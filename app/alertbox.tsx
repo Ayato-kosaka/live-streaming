@@ -84,15 +84,18 @@ export default function AlertBox() {
   }, [notificationQueue,])
 
   const speak = (thingToSay: string) => {
-    Speech.stop().then(() => Speech.speak(thingToSay,{
-      language: "ja-JP",
-      onError: (e) => console.error("Speech.speak.onError", e.message),
-      onBoundary: () => console.log("Speech.speak.onBoundary"),
-      pitch: 1.0, // 声の高さ（0.1 - 2.0）
-      rate: 1.0, // 読み上げ速度（0.1 - 10.0）
-      voice: "Google 日本語",
-      volume: 0.8, // 音量（0.0 - 1.0）
-    }))    
+    Speech.stop().then(() => 
+      Speech.getAvailableVoicesAsync().then((availableVoices)=>
+        Speech.speak(thingToSay,{
+          language: "ja-JP",
+          onError: (e) => console.error("Speech.speak.onError", e.message),
+          onBoundary: () => console.log("Speech.speak.onBoundary"),
+          pitch: 1.0, // 声の高さ（0.1 - 2.0）
+          rate: 1.0, // 読み上げ速度（0.1 - 10.0）
+          voice: availableVoices.find(x=>x.language.includes("JP"))?.identifier || "Google 日本語",
+          volume: 0.8, // 音量（0.0 - 1.0）
+        })
+    ))
   };
 
   const mainTextTemplate = useMemo(
