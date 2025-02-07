@@ -11,7 +11,6 @@ export default function AlertBox() {
   const [opacity] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    Speech.getAvailableVoicesAsync().then(j=>console.log(JSON.stringify(j)))
     // GAS API から viewrs を取得する
     const fetchViewers = async () => {
       try {
@@ -91,6 +90,7 @@ export default function AlertBox() {
       onBoundary: () => console.log("Speech.speak.onBoundary"),
       pitch: 1.0, // 声の高さ（0.1 - 2.0）
       rate: 1.0, // 読み上げ速度（0.1 - 10.0）
+      voice: "Google 日本語",
       volume: 0.8, // 音量（0.0 - 1.0）
     }))    
   };
