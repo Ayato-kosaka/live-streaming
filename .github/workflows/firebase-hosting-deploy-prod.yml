@@ -3,7 +3,7 @@
 
 name: Firebase Hosting Deploy
 on:
-  workflow_dispatch:
+  # workflow_dispatch:
   push:
     branches:
       - master
