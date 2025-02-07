@@ -67,7 +67,7 @@ export default function AlertBox() {
       duration: 500,
       useNativeDriver: true,
     }).start();
-    if(currentNotification.type==="donation" || currentNotification.type==="superchat") speak(currentNotification.message);
+    if (currentNotification.type === "donation" || currentNotification.type === "superchat") speak(currentNotification.message);
 
     // alertDuration秒後に通知を非表示
     setTimeout(() => {
@@ -84,18 +84,18 @@ export default function AlertBox() {
   }, [notificationQueue,])
 
   const speak = (thingToSay: string) => {
-    Speech.stop().then(() => 
-      Speech.getAvailableVoicesAsync().then((availableVoices)=>
-        Speech.speak(thingToSay,{
+    Speech.stop().then(() =>
+      Speech.getAvailableVoicesAsync().then((availableVoices) =>
+        Speech.speak(thingToSay, {
           language: "ja-JP",
           onError: (e) => console.error("Speech.speak.onError", e.message),
           onBoundary: () => console.log("Speech.speak.onBoundary"),
           pitch: 1.0, // 声の高さ（0.1 - 2.0）
           rate: 1.0, // 読み上げ速度（0.1 - 10.0）
-          voice: availableVoices.find(x=>x.language.includes("JP"))?.identifier || "Google 日本語",
+          voice: availableVoices.find(x => x.language.includes("JP"))?.identifier || "Google 日本語",
           volume: 0.8, // 音量（0.0 - 1.0）
         })
-    ))
+      ))
   };
 
   const mainTextTemplate = useMemo(
@@ -103,19 +103,20 @@ export default function AlertBox() {
   const imageUrl = useMemo(
     () => notification ? `https://d1ewxqdha2zjcd.cloudfront.net/assets/images/${settings[notification.type].imageSource.hash}` : '', [notification]);
   const mainTextStyle: TextStyle = useMemo(
-    () => notification ? {fontFamily: settings[notification.type].font, fontSize: settings[notification.type].fontSize, lineHeight: 1.5 * settings[notification.type].fontSize, fontWeight: settings[notification.type].fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].fontColor} : {}, [notification]);
+    () => notification ? { fontFamily: settings[notification.type].font, fontSize: settings[notification.type].fontSize, lineHeight: 1.5 * settings[notification.type].fontSize, fontWeight: settings[notification.type].fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].fontColor } : {}, [notification]);
   const messageStyle: TextStyle = useMemo(
-    () => notification?.type === "donation" || notification?.type === "superchat" ? {fontFamily: settings[notification.type].message.font, fontSize: settings[notification.type].message.fontSize, lineHeight: 1.5 * settings[notification.type].message.fontSize, fontWeight: settings[notification.type].message.fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].message.fontColor} : {}, [notification]);
+    () => notification?.type === "donation" || notification?.type === "superchat" ? { fontFamily: settings[notification.type].message.font, fontSize: settings[notification.type].message.fontSize, lineHeight: 1.5 * settings[notification.type].message.fontSize, fontWeight: settings[notification.type].message.fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].message.fontColor } : {}, [notification]);
   const emoji = useMemo(
     () => notification && viewers.find(v => v.name === notification.nickname)?.emoji, [notification]);
   const iconUrl = useMemo(
-    () => notification && 
-    viewers.find(v => v.name === notification.nickname)?.icon && 'https://lh3.googleusercontent.com/d/' + viewers.find(v => v.name === notification.nickname)?.icon
-      , [viewers, notification]);
+    () => notification &&
+      viewers.find(v => v.name === notification.nickname)?.icon && 'https://lh3.googleusercontent.com/d/' + viewers.find(v => v.name === notification.nickname)?.icon
+    , [viewers, notification]);
   const effectCounts = useMemo(
     () => notification?.type === "donation" || notification?.type === "superchat" ? {
-      fireworksCount: Math.floor(notification.amount / 10000), 
-      rainsCount: Math.floor((notification.amount % 10000) / 100), } : null, [notification])
+      fireworksCount: Math.floor(notification.amount / 10000),
+      rainsCount: Math.floor((notification.amount % 10000) / 100),
+    } : null, [notification])
 
 
   return (
@@ -126,57 +127,57 @@ export default function AlertBox() {
           <Animated.View style={[styles.alertBox, { opacity }]}>
             {notification.type === 'donation' && (
               <View style={styles.alertContainer}>
-                <Image resizeMode="contain" style={{...styles.image}} source={{ uri: iconUrl || imageUrl }} />
-                {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount||0} alertDuration={settings[notification.type].alertDuration} />}
-                {emoji && Array.from({ length: effectCounts?.rainsCount||0 }).map((_, i) => (<RainEffect key={i} index={i} emoji ={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount||1) * i}/>))}
+                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl || imageUrl }} />
+                {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount || 0} alertDuration={settings[notification.type].alertDuration} />}
+                {emoji && Array.from({ length: effectCounts?.rainsCount || 0 }).map((_, i) => (<RainEffect key={i} index={i} emoji={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount || 1) * i} />))}
                 <View style={styles.textContainer}>
-                  <Text style={{...styles.message, ...mainTextStyle}}>
+                  <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
                       if (part === '{名前}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.nickname}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.nickname}</Text>);
                       } else if (part === '{金額}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.amount.toLocaleString()}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.amount.toLocaleString()}</Text>);
                       }
                       return part; // 通常のテキスト
                     })}
                   </Text>
-                  <Text style={{...styles.message, ...messageStyle}}>{notification.message}</Text>
+                  <Text style={{ ...styles.message, ...messageStyle }}>{notification.message}</Text>
                 </View>
               </View>
             )}
             {notification.type === 'superchat' && (
               <View style={styles.alertContainer}>
-                <Image resizeMode="contain" style={{...styles.image}} source={{ uri: iconUrl || imageUrl }} />
-                {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount||0} alertDuration={settings[notification.type].alertDuration} />}
-                {emoji && Array.from({ length: effectCounts?.rainsCount||0 }).map((_, i) => (<RainEffect key={i} index={i} emoji ={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount||1) * i}/>))}
+                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl || imageUrl }} />
+                {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount || 0} alertDuration={settings[notification.type].alertDuration} />}
+                {emoji && Array.from({ length: effectCounts?.rainsCount || 0 }).map((_, i) => (<RainEffect key={i} index={i} emoji={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount || 1) * i} />))}
                 <View style={styles.textContainer}>
-                  <Text style={{...styles.message, ...mainTextStyle}}>
+                  <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
                       if (part === '{名前}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.nickname}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.nickname}</Text>);
                       } else if (part === '{金額}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.amount.toLocaleString()}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.amount.toLocaleString()}</Text>);
                       } else if (part === '{単位}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.currency}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.currency}</Text>);
                       }
                       return part; // 通常のテキスト
                     })}
                   </Text>
-                  <Text style={{...styles.message, ...messageStyle}}>{notification.message}</Text>
+                  <Text style={{ ...styles.message, ...messageStyle }}>{notification.message}</Text>
                 </View>
               </View>
             )}
             {notification.type === 'youtubeSubscriber' && (
-              <View style={{...styles.alertContainer, flexDirection: "row"}}>
-                <View style={{height: "30%", width: "20%"}}></View>
-                <Image resizeMode="contain" style={{height: "30%", width: "30%"}} source={{ uri: imageUrl }} />
-                <View style={{width: "40%",}}>
-                  <Text style={{...styles.message, ...mainTextStyle}}>
+              <View style={{ ...styles.alertContainer, flexDirection: "row" }}>
+                <View style={{ height: "30%", width: "20%" }}></View>
+                <Image resizeMode="contain" style={{ height: "30%", width: "30%" }} source={{ uri: imageUrl }} />
+                <View style={{ width: "40%", }}>
+                  <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
                       if (part === '{名前}') {
-                        return (<Text key={index} style={{color: settings[notification.type].fontHighlightColor}}>{notification.nickname}</Text>);
+                        return (<Text key={index} style={{ color: settings[notification.type].fontHighlightColor }}>{notification.nickname}</Text>);
                       }
-                        return part; // 通常のテキスト
+                      return part; // 通常のテキスト
                     })}
                   </Text>
                 </View>
@@ -242,7 +243,7 @@ const RainEffect: React.FC<{ index: number, emoji: string, delay: number }> = ({
 
 const FireworkEffect: React.FC<{ index: number, emoji: string }> = ({ index, emoji }) => {
   const animation = new Animated.Value(0);
-  
+
   useEffect(() => {
     Animated.timing(animation, {
       toValue: 1,
@@ -326,10 +327,10 @@ const FireworkExplosion: React.FC<{ emoji: string, delay: number }> = ({ emoji, 
 
   if (!isVisible) return null;
   return (
-    <Animated.View style={{ position: "absolute", left: `${left}%`, bottom: bottomPercent, opacity: opacityAnimated}} >
+    <Animated.View style={{ position: "absolute", left: `${left}%`, bottom: bottomPercent, opacity: opacityAnimated }} >
       <Text style={{ position: "absolute", fontSize: 180, left: -90, top: -90 }}>{emoji}</Text>
       {triggerFireworks && <View style={{ position: "absolute", alignItems: "center" }}>
-        {Array.from({ length: 16 }).map((_, j) => ( <FireworkEffect key={j} index={j} emoji={emoji} /> ))}
+        {Array.from({ length: 16 }).map((_, j) => (<FireworkEffect key={j} index={j} emoji={emoji} />))}
         <Text style={{ position: "absolute", fontSize: 180, left: -90, top: -90 }}>{emoji}</Text>
       </View>}
     </Animated.View>
@@ -338,7 +339,7 @@ const FireworkExplosion: React.FC<{ emoji: string, delay: number }> = ({ emoji, 
 
 const FireworkDisplay: React.FC<{ style?: ViewStyle, emoji: string, count: number, alertDuration: number }> = ({ style, emoji, count, alertDuration }) => {
   return (
-    <View style = {{...style, position: "absolute", height: '100%', width: '100%'}}>
+    <View style={{ ...style, position: "absolute", height: '100%', width: '100%' }}>
       {Array.from({ length: count }).map((_, index) => (
         <FireworkExplosion key={index} emoji={emoji} delay={index * Math.min(500, (alertDuration * 1000 - 2000) / count)} />
       ))}
@@ -445,307 +446,307 @@ type NotificationData =
 const settings = {
   "alertDelay": 5,
   "alertOrder": [
-      "donation",
-      "superchat",
-      "youtubeSubscriber",
-      "membership",
-      "raid",
-      "twitchSubscriber",
-      "bit",
-      "follower",
-      "trialDonation",
-      "support"
+    "donation",
+    "superchat",
+    "youtubeSubscriber",
+    "membership",
+    "raid",
+    "twitchSubscriber",
+    "bit",
+    "follower",
+    "trialDonation",
+    "support"
   ],
   "backgroundColor": "#ffffff",
   "customCss": "h1[data-v-0eb18151], h2[data-v-0eb18151] {\n    display: block;\n    margin: 0;\n    padding: 0;\n    line-height: 1.5;\n    text-align: center;\n    text-shadow: 0 0 1px blue;\n    word-wrap: break-word;\n}",
   "donation": {
+    "enable": 1,
+    "layout": 2,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "minAmount": 0,
+    "textAnimation": "headShake",
+    "font": "Kosugi Maru",
+    "fontSize": 32,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#37a9fd",
+    "messageTemplate": "{名前} 様、{金額} 円の投げ銭ありがとうございます！",
+    "imageSource": {
+      "hash": "2b8554b15282b1xnx11m5ikor9y.png",
+      "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
+    },
+    "soundSource": {
+      "name": "Coins.mp3",
+      "hash": "Coins.mp3"
+    },
+    "soundVolume": 80,
+    "alertDuration": 20,
+    "message": {
       "enable": 1,
-      "layout": 2,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
       "minAmount": 0,
-      "textAnimation": "headShake",
       "font": "Kosugi Maru",
-      "fontSize": 32,
+      "fontSize": 24,
       "fontWeight": 800,
       "fontColor": "#ffffff",
-      "fontHighlightColor": "#37a9fd",
-      "messageTemplate": "{名前} 様、{金額} 円の投げ銭ありがとうございます！",
-      "imageSource": {
-          "hash": "2b8554b15282b1xnx11m5ikor9y.png",
-          "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
-      },
-      "soundSource": {
-          "name": "Coins.mp3",
-          "hash": "Coins.mp3"
-      },
-      "soundVolume": 80,
-      "alertDuration": 20,
-      "message": {
-          "enable": 1,
-          "minAmount": 0,
-          "font": "Kosugi Maru",
-          "fontSize": 24,
-          "fontWeight": 800,
-          "fontColor": "#ffffff",
-          "emote": 1
-      },
-      "tts": {
-          "enable": 1,
-          "minAmount": 0,
-          "volume": 80,
-          "speed": 100,
-          "spamProtectedLevel": 0
-      },
-      "customAlert": []
+      "emote": 1
+    },
+    "tts": {
+      "enable": 1,
+      "minAmount": 0,
+      "volume": 80,
+      "speed": 100,
+      "spamProtectedLevel": 0
+    },
+    "customAlert": []
   },
   "bit": {
-      "enable": 0,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "minAmount": 100,
+    "enable": 0,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "minAmount": 100,
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6",
+    "messageTemplate": "{名前}さんが{ビッツ}ビッツで応援しました!",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "name": "1000.gif",
+      "hash": "1000.gif"
+    },
+    "soundSource": {
+      "name": "bit.ogg",
+      "hash": "bit.ogg"
+    },
+    "soundVolume": 80,
+    "alertDuration": 10,
+    "message": {
+      "enable": 1,
+      "minAmount": 0,
       "font": "Kosugi Maru",
-      "fontSize": 64,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6",
-      "messageTemplate": "{名前}さんが{ビッツ}ビッツで応援しました!",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "name": "1000.gif",
-          "hash": "1000.gif"
-      },
-      "soundSource": {
-          "name": "bit.ogg",
-          "hash": "bit.ogg"
-      },
-      "soundVolume": 80,
-      "alertDuration": 10,
-      "message": {
-          "enable": 1,
-          "minAmount": 0,
-          "font": "Kosugi Maru",
-          "fontSize": 24,
-          "fontWeight": 400,
-          "fontColor": "#ffffff"
-      },
-      "tts": {
-          "enable": 1,
-          "minAmount": 0,
-          "volume": 80
-      },
-      "customAlert": []
+      "fontSize": 24,
+      "fontWeight": 400,
+      "fontColor": "#ffffff"
+    },
+    "tts": {
+      "enable": 1,
+      "minAmount": 0,
+      "volume": 80
+    },
+    "customAlert": []
   },
   "follower": {
-      "enable": 0,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "messageTemplate": "{名前}さんがフォローしました!",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "name": "doneru.gif",
-          "hash": "doneru.gif"
-      },
-      "soundSource": {
-          "name": "Positive_Game_Sound_4.mp3",
-          "hash": "Positive_Game_Sound_4.mp3"
-      },
-      "soundVolume": 50,
-      "alertDuration": 8,
-      "font": "Kosugi Maru",
-      "fontSize": 64,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6"
+    "enable": 0,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "messageTemplate": "{名前}さんがフォローしました!",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "name": "doneru.gif",
+      "hash": "doneru.gif"
+    },
+    "soundSource": {
+      "name": "Positive_Game_Sound_4.mp3",
+      "hash": "Positive_Game_Sound_4.mp3"
+    },
+    "soundVolume": 50,
+    "alertDuration": 8,
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6"
   },
   "raid": {
-      "enable": 0,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "minAmount": 10,
-      "messageTemplate": "{名前}さんが{人数}人をraidしました!",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "name": "doneru.gif",
-          "hash": "doneru.gif"
-      },
-      "soundSource": {
-          "name": "Positive_Game_Sound_4.mp3",
-          "hash": "Positive_Game_Sound_4.mp3"
-      },
-      "soundVolume": 50,
-      "alertDuration": 8,
-      "font": "Kosugi Maru",
-      "fontSize": 64,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6",
-      "customAlert": []
+    "enable": 0,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "minAmount": 10,
+    "messageTemplate": "{名前}さんが{人数}人をraidしました!",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "name": "doneru.gif",
+      "hash": "doneru.gif"
+    },
+    "soundSource": {
+      "name": "Positive_Game_Sound_4.mp3",
+      "hash": "Positive_Game_Sound_4.mp3"
+    },
+    "soundVolume": 50,
+    "alertDuration": 8,
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6",
+    "customAlert": []
   },
   "loadOnReload": 0,
   "membership": {
-      "enable": 0,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "messageTemplate": "{名前}さんが{レベル}のメンバーになりました!",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "name": "doneru.gif",
-          "hash": "doneru.gif"
-      },
-      "soundSource": {
-          "name": "Positive_Game_Sound_4.mp3",
-          "hash": "Positive_Game_Sound_4.mp3"
-      },
-      "soundVolume": 50,
-      "alertDuration": 8,
-      "font": "Kosugi Maru",
-      "fontSize": 64,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6",
-      "customAlert": []
+    "enable": 0,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "messageTemplate": "{名前}さんが{レベル}のメンバーになりました!",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "name": "doneru.gif",
+      "hash": "doneru.gif"
+    },
+    "soundSource": {
+      "name": "Positive_Game_Sound_4.mp3",
+      "hash": "Positive_Game_Sound_4.mp3"
+    },
+    "soundVolume": 50,
+    "alertDuration": 8,
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6",
+    "customAlert": []
   },
   "superchat": {
+    "enable": 1,
+    "layout": 2,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "minAmount": 100,
+    "font": "Kosugi Maru",
+    "fontSize": 32,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#37a9fd",
+    "messageTemplate": "{名前} 様、{単位}{金額}の投げ銭ありがとうございます！",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "hash": "2b8554b15282b1xnx11m5ikor9y.png",
+      "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
+    },
+    "soundSource": {
+      "name": "Coins.mp3",
+      "hash": "Coins.mp3"
+    },
+    "soundVolume": 80,
+    "alertDuration": 10,
+    "message": {
       "enable": 1,
-      "layout": 2,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "minAmount": 100,
+      "minAmount": 0,
       "font": "Kosugi Maru",
-      "fontSize": 32,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#37a9fd",
-      "messageTemplate": "{名前} 様、{単位}{金額}の投げ銭ありがとうございます！",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "hash": "2b8554b15282b1xnx11m5ikor9y.png",
-          "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
-      },
-      "soundSource": {
-          "name": "Coins.mp3",
-          "hash": "Coins.mp3"
-      },
-      "soundVolume": 80,
-      "alertDuration": 10,
-      "message": {
-          "enable": 1,
-          "minAmount": 0,
-          "font": "Kosugi Maru",
-          "fontSize": 24,
-          "fontWeight": 400,
-          "fontColor": "#ffffff"
-      },
-      "tts": {
-          "enable": 1,
-          "minAmount": 0,
-          "volume": 80
-      },
-      "customAlert": []
+      "fontSize": 24,
+      "fontWeight": 400,
+      "fontColor": "#ffffff"
+    },
+    "tts": {
+      "enable": 1,
+      "minAmount": 0,
+      "volume": 80
+    },
+    "customAlert": []
   },
   "support": {
+    "enable": 1,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "minAmount": 0,
+    "textAnimation": "headShake",
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6",
+    "messageTemplate": "{名前}さんが{月数}ヶ月目{金額}どねをサポートしました！",
+    "imageSource": {
+      "name": "doneru.gif",
+      "hash": "doneru.gif"
+    },
+    "soundSource": {
+      "name": "Coins.mp3",
+      "hash": "Coins.mp3"
+    },
+    "soundVolume": 80,
+    "alertDuration": 10,
+    "message": {
       "enable": 1,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
       "minAmount": 0,
-      "textAnimation": "headShake",
       "font": "Kosugi Maru",
-      "fontSize": 64,
+      "fontSize": 24,
       "fontWeight": 800,
       "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6",
-      "messageTemplate": "{名前}さんが{月数}ヶ月目{金額}どねをサポートしました！",
-      "imageSource": {
-          "name": "doneru.gif",
-          "hash": "doneru.gif"
-      },
-      "soundSource": {
-          "name": "Coins.mp3",
-          "hash": "Coins.mp3"
-      },
-      "soundVolume": 80,
-      "alertDuration": 10,
-      "message": {
-          "enable": 1,
-          "minAmount": 0,
-          "font": "Kosugi Maru",
-          "fontSize": 24,
-          "fontWeight": 800,
-          "fontColor": "#ffffff",
-          "emote": 1
-      },
-      "tts": {
-          "enable": 1,
-          "minAmount": 0,
-          "volume": 80,
-          "speed": 100,
-          "spamProtectedLevel": 0
-      },
-      "customAlert": []
+      "emote": 1
+    },
+    "tts": {
+      "enable": 1,
+      "minAmount": 0,
+      "volume": 80,
+      "speed": 100,
+      "spamProtectedLevel": 0
+    },
+    "customAlert": []
   },
   "twitchSubscriber": {
-      "enable": 0,
-      "layout": 1,
-      "startAnimation": "fadeIn",
-      "endAnimation": "fadeOut",
-      "messageTemplate": "{名前}さんが{ティア}をサブスクしました!",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "name": "doneru.gif",
-          "hash": "doneru.gif"
-      },
-      "soundSource": {
-          "name": "Positive_Game_Sound_4.mp3",
-          "hash": "Positive_Game_Sound_4.mp3"
-      },
-      "soundVolume": 50,
-      "alertDuration": 8,
+    "enable": 0,
+    "layout": 1,
+    "startAnimation": "fadeIn",
+    "endAnimation": "fadeOut",
+    "messageTemplate": "{名前}さんが{ティア}をサブスクしました!",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "name": "doneru.gif",
+      "hash": "doneru.gif"
+    },
+    "soundSource": {
+      "name": "Positive_Game_Sound_4.mp3",
+      "hash": "Positive_Game_Sound_4.mp3"
+    },
+    "soundVolume": 50,
+    "alertDuration": 8,
+    "font": "Kosugi Maru",
+    "fontSize": 64,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#32c3a6",
+    "message": {
+      "enable": 1,
       "font": "Kosugi Maru",
-      "fontSize": 64,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#32c3a6",
-      "message": {
-          "enable": 1,
-          "font": "Kosugi Maru",
-          "fontSize": 24,
-          "fontWeight": 400,
-          "fontColor": "#ffffff"
-      },
-      "tts": {
-          "enable": 1,
-          "volume": 80,
-          "spamProtectedLevel": 0
-      },
-      "customAlert": []
+      "fontSize": 24,
+      "fontWeight": 400,
+      "fontColor": "#ffffff"
+    },
+    "tts": {
+      "enable": 1,
+      "volume": 80,
+      "spamProtectedLevel": 0
+    },
+    "customAlert": []
   },
   "youtubeSubscriber": {
-      "enable": 1,
-      "layout": 3,
-      "startAnimation": "slideInLeft",
-      "endAnimation": "slideOutRight",
-      "messageTemplate": "{名前}様、チャンネル登録いただき感謝いたします。\nお茶とお菓子をお供に、ゆっくりとお楽しみくださいませ。",
-      "textAnimation": "headShake",
-      "imageSource": {
-          "hash": "bda4b50da7d5b1xnx11m6as6l5o.png",
-          "name": "YoP5WY4mGKBaRK01737724157_1737724259.png"
-      },
-      "soundSource": {
-          "name": "Positive_Game_Sound_4.mp3",
-          "hash": "Positive_Game_Sound_4.mp3"
-      },
-      "soundVolume": 50,
-      "alertDuration": 8,
-      "font": "Kosugi Maru",
-      "fontSize": 17,
-      "fontWeight": 800,
-      "fontColor": "#ffffff",
-      "fontHighlightColor": "#37a9fd"
+    "enable": 1,
+    "layout": 3,
+    "startAnimation": "slideInLeft",
+    "endAnimation": "slideOutRight",
+    "messageTemplate": "{名前}様、チャンネル登録いただき感謝いたします。\nお茶とお菓子をお供に、ゆっくりとお楽しみくださいませ。",
+    "textAnimation": "headShake",
+    "imageSource": {
+      "hash": "bda4b50da7d5b1xnx11m6as6l5o.png",
+      "name": "YoP5WY4mGKBaRK01737724157_1737724259.png"
+    },
+    "soundSource": {
+      "name": "Positive_Game_Sound_4.mp3",
+      "hash": "Positive_Game_Sound_4.mp3"
+    },
+    "soundVolume": 50,
+    "alertDuration": 8,
+    "font": "Kosugi Maru",
+    "fontSize": 17,
+    "fontWeight": 800,
+    "fontColor": "#ffffff",
+    "fontHighlightColor": "#37a9fd"
   }
 }
