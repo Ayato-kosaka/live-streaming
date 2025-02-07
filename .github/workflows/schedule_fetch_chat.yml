@@ -1,0 +1,29 @@
+name: Fetch YouTube Chat Data
+
+on:
+  schedule:
+    - cron: "0 20 * * *"  # UTC 8:00 PM (日本時間 5:00)
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  fetch_chat_data:
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_GAS_API_URL: ${{ secrets.PYTHON_GAS_API_URL }}
+      PYTHON_GAS_API_PW: ${{ secrets.PYTHON_GAS_API_PW }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install yt-dlp requests
+
+      - name: チャットデータ取得スクリプトの実行
+        run: python python/fetch_chat_data.py
