@@ -37,6 +37,7 @@ def fetch_and_post_chat_data(video_ids):
                 "--sub-lang", "live_chat",
                 "--skip-download",
                 "--output", f"{output_dir}/{video_id}.%(ext)s",
+                "--cookies", "cookies.txt",
                 video_url
             ], check=True)
         except subprocess.CalledProcessError as e:
