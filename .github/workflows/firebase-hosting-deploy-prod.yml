@@ -4,9 +4,9 @@
 name: Firebase Hosting Deploy
 on:
   workflow_dispatch:
-#   push:
-#     branches:
-#       - main
+  push:
+    branches:
+      - master
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
