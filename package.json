@@ -40,7 +40,7 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "expo-speech": "~13.0.1",
-    "react-native-view-shot": "~4.0.3",
+		"react-native-view-shot": "github:Ayato-kosaka/react-native-view-shot-with-web-support#master",
     "expo-media-library": "~17.0.5"
   },
   "devDependencies": {

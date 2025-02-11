@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
 });
 
 
-interface Viewer {
+export interface Viewer {
   icon?: string;
   emoji?: string;
   name: string;

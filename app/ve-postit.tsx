@@ -114,9 +114,4 @@ postitContent: {
     borderStyle: "dotted",
     paddingBottom: 2,
   },
-  image: {
-    marginTop: 20,
-    width: 240,
-    height: 200,
-  },
 });
