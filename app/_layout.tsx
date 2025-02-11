@@ -16,6 +16,7 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     KosugiMaru: require('../assets/fonts/KosugiMaru-Regular.ttf'),
+    HuiFont29: require('../assets/fonts/HuiFont29.ttf'),
   });
 
   useEffect(() => {
