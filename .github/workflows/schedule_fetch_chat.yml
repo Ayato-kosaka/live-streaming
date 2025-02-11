@@ -23,10 +23,21 @@ jobs:
       - name: 必要なパッケージのインストール
         run: |
           python -m pip install --upgrade pip
-          pip install yt-dlp requests
-          
-      - name: cookies.txt を取得
-        run: echo "${{ secrets.YOUTUBE_COOKIES }}" > cookies.txt
+          pip install requests
+    
+      - name: Setup yt-dlp
+        uses: AnimMouse/setup-yt-dlp@v3
+        
+      - name: Setup yt-dlp YouTube cookies
+        uses: AnimMouse/setup-yt-dlp/cookies@v3
+        with:
+          cookies: ${{ secrets.YOUTUBE_COOKIES }}
 
       - name: チャットデータ取得スクリプトの実行
         run: python python/fetch_chat_data.py
+    
+      - name: Update yt-dlp YouTube cookies
+        uses: AnimMouse/setup-yt-dlp/cookies/update@v3
+        with:
+          cookies_secret_name: YOUTUBE_COOKIES
+          token: ${{ secrets.GH_PAT }}
