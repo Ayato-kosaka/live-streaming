@@ -30,3 +30,9 @@ jobs:
 
       - name: チャットデータ取得スクリプトの実行
         run: python python/fetch_chat_data.py
+    
+      - name: Update yt-dlp YouTube cookies
+        uses: AnimMouse/setup-yt-dlp/cookies/update@v3
+        with:
+          cookies_secret_name: YOUTUBE_COOKIES
+          token: ${{ secrets.GH_PAT }}
