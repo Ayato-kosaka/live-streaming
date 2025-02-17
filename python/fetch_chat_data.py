@@ -57,7 +57,10 @@ def fetch_and_post_chat_data(video_ids):
                         try:
                             message = item["addChatItemAction"]["item"]["liveChatTextMessageRenderer"]
                             author = message["authorName"]["simpleText"]
-                            text = message["message"]["runs"][0]["text"]
+                            text = "".join(
+                                    run["text"] if "text" in run else run["emoji"]["emojiId"] if "emoji" in run else str(run)
+                                    for run in message["message"]["runs"]
+                                )
                             timestampUsec = message["timestampUsec"]
                             messages.append({
                                 "video_id": video_id,
