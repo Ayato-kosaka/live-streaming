@@ -24,27 +24,49 @@ export default function AlertBox() {
 
     fetchViewers();
 
-    // WebSocket接続
-    const socket = new WebSocket(process.env.EXPO_PUBLIC_DONERU_WSS_URL!);
+    let socket: WebSocket;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
 
-    // WebSocketでメッセージを受け取ったときの処理
-    socket.onmessage = (event) => {
-      const data: NotificationData = JSON.parse(event.data);  // NotificationData型にパース
-      setNotificationQueue((prevQueue) => [...prevQueue, data]); // stateに通知内容をセット
-    };
+    const connect = () => {
+      socket = new WebSocket(process.env.EXPO_PUBLIC_DONERU_WSS_URL!);
+  
+      socket.onopen = () => {
+        console.log("WebSocket Connected");
+  
+        // 定期的に "ping" を送る
+        const keepAliveInterval = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 30000);
+  
+        // クリーンアップ処理
+        return () => {
+          clearInterval(keepAliveInterval);
+        };
+      };
 
-    // WebSocketのエラーハンドリング
-    socket.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-    };
+      socket.onmessage = (event) => {
+        const data: NotificationData = JSON.parse(event.data);
+        setNotificationQueue((prevQueue) => [...prevQueue, data]);
+      };
+  
+      socket.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+      };
+  
+      socket.onclose = () => {
+        console.log("WebSocket closed, attempting to reconnect...");
+        // 5秒後に再接続
+        reconnectTimeout = setTimeout(connect, 5000);
+      };
+    }
 
-    // WebSocketの接続終了時の処理
-    socket.onclose = () => {
-      console.log('WebSocket closed');
-    };
+    connect();
 
     // クリーンアップ
     return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
       socket.close();
     };
   }, []);
