@@ -31,7 +31,7 @@ jobs:
       - name: Setup yt-dlp YouTube cookies
         uses: AnimMouse/setup-yt-dlp/cookies@v3
         with:
-          cookies: ${{ secrets.YOUTUBE_COOKIES }}
+          cookies: ${{ secrets.YOUTUBE_COOKIES }} # https://github.com/marketplace/actions/setup-yt-dlp#youtube-cookies
 
       - name: チャットデータ取得スクリプトの実行
         run: python python/fetch_chat_data.py
