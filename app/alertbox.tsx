@@ -52,6 +52,7 @@ export default function AlertBox() {
 
       socket.onmessage = (event) => {
         const data: NotificationData = JSON.parse(event.data);
+        if (typeof data.type !== 'string') sendLog("websocketInvalidNotificationReceived", data);
         sendLog("websocketMessageReceived", data); // 👈 受信ログ
         setNotificationQueue((prevQueue) => [...prevQueue, data]);
       };
