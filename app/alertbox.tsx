@@ -3,31 +3,13 @@ import { View, Text, StyleSheet, Animated, Image, TextStyle, StyleProp, Easing, 
 import { Stack } from 'expo-router';
 import * as Speech from 'expo-speech';
 
-const sendLog = async (event: string, data: any = {}) => {
-  try {
-    const payload = {
-      timestamp: new Date().toISOString(),
-      screen: 'AlertBox',
-      event,
-      data
-    };
-
-    console.log(JSON.stringify(payload));
-    await fetch(process.env.EXPO_PUBLIC_GAS_LOG_API_URL!, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify(payload)
-    });
-  } catch (err) {
-    console.error("Failed to send log:", err);
-  }
-};
 
 export default function AlertBox() {
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [notificationQueue, setNotificationQueue] = useState<NotificationData[]>([]);
   const [opacity] = useState(new Animated.Value(0));
+  const sessionId = useRef(new Date().getTime());
 
   useEffect(() => {
     sendLog("mount"); // 👈 画面起動
@@ -166,6 +148,27 @@ export default function AlertBox() {
       fireworksCount: Math.floor(notification.amount / 10000),
       rainsCount: Math.floor((notification.amount % 10000) / 100),
     } : null, [notification])
+
+  const sendLog = useCallback(async (event: string, data: any = {}) => {
+    try {
+      const payload = {
+        timestamp: new Date().toISOString(),
+        sessionId: sessionId.current,
+        screen: 'AlertBox',
+        event,
+        data
+      };
+
+      console.log(JSON.stringify(payload));
+      await fetch(process.env.EXPO_PUBLIC_GAS_LOG_API_URL!, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error("Failed to send log:", err);
+    }
+  }, []);
 
 
   return (
