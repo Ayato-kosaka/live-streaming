@@ -157,6 +157,7 @@ export default function AlertBox() {
         sessionId: sessionId.current,
         screen: 'AlertBox',
         event,
+        gitCommit: process.env.EXPO_PUBLIC_GIT_COMMIT,
         data
       };
 
