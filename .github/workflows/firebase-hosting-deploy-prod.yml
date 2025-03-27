@@ -16,6 +16,7 @@ jobs:
         run: |
           echo "EXPO_PUBLIC_DONERU_WSS_URL=${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}" >> .env
           echo "EXPO_PUBLIC_GAS_API_URL=${{ secrets.EXPO_PUBLIC_GAS_API_URL }}" >> .env
+          echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
       - run: 'npm ci && npx expo export --platform web'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:

@@ -3,6 +3,25 @@ import { View, Text, StyleSheet, Animated, Image, TextStyle, StyleProp, Easing, 
 import { Stack } from 'expo-router';
 import * as Speech from 'expo-speech';
 
+const sendLog = async (event: string, data: any = {}) => {
+  try {
+    const payload = {
+      timestamp: new Date().toISOString(),
+      screen: 'AlertBox',
+      event,
+      data
+    };
+
+    console.log(JSON.stringify(payload));
+    await fetch(process.env.EXPO_PUBLIC_GAS_LOG_API_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error("Failed to send log:", err);
+  }
+};
 
 export default function AlertBox() {
   const [viewers, setViewers] = useState<Viewer[]>([]);
@@ -11,14 +30,17 @@ export default function AlertBox() {
   const [opacity] = useState(new Animated.Value(0));
 
   useEffect(() => {
+    sendLog("mount"); // 👈 画面起動
+
     // GAS API から viewrs を取得する
     const fetchViewers = async () => {
       try {
         const response = await fetch(process.env.EXPO_PUBLIC_GAS_API_URL!);
         const data = await response.json();
         setViewers(data.viewers || []);
+        sendLog("fetchViewersSuccess", { viewersCount: data.viewers?.length ?? 0 }); // 👈 成功ログ
       } catch (error) {
-        console.error("Error fetching viewers:", error);
+        sendLog("fetchViewersError", { error }); // 👈 エラーログ
       }
     };
 
@@ -31,7 +53,7 @@ export default function AlertBox() {
       socket = new WebSocket(process.env.EXPO_PUBLIC_DONERU_WSS_URL!);
   
       socket.onopen = () => {
-        console.log("WebSocket Connected");
+        sendLog("websocketConnected"); // 👈 接続ログ
   
         // 定期的に "ping" を送る
         const keepAliveInterval = setInterval(() => {
@@ -48,17 +70,18 @@ export default function AlertBox() {
 
       socket.onmessage = (event) => {
         const data: NotificationData = JSON.parse(event.data);
+        sendLog("websocketMessageReceived", data); // 👈 受信ログ
         setNotificationQueue((prevQueue) => [...prevQueue, data]);
       };
   
       socket.onerror = (error) => {
-        console.error("WebSocket Error:", error);
+        sendLog("websocketError", { error: String(error) }); // 👈 エラーログ
       };
   
       socket.onclose = () => {
-        console.log("WebSocket closed, attempting to reconnect...");
-        // 5秒後に再接続
-        reconnectTimeout = setTimeout(connect, 5000);
+        sendLog("websocketClosed"); // 👈 切断ログ
+        // 1秒後に再接続
+        reconnectTimeout = setTimeout(connect, 1000);
       };
     }
 
@@ -68,6 +91,7 @@ export default function AlertBox() {
     return () => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       socket.close();
+      sendLog("unmount"); // 👈 画面離脱
     };
   }, []);
 
@@ -81,6 +105,7 @@ export default function AlertBox() {
     if (notificationQueue.length === 0) return;
 
     const currentNotification = notificationQueue[0];
+    sendLog("notificationDisplayed", currentNotification); // 👈 表示ログ
 
     // 通知を表示
     setNotification(currentNotification);
@@ -110,8 +135,10 @@ export default function AlertBox() {
       Speech.getAvailableVoicesAsync().then((availableVoices) =>
         Speech.speak(thingToSay, {
           language: "ja-JP",
-          onError: (e) => console.error("Speech.speak.onError", e.message),
-          onBoundary: () => console.log("Speech.speak.onBoundary"),
+          onError: (e) => {
+            sendLog("ttsError", { message: e.message });
+          },
+          onBoundary: () => sendLog("ttsBoundary"),
           pitch: 1.0, // 声の高さ（0.1 - 2.0）
           rate: 1.0, // 読み上げ速度（0.1 - 10.0）
           voice: availableVoices.find(x => x.language.includes("JP"))?.identifier || "Google 日本語",
