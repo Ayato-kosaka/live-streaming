@@ -138,7 +138,7 @@ export default function AlertBox() {
           onError: (e) => {
             sendLog("ttsError", { message: e.message });
           },
-          onBoundary: () => sendLog("ttsBoundary"),
+          onBoundary: () => {},
           pitch: 1.0, // 声の高さ（0.1 - 2.0）
           rate: 1.0, // 読み上げ速度（0.1 - 10.0）
           voice: availableVoices.find(x => x.language.includes("JP"))?.identifier || "Google 日本語",
