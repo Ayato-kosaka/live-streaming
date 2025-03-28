@@ -7,6 +7,7 @@ import { styles } from './styles';
 import { FireworkDisplay, RainEffect } from './components';
 import { NotificationData, Viewer } from './types';
 
+const NOTIFICATION_TYPES = ["donation", "superchat", "youtubeSubscriber", "membership"] as const satisfies readonly NotificationData["type"][];
 
 export default function AlertBox() {
   const [viewers, setViewers] = useState<Viewer[]>([]);
@@ -29,7 +30,6 @@ export default function AlertBox() {
         sendLog("fetchViewersError", { error }); // 👈 エラーログ
       }
     };
-
     fetchViewers();
 
     let socket: WebSocket;
@@ -56,7 +56,7 @@ export default function AlertBox() {
 
       socket.onmessage = (event) => {
         const data: NotificationData = JSON.parse(event.data);
-        if (typeof data.type !== 'string' || !['donation', 'superchat', 'youtubeSubscriber', 'membership'].includes(data.type)) sendLog("websocketInvalidNotificationReceived", data);
+        if (typeof data.type !== 'string' || !NOTIFICATION_TYPES.includes(data.type)) sendLog("websocketInvalidNotificationReceived", data);
         sendLog("websocketMessageReceived", data); // 👈 受信ログ
         setNotificationQueue((prevQueue) => [...prevQueue, data]);
       };
@@ -71,8 +71,9 @@ export default function AlertBox() {
         reconnectTimeout = setTimeout(connect, 1000);
       };
     }
-
     connect();
+
+    Promise.all(NOTIFICATION_TYPES.map(v =>Image.prefetch(imageUrl(v))))
 
     // クリーンアップ
     return () => {
@@ -88,12 +89,13 @@ export default function AlertBox() {
     }
   }, [notificationQueue, notification]);
 
-  const processNotificationQueue = useCallback(() => {
+  const processNotificationQueue = useCallback(async () => {
     if (notificationQueue.length === 0) return;
 
     const currentNotification = notificationQueue[0];
     sendLog("notificationDisplayed", currentNotification); // 👈 表示ログ
 
+    iconUrl(currentNotification) && await Image.prefetch(iconUrl(currentNotification)!);
     // 通知を表示
     setNotification(currentNotification);
     Animated.timing(opacity, {
@@ -136,18 +138,18 @@ export default function AlertBox() {
 
   const mainTextTemplate = useMemo(
     () => notification ? settings[notification.type].messageTemplate : '', [notification]);
-  const imageUrl = useMemo(
-    () => notification ? `https://d1ewxqdha2zjcd.cloudfront.net/assets/images/${settings[notification.type].imageSource.hash}` : '', [notification]);
+  const imageUrl = useCallback(
+    (notificationType: NotificationData["type"] | null) => notificationType ? `https://d1ewxqdha2zjcd.cloudfront.net/assets/images/${settings[notificationType].imageSource.hash}` : '', []);
   const mainTextStyle: TextStyle = useMemo(
     () => notification ? { fontFamily: settings[notification.type].font, fontSize: settings[notification.type].fontSize, lineHeight: 1.5 * settings[notification.type].fontSize, fontWeight: settings[notification.type].fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].fontColor } : {}, [notification]);
   const messageStyle: TextStyle = useMemo(
     () => notification?.type === "donation" || notification?.type === "superchat" ? { fontFamily: settings[notification.type].message.font, fontSize: settings[notification.type].message.fontSize, lineHeight: 1.5 * settings[notification.type].message.fontSize, fontWeight: settings[notification.type].message.fontWeight.toString() as TextStyle["fontWeight"], color: settings[notification.type].message.fontColor } : {}, [notification]);
   const emoji = useMemo(
     () => notification && viewers.find(v => v.name === notification.nickname)?.emoji, [notification]);
-  const iconUrl = useMemo(
-    () => notification &&
+  const iconUrl = useCallback(
+    (notification: NotificationData | null) => notification &&
       viewers.find(v => v.name === notification.nickname)?.icon && 'https://lh3.googleusercontent.com/d/' + viewers.find(v => v.name === notification.nickname)?.icon
-    , [viewers, notification]);
+    , [viewers]);
   const effectCounts = useMemo(
     () => notification?.type === "donation" || notification?.type === "superchat" ? {
       fireworksCount: Math.floor(notification.amount / 10000),
@@ -185,7 +187,7 @@ export default function AlertBox() {
           <Animated.View style={[styles.alertBox, { opacity }]}>
             {notification.type === 'donation' && (
               <View style={styles.alertContainer}>
-                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl || imageUrl }} />
+                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl(notification) || imageUrl(notification.type) }} />
                 {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount || 0} alertDuration={settings[notification.type].alertDuration} />}
                 {emoji && Array.from({ length: effectCounts?.rainsCount || 0 }).map((_, i) => (<RainEffect key={i} index={i} emoji={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount || 1) * i} />))}
                 <View style={styles.textContainer}>
@@ -205,7 +207,7 @@ export default function AlertBox() {
             )}
             {notification.type === 'superchat' && (
               <View style={styles.alertContainer}>
-                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl || imageUrl }} />
+                <Image resizeMode="contain" style={{ ...styles.image }} source={{ uri: iconUrl(notification) || imageUrl(notification.type) }} />
                 {emoji && <FireworkDisplay style={styles.fireworkExplosion} emoji={emoji} count={effectCounts?.fireworksCount || 0} alertDuration={settings[notification.type].alertDuration} />}
                 {emoji && Array.from({ length: effectCounts?.rainsCount || 0 }).map((_, i) => (<RainEffect key={i} index={i} emoji={emoji} delay={(settings[notification.type].alertDuration * 1000 - 2000) / (effectCounts?.rainsCount || 1) * i} />))}
                 <View style={styles.textContainer}>
@@ -228,7 +230,7 @@ export default function AlertBox() {
             {notification.type === 'youtubeSubscriber' && (
               <View style={{ ...styles.alertContainer, flexDirection: "row" }}>
                 <View style={{ height: "30%", width: "20%" }}></View>
-                <Image resizeMode="contain" style={{ height: "30%", width: "30%" }} source={{ uri: imageUrl }} />
+                <Image resizeMode="contain" style={{ height: "30%", width: "30%" }} source={{ uri: imageUrl(notification.type) }} />
                 <View style={{ width: "40%", }}>
                   <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
