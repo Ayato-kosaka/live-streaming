@@ -1,0 +1,40 @@
+name: Firebase Functions Deploy
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main 
+
+jobs:
+  build_and_deploy_functions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: 🛠️ Node.js 22 のセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 🏗️ `.env` ファイルの作成
+        run: |
+          echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> .env
+          echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> .env
+          echo "YOUTUBE_REFRESH_TOKEN=${{ secrets.YOUTUBE_REFRESH_TOKEN }}" >> .env
+
+      - name: 📦 依存関係のインストール
+        run: npm ci
+
+      - name: 🔨 TypeScript ビルド
+        run: npm run build
+
+      - name: 🚀 Firebase CLI で Functions デプロイ
+        uses: w9jds/firebase-action@v13
+        with:
+          credentials: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: 📡 関数のデプロイ実行
+        run: npm run deploy
