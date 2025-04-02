@@ -1,42 +1,36 @@
-name: Firebase Functions Deploy
+name: Deploy Firebase Functions
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
-  build_and_deploy_functions:
+  deploy:
+    name: Deploy to Firebase
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: functions
-
     steps:
-      - uses: actions/checkout@v3
-
-      - name: 🛠️ Node.js 22 のセットアップ
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: actions/checkout@v2
 
       - name: 🏗️ `.env` ファイルの作成
         run: |
-          echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> .env
-          echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> .env
-          echo "YOUTUBE_REFRESH_TOKEN=${{ secrets.YOUTUBE_REFRESH_TOKEN }}" >> .env
+          echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> functions/.env
+          echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> functions/.env
+          echo "YOUTUBE_REFRESH_TOKEN=${{ secrets.YOUTUBE_REFRESH_TOKEN }}" >> functions/.env
 
       - name: 📦 依存関係のインストール
         run: npm ci
+        working-directory: functions
 
       - name: 🔨 TypeScript ビルド
         run: npm run build
+        working-directory: functions
 
-      - name: 🚀 Firebase Functions をデプロイ
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only functions
+      - name: 🚀 Deploy to Firebase
+        uses: jsryudev/deploy-firebase-functions@v20.0.1
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT: live-streaming-d3cac
+          FUNCTIONS_DIR: functions
