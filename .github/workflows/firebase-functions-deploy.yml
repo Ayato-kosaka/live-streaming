@@ -34,11 +34,9 @@ jobs:
       - name: 🔨 TypeScript ビルド
         run: npm run build
 
-      - name: 🚀 Firebase CLI セットアップ（Functions デプロイ用）
+      - name: 🚀 Firebase Functions をデプロイ
         uses: w9jds/firebase-action@master
         with:
-          credentials: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
-
-      - name: 📡 Firebase Functions をデプロイ
-        run: npm run deploy
+          args: deploy --only functions
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
