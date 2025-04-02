@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
   # push:
   #   branches:
-  #     - main 
+  #     - main
 
 jobs:
   build_and_deploy_functions:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: functions
 
     steps:
       - uses: actions/checkout@v3
@@ -30,11 +34,11 @@ jobs:
       - name: 🔨 TypeScript ビルド
         run: npm run build
 
-      - name: 🚀 Firebase CLI で Functions デプロイ
+      - name: 🚀 Firebase CLI セットアップ（Functions デプロイ用）
         uses: w9jds/firebase-action@master
         with:
           credentials: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
 
-      - name: 📡 関数のデプロイ実行
+      - name: 📡 Firebase Functions をデプロイ
         run: npm run deploy
