@@ -12,6 +12,8 @@ export async function commentOnLive(): Promise<void> {
 
     // アクセストークンを取得・更新（これは副作用として内部的にトークンが更新される）
     await oauth2Client.getAccessToken();
+    console.log("AccessToken:", tokenInfo?.token);
+    console.log("ExpiryDate:", oauth2Client.credentials.expiry_date);
 
     // 配信中のライブ配信を取得
     const liveRes = await youtube.liveBroadcasts.list({
