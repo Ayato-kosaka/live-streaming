@@ -11,7 +11,7 @@ export async function commentOnLive(): Promise<void> {
             await getRemoteConfigStringValue("youtube_regularly_comment");
 
     // アクセストークンを取得・更新（これは副作用として内部的にトークンが更新される）
-    await oauth2Client.getAccessToken();
+    const tokenInfo = await oauth2Client.getAccessToken();
     console.log("AccessToken:", tokenInfo?.token);
     console.log("ExpiryDate:", oauth2Client.credentials.expiry_date);
 
