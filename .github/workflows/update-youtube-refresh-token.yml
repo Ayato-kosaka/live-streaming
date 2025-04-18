@@ -49,12 +49,8 @@ jobs:
 
       # 2️⃣ GitHub Secrets を更新（YOUTUBE_REFRESH_TOKEN を上書き）
       - name: Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
-        uses: hmanzur/actions-set-secret@v2.2.0
-        with:
-          name: YOUTUBE_REFRESH_TOKEN
-          value: ${{ steps.fetch_token.outputs.refresh_token }}
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "refresh_token=${{ steps.fetch_token.outputs.refresh_token }}" >> $GITHUB_ENV
 
       # 3️⃣ 更新後、firebase-functions-deploy.yml をキックしてデプロイ実行
       - name: Trigger Firebase Functions Deploy Workflow
