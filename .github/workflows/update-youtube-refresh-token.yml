@@ -46,11 +46,15 @@ jobs:
 
           # 次のステップで使えるように出力
           echo "refresh_token=$REFRESH_TOKEN" >> $GITHUB_OUTPUT
-
-      # 2️⃣ GitHub Secrets を更新（YOUTUBE_REFRESH_TOKEN を上書き）
+          
+      # 2️⃣ GitHub API を使って、GitHub Secrets (YOUTUBE_REFRESH_TOKEN) を更新
       - name: Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
         run: |
-          echo "refresh_token=${{ steps.fetch_token.outputs.refresh_token }}" >> $GITHUB_ENV
+          echo "YOUTUBE_REFRESH_TOKEN=${{ steps.fetch_token.outputs.refresh_token }}" >> $GITHUB_ENV
+          curl -X PUT https://api.github.com/repos/${{ github.repository }}/actions/secrets/YOUTUBE_REFRESH_TOKEN \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"encrypted_value\":\"$(echo -n "${{ steps.fetch_token.outputs.refresh_token }}" | base64)\", \"key_id\":\"${{ secrets.GITHUB_KEY_ID }}\"}"
 
       # 3️⃣ 更新後、firebase-functions-deploy.yml をキックしてデプロイ実行
       - name: Trigger Firebase Functions Deploy Workflow
