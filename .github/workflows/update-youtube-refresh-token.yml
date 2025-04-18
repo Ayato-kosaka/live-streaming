@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Google OAuth トークンエンドポイントへ POST して、refresh_token を取得
+      # 🔐 Step 1: 認証コードから refresh_token を取得（Google OAuth）
       - name: Exchange auth_code for refresh_token
         id: fetch_token
         run: |
@@ -47,7 +47,7 @@ jobs:
           # 次のステップで使えるように出力
           echo "refresh_token=$REFRESH_TOKEN" >> $GITHUB_OUTPUT
 
-      # 2️⃣ GitHub API を使って、GitHub の公開鍵（key_id）を取得
+      # 🔑 Step 2: GitHub Secrets 更新用にリポジトリの公開鍵 (key_id, key) を取得
       - name: Get GitHub Public Key
         id: get_key
         run: |
@@ -63,23 +63,40 @@ jobs:
           echo "GITHUB_KEY_ID=$GITHUB_KEY_ID" >> $GITHUB_ENV
           echo "GITHUB_KEY=$GITHUB_KEY" >> $GITHUB_ENV
 
-      # 3️⃣ refresh_token を暗号化して GitHub Secrets に更新
-      - name: Encrypt and Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
+      # 🔐 Step 3: refresh_token を公開鍵で NaCl 方式により暗号化
+      - name: Encrypt refresh_token using libsodium
+        id: encrypt
         run: |
-          # refresh_token を暗号化
-          ENCRYPTED_TOKEN=$(echo -n "${{ steps.fetch_token.outputs.refresh_token }}" | \
-            openssl rsautl -encrypt -inkey <(echo "${{ env.GITHUB_KEY }}") -pubin | base64)
+          echo "
+          const nacl = require('tweetnacl');
+          const b64 = require('js-base64');
+          
+          const key = b64.toByteArray(process.env.PUBLIC_KEY);
+          const msg = Buffer.from(process.env.REFRESH_TOKEN);
+          
+          const encrypted = nacl.box.before(msg, key);
+          const encrypted_b64 = b64.fromUint8Array(encrypted);
+          
+          console.log('::set-output name=encrypted::' + encrypted_b64);
+          " > encrypt.js
 
-          # GitHub Secrets API を呼び出して更新
+          node encrypt.js
+
+      # 📝 Step 4: GitHub Secrets に YOUTUBE_REFRESH_TOKEN を保存（上書き）
+      - name: Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
+        run: |
           curl -X PUT https://api.github.com/repos/${{ github.repository }}/actions/secrets/YOUTUBE_REFRESH_TOKEN \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
             -H "Content-Type: application/json" \
-            -d "{\"encrypted_value\":\"$ENCRYPTED_TOKEN\", \"key_id\":\"${{ env.GITHUB_KEY_ID }}\"}"
+            -d "{
+              \"encrypted_value\": \"${{ steps.encrypt.outputs.encrypted }}\",
+              \"key_id\": \"${{ env.KEY_ID }}\"
+            }"
 
-      # 4️⃣ 更新後、firebase-functions-deploy.yml をキックしてデプロイ実行
+      # 🚀 Step 5: firebase-functions-deploy ワークフローをトリガー
       - name: Trigger Firebase Functions Deploy Workflow
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: firebase-functions-deploy.yml
-          token: ${{ secrets.GITHUB_PAT }}
+          token: ${{ secrets.GH_PAT }}
 
