@@ -46,20 +46,40 @@ jobs:
 
           # 次のステップで使えるように出力
           echo "refresh_token=$REFRESH_TOKEN" >> $GITHUB_OUTPUT
-          
-      # 2️⃣ GitHub API を使って、GitHub Secrets (YOUTUBE_REFRESH_TOKEN) を更新
-      - name: Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
+
+      # 2️⃣ GitHub API を使って、GitHub の公開鍵（key_id）を取得
+      - name: Get GitHub Public Key
+        id: get_key
         run: |
-          echo "YOUTUBE_REFRESH_TOKEN=${{ steps.fetch_token.outputs.refresh_token }}" >> $GITHUB_ENV
+          echo "公開鍵の取得中..."
+          KEY_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/secrets/public-key)
+
+          # 公開鍵と key_id を取得
+          GITHUB_KEY_ID=$(echo "$KEY_RESPONSE" | jq -r '.key_id')
+          GITHUB_KEY=$(echo "$KEY_RESPONSE" | jq -r '.key')
+
+          echo "公開鍵取得 ✅"
+          echo "GITHUB_KEY_ID=$GITHUB_KEY_ID" >> $GITHUB_ENV
+          echo "GITHUB_KEY=$GITHUB_KEY" >> $GITHUB_ENV
+
+      # 3️⃣ refresh_token を暗号化して GitHub Secrets に更新
+      - name: Encrypt and Update GitHub Secret (YOUTUBE_REFRESH_TOKEN)
+        run: |
+          # refresh_token を暗号化
+          ENCRYPTED_TOKEN=$(echo -n "${{ steps.fetch_token.outputs.refresh_token }}" | \
+            openssl rsautl -encrypt -inkey <(echo "${{ env.GITHUB_KEY }}") -pubin | base64)
+
+          # GitHub Secrets API を呼び出して更新
           curl -X PUT https://api.github.com/repos/${{ github.repository }}/actions/secrets/YOUTUBE_REFRESH_TOKEN \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"encrypted_value\":\"$(echo -n "${{ steps.fetch_token.outputs.refresh_token }}" | base64)\", \"key_id\":\"${{ secrets.GITHUB_KEY_ID }}\"}"
+            -d "{\"encrypted_value\":\"$ENCRYPTED_TOKEN\", \"key_id\":\"${{ env.GITHUB_KEY_ID }}\"}"
 
-      # 3️⃣ 更新後、firebase-functions-deploy.yml をキックしてデプロイ実行
+      # 4️⃣ 更新後、firebase-functions-deploy.yml をキックしてデプロイ実行
       - name: Trigger Firebase Functions Deploy Workflow
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: firebase-functions-deploy.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_PAT }}
 
