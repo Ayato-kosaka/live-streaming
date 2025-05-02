@@ -58,10 +58,12 @@ export default function AlertBox() {
         const data: NotificationData = JSON.parse(event.data);
         if (typeof data.type !== 'string' || !NOTIFICATION_TYPES.includes(data.type)) {
           sendLog("websocketInvalidNotificationReceived", data);
-          return;
+        } else if (settings[data.type].enable !== 1) {
+          sendLog("websocketNotificationDisabled", data);
+        }else {
+          sendLog("websocketMessageReceived", data); // 👈 受信ログ
+          setNotificationQueue((prevQueue) => [...prevQueue, data]);
         }
-        sendLog("websocketMessageReceived", data); // 👈 受信ログ
-        setNotificationQueue((prevQueue) => [...prevQueue, data]);
       };
   
       socket.onerror = (error) => {
