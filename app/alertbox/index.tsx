@@ -133,7 +133,8 @@ export default function AlertBox() {
       currentNotification.type === "donation" ||
       currentNotification.type === "superchat"
     )
-      speak(currentNotification.message);
+      if (settings[currentNotification.type]?.tts.enable === 1)
+        speak(currentNotification.message);
 
     // alertDuration秒後に通知を非表示
     setTimeout(() => {

@@ -47,7 +47,7 @@ export const settings = {
       "emote": 1
     },
     "tts": {
-      "enable": 1,
+      "enable": 0,
       "minAmount": 0,
       "volume": 80,
       "speed": 100,
@@ -87,7 +87,7 @@ export const settings = {
       "fontColor": "#ffffff"
     },
     "tts": {
-      "enable": 1,
+      "enable": 0,
       "minAmount": 0,
       "volume": 80
     },
@@ -198,7 +198,7 @@ export const settings = {
       "fontColor": "#ffffff"
     },
     "tts": {
-      "enable": 1,
+      "enable": 0,
       "minAmount": 0,
       "volume": 80
     },
@@ -237,7 +237,7 @@ export const settings = {
       "emote": 1
     },
     "tts": {
-      "enable": 1,
+      "enable": 0,
       "minAmount": 0,
       "volume": 80,
       "speed": 100,
@@ -275,7 +275,7 @@ export const settings = {
       "fontColor": "#ffffff"
     },
     "tts": {
-      "enable": 1,
+      "enable": 0,
       "volume": 80,
       "spamProtectedLevel": 0
     },
