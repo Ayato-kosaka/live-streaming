@@ -26,7 +26,7 @@ export const settings = {
     "fontWeight": 800,
     "fontColor": "#ffffff",
     "fontHighlightColor": "#37a9fd",
-    "messageTemplate": "{名前} 様、{金額} 円の投げ銭ありがとうございます！",
+    "messageTemplate": "{名前} 様 {金額} 円ドネ ありやとう！！",
     "imageSource": {
       "hash": "2b8554b15282b1xnx11m5ikor9y.png",
       "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
@@ -36,7 +36,7 @@ export const settings = {
       "hash": "Coins.mp3"
     },
     "soundVolume": 80,
-    "alertDuration": 20,
+    "alertDuration": 30,
     "message": {
       "enable": 1,
       "minAmount": 0,
