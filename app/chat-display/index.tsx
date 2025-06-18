@@ -74,10 +74,10 @@ export default function ChatDisplay({
     }
   }, [pairQueue, currentPair, processQueue]);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (!inputText.trim()) return;
 
-    const newPair = createChatPair(inputText.trim());
+    const newPair = await createChatPair(inputText.trim());
     setPairQueue((prevQueue) => [...prevQueue, newPair]);
     setInputText("");
 
@@ -137,12 +137,12 @@ export default function ChatDisplay({
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
           if (chats.length > 0) {
-            setPairQueue((prev) => [
-              ...prev,
-              ...chats.map((c: any) =>
+            const newPairs = await Promise.all(
+              chats.map((c: any) =>
                 createChatPair(c.snippet?.displayMessage || "")
-              ),
-            ]);
+              )
+            );
+            setPairQueue((prev) => [...prev, ...newPairs]);
           }
           const waitMs = chatData.pollingIntervalMillis || 5000;
           await sleep(waitMs);
