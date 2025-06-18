@@ -104,58 +104,48 @@ export default function ChatDisplay({
 
     const fetchChat = async () => {
       try {
-        const tokenRes = await fetch(
-          "https://api.doneru.jp/widget/token?type=chatbox&key=6fc4c29f909bb1xnx11m4pwc65l"
-        );
-        const tokenData = await tokenRes.json();
-        const youtubeAt: string | undefined = tokenData.youtube?.at;
-        if (!youtubeAt) return;
-
         let liveId: string | null = null;
         while (!liveId && !isCancelled) {
           const res = await fetch(
-            `https://www.googleapis.com/youtube/v3/liveBroadcasts?broadcastStatus=active&broadcastType=all&part=id%2Cstatus&maxResults=50&access_token=${encodeURIComponent(
-              youtubeAt
-            )}`
+            `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${process.env.EXPO_PUBLIC_YOUTUBE_CHANNEL}&eventType=live&type=video&key=${process.env.EXPO_PUBLIC_YOUTUBE_API_KEY}`
           );
           const data = await res.json();
           if (data.items && data.items.length > 0) {
-            liveId = data.items[0].id as string;
+            liveId = data.items[0].id.videoId as string;
           } else {
             await sleep(5000);
           }
         }
         if (!liveId || isCancelled) return;
 
-        const chatInitRes = await fetch("https://chat.doneru.jp/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: liveId }),
-        });
-        let { token, k, v } = await chatInitRes.json();
+        const videoRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${liveId}&key=${process.env.EXPO_PUBLIC_YOUTUBE_API_KEY}`
+        );
+        const videoData = await videoRes.json();
+        const chatId: string | undefined =
+          videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
+        if (!chatId) return;
 
+        let pageToken: string | undefined;
         while (!isCancelled) {
           const chatRes = await fetch(
-            `https://chat.doneru.jp/?token=${encodeURIComponent(
-              token
-            )}&k=${k}&v=${v}`
+            `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${chatId}&part=snippet&key=${
+              process.env.EXPO_PUBLIC_YOUTUBE_API_KEY
+            }${pageToken ? `&pageToken=${pageToken}` : ""}`
           );
           const chatData = await chatRes.json();
-          token = chatData.token || token;
-          const chats = chatData.actions?.chat || [];
+          pageToken = chatData.nextPageToken;
+          const chats = chatData.items || [];
           if (chats.length > 0) {
             setPairQueue((prev) => [
               ...prev,
               ...chats.map((c: any) =>
-                createChatPair(
-                  Array.isArray(c.message)
-                    ? c.message.map((m: any) => m.text).join("")
-                    : c.message?.text || ""
-                )
+                createChatPair(c.snippet?.displayMessage || "")
               ),
             ]);
           }
-          await sleep(3000);
+          const waitMs = chatData.pollingIntervalMillis || 5000;
+          await sleep(waitMs);
         }
       } catch (e) {
         console.error("Error fetching chat", e);
@@ -254,7 +244,6 @@ const styles = StyleSheet.create({
     height: "60%",
     flexDirection: "row",
     alignItems: "flex-end",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: {
