@@ -10,33 +10,16 @@ interface ChatBubbleProps {
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
   const bubbleStyle: ViewStyle = {
     ...styles.bubble,
-    ...(isUser ? styles.userBubble : styles.botBubble),
+    ...(isUser ? styles.botBubble : styles.userBubble),
   };
 
   const containerStyle: ViewStyle = {
     ...styles.messageContainer,
-    ...(isUser ? styles.userContainer : styles.botContainer),
+    ...(isUser ? styles.botContainer : styles.userContainer),
   };
 
   return (
     <View style={containerStyle}>
-      {!isUser && (
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{
-              uri: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1",
-            }}
-            style={styles.avatar}
-          />
-        </View>
-      )}
-
-      <View style={bubbleStyle}>
-        <Text style={isUser ? styles.userText : styles.botText}>
-          {message.text}
-        </Text>
-      </View>
-
       {isUser && (
         <View style={styles.avatarContainer}>
           <Image
@@ -47,6 +30,21 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
           />
         </View>
       )}
+
+      <View style={bubbleStyle}>
+        <Text style={isUser ? styles.botText : styles.userText}>
+          {message.text}
+        </Text>
+      </View>
+
+      {/* {!isUser && (
+        <View style={styles.avatarContainer}>
+          <Image
+            source={require("@/assets/images/chat-bot-avatar-img.png")}
+            style={styles.avatar}
+          />
+        </View>
+      )} */}
     </View>
   );
 };

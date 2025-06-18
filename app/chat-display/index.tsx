@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   Animated,
@@ -103,18 +104,23 @@ export default function ChatDisplay({
         <View style={styles.chatArea}>
           {currentPair && (
             <Animated.View style={[styles.chatContainer, { opacity }]}>
-              <ScrollView
-                ref={scrollViewRef}
-                style={styles.messagesContainer}
-                showsVerticalScrollIndicator={false}
-              >
+              <View style={styles.messagesContainer}>
                 {showUserMessage && (
                   <ChatBubble message={currentPair.userMessage} isUser={true} />
                 )}
                 {showBotReply && (
                   <ChatBubble message={currentPair.botReply} isUser={false} />
                 )}
-              </ScrollView>
+              </View>
+              <View style={styles.botAvatarContainer}>
+                {showBotReply && (
+                  <Image
+                    source={require("@/assets/images/chat-bot-avatar-img.png")}
+                    resizeMode="contain"
+                    style={styles.botAvatar}
+                  />
+                )}
+              </View>
             </Animated.View>
           )}
         </View>
@@ -173,6 +179,8 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
     height: "60%",
+    flexDirection: "row",
+    alignItems: "flex-end",
     backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
     shadowColor: "#000",
@@ -187,6 +195,16 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     paddingVertical: 16,
+  },
+  botAvatarContainer: {
+    width: 200,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: 300,
+  },
+  botAvatar: {
+    width: "100%",
+    height: 300,
   },
   inputArea: {
     paddingHorizontal: 16,
