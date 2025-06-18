@@ -1,29 +1,31 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Animated, 
-  StyleSheet, 
-  KeyboardAvoidingView, 
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Animated,
+  StyleSheet,
+  KeyboardAvoidingView,
   Platform,
-  ScrollView 
-} from 'react-native';
-import { Stack } from 'expo-router';
-import { Send } from 'lucide-react-native';
-import { ChatBubble } from './components';
-import { ChatPair, ChatDisplayProps } from './types';
-import { createChatPair } from './utils';
+  ScrollView,
+} from "react-native";
+import { Stack } from "expo-router";
+import { Send } from "lucide-react-native";
+import { ChatBubble } from "./components";
+import { ChatPair, ChatDisplayProps } from "./types";
+import { createChatPair } from "./utils";
 
-export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) {
-  const [inputText, setInputText] = useState('');
+export default function ChatDisplay({
+  displayDuration = 10,
+}: ChatDisplayProps) {
+  const [inputText, setInputText] = useState("");
   const [currentPair, setCurrentPair] = useState<ChatPair | null>(null);
   const [pairQueue, setPairQueue] = useState<ChatPair[]>([]);
   const [opacity] = useState(new Animated.Value(0));
   const [showUserMessage, setShowUserMessage] = useState(false);
   const [showBotReply, setShowBotReply] = useState(false);
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
 
   // キューから次のペアを処理
@@ -32,7 +34,7 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
 
     const nextPair = pairQueue[0];
     setCurrentPair(nextPair);
-    
+
     // フェードイン開始
     Animated.timing(opacity, {
       toValue: 1,
@@ -42,7 +44,7 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
 
     // ユーザーメッセージを表示
     setShowUserMessage(true);
-    
+
     // 1秒後にボット返信を表示
     setTimeout(() => {
       setShowBotReply(true);
@@ -59,7 +61,7 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
         setCurrentPair(null);
         setShowUserMessage(false);
         setShowBotReply(false);
-        setPairQueue(prevQueue => prevQueue.slice(1));
+        setPairQueue((prevQueue) => prevQueue.slice(1));
       });
     }, displayDuration * 1000);
   }, [pairQueue, currentPair, displayDuration, opacity]);
@@ -75,20 +77,23 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
     if (!inputText.trim()) return;
 
     const newPair = createChatPair(inputText.trim());
-    setPairQueue(prevQueue => [...prevQueue, newPair]);
-    setInputText('');
-    
+    setPairQueue((prevQueue) => [...prevQueue, newPair]);
+    setInputText("");
+
     // キーボードを閉じる
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: 0, animated: true });
     }
   }, [inputText]);
 
-  const handleKeyPress = useCallback((event: any) => {
-    if (event.nativeEvent.key === 'Enter') {
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
+  const handleKeyPress = useCallback(
+    (event: any) => {
+      if (event.nativeEvent.key === "Enter") {
+        handleSendMessage();
+      }
+    },
+    [handleSendMessage]
+  );
 
   return (
     <>
@@ -98,22 +103,16 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
         <View style={styles.chatArea}>
           {currentPair && (
             <Animated.View style={[styles.chatContainer, { opacity }]}>
-              <ScrollView 
+              <ScrollView
                 ref={scrollViewRef}
                 style={styles.messagesContainer}
                 showsVerticalScrollIndicator={false}
               >
                 {showUserMessage && (
-                  <ChatBubble 
-                    message={currentPair.userMessage} 
-                    isUser={true} 
-                  />
+                  <ChatBubble message={currentPair.userMessage} isUser={true} />
                 )}
                 {showBotReply && (
-                  <ChatBubble 
-                    message={currentPair.botReply} 
-                    isUser={false} 
-                  />
+                  <ChatBubble message={currentPair.botReply} isUser={false} />
                 )}
               </ScrollView>
             </Animated.View>
@@ -121,8 +120,8 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
         </View>
 
         {/* 入力エリア */}
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.inputArea}
         >
           <View style={styles.inputContainer}>
@@ -136,10 +135,10 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
               multiline
               maxLength={500}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.sendButton, 
-                { opacity: inputText.trim() ? 1 : 0.5 }
+                styles.sendButton,
+                { opacity: inputText.trim() ? 1 : 0.5 },
               ]}
               onPress={handleSendMessage}
               disabled={!inputText.trim()}
@@ -147,13 +146,11 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
               <Send size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          
+
           {/* キュー状態表示 */}
           {pairQueue.length > 0 && (
             <View style={styles.queueIndicator}>
-              <Text style={styles.queueText}>
-                待機中: {pairQueue.length}件
-              </Text>
+              <Text style={styles.queueText}>待機中: {pairQueue.length}件</Text>
             </View>
           )}
         </KeyboardAvoidingView>
@@ -165,20 +162,20 @@ export default function ChatDisplay({ displayDuration = 10 }: ChatDisplayProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   chatArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   chatContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 600,
-    height: '60%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    height: "60%",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -193,18 +190,18 @@ const styles = StyleSheet.create({
   },
   inputArea: {
     paddingHorizontal: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    backgroundColor: "#FFFFFF",
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginVertical: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -219,25 +216,25 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     maxHeight: 100,
     paddingVertical: 8,
-    color: '#000',
+    color: "#000",
   },
   sendButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: 8,
   },
   queueIndicator: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 4,
   },
   queueText: {
     fontSize: 12,
-    color: '#666',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    color: "#666",
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
-import { ChatMessage } from './types';
+import React from "react";
+import { View, Text, Image, StyleSheet, ViewStyle } from "react-native";
+import { ChatMessage } from "./types";
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -23,12 +23,14 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
       {!isUser && (
         <View style={styles.avatarContainer}>
           <Image
-            source={{ uri: 'https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1' }}
+            source={{
+              uri: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1",
+            }}
             style={styles.avatar}
           />
         </View>
       )}
-      
+
       <View style={bubbleStyle}>
         <Text style={isUser ? styles.userText : styles.botText}>
           {message.text}
@@ -38,7 +40,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
       {isUser && (
         <View style={styles.avatarContainer}>
           <Image
-            source={{ uri: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1' }}
+            source={{
+              uri: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1",
+            }}
             style={styles.avatar}
           />
         </View>
@@ -49,23 +53,23 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
 
 const styles = StyleSheet.create({
   messageContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     marginVertical: 8,
     paddingHorizontal: 16,
   },
   userContainer: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   botContainer: {
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   bubble: {
-    maxWidth: '70%',
+    maxWidth: "70%",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -75,22 +79,22 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   userBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderBottomRightRadius: 4,
     marginLeft: 8,
   },
   botBubble: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     borderBottomLeftRadius: 4,
     marginRight: 8,
   },
   userText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     lineHeight: 20,
   },
   botText: {
-    color: '#000000',
+    color: "#000000",
     fontSize: 16,
     lineHeight: 20,
   },
@@ -102,6 +106,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
   },
 });
