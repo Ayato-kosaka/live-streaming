@@ -10,12 +10,12 @@ interface ChatBubbleProps {
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
   const bubbleStyle: ViewStyle = {
     ...styles.bubble,
-    ...(isUser ? styles.botBubble : styles.userBubble),
+    ...(isUser ? styles.userBubble : styles.botBubble),
   };
 
   const containerStyle: ViewStyle = {
     ...styles.messageContainer,
-    ...(isUser ? styles.botContainer : styles.userContainer),
+    ...(isUser ? styles.userContainer : styles.botContainer),
   };
 
   return (
@@ -32,7 +32,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
       )}
 
       <View style={bubbleStyle}>
-        <Text style={isUser ? styles.botText : styles.userText}>
+        <Text style={isUser ? styles.userText : styles.botText}>
           {message.text}
         </Text>
       </View>
@@ -56,10 +56,10 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     paddingHorizontal: 16,
   },
-  userContainer: {
+  botContainer: {
     justifyContent: "flex-end",
   },
-  botContainer: {
+  userContainer: {
     justifyContent: "flex-start",
   },
   bubble: {
@@ -76,22 +76,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  userBubble: {
-    backgroundColor: "#007AFF",
+  botBubble: {
+    backgroundColor: "#d33682",
     borderBottomRightRadius: 4,
     marginLeft: 8,
   },
-  botBubble: {
+  userBubble: {
     backgroundColor: "#F0F0F0",
     borderBottomLeftRadius: 4,
     marginRight: 8,
   },
-  userText: {
+  botText: {
     color: "#FFFFFF",
     fontSize: 16,
     lineHeight: 20,
   },
-  botText: {
+  userText: {
     color: "#000000",
     fontSize: 16,
     lineHeight: 20,
