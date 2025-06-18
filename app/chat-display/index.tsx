@@ -113,7 +113,7 @@ export default function ChatDisplay({
           if (data.items && data.items.length > 0) {
             liveId = data.items[0].id.videoId as string;
           } else {
-            await sleep(5000);
+            await sleep(30000);
           }
         }
         if (!liveId || isCancelled) return;
