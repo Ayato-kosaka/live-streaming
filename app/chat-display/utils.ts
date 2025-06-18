@@ -12,13 +12,18 @@ export const generateBotReply = async (userMessage: string): Promise<string> => 
   }
 };
 
-export const createChatPair = async (userText: string): Promise<ChatPair> => {
-  const timestamp = Date.now();
+export const createChatPair = async (
+  userText: string,
+  avatarUrl?: string,
+  messageTimestamp?: number
+): Promise<ChatPair> => {
+  const timestamp = messageTimestamp || Date.now();
   const userMessage: ChatMessage = {
     id: `user_${timestamp}`,
     text: userText,
     timestamp,
     type: 'user',
+    avatarUrl,
   };
 
   const botReply: ChatMessage = {

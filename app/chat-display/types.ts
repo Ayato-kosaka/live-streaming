@@ -3,6 +3,7 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   type: 'user' | 'bot';
+  avatarUrl?: string;
 }
 
 export interface ChatPair {
