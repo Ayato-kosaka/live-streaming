@@ -127,23 +127,29 @@ export default function ChatDisplay({
         if (!chatId) return;
 
         let pageToken: string | undefined;
+        let isFirstFetch = true;
         while (!isCancelled) {
           const chatRes = await fetch(
-            `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${chatId}&part=snippet&key=${
+            `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${chatId}&part=snippet,authorDetails&key=${
               process.env.EXPO_PUBLIC_YOUTUBE_API_KEY
             }${pageToken ? `&pageToken=${pageToken}` : ""}`
           );
           const chatData = await chatRes.json();
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
-          if (chats.length > 0) {
+          if (!isFirstFetch && chats.length > 0) {
             setPairQueue((prev) => [
               ...prev,
               ...chats.map((c: any) =>
-                createChatPair(c.snippet?.displayMessage || "")
+                createChatPair(
+                  c.snippet?.displayMessage || "",
+                  c.authorDetails?.profileImageUrl,
+                  c.snippet?.publishedAt ? Date.parse(c.snippet.publishedAt) : undefined
+                )
               ),
             ]);
           }
+          isFirstFetch = false;
           const waitMs = chatData.pollingIntervalMillis || 5000;
           await sleep(waitMs);
         }

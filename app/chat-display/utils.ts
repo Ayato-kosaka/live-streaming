@@ -27,13 +27,18 @@ export const generateBotReply = (userMessage: string): string => {
   return replies[Math.floor(Math.random() * replies.length)];
 };
 
-export const createChatPair = (userText: string): ChatPair => {
-  const timestamp = Date.now();
+export const createChatPair = (
+  userText: string,
+  avatarUrl?: string,
+  messageTimestamp?: number
+): ChatPair => {
+  const timestamp = messageTimestamp || Date.now();
   const userMessage: ChatMessage = {
     id: `user_${timestamp}`,
     text: userText,
     timestamp,
     type: 'user',
+    avatarUrl,
   };
 
   const botReply: ChatMessage = {

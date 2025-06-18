@@ -23,9 +23,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, isUser }) => {
       {isUser && (
         <View style={styles.avatarContainer}>
           <Image
-            source={{
-              uri: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1",
-            }}
+            source={{ uri: message.avatarUrl || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1" }}
             style={styles.avatar}
           />
         </View>
