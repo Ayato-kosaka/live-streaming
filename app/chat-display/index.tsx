@@ -146,7 +146,7 @@ export default function ChatDisplay({
             setPairQueue((prev) => [...prev, ...newPairs]);
           }
           isFirstFetch = false;
-          const waitMs = chatData.pollingIntervalMillis || 5000;
+          const waitMs = (chatData.pollingIntervalMillis || 5000) + 10000;
           await sleep(waitMs);
         }
       } catch (e) {
