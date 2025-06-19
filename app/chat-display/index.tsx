@@ -155,9 +155,8 @@ export default function ChatDisplay({
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
           if (!isFirstFetch && chats.length > 0) {
-            setPairQueue((prev) => [
-              ...prev,
-              ...chats.map((c: any) =>
+            const newPairs = await Promise.all(
+              chats.map((c: any) =>
                 createChatPair(
                   c.snippet?.displayMessage || "",
                   c.authorDetails?.profileImageUrl,
@@ -165,8 +164,9 @@ export default function ChatDisplay({
                     ? Date.parse(c.snippet.publishedAt)
                     : undefined
                 )
-              ),
-            ]);
+              )
+            );
+            setPairQueue((prev) => [...prev, ...newPairs]);
             sendLog("ChatDisplay", sessionId, "chatsFetched", {
               count: chats.length,
             });
@@ -273,16 +273,11 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
     height: "60%",
+    paddingBottom: 48,
+    paddingHorizontal: 32,
+    backgroundColor: "#28a0f6",
     flexDirection: "row",
     alignItems: "flex-end",
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 5,
   },
   messagesContainer: {
