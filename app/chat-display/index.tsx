@@ -83,7 +83,7 @@ export default function ChatDisplay({
     try {
       const trimmed = inputText.trim();
       sendLog("ChatDisplay", sessionId, "userMessageSent", { text: trimmed });
-      const newPair = await createChatPair(trimmed);
+      const newPair = await createChatPair(trimmed, sessionId);
       setPairQueue((prevQueue) => [...prevQueue, newPair]);
       sendLog("ChatDisplay", sessionId, "pairEnqueued", newPair);
       setInputText("");
@@ -119,18 +119,15 @@ export default function ChatDisplay({
       sendLog("ChatDisplay", sessionId, "fetchChatStart");
       try {
         let liveId: string | null = null;
-        while (!liveId && !isCancelled) {
-          const res = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${process.env.EXPO_PUBLIC_YOUTUBE_CHANNEL}&eventType=live&type=video&key=${process.env.EXPO_PUBLIC_YOUTUBE_API_KEY}`
-          );
-          const data = await res.json();
-          if (data.items && data.items.length > 0) {
-            liveId = data.items[0].id.videoId as string;
-            sendLog("ChatDisplay", sessionId, "liveIdFound", { liveId });
-          } else {
-            sendLog("ChatDisplay", sessionId, "liveNotStarted");
-            await sleep(30000);
-          }
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${process.env.EXPO_PUBLIC_YOUTUBE_CHANNEL}&eventType=live&type=video&key=${process.env.EXPO_PUBLIC_YOUTUBE_API_KEY}`
+        );
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          liveId = data.items[0].id.videoId as string;
+          sendLog("ChatDisplay", sessionId, "liveIdFound", { liveId });
+        } else {
+          sendLog("ChatDisplay", sessionId, "liveNotStarted");
         }
         if (!liveId || isCancelled) return;
 
@@ -155,10 +152,14 @@ export default function ChatDisplay({
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
           if (!isFirstFetch && chats.length > 0) {
+            sendLog("ChatDisplay", sessionId, "chatsFetched", {
+              count: chats.length,
+            });
             const newPairs = await Promise.all(
               chats.map((c: any) =>
                 createChatPair(
                   c.snippet?.displayMessage || "",
+                  sessionId,
                   c.authorDetails?.profileImageUrl,
                   c.snippet?.publishedAt
                     ? Date.parse(c.snippet.publishedAt)

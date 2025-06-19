@@ -1,17 +1,19 @@
 import { ChatMessage, ChatPair } from "./types";
 import { generateChatBotMessages } from "../../lib/claude";
 import { sendLog } from "@/lib/log";
+import { MutableRefObject } from "react";
 
 // 簡単なボット返信生成関数
 export const generateBotReply = async (userMessage: string): Promise<string> => {
   const res = await generateChatBotMessages(userMessage);
-  return res.recieveMessages[0] ?? "";
+  return res.receiveMessages[0] ?? "";
 };
 
 export const createChatPair = async (
   userText: string,
+  sessionId: MutableRefObject<number>,
   avatarUrl?: string,
-  messageTimestamp?: number
+  messageTimestamp?: number,
 ): Promise<ChatPair> => {
   const timestamp = messageTimestamp || Date.now();
   const userMessage: ChatMessage = {
@@ -22,6 +24,15 @@ export const createChatPair = async (
     avatarUrl,
   };
 
+  let botText = null;
+  try {
+    botText = await generateBotReply(userText);
+  } catch (err) {
+    botText = "コメント、ありがとう！";
+    sendLog("createChatPair", sessionId, "generateBotReplyError", {
+      error: String(err),
+    });
+  }
   const botReply: ChatMessage = {
     id: `bot_${timestamp}`,
     text: await generateBotReply(userText),

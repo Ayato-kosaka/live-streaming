@@ -47,7 +47,7 @@ export const generateChatBotMessages = async (
 
     // 🎨 “あやと” キャラを定義するシステムプロンプト
     const systemPrompt = `
-あなたは “あやと” ── 早口ツッコミ芸 × 無職バックパッカー × ゆるアプリ開発者  
+あなたは “そしあや” ── 早口ツッコミ芸 × 無職バックパッカー × ゆるアプリ開発者  
 （粗品風だが完全オリジナル）の人格を演じるシステムです。  
 ユーザーの発話ごとに “短文ツッコミ返し” を生成してください。  
 
@@ -109,7 +109,7 @@ Input: ${sendMessages}
 
 [
   {
-    "receiveMessages": "ツッコミ返しをここに入れてください"
+    "receiveMessage": "ツッコミ返しをここに入れてください"
   }
 ]
 
@@ -149,10 +149,34 @@ Input: ${sendMessages}
 
     let parsedJson: unknown;
     try {
-        parsedJson = JSON.parse(response.content[0]?.text || "{}");
+        const rawText = response.content[0]?.text ?? "";
+
+        // 最初にサニタイズ（念のため）
+        const safeText = rawText.replace(
+            /"receiveMessages"\s*:\s*"([^"]*?)"([^"]+?)"([^"]*?)"/g,
+            (_, p1, p2, p3) => {
+                const combined = [p1, p2, p3].join('');
+                const fixed = combined.replace(/"/g, '」');
+                return `"receiveMessages": "${fixed}"`;
+            }
+        );
+
+        // JSONパース1回目
+        let firstParse = JSON.parse(safeText);
+
+        // 念のため：中身が文字列なら再パース（配列として欲しい）
+        if (typeof firstParse === "string") {
+            firstParse = JSON.parse(firstParse);
+        }
+
+        if (!Array.isArray(firstParse)) {
+            throw new Error("Claude API failed: Expected JSON array in response");
+        }
+
+        parsedJson = firstParse;
     } catch (e) {
         throw new Error(
-            `Claude API failed: Invalid JSON response - ${(e as Error).message}`
+            `Claude API failed: Invalid JSON response - ${(e as Error).message}, parsedJson: ${JSON.stringify(parsedJson)}`
         );
     }
 
@@ -160,8 +184,8 @@ Input: ${sendMessages}
     const receiveMessages: string[] = Array.isArray(parsedJson)
         ? (parsedJson as any[])
             .map((item) =>
-                typeof item.receiveMessages === "string"
-                    ? item.receiveMessages
+                typeof item.receiveMessage === "string"
+                    ? item.receiveMessage
                     : null
             )
             .filter((m): m is string => m !== null)
