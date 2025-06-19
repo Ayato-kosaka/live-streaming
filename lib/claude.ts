@@ -29,7 +29,7 @@ export interface MessageResponse {
 }
 
 export type ChatBotMessagesResponse = {
-    recieveMessages: string[];
+    receiveMessages: string[];
 };
 
 export const generateChatBotMessages = async (
@@ -105,14 +105,17 @@ export const generateChatBotMessages = async (
 Input: ${sendMessages}
 
 次の形式で出力してください。**JSON文字列ではなく、純粋なJSON配列として返してください**。
+出力はJSON構文に従ったものとし、文字列で囲まず、エスケープも不要です。ただし、JSON構文が壊れない範囲でお願いします。
 
 [
   {
-    "recieveMessages": "ツッコミ返しをここに入れてください"
+    "receiveMessages": "ツッコミ返しをここに入れてください"
   }
 ]
 
-JSON文字列で囲ったり、改行やエスケープ文字は使わないでください。コードブロック（\`\`\`）なども不要です。`.trim();
+制約：
+- JSON文字列で囲ったり、改行やエスケープ文字は使わないでください。コードブロック（\`\`\`）なども不要です。
+- recieveMessages の値には "（ダブルクオート）を含めないようにしてください。`.trim();
 
     const requestPayload = {
         model: llmModel,
@@ -154,18 +157,18 @@ JSON文字列で囲ったり、改行やエスケープ文字は使わないで�
     }
 
     // 簡易的なバリデーション
-    const recieveMessages: string[] = Array.isArray(parsedJson)
+    const receiveMessages: string[] = Array.isArray(parsedJson)
         ? (parsedJson as any[])
             .map((item) =>
-                typeof item.recieveMessages === "string"
-                    ? item.recieveMessages
+                typeof item.receiveMessages === "string"
+                    ? item.receiveMessages
                     : null
             )
             .filter((m): m is string => m !== null)
         : [];
 
     const validatedResponse: ChatBotMessagesResponse = {
-        recieveMessages,
+        receiveMessages,
     };
 
     // 📤 JSONとしてレスポンスをパースし返却
