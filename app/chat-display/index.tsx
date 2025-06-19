@@ -155,12 +155,18 @@ export default function ChatDisplay({
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
           if (!isFirstFetch && chats.length > 0) {
-            const newPairs = await Promise.all(
-              chats.map((c: any) =>
-                createChatPair(c.snippet?.displayMessage || "")
-              )
-            );
-            setPairQueue((prev) => [...prev, ...newPairs]);
+            setPairQueue((prev) => [
+              ...prev,
+              ...chats.map((c: any) =>
+                createChatPair(
+                  c.snippet?.displayMessage || "",
+                  c.authorDetails?.profileImageUrl,
+                  c.snippet?.publishedAt
+                    ? Date.parse(c.snippet.publishedAt)
+                    : undefined
+                )
+              ),
+            ]);
             sendLog("ChatDisplay", sessionId, "chatsFetched", {
               count: chats.length,
             });
