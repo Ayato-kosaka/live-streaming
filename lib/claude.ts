@@ -95,12 +95,15 @@ export const generateChatBotMessages = async (
     const userPrompt = `
 Input: ${sendMessages}
 
-Use the following JSON format for output.
+次の形式で出力してください。**JSON文字列ではなく、純粋なJSON配列として返してください**。
+
 [
   {
-    "recieveMessages": string
+    "recieveMessages": "ツッコミ返しをここに入れてください"
   }
-]`.trim();
+]
+
+JSON文字列で囲ったり、改行やエスケープ文字は使わないでください。コードブロック（\`\`\`）なども不要です。`.trim();
 
     const requestPayload = {
         model: llmModel,
