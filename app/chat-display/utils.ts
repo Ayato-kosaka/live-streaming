@@ -1,15 +1,11 @@
 import { ChatMessage, ChatPair } from "./types";
 import { generateChatBotMessages } from "../../lib/claude";
+import { sendLog } from "@/lib/log";
 
 // 簡単なボット返信生成関数
 export const generateBotReply = async (userMessage: string): Promise<string> => {
-  try {
-    const res = await generateChatBotMessages(userMessage);
-    return res.recieveMessages[0] ?? "";
-  } catch (e) {
-    console.error("generateBotReply error", e);
-    return "申し訳ありません、エラーが発生しました。";
-  }
+  const res = await generateChatBotMessages(userMessage);
+  return res.recieveMessages[0] ?? "";
 };
 
 export const createChatPair = async (

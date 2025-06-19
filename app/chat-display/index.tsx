@@ -80,12 +80,18 @@ export default function ChatDisplay({
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim()) return;
 
-    const trimmed = inputText.trim();
-    sendLog("ChatDisplay", sessionId, "userMessageSent", { text: trimmed });
-    const newPair = await createChatPair(trimmed);
-    setPairQueue((prevQueue) => [...prevQueue, newPair]);
-    sendLog("ChatDisplay", sessionId, "pairEnqueued", newPair);
-    setInputText("");
+    try {
+      const trimmed = inputText.trim();
+      sendLog("ChatDisplay", sessionId, "userMessageSent", { text: trimmed });
+      const newPair = await createChatPair(trimmed);
+      setPairQueue((prevQueue) => [...prevQueue, newPair]);
+      sendLog("ChatDisplay", sessionId, "pairEnqueued", newPair);
+      setInputText("");
+    } catch (e) {
+      sendLog("ChatDisplay", sessionId, "handleSendMessageError", {
+        error: String(e),
+      });
+    }
 
     // キーボードを閉じる
     if (scrollViewRef.current) {
@@ -122,6 +128,7 @@ export default function ChatDisplay({
             liveId = data.items[0].id.videoId as string;
             sendLog("ChatDisplay", sessionId, "liveIdFound", { liveId });
           } else {
+            sendLog("ChatDisplay", sessionId, "liveNotStarted");
             await sleep(30000);
           }
         }
@@ -163,7 +170,6 @@ export default function ChatDisplay({
           await sleep(waitMs);
         }
       } catch (e) {
-        console.error("Error fetching chat", e);
         sendLog("ChatDisplay", sessionId, "fetchChatError", {
           error: String(e),
         });
