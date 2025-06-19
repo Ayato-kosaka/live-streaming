@@ -1,9 +1,9 @@
 
-export const sendLog = async (screen: string, sessionId: React.MutableRefObject<number>, event: string, data: any = {}) => {
+export const sendLog = async (screen: string, sessionId: React.MutableRefObject<number> | null, event: string, data: any = {}) => {
     try {
         const payload = {
             timestamp: new Date().toISOString(),
-            sessionId: sessionId.current,
+            sessionId: sessionId?.current,
             screen,
             event,
             gitCommit: process.env.EXPO_PUBLIC_GIT_COMMIT,

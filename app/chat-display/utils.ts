@@ -35,7 +35,7 @@ export const createChatPair = async (
   }
   const botReply: ChatMessage = {
     id: `bot_${timestamp}`,
-    text: await generateBotReply(userText),
+    text: botText,
     timestamp: timestamp + 1000, // 1秒後の返信
     type: 'bot',
   };

@@ -1,3 +1,5 @@
+import { sendLog } from "./log";
+
 // Claude API のレスポンス型
 export interface MessageResponse {
     id: string;
@@ -140,6 +142,10 @@ Input: ${sendMessages}
             body: JSON.stringify(requestPayload),
         }
     ).then((res) => res.json());
+    sendLog("Claude", null, "Claude API", {
+        requestPayload,
+        response,
+    });
 
     if (response.stop_reason && response.stop_reason !== "end_turn") {
         throw new Error(
