@@ -16,6 +16,7 @@ import { Send } from "lucide-react-native";
 import { ChatBubble } from "./components";
 import { ChatPair, ChatDisplayProps } from "./types";
 import { createChatPair } from "./utils";
+import { sendLog } from "@/lib/log";
 
 export default function ChatDisplay({
   displayDuration = 10,
@@ -28,12 +29,14 @@ export default function ChatDisplay({
   const [showBotReply, setShowBotReply] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const sessionId = useRef(new Date().getTime());
 
   // キューから次のペアを処理
   const processQueue = useCallback(async () => {
     if (pairQueue.length === 0 || currentPair) return;
 
     const nextPair = pairQueue[0];
+    sendLog("ChatDisplay", sessionId, "pairDisplayed", nextPair);
     setCurrentPair(nextPair);
 
     // フェードイン開始
@@ -77,8 +80,11 @@ export default function ChatDisplay({
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim()) return;
 
-    const newPair = await createChatPair(inputText.trim());
+    const trimmed = inputText.trim();
+    sendLog("ChatDisplay", sessionId, "userMessageSent", { text: trimmed });
+    const newPair = await createChatPair(trimmed);
     setPairQueue((prevQueue) => [...prevQueue, newPair]);
+    sendLog("ChatDisplay", sessionId, "pairEnqueued", newPair);
     setInputText("");
 
     // キーボードを閉じる
@@ -97,12 +103,14 @@ export default function ChatDisplay({
   );
 
   useEffect(() => {
+    sendLog("ChatDisplay", sessionId, "mount");
     let isCancelled = false;
 
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
 
     const fetchChat = async () => {
+      sendLog("ChatDisplay", sessionId, "fetchChatStart");
       try {
         let liveId: string | null = null;
         while (!liveId && !isCancelled) {
@@ -112,6 +120,7 @@ export default function ChatDisplay({
           const data = await res.json();
           if (data.items && data.items.length > 0) {
             liveId = data.items[0].id.videoId as string;
+            sendLog("ChatDisplay", sessionId, "liveIdFound", { liveId });
           } else {
             await sleep(30000);
           }
@@ -125,6 +134,7 @@ export default function ChatDisplay({
         const chatId: string | undefined =
           videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
         if (!chatId) return;
+        sendLog("ChatDisplay", sessionId, "chatIdFound", { chatId });
 
         let pageToken: string | undefined;
         let isFirstFetch = true;
@@ -144,6 +154,7 @@ export default function ChatDisplay({
               )
             );
             setPairQueue((prev) => [...prev, ...newPairs]);
+            sendLog("ChatDisplay", sessionId, "chatsFetched", { count: chats.length });
           }
           isFirstFetch = false;
           const waitMs = (chatData.pollingIntervalMillis || 5000) + 10000;
@@ -151,6 +162,7 @@ export default function ChatDisplay({
         }
       } catch (e) {
         console.error("Error fetching chat", e);
+        sendLog("ChatDisplay", sessionId, "fetchChatError", { error: String(e) });
       }
     };
 
@@ -158,6 +170,7 @@ export default function ChatDisplay({
 
     return () => {
       isCancelled = true;
+      sendLog("ChatDisplay", sessionId, "unmount");
     };
   }, []);
 
