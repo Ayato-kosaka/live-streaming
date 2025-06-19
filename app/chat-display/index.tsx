@@ -19,7 +19,7 @@ import { createChatPair } from "./utils";
 import { sendLog } from "@/lib/log";
 
 export default function ChatDisplay({
-  displayDuration = 10,
+  displayDuration = 20,
 }: ChatDisplayProps) {
   const [inputText, setInputText] = useState("");
   const [currentPair, setCurrentPair] = useState<ChatPair | null>(null);
@@ -154,7 +154,9 @@ export default function ChatDisplay({
               )
             );
             setPairQueue((prev) => [...prev, ...newPairs]);
-            sendLog("ChatDisplay", sessionId, "chatsFetched", { count: chats.length });
+            sendLog("ChatDisplay", sessionId, "chatsFetched", {
+              count: chats.length,
+            });
           }
           isFirstFetch = false;
           const waitMs = (chatData.pollingIntervalMillis || 5000) + 10000;
@@ -162,7 +164,9 @@ export default function ChatDisplay({
         }
       } catch (e) {
         console.error("Error fetching chat", e);
-        sendLog("ChatDisplay", sessionId, "fetchChatError", { error: String(e) });
+        sendLog("ChatDisplay", sessionId, "fetchChatError", {
+          error: String(e),
+        });
       }
     };
 
