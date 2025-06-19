@@ -45,6 +45,7 @@ export function IconSymbol({
       color={color}
       size={size}
       name={MAPPING[name]}
+      // @ts-ignore
       style={style}
     />
   );
