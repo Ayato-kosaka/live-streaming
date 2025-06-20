@@ -221,7 +221,7 @@ export default function ChatDisplay({
         </View>
 
         {/* 入力エリア */}
-        <KeyboardAvoidingView
+        {/* <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.inputArea}
         >
@@ -246,15 +246,15 @@ export default function ChatDisplay({
             >
               <Send size={20} color="#FFFFFF" />
             </TouchableOpacity>
-          </View>
+          </View> */}
 
-          {/* キュー状態表示 */}
-          {pairQueue.length > 0 && (
+        {/* キュー状態表示 */}
+        {/* {pairQueue.length > 0 && (
             <View style={styles.queueIndicator}>
               <Text style={styles.queueText}>待機中: {pairQueue.length}件</Text>
             </View>
           )}
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView> */}
       </View>
     </>
   );
@@ -263,7 +263,8 @@ export default function ChatDisplay({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    // backgroundColor: "transparent",
+    backgroundColor: "#28a0f6",
   },
   chatArea: {
     flex: 1,
