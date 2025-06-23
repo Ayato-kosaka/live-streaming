@@ -17,12 +17,15 @@ jobs:
           echo "EXPO_PUBLIC_DONERU_WSS_URL=${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}" >> .env
           echo "EXPO_PUBLIC_GAS_API_URL=${{ secrets.EXPO_PUBLIC_GAS_API_URL }}" >> .env
           echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
+          echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
+          echo "EXPO_PUBLIC_YOUTUBE_API_KEY=${{ secrets.EXPO_PUBLIC_YOUTUBE_API_KEY }}" >> .env
+          echo "EXPO_PUBLIC_CLAUDE_API_KEY=${{ secrets.EXPO_PUBLIC_CLAUDE_API_KEY }}" >> .env
           echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
-      - run: 'npm ci && npx expo export --platform web'
+      - run: "npm ci && npx expo export --platform web"
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           expires: 30d
           projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
           channelId: live # 本番環境へデプロイ
