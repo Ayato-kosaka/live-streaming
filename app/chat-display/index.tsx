@@ -142,6 +142,7 @@ export default function ChatDisplay({
 
         let pageToken: string | undefined;
         let isFirstFetch = true;
+        let emptyFetchCount = 0;
         while (!isCancelled) {
           const chatRes = await fetch(
             `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${chatId}&part=snippet,authorDetails&key=${
@@ -151,10 +152,32 @@ export default function ChatDisplay({
           const chatData = await chatRes.json();
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
-          if (!isFirstFetch && chats.length > 0) {
-            sendLog("ChatDisplay", sessionId, "chatsFetched", {
+          if (chats.length > 10) {
+            sendLog("ChatDisplay", sessionId, "tooMuchChats", {
               count: chats.length,
             });
+            return;
+          }
+          sendLog("ChatDisplay", sessionId, "chatsFetched", {
+            count: chats.length,
+            pollingIntervalMillis: chatData.pollingIntervalMillis,
+          });
+
+          // チャットが空の場合、
+          if (chats.length === 0) {
+            emptyFetchCount++;
+            // 10回連続で空のチャットが返ってきたら、30秒待機
+            if (emptyFetchCount > 10) {
+              sendLog("ChatDisplay", sessionId, "pauseDueToEmptyChats", {
+                emptyFetchCount,
+              });
+              await sleep(30000);
+            }
+          } else {
+            emptyFetchCount = 0;
+          }
+
+          if (!isFirstFetch && chats.length > 0) {
             const newPairs = await Promise.all(
               chats.map((c: any) =>
                 createChatPair(
@@ -173,7 +196,7 @@ export default function ChatDisplay({
             });
           }
           isFirstFetch = false;
-          const waitMs = (chatData.pollingIntervalMillis || 5000) + 10000;
+          const waitMs = Math.max(chatData.pollingIntervalMillis, 5000);
           await sleep(waitMs);
         }
       } catch (e) {
@@ -273,10 +296,9 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     width: "100%",
-    maxWidth: 600,
-    height: "60%",
+    height: "100%",
     paddingBottom: 48,
-    paddingHorizontal: 32,
+    paddingHorizontal: 64,
     backgroundColor: "#28a0f6",
     flexDirection: "row",
     alignItems: "flex-end",
