@@ -152,7 +152,7 @@ export default function ChatDisplay({
           const chatData = await chatRes.json();
           pageToken = chatData.nextPageToken;
           const chats = chatData.items || [];
-          if (chats.length > 10) {
+          if (!isFirstFetch && chats.length > 10) {
             sendLog("ChatDisplay", sessionId, "tooMuchChats", {
               count: chats.length,
             });
