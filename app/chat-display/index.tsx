@@ -286,8 +286,7 @@ export default function ChatDisplay({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: "transparent",
-    backgroundColor: "#28a0f6",
+    backgroundColor: "transparent",
   },
   chatArea: {
     flex: 1,
