@@ -10,7 +10,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+		"typecheck": "tsc --noEmit"
   },
   "jest": {
     "preset": "jest-expo"
@@ -41,8 +42,9 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "expo-speech": "~13.0.1",
-		"react-native-view-shot": "github:Ayato-kosaka/react-native-view-shot-with-web-support#master",
-    "expo-media-library": "~17.0.5"
+    "react-native-view-shot": "github:Ayato-kosaka/react-native-view-shot-with-web-support#master",
+    "expo-media-library": "~17.0.5",
+    "lucide-react-native": "^0.468.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

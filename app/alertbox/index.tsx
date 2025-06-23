@@ -12,6 +12,7 @@ import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
 import { NotificationData, Viewer } from "./types";
+import { sendLog } from "@/lib/log";
 
 const NOTIFICATION_TYPES = [
   "donation",
@@ -32,7 +33,7 @@ export default function AlertBox() {
   const sessionId = useRef(new Date().getTime());
 
   useEffect(() => {
-    sendLog("mount"); // 👈 画面起動
+    sendLog("AlertBox", sessionId, "mount"); // 👈 画面起動
 
     // GAS API から viewrs を取得する
     const fetchViewers = async () => {
@@ -40,11 +41,11 @@ export default function AlertBox() {
         const response = await fetch(process.env.EXPO_PUBLIC_GAS_API_URL!);
         const data = await response.json();
         setViewers(data.viewers || []);
-        sendLog("fetchViewersSuccess", {
+        sendLog("AlertBox", sessionId, "fetchViewersSuccess", {
           viewersCount: data.viewers?.length ?? 0,
         }); // 👈 成功ログ
       } catch (error) {
-        sendLog("fetchViewersError", { error }); // 👈 エラーログ
+        sendLog("AlertBox", sessionId, "fetchViewersError", { error }); // 👈 エラーログ
       }
     };
     fetchViewers();
@@ -56,7 +57,7 @@ export default function AlertBox() {
       socket = new WebSocket(process.env.EXPO_PUBLIC_DONERU_WSS_URL!);
 
       socket.onopen = () => {
-        sendLog("websocketConnected"); // 👈 接続ログ
+        sendLog("AlertBox", sessionId, "websocketConnected"); // 👈 接続ログ
 
         // 定期的に "ping" を送る
         const keepAliveInterval = setInterval(() => {
@@ -77,21 +78,28 @@ export default function AlertBox() {
           typeof data.type !== "string" ||
           !NOTIFICATION_TYPES.includes(data.type)
         ) {
-          sendLog("websocketInvalidNotificationReceived", data);
+          sendLog(
+            "AlertBox",
+            sessionId,
+            "websocketInvalidNotificationReceived",
+            data
+          );
         } else if (settings[data.type].enable !== 1) {
-          sendLog("websocketNotificationDisabled", data);
+          sendLog("AlertBox", sessionId, "websocketNotificationDisabled", data);
         } else {
-          sendLog("websocketMessageReceived", data); // 👈 受信ログ
+          sendLog("AlertBox", sessionId, "websocketMessageReceived", data); // 👈 受信ログ
           setNotificationQueue((prevQueue) => [...prevQueue, data]);
         }
       };
 
       socket.onerror = (error) => {
-        sendLog("websocketError", { error: String(error) }); // 👈 エラーログ
+        sendLog("AlertBox", sessionId, "websocketError", {
+          error: String(error),
+        }); // 👈 エラーログ
       };
 
       socket.onclose = () => {
-        sendLog("websocketClosed"); // 👈 切断ログ
+        sendLog("AlertBox", sessionId, "websocketClosed"); // 👈 切断ログ
         // 1秒後に再接続
         reconnectTimeout = setTimeout(connect, 1000);
       };
@@ -104,7 +112,7 @@ export default function AlertBox() {
     return () => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       socket.close();
-      sendLog("unmount"); // 👈 画面離脱
+      sendLog("AlertBox", sessionId, "unmount"); // 👈 画面離脱
     };
   }, []);
 
@@ -118,7 +126,12 @@ export default function AlertBox() {
     if (notificationQueue.length === 0) return;
 
     const currentNotification = notificationQueue[0];
-    sendLog("notificationDisplayed", currentNotification); // 👈 表示ログ
+    sendLog(
+      "AlertBox",
+      sessionId,
+      "notificationDisplayed",
+      currentNotification
+    ); // 👈 表示ログ
 
     iconUrl(currentNotification) &&
       (await Image.prefetch(iconUrl(currentNotification)!));
@@ -156,7 +169,7 @@ export default function AlertBox() {
         Speech.speak(thingToSay, {
           language: "ja-JP",
           onError: (e) => {
-            sendLog("ttsError", { message: e.message });
+            sendLog("AlertBox", sessionId, "ttsError", { message: e.message });
           },
           onBoundary: () => {},
           pitch: 1.0, // 声の高さ（0.1 - 2.0）
@@ -235,28 +248,6 @@ export default function AlertBox() {
         : null,
     [notification]
   );
-
-  const sendLog = useCallback(async (event: string, data: any = {}) => {
-    try {
-      const payload = {
-        timestamp: new Date().toISOString(),
-        sessionId: sessionId.current,
-        screen: "AlertBox",
-        event,
-        gitCommit: process.env.EXPO_PUBLIC_GIT_COMMIT,
-        data,
-      };
-
-      console.log(JSON.stringify(payload));
-      await fetch(process.env.EXPO_PUBLIC_GAS_LOG_API_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload),
-      });
-    } catch (err) {
-      console.error("Failed to send log:", err);
-    }
-  }, []);
 
   return (
     <>
