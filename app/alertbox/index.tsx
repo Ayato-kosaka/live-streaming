@@ -122,6 +122,24 @@ export default function AlertBox() {
     }
   }, [notificationQueue, notification]);
 
+  // 金額に応じてアラート時間を調整する関数
+  const calculateAdjustedAlertDuration = (notification: NotificationData): number => {
+    const baseDuration = settings[notification.type]?.alertDuration || 3;
+    
+    // donation と superchat のみ金額による延長を適用
+    if (notification.type === "donation" || notification.type === "superchat") {
+      const amount = notification.amount || 0;
+      
+      if (amount >= 10000) {
+        return baseDuration + 30; // +30秒
+      } else if (amount >= 1000) {
+        return baseDuration + 15; // +15秒
+      }
+    }
+    
+    return baseDuration; // 元の時間
+  };
+
   const processNotificationQueue = useCallback(async () => {
     if (notificationQueue.length === 0) return;
 
@@ -149,7 +167,10 @@ export default function AlertBox() {
       if (settings[currentNotification.type]?.tts.enable === 1)
         speak(currentNotification.message);
 
-    // alertDuration秒後に通知を非表示
+    // 金額に応じて調整されたアラート時間を取得
+    const adjustedAlertDuration = calculateAdjustedAlertDuration(currentNotification);
+
+    // adjustedAlertDuration秒後に通知を非表示
     setTimeout(() => {
       Animated.timing(opacity, {
         toValue: 0,
@@ -160,7 +181,7 @@ export default function AlertBox() {
         setNotification(null);
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
-    }, settings[currentNotification.type]?.alertDuration * 1000 || 3000); // デフォルト値3000ms
+    }, adjustedAlertDuration * 1000); // 調整された時間を使用
   }, [notificationQueue]);
 
   const speak = (thingToSay: string) => {
@@ -269,7 +290,7 @@ export default function AlertBox() {
                     style={styles.fireworkExplosion}
                     emoji={emoji}
                     count={effectCounts?.fireworksCount || 0}
-                    alertDuration={settings[notification.type].alertDuration}
+                    alertDuration={calculateAdjustedAlertDuration(notification)}
                   />
                 )}
                 {emoji &&
@@ -280,7 +301,7 @@ export default function AlertBox() {
                         index={i}
                         emoji={emoji}
                         delay={
-                          ((settings[notification.type].alertDuration * 1000 -
+                          ((calculateAdjustedAlertDuration(notification) * 1000 -
                             2000) /
                             (effectCounts?.rainsCount || 1)) *
                           i
@@ -339,7 +360,7 @@ export default function AlertBox() {
                     style={styles.fireworkExplosion}
                     emoji={emoji}
                     count={effectCounts?.fireworksCount || 0}
-                    alertDuration={settings[notification.type].alertDuration}
+                    alertDuration={calculateAdjustedAlertDuration(notification)}
                   />
                 )}
                 {emoji &&
@@ -350,7 +371,7 @@ export default function AlertBox() {
                         index={i}
                         emoji={emoji}
                         delay={
-                          ((settings[notification.type].alertDuration * 1000 -
+                          ((calculateAdjustedAlertDuration(notification) * 1000 -
                             2000) /
                             (effectCounts?.rainsCount || 1)) *
                           i
