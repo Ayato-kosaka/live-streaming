@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing, ViewStyle, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  Animated,
+  Easing,
+  ViewStyle,
+  Dimensions,
+} from "react-native";
 
-export const RainEffect: React.FC<{ index: number, emoji: string, delay: number }> = ({ index, emoji, delay }) => {
+export const RainEffect: React.FC<{
+  index: number;
+  emoji: string;
+  delay: number;
+}> = ({ index, emoji, delay }) => {
   const fallAnimation = new Animated.Value(-50);
   const windAnimation = new Animated.Value(0);
   const windowHeight = useRef(Dimensions.get("window").height).current;
@@ -25,7 +36,7 @@ export const RainEffect: React.FC<{ index: number, emoji: string, delay: number 
           useNativeDriver: true,
         })
       ).start();
-    }
+    };
     const timeout = setTimeout(startAnimation, delay);
     return () => clearTimeout(timeout);
   }, [delay]);
@@ -34,10 +45,13 @@ export const RainEffect: React.FC<{ index: number, emoji: string, delay: number 
     <Animated.Text
       style={{
         position: "absolute",
-        fontSize: 80,
+        fontSize: 36,
         left: `${Math.floor(Math.random() * (90 - 10 + 1)) + 10}%`,
         top: -50, // 画面外から落とす
-        transform: [{ translateY: fallAnimation }, { translateX: windAnimation }],
+        transform: [
+          { translateY: fallAnimation },
+          { translateX: windAnimation },
+        ],
       }}
     >
       {emoji}
@@ -45,7 +59,10 @@ export const RainEffect: React.FC<{ index: number, emoji: string, delay: number 
   );
 };
 
-export const FireworkEffect: React.FC<{ index: number, emoji: string }> = ({ index, emoji }) => {
+export const FireworkEffect: React.FC<{ index: number; emoji: string }> = ({
+  index,
+  emoji,
+}) => {
   const animation = new Animated.Value(0);
 
   useEffect(() => {
@@ -75,8 +92,8 @@ export const FireworkEffect: React.FC<{ index: number, emoji: string }> = ({ ind
       style={{
         position: "absolute",
         fontSize: 60,
-        left: '50%',
-        top: '50%',
+        left: "50%",
+        top: "50%",
         transform: [{ translateX }, { translateY }],
       }}
     >
@@ -85,12 +102,17 @@ export const FireworkEffect: React.FC<{ index: number, emoji: string }> = ({ ind
   );
 };
 
-export const FireworkExplosion: React.FC<{ emoji: string, delay: number }> = ({ emoji, delay }) => {
+export const FireworkExplosion: React.FC<{ emoji: string; delay: number }> = ({
+  emoji,
+  delay,
+}) => {
   const [triggerFireworks, setTriggerFireworks] = useState(false);
   const [isVisible, setIsVisible] = useState(true); // 表示状態を管理
 
-  const left = useRef(Math.floor(Math.random() * (90 - 10 + 1)) + 10).current
-  const maxBottom = useRef(Math.floor(Math.random() * (90 - 40 + 1)) + 40).current
+  const left = useRef(Math.floor(Math.random() * (90 - 10 + 1)) + 10).current;
+  const maxBottom = useRef(
+    Math.floor(Math.random() * (90 - 40 + 1)) + 40
+  ).current;
 
   const opacityAnimated = useRef(new Animated.Value(1)).current; // 透明度のアニメーション
   const bottomPercentAnimated = useRef(new Animated.Value(0)).current;
@@ -121,7 +143,7 @@ export const FireworkExplosion: React.FC<{ emoji: string, delay: number }> = ({ 
           setIsVisible(false); // 完全にフェードアウトしたら削除
         });
       }, 8000);
-    }
+    };
 
     // `delay` ミリ秒後に開始
     const timer = setTimeout(startAnimation, delay);
@@ -131,21 +153,47 @@ export const FireworkExplosion: React.FC<{ emoji: string, delay: number }> = ({ 
 
   if (!isVisible) return null;
   return (
-    <Animated.View style={{ position: "absolute", left: `${left}%`, bottom: bottomPercent, opacity: opacityAnimated }} >
-      <Text style={{ position: "absolute", fontSize: 180, left: -90, top: -90 }}>{emoji}</Text>
-      {triggerFireworks && <View style={{ position: "absolute", alignItems: "center" }}>
-        {Array.from({ length: 16 }).map((_, j) => (<FireworkEffect key={j} index={j} emoji={emoji} />))}
-        <Text style={{ position: "absolute", fontSize: 180, left: -90, top: -90 }}>{emoji}</Text>
-      </View>}
+    <Animated.View
+      style={{
+        position: "absolute",
+        left: `${left}%`,
+        bottom: bottomPercent,
+        opacity: opacityAnimated,
+      }}
+    >
+      <Text style={{ position: "absolute", fontSize: 60, left: 0, top: 0 }}>
+        {emoji}
+      </Text>
+      {triggerFireworks && (
+        <View style={{ position: "absolute", alignItems: "center" }}>
+          {Array.from({ length: 16 }).map((_, j) => (
+            <FireworkEffect key={j} index={j} emoji={emoji} />
+          ))}
+          <Text style={{ position: "absolute", fontSize: 60, left: 0, top: 0 }}>
+            {emoji}
+          </Text>
+        </View>
+      )}
     </Animated.View>
   );
 };
 
-export const FireworkDisplay: React.FC<{ style?: ViewStyle, emoji: string, count: number, alertDuration: number }> = ({ style, emoji, count, alertDuration }) => {
+export const FireworkDisplay: React.FC<{
+  style?: ViewStyle;
+  emoji: string;
+  count: number;
+  alertDuration: number;
+}> = ({ style, emoji, count, alertDuration }) => {
   return (
-    <View style={{ ...style, position: "absolute", height: '100%', width: '100%' }}>
+    <View
+      style={{ ...style, position: "absolute", height: "100%", width: "100%" }}
+    >
       {Array.from({ length: count }).map((_, index) => (
-        <FireworkExplosion key={index} emoji={emoji} delay={index * Math.min(500, (alertDuration * 1000 - 2000) / count)} />
+        <FireworkExplosion
+          key={index}
+          emoji={emoji}
+          delay={index * Math.min(500, (alertDuration * 1000 - 2000) / count)}
+        />
       ))}
     </View>
   );

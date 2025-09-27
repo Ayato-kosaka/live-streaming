@@ -22,7 +22,7 @@ export const settings = {
     "minAmount": 0,
     "textAnimation": "headShake",
     "font": "Kosugi Maru",
-    "fontSize": 32,
+    "fontSize": 22,
     "fontWeight": 800,
     "fontColor": "#ffffff",
     "fontHighlightColor": "#37a9fd",
@@ -41,7 +41,7 @@ export const settings = {
       "enable": 1,
       "minAmount": 0,
       "font": "Kosugi Maru",
-      "fontSize": 24,
+      "fontSize": 18,
       "fontWeight": 800,
       "fontColor": "#ffffff",
       "emote": 1
