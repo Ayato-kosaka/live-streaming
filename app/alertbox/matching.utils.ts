@@ -84,21 +84,22 @@ export function matchViewerByNickname(
     hit = prepared.find(p => collator.compare(p.normNoEmoji, targetNoEmoji) === 0);
     if (hit) return hit;
 
-    // 5) 近似（レーベンシュタイン距離）— 短い名なら許容閾値を小さく
-    const threshold = Math.max(1, Math.floor(Math.min(target.length, 8) * 0.25)); // 例: 4〜8文字で 1〜2
-    let best = { d: Number.POSITIVE_INFINITY, v: null as null | typeof prepared[number] };
-    for (const p of prepared) {
-        const d = Math.min(
-            levenshtein(p.norm, target),
-            levenshtein(p.normNoEmoji, targetNoEmoji)
-        );
-        if (d < best.d) best = { d, v: p };
-    }
-    if (best.v && best.d <= threshold) return best.v;
+    // 意図せず誤マッチを拾うリスクが高いので一旦コメントアウト
+    // // 5) 近似（レーベンシュタイン距離）— 短い名なら許容閾値を小さく
+    // const threshold = Math.max(1, Math.floor(Math.min(target.length, 8) * 0.25)); // 例: 4〜8文字で 1〜2
+    // let best = { d: Number.POSITIVE_INFINITY, v: null as null | typeof prepared[number] };
+    // for (const p of prepared) {
+    //     const d = Math.min(
+    //         levenshtein(p.norm, target),
+    //         levenshtein(p.normNoEmoji, targetNoEmoji)
+    //     );
+    //     if (d < best.d) best = { d, v: p };
+    // }
+    // if (best.v && best.d <= threshold) return best.v;
 
-    // 6) 前後一致（末尾/先頭に謎スペース・記号が付くケース）
-    hit = prepared.find(p => p.norm && (target.startsWith(p.norm) || target.endsWith(p.norm)));
-    if (hit) return hit;
+    // // 6) 前後一致（末尾/先頭に謎スペース・記号が付くケース）
+    // hit = prepared.find(p => p.norm && (target.startsWith(p.norm) || target.endsWith(p.norm)));
+    // if (hit) return hit;
 
     return null;
 }
