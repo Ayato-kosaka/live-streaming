@@ -13,6 +13,11 @@ import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
 import { NotificationData, Viewer } from "./types";
 import { sendLog } from "@/lib/log";
+import {
+  matchViewerByNickname,
+  normalizeName,
+  normalizeNameNoEmoji,
+} from "./matching.utils";
 
 const NOTIFICATION_TYPES = [
   "donation",
@@ -22,7 +27,9 @@ const NOTIFICATION_TYPES = [
 ] as const satisfies readonly NotificationData["type"][];
 
 export default function AlertBox() {
-  const [viewers, setViewers] = useState<Viewer[]>([]);
+  const [normViewers, setNormViewers] = useState<
+    (Viewer & { norm: string; normNoEmoji: string })[]
+  >([]);
   const [notification, setNotification] = useState<NotificationData | null>(
     null
   );
@@ -40,9 +47,15 @@ export default function AlertBox() {
       try {
         const response = await fetch(process.env.EXPO_PUBLIC_GAS_API_URL!);
         const data = await response.json();
-        setViewers(data.viewers || []);
+        const normViewers = (data.viewers ?? []).map((v: Viewer) => ({
+          ...v,
+          norm: normalizeName(v.name),
+          normNoEmoji: normalizeNameNoEmoji(v.name),
+        }));
+        setNormViewers(normViewers);
         sendLog("AlertBox", sessionId, "fetchViewersSuccess", {
-          viewersCount: data.viewers?.length ?? 0,
+          viewers: data.viewers,
+          normViewers,
         }); // 👈 成功ログ
       } catch (error) {
         sendLog("AlertBox", sessionId, "fetchViewersError", { error }); // 👈 エラーログ
@@ -123,20 +136,22 @@ export default function AlertBox() {
   }, [notificationQueue, notification]);
 
   // 金額に応じてアラート時間を調整する関数
-  const calculateAdjustedAlertDuration = (notification: NotificationData): number => {
+  const calculateAdjustedAlertDuration = (
+    notification: NotificationData
+  ): number => {
     const baseDuration = settings[notification.type]?.alertDuration || 3;
-    
+
     // donation と superchat のみ金額による延長を適用
     if (notification.type === "donation" || notification.type === "superchat") {
       const amount = notification.amount || 0;
-      
+
       if (amount >= 10000) {
         return baseDuration + 30; // +30秒
       } else if (amount >= 1000) {
         return baseDuration + 15; // +15秒
       }
     }
-    
+
     return baseDuration; // 元の時間
   };
 
@@ -168,7 +183,8 @@ export default function AlertBox() {
         speak(currentNotification.message);
 
     // 金額に応じて調整されたアラート時間を取得
-    const adjustedAlertDuration = calculateAdjustedAlertDuration(currentNotification);
+    const adjustedAlertDuration =
+      calculateAdjustedAlertDuration(currentNotification);
 
     // adjustedAlertDuration秒後に通知を非表示
     setTimeout(() => {
@@ -245,19 +261,21 @@ export default function AlertBox() {
         : {},
     [notification]
   );
-  const emoji = useMemo(
-    () =>
-      notification &&
-      viewers.find((v) => v.name === notification.nickname)?.emoji,
-    [notification]
-  );
+  const matchedViewer = useMemo(() => {
+    return notification
+      ? (matchViewerByNickname(
+          normViewers,
+          notification.nickname
+        ) as (typeof normViewers)[0])
+      : null;
+  }, [normViewers, notification?.nickname]);
+  const emoji = matchedViewer?.emoji;
   const iconUrl = useCallback(
-    (notification: NotificationData | null) =>
-      notification &&
-      viewers.find((v) => v.name === notification.nickname)?.icon &&
-      "https://lh3.googleusercontent.com/d/" +
-        viewers.find((v) => v.name === notification.nickname)?.icon,
-    [viewers]
+    (n: NotificationData | null) =>
+      n && matchedViewer?.icon
+        ? "https://lh3.googleusercontent.com/d/" + matchedViewer.icon
+        : null,
+    [matchedViewer]
   );
   const effectCounts = useMemo(
     () =>
@@ -301,7 +319,8 @@ export default function AlertBox() {
                         index={i}
                         emoji={emoji}
                         delay={
-                          ((calculateAdjustedAlertDuration(notification) * 1000 -
+                          ((calculateAdjustedAlertDuration(notification) *
+                            1000 -
                             2000) /
                             (effectCounts?.rainsCount || 1)) *
                           i
@@ -371,7 +390,8 @@ export default function AlertBox() {
                         index={i}
                         emoji={emoji}
                         delay={
-                          ((calculateAdjustedAlertDuration(notification) * 1000 -
+                          ((calculateAdjustedAlertDuration(notification) *
+                            1000 -
                             2000) /
                             (effectCounts?.rainsCount || 1)) *
                           i
