@@ -69,6 +69,9 @@ export default function AlertBox() {
   // セッション識別子（ログ相関用）
   const sessionId = useRef(new Date().getTime());
 
+  // エラーメッセージ
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount");
@@ -92,6 +95,7 @@ export default function AlertBox() {
       } catch (error) {
         // 失敗ログ
         sendLog("AlertBox", sessionId, "fetchViewersError", { error });
+        setError("視聴者情報の取得に失敗しました");
       }
     };
     fetchViewers();
@@ -306,6 +310,14 @@ export default function AlertBox() {
         : null,
     [notification]
   );
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <>
