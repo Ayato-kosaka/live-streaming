@@ -148,7 +148,7 @@ export default function AlertBox() {
       socket.onerror = (error) => {
         // 通信エラーログ
         sendLog("AlertBox", sessionId, "websocketError", {
-          error: String(error),
+          error: JSON.stringify(error),
         });
       };
 
