@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>料理画像 最適化状況ドーナツ</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #ffffff;
+        color: #111827;
+      }
+
+      .donut-wrapper {
+        position: relative;
+        width: min(90vw, 480px);
+        height: min(90vw, 480px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .donut-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .donut-bg {
+        fill: none;
+        stroke: #e5e7eb;
+        stroke-width: 16;
+      }
+
+      .donut-progress {
+        fill: none;
+        stroke: #22c55e;
+        stroke-width: 16;
+        stroke-linecap: round;
+        transition: stroke 0.2s ease-out;
+      }
+
+      .center-text {
+        position: absolute;
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .center-text-main {
+        font-size: clamp(24px, 4vw, 40px);
+        font-weight: 600;
+      }
+
+      .center-text-value {
+        font-size: clamp(28px, 10vw, 46px);
+        font-weight: 700;
+        margin: 6px 0;
+        color: #22c55e;
+      }
+
+      .center-text-sub {
+        font-size: clamp(18px, 4vw, 28px);
+        color: #374151;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="donut-wrapper">
+      <svg class="donut-svg" viewBox="0 0 200 200">
+        <circle class="donut-bg" cx="100" cy="100" r="80"></circle>
+        <circle class="donut-progress" cx="100" cy="100" r="80"></circle>
+      </svg>
+
+      <div class="center-text">
+        <div class="center-text-main">最適化済</div>
+        <div class="center-text-value" id="optimizedCount">0</div>
+        <div class="center-text-sub">
+          料理画像: <span id="totalCount">0</span><br />
+          完了率: <span id="percentLabel">0</span>%
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ===== 値はここだけ変更すればOK =====
+      const progressData = {
+        optimized: 41,
+        total: 176,
+      };
+      // =====================================
+
+      const optimizedEl = document.getElementById("optimizedCount");
+      const totalEl = document.getElementById("totalCount");
+      const percentLabelEl = document.getElementById("percentLabel");
+      const progressCircle = document.querySelector(".donut-progress");
+
+      const radius = 80;
+      const circumference = 2 * Math.PI * radius;
+
+      progressCircle.style.strokeDasharray = `${circumference}`;
+      progressCircle.style.strokeDashoffset = `${circumference}`;
+
+      const optimized = progressData.optimized;
+      const total = progressData.total;
+      const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
+
+      totalEl.textContent = total;
+
+      const animationDuration = 1000;
+      let startTime = null;
+
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const t = Math.min(elapsed / animationDuration, 1);
+        const ease = 1 - (1 - t) * (1 - t);
+
+        const currentOptimized = Math.floor(optimized * ease);
+        const currentPercent = Math.floor(percent * ease);
+
+        optimizedEl.textContent = currentOptimized;
+        percentLabelEl.textContent = currentPercent;
+
+        const offset = circumference * (1 - currentPercent / 100);
+        progressCircle.style.strokeDashoffset = offset;
+
+        if (t < 1) requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    </script>
+  </body>
+</html>
