@@ -13,10 +13,12 @@
 
       body {
         width: 100vw;
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
+        padding: 24px 0;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           sans-serif;
         background: #ffffff;
@@ -75,6 +77,69 @@
         color: #374151;
         line-height: 1.4;
       }
+
+      .center-text-status {
+        font-size: clamp(14px, 3vw, 18px);
+        color: #6b7280;
+        margin-top: 8px;
+      }
+
+      .center-text-error {
+        color: #ef4444;
+      }
+
+      .category-grid {
+        width: min(90vw, 480px);
+        margin: 24px auto 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .category-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f3f4f6;
+        aspect-ratio: 1 / 1;
+      }
+
+      .category-card img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+      }
+
+      .category-card-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 6px 8px;
+        font-size: 12px;
+        color: #ffffff;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.6),
+          rgba(0, 0, 0, 0.0)
+        );
+      }
+
+      .category-card-name {
+        font-weight: 600;
+      }
+
+      .category-card-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e5e7eb;
+        color: #9ca3af;
+        font-size: 24px;
+      }
     </style>
   </head>
   <body>
@@ -91,21 +156,21 @@
           料理画像: <span id="totalCount">0</span><br />
           完了率: <span id="percentLabel">0</span>%
         </div>
+        <div class="center-text-status" id="statusText">読み込み中…</div>
       </div>
     </div>
 
+    <div id="categoryGrid" class="category-grid"></div>
+
     <script>
-      // ===== 値はここだけ変更すればOK =====
-      const progressData = {
-        optimized: 41,
-        total: 176,
-      };
-      // =====================================
+      const API_ENDPOINT = "https://script.google.com/macros/s/AKfycby9-47yO7x4TO39zgDPwAjRYqgHytrCxcylvywcnH1HNvnj6nSABCt8yV-glClw646imw/exec";
 
       const optimizedEl = document.getElementById("optimizedCount");
       const totalEl = document.getElementById("totalCount");
       const percentLabelEl = document.getElementById("percentLabel");
+      const statusTextEl = document.getElementById("statusText");
       const progressCircle = document.querySelector(".donut-progress");
+      const gridEl = document.getElementById("categoryGrid");
 
       const radius = 80;
       const circumference = 2 * Math.PI * radius;
@@ -113,34 +178,98 @@
       progressCircle.style.strokeDasharray = `${circumference}`;
       progressCircle.style.strokeDashoffset = `${circumference}`;
 
-      const optimized = progressData.optimized;
-      const total = progressData.total;
-      const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
+      function animate(optimized, total) {
+        const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
+        totalEl.textContent = total;
 
-      totalEl.textContent = total;
+        const animationDuration = 1000;
+        let startTime = null;
 
-      const animationDuration = 1000;
-      let startTime = null;
+        function step(timestamp) {
+          if (!startTime) startTime = timestamp;
+          const elapsed = timestamp - startTime;
+          const t = Math.min(elapsed / animationDuration, 1);
+          const ease = 1 - (1 - t) * (1 - t);
 
-      function animate(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const t = Math.min(elapsed / animationDuration, 1);
-        const ease = 1 - (1 - t) * (1 - t);
+          const currentOptimized = Math.floor(optimized * ease);
+          const currentPercent = Math.floor(percent * ease);
 
-        const currentOptimized = Math.floor(optimized * ease);
-        const currentPercent = Math.floor(percent * ease);
+          optimizedEl.textContent = currentOptimized;
+          percentLabelEl.textContent = currentPercent;
 
-        optimizedEl.textContent = currentOptimized;
-        percentLabelEl.textContent = currentPercent;
+          const offset = circumference * (1 - currentPercent / 100);
+          progressCircle.style.strokeDashoffset = offset;
 
-        const offset = circumference * (1 - currentPercent / 100);
-        progressCircle.style.strokeDashoffset = offset;
+          if (t < 1) requestAnimationFrame(step);
+        }
 
-        if (t < 1) requestAnimationFrame(animate);
+        requestAnimationFrame(step);
       }
 
-      requestAnimationFrame(animate);
+      function renderCategories(categories) {
+        if (!gridEl) return;
+        gridEl.innerHTML = "";
+
+        categories.forEach(cat => {
+          const card = document.createElement("div");
+          card.className = "category-card";
+
+          const img = document.createElement("img");
+          img.src = cat.image_url;
+          img.alt = cat.name;
+          img.onerror = function() {
+            if (this.dataset.errorHandled) return;
+            this.dataset.errorHandled = "true";
+            this.style.display = "none";
+            const placeholder = document.createElement("div");
+            placeholder.className = "category-card-placeholder";
+            placeholder.textContent = "🍽️";
+            card.insertBefore(placeholder, card.firstChild);
+          };
+
+          const overlay = document.createElement("div");
+          overlay.className = "category-card-overlay";
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "category-card-name";
+          nameDiv.textContent = cat.name;
+
+          overlay.appendChild(nameDiv);
+          card.appendChild(img);
+          card.appendChild(overlay);
+          gridEl.appendChild(card);
+        });
+      }
+
+      async function fetchData() {
+        try {
+          const res = await fetch(API_ENDPOINT);
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          const data = await res.json();
+
+          const optimizedConfig = data.config.find(c => c.key === "optimized");
+          const optimized = optimizedConfig ? Number(optimizedConfig.value ?? optimizedConfig) : 0;
+
+          const totalConfig = data.config.find(c => c.key === "total");
+          const total = totalConfig ? Number(totalConfig.value ?? totalConfig) : 0;
+
+          statusTextEl.style.display = "none";
+          animate(optimized, total);
+
+          if (data.dishCategories && Array.isArray(data.dishCategories)) {
+            renderCategories(data.dishCategories);
+          }
+        } catch (error) {
+          console.error("API fetch error:", error);
+          statusTextEl.textContent = "取得に失敗しました";
+          statusTextEl.classList.add("center-text-error");
+          animate(0, 0);
+        }
+      }
+
+      fetchData();
     </script>
   </body>
 </html>
