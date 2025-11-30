@@ -122,7 +122,7 @@
         background: linear-gradient(
           to top,
           rgba(0, 0, 0, 0.6),
-          rgba(0, 0, 0, 0.0)
+          rgba(0, 0, 0, 0)
         );
       }
 
@@ -163,7 +163,8 @@
     <div id="categoryGrid" class="category-grid"></div>
 
     <script>
-      const API_ENDPOINT = "https://script.google.com/macros/s/AKfycby9-47yO7x4TO39zgDPwAjRYqgHytrCxcylvywcnH1HNvnj6nSABCt8yV-glClw646imw/exec";
+      const API_ENDPOINT =
+        "https://script.google.com/macros/s/AKfycbxvafi5bnC1wi9dFitu4IZVYFMsZ9fF06rYt06QwksD85SbhbdKbaQya5Q2Ii6pCnyO/exec";
 
       const optimizedEl = document.getElementById("optimizedCount");
       const totalEl = document.getElementById("totalCount");
@@ -210,14 +211,14 @@
         if (!gridEl) return;
         gridEl.innerHTML = "";
 
-        categories.forEach(cat => {
+        categories.forEach((cat) => {
           const card = document.createElement("div");
           card.className = "category-card";
 
           const img = document.createElement("img");
           img.src = cat.image_url;
           img.alt = cat.name;
-          img.onerror = function() {
+          img.onerror = function () {
             if (this.dataset.errorHandled) return;
             this.dataset.errorHandled = "true";
             this.style.display = "none";
@@ -241,19 +242,24 @@
         });
       }
 
-      async function fetchData() {
+      // ★ JSONP コールバック（GAS から呼ばれる）
+      function handleApiData(data) {
         try {
-          const res = await fetch(API_ENDPOINT);
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
+          if (data.error) {
+            throw new Error(data.message || "Unknown error from API");
           }
-          const data = await res.json();
 
-          const optimizedConfig = data.config.find(c => c.key === "optimized");
-          const optimized = optimizedConfig ? Number(optimizedConfig.value ?? optimizedConfig) : 0;
+          const optimizedConfig = data.config.find(
+            (c) => c.key === "optimized"
+          );
+          const optimized = optimizedConfig
+            ? Number(optimizedConfig.value ?? optimizedConfig)
+            : 0;
 
-          const totalConfig = data.config.find(c => c.key === "total");
-          const total = totalConfig ? Number(totalConfig.value ?? totalConfig) : 0;
+          const totalConfig = data.config.find((c) => c.key === "total");
+          const total = totalConfig
+            ? Number(totalConfig.value ?? totalConfig)
+            : 0;
 
           statusTextEl.style.display = "none";
           animate(optimized, total);
@@ -262,14 +268,29 @@
             renderCategories(data.dishCategories);
           }
         } catch (error) {
-          console.error("API fetch error:", error);
+          console.error("API data error:", error);
           statusTextEl.textContent = "取得に失敗しました";
           statusTextEl.classList.add("center-text-error");
           animate(0, 0);
         }
       }
 
-      fetchData();
+      // ★ JSONP 用の <script> を動的に追加
+      function fetchDataJsonp() {
+        const script = document.createElement("script");
+        // callback=handleApiData を付ける
+        script.src = API_ENDPOINT + "?callback=handleApiData";
+        script.onerror = function () {
+          console.error("JSONP script load error");
+          statusTextEl.textContent = "取得に失敗しました";
+          statusTextEl.classList.add("center-text-error");
+          animate(0, 0);
+        };
+        document.body.appendChild(script);
+      }
+
+      // ページ読み込み時に実行
+      fetchDataJsonp();
     </script>
   </body>
 </html>
