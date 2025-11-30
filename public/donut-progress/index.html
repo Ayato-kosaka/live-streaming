@@ -13,10 +13,12 @@
 
       body {
         width: 100vw;
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
+        padding: 24px 0;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           sans-serif;
         background: #ffffff;
@@ -166,21 +168,22 @@
           料理画像: <span id="totalCount">0</span><br />
           完了率: <span id="percentLabel">0</span>%
         </div>
+        <div class="center-text-status" id="statusText">読み込み中…</div>
       </div>
     </div>
 
+    <div id="categoryGrid" class="category-grid"></div>
+
     <script>
-      // ===== 値はここだけ変更すればOK =====
-      const progressData = {
-        optimized: 41,
-        total: 176,
-      };
-      // =====================================
+      const API_ENDPOINT =
+        "https://script.google.com/macros/s/AKfycbxvafi5bnC1wi9dFitu4IZVYFMsZ9fF06rYt06QwksD85SbhbdKbaQya5Q2Ii6pCnyO/exec";
 
       const optimizedEl = document.getElementById("optimizedCount");
       const totalEl = document.getElementById("totalCount");
       const percentLabelEl = document.getElementById("percentLabel");
+      const statusTextEl = document.getElementById("statusText");
       const progressCircle = document.querySelector(".donut-progress");
+      const gridEl = document.getElementById("categoryGrid");
 
       const radius = 80;
       const circumference = 2 * Math.PI * radius;
@@ -188,34 +191,162 @@
       progressCircle.style.strokeDasharray = `${circumference}`;
       progressCircle.style.strokeDashoffset = `${circumference}`;
 
-      const optimized = progressData.optimized;
-      const total = progressData.total;
-      const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
+      function animate(optimized, total) {
+        const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
+        totalEl.textContent = total;
 
-      totalEl.textContent = total;
+        const animationDuration = 1000;
+        let startTime = null;
 
-      const animationDuration = 1000;
-      let startTime = null;
+        function step(timestamp) {
+          if (!startTime) startTime = timestamp;
+          const elapsed = timestamp - startTime;
+          const t = Math.min(elapsed / animationDuration, 1);
+          const ease = 1 - (1 - t) * (1 - t);
 
-      function animate(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const t = Math.min(elapsed / animationDuration, 1);
-        const ease = 1 - (1 - t) * (1 - t);
+          const currentOptimized = Math.floor(optimized * ease);
+          const currentPercent = Math.floor(percent * ease);
 
-        const currentOptimized = Math.floor(optimized * ease);
-        const currentPercent = Math.floor(percent * ease);
+          optimizedEl.textContent = currentOptimized;
+          percentLabelEl.textContent = currentPercent;
 
-        optimizedEl.textContent = currentOptimized;
-        percentLabelEl.textContent = currentPercent;
+          const offset = circumference * (1 - currentPercent / 100);
+          progressCircle.style.strokeDashoffset = offset;
 
-        const offset = circumference * (1 - currentPercent / 100);
-        progressCircle.style.strokeDashoffset = offset;
+          if (t < 1) requestAnimationFrame(step);
+        }
 
-        if (t < 1) requestAnimationFrame(animate);
+        requestAnimationFrame(step);
       }
 
-      requestAnimationFrame(animate);
+      function renderCategories(categories) {
+        if (!gridEl) return;
+        gridEl.innerHTML = "";
+
+        categories.forEach((cat) => {
+          const card = document.createElement("div");
+          card.className = "category-card";
+
+          const img = document.createElement("img");
+          img.src = cat.image_url;
+          img.alt = cat.name;
+          img.onerror = function () {
+            if (this.dataset.errorHandled) return;
+            this.dataset.errorHandled = "true";
+            this.style.display = "none";
+            const placeholder = document.createElement("div");
+            placeholder.className = "category-card-placeholder";
+            placeholder.textContent = "🍽️";
+            card.insertBefore(placeholder, card.firstChild);
+          };
+
+          const overlay = document.createElement("div");
+          overlay.className = "category-card-overlay";
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "category-card-name";
+          nameDiv.textContent = cat.name;
+
+          overlay.appendChild(nameDiv);
+          card.appendChild(img);
+          card.appendChild(overlay);
+          gridEl.appendChild(card);
+        });
+      }
+
+      // ★ JSONP コールバック（GAS から呼ばれる）
+      async function handleApiData(data) {
+        try {
+          if (data.error) {
+            throw new Error(data.message || "Unknown error from API");
+          }
+
+          const optimizedConfig = data.config.find(
+            (c) => c.key === "optimized"
+          );
+          const optimized = optimizedConfig
+            ? Number(optimizedConfig.value ?? optimizedConfig)
+            : 0;
+
+          const totalConfig = data.config.find((c) => c.key === "total");
+          const total = totalConfig
+            ? Number(totalConfig.value ?? totalConfig)
+            : 0;
+
+          // ここで「画像読み込み中…」にステータス更新
+          statusTextEl.textContent = "画像読み込み中…";
+
+          const categories = Array.isArray(data.dishCategories)
+            ? data.dishCategories
+            : [];
+
+          // 全画像の先読みを待つ
+          const urls = categories.map((c) => c.image_url).filter(Boolean);
+          await preloadImages(urls);
+
+          // ここまで来たら「データ + 画像」両方準備完了！
+          statusTextEl.style.display = "none";
+
+          // まずカード描画
+          renderCategories(categories);
+
+          // そのあとドーナツの数字アニメーション開始
+          animate(optimized, total);
+        } catch (error) {
+          console.error("API data error:", error);
+          statusTextEl.textContent = "取得に失敗しました";
+          statusTextEl.classList.add("center-text-error");
+          animate(0, 0);
+        }
+      }
+
+      // 画像を全部読み終わるまで待つ Promise
+      function preloadImages(urls, timeoutMs = 10000) {
+        const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
+        if (uniqueUrls.length === 0) return Promise.resolve([]);
+
+        const promises = uniqueUrls.map((url) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            let done = false;
+
+            const finish = (ok) => {
+              if (done) return;
+              done = true;
+              resolve({ url, ok });
+            };
+
+            img.onload = () => finish(true);
+            img.onerror = () => finish(false);
+
+            // タイムアウト（画像サーバ落ちたときなどにハングしないように）
+            if (timeoutMs) {
+              setTimeout(() => finish(false), timeoutMs);
+            }
+
+            img.src = url;
+          });
+        });
+
+        return Promise.all(promises);
+      }
+
+      // ★ JSONP 用の <script> を動的に追加
+      function fetchDataJsonp() {
+        const script = document.createElement("script");
+        // callback=handleApiData を付ける
+        script.src = API_ENDPOINT + "?callback=handleApiData";
+        script.onerror = function () {
+          console.error("JSONP script load error");
+          statusTextEl.textContent = "取得に失敗しました";
+          statusTextEl.classList.add("center-text-error");
+          animate(0, 0);
+        };
+        document.body.appendChild(script);
+      }
+
+      // ページ読み込み時に実行
+      fetchDataJsonp();
     </script>
   </body>
 </html>
