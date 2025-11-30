@@ -243,7 +243,7 @@
       }
 
       // ★ JSONP コールバック（GAS から呼ばれる）
-      function handleApiData(data) {
+      async function handleApiData(data) {
         try {
           if (data.error) {
             throw new Error(data.message || "Unknown error from API");
@@ -261,18 +261,62 @@
             ? Number(totalConfig.value ?? totalConfig)
             : 0;
 
-          statusTextEl.style.display = "none";
-          animate(optimized, total);
+          // ここで「画像読み込み中…」にステータス更新
+          statusTextEl.textContent = "画像読み込み中…";
 
-          if (data.dishCategories && Array.isArray(data.dishCategories)) {
-            renderCategories(data.dishCategories);
-          }
+          const categories = Array.isArray(data.dishCategories)
+            ? data.dishCategories
+            : [];
+
+          // 全画像の先読みを待つ
+          const urls = categories.map((c) => c.image_url).filter(Boolean);
+          await preloadImages(urls);
+
+          // ここまで来たら「データ + 画像」両方準備完了！
+          statusTextEl.style.display = "none";
+
+          // まずカード描画
+          renderCategories(categories);
+
+          // そのあとドーナツの数字アニメーション開始
+          animate(optimized, total);
         } catch (error) {
           console.error("API data error:", error);
           statusTextEl.textContent = "取得に失敗しました";
           statusTextEl.classList.add("center-text-error");
           animate(0, 0);
         }
+      }
+
+      // 画像を全部読み終わるまで待つ Promise
+      function preloadImages(urls, timeoutMs = 10000) {
+        const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
+        if (uniqueUrls.length === 0) return Promise.resolve([]);
+
+        const promises = uniqueUrls.map((url) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            let done = false;
+
+            const finish = (ok) => {
+              if (done) return;
+              done = true;
+              resolve({ url, ok });
+            };
+
+            img.onload = () => finish(true);
+            img.onerror = () => finish(false);
+
+            // タイムアウト（画像サーバ落ちたときなどにハングしないように）
+            if (timeoutMs) {
+              setTimeout(() => finish(false), timeoutMs);
+            }
+
+            img.src = url;
+          });
+        });
+
+        return Promise.all(promises);
       }
 
       // ★ JSONP 用の <script> を動的に追加
