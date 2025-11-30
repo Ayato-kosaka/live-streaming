@@ -75,6 +75,81 @@
         color: #374151;
         line-height: 1.4;
       }
+
+      .center-text-status {
+        font-size: clamp(14px, 3vw, 18px);
+        color: #6b7280;
+        margin-top: 8px;
+      }
+
+      .center-text-error {
+        color: #ef4444;
+      }
+
+      .category-grid {
+        width: min(90vw, 480px);
+        margin: 24px auto 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .category-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f3f4f6;
+        width: 100%;
+      }
+
+      /* 正方形を作るためのダミー要素（高さ確保用） */
+      .category-card::before {
+        content: "";
+        display: block;
+        padding-top: 100%; /* 高さ = 幅 → 1:1 の正方形 */
+      }
+
+      .category-card img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+      }
+
+      /* オーバーレイは下にかぶせる */
+      .category-card-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 6px 8px;
+        font-size: 12px;
+        color: #ffffff;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.6),
+          rgba(0, 0, 0, 0)
+        );
+      }
+
+      .category-card-name {
+        font-weight: 600;
+      }
+
+      .category-card-placeholder {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e5e7eb;
+        color: #9ca3af;
+        font-size: 24px;
+      }
     </style>
   </head>
   <body>
