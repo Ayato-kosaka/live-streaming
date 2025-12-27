@@ -74,7 +74,7 @@ export class YouTubeConnector implements IConnector {
   }
 
   start(
-    onEvent: (notification: SuperChatNotification) => void,
+    onEvent: (notification: NotificationData) => void,
     onError: (error: Error) => void
   ): () => void {
     let stopped = false;
@@ -196,9 +196,10 @@ export class YouTubeConnector implements IConnector {
               const amountMicros = parseInt(details.amountMicros, 10);
               const amount = amountMicros / 1000000;
 
-              // Convert to JPY if not already (simple conversion, might need improvement)
-              // For now, we'll use the amount as-is since the API returns the display amount
-              const jpy = amount; // TODO: Add proper currency conversion if needed
+              // Note: Currency conversion to JPY is not implemented
+              // The API returns the display amount in the original currency
+              // For accurate JPY conversion, integrate with a currency exchange API
+              const jpy = amount;
 
               const notification: SuperChatNotification = {
                 type: "superchat",
