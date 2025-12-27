@@ -13,7 +13,7 @@ import React, {
   useRef,
 } from "react";
 import { View, Text, Animated, Image, TextStyle } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
@@ -26,6 +26,7 @@ import {
 } from "./matching.utils";
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
+import { DoneruConnector, YouTubeConnector } from "./connectors";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
 const NOTIFICATION_TYPES = [
@@ -36,6 +37,9 @@ const NOTIFICATION_TYPES = [
 ] as const satisfies readonly NotificationData["type"][];
 
 export default function AlertBox() {
+  // Parse URL parameters for source selection
+  const params = useLocalSearchParams<{ source?: string }>();
+
   // 視聴者情報（名前の正規化済み）
   const [normViewers, setNormViewers] = useState<
     (Viewer & { norm: string; normNoEmoji: string })[]
@@ -72,9 +76,37 @@ export default function AlertBox() {
   // エラーメッセージ
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Parse source parameter to determine which connectors to use
+   * @returns Array of connector types to initialize
+   */
+  const parseSourceParam = (sourceParam?: string | string[]): string[] => {
+    // Handle array case (shouldn't happen but for safety)
+    const source = Array.isArray(sourceParam) ? sourceParam[0] : sourceParam;
+
+    if (!source) {
+      // Default: both connectors
+      return ["doneru", "youtube"];
+    }
+
+    // Split by comma and normalize
+    const sources = source
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s === "doneru" || s === "youtube");
+
+    // If invalid or empty, default to both
+    return sources.length > 0 ? sources : ["doneru", "youtube"];
+  };
+
+  const enabledSources = useMemo(
+    () => parseSourceParam(params.source),
+    [params.source]
+  );
+
   useEffect(() => {
     // 画面起動ログ
-    sendLog("AlertBox", sessionId, "mount");
+    sendLog("AlertBox", sessionId, "mount", { enabledSources });
 
     // 視聴者情報を GAS API から取得し、名前の正規化結果も持たせる
     const fetchViewers = async () => {
@@ -100,82 +132,62 @@ export default function AlertBox() {
     };
     fetchViewers();
 
-    // WebSocket 接続と再接続制御
-    let socket: WebSocket;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
+    // Initialize connectors based on URL parameter
+    const cleanupFunctions: (() => void)[] = [];
 
-    const connect = () => {
-      // Doneru の WSS へ接続
-      socket = new WebSocket(process.env.EXPO_PUBLIC_DONERU_WSS_URL!);
+    const handleNotification = (notification: NotificationData) => {
+      // Check if notification type is in accepted types and enabled
+      if (
+        !NOTIFICATION_TYPES.includes(notification.type) ||
+        settings[notification.type].enable !== 1
+      ) {
+        sendLog("AlertBox", sessionId, "notificationDisabled", notification);
+        return;
+      }
 
-      socket.onopen = () => {
-        // 接続ログ
-        sendLog("AlertBox", sessionId, "websocketConnected");
-
-        // 接続維持のため定期 ping を送信
-        const keepAliveInterval = setInterval(() => {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 30000);
-
-        // onopen のクリーンアップ関数（接続クローズ時に interval 解除）
-        return () => {
-          clearInterval(keepAliveInterval);
-        };
-      };
-
-      socket.onmessage = (event) => {
-        // 受信データをパースし、型と有効設定をチェック
-        const data: NotificationData = JSON.parse(event.data);
-        if (
-          typeof data.type !== "string" ||
-          !NOTIFICATION_TYPES.includes(data.type)
-        ) {
-          // 不正データの受信ログ
-          sendLog(
-            "AlertBox",
-            sessionId,
-            "websocketInvalidNotificationReceived",
-            data
-          );
-        } else if (settings[data.type].enable !== 1) {
-          // 設定で無効になっている通知タイプの場合はスキップ
-          sendLog("AlertBox", sessionId, "websocketNotificationDisabled", data);
-        } else {
-          // 有効な通知はキューへ積む
-          sendLog("AlertBox", sessionId, "websocketMessageReceived", data);
-          setNotificationQueue((prevQueue) => [...prevQueue, data]);
-        }
-      };
-
-      socket.onerror = (error) => {
-        // 通信エラーログ
-        sendLog("AlertBox", sessionId, "websocketError", {
-          error: JSON.stringify(error),
-        });
-      };
-
-      socket.onclose = () => {
-        // 切断ログ → 1 秒後に再接続
-        sendLog("AlertBox", sessionId, "websocketClosed");
-        reconnectTimeout = setTimeout(connect, 1000);
-      };
+      // Add to queue
+      sendLog("AlertBox", sessionId, "notificationReceived", notification);
+      setNotificationQueue((prevQueue) => [...prevQueue, notification]);
     };
-    connect();
+
+    const handleError = (error: Error) => {
+      sendLog("AlertBox", sessionId, "connectorError", {
+        error: error.message,
+      });
+    };
+
+    // Initialize Doneru connector if enabled
+    if (enabledSources.includes("doneru")) {
+      const doneruConnector = new DoneruConnector(
+        process.env.EXPO_PUBLIC_DONERU_WSS_URL!
+      );
+      const cleanup = doneruConnector.start(handleNotification, handleError);
+      cleanupFunctions.push(cleanup);
+      sendLog("AlertBox", sessionId, "doneruConnectorStarted");
+    }
+
+    // Initialize YouTube connector if enabled
+    if (enabledSources.includes("youtube")) {
+      const youtubeConnector = new YouTubeConnector(
+        process.env.EXPO_PUBLIC_YOUTUBE_API_KEY!,
+        process.env.EXPO_PUBLIC_YOUTUBE_CHANNEL
+      );
+      const cleanup = youtubeConnector.start(handleNotification, handleError);
+      cleanupFunctions.push(cleanup);
+      sendLog("AlertBox", sessionId, "youtubeConnectorStarted");
+    }
 
     // 通知画像のプリフェッチ（体感を滑らかに）
     Promise.all(NOTIFICATION_TYPES.map((v) => Image.prefetch(imageUrl(v))));
 
     // アンマウント時のクリーンアップ
     return () => {
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      // 接続が存在すればクローズ
-      socket.close();
+      // Stop all connectors
+      cleanupFunctions.forEach((cleanup) => cleanup());
       // 画面離脱ログ
       sendLog("AlertBox", sessionId, "unmount");
     };
-  }, []);
+  }, [enabledSources]);
 
   /**
    * 金額に応じてアラート時間を調整
@@ -327,8 +339,9 @@ export default function AlertBox() {
       <View style={styles.container}>
         {notification && (
           <Animated.View style={[styles.alertBox, { opacity }]}>
-            {/* 寄付（donation）用の表示 */}
-            {notification.type === "donation" && (
+            {/* 寄付（donation）とスーパーチャット（superchat）の統合表示 */}
+            {(notification.type === "donation" ||
+              notification.type === "superchat") && (
               <View style={styles.alertContainer}>
                 <Image
                   resizeMode="contain"
@@ -368,86 +381,7 @@ export default function AlertBox() {
                     )
                   )}
 
-                {/* テキスト部（テンプレートの {名前} / {金額} を置換） */}
-                <View style={styles.textContainer}>
-                  <Text style={{ ...styles.message, ...mainTextStyle }}>
-                    {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
-                      if (part === "{名前}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.nickname}
-                          </Text>
-                        );
-                      } else if (part === "{金額}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.amount.toLocaleString()}
-                          </Text>
-                        );
-                      }
-                      return part; // 通常のテキスト
-                    })}
-                  </Text>
-
-                  {/* メッセージ本文（寄付時のコメント） */}
-                  <Text style={{ ...styles.message, ...messageStyle }}>
-                    {notification.message}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* スーパーチャット（superchat）用の表示 */}
-            {notification.type === "superchat" && (
-              <View style={styles.alertContainer}>
-                <Image
-                  resizeMode="contain"
-                  style={{ ...styles.image }}
-                  source={{
-                    uri: iconUrl(notification) || imageUrl(notification.type),
-                  }}
-                />
-
-                {emoji && (
-                  <FireworkDisplay
-                    style={styles.fireworkExplosion}
-                    emoji={emoji}
-                    count={effectCounts?.fireworksCount || 0}
-                    alertDuration={calculateAdjustedAlertDuration(notification)}
-                  />
-                )}
-
-                {emoji &&
-                  Array.from({ length: effectCounts?.rainsCount || 0 }).map(
-                    (_, i) => (
-                      <RainEffect
-                        key={i}
-                        index={i}
-                        emoji={emoji}
-                        delay={
-                          ((calculateAdjustedAlertDuration(notification) *
-                            1000 -
-                            2000) /
-                            (effectCounts?.rainsCount || 1)) *
-                          i
-                        }
-                      />
-                    )
-                  )}
-
-                {/* テンプレートの {名前} / {金額} / {単位} を置換 */}
+                {/* テキスト部（テンプレートの {名前} / {金額} / {単位} を置換） */}
                 <View style={styles.textContainer}>
                   <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
@@ -476,6 +410,11 @@ export default function AlertBox() {
                           </Text>
                         );
                       } else if (part === "{単位}") {
+                        // Handle currency unit - donation uses JPY, superchat uses its currency
+                        const currency =
+                          notification.type === "superchat"
+                            ? notification.currency
+                            : "円";
                         return (
                           <Text
                             key={index}
@@ -484,7 +423,7 @@ export default function AlertBox() {
                                 settings[notification.type].fontHighlightColor,
                             }}
                           >
-                            {notification.currency}
+                            {currency}
                           </Text>
                         );
                       }
@@ -492,7 +431,7 @@ export default function AlertBox() {
                     })}
                   </Text>
 
-                  {/* メッセージ本文（スパチャ時のコメント） */}
+                  {/* メッセージ本文（寄付/スパチャ時のコメント） */}
                   <Text style={{ ...styles.message, ...messageStyle }}>
                     {notification.message}
                   </Text>
