@@ -167,7 +167,7 @@ export const settings = {
     "customAlert": []
   },
   "superchat": {
-    "enable": 0,
+    "enable": 1,
     "layout": 2,
     "startAnimation": "fadeIn",
     "endAnimation": "fadeOut",
