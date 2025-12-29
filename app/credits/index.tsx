@@ -89,19 +89,40 @@ export default function CreditsPage() {
     const fetchAndProcessData = async () => {
       try {
         // 1. 視聴者情報を取得
-        const viewersResponse = await fetch(
-          process.env.EXPO_PUBLIC_GAS_API_URL!
-        );
-        const viewersData = await viewersResponse.json();
-        const normViewers = (viewersData.viewers ?? []).map((v: Viewer) => ({
-          ...v,
-          norm: normalizeName(v.name),
-          normNoEmoji: normalizeNameNoEmoji(v.name),
-        }));
+        let normViewers: (Viewer & {
+          norm: string;
+          normNoEmoji: string;
+        })[] = [];
 
-        sendLog("CreditsPage", sessionId, "fetchViewersSuccess", {
-          count: normViewers.length,
-        });
+        try {
+          if (process.env.EXPO_PUBLIC_GAS_API_URL) {
+            const viewersResponse = await fetch(
+              process.env.EXPO_PUBLIC_GAS_API_URL
+            );
+            const viewersData = await viewersResponse.json();
+            normViewers = (viewersData.viewers ?? []).map((v: Viewer) => ({
+              ...v,
+              norm: normalizeName(v.name),
+              normNoEmoji: normalizeNameNoEmoji(v.name),
+            }));
+
+            sendLog("CreditsPage", sessionId, "fetchViewersSuccess", {
+              count: normViewers.length,
+            });
+          } else {
+            sendLog(
+              "CreditsPage",
+              sessionId,
+              "noViewersApi",
+              "EXPO_PUBLIC_GAS_API_URL not configured"
+            );
+          }
+        } catch (err) {
+          sendLog("CreditsPage", sessionId, "fetchViewersError", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          // エラーでも続行（空配列で）
+        }
 
         // 2. 通知データを取得
         // TODO: 実際のAPIエンドポイントに変更が必要
@@ -131,9 +152,18 @@ export default function CreditsPage() {
               "CreditsPage",
               sessionId,
               "usingTestData",
-              "No notifications API URL configured"
+              "No notifications API URL configured, using mock data"
             );
-            allNotifications = [];
+            // モックデータ（開発・デモ用）
+            allNotifications = Array.from({ length: 20 }, (_, i) => ({
+              type: "donation" as const,
+              amount: 1000 + i * 500,
+              nickname: `寄付者${i + 1}`,
+              message: `応援メッセージ${i + 1}です！いつも配信ありがとうございます。`,
+              messageType: 1,
+              assetID: null,
+              test: true,
+            }));
           }
         } catch (err) {
           sendLog("CreditsPage", sessionId, "fetchNotificationsError", {
