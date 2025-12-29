@@ -41,6 +41,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // 4列グリッド
 const NUM_COLUMNS = 4;
 
+// アイテムの高さ（styles.itemContainerと一致）
+const ITEM_HEIGHT = 180;
+
 interface DonationItem {
   nickname: string;
   amount: number;
@@ -188,12 +191,9 @@ export default function CreditsPage() {
         }
 
         // 3. donation のみ抽出し、時系列順にソート
-        const donations = allNotifications
-          .filter((n) => n.type === "donation")
-          .sort((a, b) => {
-            // タイムスタンプがある場合はそれでソート、なければ順序維持
-            return 0;
-          });
+        // 注: DonationNotification型にはタイムスタンプフィールドがないため、
+        // APIから受信した順序をそのまま時系列とみなす（配列の順序を維持）
+        const donations = allNotifications.filter((n) => n.type === "donation");
 
         // 4. 合計50,000円到達までスライス
         let total = 0;
@@ -262,8 +262,7 @@ export default function CreditsPage() {
         // 8. スクロールアニメーション開始
         // リストの高さを計算（アイテム数 / 列数 * アイテム高さ）
         const numRows = Math.ceil(items.length / NUM_COLUMNS);
-        const itemHeight = 180; // styles.itemContainer の高さ
-        const totalHeight = numRows * itemHeight;
+        const totalHeight = numRows * ITEM_HEIGHT;
 
         // 下から上へスクロール：0 → -totalHeight
         Animated.timing(translateY, {
@@ -377,7 +376,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     width: SCREEN_WIDTH / NUM_COLUMNS - 16,
-    height: 180,
+    height: ITEM_HEIGHT,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 8,
     padding: 8,
