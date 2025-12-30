@@ -26,23 +26,24 @@ import {
 } from "@/app/alertbox/matching.utils";
 
 // 1:1 キービジュアル画像URL（既存で生成済み）
-const KEY_VISUAL_URL =
-  "https://d1ewxqdha2zjcd.cloudfront.net/assets/images/2b8554b15282b1xnx11m5ikor9y.png";
+const KEY_VISUAL_URL = "https://i.ibb.co/rfM65PJh/IMG-3896.jpg";
 
 // 目標金額（円）
 const TARGET_AMOUNT = 50000;
 
 // スクロール時間（秒）
-const SCROLL_DURATION = 30;
+const SCROLL_DURATION = 90;
 
 // 画面の幅
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // 4列グリッド
-const NUM_COLUMNS = 4;
+const NUM_COLUMNS = 3;
 
 // アイテムの高さ（styles.itemContainerと一致）
-const ITEM_HEIGHT = 180;
+const ITEM_HEIGHT = 60;
+
+const { height } = Dimensions.get("window");
 
 interface DonationItem {
   nickname: string;
@@ -64,15 +65,25 @@ const DonationCreditsItem: React.FC<{ item: DonationItem }> = ({ item }) => {
         style={styles.itemIcon}
         resizeMode="cover"
       />
-      <Text style={styles.itemNickname} numberOfLines={1} ellipsizeMode="tail">
-        {item.nickname}
-      </Text>
-      <Text style={styles.itemAmount}>{item.amount.toLocaleString()}円</Text>
-      {item.message && (
-        <Text style={styles.itemMessage} numberOfLines={2} ellipsizeMode="tail">
-          {item.message}
+      <View style={{ position: "absolute" }}>
+        <Text
+          style={styles.itemNickname}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.nickname}
         </Text>
-      )}
+        <Text style={styles.itemAmount}>{item.amount.toLocaleString()}円</Text>
+        {item.message && (
+          <Text
+            style={styles.itemMessage}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {item.message}
+          </Text>
+        )}
+      </View>
     </View>
   );
 };
@@ -84,7 +95,7 @@ export default function CreditsPage() {
   const sessionId = useRef(new Date().getTime());
 
   // スクロールアニメーション用
-  const translateY = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(height)).current;
 
   useEffect(() => {
     sendLog("CreditsPage", sessionId, "mount");
@@ -128,45 +139,22 @@ export default function CreditsPage() {
         }
 
         // 2. 通知データを取得
-        // TODO: 実際のAPIエンドポイントに変更が必要
-        // process.env.EXPO_PUBLIC_NOTIFICATIONS_API_URL などを使用
         let allNotifications: DonationNotification[] = [];
 
         try {
           // 通知履歴APIから取得を試みる
           // 本番環境では適切なエンドポイントURLに変更してください
           const notificationsUrl =
-            process.env.EXPO_PUBLIC_NOTIFICATIONS_API_URL ||
-            process.env.EXPO_PUBLIC_GAS_API_URL;
+            "https://storage.googleapis.com/live-streaming-d3cac-public/credits_notifications.json?nocache=" +
+            Date.now();
 
           if (notificationsUrl) {
             const notificationsResponse = await fetch(notificationsUrl);
             const notificationsData = await notificationsResponse.json();
 
             // 通知データの配列を取得（実際のAPI構造に応じて調整）
-            allNotifications =
-              notificationsData.notifications ||
-              notificationsData.data ||
-              notificationsData ||
-              [];
+            allNotifications = notificationsData || [];
           } else {
-            // テストデータを使用（開発用）
-            sendLog(
-              "CreditsPage",
-              sessionId,
-              "usingTestData",
-              "No notifications API URL configured, using mock data"
-            );
-            // モックデータ（開発・デモ用）
-            allNotifications = Array.from({ length: 20 }, (_, i) => ({
-              type: "donation" as const,
-              amount: 1000 + i * 500,
-              nickname: `寄付者${i + 1}`,
-              message: `応援メッセージ${i + 1}です！いつも配信ありがとうございます。`,
-              messageType: 1,
-              assetID: null,
-              test: true,
-            }));
           }
         } catch (err) {
           sendLog("CreditsPage", sessionId, "fetchNotificationsError", {
@@ -195,22 +183,8 @@ export default function CreditsPage() {
         // APIから受信した順序をそのまま時系列とみなす（配列の順序を維持）
         const donations = allNotifications.filter((n) => n.type === "donation");
 
-        // 4. 合計50,000円到達までスライス
-        let total = 0;
-        const selectedDonations: DonationNotification[] = [];
-        for (const d of donations) {
-          if (total >= TARGET_AMOUNT) break;
-          selectedDonations.push(d);
-          total += d.amount;
-        }
-
-        sendLog("CreditsPage", sessionId, "selectedDonations", {
-          count: selectedDonations.length,
-          total,
-        });
-
         // 5. 表示用アイテムを作成
-        const items: DonationItem[] = selectedDonations.map((d) => {
+        const items: DonationItem[] = donations.map((d) => {
           const matchedViewer = matchViewerByNickname(
             normViewers,
             d.nickname
@@ -262,11 +236,11 @@ export default function CreditsPage() {
         // 8. スクロールアニメーション開始
         // リストの高さを計算（アイテム数 / 列数 * アイテム高さ）
         const numRows = Math.ceil(items.length / NUM_COLUMNS);
-        const totalHeight = numRows * ITEM_HEIGHT;
+        const totalHeight = numRows * (ITEM_HEIGHT + 1);
 
         // 下から上へスクロール：0 → -totalHeight
         Animated.timing(translateY, {
-          toValue: -totalHeight,
+          toValue: -totalHeight - 1000,
           duration: SCROLL_DURATION * 1000,
           useNativeDriver: true,
         }).start(() => {
@@ -348,8 +322,8 @@ export default function CreditsPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
-    justifyContent: "center",
+    backgroundColor: "#fcf4e7",
+    justifyContent: "flex-start",
     alignItems: "center",
   },
   keyVisualContainer: {
@@ -364,6 +338,7 @@ const styles = StyleSheet.create({
   },
   creditsContainer: {
     flex: 1,
+    position: "absolute",
     width: SCREEN_WIDTH,
     overflow: "hidden",
   },
@@ -393,7 +368,7 @@ const styles = StyleSheet.create({
   itemNickname: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#633a3a",
     textAlign: "center",
     marginBottom: 2,
   },
@@ -406,7 +381,7 @@ const styles = StyleSheet.create({
   },
   itemMessage: {
     fontSize: 10,
-    color: "#cccccc",
+    color: "#633a3a",
     textAlign: "center",
   },
   loadingText: {
