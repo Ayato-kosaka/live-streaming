@@ -23,7 +23,7 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
   const viewBoxWidth = 600;
   const viewBoxHeight = 260;
 
-  // React の useId で一意なIDを生成
+  // Generate unique ID using React's useId hook
   const uniqueId = useId();
   const clipPathId = `progressClip-${uniqueId}`;
 
@@ -34,7 +34,7 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
       viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
     >
       <Defs>
-        {/* クリップパス：進捗に応じて左から右に塗りを表示 */}
+        {/* ClipPath: Display fill from left to right based on progress */}
         <ClipPath id={clipPathId}>
           <Rect
             x="0"

@@ -28,7 +28,7 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
     return amount.toLocaleString("ja-JP") + "円";
   };
 
-  // 画面幅の80-90%を使用
+  // 画面幅の85%を使用
   const { width: screenWidth } = useWindowDimensions();
   const gaugeWidth = screenWidth * 0.85;
   const gaugeHeight = (gaugeWidth * 260) / 600; // viewBoxのアスペクト比を維持
