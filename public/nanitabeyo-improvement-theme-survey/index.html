@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>なに食べよ｜アンケート</title>
+    <style>
+      :root {
+        --cream: #fbf2e2;
+        --ink: #2e1f1f;
+        --muted: #0000008a;
+        --border: #2e1f1f;
+        --shadow: 0 14px 40px #00000014;
+        --ok: #0b6b2f;
+        --ng: #b00020;
+        --r: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
+          "Noto Sans JP", sans-serif;
+        color: var(--ink);
+        background: var(--cream);
+        min-height: 100svh;
+      }
+
+      /* 背景（画像生成したURLを差し替え） */
+      .bg {
+        position: fixed;
+        inset: 0;
+        background-image: var(--bg-url);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: saturate(1.05);
+        transform: scale(1.02);
+        pointer-events: none;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(
+            900px 540px at 50% 18%,
+            #ffffff66 0 40%,
+            transparent 70%
+          ),
+          linear-gradient(#ffffff12, #ffffff12);
+        pointer-events: none;
+      }
+
+      .wrap {
+        width: min(720px, 92vw);
+        margin: 18px auto 44px;
+        position: relative;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      .card {
+        background: var(--card);
+        border: 3px solid var(--border);
+        border-radius: 26px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(5px);
+        overflow: hidden;
+      }
+
+      header {
+        padding: 16px 14px 10px;
+        border-bottom: 2px dashed var(--border);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(18px, 5.4vw, 26px);
+        letter-spacing: 0.01em;
+      }
+      .lead {
+        margin: 0;
+        line-height: 1.65;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .panel {
+        background: #fff;
+        border: 2px solid var(--border);
+        border-radius: var(--r);
+        padding: 12px;
+      }
+      .panel h2 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+      .hint {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      /* Q1 */
+      .statusRow {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border: 2px solid var(--border);
+        border-radius: 999px;
+        background: #fff;
+        font-weight: 900;
+        font-size: 13px;
+      }
+      .pill.ok {
+        border-color: var(--ok);
+      }
+      .pill.ng {
+        border-color: var(--ng);
+      }
+      .pill .num {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .q1grid {
+        display: grid;
+        gap: 10px;
+      }
+      .sliderCard {
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        background: #fff;
+      }
+      .sliderTop {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .label {
+        font-weight: 1000;
+        font-size: 14px;
+      }
+      .sub {
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .val {
+        font-weight: 1000;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+        min-width: 3.2em;
+        text-align: right;
+        white-space: nowrap;
+      }
+      input[type="range"] {
+        width: 100%;
+        margin-top: 8px;
+        height: 34px; /* touch-friendly */
+      }
+
+      /* Q2 */
+      .q2wrap {
+        display: grid;
+        gap: 10px;
+      }
+      .q2title {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        margin: 0 0 8px;
+      }
+      .q2title b {
+        font-size: 14px;
+      }
+      .optional {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 800;
+      }
+      .radios {
+        display: grid;
+        gap: 8px;
+      }
+      label.radio {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px;
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        cursor: pointer;
+      }
+      label.radio input {
+        margin-top: 3px;
+      }
+      label.radio span {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      /* Free */
+      textarea {
+        width: 100%;
+        resize: vertical;
+        min-height: 104px;
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+      }
+      button {
+        border: 2px solid var(--border);
+        background: #fff;
+        border-radius: 999px;
+        padding: 12px 14px;
+        font-weight: 1000;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--ink);
+        color: #fff;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .msg {
+        text-align: center;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      .msg.ok {
+        color: var(--ok);
+        font-weight: 1000;
+      }
+      .msg.ng {
+        color: var(--ng);
+        font-weight: 1000;
+      }
+
+      .done {
+        padding: 22px 14px;
+        text-align: center;
+      }
+      .done h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+      }
+      .done p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+
+  <body
+    style="--bg-url: url('https://i.ibb.co/21zbZq8r/background-dish-image.jpg')"
+  >
+    <div class="bg" aria-hidden="true"></div>
+    <div class="overlay" aria-hidden="true"></div>
+
+    <main class="wrap">
+      <div class="card" id="card">
+        <header>
+          <h1>「なに食べよ」をいっしょに育てる場所を決めよう🍽️</h1>
+          <p class="lead">
+            「なに食べよ」は、日常の「食べたいが決まらない」「なんでもいい…」を解決するアプリです。<br />
+            気分の質問から“食べたい”に気づいて、そのままレストランが決まります。<br />
+            来月に向けて、使ってみて
+            <b>困ったところ／引っかかったところ</b> を教えてください！<br />
+            このアンケートをもとに、一緒に直して育てていきたいです😊
+          </p>
+        </header>
+
+        <form class="content" id="survey">
+          <!-- Q1 -->
+          <section class="panel" aria-labelledby="q1title">
+            <div class="statusRow">
+              <h2 id="q1title" style="margin: 0; font-size: 15px">
+                直してほしいところに、10ポイント配分してね（合計10）
+              </h2>
+              <div class="pill ng" id="remainPill" aria-live="polite">
+                残り <span class="num" id="remain">10</span> pt
+              </div>
+            </div>
+            <p class="hint">困った順でOK。直感で！</p>
+
+            <div class="q1grid">
+              <div class="sliderCard">
+                <div class="sliderTop">
+                  <div>
+                    <div class="label">A：最初の質問で迷った</div>
+                    <div class="sub">
+                      時間／誰と／お腹の減り…選びづらかった？
+                    </div>
+                  </div>
+                  <div class="val"><span id="valA">0</span>pt</div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value="0"
+                  step="1"
+                  name="A"
+                  aria-label="A：最初の質問で迷った"
+                />
+              </div>
+
+              <div class="sliderCard">
+                <div class="sliderTop">
+                  <div>
+                    <div class="label">B：料理提案が刺さらなかった</div>
+                    <div class="sub">「これ食べたい！」になりづらかった？</div>
+                  </div>
+                  <div class="val"><span id="valB">0</span>pt</div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value="0"
+                  step="1"
+                  name="B"
+                  aria-label="B：料理提案が刺さらなかった"
+                />
+              </div>
+
+              <div class="sliderCard">
+                <div class="sliderTop">
+                  <div>
+                    <div class="label">C：お店が決めきれなかった</div>
+                    <div class="sub">比較しづらい／決め手が分からない等</div>
+                  </div>
+                  <div class="val"><span id="valC">0</span>pt</div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value="0"
+                  step="1"
+                  name="C"
+                  aria-label="C：お店が決めきれなかった"
+                />
+              </div>
+
+              <div class="sliderCard">
+                <div class="sliderTop">
+                  <div>
+                    <div class="label">D：使い方が分からなかった</div>
+                    <div class="sub">次に何をする？が分かりづらかった？</div>
+                  </div>
+                  <div class="val"><span id="valD">0</span>pt</div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value="0"
+                  step="1"
+                  name="D"
+                  aria-label="D：使い方が分からなかった"
+                />
+              </div>
+            </div>
+          </section>
+
+          <!-- Q2 -->
+          <section class="panel" id="q2panel" aria-labelledby="q2title" hidden>
+            <div class="q2title">
+              <b id="q2title">もうちょいだけ教えて（任意）</b>
+              <span class="optional">ポイント入れた所だけ出ます</span>
+            </div>
+            <div class="q2wrap" id="q2wrap"></div>
+            <p class="hint">
+              ※どれも選ばなくてもOK。選べる人だけで大丈夫です。
+            </p>
+          </section>
+
+          <!-- Free -->
+          <section class="panel" aria-labelledby="freetitle">
+            <h2 id="freetitle">
+              その他、気になるところ自由に書いてください。（雑でOK）
+            </h2>
+            <textarea
+              name="free"
+              placeholder="例）ここで戻り方が分からん / 店の写真もっと見たい / 質問の例があると助かる など"
+            ></textarea>
+            <p class="hint">
+              短くてもOK。思ったことをそのまま書いてくれると助かります。
+            </p>
+          </section>
+
+          <!-- Actions -->
+          <section class="actions">
+            <button type="submit" class="primary" id="submit" disabled>
+              これで送る！
+            </button>
+            <div class="msg ng" id="msg">合計10ptになると送信できます</div>
+          </section>
+        </form>
+      </div>
+    </main>
+
+    <script>
+      // ====== 設定：POST先（あなたのAPIに差し替え） ======
+      const POST_ENDPOINT =
+        "https://script.google.com/macros/s/AKfycbxAa9YfVOaw4jSWX8Vq64xc41mK3AKfwMpLSEy8f90d_PjINa1aNpXEQziGSK8S7sgj/exec";
+      // ======================================================
+
+      const form = document.getElementById("survey");
+      const card = document.getElementById("card");
+
+      const ranges = {
+        A: form.querySelector('input[name="A"]'),
+        B: form.querySelector('input[name="B"]'),
+        C: form.querySelector('input[name="C"]'),
+        D: form.querySelector('input[name="D"]'),
+      };
+      const valEls = {
+        A: document.getElementById("valA"),
+        B: document.getElementById("valB"),
+        C: document.getElementById("valC"),
+        D: document.getElementById("valD"),
+      };
+      const remainEl = document.getElementById("remain");
+      const remainPill = document.getElementById("remainPill");
+      const q2panel = document.getElementById("q2panel");
+      const q2wrap = document.getElementById("q2wrap");
+      const submitBtn = document.getElementById("submit");
+      const msg = document.getElementById("msg");
+
+      // Q2（各カテゴリで「まず直すならどれ？」を1つ選ぶ）
+      const q2Defs = {
+        A: {
+          title: "A（最初の質問）：まず直すならどれ？",
+          name: "q2_A",
+          options: [
+            {
+              value: "guide",
+              label: "質問内容に迷いが生じる（直感で選べない）",
+            },
+            { value: "words", label: "質問の言葉がわかりにくい" },
+            { value: "count", label: "質問の数がちょうど良くない" },
+          ],
+        },
+        B: {
+          title: "B（料理提案）：まず直すならどれ？",
+          name: "q2_B",
+          options: [
+            {
+              value: "hit",
+              label: "もっと食べたいに刺さる料理を提案ようにする",
+            },
+            {
+              value: "image",
+              label: "提案画像をもっと食べたいと思えるようにする",
+            },
+            {
+              value: "copy",
+              label: "提案文言をもっと食べたいと思えるようにする",
+            },
+          ],
+        },
+        C: {
+          title: "C（お店決め）：まず直すならどれ？",
+          name: "q2_C",
+          options: [
+            { value: "decisive", label: "行きたいレストランが決まらない" },
+            { value: "info", label: "表示してる情報だと足りない。" },
+            { value: "speed", label: "表示速度をもっと早くして欲しい" },
+          ],
+        },
+        D: {
+          title: "D（分かりやすさ）：一番近いのはどれ？",
+          name: "q2_D",
+          options: [
+            {
+              value: "next",
+              label: "アプリ内の次に何をすればいいか分かりにくい",
+            },
+            { value: "easy", label: "画面の言葉がわかりにくい" },
+          ],
+        },
+      };
+
+      function getTotal() {
+        return ["A", "B", "C", "D"].reduce(
+          (s, k) => s + Number(ranges[k].value),
+          0
+        );
+      }
+
+      // 合計が10を超えたら、変更したスライダーだけをクランプして超過分を戻す
+      function clampToTen(changedKey) {
+        const total = getTotal();
+        if (total <= 10) return;
+
+        const current = Number(ranges[changedKey].value);
+        const others = total - current;
+        const maxAllowed = Math.max(0, 10 - others);
+        ranges[changedKey].value = String(maxAllowed);
+      }
+
+      function updateUI() {
+        for (const k of ["A", "B", "C", "D"])
+          valEls[k].textContent = ranges[k].value;
+
+        const total = getTotal();
+        const remain = 10 - total;
+        remainEl.textContent = String(remain);
+
+        const ok = remain === 0;
+        remainPill.classList.toggle("ok", ok);
+        remainPill.classList.toggle("ng", !ok);
+
+        submitBtn.disabled = !ok;
+        msg.className = "msg " + (ok ? "ok" : "ng");
+        msg.textContent = ok
+          ? "OK！送信できます🎉"
+          : "合計10ptになると送信できます";
+
+        renderQ2();
+      }
+
+      function renderQ2() {
+        // ① いまチェックされている値を退避
+        const prev = {};
+        Object.values(q2Defs).forEach((def) => {
+          const picked = form.querySelector(
+            `input[name="${def.name}"]:checked`
+          );
+          if (picked) prev[def.name] = picked.value;
+        });
+
+        const active = ["A", "B", "C", "D"].filter(
+          (k) => Number(ranges[k].value) > 0
+        );
+
+        q2wrap.innerHTML = "";
+
+        if (active.length === 0) {
+          q2panel.hidden = true;
+          return;
+        }
+        q2panel.hidden = false;
+
+        active.forEach((k) => {
+          const def = q2Defs[k];
+          const sec = document.createElement("div");
+          sec.className = "panel";
+          sec.style.borderWidth = "2px";
+          sec.style.padding = "10px";
+          sec.innerHTML = `
+      <div class="q2title" style="margin:0 0 8px;">
+        <b>${def.title}</b>
+        <span class="optional">1つ選ぶ（任意）</span>
+      </div>
+      <div class="radios" role="radiogroup" aria-label="${def.title}">
+        ${def.options
+          .map(
+            (o) => `
+          <label class="radio">
+            <input type="radio" name="${def.name}" value="${o.value}">
+            <span>${o.label}</span>
+          </label>
+        `
+          )
+          .join("")}
+      </div>
+    `;
+          q2wrap.appendChild(sec);
+        });
+
+        // ② 退避した選択を復元
+        Object.entries(prev).forEach(([name, value]) => {
+          const input = form.querySelector(
+            `input[name="${name}"][value="${value}"]`
+          );
+          if (input) input.checked = true;
+        });
+      }
+
+      for (const k of ["A", "B", "C", "D"]) {
+        ranges[k].addEventListener("input", () => {
+          clampToTen(k);
+          updateUI();
+        });
+      }
+
+      // document.getElementById("reset").addEventListener("click", () => {
+      //   form.reset();
+      //   updateUI();
+      // });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const total = getTotal();
+        if (total !== 10) return;
+
+        submitBtn.disabled = true;
+        msg.className = "msg";
+        msg.textContent = "送信中…";
+
+        // collect Q2 (optional)
+        const q2 = {};
+        ["A", "B", "C", "D"].forEach((k) => {
+          const name = q2Defs[k].name;
+          const picked = form.querySelector(`input[name="${name}"]:checked`);
+          if (picked) q2[name] = picked.value;
+        });
+
+        const data = {
+          q1_points: {
+            A: Number(ranges.A.value),
+            B: Number(ranges.B.value),
+            C: Number(ranges.C.value),
+            D: Number(ranges.D.value),
+          },
+          q2_choice: q2, // optional (selected ones only)
+          free: (form.free.value || "").trim(),
+          meta: {
+            created_at: new Date().toISOString(),
+            ua: navigator.userAgent,
+          },
+        };
+
+        const payload = {
+          timeStamp: new Date().toISOString(),
+          data: data,
+          sessionId: null,
+          screen: "Nanitabeyo-improvement-theme-survey",
+          event: "submit-survey",
+          gitCommit: "unknown",
+        };
+
+        try {
+          const res = await fetch(POST_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload),
+          });
+
+          // if (!res.ok) {
+          //   const text = await res.text().catch(() => "");
+          //   throw new Error(`HTTP ${res.status} ${text}`.slice(0, 200));
+          // }
+        } catch (err) {
+          console.error(err);
+          // submitBtn.disabled = false;
+          // msg.className = "msg ng";
+          // msg.textContent =
+          //   "送信に失敗しました。POST_ENDPOINTやサーバー設定を確認してね。";
+        }
+        card.innerHTML = `
+          <div class="done">
+            <h2>送信ありがとうございます！</h2>
+            <p>みんなの回答をもとに、来月の改善テーマを決めます😊</p>
+            <p>今後とも「なに食べよ」をよろしくお願いします🍽️</p>
+            <p>よいお年を！🎍</p>
+          </div>
+        `;
+      });
+
+      // init
+      updateUI();
+    </script>
+  </body>
+</html>
