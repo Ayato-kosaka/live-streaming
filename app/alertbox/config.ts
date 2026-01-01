@@ -14,11 +14,6 @@ export const settings = {
   ],
   "backgroundColor": "#ffffff",
   "customCss": "h1[data-v-0eb18151], h2[data-v-0eb18151] {\n    display: block;\n    margin: 0;\n    padding: 0;\n    line-height: 1.5;\n    text-align: center;\n    text-shadow: 0 0 1px blue;\n    word-wrap: break-word;\n}",
-  "piggyGauge": {
-    "targetAmount": 100000,
-    "currentAmount": 65000,
-    "label": "なに食べよの広告費"
-  },
   "donation": {
     "enable": 1,
     "layout": 2,

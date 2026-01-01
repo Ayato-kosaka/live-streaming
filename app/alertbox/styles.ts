@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
   },
   piggyGaugeContainer: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',

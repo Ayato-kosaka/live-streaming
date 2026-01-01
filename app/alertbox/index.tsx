@@ -551,11 +551,7 @@ export default function AlertBox() {
         {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
         {!notification && (
           <View style={styles.piggyGaugeContainer}>
-            <PiggyGauge
-              targetAmount={settings.piggyGauge.targetAmount}
-              currentAmount={settings.piggyGauge.currentAmount}
-              label={settings.piggyGauge.label}
-            />
+            <PiggyGauge currentAmount={95000} />
           </View>
         )}
       </View>
