@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useId } from "react";
 import Svg, {
   Defs,
   ClipPath,
@@ -15,9 +15,6 @@ interface PiggyBankProps {
   progress: number; // 0-1
 }
 
-// カウンターで一意なIDを生成
-let clipIdCounter = 0;
-
 export const PiggyBank: React.FC<PiggyBankProps> = ({
   width,
   height,
@@ -26,8 +23,9 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
   const viewBoxWidth = 600;
   const viewBoxHeight = 260;
 
-  // 一意なクリップパスIDを生成
-  const clipPathId = useMemo(() => `progressClip-${++clipIdCounter}`, []);
+  // React の useId で一意なIDを生成
+  const uniqueId = useId();
+  const clipPathId = `progressClip-${uniqueId}`;
 
   return (
     <Svg

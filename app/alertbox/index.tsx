@@ -552,9 +552,9 @@ export default function AlertBox() {
         {!notification && (
           <View style={styles.piggyGaugeContainer}>
             <PiggyGauge
-              targetAmount={100000}
-              currentAmount={65000}
-              label="なに食べよの広告費"
+              targetAmount={settings.piggyGauge.targetAmount}
+              currentAmount={settings.piggyGauge.currentAmount}
+              label={settings.piggyGauge.label}
             />
           </View>
         )}
