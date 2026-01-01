@@ -18,6 +18,7 @@ import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
 import { NotificationData, Viewer } from "./types";
+import { PiggyGauge } from "./components/PiggyGauge";
 import { sendLog } from "@/lib/log";
 import {
   matchViewerByNickname,
@@ -545,6 +546,17 @@ export default function AlertBox() {
               </View>
             )} */}
           </Animated.View>
+        )}
+
+        {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
+        {!notification && (
+          <View style={styles.piggyGaugeContainer}>
+            <PiggyGauge
+              targetAmount={100000}
+              currentAmount={65000}
+              label="なに食べよの広告費"
+            />
+          </View>
         )}
       </View>
     </>

@@ -43,4 +43,12 @@ export const styles = StyleSheet.create({
     textShadowRadius: 2, // 影の広がり（適切に調整）
     flexWrap: 'wrap', // `word-wrap: break-word;` に対応
   },
+  piggyGaugeContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
