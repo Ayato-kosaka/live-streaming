@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Svg, {
   Defs,
   ClipPath,
@@ -15,6 +15,9 @@ interface PiggyBankProps {
   progress: number; // 0-1
 }
 
+// カウンターで一意なIDを生成
+let clipIdCounter = 0;
+
 export const PiggyBank: React.FC<PiggyBankProps> = ({
   width,
   height,
@@ -22,6 +25,9 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
 }) => {
   const viewBoxWidth = 600;
   const viewBoxHeight = 260;
+
+  // 一意なクリップパスIDを生成
+  const clipPathId = useMemo(() => `progressClip-${++clipIdCounter}`, []);
 
   return (
     <Svg
@@ -31,7 +37,7 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
     >
       <Defs>
         {/* クリップパス：進捗に応じて左から右に塗りを表示 */}
-        <ClipPath id="progressClip">
+        <ClipPath id={clipPathId}>
           <Rect
             x="0"
             y="0"
@@ -86,7 +92,7 @@ export const PiggyBank: React.FC<PiggyBankProps> = ({
       </G>
 
       {/* 進捗塗りエリア（クリップされる） */}
-      <G id="PigFillArea" clipPath="url(#progressClip)">
+      <G id="PigFillArea" clipPath={`url(#${clipPathId})`}>
         <Ellipse
           cx={viewBoxWidth / 2}
           cy={viewBoxHeight / 2}

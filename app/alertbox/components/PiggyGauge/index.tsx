@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { PiggyBank } from "./PiggyBank";
 
 export type PiggyGaugeProps = {
@@ -29,7 +29,7 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   };
 
   // 画面幅の80-90%を使用
-  const screenWidth = Dimensions.get("window").width;
+  const { width: screenWidth } = useWindowDimensions();
   const gaugeWidth = screenWidth * 0.85;
   const gaugeHeight = (gaugeWidth * 260) / 600; // viewBoxのアスペクト比を維持
 
@@ -112,8 +112,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   percentageContainer: {
-    position: "absolute",
-    right: -60,
+    marginLeft: 16,
     justifyContent: "center",
   },
   percentageText: {
