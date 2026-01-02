@@ -490,7 +490,11 @@ export default function AlertBox() {
         {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
         {!notification && (
           <View style={styles.piggyGaugeContainer}>
-            <PiggyGauge currentAmount={95000} />
+            <PiggyGauge
+              currentAmount={65000}
+              targetAmount={100000}
+              label="なに食べよの広告費"
+            />
           </View>
         )}
       </View>

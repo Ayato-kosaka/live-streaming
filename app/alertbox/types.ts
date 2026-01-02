@@ -11,6 +11,7 @@ export interface Viewer {
 // {"level":"test","nickname":"Doneru","test":true,"type":"membership"}
 
 export interface DonationNotification {
+  id: string;
   amount: number;
   assetID: string | null;
   message: string;
@@ -21,6 +22,7 @@ export interface DonationNotification {
 }
 
 export interface SuperChatNotification {
+  id: string;
   amount: number;
   currency: string;
   jpy: number;

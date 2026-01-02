@@ -1,20 +1,22 @@
 // YouTube Live Chat Connector
 
 import { IConnector } from "./types";
-import { SuperChatNotification } from "../types";
+import { NotificationData, SuperChatNotification } from "../types";
 
-/**
- * YouTube API response types
- */
-interface LiveBroadcast {
-  id: string;
-  snippet: {
-    liveChatId: string;
-  };
+interface YouTubeSearchListResponse {
+  items: {
+    id: {
+      videoId: string;
+    };
+  }[];
 }
 
-interface LiveBroadcastsListResponse {
-  items: LiveBroadcast[];
+interface VideoListResponse {
+  items: {
+    liveStreamingDetails: {
+      activeLiveChatId?: string;
+    };
+  }[];
 }
 
 interface LiveChatMessage {
@@ -65,8 +67,8 @@ interface LiveChatMessagesListResponse {
  * - Tracks nextPageToken to avoid duplicates
  */
 export class YouTubeConnector implements IConnector {
-  private apiKey: string;
   private channelId?: string;
+  private apiKey: string;
 
   constructor(apiKey: string, channelId?: string) {
     this.apiKey = apiKey;
@@ -84,39 +86,69 @@ export class YouTubeConnector implements IConnector {
     let pollingIntervalMs = 5000; // Default 5 seconds
 
     /**
-     * Fetch the liveChatId from active broadcast
+     * YouTube API の search.list と videos.list を使って liveChatId を取得
      */
     const fetchLiveChatId = async (): Promise<string | null> => {
       try {
+        // ライブ配信中の videoId 取得
         const url = new URL(
-          "https://www.googleapis.com/youtube/v3/liveBroadcasts"
+          "https://www.googleapis.com/youtube/v3/search"
         );
-        url.searchParams.set("part", "snippet");
-        url.searchParams.set("broadcastStatus", "active");
+        url.searchParams.set("part", "id");
+        url.searchParams.set("eventType", "live");
+        url.searchParams.set("type", "video");
         url.searchParams.set("key", this.apiKey);
 
         if (this.channelId) {
           url.searchParams.set("channelId", this.channelId);
         } else {
-          url.searchParams.set("mine", "true");
+          throw new Error("channelId is required to fetch YouTube search");
         }
 
         const response = await fetch(url.toString());
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch live broadcasts: ${response.status} ${response.statusText}`
+            `Failed to fetch live videoId: ${response.status} ${response.statusText}`
           );
         }
 
-        const data: LiveBroadcastsListResponse = await response.json();
+        const data: YouTubeSearchListResponse = await response.json();
 
-        if (data.items && data.items.length > 0) {
-          const chatId = data.items[0].snippet.liveChatId;
-          console.log("[YouTubeConnector] Found liveChatId:", chatId);
+        if (!data.items || data.items.length === 0) {
+          console.log("[YouTubeConnector] No live active broadcasts found");
+          return null;
+        }
+
+        const videoId = data.items[0].id.videoId;
+        console.log("[YouTubeConnector] Found live videoId:", videoId);
+
+        // videoId から liveChatId を取得
+        const videoUrl = new URL(
+          "https://www.googleapis.com/youtube/v3/videos"
+        );
+        videoUrl.searchParams.set("part", "liveStreamingDetails");
+        videoUrl.searchParams.set("id", videoId);
+        videoUrl.searchParams.set("key", this.apiKey);
+
+        const videoResponse = await fetch(videoUrl.toString());
+        if (!videoResponse.ok) {
+          throw new Error(
+            `Failed to fetch liveStreamingDetails: ${videoResponse.status} ${videoResponse.statusText}`
+          );
+        }
+
+        const videoData: VideoListResponse = await videoResponse.json();
+
+        const liveStreamingDetails =
+          videoData.items[0]?.liveStreamingDetails;
+        const chatId = liveStreamingDetails?.activeLiveChatId;
+
+        if (chatId) {
+          console.log("[YouTubeConnector] Fetched liveChatId:", chatId);
           return chatId;
         }
 
-        console.log("[YouTubeConnector] No active broadcasts found");
+        console.log("[YouTubeConnector] No active chatId found");
         return null;
       } catch (error) {
         console.error("[YouTubeConnector] Error fetching liveChatId:", error);
@@ -202,6 +234,7 @@ export class YouTubeConnector implements IConnector {
               const jpy = amount;
 
               const notification: SuperChatNotification = {
+                id: message.id,
                 type: "superchat",
                 nickname: message.authorDetails.displayName,
                 amount: amount,
