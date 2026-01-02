@@ -39,7 +39,7 @@ export const doneruAmount = onRequest(
 
     try {
       const url = `${DONERU_API_BASE}?key=${encodeURIComponent(key)}`;
-      logger.info(`doneruAmount: Fetching from ${url}`);
+      logger.info("doneruAmount: Fetching from Doneru API");
 
       const response = await fetch(url, {
         method: "GET",
@@ -65,11 +65,11 @@ export const doneruAmount = onRequest(
 
       if (error instanceof Error && error.name === "AbortError") {
         logger.error("doneruAmount: Request timeout");
+        res.status(504).json({error: "upstream timeout"});
       } else {
         logger.error("doneruAmount: Error fetching from upstream", error);
+        res.status(502).json({error: "upstream error"});
       }
-
-      res.status(502).json({error: "upstream error"});
     }
   }
 );
