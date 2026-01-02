@@ -1,5 +1,5 @@
-import {onRequest} from "firebase-functions/v2/https";
-import {logger} from "firebase-functions";
+import { onRequest } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions";
 
 const DONERU_API_BASE = "https://api.doneru.jp/widget/goal/data";
 const TIMEOUT_MS = 10000; // 10 seconds
@@ -15,13 +15,16 @@ export const doneruAmount = onRequest(
   async (req, res) => {
     // OPTIONS preflight リクエストの処理
     if (req.method === "OPTIONS") {
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Methods", "GET,OPTIONS");
+      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
       res.status(204).send("");
       return;
     }
 
     // GET リクエストのみ許可
     if (req.method !== "GET") {
-      res.status(405).json({error: "Method not allowed"});
+      res.status(405).json({ error: "Method not allowed" });
       return;
     }
 
@@ -29,7 +32,7 @@ export const doneruAmount = onRequest(
     const key = req.query.key as string | undefined;
     if (!key || key.trim() === "") {
       logger.error("doneruAmount: key parameter is missing or empty");
-      res.status(400).json({error: "key is required"});
+      res.status(400).json({ error: "key is required" });
       return;
     }
 
@@ -52,7 +55,7 @@ export const doneruAmount = onRequest(
         logger.error(
           `doneruAmount: Upstream returned status ${response.status}`
         );
-        res.status(502).json({error: "upstream error"});
+        res.status(502).json({ error: "upstream error" });
         return;
       }
 
@@ -65,10 +68,10 @@ export const doneruAmount = onRequest(
 
       if (error instanceof Error && error.name === "AbortError") {
         logger.error("doneruAmount: Request timeout");
-        res.status(504).json({error: "upstream timeout"});
+        res.status(504).json({ error: "upstream timeout" });
       } else {
         logger.error("doneruAmount: Error fetching from upstream", error);
-        res.status(502).json({error: "upstream error"});
+        res.status(502).json({ error: "upstream error" });
       }
     }
   }
