@@ -17,7 +17,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
-import { NotificationData, Viewer } from "./types";
+import { NotificationData, Viewer, GoalState, SuperChatRecord } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { sendLog } from "@/lib/log";
 import {
@@ -28,6 +28,7 @@ import {
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
+import { getTable, getById, insert, getDoneruAmount } from "./api.utils";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
 const NOTIFICATION_TYPES = [
@@ -45,6 +46,9 @@ export default function AlertBox() {
   const [normViewers, setNormViewers] = useState<
     (Viewer & { norm: string; normNoEmoji: string })[]
   >([]);
+
+  // Goals 情報（起動時に取得し currentAmount を算出して保持）
+  const [goal, setGoal] = useState<GoalState | null>(null);
 
   // 現在表示中の通知（なければ null）
   const [notification, setNotification] = useState<NotificationData | null>(
@@ -109,29 +113,62 @@ export default function AlertBox() {
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount", { enabledSources });
 
-    // 視聴者情報を GAS API から取得し、名前の正規化結果も持たせる
-    const fetchViewers = async () => {
+    // 初期化処理（Viewers / Goals / doneruAmount を取得）
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch(process.env.EXPO_PUBLIC_GAS_API_URL!);
-        const data = await response.json();
-        const normViewers = (data.viewers ?? []).map((v: Viewer) => ({
+        // 1. Viewers を取得
+        const viewersResponse = await getTable<Viewer[]>("Viewers");
+        if (!viewersResponse.ok) {
+          throw new Error("Failed to fetch Viewers");
+        }
+        const viewers = viewersResponse.data || [];
+        const normViewers = viewers.map((v: Viewer) => ({
           ...v,
           norm: normalizeName(v.name),
           normNoEmoji: normalizeNameNoEmoji(v.name),
         }));
         setNormViewers(normViewers);
-        // 成功ログ（取得データのサマリを送信）
         sendLog("AlertBox", sessionId, "fetchViewersSuccess", {
-          viewers: data.viewers,
+          viewers,
           normViewers,
+        });
+
+        // 2. Goals を取得（id 固定: 2025-10-24）
+        const goalsResponse = await getById<any>("Goals", "2025-10-24");
+        if (!goalsResponse.ok) {
+          throw new Error("Failed to fetch Goals");
+        }
+        const goalRecord = goalsResponse.data;
+        sendLog("AlertBox", sessionId, "fetchGoalsSuccess", { goalRecord });
+
+        // 3. doneruAmount を取得
+        const doneruAmount = await getDoneruAmount(goalRecord.doneryGoalKey);
+        sendLog("AlertBox", sessionId, "fetchDoneruAmountSuccess", {
+          doneruAmount,
+        });
+
+        // currentAmount を算出して goal state にセット
+        const currentAmount =
+          goalRecord.startAmount +
+          goalRecord.superChatAmount +
+          doneruAmount;
+        setGoal({
+          ...goalRecord,
+          currentAmount,
+        });
+        sendLog("AlertBox", sessionId, "initSuccess", {
+          currentAmount,
+          goal: goalRecord,
         });
       } catch (error) {
         // 失敗ログ
-        sendLog("AlertBox", sessionId, "fetchViewersError", { error });
-        setError("視聴者情報の取得に失敗しました");
+        sendLog("AlertBox", sessionId, "initError", { error });
+        setError(
+          "初期化に失敗しました。Viewers / Goals / doneruAmount の取得を確認してください。"
+        );
       }
     };
-    fetchViewers();
+    fetchInitialData();
 
     // Initialize connectors based on URL parameter
     const cleanupFunctions: (() => void)[] = [];
@@ -144,6 +181,60 @@ export default function AlertBox() {
       ) {
         sendLog("AlertBox", sessionId, "notificationDisabled", notification);
         return;
+      }
+
+      // donation / superchat の場合、ローカル currentAmount を更新
+      if (notification.type === "donation" || notification.type === "superchat") {
+        setGoal((prev) => {
+          if (!prev) return prev;
+          
+          let amountToAdd = 0;
+          if (notification.type === "donation") {
+            amountToAdd = notification.amount;
+          } else if (notification.type === "superchat") {
+            amountToAdd = Math.floor(notification.jpy / 2);
+          }
+          
+          return {
+            ...prev,
+            currentAmount: prev.currentAmount + amountToAdd,
+          };
+        });
+        
+        sendLog("AlertBox", sessionId, "currentAmountUpdated", {
+          type: notification.type,
+          amount: notification.type === "donation" 
+            ? notification.amount 
+            : Math.floor(notification.jpy / 2),
+        });
+      }
+
+      // superchat の場合のみ SuperChats に INSERT
+      if (notification.type === "superchat") {
+        const superChatRecord: SuperChatRecord = {
+          id: notification.id,
+          amount: notification.amount,
+          currency: notification.currency,
+          jpy: notification.jpy,
+          message: notification.message,
+          nickname: notification.nickname,
+          test: notification.test,
+          type: notification.type,
+        };
+        
+        // INSERT は非同期で実行し、失敗してもキュー追加は続行
+        insert("SuperChats", superChatRecord)
+          .then(() => {
+            sendLog("AlertBox", sessionId, "superChatInsertSuccess", {
+              id: notification.id,
+            });
+          })
+          .catch((error) => {
+            sendLog("AlertBox", sessionId, "superChatInsertError", {
+              error,
+              id: notification.id,
+            });
+          });
       }
 
       // Add to queue
@@ -488,12 +579,12 @@ export default function AlertBox() {
         )}
 
         {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
-        {!notification && (
+        {!notification && goal && (
           <View style={styles.piggyGaugeContainer}>
             <PiggyGauge
-              currentAmount={65000}
-              targetAmount={100000}
-              label="なに食べよの広告費"
+              currentAmount={goal.currentAmount}
+              targetAmount={goal.targetAmount}
+              label={goal.label}
             />
           </View>
         )}
