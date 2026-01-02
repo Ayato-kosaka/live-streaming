@@ -26,7 +26,7 @@ export const settings = {
     "fontWeight": 800,
     "fontColor": "#ffffff",
     "fontHighlightColor": "#37a9fd",
-    "messageTemplate": "{名前} 様 {金額} 円ドネ ありやとう！！",
+    "messageTemplate": "{名前} 様 {金額}{単位}ドネ ありやとう！！",
     "imageSource": {
       "hash": "2b8554b15282b1xnx11m5ikor9y.png",
       "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
@@ -167,7 +167,7 @@ export const settings = {
     "customAlert": []
   },
   "superchat": {
-    "enable": 0,
+    "enable": 1,
     "layout": 2,
     "startAnimation": "fadeIn",
     "endAnimation": "fadeOut",

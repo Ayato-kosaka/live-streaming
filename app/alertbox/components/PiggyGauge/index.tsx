@@ -4,18 +4,19 @@ import { PiggyBank } from "./PiggyBank";
 
 export type PiggyGaugeProps = {
   currentAmount: number; // 現在（例: 65000）
+  targetAmount: number; // 目標金額
+  label: string; // ラベル（例: "なに食べよの広告費"）
 };
 
-// 投げ銭目標ラベル
-const PIGGY_GAUGE_LABEL = "なに食べよの広告費";
-// 投げ銭目標金額
-const PIGGY_GAUGE_TARGET = 100000 as const;
-
-export const PiggyGauge: React.FC<PiggyGaugeProps> = ({ currentAmount }) => {
+export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
+  currentAmount,
+  targetAmount,
+  label,
+}) => {
   // 進捗計算（0〜1にクランプ）
   const progress = useMemo(() => {
-    if (PIGGY_GAUGE_TARGET <= 0) return 0;
-    const p = currentAmount / PIGGY_GAUGE_TARGET;
+    if (targetAmount <= 0) return 0;
+    const p = currentAmount / targetAmount;
     return Math.max(0, Math.min(1, p));
   }, [currentAmount]);
 
@@ -57,9 +58,7 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({ currentAmount }) => {
             {/* テキストオーバーレイ */}
             <View style={styles.textOverlay}>
               {/* 上部：目標金額 */}
-              <Text style={styles.topText}>
-                {formatAmount(PIGGY_GAUGE_TARGET)}
-              </Text>
+              <Text style={styles.topText}>{formatAmount(targetAmount)}</Text>
 
               {/* 中央：現在金額（境界付近） */}
               <Text style={styles.centerText}>
@@ -67,7 +66,7 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({ currentAmount }) => {
               </Text>
 
               {/* 下部：ラベル */}
-              <Text style={styles.bottomText}>{PIGGY_GAUGE_LABEL}</Text>
+              <Text style={styles.bottomText}>{label}</Text>
             </View>
           </View>
         </View>
