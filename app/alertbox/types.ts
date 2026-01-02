@@ -1,7 +1,7 @@
 
 export interface Viewer {
-  icon?: string;
-  emoji?: string;
+  Icon?: string;
+  Emoji?: string;
   name: string;
 }
 
@@ -63,7 +63,7 @@ export interface GoalRecord {
   id: string;
   startAmount: number;
   superChatAmount: number;
-  doneryGoalKey: string;
+  doneruGoalKey: string;
   targetAmount: number;
   label: string;
 }

@@ -10,11 +10,11 @@ import { GASApiResponse } from "./types";
 export async function getTable<T>(table: string): Promise<GASApiResponse<T>> {
   const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch ${table}: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
@@ -30,11 +30,11 @@ export async function getById<T>(
 ): Promise<GASApiResponse<T>> {
   const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}&id=${id}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch ${table} with id ${id}: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
@@ -51,14 +51,14 @@ export async function insert<T>(
   const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ record }),
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to insert into ${table}: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
@@ -68,20 +68,19 @@ export async function insert<T>(
  * @returns Amount as a number
  */
 export async function getDoneruAmount(key: string): Promise<number> {
-  const url = `${process.env.EXPO_PUBLIC_CLOUD_FUNCTION_BASE_URL}/doneruAmount?key=${key}`;
+  const url = `https://doneruamount-3phus6cpxa-uc.a.run.app/doneruAmount?key=${key}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch doneruAmount: ${response.statusText}`);
   }
-  
-  // Response is a plain number, not JSON
-  const text = await response.text();
-  const amount = Number(text);
-  
+
+  const data = await response.json();
+  const amount = Number(data.amount);
+
   if (isNaN(amount)) {
-    throw new Error(`Invalid doneruAmount response: ${text}`);
+    throw new Error(`Invalid doneruAmount response: ${data}`);
   }
-  
+
   return amount;
 }

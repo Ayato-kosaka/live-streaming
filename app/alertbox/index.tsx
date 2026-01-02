@@ -17,7 +17,13 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
-import { NotificationData, Viewer, GoalState, SuperChatRecord, GoalRecord } from "./types";
+import {
+  NotificationData,
+  Viewer,
+  GoalState,
+  SuperChatRecord,
+  GoalRecord,
+} from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { sendLog } from "@/lib/log";
 import {
@@ -149,16 +155,14 @@ export default function AlertBox() {
         sendLog("AlertBox", sessionId, "fetchGoalsSuccess", { goalRecord });
 
         // 3. doneruAmount を取得
-        const doneruAmount = await getDoneruAmount(goalRecord.doneryGoalKey);
+        const doneruAmount = await getDoneruAmount(goalRecord.doneruGoalKey);
         sendLog("AlertBox", sessionId, "fetchDoneruAmountSuccess", {
           doneruAmount,
         });
 
         // currentAmount を算出して goal state にセット
         const currentAmount =
-          goalRecord.startAmount +
-          goalRecord.superChatAmount +
-          doneruAmount;
+          goalRecord.startAmount + goalRecord.superChatAmount + doneruAmount;
         setGoal({
           ...goalRecord,
           currentAmount,
@@ -191,35 +195,41 @@ export default function AlertBox() {
       }
 
       // donation / superchat の場合、ローカル currentAmount を更新
-      if (notification.type === "donation" || notification.type === "superchat") {
+      if (
+        notification.type === "donation" ||
+        notification.type === "superchat"
+      ) {
         setGoal((prev) => {
           if (!prev) return prev;
-          
+
           let amountToAdd = 0;
           if (notification.type === "donation") {
             amountToAdd = notification.amount;
           } else if (notification.type === "superchat") {
-            amountToAdd = Math.floor(notification.jpy * SUPERCHAT_CONVERSION_RATE);
+            amountToAdd = Math.floor(
+              notification.jpy * SUPERCHAT_CONVERSION_RATE
+            );
           }
-          
+
           return {
             ...prev,
             currentAmount: prev.currentAmount + amountToAdd,
           };
         });
-        
+
         sendLog("AlertBox", sessionId, "currentAmountUpdated", {
           type: notification.type,
-          amount: notification.type === "donation" 
-            ? notification.amount 
-            : Math.floor(notification.jpy * SUPERCHAT_CONVERSION_RATE),
+          amount:
+            notification.type === "donation"
+              ? notification.amount
+              : Math.floor(notification.jpy * SUPERCHAT_CONVERSION_RATE),
         });
       }
 
       // superchat の場合のみ SuperChats に INSERT
       if (notification.type === "superchat") {
         const superChatRecord: SuperChatRecord = {
-          id: notification.id,
+          id: notification.id || `unknown-${new Date().getTime()}`,
           amount: notification.amount,
           currency: notification.currency,
           jpy: notification.jpy,
@@ -228,7 +238,7 @@ export default function AlertBox() {
           test: notification.test,
           type: notification.type,
         };
-        
+
         // INSERT は非同期で実行し、失敗してもキュー追加は続行
         insert("SuperChats", superChatRecord)
           .then(() => {
@@ -238,8 +248,8 @@ export default function AlertBox() {
           })
           .catch((error) => {
             sendLog("AlertBox", sessionId, "superChatInsertError", {
-              error,
               id: notification.id,
+              error,
             });
           });
       }
@@ -313,6 +323,34 @@ export default function AlertBox() {
     return baseDuration; // 元の時間
   };
 
+  // 視聴者ニックネームから表示用の視聴者情報（絵文字/アイコン）を検索
+  const matchedViewer = useCallback(
+    (notification: NotificationData | null) => {
+      return notification
+        ? (matchViewerByNickname(
+            normViewers,
+            notification.nickname
+          ) as (typeof normViewers)[0])
+        : null;
+    },
+    [normViewers]
+  );
+
+  // エフェクト用絵文字
+  const emoji = useMemo(() => {
+    const viewer = matchedViewer(notification);
+    return viewer?.Emoji || null;
+  }, [matchedViewer, notification]);
+
+  // 視聴者のカスタムアイコン URL（存在する場合のみ差し替え）
+  const iconUrl = useCallback(
+    (n: NotificationData | null) =>
+      n && matchedViewer(n)?.Icon
+        ? "https://lh3.googleusercontent.com/d/" + matchedViewer(n)?.Icon
+        : null,
+    [matchedViewer]
+  );
+
   useEffect(() => {
     // 表示中の通知がない場合のみ、次の通知を処理開始
     if (!notification && notificationQueue.length > 0) {
@@ -371,7 +409,7 @@ export default function AlertBox() {
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
-  }, [notificationQueue]);
+  }, [notificationQueue, iconUrl, opacity]);
 
   // テンプレート本文（通知タイプに紐づくテンプレートを取得）
   const mainTextTemplate = useMemo(
@@ -386,28 +424,6 @@ export default function AlertBox() {
         ? `https://d1ewxqdha2zjcd.cloudfront.net/assets/images/${settings[notificationType].imageSource.hash}`
         : "",
     []
-  );
-
-  // 視聴者ニックネームから表示用の視聴者情報（絵文字/アイコン）を検索
-  const matchedViewer = useMemo(() => {
-    return notification
-      ? (matchViewerByNickname(
-          normViewers,
-          notification.nickname
-        ) as (typeof normViewers)[0])
-      : null;
-  }, [normViewers, notification?.nickname]);
-
-  // エフェクト用絵文字
-  const emoji = matchedViewer?.emoji;
-
-  // 視聴者のカスタムアイコン URL（存在する場合のみ差し替え）
-  const iconUrl = useCallback(
-    (n: NotificationData | null) =>
-      n && matchedViewer?.icon
-        ? "https://lh3.googleusercontent.com/d/" + matchedViewer.icon
-        : null,
-    [matchedViewer]
   );
 
   // 金額に比例したエフェクト回数（花火/雨）を算出

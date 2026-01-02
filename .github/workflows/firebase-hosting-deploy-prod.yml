@@ -20,7 +20,6 @@ jobs:
           echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
           echo "EXPO_PUBLIC_YOUTUBE_API_KEY=${{ secrets.EXPO_PUBLIC_YOUTUBE_API_KEY }}" >> .env
           echo "EXPO_PUBLIC_CLAUDE_API_KEY=${{ secrets.EXPO_PUBLIC_CLAUDE_API_KEY }}" >> .env
-          echo "EXPO_PUBLIC_CLOUD_FUNCTION_BASE_URL=${{ secrets.EXPO_PUBLIC_CLOUD_FUNCTION_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
       - run: "npm ci && npm run build:web"
       - uses: FirebaseExtended/action-hosting-deploy@v0
