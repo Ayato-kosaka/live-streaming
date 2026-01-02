@@ -10,6 +10,7 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions";
 import {commentOnLive} from "./commentOnLive";
+import {doneruAmount} from "./doneruAmount";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -24,3 +25,5 @@ export const commentIfLive = onSchedule(
     await commentOnLive();
   }
 );
+
+export {doneruAmount};
