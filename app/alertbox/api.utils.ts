@@ -1,6 +1,6 @@
 // API utility functions for GAS and Cloud Functions
 
-import { GASApiResponse, GoalRecord, Viewer } from "./types";
+import { GASApiResponse } from "./types";
 
 /**
  * Get data from a GAS table
