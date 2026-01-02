@@ -17,7 +17,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
-import { NotificationData, Viewer, GoalState, SuperChatRecord } from "./types";
+import { NotificationData, Viewer, GoalState, SuperChatRecord, GoalRecord } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { sendLog } from "@/lib/log";
 import {
@@ -37,6 +37,13 @@ const NOTIFICATION_TYPES = [
   "youtubeSubscriber",
   "membership",
 ] as const satisfies readonly NotificationData["type"][];
+
+// Goals テーブルのレコード ID（要件により固定）
+const GOAL_ID = "2025-10-24";
+
+// SuperChat 金額を currentAmount に加算する際の換算レート
+// 仕様: JPY 金額の 1/2 を目標金額に加算
+const SUPERCHAT_CONVERSION_RATE = 0.5;
 
 export default function AlertBox() {
   // Parse URL parameters for source selection
@@ -134,7 +141,7 @@ export default function AlertBox() {
         });
 
         // 2. Goals を取得（id 固定: 2025-10-24）
-        const goalsResponse = await getById<any>("Goals", "2025-10-24");
+        const goalsResponse = await getById<GoalRecord>("Goals", GOAL_ID);
         if (!goalsResponse.ok) {
           throw new Error("Failed to fetch Goals");
         }
@@ -192,7 +199,7 @@ export default function AlertBox() {
           if (notification.type === "donation") {
             amountToAdd = notification.amount;
           } else if (notification.type === "superchat") {
-            amountToAdd = Math.floor(notification.jpy / 2);
+            amountToAdd = Math.floor(notification.jpy * SUPERCHAT_CONVERSION_RATE);
           }
           
           return {
@@ -205,7 +212,7 @@ export default function AlertBox() {
           type: notification.type,
           amount: notification.type === "donation" 
             ? notification.amount 
-            : Math.floor(notification.jpy / 2),
+            : Math.floor(notification.jpy * SUPERCHAT_CONVERSION_RATE),
         });
       }
 
