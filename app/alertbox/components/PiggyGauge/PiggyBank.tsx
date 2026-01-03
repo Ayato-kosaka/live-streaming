@@ -81,10 +81,21 @@ export const PiggyBank: React.FC<Props> = ({ width, height, progress }) => {
     if (!el) return;
 
     const DURATION = 2200; // ms（溜まる時間）
+    const PERIOD = 15000; // ms（サイクル時間）
+
     let startTs: number | null = null;
+    let cycleStartTs: number | null = null;
 
     const loop = (ts: number) => {
-      if (startTs == null) startTs = ts;
+      if (cycleStartTs == null) cycleStartTs = ts;
+
+      // 10秒周期でサイクルを切り替える
+      const cycleT = ts - cycleStartTs;
+      if (cycleT >= PERIOD) {
+        cycleStartTs = ts;
+        startTs = ts; // fill開始時刻リセット
+      }
+      if (startTs == null) startTs = cycleStartTs;
 
       // 1) 進捗（0→target）をイージング付きで補間
       const t = Math.min(1, (ts - startTs) / DURATION);
