@@ -173,11 +173,11 @@ export const settings = {
     "endAnimation": "fadeOut",
     "minAmount": 100,
     "font": "Kosugi Maru",
-    "fontSize": 32,
+    "fontSize": 20,
     "fontWeight": 800,
     "fontColor": "#ffffff",
     "fontHighlightColor": "#37a9fd",
-    "messageTemplate": "{名前} 様、{単位}{金額}の投げ銭ありがとうございます！",
+    "messageTemplate": "{名前} 様 {金額}{単位} ありやとう！！",
     "textAnimation": "headShake",
     "imageSource": {
       "hash": "2b8554b15282b1xnx11m5ikor9y.png",
@@ -188,13 +188,13 @@ export const settings = {
       "hash": "Coins.mp3"
     },
     "soundVolume": 80,
-    "alertDuration": 10,
+    "alertDuration": 30,
     "message": {
       "enable": 1,
       "minAmount": 0,
       "font": "Kosugi Maru",
-      "fontSize": 24,
-      "fontWeight": 400,
+      "fontSize": 16,
+      "fontWeight": 800,
       "fontColor": "#ffffff"
     },
     "tts": {

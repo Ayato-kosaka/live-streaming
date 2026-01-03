@@ -336,7 +336,7 @@ export class YouTubeConnector implements IConnector {
         type: "superchat",
         nickname: message.authorDetails.displayName,
         amount,
-        currency: details.currency,
+        currency: details.currency === "JPY" ? "円" : details.currency,
         jpy,
         message: details.userComment || "",
         test: false,
