@@ -277,10 +277,7 @@ export default function AlertBox() {
 
     // Initialize YouTube connector if enabled
     if (enabledSources.includes("youtube")) {
-      const youtubeConnector = new YouTubeConnector(
-        process.env.EXPO_PUBLIC_YOUTUBE_API_KEY!,
-        process.env.EXPO_PUBLIC_YOUTUBE_CHANNEL
-      );
+      const youtubeConnector = new YouTubeConnector();
       const cleanup = youtubeConnector.start(handleNotification, handleError);
       cleanupFunctions.push(cleanup);
       sendLog("AlertBox", sessionId, "youtubeConnectorStarted");

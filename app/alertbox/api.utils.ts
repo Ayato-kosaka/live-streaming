@@ -84,3 +84,26 @@ export async function getDoneruAmount(key: string): Promise<number> {
 
   return amount;
 }
+
+/**
+ * Get doneruToken from Cloud Functions
+ * @param key Donery alertbox key
+ * @returns Token data
+ */
+export async function getDoneruToken(key: string): Promise<{
+  youtube: {
+    at: string;
+    channel: string;
+    exp: number;
+  }
+}> {
+  const url = `https://donerutoken-3phus6cpxa-uc.a.run.app/doneruToken?type=alertbox&key=${key}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch doneruToken: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+}

@@ -50,11 +50,9 @@ export class DoneruConnector implements IConnector {
           if (data.type === "donation") {
             onEvent(data);
           } else if (data.type === "superchat") {
-            // Ignore superchat from Doneru (responsibility separation)
-            console.log(
-              "[DoneruConnector] Ignoring superchat from Doneru:",
-              data
-            );
+            // YouTube API で SuperChat を処理する場合があるので、
+            // Doneru 側の設定で SuperChat 通知をオフにすること。
+            onEvent(data);
           } else {
             console.warn(
               "[DoneruConnector] Unknown notification type:",
