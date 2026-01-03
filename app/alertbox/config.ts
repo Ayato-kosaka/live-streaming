@@ -22,11 +22,11 @@ export const settings = {
     "minAmount": 0,
     "textAnimation": "headShake",
     "font": "Kosugi Maru",
-    "fontSize": 26,
+    "fontSize": 20,
     "fontWeight": 800,
     "fontColor": "#ffffff",
     "fontHighlightColor": "#37a9fd",
-    "messageTemplate": "{名前} 様 {金額}{単位}ドネ ありやとう！！",
+    "messageTemplate": "{名前} 様 {金額}{単位} ありやとう！！",
     "imageSource": {
       "hash": "2b8554b15282b1xnx11m5ikor9y.png",
       "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
@@ -41,7 +41,7 @@ export const settings = {
       "enable": 1,
       "minAmount": 0,
       "font": "Kosugi Maru",
-      "fontSize": 20,
+      "fontSize": 16,
       "fontWeight": 800,
       "fontColor": "#ffffff",
       "emote": 1
