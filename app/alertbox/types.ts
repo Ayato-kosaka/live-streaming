@@ -1,7 +1,7 @@
 
 export interface Viewer {
-  icon?: string;
-  emoji?: string;
+  Icon?: string;
+  Emoji?: string;
   name: string;
 }
 
@@ -50,4 +50,38 @@ export type NotificationData =
   | SuperChatNotification
   | YouTubeSubscriberNotification
   | MembershipNotification;
+
+// GAS API Response types
+export interface GASApiResponse<T> {
+  ok: boolean;
+  table: string;
+  data: T;
+}
+
+// Goals table record (fetched from GAS)
+export interface GoalRecord {
+  id: string;
+  startAmount: number;
+  superChatAmount: number;
+  doneruGoalKey: string;
+  targetAmount: number;
+  label: string;
+}
+
+// Goal state (UI - includes calculated currentAmount)
+export interface GoalState extends GoalRecord {
+  currentAmount: number;
+}
+
+// SuperChats table record (for POST to GAS)
+export interface SuperChatRecord {
+  id: string;
+  amount?: number;
+  currency?: string;
+  jpy?: number;
+  message?: string;
+  nickname?: string;
+  test?: boolean;
+  type?: 'superchat';
+}
 
