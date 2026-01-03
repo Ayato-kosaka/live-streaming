@@ -2,6 +2,7 @@
 
 import { IConnector } from "./types";
 import { NotificationData, SuperChatNotification } from "../types";
+import { sendLog } from "@/lib/log";
 
 interface YouTubeSearchListResponse {
   items: {
@@ -249,6 +250,7 @@ export class YouTubeConnector implements IConnector {
                 notification
               );
               onEvent(notification);
+              sendLog("YouTubeConnector", null, "superchat_received", message);
             }
           }
         }
