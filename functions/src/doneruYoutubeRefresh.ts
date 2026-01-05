@@ -65,7 +65,7 @@ export const doneruYoutubeRefresh = onRequest(
         logger.error(`Upstream status=${response.status} body=${text}`);
         res.status(502).json({
           error: "upstream error",
-          upstreamStatus: response.status
+          upstreamStatus: response.status,
         });
         return;
       }
