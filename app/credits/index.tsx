@@ -190,8 +190,8 @@ export default function CreditsPage() {
             d.nickname
           ) as (typeof normViewers)[0] | null;
 
-          const iconUri = matchedViewer?.icon
-            ? `https://lh3.googleusercontent.com/d/${matchedViewer.icon}`
+          const iconUri = matchedViewer?.Icon
+            ? `https://lh3.googleusercontent.com/d/${matchedViewer.Icon}`
             : null;
 
           return {
