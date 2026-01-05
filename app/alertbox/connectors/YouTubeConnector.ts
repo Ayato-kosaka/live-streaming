@@ -66,7 +66,7 @@ export class YouTubeConnector implements IConnector {
   private hasSyncedToLive = false;
 
   // 重複防止用の LRU キャッシュ（最大 20,000 件）
-  private seenMessageIds = new Map<string, boolean>();
+  private seenMessageIds = new Set<string>();
   private readonly MAX_SEEN_IDS = 20_000;
 
   // 停止制御
@@ -392,14 +392,14 @@ export class YouTubeConnector implements IConnector {
 
       // LRU 管理：上限を超えたら最古のエントリを削除
       if (this.seenMessageIds.size >= this.MAX_SEEN_IDS) {
-        const firstKey = this.seenMessageIds.keys().next().value;
+        const firstKey = this.seenMessageIds.values().next().value;
         if (firstKey) {
           this.seenMessageIds.delete(firstKey);
         }
       }
 
       // 新規メッセージとして処理
-      this.seenMessageIds.set(message.id, true);
+      this.seenMessageIds.add(message.id);
 
       const details = message.snippet.superChatDetails;
 
