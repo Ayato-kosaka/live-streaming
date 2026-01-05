@@ -3,7 +3,7 @@
 import { IConnector } from "./types";
 import { NotificationData, SuperChatNotification } from "../types";
 import { sendLog } from "@/lib/log";
-import { getDoneruToken } from "../api.utils";
+import { getDoneruToken, refreshDoneruYoutubeToken } from "../api.utils";
 
 interface VideoListResponse {
   items: {
@@ -209,15 +209,20 @@ export class YouTubeConnector implements IConnector {
       broadcastUrl.searchParams.set("broadcastType", "all");
       broadcastUrl.searchParams.set("part", "id,status");
       broadcastUrl.searchParams.set("maxResults", "50");
-      broadcastUrl.searchParams.set("access_token", this.access_token!);
 
       while (!this.stopped) {
         // 念のため、ループ中にも期限チェックして更新
         await this.ensureValidToken();
-        broadcastUrl.searchParams.set("access_token", this.access_token!);
 
-        const broadcastResponse = await fetch(broadcastUrl.toString());
+        const broadcastResponse = await fetch(broadcastUrl.toString(), {
+          headers: {
+            Authorization: `Bearer ${this.access_token}`,
+          },
+        });
+
         if (!broadcastResponse.ok) {
+          const body = await broadcastResponse.text();
+          this.log(`Failed to fetch live broadcasts: ${broadcastResponse.status}`, body);
           // 認可系なら上位でリトライするため throw
           throw new Error(
             `Failed to fetch live broadcasts: ${broadcastResponse.status} ${broadcastResponse.statusText}`
@@ -233,10 +238,16 @@ export class YouTubeConnector implements IConnector {
           const videoUrl = new URL("https://www.googleapis.com/youtube/v3/videos");
           videoUrl.searchParams.set("id", broadcastId);
           videoUrl.searchParams.set("part", "liveStreamingDetails");
-          videoUrl.searchParams.set("access_token", this.access_token!);
 
-          const videoResponse = await fetch(videoUrl.toString());
+          const videoResponse = await fetch(videoUrl.toString(), {
+            headers: {
+              Authorization: `Bearer ${this.access_token}`,
+            },
+          });
+
           if (!videoResponse.ok) {
+            const body = await videoResponse.text();
+            this.log(`Failed to fetch video details: ${videoResponse.status}`, body);
             throw new Error(
               `Failed to fetch video details: ${videoResponse.status} ${videoResponse.statusText}`
             );
@@ -277,14 +288,28 @@ export class YouTubeConnector implements IConnector {
     const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
     url.searchParams.set("liveChatId", liveChatId);
     url.searchParams.set("part", "snippet,authorDetails");
-    url.searchParams.set("access_token", this.access_token!);
 
     if (this.nextPageToken) {
       url.searchParams.set("pageToken", this.nextPageToken);
     }
 
-    const response = await fetch(url.toString());
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${this.access_token}`,
+      },
+    });
+
     if (!response.ok) {
+      const body = await response.text();
+      this.log(`Failed to fetch live chat messages: ${response.status}`, body);
+
+      // 401 の場合は Doneru refresh を試みる
+      if (response.status === 401) {
+        this.log("401 Unauthorized detected, attempting Doneru refresh");
+        await this.refreshDoneruToken();
+        throw new Error(`Live chat messages returned 401: ${response.status} ${response.statusText}`);
+      }
+
       // broadcast 終了などで liveChatId が無効になった場合はリセットして復旧
       if (response.status === 404 || response.status === 403) {
         this.log("Live chat ended or invalid, resetting");
@@ -307,6 +332,26 @@ export class YouTubeConnector implements IConnector {
     }
 
     return (await response.json()) as LiveChatMessagesListResponse;
+  }
+
+  /**
+   * Doneru の refresh をトリガーし、その後 token を再取得する
+   */
+  private async refreshDoneruToken() {
+    try {
+      const key = this.getDoneruKey();
+      this.log("Calling Doneru refresh API");
+      await refreshDoneruYoutubeToken(key);
+      this.log("Doneru refresh successful, invalidating local token");
+      // refresh 後は必ず token を取り直す
+      this.invalidateToken();
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error("Failed to refresh Doneru token");
+      this.log("Error refreshing Doneru token:", err);
+      // refresh が失敗しても token を無効化して次回取り直す
+      this.invalidateToken();
+      throw err;
+    }
   }
 
   /**

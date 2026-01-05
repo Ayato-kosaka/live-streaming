@@ -107,3 +107,31 @@ export async function getDoneruToken(key: string): Promise<{
   const data = await response.json();
   return data;
 }
+
+/**
+ * Refresh Doneru YouTube token via Cloud Functions
+ * @param key Doneru alertbox key
+ * @param type Type parameter (default: "alertbox")
+ * @param version Version parameter (default: "1.0.0")
+ * @returns Refresh response
+ */
+export async function refreshDoneruYoutubeToken(
+  key: string,
+  type = "alertbox",
+  version = "1.0.0"
+): Promise<unknown> {
+  const encodedKey = encodeURIComponent(key);
+  const encodedType = encodeURIComponent(type);
+  const encodedVersion = encodeURIComponent(version);
+  const url = `https://doneruyoutuberefresh-3phus6cpxa-uc.a.run.app/doneruYoutubeRefresh?key=${encodedKey}&type=${encodedType}&version=${encodedVersion}`;
+  const response = await fetch(url, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to refresh Doneru YouTube token: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+}
