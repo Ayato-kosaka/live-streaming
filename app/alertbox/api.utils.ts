@@ -120,7 +120,10 @@ export async function refreshDoneruYoutubeToken(
   type = "alertbox",
   version = "1.0.0"
 ): Promise<unknown> {
-  const url = `https://doneruyoutuberefresh-3phus6cpxa-uc.a.run.app/doneruYoutubeRefresh?key=${key}&type=${type}&version=${version}`;
+  const encodedKey = encodeURIComponent(key);
+  const encodedType = encodeURIComponent(type);
+  const encodedVersion = encodeURIComponent(version);
+  const url = `https://doneruyoutuberefresh-3phus6cpxa-uc.a.run.app/doneruYoutubeRefresh?key=${encodedKey}&type=${encodedType}&version=${encodedVersion}`;
   const response = await fetch(url, {
     method: "POST",
   });
