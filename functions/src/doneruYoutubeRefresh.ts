@@ -47,32 +47,35 @@ export const doneruYoutubeRefresh = onRequest(
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
-      const encodedKey = encodeURIComponent(key);
-      const encodedType = encodeURIComponent(type);
-      const encodedVersion = encodeURIComponent(version);
-      const url =
-        `${DONERU_API_BASE}?key=${encodedKey}` +
-        `&type=${encodedType}&version=${encodedVersion}`;
-      logger.info("doneruYoutubeRefresh: Calling Doneru API");
-
-      const response = await fetch(url, {
+      const payload = { key, type, version };
+      const response = await fetch(DONERU_API_BASE, {
         method: "POST",
         signal: controller.signal,
+        headers: {
+          "content-type": "application/json",
+          "accept": "*/*",
+        },
+        body: JSON.stringify(payload),
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        logger.error(
-          `doneruYoutubeRefresh: Upstream returned status ${response.status}`
-        );
-        res.status(502).json({ error: "upstream error" });
+        const text = await response.text();
+        logger.error(`Upstream status=${response.status} body=${text}`);
+        res.status(502).json({ error: "upstream error", upstreamStatus: response.status });
         return;
       }
 
       // レスポンスをそのまま返却
-      const data = await response.json();
       logger.info("doneruYoutubeRefresh: Successfully refreshed token");
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        res.status(200).send(text);
+        return;
+      }
+      const data = await response.json();
       res.status(200).json(data);
     } catch (error) {
       clearTimeout(timeoutId);
