@@ -227,7 +227,7 @@ export default function AlertBox() {
       }
 
       // superchat の場合のみ SuperChats に INSERT
-      if (notification.type === "superchat") {
+      if (notification.type === "superchat" && !notification.test) {
         const superChatRecord: SuperChatRecord = {
           id: notification.id || `unknown-${new Date().getTime()}`,
           amount: notification.amount,
