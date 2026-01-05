@@ -62,6 +62,13 @@ export class YouTubeConnector implements IConnector {
   private nextPageToken?: string;
   private liveChatId: string | null = null;
 
+  // 初回同期フラグ：false の場合は最初の items を破棄して現在位置に同期
+  private hasSyncedToLive = false;
+
+  // 重複防止用の LRU キャッシュ（最大 20,000 件）
+  private seenMessageIds = new Set<string>();
+  private readonly MAX_SEEN_IDS = 20_000;
+
   // 停止制御
   private stopped = false;
   private pollingTimeout: NodeJS.Timeout | null = null;
@@ -124,8 +131,15 @@ export class YouTubeConnector implements IConnector {
       // 5) 次回用 pageToken を更新（重複防止）
       this.nextPageToken = data.nextPageToken;
 
-      // 6) SuperChat のみ抽出して通知
-      this.emitSuperChats(data.items, onEvent);
+      // 6) 初回同期時は items を破棄して現在位置に同期
+      if (!this.hasSyncedToLive) {
+        this.log("Initial sync: discarding historical messages, syncing to live position");
+        this.hasSyncedToLive = true;
+        // nextPageToken のみを使って次回以降のポーリングを行う
+      } else {
+        // 7) SuperChat のみ抽出して通知（初回以降）
+        this.emitSuperChats(data.items, onEvent);
+      }
 
       // 7) 次回ポーリング
       this.scheduleNext(() => this.pollLoop(onEvent, onError), this.pollingIntervalMs);
@@ -271,6 +285,8 @@ export class YouTubeConnector implements IConnector {
         this.log("Live chat ended or invalid, resetting");
         this.liveChatId = null;
         this.nextPageToken = undefined;
+        this.hasSyncedToLive = false;
+        this.seenMessageIds.clear();
 
         if (e.status === 403) this.invalidateToken();
       }
@@ -381,6 +397,7 @@ export class YouTubeConnector implements IConnector {
 
   /**
    * SuperChat イベントを抽出して onEvent に流す
+   * 重複を防ぐため、seenMessageIds で既出チェックを行う
    */
   private emitSuperChats(
     items: LiveChatMessage[] | undefined,
@@ -391,6 +408,23 @@ export class YouTubeConnector implements IConnector {
     for (const message of items) {
       if (message.snippet.type !== "superChatEvent") continue;
       if (!message.snippet.superChatDetails) continue;
+
+      // 重複チェック：すでに処理済みなら無視
+      if (this.seenMessageIds.has(message.id)) {
+        this.log("Skipping duplicate message:", message.id);
+        continue;
+      }
+
+      // LRU 管理：上限を超えたら最古のエントリを削除
+      if (this.seenMessageIds.size >= this.MAX_SEEN_IDS) {
+        const firstKey = this.seenMessageIds.values().next().value;
+        if (firstKey) {
+          this.seenMessageIds.delete(firstKey);
+        }
+      }
+
+      // 新規メッセージとして処理
+      this.seenMessageIds.add(message.id);
 
       const details = message.snippet.superChatDetails;
 
