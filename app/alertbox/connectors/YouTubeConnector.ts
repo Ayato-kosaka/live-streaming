@@ -211,25 +211,10 @@ export class YouTubeConnector implements IConnector {
       broadcastUrl.searchParams.set("maxResults", "50");
 
       while (!this.stopped) {
-        // 念のため、ループ中にも期限チェックして更新
-        await this.ensureValidToken();
-
-        const broadcastResponse = await fetch(broadcastUrl.toString(), {
-          headers: {
-            Authorization: `Bearer ${this.access_token}`,
-          },
-        });
-
-        if (!broadcastResponse.ok) {
-          const body = await broadcastResponse.text();
-          this.log(`Failed to fetch live broadcasts: ${broadcastResponse.status}`, body);
-          // 認可系なら上位でリトライするため throw
-          throw new Error(
-            `Failed to fetch live broadcasts: ${broadcastResponse.status} ${broadcastResponse.statusText}`
-          );
-        }
-
-        const broadcastData: LiveBroadcastResponse = await broadcastResponse.json();
+        const broadcastData = await this.fetchJsonWithAuth<LiveBroadcastResponse>(
+          broadcastUrl,
+          "liveBroadcasts.list"
+        );
 
         if (broadcastData.items?.length > 0) {
           const broadcastId = broadcastData.items[0].id;
@@ -239,21 +224,10 @@ export class YouTubeConnector implements IConnector {
           videoUrl.searchParams.set("id", broadcastId);
           videoUrl.searchParams.set("part", "liveStreamingDetails");
 
-          const videoResponse = await fetch(videoUrl.toString(), {
-            headers: {
-              Authorization: `Bearer ${this.access_token}`,
-            },
-          });
-
-          if (!videoResponse.ok) {
-            const body = await videoResponse.text();
-            this.log(`Failed to fetch video details: ${videoResponse.status}`, body);
-            throw new Error(
-              `Failed to fetch video details: ${videoResponse.status} ${videoResponse.statusText}`
-            );
-          }
-
-          const videoData: VideoListResponse = await videoResponse.json();
+          const videoData = await this.fetchJsonWithAuth<VideoListResponse>(
+            videoUrl,
+            "videos.list"
+          );
           const id = videoData.items?.[0]?.liveStreamingDetails?.activeLiveChatId;
 
           if (id) {
@@ -288,50 +262,101 @@ export class YouTubeConnector implements IConnector {
     const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
     url.searchParams.set("liveChatId", liveChatId);
     url.searchParams.set("part", "snippet,authorDetails");
+    if (this.nextPageToken) url.searchParams.set("pageToken", this.nextPageToken);
 
-    if (this.nextPageToken) {
-      url.searchParams.set("pageToken", this.nextPageToken);
-    }
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${this.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      this.log(`Failed to fetch live chat messages: ${response.status}`, body);
-
-      // 401 の場合は Doneru refresh を試みる
-      if (response.status === 401) {
-        this.log("401 Unauthorized detected, attempting Doneru refresh");
-        await this.refreshDoneruToken();
-        throw new Error(`Live chat messages returned 401: ${response.status} ${response.statusText}`);
-      }
-
-      // broadcast 終了などで liveChatId が無効になった場合はリセットして復旧
-      if (response.status === 404 || response.status === 403) {
+    try {
+      return await this.fetchJsonWithAuth<LiveChatMessagesListResponse>(url, "liveChat/messages");
+    } catch (e) {
+      if (e instanceof YouTubeApiError && (e.status === 404 || e.status === 403)) {
         this.log("Live chat ended or invalid, resetting");
         this.liveChatId = null;
         this.nextPageToken = undefined;
 
-        // 403 が認可由来の可能性もあるので token も疑う
-        if (response.status === 403) {
-          this.invalidateToken();
-        }
-
-        // 呼び出し元で再試行させたいので throw
-        throw new Error(`Live chat ended or invalid: ${response.status} ${response.statusText}`);
+        if (e.status === 403) this.invalidateToken();
       }
+      throw e;
+    }
+  }
 
-      // その他は通常エラー
-      throw new Error(
-        `Failed to fetch live chat messages: ${response.status} ${response.statusText}`
-      );
+
+  /**
+   * fetchWithAuth の JSON 版
+   */
+  private async fetchJsonWithAuth<T>(
+    input: string | URL,
+    context: string,
+    init: RequestInit = {},
+    opts?: Parameters<YouTubeConnector["fetchWithAuth"]>[3]
+  ): Promise<T> {
+    const res = await this.fetchWithAuth(input, context, init, opts);
+    return (await res.json()) as T;
+  }
+
+  /**
+   * Authorization ヘッダ付き fetch
+   * - 401 なら Doneru refresh → retry（デフォ true）
+   * - 403 も retry したい場合は opts.retryOn403=true を指定（デフォ false）
+   */
+  private async fetchWithAuth(
+    input: string | URL,
+    context: string,
+    init: RequestInit = {},
+    opts: {
+      retryOnAuthError?: boolean;   // デフォ true（401 で refresh→retry）
+      retryOn403?: boolean;        // デフォ false（403 は理由が多いので基本 retryしない）
+    } = {}
+  ): Promise<Response> {
+    const retryOnAuthError = opts.retryOnAuthError ?? true;
+    const retryOn403 = opts.retryOn403 ?? false;
+
+    const doFetch = async (): Promise<Response> => {
+      await this.ensureValidToken();
+
+      // headers をマージ（既存ヘッダを壊さない）
+      const headers = new Headers(init.headers);
+      headers.set("Authorization", `Bearer ${this.access_token}`);
+
+      return fetch(typeof input === "string" ? input : input.toString(), {
+        ...init,
+        headers,
+      });
+    };
+
+    const res1 = await doFetch();
+    if (res1.ok) return res1;
+
+    // body を読んでログ（この時点で res1.body は消費されるので注意）
+    const body1 = await res1.text();
+    this.log(`[${context}] HTTP ${res1.status}`, body1);
+
+    // 401 は Doneru refresh を必ず挟む（今回の決定事項）
+    if (retryOnAuthError && res1.status === 401) {
+      this.log(`[${context}] 401 detected -> Doneru refresh -> retry once`);
+      await this.refreshDoneruToken();     // invalidateToken() までやる想定
+      // refreshDoneruToken 内で invalidate してるなら次の ensureValidToken で取り直される
+      const res2 = await doFetch();
+
+      if (res2.ok) return res2;
+
+      const body2 = await res2.text();
+      this.log(`[${context}] retry failed HTTP ${res2.status}`, body2);
+      throw new YouTubeApiError(context, res2.status, res2.statusText, body2);
     }
 
-    return (await response.json()) as LiveChatMessagesListResponse;
+    // 403 はケースが多いのでデフォは retryしない。必要なら opts.retryOn403=true
+    if (retryOn403 && res1.status === 403) {
+      this.log(`[${context}] 403 detected (retryOn403 enabled) -> invalidate -> retry once`);
+      this.invalidateToken();
+      const res2 = await doFetch();
+      if (res2.ok) return res2;
+
+      const body2 = await res2.text();
+      this.log(`[${context}] retry failed HTTP ${res2.status}`, body2);
+      throw new YouTubeApiError(context, res2.status, res2.statusText, body2);
+    }
+
+    // 通常エラー
+    throw new YouTubeApiError(context, res1.status, res1.statusText, body1);
   }
 
   /**
@@ -426,5 +451,19 @@ export class YouTubeConnector implements IConnector {
    */
   private log(...args: unknown[]) {
     console.log("[YouTubeConnector]", ...args);
+  }
+}
+
+class YouTubeApiError extends Error {
+  status: number;
+  body: string;
+  context: string;
+
+  constructor(context: string, status: number, statusText: string, body: string) {
+    super(`[${context}] ${status} ${statusText}`);
+    this.name = "YouTubeApiError";
+    this.status = status;
+    this.body = body;
+    this.context = context;
   }
 }
