@@ -28,7 +28,7 @@ export const settings = {
     "fontHighlightColor": "#37a9fd",
     "messageTemplate": "{名前} 様 {金額}{単位} ありやとう！！",
     "imageSource": {
-      "hash": "2b8554b15282b1xnx11m5ikor9y.png",
+      "hash": "05f2f6a0418c4grgg1mkgs8fhe.png",
       "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
     },
     "soundSource": {
@@ -180,7 +180,7 @@ export const settings = {
     "messageTemplate": "{名前} 様 {金額}{単位} ありやとう！！",
     "textAnimation": "headShake",
     "imageSource": {
-      "hash": "2b8554b15282b1xnx11m5ikor9y.png",
+      "hash": "05f2f6a0418c4grgg1mkgs8fhe.png",
       "name": "1tkeBy9mMwKZPYn1736018521_1736018626.png"
     },
     "soundSource": {
