@@ -3,35 +3,92 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>料理画像 最適化状況ドーナツ</title>
+    <title>達成状況ドーナツ</title>
     <style>
-      * {
+      /* =========================
+         ベースリセット
+      ========================== */
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
       }
 
       body {
-        width: 100vw;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 24px 0;
+        margin: 0;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           sans-serif;
-        background: #ffffff;
         color: #111827;
+        /* 添付画像の薄いオレンジ寄り（ベース背景） */
+        background: var(--bg-base);
       }
 
+      /* =========================
+         テーマカラー（必要ならここだけ調整）
+      ========================== */
+      :root {
+        /* 背景の薄オレンジ（添付画像っぽい） */
+        --bg-base: #fff1df;
+
+        /* ポイントカラー：オレンジ寄りの赤（添付画像っぽい） */
+        --accent: #f05a3a;
+
+        /* 読みやすさ用 */
+        --text: #111827;
+        --text-sub: #374151;
+        --text-muted: #6b7280;
+
+        /* ドーナツ背景 */
+        --donut-bg: #e5e7eb;
+      }
+
+      /* =========================
+         背景画像を載せるコンテナ
+         - 画像が読み込まれるまではベース色のまま
+         - 読み込み完了後、background-image を付与
+      ========================== */
+      #pageRoot {
+        align-items: center;
+      }
+
+      .page {
+        min-height: 100vh;
+        display: grid;
+        place-items: start center;
+        padding: 24px 12px;
+        background-color: var(--bg-base);
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+      }
+
+      /* 背景の上に載せるカード（読みやすさを確保） */
+      .panel {
+        width: min(92vw, 520px);
+        border-radius: 28px;
+        /* 背景がうるさい画像でも読めるように */
+        background: rgba(255, 241, 223, 0.78);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        padding: 20px 18px 22px;
+        box-shadow: 0 8px 30px rgba(17, 24, 39, 0.12);
+      }
+
+      /* =========================
+         ドーナツ
+      ========================== */
       .donut-wrapper {
         position: relative;
-        width: min(90vw, 480px);
-        height: min(90vw, 480px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: min(86vw, 440px);
+        height: min(86vw, 440px);
+        margin: 0 auto;
+        display: grid;
+        place-items: center;
       }
 
       .donut-svg {
@@ -42,13 +99,13 @@
 
       .donut-bg {
         fill: none;
-        stroke: #e5e7eb;
+        stroke: var(--donut-bg);
         stroke-width: 16;
       }
 
       .donut-progress {
         fill: none;
-        stroke: #22c55e;
+        stroke: var(--accent);
         stroke-width: 16;
         stroke-linecap: round;
         transition: stroke 0.2s ease-out;
@@ -58,132 +115,177 @@
         position: absolute;
         text-align: center;
         pointer-events: none;
+        padding: 0 8px;
       }
 
       .center-text-main {
-        font-size: clamp(24px, 4vw, 40px);
-        font-weight: 600;
+        font-size: clamp(18px, 4vw, 28px);
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.02em;
       }
 
       .center-text-value {
-        font-size: clamp(28px, 10vw, 46px);
-        font-weight: 700;
-        margin: 6px 0;
-        color: #22c55e;
+        font-size: clamp(28px, 10vw, 54px);
+        font-weight: 800;
+        margin: 6px 0 2px;
+        color: var(--accent);
       }
 
       .center-text-sub {
-        font-size: clamp(18px, 4vw, 28px);
-        color: #374151;
-        line-height: 1.4;
+        font-size: clamp(14px, 3.6vw, 18px);
+        color: var(--text-sub);
+        line-height: 1.45;
       }
 
       .center-text-status {
-        font-size: clamp(14px, 3vw, 18px);
-        color: #6b7280;
-        margin-top: 8px;
+        font-size: clamp(12px, 3vw, 14px);
+        color: var(--text-muted);
+        margin-top: 10px;
       }
 
       .center-text-error {
         color: #ef4444;
-      }
-
-      .category-grid {
-        width: min(90vw, 480px);
-        margin: 24px auto 0;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .category-card {
-        position: relative;
-        border-radius: 16px;
-        overflow: hidden;
-        background: #f3f4f6;
-        width: 100%;
-      }
-
-      /* 正方形を作るためのダミー要素（高さ確保用） */
-      .category-card::before {
-        content: "";
-        display: block;
-        padding-top: 100%; /* 高さ = 幅 → 1:1 の正方形 */
-      }
-
-      .category-card img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-      }
-
-      /* オーバーレイは下にかぶせる */
-      .category-card-overlay {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        padding: 6px 8px;
-        font-size: 12px;
-        color: #ffffff;
-        background: linear-gradient(
-          to top,
-          rgba(0, 0, 0, 0.6),
-          rgba(0, 0, 0, 0)
-        );
-      }
-
-      .category-card-name {
         font-weight: 600;
       }
 
-      .category-card-placeholder {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #e5e7eb;
-        color: #9ca3af;
-        font-size: 24px;
+      /* 補足：下部のヘルプ */
+      .hint {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .hint code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 0.95em;
+      }
+
+      /* =========================
+         アクセシビリティ：動きを減らす設定
+      ========================== */
+      @media (prefers-reduced-motion: reduce) {
+        .donut-progress {
+          transition: none;
+        }
       }
     </style>
   </head>
+
   <body>
-    <div class="donut-wrapper">
-      <svg class="donut-svg" viewBox="0 0 200 200">
-        <circle class="donut-bg" cx="100" cy="100" r="80"></circle>
-        <circle class="donut-progress" cx="100" cy="100" r="80"></circle>
-      </svg>
+    <!--
+      .page に background-image を適用します（読み込み完了後）。
+      それまでは --bg-base のみで表示されます。
+    -->
+    <main class="page" id="pageRoot">
+      <section class="panel" aria-label="達成状況">
+        <div class="donut-wrapper" aria-live="polite">
+          <svg class="donut-svg" viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="donut-bg" cx="100" cy="100" r="80"></circle>
+            <circle class="donut-progress" cx="100" cy="100" r="80"></circle>
+          </svg>
 
-      <div class="center-text">
-        <div class="center-text-main">最適化済</div>
-        <div class="center-text-value" id="optimizedCount">0</div>
-        <div class="center-text-sub">
-          料理画像: <span id="totalCount">0</span><br />
-          完了率: <span id="percentLabel">0</span>%
+          <div class="center-text">
+            <div class="center-text-main">達成数</div>
+            <div class="center-text-value" id="achievedCount">0</div>
+
+            <div class="center-text-sub">
+              目標数: <span id="targetCount">0</span><br />
+              達成率: <span id="percentLabel">0</span>%
+            </div>
+
+            <!-- 背景画像ロードなどの状態表示 -->
+            <div class="center-text-status" id="statusText">読み込み中…</div>
+          </div>
         </div>
-        <div class="center-text-status" id="statusText">読み込み中…</div>
-      </div>
-    </div>
-
-    <div id="categoryGrid" class="category-grid"></div>
+      </section>
+    </main>
 
     <script>
-      const API_ENDPOINT =
-        "https://script.google.com/macros/s/AKfycbxvafi5bnC1wi9dFitu4IZVYFMsZ9fF06rYt06QwksD85SbhbdKbaQya5Q2Ii6pCnyO/exec";
+      "use strict";
 
-      const optimizedEl = document.getElementById("optimizedCount");
-      const totalEl = document.getElementById("totalCount");
+      /* =========================================================
+         ユーティリティ：URLクエリ取得
+         - 例: ?achieved=10&target=20&bg=https%3A%2F%2F...
+      ========================================================== */
+      function getQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+
+        // 数値は安全にパース（不正なら 0）
+        const achieved = parseNonNegativeInt(params.get("achieved"));
+        const target = parseNonNegativeInt(params.get("target"));
+
+        // 背景画像URL（空文字なら未指定扱い）
+        const bg = (params.get("bg") || "").trim();
+
+        return { achieved, target, bg };
+      }
+
+      function parseNonNegativeInt(value) {
+        // null/空/数字以外を弾き、0以上の整数のみ許可
+        const n = Number(value);
+        if (!Number.isFinite(n)) return 0;
+        const int = Math.floor(n);
+        return int < 0 ? 0 : int;
+      }
+
+      /* =========================================================
+         背景画像：読み込み完了を待つ
+         - background-image は CSS だけだと onload を取れないので、
+           Image() でプリロードしてから適用する
+         - タイムアウトでハング防止
+      ========================================================== */
+      function preloadImage(url, timeoutMs = 10000) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          let finished = false;
+
+          const done = (ok, err) => {
+            if (finished) return;
+            finished = true;
+            ok ? resolve(url) : reject(err || new Error("Image load failed"));
+          };
+
+          img.onload = () => done(true);
+          img.onerror = () => done(false, new Error("Image load error"));
+
+          // タイムアウト（画像サーバ不調などでもUIが固まらない）
+          const timer = window.setTimeout(() => {
+            done(false, new Error("Image load timeout"));
+          }, timeoutMs);
+
+          // どちらかが先に走ったらタイマーを止める
+          const clear = () => window.clearTimeout(timer);
+          img.onload = () => {
+            clear();
+            done(true);
+          };
+          img.onerror = () => {
+            clear();
+            done(false, new Error("Image load error"));
+          };
+
+          img.src = url;
+        });
+      }
+
+      function applyBackgroundImage(el, url) {
+        // 安全のため URL をそのまま CSS に入れるのではなく、
+        // 文字列として url("...") 形式にする
+        el.style.backgroundImage = `url("${url}")`;
+      }
+
+      /* =========================================================
+         ドーナツ描画・アニメーション
+      ========================================================== */
+      const pageRootEl = document.getElementById("pageRoot");
+      const achievedEl = document.getElementById("achievedCount");
+      const targetEl = document.getElementById("targetCount");
       const percentLabelEl = document.getElementById("percentLabel");
       const statusTextEl = document.getElementById("statusText");
       const progressCircle = document.querySelector(".donut-progress");
-      const gridEl = document.getElementById("categoryGrid");
 
       const radius = 80;
       const circumference = 2 * Math.PI * radius;
@@ -191,27 +293,59 @@
       progressCircle.style.strokeDasharray = `${circumference}`;
       progressCircle.style.strokeDashoffset = `${circumference}`;
 
-      function animate(optimized, total) {
-        const percent = total > 0 ? Math.round((optimized / total) * 100) : 0;
-        totalEl.textContent = total;
+      // prefers-reduced-motion の場合、アニメーションを控える
+      const prefersReducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        const animationDuration = 1000;
-        let startTime = null;
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
 
-        function step(timestamp) {
-          if (!startTime) startTime = timestamp;
-          const elapsed = timestamp - startTime;
-          const t = Math.min(elapsed / animationDuration, 1);
+      function computePercent(achieved, target) {
+        // 目標0の場合は 0% 扱い（0除算回避）
+        if (target <= 0) return 0;
+        const raw = (achieved / target) * 100;
+        // 達成率は 0〜100 に丸める（超過は100%表示）
+        return clamp(Math.round(raw), 0, 100);
+      }
+
+      function setDonutByPercent(percent) {
+        const offset = circumference * (1 - percent / 100);
+        progressCircle.style.strokeDashoffset = `${offset}`;
+      }
+
+      function animateNumbersAndDonut(achieved, target) {
+        const percent = computePercent(achieved, target);
+
+        // 目標数は固定で表示
+        targetEl.textContent = String(target);
+
+        // 動きを減らす設定なら、即時反映
+        if (prefersReducedMotion) {
+          achievedEl.textContent = String(achieved);
+          percentLabelEl.textContent = String(percent);
+          setDonutByPercent(percent);
+          return;
+        }
+
+        // 既存の requestAnimationFrame アニメ
+        const durationMs = 900;
+        let start = null;
+
+        function step(ts) {
+          if (start == null) start = ts;
+          const t = clamp((ts - start) / durationMs, 0, 1);
+
+          // 緩やかなイージング（easeOutQuad）
           const ease = 1 - (1 - t) * (1 - t);
 
-          const currentOptimized = Math.floor(optimized * ease);
+          const currentAchieved = Math.floor(achieved * ease);
           const currentPercent = Math.floor(percent * ease);
 
-          optimizedEl.textContent = currentOptimized;
-          percentLabelEl.textContent = currentPercent;
-
-          const offset = circumference * (1 - currentPercent / 100);
-          progressCircle.style.strokeDashoffset = offset;
+          achievedEl.textContent = String(currentAchieved);
+          percentLabelEl.textContent = String(currentPercent);
+          setDonutByPercent(currentPercent);
 
           if (t < 1) requestAnimationFrame(step);
         }
@@ -219,134 +353,56 @@
         requestAnimationFrame(step);
       }
 
-      function renderCategories(categories) {
-        if (!gridEl) return;
-        gridEl.innerHTML = "";
+      /* =========================================================
+         初期化フロー
+         1) URLクエリ読む
+         2) 背景画像があればプリロードして適用
+         3) 数字 & ドーナツを描画
+      ========================================================== */
+      async function init() {
+        const { achieved, target, bg } = getQueryParams();
 
-        categories.forEach((cat) => {
-          const card = document.createElement("div");
-          card.className = "category-card";
-
-          const img = document.createElement("img");
-          img.src = cat.image_url;
-          img.alt = cat.name;
-          img.onerror = function () {
-            if (this.dataset.errorHandled) return;
-            this.dataset.errorHandled = "true";
-            this.style.display = "none";
-            const placeholder = document.createElement("div");
-            placeholder.className = "category-card-placeholder";
-            placeholder.textContent = "🍽️";
-            card.insertBefore(placeholder, card.firstChild);
-          };
-
-          const overlay = document.createElement("div");
-          overlay.className = "category-card-overlay";
-
-          const nameDiv = document.createElement("div");
-          nameDiv.className = "category-card-name";
-          nameDiv.textContent = cat.name;
-
-          overlay.appendChild(nameDiv);
-          card.appendChild(img);
-          card.appendChild(overlay);
-          gridEl.appendChild(card);
-        });
-      }
-
-      // ★ JSONP コールバック（GAS から呼ばれる）
-      async function handleApiData(data) {
-        try {
-          if (data.error) {
-            throw new Error(data.message || "Unknown error from API");
-          }
-
-          const optimizedConfig = data.config.find(
-            (c) => c.key === "optimized"
-          );
-          const optimized = optimizedConfig
-            ? Number(optimizedConfig.value ?? optimizedConfig)
-            : 0;
-
-          const totalConfig = data.config.find((c) => c.key === "total");
-          const total = totalConfig
-            ? Number(totalConfig.value ?? totalConfig)
-            : 0;
-
-          // ここで「画像読み込み中…」にステータス更新
-          statusTextEl.textContent = "画像読み込み中…";
-
-          const categories = Array.isArray(data.dishCategories)
-            ? data.dishCategories
-            : [];
-
-          // 全画像の先読みを待つ
-          const urls = categories.map((c) => c.image_url).filter(Boolean);
-          await preloadImages(urls);
-
-          // ここまで来たら「データ + 画像」両方準備完了！
+        // まず数値描画の前に、ステータス文言を適切に
+        // bg があれば「背景画像読み込み中…」、なければ「表示中」
+        if (bg) {
+          statusTextEl.textContent = "背景画像読み込み中…";
+        } else {
+          statusTextEl.textContent = "表示中";
+          // 背景画像がない場合はすぐ消してOK（お好みで）
           statusTextEl.style.display = "none";
-
-          // まずカード描画
-          renderCategories(categories);
-
-          // そのあとドーナツの数字アニメーション開始
-          animate(optimized, total);
-        } catch (error) {
-          console.error("API data error:", error);
-          statusTextEl.textContent = "取得に失敗しました";
-          statusTextEl.classList.add("center-text-error");
-          animate(0, 0);
         }
+
+        // 背景画像が指定されている場合のみロード
+        if (bg) {
+          try {
+            // ここで背景画像の読み込み完了を待つ
+            await preloadImage(bg, 12000);
+
+            // 読み込み成功したら cover 背景として適用
+            applyBackgroundImage(pageRootEl, bg);
+
+            // 状態表示を消す
+            statusTextEl.style.display = "none";
+          } catch (err) {
+            // 失敗しても UI は継続：ベース背景色のまま
+            console.warn("背景画像の読み込みに失敗:", err);
+            statusTextEl.textContent =
+              "背景画像の読み込みに失敗しました（背景色で表示中）";
+            statusTextEl.classList.add("center-text-error");
+            // 数秒後に消しても良い（今回は表示のまま）
+          }
+        }
+
+        // 数字＆ドーナツを描画（超過は達成率だけ100%にクランプ）
+        animateNumbersAndDonut(achieved, target);
       }
 
-      // 画像を全部読み終わるまで待つ Promise
-      function preloadImages(urls, timeoutMs = 10000) {
-        const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
-        if (uniqueUrls.length === 0) return Promise.resolve([]);
-
-        const promises = uniqueUrls.map((url) => {
-          return new Promise((resolve) => {
-            const img = new Image();
-            let done = false;
-
-            const finish = (ok) => {
-              if (done) return;
-              done = true;
-              resolve({ url, ok });
-            };
-
-            img.onload = () => finish(true);
-            img.onerror = () => finish(false);
-
-            // タイムアウト（画像サーバ落ちたときなどにハングしないように）
-            if (timeoutMs) {
-              setTimeout(() => finish(false), timeoutMs);
-            }
-
-            img.src = url;
-          });
-        });
-
-        return Promise.all(promises);
+      // DOM 準備ができてから起動（安定）
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
       }
-
-      // ★ JSONP 用の <script> を動的に追加
-      function fetchDataJsonp() {
-        const script = document.createElement("script");
-        // callback=handleApiData を付ける
-        script.src = API_ENDPOINT + "?callback=handleApiData";
-        script.onerror = function () {
-          console.error("JSONP script load error");
-          statusTextEl.textContent = "取得に失敗しました";
-          statusTextEl.classList.add("center-text-error");
-          animate(0, 0);
-        };
-        document.body.appendChild(script);
-      }
-
-      // ページ読み込み時に実行
-      fetchDataJsonp();
     </script>
   </body>
 </html>
