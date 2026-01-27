@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#fff7fb" />
+    <title>一月 応援ありがとう🙏</title>
+
+    <style>
+      /* =========================
+       Pastel Ranking UI (1-file)
+       - Mobile-first / Safe-area
+       - Accessible / Reduced motion
+       - No external deps
+       ========================= */
+
+      :root {
+        /* Background + surface */
+        --bg-fallback-1: #fbe8f3; /* pink */
+        --bg-fallback-2: #e9ecff; /* lavender */
+        --bg-fallback-3: #e6fff6; /* mint */
+        --surface: rgba(255, 255, 255, 0.1);
+        --surface-strong: rgba(255, 255, 255, 0.1);
+        --border: rgba(255, 255, 255, 0.65);
+
+        /* Text */
+        --text: #2b2b35;
+        --muted: #6b6b78;
+
+        /* Pastel accents (match your ribbon/confetti vibe) */
+        --pink: #f6a9c7;
+        --lav: #b9b7ff;
+        --mint: #9be7d5;
+        --peach: #ffc8a8;
+        --gold: #ffd98a; /* pastel gold */
+        --silver: #dbe6ff;
+        --bronze: #ffd0dc;
+
+        /* Layout */
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+
+        --shadow-soft: 0 10px 30px rgba(40, 25, 60, 0.1);
+        --shadow-card: 0 12px 28px rgba(40, 25, 60, 0.12);
+
+        --max-w: 420px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-rounded, system-ui, -apple-system, "Hiragino Sans",
+          "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            120% 80% at 50% 10%,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(255, 255, 255, 0) 55%
+          ),
+          linear-gradient(
+            180deg,
+            var(--bg-fallback-2),
+            var(--bg-fallback-1) 40%,
+            var(--bg-fallback-3)
+          );
+        /* background image layer injected via ::before */
+        overflow-x: hidden;
+      }
+
+      /* Background image layer (replace URL with your generated image or data URL) */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background-image: url("IMG_4329.jpeg"); /* ← ここを差し替え: 背景画像パス or data:image/... */
+        background-size: cover;
+        background-position: center;
+        background-repeat: repeat;
+        filter: saturate(1.02) brightness(1.02);
+        transform: translateZ(0);
+      }
+
+      /* Optional extra soft veil to keep text readable without killing the vibe */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(
+          80% 55% at 50% 35%,
+          rgba(255, 255, 255, 0.72) 0%,
+          rgba(255, 255, 255, 0.18) 62%,
+          rgba(255, 255, 255, 0.08) 100%
+        );
+        pointer-events: none;
+      }
+
+      .app {
+        min-height: 100svh;
+        padding: calc(env(safe-area-inset-top) + 18px)
+          calc(env(safe-area-inset-right) + 16px)
+          calc(env(safe-area-inset-bottom) + 18px)
+          calc(env(safe-area-inset-left) + 16px);
+        display: flex;
+        justify-content: center;
+      }
+
+      .wrap {
+        width: min(100%, var(--max-w));
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      header.hero {
+        padding: 18px 18px 16px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.78),
+          rgba(255, 255, 255, 0.62)
+        );
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        text-align: center;
+      }
+
+      .title {
+        margin: 0;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        font-size: 22px;
+        line-height: 1.2;
+        /* pastel gradient text */
+        background: linear-gradient(90deg, #ff86b2, #9c9bff, #69e6c9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 6px 18px rgba(255, 150, 205, 0.16);
+      }
+      .subtitle {
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .panel {
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        overflow: hidden;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 16px 10px;
+      }
+      .panel-head h2 {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        font-weight: 900;
+      }
+      .panel-head .note {
+        font-size: 12px;
+        color: rgba(90, 90, 110, 0.85);
+        font-weight: 700;
+      }
+
+      /* TOP3 grid */
+      .top3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 0 12px 14px;
+      }
+      .top-card {
+        position: relative;
+        border-radius: 18px;
+        padding: 12px 10px 10px;
+        background: rgba(255, 255, 255, 0.66);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        overflow: hidden;
+        min-height: 172px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        transform: translateZ(0);
+      }
+      .top-card::before {
+        content: attr(data-rank);
+        position: absolute;
+        inset: auto 10px 6px auto;
+        font-size: 84px;
+        font-weight: 950;
+        line-height: 1;
+        letter-spacing: -0.06em;
+        color: rgba(120, 120, 150, 0.1);
+        pointer-events: none;
+        user-select: none;
+      }
+      .top-card.primary {
+        min-height: 184px;
+        background: rgba(255, 255, 255, 0.76);
+        border-color: rgba(255, 255, 255, 0.75);
+        box-shadow: 0 14px 30px rgba(40, 25, 60, 0.14);
+      }
+
+      /* Avatar */
+      .avatar-wrap {
+        position: relative;
+        width: 78px;
+        height: 78px;
+        display: grid;
+        place-items: center;
+        margin-top: 6px;
+      }
+      .avatar-ring {
+        position: absolute;
+        inset: -5px;
+        border-radius: 999px;
+        background: conic-gradient(
+          from 180deg,
+          rgba(255, 145, 190, 0.95),
+          rgba(175, 170, 255, 0.95),
+          rgba(120, 240, 215, 0.95),
+          rgba(255, 145, 190, 0.95)
+        );
+        filter: blur(0px);
+        box-shadow: 0 10px 22px rgba(255, 140, 200, 0.18);
+      }
+
+      /* rank tint */
+      .top-card[data-rank="1"] .avatar-ring {
+        background: conic-gradient(
+          from 180deg,
+          #ffd99a,
+          #fff0c8,
+          #ffcbdc,
+          #ffd99a
+        );
+      }
+      .top-card[data-rank="2"] .avatar-ring {
+        background: conic-gradient(
+          from 180deg,
+          #dbe6ff,
+          #ffffff,
+          #c9f2ff,
+          #dbe6ff
+        );
+      }
+      .top-card[data-rank="3"] .avatar-ring {
+        background: conic-gradient(
+          from 180deg,
+          #ffd0dc,
+          #ffe6ef,
+          #ffe1c7,
+          #ffd0dc
+        );
+      }
+
+      .avatar {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        border: 3px solid rgba(255, 255, 255, 0.85);
+      }
+      .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .avatar .initials {
+        font-weight: 950;
+        font-size: 22px;
+        color: rgba(55, 55, 75, 0.72);
+      }
+
+      /* Medal badge */
+      .medal {
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 36px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 950;
+        color: rgba(45, 45, 55, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 10px 18px rgba(40, 25, 60, 0.12);
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .top-card[data-rank="1"] .medal {
+        background: rgba(255, 238, 200, 0.88);
+      }
+      .top-card[data-rank="2"] .medal {
+        background: rgba(225, 238, 255, 0.88);
+      }
+      .top-card[data-rank="3"] .medal {
+        background: rgba(255, 225, 235, 0.88);
+      }
+
+      .name {
+        margin: 14px 0 0;
+        font-weight: 900;
+        font-size: 14px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 4px;
+      }
+      .score {
+        margin: 6px 0 0;
+        font-weight: 950;
+        font-size: 14px;
+        color: rgba(60, 60, 78, 0.86);
+      }
+
+      /* List */
+      .list {
+        padding: 2px 10px 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 28px 44px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        margin: 8px 2px;
+        transition: transform 0.16s ease, box-shadow 0.16s ease;
+      }
+      .row:active {
+        transform: translateY(1px) scale(0.995);
+      }
+      .rank {
+        font-weight: 950;
+        color: rgba(70, 70, 88, 0.75);
+        text-align: right;
+      }
+      .mini-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.85);
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .mini-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .mini-avatar .initials {
+        font-weight: 950;
+        color: rgba(55, 55, 75, 0.65);
+        font-size: 14px;
+      }
+
+      .row .row-name {
+        font-weight: 900;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .row .row-score {
+        font-weight: 950;
+        color: rgba(60, 60, 78, 0.82);
+        letter-spacing: 0.01em;
+      }
+
+      /* Footer hint */
+      .foot {
+        text-align: center;
+        color: rgba(80, 80, 105, 0.72);
+        font-size: 11px;
+        padding: 6px 6px 2px;
+        font-weight: 700;
+      }
+
+      /* Hover (desktop preview only) */
+      @media (hover: hover) {
+        .row:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 26px rgba(40, 25, 60, 0.12);
+        }
+        .top-card:hover {
+          box-shadow: 0 16px 34px rgba(40, 25, 60, 0.16);
+        }
+      }
+
+      /* Small screens */
+      @media (max-width: 360px) {
+        .top3 {
+          gap: 8px;
+          padding: 0 10px 12px;
+        }
+        .avatar-wrap {
+          width: 72px;
+          height: 72px;
+        }
+        .avatar {
+          width: 66px;
+          height: 66px;
+        }
+        .top-card::before {
+          font-size: 74px;
+        }
+      }
+
+      /* Reduce motion */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Assistive-only */
+      .sr-only {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="app" role="main">
+      <div class="wrap">
+        <header class="hero" aria-label="感謝メッセージ">
+          <h1 class="title">一月 応援ありがとう<span style="color: #2b2b35;">🙏</h1>
+          <p class="subtitle">アプリ広告応援隊の皆様👏</p>
+        </header>
+
+        <section class="panel" aria-labelledby="top3-title">
+          <div class="panel-head">
+            <h2 id="top3-title">ランキング</h2>
+            <div class="note" id="asof"></div>
+          </div>
+          <div class="top3" id="top3"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="list-title">
+          <div class="list" id="list"></div>
+          <div class="foot" id="footnote"></div>
+        </section>
+
+        <p class="sr-only" id="a11y-note">
+          ランキング一覧です。上位3名はカード表示、4位以降はリスト表示です。
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      "use strict";
+
+      /**
+       * =========================
+       * Data (embed your array here)
+       * =========================
+       * avatar: 画像URL / 相対パス / dataURL どれでもOK
+       * score: 数値 (M表記にしたいなら unit:"M" を付ける)
+       */
+      const RANKING_DATA_URL = 
+            "https://storage.googleapis.com/live-streaming-d3cac-public/202601_donation_ceremony.json?nocache=" +
+            Date.now();
+      let ranking = [];
+      try {
+        const resp = await fetch(RANKING_DATA_URL, { cache: "no-store" });
+        if (resp.ok) {
+          ranking = await resp.json();
+        } else {
+          console.error("Failed to load ranking data:", resp.status, resp.statusText);
+        }
+      } catch (e) {
+        console.error("Error fetching ranking data:", e);
+      }
+
+      // Optional: timestamp
+      const now = new Date();
+      const asof = document.getElementById("asof");
+      asof.textContent = `2025/12/26 ~ 2026/01/25`;
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function initials(name) {
+        // Try to pick 1–2 visible chars (works ok for Japanese/emoji mix)
+        const s = String(name).trim();
+        if (!s) return "？";
+        // Remove trailing ellipsis commonly used
+        const cleaned = s.replace(/…+$/, "");
+        // take first 2 "characters" (codepoints-ish)
+        const arr = Array.from(cleaned);
+        return arr.slice(0, 2).join("") || arr[0] || "？";
+      }
+
+      function formatScore(score, unit) {
+        // Keep one decimal if present; otherwise integer, with thousand separators
+        const n = Number(score);
+        if (!Number.isFinite(n)) return "";
+        const hasDecimal = Math.abs(n - Math.round(n)) > 1e-9;
+        const v = hasDecimal
+            ? n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+            : n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+        return unit ? `${unit} ${v}` : v;
+        }
+
+      function avatarEl({ name, avatar }, size = "big") {
+        const safeName = escapeHtml(name);
+        const init = escapeHtml(initials(name));
+        return `
+        <div class="${
+          size === "big" ? "avatar" : "mini-avatar"
+        }" aria-label="${safeName}のアバター">
+          <img src="${escapeHtml(
+            avatar || "https://i.ibb.co/V1t1PDb/unknown-avatar.jpg"
+          )}" alt="${safeName}" loading="lazy" decoding="async" />
+        </div>
+      `;
+      }
+
+      function render() {
+        const top3 = document.getElementById("top3");
+        const list = document.getElementById("list");
+        const foot = document.getElementById("footnote");
+
+        const sorted = [...ranking].sort(
+          (a, b) => (b.score ?? 0) - (a.score ?? 0)
+        );
+        const top = sorted.slice(0, 3);
+        const rest = sorted.slice(3);
+
+        // Place 2,1,3 like the screenshot vibe
+        const order = [1, 0, 2].map((i) => top[i]).filter(Boolean);
+
+        top3.innerHTML = order
+          .map((item, idx) => {
+            const actualRank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
+            const isPrimary = actualRank === 1;
+            return `
+          <article class="top-card ${
+            isPrimary ? "primary" : ""
+          }" data-rank="${actualRank}" aria-label="${actualRank}位 ${escapeHtml(
+              item.name
+            )}">
+            <div class="avatar-wrap" aria-hidden="false">
+              <div class="avatar-ring" aria-hidden="true"></div>
+              ${avatarEl(item, "big")}
+              <div class="medal" aria-hidden="true">${actualRank}</div>
+            </div>
+            <div class="name" title="${escapeHtml(item.name)}">${escapeHtml(
+              item.name
+            )}</div>
+            <div class="score">${formatScore(item.score, item.unit)}</div>
+          </article>
+        `;
+          })
+          .join("");
+
+        list.innerHTML = rest
+          .map((item, i) => {
+            const rank = i + 4;
+            return `
+          <div class="row" role="listitem" aria-label="${rank}位 ${escapeHtml(
+              item.name
+            )} ${formatScore(item.score, item.unit)}">
+            <div class="rank">${rank}</div>
+            ${avatarEl(item, "mini")}
+            <div class="row-name" title="${escapeHtml(item.name)}">${escapeHtml(
+              item.name
+            )}</div>
+            <div class="row-score">${formatScore(item.score, item.unit)}</div>
+          </div>
+        `;
+          })
+          .join("");
+
+        foot.textContent = `合計 ${sorted.length} 名 ${formatScore(sorted.reduce((acc, cur) => acc + (Number(cur.score) || 0), 0))} 広告費 ありがとうございました🙏`;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
