@@ -2,13 +2,13 @@ name: Fetch YouTube Chat Data
 
 on:
   schedule:
-    - cron: "0 20 * * *"  # UTC 8:00 PM (日本時間 5:00)
-  workflow_dispatch:  # 手動実行も可能
+    - cron: "0 20 * * *" # UTC 8:00 PM (日本時間 5:00)
+  workflow_dispatch: # 手動実行も可能
     inputs:
       lookback_days:
-        description: 'Discovery lookback days（何日前まで検索するか）'
+        description: "Discovery lookback days（何日前まで検索するか）"
         required: false
-        default: '10'
+        default: "10"
         type: string
 
 # 同時実行を防止（単一実行前提）
@@ -39,7 +39,7 @@ jobs:
       - name: Google Cloud 認証
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: 必要なパッケージのインストール
         run: |
@@ -51,7 +51,7 @@ jobs:
 
   fetch_chat_data:
     runs-on: ubuntu-latest
-    needs: discover_videos  # Discovery が成功した場合のみ実行
+    needs: discover_videos # Discovery が成功した場合のみ実行
     env:
       # BigQuery 設定
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
