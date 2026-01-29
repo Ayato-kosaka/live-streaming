@@ -181,13 +181,13 @@ WHEN MATCHED THEN
     author_name = S.author_name,
     author_channel_id = S.author_channel_id,
     message_text = S.message_text,
-    message_runs_json = S.message_runs_json,
+    message_runs_json = SAFE.PARSE_JSON(S.message_runs_json),
     purchase_amount_text = S.purchase_amount_text,
     ingest_run_id = S.ingest_run_id,
     ingested_at = S.ingested_at,
     source_file = S.source_file,
     source_line_no = S.source_line_no,
-    raw_item_json = S.raw_item_json
+    raw_item_json = SAFE.PARSE_JSON(S.raw_item_json)
 WHEN NOT MATCHED THEN
   INSERT (
     video_id,
@@ -215,12 +215,12 @@ WHEN NOT MATCHED THEN
     S.author_name,
     S.author_channel_id,
     S.message_text,
-    S.message_runs_json,
+    SAFE.PARSE_JSON(S.message_runs_json),
     S.purchase_amount_text,
     S.ingest_run_id,
     S.ingested_at,
     S.source_file,
     S.source_line_no,
-    S.raw_item_json
+    SAFE.PARSE_JSON(S.raw_item_json)
   )
 """

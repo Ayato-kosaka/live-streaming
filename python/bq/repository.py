@@ -183,6 +183,7 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     
     # STRUCT型定義を明示的に指定
     # BigQuery の STRUCT<...> 形式で全フィールドを定義
+    # 注意: JSON型フィールドはパラメータではSTRINGとして渡し、SQL側でPARSE_JSONで変換する
     struct_type = (
         "STRUCT<"
         "video_id STRING, "
@@ -193,13 +194,13 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
         "author_name STRING, "
         "author_channel_id STRING, "
         "message_text STRING, "
-        "message_runs_json JSON, "
+        "message_runs_json STRING, "
         "purchase_amount_text STRING, "
         "ingest_run_id STRING, "
         "ingested_at TIMESTAMP, "
         "source_file STRING, "
         "source_line_no INT64, "
-        "raw_item_json JSON"
+        "raw_item_json STRING"
         ">"
     )
     
