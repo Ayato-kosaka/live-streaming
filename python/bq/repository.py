@@ -205,28 +205,19 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     # - TIMESTAMP や JSON は SQL 側で変換（SAFE_CAST / SAFE.PARSE_JSON）
     # - これにより datetime や dict を直接渡すことによるシリアライゼーションエラーを回避
     
-    # STRUCT の型を定義（各フィールドの型を ArrayQueryParameterType で指定）
-    from google.cloud.bigquery import ScalarQueryParameterType, StructQueryParameterType
+    # STRUCT の型を定義（StructQueryParameterType で指定）
+    #
+    # 重要な設計方針（正規API使用）:
+    # - values には StructQueryParameter の配列を渡す（tuple配列ではない）
+    # - これが BigQuery Python Client の正式な API
+    # 
+    # 各 StructQueryParameter は ScalarQueryParameter のリストで構成:
+    # - name=None（配列要素なので名前不要）
+    # - *fields で各フィールドを ScalarQueryParameter として渡す
     
-    struct_param_type = StructQueryParameterType(
-        ScalarQueryParameterType("video_id", "STRING"),
-        ScalarQueryParameterType("event_id", "STRING"),
-        ScalarQueryParameterType("event_type", "STRING"),
-        ScalarQueryParameterType("timestamp_usec", "INT64"),
-        ScalarQueryParameterType("published_at", "STRING"),  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
-        ScalarQueryParameterType("author_name", "STRING"),
-        ScalarQueryParameterType("author_channel_id", "STRING"),
-        ScalarQueryParameterType("message_text", "STRING"),
-        ScalarQueryParameterType("message_runs_json", "STRING"),  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
-        ScalarQueryParameterType("purchase_amount_text", "STRING"),
-        ScalarQueryParameterType("ingest_run_id", "STRING"),
-        ScalarQueryParameterType("ingested_at", "STRING"),  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
-        ScalarQueryParameterType("source_file", "STRING"),
-        ScalarQueryParameterType("source_line_no", "INT64"),
-        ScalarQueryParameterType("raw_item_json", "STRING"),  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
-    )
+    from google.cloud.bigquery import ScalarQueryParameter, StructQueryParameter
     
-    # フィールド名のリスト（バリデーションログ用）
+    # フィールド名のリスト（順序固定、これが STRUCT のスキーマ）
     field_names = [
         "video_id", "event_id", "event_type", "timestamp_usec", "published_at",
         "author_name", "author_channel_id", "message_text", "message_runs_json",
@@ -238,7 +229,7 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     for batch in batch_items(messages):
         logger.info(f"Processing batch of {len(batch)} messages for MERGE")
         
-        # ChatMessage をタプルのリストに変換（STRUCT の順序に従う）
+        # ChatMessage を StructQueryParameter のリストに変換
         # 
         # 重要な設計方針:
         # - すべて STRING/INT64 などプリミティブ型として渡す
@@ -248,7 +239,7 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
         # - ArrayQueryParameter + STRUCT 内で datetime を渡すと json.dumps() で失敗
         # - JSON 型もパラメータとして直接渡せない
         
-        batch_tuples = []
+        struct_params = []
         for msg in batch:
             # TIMESTAMP フィールド: RFC3339 文字列に変換（SQL側でSAFE_CASTで変換）
             published_at_str = to_rfc3339(msg.published_at)
@@ -261,25 +252,30 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
             
             raw_item_json_str = json.dumps(msg.raw_item_json, ensure_ascii=False)
             
-            # タプルに変換（STRUCT型定義の順序と一致させる）
-            # 注意: to_dict() は使わない（型情報が失われるため）
-            batch_tuples.append((
-                msg.video_id,
-                msg.event_id,
-                msg.event_type.value,  # Enum の値を取得
-                int(msg.timestamp_usec),  # INT64 として明示的に変換
-                published_at_str,  # STRING（SQL側でSAFE_CAST）
-                msg.author_name,
-                msg.author_channel_id,
-                msg.message_text,
-                message_runs_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
-                msg.purchase_amount_text,
-                msg.ingest_run_id,
-                ingested_at_str,  # STRING（SQL側でSAFE_CAST）
-                msg.source_file,
-                msg.source_line_no,
-                raw_item_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
-            ))
+            # StructQueryParameter を作成
+            # name=None（配列要素なので名前不要）
+            # *fields で各フィールドを ScalarQueryParameter として渡す
+            # 
+            # 注意: field_names の順序と一致させる必要がある
+            struct_param = StructQueryParameter(
+                None,  # name は None（配列要素）
+                ScalarQueryParameter("video_id", "STRING", msg.video_id),
+                ScalarQueryParameter("event_id", "STRING", msg.event_id),
+                ScalarQueryParameter("event_type", "STRING", msg.event_type.value),
+                ScalarQueryParameter("timestamp_usec", "INT64", int(msg.timestamp_usec)),
+                ScalarQueryParameter("published_at", "STRING", published_at_str),
+                ScalarQueryParameter("author_name", "STRING", msg.author_name),
+                ScalarQueryParameter("author_channel_id", "STRING", msg.author_channel_id),
+                ScalarQueryParameter("message_text", "STRING", msg.message_text),
+                ScalarQueryParameter("message_runs_json", "STRING", message_runs_json_str),
+                ScalarQueryParameter("purchase_amount_text", "STRING", msg.purchase_amount_text),
+                ScalarQueryParameter("ingest_run_id", "STRING", msg.ingest_run_id),
+                ScalarQueryParameter("ingested_at", "STRING", ingested_at_str),
+                ScalarQueryParameter("source_file", "STRING", msg.source_file),
+                ScalarQueryParameter("source_line_no", "INT64", msg.source_line_no),
+                ScalarQueryParameter("raw_item_json", "STRING", raw_item_json_str),
+            )
+            struct_params.append(struct_param)
         
         # ============================================================================
         # バリデーション: BigQuery に送信する前に値を検証
@@ -290,27 +286,24 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
         # - 異常値が混入した場合、どのレコードのどのフィールドが原因かを特定
         # 
         # 検証内容:
-        # - None または プリミティブ型（str, int）のみ許可
-        # - datetime, dict, list などの複合型が混入していないか確認
+        # - StructQueryParameter が正しく構築できているか
+        # - to_api_repr() が成功するか（BigQueryが受け入れ可能な形式か）
         # 
         # エラー時の挙動:
         # - BigQuery には送信せず、詳細ログを出力して例外を投げる
         # - video_id, event_id, source_line_no で問題レコードを特定可能
         
         # BigQuery に送信する前に真の検証: to_api_repr() が成功するかテスト
-        _validate_batch_tuples_with_api_repr(batch_tuples, field_names, struct_param_type)
+        _validate_struct_params_with_api_repr(struct_params, batch)
         
         # ArrayQueryParameter を構築
-        # array_type には StructQueryParameterType オブジェクトを渡す
-        from google.cloud.bigquery import ArrayQueryParameterType
-        array_param_type = ArrayQueryParameterType(struct_param_type)
-        
+        # array_type には "STRUCT" を渡す（StructQueryParameter の配列であることを示す）
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
                 bigquery.ArrayQueryParameter(
                     "messages",
-                    array_param_type,  # ArrayQueryParameterType オブジェクト
-                    batch_tuples
+                    "STRUCT",  # STRUCT 型の配列
+                    struct_params  # StructQueryParameter の配列
                 ),
             ]
         )
@@ -453,51 +446,48 @@ def mark_video_skipped(
 # バリデーション: バッチ送信前の値検証
 # ============================================================================
 
-def _validate_batch_tuples_with_api_repr(
-    batch_tuples: List[tuple],
-    field_names: List[str],
-    struct_param_type
+def _validate_struct_params_with_api_repr(
+    struct_params: List,
+    batch: List[ChatMessage]
 ) -> None:
     """
-    BigQuery に送信する前にバッチを検証（真の検証: to_api_repr() テスト）
+    BigQuery に送信する前に真の検証を実施
     
     目的:
-    - "Invalid value for type: STRUCT<...>" エラーの再発防止
-    - 単なる型チェックではなく、実際に BigQuery のパラメータとして使えるかテスト
+    - ArrayQueryParameter が正しく構築でき、to_api_repr() で BigQuery API 形式に変換できるかをテスト
+    - StructQueryParameter の配列が正しく構築されているかを確認
     
     検証内容:
-    - ArrayQueryParameter を実際に構築し、to_api_repr() が成功するか確認
-    - 失敗した場合、どのレコードのどのフィールドが原因かを特定
+    - ArrayQueryParameter を実際に構築
+    - to_api_repr() を呼び出して API 形式への変換をテスト
+    - 失敗した場合は詳細なエラー情報をログ出力
     
     エラー時の挙動:
     - BigQuery には送信せず、詳細ログを出力して例外を投げる
-    - video_id, event_id, source_line_no で問題レコードを特定可能
+    - これにより BigQuery エラーが発生する前に問題を検出
     
     Args:
-        batch_tuples: 検証するタプルのリスト
-        field_names: フィールド名のリスト（ログ出力用）
-        struct_param_type: StructQueryParameterType オブジェクト
+        struct_params: StructQueryParameter のリスト
+        batch: 元の ChatMessage オブジェクトのリスト（デバッグ用）
     
     Raises:
-        ValueError: パラメータの構築またはシリアライズに失敗した場合
+        ValueError: ArrayQueryParameter の構築または to_api_repr() が失敗した場合
     """
     try:
-        # ArrayQueryParameter を実際に構築してテスト
-        from google.cloud.bigquery import ArrayQueryParameterType
-        array_param_type = ArrayQueryParameterType(struct_param_type)
-        
+        # ArrayQueryParameter を実際に構築してみる
+        # array_type には "STRUCT" を渡す（StructQueryParameter の配列であることを示す）
         param = bigquery.ArrayQueryParameter(
             "messages",
-            array_param_type,
-            batch_tuples
+            "STRUCT",
+            struct_params
         )
         
-        # to_api_repr() を呼び出して、実際にシリアライズできるかテスト
-        # これが成功すれば、BigQuery に送信できる
+        # BigQuery が実際に使用する API 形式への変換をテスト
+        # これが成功すれば BigQuery クエリも成功する可能性が高い
         _ = param.to_api_repr()
         
         # 成功：ログ出力（通常時は重くならないよう info レベル）
-        logger.info(f"✅ Batch validation passed (to_api_repr test): {len(batch_tuples)} records validated")
+        logger.info(f"✅ Batch validation passed (to_api_repr test): {len(struct_params)} records validated")
         
     except Exception as e:
         # 失敗：詳細ログを出力して例外を投げる
@@ -505,100 +495,35 @@ def _validate_batch_tuples_with_api_repr(
         # 一般的な原因:
         # - datetime オブジェクトが混入（to_rfc3339() で変換し忘れ）
         # - dict/list が混入（json.dumps() で文字列化し忘れ）
-        # - 型定義と batch_tuples の順序が不一致
-        # - None 以外の値が STRING/INT64 でない
+        # - ScalarQueryParameter の構築に失敗
+        # - フィールド数が不一致
         
         error_msg = (
             f"❌ BigQuery ArrayQueryParameter 構築失敗\n"
-            f"  バッチサイズ: {len(batch_tuples)}\n"
+            f"  バッチサイズ: {len(struct_params)}\n"
             f"  エラー: {str(e)}\n"
             f"  型: {type(e).__name__}\n"
             f"\n"
             f"原因の可能性:\n"
             f"  - datetime オブジェクトが to_rfc3339() で変換されていない\n"
             f"  - dict/list が json.dumps() で文字列化されていない\n"
-            f"  - 型定義と batch_tuples の順序が不一致\n"
-            f"  - STRUCT フィールド数と tuple の要素数が不一致\n"
-            f"\n"
-            f"デバッグ情報:\n"
-            f"  - 最初のタプルの要素数: {len(batch_tuples[0]) if batch_tuples else 0}\n"
+            f"  - ScalarQueryParameter の構築に失敗\n"
+            f"  - フィールド数が不一致（15フィールド必要）\n"
         )
         
-        # 最初の数レコードの型情報をログ出力（デバッグ用）
-        if batch_tuples:
-            error_msg += f"\n最初のレコードの型情報:\n"
-            for field_idx, value in enumerate(batch_tuples[0]):
-                field_name = field_names[field_idx] if field_idx < len(field_names) else f"field_{field_idx}"
-                error_msg += f"  [{field_idx}] {field_name}: {type(value).__name__} = {repr(value)[:50]}\n"
+        # 最初の数レコードの情報をログ出力（デバッグ用）
+        if batch:
+            error_msg += f"\n最初のレコードの情報:\n"
+            first_msg = batch[0]
+            error_msg += f"  video_id: {first_msg.video_id}\n"
+            error_msg += f"  event_id: {first_msg.event_id}\n"
+            error_msg += f"  source_line_no: {first_msg.source_line_no}\n"
         
         logger.error(error_msg)
         
         raise ValueError(
             f"Failed to construct ArrayQueryParameter for BigQuery: {str(e)}. "
             f"Check logs for detailed error information. "
-            f"Batch size: {len(batch_tuples)}"
+            f"Batch size: {len(struct_params)}"
         ) from e
 
-
-def _validate_batch_tuples(batch_tuples: List[tuple], field_names: List[str]) -> None:
-    """
-    BigQuery に送信する前にバッチを検証
-    
-    目的:
-    - "Invalid value for type: STRUCT<...>" エラーの再発防止
-    - 異常値が混入した場合、どのレコードのどのフィールドが原因かを特定
-    
-    検証内容:
-    - None または プリミティブ型（str, int）のみ許可
-    - datetime, dict, list などの複合型が混入していないか確認
-    
-    エラー時の挙動:
-    - BigQuery には送信せず、詳細ログを出力して例外を投げる
-    - video_id, event_id, source_line_no で問題レコードを特定可能
-    
-    Args:
-        batch_tuples: 検証するタプルのリスト
-        field_names: フィールド名のリスト（ログ出力用）
-    
-    Raises:
-        ValueError: 不正な値が見つかった場合
-    """
-    for idx, tpl in enumerate(batch_tuples):
-        for field_idx, value in enumerate(tpl):
-            # None または str/int のみ許可
-            if value is not None and not isinstance(value, (str, int)):
-                # 異常値を検出：詳細ログを出力
-                field_name = field_names[field_idx] if field_idx < len(field_names) else f"field_{field_idx}"
-                
-                # レコード識別情報（video_id, event_id, source_line_no）を取得
-                video_id = tpl[0] if len(tpl) > 0 else "unknown"
-                event_id = tpl[1] if len(tpl) > 1 else "unknown"
-                source_line_no = tpl[13] if len(tpl) > 13 else "unknown"  # source_line_no の位置
-                
-                error_msg = (
-                    f"❌ BigQuery MERGE バリデーションエラー\n"
-                    f"  レコード番号: {idx}\n"
-                    f"  video_id: {video_id}\n"
-                    f"  event_id: {event_id}\n"
-                    f"  source_line_no: {source_line_no}\n"
-                    f"  フィールド: {field_name} (位置: {field_idx})\n"
-                    f"  不正な値: {repr(value)}\n"
-                    f"  型: {type(value).__name__}\n"
-                    f"  期待される型: None, str, または int\n"
-                    f"\n"
-                    f"原因:\n"
-                    f"  - datetime オブジェクトが to_rfc3339() で変換されていない可能性\n"
-                    f"  - dict/list が json.dumps() で文字列化されていない可能性\n"
-                    f"  - STRUCT 定義の順序と値の順序が不一致の可能性\n"
-                )
-                logger.error(error_msg)
-                
-                raise ValueError(
-                    f"Invalid value in batch at record {idx}, field '{field_name}' (position {field_idx}): "
-                    f"type {type(value).__name__} is not allowed. "
-                    f"Only None, str, or int are permitted for BigQuery ArrayQueryParameter + STRUCT. "
-                    f"video_id={video_id}, event_id={event_id}, source_line_no={source_line_no}"
-                )
-    
-    # バリデーション成功：ログ出力（通常時は重くならないよう info レベル）
-    logger.info(f"✅ Batch validation passed: {len(batch_tuples)} records validated")
