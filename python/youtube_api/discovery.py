@@ -1,17 +1,18 @@
 """
 YouTube 動画 Discovery モジュール
 
-YouTube Data API を使用して completed（アーカイブ）動画を検索・取得する。
-GAS の処理を Python に移植した実装。
+uploads playlist を使用して completed（アーカイブ）動画を検索・取得する。
+低クオータ・高再現性を実現。
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Set
 import logging
 
 from youtube_api.client import get_youtube_client, execute_api_request
 from models.types import DiscoveredVideo
 from config import YOUTUBE_CHANNEL_ID, DISCOVERY_LOOKBACK_DAYS
+from bq.repository import get_existing_video_ids
 
 
 # ============================================================================
@@ -26,9 +27,14 @@ def discover_completed_videos(
     YouTube チャンネルから completed（アーカイブ）動画を検索・取得
     
     処理フロー:
-    1. search.list で completed 動画の video_id を収集（ページング対応）
-    2. videos.list で詳細情報（title, actualStartTime）を取得
-    3. DiscoveredVideo オブジェクトのリストとして返す
+    1. channels.list で uploads playlist ID を取得
+    2. BigQuery から既存の video_id を取得（打ち切り判定用）
+    3. playlistItems.list で動画IDを新しい順に列挙（ページング対応）
+       - lookback 日数による打ち切り
+       - 既知 video_id 連続出現による打ち切り
+    4. videos.list で詳細情報（title, actualStartTime）を取得
+       - liveStreamingDetails があるもののみを抽出（アーカイブ判定）
+    5. DiscoveredVideo オブジェクトのリストとして返す
     
     Args:
         lookback_days: 何日前までの動画を検索するか
@@ -47,44 +53,118 @@ def discover_completed_videos(
     if logger:
         logger.info(f"Discovery 開始: チャンネル {YOUTUBE_CHANNEL_ID}, lookback {lookback_days} 日")
     
-    # Step 1: search.list で video_id を収集
-    video_ids = _search_completed_videos(lookback_days, logger)
+    # Step 1: uploads playlist ID を取得
+    uploads_playlist_id = _get_uploads_playlist_id(logger)
     
-    if not video_ids:
+    if not uploads_playlist_id:
         if logger:
-            logger.info("completed 動画が見つかりませんでした")
+            logger.error("uploads playlist ID の取得に失敗しました")
         return []
     
     if logger:
-        logger.info(f"search.list で {len(video_ids)} 件の動画を発見")
+        logger.info(f"uploads playlist ID: {uploads_playlist_id}")
     
-    # Step 2: videos.list で詳細情報を取得
+    # Step 2: 既存の video_id を取得（打ち切り判定用）
+    existing_video_ids = get_existing_video_ids()
+    
+    # Step 3: playlistItems.list で video_id を収集（打ち切り条件付き）
+    video_ids = _fetch_playlist_items(
+        uploads_playlist_id,
+        lookback_days,
+        existing_video_ids,
+        logger
+    )
+    
+    if not video_ids:
+        if logger:
+            logger.info("新しい動画が見つかりませんでした")
+        return []
+    
+    if logger:
+        logger.info(f"playlistItems.list で {len(video_ids)} 件の動画を発見")
+    
+    # Step 4: videos.list で詳細情報を取得（live アーカイブのみ）
     discovered_videos = _fetch_video_details(video_ids, logger)
     
-    # Step 3: actual_start_time でソート（昇順、無いものは末尾）
+    # Step 5: actual_start_time でソート（昇順、無いものは末尾）
     discovered_videos.sort(
         key=lambda v: (v.actual_start_time is None, v.actual_start_time or datetime.max)
     )
     
     if logger:
-        logger.info(f"videos.list で {len(discovered_videos)} 件の詳細情報を取得")
+        logger.info(f"videos.list で {len(discovered_videos)} 件のライブアーカイブを取得")
     
     return discovered_videos
 
 
 # ============================================================================
-# Step 1: search.list で video_id 収集
+# Step 1: uploads playlist ID 取得
 # ============================================================================
 
-def _search_completed_videos(
+def _get_uploads_playlist_id(
+    logger: Optional[logging.Logger] = None
+) -> Optional[str]:
+    """
+    channels.list API で uploads playlist ID を取得
+    
+    Args:
+        logger: ロガー（オプション）
+        
+    Returns:
+        uploads playlist ID（取得失敗時は None）
+    """
+    youtube = get_youtube_client()
+    
+    try:
+        request = youtube.channels().list(
+            part="contentDetails",
+            id=YOUTUBE_CHANNEL_ID
+        )
+        
+        response = execute_api_request(request, logger=logger)
+        
+        items = response.get("items", [])
+        if not items:
+            if logger:
+                logger.error(f"チャンネル {YOUTUBE_CHANNEL_ID} が見つかりません")
+            return None
+        
+        uploads_id = (
+            items[0]
+            .get("contentDetails", {})
+            .get("relatedPlaylists", {})
+            .get("uploads")
+        )
+        
+        return uploads_id
+        
+    except Exception as e:
+        if logger:
+            logger.error(f"uploads playlist ID の取得に失敗: {e}")
+        return None
+
+
+# ============================================================================
+# Step 2: playlistItems.list で video_id 収集（打ち切り条件付き）
+# ============================================================================
+
+def _fetch_playlist_items(
+    playlist_id: str,
     lookback_days: int,
+    existing_video_ids: Set[str],
     logger: Optional[logging.Logger] = None
 ) -> List[str]:
     """
-    search.list API で completed 動画の video_id を収集
+    playlistItems.list API で uploads playlist から video_id を収集
+    
+    打ち切り条件:
+    1. lookback 日数: cutoff 日時より古い動画のみのページに到達したら打ち切り
+    2. 既知 video_id: 連続して既知の video_id のみになったら打ち切り
     
     Args:
+        playlist_id: uploads playlist ID
         lookback_days: 何日前までの動画を検索するか
+        existing_video_ids: 既存の video_id の集合
         logger: ロガー（オプション）
         
     Returns:
@@ -93,41 +173,93 @@ def _search_completed_videos(
     youtube = get_youtube_client()
     
     # publishedAfter: 現在時刻 - lookback_days
-    published_after = datetime.utcnow() - timedelta(days=lookback_days)
-    published_after_str = published_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+    cutoff = datetime.utcnow() - timedelta(days=lookback_days)
     
     video_ids = []
     page_token = None
     page_count = 0
+    consecutive_known_count = 0  # 連続既知カウンター
+    CONSECUTIVE_KNOWN_THRESHOLD = 50  # 連続50件が既知なら打ち切り
     
     while True:
         page_count += 1
         
-        # search.list リクエスト
-        request = youtube.search().list(
-            part="snippet",
-            channelId=YOUTUBE_CHANNEL_ID,
-            type="video",
-            eventType="completed",
+        # playlistItems.list リクエスト
+        request = youtube.playlistItems().list(
+            part="contentDetails",
+            playlistId=playlist_id,
             maxResults=50,
-            pageToken=page_token,
-            publishedAfter=published_after_str
+            pageToken=page_token
         )
         
         response = execute_api_request(request, logger=logger)
+        items = response.get("items", [])
+        
         if logger:
             logger.info(
-                f"search.list page={page_count} "
-                f"items={len(response.get('items', []))} "
-                f"total={response.get('pageInfo', {}).get('totalResults')} "
+                f"playlistItems.list page={page_count} "
+                f"items={len(items)} "
                 f"nextPageToken={response.get('nextPageToken')}"
             )
         
-        # video_id を抽出
-        for item in response.get("items", []):
-            video_id = item.get("id", {}).get("videoId")
-            if video_id:
-                video_ids.append(video_id)
+        if not items:
+            # ページが空なら終了
+            break
+        
+        # 打ち切り判定フラグ
+        should_break = False
+        page_has_new_video = False
+        
+        for item in items:
+            content_details = item.get("contentDetails", {})
+            video_id = content_details.get("videoId")
+            published_at_str = content_details.get("videoPublishedAt")
+            
+            if not video_id:
+                continue
+            
+            # publishedAt のパース
+            published_at = None
+            if published_at_str:
+                try:
+                    published_at = datetime.fromisoformat(
+                        published_at_str.replace("Z", "+00:00")
+                    ).replace(tzinfo=None)
+                except Exception:
+                    pass
+            
+            # 打ち切り条件1: lookback 日数チェック
+            if published_at and published_at < cutoff:
+                if logger:
+                    logger.info(
+                        f"lookback 日数（{lookback_days}日）を超えたため Discovery を打ち切り: "
+                        f"{video_id} (published_at: {published_at.isoformat()})"
+                    )
+                should_break = True
+                break
+            
+            # video_id を追加
+            video_ids.append(video_id)
+            
+            # 打ち切り条件2: 既知 video_id 連続出現チェック
+            if video_id in existing_video_ids:
+                consecutive_known_count += 1
+            else:
+                consecutive_known_count = 0
+                page_has_new_video = True
+            
+            # 連続既知が閾値を超えたら打ち切り
+            if consecutive_known_count >= CONSECUTIVE_KNOWN_THRESHOLD:
+                if logger:
+                    logger.info(
+                        f"既知の video_id が連続 {CONSECUTIVE_KNOWN_THRESHOLD} 件出現したため "
+                        f"Discovery を打ち切り"
+                    )
+                should_break = True
+                break
+        
+        if should_break:
+            break
         
         # 次のページがあるかチェック
         page_token = response.get("nextPageToken")
@@ -135,13 +267,16 @@ def _search_completed_videos(
             break
         
         if logger:
-            logger.debug(f"search.list ページ {page_count} 完了（{len(video_ids)} 件累積）")
+            logger.debug(
+                f"playlistItems.list ページ {page_count} 完了 "
+                f"（累積: {len(video_ids)} 件, 連続既知: {consecutive_known_count}）"
+            )
     
     return video_ids
 
 
 # ============================================================================
-# Step 2: videos.list で詳細情報取得
+# Step 3: videos.list で詳細情報取得（live アーカイブのみ）
 # ============================================================================
 
 def _fetch_video_details(
@@ -151,6 +286,7 @@ def _fetch_video_details(
     """
     videos.list API で動画の詳細情報を取得
     
+    liveStreamingDetails があるもののみを抽出（アーカイブ判定）。
     50件ずつ分割してリクエストを実行する。
     
     Args:
@@ -158,7 +294,7 @@ def _fetch_video_details(
         logger: ロガー（オプション）
         
     Returns:
-        DiscoveredVideo のリスト
+        DiscoveredVideo のリスト（live アーカイブのみ）
     """
     youtube = get_youtube_client()
     discovered_videos = []
@@ -176,13 +312,19 @@ def _fetch_video_details(
         
         response = execute_api_request(request, logger=logger)
         
-        # 詳細情報を抽出
+        # 詳細情報を抽出（liveStreamingDetails があるもののみ）
         for item in response.get("items", []):
             video_id = item.get("id")
+            
+            # liveStreamingDetails がない場合はスキップ（通常動画）
+            live_details = item.get("liveStreamingDetails")
+            if not live_details:
+                continue
+            
             title = item.get("snippet", {}).get("title", "")
             
             # actualStartTime（RFC 3339 形式）
-            actual_start_time_str = item.get("liveStreamingDetails", {}).get("actualStartTime")
+            actual_start_time_str = live_details.get("actualStartTime")
             actual_start_time = None
             if actual_start_time_str:
                 try:

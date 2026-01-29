@@ -18,7 +18,9 @@ if not BQ_PROJECT_ID:
     raise ValueError("環境変数 BQ_PROJECT_ID が設定されていません")
 
 # YouTube API 関連（Discovery で使用）
-YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
+# OAuth (Doneru) 経由で認証
+# DONERU_ALERTBOX_KEY: EXPO_PUBLIC_DONERU_WSS_URL から key パラメータを抽出
+DONERU_ALERTBOX_KEY: str = os.getenv("DONERU_ALERTBOX_KEY", "")
 YOUTUBE_CHANNEL_ID: str = os.getenv("YOUTUBE_CHANNEL_ID", "")
 
 # ============================================================================

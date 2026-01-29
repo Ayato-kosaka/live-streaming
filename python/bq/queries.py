@@ -8,6 +8,22 @@ BigQuery SQL クエリ定義モジュール
 from config import BQ_DATASET, BQ_TABLE_VIDEOS, BQ_TABLE_CHAT_MESSAGES
 
 # ============================================================================
+# videos テーブル - Discovery 関連
+# ============================================================================
+
+# Discovery で使用: 既存の video_id をすべて取得
+# 
+# 用途:
+# - Discovery 時の打ち切り判定に使用
+# - 既知の video_id が連続で現れたら Discovery を打ち切る
+QUERY_GET_EXISTING_VIDEO_IDS = f"""
+SELECT
+  video_id
+FROM
+  `{BQ_DATASET}.{BQ_TABLE_VIDEOS}`
+"""
+
+# ============================================================================
 # videos テーブル - Discovery UPSERT
 # ============================================================================
 

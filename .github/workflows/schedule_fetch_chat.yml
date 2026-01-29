@@ -22,8 +22,8 @@ jobs:
     env:
       # BigQuery 設定
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      # YouTube API 設定
-      YOUTUBE_API_KEY: ${{ secrets.EXPO_PUBLIC_YOUTUBE_API_KEY }}
+      # YouTube API 設定 (OAuth via Doneru)
+      DONERU_ALERTBOX_KEY: ${{ secrets.DONERU_ALERTBOX_KEY }}
       YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
       # Discovery 設定
       DISCOVERY_LOOKBACK_DAYS: ${{ inputs.lookback_days || '10' }}

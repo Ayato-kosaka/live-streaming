@@ -16,6 +16,7 @@ from bq.queries import (
     QUERY_SELECT_TARGET_VIDEOS,
     QUERY_MERGE_VIDEO,
     QUERY_MERGE_CHAT_MESSAGES,
+    QUERY_GET_EXISTING_VIDEO_IDS,
 )
 from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
 from config import MAX_VIDEOS_PER_RUN
@@ -29,6 +30,28 @@ logger = setup_logger(__name__)
 # ============================================================================
 # Discovery: videos テーブルへの UPSERT
 # ============================================================================
+
+def get_existing_video_ids() -> set[str]:
+    """
+    BigQuery から既存の video_id を全て取得
+    
+    Discovery 処理で使用。既知の video_id が連続で現れた場合に
+    Discovery を打ち切るための判定に使用する。
+    
+    Returns:
+        既存の video_id の集合
+    """
+    client = get_bigquery_client()
+    
+    query_job = client.query(QUERY_GET_EXISTING_VIDEO_IDS)
+    results = query_job.result()
+    
+    video_ids = {row.video_id for row in results}
+    
+    logger.info(f"既存の video_id を {len(video_ids)} 件取得")
+    
+    return video_ids
+
 
 def upsert_discovered_video(discovered: DiscoveredVideo) -> None:
     """
