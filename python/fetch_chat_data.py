@@ -196,6 +196,9 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
         video_logger.info("チャットデータをパース中...")
         chat_file_path = find_chat_file_path(video.video_id)
         if not chat_file_path:
+            result.error_code = ERROR_CODE_NO_CHAT_FILE
+            result.error_detail = "チャットファイルが生成されませんでした（探索結果なし）"
+            result.chat_file_exists = False
             handle_no_chat_file(video, result, video_logger)
             return result
         
