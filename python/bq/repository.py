@@ -176,17 +176,70 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     if not messages:
         return 0
     
+    import json
+    
     client = get_bigquery_client()
     total_merged = 0
     
+    # STRUCT型定義を明示的に指定
+    # BigQuery の STRUCT<...> 形式で全フィールドを定義
+    struct_type = (
+        "STRUCT<"
+        "video_id STRING, "
+        "event_id STRING, "
+        "event_type STRING, "
+        "timestamp_usec INT64, "
+        "published_at TIMESTAMP, "
+        "author_name STRING, "
+        "author_channel_id STRING, "
+        "message_text STRING, "
+        "message_runs_json JSON, "
+        "purchase_amount_text STRING, "
+        "ingest_run_id STRING, "
+        "ingested_at TIMESTAMP, "
+        "source_file STRING, "
+        "source_line_no INT64, "
+        "raw_item_json JSON"
+        ">"
+    )
+    
     # バッチに分割して MERGE
     for batch in batch_items(messages):
-        # ChatMessage を辞書のリストに変換
-        batch_dicts = [msg.to_dict() for msg in batch]
+        # ChatMessage をタプルのリストに変換（STRUCT の順序に従う）
+        # JSON型フィールドは文字列化が必要
+        batch_tuples = []
+        for msg in batch:
+            msg_dict = msg.to_dict()
+            
+            # JSON型フィールドを文字列化
+            message_runs_json_str = None
+            if msg_dict.get('message_runs_json'):
+                message_runs_json_str = json.dumps(msg_dict['message_runs_json'])
+            
+            raw_item_json_str = json.dumps(msg_dict['raw_item_json'])
+            
+            # タプルに変換（STRUCT型定義の順序と一致させる）
+            batch_tuples.append((
+                msg_dict['video_id'],
+                msg_dict['event_id'],
+                msg_dict['event_type'],
+                msg_dict['timestamp_usec'],
+                msg_dict['published_at'],
+                msg_dict['author_name'],
+                msg_dict['author_channel_id'],
+                msg_dict['message_text'],
+                message_runs_json_str,
+                msg_dict['purchase_amount_text'],
+                msg_dict['ingest_run_id'],
+                msg_dict['ingested_at'],
+                msg_dict['source_file'],
+                msg_dict['source_line_no'],
+                raw_item_json_str,
+            ))
         
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ArrayQueryParameter("messages", "STRUCT", batch_dicts),
+                bigquery.ArrayQueryParameter("messages", struct_type, batch_tuples),
             ]
         )
         
