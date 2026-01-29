@@ -16,7 +16,7 @@ YouTube アーカイブチャット取得システム - エントリポイント
 
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 # モジュールのインポート
 from config import (
@@ -170,7 +170,11 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
             result.error_code = ERROR_CODE_YTDLP_FAILED
             result.error_detail = error_msg
             video_logger.error(f"yt-dlp 実行失敗: {error_msg[:100]}")
-            handle_failure(video, result, video_logger)
+            try:
+                handle_failure(video, result, video_logger)
+            except Exception as ee:
+                video_logger.error(f"handle_failure 自体が失敗: {ee}")
+                video_logger.error(traceback.format_exc())
             return result
         
         video_logger.info("yt-dlp 実行成功")
@@ -238,7 +242,11 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
         result.error_detail = f"{type(e).__name__}: {str(e)}"
         video_logger.error(f"予期しないエラー: {str(e)}")
         video_logger.error(traceback.format_exc())
-        handle_failure(video, result, video_logger)
+        try:
+            handle_failure(video, result, video_logger)
+        except Exception as ee:
+            video_logger.error(f"handle_failure 自体が失敗: {ee}")
+            video_logger.error(traceback.format_exc())
         return result
 
 
@@ -257,7 +265,7 @@ def handle_no_chat_file(video, result: ProcessingResult, logger: VideoLogger) ->
     7日ルール:
     - first_seen_at から 7日超 → SKIPPED
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # 7日ルールチェック（優先）
     if should_skip_after_7days(video.first_seen_at, now):
@@ -298,7 +306,7 @@ def handle_failure(video, result: ProcessingResult, logger: VideoLogger) -> None
     - first_seen_at から 7日超 → SKIPPED
     - 7日以内 → FAILED（リトライなし）
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # 7日ルールチェック
     if should_skip_after_7days(video.first_seen_at, now):
