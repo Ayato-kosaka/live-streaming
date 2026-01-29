@@ -26,6 +26,9 @@
 #
 
 set -e  # エラー時に即座に終了
+# スクリプトのディレクトリを基準にパスを解決
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MIGRATION_SQL="$SCRIPT_DIR/migration/20260129T0000_create_youtube_chat_tables.sql"
 
 # ========================================
 # 1. 環境変数チェック
@@ -76,9 +79,17 @@ echo ""
 # 4. YouTube チャット管理テーブル作成
 # ========================================
 echo "--- YouTube チャット管理テーブルを作成中... ---"
-bq query --project_id="$BQ_PROJECT_ID" --use_legacy_sql=false < infra/big-query/migration/20260128T0000_create_youtube_chat_management_table.sql
+
+# SQL ファイル存在チェック
+if [ ! -f "$MIGRATION_SQL" ]; then
+  echo "エラー: マイグレーション SQL が見つかりません: $MIGRATION_SQL"
+  echo "存在するファイルを確認してください: $SCRIPT_DIR/migration/"
+  exit 1
+fi
+
+# BigQuery に適用
+bq query --project_id="$BQ_PROJECT_ID" --use_legacy_sql=false < "$MIGRATION_SQL"
 echo "✓ YouTube チャット管理テーブルを作成しました"
-echo ""
 
 # ========================================
 # 完了

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `youtube_chat.videos` (
   status STRING NOT NULL OPTIONS(description="処理ステータス: PENDING, WAITING, SUCCEEDED, FAILED, SKIPPED"),
   first_seen_at TIMESTAMP NOT NULL OPTIONS(description="初めて処理対象になった時刻（スキップ判定基準）"),
   next_retry_at TIMESTAMP OPTIONS(description="次回リトライ予定時刻（WAITING 状態での制御用）"),
-  attempt_count INT64 NOT NULL DEFAULT 0 OPTIONS(description="試行回数"),
+  attempt_count INT64 NOT NULL OPTIONS(description="試行回数"),
   last_attempt_at TIMESTAMP OPTIONS(description="最後に処理を試行した時刻"),
   last_error_code STRING OPTIONS(description="エラー種別（例: YTDLP_FAILED, NO_CHAT_FILE, PARSE_FAILED）"),
   last_error_detail STRING OPTIONS(description="エラーの詳細情報（例外メッセージ等）"),
