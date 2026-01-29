@@ -100,7 +100,10 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
         )
 
         # ls で出力ファイル確認（デバッグ用）
-        subprocess.run(["ls", "-l", YTDLP_OUTPUT_DIR], capture_output=True, text=True)
+        file_info = subprocess.run(["ls", "-l", YTDLP_OUTPUT_DIR], capture_output=True, text=True)
+        print(f"yt-dlp output directory contents:\n{file_info.stdout}")
+        
+
         
         if result.returncode == 0:
             return (True, None)
