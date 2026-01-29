@@ -98,6 +98,9 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
             text=True,
             timeout=YTDLP_TIMEOUT_SECONDS
         )
+
+        # ls で出力ファイル確認（デバッグ用）
+        subprocess.run(["ls", "-l", YTDLP_OUTPUT_DIR], capture_output=True, text=True)
         
         if result.returncode == 0:
             return (True, None)
