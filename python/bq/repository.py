@@ -207,35 +207,46 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     # バッチに分割して MERGE
     for batch in batch_items(messages):
         # ChatMessage をタプルのリストに変換（STRUCT の順序に従う）
-        # JSON型フィールドは文字列化が必要
+        # 重要: TIMESTAMP型フィールドは datetime オブジェクトを渡す（文字列は不可）
+        from datetime import timezone
+        
         batch_tuples = []
         for msg in batch:
-            msg_dict = msg.to_dict()
+            # TIMESTAMP フィールド: datetime オブジェクトを渡す（BigQuery要件）
+            # naive datetime の場合は UTC タイムゾーンを付与
+            published_at = msg.published_at
+            if published_at is not None and published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
             
-            # JSON型フィールドを文字列化
+            ingested_at = msg.ingested_at
+            if ingested_at is not None and ingested_at.tzinfo is None:
+                ingested_at = ingested_at.replace(tzinfo=timezone.utc)
+            
+            # JSON型フィールドを文字列化（SQL側でSAFE.PARSE_JSONで変換）
             message_runs_json_str = None
-            if msg_dict.get('message_runs_json'):
-                message_runs_json_str = json.dumps(msg_dict['message_runs_json'])
+            if msg.message_runs_json:
+                message_runs_json_str = json.dumps(msg.message_runs_json, ensure_ascii=False)
             
-            raw_item_json_str = json.dumps(msg_dict['raw_item_json'])
+            raw_item_json_str = json.dumps(msg.raw_item_json, ensure_ascii=False)
             
             # タプルに変換（STRUCT型定義の順序と一致させる）
+            # 注意: to_dict() は使わない（datetime が文字列に変換されてしまうため）
             batch_tuples.append((
-                msg_dict['video_id'],
-                msg_dict['event_id'],
-                msg_dict['event_type'],
-                msg_dict['timestamp_usec'],
-                msg_dict['published_at'],
-                msg_dict['author_name'],
-                msg_dict['author_channel_id'],
-                msg_dict['message_text'],
-                message_runs_json_str,
-                msg_dict['purchase_amount_text'],
-                msg_dict['ingest_run_id'],
-                msg_dict['ingested_at'],
-                msg_dict['source_file'],
-                msg_dict['source_line_no'],
-                raw_item_json_str,
+                msg.video_id,
+                msg.event_id,
+                msg.event_type.value,  # Enum の値を取得
+                int(msg.timestamp_usec),  # INT64 として明示的に変換
+                published_at,  # datetime オブジェクト
+                msg.author_name,
+                msg.author_channel_id,
+                msg.message_text,
+                message_runs_json_str,  # STRING（SQL側でPARSE_JSON）
+                msg.purchase_amount_text,
+                msg.ingest_run_id,
+                ingested_at,  # datetime オブジェクト or None
+                msg.source_file,
+                msg.source_line_no,
+                raw_item_json_str,  # STRING（SQL側でPARSE_JSON）
             ))
         
         job_config = bigquery.QueryJobConfig(
