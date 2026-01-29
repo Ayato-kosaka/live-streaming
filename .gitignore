@@ -38,5 +38,17 @@ yarn-error.*
 
 app-example
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
 # fetch_chat_data.py
 youtube_chat
