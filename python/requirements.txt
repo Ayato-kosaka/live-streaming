@@ -10,5 +10,8 @@
 # BigQuery 操作
 google-cloud-bigquery>=3.11.0
 
+# YouTube Data API v3
+google-api-python-client>=2.100.0
+
 # HTTP通信（オプション、将来の拡張用）
 requests>=2.31.0

@@ -51,4 +51,4 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # fetch_chat_data.py
-youtube_chat
+/tmp/youtube_chat

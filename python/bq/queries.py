@@ -8,6 +8,46 @@ BigQuery SQL クエリ定義モジュール
 from config import BQ_DATASET, BQ_TABLE_VIDEOS, BQ_TABLE_CHAT_MESSAGES
 
 # ============================================================================
+# videos テーブル - Discovery UPSERT
+# ============================================================================
+
+# Discovery で取得した動画を MERGE（新規 or 既存のメタデータ更新のみ）
+# 
+# 重要: 既存レコードの進捗情報（status, attempt_count 等）は絶対に更新しない
+# 更新対象は title と actual_start_time のみ
+QUERY_DISCOVERY_UPSERT_VIDEO = f"""
+MERGE `{BQ_DATASET}.{BQ_TABLE_VIDEOS}` T
+USING (
+  SELECT
+    @video_id AS video_id,
+    @title AS title,
+    @actual_start_time AS actual_start_time
+) S
+ON T.video_id = S.video_id
+WHEN MATCHED THEN
+  UPDATE SET
+    title = S.title,
+    actual_start_time = S.actual_start_time
+WHEN NOT MATCHED THEN
+  INSERT (
+    video_id,
+    status,
+    first_seen_at,
+    attempt_count,
+    title,
+    actual_start_time
+  )
+  VALUES (
+    S.video_id,
+    'PENDING',
+    CURRENT_TIMESTAMP(),
+    0,
+    S.title,
+    S.actual_start_time
+  )
+"""
+
+# ============================================================================
 # videos テーブル - 取得対象抽出
 # ============================================================================
 
@@ -31,7 +71,9 @@ SELECT
   last_error_code,
   last_error_detail,
   succeeded_at,
-  yt_dlp_version
+  yt_dlp_version,
+  title,
+  actual_start_time
 FROM
   `{BQ_DATASET}.{BQ_TABLE_VIDEOS}`
 WHERE
@@ -66,7 +108,9 @@ USING (
     @last_error_code AS last_error_code,
     @last_error_detail AS last_error_detail,
     @succeeded_at AS succeeded_at,
-    @yt_dlp_version AS yt_dlp_version
+    @yt_dlp_version AS yt_dlp_version,
+    @title AS title,
+    @actual_start_time AS actual_start_time
 ) S
 ON T.video_id = S.video_id
 WHEN MATCHED THEN
@@ -79,7 +123,9 @@ WHEN MATCHED THEN
     last_error_code = S.last_error_code,
     last_error_detail = S.last_error_detail,
     succeeded_at = S.succeeded_at,
-    yt_dlp_version = S.yt_dlp_version
+    yt_dlp_version = S.yt_dlp_version,
+    title = S.title,
+    actual_start_time = S.actual_start_time
 WHEN NOT MATCHED THEN
   INSERT (
     video_id,
@@ -91,7 +137,9 @@ WHEN NOT MATCHED THEN
     last_error_code,
     last_error_detail,
     succeeded_at,
-    yt_dlp_version
+    yt_dlp_version,
+    title,
+    actual_start_time
   )
   VALUES (
     S.video_id,
@@ -103,7 +151,9 @@ WHEN NOT MATCHED THEN
     S.last_error_code,
     S.last_error_detail,
     S.succeeded_at,
-    S.yt_dlp_version
+    S.yt_dlp_version,
+    S.title,
+    S.actual_start_time
   )
 """
 
