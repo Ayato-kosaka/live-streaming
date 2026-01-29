@@ -17,6 +17,10 @@ BQ_PROJECT_ID: str = os.getenv("BQ_PROJECT_ID", "")
 if not BQ_PROJECT_ID:
     raise ValueError("環境変数 BQ_PROJECT_ID が設定されていません")
 
+# YouTube API 関連（Discovery で使用）
+YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
+YOUTUBE_CHANNEL_ID: str = os.getenv("YOUTUBE_CHANNEL_ID", "")
+
 # ============================================================================
 # BigQuery 設定
 # ============================================================================
@@ -39,6 +43,11 @@ MAX_MERGE_BATCH_SIZE: Final[int] = 5000
 # 1回の実行で処理する動画の最大数
 # 大量の動画がある場合でも実行時間を制限するため
 MAX_VIDEOS_PER_RUN: Final[int] = 10
+
+# Discovery の lookback 日数（デフォルト）
+# 環境変数 DISCOVERY_LOOKBACK_DAYS で上書き可能
+DEFAULT_DISCOVERY_LOOKBACK_DAYS: Final[int] = 10
+DISCOVERY_LOOKBACK_DAYS: int = int(os.getenv("DISCOVERY_LOOKBACK_DAYS", str(DEFAULT_DISCOVERY_LOOKBACK_DAYS)))
 
 # ============================================================================
 # yt-dlp 設定

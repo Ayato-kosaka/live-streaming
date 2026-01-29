@@ -11,13 +11,50 @@ from google.cloud import bigquery
 
 from bq.client import get_bigquery_client
 from bq.queries import (
+    QUERY_DISCOVERY_UPSERT_VIDEO,
     QUERY_SELECT_TARGET_VIDEOS,
     QUERY_MERGE_VIDEO,
     QUERY_MERGE_CHAT_MESSAGES,
 )
-from models.types import Video, ChatMessage, VideoStatus
+from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
 from config import MAX_VIDEOS_PER_RUN
 from utils.batching import batch_items
+
+
+# ============================================================================
+# Discovery: videos テーブルへの UPSERT
+# ============================================================================
+
+def upsert_discovered_video(discovered: DiscoveredVideo) -> None:
+    """
+    Discovery で取得した動画を videos テーブルに UPSERT
+    
+    新規レコード:
+    - video_id, title, actual_start_time を挿入
+    - status='PENDING', first_seen_at=now(), attempt_count=0
+    
+    既存レコード:
+    - title, actual_start_time のみ更新（進捗情報は触らない）
+    
+    Args:
+        discovered: DiscoveredVideo オブジェクト
+    """
+    client = get_bigquery_client()
+    
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("video_id", "STRING", discovered.video_id),
+            bigquery.ScalarQueryParameter("title", "STRING", discovered.title),
+            bigquery.ScalarQueryParameter(
+                "actual_start_time",
+                "TIMESTAMP",
+                discovered.actual_start_time.isoformat() if discovered.actual_start_time else None
+            ),
+        ]
+    )
+    
+    query_job = client.query(QUERY_DISCOVERY_UPSERT_VIDEO, job_config=job_config)
+    query_job.result()  # 完了を待つ
 
 
 # ============================================================================
@@ -60,6 +97,8 @@ def get_target_videos(max_videos: int = MAX_VIDEOS_PER_RUN) -> List[Video]:
             last_error_detail=row.last_error_detail,
             succeeded_at=row.succeeded_at,
             yt_dlp_version=row.yt_dlp_version,
+            title=row.title if hasattr(row, 'title') else None,
+            actual_start_time=row.actual_start_time if hasattr(row, 'actual_start_time') else None,
         )
         videos.append(video)
     
@@ -105,6 +144,12 @@ def update_video(video: Video) -> None:
                 video.succeeded_at.isoformat() if video.succeeded_at else None
             ),
             bigquery.ScalarQueryParameter("yt_dlp_version", "STRING", video.yt_dlp_version),
+            bigquery.ScalarQueryParameter("title", "STRING", video.title),
+            bigquery.ScalarQueryParameter(
+                "actual_start_time",
+                "TIMESTAMP",
+                video.actual_start_time.isoformat() if video.actual_start_time else None
+            ),
         ]
     )
     

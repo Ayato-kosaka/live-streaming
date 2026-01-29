@@ -54,6 +54,8 @@ class Video:
     last_error_detail: Optional[str] = None
     succeeded_at: Optional[datetime] = None
     yt_dlp_version: Optional[str] = None
+    title: Optional[str] = None
+    actual_start_time: Optional[datetime] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """BigQuery への挿入用に辞書に変換"""
@@ -68,7 +70,25 @@ class Video:
             "last_error_detail": self.last_error_detail,
             "succeeded_at": self.succeeded_at.isoformat() if self.succeeded_at else None,
             "yt_dlp_version": self.yt_dlp_version,
+            "title": self.title,
+            "actual_start_time": self.actual_start_time.isoformat() if self.actual_start_time else None,
         }
+
+
+# ============================================================================
+# Discovery 結果（YouTube API から取得した動画情報）
+# ============================================================================
+
+@dataclass
+class DiscoveredVideo:
+    """
+    YouTube Data API から取得した動画情報
+    
+    Discovery 処理で使用する一時的なデータ構造。
+    """
+    video_id: str
+    title: str
+    actual_start_time: Optional[datetime] = None
 
 
 # ============================================================================

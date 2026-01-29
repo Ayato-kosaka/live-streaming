@@ -51,7 +51,9 @@ CREATE TABLE IF NOT EXISTS `youtube_chat.videos` (
   last_error_code STRING OPTIONS(description="エラー種別（例: YTDLP_FAILED, NO_CHAT_FILE, PARSE_FAILED）"),
   last_error_detail STRING OPTIONS(description="エラーの詳細情報（例外メッセージ等）"),
   succeeded_at TIMESTAMP OPTIONS(description="処理が成功した時刻"),
-  yt_dlp_version STRING OPTIONS(description="使用した yt-dlp のバージョン")
+  yt_dlp_version STRING OPTIONS(description="使用した yt-dlp のバージョン"),
+  title STRING OPTIONS(description="動画タイトル（YouTube API から取得）"),
+  actual_start_time TIMESTAMP OPTIONS(description="実際の配信開始時刻（liveStreamingDetails.actualStartTime）")
 )
 OPTIONS(
   description="YouTube 動画の処理進捗管理テーブル（リトライ制御、ステータス管理）"
