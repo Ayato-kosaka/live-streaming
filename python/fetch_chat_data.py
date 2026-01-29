@@ -50,7 +50,7 @@ from utils.filesystem import (
     chat_file_exists,
     cleanup_chat_file,
     cleanup_output_directory,
-    get_chat_file_path,
+    find_chat_file_path,
 )
 from utils.time import (
     should_retry_within_24h,
@@ -194,7 +194,10 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
         
         # JSONL ファイルをパース
         video_logger.info("チャットデータをパース中...")
-        chat_file_path = get_chat_file_path(video.video_id)
+        chat_file_path = find_chat_file_path(video.video_id)
+        if not chat_file_path:
+            handle_no_chat_file(video, result, video_logger)
+            return result
         
         messages, stats = parse_chat_file(
             chat_file_path,

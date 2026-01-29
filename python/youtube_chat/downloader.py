@@ -74,7 +74,7 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
         - (True, None): 成功
         - (False, エラーメッセージ): 失敗
     """
-    output_template = get_chat_file_path(video_id)
+    output_template = get_ytdlp_output_template(video_id)
     
     # yt-dlp コマンド構築
     # --write-subs: 字幕をダウンロード
