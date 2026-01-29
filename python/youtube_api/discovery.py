@@ -115,6 +115,13 @@ def _search_completed_videos(
         )
         
         response = execute_api_request(request, logger=logger)
+        if logger:
+            logger.info(
+                f"search.list page={page_count} "
+                f"items={len(response.get('items', []))} "
+                f"total={response.get('pageInfo', {}).get('totalResults')} "
+                f"nextPageToken={response.get('nextPageToken')}"
+            )
         
         # video_id を抽出
         for item in response.get("items", []):
