@@ -6,6 +6,7 @@
 # YouTube チャット取得基盤の BigQuery 側環境を整備する。
 # ・BigQuery API の有効化
 # ・youtube_chat データセットの作成
+# ・YouTube チャット管理テーブルの作成
 #
 # 【前提条件】
 # - gcloud CLI がインストールされていること
@@ -25,6 +26,9 @@
 #
 
 set -e  # エラー時に即座に終了
+# スクリプトのディレクトリを基準にパスを解決
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MIGRATION_SQL="$SCRIPT_DIR/migration/20260129T0000_create_youtube_chat_tables.sql"
 
 # ========================================
 # 1. 環境変数チェック
@@ -43,14 +47,9 @@ echo ""
 # 2. BigQuery API 有効化（冪等）
 # ========================================
 echo "--- BigQuery API を有効化中... ---"
+# set -e により、失敗時は自動的にスクリプトが終了します
 gcloud services enable bigquery.googleapis.com --project "$BQ_PROJECT_ID"
-
-if [ $? -eq 0 ]; then
-  echo "✓ BigQuery API が有効化されました（または既に有効です）"
-else
-  echo "✗ BigQuery API の有効化に失敗しました"
-  exit 1
-fi
+echo "✓ BigQuery API が有効化されました（または既に有効です）"
 echo ""
 
 # ========================================
@@ -67,23 +66,33 @@ else
   echo "データセット '$DATASET_NAME' が存在しないため作成します..."
   
   # データセット作成
-  # デフォルトのロケーションは asia-northeast1 (東京) を推奨
-  # 必要に応じて --location オプションを変更してください
-  bq mk --project_id="$BQ_PROJECT_ID" --dataset --location=asia-northeast1 "$DATASET_NAME"
-  
-  if [ $? -eq 0 ]; then
-    echo "✓ データセット '$DATASET_NAME' を作成しました"
-  else
-    echo "✗ データセット '$DATASET_NAME' の作成に失敗しました"
-    exit 1
-  fi
+  # デフォルトのロケーションは us
+  # 別のリージョンを使用する場合は --location オプションを変更してください
+  # set -e により、失敗時は自動的にスクリプトが終了します
+  bq mk --project_id="$BQ_PROJECT_ID" --dataset --location=us "$DATASET_NAME"
+  echo "✓ データセット '$DATASET_NAME' を作成しました"
 fi
 echo ""
+
+
+# ========================================
+# 4. YouTube チャット管理テーブル作成
+# ========================================
+echo "--- YouTube チャット管理テーブルを作成中... ---"
+
+# SQL ファイル存在チェック
+if [ ! -f "$MIGRATION_SQL" ]; then
+  echo "エラー: マイグレーション SQL が見つかりません: $MIGRATION_SQL"
+  echo "存在するファイルを確認してください: $SCRIPT_DIR/migration/"
+  exit 1
+fi
+
+# BigQuery に適用
+bq query --project_id="$BQ_PROJECT_ID" --use_legacy_sql=false < "$MIGRATION_SQL"
+echo "✓ YouTube チャット管理テーブルを作成しました"
 
 # ========================================
 # 完了
 # ========================================
 echo "=== BigQuery セットアップ完了 ==="
-echo "次のステップ: マイグレーション SQL を実行してテーブルを作成してください"
-echo "  bq query --project_id='$BQ_PROJECT_ID' --use_legacy_sql=false < infra/big-query/migration/20260129T0000_create_youtube_chat_tables.sql"
 echo ""
