@@ -167,13 +167,21 @@ WHEN NOT MATCHED THEN
 # - 同一 (video_id, event_id) は上書きされる（冪等性）
 # - ingest_run_id / ingested_at は常に最新で更新（最終取得を追跡）
 # 
-# 重要な設計方針:
+# 重要な設計方針（Primitive-only pattern）:
 # - Python側では TIMESTAMP や JSON をすべて STRING として渡す
-# - SQL側で PARSE_TIMESTAMP / SAFE.PARSE_JSON で変換
+# - SQL側で SAFE_CAST / SAFE.PARSE_JSON で変換
 # 
 # 理由:
 # - ArrayQueryParameter + STRUCT では datetime や JSON を直接渡せない
 # - すべてプリミティブ型（STRING/INT64）として扱う必要がある
+# 
+# SAFE_CAST vs PARSE_TIMESTAMP:
+# - SAFE_CAST(... AS TIMESTAMP): RFC3339 文字列を自動解釈（推奨）
+# - PARSE_TIMESTAMP(format, ...): フォーマット文字列が必要（フォーマット事故のリスク）
+# 
+# SAFE.PARSE_JSON:
+# - 不正な JSON → NULL に変換（クエリは失敗しない）
+# - 正常な JSON → JSON 型として格納
 # 
 # 注意:
 # - バッチサイズに注意（Python側で分割処理）
@@ -185,14 +193,14 @@ WHEN MATCHED THEN
   UPDATE SET
     event_type = S.event_type,
     timestamp_usec = S.timestamp_usec,
-    published_at = PARSE_TIMESTAMP(S.published_at),
+    published_at = SAFE_CAST(S.published_at AS TIMESTAMP),
     author_name = S.author_name,
     author_channel_id = S.author_channel_id,
     message_text = S.message_text,
     message_runs_json = SAFE.PARSE_JSON(S.message_runs_json),
     purchase_amount_text = S.purchase_amount_text,
     ingest_run_id = S.ingest_run_id,
-    ingested_at = PARSE_TIMESTAMP(S.ingested_at),
+    ingested_at = SAFE_CAST(S.ingested_at AS TIMESTAMP),
     source_file = S.source_file,
     source_line_no = S.source_line_no,
     raw_item_json = SAFE.PARSE_JSON(S.raw_item_json)
@@ -219,14 +227,14 @@ WHEN NOT MATCHED THEN
     S.event_id,
     S.event_type,
     S.timestamp_usec,
-    PARSE_TIMESTAMP(S.published_at),
+    SAFE_CAST(S.published_at AS TIMESTAMP),
     S.author_name,
     S.author_channel_id,
     S.message_text,
     SAFE.PARSE_JSON(S.message_runs_json),
     S.purchase_amount_text,
     S.ingest_run_id,
-    PARSE_TIMESTAMP(S.ingested_at),
+    SAFE_CAST(S.ingested_at AS TIMESTAMP),
     S.source_file,
     S.source_line_no,
     SAFE.PARSE_JSON(S.raw_item_json)

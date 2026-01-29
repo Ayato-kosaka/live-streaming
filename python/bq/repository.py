@@ -8,6 +8,7 @@ BigQuery との全てのやり取りはこのモジュールを経由する。
 from datetime import datetime
 from typing import List, Optional
 from google.cloud import bigquery
+import json
 
 from bq.client import get_bigquery_client
 from bq.queries import (
@@ -19,6 +20,10 @@ from bq.queries import (
 from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
 from config import MAX_VIDEOS_PER_RUN
 from utils.batching import batch_items
+from utils.timestamp import to_rfc3339
+from logging_util import get_logger
+
+logger = get_logger(__name__)
 
 
 # ============================================================================
@@ -176,72 +181,58 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     if not messages:
         return 0
     
-    import json
-    
     client = get_bigquery_client()
     total_merged = 0
     
     # STRUCT型定義を明示的に指定
     # BigQuery の STRUCT<...> 形式で全フィールドを定義
     # 
-    # 重要な設計方針:
-    # - ArrayQueryParameter + STRUCT では datetime や JSON を直接渡せない
+    # 重要な設計方針（Primitive-only pattern）:
+    # - ArrayQueryParameter + STRUCT では複合型（JSON/TIMESTAMP）を直接渡せない
     # - すべて STRING/INT64 などプリミティブ型として渡し、SQL側で変換する
     # 
     # 理由:
     # - JSON型: BigQuery Python Client が QueryParameter として扱えない
     # - TIMESTAMP型: STRUCT内の datetime が json.dumps() で失敗する
     # 
-    # → すべて STRING として渡し、SQL側で PARSE_TIMESTAMP / SAFE.PARSE_JSON で変換
+    # → すべて STRING として渡し、SQL側で SAFE_CAST / SAFE.PARSE_JSON で変換
     struct_type = (
         "STRUCT<"
         "video_id STRING, "
         "event_id STRING, "
         "event_type STRING, "
         "timestamp_usec INT64, "
-        "published_at STRING, "        # TIMESTAMP → STRING (SQL側で変換)
+        "published_at STRING, "        # TIMESTAMP → STRING (SQL側で SAFE_CAST)
         "author_name STRING, "
         "author_channel_id STRING, "
         "message_text STRING, "
-        "message_runs_json STRING, "   # JSON → STRING (SQL側で変換)
+        "message_runs_json STRING, "   # JSON → STRING (SQL側で SAFE.PARSE_JSON)
         "purchase_amount_text STRING, "
         "ingest_run_id STRING, "
-        "ingested_at STRING, "         # TIMESTAMP → STRING (SQL側で変換)
+        "ingested_at STRING, "         # TIMESTAMP → STRING (SQL側で SAFE_CAST)
         "source_file STRING, "
         "source_line_no INT64, "
-        "raw_item_json STRING"         # JSON → STRING (SQL側で変換)
+        "raw_item_json STRING"         # JSON → STRING (SQL側で SAFE.PARSE_JSON)
         ">"
     )
     
-    # ヘルパー関数: datetime を RFC3339 形式の文字列に変換
-    def to_rfc3339(dt):
-        """
-        datetime を BigQuery 互換の RFC3339 形式文字列に変換
-        
-        例: 2024-01-29T10:00:00Z
-        
-        Args:
-            dt: datetime オブジェクト or None
-        
-        Returns:
-            RFC3339 文字列 or None
-        """
-        if dt is None:
-            return None
-        # naive datetime の場合は UTC を付与
-        if dt.tzinfo is None:
-            from datetime import timezone
-            dt = dt.replace(tzinfo=timezone.utc)
-        # isoformat() で RFC3339 形式に変換し、+00:00 を Z に置換
-        return dt.isoformat().replace("+00:00", "Z")
+    # フィールド名のリスト（バリデーションログ用）
+    field_names = [
+        "video_id", "event_id", "event_type", "timestamp_usec", "published_at",
+        "author_name", "author_channel_id", "message_text", "message_runs_json",
+        "purchase_amount_text", "ingest_run_id", "ingested_at", "source_file",
+        "source_line_no", "raw_item_json"
+    ]
     
     # バッチに分割して MERGE
     for batch in batch_items(messages):
+        logger.info(f"Processing batch of {len(batch)} messages for MERGE")
+        
         # ChatMessage をタプルのリストに変換（STRUCT の順序に従う）
         # 
         # 重要な設計方針:
         # - すべて STRING/INT64 などプリミティブ型として渡す
-        # - TIMESTAMP や JSON は SQL側で変換（PARSE_TIMESTAMP / SAFE.PARSE_JSON）
+        # - TIMESTAMP や JSON は SQL側で変換（SAFE_CAST / SAFE.PARSE_JSON）
         # 
         # 理由:
         # - ArrayQueryParameter + STRUCT 内で datetime を渡すと json.dumps() で失敗
@@ -249,7 +240,7 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
         
         batch_tuples = []
         for msg in batch:
-            # TIMESTAMP フィールド: RFC3339 文字列に変換（SQL側でPARSE_TIMESTAMPで変換）
+            # TIMESTAMP フィールド: RFC3339 文字列に変換（SQL側でSAFE_CASTで変換）
             published_at_str = to_rfc3339(msg.published_at)
             ingested_at_str = to_rfc3339(msg.ingested_at)
             
@@ -267,18 +258,36 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
                 msg.event_id,
                 msg.event_type.value,  # Enum の値を取得
                 int(msg.timestamp_usec),  # INT64 として明示的に変換
-                published_at_str,  # STRING（SQL側でPARSE_TIMESTAMP）
+                published_at_str,  # STRING（SQL側でSAFE_CAST）
                 msg.author_name,
                 msg.author_channel_id,
                 msg.message_text,
                 message_runs_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
                 msg.purchase_amount_text,
                 msg.ingest_run_id,
-                ingested_at_str,  # STRING（SQL側でPARSE_TIMESTAMP）
+                ingested_at_str,  # STRING（SQL側でSAFE_CAST）
                 msg.source_file,
                 msg.source_line_no,
                 raw_item_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
             ))
+        
+        # ============================================================================
+        # バリデーション: BigQuery に送信する前に値を検証
+        # ============================================================================
+        # 
+        # 目的:
+        # - "Invalid value for type: STRUCT<...>" エラーの再発防止
+        # - 異常値が混入した場合、どのレコードのどのフィールドが原因かを特定
+        # 
+        # 検証内容:
+        # - None または プリミティブ型（str, int）のみ許可
+        # - datetime, dict, list などの複合型が混入していないか確認
+        # 
+        # エラー時の挙動:
+        # - BigQuery には送信せず、詳細ログを出力して例外を投げる
+        # - video_id, event_id, source_line_no で問題レコードを特定可能
+        
+        _validate_batch_tuples(batch_tuples, field_names)
         
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
@@ -418,3 +427,71 @@ def mark_video_skipped(
     video.next_retry_at = None
     
     return video
+
+
+# ============================================================================
+# バリデーション: バッチ送信前の値検証
+# ============================================================================
+
+def _validate_batch_tuples(batch_tuples: List[tuple], field_names: List[str]) -> None:
+    """
+    BigQuery に送信する前にバッチを検証
+    
+    目的:
+    - "Invalid value for type: STRUCT<...>" エラーの再発防止
+    - 異常値が混入した場合、どのレコードのどのフィールドが原因かを特定
+    
+    検証内容:
+    - None または プリミティブ型（str, int）のみ許可
+    - datetime, dict, list などの複合型が混入していないか確認
+    
+    エラー時の挙動:
+    - BigQuery には送信せず、詳細ログを出力して例外を投げる
+    - video_id, event_id, source_line_no で問題レコードを特定可能
+    
+    Args:
+        batch_tuples: 検証するタプルのリスト
+        field_names: フィールド名のリスト（ログ出力用）
+    
+    Raises:
+        ValueError: 不正な値が見つかった場合
+    """
+    for idx, tpl in enumerate(batch_tuples):
+        for field_idx, value in enumerate(tpl):
+            # None または str/int のみ許可
+            if value is not None and not isinstance(value, (str, int)):
+                # 異常値を検出：詳細ログを出力
+                field_name = field_names[field_idx] if field_idx < len(field_names) else f"field_{field_idx}"
+                
+                # レコード識別情報（video_id, event_id, source_line_no）を取得
+                video_id = tpl[0] if len(tpl) > 0 else "unknown"
+                event_id = tpl[1] if len(tpl) > 1 else "unknown"
+                source_line_no = tpl[13] if len(tpl) > 13 else "unknown"  # source_line_no の位置
+                
+                error_msg = (
+                    f"❌ BigQuery MERGE バリデーションエラー\n"
+                    f"  レコード番号: {idx}\n"
+                    f"  video_id: {video_id}\n"
+                    f"  event_id: {event_id}\n"
+                    f"  source_line_no: {source_line_no}\n"
+                    f"  フィールド: {field_name} (位置: {field_idx})\n"
+                    f"  不正な値: {repr(value)}\n"
+                    f"  型: {type(value).__name__}\n"
+                    f"  期待される型: None, str, または int\n"
+                    f"\n"
+                    f"原因:\n"
+                    f"  - datetime オブジェクトが to_rfc3339() で変換されていない可能性\n"
+                    f"  - dict/list が json.dumps() で文字列化されていない可能性\n"
+                    f"  - STRUCT 定義の順序と値の順序が不一致の可能性\n"
+                )
+                logger.error(error_msg)
+                
+                raise ValueError(
+                    f"Invalid value in batch at record {idx}, field '{field_name}' (position {field_idx}): "
+                    f"type {type(value).__name__} is not allowed. "
+                    f"Only None, str, or int are permitted for BigQuery ArrayQueryParameter + STRUCT. "
+                    f"video_id={video_id}, event_id={event_id}, source_line_no={source_line_no}"
+                )
+    
+    # バリデーション成功：ログ出力（通常時は重くならないよう info レベル）
+    logger.info(f"✅ Batch validation passed: {len(batch_tuples)} records validated")
