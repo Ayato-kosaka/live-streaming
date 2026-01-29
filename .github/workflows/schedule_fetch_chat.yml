@@ -36,7 +36,7 @@ jobs:
       - name: 必要なパッケージのインストール
         run: |
           python -m pip install --upgrade pip
-          pip install google-cloud-bigquery requests
+          pip install -r python/requirements.txt
     
       - name: Setup yt-dlp
         uses: AnimMouse/setup-yt-dlp@v3
