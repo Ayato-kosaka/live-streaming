@@ -225,17 +225,9 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
         
         # BigQuery に MERGE
         video_logger.info(f"BigQuery に {len(messages)} メッセージを MERGE 中...")
-        try:
-            merged_count = merge_chat_messages(messages, video_logger)
-            result.merged_message_count = merged_count
-            video_logger.info(f"MERGE 完了: {merged_count} メッセージ")
-        except Exception as merge_error:
-            # BigQuery MERGEエラー
-            result.error_code = ERROR_CODE_BQ_MERGE_FAILED
-            result.error_detail = f"BigQuery MERGE失敗: {type(merge_error).__name__}: {str(merge_error)[:500]}"
-            video_logger.error(f"BigQuery MERGE失敗: {str(merge_error)[:200]}")
-            handle_failure(video, result, video_logger)
-            return result
+        merged_count = merge_chat_messages(messages)
+        result.merged_message_count = merged_count
+        video_logger.info(f"MERGE 完了: {merged_count} メッセージ")
         
         # 成功
         video = mark_video_succeeded(video)

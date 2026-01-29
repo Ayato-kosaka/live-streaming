@@ -14,9 +14,10 @@ from bq.queries import (
     QUERY_DISCOVERY_UPSERT_VIDEO,
     QUERY_SELECT_TARGET_VIDEOS,
     QUERY_MERGE_VIDEO,
+    QUERY_MERGE_CHAT_MESSAGES,
 )
 from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
-from config import MAX_VIDEOS_PER_RUN, BQ_DATASET, BQ_TABLE_CHAT_MESSAGES
+from config import MAX_VIDEOS_PER_RUN
 from utils.batching import batch_items
 
 
@@ -160,200 +161,41 @@ def update_video(video: Video) -> None:
 # chat_messages テーブル操作
 # ============================================================================
 
-def merge_chat_messages(messages: List[ChatMessage], logger=None) -> int:
+def merge_chat_messages(messages: List[ChatMessage]) -> int:
     """
     チャットメッセージを MERGE（idempotent）
     
-    ステージングテーブルを経由してMERGEを実行する。
-    この方式により、QueryParameterの型変換エラーを回避し、
-    大量メッセージの取り扱いも堅牢になる。
-    
-    処理フロー:
-    1. 一時ステージングテーブルを作成
-    2. メッセージをNDJSONとしてステージングテーブルへロード
-    3. ステージングテーブルをソースとしてMERGE実行
-    4. ステージングテーブルを削除
+    大量のメッセージがある場合は自動的にバッチ分割して処理する。
     
     Args:
         messages: MERGE する ChatMessage オブジェクトのリスト
-        logger: ロガー（デバッグ情報出力用）
         
     Returns:
         処理したメッセージの総数
-        
-    Raises:
-        Exception: BigQuery操作でエラーが発生した場合
     """
     if not messages:
         return 0
     
-    import json
-    import tempfile
-    import uuid
-    from datetime import datetime
-    
     client = get_bigquery_client()
+    total_merged = 0
     
-    # デバッグ情報をログ出力
-    if logger:
-        logger.info(f"MERGE開始: {len(messages)} メッセージ")
-        if messages:
-            sample_msg = messages[0].to_dict()
-            logger.debug(f"サンプルメッセージキー: {list(sample_msg.keys())}")
-    
-    # ステージングテーブル名（一意にするためUUIDを使用）
-    staging_table_id = f"{BQ_DATASET}.staging_chat_messages_{uuid.uuid4().hex[:8]}"
-    
-    try:
-        # 1. ステージングテーブルを作成（chat_messages と同じスキーマ）
-        staging_table = bigquery.Table(staging_table_id)
-        staging_table.expires = datetime.utcnow().replace(microsecond=0) + \
-            __import__('datetime').timedelta(hours=1)  # 1時間後に自動削除
+    # バッチに分割して MERGE
+    for batch in batch_items(messages):
+        # ChatMessage を辞書のリストに変換
+        batch_dicts = [msg.to_dict() for msg in batch]
         
-        # スキーマ定義（chat_messages と同じ）
-        staging_table.schema = [
-            bigquery.SchemaField("video_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("event_id", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("event_type", "STRING", mode="REQUIRED"),
-            bigquery.SchemaField("timestamp_usec", "INT64", mode="REQUIRED"),
-            bigquery.SchemaField("published_at", "TIMESTAMP", mode="REQUIRED"),
-            bigquery.SchemaField("author_name", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("author_channel_id", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("message_text", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("message_runs_json", "JSON", mode="NULLABLE"),
-            bigquery.SchemaField("purchase_amount_text", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("ingest_run_id", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("ingested_at", "TIMESTAMP", mode="NULLABLE"),
-            bigquery.SchemaField("source_file", "STRING", mode="NULLABLE"),
-            bigquery.SchemaField("source_line_no", "INT64", mode="NULLABLE"),
-            bigquery.SchemaField("raw_item_json", "JSON", mode="REQUIRED"),
-        ]
-        
-        client.create_table(staging_table)
-        if logger:
-            logger.debug(f"ステージングテーブル作成: {staging_table_id}")
-        
-        # 2. メッセージをNDJSONファイルとして一時ファイルに書き出し
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ndjson', delete=False) as tmp_file:
-            tmp_file_path = tmp_file.name
-            for msg in messages:
-                # JSON型フィールドは文字列化が必要
-                msg_dict = msg.to_dict()
-                # message_runs_json と raw_item_json を JSON文字列に変換
-                if msg_dict.get('message_runs_json'):
-                    msg_dict['message_runs_json'] = json.dumps(msg_dict['message_runs_json'])
-                if msg_dict.get('raw_item_json'):
-                    msg_dict['raw_item_json'] = json.dumps(msg_dict['raw_item_json'])
-                tmp_file.write(json.dumps(msg_dict) + '\n')
-        
-        if logger:
-            logger.debug(f"NDJSONファイル作成: {tmp_file_path}")
-        
-        # 3. ステージングテーブルへロード
-        job_config = bigquery.LoadJobConfig(
-            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
-            schema=staging_table.schema,
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ArrayQueryParameter("messages", "STRUCT", batch_dicts),
+            ]
         )
         
-        with open(tmp_file_path, 'rb') as source_file:
-            load_job = client.load_table_from_file(
-                source_file,
-                staging_table_id,
-                job_config=job_config
-            )
-        load_job.result()  # ロード完了を待つ
+        query_job = client.query(QUERY_MERGE_CHAT_MESSAGES, job_config=job_config)
+        query_job.result()  # 完了を待つ
         
-        if logger:
-            logger.debug(f"ステージングテーブルへロード完了: {load_job.output_rows} 行")
-        
-        # 4. ステージングテーブルからMERGE
-        merge_query = f"""
-        MERGE `{BQ_DATASET}.{BQ_TABLE_CHAT_MESSAGES}` T
-        USING `{staging_table_id}` S
-        ON T.video_id = S.video_id AND T.event_id = S.event_id
-        WHEN MATCHED THEN
-          UPDATE SET
-            event_type = S.event_type,
-            timestamp_usec = S.timestamp_usec,
-            published_at = S.published_at,
-            author_name = S.author_name,
-            author_channel_id = S.author_channel_id,
-            message_text = S.message_text,
-            message_runs_json = S.message_runs_json,
-            purchase_amount_text = S.purchase_amount_text,
-            ingest_run_id = S.ingest_run_id,
-            ingested_at = S.ingested_at,
-            source_file = S.source_file,
-            source_line_no = S.source_line_no,
-            raw_item_json = S.raw_item_json
-        WHEN NOT MATCHED THEN
-          INSERT (
-            video_id,
-            event_id,
-            event_type,
-            timestamp_usec,
-            published_at,
-            author_name,
-            author_channel_id,
-            message_text,
-            message_runs_json,
-            purchase_amount_text,
-            ingest_run_id,
-            ingested_at,
-            source_file,
-            source_line_no,
-            raw_item_json
-          )
-          VALUES (
-            S.video_id,
-            S.event_id,
-            S.event_type,
-            S.timestamp_usec,
-            S.published_at,
-            S.author_name,
-            S.author_channel_id,
-            S.message_text,
-            S.message_runs_json,
-            S.purchase_amount_text,
-            S.ingest_run_id,
-            S.ingested_at,
-            S.source_file,
-            S.source_line_no,
-            S.raw_item_json
-          )
-        """
-        
-        merge_job = client.query(merge_query)
-        merge_job.result()  # MERGE完了を待つ
-        
-        if logger:
-            logger.info(f"MERGE完了: {len(messages)} メッセージ処理")
-        
-        # 一時ファイルを削除
-        import os
-        os.unlink(tmp_file_path)
-        
-        return len(messages)
-        
-    except Exception as e:
-        # BigQueryエラーの詳細をログ出力
-        if logger:
-            logger.error(f"BigQuery MERGE失敗: {type(e).__name__}: {str(e)}")
-            # job error があれば詳細を出力
-            if hasattr(e, 'errors'):
-                logger.error(f"BigQuery errors: {e.errors}")
-        raise
-        
-    finally:
-        # 5. ステージングテーブルを削除（エラー時も確実に削除）
-        try:
-            client.delete_table(staging_table_id, not_found_ok=True)
-            if logger:
-                logger.debug(f"ステージングテーブル削除: {staging_table_id}")
-        except Exception as cleanup_error:
-            if logger:
-                logger.warning(f"ステージングテーブル削除失敗（TTLで自動削除されます）: {cleanup_error}")
-            pass  # 削除失敗は無視（TTLで自動削除される）
+        total_merged += len(batch)
+    
+    return total_merged
 
 
 # ============================================================================
