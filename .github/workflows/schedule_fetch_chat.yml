@@ -22,8 +22,6 @@ jobs:
     env:
       # BigQuery 設定
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      # YouTube API 設定 (OAuth via Doneru)
-      DONERU_ALERTBOX_KEY: ${{ secrets.DONERU_ALERTBOX_KEY }}
       YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
       # Discovery 設定
       DISCOVERY_LOOKBACK_DAYS: ${{ inputs.lookback_days || '10' }}
@@ -45,6 +43,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
+
+      - name: Doneru key を抽出
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}'
+          key="$(printf '%s' "$url" | sed -n 's/.*[?&]key=\([^&]*\).*/\1/p')"
+          if [ -z "$key" ]; then
+            echo "ERROR: EXPO_PUBLIC_DONERU_WSS_URL から key=... を抽出できませんでした" >&2
+            exit 1
+          fi
+          echo "DONERU_ALERTBOX_KEY=$key" >> "$GITHUB_ENV"
 
       - name: Discovery 実行
         run: python python/discover_videos.py
