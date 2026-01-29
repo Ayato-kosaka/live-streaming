@@ -197,26 +197,34 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     # 
     # → すべて STRING として渡し、SQL側で SAFE_CAST / SAFE.PARSE_JSON で変換
     # 
-    # ArrayQueryParameter の正しい使い方:
-    # - 第2引数: "STRUCT" (文字列の "STRUCT" のみ)
-    # - struct_types: ScalarQueryParameter の type_ のリスト
-    struct_types = [
-        bigquery.ScalarQueryParameter("video_id", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("event_id", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("event_type", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("timestamp_usec", "INT64", None).type_,
-        bigquery.ScalarQueryParameter("published_at", "STRING", None).type_,  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
-        bigquery.ScalarQueryParameter("author_name", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("author_channel_id", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("message_text", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("message_runs_json", "STRING", None).type_,  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
-        bigquery.ScalarQueryParameter("purchase_amount_text", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("ingest_run_id", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("ingested_at", "STRING", None).type_,  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
-        bigquery.ScalarQueryParameter("source_file", "STRING", None).type_,
-        bigquery.ScalarQueryParameter("source_line_no", "INT64", None).type_,
-        bigquery.ScalarQueryParameter("raw_item_json", "STRING", None).type_,  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
-    ]
+    # ArrayQueryParameter の型定義:
+    # google-cloud-bigquery 3.11.0+ では型オブジェクトを使用する必要がある
+    # 
+    # 設計方針:
+    # - すべてのフィールドを STRING または INT64 として定義（プリミティブ型のみ）
+    # - TIMESTAMP や JSON は SQL 側で変換（SAFE_CAST / SAFE.PARSE_JSON）
+    # - これにより datetime や dict を直接渡すことによるシリアライゼーションエラーを回避
+    
+    # STRUCT の型を定義（各フィールドの型を ArrayQueryParameterType で指定）
+    from google.cloud.bigquery import ScalarQueryParameterType, StructQueryParameterType
+    
+    struct_param_type = StructQueryParameterType(
+        ScalarQueryParameterType("video_id", "STRING"),
+        ScalarQueryParameterType("event_id", "STRING"),
+        ScalarQueryParameterType("event_type", "STRING"),
+        ScalarQueryParameterType("timestamp_usec", "INT64"),
+        ScalarQueryParameterType("published_at", "STRING"),  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
+        ScalarQueryParameterType("author_name", "STRING"),
+        ScalarQueryParameterType("author_channel_id", "STRING"),
+        ScalarQueryParameterType("message_text", "STRING"),
+        ScalarQueryParameterType("message_runs_json", "STRING"),  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
+        ScalarQueryParameterType("purchase_amount_text", "STRING"),
+        ScalarQueryParameterType("ingest_run_id", "STRING"),
+        ScalarQueryParameterType("ingested_at", "STRING"),  # TIMESTAMP → STRING (SQL側で SAFE_CAST)
+        ScalarQueryParameterType("source_file", "STRING"),
+        ScalarQueryParameterType("source_line_no", "INT64"),
+        ScalarQueryParameterType("raw_item_json", "STRING"),  # JSON → STRING (SQL側で SAFE.PARSE_JSON)
+    )
     
     # フィールド名のリスト（バリデーションログ用）
     field_names = [
@@ -290,15 +298,19 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
         # - video_id, event_id, source_line_no で問題レコードを特定可能
         
         # BigQuery に送信する前に真の検証: to_api_repr() が成功するかテスト
-        _validate_batch_tuples_with_api_repr(batch_tuples, field_names, struct_types)
+        _validate_batch_tuples_with_api_repr(batch_tuples, field_names, struct_param_type)
+        
+        # ArrayQueryParameter を構築
+        # array_type には StructQueryParameterType オブジェクトを渡す
+        from google.cloud.bigquery import ArrayQueryParameterType
+        array_param_type = ArrayQueryParameterType(struct_param_type)
         
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
                 bigquery.ArrayQueryParameter(
                     "messages",
-                    "STRUCT",  # 第2引数は "STRUCT" (文字列)
-                    batch_tuples,
-                    struct_types=struct_types  # STRUCT の型定義
+                    array_param_type,  # ArrayQueryParameterType オブジェクト
+                    batch_tuples
                 ),
             ]
         )
@@ -444,7 +456,7 @@ def mark_video_skipped(
 def _validate_batch_tuples_with_api_repr(
     batch_tuples: List[tuple],
     field_names: List[str],
-    struct_types: List
+    struct_param_type
 ) -> None:
     """
     BigQuery に送信する前にバッチを検証（真の検証: to_api_repr() テスト）
@@ -464,18 +476,20 @@ def _validate_batch_tuples_with_api_repr(
     Args:
         batch_tuples: 検証するタプルのリスト
         field_names: フィールド名のリスト（ログ出力用）
-        struct_types: STRUCT の型定義リスト
+        struct_param_type: StructQueryParameterType オブジェクト
     
     Raises:
         ValueError: パラメータの構築またはシリアライズに失敗した場合
     """
     try:
         # ArrayQueryParameter を実際に構築してテスト
+        from google.cloud.bigquery import ArrayQueryParameterType
+        array_param_type = ArrayQueryParameterType(struct_param_type)
+        
         param = bigquery.ArrayQueryParameter(
             "messages",
-            "STRUCT",
-            batch_tuples,
-            struct_types=struct_types
+            array_param_type,
+            batch_tuples
         )
         
         # to_api_repr() を呼び出して、実際にシリアライズできるかテスト
@@ -491,7 +505,7 @@ def _validate_batch_tuples_with_api_repr(
         # 一般的な原因:
         # - datetime オブジェクトが混入（to_rfc3339() で変換し忘れ）
         # - dict/list が混入（json.dumps() で文字列化し忘れ）
-        # - struct_types の定義と batch_tuples の順序が不一致
+        # - 型定義と batch_tuples の順序が不一致
         # - None 以外の値が STRING/INT64 でない
         
         error_msg = (
@@ -503,11 +517,10 @@ def _validate_batch_tuples_with_api_repr(
             f"原因の可能性:\n"
             f"  - datetime オブジェクトが to_rfc3339() で変換されていない\n"
             f"  - dict/list が json.dumps() で文字列化されていない\n"
-            f"  - struct_types の定義と batch_tuples の順序が不一致\n"
+            f"  - 型定義と batch_tuples の順序が不一致\n"
             f"  - STRUCT フィールド数と tuple の要素数が不一致\n"
             f"\n"
             f"デバッグ情報:\n"
-            f"  - struct_types の数: {len(struct_types)}\n"
             f"  - 最初のタプルの要素数: {len(batch_tuples[0]) if batch_tuples else 0}\n"
         )
         
