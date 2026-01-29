@@ -89,9 +89,7 @@ jobs:
       - name: Write yt-dlp cookies to file
         run: |
           mkdir -p ./.yt-dlp
-          cat > ./.yt-dlp/cookies.txt << 'EOF'
-          ${{ secrets.YOUTUBE_COOKIES }}
-          EOF
+          echo "${{ secrets.YOUTUBE_COOKIES }}" | base64 -d > ./.yt-dlp/cookies.txt
 
       - name: チャットデータ取得スクリプトの実行
         env:
