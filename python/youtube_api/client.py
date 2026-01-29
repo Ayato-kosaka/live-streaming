@@ -58,9 +58,10 @@ class BearerTokenCredentials(google.auth.credentials.Credentials):
         
         Args:
             headers: HTTP ヘッダーの辞書
-            token: トークン（オプション）
+            token: トークン（オプション、指定されない場合は self.token を使用）
         """
-        headers['authorization'] = f'Bearer {self.token}'
+        auth_token = token or self.token
+        headers['authorization'] = f'Bearer {auth_token}'
     
     def before_request(self, request, method, url, headers):
         """
@@ -123,7 +124,8 @@ def reset_youtube_client() -> None:
 def execute_api_request(
     request: Any,
     max_retries: int = 3,
-    logger: Optional[logging.Logger] = None
+    logger: Optional[logging.Logger] = None,
+    token_refresh_callback: Optional[callable] = None
 ) -> Dict[str, Any]:
     """
     YouTube API リクエストを実行（リトライ付き）
@@ -135,6 +137,7 @@ def execute_api_request(
         request: YouTube API リクエストオブジェクト
         max_retries: 最大リトライ回数
         logger: ロガー（オプション）
+        token_refresh_callback: トークンリフレッシュ時のコールバック（オプション）
         
     Returns:
         API レスポンス（dict）
@@ -162,18 +165,26 @@ def execute_api_request(
                         _token_manager.refresh_token()
                         # クライアントをリセット（新しいトークンで再構築）
                         reset_youtube_client()
-                        # リクエストを再実行するため continue
-                        # 注意: request オブジェクトは古いクライアントに紐づいているため、
-                        # 呼び出し元で新しいクライアントから再度リクエストを作成する必要がある
-                        # ここでは一度だけリフレッシュを試み、失敗したら例外を投げる
+                        
+                        if logger:
+                            logger.info("トークンリフレッシュ完了。次の試行で新しいトークンが使用されます。")
+                        
+                        # コールバックを実行（呼び出し元が新しいクライアントで request を再構築できる）
+                        if token_refresh_callback:
+                            token_refresh_callback()
+                        
+                        # NOTE: request オブジェクトは古いクライアントに紐づいているため、
+                        # このままでは新しいトークンが使われない。
+                        # 呼び出し元でこの例外をキャッチし、新しいクライアントで request を再構築する必要がある。
                         if logger:
                             logger.warning(
-                                "トークンリフレッシュ完了。呼び出し元で再試行してください。"
+                                "401 エラーは解決できません。呼び出し元で新しいクライアントを使って再試行してください。"
                             )
                     except Exception as refresh_error:
                         if logger:
                             logger.error(f"トークンリフレッシュに失敗: {refresh_error}")
-                    raise  # 呼び出し元で新しいクライアントを使って再試行
+                # 401 の場合は常に raise（呼び出し元で再試行が必要）
+                raise
             
             # リトライ可能なエラーコード（429: Too Many Requests, 500/503: Server Error）
             if e.resp.status in [429, 500, 503]:

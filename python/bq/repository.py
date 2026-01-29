@@ -17,6 +17,7 @@ from bq.queries import (
     QUERY_MERGE_VIDEO,
     QUERY_MERGE_CHAT_MESSAGES,
     QUERY_GET_EXISTING_VIDEO_IDS,
+    QUERY_GET_EXISTING_VIDEO_IDS_IN_RANGE,
 )
 from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
 from config import MAX_VIDEOS_PER_RUN
@@ -31,12 +32,59 @@ logger = setup_logger(__name__)
 # Discovery: videos テーブルへの UPSERT
 # ============================================================================
 
-def get_existing_video_ids() -> set[str]:
+def get_existing_video_ids_in_range(
+    cutoff_time: datetime,
+    logger: Optional[logging.Logger] = None
+) -> set[str]:
     """
-    BigQuery から既存の video_id を全て取得
+    BigQuery から指定期間内の既存 video_id を取得
     
     Discovery 処理で使用。既知の video_id が連続で現れた場合に
     Discovery を打ち切るための判定に使用する。
+    
+    パフォーマンス最適化:
+    - cutoff_time 以降の actual_start_time を持つ動画のみを取得
+    - actual_start_time が NULL の動画も取得（未配信動画対策）
+    
+    Args:
+        cutoff_time: カットオフ時刻（この時刻以降の動画を取得）
+        logger: ロガー（オプション）
+        
+    Returns:
+        既存の video_id の集合
+    """
+    client = get_bigquery_client()
+    
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter(
+                "cutoff_time",
+                "TIMESTAMP",
+                cutoff_time.isoformat() if cutoff_time else None
+            ),
+        ]
+    )
+    
+    query_job = client.query(QUERY_GET_EXISTING_VIDEO_IDS_IN_RANGE, job_config=job_config)
+    results = query_job.result()
+    
+    video_ids = {row.video_id for row in results}
+    
+    if logger:
+        logger.info(
+            f"既存の video_id を {len(video_ids)} 件取得 "
+            f"(cutoff: {cutoff_time.isoformat()})"
+        )
+    
+    return video_ids
+
+
+def get_existing_video_ids() -> set[str]:
+    """
+    BigQuery から既存の video_id を全て取得（非推奨）
+    
+    注意: この関数は大量のレコードを返す可能性があるため、
+    代わりに get_existing_video_ids_in_range() の使用を推奨。
     
     Returns:
         既存の video_id の集合
@@ -48,7 +96,7 @@ def get_existing_video_ids() -> set[str]:
     
     video_ids = {row.video_id for row in results}
     
-    logger.info(f"既存の video_id を {len(video_ids)} 件取得")
+    logger.info(f"既存の video_id を {len(video_ids)} 件取得（全件）")
     
     return video_ids
 

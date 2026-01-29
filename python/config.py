@@ -51,6 +51,10 @@ MAX_VIDEOS_PER_RUN: Final[int] = 10
 DEFAULT_DISCOVERY_LOOKBACK_DAYS: Final[int] = 10
 DISCOVERY_LOOKBACK_DAYS: int = int(os.getenv("DISCOVERY_LOOKBACK_DAYS", str(DEFAULT_DISCOVERY_LOOKBACK_DAYS)))
 
+# Discovery の既知 video_id 連続出現打ち切り閾値
+# この数だけ連続して既知の video_id が出現したら Discovery を打ち切る
+DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD: Final[int] = 50
+
 # ============================================================================
 # yt-dlp 設定
 # ============================================================================

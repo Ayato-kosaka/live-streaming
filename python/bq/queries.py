@@ -11,11 +11,26 @@ from config import BQ_DATASET, BQ_TABLE_VIDEOS, BQ_TABLE_CHAT_MESSAGES
 # videos テーブル - Discovery 関連
 # ============================================================================
 
-# Discovery で使用: 既存の video_id をすべて取得
+# Discovery で使用: 指定期間内の既存 video_id を取得
 # 
 # 用途:
 # - Discovery 時の打ち切り判定に使用
 # - 既知の video_id が連続で現れたら Discovery を打ち切る
+# - lookback 範囲内の video_id のみを取得してパフォーマンスを最適化
+QUERY_GET_EXISTING_VIDEO_IDS_IN_RANGE = f"""
+SELECT
+  video_id
+FROM
+  `{BQ_DATASET}.{BQ_TABLE_VIDEOS}`
+WHERE
+  actual_start_time >= @cutoff_time
+  OR actual_start_time IS NULL
+"""
+
+# Discovery で使用: 既存の video_id をすべて取得（後方互換性のため保持）
+# 
+# 注意: この クエリは大量のレコードを返す可能性があるため、
+# 代わりに QUERY_GET_EXISTING_VIDEO_IDS_IN_RANGE の使用を推奨
 QUERY_GET_EXISTING_VIDEO_IDS = f"""
 SELECT
   video_id

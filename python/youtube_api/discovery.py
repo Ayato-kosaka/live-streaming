@@ -1,7 +1,7 @@
 """
-YouTube 動画 Discovery モジュール
+YouTube ライブアーカイブ Discovery モジュール
 
-uploads playlist を使用して completed（アーカイブ）動画を検索・取得する。
+uploads playlist を使用してライブアーカイブ動画を検索・取得する。
 低クオータ・高再現性を実現。
 """
 
@@ -11,8 +11,11 @@ import logging
 
 from youtube_api.client import get_youtube_client, execute_api_request
 from models.types import DiscoveredVideo
-from config import YOUTUBE_CHANNEL_ID, DISCOVERY_LOOKBACK_DAYS
-from bq.repository import get_existing_video_ids
+from config import (
+    YOUTUBE_CHANNEL_ID,
+    DISCOVERY_LOOKBACK_DAYS,
+    DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD,
+)
 
 
 # ============================================================================
@@ -24,7 +27,7 @@ def discover_completed_videos(
     logger: Optional[logging.Logger] = None
 ) -> List[DiscoveredVideo]:
     """
-    YouTube チャンネルから completed（アーカイブ）動画を検索・取得
+    YouTube チャンネルからライブアーカイブ動画を検索・取得
     
     処理フロー:
     1. channels.list で uploads playlist ID を取得
@@ -33,7 +36,7 @@ def discover_completed_videos(
        - lookback 日数による打ち切り
        - 既知 video_id 連続出現による打ち切り
     4. videos.list で詳細情報（title, actualStartTime）を取得
-       - liveStreamingDetails があるもののみを抽出（アーカイブ判定）
+       - liveStreamingDetails があるもののみを抽出（ライブアーカイブ判定）
     5. DiscoveredVideo オブジェクトのリストとして返す
     
     Args:
@@ -41,7 +44,7 @@ def discover_completed_videos(
         logger: ロガー（オプション）
         
     Returns:
-        発見した動画のリスト（actual_start_time 昇順）
+        発見したライブアーカイブ動画のリスト（actual_start_time 昇順）
         
     Raises:
         ValueError: チャンネルIDが未設定
@@ -65,7 +68,10 @@ def discover_completed_videos(
         logger.info(f"uploads playlist ID: {uploads_playlist_id}")
     
     # Step 2: 既存の video_id を取得（打ち切り判定用）
-    existing_video_ids = get_existing_video_ids()
+    # BigQuery から lookback 範囲内の video_id のみを取得（パフォーマンス最適化）
+    from bq.repository import get_existing_video_ids_in_range
+    cutoff = datetime.utcnow() - timedelta(days=lookback_days)
+    existing_video_ids = get_existing_video_ids_in_range(cutoff, logger)
     
     # Step 3: playlistItems.list で video_id を収集（打ち切り条件付き）
     video_ids = _fetch_playlist_items(
@@ -112,36 +118,33 @@ def _get_uploads_playlist_id(
         
     Returns:
         uploads playlist ID（取得失敗時は None）
+        
+    Raises:
+        HttpError: YouTube API エラー
     """
     youtube = get_youtube_client()
     
-    try:
-        request = youtube.channels().list(
-            part="contentDetails",
-            id=YOUTUBE_CHANNEL_ID
-        )
-        
-        response = execute_api_request(request, logger=logger)
-        
-        items = response.get("items", [])
-        if not items:
-            if logger:
-                logger.error(f"チャンネル {YOUTUBE_CHANNEL_ID} が見つかりません")
-            return None
-        
-        uploads_id = (
-            items[0]
-            .get("contentDetails", {})
-            .get("relatedPlaylists", {})
-            .get("uploads")
-        )
-        
-        return uploads_id
-        
-    except Exception as e:
+    request = youtube.channels().list(
+        part="contentDetails",
+        id=YOUTUBE_CHANNEL_ID
+    )
+    
+    response = execute_api_request(request, logger=logger)
+    
+    items = response.get("items", [])
+    if not items:
         if logger:
-            logger.error(f"uploads playlist ID の取得に失敗: {e}")
+            logger.error(f"チャンネル {YOUTUBE_CHANNEL_ID} が見つかりません")
         return None
+    
+    uploads_id = (
+        items[0]
+        .get("contentDetails", {})
+        .get("relatedPlaylists", {})
+        .get("uploads")
+    )
+    
+    return uploads_id
 
 
 # ============================================================================
@@ -179,7 +182,6 @@ def _fetch_playlist_items(
     page_token = None
     page_count = 0
     consecutive_known_count = 0  # 連続既知カウンター
-    CONSECUTIVE_KNOWN_THRESHOLD = 50  # 連続50件が既知なら打ち切り
     
     while True:
         page_count += 1
@@ -208,7 +210,6 @@ def _fetch_playlist_items(
         
         # 打ち切り判定フラグ
         should_break = False
-        page_has_new_video = False
         
         for item in items:
             content_details = item.get("contentDetails", {})
@@ -225,8 +226,12 @@ def _fetch_playlist_items(
                     published_at = datetime.fromisoformat(
                         published_at_str.replace("Z", "+00:00")
                     ).replace(tzinfo=None)
-                except Exception:
-                    pass
+                except (ValueError, AttributeError) as e:
+                    if logger:
+                        logger.warning(
+                            f"[{video_id}] videoPublishedAt のパースに失敗: "
+                            f"{published_at_str} - {e}"
+                        )
             
             # 打ち切り条件1: lookback 日数チェック
             if published_at and published_at < cutoff:
@@ -246,13 +251,12 @@ def _fetch_playlist_items(
                 consecutive_known_count += 1
             else:
                 consecutive_known_count = 0
-                page_has_new_video = True
             
             # 連続既知が閾値を超えたら打ち切り
-            if consecutive_known_count >= CONSECUTIVE_KNOWN_THRESHOLD:
+            if consecutive_known_count >= DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD:
                 if logger:
                     logger.info(
-                        f"既知の video_id が連続 {CONSECUTIVE_KNOWN_THRESHOLD} 件出現したため "
+                        f"既知の video_id が連続 {DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD} 件出現したため "
                         f"Discovery を打ち切り"
                     )
                 should_break = True
@@ -332,10 +336,11 @@ def _fetch_video_details(
                     actual_start_time = datetime.fromisoformat(
                         actual_start_time_str.replace("Z", "+00:00")
                     ).replace(tzinfo=None)
-                except Exception as e:
+                except (ValueError, AttributeError) as e:
                     if logger:
                         logger.warning(
-                            f"[{video_id}] actualStartTime のパースに失敗: {actual_start_time_str} - {e}"
+                            f"[{video_id}] actualStartTime のパースに失敗: "
+                            f"{actual_start_time_str} - {e}"
                         )
             
             discovered_videos.append(
