@@ -6,6 +6,7 @@
 # YouTube チャット取得基盤の BigQuery 側環境を整備する。
 # ・BigQuery API の有効化
 # ・youtube_chat データセットの作成
+# ・YouTube チャット管理テーブルの作成
 #
 # 【前提条件】
 # - gcloud CLI がインストールされていること
@@ -62,18 +63,25 @@ else
   echo "データセット '$DATASET_NAME' が存在しないため作成します..."
   
   # データセット作成
-  # デフォルトのロケーションは asia-northeast1 (東京)
+  # デフォルトのロケーションは us
   # 別のリージョンを使用する場合は --location オプションを変更してください
   # set -e により、失敗時は自動的にスクリプトが終了します
-  bq mk --project_id="$BQ_PROJECT_ID" --dataset --location=asia-northeast1 "$DATASET_NAME"
+  bq mk --project_id="$BQ_PROJECT_ID" --dataset --location=us "$DATASET_NAME"
   echo "✓ データセット '$DATASET_NAME' を作成しました"
 fi
+echo ""
+
+
+# ========================================
+# 4. YouTube チャット管理テーブル作成
+# ========================================
+echo "--- YouTube チャット管理テーブルを作成中... ---"
+bq query --project_id="$BQ_PROJECT_ID" --use_legacy_sql=false < infra/big-query/migration/20260128T0000_create_youtube_chat_management_table.sql
+echo "✓ YouTube チャット管理テーブルを作成しました"
 echo ""
 
 # ========================================
 # 完了
 # ========================================
 echo "=== BigQuery セットアップ完了 ==="
-echo "次のステップ: マイグレーション SQL を実行してテーブルを作成してください"
-echo "  bq query --project_id='$BQ_PROJECT_ID' --use_legacy_sql=false < infra/big-query/migration/20260129T0000_create_youtube_chat_tables.sql"
 echo ""
