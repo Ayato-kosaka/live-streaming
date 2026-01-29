@@ -9,7 +9,7 @@ import os
 from typing import Tuple, Optional
 
 from config import YTDLP_TIMEOUT_SECONDS, YTDLP_OUTPUT_DIR
-from utils.filesystem import get_chat_file_path
+from utils.filesystem import get_ytdlp_output_template
 
 
 # ============================================================================
