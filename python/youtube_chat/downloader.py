@@ -10,44 +10,7 @@ from typing import Tuple, Optional
 
 from config import YTDLP_TIMEOUT_SECONDS, YTDLP_OUTPUT_DIR
 from utils.filesystem import get_chat_file_path
-from logging import getLogger
 
-logger = getLogger(__name__)
-
-# ============================================================================
-# デバッグ用ログ出力
-# ============================================================================
-
-def log_output_files(output_dir: str, video_id: str) -> None:
-    """
-    yt-dlp 実行後の出力ファイル一覧をログ出力する（デバッグ用）
-
-    Args:
-        output_dir: yt-dlp の出力ディレクトリ
-        video_id: 対象 video_id（絞り込み用）
-    """
-    try:
-        if not os.path.exists(output_dir):
-            logger.warning(f"出力ディレクトリが存在しません: {output_dir}")
-            return
-
-        files = sorted(
-            f for f in os.listdir(output_dir)
-            if video_id in f
-        )
-
-        if not files:
-            logger.warning(
-                f"[{video_id}] 出力ディレクトリに該当ファイルが見つかりません"
-            )
-            return
-
-        logger.info(f"[{video_id}] yt-dlp 出力ファイル一覧:")
-        for f in files:
-            logger.info(f"  - {f}")
-
-    except Exception as e:
-        logger.warning(f"[{video_id}] 出力ファイル一覧の取得に失敗: {e}")
 
 # ============================================================================
 # yt-dlp チェック
@@ -137,7 +100,6 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
         )
         
         if result.returncode == 0:
-            log_output_files(YTDLP_OUTPUT_DIR, video_id)
             return (True, None)
         else:
             error_msg = f"yt-dlp 終了コード {result.returncode}\n{result.stderr}"
