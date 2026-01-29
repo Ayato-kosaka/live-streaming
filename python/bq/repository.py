@@ -183,44 +183,75 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     
     # STRUCT型定義を明示的に指定
     # BigQuery の STRUCT<...> 形式で全フィールドを定義
-    # 注意: JSON型フィールドはパラメータではSTRINGとして渡し、SQL側でPARSE_JSONで変換する
+    # 
+    # 重要な設計方針:
+    # - ArrayQueryParameter + STRUCT では datetime や JSON を直接渡せない
+    # - すべて STRING/INT64 などプリミティブ型として渡し、SQL側で変換する
+    # 
+    # 理由:
+    # - JSON型: BigQuery Python Client が QueryParameter として扱えない
+    # - TIMESTAMP型: STRUCT内の datetime が json.dumps() で失敗する
+    # 
+    # → すべて STRING として渡し、SQL側で PARSE_TIMESTAMP / SAFE.PARSE_JSON で変換
     struct_type = (
         "STRUCT<"
         "video_id STRING, "
         "event_id STRING, "
         "event_type STRING, "
         "timestamp_usec INT64, "
-        "published_at TIMESTAMP, "
+        "published_at STRING, "        # TIMESTAMP → STRING (SQL側で変換)
         "author_name STRING, "
         "author_channel_id STRING, "
         "message_text STRING, "
-        "message_runs_json STRING, "
+        "message_runs_json STRING, "   # JSON → STRING (SQL側で変換)
         "purchase_amount_text STRING, "
         "ingest_run_id STRING, "
-        "ingested_at TIMESTAMP, "
+        "ingested_at STRING, "         # TIMESTAMP → STRING (SQL側で変換)
         "source_file STRING, "
         "source_line_no INT64, "
-        "raw_item_json STRING"
+        "raw_item_json STRING"         # JSON → STRING (SQL側で変換)
         ">"
     )
+    
+    # ヘルパー関数: datetime を RFC3339 形式の文字列に変換
+    def to_rfc3339(dt):
+        """
+        datetime を BigQuery 互換の RFC3339 形式文字列に変換
+        
+        例: 2024-01-29T10:00:00Z
+        
+        Args:
+            dt: datetime オブジェクト or None
+        
+        Returns:
+            RFC3339 文字列 or None
+        """
+        if dt is None:
+            return None
+        # naive datetime の場合は UTC を付与
+        if dt.tzinfo is None:
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
+        # isoformat() で RFC3339 形式に変換し、+00:00 を Z に置換
+        return dt.isoformat().replace("+00:00", "Z")
     
     # バッチに分割して MERGE
     for batch in batch_items(messages):
         # ChatMessage をタプルのリストに変換（STRUCT の順序に従う）
-        # 重要: TIMESTAMP型フィールドは datetime オブジェクトを渡す（文字列は不可）
-        from datetime import timezone
+        # 
+        # 重要な設計方針:
+        # - すべて STRING/INT64 などプリミティブ型として渡す
+        # - TIMESTAMP や JSON は SQL側で変換（PARSE_TIMESTAMP / SAFE.PARSE_JSON）
+        # 
+        # 理由:
+        # - ArrayQueryParameter + STRUCT 内で datetime を渡すと json.dumps() で失敗
+        # - JSON 型もパラメータとして直接渡せない
         
         batch_tuples = []
         for msg in batch:
-            # TIMESTAMP フィールド: datetime オブジェクトを渡す（BigQuery要件）
-            # naive datetime の場合は UTC タイムゾーンを付与
-            published_at = msg.published_at
-            if published_at is not None and published_at.tzinfo is None:
-                published_at = published_at.replace(tzinfo=timezone.utc)
-            
-            ingested_at = msg.ingested_at
-            if ingested_at is not None and ingested_at.tzinfo is None:
-                ingested_at = ingested_at.replace(tzinfo=timezone.utc)
+            # TIMESTAMP フィールド: RFC3339 文字列に変換（SQL側でPARSE_TIMESTAMPで変換）
+            published_at_str = to_rfc3339(msg.published_at)
+            ingested_at_str = to_rfc3339(msg.ingested_at)
             
             # JSON型フィールドを文字列化（SQL側でSAFE.PARSE_JSONで変換）
             message_runs_json_str = None
@@ -230,23 +261,23 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
             raw_item_json_str = json.dumps(msg.raw_item_json, ensure_ascii=False)
             
             # タプルに変換（STRUCT型定義の順序と一致させる）
-            # 注意: to_dict() は使わない（datetime が文字列に変換されてしまうため）
+            # 注意: to_dict() は使わない（型情報が失われるため）
             batch_tuples.append((
                 msg.video_id,
                 msg.event_id,
                 msg.event_type.value,  # Enum の値を取得
                 int(msg.timestamp_usec),  # INT64 として明示的に変換
-                published_at,  # datetime オブジェクト
+                published_at_str,  # STRING（SQL側でPARSE_TIMESTAMP）
                 msg.author_name,
                 msg.author_channel_id,
                 msg.message_text,
-                message_runs_json_str,  # STRING（SQL側でPARSE_JSON）
+                message_runs_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
                 msg.purchase_amount_text,
                 msg.ingest_run_id,
-                ingested_at,  # datetime オブジェクト or None
+                ingested_at_str,  # STRING（SQL側でPARSE_TIMESTAMP）
                 msg.source_file,
                 msg.source_line_no,
-                raw_item_json_str,  # STRING（SQL側でPARSE_JSON）
+                raw_item_json_str,  # STRING（SQL側でSAFE.PARSE_JSON）
             ))
         
         job_config = bigquery.QueryJobConfig(
