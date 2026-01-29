@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List, Optional
 from google.cloud import bigquery
 import json
+import logging
 
 from bq.client import get_bigquery_client
 from bq.queries import (
