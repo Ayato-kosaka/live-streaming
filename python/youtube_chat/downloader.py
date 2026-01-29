@@ -8,7 +8,7 @@ import subprocess
 import os
 from typing import Tuple, Optional
 
-from config import YTDLP_TIMEOUT_SECONDS, YTDLP_OUTPUT_DIR
+from config import YTDLP_TIMEOUT_SECONDS, YTDLP_OUTPUT_DIR, YTDLP_COOKIES_PATH
 from utils.filesystem import get_chat_file_path
 
 
@@ -87,10 +87,20 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
         "--sub-langs", "live_chat",
         "--skip-download",
         "--no-warnings",
-        "-o", output_template,
-        f"https://www.youtube.com/watch?v={video_id}"
     ]
-    
+
+    if YTDLP_COOKIES_PATH:
+        if os.path.exists(YTDLP_COOKIES_PATH):
+            cmd += ["--cookies", YTDLP_COOKIES_PATH]
+        else:
+            # cookies パスが指定されているのに存在しない場合は失敗させた方が原因が分かりやすい
+            return (False, f"cookies ファイルが見つかりません: {YTDLP_COOKIES_PATH}")
+
+    cmd += [
+        "-o", output_template,
+        f"https://www.youtube.com/watch?v={video_id}",
+    ]
+
     try:
         result = subprocess.run(
             cmd,
@@ -98,16 +108,13 @@ def download_chat_data(video_id: str) -> Tuple[bool, Optional[str]]:
             text=True,
             timeout=YTDLP_TIMEOUT_SECONDS
         )
-        
         if result.returncode == 0:
             return (True, None)
-        else:
-            error_msg = f"yt-dlp 終了コード {result.returncode}\n{result.stderr}"
-            return (False, error_msg)
-            
+
+        error_msg = f"yt-dlp 終了コード {result.returncode}\n{result.stderr}"
+        return (False, error_msg)
+
     except subprocess.TimeoutExpired:
-        error_msg = f"yt-dlp がタイムアウトしました（{YTDLP_TIMEOUT_SECONDS}秒）"
-        return (False, error_msg)
+        return (False, f"yt-dlp がタイムアウトしました（{YTDLP_TIMEOUT_SECONDS}秒）")
     except Exception as e:
-        error_msg = f"yt-dlp 実行エラー: {type(e).__name__}: {str(e)}"
-        return (False, error_msg)
+        return (False, f"yt-dlp 実行エラー: {type(e).__name__}: {str(e)}")
