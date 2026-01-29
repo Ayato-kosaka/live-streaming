@@ -21,9 +21,9 @@ from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
 from config import MAX_VIDEOS_PER_RUN
 from utils.batching import batch_items
 from utils.timestamp import to_rfc3339
-from logging_util import get_logger
+from logging_util import setup_logger
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 # ============================================================================
