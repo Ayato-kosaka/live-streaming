@@ -36,6 +36,8 @@ bash infra/big-query/20260128T0000_setup_youtube_chat_dataset.sh
 このスクリプトは以下を実行します：
 - BigQuery API の有効化（冪等）
 - `youtube_chat` データセットの作成（冪等）
+  - デフォルトロケーション: **asia-northeast1 (東京)**
+  - 別のリージョンを使用する場合は、スクリプト内の `--location` オプションを変更してください
 
 ### 3. テーブルの作成
 

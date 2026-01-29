@@ -43,14 +43,9 @@ echo ""
 # 2. BigQuery API 有効化（冪等）
 # ========================================
 echo "--- BigQuery API を有効化中... ---"
+# set -e により、失敗時は自動的にスクリプトが終了します
 gcloud services enable bigquery.googleapis.com --project "$BQ_PROJECT_ID"
-
-if [ $? -eq 0 ]; then
-  echo "✓ BigQuery API が有効化されました（または既に有効です）"
-else
-  echo "✗ BigQuery API の有効化に失敗しました"
-  exit 1
-fi
+echo "✓ BigQuery API が有効化されました（または既に有効です）"
 echo ""
 
 # ========================================
@@ -67,16 +62,11 @@ else
   echo "データセット '$DATASET_NAME' が存在しないため作成します..."
   
   # データセット作成
-  # デフォルトのロケーションは asia-northeast1 (東京) を推奨
-  # 必要に応じて --location オプションを変更してください
+  # デフォルトのロケーションは asia-northeast1 (東京)
+  # 別のリージョンを使用する場合は --location オプションを変更してください
+  # set -e により、失敗時は自動的にスクリプトが終了します
   bq mk --project_id="$BQ_PROJECT_ID" --dataset --location=asia-northeast1 "$DATASET_NAME"
-  
-  if [ $? -eq 0 ]; then
-    echo "✓ データセット '$DATASET_NAME' を作成しました"
-  else
-    echo "✗ データセット '$DATASET_NAME' の作成に失敗しました"
-    exit 1
-  fi
+  echo "✓ データセット '$DATASET_NAME' を作成しました"
 fi
 echo ""
 
