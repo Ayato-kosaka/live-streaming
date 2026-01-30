@@ -42,7 +42,7 @@ MAX_MERGE_BATCH_SIZE: Final[int] = 5000
 
 # 1回の実行で処理する動画の最大数
 # 大量の動画がある場合でも実行時間を制限するため
-MAX_VIDEOS_PER_RUN: Final[int] = 10
+MAX_VIDEOS_PER_RUN: Final[int] = 500
 
 # Discovery の lookback 日数（デフォルト）
 # 環境変数 DISCOVERY_LOOKBACK_DAYS で上書き可能
