@@ -48,6 +48,11 @@ def main() -> int:
             logger.info("発見された動画はありません。終了します。")
             return 0
         
+        dedup = {}
+        for v in discovered_videos:
+            dedup[v.video_id] = v
+        discovered_videos = list(dedup.values())
+        
         logger.info(f"発見: {len(discovered_videos)} 動画")
         
         # BigQuery に UPSERT
