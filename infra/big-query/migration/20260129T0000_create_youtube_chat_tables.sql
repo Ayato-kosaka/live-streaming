@@ -57,6 +57,10 @@ OPTIONS(
   description="YouTube 動画の処理進捗管理テーブル（リトライ制御、ステータス管理）"
 );
 
+ALTER TABLE `youtube_chat.videos`
+  ADD COLUMN IF NOT EXISTS title STRING OPTIONS(description="動画タイトル（YouTube API から取得）"),
+  ADD COLUMN IF NOT EXISTS actual_start_time TIMESTAMP OPTIONS(description="実際の配信開始時刻（liveStreamingDetails.actualStartTime）");
+
 -- ----------------------------------------------------------------------------
 -- テーブル 2: youtube_chat.chat_messages
 -- 【目的】

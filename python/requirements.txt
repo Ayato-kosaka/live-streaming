@@ -1,0 +1,17 @@
+# YouTube アーカイブチャット取得システム - Python依存パッケージ
+#
+# インストール方法:
+#   pip install -r requirements.txt
+#
+# 説明:
+#   - google-cloud-bigquery: BigQuery クライアント（videos管理、chat_messages MERGE）
+#   - requests: HTTP通信（将来の拡張用、現在は未使用）
+
+# BigQuery 操作
+google-cloud-bigquery>=3.11.0
+
+# YouTube Data API v3
+google-api-python-client>=2.100.0
+
+# HTTP通信（オプション、将来の拡張用）
+requests>=2.31.0
