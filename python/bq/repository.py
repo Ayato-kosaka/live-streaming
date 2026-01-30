@@ -8,6 +8,7 @@ BigQuery との全てのやり取りはこのモジュールを経由する。
 from datetime import datetime
 from typing import List, Optional
 from google.cloud import bigquery
+from google.cloud.bigquery import ScalarQueryParameter, StructQueryParameter
 import json
 import logging
 
@@ -322,8 +323,6 @@ def merge_chat_messages(messages: List[ChatMessage]) -> int:
     # 各 StructQueryParameter は ScalarQueryParameter のリストで構成:
     # - name=None（配列要素なので名前不要）
     # - *fields で各フィールドを ScalarQueryParameter として渡す
-    
-    from google.cloud.bigquery import ScalarQueryParameter, StructQueryParameter
     
     # フィールド名のリスト（順序固定、これが STRUCT のスキーマ）
     field_names = [
