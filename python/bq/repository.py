@@ -101,37 +101,73 @@ def get_existing_video_ids() -> set[str]:
     
     return video_ids
 
+def upsert_discovered_videos(
+    discovered_videos: List[DiscoveredVideo],
+    logger: Optional[logging.Logger] = None,
+    batch_size: int = 500
+) -> int:
+    """
+    Discovery で取得した動画を videos テーブルに一括 UPSERT（MERGE）
 
-def upsert_discovered_video(discovered: DiscoveredVideo) -> None:
-    """
-    Discovery で取得した動画を videos テーブルに UPSERT
-    
-    新規レコード:
-    - video_id, title, actual_start_time を挿入
-    - status='PENDING', first_seen_at=now(), attempt_count=0
-    
-    既存レコード:
-    - title, actual_start_time のみ更新（進捗情報は触らない）
-    
+    - 新規: status='PENDING', first_seen_at=now(), attempt_count=0 で挿入
+    - 既存: title, actual_start_time のみ更新（進捗情報は触らない）
+    - Primitive-only pattern: STRUCT 内は STRING のみで渡し、SQL 側で SAFE_CAST する
+
     Args:
-        discovered: DiscoveredVideo オブジェクト
+        discovered_videos: DiscoveredVideo のリスト
+        logger: ロガー（任意）
+        batch_size: 1回のMERGEに載せる動画数（安全側のデフォルト）
+
+    Returns:
+        UPSERT した動画数（投入件数）
     """
+    if not discovered_videos:
+        return 0
+
     client = get_bigquery_client()
-    
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("video_id", "STRING", discovered.video_id),
-            bigquery.ScalarQueryParameter("title", "STRING", discovered.title),
-            bigquery.ScalarQueryParameter(
-                "actual_start_time",
-                "TIMESTAMP",
-                discovered.actual_start_time.isoformat() if discovered.actual_start_time else None
-            ),
-        ]
-    )
-    
-    query_job = client.query(QUERY_DISCOVERY_UPSERT_VIDEO, job_config=job_config)
-    query_job.result()  # 完了を待つ
+    total = 0
+
+    # utils.batching.batch_items を流用したい場合は、
+    # batch_items(discovered_videos, batch_size=...) の形に合わせてください。
+    # いまの batch_items がサイズ固定なら、この引数は無視されてもOKです。
+    for batch in batch_items(discovered_videos, batch_size=batch_size):  # ← batch_items がこの形じゃなければ調整
+        if logger:
+            logger.info(f"Processing batch of {len(batch)} discovered videos for MERGE")
+
+        struct_params: List[StructQueryParameter] = []
+        for v in batch:
+            # actual_start_time は STRUCT 内では STRING にする（chat_messages と同じ思想）
+            # SQL 側で SAFE_CAST(... AS TIMESTAMP) する前提
+            actual_start_time_str = to_rfc3339(v.actual_start_time) if v.actual_start_time else None
+
+            struct_params.append(
+                StructQueryParameter(
+                    None,
+                    ScalarQueryParameter("video_id", "STRING", v.video_id),
+                    ScalarQueryParameter("title", "STRING", v.title),
+                    ScalarQueryParameter("actual_start_time", "STRING", actual_start_time_str),
+                )
+            )
+
+        # 送信前検証（chat_messages の関数を流用）
+        _validate_discovered_video_struct_params_with_api_repr(struct_params, batch, logger=logger)
+
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ArrayQueryParameter(
+                    "videos",
+                    "STRUCT",
+                    struct_params
+                )
+            ]
+        )
+
+        query_job = client.query(QUERY_DISCOVERY_UPSERT_VIDEO, job_config=job_config)
+        query_job.result()
+
+        total += len(batch)
+
+    return total
 
 
 # ============================================================================
@@ -599,3 +635,30 @@ def _validate_struct_params_with_api_repr(
             f"Batch size: {len(struct_params)}"
         ) from e
 
+def _validate_discovered_video_struct_params_with_api_repr(
+    struct_params: List[StructQueryParameter],
+    batch: List[DiscoveredVideo],
+    logger: Optional[logging.Logger] = None
+) -> None:
+    """
+    chat_messages と同様に、BigQuery 送信前に to_api_repr() で検証して
+    STRUCT パラメータの事故を事前検知する。
+    """
+    try:
+        param = bigquery.ArrayQueryParameter("videos", "STRUCT", struct_params)
+        _ = param.to_api_repr()
+        if logger:
+            logger.info(f"✅ Discovery batch validation passed (to_api_repr): {len(struct_params)} records")
+    except Exception as e:
+        msg = (
+            f"❌ Discovery ArrayQueryParameter 構築失敗\n"
+            f"  バッチサイズ: {len(struct_params)}\n"
+            f"  エラー: {str(e)}\n"
+            f"  型: {type(e).__name__}\n"
+        )
+        if batch:
+            first = batch[0]
+            msg += f"\n最初のレコード:\n  video_id: {first.video_id}\n  title: {first.title[:80] if first.title else ''}\n"
+        if logger:
+            logger.error(msg)
+        raise ValueError(f"Failed to construct 'videos' ArrayQueryParameter: {e}") from e
