@@ -55,17 +55,7 @@ def main() -> int:
         insert_count = 0
         update_count = 0
         
-        for discovered in discovered_videos:
-            upsert_discovered_videos(discovered)
-            
-            # ログ出力（推定）
-            # NOTE: BigQuery MERGE では INSERT/UPDATE の判別が難しいため、
-            # すべて「UPSERT」として扱う。詳細はログで確認。
-            logger.debug(
-                f"UPSERT: {discovered.video_id} | "
-                f"{discovered.title[:50]}... | "
-                f"actualStartTime: {discovered.actual_start_time.isoformat() if discovered.actual_start_time else 'N/A'}"
-            )
+        upsert_discovered_videos(discovered_videos, logger=logger)
         
         logger.info(f"UPSERT 完了: {len(discovered_videos)} 動画")
         
