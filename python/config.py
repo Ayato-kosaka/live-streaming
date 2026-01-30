@@ -18,7 +18,9 @@ if not BQ_PROJECT_ID:
     raise ValueError("環境変数 BQ_PROJECT_ID が設定されていません")
 
 # YouTube API 関連（Discovery で使用）
-YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
+# OAuth (Doneru) 経由で認証
+# DONERU_ALERTBOX_KEY: EXPO_PUBLIC_DONERU_WSS_URL から key パラメータを抽出
+DONERU_ALERTBOX_KEY: str = os.getenv("DONERU_ALERTBOX_KEY", "")
 YOUTUBE_CHANNEL_ID: str = os.getenv("YOUTUBE_CHANNEL_ID", "")
 
 # ============================================================================
@@ -48,6 +50,10 @@ MAX_VIDEOS_PER_RUN: Final[int] = 500
 # 環境変数 DISCOVERY_LOOKBACK_DAYS で上書き可能
 DEFAULT_DISCOVERY_LOOKBACK_DAYS: Final[int] = 10
 DISCOVERY_LOOKBACK_DAYS: int = int(os.getenv("DISCOVERY_LOOKBACK_DAYS", str(DEFAULT_DISCOVERY_LOOKBACK_DAYS)))
+
+# Discovery の既知 video_id 連続出現打ち切り閾値
+# この数だけ連続して既知の video_id が出現したら Discovery を打ち切る
+DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD: Final[int] = 50
 
 # ============================================================================
 # yt-dlp 設定
