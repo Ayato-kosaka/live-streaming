@@ -12,6 +12,7 @@ import {
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
 import { Viewer } from "./alertbox/types";
+import { getTable } from "./alertbox/api.utils";
 
 export default function App() {
   const [viewers, setViewers] = useState<Viewer[]>([]);
@@ -22,9 +23,12 @@ export default function App() {
     // GAS API から viewrs を取得する
     const fetchViewers = async () => {
       try {
-        const response = await fetch(process.env.EXPO_PUBLIC_GAS_API_URL!);
-        const data = await response.json();
-        setViewers(data.viewers || []);
+        const viewersResponse = await getTable<Viewer[]>("Viewers");
+        if (!viewersResponse.ok) {
+          throw new Error("Failed to fetch Viewers");
+        }
+        const viewers = viewersResponse.data || [];
+        setViewers(viewers);
       } catch (error) {
         console.error("Error fetching viewers:", error);
       }
@@ -82,9 +86,9 @@ export default function App() {
 
   const getIconUrl = useCallback(
     (name: string) =>
-      viewers.find((v) => v.name === name)?.icon &&
+      viewers.find((v) => v.name === name)?.Icon &&
       "https://lh3.googleusercontent.com/d/" +
-        viewers.find((v) => v.name === name)?.icon,
+        viewers.find((v) => v.name === name)?.Icon,
     [viewers]
   );
   const getBackColorFromString = useCallback((s: string) => {
