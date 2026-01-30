@@ -48,17 +48,12 @@ FROM
 # 更新対象は title と actual_start_time のみ
 QUERY_DISCOVERY_UPSERT_VIDEO = f"""
 MERGE `{BQ_DATASET}.{BQ_TABLE_VIDEOS}` T
-USING (
-  SELECT
-    @video_id AS video_id,
-    @title AS title,
-    @actual_start_time AS actual_start_time
-) S
+USING UNNEST(@videos) S
 ON T.video_id = S.video_id
 WHEN MATCHED THEN
   UPDATE SET
     title = S.title,
-    actual_start_time = S.actual_start_time
+    actual_start_time = SAFE_CAST(S.actual_start_time AS TIMESTAMP)
 WHEN NOT MATCHED THEN
   INSERT (
     video_id,
@@ -74,7 +69,7 @@ WHEN NOT MATCHED THEN
     CURRENT_TIMESTAMP(),
     0,
     S.title,
-    S.actual_start_time
+    SAFE_CAST(S.actual_start_time AS TIMESTAMP)
   )
 """
 

@@ -53,7 +53,7 @@ DISCOVERY_LOOKBACK_DAYS: int = int(os.getenv("DISCOVERY_LOOKBACK_DAYS", str(DEFA
 
 # Discovery の既知 video_id 連続出現打ち切り閾値
 # この数だけ連続して既知の video_id が出現したら Discovery を打ち切る
-DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD: Final[int] = 50
+DISCOVERY_CONSECUTIVE_KNOWN_THRESHOLD: Final[int] = 999999
 
 # ============================================================================
 # yt-dlp 設定

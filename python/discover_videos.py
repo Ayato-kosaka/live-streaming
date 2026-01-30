@@ -12,7 +12,7 @@ from datetime import datetime
 from config import DISCOVERY_LOOKBACK_DAYS
 from logging_util import setup_logger, get_run_id
 from youtube_api.discovery import discover_completed_videos
-from bq.repository import upsert_discovered_video
+from bq.repository import upsert_discovered_videos
 from bq.client import close_bigquery_client
 
 
@@ -56,7 +56,7 @@ def main() -> int:
         update_count = 0
         
         for discovered in discovered_videos:
-            upsert_discovered_video(discovered)
+            upsert_discovered_videos(discovered)
             
             # ログ出力（推定）
             # NOTE: BigQuery MERGE では INSERT/UPDATE の判別が難しいため、
