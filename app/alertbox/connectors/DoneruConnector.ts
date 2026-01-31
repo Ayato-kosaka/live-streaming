@@ -71,6 +71,11 @@ export class DoneruConnector implements IConnector {
       socket.onerror = (event) => {
         console.error("[DoneruConnector] WebSocket error:", event);
         onError(new Error("WebSocket error"));
+
+        // 🔑 close を呼んで onclose → 再接続に乗せる
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          socket.close();
+        }
       };
 
       socket.onclose = () => {
