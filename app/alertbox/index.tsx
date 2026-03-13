@@ -12,7 +12,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { View, Text, Animated, Image, TextStyle } from "react-native";
+import { View, Text, Animated, Image, TextStyle, Platform } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
@@ -67,6 +67,15 @@ export default function AlertBox() {
   const [notification, setNotification] = useState<NotificationData | null>(
     null
   );
+
+  // 現在表示中メディア（画像/動画）
+  const [displaySource, setDisplaySource] = useState<{
+    type: "image" | "video";
+    url: string | null;
+  }>({
+    type: "image",
+    url: null,
+  });
 
   // 未処理の通知キュー（受信順に積まれて処理される）
   const [notificationQueue, setNotificationQueue] = useState<
@@ -348,6 +357,31 @@ export default function AlertBox() {
     [matchedViewer]
   );
 
+  const preloadVideo = useCallback((url: string) => {
+    if (Platform.OS !== "web") return Promise.resolve(false);
+
+    return new Promise<boolean>((resolve) => {
+      const video = document.createElement("video");
+      video.preload = "auto";
+      video.src = url;
+
+      const cleanup = () => {
+        video.onloadeddata = null;
+        video.onerror = null;
+      };
+
+      video.onloadeddata = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      video.onerror = () => {
+        cleanup();
+        resolve(false);
+      };
+    });
+  }, []);
+
   useEffect(() => {
     // 表示中の通知がない場合のみ、次の通知を処理開始
     if (!notification && notificationQueue.length > 0) {
@@ -368,9 +402,9 @@ export default function AlertBox() {
       currentNotification
     );
 
-    // 視聴者アイコンがあれば先にプリフェッチ
-    iconUrl(currentNotification) &&
-      (await Image.prefetch(iconUrl(currentNotification)!));
+    // 表示ソースを決定（画像/動画）し、表示前に preload
+    const source = await calculateAdjustedSource(currentNotification);
+    setDisplaySource(source);
 
     // 表示開始（フェードイン）
     setNotification(currentNotification);
@@ -406,7 +440,7 @@ export default function AlertBox() {
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
-  }, [notificationQueue, iconUrl, opacity]);
+  }, [notificationQueue, opacity]);
 
   // テンプレート本文（通知タイプに紐づくテンプレートを取得）
   const mainTextTemplate = useMemo(
@@ -422,6 +456,50 @@ export default function AlertBox() {
         : "",
     []
   );
+
+  async function calculateAdjustedSource(
+    n: NotificationData
+  ): Promise<{ type: "image" | "video"; url: string | null }> {
+    const viewer = matchedViewer(n);
+    const fallbackIconUrl = iconUrl(n);
+    const fallbackImageUrl = imageUrl(n.type);
+
+    if (
+      n.type === "superchat" &&
+      n.amount >= 1000 &&
+      viewer?.superchatVideoUrl &&
+      Platform.OS === "web"
+    ) {
+      const videoReady = await preloadVideo(viewer.superchatVideoUrl);
+      if (videoReady) {
+        return { type: "video", url: viewer.superchatVideoUrl };
+      }
+    }
+
+    if (fallbackIconUrl) {
+      await Image.prefetch(fallbackIconUrl);
+      return { type: "image", url: fallbackIconUrl };
+    }
+
+    await Image.prefetch(fallbackImageUrl);
+    return { type: "image", url: fallbackImageUrl };
+  }
+
+
+  const fallbackToImageSource = useCallback(async () => {
+    if (!notification) return;
+
+    const fallbackIconUrl = iconUrl(notification);
+    if (fallbackIconUrl) {
+      await Image.prefetch(fallbackIconUrl);
+      setDisplaySource({ type: "image", url: fallbackIconUrl });
+      return;
+    }
+
+    const fallbackImageUrl = imageUrl(notification.type);
+    await Image.prefetch(fallbackImageUrl);
+    setDisplaySource({ type: "image", url: fallbackImageUrl });
+  }, [iconUrl, imageUrl, notification]);
 
   // 金額に比例したエフェクト回数（花火/雨）を算出
   const effectCounts = useMemo(
@@ -455,13 +533,28 @@ export default function AlertBox() {
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
-                <Image
-                  resizeMode="contain"
-                  style={{ ...styles.image }}
-                  source={{
-                    uri: iconUrl(notification) || imageUrl(notification.type),
-                  }}
-                />
+                {displaySource.type === "video" && displaySource.url ? (
+                  <video
+                    autoPlay
+                    controls={false}
+                    loop={false}
+                    muted
+                    onError={() => {
+                      fallbackToImageSource();
+                    }}
+                    playsInline
+                    src={displaySource.url}
+                    style={{ ...styles.image }}
+                  />
+                ) : (
+                  <Image
+                    resizeMode="contain"
+                    style={{ ...styles.image }}
+                    source={{
+                      uri: displaySource.url || imageUrl(notification.type),
+                    }}
+                  />
+                )}
 
                 {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
                 {emoji && (
