@@ -100,6 +100,8 @@ export default function AlertBox() {
   // セッション識別子（ログ相関用）
   const sessionId = useRef(new Date().getTime());
 
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   // エラーメッセージ
   const [error, setError] = useState<string | null>(null);
 
@@ -358,28 +360,45 @@ export default function AlertBox() {
   );
 
   const preloadVideo = useCallback((url: string) => {
-    if (Platform.OS !== "web") return Promise.resolve(false);
+    if (Platform.OS !== "web") return;
 
-    return new Promise<boolean>((resolve) => {
-      const video = document.createElement("video");
-      video.preload = "auto";
-      video.src = url;
+    const video = document.createElement("video");
+    let settled = false;
 
-      const cleanup = () => {
-        video.onloadeddata = null;
-        video.onerror = null;
-      };
+    const finish = (ok: boolean, reason: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
 
-      video.onloadeddata = () => {
-        cleanup();
-        resolve(true);
-      };
+      video.onloadeddata = null;
+      video.oncanplay = null;
+      video.onerror = null;
 
-      video.onerror = () => {
-        cleanup();
-        resolve(false);
-      };
-    });
+      sendLog("AlertBox", sessionId, "videoPreloadFinished", {
+        url,
+        ok,
+        reason,
+        readyState: video.readyState,
+        networkState: video.networkState,
+      });
+    };
+
+    const timer = window.setTimeout(() => {
+      finish(false, "timeout");
+    }, 3000);
+
+    video.preload = "auto";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = url;
+
+    sendLog("AlertBox", sessionId, "videoPreloadStart", { url });
+
+    video.onloadeddata = () => finish(true, "loadeddata");
+    video.oncanplay = () => finish(true, "canplay");
+    video.onerror = () => finish(false, "error");
+
+    video.load();
   }, []);
 
   useEffect(() => {
@@ -465,15 +484,22 @@ export default function AlertBox() {
     const fallbackImageUrl = imageUrl(n.type);
 
     if (
-      n.type === "superchat" &&
-      n.amount >= 1000 &&
-      viewer?.superchatVideoUrl &&
+      (n.type === "donation" || n.type === "superchat") &&
+      n.amount >= 0 &&
+      viewer?.videoUrl &&
       Platform.OS === "web"
     ) {
-      const videoReady = await preloadVideo(viewer.superchatVideoUrl);
-      if (videoReady) {
-        return { type: "video", url: viewer.superchatVideoUrl };
+      // preload は事前ウォームアップだけにする
+      preloadVideo(viewer.videoUrl);
+
+      // フォールバック用画像も先に温めておく
+      if (fallbackIconUrl) {
+        Image.prefetch(fallbackIconUrl);
+      } else {
+        Image.prefetch(fallbackImageUrl);
       }
+
+      return { type: "video", url: viewer.videoUrl };
     }
 
     if (fallbackIconUrl) {
@@ -484,7 +510,6 @@ export default function AlertBox() {
     await Image.prefetch(fallbackImageUrl);
     return { type: "image", url: fallbackImageUrl };
   }
-
 
   const fallbackToImageSource = useCallback(async () => {
     if (!notification) return;
@@ -500,6 +525,37 @@ export default function AlertBox() {
     await Image.prefetch(fallbackImageUrl);
     setDisplaySource({ type: "image", url: fallbackImageUrl });
   }, [iconUrl, imageUrl, notification]);
+
+  // play() の失敗を拾う useEffect
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (displaySource.type !== "video" || !displaySource.url) return;
+    if (!videoRef.current) return;
+
+    const el = videoRef.current;
+
+    sendLog("AlertBox", sessionId, "videoPlayAttempt", {
+      url: displaySource.url,
+      readyState: el.readyState,
+      networkState: el.networkState,
+    });
+
+    const playPromise = el.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch((error) => {
+        sendLog("AlertBox", sessionId, "videoPlayRejected", {
+          url: displaySource.url,
+          message: error instanceof Error ? error.message : String(error),
+          name:
+            typeof error === "object" && error && "name" in error
+              ? String((error as { name?: string }).name)
+              : undefined,
+        });
+        fallbackToImageSource();
+      });
+    }
+  }, [displaySource, fallbackToImageSource]);
 
   // 金額に比例したエフェクト回数（花火/雨）を算出
   const effectCounts = useMemo(
@@ -535,16 +591,64 @@ export default function AlertBox() {
               <View style={styles.alertContainer}>
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
+                    ref={videoRef}
                     autoPlay
                     controls={false}
                     loop={false}
                     muted
-                    onError={() => {
-                      fallbackToImageSource();
-                    }}
                     playsInline
+                    preload="auto"
                     src={displaySource.url}
                     style={{ ...styles.image }}
+                    onLoadStart={() =>
+                      sendLog("AlertBox", sessionId, "videoLoadStart", {
+                        url: displaySource.url,
+                      })
+                    }
+                    onLoadedMetadata={(e) =>
+                      sendLog("AlertBox", sessionId, "videoLoadedMetadata", {
+                        url: displaySource.url,
+                        duration: e.currentTarget.duration,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      })
+                    }
+                    onCanPlay={(e) =>
+                      sendLog("AlertBox", sessionId, "videoCanPlay", {
+                        url: displaySource.url,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      })
+                    }
+                    onPlaying={() =>
+                      sendLog("AlertBox", sessionId, "videoPlaying", {
+                        url: displaySource.url,
+                      })
+                    }
+                    onEnded={(e) => {
+                      const v = e.currentTarget;
+                      v.pause();
+
+                      if (Number.isFinite(v.duration) && v.duration > 0) {
+                        v.currentTime = Math.max(v.duration - 0.05, 0);
+                      }
+
+                      sendLog("AlertBox", sessionId, "videoEnded", {
+                        url: displaySource.url,
+                        duration: v.duration,
+                      });
+                    }}
+                    onError={(e) => {
+                      const mediaError = e.currentTarget.error;
+                      sendLog("AlertBox", sessionId, "videoError", {
+                        url: displaySource.url,
+                        code: mediaError?.code,
+                        message: mediaError?.message,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      });
+                      fallbackToImageSource();
+                    }}
                   />
                 ) : (
                   <Image

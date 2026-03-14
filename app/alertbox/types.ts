@@ -2,7 +2,7 @@
 export interface Viewer {
   Icon?: string;
   Emoji?: string;
-  superchatVideoUrl?: string | null;
+  videoUrl?: string | null;
   name: string;
 }
 
