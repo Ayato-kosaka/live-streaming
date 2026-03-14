@@ -2,6 +2,7 @@
 export interface Viewer {
   Icon?: string;
   Emoji?: string;
+  videoUrl?: string | null;
   name: string;
 }
 
@@ -84,4 +85,3 @@ export interface SuperChatRecord {
   test?: boolean;
   type?: 'superchat';
 }
-

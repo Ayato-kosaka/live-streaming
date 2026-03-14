@@ -12,7 +12,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { View, Text, Animated, Image, TextStyle } from "react-native";
+import { View, Text, Animated, Image, TextStyle, Platform } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
@@ -68,6 +68,15 @@ export default function AlertBox() {
     null
   );
 
+  // 現在表示中メディア（画像/動画）
+  const [displaySource, setDisplaySource] = useState<{
+    type: "image" | "video";
+    url: string | null;
+  }>({
+    type: "image",
+    url: null,
+  });
+
   // 未処理の通知キュー（受信順に積まれて処理される）
   const [notificationQueue, setNotificationQueue] = useState<
     NotificationData[]
@@ -90,6 +99,8 @@ export default function AlertBox() {
 
   // セッション識別子（ログ相関用）
   const sessionId = useRef(new Date().getTime());
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // エラーメッセージ
   const [error, setError] = useState<string | null>(null);
@@ -348,6 +359,48 @@ export default function AlertBox() {
     [matchedViewer]
   );
 
+  const preloadVideo = useCallback((url: string) => {
+    if (Platform.OS !== "web") return;
+
+    const video = document.createElement("video");
+    let settled = false;
+
+    const finish = (ok: boolean, reason: string) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+
+      video.onloadeddata = null;
+      video.oncanplay = null;
+      video.onerror = null;
+
+      sendLog("AlertBox", sessionId, "videoPreloadFinished", {
+        url,
+        ok,
+        reason,
+        readyState: video.readyState,
+        networkState: video.networkState,
+      });
+    };
+
+    const timer = window.setTimeout(() => {
+      finish(false, "timeout");
+    }, 3000);
+
+    video.preload = "auto";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = url;
+
+    sendLog("AlertBox", sessionId, "videoPreloadStart", { url });
+
+    video.onloadeddata = () => finish(true, "loadeddata");
+    video.oncanplay = () => finish(true, "canplay");
+    video.onerror = () => finish(false, "error");
+
+    video.load();
+  }, []);
+
   useEffect(() => {
     // 表示中の通知がない場合のみ、次の通知を処理開始
     if (!notification && notificationQueue.length > 0) {
@@ -368,9 +421,9 @@ export default function AlertBox() {
       currentNotification
     );
 
-    // 視聴者アイコンがあれば先にプリフェッチ
-    iconUrl(currentNotification) &&
-      (await Image.prefetch(iconUrl(currentNotification)!));
+    // 表示ソースを決定（画像/動画）し、表示前に preload
+    const source = await calculateAdjustedSource(currentNotification);
+    setDisplaySource(source);
 
     // 表示開始（フェードイン）
     setNotification(currentNotification);
@@ -406,7 +459,7 @@ export default function AlertBox() {
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
-  }, [notificationQueue, iconUrl, opacity]);
+  }, [notificationQueue, opacity]);
 
   // テンプレート本文（通知タイプに紐づくテンプレートを取得）
   const mainTextTemplate = useMemo(
@@ -422,6 +475,87 @@ export default function AlertBox() {
         : "",
     []
   );
+
+  async function calculateAdjustedSource(
+    n: NotificationData
+  ): Promise<{ type: "image" | "video"; url: string | null }> {
+    const viewer = matchedViewer(n);
+    const fallbackIconUrl = iconUrl(n);
+    const fallbackImageUrl = imageUrl(n.type);
+
+    if (
+      (n.type === "donation" || n.type === "superchat") &&
+      n.amount >= 0 &&
+      viewer?.videoUrl &&
+      Platform.OS === "web"
+    ) {
+      // preload は事前ウォームアップだけにする
+      preloadVideo(viewer.videoUrl);
+
+      // フォールバック用画像も先に温めておく
+      if (fallbackIconUrl) {
+        Image.prefetch(fallbackIconUrl);
+      } else {
+        Image.prefetch(fallbackImageUrl);
+      }
+
+      return { type: "video", url: viewer.videoUrl };
+    }
+
+    if (fallbackIconUrl) {
+      await Image.prefetch(fallbackIconUrl);
+      return { type: "image", url: fallbackIconUrl };
+    }
+
+    await Image.prefetch(fallbackImageUrl);
+    return { type: "image", url: fallbackImageUrl };
+  }
+
+  const fallbackToImageSource = useCallback(async () => {
+    if (!notification) return;
+
+    const fallbackIconUrl = iconUrl(notification);
+    if (fallbackIconUrl) {
+      await Image.prefetch(fallbackIconUrl);
+      setDisplaySource({ type: "image", url: fallbackIconUrl });
+      return;
+    }
+
+    const fallbackImageUrl = imageUrl(notification.type);
+    await Image.prefetch(fallbackImageUrl);
+    setDisplaySource({ type: "image", url: fallbackImageUrl });
+  }, [iconUrl, imageUrl, notification]);
+
+  // play() の失敗を拾う useEffect
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (displaySource.type !== "video" || !displaySource.url) return;
+    if (!videoRef.current) return;
+
+    const el = videoRef.current;
+
+    sendLog("AlertBox", sessionId, "videoPlayAttempt", {
+      url: displaySource.url,
+      readyState: el.readyState,
+      networkState: el.networkState,
+    });
+
+    const playPromise = el.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch((error) => {
+        sendLog("AlertBox", sessionId, "videoPlayRejected", {
+          url: displaySource.url,
+          message: error instanceof Error ? error.message : String(error),
+          name:
+            typeof error === "object" && error && "name" in error
+              ? String((error as { name?: string }).name)
+              : undefined,
+        });
+        fallbackToImageSource();
+      });
+    }
+  }, [displaySource, fallbackToImageSource]);
 
   // 金額に比例したエフェクト回数（花火/雨）を算出
   const effectCounts = useMemo(
@@ -455,13 +589,76 @@ export default function AlertBox() {
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
-                <Image
-                  resizeMode="contain"
-                  style={{ ...styles.image }}
-                  source={{
-                    uri: iconUrl(notification) || imageUrl(notification.type),
-                  }}
-                />
+                {displaySource.type === "video" && displaySource.url ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    controls={false}
+                    loop={false}
+                    muted
+                    playsInline
+                    preload="auto"
+                    src={displaySource.url}
+                    style={{ ...styles.image }}
+                    onLoadStart={() =>
+                      sendLog("AlertBox", sessionId, "videoLoadStart", {
+                        url: displaySource.url,
+                      })
+                    }
+                    onLoadedMetadata={(e) =>
+                      sendLog("AlertBox", sessionId, "videoLoadedMetadata", {
+                        url: displaySource.url,
+                        duration: e.currentTarget.duration,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      })
+                    }
+                    onCanPlay={(e) =>
+                      sendLog("AlertBox", sessionId, "videoCanPlay", {
+                        url: displaySource.url,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      })
+                    }
+                    onPlaying={() =>
+                      sendLog("AlertBox", sessionId, "videoPlaying", {
+                        url: displaySource.url,
+                      })
+                    }
+                    onEnded={(e) => {
+                      const v = e.currentTarget;
+                      v.pause();
+
+                      if (Number.isFinite(v.duration) && v.duration > 0) {
+                        v.currentTime = Math.max(v.duration - 0.05, 0);
+                      }
+
+                      sendLog("AlertBox", sessionId, "videoEnded", {
+                        url: displaySource.url,
+                        duration: v.duration,
+                      });
+                    }}
+                    onError={(e) => {
+                      const mediaError = e.currentTarget.error;
+                      sendLog("AlertBox", sessionId, "videoError", {
+                        url: displaySource.url,
+                        code: mediaError?.code,
+                        message: mediaError?.message,
+                        readyState: e.currentTarget.readyState,
+                        networkState: e.currentTarget.networkState,
+                      });
+                      fallbackToImageSource();
+                    }}
+                  />
+                ) : (
+                  <Image
+                    resizeMode="contain"
+                    style={{ ...styles.image }}
+                    source={{
+                      uri: displaySource.url || imageUrl(notification.type),
+                    }}
+                  />
+                )}
 
                 {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
                 {emoji && (
