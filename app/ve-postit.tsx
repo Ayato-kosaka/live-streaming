@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Image, StyleSheet, Platform } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Platform } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
 
@@ -8,28 +8,52 @@ export default function App() {
   const [content, setContent] = useState("");
   let viewShotRef = React.createRef<ViewShot>();
 
+  const downloadPng = (uri: string) => {
+    const link = document.createElement("a");
+    link.href = uri;
+    link.download = `${new Date().getTime()}-${title}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const captureWebPng = async () => {
+    const captureTarget = document.getElementById("postit-capture-target");
+    const rect = captureTarget?.getBoundingClientRect();
+    const scale = window.devicePixelRatio || 2;
+    const outputWidth = rect ? Math.round(rect.width * scale) : undefined;
+    const outputHeight = rect ? Math.round(rect.height * scale) : undefined;
+
+    // 例: CSS 幅 240px の場合、scale=2 で 480px 出力にしてぼやけを防ぐ。
+    return (viewShotRef.current as any)?.capture?.({
+      format: "png",
+      quality: 1,
+      width: outputWidth,
+      height: outputHeight,
+    });
+  };
+
   const captureAndSave = async () => {
-    if (viewShotRef) {
-        viewShotRef.current?.capture?.().then(async (uri) => {
-          if (Platform.OS === "web") {
-            // Web 用のダウンロード処理
-            const link = document.createElement("a");
-            link.href = uri;
-            link.download = `${new Date().getTime()}-${title}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } else {
-            // モバイル（iOS/Android）の場合、MediaLibrary を使用
-            const { status } = await MediaLibrary.requestPermissionsAsync();
-            if (status === "granted") {
-              await MediaLibrary.createAssetAsync(uri);
-              alert("Image saved to gallery!");
-            } else {
-              alert("Permission denied to save image.");
-            }
-          }
-        })
+    if (!viewShotRef.current?.capture) {
+      return;
+    }
+
+    if (Platform.OS === "web") {
+      const uri = await captureWebPng();
+      if (uri) {
+        downloadPng(uri);
+      }
+      return;
+    }
+
+    const uri = await (viewShotRef.current as any).capture({ format: "png", quality: 1 });
+    // モバイル（iOS/Android）の場合、MediaLibrary を使用
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status === "granted") {
+      await MediaLibrary.createAssetAsync(uri);
+      alert("Image saved to gallery!");
+    } else {
+      alert("Permission denied to save image.");
     }
   };
 
@@ -49,7 +73,7 @@ export default function App() {
         multiline
       />
       <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
-        <View style={styles.postit}>
+        <View nativeID="postit-capture-target" style={styles.postit}>
           <Text style={styles.postitTitle}>{title}</Text>
           <Text style={styles.postitContent}>{content.split("\n").map((c,i) => (<Text key={i} style={styles.underline}>{c+"\n"}</Text>))}</Text>
         </View>
