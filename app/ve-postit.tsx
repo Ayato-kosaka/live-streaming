@@ -1,35 +1,53 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, Image, StyleSheet, Platform } from "react-native";
-import * as MediaLibrary from "expo-media-library";
-import ViewShot from "react-native-view-shot";
+import React, { useRef, useState } from "react";
+import { View, Text, TextInput, Button, StyleSheet, Platform, Alert } from "react-native";
+import html2canvas from "html2canvas";
+
+const WEB_CAPTURE_SCALE_FLOOR = 3;
+
+function buildFileName(title: string): string {
+  const safeTitle = title.trim().replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/^-+|-+$/g, "");
+  const suffix = safeTitle.length > 0 ? `-${safeTitle}` : "";
+  return `${Date.now()}${suffix}.png`;
+}
 
 export default function App() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  let viewShotRef = React.createRef<ViewShot>();
+  const postitRef = useRef<View>(null);
 
   const captureAndSave = async () => {
-    if (viewShotRef) {
-        viewShotRef.current?.capture?.().then(async (uri) => {
-          if (Platform.OS === "web") {
-            // Web 用のダウンロード処理
-            const link = document.createElement("a");
-            link.href = uri;
-            link.download = `${new Date().getTime()}-${title}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } else {
-            // モバイル（iOS/Android）の場合、MediaLibrary を使用
-            const { status } = await MediaLibrary.requestPermissionsAsync();
-            if (status === "granted") {
-              await MediaLibrary.createAssetAsync(uri);
-              alert("Image saved to gallery!");
-            } else {
-              alert("Permission denied to save image.");
-            }
-          }
-        })
+    if (Platform.OS !== "web") {
+      Alert.alert("Unsupported", "This screen supports image export only on Web.");
+      return;
+    }
+
+    const node = postitRef.current as unknown as HTMLElement | null;
+    if (!node) {
+      Alert.alert("Error", "Capture target was not found.");
+      return;
+    }
+
+    try {
+      await document.fonts?.ready;
+
+      const scale = Math.max(window.devicePixelRatio || 1, WEB_CAPTURE_SCALE_FLOOR);
+      const canvas = await html2canvas(node, {
+        backgroundColor: "#faf7e0",
+        scale,
+        useCORS: true,
+        logging: false,
+      });
+
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = buildFileName(title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("captureAndSave failed", error);
+      Alert.alert("Export failed", "Could not generate an image. Please try again.");
     }
   };
 
@@ -48,12 +66,14 @@ export default function App() {
         onChangeText={setContent}
         multiline
       />
-      <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
-        <View style={styles.postit}>
-          <Text style={styles.postitTitle}>{title}</Text>
-          <Text style={styles.postitContent}>{content.split("\n").map((c,i) => (<Text key={i} style={styles.underline}>{c+"\n"}</Text>))}</Text>
-        </View>
-      </ViewShot>
+      <View ref={postitRef} style={styles.postit}>
+        <Text style={styles.postitTitle}>{title}</Text>
+        <Text style={styles.postitContent}>
+          {content.split("\n").map((c, i) => (
+            <Text key={i} style={styles.underline}>{`${c}\n`}</Text>
+          ))}
+        </Text>
+      </View>
       <Button title="Generate & Save" onPress={captureAndSave} />
     </View>
   );
@@ -99,8 +119,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#49372b",
     paddingBottom: 8,
-},
-postitContent: {
+  },
+  postitContent: {
     fontSize: 14,
     lineHeight: 21,
     textAlign: "left",
