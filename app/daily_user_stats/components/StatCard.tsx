@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../styles/colors';
 
 type Props = {
@@ -9,31 +9,21 @@ type Props = {
 };
 
 export default function StatCard({ label, value, loading }: Props) {
-  const spinAnim = useRef(new Animated.Value(0)).current;
+  const [slotNum, setSlotNum] = useState(() => Math.floor(Math.random() * 90) + 10);
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(spinAnim, {
-        toValue: 1,
-        duration: 800,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [spinAnim]);
-
-  const rotate = spinAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+    if (!loading) return;
+    const id = setInterval(() => {
+      setSlotNum(Math.floor(Math.random() * 90) + 10);
+    }, 80);
+    return () => clearInterval(id);
+  }, [loading]);
 
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{label}</Text>
       {loading ? (
-        <Animated.View style={[styles.spinner, { transform: [{ rotate }] }]} />
+        <Text style={[styles.value, styles.slot]}>{slotNum}</Text>
       ) : (
         <Text style={styles.value}>{value?.toLocaleString() ?? '-'}</Text>
       )}
@@ -65,12 +55,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     lineHeight: 26,
   },
-  spinner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.sub,
-    borderTopColor: colors.main,
+  slot: {
+    color: colors.sub,
   },
 });

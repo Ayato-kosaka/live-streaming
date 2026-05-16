@@ -9,7 +9,7 @@ export default function Header() {
     <View style={styles.container}>
       <Image source={{ uri: LOGO_URI }} style={styles.logo} />
       <Text style={styles.title}>
-        なに食べよ{'  '}
+        {'  '}なに食べよ{'  '}
         <Text style={styles.subtitle}>📈 ユーザー数</Text>
       </Text>
     </View>
@@ -20,7 +20,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 4,
     paddingVertical: 2,
   },
