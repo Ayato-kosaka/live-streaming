@@ -1,14 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { fetchDailyStats } from './lib/api';
-import {
-  computeAggregates,
-  getLast30Days,
-  getLast12Months,
-  type Aggregates,
-  type BarDatum,
-} from './lib/aggregate';
-import type { DailyStat } from './lib/types';
+import { fetchAllStats } from './lib/api';
+import { getLast30Days, formatMonthly, type BarDatum } from './lib/aggregate';
+import type { Summary } from './lib/types';
 import { colors } from './styles/colors';
 import Header from './components/Header';
 import StatPanel from './components/StatPanel';
@@ -16,19 +10,19 @@ import BarChart from './components/BarChart';
 
 export default function DailyUserStatsScreen() {
   const [loading, setLoading] = useState(true);
-  const [aggregates, setAggregates] = useState<Aggregates | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [last30, setLast30] = useState<BarDatum[]>([]);
   const [last12months, setLast12months] = useState<BarDatum[]>([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data: DailyStat[] = await fetchDailyStats();
-      setAggregates(computeAggregates(data));
-      setLast30(getLast30Days(data));
-      setLast12months(getLast12Months(data));
+      const { daily, monthly, summary } = await fetchAllStats();
+      setSummary(summary);
+      setLast30(getLast30Days(daily));
+      setLast12months(formatMonthly(monthly));
     } catch (e) {
-      console.error('Failed to fetch daily stats:', e);
+      console.error('Failed to fetch stats:', e);
     } finally {
       setLoading(false);
     }
@@ -43,7 +37,7 @@ export default function DailyUserStatsScreen() {
       <View style={styles.container}>
         <Header />
         <View style={styles.gap} />
-        <StatPanel loading={loading} aggregates={aggregates} />
+        <StatPanel loading={loading} summary={summary} />
         <View style={styles.gap} />
         <BarChart title="直近30日" data={last30} loading={loading} />
         <View style={styles.gap} />
