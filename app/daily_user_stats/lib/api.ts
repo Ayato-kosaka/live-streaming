@@ -1,16 +1,38 @@
-import type { DailyStat } from './types';
+import type { DailyStat, MonthStat, Summary } from './types';
 
-const ENDPOINT =
-  'https://script.google.com/macros/s/AKfycbz0RvIKLuuRBCktb8m7RKGk0dD0mzo6DhYFt_32zIMnqWnsLzypvZ99OZY95wQTVtW1/exec?endpoint=daily_user_stats';
+const BASE =
+  'https://script.google.com/macros/s/AKfycbz0RvIKLuuRBCktb8m7RKGk0dD0mzo6DhYFt_32zIMnqWnsLzypvZ99OZY95wQTVtW1/exec';
 
-export async function fetchDailyStats(): Promise<DailyStat[]> {
-  const res = await fetch(ENDPOINT);
+async function get<T>(endpoint: string): Promise<T> {
+  const res = await fetch(`${BASE}?endpoint=${endpoint}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const raw = await res.json();
-  return (raw as unknown[]).filter(
-    (r): r is DailyStat =>
-      typeof (r as DailyStat).date === 'string' &&
-      typeof (r as DailyStat).new_users === 'number' &&
-      typeof (r as DailyStat).returning_users === 'number'
-  );
+  return res.json() as Promise<T>;
+}
+
+export async function fetchAllStats(): Promise<{
+  daily: DailyStat[];
+  monthly: MonthStat[];
+  summary: Summary;
+}> {
+  const [daily, monthly, summary] = await Promise.all([
+    get<unknown[]>('daily_30d'),
+    get<unknown[]>('monthly_12m'),
+    get<Record<string, unknown>>('summary'),
+  ]);
+
+  return {
+    daily: (daily as unknown[]).filter(
+      (r): r is DailyStat =>
+        typeof (r as DailyStat).date === 'string' &&
+        typeof (r as DailyStat).new_users === 'number' &&
+        typeof (r as DailyStat).returning_users === 'number'
+    ),
+    monthly: (monthly as unknown[]).filter(
+      (r): r is MonthStat =>
+        typeof (r as MonthStat).month === 'string' &&
+        typeof (r as MonthStat).new_users === 'number' &&
+        typeof (r as MonthStat).returning_users === 'number'
+    ),
+    summary: summary as Summary,
+  };
 }

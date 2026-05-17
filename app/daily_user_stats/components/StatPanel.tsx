@@ -1,26 +1,26 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import StatCard from './StatCard';
-import type { Aggregates } from '../lib/aggregate';
+import type { Summary } from '../lib/types';
 
 type Props = {
   loading: boolean;
-  aggregates: Aggregates | null;
+  summary: Summary | null;
 };
 
-export default function StatPanel({ loading, aggregates }: Props) {
+export default function StatPanel({ loading, summary }: Props) {
   return (
     <View style={styles.grid}>
       <View style={styles.row}>
-        <StatCard label="今日の新規" value={aggregates?.todayNew ?? null} loading={loading} />
+        <StatCard label="今日の新規" value={summary?.today_new ?? null} loading={loading} />
         <View style={styles.colGap} />
-        <StatCard label="今日の累計" value={aggregates?.todayTotal ?? null} loading={loading} />
+        <StatCard label="今日の累計" value={summary?.today_total ?? null} loading={loading} />
       </View>
       <View style={styles.rowGap} />
       <View style={styles.row}>
-        <StatCard label="月間累計(MAU)" value={aggregates?.mau ?? null} loading={loading} />
+        <StatCard label="月間累計(MAU)" value={summary?.mau ?? null} loading={loading} />
         <View style={styles.colGap} />
-        <StatCard label="全期間累計" value={aggregates?.allTime ?? null} loading={loading} />
+        <StatCard label="全期間累計" value={summary?.all_time ?? null} loading={loading} />
       </View>
     </View>
   );
