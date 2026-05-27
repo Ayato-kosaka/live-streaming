@@ -47,7 +47,8 @@
     "react-native-svg": "^15.15.1",
     "react-native-view-shot": "github:Ayato-kosaka/react-native-view-shot-with-web-support#master",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "expo-linear-gradient": "~14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

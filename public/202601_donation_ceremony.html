@@ -511,20 +511,63 @@
        * avatar: 画像URL / 相対パス / dataURL どれでもOK
        * score: 数値 (M表記にしたいなら unit:"M" を付ける)
        */
-      const RANKING_DATA_URL = 
-            "https://storage.googleapis.com/live-streaming-d3cac-public/202601_donation_ceremony.json?nocache=" +
-            Date.now();
-      let ranking = [];
-      try {
-        const resp = await fetch(RANKING_DATA_URL, { cache: "no-store" });
-        if (resp.ok) {
-          ranking = await resp.json();
-        } else {
-          console.error("Failed to load ranking data:", resp.status, resp.statusText);
-        }
-      } catch (e) {
-        console.error("Error fetching ranking data:", e);
-      }
+      let ranking = [
+ {
+   "name": "@破産寸前なのお金がないのよ",
+   "score": 20,
+   "avatar": "https://yt4.ggpht.com/swwZxel7rghHjSTBUQoq0QviG9ud8uwas6BcX5C_R3QdTKYleneqfGQPMaoVjzpAccHIFroF7w=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@マイキーriri08049",
+   "score": 17,
+   "avatar": "https://yt4.ggpht.com/rd72zwmPeJvp_r2XbpyifDSCMrgsOBa3aSnp0-12q4lk3Jjpgb4w8Sxt0iNcTpMCrFeJYi0h=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@かこ-e",
+   "score": 14,
+   "avatar": "https://lh3.googleusercontent.com/d/1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz"
+ },
+ {
+   "name": "@aoi1685",
+   "score": 12,
+   "avatar": "https://lh3.googleusercontent.com/d/1wQzpWPNZKnty7DIiEkrSyib145QIWy4K"
+ },
+ {
+   "name": "@OYATHUYASAN",
+   "score": 12,
+   "avatar": "https://lh3.googleusercontent.com/d/1DcjL-_voO7I_JOlQrlKi2ixieBh7KSBA"
+ },
+ {
+   "name": "@お髭GG企画",
+   "score": 11,
+   "avatar": "https://yt4.ggpht.com/GUV1KjH9GulhuZ1UO4YoQQxVYZNz5EZhgQVb-tBiYLwGOz15Q880JoUxrmhbodSIF6UM7e-d=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@jasonbrophy7921",
+   "score": 10,
+   "avatar": "https://yt4.ggpht.com/rS9y4QXypRCwbP5kns1tDJJSZKEUgOttPt1LNbSLCZaOUeD7f8Ur7aOH4sLQmSIXNKpDMFangA=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@やまいお-r3i",
+   "score": 10,
+   "avatar": "https://yt4.ggpht.com/ytc/AIdro_kLBX5vWsaJ75vqS5yWvtCtU0V6j8z_2rVTj9Ek_LnpBYk1y1xBsb28oC9anmqWFMTrqe-O=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@macocomark9471",
+   "score": 10,
+   "avatar": "https://yt4.ggpht.com/ytc/AIdro_n7ZKVsaAkRYkm1ySJHvPPiFaRo6V4jWBZCAEBFc78=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@AKI-oo9ct",
+   "score": 7,
+   "avatar": "https://yt4.ggpht.com/d-IclkJZ5ouAzT2CJfv69k2FrSMcfjlUisM2y76AaOSDANeptQYo4V4hc88vypvGjJvP_8bBvA=s32-c-k-c0x00ffffff-no-rj"
+ },
+ {
+   "name": "@ひめひめ-r9z",
+   "score": 7,
+   "avatar": "https://lh3.googleusercontent.com/d/1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ"
+ }
+];
 
       // Optional: timestamp
       const now = new Date();

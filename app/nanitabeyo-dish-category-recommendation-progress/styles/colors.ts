@@ -1,5 +1,6 @@
 export const colors = {
-  backgroundTop: "#0F172A",
+  // backgroundTop: "#0F172A",
+  backgroundTop: "transparent",
   backgroundBottom: "#111827",
   title: "#FFFFFF",
   text: "#E5E7EB",

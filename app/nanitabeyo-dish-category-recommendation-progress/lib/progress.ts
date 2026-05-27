@@ -1,9 +1,9 @@
 export const TOTAL_COUNT = 2292;
 const DEFAULT_DONE = 1284;
 
-const sheetId = process.env.EXPO_PUBLIC_OBS_PROGRESS_SHEET_ID;
-const sheetName = process.env.EXPO_PUBLIC_OBS_PROGRESS_SHEET_NAME ?? "Status";
-const range = process.env.EXPO_PUBLIC_OBS_PROGRESS_RANGE ?? "B1";
+const sheetId = "1APT9leIkCWbfgyHeZ9c0z8HaRtWG-woUCGbt214gNE8";
+const sheetName = "Status";
+const range = "B1";
 
 const createUrl = () => {
   if (!sheetId) return null;
