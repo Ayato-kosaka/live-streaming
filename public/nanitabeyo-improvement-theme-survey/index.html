@@ -553,6 +553,49 @@
         renderQ2();
       }
 
+      // ====== ここを追加：プレビューしたい結果JSON ======
+      const PREVIEW_RESULT = {"q1_points":{"A":4,"B":3,"C":2,"D":1},"q2_choice":{"q2_B":"hit"},"free":"何食べよう🍽️愛用しているものです😊\n現在地の近くや次に出かける場所を予習して使うことも多いです😊何よりびっくりするのは自宅近くにこんな店があったのかとか😊\n旅行に行った先の予習をして🩷やタグをつけておけば1回アウトしてもしっかり履歴に残ります🥰現在地で緊急に使うことばかりではないということも再発見しました😊最近使いやすくなってびっくりしています😊\nと❣️言う事でご意見ではなくて😊制作スタッフにお礼です🫡\n1つお願いが\nまた次回もアンケートに参加したいのですが\n上の項目だけでは心情に当てはまらない場合もあるので\n上のレ点チェックのところも\n（その他）の欄を設けて　自身の言葉でかける欄儲けて頂けると　感想が述べやすいです","meta":{"created_at":"2026-01-10T22:00:27.408Z","ua":"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36"}};
+      // =====================================================
+
+      // ...（既存コード）...
+
+      // ====== ここを追加：結果JSONをフォームへ反映 ======
+      function applyResultToForm(result) {
+        if (!result) return;
+
+        // 1) Q1: sliders
+        const pts = result.q1_points || {};
+        ["A", "B", "C", "D"].forEach((k) => {
+          if (pts[k] === undefined || pts[k] === null) return;
+          if (!ranges[k]) return;
+          ranges[k].value = String(pts[k]);
+        });
+
+        // 2) Free text
+        if (typeof result.free === "string") {
+          form.free.value = result.free;
+        }
+
+        // 3) まずUI更新してQ2 DOMを生成する
+        updateUI();
+
+        // 4) Q2: radios（DOM生成後にチェック）
+        const q2 = result.q2_choice || {};
+        Object.entries(q2).forEach(([name, value]) => {
+          const input = form.querySelector(
+            `input[name="${name}"][value="${value}"]`
+          );
+          if (input) input.checked = true;
+        });
+
+        // 5) 念のため再計算（残りpt表示などの整合）
+        updateUI();
+      }
+
+      // =====================================================
+
+      // init（既存の init を置き換え/並べ替え）
+      applyResultToForm(PREVIEW_RESULT); // ← 先に流し込む
       function renderQ2() {
         // ① いまチェックされている値を退避
         const prev = {};
@@ -582,23 +625,23 @@
           sec.style.borderWidth = "2px";
           sec.style.padding = "10px";
           sec.innerHTML = `
-      <div class="q2title" style="margin:0 0 8px;">
-        <b>${def.title}</b>
-        <span class="optional">1つ選ぶ（任意）</span>
-      </div>
-      <div class="radios" role="radiogroup" aria-label="${def.title}">
-        ${def.options
-          .map(
-            (o) => `
-          <label class="radio">
-            <input type="radio" name="${def.name}" value="${o.value}">
-            <span>${o.label}</span>
-          </label>
-        `
-          )
-          .join("")}
-      </div>
-    `;
+            <div class="q2title" style="margin:0 0 8px;">
+              <b>${def.title}</b>
+              <span class="optional">1つ選ぶ（任意）</span>
+            </div>
+            <div class="radios" role="radiogroup" aria-label="${def.title}">
+              ${def.options
+                .map(
+                  (o) => `
+                <label class="radio">
+                  <input type="radio" name="${def.name}" value="${o.value}">
+                  <span>${o.label}</span>
+                </label>
+              `
+                )
+                .join("")}
+            </div>
+          `;
           q2wrap.appendChild(sec);
         });
 
@@ -683,17 +726,16 @@
           //   "送信に失敗しました。POST_ENDPOINTやサーバー設定を確認してね。";
         }
         card.innerHTML = `
-          <div class="done">
-            <h2>送信ありがとうございます！</h2>
-            <p>みんなの回答をもとに、来月の改善テーマを決めます😊</p>
-            <p>今後とも「なに食べよ」をよろしくお願いします🍽️</p>
-            <p>よいお年を！🎍</p>
-          </div>
-        `;
+                <div class="done">
+                  <h2>送信ありがとうございます！</h2>
+                  <p>みんなの回答をもとに、来月の改善テーマを決めます😊</p>
+                  <p>今後とも「なに食べよ」をよろしくお願いします🍽️</p>
+                  <p>よいお年を！🎍</p>
+                </div>
+              `;
       });
 
-      // init
-      updateUI();
+      updateUI(); // ← そのあとUI再計算（残りpt、Q2表示など）
     </script>
   </body>
 </html>
