@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>確定済みの料理ランキング</title>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont,
+          "Noto Sans JP", sans-serif;
+        background: rgb(251, 238, 221);
+        color: #1f1a16;
+      }
+
+      .stage {
+        width: 100vw;
+        height: 100vh;
+        padding: 24px 28px 28px;
+        box-sizing: border-box;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 18px;
+      }
+
+      .screen-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        font-size: clamp(30px, 3vw, 54px);
+        line-height: 1.1;
+        font-weight: 1000;
+        letter-spacing: 0.04em;
+        color: #3a2415;
+        text-shadow: 0 3px 0 rgba(255, 255, 255, 0.72);
+      }
+
+      .screen-title::before,
+      .screen-title::after {
+        content: "★";
+        font-size: 0.72em;
+        color: #f28c28;
+      }
+
+      .page {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 18px;
+        min-height: 0;
+      }
+
+      .card {
+        position: relative;
+        border-radius: 22px;
+        overflow: hidden;
+        background: #111;
+        box-shadow: 0 12px 34px rgba(96, 52, 20, 0.25);
+        animation: pop 480ms ease-out both;
+      }
+
+      .image {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        opacity: 1;
+        transform: scale(1.01);
+      }
+
+      .shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.82) 0%,
+          rgba(0, 0, 0, 0.58) 36%,
+          rgba(0, 0, 0, 0.14) 70%,
+          rgba(0, 0, 0, 0.02) 100%
+        );
+      }
+
+      .content {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 14px;
+        z-index: 2;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: clamp(13px, 1vw, 19px);
+        font-weight: 1000;
+        letter-spacing: 0.06em;
+        color: white;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+      }
+
+      .badge.down {
+        background: #e64646;
+      }
+
+      .badge.up {
+        background: #16a765;
+      }
+
+      .badge.down::before {
+        content: "▼";
+      }
+
+      .badge.up::before {
+        content: "▲";
+      }
+
+      .title {
+        font-size: clamp(18px, 1.65vw, 30px);
+        line-height: 1.18;
+        font-weight: 1000;
+        color: white;
+        text-shadow: 0 3px 12px rgba(0, 0, 0, 0.96), 0 0 2px rgba(0, 0, 0, 1);
+      }
+
+      .meta {
+        margin-top: 6px;
+        font-size: clamp(12px, 0.85vw, 17px);
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.92);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+      }
+
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: translateY(14px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="stage">
+      <header class="screen-title">確定済みの料理ランキング</header>
+
+      <section id="page" class="page"></section>
+    </main>
+
+    <script>
+      const CONFIG = {
+        sheetId: "1APT9leIkCWbfgyHeZ9c0z8HaRtWG-woUCGbt214gNE8",
+        sheetName: "最終判断",
+        range: "A:M",
+
+        // 4列 × 2行
+        pageSize: 8,
+
+        // 5秒ごとに次ページ
+        intervalMs: 5000,
+
+        // "down" のみ出したいなら "down"
+        // "up" のみなら "up"
+        // 全部出すなら null
+        onlyUpDown: null,
+      };
+
+      let items = [];
+      let pageIndex = 0;
+
+      function buildGvizUrl() {
+        const base = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq`;
+        const params = new URLSearchParams({
+          sheet: CONFIG.sheetName,
+          range: CONFIG.range,
+          tqx: "out:json",
+          _: String(Date.now()),
+        });
+
+        return `${base}?${params.toString()}`;
+      }
+
+      async function fetchSheetRows() {
+        const res = await fetch(buildGvizUrl());
+        const text = await res.text();
+
+        const jsonText = text.slice(
+          text.indexOf("{"),
+          text.lastIndexOf("}") + 1
+        );
+
+        const json = JSON.parse(jsonText);
+        const cols = json.table.cols.map((col) => col.label || col.id);
+
+        return json.table.rows.map((row) => {
+          const obj = {};
+
+          cols.forEach((col, i) => {
+            const cell = row.c[i];
+            obj[col] = cell ? cell.f ?? cell.v ?? "" : "";
+          });
+
+          return obj;
+        });
+      }
+
+      function normalizeRow(row) {
+        const dish = row["dish_name"] || "";
+        const searchItem = row["検索項目"] || "";
+        const rawLabel = row["feature_key_label"] || "";
+        const label = rawLabel && rawLabel !== "-" ? rawLabel : searchItem;
+        const direction = String(row["up_down"] || "").toLowerCase();
+
+        const directionLabel =
+          direction === "up"
+            ? "UP"
+            : direction === "down"
+            ? "DOWN"
+            : String(row["up_down"] || "").toUpperCase();
+
+        return {
+          dish,
+          searchItem,
+          label,
+          direction,
+          directionLabel,
+          imageUrl: row["image_url"] || "",
+          beforeRank: row["before_rank"] || "",
+          afterRank: row["after_rank"] || "",
+        };
+      }
+
+      async function refetch() {
+        try {
+          const rows = await fetchSheetRows();
+
+          items = rows
+            .map(normalizeRow)
+            .filter(
+              (item) =>
+                item.dish &&
+                item.directionLabel &&
+                item.directionLabel !== "#N/A"
+            )
+            .filter((item) => {
+              if (!CONFIG.onlyUpDown) return true;
+              return item.direction === CONFIG.onlyUpDown;
+            });
+
+          pageIndex = 0;
+        } catch (error) {
+          console.error(error);
+          items = [];
+        }
+      }
+
+      function render() {
+        const root = document.getElementById("page");
+
+        if (!items.length) {
+          root.innerHTML = `
+          <article class="card">
+            <div class="shade"></div>
+            <div class="content">
+              <div class="title">表示できるデータがありません</div>
+              <div class="meta">スプレッドシートの公開設定を確認してください</div>
+            </div>
+          </article>
+        `;
+          return;
+        }
+
+        const start = pageIndex * CONFIG.pageSize;
+        const pageItems = items.slice(start, start + CONFIG.pageSize);
+
+        root.innerHTML = pageItems
+          .map((item) => {
+            const rankText = makeRankText(item);
+
+            return `
+          <article class="card">
+            <div
+              class="image"
+              style="background-image: url('${escapeHtml(item.imageUrl)}')"
+            ></div>
+
+            <div class="shade"></div>
+
+            <div class="content">
+              <div class="badge ${escapeHtml(item.direction)}">
+                ${escapeHtml(item.directionLabel)}
+              </div>
+
+              <div class="title">
+                ${escapeHtml(makeTitle(item))}
+              </div>
+
+              ${
+                rankText
+                  ? `
+                <div class="meta">
+                  ${escapeHtml(rankText)}
+                </div>
+              `
+                  : ""
+              }
+            </div>
+          </article>
+        `;
+          })
+          .join("");
+      }
+
+      function makeTitle(item) {
+        if (item.directionLabel === "DOWN") {
+          return `${item.dish}は「${item.label}」で下がる`;
+        }
+
+        if (item.directionLabel === "UP") {
+          return `${item.dish}は「${item.label}」で上がる`;
+        }
+
+        return `${item.dish}は「${item.label}」で変動`;
+      }
+
+      function makeRankText(item) {
+        if (item.beforeRank && item.afterRank) {
+          return `${item.beforeRank}位 → ${item.afterRank}位`;
+        }
+
+        if (item.beforeRank) {
+          return `現在 ${item.beforeRank}位`;
+        }
+
+        return "";
+      }
+
+      async function nextPage() {
+        const maxPage = Math.ceil(items.length / CONFIG.pageSize);
+
+        pageIndex += 1;
+
+        if (pageIndex >= maxPage) {
+          await refetch();
+        }
+
+        render();
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      async function start() {
+        await refetch();
+        render();
+        setInterval(nextPage, CONFIG.intervalMs);
+      }
+
+      start();
+    </script>
+  </body>
+</html>
