@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fffaf2" />
+    <title>料理カテゴリランキング レビュー</title>
+    <style>
+      :root {
+        --bg: #fffaf2;
+        --surface: #ffffff;
+        --surface-subtle: #fff6e8;
+        --ink: #2a241d;
+        --muted: #71675d;
+        --line: #eadfce;
+        --accent: #d65f35;
+        --accent-strong: #b6451e;
+        --accent-soft: #fff0e8;
+        --success: #1d7a57;
+        --warning: #a36800;
+        --danger: #b64343;
+        --shadow: 0 10px 28px rgba(58, 43, 24, 0.1);
+        --radius: 18px;
+        --tap: 44px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: radial-gradient(
+            circle at top right,
+            rgba(255, 209, 168, 0.28),
+            transparent 34rem
+          ),
+          var(--bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+          "Yu Gothic", "Noto Sans JP", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+
+      .app-shell {
+        width: min(100%, 720px);
+        min-height: 100dvh;
+        margin: 0 auto;
+        padding: calc(18px + env(safe-area-inset-top)) 14px
+          calc(28px + env(safe-area-inset-bottom));
+      }
+
+      .app-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .eyebrow {
+        margin: 0 0 3px;
+        color: var(--accent-strong);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(22px, 6vw, 30px);
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+      }
+
+      .review-count {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 10px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .control-card,
+      .ranking-header,
+      .rank-card,
+      .empty-state {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(234, 223, 206, 0.92);
+        box-shadow: 0 5px 16px rgba(58, 43, 24, 0.045);
+      }
+
+      .control-card {
+        padding: 14px;
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+      }
+
+      .control-label {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .segmented,
+      .chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .segmented::-webkit-scrollbar,
+      .chips::-webkit-scrollbar {
+        display: none;
+      }
+
+      .segmented {
+        margin-bottom: 14px;
+      }
+
+      .segment,
+      .chip {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 9px 13px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        background: var(--surface);
+        font-size: 14px;
+        font-weight: 750;
+        transition: 0.16s ease;
+      }
+
+      .segment[aria-pressed="true"],
+      .chip[aria-pressed="true"] {
+        border-color: var(--accent);
+        color: #fff;
+        background: var(--accent);
+        box-shadow: 0 6px 12px rgba(214, 95, 53, 0.23);
+      }
+
+      .ranking-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px;
+        border-radius: var(--radius);
+        margin-bottom: 10px;
+      }
+
+      .ranking-title {
+        min-width: 0;
+      }
+
+      .ranking-title h2 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .ranking-subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .secondary-button,
+      .primary-button,
+      .icon-button {
+        border: 0;
+        border-radius: 12px;
+        min-height: var(--tap);
+        font-weight: 800;
+      }
+
+      .secondary-button {
+        flex: 0 0 auto;
+        padding: 0 12px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-size: 12px;
+      }
+
+      .primary-button {
+        width: 100%;
+        padding: 0 16px;
+        color: #fff;
+        background: var(--accent);
+        font-size: 15px;
+        box-shadow: 0 8px 16px rgba(214, 95, 53, 0.25);
+      }
+
+      .primary-button:disabled,
+      .secondary-button:disabled {
+        cursor: default;
+        opacity: 0.55;
+      }
+
+      .ranking-list {
+        display: grid;
+        gap: 9px;
+        padding-bottom: 22px;
+      }
+
+      .rank-card {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 38px 64px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 16px;
+        text-align: left;
+        color: inherit;
+        transition: transform 0.12s ease, border-color 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+
+      .rank-card:active {
+        transform: scale(0.992);
+        border-color: #d6bba2;
+        box-shadow: var(--shadow);
+      }
+
+      .rank-number {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .dish-thumb,
+      .dish-thumb-placeholder {
+        width: 64px;
+        height: 64px;
+        overflow: hidden;
+        border-radius: 13px;
+        background: #f4eee7;
+        object-fit: cover;
+      }
+
+      .dish-thumb-placeholder {
+        display: grid;
+        place-items: center;
+        color: #9a8a78;
+        font-size: 22px;
+      }
+
+      .dish-main {
+        min-width: 0;
+      }
+
+      .dish-name {
+        display: -webkit-box;
+        overflow: hidden;
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-weight: 850;
+        line-height: 1.35;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .score-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .score-row b {
+        color: var(--ink);
+      }
+
+      .review-badge {
+        display: grid;
+        place-items: center;
+        min-width: 30px;
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #a79b8e;
+        background: #fff;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .review-badge.up {
+        color: var(--success);
+        border-color: #b8ddcc;
+        background: #f2fbf6;
+      }
+      .review-badge.keep {
+        color: #77591f;
+        border-color: #ead4a7;
+        background: #fffaed;
+      }
+      .review-badge.down {
+        color: var(--danger);
+        border-color: #edc7c7;
+        background: #fff5f5;
+      }
+
+      .empty-state {
+        padding: 34px 18px;
+        border-radius: var(--radius);
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        align-items: flex-end;
+        background: rgba(36, 29, 20, 0.42);
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-backdrop.is-open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(100%, 720px);
+        max-height: min(90dvh, 760px);
+        overflow-y: auto;
+        border-radius: 24px 24px 0 0;
+        background: var(--surface);
+        box-shadow: 0 -12px 42px rgba(30, 20, 10, 0.2);
+        animation: slide-up 0.18s ease-out;
+      }
+
+      @keyframes slide-up {
+        from {
+          transform: translateY(16px);
+          opacity: 0.65;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-inner {
+        padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
+      }
+
+      .modal-handle {
+        width: 42px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 999px;
+        background: #ded4c7;
+      }
+
+      .modal-header {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) 42px;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .modal-header .dish-thumb,
+      .modal-header .dish-thumb-placeholder {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+      }
+
+      .modal-title {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.35;
+      }
+
+      .modal-subtitle {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .icon-button {
+        width: 42px;
+        color: var(--muted);
+        background: #f5f0ea;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .section-title {
+        margin: 18px 0 9px;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .judgment-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .judgment-option {
+        min-height: 50px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--muted);
+        background: #fff;
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .judgment-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .judgment-option:has(input:checked) {
+        border-color: var(--accent);
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+      }
+
+      label[for="dish-note"],
+      label[for="condition-note"] {
+        display: block;
+        margin: 14px 0 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 84px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 11px 12px;
+        color: var(--ink);
+        background: #fffdfa;
+        line-height: 1.45;
+      }
+
+      textarea:focus {
+        outline: 3px solid rgba(214, 95, 53, 0.16);
+        border-color: var(--accent);
+      }
+
+      details {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        background: #fffdfa;
+      }
+
+      summary {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        padding: 0 13px;
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .details-body {
+        border-top: 1px solid var(--line);
+        padding: 12px 13px 14px;
+      }
+
+      .calc-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 9px 12px;
+        margin: 0;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .calc-grid dt {
+        color: var(--muted);
+      }
+      .calc-grid dd {
+        margin: 0;
+        font-weight: 850;
+        text-align: right;
+      }
+      .calc-note {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .profile-list {
+        display: grid;
+        gap: 8px;
+      }
+      .profile-row {
+        display: grid;
+        grid-template-columns: 78px 1fr 48px;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+      .profile-label {
+        color: var(--muted);
+      }
+      .bar-track {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #f0e7db;
+      }
+      .bar-value {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #f1ad68, var(--accent));
+      }
+      .profile-score {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+      }
+
+      .status-message {
+        min-height: 18px;
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .status-message.success {
+        color: var(--success);
+      }
+      .status-message.error {
+        color: var(--danger);
+      }
+
+      .condition-options {
+        display: grid;
+        gap: 8px;
+      }
+
+      .condition-options .judgment-option {
+        min-height: 48px;
+        justify-content: start;
+        padding: 0 13px;
+      }
+
+      .config-warning {
+        display: none;
+        margin: 0 0 12px;
+        border: 1px solid #f0c5a9;
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: #8c421d;
+        background: #fff5ed;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .config-warning.is-visible {
+        display: block;
+      }
+
+      @media (min-width: 640px) {
+        .modal-backdrop {
+          align-items: center;
+          padding: 22px;
+        }
+        .modal {
+          border-radius: 24px;
+        }
+        .app-shell {
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">DISH CATEGORY REVIEW</p>
+          <h1>料理カテゴリランキング</h1>
+        </div>
+        <div class="review-count" id="review-count">レビュー 0件</div>
+      </header>
+
+      <div class="config-warning" id="config-warning"></div>
+
+      <section class="control-card" aria-label="検索条件">
+        <p class="control-label">検索項目</p>
+        <div class="segmented" id="feature-type-controls"></div>
+
+        <p class="control-label">検索条件</p>
+        <div class="chips" id="feature-key-controls"></div>
+      </section>
+
+      <section class="ranking-header" aria-label="ランキングの操作">
+        <div class="ranking-title">
+          <h2 id="ranking-title">朝食の料理ランキング</h2>
+          <p class="ranking-subtitle" id="ranking-subtitle">
+            final_score の降順 / 同値同位
+          </p>
+        </div>
+        <button
+          class="secondary-button"
+          id="condition-feedback-open"
+          type="button"
+        >
+          条件全体をレビュー
+        </button>
+      </section>
+
+      <section
+        class="ranking-list"
+        id="ranking-list"
+        aria-live="polite"
+      ></section>
+    </main>
+
+    <!-- 料理単体レビュー用モーダル -->
+    <div class="modal-backdrop" id="dish-modal-backdrop" aria-hidden="true">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dish-modal-title"
+      >
+        <div class="modal-inner">
+          <div class="modal-handle" aria-hidden="true"></div>
+          <div class="modal-header">
+            <div id="dish-modal-image"></div>
+            <div>
+              <h2 class="modal-title" id="dish-modal-title"></h2>
+              <p class="modal-subtitle" id="dish-modal-summary"></p>
+            </div>
+            <button
+              class="icon-button"
+              id="dish-modal-close"
+              type="button"
+              aria-label="閉じる"
+            >
+              ×
+            </button>
+          </div>
+
+          <h3 class="section-title" id="dish-question">この料理の順位は？</h3>
+          <div class="judgment-options" id="dish-judgment-options">
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="dish-judgment"
+                value="up"
+              />上げる</label
+            >
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="dish-judgment"
+                value="keep"
+              />妥当</label
+            >
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="dish-judgment"
+                value="down"
+              />下げる</label
+            >
+          </div>
+
+          <label for="dish-note">備考（任意）</label>
+          <textarea
+            id="dish-note"
+            maxlength="2000"
+            placeholder="例：朝食の定番だが、ベーコンエッグとは同程度に感じる。"
+          ></textarea>
+
+          <p class="status-message" id="dish-status" role="status"></p>
+          <button class="primary-button" id="dish-save" type="button">
+            フィードバックを保存
+          </button>
+
+          <details open>
+            <summary>計算根拠</summary>
+            <div class="details-body" id="calculation-details"></div>
+          </details>
+
+          <details>
+            <summary id="profile-summary">この料理の条件別スコア</summary>
+            <div class="details-body" id="profile-details"></div>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <!-- 条件全体レビュー用モーダル -->
+    <div
+      class="modal-backdrop"
+      id="condition-modal-backdrop"
+      aria-hidden="true"
+    >
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="condition-modal-title"
+      >
+        <div class="modal-inner">
+          <div class="modal-handle" aria-hidden="true"></div>
+          <div class="modal-header">
+            <div class="dish-thumb-placeholder" aria-hidden="true">✦</div>
+            <div>
+              <h2 class="modal-title" id="condition-modal-title">
+                条件全体をレビュー
+              </h2>
+              <p class="modal-subtitle" id="condition-modal-summary"></p>
+            </div>
+            <button
+              class="icon-button"
+              id="condition-modal-close"
+              type="button"
+              aria-label="閉じる"
+            >
+              ×
+            </button>
+          </div>
+
+          <h3 class="section-title">このランキング全体について</h3>
+          <div class="condition-options" id="condition-judgment-options">
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="condition-judgment"
+                value="good"
+              />概ね妥当</label
+            >
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="condition-judgment"
+                value="reorder"
+              />上位の並びを見直したい</label
+            >
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="condition-judgment"
+                value="coverage"
+              />候補の漏れ・混入がある</label
+            >
+            <label class="judgment-option"
+              ><input
+                type="radio"
+                name="condition-judgment"
+                value="other"
+              />その他</label
+            >
+          </div>
+
+          <label for="condition-note">備考（任意）</label>
+          <textarea
+            id="condition-note"
+            maxlength="2000"
+            placeholder="例：和朝食系の候補が少ない。"
+          ></textarea>
+
+          <p class="status-message" id="condition-status" role="status"></p>
+          <button class="primary-button" id="condition-save" type="button">
+            フィードバックを保存
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      "use strict";
+
+      /**
+       * GASのWebアプリURL。
+       * 指定済みの /exec URL をそのまま利用する。
+       */
+      const API_ENDPOINT =
+        "https://script.google.com/macros/s/AKfycbzBYglz4WfS5vtc7zQ8_Oc-E_AFUdQHWRgN3NwfvINnlXlGyvzTSwesRHdrM3ZK0Ycv/exec";
+
+      /**
+       * GAS側のスクリプトプロパティ RANKING_REVIEW_API_SECRET と同じ値を入れる。
+       * このHTMLを限定利用する前提で、ブラウザへ埋め込む方式にしている。
+       */
+      const API_SECRET = "018c21b1-6a31-48a4-a583-3a7277e6a2a4";
+
+      /**
+       * レビュアーを区別したい場合だけ変更する。
+       * 空文字でもGAS側は受け付ける。
+       */
+      const REVIEWER_ID = "";
+
+      /**
+       * SQLで利用しているリモートコンフィグ値。
+       * この画面は「検索項目を一つ・検索条件を一つ」だけ選ぶため、
+       * rel_score は選択中の単一feature scoreと同じになる。
+       */
+      const WEIGHTS = Object.freeze({
+        timeSlot: 1,
+        scene: 1,
+        satiety: 2,
+        taste: 8,
+        marketSalience: 0.4,
+        dineOutOrderability: 0.9,
+        jitterRatio: 0,
+      });
+
+      /**
+       * SQLの region_fallback_keys と同じ順序で評価するキー。
+       * ユーザー要件に合わせ、global を含める。
+       */
+      const REGION_FALLBACK_KEYS = Object.freeze([
+        "region:country:JP",
+        "region:scope:global",
+        "global",
+      ]);
+
+      /**
+       * スコアを同値として扱う丸め桁。
+       * 例: 0.9980001 と 0.9980004 は小数第6位までで同値扱いにする。
+       */
+      const RANK_DECIMAL_PLACES = 6;
+
+      /**
+       * UIの軸・条件・表示名。
+       * afternoon は明示的に表示対象から外している。
+       */
+      const FEATURE_DEFINITIONS = Object.freeze({
+        timeSlot: {
+          label: "時間帯",
+          keys: [
+            ["morning", "朝食"],
+            ["lunch", "ランチ"],
+            ["dinner", "夜ごはん"],
+            ["late_night", "夜食"],
+          ],
+        },
+        scene: {
+          label: "誰と",
+          keys: [
+            ["solo", "おひとり様"],
+            ["date", "デート"],
+            ["friends", "友達と"],
+            ["family", "家族と"],
+            ["drinking", "飲み会・宴会"],
+          ],
+        },
+        satiety: {
+          label: "空腹具合",
+          keys: [
+            ["light", "軽め"],
+            ["normal", "普通"],
+            ["heavy", "ガッツリ"],
+          ],
+        },
+        taste: {
+          label: "味の好み",
+          keys: [
+            ["sweet", "甘いもの"],
+            ["spicy", "辛いもの"],
+            ["junk", "ジャンク"],
+            ["healthy", "ヘルシー"],
+            ["alcohol", "お酒メイン"],
+          ],
+        },
+      });
+
+      const FEATURE_ROWS_URL =
+        "https://storage.googleapis.com/nanitabeyo-public/tickets/853/dish_category_features_20260621.json";
+      const RANKING_RESULT_LIMIT = 100;
+
+      /**
+       * FEATURE_ROWS_URLから取得したJSONを保持する。
+       *
+       * 注意:
+       * market_salience / dine_out_orderability が存在しないカテゴリは、
+       * SQLの COALESCE(..., 0) と同じく0として計算する。
+       */
+      let FEATURE_ROWS = [];
+
+      /**
+       * 画面全体の状態。
+       */
+      const state = {
+        featureType: "timeSlot",
+        featureKey: "morning",
+        selectedCandidate: null,
+        rowsByCategory: new Map(),
+        categories: new Map(),
+        currentCandidates: [],
+      };
+
+      /**
+       * DOM参照をまとめる。
+       */
+      const els = {
+        featureTypeControls: document.querySelector("#feature-type-controls"),
+        featureKeyControls: document.querySelector("#feature-key-controls"),
+        rankingTitle: document.querySelector("#ranking-title"),
+        rankingSubtitle: document.querySelector("#ranking-subtitle"),
+        rankingList: document.querySelector("#ranking-list"),
+        reviewCount: document.querySelector("#review-count"),
+        configWarning: document.querySelector("#config-warning"),
+        conditionFeedbackOpen: document.querySelector(
+          "#condition-feedback-open"
+        ),
+
+        dishModalBackdrop: document.querySelector("#dish-modal-backdrop"),
+        dishModalImage: document.querySelector("#dish-modal-image"),
+        dishModalTitle: document.querySelector("#dish-modal-title"),
+        dishModalSummary: document.querySelector("#dish-modal-summary"),
+        dishQuestion: document.querySelector("#dish-question"),
+        dishModalClose: document.querySelector("#dish-modal-close"),
+        dishNote: document.querySelector("#dish-note"),
+        dishSave: document.querySelector("#dish-save"),
+        dishStatus: document.querySelector("#dish-status"),
+        calculationDetails: document.querySelector("#calculation-details"),
+        profileSummary: document.querySelector("#profile-summary"),
+        profileDetails: document.querySelector("#profile-details"),
+
+        conditionModalBackdrop: document.querySelector(
+          "#condition-modal-backdrop"
+        ),
+        conditionModalSummary: document.querySelector(
+          "#condition-modal-summary"
+        ),
+        conditionModalClose: document.querySelector("#condition-modal-close"),
+        conditionNote: document.querySelector("#condition-note"),
+        conditionSave: document.querySelector("#condition-save"),
+        conditionStatus: document.querySelector("#condition-status"),
+      };
+
+      /**
+       * 初期化。
+       */
+      async function initialize() {
+        wireEvents();
+        renderConfigWarning();
+        renderLoadingState();
+
+        try {
+          FEATURE_ROWS = await fetchFeatureRows();
+          indexFeatureRows();
+          renderFeatureTypeControls();
+          renderFeatureKeyControls();
+          renderRanking();
+        } catch (error) {
+          console.error(error);
+          renderFeatureLoadError();
+        }
+      }
+
+      /**
+       * 外部JSONからfeature行を取得する。
+       */
+      async function fetchFeatureRows() {
+        const response = await fetch(FEATURE_ROWS_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`FEATURE_ROWSの取得に失敗しました: ${response.status}`);
+        }
+
+        const rows = await response.json();
+        if (!Array.isArray(rows)) {
+          throw new Error("FEATURE_ROWSのJSON形式が配列ではありません。");
+        }
+
+        return rows;
+      }
+
+      function renderLoadingState() {
+        els.rankingList.replaceChildren();
+        const loading = document.createElement("div");
+        loading.className = "empty-state";
+        loading.textContent = "ランキングデータを読み込んでいます。";
+        els.rankingList.append(loading);
+      }
+
+      function renderFeatureLoadError() {
+        els.rankingList.replaceChildren();
+        const error = document.createElement("div");
+        error.className = "empty-state";
+        error.textContent =
+          "ランキングデータを取得できませんでした。時間をおいて再読み込みしてください。";
+        els.rankingList.append(error);
+      }
+
+      /**
+       * category_id単位でデータを索引化する。
+       * 計算・モーダル表示のたびに元配列を総走査しないための準備。
+       */
+      function indexFeatureRows() {
+        for (const row of FEATURE_ROWS) {
+          const categoryId = row.dish_category_id;
+
+          if (!state.rowsByCategory.has(categoryId)) {
+            state.rowsByCategory.set(categoryId, []);
+          }
+          state.rowsByCategory.get(categoryId).push(row);
+
+          if (!state.categories.has(categoryId)) {
+            state.categories.set(categoryId, {
+              id: categoryId,
+              name: row["料理名"] || categoryId,
+              imageUrl: row.image_url || "",
+            });
+          }
+        }
+      }
+
+      /**
+       * 検索項目（時間帯・誰と・空腹具合・味の好み）のボタンを描画する。
+       */
+      function renderFeatureTypeControls() {
+        els.featureTypeControls.replaceChildren();
+
+        for (const [featureType, definition] of Object.entries(
+          FEATURE_DEFINITIONS
+        )) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "segment";
+          button.textContent = definition.label;
+          button.dataset.featureType = featureType;
+          button.setAttribute(
+            "aria-pressed",
+            String(featureType === state.featureType)
+          );
+
+          button.addEventListener("click", () => {
+            state.featureType = featureType;
+            state.featureKey = FEATURE_DEFINITIONS[featureType].keys[0][0];
+            renderFeatureTypeControls();
+            renderFeatureKeyControls();
+            renderRanking();
+          });
+
+          els.featureTypeControls.append(button);
+        }
+      }
+
+      /**
+       * 選択中の検索項目に対応する検索条件ボタンを描画する。
+       */
+      function renderFeatureKeyControls() {
+        els.featureKeyControls.replaceChildren();
+
+        for (const [featureKey, label] of FEATURE_DEFINITIONS[state.featureType]
+          .keys) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "chip";
+          button.textContent = label;
+          button.dataset.featureKey = featureKey;
+          button.setAttribute(
+            "aria-pressed",
+            String(featureKey === state.featureKey)
+          );
+
+          button.addEventListener("click", () => {
+            state.featureKey = featureKey;
+            renderFeatureKeyControls();
+            renderRanking();
+          });
+
+          els.featureKeyControls.append(button);
+        }
+      }
+
+      /**
+       * SQLの「単一条件時の rel_score」とmarket/orderability補正を再現して、
+       * final_score の降順で候補を作成する。
+       */
+      function calculateCandidates() {
+        const candidates = [];
+
+        for (const [categoryId, category] of state.categories.entries()) {
+          const rows = state.rowsByCategory.get(categoryId) || [];
+          const conditionRow = findFeatureRow(
+            rows,
+            state.featureType,
+            state.featureKey
+          );
+          const conditionScore = Number(conditionRow?.score || 0);
+
+          // 単一条件レビューでは rel_score = 選択条件のスコア。
+          const relScore = conditionScore;
+
+          const market = resolveRegionFeature(rows, "market_salience");
+          const dineOut = resolveRegionFeature(rows, "dine_out_orderability");
+
+          const marketMultiplier =
+            1 - WEIGHTS.marketSalience + WEIGHTS.marketSalience * market.score;
+          const dineOutMultiplier =
+            1 -
+            WEIGHTS.dineOutOrderability +
+            WEIGHTS.dineOutOrderability * dineOut.score;
+
+          const finalScore = relScore * marketMultiplier * dineOutMultiplier;
+
+          // SQLの final_score > 0 と同じ条件で絞り込む。
+          if (finalScore <= 0) continue;
+
+          candidates.push({
+            categoryId,
+            name: category.name,
+            imageUrl: category.imageUrl,
+            conditionScore,
+            relScore,
+            market,
+            dineOut,
+            marketMultiplier,
+            dineOutMultiplier,
+            finalScore,
+            rank: 0,
+          });
+        }
+
+        candidates.sort((a, b) => {
+          if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+          return a.name.localeCompare(b.name, "ja");
+        });
+
+        // 同値同位（例: 1位, 1位, 3位）を付ける。
+        let previousRankKey = null;
+        let currentRank = 0;
+
+        candidates.forEach((candidate, index) => {
+          const rankKey = roundForRank(candidate.finalScore);
+          if (rankKey !== previousRankKey) {
+            currentRank = index + 1;
+            previousRankKey = rankKey;
+          }
+          candidate.rank = currentRank;
+        });
+
+        return candidates.slice(0, RANKING_RESULT_LIMIT);
+      }
+
+      /**
+       * 最終順位リストを描画する。
+       */
+      function renderRanking() {
+        const featureLabel = FEATURE_DEFINITIONS[state.featureType].label;
+        const keyLabel = labelForFeatureKey(
+          state.featureType,
+          state.featureKey
+        );
+        const candidates = calculateCandidates();
+        state.currentCandidates = candidates;
+
+        els.rankingTitle.textContent = `${keyLabel}の料理ランキング`;
+        els.rankingSubtitle.textContent = `${featureLabel}の score と final_score / 同値同位 / 上位${RANKING_RESULT_LIMIT}件`;
+        els.rankingList.replaceChildren();
+
+        if (candidates.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent =
+            "この条件で final_score が0より大きい料理がありません。";
+          els.rankingList.append(empty);
+          renderReviewCount();
+          return;
+        }
+
+        for (const candidate of candidates) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "rank-card";
+          button.setAttribute(
+            "aria-label",
+            `${candidate.rank}位 ${candidate.name} の詳細を開く`
+          );
+
+          const rank = document.createElement("div");
+          rank.className = "rank-number";
+          rank.textContent = String(candidate.rank);
+
+          const image = createDishImage(candidate.imageUrl, candidate.name);
+
+          const main = document.createElement("div");
+          main.className = "dish-main";
+
+          const name = document.createElement("p");
+          name.className = "dish-name";
+          name.textContent = candidate.name;
+
+          const scores = document.createElement("div");
+          scores.className = "score-row";
+          scores.innerHTML = `score <b>${formatScore(
+            candidate.conditionScore
+          )}</b> <span>final_score <b>${formatScore(
+            candidate.finalScore
+          )}</b></span>`;
+
+          main.append(name, scores);
+
+          const badge = document.createElement("div");
+          const feedback = getDishFeedback(candidate.categoryId);
+          badge.className = `review-badge${
+            feedback ? ` ${feedback.judgment}` : ""
+          }`;
+          badge.title = feedback
+            ? `レビュー済み: ${dishJudgmentLabel(feedback.judgment)}`
+            : "未レビュー";
+          badge.textContent = feedback
+            ? dishJudgmentIcon(feedback.judgment)
+            : "·";
+
+          button.append(rank, image, main, badge);
+          button.addEventListener("click", () => openDishModal(candidate));
+          els.rankingList.append(button);
+        }
+
+        renderReviewCount();
+      }
+
+      /**
+       * 同一カテゴリのfeature行から、指定の feature_type / feature_key を取得する。
+       */
+      function findFeatureRow(rows, featureType, featureKey) {
+        return rows.find(
+          (row) =>
+            row.feature_type === featureType && row.feature_key === featureKey
+        );
+      }
+
+      /**
+       * SQLの LATERAL + region_fallback_keys を再現する。
+       * fallback key の先頭から検索し、最初に見つかった feature score を使う。
+       * 見つからない場合は SQLの COALESCE(..., 0) と同じく0を返す。
+       */
+      function resolveRegionFeature(rows, featureType) {
+        for (const key of REGION_FALLBACK_KEYS) {
+          const row = findFeatureRow(rows, featureType, key);
+          if (row) {
+            return {
+              score: Number(row.score || 0),
+              resolvedKey: key,
+              found: true,
+            };
+          }
+        }
+
+        return {
+          score: 0,
+          resolvedKey: null,
+          found: false,
+        };
+      }
+
+      /**
+       * 料理詳細モーダルを開く。
+       */
+      function openDishModal(candidate) {
+        state.selectedCandidate = candidate;
+
+        const existingFeedback = getDishFeedback(candidate.categoryId);
+        els.dishModalImage.replaceChildren(
+          createDishImage(candidate.imageUrl, candidate.name)
+        );
+        els.dishModalTitle.textContent = candidate.name;
+        els.dishModalSummary.textContent = `${labelForFeatureKey(
+          state.featureType,
+          state.featureKey
+        )}：${candidate.rank}位  /  score ${formatScore(
+          candidate.conditionScore
+        )}  /  final_score ${formatScore(candidate.finalScore)}`;
+        els.dishQuestion.textContent = `${labelForFeatureKey(
+          state.featureType,
+          state.featureKey
+        )}のランキングで、この料理の位置は？`;
+        els.dishNote.value = existingFeedback?.note || "";
+        setCheckedRadio("dish-judgment", existingFeedback?.judgment || "");
+        setStatus(els.dishStatus, "");
+
+        renderCalculationDetails(candidate);
+        renderProfileDetails(candidate);
+        showModal(els.dishModalBackdrop);
+      }
+
+      /**
+       * 料理モーダル内の計算根拠を描画する。
+       */
+      function renderCalculationDetails(candidate) {
+        const marketKey = candidate.market.found
+          ? candidate.market.resolvedKey
+          : "未取得（0扱い）";
+        const dineOutKey = candidate.dineOut.found
+          ? candidate.dineOut.resolvedKey
+          : "未取得（0扱い）";
+
+        els.calculationDetails.innerHTML = `
+        <dl class="calc-grid">
+          <dt>条件スコア（${escapeHtml(
+            labelForFeatureKey(state.featureType, state.featureKey)
+          )}）</dt>
+          <dd>${formatScore(candidate.conditionScore)}</dd>
+
+          <dt>定番度の使用キー</dt>
+          <dd>${escapeHtml(marketKey)}</dd>
+          <dt>定番度 score → 倍率</dt>
+          <dd>${formatScore(candidate.market.score)} → ${formatScore(
+          candidate.marketMultiplier
+        )}</dd>
+
+          <dt>外食適性の使用キー</dt>
+          <dd>${escapeHtml(dineOutKey)}</dd>
+          <dt>外食適性 score → 倍率</dt>
+          <dd>${formatScore(candidate.dineOut.score)} → ${formatScore(
+          candidate.dineOutMultiplier
+        )}</dd>
+
+          <dt>final_score</dt>
+          <dd>${formatScore(candidate.conditionScore)} × ${formatScore(
+          candidate.marketMultiplier
+        )} × ${formatScore(candidate.dineOutMultiplier)} = ${formatScore(
+          candidate.finalScore
+        )}</dd>
+        </dl>
+        <p class="calc-note">
+          定番度倍率 = 1 - ${WEIGHTS.marketSalience} + ${
+          WEIGHTS.marketSalience
+        } × 定番度score。<br />
+          外食適性倍率 = 1 - ${WEIGHTS.dineOutOrderability} + ${
+          WEIGHTS.dineOutOrderability
+        } × 外食適性score。
+        </p>
+      `;
+      }
+
+      /**
+       * 料理モーダル内に、選択中の軸だけの条件別スコアを表示する。
+       * afternoon はFEATURE_DEFINITIONSに無いため、ここには表示されない。
+       */
+      function renderProfileDetails(candidate) {
+        const definition = FEATURE_DEFINITIONS[state.featureType];
+        const rows = state.rowsByCategory.get(candidate.categoryId) || [];
+        els.profileSummary.textContent = `この料理の${definition.label}スコア`;
+        els.profileDetails.replaceChildren();
+
+        const list = document.createElement("div");
+        list.className = "profile-list";
+
+        for (const [featureKey, label] of definition.keys) {
+          const score = Number(
+            findFeatureRow(rows, state.featureType, featureKey)?.score || 0
+          );
+          const row = document.createElement("div");
+          row.className = "profile-row";
+
+          const labelEl = document.createElement("div");
+          labelEl.className = "profile-label";
+          labelEl.textContent = label;
+
+          const track = document.createElement("div");
+          track.className = "bar-track";
+          const value = document.createElement("div");
+          value.className = "bar-value";
+          value.style.width = `${Math.max(0, Math.min(score, 1)) * 100}%`;
+          track.append(value);
+
+          const scoreEl = document.createElement("div");
+          scoreEl.className = "profile-score";
+          scoreEl.textContent = formatScore(score);
+
+          row.append(labelEl, track, scoreEl);
+          list.append(row);
+        }
+
+        els.profileDetails.append(list);
+      }
+
+      /**
+       * 料理レビューをGASへ送信し、端末にも最新値を保持する。
+       */
+      async function saveDishFeedback() {
+        const candidate = state.selectedCandidate;
+        if (!candidate) return;
+
+        const judgment = selectedRadioValue("dish-judgment");
+        if (!judgment) {
+          setStatus(
+            els.dishStatus,
+            "「上げる / 妥当 / 下げる」を選択してください。",
+            "error"
+          );
+          return;
+        }
+
+        const payload = {
+          feedbackType: "dish",
+          featureType: state.featureType,
+          featureKey: state.featureKey,
+          dishCategoryId: candidate.categoryId,
+          dishName: candidate.name,
+          rank: candidate.rank,
+          score: candidate.conditionScore,
+          finalScore: candidate.finalScore,
+          judgment,
+          note: els.dishNote.value.trim(),
+          reviewerId: REVIEWER_ID,
+          requestId: createRequestId(),
+          clientSubmittedAt: new Date().toISOString(),
+          weights: { ...WEIGHTS },
+          calculationBreakdown: {
+            conditionScore: candidate.conditionScore,
+            relScore: candidate.relScore,
+            marketSalience: {
+              score: candidate.market.score,
+              resolvedKey: candidate.market.resolvedKey,
+              found: candidate.market.found,
+              multiplier: candidate.marketMultiplier,
+            },
+            dineOutOrderability: {
+              score: candidate.dineOut.score,
+              resolvedKey: candidate.dineOut.resolvedKey,
+              found: candidate.dineOut.found,
+              multiplier: candidate.dineOutMultiplier,
+            },
+            finalScore: candidate.finalScore,
+            jitterRatio: 0,
+          },
+        };
+
+        await submitFeedback({
+          payload,
+          button: els.dishSave,
+          statusEl: els.dishStatus,
+          onSuccess: () => {
+            setDishFeedback(candidate.categoryId, {
+              judgment,
+              note: payload.note,
+              savedAt: new Date().toISOString(),
+            });
+            renderRanking();
+          },
+        });
+      }
+
+      /**
+       * 条件全体フィードバックのモーダルを開く。
+       */
+      function openConditionModal() {
+        const existingFeedback = getConditionFeedback();
+        const label = labelForFeatureKey(state.featureType, state.featureKey);
+
+        els.conditionModalSummary.textContent = `${label}の料理ランキング`;
+        els.conditionNote.value = existingFeedback?.note || "";
+        setCheckedRadio("condition-judgment", existingFeedback?.judgment || "");
+        setStatus(els.conditionStatus, "");
+        showModal(els.conditionModalBackdrop);
+      }
+
+      /**
+       * 条件全体レビューをGASへ送信する。
+       */
+      async function saveConditionFeedback() {
+        const judgment = selectedRadioValue("condition-judgment");
+        if (!judgment) {
+          setStatus(
+            els.conditionStatus,
+            "ランキング全体についての判定を選択してください。",
+            "error"
+          );
+          return;
+        }
+
+        const payload = {
+          feedbackType: "condition",
+          featureType: state.featureType,
+          featureKey: state.featureKey,
+          judgment,
+          note: els.conditionNote.value.trim(),
+          reviewerId: REVIEWER_ID,
+          requestId: createRequestId(),
+          clientSubmittedAt: new Date().toISOString(),
+          weights: { ...WEIGHTS },
+          calculationBreakdown: {
+            candidateCount: state.currentCandidates.length,
+            jitterRatio: 0,
+          },
+        };
+
+        await submitFeedback({
+          payload,
+          button: els.conditionSave,
+          statusEl: els.conditionStatus,
+          onSuccess: () => {
+            setConditionFeedback({
+              judgment,
+              note: payload.note,
+              savedAt: new Date().toISOString(),
+            });
+            renderReviewCount();
+          },
+        });
+      }
+
+      /**
+       * GASへのPOST送信共通処理。
+       *
+       * GAS Webアプリは環境によってCORS応答ヘッダーを返さないため、
+       * text/plain + no-cors の「単純リクエスト」として送る。
+       * この場合、ブラウザ側ではレスポンス本文を読めないが、GAS側では
+       * e.postData.contents からJSON本文を受け取れる。
+       */
+      async function submitFeedback({ payload, button, statusEl, onSuccess }) {
+        if (
+          API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
+          !API_SECRET.trim()
+        ) {
+          setStatus(
+            statusEl,
+            "HTML上部の API_SECRET を、GASのスクリプトプロパティ値へ置き換えてください。",
+            "error"
+          );
+          return;
+        }
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = "保存中…";
+        setStatus(statusEl, "送信しています…");
+
+        try {
+          await fetch(API_ENDPOINT, {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-store",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({
+              apiSecret: API_SECRET,
+              ...payload,
+            }),
+          });
+
+          onSuccess();
+          setStatus(
+            statusEl,
+            "送信しました。スプレッドシートへ追記されます。",
+            "success"
+          );
+        } catch (error) {
+          console.error(error);
+          setStatus(
+            statusEl,
+            "送信に失敗しました。通信状態とGASのデプロイ設定を確認してください。",
+            "error"
+          );
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
+
+      /**
+       * 画面イベントを設定する。
+       */
+      function wireEvents() {
+        els.dishModalClose.addEventListener("click", () =>
+          hideModal(els.dishModalBackdrop)
+        );
+        els.conditionModalClose.addEventListener("click", () =>
+          hideModal(els.conditionModalBackdrop)
+        );
+        els.conditionFeedbackOpen.addEventListener("click", openConditionModal);
+        els.dishSave.addEventListener("click", saveDishFeedback);
+        els.conditionSave.addEventListener("click", saveConditionFeedback);
+
+        // 背景タップ時はモーダルを閉じる。
+        for (const backdrop of [
+          els.dishModalBackdrop,
+          els.conditionModalBackdrop,
+        ]) {
+          backdrop.addEventListener("click", (event) => {
+            if (event.target === backdrop) hideModal(backdrop);
+          });
+        }
+
+        // Escapeキーでも閉じられるようにする。
+        document.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape") return;
+          hideModal(els.dishModalBackdrop);
+          hideModal(els.conditionModalBackdrop);
+        });
+      }
+
+      /**
+       * モーダルを表示する。
+       */
+      function showModal(backdrop) {
+        backdrop.classList.add("is-open");
+        backdrop.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+
+      /**
+       * モーダルを閉じる。
+       */
+      function hideModal(backdrop) {
+        if (!backdrop.classList.contains("is-open")) return;
+        backdrop.classList.remove("is-open");
+        backdrop.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      /**
+       * 料理画像または画像未取得時のプレースホルダーを生成する。
+       */
+      function createDishImage(imageUrl, dishName) {
+        if (!imageUrl) {
+          const placeholder = document.createElement("div");
+          placeholder.className = "dish-thumb-placeholder";
+          placeholder.textContent = "🍽";
+          return placeholder;
+        }
+
+        const image = document.createElement("img");
+        image.className = "dish-thumb";
+        image.src = imageUrl;
+        image.alt = dishName;
+        image.loading = "lazy";
+        image.addEventListener(
+          "error",
+          () => {
+            const placeholder = document.createElement("div");
+            placeholder.className = "dish-thumb-placeholder";
+            placeholder.textContent = "🍽";
+            image.replaceWith(placeholder);
+          },
+          { once: true }
+        );
+        return image;
+      }
+
+      /**
+       * ローカルストレージのキーを作る。
+       * サーバーの既存レビュー取得は扱わず、この端末で付けた最新状態だけを表示する。
+       */
+      function storageKey(scope, ...parts) {
+        return [
+          "dish-ranking-review",
+          scope,
+          state.featureType,
+          state.featureKey,
+          ...parts,
+        ].join(":");
+      }
+
+      function getDishFeedback(categoryId) {
+        return readStorageJson(storageKey("dish", categoryId));
+      }
+
+      function setDishFeedback(categoryId, feedback) {
+        writeStorageJson(storageKey("dish", categoryId), feedback);
+      }
+
+      function getConditionFeedback() {
+        return readStorageJson(storageKey("condition"));
+      }
+
+      function setConditionFeedback(feedback) {
+        writeStorageJson(storageKey("condition"), feedback);
+      }
+
+      function readStorageJson(key) {
+        try {
+          const value = localStorage.getItem(key);
+          return value ? JSON.parse(value) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function writeStorageJson(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          console.warn("ローカル保存に失敗しました。", error);
+        }
+      }
+
+      /**
+       * 現在の条件で端末に保存済みの料理レビュー数を表示する。
+       */
+      function renderReviewCount() {
+        const reviewed = state.currentCandidates.filter((candidate) =>
+          getDishFeedback(candidate.categoryId)
+        ).length;
+        const conditionFeedback = getConditionFeedback() ? 1 : 0;
+        els.reviewCount.textContent = `レビュー ${
+          reviewed + conditionFeedback
+        }件`;
+      }
+
+      /**
+       * API秘密鍵が未設定の場合だけ、画面上へ設定箇所を案内する。
+       */
+      function renderConfigWarning() {
+        if (
+          API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
+          !API_SECRET.trim()
+        ) {
+          els.configWarning.classList.add("is-visible");
+          els.configWarning.textContent =
+            "送信を有効にするには、HTML上部の API_SECRET をGASの RANKING_REVIEW_API_SECRET と同じ値に置き換えてください。";
+        }
+      }
+
+      function labelForFeatureKey(featureType, featureKey) {
+        return (
+          FEATURE_DEFINITIONS[featureType].keys.find(
+            ([key]) => key === featureKey
+          )?.[1] || featureKey
+        );
+      }
+
+      function selectedRadioValue(name) {
+        return (
+          document.querySelector(`input[name="${name}"]:checked`)?.value || ""
+        );
+      }
+
+      function setCheckedRadio(name, value) {
+        const radio = document.querySelector(
+          `input[name="${name}"][value="${value}"]`
+        );
+        if (radio) radio.checked = true;
+        if (!radio) {
+          document
+            .querySelectorAll(`input[name="${name}"]`)
+            .forEach((input) => {
+              input.checked = false;
+            });
+        }
+      }
+
+      function setStatus(element, message, type = "") {
+        element.textContent = message;
+        element.className = `status-message${type ? ` ${type}` : ""}`;
+      }
+
+      function formatScore(value) {
+        return Number(value || 0).toFixed(4);
+      }
+
+      function roundForRank(value) {
+        return Number(Number(value).toFixed(RANK_DECIMAL_PLACES));
+      }
+
+      function createRequestId() {
+        if (
+          typeof crypto !== "undefined" &&
+          typeof crypto.randomUUID === "function"
+        ) {
+          return crypto.randomUUID();
+        }
+
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function dishJudgmentIcon(judgment) {
+        return { up: "↑", keep: "＝", down: "↓" }[judgment] || "·";
+      }
+
+      function dishJudgmentLabel(judgment) {
+        return (
+          { up: "上げる", keep: "妥当", down: "下げる" }[judgment] ||
+          "未レビュー"
+        );
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
