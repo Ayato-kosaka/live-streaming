@@ -13,6 +13,7 @@ import {commentOnLive} from "./commentOnLive";
 import {doneruAmount} from "./doneruAmount";
 import {doneruToken} from "./doneruToken";
 import {doneruYoutubeRefresh} from "./doneruYoutubeRefresh";
+import {nanitabeyoWeeklyReportProxy} from "./nanitabeyoWeeklyReportProxy";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -31,3 +32,4 @@ export const commentIfLive = onSchedule(
 export {doneruAmount};
 export {doneruToken};
 export {doneruYoutubeRefresh};
+export {nanitabeyoWeeklyReportProxy};

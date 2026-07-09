@@ -8,6 +8,14 @@
     ],
     "rewrites": [
       {
+        "source": "/nanitabeyo-weekly-report-proxy",
+        "function": "nanitabeyoWeeklyReportProxy"
+      },
+      {
+        "source": "/nanitabeyo-weekly-report-proxy/**",
+        "function": "nanitabeyoWeeklyReportProxy"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
