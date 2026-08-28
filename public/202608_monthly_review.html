@@ -589,6 +589,8 @@
         font-weight: 950;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation; /* ダブルタップズーム由来の余計な発火を防ぐ */
+        user-select: none;
       }
       #ctrl-ui button:active { transform: scale(0.97); }
       #ctrl-ui .c-back {
@@ -1490,14 +1492,19 @@
       }
 
       /* ======================== 入力 ======================== */
-      window.addEventListener("pointerdown", (ev) => {
-        if (ev.button === 2) return;
-        advance();
-      });
-      window.addEventListener("contextmenu", (ev) => {
-        ev.preventDefault();
-        back();
-      });
+      // 注意: ctrl モードではグローバル入力を登録しない。
+      // (登録するとボタンの click と pointerdown が二重発火し、1タップで2つ以上進むバグになる)
+      const IS_CTRL = new URLSearchParams(location.search).get("role") === "ctrl";
+      if (!IS_CTRL) {
+        window.addEventListener("pointerdown", (ev) => {
+          if (ev.button === 2) return;
+          advance();
+        });
+        window.addEventListener("contextmenu", (ev) => {
+          ev.preventDefault();
+          back();
+        });
+      }
       window.addEventListener("keydown", (ev) => {
         const k = ev.key;
         if (k === "Enter" || k === " " || k === "ArrowRight" || k === "ArrowDown") {
@@ -1549,11 +1556,14 @@
       let publishFn = null; // ctrl時のみセット
       let applyingRemote = false;
       let lastConfetti = 0;
+      let lastSeenTs = 0; // これより古いスナップショットは無視(連打時の巻き戻り防止)
 
       function onStateChanged() {
         updateCtrlLabels();
         if (publishFn && !applyingRemote) {
-          publishFn({ scene: sceneIdx, step: stepIdx, ts: Date.now(), confetti: lastConfetti }).catch(() => setCtrlStatus(false, "送信失敗"));
+          const ts = Date.now();
+          lastSeenTs = Math.max(lastSeenTs, ts);
+          publishFn({ scene: sceneIdx, step: stepIdx, ts, confetti: lastConfetti }).catch(() => setCtrlStatus(false, "送信失敗"));
         }
       }
 
@@ -1566,7 +1576,10 @@
         const ref = fsm.doc(db, SYNC_COLLECTION, SYNC_DOC);
         fsm.onSnapshot(
           ref,
-          (snap) => { if (snap.exists()) onRemote(snap.data()); setCtrlStatus(true); },
+          (snap) => {
+            if (snap.exists()) onRemote(snap.data(), snap.metadata.hasPendingWrites);
+            setCtrlStatus(true);
+          },
           () => setCtrlStatus(false, "接続エラー")
         );
         return (data) => fsm.setDoc(ref, data);
@@ -1623,7 +1636,13 @@
 
       if (ROLE === "ctrl") {
         initCtrlUi();
-        initSync((data) => {
+        initSync((data, isLocalEcho) => {
+          // 自分の書き込みエコーと古いスナップショットは無視(多重進行・巻き戻り防止)
+          if (isLocalEcho) return;
+          if (typeof data.ts === "number") {
+            if (data.ts <= lastSeenTs) return;
+            lastSeenTs = data.ts;
+          }
           // 他の操作元(PC等)の状態も反映してコントローラ表示を同期
           if (data.scene === sceneIdx && data.step === stepIdx) return;
           applyingRemote = true;
@@ -1643,6 +1662,11 @@
       } else if (ROLE === "view") {
         hint.classList.add("gone");
         initSync((data) => {
+          // 古いスナップショットは無視(順序入れ替わりによる巻き戻り防止)
+          if (typeof data.ts === "number") {
+            if (data.ts <= lastSeenTs) return;
+            lastSeenTs = data.ts;
+          }
           if (typeof data.confetti === "number" && data.confetti > lastConfetti) {
             if (lastConfetti !== 0) spawnConfetti(140);
             lastConfetti = data.confetti;
