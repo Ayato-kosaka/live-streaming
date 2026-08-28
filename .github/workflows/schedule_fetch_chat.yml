@@ -54,6 +54,8 @@ jobs:
             echo "ERROR: EXPO_PUBLIC_DONERU_WSS_URL から key=... を抽出できませんでした" >&2
             exit 1
           fi
+          # ログに平文で出力されないようマスクする
+          echo "::add-mask::$key"
           echo "DONERU_ALERTBOX_KEY=$key" >> "$GITHUB_ENV"
 
       - name: Discovery 実行

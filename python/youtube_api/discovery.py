@@ -122,7 +122,7 @@ def _get_uploads_playlist_id(
     Raises:
         HttpError: YouTube API エラー
     """
-    youtube = get_youtube_client()
+    youtube = get_youtube_client(logger)
     
     request = youtube.channels().list(
         part="contentDetails",
@@ -173,7 +173,7 @@ def _fetch_playlist_items(
     Returns:
         video_id のリスト
     """
-    youtube = get_youtube_client()
+    youtube = get_youtube_client(logger)
     
     # publishedAfter: 現在時刻 - lookback_days
     cutoff = datetime.utcnow() - timedelta(days=lookback_days)
@@ -300,7 +300,7 @@ def _fetch_video_details(
     Returns:
         DiscoveredVideo のリスト（live アーカイブのみ）
     """
-    youtube = get_youtube_client()
+    youtube = get_youtube_client(logger)
     discovered_videos = []
     
     # 50件ずつ分割（YouTube API の id パラメータは最大50件）
