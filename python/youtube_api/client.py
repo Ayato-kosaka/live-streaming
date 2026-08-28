@@ -47,10 +47,14 @@ class BearerTokenCredentials(google.auth.credentials.Credentials):
         """
         トークンをリフレッシュ
         
+        HTTP 401 を受けたときに google-auth 側から呼ばれる。
+        キャッシュを返すだけでは同じ期限切れトークンを使い続けてしまうため、
+        Doneru に対して明示的にリフレッシュを要求する。
+        
         Args:
             request: google.auth.transport.Request オブジェクト（未使用）
         """
-        self.token = self.token_manager.get_access_token()
+        self.token = self.token_manager.refresh_token()
     
     def apply(self, headers, token=None):
         """
@@ -67,21 +71,29 @@ class BearerTokenCredentials(google.auth.credentials.Credentials):
         """
         リクエスト送信前の処理
         
+        リクエストごとにトークンマネージャーから最新のトークンを取得する。
+        （有効期限内であればキャッシュが返るため追加の通信は発生しない）
+        これにより、リフレッシュ後の再試行で古いトークンが使われることを防ぐ。
+        
         Args:
             request: HTTP リクエストオブジェクト
             method: HTTP メソッド
             url: リクエスト URL
             headers: HTTP ヘッダー
         """
+        self.token = self.token_manager.get_access_token()
         self.apply(headers)
 
 
-def get_youtube_client() -> Any:
+def get_youtube_client(logger: Optional[logging.Logger] = None) -> Any:
     """
     YouTube Data API クライアントを取得（シングルトン）
     
     Bearer Token (OAuth) 認証を使用する。
     Doneru 経由で取得したトークンを使用してクライアントを構築。
+    
+    Args:
+        logger: ロガー（オプション、トークン取得・リフレッシュのログに使用）
     
     Returns:
         YouTube API クライアント
@@ -95,7 +107,9 @@ def get_youtube_client() -> Any:
     if _youtube_client is None:
         # Doneru トークンマネージャーを初期化
         alertbox_key = get_doneru_alertbox_key()
-        _token_manager = DoneruTokenManager(alertbox_key)
+        _token_manager = DoneruTokenManager(alertbox_key, logger=logger)
+    elif logger is not None and _token_manager is not None and _token_manager.logger is None:
+        _token_manager.logger = logger
         
         # 初回トークン取得
         access_token = _token_manager.get_access_token()
@@ -162,28 +176,25 @@ def execute_api_request(
                         )
                     try:
                         # トークンをリフレッシュ
+                        # NOTE: クライアントはリセットしない。
+                        # BearerTokenCredentials.before_request がリクエストごとに
+                        # トークンマネージャーから最新トークンを取得するため、
+                        # 同じ request オブジェクトの再実行で新しいトークンが使われる。
                         _token_manager.refresh_token()
-                        # クライアントをリセット（新しいトークンで再構築）
-                        reset_youtube_client()
                         
                         if logger:
-                            logger.info("トークンリフレッシュ完了。次の試行で新しいトークンが使用されます。")
+                            logger.info("トークンリフレッシュ完了。新しいトークンで再試行します。")
                         
-                        # コールバックを実行（呼び出し元が新しいクライアントで request を再構築できる）
+                        # コールバックを実行（呼び出し元の後処理用）
                         if token_refresh_callback:
                             token_refresh_callback()
                         
-                        # NOTE: request オブジェクトは古いクライアントに紐づいているため、
-                        # このままでは新しいトークンが使われない。
-                        # 呼び出し元でこの例外をキャッチし、新しいクライアントで request を再構築する必要がある。
-                        if logger:
-                            logger.warning(
-                                "401 エラーは解決できません。呼び出し元で新しいクライアントを使って再試行してください。"
-                            )
+                        continue
                     except Exception as refresh_error:
+                        # リフレッシュ自体に失敗した場合は元の 401 を送出する
                         if logger:
                             logger.error(f"トークンリフレッシュに失敗: {refresh_error}")
-                # 401 の場合は常に raise（呼び出し元で再試行が必要）
+                # リトライ上限、またはリフレッシュ失敗時は raise
                 raise
             
             # リトライ可能なエラーコード（429: Too Many Requests, 500/503: Server Error）

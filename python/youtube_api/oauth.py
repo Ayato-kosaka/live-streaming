@@ -19,12 +19,24 @@ DONERU_REFRESH_URL = "https://doneruyoutuberefresh-3phus6cpxa-uc.a.run.app/doner
 # タイムアウト設定
 REQUEST_TIMEOUT = 10  # 秒
 
+# 有効期限のマージン（この秒数以内に切れるトークンは期限切れ扱い）
+TOKEN_EXPIRY_MARGIN = 300  # 秒
+
+# リフレッシュの最小間隔（Doneru 側が常に期限切れトークンを返す場合の連打防止）
+MIN_REFRESH_INTERVAL = 60  # 秒
+
 
 class DoneruTokenManager:
     """
     Doneru OAuth トークンを管理するクラス
     
     トークンの取得・キャッシュ・リフレッシュを自動的に処理する。
+    
+    Doneru は自身のキャッシュしたアクセストークンをそのまま返すため、
+    誰も Doneru を利用していない時間帯（深夜のバッチ実行など）は
+    既に期限切れのトークンが返ることがある。
+    そのまま YouTube API を呼ぶと必ず HTTP 401 になるため、
+    取得したトークンの exp を検査し、期限切れならリフレッシュしてから返す。
     """
     
     def __init__(self, alertbox_key: str, logger: Optional[logging.Logger] = None):
@@ -40,6 +52,7 @@ class DoneruTokenManager:
         self._cached_token: Optional[str] = None
         self._cached_channel: Optional[str] = None
         self._token_expires_at: Optional[int] = None
+        self._last_refresh_at: Optional[float] = None
     
     def get_access_token(self) -> str:
         """
@@ -47,6 +60,7 @@ class DoneruTokenManager:
         
         キャッシュされたトークンがあり、有効期限内であればそれを返す。
         期限切れまたは未取得の場合は Doneru API から新規取得する。
+        取得したトークンが既に期限切れだった場合はリフレッシュを要求して取り直す。
         
         Returns:
             YouTube アクセストークン (Bearer Token)
@@ -68,6 +82,98 @@ class DoneruTokenManager:
         if self.logger:
             self.logger.info("Doneru API から新しいトークンを取得中...")
         
+        token = self._fetch_token()
+        
+        # Doneru が期限切れのトークンを返した場合はリフレッシュして取り直す
+        if not self._is_token_valid() and self._can_refresh():
+            if self.logger:
+                self.logger.warning(
+                    "Doneru から取得したトークンは既に期限切れです。"
+                    "リフレッシュして取り直します。"
+                )
+            return self.refresh_token()
+        
+        return token
+    
+    def refresh_token(self) -> str:
+        """
+        トークンをリフレッシュ
+        
+        Doneru にリフレッシュを要求し、新しいトークンを取得し直す。
+        
+        Returns:
+            新しい YouTube アクセストークン
+            
+        Raises:
+            RuntimeError: トークンリフレッシュに失敗
+        """
+        # 直前にリフレッシュ済みで有効なトークンを保持している場合は再利用する
+        # （google-auth 側の 401 リトライと execute_api_request の 401 リトライが
+        #   短時間に重なった際に Doneru へリフレッシュを連打しないため）
+        if not self._can_refresh() and self._is_token_valid():
+            if self.logger:
+                self.logger.info("直前にリフレッシュ済みのため、取得済みトークンを再利用します")
+            return self._cached_token  # type: ignore
+        
+        if self.logger:
+            self.logger.info("Doneru API でトークンをリフレッシュ中...")
+        
+        self._last_refresh_at = time.monotonic()
+        
+        try:
+            response = requests.post(
+                DONERU_REFRESH_URL,
+                params={
+                    "key": self.alertbox_key,
+                    "type": "alertbox",
+                    "version": "1.0.0"
+                },
+                timeout=REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            
+            # リフレッシュ後、キャッシュをクリアして新規取得
+            self._clear_cache()
+            
+            if self.logger:
+                self.logger.info("トークンリフレッシュ成功")
+            
+        except requests.exceptions.RequestException as e:
+            error_msg = f"トークンリフレッシュに失敗しました: {str(e)}"
+            if self.logger:
+                self.logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+        
+        # 新しいトークンを取得（ここでは再リフレッシュしない）
+        token = self._fetch_token()
+        
+        if not self._is_token_valid() and self.logger:
+            self.logger.warning(
+                "リフレッシュ後も期限切れのトークンが返されました。"
+                "Doneru 側の YouTube 連携が切れている可能性があります。"
+            )
+        
+        return token
+    
+    def get_channel_id(self) -> Optional[str]:
+        """
+        キャッシュされたチャンネルIDを取得
+        
+        Returns:
+            チャンネルID（未取得の場合は None）
+        """
+        return self._cached_channel
+    
+    def _fetch_token(self) -> str:
+        """
+        Doneru API からトークンを取得してキャッシュする
+        
+        Returns:
+            YouTube アクセストークン（期限切れの可能性あり）
+            
+        Raises:
+            RuntimeError: トークン取得に失敗
+        """
         try:
             response = requests.get(
                 DONERU_TOKEN_URL,
@@ -96,9 +202,10 @@ class DoneruTokenManager:
             
             if self.logger:
                 exp_time = datetime.fromtimestamp(self._token_expires_at, tz=timezone.utc)
+                remaining = self._token_expires_at - int(time.time())
                 self.logger.info(
                     f"トークン取得成功 (期限: {exp_time.isoformat()}, "
-                    f"チャンネル: {self._cached_channel})"
+                    f"残り {remaining} 秒, チャンネル: {self._cached_channel})"
                 )
             
             return self._cached_token
@@ -108,60 +215,13 @@ class DoneruTokenManager:
             if self.logger:
                 self.logger.error(error_msg)
             raise RuntimeError(error_msg) from e
+        except RuntimeError:
+            raise
         except Exception as e:
             error_msg = f"トークン取得中に予期しないエラーが発生しました: {str(e)}"
             if self.logger:
                 self.logger.error(error_msg)
             raise RuntimeError(error_msg) from e
-    
-    def refresh_token(self) -> str:
-        """
-        トークンをリフレッシュ
-        
-        Returns:
-            新しい YouTube アクセストークン
-            
-        Raises:
-            RuntimeError: トークンリフレッシュに失敗
-        """
-        if self.logger:
-            self.logger.info("Doneru API でトークンをリフレッシュ中...")
-        
-        try:
-            response = requests.post(
-                DONERU_REFRESH_URL,
-                params={
-                    "key": self.alertbox_key,
-                    "type": "alertbox",
-                    "version": "1.0.0"
-                },
-                timeout=REQUEST_TIMEOUT
-            )
-            response.raise_for_status()
-            
-            # リフレッシュ後、キャッシュをクリアして新規取得
-            self._clear_cache()
-            
-            if self.logger:
-                self.logger.info("トークンリフレッシュ成功")
-            
-            # 新しいトークンを取得
-            return self.get_access_token()
-            
-        except requests.exceptions.RequestException as e:
-            error_msg = f"トークンリフレッシュに失敗しました: {str(e)}"
-            if self.logger:
-                self.logger.error(error_msg)
-            raise RuntimeError(error_msg) from e
-    
-    def get_channel_id(self) -> Optional[str]:
-        """
-        キャッシュされたチャンネルIDを取得
-        
-        Returns:
-            チャンネルID（未取得の場合は None）
-        """
-        return self._cached_channel
     
     def _is_token_valid(self) -> bool:
         """
@@ -175,7 +235,18 @@ class DoneruTokenManager:
         
         # 期限の5分前を有効期限とする（マージンを持たせる）
         current_time = int(time.time())
-        return current_time < (self._token_expires_at - 300)
+        return current_time < (self._token_expires_at - TOKEN_EXPIRY_MARGIN)
+    
+    def _can_refresh(self) -> bool:
+        """
+        リフレッシュを実行してよいかチェック（連打防止）
+        
+        Returns:
+            前回のリフレッシュから MIN_REFRESH_INTERVAL 秒以上経過している場合 True
+        """
+        if self._last_refresh_at is None:
+            return True
+        return (time.monotonic() - self._last_refresh_at) >= MIN_REFRESH_INTERVAL
     
     def _clear_cache(self) -> None:
         """キャッシュをクリア"""
