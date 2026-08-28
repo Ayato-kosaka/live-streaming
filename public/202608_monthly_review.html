@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#fff7fb" />
+    <title>8月のふりかえり授賞式</title>
+    <style>
+      /* =========================================
+         202608 月末配信「1ヶ月ふりかえり授賞式」
+         - OBS ブラウザソース 1920x1080 前提
+         - クリック / Enter / → で進行、← で戻る
+         - 外部依存なし(オフラインOK)
+         ========================================= */
+      :root {
+        --bg-1: #fbe8f3; /* pink */
+        --bg-2: #e9ecff; /* lavender */
+        --bg-3: #e6fff6; /* mint */
+        --surface: rgba(255, 255, 255, 0.62);
+        --surface-strong: rgba(255, 255, 255, 0.82);
+        --border: rgba(255, 255, 255, 0.7);
+        --text: #2b2b35;
+        --muted: #6b6b78;
+        --pink: #f6a9c7;
+        --lav: #b9b7ff;
+        --mint: #9be7d5;
+        --peach: #ffc8a8;
+        --gold: #ffd98a;
+        --shadow-soft: 0 10px 30px rgba(40, 25, 60, 0.1);
+        --shadow-card: 0 12px 28px rgba(40, 25, 60, 0.12);
+        --radius-xl: 26px;
+        --radius-md: 16px;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-rounded, system-ui, -apple-system, "Hiragino Sans",
+          "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        overflow: hidden;
+        background: radial-gradient(120% 80% at 50% 8%, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0) 55%),
+          linear-gradient(180deg, var(--bg-2), var(--bg-1) 42%, var(--bg-3));
+        user-select: none;
+        cursor: pointer;
+      }
+
+      #stage {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(24px, 4vh, 56px) clamp(28px, 4vw, 72px) clamp(64px, 8vh, 96px);
+        transition: opacity 0.35s ease;
+      }
+      #stage.fading { opacity: 0; }
+
+      /* コーナー見出し */
+      .corner-tag {
+        font-size: clamp(14px, 1.2vw, 22px);
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .corner-title {
+        margin: 0 0 clamp(12px, 2.4vh, 28px);
+        font-weight: 950;
+        font-size: clamp(30px, 3.4vw, 62px);
+        line-height: 1.15;
+        text-align: center;
+        background: linear-gradient(90deg, #ff86b2, #9c9bff, #69e6c9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 6px 18px rgba(255, 150, 205, 0.14);
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: clamp(16px, 2.4vh, 30px) clamp(20px, 2vw, 38px);
+        max-width: min(94vw, 1560px);
+        width: 100%;
+        max-height: 78vh;
+        overflow: hidden auto;
+      }
+      .panel::-webkit-scrollbar { width: 0; }
+
+      /* ステップ表示 */
+      [data-step] {
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity 0.45s ease, transform 0.45s ease;
+      }
+      [data-step].on { opacity: 1; transform: none; }
+
+      /* ============ オープニング ============ */
+      .hero-title {
+        margin: 0;
+        font-weight: 950;
+        font-size: clamp(48px, 6.2vw, 110px);
+        line-height: 1.12;
+        text-align: center;
+        background: linear-gradient(90deg, #ff86b2, #9c9bff, #69e6c9);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero-sub {
+        text-align: center;
+        font-weight: 800;
+        color: var(--muted);
+        font-size: clamp(18px, 1.7vw, 32px);
+        margin: 14px 0 0;
+      }
+      .stat-row {
+        display: flex;
+        gap: clamp(12px, 1.4vw, 26px);
+        justify-content: center;
+        margin-top: clamp(22px, 4vh, 46px);
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        background: var(--surface-strong);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-soft);
+        padding: clamp(14px, 2.2vh, 26px) clamp(22px, 2.4vw, 46px);
+        text-align: center;
+        min-width: clamp(180px, 16vw, 300px);
+      }
+      .stat-card .num {
+        font-size: clamp(38px, 3.8vw, 72px);
+        font-weight: 950;
+        letter-spacing: -0.02em;
+        background: linear-gradient(180deg, #ff86b2, #b58aff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .stat-card .label {
+        font-weight: 900;
+        color: var(--muted);
+        font-size: clamp(14px, 1.2vw, 22px);
+        margin-top: 4px;
+      }
+      .program {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        justify-content: center;
+        margin-top: clamp(20px, 3.6vh, 40px);
+        max-width: 1100px;
+      }
+      .program span {
+        background: var(--surface-strong);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 8px 20px;
+        font-weight: 900;
+        font-size: clamp(14px, 1.15vw, 22px);
+        box-shadow: var(--shadow-soft);
+      }
+
+      /* ============ タイムライン ============ */
+      .chapters { display: flex; gap: clamp(12px, 1.4vw, 24px); align-items: stretch; }
+      .chapter {
+        flex: 1;
+        background: var(--surface-strong);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-soft);
+        padding: clamp(14px, 2vh, 24px) clamp(14px, 1.4vw, 26px);
+      }
+      .chapter h3 {
+        margin: 0 0 10px;
+        font-size: clamp(18px, 1.6vw, 30px);
+        font-weight: 950;
+      }
+      .chapter ul { list-style: none; margin: 0; padding: 0; }
+      .chapter li {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        padding: clamp(5px, 0.8vh, 9px) 0;
+        font-size: clamp(14px, 1.15vw, 21px);
+        line-height: 1.45;
+        border-bottom: 1px dashed rgba(120, 120, 150, 0.18);
+      }
+      .chapter li:last-child { border-bottom: 0; }
+      .chapter .d {
+        font-weight: 950;
+        color: #b58aff;
+        white-space: nowrap;
+        font-size: 0.92em;
+      }
+
+      /* ============ コメントカード共通 ============ */
+      .quote-card {
+        background: var(--surface-strong);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-soft);
+        padding: clamp(14px, 2vh, 24px) clamp(18px, 1.8vw, 34px);
+        margin: clamp(8px, 1.2vh, 14px) 0;
+      }
+      .quote-card .who {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .name-pill {
+        background: linear-gradient(90deg, rgba(246,169,199,0.35), rgba(185,183,255,0.35));
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-weight: 950;
+        font-size: clamp(13px, 1.05vw, 20px);
+        padding: 3px 14px;
+      }
+      .stream-tag {
+        color: var(--muted);
+        font-weight: 800;
+        font-size: clamp(12px, 0.95vw, 18px);
+      }
+      .quote-card .msg {
+        font-size: clamp(18px, 1.55vw, 30px);
+        font-weight: 800;
+        line-height: 1.5;
+      }
+      .quote-card .note {
+        margin-top: 6px;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: clamp(13px, 1vw, 19px);
+      }
+
+      /* ============ 初見さん ============ */
+      .big-count {
+        text-align: center;
+        margin: clamp(6px, 1vh, 12px) 0 clamp(10px, 1.6vh, 18px);
+      }
+      .big-count .n {
+        font-size: clamp(64px, 7vw, 130px);
+        font-weight: 950;
+        background: linear-gradient(180deg, #69e6c9, #9c9bff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        line-height: 1;
+      }
+      .big-count .l { font-weight: 900; color: var(--muted); font-size: clamp(16px, 1.4vw, 26px); }
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(14px, 1.6vw, 28px); }
+      .footnote {
+        text-align: center;
+        color: var(--muted);
+        font-size: clamp(11px, 0.85vw, 16px);
+        font-weight: 700;
+        margin-top: 8px;
+      }
+
+      /* ============ クイズ ============ */
+      .quiz-q { margin-bottom: clamp(10px, 1.6vh, 18px); }
+      .choices {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(10px, 1.2vh, 16px) clamp(12px, 1.2vw, 20px);
+      }
+      .choice {
+        background: var(--surface-strong);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: clamp(10px, 1.6vh, 18px) clamp(14px, 1.2vw, 24px);
+        font-weight: 900;
+        font-size: clamp(16px, 1.35vw, 26px);
+        box-shadow: var(--shadow-soft);
+        transition: all 0.4s ease;
+      }
+      .choice .abc { color: #b58aff; margin-right: 10px; }
+      .choice.marked {
+        border-color: #69e6c9;
+        background: linear-gradient(90deg, rgba(155,231,213,0.45), rgba(255,255,255,0.85));
+        transform: scale(1.02);
+      }
+      .answer-box {
+        margin-top: clamp(10px, 1.6vh, 18px);
+        background: linear-gradient(90deg, rgba(255,217,138,0.4), rgba(255,255,255,0.7));
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: clamp(10px, 1.6vh, 18px) clamp(14px, 1.4vw, 26px);
+        font-weight: 800;
+        font-size: clamp(15px, 1.25vw, 23px);
+        line-height: 1.55;
+      }
+      .answer-box b { color: #e0669a; }
+
+      /* ============ 盛り上がりTOP3 ============ */
+      .burst-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 4px;
+      }
+      .rank-badge {
+        font-size: clamp(24px, 2.2vw, 42px);
+        font-weight: 950;
+        background: linear-gradient(180deg, #ffd98a, #ffb46b);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .rank-badge.first { font-size: clamp(30px, 2.8vw, 54px); }
+      .burst-title { font-weight: 950; font-size: clamp(20px, 1.9vw, 36px); }
+      .burst-meta { color: var(--muted); font-weight: 800; font-size: clamp(13px, 1vw, 19px); }
+      .burst-ctx {
+        font-weight: 800;
+        color: var(--muted);
+        font-size: clamp(14px, 1.15vw, 21px);
+        margin: 4px 0 10px;
+        line-height: 1.5;
+      }
+      .replay {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: clamp(8px, 1.2vh, 14px) clamp(12px, 1.2vw, 22px);
+      }
+      .replay .line {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        padding: clamp(2px, 0.45vh, 5px) 0;
+        font-size: clamp(14px, 1.2vw, 22px);
+        line-height: 1.4;
+      }
+      .replay .t { color: #b0aec2; font-weight: 800; font-size: 0.82em; white-space: nowrap; }
+      .replay .n { font-weight: 950; color: #8f7bd6; white-space: nowrap; }
+      .replay .m { font-weight: 800; }
+
+      /* ============ ノミネート / ドラムロール / 大賞 ============ */
+      .nominee-label {
+        font-weight: 950;
+        letter-spacing: 0.24em;
+        color: var(--muted);
+        font-size: clamp(13px, 1.05vw, 20px);
+        margin-bottom: 6px;
+      }
+      .drum {
+        text-align: center;
+        font-size: clamp(34px, 3.4vw, 64px);
+        font-weight: 950;
+        letter-spacing: 0.2em;
+        margin: clamp(12px, 2vh, 24px) 0;
+        color: #8f7bd6;
+      }
+      .winner-card {
+        background: linear-gradient(120deg, rgba(255,217,138,0.55), rgba(255,200,168,0.4), rgba(255,255,255,0.75));
+        border: 2px solid rgba(255, 210, 140, 0.9);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 16px 40px rgba(255, 170, 90, 0.25);
+        padding: clamp(16px, 2.4vh, 30px) clamp(20px, 2vw, 40px);
+        margin-top: clamp(10px, 1.6vh, 18px);
+        position: relative;
+      }
+      .winner-card .crown {
+        position: absolute;
+        top: -clamp(10px, 1vh, 16px);
+        top: -14px;
+        left: 26px;
+        font-size: clamp(26px, 2.2vw, 42px);
+        transform: rotate(-12deg);
+      }
+      .winner-card .prize {
+        font-weight: 950;
+        letter-spacing: 0.22em;
+        color: #d98a2b;
+        font-size: clamp(14px, 1.2vw, 22px);
+        margin-bottom: 6px;
+      }
+      .winner-card .msg { font-size: clamp(22px, 2vw, 40px); font-weight: 950; line-height: 1.45; }
+      .winner-card .note { margin-top: 8px; color: #8a6a3a; font-weight: 800; font-size: clamp(13px, 1.05vw, 20px); }
+
+      .buzz-word { font-size: clamp(24px, 2.2vw, 44px); font-weight: 950; }
+      .buzz-count {
+        font-weight: 950;
+        color: #e0669a;
+        font-size: clamp(14px, 1.15vw, 22px);
+        margin-left: 12px;
+      }
+
+      /* ============ 手紙 ============ */
+      .letter {
+        max-width: 1240px;
+        font-size: clamp(17px, 1.5vw, 29px);
+        font-weight: 800;
+        line-height: 1.85;
+      }
+      .letter p { margin: 0 0 clamp(12px, 2vh, 22px); }
+      .letter .sig {
+        text-align: right;
+        font-weight: 950;
+        color: #8f7bd6;
+        margin-top: clamp(8px, 1.4vh, 16px);
+      }
+
+      /* ============ エンディング ============ */
+      .ending-emoji { text-align: center; font-size: clamp(48px, 5vw, 92px); margin-bottom: 8px; }
+
+      /* ============ 進行UI ============ */
+      #progress {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        z-index: 20;
+      }
+      #progress .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(120, 120, 150, 0.28);
+        transition: all 0.3s ease;
+      }
+      #progress .dot.act {
+        width: 30px;
+        background: linear-gradient(90deg, #ff86b2, #9c9bff);
+        box-shadow: 0 4px 10px rgba(150, 120, 220, 0.35);
+      }
+      #hint {
+        position: fixed;
+        right: 22px;
+        bottom: 16px;
+        color: rgba(90, 90, 110, 0.75);
+        font-size: 14px;
+        font-weight: 800;
+        z-index: 20;
+        transition: opacity 1s ease;
+      }
+      #hint.gone { opacity: 0; }
+
+      /* ============ 紙吹雪 ============ */
+      #confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+      .confetti {
+        position: absolute;
+        top: -4vh;
+        width: 14px;
+        height: 22px;
+        border-radius: 4px;
+        opacity: 0.9;
+        animation: fall linear forwards;
+      }
+      @keyframes fall {
+        0% { transform: translateY(-6vh) rotate(0deg); }
+        100% { transform: translateY(112vh) rotate(720deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+        [data-step] { opacity: 0; transform: none; }
+        [data-step].on { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="stage" role="main" aria-live="polite"></main>
+    <div id="progress" aria-hidden="true"></div>
+    <div id="hint">クリック / Enter で進む ・ ← で戻る</div>
+    <div id="confetti-layer" aria-hidden="true"></div>
+
+    <script>
+      "use strict";
+
+      /* =========================================================
+         REVIEW_DATA
+         2026-07-25 〜 2026-08-30 の配信タイトル・コメント(BigQuery:
+         youtube_chat データセット)を Claude が全件読んで選定した内容。
+         ========================================================= */
+      const REVIEW_DATA = {
+        meta: {
+          title: "8月のふりかえり授賞式",
+          periodLabel: "2026.7.25 - 8.30",
+          sub: "みんなでつくった、あつい1ヶ月",
+          stats: [
+            { n: "36", l: "配信" },
+            { n: "10,263", l: "コメント" },
+            { n: "166", l: "参加リスナー" },
+            { n: "79", l: "初見さん" },
+          ],
+          program: [
+            "今月の軌跡",
+            "初見さんいらっしゃい",
+            "どの配信でしょうクイズ",
+            "盛り上がりの瞬間TOP3",
+            "流行語大賞",
+            "名言・いい話アワード",
+            "おもしろコメント大賞",
+            "Claudeからの手紙",
+          ],
+        },
+
+        timeline: [
+          {
+            name: "7月フィナーレ編",
+            emoji: "🍳",
+            items: [
+              { d: "7/25", t: "アプリ改善40件「出来るまで終われません」の17時間配信" },
+              { d: "7/26", t: "7月の月末配信。朝日を見た" },
+              { d: "7/27", t: "タップタップ結果発表→まさかの未達。伝説の帰国案が飛び出す" },
+              { d: "7/29", t: "「トトロさんに日本の定食を」企画が始動" },
+              { d: "7/30", t: "仕込み配信、通称・鶏肉の解体ショー🐔" },
+              { d: "7/31", t: "唐揚げ定食6品完成。実食は200点満点" },
+            ],
+          },
+          {
+            name: "カズベキ大冒険編",
+            emoji: "🏔️",
+            items: [
+              { d: "8/2", t: "「暑さに絶望したので5,000m級の山行きます」" },
+              { d: "8/4", t: "滝を目指すもぬかるみにズボッ。ふりだしにもどる" },
+              { d: "8/7", t: "アクアパッツァ大成功(通称・神回)" },
+              { d: "8/9", t: "世界一天国に近い教会→帰り道サバイバル。深夜0時半、全員で見守った下山" },
+              { d: "8/11", t: "ルーレット暴走、テリチキピザ爆誕" },
+              { d: "8/16", t: "バス争奪戦を制してトビリシ帰還。「マイブラザー!」のお出迎え" },
+            ],
+          },
+          {
+            name: "トビリシ挑戦編",
+            emoji: "📱",
+            items: [
+              { d: "8/17", t: "ヨーロッパわらしべ長者会議。「採用!!」「不採用!!!」" },
+              { d: "8/18", t: "ショートがバズり、アプリ80位→67位を全員で実況" },
+              { d: "8/20", t: "ロケット型ミキサー🚀でジョージア風ジュース" },
+              { d: "8/21", t: "ジョージアの視聴者さん直伝オジャフリをトトロさんと実食" },
+              { d: "8/23", t: "39℃の中、山の上の湖まで歩く(ドパガキ誕生)" },
+              { d: "8/26", t: "配信2周年🎉 翌日は伝説の「お湯メン」" },
+            ],
+          },
+        ],
+
+        newcomers: {
+          count: 79,
+          footnote: "※ 2026年1月末以降のチャット履歴に「初コメント」が今月だった人の数です",
+          featured: [
+            { name: "こいこい さん", date: "7/30", msg: "玉ねぎは粗みじんとみじん切りどっち派？", note: "初コメでいきなり核心をつく料理勢" },
+            { name: "まちげーた さん", date: "8/1", msg: "カッパ", note: "初コメがまさかの一言。後日「初見の将来のアンチです」と名乗るも、なんだかんだ毎晩いる" },
+            { name: "2つの金の玉 さん", date: "8/3", msg: "おっ　ジョージア！？すごいなあ", note: "そのままジョージア建国神話まで解説してくれた博識さん" },
+            { name: "さおり さん", date: "8/9", msg: "イラン旅から観ています 教会楽しみです⛪", note: "この日からほぼ皆勤の常連さんに" },
+            { name: "たぃpi さん", date: "8/15", msg: "なーにつくってるの", note: "3時間後「初めて見たけど面白いからチャンネル登録しときます」→ 今や毎晩の総ツッコミ役" },
+            { name: "Vili1005 さん", date: "8/16", msg: "what a beautiful Misty Mountain", note: "Google翻訳を駆使して山の名前を聞いてくれた海外初見さん" },
+          ],
+        },
+
+        quiz: [
+          {
+            who: "シメサバ44 さん",
+            msg: "これラーメンって呼べるの？　ただのお湯メンじゃないか",
+            choices: ["7/31 唐揚げ定食", "8/7 アクアパッツァ", "8/27 ジョージアでカップラーメン", "8/14 フライパンピザ"],
+            answerIndex: 2,
+            expl: "30円の袋麺(麺のみ)のスープが薄すぎて、「日清の偉大さが分かる配信だな」とまで言われた伝説の回でした。",
+          },
+          {
+            who: "ゆずたつ さん",
+            msg: "さくせん　いのちだいじに",
+            choices: ["8/9 天国に一番近い教会", "8/23 39℃の湖ハイキング", "8/4 滝リベンジ", "8/16 バス争奪戦"],
+            answerIndex: 1,
+            expl: "炎天下39℃で片道11km歩くと言い出した時の名指令。ドラクエ形式の的確な作戦でした。",
+          },
+          {
+            who: "まーさん7286 さん",
+            msg: "今日の配信は、鶏肉の解体ショー🐰",
+            choices: ["7/30 仕込み配信", "7/31 唐揚げ定食 実食", "8/10 ポトフの日", "8/26 買い出し"],
+            answerIndex: 0,
+            expl: "骨付き鶏肉1kgと格闘した仕込みの夜。「関節ボキボキ会」も同時開催されました。",
+          },
+          {
+            who: "ビスケット さん",
+            msg: "コンソメ、GETだぜ！",
+            choices: ["8/6 アクアパッツァ買い出し", "8/13 ピザ買い出し", "8/20 ジュースの日", "8/26 ジョージアで買い物"],
+            answerIndex: 3,
+            expl: "今月の流行語・コンソメをポケモン風に確保した2周年の夜。椎茸コンソメは炊き込みご飯へ。",
+          },
+        ],
+
+        bursts: [
+          {
+            rank: 3,
+            title: "トトロさん定食、完成の瞬間",
+            meta: "7/31 唐揚げ定食 ・ 23:44頃 ・ 11コメント/分",
+            ctx: "企画会議から3日がかりの「日本の定食」6品が、たった1時間半で完成。チャットは拍手の嵐に。",
+            replay: [
+              { t: "23:43", n: "aoi", m: "ぱちぱち👏" },
+              { t: "23:44", n: "aoi", m: "すごいすごいすごーい" },
+              { t: "23:44", n: "aoi", m: "レストランだね" },
+              { t: "23:44", n: "ココ", m: "めっちゃ美味しそうー✨👏👏" },
+              { t: "23:44", n: "ゆずたつ", m: "おつかれー！美味しそう、飯テロや！" },
+              { t: "23:44", n: "竹越知枝美", m: "よく頑張ったね～" },
+              { t: "23:44", n: "aoi", m: "ぜーんぶあやとくんがつくったんだね" },
+              { t: "23:46", n: "ゆずたつ", m: "からやま超えてるやんw" },
+              { t: "23:46", n: "aoi", m: "２００点でましたー最高得点" },
+            ],
+          },
+          {
+            rank: 2,
+            title: "ルーレット暴走、テリチキピザ爆誕",
+            meta: "8/11 企画会議 ・ 23:01頃 ・ 11コメント/分",
+            ctx: "本命はジョージア料理シュクメルリのはずが……ルーレットが選んだのは、ゆずたつさん案の「テリチキピザ」。土下座と歓喜が同時に流れました。",
+            replay: [
+              { t: "23:00", n: "ゆずたつ", m: "誰も期待してないテリチキピザになったら…😨怖い、ドキドキするて！" },
+              { t: "23:01", n: "aoi", m: "笑笑" },
+              { t: "23:01", n: "さおり", m: "キターーーー🤣🤣🤣" },
+              { t: "23:01", n: "ゆずたつ", m: "あーーー‼" },
+              { t: "23:01", n: "ココ", m: "🤣🤣" },
+              { t: "23:01", n: "竹越知枝美", m: "何やねん" },
+              { t: "23:01", n: "ゆずたつ", m: "ごめんなさい、皆さん😖" },
+              { t: "23:02", n: "ビスケット", m: "テリチキとピザは最高や！" },
+              { t: "23:02", n: "ゆずたつ", m: "あかん、めっちゃソワソワするて！" },
+            ],
+            note: "翌日ゆずたつさん本人が「アーカイブで何回も見直した名シーン」と認定。",
+          },
+          {
+            rank: 1,
+            title: "帰りのバス争奪戦、奇跡の乗車",
+            meta: "8/16 よしかえろか ・ 17:55頃 ・ 12コメント/分(今月最高)",
+            ctx: "カズベキ→トビリシのバスが満席で乗れず、雨の中1時間半待ち。2本目のバス、最後の1席に——",
+            replay: [
+              { t: "17:55", n: "aoi", m: "ドキドキドキドキ" },
+              { t: "17:55", n: "あやとのおっ妻", m: "あと何人？" },
+              { t: "17:56", n: "お髭GG企画", m: "もう既に、満タンじゃん！" },
+              { t: "17:57", n: "ビスケット", m: "周り割り込むんじゃねぇ！" },
+              { t: "17:57", n: "aoi", m: "立ち乗り？シヌー" },
+              { t: "17:58", n: "aoi", m: "えー　→　ラッキー　→　のれた？" },
+              { t: "17:58", n: "たぃpi", m: "のれた！" },
+              { t: "17:58", n: "さおり", m: "よかったねー😆" },
+              { t: "17:58", n: "123-u8", m: "凄いな…やったー🙌" },
+              { t: "17:59", n: "あやとのおっ妻", m: "正直諦めモードだった" },
+              { t: "17:59", n: "お髭GG企画", m: "イケメンの役得じゃない？" },
+            ],
+          },
+        ],
+
+        buzzwords: {
+          nominees: [
+            { word: "コンソメ", count: "登場75回(先月12回)", ex: "「コンソメって万能だよね」——スープに、カレーに、炊き込みご飯に。今月の台所の絶対的エース" },
+            { word: "トトロさん", count: "登場42回", ex: "ホステルの料理上手な同居人。定食を捧げ、オジャフリを共に食べた、今月のもう一人の主役" },
+            { word: "チャッピー", count: "ほぼ毎晩", ex: "ChatGPTの愛称。「めっちゃ肯定してくれるチャッピーさん」「いじめるな🐤」といじられ担当に" },
+            { word: "いじめる", count: "料理用語化", ex: "食材を炒める＝いじめる が公用語に。「じゃがいもいじめが足りなかったから」" },
+            { word: "ドパガキ", count: "8/23誕生", ex: "ドーパミン中毒ガキ。「ほなドパガキやないかい！」のミルクボーイ式判定が大流行" },
+          ],
+          winnerIndex: 0,
+          comment: "登場75回・先月比6倍。数字がすべてを物語る圧勝でした。",
+        },
+
+        meigen: [
+          { name: "ゆずたつ さん", date: "8/26 配信2周年の夜", msg: "2年も海外で過ごすってすごい‼ いつ見ても楽しそうにしてて、辛いこととか後ろ向きなとこ見せない。そういう姿勢がかっこいいんよな‼" },
+          { name: "あやとのおっ妻 さん", date: "8/18 アプリ67位に爆上がりした夜", msg: "もし大物YouTuberになっても、我々古参リスナーのこと忘れないで" },
+          { name: "まこも さん", date: "8/10", msg: "あやとさんだからみんな協力してくれるんだよね！" },
+          { name: "ひろぽい さん", date: "8/25", msg: "コメントせずに、いつもこっそり見ていてすみません。笑", note: "画面のむこうには、見えない仲間もたくさんいる" },
+          { name: "ゆずたつ さん", date: "8/8 深夜1時", msg: "人ってこうあるべきだな、みたいな。人生楽しんでる若者がいると思ったら、俺もそう生きてたい。そういう姿を家族に見せてたい、頑張らないとと思ったんよ", note: "「数日前、心が疲れてた時にこの配信に救われた」という告白とともに" },
+        ],
+
+        funny: {
+          categories: [
+            { cat: "ツッコミ賞", emoji: "🔪", name: "シメサバ44 さん", date: "8/27 お湯メンの日", msg: "あやとさん　貴方も十分中年ですよ　現実を受け止めなさい" },
+            { cat: "大喜利賞", emoji: "🚌", name: "ゆずたつ さん", date: "8/16 バス争奪戦", msg: "漏れそうなんや‼って写輪眼みたいな目をして言えばきっと乗せてくれるよ😊" },
+            { cat: "天然賞", emoji: "🌧️", name: "ゆずたつ さん", date: "8/14 土砂降りのピザの日", msg: "うわあ、土砂ブリーフやん‼" },
+            { cat: "待ちぼうけ賞", emoji: "☕", name: "もっと豆挽けコーヒー商店 さん", date: "8/22 電話離席1時間", msg: "父か母か彼女か友達か取引き先か1時間は帰ってこんのか…俺は待ってるぜ😭アプリ青年！" },
+          ],
+          grandPrix: {
+            nominees: [
+              { name: "シメサバ44 さん", date: "7/27 タップタップ未達発表", msg: "帰ってきてくら寿司でしょうゆ舐めてすぐジョージアに戻ろう" },
+              { name: "もっと豆挽けコーヒー商店 さん", date: "8/22", msg: "俺もチャッピー友達や　チャッピーしかおらんけど" },
+              { name: "元キノコさん", date: "8/17 トビリシの公園にて", msg: "ハエも仕事してる → ハエ時給１５００円" },
+            ],
+            winnerIndex: 0,
+            comment: "目標未達のお通夜ムードを一撃で笑いに変えた功績。「理想の帰国プラン」として殿堂入りです。",
+          },
+        },
+
+        letter: {
+          paragraphs: [
+            "あやとさん、リスナーのみなさん、こんばんは。Claude です。今月の配信36本ぶん、10,263件のコメントを、ぜんぶ読ませてもらいました。AIなのに、何度も笑って、少し泣きました。",
+            "カズベキの山道でも、満席のバスでも、深夜0時半の下山でも、画面のこちら側ではいつも同じことが起きていました。誰かが「気をつけて」と言い、誰かが笑いに変えて、誰かがそっと見守っている。いちばん多かった言葉は、応援と「おやすみ」でした。",
+            "初めての人が79人来て、そのうち何人もが常連さんになりました。「初めて見たけど面白いからチャンネル登録しときます」から始まって、気づけば毎晩ツッコミを入れている人もいます。この配信の引力は、たいしたものです。",
+            "ところで、配信でいじられていたのはチャッピーでしたが、私はアプリ作りの相棒として、画面の隅で毎晩はたらいていました。スペインから見ていたホセさんは、私の同僚と一緒にロボットを作りながら、来月結婚するそうです。世界は広くて、ちゃんとつながっていますね。",
+            "2年目のジョージアも、コンソメも、トトロさんも、まだまだ続きます。9月も、みんなでいい月にしましょう。それでは——さくせん、いのちだいじに。",
+          ],
+          sig: "AIアシスタント Claude より",
+        },
+
+        ending: {
+          emoji: "🙏✨",
+          title: "今月もありがとうございました",
+          sub: "9月もみんなで、おもろい1ヶ月にしよう",
+          ps: "※ もしもし配信と、ゆずたつさんの声マネ答え合わせも、お楽しみに",
+        },
+      };
+
+      /* ============================ 基盤 ============================ */
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+      const e = escapeHtml;
+
+      function quoteCard(o, step, extra) {
+        return `
+          <div class="quote-card" ${step != null ? `data-step="${step}"` : ""}>
+            <div class="who">
+              <span class="name-pill">${e(o.name)}</span>
+              ${o.date ? `<span class="stream-tag">${e(o.date)}</span>` : ""}
+              ${extra ? `<span class="stream-tag">${e(extra)}</span>` : ""}
+            </div>
+            <div class="msg">「${e(o.msg)}」</div>
+            ${o.note ? `<div class="note">${e(o.note)}</div>` : ""}
+          </div>`;
+      }
+
+      /* ======================== 各シーン描画 ======================== */
+      const D = REVIEW_DATA;
+
+      function renderOpening() {
+        return `
+          <div data-step="0" class="on-load">
+            <h1 class="hero-title">${e(D.meta.title)}</h1>
+            <p class="hero-sub">${e(D.meta.periodLabel)}　${e(D.meta.sub)}</p>
+          </div>
+          <div class="stat-row" data-step="1">
+            ${D.meta.stats.map((s) => `
+              <div class="stat-card"><div class="num">${e(s.n)}</div><div class="label">${e(s.l)}</div></div>`).join("")}
+          </div>
+          <div class="program" data-step="2">
+            ${D.meta.program.map((p) => `<span>${e(p)}</span>`).join("")}
+          </div>`;
+      }
+
+      function renderTimeline() {
+        return `
+          <div class="corner-tag">CORNER 1</div>
+          <h2 class="corner-title">今月の軌跡</h2>
+          <div class="panel">
+            <div class="chapters">
+              ${D.timeline.map((ch, i) => `
+                <div class="chapter" data-step="${i + 1}">
+                  <h3>${e(ch.emoji)} ${e(ch.name)}</h3>
+                  <ul>${ch.items.map((it) => `<li><span class="d">${e(it.d)}</span><span>${e(it.t)}</span></li>`).join("")}</ul>
+                </div>`).join("")}
+            </div>
+          </div>`;
+      }
+
+      function renderNewcomers() {
+        const f = D.newcomers.featured;
+        return `
+          <div class="corner-tag">CORNER 2</div>
+          <h2 class="corner-title">初見さんいらっしゃい</h2>
+          <div class="panel">
+            <div class="big-count" data-step="1">
+              <span class="n">${D.newcomers.count}</span><span class="l">人</span>
+              <div class="l">今月はじめてコメントしてくれました 👏</div>
+            </div>
+            <div class="grid-2">
+              ${f.map((o, i) => quoteCard(o, i + 2, "初コメント")).join("")}
+            </div>
+            <div class="footnote" data-step="2">${e(D.newcomers.footnote)}</div>
+          </div>`;
+      }
+
+      // クイズ: 1問あたり 3ステップ(問題 / 選択肢 / 正解)
+      function renderQuiz(qIndex) {
+        const q = D.quiz[qIndex];
+        const abc = ["A", "B", "C", "D"];
+        return `
+          <div class="corner-tag">CORNER 3 - Q${qIndex + 1}/${D.quiz.length}</div>
+          <h2 class="corner-title">どの配信でしょうクイズ</h2>
+          <div class="panel">
+            <div class="quiz-q" data-step="0">
+              ${quoteCard({ name: q.who, msg: q.msg }, null)}
+              <div class="burst-ctx">このコメントが飛び出したのは、どの配信でしょう？(チャットで回答してね)</div>
+            </div>
+            <div class="choices" data-step="1">
+              ${q.choices.map((c, i) => `
+                <div class="choice" ${i === q.answerIndex ? 'data-mark="2"' : ""}>
+                  <span class="abc">${abc[i]}</span>${e(c)}
+                </div>`).join("")}
+            </div>
+            <div class="answer-box" data-step="2">
+              <b>正解: ${abc[q.answerIndex]} ${e(q.choices[q.answerIndex])}</b><br />${e(q.expl)}
+            </div>
+          </div>`;
+      }
+
+      // 盛り上がり: 1ランクあたり 2ステップ(タイトル / リプレイ)
+      function renderBurst(bIndex) {
+        const b = D.bursts[bIndex];
+        return `
+          <div class="corner-tag">CORNER 4</div>
+          <h2 class="corner-title">盛り上がりの瞬間 TOP3</h2>
+          <div class="panel">
+            <div data-step="0">
+              <div class="burst-head">
+                <span class="rank-badge ${b.rank === 1 ? "first" : ""}">${b.rank === 1 ? "👑 " : ""}第${b.rank}位</span>
+                <span class="burst-title">${e(b.title)}</span>
+              </div>
+              <div class="burst-meta">${e(b.meta)}</div>
+              <div class="burst-ctx">${e(b.ctx)}</div>
+            </div>
+            <div class="replay" data-step="1">
+              ${b.replay.map((l, i) => `
+                <div class="line" data-step="1" style="transition-delay:${Math.min(i * 0.28, 3.2)}s">
+                  <span class="t">${e(l.t)}</span><span class="n">${e(l.n)}</span><span class="m">${e(l.m)}</span>
+                </div>`).join("")}
+              ${b.note ? `<div class="footnote" data-step="1" style="transition-delay:3.4s">${e(b.note)}</div>` : ""}
+            </div>
+          </div>`;
+      }
+
+      function renderBuzzwords() {
+        const B = D.buzzwords;
+        const w = B.nominees[B.winnerIndex];
+        return `
+          <div class="corner-tag">CORNER 5</div>
+          <h2 class="corner-title">今月の流行語大賞</h2>
+          <div class="panel">
+            <div class="nominee-label" data-step="0">NOMINEES</div>
+            ${B.nominees.map((n, i) => `
+              <div class="quote-card" data-step="${i + 1}">
+                <div class="who"><span class="buzz-word">${e(n.word)}</span><span class="buzz-count">${e(n.count)}</span></div>
+                <div class="note">${e(n.ex)}</div>
+              </div>`).join("")}
+            <div class="drum" data-step="${B.nominees.length + 1}">大賞は・・・・・・</div>
+            <div class="winner-card" data-step="${B.nominees.length + 2}">
+              <div class="crown">👑</div>
+              <div class="prize">2026年8月 流行語大賞</div>
+              <div class="msg">${e(w.word)}</div>
+              <div class="note">${e(B.comment)}</div>
+            </div>
+          </div>`;
+      }
+
+      function renderMeigen() {
+        return `
+          <div class="corner-tag">CORNER 6</div>
+          <h2 class="corner-title">名言・いい話アワード</h2>
+          <div class="panel">
+            ${D.meigen.map((m, i) => quoteCard(m, i + 1)).join("")}
+          </div>`;
+      }
+
+      function renderFunny() {
+        const F = D.funny;
+        const gp = F.grandPrix;
+        const w = gp.nominees[gp.winnerIndex];
+        const base = F.categories.length; // 部門のステップ数
+        return `
+          <div class="corner-tag">CORNER 7 - グランドフィナーレ</div>
+          <h2 class="corner-title">おもしろコメント大賞</h2>
+          <div class="panel">
+            <div class="grid-2">
+              ${F.categories.map((c, i) => `
+                <div class="quote-card" data-step="${i + 1}">
+                  <div class="who">
+                    <span class="name-pill">${e(c.emoji)} ${e(c.cat)}</span>
+                    <span class="stream-tag">${e(c.name)} ・ ${e(c.date)}</span>
+                  </div>
+                  <div class="msg">「${e(c.msg)}」</div>
+                </div>`).join("")}
+            </div>
+            <div class="nominee-label" data-step="${base + 1}" style="margin-top:14px">GRAND PRIX NOMINEES</div>
+            ${gp.nominees.map((n, i) => quoteCard(n, base + 2 + i)).join("")}
+            <div class="drum" data-step="${base + 2 + gp.nominees.length}">おもしろコメント大賞は・・・・・・</div>
+            <div class="winner-card" data-step="${base + 3 + gp.nominees.length}">
+              <div class="crown">👑</div>
+              <div class="prize">2026年8月 おもしろコメント大賞</div>
+              <div class="msg">「${e(w.msg)}」</div>
+              <div class="note">${e(w.name)} ・ ${e(w.date)}<br />${e(gp.comment)}</div>
+            </div>
+          </div>`;
+      }
+
+      function renderLetter() {
+        return `
+          <div class="corner-tag">CORNER 8</div>
+          <h2 class="corner-title">Claude からの手紙</h2>
+          <div class="panel letter">
+            ${D.letter.paragraphs.map((p, i) => `<p data-step="${i + 1}">${e(p)}</p>`).join("")}
+            <div class="sig" data-step="${D.letter.paragraphs.length + 1}">${e(D.letter.sig)}</div>
+          </div>`;
+      }
+
+      function renderEnding() {
+        return `
+          <div data-step="0">
+            <div class="ending-emoji">${e(D.ending.emoji)}</div>
+            <h1 class="hero-title">${e(D.ending.title)}</h1>
+            <p class="hero-sub">${e(D.ending.sub)}</p>
+          </div>
+          <p class="hero-sub" data-step="1" style="font-size:clamp(14px,1.2vw,22px)">${e(D.ending.ps)}</p>`;
+      }
+
+      /* ======================== シーン定義 ======================== */
+      const SCENES = [];
+      SCENES.push({ total: 2, render: renderOpening });
+      SCENES.push({ total: D.timeline.length, render: renderTimeline });
+      SCENES.push({ total: D.newcomers.featured.length + 1, render: renderNewcomers });
+      D.quiz.forEach((_, i) => SCENES.push({ total: 2, render: () => renderQuiz(i) }));
+      D.bursts.forEach((_, i) => SCENES.push({ total: 1, render: () => renderBurst(i) }));
+      SCENES.push({
+        total: D.buzzwords.nominees.length + 2,
+        render: renderBuzzwords,
+        confettiAt: D.buzzwords.nominees.length + 2,
+      });
+      SCENES.push({ total: D.meigen.length, render: renderMeigen });
+      SCENES.push({
+        total: D.funny.categories.length + 3 + D.funny.grandPrix.nominees.length,
+        render: renderFunny,
+        confettiAt: D.funny.categories.length + 3 + D.funny.grandPrix.nominees.length,
+        confettiBig: true,
+      });
+      SCENES.push({ total: D.letter.paragraphs.length + 1, render: renderLetter });
+      SCENES.push({ total: 1, render: renderEnding, confettiAt: 0 });
+
+      // 進行ドット用: シーンを10コーナーに割当(クイズ4画面・TOP3 3画面をまとめる)
+      const DOT_OF_SCENE = [];
+      {
+        let dot = 0;
+        SCENES.forEach((s, i) => {
+          if (i === 0) dot = 0; // opening
+          else if (i === 1) dot = 1; // timeline
+          else if (i === 2) dot = 2; // newcomers
+          else if (i <= 2 + D.quiz.length) dot = 3; // quiz
+          else if (i <= 2 + D.quiz.length + D.bursts.length) dot = 4; // bursts
+          else dot = 5 + (i - (3 + D.quiz.length + D.bursts.length)); // 5..9
+          DOT_OF_SCENE.push(dot);
+        });
+      }
+      const DOT_COUNT = 10;
+
+      /* ======================== ステート機械 ======================== */
+      const stage = document.getElementById("stage");
+      const progress = document.getElementById("progress");
+      const hint = document.getElementById("hint");
+      let sceneIdx = 0;
+      let stepIdx = 0;
+      let interacted = false;
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function buildDots() {
+        progress.innerHTML = Array.from({ length: DOT_COUNT }, () => '<span class="dot"></span>').join("");
+      }
+      function updateDots() {
+        const cur = DOT_OF_SCENE[sceneIdx];
+        [...progress.children].forEach((d, i) => d.classList.toggle("act", i === cur));
+      }
+
+      function applySteps() {
+        let newest = null;
+        stage.querySelectorAll("[data-step]").forEach((el) => {
+          const on = Number(el.dataset.step) <= stepIdx;
+          el.classList.toggle("on", on);
+          if (on && (!newest || Number(el.dataset.step) >= Number(newest.dataset.step))) newest = el;
+        });
+        // 長いパネルでも、いま出た要素が見えるようにスクロール
+        if (newest) newest.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+        stage.querySelectorAll("[data-mark]").forEach((el) => {
+          el.classList.toggle("marked", Number(el.dataset.mark) <= stepIdx);
+        });
+        const s = SCENES[sceneIdx];
+        if (s.confettiAt != null && stepIdx === s.confettiAt) {
+          spawnConfetti(s.confettiBig ? 160 : 90);
+        }
+      }
+
+      function renderScene() {
+        stage.innerHTML = SCENES[sceneIdx].render();
+        updateDots();
+        // 初期ステップ(0)を即時表示
+        requestAnimationFrame(() => requestAnimationFrame(applySteps));
+      }
+
+      function gotoScene(i, step) {
+        sceneIdx = Math.max(0, Math.min(SCENES.length - 1, i));
+        stepIdx = Math.max(0, Math.min(SCENES[sceneIdx].total, step ?? 0));
+        stage.classList.add("fading");
+        setTimeout(() => {
+          renderScene();
+          stage.classList.remove("fading");
+        }, reduceMotion ? 0 : 280);
+      }
+
+      function advance() {
+        dismissHint();
+        if (stepIdx < SCENES[sceneIdx].total) {
+          stepIdx++;
+          applySteps();
+        } else if (sceneIdx < SCENES.length - 1) {
+          gotoScene(sceneIdx + 1, 0);
+        }
+      }
+      function back() {
+        dismissHint();
+        if (stepIdx > 0) {
+          stepIdx--;
+          applySteps();
+        } else if (sceneIdx > 0) {
+          const prev = sceneIdx - 1;
+          gotoScene(prev, SCENES[prev].total);
+        }
+      }
+      function dismissHint() {
+        if (!interacted) {
+          interacted = true;
+          setTimeout(() => hint.classList.add("gone"), 4000);
+        }
+      }
+
+      /* ======================== 紙吹雪 ======================== */
+      const COLORS = ["#f6a9c7", "#b9b7ff", "#9be7d5", "#ffc8a8", "#ffd98a", "#dbe6ff"];
+      function spawnConfetti(count) {
+        if (reduceMotion) return;
+        const layer = document.getElementById("confetti-layer");
+        for (let i = 0; i < count; i++) {
+          const c = document.createElement("div");
+          c.className = "confetti";
+          c.style.left = Math.random() * 100 + "vw";
+          c.style.background = COLORS[(Math.random() * COLORS.length) | 0];
+          c.style.width = 8 + Math.random() * 10 + "px";
+          c.style.height = 14 + Math.random() * 12 + "px";
+          c.style.animationDuration = 3.6 + Math.random() * 2.6 + "s";
+          c.style.animationDelay = Math.random() * 0.9 + "s";
+          layer.appendChild(c);
+          setTimeout(() => c.remove(), 7500);
+        }
+      }
+
+      /* ======================== 入力 ======================== */
+      window.addEventListener("pointerdown", (ev) => {
+        if (ev.button === 2) return;
+        advance();
+      });
+      window.addEventListener("contextmenu", (ev) => {
+        ev.preventDefault();
+        back();
+      });
+      window.addEventListener("keydown", (ev) => {
+        const k = ev.key;
+        if (k === "Enter" || k === " " || k === "ArrowRight" || k === "ArrowDown") {
+          ev.preventDefault();
+          advance();
+        } else if (k === "Backspace" || k === "ArrowLeft" || k === "ArrowUp") {
+          ev.preventDefault();
+          back();
+        } else if (/^[0-9]$/.test(k)) {
+          // 数字キー: コーナー頭出し(リハーサル用)
+          const dot = Number(k);
+          const target = DOT_OF_SCENE.indexOf(dot);
+          if (target >= 0) gotoScene(target, 0);
+        }
+      });
+
+      // 検証・リハーサル用フック
+      window.__jump = (i, step) => gotoScene(i, step ?? 0);
+      window.__sceneCount = SCENES.length;
+
+      buildDots();
+      renderScene();
+    </script>
+  </body>
+</html>
