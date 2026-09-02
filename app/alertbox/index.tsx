@@ -35,6 +35,7 @@ import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
 import { getTable, getById, insert, getDoneruAmount } from "./api.utils";
+import { VideoCanvasRenderer } from "./components/VideoCanvasRenderer";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
 const NOTIFICATION_TYPES = [
@@ -99,8 +100,6 @@ export default function AlertBox() {
 
   // セッション識別子（ログ相関用）
   const sessionId = useRef(new Date().getTime());
-
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // エラーメッセージ
   const [error, setError] = useState<string | null>(null);
@@ -526,37 +525,6 @@ export default function AlertBox() {
     setDisplaySource({ type: "image", url: fallbackImageUrl });
   }, [iconUrl, imageUrl, notification]);
 
-  // play() の失敗を拾う useEffect
-  useEffect(() => {
-    if (Platform.OS !== "web") return;
-    if (displaySource.type !== "video" || !displaySource.url) return;
-    if (!videoRef.current) return;
-
-    const el = videoRef.current;
-
-    sendLog("AlertBox", sessionId, "videoPlayAttempt", {
-      url: displaySource.url,
-      readyState: el.readyState,
-      networkState: el.networkState,
-    });
-
-    const playPromise = el.play();
-
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch((error) => {
-        sendLog("AlertBox", sessionId, "videoPlayRejected", {
-          url: displaySource.url,
-          message: error instanceof Error ? error.message : String(error),
-          name:
-            typeof error === "object" && error && "name" in error
-              ? String((error as { name?: string }).name)
-              : undefined,
-        });
-        fallbackToImageSource();
-      });
-    }
-  }, [displaySource, fallbackToImageSource]);
-
   // 金額に比例したエフェクト回数（花火/雨）を算出
   const effectCounts = useMemo(
     () =>
@@ -590,14 +558,7 @@ export default function AlertBox() {
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
                 {displaySource.type === "video" && displaySource.url ? (
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    controls={false}
-                    loop={false}
-                    muted
-                    playsInline
-                    preload="auto"
+                  <VideoCanvasRenderer
                     src={displaySource.url}
                     style={{ ...styles.image }}
                     onLoadStart={() =>
@@ -605,19 +566,16 @@ export default function AlertBox() {
                         url: displaySource.url,
                       })
                     }
-                    onLoadedMetadata={(e) =>
+                    onLoadedMetadata={(meta) =>
                       sendLog("AlertBox", sessionId, "videoLoadedMetadata", {
                         url: displaySource.url,
-                        duration: e.currentTarget.duration,
-                        readyState: e.currentTarget.readyState,
-                        networkState: e.currentTarget.networkState,
+                        ...meta,
                       })
                     }
-                    onCanPlay={(e) =>
+                    onCanPlay={(meta) =>
                       sendLog("AlertBox", sessionId, "videoCanPlay", {
                         url: displaySource.url,
-                        readyState: e.currentTarget.readyState,
-                        networkState: e.currentTarget.networkState,
+                        ...meta,
                       })
                     }
                     onPlaying={() =>
@@ -625,27 +583,16 @@ export default function AlertBox() {
                         url: displaySource.url,
                       })
                     }
-                    onEnded={(e) => {
-                      const v = e.currentTarget;
-                      v.pause();
-
-                      if (Number.isFinite(v.duration) && v.duration > 0) {
-                        v.currentTime = Math.max(v.duration - 0.05, 0);
-                      }
-
+                    onEnded={(meta) =>
                       sendLog("AlertBox", sessionId, "videoEnded", {
                         url: displaySource.url,
-                        duration: v.duration,
-                      });
-                    }}
-                    onError={(e) => {
-                      const mediaError = e.currentTarget.error;
+                        ...meta,
+                      })
+                    }
+                    onError={(meta) => {
                       sendLog("AlertBox", sessionId, "videoError", {
                         url: displaySource.url,
-                        code: mediaError?.code,
-                        message: mediaError?.message,
-                        readyState: e.currentTarget.readyState,
-                        networkState: e.currentTarget.networkState,
+                        ...meta,
                       });
                       fallbackToImageSource();
                     }}
