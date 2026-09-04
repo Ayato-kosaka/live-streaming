@@ -55,3 +55,8 @@ pip-delete-this-directory.txt
 # あやと島(Next.js)のビルド成果物
 site/out/
 site/.next/
+
+# 島のスプライトの元素材とライブラリ（tools/sprites/README.md の手順で取得する）
+tools/sprites/models/
+tools/sprites/vendor/
+tools/sprites/node_modules

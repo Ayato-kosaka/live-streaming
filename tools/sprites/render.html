@@ -1,0 +1,201 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/jsm/"}}</script>
+</head><body>
+<script type="module">
+/**
+ * Kenney の3Dモデルを「あやとのイラストと同じ画風」のスプライトに焼くレンダラ。
+ *
+ * あやとのキャラ絵は「太い黒線 + フラット塗り」なので、3D素材の側を寄せる:
+ *   1. MeshToonMaterial + 2段グラデーションで、陰影を面で割る(フラット塗り)
+ *   2. 頂点を法線方向に押し出した黒い裏面シェルで輪郭線を付ける。
+ *      押し出し量はカメラの表示範囲から決めるので、大きい物でも小さい物でも
+ *      画面上の線の太さが揃う(これが揃わないと「同じ絵」に見えない)
+ * これで両者が同じ絵の中にいるように見える。
+ */
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const SIZE = 768;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(SIZE, SIZE);
+renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.add(new THREE.AmbientLight(0xffffff, 1.55));
+const key = new THREE.DirectionalLight(0xfff4dc, 1.5);
+key.position.set(-5, 8, 6);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xd6f0ff, 0.5);
+rim.position.set(6, 4, -5);
+scene.add(rim);
+
+/** トゥーン用の段階グラデーション(2段=フラットに近い) */
+function toonGradient(steps) {
+  const data = new Uint8Array(steps);
+  for (let i = 0; i < steps; i++) data[i] = Math.round(255 * (0.62 + (0.38 * i) / (steps - 1)));
+  const t = new THREE.DataTexture(data, steps, 1, THREE.RedFormat);
+  t.minFilter = t.magFilter = THREE.NearestFilter;
+  t.needsUpdate = true;
+  return t;
+}
+const GRADIENT = toonGradient(3);
+
+/**
+ * Kenney 既定のティール/ピーチ配色を、あやと島の配色に置き換える。
+ * テクスチャを持たないモデル(nature-kit)はマテリアル色で塗られているので、
+ * 色相帯ごとに置き換える。これで島全体の色味が1か所で決まる。
+ */
+const PALETTE_RULES = [
+  // 葉(ティール) → 黄みの明るい緑
+  { from: [0.40, 0.56], h: 0.265, s: 0.52, l: [0.34, 0.60] },
+  // 木部(ピーチ) → あたたかい木の色
+  { from: [0.03, 0.13], h: 0.075, s: 0.44, l: [0.30, 0.56] },
+  // 岩・雪(彩度が低いもの) → すこし温かいグレー
+  { lowSat: true, h: 0.09, s: 0.10, l: [0.55, 0.86] },
+];
+
+function remapColor(c) {
+  const hsl = { h: 0, s: 0, l: 0 };
+  c.getHSL(hsl);
+  for (const r of PALETTE_RULES) {
+    const hit = r.lowSat ? hsl.s < 0.12 : hsl.h >= r.from[0] && hsl.h <= r.from[1];
+    if (!hit) continue;
+    const t = Math.max(0, Math.min(1, (hsl.l - 0.15) / 0.7));
+    c.setHSL(r.h, r.s, r.l[0] + (r.l[1] - r.l[0]) * t);
+    return c;
+  }
+  // それ以外(花の赤・黄・紫など)は少しだけ明るく、彩度は控えめに
+  c.setHSL(hsl.h, Math.min(1, hsl.s * 0.88), Math.min(0.92, hsl.l * 1.08));
+  return c;
+}
+
+/** 頂点を法線方向へ押し出した裏面だけを黒く塗る = 輪郭線 */
+function makeOutlineMaterial() {
+  return new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: { uWidth: { value: 0.02 }, uColor: { value: new THREE.Color(0x2a1d12) } },
+    vertexShader: `
+      uniform float uWidth;
+      void main() {
+        vec3 n = normalize(normalMatrix * normal);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        mv.xyz += n * uWidth;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      void main() { gl_FragColor = vec4(uColor, 1.0); }`,
+  });
+}
+
+const loader = new GLTFLoader();
+const texCache = new Map();
+async function loadTexture(url) {
+  if (!texCache.has(url)) {
+    const t = await new THREE.TextureLoader().loadAsync(url);
+    t.flipY = false;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    texCache.set(url, t);
+  }
+  return texCache.get(url);
+}
+
+/** モデルを1つ読んで、トゥーン化 + 輪郭線シェルを付けた Group を返す */
+async function prepare(url, override, outlineWidth, shells, tint) {
+  const gltf = await loader.loadAsync(url);
+  const root = gltf.scene;
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const toon = mats.map((m) => {
+      // テクスチャを持たないモデル(nature-kit など)にパレット画像を貼ると
+      // UV が合わず真っ黒になる。元から map があるものだけ差し替える。
+      const map = m.map ? override ?? m.map : null;
+      const t = new THREE.MeshToonMaterial({
+        map,
+        color: map ? 0xffffff : (m.color ? m.color.clone() : new THREE.Color(0xffffff)),
+        gradientMap: GRADIENT,
+      });
+      if (!map) remapColor(t.color);
+      return t;
+    });
+    o.material = Array.isArray(o.material) ? toon : toon[0];
+
+    if (outlineWidth > 0) {
+      const shell = new THREE.Mesh(o.geometry, makeOutlineMaterial());
+      shell.position.copy(o.position);
+      shell.rotation.copy(o.rotation);
+      shell.scale.copy(o.scale);
+      o.parent.add(shell);
+      shells.push(shell);
+    }
+  });
+
+  return root;
+}
+
+/**
+ * 複数のパーツを組んで1枚に焼く。
+ * parts: [{ url, pos:[x,y,z], rot:[x,y,z](度), scale }]
+ */
+window.renderScene = async (parts, opts = {}) => {
+  const override = opts.colormap ? await loadTexture(opts.colormap) : null;
+  const outlineWidth = opts.outline ?? 0.012;
+  const shells = [];
+  const group = new THREE.Group();
+  for (const part of parts) {
+    const o = await prepare(part.url, override, outlineWidth, shells, opts.tint);
+    const [px, py, pz] = part.pos ?? [0, 0, 0];
+    const [rx, ry, rz] = part.rot ?? [0, 0, 0];
+    o.position.set(px, py, pz);
+    o.rotation.set((rx * Math.PI) / 180, (ry * Math.PI) / 180, (rz * Math.PI) / 180);
+    if (part.scale) o.scale.setScalar(part.scale);
+    group.add(o);
+  }
+  const root = group;
+  scene.add(root);
+
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const d = maxDim * (opts.zoom ?? 1.25);
+  const cam = new THREE.OrthographicCamera(-d, d, d, -d, 0.01, 4000);
+  const yaw = ((opts.yaw ?? 45) * Math.PI) / 180;
+  const pitch = ((opts.pitch ?? 35) * Math.PI) / 180;
+  const r = maxDim * 20;
+  cam.position.set(
+    center.x + r * Math.cos(pitch) * Math.sin(yaw),
+    center.y + r * Math.sin(pitch),
+    center.z + r * Math.cos(pitch) * Math.cos(yaw),
+  );
+  cam.lookAt(center);
+  cam.updateProjectionMatrix();
+
+  // 画面上で一定の太さになるよう、表示範囲から押し出し量を決める
+  const widthWorld = (d * 2 * outlineWidth) / 2;
+  for (const s of shells) s.material.uniforms.uWidth.value = widthWorld;
+
+  renderer.render(scene, cam);
+  const data = renderer.domElement.toDataURL("image/png");
+  scene.remove(root);
+  for (const s of shells) s.parent?.remove(s);
+  return data;
+};
+/** パーツの寸法を測る(組み立ての座標決めに使う) */
+window.__measure = async (url) => {
+  const g = await loader.loadAsync(url);
+  const box = new THREE.Box3().setFromObject(g.scene);
+  const s = box.getSize(new THREE.Vector3());
+  const c = box.getCenter(new THREE.Vector3());
+  return { size: [s.x, s.y, s.z], min: [box.min.x, box.min.y, box.min.z], center: [c.x, c.y, c.z] };
+};
+
+window.renderModel = (url, opts = {}) => window.renderScene([{ url }], opts);
+window.__ready = true;
+</script></body></html>
