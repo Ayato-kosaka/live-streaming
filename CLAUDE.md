@@ -48,7 +48,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 
 まず読む:
 
-- [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。見た目・触りごこち・言葉の原則
+- [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
+- [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
 - [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
 
