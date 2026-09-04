@@ -1,0 +1,556 @@
+{
+ "slug": "latvia",
+ "name": "ラトビア",
+ "spots": [
+  {
+   "id": "latvia-s165",
+   "cat": "see",
+   "title": "赤煉瓦のブラックヘッドの家",
+   "local": "Melngalvju nams",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "1334年に商人組合の会館として建てられ、独身商人の団体ブラックヘッドが本拠とした華麗な建物。第二次大戦で破壊されたが、建都800年の1999年に往時の姿へ復元された。赤煉瓦のファサードには天文時計と金の装飾、聖ゲオルギオスの像が輝く。地下では中世の遺構を見学でき、広場にはローランド像。夜のライトアップは息をのむ美しさ。",
+   "point": "夜のライトアップが本気で美しい",
+   "tips": [
+    "内部は有料、大統領執務室の展示もある",
+    "12月の広場はクリスマス市で埋まる"
+   ],
+   "info": "通常10時〜18時、月曜休。市庁舎広場に面する",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "建築",
+    "夜景",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/House_of_the_Blackheads_in_Riga.jpg/500px-House_of_the_Blackheads_in_Riga.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/House_of_the_Blackheads_in_Riga.jpg/960px-House_of_the_Blackheads_in_Riga.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:House_of_the_Blackheads_in_Riga.jpg"
+  },
+  {
+   "id": "latvia-s166",
+   "cat": "see",
+   "title": "ユーゲントの彫刻通り",
+   "local": "Alberta iela",
+   "city": "リガ",
+   "area": "中心部",
+   "body": "世界有数のユーゲントシュティール建築密集地。1901年から1908年頃にかけ、映画監督エイゼンシュテインの父ミハイルらが手がけた館が建ち並び、叫ぶ女神の顔、スフィンクス、青とテラコッタの装飾が空を向く。8番地のリガ・ユーゲント様式博物館は当時の住居を再現し、螺旋階段が撮影の名所。首が痛くなるまで見上げたくなる一本だ。",
+   "point": "見上げるほど発見がある通り",
+   "tips": [
+    "博物館の螺旋階段は入館者だけが撮影可",
+    "隣のエリザベテス通りにも名建築が多い"
+   ],
+   "info": "通りは常時。博物館は通常10時〜18時、月曜休",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "建築",
+    "世界遺産",
+    "街歩き",
+    "デザイン"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Riga_Jugendstil_Alberta_iela_12.JPG/500px-Riga_Jugendstil_Alberta_iela_12.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Riga_Jugendstil_Alberta_iela_12.JPG/960px-Riga_Jugendstil_Alberta_iela_12.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Riga_Jugendstil_Alberta_iela_12.JPG"
+  },
+  {
+   "id": "latvia-s167",
+   "cat": "see",
+   "title": "塔から望む赤屋根の海",
+   "local": "Sv. Pētera baznīca",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "13世紀創建、リガ最古級の教会。幾度も焼け落ちた尖塔は現在123mあり、エレベーターで72m地点の展望回廊へ上がれば、旧市街の赤屋根、ダウガヴァ川、晴れた日は遠くバルト海まで一望できる。塔頂の黄金の風見鶏は街の象徴だ。教会前にはブレーメンの音楽隊の像が立ち、ロバの鼻を撫でると願いが叶うという言い伝えが残る。",
+   "point": "エレベーターで72mの展望へ",
+   "tips": [
+    "強風の日は展望回廊が閉鎖される",
+    "夕方の斜光が赤屋根を最も美しく見せる"
+   ],
+   "info": "通常10時〜19時（冬季短縮）、月曜休。展望台は有料",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "教会",
+    "世界遺産",
+    "夜景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Riga_Skyline_Panorama%2C_Latvia_-_Diliff.jpg/500px-Riga_Skyline_Panorama%2C_Latvia_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Riga_Skyline_Panorama%2C_Latvia_-_Diliff.jpg/960px-Riga_Skyline_Panorama%2C_Latvia_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Riga_Skyline_Panorama%2C_Latvia_-_Diliff.jpg"
+  },
+  {
+   "id": "latvia-s168",
+   "cat": "see",
+   "title": "白亜の宮殿で見る北国の絵",
+   "local": "Latvijas Nacionālais mākslas muzejs",
+   "city": "リガ",
+   "area": "中心部",
+   "body": "1905年築、堂々たるバロック・リバイバル様式の国立美術館。2016年の大改修でガラス屋根の吹き抜けと地下展示室が生まれ、ロゼンタールスやプルヴィーティスらラトビア絵画の名作が並ぶ。凍る川、雪をかぶる白樺、素朴な農村。北国の光の描き方に唸らされる。屋上テラスからは公園と運河の眺めが広がり、雨の日の避難先としても優秀だ。",
+   "point": "屋上テラスからの眺めも必見",
+   "tips": [
+    "月曜休館、企画展は別料金のことがある",
+    "隣のエスプラナーデ公園は散歩に最適"
+   ],
+   "info": "通常10時〜18時、月曜休。Jaņa Rozentāla laukums 1",
+   "budget": "〜€10",
+   "time": "半日",
+   "season": "通年",
+   "tags": [
+    "美術館",
+    "雨の日OK",
+    "建築"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Latvian_National_Museum_of_Art.jpg/500px-Latvian_National_Museum_of_Art.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Latvian_National_Museum_of_Art.jpg/960px-Latvian_National_Museum_of_Art.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Latvian_National_Museum_of_Art.jpg"
+  },
+  {
+   "id": "latvia-s169",
+   "cat": "see",
+   "title": "バルトのベルサイユ宮殿",
+   "local": "Rundāles pils",
+   "city": "ルンダーレ",
+   "area": "ゼムガレ地方",
+   "body": "エルミタージュを手がけたラストレッリが1736年に着工した、クールラント公のバロック夏の宮殿。138室のうち金の間、白の間、公爵夫人の居室などが公開され、天井画と漆喰装飾は圧巻の一言。フランス式庭園には2万株を超えるバラが植えられ、6月下旬から7月にかけて満開になる。リガから南へ約80km、リトアニア方面への移動途中にも寄りやすい。",
+   "point": "バラ園は初夏が最高潮を迎える",
+   "tips": [
+    "リガからバス、または現地ツアーが手軽",
+    "庭園だけの入場券も用意されている"
+   ],
+   "info": "通常10時〜18時（夏季は延長）。庭園は別券あり",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "初夏(5-6月)",
+   "tags": [
+    "城",
+    "建築",
+    "絶景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Rundale_palace%2C_still_the_most_beautiful_in_the_world._Latvia_%2810759228303%29.jpg/500px-Rundale_palace%2C_still_the_most_beautiful_in_the_world._Latvia_%2810759228303%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Rundale_palace%2C_still_the_most_beautiful_in_the_world._Latvia_%2810759228303%29.jpg/960px-Rundale_palace%2C_still_the_most_beautiful_in_the_world._Latvia_%2810759228303%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rundale_palace%2C_still_the_most_beautiful_in_the_world._Latvia_%2810759228303%29.jpg"
+  },
+  {
+   "id": "latvia-s170",
+   "cat": "see",
+   "title": "赤煉瓦の城と悲恋の伝説",
+   "local": "Turaidas pils",
+   "city": "シグルダ",
+   "area": "ガウヤ渓谷",
+   "body": "1214年創建、ガウヤ渓谷を見下ろす赤煉瓦の城。円塔の展望室から広がるのは、秋には黄金色に燃える広葉樹の海だ。敷地には17世紀の木造教会と、トゥライダのバラと呼ばれた娘マイヤの墓があり、貞節を守って命を落とした悲恋の物語が語り継がれる。民族歌の丘には巨大な石像が点在し、ゆっくり歩けば1〜2時間はあっという間に過ぎる。",
+   "point": "円塔の展望から渓谷を一望",
+   "tips": [
+    "紅葉の見頃は9月末から10月上旬",
+    "シグルダ城跡やロープウェイと組み合わせて"
+   ],
+   "info": "通常10時〜18時（夏季延長）。リガから電車で約1時間半",
+   "budget": "〜€10",
+   "time": "半日",
+   "season": "秋(9-10月)",
+   "tags": [
+    "城",
+    "絶景",
+    "自然",
+    "ハイキング"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Turaida_Castle.JPG/500px-Turaida_Castle.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Turaida_Castle.JPG/960px-Turaida_Castle.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Turaida_Castle.JPG"
+  },
+  {
+   "id": "latvia-s171",
+   "cat": "see",
+   "title": "欧州一幅広い滝の町",
+   "local": "Ventas rumba",
+   "city": "クルディーガ",
+   "area": "ヴェンタ川",
+   "body": "幅約240m、落差2mに満たない、ヨーロッパでいちばん幅の広い滝。春には遡上する魚が滝を跳び、かつては宙を飛ぶ魚を網ですくう漁が行われていた。すぐ隣には1874年築の赤煉瓦の橋が架かる。木造家屋が連なる旧市街は2023年に世界遺産へ登録され、静かな川辺とパステルの窓枠が続く。時計を忘れて半日歩きたい小さな町だ。",
+   "point": "2023年世界遺産になった旧市街",
+   "tips": [
+    "リガからバスで約3時間、日帰りも可能",
+    "春の魚の遡上シーズンは名物の光景"
+   ],
+   "info": "滝は24時間・無料。旧市街の観光案内所は日中営業",
+   "budget": "無料",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "世界遺産",
+    "自然",
+    "街歩き",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Ventas_rapid_kuldiga_latvia.jpg/500px-Ventas_rapid_kuldiga_latvia.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Ventas_rapid_kuldiga_latvia.jpg/960px-Ventas_rapid_kuldiga_latvia.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ventas_rapid_kuldiga_latvia.jpg"
+  },
+  {
+   "id": "latvia-s172",
+   "cat": "eat",
+   "title": "飛行船格納庫が街の胃袋",
+   "local": "Rīgas Centrāltirgus",
+   "city": "リガ",
+   "area": "中央市場",
+   "body": "第一次大戦で使われたドイツ軍の飛行船格納庫5棟を転用した、ヨーロッパ最大級の市場。1930年開場で、肉、乳製品、魚、野菜と棟ごとに主役が変わる。燻製魚、蜂蜜、酸味のある黒パン、樽のザワークラウトと試食が楽しく、近年はガストロ棟が加わって地元クラフトビールや軽食も充実。外の路上には花と香草を売るおばあちゃんが並ぶ。",
+   "point": "燻製魚と黒パンを買って公園へ",
+   "tips": [
+    "混雑時はスリに注意、荷物は体の前に",
+    "日曜は早じまいする店が多い"
+   ],
+   "info": "概ね7時〜18時（棟により異なる）。中央駅から徒歩5分",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "郷土料理",
+    "雨の日OK",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/German_zeppelin_hangars%2C_now_Riga_Central_Market_%2823409045760%29.jpg/500px-German_zeppelin_hangars%2C_now_Riga_Central_Market_%2823409045760%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/German_zeppelin_hangars%2C_now_Riga_Central_Market_%2823409045760%29.jpg/960px-German_zeppelin_hangars%2C_now_Riga_Central_Market_%2823409045760%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:German_zeppelin_hangars%2C_now_Riga_Central_Market_%2823409045760%29.jpg"
+  },
+  {
+   "id": "latvia-s173",
+   "cat": "eat",
+   "title": "灰色えんどうの現代郷土料理",
+   "local": "Restorāns Milda",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "ラトビアの家庭料理を現代の皿に置き換える人気店。看板は国民食である灰色えんどう豆とベーコンの一皿、そしてバターと蜂蜜で食べる自家製ライ麦パンだ。前菜には燻製の魚やカッテージチーズ、デザートには黒パンとクランベリーを重ねた伝統菓子。器も内装もどこか祖母の家のようで、素朴な味に長旅の疲れがゆっくりほどけていく。",
+   "point": "灰色えんどう豆はラトビアの国民食",
+   "tips": [
+    "席数が少ないので夜は予約が安心",
+    "地元ブルワリーの樽生ビールを合わせて"
+   ],
+   "info": "12時〜22時頃、予約推奨。旧市街Kungu iela周辺",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "郷土料理",
+    "予約必須",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Grey_peas_at_restaurant_Milda_in_Riga.jpg/500px-Grey_peas_at_restaurant_Milda_in_Riga.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Grey_peas_at_restaurant_Milda_in_Riga.jpg/960px-Grey_peas_at_restaurant_Milda_in_Riga.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Grey_peas_at_restaurant_Milda_in_Riga.jpg"
+  },
+  {
+   "id": "latvia-s174",
+   "cat": "eat",
+   "title": "黒い薬草リキュール体験",
+   "local": "Rīgas Melnais balzams",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "1752年から続く、24種の薬草や根、ベリーを漬け込んだ黒いリキュール。アルコール45度、強い苦味の奥に蜂蜜とスパイスが潜む。ストレートも良いが、ブラックカラント味を炭酸で割るのが今風で、ホットで飲めば冬の体が芯から温まる。旧市街のバーではカシスとのカクテルが定番。陶製ボトルは見た目にも映え、土産としても人気が高い。",
+   "point": "カシス味の炭酸割りが飲みやすい",
+   "tips": [
+    "空港より市内スーパーの方が安く買える",
+    "度数45度、一杯の量は控えめに"
+   ],
+   "info": "バーは夕方から深夜。土産用はスーパーでも購入可",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "バー",
+    "おみやげ",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Riga_Black_Balsam.jpg/500px-Riga_Black_Balsam.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Riga_Black_Balsam.jpg/960px-Riga_Black_Balsam.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Riga_Black_Balsam.jpg"
+  },
+  {
+   "id": "latvia-s175",
+   "cat": "eat",
+   "title": "地下に響く民謡ビアセラー",
+   "local": "Folkklubs Ala Pagrabs",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "石造りのアーチが続く地下空間に、ラトビア各地の地ビールが数十種そろう酒場。夜が更けると民族音楽の生演奏が始まり、地元客が輪になって踊り出す。合わせたいのは黒パンのニンニク揚げやカッテージチーズ、そしてライ麦パンと生クリームを重ねた伝統デザート。観光客と地元客が半々の空気で、ひとりでも入りやすいのが嬉しい。",
+   "point": "週末の夜はライブで大盛り上がり",
+   "tips": [
+    "深夜まで営業、つい長居してしまう",
+    "小さいサイズで数種類を飲み比べたい"
+   ],
+   "info": "12時から翌2時頃（週末は延長）。Peldu iela 19",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "バー",
+    "郷土料理",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Rupjmaizes_k%C4%81rtojums.jpg/500px-Rupjmaizes_k%C4%81rtojums.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Rupjmaizes_k%C4%81rtojums.jpg/960px-Rupjmaizes_k%C4%81rtojums.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rupjmaizes_k%C4%81rtojums.jpg"
+  },
+  {
+   "id": "latvia-s176",
+   "cat": "eat",
+   "title": "クルゼメの人参タルト",
+   "local": "Sklandrausis",
+   "city": "クルディーガ",
+   "area": "クルゼメ地方",
+   "body": "ライ麦の生地にジャガイモと人参のピュレを重ねて焼く、素朴な甘さの伝統菓子。EUの伝統的特産品保証を受けたクルゼメ地方の名物で、キャラウェイの香りとオレンジ色の断面が愛らしい。市場やパン屋で1個2ユーロ前後と気軽な値段だ。温かいコーヒーと合わせれば、農村の台所の記憶を少し分けてもらったような気分になる。",
+   "point": "1個€2前後、朝食にも軽食にも",
+   "tips": [
+    "午後には売り切れていることが多い",
+    "リガ中央市場のパン棟でも購入できる"
+   ],
+   "info": "パン屋や市場で通年販売。クルディーガとヴェンツピルスが本場",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "スイーツ",
+    "市場",
+    "おみやげ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Sklandrausis.jpg/500px-Sklandrausis.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Sklandrausis.jpg/960px-Sklandrausis.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sklandrausis.jpg"
+  },
+  {
+   "id": "latvia-s177",
+   "cat": "eat",
+   "title": "1870年からの甘い時計",
+   "local": "Laima",
+   "city": "リガ",
+   "area": "自由記念碑そば",
+   "body": "自由の記念碑の脇に立つライマの時計は、リガっ子の待ち合わせの聖地。ラトビアを代表するチョコレートブランドは1870年創業で、ミルクチョコやリキュール入りボンボン、蜂蜜とスパイスを効かせたジンジャークッキーが人気だ。近くのチョコレート博物館では製造工程の見学と試食ができ、限定パッケージは軽くてかさばらない土産の定番になる。",
+   "point": "待ち合わせはライマの時計の下で",
+   "tips": [
+    "12月は街中にジンジャークッキーが並ぶ",
+    "博物館の見学は事前予約が確実"
+   ],
+   "info": "時計は自由の記念碑のそば。店舗は概ね10時〜20時",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "スイーツ",
+    "おみやげ",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Gingerbreads_%28Latvia%29.jpg/500px-Gingerbreads_%28Latvia%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Gingerbreads_%28Latvia%29.jpg/960px-Gingerbreads_%28Latvia%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Gingerbreads_%28Latvia%29.jpg"
+  },
+  {
+   "id": "latvia-s178",
+   "cat": "do",
+   "title": "松林と白砂の保養地",
+   "local": "Jūrmalas pludmale",
+   "city": "ユールマラ",
+   "area": "マヨリ",
+   "body": "リガから電車で30分、33kmも続く白砂の海岸線。松林には19世紀から続く木造の別荘が点在し、保養地の空気が今も濃い。ヨマス通りにはカフェとアイスクリームの店が並ぶ。水温はやや低めだが、その分だけ夕暮れの長さが格別だ。ジンタリ森林公園に立つ高さ38mの展望塔は無料で上れ、海と松林の境目をゆっくり見下ろせる。",
+   "point": "電車と徒歩だけで気軽に行ける",
+   "tips": [
+    "夏は車に環境税が必要、電車が断然楽",
+    "展望塔は冬季に閉まる日がある"
+   ],
+   "info": "電車でMajori駅下車。ビーチは無料で通年開放",
+   "budget": "〜€10",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "海",
+    "自然",
+    "街歩き",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Latvia%2C_Jurmala%2C_Bulduri_beach_sunset.jpg/500px-Latvia%2C_Jurmala%2C_Bulduri_beach_sunset.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Latvia%2C_Jurmala%2C_Bulduri_beach_sunset.jpg/960px-Latvia%2C_Jurmala%2C_Bulduri_beach_sunset.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Latvia%2C_Jurmala%2C_Bulduri_beach_sunset.jpg"
+  },
+  {
+   "id": "latvia-s179",
+   "cat": "do",
+   "title": "渓谷を渡る空中ロープウェイ",
+   "local": "Siguldas gaisa trošu ceļš",
+   "city": "シグルダ",
+   "area": "ガウヤ国立公園",
+   "body": "1969年運行開始、ガウヤ渓谷を高さ40m、全長1060mで横断するロープウェイ。眼下には蛇行する川と紅葉の森が広がり、真下を覗くと足がすくむ。夏はここからバンジージャンプに挑む猛者も。冬は1986年建設のボブスレー・リュージュ競技場でゴム製ボブに乗り、時速80kmの滑走を体験できる。絶景とアドレナリンを一日で味わえる町だ。",
+   "point": "秋の紅葉シーズンが眺めの最高潮",
+   "tips": [
+    "ボブスレー体験は冬季限定で要予約",
+    "シグルダ駅からロープウェイまで徒歩20分"
+   ],
+   "info": "ロープウェイは通年運行（概ね30分毎）。悪天候時は運休",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "秋(9-10月)",
+   "tags": [
+    "絶景",
+    "自然",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sigulda_Cable_Car_2024_%285%29.jpg/500px-Sigulda_Cable_Car_2024_%285%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sigulda_Cable_Car_2024_%285%29.jpg/960px-Sigulda_Cable_Car_2024_%285%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sigulda_Cable_Car_2024_%285%29.jpg"
+  },
+  {
+   "id": "latvia-s180",
+   "cat": "do",
+   "title": "霧の湿原を歩く朝",
+   "local": "Lielais Ķemeru tīrelis",
+   "city": "ユールマラ近郊",
+   "area": "ケメリ国立公園",
+   "body": "鏡のような池塘が点在する大湿原を、全長約3.4kmの木道が貫く。夜明け前に歩き出すと霧が水面を漂い、朝日で世界がピンクに染まる瞬間に立ち会える。展望塔からは地平線まで湿原と松の低木が続く。近くには硫黄泉が湧き、20世紀初頭の温泉保養地の面影も残る。リガから電車で約1時間、夏の朝活として旅程に組み込みたい。",
+   "point": "日の出直後に立ちこめる霧が絶景",
+   "tips": [
+    "駐車場は有料、電車と徒歩でも行ける",
+    "木道は一方通行のループ、逆走は避けて"
+   ],
+   "info": "24時間開放・無料。ケメリ駅から徒歩約1時間",
+   "budget": "無料",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "自然",
+    "ハイキング",
+    "絶景",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/%C4%B6emeru_nacion%C4%81lais_parks._Liel%C4%81_%C4%B6emeru_t%C4%ABre%C4%BCa_taka.jpg/500px-%C4%B6emeru_nacion%C4%81lais_parks._Liel%C4%81_%C4%B6emeru_t%C4%ABre%C4%BCa_taka.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/%C4%B6emeru_nacion%C4%81lais_parks._Liel%C4%81_%C4%B6emeru_t%C4%ABre%C4%BCa_taka.jpg/960px-%C4%B6emeru_nacion%C4%81lais_parks._Liel%C4%81_%C4%B6emeru_t%C4%ABre%C4%BCa_taka.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%C4%B6emeru_nacion%C4%81lais_parks._Liel%C4%81_%C4%B6emeru_t%C4%ABre%C4%BCa_taka.jpg"
+  },
+  {
+   "id": "latvia-s181",
+   "cat": "do",
+   "title": "蝋燭のランタンで巡る城",
+   "local": "Cēsu pils",
+   "city": "ツェーシス",
+   "area": "ヴィゼメ地方",
+   "body": "1214年にリヴォニア騎士団が築いた城跡。見どころは、貸し出される本物の蝋燭ランタンを手に真っ暗な西塔を上る体験だ。揺れる炎に浮かぶ石の螺旋階段は映画のワンシーンそのもの。隣接する新城には歴史展示、旧市街には木造の家並みと地ビール醸造所が待つ。リガから電車で約1時間半、小さいけれど密度の高い名品の町。",
+   "point": "本物の蝋燭ランタンを持って塔へ",
+   "tips": [
+    "夏は中世祭りやコンサートも開催される",
+    "冬季は開館時間が短くなるので注意"
+   ],
+   "info": "通常10時〜18時（季節変動）、冬季は休館日が増える",
+   "budget": "〜€10",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "城",
+    "街歩き",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Cesis_Lettland_Latvia.jpg/500px-Cesis_Lettland_Latvia.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Cesis_Lettland_Latvia.jpg/960px-Cesis_Lettland_Latvia.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Cesis_Lettland_Latvia.jpg"
+  },
+  {
+   "id": "latvia-s182",
+   "cat": "buy",
+   "title": "木造街区の土曜マルシェ",
+   "local": "Kalnciema kvartāls",
+   "city": "リガ",
+   "area": "パールダウガヴァ",
+   "body": "19世紀の木造建築を修復した街区で、毎週土曜に開かれるファーマーズマーケット。地元のチーズ、蜂蜜、燻製肉、焼きたてのライ麦パン、陶器やリネンの作家ものが中庭に並ぶ。ライブ演奏や子ども向けのワークショップもあり、夏はワイン片手にのんびり過ごせる。旧市街から川を渡ってトラムで15分、暮らしの手触りに出会える場所だ。",
+   "point": "開催は土曜10時から16時が基本",
+   "tips": [
+    "午前中は品ぞろえが良く比較的空いている",
+    "小さな露店では現金があると便利"
+   ],
+   "info": "土曜10時〜16時が中心。Kalnciema iela 35周辺",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "雑貨",
+    "おみやげ",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Kalnciema_iela_24%2C_R%C4%ABga.JPG/500px-Kalnciema_iela_24%2C_R%C4%ABga.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Kalnciema_iela_24%2C_R%C4%ABga.JPG/960px-Kalnciema_iela_24%2C_R%C4%ABga.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kalnciema_iela_24%2C_R%C4%ABga.JPG"
+  },
+  {
+   "id": "latvia-s183",
+   "cat": "buy",
+   "title": "バルトのリネンを一枚",
+   "local": "Latvijas lini",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "涼しくて丈夫、洗うほど柔らかくなるバルトのリネン。旧市街の工房系ショップには、キッチンクロス、テーブルランナー、シャツ、寝具が生成りやインディゴ色で並ぶ。伝統模様リエルヴァールデ帯の文様を取り入れたデザインも人気だ。軽くて畳めるので土産に最適、クロスは1枚10ユーロ前後から。手仕事のタグを確かめて選びたい。",
+   "point": "軽くて割れない優秀な土産",
+   "tips": [
+    "洗濯は低温、初回は単独洗いが安心",
+    "ラトビア製かどうかタグで確認を"
+   ],
+   "info": "旧市街の店舗は概ね10時〜19時。日曜は短縮の店も",
+   "budget": "€10-30",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "雑貨",
+    "おみやげ",
+    "デザイン"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Linen_cloth.jpg/500px-Linen_cloth.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Linen_cloth.jpg/960px-Linen_cloth.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Linen_cloth.jpg"
+  },
+  {
+   "id": "latvia-s184",
+   "cat": "buy",
+   "title": "模様が語る手編みミトン",
+   "local": "Latviešu cimdi",
+   "city": "リガ",
+   "area": "旧市街",
+   "body": "ラトビアのミトンは地方ごとに模様が異なり、太陽や星、蛇といった記号に守護の意味が込められている。かつては嫁入り道具として何百組も編まれ、今も歌と祭りの民族衣装に欠かせない。旧市街の手工芸店では手編みの一点ものが20ユーロ前後から手に入る。柄の由来を尋ねると、店主が地図を広げて土地の話を始めてくれることもある。",
+   "point": "模様にはそれぞれ土地の意味がある",
+   "tips": [
+    "手編みか機械編みかは裏側を見れば分かる",
+    "冬用は厚手ウール、夏の土産なら靴下も"
+   ],
+   "info": "手工芸店は概ね10時〜18時。市庁舎広場周辺に集中",
+   "budget": "€10-30",
+   "time": "30分",
+   "season": "冬(12-3月)",
+   "tags": [
+    "おみやげ",
+    "雑貨",
+    "街歩き"
+   ],
+   "img": "",
+   "big": "",
+   "cm": ""
+  },
+  {
+   "id": "latvia-s185",
+   "cat": "do",
+   "title": "谷を渡るレトロゴンドラ",
+   "local": "Siguldas gaisa trosu ceļš",
+   "city": "シグルダ",
+   "area": "シグルダ",
+   "body": "ガウヤ渓谷を、レトロな箱型ゴンドラで空中横断。全長1025m、高さ43mから見下ろす森と川は、まるでジオラマ。秋は谷いっぱいが黄金色、冬は白一色。1970年代から動く小さな箱に十数人で乗り込む、ちょっと昭和な感じもたまらない。",
+   "point": "窓側をキープして谷を俯瞰、紅葉期が圧巻",
+   "tips": [],
+   "info": "片道15ユーロ・往復22ユーロ／おおむね30分に1本",
+   "budget": "€10-30",
+   "time": "30分",
+   "season": "冬(12-3月)",
+   "tags": [
+    "自然"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sigulda_Cable_Car_2024_%285%29.jpg/500px-Sigulda_Cable_Car_2024_%285%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sigulda_Cable_Car_2024_%285%29.jpg/960px-Sigulda_Cable_Car_2024_%285%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sigulda_Cable_Car_2024_%285%29.jpg"
+  }
+ ]
+}

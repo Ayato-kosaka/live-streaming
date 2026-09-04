@@ -1644,3 +1644,312 @@ img { max-width: 100%; }
   .nextup-count b { font-size: 38px; }
   .nextup-go { justify-self: end; }
 }
+
+/* =========================================================
+   北欧ヒッチハイク旅
+   ---------------------------------------------------------
+   企画の芯は「陸路をぜんぶ人の親切でつなぐ」こと。
+   だから距離と移動手段をいちばん大きく見せる。
+   ========================================================= */
+
+/* --- 出発までのカウントダウン --- */
+.cdown {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+  padding: 18px 14px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 236, 178, 0.85), rgba(255, 253, 246, 0) 66%),
+    linear-gradient(#fffdf6, #fff4de);
+  box-shadow: 0 5px 0 var(--frame-deep);
+}
+.cdown-label, .cdown-load { font-size: 11.5px; font-weight: 900; letter-spacing: 0.1em; color: var(--ink-3); }
+.cdown-nums { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+.cdown-nums em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.cdown-nums b {
+  font-size: clamp(28px, 9vw, 46px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.cdown-when { font-size: 11px; font-weight: 800; color: var(--ink-3); }
+.cdown.is-gone b { font-size: 20px; font-weight: 900; }
+.cdown.is-gone i { font-style: normal; font-size: 12px; color: var(--ink-3); }
+
+/* --- 数字4つ --- */
+.nfacts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+@media (min-width: 640px) { .nfacts { grid-template-columns: repeat(4, 1fr); } }
+.nfacts span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 11px 6px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 15px;
+  background: var(--paper);
+}
+.nfacts b { font-size: 24px; font-weight: 900; line-height: 1; }
+.nfacts i { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
+
+/* --- ルート。横に広い地図はスマホで読めないので、縦1本の線にした --- */
+.route-sum { margin: 0 0 14px; font-size: 13.5px; font-weight: 700; line-height: 1.8; }
+.route-sum b { font-size: 18px; }
+.route-list { list-style: none; margin: 0; padding: 0; }
+.rleg { position: relative; padding: 0 0 18px 42px; }
+.rleg-line {
+  position: absolute;
+  left: 15px; top: 6px; bottom: -6px;
+  width: 3px;
+  background: repeating-linear-gradient(180deg, var(--frame-dark) 0 6px, transparent 6px 12px);
+}
+.rleg:last-child .rleg-line { display: none; }
+.rleg-dot {
+  position: absolute;
+  left: 0; top: 0;
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--frame-dark);
+  background: var(--paper);
+  font-size: 14px;
+  box-shadow: 0 2px 0 var(--frame-deep);
+}
+/* ヒッチハイクの区間だけ色を変える。これがこの企画の主役なので。 */
+.rleg.is-hitch .rleg-dot { background: linear-gradient(#fff6cf, var(--gold)); }
+.rleg.is-fly .rleg-dot, .rleg.is-ferry .rleg-dot { background: #e6f2fb; }
+.rleg-body { display: grid; gap: 3px; }
+.rleg-to { font-size: 15.5px; font-weight: 900; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rleg-flag {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 2px solid var(--frame-dark);
+  background: var(--paper);
+  color: var(--ink);
+}
+.rleg-here {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent, #e08a3c);
+  color: #fffdf6;
+}
+.rleg-how { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.rleg-fixed {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--frame-deep);
+  background: rgba(255, 236, 178, 0.6);
+  border-radius: 8px;
+  padding: 3px 8px;
+  justify-self: start;
+}
+.rleg-note { margin: 3px 0 0; font-size: 12.5px; line-height: 1.75; font-weight: 700; }
+.rleg-stay { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+
+/* --- 国のカード --- */
+.ncountries { display: grid; gap: 9px; margin-top: 12px; }
+.ncountry {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 3px solid var(--frame-dark);
+  border-left-width: 9px;
+  border-radius: 17px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-deep);
+  color: var(--ink);
+}
+.ncountry:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.ncountry-leg {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--frame-dark);
+  color: #fffdf6;
+  font-size: 12px;
+  font-weight: 900;
+}
+.ncountry-flag { font-size: 27px; line-height: 1; }
+.ncountry-body { display: grid; gap: 2px; min-width: 0; }
+.ncountry-body b { font-size: 15.5px; font-weight: 900; }
+.ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2, var(--ink)); }
+.ncountry-body em { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
+
+/* --- 見どころ --- */
+.ncity { margin: 22px 0 6px; }
+.ncity-name {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 900;
+  padding-left: 12px;
+  border-left: 7px solid var(--frame-dark);
+}
+.nspots { display: grid; gap: 12px; }
+@media (min-width: 900px) { .nspots { grid-template-columns: 1fr 1fr; } }
+.nspot {
+  overflow: hidden;
+  border: 3px solid var(--frame);
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-dark);
+}
+.nspot-img { position: relative; display: block; line-height: 0; background: #e8eef0; }
+.nspot-img img { width: 100%; height: 190px; object-fit: cover; }
+.nspot-credit {
+  position: absolute;
+  right: 6px; bottom: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fffdf6;
+  background: rgba(20, 40, 50, 0.6);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.nspot-body { padding: 13px 15px 15px; }
+.nspot-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.nspot-cat {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 2px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+}
+.nspot-city { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.nspot h3 { margin: 7px 0 0; font-size: 16.5px; font-weight: 900; line-height: 1.45; }
+.nspot-local { margin: 2px 0 0; font-size: 11px; font-weight: 800; color: var(--ink-3); }
+.nspot-point {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--frame-deep);
+  background: rgba(255, 236, 178, 0.55);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.nspot-text { margin: 9px 0 0; font-size: 13px; line-height: 1.85; font-weight: 600; }
+.nspot-tips { margin: 9px 0 0; padding-left: 1.1em; font-size: 12px; line-height: 1.8; font-weight: 700; color: var(--ink-3); }
+.nspot-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.nspot-meta div {
+  display: flex; gap: 5px; align-items: baseline;
+  border: 2px solid var(--frame-dark);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.nspot-meta dt { font-size: 9.5px; font-weight: 900; color: var(--ink-3); }
+.nspot-meta dd { margin: 0; font-size: 11.5px; font-weight: 900; }
+.nspot-info { margin: 9px 0 0; font-size: 11.5px; line-height: 1.7; font-weight: 700; color: var(--ink-3); }
+.nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 9px 0 0; }
+.nspot-tags span {
+  font-size: 10px; font-weight: 900;
+  color: var(--ink-3);
+  background: rgba(0, 0, 0, 0.045);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* --- 国あての企画 --- */
+.cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.cideas li {
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 15px;
+  background: var(--paper);
+  padding: 11px 13px;
+}
+.cideas p { margin: 0; font-size: 13px; line-height: 1.75; font-weight: 700; }
+.cidea-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; }
+.cidea-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.cidea-vote {
+  font-size: 11px; font-weight: 900;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+  color: var(--ink);
+}
+.cidea-vote.is-on { background: linear-gradient(#fff6cf, var(--gold)); }
+
+/* --- 国のページの前後リンク --- */
+.nnav { display: flex; justify-content: space-between; gap: 10px; margin: 20px 0 6px; }
+.nnav a {
+  font-size: 13px; font-weight: 900;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 3px solid var(--frame-dark);
+  background: var(--paper);
+  box-shadow: 0 3px 0 var(--frame-deep);
+  color: var(--ink);
+}
+
+/* --- 旅のしおり --- */
+.gjump { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.gjump a {
+  font-size: 11.5px; font-weight: 900;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: var(--paper);
+  color: var(--ink);
+}
+.gnotes { display: grid; gap: 12px; margin-top: 10px; }
+.gnote b { display: block; font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+.gnote p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 600; }
+.glist { margin: 10px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.9; font-weight: 700; }
+.glist.is-dont li { color: #a8462e; }
+.gtable { display: grid; gap: 7px; margin-top: 10px; }
+.grow {
+  display: grid;
+  gap: 2px;
+  padding: 10px 13px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.grow b { font-size: 13.5px; font-weight: 900; }
+.grow span { font-size: 12px; font-weight: 800; }
+.grow i, .grow em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); }
+.gcards { display: grid; gap: 9px; margin-top: 10px; }
+@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; } }
+.gcard {
+  padding: 12px 14px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 15px;
+  background: var(--paper);
+}
+.gcard b { display: block; font-size: 13.5px; font-weight: 900; }
+.gcard i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.gcard p { margin: 6px 0 0; font-size: 12.5px; line-height: 1.8; font-weight: 600; }
+.gcard span { display: block; margin-top: 5px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.gphrase { margin-top: 16px; }
+.gphrase h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 15px; font-weight: 900; }
+.gphrase h3 i { font-style: normal; font-size: 11px; color: var(--ink-3); }
+.gwords { display: grid; gap: 6px; margin-top: 8px; }
+@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; } }
+.gwords div {
+  display: grid;
+  gap: 1px;
+  padding: 8px 12px;
+  border: 2px solid var(--frame-dark);
+  border-radius: 12px;
+  background: var(--paper);
+}
+.gwords b { font-size: 13px; font-weight: 900; }
+.gwords i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--accent-deep, #c2691f); }
+.gwords span { font-size: 11px; font-weight: 700; color: var(--ink-3); }

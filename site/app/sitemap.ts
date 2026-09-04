@@ -5,13 +5,19 @@ import { APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
+import { NORDIC_COUNTRIES } from "@/content/nordic";
 
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const url = (p: string) => `${SITE.url}${p}`;
-  const top = ["", "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends"];
+  const top = [
+    "",
+    "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    // これからの大きい企画。専用ページを持つものはここに足す。
+    "/nordic", "/nordic/guide",
+  ];
   return [
     ...top.map((p) => ({ url: url(p), lastModified: now, priority: p === "" ? 1 : 0.8 })),
     ...STREAM_TYPES.map((t) => ({ url: url(`/streams/${t.slug}`), lastModified: now, priority: 0.7 })),
@@ -19,5 +25,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...RECIPES.map((r) => ({ url: url(`/kitchen/${r.slug}`), lastModified: now, priority: 0.6 })),
     ...APPS.map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
     ...LEGENDS.map((l) => ({ url: url(`/legends/${l.slug}`), lastModified: now, priority: 0.6 })),
+    ...NORDIC_COUNTRIES.map((c) => ({ url: url(`/nordic/${c.slug}`), lastModified: now, priority: 0.6 })),
   ];
 }

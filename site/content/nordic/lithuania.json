@@ -1,0 +1,599 @@
+{
+ "slug": "lithuania",
+ "name": "リトアニア",
+ "spots": [
+  {
+   "id": "lithuania-s186",
+   "cat": "see",
+   "title": "バロックが溢れる旧市街",
+   "local": "Vilniaus senamiestis",
+   "city": "ヴィリニュス",
+   "area": "旧市街",
+   "body": "東欧最大級、約360haが1994年に世界遺産となった旧市街。ゴシック、ルネサンス、そしてとりわけバロックの教会が数十も密集し、路地を曲がるたび違う時代の壁に出会う。夜明けの門には奇跡の聖母像が掲げられ、ピリエス通りには琥珀の店とカフェが連なる。正しい歩き方は中庭に入り込むこと。壁画や小さな噴水が静かに待っている。",
+   "point": "中庭に入ると別世界が広がる",
+   "tips": [
+    "石畳は雨で滑るので靴底の選択が重要",
+    "教会は無料開放が多いが礼拝中は静かに"
+   ],
+   "info": "常時開放。ヴィリニュス駅から旧市街まで徒歩10〜20分",
+   "budget": "無料",
+   "time": "1日",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "街歩き",
+    "教会",
+    "建築"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Vilnius_old_town_by_Augustas_Didzgalvis.jpg/500px-Vilnius_old_town_by_Augustas_Didzgalvis.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Vilnius_old_town_by_Augustas_Didzgalvis.jpg/960px-Vilnius_old_town_by_Augustas_Didzgalvis.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Vilnius_old_town_by_Augustas_Didzgalvis.jpg"
+  },
+  {
+   "id": "lithuania-s187",
+   "cat": "see",
+   "title": "建国伝説の丘に立つ塔",
+   "local": "Gedimino pilies bokštas",
+   "city": "ヴィリニュス",
+   "area": "城の丘",
+   "body": "大公ゲディミナスが鉄の狼の夢を見てこの地に街を築いたという伝説の丘。八角形の赤煉瓦の塔は14世紀の上城の名残で、屋上に立てば旧市街の赤い屋根、ネリス川、対岸の高層ビル群までが一望できる。塔内には甲冑や城の模型を展示。麓の大聖堂広場には奇跡と刻まれたタイルがあり、その上で一回転すると願いが叶うと言われている。",
+   "point": "ケーブルカーで丘の上まで楽々",
+   "tips": [
+    "徒歩なら5分の急坂、雨の日は滑りやすい",
+    "夕暮れは西向きの光を狙うと美しい"
+   ],
+   "info": "塔は通常10時〜18時（季節変動）。ケーブルカーは往復券あり",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "城",
+    "街歩き",
+    "夜景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Gedimino_pilis_by_Augustas_Didzgalvis.jpg/500px-Gedimino_pilis_by_Augustas_Didzgalvis.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Gedimino_pilis_by_Augustas_Didzgalvis.jpg/960px-Gedimino_pilis_by_Augustas_Didzgalvis.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Gedimino_pilis_by_Augustas_Didzgalvis.jpg"
+  },
+  {
+   "id": "lithuania-s188",
+   "cat": "see",
+   "title": "ナポレオンが恋した教会",
+   "local": "Šv. Onos bažnyčia",
+   "city": "ヴィリニュス",
+   "area": "旧市街",
+   "body": "33種類もの形の赤煉瓦を組み上げた後期ゴシックの傑作。1500年前後の完成以来ほぼ原形を保ち、繊細なファサードはまるで炎が立ち上がるようだ。ナポレオンが手のひらに載せてパリへ持ち帰りたいと語ったという伝説で知られる。背後には修道院の高い鐘楼が寄り添い、夕日を浴びる時間になるとレンガが赤金色に燃え上がる。",
+   "point": "夕日の時間帯がいちばん美しい",
+   "tips": [
+    "内部は小さく5分ほどで見学できる",
+    "隣のベルナルディン庭園で休憩を"
+   ],
+   "info": "概ね火〜日の日中に開扉、入場無料（寄付歓迎）",
+   "budget": "無料",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "教会",
+    "建築",
+    "世界遺産",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/St._Anne%27s_Church_Exterior_3%2C_Vilnius%2C_Lithuania_-_Diliff.jpg/500px-St._Anne%27s_Church_Exterior_3%2C_Vilnius%2C_Lithuania_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/St._Anne%27s_Church_Exterior_3%2C_Vilnius%2C_Lithuania_-_Diliff.jpg/960px-St._Anne%27s_Church_Exterior_3%2C_Vilnius%2C_Lithuania_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:St._Anne%27s_Church_Exterior_3%2C_Vilnius%2C_Lithuania_-_Diliff.jpg"
+  },
+  {
+   "id": "lithuania-s189",
+   "cat": "see",
+   "title": "芸術家たちの独立共和国",
+   "local": "Užupis",
+   "city": "ヴィリニュス",
+   "area": "ウジュピス",
+   "body": "1997年4月1日に独立を宣言した、川向こうの芸術家地区。41条からなる憲法が20以上の言語で壁に掲げられ、日本語版もある。犬は犬である権利を持つといった洒落た条文に思わず笑う。天使の像を中心にギャラリーとカフェが点在し、毎年4月1日の独立記念日には手作りのパスポートにスタンプが押される。落書きと花と猫の街だ。",
+   "point": "憲法の壁には日本語版もある",
+   "tips": [
+    "旧市街から橋を渡って徒歩5分ほど",
+    "4月1日は一日中お祭り騒ぎになる"
+   ],
+   "info": "常時。ギャラリーやカフェは概ね11時〜19時",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "デザイン",
+    "カフェ",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Vilnius_Uzupio_Respublica.jpg/500px-Vilnius_Uzupio_Respublica.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Vilnius_Uzupio_Respublica.jpg/960px-Vilnius_Uzupio_Respublica.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Vilnius_Uzupio_Respublica.jpg"
+  },
+  {
+   "id": "lithuania-s190",
+   "cat": "see",
+   "title": "湖に浮かぶ赤煉瓦の城",
+   "local": "Trakų salos pilis",
+   "city": "トラカイ",
+   "area": "ガルヴェ湖",
+   "body": "ガルヴェ湖の島に立つ14〜15世紀の赤煉瓦の城。木の橋を渡って門をくぐると、中庭は騎士の時代そのもので、ヴィタウタス大公が君臨した最盛期の展示が並ぶ。夏はカヤックや遊覧船から城を見上げ、冬は湖が凍って氷の上を歩く人の姿も。ヴィリニュスから電車やバスで30分ほど、リトアニア観光の王道にして外せない日帰り先。",
+   "point": "湖の上から見上げる角度が絶景",
+   "tips": [
+    "帰りにカライム人のキビナイをぜひ",
+    "夏の週末は混雑、午前中が狙い目"
+   ],
+   "info": "通常10時〜18時（冬季短縮・月曜休あり）。入城は有料",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "城",
+    "湖",
+    "絶景",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Trakai_Island_Castle%2C_Lithuania_-_Diliff.jpg/500px-Trakai_Island_Castle%2C_Lithuania_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Trakai_Island_Castle%2C_Lithuania_-_Diliff.jpg/960px-Trakai_Island_Castle%2C_Lithuania_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Trakai_Island_Castle%2C_Lithuania_-_Diliff.jpg"
+  },
+  {
+   "id": "lithuania-s191",
+   "cat": "see",
+   "title": "十万の十字架が立つ丘",
+   "local": "Kryžių kalnas",
+   "city": "シャウレイ",
+   "area": "郊外",
+   "body": "小さな丘に大小十万を超える十字架が林立する巡礼地。19世紀の蜂起の犠牲者を悼んで始まり、ソ連時代には三度ブルドーザーで撤去されたが、人々は夜ごと十字架を立て直した。1993年にはヨハネ・パウロ2世が訪れている。風が吹くと無数のロザリオが触れ合い、鈴のような音が丘を渡る。自分の十字架を立てて祈ることもできる。",
+   "point": "風に鳴るロザリオの音を聴く",
+   "tips": [
+    "麓の売店で十字架を買って奉納できる",
+    "シャウレイ市内からバスかタクシーで"
+   ],
+   "info": "24時間開放・無料。リガとヴィリニュスの移動途中に寄れる",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "教会",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Hill_of_crosses_in_Lithuania.jpg/500px-Hill_of_crosses_in_Lithuania.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Hill_of_crosses_in_Lithuania.jpg/960px-Hill_of_crosses_in_Lithuania.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Hill_of_crosses_in_Lithuania.jpg"
+  },
+  {
+   "id": "lithuania-s192",
+   "cat": "see",
+   "title": "モダニズム建築の実験都市",
+   "local": "Kauno modernizmas",
+   "city": "カウナス",
+   "area": "新市街",
+   "body": "両大戦間に暫定首都となったカウナスで花開いた、1919年から1939年のモダニズム建築群が2023年に世界遺産へ登録された。曲面のバルコニー、丸窓、太い円柱がラスヴェス通り沿いに点在する。丘の上に白く輝くキリスト復活教会は屋上テラスが名所で、旧市街とネムナス川の合流点まで見晴らせる。1931年製のケーブルカーで丘を上るのも一興。",
+   "point": "2023年世界遺産の20世紀建築",
+   "tips": [
+    "観光案内所のモダニズム地図が便利",
+    "ジャリアカルニスのケーブルカーは現役"
+   ],
+   "info": "街歩きは常時。教会や施設の見学は概ね10時〜17時",
+   "budget": "無料",
+   "time": "1日",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "建築",
+    "街歩き",
+    "デザイン"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Kauno_senamiestis_by_Augustas_Didzgalvis.jpg/500px-Kauno_senamiestis_by_Augustas_Didzgalvis.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Kauno_senamiestis_by_Augustas_Didzgalvis.jpg/960px-Kauno_senamiestis_by_Augustas_Didzgalvis.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kauno_senamiestis_by_Augustas_Didzgalvis.jpg"
+  },
+  {
+   "id": "lithuania-s193",
+   "cat": "eat",
+   "title": "飛行船の形の国民食",
+   "local": "Cepelinai",
+   "city": "ヴィリニュス",
+   "area": "旧市街",
+   "body": "すりおろしたジャガイモの生地で挽肉を包み、茹で上げた国民食。飛行船ツェッペリンに似た形が名前の由来で、ひとつが拳ほど、2個も食べれば確実に満腹になる。上からベーコンとサワークリームのソースをたっぷりかけるのが基本形。老舗ではビールか冷たいケフィアと合わせる。もっちりした独特の食感は、旅で一度は挑戦したい味だ。",
+   "point": "1人前2個は多め、シェアが正解",
+   "tips": [
+    "注文から茹で上がりまで20分前後かかる",
+    "肉なしでカッテージチーズ入りの型もある"
+   ],
+   "info": "郷土料理店で通年提供、1皿8ユーロ前後",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "郷土料理",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Cepelinai_2%2C_Vilnius%2C_Lithuania_-_Diliff.jpg/500px-Cepelinai_2%2C_Vilnius%2C_Lithuania_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Cepelinai_2%2C_Vilnius%2C_Lithuania_-_Diliff.jpg/960px-Cepelinai_2%2C_Vilnius%2C_Lithuania_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Cepelinai_2%2C_Vilnius%2C_Lithuania_-_Diliff.jpg"
+  },
+  {
+   "id": "lithuania-s194",
+   "cat": "eat",
+   "title": "カライム人のミートパイ",
+   "local": "Kibinai",
+   "city": "トラカイ",
+   "area": "カライム通り",
+   "body": "14世紀にクリミア半島から移り住んだカライム人が伝えた、三日月形の包み焼きパイ。羊肉や牛肉と玉ねぎを細かく刻んで詰め、さくさくの生地で焼き上げる。木造家屋が並ぶカライム通りには専門店が軒を連ね、熱々を紙に包んで湖畔で頬張るのが最高の食べ方だ。近年はきのこやカッテージチーズを詰めたベジタリアン版も増えている。",
+   "point": "城見学のあと湖畔で頬張りたい",
+   "tips": [
+    "焼き上がりが多いのは昼前後の時間帯",
+    "冷めても美味しいので持ち帰りにも向く"
+   ],
+   "info": "専門店は概ね10時〜20時。1個3ユーロ前後",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "郷土料理",
+    "湖",
+    "おみやげ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/02017_0065_Litauische_Kibinai_in_Schlesien.jpg/500px-02017_0065_Litauische_Kibinai_in_Schlesien.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/02017_0065_Litauische_Kibinai_in_Schlesien.jpg/960px-02017_0065_Litauische_Kibinai_in_Schlesien.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:02017_0065_Litauische_Kibinai_in_Schlesien.jpg"
+  },
+  {
+   "id": "lithuania-s195",
+   "cat": "eat",
+   "title": "衝撃のピンク色冷製スープ",
+   "local": "Šaltibarščiai",
+   "city": "ヴィリニュス",
+   "area": "市内各所",
+   "body": "ビーツとケフィアで作る、目の覚めるようなショッキングピンクの冷たいスープ。刻んだきゅうりとディル、茹で卵が入り、添えられるのは湯気の立つ熱々の茹でジャガイモだ。冷たいスープと熱いイモを交互に口へ運ぶのがリトアニア流。夏の風物詩だが通年提供の店も増えた。初夏にはこのスープを讃える祭りまで開かれる愛されぶり。",
+   "point": "熱いジャガイモと交互に食べる",
+   "tips": [
+    "1杯4〜6ユーロ、夏は屋外席で味わいたい",
+    "ビーツで舌がピンクになるのはご愛嬌"
+   ],
+   "info": "主に5月〜9月が旬、通年提供の店も増加中",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "夏(6-8月)",
+   "tags": [
+    "郷土料理",
+    "カフェ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Chlodnik_%28Cold_Borscht%29.jpg/500px-Chlodnik_%28Cold_Borscht%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Chlodnik_%28Cold_Borscht%29.jpg/960px-Chlodnik_%28Cold_Borscht%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Chlodnik_%28Cold_Borscht%29.jpg"
+  },
+  {
+   "id": "lithuania-s196",
+   "cat": "eat",
+   "title": "地元の台所は巨大市場",
+   "local": "Kauno centrinis turgus",
+   "city": "カウナス",
+   "area": "中央市場",
+   "body": "地元の胃袋を支える中央市場には、蜂蜜、燻製肉、黒パン、森のきのこ、そして年輪ケーキのシャコティスが山と積まれる。夏はベリーとチェリー、秋はきのこの品評会のような賑わいだ。値札はキロ単位だが、少量でも快く量り売りしてくれる。ヴィリニュスなら1906年開場のハレス市場が同じ役割で、こちらは総菜と屋台が充実している。",
+   "point": "量り売りは少量でも快く応じてくれる",
+   "tips": [
+    "活気があるのは朝から昼にかけて",
+    "日曜休みの店が多いので平日訪問が確実"
+   ],
+   "info": "概ね7時〜16時（店舗による）。日曜は規模が縮小",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "郷土料理",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/%C5%A0akotis_display_at_Kaunas_Central_Market_%28Urmas%29_2025.jpg/500px-%C5%A0akotis_display_at_Kaunas_Central_Market_%28Urmas%29_2025.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/%C5%A0akotis_display_at_Kaunas_Central_Market_%28Urmas%29_2025.jpg/960px-%C5%A0akotis_display_at_Kaunas_Central_Market_%28Urmas%29_2025.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%C5%A0akotis_display_at_Kaunas_Central_Market_%28Urmas%29_2025.jpg"
+  },
+  {
+   "id": "lithuania-s197",
+   "cat": "eat",
+   "title": "とげとげの年輪ケーキ",
+   "local": "Šakotis",
+   "city": "ヴィリニュス",
+   "area": "市内各所",
+   "body": "卵とバターをたっぷり使った生地を、回転する串に少しずつ垂らしながら焼き上げる、とげとげの年輪ケーキ。結婚式や祭りの主役で、高さ50cmを超える大物も珍しくない。食感は驚くほど軽く、コーヒーにも蜂蜜酒ミードにもよく合う。土産には真空パックの小型が便利で、専門店では焼きたての塊から量り売りしてもらえることもある。",
+   "point": "真空パックの小型が土産に最適",
+   "tips": [
+    "湿気に弱いので密閉して持ち帰りたい",
+    "蜂蜜酒ミードと合わせると本格派"
+   ],
+   "info": "市場や製菓店で通年販売。100gあたり3ユーロ前後から",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "スイーツ",
+    "おみやげ",
+    "市場"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Lithuanian_Cake_-_%C5%A0akotis.jpg/500px-Lithuanian_Cake_-_%C5%A0akotis.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Lithuanian_Cake_-_%C5%A0akotis.jpg/960px-Lithuanian_Cake_-_%C5%A0akotis.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Lithuanian_Cake_-_%C5%A0akotis.jpg"
+  },
+  {
+   "id": "lithuania-s198",
+   "cat": "eat",
+   "title": "農家ビールの深い森へ",
+   "local": "Šnekutis",
+   "city": "ヴィリニュス",
+   "area": "ウジュピス周辺",
+   "body": "リトアニアは中世から続く農家ビールの国。北部アウクシュタイティヤ地方の造り手による無濾過のビールは、パンのような香りと自然な酸味があり、工業製品とはまるで別物だ。名店シュネクティスは木樽と昭和の食堂のような内装が魅力で、豚耳の燻製や黒パンのニンニク揚げを肴に一杯。値段も驚くほど良心的で、つい長居してしまう。",
+   "point": "無濾過の農家ビールを指名で頼む",
+   "tips": [
+    "黒パンのニンニク揚げは定番のつまみ",
+    "小さいグラスで数種類の飲み比べを"
+   ],
+   "info": "12時〜24時頃。市内に数店舗、旧市街から徒歩圏",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "バー",
+    "郷土料理",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Lithuanian-beer.jpg/500px-Lithuanian-beer.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Lithuanian-beer.jpg/960px-Lithuanian-beer.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Lithuanian-beer.jpg"
+  },
+  {
+   "id": "lithuania-s199",
+   "cat": "do",
+   "title": "砂丘に沈む夕日の絶景",
+   "local": "Parnidžio kopa",
+   "city": "ニダ",
+   "area": "クルシュー砂州",
+   "body": "世界遺産クルシュー砂州、ニダの南に広がる高さ約50mのパルニジス砂丘。頂には御影石の日時計が立ち、片側は青いバルト海、反対側はラグーンと死の谷と呼ばれる砂の谷が横たわる。木道を20分ほど上ると風紋と松林、そして国境の向こうまで見晴らせる。日没にかけての色の変化は圧巻で、この旅の一枚はきっとここで撮ることになる。",
+   "point": "日没の1時間前に登り始めよう",
+   "tips": [
+    "砂丘の保護のため歩けるのは木道のみ",
+    "トーマス・マンの夏の家も徒歩圏内"
+   ],
+   "info": "24時間開放・無料。クライペダからフェリーとバスで約1時間",
+   "budget": "無料",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "絶景",
+    "自然",
+    "海",
+    "世界遺産"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Hohe_D%C3%BCne_Nida_%282022%29.jpg/500px-Hohe_D%C3%BCne_Nida_%282022%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Hohe_D%C3%BCne_Nida_%282022%29.jpg/960px-Hohe_D%C3%BCne_Nida_%282022%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Hohe_D%C3%BCne_Nida_%282022%29.jpg"
+  },
+  {
+   "id": "lithuania-s200",
+   "cat": "do",
+   "title": "気球で浮かぶ首都の空",
+   "local": "Skrydis oro balionu",
+   "city": "ヴィリニュス",
+   "area": "上空",
+   "body": "首都の中心上空を熱気球が飛べる、世界でも珍しい街。夏の早朝か夕方、風向き次第で旧市街の赤い屋根やネリス川、ゲディミナスの丘の真上を音もなく漂う。飛行はおよそ1時間、着地後にシャンパンで乾杯する伝統付きだ。空から眺めるとバロックのドームがきのこのように点在して見え、迷路のような街の地形が一気に腑に落ちる。",
+   "point": "天候次第、朝夕の便が基本になる",
+   "tips": [
+    "前日までに予約、当日朝に催行を判断",
+    "風で着地点が変わるため時間に余裕を"
+   ],
+   "info": "5月〜9月が中心、所要3時間程度（飛行は約1時間）",
+   "budget": "€60〜",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "絶景",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg/500px-Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg/960px-Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg"
+  },
+  {
+   "id": "lithuania-s201",
+   "cat": "do",
+   "title": "要塞の中のイルカと海",
+   "local": "Lietuvos jūrų muziejus",
+   "city": "クライペダ",
+   "area": "スミルティネ",
+   "body": "19世紀のコプガリス要塞をそのまま使った海洋博物館。堀の水槽にはバルト海の魚が泳ぎ、外の岩場ではアザラシやペンギンが暮らす。イルカのプログラムは子どもに大人気だ。大規模改修を経て展示は刷新され、砂州の自然史も学べる。旧市街からフェリーで対岸のスミルティネへ渡り、松林と砂浜を歩いて向かう道のりそのものが楽しい。",
+   "point": "フェリーで対岸へ渡ってアクセス",
+   "tips": [
+    "開館日と時間は事前に公式サイトで確認",
+    "夏の週末は入場券が売り切れることも"
+   ],
+   "info": "フェリーでスミルティネへ。冬季は開館日が限られる",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "子連れOK",
+    "海",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Dolphinarium_of_the_Lithuanian_Maritime_Museum_in_Klaip%C4%97da%2C_Lithuania_in_2016.jpg/500px-Dolphinarium_of_the_Lithuanian_Maritime_Museum_in_Klaip%C4%97da%2C_Lithuania_in_2016.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Dolphinarium_of_the_Lithuanian_Maritime_Museum_in_Klaip%C4%97da%2C_Lithuania_in_2016.jpg/960px-Dolphinarium_of_the_Lithuanian_Maritime_Museum_in_Klaip%C4%97da%2C_Lithuania_in_2016.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Dolphinarium_of_the_Lithuanian_Maritime_Museum_in_Klaip%C4%97da%2C_Lithuania_in_2016.jpg"
+  },
+  {
+   "id": "lithuania-s202",
+   "cat": "do",
+   "title": "森に並ぶソ連時代の像",
+   "local": "Grūto parkas",
+   "city": "ドルスキニンカイ",
+   "area": "グルータス",
+   "body": "独立後に各地の広場から撤去されたレーニンやスターリンの像を集め、2001年に開園した野外博物館。監視塔と有刺鉄線を模した通路、スピーカーから流れるソ連歌謡が、皮肉と歴史の重さを同時に突きつけてくる。展示館にはプロパガンダのポスターや当時の日用品が並ぶ。併設の食堂では、あえて再現した質素なソ連風スープが供される。",
+   "point": "賛否ある展示、歴史の教材として",
+   "tips": [
+    "ヴィリニュスから車で約2時間かかる",
+    "温泉保養地ドルスキニンカイと合わせて"
+   ],
+   "info": "通常9時〜17時頃（季節変動）。ドルスキニンカイ近郊",
+   "budget": "〜€10",
+   "time": "半日",
+   "season": "通年",
+   "tags": [
+    "美術館",
+    "自然"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Gr%C5%ABto_parkas_-_Entrance.JPG/500px-Gr%C5%ABto_parkas_-_Entrance.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Gr%C5%ABto_parkas_-_Entrance.JPG/960px-Gr%C5%ABto_parkas_-_Entrance.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Gr%C5%ABto_parkas_-_Entrance.JPG"
+  },
+  {
+   "id": "lithuania-s203",
+   "cat": "buy",
+   "title": "バルトの金、琥珀選び",
+   "local": "Gintaras",
+   "city": "パランガ",
+   "area": "海岸沿い",
+   "body": "数千万年前の松脂が化石になった琥珀は、バルト海沿岸の宝物。パランガの琥珀博物館では虫入りの標本や数kgの巨大な原石を展示し、周辺の工房では研磨体験もできる。買うなら透かして気泡や虫が見える天然ものを。冬の嵐の翌朝には浜辺に琥珀が打ち上がることがあり、宝探し気分で下を向いて歩く人の姿が波打ち際に並ぶ。",
+   "point": "透かして気泡が見えれば天然の証",
+   "tips": [
+    "軽くてほんのり温かいのが本物の目安",
+    "値段は色と透明度で大きく変わる"
+   ],
+   "info": "博物館は通常10時〜17時頃、月曜休。海岸は自由に散策可",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "おみやげ",
+    "美術館",
+    "海"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg/500px-Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg/960px-Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg"
+  },
+  {
+   "id": "lithuania-s204",
+   "cat": "buy",
+   "title": "春を呼ぶ聖カジミエル市",
+   "local": "Kaziuko mugė",
+   "city": "ヴィリニュス",
+   "area": "旧市街一帯",
+   "body": "400年以上続く、3月上旬の週末に旧市街を埋め尽くす国内最大の職人市。名物は乾燥花を棒状に束ねたカラフルなヴェルバで、ほかに木彫り、鉄細工、リネン、蜂蜜、黒パンが所狭しと並ぶ。屋台からは焼きソーセージと温かい蜂蜜酒の湯気。数十万人が訪れて通りは歩くのも大変なほどで、長い冬の終わりを祝う国民的な行事になっている。",
+   "point": "開催は例年3月第1週末が目安",
+   "tips": [
+    "ヴェルバは軽く意外と持ち帰りやすい",
+    "大変混雑するので貴重品は体の前に"
+   ],
+   "info": "例年3月上旬の金〜日。旧市街の主要通りが会場になる",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "冬(12-3月)",
+   "tags": [
+    "市場",
+    "おみやげ",
+    "雑貨",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Verbos_Kaziuko_mugeje.jpg/500px-Verbos_Kaziuko_mugeje.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Verbos_Kaziuko_mugeje.jpg/960px-Verbos_Kaziuko_mugeje.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Verbos_Kaziuko_mugeje.jpg"
+  },
+  {
+   "id": "lithuania-s205",
+   "cat": "buy",
+   "title": "スーパーで買う本気土産",
+   "local": "Maxima / Iki",
+   "city": "ヴィリニュス",
+   "area": "市内各所",
+   "body": "旅の最後は地元のスーパーへ。棚に並ぶのは無濾過の地ビール、蜂蜜酒ミード、酸味のある黒パン、編んだ燻製チーズ、ビーツのスープの素、森のベリーのジャム。琥珀色の蜂蜜は瓶ごと買っても数ユーロで、土産物店の半額以下ということも珍しくない。瓶や缶にはデポジット制度があるので、空き容器は店頭の返却機へ持ち込もう。",
+   "point": "地ビールと蜂蜜が安くて確実",
+   "tips": [
+    "瓶や缶はデポジット、返却機で返金される",
+    "液体類は預け荷物に入れるのを忘れずに"
+   ],
+   "info": "大型店は概ね8時〜22時、日曜も営業している",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "おみやげ",
+    "市場",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Beer_selection%2C_Maxima_supermarket%2C_Vilnius%2C_Mindaugo_g._11%2C_2025.jpg/500px-Beer_selection%2C_Maxima_supermarket%2C_Vilnius%2C_Mindaugo_g._11%2C_2025.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Beer_selection%2C_Maxima_supermarket%2C_Vilnius%2C_Mindaugo_g._11%2C_2025.jpg/960px-Beer_selection%2C_Maxima_supermarket%2C_Vilnius%2C_Mindaugo_g._11%2C_2025.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Beer_selection%2C_Maxima_supermarket%2C_Vilnius%2C_Mindaugo_g._11%2C_2025.jpg"
+  },
+  {
+   "id": "lithuania-s206",
+   "cat": "do",
+   "title": "旧市街の真上を熱気球で",
+   "local": "Oro balionai virš Vilniaus",
+   "city": "ヴィリニュス",
+   "area": "ヴィリニュス",
+   "body": "ヴィリニュスは、旧市街の真上を熱気球が飛べる世界でも珍しい首都。夜明けか日没に飛び立ち、赤い屋根と教会の尖塔、蛇行するネリス川を見下ろす。着陸後はシャンパンで乾杯するのがお約束。夕空にいくつも浮かぶ気球そのものも絶景。",
+   "point": "地上からバルーンを見上げる絵も撮って",
+   "tips": [],
+   "info": "4〜10月の早朝か夕方／飛行約1時間。天候により当日中止も",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "街歩き",
+    "教会"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg/500px-Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg/960px-Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Hot_air_balloons_over_Vilnius%2C_Lithuania_%284957045812%29.jpg"
+  },
+  {
+   "id": "lithuania-s207",
+   "cat": "do",
+   "title": "自称共和国をおさんぽ",
+   "local": "Užupio Respublika（ウジュピス共和国）",
+   "city": "ヴィリニュス",
+   "area": "ヴィリニュス",
+   "body": "川を渡った先にある、アーティストが1997年に「独立」を宣言した自称共和国。憲法は壁に多言語で掲げられ、「犬には犬である権利がある」など愛すべき条文がずらり。ギャラリー、落書き、天使の像。カフェで一息つきながら歩くのが正解。",
+   "point": "憲法の壁と天使像はマスト撮影",
+   "tips": [],
+   "info": "旧市街から徒歩約10分／散策1〜2時間。スタンプがもらえる店も",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "美術館",
+    "カフェ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Vilnius_Uzupio_Respublica.jpg/500px-Vilnius_Uzupio_Respublica.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Vilnius_Uzupio_Respublica.jpg/960px-Vilnius_Uzupio_Respublica.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Vilnius_Uzupio_Respublica.jpg"
+  },
+  {
+   "id": "lithuania-s208",
+   "cat": "do",
+   "title": "琥珀の宮殿とバラ園",
+   "local": "Palangos gintaro muziejus",
+   "city": "パランガ",
+   "area": "パランガ",
+   "body": "「バルト海の金」琥珀を集めた、リトアニア随一のコレクション。舞台は19世紀のティシュケヴィチ伯爵邸で、白い宮殿と植物学者が設計したバラ園がまず美しい。虫が閉じ込められた「インクルージョン」標本は必見。浜辺では嵐の翌日に琥珀が拾えることも。",
+   "point": "白い宮殿×バラ園はドレス写真の名所",
+   "tips": [],
+   "info": "クライペダから車約30分／見学1.5時間。夏は日没が22時ごろ",
+   "budget": "€10-30",
+   "time": "30分",
+   "season": "夏(6-8月)",
+   "tags": [
+    "建築",
+    "城",
+    "海"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg/500px-Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg/960px-Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ti%C5%A1kevi%C4%8Diai_Palace_at_dusk%2C_Palanga%2C_Lithuania_-_Diliff.jpg"
+  }
+ ]
+}
