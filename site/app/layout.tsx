@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import IslandTheme from "@/components/island/Theme";
+import { NOW_FALLBACK } from "@/content/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://live-streaming-d3cac.web.app"),
@@ -27,8 +29,21 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    // 下のスクリプトが data-time を足すぶんサーバの出力と食い違うが、
+    // それは承知のうえなので suppressHydrationWarning で黙らせる
+    <html lang="ja" suppressHydrationWarning>
       <head>
+        {/* 島の空の色を見ている人の時計に、島の景色をあやとの現在地に合わせる。
+            描き始める前に決めたいので、React を待たずにここで入れておく。
+            現在地はこのあと IslandTheme が本物の値で上書きする。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){var d=document.documentElement,h=new Date().getHours();" +
+              "d.dataset.time=h<5?'night':h<10?'morning':h<16?'day':h<19?'evening':'night';" +
+              `d.dataset.theme=${JSON.stringify(NOW_FALLBACK.theme)};})()`,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -36,7 +51,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <IslandTheme />
+        {children}
+      </body>
     </html>
   );
 }

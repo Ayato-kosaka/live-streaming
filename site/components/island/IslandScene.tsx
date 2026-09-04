@@ -47,7 +47,18 @@ const POND = { x: 452, y: 806, rx: 66, ry: 32 };
 /* 置くもの                                                            */
 /* ------------------------------------------------------------------ */
 
-export type Item = { n: string; x: number; y: number; s: number; flip?: boolean; cls?: string };
+export type Item = {
+  n: string;
+  x: number;
+  y: number;
+  s: number;
+  flip?: boolean;
+  /** そよ風で揺らす。値は揺れ始めをずらすための秒数 */
+  sway?: number;
+};
+
+/** 揺れるもの(草木)かどうか。建物や岩は揺れない。 */
+const SWAYS = /^(tree|bush|grass|flower|mushroom|lily)/;
 
 const P = Object.fromEntries(SPOTS.map((s) => [s.id, s])) as Record<SpotId, (typeof SPOTS)[number]>;
 
@@ -263,6 +274,20 @@ const PATHS: Item[] = [
 /* ------------------------------------------------------------------ */
 
 /**
+ * 夜にともる灯り。[x, y, 半径]。
+ * 島の絵に混ぜると時間帯の色かぶせに沈むので、その上の層で描く。
+ */
+export const LAMPS: [number, number, number][] = [
+  [P.friends.x, P.friends.y - 10, 104],
+  [P.board.x + 74, P.board.y - 36, 60],
+  [P.now.x, P.now.y - 32, 52],
+  [P.kitchen.x + 14, P.kitchen.y - 30, 70],
+  [P.apps.x + 12, P.apps.y - 30, 70],
+  [P.streams.x + 4, P.streams.y - 80, 72],
+  [P.legends.x + 8, P.legends.y - 28, 72],
+];
+
+/**
  * 島に置いてある物。手前(y が大きい)ほど後に描く。
  * 住人やあやとと重ね順を混ぜたいので、絵ではなく配列のまま外へ出す。
  */
@@ -274,7 +299,9 @@ export const PROPS: Item[] = [
   ...shrubs,
   ...BUILDINGS,
   ...DRESSING,
-].sort((a, b) => a.y - b.y);
+]
+  .map((p, i) => (SWAYS.test(p.n) ? { ...p, sway: (i % 13) * 0.36 } : p))
+  .sort((a, b) => a.y - b.y);
 
 export default function IslandScene() {
   return (
@@ -306,6 +333,7 @@ export default function IslandScene() {
         <clipPath id="grassClip">
           <path d={grassPath} />
         </clipPath>
+
       </defs>
 
       {/* ------- 海 ------- */}

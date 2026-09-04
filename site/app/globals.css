@@ -71,34 +71,47 @@
   --lamp: 0;
 }
 
+/* 時間帯は「島全体に色をかぶせる」ことで表す。
+   地形の色だけ変えても、焼いてあるスプライトは昼のままなので、
+   夜になると木や建物だけ明るく浮いてしまう。
+   --tint は乗算、--glow はスクリーンで重ねる。 */
 [data-time="morning"] {
   --sky-1: #ffd9ae; --sky-2: #dff4ff;
-  --sea-deep: #2288ad; --sea-shallow: #7fd8e2;
+  --tint: rgba(255, 224, 186, 0.16);
+  --glow: rgba(255, 214, 150, 0.14);
+}
+[data-time="day"] {
+  --tint: transparent;
+  --glow: transparent;
 }
 [data-time="evening"] {
   --sky-1: #ff9d78; --sky-2: #ffd7a0;
-  --sea-deep: #1d6a90; --sea-mid: #2f92ae; --sea-shallow: #63bcc9;
-  --sand: #eed6a1; --sand-wet: #dcbd84;
-  --grass-hi: #93c96a; --grass: #74b452; --grass-lo: #55953c;
-  --grass2-hi: #a1d472; --grass2: #7fbe58;
   --sun: #ffcf90;
+  --tint: rgba(255, 146, 88, 0.3);
+  --glow: rgba(255, 176, 96, 0.2);
 }
 [data-time="night"] {
   --sky-1: #16214f; --sky-2: #3a4a86;
-  --sea-deep: #0f3550; --sea-mid: #16506e; --sea-shallow: #2b7d95; --sea-shelf: #3f9aa8;
   --foam: #cfe9f2;
-  --sand: #cdb489; --sand-wet: #b79a6e; --sand-edge: #9c8259;
-  --grass-hi: #5d9a55; --grass: #4b8547; --grass-lo: #36663a;
-  --grass2-hi: #68a55c; --grass2: #538e4c;
-  --cliff: #9d7748; --cliff-lo: #7d5c37;
-  --wall: #f3e6cf;
+  --tint: rgba(40, 66, 150, 0.52);
+  --glow: rgba(120, 160, 255, 0.1);
   --lamp: 1;
 }
+/* いまいる場所で島の景色を変える。
+   地形の色だけ変えるとスプライトが取り残されるので、
+   島の絵ぜんぶに軽いフィルタもかける。 */
 [data-theme="nordic"] {
   --grass-hi: #b6dfa8; --grass: #96c98c; --grass-lo: #74a86f;
   --grass2-hi: #c4e7b3; --grass2: #a5d497;
   --sand: #eef0e7; --sand-wet: #dbdfd2; --sand-edge: #c4c9ba;
-  --leaf-a: #3f7f56; --leaf-b: #55976a; --leaf-c: #2f6644;
+  --sea-deep: #2a6f92; --sea-mid: #4295b3; --sea-shallow: #8ed3dd;
+  --place-filter: saturate(0.86) hue-rotate(-6deg) brightness(1.04);
+}
+[data-theme="desert"] {
+  --grass-hi: #d9d276; --grass: #c2b959; --grass-lo: #9e9542;
+  --grass2-hi: #e2dc86; --grass2: #cdc466;
+  --sand: #f6e2ae; --sand-wet: #e6cd90; --sand-edge: #d3b676;
+  --place-filter: saturate(1.05) hue-rotate(-14deg) brightness(1.03);
 }
 
 * { box-sizing: border-box; }
@@ -146,7 +159,32 @@ img { max-width: 100%; }
 @media (min-width: 1000px) {
   .stage { height: min(92svh, 880px); }
 }
-.stage-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  filter: var(--place-filter, none);
+}
+
+/* 島ぜんぶにかぶせる時間帯の色。地形もスプライトも同じだけ染まる。 */
+.stage::before,
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 1.2s ease;
+}
+.stage::before { background: var(--tint, transparent); mix-blend-mode: multiply; }
+.stage::after { background: var(--glow, transparent); mix-blend-mode: screen; }
+/* 名札や吹き出しは色をかぶせない。読めなくなるので。 */
+.stage .labels,
+.stage .arrive,
+.stage .sheet,
+.stage .walk-hint,
+.stage .zoom-toggle { z-index: 3; }
 
 .labels { position: absolute; inset: 0; pointer-events: none; }
 
@@ -219,6 +257,32 @@ img { max-width: 100%; }
 @keyframes hintPulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.55; } }
 
 /* --- 島のモーション --- */
+/* 木と草が、そよ風でゆっくり揺れる。全部そろって揺れないよう位相をずらす。 */
+.sway { animation: sway 4.6s ease-in-out infinite alternate; }
+@keyframes sway {
+  from { transform: rotate(-1.1deg); }
+  to { transform: rotate(1.1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sway { animation: none; }
+}
+
+/* 夜だけ灯りをともす。--lamp は data-time="night" で 1 になる。 */
+.stage-lamps {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: var(--lamp, 0);
+  transition: opacity 1.2s ease;
+}
+.stage-lamps circle { animation: lampFlicker 3.4s ease-in-out infinite alternate; }
+.stage-lamps circle:nth-child(even) { animation-duration: 4.6s; }
+@keyframes lampFlicker { from { opacity: 0.78; } to { opacity: 1; } }
+
 .foam path { animation: foamDrift 9s linear infinite; }
 .foam path:nth-child(2) { animation-duration: 13s; animation-direction: reverse; }
 @keyframes foamDrift { to { stroke-dashoffset: -92; } }
