@@ -54,7 +54,7 @@ export default function FriendsPage() {
         </p>
         <div className="tiles" style={{ marginTop: 14 }}>
           <a className="tile" href={doneru.href} target="_blank" rel="noopener noreferrer">
-            <span className="tile-emoji" aria-hidden>{doneru.emoji}</span>
+            <img className="tile-icon" src={`/sprites/${doneru.icon}.png`} alt="" />
             <span className="tile-text">
               <b>投げ銭してキャラクターを作る</b>
               <i>{doneru.note}</i>

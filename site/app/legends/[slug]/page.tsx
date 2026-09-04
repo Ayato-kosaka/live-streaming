@@ -26,7 +26,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   return (
     <PageShell current="legends" crumbs={[{ label: "伝説の丘", href: "/legends" }, { label: l.title }]}>
       <PageHead
-        emoji={l.emoji}
+        icon={l.icon}
         title={l.title}
         lead={l.lead}
         meta={<span className="chip dark">🗓 {l.span ?? l.date.replace(/-/g, "/")}</span>}

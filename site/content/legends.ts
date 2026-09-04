@@ -3,6 +3,8 @@ export type Legend = {
   slug: string;
   title: string;
   emoji: string;
+  /** 一覧に出す絵。site/public/sprites のスプライト名 */
+  icon: string;
   date: string;
   span?: string;
   lead: string;
@@ -13,6 +15,7 @@ export type Legend = {
 export const LEGENDS: Legend[] = [
   {
     slug: "iran-walk",
+    icon: "signpost",
     title: "イランまで歩く",
     emoji: "🚶",
     date: "2026-04-29",
@@ -34,6 +37,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "egypt-festival",
+    icon: "statue-head",
     title: "GWエジプト祭り",
     emoji: "🏛️",
     date: "2025-05-03",
@@ -53,6 +57,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "newyear-24h",
+    icon: "lantern",
     title: "年越し24時間配信",
     emoji: "🎍",
     date: "2024-12-31",
@@ -68,6 +73,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "million-views",
+    icon: "statue",
     title: "ショート動画100万再生",
     emoji: "📈",
     date: "2026-03-23",
@@ -84,6 +90,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "roulette-georgia",
+    icon: "canoe",
     title: "ルーレットで行くジョージアぶらり旅",
     emoji: "🎡",
     date: "2026-07-19",
@@ -93,6 +100,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "kazbegi",
+    icon: "rock-tall",
     title: "カズベキ遠征",
     emoji: "⛰️",
     date: "2026-08-02",
@@ -112,6 +120,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "iwashi-festival",
+    icon: "food-fish",
     title: "ジョージアイワシ祭り",
     emoji: "🐟",
     date: "2026-07-22",
@@ -127,6 +136,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "thousand-subs",
+    icon: "campfire",
     title: "チャンネル登録1,000人",
     emoji: "🎊",
     date: "2025-12-16",

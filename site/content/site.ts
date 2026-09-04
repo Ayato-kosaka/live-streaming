@@ -21,6 +21,7 @@ export const PROFILE = {
 export const LINKS = [
   {
     id: "youtube",
+    icon: "tower-studio",
     label: "YouTube チャンネル",
     note: "毎晩22時から生配信",
     href: "https://youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w",
@@ -28,6 +29,7 @@ export const LINKS = [
   },
   {
     id: "app",
+    icon: "food-plate-dinner",
     label: "なに食べよ（App Store）",
     note: "iPhone / iPad",
     href: "https://apps.apple.com/jp/app/id6751139648",
@@ -35,6 +37,7 @@ export const LINKS = [
   },
   {
     id: "app-android",
+    icon: "food-plate-dinner",
     label: "なに食べよ（Google Play）",
     note: "Android",
     href: "https://play.google.com/store/apps/details?id=com.nanitabeyo",
@@ -42,6 +45,7 @@ export const LINKS = [
   },
   {
     id: "doneru",
+    icon: "stall",
     label: "投げ銭（Doneru）",
     note: "100円から。キャラクターも作れます",
     href: "https://doneru.jp/ayato_arigato",

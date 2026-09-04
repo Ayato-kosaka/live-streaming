@@ -30,7 +30,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   return (
     <PageShell current="kitchen" crumbs={[{ label: "キッチン小屋", href: "/kitchen" }, { label: r.name }]}>
       <PageHead
-        emoji={r.emoji}
+        icon={r.icon}
         title={r.name}
         lead={r.note}
         meta={

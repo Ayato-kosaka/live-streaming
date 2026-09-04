@@ -5,6 +5,8 @@ export type AppEntry = {
   slug: string;
   name: string;
   emoji: string;
+  /** 一覧に出す絵。site/public/sprites のスプライト名 */
+  icon: string;
   tagline: string;
   status: "運営中" | "公開済み";
   links: { label: string; href: string }[];
@@ -15,6 +17,7 @@ export type AppEntry = {
 export const APPS: AppEntry[] = [
   {
     slug: "nanitabeyo",
+    icon: "food-plate-dinner",
     name: "なに食べよ",
     emoji: "🍽️",
     tagline: "「今日なに食べよ」を、ストレスなく決められるグルメアプリ",
@@ -51,6 +54,7 @@ export const APPS: AppEntry[] = [
   },
   {
     slug: "nanikore",
+    icon: "signpost",
     name: "なにこれオーディオガイド",
     emoji: "🎧",
     tagline: "旅先で「これ何？」を音声で教えてくれるガイド",

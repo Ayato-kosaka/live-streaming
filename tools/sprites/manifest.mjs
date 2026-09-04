@@ -14,6 +14,7 @@
 const NK = "./models/gltf";    // nature-kit
 const HK = "./models/holiday"; // holiday-kit
 const BK = "./models";         // building-kit / mini-characters
+const FK = "./models/food";    // food-kit
 
 /* ---------------- 建物の配色 ---------------- */
 const WALL = { h: 0.105, s: 0.60, l: [0.68, 0.88] }; // クリーム色の壁
@@ -163,6 +164,17 @@ export const SPRITES = [
   { name: "path-stone", parts: [`${NK}/path_stone.glb`] },
   { name: "path-stone-circle", parts: [`${NK}/path_stoneCircle.glb`] },
   { name: "fence", parts: [`${NK}/fence_simple.glb`] },
+
+  /* ---------- 料理 ----------
+     クッキングのスタンプ帳で使う。food-kit の配色はそのままで美味しそうなので、
+     島の配色には寄せない(plain)。 */
+  ...[
+    "sandwich", "turkey", "taco", "tomato", "salad", "pan-stew", "dim-sum",
+    "plate-dinner", "bowl-soup", "skewer", "tajine", "bowl", "bread",
+    "bowl-cereal", "pancakes", "fries", "bowl-broth", "pudding", "waffle",
+    "croissant", "meat-patty", "fish", "pan", "egg-cooked", "pizza",
+    "plate-sauerkraut", "soda-glass", "meat-ribs", "cup-coffee", "cake",
+  ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ---------- */
   // Kenney の配色がそのままで可愛いので、色は置き換えない

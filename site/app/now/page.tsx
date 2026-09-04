@@ -31,7 +31,7 @@ export default function NowPage() {
         <div className="tiles" style={{ marginTop: 14 }}>
           {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
             <a key={l.id} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-              <span className="tile-emoji" aria-hidden>{l.emoji}</span>
+              <img className="tile-icon" src={`/sprites/${l.icon}.png`} alt="" />
               <span className="tile-text">
                 <b>{l.label}</b>
                 <i>{l.note}</i>

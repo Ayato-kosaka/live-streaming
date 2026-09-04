@@ -22,7 +22,7 @@ export default function LegendsPage() {
       <div className="tiles">
         {LEGENDS.map((l) => (
           <Link key={l.slug} className="tile" href={`/legends/${l.slug}`}>
-            <span className="tile-emoji" aria-hidden>{l.emoji}</span>
+            <img className="tile-icon" src={`/sprites/${l.icon}.png`} alt="" />
             <span className="tile-text">
               <b>{l.title}</b>
               <i>{l.span ?? l.date.replace(/-/g, "/")}</i>
