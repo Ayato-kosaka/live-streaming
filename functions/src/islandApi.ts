@@ -8,6 +8,10 @@
  *
  * ログインは要求しない。1人1票と連投制限は、ブラウザが持つ端末ID(cid)で行う。
  * 厳密な本人確認ではなく「ボットの連打を止める」ためのもの。
+ *
+ * 管理操作(非表示にする・消す)はここには置かない。
+ * GitHub Actions の「管理スクリプトを実行」から、
+ * Firebase のサービスアカウントで直接 Firestore を触る。
  */
 
 import {onRequest} from "firebase-functions/v2/https";
@@ -28,12 +32,6 @@ const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
 const IDEAS_PER_DAY = 8;
 const NOTES_PER_DAY = 20;
-
-/**
- * 管理操作用のキー。Functions の環境変数 ISLAND_ADMIN_KEY に入れる。
- * @return {string} 設定されていなければ空文字
- */
-const adminKey = (): string => process.env.ISLAND_ADMIN_KEY ?? "";
 
 type Json = Record<string, unknown>;
 
@@ -297,38 +295,6 @@ export const islandApi = onRequest(
           },
         });
         return;
-      }
-
-      /* ---------------- 管理 ---------------- */
-      if (path.startsWith("/admin/")) {
-        const key = String(req.headers["x-island-key"] ?? "");
-        if (!adminKey() || key !== adminKey()) {
-          res.status(403).json({error: "forbidden"});
-          return;
-        }
-        if (method === "POST" && path === "/admin/state") {
-          const patch: Json = {};
-          if (body.current) patch.current = body.current;
-          if (body.stats) patch.stats = body.stats;
-          patch.updatedAt = Date.now();
-          await STATE_DOC.set(patch, {merge: true});
-          res.json({ok: true});
-          return;
-        }
-        if (method === "POST" && path === "/admin/hide") {
-          const id = clean(body.id, 64);
-          const col = clean(body.kind, 16) === "note" ? NOTES : IDEAS;
-          await col.doc(id).set({hidden: body.hidden !== false}, {merge: true});
-          res.json({ok: true});
-          return;
-        }
-        if (method === "POST" && path === "/admin/pick") {
-          const id = clean(body.id, 64);
-          const status = clean(body.status, 12) || "picked";
-          await IDEAS.doc(id).set({status}, {merge: true});
-          res.json({ok: true});
-          return;
-        }
       }
 
       res.status(404).json({error: "not found", path});
