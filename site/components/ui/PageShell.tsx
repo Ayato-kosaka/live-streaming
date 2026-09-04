@@ -15,7 +15,7 @@ export function IslandHeader({ current }: { current?: string }) {
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
             <Link key={s.id} href={s.href} className={`ih-link${current === s.id ? " is-on" : ""}`}>
-              <img src={`/sprites/${s.icon}.png`} alt="" />
+              <img src={`/sprites/${s.icon}.webp`} alt="" />
               {s.label}
             </Link>
           ))}
@@ -59,7 +59,7 @@ export function PageHead({
 }) {
   return (
     <div className="phead">
-      {icon && <img className="phead-icon" src={`/sprites/${icon}.png`} alt="" />}
+      {icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
       {!icon && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
       <h1>{title}</h1>
       {lead && <p className="phead-lead">{lead}</p>}

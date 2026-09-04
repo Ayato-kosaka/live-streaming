@@ -110,8 +110,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** カメラの目標地点 */
   const camTarget = useCallback(() => {
     if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 100 };
-    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy - 10 };
-    return { x: ISLAND.cx, y: ISLAND.cy };
+    // 上に見出しが乗るので、島は画面のやや下に置く
+    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy - 62 };
+    return { x: ISLAND.cx, y: ISLAND.cy - 40 };
   }, [follow, mode]);
 
   useEffect(() => {
@@ -331,7 +332,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 }}
                 aria-label={s.label}
               >
-                <img src={`/sprites/${s.icon}.png`} alt="" />
+                <img src={`/sprites/${s.icon}.webp`} alt="" />
               </button>
             );
           }
@@ -346,7 +347,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 target.current = { x: s.x, y: s.y + 30 };
               }}
             >
-              <img className="spot-icon" src={`/sprites/${s.icon}.png`} alt="" />
+              <img className="spot-icon" src={`/sprites/${s.icon}.webp`} alt="" />
               <span className="spot-text">
                 <b>{s.label}</b>
                 <i>{s.blurb}</i>
@@ -359,7 +360,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       {/* スマホ: 選んだ場所のカード */}
       {mode === "phone" && selected && (
         <div className="sheet" data-ui>
-          <img className="sheet-icon" src={`/sprites/${selected.icon}.png`} alt="" />
+          <img className="sheet-icon" src={`/sprites/${selected.icon}.webp`} alt="" />
           <span className="sheet-text">
             <b>{selected.label}</b>
             <i>{selected.blurb}</i>

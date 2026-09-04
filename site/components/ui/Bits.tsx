@@ -91,7 +91,7 @@ export function TileLink({
   return (
     <Link className="tile" href={href} style={accent ? { ["--tile" as string]: accent } : undefined}>
       {icon ? (
-        <img className="tile-icon" src={`/sprites/${icon}.png`} alt="" />
+        <img className="tile-icon" src={`/sprites/${icon}.webp`} alt="" />
       ) : (
         <span className="tile-emoji" aria-hidden>
           {emoji}

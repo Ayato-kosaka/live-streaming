@@ -19,7 +19,8 @@ Kenney の CC0 3Dモデルを、**あつまれ どうぶつの森に寄せた画
       屋根の色は `neutral` を上書きして決める
 - `manifest.mjs` … 焼くものの一覧。建物はモジュールパーツを組んで1枚にする
 - `bake.mjs` … まとめて焼く
-- `meta.py` … 焼いた絵を切り詰めて、島に置くための寸法を `site/content/sprites.json` に書く
+- `meta.py` … 焼いた絵を切り詰めて WebP に変換し、島に置くための寸法を
+  `site/content/sprites.json` に書く。PNG のままだと島1枚で3MB近くになる
 - `lab.mjs` … 試作用。JSON で渡した定義だけを焼いて見比べる
 
 ## 焼き直す手順

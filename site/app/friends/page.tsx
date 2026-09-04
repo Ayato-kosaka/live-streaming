@@ -54,7 +54,7 @@ export default function FriendsPage() {
         </p>
         <div className="tiles" style={{ marginTop: 14 }}>
           <a className="tile" href={doneru.href} target="_blank" rel="noopener noreferrer">
-            <img className="tile-icon" src={`/sprites/${doneru.icon}.png`} alt="" />
+            <img className="tile-icon" src={`/sprites/${doneru.icon}.webp`} alt="" />
             <span className="tile-text">
               <b>投げ銭してキャラクターを作る</b>
               <i>{doneru.note}</i>
@@ -62,7 +62,7 @@ export default function FriendsPage() {
             <span className="tile-go" aria-hidden>↗</span>
           </a>
           <a className="tile" href={CHARACTER_DRIVE} target="_blank" rel="noopener noreferrer">
-            <img className="tile-icon" src="/sprites/stall.png" alt="" />
+            <img className="tile-icon" src="/sprites/stall.webp" alt="" />
             <span className="tile-text">
               <b>キャラクター置き場</b>
               <i>Googleドライブ・自由にダウンロードOK</i>

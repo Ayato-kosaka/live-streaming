@@ -1,8 +1,12 @@
-"""焼いたスプライトを切り詰めて、島に置くための寸法を書き出す。
+"""焼いたスプライトを配信用に整えて、島に置くための寸法を書き出す。
 
-接地影が焼き込んであるので「画像の下端＝地面」ではない。
-影を含む見える範囲(w,h)と、物体そのものの範囲(ox,oy,ow,oh)を別々に持たせて、
-site 側で足元をぴったり合わせられるようにする。
+やること:
+  1. 透明な余白を切り落とす
+  2. 長辺 320px まで縮める(島では 40〜200px でしか映らないので、これで足りる)
+  3. WebP で書き出す。PNG のままだと島1枚で3MB近くになってしまう
+  4. 接地影が焼き込んであるので「画像の下端＝地面」ではない。
+     影を含む見える範囲(w,h)と、物体そのものの範囲(ox,oy,ow,oh)を
+     別々に持たせて、site 側で足元をぴったり合わせられるようにする
 """
 import json
 import os
@@ -16,6 +20,8 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else "../../site/content/sprites.json"
 # 接地影の濃さは 0.2 前後なので、これより濃ければ物体とみなす
 SOLID = 140
 VISIBLE = 6
+# 表示に必要な最大の辺の長さ(px)。高精細画面のぶんも見込んである
+MAX_SIDE = 320
 
 meta = {}
 for f in sorted(os.listdir(SRC)):
@@ -31,7 +37,11 @@ for f in sorted(os.listdir(SRC)):
         print("空:", name)
         continue
     im = im.crop(seen)
-    im.save(path, optimize=True)
+    k = min(1.0, MAX_SIDE / max(im.size))
+    if k < 1:
+        im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+    im.save(os.path.join(SRC, name + ".webp"), quality=88, method=6)
+    os.remove(path)
 
     a = im.getchannel("A")
     solid = a.point(lambda v: 255 if v > SOLID else 0).getbbox() or (0, 0, im.width, im.height)

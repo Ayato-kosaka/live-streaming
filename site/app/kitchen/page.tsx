@@ -37,7 +37,7 @@ export default function KitchenPage() {
             const c = COUNTRIES.find((x) => x.slug === r.country);
             return (
               <Link key={r.slug} href={`/kitchen/${r.slug}`} className="stamp">
-                <img className="stamp-icon" src={`/sprites/${r.icon}.png`} alt="" />
+                <img className="stamp-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 <b>{r.name}</b>
                 <i>
                   {c?.flag} {r.date.replace(/-/g, "/")}

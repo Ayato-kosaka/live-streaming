@@ -22,7 +22,7 @@ export default function LegendsPage() {
       <div className="tiles">
         {LEGENDS.map((l) => (
           <Link key={l.slug} className="tile" href={`/legends/${l.slug}`}>
-            <img className="tile-icon" src={`/sprites/${l.icon}.png`} alt="" />
+            <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
             <span className="tile-text">
               <b>{l.title}</b>
               <i>{l.span ?? l.date.replace(/-/g, "/")}</i>
@@ -37,7 +37,7 @@ export default function LegendsPage() {
           「怖いイメージを変えたいので、一緒にご飯を食べにイランまで歩く」。2026年のGWに12日間かけて、アルメニアのエレバンからイラン国境まで約380kmを歩いた企画です。
         </p>
         <Link className="tile" href="/legends/iran-walk" style={{ marginTop: 12 }}>
-          <img className="tile-icon" src="/sprites/signpost.png" alt="" />
+          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>イランまで歩く</b>
             <i>12日間・約380km の記録</i>

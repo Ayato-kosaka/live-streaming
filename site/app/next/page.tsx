@@ -24,7 +24,7 @@ export default function NextPage() {
         <h2>もっと大きい企画を出したい</h2>
         <p>「こういうことやってほしい」は掲示板のほうへ。投票の多いものから企画会議に上がります。</p>
         <Link className="tile" href="/board">
-          <img className="tile-icon" src="/sprites/signboard.png" alt="" />
+          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
             <i>ログインなしで出せます</i>

@@ -32,7 +32,7 @@ export default function StreamsPage() {
       {STREAM_TYPES.map((t) => (
         <Panel key={t.slug}>
           <h2 style={{ ["--frame" as string]: t.color }}>
-            <img className="h2-icon" src={`/sprites/${t.icon}.png`} alt="" /> {t.name}
+            <img className="h2-icon" src={`/sprites/${t.icon}.webp`} alt="" /> {t.name}
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
             <span className="chip">🕙 {t.when}</span>
@@ -44,7 +44,7 @@ export default function StreamsPage() {
             ))}
           </div>
           <Link className="tile" href={`/streams/${t.slug}`} style={{ marginTop: 14, ["--tile" as string]: t.color }}>
-            <img className="tile-icon" src={`/sprites/${t.icon}.png`} alt="" />
+            <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
             <span className="tile-text">
               <b>{t.name}をくわしく</b>
               <i>{t.deeper ? t.deeper.label : "配信の中身を見る"}</i>

@@ -91,7 +91,7 @@ export default function Home() {
           <div className="stamps">
             {latestRecipes.map((r) => (
               <Link key={r.slug} href={`/kitchen/${r.slug}`} className="stamp">
-                <img className="stamp-icon" src={`/sprites/${r.icon}.png`} alt="" />
+                <img className="stamp-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 <b>{r.name}</b>
                 <i>{r.date.replace(/-/g, "/")}</i>
               </Link>
@@ -141,7 +141,7 @@ export default function Home() {
           <div className="tiles" style={{ marginTop: 14 }}>
             {LINKS.map((l) => (
               <a key={l.id} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-                <img className="tile-icon" src={`/sprites/${l.icon}.png`} alt="" />
+                <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
                 <span className="tile-text">
                   <b>{l.label}</b>
                   <i>{l.note}</i>

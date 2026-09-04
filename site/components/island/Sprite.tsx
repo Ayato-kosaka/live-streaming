@@ -52,7 +52,7 @@ export function Sprite({
   const top = y - (m.oy + m.oh) * k;
   return (
     <image
-      href={`/sprites/${name}.png`}
+      href={`/sprites/${name}.webp`}
       x={left}
       y={top}
       width={m.w * k}
