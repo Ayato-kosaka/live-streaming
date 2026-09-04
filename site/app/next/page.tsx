@@ -23,11 +23,33 @@ export default function NextPage() {
       <Panel>
         <h2>もっと大きい企画を出したい</h2>
         <p>「こういうことやってほしい」は掲示板のほうへ。投票の多いものから企画会議に上がります。</p>
+        <Link className="tile" href="/nordic" style={{ marginBottom: 8 }}>
+          <span className="tile-text">
+            <b>いちばん大きい企画は「ヒッチハイクで北欧へ」</b>
+            <i>9月11日出発。ルートと国ごとの見どころ</i>
+          </span>
+          <span className="tile-go" aria-hidden>→</span>
+        </Link>
         <Link className="tile" href="/board">
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
             <i>ログインなしで出せます</i>
+          </span>
+          <span className="tile-go" aria-hidden>→</span>
+        </Link>
+      </Panel>
+      <Panel>
+        <h2>企画のページを一緒に作る</h2>
+        <p>
+          これからの企画のページは、毎回ちゃんと作りたいと思っています。
+          骨組みを書いてくれる人がいると、それだけ良いページになります。
+        </p>
+        <Link className="tile" href="/next/new">
+          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
+          <span className="tile-text">
+            <b>企画のページを作る</b>
+            <i>いまは、あやとが声をかけた人だけ</i>
           </span>
           <span className="tile-go" aria-hidden>→</span>
         </Link>

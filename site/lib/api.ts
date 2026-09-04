@@ -93,6 +93,33 @@ export type MeSettings = {
   showPhoto?: boolean;
 };
 
+/** 企画ページの下書き。あやとが「書いていいよ」と決めた人だけが書ける。 */
+export type PlanDraft = {
+  id?: string;
+  title: string;
+  when: string;
+  date: string;
+  note: string;
+  tags: string[];
+  place: { name: string; area: string; map: string };
+  about: string[];
+  links: { label: string; href: string }[];
+  photos: { src: string; alt: string; credit: string; creditHref: string }[];
+  embeds: { kind: "instagram" | "youtube"; id: string; note: string }[];
+  by?: string;
+  updatedAt?: number;
+};
+
+export const getDrafts = (token: string) =>
+  req<{ drafts: PlanDraft[] }>("/drafts", { headers: auth(token) });
+
+export const saveDraft = (d: PlanDraft, token: string) =>
+  req<{ id: string; draft: PlanDraft }>("/drafts", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(d),
+  });
+
 /** 島での見え方を保存する。ログインしていないと使えない。 */
 export const saveMe = (s: MeSettings, token: string) =>
   req<MeSettings & { uid: string }>("/me", {
