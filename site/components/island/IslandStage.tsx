@@ -7,6 +7,7 @@ import { Sprite } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 import { UI } from "@/content/voice";
+import { Gull } from "./Guide";
 import {
   createVillagers,
   stepVillagers,
@@ -20,6 +21,11 @@ const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやたは住人よりひとまわり大きい。主人公なので。 */
 const AYATO_H = 74;
 const VILLAGER_H = 42;
+
+/** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
+const ARRIVE_SPAN = 3400;
+/** 同じセッションで2回目からは、演出を飛ばして最初から島にいる */
+const VISITED = "ayato-island-arrived";
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -46,12 +52,33 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const keys = useRef<Record<string, boolean>>({});
   const avatarRef = useRef(avatar);
   avatarRef.current = avatar;
-  const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy, span: 1420 });
+  // 最初の1フレーム目から遠景で描き始めるので、演出は読み込みと同時に始まる。
+  // JS の判定を待たないぶん、島が一瞬見えてから引く、というちらつきが起きない。
+  const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
+  const [arriving, setArriving] = useState(true);
   const [, tick] = useState(0);
 
   const villagers = useMemo(() => createVillagers(residents), [residents]);
   const dice = useRef(rng(777));
   const clock = useRef(0);
+
+  useEffect(() => {
+    let seen = false;
+    try {
+      seen = !!sessionStorage.getItem(VISITED);
+      sessionStorage.setItem(VISITED, "1");
+    } catch {
+      /* プライベートモードなどで読めなくても、演出を出すだけなので気にしない */
+    }
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (seen || still) {
+      camRef.current.span = 0; // 下の ease が最初の1フレームで追いつく
+      setArriving(false);
+      return;
+    }
+    const t = setTimeout(() => setArriving(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const el = hostRef.current;
@@ -129,7 +156,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const ease = 0.09 * (dt / 16.67);
       cam.x += (want.x - cam.x) * ease;
       cam.y += (want.y - cam.y) * ease;
-      cam.span += (span - cam.span) * 0.1 * (dt / 16.67);
+      // 遠景から寄るときは、着地するように後半をゆっくりにする
+      const far = cam.span > span * 1.25;
+      cam.span += (span - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
       tick((v) => (v + 1) % 1000000);
       raf = requestAnimationFrame(step);
     };
@@ -197,7 +226,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   })();
 
   return (
-    <div className="stage" ref={hostRef} onClick={onStageClick}>
+    <div className={`stage${arriving ? " is-arriving" : ""}`} ref={hostRef} onClick={onStageClick}>
       <svg className="stage-svg" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid slice" aria-hidden>
         <IslandScene />
         {layers.map((l) => {
@@ -322,6 +351,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         <button data-ui className="zoom-toggle" onClick={() => setWide((v) => !v)}>
           {wide ? UI.comeDown : UI.lookAround}
         </button>
+      )}
+
+      {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}
+      {arriving && (
+        <div className="arrive" aria-hidden>
+          <span className="arrive-flash" />
+          <span className="arrive-gull">
+            <Gull size={92} wing="fly" shadow={false} />
+          </span>
+        </div>
       )}
 
       {hint && (

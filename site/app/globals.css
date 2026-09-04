@@ -891,3 +891,54 @@ img { max-width: 100%; }
 @media (min-width: 720px) {
   .gsay-bubble { font-size: 15px; padding: 12px 18px; }
 }
+
+/* --- 島に着くまでの演出 --- */
+.arrive {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* 空の光。だんだん目が慣れていく感じ */
+.arrive-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 8%, #ffffff 0%, #dff4ff 42%, rgba(190, 232, 246, 0) 78%);
+  animation: arriveFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes arriveFlash {
+  0% { opacity: 1; }
+  55% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+/* カモメが手前を横切って、島へ降りていく */
+.arrive-gull {
+  position: absolute;
+  left: -14%;
+  top: 18%;
+  animation: arriveGull 2.8s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+  filter: drop-shadow(0 8px 12px rgba(20, 60, 80, 0.22));
+}
+@keyframes arriveGull {
+  0%   { transform: translate(0, 0) scale(1.5) rotate(-6deg); opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { transform: translate(52vw, 14vh) scale(1) rotate(3deg); opacity: 1; }
+  100% { transform: translate(104vw, 34vh) scale(0.6) rotate(8deg); opacity: 0; }
+}
+/* 着くまでは名札を出さない。島の形だけを見せる。 */
+.stage.is-arriving .labels,
+.stage.is-arriving .walk-hint,
+.stage.is-arriving .zoom-toggle {
+  animation: arriveUi 3s ease forwards;
+}
+@keyframes arriveUi {
+  0%, 52% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrive { display: none; }
+  .stage.is-arriving .labels,
+  .stage.is-arriving .walk-hint,
+  .stage.is-arriving .zoom-toggle { animation: none; }
+}
