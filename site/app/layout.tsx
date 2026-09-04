@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import IslandTheme from "@/components/island/Theme";
+import { AuthProvider } from "@/lib/auth";
 import { NOW_FALLBACK } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -53,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <IslandTheme />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

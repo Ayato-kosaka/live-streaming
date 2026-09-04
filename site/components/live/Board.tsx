@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { getIdeas, postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
 import { BOARD } from "@/content/voice";
+import { useAuth } from "@/lib/auth";
+import SignIn from "./SignIn";
 
 export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
@@ -12,6 +14,7 @@ export default function Board() {
   const [voted, setVoted] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
   const [sort, setSort] = useState<"votes" | "new">("votes");
+  const { user, token } = useAuth();
 
   useEffect(() => {
     setVoted(votedLocally());
@@ -29,7 +32,7 @@ export default function Board() {
     setSending(true);
     setErr(null);
     try {
-      const { idea } = await postIdea(t, name.trim() || undefined);
+      const { idea } = await postIdea(t, name.trim() || undefined, await token());
       setIdeas((cur) => [idea, ...(cur ?? [])]);
       setText("");
     } catch (e) {
@@ -45,7 +48,7 @@ export default function Board() {
     rememberVote(id);
     setVoted(new Set([...voted, id]));
     try {
-      await voteIdea(id);
+      await voteIdea(id, await token());
     } catch {
       /* 楽観更新のまま。次の読み込みで正しい数に戻る */
     }
@@ -60,6 +63,7 @@ export default function Board() {
       <section className="panel">
         <h2>{BOARD.postTitle}</h2>
         <p className="muted">{BOARD.postNote}</p>
+        <SignIn />
         <textarea
           className="bin"
           value={text}
@@ -69,13 +73,17 @@ export default function Board() {
           placeholder={BOARD.placeholder}
         />
         <div className="brow">
-          <input
-            className="bin"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={20}
-            placeholder={BOARD.namePlaceholder}
-          />
+          {user ? (
+            <span className="bin bin-locked">{user.name} として出します</span>
+          ) : (
+            <input
+              className="bin"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={20}
+              placeholder={BOARD.namePlaceholder}
+            />
+          )}
           <button className="bbtn" onClick={submit} disabled={sending}>
             {sending ? BOARD.submitting : BOARD.submit}
           </button>
@@ -118,7 +126,11 @@ export default function Board() {
               <div className="idea-body">
                 <p>{i.text}</p>
                 <div className="idea-meta">
-                  {i.name && <span>{i.name} さん</span>}
+                  {i.name && (
+                    <span>
+                      {i.name} さん{user && i.byUid === user.uid ? "（あなた）" : ""}
+                    </span>
+                  )}
                   <time>{i.createdAt.slice(0, 10).replace(/-/g, "/")}</time>
                   {i.status === "picked" && <em>{BOARD.picked}</em>}
                 </div>

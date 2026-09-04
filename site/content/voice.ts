@@ -65,7 +65,7 @@ export const UI = {
 /** 企画掲示板。 */
 export const BOARD = {
   postTitle: "企画を貼る",
-  postNote: "ログインは要らない。思いついたことを、そのまま書いて。",
+  postNote: "思いついたことを、そのまま書いて。名前もログインも要らない。",
   placeholder: "例）ジョージアの市場で買った食材だけで一週間ごはんを作る",
   namePlaceholder: "名前（なくてもいい）",
   submit: "はりだす",

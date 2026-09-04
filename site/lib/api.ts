@@ -32,6 +32,8 @@ export type Idea = {
   id: string;
   text: string;
   name?: string;
+  /** ログインして出した人。自分のかどうかを見分けるのに使う */
+  byUid?: string;
   votes: number;
   createdAt: string;
   status?: "open" | "picked" | "done";
@@ -62,6 +64,10 @@ export function clientId(): string {
   }
 }
 
+/** ログインしている人の合言葉。付いていればサーバー側が本人として扱う。 */
+const auth = (token?: string | null): Record<string, string> =>
+  token ? { authorization: `Bearer ${token}` } : {};
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -73,12 +79,24 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const getState = () => req<IslandState>("/state");
 export const getIdeas = () => req<{ ideas: Idea[] }>("/ideas");
-export const postIdea = (text: string, name?: string) =>
-  req<{ idea: Idea }>("/ideas", { method: "POST", body: JSON.stringify({ text, name, cid: clientId() }) });
-export const voteIdea = (id: string) =>
-  req<{ votes: number }>(`/ideas/${id}/vote`, { method: "POST", body: JSON.stringify({ cid: clientId() }) });
-export const postNote = (planId: string, text: string) =>
-  req<{ note: NextNote }>("/notes", { method: "POST", body: JSON.stringify({ planId, text, cid: clientId() }) });
+export const postIdea = (text: string, name?: string, token?: string | null) =>
+  req<{ idea: Idea }>("/ideas", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ text, name, cid: clientId() }),
+  });
+export const voteIdea = (id: string, token?: string | null) =>
+  req<{ votes: number }>(`/ideas/${id}/vote`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ cid: clientId() }),
+  });
+export const postNote = (planId: string, text: string, token?: string | null) =>
+  req<{ note: NextNote }>("/notes", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ planId, text, cid: clientId() }),
+  });
 
 /** 自分が投票した企画（サーバーにも記録するが、UIの即時反映用にローカルにも持つ） */
 export function votedLocally(): Set<string> {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getState, postNote, type NextNote } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { NEXT_FALLBACK } from "@/content/site";
 
 export default function NextPlans() {
@@ -9,6 +10,7 @@ export default function NextPlans() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     getState()
@@ -22,11 +24,11 @@ export default function NextPlans() {
     setBusy(planId);
     setErr(null);
     try {
-      const { note } = await postNote(planId, text);
+      const { note } = await postNote(planId, text, await token());
       setNotes((n) => [note, ...n]);
       setDraft((d) => ({ ...d, [planId]: "" }));
     } catch {
-      setErr("いま貼れませんでした。少し time をおいて試してください。");
+      setErr("いま貼れなかった。少し待ってから、もう一度ためしてみて。");
     } finally {
       setBusy(null);
     }
