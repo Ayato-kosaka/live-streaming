@@ -104,13 +104,16 @@ def get_youtube_client(logger: Optional[logging.Logger] = None) -> Any:
     """
     global _youtube_client, _token_manager
     
-    if _youtube_client is None:
+    # トークンマネージャーの準備（未初期化なら作る。既にあれば logger だけ補う）
+    if _token_manager is None:
         # Doneru トークンマネージャーを初期化
         alertbox_key = get_doneru_alertbox_key()
         _token_manager = DoneruTokenManager(alertbox_key, logger=logger)
-    elif logger is not None and _token_manager is not None and _token_manager.logger is None:
+    elif logger is not None and _token_manager.logger is None:
         _token_manager.logger = logger
-        
+    
+    # クライアントの構築（シングルトン）
+    if _youtube_client is None:
         # 初回トークン取得
         access_token = _token_manager.get_access_token()
         
@@ -120,6 +123,16 @@ def get_youtube_client(logger: Optional[logging.Logger] = None) -> Any:
         
         # YouTube API クライアントを構築
         _youtube_client = build('youtube', 'v3', credentials=credentials)
+    
+    # None のまま呼び出し側に返さない
+    # （返してしまうと呼び出し側で
+    #  「'NoneType' object has no attribute 'channels'」という
+    #   原因の分からない例外になってしまうため）
+    if _youtube_client is None:
+        raise RuntimeError(
+            "YouTube API クライアントの構築に失敗しました。"
+            "Doneru からのトークン取得結果を確認してください。"
+        )
     
     return _youtube_client
 
