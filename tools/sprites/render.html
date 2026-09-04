@@ -4,79 +4,100 @@
 </head><body>
 <script type="module">
 /**
- * Kenney の3Dモデルを「あやとのイラストと同じ画風」のスプライトに焼くレンダラ。
+ * Kenney の3Dモデルを「あつ森の見え方」のスプライトに焼くレンダラ。
  *
- * あやとのキャラ絵は「太い黒線 + フラット塗り」なので、3D素材の側を寄せる:
- *   1. MeshToonMaterial + 2段グラデーションで、陰影を面で割る(フラット塗り)
- *   2. 頂点を法線方向に押し出した黒い裏面シェルで輪郭線を付ける。
- *      押し出し量はカメラの表示範囲から決めるので、大きい物でも小さい物でも
- *      画面上の線の太さが揃う(これが揃わないと「同じ絵」に見えない)
- * これで両者が同じ絵の中にいるように見える。
+ * あつ森の絵づくりを分解すると、効いているのは次の4つ:
+ *   1. 環境光がとても強い。影は真っ黒にならず、空の色と地面の照り返しで青緑〜黄に転ぶ
+ *   2. 陰影はトゥーンのような硬い段ではなく、なだらかなグラデーション
+ *   3. すべての物が地面に「柔らかい接地影」を落としている。これが無いと物が浮く
+ *   4. 彩度は高いが、明度も高い。暗く濁った色がほとんど無い
+ * この4つを再現し、輪郭線はあやとのキャラ絵と並べたときに浮かない程度に
+ * ごく細く(黒ではなく焦茶で)だけ入れる。
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const SIZE = 768;
+const SUPER = 2;      // 一度大きく描いてから縮める(輪郭を滑らかにする)
+const SIZE = 512;
+
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-renderer.setSize(SIZE, SIZE);
+renderer.setSize(SIZE * SUPER, SIZE * SUPER);
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.add(new THREE.AmbientLight(0xffffff, 1.55));
-const key = new THREE.DirectionalLight(0xfff4dc, 1.5);
-key.position.set(-5, 8, 6);
-scene.add(key);
-const rim = new THREE.DirectionalLight(0xd6f0ff, 0.5);
-rim.position.set(6, 4, -5);
-scene.add(rim);
 
-/** トゥーン用の段階グラデーション(2段=フラットに近い) */
-function toonGradient(steps) {
-  const data = new Uint8Array(steps);
-  for (let i = 0; i < steps; i++) data[i] = Math.round(255 * (0.62 + (0.38 * i) / (steps - 1)));
-  const t = new THREE.DataTexture(data, steps, 1, THREE.RedFormat);
-  t.minFilter = t.magFilter = THREE.NearestFilter;
-  t.needsUpdate = true;
-  return t;
-}
-const GRADIENT = toonGradient(3);
+/* ---- 光: 強い環境光 + やわらかい主光源。影の色は空と地面から作る ---- */
+const hemi = new THREE.HemisphereLight(0xdff1ff, 0x9fd96a, 2.0);
+scene.add(hemi);
+const key = new THREE.DirectionalLight(0xfff4d8, 1.35);
+key.position.set(-6, 10, 7);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.radius = 9;
+key.shadow.bias = -0.0008;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xd6ecff, 0.45);
+fill.position.set(7, 4, -6);
+scene.add(fill);
+
+/* ---- 接地影を受ける板。影だけを描くので背景は透けたまま ---- */
+const shadowCatcher = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.ShadowMaterial({ opacity: 0.26, color: 0x2b5c37 }),
+);
+shadowCatcher.rotation.x = -Math.PI / 2;
+shadowCatcher.receiveShadow = true;
+scene.add(shadowCatcher);
 
 /**
- * Kenney 既定のティール/ピーチ配色を、あやと島の配色に置き換える。
- * テクスチャを持たないモデル(nature-kit)はマテリアル色で塗られているので、
- * 色相帯ごとに置き換える。これで島全体の色味が1か所で決まる。
+ * Kenney 既定のティール/ピーチ配色を、あやと島(あつ森寄り)の配色へ。
+ * 彩度と明度を上げて、暗く濁った色を作らないのがコツ。
  */
 const PALETTE_RULES = [
-  // 葉(ティール) → 黄みの明るい緑
-  { from: [0.40, 0.56], h: 0.265, s: 0.52, l: [0.34, 0.60] },
-  // 木部(ピーチ) → あたたかい木の色
-  { from: [0.03, 0.13], h: 0.075, s: 0.44, l: [0.30, 0.56] },
-  // 岩・雪(彩度が低いもの) → すこし温かいグレー
-  { lowSat: true, h: 0.09, s: 0.10, l: [0.55, 0.86] },
+  // 葉(ティール) → あつ森の芝に近い、彩度の高い黄緑
+  { from: [0.38, 0.58], h: 0.268, s: 0.60, l: [0.34, 0.52] },
+  // 木部(ピーチ) → あたたかい木の色。
+  // 彩度の高い黄色(花)まで巻き込まないよう、上限を付ける。
+  { from: [0.02, 0.14], maxSat: 0.45, h: 0.072, s: 0.44, l: [0.30, 0.50] },
+  // 岩・雪 → 温かいグレー(茶色にしない)
+  { lowSat: true, h: 0.09, s: 0.07, l: [0.56, 0.82] },
 ];
 
-function remapColor(c) {
+/** 岩は木部と同じ色相帯にいるので、モデル側で「岩」と分かるものだけ灰色に寄せる */
+const ROCK_RULE = { h: 0.10, s: 0.08, l: [0.52, 0.80] };
+
+function remapColor(c, kind) {
   const hsl = { h: 0, s: 0, l: 0 };
   c.getHSL(hsl);
+  if (kind === "rock") {
+    const t = Math.max(0, Math.min(1, (hsl.l - 0.15) / 0.7));
+    c.setHSL(ROCK_RULE.h, ROCK_RULE.s, ROCK_RULE.l[0] + (ROCK_RULE.l[1] - ROCK_RULE.l[0]) * t);
+    return c;
+  }
   for (const r of PALETTE_RULES) {
-    const hit = r.lowSat ? hsl.s < 0.12 : hsl.h >= r.from[0] && hsl.h <= r.from[1];
+    const hit = r.lowSat
+      ? hsl.s < 0.12
+      : hsl.h >= r.from[0] && hsl.h <= r.from[1] && (r.maxSat === undefined || hsl.s <= r.maxSat);
     if (!hit) continue;
     const t = Math.max(0, Math.min(1, (hsl.l - 0.15) / 0.7));
     c.setHSL(r.h, r.s, r.l[0] + (r.l[1] - r.l[0]) * t);
     return c;
   }
-  // それ以外(花の赤・黄・紫など)は少しだけ明るく、彩度は控えめに
-  c.setHSL(hsl.h, Math.min(1, hsl.s * 0.88), Math.min(0.92, hsl.l * 1.08));
+  // 花の赤・黄・紫など: 彩度を上げて、明るくはっきりさせる(白っぽくしない)
+  c.setHSL(hsl.h, Math.min(1, hsl.s * 1.3 + 0.10), Math.min(0.70, 0.22 + hsl.l * 0.66));
   return c;
 }
 
-/** 頂点を法線方向へ押し出した裏面だけを黒く塗る = 輪郭線 */
+/** 頂点を法線方向へ押し出した裏面だけを塗る = 輪郭線 */
 function makeOutlineMaterial() {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
-    uniforms: { uWidth: { value: 0.02 }, uColor: { value: new THREE.Color(0x2a1d12) } },
+    uniforms: { uWidth: { value: 0.01 }, uColor: { value: new THREE.Color(0x4a3524) } },
     vertexShader: `
       uniform float uWidth;
       void main() {
@@ -105,37 +126,35 @@ async function loadTexture(url) {
   return texCache.get(url);
 }
 
-/** モデルを1つ読んで、トゥーン化 + 輪郭線シェルを付けた Group を返す */
-async function prepare(url, override, outlineWidth, shells, tint) {
+/** モデルを1つ読んで、あつ森寄りのマテリアルと輪郭線シェルを付ける */
+async function prepare(url, override, shells, kind) {
   const gltf = await loader.loadAsync(url);
   const root = gltf.scene;
   root.traverse((o) => {
     if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
-    const toon = mats.map((m) => {
-      // テクスチャを持たないモデル(nature-kit など)にパレット画像を貼ると
-      // UV が合わず真っ黒になる。元から map があるものだけ差し替える。
+    const soft = mats.map((m) => {
+      // テクスチャを持たないモデル(nature-kit など)に他キットのパレット画像を
+      // 貼ると UV が合わず真っ黒になる。元から map があるものだけ差し替える。
       const map = m.map ? override ?? m.map : null;
-      const t = new THREE.MeshToonMaterial({
+      const mat = new THREE.MeshLambertMaterial({
         map,
-        color: map ? 0xffffff : (m.color ? m.color.clone() : new THREE.Color(0xffffff)),
-        gradientMap: GRADIENT,
+        color: map ? 0xffffff : m.color ? m.color.clone() : new THREE.Color(0xffffff),
       });
-      if (!map) remapColor(t.color);
-      return t;
+      if (!map) remapColor(mat.color, kind);
+      return mat;
     });
-    o.material = Array.isArray(o.material) ? toon : toon[0];
+    o.material = Array.isArray(o.material) ? soft : soft[0];
 
-    if (outlineWidth > 0) {
-      const shell = new THREE.Mesh(o.geometry, makeOutlineMaterial());
-      shell.position.copy(o.position);
-      shell.rotation.copy(o.rotation);
-      shell.scale.copy(o.scale);
-      o.parent.add(shell);
-      shells.push(shell);
-    }
+    const shell = new THREE.Mesh(o.geometry, makeOutlineMaterial());
+    shell.position.copy(o.position);
+    shell.rotation.copy(o.rotation);
+    shell.scale.copy(o.scale);
+    o.parent.add(shell);
+    shells.push(shell);
   });
-
   return root;
 }
 
@@ -145,11 +164,11 @@ async function prepare(url, override, outlineWidth, shells, tint) {
  */
 window.renderScene = async (parts, opts = {}) => {
   const override = opts.colormap ? await loadTexture(opts.colormap) : null;
-  const outlineWidth = opts.outline ?? 0.012;
+  const outlineWidth = opts.outline ?? 0.0045;
   const shells = [];
   const group = new THREE.Group();
   for (const part of parts) {
-    const o = await prepare(part.url, override, outlineWidth, shells, opts.tint);
+    const o = await prepare(part.url, override, shells, part.kind ?? opts.kind);
     const [px, py, pz] = part.pos ?? [0, 0, 0];
     const [rx, ry, rz] = part.rot ?? [0, 0, 0];
     o.position.set(px, py, pz);
@@ -157,43 +176,59 @@ window.renderScene = async (parts, opts = {}) => {
     if (part.scale) o.scale.setScalar(part.scale);
     group.add(o);
   }
-  const root = group;
-  scene.add(root);
+  scene.add(group);
 
-  const box = new THREE.Box3().setFromObject(root);
+  const box = new THREE.Box3().setFromObject(group);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
-  const d = maxDim * (opts.zoom ?? 1.25);
-  const cam = new THREE.OrthographicCamera(-d, d, d, -d, 0.01, 4000);
+
+  // 影のぶんだけ下に余白を取る
+  const d = maxDim * (opts.zoom ?? 1.32);
+  const cam = new THREE.OrthographicCamera(-d, d, d, -d, 0.01, 6000);
   const yaw = ((opts.yaw ?? 45) * Math.PI) / 180;
-  const pitch = ((opts.pitch ?? 35) * Math.PI) / 180;
-  const r = maxDim * 20;
+  const pitch = ((opts.pitch ?? 32) * Math.PI) / 180;
+  const r = maxDim * 40;
+  const look = new THREE.Vector3(center.x, box.min.y + size.y * 0.42, center.z);
   cam.position.set(
-    center.x + r * Math.cos(pitch) * Math.sin(yaw),
-    center.y + r * Math.sin(pitch),
-    center.z + r * Math.cos(pitch) * Math.cos(yaw),
+    look.x + r * Math.cos(pitch) * Math.sin(yaw),
+    look.y + r * Math.sin(pitch),
+    look.z + r * Math.cos(pitch) * Math.cos(yaw),
   );
-  cam.lookAt(center);
+  cam.lookAt(look);
   cam.updateProjectionMatrix();
 
+  // 影の描画範囲をこの物体に合わせる(狭くするほど影が綺麗に出る)
+  const sc = key.shadow.camera;
+  sc.left = -maxDim * 1.6;
+  sc.right = maxDim * 1.6;
+  sc.top = maxDim * 1.6;
+  sc.bottom = -maxDim * 1.6;
+  sc.near = 0.1;
+  sc.far = maxDim * 40;
+  key.position.set(look.x - maxDim * 2.6, box.min.y + maxDim * 9, look.z + maxDim * 3.2);
+  key.target.position.copy(look);
+  key.target.updateMatrixWorld();
+  sc.updateProjectionMatrix();
+
+  shadowCatcher.position.y = box.min.y + 0.001;
+
   // 画面上で一定の太さになるよう、表示範囲から押し出し量を決める
-  const widthWorld = (d * 2 * outlineWidth) / 2;
-  for (const s of shells) s.material.uniforms.uWidth.value = widthWorld;
+  for (const s of shells) s.material.uniforms.uWidth.value = d * outlineWidth;
 
   renderer.render(scene, cam);
   const data = renderer.domElement.toDataURL("image/png");
-  scene.remove(root);
+  scene.remove(group);
   for (const s of shells) s.parent?.remove(s);
   return data;
 };
+
 /** パーツの寸法を測る(組み立ての座標決めに使う) */
 window.__measure = async (url) => {
   const g = await loader.loadAsync(url);
   const box = new THREE.Box3().setFromObject(g.scene);
   const s = box.getSize(new THREE.Vector3());
-  const c = box.getCenter(new THREE.Vector3());
-  return { size: [s.x, s.y, s.z], min: [box.min.x, box.min.y, box.min.z], center: [c.x, c.y, c.z] };
+  return { size: [s.x, s.y, s.z], min: [box.min.x, box.min.y, box.min.z] };
 };
 
 window.renderModel = (url, opts = {}) => window.renderScene([{ url }], opts);

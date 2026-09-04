@@ -1,0 +1,178 @@
+{
+"bench": {
+"h": 420,
+"w": 505
+},
+"bridge": {
+"h": 342,
+"w": 512
+},
+"bush": {
+"h": 293,
+"w": 362
+},
+"bush-small": {
+"h": 312,
+"w": 364
+},
+"campfire": {
+"h": 227,
+"w": 376
+},
+"canoe": {
+"h": 199,
+"w": 312
+},
+"fence": {
+"h": 277,
+"w": 364
+},
+"flower-purple": {
+"h": 446,
+"w": 399
+},
+"flower-red": {
+"h": 426,
+"w": 366
+},
+"flower-yellow": {
+"h": 476,
+"w": 453
+},
+"grass": {
+"h": 307,
+"w": 402
+},
+"grass-large": {
+"h": 317,
+"w": 512
+},
+"hut-kitchen": {
+"h": 488,
+"w": 457
+},
+"hut-museum": {
+"h": 500,
+"w": 456
+},
+"hut-workshop": {
+"h": 488,
+"w": 457
+},
+"lantern": {
+"h": 373,
+"w": 284
+},
+"lily": {
+"h": 241,
+"w": 406
+},
+"log": {
+"h": 261,
+"w": 384
+},
+"mushroom": {
+"h": 466,
+"w": 512
+},
+"path-stone": {
+"h": 223,
+"w": 359
+},
+"path-stone-circle": {
+"h": 224,
+"w": 407
+},
+"rock-flat": {
+"h": 229,
+"w": 367
+},
+"rock-large": {
+"h": 280,
+"w": 305
+},
+"rock-small": {
+"h": 305,
+"w": 416
+},
+"rock-tall": {
+"h": 401,
+"w": 360
+},
+"signpost": {
+"h": 424,
+"w": 406
+},
+"statue": {
+"h": 431,
+"w": 379
+},
+"tent": {
+"h": 390,
+"w": 487
+},
+"tree-palm": {
+"h": 432,
+"w": 434
+},
+"tree-pine": {
+"h": 367,
+"w": 260
+},
+"tree-pine-tall": {
+"h": 360,
+"w": 268
+},
+"tree-round": {
+"h": 375,
+"w": 321
+},
+"tree-round-fall": {
+"h": 399,
+"w": 380
+},
+"tree-thin": {
+"h": 393,
+"w": 325
+},
+"villager-female-a": {
+"h": 343,
+"w": 354
+},
+"villager-female-b": {
+"h": 455,
+"w": 468
+},
+"villager-female-c": {
+"h": 457,
+"w": 453
+},
+"villager-female-d": {
+"h": 457,
+"w": 453
+},
+"villager-female-e": {
+"h": 437,
+"w": 437
+},
+"villager-male-a": {
+"h": 422,
+"w": 431
+},
+"villager-male-b": {
+"h": 415,
+"w": 422
+},
+"villager-male-c": {
+"h": 440,
+"w": 434
+},
+"villager-male-d": {
+"h": 422,
+"w": 432
+},
+"villager-male-e": {
+"h": 423,
+"w": 431
+}
+}

@@ -5,8 +5,13 @@
  * 素材: Kenney (CC0) — nature-kit / holiday-kit / mini-characters / food-kit
  */
 
-/** 島全体の色味を決めるパレット。差し替えると全部の色が変わる。 */
-export const COLORMAP = "./palette/island.png";
+/**
+ * 既定ではパレットを差し替えない。
+ * Kenney のキットはそれぞれ自前の colormap を持っていて、
+ * 別キットのものを貼ると UV が合わず色が壊れるため。
+ * テクスチャを持たないモデルは render.html の PALETTE_RULES で色を決める。
+ */
+export const COLORMAP = null;
 
 const NK = "./models/gltf";   // nature-kit
 const HK = "./models/holiday"; // holiday-kit
@@ -35,7 +40,7 @@ export const SPRITES = [
   { name: "tent", parts: [`${NK}/tent_detailedOpen.glb`] },
   { name: "campfire", parts: [`${NK}/campfire_stones.glb`] },
   { name: "signpost", parts: [`${NK}/sign.glb`] },
-  { name: "statue", parts: [`${NK}/statue_head.glb`] },
+  { name: "statue", parts: [`${NK}/statue_head.glb`], opts: { kind: "rock" } },
   { name: "canoe", parts: [`${NK}/canoe.glb`] },
   { name: "bridge", parts: [`${NK}/bridge_wood.glb`] },
   { name: "bench", parts: [`${HK}/bench.glb`] },
@@ -62,13 +67,15 @@ export const SPRITES = [
   { name: "lily", parts: [`${NK}/lily_large.glb`] },
 
   /* ---------- 岩 ---------- */
-  { name: "rock-large", parts: [`${NK}/rock_largeA.glb`] },
-  { name: "rock-small", parts: [`${NK}/rock_smallA.glb`] },
-  { name: "rock-tall", parts: [`${NK}/rock_tallC.glb`] },
+  { name: "rock-large", parts: [`${NK}/rock_largeA.glb`], opts: { kind: "rock" } },
+  { name: "rock-small", parts: [`${NK}/rock_smallA.glb`], opts: { kind: "rock" } },
+  { name: "rock-tall", parts: [`${NK}/rock_tallC.glb`], opts: { kind: "rock" } },
+  { name: "rock-flat", parts: [`${NK}/rock_smallFlatA.glb`], opts: { kind: "rock" } },
+  { name: "path-stone-circle", parts: [`${NK}/path_stoneCircle.glb`], opts: { kind: "rock" } },
 
   /* ---------- 柵・道 ---------- */
   { name: "fence", parts: [`${NK}/fence_simple.glb`] },
-  { name: "path-stone", parts: [`${NK}/path_stone.glb`] },
+  { name: "path-stone", parts: [`${NK}/path_stone.glb`], opts: { kind: "rock" } },
 
   /* ---------- 住人 ---------- */
   ...["male-a", "male-b", "male-c", "male-d", "male-e", "female-a", "female-b", "female-c", "female-d", "female-e"].map(
