@@ -21,14 +21,28 @@ export default function Home() {
       <section className="hero">
         <IslandStage residents={RESIDENTS} />
         <div className="hero-ui">
+          {/* 島の上に文字を重ねると絵が死ぬので、看板ロゴ1枚だけ置く。
+              引き（島ぜんぶ）は上部中央にフル、寄り（あやとを追う）は右上に小さく。
+              置き場所の出し分けは .stage[data-view] からの兄弟セレクタでCSS側が決める。 */}
           <div className="hero-copy">
-            <p className="eyebrow">{HERO.eyebrow}</p>
-            <h1>あやと島</h1>
-            {/* スマホでは1行目だけ。2行とも出すと島が文字で埋まる */}
-            <p className="lede">
-              <span>{HERO.lede[0]}</span>
-              <span className="lede-more">{HERO.lede[1]}</span>
-            </p>
+            <h1 className="hero-logo">
+              {/* 引きは看板まるごと。寄りは下がった札を落としたバッジだけ（小さいと読めないので） */}
+              <img
+                className="hero-logo-full"
+                src="/logos/ayato-island.webp"
+                alt="あやと島 — 毎晩22時、世界のどこかから生配信"
+                width={900}
+                height={706}
+              />
+              <img
+                className="hero-logo-mark"
+                src="/logos/ayato-island-mark.webp"
+                alt=""
+                width={520}
+                height={305}
+                aria-hidden
+              />
+            </h1>
             <div className="hero-badges">
               <Link className="badge" href="/now">
                 いま {NOW_FALLBACK.place}

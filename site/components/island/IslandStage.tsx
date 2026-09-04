@@ -126,7 +126,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
   const span = useMemo(() => {
     const aspect = box.w / Math.max(1, box.h);
-    if (mode === "phone") return wide ? 980 : 500;
+    // 寄りはしっかり寄せる。どうぶつの森の「その場にいる」感は画面に映る範囲の狭さから来る。
+    if (mode === "phone") return wide ? 850 : 340;
     if (mode === "tablet") return Math.max(1120, 980 * aspect);
     return Math.max(1220, 880 * aspect);
   }, [mode, wide, box.w, box.h]);
@@ -134,10 +135,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** カメラの目標地点 */
   const camTarget = useCallback(() => {
     // 下にバーとカードが出るぶん、島は画面の上寄りに置く
-    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 130 };
+    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 92 };
     if (mode === "phone") return { x: ISLAND.cx, y: ISLAND.cy - 150 };
     // 上に見出しが乗るので、島は画面のやや下に置く
-    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy - 62 };
+    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy + 6 };
     return { x: ISLAND.cx, y: ISLAND.cy - 40 };
   }, [follow, mode]);
 
@@ -268,8 +269,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     return [...scene, ...cast, me].sort((a, b) => a.y - b.y);
   })();
 
+  // data-view / data-mode は、ロゴなど島の外のUIが寄り・引きを知るための出口。
   return (
-    <div className={`stage${arriving ? " is-arriving" : ""}`} ref={hostRef} onClick={onStageClick}>
+    <div
+      className={`stage${arriving ? " is-arriving" : ""}`}
+      data-view={follow ? "close" : "wide"}
+      data-mode={mode}
+      ref={hostRef}
+      onClick={onStageClick}
+    >
       <svg className="stage-svg" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid slice" aria-hidden>
         <IslandScene />
         {layers.map((l) => {

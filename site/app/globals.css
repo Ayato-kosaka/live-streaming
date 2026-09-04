@@ -381,38 +381,52 @@ img { max-width: 100%; }
   padding: calc(18px + env(safe-area-inset-top)) 16px 0;
 }
 .hero-copy { text-align: center; max-width: 640px; }
-.eyebrow {
+
+/* ---- 島の上のロゴ ------------------------------------------------------
+   文字で説明せず、看板1枚に言いたいことを全部入れてある。
+   ・引き（島ぜんぶ / PC）… 上部中央にフルの看板
+   ・寄り（あやとを追うスマホ）… 右上に小さくバッジだけ
+   寄り引きは IslandStage が .stage[data-view] に出しているので、
+   兄弟セレクタ（.stage ~ .hero-ui）でこちらが受け取る。 */
+.hero-logo {
   margin: 0;
-  font-size: 11.5px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  color: #fffdf6;
-  text-shadow: 0 2px 10px rgba(10, 50, 66, 0.6);
+  line-height: 0;
+  /* 画面から浮いて見えるよう、看板の形にそって影を落とす */
+  filter: drop-shadow(0 10px 18px rgba(8, 46, 62, 0.38));
+  animation: logo-in 720ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
-.hero-copy h1 {
-  margin: 4px 0 0;
-  font-size: clamp(40px, 12.5vw, 82px);
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  color: #fffdf6;
-  text-shadow: 0 4px 0 var(--frame-dark), 0 6px 0 var(--frame-deep),
-    0 16px 30px rgba(8, 46, 62, 0.45);
+/* display は .hero-logo-full / -mark 側で持つ。
+   ここで img に display を書くと詳細度で勝ってしまい、寄り引きの出し分けが効かない。 */
+.hero-logo img { height: auto; }
+/* スマホは看板を大きく見せたい。PCは島が主役なので控えめに。 */
+.hero-logo-full { display: block; width: clamp(232px, 58vw, 360px); }
+@media (min-width: 640px) { .hero-logo-full { width: 300px; } }
+@media (min-width: 1024px) { .hero-logo-full { width: 268px; } }
+.hero-logo-mark { display: none; width: 124px; }
+@keyframes logo-in {
+  from { opacity: 0; transform: translateY(-14px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
 }
-.lede {
-  margin: 10px auto 0;
-  font-size: clamp(12.5px, 3.5vw, 16px);
-  font-weight: 700;
-  line-height: 1.7;
-  color: #fffdf6;
-  text-shadow: 0 2px 12px rgba(10, 50, 66, 0.7);
+@media (prefers-reduced-motion: reduce) {
+  .hero-logo { animation: none; }
 }
-.lede span { display: block; }
-.lede-more { display: none; }
-@media (min-width: 640px) {
-  .lede-more { display: block; }
+
+/* 寄り＝右上に小さく。島の主役はあやとなので、看板は隅に引く */
+/* PCは島が画面いっぱいなので、看板は海の上（左上）に寄せて島を隠さない */
+@media (min-width: 1024px) {
+  .hero-ui { justify-content: flex-start; padding-left: 24px; }
+  .hero-copy { text-align: left; }
+  .hero-badges { justify-content: flex-start; }
 }
-.hero-badges { margin-top: 14px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+.stage[data-view="close"] ~ .hero-ui { justify-content: flex-end; }
+.stage[data-view="close"] ~ .hero-ui .hero-copy { max-width: none; text-align: right; }
+.stage[data-view="close"] ~ .hero-ui .hero-logo-full { display: none; }
+.stage[data-view="close"] ~ .hero-ui .hero-logo-mark { display: block; margin-left: auto; }
+.stage[data-view="close"] ~ .hero-ui .hero-badges { justify-content: flex-end; margin-top: 8px; }
+.stage[data-view="close"] ~ .hero-ui .badge { font-size: 11px; padding: 5px 11px; border-width: 2px; }
+
+.hero-badges { margin-top: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
 .badge {
   pointer-events: auto;
   display: inline-flex; align-items: center; gap: 7px;
@@ -530,8 +544,8 @@ img { max-width: 100%; }
 .hero-ui:before {
   content: "";
   position: absolute; inset: 0 0 auto; height: 42%;
-  background: linear-gradient(180deg, rgba(8, 52, 70, 0.62) 0%, rgba(8, 52, 70, 0.42) 38%,
-    rgba(8, 52, 70, 0.14) 72%, rgba(8, 52, 70, 0) 100%);
+  background: linear-gradient(180deg, rgba(8, 52, 70, 0.34) 0%, rgba(8, 52, 70, 0.2) 42%,
+    rgba(8, 52, 70, 0.06) 74%, rgba(8, 52, 70, 0) 100%);
   pointer-events: none;
 }
 @media (max-width: 639px) {
@@ -1120,7 +1134,7 @@ img { max-width: 100%; }
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding-left: 8px;
   padding-right: 8px;
   background: linear-gradient(rgba(10, 60, 80, 0) 0%, rgba(10, 60, 80, 0.34) 34%, rgba(10, 60, 80, 0.5) 100%);
@@ -1135,9 +1149,11 @@ img { max-width: 100%; }
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   padding: 4px 2px;
-  mask-image: linear-gradient(90deg, #000 90%, transparent);
+
 }
 .island-bar-scroll::-webkit-scrollbar { display: none; }
+/* スクロールの終わりとズームボタンの境目。重なって見えないよう仕切りを1本入れる */
+.island-bar-scroll { border-right: 1px solid rgba(255, 253, 246, 0.22); padding-right: 8px; }
 .bar-spot {
   flex: none;
   display: inline-flex;
