@@ -405,6 +405,26 @@ export default function IslandScene() {
         ))}
       </g>
 
+      {/* ------- ちょうちょ ------- */}
+      <g className="bugs" aria-hidden>
+        {[
+          [420, 690, 0, "#ffd35e"],
+          [700, 620, 3.1, "#ffffff"],
+          [560, 830, 6.2, "#c79bff"],
+          [860, 760, 9.4, "#ff9fb6"],
+        ].map(([bx, by, delay, color], i) => (
+          <g key={i} className="bug" style={{ animationDelay: `${delay}s` }} transform={`translate(${bx} ${by})`}>
+            <g className="bug-wing">
+              <ellipse cx={-6} cy={-2} rx={6} ry={8} fill={color as string} />
+              <ellipse cx={6} cy={-2} rx={6} ry={8} fill={color as string} />
+              <ellipse cx={-6} cy={-5} rx={3} ry={3.4} fill="#ffffff" opacity={0.45} />
+              <ellipse cx={6} cy={-5} rx={3} ry={3.4} fill="#ffffff" opacity={0.45} />
+              <ellipse cx={0} cy={0} rx={1.8} ry={7} fill="#5b4630" />
+            </g>
+          </g>
+        ))}
+      </g>
+
       {/* ------- 桟橋 ------- */}
       <g>
         <ellipse cx={236} cy={882} rx={68} ry={17} fill="#134a2c" opacity={0.15} />

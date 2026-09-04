@@ -232,6 +232,21 @@ img { max-width: 100%; }
 .spot-text { display: flex; flex-direction: column; line-height: 1.15; }
 .spot-text b { font-size: 14px; font-weight: 900; letter-spacing: 0.01em; }
 .spot-text i { font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); }
+/* マウスのある画面では、ふだんは名前だけ。近づいたときに説明が開く。
+   名札だらけで島が埋まらないようにするため。 */
+@media (hover: hover) {
+  .spot-text i {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.18s ease, opacity 0.18s ease;
+  }
+  .spot-label:hover .spot-text i,
+  .spot-label:focus-visible .spot-text i {
+    max-height: 1.5em;
+    opacity: 1;
+  }
+}
 @media (min-width: 720px) {
   .spot-icon { width: 40px; height: 40px; }
   .spot-text b { font-size: 16px; }
@@ -282,6 +297,23 @@ img { max-width: 100%; }
 .stage-lamps circle { animation: lampFlicker 3.4s ease-in-out infinite alternate; }
 .stage-lamps circle:nth-child(even) { animation-duration: 4.6s; }
 @keyframes lampFlicker { from { opacity: 0.78; } to { opacity: 1; } }
+
+/* ちょうちょ。昼だけ飛んでいる(夜は色をかぶせる層に沈む)。 */
+.bug { animation: bugFly 17s ease-in-out infinite; }
+.bug-wing { animation: bugFlap 0.26s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes bugFly {
+  0%   { transform: translate(0, 0); }
+  18%  { transform: translate(34px, -26px); }
+  36%  { transform: translate(72px, 4px); }
+  54%  { transform: translate(40px, 38px); }
+  72%  { transform: translate(-18px, 24px); }
+  86%  { transform: translate(-30px, -14px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes bugFlap { from { transform: scaleX(0.45); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .bug, .bug-wing { animation: none; }
+}
 
 .foam path { animation: foamDrift 9s linear infinite; }
 .foam path:nth-child(2) { animation-duration: 13s; animation-direction: reverse; }
