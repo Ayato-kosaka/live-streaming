@@ -19,7 +19,6 @@ jobs:
           echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> functions/.env
           echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> functions/.env
           echo "YOUTUBE_REFRESH_TOKEN=${{ secrets.YOUTUBE_REFRESH_TOKEN }}" >> functions/.env
-          echo "ISLAND_ADMIN_KEY=${{ secrets.ISLAND_ADMIN_KEY }}" >> functions/.env
 
       - name: 📦 依存関係のインストール
         run: npm ci
