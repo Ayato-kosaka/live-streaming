@@ -1775,12 +1775,11 @@ img { max-width: 100%; }
 .ncountry {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 13px 14px;
   border: 3px solid var(--frame-dark);
-  border-left-width: 9px;
   border-radius: 17px;
   background: var(--paper);
   box-shadow: 0 4px 0 var(--frame-deep);
@@ -1796,7 +1795,6 @@ img { max-width: 100%; }
   font-size: 12px;
   font-weight: 900;
 }
-.ncountry-flag { font-size: 27px; line-height: 1; }
 .ncountry-body { display: grid; gap: 2px; min-width: 0; }
 .ncountry-body b { font-size: 15.5px; font-weight: 900; }
 .ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2, var(--ink)); }
@@ -2017,3 +2015,224 @@ img { max-width: 100%; }
   overflow-x: auto;
   white-space: pre;
 }
+
+/* --- 北欧ルートの地図 -------------------------------------------------
+   形は本物（Natural Earth の海岸線をランベルト正角円錐で投影）。
+   塗りは島とそろえて、輪郭線を引かず、砂の縁と浅瀬の帯で陸と海を分ける。
+   --------------------------------------------------------------------- */
+.nmap {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  border: 4px solid var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  background: #2f7391;
+  overflow: hidden;
+}
+.nmap text {
+  font-family: inherit;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+.nmap-country {
+  fill: #3f7a4e;
+  font-weight: 900;
+  opacity: 0.65;
+  letter-spacing: 0.2em;
+  stroke: #f2f8e4;
+  stroke-width: 6;
+}
+.nmap-city {
+  fill: #18414f;
+  font-size: 24px;
+  font-weight: 900;
+  stroke: #fffdf6;
+  stroke-width: 6;
+}
+.nmap-city.is-big { font-size: 30px; }
+.nmap-chip.is-here rect { fill: var(--gold, #f0c040); }
+.nmap-chip rect {
+  fill: rgba(255, 253, 246, 0.94);
+  stroke: var(--frame-dark);
+  stroke-width: 3;
+}
+.nmap-chip text {
+  fill: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+.nmap-pin { cursor: pointer; }
+.nmap-pin:hover .nmap-city { fill: #0d2f3b; }
+
+/* --- デザインの見本ページ --- */
+.dsgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; margin-top: 12px; }
+.dscell {
+  display: grid; justify-items: center; gap: 6px;
+  padding: 12px 6px;
+  border: 2px solid var(--frame-dark);
+  border-radius: 13px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.dscell i { font-style: normal; font-size: 9.5px; font-weight: 800; color: var(--ink-3); word-break: break-all; text-align: center; }
+.ic { display: inline-block; vertical-align: -0.16em; }
+.flag { display: inline-block; vertical-align: -0.16em; }
+
+/* --- 折りたたみ -------------------------------------------------------
+   長い文章をそのまま並べない。見出しだけ並べて、押すと開く。
+   --------------------------------------------------------------------- */
+.fold {
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 3px 0 var(--frame-deep);
+  overflow: hidden;
+}
+.fold + .fold { margin-top: 8px; }
+.fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  border-left: 7px solid var(--frame-dark);
+  -webkit-tap-highlight-color: transparent;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: rgba(255, 236, 178, 0.35); }
+.fold-t { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.fold-t b { font-size: 14.5px; font-weight: 900; line-height: 1.4; }
+.fold-t i {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fold-n {
+  flex: none;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.fold-c { flex: none; color: var(--ink-3); transition: transform 0.2s ease; }
+.fold[open] > summary .fold-c { transform: rotate(180deg); }
+.fold[open] > summary { border-bottom: 2px solid rgba(0, 0, 0, 0.07); }
+.fold-body { padding: 13px 15px 16px; }
+.fold-body > :first-child { margin-top: 0; }
+.fold-body > :last-child { margin-bottom: 0; }
+.folds { display: grid; gap: 8px; margin-top: 12px; }
+
+/* --- 北欧: 地図まわり --- */
+.panel.is-map { padding-left: 12px; padding-right: 12px; }
+.nmlegend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.nmlegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: var(--paper);
+  color: var(--ink);
+}
+.nmlegend .is-hitch { background: linear-gradient(#ffe3a6, #f6c563); }
+.nmlegend .is-ferry { background: #e6f2fb; }
+.nmlegend .is-side { background: #f3e6cd; }
+.nmlegend .is-fly { background: #eef3f6; }
+
+.rleg-h { display: inline-flex; align-items: center; gap: 6px; }
+.rleg-h .ic { color: var(--ink-3); }
+.rleg-h.is-hitch .ic { color: #c98a1c; }
+.rleg-h.is-ferry .ic { color: #3f86ab; }
+.rleg-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--frame-deep);
+}
+
+/* 引用のような、この企画の芯を言う一枚 */
+.nquote {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 3px dashed var(--frame-dark);
+  background: rgba(255, 236, 178, 0.4);
+}
+.nquote p { margin: 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; }
+.nquote b { font-weight: 900; }
+
+.ncountry-go { flex: none; color: var(--ink-3); margin-left: auto; }
+.tile-mark {
+  flex: none;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+  color: var(--ink);
+}
+
+/* --- しおりのコーナー --- */
+.gchap { margin-bottom: 10px; }
+.gchap > .fold { border-width: 4px; box-shadow: 0 5px 0 var(--frame-deep); }
+.gchap > .fold > summary { padding: 15px 16px; border-left-width: 9px; }
+.gchap-h { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; }
+.gchap-h .ic { color: var(--frame-deep); }
+.gchap .fold-t b { font-size: 16px; }
+.gchap .fold .fold { box-shadow: none; border-width: 2px; }
+.gchap .fold .fold > summary { border-left-width: 5px; padding: 10px 12px; }
+
+/* --- 国のページ: 到着のしかた --- */
+.narrive {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 13px 15px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  background: rgba(255, 236, 178, 0.45);
+}
+.narrive b { font-size: 15px; font-weight: 900; }
+.narrive i { font-style: normal; font-size: 12px; font-weight: 900; color: var(--ink-3); }
+.narrive span { font-size: 11.5px; font-weight: 900; color: var(--frame-deep); }
+.narrive p { margin: 4px 0 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
+
+.nspot-h { display: inline-flex; align-items: center; gap: 7px; }
+.nspot-h .ic { color: var(--frame-deep); flex: none; }
+.ncity-name em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ink-3);
+  margin-left: 10px;
+}
+.nnav a { display: inline-flex; align-items: center; gap: 7px; }
+.ic.is-flip { transform: scaleX(-1); }
+.nspot-credit { display: inline-flex; align-items: center; gap: 4px; }

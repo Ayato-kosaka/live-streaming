@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
-import RouteMap from "@/components/nordic/RouteMap";
+import Icon, { type IconName } from "@/components/ui/Icon";
+import Flag from "@/components/ui/Flag";
+import Fold from "@/components/ui/Fold";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
-import { CATS, NORDIC_COUNTRIES, ROUTE, loadSpots, nordicCountry, type NordicSpot } from "@/content/nordic";
+import RouteMapSvg from "@/components/nordic/RouteMapSvg";
+import MAP from "@/content/nordic/map.json";
+import { NORDIC_COUNTRIES, ROUTE, loadSpots, nordicCountry, type NordicSpot } from "@/content/nordic";
 
 export function generateStaticParams() {
   return NORDIC_COUNTRIES.map((c) => ({ country: c.slug }));
@@ -25,65 +29,79 @@ export async function generateMetadata({
   };
 }
 
-/** 見どころひとつ。写真は Wikimedia から借りているので、出どころを必ず添える。 */
+const CAT: Record<string, { label: string; icon: IconName }> = {
+  see: { label: "見る", icon: "see" },
+  do: { label: "やる", icon: "do" },
+  eat: { label: "食べる", icon: "eat" },
+  buy: { label: "買う", icon: "buy" },
+};
+
+/**
+ * 見どころ1件。
+ *
+ * 閉じているときは、写真と「ここが面白い」の一行だけ。
+ * 本文を全部並べると1国で数千字になって、探すのがつらくなる。
+ */
 function Spot({ s }: { s: NordicSpot }) {
-  const cat = CATS[s.cat];
+  const cat = CAT[s.cat] ?? CAT.see;
   return (
-    <article className="nspot" id={s.id}>
+    <Fold
+      title={
+        <span className="nspot-h">
+          <Icon name={cat.icon} size={16} />
+          {s.title}
+        </span>
+      }
+      lead={s.point || s.local}
+      note={s.budget || undefined}
+    >
       {s.img && (
         <a className="nspot-img" href={s.cm || s.big} target="_blank" rel="noopener noreferrer">
           <img src={s.img} alt={s.title} loading="lazy" referrerPolicy="no-referrer" />
-          <span className="nspot-credit">Wikimedia Commons</span>
+          <span className="nspot-credit">
+            Wikimedia Commons
+            <Icon name="external" size={11} />
+          </span>
         </a>
       )}
-      <div className="nspot-body">
-        <span className="nspot-head">
-          <em className="nspot-cat">
-            {cat?.icon} {cat?.label}
-          </em>
-          <i className="nspot-city">{s.city}{s.area && s.area !== s.city ? ` / ${s.area}` : ""}</i>
-        </span>
-        <h3>{s.title}</h3>
-        {s.local && <p className="nspot-local">{s.local}</p>}
-        {s.point && <p className="nspot-point">{s.point}</p>}
-        <p className="nspot-text">{s.body}</p>
-        {s.tips?.length > 0 && (
-          <ul className="nspot-tips">
-            {s.tips.map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
+      {s.local && <p className="nspot-local">{s.local}</p>}
+      <p className="nspot-text">{s.body}</p>
+      {s.tips?.length > 0 && (
+        <ul className="nspot-tips">
+          {s.tips.map((t, i) => (
+            <li key={i}>{t}</li>
+          ))}
+        </ul>
+      )}
+      <dl className="nspot-meta">
+        {s.budget && (
+          <div>
+            <dt>お金</dt>
+            <dd>{s.budget}</dd>
+          </div>
         )}
-        <dl className="nspot-meta">
-          {s.budget && (
-            <div>
-              <dt>お金</dt>
-              <dd>{s.budget}</dd>
-            </div>
-          )}
-          {s.time && (
-            <div>
-              <dt>時間</dt>
-              <dd>{s.time}</dd>
-            </div>
-          )}
-          {s.season && (
-            <div>
-              <dt>時期</dt>
-              <dd>{s.season}</dd>
-            </div>
-          )}
-        </dl>
-        {s.info && <p className="nspot-info">{s.info}</p>}
-        {s.tags?.length > 0 && (
-          <p className="nspot-tags">
-            {s.tags.map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </p>
+        {s.time && (
+          <div>
+            <dt>時間</dt>
+            <dd>{s.time}</dd>
+          </div>
         )}
-      </div>
-    </article>
+        {s.season && (
+          <div>
+            <dt>時期</dt>
+            <dd>{s.season}</dd>
+          </div>
+        )}
+      </dl>
+      {s.info && <p className="nspot-info">{s.info}</p>}
+      {s.tags?.length > 0 && (
+        <p className="nspot-tags">
+          {s.tags.map((t) => (
+            <span key={t}>{t}</span>
+          ))}
+        </p>
+      )}
+    </Fold>
   );
 }
 
@@ -109,6 +127,8 @@ export default async function NordicCountryPage({
   const prev = NORDIC_COUNTRIES[idx - 1];
   const next = NORDIC_COUNTRIES[idx + 1];
   const arrive = ROUTE.find((l) => l.enters === c.slug);
+  // 地図で光らせる街。この国で最初に降りるところ。
+  const firstCity = MAP.cities.find((m) => m.country === c.slug)?.id;
 
   return (
     <PageShell
@@ -120,9 +140,9 @@ export default async function NordicCountryPage({
       ]}
     >
       <PageHead
-        emoji={c.flag}
         title={c.name}
         lead={c.catch}
+        mark={<Flag slug={c.slug} size={54} />}
         meta={
           <>
             <span>{c.leg}カ国目</span>
@@ -133,23 +153,30 @@ export default async function NordicCountryPage({
         }
       />
 
-      {arrive && (
-        <Panel>
-          <h2>ここへの入り方</h2>
-          <p className="nspot-point">
-            {arrive.from} から {arrive.to} へ
-            {arrive.km ? ` ${arrive.km.toLocaleString()}km` : ""}
-            {arrive.time ? ` / ${arrive.time}` : ""}
-          </p>
-          {arrive.fixed && <p className="nspot-info">{arrive.fixed}</p>}
-          {arrive.note && <p>{arrive.note}</p>}
-        </Panel>
-      )}
+      <section className="panel is-map">
+        <h2>ルートのなかの{c.name}</h2>
+        <RouteMapSvg here={firstCity} />
+        {arrive && (
+          <div className="narrive">
+            <b>
+              {arrive.from} から {arrive.to} へ
+            </b>
+            <i>
+              {arrive.move === "hitch" ? "ヒッチハイク" : arrive.move === "ferry" ? "フェリー" : "飛行機"}
+              {arrive.km ? ` ${arrive.km.toLocaleString()}km` : ""}
+              {arrive.time ? ` / ${arrive.time}` : ""}
+            </i>
+            {arrive.fixed && <span>{arrive.fixed}</span>}
+            {arrive.note && <p>{arrive.note}</p>}
+          </div>
+        )}
+      </section>
 
       <Panel>
         <h2>{c.name}で行くところ</h2>
         <p className="muted">
-          {spots.length}件。街ごとに並べています。写真は Wikimedia Commons から借りたもので、押すと出どころに飛びます。
+          {spots.length}件。街ごとに並べています。見出しを押すと中身が開きます。
+          写真は Wikimedia Commons から借りたもので、押すと出どころに飛びます。
         </p>
         <div className="chips" style={{ marginTop: 10 }}>
           {[...byCity.keys()].map((city) => (
@@ -162,8 +189,11 @@ export default async function NordicCountryPage({
 
       {[...byCity.entries()].map(([city, list]) => (
         <section key={city} className="ncity" id={`city-${encodeURIComponent(city)}`}>
-          <h2 className="ncity-name">{city}</h2>
-          <div className="nspots">
+          <h2 className="ncity-name">
+            {city}
+            <em>{list.length}件</em>
+          </h2>
+          <div className="folds">
             {list.map((s) => (
               <Spot key={s.id} s={s} />
             ))}
@@ -173,22 +203,21 @@ export default async function NordicCountryPage({
 
       <CountryIdeas country={c.name} />
 
-      <Panel>
-        <h2>ルートのなかの、この国</h2>
-        <RouteMap here={arrive?.to} />
-      </Panel>
-
       <div className="nnav">
         {prev ? (
           <Link href={`/nordic/${prev.slug}`}>
-            ← {prev.flag} {prev.name}
+            <Icon name="right" size={14} className="is-flip" />
+            <Flag slug={prev.slug} size={22} />
+            {prev.name}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
           <Link href={`/nordic/${next.slug}`}>
-            {next.flag} {next.name} →
+            <Flag slug={next.slug} size={22} />
+            {next.name}
+            <Icon name="right" size={14} />
           </Link>
         ) : (
           <span />
