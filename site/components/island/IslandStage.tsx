@@ -6,11 +6,13 @@ import IslandScene, { PROPS, type Item } from "./IslandScene";
 import { Sprite } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
-import { UI } from "@/content/voice";
+import { CHATTER, UI } from "@/content/voice";
 import { Gull } from "./Guide";
 import {
   createVillagers,
   stepVillagers,
+  talkTo,
+  villagerAt,
   villagerPose,
   type Resident,
 } from "./villagers";
@@ -201,12 +203,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const onStageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("[data-ui]")) return;
     const r = hostRef.current!.getBoundingClientRect();
-    target.current = {
-      x: vbX + ((e.clientX - r.left) / r.width) * vbW,
-      y: vbY + ((e.clientY - r.top) / r.height) * vbH,
-    };
+    const wx = vbX + ((e.clientX - r.left) / r.width) * vbW;
+    const wy = vbY + ((e.clientY - r.top) / r.height) * vbH;
     setHint(false);
     setSelected(null);
+    // 住人を押したときは歩かずに、話しかける
+    const who = villagerAt(villagers, wx, wy, VILLAGER_H * 0.8);
+    if (who) {
+      talkTo(who, CHATTER[who.post] ?? [], dice.current);
+      return;
+    }
+    target.current = { x: wx, y: wy };
   };
 
   /* 景色・住人・あやとを、足元の y で並べ替えてから描く。
@@ -263,10 +270,25 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         })}
       </svg>
 
+      {/* 住人の吹き出し */}
+      <div className="labels" aria-hidden>
+        {villagers.map((v, i) => {
+          if (!v.says) return null;
+          const s = toScreen(v.x, v.y - VILLAGER_H - 20);
+          if (s.left < -160 || s.left > box.w + 160 || s.top < -80 || s.top > box.h + 80) return null;
+          return (
+            <span key={`t${i}`} className="chatter" style={{ left: s.left, top: s.top }}>
+              {v.says}
+            </span>
+          );
+        })}
+      </div>
+
       {/* 住人の頭の上に、見に来てくれている人のアイコンを小さく出す */}
       <div className="labels" aria-hidden>
         {villagers.map((v, i) => {
           if (!v.icon && !v.emoji) return null;
+          if (v.says) return null;
           const s = toScreen(v.x, v.y - VILLAGER_H - 12);
           if (s.left < -60 || s.left > box.w + 60 || s.top < -60 || s.top > box.h + 60) return null;
           const scale = Math.max(0.5, Math.min(1.05, box.w / vbW));

@@ -38,6 +38,12 @@ export type Mood = "walk" | "stand" | "think" | "wave";
 export type Villager = {
   /** 見た目のスプライト名 */
   look: string;
+  /** 持ち場の場所ID。何をしゃべるかがこれで決まる */
+  post: SpotId;
+  /** いま出している吹き出し。null なら黙っている */
+  says: string | null;
+  /** 吹き出しが消えるまでのミリ秒 */
+  saysLeft: number;
   /** いま居る場所 */
   x: number;
   y: number;
@@ -99,6 +105,9 @@ export function createVillagers(residents: Resident[], max = 10): Villager[] {
     const [x, y] = clampToGrass(s.x + Math.cos(a) * post.r * 0.6, s.y + 26 + Math.sin(a) * post.r * 0.4);
     return {
       look: LOOKS[i % LOOKS.length],
+      post: post.spot,
+      says: null,
+      saysLeft: 0,
       x, y, tx: x, ty: y,
       hx: s.x, hy: s.y + 24, hr: post.r,
       facing: r() < 0.5 ? -1 : 1,
@@ -122,6 +131,10 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
   const dt = dtMs / 16.67;
   for (const v of vs) {
     v.left -= dtMs;
+    if (v.says) {
+      v.saysLeft -= dtMs;
+      if (v.saysLeft <= 0) v.says = null;
+    }
     if (v.mood === "walk") {
       const dx = v.tx - v.x;
       const dy = v.ty - v.y;
@@ -157,6 +170,29 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
     v.mood = r() < 0.65 ? "think" : "stand";
     v.left = v.mood === "think" ? 500 + r() * 900 : 1200 + r() * 2600;
   }
+}
+
+/** 押された住人にひとこと言わせる。話しているあいだは足を止める。 */
+export function talkTo(v: Villager, lines: string[], r: () => number) {
+  if (!lines.length) return;
+  v.says = lines[Math.floor(r() * lines.length) % lines.length];
+  v.saysLeft = 4200;
+  v.mood = "wave";
+  v.left = 1200;
+}
+
+/** その位置にいちばん近い住人。押した所から離れていれば null。 */
+export function villagerAt(vs: Villager[], x: number, y: number, reach = 34): Villager | null {
+  let best: Villager | null = null;
+  let bd = reach;
+  for (const v of vs) {
+    const d = Math.hypot(v.x - x, (v.y - y - 16) * 0.8);
+    if (d < bd) {
+      bd = d;
+      best = v;
+    }
+  }
+  return best;
 }
 
 /** その瞬間の見た目のゆれ。歩きは上下に、悩みは首をかしげる。 */
