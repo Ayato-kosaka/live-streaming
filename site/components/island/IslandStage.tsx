@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import IslandScene from "./IslandScene";
+import IslandScene, { PROPS, type Item } from "./IslandScene";
+import { Sprite } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
+import {
+  createVillagers,
+  stepVillagers,
+  villagerPose,
+  type Resident,
+} from "./villagers";
+
+export type { Resident };
 
 const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
-
-export type Resident = { icon?: string; emoji?: string; days: number };
+/** あやたは住人よりひとまわり大きい。主人公なので。 */
+const AYATO_H = 74;
+const VILLAGER_H = 42;
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -21,22 +31,6 @@ const clampToIsland = (x: number, y: number): [number, number] => {
   }
   return [ISLAND.cx, ISLAND.cy];
 };
-
-/** 住人の立ち位置。決定的に散らして、島の中に収める。 */
-function residentSpots(n: number) {
-  const r = rng(4242);
-  const out: { x: number; y: number }[] = [];
-  let guard = 0;
-  while (out.length < n && guard++ < n * 80) {
-    const x = ISLAND.cx + (r() - 0.5) * 820;
-    const y = ISLAND.cy + (r() - 0.5) * 700;
-    if (!insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 46)) continue;
-    if (SPOTS.some((s) => Math.hypot(s.x - x, s.y - y) < 74)) continue;
-    if (out.some((p) => Math.hypot(p.x - x, p.y - y) < 62)) continue;
-    out.push({ x, y });
-  }
-  return out;
-}
 
 export default function IslandStage({ residents = [] }: { residents?: Resident[] }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -53,6 +47,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   avatarRef.current = avatar;
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy, span: 1420 });
   const [, tick] = useState(0);
+
+  const villagers = useMemo(() => createVillagers(residents), [residents]);
+  const dice = useRef(rng(777));
+  const clock = useRef(0);
 
   useEffect(() => {
     const el = hostRef.current;
@@ -74,24 +72,26 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
   const span = useMemo(() => {
     const aspect = box.w / Math.max(1, box.h);
-    if (mode === "phone") return wide ? 1060 : 480;
-    if (mode === "tablet") return Math.max(1160, 1020 * aspect);
-    return Math.max(1400, 980 * aspect);
+    if (mode === "phone") return wide ? 1060 : 520;
+    if (mode === "tablet") return Math.max(1120, 980 * aspect);
+    return Math.max(1220, 880 * aspect);
   }, [mode, wide, box.w, box.h]);
 
   /** カメラの目標地点 */
   const camTarget = useCallback(() => {
-    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 110 };
-    if (mode === "wide") return { x: ISLAND.cx - 60, y: ISLAND.cy + 6 };
-    return { x: ISLAND.cx, y: ISLAND.cy + 6 };
+    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 100 };
+    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy - 10 };
+    return { x: ISLAND.cx, y: ISLAND.cy };
   }, [follow, mode]);
 
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
     const step = (t: number) => {
-      const dt = Math.min(48, t - last) / 16.67;
+      const dt = Math.min(48, t - last);
       last = t;
+      clock.current = t;
+      stepVillagers(villagers, dt, dice.current);
 
       setAvatar((prev) => {
         let { x, y } = prev;
@@ -117,7 +117,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         setWalking(moving);
         if (!moving) return prev;
         const n = Math.hypot(vx, vy) || 1;
-        const sp = 4.2 * dt;
+        const sp = 4.2 * (dt / 16.67);
         const [nx, ny] = clampToIsland(x + (vx / n) * sp, y + (vy / n) * sp);
         if (vx !== 0) setFacing(vx > 0 ? 1 : -1);
         return { x: nx, y: ny };
@@ -125,16 +125,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
       const cam = camRef.current;
       const want = camTarget();
-      const ease = 0.09 * dt;
+      const ease = 0.09 * (dt / 16.67);
       cam.x += (want.x - cam.x) * ease;
       cam.y += (want.y - cam.y) * ease;
-      cam.span += (span - cam.span) * 0.1 * dt;
+      cam.span += (span - cam.span) * 0.1 * (dt / 16.67);
       tick((v) => (v + 1) % 1000000);
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [camTarget, span]);
+  }, [camTarget, span, villagers]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -179,43 +179,73 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     setSelected(null);
   };
 
-  const places = useMemo(() => residentSpots(residents.length), [residents.length]);
+  /* 景色・住人・あやとを、足元の y で並べ替えてから描く。
+     こうしないと木の手前に立つべき住人が木の裏に隠れてしまう。 */
+  const layers = (() => {
+    const t = clock.current;
+    const cast = villagers.map((v, i) => ({
+      kind: "villager" as const,
+      y: v.y,
+      key: `v${i}`,
+      v,
+      pose: villagerPose(v, t),
+    }));
+    const me = { kind: "ayato" as const, y: avatar.y, key: "me" };
+    const scene = PROPS.map((p, i) => ({ kind: "prop" as const, y: p.y, key: `o${i}`, p }));
+    return [...scene, ...cast, me].sort((a, b) => a.y - b.y);
+  })();
 
   return (
     <div className="stage" ref={hostRef} onClick={onStageClick}>
       <svg className="stage-svg" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid slice" aria-hidden>
         <IslandScene />
-        <g>
-          <ellipse cx={avatar.x} cy={avatar.y + 2} rx={28} ry={10} fill="#134a2c" opacity={0.24} />
-          <g transform={`translate(${avatar.x},${avatar.y}) scale(${facing},1)`} className={walking ? "ayato walking" : "ayato"}>
-            <image href="/characters/ayato.png" x={-46} y={-104} width={92} height={106} preserveAspectRatio="xMidYMax meet" />
-          </g>
-        </g>
+        {layers.map((l) => {
+          if (l.kind === "prop") {
+            const p: Item = l.p;
+            return <Sprite key={l.key} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} className={p.cls} />;
+          }
+          if (l.kind === "villager") {
+            const { v, pose } = l;
+            return (
+              <g key={l.key} transform={`translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)})`}>
+                <ellipse cx={0} cy={-pose.dy} rx={13} ry={4.6} fill="#134a2c" opacity={0.18} />
+                <g transform={`rotate(${pose.rot.toFixed(1)})`}>
+                  <Sprite name={v.look} x={0} y={0} size={VILLAGER_H} flip={v.facing < 0} />
+                </g>
+              </g>
+            );
+          }
+          return (
+            <g key={l.key}>
+              <ellipse cx={avatar.x} cy={avatar.y + 1} rx={22} ry={8} fill="#134a2c" opacity={0.22} />
+              <g transform={`translate(${avatar.x},${avatar.y}) scale(${facing},1)`} className={walking ? "ayato walking" : "ayato"}>
+                <image
+                  href="/characters/ayato.png"
+                  x={-AYATO_H * 0.43}
+                  y={-AYATO_H}
+                  width={AYATO_H * 0.86}
+                  height={AYATO_H}
+                  preserveAspectRatio="xMidYMax meet"
+                />
+              </g>
+            </g>
+          );
+        })}
       </svg>
 
-      {/* 住人（HTMLで描く。アイコンが読めなければ絵文字にフォールバック） */}
+      {/* 住人の頭の上に、見に来てくれている人のアイコンを小さく出す */}
       <div className="labels" aria-hidden>
-        {places.map((p, i) => {
-          if (mode === "phone" && wide && i % 2 === 1) return null;
-          const s = toScreen(p.x, p.y);
-          const scale = box.w / vbW;
-          if (s.left < -80 || s.left > box.w + 80 || s.top < -80 || s.top > box.h + 80) return null;
-          const r = residents[i];
+        {villagers.map((v, i) => {
+          if (!v.icon && !v.emoji) return null;
+          const s = toScreen(v.x, v.y - VILLAGER_H - 12);
+          if (s.left < -60 || s.left > box.w + 60 || s.top < -60 || s.top > box.h + 60) return null;
+          const scale = Math.max(0.5, Math.min(1.05, box.w / vbW));
           return (
-            <span
-              key={i}
-              className="resident-chip"
-              style={{
-                left: s.left,
-                top: s.top,
-                ["--rs" as string]: Math.max(0.42, Math.min(1.2, scale)),
-                animationDelay: `${(i % 11) * 0.19}s`,
-              }}
-            >
-              <span className="resident-emoji">{r.emoji || "🙂"}</span>
-              {r.icon && (
+            <span key={i} className="resident-chip" style={{ left: s.left, top: s.top, ["--rs" as string]: scale }}>
+              <span className="resident-emoji">{v.emoji || "🙂"}</span>
+              {v.icon && (
                 <img
-                  src={`https://lh3.googleusercontent.com/d/${r.icon}=s96`}
+                  src={`https://lh3.googleusercontent.com/d/${v.icon}=s96`}
                   alt=""
                   loading="lazy"
                   onError={(e) => {
@@ -231,7 +261,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       {/* 建物ラベル: PCは名前つき、スマホはピン */}
       <div className="labels">
         {SPOTS.map((s) => {
-          const p = toScreen(s.x, s.y + (s.labelAt === "above" ? -72 : 14));
+          // 建物を隠さないよう、足元より下（または頭より上）に置く
+          const p = toScreen(s.x, s.y + (s.labelAt === "above" ? -104 : 40));
           const pad = 70;
           if (p.left < -pad || p.left > box.w + pad || p.top < -pad || p.top > box.h + pad) return null;
           if (mode === "phone") {
@@ -248,7 +279,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 }}
                 aria-label={s.label}
               >
-                <span aria-hidden>{s.emoji}</span>
+                <img src={`/sprites/${s.icon}.png`} alt="" />
               </button>
             );
           }
@@ -263,9 +294,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 target.current = { x: s.x, y: s.y + 30 };
               }}
             >
-              <span className="spot-emoji" aria-hidden>
-                {s.emoji}
-              </span>
+              <img className="spot-icon" src={`/sprites/${s.icon}.png`} alt="" />
               <span className="spot-text">
                 <b>{s.label}</b>
                 <i>{s.blurb}</i>
@@ -278,7 +307,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       {/* スマホ: 選んだ場所のカード */}
       {mode === "phone" && selected && (
         <div className="sheet" data-ui>
-          <span className="sheet-emoji" aria-hidden>{selected.emoji}</span>
+          <img className="sheet-icon" src={`/sprites/${selected.icon}.png`} alt="" />
           <span className="sheet-text">
             <b>{selected.label}</b>
             <i>{selected.blurb}</i>
@@ -290,14 +319,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
       {mode === "phone" && (
         <button data-ui className="zoom-toggle" onClick={() => setWide((v) => !v)}>
-          {wide ? "🔍 近づく" : "🗺 島ぜんぶ"}
+          {wide ? "島におりる" : "島ぜんぶ見る"}
         </button>
       )}
 
       {hint && (
-        <p className="walk-hint">
-          <span aria-hidden>👆</span> 島をタップすると歩きます
-        </p>
+        <p className="walk-hint">島をタップすると、そこまで歩きます</p>
       )}
     </div>
   );
