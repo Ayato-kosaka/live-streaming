@@ -43,6 +43,8 @@ export default function Home() {
                 height={305}
                 aria-hidden
               />
+              {/* 見出しは絵だけなので、読み上げと検索のために文字も置いておく */}
+              <span className="sr-only">あやと島 — 毎晩22時、世界のどこかから生配信</span>
             </h1>
             <div className="hero-badges">
               <Link className="badge" href="/now">

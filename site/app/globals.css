@@ -460,6 +460,17 @@ img { max-width: 100%; }
    ・寄り（あやとを追うスマホ）… 右上に小さくバッジだけ
    寄り引きは IslandStage が .stage[data-view] に出しているので、
    兄弟セレクタ（.stage ~ .hero-ui）でこちらが受け取る。 */
+/* 目には見えないが、読み上げと検索には届く文字 */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hero-logo {
   margin: 0;
   line-height: 0;
