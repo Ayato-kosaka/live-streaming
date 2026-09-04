@@ -3,6 +3,8 @@ export type StreamType = {
   slug: string;
   name: string;
   emoji: string;
+  /** 島に置いてあるスプライト名。UIの絵はこちらを使う。 */
+  icon: string;
   color: string;
   when: string;
   lead: string;
@@ -18,6 +20,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "cooking",
     name: "クッキング配信",
     emoji: "🍳",
+    icon: "hut-kitchen",
     color: "var(--roof-coral)",
     when: "だいたい週の後半",
     lead: "「何を作るか」から一緒に決めて、買い出しに行って、作って食べる。3日がかりの連続ドラマみたいなクッキング。",
@@ -37,6 +40,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "walk",
     name: "おさんぽ・絶景配信",
     emoji: "🚶",
+    icon: "tree-palm",
     color: "var(--roof-mint)",
     when: "天気がいい日",
     lead: "湖まで歩く、滝を見に行く、教会に登る。目的地に着くまでの道のりごと配信する。",
@@ -56,6 +60,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "making",
     name: "アプリ作り配信",
     emoji: "💻",
+    icon: "hut-workshop",
     color: "var(--roof-sky)",
     when: "だいたい金曜",
     lead: "自作のグルメアプリ「なに食べよ」を、目の前で作る。「作り切るまで終われません」と宣言して長時間やる日もある。",
@@ -75,6 +80,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "meeting",
     name: "今週の企画会議",
     emoji: "🗣️",
+    icon: "signboard",
     color: "var(--roof-gold)",
     when: "週のはじめ",
     lead: "来週なにをするかを、視聴者さんと一緒に決める会。この島でいちばん大事な回。",
@@ -94,6 +100,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "monthly",
     name: "月末配信",
     emoji: "🏆",
+    icon: "statue",
     color: "#c79bff",
     when: "毎月末",
     lead: "1ヶ月をふりかえる授賞式。出席リスナー表彰、名言アワード、おもしろコメント大賞、投げ銭ありがとう。1ヶ月分のチャットを全部読んで作っている。",

@@ -16,14 +16,14 @@ export const ISLAND = {
 
 /** 草地は砂浜より内側 */
 export const GRASS_INSET = 34;
-/** 高台(2段目) */
+/** 高台(2段目)。島の縁に寄せすぎると画面外に出るので、内側に置く。 */
 export const PLATEAU = {
-  cx: 748,
-  cy: 430,
+  cx: 726,
+  cy: 486,
   squash: 0.78,
-  radii: [118, 128, 138, 142, 134, 122, 112, 108, 114, 126, 138, 140, 130, 120, 112, 110],
+  radii: [128, 138, 148, 152, 144, 132, 122, 118, 124, 136, 148, 150, 140, 130, 122, 120],
   /** 崖の高さ(見た目の落差) */
-  drop: 22,
+  drop: 34,
 };
 
 export type SpotId =
@@ -44,6 +44,8 @@ export type Spot = {
   y: number;
   label: string;
   emoji: string;
+  /** 目印になるスプライト名。ラベルの絵に使う。 */
+  icon: string;
   href: string;
   blurb: string;
   /** ラベルの向き。建物と重ならないように。 */
@@ -57,6 +59,7 @@ export const SPOTS: Spot[] = [
     y: 600,
     label: "配信やぐら",
     emoji: "📺",
+    icon: "tower-studio",
     href: "/streams",
     blurb: "どんな配信をしてるか",
     labelAt: "below",
@@ -67,6 +70,7 @@ export const SPOTS: Spot[] = [
     y: 706,
     label: "キッチン小屋",
     emoji: "🍳",
+    icon: "hut-kitchen",
     href: "/kitchen",
     blurb: "作ってきたごはん",
     labelAt: "below",
@@ -77,6 +81,7 @@ export const SPOTS: Spot[] = [
     y: 700,
     label: "アプリ工房",
     emoji: "💻",
+    icon: "hut-workshop",
     href: "/apps",
     blurb: "旅先で作ってるアプリ",
     labelAt: "below",
@@ -87,16 +92,18 @@ export const SPOTS: Spot[] = [
     y: 846,
     label: "旅の桟橋",
     emoji: "🗺️",
+    icon: "signpost",
     href: "/map",
     blurb: "これまでに歩いた17カ国",
     labelAt: "below",
   },
   {
     id: "legends",
-    x: 762,
-    y: 404,
+    x: 736,
+    y: 462,
     label: "伝説の丘",
     emoji: "🏆",
+    icon: "hall-museum",
     href: "/legends",
     blurb: "語り継がれてる企画",
     labelAt: "below",
@@ -107,6 +114,7 @@ export const SPOTS: Spot[] = [
     y: 556,
     label: "いまのポスト",
     emoji: "📮",
+    icon: "mailbox",
     href: "/now",
     blurb: "今どこで何してる",
     labelAt: "above",
@@ -117,6 +125,7 @@ export const SPOTS: Spot[] = [
     y: 548,
     label: "これから",
     emoji: "✈️",
+    icon: "tent",
     href: "/next",
     blurb: "次に行くところ",
     labelAt: "below",
@@ -127,6 +136,7 @@ export const SPOTS: Spot[] = [
     y: 872,
     label: "企画掲示板",
     emoji: "📋",
+    icon: "signboard",
     href: "/board",
     blurb: "みんなの企画提案",
     labelAt: "below",
@@ -137,6 +147,7 @@ export const SPOTS: Spot[] = [
     y: 574,
     label: "たき火広場",
     emoji: "⛺",
+    icon: "campfire",
     href: "/friends",
     blurb: "愉快な仲間達",
     labelAt: "below",

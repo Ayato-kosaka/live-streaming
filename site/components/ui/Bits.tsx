@@ -74,21 +74,29 @@ export function Stat({ value, label, sub }: { value: ReactNode; label: string; s
 export function TileLink({
   href,
   emoji,
+  icon,
   title,
   note,
   accent,
 }: {
   href: string;
-  emoji: string;
+  /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
+  emoji?: string;
+  /** 島に置いてあるスプライト名。行き先が島の場所なら、こちらを使う。 */
+  icon?: string;
   title: string;
   note?: string;
   accent?: string;
 }) {
   return (
     <Link className="tile" href={href} style={accent ? { ["--tile" as string]: accent } : undefined}>
-      <span className="tile-emoji" aria-hidden>
-        {emoji}
-      </span>
+      {icon ? (
+        <img className="tile-icon" src={`/sprites/${icon}.webp`} alt="" />
+      ) : (
+        <span className="tile-emoji" aria-hidden>
+          {emoji}
+        </span>
+      )}
       <span className="tile-text">
         <b>{title}</b>
         {note && <i>{note}</i>}

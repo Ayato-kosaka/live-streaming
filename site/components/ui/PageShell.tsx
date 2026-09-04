@@ -1,19 +1,21 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SPOTS } from "../island/layout";
+import { Gull } from "../island/Guide";
+import { FOOT, UI } from "@/content/voice";
 
 export function IslandHeader({ current }: { current?: string }) {
   return (
     <header className="ih">
       <div className="ih-in">
         <Link href="/" className="ih-home">
-          <span aria-hidden>🏝️</span>
+          <Gull size={26} shadow={false} />
           <b>あやと島</b>
         </Link>
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
             <Link key={s.id} href={s.href} className={`ih-link${current === s.id ? " is-on" : ""}`}>
-              <span aria-hidden>{s.emoji}</span>
+              <img src={`/sprites/${s.icon}.webp`} alt="" />
               {s.label}
             </Link>
           ))}
@@ -38,23 +40,35 @@ export function Crumbs({ items }: { items: { label: string; href?: string }[] })
 }
 
 export function PageHead({
+  icon,
   emoji,
   title,
   lead,
+  say,
   meta,
 }: {
-  emoji: string;
+  /** 見出しの絵。島に置いてあるスプライト名。 */
+  icon?: string;
+  /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
+  emoji?: string;
   title: string;
   lead?: string;
+  /** 案内役のひとこと。 */
+  say?: string;
   meta?: ReactNode;
 }) {
   return (
     <div className="phead">
-      <span className="phead-emoji" aria-hidden>
-        {emoji}
-      </span>
+      {icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
+      {!icon && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
       <h1>{title}</h1>
       {lead && <p className="phead-lead">{lead}</p>}
+      {say && (
+        <div className="gsay phead-say">
+          <span className="gsay-bird"><Gull size={52} /></span>
+          <p className="gsay-bubble">{say}</p>
+        </div>
+      )}
       {meta && <div className="phead-meta">{meta}</div>}
     </div>
   );
@@ -64,11 +78,9 @@ export function IslandFooter() {
   return (
     <footer className="ifoot">
       <Link href="/" className="ifoot-back">
-        <span aria-hidden>🏝️</span> 島にもどる
+        <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
-      <p className="ifoot-note">
-        あやと島 — あやとと愉快な仲間達。毎晩22時、世界のどこかから生配信しています。
-      </p>
+      <p className="ifoot-note">{FOOT.note}</p>
     </footer>
   );
 }

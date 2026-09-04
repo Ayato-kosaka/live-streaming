@@ -27,7 +27,7 @@ export default function NowLive() {
   return (
     <>
       <section className="panel now-hero">
-        <span className="now-pin" aria-hidden>📍</span>
+        <img className="now-pin" src="/sprites/signpost.webp" alt="" />
         <b className="now-place">{cur.place}</b>
         <p className="now-word">{cur.word}</p>
         <span className="chip">

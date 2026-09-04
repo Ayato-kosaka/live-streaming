@@ -8,6 +8,8 @@ import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { LINKS, NOW_FALLBACK, NEXT_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { GUIDE, HERO, HOME } from "@/content/voice";
+import { Gull } from "@/components/island/Guide";
 
 export default function Home() {
   const s = STATS_FALLBACK;
@@ -18,29 +20,33 @@ export default function Home() {
         <IslandStage residents={RESIDENTS} />
         <div className="hero-ui">
           <div className="hero-copy">
-            <p className="eyebrow">毎晩 22:00 — 世界のどこかから生配信</p>
+            <p className="eyebrow">{HERO.eyebrow}</p>
             <h1>あやと島</h1>
             <p className="lede">
-              旅と、ごはんと、アプリ作り。
+              {HERO.lede[0]}
               <br />
-              あやとと愉快な仲間達が住んでいる島です。
+              {HERO.lede[1]}
             </p>
             <div className="hero-badges">
               <Link className="badge" href="/now">
-                <em>📍</em> いま {NOW_FALLBACK.place}
+                いま {NOW_FALLBACK.place}
               </Link>
             </div>
           </div>
         </div>
         <div className="scroll-cue" aria-hidden>
-          <span>島の外も見る</span>
+          <span>{HERO.scroll}</span>
           <i>↓</i>
         </div>
       </section>
 
       <div className="page">
         <Panel>
-          <h2>はじめまして</h2>
+          <div className="gsay" style={{ marginBottom: 14 }}>
+            <span className="gsay-bird"><Gull size={54} /></span>
+            <p className="gsay-bubble">{GUIDE.island}</p>
+          </div>
+          <h2>{HOME.about}</h2>
           <p>
             <b>{PROFILE.lead}</b>
           </p>
@@ -56,14 +62,14 @@ export default function Home() {
         </Panel>
 
         <Panel>
-          <h2>どんな配信をしてるか</h2>
-          <p className="muted">やってることは大きく5つ。押すとその中身まで見られます。</p>
+          <h2>{HOME.doing}</h2>
+          <p className="muted">{HOME.doingNote}</p>
           <div className="tiles" style={{ marginTop: 12 }}>
             {STREAM_TYPES.map((t) => (
               <TileLink
                 key={t.slug}
                 href={`/streams/${t.slug}`}
-                emoji={t.emoji}
+                icon={t.icon}
                 title={t.name}
                 note={t.when}
                 accent={t.color}
@@ -73,26 +79,26 @@ export default function Home() {
         </Panel>
 
         <Panel>
-          <h2>これまで</h2>
+          <h2>{HOME.past}</h2>
           <div className="tiles">
-            <TileLink href="/map" emoji="🗺️" title={`歩いた ${s.countries} カ国`} note="パリからジョージアまでの道のり" />
-            <TileLink href="/kitchen" emoji="🍳" title={`作った ${RECIPES.length} 品`} note="クッキング・スタンプ帳" />
-            <TileLink href="/apps" emoji="💻" title="アプリ2つ" note="なに食べよ / なにこれオーディオガイド" />
-            <TileLink href="/legends" emoji="🏆" title={`伝説の企画 ${LEGENDS.length} 個`} note="イランまで歩いた話ほか" />
+            <TileLink href="/map" icon="signpost" title={`歩いた ${s.countries} カ国`} note="パリからジョージアまでの道のり" />
+            <TileLink href="/kitchen" icon="hut-kitchen" title={`作った ${RECIPES.length} 品`} note="クッキング・スタンプ帳" />
+            <TileLink href="/apps" icon="hut-workshop" title="アプリ2つ" note="なに食べよ / なにこれオーディオガイド" />
+            <TileLink href="/legends" icon="hall-museum" title={`伝説の企画 ${LEGENDS.length} 個`} note="イランまで歩いた話ほか" />
           </div>
 
-          <h3 className="sub">最近のごはん</h3>
+          <h3 className="sub">{HOME.recent}</h3>
           <div className="stamps">
             {latestRecipes.map((r) => (
               <Link key={r.slug} href={`/kitchen/${r.slug}`} className="stamp">
-                <span className="stamp-emoji" aria-hidden>{r.emoji}</span>
+                <img className="stamp-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 <b>{r.name}</b>
                 <i>{r.date.replace(/-/g, "/")}</i>
               </Link>
             ))}
           </div>
 
-          <h3 className="sub">最近まわった国</h3>
+          <h3 className="sub">{HOME.recentCountries}</h3>
           <div className="chips">
             {[...COUNTRIES].reverse().slice(0, 6).map((c) => (
               <Link key={c.slug} className="chip" href={`/map/${c.slug}`}>
@@ -103,30 +109,30 @@ export default function Home() {
         </Panel>
 
         <Panel>
-          <h2>いまと、これから</h2>
+          <h2>{HOME.nowNext}</h2>
           <div className="tiles">
-            <TileLink href="/now" emoji="📮" title={`いま ${NOW_FALLBACK.place}`} note={NOW_FALLBACK.word} />
+            <TileLink href="/now" icon="lantern" title={`いま ${NOW_FALLBACK.place}`} note={NOW_FALLBACK.word} />
             {NEXT_FALLBACK.map((n) => (
-              <TileLink key={n.id} href="/next" emoji="✈️" title={n.title} note={n.when} />
+              <TileLink key={n.id} href="/next" icon="tent" title={n.title} note={n.when} />
             ))}
           </div>
         </Panel>
 
         <Panel>
-          <h2>みんなで作ってます</h2>
+          <h2>{HOME.together}</h2>
           <p>
             行き先も、作る料理も、アプリの機能も、だいたい配信で相談しながら決めています。
-            {ACTIVE_FRIENDS}人が今の島の住人で、これまでにのべ{s.people.toLocaleString()}人が来てくれました。
+            いまの島の住人は{ACTIVE_FRIENDS}人。これまでにのべ{s.people.toLocaleString()}人が来てくれました。
           </p>
           <div className="tiles" style={{ marginTop: 12 }}>
-            <TileLink href="/board" emoji="📋" title="企画掲示板" note="ログインなしで企画を出せます" accent="var(--accent)" />
-            <TileLink href="/friends" emoji="⛺" title="愉快な仲間達" note="島に住んでいる人たち" />
+            <TileLink href="/board" icon="signboard" title="企画掲示板" note="名前がなくても貼れる" accent="var(--accent)" />
+            <TileLink href="/friends" icon="campfire" title="愉快な仲間達" note="島に住んでいる人たち" />
           </div>
         </Panel>
 
         <Panel>
-          <h2>今夜の配信は</h2>
-          <p className="muted">毎晩22:00(日本時間)から。だいたい2〜3時間。</p>
+          <h2>{HOME.tonight}</h2>
+          <p className="muted">{HOME.tonightNote}</p>
           <div className="scards" style={{ marginTop: 12 }}>
             {STREAM_TYPES[0].samples.slice(0, 2).map((v) => (
               <StreamCard key={v.videoId} {...v} />
@@ -135,7 +141,7 @@ export default function Home() {
           <div className="tiles" style={{ marginTop: 14 }}>
             {LINKS.map((l) => (
               <a key={l.id} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-                <span className="tile-emoji" aria-hidden>{l.emoji}</span>
+                <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
                 <span className="tile-text">
                   <b>{l.label}</b>
                   <i>{l.note}</i>

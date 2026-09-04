@@ -150,41 +150,52 @@ img { max-width: 100%; }
 
 .labels { position: absolute; inset: 0; pointer-events: none; }
 
+/* 場所の名札。地面に立てた木の札のつもりで、角は丸く・下に厚みを出す。 */
 .spot-label {
   position: absolute;
   transform: translate(-50%, 0);
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 13px 6px 8px;
-  background: var(--paper);
-  border: 3px solid var(--frame);
-  border-radius: 999px;
-  box-shadow: var(--pop), var(--shadow-2);
+  gap: 4px;
+  padding: 5px 14px 5px 6px;
+  background: linear-gradient(#fffdf6, #fff3da);
+  border: 3px solid var(--frame-dark);
+  border-radius: 15px;
+  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-2);
   white-space: nowrap;
   transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s;
+}
+/* 札を留めている杭 */
+.spot-label::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 7px; height: 11px;
+  margin-left: -3.5px;
+  border-radius: 0 0 3px 3px;
+  background: var(--frame-deep);
 }
 .spot-label:hover,
 .spot-label:focus-visible {
   transform: translate(-50%, -3px) scale(1.05);
-  box-shadow: 0 8px 0 var(--frame-dark), var(--shadow-3);
+  box-shadow: 0 7px 0 var(--frame-deep), var(--shadow-3);
 }
-.spot-label:active { transform: translate(-50%, 1px) scale(0.98); box-shadow: 0 2px 0 var(--frame-dark); }
-.spot-emoji {
-  display: grid;
-  place-items: center;
-  width: 27px; height: 27px;
-  border-radius: 50%;
-  background: var(--paper-2);
-  font-size: 15px;
+.spot-label:active { transform: translate(-50%, 2px) scale(0.98); box-shadow: 0 2px 0 var(--frame-deep); }
+/* 目印は島に置いてある物そのもの。絵文字は使わない。 */
+.spot-icon {
+  width: 34px; height: 34px;
   flex: none;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 1px 1px rgba(60, 40, 20, 0.18));
 }
 .spot-text { display: flex; flex-direction: column; line-height: 1.15; }
 .spot-text b { font-size: 14px; font-weight: 900; letter-spacing: 0.01em; }
 .spot-text i { font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); }
 @media (min-width: 720px) {
-  .spot-emoji { width: 32px; height: 32px; font-size: 18px; }
+  .spot-icon { width: 40px; height: 40px; }
   .spot-text b { font-size: 16px; }
   .spot-text i { font-size: 11.5px; }
 }
@@ -294,25 +305,28 @@ img { max-width: 100%; }
 .badge em { font-style: normal; }
 
 /* 住人チップ */
+/* 住人の頭の上に出る、見に来てくれている人の印。
+   大きいと島が名札だらけになるので、小さく・淡くとどめる。 */
 .resident-chip {
   position: absolute;
   transform: translate(-50%, -100%) scale(var(--rs, 1));
   transform-origin: bottom center;
-  width: 40px; height: 40px;
+  width: 23px; height: 23px;
   border-radius: 50%;
-  background: var(--paper);
-  border: 3px solid #fffdf6;
-  box-shadow: 0 5px 10px rgba(12, 62, 40, 0.3);
+  background: var(--paper-2);
+  border: 2px solid #fffdf6;
+  box-shadow: 0 2px 5px rgba(12, 62, 40, 0.26);
   display: grid; place-items: center;
   overflow: hidden;
+  opacity: 0.92;
   animation: bobChip 1.6s ease-in-out infinite;
   pointer-events: none;
 }
-.resident-chip .resident-emoji { font-size: 19px; line-height: 1; }
+.resident-chip .resident-emoji { font-size: 11px; line-height: 1; }
 .resident-chip img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 @keyframes bobChip {
   0%, 100% { transform: translate(-50%, -100%) scale(var(--rs, 1)) translateY(0); }
-  50% { transform: translate(-50%, -100%) scale(var(--rs, 1)) translateY(-4px); }
+  50% { transform: translate(-50%, -100%) scale(var(--rs, 1)) translateY(-3px); }
 }
 
 .zoom-toggle {
@@ -331,23 +345,37 @@ img { max-width: 100%; }
 .zoom-toggle:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-dark); }
 
 /* スマホのピン */
+/* スマホの目印。丸バッジではなく、地面に立てた木の札に見えるようにする。 */
 .spot-pin {
   position: absolute;
-  transform: translate(-50%, -50%) scale(var(--ps, 1));
+  transform: translate(-50%, -60%) scale(var(--ps, 1));
   pointer-events: auto;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  background: var(--paper);
-  border: 3px solid var(--frame);
-  box-shadow: 0 4px 0 var(--frame-dark), var(--shadow-2);
+  width: 54px; height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(#fffdf6, #fff1d4);
+  border: 3px solid var(--frame-dark);
+  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-2);
   display: grid; place-items: center;
-  font-size: 21px;
   transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.spot-pin::before {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: -10px;
+  width: 7px; height: 10px;
+  margin-left: -3.5px;
+  border-radius: 0 0 3px 3px;
+  background: var(--frame-deep);
+}
+.spot-pin img {
+  width: 42px; height: 42px;
+  object-fit: contain;
+  object-position: center bottom;
 }
 .spot-pin:after {
   content: "";
   position: absolute; inset: -7px;
-  border-radius: 50%;
+  border-radius: 20px;
   border: 2.5px solid var(--paper);
   opacity: 0.55;
   animation: pinPulse 2.6s ease-out infinite;
@@ -356,8 +384,8 @@ img { max-width: 100%; }
   0% { transform: scale(0.86); opacity: 0.6; }
   70%, 100% { transform: scale(1.28); opacity: 0; }
 }
-.spot-pin.is-on { transform: translate(-50%, -50%) scale(calc(var(--ps, 1) * 1.16)); background: var(--gold); }
-.spot-pin:active { transform: translate(-50%, -48%) scale(calc(var(--ps, 1) * 0.94)); box-shadow: 0 1px 0 var(--frame-dark); }
+.spot-pin.is-on { transform: translate(-50%, -60%) scale(calc(var(--ps, 1) * 1.14)); background: linear-gradient(#fff4c8, var(--gold)); }
+.spot-pin:active { transform: translate(-50%, -57%) scale(calc(var(--ps, 1) * 0.94)); box-shadow: 0 1px 0 var(--frame-deep); }
 
 /* スマホの下カード */
 .sheet {
@@ -374,10 +402,9 @@ img { max-width: 100%; }
   animation: sheetUp 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 @keyframes sheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
-.sheet-emoji {
-  width: 42px; height: 42px; flex: none;
-  border-radius: 50%; background: var(--paper-2);
-  display: grid; place-items: center; font-size: 21px;
+.sheet-icon {
+  width: 46px; height: 46px; flex: none;
+  object-fit: contain; object-position: center bottom;
 }
 .sheet-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; flex: 1; }
 .sheet-text b { font-size: 15.5px; font-weight: 900; }
@@ -470,6 +497,7 @@ img { max-width: 100%; }
   background: rgba(255, 250, 235, 0.14);
   white-space: nowrap;
 }
+.ih-link img { width: 20px; height: 20px; object-fit: contain; object-position: center bottom; }
 .ih-link.is-on { background: var(--paper); color: var(--ink); }
 
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #d9ecf4; margin: 0 0 14px; }
@@ -479,14 +507,13 @@ img { max-width: 100%; }
 
 /* ページ見出し */
 .phead { text-align: center; margin: 6px 0 26px; }
-.phead-emoji {
-  display: inline-grid; place-items: center;
-  width: 58px; height: 58px;
-  border-radius: 50%;
-  background: var(--paper);
-  border: 4px solid var(--frame);
-  font-size: 27px;
-  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+.phead-icon {
+  display: block;
+  margin: 0 auto;
+  width: 88px; height: 88px;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 6px 10px rgba(8, 46, 62, 0.32));
 }
 .phead h1 {
   margin: 12px 0 0;
@@ -502,6 +529,26 @@ img { max-width: 100%; }
   color: #eaf7fc;
   text-shadow: 0 2px 8px rgba(8, 46, 62, 0.4);
 }
+.phead-mark {
+  display: inline-grid; place-items: center;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 4px solid var(--frame);
+  font-size: 34px;
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+}
+.h2-icon {
+  width: 32px; height: 32px;
+  vertical-align: -8px;
+  object-fit: contain; object-position: center bottom;
+}
+.tile-icon {
+  width: 44px; height: 44px; flex: none;
+  object-fit: contain; object-position: center bottom;
+}
+.phead-say { justify-content: center; margin-top: 16px; }
+.phead-say .gsay-bubble { text-align: left; max-width: 30em; }
 .phead-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
 
 /* 紙のパネル */
@@ -658,11 +705,7 @@ img { max-width: 100%; }
   transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s, border-style 0.16s;
 }
 .stamp:hover { transform: translateY(-3px) rotate(-1.5deg); border-style: solid; box-shadow: 0 6px 0 var(--frame-dark); }
-.stamp-emoji {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: var(--paper); border: 2.5px solid var(--frame);
-  display: grid; place-items: center; font-size: 25px;
-}
+.stamp-icon { display: block; width: 46px; height: 46px; object-fit: contain; object-position: center bottom; }
 .stamp b { font-size: 11.5px; font-weight: 900; line-height: 1.35; }
 .stamp i { font-size: 10px; font-style: normal; color: var(--ink-3); font-weight: 700; }
 
@@ -679,7 +722,7 @@ img { max-width: 100%; }
 
 /* いま */
 .now-hero { text-align: center; }
-.now-pin { font-size: 30px; }
+.now-pin { display: block; margin: 0 auto 6px; width: 54px; height: 54px; object-fit: contain; object-position: center bottom; }
 .now-place { display: block; font-size: clamp(21px, 6vw, 30px); font-weight: 900; margin: 4px 0 8px; }
 .now-word { font-size: 14.5px; line-height: 1.9; }
 .week { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -770,7 +813,9 @@ img { max-width: 100%; }
   border-radius: var(--r-1); padding: 7px 4px;
   transition: transform 0.14s;
 }
+.vote svg { width: 19px; height: 18px; color: #e8879a; }
 .vote.is-on { background: var(--gold); border-color: #d9a12c; }
+.vote.is-on svg { color: #d1455f; }
 .vote:active { transform: scale(0.94); }
 .vote b { font-size: 14px; font-weight: 900; }
 .idea-body { min-width: 0; flex: 1; }
@@ -805,3 +850,134 @@ img { max-width: 100%; }
 .scroll-cue i { font-style: normal; font-size: 15px; animation: cue 1.8s ease-in-out infinite; }
 @keyframes cue { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(5px); opacity: 1; } }
 @media (min-width: 640px) { .scroll-cue { display: flex; } }
+
+/* --- 島の案内役(カモメのミナト) --- */
+.gsay {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gsay-bird {
+  flex: none;
+  display: block;
+  animation: gullBob 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 3px 4px rgba(40, 60, 40, 0.18));
+}
+@keyframes gullBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+.gull-wing { animation: gullFlap 0.42s ease-in-out infinite alternate; }
+@keyframes gullFlap { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+
+.gsay-bubble {
+  position: relative;
+  margin: 0 0 4px;
+  background: var(--paper);
+  border: 3px solid var(--frame);
+  border-radius: 18px;
+  padding: 10px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.65;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--frame-dark), var(--shadow-1);
+}
+.gsay-bubble::before,
+.gsay-bubble::after {
+  content: "";
+  position: absolute;
+  left: -11px;
+  bottom: 13px;
+  border: 6px solid transparent;
+  border-right-color: var(--frame);
+}
+.gsay-bubble::after {
+  left: -6px;
+  border-right-color: var(--paper);
+}
+@media (min-width: 720px) {
+  .gsay-bubble { font-size: 15px; padding: 12px 18px; }
+}
+
+/* --- 島に着くまでの演出 --- */
+.arrive {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* 空の光。だんだん目が慣れていく感じ */
+.arrive-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 8%, #ffffff 0%, #dff4ff 42%, rgba(190, 232, 246, 0) 78%);
+  animation: arriveFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes arriveFlash {
+  0% { opacity: 1; }
+  55% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+/* カモメが手前を横切って、島へ降りていく */
+.arrive-gull {
+  position: absolute;
+  left: -14%;
+  top: 18%;
+  animation: arriveGull 2.8s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+  filter: drop-shadow(0 8px 12px rgba(20, 60, 80, 0.22));
+}
+@keyframes arriveGull {
+  0%   { transform: translate(0, 0) scale(1.5) rotate(-6deg); opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { transform: translate(52vw, 14vh) scale(1) rotate(3deg); opacity: 1; }
+  100% { transform: translate(104vw, 34vh) scale(0.6) rotate(8deg); opacity: 0; }
+}
+/* 着くまでは名札を出さない。島の形だけを見せる。 */
+.stage.is-arriving .labels,
+.stage.is-arriving .walk-hint,
+.stage.is-arriving .zoom-toggle {
+  animation: arriveUi 3s ease forwards;
+}
+@keyframes arriveUi {
+  0%, 52% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrive { display: none; }
+  .stage.is-arriving .labels,
+  .stage.is-arriving .walk-hint,
+  .stage.is-arriving .zoom-toggle { animation: none; }
+}
+
+/* --- 住人のひとこと --- */
+.chatter {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  max-width: 220px;
+  background: var(--paper);
+  border: 3px solid var(--frame);
+  border-radius: 16px;
+  padding: 8px 13px;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--frame-dark), var(--shadow-2);
+  pointer-events: none;
+  animation: chatterPop 0.22s cubic-bezier(0.34, 1.5, 0.64, 1);
+  z-index: 4;
+}
+.chatter::before,
+.chatter::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-top-color: var(--frame);
+}
+.chatter::after { bottom: -6px; border-top-color: var(--paper); }
+@keyframes chatterPop {
+  from { transform: translate(-50%, -92%) scale(0.86); opacity: 0; }
+  to { transform: translate(-50%, -100%) scale(1); opacity: 1; }
+}

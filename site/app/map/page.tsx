@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { COUNTRIES } from "@/content/countries";
 
@@ -18,9 +19,10 @@ export default function MapPage() {
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋" }]}>
       <PageHead
-        emoji="🗺️"
+        icon="signpost"
         title="これまでに歩いた17カ国"
         lead="2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、いまはコーカサスにいます。"
+        say={GUIDE.map}
       />
       <div className="stats" style={{ marginBottom: 18 }}>
         <Stat value="17" label="国" />

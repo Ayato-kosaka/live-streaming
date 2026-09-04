@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
@@ -17,9 +18,10 @@ export default function KitchenPage() {
   return (
     <PageShell current="kitchen" crumbs={[{ label: "キッチン小屋" }]}>
       <PageHead
-        emoji="🍳"
+        icon="hut-kitchen"
         title="クッキング・スタンプ帳"
-        lead="何を作るかを企画会議で決めて、買い出しに行って、作って食べる。3日がかりで1品。押すと、その3日ぶんの配信が出てきます。"
+        lead="何を作るかを企画会議で決めて、買い出しに行って、作って食べる。3日がかりで1品。"
+        say={GUIDE.kitchen}
       />
       <div className="stats" style={{ marginBottom: 18 }}>
         <Stat value={RECIPES.length} label="作った料理" />
@@ -35,7 +37,7 @@ export default function KitchenPage() {
             const c = COUNTRIES.find((x) => x.slug === r.country);
             return (
               <Link key={r.slug} href={`/kitchen/${r.slug}`} className="stamp">
-                <span className="stamp-emoji" aria-hidden>{r.emoji}</span>
+                <img className="stamp-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 <b>{r.name}</b>
                 <i>
                   {c?.flag} {r.date.replace(/-/g, "/")}

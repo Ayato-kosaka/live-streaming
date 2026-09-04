@@ -92,3 +92,26 @@ export function alongCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, count: number): Pt[] 
   }
   return out;
 }
+
+/** 角度の割合(0=北, 時計回り)における半径。半径配列を線形補間する。 */
+export function radiusAt(radii: number[], t: number): number {
+  const n = radii.length;
+  const u = ((t % 1) + 1) % 1;
+  const i = Math.floor(u * n) % n;
+  const f = u * n - Math.floor(u * n);
+  return radii[i] * (1 - f) + radii[(i + 1) % n] * f;
+}
+
+/** 輪郭の上の点。inset だけ内側へ寄せられる。 */
+export function pointAt(
+  cx: number,
+  cy: number,
+  radii: number[],
+  squash: number,
+  t: number,
+  inset = 0,
+): Pt {
+  const a = t * Math.PI * 2 - Math.PI / 2;
+  const r = radiusAt(radii, t) - inset;
+  return [cx + Math.cos(a) * r, cy + Math.sin(a) * r * squash];
+}

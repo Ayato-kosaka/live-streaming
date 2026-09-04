@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { Panel } from "@/components/ui/Bits";
 import { APPS } from "@/content/apps";
 
@@ -13,14 +14,15 @@ export default function AppsPage() {
   return (
     <PageShell current="apps" crumbs={[{ label: "アプリ工房" }]}>
       <PageHead
-        emoji="💻"
+        icon="hut-workshop"
         title="アプリ工房"
         lead="旅をしながらアプリを作っています。目標は食べログ超え。設計も文言も、配信でみんなに相談しながら決めてきました。"
+        say={GUIDE.apps}
       />
       {APPS.map((a) => (
         <Panel key={a.slug}>
           <h2>
-            <span aria-hidden>{a.emoji}</span> {a.name}
+            <img className="h2-icon" src={`/sprites/${a.icon}.webp`} alt="" /> {a.name}
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
             <span className="chip">{a.status}</span>
@@ -30,7 +32,7 @@ export default function AppsPage() {
           <p>{a.summary}</p>
           <div className="tiles" style={{ marginTop: 14 }}>
             <Link className="tile" href={`/apps/${a.slug}`}>
-              <span className="tile-emoji" aria-hidden>{a.emoji}</span>
+              <img className="tile-icon" src={`/sprites/${a.icon}.webp`} alt="" />
               <span className="tile-text">
                 <b>{a.name}の歴史を見る</b>
                 <i>作り始めから今日までの全部</i>
@@ -39,7 +41,7 @@ export default function AppsPage() {
             </Link>
             {a.links.map((l) => (
               <a key={l.href} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-                <span className="tile-emoji" aria-hidden>⬇️</span>
+                <img className="tile-icon" src="/sprites/food-plate-dinner.webp" alt="" />
                 <span className="tile-text">
                   <b>{l.label}</b>
                   <i>ダウンロード</i>

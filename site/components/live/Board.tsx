@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getIdeas, postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
+import { BOARD } from "@/content/voice";
 
 export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
@@ -22,7 +23,7 @@ export default function Board() {
   const submit = async () => {
     const t = text.trim();
     if (t.length < 4) {
-      setErr("もう少しだけ詳しく書いてください（4文字以上）");
+      setErr(BOARD.tooShort);
       return;
     }
     setSending(true);
@@ -32,11 +33,7 @@ export default function Board() {
       setIdeas((cur) => [idea, ...(cur ?? [])]);
       setText("");
     } catch (e) {
-      setErr(
-        String(e).includes("429")
-          ? "今日はたくさん出してくれました。また明日お願いします。"
-          : "いま送れませんでした。少し時間をおいて試してください。",
-      );
+      setErr(String(e).includes("429") ? BOARD.tooMany : BOARD.failed);
     } finally {
       setSending(false);
     }
@@ -61,15 +58,15 @@ export default function Board() {
   return (
     <>
       <section className="panel">
-        <h2>企画を出す</h2>
-        <p className="muted">ログインは要りません。思いついたことをそのまま書いてください。</p>
+        <h2>{BOARD.postTitle}</h2>
+        <p className="muted">{BOARD.postNote}</p>
         <textarea
           className="bin"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
           maxLength={200}
-          placeholder="例）ジョージアの市場で買った食材だけで一週間ごはん作る"
+          placeholder={BOARD.placeholder}
         />
         <div className="brow">
           <input
@@ -77,10 +74,10 @@ export default function Board() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={20}
-            placeholder="名前（任意）"
+            placeholder={BOARD.namePlaceholder}
           />
           <button className="bbtn" onClick={submit} disabled={sending}>
-            {sending ? "送信中…" : "掲示板に貼る"}
+            {sending ? BOARD.submitting : BOARD.submit}
           </button>
         </div>
         {err && <p className="err">{err}</p>}
@@ -88,25 +85,34 @@ export default function Board() {
 
       <section className="panel">
         <div className="bhead">
-          <h2 style={{ margin: 0 }}>みんなの企画</h2>
+          <h2 style={{ margin: 0 }}>{BOARD.listTitle}</h2>
           <div className="bsort">
             <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
-              人気順
+              {BOARD.sortVotes}
             </button>
             <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
-              新着順
+              {BOARD.sortNew}
             </button>
           </div>
         </div>
 
-        {ideas === null && <p className="muted">読み込み中…</p>}
-        {ideas?.length === 0 && <p className="muted">まだ企画がありません。いちばんに出してみてください。</p>}
+        {ideas === null && <p className="muted">{BOARD.loading}</p>}
+        {ideas?.length === 0 && <p className="muted">{BOARD.empty}</p>}
 
         <ul className="ideas">
           {list.map((i) => (
             <li key={i.id} className={i.status === "picked" ? "is-picked" : ""}>
-              <button className={`vote${voted.has(i.id) ? " is-on" : ""}`} onClick={() => vote(i.id)} aria-label="いいね">
-                <span aria-hidden>👍</span>
+              <button
+                className={`vote${voted.has(i.id) ? " is-on" : ""}`}
+                onClick={() => vote(i.id)}
+                aria-label={BOARD.agree}
+              >
+                <svg viewBox="0 0 24 22" aria-hidden>
+                  <path
+                    d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
+                    fill="currentColor"
+                  />
+                </svg>
                 <b>{i.votes}</b>
               </button>
               <div className="idea-body">
@@ -114,7 +120,7 @@ export default function Board() {
                 <div className="idea-meta">
                   {i.name && <span>{i.name} さん</span>}
                   <time>{i.createdAt.slice(0, 10).replace(/-/g, "/")}</time>
-                  {i.status === "picked" && <em>採用されました</em>}
+                  {i.status === "picked" && <em>{BOARD.picked}</em>}
                 </div>
               </div>
             </li>
