@@ -108,7 +108,10 @@ jobs:
 
   island_stats:
     runs-on: ubuntu-latest
-    needs: fetch_chat_data # チャット取り込みの後に集計する
+    # チャット取り込みの後に集計する。取り込みが失敗しても、
+    # 既にある分の数字は更新したいので always() で走らせる。
+    needs: fetch_chat_data
+    if: ${{ always() }}
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:

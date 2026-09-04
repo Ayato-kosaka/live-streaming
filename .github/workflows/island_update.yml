@@ -1,0 +1,72 @@
+name: あやと島の「いま」を更新
+
+# 手動実行専用。Claude Code から「今どこ更新して」と頼むとこれが走る。
+# 空欄にした項目は、いまの値がそのまま残る。
+on:
+  workflow_dispatch:
+    inputs:
+      place:
+        description: "今どこ（例: ジョージア・トビリシ）"
+        required: false
+        type: string
+      word:
+        description: "ひとこと"
+        required: false
+        type: string
+      week:
+        description: "今週やること（改行区切り）"
+        required: false
+        type: string
+      theme:
+        description: "島の景色"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - georgia
+          - nordic
+          - desert
+          - default
+      refresh_stats:
+        description: "数字も BigQuery から取り直す"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      - name: 「いま」を更新
+        if: inputs.place != '' || inputs.word != '' || inputs.week != '' || inputs.theme != ''
+        env:
+          ISLAND_PLACE: ${{ inputs.place }}
+          ISLAND_WORD: ${{ inputs.word }}
+          ISLAND_WEEK: ${{ inputs.week }}
+          ISLAND_THEME: ${{ inputs.theme }}
+        run: python python/island_set_current.py
+
+      - name: 数字を取り直す
+        if: inputs.refresh_stats
+        run: python python/island_daily_stats.py
