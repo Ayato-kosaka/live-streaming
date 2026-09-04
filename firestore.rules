@@ -25,6 +25,7 @@ service cloud.firestore {
     match /islandVotes/{docId} { allow read, write: if false; }
     match /islandRate/{docId} { allow read, write: if false; }
     match /islandUsers/{docId} { allow read, write: if false; }
+    match /islandDrafts/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {
