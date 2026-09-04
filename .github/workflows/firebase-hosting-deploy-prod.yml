@@ -22,6 +22,14 @@ jobs:
           echo "EXPO_PUBLIC_CLAUDE_API_KEY=${{ secrets.EXPO_PUBLIC_CLAUDE_API_KEY }}" >> .env
           echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
       - run: "npm ci && npm run build:web"
+      - name: 🔐 Firestore ルールのデプロイ
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:rules \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"

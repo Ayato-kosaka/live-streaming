@@ -14,6 +14,7 @@ import {doneruAmount} from "./doneruAmount";
 import {doneruToken} from "./doneruToken";
 import {doneruYoutubeRefresh} from "./doneruYoutubeRefresh";
 import {nanitabeyoWeeklyReportProxy} from "./nanitabeyoWeeklyReportProxy";
+import {islandApi} from "./islandApi";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -33,3 +34,4 @@ export {doneruAmount};
 export {doneruToken};
 export {doneruYoutubeRefresh};
 export {nanitabeyoWeeklyReportProxy};
+export {islandApi};

@@ -15,3 +15,6 @@ google-api-python-client>=2.100.0
 
 # HTTP通信（オプション、将来の拡張用）
 requests>=2.31.0
+
+# Firestore（あやと島の数字の書き込み）
+google-cloud-firestore>=2.16.0
