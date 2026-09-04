@@ -105,21 +105,27 @@ async function takeQuota(
  * @return {Promise<object[]>} 企画提案の配列
  */
 async function listIdeas(limit = 120) {
-  const snap = await IDEAS.where("hidden", "==", false)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
+  // where + orderBy の組み合わせは複合インデックスが要るので、
+  // 並べ替えだけ Firestore に任せて、非表示の除外はこちらで行う。
+  const snap = await IDEAS.orderBy("createdAt", "desc")
+    .limit(limit * 2)
     .get();
-  return snap.docs.map((d) => {
-    const v = d.data();
-    return {
-      id: d.id,
-      text: v.text as string,
-      name: (v.name as string) || undefined,
-      votes: (v.votes as number) ?? 0,
-      status: (v.status as string) ?? "open",
-      createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
-    };
-  });
+  return snap.docs
+    .filter((d) => d.data().hidden !== true)
+    .slice(0, limit)
+    .map((d) => {
+      const v = d.data();
+      return {
+        id: d.id,
+        text: v.text as string,
+        name: (v.name as string) || undefined,
+        votes: (v.votes as number) ?? 0,
+        status: (v.status as string) ?? "open",
+        createdAt: new Date(
+          (v.createdAt as number) ?? Date.now(),
+        ).toISOString(),
+      };
+    });
 }
 
 /**
@@ -128,19 +134,23 @@ async function listIdeas(limit = 120) {
  * @return {Promise<object[]>} 付箋の配列
  */
 async function listNotes(limit = 200) {
-  const snap = await NOTES.where("hidden", "==", false)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(limit * 2)
     .get();
-  return snap.docs.map((d) => {
-    const v = d.data();
-    return {
-      id: d.id,
-      planId: v.planId as string,
-      text: v.text as string,
-      createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
-    };
-  });
+  return snap.docs
+    .filter((d) => d.data().hidden !== true)
+    .slice(0, limit)
+    .map((d) => {
+      const v = d.data();
+      return {
+        id: d.id,
+        planId: v.planId as string,
+        text: v.text as string,
+        createdAt: new Date(
+          (v.createdAt as number) ?? Date.now(),
+        ).toISOString(),
+      };
+    });
 }
 
 export const islandApi = onRequest(
