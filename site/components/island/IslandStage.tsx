@@ -20,8 +20,9 @@ import {
 export type { Resident };
 
 const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
-/** あやたは住人よりひとまわり大きい。主人公なので。 */
-const AYATO_H = 74;
+/** あやとは住人よりひとまわり大きい。主人公なので。
+    ただし小屋(78)と同じ背丈になると急に浮くので、そこまでは大きくしない。 */
+const AYATO_H = 58;
 const VILLAGER_H = 42;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
