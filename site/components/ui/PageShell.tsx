@@ -42,6 +42,7 @@ export function Crumbs({ items }: { items: { label: string; href?: string }[] })
 export function PageHead({
   icon,
   emoji,
+  logo,
   title,
   lead,
   say,
@@ -51,6 +52,8 @@ export function PageHead({
   icon?: string;
   /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
   emoji?: string;
+  /** 公式のアプリアイコンなど */
+  logo?: string;
   title: string;
   lead?: string;
   /** 案内役のひとこと。 */
@@ -59,7 +62,8 @@ export function PageHead({
 }) {
   return (
     <div className="phead">
-      {icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
+      {logo && <img className="phead-logo" src={logo} alt="" />}
+      {!logo && icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
       {!icon && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
       <h1>{title}</h1>
       {lead && <p className="phead-lead">{lead}</p>}

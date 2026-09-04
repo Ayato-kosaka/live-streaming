@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
+import { LiveNumber } from "@/lib/liveStats";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
@@ -21,10 +22,10 @@ export default function FriendsPage() {
         say={GUIDE.friends}
       />
       <div className="stats" style={{ marginBottom: 18 }}>
-        <Stat value={ACTIVE_FRIENDS} label="いまの島の住人" sub="直近90日で5日以上" />
-        <Stat value={STATS_FALLBACK.people.toLocaleString()} label="のべ参加人数" sub="2024/10から" />
+        <Stat value={<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />} label="いまの島の住人" sub="直近90日で5日以上" />
+        <Stat value={<LiveNumber statKey="people" fallback={STATS_FALLBACK.people} />} label="のべ参加人数" sub="2024/10から" />
         <Stat value={RESIDENTS.length} label="キャラクター登録済み" />
-        <Stat value={STATS_FALLBACK.comments.toLocaleString()} label="みんなのコメント" />
+        <Stat value={<LiveNumber statKey="comments" fallback={STATS_FALLBACK.comments} />} label="みんなのコメント" />
       </div>
 
       <Panel>
@@ -54,7 +55,7 @@ export default function FriendsPage() {
         </p>
         <div className="tiles" style={{ marginTop: 14 }}>
           <a className="tile" href={doneru.href} target="_blank" rel="noopener noreferrer">
-            <img className="tile-icon" src={`/sprites/${doneru.icon}.webp`} alt="" />
+            <img className="tile-logo" src={doneru.logo} alt="" />
             <span className="tile-text">
               <b>投げ銭してキャラクターを作る</b>
               <i>{doneru.note}</i>

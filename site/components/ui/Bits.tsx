@@ -75,6 +75,7 @@ export function TileLink({
   href,
   emoji,
   icon,
+  logo,
   title,
   note,
   accent,
@@ -84,13 +85,17 @@ export function TileLink({
   emoji?: string;
   /** 島に置いてあるスプライト名。行き先が島の場所なら、こちらを使う。 */
   icon?: string;
+  /** 公式のアプリアイコンなど。あればいちばん優先して出す。 */
+  logo?: string;
   title: string;
   note?: string;
   accent?: string;
 }) {
   return (
     <Link className="tile" href={href} style={accent ? { ["--tile" as string]: accent } : undefined}>
-      {icon ? (
+      {logo ? (
+        <img className="tile-logo" src={logo} alt="" />
+      ) : icon ? (
         <img className="tile-icon" src={`/sprites/${icon}.webp`} alt="" />
       ) : (
         <span className="tile-emoji" aria-hidden>

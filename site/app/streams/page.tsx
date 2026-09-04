@@ -3,6 +3,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
+import { LiveNumber } from "@/lib/liveStats";
 import { Panel, StreamCard, Stat } from "@/components/ui/Bits";
 import Link from "next/link";
 
@@ -23,10 +24,14 @@ export default function StreamsPage() {
       />
 
       <div className="stats" style={{ marginBottom: 18 }}>
-        <Stat value={s.streams.toLocaleString()} label="配信本数" sub={`${s.since.replace(/-/g, "/")} から`} />
-        <Stat value={s.streamDays.toLocaleString()} label="配信した日数" />
-        <Stat value={s.comments.toLocaleString()} label="流れたコメント" />
-        <Stat value={s.people.toLocaleString()} label="のべ参加人数" />
+        <Stat
+          value={<LiveNumber statKey="streams" fallback={s.streams} />}
+          label="配信本数"
+          sub={`${s.since.replace(/-/g, "/")} から`}
+        />
+        <Stat value={<LiveNumber statKey="streamDays" fallback={s.streamDays} />} label="配信した日数" />
+        <Stat value={<LiveNumber statKey="comments" fallback={s.comments} />} label="流れたコメント" />
+        <Stat value={<LiveNumber statKey="people" fallback={s.people} />} label="のべ参加人数" />
       </div>
 
       {STREAM_TYPES.map((t) => (

@@ -18,7 +18,18 @@ export const PROFILE = {
   ],
 };
 
-export const LINKS = [
+/** サイトから外へ出るリンク。logo があれば公式のアイコンを出す。 */
+export type LinkItem = {
+  id: string;
+  label: string;
+  note: string;
+  href: string;
+  emoji: string;
+  icon: string;
+  logo?: string;
+};
+
+export const LINKS: LinkItem[] = [
   {
     id: "youtube",
     icon: "tower-studio",
@@ -30,6 +41,7 @@ export const LINKS = [
   {
     id: "app",
     icon: "food-plate-dinner",
+    logo: "/logos/nanitabeyo.png",
     label: "なに食べよ（App Store）",
     note: "iPhone / iPad",
     href: "https://apps.apple.com/jp/app/id6751139648",
@@ -38,6 +50,7 @@ export const LINKS = [
   {
     id: "app-android",
     icon: "food-plate-dinner",
+    logo: "/logos/nanitabeyo.png",
     label: "なに食べよ（Google Play）",
     note: "Android",
     href: "https://play.google.com/store/apps/details?id=com.nanitabeyo",
@@ -46,6 +59,7 @@ export const LINKS = [
   {
     id: "doneru",
     icon: "stall",
+    logo: "/logos/doneru.png",
     label: "投げ銭（Doneru）",
     note: "100円から。キャラクターも作れます",
     href: "https://doneru.jp/ayato_arigato",

@@ -30,7 +30,8 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   return (
     <PageShell current="apps" crumbs={[{ label: "アプリ工房", href: "/apps" }, { label: a.name }]}>
       <PageHead
-        icon={a.icon}
+        icon={a.logo ? undefined : a.icon}
+        logo={a.logo}
         title={a.name}
         lead={a.tagline}
         meta={a.links.map((l) => (
