@@ -5,6 +5,8 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import { RECIPES, recipeBySlug } from "@/content/recipes";
 import { countryBySlug } from "@/content/countries";
+import Flag from "@/components/ui/Flag";
+import Icon from "@/components/ui/Icon";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -14,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) return {};
-  return { title: `${r.emoji} ${r.name}`, description: r.note };
+  return { title: r.name, description: r.note };
 }
 
 export default async function RecipePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -28,7 +30,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const next = sorted[i + 1];
 
   return (
-    <PageShell current="kitchen" crumbs={[{ label: "キッチン小屋", href: "/kitchen" }, { label: r.name }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "キッチン小屋", href: "/kitchen" }, { label: r.name }]}>
       <PageHead
         icon={r.icon}
         title={r.name}
@@ -38,7 +40,8 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
             <span className="chip dark">🗓 {r.date.replace(/-/g, "/")}</span>
             {c && (
               <Link className="chip dark" href={`/map/${c.slug}`}>
-                {c.flag} {c.name}で作った
+                <Flag slug={c.slug} size={20} />
+                {c.name}で作った
               </Link>
             )}
           </>
@@ -53,8 +56,24 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         </div>
       </Panel>
       <nav className="pager">
-        {prev ? <Link href={`/kitchen/${prev.slug}`}>← {prev.emoji} {prev.name}</Link> : <span />}
-        {next ? <Link href={`/kitchen/${next.slug}`}>{next.emoji} {next.name} →</Link> : <span />}
+        {prev ? (
+          <Link href={`/kitchen/${prev.slug}`}>
+            <Icon name="right" size={13} className="is-flip" />
+            <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
+            {prev.name}
+          </Link>
+        ) : (
+          <span />
+        )}
+        {next ? (
+          <Link href={`/kitchen/${next.slug}`}>
+            <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
+            {next.name}
+            <Icon name="right" size={13} />
+          </Link>
+        ) : (
+          <span />
+        )}
       </nav>
     </PageShell>
   );

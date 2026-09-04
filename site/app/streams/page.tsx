@@ -6,6 +6,7 @@ import { STATS_FALLBACK } from "@/content/site";
 import { LiveNumber } from "@/lib/liveStats";
 import { Panel, StreamCard, Stat } from "@/components/ui/Bits";
 import Link from "next/link";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "どんな配信をしてるか",
@@ -54,7 +55,7 @@ export default function StreamsPage() {
               <b>{t.name}をくわしく</b>
               <i>{t.deeper ? t.deeper.label : "配信の中身を見る"}</i>
             </span>
-            <span className="tile-go" aria-hidden>→</span>
+            <Icon name="right" size={15} className="tile-go" />
           </Link>
         </Panel>
       ))}

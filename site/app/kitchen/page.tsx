@@ -5,6 +5,7 @@ import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
+import Flag from "@/components/ui/Flag";
 
 export const metadata: Metadata = {
   title: "クッキング・スタンプ帳",
@@ -16,7 +17,7 @@ export default function KitchenPage() {
   const byCountry = new Map<string, number>();
   RECIPES.forEach((r) => byCountry.set(r.country, (byCountry.get(r.country) ?? 0) + 1));
   return (
-    <PageShell current="kitchen" crumbs={[{ label: "キッチン小屋" }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "キッチン小屋" }]}>
       <PageHead
         icon="hut-kitchen"
         title="クッキング・スタンプ帳"
@@ -40,7 +41,8 @@ export default function KitchenPage() {
                 <img className="stamp-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 <b>{r.name}</b>
                 <i>
-                  {c?.flag} {r.date.replace(/-/g, "/")}
+                  {c && <Flag slug={c.slug} size={17} />}
+                  {r.date.replace(/-/g, "/")}
                 </i>
               </Link>
             );

@@ -77,6 +77,7 @@ food-kit は専用の `Textures/colormap.png` を持っているので、
 
 ## 3. 触りごこちの原則
 
+決まりごとそのものは [`island-design.md`](./island-design.md) にある。ここには背景だけ書く。
 ゲームの「これは触れる」を伝える作法を、そのまま持ち込んでいる。
 
 1. **押す場所は物そのもの。**
@@ -201,5 +202,6 @@ python/                               BigQuery からデータを作るところ
 ```
 
 関連ドキュメント:
+- [`island-design.md`](./island-design.md) — **デザイン仕様。守るべき決まりごとはこちら**
 - [`island-db.md`](./island-db.md) — Firestore / BigQuery のデータ設計
 - [`island-plan-drafts.md`](./island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み

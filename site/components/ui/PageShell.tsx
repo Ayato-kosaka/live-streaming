@@ -42,6 +42,7 @@ export function Crumbs({ items }: { items: { label: string; href?: string }[] })
 export function PageHead({
   icon,
   emoji,
+  mark,
   logo,
   title,
   lead,
@@ -51,7 +52,10 @@ export function PageHead({
   /** 見出しの絵。島に置いてあるスプライト名。 */
   icon?: string;
   /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
+  /** 絵文字。もう使わない。残っているのは移行中のページだけ。 */
   emoji?: string;
+  /** 自前の印（国旗やアイコン）。emoji の置き換え。 */
+  mark?: ReactNode;
   /** 公式のアプリアイコンなど */
   logo?: string;
   title: string;
@@ -64,7 +68,8 @@ export function PageHead({
     <div className="phead">
       {logo && <img className="phead-logo" src={logo} alt="" />}
       {!logo && icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
-      {!icon && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
+      {!logo && !icon && mark && <span className="phead-mark" aria-hidden>{mark}</span>}
+      {!logo && !icon && !mark && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
       <h1>{title}</h1>
       {lead && <p className="phead-lead">{lead}</p>}
       {say && (

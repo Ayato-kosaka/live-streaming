@@ -153,12 +153,12 @@ export const nordicCountry = (slug: string) => NORDIC_COUNTRIES.find((c) => c.sl
 /** 旅のしおり。お金・通信・服装・サウナ・食べもの・おみやげ・困ったとき。 */
 export const NORDIC_GUIDE = INDEX.guide;
 
-/** 見どころの種類。 */
-export const CATS: Record<string, { label: string; icon: string }> = {
-  see: { label: "見る", icon: "🏛" },
-  do: { label: "やる", icon: "🎈" },
-  eat: { label: "食べる", icon: "🍽" },
-  buy: { label: "買う", icon: "🛍" },
+/** 見どころの種類。印は components/ui/Icon.tsx の同名アイコンを使う。 */
+export const CATS: Record<string, { label: string }> = {
+  see: { label: "見る" },
+  do: { label: "やる" },
+  eat: { label: "食べる" },
+  buy: { label: "買う" },
 };
 
 export type NordicSpot = {

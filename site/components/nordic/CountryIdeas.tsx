@@ -13,7 +13,18 @@ import SignIn from "@/components/live/SignIn";
  * その国のページには、その国あての提案だけが並ぶ。
  * こうしておくと、あやとが現地に着いた日に、その国ぶんだけ読み返せる。
  */
-export default function CountryIdeas({ country }: { country: string }) {
+export default function CountryIdeas({
+  country,
+  title,
+  note,
+  placeholder,
+}: {
+  country: string;
+  /** 見出し。省略すると「◯◯でこれやって」 */
+  title?: string;
+  note?: string;
+  placeholder?: string;
+}) {
   const tag = `【${country}】`;
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   const [text, setText] = useState("");
@@ -65,17 +76,17 @@ export default function CountryIdeas({ country }: { country: string }) {
 
   return (
     <section className="panel">
-      <h2>{country}でこれやって</h2>
+      <h2>{title ?? `${country}でこれやって`}</h2>
       <p className="muted">
-        行く前に読みます。現地で「今これ見てる」って言えるのがいちばん嬉しいので、
-        知ってることがあったら書いてください。
+        {note ??
+          "行く前に読みます。現地で「今これ見てる」って言えるのがいちばん嬉しいので、知ってることがあったら書いてください。"}
       </p>
       {!user && <SignIn compact />}
       <textarea
         className="bin"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={`例）${country}の朝市に行ってほしい。地元の人しかいないやつ`}
+        placeholder={placeholder ?? `例）${country}の朝市に行ってほしい。地元の人しかいないやつ`}
         maxLength={180}
         rows={3}
       />

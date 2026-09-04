@@ -4,6 +4,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import { Panel } from "@/components/ui/Bits";
 import { APPS } from "@/content/apps";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "アプリ工房",
@@ -37,7 +38,7 @@ export default function AppsPage() {
                 <b>{a.name}の歴史を見る</b>
                 <i>作り始めから今日までの全部</i>
               </span>
-              <span className="tile-go" aria-hidden>→</span>
+              <Icon name="right" size={15} className="tile-go" />
             </Link>
             {a.links.map((l) => (
               <a key={l.href} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
@@ -46,7 +47,7 @@ export default function AppsPage() {
                   <b>{l.label}</b>
                   <i>ダウンロード</i>
                 </span>
-                <span className="tile-go" aria-hidden>↗</span>
+                <Icon name="external" size={15} className="tile-go" />
               </a>
             ))}
           </div>

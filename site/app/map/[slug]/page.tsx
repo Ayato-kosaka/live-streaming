@@ -6,6 +6,8 @@ import { Panel, StreamCard } from "@/components/ui/Bits";
 import { COUNTRIES, countryBySlug } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity } from "@/content/cityStreams";
+import Flag from "@/components/ui/Flag";
+import Icon from "@/components/ui/Icon";
 
 export function generateStaticParams() {
   return COUNTRIES.map((c) => ({ slug: c.slug }));
@@ -15,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const c = countryBySlug(slug);
   if (!c) return {};
-  return { title: `${c.flag} ${c.name}`, description: c.summary };
+  return { title: c.name, description: c.summary };
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
@@ -32,7 +34,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋", href: "/map" }, { label: c.name }]}>
       <PageHead
-        emoji={c.flag}
+        mark={<Flag slug={c.slug} size={54} />}
         title={c.name}
         lead={c.summary}
         meta={
@@ -105,7 +107,8 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           <div className="chips">
             {cooked.map((r) => (
               <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`}>
-                {r.emoji} {r.name}
+                <img className="mini-icon" src={`/sprites/${r.icon}.webp`} alt="" />
+                {r.name}
               </Link>
             ))}
           </div>
@@ -115,14 +118,18 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       <nav className="pager">
         {prev ? (
           <Link href={`/map/${prev.slug}`}>
-            ← {prev.flag} {prev.name}
+            <Icon name="right" size={13} className="is-flip" />
+            <Flag slug={prev.slug} size={20} />
+            {prev.name}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
           <Link href={`/map/${next.slug}`}>
-            {next.flag} {next.name} →
+            <Flag slug={next.slug} size={20} />
+            {next.name}
+            <Icon name="right" size={13} />
           </Link>
         ) : (
           <span />

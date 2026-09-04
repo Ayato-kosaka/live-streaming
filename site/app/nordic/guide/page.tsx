@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
+import Icon, { type IconName } from "@/components/ui/Icon";
+import Fold from "@/components/ui/Fold";
 import { NORDIC_GUIDE as G } from "@/content/nordic";
 
 export const metadata: Metadata = {
@@ -9,17 +11,47 @@ export const metadata: Metadata = {
     "お金、通信、服装、サウナの入り方、食べもの20品、おみやげ20品、困ったとき。北欧とバルト三国を旅する前に読むもの。",
 };
 
-/** 見出しと本文が並ぶだけの節。しおりの大半はこの形。 */
+/** 見出しと本文が並ぶだけの節。ひとつずつ畳んでおく。 */
 function Notes({ items }: { items: { title: string; body: string }[] }) {
   return (
-    <div className="gnotes">
+    <div className="folds">
       {items.map((n) => (
-        <div key={n.title} className="gnote">
-          <b>{n.title}</b>
+        <Fold key={n.title} title={n.title} lead={n.body}>
           <p>{n.body}</p>
-        </div>
+        </Fold>
       ))}
     </div>
+  );
+}
+
+/** しおりのコーナー1つ。中身は開くまで出さない。 */
+function Chapter({
+  id,
+  icon,
+  title,
+  note,
+  children,
+}: {
+  id: string;
+  icon: IconName;
+  title: string;
+  note: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="gchap" id={id}>
+      <Fold
+        title={
+          <span className="gchap-h">
+            <Icon name={icon} size={20} />
+            {title}
+          </span>
+        }
+        lead={note}
+      >
+        {children}
+      </Fold>
+    </section>
   );
 }
 
@@ -28,7 +60,9 @@ function Notes({ items }: { items: { title: string; body: string }[] }) {
  *
  * 行く人のためだけの実用ページにしない。行かない人が読んでも面白いように、
  * 「なぜそうなっているか」まで書いてある元の文章をそのまま活かす。
- * 節の順番は、旅の準備で困る順。
+ *
+ * ただし全部そのまま並べると2万字を超えるので、コーナーも項目も畳んでおく。
+ * 目次から開いて、読みたいところだけ読む形にする。
  */
 export default function NordicGuidePage() {
   return (
@@ -41,10 +75,10 @@ export default function NordicGuidePage() {
       ]}
     >
       <PageHead
-        emoji="📖"
+        mark={<Icon name="book" size={44} />}
         title="旅のしおり"
         lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。"
-        say="行かない人が読んでも面白いように書いてあるよ。サウナのところは特に。"
+        say="読みたいところだけ開いてね。サウナのところは行かない人も面白いと思う。"
       />
 
       <p className="muted" style={{ marginBottom: 14 }}>
@@ -52,43 +86,19 @@ export default function NordicGuidePage() {
         地域全体を比べている文章の中には、まだ7カ国ぶんの数字が出てきます。
       </p>
 
-      <nav className="gjump">
-        {[
-          ["basic", "まず知っておくこと"],
-          ["money", "お金"],
-          ["connect", "通信"],
-          ["clothes", "服装"],
-          ["move", "国から国への移動"],
-          ["sauna", "サウナの入り方"],
-          ["food", "食べもの"],
-          ["souvenir", "おみやげ"],
-          ["light", "白夜と極夜とオーロラ"],
-          ["phrases", "現地のことば"],
-          ["trouble", "困ったとき"],
-        ].map(([id, label]) => (
-          <a key={id} href={`#${id}`}>
-            {label}
-          </a>
-        ))}
-      </nav>
-
-      <Panel>
-        <h2 id="basic">まず知っておくこと</h2>
+      <Chapter id="basic" icon="alert" title="まず知っておくこと" note={`ビザ、入国、物価。${G.basic.length}項目`}>
         <Notes items={G.basic} />
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="money">お金</h2>
+      <Chapter id="money" icon="coin" title="お金" note={`通貨4種類、カードと現金。${G.money.length}項目`}>
         <Notes items={G.money} />
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="connect">通信</h2>
+      <Chapter id="connect" icon="wifi" title="通信" note={`eSIM、フリーWi-Fi。${G.connect.length}項目`}>
         <Notes items={G.connect} />
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="clothes">服装</h2>
+      <Chapter id="clothes" icon="shirt" title="服装" note="季節ごとの重ね方と、持ち物リスト">
         <Notes items={G.clothes.seasons} />
         <h3 className="sub">持ち物リスト</h3>
         <ul className="glist">
@@ -96,10 +106,9 @@ export default function NordicGuidePage() {
             <li key={p}>{p}</li>
           ))}
         </ul>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="move">国から国への移動</h2>
+      <Chapter id="move" icon="ferry" title="国から国への移動" note={`${G.move.length}区間。時間とお金`}>
         <div className="gtable">
           {G.move.map((m) => (
             <div key={m.from} className="grow">
@@ -110,10 +119,9 @@ export default function NordicGuidePage() {
             </div>
           ))}
         </div>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="sauna">サウナの入り方</h2>
+      <Chapter id="sauna" icon="sauna" title="サウナの入り方" note="手順、やってはいけないこと、ことば">
         <Notes items={G.sauna.steps} />
         <h3 className="sub">やってはいけないこと</h3>
         <ul className="glist is-dont">
@@ -130,10 +138,9 @@ export default function NordicGuidePage() {
             </div>
           ))}
         </div>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="food">食べもの {G.food.length}品</h2>
+      <Chapter id="food" icon="bowl" title="食べもの" note={`${G.food.length}品。何で、どこで食べるか`}>
         <div className="gcards">
           {G.food.map((f) => (
             <div key={f.local} className="gcard">
@@ -144,10 +151,9 @@ export default function NordicGuidePage() {
             </div>
           ))}
         </div>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="souvenir">おみやげ {G.souvenir.length}品</h2>
+      <Chapter id="souvenir" icon="gift" title="おみやげ" note={`${G.souvenir.length}品。値段とどこで買うか`}>
         <div className="gcards">
           {G.souvenir.map((f) => (
             <div key={f.name} className="gcard">
@@ -160,10 +166,9 @@ export default function NordicGuidePage() {
             </div>
           ))}
         </div>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="light">白夜と極夜とオーロラ</h2>
+      <Chapter id="light" icon="light" title="白夜と極夜とオーロラ" note="場所ごとの、明るい時期と暗い時期">
         <div className="gtable">
           {G.light.map((l) => (
             <div key={l.place} className="grow">
@@ -174,10 +179,9 @@ export default function NordicGuidePage() {
             </div>
           ))}
         </div>
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="phrases">現地のことば</h2>
+      <Chapter id="phrases" icon="talk" title="現地のことば" note={`${G.phrases.length}言語。挨拶と、通じる一言`}>
         {G.phrases.map((p) => (
           <div key={p.lang} className="gphrase">
             <h3>
@@ -196,12 +200,11 @@ export default function NordicGuidePage() {
             </div>
           </div>
         ))}
-      </Panel>
+      </Chapter>
 
-      <Panel>
-        <h2 id="trouble">困ったとき</h2>
+      <Chapter id="trouble" icon="alert" title="困ったとき" note={`緊急番号、盗難、病気。${G.trouble.length}項目`}>
         <Notes items={G.trouble} />
-      </Panel>
+      </Chapter>
     </PageShell>
   );
 }

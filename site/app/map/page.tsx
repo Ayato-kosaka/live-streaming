@@ -4,6 +4,8 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { COUNTRIES } from "@/content/countries";
+import Flag from "@/components/ui/Flag";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "これまでに歩いた17カ国",
@@ -38,7 +40,7 @@ export default function MapPage() {
             {COUNTRIES.filter((c) => c.region === region).map((c) => (
               <li key={c.slug}>
                 <Link href={`/map/${c.slug}`}>
-                  <span className="clist-flag" aria-hidden>{c.flag}</span>
+                  <Flag slug={c.slug} size={28} className="clist-flag" />
                   <span className="clist-body">
                     <b>
                       {c.name}
@@ -50,7 +52,7 @@ export default function MapPage() {
                       {c.stays.flatMap((s) => s.cities).slice(0, 4).join("、")}
                     </i>
                   </span>
-                  <span className="tile-go" aria-hidden>→</span>
+                  <Icon name="right" size={15} className="tile-go" />
                 </Link>
               </li>
             ))}
