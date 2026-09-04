@@ -5,6 +5,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import { COUNTRIES, countryBySlug } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
+import { streamsOfCity } from "@/content/cityStreams";
 
 export function generateStaticParams() {
   return COUNTRIES.map((c) => ({ slug: c.slug }));
@@ -47,12 +48,34 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
 
       <Panel>
         <h2>行った街</h2>
-        <div className="chips">
-          {[...new Set(c.stays.flatMap((s) => s.cities))].map((city) => (
-            <span key={city} className="chip">
-              📍 {city}
-            </span>
-          ))}
+        <p className="muted">街を押すと、そこから配信した回が出てきます。</p>
+        <div className="cities">
+          {[...new Set(c.stays.flatMap((s) => s.cities))].map((city) => {
+            const lives = streamsOfCity(c.slug, city);
+            if (!lives.length) {
+              return (
+                <div key={city} className="city is-quiet">
+                  <span className="city-head">
+                    <b>{city}</b>
+                    <i>配信はのこっていない</i>
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <details key={city} className="city">
+                <summary className="city-head">
+                  <b>{city}</b>
+                  <i>{lives.length}本の配信</i>
+                </summary>
+                <div className="scards">
+                  {lives.map((v) => (
+                    <StreamCard key={v.videoId} videoId={v.videoId} title={v.title} date={v.date} />
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </div>
       </Panel>
 

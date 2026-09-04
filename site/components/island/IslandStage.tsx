@@ -23,12 +23,11 @@ const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやとは住人よりひとまわり大きい。主人公なので。
     ただし小屋(78)と同じ背丈になると急に浮くので、そこまでは大きくしない。 */
 const AYATO_H = 58;
-const VILLAGER_H = 46;
-/** 視聴者さんのキャラクターは正方形の絵で余白があるので、少し大きめに置く */
-const GUEST_H = 62;
+/** 島に住んでいる人の背丈。正方形の絵で余白があるので、少し大きめに置く */
+const RESIDENT_H = 62;
 
-/** 視聴者さんのキャラクター置き場(Googleドライブ)の画像URL */
-const guestIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
+/** 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場 */
+const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
@@ -79,7 +78,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     for (const v of villagers) {
       if (!v.icon) continue;
       const img = new Image();
-      img.src = guestIconUrl(v.icon);
+      img.src = residentIconUrl(v.icon);
       img.onload = () => {
         if (alive) setReadyIcons((prev) => (prev.has(v.icon!) ? prev : new Set(prev).add(v.icon!)));
       };
@@ -245,7 +244,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     setHint(false);
     setSelected(null);
     // 住人を押したときは歩かずに、話しかける
-    const who = villagerAt(villagers, wx, wy, VILLAGER_H * 0.8);
+    const who = villagerAt(villagers, wx, wy, RESIDENT_H * 0.6);
     if (who) {
       talkTo(who, CHATTER[who.post] ?? [], dice.current);
       return;
@@ -280,33 +279,21 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           }
           if (l.kind === "villager") {
             const { v, pose } = l;
-            // 視聴者さんのキャラクターは透過の絵なので、そのまま島に立たせる。
-            // 絵が無い人・読めなかった人だけ、島の住人の姿を借りる。
-            const guest = !!v.icon && readyIcons.has(v.icon);
-            const h = guest ? GUEST_H : VILLAGER_H;
+            // 島に住んでいるのは視聴者さん本人のキャラクター。
+            // 絵が読めるまでは出さない(壊れた画像の枠を出さないため)。
+            if (!v.icon || !readyIcons.has(v.icon)) return null;
             return (
               <g key={l.key} transform={`translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)})`}>
-                <ellipse
-                  cx={0}
-                  cy={-pose.dy}
-                  rx={guest ? 17 : 13}
-                  ry={guest ? 6 : 4.6}
-                  fill="#134a2c"
-                  opacity={0.18}
-                />
+                <ellipse cx={0} cy={-pose.dy} rx={17} ry={6} fill="#134a2c" opacity={0.18} />
                 <g transform={`rotate(${pose.rot.toFixed(1)})`}>
-                  {guest ? (
-                    <image
-                      href={guestIconUrl(v.icon as string)}
-                      x={-h / 2}
-                      y={-h}
-                      width={h}
-                      height={h}
-                      preserveAspectRatio="xMidYMax meet"
-                    />
-                  ) : (
-                    <Sprite name={v.look} x={0} y={0} size={VILLAGER_H} flip={v.facing < 0} />
-                  )}
+                  <image
+                    href={residentIconUrl(v.icon)}
+                    x={-RESIDENT_H / 2}
+                    y={-RESIDENT_H}
+                    width={RESIDENT_H}
+                    height={RESIDENT_H}
+                    preserveAspectRatio="xMidYMax meet"
+                  />
                 </g>
               </g>
             );
@@ -348,7 +335,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       <div className="labels" aria-hidden>
         {villagers.map((v, i) => {
           if (!v.says) return null;
-          const s = toScreen(v.x, v.y - VILLAGER_H - 20);
+          const s = toScreen(v.x, v.y - RESIDENT_H - 16);
           if (s.left < -160 || s.left > box.w + 160 || s.top < -80 || s.top > box.h + 80) return null;
           return (
             <span key={`t${i}`} className="chatter" style={{ left: s.left, top: s.top }}>
