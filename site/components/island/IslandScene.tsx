@@ -55,6 +55,8 @@ export type Item = {
   flip?: boolean;
   /** そよ風で揺らす。値は揺れ始めをずらすための秒数 */
   sway?: number;
+  /** 入口になっている建物。押せるようにするため、どの場所かを持たせる。 */
+  spot?: SpotId;
 };
 
 /** 揺れるもの(草木)かどうか。建物や岩は揺れない。 */
@@ -62,18 +64,15 @@ const SWAYS = /^(tree|bush|grass|flower|mushroom|lily)/;
 
 const P = Object.fromEntries(SPOTS.map((s) => [s.id, s])) as Record<SpotId, (typeof SPOTS)[number]>;
 
-/** 建物。ここが島の骨格になるので、手で置く。 */
-const BUILDINGS: Item[] = [
-  { n: "tower-studio", x: P.streams.x, y: P.streams.y, s: 128 },
-  { n: "hut-kitchen", x: P.kitchen.x, y: P.kitchen.y, s: 78 },
-  { n: "hut-workshop", x: P.apps.x, y: P.apps.y, s: 78 },
-  { n: "hall-museum", x: P.legends.x, y: P.legends.y, s: 74 },
-  { n: "tent", x: P.next.x, y: P.next.y, s: 56 },
-  { n: "signboard", x: P.board.x, y: P.board.y, s: 62 },
-  { n: "signpost", x: P.map.x, y: P.map.y, s: 54 },
-  { n: "mailbox", x: P.now.x, y: P.now.y, s: 44 },
-  { n: "campfire", x: P.friends.x, y: P.friends.y, s: 24 },
-];
+/** 建物。押せる範囲と絵がズレると「押したのに反応しない」になるので、
+    絵は SPOTS の定義そのものから作る。ここが唯一の出どころ。 */
+const BUILDINGS: Item[] = SPOTS.map((sp) => ({
+  n: sp.icon,
+  x: sp.x,
+  y: sp.y,
+  s: sp.size,
+  spot: sp.id,
+}));
 
 /** 建物のまわりの飾り。場所ごとに「何をしている所か」が伝わるように置く。 */
 const DRESSING: Item[] = [

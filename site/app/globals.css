@@ -188,69 +188,141 @@ img { max-width: 100%; }
 
 .labels { position: absolute; inset: 0; pointer-events: none; }
 
-/* 場所の名札。地面に立てた木の札のつもりで、角は丸く・下に厚みを出す。 */
-.spot-label {
+/* =========================================================
+   入口(建物)の押し方
+   ---------------------------------------------------------
+   ゲームで「これは触れる」と伝えるやり方をそのまま使っている。
+   ・押す場所は建物の絵そのもの（.spot-hit を絵の四隅に合わせる）
+   ・押せる物には常に灯りを置き、近づくと強くする（.spot-glow）
+   ・名前が出るのはいちばん近い1つだけ。島が字で埋まらないように。
+   ========================================================= */
+.spot { position: absolute; inset: 0; pointer-events: none; }
+
+/* 建物の絵にぴったり重なる、透明な押しボタン。
+   絵より小さい入口(たき火など)でも、指で押せる大きさまで広げてある。 */
+.spot-hit {
   position: absolute;
-  transform: translate(-50%, 0);
+  padding: 0;
+  border: 0;
+  background: none;
   pointer-events: auto;
+  cursor: pointer;
+  border-radius: 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.spot-hit:focus-visible {
+  outline: 3px solid #fffdf6;
+  outline-offset: 2px;
+}
+.spot-hit:active { transform: translateY(1px); }
+
+/* 地面の灯り。SVG側の楕円。 */
+.spot-glow {
+  opacity: 0.36;
+  transition: opacity 0.35s ease;
+  animation: spotBreath 3.6s ease-in-out infinite;
+  pointer-events: none;
+  /* SVGのCSS transform は既定で原点(0,0)基準になるので、図形の中心を軸にする */
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.spot-glow.is-near { opacity: 0.7; }
+.spot-glow.is-on { opacity: 0.9; }
+@keyframes spotBreath {
+  0%, 100% { transform: scale(0.94); }
+  50% { transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot-glow { animation: none; }
+}
+
+/* きらめき。輪郭線を足さずに「触れる物」だと伝えるための、どうぶつの森の作法。 */
+.spot-spark path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sparkTwinkle 2.6s ease-in-out infinite;
+  opacity: 0;
+}
+.spot-spark.is-near path { animation-duration: 2s; }
+.spot-spark.is-on path { animation-duration: 1.5s; }
+@keyframes sparkTwinkle {
+  0%, 62%, 100% { opacity: 0; scale: 0.3; }
+  16% { opacity: 0.95; scale: 1; }
+  38% { opacity: 0.35; scale: 0.75; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot-spark path { animation: none; opacity: 0.7; }
+}
+
+/* 近づいた入口は、ふわっと弾ませる。押せることの最後のひと押し。 */
+.spot-art { transition: none; }
+.spot-art.is-on { animation: spotBob 1.5s ease-in-out infinite; }
+@keyframes spotBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.018); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot-art.is-on { animation: none; }
+}
+
+/* 名札。近づいた1つだけ出て、そのまま入口になる。
+   木の札のつもりで、角は丸く・下に厚みを出す。 */
+.spot-name {
+  position: absolute;
+  transform: translate(-50%, -100%) scale(0.86);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  opacity: 0;
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 14px 5px 6px;
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 12px;
   background: linear-gradient(#fffdf6, #fff3da);
   border: 3px solid var(--frame-dark);
-  border-radius: 15px;
+  border-radius: 14px;
   box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-2);
   white-space: nowrap;
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s;
+  transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 /* 札を留めている杭 */
-.spot-label::before {
+.spot-name::before {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -11px;
-  width: 7px; height: 11px;
+  bottom: -10px;
+  width: 7px; height: 10px;
   margin-left: -3.5px;
   border-radius: 0 0 3px 3px;
   background: var(--frame-deep);
 }
-.spot-label:hover,
-.spot-label:focus-visible {
-  transform: translate(-50%, -3px) scale(1.05);
-  box-shadow: 0 7px 0 var(--frame-deep), var(--shadow-3);
+.spot-name b { font-size: 14px; font-weight: 900; letter-spacing: 0.01em; }
+.spot-name i {
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 900;
+  color: #fffdf6;
+  background: var(--frame-dark);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
-.spot-label:active { transform: translate(-50%, 2px) scale(0.98); box-shadow: 0 2px 0 var(--frame-deep); }
-/* 目印は島に置いてある物そのもの。絵文字は使わない。 */
-.spot-icon {
-  width: 34px; height: 34px;
-  flex: none;
-  object-fit: contain;
-  object-position: center bottom;
-  filter: drop-shadow(0 1px 1px rgba(60, 40, 20, 0.18));
+.spot.is-on .spot-name {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -100%) scale(1);
 }
-.spot-text { display: flex; flex-direction: column; line-height: 1.15; }
-.spot-text b { font-size: 14px; font-weight: 900; letter-spacing: 0.01em; }
-.spot-text i { font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); }
-/* マウスのある画面では、ふだんは名前だけ。近づいたときに説明が開く。
-   名札だらけで島が埋まらないようにするため。 */
-@media (hover: hover) {
-  .spot-text i {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.18s ease, opacity 0.18s ease;
-  }
-  .spot-label:hover .spot-text i,
-  .spot-label:focus-visible .spot-text i {
-    max-height: 1.5em;
-    opacity: 1;
-  }
-}
+.spot.is-on .spot-name:hover { transform: translate(-50%, -100%) scale(1.06); }
+.spot.is-on .spot-name:active { transform: translate(-50%, calc(-100% + 3px)) scale(1); box-shadow: 0 1px 0 var(--frame-deep); }
 @media (min-width: 720px) {
-  .spot-icon { width: 40px; height: 40px; }
-  .spot-text b { font-size: 16px; }
-  .spot-text i { font-size: 11.5px; }
+  .spot-name b { font-size: 15.5px; }
+  .spot-name i { font-size: 11px; }
+}
+/* マウスのある画面は島が大きく映るので、名前は最初から全部出しておく。
+   ただし薄く小さく。近づいた1つだけが濃くなって「はいる」が出る。 */
+@media (hover: hover) and (min-width: 1024px) {
+  .spot-name { opacity: 0.62; transform: translate(-50%, -100%) scale(0.8); }
+  .spot.is-idle .spot-name i,
+  .spot.is-near .spot-name i { display: none; }
+  .spot-hit:hover + .spot-name { opacity: 1; }
 }
 
 .walk-hint {
@@ -441,59 +513,6 @@ img { max-width: 100%; }
 .badge em { font-style: normal; }
 
 /* 住人チップ */
-/* スマホの目印。名前は下のバーに出すので、ここは「押せる場所がある」ことだけ示す。
-   建物の絵まで丸に入れると、島じゅうが白い丸だらけになってしまう。 */
-.spot-pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
-  width: 44px; height: 44px;
-  border: 0;
-  background: none;
-  display: grid; place-items: center;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.spot-pin::before {
-  content: "";
-  width: 15px; height: 15px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #fffdf6, #ffdf95);
-  border: 2.5px solid var(--frame-deep);
-  box-shadow: 0 2px 5px rgba(12, 62, 40, 0.4);
-}
-/* まわりに広がる光。押せることに気づいてもらう */
-.spot-pin::after {
-  content: "";
-  position: absolute;
-  width: 15px; height: 15px;
-  border-radius: 50%;
-  border: 2px solid #fffdf6;
-  opacity: 0.6;
-  animation: pinPulse 2.8s ease-out infinite;
-}
-@keyframes pinPulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  70%, 100% { transform: scale(2.4); opacity: 0; }
-}
-.spot-pin img { display: none; }
-/* 選んだところだけ、何の場所かを絵で出す */
-.spot-pin.is-on { transform: translate(-50%, -50%) scale(1); }
-.spot-pin.is-on::before {
-  width: 44px; height: 44px;
-  background: radial-gradient(circle at 34% 28%, #fff6cf, var(--gold));
-  border-color: var(--frame-dark);
-  box-shadow: 0 3px 0 var(--frame-deep), var(--shadow-1);
-}
-.spot-pin.is-on::after { display: none; }
-.spot-pin.is-on img {
-  display: block;
-  position: absolute;
-  width: 30px; height: 30px;
-  object-fit: contain;
-  object-position: center bottom;
-}
-.spot-pin:active { transform: translate(-50%, -50%) scale(0.9); }
-
 /* スマホの下カード */
 .sheet {
   position: absolute;
