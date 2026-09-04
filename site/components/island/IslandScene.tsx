@@ -405,6 +405,30 @@ export default function IslandScene() {
         ))}
       </g>
 
+      {/* ------- 沖を行く舟と、空のカモメ ------- */}
+      {/* CSS の animation は transform 属性を上書きしてしまうので、
+          置き場所は外側の g で決めて、動きは内側の g に持たせる。 */}
+      <g transform="translate(-260 208)" aria-hidden>
+        <g className="boat">
+          <ellipse cx={0} cy={7} rx={26} ry={6} fill="#0b3f52" opacity={0.16} />
+          <path d="M-26 0 q26 16 52 0 q-7 11 -26 11 q-19 0 -26 -11Z" fill="#f0798d" />
+          <path d="M-26 0 q26 16 52 0 q-4 4 -8 6 q-18 5 -36 0 q-4 -2 -8 -6Z" fill="#fff" opacity={0.22} />
+          <rect x={-2} y={-26} width={4} height={26} rx={2} fill="#c98d55" />
+          <path d="M2 -25 L24 -5 L2 -5 Z" fill="#fffdf6" />
+        </g>
+      </g>
+      {[
+        [70, 380, 1, 0],
+        [1120, 470, 0.82, 13],
+        [40, 900, 0.7, 24],
+      ].map(([gx, gy, k, delay], i) => (
+        <g key={i} transform={`translate(${gx} ${gy}) scale(${k})`} aria-hidden>
+          <g className="skygull" style={{ animationDelay: `${delay}s` }}>
+            <path d="M-17 0 q9 -10 17 0 q8 -10 17 0 q-9 -4 -17 3 q-8 -7 -17 -3Z" fill="#fffdf6" opacity={0.85} />
+          </g>
+        </g>
+      ))}
+
       {/* ------- ちょうちょ ------- */}
       <g className="bugs" aria-hidden>
         {[

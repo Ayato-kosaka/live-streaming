@@ -298,6 +298,27 @@ img { max-width: 100%; }
 .stage-lamps circle:nth-child(even) { animation-duration: 4.6s; }
 @keyframes lampFlicker { from { opacity: 0.78; } to { opacity: 1; } }
 
+/* 沖を行く舟。島のまわりに動くものがあると、海が止まって見えない。 */
+.boat { animation: boatSail 64s linear infinite; }
+@keyframes boatSail {
+  from { transform: translate(0, 0) rotate(-2deg); }
+  25%  { transform: translate(430px, -10px) rotate(2deg); }
+  50%  { transform: translate(860px, 4px) rotate(-2deg); }
+  75%  { transform: translate(1290px, -10px) rotate(2deg); }
+  to   { transform: translate(1720px, 0) rotate(-2deg); }
+}
+/* 空のカモメ。ゆっくり横切る */
+.skygull { animation: gullDrift 34s linear infinite; }
+@keyframes gullDrift {
+  from { transform: translate(-120px, 30px); opacity: 0; }
+  10%  { opacity: 0.85; }
+  88%  { opacity: 0.85; }
+  to   { transform: translate(300px, -80px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boat, .skygull { animation: none; }
+}
+
 /* ちょうちょ。昼だけ飛んでいる(夜は色をかぶせる層に沈む)。 */
 .bug { animation: bugFly 17s ease-in-out infinite; }
 .bug-wing { animation: bugFlap 0.26s ease-in-out infinite alternate; transform-origin: center; }
