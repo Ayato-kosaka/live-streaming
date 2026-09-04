@@ -32,6 +32,7 @@ export function Sprite({
   opacity,
   className,
   style,
+  sway,
 }: {
   /** スプライト名(site/public/sprites/ のファイル名) */
   name: string;
@@ -44,13 +45,15 @@ export function Sprite({
   opacity?: number;
   className?: string;
   style?: React.CSSProperties;
+  /** そよ風で揺らす。値は揺れ始めをずらすための秒数。 */
+  sway?: number;
 }) {
   const m = META[name];
   if (!m) return null;
   const k = size / m.oh; // 1px あたりのワールド単位
   const left = x - (m.ox + m.ow / 2) * k;
   const top = y - (m.oy + m.oh) * k;
-  return (
+  const img = (
     <image
       href={`/sprites/${name}.webp`}
       x={left}
@@ -63,6 +66,14 @@ export function Sprite({
       transform={flip ? `translate(${2 * x} 0) scale(-1 1)` : undefined}
       preserveAspectRatio="none"
     />
+  );
+  // 揺らすときは、足元を軸にして回すために g で包む。
+  // image に直接 CSS の transform をかけると、左右反転の指定と衝突する。
+  if (sway === undefined) return img;
+  return (
+    <g className="sway" style={{ transformOrigin: `${x}px ${y}px`, animationDelay: `${sway}s` }}>
+      {img}
+    </g>
   );
 }
 

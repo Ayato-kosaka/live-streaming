@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import IslandScene, { PROPS, type Item } from "./IslandScene";
+import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
 import { Sprite } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
@@ -240,7 +240,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         {layers.map((l) => {
           if (l.kind === "prop") {
             const p: Item = l.p;
-            return <Sprite key={l.key} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} className={p.cls} />;
+            return <Sprite key={l.key} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} sway={p.sway} />;
           }
           if (l.kind === "villager") {
             const { v, pose } = l;
@@ -269,6 +269,21 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             </g>
           );
         })}
+      </svg>
+
+      {/* 夜の灯り。時間帯の色かぶせより上に重ねる */}
+      <svg className="stage-lamps" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid slice" aria-hidden>
+        <defs>
+          <radialGradient id="lampG">
+            <stop offset="0" stopColor="#fff6d4" stopOpacity="1" />
+            <stop offset="0.28" stopColor="#ffdc8a" stopOpacity="0.72" />
+            <stop offset="0.62" stopColor="#ffc860" stopOpacity="0.3" />
+            <stop offset="1" stopColor="#ffbe4d" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        {LAMPS.map(([lx, ly, r], i) => (
+          <circle key={i} cx={lx} cy={ly} r={r} fill="url(#lampG)" />
+        ))}
       </svg>
 
       {/* 住人の吹き出し */}
