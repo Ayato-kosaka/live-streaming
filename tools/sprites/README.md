@@ -1,19 +1,26 @@
 # 島のスプライトを焼く
 
-Kenney の CC0 3Dモデルを、**あやとのキャラ絵と同じ画風**（太い黒線＋フラット塗り）の
-透過PNGに焼くための道具です。焼いた結果は `site/public/sprites/` に入っています。
+Kenney の CC0 3Dモデルを、**あつまれ どうぶつの森に寄せた画風**の透過PNGに焼くための
+道具です。焼いた結果は `site/public/sprites/` に入っています。
 素材そのもの（`models/`）とライブラリ（`vendor/`）はリポジトリに入れていません。
 
 ## 何をしているか
 
 - `render.html` … three.js で1枚ずつ描く
-  - `MeshToonMaterial` ＋ 3段グラデーションで陰影を面で割る（フラット塗り）
-  - 頂点を法線方向へ押し出した黒い裏面シェルで輪郭線を付ける。押し出し量は
-    カメラの表示範囲から決めるので、**大きい物でも小さい物でも線の太さが画面上で揃う**
-  - テクスチャを持たないモデル（nature-kit）は、マテリアル色を色相帯ごとに
-    置き換えて島の配色にする（`PALETTE_RULES`）
+  - **輪郭線は付けない。** あつ森には線が無く、形は色の差だけで分かれている
+  - 環境光を主役にして影の側も明るく保ち、`MeshLambertMaterial` でなだらかに陰を付ける
+  - 足元に**接地影を焼き込む**。これが無いと島に置いたとき物が浮いて見える
+  - 色は総取り替えする
+    - nature-kit はマテリアルに名前が付いている（`dirt` / `grass` / `stone` …）ので、
+      名前ごとに行き先の色を決める（`MATERIALS`）
+    - 建物キットは共有テクスチャ（colormap）なので、そのピクセルを色相帯ごとに
+      塗り替える（`BANDS`）。建物キットでは
+      `green`＝壁 / `blue`＝柱と窓枠 / `neutral`＝屋根 に対応するので、
+      屋根の色は `neutral` を上書きして決める
 - `manifest.mjs` … 焼くものの一覧。建物はモジュールパーツを組んで1枚にする
 - `bake.mjs` … まとめて焼く
+- `meta.py` … 焼いた絵を切り詰めて、島に置くための寸法を `site/content/sprites.json` に書く
+- `lab.mjs` … 試作用。JSON で渡した定義だけを焼いて見比べる
 
 ## 焼き直す手順
 
@@ -35,6 +42,7 @@ cp -r node_modules/three/examples/jsm vendor/jsm
 # 3. 焼く
 python3 -m http.server 8904 &
 node bake.mjs ../../site/public/sprites
+python3 meta.py
 ```
 
 ## ライセンス

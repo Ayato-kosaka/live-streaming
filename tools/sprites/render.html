@@ -6,13 +6,13 @@
 /**
  * Kenney の3Dモデルを「あつ森の見え方」のスプライトに焼くレンダラ。
  *
- * あつ森の絵づくりを分解すると、効いているのは次の4つ:
- *   1. 環境光がとても強い。影は真っ黒にならず、空の色と地面の照り返しで青緑〜黄に転ぶ
- *   2. 陰影はトゥーンのような硬い段ではなく、なだらかなグラデーション
- *   3. すべての物が地面に「柔らかい接地影」を落としている。これが無いと物が浮く
- *   4. 彩度は高いが、明度も高い。暗く濁った色がほとんど無い
- * この4つを再現し、輪郭線はあやとのキャラ絵と並べたときに浮かない程度に
- * ごく細く(黒ではなく焦茶で)だけ入れる。
+ * あつ森の絵づくりを分解すると、効いているのは次の5つ:
+ *   1. 輪郭線が無い。形は色の差だけで分かれている
+ *   2. 環境光がとても強く、影の側も明るいまま。暗く濁った色がほとんど無い
+ *   3. 陰影はなだらかで、面ごとの明度差は小さい
+ *   4. すべての物が地面に柔らかい接地影を落としている。これが無いと物が浮く
+ *   5. 彩度も明度も高い。特に緑は黄色寄り、木は赤みのある茶色
+ * ここではその5つを、素材の色を作り替えることも含めて再現する。
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -31,144 +31,239 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
-/* ---- 光: 強い環境光 + やわらかい主光源。影の色は空と地面から作る ---- */
-const hemi = new THREE.HemisphereLight(0xdff1ff, 0x9fd96a, 2.0);
+/* ---- 光: 環境光を主役にして、方向光は「どちらが上か」を示す程度に弱く ---- */
+const hemi = new THREE.HemisphereLight(0xfff8ec, 0xcbe6a6, 1.85);
 scene.add(hemi);
-const key = new THREE.DirectionalLight(0xfff4d8, 1.35);
+const key = new THREE.DirectionalLight(0xfff6e2, 1.15);
 key.position.set(-6, 10, 7);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
-key.shadow.radius = 9;
-key.shadow.bias = -0.0008;
+key.shadow.radius = 10;
+key.shadow.bias = -0.0009;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xd6ecff, 0.45);
-fill.position.set(7, 4, -6);
+// 影側が沈まないよう、反対からも当てる
+const fill = new THREE.DirectionalLight(0xe8f4ff, 0.5);
+fill.position.set(8, 3, -6);
 scene.add(fill);
 
 /* ---- 接地影を受ける板。影だけを描くので背景は透けたまま ---- */
 const shadowCatcher = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
-  new THREE.ShadowMaterial({ opacity: 0.26, color: 0x2b5c37 }),
+  new THREE.PlaneGeometry(400, 400),
+  new THREE.ShadowMaterial({ opacity: 0.2, color: 0x2f6b3a }),
 );
 shadowCatcher.rotation.x = -Math.PI / 2;
 shadowCatcher.receiveShadow = true;
 scene.add(shadowCatcher);
 
+/* ------------------------------------------------------------------ */
+/* 配色                                                                */
+/* ------------------------------------------------------------------ */
+
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
 /**
- * Kenney 既定のティール/ピーチ配色を、あやと島(あつ森寄り)の配色へ。
- * 彩度と明度を上げて、暗く濁った色を作らないのがコツ。
+ * あつ森寄りの色に置き換える。
+ * 素材の色相帯ごとに「行き先」を決めておき、明るさだけ元の色から引き継ぐ。
+ * こうすると立体の陰影は保ったまま、配色だけ総取り替えできる。
  */
-const PALETTE_RULES = [
-  // 葉(ティール) → あつ森の芝に近い、彩度の高い黄緑
-  { from: [0.38, 0.58], h: 0.268, s: 0.60, l: [0.34, 0.52] },
-  // 木部(ピーチ) → あたたかい木の色。
-  // 彩度の高い黄色(花)まで巻き込まないよう、上限を付ける。
-  { from: [0.02, 0.14], maxSat: 0.45, h: 0.072, s: 0.44, l: [0.30, 0.50] },
-  // 岩・雪 → 温かいグレー(茶色にしない)
-  { lowSat: true, h: 0.09, s: 0.07, l: [0.56, 0.82] },
-];
+const BANDS = {
+  // 葉・草(ティール〜緑)。建物キットでは壁の本体
+  green: { lo: 0.20, hi: 0.52, h: 0.250, s: 0.60, l: [0.28, 0.47] },
+  // 木・土(オレンジ〜茶)
+  wood: { lo: 0.02, hi: 0.105, minSat: 0.25, h: 0.078, s: 0.42, l: [0.26, 0.44] },
+  // 屋根のスレート(青〜藍)。建物キットでは柱や窓枠
+  blue: { lo: 0.52, hi: 0.78, h: 0.552, s: 0.42, l: [0.42, 0.64] },
+  // 彩度の低い色(石・雪・白い縁取り)。建物キットでは屋根
+  neutral: { flat: true, h: 0.09, s: 0.17, l: [0.46, 0.76] },
+};
+const ORDER = ["neutral", "green", "wood", "blue"];
 
-/** 岩は木部と同じ色相帯にいるので、モデル側で「岩」と分かるものだけ灰色に寄せる */
-const ROCK_RULE = { h: 0.10, s: 0.08, l: [0.52, 0.80] };
+/**
+ * nature-kit のモデルはマテリアルに名前が付いている(dirt / grass / stone …)。
+ * 色相から推し量るより、名前で指定したほうが確実なので、名前があるものは
+ * こちらを使う。値は「あつ森ならこの色」というつもりで置いた固定色。
+ */
+const MATERIALS = {
+  leafsgreen: [0.248, 0.58, 0.46],
+  leafsdark: [0.272, 0.55, 0.36],
+  grass: [0.245, 0.60, 0.50],
+  dirt: [0.076, 0.44, 0.42],
+  wood: [0.086, 0.48, 0.60],
+  woodbark: [0.068, 0.40, 0.40],
+  wooddark: [0.062, 0.38, 0.34],
+  woodinner: [0.100, 0.52, 0.78],
+  stone: [0.100, 0.15, 0.80],
+  stonedark: [0.100, 0.13, 0.60],
+  corn: [0.130, 0.85, 0.62],
+  colorred: [0.985, 0.72, 0.62],
+  colorpurple: [0.745, 0.55, 0.70],
+  colorwhite: [0.100, 0.20, 0.94],
+  coloryellow: [0.125, 0.90, 0.64],
+  colorgreen: [0.245, 0.60, 0.50],
+  colorblue: [0.550, 0.55, 0.62],
+  _defaultmat: [0.100, 0.16, 0.92],
+};
 
-function remapColor(c, kind) {
+/**
+ * 色相帯から「あつ森ならこの色」を決める。明るさだけ元の色から引き継ぐので、
+ * 立体の陰影は保ったまま配色だけ総取り替えできる。
+ * @param {{h:number,s:number,l:number}} hsl 元の色
+ * @param {object} o 上書き指定
+ * @return {{h:number,s:number,l:number}} 置き換えた色
+ */
+function acHsl(hsl, o = {}) {
+  const t = clamp01((hsl.l - 0.12) / 0.72);
+  const put = (r) => ({ h: r.h, s: r.s, l: r.l[0] + (r.l[1] - r.l[0]) * t });
+  for (const name of ORDER) {
+    const b = { ...BANDS[name], ...(o[name] ?? {}) };
+    const hit = b.flat ?
+      hsl.s < 0.15 :
+      hsl.h >= b.lo && hsl.h <= b.hi && (b.minSat === undefined || hsl.s >= b.minSat);
+    if (hit) return put(b);
+  }
+  // 花や布の赤・青・紫: 彩度と明度を上げて、澄んだ色にする
+  return { h: hsl.h, s: Math.min(1, hsl.s * 1.12 + 0.14), l: clamp01(0.30 + hsl.l * 0.62) };
+}
+
+/**
+ * 色ひとつを置き換える。
+ * @param {THREE.Color} c 対象
+ * @param {object} o 上書き指定
+ * @return {THREE.Color} 同じインスタンス
+ */
+function remapColor(c, o) {
   const hsl = { h: 0, s: 0, l: 0 };
   c.getHSL(hsl);
-  if (kind === "rock") {
-    const t = Math.max(0, Math.min(1, (hsl.l - 0.15) / 0.7));
-    c.setHSL(ROCK_RULE.h, ROCK_RULE.s, ROCK_RULE.l[0] + (ROCK_RULE.l[1] - ROCK_RULE.l[0]) * t);
-    return c;
-  }
-  for (const r of PALETTE_RULES) {
-    const hit = r.lowSat
-      ? hsl.s < 0.12
-      : hsl.h >= r.from[0] && hsl.h <= r.from[1] && (r.maxSat === undefined || hsl.s <= r.maxSat);
-    if (!hit) continue;
-    const t = Math.max(0, Math.min(1, (hsl.l - 0.15) / 0.7));
-    c.setHSL(r.h, r.s, r.l[0] + (r.l[1] - r.l[0]) * t);
-    return c;
-  }
-  // 花の赤・黄・紫など: 彩度を上げて、明るくはっきりさせる(白っぽくしない)
-  c.setHSL(hsl.h, Math.min(1, hsl.s * 1.3 + 0.10), Math.min(0.70, 0.22 + hsl.l * 0.66));
+  const n = acHsl(hsl, o);
+  c.setHSL(n.h, n.s, n.l);
   return c;
 }
 
-/** 頂点を法線方向へ押し出した裏面だけを塗る = 輪郭線 */
-function makeOutlineMaterial() {
-  return new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    uniforms: { uWidth: { value: 0.01 }, uColor: { value: new THREE.Color(0x4a3524) } },
-    vertexShader: `
-      uniform float uWidth;
-      void main() {
-        vec3 n = normalize(normalMatrix * normal);
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        mv.xyz += n * uWidth;
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: `
-      uniform vec3 uColor;
-      void main() { gl_FragColor = vec4(uColor, 1.0); }`,
-  });
+/* ---- テクスチャ(colormap)も同じ規則で塗り替える ---- */
+const texCache = new Map();
+
+/**
+ * @param {number} r 0-255
+ * @param {number} g 0-255
+ * @param {number} b 0-255
+ * @return {{h:number,s:number,l:number}} HSL
+ */
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b); const mn = Math.min(r, g, b);
+  const l = (mx + mn) / 2;
+  let h = 0; let s = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (mx === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  return { h, s, l };
 }
+
+/**
+ * @param {{h:number,s:number,l:number}} c HSL
+ * @return {number[]} RGB 0-255
+ */
+function hslToRgb({ h, s, l }) {
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const f = (t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map((v) => Math.round(v * 255));
+}
+
+/**
+ * colormap のピクセルを島の配色に置き換えた新しいテクスチャを作る。
+ * @param {THREE.Texture} src 元のテクスチャ
+ * @param {object} o 上書き指定
+ * @return {THREE.Texture} 塗り替えたテクスチャ
+ */
+function acTexture(src, o) {
+  const img = src.image;
+  // ImageBitmap には src が無いので、画像そのものに印を付けて見分ける。
+  // ここを誤ると別のモデルのテクスチャを使い回してしまう。
+  if (!img.__acId) img.__acId = "img" + (acTexture.n = (acTexture.n ?? 0) + 1);
+  const key = img.__acId + "|" + JSON.stringify(o ?? null);
+  if (texCache.has(key)) return texCache.get(key);
+  const cv = document.createElement("canvas");
+  cv.width = img.width; cv.height = img.height;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+  const d = ctx.getImageData(0, 0, cv.width, cv.height);
+  const px = d.data;
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i + 3] === 0) continue;
+    const n = acHsl(rgbToHsl(px[i], px[i + 1], px[i + 2]), o);
+    const [r, g, b] = hslToRgb(n);
+    px[i] = r; px[i + 1] = g; px[i + 2] = b;
+  }
+  ctx.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.flipY = src.flipY;
+  t.wrapS = src.wrapS; t.wrapT = src.wrapT;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.magFilter = THREE.NearestFilter;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.needsUpdate = true;
+  texCache.set(key, t);
+  return t;
+}
+
+/* ------------------------------------------------------------------ */
 
 const loader = new GLTFLoader();
-const texCache = new Map();
-async function loadTexture(url) {
-  if (!texCache.has(url)) {
-    const t = await new THREE.TextureLoader().loadAsync(url);
-    t.flipY = false;
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.magFilter = THREE.NearestFilter;
-    t.minFilter = THREE.LinearMipmapLinearFilter;
-    texCache.set(url, t);
-  }
-  return texCache.get(url);
-}
 
-/** モデルを1つ読んで、あつ森寄りのマテリアルと輪郭線シェルを付ける */
-async function prepare(url, override, shells, kind) {
-  const gltf = await loader.loadAsync(url);
+/**
+ * モデルを1つ読んで、あつ森寄りのマテリアルに差し替える。
+ * @param {object} part 読み込むパーツ
+ * @param {object} opts スプライト全体の指定
+ * @return {Promise<THREE.Object3D>} 読み込んだモデル
+ */
+async function prepare(part, opts) {
+  const gltf = await loader.loadAsync(part.url);
   const root = gltf.scene;
-  root.traverse((o) => {
-    if (!o.isMesh) return;
-    o.castShadow = true;
-    o.receiveShadow = true;
-    const mats = Array.isArray(o.material) ? o.material : [o.material];
+  // パーツごとの色指定が無ければ、スプライト全体の指定を使う
+  const o = { ...opts, ...(part.tint ?? {}) };
+  const plain = part.plain ?? opts.plain;
+  root.traverse((n) => {
+    if (!n.isMesh) return;
+    n.castShadow = true;
+    n.receiveShadow = true;
+    const mats = Array.isArray(n.material) ? n.material : [n.material];
     const soft = mats.map((m) => {
-      // テクスチャを持たないモデル(nature-kit など)に他キットのパレット画像を
-      // 貼ると UV が合わず真っ黒になる。元から map があるものだけ差し替える。
-      const map = m.map ? override ?? m.map : null;
-      const mat = new THREE.MeshLambertMaterial({
-        map,
-        color: map ? 0xffffff : m.color ? m.color.clone() : new THREE.Color(0xffffff),
-      });
-      if (!map) remapColor(mat.color, kind);
-      return mat;
+      const map = m.map && !plain ? acTexture(m.map, o) : m.map ?? null;
+      const color = map ? new THREE.Color(0xffffff) :
+        m.color ? m.color.clone() : new THREE.Color(0xffffff);
+      if (!map && !plain) {
+        const named = (o.mat ?? {})[(m.name ?? "").toLowerCase()] ??
+          MATERIALS[(m.name ?? "").toLowerCase()];
+        if (named) color.setHSL(named[0], named[1], named[2]);
+        else remapColor(color, o);
+      }
+      return new THREE.MeshLambertMaterial({ map, color });
     });
-    o.material = Array.isArray(o.material) ? soft : soft[0];
-
-    const shell = new THREE.Mesh(o.geometry, makeOutlineMaterial());
-    shell.position.copy(o.position);
-    shell.rotation.copy(o.rotation);
-    shell.scale.copy(o.scale);
-    o.parent.add(shell);
-    shells.push(shell);
+    n.material = Array.isArray(n.material) ? soft : soft[0];
   });
   return root;
 }
 
 /**
  * 複数のパーツを組んで1枚に焼く。
- * parts: [{ url, pos:[x,y,z], rot:[x,y,z](度), scale }]
+ * parts: [{ url, pos:[x,y,z], rot:[x,y,z](度), scale, tint }]
  */
 window.renderScene = async (parts, opts = {}) => {
-  const override = opts.colormap ? await loadTexture(opts.colormap) : null;
-  const outlineWidth = opts.outline ?? 0.0045;
-  const shells = [];
   const group = new THREE.Group();
   for (const part of parts) {
-    const o = await prepare(part.url, override, shells, part.kind ?? opts.kind);
+    const o = await prepare(part, opts);
     const [px, py, pz] = part.pos ?? [0, 0, 0];
     const [rx, ry, rz] = part.rot ?? [0, 0, 0];
     o.position.set(px, py, pz);
@@ -200,10 +295,10 @@ window.renderScene = async (parts, opts = {}) => {
 
   // 影の描画範囲をこの物体に合わせる(狭くするほど影が綺麗に出る)
   const sc = key.shadow.camera;
-  sc.left = -maxDim * 1.6;
-  sc.right = maxDim * 1.6;
-  sc.top = maxDim * 1.6;
-  sc.bottom = -maxDim * 1.6;
+  sc.left = -maxDim * 1.7;
+  sc.right = maxDim * 1.7;
+  sc.top = maxDim * 1.7;
+  sc.bottom = -maxDim * 1.7;
   sc.near = 0.1;
   sc.far = maxDim * 40;
   key.position.set(look.x - maxDim * 2.6, box.min.y + maxDim * 9, look.z + maxDim * 3.2);
@@ -213,13 +308,9 @@ window.renderScene = async (parts, opts = {}) => {
 
   shadowCatcher.position.y = box.min.y + 0.001;
 
-  // 画面上で一定の太さになるよう、表示範囲から押し出し量を決める
-  for (const s of shells) s.material.uniforms.uWidth.value = d * outlineWidth;
-
   renderer.render(scene, cam);
   const data = renderer.domElement.toDataURL("image/png");
   scene.remove(group);
-  for (const s of shells) s.parent?.remove(s);
   return data;
 };
 
