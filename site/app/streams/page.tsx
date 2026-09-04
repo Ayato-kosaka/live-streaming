@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
 import { Panel, StreamCard, Stat } from "@/components/ui/Bits";
@@ -15,9 +16,10 @@ export default function StreamsPage() {
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら" }]}>
       <PageHead
-        emoji="📺"
+        icon="tower-studio"
         title="どんな配信をしてるか"
-        lead="毎晩22時から、世界のどこかで生配信。やってることは大きく5つに分かれています。押すと、その中身まで見られます。"
+        lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つに分かれています。"
+        say={GUIDE.streams}
       />
 
       <div className="stats" style={{ marginBottom: 18 }}>
@@ -30,7 +32,7 @@ export default function StreamsPage() {
       {STREAM_TYPES.map((t) => (
         <Panel key={t.slug}>
           <h2 style={{ ["--frame" as string]: t.color }}>
-            <span aria-hidden>{t.emoji}</span> {t.name}
+            <img className="h2-icon" src={`/sprites/${t.icon}.png`} alt="" /> {t.name}
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
             <span className="chip">🕙 {t.when}</span>
@@ -42,7 +44,7 @@ export default function StreamsPage() {
             ))}
           </div>
           <Link className="tile" href={`/streams/${t.slug}`} style={{ marginTop: 14, ["--tile" as string]: t.color }}>
-            <span className="tile-emoji" aria-hidden>{t.emoji}</span>
+            <img className="tile-icon" src={`/sprites/${t.icon}.png`} alt="" />
             <span className="tile-text">
               <b>{t.name}をくわしく</b>
               <i>{t.deeper ? t.deeper.label : "配信の中身を見る"}</i>

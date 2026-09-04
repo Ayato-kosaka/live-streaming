@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { Panel } from "@/components/ui/Bits";
 import { APPS } from "@/content/apps";
 
@@ -13,9 +14,10 @@ export default function AppsPage() {
   return (
     <PageShell current="apps" crumbs={[{ label: "アプリ工房" }]}>
       <PageHead
-        emoji="💻"
+        icon="hut-workshop"
         title="アプリ工房"
         lead="旅をしながらアプリを作っています。目標は食べログ超え。設計も文言も、配信でみんなに相談しながら決めてきました。"
+        say={GUIDE.apps}
       />
       {APPS.map((a) => (
         <Panel key={a.slug}>

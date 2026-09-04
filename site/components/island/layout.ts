@@ -114,7 +114,7 @@ export const SPOTS: Spot[] = [
     y: 556,
     label: "いまのポスト",
     emoji: "📮",
-    icon: "lantern",
+    icon: "mailbox",
     href: "/now",
     blurb: "今どこで何してる",
     labelAt: "above",

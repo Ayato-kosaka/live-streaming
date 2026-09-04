@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import Board from "@/components/live/Board";
 
 export const metadata: Metadata = {
@@ -11,9 +12,10 @@ export default function BoardPage() {
   return (
     <PageShell current="board" crumbs={[{ label: "企画掲示板" }]}>
       <PageHead
-        emoji="📋"
+        icon="signboard"
         title="企画掲示板"
-        lead="「こういうことやってほしい」を出せる場所です。ログインは要りません。票が集まった企画は、週のはじめの企画会議に持っていきます。"
+        lead="「こういうことやってほしい」を出せる場所です。ログインは要りません。"
+        say={GUIDE.board}
       />
       <Board />
     </PageShell>

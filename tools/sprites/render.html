@@ -229,6 +229,17 @@ const loader = new GLTFLoader();
  * @return {Promise<THREE.Object3D>} 読み込んだモデル
  */
 async function prepare(part, opts) {
+  // キットに無い小物(貼り紙・郵便受けの旗など)は、箱を組んで作る
+  if (part.box) {
+    const [w, h, d] = part.box;
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(...part.color) }),
+    );
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
   const gltf = await loader.loadAsync(part.url);
   const root = gltf.scene;
   // パーツごとの色指定が無ければ、スプライト全体の指定を使う

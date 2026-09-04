@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import NowLive from "@/components/live/NowLive";
 import { Panel } from "@/components/ui/Bits";
 import { PROFILE, LINKS } from "@/content/site";
@@ -12,7 +13,12 @@ export const metadata: Metadata = {
 export default function NowPage() {
   return (
     <PageShell current="now" crumbs={[{ label: "いまのポスト" }]}>
-      <PageHead emoji="📮" title="いま何してる" lead="今どこにいて、今週なにをするか。配信の前にここを見ておくと話が早いです。" />
+      <PageHead
+        icon="mailbox"
+        title="いま何してる"
+        lead="今どこにいて、今週なにをするか。配信の前にここを見ておくと話が早いです。"
+        say={GUIDE.now}
+      />
       <NowLive />
       <Panel>
         <h2>あやとって誰</h2>

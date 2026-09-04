@@ -21,7 +21,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   if (!t) notFound();
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: t.name }]}>
-      <PageHead emoji={t.emoji} title={t.name} lead={t.lead} meta={<span className="chip dark">🕙 {t.when}</span>} />
+      <PageHead icon={t.icon} title={t.name} lead={t.lead} meta={<span className="chip dark">{t.when}</span>} />
       <Panel>
         <h2 style={{ ["--frame" as string]: t.color }}>どういう配信か</h2>
         {t.body.map((p, i) => (
@@ -37,7 +37,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </div>
       </Panel>
       {t.deeper && (
-        <TileLink href={t.deeper.href} emoji={t.emoji} title={t.deeper.label} note="もっと深く見る" accent={t.color} />
+        <TileLink href={t.deeper.href} icon={t.icon} title={t.deeper.label} note="もっと深く見る" accent={t.color} />
       )}
     </PageShell>
   );

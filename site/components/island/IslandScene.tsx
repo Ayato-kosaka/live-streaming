@@ -60,7 +60,7 @@ const BUILDINGS: Item[] = [
   { n: "tent", x: P.next.x, y: P.next.y, s: 56 },
   { n: "signboard", x: P.board.x, y: P.board.y, s: 62 },
   { n: "signpost", x: P.map.x, y: P.map.y, s: 54 },
-  { n: "lantern", x: P.now.x, y: P.now.y, s: 66 },
+  { n: "mailbox", x: P.now.x, y: P.now.y, s: 44 },
   { n: "campfire", x: P.friends.x, y: P.friends.y, s: 24 },
 ];
 
@@ -90,6 +90,7 @@ const DRESSING: Item[] = [
   { n: "bench", x: P.friends.x + 4, y: P.friends.y + 42, s: 26 },
   // 企画掲示板: 立ち読み用の灯り
   { n: "lantern", x: P.board.x + 74, y: P.board.y + 6, s: 52 },
+  { n: "bench", x: P.now.x - 56, y: P.now.y + 24, s: 26 },
   // 旅の桟橋: 舟
   { n: "canoe", x: 214, y: 916, s: 20, flip: true },
   { n: "rock-flat", x: 300, y: 906, s: 12 },

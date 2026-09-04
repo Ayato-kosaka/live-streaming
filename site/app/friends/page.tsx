@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
@@ -14,9 +15,10 @@ export default function FriendsPage() {
   return (
     <PageShell current="friends" crumbs={[{ label: "たき火広場" }]}>
       <PageHead
-        emoji="⛺"
+        icon="campfire"
         title="愉快な仲間達"
         lead="毎晩22時に集まってくる人たち。名前は出しませんが、ちゃんとここにいます。"
+        say={GUIDE.friends}
       />
       <div className="stats" style={{ marginBottom: 18 }}>
         <Stat value={ACTIVE_FRIENDS} label="いまの島の住人" sub="直近90日で5日以上" />
@@ -60,7 +62,7 @@ export default function FriendsPage() {
             <span className="tile-go" aria-hidden>↗</span>
           </a>
           <a className="tile" href={CHARACTER_DRIVE} target="_blank" rel="noopener noreferrer">
-            <span className="tile-emoji" aria-hidden>📁</span>
+            <img className="tile-icon" src="/sprites/stall.png" alt="" />
             <span className="tile-text">
               <b>キャラクター置き場</b>
               <i>Googleドライブ・自由にダウンロードOK</i>

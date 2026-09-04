@@ -488,6 +488,7 @@ img { max-width: 100%; }
   background: rgba(255, 250, 235, 0.14);
   white-space: nowrap;
 }
+.ih-link img { width: 20px; height: 20px; object-fit: contain; object-position: center bottom; }
 .ih-link.is-on { background: var(--paper); color: var(--ink); }
 
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #d9ecf4; margin: 0 0 14px; }
@@ -497,14 +498,13 @@ img { max-width: 100%; }
 
 /* ページ見出し */
 .phead { text-align: center; margin: 6px 0 26px; }
-.phead-emoji {
-  display: inline-grid; place-items: center;
-  width: 58px; height: 58px;
-  border-radius: 50%;
-  background: var(--paper);
-  border: 4px solid var(--frame);
-  font-size: 27px;
-  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+.phead-icon {
+  display: block;
+  margin: 0 auto;
+  width: 88px; height: 88px;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 6px 10px rgba(8, 46, 62, 0.32));
 }
 .phead h1 {
   margin: 12px 0 0;
@@ -520,6 +520,26 @@ img { max-width: 100%; }
   color: #eaf7fc;
   text-shadow: 0 2px 8px rgba(8, 46, 62, 0.4);
 }
+.phead-mark {
+  display: inline-grid; place-items: center;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 4px solid var(--frame);
+  font-size: 34px;
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+}
+.h2-icon {
+  width: 32px; height: 32px;
+  vertical-align: -8px;
+  object-fit: contain; object-position: center bottom;
+}
+.tile-icon {
+  width: 44px; height: 44px; flex: none;
+  object-fit: contain; object-position: center bottom;
+}
+.phead-say { justify-content: center; margin-top: 16px; }
+.phead-say .gsay-bubble { text-align: left; max-width: 30em; }
 .phead-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
 
 /* 紙のパネル */
@@ -697,7 +717,7 @@ img { max-width: 100%; }
 
 /* いま */
 .now-hero { text-align: center; }
-.now-pin { font-size: 30px; }
+.now-pin { display: block; margin: 0 auto 6px; width: 54px; height: 54px; object-fit: contain; object-position: center bottom; }
 .now-place { display: block; font-size: clamp(21px, 6vw, 30px); font-weight: 900; margin: 4px 0 8px; }
 .now-word { font-size: 14.5px; line-height: 1.9; }
 .week { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -788,7 +808,9 @@ img { max-width: 100%; }
   border-radius: var(--r-1); padding: 7px 4px;
   transition: transform 0.14s;
 }
+.vote svg { width: 19px; height: 18px; color: #e8879a; }
 .vote.is-on { background: var(--gold); border-color: #d9a12c; }
+.vote.is-on svg { color: #d1455f; }
 .vote:active { transform: scale(0.94); }
 .vote b { font-size: 14px; font-weight: 900; }
 .idea-body { min-width: 0; flex: 1; }
@@ -823,3 +845,49 @@ img { max-width: 100%; }
 .scroll-cue i { font-style: normal; font-size: 15px; animation: cue 1.8s ease-in-out infinite; }
 @keyframes cue { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(5px); opacity: 1; } }
 @media (min-width: 640px) { .scroll-cue { display: flex; } }
+
+/* --- 島の案内役(カモメのミナト) --- */
+.gsay {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gsay-bird {
+  flex: none;
+  display: block;
+  animation: gullBob 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 3px 4px rgba(40, 60, 40, 0.18));
+}
+@keyframes gullBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+.gull-wing { animation: gullFlap 0.42s ease-in-out infinite alternate; }
+@keyframes gullFlap { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+
+.gsay-bubble {
+  position: relative;
+  margin: 0 0 4px;
+  background: var(--paper);
+  border: 3px solid var(--frame);
+  border-radius: 18px;
+  padding: 10px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.65;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--frame-dark), var(--shadow-1);
+}
+.gsay-bubble::before,
+.gsay-bubble::after {
+  content: "";
+  position: absolute;
+  left: -11px;
+  bottom: 13px;
+  border: 6px solid transparent;
+  border-right-color: var(--frame);
+}
+.gsay-bubble::after {
+  left: -6px;
+  border-right-color: var(--paper);
+}
+@media (min-width: 720px) {
+  .gsay-bubble { font-size: 15px; padding: 12px 18px; }
+}

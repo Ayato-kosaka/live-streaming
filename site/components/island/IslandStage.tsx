@@ -6,6 +6,7 @@ import IslandScene, { PROPS, type Item } from "./IslandScene";
 import { Sprite } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
+import { UI } from "@/content/voice";
 import {
   createVillagers,
   stepVillagers,
@@ -312,19 +313,19 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             <b>{selected.label}</b>
             <i>{selected.blurb}</i>
           </span>
-          <Link className="sheet-go" href={selected.href}>ひらく</Link>
-          <button className="sheet-close" onClick={() => setSelected(null)} aria-label="閉じる">×</button>
+          <Link className="sheet-go" href={selected.href}>{UI.enter}</Link>
+          <button className="sheet-close" onClick={() => setSelected(null)} aria-label={UI.close}>×</button>
         </div>
       )}
 
       {mode === "phone" && (
         <button data-ui className="zoom-toggle" onClick={() => setWide((v) => !v)}>
-          {wide ? "島におりる" : "島ぜんぶ見る"}
+          {wide ? UI.comeDown : UI.lookAround}
         </button>
       )}
 
       {hint && (
-        <p className="walk-hint">島をタップすると、そこまで歩きます</p>
+        <p className="walk-hint">{UI.walkHint}</p>
       )}
     </div>
   );
