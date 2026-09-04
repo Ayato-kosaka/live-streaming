@@ -15,12 +15,12 @@
 
 ## 誰が書けるか
 
-Firestore の `islandUsers/{uid}` に `canDraft: true` を立てた人だけ。
+Firestore の `islandUsers/{uid}` に `canDraft: true` が立っている人だけ。
 `admin: true` の人は全員ぶんの下書きが読める。
 
-書いてもらいたい人が出てきたら、Firebase コンソールの Firestore で
-その人の `islandUsers` ドキュメントを開いて `canDraft` を `true` にする。
-uid はその人がログインしたときに作られる。名前で探せるように `name` も入っている。
+`islandUsers` のドキュメントは、その人が初めてログインしたときに作られる。
+`name`（YouTube のチャンネル名）が入っているので、そこから探せる。
+`canDraft` はコンソールからしか立たない。API 側には、この値を書き換える口を持たせていない。
 
 ## API
 
