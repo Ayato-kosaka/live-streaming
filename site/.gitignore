@@ -1,4 +1,5 @@
 node_modules/
 .next/
+.next-verify/
 out/
 next-env.d.ts

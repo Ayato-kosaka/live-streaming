@@ -8,7 +8,10 @@ for (const s of shots) {
   // 画像は落として、撮影が待たされないようにする。
   await p.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await p.route(/lh3\.googleusercontent\.com|accounts\.google\.com|i\.ytimg\.com|fonts\.gstatic\.com|www\.google\.com/, (r) => r.abort());
-  await p.goto(s.url, { waitUntil: "load", timeout: 60000 });
+  for (let i = 0; i < 4; i++) {
+    try { await p.goto(s.url, { waitUntil: "load", timeout: 60000 }); break; }
+    catch (e) { if (i === 3) throw e; await p.waitForTimeout(2000 * (i + 1)); }
+  }
   await p.waitForTimeout(s.wait ?? 2500);
   try {
     await p.screenshot({ path: s.out, fullPage: !!s.full, timeout: 8000 });

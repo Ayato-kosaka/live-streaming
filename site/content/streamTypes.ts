@@ -100,7 +100,7 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "monthly",
     name: "月末配信",
     emoji: "🏆",
-    icon: "statue",
+    icon: "fountain",
     color: "#c79bff",
     when: "毎月末",
     lead: "1ヶ月をふりかえる授賞式。出席リスナー表彰、名言アワード、おもしろコメント大賞、投げ銭ありがとう。1ヶ月分のチャットを全部読んで作っている。",
