@@ -25,6 +25,46 @@ TOKEN_EXPIRY_MARGIN = 300  # 秒
 # リフレッシュの最小間隔（Doneru 側が常に期限切れトークンを返す場合の連打防止）
 MIN_REFRESH_INTERVAL = 60  # 秒
 
+# exp をミリ秒とみなす閾値
+# UNIX 秒でこの値を超えるのは西暦 5138 年以降なので、
+# これを超えていればミリ秒で返ってきたと判断する。
+EXPIRY_MILLISECONDS_THRESHOLD = 10 ** 11
+
+
+def _normalize_expiry(
+    raw_exp: Any,
+    logger: Optional[logging.Logger] = None
+) -> Optional[int]:
+    """
+    Doneru が返す exp を UNIX 秒に正規化する
+
+    Doneru は exp をミリ秒で返す。秒として扱うと期限が遥か未来になり、
+    期限切れのトークンを「まだ有効」と誤判定してリフレッシュしなくなるため、
+    ここで秒に揃える。
+
+    Args:
+        raw_exp: Doneru API が返した exp（数値または数値文字列）
+        logger: ロガー（オプション）
+
+    Returns:
+        UNIX 秒の有効期限（解釈できない場合は None）
+    """
+    try:
+        value = int(raw_exp)
+    except (TypeError, ValueError):
+        if logger:
+            logger.warning(
+                f"Doneru API の exp を数値として解釈できませんでした: {raw_exp!r}。"
+                "期限不明として扱います。"
+            )
+        return None
+
+    if value > EXPIRY_MILLISECONDS_THRESHOLD:
+        # ミリ秒で返ってきているので秒に変換する
+        value //= 1000
+
+    return value
+
 
 class DoneruTokenManager:
     """
@@ -198,15 +238,25 @@ class DoneruTokenManager:
             # トークンをキャッシュ
             self._cached_token = youtube_data["at"]
             self._cached_channel = youtube_data.get("channel")
-            self._token_expires_at = youtube_data["exp"]
+            self._token_expires_at = _normalize_expiry(
+                youtube_data["exp"], self.logger
+            )
             
             if self.logger:
-                exp_time = datetime.fromtimestamp(self._token_expires_at, tz=timezone.utc)
-                remaining = self._token_expires_at - int(time.time())
-                self.logger.info(
-                    f"トークン取得成功 (期限: {exp_time.isoformat()}, "
-                    f"残り {remaining} 秒, チャンネル: {self._cached_channel})"
-                )
+                if self._token_expires_at is None:
+                    self.logger.info(
+                        f"トークン取得成功 (期限: 不明, "
+                        f"チャンネル: {self._cached_channel})"
+                    )
+                else:
+                    exp_time = datetime.fromtimestamp(
+                        self._token_expires_at, tz=timezone.utc
+                    )
+                    remaining = self._token_expires_at - int(time.time())
+                    self.logger.info(
+                        f"トークン取得成功 (期限: {exp_time.isoformat()}, "
+                        f"残り {remaining} 秒, チャンネル: {self._cached_channel})"
+                    )
             
             return self._cached_token
             
