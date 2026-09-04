@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getState, type IslandStats } from "@/lib/api";
+import { getState, type IslandState, type IslandStats, type ResidentShow } from "@/lib/api";
 import { STATS_FALLBACK } from "@/content/site";
 
 /**
@@ -14,13 +14,11 @@ import { STATS_FALLBACK } from "@/content/site";
  *
  * 読み込みは1回だけ。ページを移っても同じ結果を使い回す。
  */
-let cache: Promise<Partial<IslandStats> | null> | null = null;
+let cache: Promise<IslandState | null> | null = null;
 
 const load = () => {
   if (!cache) {
-    cache = getState()
-      .then((s) => s.stats ?? null)
-      .catch(() => null);
+    cache = getState().catch(() => null);
   }
   return cache;
 };
@@ -33,7 +31,7 @@ export function useLiveStats(): IslandStats {
   useEffect(() => {
     let alive = true;
     load().then((s) => {
-      if (alive && s) setStats(s);
+      if (alive && s?.stats) setStats(s.stats);
     });
     return () => {
       alive = false;
@@ -60,7 +58,7 @@ export function LiveNumber({
   useEffect(() => {
     let alive = true;
     load().then((s) => {
-      const v = s ? (s as Record<string, unknown>)[statKey] : undefined;
+      const v = s?.stats ? (s.stats as Record<string, unknown>)[statKey] : undefined;
       if (alive && typeof v === "number") setN(v);
     });
     return () => {
@@ -68,4 +66,23 @@ export function LiveNumber({
     };
   }, [statKey]);
   return <>{format(n ?? fallback)}</>;
+}
+
+/**
+ * 名前を出すと決めた住人の一覧。
+ * 出すか出さないかは本人が決めるので、ここに載る人は少ない。
+ */
+export function useResidentShow(): Map<string, ResidentShow> {
+  const [m, setM] = useState<Map<string, ResidentShow>>(() => new Map());
+  useEffect(() => {
+    let alive = true;
+    load().then((s) => {
+      if (!alive || !s?.residents?.length) return;
+      setM(new Map(s.residents.filter((r) => r.icon).map((r) => [r.icon, r])));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return m;
 }

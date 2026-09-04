@@ -6,12 +6,16 @@ import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
 import { Sprite, spriteWidth } from "./Sprite";
 import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
-import { CHATTER, UI } from "@/content/voice";
+import { UI } from "@/content/voice";
+import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
+import { useResidentShow } from "@/lib/liveStats";
 import {
   createVillagers,
   stepVillagers,
   talkTo,
+  hush,
+  rotateInvites,
   villagerAt,
   villagerPose,
   type Resident,
@@ -43,6 +47,8 @@ const NEAR = 215;
 const HERE = 120;
 /** 指で押せる最小の大きさ(画面px) */
 const TAP_MIN = 48;
+/** 話しかけられる距離。これより遠いと、まず歩いて近づく。 */
+const TALK_REACH = 74;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
@@ -84,9 +90,21 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [readyIcons, setReadyIcons] = useState<Set<string>>(new Set());
   const [, tick] = useState(0);
 
+  // 名前と YouTube アイコンは、本人が「出す」と決めた人だけ後から乗せる
+  const show = useResidentShow();
   const villagers = useMemo(() => createVillagers(residents), [residents]);
+  for (const v of villagers) {
+    const s = v.icon ? show.get(v.icon) : undefined;
+    v.name = s?.name ?? undefined;
+    v.photo = s?.photo ?? undefined;
+  }
+  /** いま吹き出しを開いている住人。閉じるまでここに居座る。 */
+  const [talking, setTalking] = useState<number | null>(null);
+  /** 話しかけようとして、まだ着いていない相手 */
+  const walkingTo = useRef<number | null>(null);
   const dice = useRef(rng(777));
   const clock = useRef(0);
+  const inviteSlot = useRef(-1);
 
   // キャラ画像は外から取ってくるので、先に読んでおく。
   // SVG の image に直接URLを入れると、失敗したとき壊れた画像の枠が出てしまう。
@@ -167,6 +185,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       last = t;
       clock.current = t;
       stepVillagers(villagers, dt, dice.current);
+      // 「話しかけて」の合図は数人ずつ、9秒おきに入れ替える
+      const slot = Math.floor(t / 9000);
+      if (slot !== inviteSlot.current) {
+        inviteSlot.current = slot;
+        rotateInvites(villagers, slot, (v) => hasVoice(v.icon));
+      }
 
       setAvatar((prev) => {
         let { x, y } = prev;
@@ -198,6 +222,19 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         if (vx !== 0) setFacing(vx > 0 ? -1 : 1);
         return { x: nx, y: ny };
       });
+
+      // 話しかけに行った相手のそばまで来たら、吹き出しを開く。
+      // setAvatar の中でやると更新中に更新することになるので、外で見る。
+      if (walkingTo.current !== null) {
+        const i = walkingTo.current;
+        const who = villagers[i];
+        const me = avatarRef.current;
+        if (!who || Math.hypot(me.x - who.x, (me.y - who.y) * 1.3) <= TALK_REACH) {
+          walkingTo.current = null;
+          target.current = null;
+          if (who) openTalkRef.current?.(i);
+        }
+      }
 
       const cam = camRef.current;
       const want = camTarget();
@@ -293,6 +330,48 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     if (wide) setWide(false);
   };
 
+  /** 吹き出しを開く。開けるのは一度にひとりだけ。 */
+  const openTalk = useCallback(
+    (i: number) => {
+      villagers.forEach((o) => {
+        if (o.says) hush(o);
+      });
+      talkTo(villagers[i], linesOf(villagers[i].icon));
+      setTalking(i);
+    },
+    [villagers],
+  );
+  const openTalkRef = useRef<((i: number) => void) | null>(null);
+  openTalkRef.current = openTalk;
+
+  /** 吹き出しを閉じる。閉じるまで消えないのが決まり。 */
+  const closeTalk = useCallback(() => {
+    setTalking((cur) => {
+      if (cur !== null && villagers[cur]) hush(villagers[cur]);
+      return null;
+    });
+  }, [villagers]);
+
+  /** 住人に話しかける。遠ければまず歩いて近づいてから。 */
+  const approach = useCallback(
+    (i: number) => {
+      const v = villagers[i];
+      const me = avatarRef.current;
+      setHint(false);
+      setSelected(null);
+      if (Math.hypot(me.x - v.x, (me.y - v.y) * 1.3) <= TALK_REACH) {
+        openTalk(i);
+        return;
+      }
+      // 近づいている間、相手には待っていてもらう
+      v.mood = "stand";
+      v.left = 9000;
+      walkingTo.current = i;
+      target.current = { x: v.x + (me.x > v.x ? 40 : -40), y: v.y + 8 };
+    },
+    [villagers, openTalk],
+  );
+
   const onStageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("[data-ui]")) return;
     const r = hostRef.current!.getBoundingClientRect();
@@ -300,12 +379,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const wy = vbY + ((e.clientY - r.top) / r.height) * vbH;
     setHint(false);
     setSelected(null);
-    // 住人を押したときは歩かずに、話しかける
+    // 読んでいる途中で地面を押しても閉じない。閉じるのは×だけ。
+    // 住人を押したら、まず歩いて近づいてから話しかける
     const who = villagerAt(villagers, wx, wy, RESIDENT_H * 0.6);
     if (who) {
-      talkTo(who, CHATTER[who.post] ?? [], dice.current);
+      approach(villagers.indexOf(who));
       return;
     }
+    walkingTo.current = null;
     target.current = { x: wx, y: wy };
   };
 
@@ -453,20 +534,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </svg>
 
-      {/* 住人の吹き出し */}
-      <div className="labels" aria-hidden>
-        {villagers.map((v, i) => {
-          if (!v.says) return null;
-          const s = toScreen(v.x, v.y - RESIDENT_H - 16);
-          if (s.left < -160 || s.left > box.w + 160 || s.top < -80 || s.top > box.h + 80) return null;
-          return (
-            <span key={`t${i}`} className="chatter" style={{ left: s.left, top: s.top }}>
-              {v.says}
-            </span>
-          );
-        })}
-      </div>
-
       {/* 入口。押す場所は建物の絵そのもの。
           絵の四隅をそのまま当たり判定にして、指で押せる最小の大きさまで広げる。 */}
       <div className="labels">
@@ -509,6 +576,65 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 <b>{sp.label}</b>
                 <i>{UI.enter}</i>
               </Link>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 住人まわり。名前・話しかけての合図・吹き出し。
+          吹き出しは勝手に消えない。読み終わったら×で閉じてもらう。 */}
+      <div className="labels">
+        {villagers.map((v, i) => {
+          const head = toScreen(v.x, v.y - RESIDENT_H - 10);
+          const foot = toScreen(v.x, v.y + 6);
+          const off = head.left < -180 || head.left > box.w + 180 || head.top < -140 || head.top > box.h + 140;
+          if (off || !v.icon || !readyIcons.has(v.icon)) return null;
+          return (
+            <div key={`v${i}`}>
+              {/* 住人を押す所。建物の当たり判定より手前に置く。
+                  建物の前に立っている人が押せない、が起きないようにするため。 */}
+              <button
+                data-ui
+                className="who-hit"
+                style={{
+                  left: head.left - Math.max(22, RESIDENT_H * 0.42),
+                  top: head.top - 6,
+                  width: Math.max(44, RESIDENT_H * 0.84),
+                  height: Math.max(44, foot.top - head.top + 12),
+                }}
+                onClick={() => approach(i)}
+                aria-label={UI.talkTo}
+              />
+              {/* 名前と YouTube のアイコン。本人が「出す」と決めた人だけ出る。 */}
+              {v.name && (
+                <span className="who" style={{ left: foot.left, top: foot.top }}>
+                  {v.photo && <img src={v.photo} alt="" loading="lazy" />}
+                  <b>{v.name}</b>
+                </span>
+              )}
+              {/* 話しかけて、の合図。数人ずつ順番に出す。 */}
+              {v.invite && !v.says && (
+                <button
+                  data-ui
+                  className="who-call"
+                  style={{ left: head.left, top: head.top }}
+                  onClick={() => approach(i)}
+                  aria-label={UI.talkTo}
+                >
+                  !
+                </button>
+              )}
+              {v.says && (
+                <div className="chatter" data-ui style={{ left: head.left, top: head.top }}>
+                  <p>{v.says}</p>
+                  <button className="chatter-x" onClick={closeTalk} aria-label={UI.close}>
+                    ×
+                  </button>
+                  <button className="chatter-more" onClick={() => openTalk(i)}>
+                    {UI.moreTalk}
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

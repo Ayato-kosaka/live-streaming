@@ -66,6 +66,29 @@ async function whoIs(header?: string): Promise<Who> {
   }
 }
 
+/**
+ * 島に名前を出してよいと決めた人だけを返す。
+ *
+ * 名前も YouTube のアイコンも、出すか出さないかは本人が決める。
+ * 何もしていない人は、キャラクターだけが島にいて名前は出ない。
+ * @return {Promise<Json[]>} キャラクターと、出してよい名前・アイコン
+ */
+async function listResidents(): Promise<Json[]> {
+  const snap = await USERS.where("character", "!=", null).limit(200).get();
+  const out: Json[] = [];
+  snap.forEach((d) => {
+    const u = d.data() ?? {};
+    if (!u.character) return;
+    if (!u.showName && !u.showPhoto) return;
+    out.push({
+      icon: u.character,
+      name: u.showName ? (u.nickname as string) || (u.name as string) || null : null,
+      photo: u.showPhoto ? (u.photo as string) || null : null,
+    });
+  });
+  return out;
+}
+
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
@@ -212,26 +235,46 @@ export const islandApi = onRequest(
         const name = clean(body.title ?? t.name ?? "", MAX_NAME_LEN);
         const channelId = clean(body.channelId, 64);
         const now = Date.now();
-        await USERS.doc(t.uid).set(
-          {
-            name: name || null,
-            channelId: channelId || null,
-            photo: clean(body.thumbnail, 300) || null,
-            lastSeenAt: now,
-            firstSeenAt: now,
-          },
-          {merge: true},
-        );
-        res.json({uid: t.uid, name, channelId: channelId || undefined});
+        const ref = USERS.doc(t.uid);
+        const prev = await ref.get();
+        const patch: Json = {
+          lastSeenAt: now,
+          firstSeenAt: prev.exists ? prev.data()?.firstSeenAt ?? now : now,
+        };
+        // ログインしたときだけ届く、YouTube から取れた本人の情報
+        if (name) patch.name = name;
+        if (channelId) patch.channelId = channelId;
+        if (body.thumbnail !== undefined) patch.photo = clean(body.thumbnail, 300) || null;
+        // 島での見え方。出すか出さないかは、本人が決める。
+        if (body.nickname !== undefined) {
+          patch.nickname = clean(body.nickname, MAX_NAME_LEN) || null;
+        }
+        if (body.character !== undefined) {
+          patch.character = clean(body.character, 64) || null;
+        }
+        if (body.showName !== undefined) patch.showName = !!body.showName;
+        if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
+        await ref.set(patch, {merge: true});
+        const saved = {...(prev.data() ?? {}), ...patch};
+        res.json({
+          uid: t.uid,
+          name,
+          channelId: channelId || undefined,
+          nickname: (saved.nickname as string) ?? null,
+          character: (saved.character as string) ?? null,
+          showName: !!saved.showName,
+          showPhoto: !!saved.showPhoto,
+        });
         return;
       }
 
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, ideas, notes] = await Promise.all([
+        const [stateSnap, ideas, notes, residents] = await Promise.all([
           STATE_DOC.get(),
           listIdeas(60),
           listNotes(),
+          listResidents(),
         ]);
         const state = stateSnap.exists ? stateSnap.data() ?? {} : {};
         res.set(
@@ -243,6 +286,7 @@ export const islandApi = onRequest(
           stats: state.stats ?? null,
           ideas,
           notes,
+          residents,
         });
         return;
       }

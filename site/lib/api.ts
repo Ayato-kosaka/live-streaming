@@ -41,11 +41,15 @@ export type Idea = {
 
 export type NextNote = { id: string; planId: string; text: string; createdAt: string };
 
+/** 島に名前を出すと決めた住人。何もしていない人はここに出てこない。 */
+export type ResidentShow = { icon: string; name?: string | null; photo?: string | null };
+
 export type IslandState = {
   current?: Partial<IslandCurrent>;
   stats?: Partial<IslandStats>;
   ideas?: Idea[];
   notes?: NextNote[];
+  residents?: ResidentShow[];
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -78,6 +82,24 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getState = () => req<IslandState>("/state");
+
+/** 島での見え方。名前もアイコンも、出すか出さないかは本人が決める。 */
+export type MeSettings = {
+  /** 島にいる自分のキャラクター(Drive の画像ID)。選ばなければ名前は出ない。 */
+  character?: string | null;
+  /** 本名以外で呼ばれたいときの名前 */
+  nickname?: string | null;
+  showName?: boolean;
+  showPhoto?: boolean;
+};
+
+/** 島での見え方を保存する。ログインしていないと使えない。 */
+export const saveMe = (s: MeSettings, token: string) =>
+  req<MeSettings & { uid: string }>("/me", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(s),
+  });
 export const getIdeas = () => req<{ ideas: Idea[] }>("/ideas");
 export const postIdea = (text: string, name?: string, token?: string | null) =>
   req<{ idea: Idea }>("/ideas", {
