@@ -44,11 +44,13 @@ export type Spot = {
   y: number;
   label: string;
   emoji: string;
-  /** 目印になるスプライト名。ラベルの絵に使う。 */
+  /** 島に建っている絵。バーの小さな絵にも同じものを使う。 */
   icon: string;
+  /** 絵の高さ(ワールド単位)。押せる範囲もこの大きさから作るので、絵と一致させる。 */
+  size: number;
   href: string;
   blurb: string;
-  /** ラベルの向き。建物と重ならないように。 */
+  /** 名札の向き。建物と重ならないように。 */
   labelAt?: "below" | "above";
 };
 
@@ -60,6 +62,7 @@ export const SPOTS: Spot[] = [
     label: "配信やぐら",
     emoji: "📺",
     icon: "tower-studio",
+    size: 128,
     href: "/streams",
     blurb: "どんな配信をしてるか",
     labelAt: "below",
@@ -71,6 +74,7 @@ export const SPOTS: Spot[] = [
     label: "キッチン小屋",
     emoji: "🍳",
     icon: "hut-kitchen",
+    size: 78,
     href: "/kitchen",
     blurb: "作ってきたごはん",
     labelAt: "below",
@@ -82,6 +86,7 @@ export const SPOTS: Spot[] = [
     label: "アプリ工房",
     emoji: "💻",
     icon: "hut-workshop",
+    size: 78,
     href: "/apps",
     blurb: "旅先で作ってるアプリ",
     labelAt: "below",
@@ -93,6 +98,7 @@ export const SPOTS: Spot[] = [
     label: "旅の桟橋",
     emoji: "🗺️",
     icon: "signpost",
+    size: 54,
     href: "/map",
     blurb: "これまでに歩いた17カ国",
     labelAt: "below",
@@ -104,6 +110,7 @@ export const SPOTS: Spot[] = [
     label: "伝説の丘",
     emoji: "🏆",
     icon: "hall-museum",
+    size: 74,
     href: "/legends",
     blurb: "語り継がれてる企画",
     labelAt: "below",
@@ -115,6 +122,7 @@ export const SPOTS: Spot[] = [
     label: "いまのポスト",
     emoji: "📮",
     icon: "mailbox",
+    size: 44,
     href: "/now",
     blurb: "今どこで何してる",
     labelAt: "above",
@@ -126,6 +134,7 @@ export const SPOTS: Spot[] = [
     label: "これから",
     emoji: "✈️",
     icon: "tent",
+    size: 56,
     href: "/next",
     blurb: "次に行くところ",
     labelAt: "below",
@@ -137,6 +146,7 @@ export const SPOTS: Spot[] = [
     label: "企画掲示板",
     emoji: "📋",
     icon: "signboard",
+    size: 62,
     href: "/board",
     blurb: "みんなの企画提案",
     labelAt: "below",
@@ -148,6 +158,7 @@ export const SPOTS: Spot[] = [
     label: "たき火広場",
     emoji: "⛺",
     icon: "campfire",
+    size: 34,
     href: "/friends",
     blurb: "愉快な仲間達",
     labelAt: "below",

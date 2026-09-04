@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import IslandMe from "./IslandMe";
 
 /**
  * 島へのログイン。
@@ -18,13 +19,16 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
 
   if (user) {
     return (
-      <div className="signed">
-        {user.photo && <img src={user.photo} alt="" />}
-        <span className="signed-name">{user.name}</span>
-        <button className="signed-out" onClick={signOut}>
-          ログアウト
-        </button>
-      </div>
+      <>
+        <div className="signed">
+          {user.photo && <img src={user.photo} alt="" />}
+          <span className="signed-name">{user.name}</span>
+          <button className="signed-out" onClick={signOut}>
+            ログアウト
+          </button>
+        </div>
+        {!compact && <IslandMe />}
+      </>
     );
   }
 

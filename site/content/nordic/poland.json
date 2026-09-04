@@ -1,0 +1,488 @@
+{
+ "slug": "poland",
+ "name": "ポーランド",
+ "spots": [
+  {
+   "id": "poland-krakow-main-square",
+   "cat": "see",
+   "title": "ヨーロッパ最大級の中世の広場",
+   "local": "Rynek Główny",
+   "city": "クラクフ",
+   "area": "旧市街",
+   "body": "一辺200mの正方形。中世ヨーロッパで最大級の市場広場が、そのままの形で今も街の中心にある。第二次大戦でワルシャワが徹底的に壊されたのに対し、クラクフはほぼ無傷で残った。だから石畳も建物の並びも本物で、復元ではない。1時間ごとに聖マリア教会の塔からラッパ（ヘイナウ）が鳴り、途中でぷつりと途切れる。13世紀にタタール軍の矢がラッパ手の喉を貫いた瞬間を、今も再現している。",
+   "point": "戦火を逃れた本物の中世がまるごと残っている",
+   "tips": [
+    "ラッパは毎正時。塔の4方向へ順に吹くので、鳴り始めたら塔を見上げる",
+    "夜のライトアップの方が人が少なく写真が撮りやすい"
+   ],
+   "info": "24時間出入り自由・無料。聖マリア教会の内部拝観は有料",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "街歩き",
+    "広場",
+    "夜景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sukiennice_and_Main_Market_Square_Krakow_Poland.JPG/500px-Sukiennice_and_Main_Market_Square_Krakow_Poland.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sukiennice_and_Main_Market_Square_Krakow_Poland.JPG/960px-Sukiennice_and_Main_Market_Square_Krakow_Poland.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sukiennice_and_Main_Market_Square_Krakow_Poland.JPG"
+  },
+  {
+   "id": "poland-cloth-hall",
+   "cat": "buy",
+   "title": "広場の真ん中にある屋根つき市場",
+   "local": "Sukiennice",
+   "city": "クラクフ",
+   "area": "旧市街",
+   "body": "広場のど真ん中に建つ、14世紀からの織物会館。1階のアーケードは今も土産物の市場で、琥珀のアクセサリー、木彫り、刺繍のクロス、ポーランド陶器（ボレスワヴィエツ）が並ぶ。観光地価格ではあるけれど、琥珀は本物を扱う店が多い。2階はポーランド19世紀絵画のギャラリーになっていて、外の喧騒がうそのように静か。",
+   "point": "土産と美術館が同じ建物に入っている",
+   "tips": [
+    "琥珀は「アンバー」でなく「Bursztyn」の表記を探すと本物の店が多い",
+    "夕方は店じまいが早い。買い物は日のあるうちに"
+   ],
+   "info": "1階アーケードは無料。2階ギャラリーは有料、月曜休みのことが多い",
+   "budget": "〜100 zł",
+   "time": "1時間",
+   "season": "通年",
+   "tags": [
+    "買い物",
+    "琥珀",
+    "市場",
+    "美術館"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/20200516_Sukiennice_w_Krakowie_0909_9963.jpg/500px-20200516_Sukiennice_w_Krakowie_0909_9963.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/20200516_Sukiennice_w_Krakowie_0909_9963.jpg/960px-20200516_Sukiennice_w_Krakowie_0909_9963.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:20200516_Sukiennice_w_Krakowie_0909_9963.jpg"
+  },
+  {
+   "id": "poland-wawel",
+   "cat": "see",
+   "title": "王の丘と、竜の洞窟",
+   "local": "Wawel",
+   "city": "クラクフ",
+   "area": "ヴァヴェル",
+   "body": "ヴィスワ川を見下ろす丘に建つ、歴代ポーランド王の城と大聖堂。大聖堂にはポーランドの王と英雄がずらりと眠っていて、鐘楼の巨大なジグムント鐘を触ると願いが叶うと言われている。丘の下には「竜の洞窟」があり、出口では火を吹く竜の像が待っている。城の中庭までは無料で入れるので、時間がなくても丘には登る価値がある。",
+   "point": "中庭までは無料。丘に登るだけでも街が一望できる",
+   "tips": [
+    "各展示は入場券が別。夏は当日券が昼前に売り切れる",
+    "竜の洞窟は4〜10月のみ。階段が急なので靴に注意"
+   ],
+   "info": "中庭・敷地は無料。各展示は 20〜40 zł 程度",
+   "budget": "無料〜40 zł",
+   "time": "2〜3時間",
+   "season": "通年（洞窟は4〜10月）",
+   "tags": [
+    "世界遺産",
+    "城",
+    "教会",
+    "絶景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Wawel_%284%29.jpg/500px-Wawel_%284%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Wawel_%284%29.jpg/960px-Wawel_%284%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Wawel_%284%29.jpg"
+  },
+  {
+   "id": "poland-kazimierz",
+   "cat": "do",
+   "title": "ユダヤ人街の夜と、シンドラーの記憶",
+   "local": "Kazimierz",
+   "city": "クラクフ",
+   "area": "カジミエシュ",
+   "body": "500年にわたってユダヤ人が暮らした地区。ホロコーストでその暮らしは断ち切られ、戦後は荒れ果てていたが、映画『シンドラーのリスト』の撮影をきっかけに息を吹き返した。今はシナゴーグと墓地が残る一方で、通りにはバーとレコード屋と古着屋が並ぶ。夜のシェロカ通りは、ろうそくの灯る店から音楽がもれてくる。重い歴史と、いまの生活が同じ石畳の上にある。",
+   "point": "重い歴史と、いまの夜遊びが同じ通りに並んでいる",
+   "tips": [
+    "シンドラーの工場（現・博物館）は川の対岸。歩いて20分",
+    "土曜はシナゴーグが閉まる。金曜の日没前も早じまい"
+   ],
+   "info": "地区の散策は無料。各シナゴーグ・博物館は有料",
+   "budget": "無料〜60 zł",
+   "time": "半日",
+   "season": "通年",
+   "tags": [
+    "歴史",
+    "街歩き",
+    "夜",
+    "ユダヤ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Szeroka_street%2C_view_from_S%2C_Kazimierz%2C_Krak%C3%B3w%2C_Poland.jpg/500px-Szeroka_street%2C_view_from_S%2C_Kazimierz%2C_Krak%C3%B3w%2C_Poland.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Szeroka_street%2C_view_from_S%2C_Kazimierz%2C_Krak%C3%B3w%2C_Poland.jpg/960px-Szeroka_street%2C_view_from_S%2C_Kazimierz%2C_Krak%C3%B3w%2C_Poland.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Szeroka_street%2C_view_from_S%2C_Kazimierz%2C_Krak%C3%B3w%2C_Poland.jpg"
+  },
+  {
+   "id": "poland-wieliczka",
+   "cat": "see",
+   "title": "地下100mの塩の大聖堂",
+   "local": "Kopalnia soli Wieliczka",
+   "city": "クラクフ",
+   "area": "ヴィエリチカ",
+   "body": "13世紀から700年間掘り続けられた岩塩鉱山。地下135mまで下りると、坑夫たちが岩塩を彫って作った巨大な礼拝堂が現れる。床も壁もシャンデリアも、最後の晩餐のレリーフまで全部が塩。手すりを舐めるとしょっぱい。世界遺産の第1号リスト（1978年）に載った12件のひとつで、地下の総延長は300kmを超える。",
+   "point": "シャンデリアまで全部が塩で彫られている",
+   "tips": [
+    "クラクフから電車かバスで30〜40分。日帰りできる",
+    "地下は年間17度前後。夏でも上着がいる",
+    "見学は3km歩き、階段800段を下りる"
+   ],
+   "info": "ガイドツアー制、要予約。所要2〜3時間。写真撮影は別料金のことがある",
+   "budget": "130〜160 zł",
+   "time": "半日",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "地下",
+    "絶景",
+    "日帰り"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/%CE%91%CE%BB%CE%B1%CF%84%CF%89%CF%81%CF%85%CF%87%CE%B5%CE%AF%CE%B1_%CE%92%CE%B9%CE%B5%CE%BB%CE%AF%CF%84%CF%83%CE%BA%CE%B1_5021.jpg/500px-%CE%91%CE%BB%CE%B1%CF%84%CF%89%CF%81%CF%85%CF%87%CE%B5%CE%AF%CE%B1_%CE%92%CE%B9%CE%B5%CE%BB%CE%AF%CF%84%CF%83%CE%BA%CE%B1_5021.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/%CE%91%CE%BB%CE%B1%CF%84%CF%89%CF%81%CF%85%CF%87%CE%B5%CE%AF%CE%B1_%CE%92%CE%B9%CE%B5%CE%BB%CE%AF%CF%84%CF%83%CE%BA%CE%B1_5021.jpg/960px-%CE%91%CE%BB%CE%B1%CF%84%CF%89%CF%81%CF%85%CF%87%CE%B5%CE%AF%CE%B1_%CE%92%CE%B9%CE%B5%CE%BB%CE%AF%CF%84%CF%83%CE%BA%CE%B1_5021.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%CE%91%CE%BB%CE%B1%CF%84%CF%89%CF%81%CF%85%CF%87%CE%B5%CE%AF%CE%B1_%CE%92%CE%B9%CE%B5%CE%BB%CE%AF%CF%84%CF%83%CE%BA%CE%B1_5021.jpg"
+  },
+  {
+   "id": "poland-auschwitz",
+   "cat": "see",
+   "title": "アウシュヴィッツ・ビルケナウ",
+   "local": "Auschwitz-Birkenau",
+   "city": "オシフィエンチム",
+   "area": "アウシュヴィッツ",
+   "body": "110万人以上が殺された強制収容所が、壊されずにそのまま残されている。第1収容所には収容者から奪われた靴・眼鏡・髪が山積みで展示され、3km離れたビルケナウには線路の引き込み線と、爆破されたガス室の跡が広がる。案内は淡々としていて、感情的な演出はいっさいない。だからこそ、ここで何があったかが逃げ場なく入ってくる。",
+   "point": "壊さず、飾らず、そのまま残されている",
+   "tips": [
+    "入場は無料だが、混雑期はガイド付きツアーが必須。予約は公式サイトから",
+    "第1収容所とビルケナウの両方を見る。無料シャトルが走っている",
+    "14歳未満の見学は推奨されていない",
+    "大きな荷物は持ち込めない。コインロッカーは数が少ない"
+   ],
+   "info": "入場は無料（ガイドは有料）。オンライン予約が事実上必須。クラクフからバスで約1.5時間",
+   "budget": "無料〜90 zł",
+   "time": "半日〜1日",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "歴史",
+    "戦争",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Auschwitz_I_%2822_May_2010%29_b.jpg/500px-Auschwitz_I_%2822_May_2010%29_b.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Auschwitz_I_%2822_May_2010%29_b.jpg/960px-Auschwitz_I_%2822_May_2010%29_b.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Auschwitz_I_%2822_May_2010%29_b.jpg"
+  },
+  {
+   "id": "poland-warsaw-old-town",
+   "cat": "see",
+   "title": "ゼロから建て直された旧市街",
+   "local": "Stare Miasto",
+   "city": "ワルシャワ",
+   "area": "旧市街",
+   "body": "第二次大戦でワルシャワは85%が瓦礫になった。旧市街は戦後、18世紀の絵画と市民の記憶をもとに、レンガ一枚から積み直された。「復元されたもの」が世界遺産になった、極めて珍しい例。広場のカフェに座っていると本物にしか見えないが、これはこの街の人たちが「なかったことにしない」と決めた結果の風景でもある。",
+   "point": "壊された街を、絵を見ながら積み直した",
+   "tips": [
+    "旧王宮の中には、復元の元になった絵画が展示されている",
+    "広場から城壁沿いに歩くとバルバカン（砦）に出る"
+   ],
+   "info": "広場・街歩きは無料。旧王宮は有料",
+   "budget": "無料〜50 zł",
+   "time": "2時間",
+   "season": "通年",
+   "tags": [
+    "世界遺産",
+    "街歩き",
+    "歴史",
+    "復元"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Old_Town_Market_Place-Warsaw-Poland.JPG/500px-Old_Town_Market_Place-Warsaw-Poland.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Old_Town_Market_Place-Warsaw-Poland.JPG/960px-Old_Town_Market_Place-Warsaw-Poland.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Old_Town_Market_Place-Warsaw-Poland.JPG"
+  },
+  {
+   "id": "poland-warsaw-uprising-museum",
+   "cat": "see",
+   "title": "63日間の蜂起の記録",
+   "local": "Muzeum Powstania Warszawskiego",
+   "city": "ワルシャワ",
+   "area": "ヴォラ",
+   "body": "1944年、ワルシャワ市民がドイツ軍に対して起こした63日間の武装蜂起の博物館。展示は年表ではなく、その日その場所で何が起きたかを音と映像と実物で積み上げていく。心臓の鼓動のような音が館内にずっと響いている。20万人が死に、街はそのあと徹底的に破壊された。ワルシャワの旧市街を見る前に、ここに来ておくと意味が変わる。",
+   "point": "旧市街の「復元」の意味が、ここに来ると分かる",
+   "tips": [
+    "旧市街より先に来ると、街の見え方が変わる",
+    "音声ガイド（日本語あり）を借りたほうがいい"
+   ],
+   "info": "月曜休館のことが多い。入場料 30 zł 前後、週の1日は無料",
+   "budget": "〜30 zł",
+   "time": "2〜3時間",
+   "season": "通年",
+   "tags": [
+    "歴史",
+    "戦争",
+    "博物館"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Muzeum_Powstania_Warszawskiego_2023.jpg/500px-Muzeum_Powstania_Warszawskiego_2023.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Muzeum_Powstania_Warszawskiego_2023.jpg/960px-Muzeum_Powstania_Warszawskiego_2023.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Muzeum_Powstania_Warszawskiego_2023.jpg"
+  },
+  {
+   "id": "poland-palace-culture",
+   "cat": "see",
+   "title": "スターリンからの「贈り物」",
+   "local": "Pałac Kultury i Nauki",
+   "city": "ワルシャワ",
+   "area": "中央駅前",
+   "body": "高さ237m、ワルシャワのどこからでも見える巨大な建物。1955年にソ連から「贈られた」もので、市民には長いあいだ支配の象徴として嫌われてきた。今は劇場・映画館・博物館が入る複合施設で、30階の展望台からワルシャワが一望できる。「ワルシャワで一番いい眺めはここだ。だってこの建物が見えないから」というブラックジョークが有名。",
+   "point": "嫌われながら街のシンボルになった塔",
+   "tips": [
+    "30階展望台は夜のほうが空いている",
+    "冬は展望台が風でかなり寒い"
+   ],
+   "info": "展望台は 25〜30 zł 前後。中央駅から徒歩すぐ",
+   "budget": "〜30 zł",
+   "time": "1時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "建築",
+    "夜景",
+    "社会主義"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Pa%C5%82ac_Kultury_i_Nauki_2019.jpg/500px-Pa%C5%82ac_Kultury_i_Nauki_2019.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Pa%C5%82ac_Kultury_i_Nauki_2019.jpg/960px-Pa%C5%82ac_Kultury_i_Nauki_2019.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Pa%C5%82ac_Kultury_i_Nauki_2019.jpg"
+  },
+  {
+   "id": "poland-lazienki",
+   "cat": "do",
+   "title": "孔雀が歩く王の庭で、ショパンを聴く",
+   "local": "Łazienki Królewskie",
+   "city": "ワルシャワ",
+   "area": "ワジェンキ公園",
+   "body": "76ヘクタールの王宮庭園。池に浮かぶ「水上宮殿」、野外劇場、そして孔雀が普通に芝生を歩いている。5月から9月の日曜は、ショパン像の足元で無料のピアノコンサートが開かれる（正午と16時）。芝生に座って聴く人、寝そべる人、犬を連れた人。ワルシャワの人がいちばん普通に幸せそうにしている場所。",
+   "point": "日曜正午、ショパン像の下で無料コンサート",
+   "tips": [
+    "コンサートは5〜9月の日曜、12:00と16:00。雨天中止",
+    "リスがとても人慣れしている"
+   ],
+   "info": "公園は無料・通年開放。宮殿内部は有料",
+   "budget": "無料",
+   "time": "2〜3時間",
+   "season": "5〜9月がいちばんいい",
+   "tags": [
+    "公園",
+    "音楽",
+    "無料",
+    "ショパン"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/4_Warszawa-Lazienki_Krolewskie_107.jpg/500px-4_Warszawa-Lazienki_Krolewskie_107.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/4_Warszawa-Lazienki_Krolewskie_107.jpg/960px-4_Warszawa-Lazienki_Krolewskie_107.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:4_Warszawa-Lazienki_Krolewskie_107.jpg"
+  },
+  {
+   "id": "poland-wilanow",
+   "cat": "see",
+   "title": "ポーランドのヴェルサイユ",
+   "local": "Pałac w Wilanowie",
+   "city": "ワルシャワ",
+   "area": "ヴィラヌフ",
+   "body": "17世紀、ヤン3世ソビエスキ王が建てたバロックの宮殿。戦災を免れたので内装も家具も本物が残っている。バラ園とイタリア式庭園が広がり、冬には庭全体を光で埋める「王の庭のイルミネーション」が行われる。中心部から少し離れているぶん、観光客の密度が一気に下がる。",
+   "point": "戦災を免れたので、内装が本物のまま残っている",
+   "tips": [
+    "市内からバスで30〜40分",
+    "庭だけの入場券もある"
+   ],
+   "info": "宮殿＋庭で 50 zł 前後。木曜は宮殿が無料の期間がある",
+   "budget": "〜50 zł",
+   "time": "半日",
+   "season": "通年（冬のイルミネーションが名物）",
+   "tags": [
+    "宮殿",
+    "庭園",
+    "バロック"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Garden_facade_of_the_Wilan%C3%B3w_Palace%2C_2019%2C_02.jpg/500px-Garden_facade_of_the_Wilan%C3%B3w_Palace%2C_2019%2C_02.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Garden_facade_of_the_Wilan%C3%B3w_Palace%2C_2019%2C_02.jpg/960px-Garden_facade_of_the_Wilan%C3%B3w_Palace%2C_2019%2C_02.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Garden_facade_of_the_Wilan%C3%B3w_Palace%2C_2019%2C_02.jpg"
+  },
+  {
+   "id": "poland-katowice-spodek",
+   "cat": "see",
+   "title": "空飛ぶ円盤みたいなアリーナ",
+   "local": "Spodek",
+   "city": "カトヴィツェ",
+   "area": "中心部",
+   "body": "1971年にできた、UFOそっくりの円盤型アリーナ。名前もそのまま「Spodek＝受け皿」。社会主義時代の建築なのに未来的で、いまもコンサートとスポーツの会場として現役。カトヴィツェは炭鉱の街から文化の街へ切り替えた都市で、この円盤はその切り替えの象徴として街の顔になっている。クタイシからの飛行機が着く空港は、ここから車で40分ほど。",
+   "point": "北欧への旅は、この街に降り立つところから始まる",
+   "tips": [
+    "カトヴィツェ空港から市内までバスで40〜50分",
+    "円盤の裏手にNOSPRとシレジア博物館がある"
+   ],
+   "info": "外観は自由に見られる。イベント時のみ内部に入れる",
+   "budget": "無料",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "建築",
+    "社会主義",
+    "空港最寄り"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/At_Katowice_2024_430_-_Spodek.jpg/500px-At_Katowice_2024_430_-_Spodek.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/At_Katowice_2024_430_-_Spodek.jpg/960px-At_Katowice_2024_430_-_Spodek.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:At_Katowice_2024_430_-_Spodek.jpg"
+  },
+  {
+   "id": "poland-katowice-nospr",
+   "cat": "see",
+   "title": "炭鉱跡に建った、音のためだけの建物",
+   "local": "NOSPR",
+   "city": "カトヴィツェ",
+   "area": "文化地区",
+   "body": "元は炭鉱だった土地に、2014年に建てられたポーランド国立放送交響楽団のホール。黒いレンガの外観は、この街の石炭と鉱夫の記憶をそのまま形にしたもの。中に入ると一転して、木に包まれた明るいコンサートホールになる。世界でも屈指の音響と言われていて、当日券が出れば数十ズウォティで一流のオーケストラが聴ける。",
+   "point": "炭鉱の黒い外観と、木に包まれた中身の落差",
+   "tips": [
+    "公演の当日券が意外と安い。夕方に窓口をのぞく価値がある",
+    "隣のシレジア博物館は地下に展示が広がっていて面白い"
+   ],
+   "info": "コンサートは 30〜120 zł 程度。建物の外観と広場は自由",
+   "budget": "無料〜120 zł",
+   "time": "2時間",
+   "season": "通年",
+   "tags": [
+    "建築",
+    "音楽",
+    "炭鉱"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Katowice_NOSPR_06.15_097.JPG/500px-Katowice_NOSPR_06.15_097.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Katowice_NOSPR_06.15_097.JPG/960px-Katowice_NOSPR_06.15_097.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Katowice_NOSPR_06.15_097.JPG"
+  },
+  {
+   "id": "poland-nikiszowiec",
+   "cat": "see",
+   "title": "赤レンガの炭鉱住宅街",
+   "local": "Nikiszowiec",
+   "city": "カトヴィツェ",
+   "area": "ニキショヴィエツ",
+   "body": "20世紀初頭に炭鉱夫のために作られた、赤レンガの集合住宅がまるごと残る地区。9つの街区が回廊でつながり、中庭とパン屋と教会が徒歩圏に収まっている。世界遺産の暫定リストに入っていて、いまも普通に人が住んでいる。観光地化されきっていないので、洗濯物とおばあちゃんと猫のいる生活の風景がそのまま見られる。",
+   "point": "観光地になりきっていない、人の住んでいる遺産",
+   "tips": [
+    "住んでいる人の生活の場。中庭に入るときは静かに",
+    "日曜の朝、教会から人が出てくる時間がいちばん街らしい"
+   ],
+   "info": "自由に歩ける。市内からバス・トラムで30分前後",
+   "budget": "無料",
+   "time": "2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "炭鉱",
+    "レンガ",
+    "生活"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Plac_Wyzwolenia%2C_Nikiszowiec%2C_Katowice-20211022-9021-2.jpg/500px-Plac_Wyzwolenia%2C_Nikiszowiec%2C_Katowice-20211022-9021-2.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Plac_Wyzwolenia%2C_Nikiszowiec%2C_Katowice-20211022-9021-2.jpg/960px-Plac_Wyzwolenia%2C_Nikiszowiec%2C_Katowice-20211022-9021-2.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Plac_Wyzwolenia%2C_Nikiszowiec%2C_Katowice-20211022-9021-2.jpg"
+  },
+  {
+   "id": "poland-bialystok-branicki",
+   "cat": "see",
+   "title": "ワルシャワとヴィリニュスの真ん中",
+   "local": "Pałac Branickich",
+   "city": "ビャウィストク",
+   "area": "中心部",
+   "body": "ワルシャワからヴィリニュスまで513km。1日で抜けるのはヒッチハイクだと厳しいので、途中で泊まるならこの街になる。18世紀のブラニツキ宮殿は「ポドラシェのヴェルサイユ」と呼ばれるバロック建築で、庭は無料で歩ける。街自体は素朴で物価も安く、ポーランド最後の夜を過ごすのにちょうどいい。",
+   "point": "513kmの途中で一泊するならここ",
+   "tips": [
+    "ワルシャワから約200km、ヴィリニュスまで約300km",
+    "この先の国境（オグロドニキ）越えは車が減る。朝早く出る"
+   ],
+   "info": "宮殿の庭は無料・通年。建物内部は医大が使っていて限定公開",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "中継地",
+    "宮殿",
+    "庭園"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/20230711_172515_July_2023_in_Bia%C5%82ystok.jpg/500px-20230711_172515_July_2023_in_Bia%C5%82ystok.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/20230711_172515_July_2023_in_Bia%C5%82ystok.jpg/960px-20230711_172515_July_2023_in_Bia%C5%82ystok.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:20230711_172515_July_2023_in_Bia%C5%82ystok.jpg"
+  },
+  {
+   "id": "poland-pierogi",
+   "cat": "eat",
+   "title": "ポーランドの餃子",
+   "local": "Pierogi",
+   "city": "全国",
+   "area": "どこでも",
+   "body": "小麦の皮で具を包んで茹でた、ポーランドの国民食。定番は「ルスキエ」（じゃがいもとカッテージチーズ）、肉、ザワークラウトときのこ。茹でたてにバターと揚げ玉ねぎをかけて食べる。茹でずに焼いた「smażone」も頼める。甘いブルーベリー入りはデザートとして出てくる。1皿6〜9個で、これだけで昼食になる。",
+   "point": "1皿で腹がふくれて、だいたい20〜30 zł",
+   "tips": [
+    "「ruskie」はロシア風ではなく、旧ルテニア地方の意味",
+    "焼き（smażone）を頼むと香ばしくなる"
+   ],
+   "info": "専門店（Pierogarnia）が各都市にある。20〜35 zł 程度",
+   "budget": "20〜35 zł",
+   "time": "1時間",
+   "season": "通年",
+   "tags": [
+    "ごはん",
+    "名物",
+    "安い"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pierogi_z_mas%C5%82em_-_2023.03.31.jpg/500px-Pierogi_z_mas%C5%82em_-_2023.03.31.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pierogi_z_mas%C5%82em_-_2023.03.31.jpg/960px-Pierogi_z_mas%C5%82em_-_2023.03.31.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Pierogi_z_mas%C5%82em_-_2023.03.31.jpg"
+  },
+  {
+   "id": "poland-milk-bar",
+   "cat": "eat",
+   "title": "社会主義時代から続く定食屋",
+   "local": "Bar mleczny",
+   "city": "全国",
+   "area": "どこでも",
+   "body": "「ミルクバー」と呼ばれる、国が補助を出していた大衆食堂。共産主義時代に労働者の食事を支えた仕組みが、いまも一部の店で生き残っている。スープ、ピエロギ、カツレツ、コンポート。全部合わせて20〜30 zł で腹一杯になる。カウンターで注文して自分で運び、食べ終わったら自分で返す。観光客向けの店ではないので、値段も雰囲気もそのまま。",
+   "point": "スープからデザートまで頼んで1000円台",
+   "tips": [
+    "メニューはポーランド語のみのことが多い。写真か指差しで通じる",
+    "現金のみの店がまだある"
+   ],
+   "info": "昼のピークは12〜14時。夕方に閉まる店が多い",
+   "budget": "20〜30 zł",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "ごはん",
+    "安い",
+    "地元"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Bar_mleczny_Kalina%2C_Poznan%2C_pomidorowka%2C_watrobka.jpg/500px-Bar_mleczny_Kalina%2C_Poznan%2C_pomidorowka%2C_watrobka.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Bar_mleczny_Kalina%2C_Poznan%2C_pomidorowka%2C_watrobka.jpg/960px-Bar_mleczny_Kalina%2C_Poznan%2C_pomidorowka%2C_watrobka.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bar_mleczny_Kalina%2C_Poznan%2C_pomidorowka%2C_watrobka.jpg"
+  },
+  {
+   "id": "poland-zapiekanka",
+   "cat": "eat",
+   "title": "半分に切ったバゲットのピザ",
+   "local": "Zapiekanka",
+   "city": "クラクフ",
+   "area": "屋台",
+   "body": "バゲットを縦半分に切って、マッシュルームとチーズを乗せて焼き、ケチャップをかけた軽食。1970年代に生まれたポーランド版ファストフードで、クラクフのカジミエシュにある円形の市場（Okrąglak）の屋台が有名。深夜まで開いていて、飲んだあとの締めに食べる。10〜20 zł。",
+   "point": "深夜まで開いていて、締めに食べるもの",
+   "tips": [
+    "カジミエシュのプラツ・ノヴィ（Plac Nowy）の円形市場が本場",
+    "ソースは選べる。ガーリックが定番"
+   ],
+   "info": "屋台。深夜まで営業していることが多い",
+   "budget": "10〜20 zł",
+   "time": "15分",
+   "season": "通年",
+   "tags": [
+    "ごはん",
+    "屋台",
+    "夜食",
+    "安い"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Polish_zapiekanka%2C_June_2021.jpg/500px-Polish_zapiekanka%2C_June_2021.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Polish_zapiekanka%2C_June_2021.jpg/960px-Polish_zapiekanka%2C_June_2021.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Polish_zapiekanka%2C_June_2021.jpg"
+  }
+ ]
+}

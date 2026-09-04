@@ -1,0 +1,911 @@
+{
+ "slug": "sweden",
+ "name": "スウェーデン",
+ "spots": [
+  {
+   "id": "sweden-s042",
+   "cat": "see",
+   "title": "沈んだ王の船、ヴァーサ号",
+   "local": "Vasamuseet",
+   "city": "ストックホルム",
+   "area": "ユールゴーデン島",
+   "body": "1628年の処女航海でわずか1300m進んだだけで沈没した軍艦が、333年後の1961年に引き揚げられた。全長69m、マスト52m、船体の95%が当時のまま。薄暗い館内に浮かぶ黒褐色の巨体と、500体を超えるライオンや神々の彫刻。木と防腐剤の匂いが漂うなか、6層のデッキを回りながら見上げるたび違う表情を見せる。北欧で最も来館者の多い博物館。",
+   "point": "6層デッキから見上げる船尾彫刻",
+   "tips": [
+    "日本語音声ガイドあり。館内は保存のため肌寒い",
+    "隣の北方民族博物館とセットで半日コースに"
+   ],
+   "info": "毎日10-17時（夏季8:30-18時）、12/23-25休。地下鉄+バス67番",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "美術館",
+    "建築",
+    "雨の日OK",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Stockholm_Vasa_Museum_vasa_exterior_18.jpg/500px-Stockholm_Vasa_Museum_vasa_exterior_18.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Stockholm_Vasa_Museum_vasa_exterior_18.jpg/960px-Stockholm_Vasa_Museum_vasa_exterior_18.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Stockholm_Vasa_Museum_vasa_exterior_18.jpg"
+  },
+  {
+   "id": "sweden-s043",
+   "cat": "see",
+   "title": "赤い広場と最古の街並み",
+   "local": "Stortorget, Gamla Stan",
+   "city": "ストックホルム",
+   "area": "ガムラスタン",
+   "body": "14〜18世紀の切妻屋根が肩を寄せ合う旧市街の中心。赤・黄土・クリーム色の商館が囲むこの広場は、1520年にデンマーク王が90人以上を処刑した「ストックホルムの血浴」の舞台でもある。石畳を鳴らして進めば、幅わずか90cmのモーテン・トロツィグ横丁へ。冬はクリスマス市が立ち、グルッグ（ホットワイン）の湯気が上がる。",
+   "point": "血浴の広場と幅90cmの最狭路地",
+   "tips": [
+    "ノーベル博物館は広場に面した旧証券取引所内",
+    "12時15分の王宮衛兵交代まで徒歩3分"
+   ],
+   "info": "散策自由・24時間。地下鉄Gamla Stan駅からすぐ",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "建築",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Stortorget_i_Gamla_Stan_i_Stockholm.JPG/500px-Stortorget_i_Gamla_Stan_i_Stockholm.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Stortorget_i_Gamla_Stan_i_Stockholm.JPG/960px-Stortorget_i_Gamla_Stan_i_Stockholm.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Stortorget_i_Gamla_Stan_i_Stockholm.JPG"
+  },
+  {
+   "id": "sweden-s044",
+   "cat": "see",
+   "title": "北欧のヴェルサイユ、王の島",
+   "local": "Drottningholms slott",
+   "city": "ストックホルム",
+   "area": "ローヴォン島",
+   "body": "1662年にニコデムス・テッシン父子が設計した、現国王一家が今も暮らす宮殿。1991年に世界遺産へ登録された。刈り込みと噴水のバロック庭園、1753年築の中国の離宮キーナ城、そして舞台装置が18世紀のまま動く宮廷劇場が三本柱。夏は市庁舎前から蒸気船で約1時間、湖上から白亜の姿がゆっくり近づく瞬間が最高の見せ場だ。",
+   "point": "18世紀の装置が今も動く宮廷劇場",
+   "tips": [
+    "劇場内部は夏のガイドツアーのみ入場可",
+    "市庁舎前発の遊覧船は片道約1時間で旅情たっぷり"
+   ],
+   "info": "夏季10-17時、冬は週末のみ短縮営業。地下鉄Brommaplan+バス",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "世界遺産",
+    "城",
+    "建築",
+    "クルーズ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Drottningholm_Palace_%28by_Pudelek%29_1.jpg/500px-Drottningholm_Palace_%28by_Pudelek%29_1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Drottningholm_Palace_%28by_Pudelek%29_1.jpg/960px-Drottningholm_Palace_%28by_Pudelek%29_1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Drottningholm_Palace_%28by_Pudelek%29_1.jpg"
+  },
+  {
+   "id": "sweden-s045",
+   "cat": "see",
+   "title": "木造の町並みが残るハーガ",
+   "local": "Haga",
+   "city": "ヨーテボリ",
+   "area": "ハーガ・ニューガータ",
+   "body": "1648年に開かれた同市最古の労働者地区。1970年代の取り壊し計画を市民運動が止め、石造1階に木造2層を載せた「ランズヘーヴディンゲフース」の通りがまるごと残った。石畳のハーガ・ニューガータにはカフェ、古着屋、陶器工房が軒を連ね、直径20cm超の巨大シナモンロール「ハーガブッレ」が名物。坂上の砦からは街を一望できる。",
+   "point": "顔より大きいハーガブッレ",
+   "tips": [
+    "坂を上ったスカンセン・クローナン砦は眺望が抜群",
+    "日曜は店の開店が11時ごろと遅め"
+   ],
+   "info": "通りは自由散策、店舗は概ね11-18時。トラムHagakyrkan下車",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "建築",
+    "カフェ",
+    "ヴィンテージ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Haga_Nygata%2C_G%C3%B6teborg.jpg/500px-Haga_Nygata%2C_G%C3%B6teborg.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Haga_Nygata%2C_G%C3%B6teborg.jpg/960px-Haga_Nygata%2C_G%C3%B6teborg.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Haga_Nygata%2C_G%C3%B6teborg.jpg"
+  },
+  {
+   "id": "sweden-s046",
+   "cat": "see",
+   "title": "ねじれる白い塔と新港",
+   "local": "Turning Torso",
+   "city": "マルメ",
+   "area": "ヴェストラ・ハムネン",
+   "body": "サンティアゴ・カラトラバが自作の彫刻『ねじれる胴体』を建築化した190m・54階のタワー。9つの立方体が積み上がり、最上部は根元から90度ねじれている。2005年竣工。足元のヴェストラ・ハムネンは造船所跡を再生した環境先進地区で、木デッキの海沿い遊歩道からは対岸デンマークとエーレスンド橋が見える。夕暮れに白い外壁が桃色に染まる。",
+   "point": "根元から90度ねじれた190mの塔",
+   "tips": [
+    "内部は住居で非公開。外観と海沿い散歩が本番",
+    "中央駅からレンタサイクルで15分ほど"
+   ],
+   "info": "外観は24時間。中央駅からバス2番Västra Hamnen下車",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "建築",
+    "デザイン",
+    "海",
+    "夜景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Turning_Torso_Malm%C3%B6_2011.jpg/500px-Turning_Torso_Malm%C3%B6_2011.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Turning_Torso_Malm%C3%B6_2011.jpg/960px-Turning_Torso_Malm%C3%B6_2011.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Turning_Torso_Malm%C3%B6_2011.jpg"
+  },
+  {
+   "id": "sweden-s047",
+   "cat": "see",
+   "title": "北欧一高い双塔の大聖堂",
+   "local": "Uppsala domkyrka",
+   "city": "ウプサラ",
+   "area": "旧市街",
+   "body": "1287年着工、1435年献堂のゴシック建築で、118.7mの双塔は北欧最高。内部にはグスタフ・ヴァーサ王と植物学者リンネが眠る。赤レンガの重厚な壁と、聖ビルギッタの黄金の聖遺物箱が放つ光の対比が美しい。徒歩5分の丘には16世紀のウプサラ城、北へ5kmには6世紀の王墓が並ぶ古ウプサラ。学生街のざわめきごと味わいたい。",
+   "point": "118.7m、北欧で最も高い塔",
+   "tips": [
+    "宝物室の中世の織物は必見",
+    "古ウプサラへは市バス2番で約15分"
+   ],
+   "info": "毎日8-18時、礼拝時は見学制限あり。入場無料",
+   "budget": "無料",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "教会",
+    "建築",
+    "街歩き",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Uppsala_domkyrka_i_oktober_2011.jpg/500px-Uppsala_domkyrka_i_oktober_2011.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Uppsala_domkyrka_i_oktober_2011.jpg/960px-Uppsala_domkyrka_i_oktober_2011.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Uppsala_domkyrka_i_oktober_2011.jpg"
+  },
+  {
+   "id": "sweden-s048",
+   "cat": "see",
+   "title": "薔薇と廃墟の中世都市",
+   "local": "Visby ringmur",
+   "city": "ヴィスビュー",
+   "area": "ゴットランド島",
+   "body": "13世紀のハンザ交易で栄えた港町を、全長3.4km・塔44基の石灰岩の環状城壁が今も囲む。1995年世界遺産登録。壁の内側には十数の教会廃墟が点在し、石壁を這うバラが夏に一斉に咲くことから「バラと廃墟の町」と呼ばれる。8月の中世週間には町中が中世の装いに。夕日が城壁を蜂蜜色に染める時間が最も美しい。",
+   "point": "全長3.4km・44基の塔が残る城壁",
+   "tips": [
+    "8月の中世週間は宿が半年前に埋まる",
+    "ストックホルムから空路35分、船なら約3時間"
+   ],
+   "info": "城壁・旧市街は24時間自由。ニネヴェ門付近の眺めが良い",
+   "budget": "無料",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "世界遺産",
+    "街歩き",
+    "絶景",
+    "島"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/The_medieval_city_wall_of_Visby%2C_Gotland%2C_Sweden_%2825574040981%29.jpg/500px-The_medieval_city_wall_of_Visby%2C_Gotland%2C_Sweden_%2825574040981%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/The_medieval_city_wall_of_Visby%2C_Gotland%2C_Sweden_%2825574040981%29.jpg/960px-The_medieval_city_wall_of_Visby%2C_Gotland%2C_Sweden_%2825574040981%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:The_medieval_city_wall_of_Visby%2C_Gotland%2C_Sweden_%2825574040981%29.jpg"
+  },
+  {
+   "id": "sweden-s049",
+   "cat": "see",
+   "title": "絵本から出てきた赤い家",
+   "local": "Carl Larsson-gården",
+   "city": "スンドボーン",
+   "area": "ダーラナ地方",
+   "body": "画家カール・ラーションと妻カーリンが1888年から手を入れ続けた住まい。ファールン鉱山の赤い顔料で塗った外壁、緑や青に彩られたドア枠、カーリンが織った幾何学模様のテキスタイル——「北欧インテリア」の原型がここにある。水彩画集『わが家』の光景が実物として残り、ガイドと部屋を巡ると絵の中へ入り込んだ気分に。庭のリンゴの木も見事。",
+   "point": "北欧インテリアの原点となった家",
+   "tips": [
+    "見学はガイドツアーのみ。英語回は時間限定",
+    "世界遺産ファールン銅山まで車で20分"
+   ],
+   "info": "5-9月は毎日ツアー、冬季は要予約。ファールンからバス",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "夏(6-8月)",
+   "tags": [
+    "デザイン",
+    "美術館",
+    "建築",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Carl_Larsson-g%C3%A5rden.JPG/500px-Carl_Larsson-g%C3%A5rden.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Carl_Larsson-g%C3%A5rden.JPG/960px-Carl_Larsson-g%C3%A5rden.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Carl_Larsson-g%C3%A5rden.JPG"
+  },
+  {
+   "id": "sweden-s050",
+   "cat": "see",
+   "title": "世界一の確率で光が降る",
+   "local": "Abisko / Aurora Sky Station",
+   "city": "アビスコ",
+   "area": "アビスコ国立公園",
+   "body": "北緯68度、トルネトレスク湖畔のアビスコは周囲の山が雲を遮る「ブルーホール」現象で晴天率が北欧屈指。冬はチェアリフトで標高900mのオーロラ・スカイステーションへ上がり、氷点下20度の空に緑のカーテンが揺れるのを待つ。夏は逆に5月末から7月半ばまで太陽が沈まない白夜。同じ場所が季節でまるごと別世界になる。",
+   "point": "晴天率の高さで知られるオーロラ聖地",
+   "tips": [
+    "防寒スーツと靴は現地レンタル可、手袋は2枚重ね",
+    "キルナから列車で約1時間20分"
+   ],
+   "info": "スカイステーションは12-3月の夜間運行、要予約",
+   "budget": "€60〜",
+   "time": "半日",
+   "season": "冬(12-3月)",
+   "tags": [
+    "オーロラ",
+    "自然",
+    "絶景",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg/500px-Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg/960px-Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg"
+  },
+  {
+   "id": "sweden-s051",
+   "cat": "see",
+   "title": "世界一長い地下の美術館",
+   "local": "Tunnelbanan konst",
+   "city": "ストックホルム",
+   "area": "市内全域",
+   "body": "100駅近くにアートが仕込まれた地下鉄は「世界一長い美術館」と呼ばれる。青い洞窟のようなT-Centralen、夕焼け色の岩肌が迫るSolna centrum、虹色のStadion、化石の壁のKungsträdgården。掘削したままの岩盤にそのまま塗装するという手法が独特で、ホームごとに世界観が激変する。1日券があれば乗り降り自由で撮り放題だ。",
+   "point": "青の洞窟T-Centralenは必撮",
+   "tips": [
+    "24時間券で乗り降り自由、改札は再入場可",
+    "混雑を避けるなら平日の日中を狙う"
+   ],
+   "info": "SLの24時間券で乗り降り自由／主要3駅めぐりで1.5〜2時間",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "デザイン",
+    "美術館",
+    "雨の日OK",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg/500px-T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg/960px-T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg"
+  },
+  {
+   "id": "sweden-s052",
+   "cat": "eat",
+   "title": "1888年創業の美食市場",
+   "local": "Östermalms Saluhall",
+   "city": "ストックホルム",
+   "area": "エステルマルム",
+   "body": "1888年開業、赤レンガと鉄骨のネオゴシック建築。2020年の大改修で天井の鉄骨が磨き上げられ、19の店が並ぶ。トナカイの燻製、ニシンの酢漬け、北極エビ、リンゴンベリーを添えたミートボール。名物は魚介の煮込みスープ、フィスクスッペ。カウンターで白ワインを片手に立ったまま一皿食べるのが地元流の作法だ。",
+   "point": "立ち飲みで味わう魚介スープ",
+   "tips": [
+    "土曜午前は混雑。11時前が狙い目",
+    "日曜休みの店が多いので平日に訪ねたい"
+   ],
+   "info": "月-木9:30-19時、金土-18時、日休。地下鉄Östermalmstorg",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "シーフード",
+    "郷土料理",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/%C3%96stermalms_Saluhall%2C_Stockholm%2C_Sweden_%2813735623615%29.jpg/500px-%C3%96stermalms_Saluhall%2C_Stockholm%2C_Sweden_%2813735623615%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/%C3%96stermalms_Saluhall%2C_Stockholm%2C_Sweden_%2813735623615%29.jpg/960px-%C3%96stermalms_Saluhall%2C_Stockholm%2C_Sweden_%2813735623615%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%C3%96stermalms_Saluhall%2C_Stockholm%2C_Sweden_%2813735623615%29.jpg"
+  },
+  {
+   "id": "sweden-s053",
+   "cat": "eat",
+   "title": "フィーカの聖地、猫の名店",
+   "local": "Vete-Katten",
+   "city": "ストックホルム",
+   "area": "ノルマルム",
+   "body": "1928年創業、迷路のように小部屋が連なる老舗コンディトリ。名物はカルダモンが香るシナモンロール（カネルブッレ）と、マジパンを緑にまとったプリンセスケーキ。2月にはクリームとアーモンドペーストを詰めたセムラが登場する。スウェーデン人が1日2回とるコーヒー休憩「フィーカ」は生活文化そのもの。奥の中庭席が特等席。",
+   "point": "10月4日はシナモンロールの日",
+   "tips": [
+    "セムラは断食前後の2-3月が本番シーズン",
+    "カウンターで選び席で待つセルフ方式"
+   ],
+   "info": "月-金7:30-20時、土日9:30-19時。地下鉄Hötorget",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "カフェ",
+    "スイーツ",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Kanelbulle_in_Stockholm.jpg/500px-Kanelbulle_in_Stockholm.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Kanelbulle_in_Stockholm.jpg/960px-Kanelbulle_in_Stockholm.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kanelbulle_in_Stockholm.jpg"
+  },
+  {
+   "id": "sweden-s054",
+   "cat": "eat",
+   "title": "魚の教会で海の幸を",
+   "local": "Feskekörka",
+   "city": "ヨーテボリ",
+   "area": "ローゼンルンド運河沿い",
+   "body": "1874年、建築家ヴィクトル・フォン・ゲゲルフェルトが柱のないゴシック風ホールとして建てた魚市場。とがった切妻屋根から「魚の教会」の愛称がついた。長い改修を経て2024年に再オープンし、鮮魚店に加えレストランやバーが入る。名物は西海岸の甘い北極エビ、ムール貝の白ワイン蒸し、具沢山のフィッシュスープ。",
+   "point": "2024年に再開した魚の教会",
+   "tips": [
+    "西海岸のエビは自分で殻をむいて食べる",
+    "ハーガ地区まで徒歩5分でセット散歩に"
+   ],
+   "info": "火-土10-18時、日月休。トラムHagakyrkan下車",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "シーフード",
+    "建築",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Feskek%C3%B6rka_01.JPG/500px-Feskek%C3%B6rka_01.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Feskek%C3%B6rka_01.JPG/960px-Feskek%C3%B6rka_01.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Feskek%C3%B6rka_01.JPG"
+  },
+  {
+   "id": "sweden-s055",
+   "cat": "eat",
+   "title": "エビ山盛りのオープンサンド",
+   "local": "Räkmacka",
+   "city": "ヨーテボリ",
+   "area": "港・群島エリア",
+   "body": "茹でた北極エビ（レーコル）をパンに山と積み、ゆで卵、レモン、ディル、マヨネーズを添えた西海岸の国民食。ヨーテボリでは朝の競りに上がったばかりのエビが使われ、身が締まって驚くほど甘い。港のカフェや群島行きフェリーの船上で頬張るのが最高の食べ方だ。地元で「エビの舟」と呼ぶ豪華盛りもある。冷えた地ビールを添えて。",
+   "point": "殻付きエビを剥きながら食べる",
+   "tips": [
+    "群島クルーズの船内でも提供されることが多い",
+    "エビ漁体験ツアーは秋が快適でおすすめ"
+   ],
+   "info": "港のカフェで通年提供、1皿€15前後。昼が中心",
+   "budget": "€10-30",
+   "time": "30分",
+   "season": "通年",
+   "tags": [
+    "シーフード",
+    "郷土料理",
+    "海"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/R%C3%A4kmacka_%2816497446529%29.jpg/500px-R%C3%A4kmacka_%2816497446529%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/R%C3%A4kmacka_%2816497446529%29.jpg/960px-R%C3%A4kmacka_%2816497446529%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:R%C3%A4kmacka_%2816497446529%29.jpg"
+  },
+  {
+   "id": "sweden-s056",
+   "cat": "eat",
+   "title": "多国籍が交わる青空市場",
+   "local": "Möllevångstorget",
+   "city": "マルメ",
+   "area": "メレヴォンゲン",
+   "body": "労働者の街メレヴォンゲンの中心に立つ広場市。中東、バルカン、アジアの店主が並び、山積みのデーツやザクロ、香辛料の匂いが漂う。マルメはファラフェル文化が根づいた街で、1皿€5前後の熱々ファラフェルにピクルスとソースを詰めた包みが名物。夜は周囲のバーが賑わい、屋外席がぎっしり埋まって深夜まで声が絶えない。",
+   "point": "1皿€5前後の名物ファラフェル",
+   "tips": [
+    "市場は月-土の日中のみ、日曜はほぼ休み",
+    "現金不可の店も多くカードは必携"
+   ],
+   "info": "月-金8-18時、土-16時。中央駅から徒歩20分/バス",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "街歩き",
+    "バー"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Market_at_M%C3%B6llev%C3%A5ngstorget_in_Malm%C3%B6_Sweden.jpg/500px-Market_at_M%C3%B6llev%C3%A5ngstorget_in_Malm%C3%B6_Sweden.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Market_at_M%C3%B6llev%C3%A5ngstorget_in_Malm%C3%B6_Sweden.jpg/960px-Market_at_M%C3%B6llev%C3%A5ngstorget_in_Malm%C3%B6_Sweden.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Market_at_M%C3%B6llev%C3%A5ngstorget_in_Malm%C3%B6_Sweden.jpg"
+  },
+  {
+   "id": "sweden-s057",
+   "cat": "eat",
+   "title": "学生街の市場とフィーカ",
+   "local": "Saluhallen Uppsala",
+   "city": "ウプサラ",
+   "area": "サンクト・エリック広場",
+   "body": "大聖堂を望む広場に建つ市場ホール。チーズ、燻製、菓子の店が並び、2階のレストランではエルクのミートボールや旬のザリガニが味わえる。町の反対側には1878年創業のオフヴァンダールスが健在で、詩人や学者が通った木の内装、名物はアーモンド菓子と濃いコーヒー。北欧最古の大学町ならではの、知的で気取らない空気が漂う。",
+   "point": "1878年創業の学者たちのカフェ",
+   "tips": [
+    "8月のザリガニ祭シーズンは市場が最も華やぐ",
+    "フューリス川沿いのテラス席は夏が快適"
+   ],
+   "info": "市場は月-金10-18時、土-16時。中央駅から徒歩10分",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "市場",
+    "カフェ",
+    "郷土料理",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Saluhallen%2C_Uppsala.jpg/500px-Saluhallen%2C_Uppsala.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Saluhallen%2C_Uppsala.jpg/960px-Saluhallen%2C_Uppsala.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Saluhallen%2C_Uppsala.jpg"
+  },
+  {
+   "id": "sweden-s058",
+   "cat": "eat",
+   "title": "黄金色のサフランパンケーキ",
+   "local": "Saffranspannkaka",
+   "city": "ヴィスビュー",
+   "area": "ゴットランド島",
+   "body": "島の郷土菓子。米をミルクで炊き、サフランとアーモンドを混ぜてオーブンで焼き上げた濃厚なプディング風パンケーキで、真っ赤なサルミバール（島産のキイチゴ）のジャムと生クリームを添える。もとは秋の祝祭の菓子だった。羊農家が営むカフェで、羊毛の敷物が置かれた石造りの部屋でいただくのが最高の贅沢だ。",
+   "point": "赤いベリージャムとの黄金コンビ",
+   "tips": [
+    "島の名物はほかにゴットランド産アスパラと羊肉",
+    "カフェは冬季休業が多く夏が本番"
+   ],
+   "info": "島内カフェで主に5-9月提供、1皿€8前後",
+   "budget": "〜€10",
+   "time": "30分",
+   "season": "夏(6-8月)",
+   "tags": [
+    "スイーツ",
+    "郷土料理",
+    "カフェ",
+    "島"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Saffron_pancake_with_dewberry.jpg/500px-Saffron_pancake_with_dewberry.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Saffron_pancake_with_dewberry.jpg/960px-Saffron_pancake_with_dewberry.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Saffron_pancake_with_dewberry.jpg"
+  },
+  {
+   "id": "sweden-s059",
+   "cat": "eat",
+   "title": "サーミの森と焚き火の味",
+   "local": "Suovas / Sámi cuisine",
+   "city": "キルナ",
+   "area": "ラップランド",
+   "body": "先住民サーミの伝統食。塩漬けにして白樺で燻したトナカイ肉「ソーヴァス」を薄く切って焼き、リンゴンベリーとキノコのクリームソースで食べる。ラヴ（円錐テント）の中で焚き火を囲み、燻煙の匂いのなか木のカップ「グクシ」でコーヒーを飲む時間そのものが体験だ。デザートは黄金色に輝く貴重なクラウドベリー。",
+   "point": "焚き火のラヴでいただく燻製トナカイ",
+   "tips": [
+    "トナカイ牧場訪問とセットのツアーが便利",
+    "クラウドベリーの旬は8月ごろ"
+   ],
+   "info": "キルナ周辺のサーミ体験施設で通年、要予約が基本",
+   "budget": "€30-60",
+   "time": "半日",
+   "season": "通年",
+   "tags": [
+    "郷土料理",
+    "自然",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Ground_reindeer_steak_at_Sajos.jpg/500px-Ground_reindeer_steak_at_Sajos.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Ground_reindeer_steak_at_Sajos.jpg/960px-Ground_reindeer_steak_at_Sajos.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ground_reindeer_steak_at_Sajos.jpg"
+  },
+  {
+   "id": "sweden-s060",
+   "cat": "do",
+   "title": "3万島へ、群島クルーズ",
+   "local": "Stockholms skärgård / Vaxholm",
+   "city": "ストックホルム",
+   "area": "群島",
+   "body": "市街の目の前から約3万の島々が広がる。ワックスホルム社の白い定期船に乗れば、松林と赤い小屋のシルエットが次々に流れていく。約1時間で「群島の玄関」ヴァックスホルムへ。16世紀の要塞と木造の別荘街を歩き、桟橋のカフェでエビサンド。さらに足を延ばせばグリンダ島やサンドハムン島の白い砂浜が待っている。",
+   "point": "白い定期船で行く赤い小屋の島",
+   "tips": [
+    "夏の島巡りは5日間有効のボートパスが得",
+    "日曜午後の帰り便は混むので早めに乗船"
+   ],
+   "info": "Strömkajen発、通年運航（夏は増便）。片道約1時間",
+   "budget": "€10-30",
+   "time": "半日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "クルーズ",
+    "島",
+    "絶景",
+    "海"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Stockholm_archipelago_14.jpg/500px-Stockholm_archipelago_14.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Stockholm_archipelago_14.jpg/960px-Stockholm_archipelago_14.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Stockholm_archipelago_14.jpg"
+  },
+  {
+   "id": "sweden-s061",
+   "cat": "do",
+   "title": "海に浮かぶ木造サウナ",
+   "local": "Ribersborgs Kallbadhus",
+   "city": "マルメ",
+   "area": "リーベルスボリ海岸",
+   "body": "1898年開業、砂浜から長い桟橋を歩いた先、海の上に建つ木造の冷水浴場。男女別エリアで水着を着けないのが基本という、スウェーデン流の作法が今も守られている。薪サウナで温まったら、はしごを伝ってエーレスンド海峡へ。冬の水温は2度、心臓が跳ねる冷たさのあと体の芯からじんわり熱が戻る。カフェの軽食も名物。",
+   "point": "冬は水温2度、桟橋の先の海へ飛び込む",
+   "tips": [
+    "タオル必須（レンタルあり）、水着不要エリアに注意",
+    "日没前が最も混むので夕方前の入場が快適"
+   ],
+   "info": "通年営業、概ね月-金10-20時ほか季節変動。中央駅からバス",
+   "budget": "〜€10",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "サウナ",
+    "海",
+    "絶景"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Ribersborgs_kallbadhus%2C_Malm%C3%B6.jpg/500px-Ribersborgs_kallbadhus%2C_Malm%C3%B6.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Ribersborgs_kallbadhus%2C_Malm%C3%B6.jpg/960px-Ribersborgs_kallbadhus%2C_Malm%C3%B6.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ribersborgs_kallbadhus%2C_Malm%C3%B6.jpg"
+  },
+  {
+   "id": "sweden-s062",
+   "cat": "do",
+   "title": "北欧最大級の遊園地",
+   "local": "Liseberg",
+   "city": "ヨーテボリ",
+   "area": "リーセベリ",
+   "body": "1923年開園、木々の丘に40以上のアトラクションが広がる北欧最大級の遊園地。木製コースター「バルデル」、落下塔「アトモスフィア」、2023年開業の屋内型テーマエリア「アンダーランド」まで幅広い。11月中旬から始まるクリスマスマーケットは500万個のイルミネーションと、グルッグやスモークソーセージの屋台で別世界に変わる。",
+   "point": "冬は500万個の光のクリスマス市",
+   "tips": [
+    "乗り放題パスは入園料と別。事前購入が安心",
+    "中央駅からトラムで5分と好アクセス"
+   ],
+   "info": "4-10月と11-12月に開園、時期で時間変動。要事前確認",
+   "budget": "€30-60",
+   "time": "1日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "子連れOK",
+    "夜景",
+    "街歩き"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/G%C3%B6teborg_Liseberg_entrance.jpg/500px-G%C3%B6teborg_Liseberg_entrance.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/G%C3%B6teborg_Liseberg_entrance.jpg/960px-G%C3%B6teborg_Liseberg_entrance.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:G%C3%B6teborg_Liseberg_entrance.jpg"
+  },
+  {
+   "id": "sweden-s063",
+   "cat": "do",
+   "title": "毎年生まれ変わる氷のホテル",
+   "local": "Icehotel",
+   "city": "ユッカスヤルヴィ",
+   "area": "トルネ川沿い",
+   "body": "1989年に始まった世界初の氷のホテル。冬季はトルネ川から切り出した氷と雪でアーティストが客室を彫り上げ、春には溶けて川へ還る。室温は常に−5〜−7度、トナカイの毛皮と寝袋にくるまって眠る。2016年からは太陽光で冷却する通年営業棟「アイスホテル365」も加わった。氷のグラスで飲むカクテルは、飲むほどにグラスが溶けていく。",
+   "point": "毎冬アーティストが彫る一点物の客室",
+   "tips": [
+    "宿泊しなくても日中の見学ツアーに参加できる",
+    "キルナ空港から車で約20分"
+   ],
+   "info": "冬季12-4月が本番、365棟は通年営業。宿泊は要予約",
+   "budget": "€60〜",
+   "time": "半日",
+   "season": "冬(12-3月)",
+   "tags": [
+    "建築",
+    "デザイン",
+    "予約必須",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG/500px-Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG/960px-Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG"
+  },
+  {
+   "id": "sweden-s064",
+   "cat": "do",
+   "title": "犬ぞりで極夜の森へ",
+   "local": "Hundspann / Dog sledding",
+   "city": "キルナ",
+   "area": "ラップランド",
+   "body": "8頭前後のハスキーが引くそりに乗り、凍った湖と白樺の森を走る。出発前の犬たちの大合唱が、走り出した瞬間ぴたりとやみ、あとは雪を切る音だけが残る。自分で操縦するマッシャー体験も選べる。昼でも空が藍色に沈む極夜の時期は、雪面が青く光る「ブルーアワー」が延々と続く。休憩の焚き火で飲む熱いベリージュースが染みる。",
+   "point": "走り出した瞬間、犬の声が止む",
+   "tips": [
+    "防寒具は現地レンタルが基本、電池は内ポケットへ",
+    "半日ツアーのあとオーロラ観賞の夜行を足せる"
+   ],
+   "info": "12-3月中心、2-6時間のツアーが主流。要予約",
+   "budget": "€60〜",
+   "time": "半日",
+   "season": "冬(12-3月)",
+   "tags": [
+    "自然",
+    "オーロラ",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/White_huskies_dog_sledding.jpg/500px-White_huskies_dog_sledding.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/White_huskies_dog_sledding.jpg/960px-White_huskies_dog_sledding.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:White_huskies_dog_sledding.jpg"
+  },
+  {
+   "id": "sweden-s065",
+   "cat": "do",
+   "title": "奇岩ラウクの島を自転車で",
+   "local": "Fårö / Raukar",
+   "city": "フォーレ島",
+   "area": "ラングハンマル",
+   "body": "ゴットランド島の北端からフェリーで10分。石灰岩が波に削られて残った奇岩「ラウク」が、ラングハンマルの浜に無言で立ち並ぶ。映画監督イングマール・ベルイマンが愛し、晩年を過ごした島でもある。平坦な地形は自転車が最適で、松林、羊の牧草地、白い砂浜が次々に現れる。夏の遅い夕日がラウクを橙色に染める瞬間が絶景だ。",
+   "point": "波が彫った奇岩ラウクの群れ",
+   "tips": [
+    "フェリーは無料、時刻表は季節で変動する",
+    "ベルイマン・センターは夏季のみ開館"
+   ],
+   "info": "フェリーは24時間運航・無料。ヴィスビューから車で1時間",
+   "budget": "無料",
+   "time": "1日",
+   "season": "夏(6-8月)",
+   "tags": [
+    "絶景",
+    "島",
+    "自然",
+    "無料"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Gotland_F%C3%A5r%C3%B6-Raukar_Langhammars.jpg/500px-Gotland_F%C3%A5r%C3%B6-Raukar_Langhammars.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Gotland_F%C3%A5r%C3%B6-Raukar_Langhammars.jpg/960px-Gotland_F%C3%A5r%C3%B6-Raukar_Langhammars.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Gotland_F%C3%A5r%C3%B6-Raukar_Langhammars.jpg"
+  },
+  {
+   "id": "sweden-s066",
+   "cat": "buy",
+   "title": "花柄の巨匠、王室御用達",
+   "local": "Svenskt Tenn",
+   "city": "ストックホルム",
+   "area": "ストランドヴェーゲン",
+   "body": "1924年、エストリッド・エリクソンが創業したインテリア店。1934年に加わったウィーン出身の建築家ヨーゼフ・フランクが描いた、極彩色の植物柄テキスタイルが看板だ。「マニラ」「緑の鳥」など今も現役の柄が布、クッション、トレイになって並ぶ。2階のティールームで紅茶を飲みながら海峡を眺める時間も込みで訪れたい。",
+   "point": "ヨーゼフ・フランクの植物柄",
+   "tips": [
+    "布は10cm単位で購入可、軽いおみやげに最適",
+    "2階のティールームは概ね12-16時"
+   ],
+   "info": "月-金10-18時、土-17時、日12-16時。地下鉄Östermalmstorg",
+   "budget": "€30-60",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "デザイン",
+    "雑貨",
+    "おみやげ",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Svenskt_Tenn_02.JPG/500px-Svenskt_Tenn_02.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Svenskt_Tenn_02.JPG/960px-Svenskt_Tenn_02.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Svenskt_Tenn_02.JPG"
+  },
+  {
+   "id": "sweden-s067",
+   "cat": "buy",
+   "title": "古着と器の宝探し通り",
+   "local": "Haga Nygata",
+   "city": "ヨーテボリ",
+   "area": "ハーガ／マガシンスガータン",
+   "body": "木造家屋の1階がそのまま店になった通り。北欧ヴィンテージの食器、1960年代グスタフスベリの皿、手編みのミトン、革の小物が小さな店に詰まっている。少し北のマガシンスガータン周辺は、インテリアショップやセレクトショップが集まる新しい買い物エリア。両者をつなぐ徒歩20分ほどの道が、この街でいちばん楽しい買い物ルートだ。",
+   "point": "北欧ヴィンテージ食器の掘り出し物",
+   "tips": [
+    "日曜も開く店が多いのがヨーテボリの利点",
+    "陶器は割れ物梱包を頼んでおくと安心"
+   ],
+   "info": "多くの店は11-18時、日曜は短縮。トラムHagakyrkan",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "ヴィンテージ",
+    "雑貨",
+    "街歩き",
+    "デザイン"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Haga_Nygata_26-28.jpg/500px-Haga_Nygata_26-28.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Haga_Nygata_26-28.jpg/960px-Haga_Nygata_26-28.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Haga_Nygata_26-28.jpg"
+  },
+  {
+   "id": "sweden-s068",
+   "cat": "buy",
+   "title": "南部デザインの発信基地",
+   "local": "Form/Design Center",
+   "city": "マルメ",
+   "area": "リッラ・トリ",
+   "body": "1964年に開いた、北欧で最も歴史あるデザインセンターのひとつ。17世紀の木組みの家が並ぶリッラ・トリの一角、白い中庭を抱く建物に企画展、書店、ショップ、カフェが入る。スウェーデン南部の若手作家によるガラスや陶器、印刷物が手頃な価格で並び、量産品にはない一点物に出会える。展示は無料で、雨の日の避難場所としても優秀。",
+   "point": "南部の若手作家の一点物が買える",
+   "tips": [
+    "入場無料。中庭のカフェは地元の待ち合わせ場所",
+    "リッラ・トリの木組みの家並みも合わせて"
+   ],
+   "info": "火-金11-17時、土日12-16時、月休。中央駅から徒歩10分",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "デザイン",
+    "雑貨",
+    "無料",
+    "雨の日OK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Form_Design_Centre.JPG/500px-Form_Design_Centre.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Form_Design_Centre.JPG/960px-Form_Design_Centre.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Form_Design_Centre.JPG"
+  },
+  {
+   "id": "sweden-s069",
+   "cat": "buy",
+   "title": "赤い馬、ダーラナホース",
+   "local": "Dalahäst / Nusnäs",
+   "city": "モーラ",
+   "area": "ヌスネース",
+   "body": "スウェーデンの象徴、赤い木馬。17世紀に森の木こりが子どものために彫ったのが始まりで、鞍と首飾りを描く「クルビッツ」という民俗絵付けが施される。シリヤン湖畔ヌスネースの工房グランナス・A・オルソンでは1928年から製造が続き、削り、下塗り、絵付けの工程を間近で見学できる。自分で絵付けする体験も人気だ。",
+   "point": "工房で見る手描きのクルビッツ模様",
+   "tips": [
+    "サイズは3cmから数十cmまで。小型は軽くて楽",
+    "ミッドサマーの時期はダーラナが最も賑わう"
+   ],
+   "info": "工房は月-金9-17時（夏は土日も）。モーラから車で15分",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "おみやげ",
+    "雑貨",
+    "子連れOK"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Dalah%C3%A4st-lightbox.jpg/500px-Dalah%C3%A4st-lightbox.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Dalah%C3%A4st-lightbox.jpg/960px-Dalah%C3%A4st-lightbox.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Dalah%C3%A4st-lightbox.jpg"
+  },
+  {
+   "id": "sweden-s070",
+   "cat": "buy",
+   "title": "サーミの手仕事ドゥオッジ",
+   "local": "Duodji, Jokkmokk",
+   "city": "ヨックモック",
+   "area": "ラップランド",
+   "body": "トナカイの角と白樺のこぶ、なめし革を組み合わせたサーミの伝統工芸。木を刳り抜いたカップ「グクシ」、錫糸を編み込んだ革のブレスレット、刻み模様の小刀などがある。正統な品には「Sámi Duodji」の認証ラベルが付く。毎年2月第1木曜から4日間開かれるヨックモックの冬市は1605年から続き、工芸品が最も集まる絶好の機会だ。",
+   "point": "Sámi Duodji認証ラベルが本物の証",
+   "tips": [
+    "2月の冬市は宿が早く埋まるため早期予約を",
+    "グクシは油分を残すため強い洗剤で洗わない"
+   ],
+   "info": "冬市は2月第1木曜から4日間。通年は工芸店・博物館併設店で",
+   "budget": "€30-60",
+   "time": "1〜2時間",
+   "season": "冬(12-3月)",
+   "tags": [
+    "おみやげ",
+    "雑貨",
+    "市場"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Duodji_guksi_drinking_cup_k%C3%A5sa_niibi_knife_kniv.JPG/500px-Duodji_guksi_drinking_cup_k%C3%A5sa_niibi_knife_kniv.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Duodji_guksi_drinking_cup_k%C3%A5sa_niibi_knife_kniv.JPG/960px-Duodji_guksi_drinking_cup_k%C3%A5sa_niibi_knife_kniv.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Duodji_guksi_drinking_cup_k%C3%A5sa_niibi_knife_kniv.JPG"
+  },
+  {
+   "id": "sweden-s071",
+   "cat": "see",
+   "title": "ノーベル賞晩餐会の黄金ホール",
+   "local": "Stockholms stadshus（市庁舎）",
+   "city": "ストックホルム",
+   "area": "ストックホルム",
+   "body": "湖に映る赤レンガの塔が街のシンボル。ガイドツアーでノーベル賞晩餐会が開かれる「青の間」と、1800万枚の金モザイクが輝く「黄金の間」へ。106mの塔にのぼれば、旧市街と水面がきらめくパノラマがごほうび。",
+   "point": "内部は基本ガイドツアー参加のみ",
+   "tips": [],
+   "info": "塔は例年5〜9月のみ公開／ツアー約45分、公式サイトで事前予約推奨",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "絶景",
+    "街歩き",
+    "湖",
+    "予約必須"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Stockholms_Stadshuset_City_Hall_Stockholm_2016_01.jpg/500px-Stockholms_Stadshuset_City_Hall_Stockholm_2016_01.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Stockholms_Stadshuset_City_Hall_Stockholm_2016_01.jpg/960px-Stockholms_Stadshuset_City_Hall_Stockholm_2016_01.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Stockholms_Stadshuset_City_Hall_Stockholm_2016_01.jpg"
+  },
+  {
+   "id": "sweden-s072",
+   "cat": "eat",
+   "title": "国民的おやつ時間フィーカ",
+   "local": "Fika / Kanelbulle",
+   "city": "全土",
+   "area": "全土",
+   "body": "コーヒーと甘いパンでひと息つく「フィーカ」はスウェーデン人の必須習慣。カルダモン香るシナモンロールが定番で、ヨーテボリのハーガ地区にあるCafé Husarenでは顔より大きい特大版が名物。10月4日はシナモンロールの日。",
+   "point": "注文は「フィーカ、タック！」",
+   "tips": [],
+   "info": "所要30〜60分／午後3時前後がフィーカのゴールデンタイム",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "カフェ",
+    "スイーツ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Kanelbulle.jpg/500px-Kanelbulle.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Kanelbulle.jpg/960px-Kanelbulle.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kanelbulle.jpg"
+  },
+  {
+   "id": "sweden-s073",
+   "cat": "eat",
+   "title": "本場のミートボールは別格",
+   "local": "Köttbullar med lingonsylt",
+   "city": "ストックホルム",
+   "area": "ストックホルム",
+   "body": "定番の家庭料理は、なめらかなマッシュポテトとクリームソース、甘酸っぱいリンゴンベリージャム、ピクルスきゅうりが黄金の組み合わせ。旧市街の老舗やMeatballs for the Peopleのような専門店では、鹿肉やエルクのジビエ版も選べる。",
+   "point": "ジャムは添え物でなく必須の相棒",
+   "tips": [],
+   "info": "1皿200〜300SEK前後／平日は日替わりランチdagens rättがお得",
+   "budget": "€30-60",
+   "time": "1〜2時間",
+   "season": "通年",
+   "tags": [
+    "街歩き",
+    "郷土料理"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Swedish_meatballs_in_Gamla_stan%2C_Stockholm.jpg/500px-Swedish_meatballs_in_Gamla_stan%2C_Stockholm.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Swedish_meatballs_in_Gamla_stan%2C_Stockholm.jpg/960px-Swedish_meatballs_in_Gamla_stan%2C_Stockholm.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Swedish_meatballs_in_Gamla_stan%2C_Stockholm.jpg"
+  },
+  {
+   "id": "sweden-s074",
+   "cat": "eat",
+   "title": "緑のドレスの姫君ケーキ",
+   "local": "Prinsesstårta（プリンセスケーキ）",
+   "city": "全土",
+   "area": "全土",
+   "body": "淡いミントグリーンのマジパンをまとい、頭にピンクのバラをのせた王室生まれのケーキ。中はスポンジ、カスタード、こんもり高い生クリームの三層で、断面の可愛さは撮影必至。2〜3月ならカルダモン香るセムラもぜひ一緒に。",
+   "point": "断面ショットは真横から狙って",
+   "tips": [],
+   "info": "1カット80〜120SEK目安／カフェのショーケースで通年入手可",
+   "budget": "€30-60",
+   "time": "1〜2時間",
+   "season": "初夏(5-6月)",
+   "tags": [
+    "カフェ",
+    "スイーツ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Prinsesst%C3%A5rta.JPG/500px-Prinsesst%C3%A5rta.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Prinsesst%C3%A5rta.JPG/960px-Prinsesst%C3%A5rta.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Prinsesst%C3%A5rta.JPG"
+  },
+  {
+   "id": "sweden-s075",
+   "cat": "do",
+   "title": "氷のスイートに泊まる非日常",
+   "local": "ICEHOTEL Jukkasjärvi",
+   "city": "ラップランド",
+   "area": "ラップランド",
+   "body": "トルネ川の氷を切り出し、毎冬アーティストが彫り上げる氷のホテル。室温マイナス5度前後の氷の部屋でトナカイの毛皮にくるまって眠る夜は、一生ものの記憶に。通年営業の氷点下ルーム棟やアイスバーもあり、日帰り見学だけでも楽しめる。",
+   "point": "暖かい部屋との2泊構成が安心",
+   "tips": [],
+   "info": "氷の客室は例年12〜4月／日帰り見学は大人325SEK前後",
+   "budget": "€30-60",
+   "time": "1〜2時間",
+   "season": "冬(12-3月)",
+   "tags": [
+    "バー"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG/500px-Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG/960px-Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Room_Icehotel_Jukkasj%C3%A4rvi_2012.JPG"
+  },
+  {
+   "id": "sweden-s076",
+   "cat": "do",
+   "title": "晴天率が北欧一のオーロラ",
+   "local": "Aurora Sky Station, Abisko",
+   "city": "アビスコ国立公園",
+   "area": "アビスコ国立公園",
+   "body": "山に囲まれ雲ができにくい「ブルーホール」現象で、世界屈指の晴天率を誇るオーロラの聖地。チェアリフトで登るオーロラ・スカイステーションでは防寒着を借りて夜空を独り占め。運が良ければ緑のカーテンが天頂で大きく踊る。",
+   "point": "月明かりの少ない新月前後が有利",
+   "tips": [],
+   "info": "シーズンは9月下旬〜3月／防寒着レンタルあり、3泊以上の滞在が安心",
+   "budget": "€10-30",
+   "time": "1〜2時間",
+   "season": "冬(12-3月)",
+   "tags": [
+    "オーロラ"
+   ],
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg/500px-Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg/960px-Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Aurora_in_Abisko_near_Tornetr%C3%A4sk.jpg"
+  }
+ ]
+}

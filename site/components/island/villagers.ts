@@ -36,10 +36,15 @@ export type Mood = "walk" | "stand" | "think" | "wave";
 export type Villager = {
   /** 持ち場の場所ID。何をしゃべるかがこれで決まる */
   post: SpotId;
-  /** いま出している吹き出し。null なら黙っている */
+  /** いま出している吹き出し。null なら黙っている。
+      勝手には消えない。読み終わったら自分で閉じてもらう。 */
   says: string | null;
-  /** 吹き出しが消えるまでのミリ秒 */
-  saysLeft: number;
+  /** セリフ帳をシャッフルした順番。同じ話ばかりにならないように回す。 */
+  queue: number[];
+  /** いま queue の何番目か */
+  qi: number;
+  /** 話しかけて、と合図を出している最中か。数人ずつ順番に回す。 */
+  invite: boolean;
   /** いま居る場所 */
   x: number;
   y: number;
@@ -58,9 +63,13 @@ export type Villager = {
   speed: number;
   /** 上下の揺れの位相。全員がそろって跳ねないようにずらす */
   phase: number;
-  /** 見ている人のアイコン */
+  /** 見ている人のアイコン(キャラクター画像) */
   icon?: string;
   emoji?: string;
+  /** 表示してよい名前。本人が出すと決めたときだけ入る。 */
+  name?: string;
+  /** 表示してよい YouTube のアイコン。本人が出すと決めたときだけ入る。 */
+  photo?: string;
 };
 
 const SPOT = Object.fromEntries(SPOTS.map((s) => [s.id, s])) as Record<SpotId, (typeof SPOTS)[number]>;
@@ -90,7 +99,15 @@ function wander(v: Villager, r: () => number): [number, number] {
   return [v.hx, v.hy];
 }
 
-export type Resident = { icon?: string; emoji?: string; days: number };
+export type Resident = {
+  icon?: string;
+  emoji?: string;
+  days: number;
+  /** 本人が「出す」と決めたときだけ入る表示名（ニックネーム可） */
+  name?: string;
+  /** 本人が「出す」と決めたときだけ入る YouTube のアイコン */
+  photo?: string;
+};
 
 /**
  * 島に住んでいる人をつくる。
@@ -99,6 +116,15 @@ export type Resident = { icon?: string; emoji?: string; days: number };
  */
 export function createVillagers(residents: Resident[], max = 12): Villager[] {
   const r = rng(20260904);
+  /** セリフ帳の並びを人ごとにシャッフルしておく。話す順番が毎回変わる。 */
+  const shuffle = (n: number) => {
+    const a = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(r() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
   const living = residents.filter((x) => x.icon).slice(0, max);
   return living.map((who, i) => {
     const post = POSTS[i % POSTS.length];
@@ -108,7 +134,9 @@ export function createVillagers(residents: Resident[], max = 12): Villager[] {
     return {
       post: post.spot,
       says: null,
-      saysLeft: 0,
+      queue: shuffle(12),
+      qi: 0,
+      invite: false,
       x, y, tx: x, ty: y,
       hx: s.x, hy: s.y + 24, hr: post.r,
       facing: r() < 0.5 ? -1 : 1,
@@ -118,6 +146,8 @@ export function createVillagers(residents: Resident[], max = 12): Villager[] {
       phase: r() * Math.PI * 2,
       icon: who.icon,
       emoji: who.emoji,
+      name: who.name,
+      photo: who.photo,
     };
   });
 }
@@ -132,10 +162,8 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
   const dt = dtMs / 16.67;
   for (const v of vs) {
     v.left -= dtMs;
-    if (v.says) {
-      v.saysLeft -= dtMs;
-      if (v.saysLeft <= 0) v.says = null;
-    }
+    // 話している間は足を止めて、閉じられるまで待つ
+    if (v.says) continue;
     if (v.mood === "walk") {
       const dx = v.tx - v.x;
       const dy = v.ty - v.y;
@@ -173,13 +201,52 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
   }
 }
 
-/** 押された住人にひとこと言わせる。話しているあいだは足を止める。 */
-export function talkTo(v: Villager, lines: string[], r: () => number) {
+/**
+ * 話しかける。
+ * 吹き出しは自分で閉じるまで出したまま。読みかけで消えるのがいちばん困る。
+ * セリフはシャッフルした順に1つずつ。一周するまで同じ話はしない。
+ */
+export function talkTo(v: Villager, lines: string[]) {
   if (!lines.length) return;
-  v.says = lines[Math.floor(r() * lines.length) % lines.length];
-  v.saysLeft = 4200;
+  const idx = v.queue.filter((i) => i < lines.length);
+  const pick = idx.length ? idx[v.qi % idx.length] : 0;
+  v.qi = (v.qi + 1) % Math.max(1, idx.length);
+  v.says = lines[pick];
   v.mood = "wave";
-  v.left = 1200;
+  v.left = 1400;
+  v.invite = false;
+}
+
+/** 吹き出しを閉じて、また歩きだしてもらう。 */
+export function hush(v: Villager) {
+  v.says = null;
+  v.mood = "think";
+  v.left = 400;
+}
+
+/**
+ * 「話しかけて」の合図を出す人を入れ替える。
+ * 全員がいつも合図していると島がうるさいので、数人ずつ順番に回す。
+ * @param {Villager[]} vs 住人
+ * @param {number} tick いま何回目の入れ替えか
+ * @param {(v: Villager) => boolean} canTalk セリフを持っている人か
+ * @param {number} at 一度に合図する人数
+ */
+export function rotateInvites(
+  vs: Villager[],
+  tick: number,
+  canTalk: (v: Villager) => boolean,
+  at = 3,
+) {
+  const able = vs.filter((v) => v.icon && canTalk(v));
+  able.forEach((v) => {
+    v.invite = false;
+  });
+  if (!able.length) return;
+  for (let k = 0; k < at; k++) {
+    const v = able[(tick * at + k) % able.length];
+    if (!v.says) v.invite = true;
+  }
 }
 
 /** その位置にいちばん近い住人。押した所から離れていれば null。 */

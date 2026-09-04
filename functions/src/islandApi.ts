@@ -30,10 +30,13 @@ const NOTES = db.collection("islandNotes");
 const VOTES = db.collection("islandVotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
+const DRAFTS = db.collection("islandDrafts");
 
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
+const MAX_DRAFT_LEN = 12000;
+const DRAFTS_PER_DAY = 12;
 const IDEAS_PER_DAY = 8;
 const NOTES_PER_DAY = 20;
 
@@ -64,6 +67,78 @@ async function whoIs(header?: string): Promise<Who> {
     logger.warn("token verify failed", String(e));
     return null;
   }
+}
+
+/**
+ * 島に名前を出してよいと決めた人だけを返す。
+ *
+ * 名前も YouTube のアイコンも、出すか出さないかは本人が決める。
+ * 何もしていない人は、キャラクターだけが島にいて名前は出ない。
+ * @return {Promise<Json[]>} キャラクターと、出してよい名前・アイコン
+ */
+async function listResidents(): Promise<Json[]> {
+  const snap = await USERS.where("character", "!=", null).limit(200).get();
+  const out: Json[] = [];
+  snap.forEach((d) => {
+    const u = d.data() ?? {};
+    if (!u.character) return;
+    if (!u.showName && !u.showPhoto) return;
+    out.push({
+      icon: u.character,
+      name: u.showName ?
+        (u.nickname as string) || (u.name as string) || null :
+        null,
+      photo: u.showPhoto ? (u.photo as string) || null : null,
+    });
+  });
+  return out;
+}
+
+/**
+ * 企画ページの下書きを、保存してよい形に整える。
+ *
+ * ここに入るのは、あやとが「書いていいよ」と決めた視聴者さんが書いたもの。
+ * それでも受け取る側では長さと形だけは必ず切りそろえる。
+ * 中身の良し悪しは、あやとが Claude Code で仕上げるときに直す。
+ * @param {Json} b 送られてきた中身
+ * @return {Json} 保存する形
+ */
+function shapeDraft(b: Json): Json {
+  const arr = (v: unknown, n: number, f: (x: Json) => Json) =>
+    Array.isArray(v) ? v.slice(0, n).map((x) => f((x ?? {}) as Json)) : [];
+  const place = (b.place ?? {}) as Json;
+  return {
+    title: clean(b.title, 60),
+    when: clean(b.when, 40),
+    date: clean(b.date, 10),
+    note: clean(b.note, 200),
+    tags: Array.isArray(b.tags) ?
+      b.tags.slice(0, 6).map((t) => clean(t, 16)) :
+      [],
+    place: {
+      name: clean(place.name, 60),
+      area: clean(place.area, 60),
+      map: clean(place.map, 300),
+    },
+    about: Array.isArray(b.about) ?
+      b.about.slice(0, 8).map((p) => clean(p, 600)) :
+      [],
+    links: arr(b.links, 8, (x) => ({
+      label: clean(x.label, 60),
+      href: clean(x.href, 300),
+    })),
+    photos: arr(b.photos, 8, (x) => ({
+      src: clean(x.src, 400),
+      alt: clean(x.alt, 120),
+      credit: clean(x.credit, 120),
+      creditHref: clean(x.creditHref, 300),
+    })),
+    embeds: arr(b.embeds, 4, (x) => ({
+      kind: x.kind === "youtube" ? "youtube" : "instagram",
+      id: clean(x.id, 40),
+      note: clean(x.note, 120),
+    })),
+  };
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -212,26 +287,126 @@ export const islandApi = onRequest(
         const name = clean(body.title ?? t.name ?? "", MAX_NAME_LEN);
         const channelId = clean(body.channelId, 64);
         const now = Date.now();
-        await USERS.doc(t.uid).set(
-          {
-            name: name || null,
-            channelId: channelId || null,
-            photo: clean(body.thumbnail, 300) || null,
-            lastSeenAt: now,
-            firstSeenAt: now,
-          },
-          {merge: true},
-        );
-        res.json({uid: t.uid, name, channelId: channelId || undefined});
+        const ref = USERS.doc(t.uid);
+        const prev = await ref.get();
+        const patch: Json = {
+          lastSeenAt: now,
+          firstSeenAt: prev.exists ? prev.data()?.firstSeenAt ?? now : now,
+        };
+        // ログインしたときだけ届く、YouTube から取れた本人の情報
+        if (name) patch.name = name;
+        if (channelId) patch.channelId = channelId;
+        if (body.thumbnail !== undefined) {
+          patch.photo = clean(body.thumbnail, 300) || null;
+        }
+        // 島での見え方。出すか出さないかは、本人が決める。
+        if (body.nickname !== undefined) {
+          patch.nickname = clean(body.nickname, MAX_NAME_LEN) || null;
+        }
+        if (body.character !== undefined) {
+          patch.character = clean(body.character, 64) || null;
+        }
+        if (body.showName !== undefined) patch.showName = !!body.showName;
+        if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
+        await ref.set(patch, {merge: true});
+        const saved = {...(prev.data() ?? {}), ...patch};
+        res.json({
+          uid: t.uid,
+          name,
+          channelId: channelId || undefined,
+          nickname: (saved.nickname as string) ?? null,
+          character: (saved.character as string) ?? null,
+          showName: !!saved.showName,
+          showPhoto: !!saved.showPhoto,
+        });
+        return;
+      }
+
+      /* ---------------- 企画ページの下書き ---------------- */
+      /* あやとが「書いていいよ」と決めた人だけが書ける。
+         下書きはそのまま公開せず、あやとが Claude Code で仕上げてから
+         content/plans.ts に入る。ここは受け皿までを持つ。 */
+      if (path === "/drafts" || path.startsWith("/drafts/")) {
+        const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
+        if (!m) {
+          res.status(401).json({error: "no token"});
+          return;
+        }
+        let t;
+        try {
+          t = await admin.auth().verifyIdToken(m[1]);
+        } catch {
+          res.status(401).json({error: "bad token"});
+          return;
+        }
+        const meSnap = await USERS.doc(t.uid).get();
+        const me = meSnap.data() ?? {};
+        if (!me.canDraft && !me.admin) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+
+        if (method === "GET" && path === "/drafts") {
+          const q = me.admin ?
+            DRAFTS.orderBy("updatedAt", "desc").limit(80) :
+            DRAFTS.where("uid", "==", t.uid).limit(40);
+          const snap = await q.get();
+          res.json({
+            drafts: snap.docs.map((d) => ({id: d.id, ...(d.data() ?? {})})),
+          });
+          return;
+        }
+
+        if (method === "POST" && path === "/drafts") {
+          const body2 = body;
+          if (JSON.stringify(body2).length > MAX_DRAFT_LEN) {
+            res.status(400).json({error: "too long"});
+            return;
+          }
+          const draft = shapeDraft(body2);
+          if (!(draft.title as string)) {
+            res.status(400).json({error: "no title"});
+            return;
+          }
+          if (!(await takeQuota(t.uid, "draft", DRAFTS_PER_DAY))) {
+            res.status(429).json({error: "too many"});
+            return;
+          }
+          const id = clean(body2.id, 40);
+          const now = Date.now();
+          const ref = id ? DRAFTS.doc(id) : DRAFTS.doc();
+          if (id) {
+            const cur = await ref.get();
+            if (cur.exists && cur.data()?.uid !== t.uid && !me.admin) {
+              res.status(403).json({error: "not yours"});
+              return;
+            }
+          }
+          await ref.set(
+            {
+              ...draft,
+              uid: t.uid,
+              by: clean(me.nickname ?? me.name ?? t.name ?? "", MAX_NAME_LEN),
+              updatedAt: now,
+              createdAt: id ? undefined : now,
+            },
+            {merge: true},
+          );
+          res.json({id: ref.id, draft});
+          return;
+        }
+
+        res.status(404).json({error: "not found"});
         return;
       }
 
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, ideas, notes] = await Promise.all([
+        const [stateSnap, ideas, notes, residents] = await Promise.all([
           STATE_DOC.get(),
           listIdeas(60),
           listNotes(),
+          listResidents(),
         ]);
         const state = stateSnap.exists ? stateSnap.data() ?? {} : {};
         res.set(
@@ -243,6 +418,7 @@ export const islandApi = onRequest(
           stats: state.stats ?? null,
           ideas,
           notes,
+          residents,
         });
         return;
       }

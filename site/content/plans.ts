@@ -40,6 +40,8 @@ export type Plan = {
   embeds?: PlanEmbed[];
   /** 大きい企画は専用のページを持つ */
   href?: string;
+  /** これが今いちばん大きい企画。トップの先頭に大きく出す。 */
+  big?: boolean;
 };
 
 export const PLANS: Plan[] = [
@@ -64,6 +66,9 @@ export const PLANS: Plan[] = [
       { label: "Mtatsminda Park 公式", href: "https://mtatsminda.ge/en/" },
       { label: "イベント情報（YOLO）", href: "https://yolo.ge/en/poster/food-wine-fest-tbilisi5858" },
     ],
+    embeds: [
+      { kind: "instagram", id: "Dcku99gDfv9", note: "去年の様子。こんな感じのお祭りです。" },
+    ],
     photos: [
       {
         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg",
@@ -81,20 +86,37 @@ export const PLANS: Plan[] = [
   },
   {
     id: "nordic",
-    title: "北欧とバルト三国へ",
-    when: "2026年9月から",
-    date: "2026-09-14",
-    note: "トビリシを出て、ポーランドからバルト三国を北上して、北欧へ抜ける。",
-    tags: ["北欧", "バルト", "移動"],
+    title: "ヒッチハイクで北欧へ",
+    when: "2026年9月11日(金) 23:30 出発",
+    date: "2026-09-11",
+    note: "ジョージアを出て、ポーランドからバルト三国を北上し、北欧へ抜ける。陸路はぜんぶヒッチハイク。",
+    tags: ["北欧", "バルト", "ヒッチハイク", "一方通行"],
     href: "/nordic",
+    /** いちばん近くて、いちばん大きい企画。トップの先頭に出す。 */
+    big: true,
     about: [
       "ジョージアに戻ってくる往復ではなく、そのまま次の拠点へ抜ける一方向の旅。",
-      "飛行機は2区間だけ。あとは長距離バスとフェリーでつなぐ。",
+      "飛行機はクタイシ→カトヴィツェの1本だけ。そこから先の陸路は、ぜんぶヒッチハイクでつなぐ。バスに逃げないのが企画の芯。",
+      "ワルシャワからヴィリニュスまで513km。ここが最初の山場で、途中で一泊はさむ。",
+      "9月のバルトは3日に1日くらい雨。寒さと雨のなかで、どこまで人の親切に乗れるか。",
     ],
   },
 ];
 
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
+
+/**
+ * いま、いちばん近い企画。
+ * まだ来ていないもののうち、いちばん日が近いもの。
+ * 全部終わっていれば big を付けたものを出す（次の大物は先に告知しておきたいので）。
+ */
+export function nextPlan(today = new Date()): Plan | undefined {
+  const ahead = PLANS.filter((p) => {
+    const d = daysUntil(p.date, today);
+    return d !== null && d >= 0;
+  }).sort((a, b) => (a.date! < b.date! ? -1 : 1));
+  return ahead[0] ?? PLANS.find((p) => p.big) ?? PLANS[0];
+}
 
 /** その日まであと何日か。過ぎていればマイナス。 */
 export function daysUntil(date: string | undefined, today = new Date()): number | null {
