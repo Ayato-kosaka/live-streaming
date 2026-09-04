@@ -191,17 +191,32 @@ img { max-width: 100%; }
 /* =========================================================
    入口(建物)の押し方
    ---------------------------------------------------------
-   ゲームで「これは触れる」と伝えるやり方をそのまま使っている。
-   ・押す場所は建物の絵そのもの（.spot-hit を絵の四隅に合わせる）
-   ・押せる物には常に灯りを置き、近づくと強くする（.spot-glow）
-   ・名前が出るのはいちばん近い1つだけ。島が字で埋まらないように。
+   「押せる」の合図は1種類だけ（docs/island-design.md）。
+   光ときらめきと札を混ぜると、どれが合図でどれが飾りか分からなくなる。
+   夜のランタンと取り違えられたので、光はやめて札だけにした。
+
+   6つの入口には、いつも札が立っている。
+     遠い … 小さい丸に「!」
+     近い … 開いて名前と「はいる」が出る
    ========================================================= */
-.spot { position: absolute; inset: 0; pointer-events: none; }
+.spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
 
 /* 建物の絵にぴったり重なる、透明な押しボタン。
    絵より小さい入口(たき火など)でも、指で押せる大きさまで広げてある。 */
 .spot-hit {
   position: absolute;
+  left: calc(var(--hw, 48px) / -2);
+  top: calc(var(--hh, 48px) * -1);
+  width: var(--hw, 48px);
+  height: var(--hh, 48px);
   padding: 0;
   border: 0;
   background: none;
@@ -210,119 +225,261 @@ img { max-width: 100%; }
   border-radius: 14px;
   -webkit-tap-highlight-color: transparent;
 }
-.spot-hit:focus-visible {
-  outline: 3px solid #fffdf6;
-  outline-offset: 2px;
-}
-.spot-hit:active { transform: translateY(1px); }
+.spot-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
-/* 地面の灯り。SVG側の楕円。 */
-.spot-glow {
-  opacity: 0.36;
-  transition: opacity 0.35s ease;
-  animation: spotBreath 3.6s ease-in-out infinite;
-  pointer-events: none;
-  /* SVGのCSS transform は既定で原点(0,0)基準になるので、図形の中心を軸にする */
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.spot-glow.is-near { opacity: 0.7; }
-.spot-glow.is-on { opacity: 0.9; }
-@keyframes spotBreath {
-  0%, 100% { transform: scale(0.94); }
-  50% { transform: scale(1.06); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spot-glow { animation: none; }
-}
-
-/* きらめき。輪郭線を足さずに「触れる物」だと伝えるための、どうぶつの森の作法。 */
-.spot-spark path {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sparkTwinkle 2.6s ease-in-out infinite;
-  opacity: 0;
-}
-.spot-spark.is-near path { animation-duration: 2s; }
-.spot-spark.is-on path { animation-duration: 1.5s; }
-@keyframes sparkTwinkle {
-  0%, 62%, 100% { opacity: 0; scale: 0.3; }
-  16% { opacity: 0.95; scale: 1; }
-  38% { opacity: 0.35; scale: 0.75; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spot-spark path { animation: none; opacity: 0.7; }
-}
-
-/* 近づいた入口は、ふわっと弾ませる。押せることの最後のひと押し。 */
-.spot-art { transition: none; }
-.spot-art.is-on { animation: spotBob 1.5s ease-in-out infinite; }
-@keyframes spotBob {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-3px) scale(1.018); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spot-art.is-on { animation: none; }
-}
-
-/* 名札。近づいた1つだけ出て、そのまま入口になる。
-   木の札のつもりで、角は丸く・下に厚みを出す。 */
-.spot-name {
+/* 札。建物の頭の上に立つ。 */
+.spot-mark {
   position: absolute;
-  transform: translate(-50%, -100%) scale(0.86);
+  left: 0;
+  top: calc(var(--mh, 48px) * -1 - 8px);
+  transform: translate(-50%, -100%);
   transform-origin: 50% 100%;
-  pointer-events: none;
-  opacity: 0;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 5px 12px;
-  background: linear-gradient(#fffdf6, #fff3da);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(#fff6cf, var(--gold));
   border: 3px solid var(--frame-dark);
-  border-radius: 14px;
-  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-2);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--frame-deep);
+  color: var(--ink);
   white-space: nowrap;
-  transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), height 0.22s ease,
+    border-radius 0.22s ease, background 0.22s ease;
+  animation: spotHop 2.4s ease-in-out infinite;
 }
 /* 札を留めている杭 */
-.spot-name::before {
+.spot-mark::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -10px;
-  width: 7px; height: 10px;
-  margin-left: -3.5px;
+  bottom: -9px;
+  width: 6px;
+  height: 9px;
+  margin-left: -3px;
   border-radius: 0 0 3px 3px;
   background: var(--frame-deep);
 }
-.spot-name b { font-size: 14px; font-weight: 900; letter-spacing: 0.01em; }
-.spot-name i {
-  font-size: 10.5px;
+@keyframes spotHop {
+  0%, 100% { transform: translate(-50%, -100%); }
+  50% { transform: translate(-50%, calc(-100% - 5px)); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-mark { animation: none; } }
+
+.spot-bang {
+  flex: none;
+  width: 24px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 22px;
+  color: var(--frame-deep);
+}
+.spot-text { display: none; }
+.spot-mark > .spot-text, .spot-mark > .spot-go { overflow: hidden; }
+.spot-go { display: none; }
+
+/* 近づいたら開く */
+.spot.is-on .spot-mark {
+  width: auto;
+  height: auto;
+  padding: 6px 8px 6px 4px;
+  gap: 7px;
+  border-radius: 16px;
+  background: linear-gradient(#fffdf6, #fff3da);
+}
+.spot.is-on .spot-bang {
+  width: 22px;
+  height: 22px;
+  line-height: 19px;
+  border-radius: 50%;
+  background: linear-gradient(#fff6cf, var(--gold));
+  border: 2px solid var(--frame-dark);
+  font-size: 13px;
+}
+.spot.is-on .spot-text {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+  text-align: left;
+}
+.spot.is-on .spot-text b { font-size: 14px; font-weight: 900; }
+.spot.is-on .spot-text i {
   font-style: normal;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+.spot.is-on .spot-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  font-size: 10.5px;
   font-weight: 900;
   color: #fffdf6;
   background: var(--frame-dark);
   border-radius: 999px;
+  padding: 3px 8px;
+}
+.spot-mark:active { transform: translate(-50%, calc(-100% + 3px)); box-shadow: 0 1px 0 var(--frame-deep); }
+
+/* 出発までの日数。札の右肩に付ける。離して置くと島の上で迷子になる。 */
+.spot-badge {
+  position: absolute;
+  right: -8px;
+  top: -11px;
+  font-style: normal;
+  pointer-events: none;
+  z-index: 2;
+  font-size: 10px;
+  font-weight: 900;
+  color: #fffdf6;
+  background: var(--accent-deep, #d4552a);
+  border: 2.5px solid #fffdf6;
+  border-radius: 999px;
   padding: 2px 8px;
+  box-shadow: 0 2px 5px rgba(20, 40, 30, 0.35);
+  animation: badgePulse 2s ease-in-out infinite;
 }
-.spot.is-on .spot-name {
-  opacity: 1;
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-badge { animation: none; } }
+
+/* 近づいた入口は、ふわっと弾ませる */
+.spot-art.is-on { animation: spotBob 1.6s ease-in-out infinite; }
+@keyframes spotBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-art.is-on { animation: none; } }
+
+/* =========================================================
+   住人
+   ---------------------------------------------------------
+   島の主役はあやとと入口。住人はおまけなので、
+   当たり判定は入口より奥に置いて、行き先を塞がないようにする。
+   ========================================================= */
+.labels.is-cast { z-index: 1; }
+.who {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.who-hit {
+  position: absolute;
+  left: -22px;
+  top: -52px;
+  width: 44px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
   pointer-events: auto;
-  transform: translate(-50%, -100%) scale(1);
+  cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
 }
-.spot.is-on .spot-name:hover { transform: translate(-50%, -100%) scale(1.06); }
-.spot.is-on .spot-name:active { transform: translate(-50%, calc(-100% + 3px)) scale(1); box-shadow: 0 1px 0 var(--frame-deep); }
-@media (min-width: 720px) {
-  .spot-name b { font-size: 15.5px; }
-  .spot-name i { font-size: 11px; }
+.who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 話しかけられる人は、足元がふわっと光る。頭の上に印は出さない（島が!だらけになる） */
+.who.is-calling .who-hit::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 34px;
+  height: 12px;
+  margin-left: -17px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 246, 207, 0.9), rgba(255, 246, 207, 0));
+  animation: whoBreath 2.2s ease-in-out infinite;
 }
-/* マウスのある画面は島が大きく映るので、名前は最初から全部出しておく。
-   ただし薄く小さく。近づいた1つだけが濃くなって「はいる」が出る。 */
-@media (hover: hover) and (min-width: 1024px) {
-  .spot-name { opacity: 0.62; transform: translate(-50%, -100%) scale(0.8); }
-  .spot.is-idle .spot-name i,
-  .spot.is-near .spot-name i { display: none; }
-  .spot-hit:hover + .spot-name { opacity: 1; }
+@keyframes whoBreath {
+  0%, 100% { opacity: 0.45; transform: scale(0.9); }
+  50% { opacity: 0.9; transform: scale(1.15); }
+}
+.who-name {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  transform: translate(-50%, 0);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 3px;
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.92);
+  border: 2px solid var(--frame-dark);
+  box-shadow: 0 2px 0 var(--frame-deep);
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 124px;
+  overflow: hidden;
+}
+.who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.who-name b { overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   吹き出し
+   ---------------------------------------------------------
+   島の上に浮かべると見切れるので、画面の上にどんと出す。
+   ゲームのセリフ窓と同じで、どこを押しても閉じる。
+   ========================================================= */
+.talkbox {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: calc(14px + env(safe-area-inset-top));
+  z-index: 8;
+  padding: 15px 18px 12px;
+  border: 4px solid var(--frame-dark);
+  border-radius: 20px;
+  background: linear-gradient(#fffdf6, #fff4de);
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  animation: talkIn 0.22s cubic-bezier(0.34, 1.5, 0.64, 1);
+  pointer-events: none;
+}
+.talkbox p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.talkbox-tap {
+  display: block;
+  margin-top: 8px;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  text-align: right;
+}
+@keyframes talkIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+/* 話しているあいだは、島の上のUIを引っ込める */
+.stage.is-talking .spot-mark,
+.stage.is-talking .spot-badge,
+.stage.is-talking .who-name { opacity: 0; transition: opacity 0.18s; }
+@media (min-width: 640px) {
+  .talkbox { left: 50%; right: auto; transform: translateX(-50%); width: min(560px, 70vw); }
+  @keyframes talkIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.97); }
+    to { opacity: 1; transform: translateX(-50%); }
+  }
 }
 
 .walk-hint {
@@ -522,47 +679,6 @@ img { max-width: 100%; }
   box-shadow: var(--pop), var(--shadow-2);
 }
 .badge em { font-style: normal; }
-
-/* 住人チップ */
-/* スマホの下カード */
-.sheet {
-  position: absolute;
-  left: 10px; right: 10px;
-  bottom: calc(var(--bar-h) + 10px + env(safe-area-inset-bottom));
-  z-index: 8;
-  display: flex; align-items: center; gap: 11px;
-  background: var(--paper);
-  border: 3px solid var(--frame);
-  border-radius: var(--r-3);
-  padding: 11px 12px;
-  box-shadow: 0 6px 0 var(--frame-dark), var(--shadow-3);
-  animation: sheetUp 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-@keyframes sheetUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
-.sheet-icon {
-  width: 46px; height: 46px; flex: none;
-  object-fit: contain; object-position: center bottom;
-}
-.sheet-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; flex: 1; }
-.sheet-text b { font-size: 15.5px; font-weight: 900; }
-.sheet-text i { font-size: 11.5px; font-style: normal; font-weight: 700; color: var(--ink-3); }
-.sheet-go {
-  flex: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 13.5px; font-weight: 900;
-  padding: 9px 16px;
-  border-radius: 999px;
-  box-shadow: 0 4px 0 #cf4867;
-}
-.sheet-go:active { transform: translateY(2px); box-shadow: 0 2px 0 #cf4867; }
-.sheet-close {
-  position: absolute; top: -12px; right: -6px;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--paper); border: 3px solid var(--frame);
-  font-size: 15px; font-weight: 900; line-height: 1;
-  box-shadow: var(--shadow-1);
-}
 
 /* ヒーローの高さ: スマホは短くして下のセクションを覗かせる */
 .stage { height: 86svh; min-height: 520px; max-height: 780px; }
@@ -1121,137 +1237,6 @@ img { max-width: 100%; }
    勝手に消えると、読みかけで消えていちばん困る。
    --------------------------------------------------------------------- */
 
-/* 住人を押す所。住人は島の主役なので、建物の当たり判定より手前に置く。 */
-.who-hit {
-  position: absolute;
-  padding: 0;
-  border: 0;
-  background: none;
-  pointer-events: auto;
-  cursor: pointer;
-  border-radius: 12px;
-  -webkit-tap-highlight-color: transparent;
-  z-index: 5;
-}
-.who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
-
-/* 「話しかけて」の合図。数人ずつ順番に出るので、島がうるさくならない。 */
-.who-call {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  pointer-events: auto;
-  width: 26px; height: 26px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  border: 2.5px solid var(--frame-dark);
-  background: radial-gradient(circle at 34% 28%, #fff6cf, var(--gold));
-  box-shadow: 0 3px 0 var(--frame-deep);
-  color: var(--frame-deep);
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1;
-  padding: 0 0 2px;
-  animation: callHop 1.5s ease-in-out infinite;
-  z-index: 6;
-}
-@keyframes callHop {
-  0%, 100% { transform: translate(-50%, -100%); }
-  50% { transform: translate(-50%, calc(-100% - 5px)); }
-}
-.who-call:active { transform: translate(-50%, calc(-100% + 2px)); box-shadow: 0 1px 0 var(--frame-deep); }
-@media (prefers-reduced-motion: reduce) { .who-call { animation: none; } }
-
-/* 名前と YouTube のアイコン。本人が「出す」と決めた人にだけ出る。 */
-.who {
-  position: absolute;
-  transform: translate(-50%, 0);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px 2px 3px;
-  border-radius: 999px;
-  background: rgba(255, 253, 246, 0.92);
-  border: 2px solid var(--frame-dark);
-  box-shadow: 0 2px 0 var(--frame-deep);
-  font-size: 10.5px;
-  font-weight: 900;
-  color: var(--ink);
-  white-space: nowrap;
-  pointer-events: none;
-  max-width: 132px;
-  overflow: hidden;
-  z-index: 2;
-}
-.who img { width: 15px; height: 15px; border-radius: 50%; flex: none; }
-.who b { overflow: hidden; text-overflow: ellipsis; }
-
-/* 吹き出し。閉じるまで出しっぱなし。 */
-.chatter {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  width: max-content;
-  max-width: min(250px, 74vw);
-  background: var(--paper);
-  border: 3px solid var(--frame);
-  border-radius: 16px;
-  padding: 9px 13px 34px;
-  box-shadow: 0 4px 0 var(--frame-dark), var(--shadow-2);
-  pointer-events: auto;
-  animation: chatterPop 0.22s cubic-bezier(0.34, 1.5, 0.64, 1);
-  z-index: 7;
-}
-.chatter p {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 800;
-  line-height: 1.65;
-  color: var(--ink);
-}
-.chatter::before,
-.chatter::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -11px;
-  margin-left: -6px;
-  border: 6px solid transparent;
-  border-top-color: var(--frame);
-}
-.chatter::after { bottom: -6px; border-top-color: var(--paper); }
-/* 閉じる。ここを押さないと消えない。 */
-.chatter-x {
-  position: absolute;
-  top: -11px; right: -11px;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  border: 3px solid var(--frame);
-  background: var(--paper);
-  color: var(--ink-3);
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1;
-  box-shadow: 0 2px 0 var(--frame-dark);
-}
-.chatter-x:active { transform: translateY(2px); box-shadow: none; }
-/* もうひとこと。セリフはシャッフル順に出るので、同じ話にはならない。 */
-.chatter-more {
-  position: absolute;
-  left: 13px; bottom: 8px;
-  padding: 3px 11px;
-  border-radius: 999px;
-  border: 2px solid var(--frame-dark);
-  background: linear-gradient(#fffdf6, #fff3da);
-  color: var(--ink);
-  font-size: 10.5px;
-  font-weight: 900;
-  box-shadow: 0 2px 0 var(--frame-deep);
-}
-.chatter-more:active { transform: translateY(2px); box-shadow: none; }
-@keyframes chatterPop {
-  from { transform: translate(-50%, -92%) scale(0.86); opacity: 0; }
-  to { transform: translate(-50%, -100%) scale(1); opacity: 1; }
-}
-
 /* --- スマホ: 島の下にまとめた操作バー --- */
 /* 島の上に9つの名札を置くと島が見えなくなるので、行き先はここに並べる。
    浮いたボタンを island の上に散らさないことで、重なりも起きない。 */
@@ -1285,8 +1270,11 @@ img { max-width: 100%; }
 
 }
 .island-bar-scroll::-webkit-scrollbar { display: none; }
-/* スクロールの終わりとズームボタンの境目。重なって見えないよう仕切りを1本入れる */
-.island-bar-scroll { border-right: 1px solid rgba(255, 253, 246, 0.22); padding-right: 8px; }
+/* 右端が「切れている」ように見えないよう、ぼかして終わらせる */
+.island-bar-scroll {
+  padding-right: 14px;
+  mask-image: linear-gradient(90deg, #000 0 calc(100% - 26px), transparent 100%);
+}
 .bar-spot {
   flex: none;
   display: inline-flex;
@@ -2236,3 +2224,33 @@ img { max-width: 100%; }
 .nnav a { display: inline-flex; align-items: center; gap: 7px; }
 .ic.is-flip { transform: scaleX(-1); }
 .nspot-credit { display: inline-flex; align-items: center; gap: 4px; }
+
+/* 下のバー: 「これから」だけ日数を出す */
+.bar-spot em {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #fffdf6;
+  background: var(--accent-deep, #d4552a);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 2px;
+}
+
+/* --- あやと島について: 住人をちらっと --- */
+.crowd-peek { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+.crowd-peek img {
+  width: 46px; height: 46px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+/* 一覧に添える小さなスプライト */
+.mini-icon {
+  width: 22px; height: 22px;
+  object-fit: contain; object-position: center bottom;
+  vertical-align: -0.32em;
+}
+
+/* アイコンにした矢印は、文字だったときと同じ位置に置く */
+.tile-go { flex: none; color: var(--ink-3); }
+.chip .ic, .tile .ic { vertical-align: -0.16em; }

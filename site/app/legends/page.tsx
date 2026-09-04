@@ -4,6 +4,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import { Panel } from "@/components/ui/Bits";
 import { LEGENDS } from "@/content/legends";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "伝説の丘",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function LegendsPage() {
   return (
-    <PageShell current="legends" crumbs={[{ label: "伝説の丘" }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "伝説の丘" }]}>
       <PageHead
         icon="hall-museum"
         title="伝説の丘"
@@ -27,7 +28,7 @@ export default function LegendsPage() {
               <b>{l.title}</b>
               <i>{l.span ?? l.date.replace(/-/g, "/")}</i>
             </span>
-            <span className="tile-go" aria-hidden>→</span>
+            <Icon name="right" size={15} className="tile-go" />
           </Link>
         ))}
       </div>
@@ -42,7 +43,7 @@ export default function LegendsPage() {
             <b>イランまで歩く</b>
             <i>12日間・約380km の記録</i>
           </span>
-          <span className="tile-go" aria-hidden>→</span>
+          <Icon name="right" size={15} className="tile-go" />
         </Link>
       </Panel>
     </PageShell>

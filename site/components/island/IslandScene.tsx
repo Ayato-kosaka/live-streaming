@@ -1,4 +1,4 @@
-import { ISLAND, GRASS_INSET, PLATEAU, SPOTS, WORLD, type SpotId } from "./layout";
+import { ISLAND, GRASS_INSET, PLACES, PLATEAU, SPOTS, WORLD, type SpotId } from "./layout";
 import { blob, inset, insideRadii, pointAt, radiiToPoints, rng, type Pt } from "./geometry";
 import { Sprite } from "./Sprite";
 
@@ -62,16 +62,18 @@ export type Item = {
 /** 揺れるもの(草木)かどうか。建物や岩は揺れない。 */
 const SWAYS = /^(tree|bush|grass|flower|mushroom|lily)/;
 
-const P = Object.fromEntries(SPOTS.map((s) => [s.id, s])) as Record<SpotId, (typeof SPOTS)[number]>;
+const P = Object.fromEntries(PLACES.map((s) => [s.id, s])) as Record<SpotId, (typeof PLACES)[number]>;
 
 /** 建物。押せる範囲と絵がズレると「押したのに反応しない」になるので、
-    絵は SPOTS の定義そのものから作る。ここが唯一の出どころ。 */
-const BUILDINGS: Item[] = SPOTS.map((sp) => ({
+    絵は PLACES の定義そのものから作る。ここが唯一の出どころ。
+    押せるのは入口の6つだけ。残りは景色として建っているだけで、spot を付けない。 */
+const ENTRANCES = new Set(SPOTS.map((s) => s.id));
+const BUILDINGS: Item[] = PLACES.map((sp) => ({
   n: sp.icon,
   x: sp.x,
   y: sp.y,
   s: sp.size,
-  spot: sp.id,
+  spot: ENTRANCES.has(sp.id) ? sp.id : undefined,
 }));
 
 /** 建物のまわりの飾り。場所ごとに「何をしている所か」が伝わるように置く。 */
@@ -118,7 +120,7 @@ const shoreTrees: Item[] = (() => {
   for (let i = 0; i < 26; i++) {
     const t = i / 26 + (r() - 0.5) * 0.012;
     const [x, y] = pointAt(ISLAND.cx, ISLAND.cy, grassR, ISLAND.squash, t, 6 + r() * 16);
-    if (SPOTS.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
+    if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
     const palm = y > ISLAND.cy - 40 && r() < 0.55;
     out.push({
       n: palm ? "tree-palm" : r() < 0.34 ? "tree-fat" : r() < 0.6 ? "tree-round" : "tree-tall",
@@ -147,7 +149,7 @@ function scatter(
     const x = ISLAND.cx + (r() - 0.5) * 900;
     const y = ISLAND.cy + (r() - 0.5) * 840;
     if (!insideRadii(ISLAND.cx, ISLAND.cy, radii, x, y, ISLAND.squash, margin)) continue;
-    if (SPOTS.some((s) => Math.hypot(s.x - x, s.y - y) < 78)) continue;
+    if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 78)) continue;
     if (Math.hypot(POND.x - x, (POND.y - y) * 1.8) < 84) continue;
     if (out.some((p) => Math.hypot(p.x - x, p.y - y) < spread)) continue;
     const it = pick(r);

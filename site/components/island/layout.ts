@@ -37,133 +37,72 @@ export type SpotId =
   | "board"
   | "friends";
 
-export type Spot = {
+/** 島に建っている物。入口になっているものと、景色として置いてあるものがある。 */
+export type Place = {
   id: SpotId;
   /** 建物の足元 */
   x: number;
   y: number;
+  /** 建物の名前 */
   label: string;
-  emoji: string;
-  /** 島に建っている絵。バーの小さな絵にも同じものを使う。 */
+  /** スプライト名。バーの小さな絵にも同じものを使う。 */
   icon: string;
   /** 絵の高さ(ワールド単位)。押せる範囲もこの大きさから作るので、絵と一致させる。 */
   size: number;
-  href: string;
-  blurb: string;
-  /** 名札の向き。建物と重ならないように。 */
-  labelAt?: "below" | "above";
 };
 
-export const SPOTS: Spot[] = [
-  {
-    id: "streams",
-    x: 520,
-    y: 600,
-    label: "配信やぐら",
-    emoji: "📺",
-    icon: "tower-studio",
-    size: 128,
-    href: "/streams",
-    blurb: "どんな配信をしてるか",
-    labelAt: "below",
-  },
-  {
-    id: "kitchen",
-    x: 330,
-    y: 706,
-    label: "キッチン小屋",
-    emoji: "🍳",
-    icon: "hut-kitchen",
-    size: 78,
-    href: "/kitchen",
-    blurb: "作ってきたごはん",
-    labelAt: "below",
-  },
-  {
-    id: "apps",
-    x: 812,
-    y: 700,
-    label: "アプリ工房",
-    emoji: "💻",
-    icon: "hut-workshop",
-    size: 78,
-    href: "/apps",
-    blurb: "旅先で作ってるアプリ",
-    labelAt: "below",
-  },
-  {
-    id: "map",
-    x: 262,
-    y: 846,
-    label: "旅の桟橋",
-    emoji: "🗺️",
-    icon: "signpost",
-    size: 54,
-    href: "/map",
-    blurb: "これまでに歩いた17カ国",
-    labelAt: "below",
-  },
-  {
-    id: "legends",
-    x: 736,
-    y: 462,
-    label: "伝説の丘",
-    emoji: "🏆",
-    icon: "hall-museum",
-    size: 74,
-    href: "/legends",
-    blurb: "語り継がれてる企画",
-    labelAt: "below",
-  },
-  {
-    id: "now",
-    x: 452,
-    y: 556,
-    label: "いまのポスト",
-    emoji: "📮",
-    icon: "mailbox",
-    size: 44,
-    href: "/now",
-    blurb: "今どこで何してる",
-    labelAt: "above",
-  },
-  {
-    id: "next",
-    x: 296,
-    y: 548,
-    label: "これから",
-    emoji: "✈️",
-    icon: "tent",
-    size: 56,
-    href: "/next",
-    blurb: "次に行くところ",
-    labelAt: "below",
-  },
-  {
-    id: "board",
-    x: 610,
-    y: 872,
-    label: "企画掲示板",
-    emoji: "📋",
-    icon: "signboard",
-    size: 62,
-    href: "/board",
-    blurb: "みんなの企画提案",
-    labelAt: "below",
-  },
-  {
-    id: "friends",
-    x: 886,
-    y: 574,
-    label: "たき火広場",
-    emoji: "⛺",
-    icon: "campfire",
-    size: 34,
-    href: "/friends",
-    blurb: "愉快な仲間達",
-    labelAt: "below",
-  },
+/**
+ * 島に建っている物、ぜんぶ。
+ * 座標はここが唯一の出どころ。飾りの配置も明かりもこれを見て置く。
+ */
+export const PLACES: Place[] = [
+  { id: "streams", x: 520, y: 600, label: "配信やぐら", icon: "tower-studio", size: 128 },
+  { id: "kitchen", x: 330, y: 706, label: "キッチン小屋", icon: "hut-kitchen", size: 78 },
+  { id: "apps", x: 812, y: 700, label: "アプリ工房", icon: "hut-workshop", size: 78 },
+  { id: "map", x: 262, y: 846, label: "旅の桟橋", icon: "signpost", size: 54 },
+  { id: "legends", x: 736, y: 462, label: "伝説の丘", icon: "hall-museum", size: 74 },
+  { id: "now", x: 452, y: 556, label: "いまのポスト", icon: "mailbox", size: 44 },
+  { id: "next", x: 296, y: 548, label: "これから", icon: "tent", size: 66 },
+  { id: "board", x: 610, y: 872, label: "企画掲示板", icon: "signboard", size: 62 },
+  { id: "friends", x: 886, y: 574, label: "たき火広場", icon: "campfire", size: 46 },
 ];
+
+export type Spot = Place & {
+  href: string;
+  /** 名札に添える、そこで分かることの一言 */
+  blurb: string;
+  /** 出発までの日数を出す入口。いちばん気にされるところなので目立たせる。 */
+  countdown?: boolean;
+};
+
+/**
+ * 島の入口は6つだけ。
+ *
+ * 来た人が順に浮かべる問いに合わせてある（`docs/island-design.md`）。
+ *   あやと島について / どんな配信 / グルメアプリ / これから / 企画掲示板 / これまでの国
+ *
+ * キッチン小屋・伝説の丘・いまのポストは島に建っているが押せない。
+ * それぞれ親のページ（配信やぐら / あやと島について）の中から行く。
+ * 入口を増やしたくなったら、どれかの中に入れる。ここは6つのまま。
+ */
+const ENTRANCE: Record<string, Omit<Spot, keyof Place>> = {
+  friends: { href: "/about", blurb: "あやとって、どんな人", },
+  streams: { href: "/streams", blurb: "どんな配信をしてるか" },
+  apps: { href: "/apps", blurb: "グルメアプリを作ってる" },
+  next: { href: "/next", blurb: "これから何をするか", countdown: true },
+  board: { href: "/board", blurb: "自分も企画を出せる" },
+  map: { href: "/map", blurb: "これまでに歩いた国" },
+};
+
+/** 入口の並び順。名札の重なりを避けるため、上（奥）から順に並べる。 */
+const ORDER: SpotId[] = ["next", "friends", "streams", "apps", "board", "map"];
+
+export const SPOTS: Spot[] = ORDER.map((id) => {
+  const p = PLACES.find((x) => x.id === id)!;
+  return { ...p, ...ENTRANCE[id] };
+});
+
+export const placeById = (id: SpotId) => PLACES.find((p) => p.id === id)!;
 
 /** あやとの立ち位置(初期) */
 export const AYATO_HOME = { x: 646, y: 790 };

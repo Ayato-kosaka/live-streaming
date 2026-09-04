@@ -4,6 +4,7 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import { LEGENDS, legendBySlug } from "@/content/legends";
+import Icon from "@/components/ui/Icon";
 
 export function generateStaticParams() {
   return LEGENDS.map((l) => ({ slug: l.slug }));
@@ -13,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const l = legendBySlug(slug);
   if (!l) return {};
-  return { title: `${l.emoji} ${l.title}`, description: l.lead };
+  return { title: l.title, description: l.lead };
 }
 
 export default async function LegendPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -24,7 +25,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   const prev = LEGENDS[i - 1];
   const next = LEGENDS[i + 1];
   return (
-    <PageShell current="legends" crumbs={[{ label: "伝説の丘", href: "/legends" }, { label: l.title }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "伝説の丘", href: "/legends" }, { label: l.title }]}>
       <PageHead
         icon={l.icon}
         title={l.title}
@@ -46,8 +47,22 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         </div>
       </Panel>
       <nav className="pager">
-        {prev ? <Link href={`/legends/${prev.slug}`}>← {prev.emoji} {prev.title}</Link> : <span />}
-        {next ? <Link href={`/legends/${next.slug}`}>{next.emoji} {next.title} →</Link> : <span />}
+        {prev ? (
+          <Link href={`/legends/${prev.slug}`}>
+            <Icon name="right" size={13} className="is-flip" />
+            {prev.title}
+          </Link>
+        ) : (
+          <span />
+        )}
+        {next ? (
+          <Link href={`/legends/${next.slug}`}>
+            {next.title}
+            <Icon name="right" size={13} />
+          </Link>
+        ) : (
+          <span />
+        )}
       </nav>
     </PageShell>
   );

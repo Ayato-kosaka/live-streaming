@@ -78,7 +78,6 @@ export const UI = {
   close: "とじる",
   more: "もっと見る",
   talkTo: "話しかける",
-  moreTalk: "もうひとこと",
 };
 
 /** 企画掲示板。 */

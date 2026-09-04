@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import Icon from "./Icon";
 
 /** YouTube のサムネ + 再生リンク。埋め込みはクリックしてから読み込む(軽さのため)。 */
 export function StreamCard({
@@ -107,7 +108,7 @@ export function TileLink({
         {note && <i>{note}</i>}
       </span>
       <span className="tile-go" aria-hidden>
-        →
+        <Icon name="right" size={15} />
       </span>
     </Link>
   );

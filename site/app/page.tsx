@@ -13,6 +13,7 @@ import { PLANS } from "@/content/plans";
 import { GUIDE, HERO, HOME } from "@/content/voice";
 import { Gull } from "@/components/island/Guide";
 import NextUp from "@/components/live/NextUp";
+import Icon from "@/components/ui/Icon";
 
 export default function Home() {
   const s = STATS_FALLBACK;
@@ -46,11 +47,6 @@ export default function Home() {
               {/* 見出しは絵だけなので、読み上げと検索のために文字も置いておく */}
               <span className="sr-only">あやと島 — 毎晩22時、世界のどこかから生配信</span>
             </h1>
-            <div className="hero-badges">
-              <Link className="badge" href="/now">
-                いま {NOW_FALLBACK.place}
-              </Link>
-            </div>
           </div>
         </div>
         <div className="scroll-cue" aria-hidden>
@@ -202,7 +198,7 @@ export default function Home() {
                   <b>{l.label}</b>
                   <i>{l.note}</i>
                 </span>
-                <span className="tile-go" aria-hidden>↗</span>
+                <Icon name="external" size={15} className="tile-go" />
               </a>
             ))}
           </div>

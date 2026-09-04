@@ -10,7 +10,7 @@
  * 住人ごとに持ち場(仕事のある場所)があって、その周りをうろうろする。
  */
 
-import { GRASS_INSET, ISLAND, SPOTS, type SpotId } from "./layout";
+import { GRASS_INSET, ISLAND, PLACES, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 
 const HOME_R = inset(ISLAND.radii, GRASS_INSET + 12);
@@ -72,7 +72,7 @@ export type Villager = {
   photo?: string;
 };
 
-const SPOT = Object.fromEntries(SPOTS.map((s) => [s.id, s])) as Record<SpotId, (typeof SPOTS)[number]>;
+const SPOT = Object.fromEntries(PLACES.map((s) => [s.id, s])) as Record<SpotId, (typeof PLACES)[number]>;
 
 /** 島の草地からはみ出さないところまで引き戻す。 */
 export function clampToGrass(x: number, y: number): [number, number] {
@@ -93,7 +93,7 @@ function wander(v: Villager, r: () => number): [number, number] {
     const a = r() * Math.PI * 2;
     const d = 18 + r() * v.hr;
     const [x, y] = clampToGrass(v.hx + Math.cos(a) * d, v.hy + Math.sin(a) * d * 0.7);
-    if (SPOTS.some((s) => Math.hypot(s.x - x, (s.y - y) * 1.4) < 42)) continue;
+    if (PLACES.some((s) => Math.hypot(s.x - x, (s.y - y) * 1.4) < 42)) continue;
     return [x, y];
   }
   return [v.hx, v.hy];

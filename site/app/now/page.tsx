@@ -4,6 +4,7 @@ import { GUIDE } from "@/content/voice";
 import NowLive from "@/components/live/NowLive";
 import { Panel } from "@/components/ui/Bits";
 import { PROFILE, LINKS } from "@/content/site";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "いま何してる",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function NowPage() {
   return (
-    <PageShell current="now" crumbs={[{ label: "いまのポスト" }]}>
+    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "いまのポスト" }]}>
       <PageHead
         icon="mailbox"
         title="いま何してる"
@@ -40,7 +41,7 @@ export default function NowPage() {
                 <b>{l.label}</b>
                 <i>{l.note}</i>
               </span>
-              <span className="tile-go" aria-hidden>↗</span>
+              <Icon name="external" size={15} className="tile-go" />
             </a>
           ))}
         </div>

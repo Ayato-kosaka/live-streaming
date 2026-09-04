@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import { APPS, appBySlug } from "@/content/apps";
+import Icon from "@/components/ui/Icon";
 
 export function generateStaticParams() {
   return APPS.map((a) => ({ slug: a.slug }));
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const a = appBySlug(slug);
   if (!a) return {};
-  return { title: `${a.emoji} ${a.name}`, description: a.summary };
+  return { title: a.name, description: a.summary };
 }
 
 const KIND: Record<string, { label: string; color: string }> = {
@@ -36,7 +37,8 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         lead={a.tagline}
         meta={a.links.map((l) => (
           <a key={l.href} className="chip dark" href={l.href} target="_blank" rel="noopener noreferrer">
-            ⬇️ {l.label}
+            <Icon name={l.label.includes("Google") ? "googleplay" : l.label.includes("App Store") ? "appstore" : "external"} size={15} />
+            {l.label}
           </a>
         ))}
       />
@@ -61,7 +63,8 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
                 {m.note && <i>{m.note}</i>}
                 {m.videoId && (
                   <a href={`https://www.youtube.com/watch?v=${m.videoId}`} target="_blank" rel="noopener noreferrer">
-                    この日の配信 ↗
+                    この日の配信
+                    <Icon name="external" size={12} />
                   </a>
                 )}
               </div>

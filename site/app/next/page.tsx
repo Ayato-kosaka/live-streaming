@@ -4,6 +4,7 @@ import { GUIDE } from "@/content/voice";
 import NextPlans from "@/components/live/NextPlans";
 import { Panel } from "@/components/ui/Bits";
 import Link from "next/link";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "これから",
@@ -28,7 +29,7 @@ export default function NextPage() {
             <b>いちばん大きい企画は「ヒッチハイクで北欧へ」</b>
             <i>9月11日出発。ルートと国ごとの見どころ</i>
           </span>
-          <span className="tile-go" aria-hidden>→</span>
+          <Icon name="right" size={15} className="tile-go" />
         </Link>
         <Link className="tile" href="/board">
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
@@ -36,7 +37,7 @@ export default function NextPage() {
             <b>企画掲示板へ</b>
             <i>ログインなしで出せます</i>
           </span>
-          <span className="tile-go" aria-hidden>→</span>
+          <Icon name="right" size={15} className="tile-go" />
         </Link>
       </Panel>
       <Panel>
@@ -51,7 +52,7 @@ export default function NextPage() {
             <b>企画のページを作る</b>
             <i>いまは、あやとが声をかけた人だけ</i>
           </span>
-          <span className="tile-go" aria-hidden>→</span>
+          <Icon name="right" size={15} className="tile-go" />
         </Link>
       </Panel>
     </PageShell>

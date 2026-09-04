@@ -5,6 +5,7 @@ import { LiveNumber } from "@/lib/liveStats";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "愉快な仲間達",
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
   return (
-    <PageShell current="friends" crumbs={[{ label: "たき火広場" }]}>
+    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "たき火広場" }]}>
       <PageHead
         icon="campfire"
         title="愉快な仲間達"
@@ -36,7 +37,7 @@ export default function FriendsPage() {
         <div className="crowd">
           {RESIDENTS.map((r, i) => (
             <span className="crowd-one" key={i}>
-              <span className="crowd-emoji" aria-hidden>{r.emoji ?? "🙂"}</span>
+              
               {r.icon && (
                 <img src={`https://lh3.googleusercontent.com/d/${r.icon}=s128`} alt="" loading="lazy" />
               )}
@@ -60,7 +61,7 @@ export default function FriendsPage() {
               <b>投げ銭してキャラクターを作る</b>
               <i>{doneru.note}</i>
             </span>
-            <span className="tile-go" aria-hidden>↗</span>
+            <Icon name="external" size={15} className="tile-go" />
           </a>
           <a className="tile" href={CHARACTER_DRIVE} target="_blank" rel="noopener noreferrer">
             <img className="tile-icon" src="/sprites/stall.webp" alt="" />
@@ -68,7 +69,7 @@ export default function FriendsPage() {
               <b>キャラクター置き場</b>
               <i>Googleドライブ・自由にダウンロードOK</i>
             </span>
-            <span className="tile-go" aria-hidden>↗</span>
+            <Icon name="external" size={15} className="tile-go" />
           </a>
         </div>
       </Panel>
