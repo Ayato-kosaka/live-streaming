@@ -52,3 +52,6 @@ pip-delete-this-directory.txt
 
 # fetch_chat_data.py
 /tmp/youtube_chat
+# あやと島(Next.js)のビルド成果物
+site/out/
+site/.next/

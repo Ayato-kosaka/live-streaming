@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/island-api/**",
+        "function": "islandApi"
+      },
+      {
         "source": "/nanitabeyo-weekly-report-proxy",
         "function": "nanitabeyoWeeklyReportProxy"
       },
@@ -16,10 +20,67 @@
         "function": "nanitabeyoWeeklyReportProxy"
       },
       {
+        "source": "/alertbox",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/alertbox/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/chat-display",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/chat-display/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/credits",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/credits/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/daily_user_stats",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/daily_user_stats/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/nanitabeyo-dish-category-recommendation-progress",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/nanitabeyo-dish-category-recommendation-progress/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/ve-comment",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/ve-comment/**",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/ve-postit",
+        "destination": "/expo-app.html"
+      },
+      {
+        "source": "/ve-postit/**",
+        "destination": "/expo-app.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
-    ]
+    ],
+    "cleanUrls": true
   },
   "functions": [
     {
@@ -46,5 +107,8 @@
       "enabled": false
     },
     "singleProjectMode": true
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

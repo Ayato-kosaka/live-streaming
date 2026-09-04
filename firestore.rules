@@ -1,0 +1,33 @@
+rules_version = '2';
+
+/**
+ * Firestore セキュリティルール。
+ *
+ * 方針:
+ *   - 既存の月末配信ページ(OBSとスマホコントローラの同期)は今まで通り動かす
+ *   - あやと島のデータはブラウザから直接触らせない。書き込みも読み取りも
+ *     Cloud Functions(islandApi)経由にする。Admin SDK はルールを迂回するので、
+ *     ここでは全部 deny にしておけばよい
+ *   - 明示していないものは全部 deny
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 月末配信の進行同期。合言葉つきのドキュメントIDを知っている人だけが使う想定。
+    match /monthlyReview/{docId} {
+      allow read, write: if true;
+    }
+
+    // あやと島。ブラウザからは触らせない(islandApi 経由のみ)。
+    match /island/{docId} { allow read, write: if false; }
+    match /islandIdeas/{docId} { allow read, write: if false; }
+    match /islandNotes/{docId} { allow read, write: if false; }
+    match /islandVotes/{docId} { allow read, write: if false; }
+    match /islandRate/{docId} { allow read, write: if false; }
+
+    // それ以外は禁止
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
