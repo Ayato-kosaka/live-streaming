@@ -22,7 +22,7 @@ export default function AppsPage() {
       {APPS.map((a) => (
         <Panel key={a.slug}>
           <h2>
-            <img className="h2-icon" src={`/sprites/${a.icon}.webp`} alt="" /> {a.name}
+            <img className={a.logo ? "h2-logo" : "h2-icon"} src={a.logo ?? `/sprites/${a.icon}.webp`} alt="" /> {a.name}
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
             <span className="chip">{a.status}</span>
@@ -32,7 +32,7 @@ export default function AppsPage() {
           <p>{a.summary}</p>
           <div className="tiles" style={{ marginTop: 14 }}>
             <Link className="tile" href={`/apps/${a.slug}`}>
-              <img className="tile-icon" src={`/sprites/${a.icon}.webp`} alt="" />
+              <img className={a.logo ? "tile-logo" : "tile-icon"} src={a.logo ?? `/sprites/${a.icon}.webp`} alt="" />
               <span className="tile-text">
                 <b>{a.name}の歴史を見る</b>
                 <i>作り始めから今日までの全部</i>
@@ -41,7 +41,7 @@ export default function AppsPage() {
             </Link>
             {a.links.map((l) => (
               <a key={l.href} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-                <img className="tile-icon" src="/sprites/food-plate-dinner.webp" alt="" />
+                <img className={a.logo ? "tile-logo" : "tile-icon"} src={a.logo ?? "/sprites/food-plate-dinner.webp"} alt="" />
                 <span className="tile-text">
                   <b>{l.label}</b>
                   <i>ダウンロード</i>

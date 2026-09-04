@@ -23,7 +23,12 @@ const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやとは住人よりひとまわり大きい。主人公なので。
     ただし小屋(78)と同じ背丈になると急に浮くので、そこまでは大きくしない。 */
 const AYATO_H = 58;
-const VILLAGER_H = 42;
+const VILLAGER_H = 46;
+/** 視聴者さんのキャラクターは正方形の絵で余白があるので、少し大きめに置く */
+const GUEST_H = 62;
+
+/** 視聴者さんのキャラクター置き場(Googleドライブ)の画像URL */
+const guestIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
@@ -59,11 +64,30 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   // JS の判定を待たないぶん、島が一瞬見えてから引く、というちらつきが起きない。
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
   const [arriving, setArriving] = useState(true);
+  /** 読み込めたキャラ画像。読めるまでは島の住人の姿で立たせておく */
+  const [readyIcons, setReadyIcons] = useState<Set<string>>(new Set());
   const [, tick] = useState(0);
 
   const villagers = useMemo(() => createVillagers(residents), [residents]);
   const dice = useRef(rng(777));
   const clock = useRef(0);
+
+  // キャラ画像は外から取ってくるので、先に読んでおく。
+  // SVG の image に直接URLを入れると、失敗したとき壊れた画像の枠が出てしまう。
+  useEffect(() => {
+    let alive = true;
+    for (const v of villagers) {
+      if (!v.icon) continue;
+      const img = new Image();
+      img.src = guestIconUrl(v.icon);
+      img.onload = () => {
+        if (alive) setReadyIcons((prev) => (prev.has(v.icon!) ? prev : new Set(prev).add(v.icon!)));
+      };
+    }
+    return () => {
+      alive = false;
+    };
+  }, [villagers]);
 
   useEffect(() => {
     let seen = false;
@@ -103,14 +127,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
   const span = useMemo(() => {
     const aspect = box.w / Math.max(1, box.h);
-    if (mode === "phone") return wide ? 1060 : 520;
+    if (mode === "phone") return wide ? 980 : 500;
     if (mode === "tablet") return Math.max(1120, 980 * aspect);
     return Math.max(1220, 880 * aspect);
   }, [mode, wide, box.w, box.h]);
 
   /** カメラの目標地点 */
   const camTarget = useCallback(() => {
-    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 100 };
+    // 下にバーとカードが出るぶん、島は画面の上寄りに置く
+    if (follow) return { x: avatarRef.current.x, y: avatarRef.current.y - 130 };
+    if (mode === "phone") return { x: ISLAND.cx, y: ISLAND.cy - 150 };
     // 上に見出しが乗るので、島は画面のやや下に置く
     if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy - 62 };
     return { x: ISLAND.cx, y: ISLAND.cy - 40 };
@@ -151,7 +177,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const n = Math.hypot(vx, vy) || 1;
         const sp = 4.2 * (dt / 16.67);
         const [nx, ny] = clampToIsland(x + (vx / n) * sp, y + (vy / n) * sp);
-        if (vx !== 0) setFacing(vx > 0 ? 1 : -1);
+        // ayato.png は左を向いている絵。右へ歩くときに左右を反転する
+        if (vx !== 0) setFacing(vx > 0 ? -1 : 1);
         return { x: nx, y: ny };
       });
 
@@ -202,6 +229,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     top: ((wy - vbY) / vbH) * box.h,
   });
 
+  /** 場所を選んで、あやとをそこまで歩かせる。目印からも下のバーからも呼ぶ。 */
+  const goTo = (s: Spot) => {
+    setSelected(s);
+    target.current = { x: s.x, y: s.y + 30 };
+    setHint(false);
+    if (wide) setWide(false);
+  };
+
   const onStageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("[data-ui]")) return;
     const r = hostRef.current!.getBoundingClientRect();
@@ -245,11 +280,33 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           }
           if (l.kind === "villager") {
             const { v, pose } = l;
+            // 視聴者さんのキャラクターは透過の絵なので、そのまま島に立たせる。
+            // 絵が無い人・読めなかった人だけ、島の住人の姿を借りる。
+            const guest = !!v.icon && readyIcons.has(v.icon);
+            const h = guest ? GUEST_H : VILLAGER_H;
             return (
               <g key={l.key} transform={`translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)})`}>
-                <ellipse cx={0} cy={-pose.dy} rx={13} ry={4.6} fill="#134a2c" opacity={0.18} />
+                <ellipse
+                  cx={0}
+                  cy={-pose.dy}
+                  rx={guest ? 17 : 13}
+                  ry={guest ? 6 : 4.6}
+                  fill="#134a2c"
+                  opacity={0.18}
+                />
                 <g transform={`rotate(${pose.rot.toFixed(1)})`}>
-                  <Sprite name={v.look} x={0} y={0} size={VILLAGER_H} flip={v.facing < 0} />
+                  {guest ? (
+                    <image
+                      href={guestIconUrl(v.icon as string)}
+                      x={-h / 2}
+                      y={-h}
+                      width={h}
+                      height={h}
+                      preserveAspectRatio="xMidYMax meet"
+                    />
+                  ) : (
+                    <Sprite name={v.look} x={0} y={0} size={VILLAGER_H} flip={v.facing < 0} />
+                  )}
                 </g>
               </g>
             );
@@ -301,32 +358,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         })}
       </div>
 
-      {/* 住人の頭の上に、見に来てくれている人のアイコンを小さく出す */}
-      <div className="labels" aria-hidden>
-        {villagers.map((v, i) => {
-          if (!v.icon && !v.emoji) return null;
-          if (v.says) return null;
-          const s = toScreen(v.x, v.y - VILLAGER_H - 12);
-          if (s.left < -60 || s.left > box.w + 60 || s.top < -60 || s.top > box.h + 60) return null;
-          const scale = Math.max(0.5, Math.min(1.05, box.w / vbW));
-          return (
-            <span key={i} className="resident-chip" style={{ left: s.left, top: s.top, ["--rs" as string]: scale }}>
-              <span className="resident-emoji">{v.emoji || "🙂"}</span>
-              {v.icon && (
-                <img
-                  src={`https://lh3.googleusercontent.com/d/${v.icon}=s96`}
-                  alt=""
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              )}
-            </span>
-          );
-        })}
-      </div>
-
       {/* 建物ラベル: PCは名前つき、スマホはピン */}
       <div className="labels">
         {SPOTS.map((s) => {
@@ -340,12 +371,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 key={s.id}
                 data-ui
                 className={`spot-pin${selected?.id === s.id ? " is-on" : ""}`}
-                style={{ left: p.left, top: p.top, ["--ps" as string]: Math.max(0.66, Math.min(1.1, box.w / vbW)) }}
-                onClick={() => {
-                  setSelected(s);
-                  target.current = { x: s.x, y: s.y + 30 };
-                  setHint(false);
-                }}
+                style={{ left: p.left, top: p.top }}
+                onClick={() => goTo(s)}
                 aria-label={s.label}
               >
                 <img src={`/sprites/${s.icon}.webp`} alt="" />
@@ -373,7 +400,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         })}
       </div>
 
-      {/* スマホ: 選んだ場所のカード */}
+      {/* スマホ: 選んだ場所のカード。下の場所バーの上に積む */}
       {mode === "phone" && selected && (
         <div className="sheet" data-ui>
           <img className="sheet-icon" src={`/sprites/${selected.icon}.webp`} alt="" />
@@ -386,10 +413,25 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         </div>
       )}
 
+      {/* スマホ: 島の上に名札を並べると島が隠れるので、行き先は下のバーにまとめる */}
       {mode === "phone" && (
-        <button data-ui className="zoom-toggle" onClick={() => setWide((v) => !v)}>
-          {wide ? UI.comeDown : UI.lookAround}
-        </button>
+        <div className="island-bar" data-ui>
+          <div className="island-bar-scroll">
+            {SPOTS.map((s) => (
+              <button
+                key={s.id}
+                className={`bar-spot${selected?.id === s.id ? " is-on" : ""}`}
+                onClick={() => goTo(s)}
+              >
+                <img src={`/sprites/${s.icon}.webp`} alt="" />
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
+          <button className="bar-zoom" onClick={() => setWide((v) => !v)}>
+            {wide ? UI.comeDown : UI.lookAround}
+          </button>
+        </div>
       )}
 
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}

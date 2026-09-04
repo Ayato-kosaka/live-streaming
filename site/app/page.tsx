@@ -1,6 +1,7 @@
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
+import { LiveNumber } from "@/lib/liveStats";
 import { Panel, Stat, TileLink, StreamCard } from "@/components/ui/Bits";
 import { IslandFooter } from "@/components/ui/PageShell";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -22,10 +23,10 @@ export default function Home() {
           <div className="hero-copy">
             <p className="eyebrow">{HERO.eyebrow}</p>
             <h1>あやと島</h1>
+            {/* スマホでは1行目だけ。2行とも出すと島が文字で埋まる */}
             <p className="lede">
-              {HERO.lede[0]}
-              <br />
-              {HERO.lede[1]}
+              <span>{HERO.lede[0]}</span>
+              <span className="lede-more">{HERO.lede[1]}</span>
             </p>
             <div className="hero-badges">
               <Link className="badge" href="/now">
@@ -54,10 +55,14 @@ export default function Home() {
             <p key={i}>{p}</p>
           ))}
           <div className="stats" style={{ marginTop: 16 }}>
-            <Stat value={s.streams.toLocaleString()} label="配信本数" sub={`${s.since.replace(/-/g, "/")} から`} />
+            <Stat
+              value={<LiveNumber statKey="streams" fallback={s.streams} />}
+              label="配信本数"
+              sub={`${s.since.replace(/-/g, "/")} から`}
+            />
             <Stat value={s.countries} label="歩いた国" />
             <Stat value={RECIPES.length} label="作った料理" />
-            <Stat value={ACTIVE_FRIENDS} label="島の住人" sub="直近90日" />
+            <Stat value={<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />} label="島の住人" sub="直近90日" />
           </div>
         </Panel>
 
@@ -122,7 +127,8 @@ export default function Home() {
           <h2>{HOME.together}</h2>
           <p>
             行き先も、作る料理も、アプリの機能も、だいたい配信で相談しながら決めています。
-            いまの島の住人は{ACTIVE_FRIENDS}人。これまでにのべ{s.people.toLocaleString()}人が来てくれました。
+            いまの島の住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
+            これまでにのべ<LiveNumber statKey="people" fallback={s.people} />人が来てくれました。
           </p>
           <div className="tiles" style={{ marginTop: 12 }}>
             <TileLink href="/board" icon="signboard" title="企画掲示板" note="名前がなくても貼れる" accent="var(--accent)" />
@@ -141,7 +147,11 @@ export default function Home() {
           <div className="tiles" style={{ marginTop: 14 }}>
             {LINKS.map((l) => (
               <a key={l.id} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-                <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
+                {l.logo ? (
+                  <img className="tile-logo" src={l.logo} alt="" />
+                ) : (
+                  <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
+                )}
                 <span className="tile-text">
                   <b>{l.label}</b>
                   <i>{l.note}</i>
