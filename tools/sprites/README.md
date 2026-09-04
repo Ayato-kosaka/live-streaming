@@ -22,6 +22,8 @@ Kenney の CC0 3Dモデルを、**あつまれ どうぶつの森に寄せた画
 - `meta.py` … 焼いた絵を切り詰めて WebP に変換し、島に置くための寸法を
   `site/content/sprites.json` に書く。PNG のままだと島1枚で3MB近くになる
 - `lab.mjs` … 試作用。JSON で渡した定義だけを焼いて見比べる
+- `og.mjs` … 共有カード(`site/public/og.png`)を島そのものから作り直す
+- `shot2.mjs` … 画面の見た目を撮って確かめる
 
 ## 焼き直す手順
 
