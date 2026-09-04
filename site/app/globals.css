@@ -1172,3 +1172,46 @@ img { max-width: 100%; }
   border: 2px solid rgba(255, 253, 246, 0.45);
 }
 .bar-zoom:active { transform: translateY(2px); }
+
+/* --- 国のページ: 行った街 --- */
+.cities { display: grid; gap: 9px; margin-top: 10px; }
+.city {
+  border: 2.5px solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+.city-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 900;
+}
+.city-head::-webkit-details-marker { display: none; }
+.city-head b { font-size: 14.5px; }
+.city-head i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+/* 開くしるし。三角より、閉じ開きが伝わる線にする */
+.city-head::after {
+  content: "";
+  width: 9px; height: 9px;
+  border-right: 2.5px solid var(--frame-dark);
+  border-bottom: 2.5px solid var(--frame-dark);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+  flex: none;
+}
+.city[open] .city-head::after { transform: rotate(-135deg) translateY(-2px); }
+.city[open] .city-head { background: var(--paper); }
+.city .scards { padding: 4px 12px 13px; }
+.city.is-quiet { opacity: 0.62; }
+.city.is-quiet .city-head { cursor: default; }
+.city.is-quiet .city-head::after { display: none; }

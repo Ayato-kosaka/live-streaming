@@ -20,7 +20,7 @@ await p.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentT
 await p.route(/i\.ytimg\.com|fonts\.gstatic\.com/, (r) => r.abort());
 // この環境からは Drive の画像に届かないので、手元に落としてある本物の
 // キャラクター画像を返して、島に立った姿を確かめる
-const sample = ["/tmp/r-18okO58dwMaci-9R1go0Rj1dTqliSWlz3.png", "/tmp/r-1wQzpWPNZKnty7DIiEkrSyib145QIWy4K.png"];
+const sample = fs.readdirSync("/tmp").filter((f) => f.startsWith("r-") && f.endsWith(".png")).map((f) => "/tmp/" + f);
 let n = 0;
 await p.route(/lh3\.googleusercontent\.com/, (r) =>
   r.fulfill({ status: 200, contentType: "image/png", body: fs.readFileSync(sample[n++ % sample.length]) }));
@@ -55,10 +55,9 @@ if (!wide) throw new Error(".bar-zoom がない");
 await wide.click(); await p.waitForTimeout(2600); await shot("03-wide");
 // 住人チップの大きさ
 const cast = await p.$$eval(".stage-svg image", (els) => {
-  const guests = els.filter((e) => (e.getAttribute("href") || "").includes("googleusercontent"));
-  const npcs = els.filter((e) => (e.getAttribute("href") || "").includes("villager-"));
-  const size = (e) => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; };
-  return { guests: guests.length, npcs: npcs.length, guestSize: guests[0] && size(guests[0]), npcSize: npcs[0] && size(npcs[0]) };
+  const people = els.filter((e) => (e.getAttribute("href") || "").includes("googleusercontent"));
+  const r = people[0] && people[0].getBoundingClientRect();
+  return { people: people.length, size: r && [Math.round(r.width), Math.round(r.height)] };
 });
-console.log("島にいる人:", JSON.stringify(cast));
+console.log("島に住んでいる人:", JSON.stringify(cast));
 await b.close();

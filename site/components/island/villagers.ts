@@ -1,6 +1,9 @@
 /**
  * 島の住人のふるまい。
  *
+ * 島に住んでいるのは、キャラクターを作ってくれた視聴者さん本人たち。
+ * 借り物のキャラを立たせるのではなく、その人の絵がそのまま島にいる。
+ *
  * どうぶつの森の住人は、ただ往復しているのではなく
  *   歩く → 立ちどまる → ちょっと悩む → また歩きだす
  * という間があるから生きて見える。ここではその「間」を状態として持つ。
@@ -11,13 +14,6 @@ import { GRASS_INSET, ISLAND, SPOTS, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 
 const HOME_R = inset(ISLAND.radii, GRASS_INSET + 12);
-
-/** 住人の見た目。Kenney の12人を順番に割り当てる。 */
-const LOOKS = [
-  "villager-female-b", "villager-male-c", "villager-female-d", "villager-male-a",
-  "villager-female-a", "villager-male-e", "villager-female-f", "villager-male-b",
-  "villager-female-c", "villager-male-f", "villager-female-e", "villager-male-d",
-];
 
 /** どの場所に住みついているか。持ち場によって何をしている人かが変わる。 */
 const POSTS: { spot: SpotId; r: number }[] = [
@@ -30,14 +26,14 @@ const POSTS: { spot: SpotId; r: number }[] = [
   { spot: "now", r: 62 },
   { spot: "legends", r: 62 },
   { spot: "next", r: 62 },
-  { spot: "kitchen", r: 96 },
+  { spot: "kitchen", r: 100 },
+  { spot: "streams", r: 118 },
+  { spot: "friends", r: 96 },
 ];
 
 export type Mood = "walk" | "stand" | "think" | "wave";
 
 export type Villager = {
-  /** 見た目のスプライト名 */
-  look: string;
   /** 持ち場の場所ID。何をしゃべるかがこれで決まる */
   post: SpotId;
   /** いま出している吹き出し。null なら黙っている */
@@ -96,15 +92,20 @@ function wander(v: Villager, r: () => number): [number, number] {
 
 export type Resident = { icon?: string; emoji?: string; days: number };
 
-/** 初期配置。SSR と CSR で同じ並びになるよう、乱数は種を固定する。 */
-export function createVillagers(residents: Resident[], max = 10): Villager[] {
+/**
+ * 島に住んでいる人をつくる。
+ * キャラクターを作ってくれた人（絵がある人）だけが島を歩く。
+ * SSR と CSR で同じ並びになるよう、乱数は種を固定する。
+ */
+export function createVillagers(residents: Resident[], max = 12): Villager[] {
   const r = rng(20260904);
-  return POSTS.slice(0, Math.min(max, residents.length || max)).map((post, i) => {
+  const living = residents.filter((x) => x.icon).slice(0, max);
+  return living.map((who, i) => {
+    const post = POSTS[i % POSTS.length];
     const s = SPOT[post.spot];
-    const a = (i / POSTS.length) * Math.PI * 2;
+    const a = (i / Math.max(1, living.length)) * Math.PI * 2;
     const [x, y] = clampToGrass(s.x + Math.cos(a) * post.r * 0.6, s.y + 26 + Math.sin(a) * post.r * 0.4);
     return {
-      look: LOOKS[i % LOOKS.length],
       post: post.spot,
       says: null,
       saysLeft: 0,
@@ -115,8 +116,8 @@ export function createVillagers(residents: Resident[], max = 10): Villager[] {
       left: 400 + r() * 2600,
       speed: 0.34 + r() * 0.16,
       phase: r() * Math.PI * 2,
-      icon: residents[i]?.icon,
-      emoji: residents[i]?.emoji,
+      icon: who.icon,
+      emoji: who.emoji,
     };
   });
 }
