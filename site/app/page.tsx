@@ -8,7 +8,8 @@ import { STREAM_TYPES } from "@/content/streamTypes";
 import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
-import { LINKS, NOW_FALLBACK, NEXT_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { PLANS } from "@/content/plans";
 import { GUIDE, HERO, HOME } from "@/content/voice";
 import { Gull } from "@/components/island/Guide";
 
@@ -117,8 +118,8 @@ export default function Home() {
           <h2>{HOME.nowNext}</h2>
           <div className="tiles">
             <TileLink href="/now" icon="lantern" title={`いま ${NOW_FALLBACK.place}`} note={NOW_FALLBACK.word} />
-            {NEXT_FALLBACK.map((n) => (
-              <TileLink key={n.id} href="/next" icon="tent" title={n.title} note={n.when} />
+            {PLANS.map((n) => (
+              <TileLink key={n.id} href={n.href ?? "/next"} icon="tent" title={n.title} note={n.when} />
             ))}
           </div>
         </Panel>

@@ -82,23 +82,7 @@ export const NOW_FALLBACK = {
   ],
 };
 
-/** 「これから」の初期値。 */
-export const NEXT_FALLBACK = [
-  {
-    id: "food-wine-fest",
-    when: "2026年9月6日(日)",
-    title: "Food & Wine Fest @ ムタツミンダ公園",
-    note: "トビリシの山の上の公園でやるフード＆ワインのお祭り。行ってきます。",
-    tags: ["ジョージア", "祭り"],
-  },
-  {
-    id: "nordic",
-    when: "2026年9月11日から",
-    title: "北欧へ行く",
-    note: "中身はこれから決めます。どこで何をするか、企画会議で一緒に考えたいです。",
-    tags: ["北欧", "移動"],
-  },
-];
+/* 「これから」の予定は content/plans.ts に移した（写真や埋め込みを持たせるため）。 */
 
 /** サイトに出す数字の初期値。/island-api/state の stats で上書きされる。 */
 export const STATS_FALLBACK = {
