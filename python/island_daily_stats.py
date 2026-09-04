@@ -29,20 +29,26 @@ logger = logging.getLogger(__name__)
 BOT_NAME = "@あやとグルメアプリ"
 
 VIDEOS_SQL = f"""
+WITH v AS (
+  SELECT video_id, title, actual_start_time
+  FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos`
+)
 SELECT
-  COUNT(*) AS streams,
-  COUNT(DISTINCT DATE(actual_start_time, 'Asia/Tokyo')) AS stream_days,
-  FORMAT_TIMESTAMP('%Y-%m-%d', MIN(actual_start_time), 'Asia/Tokyo') AS since,
-  ARRAY_AGG(
-    STRUCT(
-      video_id,
-      title,
+  (SELECT COUNT(*) FROM v) AS streams,
+  (
+    SELECT COUNT(DISTINCT DATE(actual_start_time, 'Asia/Tokyo'))
+    FROM v WHERE actual_start_time IS NOT NULL
+  ) AS stream_days,
+  (
+    SELECT FORMAT_TIMESTAMP('%Y-%m-%d', MIN(actual_start_time), 'Asia/Tokyo')
+    FROM v WHERE actual_start_time IS NOT NULL
+  ) AS since,
+  ARRAY(
+    SELECT AS STRUCT video_id, title,
       FORMAT_TIMESTAMP('%Y-%m-%d', actual_start_time, 'Asia/Tokyo') AS date
-    )
+    FROM v WHERE actual_start_time IS NOT NULL
     ORDER BY actual_start_time DESC LIMIT 5
   ) AS latest
-FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos`
-WHERE actual_start_time IS NOT NULL
 """
 
 CHAT_SQL = f"""
