@@ -201,6 +201,5 @@ python/                               BigQuery からデータを作るところ
 ```
 
 関連ドキュメント:
-- [`island-login.md`](./island-login.md) — YouTube ログインを有効にする手順
-- [`island-plan-drafts.md`](./island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
 - [`island-db.md`](./island-db.md) — Firestore / BigQuery のデータ設計
+- [`island-plan-drafts.md`](./island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み

@@ -30,6 +30,20 @@ Hosting は `npm run build:web` を通る。Expo の web ビルド → `dist/` �
 `site`（Next.js）をビルドして `site/out/` を `dist/` に重ねる、という順。
 つまり **あやと島は `dist/` の一部として配信される**。
 
+## ドキュメントと issue の使い分け
+
+**`docs/` には、あとから読んで意味のあるものだけ置く。**
+仕組みがどうなっているか、なぜそう決めたか、どこを触ればいいか。
+
+次のものは `docs/` に置かない。**GitHub issue を立てる。**
+
+- あやたにやってもらう操作（コンソールの設定、権限付与、鍵の発行）
+- 「これから増やすとしたら」のような検討中の案
+- 期限や状態を持つもの（やった / やっていない が変わるもの）
+
+issue を立てたら、**終わったら自分で閉じるところまでやる。**
+開けっぱなしにしない。誰かの操作待ちで止まっているものは、待っていることが分かるように書く。
+
 ## 作業の入口
 
 まず読む:
@@ -37,7 +51,6 @@ Hosting は `npm run build:web` を通る。Expo の web ビルド → `dist/` �
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。見た目・触りごこち・言葉の原則
 - [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
-- [`docs/island-login.md`](docs/island-login.md) — YouTube ログインを有効にする手順（あやとの作業）
 
 ## 検証のしかた
 
