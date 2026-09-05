@@ -43,6 +43,7 @@
     ".next-dev3020/types/**/*.ts",
     ".next-dev3021/types/**/*.ts",
     ".next-dev3022/types/**/*.ts",
+    ".next-dev3025/types/**/*.ts",
     ".next-dev3030/types/**/*.ts",
     ".next-dev3031/types/**/*.ts",
     ".next-dev3032/types/**/*.ts",
@@ -50,7 +51,7 @@
     ".next-dev3040/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-dev3025/types/**/*.ts"
+    ".next-dev3041/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
