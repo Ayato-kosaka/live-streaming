@@ -21,9 +21,6 @@ import { atText, watchAt } from "@/lib/peak";
  *
  * 分かっていない配信のほうが多い（756本のうち212本）。**その時は黙って頭から。**
  * 出すために基準を下げると、出ているものまで信用されなくなる。
- *
- * 番号（`no`）の付いたカードだけは、山があっても頭から開く。
- * 順番に並べてあるものは、順番に見るために並べてある。
  */
 export function Vid({
   videoId,
@@ -39,7 +36,7 @@ export function Vid({
   /** 何本目か。長い企画で順番を見せたいときだけ渡す。 */
   no?: number;
 }) {
-  const peak = no === undefined ? peakOf(videoId) : null;
+  const peak = peakOf(videoId);
   return (
     <a
       className="vid"
