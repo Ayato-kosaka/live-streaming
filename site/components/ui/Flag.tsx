@@ -8,7 +8,6 @@
  * 遠目に「あの国だ」と分かればいい。
  */
 
-type Band = { c: string };
 type Spec =
   /** 横縞。上から順に */
   | { k: "h"; bands: string[] }
@@ -214,8 +213,8 @@ export default function Flag({
     }
     if (f.k === "crescent") {
       const cx = (f.cx ?? 0.4) * W;
-      // 月の内側は「地の色でくり抜く」。縞のうえだと1色では抜けないので、
-      // くり抜きは clipPath ではなく mask を使わず、縞をもう一度重ねて消す。
+      // 月の内側は地の色で塗りつぶすのが簡単だが、縞のうえだと1色では抜けない。
+      // だから月そのものを mask で作って、縞をそのまま透けさせる。
       const inner = f.bands ? null : <circle cx={cx + W * 0.06} cy={H / 2} r={H * 0.24} fill={f.bg} />;
       const id = `cm-${slug}`;
       return (
