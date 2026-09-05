@@ -1,4 +1,6 @@
 // 3周目・/next /board /friends /now の検品用。撮り終わったら消す。
+// 全面を1枚で撮ると PNG が 780×10000 を超えて、混んでいるときに落ちる。
+// 画面ぶんだけ切って撮る。
 import { chromium } from "playwright-core";
 import fs from "node:fs";
 
@@ -6,7 +8,9 @@ const PORT = process.env.PORT || "3020";
 const OUT = process.env.OUT || "/tmp/r3nx";
 const TAG = process.env.TAG || "a";
 const W = +(process.env.W || 390), H = +(process.env.H || 844);
-const pages = (process.env.PAGES || "/next,/board,/friends,/now").split(",");
+const pages = (process.env.PAGES || "/next").split(",");
+/** 撮る画面の番号（0=1画面目）。省略すると測るだけ。 */
+const shots = (process.env.SHOTS || "").split(",").filter(Boolean).map(Number);
 
 const IDEAS = [
   { id: "i1", text: "1日だけ、コンビニの新商品だけで生きる配信", name: "たまご", votes: 14, createdAt: "2026-09-01T10:00:00.000Z" },
@@ -15,9 +19,9 @@ const IDEAS = [
   { id: "i4", text: "食材しばりで、じゃがいもだけの3品", votes: 2, createdAt: "2026-09-04T10:00:00.000Z" },
 ];
 const NOTES = [
-  { id: "n1", planId: "nordic-walk", text: "オーロラは晴れた夜の23時ごろが狙い目だよー", createdAt: "2026-09-01T10:00:00.000Z" },
-  { id: "n2", planId: "nordic-walk", text: "サーモンスープが体にしみる", createdAt: "2026-09-02T10:00:00.000Z" },
-  { id: "n3", planId: "nordic-walk", text: "手袋は薄手と厚手の2枚重ねがいい", createdAt: "2026-09-02T11:00:00.000Z" },
+  { id: "n1", planId: "food-wine-fest", text: "ケーブルカーは行列するから朝いちがいいよー", createdAt: "2026-09-01T10:00:00.000Z" },
+  { id: "n2", planId: "food-wine-fest", text: "ヒンカリは頼みすぎ注意", createdAt: "2026-09-02T10:00:00.000Z" },
+  { id: "n3", planId: "nordic", text: "手袋は薄手と厚手の2枚重ねがいい", createdAt: "2026-09-02T11:00:00.000Z" },
 ];
 const POLL = {
   poll: { id: "p1", question: "今夜の1品、どっちが見たい?", total: 138,
@@ -45,25 +49,29 @@ for (const path of pages) {
   p.on("pageerror", e => errs.push(String(e).slice(0, 200)));
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   if (process.env.POLLED) await p.addInitScript(() => localStorage.setItem("ayato-island-poll", "p1\ta"));
-  await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "domcontentloaded", timeout: 90000 });
-  await p.waitForTimeout(3000);
+  await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+  await p.waitForTimeout(2600);
   const m = await p.evaluate(() => {
     const doc = document.documentElement;
     const h1 = document.querySelector("h1");
-    const main = document.querySelector("main.page") || document.querySelector("main");
-    // 中身が始まる y（.phead の底）
     const ph = document.querySelector(".phead");
-    const over = [...document.querySelectorAll("body *")].filter(e => e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== "auto" && getComputedStyle(e).overflowX !== "scroll").slice(0, 4).map(e => e.className + ":" + e.scrollWidth + ">" + e.clientWidth);
+    const over = [...document.querySelectorAll("main *")]
+      .filter(e => e.scrollWidth > e.clientWidth + 2 && !["auto", "scroll"].includes(getComputedStyle(e).overflowX))
+      .slice(0, 4).map(e => (e.className || e.tagName) + ":" + e.scrollWidth + ">" + e.clientWidth);
     return {
       height: doc.scrollHeight,
       h1: h1 ? h1.textContent.trim() : "(なし)",
-      contentTop: ph ? Math.round(ph.getBoundingClientRect().bottom + window.scrollY) : (main ? Math.round(main.getBoundingClientRect().top + window.scrollY) : 0),
+      contentTop: ph ? Math.round(ph.getBoundingClientRect().bottom + window.scrollY) : 0,
       wide: doc.scrollWidth > window.innerWidth,
       over,
     };
   });
   const name = path.replace(/\//g, "_") || "_top";
-  await p.screenshot({ path: `${OUT}/${TAG}${name}.png`, fullPage: true });
+  for (const i of shots) {
+    await p.evaluate((y) => window.scrollTo(0, y), i * H);
+    await p.waitForTimeout(500);
+    await p.screenshot({ path: `${OUT}/${TAG}${name}_${i}.png` });
+  }
   rows.push({ path, ...m, screens: (m.height / H).toFixed(1), errs });
   await p.close();
 }

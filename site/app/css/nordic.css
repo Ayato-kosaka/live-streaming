@@ -28,10 +28,6 @@
 .tnow {
   position: relative;
 }
-/* 一本道の帯を紙のはしまで届かせるのに、紙の左右の余白を負のマージンで使う。
-   `.panel.paper` は幅を --pp-x で持っているので、数値で書かずそれを借りる。 */
-.tnow-rail { --tnow-x: var(--pp-x, var(--sp-4)); }
-
 .tnow-top h1 {
   margin: 0;
   font-size: clamp(21px, 6.4vw, 33px);
@@ -53,9 +49,11 @@
 .tnow-top p { margin: 9px 0 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; color: var(--ink-2); }
 .tnow-top b { font-weight: 900; color: var(--ink); }
 
-/* --- あと何日 / あと何km --- */
-.tnow-counts { display: grid; gap: 9px; margin-top: 15px; }
-@media (min-width: 620px) { .tnow-counts { grid-template-columns: 1.25fr 1fr; align-items: stretch; } }
+/* --- あと何日／あと何km ---
+   **枠はいつも1つ。** 出る前は日数、出たあとは残りの距離。
+   2つ並べていたころ、出発前の画面には減らない 1,541km のバーが空のまま出ていて、
+   すぐ上の一行と同じ数字を2回言っていた（`TripNow.tsx`）。 */
+.tnow-counts { margin-top: 15px; }
 
 /* 数字の枠。紙の上なので、厚みも茶色い枠も持たせない。
    罫線1本で囲んで、中の地をほんの少し変えるだけで「別のまとまり」は言える。 */
@@ -142,91 +140,6 @@
 /* 次の区間の絵。スマホでは行の下にまわす（3列に絵まで入ると全部が細くなる） */
 .tnow-art { grid-column: 1 / -1; justify-self: center; margin-top: 4px; }
 @media (min-width: 620px) { .tnow-art { grid-column: auto; margin-top: 0; } }
-
-.tnow-what {
-  margin: var(--sp-2) 0 0;
-  padding: var(--sp-3) var(--sp-3);
-  font-size: 12.5px;
-  line-height: 1.85;
-  font-weight: 700;
-  color: var(--ink);
-  border-radius: var(--r-1);
-  background: color-mix(in srgb, var(--gold) 22%, var(--paper));
-}
-
-/* --- 一本道 ---
-   10カ所を横に並べる。スマホでは入りきらないので横に流す。
-   「どこまで来たか」がこの帯だけで分かるのが役目。 */
-.tnow-rail {
-  list-style: none;
-  display: flex;
-  gap: 0;
-  margin: 14px calc(-1 * var(--tnow-x)) 0;
-  padding: 4px var(--tnow-x) 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tnow-rail::-webkit-scrollbar { display: none; }
-.tnow-rail li {
-  position: relative;
-  flex: 1 0 auto;
-  min-width: 68px;
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-1);
-  padding-top: var(--sp-3);
-}
-/* 街と街をつなぐ線。点の高さに合わせて、点の後ろを通す。 */
-.tnow-rail li::before {
-  content: "";
-  position: absolute;
-  top: 17px;
-  left: -50%;
-  width: 100%;
-  height: 4px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--rule) 34%, var(--paper));
-}
-.tnow-rail li:first-child::before { display: none; }
-.tnow-rail li.is-past::before,
-.tnow-rail li.is-on::before { background: var(--rule); }
-/* 琥珀は「押せる板のふち」の色なので、押せない図に持ち出さない
-   （docs/island-world.md 3.2）。紙の上の図は罫の色で描く。 */
-.tnow-dot {
-  position: relative;
-  width: 13px; height: 13px;
-  border-radius: 50%;
-  background: var(--paper);
-  box-shadow: 0 0 0 3.5px var(--rule);
-  z-index: 1;
-}
-.tnow-rail li.is-past .tnow-dot { background: var(--rule); }
-.tnow-rail li.is-on .tnow-dot {
-  width: 17px; height: 17px;
-  margin-top: calc(-1 * var(--sp-1));
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-deep);
-}
-.tnow-rail li.is-goal .tnow-dot { background: var(--gold); box-shadow: 0 0 0 4px var(--accent-deep); }
-.tnow-name {
-  font-size: var(--fs-min);
-  font-weight: 900;
-  line-height: 1.4;
-  text-align: center;
-  color: var(--ink-2);
-}
-.tnow-rail li.is-on .tnow-name,
-.tnow-rail li.is-goal .tnow-name { color: var(--ink); }
-.tnow-goal {
-  font-size: var(--fs-min);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  padding: var(--sp-1) var(--sp-2);
-  border-radius: var(--r-pill);
-  background: var(--accent-deep);
-  color: var(--paper);
-  white-space: nowrap;
-}
 
 /* --- 行き先ボタン --- */
 .tnow-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
@@ -594,7 +507,7 @@ p.rtie {
 .ncountry {
   position: relative;
   display: grid;
-  grid-template-columns: 104px 1fr;
+  grid-template-columns: 96px 1fr;
   align-items: stretch;
   gap: var(--sp-3);
   padding: 0 var(--sp-3) 0 0;
@@ -612,7 +525,7 @@ p.rtie {
   position: relative;
   display: block;
   line-height: 0;
-  min-height: 94px;
+  min-height: 86px;
   background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
 }
 .ncountry-img img { width: 100%; height: 100%; object-fit: cover; }
@@ -645,19 +558,21 @@ p.rtie {
 }
 .ncountry-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 900; line-height: 1.5; }
+.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 900; line-height: 1.45; }
 .ncountry-body em {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--ink-2);
 }
+/* 見どころの数。国の名前と同じ行の右はしへ寄せる。 */
 .ncountry-more {
+  margin-left: auto;
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  margin-top: 2px;
+  gap: 2px;
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--frame-deep);
@@ -729,7 +644,11 @@ p.rtie {
    全部持っているので、ここが持つのは、いちばん上の章を本文から離すぶんと、
    名前の大きさだけ。 */
 .panel > .ncity:first-of-type { margin-top: var(--sp-4); }
-/* 街の名前は、しおりの章より一段小さい。章は10しかないが、街は多い国で13ある。 */
+/* しおりは章が10だが、街は多い国で13ある。そのぶん1段を詰める。
+   `.gchap`（0,1,0）より強くしないと、あとから読まれる ui.css に負ける。 */
+.panel > .ncity { margin-bottom: var(--sp-2); }
+.panel .ncity > .fold > summary { min-height: 52px; padding: var(--sp-2) var(--sp-3); }
+/* 街の名前は、しおりの章より一段小さい。 */
 .ncity .gchap-h { font-size: 16px; }
 
 /* --- 見どころ1件（紙の型。段の中身） --- */

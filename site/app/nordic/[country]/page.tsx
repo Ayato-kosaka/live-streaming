@@ -222,8 +222,7 @@ export default async function NordicCountryPage({
       <Panel>
         <h2>{c.name}で行くところ</h2>
         <p className="muted">
-          {spots.length}件を{byCity.size}つの街に分けています。街を押すと、その街の段が並びます。
-          写真は Wikimedia Commons から借りたもので、開いてから押すと出どころに飛びます。
+          {spots.length}件を{byCity.size}の街に分けています。街を押すと、その街の段が並びます。
         </p>
         {[...byCity.entries()].map(([city, list]) => (
           <section key={city} className="gchap ncity" id={`city-${encodeURIComponent(city)}`}>

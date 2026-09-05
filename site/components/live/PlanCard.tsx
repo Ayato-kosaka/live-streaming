@@ -295,7 +295,7 @@ function Doing({ plan }: { plan: Plan }) {
  * どこが空いているのかを見せないまま「付箋を貼ってください」と言っても、
  * 何を書けばいいのか分からない。空いている場所を先に出す。
  */
-function Asks({ plan }: { plan: Plan }) {
+function Asks({ plan, jump = true }: { plan: Plan; jump?: boolean }) {
   if (!plan.asks?.length) return null;
   return (
     <div className="nx-asks">
@@ -305,10 +305,15 @@ function Asks({ plan }: { plan: Plan }) {
           <li key={a}>{a}</li>
         ))}
       </ul>
-      <a href={`#${plan.id}-notes`}>
-        付箋で教える
-        <Icon name="right" size={12} />
-      </a>
+      {/* 付箋の欄が閉じているとき（道のりの段）だけ、そこへ連れていく。
+          主役の札は、この真下に入力欄が開いている。同じ行き先の札を
+          20px 下にもう1つ置いても、押しどころが2つに割れるだけ。 */}
+      {jump && (
+        <a href={`#${plan.id}-notes`}>
+          付箋で教える
+          <Icon name="right" size={12} />
+        </a>
+      )}
     </div>
   );
 }
@@ -402,7 +407,7 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
         </div>
       )}
 
-      <Asks plan={plan} />
+      <Asks plan={plan} jump={false} />
 
       {children}
     </section>

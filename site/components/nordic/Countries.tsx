@@ -57,18 +57,20 @@ export default async function Countries() {
             <span className="ncountry-leg">{c.leg}</span>
           </span>
           <span className="ncountry-body">
+            {/* 国の名前と、見どころの数を1行に。行を分けるとカードが1段ぶん伸びて、
+                6枚で 100px 変わる。 */}
             <span className="ncountry-name">
-              <Flag slug={c.slug} size={20} />
+              <Flag slug={c.slug} size={19} />
               <b>{nordicCountry(c.slug)?.name ?? c.name}</b>
+              <span className="ncountry-more">
+                {c.spots}件
+                <Icon name="right" size={13} />
+              </span>
             </span>
             {/* 見どころの名前と、なぜ見たいのか。国の紹介文（`c.catch`）は
                 ここでは出さない。写真が言っていることを、字でもう一度言うことになる。 */}
             {spot && <i>{spot.title}</i>}
             {why && <em>{why}</em>}
-            <span className="ncountry-more">
-              ほか{Math.max(0, c.spots - 1)}件
-              <Icon name="right" size={13} />
-            </span>
           </span>
         </Link>
       ))}

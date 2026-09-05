@@ -204,7 +204,13 @@
 /* 段の中身は紙の上の折りたたみ。枠を1本の罫線に落として、
    石の右に「行が1本ある」だけに見せる（紙の上に枠を積まない）。 */
 .nx-road-b > .fold { border-radius: var(--r-0); background: none; }
-.nx-road-b > .fold > summary { min-height: 56px; padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2); }
+.nx-road-b > .fold > summary { min-height: 56px; padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2); flex-wrap: wrap; }
+/* 石の右に残る幅は 257px しかない。そこに題名・日数の札・開く印を1行で並べると、
+   題名に 111px しか回らず「ヒッチハイクで / 北欧へ」と折り返す。
+   題名とひとことで1行を使いきって、日数と開く印は次の行に下ろす。 */
+.nx-road-b > .fold > summary > .fold-t { flex: 1 0 100%; }
+.nx-road-b > .fold > summary > .fold-n { margin-left: 0; }
+.nx-road-b > .fold > summary > .fold-c { margin-left: auto; }
 /* 日数の札は、一覧では右端に寄る作りになっている。ここでは題名の右、
    折りたたみの印の手前に置く。台紙（.fold-n のオリーブ）は要らない。
    日数の札そのものが札の形をしているので、札の上に札が載ってしまう。 */

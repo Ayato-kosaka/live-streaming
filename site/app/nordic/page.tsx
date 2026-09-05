@@ -82,7 +82,6 @@ export default async function NordicPage() {
         country: c?.name,
         how: `${MOVE[l.move]}${l.km ? ` ${l.km.toLocaleString()}km` : ""}${l.time ? ` / ${l.time}` : ""}`,
         art: l.art,
-        note: l.note,
         hitch: l.move === "hitch" ? (l.km ?? 0) : 0,
       };
     }),

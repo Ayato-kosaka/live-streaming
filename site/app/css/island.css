@@ -62,6 +62,12 @@
   border-radius: 14px;
   -webkit-tap-highlight-color: transparent;
 }
+/* 島の上のフォーカスの輪。
+   tokens.css の既定は水色（--accent-2）で、紙の上で読めるように濃くしたぶん、
+   濃紺の海に対して 1.88 : 1 まで落ちた（文字でないものは 3 : 1 が下限）。
+   島の中だけ、生成りに近い白へ差し替える。海の上なら 12 : 1 を超える。 */
+.stage :focus-visible { outline-color: #fffdf6; }
+
 .spot-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
 /* 札。建物の頭の上に、杭を打って立っている。
