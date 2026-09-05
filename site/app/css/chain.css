@@ -683,11 +683,14 @@
   flex: none;
   padding: 5px 9px;
   border-radius: 999px;
-  background: var(--accent, #ff9a3c);
-  color: #fffdf6;
+  /* **桃色（--accent）から始めない。** 白い字が 2.58 : 1 しかない。
+     いまの島の `.spot-go` と同じ濃さにして 5.41〜7.56 : 1。
+     字を明るくするのではなく板を濃くする、が島の決まり（`island-world.md` 3.4）。 */
+  background: linear-gradient(#9c580f, #7d450c);
+  color: var(--paper, #fffdf6);
   font-size: 11.5px;
   font-weight: 900;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 2px 0 #c9a978; }
 /* 出発までの日数。札の右肩に貼ったシール */
@@ -700,9 +703,12 @@
   font-weight: 900;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #ff5f6d;
-  color: #fffdf6;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.16);
+  /* ここも同じ。桃色のままだと白い字が 2.90 : 1。濃いほうから始めて 5.89〜8.72 : 1
+     （色みはいまの島の `.spot-badge` と揃えてある） */
+  background: linear-gradient(#c4123f, #96072e);
+  color: var(--paper, #fffdf6);
+  border: 2.5px solid var(--paper, #fffdf6);
+  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32);
   transform: rotate(-7deg);
 }
 /* 近づいた建物は、ふわっと弾ませる（`docs/island-design.md` 3-5 反応を返す） */
@@ -864,9 +870,9 @@
   margin-top: 10px;
   padding: 11px 13px;
   border-radius: 14px;
-  background: var(--accent, #ff9a3c);
-  color: #fffdf6;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  background: linear-gradient(#9c580f, #7d450c);
+  color: var(--paper, #fffdf6);
+  box-shadow: 0 4px 0 rgba(76, 48, 20, 0.55);
 }
 .isle-more span { flex: 1; min-width: 0; }
 .isle-more b { display: block; font-size: 14px; font-weight: 900; }
@@ -879,7 +885,11 @@
   margin: 0;
   left: 14px;
   top: calc(12px + env(safe-area-inset-top));
-  z-index: 4;
+  /* **札より下に置く。** 札はここを避けて動くが（IsleStage の uiBoxes）、
+     避けきれなかったときに勝つのは札のほう。名前は一度読めば済む飾りで、
+     札はこれから歩いて行く先（いまの島の看板ロゴと同じ決め方）。
+     上に置いていたときは、札の字が暗幕に半分隠れて 1.81 : 1 になっていた */
+  z-index: 2;
   max-width: min(56vw, 320px);
   padding: 8px 13px;
   border-radius: 14px;
