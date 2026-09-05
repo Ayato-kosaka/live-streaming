@@ -58,6 +58,8 @@
     ".next-3160/types/**/*.ts",
     ".next-3170/types/**/*.ts",
     ".next-3180/types/**/*.ts",
+    ".next-3200/types/**/*.ts",
+    ".next-3210/types/**/*.ts",
     ".next-dev3010/types/**/*.ts",
     ".next-dev3011/types/**/*.ts",
     ".next-dev3012/types/**/*.ts",
@@ -84,11 +86,14 @@
     ".next-dev3160/types/**/*.ts",
     ".next-dev3170/types/**/*.ts",
     ".next-dev3180/types/**/*.ts",
+    ".next-dev3190/types/**/*.ts",
+    ".next-dev3200/types/**/*.ts",
+    ".next-dev3210/types/**/*.ts",
     ".next-perf/types/**/*.ts",
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-dev3190/types/**/*.ts"
+    ".next-dev3220/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

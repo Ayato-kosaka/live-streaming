@@ -25,7 +25,7 @@ import { FARE_POUR, NORDIC_LOG, ROUTE, nordicCountry, type Leg } from "@/content
  * （`docs/nordic-fund.md` 提案1）。
  *
  *   足代（お金）  … その区間を越えるのに実際に要るもの1つ
- *   道しるべ（言葉）… その区間で何をしてほしいか
+ *   道しるべ（言葉）… わかれ道を押す／言葉で立てる
  *   起きたこと      … 越えたあとに手で入れる（`content/nordic.ts` の `NORDIC_LOG`）
  *
  * 3つめは旅が終わってから入るので、出発前は空。空なら席そのものを出さない。
@@ -56,9 +56,15 @@ export default function RouteLegs() {
           <Fold
             key={l.id}
             title={
-              <span className={`rleg-h ${m.cls}`} data-leg={l.id}>
+              <span className={`rleg-h ${m.cls}`} id={`leg-${l.id}`} data-leg={l.id}>
                 <Mark art={l.art} size={38} className="rleg-art" />
                 <span className="rleg-way">
+                  {/* 「いま、この区間を走っています」。出す・出さないは `TripNow` が
+                      現在地を読んでから `data-now` で切り替える。10枚のカードのうち
+                      どれが今日の話なのかは、畳んだままでも分かるようにしておく。
+                      見出しの flex 行に並べると、区間名と場所を取り合って
+                      「リガ → タリン」が1文字ずつ縦に積まれた。名前の中に流す。 */}
+                  <span className="rleg-now">いま、ここ</span>
                   {/* 矢印は <i> にしない。`ui.css` の `.fold[open] > summary .fold-t i`
                       が「開いたら要約の一行を消す」ために i を消すので、
                       開いた区間だけ矢印が消えていた。 */}
@@ -147,7 +153,7 @@ export default function RouteLegs() {
                 <PostMark />
                 <span>道しるべ</span>
               </h3>
-              <Signpost leg={l.id} ask={l.ask} />
+              <Signpost leg={l.id} seq={i} ask={l.ask} fork={l.fork} logged={!!log} />
             </div>
 
             {/* 足代。越えるのに要るもの1つに紐づける。

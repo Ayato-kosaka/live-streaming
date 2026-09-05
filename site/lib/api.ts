@@ -226,6 +226,72 @@ export function rememberPollAnswer(id: string, option: string) {
   }
 }
 
+/* ---------------- 北欧旅のわかれ道 ----------------
+   区間ごとの「どっちにしてほしい？」。押すだけで答えられる、参加のいちばん下の段。
+   問いの字と選択肢の字は `content/nordic.ts` にあって、ここでやりとりするのは
+   id と数だけ（`docs/nordic-fund.md` 提案8）。 */
+
+/** 札ごとに、何人が押したか。押されていない札は入っていない。 */
+export type ForkCounts = Record<string, number>;
+
+/**
+ * わかれ道の数を、知っている id のぶんだけ読む。
+ * 一覧では取らない。知らない id を混ぜ込まれても、画面に出ないようにするため。
+ */
+export const getForks = (ids: string[]) =>
+  req<{ forks: Record<string, ForkCounts> }>(
+    `/fork?ids=${encodeURIComponent(ids.join(","))}`,
+  );
+
+/** 押す。1人1票なので、2回目からは押し直しにならず、いまの数だけ返る。 */
+export const voteFork = (id: string, option: string, token?: string | null) =>
+  req<{ id: string; votes: ForkCounts; mine: string }>(`/fork/${id}/vote`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ option, cid: clientId() }),
+  });
+
+/**
+ * どのわかれ道で、どれを押したか。
+ *
+ * 「今夜のおたずね」（`POLL_MINE`）と分けてある。あちらは同時に1つしか出ないので
+ * 1つぶんで足りるが、わかれ道は6つが何か月も並んだままになる。
+ * サーバーにも残っているが、引くにはもう1往復要る。次に来たときに
+ * 自分の1票がそこにあると分かるほうが、次も押す気になる。
+ */
+const FORK_MINE = "ayato-nordic-fork";
+
+function forkStore(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(FORK_MINE) ?? "";
+    return Object.fromEntries(
+      raw
+        .split("\n")
+        .map((line) => line.split("\t"))
+        .filter((p) => p.length === 2 && p[0] && p[1]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+export function forkAnswer(id: string): string | null {
+  return forkStore()[id] ?? null;
+}
+
+export function rememberForkAnswer(id: string, option: string) {
+  try {
+    const all = { ...forkStore(), [id]: option };
+    // 区間は10しかないので、増え続けることはない。それでも上限は置いておく
+    const lines = Object.entries(all)
+      .slice(-20)
+      .map(([k, v]) => `${k}\t${v}`);
+    localStorage.setItem(FORK_MINE, lines.join("\n"));
+  } catch {
+    /* localStorage が使えない環境では諦める。サーバー側には残っている */
+  }
+}
+
 /* ---------------- 今日、島に来た人 ----------------
    「誰かがそこにいる」を出す（`docs/island-play.md` 仕掛け16）。
    同時接続は出さない。作れないうえに、たいていの時間帯は「1人」と出て、

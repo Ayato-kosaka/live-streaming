@@ -237,6 +237,32 @@
   box-shadow: var(--shadow-1);
 }
 .rleg-way { min-width: 0; }
+/* 「いま、ここ」。旅が始まってから、いま走っている1区間にだけ出る。
+   出す・出さないは `TripNow` が現在地を読んで `data-now` で切り替える
+   （React で描き直すと、地図の SVG まで作り直しになる）。 */
+.rleg-now { display: none; }
+/* 開いたカードの見出しは蛍光（--marker）で塗られているので、札も蛍光にすると
+   何も乗っていないように見える。紙の札に輪をかける。輪は厚みではないので、
+   押せるものと取り違えない（docs/island-world.md 3.4）。 */
+.rleg-h[data-now] .rleg-now {
+  /* 区間名と同じ行に置くと、名前が「リガ → タリ／ン」と割れる。
+     札を上の行に出して、名前には行を丸ごと渡す。 */
+  display: block;
+  width: fit-content;
+  margin: 0 0 3px;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--frame-dark);
+  color: var(--ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+/* 上の司令塔から `#leg-…` で飛んでくる。真上に貼りつくと見出しが読めない。 */
+.rleg-h { scroll-margin-top: 12px; }
 .rleg-arrow { color: var(--ink-2); margin: 0 2px; }
 .rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .rleg-fixed {
@@ -464,6 +490,88 @@ p.rtie {
   color: var(--ink);
 }
 .carry-go:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+/* --- わかれ道 ---
+   押すだけで答えられる、参加のいちばん下の段（docs/nordic-fund.md 提案8）。
+   道しるべの席の頭に置く。**書く欄より上**にあるのが要で、
+   ここが作文から始まっていると、97%の人は自分の席が無いと読む。
+
+   棒は伸ばさない。ここに置くと、すぐ下の足代のバーと同じ形のものが
+   1枚のカードに2つ並ぶ。数は字で言う。 */
+.fork { margin: 0 0 var(--sp-3); }
+.fork-q {
+  margin: 0 0 var(--sp-2);
+  font-size: 12.5px;
+  line-height: 1.8;
+  font-weight: 900;
+  color: var(--ink);
+}
+.fork-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+@media (min-width: 560px) { .fork-list { grid-template-columns: 1fr 1fr; } }
+/* 押せるものは板。紙の上に載せていい板は「押すもの・書くもの」だけで、
+   押せる合図は厚みだけ（docs/island-world.md 3.4）。 */
+.fork-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: var(--pop);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--ink);
+}
+.fork-pick:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+/* 押したあとは、板を押し込んだままにする。自分の1票がそこにあると分かる。
+   押せないものに厚みを残すと、まだ押せるように見える。 */
+.fork-pick:disabled { transform: translateY(4px); box-shadow: var(--pop-push); }
+.fork-pick.is-mine {
+  background: var(--marker);
+  color: var(--marker-ink);
+  border-color: var(--frame-dark);
+}
+.fork-pick em {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+.fork-said {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.fork-said b { font-weight: 900; color: var(--ink); }
+/* 越えた区間。押せるものは消えて、押された数の答えだけが残る。
+   ここは3つめの席（起きたこと）の隣に並ぶ読み物になる。 */
+.fork-was {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left: 3px solid var(--marker);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+.fork-was b { font-weight: 900; color: var(--ink); }
+
+/* --- 書く欄は、押してから開く ---
+   閉じているあいだも、そこで何ができるかは板が言っている。
+   開いたままにしていたころ、開いた区間カード 1,054px のうち 250px が
+   誰も触っていない入力欄だった（10区間ぶん、同じものが並ぶ）。 */
+.spost-write { display: block; }
+
 .spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
 .spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }

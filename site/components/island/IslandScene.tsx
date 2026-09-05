@@ -296,9 +296,20 @@ const sandR = baseR.map((r, i) => {
  * 公式の写真では、浅瀬も泡も「思ったより細い」。深い青がすぐそこまで来ている。
  */
 const SHORE = {
-  /** 深い青から浅瀬へ移るところ。ここを段にすると、島に輪がはまって見える */
-  fade1: -168,
-  fade2: -134,
+  /* 深い青から浅瀬へ移るところ。
+
+     **公式は、ここがほとんど無い。** ビーチの公式絵（`ref_Summer_Beach_NH_Artwork`）を
+     横に切って測ると、平らな深い青がそのまま続いて、**6〜15px**で
+     セージと白の入り混じった帯に変わる。段は付いていない。
+     段に見えないのは、浅瀬そのものの縁がぎざぎざだからで、
+     あいだに帯を挟んで色をなじませているからではない。
+
+     こちらは 1280 幅で **54px** 取っていた（27 + 27）。公式の4〜9倍。
+     引きで見ると島のまわりに淡い輪が広がって、島が水に浮いた皿に見える。
+     幅を 8 単位ずつまで詰めて、深い青を岸まで持ってくる。
+     ぶれ幅（wobble）も一緒に詰める。帯より大きいと隣を突き抜ける。 */
+  fade1: -120,
+  fade2: -112,
   /** 明るいターコイズの浅瀬 */
   shallow: -104,
   /** いちばん明るい、砂のすぐ沖 */
@@ -334,8 +345,8 @@ const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
 
 /** 浅瀬。輪郭をそのまま外へ出すと機械的に見えるので、帯ごとに違う起伏を足す。 */
-const fade1Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade1), 71, 22), SQ);
-const fade2Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade2), 72, 18), SQ);
+const fade1Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade1), 71, 8), SQ);
+const fade2Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade2), 72, 6), SQ);
 const shallowPath = blob(CX, CY, wobble(inset(sandR, SHORE.shallow), 73, 15), SQ);
 const shelfPath = blob(CX, CY, wobble(inset(sandR, SHORE.shelf), 74, 9), SQ);
 
@@ -416,6 +427,7 @@ function foamLace(
  */
 const LACE_BACK = [...foamLace(64, 8801, -30, -16, 15, 32), ...foamLace(96, 8802, -18, -4, 7, 17)];
 const LACE_FRONT = [...foamLace(64, 8811, -18, -5, 15, 32), ...foamLace(96, 8812, -6, 8, 7, 17)];
+
 /** 6本それぞれの太さと濃さ。ばらけていないとレースに見えない。 */
 const LACE_STYLE: [number, number][] = [
   [3.4, 0.9],
@@ -514,14 +526,6 @@ const seaBlobs = seaPatches(96, 6161, 7, 26, 0.3);
 const seaStreaks = seaPatches(56, 6162, 22, 62, 0.055);
 /** 3本それぞれの濃さ。ばらけていないと「点を撒いた」ように見える。 */
 const SEA_OPACITY = [0.5, 0.32, 0.18];
-/** きらめきの濃さと、明滅の位相。濃さは CSS 変数で渡す（下のコメントの理由）。 */
-const glintStyle = (o: number, delay: number) =>
-  ({ "--o": o, animationDelay: `${delay}s` }) as React.CSSProperties;
-
-/** 沖のうねり。島を囲む輪にして、水面が動いているように見せる。 */
-const swellPaths = [180, 262, 352].map((d, i) =>
-  blob(CX, CY, wobble(resample(inset(sandR, -d), 40), 91 + i, 16 + i * 6), SQ),
-);
 
 /**
  * 草の地模様。
@@ -1124,29 +1128,34 @@ function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
-      {/* 沖のうねり。島を囲む輪にすると、海が島に向かって寄せてくるように見える。
-          ゆっくり大きくなって消えるので、水がこちらへ寄せているように見える。 */}
-      <g className="swell" fill="none" stroke="#ffffff" strokeLinecap="round" aria-hidden>
-        {swellPaths.map((d, i) => (
-          <path
-            key={i}
-            d={d}
-            className="swell-ring"
-            style={{ transformOrigin: `${CX}px ${CY}px`, animationDelay: `${i * -3.2}s` }}
-            strokeWidth={26 - i * 5}
-            strokeOpacity={0.075 - i * 0.014}
-          />
-        ))}
-      </g>
-      {/* 水面の白いかたまり。3つの層をずらして明滅させると、水が動いて見える。
-          動かすのは opacity だけ。形を毎フレーム作り直さないのが要点。
-          層ごとの濃さは --o で渡す。opacity 属性に書くと animation に消される。 */}
+      {/* 水面の白いかたまり。海が塗りに見えないように、大小2種を撒いてある。
+
+          **明滅は外した。** 島の SVG の中で何かを動かすと、その要素の
+          外接矩形ぶんが毎フレーム描き直される。この6本は島をぐるりと囲む
+          形なので、外接矩形は**画面ぜんぶ**になる。海が画面の1割しか
+          写っていなくても、1割ではなく10割ぶんの代金を払っていた。
+
+          実測（1440×900・歩かせて6秒・絞りなし・4往復の中央値）:
+
+            いまのまま                      12.2 fps
+            きらめきを止める                19.2 fps
+            沖のうねり(swell)を止める        15.5 fps
+            **両方止める                    33.8 fps**
+
+          うねりのほうは消した。白 7.5% の輪を3本、島の外に広げていたもので、
+          止めても消しても数字が同じ（32.7 / 33.8 fps）＝**見えていなかった**。
+          きらめきは見える（濃さが 0.175 ↔ 0.5 で振れる）ので、形は残して
+          動きだけ止めた。海の動きは波打ち際のレース（.surf）と舟とカモメが持つ。
+          あれらは外接矩形が小さいので、動かしても代金がつかない。
+
+          **ここに動くものを足すときは、その形の外接矩形を先に見ること。**
+          小さいものは何個動かしても無料で、島をまたぐものは1個で 20fps 持っていく。 */}
       <g className="sea-glint" fill="#ffffff" aria-hidden>
         {seaBlobs.map((d, i) => (
-          <path key={`b${i}`} d={d} style={glintStyle(SEA_OPACITY[i], i * -2.6)} />
+          <path key={`b${i}`} d={d} opacity={SEA_OPACITY[i] * 0.72} />
         ))}
         {seaStreaks.map((d, i) => (
-          <path key={`s${i}`} d={d} style={glintStyle(SEA_OPACITY[i] * 0.8, i * -3.7 - 1.3)} />
+          <path key={`s${i}`} d={d} opacity={SEA_OPACITY[i] * 0.8 * 0.72} />
         ))}
       </g>
 
