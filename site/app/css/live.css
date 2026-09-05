@@ -499,7 +499,10 @@
 .pap-sec + .pap-sec { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--pap-line); }
 .pap p { margin: 0 0 var(--sp-2); font-size: var(--fs-body); font-weight: 600; line-height: 1.95; color: var(--pap-ink); }
 .pap p:last-child { margin-bottom: 0; }
-.pap .pap-note { font-size: var(--fs-note); color: var(--pap-ink-2); }
+/* 添え書き。--ink-2 だと紙のいちばん暗いムラ（#dbd09f。--pg-paper-bg の
+   radial-gradient が作る）の上で 4.19 : 1 まで落ちる。読ませる字なので墨にする。
+   本文との差は、色ではなく 12px という大きさが言っている。 */
+.pap .pap-note { font-size: var(--fs-note); color: var(--pap-ink); }
 /* 紙の上でも、行き先のカードだけは板でよい（`docs/island-world.md` 2.1・4章）。
    細枠だけだと、すぐ上にある「押せない札」と同じ形になって、
    どれが行き先なのかを覚えてもらう前提の画面になる。合図は厚み1種類。 */
