@@ -427,6 +427,25 @@ function foamLace(
  */
 const LACE_BACK = [...foamLace(64, 8801, -30, -16, 15, 32), ...foamLace(96, 8802, -18, -4, 7, 17)];
 const LACE_FRONT = [...foamLace(64, 8811, -18, -5, 15, 32), ...foamLace(96, 8812, -6, 8, 7, 17)];
+
+/**
+ * 浅瀬まで散らばる、細い白い弧。**寄せ引きには参加しない。**
+ *
+ * 公式のビーチ絵を横に切ると、セージ色の帯の中に白い弧が何本も混ざっている
+ * （y=430 の切り口で、セージ 9〜20px と白 13〜17px が交互に6回）。
+ * こちらは白が波打ち際（砂から -30 まで）にしか無くて、そこから外は
+ * セージのベタ塗りだった。切り口が「セージ46px → 白へ一直線」になっていた。
+ *
+ * 沖のほうの泡は、寄せ引きでほとんど動かない（引いても残っている）。
+ * それに `.surf` に入れると、明滅する形が島の外へもう 55 単位ぶん広がる。
+ * **静かに置いておくほうが、本物にも近いし安い。**
+ */
+const LACE_OUT = foamLace(84, 8821, -86, -34, 9, 22);
+const LACE_OUT_STYLE: [number, number][] = [
+  [2.0, 0.5],
+  [1.5, 0.38],
+  [1.1, 0.28],
+];
 /** 6本それぞれの太さと濃さ。ばらけていないとレースに見えない。 */
 const LACE_STYLE: [number, number][] = [
   [3.4, 0.9],
@@ -1217,6 +1236,10 @@ function IslandScene() {
         <path d={foamDots[1]} opacity="0.42" />
       </g>
       <g fill="none" stroke="var(--foam)" strokeLinecap="round" aria-hidden>
+        {/* 浅瀬に散らばるぶん。明滅させない（上の LACE_OUT の注） */}
+        {LACE_OUT.map((d, i) => (
+          <path key={`fo${i}`} d={d} strokeWidth={LACE_OUT_STYLE[i][0]} strokeOpacity={LACE_OUT_STYLE[i][1]} />
+        ))}
         <g className="surf surf-back">
           {LACE_BACK.map((d, i) => (
             <path key={`fb${i}`} d={d} strokeWidth={LACE_STYLE[i][0]} strokeOpacity={LACE_STYLE[i][1]} />
