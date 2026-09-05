@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { postNordicArrived } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { loadState } from "@/lib/liveStats";
+import { useOwner } from "./log";
 
 /**
  * 旅程表のいちばん下の行。**着く前と、着いたあとで書き分ける。**
@@ -34,6 +37,9 @@ function tookDays(depart: string, arrived: string): number | null {
 
 export default function GoalRow({ depart }: { depart: string }) {
   const [arrived, setArrived] = useState<string | null>(null);
+  const owner = useOwner();
+  const { token } = useAuth();
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -47,6 +53,21 @@ export default function GoalRow({ depart }: { depart: string }) {
   }, []);
 
   const took = arrived ? tookDays(depart, arrived) : null;
+
+  /* 着いた、を記録する。**この行に置く。** 旅が終わったことを言う場所は
+     旅程表のいちばん下なので、押す場所も同じところにする。
+     取り消せる口も並べておく。船が着く前に押してしまうことは普通に起きる。 */
+  const mark = async (date: string) => {
+    setBusy(true);
+    try {
+      const t = await token();
+      if (!t) return;
+      await postNordicArrived(date, t);
+      setArrived(date || null);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="ndayr is-flat">
@@ -68,6 +89,30 @@ export default function GoalRow({ depart }: { depart: string }) {
             `ポーランドから${took ? `${took}日` : ""}、ぜんぶ人の車と船で来ました。ここに、会いたい人がいます。` :
             "船が着いたら終わりです。ここに、会いたい人がいます。友だちの家に約1週間。"}
         </span>
+        {owner && (
+          <span className="nlog-acts">
+            {arrived ? (
+              <button
+                type="button"
+                className="nlog-drop"
+                disabled={busy}
+                onClick={() => mark("")}
+              >
+                着いたのを取り消す
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="nph-post-go"
+                disabled={busy}
+                /* 日付は今日。UTC で切る（島じゅうの「1日」がそう） */
+                onClick={() => mark(new Date().toISOString().slice(0, 10))}
+              >
+                着いた
+              </button>
+            )}
+          </span>
+        )}
       </span>
     </div>
   );
