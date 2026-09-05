@@ -80,8 +80,16 @@ const WOODS = bucket(MAP.woods, 3);
 const DUNES = bucket(MAP.dunes, 2);
 const GLINTS = bucket(MAP.glints, 2);
 
-/** 旅の順。18カ国を、初めて入った順に並べたもの。 */
-const TRIP = [...COUNTRIES].sort((a, b) => a.order - b.order);
+/**
+ * 旅の順。初めて入った順に並べたもの。
+ *
+ * 地図に置き場（anchors）のある国だけにする。置き場が無い国をたどりに
+ * 入れると、寄せる枠が無いところで地図が世界全図に戻って、
+ * 札だけが入れ替わる。**たどりが止まって見える。**
+ */
+const TRIP = [...COUNTRIES]
+  .filter((c) => c.slug in (MAP.anchors as Record<string, unknown>))
+  .sort((a, b) => a.order - b.order);
 
 /**
  * 国ひとつぶんの寄り枠。
@@ -138,7 +146,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   /** 自動でたどっているか。押している間だけ、順に国が入れ替わる。 */
   const [walk, setWalk] = useState(false);
   const chapters = MAP.chapters as Chapter[];
-  const box = pick ? FIT[pick] : chapters[chap].box;
+  const box = (pick && FIT[pick]) || chapters[chap].box;
   const wide = !pick && chap === 0;
   const at = pick ? TRIP.findIndex((c) => c.slug === pick) : -1;
   const open = at >= 0 ? TRIP[at] : null;
@@ -149,23 +157,19 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     setPick(TRIP[i].slug);
   };
 
-  // たどっている間だけ、3.2秒ごとに次の国へ。最後まで行ったら自分で止まる。
-  // 途中で人が触ったら止める（下の onPick）。**戻らずに終わる**のが大事で、
-  // 環にすると「終わりの無いもの」になって、見ている人が降りられない。
+  // たどっている間だけ、3.2秒で次の国へ。1歩ごとに次の1歩を仕込む
+  // （`at` が変わるたびにこの効果が張り直される）。
+  // **最後まで行ったら自分で止まる。** 環にすると終わりが無くなって、
+  // 見ている人が「どこまで見たか」を持てない。旅は一方通行なので、端で止める。
   useEffect(() => {
     if (!walk) return;
-    const t = setInterval(() => {
-      setPick((cur) => {
-        const i = cur ? TRIP.findIndex((c) => c.slug === cur) : -1;
-        if (i >= TRIP.length - 1) {
-          setWalk(false);
-          return cur;
-        }
-        return TRIP[i + 1].slug;
-      });
-    }, 3200);
-    return () => clearInterval(t);
-  }, [walk]);
+    if (at >= TRIP.length - 1) {
+      setWalk(false);
+      return;
+    }
+    const t = setTimeout(() => setPick(TRIP[at + 1].slug), 3200);
+    return () => clearTimeout(t);
+  }, [walk, at]);
 
   /** たどりの入り／切り。開いていないときは1カ国目から、最後まで来ていたら頭から。 */
   const play = () => {
