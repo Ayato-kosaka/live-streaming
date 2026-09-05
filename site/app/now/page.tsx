@@ -3,6 +3,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import NowLive from "@/components/live/NowLive";
 import { PROFILE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
+import Fold from "@/components/ui/Fold";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -37,12 +38,17 @@ export default function NowPage() {
       <NowLive letter>
         <section className="pap-sec">
           <h2 className="pap-h">あやとって誰</h2>
+          {/* 1行で答えて、残りは畳む。この面は「今日どこにいるか」を見に来る面で、
+              生い立ちは たき火広場（/about）が持っている。同じ4段落を、
+              毎日見に来る面の真ん中に開いたまま置いておく理由が無い。 */}
           <p>
             <b>{PROFILE.lead}</b>
           </p>
-          {PROFILE.body.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
+          <Fold title="もう少しくわしく" lead="日本を出てからのことと、作っているもの">
+            {PROFILE.body.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </Fold>
           <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
               <a className="pap-go" key={l.id} href={l.href} target="_blank" rel="noopener noreferrer">

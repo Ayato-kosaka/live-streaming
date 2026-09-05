@@ -722,20 +722,15 @@ p.rtie {
     color-mix(in srgb, var(--ink) 92%, transparent));
 }
 
-/* 街の見出し。パネルの外、ページの地に直に置く。
-   **地は生成りになったので、白で抜かない。** ここは長いあいだ濃い青の地を前提に
-   `--paper` で抜いてあって、地が変わったあとも残っていた。実測で 1.07 : 1、
-   つまり見えていなかった（描いた画素で測ると、字がまったく出てこない）。 */
-.ncity { margin: var(--sp-5) 0 var(--sp-2); }
-.ncity-name {
-  margin: 0 0 var(--sp-3);
-  font-size: 17px;
-  font-weight: 900;
-  padding-left: var(--sp-3);
-  border-left: 7px solid var(--gold);
-  color: var(--ink);
-}
-.ncity-name em { color: var(--ink-2); }
+/* 街。**しおりの章（`.gchap`）を借りて、街ごとに畳んである。**
+   以前はここが「ページの地に直に置いた見出し＋その街の段ぜんぶ」で、
+   フィンランドだけで41段が並んで 3,350px あった。
+   `ui.css` の `.gchap > .fold` が章の作り（帯・紙・中の段・章の間の余白）を
+   全部持っているので、ここが持つのは、いちばん上の章を本文から離すぶんと、
+   名前の大きさだけ。 */
+.panel > .ncity:first-of-type { margin-top: var(--sp-4); }
+/* 街の名前は、しおりの章より一段小さい。章は10しかないが、街は多い国で13ある。 */
+.ncity .gchap-h { font-size: 16px; }
 
 /* --- 見どころ1件（紙の型。段の中身） --- */
 /* 閉じているときのサムネイル。20段ならんだとき、1段ずつ違って見えるのが効く。 */

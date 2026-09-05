@@ -264,6 +264,12 @@
 /* 字が 12px なので、そのままだと指の当たりが 13×21px しかない
    （docs/island-review-2.md 14章）。札を大きくすると前置きが伸びるので、
    当たりだけを字の外へ広げる。左右は区切りの「›」の幅ぶんまで。 */
+.crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.crumbs a::after { content: ""; position: absolute; inset: -12px -4px; }
+.crumbs b { color: var(--ink); }
+/* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
+   （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
+.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 1px; }
 /* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
    朱の枠で言っているのと同じことしか言っていない。
    狭い画面で、同じ場所の名前を2回出すために 45px は使わない。
@@ -280,12 +286,6 @@
     border: 0;
   }
 }
-.crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
-.crumbs a::after { content: ""; position: absolute; inset: -12px -4px; }
-.crumbs b { color: var(--ink); }
-/* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
-   （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
-.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 1px; }
 
 /* ページ見出し。
    島の外のページの地は、紙より明るい生成りになった（tokens.css の --ground-paper）。

@@ -396,7 +396,7 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
 
       {hasBody(plan, 1) && (
         <div style={{ margin: "var(--sp-4) 0" }}>
-          <Fold title="くわしく" lead={plan.place?.area ?? plan.tags.join(" / ")}>
+          <Fold title="どんなところなんだろう" lead={plan.place?.area ?? plan.tags.join(" / ")}>
             <PlanBody plan={plan} from={1} />
           </Fold>
         </div>

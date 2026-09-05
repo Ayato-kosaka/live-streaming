@@ -640,14 +640,16 @@
   margin-top: var(--sp-2);
   padding: 2px var(--sp-2);
   border-radius: var(--r-0);
-  background: color-mix(in srgb, var(--pick) 12%, transparent);
+  /* 朱は「いま選んでいるもの」の色なので使わない（`docs/ac-reference.md` 7章）。
+     数えた事実の札は、オリーブの平ら1種類にそろえる（`.rz-star-tag` と同じ）。 */
+  background: var(--chip);
   font-size: var(--fs-min);
   font-weight: 900;
   line-height: 1.5;
-  color: var(--pap-ink);
+  color: var(--chip-ink);
   text-align: center;
 }
-.rz-here .ic { flex: none; color: var(--pick); }
+.rz-here .ic { flex: none; color: var(--chip-ink); }
 .rz-star .rz-here { margin-top: var(--sp-3); }
 /* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く */
 .rz-today {

@@ -127,7 +127,11 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
 
   return (
     <>
-      <section className="panel now-hero">
+      {/* この箱そのものは押せない。押せるのは中の札2枚だけなので、
+          箱は紙にして、板は押せるものだけに残す。
+          厚み8pxの板を、押せないまま紙の地に積んでいた
+          （`docs/island-review-2` 3章）。 */}
+      <section className="panel paper now-hero">
         <img className="now-pin" src="/sprites/signpost.webp" alt="" />
         <b className="now-place">
           {flag && <Flag slug={flag} size={30} className="now-flag" />}

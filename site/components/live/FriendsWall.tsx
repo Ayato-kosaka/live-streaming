@@ -97,7 +97,7 @@ export default function FriendsWall() {
       {here.size > 0 && (
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
-          顔ぶれは毎日入れ替わります。押しかけると、その人のほうから話しかけてくれます。
+          顔ぶれは毎日入れ替わります。近くまで行くと、その人のほうから話しかけてくれます。
           <Link href="/">
             島へ会いに行く
             <Icon name="right" size={12} />
