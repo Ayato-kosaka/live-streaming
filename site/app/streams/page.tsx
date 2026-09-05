@@ -12,6 +12,7 @@ import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import WeekRail from "@/components/streams/WeekRail";
 import { Vid } from "@/components/streams/Vid";
+import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
@@ -46,18 +47,43 @@ export default function StreamsPage() {
         say={GUIDE.streams}
       />
 
-      <Panel>
-        <h2>
-          <ArtCam size={30} /> 今夜は、何をやってる日
-        </h2>
-        <WeekRail />
-        <div className="stats" style={{ marginTop: 16 }}>
-          <Stat value={<LiveNumber statKey="streams" fallback={s.streams} />} label="配信した回数" sub={`${s.since.replace(/-/g, "/")} から`} />
-          <Stat value={<LiveNumber statKey="streamDays" fallback={s.streamDays} />} label="配信した日数" sub="休んだ日のほうが少ない" />
-          <Stat value={<LiveNumber statKey="comments" fallback={s.comments} />} label="流れたコメント" sub="月末に全部読み返す" />
-          <Stat value={<LiveNumber statKey="people" fallback={s.people} />} label="のべ参加人数" sub="島の住人になった人も" />
-        </div>
-      </Panel>
+      {/* 番組表と数えたものは「やぐらに貼ってある紙」。押すものではないので、
+          板の見出しと板の数字カードをやめて、蛍光ペンの帯と罫のます目にする
+          （`docs/ac-reference.md` 7章 / `docs/island-world.md` 2.1）。 */}
+      <Sheet>
+        <Zone>
+          <H art={<ArtCam size={32} />}>今夜は、何をやってる日</H>
+          <WeekRail />
+        </Zone>
+        <Zone tight>
+          <Rec
+            items={[
+              {
+                n: <LiveNumber statKey="streams" fallback={s.streams} />,
+                unit: "回",
+                label: "配信した",
+                note: `${s.since.replace(/-/g, "/")} から`,
+              },
+              {
+                n: <LiveNumber statKey="streamDays" fallback={s.streamDays} />,
+                unit: "日",
+                label: "配信した日数",
+                note: "休んだ日のほうが少ない",
+              },
+              {
+                n: <LiveNumber statKey="comments" fallback={s.comments} />,
+                label: "流れたコメント",
+                note: "月末に全部読み返す",
+              },
+              {
+                n: <LiveNumber statKey="people" fallback={s.people} />,
+                label: "のべ参加人数",
+                note: "島の住人になった人も",
+              },
+            ]}
+          />
+        </Zone>
+      </Sheet>
 
       <div className="tys">
         {STREAM_TYPES.map((t, i) => {

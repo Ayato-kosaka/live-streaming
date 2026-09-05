@@ -366,11 +366,13 @@
   margin: 0 0 20px;
   padding: 10px;
   border-radius: 12px;
-  background: #f4efcf;
+  background: var(--paper-out);
   box-shadow: var(--shadow-2);
 }
 .pap {
-  --pap-line: #9e976d;
+  /* 紙の色・罫・蛍光ペンは tokens.css の段から取る。ここに同じ値を持つと、
+     片方だけ直したときに同じページの中で紙が2種類になる。 */
+  --pap-line: var(--rule);
   --pap-ink: #4b4527;
   --pap-ink-2: #736b46;
   padding: 18px 16px 20px;
@@ -378,11 +380,11 @@
   border-radius: 6px;
   /* ムラは重ねたラジアルグラデーションで作る。画像は足さない */
   background:
-    radial-gradient(58% 40% at 16% 10%, rgba(255, 255, 255, 0.55), transparent 62%),
+    radial-gradient(58% 40% at 16% 10%, rgba(255, 255, 255, 0.18), transparent 62%),
     radial-gradient(46% 34% at 86% 26%, rgba(150, 140, 82, 0.14), transparent 64%),
     radial-gradient(64% 46% at 36% 92%, rgba(150, 140, 82, 0.15), transparent 62%),
-    radial-gradient(40% 30% at 92% 84%, rgba(255, 255, 255, 0.4), transparent 60%),
-    linear-gradient(#efe4b6, #eadda9);
+    radial-gradient(40% 30% at 92% 84%, rgba(255, 255, 255, 0.14), transparent 60%),
+    linear-gradient(var(--paper-mottle-b), var(--paper-mottle-a));
   color: var(--pap-ink);
 }
 /* 紙の題名。白い札を少し傾けて、テープで貼ったように置く */
@@ -405,7 +407,7 @@
   display: inline-block;
   margin: 0 0 10px;
   padding: 1px 8px 2px;
-  background: #dbdc90;
+  background: var(--marker);
   font-size: 14px;
   font-weight: 900;
   letter-spacing: var(--ls-head);

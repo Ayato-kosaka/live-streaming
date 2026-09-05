@@ -11,14 +11,28 @@
 /* =========================================================
    建物の押し方
    ---------------------------------------------------------
-   **島に建っているものは全部押せる**（docs/island-design.md 6章）。
-   「押せる」の合図は厚み1種類だけ（island-world.md 3.4）。
+   **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
+   だから「押せる」を印で言う必要がもう無い。建っていること自体が印になる。
+   合図は厚み1種類だけ（`island-world.md` 3.4）。
    光らせない。きらめかせない。色を変えない。
 
-   案内するのは6つだけ。看板を出す6つには、いつも札が立っている。
-     遠い … 小さい丸に「!」
-     近い … 開いて名前と「はいる」が出る
-   残りの4つは静かに建っていて、近づいた人にだけ札が開く。
+   前は6つの入口に「!」の札が立っていた。全部の建物が押せるようになると
+   それは10本になり、引きの島で10個が同時に跳ねることになる。
+   全部が叫んでいる画面では、どれも目に入らない
+   （`island-design.md` 3-4「注目させるのは一度に1つ」）。
+
+   **「!」の意味を変えた。「今日ここに何かある」だけに使う。**
+   今日の板（`components/today`）が指している場所に1つだけ立つ。
+   配信中なら配信やぐら、企画の当日なら「これから」、
+   きのう料理を作った日ならキッチン小屋、1年前の今日があれば旅の桟橋。
+   どれも無い日は0本。**だから出た日に本当に目が行く。**
+
+   行き先の一覧は、下のバー（スマホ）とページの頭の並び（PC）が持っている。
+   島の上に一覧を積む必要はない。
+
+     ふだん   … 何も出ない。建物がそこに建っている
+     今日の場所 … 小さい丸に「!」
+     近づいた  … 開いて名前と「はいる」が出る
    ========================================================= */
 .spot {
   position: absolute;
@@ -27,8 +41,10 @@
   width: 0;
   height: 0;
   pointer-events: none;
-  will-change: transform;
 }
+/* 動くのは「いま出ているもの」だけ。隠れている札にまで層を作らせない */
+.spot.is-on,
+.spot.is-today { will-change: transform; }
 
 /* 建物の絵にぴったり重なる、透明な押しボタン。
    絵より小さい入口(たき火など)でも、指で押せる大きさまで広げてある。 */
@@ -50,14 +66,17 @@
 
 /* 札。建物の頭の上に、杭を打って立っている。
    板そのものに厚みを持たせたいので、下向きの box-shadow を「板の側面」として使う。
-   ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。 */
+   ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。
+
+   ふだんは出ていない。出るのは「今日の場所」と「近づいた建物」だけ。 */
 .spot-mark {
   position: absolute;
   left: 0;
   top: calc(var(--mh, 48px) * -1 - 12px);
   transform: translate(-50%, -100%);
   transform-origin: 50% 100%;
-  pointer-events: auto;
+  visibility: hidden;
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 0;
@@ -70,6 +89,7 @@
     linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
+  /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
   box-shadow:
     0 4px 0 var(--frame-deep),
     3px 8px 9px var(--cast);
@@ -77,6 +97,14 @@
   white-space: nowrap;
   /* 開くときは keyframes で弾ませる。ここは色と丸みだけ繋ぐ */
   transition: border-radius 0.2s ease, background 0.2s ease, padding 0.2s ease;
+}
+.spot.is-today .spot-mark,
+.spot.is-on .spot-mark {
+  visibility: visible;
+  pointer-events: auto;
+}
+/* 今日ここに何かある、の1本だけが跳ねる */
+.spot.is-today .spot-mark {
   animation: spotHop 2.8s cubic-bezier(0.32, 0.02, 0.28, 1) infinite;
 }
 /* 札を留めている杭。木目が見えるよう、縦に3色の帯を重ねる */
@@ -101,20 +129,7 @@
   88% { transform: translate(-50%, -100%) scale(1.08, 0.93); }
   94% { transform: translate(-50%, calc(-100% - 2px)) scale(0.98, 1.02); }
 }
-@media (prefers-reduced-motion: reduce) { .spot-mark { animation: none; } }
-
-/* 看板を出さない建物（キッチン小屋・伝説の丘・いまのポスト・仲間のテント）。
-   押せるけれど案内はしない、という状態を作る（`docs/island-design.md` 6章）。
-   遠くからは何も出さず、建物がただ建っている。近づいた人にだけ札が開く。
-   島じゅうに「!」が立つと、どれが行き先の看板か分からなくなるので。 */
-.spot.is-quiet .spot-mark {
-  opacity: 0;
-  pointer-events: none;
-  animation: none;
-}
-.spot.is-quiet .spot-mark::after { opacity: 0; }
-.spot.is-quiet.is-on .spot-mark { opacity: 1; pointer-events: auto; }
-.spot.is-quiet.is-on .spot-mark::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .spot.is-today .spot-mark { animation: none; } }
 
 .spot-bang {
   flex: none;
@@ -215,7 +230,8 @@
 }
 
 /* 出発までの日数。札の右肩に貼ったシール。
-   離して置くと島の上で迷子になるので、必ず札に食い込ませる。 */
+   **札が出ているときだけ出す。** 前は札が閉じていても島の上に浮いていて、
+   引きで見ると「何の あと1日 なのか」が分からない札になっていた。 */
 .spot-badge {
   position: absolute;
   right: -11px;
@@ -230,7 +246,7 @@
   background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
   border: 2.5px solid var(--paper);
   border-radius: 999px;
-  padding: 2.5px 8px;
+  padding: 2px 8px;
   box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
@@ -246,7 +262,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot-badge { animation: none; transform: rotate(-7deg); } }
 
-/* 近づいた入口は、ふわっと弾ませる */
+/* 近づいた入口は、ふわっと弾ませる（`island-design.md` 3-5 反応を返す） */
 .spot-art.is-on { animation: spotBob 1.6s ease-in-out infinite; }
 @keyframes spotBob {
   0%, 100% { transform: translateY(0) scale(1); }

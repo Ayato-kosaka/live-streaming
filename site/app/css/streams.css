@@ -42,21 +42,23 @@
 .zk {
   /* 紙の色は `ui.css` の Fold と同じものを使う（--pf-* と同値）。
      ここだけ別の紙にすると、同じページの中で紙が2種類になってしまう。 */
-  --zk-paper: #efe4b6;
-  --zk-paper-lo: #e7d9a2;
-  --zk-shade: #dccfa0;
-  /* 紙の外側。紙より明るいので、紙が「載っている」ように見える */
-  --zk-out: #f4efcf;
-  /* 罫線。黒い線は使わない。暖かいオリーブ灰 */
-  --zk-rule: #9e976d;
-  --zk-rule-soft: color-mix(in srgb, #9e976d 62%, transparent);
+  /* 同じ値を2か所に持つと、直したほうと直さないほうで紙が2種類になる。
+     紙の色・罫・蛍光ペン・チップ・選択は、ぜんぶ tokens.css の段から取る。 */
+  --zk-paper: var(--paper-mottle-b);
+  --zk-paper-lo: var(--paper-mottle-a);
+  --zk-shade: color-mix(in srgb, var(--paper-mottle-a) 84%, var(--rule));
+  /* 紙の外側。紙より少しだけ明るいので、紙が「載っている」ように見える */
+  --zk-out: var(--paper-out);
+  /* 罫線。黒い線は使わない。暖かいオリーブ */
+  --zk-rule: var(--rule);
+  --zk-rule-soft: color-mix(in srgb, var(--rule) 62%, transparent);
   /* 見出しに敷く蛍光ペンの帯 */
-  --zk-mark: #dbdc90;
+  --zk-mark: var(--marker);
   /* 平らなチップ。影を落とさない */
-  --zk-chip: #cfc202;
-  --zk-chip-soft: color-mix(in srgb, #cfc202 40%, #fff8d2);
+  --zk-chip: var(--chip);
+  --zk-chip-soft: color-mix(in srgb, var(--chip) 40%, #fff8d2);
   /* 選んでいるもの。塗りは変えず、細い枠だけ */
-  --zk-pick: #e2522d;
+  --zk-pick: var(--pick);
   /* 字は島ぜんぶと同じ茶を使う。紙の上だけ別の墨にすると、
      同じサイトの中で文字の色が2種類あるように見える。 */
   --zk-ink: var(--ink);
@@ -79,10 +81,13 @@
   border: 1px solid var(--zk-rule);
   border-radius: 6px;
   overflow: hidden;
+  /* ムラは「紙の中の5%」に収める。左上に白を 0.5 で敷いていたころは
+     そこだけ紙の外より明るくなって、紙が地から浮いた箱に見えていた。
+     紙の外（--paper-out）が紙より明るい、という関係を崩さない。 */
   background:
-    radial-gradient(120% 40% at 8% 0%, rgba(255, 255, 255, 0.5), transparent 56%),
+    radial-gradient(120% 40% at 8% 0%, rgba(255, 255, 255, 0.16), transparent 56%),
     radial-gradient(80% 34% at 94% 62%, rgba(118, 110, 68, 0.14), transparent 60%),
-    radial-gradient(60% 26% at 68% 18%, rgba(255, 255, 255, 0.3), transparent 72%),
+    radial-gradient(60% 26% at 68% 18%, rgba(255, 255, 255, 0.12), transparent 72%),
     radial-gradient(50% 22% at 22% 88%, rgba(118, 110, 68, 0.12), transparent 66%),
     linear-gradient(var(--zk-paper), var(--zk-paper-lo));
 }

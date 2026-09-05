@@ -45,29 +45,31 @@ def max_side(name):
     return SMALL_SIDE if SMALL.match(name) else MAX_SIDE
 
 
+# 焼きたての PNG があるものは作り直し、無いものは前に作った webp をそのまま測る。
+# 一部だけ焼き直したときに、寸法表から残りが消えないようにするため
+names = sorted({f.rsplit(".", 1)[0] for f in os.listdir(SRC) if f.endswith((".png", ".webp"))})
 meta = {}
-for f in sorted(os.listdir(SRC)):
-    if not f.endswith(".png"):
-        continue
-    name = f[:-4]
-    path = os.path.join(SRC, f)
-    im = Image.open(path).convert("RGBA")
-    a = im.getchannel("A")
-
-    seen = a.point(lambda v: 255 if v > VISIBLE else 0).getbbox()
-    if seen is None:
-        print("空:", name)
-        continue
-    im = im.crop(seen)
-    k = min(1.0, max_side(name) / max(im.size))
-    if k < 1:
-        im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
-    # 品質88・透明は無圧縮(既定)だと、中身の3割が透明の階調に消えていた。
-    # 接地影のぼかしと輪郭のなめらかさは、色より粗くても見分けが付かない。
-    # 88/既定 と 82/72 を並べて見比べても差が出ず、大きさは約7割になる。
-    # ここから下げる(aq50 など)と、影に同心円の縞が出はじめる
-    im.save(os.path.join(SRC, name + ".webp"), quality=82, alpha_quality=72, method=6)
-    os.remove(path)
+for name in names:
+    fresh = os.path.join(SRC, name + ".png")
+    if os.path.exists(fresh):
+        im = Image.open(fresh).convert("RGBA")
+        a = im.getchannel("A")
+        seen = a.point(lambda v: 255 if v > VISIBLE else 0).getbbox()
+        if seen is None:
+            print("空:", name)
+            continue
+        im = im.crop(seen)
+        k = min(1.0, max_side(name) / max(im.size))
+        if k < 1:
+            im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+        # 品質88・透明は無圧縮(既定)だと、中身の3割が透明の階調に消えていた。
+        # 接地影のぼかしと輪郭のなめらかさは、色より粗くても見分けが付かない。
+        # 88/既定 と 82/72 を並べて見比べても差が出ず、大きさは約7割になる。
+        # ここから下げる(aq50 など)と、影に同心円の縞が出はじめる
+        im.save(os.path.join(SRC, name + ".webp"), quality=82, alpha_quality=72, method=6)
+        os.remove(fresh)
+    else:
+        im = Image.open(os.path.join(SRC, name + ".webp")).convert("RGBA")
 
     a = im.getchannel("A")
     solid = a.point(lambda v: 255 if v > SOLID else 0).getbbox() or (0, 0, im.width, im.height)
