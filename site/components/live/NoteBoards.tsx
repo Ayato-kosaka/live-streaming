@@ -66,7 +66,18 @@ export type NotePlace = {
 };
 
 /** 棚に並ぶ1枚。付箋も国あての提案も、読むときは同じ形でよい。 */
-type Sticky = { id: string; text: string; by?: string };
+type Sticky = {
+  id: string;
+  text: string;
+  /** 書いた人の名前。名乗っていなければ無い */
+  by?: string;
+  /**
+   * もとの貼り先の id。**表から外れた企画のぶんだけ**入る。
+   * 棚の名前には出さない（島の画面に slug は出てこない）。
+   * 1枚ずつの小さい添え書きにだけ落とす。
+   */
+  from?: string;
+};
 
 type Shelf = NotePlace & { items: Sticky[] };
 
@@ -84,7 +95,7 @@ function shelves(places: NotePlace[], notes: NextNote[], ideas: Idea[]): Shelf[]
   const byPlan = new Map<string, Sticky[]>();
   for (const n of notes) {
     const list = byPlan.get(n.planId) ?? [];
-    list.push({ id: n.id, text: n.text });
+    list.push({ id: n.id, text: n.text, from: n.planId });
     byPlan.set(n.planId, list);
   }
   const byTag = new Map<string, Sticky[]>();
@@ -106,13 +117,29 @@ function shelves(places: NotePlace[], notes: NextNote[], ideas: Idea[]): Shelf[]
 
   /* 面の側が知らない貼り先。終わった企画を `content/plans.ts` から外すと
      付箋だけが残るし、`【札】` はあとから増やせる。
-     **拾わないと、書いた人の1行がどこからも読めなくなる。** */
-  /* 棚の名前に企画の id をそのまま出す。「終わった企画」だと、2つ外したときに
-     同じ名前の札が2枚並んで見分けられなくなる。ここへ落ちてくるのは
-     まれなので、読みにくさより見分けを取る。 */
-  for (const [key, items] of byPlan) {
-    out.push({ key, name: key, group: "表から外した企画", by: "plan", items });
+     **拾わないと、書いた人の1行がどこからも読めなくなる。**
+
+     企画を外すと、その名前はもうどこにも無い。付箋が持っているのは id だけで、
+     名前は Git の履歴にしか残らない。**だから id を棚の名前にしない。**
+     島の画面に slug は出てこない（`docs/ac-reference.md`）。
+     棚は「もう表に無い企画」1つにまとめて、どの企画のものかは
+     1枚ずつの小さい添え書きに落とす。1枚も読めなくならない。 */
+  /* 企画ごとの山を並べ直すと日付が前後するので、もとの並び（新しい順）から拾う。
+     棚の鍵に `#` を付けてあるのは、企画の id とぶつからないようにするため。 */
+  const left = new Set(byPlan.keys());
+  const gone = notes
+    .filter((n) => left.has(n.planId))
+    .map((n) => ({ id: n.id, text: n.text, from: n.planId }));
+  if (gone.length) {
+    out.push({
+      key: "#gone",
+      name: "もう表に無い企画",
+      group: "そのほか",
+      by: "plan",
+      items: gone,
+    });
   }
+  /* 知らない【札】のほうは、札そのものが人の書いた字なので、そのまま棚の名前にする。 */
   for (const [key, items] of byTag) {
     out.push({ key, name: key, group: "そのほか", by: "tag", items });
   }
@@ -248,6 +275,11 @@ export default function NoteBoards({
                   </span>
                   {n.text}
                   {n.by && <em className="nb-by">{n.by} さん</em>}
+                  {/* どの企画に貼られたものか。棚の名前が引けないときだけ、
+                      1枚ずつの添え書きに落とす（棚の名前には出さない） */}
+                  {now.key === "#gone" && n.from && (
+                    <em className="nb-from">もとの企画 {n.from}</em>
+                  )}
                 </li>
               ))}
             </ul>

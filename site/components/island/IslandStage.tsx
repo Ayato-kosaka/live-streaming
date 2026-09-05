@@ -1652,7 +1652,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                     !
                   </span>
                 )}
-                {hasDays && (
+                {/* 閉じた札の上に印は1つまで。「!」が立つ日は、そちらに譲る。
+                    小さい丸の上に「!」と「あと1日」が並ぶと、どちらも読めない。 */}
+                {hasDays && (count || on) && (
                   <em className="spot-badge" aria-hidden>
                     {days === 0 ? "今日" : `あと${days}日`}
                   </em>
