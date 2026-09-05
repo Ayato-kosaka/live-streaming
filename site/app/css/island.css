@@ -195,16 +195,17 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot.is-on .spot-mark { animation: none; } }
 
+/* 開いた札の中の「!」は、札に押してある印であって、それ自体は押せない。
+   **押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+   照り返しも厚みも外す。中に小さいボタンが入っているように見せない。 */
 .spot.is-on .spot-bang {
   width: 24px;
   height: 24px;
   line-height: 21px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 33% 26%, rgba(255, 255, 255, 0.9) 0 14%, rgba(255, 255, 255, 0) 46%),
-    linear-gradient(var(--paper-2), var(--gold));
+  background: linear-gradient(var(--paper-2), var(--gold));
   border: 2px solid var(--frame-dark);
-  box-shadow: 0 2px 0 var(--frame-deep);
+  box-shadow: none;
   font-size: 14px;
 }
 .spot.is-on .spot-text {
