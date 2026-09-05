@@ -129,6 +129,11 @@ await offline(ctx);
   並べてあるので、**そのまま置いておく。** 畳むと次のビルドでまた書き足される。
   （`typescript.tsconfigPath` で逃がす手は使えない。Next はそのファイルを作り直して
   くれないので、本番のビルドが `paths` を失って落ちる。試して戻した）
+- **押しどころは、見た目の箱で測らない** — `getBoundingClientRect` には
+  `::after` で広げた当たり判定が出ないし、隣の要素に取られている場所も出ない。
+  中心から1pxずつ外へ伸ばして `elementFromPoint` がまだ自分を返すかで測る。
+  道具は `tools/sprites/hitbox.mjs`。「押せないのに厚みがある」ものを数えるのは
+  `tools/sprites/popcheck.mjs`。
 - **CPU の絞り（`Emulation.setCPUThrottlingRate`）は、それ自体が CPU を食う** —
   `/board` を6秒で、絞りなし 120ms が 4倍絞りで 4,710ms（うちメイン 4,367ms）。
   **どの面にも1フレーム 13ms 前後の下駄がつく。** 「島も北欧も掲示板も 13ms」が
