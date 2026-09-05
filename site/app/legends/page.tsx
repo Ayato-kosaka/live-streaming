@@ -29,7 +29,7 @@ export default function LegendsPage() {
       <PageHead
         icon="hall-museum"
         title="伝説の丘"
-        lead="いまでも話に出てくる、大きい企画と大きい日。だいたいは企画会議から生まれています。"
+        lead={`いまでも話に出てくる、大きい企画と大きい日が${LEGENDS.length}つ。どれも週のはじめの企画会議から始まった。`}
         say="数字だけ追っていっても分かるよ。気になったのを押すと、その日ぜんぶが出てくる。"
       />
 
@@ -72,11 +72,22 @@ export default function LegendsPage() {
           </Link>
         </Zone>
 
+        {/* 丘に来た人が最初に思うのは「これ何?」。答え（企画会議で出た一言）を
+            一覧より先に置く（`docs/island-ux.md` 5.7）。いちばんの1つだけは、
+            この面の主役なので上に残す。 */}
+        <Zone>
+          <H art={<ArtMeeting size={32} />}>これ、どうやって伝説になったんだろう</H>
+          <p className="zk-lead">
+            どれも最初は、週のはじめの企画会議で出た一言。「怖いイメージを変えたい」「イワシで3日いける」。
+            その場で笑って終わる日もあるし、そのまま来週の予定になる日もある。
+          </p>
+        </Zone>
+
         <Zone tight>
           <H art={<ArtMonument size={32} />} note={`${LEGENDS.length}つ・配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>
             丘に立っているもの
           </H>
-          <p className="zk-lead">数字を見るだけで、その日に何があったかだいたい分かるようにしてあります。</p>
+          <p className="zk-lead">数字ひとつで、その日に何があったかだいたい分かる。</p>
         </Zone>
 
         <Zone flush>
@@ -100,13 +111,6 @@ export default function LegendsPage() {
           </div>
         </Zone>
 
-        <Zone>
-          <H art={<ArtMeeting size={32} />}>どうやって伝説になるのか</H>
-          <p className="zk-lead">
-            どれも最初は、週のはじめの企画会議で出た一言でした。「怖いイメージを変えたい」「イワシで3日いける」。
-            その場で笑って終わることもあるし、そのまま来週の予定になることもある。
-          </p>
-        </Zone>
       </Sheet>
 
       <div className="tiles">
