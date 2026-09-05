@@ -773,20 +773,24 @@
   font-weight: 700;
   line-height: 1.9;
 }
-/* 島だよりの日付。紙の右上に押したスタンプに見せる */
+/* 島だよりの日付。紙の右上に押したスタンプに見せる。
+   前は色を #c07a5a で直に持っていて、紙の上で 2.66 : 1 しか無かった
+   （`docs/island-world.md` 7.9 の表）。うすい朱はこの紙の上では 4.5 を越えない
+   （`--pick` でも 2.94）ので、色を濃くするのではなく墨に替える。
+   「スタンプらしさ」を出しているのは色ではなく、傾いた二重の枠のほう。
+   opacity も外す。枠ごと薄くなって、字と枠の両方が沈んでいた。 */
 .np-stamp {
   position: absolute;
   top: 12px;
   right: 12px;
   padding: var(--sp-1) var(--sp-2);
-  border: 2px solid #c07a5a;
+  border: 2px solid var(--ink-2);
   border-radius: 4px;
   transform: rotate(6deg);
-  color: #c07a5a;
+  color: var(--ink-2);
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.08em;
-  opacity: 0.85;
 }
 .pap { position: relative; }
 
