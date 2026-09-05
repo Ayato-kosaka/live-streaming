@@ -2,10 +2,10 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import { Mark } from "./Marks";
 import { Answer } from "./Fork";
-import { DAYS, NORDIC_LOG, ROUTE, nordicCountry, type Leg } from "@/content/nordic";
+import { DAYS, NORDIC_LOG, ROUTE, dayName, nordicCountry, type Leg } from "@/content/nordic";
 
 /**
- * 旅のよてい。日付ごとに1行。**この面の本体。**
+ * 旅のよてい。**この面の本体。**
  *
  * ここは区間ごとの10枚のカードだった。1枚ずつを畳んであって、開くと中に
  * 「足代の席」「道しるべの席」があり、両方そろうと区間が「つながる」という
@@ -13,11 +13,16 @@ import { DAYS, NORDIC_LOG, ROUTE, nordicCountry, type Leg } from "@/content/nord
  * 作った言葉で、読む人は誰も知らない。説明が要る言葉は画面に出さない
  * （`docs/nordic-fund.md` 「捨てた設計」）。
  *
- * 代わりに、そのまま読めるものにする。**何日目に、どこからどこへ、どうやって、
- * その日に何があるか。** 日付は切符のある2日にだけ入っている。
- * 残りは埋めない。陸路はぜんぶヒッチハイクなので、乗せてもらえた日でずれる。
+ * **数字が入るのは、本人が言い切った日だけ。** 1日目アウシュヴィッツ、
+ * 2日目ワルシャワ、3日目ビャウィストク、6日目ヴィリニュス、7日目リガ。
+ * 4日目・5日目とリガから先は言われていないので、行はあっても中身を書かない。
+ * **分からない日を埋めない。** 埋めると、決まっている5日ぶんまで
+ * 「たぶんこうだろう」に見えてしまう。
  *
- * 畳まない。10日ぶんを上から下まで読めるのが旅程表なので、
+ * 予備の2日も、表の中に行として置く。雨と、車がつかまらない日のぶん。
+ * 出さずに「9日ぐらい」とだけ書くと、数が合わない表になる。
+ *
+ * 畳まない。上から下まで読めるのが旅程表なので、
  * 押して開かないと中身が分からない形にはしない。
  *
  * 国の話はここでしない。`/nordic/[国]` に見どころが161件あって、
@@ -48,16 +53,17 @@ export default function Days() {
   return (
     <ol className="ndays">
       {DAYS.map((day) => {
-        const log = day.legs.map((l) => NORDIC_LOG[l.id]).find(Boolean);
+        const legs = day.legs ?? [];
+        const log = legs.map((l) => NORDIC_LOG[l.id]).find(Boolean);
         return (
-          <li key={day.n} className="nday" id={`day-${day.n}`}>
+          <li key={day.id} className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
             <p className="nday-when">
-              <b>{day.n}日目</b>
+              <b>{dayName(day)}</b>
               {day.date && <time dateTime={day.date}>{when(day.date)}</time>}
               {/* 「いま、ここ」は `TripNow` が現在地を読んでから出す。
                   どの日が今日の話なのかは、上から読まなくても分かるようにしておく。 */}
               <span className="nday-now">いま、ここ</span>
-              {/* 泊まるところは、独立した行にしない。1日あたり37px、10日で370px。 */}
+              {/* 泊まるところは、独立した行にしない。1日あたり37px。 */}
               {day.stay && (
                 <span className="nday-stay">
                   <Icon name="home" size={14} />
@@ -66,7 +72,13 @@ export default function Days() {
               )}
             </p>
 
-            {day.legs.map((l) => {
+            {/* 決まっていない日と、予備の日はこれだけ。
+                「移動にあてる日」のように、言われていないことを書き足さない。
+                区間のある行（「リガのあと」）では、**区間より先に**置く。
+                何日目か分からない、と先に言わないまま3区間を読ませない。 */}
+            {day.say && <p className="nday-say">{day.say}</p>}
+
+            {legs.map((l) => {
               const c = l.enters ? nordicCountry(l.enters) : undefined;
               return (
                 <div key={l.id} className="nday-go" data-leg={l.id}>
@@ -96,13 +108,11 @@ export default function Days() {
 
             {/* 越えた日にだけ、聞いた答えが残る。まだの日の問いは、
                 下の「この旅に、言う」に並んでいる（`Asks.tsx`）。 */}
-            {day.legs.map((l) =>
+            {legs.map((l) =>
               l.fork ? (
                 <Answer key={l.id} leg={l.id} seq={ROUTE.indexOf(l)} fork={l.fork} />
               ) : null,
             )}
-
-
 
             {/* 越えた日にだけ入る。よていだけの表は、出発前にしか読む理由がない。 */}
             {log && (
@@ -128,7 +138,7 @@ export default function Days() {
           相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。 */}
       <li className="nday is-goal">
         <p className="nday-when">
-          <b>翌朝</b>
+          <b>着いた朝</b>
         </p>
         <p className="nday-way">ストックホルム</p>
         <p className="nday-note">

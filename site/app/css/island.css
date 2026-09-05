@@ -108,6 +108,19 @@
 
 .spot-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
+/* 札の入れ物。ふだんは何もしない。
+   建物が画面の外へ出たときだけ、ここに translate が入って札を縁へ寄せる
+   （`IslandStage.tsx` の「画面から出た看板は、縁に寄せて名前だけ残す」）。
+   **建物の当たり（.spot-hit）はこの中に入れない。** 一緒に動くと、
+   絵の無いところが押せることになる。 */
+.spot-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
 /* 札。建物の頭の上に、杭を打って立っている。
    板そのものに厚みを持たせたいので、下向きの box-shadow を「板の側面」として使う。
    ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。
@@ -169,6 +182,48 @@
     3px 8px 9px var(--cast);
 }
 .spot.is-sign .spot-mark::after { height: 15px; width: 9px; margin-left: -4.5px; bottom: -14px; }
+
+/* 縁へ寄せた札。**杭を、建物のほうを指す矢に持ち替える。**
+   杭は「ここに立っている」の絵なので、建物から離れた札に付いていると嘘になる。
+   矢にすれば「そっちに建っている」と読める。
+   矢は絵文字でも記号の字でもなく、三角形そのもの（`island-design.md` 1章）。 */
+.spot[data-edge] .spot-mark::after {
+  width: 0;
+  height: 0;
+  margin: 0;
+  border: 7px solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.spot[data-edge="d"] .spot-mark::after {
+  left: 50%;
+  bottom: -13px;
+  margin-left: -7px;
+  border-top-color: var(--frame-dark);
+}
+.spot[data-edge="u"] .spot-mark::after {
+  left: 50%;
+  bottom: auto;
+  top: -13px;
+  margin-left: -7px;
+  border-bottom-color: var(--frame-dark);
+}
+.spot[data-edge="l"] .spot-mark::after {
+  left: -13px;
+  bottom: auto;
+  top: 50%;
+  margin-top: -7px;
+  border-right-color: var(--frame-dark);
+}
+.spot[data-edge="r"] .spot-mark::after {
+  left: auto;
+  right: -13px;
+  bottom: auto;
+  top: 50%;
+  margin-top: -7px;
+  border-left-color: var(--frame-dark);
+}
 .spot.is-sign .spot-text { display: grid; gap: 1px; line-height: 1.2; text-align: left; }
 .spot.is-sign .spot-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
 /* 一言は近づいてから。遠くの6枚が2行ずつ出ていると、島が字で埋まる */
@@ -350,6 +405,15 @@
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
 }
+/* 閉じている看板の上では、シールを板の外（真上）へ出す。
+   板の右肩に貼ると、「これから」の4文字のうち3文字がシールの下に入って、
+   **何の「あと1日」なのか読めない札**になっていた（4周目レビュー1章）。
+   開いた札（.is-on）は横に長いので、いままでどおり右肩でよい。 */
+.spot.is-sign:not(.is-on) .spot-badge {
+  top: auto;
+  bottom: calc(100% + 2px);
+  right: -6px;
+}
 /* ずっと同じ速さで脈打つと背景の一部になる。
    長く止めてから、2回だけ跳ねる。目の端でも「動いた」と分かる。 */
 @keyframes badgePop {
@@ -385,12 +449,18 @@
   pointer-events: none;
   will-change: transform;
 }
+/* 住人の当たりは、住人の絵と同じ大きさにする。
+   絵はカメラの倍率で 53px（スマホ）〜94px（PC）と伸び縮みするのに、
+   ここが 44×56 の固定だったので、PC では**見えている住人の下4割が押せなかった**。
+   横 44px は指の最小 48px も割っていた。
+   `--ws` はカメラの倍率が変わるたびに `IslandStage.tsx` が書く。
+   足元（絵の下端）を当たりの下端にそろえる。 */
 .who-hit {
   position: absolute;
-  left: -22px;
-  top: -52px;
-  width: 44px;
-  height: 56px;
+  left: calc(var(--ws, 48px) / -2);
+  top: calc(var(--ws, 48px) * -1);
+  width: var(--ws, 48px);
+  height: var(--ws, 48px);
   padding: 0;
   border: 0;
   background: none;
@@ -605,6 +675,17 @@
 @media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } }
 
 /* --- 島のモーション --- */
+/* 画面から出ている島は、動かさない。
+   `/` は 5.5画面ぶんあって、下まで巻いた人は島を見ていない。それでも
+   木は揺れ、波は動き、住人は歩いていた（放置1秒あたり 280ms。`/board` は 43ms）。
+   rAF のほうは `IslandStage.tsx` が止める。CSS の動きはここで止める。
+   **消すのではなく止める。** 戻ってきたときに続きから動きだす。 */
+.stage.is-away *,
+.stage.is-away::before,
+.stage.is-away::after {
+  animation-play-state: paused;
+}
+
 /* 木と草が、そよ風でゆっくり揺れる。全部そろって揺れないよう位相をずらす。 */
 .sway { animation: sway 4.6s ease-in-out infinite alternate; }
 @keyframes sway {
@@ -975,6 +1056,51 @@
   }
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* 島の地図（島の連なりへ）。
+   ---------------------------------------------------------
+   **トップは、いままでどおり「いまの島」**（`docs/island-atlas.md` 7章）なので、
+   連なりへはここからしか行けない。だから隅に隠さず、右上に置く。
+
+   置き場所が縦に動くのは、右上を看板ロゴと分け合っているから。
+   スマホは寄り（既定）なら小さいマーク（124×73）、引きなら大きい看板（〜214×168）が
+   同じ隅に出る。**ロゴの下に必ず来る高さ**を、寄り引きで出し分ける。
+   640px から上はロゴが中央か左へ寄るので、右上の 12px がそのまま空く。 */
+.stage-atlas {
+  position: absolute;
+  right: 12px;
+  /* スマホ・引き（島ぜんぶ）。大きい看板の下 */
+  top: calc(196px + env(safe-area-inset-top));
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* スマホ・寄り（既定）。小さいマークの下 */
+.stage[data-view="close"] .stage-atlas { top: calc(104px + env(safe-area-inset-top)); }
+@media (min-width: 640px) {
+  .stage .stage-atlas { top: calc(12px + env(safe-area-inset-top)); }
+}
+.stage-atlas:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.stage-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+.stage.is-talking .stage-atlas { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+
 /* 話しているあいだは、島の上のUIと同じように引っ込める。
    バーごと引くのは、名乗り（カモメ）が出ているあいだ島を見せたいから。
    板だけ消してバーの枠が残ると、空っぽの板が下に居座ることになる。 */

@@ -14,22 +14,25 @@ import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Countries from "@/components/nordic/Countries";
 import {
   DAYS,
+  DAY_OF,
   DEPART,
   FARES,
   HITCH_KM,
   MAIN,
+  NORDIC_COUNTRIES,
   NORDIC_GUIDE,
   ROUTE,
+  WHY,
+  dayName,
   nordicCountry,
 } from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
-import { planById } from "@/content/plans";
 import { LINKS } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
   description:
-    "スウェーデンに、会いたい人がいます。ジョージアからそこまで1,541km。バスにも電車にも乗らず、人の車だけで行きます。2026年9月11日出発。ルート地図、国ごとの見どころ、旅のしおり。",
+    "スウェーデンに、会いたい人がいます。スウェーデン行きの飛行機が高いので、安いポーランド行きで飛んで、そこから1,541kmを人の車で北上します。2026年9月11日出発。旅のよてい、ルート地図、国ごとの見どころ、旅のしおり。",
 };
 
 const MOVE: Record<string, string> = {
@@ -51,12 +54,16 @@ const MOVE: Record<string, string> = {
  * **この面は、毎晩の配信で「見てね」と言われる面になる。**
  *
  *   1. いま何が起きているか  … あと何日／いまどこ／つぎどこ（TripNow）
- *   2. どこを通るのか        … 地図
- *   3. 何をするのか          … **旅のよてい。日付ごと**（Days）
- *   4. どこへ行けばもっと見られるか … 通る6カ国 → 国のページ
- *   5. もっと知りたい人だけが開くもの … なぜバスに乗らないのか
+ *   2. **なぜ行くのか**      … 会いたい人のことと、なぜ歩くのか（WHY）
+ *   3. どこを通るのか        … 地図
+ *   4. 何をするのか          … **旅のよてい。何日目にどこへ**（Days）
+ *   5. どこへ行けばもっと見られるか … 通る6カ国 → 国のページ
  *   6. この旅に、言う        … まだ決めていないこと／やってほしいことを書く
  *   7. 応援する              … 投げ銭。**いちばん最後に、これだけで**
+ *
+ * **2 が長いあいだ無かった。** 面には「ヒッチハイクで行く」としか書いておらず、
+ * なぜ行くのかも、なぜ歩くのかも、どこにも書いていなかった。
+ * オーナーの指摘で足したのがここ。**地図より先に置く。**
  *
  * **3 に、言うことと出すことを混ぜない。** ここは長いあいだ、区間ごとの
  * カード10枚の中に「足代の席」と「道しるべの席」があって、両方そろうと
@@ -72,7 +79,6 @@ const MOVE: Record<string, string> = {
  * 数字は意味のあるものだけ置く。読んで何も分からない数字は出さない。
  */
 export default async function NordicPage() {
-  const plan = planById("nordic");
   const doneru = LINKS.find((l) => l.id === "doneru")!;
   const cityId = Object.fromEntries(MAP.cities.map((c) => [c.name, c.id]));
 
@@ -104,15 +110,24 @@ export default async function NordicPage() {
     if (s) s.hitch = (s.hitch ?? 0) + l.km;
   }
 
-  // 区間の id → 何日目。旅程表のその日へ飛ぶのに使う。
-  const dayOf: Record<string, number> = {};
-  for (const d of DAYS) for (const l of d.legs) dayOf[l.id] = d.n;
+  // 区間の id → 旅程表のどの行か。上の司令塔が「今日のところへ」で使う。
+  // 何日目か分かっていない行もあるので、数字ではなく行の名前で持つ。
+  const dayOf: Record<string, string> = Object.fromEntries(
+    Object.entries(DAY_OF).map(([id, d]) => [id, d.id]),
+  );
 
-  // まだ決めていないこと。何日目の話かを付けて、下の「言う」の区画に並べる。
+  // まだ決めていないこと。**どこの話かを、問いの上に付ける。**
+  // 何日目・どこからどこへ、は旅程表と同じ字を使う（手で書くと片方だけ古くなる）。
   const asks: AskItem[] = DAYS.flatMap((d) =>
-    d.legs
+    (d.legs ?? [])
       .filter((l) => l.fork)
-      .map((l) => ({ leg: l.id, seq: ROUTE.indexOf(l), day: d.n, fork: l.fork! })),
+      .map((l) => ({
+        leg: l.id,
+        seq: ROUTE.indexOf(l),
+        when: dayName(d),
+        way: `${l.from} → ${l.to}${l.km ? ` ${l.km.toLocaleString()}km` : ""}`,
+        fork: l.fork!,
+      })),
   );
 
   return (
@@ -127,6 +142,24 @@ export default async function NordicPage() {
         hitchKm={HITCH_KM}
       />
 
+      {/* なぜこの旅が起きるのか。**地図より先。**
+          ここが無いあいだ、面には「ヒッチハイクで行く」としか書いていなかった。
+          会いたい人がいることも、スウェーデン行きの飛行機が高いから
+          ポーランドから歩くことも、どこにも書いていなかった。
+
+          **箇条書きにしない。** 出会って、帰ってしまって、何度も近くまで来て、
+          呼んでもらえた、という順に読めることに意味がある。
+          相手の名前も素性も出さない（`docs/nordic-fund.md` 1章・GitHub #106）。
+          出していいと分かったら `FRIEND.name` に入れるだけで、文は変えなくていい。 */}
+      <section className="panel paper" id="why">
+        <h2>会いに行く理由</h2>
+        <div className="nwhy">
+          {WHY.map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
+        </div>
+      </section>
+
       {/* 地図。このページの主役なので、いちばん上に、いちばん大きく。
           面は紙（`docs/island-world.md` 2章）。`Panel` は id を取らないので、
           ここは class を直に書く。 */}
@@ -136,11 +169,9 @@ export default async function NordicPage() {
         <RouteMapSvg />
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
             和文の途中に空きが1つ入る（書き出した HTML の画素で拾った）。 */}
-        {/* 「下の区間を開くと、その線に帯が敷かれます」を書いていた。
-            画面の使い方の説明で、読んでも何もできない。開けば分かる。 */}
-        <p className="nmap-say">
-          いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
-        </p>
+        {/* 「いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です」
+            を書いていた。**すぐ上の説明が同じことを言っている**（飛行機はポーランドまで、
+            そこから先は人の車）。地図の下でもう一度言わない。 */}
         {/* 線の読み方。**畳んである。** 6種類の線の見本は、地図を読むために
             要るものではあるが、初めて開いた人が最初に読むものではない。
             開いたままだと 200px、地図そのものと同じだけの場所を使っていた。 */}
@@ -154,13 +185,15 @@ export default async function NordicPage() {
         </div>
       </section>
 
-      {/* 旅のよてい。**この面の本体。** 日付ごとに1つ。
+      {/* 旅のよてい。**この面の本体。**
+          何日目にどこへ行くかを、本人が言い切ったぶんだけ並べる。
+          言われていない日（4日目・5日目、リガから先）は行だけ置いて中身を書かない。
           国ごとの話は `/nordic/[国]` にあるので、ここには書かない。 */}
       <section className="panel paper" id="plan">
         <h2>旅のよてい</h2>
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳む。 */}
         <p className="muted">
-          日付が入っているのは、切符のある最初の2日だけです。そこから先は乗せてもらえた日でずれるので、日にちを決めていません。
+          決めてあるのは「何日目に、どこへ」までです。日にちは、乗せてもらえた日でずれるので決めていません。
         </p>
         <Days />
       </section>
@@ -169,27 +202,20 @@ export default async function NordicPage() {
           紙を2枚に分けていたが、どちらも「もっと見たい人が押すもの」なので1枚にする。 */}
       <Panel>
         <h2>通る6カ国</h2>
-        <p className="muted">
-          写真は、その国でいちばん見たいもの。押すと、その国の見どころが全部出ます。
-        </p>
-        <Countries />
+        {/* **畳んである。** 写真6枚で 505px あって、面の1割をここが使っていた。
+            この面でいちばん読んでほしいのは、なぜ行くのかと、何日目にどこへ行くか。
+            国ごとの見どころ161件は、読みたい人が開けば全部ある。 */}
         <div className="folds">
           <Fold
-            title="どうしてバスに乗らないのか"
-            lead="ジョージアに戻らない一方通行の旅。飛行機はクタイシ発の1本だけ"
+            title="国ごとの見どころ"
+            lead={`ポーランド / リトアニア / ラトビア / エストニア / フィンランド / スウェーデン。${NORDIC_COUNTRIES.reduce((a, c) => a + c.spots, 0)}件`}
           >
-            {plan?.about?.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-            <div className="nquote">
-              <p>
-                バスなら2日で終わる道です。それを親指1本で行くのは、
-                <b>そうやって行かないと、会いに行ったことにならない</b>
-                から。誰の車に乗せてもらえるかで、旅の中身が毎日変わります。
-              </p>
-            </div>
+            <Countries />
           </Fold>
         </div>
+        {/* 「どうしてバスに乗らないのか」の畳みがここにあった。
+            答え（スウェーデン行きの飛行機が高い）は面のいちばん上に移したので、
+            同じ話を2か所でしない。 */}
         <Link className="tile" href="/nordic/guide">
           <span className="tile-mark">
             <Icon name="book" size={26} />
@@ -210,7 +236,7 @@ export default async function NordicPage() {
       <section className="panel paper" id="say">
         <h2>この旅に、言う</h2>
         <p className="muted">
-          行き先も、やることも、まだ決まっていないところがあります。行く前に全部読みます。
+          まだ決まっていないところがあります。行く前に、全部読みます。
         </p>
         <Asks items={asks} />
         <h3 className="nsub">やってほしいことを書く</h3>
@@ -218,7 +244,7 @@ export default async function NordicPage() {
           bare
           foldWrite
           country="北欧旅"
-          note="ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。"
+          note="ルートへの口出しも、やってほしい企画も、知り合いの話も。"
           placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
         />
       </section>
@@ -229,7 +255,7 @@ export default async function NordicPage() {
       <section className="panel paper" id="back">
         <h2>応援する</h2>
         <p className="muted">
-          出さなくても旅は行きます。飛行機はもう取ってあるし、乗せてもらうぶんはただです。お金が要るのは船と、泊まるところだけです。
+          出さなくても旅は行きます。乗せてもらうぶんはただで、お金が要るのは船と泊まるところだけです。
         </p>
         <Support />
         <ul className="nback-what">

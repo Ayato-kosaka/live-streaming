@@ -159,6 +159,18 @@ function anchorVb(cx: number, cy: number, span: number, w: number, h: number): s
   return `${(cx - vw / 2).toFixed(1)} ${(cy - vh / 2).toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`;
 }
 
+/**
+ * 看板を出す6つの、まん中。
+ *
+ * カメラはあやとを追うが、**追いきらずにここへ引き戻す**（`camWant`）。
+ * 島に来た人が最初に読むのは入口の名前なので、
+ * 主人公の居場所より、入口の並びのほうがカメラの基準として強い。
+ */
+const SIGN_MID = {
+  x: (Math.min(...SPOTS.map((s) => s.x)) + Math.max(...SPOTS.map((s) => s.x))) / 2,
+  y: (Math.min(...SPOTS.map((s) => s.y)) + Math.max(...SPOTS.map((s) => s.y))) / 2,
+};
+
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
 /** 指で押せる最小の大きさ(画面px) */
@@ -260,6 +272,23 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const ayatoShadowRef = useRef<SVGEllipseElement>(null);
   const villagerRefs = useRef<(SVGGElement | null)[]>([]);
   const markRefs = useRef<(HTMLDivElement | null)[]>([]);
+  /** 札を画面の縁へ寄せるための入れ子。建物の当たりは動かさずに、札だけをずらす */
+  const pinRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  /** 札の実寸。縁へ寄せるときに要る。毎フレーム測ると layout が起きるので、開閉のたびに1回だけ */
+  const signBox = useRef<{ w: number; h: number }[]>([]);
+  /** いま縁に寄せている向き。同じ値を書き続けて属性を触らないための控え */
+  const edgeAt = useRef<string[]>([]);
+  /** 島の隅に置いてある道具の箱。縁へ寄せた札が、この上に乗らないようにする */
+  const uiBoxes = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
+  /**
+   * 札の置き直しが要るか。
+   *
+   * ふだんはカメラが動いたときだけ置き直せばいい（建物は動かないので）。
+   * ただし**札の大きさが変わったとき**は、カメラが止まっていても置き直しが要る。
+   * 「!」が立つのも、書体が届くのも、日数が入るのも、カメラが落ち着いた後なので、
+   * ここを見ないと古い寸法で詰めた並びのまま残る。
+   */
+  const platesDirty = useRef(true);
   const whoRefs = useRef<(HTMLDivElement | null)[]>([]);
   const barRef = useRef<HTMLDivElement>(null);
   /** 下のバーの背(px)。島をどれだけ上へ寄せるかの計算に使う */
@@ -390,6 +419,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [days, setDays] = useState<number | null>(null);
   /** 今日、何かある建物。「!」が立つのはここ1つだけ。 */
   const [todaySpot, setTodaySpot] = useState<SpotId | null>(null);
+  /** 毎フレームの計算から見るための控え。跳ねる札の箱を広く見るのに使う */
+  const todayRef = useRef<SpotId | null>(null);
+  todayRef.current = todaySpot;
   /**
    * いま配信の時間か（日本時間 22:00〜25:00）。
    *
@@ -569,6 +601,53 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     if (h && h !== barH.current) barH.current = h;
   });
 
+  /* 札の実寸を控えておく。縁へ寄せるときに要る。
+     **毎フレーム測らない。** offsetWidth は layout を起こすので、
+     大きさが変わりうるとき（開いた・閉じた・画面が変わった・日数が動いた）だけ測る。 */
+  useEffect(() => {
+    /* 札の大きさは、開いた・閉じたのほかに、「!」が立った・書体が届いた・
+       日数が入った、でも変わる。**変わったことを見張る**（状態を数え上げると、
+       数え落としたぶんだけ古い寸法で詰めることになる）。 */
+    const ro = new ResizeObserver((es) => {
+      for (const e of es) {
+        const i = Number((e.target as HTMLElement).dataset.i);
+        const bs = e.borderBoxSize?.[0];
+        signBox.current[i] = bs
+          ? { w: bs.inlineSize, h: bs.blockSize }
+          : { w: e.contentRect.width, h: e.contentRect.height };
+      }
+      platesDirty.current = true;
+    });
+    for (let i = 0; i < DOORS.length; i++) {
+      const el = markRefs.current[i]?.querySelector<HTMLElement>(".spot-mark");
+      if (!el) continue;
+      el.dataset.i = String(i);
+      signBox.current[i] = { w: el.offsetWidth, h: el.offsetHeight };
+      ro.observe(el);
+    }
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // 島の隅の道具（島をながめる・島の地図・今日の島）と看板ロゴ。
+    // ここは動かないので、札と同じときに1回測れば足りる。
+    const host = hostRef.current;
+    const hb = host?.getBoundingClientRect();
+    const boxes: { x: number; y: number; w: number; h: number }[] = [];
+    if (host && hb) {
+      for (const el of host.querySelectorAll<HTMLElement>(
+        '.stage-view, .stage-atlas, .today[data-place="corner"]',
+      )) {
+        const r = el.getBoundingClientRect();
+        boxes.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
+      }
+      // 看板ロゴはここに入れない。札とぶつかったときは**ロゴのほうが引く**と
+      // 決めてあるので（下の data-logo）、札を動かすと二重に避けることになる。
+    }
+    uiBoxes.current = boxes;
+    platesDirty.current = true;
+  }, [openSpot, box.w, box.h, days, onAir, barOpen, todaySpot]);
+
   const mode = modeOf(box.w);
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
   /** 島に降り立った視点か。「島ぜんぶ」を押していないあいだは、どの幅でもこちら */
@@ -589,8 +668,21 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const m = modeOf(b.w);
     /* 寄っているあいだは、どの幅でもあやとを追う。
        追わずに寄ると、あやとが画面の外へ歩いていってしまう。
-       少し上を向くのは、足元より「これから歩く先」が見えたほうがいいから。 */
-    if (!wideRef.current) return { x: avatar.current.x, y: avatar.current.y - (m === "phone" ? 92 : 70) };
+       少し上を向くのは、足元より「これから歩く先」が見えたほうがいいから。
+
+       ただし**追いきらない。** あやとだけを見て寄ると、島の骨格（入口6つの並び）が
+       画面から外れる。実測で、1440×900 で6枚のうち画面に入っているのは2枚だった。
+       あやとが画面のまん中から離れてよい量に上限を決めて、
+       その範囲では入口6つのまん中（SIGN_MID）を見る。
+       PC はこれだけで6枚とも画面に入る（frame 702×386 に対して入口の広がりは 624×324）。 */
+    if (!wideRef.current) {
+      const ex = avatar.current.x;
+      const ey = avatar.current.y - (m === "phone" ? 92 : 70);
+      const s = spanOf(b.w, b.h, false);
+      const vh = (s * b.h) / Math.max(1, b.w);
+      const pull = (d: number, max: number) => (d > max ? max : d < -max ? -max : d);
+      return { x: ex + pull(SIGN_MID.x - ex, s * 0.22), y: ey + pull(SIGN_MID.y - ey, vh * 0.18) };
+    }
     if (m === "phone") {
       const s = spanOf(b.w, b.h, wideRef.current);
       const lift = barH.current && b.w ? (barH.current / 2) * (s / b.w) : 0;
@@ -614,6 +706,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     let lastOpen: SpotId | null = null;
     /** 前のフレームの viewBox。同じなら島を描き直さない */
     let lastVb = "";
+    /** 前のフレームの倍率(px/ワールド単位)。住人の当たりの大きさはこれで決まる */
+    let lastK = 0;
+    /** 前のフレームであやとに書いた transform。同じなら書かない */
+    let lastMe = "";
+    /** 住人を最後に動かしてから貯めた時間(ms)。放置中は 24fps に落とす */
+    let castWait = 0;
+    /** 前のフレームでカメラが動いたか。動いていれば住人も 60fps で動かす */
+    let camBusy = true;
+    /** 前のフレームであやとが歩いていたか */
+    let movingLast = false;
+    /** 動きを減らす設定。住人は歩かない（`docs/island-design.md` 3-5 の例外） */
+    const still = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
     const step = (t: number) => {
       const dt = Math.min(48, t - last);
@@ -621,7 +725,23 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       clock.current = t;
       const b = boxRef.current;
 
-      stepVillagers(villagers, dt, dice.current);
+      /* --- 住人を動かす値段 -----------------------------------------------
+         島は誰も触っていない1秒で 280ms の CPU を使っていた（`/board` は 43ms）。
+         内訳を交互A/Bで割ると、rAF を止めるだけで 130ms まで落ちる。
+         **その大半は「住人12人ぶんの transform を毎フレーム書くこと」**で、
+         書き換えた要素の外接矩形ぶん島の SVG が描き直される。
+
+         住人は 1秒に数px しか歩かない。60回書いても24回書いても、
+         目に見えるものは変わらない。**カメラもあやとも止まっているあいだだけ**
+         24fps に落とす。歩いているあいだは触らない（そこは手ざわりに直結する）。
+         動きを止めたい人（reduce）には、そもそも歩かせない。 */
+      const busy = camBusy || movingLast || !!target.current || walkingTo.current !== null;
+      castWait += dt;
+      const stepCast = !still && (busy || castWait >= 40);
+      if (stepCast) {
+        stepVillagers(villagers, castWait, dice.current);
+        castWait = 0;
+      }
       const slot = Math.floor(t / 9000);
       if (slot !== inviteSlot.current) {
         inviteSlot.current = slot;
@@ -770,19 +890,23 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const sy = (wy: number) => ((wy - vbY) / vbH) * b.h;
 
       // --- あやと ---
-      if (ayatoRef.current) {
-        ayatoRef.current.setAttribute(
-          "transform",
-          `translate(${me.x.toFixed(1)} ${me.y.toFixed(1)}) scale(${facing.current} 1)`,
-        );
-      }
-      if (ayatoShadowRef.current) {
-        ayatoShadowRef.current.setAttribute("cx", me.x.toFixed(1));
-        ayatoShadowRef.current.setAttribute("cy", (me.y + 1).toFixed(1));
+      // 立ち止まっているあいだも毎フレーム書いていた。同じ値でも属性に書けば、
+      // その要素のぶんだけ島が描き直される。文字にして同じなら触らない。
+      const meTf = `translate(${me.x.toFixed(1)} ${me.y.toFixed(1)}) scale(${facing.current} 1)`;
+      if (meTf !== lastMe) {
+        lastMe = meTf;
+        ayatoRef.current?.setAttribute("transform", meTf);
+        if (ayatoShadowRef.current) {
+          ayatoShadowRef.current.setAttribute("cx", me.x.toFixed(1));
+          ayatoShadowRef.current.setAttribute("cy", (me.y + 1).toFixed(1));
+        }
       }
 
       // --- 住人 ---
-      for (let i = 0; i < villagers.length; i++) {
+      // 住人が動いたか、カメラが動いたときだけ書く。どちらも無いフレームでは
+      // 画面の中の位置が1ドットも変わらないので、書くだけ島を汚すことになる。
+      const castWrite = stepCast || camMoved;
+      for (let i = 0; castWrite && i < villagers.length; i++) {
         const v = villagers[i];
         // 画面の外にいる住人は書かない。寄りのときは12人のうち大半が外にいて、
         // そのぶん毎フレーム属性を書き換えては島を汚していた（外側に余白を足して、
@@ -790,7 +914,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const off =
           v.x < vbX - 120 || v.x > vbX + vbW + 120 || v.y < vbY - 160 || v.y > vbY + vbH + 160;
         const g = villagerRefs.current[i];
-        if (g && !off) {
+        if (g && !off && stepCast) {
           const pose = villagerPose(v, t);
           // 左右は反転しない。
           //
@@ -829,8 +953,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       }
       // 入口は島に建っていて動かない。画面の中での位置が変わるのはカメラが動いたときだけ。
       // カメラが止まっているあいだに書き直すと、6つぶんの計算し直しがただ増える。
-      if (camMoved) {
+      if (camMoved || platesDirty.current) {
+        platesDirty.current = false;
         const k = b.w / vbW;
+        /* 住人の当たりを、絵の大きさに合わせる。
+           絵はカメラの倍率で 53px（スマホ）から 94px（PC）まで伸び縮みするのに、
+           当たりだけ 44×56 の固定だった。PC では見えている住人の下4割が押せず、
+           横は 48px も割っていた（`docs/island-design.md` 3-1「押す場所は物そのもの」）。
+           12人とも同じ大きさなので、ステージに1回書けば足りる。 */
+        if (k !== lastK) {
+          lastK = k;
+          hostRef.current?.style.setProperty("--ws", `${Math.max(TAP_MIN, RESIDENT_H * k).toFixed(1)}px`);
+        }
         /* 札が看板ロゴの下へ入ったか。**入ったら看板のほうが引く。**
            看板は一度読めば済む飾りで、札は今から歩いて行く先だから、
            どちらか1枚しか読めないなら札を残す。
@@ -838,6 +972,26 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
            早めに引くぶんには困らない（半端に重なった絵がいちばん読めない）。 */
         const lb = logoBox.current;
         let under = false;
+        /* 縁に寄せる札が避ける場所。
+           島の隅のボタン（島をながめる・島の地図・今日の島）と、看板ロゴと、
+           **画面に入っている札そのもの**。ここを見ずに縁へ寄せると、
+           寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。 */
+        const taken = uiBoxes.current.slice();
+        /** この画面の札の居場所。ぜんぶ出そろってから、縁へ寄せるものを決める */
+        const plates: {
+          i: number;
+          el: HTMLDivElement;
+          /** 建物の足元（画面px）。矢がどっちを指すかはここから決まる */
+          fx: number;
+          fy: number;
+          rect: { x: number; y: number; w: number; h: number };
+          out: boolean;
+        }[] = [];
+        const pad = 8;
+        /* 上は「あと◯日」のシールのぶん、下はスマホの下バーと隅のボタンのぶん空ける。
+           バーの上に札が乗ると、島の道具と行き先が同じ層で重なって読めない。 */
+        const padTop = 32;
+        const padBottom = (modeOf(b.w) === "phone" ? barH.current : 0) + 46;
         for (let i = 0; i < DOORS.length; i++) {
           const el = markRefs.current[i];
           if (!el) continue;
@@ -858,7 +1012,98 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           const artH = sp.size * k;
           el.style.setProperty("--hw", `${Math.max(TAP_MIN, artW).toFixed(1)}px`);
           el.style.setProperty("--hh", `${Math.max(TAP_MIN, artH).toFixed(1)}px`);
-          el.style.setProperty("--mh", `${Math.max(12, artH).toFixed(1)}px`);
+          const mh = Math.max(12, artH);
+          el.style.setProperty("--mh", `${mh.toFixed(1)}px`);
+
+          // 縁へ寄せるかどうかは、6枚ぜんぶの居場所が出そろってから決める（下）
+          const sz = sp.sign ? signBox.current[i] : null;
+          if (sz && sz.w) {
+            /* 箱を少し大きく見ておく。
+               「今日ここに何かある」の1枚は 10px 跳ねる（spotHop）ので、
+               計算どおりの箱で詰めると、跳ねた先で隣に食い込む。
+               紙一重で通すより、6px ずつ広く見て余らせるほうが読める。 */
+            // 「あと◯日」のシールは板の外（真上）に出ているので、その背も箱に入れる
+            const gy = (todayRef.current === sp.id ? 13 : 6) + (sp.countdown ? 26 : 0);
+            const rect = { x: px - sz.w / 2 - 6, y: py - mh - 12 - sz.h - gy, w: sz.w + 12, h: sz.h + gy + 6 };
+            const out =
+              rect.x < pad ||
+              rect.x + rect.w > b.w - pad ||
+              rect.y < padTop ||
+              rect.y + rect.h > b.h - padBottom ||
+              // 島の隅の道具の下に入った札も、寄せ直す対象にする。
+              // 半分隠れた札は、画面の外にあるのと同じで読めない。
+              uiBoxes.current.some(
+                (q) =>
+                  rect.x < q.x + q.w &&
+                  rect.x + rect.w > q.x &&
+                  rect.y < q.y + q.h &&
+                  rect.y + rect.h > q.y,
+              );
+            // 画面に入っている札は、寄せる札が避ける相手になる
+            if (!out) taken.push(rect);
+            plates.push({ i, el, fx: px, fy: py, rect, out });
+          } else if (edgeAt.current[i]) {
+            edgeAt.current[i] = "";
+            el.removeAttribute("data-edge");
+            const pin0 = pinRefs.current[i];
+            if (pin0) pin0.style.transform = "";
+          }
+        }
+
+        /* --- 画面から出た看板は、縁に寄せて名前だけ残す ---
+           島の入口6つは「島に来た人が最初に読むもの」なので、
+           建物が画面の外にあっても名前は読めていなければならない。
+           寄りを引いて6枚を入れる手は採らない。390幅では入口の広がり 624×324 に対して
+           画面が 340×633 しかなく、6枚が入る寸法まで引くと住人が 24px の点になる。
+           **建物の当たりは動かさない。** ずらすのは札だけで、
+           杭は「そっちに建っている」を指す矢に変わる（`island.css`）。 */
+        for (const pl of plates) {
+          const pin = pinRefs.current[pl.i];
+          if (!pin) continue;
+          const { rect } = pl;
+          let dx = 0;
+          let dy = 0;
+          let dir = "";
+          if (pl.out) {
+            let left = rect.x;
+            let top = rect.y;
+            if (left < pad) dx = pad - left;
+            else if (left + rect.w > b.w - pad) dx = b.w - pad - (left + rect.w);
+            if (top < padTop) dy = padTop - top;
+            else if (top + rect.h > b.h - padBottom) dy = b.h - padBottom - (top + rect.h);
+            left += dx;
+            top += dy;
+            /* 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）。
+               1周では、逃がした先でまた別のものと重なることがあるので数周する。
+               **下へしか動かさない。** 上へ戻すと、避けたはずのものへ帰っていく。 */
+            for (let pass = 0; pass < 3; pass++) {
+              let moved = false;
+              for (const q of taken) {
+                if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
+                  const push = q.y + q.h + 6 - top;
+                  if (push > 0) {
+                    top += push;
+                    dy += push;
+                    moved = true;
+                  }
+                }
+              }
+              if (!moved) break;
+            }
+            taken.push({ x: left, y: top, w: rect.w, h: rect.h });
+            /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す。
+               「どっちへ押しやったか」で決めると、上へはみ出した札を下げたときに
+               建物と反対を指す（札はもともと建物の頭の上に出るので）。 */
+            const ax = pl.fx - (left + rect.w / 2);
+            const ay = pl.fy - (top + rect.h / 2);
+            dir = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
+          }
+          if (dir !== edgeAt.current[pl.i]) {
+            edgeAt.current[pl.i] = dir;
+            if (dir) pl.el.setAttribute("data-edge", dir);
+            else pl.el.removeAttribute("data-edge");
+          }
+          pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
         }
         if (lb) {
           const now = under ? "away" : "";
@@ -881,10 +1126,49 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         setOrder(sig);
       }
 
+      camBusy = camMoved;
+      movingLast = moving;
       raf = requestAnimationFrame(step);
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+
+    /* --- 見えていないあいだは、島を動かさない -------------------------------
+       `/` は 5.5画面ぶんある。下まで巻いた人は島を見ていないのに、
+       そのあいだも1コアの3割を使い続けていた（放置1秒 280ms / `/board` は 43ms）。
+       別のタブに移った人も同じ。**見えていないものは動かさない。** */
+    let alive = false;
+    let onScreen = true;
+    const run = () => {
+      if (alive || document.hidden || !onScreen) return;
+      alive = true;
+      last = performance.now();
+      // CSS のほうの動き（木の揺れ・波・舟・ちょうちょ）も一緒に起こす
+      hostRef.current?.classList.remove("is-away");
+      raf = requestAnimationFrame(step);
+    };
+    const stop = () => {
+      if (!alive) return;
+      alive = false;
+      cancelAnimationFrame(raf);
+      hostRef.current?.classList.add("is-away");
+    };
+    const io = new IntersectionObserver(
+      ([e]) => {
+        onScreen = e.isIntersecting;
+        if (onScreen) run();
+        else stop();
+      },
+      // 画面に半分かかるまでは動かす。境目で行ったり来たりさせない
+      { rootMargin: "80px" },
+    );
+    if (hostRef.current) io.observe(hostRef.current);
+    const vis = () => (document.hidden ? stop() : run());
+    document.addEventListener("visibilitychange", vis);
+    run();
+    return () => {
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", vis);
+    };
   }, [camWant, villagers]);
 
   useEffect(() => {
@@ -1217,6 +1501,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
                 aria-label={live ? LIVE.aria : `${sp.label}にはいる`}
               />
+              {/* 札の入れ物。**建物の当たりと別にしてある。**
+                  建物が画面から出たときは札だけを縁へ寄せるので、
+                  同じ入れ物に入れていると当たりまで一緒に動いて、
+                  絵のないところが押せることになる（`island-design.md` 3-1）。 */}
+              <span
+                className="spot-pin"
+                ref={(el) => {
+                  pinRefs.current[i] = el;
+                }}
+              >
               <Link
                 data-ui
                 href={href}
@@ -1253,6 +1547,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                   <Icon name="right" size={12} />
                 </span>
               </Link>
+              </span>
             </div>
           );
         })}
@@ -1357,6 +1652,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         <Icon name={wide ? "walk" : "island"} size={15} />
         {wide ? UI.comeDown : UI.lookAround}
       </button>
+
+      {/* 島の連なりへの入口。
+          **トップは、いままでどおり「いまの島」**（`docs/island-atlas.md` 7章）。
+          毎日来る人に、島へ入るための1タップを増やさないと決まっているので、
+          連なりはここから見る。行き先ではあるが下のバーには入れない。
+          バーの6つは「この島の中のどこへ行くか」で、こちらは島の外へ出る話。
+          隣に並べると、島の中と外が同じ重さに見える。 */}
+      <Link className="stage-atlas" data-ui href="/atlas" prefetch={false}>
+        <Icon name="map" size={15} />
+        {UI.atlas}
+      </Link>
 
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}
       {arriving && (

@@ -44,8 +44,13 @@ type Props = {
   /** `ROUTE` の中での位置。もう越えた日かどうかを、ここで見分ける */
   seq: number;
   fork: NonNullable<Leg["fork"]>;
-  /** 何日目の話か。問いと同じ行に出す */
-  day?: number;
+  /**
+   * 何日目の話か（「2日目」「出発」「リガのあと」）。
+   * 数字が入っていない日もあるので、文字で受け取る。
+   */
+  when?: string;
+  /** どこからどこへ。旅程表の行と同じ字にする */
+  way?: string;
 };
 
 /** もう越えた日か。位置で決める。手書きの日記を待つと、決まったことに票が入り続ける。 */
@@ -61,7 +66,7 @@ function top(counts: Record<string, number>) {
 }
 
 /** まだ決めていないこと。押せる。越えた日と、数が読めないときは出さない。 */
-export function Ask({ leg, seq, fork, day }: Props) {
+export function Ask({ leg, seq, fork, when, way }: Props) {
   const id = forkId(leg);
   const counts = useFork(id);
   const passed = usePassed(seq);
@@ -101,10 +106,18 @@ export function Ask({ leg, seq, fork, day }: Props) {
 
   return (
     <div className="fork">
-      <p className="fork-q">
-        {day && <b className="fork-day">{day}日目</b>}
-        {fork.q}
-      </p>
+      {/* **問いの上に、どこの話かを置く。**
+          「始発まで、空港で数時間あります」だけが並んでいたころ、
+          オーナーに「何のこと？ ってなる」と止められた。
+          何日目・どこからどこへ、は旅程表の行と同じ字を使う。
+          手で書くと、旅程が変わったときにこちらだけ古い字が残る。 */}
+      {(when || way) && (
+        <p className="fork-where">
+          {when && <b className="fork-day">{when}</b>}
+          {way}
+        </p>
+      )}
+      <p className="fork-q">{fork.q}</p>
       <ul className="fork-list">
         {fork.options.map((o) => (
           <li key={o.id}>

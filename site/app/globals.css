@@ -11,6 +11,7 @@
  *   pages  … 島の外のページ（パネル、タイル、見出し、各コーナー）
  *   plans  … これからの企画のカード
  *   nordic … 北欧ヒッチハイク旅（地図・しおり・見どころ）
+ *   chain  … 島の連なり（/atlas）。章ごとの島と、島から島への道
  *   ui     … 折りたたみ・アイコン・下書きの道具・デザインの見本
  *   home   … トップページの章立て（これから／いま／これまで／見にいく）
  */
@@ -25,5 +26,6 @@
 @import "./css/home.css";
 @import "./css/streams.css";
 @import "./css/atlas.css";
+@import "./css/chain.css";
 @import "./css/live.css";
 @import "./css/today.css";

@@ -225,8 +225,33 @@ function Voice({ v, i }: { v: (typeof VOICES)[number]; i: number }) {
   return (
     // 吹き出しは押せない。紙の上の引用なので、厚みは付けない（docs/island-world.md 3.4）
     <li className={`avoice${i % 2 ? " is-r" : ""}`}>
-      <p className="avoice-say">{v.text}</p>
-      <span className="avoice-when">{fmtYm(v.date)}の配信</span>
+      {/* アイコンは YouTube から。届かないときのために alt は空にして、
+          名前を隣に文字で置く（絵が出なくても誰の言葉かは分かる） */}
+      {v.icon ? (
+        <img
+          className="avoice-face"
+          src={v.icon}
+          alt=""
+          width={32}
+          height={32}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <span className="avoice-face is-none" aria-hidden="true">
+          {v.name.replace(/^@/, "").slice(0, 1)}
+        </span>
+      )}
+      <div className="avoice-body">
+        {/* 名前といつかを1行にまとめて、吹き出しの上に置く。
+            日付を吹き出しの下に置くと、次の人の名前と近くなって、
+            どちらの言葉に付いた日付なのか読み取れなくなる */}
+        <span className="avoice-who">
+          {v.name}
+          <em>{fmtYm(v.date)}</em>
+        </span>
+        <p className="avoice-say">{v.text}</p>
+      </div>
     </li>
   );
 }
@@ -320,7 +345,7 @@ export default function AboutPage() {
           （`python/build_voices.py` → `content/voices.ts`）。 */}
       <Panel>
         <h2>島のみんなから見た、あやと</h2>
-        <p className="muted">配信のコメント欄から、書かれたまま。名前は本人に聞けていないので伏せています。</p>
+        <p className="muted">配信のコメント欄から、書かれたまま。名前とアイコンは YouTube のものです。</p>
         <ul className="avoices">
           {VOICES.slice(0, VOICE_OPEN).map((v, i) => (
             <Voice key={v.eventId} v={v} i={i} />

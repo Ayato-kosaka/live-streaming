@@ -76,6 +76,8 @@ export const UI = {
   enter: "はいる",
   backToIsland: "島にもどる",
   lookAround: "島をながめる",
+  /** 島の連なりへ。旅の章ごとに島が1つ建っている（`docs/island-atlas.md`） */
+  atlas: "島の地図",
   comeDown: "島におりる",
   walkHint: "押したところまで歩いていくよ",
   close: "とじる",
