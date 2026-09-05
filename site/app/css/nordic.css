@@ -344,7 +344,19 @@
    区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
    両方そろって、その区間はつながる（docs/nordic-fund.md 提案1）。
    席は罫線で仕切る。紙の型なので、中に板を積まない。 */
-.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; }
+/* 席の区切りの罫は、紙のはしからはしまで引く。本物の図鑑の紙も、
+   区切りは端まで届く1本になっている（/tmp/acref/ref_NH_Critterpedia_*.jpg）。
+   中だけで止めると、区切りではなく「もう1つの箱」に見える。
+   はしまでの幅は `ui.css` の `.fold-body` が持っているので、そこから借りる。 */
+.rleg-seat,
+.rtie {
+  --rleg-x: var(--sp-4);
+  margin-left: calc(-1 * var(--rleg-x));
+  margin-right: calc(-1 * var(--rleg-x));
+  padding-left: var(--rleg-x);
+  padding-right: var(--rleg-x);
+}
+.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; padding-bottom: 2px; }
 .rleg-seath {
   display: flex;
   align-items: center;
@@ -388,8 +400,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 13px 0 0;
-  padding: 10px 0 0;
+  margin-top: 13px;
+  padding-top: 10px;
   border-top: 1px solid var(--rule);
   font-size: var(--fs-note);
   font-weight: 800;

@@ -40,6 +40,20 @@ const TICK = 60_000;
  */
 let openedThisLoad: boolean | null = null;
 
+/**
+ * 島に初めて降りた人かどうか。島の到着演出と同じ鍵を見る。
+ *
+ * 島のほうで書き込むより先にこの部品が動くことがあるので、
+ * 「まだ鍵が無い」＝初回、として読むだけにする（書き込まない）。
+ */
+function isFirstEverVisit(): boolean {
+  try {
+    return !localStorage.getItem("ayato-island-arrived");
+  } catch {
+    return false;
+  }
+}
+
 export default function Today({ place }: { place: "corner" | "bar" }) {
   const [news, setNews] = useState<TodayNews | null>(null);
   const [open, setOpen] = useState(false);
@@ -75,7 +89,12 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     setFresh(first);
     // 配信中・企画の当日・きのう料理を作った日だけ、向こうから開く。
     // 1年前の今日と「今夜まであとN分」は、畳んだ1行で足りる。
-    const worthOpening = first && ["live", "plan", "recipe"].includes(todayNews().kind);
+    //
+    // ただし**島に初めて降りた人には開かない**。その人には島のカモメが
+    // 1回だけ名乗る（IslandStage）。板とカモメを同時に出すと、島が見えない
+    // うえに、どちらを読めばいいのか分からなくなる。名乗りのほうが先。
+    const worthOpening =
+      first && !isFirstEverVisit() && ["live", "plan", "recipe"].includes(todayNews().kind);
     setOpen(worthOpening);
     // 自動で開いた日は、その時点で今日ぶんを見せたことになる
     if (worthOpening) seen.current = true;
