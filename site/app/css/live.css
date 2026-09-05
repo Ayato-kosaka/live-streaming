@@ -827,7 +827,9 @@
   font-style: normal;
   font-size: var(--fs-note);
   font-weight: 900;
-  color: var(--frame-deep);
+  /* 金は板のふちの色で、クリームの面の上では 4.40 : 1 しか出ない。
+     数を言うだけの字なので、読める墨のうすいほうにする（5.9 : 1）。 */
+  color: var(--ink-2);
 }
 
 /* いまいる国の旗を、地名のとなりに。テーマの符丁（georgia など）は
