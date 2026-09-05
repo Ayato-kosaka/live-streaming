@@ -490,6 +490,52 @@ export function talkTo(v: Villager, lines: string[]) {
   v.says = lines[pick];
 }
 
+/* ---- 向こうから口を開く --------------------------------------------------
+   「参加してください」と呼びかけても、誰も押さない。
+   **こちらから声をかけて、応じてもらう。** 応じたことが、あとから能動に見える
+   （`docs/island-play.md` 3つの原理の3番）。
+
+   ただし、押していないのに喋りだすのは、やりすぎると邪魔になる。
+   かける条件は3つ全部そろったときだけ。
+     - 島に降りてしばらく経っている（降りた直後に喋られると島を見る時間が無い）
+     - 合図（!）を出している人が、すぐそばにいる
+     - まだ誰とも話していない
+   そして **1回だけ**。2回目からは、こちらから押してもらう。
+
+   使うのは `IslandStage` 側。毎フレーム呼んでよい（ほとんどの回は null を返す）。
+
+     const who = callOut(villagers, avatar.current, t - landedAt.current);
+     if (who) openTalkRef.current?.(villagers.indexOf(who));
+
+   声をかけた1言目は talkTo が greet に差し替えるので、
+   **島のほうから「はじめまして」「久しぶり」と言ってくる**形になる。
+   -------------------------------------------------------------------------- */
+
+/** 島に降りてから、声をかけるまでの間（ミリ秒） */
+const CALL_AFTER = 9000;
+/** どれだけ近づいたら声をかけるか（ワールド単位） */
+const CALL_NEAR = 96;
+/** このページで、もう声をかけたか */
+let called = false;
+
+/**
+ * すぐそばまで来た人に、向こうから声をかけたい住人。いなければ null。
+ * 1度返したら、そのページではもう返さない。
+ * @param {Villager[]} vs 住人
+ * @param {{ x: number; y: number }} me あやとの居場所
+ * @param {number} sinceMs 島に降りてからの経過ミリ秒
+ */
+export function callOut(vs: Villager[], me: { x: number; y: number }, sinceMs: number): Villager | null {
+  if (called || greeted || sinceMs < CALL_AFTER) return null;
+  for (const v of vs) {
+    if (!v.invite || v.says || !v.icon) continue;
+    if (Math.hypot(v.x - me.x, (v.y - me.y) * 1.3) > CALL_NEAR) continue;
+    called = true;
+    return v;
+  }
+  return null;
+}
+
 /** 吹き出しを閉じて、また歩きだしてもらう。 */
 export function hush(v: Villager) {
   v.says = null;

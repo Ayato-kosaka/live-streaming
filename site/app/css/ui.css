@@ -69,8 +69,10 @@
   color: var(--ink);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+/* 下書きの字は「何を書く欄か」を言っている。読ませる字なので --ink-3 は使わない
+   （紙の上で 4.4 : 1 までしか出ない。docs/island-review-2.md 5.3）。 */
 .dform input::placeholder,
-.dform textarea::placeholder { color: var(--ink-3); font-weight: 700; }
+.dform textarea::placeholder { color: var(--ink-2); font-weight: 700; opacity: 1; }
 .dform input:focus,
 .dform textarea:focus,
 .dform select:focus {

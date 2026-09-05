@@ -37,11 +37,12 @@ const m = await p.evaluate(() => {
   const r = st.getBoundingClientRect();
   const area = r.width * r.height;
   // ステージの上に乗っている道具ぜんぶ
-  const sel = [".island-bar", ".today", ".stage-view", ".hero-ui .hero-copy", ".walk-hint", ".talkbox"];
+  const sel = [".island-bar", ".bar-toggle", ".stage-view", ".hero-logo img", ".walk-hint", ".talkbox"];
   const parts = [];
   let covered = 0;
   for (const s of sel) {
     for (const el of document.querySelectorAll(s)) {
+      if (getComputedStyle(el).display === "none" || getComputedStyle(el).visibility === "hidden") continue;
       const q = el.getBoundingClientRect();
       if (!q.width || !q.height) continue;
       const x0 = Math.max(q.left, r.left), x1 = Math.min(q.right, r.right);

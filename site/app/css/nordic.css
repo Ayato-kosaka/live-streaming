@@ -324,7 +324,7 @@
   box-shadow: var(--shadow-1);
 }
 .rleg-way { min-width: 0; }
-.rleg-way i { font-style: normal; color: var(--ink-2); margin: 0 2px; }
+.rleg-arrow { color: var(--ink-2); margin: 0 2px; }
 .rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .rleg-fixed {
   font-size: var(--fs-min);
@@ -351,6 +351,10 @@
   gap: 6px;
   margin: 0 0 8px;
 }
+/* 席の名前の右に日付を出す行。h3 の中に日付を入れないためだけの1枚。
+   紙の見出しは蛍光ペンを「字の下」に敷くので、h3 の中に置いた字は全部帯に入る。 */
+.rleg-seath-row { display: flex; align-items: baseline; gap: var(--sp-2); margin: 0 0 8px; }
+.rleg-seath-row .rleg-seath { margin: 0; }
 /* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
    席の名前は紙の h3 なので、ここが使いどころ。 */
 .rleg-seath span {
@@ -363,6 +367,16 @@
   color: var(--marker-ink);
 }
 .seatmark { flex: none; display: block; }
+/* 起きたこと。越えた日と、そこで起きたこと2〜3行（docs/nordic-fund.md 提案4）。
+   日付は見出しの右へ流す。左に置くと、席の名前より先に日付を読むことになる。 */
+.rleg-when {
+  margin-left: auto;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.rleg-log { margin: 0 0 var(--sp-2); font-size: 13px; line-height: 1.95; font-weight: 700; }
 
 /* --- つながりの読み上げ ---
    埋まっていない区間を灰色にしない。灰色は失敗の色になる。

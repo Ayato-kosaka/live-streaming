@@ -438,38 +438,50 @@
    影は落とさない（紙の型。docs/ac-reference.md 7章）。
    --------------------------------------------------------- */
 
+/* 主役は国の地図ひとつ。紙のはしからはしまで敷く（ac-reference 7章 4）。
+   罫も紙の端から端まで引く。パネルの内側で止めると、
+   紙に刷った罫ではなく「カードの区切り線」に見える（review-2 11章）。 */
 .apass-top {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 14px;
+  position: relative;
+  margin-inline: calc(-1 * var(--pp-x, var(--sp-4)));
   border-bottom: 1px solid var(--rule);
 }
-/* 旗は事実なので色を変えない。紙に貼ってあるように細い縁だけ付ける */
-.apass-flag {
-  line-height: 0;
-  border: 3px solid var(--paper-out);
-  border-radius: 4px;
-  box-shadow: var(--shadow-1);
+/* 紙の上の地図の作りは下の `.panel.paper .amap` が持っている。
+   ここではパスポートのぶんだけ、上の余白と罫を取り消す。 */
+.apass-top .amap { margin-inline: 0; margin-bottom: 0; border-block: 0; padding-block: 0; }
+.apass-top .amap-foot { padding: var(--sp-2) var(--pp-x, var(--sp-4)) var(--sp-3); margin-top: 0; }
+
+/* ローマ字名と地方。旗はここに小さく添える。
+   `Flag` は 20〜30px で読めるように角丸と縁を決めてあるので、大きくしない。 */
+.apass-who {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-3);
 }
-.apass-who { display: grid; gap: 2px; min-width: 0; }
-.apass-who b { font-size: var(--fs-h2); font-weight: 900; letter-spacing: var(--ls-head, 0.04em); line-height: 1.25; }
+.apass-flag { line-height: 0; }
 .apass-who em {
   font-style: normal;
-  font-size: var(--fs-min);
+  font-size: var(--fs-body);
   font-weight: 900;
-  color: var(--ink-3);
-  letter-spacing: 0.12em;
+  color: var(--ink-2);
+  letter-spacing: 0.16em;
 }
 .apass-who i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-/* 入国のスタンプ。押せないので完全に平ら。数を言う印なのでオリーブ */
+/* 入国のスタンプ。押せないので完全に平ら。数を言う印なのでオリーブ。
+   地図の右上に、紙の上から押したように重ねる。 */
 .apass-stamp {
-  flex: none;
-  width: 62px;
-  height: 62px;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 1;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
   border: 2.5px solid var(--chip);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
   box-shadow: inset 0 0 0 2.5px var(--paper), inset 0 0 0 5px var(--chip);
   display: grid;
   place-content: center;
@@ -480,14 +492,15 @@
 .apass-stamp b { font-size: var(--fs-h2); font-weight: 900; line-height: 1; }
 .apass-stamp i { font-style: normal; font-size: var(--fs-min); font-weight: 900; margin-top: 2px; }
 
-/* 入国と出国。日付は罫で区切った台帳にする */
-.apass-log { margin: 0; display: grid; gap: 0; }
+/* 入国と出国。日付は罫で区切った台帳にする。
+   罫は紙のはしからはしまで（ac-reference 7章「紙いっぱいに引く」）。 */
+.apass-log { margin-inline: calc(-1 * var(--pp-x, var(--sp-4))); display: grid; gap: 0; }
 .apass-log > div {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: baseline;
   gap: 4px 10px;
-  padding: 11px 2px;
+  padding: 11px var(--pp-x, var(--sp-4));
   border-bottom: 1px solid var(--rule);
 }
 .apass-log dt {
@@ -512,7 +525,7 @@
 .apass-num {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 2px;
+  margin: 2px calc(-1 * var(--pp-x, var(--sp-4))) 0;
 }
 .apass-num div { padding: 13px 6px 2px; text-align: center; border-left: 1px solid var(--rule); }
 .apass-num div:first-child { border-left: 0; }
