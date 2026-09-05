@@ -20,7 +20,7 @@ BigQuery(youtube_chat)を集計して Firestore の island/state に書き込む
 
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 
 from google.cloud import bigquery, firestore
@@ -158,6 +158,25 @@ def fetch_stats() -> Dict[str, Any]:
     }
 
 
+def sweep_here(db: firestore.Client) -> int:
+    """置きっぱなしの「いま島にいる人」を片づける。
+
+    islandHere はブラウザが自分で消していく(docs/island-here.md)。
+    ただし電池切れや圏外では消えずに残る。読む側は 60秒より古いものを
+    無視するので画面には出ないが、ドキュメントは溜まる一方になる。
+    1日1回ここでまとめて消す。**中身は居場所と時刻しか無いので、
+    消して失うものは何も無い。**
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
+    gone = 0
+    for doc in db.collection("islandHere").where("seenAt", "<", cutoff).limit(500).stream():
+        doc.reference.delete()
+        gone += 1
+    if gone:
+        logger.info("islandHere の置きっぱなしを %s 件消しました", gone)
+    return gone
+
+
 def main() -> int:
     """エントリポイント。"""
     stats = fetch_stats()
@@ -183,6 +202,8 @@ def main() -> int:
         {"stats": stats, "fund": fund}, merge=True
     )
     logger.info("Firestore island/state の stats と fund を更新しました")
+
+    sweep_here(db)
     return 0
 
 

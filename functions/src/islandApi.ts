@@ -117,7 +117,15 @@ async function whoIs(header?: string): Promise<Who> {
  * 分かるのは「この YouTube チャンネルの人が、名前を出してよいと言った」
  * までで、それがどの絵の人かは向こう側で突き合わせる。
  * 本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
- * @return {Promise<Json[]>} チャンネルと、出してよい名前・アイコン
+ *
+ * **uid も返す。** 「いま島にいる人」(docs/island-here.md)は islandHere/{uid} に
+ * 居場所だけを書く。名前とアイコンをそちらに書かせると他人を名乗れるので、
+ * 誰なのかはここで返したものと uid で突き合わせて、読む側が決める。
+ * カスタムクレームにチャンネルIDを入れる手もあるが、そちらは
+ * setCustomUserClaims と再ログインが要る。ここに1つ足すほうが軽い。
+ * 出るのは「名前かアイコンを出してよい」と本人が言った人だけなので、
+ * 何もしていない人の uid はここに出ない。
+ * @return {Promise<Json[]>} uid・チャンネルと、出してよい名前・アイコン
  */
 async function listResidents(): Promise<Json[]> {
   const snap = await USERS.where("channelId", "!=", null).limit(500).get();
@@ -127,6 +135,7 @@ async function listResidents(): Promise<Json[]> {
     if (!u.channelId) return;
     if (!u.showName && !u.showPhoto) return;
     out.push({
+      uid: d.id,
       channelId: u.channelId,
       name: u.showName ?
         (u.nickname as string) || (u.name as string) || null :

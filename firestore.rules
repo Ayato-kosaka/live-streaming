@@ -18,6 +18,37 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    /* いま島にいる人(docs/island-here.md)。
+       **ここだけはブラウザから直接読み書きする。**
+       他の人の動きを「動いて見える」速さで出すには、数秒ごとに Function へ
+       聞きにいくのでは足りない。onSnapshot で受けたいので、ここだけ開ける。
+
+       開けても危なくない形にしてある。
+         - **名前とアイコンを入れさせない。** 入れさせると他人の名前を名乗れる。
+           入るのは居場所と時刻だけで、誰なのかは islandApi が本人確認した
+           residents(チャンネルと、本人が出してよいと言った名前・アイコン)と
+           uid で突き合わせて、読む側が決める
+         - **書けるのは自分のぶんだけ。** ドキュメントIDが uid と一致すること
+         - **項目を4つに絞る。** 知らない項目を足せない
+         - **seenAt はサーバー時刻でなければ通さない。** 手元の時計を書かせると、
+           ずっと「オンライン」でいられる
+       読むのは誰でも。ログインしていなくても、いる人が見える。 */
+    match /islandHere/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(["at", "x", "y", "seenAt"])
+        && request.resource.data.seenAt == request.time
+        && request.resource.data.at is string
+        && request.resource.data.at.size() <= 60
+        && request.resource.data.at.matches("^/[A-Za-z0-9/_-]*$")
+        && request.resource.data.x is number
+        && request.resource.data.x >= 0 && request.resource.data.x <= 1200
+        && request.resource.data.y is number
+        && request.resource.data.y >= 0 && request.resource.data.y <= 1200;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // あやと島。ブラウザからは触らせない(islandApi 経由のみ)。
     match /island/{docId} { allow read, write: if false; }
     match /islandIdeas/{docId} { allow read, write: if false; }
