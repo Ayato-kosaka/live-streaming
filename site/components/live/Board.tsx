@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
-import NoteBoards from "./NoteBoards";
+import NoteBoards, { type NotePlace } from "./NoteBoards";
 import { EmptyBoard, Pin, Stone } from "./art";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
@@ -68,11 +68,15 @@ function rememberPost(id: string) {
 /**
  * 企画をだす（掲示板）。
  *
+ * `places` は「付箋がどこに貼られているか」の棚割り。面の側で組んで渡す
+ * （`app/board/page.tsx`）。ここで `content/plans.ts` や `content/nordic.ts` を
+ * 読むと、棚の名前ひとつのために 50KB がブラウザまで来る。
+ *
  * ログインなしで貼れて、投票できる。
  * だからログインの案内は畳んで下に置き、いちばん上は書く場所にする。
  * 票の多いものが目立ち、自分が貼ったもの・さんせいしたものが自分で分かるようにする。
  */
-export default function Board() {
+export default function Board({ places }: { places: NotePlace[] }) {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
   const [down, setDown] = useState(false);
@@ -334,7 +338,7 @@ export default function Board() {
       {/* 島じゅうに散らばった付箋を、貼り先ごとにまとめて読む。
           この板に貼られた企画は下にそのまま並ぶので、ここには集めない
           （同じものが1つの面に2回出る）。 */}
-      <NoteBoards ideas={ideas} />
+      <NoteBoards places={places} ideas={ideas} />
 
       <section className="panel paper">
         {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、

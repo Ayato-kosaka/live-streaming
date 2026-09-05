@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadState } from "@/lib/liveStats";
 import { type Idea, type NextNote } from "@/lib/api";
-import { PLANS, type Plan } from "@/content/plans";
-import { NORDIC_COUNTRIES } from "@/content/nordic";
 import Icon from "@/components/ui/IconCore";
 import { Pin } from "./art";
 
@@ -15,8 +13,8 @@ import { Pin } from "./art";
  * ## なぜ要るか
  *
  * 視聴者さんが字を書ける場所は、いま島に9か所ある。
- * `/next` の企画ごとの付箋（企画の数だけ増える）、`/board` の掲示板、
- * `/nordic` の「この旅に言う」、`/nordic/[国]` の6カ国。
+ * `/next` の企画ごとの付箋（企画が増えれば増える）、`/board` の掲示板、
+ * `/nordic` の「この旅に、言う」、`/nordic/[国]` の6カ国、`/next/new` の下書き。
  * **書いたものは、書いた場所にしか出ない。** だから貼った本人も、
  * 読むあやとも、いま何が来ているのかを一望できない。
  * 「散らばりすぎてて、一括で見ることができない」（オーナー）。
@@ -31,10 +29,12 @@ import { Pin } from "./art";
  * 国あての提案は本文の頭の `【国名】` を持っていて、**どちらも推測が要らない。**
  * だからカテゴリーは貼り先にする。棚の名前も、貼られた場所の名前そのままにする。
  *
- * ## 並べる順
+ * ## 棚の並び
  *
  * 枚数の多い順にはしない（`docs/island-play.md` の「順位表を作らない」）。
- * 企画は日付順、国は旅で通る順。**中身が増えても棚の順は動かない。**
+ * 順番も名前も、面の側（`app/board/page.tsx` の `NOTE_PLACES`）が決めて渡す。
+ * **ここは仕分けるだけ。** そうしておくと、`content/nordic.ts` の 44KB を
+ * ブラウザまで運ばずに済む（棚の名前と行き先しか要らない）。
  */
 
 /** 本文の頭に付く貼り先の札。`components/nordic/CountryIdeas.tsx` が付けている。 */
@@ -46,27 +46,24 @@ const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 /** 1つの棚に出す枚数の上限。ここを越えたぶんは、貼ってある場所へ送る。 */
 const SHOW = 24;
 
-/** 棚に並ぶ1枚。付箋も国あての提案も、読むときは同じ形でよい。 */
-type Sticky = { id: string; text: string; by?: string };
-
-type Shelf = {
+/** 貼り先ひとつ。棚の名前と行き先は、面の側が決める。 */
+export type NotePlace = {
+  /** 見分ける鍵。`plan` なら付箋の `planId`、`tag` なら【札】の中の字 */
   key: string;
-  /** 棚の名前。貼られた場所の名前そのまま */
+  /** 棚の名前 */
   name: string;
   /** 棚の束ねかた。札の上に小さく出す */
   group: string;
   /** 貼ってある場所。押すとそこへ行けて、そこで続きが書ける */
   href?: string;
-  items: Sticky[];
+  /** どちらの入れ物から拾うか */
+  by: "plan" | "tag";
 };
 
-const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? "9999");
+/** 棚に並ぶ1枚。付箋も国あての提案も、読むときは同じ形でよい。 */
+type Sticky = { id: string; text: string; by?: string };
 
-/** 国の札から、その国の紙へ。表に無い札は行き先を持たない。 */
-const NORDIC_HREF = new Map(NORDIC_COUNTRIES.map((c) => [c.name, `/nordic/${c.slug}`]));
-
-/** 札の並び順。旅で通る順に固定する。枚数では動かさない。 */
-const TAG_ORDER = ["北欧旅", ...NORDIC_COUNTRIES.map((c) => c.name)];
+type Shelf = NotePlace & { items: Sticky[] };
 
 /**
  * 付箋と提案を、貼り先ごとの棚に分ける。
@@ -74,64 +71,42 @@ const TAG_ORDER = ["北欧旅", ...NORDIC_COUNTRIES.map((c) => c.name)];
  * 中身が1枚も無い棚は作らない。空の棚が並ぶと、
  * 「まだありません」だけが延々続く面になる。
  */
-function shelves(notes: NextNote[], ideas: Idea[]): Shelf[] {
+function shelves(places: NotePlace[], notes: NextNote[], ideas: Idea[]): Shelf[] {
   const out: Shelf[] = [];
 
-  /* 1. これからの企画。`/next` の付箋（islandNotes）。日付の早い順。 */
-  const plans = [...PLANS].sort(byDate);
-  for (const p of plans) {
-    const items = notes
-      .filter((n) => n.planId === p.id)
-      .map((n) => ({ id: n.id, text: n.text }));
-    if (items.length) {
-      out.push({
-        key: `plan:${p.id}`,
-        name: p.title,
-        group: "これからの企画",
-        href: `/next#${p.id}-notes`,
-        items,
-      });
-    }
-  }
-
-  /* 2. 企画の表から消えたもの。終わった企画を `content/plans.ts` から外すと、
-        付箋だけが残って、どこからも読めなくなる。拾って最後に置く。 */
-  const known = new Set(PLANS.map((p) => p.id));
-  const lost = new Map<string, Sticky[]>();
+  /* 付箋（islandNotes）は planId で、提案（islandIdeas）は頭の【札】で仕分ける。
+     先に全部を鍵ごとの山にしてから、渡された順に棚へ移す。 */
+  const byPlan = new Map<string, Sticky[]>();
   for (const n of notes) {
-    if (known.has(n.planId)) continue;
-    const list = lost.get(n.planId) ?? [];
+    const list = byPlan.get(n.planId) ?? [];
     list.push({ id: n.id, text: n.text });
-    lost.set(n.planId, list);
+    byPlan.set(n.planId, list);
   }
-
-  /* 3. 国あての提案（islandIdeas の【札】付き）。旅で通る順。 */
-  const tagged = new Map<string, Sticky[]>();
+  const byTag = new Map<string, Sticky[]>();
   for (const i of ideas) {
     const m = TAG.exec(i.text);
     if (!m) continue;
-    const list = tagged.get(m[1]) ?? [];
+    const list = byTag.get(m[1]) ?? [];
     list.push({ id: i.id, text: i.text.slice(m[0].length).trim(), by: i.name });
-    tagged.set(m[1], list);
-  }
-  const tags = [...tagged.keys()].sort((a, b) => {
-    const ia = TAG_ORDER.indexOf(a);
-    const ib = TAG_ORDER.indexOf(b);
-    // 表に無い札（あとから増えた貼り先）は、うしろに名前順で置く
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
-  });
-  for (const t of tags) {
-    out.push({
-      key: `tag:${t}`,
-      name: t,
-      group: "北欧の旅",
-      href: NORDIC_HREF.get(t) ?? (t === "北欧旅" ? "/nordic#say" : undefined),
-      items: tagged.get(t)!,
-    });
+    byTag.set(m[1], list);
   }
 
-  for (const [planId, items] of lost) {
-    out.push({ key: `gone:${planId}`, name: "終わった企画", group: "そのほか", items });
+  for (const p of places) {
+    const pile = p.by === "plan" ? byPlan : byTag;
+    const items = pile.get(p.key);
+    if (!items?.length) continue;
+    out.push({ ...p, items });
+    pile.delete(p.key);
+  }
+
+  /* 面の側が知らない貼り先。終わった企画を `content/plans.ts` から外すと
+     付箋だけが残るし、`【札】` はあとから増やせる。
+     **拾わないと、書いた人の1行がどこからも読めなくなる。** */
+  for (const [key, items] of byPlan) {
+    out.push({ key, name: "終わった企画", group: "そのほか", by: "plan", items });
+  }
+  for (const [key, items] of byTag) {
+    out.push({ key, name: key, group: "そのほか", by: "tag", items });
   }
 
   return out;
@@ -144,7 +119,14 @@ function shelves(notes: NextNote[], ideas: Idea[]): Shelf[] {
  * 付箋（`islandNotes`）だけは `/state` にしか無いので、
  * 島じゅうで使い回している読み込み（`lib/liveStats.tsx`）に相乗りする。
  */
-export default function NoteBoards({ ideas }: { ideas: Idea[] | null }) {
+export default function NoteBoards({
+  places,
+  ideas,
+}: {
+  places: NotePlace[];
+  /** 取りに行っている最中は null。0件と区別する */
+  ideas: Idea[] | null;
+}) {
   const [notes, setNotes] = useState<NextNote[] | null>(null);
   /** 読めなかったか。空っぽと読めなかったを、同じ顔で出さない */
   const [down, setDown] = useState(false);
@@ -160,16 +142,18 @@ export default function NoteBoards({ ideas }: { ideas: Idea[] | null }) {
     });
   }, []);
 
-  const list = useMemo(() => shelves(notes ?? [], ideas ?? []), [notes, ideas]);
+  const list = useMemo(
+    () => shelves(places, notes ?? [], ideas ?? []),
+    [places, notes, ideas],
+  );
 
-  // 読み込みが終わったあとで棚が増えることがあるので、選び直しはここで受ける
-  const now = list.find((s) => s.key === pick) ?? list[0];
-
+  /* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く。
+     「読み込み中…」の字だけだと、何も無いのか取りに行っているのか分からない
+     （`docs/island-world.md` 4.1）。 */
   if (notes === null || ideas === null) {
     return (
       <section className="panel paper">
         <h2>どこに、どんな意見が来てるか</h2>
-        {/* 出てくる付箋と同じ形の灰色。「読み込み中…」の字だけにしない */}
         <ul className="nx-notes is-wait" aria-hidden>
           <li />
           <li />
@@ -179,12 +163,15 @@ export default function NoteBoards({ ideas }: { ideas: Idea[] | null }) {
     );
   }
 
+  // 読み込みの順で棚が増えるので、選び直しは毎回ここで受け直す
+  const now = list.find((s) => s.key === pick) ?? list[0];
+
   return (
     <section className="panel paper">
       <h2>どこに、どんな意見が来てるか</h2>
       <p className="muted">
         付箋は島のあちこちに貼られています。貼られた場所ごとに、ここでまとめて読めます。
-        この板に貼られた企画だけは、すぐ下に並んでいます。
+        この板に貼られた企画だけは、そのまま下に並んでいます。
       </p>
 
       {down && !list.length && (
@@ -197,7 +184,7 @@ export default function NoteBoards({ ideas }: { ideas: Idea[] | null }) {
       {!down && !list.length && (
         <div className="blank">
           <b>まだ、どこにも貼られていません</b>
-          <p>これからの企画に1枚貼ると、貼った場所の名前でここに棚ができます。</p>
+          <p>これからの企画に1枚貼ると、貼った場所の名前で、ここに棚ができます。</p>
           <Link className="blank-go" href="/next">
             これからの企画へ
             <Icon name="right" size={14} />
@@ -208,7 +195,7 @@ export default function NoteBoards({ ideas }: { ideas: Idea[] | null }) {
       {!!list.length && now && (
         <>
           {/* 棚の選び札。束ねかたごとに1行にする。
-              厚みは1枚ずつ付ける。3.5 の「厚みを付けなくてよい」例外は
+              厚みは1枚ずつ付ける。「付けなくてよい」例外が効くのは
               一面ぜんぶが押せるマスの並びのときだけで、ここは紙の面の途中にある
               （`docs/island-world.md` 3.5）。 */}
           {[...new Set(list.map((s) => s.group))].map((g) => (
