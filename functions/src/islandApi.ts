@@ -611,6 +611,9 @@ export const islandApi = onRequest(
             ]);
             if (!p.exists) throw new Error("no poll");
             const data = p.data() ?? {};
+            // 引っ込めた問いは、IDを知っていても押せない。
+            // 一覧に出さないだけだと、前に開いた画面から押し続けられる。
+            if (data.hidden === true) throw new Error("closed");
             const shaped = shapePoll(id, data);
             if (!shaped.options.some((o) => o.id === option)) {
               throw new Error("bad option");

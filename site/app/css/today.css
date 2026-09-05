@@ -110,6 +110,11 @@
 }
 
 /* --- 開いたとき --- */
+/* 開いた面と、その下の問いを、ひとつにまとめて畳む器。
+   Poll は畳んでいるあいだも問いを読みに行くので、消さずに display だけ落とす。
+   display が none から戻るときに、中の開く動きもやり直される。 */
+.today-fold[hidden] { display: none; }
+
 .today-open {
   margin-top: 7px;
   padding: 11px 13px 12px;
@@ -210,15 +215,161 @@
     min-width: 0;
   }
   /* 開いた面はバーの上（島の上）へ浮かせる。
-     バーの中で伸ばすと背が変わって、島と walk-hint が毎回ずれる。 */
-  .today[data-place="bar"] .today-open {
+     バーの中で伸ばすと背が変わって、島と walk-hint が毎回ずれる。
+     問いが付くと2枚になるので、浮かせるのは器のほうにする。 */
+  .today[data-place="bar"] .today-fold {
     position: absolute;
     left: 0;
     right: 0;
     bottom: calc(100% + 8px);
-    margin: 0;
+    /* 問いの選択肢が4つあると画面の上に抜けることがある。そこだけ中で送る */
+    max-height: 62vh;
+    overflow-y: auto;
+    /* 板の側面と落ち影が切れないぶんの余白 */
+    padding: 2px 4px 6px 2px;
   }
+  .today[data-place="bar"] .today-open { margin: 0; }
 }
 
 /* 住人と話しているあいだは、島の上のUIを引っ込める（入口の札と同じ扱い） */
 .stage.is-talking .today { opacity: 0; transition: opacity 0.18s; pointer-events: none; }
+
+
+/* =========================================================
+   今夜のおたずね
+   ---------------------------------------------------------
+   板の中の2枚目。押すだけで意思表示できる、参加のいちばん下の段。
+
+   押す前は人数を出さない。先に数字を見せると多いほうに引っぱられるし、
+   「もう決まっている」に見えると押す意味が消える。
+   押した瞬間に棒が伸びて、そこではじめて人数が出る。
+   ========================================================= */
+
+.poll {
+  margin-top: 7px;
+  padding: 10px 12px 11px;
+  background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 板の名前。「今日の島」と同じ扱いにして、主役（問い）を邪魔しない */
+.poll-ask {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--frame-dark);
+  opacity: 0.72;
+}
+.poll-q {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.poll-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+/* 選択肢。押すものなので、島のボタンと同じ厚みの型にする */
+.poll-pick {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  /* 指で押せる高さ。島のバーの入口と同じ 44px を下限にする */
+  min-height: 40px;
+  padding: 8px 11px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--paper-out);
+  border: 3px solid var(--frame-dark);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  -webkit-tap-highlight-color: transparent;
+}
+.poll-pick:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.poll-pick:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 押し終わったら、もう押すものではない。厚みを抜いて、板の上に寝かせる */
+.poll-pick:disabled {
+  cursor: default;
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* 票の棒。文字の下を塗る。
+   幅ではなく scaleX で伸ばすので、1票増えても版が組み直されない */
+.poll-bar {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: linear-gradient(var(--gold), #f0b429);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* 自分が押したほうだけ、色を変えて手前に出す */
+.poll-item.is-mine .poll-bar { background: linear-gradient(#9be76e, #6fc63f); }
+@media (prefers-reduced-motion: reduce) {
+  .poll-bar { transition: none; }
+}
+
+.poll-label {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+.poll-pick .poll-tick { position: relative; flex: none; }
+/* 人数。棒の長さで大小は分かるので、数字は小さく添えるだけ */
+.poll-n {
+  position: relative;
+  flex: none;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 押した直後の1行。自分の1票がどこに入ったかを言葉でも言う */
+.poll-said {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--frame-dark);
+}
+.poll-failed {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+/* 次の段への橋。押した直後に出す。
+   ここだけは板の型にしない。押させたいのは選択肢のほうで、
+   これは「書いてもいいよ」の誘いなので、線1本ぶん軽くする。 */
+.poll-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 4px 2px;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 900;
+  border-bottom: 2px solid var(--frame-dark);
+}
+.poll-why:active { transform: translateY(1px); }

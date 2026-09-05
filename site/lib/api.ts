@@ -165,3 +165,56 @@ export function rememberVote(id: string) {
     /* localStorage が使えない環境では諦める */
   }
 }
+
+/* ---------------- 今夜のおたずね ----------------
+   参加のいちばん下の段。文章を書かずに、押すだけで数字が動く。
+   「さんせい」は誰かが企画を書かないと押すものが無いが、
+   こちらはこちらから問いを出しているので、掲示板が空でも押せる。 */
+
+export type PollOption = { id: string; label: string; votes: number };
+
+export type Poll = {
+  id: string;
+  question: string;
+  options: PollOption[];
+  /** 全部の票を足した数。棒の長さはこれで割って出す */
+  total: number;
+  /** 締め切り。過ぎたものはサーバー側が返さない */
+  openUntil: string | null;
+};
+
+export const getPoll = () => req<{ poll: Poll | null }>("/poll");
+
+/** 押す。1人1票なので、2回目からは押し直しにならず、いまの数だけ返る。 */
+export const votePoll = (id: string, option: string, token?: string | null) =>
+  req<{ poll: Poll; mine: string }>(`/poll/${id}/vote`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ option, cid: clientId() }),
+  });
+
+/**
+ * どの問いで、どれを押したか。
+ *
+ * サーバーにも残っているが、それを引くにはもう1往復要る。
+ * 次に来たときに棒がすぐ出ているほうが「自分の1票が残っている」と分かるので、
+ * ここにも持つ。問いは同時に1つしか出ないので、ひとつぶんだけで足りる。
+ */
+const POLL_MINE = "ayato-island-poll";
+
+export function pollAnswer(id: string): string | null {
+  try {
+    const [pid, option] = (localStorage.getItem(POLL_MINE) ?? "").split("\t");
+    return pid === id ? option || null : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberPollAnswer(id: string, option: string) {
+  try {
+    localStorage.setItem(POLL_MINE, `${id}\t${option}`);
+  } catch {
+    /* localStorage が使えない環境では諦める。サーバー側には残っている */
+  }
+}

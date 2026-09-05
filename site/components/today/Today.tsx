@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { todayNews, type TodayNews } from "@/lib/todayNews";
 import { jstNow } from "@/lib/nightly";
 import { Arrow, NewDot, Wedge } from "./art";
+import Poll from "./Poll";
 
 /**
  * 今日の島。
@@ -14,6 +15,7 @@ import { Arrow, NewDot, Wedge } from "./art";
  *
  * **これは器である。** ほかの仕掛け（1年前の今日・今夜のおたずね・訪問者数）は
  * 全部この板に載る想定なので、中身の決め方は `lib/todayNews.ts` に外へ出してある。
+ * 「今夜のおたずね」は開いた面の下に付く（`./Poll.tsx`）。
  *
  * 合図は赤い丸ひとつ。島の合図は「入口＝札」「新しいものがある＝赤い丸」の
  * 2種類しかないので、**3つ目を作らない**（`docs/island-design.md` 3-3）。
@@ -33,6 +35,11 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
   const [open, setOpen] = useState(false);
   /** まだ今日ぶんを見ていない。赤い丸を出すかどうかの判断に使う */
   const [fresh, setFresh] = useState(false);
+  /** 今夜のおたずねが出ていて、まだ押していない。これも赤い丸の理由になる */
+  const [asking, setAsking] = useState(false);
+  /* 問いは島が落ち着いてから読みに行くので、返事が来たときには
+     もう板を開いているかもしれない。開いたあとに丸を足さないための見張り。 */
+  const seen = useRef(false);
 
   useEffect(() => {
     setNews(todayNews());
@@ -49,14 +56,25 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     }
     setFresh(first);
     setOpen(first);
+    // 自動で開いた日は、その時点で今日ぶんを見せたことになる
+    if (first) seen.current = true;
 
     const id = setInterval(() => setNews(todayNews()), TICK);
     return () => clearInterval(id);
   }, []);
 
   const toggle = useCallback(() => {
+    seen.current = true;
     setFresh(false);
+    // 押していなくても、一度見た問いは「新しいもの」ではない。
+    // 押すまで丸を出し続けると、赤い丸が催促になる。
+    setAsking(false);
     setOpen((v) => !v);
+  }, []);
+
+  /** 問いが出ているか、押し終わったかの伝言。まだ板を開いていないときだけ丸にする。 */
+  const onPoll = useCallback((unanswered: boolean) => {
+    setAsking(unanswered && !seen.current);
   }, []);
 
   // 画面が出るまでは何も置かない。中身が今日のものだと確かめられるまで出さない
@@ -82,11 +100,14 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
           <em>今日の島</em>
           <b>{news.line}</b>
         </span>
-        {fresh && !open && <NewDot />}
+        {(fresh || asking) && !open && <NewDot />}
         <Wedge />
       </button>
 
-      {open && (
+      {/* 畳んでいるあいだも消さずに置いておく。問いを読みに行くのは中の Poll なので、
+          消してしまうと板を開くまで赤い丸が出ない。display が戻るときに
+          開く動きもやり直される（`app/css/today.css`）。 */}
+      <div className="today-fold" hidden={!open}>
         <div className="today-open">
           <b className="today-title">{news.title}</b>
           {/* 配信のタイトルは引用なので、絵文字が入っていてもそのまま出す
@@ -95,7 +116,11 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
           <p className="today-body">{news.body}</p>
           {go}
         </div>
-      )}
+
+        {/* 配信中は問いを出さない。島に留めずに外へ出すのが正解なので、
+            「見にいく」の隣に押すものを増やさない（`docs/island-play.md` 5章）。 */}
+        {news.kind !== "live" && <Poll onCount={onPoll} />}
+      </div>
     </div>
   );
 }
