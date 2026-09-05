@@ -5,6 +5,27 @@
  */
 export type RecipeStream = { label: "企画会議" | "買い出し" | "調理" | "リベンジ" | "配信"; date: string; videoId: string; title: string };
 
+/**
+ * どんな料理か。
+ *
+ * 国だけで絞ると、25品がジョージアに固まっていて絞り込みの意味がない。
+ * 「粉もの続きの週」「イワシで3日」のような、実際にあったかたよりは
+ * 国ではなく料理の種類のほうに出るので、こちらの軸を足した。
+ */
+export type RecipeKind = "rice" | "meat" | "fish" | "flour" | "soup" | "side" | "sweet";
+
+export const KINDS: { id: RecipeKind; label: string }[] = [
+  { id: "rice", label: "ごはん・麺" },
+  { id: "flour", label: "粉もの" },
+  { id: "meat", label: "肉" },
+  { id: "fish", label: "魚" },
+  { id: "soup", label: "汁もの" },
+  { id: "side", label: "副菜" },
+  { id: "sweet", label: "甘いもの" },
+];
+
+export const kindLabel = (k: RecipeKind) => KINDS.find((x) => x.id === k)?.label ?? k;
+
 export type Recipe = {
   slug: string;
   name: string;
@@ -12,6 +33,7 @@ export type Recipe = {
   /** スタンプに使うスプライト名(site/public/sprites の food-*) */
   icon: string;
   country: string; // countries.slug
+  kind: RecipeKind;
   date: string; // 完成した日
   note: string;
   streams: RecipeStream[];
@@ -24,6 +46,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥪",
     icon: "food-sandwich",
     country: "uk",
+    kind: "flour",
     date: "2025-02-03",
     note: "チェスターのホステルにコンロが無かったので、卵サンドで乗り切った回。",
     streams: [{ label: "調理", date: "2025-02-03", videoId: "u9jY4KyIHKQ", title: "キッチンにコンロ無かったけど、卵サンド食べてみた" }],
@@ -34,6 +57,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍗",
     icon: "food-turkey",
     country: "uk",
+    kind: "meat",
     date: "2025-02-10",
     note: "イギリスの鶏を丸ごと焼いた。ここからクッキング配信が本格化した。",
     streams: [
@@ -47,6 +71,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🌯",
     icon: "food-taco",
     country: "belgium",
+    kind: "flour",
     date: "2025-03-26",
     note: "リエージュで。スネちゃまの誕生日をお祝いしながら作った。",
     streams: [{ label: "調理", date: "2025-03-26", videoId: "mnI9zAyPBTU", title: "ベルギー🇧🇪リエージュでトルティーヤを作りました" }],
@@ -57,6 +82,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍅",
     icon: "food-tomato",
     country: "azerbaijan",
+    kind: "side",
     date: "2025-07-06",
     note: "名前がそのまま料理名になった一品。ましが5回。",
     streams: [{ label: "調理", date: "2025-07-06", videoId: "9Q1ghbbZDqs", title: "アゼルバイジャン🇦🇿でニンニクましましましましましトマト作りました" }],
@@ -67,6 +93,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥗",
     icon: "food-salad",
     country: "azerbaijan",
+    kind: "side",
     date: "2025-07-16",
     note: "現地の食べ方を真似して作ったサラダ。",
     streams: [{ label: "調理", date: "2025-07-16", videoId: "MS6fQfPDsDo", title: "アゼルバイジャン🇦🇿風サラダ作りました" }],
@@ -77,6 +104,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍛",
     icon: "food-pan-stew",
     country: "azerbaijan",
+    kind: "soup",
     date: "2025-07-17",
     note: "水を使わないカレー。スパイスは現地のマーケットで揃えた。",
     streams: [{ label: "調理", date: "2025-07-17", videoId: "_0MiXG6Qwsw", title: "アゼルバイジャン🇦🇿風チキン無水スパイスカレー作りました" }],
@@ -87,6 +115,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥟",
     icon: "food-dim-sum",
     country: "georgia",
+    kind: "rice",
     date: "2025-07-22",
     note: "皮から作った水餃子。ジョージアにはヒンカリという似た料理がある。",
     streams: [{ label: "調理", date: "2025-07-22", videoId: "YkGHXQywuUE", title: "ジョージア🇬🇪で水餃子作りました" }],
@@ -97,6 +126,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍝",
     icon: "food-plate-dinner",
     country: "georgia",
+    kind: "rice",
     date: "2025-08-05",
     note: "買い出しと調理を2日に分けた、いまの3日構成の原型。",
     streams: [
@@ -110,6 +140,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍲",
     icon: "food-bowl-soup",
     country: "georgia",
+    kind: "soup",
     date: "2025-10-13",
     note: "「作ってみたい」から翌日に実際に作った回。",
     streams: [
@@ -123,6 +154,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥙",
     icon: "food-skewer",
     country: "georgia",
+    kind: "meat",
     date: "2026-02-17",
     note: "バトゥミ最終日の深夜に作った。",
     streams: [{ label: "調理", date: "2026-02-17", videoId: "hnVwWLDS6B8", title: "ケバブ作る" }],
@@ -133,6 +165,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🧄",
     icon: "food-tajine",
     country: "georgia",
+    kind: "rice",
     date: "2026-04-17",
     note: "1回目は失敗した。翌日リベンジして大食いした、珍しい2部作。",
     streams: [
@@ -146,6 +179,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍚",
     icon: "food-bowl",
     country: "armenia",
+    kind: "rice",
     date: "2026-05-16",
     note: "アルメニアの宿のキッチンで。",
     streams: [{ label: "調理", date: "2026-05-16", videoId: "AZwmL3H25TA", title: "アルメニアでトマトチキンライス作ります" }],
@@ -156,6 +190,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍞",
     icon: "food-bread",
     country: "georgia",
+    kind: "flour",
     date: "2026-05-25",
     note: "材料探しにマーケットへ行くところから3本立てになった回。",
     streams: [
@@ -169,6 +204,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍛",
     icon: "food-bowl-cereal",
     country: "georgia",
+    kind: "rice",
     date: "2026-06-02",
     note: "アゼルバイジャンで食べた味を、ジョージアで再現した。",
     streams: [{ label: "調理", date: "2026-06-02", videoId: "A-gx1RqF0Cg", title: "アゼルバイジャン風ピラフ作ります！" }],
@@ -179,6 +215,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥞",
     icon: "food-pancakes",
     country: "georgia",
+    kind: "flour",
     date: "2026-06-12",
     note: "ソースから自作した。前日にソース作りの回がある。",
     streams: [
@@ -192,6 +229,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍤",
     icon: "food-fries",
     country: "georgia",
+    kind: "side",
     date: "2026-06-19",
     note: "企画会議から始まった天ぷら。",
     streams: [
@@ -205,6 +243,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍜",
     icon: "food-bowl-broth",
     country: "georgia",
+    kind: "rice",
     date: "2026-06-26",
     note: "麺から打った。ジョージアのチーズと合わせた変化球。",
     streams: [
@@ -218,6 +257,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍑",
     icon: "food-pudding",
     country: "georgia",
+    kind: "sweet",
     date: "2026-07-02",
     note: "タイトルが「ジョジアデコンポトツクル」だった回。",
     streams: [{ label: "調理", date: "2026-07-02", videoId: "pcATx8Qq4s8", title: "ジョジアデコンポトツクル" }],
@@ -228,6 +268,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥞",
     icon: "food-waffle",
     country: "georgia",
+    kind: "flour",
     date: "2026-07-03",
     note: "翌日のクレープと合わせて2日連続の粉物。",
     streams: [{ label: "調理", date: "2026-07-03", videoId: "4uICARYwXbY", title: "ジョージア風ガレット作ります！" }],
@@ -238,6 +279,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥐",
     icon: "food-croissant",
     country: "georgia",
+    kind: "flour",
     date: "2026-07-04",
     note: "ガレットの翌日。甘い方。",
     streams: [{ label: "調理", date: "2026-07-04", videoId: "zQJSiKL0D3U", title: "ジョージア風クレープ作ります！" }],
@@ -248,6 +290,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥔",
     icon: "food-meat-patty",
     country: "georgia",
+    kind: "side",
     date: "2026-07-09",
     note: "たねを作る日と揚げる日で分けた。",
     streams: [
@@ -261,6 +304,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🐟",
     icon: "food-fish",
     country: "georgia",
+    kind: "fish",
     date: "2026-07-16",
     note: "タレを作る日、漬ける日、食べる日の3日がかり。5種類を食べ比べた。",
     streams: [
@@ -275,6 +319,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍜",
     icon: "food-bowl-broth",
     country: "georgia",
+    kind: "rice",
     date: "2026-07-22",
     note: "「ジョージアイワシ祭り」3連戦の1日目。",
     streams: [
@@ -288,6 +333,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🐟",
     icon: "food-fish",
     country: "georgia",
+    kind: "fish",
     date: "2026-07-23",
     note: "イワシ祭り2日目。いちばんシンプルな食べ方。",
     streams: [{ label: "調理", date: "2026-07-23", videoId: "SQXQOF1_Qhg", title: "ジョージアでイワシの塩焼き作ります！" }],
@@ -298,6 +344,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥘",
     icon: "food-pan",
     country: "georgia",
+    kind: "rice",
     date: "2026-07-24",
     note: "イワシ祭り最終日。3日間イワシを食べ続けた。",
     streams: [{ label: "調理", date: "2026-07-24", videoId: "EjRXQuzubLo", title: "ジョージアイワシ祭り最終日！イワシのパエリア作ります！" }],
@@ -308,6 +355,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍳",
     icon: "food-egg-cooked",
     country: "georgia",
+    kind: "side",
     date: "2026-07-30",
     note: "翌日の唐揚げ定食の副菜を先に作った回。",
     streams: [{ label: "調理", date: "2026-07-30", videoId: "Z0AI9LY0Z2U", title: "卵焼きと酢の物つくろーー！" }],
@@ -318,6 +366,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍱",
     icon: "food-plate-dinner",
     country: "georgia",
+    kind: "meat",
     date: "2026-07-31",
     note: "「本気のクッキング」と銘打った定食一式。",
     streams: [{ label: "調理", date: "2026-07-31", videoId: "ZcchwhRE_Ks", title: "本気のクッキングや！！唐揚げ定食つくるぞ！！" }],
@@ -328,6 +377,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🐠",
     icon: "food-pan-stew",
     country: "georgia",
+    kind: "fish",
     date: "2026-08-07",
     note: "カズベキの山の宿で作った。買い出しの日から2日がかり。",
     streams: [
@@ -341,6 +391,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍕",
     icon: "food-pizza",
     country: "georgia",
+    kind: "flour",
     date: "2026-08-14",
     note: "生地から。買い出しの日も配信した。",
     streams: [
@@ -354,6 +405,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🥔",
     icon: "food-plate-sauerkraut",
     country: "georgia",
+    kind: "side",
     date: "2026-08-19",
     note: "「どーやってつくろ」から始まった回。",
     streams: [{ label: "調理", date: "2026-08-19", videoId: "aymUG1Q0Kec", title: "ジョージア風ジャーマンポテトどーやってつくろ！" }],
@@ -364,6 +416,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🧃",
     icon: "food-soda-glass",
     country: "georgia",
+    kind: "sweet",
     date: "2026-08-20",
     note: "市場のフルーツを絞った。",
     streams: [{ label: "調理", date: "2026-08-20", videoId: "qMmJYgQww8Y", title: "ジョージア風フルーツジュースつくろ！" }],
@@ -374,6 +427,7 @@ export const RECIPES: Recipe[] = [
     emoji: "🍖",
     icon: "food-meat-ribs",
     country: "georgia",
+    kind: "meat",
     date: "2026-08-21",
     note: "ジョージアの家庭料理。肉とじゃがいもを一緒に炒める。",
     streams: [{ label: "調理", date: "2026-08-21", videoId: "xo1eYfB4RyU", title: "ジョージア料理オジャフリつくろーー！！" }],
@@ -381,3 +435,11 @@ export const RECIPES: Recipe[] = [
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);
+
+/**
+ * 何品目か。図鑑の番号にあたる。
+ * 作った順（古い順）に1から振る。あとから料理が増えても、
+ * 前に押したスタンプの番号は変わらない。
+ */
+const ORDER = [...RECIPES].sort((a, b) => (a.date < b.date ? -1 : 1)).map((r) => r.slug);
+export const recipeNo = (slug: string) => ORDER.indexOf(slug) + 1;
