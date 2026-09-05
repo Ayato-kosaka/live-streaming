@@ -302,7 +302,8 @@ export default function RouteMapSvg({ here }: { here?: string }) {
                     実在の人なので、伏せたままで成立する形にしてある
                     （docs/nordic-fund.md 1章）。名前を出していいと分かったら、
                     この一行を差し替えるだけで済む。 */}
-                <g className="nm-chip is-goal" transform={`translate(${c.x} ${c.y - r - 46})`}>
+                {/* 札は下に出す。上はヘルシンキからのフェリーの線が通っている。 */}
+                <g className="nm-chip is-goal" transform={`translate(${c.x - 24} ${c.y + r + 52})`}>
                   <rect x="-172" y="-25" width="344" height="50" rx="25" />
                   <text x="0" y="9" textAnchor="middle">
                     ここに、会いたい人がいる

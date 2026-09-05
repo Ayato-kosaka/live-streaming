@@ -917,6 +917,19 @@ window.renderScene = async (parts, opts = {}) => {
   const data = renderer.domElement.toDataURL("image/png");
   for (const l of extra) scene.remove(l);
   scene.remove(group);
+
+  /* 描いたものを GPU から降ろす。
+   * 外すだけだと形・素材・テクスチャが載りっぱなしになり、
+   * 176点を続けて焼くうちにメモリを食いつぶしてブラウザごと落ちる。
+   * 控え(キャッシュ)はどれも1つのモデルの中でしか効かないので、一緒に捨てる。 */
+  group.traverse((n) => {
+    if (!n.isMesh) return;
+    n.geometry.dispose();
+    for (const m of (Array.isArray(n.material) ? n.material : [n.material])) m.dispose();
+  });
+  for (const t of texCache.values()) t.dispose();
+  texCache.clear();
+  foliageCache.clear();
   return data;
 };
 

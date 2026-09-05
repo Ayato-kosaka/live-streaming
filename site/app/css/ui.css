@@ -222,7 +222,6 @@
   position: absolute;
   inset: 3px;
   z-index: -1;
-  border: 1.5px solid transparent;
   border-radius: var(--r-0);
   background: var(--marker);
   opacity: 0;
@@ -394,7 +393,7 @@
 /* 中の項目は一段小さく。入れ子が2段あることを、開かなくても分かるようにする。 */
 .gchap .fold .fold > summary { min-height: 46px; padding: 10px 11px; }
 .gchap .fold .fold .fold-t b { font-size: 13.5px; }
-.gchap .fold .fold .fold-c { width: 14px; height: 14px; padding: 4px; border-radius: 6px; }
+.gchap .fold .fold .fold-c { width: 14px; height: 14px; padding: 4px; border-radius: 7px; }
 .gchap .fold .fold .fold-body { padding: 11px 13px 14px; }
 
 .nspot-h { display: inline-flex; align-items: center; gap: 7px; }

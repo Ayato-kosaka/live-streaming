@@ -768,7 +768,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   color: var(--ink);
   background: var(--paper-2);
   border: 2px solid color-mix(in srgb, var(--frame) 66%, var(--paper));
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 4px 13px;
 }
 /* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
@@ -778,7 +778,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .noteform input {
   flex: 1; min-width: 0;
   border: var(--bw-2) solid var(--frame);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 12px 16px;
   font: inherit; font-size: 14px; font-weight: 700;
   background: var(--paper-2);
@@ -788,13 +788,13 @@ a.chip:active, button.chip:active, .chip.link:active {
   flex: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 78%, var(--paper)) 0%, var(--frame) 100%);
   color: #fff;
-  border-radius: 999px; padding: 12px 20px;
+  border-radius: var(--r-pill); padding: 12px 20px;
   min-height: 46px;
   font-weight: 900; font-size: 14px;
-  text-shadow: 0 1px 0 rgba(120, 70, 20, 0.4);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
   box-shadow: var(--pop-sm), inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
-.noteform button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.noteform button:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .noteform button:disabled { opacity: 0.5; box-shadow: none; transform: none; }
 
 /* 掲示板 */
@@ -810,16 +810,16 @@ a.chip:active, button.chip:active, .chip.link:active {
   resize: vertical;
 }
 .brow { display: flex; gap: 9px; margin-top: 10px; }
-.brow .bin { flex: 1; border-radius: 999px; }
+.brow .bin { flex: 1; border-radius: var(--r-pill); }
 .bbtn {
   flex: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 100%);
   color: #fff;
-  border-radius: 999px; padding: 13px 24px;
+  border-radius: var(--r-pill); padding: 13px 24px;
   min-height: 48px;
   font-weight: 900; font-size: 14.5px;
   letter-spacing: var(--ls-head);
-  text-shadow: 0 1px 0 rgba(150, 40, 70, 0.35);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--accent-deep) 46%, transparent);
   box-shadow: 0 5px 0 var(--accent-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 .bbtn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-deep); }
@@ -829,15 +829,15 @@ a.chip:active, button.chip:active, .chip.link:active {
 .bsort button {
   font-size: 12.5px; font-weight: 900;
   padding: 7px 15px; min-height: 38px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: 2.5px solid var(--frame);
+  border: var(--bw-1) solid var(--frame);
   box-shadow: var(--pg-lit), 0 2px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 .bsort button.is-on {
   background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 70%, var(--paper)) 0%, var(--frame) 100%);
   color: #fff;
-  text-shadow: 0 1px 0 rgba(120, 70, 20, 0.4);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
 }
 .bsort button:active { transform: translateY(2px); box-shadow: none; }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
@@ -845,7 +845,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .vote {
   flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
   min-width: 54px; min-height: 54px;
-  background: var(--paper); border: 3px solid var(--frame);
+  background: var(--paper); border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-1); padding: 8px 5px;
   box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
   transition: transform 0.12s ease;
@@ -923,7 +923,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* --- 国のページ: 行った街 --- */
 .cities { display: grid; gap: 9px; margin-top: 10px; }
 .city {
-  border: 2.5px solid var(--frame);
+  border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-2);
   background: var(--paper-2);
   overflow: hidden;
@@ -950,8 +950,8 @@ a.chip:active, button.chip:active, .chip.link:active {
 .city-head::after {
   content: "";
   width: 9px; height: 9px;
-  border-right: 2.5px solid var(--frame-dark);
-  border-bottom: 2.5px solid var(--frame-dark);
+  border-right: var(--bw-1) solid var(--frame-dark);
+  border-bottom: var(--bw-1) solid var(--frame-dark);
   transform: rotate(45deg) translateY(-2px);
   transition: transform 0.18s ease;
   flex: none;

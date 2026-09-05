@@ -177,7 +177,8 @@ export default function Board() {
               key={s}
               className="nx-seed"
               onClick={() => {
-                setText(s);
+                // すでに書いてあるものを消さない。書き出しは前に足すだけ
+                setText((t) => (t.startsWith(s) ? t : s + t));
                 box.current?.focus();
               }}
             >

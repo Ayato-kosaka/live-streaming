@@ -111,7 +111,8 @@ function PlanNotes({
             key={s}
             className="nx-seed"
             onClick={() => {
-              onDraft(s);
+              // すでに書いてあるものを消さない。書き出しは前に足すだけ
+              onDraft(draft.startsWith(s) ? draft : s + draft);
               box.current?.focus();
             }}
           >
