@@ -28,6 +28,11 @@ python/
 │   ├── queries.py          # SQL クエリ定義
 │   └── repository.py       # データ操作（CRUD、MERGE）
 │
+├── fetch_doneru_donations.py  # Doneru の寄付履歴を BigQuery に入れる
+├── doneru/                 # Doneru API（cookie 認証。公開 API は無い）
+│   ├── client.py           # 取得（ページ送り・セッション切れの検出）
+│   └── normalizer.py       # BigQuery の行にそろえる（列名は決め打ちしない）
+│
 ├── youtube_chat/           # YouTube チャット処理
 │   ├── downloader.py       # yt-dlp 実行
 │   ├── parser.py           # JSONL ストリーム解析
