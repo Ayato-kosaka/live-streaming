@@ -98,6 +98,29 @@ def _build_cookie_header(raw: str) -> str:
     return f"_dt={jar['_dt']}; __td_signed={jar.get('__td_signed', 'true')}"
 
 
+def _describe_cookie(cookie_header: str) -> str:
+    """cookie の「形」だけを一行にする。**値は入れない。**
+
+    401 が返ったとき、値の貼り損ねなのかセッションが死んだのかを分けたい。
+    Doneru の `_dt` は `s` ＋ 32桁の16進数（33文字）なので、長さと字種を見れば
+    切れているか、余計なものが混ざっているかは分かる。
+    """
+    value = ""
+    for part in cookie_header.split(";"):
+        name, _, raw = part.strip().partition("=")
+        if name == "_dt":
+            value = raw
+            break
+
+    looks_right = len(value) == 33 and value.startswith("s") and all(
+        c in "0123456789abcdef" for c in value[1:]
+    )
+    return (
+        f"_dt は {len(value)} 文字"
+        + ("（Doneru の形と一致）" if looks_right else "（想定は 's' + 16進32桁 = 33文字。形が違う）")
+    )
+
+
 def _find_record_list(payload: Any, depth: int = 0) -> Optional[List[Dict[str, Any]]]:
     """レスポンスの中から寄付レコードの配列を探す。
 
@@ -125,6 +148,10 @@ class DoneruClient:
     def __init__(self, cookie: Optional[str] = None):
         raw = cookie if cookie is not None else os.getenv("DONERU_COOKIE", "")
         self._cookie_header = _build_cookie_header(raw)
+        # 401 が返ったときに「値が化けている」のか「セッションが死んでいる」のかを
+        # 分けるための手がかり。**値そのものは持たない**（public なログに出るため）。
+        # 長さだけで、貼り損ね・切れ・改行の混入は見分けられる。
+        self.cookie_shape = _describe_cookie(self._cookie_header)
         self._session = requests.Session()
         self._session.headers.update(DEFAULT_HEADERS)
         self._session.headers["cookie"] = self._cookie_header
