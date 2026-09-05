@@ -1,11 +1,11 @@
 /* =========================================================
    導線 — 「あの話どこだっけ」から短く着くための3つ
 
-     1. 看板の口（.ihx）… 面のいちばん上。押すと10軒＋「ぜんぶ」が下りてくる
-     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。同じ一覧を開いたまま置く
+     1. 看板の口（.ihx-open）… 面のいちばん上。「ぜんぶ」への板1枚
+     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。10軒＋「ぜんぶ」を開いたまま
      3. ぜんぶの面（.dx*）… /all。行き先を1枚に並べて、字で絞る
 
-   **1 と 2 は同じ部品**（`components/ui/PlaceList.tsx`）。器が違うだけ。
+   **一覧を書くのは1か所**（`components/ui/PlaceList.tsx`）。2 と 3 がそこを見る。
    `docs/island-ux.md` 5.2 が「一覧の部品を1つ作って使い回す」と決めている。
    9月5日まで、ここは口が3つ（帯6つ・現在地の行の「ぜんぶ」・砂浜12）に
    分かれていて、狭い画面ではヘッダーと砂浜だけで 613px を使っていた。
@@ -16,101 +16,58 @@
 
 /* --- 1. 看板の口（狭い画面） ----------------------------------------- */
 
-/* `<details>` で作る。JS を1行も要らずに開閉できて、閉じているあいだは
-   中の10軒が読み上げにも出てこない（静的書き出しなので、これが効く）。 */
-.ihx { flex: none; position: static; }
-@media (min-width: 900px) { .ihx { display: none; } }
+/* 「ぜんぶ」への板1枚。**狭い画面ではこれが唯一の口。**
+   9月5日まで現在地の行に居たものを、看板の中へ上げた。行が1本まるごと
+   （48〜89px ＋ 余白12px）消える。
 
+   畳んだ一覧（`<details>` のシート）も作って測ったが、**紙96枚が3タップに
+   なる**ので捨てた。`/all` の1棚目が「島のなか」（10軒ぜんぶ）なので、
+   `/all` はシートの上位互換になっている（`PageShell` の但し書き）。 */
 .ihx-open {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
   /* 指で押せる最小（`docs/island-design.md` 3-2） */
   min-height: 48px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-2);
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   color: var(--ink);
-  font-size: var(--fs-min);
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-body);
   white-space: nowrap;
-  cursor: pointer;
   /* 押せるので厚み。48px の板は 6px（`docs/island-design.md` 3章）。 */
-  box-shadow: 0 6px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: var(--pop), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
-  /* ブラウザの三角を消す。島に三角のマーカーは無い。 */
-  list-style: none;
 }
-.ihx-open::-webkit-details-marker { display: none; }
 .ihx-open:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
-/* 開いているあいだは沈めたままにする。「いま開いているのはこれ」を形で言う。 */
-.ihx[open] > .ihx-open { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
-.ihx-chev { transition: transform 0.16s ease; }
-.ihx[open] .ihx-chev { transform: rotate(180deg); }
-
-/* 下りてくる一覧。**紙を押しのけない。** 看板の下にかぶせる。
-   押しのけると、開いた瞬間に読んでいた場所が 340px 下へ動く。 */
-.ihx-sheet {
-  position: absolute;
-  left: 0; right: 0;
-  top: 100%;
-  /* 看板の切り口（3px）と、その下の波（11px）を越えたところから。 */
-  margin-top: 14px;
-  padding: var(--sp-3);
-  border: var(--bw-2) solid var(--frame-deep);
-  border-radius: var(--r-2);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 10px 24px rgba(52, 66, 32, 0.28);
-}
-.ihx-doors {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: var(--sp-2);
-}
-.ihx-doors > li { display: grid; min-width: 0; }
-.ihx-doors > li.is-all { grid-column: 1 / -1; }
-.ihx-door {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 48px;
-  min-width: 0;
-  padding: var(--sp-1) var(--sp-2);
-  border-radius: var(--r-2);
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--frame) 52%, var(--paper)) 0%,
-    var(--frame) 100%);
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
-  color: var(--ink);
-  font-size: var(--fs-min);
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.ihx-door img { width: 20px; height: 20px; flex: none; object-fit: contain; object-position: center bottom; }
-.ihx-door:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
-.ihx-door.is-all {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
-  font-size: var(--fs-note);
+/* 900px から上は6つの札が1段で並び、その列の最後に「ぜんぶ」が入る。 */
+@media (min-width: 900px) { .ihx-open { display: none; } }
+/* 狭い画面では「島のなか」を落として「ぜんぶ」だけにする。
+   **消さずに隠す。** 読み上げには「島のなか ぜんぶ」のまま残す。 */
+@media (max-width: 599.98px) {
+  .ihx-long {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ihx-open { padding: 0 var(--sp-3); }
 }
 
 /* いま居る場所。押せないので**完全に平ら**にする。
    厚みは「押せる」の合図1種類だけに使う（`docs/island-world.md` 3.4）。 */
-.ihx-door.is-here,
 .ifoot-door.is-here {
   background: color-mix(in srgb, var(--frame-deep) 22%, transparent);
   box-shadow: none;
-  color: var(--ink-2);
+  color: color-mix(in srgb, var(--paper) 74%, var(--frame));
   cursor: default;
 }
-.ifoot-door.is-here { color: color-mix(in srgb, var(--paper) 74%, var(--frame)); }
 
 /* --- 1b. 現在地の行 --------------------------------------------------- */
 

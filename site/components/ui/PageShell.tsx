@@ -20,15 +20,28 @@ type Crumb = { label: string; href?: string };
  * **中身が始まるまでに 177〜218px、1画面の 21〜26% を、106面ぜんぶが
  * 同じ絵で使っていた。**
  *
- * `docs/island-ux.md` 5.2 の答えをそのまま採る。狭い画面の看板は
+ * `docs/island-ux.md` 5.2 の答えを採る。狭い画面の看板は
  *
- *     [ 島 ]   いま：○○   [ ほかの場所 ]
+ *     [ 島 ]   いま：○○   [ ぜんぶ ]
  *
- * の1段だけにして、行き先は「ほかの場所」を押すと下りてくる一覧（`PlaceList`）に
- * 持たせる。**到達性は落ちない。** 前は帯に出ている6つが1タップ、
- * 残り4つは砂浜まで送るか「ぜんぶ」経由で2タップだった。いまは
- * 10軒とも「ほかの場所」→ 行き先の2タップで、砂浜まで送れば10軒とも1タップ。
- * どこからでも2タップ、は保たれる。
+ * の1段だけにして、行き先は「ぜんぶ」の先（`/all`）に持たせる。
+ *
+ * ## 畳んだ一覧（5.2 の「ほかの場所」のシート）は採らなかった
+ *
+ * 作って測って捨てた。**シートにすると、96枚の紙が3タップになる。**
+ *
+ *     シート  … ほかの場所 → 10軒のどれか      = 2タップ
+ *               ほかの場所 → ぜんぶ → 紙        = **3タップ**
+ *     ぜんぶ  … ぜんぶ → 10軒のどれか           = 2タップ
+ *               ぜんぶ → 紙                     = 2タップ
+ *
+ * `/all` の1棚目が「島のなか」（10軒ぜんぶ）なので、**`/all` はシートの
+ * 上位互換**になっている。シートが勝てるのは10軒だけで、そこも同じ2タップ。
+ * 5.2 が書かれたときに `/all` はまだ無かった。決まりのほうを直す。
+ *
+ * **到達性は落ちない。** 前は帯に出ている6つが1タップ、残り4軒は砂浜まで
+ * 送るか「ぜんぶ」経由で2タップ、紙96枚が2タップだった。いまは10軒とも
+ * 2タップ（砂浜まで送れば1タップ）、紙96枚は2タップのまま。
  *
  * ## 広い画面（900px 以上）は6つの札のまま
  *
@@ -65,17 +78,15 @@ export function IslandHeader({
             <b>{here}</b>
           </p>
         )}
-        {/* 狭い画面の口。中身は砂浜と同じ `PlaceList`。 */}
-        <details className="ihx">
-          <summary className="ihx-open">
+        {/* 狭い画面の口。**ここが唯一の口。**
+            その面自身への口は出さない（`/all` の上に「ぜんぶ」を出すと、
+            押しても同じ紙が出てくる。`docs/island-design.md` 3-3）。 */}
+        {!atAll && (
+          <Link className="ihx-open" href={ALL_HREF} prefetch={false}>
             <Icon name="signpost" size={16} />
-            ほかの場所
-            <Icon name="chevron" size={13} className="ihx-chev" />
-          </summary>
-          <div className="ihx-sheet">
-            <PlaceList variant="sheet" current={current} atAll={atAll} />
-          </div>
-        </details>
+            <span className="ihx-long">島のなか </span>ぜんぶ
+          </Link>
+        )}
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
             <Link
@@ -188,7 +199,7 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
         <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
       <nav aria-label="島に建っているもの">
-        <PlaceList variant="foot" current={current} atAll={atAll} />
+        <PlaceList current={current} atAll={atAll} />
       </nav>
       <p className="ifoot-note">{FOOT.note}</p>
     </footer>
