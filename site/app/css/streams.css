@@ -144,6 +144,9 @@
 }
 .zk-lead {
   margin: var(--sp-3) 0 0;
+  /* PC では紙が 890px あって、本文が1行 60字を超えていた。
+     行を目で追い直すのが辛くなるので、読む字だけ幅を止める。 */
+  max-width: 46em;
   font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.85;
@@ -209,11 +212,14 @@
 /* 紙の上の記録欄。細い罫線で仕切った表 */
 .zk-rec {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* 数が3つの面（配信の型）で、4つ目のマスだけが罫で囲われた空欄として
+     残っていた。auto-fit なら空いた列がつぶれて、ある数だけで割り切れる。 */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   border-top: 1px solid var(--zk-rule-soft);
   border-left: 1px solid var(--zk-rule-soft);
 }
-@media (min-width: 640px) { .zk-rec { grid-template-columns: repeat(4, 1fr); } }
+/* 2列に落ちる幅で数が奇数のときは、最後の1つを横いっぱいに伸ばす */
+@media (max-width: 639px) { .zk-rec > div:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 .zk-rec > div {
   padding: var(--sp-3) var(--sp-2) var(--sp-3);
   border-right: 1px solid var(--zk-rule-soft);
