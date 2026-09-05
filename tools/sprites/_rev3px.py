@@ -23,7 +23,9 @@ for m in json.load(open("/tmp/r3/px.json")):
     bg = a[key == top].mean(0)
     L = lum(a)
     o = np.argsort(L)
-    fg = a[o[int(len(o)*0.03)]] if lum(bg) > 0.4 else a[o[int(len(o)*0.97)]]
+    import re
+    mm = re.findall(r"[\d.]+", m.get("col","rgb(0,0,0)"))
+    fg = np.array([float(mm[0]), float(mm[1]), float(mm[2])])  # 字の色は computed をそのまま使う（アイコンに引っぱられないように）
     m["r"] = round(ratio(fg, bg), 2)
     m["fghex"] = "#%02x%02x%02x" % tuple(int(v) for v in fg)
     m["bghex"] = "#%02x%02x%02x" % tuple(int(v) for v in bg)

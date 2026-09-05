@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getPoll, pollAnswer, rememberPollAnswer, votePoll, type Poll as PollData } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Arrow, Tick } from "./art";
+import { whenIdle } from "./idle";
 
 /**
  * 今夜のおたずね。
@@ -23,17 +24,6 @@ import { Arrow, Tick } from "./art";
  * その上に載るという作りにしてある（`docs/island-play.md` 9章）。
  */
 
-/**
- * 問いを読みに行くのを、島が落ち着くまで待つ。
- *
- * 島に降りる演出は 3.4 秒。そのあいだは毎フレーム絵を描いているので、
- * ここで fetch と再描画を割り込ませると起動が目に見えて重くなる。
- * 手が空いたら読む（`requestIdleCallback`）。空かなければ、この時間で諦めて読む。
- */
-const IDLE_WAIT = 5000;
-/** `requestIdleCallback` が無い端末（Safari など）で待つ時間。演出の終わりに合わせる。 */
-const FALLBACK_WAIT = 3600;
-
 type Sent = "none" | "sending" | "done";
 
 /**
@@ -44,7 +34,19 @@ type Sent = "none" | "sending" | "done";
  */
 type Phase = "reading" | "open" | "none";
 
-export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => void }) {
+/**
+ * @param onCount まだ押していない問いが出ているか。板の赤い丸の理由になる
+ * @param onEmpty 今夜は問いが無い（読めなかった日も含む）。
+ *   **無い日はここでは何も描かない。** 代わりに板が今日の2枚目を出す
+ *   （`./Today.tsx`。`docs/island-review-2.md` 12.1）。
+ */
+export default function Poll({
+  onCount,
+  onEmpty,
+}: {
+  onCount?: (unanswered: boolean) => void;
+  onEmpty?: () => void;
+}) {
   const [poll, setPoll] = useState<PollData | null>(null);
   const [phase, setPhase] = useState<Phase>("reading");
   const [mine, setMine] = useState<string | null>(null);
@@ -57,6 +59,8 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
      中身は「赤い丸を出すかどうか」の伝言だけなので、最新のものを持つだけでよい。 */
   const tell = useRef(onCount);
   tell.current = onCount;
+  const tellEmpty = useRef(onEmpty);
+  tellEmpty.current = onEmpty;
 
   useEffect(() => {
     let alive = true;
@@ -66,6 +70,7 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
           if (!alive) return;
           if (!p || p.options.length < 2) {
             setPhase("none");
+            tellEmpty.current?.();
             return;
           }
           const had = pollAnswer(p.id);
@@ -80,22 +85,15 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
         .catch(() => {
           // 読めなかった日は、問いが無い日と同じ顔にする。
           // 島の中でサーバーの失敗を見せない（`docs/island-design.md` 4章）
-          if (alive) setPhase("none");
+          if (!alive) return;
+          setPhase("none");
+          tellEmpty.current?.();
         });
     };
-    const ric = (window as unknown as { requestIdleCallback?: typeof requestIdleCallback })
-      .requestIdleCallback;
-    if (ric) {
-      const id = ric(read, { timeout: IDLE_WAIT });
-      return () => {
-        alive = false;
-        (window as unknown as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(id);
-      };
-    }
-    const t = setTimeout(read, FALLBACK_WAIT);
+    const stop = whenIdle(read);
     return () => {
       alive = false;
-      clearTimeout(t);
+      stop();
     };
   }, []);
 
@@ -156,19 +154,11 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
     );
   }
 
-  // 今夜は問いが無い日。「まだ何も無い」で終わらせず、次にすることを1つ置く。
-  // 読めなかった日もここに来る。島の中でエラーを出さない
-  if (phase === "none" || !poll) {
-    return (
-      <p className="poll-none">
-        今夜のおたずねは、まだ出ていない。
-        <Link className="poll-why" href="/board">
-          掲示板に企画を貼る
-          <Arrow size={11} />
-        </Link>
-      </p>
-    );
-  }
+  // 今夜は問いが無い日。読めなかった日もここに来る（島の中でエラーを出さない）。
+  // ここでは何も描かない。**空いた場所には、板が今日の2枚目を出す。**
+  // 「まだ出ていない」の1行だけで終わらせると、
+  // 問いが無い日は島に降りて押すものが1つしか無くなる（`docs/island-review-2.md` 12.1）。
+  if (phase === "none" || !poll) return null;
 
   const open = grown.current && !!mine;
   // 押す前は人数を出さない。先に数字を見せると、多いほうに引っぱられる

@@ -95,10 +95,8 @@
 
 /* 見出し。蛍光ペンで引いた帯を字の後ろに敷く。これ1つで印刷物に見える */
 .zk-h {
-  /* 見出しが長いと、左の小さい絵だけが1行上に取り残されていた
-     （`/legends` の「これ、どうやって伝説になったんだろう」）。
-     見出しを縮める側にして、折り返しは絵の隣で起こす。 */
-  flex: 1 1 auto;
+  /* 絵と同じ行に居られる幅まで縮む。折り返しは見出しの中で起こす */
+  flex: 0 1 auto;
   min-width: 0;
   display: inline;
   margin: 0;
@@ -121,8 +119,15 @@
   display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
 }
-/* 見出しの左に置く小さいイラスト。字と同じ行に揃える */
-.zk-hi { flex: none; align-self: center; }
+/* 絵と見出しは1つのまとまり。ここは折り返さない。
+   はみ出すのは右の数（.zk-hn）だけにする */
+.zk-hgrp {
+  display: flex; align-items: baseline; gap: var(--sp-2);
+  flex: 1 1 auto; min-width: 0;
+}
+/* 見出しの左に置く小さいイラスト。2行になる見出しでは、真ん中ではなく
+   1行目の隣に置く。まん中だと、行と行のあいだに絵が浮いて見える。 */
+.zk-hi { flex: none; align-self: flex-start; margin-top: 3px; }
 .zk-hi .art { width: 28px; height: 28px; }
 @media (min-width: 720px) { .zk-hi .art { width: 32px; height: 32px; } }
 

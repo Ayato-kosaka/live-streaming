@@ -51,10 +51,15 @@ export function H({
   note?: ReactNode;
   art?: ReactNode;
 }) {
+  // 絵と見出しは1つのまとまりにして包む。並べただけだと、見出しが長いときに
+  // 折り返しの計算が「絵」と「見出し」のあいだで起きて、絵だけが1行上に
+  // 取り残されていた（`/legends` の「これ、どうやって伝説になったんだろう」）。
   return (
     <h2 className="zk-hr">
-      {art && <span className="zk-hi">{art}</span>}
-      <span className="zk-h">{children}</span>
+      <span className="zk-hgrp">
+        {art && <span className="zk-hi">{art}</span>}
+        <span className="zk-h">{children}</span>
+      </span>
       {note && <span className="zk-hn">{note}</span>}
     </h2>
   );

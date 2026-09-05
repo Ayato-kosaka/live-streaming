@@ -218,3 +218,59 @@ export function rememberPollAnswer(id: string, option: string) {
     /* localStorage が使えない環境では諦める。サーバー側には残っている */
   }
 }
+
+/* ---------------- 今日、島に来た人 ----------------
+   「誰かがそこにいる」を出す（`docs/island-play.md` 仕掛け16）。
+   同時接続は出さない。作れないうえに、たいていの時間帯は「1人」と出て、
+   1人と出た瞬間にこの島は寂れて見える。日単位なら数十〜数百になる。 */
+
+/** 数えた日と、そのときの人数。日付はサーバーが決めた「島の1日」。 */
+const VISIT_MINE = "ayato-island-visit";
+
+/**
+ * 島の「1日」。サーバー側の `today()` と同じで、UTC で切る。
+ *
+ * 日本時間の朝9時で変わるので、配信の一晩（22時〜25時）が1日の中に収まる。
+ * 画面に出す日付は JST（`lib/nightly.ts`）だが、数える側の1日はこちら。
+ */
+const islandDay = () => new Date().toISOString().slice(0, 10);
+
+/** 前に数えた日と、そのときの人数。今日ぶんが残っていれば、もう叩かない。 */
+function visitRemembered(): { day: string; n: number } | null {
+  try {
+    const [day, n] = (localStorage.getItem(VISIT_MINE) ?? "").split("\t");
+    return day && n ? { day, n: Number(n) } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 今日ここに来た人の数。**1日1回しか数えない。**
+ *
+ * その日2回目からはサーバーに聞かず、最初に来たときの数をそのまま返す。
+ * 人数は増える一方なので、少し前の数を出しても嘘にはならない（実際より小さいだけ）。
+ * 毎回聞きにいくと、島を開くたびに Functions が1回動くことになる。
+ *
+ * 数えられなかった日は null。島の中でサーバーの失敗を見せない。
+ */
+export async function countVisit(token?: string | null): Promise<number | null> {
+  const had = visitRemembered();
+  if (had && had.day === islandDay() && Number.isFinite(had.n)) return had.n;
+  try {
+    const r = await req<{ day: string; visits: number }>("/visit", {
+      method: "POST",
+      headers: auth(token),
+      body: JSON.stringify({ cid: clientId() }),
+    });
+    try {
+      localStorage.setItem(VISIT_MINE, `${r.day}\t${r.visits}`);
+    } catch {
+      /* 覚えられなくても、次に来たときにもう一度数えられるだけ */
+    }
+    return r.visits;
+  } catch {
+    return null;
+  }
+}
+

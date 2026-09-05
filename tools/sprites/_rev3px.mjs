@@ -27,8 +27,10 @@ for (const [path, sels] of Object.entries(TARGETS)) {
       let info;
       try {
         info = await el.evaluate((x) => { const cs = getComputedStyle(x); const r = x.getBoundingClientRect(); return { fs: parseFloat(cs.fontSize), col: cs.color, bgc: cs.backgroundColor, w: Math.round(r.width), h: Math.round(r.height), t: (x.textContent || "").trim().slice(0, 24) }; });
-        await el.scrollIntoViewIfNeeded({ timeout: 5000 });
-        await el.screenshot({ path: f, animations: "disabled", timeout: 8000 });
+        try { await el.scrollIntoViewIfNeeded({ timeout: 4000 }); } catch (e) {}
+        const box = await el.boundingBox();
+        if (!box) throw new Error("box無し");
+        await p.screenshot({ path: f, clip: box, animations: "disabled", timeout: 10000 });
       } catch (e) { meta.push({ path, sel, note: "撮れず " + String(e).slice(0, 40) }); continue; }
       meta.push({ path, sel, file: f, ...info });
     }
