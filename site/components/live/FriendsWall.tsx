@@ -45,7 +45,7 @@ export default function FriendsWall() {
             <b>{show.get(star.icon!)?.name ?? "No.1"}</b>
             {/* 「80日」だけでは長いのか短いのか分からない。数えている幅ごと出す */}
             <span className="rz-star-n">
-              90日のうち<b>{star.days}</b>日、島にいた
+              直近90日のうち<b>{star.days}</b>日
             </span>
             <span className="rz-bar">
               <i style={{ width: `${Math.round((star.days / 90) * 100)}%` }} />
