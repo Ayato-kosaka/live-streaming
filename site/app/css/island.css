@@ -214,6 +214,10 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot.is-today .spot-mark { animation: none; } }
 
+/* 「!」は島の合図2種類のうちの1つ（`docs/island-design.md` 3-3）。
+   前は --frame-deep で、金の丸（--gold / --frame）に溶けていた。
+   実測 2.56 : 1（丸の下のほう）。**いちばん見えるべき印がいちばん薄かった。**
+   --ink に落として 5.13〜8.68 : 1。地の金は動かさない（光らせない・色を変えない）。 */
 .spot-bang {
   flex: none;
   width: 28px;
@@ -221,7 +225,7 @@
   font-size: 19px;
   font-weight: 900;
   line-height: 26px;
-  color: var(--frame-deep);
+  color: var(--ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .spot-text { display: none; }
@@ -285,11 +289,13 @@
   text-align: left;
 }
 .spot.is-on .spot-text b { font-size: 14.5px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言。名前より静かにしたいが、--ink-3 は紙の上で 4.13 : 1 しかなかった（実測）。
+   --ink-2 で 5.70 : 1。名前（--ink・9.25 : 1）との差は残るので、静けさは保てる。 */
 .spot.is-on .spot-text i {
   font-style: normal;
   font-size: 11.5px;
   font-weight: 800;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* 「はいる」も押せる板にする。文字だけだと、看板の飾りに見えてしまう */
 .spot.is-on .spot-go {
@@ -300,7 +306,10 @@
   font-size: 11.5px;
   font-weight: 900;
   color: var(--paper);
-  background: linear-gradient(var(--frame-dark), var(--frame-deep));
+  /* 前は --frame-dark → --frame-deep で、板の上のほうが 2.90 : 1 しかなかった（実測）。
+     **字を明るくするのではなく、板を濃くする。** 島は板なので、
+     読ませるために光らせない（`island-world.md` 3.4）。いまは 5.25〜7.35 : 1。 */
+  background: linear-gradient(#9c580f, #7d450c);
   border-radius: 999px;
   padding: 4px 9px 4px 10px;
   box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -331,7 +340,9 @@
   font-weight: 900;
   letter-spacing: 0.01em;
   color: var(--paper);
-  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
+     濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
+  background: linear-gradient(var(--accent-deep), #a8083a);
   border: 2.5px solid var(--paper);
   border-radius: 999px;
   padding: 2px 8px;
@@ -921,7 +932,9 @@
   border: 2px solid var(--paper);
   border-radius: 999px;
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
-  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
+     濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
+  background: linear-gradient(var(--accent-deep), #a8083a);
   color: var(--paper);
   transform: rotate(-6deg);
 }

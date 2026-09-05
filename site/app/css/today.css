@@ -71,8 +71,10 @@
   font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: var(--frame-dark);
-  opacity: 0.72;
+  /* 前は --frame-dark を 0.72 で薄めていて、紙の上で 2.12 : 1 だった（実測）。
+     **薄めるのをやめて、暗い色を使う。** --ink-2 で 6.07 : 1。
+     主役の1行（--ink・9.25 : 1）との差は残るので、板の名前として静かなまま。 */
+  color: var(--ink-2);
 }
 .today-line b {
   display: block;
@@ -208,11 +210,15 @@
 .today-nopoll .poll-why { margin-top: 2px; }
 
 /* 配信中だけは色を変える。1日3時間しか出ない板なので、出たら分かるほうがいい */
+/* 配信中の板。前は桃色（--accent）から始めていて、白い字が 2.18〜3.17 : 1 だった。
+   **1日3時間しか出ない板が、いちばん読めなかった。** 濃いほうから始めて
+   4.79〜7.22 : 1 にする。赤いことは変えていないので、出たときに分かるのは同じ。 */
 .today[data-kind="live"] .today-tab {
-  background: linear-gradient(var(--accent) 0 46%, var(--accent-deep, #d4552a));
+  background: linear-gradient(var(--accent-deep) 0 46%, #a8083a);
   color: var(--paper);
 }
-.today[data-kind="live"] .today-line em { color: var(--paper); opacity: 0.85; }
+/* 薄めない。0.85 に落とすと、濃い赤の上でも 3.77 : 1 まで下がる */
+.today[data-kind="live"] .today-line em { color: var(--paper); }
 .today[data-kind="live"] .today-wedge path { fill: var(--paper); }
 
 /* =========================================================
@@ -292,8 +298,10 @@
   font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: var(--frame-dark);
-  opacity: 0.72;
+  /* 前は --frame-dark を 0.72 で薄めていて、紙の上で 2.12 : 1 だった（実測）。
+     **薄めるのをやめて、暗い色を使う。** --ink-2 で 6.07 : 1。
+     主役の1行（--ink・9.25 : 1）との差は残るので、板の名前として静かなまま。 */
+  color: var(--ink-2);
 }
 .poll-q {
   margin: 2px 0 0;
