@@ -343,8 +343,25 @@ export default function PlanCard({
       }
     >
       {lead ? (
+        // 時計だけを四角く置くと、その右が丸ごと空いて、いちばん大事な数字が
+        // 隅にぽつんと残る。日付と場所を時計のとなりに引き寄せて、
+        // 「いつ・どこで」を一本の帯として読ませる。
         <div className="nx-lead-head">
-          <LeadClock plan={plan} />
+          <div className="nx-when">
+            <LeadClock plan={plan} />
+            <span className="nx-when-m">
+              <span>
+                <Icon name="calendar" size={13} />
+                {plan.when}
+              </span>
+              {plan.place && (
+                <span>
+                  <Icon name="pin" size={13} />
+                  {plan.place.name}
+                </span>
+              )}
+            </span>
+          </div>
           <h2>{plan.title}</h2>
         </div>
       ) : (
@@ -355,15 +372,20 @@ export default function PlanCard({
       )}
 
       <div className="chips" style={{ margin: "12px 0" }}>
-        <span className="chip">
-          <Icon name="calendar" size={12} />
-          {plan.when}
-        </span>
-        {plan.place && (
-          <span className="chip">
-            <Icon name="pin" size={12} />
-            {plan.place.name}
-          </span>
+        {/* 主役の札は、日付と場所を上の帯で言い終わっている。ここで繰り返さない */}
+        {!lead && (
+          <>
+            <span className="chip">
+              <Icon name="calendar" size={12} />
+              {plan.when}
+            </span>
+            {plan.place && (
+              <span className="chip">
+                <Icon name="pin" size={12} />
+                {plan.place.name}
+              </span>
+            )}
+          </>
         )}
         {plan.tags.map((t) => (
           <span className="chip" key={t}>

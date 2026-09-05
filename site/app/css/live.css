@@ -43,26 +43,14 @@
 }
 .nx-notice-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nx-notice-t b { font-size: 13.5px; font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
-.nx-notice-t i { font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--ink-2); line-height: 1.55; }
-/* 件数。赤にしない。赤い丸はベルの1つだけにして、
-   「まだ見ていないものがある」の合図がこの帯に2つ並ばないようにする */
-.nx-notice-n {
-  margin-left: auto;
-  flex: none;
-  display: grid;
-  place-items: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 9px;
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
-  background: linear-gradient(color-mix(in srgb, var(--gold) 45%, var(--paper)), var(--gold));
-  box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1;
+/* 企画の題名は長い。2行までは折り返して見せて、それ以上は切る
+   （しらせの帯が縦に伸びると、下の札が画面から押し出される） */
+.nx-notice-t i {
+  font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--ink-2); line-height: 1.55;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
+/* 件数を丸い札でもう一度出していた。同じ数を2回言うと、
+   どちらがしらせなのか分からなくなる。合図はベルの赤い丸ひとつに絞る */
 
 /* =========================================================
    2. あと何日か（主役の企画の時計）
@@ -109,10 +97,12 @@
   box-shadow: 0 3px 0 var(--frame-dark);
 }
 .nx-clock em + em b { font-size: 22px; color: var(--ink); }
-/* 今日・進行中は数字が出ないので、1枚の札にする */
+/* 時分まで刻まないものは1枚の札。開いた瞬間に読ませたい数字はこれ1つなので、
+   時分の3枚組と同じ大きさまで数字を上げる */
 .nx-clock.is-one { grid-template-columns: auto; }
-.nx-clock.is-one em { min-width: 108px; padding: 12px 16px; font-size: 11px; }
-.nx-clock.is-one em b { font-size: 26px; }
+.nx-clock.is-one em { min-width: 96px; padding: 10px 14px 9px; font-size: 11px; }
+.nx-clock.is-one em b { font-size: 42px; }
+.nx-clock.is-one em span { font-size: 10.5px; }
 
 @media (min-width: 640px) {
   .nx-clock em { min-width: 66px; }
@@ -121,12 +111,19 @@
   .nx-clock em + em b { font-size: 26px; }
 }
 
-/* 主役カードの頭。時計と題名を横に並べる */
+/* 主役カードの頭。上の帯で「いつ・どこで」、下で「何が」 */
 .nx-lead-head { display: grid; gap: 12px; margin-bottom: 12px; }
 .nx-lead-head h2 { margin: 0; font-size: clamp(20px, 5.6vw, 30px); line-height: 1.32; }
-@media (min-width: 560px) {
-  .nx-lead-head { grid-template-columns: auto 1fr; align-items: center; gap: 16px; }
+/* 時計のとなりに日付と場所を寄せる。時計の右が空いたままだと、
+   いちばん大きい数字が隅に取り残されて、帯として読めない */
+.nx-when { display: flex; align-items: center; gap: 14px; }
+.nx-when-m { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.nx-when-m > span {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 900; line-height: 1.5;
+  color: var(--ink-2);
 }
+.nx-when-m .ic { flex: none; color: var(--frame-deep); }
 
 /* =========================================================
    3. きみができること
@@ -259,6 +256,19 @@
 .nx-notes > li:nth-child(3n) { background: linear-gradient(#ffe4ee, #ffcede); transform: rotate(-0.5deg); }
 .nx-notes > li:nth-child(4n) { background: linear-gradient(#e4f7d8, #cdeeba); transform: rotate(1.8deg); }
 .nx-notes .nx-pin { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); }
+/* 取りに行っているあいだの灰色。付箋と同じ形・同じ傾きで、色だけ抜く */
+.nx-notes.is-wait > li {
+  width: 9em;
+  height: 66px;
+  background: color-mix(in srgb, var(--ink-3) 20%, transparent);
+  box-shadow: none;
+  animation: waitfade 1.4s ease-in-out infinite;
+}
+.nx-notes.is-wait > li:nth-child(2) { width: 11em; animation-delay: 0.18s; }
+.nx-notes.is-wait > li:nth-child(3) { width: 7.5em; animation-delay: 0.36s; }
+@media (prefers-reduced-motion: reduce) {
+  .nx-notes.is-wait > li { animation: none; }
+}
 
 /* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
 .nx-seeds { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
@@ -292,6 +302,25 @@
 }
 .bd-count b { font-size: 15px; color: var(--ink); }
 
+/* 1件も貼られていないとき。空の板を見せて終わらせず、書く場所へ戻す1手を置く */
+.bd-empty { text-align: center; }
+.bd-empty > p { margin: 6px 0 0; }
+.bd-empty-go {
+  margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: var(--r-2);
+  border: var(--bw-2) solid var(--frame-dark);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
+  box-shadow: 0 5px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+  font-size: 14px; font-weight: 900; letter-spacing: 0.03em;
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.bd-empty-go:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
+.bd-empty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
+
 /* 貼られた企画。板に画びょうで留めた紙に見せる */
 .bd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .bd-list > li {
@@ -303,6 +332,23 @@
   border-radius: 5px 5px 12px 12px;
   background: linear-gradient(#fffdf3, #fdf4dd);
   box-shadow: 2px 5px 0 rgba(120, 90, 40, 0.15);
+}
+/* 取りに行っているあいだの灰色。出てくる紙とまったく同じ形で、色だけ抜く。
+   1.4秒でゆっくり明滅させる（これより速いと落ち着かない） */
+.bd-list.is-wait > li {
+  height: 92px;
+  background: color-mix(in srgb, var(--ink-3) 20%, transparent);
+  box-shadow: none;
+  animation: waitfade 1.4s ease-in-out infinite;
+}
+.bd-list.is-wait > li:nth-child(2) { animation-delay: 0.18s; }
+.bd-list.is-wait > li:nth-child(3) { animation-delay: 0.36s; }
+@keyframes waitfade {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-list.is-wait > li { animation: none; }
 }
 .bd-list > li:nth-child(3n + 2) { transform: rotate(-0.35deg); }
 .bd-list > li:nth-child(3n) { transform: rotate(0.3deg); }
@@ -389,6 +435,22 @@
 .pap-gos { display: grid; gap: 9px; }
 
 /* 紙の上の一覧。罫線で区切るだけ */
+/* 決まりが2通りあるとき。どちらが自分かを先に選ばせて、本文はその下に置く */
+.pap-rule { list-style: none; margin: 0 0 9px; padding: 0; display: grid; gap: 9px; }
+.pap-rule > li {
+  padding: 10px 12px 11px;
+  border: 1px solid var(--pap-line);
+  border-radius: 5px;
+  background: rgba(255, 253, 240, 0.5);
+}
+.pap-rule b { display: block; font-size: 13px; font-weight: 900; color: var(--pap-ink); }
+.pap-rule i {
+  display: block; margin-top: 4px;
+  font-style: normal; font-size: 12.5px; font-weight: 600; line-height: 1.9;
+  color: var(--pap-ink-2);
+}
+@media (min-width: 560px) { .pap-rule { grid-template-columns: 1fr 1fr; } }
+
 .pap-rows { list-style: none; margin: 0; padding: 0; }
 .pap-rows > li { padding: 9px 0; border-top: 1px solid var(--pap-line); font-size: 13.5px; font-weight: 700; line-height: 1.85; }
 .pap-rows > li:first-child { border-top: 0; padding-top: 0; }
@@ -413,7 +475,47 @@
    図鑑の面は、絵が縦の半分以上を占めている。
    一人ひとりが主役に見えるように、絵を大きく、まわりを空ける。
    ========================================================= */
-.rz { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 12px; }
+/* 面の主役。同じ大きさのマスを22個並べると、一人ひとりが見えなくなる。
+   いちばん長くいる人だけ横いっぱいに置いて、絵を大きくする。
+   紙の型なので影は付けず、赤い細枠だけで「ここ」を示す。 */
+.rz-star {
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 12px;
+  border: 2px solid #e2522d;
+  border-radius: 6px;
+  background: rgba(255, 253, 240, 0.5);
+}
+.rz-star .rz-shot { aspect-ratio: 1 / 1; }
+.rz-star figcaption { min-width: 0; }
+.rz-star-tag {
+  display: inline-block;
+  padding: 2px 8px 3px;
+  border-radius: 4px;
+  background: #e2522d;
+  color: #fffdf0;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.04em;
+}
+.rz-star figcaption > b {
+  display: block;
+  margin-top: 7px;
+  font-size: 16px; font-weight: 900; line-height: 1.4;
+  color: var(--pap-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rz-star-n { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 800; color: var(--pap-ink-2); }
+.rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
+.rz-star .rz-bar { margin-top: 8px; }
+.rz-star .rz-bar > i { background: #e2522d; }
+@media (min-width: 560px) {
+  .rz-star { grid-template-columns: 200px 1fr; gap: 18px; padding: 14px 18px 16px; }
+  .rz-star-n b { font-size: 32px; }
+}
+
+.rz { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 9px; }
 @media (min-width: 520px) { .rz { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 860px) { .rz { grid-template-columns: repeat(4, 1fr); } }
 .rz-card {
@@ -423,13 +525,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 6px 9px;
+  /* 上は通し番号のぶんだけ空ける。番号と絵が重なると、どちらも読めない */
+  padding: 18px 6px 9px;
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.42);
 }
-/* いちばん長くいる人だけ、赤い細枠。塗りは変えない */
-.rz-card.is-top { border: 2px solid #e2522d; padding: 9px 7px 8px; }
+/* 図鑑の通し番号。名前を出していない人の欄が空にならないよう、隅に置く */
+.rz-no {
+  position: absolute; top: 6px; left: 8px;
+  font-size: 9.5px; font-weight: 900; letter-spacing: 0.08em;
+  color: var(--pap-ink-2);
+  opacity: 0.7;
+}
 .rz-shot { position: relative; width: 100%; aspect-ratio: 1 / 1; display: grid; place-items: end center; }
 .rz-shot img {
   position: relative;
@@ -459,9 +567,9 @@
 /* 何日いっしょにいたかの帯。図鑑の「出る時間」の目盛りと同じ作り */
 .rz-bar { width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
 .rz-bar > i { display: block; height: 100%; border-radius: 3px; background: #cfc202; }
-.rz-card.is-top .rz-bar > i { background: #e2522d; }
-/* 名前を出していない人の欄。図鑑の未登録と同じで、通し番号だけを置く */
-.rz-card.is-blank .rz-name { color: var(--pap-ink-2); font-weight: 900; letter-spacing: 0.06em; }
+/* 名前を出していない人のマスは、名札の行そのものを出さない。
+   空の行を22個並べると、そこだけ抜けて見える */
+.rz-card.is-blank .rz-days { margin-top: 5px; }
 
 /* =========================================================
    9. いまのポスト
@@ -628,20 +736,6 @@
 }
 .nx-asks > a:hover { transform: translateY(-2px); box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep)); }
 .nx-asks > a:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep)); }
-
-/* 図鑑でいちばん長くいる人の印。紙の上なので影は付けず、ベタ塗りの角丸だけ */
-.rz-top {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  padding: 2px 7px 3px;
-  border-radius: 0 4px 0 6px;
-  background: #e2522d;
-  color: #fffdf0;
-  font-size: 9.5px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
 
 /* 島での見え方の下見。設定を並べるだけでは、押した結果が想像できない */
 .me-prev {

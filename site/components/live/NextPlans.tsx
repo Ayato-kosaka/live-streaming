@@ -47,7 +47,8 @@ function PlanNotes({
   onAdd,
 }: {
   plan: Plan;
-  notes: NextNote[];
+  /** 取りに行っている最中は null。0枚と区別する（読む前に「まだ1枚もありません」と言わない） */
+  notes: NextNote[] | null;
   draft: string;
   busy: boolean;
   onDraft: (v: string) => void;
@@ -63,14 +64,22 @@ function PlanNotes({
         <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, margin: "18px 0 0" }}>
           みんなの付箋
         </h3>
-        {notes.length > 0 && (
+        {!!notes?.length && (
           <span className="bd-count">
             <b>{notes.length}</b>枚
           </span>
         )}
       </div>
 
-      {notes.length === 0 ? (
+      {notes === null ? (
+        /* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く。
+           空の配列から始めると、読む前に「まだ1枚もありません」と嘘をつくことになる。 */
+        <ul className="nx-notes is-wait" aria-hidden>
+          <li />
+          <li />
+          <li />
+        </ul>
+      ) : notes.length === 0 ? (
         <p className="muted" style={{ marginTop: 10 }}>
           まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
         </p>
@@ -179,7 +188,7 @@ function Road({ plans, today }: { plans: Plan[]; today: Date | null }) {
  * 出てから今日の日付で、終わったものを畳む。
  */
 export default function NextPlans() {
-  const [notes, setNotes] = useState<NextNote[]>([]);
+  const [notes, setNotes] = useState<NextNote[] | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -190,6 +199,8 @@ export default function NextPlans() {
     setToday(new Date());
     getState()
       .then((s) => setNotes(s.notes ?? []))
+      // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
+      // ここで手を止めさせない
       .catch(() => setNotes([]));
   }, []);
 
@@ -200,7 +211,7 @@ export default function NextPlans() {
     setErr(null);
     try {
       const { note } = await postNote(planId, text, await token());
-      setNotes((n) => [note, ...n]);
+      setNotes((n) => [note, ...(n ?? [])]);
       setDraft((d) => ({ ...d, [planId]: "" }));
     } catch {
       setErr("いま貼れなかった。少し待ってから、もう一度ためしてみて。");
@@ -214,7 +225,7 @@ export default function NextPlans() {
   const ahead = sorted.filter((p) => !done.includes(p));
   const [lead, ...rest] = ahead;
 
-  const notesFor = (p: Plan) => notes.filter((n) => n.planId === p.id);
+  const notesFor = (p: Plan) => notes?.filter((n) => n.planId === p.id) ?? null;
   const notesProps = (p: Plan) => ({
     plan: p,
     notes: notesFor(p),
@@ -228,22 +239,21 @@ export default function NextPlans() {
 
   return (
     <>
-      {/* しらせ。「何件あって、いちばん近いのはいつか」だけを、いちばん上で言う。
-          赤い丸は「まだ見ていないものがある」の合図で、島じゅうでこれ1種類しか使わない。 */}
+      {/* しらせ。「何件あって、次は何か」だけを、いちばん上で言う。
+          赤い丸は「まだ見ていないものがある」の合図で、島じゅうでこれ1種類しか使わない。
+          あと何日かは、すぐ下の札が大きい数字で言う。ここで先に言うと同じ数が2回出る。 */}
       {ahead.length > 0 && (
         <div className="nx-notice">
           <NoticeBell size={34} />
           <span className="nx-notice-t">
             <b>これからの予定が{ahead.length}件</b>
-            <i>
-              {lead ?
-                leadDays === null ? `いちばん近いのは ${short(lead.date)}` :
-                leadDays === 0 ? "いちばん近いのは、今日" :
-                `いちばん近いのは あと${leadDays}日` :
-                ""}
-            </i>
+            {lead && (
+              <i>
+                {leadDays === 0 ? "今日は " : `つぎは ${short(lead.date)} `}
+                {lead.title}
+              </i>
+            )}
           </span>
-          <span className="nx-notice-n">{ahead.length}</span>
         </div>
       )}
 

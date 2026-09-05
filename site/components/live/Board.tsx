@@ -70,17 +70,30 @@ export default function Board() {
   const [voted, setVoted] = useState<Set<string>>(new Set());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
+  const [loadErr, setLoadErr] = useState(false);
   const [sort, setSort] = useState<"votes" | "new">("votes");
   const [onlyMine, setOnlyMine] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const { user, token } = useAuth();
 
+  /** 取りに行く。読めなかったときは「0件」と言わずに、読めなかったと言う。 */
+  const load = () => {
+    setIdeas(null);
+    setLoadErr(false);
+    getIdeas()
+      .then((r) => setIdeas(r.ideas))
+      .catch(() => {
+        setIdeas([]);
+        setLoadErr(true);
+      });
+  };
+
   useEffect(() => {
     setVoted(votedLocally());
     setMine(minePosts());
-    getIdeas()
-      .then((r) => setIdeas(r.ideas))
-      .catch(() => setIdeas([]));
+    load();
+    // 初回だけ。load は毎回作り直されるので、依存に入れると取りに行き続ける
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submit = async () => {
@@ -236,19 +249,22 @@ export default function Board() {
       <section className="panel">
         <div className="bhead">
           <h2 style={{ margin: 0 }}>{BOARD.listTitle}</h2>
-          <div className="bsort">
-            <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
-              {BOARD.sortVotes}
-            </button>
-            <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
-              {BOARD.sortNew}
-            </button>
-            {mineCount > 0 && (
-              <button className={onlyMine ? "is-on" : ""} onClick={() => setOnlyMine((v) => !v)}>
-                じぶんの{mineCount}
+          {/* 1件も無いのに並べ替えの札だけ出ていると、空の板がさらに空に見える */}
+          {all.length > 0 && (
+            <div className="bsort">
+              <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
+                {BOARD.sortVotes}
               </button>
-            )}
-          </div>
+              <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
+                {BOARD.sortNew}
+              </button>
+              {mineCount > 0 && (
+                <button className={onlyMine ? "is-on" : ""} onClick={() => setOnlyMine((v) => !v)}>
+                  じぶんの{mineCount}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {all.length > 0 && (
@@ -260,14 +276,40 @@ export default function Board() {
           </div>
         )}
 
-        {ideas === null && <p className="muted">{BOARD.loading}</p>}
-        {ideas?.length === 0 && (
-          <>
+        {/* 取りに行っているあいだは、出てくる紙と同じ形の灰色を3枚置く。
+            「読み込み中…」の字だけだと、板に何も無いのか取りに行っているのか分からない。 */}
+        {ideas === null && (
+          <ul className="bd-list is-wait" aria-hidden>
+            <li />
+            <li />
+            <li />
+          </ul>
+        )}
+        {loadErr && (
+          <div className="bd-empty">
+            <p className="muted">いま板が見られません。少し待ってから、もう一度。</p>
+            <button className="bd-empty-go" onClick={load}>
+              もう一度ためす
+            </button>
+          </div>
+        )}
+        {!loadErr && ideas?.length === 0 && (
+          <div className="bd-empty">
             <EmptyBoard />
-            <p className="muted" style={{ textAlign: "center" }}>
-              {BOARD.empty}
-            </p>
-          </>
+            <p className="muted">{BOARD.empty}</p>
+            {/* 空の板を見せるだけだと、そこで終わる。
+                書く場所は上にあるので、押したらそこへ連れていって、枠に入れる。 */}
+            <button
+              className="bd-empty-go"
+              onClick={() => {
+                box.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                box.current?.focus({ preventScroll: true });
+              }}
+            >
+              いちばんに貼る
+              <Icon name="up" size={13} />
+            </button>
+          </div>
         )}
         {ideas !== null && ideas.length > 0 && list.length === 0 && (
           <p className="muted">じぶんが貼ったものは、まだありません。</p>

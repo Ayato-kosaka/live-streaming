@@ -168,6 +168,10 @@
 }
 .zk-pick:hover { filter: brightness(1.06); }
 .zk-pick.is-on { border-color: var(--zk-pick); }
+/* 指の当たりは48px（`docs/island-design.md`）。紙の上でチップを縦に太らせると
+   図鑑の平らさが崩れるので、見た目は40pxのまま、当たりだけ上下へ広げる */
+.zk-pick { position: relative; }
+.zk-pick::after { content: ""; position: absolute; inset: -4px 0; }
 .zk-pick em { font-style: normal; font-size: 10.5px; font-weight: 900; opacity: 0.62; }
 .zk-pick .flag { flex: none; border-radius: 2px; }
 .zk-picks { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -607,7 +611,13 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
+  /* 指ではじいたとき、チップが半分切れたところで止まらないようにする。
+     見出し（どこで / なにを）のぶんだけ左を空けて、そこへ吸い付かせる */
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 3.6em;
+  overscroll-behavior-x: contain;
 }
+.kt-tools .zk-pick { scroll-snap-align: start; }
 .kt-tools .zk-picks::-webkit-scrollbar { display: none; }
 /* 右がまだ続いていることを、紙の色へのぼかしで伝える */
 .kt-tools .zk-picks {
@@ -699,15 +709,17 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    横長の枠にして、幅と高さの両方でいっぱいまで使わせると大きさがそろう。 */
 .dish-art {
   position: relative;
-  height: 96px;
-  margin: 18px 0 11px;
+  /* 図鑑の面は絵が縦の半分以上を占めている（`docs/ac-reference.md` の 7章）。
+     料理の絵がマスの半分を切ると、ただの一覧に戻る */
+  height: 112px;
+  margin: 16px 0 11px;
   /* grid だと行が中身の高さに広がって、縦長の料理（グラスなど）がマスから
      はみ出す。flex の definite height なら max-height: 100% がちゃんと効く。 */
   display: flex;
   align-items: flex-end;
   justify-content: center;
 }
-@media (min-width: 720px) { .dish-art { height: 116px; } }
+@media (min-width: 720px) { .dish-art { height: 132px; } }
 /* 皿。料理の下に必ず1枚敷いて、宙に浮かせない。印刷なので影は付けない */
 .dish-art::before {
   content: "";
