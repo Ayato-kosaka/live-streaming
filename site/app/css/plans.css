@@ -29,7 +29,20 @@
   background: var(--paper);
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-pill);
-  box-shadow: var(--pop-sm);
+  /* 押せないので厚みは付けない（厚みは押せるものだけの合図）。
+     札の上に載っているので、地面に落ちる影だけを持たせる。 */
+  box-shadow: var(--shadow-1);
+}
+
+/* 本物の会話窓の名札は、窓の上に離して置くのではなく、窓の左上に重ねてある。
+   離すと「見出しと本文」に見えるが、重ねると「この札のこと」になる。
+   角丸のふちからはみ出るのも本物どおり。
+   すぐ下が企画の札のときだけ重ねる（ページの見出しとして使うところもあるため）。 */
+.nextup-eyebrow:has(+ .nextup-card) {
+  position: relative;
+  z-index: 1;
+  margin-left: 16px;
+  margin-bottom: -14px;
 }
 /* 札の中の短い棒。記号を足さずに「ここから始まる」を出す。 */
 .nextup-eyebrow::before {
@@ -236,7 +249,7 @@
 .nextup-rest a:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
 .nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
 
-.nextup-eyebrow2 { margin-top: 16px; }
+.nextup-eyebrow2 { margin-top: 20px; }
 /* ふたつ目の札はひとまわり小さく。主役は「いちばん近い企画」のまま。 */
 .nextup-card.is-small {
   padding: 14px;
