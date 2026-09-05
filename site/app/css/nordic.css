@@ -564,15 +564,20 @@
   color: var(--ink);
 }
 .ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* 1字しか入らないので、丸も字も小さすぎると、フチのぼけで字がやせる。
+   実測（描いた画素から）で 24px/12px は 4.29 : 1 まで落ちていた。 */
 .ncountry-leg {
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   display: grid; place-items: center;
   border-radius: 50%;
   /* 何カ国目か。数えたものなのでオリーブの平らな札（docs/island-world.md 3.2）。
-     琥珀の丸にクリームの数字だと 2.91 : 1 で読めない。 */
-  background: var(--chip);
+     琥珀の丸にクリームの数字だと 2.91 : 1 で読めない。
+     オリーブの札そのままだと 5.66 : 1 だが、1字が丸の中で細るぶんフチのぼけに
+     食われて、描いた画素では 4.04 : 1 まで落ちる。だから面を紙で薄めて
+     7.3 : 1 まで開けておく。字の色は札のまま。 */
+  background: color-mix(in srgb, var(--chip) 55%, var(--paper));
   color: var(--chip-ink);
-  font-size: var(--fs-note);
+  font-size: 13.5px;
   font-weight: 900;
 }
 .ncountry-body { display: grid; gap: 2px; min-width: 0; }
@@ -606,7 +611,9 @@
   color: var(--ink-2);
 }
 .ncway-b b { font-size: 14px; font-weight: 900; line-height: 1.45; }
-.ncway-b em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--frame-deep); }
+/* 琥珀は押せる板のふちの色。字に使うと紙の上で 4.35 : 1 にしかならないし、
+   押せるものと読み違える（docs/island-world.md 3.2）。 */
+.ncway-b em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .ncway-fix { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
 .ncway-note {
   margin: 11px 0 0;

@@ -89,12 +89,16 @@ export default function StreamsPage() {
           // いちばん本数の多いクッキングだけ横幅いっぱい。
           // 5枚が均等に並ぶと、どれから見ればいいのか分からない
           return (
-            <article
+            <details
               className={`ty${t.slug === "cooking" ? " is-wide" : ""}`}
               key={t.slug}
               style={{ ["--ty" as string]: t.color }}
+              // 5枚とも開いていると、この面だけで6画面ぶんになる。屋根（名前と曜日）は
+              // 5つとも見せたまま、中身は畳む。開いておくのは1枚目だけ
+              // （`docs/island-ux.md` 5.5・`docs/island-design.md` 4章）。
+              open={i === 0}
             >
-              <div className="ty-roof">
+              <summary className="ty-roof" style={{ ["--ty" as string]: t.color }}>
                 <img src={`/sprites/${t.icon}.webp`} alt="" />
                 <span className="ty-name">
                   <b>{t.name}</b>
@@ -103,7 +107,8 @@ export default function StreamsPage() {
                     {t.when}
                   </span>
                 </span>
-              </div>
+                <Icon name="chevron" size={20} className="ty-c" />
+              </summary>
               <div className="ty-in">
                 <p className="ty-lead">{t.short}</p>
                 <ol className="beat">
@@ -120,7 +125,7 @@ export default function StreamsPage() {
                     <i>{num.cap}</i>
                   </span>
                 )}
-                <Fold title="もっと詳しく" lead={t.lead} note={`${t.samples.length}本`} open={i === 0}>
+                <Fold title="もっと詳しく" lead={t.lead} note={`${t.samples.length}本`}>
                   {t.body.map((p, k) => (
                     <p key={k}>{p}</p>
                   ))}
@@ -135,7 +140,7 @@ export default function StreamsPage() {
                   <Icon name="right" size={15} />
                 </Link>
               </div>
-            </article>
+            </details>
           );
         })}
       </div>
