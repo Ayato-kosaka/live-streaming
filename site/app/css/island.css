@@ -1115,7 +1115,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 44px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。実測 45px で割っていた */
+  min-height: 48px;
   margin-top: 2px;
   padding-top: 8px;
   border-top: 2px dashed var(--frame);
@@ -1226,13 +1227,27 @@
     white-space: nowrap;
   }
   .stage .stage-view,
-  .stage .stage-index {
+  .stage .stage-index,
+  .stage .bar-toggle {
     width: 48px;
     padding: 0;
     gap: 0;
     justify-content: center;
     border-radius: 50%;
   }
+  /* 行き先の開け閉めも同じ丸にする。
+     ここに「行き先をみる」の5文字を置くと、隣の「今日の島」の1行が
+     そのぶん詰められて、今日いちばん言いたいことが「今日は Food & Wine
+     Fest @ ム…」と切れた。**切れた1行より、絵だけの丸のほうが読める。**
+     上向きの山形は「下から出てくる」の絵で、押せば6つが生える。 */
+  .stage .bar-toggle { align-self: center; }
+  /* バーの1段目は横幅がぎりぎり。今日の1行に1文字でも多く回す。
+     絵（30px）は残す。島の絵の続きとして読めるので、字ではない情報が
+     ここに1つあるほうが、行が短くなるより効く。 */
+  .stage .bar-row { gap: 6px; }
+  .stage .island-bar { padding-left: 7px; padding-right: 7px; }
+  .stage .today[data-place="bar"] .today-tab { gap: 6px; padding: 6px 8px 6px 6px; }
+
   /* 「今日の島」の名札は、バーでは出さない。
      1行目に小さい字で毎日おなじ4文字が出ているだけで、下の1行が
      「今日は…」と自分で名乗っている。板が1行になって、島が 14px 広くなる。

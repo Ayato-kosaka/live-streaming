@@ -80,7 +80,7 @@ const WALKED = "ayato-island-walked";
 
 const modeOf = (w: number) => (w < 640 ? "phone" : w < 1024 ? "tablet" : "wide");
 
-export default function IsleStage({ spec }: { spec: IsleSpec }) {
+export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boolean }) {
   const world = useMemo(() => buildWorld(spec), [spec]);
   const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
@@ -808,6 +808,9 @@ export default function IsleStage({ spec }: { spec: IsleSpec }) {
         })}
       </svg>
 
+      {/* 島の下ふち。海をページの地へ溶かす */}
+      <span className="isle-shore" aria-hidden />
+
       {/* 建物の札。近づくと開いて、名前と一言と「みる」が出る */}
       <div className="isle-labels">
         {world.places.map((sp, i) => {
@@ -890,11 +893,15 @@ export default function IsleStage({ spec }: { spec: IsleSpec }) {
       {/* 建物の中。押した建物の一覧が、島の上に開く */}
       {openPlace && <IsleSheet place={openPlace} onClose={() => setSheet(null)} />}
 
-      {/* この島の名前。島に降りた人が最初に読むもの */}
-      <div className="isle-sign" data-ui>
-        <b>{spec.name}</b>
-        <i>{spec.note}</i>
-      </div>
+      {/* この島の名前。島に降りた人が最初に読むもの。
+          **表紙のときは出さない。** あそこは看板ロゴ（あやと島）が同じ隅にいる。
+          隅に札が2枚あると、どちらも読まれない（`docs/island-design.md` 3-4） */}
+      {!cover && (
+        <div className="isle-sign" data-ui>
+          <b>{spec.name}</b>
+          <i>{spec.note}</i>
+        </div>
+      )}
 
       <button className="isle-view" data-ui onClick={() => setWide((v) => !v)}>
         <Icon name={wide ? "walk" : "island"} size={15} />

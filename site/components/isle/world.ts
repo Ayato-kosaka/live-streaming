@@ -69,6 +69,8 @@ export type IsleWorld = {
   plants: Plant[];
   /** 道。1本のパスにまとめてある（別々に置くと要素が道の数だけ増える） */
   trail: string;
+  /** 海の模様。濃さの違う3本のパスにまとめてある */
+  sea: string[];
   /** 舟をつなぐところ。あやとはここから歩きはじめる */
   dock: { x: number; y: number };
   art: IslandArt;
@@ -129,10 +131,19 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
     const t = (start + (i + 0.5) / ring.length) % 1;
     const away = Math.min(Math.abs(t - dockT), 1 - Math.abs(t - dockT));
     const tt = away < 0.06 ? (t + 0.1) % 1 : t;
-    // ふちの内側。大きい島ほど内へ入れて、ふちに1列に並んで見えないようにする
-    const inset = BEACH + r * (0.1 + rand() * 0.16);
-    const q = at(w, sand, tt, inset);
-    return { ...p, x: Math.round(q.x), y: Math.round(q.y) };
+    /* **中心からの距離は、その向きの島の幅に対する割合で決める。**
+       「ふちから何単位」で置くと、細くなっている向き（北欧の西側は
+       いちばん広いところの半分しかない）で建物が中心まで寄ってきて、
+       5軒が1か所に固まる。実際そうなった。
+       そのうえで、浜からは必ず離す（浜に建てると波打ち際に建物が立つ）。 */
+    const rr = radiusAt(sand, tt);
+    const d = Math.min(rr - BEACH - 16, rr * (0.6 + rand() * 0.18));
+    const a = tt * Math.PI * 2 - Math.PI / 2;
+    return {
+      ...p,
+      x: Math.round(cx + Math.cos(a) * d),
+      y: Math.round(cy + Math.sin(a) * d * SQUASH),
+    };
   });
   const pier = spec.places.find((p) => p.id === "pier");
   if (pier) placed.push({ ...pier, x: Math.round(dockAt.x), y: Math.round(dockAt.y) });
@@ -159,6 +170,7 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
   plants.sort((a, b) => a.y - b.y);
 
   return {
+    sea: seaPatches(art.seed, w, sand, r),
     slug: spec.slug,
     size,
     cx,
@@ -279,4 +291,36 @@ export function clampTo(
     if (inside(w, radii, nx, ny, margin)) return [nx, ny];
   }
   return [w.cx, w.cy];
+}
+
+
+/**
+ * 海の模様。
+ *
+ * 一色に塗ると、島のまわりが「青い紙」になる。かといって、きらめきを
+ * **動かしてはいけない**——島をぐるりと囲む形の外接矩形は画面ぜんぶになるので、
+ * 海が画面の1割しか写っていなくても10割ぶんの代金を払う
+ * （`CLAUDE.md`。いまの島はこれを止めるだけで PC が 12.2 → 33.8 fps になった）。
+ * ここは**静止**。カメラを焼き直すときにしか塗り直されない。
+ *
+ * 濃さの違う3本のパスにまとめる。1つずつ置くと要素がその数だけ増えるし、
+ * 濃さがそろっていると「点を撒いた」ように見える。
+ */
+function seaPatches(seed: number, w: { cx: number; cy: number; squash: number }, sand: number[], r: number): string[] {
+  const rand = rng(seed + 313);
+  const out = ["", "", ""];
+  for (let i = 0; i < 54; i++) {
+    const t = rand();
+    // 島のすぐ外の帯にだけ撒く。遠くの沖は画面に入らないので、置くだけ無駄になる
+    const d = radiusAt(sand, t) + r * (0.06 + rand() * 0.9);
+    const a = t * Math.PI * 2 - Math.PI / 2;
+    const x = w.cx + Math.cos(a) * d;
+    const y = w.cy + Math.sin(a) * d * w.squash;
+    const rx = r * (0.03 + rand() * 0.08);
+    const ry = rx * (0.2 + rand() * 0.2);
+    out[i % 3] +=
+      `M${(x - rx).toFixed(0)},${y.toFixed(0)}a${rx.toFixed(0)},${ry.toFixed(0)} 0 1,0 ${(rx * 2).toFixed(0)},0` +
+      `a${rx.toFixed(0)},${ry.toFixed(0)} 0 1,0 ${(-rx * 2).toFixed(0)},0Z`;
+  }
+  return out;
 }

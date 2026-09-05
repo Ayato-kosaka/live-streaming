@@ -488,6 +488,44 @@
 /* 島の絵は、画面より各辺 --scene-pad だけ大きく取る。
    **`viewBox` を書き換えず、`transform` でずらす**ため（`IsleStage.tsx` の anchor）。
    `will-change` は `<svg>` そのものにだけ付ける。中の要素に付けると逆に遅くなる。 */
+/* 時間帯の色。**島も海も同じだけ染まる。**
+   これが無いと、夕方の紫の海に昼の島が浮かんでいることになる（撮って見つけた）。
+   仕掛けは `tokens.css` の `.stage::before/::after` と同じもの。
+   昼は2枚とも透明なので、層ごと外す——中身が透明でも、mix-blend-mode を持つ層は
+   画面ぜんぶを合成し直す（`island.css` の同じ注）。 */
+.isle::before,
+.isle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 1.2s ease;
+}
+.isle::before { background: var(--tint, transparent); mix-blend-mode: multiply; }
+.isle::after { background: var(--glow, transparent); mix-blend-mode: screen; }
+:root[data-time="day"] .isle::before,
+:root[data-time="day"] .isle::after,
+:root:not([data-time]) .isle::before,
+:root:not([data-time]) .isle::after { content: none; }
+
+/* 島の下ふち。海をページの地へ溶かして、切り口が出ないようにする */
+.isle-shore {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+  background-image: var(--page-bg);
+  background-size: 100% 4000px;
+  background-position: left top;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+}
+
 .isle-svg {
   position: absolute;
   /* `island.css` が :root に置いている値と同じもの。あちらを触らないので、
@@ -504,6 +542,7 @@
 .isle.is-away * { animation-play-state: paused; }
 
 /* --- 地面 --- */
+.ig-sea { fill: var(--foam); }
 .ig-shelf { fill: var(--sea-shelf); opacity: 0.75; }
 .ig-shallow { fill: var(--sea-shallow); opacity: 0.72; }
 .ig-foam { fill: var(--foam); opacity: 0.72; }
@@ -522,7 +561,7 @@
   opacity: 0.62;
 }
 /* 建設中（`docs/island-atlas.md` 5章）。進捗バーではなく、景色そのものが育つ */
-.ig-plot { fill: rgba(90, 62, 26, 0.22); stroke: #8a6432; stroke-width: 2; }
+.ig-plot { fill: rgba(90, 62, 26, 0.16); stroke: #8a6432; stroke-width: 2; stroke-dasharray: 9 7; }
 .ig-stake { stroke: #8a6432; stroke-width: 3; stroke-linecap: round; }
 .ig-rebar { stroke: #b0763a; stroke-width: 3; stroke-linecap: round; }
 .ig-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 2; }

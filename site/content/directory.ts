@@ -1,5 +1,5 @@
 import { DOORS } from "@/components/island/layout";
-import { PAST_CHAPTERS } from "@/components/chain/route";
+import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
@@ -181,20 +181,20 @@ export const SHELVES: Shelf[] = [
     note: "旅の章ごとに島が1つ建っている",
     items: [
       { href: "/atlas", name: "島の地図", note: "章ごとの島が、日付順に並ぶ", q: q("島の地図 atlas 連なり 章") },
-      ...PAST_CHAPTERS.flatMap((c) => [
-        {
-          href: `/island/${c.slug}`,
-          name: c.name,
-          note: `${c.from.slice(0, 4)}年から。この章のあいだの島`,
-          q: q(c.name, c.slug, "過去の島"),
-        },
-        {
-          href: `/island/${c.slug}/streams`,
-          name: `${c.name}の配信`,
-          note: "この章のあいだにやった配信だけ",
-          q: q(c.name, c.slug, "配信 アーカイブ"),
-        },
-      ]),
+      ...ISLE_CHAPTERS.map((c) => ({
+        href: `/island/${c.slug}`,
+        name: c.name,
+        // まだ始まっていない章（北欧）は from が空。年を出すと「年から」になる
+        note: c.from ? `${c.from.slice(0, 4)}年から。歩ける島` : "次の島。まだ建っていない",
+        q: q(c.name, c.slug, "島 歩く"),
+      })),
+      // 配信の一覧は、配信のある章だけ。無い章に口を出すと、押した先が無い
+      ...ISLE_STREAM_CHAPTERS.map((c) => ({
+        href: `/island/${c.slug}/streams`,
+        name: `${c.name}の配信`,
+        note: "この章のあいだにやった配信だけ",
+        q: q(c.name, c.slug, "配信 アーカイブ"),
+      })),
     ],
   },
   {

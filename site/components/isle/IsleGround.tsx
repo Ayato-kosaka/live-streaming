@@ -35,6 +35,10 @@ function IsleGroundRaw({ w }: { w: IsleWorld }) {
       <defs>
         <GrassTile id={pat} seed={w.art.seed} />
       </defs>
+      {/* 海の模様。**動かさない**（島を囲む形を動かすと、画面ぜんぶを塗り直す） */}
+      {w.sea.map((d, i) => (
+        <path key={i} className="ig-sea" d={d} opacity={[0.34, 0.22, 0.13][i]} />
+      ))}
       {/* 浅瀬。輪郭をそのまま外へ出すと機械的に見えるので、帯ごとに違う起伏を足す */}
       <path className="ig-shelf" d={s(wobble(out(r * 0.2), 71, r * 0.02))} />
       <path className="ig-shallow" d={s(wobble(out(r * 0.08), 72, r * 0.016))} />

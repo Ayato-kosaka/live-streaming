@@ -4,7 +4,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { StreamCard } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
-import { PAST_CHAPTERS } from "@/components/chain/route";
+import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 
 /**
  * 過去の島の配信だけを並べる面。
@@ -35,9 +35,7 @@ import { PAST_CHAPTERS } from "@/components/chain/route";
  */
 
 export function generateStaticParams() {
-  return PAST_CHAPTERS.filter((c) => CHAPTER_STREAMS[c.slug]?.length).map((c) => ({
-    chapter: c.slug,
-  }));
+  return ISLE_STREAM_CHAPTERS.map((c) => ({ chapter: c.slug }));
 }
 
 export async function generateMetadata({
@@ -46,7 +44,7 @@ export async function generateMetadata({
   params: Promise<{ chapter: string }>;
 }): Promise<Metadata> {
   const { chapter } = await params;
-  const c = PAST_CHAPTERS.find((x) => x.slug === chapter);
+  const c = ISLE_STREAM_CHAPTERS.find((x) => x.slug === chapter);
   if (!c) return {};
   const n = CHAPTER_STREAMS[c.slug]?.length ?? 0;
   return {
@@ -61,7 +59,7 @@ export default async function ChapterStreams({
   params: Promise<{ chapter: string }>;
 }) {
   const { chapter } = await params;
-  const c = PAST_CHAPTERS.find((x) => x.slug === chapter)!;
+  const c = ISLE_STREAM_CHAPTERS.find((x) => x.slug === chapter)!;
   const streams = CHAPTER_STREAMS[c.slug] ?? [];
 
   // 月ごとにまとめる。焼いてある表はもう新しい順なので、並べ替えない

@@ -31,6 +31,3 @@ export const ISLE_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => c.slug !== NOW_CH
 export const ISLE_STREAM_CHAPTERS: Chapter[] = ISLE_CHAPTERS.filter(
   (c) => CHAPTER_STREAMS[c.slug]?.length,
 );
-
-/** 終わった章。**期間が確定しているものだけ**を並べたいところが使う */
-export const PAST_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => c.from && c.to);

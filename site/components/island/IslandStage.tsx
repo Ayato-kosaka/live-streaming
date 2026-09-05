@@ -1741,9 +1741,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               onClick={() => setBarOpen((v) => !v)}
               aria-expanded={barOpen}
               aria-controls="island-bar-spots"
+              aria-label={barOpen ? UI.close : "行き先をみる"}
             >
-              <Icon name={barOpen ? "chevron" : "up"} size={12} />
-              {barOpen ? UI.close : "行き先"}
+              <Icon name={barOpen ? "chevron" : "up"} size={14} />
+              <span className="tool-label">{barOpen ? UI.close : "行き先をみる"}</span>
             </button>
           </div>
           <div className="island-bar-scroll" id="island-bar-spots">
