@@ -356,6 +356,14 @@ const SEA_ABYSS = "color-mix(in srgb, var(--sea-deep) 84%, #0b3f86 16%)";
    上 rgb(100,147,255) → 水平線ぎわ rgb(112,178,254)。雲は rgb(149,190,253)。
    青が強い。空を水色にすると、芝の緑と喧嘩して絵が濁る。 */
 const SKY_Y = 170;
+/* 空の色。本物の値に海の色を少しだけ混ぜる。
+   混ぜておくと、時間帯（夕・夜）や別の島に移ったときに、空も一緒に動く。
+   混ぜずに置くと、海が紫になった夕方に空だけ真昼の青で残る。 */
+const SKY_HI = "color-mix(in srgb, #6491ff 80%, var(--sea-mid) 20%)";
+const SKY_MID = "color-mix(in srgb, #74aefe 80%, var(--sea-mid) 20%)";
+const SKY_LO = "color-mix(in srgb, #8fc6fe 78%, var(--sea-shallow) 22%)";
+/** 雲。空より明るく、白すぎない（白にすると波のしぶきと同じ強さになる） */
+const CLOUD = "color-mix(in srgb, #d7e6ff 76%, var(--foam) 24%)";
 /** 雲。丸を重ねただけの、輪郭のない塊（`island-design.md` 2章-1） */
 const CLOUDS: [number, number, number][] = [
   [120, -30, 0.9],
@@ -1126,9 +1134,9 @@ function IslandScene() {
         </radialGradient>
         {/* 空。本物は上ほど濃い青で、水平線ぎわが明るい */}
         <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6491ff" />
-          <stop offset="0.72" stopColor="#74aefe" />
-          <stop offset="1" stopColor="#8fc6fe" />
+          <stop offset="0" stopColor={SKY_HI} />
+          <stop offset="0.72" stopColor={SKY_MID} />
+          <stop offset="1" stopColor={SKY_LO} />
         </linearGradient>
         <radialGradient id="grassG" cx="38%" cy="28%">
           <stop offset="0" stopColor="var(--grass-hi)" />
@@ -1195,7 +1203,7 @@ function IslandScene() {
       <g aria-hidden>
         <rect x={-500} y={-500} width={WORLD + 1000} height={SKY_Y + 500} fill="url(#skyG)" />
         {CLOUDS.map(([cx, cy, k], i) => (
-          <g key={i} transform={`translate(${cx} ${cy}) scale(${k})`} fill="#95bcfd" opacity={0.85}>
+          <g key={i} transform={`translate(${cx} ${cy}) scale(${k})`} fill={CLOUD} opacity={0.7}>
             <ellipse cx={-52} cy={16} rx={54} ry={26} />
             <ellipse cx={30} cy={18} rx={62} ry={24} />
             <ellipse cx={-8} cy={-8} rx={48} ry={34} />
@@ -1203,8 +1211,8 @@ function IslandScene() {
         ))}
         {/* 水平線。線を引かずに、際をひと筋明るくして境目を作る。
             線を引くと輪郭になる（`island-design.md` 2章-1「輪郭線を引かない」）。 */}
-        <rect x={-500} y={SKY_Y - 9} width={WORLD + 1000} height={18} fill="#cfe4ff" opacity={0.7} />
-        <rect x={-500} y={SKY_Y + 9} width={WORLD + 1000} height={34} fill="#79b0f6" opacity={0.5} />
+        <rect x={-500} y={SKY_Y - 9} width={WORLD + 1000} height={18} fill={CLOUD} opacity={0.8} />
+        <rect x={-500} y={SKY_Y + 9} width={WORLD + 1000} height={34} fill={SKY_LO} opacity={0.45} />
       </g>
       {/* ------- 浅瀬。岸のすぐそばだけ。
           深い青からいきなり浅瀬に変わると、島に輪がはまって見える。
