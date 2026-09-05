@@ -247,8 +247,8 @@
 /* 開いている段は、帯を引ききったまま置く。ここが本文の見出しになる。
    帯の上に載る字は、紙の上の字のままだと沈む。蛍光ペン用の墨に替える。 */
 .fold[open] > summary::before { opacity: 1; transform: none; }
-.fold[open] > summary .fold-t b,
-.gchap > .fold > summary .fold-t b { color: var(--marker-ink); }
+.fold[open] > summary > .fold-t > b,
+.gchap > .fold > summary > .fold-t > b { color: var(--marker-ink); }
 
 /* 選んでいるものの印はオレンジ赤の細枠だけ（ac-reference 7章）。
    これは「いま指しているのはここ」の印なので、開いている段すべてには付けない。
@@ -272,8 +272,12 @@
   white-space: nowrap;
 }
 /* 開いたら要約の一行は消す。本文の1行目と同じ文が二度並ぶのがいちばん安く見える。
-   高さを動かして畳むと、開くたびにページ全体の版組みが走るので、そのまま消す。 */
-.fold[open] > summary .fold-t i { display: none; }
+   高さを動かして畳むと、開くたびにページ全体の版組みが走るので、そのまま消す。
+
+   消すのは Fold.tsx が lead として置く <i> **だけ**。子孫まで見にいくと、
+   題の中で <i> を使っている部品（北欧の区間の矢印など）を巻き添えにして、
+   開いた段からだけ矢印が消える、という直しにくい壊れかたをする。 */
+.fold[open] > summary > .fold-t > i { display: none; }
 
 /* 数の札は平ら。押せないものに厚みを付けない（docs/island-world.md 3.4）。
    オリーブのベタは「数えたもの・押せない」の色（同 3.2）。 */

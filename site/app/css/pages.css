@@ -174,8 +174,11 @@
     margin: -1px; padding: 0; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  /* 3列に落とすため、札の内側と最小幅を1段詰める。字は 5文字が最長。 */
-  .ih-nav { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); padding: var(--sp-1); }
+  /* 3列 × 2段に決め打つ。auto-fit のままだと、480px で4列に割れて
+     札が 94px になり、6つのうち4つの字が切れていた。狭い画面では
+     「6つが2段で読める」ほうが、列がきれいに埋まることより大事。
+     すきまを1段詰めるのは、360px でも3列が 90px を保つため。 */
+  .ih-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-1); padding: var(--sp-1); }
   .ih-link { padding: var(--sp-1); gap: 2px; }
   .ih-link img { width: 18px; height: 18px; }
 }
