@@ -349,7 +349,9 @@
    中だけで止めると、区切りではなく「もう1つの箱」に見える。
    はしまでの幅は `ui.css` の `.fold-body` が持っているので、そこから借りる。 */
 .rleg-seat,
-.rtie {
+/* p.rtie と書くのは、`pages.css` の `.panel p` が margin をまとめて上書きするから。
+   同じ強さにしておかないと、左右の負のマージンだけが黙って消える。 */
+p.rtie {
   --rleg-x: var(--sp-4);
   margin-left: calc(-1 * var(--rleg-x));
   margin-right: calc(-1 * var(--rleg-x));
