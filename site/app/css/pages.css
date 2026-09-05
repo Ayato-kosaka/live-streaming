@@ -1061,9 +1061,14 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 /* いま選んでいる並び。塗りは変えず、朱の細枠だけ（ac-reference ⑦-6）。 */
+/* 選ばれている札は、色ではなく**沈んだまま**で言う（island-design.md 3-5）。
+   前は朱の輪で囲っていたが、同じ面の付箋の棚も朱の輪にしたところ、
+   48px の札をぐるりと囲む輪は細枠と同じ色でも別物の強さになり、
+   紙の面でいちばん強い赤が2種類の意味で並ぶことになった。
+   `:active` と同じ形なので、合図を1つも増やしていない。 */
 .bsort button.is-on {
-  border-color: var(--pick);
-  box-shadow: var(--pg-lit), 0 0 0 2px var(--pick), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  transform: translateY(4px);
+  box-shadow: var(--pg-lit);
 }
 .bsort button:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
