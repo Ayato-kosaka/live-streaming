@@ -244,7 +244,13 @@ python3 -m http.server 4321 --directory .next-verify &
 cd ../tools/sprites && node crawl.mjs     # 全ページの h1・JSエラー・横あふれ・リンク切れ
 node align.mjs                            # 建物の絵と当たり判定・合図のズレ
 cd .. && python3 tools/sprites/audit.py   # スプライト1枚ずつ、上の5原則を数で
+SPORT=4321 STATE=1 node tools/sprites/clutter.mjs   # 1画面に何個・何文字・UI が何%
 ```
+
+`clutter.mjs` は「ごちゃごちゃしている」を主観で言わないための道具。
+390×844 の1画面に載っているものの数と、出ている字の数と、UI が島の絵を
+覆っている割合を出す。**`STATE=1` を付けて測る。** 付けないと住人の名札が
+出ていない日を測ることになり、本番より静かな数字が出る。
 
 `audit.py` は 2章の原則をそのまま測る（輪郭線・接地影・暗さ・彩度）。
 **「浮いている絵」を目で探さない。** 300枚を並べて見ても、どれが原則を
