@@ -30,6 +30,12 @@ export type Plan = {
   when: string;
   /** その日。あと何日かを数えるのに使う(YYYY-MM-DD) */
   date?: string;
+  /**
+   * 始まる時刻まで分かっているとき（ISO8601・時差込み）。
+   * 「あと1日」だけだと、その日のいつなのかが分からない。
+   * 時刻があるものは時間と分まで数える。
+   */
+  at?: string;
   note: string;
   tags: string[];
   place?: { name: string; area?: string; map?: string };
@@ -89,6 +95,8 @@ export const PLANS: Plan[] = [
     title: "ヒッチハイクで北欧へ",
     when: "2026年9月11日(金) 23:30 出発",
     date: "2026-09-11",
+    // クタイシ発の便の時刻。ジョージア時間(UTC+4)。`content/nordic.ts` の DEPART と同じ。
+    at: "2026-09-11T23:30:00+04:00",
     note: "ジョージアを出て、ポーランドからバルト三国を北上し、北欧へ抜ける。陸路はぜんぶヒッチハイク。",
     tags: ["北欧", "バルト", "ヒッチハイク", "一方通行"],
     href: "/nordic",
@@ -116,6 +124,19 @@ export function nextPlan(today = new Date()): Plan | undefined {
     return d !== null && d >= 0;
   }).sort((a, b) => (a.date! < b.date! ? -1 : 1));
   return ahead[0] ?? PLANS.find((p) => p.big) ?? PLANS[0];
+}
+
+/**
+ * その企画まで、あと何日か。
+ *
+ * 時刻まで決まっているもの（`at`）は、その時刻までを実際に数える。
+ * 決まっていないものは「その日まであと何日」という数え方にする。
+ * ここを1か所にしておかないと、しらせの帯が「あと1日」で
+ * 時計が「あと0日23時間」になる、という食い違いが出る。
+ */
+export function planDaysLeft(p: Plan, now = new Date()): number | null {
+  if (p.at) return Math.floor((new Date(p.at).getTime() - now.getTime()) / 86400000);
+  return daysUntil(p.date, now);
 }
 
 /** その日まであと何日か。過ぎていればマイナス。 */

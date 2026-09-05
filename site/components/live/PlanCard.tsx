@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { daysUntil, type Plan } from "@/content/plans";
+import { planDaysLeft, type Plan } from "@/content/plans";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
@@ -21,17 +21,122 @@ function shortDate(date?: string) {
  * 何日経っても「あと1日」のままになる。
  * サーバー側では日付だけ出しておいて、画面が出てから今日の日付で数え直す。
  */
-function useDays(date?: string) {
+function useDays(plan: Plan) {
   const [d, setD] = useState<number | null>(null);
-  useEffect(() => setD(daysUntil(date, new Date())), [date]);
+  useEffect(() => setD(planDaysLeft(plan, new Date())), [plan]);
   return d;
 }
 
-/** 日数の札。big はいちばん近い企画に使う、大きいほう。 */
-function Count({ date, big }: { date?: string; big?: boolean }) {
-  const d = useDays(date);
-  if (!date) return null;
+/**
+ * 始まるまでの残り。日・時間・分。
+ *
+ * 「あと1日」だけだと、その日の朝なのか夜なのかが分からない。
+ * 出発の時刻まで決まっているものは、そこまで数える。
+ * 1分ごとに数え直すほどの面ではないので30秒おき（分がずれて見えない程度）。
+ */
+export function useCountdown(plan: Plan) {
+  const [left, setLeft] = useState<{ d: number; h: number; m: number } | null>(null);
+  useEffect(() => {
+    if (!plan.date) return;
+    const [y, mo, dd] = plan.date.split("-").map(Number);
+    // 時刻が分かっていなければ、その日の始まりを目標にする（端末の時計の日付で）
+    const target = plan.at ? new Date(plan.at).getTime() : new Date(y, mo - 1, dd, 0, 0, 0).getTime();
+    const tick = () => {
+      const ms = target - Date.now();
+      if (ms <= 0) return setLeft({ d: -1, h: 0, m: 0 });
+      const s = Math.floor(ms / 1000);
+      setLeft({ d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60) });
+    };
+    tick();
+    const id = setInterval(tick, 30000);
+    return () => clearInterval(id);
+  }, [plan.date, plan.at]);
+  return left;
+}
 
+/**
+ * 主役の企画の時計。
+ * ページを開いていちばん先に目に入るのがこれ。数字だけ大きく出す。
+ *
+ * 出発の時刻まで決まっているもの（`at`）だけ、時間と分まで刻む。
+ * 決まっていないものを「あと0日23時間」と出すと、
+ * 明日のことなのに0日と書いてあることになって、かえって分からない。
+ */
+export function LeadClock({ plan }: { plan: Plan }) {
+  const left = useCountdown(plan);
+  const days = useDays(plan);
+  if (!plan.date) return null;
+
+  // 画面が出るまでは日付だけ。焼き込みの日数を一瞬でも見せない
+  if (days === null || (plan.at && left === null)) {
+    return (
+      <p className="nx-clock is-one">
+        <em>
+          <b>{shortDate(plan.date)}</b>その日まで
+        </em>
+      </p>
+    );
+  }
+  if (days < 0) {
+    return (
+      <p className="nx-clock is-one">
+        <em>
+          <b>おわった</b>
+          {shortDate(plan.date)}
+        </em>
+      </p>
+    );
+  }
+  if (plan.at && left) {
+    if (left.d < 0) {
+      return (
+        <p className="nx-clock is-one">
+          <em>
+            <b>いま</b>やっているところ
+          </em>
+        </p>
+      );
+    }
+    return (
+      <p className="nx-clock">
+        <em>
+          <span>あと</span>
+          <b>{left.d}</b>日
+        </em>
+        <em>
+          <b>{left.h}</b>時間
+        </em>
+        <em>
+          <b>{left.m}</b>分
+        </em>
+      </p>
+    );
+  }
+  if (days === 0) {
+    return (
+      <p className="nx-clock is-one">
+        <em>
+          <b>今日</b>
+          {shortDate(plan.date)}
+        </em>
+      </p>
+    );
+  }
+  return (
+    <p className="nx-clock is-one">
+      <em>
+        <span>あと</span>
+        <b>{days}</b>日
+      </em>
+    </p>
+  );
+}
+
+/** 一覧のほうの日数の札。小さいほう。 */
+function Count({ plan }: { plan: Plan }) {
+  const d = useDays(plan);
+  const date = plan.date;
+  if (!date) return null;
   const body =
     d === null ? <b>{shortDate(date)}</b> :
     d === 0 ? <b>今日</b> :
@@ -42,12 +147,8 @@ function Count({ date, big }: { date?: string; big?: boolean }) {
     ) : (
       <b>おわった</b>
     );
-
-  if (big) return <span className="nextup-count">{body}</span>;
   return (
-    <span className={`count${d === 0 ? " is-today" : ""}${d !== null && d < 0 ? " is-past" : ""}`}>
-      {body}
-    </span>
+    <span className={`count${d === 0 ? " is-today" : ""}${d !== null && d < 0 ? " is-past" : ""}`}>{body}</span>
   );
 }
 
@@ -107,11 +208,11 @@ function Embeds({ plan }: { plan: Plan }) {
 }
 
 /** 行き先の地図と、公式の紹介。 */
-function Links({ plan }: { plan: Plan }) {
-  if (!plan.links?.length && !plan.place?.map) return null;
+function Links({ plan, mapDone }: { plan: Plan; mapDone?: boolean }) {
+  if (!plan.links?.length && (!plan.place?.map || mapDone)) return null;
   return (
     <div className="chips" style={{ marginTop: 12 }}>
-      {plan.place?.map && (
+      {plan.place?.map && !mapDone && (
         <a className="chip link" href={plan.place.map} target="_blank" rel="noopener noreferrer">
           地図で見る
           <Icon name="external" size={12} />
@@ -128,11 +229,64 @@ function Links({ plan }: { plan: Plan }) {
 }
 
 /**
+ * きみができること。
+ *
+ * 「いつ」「何が起きる」の次に来る問いは「じゃあ自分は何をすればいいのか」。
+ * 写真と説明を読み終わるまでこれが出てこないと、そこで読むのをやめてしまう。
+ * だから説明より先、題名のすぐ下に置く。
+ */
+function Doing({ plan }: { plan: Plan }) {
+  const youtube = LINKS.find((l) => l.id === "youtube")!;
+  return (
+    <div className="nx-do">
+      <span>きみができること</span>
+      <div className="nx-dos">
+        <a className="nx-do-b is-go" href={`#${plan.id}-notes`}>
+          <Icon name="comment" size={26} />
+          <span>
+            <b>付箋を貼る</b>
+            <i>知ってることを教える</i>
+          </span>
+        </a>
+        {plan.href && (
+          <Link className="nx-do-b" href={plan.href}>
+            <Icon name="signpost" size={26} />
+            <span>
+              <b>企画のページを見る</b>
+              <i>ルート・行き先・見どころ</i>
+            </span>
+          </Link>
+        )}
+        <a className="nx-do-b" href={youtube.href} target="_blank" rel="noopener noreferrer">
+          <Icon name="live" size={26} />
+          <span>
+            <b>その日の配信で見る</b>
+            <i>毎晩22時・YouTube</i>
+          </span>
+        </a>
+        {plan.place?.map && (
+          <a className="nx-do-b" href={plan.place.map} target="_blank" rel="noopener noreferrer">
+            <Icon name="map" size={26} />
+            <span>
+              <b>どこにあるか見る</b>
+              <i>{plan.place.area ?? plan.place.name}</i>
+            </span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * これからの予定ひとつ。
  *
  * lead を付けたものが、そのページの主役。
- * 日数の札を大きくして題名の左に置き、写真と説明もぜんぶ開いたまま出す。
- * それ以外は説明を畳んで、題名と日付だけで先へ進めるようにする。
+ * 開いた瞬間に3つの問いに答える形にしてある。
+ *   1. あと何日か   … 時計を題名の左に、いちばん大きく
+ *   2. 何が起きるのか … 題名・日付・場所・ひとこと
+ *   3. 自分は何をすればいいのか … 説明より先に、押せるものを並べる
+ * それ以外の企画は説明を畳んで、題名と日付だけで先へ進めるようにする。
  */
 export default function PlanCard({
   plan,
@@ -161,16 +315,17 @@ export default function PlanCard({
           { scrollMarginTop: 78 }
       }
     >
-      <div
-        className="phead-row"
-        style={lead ? { gap: 14, alignItems: "center", flexWrap: "nowrap" } : undefined}
-      >
-        {lead && <Count date={plan.date} big />}
-        <h2 style={lead ? { margin: 0, fontSize: "clamp(20px,5.6vw,30px)", lineHeight: 1.32 } : { margin: 0 }}>
-          {plan.title}
-        </h2>
-        {!lead && <Count date={plan.date} />}
-      </div>
+      {lead ? (
+        <div className="nx-lead-head">
+          <LeadClock plan={plan} />
+          <h2>{plan.title}</h2>
+        </div>
+      ) : (
+        <div className="phead-row">
+          <h2 style={{ margin: 0 }}>{plan.title}</h2>
+          <Count plan={plan} />
+        </div>
+      )}
 
       <div className="chips" style={{ margin: "12px 0" }}>
         <span className="chip">
@@ -192,39 +347,7 @@ export default function PlanCard({
 
       <p style={lead ? { fontSize: 16 } : undefined}>{plan.note}</p>
 
-      {/* 主役の企画だけ、来た人が次にやることを題名のすぐ下に置く。
-          写真や説明を読み終わるまで「自分は何をすればいいのか」が出てこないと、そこで止まる。 */}
-      {lead && (
-        <>
-          {/* 専用のページを持つ大きい企画は、写真より先に入口を出す。
-              下まで読まないと入口が出てこないと、そこで止まってしまう。 */}
-          {plan.href && (
-            <Link className="tile" href={plan.href} style={{ marginTop: 16 }}>
-              <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
-              <span className="tile-text">
-                <b>この企画のページへ</b>
-                <i>ルート・行き先・国ごとの見どころ</i>
-              </span>
-              <Icon name="right" size={15} className="tile-go" />
-            </Link>
-          )}
-          <div className="chips" style={{ marginTop: 14 }}>
-            <a className="chip link" href={`#${plan.id}-notes`}>
-              付箋を貼る
-              <Icon name="right" size={12} />
-            </a>
-            <a
-              className="chip link"
-              href={LINKS.find((l) => l.id === "youtube")!.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              配信を見る
-              <Icon name="external" size={12} />
-            </a>
-          </div>
-        </>
-      )}
+      {lead && <Doing plan={plan} />}
 
       {/* 主役は開いたまま。それ以外は「どんなところ」を畳んで、先へ進みやすくする。 */}
       {lead ? (
@@ -241,7 +364,7 @@ export default function PlanCard({
               </Fold>
             </div>
           )}
-          <Links plan={plan} />
+          <Links plan={plan} mapDone />
         </>
       ) : (
         (plan.about?.length || plan.photos?.length || plan.embeds?.length || plan.links?.length || plan.place?.map) && (

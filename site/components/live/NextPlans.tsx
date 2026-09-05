@@ -1,15 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getState, postNote, type NextNote } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { PLANS, daysUntil, type Plan } from "@/content/plans";
+import { PLANS, daysUntil, planDaysLeft, type Plan } from "@/content/plans";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import PlanCard from "./PlanCard";
+import { NoticeBell, Pin, Stone } from "./art";
 
 /** 日付の早い順。日付の無いものは後ろ。 */
 const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? "9999");
+
+/** 「9/6」 */
+const short = (date?: string) => {
+  if (!date) return "";
+  const [, m, d] = date.split("-");
+  return `${Number(m)}/${Number(d)}`;
+};
+
+/**
+ * 付箋に何を書けばいいのかの見本。
+ *
+ * 空の入力欄と「貼る」ボタンだけ置いても、人は何も書けない。
+ * 押すと書き出しが入るところまで用意して、続きだけ書けばいい形にする。
+ */
+const SEEDS = [
+  "ここ行くといいよ：",
+  "これ食べてみて：",
+  "これ気をつけて：",
+  "去年行った人から：",
+];
 
 /**
  * 企画1つぶんの付箋。
@@ -32,23 +53,43 @@ function PlanNotes({
   onDraft: (v: string) => void;
   onAdd: () => void;
 }) {
+  const box = useRef<HTMLInputElement>(null);
+  // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
+  const pins = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
+
   return (
     <>
-      <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78 }}>
-        みんなの付箋{notes.length > 0 && `（${notes.length}枚）`}
-      </h3>
+      <div className="nx-noteshead">
+        <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, margin: "18px 0 0" }}>
+          みんなの付箋
+        </h3>
+        {notes.length > 0 && (
+          <span className="bd-count">
+            <b>{notes.length}</b>枚
+          </span>
+        )}
+      </div>
+
       {notes.length === 0 ? (
-        <p className="muted">まだ1枚もありません。知ってることがあったら貼ってください。</p>
+        <p className="muted" style={{ marginTop: 10 }}>
+          まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
+        </p>
       ) : (
-        <ul className="notes">
-          {notes.map((n) => (
-            <li key={n.id}>{n.text}</li>
+        <ul className="nx-notes">
+          {notes.map((n, i) => (
+            <li key={n.id}>
+              <span className="nx-pin">
+                <Pin tone={pins[i % pins.length]} size={19} />
+              </span>
+              {n.text}
+            </li>
           ))}
         </ul>
       )}
 
-      <div className="noteform">
+      <div className="noteform" style={{ marginTop: 16 }}>
         <input
+          ref={box}
           value={draft}
           onChange={(e) => onDraft(e.target.value)}
           placeholder="ここ行くといいよ / これ食べて / これ気をつけて"
@@ -62,7 +103,66 @@ function PlanNotes({
           貼る
         </button>
       </div>
+
+      <div className="nx-seeds">
+        <span>書き出しを選ぶ</span>
+        {SEEDS.map((s) => (
+          <button
+            key={s}
+            className="nx-seed"
+            onClick={() => {
+              onDraft(s);
+              box.current?.focus();
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
     </>
+  );
+}
+
+/**
+ * これからの道のり。
+ *
+ * 予定を縦の点線でつなぐのではなく、島の道の飛び石として並べる。
+ * 何個あって、どの順に来るのかが、字を読む前に形で分かる。
+ */
+function Road({ plans, today }: { plans: Plan[]; today: Date | null }) {
+  return (
+    <ul className="nx-road">
+      {plans.map((p, i) => {
+        const d = today ? planDaysLeft(p, today) : null;
+        return (
+          <li key={p.id}>
+            <span className="nx-stone">
+              <Stone tone={i === 0 ? "now" : "stone"} />
+              <b>{i + 1}</b>
+            </span>
+            <div className="nx-road-b">
+              <div className="nx-road-when">
+                <time>{p.when}</time>
+                {d !== null && (
+                  <span className={`count${d === 0 ? " is-today" : ""}`}>
+                    {d === 0 ? "今日" : <>あと<b>{d}</b>日</>}
+                  </span>
+                )}
+              </div>
+              <a className="nx-road-t" href={`#${p.id}`}>
+                <b>{p.title}</b>
+                <i>{p.note}</i>
+              </a>
+              <a className="nx-road-go" href={`#${p.id}`}>
+                {i === 0 ? "上に書いてあります" : "この企画を見る"}
+                {/* いちばん近い企画の札はこの上にあるので、矢印も上を向ける */}
+                <Icon name={i === 0 ? "up" : "chevron"} size={13} />
+              </a>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -123,15 +223,33 @@ export default function NextPlans() {
     onAdd: () => add(p.id),
   });
 
+  const leadDays = lead && today ? planDaysLeft(lead, today) : null;
+
   return (
     <>
+      {/* しらせ。「何件あって、いちばん近いのはいつか」だけを、いちばん上で言う。
+          赤い丸は「まだ見ていないものがある」の合図で、島じゅうでこれ1種類しか使わない。 */}
+      {ahead.length > 0 && (
+        <div className="nx-notice">
+          <NoticeBell size={34} />
+          <span className="nx-notice-t">
+            <b>これからの予定が{ahead.length}件</b>
+            <i>
+              {lead ?
+                leadDays === null ? `いちばん近いのは ${short(lead.date)}` :
+                leadDays === 0 ? "いちばん近いのは、今日" :
+                `いちばん近いのは あと${leadDays}日` :
+                ""}
+            </i>
+          </span>
+          <span className="nx-notice-n">{ahead.length}</span>
+        </div>
+      )}
+
       {lead && (
-        <>
-          <p className="nextup-eyebrow">いちばん近いのはこれ</p>
-          <PlanCard plan={lead} lead>
-            <PlanNotes {...notesProps(lead)} />
-          </PlanCard>
-        </>
+        <PlanCard plan={lead} lead>
+          <PlanNotes {...notesProps(lead)} />
+        </PlanCard>
       )}
 
       {/* 予定がいくつあって、どの順で来るのか。
@@ -139,32 +257,8 @@ export default function NextPlans() {
       {ahead.length > 1 && (
         <section className="panel">
           <h2>これからの道のり</h2>
-          <ul className="tl">
-            {ahead.map((p, i) => {
-              const d = today ? daysUntil(p.date, today) : null;
-              return (
-                <li key={p.id}>
-                  <span
-                    className="tl-dot"
-                    style={{ background: i === 0 ? "var(--accent)" : "var(--frame)" }}
-                  />
-                  <div className="tl-head">
-                    <time>{p.when}</time>
-                    {d !== null && (
-                      <span className={`count${d === 0 ? " is-today" : ""}`} style={{ marginLeft: 0 }}>
-                        {d === 0 ? "今日" : <>あと<b>{d}</b>日</>}
-                      </span>
-                    )}
-                  </div>
-                  <div className="tl-body">
-                    <b>{p.title}</b>
-                    <i>{p.note}</i>
-                    <a href={`#${p.id}`}>{i === 0 ? "上のカードに書いてあります" : "この企画を見る"}</a>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <p className="muted">上から順に踏んでいきます。押すと、その企画のところまで飛びます。</p>
+          <Road plans={ahead} today={today} />
         </section>
       )}
 
