@@ -886,7 +886,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 onMouseLeave={() => setHover((v) => (v === sp.id ? null : v))}
                 onFocus={() => setHover(sp.id)}
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
-                aria-label={`${sp.label}へ行く`}
+                // 押すと「歩いていく」。入るのは、着いて開いた札のほう。
+                // 「へ行く」と読み上げると、押した先で入れると思われる
+                aria-label={`${sp.label}まで歩く`}
               />
               <Link
                 data-ui

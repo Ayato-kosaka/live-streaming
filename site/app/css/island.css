@@ -500,7 +500,9 @@
 .walk-hint {
   position: absolute;
   left: 14px;
-  top: calc(58px + env(safe-area-inset-top));
+  /* 「島をながめる」の真下。あちらは 12px から 48px（指で押せる最小）なので、
+     60px より下でないと重なる。 */
+  top: calc(70px + env(safe-area-inset-top));
   margin: 0;
   white-space: nowrap;
   background: rgba(56, 44, 34, 0.78);
