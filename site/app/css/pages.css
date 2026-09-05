@@ -839,7 +839,9 @@ a.chip:active, button.chip:active, .chip.link:active {
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--frame-deep) 92%, var(--ink)) 0%,
     color-mix(in srgb, var(--frame-deep) 74%, var(--ink)) 100%);
-  padding: 28px 16px calc(34px + env(safe-area-inset-bottom));
+  /* 余白は段から（docs/island-world.md 5.1）。下だけ、指の届かない
+     画面の底のぶんを足す。 */
+  padding: var(--sp-6) var(--sp-4) calc(var(--sp-6) + var(--sp-1) + env(safe-area-inset-bottom));
   text-align: center;
 }
 .ifoot-back {
