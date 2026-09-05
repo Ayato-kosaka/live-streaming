@@ -93,7 +93,7 @@ island/state
 `stats` は `island_daily_stats.py` が毎日書く。
 `current` は `island_set_current.py` であやとが手で書く。
 
-### `islandIdeas/{id}` — 企画掲示板に貼られた提案
+### `islandIdeas/{id}` — 掲示板（`/board`「企画をだす」）に貼られた提案
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
