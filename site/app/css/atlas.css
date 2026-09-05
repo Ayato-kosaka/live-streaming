@@ -945,7 +945,19 @@
 }
 .astep b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
 .astep i { font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.75; }
+/* その日の配信へ。字の大きさは変えずに、当たり判定だけ 48px まで広げる
+   （`.crumbs a::after` と同じ手。`docs/island-design.md` 3-2）。
+   節目が21件あるので、1つずつを板にすると畳んだ中が板の壁になる。 */
+.astep a::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: max(calc(100% + 8px), 48px);
+  height: 48px;
+}
 .astep a {
+  position: relative;
   justify-self: start;
   display: inline-flex;
   align-items: center;

@@ -905,7 +905,17 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--zk-ink);
 }
 .kt-colophon > svg { flex: none; }
-.kt-colophon a { font-weight: 900; color: var(--accent-2); text-underline-offset: 3px; }
+.kt-colophon a { position: relative; font-weight: 900; color: var(--accent-2); text-underline-offset: 3px; }
+/* 文の中のリンクは行の高さぶんしか無い。字は動かさず、当たり判定だけ広げる
+   （`.crumbs a::after` と同じ手） */
+.kt-colophon a::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% + 8px);
+  height: 48px;
+}
 
 /* 国ごとの内わけ。棒の長さで多い少ないを見せる */
 .kt-by { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
