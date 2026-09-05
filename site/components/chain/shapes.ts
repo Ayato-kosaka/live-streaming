@@ -55,9 +55,11 @@ export const ISLAND_ART: Record<string, IslandArt> = {
     radii: [0.86, 0.9, 1.06, 1.24, 1.3, 1.2, 1.0, 0.86, 0.82, 0.9, 1.08, 1.22, 1.26, 1.12, 0.96, 0.86],
     squash: 0.58,
     props: [
-      // ナツメヤシは焼けていないので、いまはヤシで代える（報告に挙げてある）
-      { n: "tree-palm", s: 0.34 },
-      { n: "tree-palm-short", s: 0.24 },
+      // ナツメヤシ。ここに生えているのはココヤシ（tree-palm）ではない。
+      // 大人の木・若木・株立ちの3本を混ぜる。1種類だけ撒くと林が壁紙に見える
+      { n: "tree-date", s: 0.34 },
+      { n: "tree-date-young", s: 0.26 },
+      { n: "tree-date-short", s: 0.19 },
       { n: "cactus", s: 0.18 },
       { n: "rock-flat", s: 0.12 },
       { n: "stone-small", s: 0.1 },

@@ -1016,7 +1016,7 @@ function dateTrunk(o) {
   const ringAt = (k) => {
     const t = k / rings;
     // 上へ行くほど細く、そして少しだけ反る。まっすぐの柱は電柱に見える
-    const rr = (r0 + (r1 - r0) * t) * (k % 2 ? 1.0 : 0.86);
+    const rr = (r0 + (r1 - r0) * t) * (k % 2 ? 1.0 : 0.895);
     const cx = lean * t * t;
     const cy = h * t;
     const off = (k % 2) * step * 0.5;
@@ -1202,7 +1202,13 @@ function datePalm(o) {
       FC.push(...f.C);
     }
   }
-  // 葉ぜんたいの上下グラデーション。ここで初めて色みまで振る(leafTint)
+  /* 葉ぜんたいの上下グラデーション。ここで初めて色みまで振る(leafTint)。
+   *
+   * **下端は広葉樹(LEAF_BOTTOM=0.58)ほど落とさない。** あちらは葉が詰まった
+   * 丸い塊なので、底が暗いのが正しい。ヤシの樹冠は薄くて空いていて、
+   * 垂れた葉の裏まで空の光が回る。0.58 のまま焼いたら、垂れた葉ぜんぶが
+   * 沈んで、緑ではなく灰色の傘に見えた。 */
+  const PALM_BOTTOM = 0.78;
   {
     let mn = Infinity, mx = -Infinity;
     for (let v = 1; v < FP.length; v += 3) { if (FP[v] < mn) mn = FP[v]; if (FP[v] > mx) mx = FP[v]; }
@@ -1211,7 +1217,7 @@ function datePalm(o) {
     for (let i = 0; i < FC.length / 3; i++) {
       const t = (FP[i * 3 + 1] - mn) / span;
       const e = t * t * (3 - 2 * t);
-      leafTint(FC[i * 3] * (LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * e), col, i);
+      leafTint(FC[i * 3] * (PALM_BOTTOM + (LEAF_TOP - PALM_BOTTOM) * e), col, i);
     }
     const fg = new THREE.BufferGeometry();
     fg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(FP), 3));
