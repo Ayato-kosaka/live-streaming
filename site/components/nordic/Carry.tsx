@@ -114,7 +114,8 @@ export function Tie({ leg, needsFare, cost, before, reach }: TieProps) {
   if (tied) {
     say = (
       <>
-        <b>つながりました。</b>足代も道しるべも、そろっています
+        <b>つながりました。</b>
+        {needsFare ? "足代も道しるべも、そろっています" : "お金の要らない区間に、道しるべが立っています"}
       </>
     );
   } else if (fareDone) {
