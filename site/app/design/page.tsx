@@ -115,8 +115,8 @@ const cell: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: 5,
-  padding: "12px 4px 9px",
+  gap: 4,
+  padding: "8px 5px 8px",
   borderRight: `1px solid ${P.rule}55`,
   borderBottom: `1px solid ${P.rule}55`,
 };
@@ -130,15 +130,22 @@ const label: React.CSSProperties = {
   opacity: 0.6,
 };
 
-/** 小さくしたときの見え方を見る帯。明暗2本で1組にする。 */
+/**
+ * 見え方を見る帯。
+ *
+ * 1つの絵につき **大小2サイズ × 明暗2つの下地** の4通りを出す。
+ * 大きいほうだけ見ていると、小さくしたときに潰れる絵を見落とす。
+ * 明るいほうだけ見ていると、白い絵が消えるのを見落とす。逆も同じ。
+ */
 const strip = (bg: string, ink: string): React.CSSProperties => ({
   display: "flex",
   alignItems: "flex-end",
   justifyContent: "center",
-  gap: 6,
-  height: 26,
-  padding: "0 8px",
-  borderRadius: 6,
+  gap: 8,
+  height: 52,
+  width: "100%",
+  padding: "0 6px 4px",
+  borderRadius: 7,
   background: bg,
   color: ink,
 });
@@ -163,14 +170,13 @@ export default function DesignPage() {
             <div style={grid}>
               {g.names.map((n) => (
                 <div key={n} style={cell}>
-                  <Icon name={n as IconName} size={56} />
                   <span style={day}>
+                    <Icon name={n as IconName} size={40} />
                     <Icon name={n as IconName} size={16} />
-                    <Icon name={n as IconName} size={22} />
                   </span>
                   <span style={night}>
+                    <Icon name={n as IconName} size={40} />
                     <Icon name={n as IconName} size={16} />
-                    <Icon name={n as IconName} size={22} />
                   </span>
                   <i style={label}>{n}</i>
                 </div>
