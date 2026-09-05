@@ -877,7 +877,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
              行き先が1つしかないもの（旅のしおり・掲示板）だけ、そのまま外へ出る */
           const enter = () => {
             dismissHint();
-            if (sp.items || sp.facts) setSheet(sp.id);
+            if (sp.items || sp.facts || sp.shorts) setSheet(sp.id);
             else if (sp.href) router.push(sp.href);
           };
           return (

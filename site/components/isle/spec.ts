@@ -27,6 +27,7 @@ import { chapterDays, type Chapter } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
+import { shortsOf, type Short } from "@/content/shorts";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 
 export type IsleItem = {
@@ -61,6 +62,8 @@ export type IslePlaceSpec = {
   /** 板の中身 */
   items?: IsleItem[];
   facts?: IsleFact[];
+  /** ショート動画。サムネイルの格子で出る（`components/isle/IsleSheet.tsx`） */
+  shorts?: Short[];
   /** 板の中の1行 */
   note?: string;
   /** 「ぜんぶ見る」の行き先 */
@@ -169,6 +172,29 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
     });
   }
 
+  /* ショート動画。**配信とは別の建物にする。**
+     やぐらの中は「新しい3本＋全部見る」で、押すと島の外（YouTube と `/island/<章>/streams`）へ
+     出ていく作りになっている。そこにサムネイルの格子を足すと、1枚の板に
+     出口が3種類できて、何を見ている板なのか分からなくなる。
+
+     **埋め込まない。** 58本のうち31本が1つの章にあるので、iframe を並べると
+     板を開いた瞬間にプレイヤーが31個立ち上がる。押したら YouTube へ行く絵にする。 */
+  const shorts = shortsOf(c.slug);
+  if (shorts.length) {
+    places.push({
+      id: "shorts",
+      label: "ショート動画",
+      blurb: `${shorts.length}本`,
+      /* 板に色紙が何枚も貼ってある絵。**中に出るものと同じ形**にしてある。
+         北欧の島の「この旅の掲示板」も同じ絵だが、あちらは別の島で、
+         札に出る名前が違う（`docs/island-design.md` 6章「札は答えだけを言う」） */
+      icon: "signboard",
+      size: 58,
+      note: `${ym(shorts[0].date)}から${ym(shorts[shorts.length - 1].date)}まで、${shorts.length}本。押すと YouTube で開きます。`,
+      shorts,
+    });
+  }
+
   if (legends.length) {
     places.push({
       id: "legends",
@@ -235,7 +261,13 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
     theme: art.theme,
     /* **どの島も最大6つ**（`docs/island-atlas.md` 4章）。
        あふれたら削るのは中身のほうで、船着き場は必ず残す。
-       島から出る道が消えると、島が袋小路になる */
+       島から出る道が消えると、島が袋小路になる。
+
+       **あふれるのはヨーロッパだけ**（6つ建つ）。押し出されるのは最後の
+       「この島のこと」（石碑）で、これは順番の事故ではなく選んだ結果。
+       石碑の4つの数字のうち、日数・本数・国数は同じ島の他の札にも出ているし、
+       人数を含めた3つは、ここへ来る前に通る `/atlas` の島の札に出ている
+       （`components/chain/Chain.tsx`）。ショート31本は、どこにも無い。 */
     places: [...places.slice(0, 5), pier(prev, next)],
     folk: st?.residents ?? [],
     prev,

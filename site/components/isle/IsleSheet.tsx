@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/IconCore";
+import { shortHref, shortThumb } from "@/content/shorts";
 import type { IslePlaceSpec } from "./spec";
 
 /**
@@ -63,6 +64,37 @@ export default function IsleSheet({
                   {f.unit && <span>{f.unit}</span>}
                 </b>
                 <i>{f.cap}</i>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* ショート動画。**埋め込まない。**
+            プレイヤーを31個並べると、板を開いた瞬間に外へ31本つなぎにいく。
+            サムネイル1枚は 15KB で、しかも見えるまで取りにいかない（`loading="lazy"`）。
+
+            **絵は縦。** YouTube が配っている 480×360 は、縦の絵を中心に置いて
+            まわりをぼかしで埋めたもの。縦の枠に `object-fit: cover` で入れると、
+            ぼかしの左右が落ちて**元の縦の絵だけ**が残る。
+
+            題名は絵の中に焼かれているので、外では2行で止める。
+            読み上げには `alt` で全文が渡る。 */}
+        {place.shorts && (
+          <ul className="isle-shots">
+            {place.shorts.map((s) => (
+              <li key={s.id}>
+                <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={shortThumb(s.id)}
+                    alt={s.title}
+                    width={480}
+                    height={360}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <b>{s.title}</b>
+                  <i>{s.city ? `${s.city}・${s.date}` : s.date}</i>
+                </a>
               </li>
             ))}
           </ul>
