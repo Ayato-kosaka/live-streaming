@@ -34,8 +34,18 @@ export type { Resident };
 const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやとの背丈。島の主人公なので、住人より必ず大きい。 */
 const AYATO_H = 60;
-/** 住人の背丈。あやとより小さく置く。主役はあやと。 */
-const RESIDENT_H = 46;
+/**
+ * 住人の背丈。あやとより小さく置く。主役はあやと。
+ *
+ * 46 から 52 に上げた。本物のあつ森は、住人が画面の高さの **15〜34%**
+ * （`/tmp/acref/` の 1280×720 の実測。手前の1人で 32〜34%、奥に立っている人で 15〜24%）。
+ * こちらは PC で 11.9%、スマホで（横幅に対して）13.6% だった。
+ * カメラを寄せて近づける手もあるが、それをやると入口6つが1画面に入らなくなる
+ * （4周目レビュー1章と6章は、この1つの数字で引っぱり合っている）。
+ * **絵のほうを大きくすれば、寄りを変えずに近づける。** 小屋の背が 78 なので、
+ * 52 は「小屋の3分の2の背丈の人」。あやと（60）より小さいままにしてある。
+ */
+const RESIDENT_H = 52;
 
 /**
  * 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場。
@@ -710,6 +720,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     let lastK = 0;
     /** 前のフレームであやとに書いた transform。同じなら書かない */
     let lastMe = "";
+    /** 住人ごとの、前に書いた transform。同じなら書かない */
+    const lastPose: string[] = [];
     /** 住人を最後に動かしてから貯めた時間(ms)。放置中は 24fps に落とす */
     let castWait = 0;
     /** 前のフレームでカメラが動いたか。動いていれば住人も 60fps で動かす */
@@ -925,10 +937,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           // これは視聴者さんが投げ銭で作った絵なので、勝手に裏返さない。
           //
           // 立ち話が向かい合って見えるかどうかは、位置と間で表す。
-          g.setAttribute(
-            "transform",
-            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
-          );
+          /* 同じ姿勢なら書かない。**書いた要素は、動いていなくても描き直される。**
+             12人のうち、立ち止まって遠くを見ている人（gaze）は姿勢が変わらないし、
+             ゆっくり揺れている人も、0.1度きざみでは何フレームも同じ値になる。 */
+          const tf = `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`;
+          if (tf !== lastPose[i]) {
+            lastPose[i] = tf;
+            g.setAttribute("transform", tf);
+          }
         }
         const w = whoRefs.current[i];
         if (w) {
@@ -1119,11 +1135,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         setOpenSpot(best);
       }
 
-      // --- 奥行きの並び。変わったときだけ描き直す ---
-      const sig = villagers.map((v) => Math.round(v.y / 24)).join(",") + "|" + Math.round(me.y / 24);
-      if (sig !== lastOrder) {
-        lastOrder = sig;
-        setOrder(sig);
+      /* --- 奥行きの並び。変わったときだけ描き直す ---
+         誰も動いていないフレームでは並びも変わらない。それでも文字列を作ると、
+         1秒に60回ぶんのゴミを出すだけになる。動いたフレームだけ数える。 */
+      if (stepCast || moving) {
+        const sig = villagers.map((v) => Math.round(v.y / 24)).join(",") + "|" + Math.round(me.y / 24);
+        if (sig !== lastOrder) {
+          lastOrder = sig;
+          setOrder(sig);
+        }
       }
 
       camBusy = camMoved;
