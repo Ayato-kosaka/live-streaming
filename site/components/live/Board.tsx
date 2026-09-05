@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
+import NoteBoards from "./NoteBoards";
 import { EmptyBoard, Pin, Stone } from "./art";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
@@ -329,6 +330,11 @@ export default function Board() {
           </Link>
         </div>
       </section>
+
+      {/* 島じゅうに散らばった付箋を、貼り先ごとにまとめて読む。
+          この板に貼られた企画は下にそのまま並ぶので、ここには集めない
+          （同じものが1つの面に2回出る）。 */}
+      <NoteBoards ideas={ideas} />
 
       <section className="panel paper">
         {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、

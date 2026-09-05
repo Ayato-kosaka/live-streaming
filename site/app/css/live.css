@@ -990,3 +990,91 @@
 }
 .me-prev-tag img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 .me-prev-none { align-self: center; font-size: var(--fs-note); font-weight: 800; color: #4a6b52; }
+
+/* =========================================================
+   10. 付箋のボード（掲示板に集約）
+   島じゅうに散らばった付箋を、貼り先ごとの棚にして1か所で読む。
+   紙の面の上なので、押せる札（棚の選び札・行き先）だけが板。
+   付箋そのものは 5章の .nx-notes をそのまま使う。1枚も足していない。
+   ========================================================= */
+.nb-group { display: grid; gap: var(--sp-2); margin-top: var(--sp-4); }
+/* 棚の束ねかた。読ませる字なので --ink-3 は使わない
+   （`docs/island-world.md` 7.1） */
+.nb-glabel {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+.nb-tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* 棚の選び札。押せるので板・厚み4px・48px（`docs/island-world.md` 3.4） */
+.nb-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.nb-tab > b { font-size: var(--fs-note); font-weight: 900; }
+/* 枚数。何枚来ているかは言うが、これで並べ替えはしない
+   （`docs/island-play.md` の「順位表を作らない」） */
+.nb-tab > i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--chip-ink);
+  background: var(--chip);
+  border-radius: var(--r-pill);
+  padding: 2px var(--sp-2);
+}
+/* いま選んでいる棚。塗りは変えず、朱の細枠だけ（`docs/island-world.md` 3.2） */
+.nb-tab.is-on {
+  border-color: var(--pick);
+  box-shadow: var(--pg-lit), 0 0 0 2px var(--pick),
+    0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+}
+.nb-tab:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+
+.nb-board { margin-top: var(--sp-5); }
+.nb-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
+.nb-head > h3 { margin: 0; }
+/* 貼ってある場所へ。押せるので板・厚み5px・48px */
+.nb-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin-left: auto;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+}
+.nb-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+/* 誰が書いたか。付箋の中で、字より一段下げる */
+.nb-by {
+  display: block;
+  margin-top: var(--sp-1);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: #6b5530;
+}
+.nb-more {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
