@@ -174,7 +174,7 @@
 .zk-pick::after { content: ""; position: absolute; inset: -4px 0; }
 .zk-pick em { font-style: normal; font-size: 10.5px; font-weight: 900; opacity: 0.62; }
 .zk-pick .flag { flex: none; border-radius: 2px; }
-.zk-picks { display: flex; flex-wrap: wrap; gap: 7px; }
+.zk-picks { display: flex; flex-wrap: wrap; gap: 8px; }
 /* 何の絞り込みかを言う小さい見出し。行の先頭に置く */
 .zk-picks-t {
   flex: none;

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { GUIDE } from "@/content/voice";
 import { LEGENDS } from "@/content/legends";
 import Icon from "@/components/ui/Icon";
 import { Fig } from "@/components/streams/Vid";
@@ -20,14 +19,18 @@ export default function LegendsPage() {
   /** 残っている配信の本数。伝説がどれだけの日数でできているかの目安。 */
   const videos = LEGENDS.reduce((n, l) => n + l.streams.length, 0);
   const oldest = [...LEGENDS].sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+  /** 「この12日間を読む」の12日。字で埋め込むと、いちばんの1つが入れ替わったとき嘘になる。 */
+  const topDays = top.facts?.find((f) => f.unit?.includes("日"));
 
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "伝説の丘" }]}>
+      {/* カモメは見出しの言い直しをしない（`docs/island-design.md` 5章）。
+          「企画会議から生まれる」は下の節で言うので、ここは読みかたの案内だけにする。 */}
       <PageHead
         icon="hall-museum"
         title="伝説の丘"
         lead="いまでも話に出てくる、大きい企画と大きい日。だいたいは企画会議から生まれています。"
-        say={GUIDE.legends}
+        say="数字だけ追っていっても分かるよ。気になったのを押すと、その日ぜんぶが出てくる。"
       />
 
       <Sheet>
@@ -63,7 +66,7 @@ export default function LegendsPage() {
               </div>
             )}
             <span className="zk-open">
-              この12日間を読む
+              {topDays ? `この${topDays.n}${topDays.unit}を読む` : "この企画を読む"}
               <Icon name="right" size={14} />
             </span>
           </Link>

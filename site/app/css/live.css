@@ -271,7 +271,7 @@
 }
 
 /* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
-.nx-seeds { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.nx-seeds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .nx-seeds > span { font-size: 11px; font-weight: 900; color: var(--ink-3); align-self: center; }
 .nx-seed {
   padding: 6px 13px;

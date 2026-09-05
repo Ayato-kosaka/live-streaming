@@ -22,59 +22,40 @@
 
 .hchap {
   position: relative;
-  background: var(--chap-bg, transparent);
   padding: 30px 16px 34px;
   margin: 0 0 6px;
 }
 
-/* 章の地は要素そのものに敷き、上端だけ角を丸めて前の章にかぶせる。
-   丸めた角の外側には下地（海の紺）が覗くので、::before で前の章の色を敷いて埋める。
-   z-index: -1 なので、親の背景よりさらに奥に入る。 */
-.hchap::before {
+/* 章の地は持たない。
+   4色のパステルを敷いていたが、その色は何も指していなかった。同じサイトの中で
+   配信の型5色が意味を持っているので、片方が意味を持つともう片方も意味があるように
+   見えて、読む人が探してしまう（docs/island-world.md 7.2）。
+
+   トップページは島そのものなので、島の下も板の地（海）のまま。
+   章の切り替わりは色ではなく、打ち寄せる泡の線と、吊るした看板でやる。 */
+
+/* 章の境目。前の章との間に、波打ち際の泡を1本引く。
+   色を変えずに「別の浜に来た」と分からせるのは、これがいちばん安い。 */
+.hchap + .hchap {
+  padding-top: 46px;
+}
+.hchap + .hchap::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: var(--chap-prev, transparent);
-  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 14px;
+  /* 泡は下に向かって薄れる。まっすぐな線を引くと水平線に見えてしまう */
+  background:
+    radial-gradient(14px 10px at 12% 0, var(--foam) 60%, transparent 61%),
+    radial-gradient(20px 12px at 34% 0, var(--foam) 60%, transparent 61%),
+    radial-gradient(16px 9px at 58% 0, var(--foam) 60%, transparent 61%),
+    radial-gradient(22px 12px at 82% 0, var(--foam) 60%, transparent 61%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, transparent 100%);
+  opacity: 0.6;
+  pointer-events: none;
 }
-
-.hchap[data-chap="next"] {
-  --chap-prev: #ffffff;
-  --chap-bg: linear-gradient(180deg, #fff4d4 0%, #ffe9b8 100%);
-  --chap-ink: #7a5410;
-  --chap-sign: #f2b855;
-  --chap-sign-lo: #cf8f30;
-}
-.hchap[data-chap="now"] {
-  --chap-prev: #ffe9b8;
-  --chap-bg: linear-gradient(180deg, #e8f8e0 0%, #d7f1cd 100%);
-  --chap-ink: #3d6b2c;
-  --chap-sign: #9fd76c;
-  --chap-sign-lo: #6fae43;
-}
-.hchap[data-chap="past"] {
-  --chap-prev: #d7f1cd;
-  --chap-bg: linear-gradient(180deg, #ddf3fb 0%, #c6eaf8 100%);
-  --chap-ink: #245f7d;
-  --chap-sign: #74cbe8;
-  --chap-sign-lo: #3e9dbf;
-}
-.hchap[data-chap="watch"] {
-  --chap-prev: #c6eaf8;
-  --chap-bg: linear-gradient(180deg, #ffe6ea 0%, #ffd6de 100%);
-  --chap-ink: #94334c;
-  --chap-sign: #f792a7;
-  --chap-sign-lo: #d75f7c;
-}
-
-/* 章の境目。砂浜の波打ち際のように、上辺を丸くえぐる */
-.hchap + .hchap {
-  margin-top: -18px;
-  border-top-left-radius: 34px;
-  border-top-right-radius: 34px;
-  padding-top: 40px;
-}
-
 
 .hchap-head {
   text-align: center;
@@ -86,9 +67,11 @@
   font-size: 26px;
   line-height: 1.32;
   letter-spacing: var(--ls-head);
-  color: var(--chap-ink);
-  /* 白い縁取りで、地の色の上でも読めるようにする。線ではなく影を4方向に置く */
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.75);
+  /* 海の上に載るので、白の中身に紺のふち。縁取りの白い字は板の上だけに残す決まり */
+  color: #ffffff;
+  text-shadow:
+    0 2px 0 rgba(9, 44, 82, 0.55),
+    0 0 10px rgba(9, 44, 82, 0.35);
 }
 
 .hchap-head > p {
@@ -96,7 +79,8 @@
   max-width: 30em;
   font-size: 14px;
   line-height: 1.75;
-  color: var(--ink-2);
+  color: #eaf6ff;
+  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.45);
 }
 
 /* ───────── 吊るした木の看板 ───────── */
@@ -118,13 +102,13 @@
   fill: none;
 }
 .hsign-lip {
-  fill: var(--chap-sign-lo);
+  fill: var(--frame-deep);
 }
 .hsign-face {
-  fill: var(--chap-sign);
+  fill: var(--frame);
 }
 .hsign-grain {
-  stroke: var(--chap-sign-lo);
+  stroke: var(--frame-deep);
   stroke-width: 2;
   stroke-linecap: round;
   fill: none;
@@ -135,7 +119,7 @@
   opacity: 0.34;
 }
 .hsign-nail {
-  fill: var(--chap-sign-lo);
+  fill: var(--frame-deep);
 }
 /* 看板の文字。SVG の中に置くと字が滲むので、上に重ねる */
 .hsign em {
@@ -286,7 +270,8 @@
   font-size: 15px;
   font-weight: 700;
   line-height: 1.7;
-  color: var(--chap-ink);
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(9, 44, 82, 0.5);
 }
 
 /* ───────── 横に流して見る帯 ───────── */
@@ -305,7 +290,8 @@
   margin: 0;
   font-size: 15px;
   letter-spacing: var(--ls-head);
-  color: var(--chap-ink);
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(9, 44, 82, 0.5);
 }
 .hstrip-more {
   display: inline-flex;
@@ -314,7 +300,8 @@
   flex: none;
   font-size: 12px;
   font-weight: 700;
-  color: var(--ink-2);
+  color: #dcefff;
+  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.45);
   text-decoration: none;
 }
 

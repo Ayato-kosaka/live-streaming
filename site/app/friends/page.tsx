@@ -35,7 +35,7 @@ export default function FriendsPage() {
         mark={<FriendsMark />}
         title="愉快な仲間達"
         lead="毎晩22時に集まってくる人たち。名前は出しませんが、ちゃんとここにいます。"
-        say="ここに並んでるのは、みんな本人だよ。自分で作った絵が、そのまま島を歩いてる。"
+        say="自分のキャラクターも作れるよ。作った絵は、そのまま島を歩くんだ。"
       />
 
       <div className="pap-mat">

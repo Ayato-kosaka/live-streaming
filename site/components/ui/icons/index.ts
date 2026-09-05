@@ -20,6 +20,7 @@ export type IconName =
   // 操作
   | "right" | "left" | "up" | "chevron" | "close" | "plus" | "minus" | "menu"
   | "check" | "external" | "download" | "search" | "share" | "play"
+  | "pause" | "dots" | "filter" | "sort" | "info" | "refresh"
   // ブランド
   | "appstore" | "googleplay" | "instagram" | "youtube"
   // 島の場所

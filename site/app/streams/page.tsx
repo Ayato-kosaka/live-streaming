@@ -15,7 +15,7 @@ import { Vid } from "@/components/streams/Vid";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
-  title: "どんな配信をしてるか",
+  title: "配信やぐら",
   description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
 };
 
@@ -37,10 +37,12 @@ export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら" }]}>
+      {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
+          「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead
         icon="tower-studio"
-        title="どんな配信をしてるか"
-        lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つに分かれています。"
+        title="配信やぐら"
+        lead="どんな配信をしてるか。毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
         say={GUIDE.streams}
       />
 

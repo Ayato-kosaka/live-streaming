@@ -99,4 +99,54 @@ export const nav: Record<string, Draw> = {
       fill="currentColor"
     />
   ),
+
+  pause: () => (
+    <g fill="currentColor">
+      <rect x="16" y="13" width="11" height="38" rx="5.5" />
+      <rect x="37" y="13" width="11" height="38" rx="5.5" />
+    </g>
+  ),
+
+  /** もっと見る。行の右端に置く3つの点。 */
+  dots: () => (
+    <g fill="currentColor">
+      <circle cx="14" cy="32" r="5.4" />
+      <circle cx="32" cy="32" r="5.4" />
+      <circle cx="50" cy="32" r="5.4" />
+    </g>
+  ),
+
+  /** 絞り込み。じょうごの形。角は全部丸める。 */
+  filter: () => (
+    <path
+      d="M9 12h46a3 3 0 0 1 2.3 4.9L40 37.4V52a3 3 0 0 1-4.3 2.7l-8-4A3 3 0 0 1 26 48V37.4L6.7 16.9A3 3 0 0 1 9 12z"
+      fill="currentColor"
+    />
+  ),
+
+  /** 並べ替え。長さの違う3本と、下向きの矢。 */
+  sort: () => (
+    <g fill="currentColor">
+      <rect x="6" y="14" width="30" height="8" rx="4" />
+      <rect x="6" y="28" width="22" height="8" rx="4" />
+      <rect x="6" y="42" width="14" height="8" rx="4" />
+      <path d="M48 12a4 4 0 0 1 4 4v24.6l4.2-4.2a4 4 0 1 1 5.6 5.6l-11 11a4 4 0 0 1-5.6 0l-11-11a4 4 0 1 1 5.6-5.6l4.2 4.2V16a4 4 0 0 1 4-4z" />
+    </g>
+  ),
+
+  /** これは何か。輪と点と棒で作る。字を置かない。 */
+  info: () => (
+    <g fill="currentColor">
+      <path d="M32 4a28 28 0 1 1 0 56 28 28 0 0 1 0-56zm0 8a20 20 0 1 0 0 40 20 20 0 0 0 0-40z" />
+      <circle cx="32" cy="21" r="4.2" />
+      <rect x="27.8" y="28" width="8.4" height="20" rx="4.2" />
+    </g>
+  ),
+
+  /** もう一度。輪の一部を欠いて、そこに矢じりを付ける。 */
+  refresh: () => (
+    <g fill="currentColor">
+      <path d="M32 8a24 24 0 1 1-22.6 32 4.6 4.6 0 0 1 8.7-3A14.8 14.8 0 1 0 32 17.2h-1.4l3.6 3.6a4.4 4.4 0 0 1-6.2 6.2l-9.4-9.4a4.4 4.4 0 0 1 0-6.2l9.4-9.4a4.4 4.4 0 0 1 6.2 6.2L30.6 12H32z" />
+    </g>
+  ),
 };

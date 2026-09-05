@@ -141,6 +141,9 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
   return b;
 }
 
+/** 低木の地の色。草より一段暗くないと、地面に沈んで見えなくなる。 */
+const BUSH_DARK = "color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%)";
+
 /** 飾りを描く。色は島のテーマ変数に付いていくので、北欧に行っても浮かない。 */
 function DecoLayer({ p, shade }: { p: DecoPaths; shade: string }) {
   return (
@@ -159,9 +162,6 @@ function DecoLayer({ p, shade }: { p: DecoPaths; shade: string }) {
     </g>
   );
 }
-
-/** 低木の地の色。草より一段暗くないと、地面に沈んで見えなくなる。 */
-const BUSH_DARK = "color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%)";
 
 /* ---- 島の形 -------------------------------------------------------------
    まん丸に近い輪郭は「島」に見えない。実際の島には、海へ突き出した岬と、

@@ -310,6 +310,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     let last = performance.now();
     let lastOrder = "";
     let lastOpen: SpotId | null = null;
+    /** 前のフレームの viewBox。同じなら島を描き直さない */
+    let lastVb = "";
 
     const step = (t: number) => {
       const dt = Math.min(48, t - last);
@@ -385,6 +387,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         cam.y += (want.y - cam.y) * ease;
         const far = cam.span > span * 1.25;
         cam.span += (span - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
+        // 追いつく手前で止める。近づくほど遅くなる式なので、放っておくと
+        // 目に見えない差を永遠に詰め続けて、そのあいだ島を描き直し続ける。
+        if (Math.abs(want.x - cam.x) < 0.05) cam.x = want.x;
+        if (Math.abs(want.y - cam.y) < 0.05) cam.y = want.y;
+        if (Math.abs(span - cam.span) < 0.05) cam.span = span;
       }
 
       const vbW = cam.span;
@@ -392,8 +399,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const vbX = cam.x - vbW / 2;
       const vbY = cam.y - vbH / 2;
       const vb = `${vbX.toFixed(1)} ${vbY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}`;
-      sceneRef.current?.setAttribute("viewBox", vb);
-      lampRef.current?.setAttribute("viewBox", vb);
+      /* viewBox を書き換えると、島の SVG（画像152枚）がまるごと描き直される。
+         止まっているのに書き直すと、何もしていない画面でずっと GPU が回る。
+         文字にしたときに同じなら、画面には出ない差なので触らない。 */
+      const camMoved = vb !== lastVb;
+      if (camMoved) {
+        lastVb = vb;
+        sceneRef.current?.setAttribute("viewBox", vb);
+        lampRef.current?.setAttribute("viewBox", vb);
+      }
       const sx = (wx: number) => ((wx - vbX) / vbW) * b.w;
       const sy = (wy: number) => ((wy - vbY) / vbH) * b.h;
 
@@ -443,20 +457,24 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           }
         }
       }
-      for (let i = 0; i < SPOTS.length; i++) {
-        const el = markRefs.current[i];
-        if (!el) continue;
-        const sp = SPOTS[i];
-        el.style.transform = `translate(${sx(sp.x).toFixed(1)}px, ${sy(sp.y).toFixed(1)}px)`;
-        // 絵の大きさは倍率で変わるので、毎フレーム測り直す。
-        // 当たり判定は指で押せる最小(48px)まで広げるが、
-        // 札の高さは絵の実寸を使う。最小に合わせると、引きで札が建物から浮いてしまう。
+      // 入口は島に建っていて動かない。画面の中での位置が変わるのはカメラが動いたときだけ。
+      // カメラが止まっているあいだに書き直すと、6つぶんの計算し直しがただ増える。
+      if (camMoved) {
         const k = b.w / vbW;
-        const artW = spotBox(sp).w * k;
-        const artH = sp.size * k;
-        el.style.setProperty("--hw", `${Math.max(TAP_MIN, artW).toFixed(1)}px`);
-        el.style.setProperty("--hh", `${Math.max(TAP_MIN, artH).toFixed(1)}px`);
-        el.style.setProperty("--mh", `${Math.max(12, artH).toFixed(1)}px`);
+        for (let i = 0; i < SPOTS.length; i++) {
+          const el = markRefs.current[i];
+          if (!el) continue;
+          const sp = SPOTS[i];
+          el.style.transform = `translate(${sx(sp.x).toFixed(1)}px, ${sy(sp.y).toFixed(1)}px)`;
+          // 絵の大きさは倍率で変わるので、測り直す。
+          // 当たり判定は指で押せる最小(48px)まで広げるが、
+          // 札の高さは絵の実寸を使う。最小に合わせると、引きで札が建物から浮いてしまう。
+          const artW = spotBox(sp).w * k;
+          const artH = sp.size * k;
+          el.style.setProperty("--hw", `${Math.max(TAP_MIN, artW).toFixed(1)}px`);
+          el.style.setProperty("--hh", `${Math.max(TAP_MIN, artH).toFixed(1)}px`);
+          el.style.setProperty("--mh", `${Math.max(12, artH).toFixed(1)}px`);
+        }
       }
       if (best !== lastOpen) {
         lastOpen = best;
@@ -568,16 +586,31 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     target.current = { x: wx, y: wy };
   };
 
+  /* 景色の絵は、島に置いたら二度と動かない。
+     だから要素そのものを1度だけ作って使い回す。並び替えのたびに作り直すと、
+     住人が木を1本またぐたびに 152 枚のスプライトを React が全部見に行くことになる。
+     同じ要素を渡せば、React はその手前で止まって中まで降りてこない。 */
+  const sceneArt = useMemo(
+    () =>
+      PROPS.map((p, i) => ({
+        kind: "prop" as const,
+        y: p.y,
+        key: `o${i}`,
+        p,
+        art: <Sprite key={`o${i}`} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} sway={p.sway} />,
+      })),
+    [],
+  );
+
   /* 景色・住人・あやとを、足元の y で並べ替えてから描く。
      こうしないと木の手前に立つべき住人が木の裏に隠れてしまう。
      order が変わったときだけ組み直す。 */
   const layers = useMemo(() => {
     const cast = villagers.map((v, i) => ({ kind: "villager" as const, y: v.y, key: `v${i}`, i, v }));
     const me = { kind: "ayato" as const, y: avatar.current.y, key: "me" };
-    const scene = PROPS.map((p, i) => ({ kind: "prop" as const, y: p.y, key: `o${i}`, p }));
-    return [...scene, ...cast, me].sort((a, b) => a.y - b.y);
+    return [...sceneArt, ...cast, me].sort((a, b) => a.y - b.y);
     // order は「並びが変わった」ことだけを伝える合図
-  }, [order, villagers]);
+  }, [order, villagers, sceneArt]);
 
   const cam = camRef.current;
   const vbW0 = cam.span;
@@ -597,7 +630,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         {layers.map((l) => {
           if (l.kind === "prop") {
             const p: Item = l.p;
-            const art = <Sprite key={l.key} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} sway={p.sway} />;
+            const art = l.art;
             if (!p.spot) return art;
             // 入口の建物は、札が開いているときだけ軽く弾む
             return (
