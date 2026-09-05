@@ -214,7 +214,7 @@
    **1日3時間しか出ない板が、いちばん読めなかった。** 濃いほうから始めて
    4.79〜7.22 : 1 にする。赤いことは変えていないので、出たときに分かるのは同じ。 */
 .today[data-kind="live"] .today-tab {
-  background: linear-gradient(var(--accent-deep) 0 46%, #a8083a);
+  background: linear-gradient(#c4123f 0 46%, #96072e);
   color: var(--paper);
 }
 /* 薄めない。0.85 に落とすと、濃い赤の上でも 3.77 : 1 まで下がる */

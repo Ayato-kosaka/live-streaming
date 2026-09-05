@@ -342,7 +342,7 @@
   color: var(--paper);
   /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
      濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
-  background: linear-gradient(var(--accent-deep), #a8083a);
+  background: linear-gradient(#c4123f, #96072e);
   border: 2.5px solid var(--paper);
   border-radius: 999px;
   padding: 2px 8px;
@@ -717,14 +717,12 @@
   .surf-front { opacity: 0.6; }
 }
 
-.smoke circle { animation: smokeUp 4.2s ease-out infinite; transform-origin: center; }
-.smoke circle:nth-child(2) { animation-delay: 1.4s; }
-.smoke circle:nth-child(3) { animation-delay: 2.8s; }
-@keyframes smokeUp {
-  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
-  25% { opacity: 0.55; }
-  100% { opacity: 0; transform: translateY(-34px) scale(1.5); }
-}
+/* ここにあった .smoke / @keyframes smokeUp を消した。
+   **誰も使っていなかったうえ、使えない状態だった。**
+   `transform-box: fill-box` が無いので、SVG の中では原点が viewBox の (0,0) に
+   なり、scale(0.5) を掛けた瞬間に煙が島の反対側へ飛ぶ（`CLAUDE.md`）。
+   配信中のやぐらに煙を出そうとして気づいた。やぐらは石造りで煙突が無いので、
+   屋根から煙が出ると「人がいる」ではなく「燃えている」に見える。煙は使わない。 */
 
 .flame { animation: flicker 0.9s ease-in-out infinite alternate; transform-origin: 880px 560px; }
 @keyframes flicker { from { transform: scaleY(0.94) scaleX(1.03); } to { transform: scaleY(1.06) scaleX(0.97); } }
@@ -934,7 +932,7 @@
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
   /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
      濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
-  background: linear-gradient(var(--accent-deep), #a8083a);
+  background: linear-gradient(#c4123f, #96072e);
   color: var(--paper);
   transform: rotate(-6deg);
 }
@@ -966,6 +964,14 @@
 .stage-view:active {
   transform: translateY(4px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+/* スマホより広い画面では、左上に看板ロゴが出ている。同じ隅を取り合うと
+   ロゴの上にボタンが乗る。左下へ下ろす。島の下は空いている。 */
+@media (min-width: 640px) {
+  .stage-view {
+    top: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 /* 話しているあいだは、島の上のUIと同じように引っ込める。
@@ -1064,7 +1070,3 @@
    ========================================================= */
 .live-art { display: none; }
 .stage[data-live="on"] .live-art { display: block; }
-@media (prefers-reduced-motion: reduce) {
-  /* 煙は止める。灯りは動かないので、そのまま点いている */
-  .stage[data-live="on"] .smoke circle { animation: none; opacity: 0.28; }
-}

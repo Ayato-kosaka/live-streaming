@@ -1069,23 +1069,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             灯りは**景色**であって、押せる合図ではない（`island-world.md` 3.4）。
             建物の押しかたは何も変わらない。 */}
         <g className="live-art" aria-hidden>
-          {/* 窓からもれる光。ぼかしの代わりに、薄い楕円を3枚重ねる。
-              filter を使うと画面ぜんぶを掛け直すことになる（tokens.css の注） */}
-          <ellipse cx={518} cy={528} rx={62} ry={40} fill="#ffd98a" opacity={0.16} />
-          <ellipse cx={518} cy={528} rx={40} ry={26} fill="#ffe6a8" opacity={0.18} />
-          <ellipse cx={503} cy={578} rx={34} ry={20} fill="#ffd98a" opacity={0.16} />
-          {/* 灯のついた窓。上のふたつと、下の戸 */}
+          {/* 灯のついた窓。上のふたつと、下の戸。
+              **ぼかした光の輪は置かない。** 一度置いて撮ってみたら、草の上に
+              半透明の円盤が乗っているようにしか見えなかった（島は板なので、
+              にじんだ光がそもそも世界に無い）。窓が明るいだけで「人がいる」は伝わる。 */}
           <path d="M496.7 518.7 L504.8 523.3 L504.8 536.5 L496.7 531.9 Z" fill="var(--window)" />
           <path d="M532.2 523.3 L540.3 518.7 L540.3 531.9 L532.2 536.5 Z" fill="var(--window)" />
           <path d="M499.2 568.5 L506.8 573.1 L506.8 586.8 L499.2 582.2 Z" fill="var(--window)" />
-          {/* 戸から地面へこぼれる光。人がいる、が足元にも出る */}
+          {/* 戸から地面へこぼれる光。輪ではなく、戸の形から伸びる台形。
+              地面に落ちる光は本当にこの形をしているので、円盤には見えない */}
           <path d="M497 588 L509 588 L520 606 L492 606 Z" fill="#ffe6a8" opacity={0.22} />
-          {/* 煙。屋根の向こうから、ゆっくり上がる */}
-          <g className="smoke" fill="#fffdf6" opacity={0.5}>
-            <circle cx={526} cy={474} r={7} />
-            <circle cx={530} cy={474} r={9} />
-            <circle cx={523} cy={474} r={6} />
-          </g>
         </g>
       </svg>
 
@@ -1141,8 +1134,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                - キーボードや読み上げから実行した（`detail === 0`。歩く絵が返らない）
              このどちらかなら、歩かせる意味が無いのでそのまま入る。 */
           const enterOrWalk = (e: React.MouseEvent) => {
-            // 配信中のやぐらは歩かせない。行き先が島の外なので、寄っても意味がない
-            if (live || e.detail === 0 || on) {
+            /* 配信中のやぐらは歩かせない（行き先が島の外なので寄っても意味がない）。
+               Ctrl や ⌘ を押しながらの「新しいタブで開く」も、そのまま通す。
+               ここで preventDefault すると、リンクにした意味が半分無くなる。 */
+            if (live || e.detail === 0 || on || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
               leaveAt.current = { x: sp.x, y: sp.y + 34 };
               return;
             }
