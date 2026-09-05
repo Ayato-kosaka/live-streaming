@@ -124,20 +124,12 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         「この色は何を指しているか」に答えられなくなる。紙の作り（罫線・平らなチップ・
         厚みを付けない）は5つとも同じにしておく。
       */}
-      <Sheet
-        style={{
-          ["--zk-paper" as string]: `color-mix(in srgb, ${t.color} 8%, #efe4b6)`,
-          ["--zk-paper-lo" as string]: `color-mix(in srgb, ${t.color} 11%, #e7d9a2)`,
-          ["--zk-out" as string]: `color-mix(in srgb, ${t.color} 7%, #f4efcf)`,
-        }}
-      >
+      <Sheet style={{ ["--zk-tint" as string]: `color-mix(in srgb, ${t.color} 10%, transparent)` }}>
         <Zone>
           {/* 見出しは型ごとに変える。5面とも同じ問いで始めると、
               紙の作りも同じなので5つが同じ面に見える。
               添えの一行は見出しの言い直しだったので落とした。 */}
-          <H art={<ArtSignpost size={32} />} note={`${t.beat.length}つ`}>
-            {t.flow}
-          </H>
+          <H art={<ArtSignpost size={32} />}>{t.flow}</H>
           <ol className="rt">
             {t.beat.map((b, k) => {
               const A = art[k];
@@ -205,9 +197,10 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Link>
       )}
 
+      {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}
       <nav className="pager" style={{ marginTop: "var(--sp-4)" }}>
         {prev ? (
-          <Link href={`/streams/${prev.slug}`}>
+          <Link href={`/streams/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
             <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
             {prev.name}
@@ -216,7 +209,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           <span />
         )}
         {next ? (
-          <Link href={`/streams/${next.slug}`}>
+          <Link href={`/streams/${next.slug}`} prefetch={false}>
             <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
             {next.name}
             <Icon name="right" size={13} />

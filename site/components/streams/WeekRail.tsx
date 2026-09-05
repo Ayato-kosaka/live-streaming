@@ -18,7 +18,7 @@ export default function WeekRail() {
   const free = STREAM_TYPES.filter((t) => typeof t.week === "string");
 
   return (
-    <div className="wk pat">
+    <div className="wk">
       <div className="wk-days">
         {DAYS.map((d, i) => (
           <span key={d} className={i > 4 ? "is-end" : undefined}>

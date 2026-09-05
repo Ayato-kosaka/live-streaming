@@ -169,6 +169,7 @@ function shapeDraft(b: Json): Json {
  * 日本時間の朝9時で変わるので、**配信の一晩（22時〜25時）が1日の中に収まる**。
  * JST で切ると 0時をまたいだ配信が2日に割れて、連投制限も訪問者数も夜中に半分になる。
  * 画面に出す日付は JST（`site/lib/nightly.ts`）だが、こちらは数える側の都合で決める。
+ * @return {string} YYYY-MM-DD
  */
 const today = () => new Date().toISOString().slice(0, 10);
 

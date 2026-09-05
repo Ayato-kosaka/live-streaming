@@ -284,6 +284,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           <Link
             key={c.id}
             href={`/nordic/${c.country}`}
+            prefetch={false}
             className={`nmap-pin is-${c.kind}${c.cap ? " is-cap" : ""}${done(c.seq) ? " is-done" : ""}${
               here === c.id ? " is-now" : ""
             }`}

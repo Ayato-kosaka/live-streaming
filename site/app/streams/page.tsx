@@ -137,7 +137,8 @@ export default function StreamsPage() {
                     ))}
                   </div>
                 </Fold>
-                <Link className="ty-go" href={`/streams/${t.slug}`}>
+                {/* 5つの型ぶんを画面に入った時点で先読みしない。指が乗ってから読む */}
+                <Link className="ty-go" href={`/streams/${t.slug}`} prefetch={false}>
                   この型だけ見る
                   <Icon name="right" size={15} />
                 </Link>

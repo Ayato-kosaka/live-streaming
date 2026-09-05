@@ -11,16 +11,40 @@
  * 動きは requestAnimationFrame の間隔をそのまま集める。16.7ms を超えた回数と
  * 最悪値（p95）を見れば、カクついているかどうかは数字で分かる。
  *
+ * ## 転送量は「素のバイト数」で見ない
+ *
+ * Firebase Hosting は文字ものを勝手に縮めて配る。素のバイト数だけを見ていると、
+ * ほとんど空気でできている HTML と RSC が上位に並んで、順番を読み違える。
+ * ここでは**素**と**縮めたあと（brotli）**の両方を出す。直す順番は縮めたあとで決める。
+ *
+ *   例: index.html は素 351KB → 縮めて 78KB。書体は 890KB → 縮めても 890KB。
+ *       重いのは書体のほうで、HTML ではない。
+ *
+ * ## 「読み込み」と「巻いたあと」を分けて出す
+ *
+ * Next の <Link> は画面に入るたび、その行き先の RSC(`*.txt?_rsc=`)と JS を先に取る。
+ * これは開いた時点では出ないので、巻いてはじめて増える。**その差が先読みの値段**。
+ *
+ * ## before.json とは比べられない
+ *
+ * `.perf/before.json` は測り方が変わる前の記録。当時は外に出られない画像すべてに
+ * og.png(470KB)を返していて、住人アイコン12枚だけで 5.6MB を数えていた。
+ * DOM ノード数も、そのころとは画面の作りが違う。**転送量とノード数は
+ * before と比べないこと。** 新しい基準は `.perf/after.json`。
+ *
  * 使い方:
  *   cd site && NEXT_DIST_DIR=.next-verify npx next build
- *   python3 -m http.server 4321 --directory .next-verify &
- *   cd ../tools/sprites && node perf.mjs            # 全ページの要約
- *   node perf.mjs / /nordic                          # ページを絞る
- *   node perf.mjs --save before                      # 記録して、あとで比べる
- *   node perf.mjs --diff before                      # 記録と比べる
+ *   python3 -m http.server 4350 --directory .next-verify &
+ *   cd ../tools/sprites && SPORT=4350 node perf.mjs      # 全ページの要約
+ *   SPORT=4350 node perf.mjs / /nordic                    # ページを絞る
+ *   SPORT=4350 node perf.mjs --top 15                     # 大きい順にファイルを並べる
+ *   SPORT=4350 node perf.mjs --save after                 # 記録して、あとで比べる
+ *   SPORT=4350 node perf.mjs --diff after                 # 記録と比べる
  */
 import { chromium } from "playwright-core";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { brotliCompressSync, constants } from "zlib";
+import { offline } from "./route.mjs";
 
 const SPORT = process.env.SPORT || "4321";
 const BASE = `http://localhost:${SPORT}`;
@@ -29,6 +53,7 @@ const STORE = "/home/user/live-streaming/tools/sprites/.perf";
 const argv = process.argv.slice(2);
 const saveAs = pick("--save");
 const diffWith = pick("--diff");
+const topN = Number(pick("--top") || 0);
 function pick(flag) {
   const i = argv.indexOf(flag);
   if (i < 0) return null;
@@ -51,22 +76,30 @@ const ctx = await b.newContext({
   hasTouch: true,
   deviceScaleFactor: 3,
 });
-/**
- * このサンドボックスからは外の画像に出られないので差し替える（本番では出る）。
- *
- * 前は何にでも og.png（470KB）を返していた。住人のアイコンは12枚あるので、
- * それだけで 5.6MB。「転送 7.4MB」の中身はほとんどこれで、島が重いという話とは別。
- * 本番の住人アイコンは `=s160` の 160px なので、同じ大きさの絵を返す。
- * 前の測り方に戻したいときは PERF_AVATAR に og.png を渡す。
- */
-const AVATAR = process.env.PERF_AVATAR || "/home/user/live-streaming/tools/sprites/avatar-160.png";
-await ctx.route(/googleusercontent\.com/, (r) => r.fulfill({ path: AVATAR }));
-// 北欧の写真も配信のサムネイルも、本番では横 500 前後の JPEG。og.png（470KB）を
-// 返すと、写真が10枚あるだけで転送が 4.7MB 増えて、数字が読めなくなる。
-await ctx.route(/upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, (r) =>
-  r.fulfill({ path: "/home/user/live-streaming/tools/sprites/photo-480.jpg" }),
-);
-await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+// 外に出られない先の差し替えは route.mjs に任せる。住人は1人ずつ本番と同じ絵
+// （`python3 avatars.py` で落としたもの）が返るので、12人ぶんの重さが本物になる。
+// 写真は本番の横500前後の JPEG に寄せる。og.png(470KB)を返すと数字が読めない。
+await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+
+/** URL を見て、何の種類のファイルかを決める。直す担当を分けるための粒度。 */
+function kindOf(url, type) {
+  if (/\.txt\?_rsc=|_rsc=/.test(url)) return "先読み";
+  if (/\.woff2?($|\?)/.test(url)) return "書体";
+  if (/\.css($|\?)/.test(url)) return "CSS";
+  if (/\.js($|\?)/.test(url)) return "JS";
+  if (/\.html($|\?)/.test(url)) return "HTML";
+  if (/\.(png|jpe?g|webp|avif|gif|svg)($|\?)/.test(url)) return "画像";
+  if (type === "image") return "画像";
+  if (type === "script") return "JS";
+  if (type === "stylesheet") return "CSS";
+  if (type === "font") return "書体";
+  return "他";
+}
+const KINDS = ["HTML", "CSS", "JS", "書体", "画像", "先読み", "他"];
+
+/** 縮めたあとの大きさ。Hosting は brotli で配るので、そこに寄せる。 */
+const brotli = (buf) =>
+  brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: 5 } }).length;
 
 const out = {};
 for (const path of pages) {
@@ -75,14 +108,37 @@ for (const path of pages) {
   const cdp = await ctx.newCDPSession(p);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
 
-  let bytes = 0;
-  p.on("response", async (r) => {
-    const len = Number(r.headers()["content-length"] || 0);
-    if (len) bytes += len;
+  // 応答の中身を読むのは await なので、ページを閉じる前に全部そろうまで待つ。
+  // 待たずに閉じると body() が空で返ってきて、書体が 890KB → 47KB に化ける。
+  const res = [];
+  const pending = [];
+  p.on("response", (r) => {
+    pending.push(
+      (async () => {
+        let raw = 0;
+        try {
+          const buf = await r.body();
+          raw = buf.length;
+          res.push({ url: r.url().replace(BASE, ""), type: r.request().resourceType(), raw, br: brotli(buf), t: Date.now() });
+          return;
+        } catch {
+          // 画像など body が取れないものは content-length で拾う
+          raw = Number(r.headers()["content-length"] || 0);
+          if (raw) res.push({ url: r.url().replace(BASE, ""), type: r.request().resourceType(), raw, br: raw, t: Date.now() });
+        }
+      })(),
+    );
   });
 
   // 画面が出る前から rAF を仕掛けておかないと、いちばんカクつく最初の数フレームを取り逃す
   await p.addInitScript(() => {
+    // LCP は誰も入れていなくて、ずっと 0 が出ていた。ここで観測して置いておく
+    window.__lcp = 0;
+    try {
+      new PerformanceObserver((l) => {
+        for (const e of l.getEntries()) window.__lcp = e.startTime;
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch {}
     window.__f = [];
     let last = 0;
     const tick = (t) => {
@@ -101,14 +157,20 @@ for (const path of pages) {
   // 到着演出は3.4秒。終わりきるまで待って、その間のフレームを演出ぶんとして切り出す
   await p.waitForTimeout(3600);
   const open = await p.evaluate(() => window.__f.splice(0));
+  await Promise.all(pending.splice(0));
+  const tLoad = Date.now();
 
-  // スクロールしながらのフレーム。指で送ったときの重さはここに出る
+  // スクロールしながらのフレーム。指で送ったときの重さはここに出る。
+  // **一気に下まで飛ばさないこと。** 飛ばすと途中の <Link> が画面に入らず、
+  // 先読みが起きないので「先読みは軽い」という嘘の数字になる。指で送るのと同じに刻む。
   await p.evaluate(() => window.scrollTo(0, 0));
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 24; i++) {
     await p.mouse.wheel(0, 420);
     await p.waitForTimeout(120);
   }
+  await p.waitForTimeout(800);
   const scroll = await p.evaluate(() => window.__f.splice(0));
+  await Promise.all(pending.splice(0));
 
   const m = await p.evaluate(() => {
     const paint = performance.getEntriesByType("paint");
@@ -126,9 +188,38 @@ for (const path of pages) {
     };
   });
 
+  // 同じ URL を2回取っていても、数えるのは1回だけ。
+  // python の http.server は Cache-Control を付けないので、同じ絵を何度でも取りに
+  // いってしまう。本番の Hosting はキャッシュを付けるので、そのぶんは払わない。
+  // （実測: 住人アイコン12枚がちょうど2回ずつ来て、それだけで 250KB 水増しされていた）
+  const seen = new Set();
+  const uniq = [];
+  let refetch = 0;
+  for (const r of res) {
+    if (seen.has(r.url)) { refetch++; continue; }
+    seen.add(r.url);
+    uniq.push(r);
+  }
+
+  // 読み込みぶんと、巻いてから増えたぶんに分ける
+  const sum = (rows, f) => rows.reduce((s, r) => s + r[f], 0);
+  const atLoad = uniq.filter((r) => r.t <= tLoad);
+  const byKind = {};
+  for (const k of KINDS) {
+    const rows = uniq.filter((r) => kindOf(r.url, r.type) === k);
+    if (rows.length) byKind[k] = { n: rows.length, raw: kb(sum(rows, "raw")), br: kb(sum(rows, "br")) };
+  }
+
   out[path] = {
     ...m,
-    kb: Math.round(bytes / 1024),
+    reqs: uniq.length,
+    refetch,
+    kb: kb(sum(uniq, "raw")),
+    br: kb(sum(uniq, "br")),
+    loadKb: kb(sum(atLoad, "raw")),
+    loadBr: kb(sum(atLoad, "br")),
+    byKind,
+    top: [...uniq].sort((a, x) => x.raw - a.raw).slice(0, 25).map((r) => ({ url: r.url, raw: kb(r.raw), br: kb(r.br) })),
     wall: Date.now() - t0,
     open: stat(open),
     scroll: stat(scroll),
@@ -136,6 +227,10 @@ for (const path of pages) {
   await p.close();
 }
 await b.close();
+
+function kb(n) {
+  return Math.round(n / 1024);
+}
 
 /** フレーム間隔の要約。長い1本より、16.7ms 超えの本数のほうが体感に近い。 */
 function stat(fr) {
@@ -153,15 +248,40 @@ function stat(fr) {
 
 const pad = (s, n) => String(s).padEnd(n);
 const num = (s, n) => String(s).padStart(n);
+
+console.log("■ 出るまでと、動き");
 console.log(
-  pad("page", 12) + num("FCP", 6) + num("LCP", 6) + num("KB", 6) + num("nodes", 7) + num("svg", 6) +
+  pad("page", 12) + num("FCP", 6) + num("LCP", 6) + num("nodes", 7) + num("svg", 6) +
     num("開p50", 7) + num("開p95", 7) + num("開落ち", 7) + num("巻p95", 7) + num("巻落ち", 7),
 );
 for (const [k, v] of Object.entries(out)) {
   console.log(
-    pad(k, 12) + num(v.fcp, 6) + num(v.lcp, 6) + num(v.kb, 6) + num(v.nodes, 7) + num(v.svg, 6) +
+    pad(k, 12) + num(v.fcp, 6) + num(v.lcp, 6) + num(v.nodes, 7) + num(v.svg, 6) +
       num(v.open.p50, 7) + num(v.open.p95, 7) + num(v.open.jank, 7) + num(v.scroll.p95, 7) + num(v.scroll.jank, 7),
   );
+}
+
+console.log("\n■ 転送量（縮めたあとが本番の値段。かっこの中が素のバイト数）");
+console.log(
+  pad("page", 12) + num("本数", 6) + num("読込br", 9) + num("全部br", 9) + num("先読みbr", 10) +
+    KINDS.map((k) => num(k, 8)).join(""),
+);
+for (const [k, v] of Object.entries(out)) {
+  console.log(
+    pad(k, 12) + num(v.reqs, 6) + num(v.loadBr, 9) + num(v.br, 9) +
+      num(v.byKind["先読み"]?.br ?? 0, 10) +
+      KINDS.map((kk) => num(v.byKind[kk]?.br ?? 0, 8)).join("") +
+      "   素 " + v.kb + "KB",
+  );
+}
+
+if (topN) {
+  for (const [k, v] of Object.entries(out)) {
+    console.log(`\n■ ${k} 大きい順（縮めたあと / 素）`);
+    for (const r of v.top.slice(0, topN)) {
+      console.log(`  ${num(r.br, 6)}KB ${num("(" + r.raw + ")", 9)}  ${r.url.slice(0, 88)}`);
+    }
+  }
 }
 
 if (saveAs) {
@@ -172,6 +292,7 @@ if (saveAs) {
 if (diffWith) {
   const old = JSON.parse(readFileSync(`${STORE}/${diffWith}.json`, "utf8"));
   console.log(`\n${diffWith} との差（マイナスが改善）`);
+  if (diffWith === "before") console.log("※ before は測り方が違う。転送量とノード数は比べないこと。");
   for (const [k, v] of Object.entries(out)) {
     const o = old[k];
     if (!o) continue;
@@ -179,7 +300,7 @@ if (diffWith) {
     console.log(
       pad(k, 12) +
         num("FCP " + d(v.fcp, o.fcp), 12) +
-        num("KB " + d(v.kb, o.kb), 11) +
+        num("br " + d(v.br, o.br ?? o.kb), 11) +
         num("nodes " + d(v.nodes, o.nodes), 13) +
         num("開落ち " + d(v.open.jank, o.open.jank), 12) +
         num("巻p95 " + d(v.scroll.p95, o.scroll.p95), 13),

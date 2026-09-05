@@ -169,16 +169,19 @@ function away(now: Date, today: string, lastVisit?: string | null): TodayNews | 
     nights > 0 ? `配信が${nights}日ぶん` : "",
     dishes.length > 0 ? `料理が${dishes.length}品` : "",
   ].filter(Boolean);
+  // 「配信が15日ぶんと料理が1品」は続けて読むと切れ目が分からない。読点で割る
   return {
     kind: "away",
     icon: "mailbox",
-    line: `前に来てから、${bits.join("と")}`,
+    line: `前に来てから、${bits.join("、")}`,
     title: "前に来てから、あったこと",
     body: `${jstShift(now, -daysApart(lastVisit, today) + 1).replace(/-/g, "/")} から昨日まで。${
       dishes.length > 0 ? `いちばん新しいのは${dishes[dishes.length - 1].name}。` : "見逃したぶんは、これだけ。"
     }`,
-    href: dishes.length > 0 ? `/kitchen/${dishes[dishes.length - 1].slug}` : "/streams",
-    go: dishes.length > 0 ? "見にいく" : "配信を見る",
+    // 追いつく場所へ送る。配信があったなら配信やぐら（一覧がある）、
+    // 料理だけの留守なら、その1品のところへ直に
+    href: nights > 0 ? "/streams" : `/kitchen/${dishes[dishes.length - 1].slug}`,
+    go: nights > 0 ? "配信を見る" : "見にいく",
   };
 }
 
@@ -298,4 +301,22 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
 /** 板の1行になるもの。島のほうもこれで「!」を出す建物を決める（`IslandStage.tsx`）。 */
 export function todayNews(now: Date = new Date(), who: TodayWho = {}): TodayNews {
   return todayNewsList(now, who)[0];
+}
+
+/**
+ * 板が、押されなくても自分から開く日か。
+ *
+ * **この判断を2か所に置かない。** 板が自分から開く日は島のカモメが黙り、
+ * 開かない日はカモメが名乗る（`components/island/IslandStage.tsx`）。
+ * 片方だけ直すと、板とカモメが同時に開いて島が見えなくなるか、
+ * どちらも出ない日ができる。
+ *
+ * - 開くのは、今日ほんとうに何かある日だけ。1年前の今日と「あとN分」は
+ *   畳んだ1行で足りている
+ * - **スマホでは開かない。** 390×844 で板と問いが同時に開くと、
+ *   島の絵が上端の帯しか見えなくなる（`docs/island-review-2.md` 8.3）
+ */
+export function opensByItself(kind: TodayNews["kind"], phone: boolean): boolean {
+  if (phone) return false;
+  return kind === "live" || kind === "plan" || kind === "recipe" || kind === "milestone";
 }

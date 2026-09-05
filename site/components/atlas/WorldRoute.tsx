@@ -350,6 +350,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               <Link
                 key={slug}
                 href={`/map/${slug}`}
+                prefetch={false}
                 className={`apin${slug === here ? " is-here" : ""}${
                   labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""
                 }`}

@@ -72,7 +72,7 @@ const ctx = await b.newContext({
   viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
 });
 // このサンドボックスからは住人の写真に届かない。本番と同じ「写真がある」状態にする
-await ctx.route(/googleusercontent\.com/, (r) => r.fulfill({ path: `${ROOT}/site/public/characters/ayato.png` }));
+await ctx.route(/googleusercontent\.com/, (r) => r.fulfill({ path: `${ROOT}/site/public/characters/ayato.webp` }));
 const p = await ctx.newPage();
 p.on("pageerror", (e) => console.log("[pageerror]", String(e).slice(0, 200)));
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));

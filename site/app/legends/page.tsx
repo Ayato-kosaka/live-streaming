@@ -36,7 +36,8 @@ export default function LegendsPage() {
       <Sheet>
         {/* いちばん語られている1つ。紙の上半分を丸ごと使って、数字を先に見せる */}
         <Zone>
-          <Link className="zk-hero lg-hero" href={`/legends/${top.slug}`}>
+          {/* 一覧のぶんは、指が乗ってから読む（prefetch={false}）。画面に入った時点では読まない */}
+          <Link className="zk-hero lg-hero" href={`/legends/${top.slug}`} prefetch={false}>
             <span className="lg-hero-tag">
               <ArtMedal size={20} />
               いちばん語られている
@@ -76,7 +77,8 @@ export default function LegendsPage() {
             一覧より先に置く（`docs/island-ux.md` 5.7）。いちばんの1つだけは、
             この面の主役なので上に残す。 */}
         <Zone>
-          <H art={<ArtMeeting size={32} />}>これ、どうやって伝説になったんだろう</H>
+          {/* スマホ幅で「う」1文字だけが2行目に落ちていた。意味を落とさずに縮める */}
+          <H art={<ArtMeeting size={32} />}>どうやって伝説になったんだろう</H>
           <p className="zk-lead">
             どれも最初は、週のはじめの企画会議で出た一言。「怖いイメージを変えたい」「イワシで3日いける」。
             その場で笑って終わる日もあるし、そのまま来週の予定になる日もある。
@@ -93,7 +95,7 @@ export default function LegendsPage() {
         <Zone flush>
           <div className="lg-wall">
             {wall.map((l) => (
-              <Link className="plaque" key={l.slug} href={`/legends/${l.slug}`}>
+              <Link className="plaque" key={l.slug} href={`/legends/${l.slug}`} prefetch={false}>
                 <span className="plaque-badge">
                   <img src={`/sprites/${l.icon}.webp`} alt="" loading="lazy" />
                 </span>

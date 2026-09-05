@@ -132,7 +132,7 @@ export default function MapPage() {
                         <span className="atrip-no" aria-hidden>
                           {c.order}
                         </span>
-                        <Link className="atrip-card" href={`/map/${c.slug}`}>
+                        <Link className="atrip-card" href={`/map/${c.slug}`} prefetch={false}>
                           <span className="atrip-flag">
                             <Flag slug={c.slug} size={34} />
                           </span>

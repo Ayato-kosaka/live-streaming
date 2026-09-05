@@ -259,7 +259,7 @@ function Doing({ plan }: { plan: Plan }) {
           </span>
         </a>
         {plan.href && (
-          <Link className="nx-do-b" href={plan.href}>
+          <Link className="nx-do-b" href={plan.href} prefetch={false}>
             <Icon name="signpost" size={26} />
             <span>
               <b>企画のページを見る</b>
@@ -455,7 +455,7 @@ export function PlanRow({ plan, children }: { plan: Plan; children?: React.React
           <PlanBody plan={plan} />
 
           {plan.href && (
-            <Link className="tile" href={plan.href} style={{ marginTop: "var(--sp-4)" }}>
+            <Link className="tile" href={plan.href} prefetch={false} style={{ marginTop: "var(--sp-4)" }}>
               <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
               <span className="tile-text">
                 <b>この企画のページへ</b>

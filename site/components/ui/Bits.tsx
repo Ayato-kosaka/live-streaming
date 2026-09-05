@@ -92,6 +92,7 @@ export function TileLink({
   title,
   note,
   accent,
+  prefetch = false,
 }: {
   href: string;
   /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
@@ -103,9 +104,21 @@ export function TileLink({
   title: string;
   note?: string;
   accent?: string;
+  /**
+   * 行き先を先に取ってくるか。**既定は取らない。**
+   * タイルは「次にどこへ行くか」の並びで、出るのはたいてい何枚も一緒。
+   * 全部先読みすると、押されない面の中身まで丸ごと落ちてくる。
+   * ここぞという1枚だけ `prefetch` を立てる。
+   */
+  prefetch?: boolean;
 }) {
   return (
-    <Link className="tile" href={href} style={accent ? { ["--tile" as string]: accent } : undefined}>
+    <Link
+      className="tile"
+      href={href}
+      prefetch={prefetch}
+      style={accent ? { ["--tile" as string]: accent } : undefined}
+    >
       {logo ? (
         <img className="tile-logo" src={logo} alt="" />
       ) : icon ? (

@@ -185,7 +185,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
               8品まで出して、その先はキッチン小屋に渡す。 */}
           <div className="chips">
             {cooked.slice(0, DISHES).map((r) => (
-              <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`}>
+              <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`} prefetch={false}>
                 <img className="mini-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 {r.name}
               </Link>
@@ -206,7 +206,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
 
       <nav className="pager">
         {prev ? (
-          <Link href={`/map/${prev.slug}`}>
+          <Link href={`/map/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
             <Flag slug={prev.slug} size={20} />
             {prev.name}
@@ -215,7 +215,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           <span />
         )}
         {next ? (
-          <Link href={`/map/${next.slug}`}>
+          <Link href={`/map/${next.slug}`} prefetch={false}>
             <Flag slug={next.slug} size={20} />
             {next.name}
             <Icon name="right" size={13} />

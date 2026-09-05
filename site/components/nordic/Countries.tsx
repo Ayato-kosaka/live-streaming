@@ -53,7 +53,7 @@ export default async function Countries() {
   return (
     <div className="ncountries">
       {cards.map(({ c, spot }) => (
-        <Link key={c.slug} className="ncountry" href={`/nordic/${c.slug}`}>
+        <Link key={c.slug} className="ncountry" href={`/nordic/${c.slug}`} prefetch={false}>
           <span className="ncountry-img">
             {spot?.img && (
               <img src={spot.img} alt="" loading="lazy" referrerPolicy="no-referrer" />

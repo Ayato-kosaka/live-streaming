@@ -118,7 +118,9 @@ export default function KitchenCatalog({
 
           <p className="kt-count">
             <b>{shown.length}</b> 品ならんでる
-            {!reset && (
+            {/* 0品のときは空っぽの枠のほうが「ぜんぶ出す」を出す。
+                同じボタンが1画面に2つ並ばないようにする。 */}
+            {!reset && shown.length > 0 && (
               <button
                 type="button"
                 className="kt-clear"
@@ -136,7 +138,23 @@ export default function KitchenCatalog({
 
       <div className="zk-zone is-flush">
         {shown.length === 0 ? (
-          <p className="kt-none">この組み合わせは、まだ押されていない。ほかの国か、ほかの種類を押してみて。</p>
+          /* 空っぽの形は島に1つしかない（`docs/island-world.md` 4.1）。
+             ここだけ自前の1行にしていたので、他の面と同じ枠に寄せる。
+             次にする一手（絞り込みを外す）を板で1つ置く。 */
+          <div className="blank">
+            <b>この組み合わせは、まだ押されていない</b>
+            <p>ほかの国か、ほかの種類なら押してあるかも。</p>
+            <button
+              type="button"
+              className="blank-go"
+              onClick={() => {
+                setCountry("all");
+                setKind("all");
+              }}
+            >
+              ぜんぶ出す
+            </button>
+          </div>
         ) : (
           <div className="kt-grid-wrap">
             <div className="kt-grid">
@@ -159,7 +177,9 @@ export default function KitchenCatalog({
  */
 export function Dish({ r }: { r: Recipe }) {
   return (
-    <Link className="dish" href={`/kitchen/${r.slug}`}>
+    // 一覧の30枚が画面に入っただけで行き先を先読みすると、この面だけで 228KB になる。
+    // prefetch={false} は「読まない」ではなく「指が乗ってから読む」なので、押した速さは変わらない。
+    <Link className="dish" href={`/kitchen/${r.slug}`} prefetch={false}>
       <span className="dish-no">No.{String(recipeNo(r.slug)).padStart(2, "0")}</span>
       {r.streams.length > 1 && <span className="dish-days">{r.streams.length}日がかり</span>}
       <span className="dish-art">

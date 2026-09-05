@@ -44,7 +44,7 @@ const PAGES = [
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, isMobile: W < 640 });
 // サンドボックスから出られない先はローカル画像に差し替える（tools/sprites/talk.mjs と同じ）
-await ctx.route(/googleusercontent\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/characters/ayato.png" }));
+await ctx.route(/googleusercontent\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/characters/ayato.webp" }));
 await ctx.route(/upload\.wikimedia\.org/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
 const p = await ctx.newPage();
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
