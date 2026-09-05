@@ -17,6 +17,7 @@ import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
 import { todayNews, type TodayNews } from "@/lib/todayNews";
 import {
+  callOut,
   createVillagers,
   stepVillagers,
   talkTo,
@@ -243,6 +244,24 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const skipArrive = useRef(false);
   /** 建物に入るときの立ち位置。戻ってきたらここから始める */
   const leaveAt = useRef<{ x: number; y: number } | null>(null);
+  /**
+   * 島に降り立った時刻。住人が向こうから声をかけるまでの間を数えるのに使う。
+   * まだ降りていないあいだは Infinity にしておく。
+   * 引き算が -Infinity になって、条件が勝手に成立しない。
+   */
+  const landedAt = useRef(Infinity);
+  /**
+   * この来訪で、島のほうから一度でも口を開いたか。
+   *
+   * **1回の来訪で、向こうから話しかけてくるのは1回だけ。**
+   * カモメの名乗り（初めて来た人）と、住人の「はじめまして／久しぶり」は
+   * どちらも「世界のほうが先に口を開く」仕掛けで、狙っている相手が違う。
+   *   カモメ … 初めて来た人。この人が誰で何をしているかに答える
+   *   住人   … 2回目以降の人。前に来たことを覚えている、を伝える
+   * 初めての人には両方あたるので、そこだけカモメを優先して住人を黙らせる。
+   * 10秒のあいだに知らない相手が2回話しかけてくるのは、島ではなく客引きになる。
+   */
+  const spokeFirst = useRef(false);
   const dice = useRef(rng(777));
   const clock = useRef(0);
   const inviteSlot = useRef(-1);
@@ -367,12 +386,20 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       skipArrive.current = true;
       snapCam.current = true;
       setArriving(false);
-      if (greet) setTalking({ i: GUIDE, text: GREETING });
+      landedAt.current = performance.now();
+      if (greet) {
+        spokeFirst.current = true;
+        setTalking({ i: GUIDE, text: GREETING });
+      }
       return;
     }
     const t = setTimeout(() => {
       setArriving(false);
-      if (greet) setTalking({ i: GUIDE, text: GREETING });
+      landedAt.current = performance.now();
+      if (greet) {
+        spokeFirst.current = true;
+        setTalking({ i: GUIDE, text: GREETING });
+      }
     }, 3000);
     return () => clearTimeout(t);
   }, []);
@@ -505,6 +532,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ayatoRef.current?.classList.toggle("walking", moving);
       }
 
+      /* --- 向こうから口を開く ---
+         そばに来た人に、住人のほうから声をかける（`docs/island-play.md` 3つの原理の3番）。
+         条件が3つそろった1回だけで、あとは毎回 null が返るので毎フレーム呼んでよい。
+         カモメが名乗った来訪では黙ってもらう（向こうから話しかけるのは1来訪に1回）。 */
+      if (!spokeFirst.current) {
+        const who = callOut(villagers, avatar.current, t - landedAt.current);
+        if (who) {
+          spokeFirst.current = true;
+          openTalkRef.current?.(villagers.indexOf(who));
+        }
+      }
+
       // --- 話しかけに行った相手のそばまで来たか ---
       if (walkingTo.current !== null) {
         const i = walkingTo.current;
@@ -582,9 +621,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const g = villagerRefs.current[i];
         if (g && !off) {
           const pose = villagerPose(v, t);
+          // 向きを絵に出す。立ち話は「向かい合っている」ことでしか読めないので、
+          // 反転が無いと、2人が並んで別々の方を見ているようにしか見えない。
+          // 住人の絵はあやとと同じで左を向いているので、
+          // 右を向かせたい（facing が 1）ときに左右を反転する。
           g.setAttribute(
             "transform",
-            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
+            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)}) scale(${-v.facing} 1)`,
           );
         }
         const w = whoRefs.current[i];
