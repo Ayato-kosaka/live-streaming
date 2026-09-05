@@ -174,6 +174,39 @@
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+/* 今日ここに来た人。開いた面のいちばん下に、罫1本で区切って小さく置く。
+   **押すものではないので平ら。** 数は板の主役ではなく、
+   「自分ひとりで見ているのではない」を言うためだけの1行
+   （`docs/island-play.md` 仕掛け16）。 */
+.today-visits {
+  margin: 11px 0 0;
+  padding-top: 8px;
+  border-top: 2px solid rgba(158, 151, 109, 0.28);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--frame-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 今日の2枚目（今夜のおたずねが無い日） --- */
+/* 板の型は1枚目と同じ。中身が2枚あるだけで、格が違うわけではない。
+   薄くして「おまけ」に見せると、字まで読めなくなる（`docs/island-review-2.md` 1章）。 */
+/* 見出しは「今夜のおたずね」と同じ扱い。何の板かだけを小さく言う */
+.today-more .poll-ask { margin-bottom: 2px; }
+
+/* 2枚目の下に1行だけ残す、掲示板への橋。
+   問いが無い日でも「次にすることが1つある」で終わらせる（`docs/island-design.md` 4章）。 */
+.today-nopoll {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 2px solid rgba(158, 151, 109, 0.28);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--frame-dark);
+}
+.today-nopoll .poll-why { margin-top: 2px; }
+
 /* 配信中だけは色を変える。1日3時間しか出ない板なので、出たら分かるほうがいい */
 .today[data-kind="live"] .today-tab {
   background: linear-gradient(var(--accent) 0 46%, var(--accent-deep, #d4552a));
@@ -225,7 +258,9 @@
     /* 板の側面と落ち影が切れないぶんの余白 */
     padding: 2px 4px 6px 2px;
   }
-  .today[data-place="bar"] .today-open { margin: 0; }
+  /* 上に詰めるのは1枚目だけ。2枚目は1枚目との間を空ける
+     （`.today-more` も同じ板の型なので、まとめて 0 にすると重なって見える） */
+  .today[data-place="bar"] .today-open:not(.today-more) { margin: 0; }
 }
 
 /* 住人と話しているあいだは、島の上のUIを引っ込める（入口の札と同じ扱い） */
@@ -372,7 +407,7 @@
 .poll-why:active { transform: translateY(1px); }
 
 
-/* --- 読んでいるあいだ／今夜は問いが無い日（`docs/island-design.md` 4章） --- */
+/* --- 読んでいるあいだ（`docs/island-design.md` 4章） --- */
 
 /* 中身の形をした薄い板。回るものは島に1つも無いので、ここにも置かない */
 .poll.is-waiting { padding-bottom: 12px; }
@@ -384,18 +419,7 @@
 .poll-skel-q { height: 14px; width: 68%; margin-top: 6px; }
 .poll-skel-o { height: 40px; margin-top: 7px; }
 
-/* 問いが無い日。1行だけだが、板には載せる。
-   島の上に字を直に置くと、木や草に重なって読めない。 */
-.poll-none {
-  margin: 7px 0 0;
-  padding: 9px 12px 10px;
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 1.5;
-  color: var(--frame-dark);
-  background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
-  border: 3px solid var(--frame-dark);
-  border-radius: 16px;
-  box-shadow: 0 4px 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-.poll-none .poll-why { margin-top: 4px; }
+/* 問いが無い日の板は、ここには無い。
+   代わりに「今日の2枚目」が出て、その中に掲示板への橋が1行入る
+   （`.today-more` / `.today-nopoll`）。1行だけの板を置くと、
+   島に降りて押すものが増えないまま画面だけ狭くなる。 */
