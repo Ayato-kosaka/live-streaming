@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { todayNewsList, type TodayNews } from "@/lib/todayNews";
+import { opensByItself, todayNewsList, type TodayNews } from "@/lib/todayNews";
 import { jstNow } from "@/lib/nightly";
 import { countVisit } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -118,21 +118,14 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
       openedThisLoad = first;
     }
     setFresh(first);
-    // 配信中・企画の当日・きのう料理を作った日・節目の日だけ、向こうから開く。
-    // 1年前の今日と「今夜まであとN分」は、畳んだ1行で足りる。
+    // どの日に自分から開くかは `lib/todayNews.ts` が決める。
+    // 島のカモメが名乗るかどうかも同じ判断を見ているので、ここには置かない。
     //
-    // **スマホでは開かない。** 390×844 で板と問いが同時に開くと、
-    // 島の絵が上端の帯しか見えなくなる（`docs/island-review-2.md` 8.3）。
-    // 仕掛け1の狙い（降りた瞬間に今日が分かる）は、畳んだ1行で足りている。
-    //
-    // **島に初めて降りた人にも開かない。** その人には島のカモメが1回だけ名乗る
+    // **島に初めて降りた人には開かない。** その人には島のカモメが1回だけ名乗る
     // （IslandStage）。板とカモメを同時に出すと、島が見えないうえに、
     // どちらを読めばいいのか分からなくなる。名乗りのほうが先。
     const worthOpening =
-      first &&
-      place === "corner" &&
-      who.lastVisit !== null &&
-      ["live", "plan", "recipe", "milestone"].includes(list[0].kind);
+      first && who.lastVisit !== null && opensByItself(list[0].kind, place === "bar");
     setOpen(worthOpening);
     // 自動で開いた日は、その時点で今日ぶんを見せたことになる
     if (worthOpening) seen.current = true;

@@ -302,3 +302,21 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
 export function todayNews(now: Date = new Date(), who: TodayWho = {}): TodayNews {
   return todayNewsList(now, who)[0];
 }
+
+/**
+ * 板が、押されなくても自分から開く日か。
+ *
+ * **この判断を2か所に置かない。** 板が自分から開く日は島のカモメが黙り、
+ * 開かない日はカモメが名乗る（`components/island/IslandStage.tsx`）。
+ * 片方だけ直すと、板とカモメが同時に開いて島が見えなくなるか、
+ * どちらも出ない日ができる。
+ *
+ * - 開くのは、今日ほんとうに何かある日だけ。1年前の今日と「あとN分」は
+ *   畳んだ1行で足りている
+ * - **スマホでは開かない。** 390×844 で板と問いが同時に開くと、
+ *   島の絵が上端の帯しか見えなくなる（`docs/island-review-2.md` 8.3）
+ */
+export function opensByItself(kind: TodayNews["kind"], phone: boolean): boolean {
+  if (phone) return false;
+  return kind === "live" || kind === "plan" || kind === "recipe" || kind === "milestone";
+}
