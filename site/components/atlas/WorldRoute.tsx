@@ -60,7 +60,7 @@ const MOVE: Record<string, { c: string; w: number; dash?: string; cap?: "round" 
   sea: { c: "#ffffff", w: 4.4, dash: "1 11", cap: "round" },
   walk: { c: "var(--am-walk)", w: 8.5, dash: "0.5 13", cap: "round" },
   hitch: { c: "var(--am-hitch)", w: 6, dash: "13 11", cap: "round" },
-  side: { c: "#e8be74", w: 4, dash: "1 10", cap: "round" },
+  side: { c: "var(--am-side)", w: 5, dash: "2 9", cap: "round" },
 };
 
 /** 移動のしかたごとの距離(km)。スクリプトが大円距離で出したもの。 */
@@ -342,7 +342,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
         {LEGEND.filter(([move]) => moved[move]).map(([move, label]) => {
           const st = MOVE[move];
           return (
-            <span className="amap-key" key={move}>
+            <span className="amap-key" data-move={move} key={move}>
               {/* 凡例の線は、地図に引いてある線そのものを写す。
                   太さも点線の刻みも同じにしないと、凡例が別のものを指してしまう */}
               <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden>

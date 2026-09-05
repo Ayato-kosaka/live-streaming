@@ -21,7 +21,7 @@ const MOVE: Record<string, { c: string; w: number; dash?: string }> = {
   sea: { c: "#ffffff", w: 5, dash: "1 12" },
   walk: { c: "var(--am-walk)", w: 9, dash: "0.5 14" },
   hitch: { c: "var(--am-hitch)", w: 6.5, dash: "14 12" },
-  side: { c: "#e8be74", w: 4.5, dash: "1 11" },
+  side: { c: "var(--am-side)", w: 5.5, dash: "2 10" },
 };
 
 /** 凡例に出す言葉。世界地図と同じ言い方にそろえる。 */
@@ -203,7 +203,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
         {used.map((k) => {
           const st = MOVE[k];
           return (
-            <span className="amap-key" key={k}>
+            <span className="amap-key" data-move={k} key={k}>
               <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden>
                 <path
                   d="M1 6h28"
