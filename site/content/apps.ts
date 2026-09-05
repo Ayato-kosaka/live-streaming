@@ -11,6 +11,8 @@ export type AppEntry = {
   logo?: string;
   tagline: string;
   status: "運営中" | "公開済み";
+  /** アプリの中身。配信で作ってきた機能のうち、いま画面にあるものだけ書く。 */
+  features: { title: string; note: string }[];
   links: { label: string; href: string }[];
   summary: string;
   milestones: AppMilestone[];
@@ -25,6 +27,12 @@ export const APPS: AppEntry[] = [
     emoji: "🍽️",
     tagline: "「今日なに食べよ」を、ストレスなく決められるグルメアプリ",
     status: "運営中",
+    features: [
+      { title: "気分から絞る", note: "何が食べたいか決まっていなくても、気分と条件から進める" },
+      { title: "好き嫌い投票", note: "みんなの投票が、次に出てくる料理に効く" },
+      { title: "深掘り検索", note: "条件を足して、もっと細かく探す" },
+      { title: "料理の写真と文言", note: "視聴者さんと一緒に、1枚ずつ選んで整えた" },
+    ],
     links: [
       { label: "App Store", href: "https://apps.apple.com/jp/app/id6751139648" },
       { label: "Google Play", href: "https://play.google.com/store/apps/details?id=com.nanitabeyo" },
@@ -39,7 +47,7 @@ export const APPS: AppEntry[] = [
       { date: "2025-08-16", kind: "build", title: "英語名が決まった", videoId: "QieWHVc69q8" },
       { date: "2025-08-17", kind: "build", title: "アプリアイコン完成", videoId: "6bi2gCN4_dQ" },
       { date: "2025-08-31", kind: "milestone", title: "Android 審査通過", videoId: "3YtMCGsAcRo" },
-      { date: "2025-09-02", kind: "release", title: "リリース🎉", note: "クタイシから報告", videoId: "LjE5Zen0f7g" },
+      { date: "2025-09-02", kind: "release", title: "リリース", note: "クタイシから報告", videoId: "LjE5Zen0f7g" },
       { date: "2025-11-14", kind: "release", title: "サーバーリリース完了", videoId: "Gr4RW4u9IFs" },
       { date: "2025-11-21", kind: "milestone", title: "広告を開始", videoId: "VQKtu8xsAM0" },
       { date: "2025-12-18", kind: "build", title: "料理文言をみんなで整えた", note: "「みんなの感性の結晶」と言っていた", videoId: "w_kql8jnB30" },
@@ -62,12 +70,16 @@ export const APPS: AppEntry[] = [
     emoji: "🎧",
     tagline: "旅先で「これ何？」を音声で教えてくれるガイド",
     status: "公開済み",
+    features: [
+      { title: "目の前のものを説明", note: "「これ何？」に、読むのではなく耳で答える" },
+      { title: "歩きながら聞く", note: "画面を見ずに済むので、旅の足を止めない" },
+    ],
     links: [],
     summary:
       "「なに食べよ」より前に作っていたアプリ。旅をしながら、目の前のものが何なのか分からないという自分の困りごとから作った。エジプト滞在中にお試し版を公開し、そのままリリースした。",
     milestones: [
       { date: "2025-04-29", kind: "build", title: "お試し版を公開", note: "エジプトぷらり配信で", videoId: "Y-EvbeBomrU" },
-      { date: "2025-05-11", kind: "release", title: "リリース🎊", videoId: "cisSYeOGDUE" },
+      { date: "2025-05-11", kind: "release", title: "リリース", videoId: "cisSYeOGDUE" },
       { date: "2025-07-09", kind: "update", title: "大型アップデート", videoId: "-gaULSsv63Y" },
       { date: "2025-07-12", kind: "trouble", title: "不具合が直った", videoId: "4fOkTVpRVpo" },
     ],

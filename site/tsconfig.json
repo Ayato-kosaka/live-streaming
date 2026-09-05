@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -13,9 +17,39 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next*/types/**/*.ts",
+    ".next-dev3012/types/**/*.ts",
+    ".next-dev3013/types/**/*.ts",
+    ".next-dev3014/types/**/*.ts",
+    ".next-dev3015/types/**/*.ts",
+    ".next-dev3016/types/**/*.ts",
+    ".next-dev3018/types/**/*.ts",
+    ".next-dev3020/types/**/*.ts",
+    ".next-dev3021/types/**/*.ts",
+    ".next-dev3022/types/**/*.ts",
+    ".next-dev3030/types/**/*.ts",
+    ".next-dev3031/types/**/*.ts",
+    ".next-dev3032/types/**/*.ts",
+    ".next-dev3033/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-dev3010/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,5 +1,8 @@
 import { chromium } from "playwright-core";
 
+/** 並列で作業するとき、エージェントごとに別のポートを使う。既定は 3000。 */
+const PORT = process.env.PORT || "3000";
+
 /**
  * 建物の絵と、押せる範囲・札の位置がズレていないか測る。
  *
@@ -16,7 +19,7 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
   await ctx.route(/googleusercontent\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/characters/ayato.png" }));
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
-  await p.goto("http://localhost:3000/", { waitUntil: "domcontentloaded", timeout: 60000 });
+  await p.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await p.waitForTimeout(3000);
   if (wide) { const z = await p.$(".bar-zoom"); if (z) await z.click(); await p.waitForTimeout(2500); }
 

@@ -278,7 +278,7 @@ export const COUNTRIES: Country[] = [
     summary:
       "いちばん長くいる国。チーズパンと山と教会と黒海。ここで自作アプリ「なに食べよ」をリリースし、クッキング配信が定着し、常連さんが増えた。いまもここにいる。",
     highlights: [
-      { title: "ジョージア着いたけど最高すぎた", note: "㊗️350本目", date: "2025-07-19", videoId: "YP9D8CihaXg" },
+      { title: "ジョージア着いたけど最高すぎた", note: "350本目", date: "2025-07-19", videoId: "YP9D8CihaXg" },
       { title: "ゲルゲティ三位一体教会", note: "カズベキの絶景", date: "2025-08-08", videoId: "PaxO-Ywl2C4" },
       { title: "なに食べよ がリリースされました", note: "クタイシから", date: "2025-09-02", videoId: "LjE5Zen0f7g" },
       { title: "バトゥミで年越し7時間", note: "W年越し配信", date: "2025-12-31", videoId: "ri120z7_4Ic" },

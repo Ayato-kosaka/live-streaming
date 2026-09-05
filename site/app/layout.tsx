@@ -1,8 +1,27 @@
 import type { Metadata, Viewport } from "next";
+import { Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
 import { NOW_FALLBACK } from "@/content/site";
+
+/**
+ * 島の書体。丸ゴシックは、あつ森の字の「角が無い・字面が大きい・線が均一」に近い。
+ *
+ * これまでは <link> で Google Fonts を直に読んでいた。描き始める前に外の
+ * サーバへ取りにいくので、電波の悪いところで最初の1秒が真っ白になる。
+ * next/font はビルド時に取ってきて自分のドメインから配るので、その待ちが消える。
+ */
+const maru = Zen_Maru_Gothic({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+  variable: "--font-maru",
+  // 日本語は Google 側が文字の範囲ごとにファイルを分けているので、
+  // 使う文字が入っているぶんだけが落ちてくる。preload すると全部先に取りにいってしまう。
+  preload: false,
+  fallback: ["ui-rounded", "Hiragino Maru Gothic ProN", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://live-streaming-d3cac.web.app"),
@@ -32,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     // 下のスクリプトが data-time を足すぶんサーバの出力と食い違うが、
     // それは承知のうえなので suppressHydrationWarning で黙らせる
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="ja" className={maru.variable} suppressHydrationWarning>
       <head>
         {/* 島の空の色を見ている人の時計に、島の景色をあやとの現在地に合わせる。
             描き始める前に決めたいので、React を待たずにここで入れておく。
@@ -44,12 +63,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "d.dataset.time=h<5?'night':h<10?'morning':h<16?'day':h<19?'evening':'night';" +
               `d.dataset.theme=${JSON.stringify(NOW_FALLBACK.theme)};})()`,
           }}
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap"
-          rel="stylesheet"
         />
       </head>
       <body>

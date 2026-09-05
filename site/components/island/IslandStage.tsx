@@ -9,6 +9,8 @@ import { inset, insideRadii, rng } from "./geometry";
 import { UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
+import Today from "@/components/today/Today";
+import { jstNow } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/Icon";
 import { daysUntil, nextPlan } from "@/content/plans";
@@ -54,8 +56,25 @@ const TALK_REACH = 74;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
-/** 同じセッションで2回目からは、演出を飛ばして最初から島にいる */
+/**
+ * 最後に島へ降りた日（JST の YYYY-MM-DD）。到着演出を出すかどうかの判断に使う。
+ *
+ * 前は sessionStorage だったので、タブを閉じるたびに 3.4 秒の演出が入っていた。
+ * 毎日来る人には毎日3.4秒の税で、1分の周回のうち 6% を占める。
+ * いい演出ほど2回目からは邪魔になるので、localStorage に移して初回だけにした。
+ * ただし長く空いた人にはもう一度見せる。帰ってきた感じがするので。
+ */
 const VISITED = "ayato-island-arrived";
+/** これだけ空いたら、もう一度カモメと降りてもらう（日） */
+const ARRIVE_AGAIN = 30;
+/**
+ * 建物に入る前にどこに立っていたか。
+ *
+ * 前は「島にもどる」で戻るたびに AYATO_HOME まで引き戻されていて、
+ * 2軒目に行く気にならなかった。出た場所に立っていれば、島がハブとして働く。
+ * タブを閉じたら忘れてよいので sessionStorage。
+ */
+const RETURN_AT = "ayato-island-at";
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -68,6 +87,14 @@ const clampToIsland = (x: number, y: number): [number, number] => {
   }
   return [ISLAND.cx, ISLAND.cy];
 };
+
+/** その日付から今日（日本時間）までの日数。日付として読めない値なら null。 */
+function daysSince(day: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const [y, m, d] = day.split("-").map(Number);
+  const t = jstNow();
+  return Math.round((Date.UTC(t.y, t.m - 1, t.d) - Date.UTC(y, m - 1, d)) / 86400000);
+}
 
 /** 入口の絵の、画面に出る四角。当たり判定と札の位置はここから作る。 */
 function spotBox(sp: Spot) {
@@ -105,6 +132,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const walkingTo = useRef<number | null>(null);
   const keys = useRef<Record<string, boolean>>({});
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
+  /** 到着演出を飛ばす人。最初の1フレームでカメラを目的の位置に置く */
+  const snapCam = useRef(false);
+  /** 建物に入るときの立ち位置。戻ってきたらここから始める */
+  const leaveAt = useRef<{ x: number; y: number } | null>(null);
   const dice = useRef(rng(777));
   const clock = useRef(0);
   const inviteSlot = useRef(-1);
@@ -143,23 +174,57 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     };
   }, [villagers]);
 
+  /* 到着演出と、前に立っていた場所。どちらも降りた瞬間の話なのでまとめて置く。 */
   useEffect(() => {
-    let seen = false;
+    // さっき出ていった建物の前から始める。無ければ、いつもの家の前。
     try {
-      seen = !!sessionStorage.getItem(VISITED);
-      sessionStorage.setItem(VISITED, "1");
+      const at = sessionStorage.getItem(RETURN_AT)?.split(",").map(Number);
+      if (at?.length === 2 && Number.isFinite(at[0]) && Number.isFinite(at[1])) {
+        const [x, y] = clampToIsland(at[0], at[1]);
+        avatar.current.x = x;
+        avatar.current.y = y;
+      }
+    } catch {
+      /* 読めなければ家の前から。位置が戻らないだけなので気にしない */
+    }
+
+    let apart: number | null = null;
+    try {
+      // 日付になっていない値（前の版が入れていた "1" や、道具が入れる印）は
+      // 「ついさっき来た」として扱う。演出を出す側に倒すと毎回出てしまう。
+      const raw = localStorage.getItem(VISITED);
+      apart = raw ? daysSince(raw) ?? 0 : null;
+      localStorage.setItem(VISITED, jstNow().date);
     } catch {
       /* プライベートモードなどで読めなくても、演出を出すだけなので気にしない */
     }
+    // 初めての人(null)には見せる。長く空いた人にも、もう一度。
+    const again = apart === null || apart >= ARRIVE_AGAIN;
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (seen || still) {
-      camRef.current.span = 0; // 下の ease が最初の1フレームで追いつく
+    if (!again || still) {
+      // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
+      // 極端に寄った絵を何十フレームも描いてから所定の位置に戻ることになる。
+      snapCam.current = true;
       setArriving(false);
       return;
     }
     const t = setTimeout(() => setArriving(false), 3000);
     return () => clearTimeout(t);
   }, []);
+
+  /* 島を出るとき、立っていた場所を残す。
+     Next.js の画面遷移では pagehide が来ないので、消えるときに書く。 */
+  useEffect(
+    () => () => {
+      const p = leaveAt.current ?? avatar.current;
+      try {
+        sessionStorage.setItem(RETURN_AT, `${Math.round(p.x)},${Math.round(p.y)}`);
+      } catch {
+        /* 書けなければ次は家の前から。それだけのこと */
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const el = hostRef.current;
@@ -268,11 +333,19 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // --- カメラ ---
       const cam = camRef.current;
       const want = camTarget();
-      const ease = 0.09 * (dt / 16.67);
-      cam.x += (want.x - cam.x) * ease;
-      cam.y += (want.y - cam.y) * ease;
-      const far = cam.span > span * 1.25;
-      cam.span += (span - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
+      if (snapCam.current) {
+        // 到着演出を飛ばす人。寄りも位置も、最初の1フレームで所定の場所に置く
+        snapCam.current = false;
+        cam.x = want.x;
+        cam.y = want.y;
+        cam.span = span;
+      } else {
+        const ease = 0.09 * (dt / 16.67);
+        cam.x += (want.x - cam.x) * ease;
+        cam.y += (want.y - cam.y) * ease;
+        const far = cam.span > span * 1.25;
+        cam.span += (span - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
+      }
 
       const vbW = cam.span;
       const vbH = (cam.span * b.h) / Math.max(1, b.w);
@@ -473,7 +546,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
   return (
     <div
-      className={`stage${arriving ? " is-arriving" : ""}${talking ? " is-talking" : ""}`}
+      className={`stage has-today${arriving ? " is-arriving" : ""}${talking ? " is-talking" : ""}`}
       data-view={follow ? "close" : "wide"}
       data-mode={mode}
       ref={hostRef}
@@ -580,7 +653,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
                 aria-label={`${sp.label}へ行く`}
               />
-              <Link data-ui href={sp.href} className="spot-mark" tabIndex={on ? 0 : -1}>
+              <Link
+                data-ui
+                href={sp.href}
+                className="spot-mark"
+                tabIndex={on ? 0 : -1}
+                // 戻ってきたときに、この建物の前に立っていてほしい。
+                // 遠くから札を押して入ることもあるので、あやとの現在地ではなく建物の足元を残す。
+                onClick={() => {
+                  leaveAt.current = { x: sp.x, y: sp.y + 34 };
+                }}
+              >
                 <span className="spot-bang" aria-hidden>
                   !
                 </span>
@@ -635,9 +718,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         </div>
       )}
 
+      {/* 今日の島。降りた瞬間に「今日は何が違うか」を1枚だけ渡す。
+          PC・タブレットは島の隅に浮かせ、スマホは下バーの1段目に置く。
+          出し分けは mode で決まるので、同時に2枚は出ない。 */}
+      {mode !== "phone" && <Today place="corner" />}
+
       {/* スマホ: 行き先は下のバーにまとめる */}
       {mode === "phone" && (
         <div className="island-bar" data-ui>
+          <Today place="bar" />
           <div className="island-bar-scroll">
             {SPOTS.map((s) => (
               <button

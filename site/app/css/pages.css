@@ -1,0 +1,1145 @@
+/* =========================================================
+   ページ共通（島の外のページ）
+
+   ここは「Webページ」ではなく「ゲームの画面」に見せる場所。
+
+   窓の型は2つある（docs/ac-reference.md ⑦）。1つの面で混ぜない。
+
+     板の型 … 押すもの・行き先。厚みのある板。角が丸い。二重枠
+     紙の型 … 一覧と詳細。印刷したページ。影を落とさず、細い罫線で区切る
+
+   どちらにも共通する決まり:
+     1. 角丸は部品の高さの 1/3。ただし大きな面は --r-3 で止める
+     2. 板の厚みは真下にまっすぐ。落ちる影は光の反対＝右下へずらす
+     3. ぼかした影を使わない。ぼかすぶん濃さで見せる
+     4. 押せるものだけに厚みがある。押すと厚みぶん沈む
+   ========================================================= */
+
+/* このファイルの中だけで使う派生値。色・影・角丸は tokens.css のものを
+   そのまま使う。向こうで色が変わればここも一緒に動く。 */
+:root {
+  --pg-edge: var(--frame-dark);   /* 板の側面。下の厚みはこの色 */
+  --pg-rim: var(--paper-2);       /* 枠の内側にもう一枚あるクリームの輪 */
+  /* 落ちる影は tokens の実測どおり（右下へずれる暖かい灰緑）。 */
+  --pg-drop: var(--shadow-3);
+  --pg-drop-s: var(--shadow-2);
+  /* 板の上面のハイライト。明るさの差だけで立体を作る */
+  --pg-lit: inset 0 2px 0 rgba(255, 255, 255, 0.85);
+  /* 角丸は「部品の高さの 1/3」で選ぶ。ただし 200px を超える面は
+     半径を上げるほど四隅だけ間延びするので、そこで止める（tokens.css）。
+       パネル … ページを包む大きな面。--r-3 で止める
+       カード … 80〜120px。--r-3
+       タイル … 54〜80px。--r-2 */
+  --pg-r-panel: var(--r-3);
+  --pg-r-card: var(--r-3);
+  --pg-r-tile: var(--r-2);
+}
+
+.page {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 16px 14px 72px;
+}
+@media (min-width: 720px) { .page { padding: 26px 24px 96px; } }
+
+/* パネルの裏の海。
+   ここが一色べたのままだと、窓と窓のあいだが「何も無い場所」になって、
+   紙が宙に浮いて見える。任天堂の平らな絵は、近い2色のゆるい帯と
+   細かい粒でできている（/tmp/acref/ref_Beach_Card_NH.png）。
+   スクロールしても動かさない。動かすと帯が毎フレーム描き直しになる。 */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 1.2px, transparent 1.7px),
+    radial-gradient(ellipse 150% 26% at 50% -6%,
+      rgba(255, 255, 255, 0.16) 0%, transparent 72%),
+    radial-gradient(ellipse 130% 21% at 18% 33%,
+      color-mix(in srgb, var(--sea-mid) 34%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 140% 23% at 80% 68%,
+      color-mix(in srgb, var(--sea-mid) 26%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 170% 34% at 50% 108%,
+      color-mix(in srgb, var(--sea-deep) 72%, var(--ink)) 0%, transparent 76%);
+  background-size: 52px 52px, 78px 78px, auto, auto, auto, auto;
+  background-position: 0 0, 21px 27px, 0 0, 0 0, 0 0, 0 0;
+}
+
+/* 木の看板ヘッダー。
+   板は1枚の平らな木ではなく、上が明るく下が暗い「厚みのある板」に見せる。
+   下の縁を濃い色で切ると、そこが板の切り口になる。 */
+.ih {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  /* --wood は tokens.css に無い変数だった。無い変数を1つでも混ぜると
+     background ごと無効になって、看板が透明のまま h1 と重なる。
+     木目は擬似要素を足さずに背景を2枚重ねる。スクロールで貼り付いて
+     いる要素なので、重ねる層は少ないほうがいい。 */
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(255, 253, 246, 0.08) 0 2px,
+      rgba(255, 253, 246, 0) 2px 7px),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--frame) 82%, var(--paper)) 0%,
+      var(--frame) 42%,
+      var(--frame-dark) 100%);
+  border-bottom: var(--bw-3) solid var(--frame-deep);
+}
+/* 看板の下の縁を波形にする。まっすぐ切ると Web のヘッダーに戻ってしまう。
+   本物の帯（あつまれ どうぶつの森のバナー）はここが必ず波打っている。 */
+.ih::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 100%;
+  height: 11px;
+  pointer-events: none;
+  background: var(--frame-deep);
+  /* 半円を並べて波にする。画像もフィルタも使わないので描画が軽い */
+  -webkit-mask-image: radial-gradient(circle 11px at 50% 0, #000 98%, transparent 100%);
+  mask-image: radial-gradient(circle 11px at 50% 0, #000 98%, transparent 100%);
+  -webkit-mask-size: 22px 11px;
+  mask-size: 22px 11px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+.ih-in {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 11px;
+}
+@media (min-width: 720px) { .ih-in { padding: 12px 20px 13px; gap: 14px; } }
+.ih-home {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
+  padding: 7px 16px 7px 11px;
+  font-weight: 900; font-size: 15px;
+  letter-spacing: var(--ls-body);
+  flex: none;
+  min-height: 44px;
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.12s ease;
+}
+.ih-home:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-deep); }
+.ih-nav {
+  display: flex; gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 3px 0;
+  mask-image: linear-gradient(90deg, #000 90%, transparent);
+}
+.ih-nav::-webkit-scrollbar { display: none; }
+/* 広い画面では全部並ぶので、端をぼかすと「切れている」誤解になる */
+@media (min-width: 900px) {
+  .ih-nav { flex-wrap: wrap; overflow: visible; mask-image: none; row-gap: 6px; }
+}
+.ih-link {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #fff7e6;
+  font-size: 13px; font-weight: 900;
+  letter-spacing: var(--ls-body);
+  padding: 7px 13px;
+  min-height: 40px;
+  border-radius: var(--r-pill);
+  /* 板を彫って中を暗くする。半透明の白を敷くと木に溶けて、
+     押せるふだに見えなかった。 */
+  background: color-mix(in srgb, var(--frame-deep) 34%, transparent);
+  box-shadow:
+    inset 0 2px 2px color-mix(in srgb, var(--frame-deep) 46%, transparent),
+    inset 0 -1.5px 0 rgba(255, 245, 220, 0.3);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
+  white-space: nowrap;
+  transition: transform 0.12s ease;
+}
+.ih-link img { width: 22px; height: 22px; object-fit: contain; object-position: center bottom; }
+/* いま居る場所だけ、板から浮いた紙のふだにする */
+.ih-link.is-on {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+.ih-link:active { transform: translateY(2px); }
+/* いま居る場所のふだだけ厚みを持っている。沈むときは厚みも潰す */
+.ih-link.is-on:active { box-shadow: 0 1px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7); }
+
+/* パンくず。海の上に直接置くと読みづらいので、紙のふだに乗せる */
+.crumbs {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  width: fit-content; max-width: 100%;
+  font-size: 12.5px; font-weight: 900;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: var(--bw-1) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
+  border-radius: var(--r-pill);
+  padding: 6px 15px;
+  margin: 0 0 16px;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--sea-deep) 40%, #05233d);
+}
+.crumbs a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.crumbs b { color: var(--ink); }
+.crumbs i { font-style: normal; color: var(--ink-3); margin: 0 1px; }
+
+/* ページ見出し */
+.phead { text-align: center; margin: 10px 0 30px; }
+@media (min-width: 720px) { .phead { margin: 16px 0 38px; } }
+.phead-icon {
+  display: block;
+  margin: 0 auto;
+  width: 96px; height: 96px;
+  object-fit: contain;
+  object-position: center bottom;
+  /* 接地影。真下にべたっと1枚だけ。2枚重ねると合成が2回走る */
+  filter: drop-shadow(0 9px 1px color-mix(in srgb, #05233d 34%, transparent));
+}
+.phead h1 {
+  margin: 14px 0 0;
+  font-size: clamp(26px, 6.8vw, 42px);
+  font-weight: 900;
+  /* どうぶつの森の文字は字間が広い。詰まっているとWebの見出しに見える */
+  letter-spacing: var(--ls-head);
+  line-height: 1.3;
+  color: #fffdf6;
+  /* 白い字のまわりを濃い茶で1周する。縁取りがあるぶん字面が大きく見えて、
+     海の上でも字が沈まない。ぼかした影は文字の面積ぶん塗り直しが重いので、
+     ぼかさない影だけで作る。 */
+  text-shadow:
+    2px 0 0 var(--frame-deep), -2px 0 0 var(--frame-deep),
+    0 2px 0 var(--frame-deep), 0 -2px 0 var(--frame-deep),
+    0 6px 0 var(--frame-dark), 0 9px 1px color-mix(in srgb, #05233d 38%, transparent);
+}
+.phead-lead {
+  margin: 12px auto 0; max-width: 40em;
+  font-size: clamp(13.5px, 3.6vw, 16px);
+  font-weight: 800; line-height: 1.85;
+  letter-spacing: var(--ls-body);
+  color: #f4fbfe;
+  text-shadow: 0 2px 3px color-mix(in srgb, #05233d 58%, transparent);
+}
+.phead-mark {
+  display: inline-grid; place-items: center;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 4px solid var(--frame);
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+}
+/* 公式のアプリアイコン。四角い絵なので、角を丸めてアプリらしく見せる */
+.tile-logo {
+  width: 44px; height: 44px; flex: none;
+  border-radius: var(--r-1);
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(60, 40, 20, 0.22);
+  background: #fff;
+}
+.phead-logo {
+  display: block;
+  margin: 0 auto;
+  width: 84px; height: 84px;
+  border-radius: var(--r-2);
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 7px 1px color-mix(in srgb, #05233d 34%, transparent);
+}
+.tile-icon {
+  width: 44px; height: 44px; flex: none;
+  object-fit: contain; object-position: center bottom;
+}
+.phead-say { justify-content: center; margin-top: 16px; }
+.phead-say .gsay-bubble { text-align: left; max-width: 30em; }
+.phead-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+
+/* =========================================================
+   窓の型は2つある（docs/ac-reference.md ⑦）
+
+     板の型 … 押すもの・行き先。厚みがあって、押すと沈む
+     紙の型 … 一覧と詳細。印刷したページ。影を落とさず、細い罫線で区切る
+
+   ぜんぶを板の型で作ると、同じ形のカードが延々と積まれて見える。
+   1つの面で2つを混ぜない。中身から型を決めるので、ページ側は触らなくていい。
+   ========================================================= */
+
+:root {
+  /* 紙の型は tokens.css の実測値をそのまま使う。ここでは別名を置くだけ。 */
+  --pg-sheet: var(--paper-mottle-b);   /* 紙の地。明るいほう */
+  --pg-sheet-lo: var(--paper-mottle-a); /* 同じ紙の、沈んでいるほう */
+  --pg-rule: var(--rule);              /* 区切りの罫線。黒は使わない */
+  --pg-mark: var(--marker);            /* 見出しに敷く蛍光ペン */
+  --pg-pick: var(--pick);              /* 選んでいるものの細枠 */
+
+  /* 紙の地。無地にしない。明るさが5%ほどムラになっている。
+     ラジアルを重ねてムラを作り、細い斜めの縞で紙の目を出す。画像は足さない。 */
+  --pg-paper-bg:
+    repeating-linear-gradient(58deg,
+      rgba(255, 255, 255, 0.16) 0 1px, rgba(255, 255, 255, 0) 1px 4px),
+    radial-gradient(ellipse 62% 42% at 16% 10%,
+      color-mix(in srgb, var(--paper) 82%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 54% 46% at 86% 42%,
+      color-mix(in srgb, var(--paper) 62%, transparent) 0%, transparent 74%),
+    radial-gradient(ellipse 74% 44% at 38% 92%,
+      color-mix(in srgb, var(--sand-edge) 30%, transparent) 0%, transparent 72%),
+    linear-gradient(180deg, var(--pg-sheet) 0%, var(--pg-sheet-lo) 100%);
+  /* 紙の外の地。紙より明るいので、紙が「載っている」ように見える */
+  --pg-outer: var(--paper-out);
+}
+
+/* --- 板の型（既定） -----------------------------------------------------
+   ゲームの窓は「枠 → クリームの輪 → 紙」の三層でできている。
+   border で外枠、inset の影で内側の輪、background が紙。 */
+.panel {
+  position: relative;
+  /* 既定の地も無地にしない（docs/ac-reference.md ⑦-1）。
+     左上から光が当たって、右下に向かって紙が沈む。無地の白いカードが
+     等間隔で積まれて見えるのは、ここが真っ平らだったのが大きい。 */
+  background: var(--pg-ground,
+    radial-gradient(ellipse 58% 44% at 88% 78%,
+      color-mix(in srgb, var(--sand) 34%, transparent) 0%, transparent 72%)
+    ,
+    linear-gradient(156deg,
+      color-mix(in srgb, #fff 34%, var(--paper)) 0%,
+      var(--paper) 34%,
+      color-mix(in srgb, var(--paper-2) 76%, var(--sand)) 100%));
+  /* 枠は一色で塗らない。上を明るく下を暗くすると、平らな線が面取りになる */
+  border: var(--bw-2) solid var(--frame);
+  border-top-color: color-mix(in srgb, var(--frame) 72%, var(--paper));
+  border-bottom-color: color-mix(in srgb, var(--frame) 74%, var(--frame-deep));
+  border-radius: var(--pg-r-panel);
+  box-shadow:
+    inset 0 0 0 6px var(--pg-rim),      /* 内側のクリームの輪 */
+    0 8px 0 var(--pg-edge),             /* 板の厚み。ぼかさない */
+    var(--pg-drop);
+  padding: 26px 18px 24px;
+  margin: 0 0 30px;
+}
+@media (min-width: 720px) { .panel { padding: 34px 32px 32px; margin-bottom: 38px; } }
+
+/* --- 地の質感 -----------------------------------------------------------
+   紙・棚板・台紙・コルクを描き分けて、目で区切りが付くようにする。
+   質感はぜんぶ CSS のグラデーション。画像もフィルタも使わない。
+   ----------------------------------------------------------------------- */
+
+/* 行き先が並ぶところは「棚板」。木目を縦に通して、上から下へ色が落ちる */
+.panel:has(> .tiles),
+.panel:has(> .scards) {
+  --pg-ground:
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--frame-deep) 7%, transparent) 0 2px,
+      transparent 2px 11px),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--frame) 9%, var(--paper)) 0%,
+      color-mix(in srgb, var(--frame) 30%, var(--paper)) 100%);
+}
+/* 棚には奥行きの線が1本ある */
+.panel:has(> .tiles)::after,
+.panel:has(> .scards)::after {
+  content: "";
+  position: absolute;
+  left: 14px; right: 14px; bottom: 9px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--frame) 46%, transparent);
+  pointer-events: none;
+}
+
+/* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする。
+   掲示板は「貼る場所」と「貼ってあるもの」で1枚の板なので、
+   書き込む面（.bin / .brow）と貼ってある面（.bd-list）の両方を板にする。 */
+.panel:has(> .bin),
+.panel:has(> .brow),
+.panel:has(> .bd-list),
+.panel:has(.noteform) {
+  --pg-ground:
+    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--cliff-line) 26%, transparent) 0 2.4px, transparent 3.4px),
+    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--cliff-line) 22%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 84%, color-mix(in srgb, var(--cliff-line) 18%, transparent) 0 1.6px, transparent 2.6px),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--cliff) 58%, var(--paper-2)) 0%,
+      color-mix(in srgb, var(--cliff-lo) 56%, var(--paper-2)) 100%);
+  background-size: 84px 84px, 112px 112px, 63px 63px, auto;
+  border-color: var(--frame-dark);
+  --pg-edge: var(--frame-deep);
+  --pg-rim: color-mix(in srgb, var(--frame) 34%, var(--paper-2));
+}
+
+/* いまいる場所と今週の予定は、うっすら草を敷いて「外の場所」に見せる */
+.panel.now-hero,
+.panel:has(> .week) {
+  --pg-ground:
+    radial-gradient(ellipse 70% 46% at 50% 108%,
+      color-mix(in srgb, var(--grass2-hi) 62%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg,
+      var(--paper) 0%,
+      color-mix(in srgb, var(--grass2-hi) 30%, var(--paper)) 100%);
+  border-color: color-mix(in srgb, var(--grass-lo) 40%, var(--frame));
+  --pg-edge: color-mix(in srgb, var(--grass-lo) 40%, var(--frame-dark));
+  --pg-rim: color-mix(in srgb, var(--grass2-hi) 34%, var(--paper));
+}
+
+/* --- 紙の型 -------------------------------------------------------------
+   一覧と詳細のパネル。図鑑の面を写す。
+   厚みの板を外し、細い罫線と紙のムラだけで作る。角も板ほど丸くしない。
+
+   はじめは中身の class から :has() で当てていたが、中身の名前は
+   ページを作り直すたびに変わる。どの面を紙にするかはページ側の判断なので、
+   <Panel className="paper"> と書いてもらう形にした。
+   ----------------------------------------------------------------------- */
+.panel.paper {
+  --pg-ground: var(--pg-paper-bg);
+  --pg-rim: transparent;
+  --pg-edge: transparent;
+  border: 2px solid var(--pg-rule);
+  border-radius: var(--r-2);
+  /* 紙は厚みの板を持たない。水の上に置いた1枚として、ずれた影だけ落とす */
+  box-shadow: var(--shadow-1);
+  padding: 22px 15px 20px;
+}
+@media (min-width: 720px) {
+  .panel.paper {
+    padding: 28px 26px 26px;
+  }
+}
+/* 紙の面に置くものは、紙の作りに合わせる（docs/ac-reference.md ⑦-2,5,6）。
+   厚みの板と細い罫線が1つの面に混ざると、どちらが押せるのか分からなくなる。
+     ・区切りは影ではなく細い罫線
+     ・押せない印（チップ）は平ら
+     ・選んでいるものは塗りを変えず、細いオレンジ赤の枠で示す */
+.panel.paper :is(.scard, .city, .stat, .chip) {
+  box-shadow: none;
+  border-width: 1.5px;
+  border-color: var(--pg-rule);
+  border-style: solid;
+  background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
+}
+.panel.paper :is(.scard, .city):hover { transform: none; border-color: var(--pg-pick); }
+.panel.paper :is(.scard, .city):active { transform: translateY(1px); border-color: var(--pg-pick); }
+.panel.paper .chip {
+  border-radius: var(--r-0);
+  background: var(--chip);
+  border-color: color-mix(in srgb, var(--chip) 72%, var(--ink));
+  color: var(--chip-ink);
+  box-shadow: none;
+}
+/* 紙の面の見出しの下には、蛍光ペンの帯を敷く。これ1つで「印刷物」に見える。 */
+.panel.paper :is(h3, .sub) {
+  background: linear-gradient(180deg, transparent 46%, var(--pg-mark) 46%);
+  color: var(--marker-ink);
+  border: 0;
+  border-radius: 0;
+  padding: 0 4px 1px;
+}
+
+/* コルクの上は地が濃い。添え書きの色をそのまま置くと読めないので、
+   本文と同じ濃さまで戻す。 */
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(.muted, p) {
+  color: var(--ink);
+}
+
+/* --- 見出し -------------------------------------------------------------
+   板の型では「窓の上ぶちにはめた木の札」。
+   幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
+   窓の縁をまたがせる。ここが「ゲームの窓」に見えるかどうかの分かれ目。 */
+.panel > h2,
+.panel > .bhead > h2 {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 14px;
+  padding: 8px 15px 9px 11px;
+  font-size: clamp(17px, 4.4vw, 23px);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  line-height: 1.4;
+  /* 長い見出しが「たまっ／たか」のように1文字だけ折り返すのを防ぐ */
+  text-wrap: balance;
+  display: flex; align-items: center; gap: 8px;
+  border-radius: var(--r-pill);
+  border: var(--bw-2) solid color-mix(in srgb, var(--frame) 84%, var(--frame-deep));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 30%, var(--paper)) 0%,
+    color-mix(in srgb, var(--frame) 62%, var(--paper)) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 4px 0 color-mix(in srgb, var(--frame) 60%, var(--frame-deep)),
+    var(--pg-drop-s);
+}
+/* 先頭の見出しだけ、窓の上ぶちをまたがせる。
+   左右にはみ出させて、細いスマホでも折り返さずに入るようにする。 */
+.panel > h2:first-child {
+  margin: -34px -6px 14px -4px;
+  max-width: calc(100% + 10px);
+}
+@media (min-width: 720px) {
+  .panel > h2,
+  .panel > .bhead > h2 { padding: 11px 26px 12px 16px; margin-bottom: 18px; }
+  .panel > h2:first-child { margin: -40px 0 18px 10px; max-width: 100%; }
+}
+/* 札の両端に打ってある留め具。片側だけだと箇条書きの点に見える */
+.panel > h2::before,
+.panel > h2::after,
+.panel > .bhead > h2::before,
+.panel > .bhead > h2::after {
+  content: "";
+  flex: none;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--frame-deep) 62%, var(--frame));
+  box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 棚板の面の札は、木そのものの色にする。地が木なので、札も木で揃える。 */
+.panel:has(> .tiles) > h2,
+.panel:has(> .scards) > h2,
+.panel:has(> .tiles) > .bhead > h2,
+.panel:has(> .scards) > .bhead > h2 {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 68%, var(--paper)) 0%,
+    var(--frame) 100%);
+  border-color: var(--frame-deep);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 4px 0 var(--frame-deep),
+    var(--pg-drop-s);
+}
+/* 草の面の札は葉の色。ここだけ「外」だと分かる。 */
+.panel.now-hero > h2,
+.panel:has(> .week) > h2 {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--grass2-hi) 78%, var(--paper)) 0%,
+    var(--grass2) 100%);
+  border-color: var(--grass-lo);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.62),
+    0 4px 0 var(--grass-lo),
+    var(--pg-drop-s);
+}
+.panel.now-hero > h2::before, .panel.now-hero > h2::after,
+.panel:has(> .week) > h2::before, .panel:has(> .week) > h2::after {
+  background: color-mix(in srgb, var(--grass-lo) 74%, var(--leaf-c));
+}
+/* コルクの面の札は、板に打ちつけた札。留め具を画鋲の色にする。 */
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2) {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 40%, var(--paper)) 0%,
+    color-mix(in srgb, var(--frame) 78%, var(--frame-dark)) 100%);
+  border-color: var(--frame-deep);
+}
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::before,
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::after {
+  background: var(--accent);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent-deep) 42%, transparent), 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* 紙の型の見出しは「白い紙の札を、少し傾けてテープで貼った」もの。
+   木の札のままだと、紙の面に板が乗って型が混ざる。 */
+.panel.paper > h2 {
+  border: 0;
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 22px;
+  transform: rotate(-1.1deg);
+  transform-origin: left center;
+  box-shadow: var(--shadow-1);
+}
+.panel.paper > h2:first-child {
+  margin: -30px 0 18px 6px;
+}
+/* 留め具の丸をやめて、両端に貼ったテープにする */
+.panel.paper > h2::before,
+.panel.paper > h2::after {
+  position: absolute;
+  width: 30px; height: 12px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--gold) 26%, rgba(255, 255, 255, 0.62));
+  box-shadow: none;
+}
+.panel.paper > h2::before {
+  left: -12px; top: -7px; transform: rotate(-29deg);
+}
+.panel.paper > h2::after {
+  right: -12px; top: -7px; transform: rotate(29deg);
+}
+
+.panel p { margin: 0 0 11px; font-size: 15px; line-height: 1.95; font-weight: 600; }
+.panel p:last-child { margin-bottom: 0; }
+.panel > h2 + p, .panel > h2 + .muted { margin-top: 0; }
+
+/* 配信カード。押せるので下に厚みを付ける */
+.scards { display: grid; gap: 11px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .scards { grid-template-columns: 1fr 1fr; } }
+.scard {
+  display: flex; gap: 12px; align-items: stretch;
+  background: var(--paper-2);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 9px 12px 9px 9px;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  transition: transform 0.14s ease;
+}
+.scard:hover { transform: translateY(-3px); box-shadow: 0 7px 0 var(--pg-edge), var(--pg-drop-s); }
+.scard:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
+.scard-thumb {
+  position: relative; flex: none; width: 112px; aspect-ratio: 16/9;
+  border-radius: var(--r-1); overflow: hidden;
+  background: var(--sand-edge);
+  box-shadow: inset 0 0 0 2px rgba(255, 253, 246, 0.55);
+}
+.scard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scard-play {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #fff; font-size: 17px;
+  background: color-mix(in srgb, var(--ink) 46%, transparent);
+  text-shadow: 0 2px 3px color-mix(in srgb, var(--ink) 70%, transparent);
+}
+.scard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; justify-content: center; }
+.scard-meta { display: flex; gap: 7px; align-items: center; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.scard-meta em {
+  font-style: normal;
+  background: var(--frame); color: #fff;
+  border-radius: var(--r-pill); padding: 2px 9px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
+}
+.scard-body b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
+
+/* タイル。ここがいちばん「押せる板」に見えないといけない */
+.tiles { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .tiles { grid-template-columns: 1fr 1fr; } }
+.tile {
+  display: flex; align-items: center; gap: 13px;
+  min-height: 66px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--tile, var(--frame));
+  border-radius: var(--pg-r-tile);
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 6px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink));
+  transition: transform 0.14s ease;
+}
+.tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 9px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink)),
+    var(--pg-drop-s);
+}
+/* 押したら沈む。厚みが減るぶんだけ下に動かすと、板が押し込まれて見える */
+.tile:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink));
+}
+.tile-emoji { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--paper-2); display: grid; place-items: center; font-size: 22px; }
+.tile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tile-text b { font-size: 16px; font-weight: 900; letter-spacing: var(--ls-body); }
+.tile-text i { font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); line-height: 1.6; }
+.tile-go { font-size: 17px; color: var(--frame-dark); flex: none; }
+
+/* 数字。ゲームの数字は大きくて、下に台がある */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 62%);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 14px 10px 13px;
+  text-align: center;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.85),
+    0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+}
+.stat b {
+  display: block;
+  font-size: clamp(24px, 6.4vw, 32px);
+  font-weight: 900; line-height: 1.05;
+  letter-spacing: var(--ls-body);
+  color: var(--frame-deep);
+}
+.stat span { display: block; font-size: 12.5px; font-weight: 900; color: var(--ink); margin-top: 5px; letter-spacing: var(--ls-body); }
+.stat i { display: block; font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); margin-top: 3px; }
+
+/* チップ */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 6px 13px;
+  min-height: 30px;
+  font-size: 12.5px; font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  /* 押せない印なので厚みも影も付けない。上のつやだけ残す */
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
+/* 押せるチップにだけ厚みを付ける。平らなものと並んだとき、
+   厚みがあるほうだけが「押せる」と読める。 */
+a.chip, button.chip, .chip.link {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 3px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+a.chip:active, button.chip:active, .chip.link:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
+.chip.dark {
+  background: rgba(255, 253, 246, 0.22);
+  border-color: rgba(255, 253, 246, 0.72);
+  color: #fffdf6;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* 足元の木の板。上の縁を明るくすると、板の切り口に見える */
+.ifoot {
+  border-top: var(--bw-3) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
+  background: linear-gradient(180deg, var(--frame-dark) 0%, var(--frame-deep) 100%);
+  padding: 28px 16px calc(34px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.ifoot-back {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
+  padding: 12px 26px;
+  min-height: 48px;
+  font-weight: 900; font-size: 15px;
+  letter-spacing: var(--ls-head);
+  box-shadow: 0 5px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.75);
+  transition: transform 0.12s ease;
+}
+.ifoot-back:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
+.ifoot-note { margin: 18px 0 0; font-size: 12px; font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
+
+/* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
+.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.pager a {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 11px 20px;
+  min-height: 46px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; font-weight: 900;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 4px 0 var(--pg-edge);
+  transition: transform 0.12s ease;
+}
+.pager a:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
+
+/* いま */
+.now-hero { text-align: center; }
+.now-pin { display: block; margin: 0 auto 6px; width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 color-mix(in srgb, var(--frame-deep) 26%, transparent)); }
+.now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: 6px 0 10px; }
+/* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
+.week { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.week li {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid color-mix(in srgb, var(--frame) 60%, var(--paper));
+  border-left: 8px solid var(--frame);
+  border-radius: var(--r-0) var(--r-2) var(--r-2) var(--r-0);
+  padding: 12px 14px;
+  font-size: 14.5px; font-weight: 700; line-height: 1.75;
+  box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--frame) 60%, var(--paper-2));
+}
+
+/* 付箋 */
+/* 小見出しは本文より小さいので、色で沈めるより枠で分ける */
+.sub {
+  display: inline-flex; align-items: center;
+  font-size: 12.5px; font-weight: 900;
+  letter-spacing: var(--ls-head);
+  margin: 20px 0 10px;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 2px solid color-mix(in srgb, var(--frame) 66%, var(--paper));
+  border-radius: var(--r-pill);
+  padding: 4px 13px;
+}
+/* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
+.muted { color: var(--ink-2); font-size: 13.5px; font-weight: 600; line-height: 1.85; }
+.err { color: var(--accent-deep); font-size: 13px; font-weight: 900; margin: 8px 0 0; }
+.noteform { display: flex; gap: 9px; margin-top: 14px; }
+.noteform input {
+  flex: 1; min-width: 0;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 12px 16px;
+  font: inherit; font-size: 14px; font-weight: 700;
+  background: var(--paper-2);
+  box-shadow: inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 22%, transparent);
+}
+.noteform button {
+  flex: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 78%, var(--paper)) 0%, var(--frame) 100%);
+  color: #fff;
+  border-radius: var(--r-pill); padding: 12px 20px;
+  min-height: 46px;
+  font-weight: 900; font-size: 14px;
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
+  box-shadow: var(--pop-sm), inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+.noteform button:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.noteform button:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+
+/* 掲示板 */
+/* 書き込む場所は「へこんでいる」。押す場所（板）と逆にすると役割が伝わる */
+.bin {
+  width: 100%;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-2);
+  padding: 13px 15px;
+  font: inherit; font-size: 14.5px; font-weight: 600; line-height: 1.8;
+  background: var(--paper-2);
+  box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 24%, transparent);
+  resize: vertical;
+}
+.brow { display: flex; gap: 9px; margin-top: 10px; }
+.brow .bin { flex: 1; border-radius: var(--r-pill); }
+.bbtn {
+  flex: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 100%);
+  color: #fff;
+  border-radius: var(--r-pill); padding: 13px 24px;
+  min-height: 48px;
+  font-weight: 900; font-size: 14.5px;
+  letter-spacing: var(--ls-head);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--accent-deep) 46%, transparent);
+  box-shadow: 0 5px 0 var(--accent-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.bbtn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--accent-deep); }
+.bbtn:disabled { opacity: 0.55; box-shadow: none; transform: none; }
+.bhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.bsort { display: flex; gap: 6px; }
+.bsort button {
+  font-size: 12.5px; font-weight: 900;
+  padding: 7px 15px; min-height: 38px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  box-shadow: var(--pg-lit), 0 2px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+}
+.bsort button.is-on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 70%, var(--paper)) 0%, var(--frame) 100%);
+  color: #fff;
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
+}
+.bsort button:active { transform: translateY(2px); box-shadow: none; }
+/* 提案の並べ方そのものは live.css の .bd-list が持っている。
+   ここには、どのページでも同じ形をしている「さんせいの札」だけを置く。 */
+.vote {
+  flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 54px; min-height: 54px;
+  background: var(--paper); border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-1); padding: 8px 5px;
+  box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.vote svg { width: 20px; height: 19px; color: var(--accent); }
+.vote.is-on { background: var(--gold); border-color: color-mix(in srgb, var(--gold) 62%, var(--frame-deep)); box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--gold) 36%, var(--frame-deep)); }
+.vote.is-on svg { color: var(--accent-deep); }
+.vote:active { transform: translateY(3px); box-shadow: 0 0 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
+.vote b { font-size: 15px; font-weight: 900; }
+.idea-body { min-width: 0; flex: 1; }
+.idea-body p { margin: 0; font-size: 14.5px; line-height: 1.8; font-weight: 600; word-break: break-word; }
+.idea-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 7px; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.idea-meta em { font-style: normal; color: var(--frame-deep); }
+
+.scroll-cue {
+  position: absolute;
+  left: 50%; bottom: calc(var(--bar-h, 0px) + 10px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column; align-items: center; gap: 2px;
+  color: #fffdf6; font-size: 11px; font-weight: 800;
+  text-shadow: 0 2px 8px color-mix(in srgb, #05233d 62%, transparent);
+  pointer-events: none;
+}
+.scroll-cue i { font-style: normal; font-size: 15px; animation: cue 1.8s ease-in-out infinite; }
+@keyframes cue { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(5px); opacity: 1; } }
+@media (min-width: 640px) { .scroll-cue { display: flex; } }
+
+/* --- 島の案内役(カモメのミナト) --- */
+.gsay {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gsay-bird {
+  flex: none;
+  display: block;
+  animation: gullBob 2.8s ease-in-out infinite;
+}
+@keyframes gullBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+.gull-wing { animation: gullFlap 0.42s ease-in-out infinite alternate; }
+@keyframes gullFlap { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+
+.gsay-bubble {
+  position: relative;
+  margin: 0 0 4px;
+  background: var(--paper);
+  border: var(--bw-2) solid var(--frame);
+  border-top-color: color-mix(in srgb, var(--frame) 72%, var(--paper));
+  border-radius: var(--r-3);
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 4px var(--pg-rim), 0 5px 0 var(--frame-dark), var(--pg-drop-s);
+}
+.gsay-bubble::before,
+.gsay-bubble::after {
+  content: "";
+  position: absolute;
+  left: -11px;
+  bottom: 13px;
+  border: 6px solid transparent;
+  border-right-color: var(--frame);
+}
+.gsay-bubble::after {
+  left: -6px;
+  border-right-color: var(--paper);
+}
+@media (min-width: 720px) {
+  .gsay-bubble { font-size: 15.5px; padding: 14px 22px; }
+}
+
+/* --- 国のページ: 行った街 --- */
+.cities { display: grid; gap: 9px; margin-top: 10px; }
+.city {
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+.city-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 900;
+}
+.city-head::-webkit-details-marker { display: none; }
+.city-head b { font-size: 14.5px; }
+.city-head i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+/* 開くしるし。三角より、閉じ開きが伝わる線にする */
+.city-head::after {
+  content: "";
+  width: 9px; height: 9px;
+  border-right: var(--bw-1) solid var(--frame-dark);
+  border-bottom: var(--bw-1) solid var(--frame-dark);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+  flex: none;
+}
+.city[open] .city-head::after { transform: rotate(-135deg) translateY(-2px); }
+.city[open] .city-head { background: var(--paper); }
+.city .scards { padding: 4px 12px 13px; }
+.city.is-quiet { opacity: 0.62; }
+.city.is-quiet .city-head { cursor: default; }
+.city.is-quiet .city-head::after { display: none; }
+
+/* --- ログイン --- */
+.signin {
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  padding: 14px 15px;
+  margin-bottom: 14px;
+}
+.signin > b { display: block; font-size: 14px; }
+.signin ul { margin: 8px 0 10px; padding-left: 1.15em; }
+.signin li { font-size: 12.5px; font-weight: 700; line-height: 1.8; color: var(--ink-2); }
+.signin-warn {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--gold) 20%, var(--paper));
+  border: 2px dashed var(--frame);
+  border-radius: var(--r-1);
+  padding: 10px 12px;
+}
+.signin-warn b { color: var(--frame-deep); }
+.signin-go {
+  background: var(--accent-2);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 900;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent-2) 66%, var(--ink));
+}
+.signin-go:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-2) 66%, var(--ink)); }
+.signin-go:disabled { opacity: 0.6; box-shadow: none; }
+.signin-skip { margin: 10px 0 0; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.signin-link {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.signed {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper-2);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 4px 6px 4px 4px;
+  margin-bottom: 12px;
+}
+.signed img { width: 26px; height: 26px; border-radius: 50%; }
+.signed-name { font-size: 12.5px; font-weight: 900; }
+.signed-out { font-size: 11px; font-weight: 800; color: var(--ink-3); padding: 4px 8px; }
+.bin-locked {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+  background: var(--paper-2);
+}
+
+/* --- これからの予定 --- */
+.phead-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.count {
+  margin-left: auto;
+  flex: none;
+  background: var(--paper-2);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 4px 13px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.count b { font-size: 17px; color: var(--accent); margin: 0 2px; }
+.count.is-today { background: var(--gold); border-color: color-mix(in srgb, var(--gold) 62%, var(--frame-deep)); color: var(--ink); }
+.count.is-past { opacity: 0.62; }
+
+.pphotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.pphotos figure { margin: 0; }
+.pphotos img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  display: block;
+  background: var(--paper-2);
+}
+.pphotos figcaption {
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.pphotos figcaption a { text-decoration: underline; text-underline-offset: 2px; }
+
+.pembeds { display: grid; gap: 12px; margin: 14px 0; }
+.pembed iframe {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  display: block;
+}
+.pembed:has(iframe[src*="youtube"]) iframe { aspect-ratio: 16 / 9; }
+.pembed-note { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-3); }
+.chip.link { background: var(--paper); border-color: var(--frame-dark); }
+
+/* --- 島での見え方の設定 -----------------------------------------------
+   名前も YouTube のアイコンも、出すか出さないかは本人が決める。
+   何もしなければキャラクターだけが島にいて、名前は出ない。
+   --------------------------------------------------------------------- */
+.me {
+  margin-top: 12px;
+  padding: 14px;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-dark);
+}
+.me-title { display: block; font-size: 14px; }
+.me-note { margin: 6px 0 12px; font-size: 12px; line-height: 1.7; color: var(--ink-3); }
+.me-label { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 6px; }
+.me-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.me-pick {
+  width: 46px; height: 46px;
+  padding: 2px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.me-pick img { width: 100%; height: 100%; object-fit: contain; }
+.me-pick.is-on { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 55%, transparent); }
+.me-pick-none { width: auto; padding: 0 12px; font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.me-row { display: block; margin-bottom: 10px; }
+.me-row span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 4px; }
+.me-row input {
+  width: 100%;
+  padding: 9px 12px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+.me-check { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; font-weight: 800; }
+.me-check input { width: 20px; height: 20px; accent-color: var(--frame-dark); }
+.me-save {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 42%, var(--paper)) 0%, var(--gold) 100%);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--frame-deep);
+}
+.me-save:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.me-ok { margin: 8px 0 0; font-size: 12px; font-weight: 800; color: var(--ink-3); }

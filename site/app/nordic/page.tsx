@@ -1,94 +1,143 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PageShell, { PageHead } from "@/components/ui/PageShell";
+import PageShell from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
-import Countdown from "@/components/nordic/Countdown";
+import TripNow, { type Stop } from "@/components/nordic/TripNow";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import RouteLegs from "@/components/nordic/RouteLegs";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
-import { HITCH_KM, NORDIC_COUNTRIES, NORDIC_GUIDE, ROUTE } from "@/content/nordic";
+import Highlights from "@/components/nordic/Highlights";
+import {
+  DEPART,
+  HITCH_KM,
+  MAIN,
+  NORDIC_COUNTRIES,
+  NORDIC_GUIDE,
+  ROUTE,
+  nordicCountry,
+} from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
 import { planById } from "@/content/plans";
 
 export const metadata: Metadata = {
-  title: "ヒッチハイクで北欧へ",
+  title: "スウェーデンまでヒッチハイクで",
   description:
-    "2026年9月11日、ジョージアを出て、ポーランドからバルト三国を北上して北欧へ。陸路1,541kmはぜんぶヒッチハイク。ルート地図、国ごとの見どころ、旅のしおり。",
+    "スウェーデンに、会いたい人がいます。ジョージアからそこまで1,541km。バスにも電車にも乗らず、人の車だけで行きます。2026年9月11日出発。ルート地図、国ごとの見どころ、旅のしおり。",
+};
+
+const MOVE: Record<string, string> = {
+  fly: "飛行機",
+  hitch: "ヒッチハイク",
+  ferry: "フェリー",
+  walk: "歩き",
 };
 
 /**
  * 北欧ヒッチハイク旅。
  *
- * 主役は地図。「どうやって行くのか」がこの企画のすべてなので、
- * 文章より先に、通る道が絵で見える状態にする。
+ * この企画は「ヒッチハイクで北欧を回る」ではなく、
+ * **会いたい人がいるので、スウェーデンまで陸路で会いに行く**話。
+ * 行為ではなく目的があるので、終わりが想像できるし、1,541km が
+ * そのまま「会えるまでの遠さ」になる。
+ * その人が誰なのかは書かない。名前も写真も出さない。
+ *
+ * 並びは「来た人の頭に浮かぶ順」。
+ *   1. いつ出て、会えるまであとどれだけで、いまどこにいるのか（TripNow）
+ *   2. どの道を通るのか（地図）
+ *   3. どうしてバスに乗らないのか
+ *   4. その道で何が起きるのか（区間ごと）
+ *   5. 途中で何を見るのか
+ *   6. どの国を通るのか
+ *   7. 持っていくもの
+ *   8. 自分は何を言えるのか（意見）
  *
  * 数字は意味のあるものだけ置く。読んで何も分からない数字（「0回、戻らない」）は出さない。
  */
-export default function NordicPage() {
+export default async function NordicPage() {
   const plan = planById("nordic");
-  const stays = ROUTE.filter((l) => l.stay).length;
-  const cities = MAP.cities.length;
+  const cityId = Object.fromEntries(MAP.cities.map((c) => [c.name, c.id]));
+
+  // 一本道の止まる場所。寄り道は数えない（行って戻ってくるので旅は進まない）。
+  const stops: Stop[] = [
+    { name: MAIN[0].from, country: "ジョージア" },
+    ...MAIN.map((l) => {
+      const nm = l.to.replace(/（.*$/, "");
+      const c = l.enters ? nordicCountry(l.enters) : undefined;
+      return {
+        name: nm,
+        id: cityId[nm],
+        country: c?.name,
+        how: `${MOVE[l.move]}${l.km ? ` ${l.km.toLocaleString()}km` : ""}${l.time ? ` / ${l.time}` : ""}`,
+        art: l.art,
+        note: l.note,
+        hitch: l.move === "hitch" ? (l.km ?? 0) : 0,
+      };
+    }),
+  ];
+  // 国が変わらない区間は、直前の国をそのまま引き継ぐ。
+  for (let i = 1; i < stops.length; i++) {
+    if (!stops[i].country) stops[i].country = stops[i - 1].country;
+  }
+  // 寄り道ぶんの距離は、その日を過ごす街に足す。
+  // 一本道に並べないだけで、親指を上げる距離には入っている（HITCH_KM と合わせる）。
+  for (const l of ROUTE) {
+    if (!l.side || l.move !== "hitch" || !l.km) continue;
+    const s = stops.find((x) => x.name === l.from.replace(/（.*$/, ""));
+    if (s) s.hitch = (s.hitch ?? 0) + l.km;
+  }
 
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
-      <PageHead
-        icon="signpost"
-        title="ヒッチハイクで北欧へ"
-        lead={plan?.note}
-        say="いってらっしゃい、じゃなくて。どこかで一緒に乗せてもらう気持ちで見ててね。"
+      <TripNow
+        stops={stops}
+        depart={DEPART}
+        departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30"
+        hitchKm={HITCH_KM}
       />
 
-      <Panel>
-        <Countdown />
-      </Panel>
-
       {/* 地図。このページの主役なので、いちばん上に、いちばん大きく。 */}
-      <section className="panel is-map">
-        <h2>通る道</h2>
+      <section className="panel is-map" id="map">
+        <h2>会いに行く道</h2>
         <p className="muted">街を押すと、その国のページへ。</p>
         <RouteMapSvg />
         <MapLegend />
-        <div className="nfacts">
-          <span>
-            <b>{HITCH_KM.toLocaleString()}</b>
-            <i>km を親指で</i>
-          </span>
-          <span>
-            <b>6</b>
-            <i>カ国を北へ</i>
-          </span>
-          <span>
-            <b>{cities}</b>
-            <i>の街に降りる</i>
-          </span>
-          <span>
-            <b>{stays}</b>
-            <i>泊まる街</i>
-          </span>
-        </div>
+        <p className="nmap-say">
+          いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
+        </p>
       </section>
 
       <Panel>
-        <h2>どういう企画なのか</h2>
+        <h2>どうしてバスに乗らないのか</h2>
         {plan?.about?.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
         <div className="nquote">
           <p>
             バスなら2日で終わる道です。それを親指1本で行くのは、
-            <b>その土地の人に会わないと1mmも進まない</b>から。
+            <b>そうやって行かないと、会いに行ったことにならない</b>から。
             誰の車に乗せてもらえるかで、旅の中身が毎日変わります。
           </p>
         </div>
       </Panel>
 
       <Panel>
-        <h2>区間ごとの話</h2>
-        <p className="muted">押すと、その区間で何が起きるかが出てきます。</p>
+        <h2>この10日を、いっしょに決める</h2>
+        <p className="muted">
+          区間を押すと、その日に何が起きるかと、道しるべの欄が出てきます。
+          道しるべが立っていない区間は、あやとがただ走るだけの区間になります。
+        </p>
         <RouteLegs />
+      </Panel>
+
+      <Panel>
+        <h2>会いに行く途中で、何を見るのか</h2>
+        <p className="muted">
+          161件から、通る順に8つ。写真を押すと、その国のページの、そこに飛びます。
+        </p>
+        <Highlights />
       </Panel>
 
       <Panel>
@@ -131,12 +180,14 @@ export default function NordicPage() {
       </Panel>
 
       {/* 北欧旅ぜんぶへの意見。国ごとの募集は各国のページにある。 */}
-      <CountryIdeas
-        country="北欧旅"
-        title="この旅、どうなってほしい？"
-        note="行く前に全部読みます。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も、なんでも。"
-        placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
-      />
+      <div id="voices">
+        <CountryIdeas
+          country="北欧旅"
+          title="この旅、どうなってほしい？"
+          note="行く前に全部読みます。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も、なんでも。"
+          placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
+        />
+      </div>
     </PageShell>
   );
 }

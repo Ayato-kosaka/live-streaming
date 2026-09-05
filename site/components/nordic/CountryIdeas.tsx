@@ -81,6 +81,33 @@ export default function CountryIdeas({
         {note ??
           "行く前に読みます。現地で「今これ見てる」って言えるのがいちばん嬉しいので、知ってることがあったら書いてください。"}
       </p>
+
+      {/* 出ている意見を先に見せる。「書くところ」だけが先にあると、
+          何を書けばいいのか分からないまま、白い枠を見ることになる。 */}
+      {list.length > 0 && (
+        <ul className="cideas">
+          {list.map((i) => (
+            <li key={i.id}>
+              <p>{i.text.slice(tag.length)}</p>
+              <span className="cidea-foot">
+                <i>{i.name || "名無しさん"}</i>
+                <button
+                  className={`cidea-vote${voted.has(i.id) ? " is-on" : ""}`}
+                  onClick={() => vote(i.id)}
+                  disabled={voted.has(i.id)}
+                >
+                  いいね {i.votes}
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {ideas !== null && list.length === 0 && (
+        <p className="cidea-none">まだ1件もありません。最初のひとつをどうぞ。</p>
+      )}
+
+      <p className="cidea-ask">{list.length > 0 ? "自分も書く" : "書いてみる"}</p>
       {!user && <SignIn compact />}
       <textarea
         className="bin"
@@ -103,31 +130,6 @@ export default function CountryIdeas({
         {sending ? "貼っています…" : "はりだす"}
       </button>
       {err && <p className="err">{err}</p>}
-
-      {list.length > 0 && (
-        <ul className="cideas">
-          {list.map((i) => (
-            <li key={i.id}>
-              <p>{i.text.slice(tag.length)}</p>
-              <span className="cidea-foot">
-                <i>{i.name || "名無しさん"}</i>
-                <button
-                  className={`cidea-vote${voted.has(i.id) ? " is-on" : ""}`}
-                  onClick={() => vote(i.id)}
-                  disabled={voted.has(i.id)}
-                >
-                  いいね {i.votes}
-                </button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {ideas !== null && list.length === 0 && (
-        <p className="muted" style={{ marginTop: 12 }}>
-          まだ1件もありません。最初のひとつをどうぞ。
-        </p>
-      )}
     </section>
   );
 }

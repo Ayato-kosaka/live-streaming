@@ -1,0 +1,355 @@
+/* =========================================================
+   あやと島 — デザイントークン
+   モバイルファースト。色は「昼のジョージア」を基準に、
+   時間帯(data-time)と現在地テーマ(data-theme)で上書きする。
+
+   色の基準は任天堂の公式スクリーンショット（`docs/ac-reference.md`）。
+   /tmp/acref/ の画像から Python で1枚ずつ画素を測った値:
+
+     海（公式アート）  #088ce2  H204 S93 L46
+     空（実機・昼）    #528eff  H219 S100 L66   ※上から下までほぼ一色
+     会話窓の紙       #fffae4  H49 S100 L95
+     会話窓の文字      #614f27  H41 S43 L27
+     強調の青         #00b5d0  H188 S100 L41
+     名札の黄         #fff98e / 文字 #e9a30d
+     図鑑の紙        #eae0b0  H50 S58 L80 / 罫線 #9c946c / チップ #c9bf05
+     夜の空          #11143f  H236 S58 L16 / 夜の地面 #514a72  H250 S21 L37
+
+   測って分かったいちばん大事なこと: **どうぶつの森には彩度の低い色がほとんど無い。**
+   「クリーム」も「茶色」も「オリーブ」も、HSL で見ると S50〜100 ある。
+   灰色を混ぜて落ち着かせた色を1つ置くと、そこだけ写真のように見えて絵から浮く。
+   暗い色を作るときも、L を落とすぶん S を上げる。
+   ========================================================= */
+
+:root {
+  /* 海。明るさは前のままで、彩度だけ実測に合わせた（S62 -> S89）。
+     公式アートの沖は #088ce2 で、明度はいまと同じ L46 なのに彩度が 30 も高い。
+     この1色がページの下地なので、ここが濁っていると何を載せても濁って見える。
+     いちばん深いところでも L46 まで。これ以上暗いと絵本に見えない。 */
+  --sea-deep: #0d87de;
+  --sea-mid: #2ea5ef;
+  --sea-shallow: #4ddaea;
+  --sea-shelf: #94f4f0;
+  /* 泡は真っ白。公式のビーチはレース状にくっきり描いてあって、白がにごらない。 */
+  --foam: #ffffff;
+
+  /* 陸 */
+  --sand: #f9e4a9;
+  --sand-wet: #ecce8d;
+  --sand-edge: #dcb46a;
+  --grass-hi: #9be76e;
+  --grass: #7bd350;
+  --grass-lo: #5bb63a;
+  --grass2-hi: #b3ee87;
+  --grass2: #92df62;
+  --cliff: #dca96a;
+  --cliff-lo: #bf854a;
+  --cliff-line: #8f5e32;
+
+  /* 建物 */
+  --wall: #fffaf0;
+  --wall-lo: #f7eacf;
+  --roof-coral: #f97690;
+  --roof-sky: #58c1ee;
+  --roof-gold: #ffd152;
+  --roof-mint: #7be0b1;
+  --roof-wood: #d4955e;
+  --door: #bf7b40;
+  --window: #ffebad;
+
+  /* 木・草 */
+  --leaf-a: #53b540;
+  --leaf-b: #75ca58;
+  --leaf-c: #3f9a3c;
+  --trunk: #9f693c;
+
+  /* UI「板の型」— 島の上に浮くHUD、ボタン、通知。
+     紙は公式の会話窓の実測 #fffae4。白ではなくクリームで、しかも S100。
+     文字は真っ黒にしない。公式は #614f27（H41 S43）の金茶で、
+     灰色は1滴も入っていない。前の #59422c は S34 で、並べると濁って見えた。
+     3段とも 12px の小さい字で使うので、紙に対して 4.5:1 は割らないところで止める。 */
+  --paper: #fffae4;
+  --paper-2: #fdf1cf;
+  --ink: #56401f;
+  --ink-2: #7a5c26;
+  --ink-3: #8f7133;
+  /* 枠。公式の時計まわりの木は #eeb368 前後。深いほうも彩度を落とさずに沈める。 */
+  --frame: #f2b054;
+  --frame-dark: #ce8327;
+  --frame-deep: #a86115;
+  --accent: #ff7092;
+  /* --accent の濃いほう。バッジのグラデーションの下側と、日数の丸。
+     いままで定義が無く 4カ所が var(--accent-deep, #d4552a) で逃げていた。
+     橙に飛ぶと --accent の桃色と別物になるので、色相は --accent の隣に置く。 */
+  --accent-deep: #da1647;
+  /* 公式の本文中リンクは #00b5d0。前の #32c1e2 は明るくて字が浮いていた。 */
+  --accent-2: #0ab8db;
+  --gold: #ffcf4d;
+
+  /* UI「紙の型」— いきもの図鑑・カタログ・しおり。
+     `docs/ac-reference.md` の 7章。板の型と混ぜない。ここには影を落とさない。
+     図鑑の面（/tmp/acref/ref_NH_Critterpedia_Coelacanth.jpg）から測った値。
+     紙は無地ではなく、明るさが 5% ほどムラになっている。2色を重ねて作る。 */
+  --paper-mottle-a: #eadda9;
+  --paper-mottle-b: #efe4b6;
+  --paper-out: #f4efcf;
+  /* 罫線。黒い線は使わない。暖かいオリーブ。実測 #9c946c より少しだけ温かく。 */
+  --rule: #9d9463;
+  /* 見出しの下に敷く蛍光ペンの帯と、その上に載る字 */
+  --marker: #dcdb93;
+  --marker-ink: #33490b;
+  /* 平らなチップ。押せないので厚みも影も付けない */
+  --chip: #cdc104;
+  --chip-ink: #43400f;
+  /* 選んでいるもの。塗りは変えず、この色の細枠だけを足す */
+  --pick: #e4522c;
+
+  /* 影。3つのことを直した。
+
+     1. 真下に落とさない。光は左上から来ているので、影は**右下**へずれる。
+        真下だけに落ちる影は、物が浮いているのではなく「板が2枚ある」に見える。
+     2. 濃くする。公式の接地影は 30〜40%。18〜24% では地面に乗っていない。
+     3. 黒と紺をやめる。公式の影の中は暗いだけで、色が消えていない。
+        地面（草）の照り返しが入った暖かい灰緑にする。青い海の上では深い青緑に、
+        クリームの紙の上では暖かいオリーブに見える。どちらでも濁らない。
+
+     公式の影はぼけていないので、ぼかしは 0〜3px までにとどめる。 */
+  --shadow-1: 1px 3px 0 rgba(52, 66, 32, 0.28);
+  --shadow-2: 2px 7px 1px rgba(46, 60, 30, 0.34);
+  --shadow-3: 3px 13px 3px rgba(40, 54, 26, 0.38);
+  /* 押せるものの下の厚み。影ではなく、板の側面。
+     だから色は「その板の色の濃いほう」で、ぼかさず、真下にまっすぐ出す。
+     厚みは高さの 1割前後（48px のボタンで 5〜6px）。 */
+  --pop: 0 6px 0 var(--frame-dark);
+  --pop-sm: 0 4px 0 var(--frame-dark);
+  --pop-lg: 0 8px 0 var(--frame-deep);
+  /* 押したとき。厚みを潰して、そのぶん本体を下げる。
+     沈む量と厚みの減る量を同じにしないと、下の辺が動いて見える。 */
+  --pop-push: 0 2px 0 var(--frame-dark);
+  --pop-push-lg: 0 3px 0 var(--frame-deep);
+
+  /* 角丸。公式の窓枠は「半径が高さの 1/3」くらい丸い。
+     下は 1/3 になる高さを並べた段。**部品の高さで選ぶ**こと。
+
+       --r-0  24〜36px の小さな札・タグ
+       --r-1  36〜54px のボタン、入力欄
+       --r-2  54〜80px の帯、1行のカード
+       --r-3  80〜120px の吹き出し、見出しの箱
+       --r-4  120〜170px のカード
+       --r-5  170px 以上の大きな箱
+
+     ただし 1/3 が効くのは 200px あたりまで。それより高い面（ページ全体を包む
+     パネルや紙）は、半径を上げるほど四隅だけが間延びして安っぽくなる。
+     公式でも図鑑の紙の角はほとんど直角に近い。大きな面には --r-2 までにする。 */
+  --r-0: 8px;
+  --r-1: 12px;
+  --r-2: 20px;
+  --r-3: 30px;
+  --r-4: 44px;
+  --r-5: 56px;
+  /* 完全な楕円。公式のボタン・名札・チップはほぼこれ */
+  --r-pill: 999px;
+
+  /* 枠の太さ。公式の窓枠はこちらより太い。
+     直に px を書いているところが多いので、これから触る CSS はこれを使う。 */
+  --bw-1: 2.5px;
+  --bw-2: 3.5px;
+  --bw-3: 5px;
+
+  /* 字間。太いゴシックで字間が広いのが本物の見え方。
+     丸ゴシックの日本語は、字面が円に近いぶん詰めると団子になる。
+     0.015em はほぼ詰めているのと同じで、字がくっついて見えていた。
+     ひらがなの多い文にちょうど air が入るのは 0.04em あたり。 */
+  --ls-body: 0.04em;
+  --ls-head: 0.08em;
+  --ls-caps: 0.14em;
+
+  /* 行の高さ。日本語は行間を空けないと、太い字が塊になって読めない。
+     各ページの CSS が個別に 1.7〜1.95 を書いているので、
+     ここは「何も言われていない文字」の下敷き。 */
+  --lh-body: 1.75;
+  --lh-head: 1.3;
+
+  /* ページの下地。ふだんは海と同じ色。時間帯ごとに書きかえる
+     （--sea-deep 自体を時間で書きかえると、島の地形が二重に染まる）。
+     どの時間帯でも L46 前後に揃える。ここに白い字が載るので、
+     明るさを動かすと時間帯によって字が読めたり読めなかったりする。
+
+     一色でベタ塗りにすると、そこだけ「Webページの背景」に見える。
+     公式の空も海も、必ず上から下へ明るさが動いている。
+     下（水平線のほう）をわずかに明るくして、光が向こうから来ている形にする。 */
+  --page-bg: linear-gradient(180deg, #0b7ed3 0%, var(--sea-deep) 42%, #2299e6 100%);
+
+  /* 空。実測すると公式の空は上から下までほぼ一色で、地平線でわずかに明るくなる。
+     前は上 #79c0f6 → 下 #bbe8fb と大きく白へ抜けていて、霞んで見えていた。 */
+  --sky-1: #528eff;
+  --sky-2: #7ab4ff;
+  --sun: #fff3bd;
+  --lamp: 0;
+  /* 時間帯のかぶせ色。既定（昼）は何もかけない。 */
+  --tint: transparent;
+  --glow: transparent;
+}
+
+/* 時間帯は3つを組み合わせて表す。
+
+   1. **水そのものの色**（--sea-*）。ここがいちばん効く。
+   2. --tint（乗算）。焼いてあるスプライトは色を変えられないので、
+      木や建物を時間帯に合わせるにはこれしか手が無い。
+   3. --glow（スクリーン）。空気に光が満ちている感じ。
+
+   前は 3 に頼りすぎていた。**スクリーンは彩度を殺す。**
+   白に近い色でスクリーンすると、暗いチャンネルが一気に持ち上がって
+   R・G・B の差が縮まる。海の彩度を計算すると S86 -> S38 まで落ちていた。
+   実際、夕方の画面は「橙の夕焼け」ではなく「灰色の曇り」に見えていた。
+
+   だから glow は 0.10 前後の"ひとさじ"に留めて、
+   色は 1（水そのもの）と 2（乗算）で作る。 */
+
+/* 朝。日が低いので光が金色になる。水は昼より少し明るく、少し青緑寄り。
+   本物の朝はもともと控えめ。派手にすると「夕方」に見えてしまう。 */
+[data-time="morning"] {
+  --sea-deep: #0f8fe0; --sea-mid: #3ab2f2; --sea-shallow: #62e4ef; --sea-shelf: #a6f8f2;
+  --sky-1: #ffc78f; --sky-2: #c2ebff;
+  --sun: #fff0c0;
+  --tint: rgba(255, 228, 186, 0.16);
+  --glow: rgba(255, 216, 150, 0.10);
+  --page-bg: linear-gradient(180deg, #0a86d4 0%, #1194e0 45%, #35abe9 100%);
+}
+[data-time="day"] {
+  --tint: transparent;
+  --glow: transparent;
+}
+/* 夕。1日でいちばん色が動く時間。
+   水を青からすみれへ動かしてから、橙を乗算する。
+   青いままの水に橙を乗算すると、補色どうしで打ち消しあって灰色になる。 */
+[data-time="evening"] {
+  --sea-deep: #3a4fbe; --sea-mid: #6a78d8; --sea-shallow: #a89ce8; --sea-shelf: #d6c8f4;
+  --sky-1: #ff7452; --sky-2: #ffca7a;
+  --sun: #ffd79c;
+  --tint: rgba(255, 130, 62, 0.28);
+  --glow: rgba(255, 176, 92, 0.10);
+  /* 夕暮れの水は、遠くほど夕日を拾って紫に寄る */
+  --page-bg: linear-gradient(180deg, #2a4cbc 0%, #3159d8 45%, #5a6fe6 100%);
+}
+/* 夜。公式の夜は「暗い」ではなく「青い」。星も草も見えている。
+   ただし実測すると青ではなく**すみれ色**だった（空 H236、地面 H250）。
+   水そのものを沈めたぶん、乗算は 0.62 から 0.55 に緩める。
+   両方かけると草まで真っ黒になって、島に何があるか分からなくなる。 */
+[data-time="night"] {
+  --sea-deep: #1b4a94; --sea-mid: #2a63b4; --sea-shallow: #3f8ccc; --sea-shelf: #63aede;
+  --sky-1: #141643; --sky-2: #2a336f;
+  --foam: #d9ebff;
+  --tint: rgba(38, 40, 116, 0.55);
+  --glow: rgba(126, 142, 255, 0.16);
+  --page-bg: linear-gradient(180deg, #101a44 0%, #192957 45%, #27407e 100%);
+  --lamp: 1;
+}
+/* いまいる場所で島の景色を変える。
+   地形の色だけ変えるとスプライトが取り残されるので、
+   島の絵ぜんぶに軽いフィルタもかける。 */
+/* 北欧。「寒い」を彩度を抜いて作らない。抜くと写真の色になって、絵から外れる。
+   前の砂は S15〜31 の灰色で、ここだけ絵ではなくグレースケールに見えていた。
+   寒さは **色相**（緑を青へ、砂を青みのクリームへ）と **明るさ**で作る。 */
+[data-theme="nordic"] {
+  --grass-hi: #b6ecac; --grass: #8ddb8c; --grass-lo: #62be72;
+  --grass2-hi: #caf6bb; --grass2: #a3e69c;
+  --sand: #edf5e2; --sand-wet: #d8e6c2; --sand-edge: #bdd0a2;
+  --sea-deep: #0e8ab8; --sea-mid: #33b6d8; --sea-shallow: #8fecf2;
+  /* 彩度は落とさない。落とすと島ぜんぶが写真のように見える */
+  --place-filter: hue-rotate(-6deg) brightness(1.06);
+}
+[data-theme="desert"] {
+  --grass-hi: #ece37a; --grass: #d8ca4e; --grass-lo: #b0a437;
+  --grass2-hi: #f5ee88; --grass2: #e3d95e;
+  --sand: #fae7b2; --sand-wet: #ecd394; --sand-edge: #dbbd79;
+  --place-filter: saturate(1.05) hue-rotate(-14deg) brightness(1.03);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-maru), ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--page-bg);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  /* 本物は太いゴシックで字間が広い。丸ゴシックは字間を詰めると団子になる。 */
+  letter-spacing: var(--ls-body);
+  /* 既定の line-height は 1.4 前後で、太い日本語には詰まりすぎる。
+     ボタンやラベルは各ページの CSS が 1 や 1.1 を指定しているのでそちらが勝つ。 */
+  line-height: var(--lh-body);
+}
+
+/* 見出しの既定。ページ側の CSS が個別に指定していればそちらが勝つ。
+   ここは「何も言われていない見出し」を本物寄りにするための下敷き。
+   見出しは行間を詰める。本文と同じ 1.75 だと、2行になったとき離れて見える。 */
+h1, h2, h3 {
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  line-height: var(--lh-head);
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; }
+
+:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; border-radius: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* =========================================================
+   島のステージ
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 520px;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  background: var(--sea-deep);
+}
+@media (min-width: 1000px) {
+  .stage { height: min(92svh, 880px); }
+}
+.stage-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  filter: var(--place-filter, none);
+}
+
+/* 島ぜんぶにかぶせる時間帯の色。地形もスプライトも同じだけ染まる。 */
+.stage::before,
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 1.2s ease;
+}
+.stage::before { background: var(--tint, transparent); mix-blend-mode: multiply; }
+.stage::after { background: var(--glow, transparent); mix-blend-mode: screen; }
+/* 名札や吹き出しは色をかぶせない。読めなくなるので。 */
+.stage .labels,
+.stage .arrive,
+.stage .sheet,
+.stage .walk-hint,
+.stage .island-bar { z-index: 3; }
+
+.labels { position: absolute; inset: 0; pointer-events: none; }

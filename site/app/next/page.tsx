@@ -5,6 +5,7 @@ import NextPlans from "@/components/live/NextPlans";
 import { Panel } from "@/components/ui/Bits";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import { Stone } from "@/components/live/art";
 
 export const metadata: Metadata = {
   title: "これから",
@@ -17,37 +18,49 @@ export default function NextPage() {
       <PageHead
         icon="tent"
         title="これから"
-        lead="次に行くところと、やろうとしていること。予定はあやとが書きますが、中身はみんなで。知ってることがあったら付箋を貼ってください。"
+        lead="次に行くところと、やろうとしていること。日にちはあやとが決めますが、中身はみんなで。"
         say={GUIDE.next}
       />
       <NextPlans />
       <Panel>
-        <h2>もっと大きい企画を出したい</h2>
-        <p>「こういうことやってほしい」は掲示板のほうへ。投票の多いものから企画会議に上がります。</p>
-        <Link className="tile" href="/nordic" style={{ marginBottom: 8 }}>
-          <span className="tile-text">
-            <b>いちばん大きい企画は「ヒッチハイクで北欧へ」</b>
-            <i>9月11日出発。ルートと国ごとの見どころ</i>
-          </span>
-          <Icon name="right" size={15} className="tile-go" />
-        </Link>
-        <Link className="tile" href="/board">
+        <h2>自分も企画を出したい</h2>
+        <p>
+          このページに並んでいるものも、ほとんどが誰かの思いつきから始まっています。
+          ここまで来る道は3歩ぶんです。
+        </p>
+        {/* どこへ届くのかが見えないと、書いても意味がない気がして手が止まる。
+            掲示板と同じ3歩を、行き先の側からも見せておく。 */}
+        <ol className="bd-flow">
+          {[
+            { t: "掲示板に貼る", n: "ログインも名前も要りません" },
+            { t: "週のはじめの会議", n: "票の集まったものから見ます" },
+            { t: "このページに出る", n: "日にちが決まったら、いちばん上に" },
+          ].map((f, i) => (
+            <li key={f.t}>
+              <span className="nx-stone">
+                <Stone tone={i === 2 ? "now" : "stone"} />
+                <b>{i + 1}</b>
+              </span>
+              <span>
+                <b>{f.t}</b>
+                <i>{f.n}</i>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <Link className="tile" href="/board" style={{ marginTop: 16 }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
-            <i>ログインなしで出せます</i>
+            <i>思いついたことを、そのまま貼る</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-      </Panel>
-      <Panel>
-        <h2>企画のページを一緒に作る</h2>
-        <p>
-          これからの企画のページは、毎回ちゃんと作りたいと思っています。
-          骨組みを書いてくれる人がいると、それだけ良いページになります。
+        <p className="muted" style={{ marginTop: 16 }}>
+          ここに並ぶ企画のページも、骨組みから一緒に作っています。書いてくれる人がいると、それだけ良いページになります。
         </p>
         <Link className="tile" href="/next/new">
-          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
+          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>企画のページを作る</b>
             <i>いまは、あやとが声をかけた人だけ</i>

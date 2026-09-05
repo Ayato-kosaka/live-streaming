@@ -2,50 +2,82 @@ import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import NowLive from "@/components/live/NowLive";
-import { Panel } from "@/components/ui/Bits";
 import { PROFILE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "いま何してる",
   description: "あやとが今どこにいて、今週なにをするか。",
 };
 
+/**
+ * いまのポスト。
+ *
+ * 上半分は「板の型」。いまどこにいるか、今夜あるか、次の企画はいつか。
+ * 押すものと、しらせだけを置く。
+ *
+ * 下半分は「紙の型」の島だより。今週やること、あやとのこと、この先の話。
+ * 読むものは紙に刷ってある、という見え方にする（`docs/ac-reference.md` の 7章）。
+ * 同じ形の板が延々と積まれるのを避けるため、この2つは必ず台紙ごと分ける。
+ */
 export default function NowPage() {
   return (
     <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "いまのポスト" }]}>
       <PageHead
         icon="mailbox"
         title="いま何してる"
-        lead="今どこにいて、今週なにをするか。配信の前にここを見ておくと話が早いです。"
+        lead="今どこにいて、今週なにをするか。ここは毎日書きかわります。"
         say={GUIDE.now}
       />
-      <NowLive />
-      <Panel>
-        <h2>あやとって誰</h2>
-        <p>
-          <b>{PROFILE.lead}</b>
-        </p>
-        {PROFILE.body.map((p, i) => (
-          <p key={i}>{p}</p>
-        ))}
-        <div className="tiles" style={{ marginTop: 14 }}>
-          {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
-            <a key={l.id} className="tile" href={l.href} target="_blank" rel="noopener noreferrer">
-              {l.logo ? (
-                  <img className="tile-logo" src={l.logo} alt="" />
-                ) : (
-                  <img className="tile-icon" src={`/sprites/${l.icon}.webp`} alt="" />
-                )}
-              <span className="tile-text">
-                <b>{l.label}</b>
-                <i>{l.note}</i>
-              </span>
-              <Icon name="external" size={15} className="tile-go" />
-            </a>
+      <NowLive letter>
+        <section className="pap-sec">
+          <h2 className="pap-h">あやとって誰</h2>
+          <p>
+            <b>{PROFILE.lead}</b>
+          </p>
+          {PROFILE.body.map((p, i) => (
+            <p key={i}>{p}</p>
           ))}
-        </div>
-      </Panel>
+          <div className="pap-gos" style={{ marginTop: 12 }}>
+            {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
+              <a className="pap-go" key={l.id} href={l.href} target="_blank" rel="noopener noreferrer">
+                {l.logo ? <img src={l.logo} alt="" /> : <img src={`/sprites/${l.icon}.webp`} alt="" />}
+                <span>
+                  <b>{l.label}</b>
+                  <i>{l.note}</i>
+                </span>
+                <Icon name="external" size={14} />
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section className="pap-sec">
+          <h2 className="pap-h">もっと先の話</h2>
+          <p className="pap-note">
+            この島だよりは今週ぶんです。もっと先の予定と、これまで歩いた道はこちらに。
+          </p>
+          <div className="pap-gos" style={{ marginTop: 12 }}>
+            <Link className="pap-go" href="/next">
+              <img src="/sprites/tent.webp" alt="" />
+              <span>
+                <b>これから</b>
+                <i>次に行くところ、次にやること</i>
+              </span>
+              <Icon name="right" size={14} />
+            </Link>
+            <Link className="pap-go" href="/map">
+              <img src="/sprites/canoe.webp" alt="" />
+              <span>
+                <b>旅の桟橋</b>
+                <i>これまでに歩いた国</i>
+              </span>
+              <Icon name="right" size={14} />
+            </Link>
+          </div>
+        </section>
+      </NowLive>
     </PageShell>
   );
 }

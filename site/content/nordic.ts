@@ -15,6 +15,11 @@ import INDEX from "./nordic/index.json";
 export type Move = "fly" | "hitch" | "ferry" | "walk";
 
 export type Leg = {
+  /**
+   * 区間の名前。意見を区間ごとに分けて貼るときの札に使う（`【区間:riga-tallinn】`）。
+   * **変えない。** 変えると、それまでに集まった道しるべが行方不明になる。
+   */
+  id: string;
   /** どこから */
   from: string;
   /** どこへ */
@@ -34,6 +39,25 @@ export type Leg = {
   enters?: string;
   /** 泊まる予定 */
   stay?: string;
+  /**
+   * 寄り道。行って戻ってくる区間で、旅の進み方には数えない。
+   * （`TripNow` の「いま／つぎ」は、これを外した一本道で組み立てる）
+   */
+  side?: boolean;
+  /**
+   * この区間の絵（`components/nordic/Marks.tsx` の名前）。
+   * **区間ごとに必ず違うものにする。** 同じ印を10回並べると、
+   * どの日も同じことをしているように見えてしまう。
+   */
+  art: string;
+  /**
+   * その区間で「何をしてほしいか」を聞く一行。
+   *
+   * 「この旅、どうなってほしい？」は問いが大きすぎて答えられない。
+   * 区間まで下ろすと、300km 車が来ない日の話や、雨の中で立つ日の話になって、
+   * 書ける人が出てくる（`docs/nordic-fund.md` 提案2）。
+   */
+  ask: string;
 };
 
 /**
@@ -42,6 +66,7 @@ export type Leg = {
  */
 export const ROUTE: Leg[] = [
   {
+    id: "kutaisi-katowice",
     from: "クタイシ",
     to: "カトヴィツェ",
     move: "fly",
@@ -51,8 +76,11 @@ export const ROUTE: Leg[] = [
     fixed: "Wizz Air W6 1200 / 9月11日(金) 23:30 発 → 9月12日(土) 01:05 着",
     note: "唯一の飛行機。219ラリ（約1.3万円）、機内持ち込みのカバンひとつだけ。ここから先は地面を這っていく。",
     enters: "poland",
+    ask: "深夜1時にカトヴィツェ着。始発までの数時間、空港で何をしてたら面白い？",
+    art: "nightflight",
   },
   {
+    id: "katowice-krakow",
     from: "カトヴィツェ",
     to: "クラクフ",
     move: "hitch",
@@ -60,16 +88,23 @@ export const ROUTE: Leg[] = [
     time: "1〜3時間",
     note: "深夜1時に空港に着くので、初日は空港で朝を待つことになりそう。最初の親指はここで上げる。",
     stay: "クラクフ",
+    ask: "いちばん最初に親指を立てる80km。最初に乗せてくれた人に、何を聞いてほしい？",
+    art: "airportwait",
   },
   {
+    id: "krakow-oswiecim",
     from: "クラクフ",
     to: "オシフィエンチム（アウシュヴィッツ）",
     move: "hitch",
     km: 66,
     time: "1〜2時間",
     note: "日帰りの寄り道。行くかどうかも含めて、配信で相談したい場所。",
+    side: true,
+    ask: "行くかどうかも、まだ決めていません。行くとしたら、どう伝えるのがいいと思いますか？",
+    art: "rails",
   },
   {
+    id: "krakow-warszawa",
     from: "クラクフ",
     to: "ワルシャワ",
     move: "hitch",
@@ -77,8 +112,11 @@ export const ROUTE: Leg[] = [
     time: "半日",
     note: "高速A4/S7沿い。ポーランドは大きなガソリンスタンドが多くて、声をかけやすいらしい。",
     stay: "ワルシャワ",
+    ask: "大きなガソリンスタンドで声をかける295km。断られた回数も数えたほうがいい？",
+    art: "gasstation",
   },
   {
+    id: "warszawa-bialystok",
     from: "ワルシャワ",
     to: "ビャウィストク",
     move: "hitch",
@@ -86,8 +124,11 @@ export const ROUTE: Leg[] = [
     time: "半日",
     note: "ワルシャワからヴィリニュスまでは513km。1日で抜けるのは無理があるので、ここで一泊はさむ。",
     stay: "ビャウィストク",
+    ask: "ほとんど何もない平原の200km。ここで撮っておいてほしいものは？",
+    art: "longroad",
   },
   {
+    id: "bialystok-vilnius",
     from: "ビャウィストク",
     to: "ヴィリニュス",
     move: "hitch",
@@ -95,9 +136,12 @@ export const ROUTE: Leg[] = [
     time: "1日",
     note: "オグロドニキの国境を越えてリトアニアへ。この区間はとにかく車が少ない。最初の山場。",
     enters: "lithuania",
+    ask: "車が少ない300kmと、歩いて越える国境。この日に何をしてほしい？",
+    art: "border",
     stay: "ヴィリニュス",
   },
   {
+    id: "vilnius-riga",
     from: "ヴィリニュス",
     to: "リガ",
     move: "hitch",
@@ -105,9 +149,12 @@ export const ROUTE: Leg[] = [
     time: "1日",
     note: "途中でシャウレイの「十字架の丘」に寄れる。20万本の十字架が立っている丘。",
     enters: "latvia",
+    ask: "十字架の丘に寄れる293km。寄ってほしい？ それとも先を急いでほしい？",
+    art: "crosses",
     stay: "リガ",
   },
   {
+    id: "riga-tallinn",
     from: "リガ",
     to: "タリン",
     move: "hitch",
@@ -115,9 +162,12 @@ export const ROUTE: Leg[] = [
     time: "1日",
     note: "バルト海沿いのVia Baltica。9月のバルトは3日に1日は雨が降る。濡れながら立つ日が必ずある。",
     enters: "estonia",
+    ask: "3日に1日は雨のバルト海沿い307km。濡れながら立つ日に、何をしてほしい？",
+    art: "rainroad",
     stay: "タリン",
   },
   {
+    id: "tallinn-helsinki",
     from: "タリン",
     to: "ヘルシンキ",
     move: "ferry",
@@ -125,16 +175,33 @@ export const ROUTE: Leg[] = [
     time: "2時間",
     note: "1日10〜13便のフェリー。ここだけは親指では渡れない。徒歩客なら片道10.5ユーロから。",
     enters: "finland",
+    ask: "ここだけは親指で渡れない2時間。船の上で何をする？",
+    art: "ferryday",
   },
   {
+    id: "helsinki-stockholm",
     from: "ヘルシンキ",
     to: "ストックホルム",
     move: "ferry",
     time: "17時間（船中泊）",
     note: "夜に出て朝に着く一泊フェリー。宿代が浮くので、ヘルシンキではホテルを取らない。",
     enters: "sweden",
+    ask: "17時間の夜行フェリー。朝、着いたら終点です。最後の夜に何をしてほしい？",
+    art: "ferrynight",
     stay: "ストックホルム（友だちの家に約1週間）",
   },
+];
+
+/**
+ * 寄り道を外した一本道。「いま どこにいて、つぎ どこへ行くか」はこれで数える。
+ * 出発地（クタイシ）が先頭に入るので、区間の数より1つ多い。
+ */
+export const MAIN: Leg[] = ROUTE.filter((l) => !l.side);
+
+/** 一本道の止まる場所。地図の街の id と突き合わせるのに使う。 */
+export const STOPS: { name: string; leg?: Leg }[] = [
+  { name: MAIN[0].from },
+  ...MAIN.map((l) => ({ name: l.to.replace(/（.*$/, ""), leg: l })),
 ];
 
 /** ヒッチハイクでつなぐ距離の合計。企画の重さがひと目で分かる数字。 */

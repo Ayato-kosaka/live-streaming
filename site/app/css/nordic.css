@@ -1,0 +1,944 @@
+/* =========================================================
+   北欧ヒッチハイク旅
+   ---------------------------------------------------------
+   企画の芯は「会いたい人がいるので、スウェーデンまで陸路で会いに行く」こと。
+   だから「あと何日」「あと何km」「いまどこ」を、いちばん大きく見せる。
+
+   このページ群は2つの型を混ぜないように分けてある（docs/ac-reference.md 7章）。
+     - 旅の司令塔（.tnow）と地図まわり … 板の型。厚みと影がある
+     - 見どころと旅のしおり（.folds / .gchap） … 紙の型。影を落とさない
+   紙の型の下敷きは app/css/ui.css が持っている。ここではその上に足すぶんだけ書く。
+   ========================================================= */
+
+/* =========================================================
+   旅の司令塔
+   ---------------------------------------------------------
+   1画面で「いつ出て・あとどれだけで会えて・いまどこで・次はどこか」を言い切る。
+   ここを読んでスクロールをやめても、企画の形が分かる状態にする。
+   ========================================================= */
+.tnow {
+  position: relative;
+  margin: 0 0 26px;
+  padding: 18px 16px 20px;
+  border: var(--bw-3) solid var(--frame-dark);
+  border-radius: var(--r-3);
+  background:
+    radial-gradient(130% 90% at 50% 0%, color-mix(in srgb, var(--gold) 34%, transparent), transparent 62%),
+    linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: var(--pop-lg), var(--shadow-3);
+}
+@media (min-width: 720px) { .tnow { padding: 26px 26px 26px; } }
+
+.tnow-top h1 {
+  margin: 0;
+  font-size: clamp(21px, 6.4vw, 33px);
+  font-weight: 900;
+  line-height: 1.32;
+  letter-spacing: var(--ls-head);
+  color: var(--ink);
+}
+.tnow-top p {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.tnow-top b { font-weight: 900; color: var(--ink); }
+
+/* --- あと何日 / あと何km --- */
+.tnow-counts { display: grid; gap: 9px; margin-top: 15px; }
+@media (min-width: 620px) { .tnow-counts { grid-template-columns: 1.25fr 1fr; align-items: stretch; } }
+
+.tnow-count {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  text-align: center;
+  padding: 13px 12px 14px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 16%, var(--paper)), var(--paper));
+}
+.tnow-count.is-far { background: linear-gradient(color-mix(in srgb, var(--accent) 13%, var(--paper)), var(--paper)); }
+.tnow-count-l {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
+}
+.tnow-count-n { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+.tnow-count-n em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.tnow-count-n b {
+  font-size: clamp(26px, 8.4vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.tnow-count-n.is-wait { font-size: 19px; font-weight: 900; color: var(--ink); }
+.tnow-count-w { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-3); }
+.is-far .tnow-count-n b { color: var(--accent-deep); }
+
+/* 進み具合。数字だけだと減っているのが分からない。 */
+.tnow-bar {
+  width: 100%;
+  height: 8px;
+  margin-top: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--frame-dark) 24%, var(--paper));
+  overflow: hidden;
+}
+.tnow-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+}
+
+/* --- いま / つぎ --- */
+.tnow-pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 12px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper);
+}
+@media (min-width: 620px) { .tnow-pair { grid-template-columns: 1fr auto 1fr auto; } }
+.tnow-at, .tnow-to { display: grid; gap: 1px; min-width: 0; }
+.tnow-at i, .tnow-to i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
+}
+.tnow-at b, .tnow-to b { font-size: 16.5px; font-weight: 900; line-height: 1.35; }
+.tnow-at em, .tnow-to em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.tnow-to b { color: var(--frame-deep); }
+.tnow-go { flex: none; color: var(--frame-dark); display: grid; place-items: center; }
+/* 次の区間の絵。スマホでは行の下にまわす（3列に絵まで入ると全部が細くなる） */
+.tnow-art { grid-column: 1 / -1; justify-self: center; margin-top: 4px; }
+@media (min-width: 620px) { .tnow-art { grid-column: auto; margin-top: 0; } }
+
+.tnow-what {
+  margin: 9px 0 0;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--gold) 22%, var(--paper));
+}
+
+/* --- 一本道 ---
+   10カ所を横に並べる。スマホでは入りきらないので横に流す。
+   「どこまで来たか」がこの帯だけで分かるのが役目。 */
+.tnow-rail {
+  list-style: none;
+  display: flex;
+  gap: 0;
+  margin: 14px -16px 0;
+  padding: 4px 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tnow-rail::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .tnow-rail { margin-left: -26px; margin-right: -26px; padding-left: 26px; padding-right: 26px; } }
+.tnow-rail li {
+  position: relative;
+  flex: 1 0 auto;
+  min-width: 68px;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding-top: 12px;
+}
+/* 街と街をつなぐ線。点の高さに合わせて、点の後ろを通す。 */
+.tnow-rail li::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: -50%;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--frame-dark) 30%, var(--paper));
+}
+.tnow-rail li:first-child::before { display: none; }
+.tnow-rail li.is-past::before,
+.tnow-rail li.is-on::before { background: var(--frame-dark); }
+.tnow-dot {
+  position: relative;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 3.5px var(--frame-dark);
+  z-index: 1;
+}
+.tnow-rail li.is-past .tnow-dot { background: var(--frame-dark); }
+.tnow-rail li.is-on .tnow-dot {
+  width: 17px; height: 17px;
+  margin-top: -2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--frame-deep);
+}
+.tnow-rail li.is-goal .tnow-dot { background: var(--gold); box-shadow: 0 0 0 4px var(--accent-deep); }
+.tnow-name {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink-3);
+}
+.tnow-rail li.is-on .tnow-name,
+.tnow-rail li.is-goal .tnow-name { color: var(--ink); }
+.tnow-goal {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--accent-deep);
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+/* --- 行き先ボタン --- */
+.tnow-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tnow-act {
+  font-size: 12.5px;
+  font-weight: 900;
+  padding: 9px 17px;
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.tnow-act:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.tnow-act.is-main { background: linear-gradient(#fff0bb, var(--gold)); }
+
+/* =========================================================
+   地図のまわり
+   ========================================================= */
+/* 線の読み方。地図の中に板で置くと、いちばん見せたいところが隠れる。 */
+.nmkeys {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+@media (min-width: 620px) { .nmkeys { grid-template-columns: repeat(3, 1fr); } }
+.nmkeys li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 3px 9px;
+  padding: 8px 11px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.nmkeys b { font-size: 11.5px; font-weight: 900; }
+.nmkeys i {
+  grid-column: 2;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+/* 見本は地図と同じ線で描く。色の名前を書くより、線そのものを見せる。 */
+.nmkeys-s { grid-row: span 2; height: 22px; border-radius: var(--r-pill); }
+.nmkeys .is-hitch .nmkeys-s { background: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%); }
+.nmkeys .is-ferry .nmkeys-s {
+  height: 8px;
+  background: repeating-linear-gradient(90deg, var(--sea-mid) 0 5px, transparent 5px 11px);
+}
+.nmkeys .is-side .nmkeys-s {
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--frame-dark) 0 4px, transparent 4px 10px);
+}
+.nmkeys .is-fly .nmkeys-s {
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--sea-deep) 0 9px, transparent 9px 16px);
+}
+.nmkeys .is-border .nmkeys-s {
+  width: 9px;
+  justify-self: center;
+  height: 24px;
+  background: linear-gradient(var(--accent) 0 30%, var(--paper) 30% 70%, var(--accent) 70%);
+  box-shadow: 0 0 0 1.5px var(--frame-dark);
+}
+.nmap-say {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+/* =========================================================
+   区間ごとの話
+   ---------------------------------------------------------
+   見出しの左には、その区間の絵。同じ親指の印を10回並べると、
+   どの区間も同じことをしているように見える（Marks.tsx）。
+   ========================================================= */
+.rleg-art {
+  flex: none;
+  border-radius: 10px;
+  box-shadow: var(--shadow-1);
+}
+.rleg-way { min-width: 0; }
+.rleg-way i { font-style: normal; color: var(--ink-3); margin: 0 2px; }
+.rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.rleg-fixed {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--marker-ink);
+  background: var(--marker);
+  border-radius: var(--r-0);
+  padding: 4px 9px;
+  display: inline-block;
+}
+.rleg-stay { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+
+/* --- 区間の席 ---
+   区間カードには席がある。いまは「道しるべ（言葉）」だけ。
+   足代（お金）の席は、区間ごとの実費と GET /fund が入ってから同じ形で足す。
+   席は罫線で仕切る。紙の型なので、中に板を積まない。 */
+.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; }
+.rleg-seat > h3 {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+.spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
+.spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
+.spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
+.spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
+.spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
+.spost-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。 */
+.spost-none {
+  margin: 0 0 10px;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--marker) 46%, transparent);
+  color: var(--marker-ink);
+}
+
+/* =========================================================
+   国のカード（トップの「通る6カ国」）
+   ========================================================= */
+.ncountries { display: grid; gap: 9px; margin-top: 12px; }
+@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr; } }
+.ncountry {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+}
+.ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.ncountry-leg {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--frame-dark);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 900;
+}
+.ncountry-body { display: grid; gap: 2px; min-width: 0; }
+.ncountry-body b { font-size: 15.5px; font-weight: 900; }
+.ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.ncountry-body em { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
+
+/* =========================================================
+   国のページ
+   ========================================================= */
+/* 入る道・出る道 */
+.ncways { display: grid; gap: 9px; margin-top: 13px; }
+@media (min-width: 620px) { .ncways { grid-template-columns: 1fr 1fr; } }
+.ncway {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 20%, var(--paper));
+}
+.ncway-art { flex: none; border-radius: 11px; box-shadow: var(--shadow-1); }
+.ncway-b { display: grid; gap: 2px; min-width: 0; }
+.ncway-b i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
+}
+.ncway-b b { font-size: 14px; font-weight: 900; line-height: 1.45; }
+.ncway-b em { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--frame-deep); }
+.ncway-fix { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-2); }
+.ncway-note {
+  margin: 11px 0 0;
+  font-size: 13px;
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 街の見出し。青いページの地に直に置くので、白で抜く。
+   ここを --ink のままにすると、濃い青の上の濃い茶になって読めない。 */
+.ncity { margin: 24px 0 6px; }
+.ncity-name {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 900;
+  padding-left: 12px;
+  border-left: 7px solid var(--gold);
+  color: var(--paper);
+}
+.ncity-name em { color: color-mix(in srgb, var(--paper) 74%, var(--sea-deep)); }
+
+/* --- 見どころ1件（紙の型。段の中身） --- */
+/* 閉じているときのサムネイル。20段ならんだとき、1段ずつ違って見えるのが効く。 */
+.nspot-th {
+  flex: none;
+  width: 52px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--rule) 26%, transparent);
+}
+.nspot-hb { display: flex; align-items: center; gap: 7px; min-width: 0; flex-wrap: wrap; }
+.nspot-name { min-width: 0; }
+/* 種類は平らな札に言葉で。押せないものに厚みを付けない（紙の型） */
+.nspot-cat {
+  flex: none;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+}
+.nspot-img { position: relative; display: block; line-height: 0; margin-bottom: 11px; }
+.nspot-img img {
+  width: 100%;
+  height: clamp(180px, 46vw, 320px);
+  object-fit: cover;
+  border-radius: var(--r-1);
+}
+.nspot-credit {
+  position: absolute;
+  right: 7px; bottom: 7px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--paper);
+  background: rgba(30, 34, 20, 0.62);
+  border-radius: var(--r-0);
+  padding: 2px 7px;
+}
+.nspot-local { margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.nspot-text { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 600; }
+.nspot-tips {
+  margin: 10px 0 0;
+  padding: 9px 13px 9px 28px;
+  font-size: 12px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-left: 3px solid color-mix(in srgb, var(--rule) 60%, transparent);
+}
+.nspot-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 11px 0 0; }
+.nspot-meta div {
+  display: flex; gap: 6px; align-items: baseline;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-0);
+  padding: 3px 10px;
+}
+.nspot-meta dt { font-size: 9.5px; font-weight: 900; color: var(--ink-3); }
+.nspot-meta dd { margin: 0; font-size: 11.5px; font-weight: 900; }
+.nspot-info { margin: 10px 0 0; font-size: 11.5px; line-height: 1.75; font-weight: 700; color: var(--ink-3); }
+.nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
+.nspot-tags span {
+  font-size: 10px; font-weight: 900;
+  color: var(--ink-3);
+  background: color-mix(in srgb, var(--rule) 20%, transparent);
+  border-radius: var(--r-0);
+  padding: 2px 8px;
+}
+
+/* =========================================================
+   国あての意見
+   ---------------------------------------------------------
+   ここは「読む」ところではなく「書く」ところなので、板の型のまま。
+   ========================================================= */
+.cidea-none { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+/* 出ている意見と、書くところの区切り。ここから下は自分の番、という札。 */
+.cidea-ask {
+  display: inline-block;
+  margin: 18px 0 8px;
+  padding: 3px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  border-radius: var(--r-pill);
+  background: var(--frame-dark);
+  color: var(--paper);
+}
+.cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
+.cideas li {
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  padding: 12px 14px;
+}
+.cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
+.cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+.cidea-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.cidea-vote {
+  font-size: 11px; font-weight: 900;
+  padding: 5px 13px;
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.cidea-vote:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.cidea-vote.is-on { background: linear-gradient(#fff0bb, var(--gold)); }
+
+/* 国のページの前後リンク */
+.nnav { display: flex; justify-content: space-between; gap: 10px; margin: 22px 0 6px; }
+.nnav a {
+  font-size: 13px; font-weight: 900;
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  border: var(--bw-2) solid var(--frame-dark);
+  background: var(--paper);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+}
+.nnav a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+
+/* =========================================================
+   旅のしおり
+   ---------------------------------------------------------
+   紙の型（docs/ac-reference.md 7章）。章の紙と段の罫線は ui.css が持っている。
+   ここは目次と、章の中に出てくる表・札まわり。
+   ========================================================= */
+.gbook { margin-top: 4px; }
+
+/* 目次。まず全体で何章あるかを見せてから、章を並べる。 */
+.gtoc {
+  display: grid;
+  gap: 0;
+  margin: 0 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background:
+    radial-gradient(150% 90% at 8% 0%, color-mix(in srgb, var(--paper-out) 78%, transparent), transparent 56%),
+    linear-gradient(var(--paper-mottle-b), var(--paper-mottle-a));
+}
+@media (min-width: 620px) { .gtoc { grid-template-columns: 1fr 1fr; } }
+.gtoc a {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: baseline;
+  gap: 1px 10px;
+  padding: 9px 13px;
+  color: var(--ink);
+  border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+}
+.gtoc a:first-child { border-top: 0; }
+@media (min-width: 620px) { .gtoc a:nth-child(2) { border-top: 0; } }
+.gtoc a:hover { background: color-mix(in srgb, var(--marker) 55%, transparent); }
+.gtoc-n {
+  grid-row: span 2;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+.gtoc b { font-size: 13.5px; font-weight: 900; }
+.gtoc i { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--ink-2); }
+
+/* 章の番号。図鑑の面のように、通し番号を平らな札で置く。 */
+.gchap-n {
+  flex: none;
+  min-width: 26px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 章の外に置く但し書き。青い地の上なので白で抜く。 */
+.gnote {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--paper) 86%, var(--sea-deep));
+}
+
+.gsub {
+  display: inline-block;
+  margin: 16px 0 2px;
+  padding: 2px 9px;
+  font-size: 13px;
+  font-weight: 900;
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+.gsub i { font-style: normal; font-size: 11px; font-weight: 800; margin-left: 8px; }
+.gpnote { margin: 6px 0 0; font-size: 12px; line-height: 1.8; font-weight: 700; color: var(--ink-2); }
+
+.glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }
+.glist.is-dont li { color: var(--pick); }
+
+/* 表。紙の型なので、行の枠ではなく罫線1本で分ける。 */
+.gtable { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
+.grow {
+  display: grid;
+  gap: 2px;
+  padding: 10px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+}
+.grow b { font-size: 13.5px; font-weight: 900; }
+.grow span { font-size: 12px; font-weight: 800; }
+.grow i, .grow em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-2); }
+
+.gcards { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
+@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+.gcard { padding: 10px 4px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
+.gcard b { display: block; font-size: 13.5px; font-weight: 900; }
+.gcard i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.gcard p { margin: 5px 0 0; font-size: 12.5px; line-height: 1.85; font-weight: 600; }
+.gcard span { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+
+.gphrase { margin-top: 6px; }
+.gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
+@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+.gwords div {
+  display: grid;
+  gap: 1px;
+  padding: 8px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+}
+.gwords b { font-size: 13px; font-weight: 900; }
+.gwords i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--accent-deep); }
+.gwords span { font-size: 11px; font-weight: 700; color: var(--ink-3); }
+
+/* =========================================================
+   ルート地図
+   ---------------------------------------------------------
+   形は本物（Natural Earth の海岸線をランベルト正角円錐で投影）。
+   座標は python/build_nordic_map.py が焼き込んでいる。本物との
+   重なりは面積で 99.5%。
+
+   色はここで全部つける。SVG の中に生の色を書くと、島の色を
+   変えたときに地図だけ取り残されて浮くため。
+   ========================================================= */
+
+svg.nmap {
+  /* 通らない国。草の緑を砂の色で濁らせて、通る国と一段差をつける。
+     ここを濁らせるほど、通る6カ国が前に出る。 */
+  --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
+  --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
+  /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
+  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
+  --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
+  --nm-label: color-mix(in srgb, var(--ink) 40%, var(--grass-lo) 60%);
+  --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
+
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-3);
+  border: var(--bw-3) solid var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  background: var(--sea-deep);
+  overflow: hidden;
+}
+.nmap text {
+  font-family: inherit;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+
+/* --- 海 --- */
+.nmap .nm-sea-a { stop-color: color-mix(in srgb, var(--sea-mid) 62%, var(--sea-shallow) 38%); }
+.nmap .nm-sea-b { stop-color: var(--sea-deep); }
+.nmap .nm-sea-c { stop-color: color-mix(in srgb, var(--sea-deep) 74%, var(--ink) 26%); }
+.nmap .nm-glint-a { stop-color: var(--foam); stop-opacity: 0.9; }
+.nmap .nm-glint-b { stop-color: var(--foam); stop-opacity: 0; }
+.nmap .nm-swell {
+  fill: none;
+  stroke: var(--foam);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  opacity: 0.13;
+}
+.nmap .nm-glints { opacity: 0.72; }
+
+/* --- 岸。沖から順に 浅瀬 → 泡 → 濡れた砂 → 砂浜（ac-reference 2章） --- */
+.nmap .nm-landdrop,
+.nmap .nm-shelf,
+.nmap .nm-shallow,
+.nmap .nm-foam-lace,
+.nmap .nm-foam,
+.nmap .nm-sand,
+.nmap .nm-sand-wet {
+  fill: none;
+  stroke-linejoin: round;
+}
+/* 陸が海に落とす影。これが無いと陸と海が同じ面に見える。 */
+.nmap .nm-landdrop { fill: var(--ink); opacity: 0.2; stroke: none; }
+.nmap .nm-shelf { stroke: var(--sea-shelf); stroke-width: 38; opacity: 0.55; }
+.nmap .nm-shallow { stroke: var(--sea-shallow); stroke-width: 17; opacity: 0.82; }
+/* 泡はぼかさない。不規則な弧が並ぶレースに見せる。 */
+.nmap .nm-foam-lace {
+  stroke: var(--foam);
+  stroke-width: 12;
+  stroke-dasharray: 7 18;
+  stroke-linecap: round;
+  opacity: 0.42;
+}
+.nmap .nm-foam { stroke: var(--foam); stroke-width: 6; opacity: 0.9; }
+/* 内側の帯。広いほうが奥（乾いた砂）になるので、乾いた砂を先に太く引く。 */
+.nmap .nm-sand { stroke: var(--sand); stroke-width: 13; }
+.nmap .nm-sand-wet { stroke: var(--sand-wet); stroke-width: 6; opacity: 0.9; }
+
+/* --- 陸 --- */
+.nmap .nm-land-a { stop-color: var(--nm-other); }
+.nmap .nm-land-b { stop-color: var(--nm-other-lo); }
+.nmap .nm-c { stroke: none; }
+.nmap .nm-c-poland { fill: var(--grass-hi); }
+.nmap .nm-c-lithuania { fill: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
+.nmap .nm-c-latvia { fill: var(--grass2-hi); }
+.nmap .nm-c-estonia { fill: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
+.nmap .nm-c-finland { fill: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
+.nmap .nm-c-sweden { fill: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
+/* 国の境。線ではなく、両側ににじむ影で分ける。 */
+.nmap .nm-seam {
+  fill: none;
+  stroke: var(--leaf-c);
+  stroke-width: 7;
+  opacity: 0.22;
+  stroke-linejoin: round;
+}
+
+/* --- 地面の情報量（ac-reference 4章） ---
+   森も山も、同じパスを3枚ずらして重ねている。奥から 影 → 光 → 本体。
+   1本ずつに面を持たせるとパスの文字数が倍になる（森だけで 700 本）。 */
+.nmap .nm-wood { fill: var(--leaf-c); opacity: 0.34; }
+.nmap .nm-wood-hi { fill: var(--leaf-b); opacity: 0.34; }
+.nmap .nm-wood-shade { fill: var(--ink); opacity: 0.11; }
+.nmap .nm-hill { fill: color-mix(in srgb, var(--cliff) 62%, var(--ink-3) 38%); opacity: 0.78; }
+.nmap .nm-hill-hi { fill: var(--sand); opacity: 0.72; }
+.nmap .nm-hill-shade { fill: var(--ink); opacity: 0.16; }
+.nmap .nm-lake {
+  fill: var(--sea-shallow);
+  stroke: var(--sand);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.nmap .nm-river {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sea-mid) 78%, var(--foam) 22%);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.nmap .nm-grid {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 1.5;
+  opacity: 0.12;
+}
+
+/* --- 名前 --- */
+/* 海の名前。海の色に近い明るい青緑で、うしろに深い青をうっすら敷く。
+   白フチを付けると街の名札と同じ強さになって、どれが街か分からなくなる。 */
+.nmap .nm-sea-name {
+  fill: var(--nm-seaname);
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  stroke: var(--sea-deep);
+  stroke-width: 5;
+  stroke-opacity: 0.34;
+}
+/* 国名も同じ考え方。地形の一部として置くので、札には見せない。
+   ただし森の上に出すので、薄いフチが無いと木に食われて読めない。 */
+.nmap .nm-country {
+  fill: var(--nm-label);
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  stroke: var(--paper);
+  stroke-width: 6;
+  stroke-opacity: 0.42;
+  opacity: 0.82;
+}
+.nmap .nm-city {
+  fill: var(--ink);
+  font-weight: 900;
+  stroke: var(--paper);
+  stroke-width: 8;
+}
+.nmap .nm-city.is-big { stroke-width: 9; }
+
+/* --- ルート --- */
+.nmap .nm-leg-case,
+.nmap .nm-leg-line,
+.nmap .nm-fly {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nmap .nm-leg-case { stroke: var(--nm-case); opacity: 0.26; }
+.nmap .is-hitch .nm-leg-line { stroke: var(--nm-hitch); }
+.nmap .is-ferry .nm-leg-line { stroke: var(--foam); }
+.nmap .is-side .nm-leg-line { stroke: var(--frame); }
+.nmap .nm-arrow { fill: var(--paper); opacity: 0.95; }
+.nmap .is-ferry .nm-arrow { fill: var(--sea-deep); opacity: 0.7; }
+.nmap .is-side .nm-arrow { fill: var(--ink); opacity: 0.5; }
+.nmap .nm-fly {
+  stroke: var(--foam);
+  stroke-width: 5;
+  stroke-dasharray: 16 15;
+  opacity: 0.8;
+}
+/* 出発したあと。まだ行っていない道は薄く、通った道はそのまま濃く残す。
+   出発前（data-here が無い）は全部これから行く道なので、何もしない。 */
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-line { opacity: 0.42; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-case { opacity: 0.12; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-arrow { opacity: 0.4; }
+.nmap[data-here] .nmap-pin:not(.is-done) .nm-pin-dot { fill: var(--paper-2); }
+.nmap[data-here] .nmap-pin:not(.is-done) .nm-city { opacity: 0.7; }
+
+/* --- 陸の国境。赤白の遮断棒 --- */
+.nmap .nm-border-bar { fill: var(--paper); }
+.nmap .nm-border-tip { fill: var(--accent); }
+
+/* --- 街 --- */
+.nmap-pin { cursor: pointer; }
+.nmap .nm-hit { fill: transparent; }
+.nmap .nm-pin-shadow { fill: var(--ink); opacity: 0.32; }
+.nmap .nm-pin-ring { fill: var(--paper); }
+.nmap .nm-pin-dot { fill: var(--gold); }
+.nmap .is-goal .nm-pin-dot { fill: var(--accent); }
+.nmap .is-side .nm-pin-dot { fill: var(--frame-dark); }
+.nmap .is-pass .nm-pin-dot,
+.nmap .is-land .nm-pin-dot { fill: var(--sea-mid); }
+.nmap-pin:hover .nm-pin-ring { fill: var(--gold); }
+.nmap-pin:hover .nm-city { fill: var(--frame-deep); }
+
+/* 「いま ここ」の札は、どの街にもぶら下げてある（いる場所が分かるのは
+   画面が出たあとのことがあるので、その場で SVG を足すのは避けたい）。
+   出すのは `is-now` が付いた1つだけ。 */
+.nmap .nm-here { display: none; }
+.nmap .nmap-pin.is-now .nm-here { display: inline; }
+.nmap .nm-here circle { stroke: var(--foam); stroke-width: 5; }
+
+/* ゴール。いま居る街がゴールなら「いま ここ」が勝つ。札は1枚だけ。 */
+.nmap .nm-goal-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  opacity: 0.75;
+}
+.nmap .nmap-pin.is-now .nm-goal .nm-chip { display: none; }
+.nmap .nm-chip.is-goal rect { fill: var(--accent); }
+.nmap .nm-chip.is-goal text { fill: var(--paper); letter-spacing: 0.14em; }
+
+/* --- 吹き出し（飛行機の時間、いまここ） --- */
+.nmap .nm-chip rect {
+  fill: var(--paper);
+  stroke: var(--frame-dark);
+  stroke-width: 3.5;
+}
+.nmap .nm-chip.is-here rect { fill: var(--gold); }
+.nmap .nm-chip text { fill: var(--ink); font-size: 27px; font-weight: 900; }
+
+/* --- 方位 --- */
+.nmap .nm-compass-disc {
+  fill: var(--paper);
+  fill-opacity: 0.9;
+  stroke: var(--frame-dark);
+  stroke-width: 3.5;
+}
+.nmap .nm-compass-n { fill: color-mix(in srgb, var(--accent) 72%, var(--frame-deep) 28%); }
+.nmap .nm-compass-s { fill: var(--ink-3); }
+.nmap .nm-compass-t {
+  fill: var(--ink);
+  font-size: 24px;
+  font-weight: 900;
+  stroke: var(--paper);
+  stroke-width: 6;
+}
+
+/* --- 縮尺 --- */
+.nmap .nm-scale-bar,
+.nmap .nm-scale-tick {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.nmap .nm-scale-t {
+  fill: var(--paper);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+/* --- 区間の距離 --- */
+.nmap .nm-km {
+  fill: var(--frame-deep);
+  font-size: 27px;
+  font-weight: 900;
+  stroke: var(--paper);
+  stroke-width: 7;
+}
+.nmap .is-ferry .nm-km { fill: var(--sea-deep); }

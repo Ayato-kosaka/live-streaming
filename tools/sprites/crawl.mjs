@@ -2,7 +2,10 @@ import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
 
-const root = "/home/user/live-streaming/site/.next-verify";
+/** 書き出したものを配る静的サーバのポート。並列作業では別々にする。 */
+const SPORT = process.env.SPORT || "4321";
+
+const root = process.env.DIST || "/home/user/live-streaming/site/.next-verify";
 function walk(d, base = "") {
   let out = [];
   for (const f of readdirSync(d)) {
@@ -28,7 +31,7 @@ for (const page of pages) {
   const onErr = e => errs.push("JS: " + String(e).slice(0, 200));
   const onCon = m => { if (m.type() === "error" && !/island-api|Failed to load resource/.test(m.text())) errs.push("console: " + m.text().slice(0, 160)); };
   p.on("pageerror", onErr); p.on("console", onCon);
-  const res = await p.goto("http://localhost:4321" + page, { waitUntil: "domcontentloaded", timeout: 45000 });
+  const res = await p.goto(`http://localhost:${SPORT}` + page, { waitUntil: "domcontentloaded", timeout: 45000 });
   await p.waitForTimeout(900);
   const info = await p.evaluate(() => ({
     h1: document.querySelector("h1")?.textContent?.trim().slice(0, 40) ?? null,
@@ -44,7 +47,7 @@ for (const page of pages) {
 const all = new Set(pages.map(x => x.replace(/\.html$/, "").replace(/\/index$/, "") || "/"));
 const seen = new Set();
 for (const page of pages) {
-  await p.goto("http://localhost:4321" + page, { waitUntil: "domcontentloaded" });
+  await p.goto(`http://localhost:${SPORT}` + page, { waitUntil: "domcontentloaded" });
   const links = await p.$$eval("a[href^='/']", as => as.map(a => a.getAttribute("href")));
   links.forEach(l => seen.add(l.split("#")[0].replace(/\/$/, "") || "/"));
 }

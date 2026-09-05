@@ -30,7 +30,7 @@ export function StreamCard({
           height={180}
         />
         <span className="scard-play" aria-hidden>
-          ▶
+          <Icon name="play" size={17} />
         </span>
       </span>
       <span className="scard-body">
