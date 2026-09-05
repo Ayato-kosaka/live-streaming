@@ -155,7 +155,10 @@ const GUIDE = -1;
  * 今日の板が自分から開く日。
  *
  * その日は名乗りを出さない。カモメと板が両方開くと、また島が見えなくなる。
- * 判断のもとは `components/today/Today.tsx` と同じで、あちらが増えたらここも足す。
+ * ただし**初めて島に降りた人には、板のほうが開かないことになっている**ので
+ * （`components/today/Today.tsx` の isFirstEverVisit）、そちらは日に関わらず名乗る。
+ * ここが効くのは「長く空いて帰ってきた人」だけ。
+ * 判断のもとは Today.tsx と同じで、あちらが増えたらここも足す。
  */
 const TODAY_OPENS: TodayNews["kind"][] = ["live", "plan", "recipe"];
 
@@ -363,16 +366,29 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // 「ついさっき来た」として扱う。演出を出す側に倒すと毎回出てしまう。
       const raw = localStorage.getItem(VISITED);
       apart = raw ? daysSince(raw) ?? 0 : null;
-      localStorage.setItem(VISITED, jstNow().date);
     } catch {
       /* プライベートモードなどで読めなくても、演出を出すだけなので気にしない */
     }
+    /* 「来た」を書き留めるのは、降り終わってから。
+       **この鍵を読むだけの人がいる。** 今日の板は `ayato-island-arrived` を見て
+       「初めての人には自分から開かない」を決めている（`components/today/Today.tsx`）。
+       ここで先に書くと、初めて来た人が「2回目の人」に見えて、
+       配信中の日に板とカモメが両方開く。読ませてから書く。 */
+    const remember = () => {
+      try {
+        localStorage.setItem(VISITED, jstNow().date);
+      } catch {
+        /* 書けなくても、次にもう一度演出が出るだけ */
+      }
+    };
     // 初めての人(null)には見せる。長く空いた人にも、もう一度。
-    const again = apart === null || apart >= ARRIVE_AGAIN;
+    const firstEver = apart === null;
+    const again = firstEver || apart >= ARRIVE_AGAIN;
     /* 名乗りも同じ人に同じ回数だけ。到着の演出は「来た」しか言っていないので、
        そのあとに1文だけ足して、演出に中身を持たせる。
-       今日の板が自分から開く日は出さない（両方開くと島が見えない）。 */
-    const greet = again && !TODAY_OPENS.includes(todayNews().kind);
+       **初めての人には、どの日でも名乗る。** 板のほうが初回は開かないので重ならない。
+       長く空いて帰ってきた人だけ、板が自分から開く日は黙る。 */
+    const greet = firstEver || !TODAY_OPENS.includes(todayNews().kind);
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
@@ -387,6 +403,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       snapCam.current = true;
       setArriving(false);
       landedAt.current = performance.now();
+      remember();
       if (greet) {
         spokeFirst.current = true;
         setTalking({ i: GUIDE, text: GREETING });
@@ -396,6 +413,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const t = setTimeout(() => {
       setArriving(false);
       landedAt.current = performance.now();
+      remember();
       if (greet) {
         spokeFirst.current = true;
         setTalking({ i: GUIDE, text: GREETING });
