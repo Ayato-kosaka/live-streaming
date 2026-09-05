@@ -76,7 +76,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       <Panel className="paper">
         <h2>どんなアプリか</h2>
         <div className="aapp-split">
-          <PhoneShot width={172} screen={SHOT[a.slug] ?? "food"} />
+          <PhoneShot width={200} screen={SHOT[a.slug] ?? "food"} />
           <div>
             <p>{a.summary}</p>
             <div className="afeat" style={{ marginTop: 12 }}>

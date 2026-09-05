@@ -533,25 +533,19 @@
    アプリ工房
    --------------------------------------------------------- */
 
-.ashelf { display: grid; gap: 16px; }
-.aapp {
-  border-radius: var(--r-3);
-  background: var(--paper);
-  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 8px 0 var(--frame-deep), var(--shadow-2);
-  overflow: hidden;
-}
-.aapp-top {
-  display: grid;
-  gap: 14px;
-  padding: 18px 16px 0;
-  justify-items: center;
-  text-align: center;
-}
+/* アプリ1本ぶん。主役はアプリの画面なので、絵を大きく置いて
+   まわりに言葉を回す（docs/ac-reference.md 7章）。 */
+.aapp-hero { display: grid; gap: 16px; justify-items: center; }
+.aapp-shot { display: block; }
+.aapp-said { min-width: 0; display: grid; gap: 10px; align-content: start; }
+.aapp-id { display: flex; align-items: center; gap: 12px; }
 .aapp-logo {
-  width: 78px;
-  height: 78px;
-  border-radius: 20px;
-  box-shadow: 0 5px 0 rgba(90, 66, 34, 0.3);
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 15px;
+  /* 紙の上なので厚みは付けない。物として地面に落ちる影だけ。 */
+  box-shadow: var(--shadow-1);
   background: var(--paper-2);
 }
 /* 公式のアイコンが無いアプリは、自前の絵を同じ札に収める */
@@ -560,11 +554,42 @@
   place-items: center;
   background: var(--paper-2);
 }
-.aapp-name { font-size: 21px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); margin: 0; }
-.aapp-line { margin: 4px 0 0 !important; font-size: 13.5px !important; line-height: 1.8 !important; color: var(--ink-2); }
-.aapp-shot { display: block; margin: 12px auto -4px; }
-.aapp-body { padding: 14px 16px 18px; }
-.aapp-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.aapp-line { margin: 0 !important; font-size: 13.5px !important; line-height: 1.8 !important; color: var(--ink-2); }
+.aapp-sum { margin: 0 !important; font-size: 13.5px !important; line-height: 1.9 !important; }
+.aapp-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+/* 機能が増えた順のノート。畳んだ中身なので、罫だけで区切る */
+.agrow { list-style: none; margin: 0; padding: 0; display: grid; }
+.agrow > li {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 9px 2px;
+  border-top: 1px solid var(--rule);
+}
+.agrow > li:first-child { border-top: 0; }
+.agrow-mark {
+  grid-row: span 2;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--rule);
+  color: var(--ink-2);
+}
+.agrow time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.04em; }
+.agrow b { font-size: 13.5px; font-weight: 900; line-height: 1.6; }
+.agrow i {
+  grid-column: 2 / -1;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
 .abadge {
   display: inline-flex;
   align-items: center;
@@ -607,23 +632,29 @@
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
-.astep-mark { flex: none; padding-top: 4px; }
-.astep-dot {
-  display: block;
-  width: 13px;
-  height: 13px;
+/* 種類の印。色で分けるのをやめたので、丸の中に絵を入れる */
+.astep-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px var(--paper);
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  color: var(--ink-2);
 }
 .astep-body { min-width: 0; display: grid; gap: 3px; }
 .astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .astep-head time { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+/* 種類の言葉。数えたもの・言うだけの札と同じ、オリーブの平ら */
 .astep-kind {
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
-  padding: 1px 7px;
-  border-radius: 999px;
-  color: #4a3a22;
+  padding: 1px 8px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
 }
 .astep b { font-size: 14.5px; font-weight: 900; line-height: 1.55; }
 .astep i { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; }
@@ -660,12 +691,12 @@
 .aapp-split p { margin: 0 !important; }
 
 @media (min-width: 700px) {
-  .aapp-split { grid-template-columns: auto 1fr; align-items: start; }
+  .aapp-hero { grid-template-columns: auto minmax(0, 1fr); align-items: start; justify-items: start; gap: 24px; }
+  .aapp-split { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
   .acards { grid-template-columns: repeat(3, 1fr); }
   .afeat { grid-template-columns: repeat(2, 1fr); }
   .abio { grid-template-columns: minmax(0, 312px) minmax(0, 1fr); gap: 24px; }
   .abio-art { justify-self: start; }
-  .aapp-top { grid-template-columns: auto 1fr; justify-items: start; text-align: left; padding: 20px 22px 0; }
   .aapp-badges { justify-content: flex-start; }
   .acty-num { grid-template-columns: repeat(3, 1fr); }
 }
