@@ -236,10 +236,21 @@
   display: flex; align-items: flex-end; justify-content: center;
 }
 @media (min-width: 720px) { .zk-hero-art { height: 230px; } }
-/* 図鑑の1枚（料理の詳細）。この面の主役は料理の絵1つなので、
-   縦の半分以上を絵にする。2周目の実測では紙の 19% しかなかった。 */
+/* 図鑑の1枚（料理の詳細）。この面の主役は料理の絵1つ。
+   ただし焼いてあるスプライトは長辺 320px までしか無いので、枠だけ広げても
+   絵は natural size で止まって、空きが増えるだけだった（実測 197x253）。
+   枠は絵が埋められる大きさに合わせ、`height: 100%` で枠まで伸ばす。
+   320px を超える引き伸ばしはぼけるので、そこで止める。
+   「ここを見ろ」は、絵の大きさではなく上下の余白で言う。 */
 .zk-hero.is-dex .zk-hero-art { height: 268px; margin: var(--sp-6) 0 var(--sp-5); }
-@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 372px; } }
+@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 320px; } }
+.zk-hero.is-dex .zk-hero-art img {
+  height: 100%;
+  width: auto;
+  max-height: 320px;
+  /* 平たい料理（ピザ・ワッフル）は横幅で止まる。縦に引き伸ばさない */
+  max-width: 86%;
+}
 .zk-hero.is-dex .zk-hero-art::before { height: 34px; }
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {

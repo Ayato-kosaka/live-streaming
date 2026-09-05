@@ -359,7 +359,8 @@ export const feel: Record<string, Draw> = {
       <Sh c={c} cy={58} rx={12} ry={2.8} />
       {/* 白い吹き出しを生成りの紙に置くと 1.1 倍しか差が出ず、点3つしか見えなかった。
           陰を灰白（`wd`）から冷たい灰（`gy` / `gyd`）へ落として、輪郭を地から離す */}
-      <path d="M20 12a11 11 0 0 1 20-4 10 10 0 0 1 12 12 9 9 0 0 1-6 14 11 11 0 0 1-18 2 10 10 0 0 1-14-10 9 9 0 0 1 6-14z" fill={c.w} />
+      <path d="M20 12a11 11 0 0 1 20-4 10 10 0 0 1 12 12 9 9 0 0 1-6 14 11 11 0 0 1-18 2 10 10 0 0 1-14-10 9 9 0 0 1 6-14z" fill={c.wd} />
+      <path d="M20 12a11 11 0 0 1 20-4 10 10 0 0 1 4.6 4.6c-8-4.6-20-4-27 3.6A9.6 9.6 0 0 1 20 12z" fill={c.w} />
       <path d="M40 8a10 10 0 0 1 12 12 9 9 0 0 1-6 14 11 11 0 0 1-14 3.4V9.6A11 11 0 0 1 40 8z" fill={c.gy} />
       <path d="M46 34a11 11 0 0 1-14 3.4 11 11 0 0 1-13.6-1.6c8 3.4 20 2.6 27.6-1.8z" fill={c.gyd} opacity={c.flat ? 1 : 0.6} />
       <g fill={c.pu}>
@@ -367,9 +368,9 @@ export const feel: Record<string, Draw> = {
         <circle cx="32" cy="20" r="3.6" />
         <circle cx="42" cy="20" r="3.6" />
       </g>
-      <circle cx="20" cy="43" r="6" fill={c.w} />
+      <circle cx="20" cy="43" r="6" fill={c.wd} />
       <path d="M20 37a6 6 0 0 1 0 12z" fill={c.gy} />
-      <circle cx="13" cy="53" r="4" fill={c.w} />
+      <circle cx="13" cy="53" r="4" fill={c.wd} />
       <path d="M13 49a4 4 0 0 1 0 8z" fill={c.gy} />
       <Gl c={c} cx={22} cy={12} rx={5} ry={2.4} r={-24} o={0.7} />
     </>
