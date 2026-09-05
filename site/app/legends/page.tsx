@@ -33,8 +33,15 @@ export default function LegendsPage() {
    * 札の字は `content/legends.ts` から取る。ここで書き写すと、
    * 題名が変わったときにこちらだけ古い字が残る。
    */
-  const AGAIN = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia", "kazbegi", "iwashi-festival"];
-  const again = AGAIN.map((slug) => LEGENDS.find((l) => l.slug === slug)).filter((l) => !!l);
+  const ONCE_MORE = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia", "kazbegi", "iwashi-festival"];
+  /** いちばん新しい伝説の日。「ついこのあいだ」の線をここから引く。 */
+  const newest = [...LEGENDS].sort((a, b) => (a.date < b.date ? 1 : -1))[0].date;
+  const halfYear = new Date(new Date(newest).getTime() - 180 * 86400000).toISOString().slice(0, 10);
+  const again = ONCE_MORE.map((slug) => LEGENDS.find((l) => l.slug === slug))
+    .filter((l) => !!l)
+    // ついこのあいだ終わったものは外す。半年前にやったことなら「もう一度」だが、
+    // 先月やったことに同じ問いを出すと、答えようがない
+    .filter((l) => l.date < halfYear);
 
   return (
     <PageShell crumbs={[{ label: "伝説の企画" }]}>
@@ -142,10 +149,9 @@ export default function LegendsPage() {
             この問いはこの面にしか置けない。丘に何が立っているかを持っているのが
             この面だけで、選択肢がそのまま丘の札になっているから。 */}
         <Zone tight>
-          <H art={<ArtMedal size={32} />}>もう一度やるなら</H>
-          <p className="zk-lead">
-            どれも1回きりで終わった企画。同じことをもう一度やるとしたら、どれがいい?
-          </p>
+          {/* 見出しと問いで同じことを二度読ませない。丘の札を見たあとに
+              置くので、前置きは要らない */}
+          <H art={<ArtMedal size={32} />}>1回きりで終わったもの</H>
           <Ask
             id="legends-again"
             q="もう一度やるなら、どれ?"
