@@ -174,18 +174,19 @@ function Photos({ plan, from = 0, to }: { plan: Plan; from?: number; to?: number
           <img src={ph.src} alt={ph.alt} loading="lazy" referrerPolicy="no-referrer" />
           <figcaption>
             {ph.alt}
-            {ph.credit && (
-              <>
-                {" — "}
-                {ph.creditHref ? (
-                  <a href={ph.creditHref} target="_blank" rel="noopener noreferrer">
-                    {ph.credit}
-                  </a>
-                ) : (
-                  ph.credit
-                )}
-              </>
-            )}
+            {/* 出どころは行の続きに流していた。そのせいで、借りものの写真が
+                並ぶ面では押しどころが 34px しか無い（`docs/island-world.md` 4章は
+                48px と決めている）。行を分けて、押せる高さを持たせる。
+                借りていない写真では札そのものが出ない。 */}
+            {ph.credit &&
+              (ph.creditHref ? (
+                <a className="pcredit" href={ph.creditHref} target="_blank" rel="noopener noreferrer">
+                  {ph.credit}
+                  <Icon name="external" size={11} />
+                </a>
+              ) : (
+                <span className="pcredit is-flat">{ph.credit}</span>
+              ))}
           </figcaption>
         </figure>
       ))}
@@ -433,7 +434,19 @@ export function PlanRow({ plan, children }: { plan: Plan; children?: React.React
         <b className="is-date">{shortDate(plan.date)}</b>
       </span>
       <div className="nx-road-b">
-        <Fold title={plan.title} lead={plan.note} note={<Count plan={plan} />}>
+        {/* いちばん大きい企画だけは、畳んだままでも時計を出す。
+            この面でいちばん気にされているのが「出発まであと何日か」なのに、
+            旅の出発が1行に畳まれていて、すぐ上の1日だけのお祭りのほうが
+            大きい時計を持っていた。中身は畳んだまま、時計と札だけ出す
+            （見た目は `app/next/next.css`）。 */}
+        {plan.big && (
+          <div className="nx-big">
+            <span className="nx-big-tag">いちばん大きい企画</span>
+            <LeadClock plan={plan} />
+          </div>
+        )}
+        {/* 大きい企画は、すぐ上の時計が同じ数を言っている。札を2つ出さない */}
+        <Fold title={plan.title} lead={plan.note} note={plan.big ? undefined : <Count plan={plan} />}>
           <div className="chips" style={{ marginBottom: "var(--sp-3)" }}>
             <span className="chip">
               <Icon name="calendar" size={12} />
