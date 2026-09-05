@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { alert } from "./core";
 
 /** 気持ちと反応の印。👍の代わりに使う。 */
 export const feel: Record<string, Draw> = {
@@ -101,17 +103,7 @@ export const feel: Record<string, Draw> = {
     </>
   ),
 
-  alert: (c) => (
-    <>
-      <Sh c={c} cy={56} rx={22} ry={3.4} />
-      <path d="M27.2 7.4a5.6 5.6 0 0 1 9.6 0l24 40A5.6 5.6 0 0 1 56 56H8a5.6 5.6 0 0 1-4.8-8.6z" fill={c.yld} />
-      <path d="M27.2 7.4a5.6 5.6 0 0 1 9.6 0l24 40A5.6 5.6 0 0 1 56 56H32z" fill={c.yl} />
-      <path d="M32 7.4a5.6 5.6 0 0 0-4.8 2.6l-24 40A5.6 5.6 0 0 0 8 56h24z" fill={c.yl} />
-      <rect x="28" y="20" width="8" height="19" rx="4" fill={c.bk} />
-      <circle cx="32" cy="46" r="4.4" fill={c.bk} />
-      <Gl c={c} cx={22} cy={30} rx={2.4} ry={8} r={16} o={0.35} />
-    </>
-  ),
+  alert,
 
   crown: (c) => (
     <>

@@ -26,6 +26,17 @@ const SIZE = 320;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(SIZE * SUPER, SIZE * SUPER);
+
+/* 焼く大きさは1枚ごとに変えられる。
+ * ふだんは 320px ぶん。ただし図鑑の主役（`/kitchen/[品]` や `/legends` の
+ * いちばん上）は画面で 300px 近くまで大きく出るので、320px で焼くと
+ * 高精細画面では 2倍に引き伸ばされてぼける。その絵だけ opts.px で上げる。 */
+let curPx = SIZE;
+const setPx = (px) => {
+  if (px === curPx) return;
+  curPx = px;
+  renderer.setSize(px * SUPER, px * SUPER);
+};
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
@@ -1001,6 +1012,7 @@ async function prepare(part, opts) {
  * parts: [{ url, pos:[x,y,z], rot:[x,y,z](度), scale, tint }]
  */
 window.renderScene = async (parts, opts = {}) => {
+  setPx(opts.px ?? SIZE);
   const group = new THREE.Group();
   // 明かりの円は画づくりの飾りなので、画角を決める箱には入れない
   const framed = [];
@@ -1010,7 +1022,10 @@ window.renderScene = async (parts, opts = {}) => {
     const [rx, ry, rz] = part.rot ?? [0, 0, 0];
     o.position.set(px, py, pz);
     o.rotation.set((rx * Math.PI) / 180, (ry * Math.PI) / 180, (rz * Math.PI) / 180);
-    if (part.scale) o.scale.setScalar(part.scale);
+    // 数ひとつなら等倍。配列を渡すと軸ごとに伸ばせる。
+    // 桟橋の杭のように「同じ角材を長さだけ変えて使う」ときに要る
+    if (Array.isArray(part.scale)) o.scale.set(...part.scale);
+    else if (part.scale) o.scale.setScalar(part.scale);
     group.add(o);
     if (!part.glow) framed.push(o);
   }

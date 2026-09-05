@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl, Eye, Blush } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { island } from "./core";
 
 /**
  * 島の場所。入口ごとに **別々の絵**を持たせる。
@@ -292,27 +294,7 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** 島そのもの。トップへ戻る印。 */
-  island: (c) => (
-    <>
-      <ellipse cx="32" cy="42" rx="29" ry="15" fill={c.sk} />
-      <path
-        d="M5 44c6-3 10 3 16 0s10 3 16 0 10 3 16 0 5-.6 6-1.4A29 29 0 0 1 32 57 29 29 0 0 1 4 42.6c.2.4.4.8 1 1.4z"
-        fill={c.w}
-        opacity="0.5"
-      />
-      <ellipse cx="32" cy="40" rx="20" ry="9" fill={c.cr} />
-      <ellipse cx="32" cy="36.5" rx="14" ry="7" fill={c.gr} />
-      <ellipse cx="27" cy="34" rx="6" ry="2.6" fill={c.grl} opacity="0.7" />
-      <path d="M31 36V16h4l-1 20z" fill={c.wod} />
-      <g fill={c.grd}>
-        <path d="M33 15c7-4 13-1 14 3-4-3-9-2.6-13 1z" />
-        <path d="M33 15c-7-4-13-1-14 3 4-3 9-2.6 13 1z" />
-        <path d="M33 14c2-7 8-9 12-7-4 1-7 4-9 8z" />
-      </g>
-      <circle cx="33" cy="13.5" r="3" fill={c.gd} />
-    </>
-  ),
+  island,
 
   /** 家。パンくずの「島」以外で使う汎用の家。 */
   home: (c) => (

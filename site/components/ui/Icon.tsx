@@ -1,10 +1,11 @@
 import { C, INK } from "./icons/pal";
 import { GLYPHS, FLAT, BRAND, type IconName } from "./icons";
+import { Shell } from "./icons/shell";
 
 export type { IconName };
 
 /**
- * 島のアイコン。
+ * 島のアイコン。**紙の面（サーバで描き切る面）で使う。**
  *
  * 絵文字は1文字も使わない（`docs/island-design.md`）。
  * ただし「絵文字をやめた代わりの記号」では足りない。ここに置くのは**小さなイラスト**で、
@@ -19,30 +20,14 @@ export type { IconName };
  * 絵は `components/ui/icons/*.tsx` に分けてある。増やすときはそこへ足して、
  * `icons/index.ts` の `IconName` に1行足す。
  *
+ * **ブラウザで描き直す部品（`"use client"` の付いたもの）からは、これを読まない。**
+ * ここは 223 種を1つの表にまとめていて、名前で引くから、どれが要るか静的に分からない。
+ * 束に入れると 174KB がまるごとブラウザへ行って、そのうち走るのは 6% しかない。
+ * そちらは `IconCore.tsx` を読む（呼べる名前が狭いので、間違えると型で落ちる）。
+ *
  * 場所や物のうち、**大きく出すもの**は今までどおりスプライト
  * （`site/public/sprites/*.webp`）を使う。ここは 12〜60px で出すもの。
  */
-/**
- * 上からの光。
- *
- * 焼いたスプライトは上から光が当たっていて、上下に階調がある。SVG の塗りは平らなので、
- * 並べると別の世界のものに見える（`docs/island-world.md` 6章）。
- * だから絵の上に、**上を明るく・下を暗く**する薄い膜を1枚かぶせる。
- *
- * 中身は絵ごとに変わらないので、1つ書いて全部から参照する。
- * 同じ id が何度も出るが、**どれも中身が同じ**なので、ブラウザが文書順の1つ目に
- * 解決しても、その1つ目が消えて2つ目に解決し直されても、描かれるものは変わらない。
- * **中身が同じものだけを id で共有する** — このファイルの決めごとはこれ1つ。
- */
-const LIGHT = (
-  <linearGradient id="ic-light" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stopColor="#ffffff" stopOpacity="0.13" />
-    <stop offset="0.42" stopColor="#ffffff" stopOpacity="0" />
-    <stop offset="0.58" stopColor="#2a2415" stopOpacity="0" />
-    <stop offset="1" stopColor="#2a2415" stopOpacity="0.1" />
-  </linearGradient>
-);
-
 export default function Icon({
   name,
   size = 18,
@@ -66,65 +51,5 @@ export default function Icon({
   // 他人のマークなので、こちらの都合で色や陰影を足してはいけない
   // （`docs/island-design.md` 1章「本物の形を写す」／`icons/brand.tsx`）。
   const flat = tone === "ink" || BRAND.has(name) || (tone !== "color" && FLAT.has(name));
-
-  // 単色の印には光を乗せない。223 種のうちここに来る 24 種（操作 20・ブランド 4）は、
-  // currentColor 1色であることが置いた側の CSS との約束になっている（`.rleg-h .ic` など）。
-  // 上からの光は色を1つ足すのと同じなので、約束のあるものには乗せない
-  if (flat) {
-    return (
-      <svg
-        className={className ? `ic ${className}` : "ic"}
-        width={size}
-        height={size}
-        viewBox="0 0 64 64"
-        aria-hidden
-        focusable="false"
-      >
-        {draw(INK)}
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      className={className ? `ic ${className}` : "ic"}
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      aria-hidden
-      focusable="false"
-    >
-      <defs>
-        {LIGHT}
-        {/*
-          光を絵の形だけに乗せるための抜き型。
-          塗りの明るさではなく**不透明度**で抜く（`mask-type: alpha`）ので、
-          抜き型の中の色は何でもよい。形だけを見ている。
-
-          ここで絵をもう一度描いているのは、**`<use href="#id">` で同じ形を借りると
-          絵が黙って平らになる**から。id は文書ぜんぶで1つの名前空間なので、
-          同じ印を2つ置くと id がぶつかる。ぶつかった参照は文書順の1つ目に解決され、
-          その1つ目が消えると（別のページへ移った、折りたたみを閉じた）参照先が無くなって、
-          残った印から光だけが落ちる。**壊れないので気づけない。**
-
-          いま id を持つのは「どの印でも中身が同じもの」— この抜き型と `ic-light` の
-          2つだけ。どれに解決されても結果が変わらないので、消えても困らない。
-          代わりに絵1つぶんマークアップが増える。**黙って絵が変わるよりはいい。**
-        */}
-        <mask
-          id={`im-${name}`}
-          maskUnits="userSpaceOnUse"
-          x="0"
-          y="0"
-          width="64"
-          height="64"
-          style={{ maskType: "alpha" }}
-        >
-          {draw(C)}
-        </mask>
-      </defs>
-      {draw(C)}
-      <rect width="64" height="64" fill="url(#ic-light)" mask={`url(#im-${name})`} />
-    </svg>
-  );
+  return <Shell name={name} draw={draw} size={size} flat={flat} className={className} pal={flat ? INK : C} />;
 }

@@ -562,6 +562,15 @@ export const islandApi = onRequest(
         let total = (doneru ?? 0) + superchat + start;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
+        /* 1円も分からないときは、200 で 0 を返さない。
+           0円は「誰も出していない」に見えるし、CDN に5分ぶん焼き付く。
+           鍵がまだ無いあいだ(GitHub #110)は毎回ここに来る。画面は 200 以外を
+           「読めなかった」として黙って足代の数字を消すので、これでいい。 */
+        if (total <= 0) {
+          res.set("Cache-Control", "no-store");
+          res.status(503).json({error: "no fund data"});
+          return;
+        }
         res.set(
           "Cache-Control",
           "public, max-age=300, s-maxage=600, stale-while-revalidate=1800",

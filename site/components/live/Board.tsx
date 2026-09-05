@@ -16,7 +16,7 @@ import { BOARD } from "@/content/voice";
 import { LEGENDS } from "@/content/legends";
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
 import { EmptyBoard, Pin, Stone } from "./art";
 

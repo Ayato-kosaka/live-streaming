@@ -6,7 +6,7 @@ import { RESIDENTS } from "@/content/residents";
 import { useResidentShow } from "@/lib/liveStats";
 import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import { Pedestal } from "./art";
 
 /** キャラクター画像は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */

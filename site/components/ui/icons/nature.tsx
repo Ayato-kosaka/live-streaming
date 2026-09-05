@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { light } from "./core";
 
 /** 天気と時間、それに火まわり。 */
 export const nature: Record<string, Draw> = {
@@ -109,19 +111,7 @@ export const nature: Record<string, Draw> = {
     </>
   ),
 
-  /** ランタン。夜のあかり。 */
-  light: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={14} ry={3.2} />
-      <path d="M24 12a8 8 0 0 1 16 0" fill="none" stroke={c.gyd} strokeWidth="3.4" strokeLinecap="round" />
-      <path d="M20 12h24l-3 6H23z" fill={c.gyd} />
-      <path d="M22 20h20l3 22a4 4 0 0 1-4 4.6H23A4 4 0 0 1 19 42z" fill={c.yl} />
-      <path d="M32 20h10l3 22a4 4 0 0 1-4 4.6H32z" fill={c.yld} />
-      <path d="M32 26c3.2 4 5 6 5 8.6a5 5 0 0 1-10 0c0-2.6 1.8-4.6 5-8.6z" fill={c.ord} />
-      <path d="M17 47h30v5.4a2.6 2.6 0 0 1-2.6 2.6H19.6A2.6 2.6 0 0 1 17 52.4z" fill={c.gyd} />
-      <Gl c={c} cx={24} cy={28} rx={2} ry={6} r={4} o={0.55} />
-    </>
-  ),
+  light,
 
   tree: (c) => (
     <>

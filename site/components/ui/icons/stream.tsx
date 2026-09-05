@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { calendar, clock, comment, live } from "./core";
 
 /** 配信まわりの道具。 */
 export const stream: Record<string, Draw> = {
@@ -48,20 +50,7 @@ export const stream: Record<string, Draw> = {
     </>
   ),
 
-  comment: (c) => (
-    <>
-      <Sh c={c} cy={56} rx={18} ry={3.2} />
-      {/* 白い吹き出しは明るい下地で消える。地を青にして、文字を白で抜く */}
-      <path d="M12 8h40a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H29L16 55.4V44h-4a9 9 0 0 1-9-9V17a9 9 0 0 1 9-9z" fill={c.bl} />
-      <path d="M32 8h20a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H32z" fill={c.bld} />
-      <g fill={c.w}>
-        <rect x="12" y="16.5" width="40" height="5" rx="2.5" />
-        <rect x="12" y="25.5" width="30" height="5" rx="2.5" />
-        <rect x="12" y="34.5" width="22" height="5" rx="2.5" opacity="0.75" />
-      </g>
-      <Gl c={c} cx={16} cy={13} rx={6} ry={2} r={-4} o={0.5} />
-    </>
-  ),
+  comment,
 
   /** 投げ銭。飛んできたコインに気持ちが乗っている。 */
   tip: (c) => (
@@ -91,70 +80,11 @@ export const stream: Record<string, Draw> = {
     </>
   ),
 
-  clock: (c) => (
-    <>
-      <Sh c={c} cy={56} rx={19} ry={3.6} />
-      <circle cx="32" cy="31" r="27" fill={c.gdd} />
-      <circle cx="32" cy="29.6" r="27" fill={c.gd} />
-      <circle cx="32" cy="29.6" r="21.5" fill={c.cr} />
-      <g fill={c.gdd}>
-        <rect x="30.6" y="11" width="2.8" height="5" rx="1.4" />
-        <rect x="30.6" y="43" width="2.8" height="5" rx="1.4" />
-        <rect x="12" y="28.2" width="5" height="2.8" rx="1.4" />
-        <rect x="47" y="28.2" width="5" height="2.8" rx="1.4" />
-      </g>
-      <path d="M32 16v14h11" fill="none" stroke={c.ink} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="32" cy="29.6" r="3" fill={c.rd} />
-      <Gl c={c} cx={21} cy={19} rx={5} ry={8} r={40} o={0.45} />
-    </>
-  ),
+  clock,
 
-  calendar: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={22} ry={3.4} />
-      <rect x="17" y="3" width="6" height="13" rx="3" fill={c.gyd} />
-      <rect x="41" y="3" width="6" height="13" rx="3" fill={c.gyd} />
-      <rect x="5" y="8" width="54" height="48" rx="8" fill={c.w} />
-      <path d="M51 8a8 8 0 0 1 8 8v32a8 8 0 0 1-8 8H32V8z" fill={c.wd} />
-      <path d="M5 16a8 8 0 0 1 8-8h38a8 8 0 0 1 8 8v6H5z" fill={c.rd} />
-      <path d="M32 8h19a8 8 0 0 1 8 8v6H32z" fill={c.rdd} />
-      <g fill={c.crd}>
-        <rect x="12" y="28" width="9" height="8" rx="2.4" />
-        <rect x="38" y="28" width="9" height="8" rx="2.4" />
-        <rect x="12" y="41" width="9" height="8" rx="2.4" />
-        <rect x="38" y="41" width="9" height="8" rx="2.4" />
-      </g>
-      <rect x="25" y="28" width="9" height="8" rx="2.4" fill={c.crd} />
-      <rect x="25" y="41" width="9" height="8" rx="2.4" fill={c.gr} />
-      <Gl c={c} cx={15} cy={12} rx={6} ry={1.8} r={-4} o={0.4} />
-    </>
-  ),
+  calendar,
 
-  /**
-   * 生放送のランプ。線の弧だけだと「電波の記号」で、物になっていなかった。
-   * 台と笠を付けて、点いている赤い球にする。光は左右の弧で示す。
-   */
-  live: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={16} ry={3.4} />
-      {/* 光。玉から放射する短い線。玉より外に出しすぎると羽根に見える */}
-      <g stroke={c.rdl} strokeWidth="5" strokeLinecap="round" opacity={c.flat ? 1 : 0.8}>
-        <path d="M32 3v6" />
-        <path d="M9.4 12.4 13.6 16.6" />
-        <path d="M54.6 12.4 50.4 16.6" />
-        <path d="M2 32h6" />
-        <path d="M56 32h6" />
-      </g>
-      {/* 玉。ここが主役なので大きく取る */}
-      <circle cx="32" cy="32" r="17" fill={c.rdd} />
-      <circle cx="32" cy="30.8" r="17" fill={c.rd} />
-      <path d="M20 19a17 17 0 0 1 24 0 17 17 0 0 0-24 0z" fill={c.rdl} />
-      <ellipse cx="25" cy="24" rx="4.6" ry="3" fill={c.w} opacity={c.flat ? 1 : 0.55} transform="rotate(-32 25 24)" />
-      {/* 台。玉が浮かないように受ける */}
-      <path d="M17 44h30l-2 8H19z" fill={c.gyd} />
-      <rect x="14" y="51" width="36" height="6" rx="3" fill={c.gy} />
-    </>
-  ),
+  live,
 
   book: (c) => (
     <>

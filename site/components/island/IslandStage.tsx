@@ -12,7 +12,7 @@ import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { jstNow } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
 import { opensByItself, todayNews, type TodayNews } from "@/lib/todayNews";

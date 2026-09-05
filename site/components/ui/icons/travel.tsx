@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { map, pin, signpost, walk } from "./core";
 
 /**
  * 旅の道具と乗り物。
@@ -77,19 +79,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  map: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={22} ry={3.6} />
-      <path d="M6 15 23 8v41L6 56z" fill={c.cr} />
-      <path d="M25 8l14 7v41l-14-7z" fill={c.crd} />
-      <path d="M41 15 58 8v41l-17 7z" fill={c.cr} />
-      <path d="M9 42c6-6 6-14 12-16s10 6 16 3 8-14 14-16" fill="none" stroke={c.rd} strokeWidth="3" strokeLinecap="round" strokeDasharray="1 6" />
-      <path d="M12 20c5 2 8 0 11 2" fill="none" stroke={c.sk} strokeWidth="3.4" strokeLinecap="round" />
-      <ellipse cx="47" cy="26" rx="7" ry="4.4" fill={c.grl} opacity="0.9" />
-      <path d="M50 34a5.6 5.6 0 0 1 5.6 5.6c0 4-5.6 10.4-5.6 10.4s-5.6-6.4-5.6-10.4A5.6 5.6 0 0 1 50 34z" fill={c.rdd} />
-      <circle cx="50" cy="39.6" r="2.2" fill={c.w} />
-    </>
-  ),
+  map,
 
   passport: (c) => (
     <>
@@ -196,17 +186,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  signpost: (c) => (
-    <>
-      <Sh c={c} cy={56} rx={13} ry={3.4} />
-      <rect x="29" y="12" width="6.5" height="44" rx="3" fill={c.wod} />
-      <path d="M13 14h21a2.4 2.4 0 0 1 2.4 2.4v7.2A2.4 2.4 0 0 1 34 26H13l-6-6z" fill={c.gr} />
-      <path d="M30 30h21l6 6-6 6H30a2.4 2.4 0 0 1-2.4-2.4v-7.2A2.4 2.4 0 0 1 30 30z" fill={c.or} />
-      <rect x="14" y="19" width="14" height="2.6" rx="1.3" fill={c.w} opacity="0.85" />
-      <rect x="34" y="35" width="14" height="2.6" rx="1.3" fill={c.w} opacity="0.85" />
-      <Gl c={c} cx={30.5} cy={18} rx={1.4} ry={4} r={0} o={0.35} />
-    </>
-  ),
+  signpost,
 
   /**
    * キャンピングカー。全体をクリームで塗ると明るい下地に溶けるので、
@@ -335,21 +315,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  walk: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={15} ry={3.4} />
-      <circle cx="37" cy="11" r="7" fill={c.sn} />
-      <path d="M37 4a7 7 0 0 1 0 14z" fill={c.snd} />
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M35 20 28 34" stroke={c.bl} strokeWidth="9" />
-        <path d="M28 34 39 41l2 13" stroke={c.bld} strokeWidth="8" />
-        <path d="M28 34 17 50" stroke={c.bl} strokeWidth="8" />
-        <path d="M33 24 45 30" stroke={c.sn} strokeWidth="6.4" />
-      </g>
-      <rect x="37" y="50" width="10" height="6" rx="3" fill={c.brd} />
-      <rect x="10" y="47" width="11" height="6" rx="3" fill={c.brd} transform="rotate(-24 15.5 50)" />
-    </>
-  ),
+  walk,
 
   suitcase: (c) => (
     <>
@@ -364,15 +330,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  pin: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={9} ry={2.8} />
-      <path d="M32 3a18 18 0 0 1 18 18c0 12.6-18 33-18 33S14 33.6 14 21A18 18 0 0 1 32 3z" fill={c.rd} />
-      <path d="M32 3a18 18 0 0 1 18 18c0 12.6-18 33-18 33z" fill={c.rdd} />
-      <circle cx="32" cy="21" r="7" fill={c.w} />
-      <Gl c={c} cx={23} cy={13} rx={2.6} ry={5} r={34} o={0.5} />
-    </>
-  ),
+  pin,
 
   /** 路面電車。ヨーロッパの街なか。 */
   tram: (c) => (

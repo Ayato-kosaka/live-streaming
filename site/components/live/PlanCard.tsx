@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { planDaysLeft, type Plan } from "@/content/plans";
 import { LINKS } from "@/content/site";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
 import { Stone } from "./art";
 
