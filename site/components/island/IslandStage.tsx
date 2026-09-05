@@ -782,6 +782,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </svg>
 
+      {/* 島の下ふち。海をページの下地へ溶かして、切り口が出ないようにする。
+          tokens.css が .stage の ::before / ::after を時間帯の色に使っているので、
+          擬似要素ではなく実体を1枚置いている。 */}
+      <span className="stage-shore" aria-hidden />
+
       {/* 建物の札。島に建っているものは全部押せるので、ふだんは何も出さない。
           出るのは「今日ここに何かある」1つと、いま近づいている1つだけ。 */}
       <div className="labels">
@@ -811,6 +816,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 href={sp.href}
                 className="spot-mark"
                 tabIndex={on ? 0 : -1}
+                // 10軒ぶんの札がいつも画面にいるので、先読みを止めないと
+                // 島を開いただけで全ページの RSC を取りにいく（実測で約3MB）。
+                // 静的書き出しなので、先読みで得られるものは小さい。
+                prefetch={false}
                 // 戻ってきたときに、この建物の前に立っていてほしい。
                 // 遠くから札を押して入ることもあるので、あやとの現在地ではなく建物の足元を残す。
                 onClick={() => {

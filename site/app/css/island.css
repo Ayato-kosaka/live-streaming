@@ -800,9 +800,13 @@
    こうしておけば、時間帯で色が変わっても勝手に付いてくる（値を写さずに済む）。
 
    動かさないので、毎フレームの負担にはならない。
+
+   **`.stage::before` / `::after` は使えない。** その2枚は tokens.css が
+   時間帯の色（乗算の --tint と スクリーンの --glow）に使っている。
+   ここで `.stage::after` を書くと、あとから読まれるぶん glow の層を
+   潰してしまい、夜の色が地面に届かなくなる。だから中に1枚置く。
    ========================================================= */
-.stage::after {
-  content: "";
+.stage-shore {
   position: absolute;
   left: 0;
   right: 0;
@@ -817,6 +821,17 @@
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
   mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
 }
+
+/* 時間帯の色をかぶせる2枚（tokens.css の .stage::before / ::after）は、
+   mix-blend-mode を持っている。中身が透明でも、画面ぜんぶを毎フレーム
+   合成し直す層が2枚あることに変わりはない。島は viewBox が動くたび
+   描き直されるので、そのたび2回ぶん余計に合成することになる。
+   **昼はどちらも transparent なので、層ごと外す。**
+   夜の灯り（.stage-lamps）を display:none にしてあるのと同じ理屈。 */
+:root[data-time="day"] .stage::before,
+:root[data-time="day"] .stage::after,
+:root:not([data-time]) .stage::before,
+:root:not([data-time]) .stage::after { content: none; }
 
 /* =========================================================
    到着の演出
