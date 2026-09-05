@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as fbSignOut,
-  type User,
-} from "firebase/auth";
+import type { User } from "firebase/auth";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "@/lib/firebase";
 import { API_BASE } from "@/lib/api";
@@ -23,6 +17,20 @@ import { API_BASE } from "@/lib/api";
  * これは Google の審査を通していない「機密スコープ」なので、
  * 同意画面の前に「このアプリは確認されていません」という警告が出る。
  * それを隠さず、押す前に説明する。
+ *
+ * ## firebase/auth は押されてから読む
+ *
+ * この島は名前もログインも要らずに遊べる。ほとんどの人はログインを押さない。
+ * それなのに firebase/auth（85KB・縮めて 23KB）が全ページに乗っていて、実測で
+ * 20% しか走っていなかった。
+ *
+ * かわりに「この端末は一度ログインした」という印だけを localStorage に置く。
+ *   - 印が無い人 … 何も取りにいかない。ログインしていない人として即座に始まる
+ *   - 印がある人 … その場で読み込んで、前のログインを引き継ぐ
+ *   - 押した人   … そこで読み込む
+ *
+ * 印だけ消えて Firebase 側のログインが残っている端末では、いったんログアウトに
+ * 見える。押せば同じアカウントで戻るので、入れなくなることはない。
  */
 
 /** 島でのその人。YouTube のチャンネルと結びついている。 */
@@ -51,6 +59,26 @@ const Ctx = createContext<AuthState | null>(null);
 /** YouTube のチャンネルを1つだけ読む許可。名前とアイコンを取るために使う。 */
 const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
+/** この端末は一度ログインしたか。firebase/auth を読むかどうかの唯一の手がかり。 */
+const SIGNED_IN = "ayato-island-signedin";
+
+function everSignedIn(): boolean {
+  try {
+    return localStorage.getItem(SIGNED_IN) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberSignedIn(on: boolean) {
+  try {
+    if (on) localStorage.setItem(SIGNED_IN, "1");
+    else localStorage.removeItem(SIGNED_IN);
+  } catch {
+    /* localStorage が使えない端末では、毎回押してもらうことになる */
+  }
+}
+
 async function fetchChannel(accessToken: string) {
   const r = await fetch(
     "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
@@ -74,20 +102,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // 一度も押していない端末では、ここで何も取りにいかない。
+    if (!everSignedIn()) {
+      setFbUser(null);
+      return;
+    }
     let off = () => {};
+    let gone = false;
     // ログインがまだ有効になっていないと、状態が一度も返ってこないことがある。
     // 待ち続けると画面にログインの入口が出ないので、少し待って諦める。
     const giveUp = setTimeout(() => setFbUser((v) => (v === undefined ? null : v)), 2500);
-    try {
-      off = onAuthStateChanged(firebaseAuth(), (u) => {
+    (async () => {
+      try {
+        const [auth, { onAuthStateChanged }] = await Promise.all([
+          firebaseAuth(),
+          import("firebase/auth"),
+        ]);
+        if (gone) return;
+        off = onAuthStateChanged(auth, (u) => {
+          clearTimeout(giveUp);
+          setFbUser(u);
+        });
+      } catch {
         clearTimeout(giveUp);
-        setFbUser(u);
-      });
-    } catch {
-      clearTimeout(giveUp);
-      setFbUser(null);
-    }
+        setFbUser(null);
+      }
+    })();
     return () => {
+      gone = true;
       clearTimeout(giveUp);
       off();
     };
@@ -106,8 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fbUser]);
 
   const token = useCallback(async () => {
+    // 押していない端末のために、ここで firebase/auth を読み込みはしない。
+    if (!everSignedIn()) return null;
     try {
-      return (await firebaseAuth().currentUser?.getIdToken()) ?? null;
+      return (await (await firebaseAuth()).currentUser?.getIdToken()) ?? null;
     } catch {
       return null;
     }
@@ -117,9 +161,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setBusy(true);
     setError(null);
     try {
+      const [auth, { GoogleAuthProvider, signInWithPopup }] = await Promise.all([
+        firebaseAuth(),
+        import("firebase/auth"),
+      ]);
       const provider = new GoogleAuthProvider();
       provider.addScope(YOUTUBE_SCOPE);
-      const res = await signInWithPopup(firebaseAuth(), provider);
+      const res = await signInWithPopup(auth, provider);
+      // ここまで来たら次からは黙って引き継ぐ
+      rememberSignedIn(true);
       const cred = GoogleAuthProvider.credentialFromResult(res);
       const channel = cred?.accessToken ? await fetchChannel(cred.accessToken) : null;
       const idToken = await res.user.getIdToken();
@@ -149,12 +199,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    rememberSignedIn(false);
     try {
-      await fbSignOut(firebaseAuth());
+      const [auth, { signOut: fbSignOut }] = await Promise.all([
+        firebaseAuth(),
+        import("firebase/auth"),
+      ]);
+      await fbSignOut(auth);
     } catch {
       /* 元からログインしていなければ何もしない */
     }
     setProfile(null);
+    setFbUser(null);
   }, []);
 
   const value = useMemo<AuthState>(

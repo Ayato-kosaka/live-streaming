@@ -84,7 +84,10 @@ for (const s of list) {
         ([pp, oo]) => window.renderScene(pp, oo),
         [parts, s.opts ?? {}],
       );
-      fs.writeFileSync(path.join(outDir, `${s.name}.png`), Buffer.from(data.split(",")[1], "base64"));
+      // 名前に `/` が入っているもの(hero/ の大きい絵)は、その下に掘ってから書く
+      const file = path.join(outDir, `${s.name}.png`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, Buffer.from(data.split(",")[1], "base64"));
       ok = true;
     } catch (e) {
       console.error(`\n${s.name} で落ちた(${attempt + 1}回目): ${String(e).slice(0, 160)}`);

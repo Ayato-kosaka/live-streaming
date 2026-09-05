@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
 import { chrome, NOMINAL_W, overlap, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
+import Flag from "@/components/ui/Flag";
+// 印はブラウザまで運ぶぶんの表から取る。`Icon.tsx` を読むと 223種 174KB が
+// まるごと束に入る（`components/ui/IconCore.tsx` の注）。
+import Icon from "@/components/ui/IconCore";
 
 /**
  * パリからジョージアまでの1枚の地図。
@@ -76,11 +80,109 @@ const WOODS = bucket(MAP.woods, 3);
 const DUNES = bucket(MAP.dunes, 2);
 const GLINTS = bucket(MAP.glints, 2);
 
+/**
+ * 旅の順。初めて入った順に並べたもの。
+ *
+ * 地図に置き場（anchors）のある国だけにする。置き場が無い国をたどりに
+ * 入れると、寄せる枠が無いところで地図が世界全図に戻って、
+ * 札だけが入れ替わる。**たどりが止まって見える。**
+ */
+const TRIP = [...COUNTRIES]
+  .filter((c) => c.slug in (MAP.anchors as Record<string, unknown>))
+  .sort((a, b) => a.order - b.order);
+
+/**
+ * 国ひとつぶんの寄り枠。
+ *
+ * その国のピンと、その国で通った街が全部入る枠を作って、
+ * **地図と同じ縦横比まで広げる。** 比を合わせないと、寄せたときに
+ * 上下か左右がはみ出して切れる（章の枠と同じ決まり）。
+ *
+ * 街が1つしか無い国（ベルギー、アラブ首長国連邦）でそのまま寄せると、
+ * 点1つに張りついて「どこの国か」が分からなくなる。まわりの地形が
+ * 見える程度の下限（幅 250）を置く。
+ */
+const RATIO = W / H;
+const FIT: Record<string, number[]> = (() => {
+  const out: Record<string, number[]> = {};
+  const cities = MAP.cities as { country: string; x: number; y: number }[];
+  for (const [slug, a] of Object.entries(
+    MAP.anchors as Record<string, { x: number; y: number }>,
+  )) {
+    const pts = [[a.x, a.y], ...cities.filter((c) => c.country === slug).map((c) => [c.x, c.y])];
+    const xs = pts.map((q) => q[0]);
+    const ys = pts.map((q) => q[1]);
+    let w = Math.max(250, (Math.max(...xs) - Math.min(...xs)) * 1.9);
+    let h = Math.max(250 / RATIO, (Math.max(...ys) - Math.min(...ys)) * 1.9);
+    if (w / h < RATIO) w = h * RATIO;
+    else h = w / RATIO;
+    // 世界より大きくは寄せられない
+    if (w > W) { w = W; h = H; }
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    out[slug] = [
+      Math.max(0, Math.min(W - w, cx - w / 2)),
+      Math.max(0, Math.min(H - h, cy - h / 2)),
+      w,
+      h,
+    ];
+  }
+  return out;
+})();
+
+const ymd = (d: string) => (d ? d.replace(/-/g, "/") : "");
+
 export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   const [chap, setChap] = useState(0);
+  /**
+   * いま開いている国。押したピンの国が入る。
+   *
+   * **ピンを「その国のページへの入口」から「地図の上で開く札」に変えた。**
+   * 前はピンを押すと面ごと入れ替わっていたので、18カ国を見て回るのに
+   * 18回ページを読み直すことになり、地図に戻るたびに世界全図へ戻された。
+   * 押して開く形にすると、地図の上を歩いて回れる。国のページへは札から行く。
+   */
+  const [pick, setPick] = useState<string | null>(null);
+  /** 自動でたどっているか。押している間だけ、順に国が入れ替わる。 */
+  const [walk, setWalk] = useState(false);
   const chapters = MAP.chapters as Chapter[];
-  const box = chapters[chap].box;
-  const wide = chap === 0;
+  const box = (pick && FIT[pick]) || chapters[chap].box;
+  const wide = !pick && chap === 0;
+  const at = pick ? TRIP.findIndex((c) => c.slug === pick) : -1;
+  const open = at >= 0 ? TRIP[at] : null;
+
+  /** 何カ国目へ行くか。端で止める（環にしない。旅は一方通行なので）。 */
+  const goTo = (n: number) => {
+    const i = Math.max(0, Math.min(TRIP.length - 1, n));
+    setPick(TRIP[i].slug);
+  };
+
+  // たどっている間だけ、3.2秒で次の国へ。1歩ごとに次の1歩を仕込む
+  // （`at` が変わるたびにこの効果が張り直される）。
+  // **最後まで行ったら自分で止まる。** 環にすると終わりが無くなって、
+  // 見ている人が「どこまで見たか」を持てない。旅は一方通行なので、端で止める。
+  useEffect(() => {
+    if (!walk) return;
+    if (at >= TRIP.length - 1) {
+      setWalk(false);
+      return;
+    }
+    const t = setTimeout(() => setPick(TRIP[at + 1].slug), 3200);
+    return () => clearTimeout(t);
+  }, [walk, at]);
+
+  /** たどりの入り／切り。開いていないときは1カ国目から、最後まで来ていたら頭から。 */
+  const play = () => {
+    if (walk) { setWalk(false); return; }
+    if (at < 0 || at >= TRIP.length - 1) setPick(TRIP[0].slug);
+    setWalk(true);
+  };
+
+  /** 人が押したときは、たどりを止めてその国を開く。 */
+  const onPick = (slug: string) => {
+    setWalk(false);
+    setPick((cur) => (cur === slug ? null : slug));
+  };
 
   const { k, z, tx, ty, peaks } = useMemo(() => {
     const kk = W / box[2];
@@ -212,9 +314,15 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
             key={c.id}
             type="button"
             role="tab"
-            aria-selected={i === chap}
-            className={`amap-tab${i === chap ? " is-on" : ""}`}
-            onClick={() => setChap(i)}
+            aria-selected={!pick && i === chap}
+            className={`amap-tab${!pick && i === chap ? " is-on" : ""}`}
+            onClick={() => {
+              // 章を選び直したら、開いていた国は閉じる。
+              // 開いたまま章だけ変わると、札と地図が別の国を指す
+              setPick(null);
+              setWalk(false);
+              setChap(i);
+            }}
           >
             {c.label}
           </button>
@@ -295,24 +403,6 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               {/* 経緯線。うっすら出すだけで「地図を見ている」感じが出る */}
               <path d={MAP.grid} fill="none" stroke="#ffffff" strokeWidth={1.4 / k} opacity="0.12" />
 
-              {/* 海の名前 */}
-              {(MAP.seas as { name: string; x: number; y: number; size: number; rot: number }[])
-                .filter((s) => inBox(s.x, s.y))
-                .map((s) => (
-                <text
-                  key={s.name}
-                  className="am-sea"
-                  x={s.x}
-                  y={s.y}
-                  fontSize={s.size / k}
-                  strokeWidth={4 / k}
-                  textAnchor="middle"
-                  transform={s.rot ? `rotate(${s.rot} ${s.x} ${s.y})` : undefined}
-                  >
-                    {s.name}
-                  </text>
-                ))}
-
               {/* ルート。下に濃い影を敷いてから本線を重ねる */}
               {(MAP.legs as { from: string; to: string; move: string; d: string }[]).map((l) => {
                 const s = MOVE[l.move] ?? MOVE.land;
@@ -337,6 +427,32 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
 
           {/* 国のピンと街。HTML で重ねているので、寄せても文字が小さくならない */}
           <div className={`amap-pins${wide ? " is-wide" : ""}`}>
+            {/* 海の名前。
+                前は SVG の文字だったので、**スマホでは 5.7px** しか無かった
+                （viewBox の中の 24 を、幅 330px の枠に収めるとそうなる）。
+                字の下限は 11.5px と決まっている（`docs/island-world.md` 5.4）。
+                街の名前と同じで、HTML に出せば寄せても大きさが変わらない。
+
+                大きさは海の広さを表しているので、そこは残す。枠の幅に比例させて、
+                下限 11.5px で止める（1cqw = 地図の枠の1%）。
+
+                世界を1枚に収めた面では、大きい海だけにする。7つ並べると
+                330px の地図が名前で埋まる（街の名前を隠しているのと同じ理由）。 */}
+            {(MAP.seas as { name: string; x: number; y: number; size: number; rot: number }[])
+              .filter((s) => inBox(s.x, s.y) && (!wide || s.size >= 26))
+              .map((s) => (
+                <span
+                  key={s.name}
+                  className="asea"
+                  style={{
+                    ...pos(s.x, s.y),
+                    fontSize: `max(var(--fs-min), ${((s.size / W) * 100).toFixed(2)}cqw)`,
+                    ["--asea-rot" as string]: `${s.rot}deg`,
+                  }}
+                >
+                  {s.name}
+                </span>
+              ))}
             {labels.city.filter((v) => !v.hide).map(({ c, dy, left }) => (
               <span
                 key={c.id}
@@ -347,13 +463,15 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               </span>
             ))}
             {Object.entries(anchors).map(([slug, a]) => (
-              <Link
+              <button
                 key={slug}
-                href={`/map/${slug}`}
-                prefetch={false}
+                type="button"
+                aria-pressed={slug === pick}
+                aria-label={`${name[slug]}を地図で開く`}
+                onClick={() => onPick(slug)}
                 className={`apin${slug === here ? " is-here" : ""}${
-                  labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""
-                }`}
+                  slug === pick ? " is-open" : ""
+                }${labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""}`}
                 style={pos(a.x, a.y)}
               >
                 <span className="apin-dot">
@@ -368,7 +486,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
                 >
                   {name[slug]}
                 </span>
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -382,6 +500,106 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
             {bar.km}km
           </div>
         </div>
+      </div>
+
+      {/* たどる。
+          地図を「読むもの」から「歩けるもの」にするための1本。
+          作り物の当たりは置かない（`docs/island-play.md` 4章）。
+          出てくるのは、実際に入った国・実際に通った街・実際にやった配信だけ。 */}
+      <div className="atrace">
+        <div className="atrace-bar">
+          <button type="button" className="atrace-go" onClick={play}>
+            <Icon name={walk ? "pause" : "play"} size={14} />
+            {walk ? "とめる" : at < 0 ? "パリから、たどる" : at >= TRIP.length - 1 ? "もう一度たどる" : "つづきをたどる"}
+          </button>
+          <div className="atrace-step">
+            <button
+              type="button"
+              onClick={() => { setWalk(false); goTo(at - 1); }}
+              disabled={at <= 0}
+              aria-label="ひとつ前の国"
+            >
+              <Icon name="left" size={15} />
+            </button>
+            <span>
+              <b>{at < 0 ? "–" : at + 1}</b> / {TRIP.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => { setWalk(false); goTo(at + 1); }}
+              disabled={at >= TRIP.length - 1}
+              aria-label="つぎの国"
+            >
+              <Icon name="right" size={15} />
+            </button>
+          </div>
+        </div>
+
+        {open ? (
+          /* 開いた国の札。紙の型なので影は落とさず、罫で割る。
+             押せるのは「その国のページへ」と配信の2つだけ。 */
+          <article className="acard">
+            <p className="acard-head">
+              <span className="acard-flag">
+                <Flag slug={open.slug} size={30} />
+              </span>
+              <b>{open.name}</b>
+              <em>{open.en}</em>
+              <i>{open.order}カ国目</i>
+            </p>
+            <p className="acard-when">
+              {open.stays
+                .map((st) => `${ymd(st.from)} – ${st.to ? ymd(st.to) : "いまも"}`)
+                .join("、")}
+            </p>
+            <p className="acard-sum">{open.summary}</p>
+            <p className="acard-towns">
+              {[...new Set(open.stays.flatMap((st) => st.cities))].map((t) => (
+                <span key={t}>{t}</span>
+              ))}
+            </p>
+            {/* この国の代表の1本。配信が残っていない国もあるので、あるときだけ出す */}
+            {(() => {
+              const h = open.highlights.find((x) => x.videoId);
+              if (!h) return null;
+              return (
+                <a
+                  className="scard acard-live"
+                  href={`https://www.youtube.com/watch?v=${h.videoId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="scard-thumb">
+                    <img
+                      src={`https://i.ytimg.com/vi/${h.videoId}/mqdefault.jpg`}
+                      alt=""
+                      loading="lazy"
+                      width={320}
+                      height={180}
+                    />
+                    <span className="scard-play" aria-hidden>
+                      <Icon name="play" size={17} />
+                    </span>
+                  </span>
+                  <span className="scard-body">
+                    <span className="scard-meta">
+                      {h.date && <time>{ymd(h.date)}</time>}
+                    </span>
+                    <b>{h.title}</b>
+                  </span>
+                </a>
+              );
+            })()}
+            <Link className="acard-go" href={`/map/${open.slug}`} prefetch={false}>
+              {open.name}のページへ
+              <Icon name="right" size={14} />
+            </Link>
+          </article>
+        ) : (
+          <p className="atrace-hint">
+            ピンを押すと、その国が開きます。18カ国ぶん、通った街とその国からの配信が出ます。
+          </p>
+        )}
       </div>
 
       <div className="amap-foot">

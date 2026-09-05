@@ -270,8 +270,9 @@
 .zk-hero.is-dex .zk-hero-art { height: auto; min-height: 168px; margin: var(--sp-6) 0 var(--sp-6); }
 @media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { min-height: 220px; } }
 .zk-hero.is-dex .zk-hero-art img {
-  /* 焼いてあるスプライトは長辺 320px まで。それ以上に伸ばしてもぼけるだけなので、
-     引き伸ばさずに natural size で置く。 */
+  /* 主役の絵だけ、長辺 640px でもう1枚焼いてある（`sprites/hero/`）。
+     高精細画面にはそちらが配られるので、320px で頭打ちだった頃より
+     枠を広げる余地がある。いまは natural size のまま置いている。 */
   max-height: 300px;
   max-width: 86%;
 }

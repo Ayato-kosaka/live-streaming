@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import PlanDraftEditor from "@/components/live/PlanDraftEditor";
+// 下見に出る企画の札は「これから」の面と同じ部品。見た目も同じ1枚から取る
+import "../next.css";
 
 export const metadata: Metadata = {
   title: "企画のページを作る",

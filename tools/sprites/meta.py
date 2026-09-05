@@ -27,6 +27,12 @@ VISIBLE = 6
 # 1ワールド = 約2.4px なので 300px 強。ページの見出しの丸は 96px の2倍で192px。
 # その両方を上回る 320 を既定にする。
 MAX_SIDE = 320
+# 図鑑の主役だけ、もう1枚この大きさで焼いてある(`hero/`)。
+# `/kitchen/[品]` の絵は画面で高さ 300px まで出るので、2倍の画面では
+# 600px 要る。320px の1枚を引き伸ばすと、そこだけぼける。
+# 一覧のマスは今までの1枚のままなので、増えるのは詳細を開いた人の1枚だけ
+HERO_DIR = "hero"
+HERO_SIDE = 640
 # 島の地面に置く小物は、いちばん大きいものでもワールド34(岩)。
 # デスクトップの2倍画面で 82px、タイルの印でも 88px にしかならない。
 # ここに 320px を配るのは、面積で15倍を捨てているのと同じ。
@@ -141,3 +147,30 @@ with open(OUT, "w") as fp:
     json.dump(meta, fp, indent=0, sort_keys=True)
     fp.write("\n")
 print(f"{len(meta)} 点 → {OUT}")
+
+# 主役の大きい絵。寸法表には入れない。
+#
+# 島に置くスプライトは sprites.json の ox/oy/ow/oh を見て足元を合わせるが、
+# こちらは詳細ページの <img> が srcset で選ぶだけなので、寸法は要らない。
+# 入れると「同じ物が2つある」ことになり、島に置ける名前が二重になる。
+hero_dir = os.path.join(SRC, HERO_DIR)
+if os.path.isdir(hero_dir):
+    n = 0
+    for f in sorted(os.listdir(hero_dir)):
+        if not f.endswith(".png"):
+            continue
+        src = os.path.join(hero_dir, f)
+        im = Image.open(src).convert("RGBA")
+        seen = im.getchannel("A").point(lambda v: 255 if v > VISIBLE else 0).getbbox()
+        if seen is None:
+            print("空:", f)
+            continue
+        im = im.crop(seen)
+        k = min(1.0, HERO_SIDE / max(im.size))
+        if k < 1:
+            im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
+        im.save(os.path.join(hero_dir, f[:-4] + ".webp"), quality=82, alpha_quality=72, method=6)
+        os.remove(src)
+        n += 1
+    if n:
+        print(f"主役の大きい絵 {n} 点 → {hero_dir}")

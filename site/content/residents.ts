@@ -6,7 +6,13 @@
  *  島にいる日が多い、という形にするため。いまは手で書いた値のままで、
  *  更新する仕組みが無い。自動で焼き直すには、キャラクター画像と
  *  YouTube のチャンネルを結ぶ表が要るが、それはまだどこにも無い。 */
-export type Resident = { icon?: string; emoji?: string; days: number };
+/**
+ * `channel` は YouTube のチャンネル id。**あやとが表で持っている割り当て**を
+ * `python/build_residents.py` が焼く。ここが埋まって初めて、
+ * 「名前を出してよい」と言った人の名前が、その絵の札に出る。
+ * 本人に絵を選ばせない（他人の絵を自分のものにできてしまうため）。
+ */
+export type Resident = { icon?: string; emoji?: string; days: number; channel?: string };
 
 export const RESIDENTS: Resident[] = [
   { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "\ud83d\udc99", days: 80 },

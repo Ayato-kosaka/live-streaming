@@ -1,38 +1,47 @@
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
-import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
+import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
 import { StreamCard } from "@/components/ui/Bits";
 import { IslandFooter } from "@/components/ui/PageShell";
 import { STREAM_TYPES } from "@/content/streamTypes";
-import { COUNTRIES } from "@/content/countries";
-import { RECIPES } from "@/content/recipes";
-import { LEGENDS } from "@/content/legends";
-import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { HERO, HOME } from "@/content/voice";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
-import Flag from "@/components/ui/Flag";
 import Chapter from "@/components/home/Chapter";
-import { BigCard, Strip } from "@/components/home/Cards";
+import Meishi from "@/components/home/Meishi";
+import Shelf from "@/components/home/Shelf";
 
 /**
  * トップページ。
  *
- * 以前は同じ形の白いパネルが7枚、同じ間隔で縦に積んであった。
- * どれも同じ重さに見えるので、来た人は何から見ればいいのか決められない。
+ * 島のステージと、その下に続く4章。
  *
- * あやとが整理した並びに合わせて、3つの章に区切り直した。
- *   これから … いま来た人が真っ先に知りたいこと。いちばん大きく、いちばん先
- *   いま     … この人は誰で、何をしているのか
- *   これまで … どこへ行って、何を作ってきたのか
- * 章の中でも大きさに序列を付ける。全部を同じ大きさで出すのをやめた。
+ * ## 4章に、それぞれ違う顔をさせる
+ *
+ * 前は4章とも「絵・題・矢印」の横並びカードを積んだだけで、
+ * 章ごとに違うのは吊り看板の文字だけだった。撮って並べると、章の境目が
+ * 絵として見えない。中身をそれぞれ別の形にした。
+ *
+ *   これから … しらせと時計。いちばん近い企画と、いちばん大きい企画（NextUp）
+ *   いま     … 名刺。顔と3行と数字と押しどころが1枚に（Meishi）
+ *   これまで … 棚の格子。数を持った6マス（Shelf）
+ *   見にいく … 画面。今夜の1本と、外へ出る口
+ *
+ * ## 消したもの
+ *
+ * 配信の型5つの帯（→ `/streams`）・国旗18（→ `/map`）・料理12品の帯（→ `/kitchen`）・
+ * 行き先カード5枚。どれも**行き先のページの1画面目のコピー**で
+ * （`docs/island-ux.md` 3.4）、そちらにもっと良い形で置いてある。
+ * これで 5,357px（6.35画面）が半分以下になる。行ける先は1つも減っていない。
+ *
+ * ## 地
+ *
+ * 章は海の上ではなく、島の浜（砂の帯）の上に載る。理由は `Chapter.tsx` に書いた。
  */
 export default function Home() {
   const s = STATS_FALLBACK;
-  const latestRecipes = [...RECIPES].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12);
-  // 新しく行った国から先に見せる。古い順に出すと、いま追いかけている旅が最後になる
-  const recentCountries = [...COUNTRIES].sort((a, b) => b.order - a.order);
 
   return (
     <main>
@@ -78,147 +87,37 @@ export default function Home() {
           id="next"
           kicker="これから"
           title={HOME.next}
-          note="いちばん近い企画から。日にちが決まっているものは、島の入口にも出ている。"
+          note="日にちが決まっているものは、島の入口にも出ています。"
         >
           <NextUp />
-          <div className="hjoin">
-            <span className="hjoin-art">
-              <img src="/sprites/signboard.webp" alt="" loading="lazy" />
-            </span>
-            <div className="hjoin-body">
+          {/* 掲示板への誘いは、絵と3行と大きいボタンの箱を積んでいた（290px）。
+              ここで言いたいのは「行き先は自分でも出せる」の一言だけなので、
+              押せる板1枚に畳んだ。読ませる文は掲示板の面が持っている。 */}
+          <Link className="hjoin" href="/board">
+            <img className="hjoin-art" src="/sprites/signboard.webp" alt="" loading="lazy" />
+            <span className="hjoin-body">
               <b>{HOME.board}</b>
-              <p>
-                行き先も、作る料理も、アプリの機能も、だいたい配信で相談しながら決めています。
-                いまの島の住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
-                これまでにのべ<LiveNumber statKey="people" fallback={s.people} />人が来てくれました。
-              </p>
-              <Link className="hjoin-go" href="/board">
-                <Icon name="talk" size={16} />
-                企画を貼りにいく
-                <Icon name="right" size={14} />
-              </Link>
-            </div>
-          </div>
+              <i>
+                行き先も、作る料理も、配信で相談しながら決めています。のべ
+                <LiveNumber statKey="people" fallback={s.people} />
+                人が来てくれました
+              </i>
+            </span>
+            <Icon name="right" size={16} className="hjoin-go" />
+          </Link>
         </Chapter>
 
         <Chapter id="now" kicker="いま" title={HOME.about} note={HOME.aboutNote}>
-          <p className="hlead">{PROFILE.lead}</p>
-
-          <div className="hbigs">
-            <BigCard
-              href="/about"
-              icon="campfire"
-              title="あやとって、どんな人"
-              note={PROFILE.body[0]}
-              stat={s.countries}
-              statLabel="カ国を歩いた"
-              accent="var(--roof-gold)"
-            />
-            <BigCard
-              href="/streams"
-              icon="tower-studio"
-              title={HOME.doing}
-              note={HOME.doingNote}
-              stat={<LiveNumber statKey="streams" fallback={s.streams} />}
-              statLabel="本の配信"
-              accent="var(--roof-coral)"
-            />
-            <BigCard
-              href="/apps"
-              icon="hut-workshop"
-              title={HOME.apps}
-              note={HOME.appsNote}
-              stat={2}
-              statLabel="つのアプリ"
-              accent="var(--roof-sky)"
-            />
-          </div>
-
-          <Strip title="配信は5つの型でできてる" more="/streams" moreLabel="配信やぐらへ">
-            {STREAM_TYPES.map((t) => (
-              <Link
-                key={t.slug}
-                className="hcard"
-                href={`/streams/${t.slug}`}
-                prefetch={false}
-                style={{ ["--hb" as string]: t.color }}
-              >
-                <img src={`/sprites/${t.icon}.webp`} alt="" loading="lazy" />
-                <b>{t.name}</b>
-                <i>{t.when}</i>
-              </Link>
-            ))}
-          </Strip>
-
-          <div className="hduo">
-            <Link className="hmini" href="/now">
-              <span className="hmini-art">
-                <img src="/sprites/lantern.webp" alt="" loading="lazy" />
-              </span>
-              <span className="hmini-text">
-                <b>いま {NOW_FALLBACK.place}</b>
-                <i>{NOW_FALLBACK.word}</i>
-              </span>
-              <Icon name="right" size={14} className="hmini-go" />
-            </Link>
-            <Link className="hmini" href="/friends">
-              <span className="hmini-art">
-                <img src="/sprites/tent.webp" alt="" loading="lazy" />
-              </span>
-              <span className="hmini-text">
-                <b>愉快な仲間達</b>
-                <i>島の住人 {ACTIVE_FRIENDS} 人</i>
-              </span>
-              <Icon name="right" size={14} className="hmini-go" />
-            </Link>
-          </div>
+          <Meishi />
         </Chapter>
 
         <Chapter
           id="past"
           kicker="これまで"
           title={HOME.past}
-          note={`2024年の秋に日本を出て、いまで ${s.countries} カ国目。作った料理は ${RECIPES.length} 品。`}
+          note="押すと、その中身をぜんぶ並べた面へ行けます。"
         >
-          <BigCard
-            href="/map"
-            icon="signpost"
-            title={`歩いた ${s.countries} カ国の地図`}
-            note="パリからジョージアまで、どこをどう通ってきたか。国を押すと、そこで何をしていたかが出てくる。"
-            stat={s.countries}
-            statLabel="カ国"
-            accent="var(--roof-mint)"
-          />
-          <div className="hflags">
-            {recentCountries.map((c) => (
-              <Link key={c.slug} className="hflag" href={`/map/${c.slug}`} prefetch={false}>
-                <Flag slug={c.slug} size={26} />
-                <span>{c.name}</span>
-              </Link>
-            ))}
-          </div>
-
-          <Strip title={HOME.recent} more="/kitchen" moreLabel="スタンプ帳へ">
-            {latestRecipes.map((r) => (
-              <Link key={r.slug} className="hdish" href={`/kitchen/${r.slug}`} prefetch={false}>
-                <span className="hdish-art">
-                  <img src={`/sprites/${r.icon}.webp`} alt="" loading="lazy" />
-                </span>
-                <b>{r.name}</b>
-                <i>{r.date.replace(/-/g, "/")}</i>
-              </Link>
-            ))}
-          </Strip>
-
-          <BigCard
-            href="/legends"
-            icon="hall-museum"
-            title="語り継がれてる企画"
-            note={LEGENDS[0]?.lead ?? "イランまで12日間歩いた話ほか"}
-            stat={LEGENDS.length}
-            statLabel="の伝説"
-            accent="var(--roof-gold)"
-          />
+          <Shelf />
         </Chapter>
 
         <Chapter id="watch" kicker="見にいく" title={HOME.tonight} note={HOME.tonightNote}>

@@ -31,12 +31,14 @@ export type IconName =
   | "mountain" | "sea" | "forest" | "bridge" | "castle" | "church" | "museum"
   | "station" | "hotel" | "market" | "hotspring" | "bench" | "windmill" | "lighthouse"
   | "harbor" | "oldtown" | "mosque" | "pyramid" | "desert" | "glacier" | "fjord" | "cafe"
+  | "statue"
   // 旅
   | "backpack" | "sleepingbag" | "compass" | "map" | "passport" | "ticket"
   | "thumb" | "road" | "signpost" | "camper" | "train" | "bus" | "ferry"
   | "plane" | "bike" | "walk" | "suitcase" | "pin" | "tram" | "taxi" | "boat" | "fuel"
   | "umbrella" | "sunglasses" | "bottle" | "shoes" | "key" | "wallet" | "stamp"
   | "cablecar" | "balloon" | "sled" | "border" | "bunk"
+  | "distance" | "laundry" | "plug" | "card" | "firstaid" | "hitchsign"
   // 料理
   | "pot" | "pan" | "knife" | "cuttingboard" | "chopsticks" | "cup" | "stove"
   | "plate" | "bowl" | "basket" | "veg" | "meat" | "fish" | "bread" | "egg"
@@ -50,19 +52,29 @@ export type IconName =
   | "calendar" | "live" | "book" | "wifi" | "screen" | "photo" | "link" | "chart"
   | "people"
   | "laptop" | "tripod" | "ringlight" | "sdcard" | "battery" | "upload"
-  | "film" | "scissors" | "poll" | "member"
+  | "film" | "scissors" | "poll" | "member" | "log"
   // 気持ち
   | "heart" | "star" | "clap" | "idea" | "question" | "alert" | "crown"
   | "medal" | "trophy" | "talk" | "bell" | "gift" | "coin" | "smile" | "sad"
   | "sparkle" | "music" | "hourglass" | "ribbon"
   | "laugh" | "surprise" | "think" | "sleep" | "hello" | "note" | "tag" | "bookmark"
+  | "meet" | "phrase" | "pinup"
   // 天気と火
   | "sun" | "moon" | "cloud" | "rain" | "snow" | "flame" | "light" | "tree"
   | "wind" | "rainbow" | "aurora" | "thermometer" | "night"
   | "leaf" | "flower" | "wave" | "sunrise" | "fog" | "thunder" | "bird" | "reindeer"
+  | "pine" | "lake" | "midnightsun"
   // そのほか
   | "shirt" | "sauna" | "brick" | "see" | "do" | "buy" | "flag";
 
+/**
+ * 名前から絵を引く表。
+ *
+ * `nav` だけキーの型が具体で、残りの群は `Record<string, Draw>` なので、
+ * 素直にまとめると「nav の 20 個しか無い」という型になる。
+ * ここは名前で引くための表で、名前は `IconName` が持っているほうが正しいので、
+ * いったん `Partial` で受けてから `IconName` の表として渡す。
+ */
 export const GLYPHS = {
   ...nav,
   ...brand,
@@ -74,7 +86,7 @@ export const GLYPHS = {
   ...feel,
   ...nature,
   ...misc,
-} as Record<IconName, Draw>;
+} as Partial<Record<IconName, Draw>> as Record<IconName, Draw>;
 
 /**
  * 単色で描く印。

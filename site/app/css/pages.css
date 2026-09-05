@@ -1176,7 +1176,10 @@ a.chip:active, button.chip:active, .chip.link:active {
   border-radius: var(--r-1);
   padding: var(--sp-2) var(--sp-3);
 }
-.signin-warn b { color: var(--frame-deep); }
+/* --frame-deep は紙の上で 4.22 : 1（描いた画素で実測）。読ませる字なので墨にする。
+   ここが強いことは、太さと点線の枠がもう言っている
+   （`docs/island-review-3.md` 17章 10）。 */
+.signin-warn b { color: var(--ink); }
 .signin-go {
   /* 水色の上の白い字は 2.4:1。色相はそのままに、墨を混ぜて 5:1 まで沈める。 */
   background: color-mix(in srgb, var(--accent-2) 60%, var(--ink));

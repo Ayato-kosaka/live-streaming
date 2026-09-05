@@ -96,17 +96,23 @@ async function whoIs(header?: string): Promise<Who> {
  *
  * 名前も YouTube のアイコンも、出すか出さないかは本人が決める。
  * 何もしていない人は、キャラクターだけが島にいて名前は出ない。
- * @return {Promise<Json[]>} キャラクターと、出してよい名前・アイコン
+ *
+ * **キャラクターが誰のものかは、ここでは決めない。** 割り当てはあやとが
+ * 表で持っていて、`site/content/residents.ts` に焼いてある。ログインで
+ * 分かるのは「この YouTube チャンネルの人が、名前を出してよいと言った」
+ * までで、それがどの絵の人かは向こう側で突き合わせる。
+ * 本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
+ * @return {Promise<Json[]>} チャンネルと、出してよい名前・アイコン
  */
 async function listResidents(): Promise<Json[]> {
-  const snap = await USERS.where("character", "!=", null).limit(200).get();
+  const snap = await USERS.where("channelId", "!=", null).limit(500).get();
   const out: Json[] = [];
   snap.forEach((d) => {
     const u = d.data() ?? {};
-    if (!u.character) return;
+    if (!u.channelId) return;
     if (!u.showName && !u.showPhoto) return;
     out.push({
-      icon: u.character,
+      channelId: u.channelId,
       name: u.showName ?
         (u.nickname as string) || (u.name as string) || null :
         null,
@@ -421,9 +427,6 @@ export const islandApi = onRequest(
         if (body.nickname !== undefined) {
           patch.nickname = clean(body.nickname, MAX_NAME_LEN) || null;
         }
-        if (body.character !== undefined) {
-          patch.character = clean(body.character, 64) || null;
-        }
         if (body.showName !== undefined) patch.showName = !!body.showName;
         if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
         await ref.set(patch, {merge: true});
@@ -433,7 +436,6 @@ export const islandApi = onRequest(
           name,
           channelId: channelId || undefined,
           nickname: (saved.nickname as string) ?? null,
-          character: (saved.character as string) ?? null,
           showName: !!saved.showName,
           showPhoto: !!saved.showPhoto,
         });
@@ -562,6 +564,15 @@ export const islandApi = onRequest(
         let total = (doneru ?? 0) + superchat + start;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
+        /* 1円も分からないときは、200 で 0 を返さない。
+           0円は「誰も出していない」に見えるし、CDN に5分ぶん焼き付く。
+           鍵がまだ無いあいだ(GitHub #110)は毎回ここに来る。画面は 200 以外を
+           「読めなかった」として黙って足代の数字を消すので、これでいい。 */
+        if (total <= 0) {
+          res.set("Cache-Control", "no-store");
+          res.status(503).json({error: "no fund data"});
+          return;
+        }
         res.set(
           "Cache-Control",
           "public, max-age=300, s-maxage=600, stale-while-revalidate=1800",

@@ -10,7 +10,14 @@ export type Legend = {
   slug: string;
   title: string;
   emoji: string;
-  /** 一覧に出す絵。site/public/sprites のスプライト名 */
+  /**
+   * 一覧に出す絵。`site/public/sprites` のスプライト名。
+   *
+   * **企画1つに絵1つ。看板や石碑を使い回さない。** 丘に並ぶのは
+   * 「380km歩いた」「エジプトの遺跡を5日」のように性格の違う企画で、
+   * 汎用の絵を配ると、どれがどれだか分からない棚になる。
+   * 焼くところは `tools/sprites/manifest.mjs` の「伝説の丘の記念碑」。
+   */
   icon: string;
   date: string;
   span?: string;
@@ -26,7 +33,7 @@ export type Legend = {
 export const LEGENDS: Legend[] = [
   {
     slug: "iran-walk",
-    icon: "signpost",
+    icon: "legend-iran-walk",
     title: "イランまで歩く",
     emoji: "🚶",
     date: "2026-04-29",
@@ -53,7 +60,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "egypt-festival",
-    icon: "statue-head",
+    icon: "legend-egypt-festival",
     title: "GWエジプト祭り",
     emoji: "🏛️",
     date: "2025-05-03",
@@ -77,7 +84,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "newyear-24h",
-    icon: "lantern",
+    icon: "legend-newyear-24h",
     title: "年越し24時間配信",
     emoji: "🎍",
     date: "2024-12-31",
@@ -97,7 +104,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "million-views",
-    icon: "statue",
+    icon: "legend-million-views",
     title: "ショート動画100万再生",
     emoji: "📈",
     date: "2026-03-23",
@@ -118,7 +125,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "roulette-georgia",
-    icon: "canoe",
+    icon: "legend-roulette-georgia",
     title: "ルーレットで行くジョージアぶらり旅",
     emoji: "🎡",
     date: "2026-07-19",
@@ -129,7 +136,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "kazbegi",
-    icon: "rock-tall",
+    icon: "legend-kazbegi",
     title: "カズベキ遠征",
     emoji: "⛰️",
     date: "2026-08-02",
@@ -153,7 +160,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "iwashi-festival",
-    icon: "food-fish",
+    icon: "legend-iwashi-festival",
     title: "ジョージアイワシ祭り",
     emoji: "🐟",
     date: "2026-07-22",
@@ -173,7 +180,7 @@ export const LEGENDS: Legend[] = [
   },
   {
     slug: "thousand-subs",
-    icon: "campfire",
+    icon: "legend-thousand-subs",
     title: "チャンネル登録1,000人",
     emoji: "🎊",
     date: "2025-12-16",

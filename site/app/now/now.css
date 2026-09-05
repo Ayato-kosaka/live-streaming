@@ -1,0 +1,152 @@
+/*
+ * いまのポスト（/now）だけの見た目。
+ *
+ * `app/css/live.css` に入れなかったのは、あの1枚を「これから」「掲示板」
+ * 「住人の壁」と分け合っていて、いま並行で直しているところだから。
+ * この面だけのものは、この面の隣に置く。
+ *
+ * ここは島だより（紙）の中。紙の上に板を出してよいのは押すものだけ
+ * （`docs/island-world.md` 2.1）。厚みを持つのは行き先の札だけで、
+ * 街の名前も日数も平ら。
+ */
+
+/* ───────── いまいる国 ───────── */
+
+.nowc-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2) !important;
+}
+.nowc-head b {
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  line-height: 1.3;
+}
+/* 何日目か。数えたものの札はオリーブの平ら1種類
+   （`docs/island-world.md` 3.2）。押せないので厚みは付けない。 */
+.nowc-day {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--chip-ink);
+  background: var(--chip);
+  border-radius: var(--r-0);
+  padding: 3px var(--sp-2);
+  line-height: 1.5;
+}
+
+.nowc-cities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}
+.nowc-cities > span {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--pap-ink-2);
+}
+.nowc-cities em {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-0);
+  border: 1px solid var(--pap-line);
+  color: var(--pap-ink);
+}
+
+/* この国でいちばん喋られた回。押すと配信そのものへ出ていく。 */
+.nowc-spots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.nowc-spots a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  /* 外へ出る口は水色（`docs/island-world.md` 3.2）。島の中の行き先は金 */
+  border: var(--bw-1) solid color-mix(in srgb, var(--accent-2) 62%, #ffffff);
+  background: linear-gradient(180deg, #f6fcff 0%, #e9f6fd 100%);
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-2) 70%, #23516c);
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.nowc-spots a:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--accent-2) 70%, #23516c);
+}
+.nowc-spots b {
+  grid-column: 1;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: 1.45;
+}
+.nowc-spots i {
+  grid-column: 1;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.nowc-spots .ic {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  color: var(--ink-2);
+}
+
+/* ───────── その前は、どこにいたか ───────── */
+
+.nowt {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.nowt a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.nowt a:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+}
+.nowt b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+}
+.nowt i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nowc-spots a,
+  .nowt a {
+    transition: none;
+  }
+}

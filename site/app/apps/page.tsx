@@ -98,7 +98,7 @@ export default function AppsPage() {
                     端末の右がぽっかり空いていたから。狭い画面では同じ並びになる。 */}
                 <Link className="tile" href={`/apps/${a.slug}`}>
                   <span className="tile-mark">
-                    <Icon name="book" size={24} />
+                    <Icon name="log" size={24} />
                   </span>
                   <span className="tile-text">
                     <b>作ってきた記録</b>

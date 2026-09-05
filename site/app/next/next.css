@@ -1,0 +1,86 @@
+/*
+ * これから（/next）だけの見た目。
+ *
+ * `app/css/live.css` に入れなかったのは、あの1枚を「いまのポスト」「掲示板」
+ * 「住人の壁」と分け合っていて、いま並行で直しているところだから。
+ * この面だけのものは、この面の隣に置く。
+ */
+
+/* ───────── いちばん大きい企画 ─────────
+ *
+ * この面でいちばん気にされているのは「出発まであと何日か」なのに、
+ * その北欧ヒッチハイクは、飛び石の段に畳まれた1行だった。
+ * すぐ上では1日だけのお祭りが大きい時計を持っていて、
+ * **旅の出発のほうが小さい**という並びになっていた。
+ *
+ * 段を開いておくと 700px 増える。増やすのは時計と札だけにして、
+ * 中身は畳んだままにする。「あと何日か」さえ出ていれば、
+ * 出発が近いことは石の1行より確かに伝わる。
+ */
+.nx-big {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-bottom: var(--sp-2);
+}
+/* 「いちばん大きい」は数えたものでも押せるものでもない、ただの目印。
+   オリーブの平ら1枚にする（`docs/island-world.md` 3.2・3.4）。 */
+.nx-big-tag {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--chip-ink);
+  background: var(--chip);
+  border-radius: var(--r-0);
+  padding: 3px var(--sp-2);
+  line-height: 1.5;
+}
+/* 主役の札の時計より一段小さく。ここは2番手なので、
+   上の「あと1日」と同じ大きさで置くと、どちらが近いのか分からなくなる。 */
+.nx-big .nx-clock em:first-child {
+  min-width: 62px;
+}
+.nx-big .nx-clock em:first-child b {
+  font-size: 32px;
+}
+.nx-big .nx-clock em b {
+  font-size: 22px;
+}
+
+/* ───────── 借りた写真の出どころ ───────── */
+
+/*
+ * 出どころは説明の行の続きに流していた。34px しか高さが無くて、
+ * `docs/island-world.md` 4章の 48px を割っていた（実測 307×34・278×34）。
+ * 行を分けて、押せる高さを持たせる。
+ * 外へ出る口なので水色（同 3.2）。紙の上の押せるものなので厚みを持つ。
+ */
+.pcredit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin-top: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-1);
+  border: var(--bw-1) solid color-mix(in srgb, var(--accent-2) 60%, #ffffff);
+  background: linear-gradient(180deg, #f6fcff 0%, #e9f6fd 100%);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent-2) 70%, #23516c);
+  color: var(--ink);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.5;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.pcredit:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--accent-2) 70%, #23516c);
+}
+/* 行き先の無い出どころは押せない。平らな札にする（同 3.4） */
+.pcredit.is-flat {
+  min-height: 0;
+  border-color: var(--rule);
+  background: var(--chip);
+  color: var(--chip-ink);
+  box-shadow: none;
+}

@@ -22,7 +22,7 @@ const L = (d: string, w = 9.5) => (
   />
 );
 
-export const nav: Record<string, Draw> = {
+export const nav = {
   right: () => L("M26 15 45 32 26 49"),
   left: () => L("M38 15 19 32 38 49"),
   up: () => L("M15 38 32 19 49 38"),
@@ -161,4 +161,4 @@ export const nav: Record<string, Draw> = {
       <path d="M28.5 2 44 12 28.5 22z" fill="currentColor" />
     </>
   ),
-};
+} satisfies Record<string, Draw>;

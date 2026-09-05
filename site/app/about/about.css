@@ -1,0 +1,166 @@
+/*
+ * たき火広場（/about）だけの見た目。
+ *
+ * `app/css/atlas.css` に入れなかったのは、あの1枚を `/map` `/nordic` と分け合っていて、
+ * いま並行で直しているところだから。この面だけのものは、この面の隣に置く。
+ * 面が無くなったらこの1枚ごと消える、という形にしておく。
+ *
+ * この面は紙（`docs/island-world.md` 2章）。紙の上に板を出してよいのは
+ * 「押すもの」だけ（同 2.1）。ここで厚みを持つのは道の石と3枚の札だけで、
+ * 読むところは全部平ら。
+ */
+
+/* ───────── ここまでの道のり（横に流れる年表） ───────── */
+
+/*
+ * 前は畳んだ中に、縦に9段の年表があった。
+ * 畳んであるあいだ、この面は「顔と3行と数字4つ」だけの 2.02画面で、
+ * はじめて来た人には**この人が何をしてきた人なのかが1つも出ていなかった**。
+ *
+ * 開いて縦に並べると 9段で 800px を超える。だから横に倒した。
+ * 指で送る道になって、高さは 380px で済む。石は押せる。
+ * 押すとその国・そのアプリ・その伝説の面へ入る。
+ */
+.aroad {
+  position: relative;
+  margin: var(--sp-3) calc(-1 * var(--sp-4)) 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.aroad::-webkit-scrollbar {
+  display: none;
+}
+.aroad-rail {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: stretch;
+  width: max-content;
+}
+
+/* 年の札。年が変わるところにだけ立つ。旅の長さが目で分かる */
+.aroad-year {
+  flex: none;
+  align-self: center;
+  writing-mode: vertical-rl;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--ink-2);
+  padding: var(--sp-2) 2px;
+  border-left: 2px solid var(--rule);
+  border-right: 2px solid var(--rule);
+}
+
+.aroad-stone {
+  scroll-snap-align: start;
+  flex: none;
+  width: 218px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 12px 13px 14px;
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  /* 押せるものだけ厚みを持つ（`docs/island-world.md` 3.4） */
+  box-shadow: 0 5px 0 var(--frame-dark);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.aroad-stone:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--frame-dark);
+}
+/* 行き先の無い節目は読むだけ。平らにして、押せないことを厚みの無さで言う */
+.aroad-stone.is-flat {
+  border-color: var(--rule);
+  box-shadow: none;
+  background: var(--paper-2);
+}
+
+.aroad-when {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+/* 節目の種類は色ではなく印で分ける（`docs/island-world.md` 3.1）。
+   紙の上の印なので厚みは付けず、罫と同じ細い輪で囲むだけ。 */
+.aroad-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  color: var(--ink-2);
+}
+.aroad-what {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: 1.5;
+}
+.aroad-note {
+  margin: 0;
+  font-size: var(--fs-min);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.aroad-go {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+
+/* ───────── 島でやっていること（3枚） ───────── */
+
+/* 前は畳んだ中にあった。ここは「何が面白いのか」への答えなので、開いて置く。
+   3枚とも押せる。歩く→道しるべ、作って食べる→キッチン小屋、作る→アプリ工房。 */
+a.acard {
+  text-decoration: none;
+  color: var(--ink);
+  border: var(--bw-1) solid var(--frame);
+  box-shadow: 0 5px 0 var(--frame-dark);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+a.acard:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--frame-dark);
+}
+.acard-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+
+@media (min-width: 720px) {
+  .acards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aroad-stone,
+  a.acard {
+    transition: none;
+  }
+}

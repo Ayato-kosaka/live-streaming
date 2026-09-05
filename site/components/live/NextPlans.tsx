@@ -5,7 +5,7 @@ import { getState, postNote, type NextNote } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { PLANS, daysUntil, type Plan } from "@/content/plans";
 import Fold from "@/components/ui/Fold";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import PlanCard, { PlanRow } from "./PlanCard";
 import { Pin } from "./art";
 

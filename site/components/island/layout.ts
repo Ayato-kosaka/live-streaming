@@ -168,8 +168,10 @@ export const PLACES: Place[] = [
     x: 262,
     y: 846,
     label: "旅の桟橋",
-    icon: "signpost",
-    size: 54,
+    // 名前は桟橋なのに、立っていたのは何も書いていない道しるべだった。
+    // 名前は変えない判断をしたので（issue #114）、絵のほうを桟橋にした
+    icon: "pier",
+    size: 62,
     href: "/map",
     blurb: "これまでに歩いた国",
     sign: true,

@@ -41,8 +41,14 @@ export type Idea = {
 
 export type NextNote = { id: string; planId: string; text: string; createdAt: string };
 
-/** 島に名前を出すと決めた住人。何もしていない人はここに出てこない。 */
-export type ResidentShow = { icon: string; name?: string | null; photo?: string | null };
+/**
+ * 島に名前を出すと決めた住人。何もしていない人はここに出てこない。
+ *
+ * **キャラクターの絵ではなく YouTube のチャンネルで返る。** どの絵が誰のものかは
+ * あやとが表で持っていて `content/residents.ts` に焼いてあるので、突き合わせは
+ * こちら側でやる。本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
+ */
+export type ResidentShow = { channelId: string; name?: string | null; photo?: string | null };
 
 export type IslandState = {
   current?: Partial<IslandCurrent>;
@@ -85,8 +91,9 @@ export const getState = () => req<IslandState>("/state");
 
 /** 島での見え方。名前もアイコンも、出すか出さないかは本人が決める。 */
 export type MeSettings = {
-  /** 島にいる自分のキャラクター(Drive の画像ID)。選ばなければ名前は出ない。 */
-  character?: string | null;
+  /* キャラクターは本人に選ばせない。割り当てはあやとの表が決める
+     （`content/residents.ts` の channel）。他人の絵を自分のものに
+     できてしまうため。ログインで本人が決めるのは、この下の3つだけ。 */
   /** 本名以外で呼ばれたいときの名前 */
   nickname?: string | null;
   showName?: boolean;

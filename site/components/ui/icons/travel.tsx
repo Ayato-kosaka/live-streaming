@@ -1,5 +1,7 @@
 import type { Draw } from "./bits";
 import { Sh, Gl } from "./bits";
+// ブラウザまで運ぶ印はここには置かない（`core.tsx` の頭を読む）。並びだけこの表で決める
+import { map, pin, signpost, walk } from "./core";
 
 /**
  * 旅の道具と乗り物。
@@ -77,19 +79,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  map: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={22} ry={3.6} />
-      <path d="M6 15 23 8v41L6 56z" fill={c.cr} />
-      <path d="M25 8l14 7v41l-14-7z" fill={c.crd} />
-      <path d="M41 15 58 8v41l-17 7z" fill={c.cr} />
-      <path d="M9 42c6-6 6-14 12-16s10 6 16 3 8-14 14-16" fill="none" stroke={c.rd} strokeWidth="3" strokeLinecap="round" strokeDasharray="1 6" />
-      <path d="M12 20c5 2 8 0 11 2" fill="none" stroke={c.sk} strokeWidth="3.4" strokeLinecap="round" />
-      <ellipse cx="47" cy="26" rx="7" ry="4.4" fill={c.grl} opacity="0.9" />
-      <path d="M50 34a5.6 5.6 0 0 1 5.6 5.6c0 4-5.6 10.4-5.6 10.4s-5.6-6.4-5.6-10.4A5.6 5.6 0 0 1 50 34z" fill={c.rdd} />
-      <circle cx="50" cy="39.6" r="2.2" fill={c.w} />
-    </>
-  ),
+  map,
 
   passport: (c) => (
     <>
@@ -196,17 +186,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  signpost: (c) => (
-    <>
-      <Sh c={c} cy={56} rx={13} ry={3.4} />
-      <rect x="29" y="12" width="6.5" height="44" rx="3" fill={c.wod} />
-      <path d="M13 14h21a2.4 2.4 0 0 1 2.4 2.4v7.2A2.4 2.4 0 0 1 34 26H13l-6-6z" fill={c.gr} />
-      <path d="M30 30h21l6 6-6 6H30a2.4 2.4 0 0 1-2.4-2.4v-7.2A2.4 2.4 0 0 1 30 30z" fill={c.or} />
-      <rect x="14" y="19" width="14" height="2.6" rx="1.3" fill={c.w} opacity="0.85" />
-      <rect x="34" y="35" width="14" height="2.6" rx="1.3" fill={c.w} opacity="0.85" />
-      <Gl c={c} cx={30.5} cy={18} rx={1.4} ry={4} r={0} o={0.35} />
-    </>
-  ),
+  signpost,
 
   /**
    * キャンピングカー。全体をクリームで塗ると明るい下地に溶けるので、
@@ -335,21 +315,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  walk: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={15} ry={3.4} />
-      <circle cx="37" cy="11" r="7" fill={c.sn} />
-      <path d="M37 4a7 7 0 0 1 0 14z" fill={c.snd} />
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M35 20 28 34" stroke={c.bl} strokeWidth="9" />
-        <path d="M28 34 39 41l2 13" stroke={c.bld} strokeWidth="8" />
-        <path d="M28 34 17 50" stroke={c.bl} strokeWidth="8" />
-        <path d="M33 24 45 30" stroke={c.sn} strokeWidth="6.4" />
-      </g>
-      <rect x="37" y="50" width="10" height="6" rx="3" fill={c.brd} />
-      <rect x="10" y="47" width="11" height="6" rx="3" fill={c.brd} transform="rotate(-24 15.5 50)" />
-    </>
-  ),
+  walk,
 
   suitcase: (c) => (
     <>
@@ -364,15 +330,7 @@ export const travel: Record<string, Draw> = {
     </>
   ),
 
-  pin: (c) => (
-    <>
-      <Sh c={c} cy={57} rx={9} ry={2.8} />
-      <path d="M32 3a18 18 0 0 1 18 18c0 12.6-18 33-18 33S14 33.6 14 21A18 18 0 0 1 32 3z" fill={c.rd} />
-      <path d="M32 3a18 18 0 0 1 18 18c0 12.6-18 33-18 33z" fill={c.rdd} />
-      <circle cx="32" cy="21" r="7" fill={c.w} />
-      <Gl c={c} cx={23} cy={13} rx={2.6} ry={5} r={34} o={0.5} />
-    </>
-  ),
+  pin,
 
   /** 路面電車。ヨーロッパの街なか。 */
   tram: (c) => (
@@ -676,6 +634,138 @@ export const travel: Record<string, Draw> = {
         <rect x="30" y="40" width="19" height="4" rx="2" />
       </g>
       <Gl c={c} cx={8} cy={13} rx={1.6} ry={5} r={0} o={0.4} />
+    </>
+  ),
+
+  /**
+   * 距離。ヒッチハイクは「あと何km」で語られるので、道端の距離標にする。
+   * 数字は 16px で読めないから彫らない。**帯2本の長さの差**だけで
+   * 「何か書いてある柱」に見せる。柱だけだと宙に立つので、草の土手を足す。
+   */
+  distance: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={4} />
+      <path d="M4 53c8-6 14-7 28-7s20 1 28 7z" fill={c.gr} />
+      <rect x="20" y="14" width="24" height="40" rx="6" fill={c.w} />
+      <path d="M32 14h6a6 6 0 0 1 6 6v34h-12z" fill={c.wd} />
+      <rect x="20" y="7" width="24" height="13" rx="6" fill={c.rd} />
+      <path d="M32 7h6a6 6 0 0 1 6 6v7H32z" fill={c.rdd} />
+      <g fill={c.nv}>
+        <rect x="24" y="27" width="16" height="4.6" rx="2.3" />
+        <rect x="24" y="36" width="11" height="4.6" rx="2.3" />
+      </g>
+      <Gl c={c} cx={24} cy={24} rx={1.8} ry={6} r={0} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 洗濯。長旅でいちばん困るのはこれ。丸窓の中に水を入れておくと、
+   * 16px でも「白い箱」ではなく洗濯機に見える。
+   */
+  laundry: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.6} />
+      <rect x="9" y="6" width="46" height="50" rx="8" fill={c.w} />
+      <path d="M32 6h14a8 8 0 0 1 8 8v34a8 8 0 0 1-8 8H32z" fill={c.wd} />
+      <rect x="14" y="11" width="36" height="7" rx="3.5" fill={c.gy} />
+      <circle cx="19.5" cy="14.5" r="2.2" fill={c.rd} />
+      <circle cx="27" cy="14.5" r="2.2" fill={c.gr} />
+      <circle cx="32" cy="36" r="15" fill={c.gyd} />
+      <circle cx="32" cy="36" r="12" fill={c.sk} />
+      <path d="M20 38c4-3 8 3 12 0s8 3 12 0v6a12 12 0 0 1-24 0z" fill={c.bl} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.85}>
+        <circle cx="26" cy="31" r="2.6" />
+        <circle cx="36.5" cy="28.5" r="1.8" />
+      </g>
+      <Gl c={c} cx={16} cy={14} rx={4} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 電源。北欧はCタイプの丸2本。四角い顔に丸い目が2つ、という形になるので、
+   * 小さくしても「プラグ」だと分かる。コードは右下へ垂らして接地影に着ける。
+   */
+  plug: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={13} ry={3.2} />
+      {/* 差し込む2本。細く長くしないと「鼻」に見える */}
+      <g fill={c.nv}>
+        <rect x="20" y="3" width="6.4" height="18" rx="3.2" />
+        <rect x="37.6" y="3" width="6.4" height="18" rx="3.2" />
+      </g>
+      {/* 本体。生成りの紙の上でも消えないよう、白ではなく灰でとる */}
+      <rect x="14" y="17" width="36" height="24" rx="9" fill={c.gy} />
+      <path d="M32 17h9a9 9 0 0 1 9 9v6a9 9 0 0 1-9 9h-9z" fill={c.gyd} />
+      {/* コード。右下へ長く垂らして、接地影に着ける */}
+      <path d="M32 41v5c0 6 7 5 7 11" fill="none" stroke={c.nv} strokeWidth="6.4" strokeLinecap="round" />
+      <Gl c={c} cx={21} cy={24} rx={2.6} ry={5} r={22} o={0.5} />
+    </>
+  ),
+
+  /**
+   * カード。北欧はほとんど現金を使わない。
+   * ICチップと磁気帯の2つだけで、他のどの札とも見分けがつく。
+   */
+  card: (c) => (
+    <>
+      <Sh c={c} cy={53} rx={24} ry={4} />
+      <rect x="4" y="14" width="56" height="36" rx="7" fill={c.bl} />
+      <path d="M32 14h21a7 7 0 0 1 7 7v22a7 7 0 0 1-7 7H32z" fill={c.bld} />
+      <rect x="4" y="21" width="56" height="8" fill={c.nv} />
+      <rect x="11" y="34" width="13" height="10" rx="2.6" fill={c.gd} />
+      <rect x="11" y="38" width="13" height="2" fill={c.gdd} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.75}>
+        <rect x="30" y="38.4" width="13" height="3.4" rx="1.7" />
+        <rect x="46" y="38.4" width="8" height="3.4" rx="1.7" />
+      </g>
+      <Gl c={c} cx={13} cy={18} rx={6} ry={1.6} r={-4} o={0.45} />
+    </>
+  ),
+
+  /**
+   * 困ったとき。救急箱。
+   * 赤い十字を面で置くだけだと医療の記号になるので、**箱の厚みと取っ手**を付けて物にする。
+   */
+  firstaid: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={4} />
+      <path d="M26 14v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3" fill="none" stroke={c.gyd} strokeWidth="4.4" strokeLinecap="round" />
+      <rect x="5" y="14" width="54" height="38" rx="8" fill={c.w} />
+      <path d="M40 14h11a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H40z" fill={c.wd} />
+      <g fill={c.rd}>
+        <rect x="26" y="20" width="11" height="26" rx="3.4" />
+        <rect x="18.5" y="27.5" width="26" height="11" rx="3.4" />
+      </g>
+      <rect x="8" y="30" width="6" height="7" rx="2.4" fill={c.gyd} />
+      <Gl c={c} cx={13} cy={19} rx={5} ry={1.8} r={-4} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 行き先を書いた段ボール。
+   *
+   * ヒッチハイクの絵を親指（`thumb`）1つで済ませると、10回並べたときに
+   * 「どの区間も同じこと」に見える。実際に手に持っているのはこの板で、
+   * **書いてある地名が変わる**のが区間の違いそのもの。字は 16px で読めないから、
+   * 太い1本の帯に置き換えて「大きく書いてある」ことだけを残す。
+   */
+  hitchsign: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <g transform="rotate(-8 32 28)">
+        <rect x="8" y="8" width="48" height="34" rx="4" fill={c.wol} />
+        <path d="M32 8h20a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H32z" fill={c.wo} />
+        <rect x="14" y="16" width="36" height="8" rx="4" fill={c.bk} />
+        <rect x="14" y="29" width="22" height="5" rx="2.5" fill={c.wod} />
+      </g>
+      {/* 板を下から支える手。指を板の手前に重ねると、持っていることになる */}
+      <path d="M16 44h26a5 5 0 0 1 5 5v9H21a5 5 0 0 1-5-5z" fill={c.snd} />
+      <g fill={c.sn}>
+        <rect x="18" y="41" width="7.6" height="12" rx="3.8" />
+        <rect x="27" y="40" width="7.6" height="13" rx="3.8" />
+        <rect x="36" y="41.5" width="7.6" height="11" rx="3.8" />
+      </g>
+      <Gl c={c} cx={16} cy={14} rx={5} ry={2} r={-8} o={0.4} />
     </>
   ),
 };

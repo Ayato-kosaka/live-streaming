@@ -98,7 +98,8 @@ export default function MapPage() {
       <Panel>
         <h2>どこをどう回ったんだろう</h2>
         <p className="muted">
-          ピンを押すと、その国のページへ行けます。上のボタンで地図を寄せられます。
+          ピンを押すと、その国が地図の上で開きます。「パリから、たどる」を押すと、
+          出発から今日まで、入った順に18カ国を回ります。
         </p>
         <WorldRoute here={here.slug} />
       </Panel>

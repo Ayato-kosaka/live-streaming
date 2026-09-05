@@ -9,6 +9,44 @@
 }
 
 /* =========================================================
+   島の絵を、画面より一回り大きく取る
+   ---------------------------------------------------------
+   **`viewBox` を1ドット書き換えると、その SVG の中身が全部描き直される。**
+   島の地面は `bakeDeco` で「スプライト80枚を、色ごとの島いっぱいのパス12本」に
+   まとめてある。まとめたおかげでノードは減ったが、**1本1本が島の全域に広がる
+   ので、画面の外にある部分をブラウザが捨てられない。** スマホは 1200 のうち
+   340 しか見ていないのに、毎フレーム島ぜんぶのパスをなぞっていた。
+
+   実測（390×844・dpr3・歩かせて6秒・1フレームあたりの描画プロセスの CPU）:
+
+     いまのまま                          26.6 / 25.9 ms
+     地面のパス（上から26層）を消す           6.7 /  6.3 ms   ← 20ms はここ
+     スプライト（画像73枚）を消す            19.5 / 27.4 ms   ← ほとんど効かない
+
+   そこで **`viewBox` は据え置いて、毎フレーム動かすのは `transform` だけ**に
+   した（`components/island/IslandStage.tsx` の anchor）。同じページで
+   `viewBox` を書く／`transform` で動かす、を入れ替えて測ると
+   **23.3 → 4.8 ms**。4〜5倍。
+
+   そのために、SVG を画面より各辺 --scene-pad だけ大きく取って、
+   ずらしたときにふちに隙間が出ないようにしてある。**px で取るのが正しい。**
+   ワールド単位で取ると、寄っているとき（340）と引いているとき（830）で
+   余白の意味が倍以上変わる。画面の上で何 px ずれたら焼き直すか、が知りたい。
+
+   `will-change` は **`<svg>` そのものにだけ**付ける。海や木など**中の要素に
+   付けると逆に遅くなる**（同じ測り方で 1フレーム 133ms まで悪化した）。
+   ========================================================= */
+:root { --scene-pad: 140px; }
+.stage-svg {
+  inset: auto;
+  left: calc(var(--scene-pad) * -1);
+  top: calc(var(--scene-pad) * -1);
+  width: calc(100% + var(--scene-pad) * 2);
+  height: calc(100% + var(--scene-pad) * 2);
+  will-change: transform;
+}
+
+/* =========================================================
    建物の押し方
    ---------------------------------------------------------
    **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
@@ -109,6 +147,32 @@
   visibility: visible;
   pointer-events: auto;
 }
+/* 看板を出す6つは、遠くからでも名前が出ている。
+   `docs/island-design.md` 6章「押せることと、案内することは別。
+   看板を出すのは sign の付いた6つだけ」。**その6つが働いていなかった。**
+   閉じた札は 34px の丸で visibility:hidden だったので、島に降りた1画面目に
+   建物の名前が1枚も出ていなかった。押せる物だと画面のどこにも書いていない。
+
+   遠くからは名前だけ。近づくと（.is-on）そこに一言と「はいる」が足される。
+   **揺らさない。** 6枚が同時に揺れたら、島ではなく看板の並びになる。
+   残り4軒は静かに建っていて、近づいた人にだけ名前が出る。ここは変えない。 */
+.spot.is-sign .spot-mark {
+  visibility: visible;
+  pointer-events: auto;
+  width: auto;
+  height: auto;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
+  box-shadow:
+    0 4px 0 var(--frame-deep),
+    3px 8px 9px var(--cast);
+}
+.spot.is-sign .spot-mark::after { height: 15px; width: 9px; margin-left: -4.5px; bottom: -14px; }
+.spot.is-sign .spot-text { display: grid; gap: 1px; line-height: 1.2; text-align: left; }
+.spot.is-sign .spot-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言は近づいてから。遠くの6枚が2行ずつ出ていると、島が字で埋まる */
+.spot.is-sign:not(.is-on) .spot-text i { display: none; }
 /* 閉じている札は 34px しかない。絵は小さいままでいいが、
    押せるものである以上、指の当たりは 48px 要る（`island-design.md` 3-2）。
    見えない当たりを外へ広げる。 */
@@ -150,6 +214,10 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot.is-today .spot-mark { animation: none; } }
 
+/* 「!」は島の合図2種類のうちの1つ（`docs/island-design.md` 3-3）。
+   前は --frame-deep で、金の丸（--gold / --frame）に溶けていた。
+   実測 2.56 : 1（丸の下のほう）。**いちばん見えるべき印がいちばん薄かった。**
+   --ink に落として 5.13〜8.68 : 1。地の金は動かさない（光らせない・色を変えない）。 */
 .spot-bang {
   flex: none;
   width: 28px;
@@ -157,7 +225,7 @@
   font-size: 19px;
   font-weight: 900;
   line-height: 26px;
-  color: var(--frame-deep);
+  color: var(--ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .spot-text { display: none; }
@@ -221,11 +289,13 @@
   text-align: left;
 }
 .spot.is-on .spot-text b { font-size: 14.5px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言。名前より静かにしたいが、--ink-3 は紙の上で 4.13 : 1 しかなかった（実測）。
+   --ink-2 で 5.70 : 1。名前（--ink・9.25 : 1）との差は残るので、静けさは保てる。 */
 .spot.is-on .spot-text i {
   font-style: normal;
   font-size: 11.5px;
   font-weight: 800;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* 「はいる」も押せる板にする。文字だけだと、看板の飾りに見えてしまう */
 .spot.is-on .spot-go {
@@ -236,7 +306,10 @@
   font-size: 11.5px;
   font-weight: 900;
   color: var(--paper);
-  background: linear-gradient(var(--frame-dark), var(--frame-deep));
+  /* 前は --frame-dark → --frame-deep で、板の上のほうが 2.90 : 1 しかなかった（実測）。
+     **字を明るくするのではなく、板を濃くする。** 島は板なので、
+     読ませるために光らせない（`island-world.md` 3.4）。いまは 5.25〜7.35 : 1。 */
+  background: linear-gradient(#9c580f, #7d450c);
   border-radius: 999px;
   padding: 4px 9px 4px 10px;
   box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -267,7 +340,9 @@
   font-weight: 900;
   letter-spacing: 0.01em;
   color: var(--paper);
-  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
+     濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
+  background: linear-gradient(#c4123f, #96072e);
   border: 2.5px solid var(--paper);
   border-radius: 999px;
   padding: 2px 8px;
@@ -547,8 +622,12 @@
 .stage-lamps { display: none; }
 [data-time="night"] .stage-lamps {
   position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
+  /* 島の絵と同じ大きさ・同じ動かしかたにする。ここがズレると、
+     灯りだけが島から取り残されて動く（上の --scene-pad の注を見る） */
+  left: calc(var(--scene-pad) * -1);
+  top: calc(var(--scene-pad) * -1);
+  width: calc(100% + var(--scene-pad) * 2);
+  height: calc(100% + var(--scene-pad) * 2);
   display: block;
   z-index: 2;
   pointer-events: none;
@@ -638,14 +717,12 @@
   .surf-front { opacity: 0.6; }
 }
 
-.smoke circle { animation: smokeUp 4.2s ease-out infinite; transform-origin: center; }
-.smoke circle:nth-child(2) { animation-delay: 1.4s; }
-.smoke circle:nth-child(3) { animation-delay: 2.8s; }
-@keyframes smokeUp {
-  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
-  25% { opacity: 0.55; }
-  100% { opacity: 0; transform: translateY(-34px) scale(1.5); }
-}
+/* ここにあった .smoke / @keyframes smokeUp を消した。
+   **誰も使っていなかったうえ、使えない状態だった。**
+   `transform-box: fill-box` が無いので、SVG の中では原点が viewBox の (0,0) に
+   なり、scale(0.5) を掛けた瞬間に煙が島の反対側へ飛ぶ（`CLAUDE.md`）。
+   配信中のやぐらに煙を出そうとして気づいた。やぐらは石造りで煙突が無いので、
+   屋根から煙が出ると「人がいる」ではなく「燃えている」に見える。煙は使わない。 */
 
 .flame { animation: flicker 0.9s ease-in-out infinite alternate; transform-origin: 880px 560px; }
 @keyframes flicker { from { transform: scaleY(0.94) scaleX(1.03); } to { transform: scaleY(1.06) scaleX(0.97); } }
@@ -853,7 +930,9 @@
   border: 2px solid var(--paper);
   border-radius: 999px;
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
-  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
+     濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
+  background: linear-gradient(#c4123f, #96072e);
   color: var(--paper);
   transform: rotate(-6deg);
 }
@@ -885,6 +964,14 @@
 .stage-view:active {
   transform: translateY(4px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+/* スマホより広い画面では、左上に看板ロゴが出ている。同じ隅を取り合うと
+   ロゴの上にボタンが乗る。左下へ下ろす。島の下は空いている。 */
+@media (min-width: 640px) {
+  .stage-view {
+    top: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 /* 話しているあいだは、島の上のUIと同じように引っ込める。
@@ -970,3 +1057,16 @@
   85%  { transform: translate3d(85vw, 26vh, 0) scale(0.75) rotate(7deg); opacity: 0.6; }
   100% { transform: translate3d(106vw, 35vh, 0) scale(0.6) rotate(8deg); opacity: 0; }
 }
+
+/* =========================================================
+   配信中だけ、やぐらに灯りがつく
+   ---------------------------------------------------------
+   `docs/island-play.md` 仕掛け5。日本時間 22:00〜25:00 のあいだだけ、
+   配信やぐらの窓に灯りがともって、屋根の向こうから煙が上がる。
+   **これは景色であって、押せる合図ではない**（`island-world.md` 3.4）。
+   厚みも照り返しも足さない。建物の押しかたは何も変わらない。
+
+   ふだんは display:none。出ていない21時間は、描く物が1つも増えない。
+   ========================================================= */
+.live-art { display: none; }
+.stage[data-live="on"] .live-art { display: block; }

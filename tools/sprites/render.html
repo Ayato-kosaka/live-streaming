@@ -26,6 +26,17 @@ const SIZE = 320;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(SIZE * SUPER, SIZE * SUPER);
+
+/* 焼く大きさは1枚ごとに変えられる。
+ * ふだんは 320px ぶん。ただし図鑑の主役（`/kitchen/[品]` や `/legends` の
+ * いちばん上）は画面で 300px 近くまで大きく出るので、320px で焼くと
+ * 高精細画面では 2倍に引き伸ばされてぼける。その絵だけ opts.px で上げる。 */
+let curPx = SIZE;
+const setPx = (px) => {
+  if (px === curPx) return;
+  curPx = px;
+  renderer.setSize(px * SUPER, px * SUPER);
+};
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
@@ -635,6 +646,37 @@ const SMOOTH_MAT = /^leafs/;
 const GRAD_MAT = /^(leafs|grass)/;
 /** 岩に貼り付いている苔のマテリアル名。 */
 const MOSS_MAT = /^grass$/;
+/** 幹のマテリアル名。太らせるのはここだけ。 */
+const TRUNK_MAT = /^woodbark$/;
+
+/**
+ * 幹を横に太らせる。
+ *
+ * 公式スクショの木を測ると、幹の幅は樹冠の幅の 0.35 倍ある
+ * （`/tmp/acref/crop_tree.png`。樹冠 254px に対して幹 90px）。
+ * Kenney の広葉樹は 0.22〜0.29 倍しかなく、樹冠の重さに対して
+ * 幹が細い棒に見えていた。縦はそのままに、横だけ広げる。
+ *
+ * 幹の断面の中心を軸にする。原点をそのまま使うと、根が片側へ寄っている
+ * 木（tree_oak の板根）が地面から浮いた場所へずれる。
+ *
+ * @param {THREE.BufferGeometry} geo 幹の形（その場で書き換える）
+ * @param {number} k 横の倍率
+ */
+function thickenTrunk(geo, k) {
+  geo.computeBoundingBox();
+  const { min, max } = geo.boundingBox;
+  const cx = (min.x + max.x) / 2;
+  const cz = (min.z + max.z) / 2;
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    pos.setX(i, cx + (pos.getX(i) - cx) * k);
+    pos.setZ(i, cz + (pos.getZ(i) - cz) * k);
+  }
+  pos.needsUpdate = true;
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+}
 
 /* ------------------------------------------------------------------ */
 /* 岩の苔の境目をぼかす                                                 */
@@ -908,6 +950,19 @@ async function prepare(part, opts) {
     m.receiveShadow = true;
     return m;
   }
+  // 円盤。車輪・文字盤のように「丸いもの」は箱では組めない。
+  // 既定の軸は Y。rot で寝かせたり立てたりして使う
+  if (part.disc) {
+    // r2 を渡すと下だけ細くなる。杯や鉢のように口の開いたものを組める
+    const { r = 0.5, r2 = r, h = 0.1, seg = 24 } = part.disc;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r2, h, seg),
+      new THREE.MeshLambertMaterial({ color: setHsl(new THREE.Color(), ...part.color) }),
+    );
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
   // 炎・明かりはキットに無いので、その場で組む
   if (part.flame) {
     // tongues: [横, 前後, 傾き(度), 大きさの比, 色の番号] を奥から手前の順に
@@ -936,6 +991,7 @@ async function prepare(part, opts) {
   const detail = part.detail ?? (plain ? null : DETAIL_OF(part.url));
   const lobes = part.lobes ?? opts.lobes ?? 0;
   const moss = part.moss ?? opts.moss ?? null;
+  const trunk = part.trunk ?? opts.trunk ?? 1;
 
   /** マテリアル名 → 置き換えたあとの色。苔を石の色へ溶かすのに使う */
   const resolved = new Map();
@@ -981,6 +1037,7 @@ async function prepare(part, opts) {
       }
       parent.remove(n);
     }
+    if (trunk !== 1 && TRUNK_MAT.test(mn)) thickenTrunk(n.geometry, trunk);
     if (moss && MOSS_MAT.test(mn)) mossMeshes.push(n);
   }
 
@@ -1001,6 +1058,7 @@ async function prepare(part, opts) {
  * parts: [{ url, pos:[x,y,z], rot:[x,y,z](度), scale, tint }]
  */
 window.renderScene = async (parts, opts = {}) => {
+  setPx(opts.px ?? SIZE);
   const group = new THREE.Group();
   // 明かりの円は画づくりの飾りなので、画角を決める箱には入れない
   const framed = [];
@@ -1010,7 +1068,10 @@ window.renderScene = async (parts, opts = {}) => {
     const [rx, ry, rz] = part.rot ?? [0, 0, 0];
     o.position.set(px, py, pz);
     o.rotation.set((rx * Math.PI) / 180, (ry * Math.PI) / 180, (rz * Math.PI) / 180);
-    if (part.scale) o.scale.setScalar(part.scale);
+    // 数ひとつなら等倍。配列を渡すと軸ごとに伸ばせる。
+    // 桟橋の杭のように「同じ角材を長さだけ変えて使う」ときに要る
+    if (Array.isArray(part.scale)) o.scale.set(...part.scale);
+    else if (part.scale) o.scale.setScalar(part.scale);
     group.add(o);
     if (!part.glow) framed.push(o);
   }

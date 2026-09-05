@@ -6,16 +6,16 @@ import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
 import { Sprite, spriteWidth } from "./Sprite";
 import { AYATO_HOME, DOORS, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
-import { UI } from "@/content/voice";
+import { LIVE, UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
-import { jstNow } from "@/lib/nightly";
+import { jstNow, readNight } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
-import { opensByItself, todayNews, type TodayNews } from "@/lib/todayNews";
+import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
 import {
   callOut,
   createVillagers,
@@ -103,14 +103,61 @@ const TODAY_AT: Partial<Record<TodayNews["kind"], SpotId>> = {
    box を見る計算を React の外（素の関数）に出して、毎フレームその場で引く。
    ------------------------------------------------------------------------ */
 const modeOf = (w: number) => (w < 640 ? "phone" : w < 1024 ? "tablet" : "wide");
-/** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
+/**
+ * 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。
+ *
+ * **PC も「島に降り立った視点」を既定にした。**
+ * 前は PC だけ島ぜんぶの引きで、1ワールド単位が 0.9px しかなかった。
+ * 住人の背丈は 46 単位なので画面には 41px、島の高さ 792px に対して **5%**。
+ * 22人ぶんの絵を日替わりで出して、立ち話までさせているのに、
+ * PC ではその全部が緑の上の点になっていた（`docs/island-review-3.md` 3位）。
+ * 海が画面の 51.9% を占めていたのも同じ理由で、島の外側まで入れていたから。
+ *
+ * 寄りの度合いは **1ワールド単位あたりの px** で決める。画面の幅で割ると、
+ * 大きな画面ほど引いてしまって、住人の大きさが機種で変わる。
+ *   スマホ … 390 / 340 = 1.15 px。あやと 60単位 → 69px（画面高の 8%）
+ *   PC     … 1440 / 700 = 2.06 px。あやと → 123px（画面高の 16%）
+ * 本物のあつ森でも、主人公は画面高のだいたい 1/7（14%前後）。
+ * レビューにある「35〜40%」は、実物を測るとそこまで大きくない。16% を狙う。
+ *
+ * 引いて島ぜんぶを見たい人には、「島ぜんぶ」のボタンがある（wide）。
+ * そちらは今までの値をそのまま残す。
+ */
 const spanOf = (w: number, h: number, wide: boolean) => {
   const aspect = w / Math.max(1, h);
   const m = modeOf(w);
   if (m === "phone") return wide ? 830 : 340;
-  if (m === "tablet") return Math.max(1120, 980 * aspect);
-  return Math.max(1220, 880 * aspect);
+  if (m === "tablet") return wide ? Math.max(1120, 980 * aspect) : Math.max(430, w / 1.75);
+  return wide ? Math.max(1220, 880 * aspect) : Math.max(560, w / 2.05);
 };
+
+/* ---- 島の絵を動かすしかけ ------------------------------------------------
+   **`viewBox` を1ドット書き換えると、その SVG の中身が全部描き直される。**
+   島の地面は色ごとの「島いっぱいのパス」にまとめてあるので、画面の外にある
+   部分をブラウザが捨てられない。スマホは 1200 のうち 340 しか見ていないのに、
+   毎フレーム島ぜんぶをなぞっていた（内訳は `app/css/island.css` の注）。
+
+   なので **`viewBox` は据え置き、毎フレーム動かすのは `transform` だけ**にする。
+   焼いてある絵（アンカー）からのズレを translate と scale で見せて、
+   ズレが大きくなったときにだけ焼き直す。実測 23.3ms → 4.8ms。
+   ------------------------------------------------------------------------ */
+/** 画面の外に余分に焼いておく幅(px)。`--scene-pad` と必ず同じ値にする。 */
+const SCENE_PAD = 140;
+/** 焼いた絵を、これ以上の倍率で引き伸ばして見せない。1.12 倍までならぼけない。 */
+const ZOOM_Q = 1.12;
+
+/**
+ * 島の絵の viewBox。画面より各辺 SCENE_PAD だけ広く取る。
+ * ここが返す文字列で焼いた絵を「アンカー」と呼ぶ。
+ */
+function anchorVb(cx: number, cy: number, span: number, w: number, h: number): string {
+  const k = Math.max(1, w) / span; // px / ワールド単位
+  const ew = w + SCENE_PAD * 2;
+  const eh = h + SCENE_PAD * 2;
+  const vw = ew / k;
+  const vh = eh / k;
+  return `${(cx - vw / 2).toFixed(1)} ${(cy - vh / 2).toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`;
+}
 
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
@@ -248,6 +295,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const walkingTo = useRef<number | null>(null);
   const keys = useRef<Record<string, boolean>>({});
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
+  /**
+   * 島の絵を最後に焼いた場所（アンカー）と、そのときの画面の大きさ。
+   * いまのカメラとの差は transform で見せて、差が大きくなったら焼き直す。
+   */
+  const anchor = useRef({ x: 0, y: 0, span: 0, w: 0, h: 0 });
+  /** 焼いてある viewBox と、いま掛けている transform。React が描き直しても同じ値を書く */
+  const sceneVb = useRef("");
+  const sceneTf = useRef("");
   /** 到着演出を飛ばす人。最初の1フレームでカメラを目的の位置に置く */
   const snapCam = useRef(false);
   /** 到着演出を飛ばす人かどうか。画面の大きさが分かるたびにカメラを置き直す */
@@ -329,12 +384,29 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [days, setDays] = useState<number | null>(null);
   /** 今日、何かある建物。「!」が立つのはここ1つだけ。 */
   const [todaySpot, setTodaySpot] = useState<SpotId | null>(null);
+  /**
+   * いま配信の時間か（日本時間 22:00〜25:00）。
+   *
+   * **島の絵が、現実にいま配信があるかどうかを表す**（`docs/island-play.md` 仕掛け5）。
+   * やぐらに灯りがつき、煙が出て、札が「いま配信中」に変わる。
+   * 1日3時間しか見られない絵なので、「今しか見られない」がそのまま成立する。
+   * しかも見た人が取る行動（配信を見にいく）が、このサイトの目的そのもの。
+   */
+  const [onAir, setOnAir] = useState(false);
   useEffect(() => {
-    const p = nextPlan(new Date());
-    setDays(daysUntil(p?.date, new Date()));
-    // 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める
-    const n = todayNews();
-    setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
+    /* 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める。
+       **1分ごとに数え直す。** 21:59 に開いたまま22時をまたぐ人がいる。
+       そこで島が変わらないと、島の絵は現実と同期していないことになる。 */
+    const read = () => {
+      const now = new Date();
+      setDays(daysUntil(nextPlan(now)?.date, now));
+      const n = todayNews(now);
+      setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
+      setOnAir(readNight(now).onAir);
+    };
+    read();
+    const id = setInterval(read, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   // キャラ画像は外から取ってくるので、先に読んでおく。
@@ -477,7 +549,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
   const mode = modeOf(box.w);
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
-  const follow = mode === "phone" && !wide;
+  /** 島に降り立った視点か。「島ぜんぶ」を押していないあいだは、どの幅でもこちら */
+  const follow = !wide;
 
   /**
    * カメラが行きたい先。
@@ -492,7 +565,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const camWant = useCallback(() => {
     const b = boxRef.current;
     const m = modeOf(b.w);
-    if (m === "phone" && !wideRef.current) return { x: avatar.current.x, y: avatar.current.y - 92 };
+    /* 寄っているあいだは、どの幅でもあやとを追う。
+       追わずに寄ると、あやとが画面の外へ歩いていってしまう。
+       少し上を向くのは、足元より「これから歩く先」が見えたほうがいいから。 */
+    if (!wideRef.current) return { x: avatar.current.x, y: avatar.current.y - (m === "phone" ? 92 : 70) };
     if (m === "phone") {
       const s = spanOf(b.w, b.h, wideRef.current);
       const lift = barH.current && b.w ? (barH.current / 2) * (s / b.w) : 0;
@@ -619,14 +695,54 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const vbX = cam.x - vbW / 2;
       const vbY = cam.y - vbH / 2;
       const vb = `${vbX.toFixed(1)} ${vbY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}`;
-      /* viewBox を書き換えると、島の SVG（画像152枚）がまるごと描き直される。
+      /* カメラが止まっているあいだは、何も書かない。
          止まっているのに書き直すと、何もしていない画面でずっと GPU が回る。
          文字にしたときに同じなら、画面には出ない差なので触らない。 */
       const camMoved = vb !== lastVb;
-      if (camMoved) {
+      /* カメラが止まったのに、絵が 1.11 倍に引き伸ばされたまま残ることがある
+         （到着の寄せが終わった瞬間など）。止まった1回だけ焼き直して、等倍に戻す。
+         **止まっているあいだの絵がいちばん長く見られる。** そこがぼけていては困る。 */
+      if (!camMoved && sceneTf.current) anchor.current.span = 0;
+      if (camMoved || sceneTf.current) {
         lastVb = vb;
-        sceneRef.current?.setAttribute("viewBox", vb);
-        lampRef.current?.setAttribute("viewBox", vb);
+        /* --- 島の絵を動かす ---
+           **`viewBox` は書き換えない。** 書き換えると島ぜんぶが描き直される
+           （上の SCENE_PAD の注）。焼いてある絵とのズレを transform で見せる。 */
+        const a = anchor.current;
+        const kd = b.w / cam.span; // px / ワールド単位
+        let s = a.span / cam.span;
+        let tx = -(cam.x - a.x) * kd;
+        let ty = -(cam.y - a.y) * kd;
+        // 余白を使い切ったか、引き伸ばしすぎたか、画面の大きさが変わったら焼き直す
+        if (
+          a.w !== b.w ||
+          a.h !== b.h ||
+          s > ZOOM_Q ||
+          s < 1 / ZOOM_Q ||
+          Math.abs(tx) > SCENE_PAD * 0.85 ||
+          Math.abs(ty) > SCENE_PAD * 0.85
+        ) {
+          a.x = cam.x;
+          a.y = cam.y;
+          a.span = cam.span;
+          a.w = b.w;
+          a.h = b.h;
+          sceneVb.current = anchorVb(cam.x, cam.y, cam.span, b.w, b.h);
+          sceneRef.current?.setAttribute("viewBox", sceneVb.current);
+          lampRef.current?.setAttribute("viewBox", sceneVb.current);
+          s = 1;
+          tx = 0;
+          ty = 0;
+        }
+        const tf =
+          s === 1 && tx === 0 && ty === 0
+            ? ""
+            : `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s.toFixed(4)})`;
+        if (tf !== sceneTf.current) {
+          sceneTf.current = tf;
+          if (sceneRef.current) sceneRef.current.style.transform = tf;
+          if (lampRef.current) lampRef.current.style.transform = tf;
+        }
       }
       const sx = (wx: number) => ((wx - vbX) / vbW) * b.w;
       const sy = (wy: number) => ((wy - vbY) / vbH) * b.h;
@@ -847,20 +963,38 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     // order は「並びが変わった」ことだけを伝える合図
   }, [order, villagers, sceneArt]);
 
+  /* 島の絵の viewBox と transform は、毎フレーム rAF が ref に書いている。
+     React が描き直したときも**同じ値**を書かないと、次のフレームまで絵が飛ぶ。
+     なので JSX からも ref の中身をそのまま渡す。まだ焼いていなければ、ここで焼く。 */
   const cam = camRef.current;
-  const vbW0 = cam.span;
-  const vbH0 = (cam.span * box.h) / Math.max(1, box.w);
-  const vb0 = `${cam.x - vbW0 / 2} ${cam.y - vbH0 / 2} ${vbW0} ${vbH0}`;
+  if (!sceneVb.current) {
+    anchor.current = { x: cam.x, y: cam.y, span: cam.span, w: box.w, h: box.h };
+    sceneVb.current = anchorVb(cam.x, cam.y, cam.span, box.w, box.h);
+  }
+  const vb0 = sceneVb.current;
+  const tf0 = sceneTf.current;
 
   return (
     <div
       className={`stage has-today${arriving ? " is-arriving" : ""}${talking ? " is-talking" : ""}`}
-      data-view={follow ? "close" : "wide"}
+      /* いま配信の時間か。島の絵（やぐらの灯りと煙）を CSS で切り替える */
+      data-live={onAir ? "on" : undefined}
+      /* ヒーローの見出し（看板ロゴ）の置き場。**カメラの寄りとは別のもの。**
+         PC も寄りを既定にしたが、こちらまで "close" にすると
+         ロゴが右上へ寄って「今日の島」の板と重なる。見出しの置き場は変えない。 */
+      data-view={mode === "phone" && follow ? "close" : "wide"}
       data-mode={mode}
       ref={hostRef}
       onClick={onStageClick}
     >
-      <svg ref={sceneRef} className="stage-svg" viewBox={vb0} preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <svg
+        ref={sceneRef}
+        className="stage-svg"
+        viewBox={vb0}
+        style={tf0 ? { transform: tf0 } : undefined}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
         <IslandScene />
         {layers.map((l) => {
           if (l.kind === "prop") {
@@ -922,10 +1056,41 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             </g>
           );
         })}
+
+        {/* ------- 配信中だけ、やぐらに人がいる -------
+            `docs/island-play.md` 仕掛け5。**島の絵そのものが、現実にいま配信が
+            あるかどうかを表す。** 日本時間 22:00〜25:00 の3時間しか出ない絵なので、
+            「今しか見られない」が演出ではなく事実として成立する。
+
+            ふだんは CSS で display:none。出ていないあいだの値段はゼロ。
+            座標は tower-studio.webp の窓を実測して出した（スプライトは
+            197×291、物体は 144×252、足元が (520,600) で高さ 128 ワールド単位。
+            1画素 = 0.508 ワールド単位）。
+            灯りは**景色**であって、押せる合図ではない（`island-world.md` 3.4）。
+            建物の押しかたは何も変わらない。 */}
+        <g className="live-art" aria-hidden>
+          {/* 灯のついた窓。上のふたつと、下の戸。
+              **ぼかした光の輪は置かない。** 一度置いて撮ってみたら、草の上に
+              半透明の円盤が乗っているようにしか見えなかった（島は板なので、
+              にじんだ光がそもそも世界に無い）。窓が明るいだけで「人がいる」は伝わる。 */}
+          <path d="M496.7 518.7 L504.8 523.3 L504.8 536.5 L496.7 531.9 Z" fill="var(--window)" />
+          <path d="M532.2 523.3 L540.3 518.7 L540.3 531.9 L532.2 536.5 Z" fill="var(--window)" />
+          <path d="M499.2 568.5 L506.8 573.1 L506.8 586.8 L499.2 582.2 Z" fill="var(--window)" />
+          {/* 戸から地面へこぼれる光。輪ではなく、戸の形から伸びる台形。
+              地面に落ちる光は本当にこの形をしているので、円盤には見えない */}
+          <path d="M497 588 L509 588 L520 606 L492 606 Z" fill="#ffe6a8" opacity={0.22} />
+        </g>
       </svg>
 
       {/* 夜の灯り。時間帯の色かぶせより上に重ねる */}
-      <svg ref={lampRef} className="stage-lamps" viewBox={vb0} preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <svg
+        ref={lampRef}
+        className="stage-lamps"
+        viewBox={vb0}
+        style={tf0 ? { transform: tf0 } : undefined}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
         <defs>
           <radialGradient id="lampG">
             <stop offset="0" stopColor="#fff6d4" stopOpacity="1" />
@@ -944,37 +1109,76 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           擬似要素ではなく実体を1枚置いている。 */}
       <span className="stage-shore" aria-hidden />
 
-      {/* 建物の札。島に建っているものは全部押せるので、ふだんは何も出さない。
-          出るのは「今日ここに何かある」1つと、いま近づいている1つだけ。 */}
+      {/* 建物の札。
+          **看板を出す6つ（`sign`）は、遠くからでも名前が出ている。**
+          残り4軒は静かに建っていて、近づいた人にだけ名前が出る
+          （`docs/island-design.md` 6章「押せることと、案内することは別」）。
+          「!」が立つのは「今日ここに何かある」1つだけ。 */}
       <div className="labels">
         {DOORS.map((sp, i) => {
           const on = openSpot === sp.id;
           const today = todaySpot === sp.id;
+          const sign = !!sp.sign;
+          /* 配信中の配信やぐらは、行き先が YouTube に変わる。
+             **島に留めずに外へ出すのが正解**（`docs/island-play.md` 5章）。
+             島は留守番の場所で、配信がある3時間だけは、島より向こうが本体。 */
+          const live = onAir && sp.id === "streams";
+          const href = live ? YOUTUBE : sp.href;
+          const label = live ? LIVE.label : sp.label;
+          const blurb = live ? LIVE.blurb : sp.blurb;
+          const go = live ? LIVE.go : UI.enter;
+          /* 建物そのものを押したとき。
+             指とマウスは、まず**歩く**。島を歩くのがこの画面のいちばんの手ざわりで、
+             着けば札が開いて、そこから入れる。ただし
+               - もう札が開いている（＝そばに立っている）
+               - キーボードや読み上げから実行した（`detail === 0`。歩く絵が返らない）
+             このどちらかなら、歩かせる意味が無いのでそのまま入る。 */
+          const enterOrWalk = (e: React.MouseEvent) => {
+            /* 配信中のやぐらは歩かせない（行き先が島の外なので寄っても意味がない）。
+               Ctrl や ⌘ を押しながらの「新しいタブで開く」も、そのまま通す。
+               ここで preventDefault すると、リンクにした意味が半分無くなる。 */
+            if (live || e.detail === 0 || on || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+              leaveAt.current = { x: sp.x, y: sp.y + 34 };
+              return;
+            }
+            e.preventDefault();
+            goTo(sp);
+          };
           return (
             <div
               key={sp.id}
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}`}
+              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}${sign ? " is-sign" : ""}`}
             >
-              <button
+              {/* 建物の当たり。**`<a href>` にしてある。**
+                  `<button>` だと長押しの「新しいタブで開く」が出ないし、
+                  読み上げにもキーボードにも「行き先」として見えない。
+                  建物は入口なので、まず行き先であるべき。 */}
+              <Link
                 data-ui
+                href={href}
+                prefetch={false}
                 className="spot-hit"
-                onClick={() => goTo(sp)}
+                /* 1軒につき、キーボードの止まり先はいつも1つ。
+                   札が出ているときは札のほうが行き先（名前と一言と「はいる」が
+                   ぜんぶ載っている）。出ていないときだけ、この当たりが受ける。 */
+                tabIndex={on || sign ? -1 : 0}
+                onClick={enterOrWalk}
                 onMouseEnter={() => setHover(sp.id)}
                 onMouseLeave={() => setHover((v) => (v === sp.id ? null : v))}
                 onFocus={() => setHover(sp.id)}
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
-                // 押すと「歩いていく」。入るのは、着いて開いた札のほう。
-                // 「へ行く」と読み上げると、押した先で入れると思われる
-                aria-label={`${sp.label}まで歩く`}
+                aria-label={live ? LIVE.aria : `${sp.label}にはいる`}
               />
               <Link
                 data-ui
-                href={sp.href}
+                href={href}
+                target={live ? "_blank" : undefined}
+                rel={live ? "noopener noreferrer" : undefined}
                 className="spot-mark"
-                tabIndex={on ? 0 : -1}
+                tabIndex={on || sign ? 0 : -1}
                 // 10軒ぶんの札がいつも画面にいるので、先読みを止めないと
                 // 島を開いただけで全ページの RSC を取りにいく（実測で約3MB）。
                 // 静的書き出しなので、先読みで得られるものは小さい。
@@ -996,11 +1200,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                   </em>
                 )}
                 <span className="spot-text">
-                  <b>{sp.label}</b>
-                  <i>{sp.blurb}</i>
+                  <b>{label}</b>
+                  <i>{blurb}</i>
                 </span>
                 <span className="spot-go">
-                  {UI.enter}
+                  {go}
                   <Icon name="right" size={12} />
                 </span>
               </Link>
@@ -1102,12 +1306,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           行き先ではないのでバーから出した。バーの中に混ぜると6つの入口と
           同じ重さに見えて、そのぶん入口の名前が削られる（名前が切れたら入口は無いのと同じ）。
           カメラの操作なので、島の隅に単独で置く。 */}
-      {mode === "phone" && (
-        <button className="stage-view" data-ui onClick={() => setWide((v) => !v)}>
-          <Icon name={wide ? "walk" : "island"} size={15} />
-          {wide ? UI.comeDown : UI.lookAround}
-        </button>
-      )}
+      {/* **どの幅でも出す。** PC も既定は「島に降り立った視点」になったので、
+          引いて島ぜんぶを見る道が要る（前はスマホにしか無かった）。 */}
+      <button className="stage-view" data-ui onClick={() => setWide((v) => !v)}>
+        <Icon name={wide ? "walk" : "island"} size={15} />
+        {wide ? UI.comeDown : UI.lookAround}
+      </button>
 
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}
       {arriving && (

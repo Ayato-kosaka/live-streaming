@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { LiveNumber } from "@/lib/liveStats";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
-import { VOICES } from "@/content/chatter";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
@@ -27,15 +26,6 @@ export const metadata: Metadata = {
  */
 export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
-  /* セリフは口調がばらけるように、離れた人から3人ぶん取る。並びは固定（毎回変わると落ち着かない）。
-     出すのは「ふだんの1言」だけではなく、**1言目**も1つずつ。
-     島は、はじめて来た人には「はじめまして」、しばらく空いた人には「久しぶり」と言う
-     （`docs/island-play.md` 仕掛け6）。それが起きることは、来る前に知らせておいていい。 */
-  const says = [
-    { icon: VOICES[0].icon, line: VOICES[0].lines[0], when: "島を歩いていると" },
-    { icon: VOICES[6].icon, line: VOICES[6].greet.first, when: "はじめて島に降りた人に" },
-    { icon: VOICES[13].icon, line: VOICES[13].greet.back, when: "しばらく空いた人に" },
-  ];
 
   return (
     <PageShell crumbs={[{ label: "仲間のテント" }]}>
@@ -89,27 +79,10 @@ export default function FriendsPage() {
             <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
             <p className="pap-note">
               自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
-            </p>
-            <FriendsWall />
-          </section>
-
-          <section className="pap-sec">
-            <h2 className="pap-h">島で何を言われるか</h2>
-            <p className="pap-note">
-              島を歩いていると、住人のほうから話しかけてきます。しゃべり方は、その人が配信で書いてきたコメントから写しています。
+              マスを押すと、その人の1枚が開きます。しゃべり方は、その人が配信で書いてきたコメントから写しています。
               しばらく来ていなかった人には「久しぶり」と言いますが、空いた日数は数えていません。
             </p>
-            <div className="pap-quotes">
-              {says.map((v) => (
-                <figure className="pap-quote" key={v.icon}>
-                  <img src={`https://lh3.googleusercontent.com/d/${v.icon}=s128`} alt="" loading="lazy" />
-                  <span className="pap-quote-b">
-                    <em className="pap-when">{v.when}</em>
-                    <blockquote>{v.line}</blockquote>
-                  </span>
-                </figure>
-              ))}
-            </div>
+            <FriendsWall />
           </section>
 
           <section className="pap-sec">
@@ -165,6 +138,7 @@ export default function FriendsPage() {
               <p className="pap-note">
                 「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
                 個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。
+                図鑑の番号も、並べるための通し番号であって順位ではありません。
               </p>
             </Fold>
             <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>

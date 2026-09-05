@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getState, type IslandCurrent } from "@/lib/api";
 import { NOW_FALLBACK, LINKS } from "@/content/site";
 import { PLANS, planDaysLeft } from "@/content/plans";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";

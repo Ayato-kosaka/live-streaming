@@ -46,7 +46,12 @@ export default function LegendsPage() {
               <Tape>{top.title}</Tape>
             </div>
             <div className="zk-hero-art">
-              <img src={`/sprites/${top.icon}.webp`} alt="" />
+              {/* 主役の絵だけ、高精細画面には長辺640pxのほうを配る */}
+              <img
+                src={`/sprites/${top.icon}.webp`}
+                srcSet={`/sprites/${top.icon}.webp 1x, /sprites/hero/${top.icon}.webp 2x`}
+                alt=""
+              />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />

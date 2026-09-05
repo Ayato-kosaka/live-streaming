@@ -211,7 +211,8 @@ export default function RouteMapSvg({ here }: { here?: string }) {
       <g className="nm-leg is-fly" data-leg={flyLegId} data-seq={flySeq}>
         <path className="nm-leg-look" d={fly.d} strokeWidth="30" />
         <path className="nm-fly" d={fly.d} />
-        <path className="nm-leg-tie" d={fly.d} strokeWidth="3" strokeDasharray="16 15" />
+        {/* 飛行機も同じ。破線を重ねずに通しの1本にして、点々をつなぐ */}
+        <path className="nm-leg-tie" d={fly.d} strokeWidth="3" />
       </g>
       <g className="nm-chip" transform={`translate(${fly.chip[0]} ${fly.chip[1]})`}>
         <rect x="-178" y="-26" width="356" height="52" rx="26" />
@@ -239,12 +240,11 @@ export default function RouteMapSvg({ here }: { here?: string }) {
             <path className="nm-leg-line" d={l.d} strokeWidth={s.width} strokeDasharray={s.dash} />
             {/* つながった区間。線を1本増やさず、同じ線の芯を明るくする
                 （`docs/nordic-fund.md` 提案3）。金額は地図に書かない。 */}
-            <path
-              className="nm-leg-tie"
-              d={l.d}
-              strokeWidth={Math.max(3, s.width - 5)}
-              strokeDasharray={s.dash}
-            />
+            {/* **芯に破線を渡さない。** 元の線と同じ刻みで重ねると、色がほとんど
+                同じなので画素が動かない（実測: フェリー8画素・寄り道8画素しか
+                変わらず、目では見分けられなかった）。芯を通しの1本にすると
+                **点々が1本につながる**。つながったことを、色ではなく形で言える。 */}
+            <path className="nm-leg-tie" d={l.d} strokeWidth={Math.max(3, s.width - 5)} />
             {l.marks.map(([mx, my, ang], i) => (
               <path
                 key={i}

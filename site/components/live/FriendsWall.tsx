@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
+import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
 import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import { Pedestal } from "./art";
 
 /** キャラクター画像は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
@@ -38,111 +39,181 @@ function useOnIslandToday(): Map<string, string> {
 /**
  * 島を歩いている仲間の図鑑。
  *
- * 「投げ銭で作ったキャラクターが並ぶ面」なので、一人ひとりが主役に見えないと意味がない。
- * 丸く小さく切り抜いて敷き詰めると、誰の絵も見えなくなる。
- * だから figure ひとつぶんの枠を大きく取り、絵は切らずに全身を出し、
- * 足元に台座（島の草の切り株）を敷いて、地面に立っているようにする。
+ * ## なぜ一覧をやめて、見開き＋マスにしたか
  *
- * 同じ大きさのマスを22個並べると、それはそれで「一覧」に戻ってしまう。
- * いちばん長くいる人だけ横いっぱいの1枚にして、面に主役を1人つくる。
+ * 前は 22人ぶんの札を2列で積んでいて、面の高さが 5,155px（6.1画面）あった。
+ * それだけ縦を使っても、1人について言えていたのは**名前と日数だけ**で、
+ * 「絵と名前の一覧」から出られていなかった。
  *
- * **今日どこに立っているかを、その人の欄に書く。** 図鑑を名簿で終わらせない。
- * 島の顔ぶれは日替わりなので、ここも毎日書きかわる。
+ * 本物の図鑑（`docs/ac-reference.md` 7章、いきもの図鑑のシーラカンスの面）は
+ * **一覧と1枚を分けている。** 一覧は小さいマスをぎっしり並べるだけ。
+ * 選んだ1匹だけが、絵が縦の半分を占める大きな紙になる。
+ * この形にすると、22人ぶんの縦を使わずに、1人あたりの中身は増える。
+ *
+ * 題名の札は**絵の上**（実測。白い紙を少し傾けて貼ってある）。
+ * 欄は罫で割って、見出しに蛍光ペンの帯を敷く。影は落とさない。
+ *
+ * ## 何を書いて、何を書かないか
+ *
+ * 島にいるのは視聴者さんご本人なので、**こちらが書いた人物評は出さない。**
+ * `chatter.ts` の `note` には「毒舌」「夜勤明けが多い」のような、
+ * セリフを書くための手控えが入っている。あれは本人の紹介文ではない。
+ *
+ * 出すのは**その人が島で実際に言うこと**だけにする。口調はその人のものを
+ * 写してあるので（`content/chatter.ts`）、セリフを並べれば人柄はそれで伝わる。
+ * はじめての人への1言目と、久しぶりの人への1言目も、島で出るものと同じ。
  *
  * 名前を出すか出さないかは本人が決める（`docs/island-concept.md`）。
  * `/island-api/state` の residents に載っている人だけ名札を付け、
- * そのほかはキャラクターと「いっしょにいた日数」だけを出す。誰が誰かは、絵だけが示す。
+ * そのほかは通し番号だけ。誰が誰かは、絵だけが示す。
  *
- * ここは紙の型。押すものではないので、厚みも影も付けない。
+ * ここは紙の型。押すのはマスと送りだけなので、そこにしか厚みを付けない。
  */
 export default function FriendsWall() {
   const show = useResidentShow();
   const here = useOnIslandToday();
-  const list = RESIDENTS.filter((r) => r.icon);
-  // 日数の帯は、いちばん長くいる人を満杯にした割合で描く
-  const top = Math.max(...list.map((r) => r.days), 1);
-  const named = list.filter((r) => show.get(r.icon!)?.name).length;
-  const [star, ...rest] = list;
-  const starSpot = star?.icon ? here.get(star.icon) : undefined;
+  const list = useMemo(() => RESIDENTS.filter((r) => r.icon), []);
+  const [at, setAt] = useState(0);
+  // 送りで見開きが差し替わったとき、目が迷子にならないよう見出しへ焦点を戻す。
+  // ただし最初に開いたときは動かさない（勝手にスクロールしない）。
+  const first = useRef(true);
+  const head = useRef<HTMLParagraphElement>(null);
+
+  const say = useMemo(() => Object.fromEntries(VOICES.map((v) => [v.icon, v])), []);
+  const r = list[at];
+  const v = r?.icon ? say[r.icon] : undefined;
+  const name = r?.icon ? show.get(r.icon)?.name : undefined;
+  const spot = r?.icon ? here.get(r.icon) : undefined;
+  const named = list.filter((x) => show.get(x.icon!)?.name).length;
+
+  const go = (n: number) => {
+    setAt((n + list.length) % list.length);
+    if (!first.current) head.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    first.current = false;
+  };
+
+  if (!r) return null;
 
   return (
     <>
-      {star && (
-        <figure className="rz-star">
-          <span className="rz-shot">
-            <Pedestal w={124} />
-            <img src={drive(star.icon!, 384)} alt="" />
-          </span>
-          <figcaption>
-            <span className="rz-star-tag">いちばん長くいる人</span>
-            <b>{show.get(star.icon!)?.name ?? "No.1"}</b>
-            {/* 「80日」だけでは長いのか短いのか分からない。数えている幅ごと出す */}
-            <span className="rz-star-n">
-              直近90日のうち<b>{star.days}</b>日
-            </span>
-            <span className="rz-bar">
-              <i style={{ width: `${Math.round((star.days / 90) * 100)}%` }} />
-            </span>
-            {starSpot && (
-              <span className="rz-here">
-                <Icon name="pin" size={12} />
-                今日は{starSpot}のあたりにいます
-              </span>
+      {/* 図鑑の1枚。絵が縦の半分以上を占めるのが本物の型（ac-reference 7章 4）。 */}
+      <div className="rzk">
+        <div className="rzk-page">
+          {/* 題名の札は絵の上。テープで貼ったように少し傾ける。
+              名前を出していない人は通し番号が題名になる。 */}
+          <p className="rzk-tag" ref={head}>
+            {name ?? `No.${at + 1}`}
+          </p>
+
+          <div className="rzk-art">
+            <Pedestal w={150} />
+            {/* 22人ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く */}
+            <img key={r.icon} src={drive(r.icon!, 512)} alt="" />
+          </div>
+
+          <dl className="rzk-fields">
+            {/* いっしょにいた日数は出さない。日数は BigQuery から正しく数えられるが、
+                その数字がこの絵の人のものだ、とは言えない。キャラクターの絵と
+                YouTube のチャンネルを結ぶ表がまだどこにも無いため（issue #113）。
+                手で書いた値が並んでいて、実在する人の順番を間違えて出していた。
+                表ができたら python/build_residents.py が焼くので、そのとき戻す。 */}
+            <div className="rzk-wide">
+              <dt>今日いるところ</dt>
+              {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
+                  分からないあいだは何も言わない（island-world.md 4.3 ④）。 */}
+              <dd>
+                {here.size === 0 ? (
+                  <span className="rzk-quiet">数えています</span>
+                ) : spot ? (
+                  <span className="rzk-spot">
+                    <Icon name="pin" size={13} />
+                    {spot}のあたり
+                  </span>
+                ) : (
+                  <span className="rzk-quiet">今日は出ていません</span>
+                )}
+              </dd>
+            </div>
+            {v && (
+              <>
+                <div className="rzk-wide">
+                  <dt>島で言うこと</dt>
+                  <dd>
+                    <ul className="rzk-lines">
+                      {v.lines.slice(0, 2).map((l) => (
+                        <li key={l}>{l}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+                <div>
+                  <dt>はじめての人に</dt>
+                  <dd className="rzk-say">{v.greet.first}</dd>
+                </div>
+                <div>
+                  <dt>久しぶりの人に</dt>
+                  <dd className="rzk-say">{v.greet.back}</dd>
+                </div>
+              </>
             )}
-          </figcaption>
-        </figure>
-      )}
+          </dl>
+
+          {/* 送り。詳細ページの `.pager` と同じ役なので、同じ向きの印を使う */}
+          <nav className="rzk-pager" aria-label="図鑑を送る">
+            <button type="button" onClick={() => go(at - 1)}>
+              <Icon name="left" size={14} />
+              まえの人
+            </button>
+            <span>
+              <b>{at + 1}</b> / {list.length}
+            </span>
+            <button type="button" onClick={() => go(at + 1)}>
+              つぎの人
+              <Icon name="right" size={14} />
+            </button>
+          </nav>
+        </div>
+
+        {/* 一覧のマス。押すと上の1枚が差し替わる。
+            選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6）。 */}
+        <div className="rzk-grid" role="tablist" aria-label="島の住人">
+          {list.map((x, i) => {
+            const on = i === at;
+            return (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={on}
+                className={`rzk-cell${on ? " is-on" : ""}${here.get(x.icon!) ? " is-here" : ""}`}
+                key={x.icon}
+                onClick={() => go(i)}
+              >
+                <span className="rzk-cell-no">{i + 1}</span>
+                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* 島へ戻る道。図鑑で顔を覚えた人に会いに行けるのが、この面のいちばんの用事。 */}
       {here.size > 0 && (
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
-          顔ぶれは毎日入れ替わります。近くまで行くと、その人のほうから話しかけてくれます。
+          マスの角が光っているのが、その人たちです。近くまで行くと、向こうから話しかけてきます。
           <Link href="/">
             島へ会いに行く
-            <Icon name="right" size={12} />
+            <Icon name="right" size={13} />
           </Link>
         </p>
       )}
 
-      <div className="rz">
-        {rest.map((r, i) => {
-          const s = show.get(r.icon!);
-          const spot = here.get(r.icon!);
-          return (
-            <figure className={`rz-card${s?.name ? "" : " is-blank"}`} key={r.icon}>
-              <span className="rz-no">No.{i + 2}</span>
-              <span className="rz-shot">
-                <Pedestal />
-                <img src={drive(r.icon!, 256)} alt="" loading="lazy" />
-              </span>
-              {/* 名前を出していない人の欄は、通し番号だけを上の隅に置いて空けておく。
-                  「名前は出していない人」と21回書くと、それだけで面が埋まる。 */}
-              {s?.name && <figcaption className="rz-name">{s.name}</figcaption>}
-              <span className="rz-days">
-                <b>{r.days}</b>日いっしょ
-              </span>
-              <span className="rz-bar">
-                <i style={{ width: `${Math.round((r.days / top) * 100)}%` }} />
-              </span>
-              {/* 今日どこに立っているか。いない人の欄には何も書かない
-                  （「今日はいません」と21回書くと、留守の札が並ぶだけになる） */}
-              {spot && (
-                <span className="rz-here">
-                  <Icon name="pin" size={11} />
-                  {spot}
-                </span>
-              )}
-            </figure>
-          );
-        })}
-      </div>
       <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
         いま{list.length}人ぶんの絵があります。
-        {named > 0 ?
-          `そのうち${named}人が、島に名前を出すことにしてくれました。` :
-          "名前を出すかどうかは本人が決めるので、いまは誰も出していません。"}
-        帯の長さは、直近90日でいっしょにいた日数です。
+        {named > 0
+          ? `そのうち${named}人が、島に名前を出すことにしてくれました。`
+          : "名前を出すかどうかは本人が決めるので、いまは誰も出していません。"}
+        セリフは、その人が配信で書いてきたコメントから口調だけを写したものです。
       </p>
     </>
   );

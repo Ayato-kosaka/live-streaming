@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PLANS, planDaysLeft, nextPlan, type Plan } from "@/content/plans";
 import { HOME } from "@/content/voice";
-import Icon from "@/components/ui/Icon";
+import Icon from "@/components/ui/IconCore";
 import { NoticeBell } from "./art";
 
 /**

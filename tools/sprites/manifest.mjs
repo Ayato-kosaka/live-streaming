@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 /**
  * あやと島で使うスプライトの一覧。
  * 建物はモジュールパーツを組み立てて1枚に焼く。
@@ -34,15 +36,26 @@ const WOODEN = {
   blue: { h: 0.072, s: 0.42, l: [0.34, 0.52] },
   neutral: { h: 0.10, s: 0.30, l: [0.62, 0.86] },
 };
+/* 幹の太さ。
+ *
+ * 公式スクショの木を測ると、幹の幅は樹冠の幅の 0.35 倍ある
+ * （`/tmp/acref/crop_tree.png`。樹冠 254px に幹 90px）。
+ * Kenney の広葉樹は 0.22〜0.29 倍しかなく、樹冠の重さに対して
+ * 幹が細い棒で、遠目には「緑の玉が浮いている」ように見えていた。
+ * 1.28 倍にすると 0.28 → 0.36 で、公式とほぼ同じ比になる。
+ *
+ * 針葉樹とヤシには掛けない。あちらは公式でも細い。 */
+const TRUNK = { trunk: 1.28 };
+
 /** 広葉樹。樹冠を房に分ける。1で既定の効き、小さいほど元の塊に近い。
  *
  * 掛けてよいのは「樹冠がひと塊のモデル」だけ。tree_detailed / tree_blocks /
  * tree_plateau のように、はじめから葉のかたまりが枝ごとに分かれているものに
  * 掛けると、その散らばりごと12個に複製されて、立方体が空中にばらけた絵になる。
  * 分かれている木は、それ自体がもう「房の集まり」なので何もしない。 */
-const LEAFY = { lobes: 1 };
+const LEAFY = { lobes: 1, ...TRUNK };
 /** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
-const LEAFY_SOFT = { lobes: 0.72 };
+const LEAFY_SOFT = { lobes: 0.72, ...TRUNK };
 
 /** 雪。「わずかに青い白」を無彩色として拾わせる(render.html の chromaMax)。 */
 const SNOWY = { neutral: { chromaMax: 0.20 } };
@@ -181,6 +194,267 @@ const VILLAGER = {
 /** キットに無い小物は箱を組んで作る。 */
 const box = (size, color, pos, rot = [0, 0, 0]) => ({ box: size, color, pos, rot });
 
+/** 箱を組むときの色。[色相, 彩度, 明度] の sRGB。 */
+const C = {
+  post: [0.080, 0.44, 0.42],   // 杭・柱。樹皮より一段暗い
+  plank: [0.088, 0.46, 0.62],  // 板
+  face: [0.100, 0.24, 0.88],   // 板に貼った白い面
+  rope: [0.105, 0.30, 0.66],   // 麻の綱
+  gold: [0.122, 0.80, 0.60],
+  red: [0.010, 0.66, 0.52],
+  blue: [0.560, 0.52, 0.56],
+  yellow: [0.128, 0.86, 0.62],
+};
+
+/**
+ * 組み立てたものを、まとめて縮めて置き直す。
+ * 建物のパーツは 1マス = 1.0 で作られているので、岩の上に載せるような
+ * 「小さい建物」は、部品ごとに倍率と座標を掛け直さないと組めない。
+ */
+const scaled = (parts, k, [dx, dy, dz] = [0, 0, 0]) => parts.map((p) => {
+  const [x, y, z] = p.pos ?? [0, 0, 0];
+  const q = { ...p, pos: [x * k + dx, y * k + dy, z * k + dz] };
+  // 箱は寸法そのものを縮める。scale を足すと二重に効く
+  if (p.box) q.box = p.box.map((v) => v * k);
+  else q.scale = (p.scale ?? 1) * k;
+  return q;
+});
+
+/**
+ * 2点に渡した綱。
+ * たるみ(sag)を付けないと、突っ張った棒にしか見えない。
+ * 短い箱をつないで作るので、節ごとに傾きを計算する。
+ */
+const rope = (a, b, sag, seg = 8, w = 0.05) => {
+  const at = (t) => [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t - sag * Math.sin(Math.PI * t),
+    a[2] + (b[2] - a[2]) * t,
+  ];
+  const out = [];
+  for (let i = 0; i < seg; i++) {
+    const p = at(i / seg);
+    const q = at((i + 1) / seg);
+    const [dx, dy, dz] = [q[0] - p[0], q[1] - p[1], q[2] - p[2]];
+    out.push(box(
+      // 節どうしを少し重ねる。隙間が空くと綱ではなく点線に見える
+      [Math.hypot(dx, dy, dz) + w * 0.9, w, w], C.rope,
+      [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2],
+      [0, 0, (Math.atan2(dy, dx) * 180) / Math.PI],
+    ));
+  }
+  return out;
+};
+
+/* ---------------- 旅の桟橋 ----------------
+ * 島の「旅の桟橋」に立っていたのは、何も書いていない道しるべ(sign.glb)。
+ * 名前は桟橋なのに絵は道端の標識で、指しているものが違っていた(issue #114)。
+ * 名前は変えない判断をしたので、絵のほうを桟橋に寄せる。
+ *
+ * 桟橋の見分けは「水から突き出た杭」と「杭に巻いたもやい綱」。
+ * 板だけ並べると、ただの木の道になる。杭を板より高く出すのが要。 */
+const pier = () => [
+  // 板。2枚 × 2列。奥から手前へ張り出す
+  ...[-0.5, 0.5].flatMap((x) => [
+    part(`${NK}/path_wood.glb`, [x, 0.46, -0.26]),
+    part(`${NK}/path_wood.glb`, [x, 0.46, 0.26]),
+  ]),
+  // 杭。手前の2本だけ板を突き抜けて高く出し、そこに綱を渡す
+  box([0.17, 1.12, 0.17], C.post, [-0.84, 0.56, 0.30]),
+  box([0.17, 0.92, 0.17], C.post, [0.84, 0.46, 0.30]),
+  box([0.15, 0.46, 0.15], C.post, [-0.84, 0.23, -0.30]),
+  box([0.15, 0.46, 0.15], C.post, [0.84, 0.23, -0.30]),
+  ...rope([-0.84, 1.04, 0.30], [0.84, 0.84, 0.30], 0.36),
+  // 杭に巻いてある綱。巻きが無いと、ただ棒に引っ掛けただけに見える
+  box([0.21, 0.07, 0.21], C.rope, [-0.84, 0.94, 0.30]),
+  box([0.21, 0.07, 0.21], C.rope, [0.84, 0.75, 0.30]),
+  // 板の上の積み荷。ここから出ていく所だ、というひとこと。
+  // 1周目は綱のとぐろを置いたが、上から見ると板の染みにしか見えなかった
+  { url: `${FK}/barrel.glb`, pos: [0.24, 0.46, 0.02], scale: 0.62, tint: WOODEN },
+  { url: `${FK}/bag.glb`, pos: [-0.16, 0.46, 0.16], rot: [0, 28, 0], scale: 0.52 },
+];
+
+/* ---------------- 伝説の丘の記念碑 ----------------
+ * 丘に並ぶのは「380kmイラン横断」「GWエジプト祭り」のように、
+ * 一つひとつ性格の違う企画。看板と石碑を使い回すと、どれがどれなのか
+ * 分からない棚になる。企画ごとに、その日を指す形を組む。 */
+
+/**
+ * 道しるべ。歩いた企画。
+ *
+ * 板の端に45度の四角を重ねて矢印の先を作る。1周目は四角を板の高さより
+ * 小さくしたので、対角線が板に収まってしまい、ただの長方形に見えていた。
+ * 板の外へはみ出す大きさにしないと、矢印にならない。
+ * 足元には荷物。「歩いて行った」を言うのは、板ではなくこちら。
+ */
+const legendWalk = () => {
+  /** 行き先の板1枚。x は柱からの張り出し、d は張り出す向き。 */
+  const arrow = (y, len, d, tilt) => {
+    const half = len / 2;
+    const tip = d * (half * 2 + 0.02);
+    return [
+      box([len, 0.22, 0.055], C.face, [d * half, y, 0.03], [0, 0, tilt]),
+      box([0.24, 0.24, 0.055], C.face, [tip, y + (d > 0 ? 0.01 : -0.01), 0.03], [0, 0, 45]),
+    ];
+  };
+  return [
+    box([0.15, 1.40, 0.15], C.post, [0, 0.70, 0]),
+    box([0.22, 0.09, 0.22], C.post, [0, 1.42, 0]),
+    ...arrow(1.14, 0.80, 1, 2),
+    ...arrow(0.82, 0.66, -1, -3),
+    // 足元の荷物。柱に寄せると柱の一部に見えるので、離して置く
+    { url: `${FK}/bag.glb`, pos: [-0.44, 0, 0.56], rot: [0, 24, 0], scale: 0.84 },
+    { url: `${FK}/bag-flat.glb`, pos: [0.40, 0, 0.50], rot: [0, -34, 0], scale: 0.80 },
+  ];
+};
+
+/** 遺跡。エジプト祭り。オベリスクと折れた柱と石の顔。 */
+const legendRuins = () => [
+  { url: `${NK}/statue_obelisk.glb`, pos: [-0.10, 0, -0.16], scale: 1.25 },
+  { url: `${NK}/statue_columnDamaged.glb`, pos: [0.50, 0, 0.16], scale: 0.92 },
+  // 石だけ3つ並べると、どこの遺跡だか分からない。ナツメヤシを1本足す
+  { url: `${NK}/tree_palmDetailedShort.glb`, pos: [-0.95, 0, 0.60], scale: 0.74 },
+];
+/** 遺跡の石。灰色にすると北欧の石になるので、砂の色へ寄せる。 */
+const SANDSTONE = {
+  mat: {
+    stone: [0.105, 0.34, 0.78], stonedark: [0.100, 0.32, 0.62],
+    dirt: [0.098, 0.36, 0.70], grass: [0.298, 0.40, 0.50],
+  },
+  moss: { from: "stone" },
+};
+
+/* 年越し24時間配信。
+ *
+ * 1周目は街灯と丸太を置いて「夜通し」を言おうとしたが、島にある街灯と
+ * ベンチをそのまま並べただけで、どの企画かが読めなかった。
+ * この日を指しているのは時刻そのもの——0時をまたいで回り続けた針。
+ * 文字盤を組んで、針を12時に立てる。
+ *
+ * 文字盤の向き。既定の軸は Y なので、rot [0,135,90] で
+ * 「カメラの方位(yaw45)へ向いた軸」にする。こうすると円が
+ * 縦つぶれだけで済み、45度のまま置いたときより丸く見える。 */
+const CLOCK_Y = 1.40;
+/** 文字盤の面の法線。手前へ 0.07 出したところに針と目盛りを置く */
+const CLOCK_N = [0.0495, 0.0495];
+/** 文字盤の面の横方向(3時と9時の向き)。カメラ方位と直交する */
+const CLOCK_U = [0.7071, -0.7071];
+const clockAt = (u, y, out = 1) => [
+  CLOCK_U[0] * u + CLOCK_N[0] * out, y, CLOCK_U[1] * u + CLOCK_N[1] * out,
+];
+const legendVigil = () => [
+  // 柱は文字盤の下で止める。1周目は文字盤と同じ高さまで伸ばしてしまい、
+  // 針が柱の裏に隠れて、ただの丸い板になっていた
+  box([0.17, 0.98, 0.17], C.post, [0, 0.49, 0]),
+  box([0.34, 0.10, 0.34], C.post, [0, 0.05, 0]),
+  // 文字盤。ふちを一回り大きい輪で囲って、板ではなく時計にする
+  { disc: { r: 0.46, h: 0.09 }, color: C.gold, pos: [0, CLOCK_Y, 0], rot: [0, 135, 90] },
+  { disc: { r: 0.40, h: 0.12 }, color: C.face, pos: [0, CLOCK_Y, 0], rot: [0, 135, 90] },
+  // 目盛りは12・3・6・9の4本だけ。12本入れると小さく出したとき潰れる
+  box([0.07, 0.10, 0.07], C.post, clockAt(0, CLOCK_Y + 0.31)),
+  box([0.07, 0.10, 0.07], C.post, clockAt(0, CLOCK_Y - 0.31)),
+  box([0.10, 0.07, 0.10], C.post, clockAt(0.31, CLOCK_Y), [0, 45, 0]),
+  box([0.10, 0.07, 0.10], C.post, clockAt(-0.31, CLOCK_Y), [0, 45, 0]),
+  // 針。長針は12ちょうど、短針は少し手前。重ねると1本に見える
+  box([0.075, 0.36, 0.075], C.post, clockAt(0, CLOCK_Y + 0.18, 1.6)),
+  box([0.085, 0.24, 0.085], C.post, clockAt(-0.03, CLOCK_Y + 0.12, 2.2), [0, 45, 8]),
+  { disc: { r: 0.06, h: 0.08 }, color: C.red, pos: clockAt(0, CLOCK_Y, 2.4), rot: [0, 135, 90] },
+  // 夜通しの明かり。時計の足元だけ暖める
+  { glow: { r: 0.62, color: 0xffd9a0, strength: 0.44 }, pos: [0, 0.006, 0] },
+];
+/** 文字盤を下から暖める。夜のあいだずっと点いていた、という色 */
+const VIGIL = {
+  lights: [{ color: 0xffbe6a, intensity: 0.09, distance: 2.4, decay: 2, pos: [0, 0.50, 0.40] }],
+};
+
+/* 100万再生。
+ *
+ * 1周目は石の台に金の輪(statue_ring)を立てたが、金具の取っ手にしか
+ * 見えなかった。賞だと分かるのは、輪ではなく杯の形。
+ * 円盤の上下の太さを変えられるので(disc の r2)、口の開いた杯を組む。 */
+const legendMedal = () => [
+  part(`${NK}/statue_block.glb`),
+  { disc: { r: 0.17, h: 0.06 }, color: C.gold, pos: [0, 0.38, 0] },
+  box([0.075, 0.16, 0.075], C.gold, [0, 0.49, 0]),
+  { disc: { r: 0.25, r2: 0.13, h: 0.30 }, color: C.gold, pos: [0, 0.72, 0] },
+  { disc: { r: 0.27, h: 0.055 }, color: C.gold, pos: [0, 0.885, 0] },
+  // 取っ手。これが無いと、金の植木鉢に見える
+  box([0.075, 0.20, 0.075], C.gold, [0.28, 0.76, 0], [0, 0, 22]),
+  box([0.075, 0.20, 0.075], C.gold, [-0.28, 0.76, 0], [0, 0, -22]),
+];
+
+/* ルーレットで行く、ぶらり旅。
+ *
+ * 1周目はキットの車輪(wheel.glb)を軸受けに載せたが、荷車の車輪にしか
+ * 見えなかった。回して行き先を決めるものは、輻(スポーク)ではなく
+ * 「色の分かれた縁」と「止まった所を指す針」で分かる。
+ * 円盤を組んで、縁に出目を並べる。 */
+const WHEEL_Y = 0.86;
+const WHEEL_R = 0.40;
+/** 出目。輪の縁を等分に色分けする。角度は12時から時計回り。 */
+const pips = () => {
+  const cols = [C.red, C.yellow, C.blue, C.face, C.red, C.yellow, C.blue, C.face];
+  return cols.map((c, i) => {
+    const a = (i / cols.length) * Math.PI * 2;
+    return box(
+      [0.19, 0.17, 0.15], c,
+      [0, WHEEL_Y + Math.cos(a) * WHEEL_R, Math.sin(a) * WHEEL_R],
+      [(a * 180) / Math.PI, 0, 0],
+    );
+  });
+};
+const legendWheel = () => [
+  box([0.90, 0.11, 0.40], C.plank, [0, 0.055, 0]),
+  box([0.12, 0.60, 0.12], C.post, [-0.32, 0.36, 0]),
+  box([0.12, 0.60, 0.12], C.post, [0.32, 0.36, 0]),
+  { disc: { r: 0.47, h: 0.10 }, color: C.post, pos: [0, WHEEL_Y, 0], rot: [0, 0, 90] },
+  { disc: { r: 0.40, h: 0.14 }, color: C.face, pos: [0, WHEEL_Y, 0], rot: [0, 0, 90] },
+  ...pips(),
+  { disc: { r: 0.09, h: 0.20 }, color: C.post, pos: [0, WHEEL_Y, 0], rot: [0, 0, 90] },
+  // 止まった所を指す針。輪より上から降ろす
+  box([0.10, 0.24, 0.10], C.red, [0, WHEEL_Y + 0.60, 0]),
+];
+
+/** 山の上の教会。カズベキ遠征。岩の台地に小さい礼拝堂を1つ載せる。 */
+const chapel = () => [
+  ...[0, 90, 180, 270].map((d) => W(0, 0, d, d === 270 ? "wall-door" : "wall-window-small")),
+  part(`${BK}/roof-point.glb`, [0, 1, 0]),
+];
+/* カズベキ遠征。
+ *
+ * 1周目は cliff の立方体に礼拝堂を載せたが、天面が芝のままで
+ * 「土の箱の上に建った家」にしかならなかった。カズベキで写っているのは
+ * 尖った岩山と、その手前の小さい礼拝堂。岩は cliff ではなく rock_tall を
+ * 大きくして使う。輪郭が不揃いなぶん、山に見える。 */
+const legendPeak = () => [
+  { url: `${NK}/rock_tallG.glb`, pos: [-0.62, 0, -0.62], scale: 2.5, tint: STONE },
+  { url: `${NK}/rock_tallC.glb`, pos: [0.42, 0, -0.95], scale: 1.5, tint: STONE },
+  { url: `${HK}/snow-pile.glb`, pos: [-0.62, 1.52, -0.62], scale: 0.78 },
+  { url: `${HK}/snow-pile.glb`, pos: [0.42, 0.86, -0.95], scale: 0.46 },
+  // 手前の丘。礼拝堂を地面に直接置くと、山の裾に埋まって見えなくなる
+  { url: `${NK}/rock_largeA.glb`, pos: [0.52, 0, 0.62], scale: 1.35, tint: STONE },
+  ...scaled(chapel(), 0.50, [0.52, 0.31, 0.62]).map((p) => ({ ...p, tint: house("coral") })),
+  { url: `${HK}/tree-snow-b.glb`, pos: [-1.18, 0, 0.72], scale: 0.62 },
+];
+
+/** イワシ3日連続。まな板に3尾。1尾だけだと、ただの魚の絵になる。 */
+const legendFish = () => [
+  { url: `${FK}/cutting-board.glb`, rot: [0, 90, 0], scale: 1.15 },
+  // 3尾。まな板からはみ出すと皿に乗っていないように見えるので、少し縮める
+  ...[[-0.21, -7], [0.01, 6], [0.22, -3]].map(([z, ry], i) => ({
+    url: `${FK}/fish.glb`, pos: [i === 1 ? 0.03 : -0.02, 0.07, z], rot: [0, 90 + ry, 0], scale: 0.82,
+  })),
+];
+
+/** お祝いの電飾。登録1,000人。柱2本に電飾を渡して、下に切株の台を置く。 */
+const legendLights = () => [
+  box([0.12, 1.24, 0.12], C.post, [-0.72, 0.62, 0]),
+  box([0.12, 1.06, 0.12], C.post, [0.72, 0.53, 0]),
+  { url: `${HK}/lights-colored.glb`, pos: [0, 0.90, 0], scale: [1.52, 1.20, 1.4] },
+  { url: `${NK}/stump_roundDetailed.glb`, pos: [0.02, 0, 0.34], scale: 0.9 },
+  { url: `${FK}/cake-birthday.glb`, pos: [0.02, 0.36, 0.34], scale: 0.8, plain: true },
+];
+
 /** 掲示板。丸太2本に板を渡して、企画の紙を貼る。 */
 const board = () => [
   part(`${BK}/pillar-wood.glb`, [-0.42, 0, 0]),
@@ -201,7 +475,7 @@ const mailbox = () => [
   box([0.02, 0.07, 0.15], [0.13, 0.85, 0.58], [0.25, 0.93, 0.075]),
 ];
 
-export const SPRITES = [
+const SPRITES_BASE = [
   /* ---------- 建物 ---------- */
   { name: "hut-kitchen", parts: [...cottage(), ...chimney(0.38)], opts: house("coral") },
   { name: "hut-workshop", parts: cottage(), opts: house("sky") },
@@ -218,6 +492,7 @@ export const SPRITES = [
   { name: "canoe-paddle", parts: [`${NK}/canoe_paddle.glb`] },
   { name: "campfire", parts: campfire(), opts: CAMPFIRE },
   { name: "signpost", parts: [`${NK}/sign.glb`] },
+  { name: "pier", parts: pier() },
   { name: "statue", parts: [`${NK}/statue_obelisk.glb`] },
   { name: "statue-head", parts: [`${NK}/statue_head.glb`] },
   { name: "canoe", parts: [`${NK}/canoe.glb`] },
@@ -242,6 +517,17 @@ export const SPRITES = [
   { name: "hedge", parts: [`${BK}/hedge.glb`] },
   { name: "hedge-gate", parts: [`${BK}/hedge-gate.glb`] },
 
+  /* ---------- 伝説の丘 ----------
+     `site/content/legends.ts` の企画1つに絵1つ。名前は slug に合わせる。 */
+  { name: "legend-iran-walk", parts: legendWalk() },
+  { name: "legend-egypt-festival", parts: legendRuins(), opts: SANDSTONE },
+  { name: "legend-newyear-24h", parts: legendVigil(), opts: VIGIL },
+  { name: "legend-million-views", parts: legendMedal(), opts: GREYSTONE },
+  { name: "legend-roulette-georgia", parts: legendWheel(), opts: WOODEN },
+  { name: "legend-kazbegi", parts: legendPeak(), opts: SNOWY },
+  { name: "legend-iwashi-festival", parts: legendFish(), opts: { plain: true } },
+  { name: "legend-thousand-subs", parts: legendLights() },
+
   /* ---------- 島の景色 ----------
      押せない飾り。遠くに置いて島を広く見せる。 */
   { name: "windmill", parts: [`${BK}/windmill.glb`], opts: house("sky") },
@@ -251,20 +537,20 @@ export const SPRITES = [
      広葉樹は樹冠を房に分ける(LEAFY)。針葉樹とヤシは葉がもともと分かれているので掛けない。 */
   { name: "tree-round", parts: [`${NK}/tree_oak.glb`], opts: LEAFY },
   { name: "tree-fat", parts: [`${NK}/tree_fat.glb`], opts: LEAFY },
-  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: { lobes: 0.3 } },
+  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: { lobes: 0.3, ...TRUNK } },
   // tree_blocks は葉が立方体の集まりだが、法線をならすと1個の丸い塊に
   // なってしまい、tree-round と見分けが付かない。房をごく弱く掛けて、
   // 面の向きを崩し、キットの「積み木の木」らしさを戻す
-  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: { lobes: 0.34 } },
+  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: { lobes: 0.34, ...TRUNK } },
   { name: "tree-default", parts: [`${NK}/tree_default.glb`], opts: LEAFY },
   { name: "tree-small", parts: [`${NK}/tree_small.glb`], opts: LEAFY },
-  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`] },
+  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`], opts: TRUNK },
   { name: "tree-thin", parts: [`${NK}/tree_thin.glb`], opts: LEAFY_SOFT },
   { name: "tree-pine", parts: [`${NK}/tree_pineDefaultA.glb`] },
   { name: "tree-pine-tall", parts: [`${NK}/tree_pineTallA.glb`] },
   { name: "tree-pine-round", parts: [`${NK}/tree_pineRoundC.glb`] },
   { name: "tree-pine-small", parts: [`${NK}/tree_pineSmallB.glb`] },
-  { name: "tree-cone", parts: [`${NK}/tree_cone.glb`] },
+  { name: "tree-cone", parts: [`${NK}/tree_cone.glb`], opts: TRUNK },
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
   { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
   { name: "tree-palm-bend", parts: [`${NK}/tree_palmBend.glb`] },
@@ -439,3 +725,39 @@ export const SPRITES = [
     opts: VILLAGER,
   }))),
 ];
+
+/* ---------------- 図鑑の主役だけ、もう1枚大きく焼く ----------------
+ *
+ * `/kitchen/[品]` と `/legends` は、絵1つでその面が持っている。画面では
+ * 高さ 300px 近くまで出るのに、焼いてあるのは長辺 320px（卵サンドで 197×253）。
+ * 高精細画面では2倍に引き伸ばされて、主役の絵だけがぼけていた。
+ *
+ * 全部を大きくすると一覧のマスまで重くなるので、**主役として出る絵だけ**
+ * 長辺 640px でもう1枚焼き、`sprites/hero/` に置く。画面側は srcset で
+ * 2倍の画面にだけそちらを配るので、増えるのは詳細を開いた人の1枚だけ。
+ *
+ * どれが主役かは recipes.ts と legends.ts が決めている。ここに名前を写すと
+ * 品が増えたとき片方だけ古くなるので、その2つを読んで拾う。 */
+const HERO_PX = 640;
+const CONTENT = new URL("../../site/content/", import.meta.url);
+
+const heroNames = () => {
+  const out = new Set();
+  for (const f of ["recipes.ts", "legends.ts"]) {
+    for (const m of fs.readFileSync(new URL(f, CONTENT), "utf8").matchAll(/^\s*icon: "([^"]+)"/gm)) {
+      out.add(m[1]);
+    }
+  }
+  return [...out].sort();
+};
+
+export const SPRITES = [
+  ...SPRITES_BASE,
+  ...heroNames().map((name) => {
+    const base = SPRITES_BASE.find((s) => s.name === name);
+    // 一覧に無い名前を主役に指定している。焼けないので、黙って飛ばさず止める
+    if (!base) throw new Error(`主役に指定された絵が manifest に無い: ${name}`);
+    return { ...base, name: `hero/${name}`, opts: { ...(base.opts ?? {}), px: HERO_PX } };
+  }),
+];
+

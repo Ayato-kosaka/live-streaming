@@ -65,4 +65,4 @@ tools/sprites/node_modules
 tools/sprites/.perf/
 
 # 使い捨ての測定スクリプト。並列で作業していると溜まるので、追わない
-tools/sprites/_*.mjs
+tools/sprites/_*

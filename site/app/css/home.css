@@ -1,8 +1,11 @@
 /*
  * トップページの章立て。
  *
- * 同じ形のパネルを縦に積むのをやめて、「これから／いま／これまで／見にいく」の
- * 4つの章に区切った。章ごとに地の色を変え、境目に木の看板を吊るす。
+ * 「これから／いま／これまで／見にいく」の4章。章ごとに中の形を変える
+ *   これから … しらせと時計（.nextup）
+ *   いま     … 名刺（.mei）
+ *   これまで … 棚の格子（.shelf）
+ *   見にいく … 画面（.scards + .houts）
  *
  * 本物（docs/ac-reference.md）から持ってきている作り:
  *   - 輪郭線を引かない。境目は色の差と厚みで作る
@@ -12,88 +15,90 @@
  *   - 絵は枠から少しはみ出させる。平らな四角ではなく「箱に物が入っている」に見せる
  */
 
-/* ───────── 章 ───────── */
+/* ───────── 章 ─────────
+ *
+ * 地を海から浜（砂）に変えた。理由は components/home/Chapter.tsx に書いた。
+ * 要点だけ: 海は時間帯で色が変わるので、その上に置いた字は白でも墨でも
+ * 4.5 : 1 に届かない。実測で 1.91〜2.78 : 1 だった。地のほうを変えるしかない。
+ *
+ * 海は章と章のあいだに残る。島の板の上に立っていることは変わらない
+ * （docs/island-world.md 2章。`/` は板、地は海）。
+ */
 
 .home {
-  /* 章が地の色を持つので、ページ側の余白は章に任せる */
+  /* 砂の帯が端まで伸びるので、ページ側の左右余白は帯に任せる。
+     広い画面でも帯だけは端まで届かせる。940px で切ると、砂の四角が海に浮いて
+     「浜」ではなく「板を1枚置いた」に見える。中身の幅は帯の内側で絞る。 */
+  max-width: none;
   padding-left: 0;
   padding-right: 0;
 }
 
 .hchap {
   position: relative;
-  padding: 30px 16px 34px;
-  margin: 0 0 6px;
+  margin: 0 0 14px;
+}
+.hchap:last-child {
+  margin-bottom: 0;
 }
 
-/* 章の地は持たない。
-   4色のパステルを敷いていたが、その色は何も指していなかった。同じサイトの中で
-   配信の型5色が意味を持っているので、片方が意味を持つともう片方も意味があるように
-   見えて、読む人が探してしまう（docs/island-world.md 7.2）。
-
-   トップページは島そのものなので、島の下も板の地（海）のまま。
-   章の切り替わりは色ではなく、打ち寄せる泡の線と、吊るした看板でやる。 */
-
-/* 章の境目。前の章との間に、波打ち際の泡を1本引く。
-   色を変えずに「別の浜に来た」と分からせるのは、これがいちばん安い。 */
-.hchap + .hchap {
-  padding-top: 46px;
-}
-.hchap + .hchap::before {
-  content: "";
+/* 打ち寄せる泡。砂の帯の上ぎわに置く。
+   海から浜へ上がったことが、線を引かずに分かる。 */
+.hchap-foam {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
-  height: 14px;
-  /* 泡は下に向かって薄れる。まっすぐな線を引くと水平線に見えてしまう */
-  background:
-    radial-gradient(14px 10px at 12% 0, var(--foam) 60%, transparent 61%),
-    radial-gradient(20px 12px at 34% 0, var(--foam) 60%, transparent 61%),
-    radial-gradient(16px 9px at 58% 0, var(--foam) 60%, transparent 61%),
-    radial-gradient(22px 12px at 82% 0, var(--foam) 60%, transparent 61%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, transparent 100%);
-  opacity: 0.6;
+  top: -9px;
+  height: 16px;
+  z-index: 1;
   pointer-events: none;
+  background:
+    radial-gradient(15px 11px at 11% 100%, var(--foam) 62%, transparent 63%),
+    radial-gradient(21px 13px at 33% 100%, var(--foam) 62%, transparent 63%),
+    radial-gradient(17px 10px at 57% 100%, var(--foam) 62%, transparent 63%),
+    radial-gradient(23px 13px at 79% 100%, var(--foam) 62%, transparent 63%),
+    radial-gradient(14px 9px at 94% 100%, var(--foam) 62%, transparent 63%);
+  opacity: 0.78;
+}
+
+/* 砂の帯。ここから下が「浜」。
+   砂は docs/island-world.md 3.2 の色の表に無い。意味を持たせていない色で、
+   島の地面そのもの。章ごとに色を変えないのは、変えた瞬間に
+   「その色は何を指しているのか」を読む人が探し始めるから（同 3.1）。 */
+.hchap-mat {
+  position: relative;
+  padding: 20px 16px 26px;
+  /* 波打ちぎわは濡れて濃く、奥へ行くほど乾いて明るい。上下で色を変えるだけで浜に見える */
+  background:
+    radial-gradient(120% 60% at 20% 0%, color-mix(in srgb, var(--sand-wet) 60%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--sand-wet) 0%, var(--sand) 16%, #fdf2cd 62%, var(--sand) 100%);
+  box-shadow: inset 0 -3px 0 var(--sand-edge);
 }
 
 .hchap-head {
   position: relative;
   text-align: center;
-  margin: 0 0 var(--sp-4, 22px);
+  margin: 0 0 16px;
 }
 
-/* 白い字を海の上に直に置くと 2.2〜3.1 : 1 にしかならず、読めない。
-   看板の下に落ちる陰として、字の後ろだけ水を暗くする。
-   これで白との比が 8 : 1 を超える。 */
-.hchap-head::before {
-  content: "";
-  position: absolute;
-  inset: -10px -14px 2px;
-  background: radial-gradient(closest-side, rgba(6, 38, 74, 0.58), rgba(6, 38, 74, 0) 78%);
-  z-index: -1;
-  pointer-events: none;
-}
-
+/* 砂の上なので、字は白ではなく墨。海の上に白を置いていたころは 1.91〜2.78 : 1 だった。 */
 .hchap-head h2 {
-  margin: 10px 0 0;
-  font-size: 26px;
+  margin: 6px 0 0;
+  font-size: 24px;
   line-height: 1.32;
   letter-spacing: var(--ls-head);
-  /* 海の上に載るので、白の中身に紺のふち。縁取りの白い字は板の上だけに残す決まり */
-  color: #ffffff;
-  text-shadow:
-    0 2px 0 rgba(9, 44, 82, 0.55),
-    0 0 10px rgba(9, 44, 82, 0.35);
+  color: var(--ink);
 }
 
 .hchap-head > p {
-  margin: 8px auto 0;
+  margin: 6px auto 0;
   max-width: 30em;
   font-size: 14px;
   line-height: 1.75;
-  color: #eaf6ff;
-  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.45);
+  /* 砂の上では --ink-3 が 3.6 : 1、--ink-2 でも実測 4.53〜4.87 : 1 で、
+     4.5 の線に触っている。章の題のすぐ下に来る1行なので墨まで濃くする
+     （砂のいちばん明るいところ #fdf2cd に対して 8.5 : 1）。 */
+  color: var(--ink);
 }
 
 /* ───────── 吊るした木の看板 ───────── */
@@ -104,8 +109,8 @@
   line-height: 0;
 }
 .hsign svg {
-  width: 190px;
-  height: 64px;
+  width: 168px;
+  height: 57px;
   overflow: visible;
 }
 .hsign-rope {
@@ -134,459 +139,354 @@
 .hsign-nail {
   fill: var(--frame-deep);
 }
-/* 看板の文字。SVG の中に置くと字が滲むので、上に重ねる */
+/* 看板の文字。SVG の中に置くと字が滲むので、上に重ねる。
+   白から墨に変えた。こはくの板に白は 1.91 : 1 で、4章の見出しでいちばん薄かった。
+   彫った字として置くと 5 : 1 を超える。上に1本だけ明るい影を落として、掘りを出す。 */
 .hsign em {
   position: absolute;
-  inset: 0;
+  inset: 0 0 6px;
   display: grid;
   place-items: center;
   padding-top: 6px;
   font-style: normal;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   letter-spacing: var(--ls-caps);
-  color: #fffdf5;
-  text-shadow: 0 2px 0 rgba(120, 76, 24, 0.32);
-}
-
-/* ───────── 章の中の大きなカード ───────── */
-
-.hbigs {
-  display: grid;
-  gap: 14px;
-  margin: 0 0 18px;
-}
-
-.hbig {
-  --hb: var(--frame);
-  position: relative;
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 26px;
-  grid-template-areas:
-    "art body go"
-    "art stat go";
-  align-items: center;
-  gap: 4px 10px;
-  padding: 15px 12px 15px 8px;
-  margin: 0 0 16px;
-  border-radius: var(--r-3);
-  background: var(--paper);
-  /* 枠は border ではなく内側の影。角丸の内側にぴたりと沿うので、線に見えない */
-  box-shadow:
-    inset 0 0 0 4px var(--hb),
-    0 7px 0 color-mix(in srgb, var(--hb) 72%, #6b4a1c),
-    0 12px 14px -6px rgba(70, 96, 74, 0.28);
   color: var(--ink);
-  text-decoration: none;
-  transition: transform 90ms ease, box-shadow 90ms ease;
-}
-.hbig:last-child {
-  margin-bottom: 0;
-}
-/* 押した瞬間だけ厚みぶん沈む。本物のボタンと同じ動き */
-.hbig:active {
-  transform: translateY(5px);
-  box-shadow:
-    inset 0 0 0 4px var(--hb),
-    0 2px 0 color-mix(in srgb, var(--hb) 72%, #6b4a1c),
-    0 5px 8px -4px rgba(70, 96, 74, 0.26);
+  text-shadow: 0 1px 0 rgba(255, 250, 228, 0.45);
 }
 
-.hbig-art {
-  grid-area: art;
+/* ───────── いま：名刺 ───────── */
+
+.mei {
+  border-radius: var(--r-3);
+  padding: 16px 14px 18px;
+  background: linear-gradient(180deg, #fffdf5 0%, #fff6e0 100%);
+  /* 名刺は押せない。押せるのは中の数字と3つの口だけなので、
+     台紙そのものには厚みを付けない（docs/island-world.md 3.4）。 */
+  box-shadow: inset 0 0 0 4px var(--frame);
+}
+
+.mei-top {
   display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
+  gap: 12px;
 }
-.hbig-art img {
-  /* 枠から少しはみ出させる。四角の中に収めると平面に見える */
-  width: 100px;
-  height: auto;
-  max-height: 100px;
-  margin: -14px 0 -14px -8px;
-  object-fit: contain;
-  /* 接地影。真下の黒ではなく、暖かい灰緑を右下にずらす */
-  filter: drop-shadow(3px 5px 2px rgba(92, 112, 84, 0.3));
-}
-
-.hbig-body {
-  grid-area: body;
-  align-self: end;
+.mei-face {
   display: block;
+  justify-self: center;
+  padding: 6px 6px 8px;
+  border-radius: 6px;
+  background: #fffdf3;
+  box-shadow: 0 4px 10px -4px rgba(70, 96, 74, 0.4);
+  rotate: -1.4deg;
+}
+.mei-face img {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 3px;
+}
+.mei-word {
   min-width: 0;
 }
-.hbig-body b {
+.mei-name {
   display: block;
-  font-size: 17px;
-  line-height: 1.45;
+  font-size: 22px;
+  line-height: 1.3;
   letter-spacing: var(--ls-head);
-}
-.hbig-body i {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-top: 4px;
-  font-style: normal;
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--ink-2);
-}
-
-/* 数字は見出しの下に横並びで置く。右側に縦に積むと本文の幅が足りなくなる */
-.hbig-stat {
-  grid-area: stat;
-  align-self: start;
-  justify-self: start;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-top: 6px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--hb) 26%, #fff);
-}
-.hbig-stat em {
-  font-style: normal;
-  font-weight: 800;
-  font-size: 19px;
-  line-height: 1.1;
-  color: color-mix(in srgb, var(--hb) 62%, #4a3410);
-  font-variant-numeric: tabular-nums;
-}
-.hbig-stat span {
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-.hbig-go {
-  grid-area: go;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--hb) 34%, #fff);
-  color: color-mix(in srgb, var(--hb) 66%, #4a3410);
-}
-
-/* ───────── 章のリード文 ───────── */
-
-.hlead {
-  margin: -6px 0 16px;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.7;
-  color: #ffffff;
-  text-shadow: 0 2px 0 rgba(9, 44, 82, 0.5);
-}
-
-/* ───────── 横に流して見る帯 ───────── */
-
-.hstrip {
-  margin: 20px -16px 0;
-}
-/* 帯の見出しも海の上。字の後ろだけ水を暗くする */
-.hstrip-head {
-  position: relative;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 var(--sp-3, 16px) var(--sp-2, 10px);
-}
-.hstrip-head::before {
-  content: "";
-  position: absolute;
-  inset: -6px 0 0;
-  background: linear-gradient(180deg, rgba(6, 38, 74, 0.42), rgba(6, 38, 74, 0));
-  z-index: -1;
-  pointer-events: none;
-}
-.hstrip-head h3 {
-  margin: 0;
-  font-size: 15px;
-  letter-spacing: var(--ls-head);
-  color: #ffffff;
-  text-shadow: 0 2px 0 rgba(9, 44, 82, 0.5);
-}
-.hstrip-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex: none;
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.55);
-  text-decoration: none;
-}
-
-.hstrip-rail {
-  display: flex;
-  gap: 10px;
-  padding: 4px 16px 14px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.hstrip-rail::-webkit-scrollbar {
-  display: none;
-}
-.hstrip-rail > * {
-  scroll-snap-align: start;
-}
-
-/* 帯の中の小さいカード（配信の型） */
-.hcard {
-  --hb: var(--frame);
-  flex: none;
-  width: 116px;
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 12px 8px 10px;
-  border-radius: var(--r-2);
-  background: var(--paper);
-  box-shadow:
-    inset 0 0 0 3px var(--hb),
-    0 5px 0 color-mix(in srgb, var(--hb) 72%, #6b4a1c);
   color: var(--ink);
-  text-decoration: none;
-  transition: transform 90ms ease, box-shadow 90ms ease;
 }
-.hcard:active {
-  transform: translateY(4px);
-  box-shadow:
-    inset 0 0 0 3px var(--hb),
-    0 1px 0 color-mix(in srgb, var(--hb) 72%, #6b4a1c);
+.mei-lead {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--ink);
 }
-.hcard img {
-  width: 62px;
-  height: 62px;
-  object-fit: contain;
-  margin-top: -14px;
-  filter: drop-shadow(3px 4px 2px rgba(92, 112, 84, 0.28));
-}
-.hcard b {
-  font-size: 12.5px;
-  line-height: 1.4;
-  text-align: center;
-  letter-spacing: 0.01em;
-}
-.hcard i {
-  font-style: normal;
-  font-size: 10.5px;
+.mei-body {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.8;
   color: var(--ink-2);
 }
 
-/* 帯の中の料理。皿に乗せて、スタンプ帳らしくする */
-.hdish {
-  flex: none;
-  width: 98px;
+/* 数字は入口。読むだけの数を4つ並べても見応えにはならないので、
+   その数を持っている面へ行ける板にする。 */
+.mei-nums {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.mei-num {
+  display: grid;
+  align-content: center;
   justify-items: center;
   gap: 1px;
-  text-decoration: none;
-  color: var(--ink);
-}
-.hdish-art {
-  display: grid;
-  place-items: center;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  /* 皿。ふちに一段明るい輪を作ると、平らな丸ではなく皿に見える */
-  background:
-    radial-gradient(circle at 50% 42%, #fffdf6 0%, #fff6e2 58%, #f3e0bb 100%);
-  box-shadow:
-    inset 0 0 0 4px #ffffff,
-    inset 0 -6px 10px -6px rgba(150, 118, 66, 0.4),
-    0 5px 0 #e2c99a,
-    0 9px 10px -6px rgba(70, 96, 74, 0.3);
-  transition: transform 90ms ease, box-shadow 90ms ease;
-}
-.hdish:active .hdish-art {
-  transform: translateY(4px);
-  box-shadow:
-    inset 0 0 0 4px #ffffff,
-    0 1px 0 #e2c99a;
-}
-.hdish-art img {
-  width: 62px;
-  height: 62px;
-  object-fit: contain;
-  filter: drop-shadow(2px 4px 2px rgba(92, 112, 84, 0.26));
-}
-.hdish b {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-top: 6px;
-  min-height: 2.7em;
-  font-size: 12px;
-  line-height: 1.35;
-  text-align: center;
-}
-.hdish i {
-  font-style: normal;
-  font-size: 10px;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ───────── 国旗の一覧 ───────── */
-
-.hflags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 14px 0 0;
-}
-.hflag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px 7px 8px;
+  min-height: 62px;
+  padding: 8px 6px;
   border-radius: var(--r-2);
   background: var(--paper);
   box-shadow:
-    inset 0 0 0 2.5px #ffffff,
-    0 4px 0 rgba(120, 152, 168, 0.34);
-  font-size: 12.5px;
-  font-weight: 700;
+    inset 0 0 0 2.5px var(--frame),
+    0 5px 0 var(--frame-dark);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
-.hflag:active {
-  transform: translateY(3px);
-  box-shadow: inset 0 0 0 2.5px #ffffff, 0 1px 0 rgba(120, 152, 168, 0.34);
+.mei-num:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
+}
+.mei-num em {
+  font-style: normal;
+  font-weight: 900;
+  font-size: 24px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.mei-num span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.mei-since {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.mei-gos {
+  display: grid;
+  gap: 9px;
+  margin: 14px 0 0;
+}
+.mei-go {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 9px 12px;
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 2.5px var(--frame),
+    0 5px 0 var(--frame-dark);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.mei-go:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
+}
+/* 今夜の配信だけは外へ出る口。外へ出るものは水色（docs/island-world.md 3.2）。 */
+.mei-go.is-live {
+  background: linear-gradient(180deg, #eaf8ff 0%, #d9f0fd 100%);
+  box-shadow:
+    inset 0 0 0 2.5px var(--accent-2),
+    0 5px 0 color-mix(in srgb, var(--accent-2) 68%, #23516c);
+}
+.mei-go.is-live:active {
+  box-shadow:
+    inset 0 0 0 2.5px var(--accent-2),
+    0 1px 0 color-mix(in srgb, var(--accent-2) 68%, #23516c);
+}
+.mei-go b {
+  display: block;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.mei-go i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ───────── これまで：棚の格子 ───────── */
+
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.shelf-box {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-height: 150px;
+  padding: 12px 11px 13px;
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, #fffdf5 0%, #fff5dd 100%);
+  box-shadow:
+    inset 0 0 0 3px var(--frame),
+    0 6px 0 var(--frame-dark),
+    0 11px 12px -7px rgba(70, 96, 74, 0.26);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.shelf-box:active {
+  transform: translateY(5px);
+  box-shadow:
+    inset 0 0 0 3px var(--frame),
+    0 1px 0 var(--frame-dark),
+    0 4px 7px -5px rgba(70, 96, 74, 0.24);
+}
+.shelf-n {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.shelf-n em {
+  font-style: normal;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.shelf-n i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.shelf-name {
+  font-size: 15px;
+  line-height: 1.35;
+  letter-spacing: var(--ls-head);
+}
+.shelf-note {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+/* 見本。中身の手前の数個だけ。ぜんぶ出すのは行き先のページの仕事 */
+.shelf-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.shelf-dishes {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+.shelf-dishes img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(2px 3px 2px rgba(92, 112, 84, 0.26));
+}
+.shelf-types,
+.shelf-apps,
+.shelf-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.shelf-types em,
+.shelf-apps em,
+.shelf-line em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 2px 7px;
+  border-radius: var(--r-0);
+  /* 押せない札は完全に平ら（docs/island-world.md 3.4）。
+     オリーブは「数えたもの・押せない」の色（同 3.2）。 */
+  background: var(--chip);
+  color: var(--chip-ink);
+}
+/* 型の名前だけは、その型の色で1本だけ縁を持つ。
+   色で分けていいのは配信の型だけ、と決まっている（docs/island-world.md 3.3）。 */
+.shelf-types em {
+  --hb: var(--frame);
+  box-shadow: inset 2px 0 0 var(--hb);
+}
+.shelf-go {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--frame);
+  color: #4a3410;
 }
 
 /* ───────── 掲示板への誘い ───────── */
 
+/* 絵と3行と大きいボタンの箱（290px）を、押せる板1枚に畳んだ。
+   トップで言うのは「行き先は自分でも出せる」の一言だけでよく、
+   貼ってからの3歩は掲示板の面が図で持っている。 */
 .hjoin {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 10px;
-  align-items: center;
-  margin: 18px 0 0;
-  padding: 16px 16px 16px 8px;
-  border-radius: var(--r-3);
-  background: linear-gradient(180deg, #fffdf5 0%, #fff4dd 100%);
-  box-shadow:
-    inset 0 0 0 4px var(--frame),
-    0 7px 0 var(--frame-dark),
-    0 12px 14px -6px rgba(70, 96, 74, 0.26);
-}
-.hjoin-art img {
-  width: 88px;
-  height: auto;
-  margin: -10px 0 -10px -6px;
-  filter: drop-shadow(3px 5px 2px rgba(92, 112, 84, 0.3));
-}
-.hjoin-body b {
-  display: block;
-  font-size: 17px;
-  letter-spacing: var(--ls-head);
-}
-.hjoin-body p {
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  line-height: 1.75;
-  color: var(--ink-2);
-}
-.hjoin-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-2);
-  background: var(--accent);
-  box-shadow: 0 5px 0 #d34f6f;
-  color: #fff;
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-decoration: none;
-  transition: transform 90ms ease, box-shadow 90ms ease;
-}
-.hjoin-go:active {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 #d34f6f;
-}
-
-/* ───────── 2つ並びの小さい入口 ───────── */
-
-.hduo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 16px 0 0;
-}
-.hmini {
   position: relative;
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: 62px minmax(0, 1fr) 18px;
   align-items: center;
-  gap: 8px;
-  padding: 10px 22px 10px 6px;
+  gap: 10px;
+  min-height: 72px;
+  margin: 16px 0 0;
+  padding: 10px 12px 10px 8px;
   border-radius: var(--r-2);
-  background: var(--paper);
+  /* 企画を出す口は、この章でいちばん押してほしいところ。桃は「いま／新しい」の色なので
+     使わず（docs/island-world.md 3.2）、金のふちのまま厚みを一段だけ厚くする。 */
+  background: linear-gradient(180deg, #fffdf5 0%, #fff4dd 100%);
   box-shadow:
-    inset 0 0 0 3px #ffffff,
-    0 5px 0 rgba(132, 156, 118, 0.34);
+    inset 0 0 0 3px var(--frame),
+    0 6px 0 var(--frame-dark);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
-.hmini:active {
-  transform: translateY(4px);
-  box-shadow: inset 0 0 0 3px #ffffff, 0 1px 0 rgba(132, 156, 118, 0.34);
+.hjoin:active {
+  transform: translateY(5px);
+  box-shadow: inset 0 0 0 3px var(--frame), 0 1px 0 var(--frame-dark);
 }
-.hmini-art img {
-  width: 52px;
-  height: 52px;
-  object-fit: contain;
-  margin: -8px 0 -8px -4px;
-  filter: drop-shadow(2px 4px 2px rgba(92, 112, 84, 0.28));
+.hjoin-art {
+  width: 72px;
+  height: auto;
+  margin: -8px 0 -8px -8px;
+  filter: drop-shadow(3px 5px 2px rgba(92, 112, 84, 0.3));
 }
-.hmini-text {
-  min-width: 0;
-}
-.hmini-text b {
+.hjoin-body b {
   display: block;
-  font-size: 12.5px;
+  font-size: 15px;
   line-height: 1.4;
+  letter-spacing: var(--ls-head);
 }
-.hmini-text i {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.hjoin-body i {
+  display: block;
+  margin-top: 3px;
   font-style: normal;
-  font-size: 10.5px;
-  line-height: 1.5;
+  font-size: 11.5px;
+  line-height: 1.6;
   color: var(--ink-2);
 }
-.hmini-go {
-  position: absolute;
-  right: 7px;
-  top: 50%;
-  translate: 0 -50%;
-  color: var(--ink-3);
+.hjoin-go {
+  color: var(--ink-2);
 }
 
 /* ───────── 外に出るリンク ───────── */
@@ -602,19 +502,23 @@
   grid-template-columns: 46px 1fr;
   align-items: center;
   gap: 10px;
+  min-height: 56px;
   padding: 12px 30px 12px 10px;
   border-radius: var(--r-2);
   background: var(--paper);
+  /* 外へ出る口は水色（docs/island-world.md 3.2）。桃は「いま／新しい」なので使わない */
   box-shadow:
-    inset 0 0 0 3px #ffffff,
-    0 5px 0 rgba(170, 118, 132, 0.34);
+    inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
+    0 5px 0 color-mix(in srgb, var(--accent-2) 72%, #23516c);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 .hout:active {
   transform: translateY(4px);
-  box-shadow: inset 0 0 0 3px #ffffff, 0 1px 0 rgba(170, 118, 132, 0.34);
+  box-shadow:
+    inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
+    0 1px 0 color-mix(in srgb, var(--accent-2) 72%, #23516c);
 }
 .hout-logo,
 .hout-icon {
@@ -642,14 +546,14 @@
   right: 10px;
   top: 50%;
   translate: 0 -50%;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* ───────── 広い画面 ───────── */
 
 @media (min-width: 720px) {
-  .hchap {
-    padding: 40px 24px 46px;
+  .hchap-mat {
+    padding: 36px 24px 42px;
   }
   .hchap-head h2 {
     font-size: 32px;
@@ -661,41 +565,46 @@
   .hsign em {
     font-size: 18px;
   }
-  .hbigs {
+  .mei {
+    padding: 22px 20px 24px;
+  }
+  /* 広い画面では顔と言葉を横に並べる。名刺は横組みのほうが名刺に見える */
+  .mei-top {
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: center;
+    gap: 22px;
+  }
+  .mei-face {
+    justify-self: start;
+  }
+  .mei-nums {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .mei-gos {
     grid-template-columns: repeat(3, 1fr);
-    align-items: stretch;
   }
-  .hbigs .hbig {
-    grid-template-columns: 1fr;
-    grid-template-areas: "art" "body" "stat" "go";
-    justify-items: center;
-    text-align: center;
-    padding: 18px 14px 46px;
-    margin: 0;
-  }
-  .hbigs .hbig-art img {
-    margin: -24px 0 0;
-  }
-  .hbigs .hbig-go {
-    top: auto;
-    bottom: 12px;
-    right: 50%;
-    translate: 50% 0;
-  }
-  .hbigs .hbig-stat {
-    margin-top: 8px;
+  .shelf {
+    grid-template-columns: repeat(3, 1fr);
   }
   .houts {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* 帯そのものは 940px で止める。地の砂だけは端まで伸ばしたいので、
+   中身の幅を絞るのは中の側でやる。 */
+@media (min-width: 1000px) {
+  .hchap-mat > * {
+    max-width: 940px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hbig,
-  .hcard,
-  .hdish-art,
-  .hflag,
-  .hmini,
+  .mei-num,
+  .mei-go,
+  .shelf-box,
   .hout,
   .hjoin-go {
     transition: none;

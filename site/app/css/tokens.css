@@ -470,7 +470,10 @@ html, body { margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  font-family: var(--font-maru), ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
+  /* 1本目は島で使う字だけを焼いたもの（fonts.css）。そこに無い字 — 掲示板や付箋に
+     視聴者さんが書いた字 — だけが2本目の var(--font-maru)、next/font が置いていく
+     Google の切り分けに落ちる。同じ書体なので、落ちても見た目は変わらない。 */
+  font-family: "Maru Island", var(--font-maru), ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
     "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
   color: var(--ink);
   background: var(--page-bg);

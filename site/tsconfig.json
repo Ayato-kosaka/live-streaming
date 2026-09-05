@@ -32,26 +32,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next*/types/**/*.ts",
-    ".next-dev3010/types/**/*.ts",
-    ".next-dev3011/types/**/*.ts",
-    ".next-dev3012/types/**/*.ts",
-    ".next-dev3013/types/**/*.ts",
-    ".next-dev3014/types/**/*.ts",
-    ".next-dev3015/types/**/*.ts",
-    ".next-dev3016/types/**/*.ts",
-    ".next-dev3018/types/**/*.ts",
-    ".next-dev3020/types/**/*.ts",
-    ".next-dev3021/types/**/*.ts",
-    ".next-dev3022/types/**/*.ts",
-    ".next-dev3025/types/**/*.ts",
-    ".next-dev3030/types/**/*.ts",
-    ".next-dev3031/types/**/*.ts",
-    ".next-dev3032/types/**/*.ts",
-    ".next-dev3033/types/**/*.ts",
-    ".next-dev3040/types/**/*.ts",
-    ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-dev3041/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
     "node_modules"
