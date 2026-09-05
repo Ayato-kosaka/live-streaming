@@ -91,8 +91,16 @@ export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
           ))}
         </ul>
       )}
-      {/* 「0件」を失敗のように見せない。言葉は「まだ」ではなく「これから」
-          （`docs/nordic-fund.md` 3章）。 */}
+      {/* 読み込み中は、場所だけ先に取る。中身の形をした薄い板を2枚置く。
+          ぐるぐる回すものは使わない（島に回るものは無い。`docs/island-design.md` 4章）。 */}
+      {items === null && (
+        <div className="spost-wait" aria-hidden>
+          <span />
+          <span />
+        </div>
+      )}
+      {/* 「0件」を失敗のように見せない。言葉は「まだ」ではなく「これから」で、
+          次にすることを1つ書く（`docs/nordic-fund.md` 3章・`island-design.md` 4章）。 */}
       {items !== null && list.length === 0 && (
         <p className="spost-none">この区間の道しるべは、これから立ちます。最初のひとつをどうぞ。</p>
       )}

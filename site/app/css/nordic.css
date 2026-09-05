@@ -460,12 +460,13 @@
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: var(--pop-sm);
+  /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
+  box-shadow: var(--pop);
   font-size: 13.5px;
   font-weight: 900;
   color: var(--ink);
 }
-.bpost:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.bpost:active { transform: translateY(4px); box-shadow: var(--pop-push); }
 .bpost:disabled { opacity: 0.5; box-shadow: none; transform: none; }
 
 /* --- ボード全体 ---
@@ -497,18 +498,30 @@
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: var(--pop-sm);
+  /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
+  box-shadow: var(--pop);
   font-size: 13.5px;
   font-weight: 900;
   color: var(--ink);
 }
-.carry-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.carry-go:active { transform: translateY(4px); box-shadow: var(--pop-push); }
 .spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
 .spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
 .spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
 .spost-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+/* 読み込み中。中身の形をした薄い板だけ置いて、場所を先に取る。
+   出たとたんに下がずれるのを防ぐのが役目なので、動かさない。 */
+.spost-wait { display: grid; gap: 8px; margin: 0 0 12px; }
+.spost-wait span {
+  display: block;
+  height: 13px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--rule) 22%, transparent);
+}
+.spost-wait span:last-child { width: 62%; }
+
 /* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。
    つながりの読み上げ（.rtie）がすぐ上にあるので、塗りは重ねず罫線1本にする。
    同じ濃さの札が2つ続くと、どちらも読まれない。 */

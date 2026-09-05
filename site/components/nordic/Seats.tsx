@@ -134,11 +134,11 @@ export function TieMark({ tied, size = 30 }: { tied: boolean; size?: number }) {
       <Ground cx="24.5" cy="34.5" rx="16" />
       {/* 足代の輪 */}
       <g transform={`translate(${-gap} 0)`}>
-        <rect x="2" y="16" width="26" height="15" rx="7.5" fill={C.gdd} mask="url(#ntieA)" />
+        <rect x="2" y="16" width="26" height="15" rx="7.5" fill="url(#sgGoldD)" mask="url(#ntieA)" />
       </g>
       {/* 道しるべの輪。噛み合うときは、こちらが手前を通る */}
       <g transform={`translate(${gap} 0)`}>
-        <rect x="20" y="16" width="26" height="15" rx="7.5" fill={C.grd} mask="url(#ntieB)" />
+        <rect x="20" y="16" width="26" height="15" rx="7.5" fill="url(#sgGreen)" mask="url(#ntieB)" />
       </g>
     </Svg>
   );
