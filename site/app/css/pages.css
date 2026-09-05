@@ -204,7 +204,7 @@
   color: var(--ink);
   box-shadow:
     0 6px 0 var(--frame-deep),
-    inset 0 0 0 2px var(--pick),
+    0 0 0 2px var(--pick),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 /* 沈む量と厚みの減る量を揃える。ずれると札の下の辺が動いて見える。 */
@@ -213,7 +213,7 @@
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
 }
 .ih-link.is-on:active {
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 0 0 2px var(--pick), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 var(--frame-deep), 0 0 0 2px var(--pick), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
@@ -428,7 +428,9 @@
   border: 1px solid var(--pg-rule);
   background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
 }
-.panel.paper .city:hover { transform: none; border-color: var(--pg-pick); }
+/* 紙の上の行は、ふれただけでは色を変えない。朱は「いま選んでいる」の色で、
+   ふれている状態とは役が違う（island-world 3.2）。 */
+.panel.paper .city:hover { transform: none; }
 .panel.paper .city:active { transform: translateY(1px); border-color: var(--pg-pick); }
 .panel.paper .stat { background: color-mix(in srgb, var(--pg-sheet) 55%, var(--paper)); }
 .panel.paper .stat:first-child {
@@ -595,7 +597,7 @@
   position: relative; flex: none; width: 112px; aspect-ratio: 16/9;
   border-radius: var(--r-1); overflow: hidden;
   background: var(--sand-edge);
-  box-shadow: inset 0 0 0 2px rgba(255, 253, 246, 0.55);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--paper) 55%, transparent);
 }
 .scard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .scard-play {
@@ -723,9 +725,10 @@
 .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .chip {
   display: inline-flex; align-items: center; gap: var(--sp-1);
-  /* 数えたもの・言うだけのもの。図鑑の面の平らなチップ（ac-reference ⑦）。 */
+  /* 数えたもの・言うだけのもの。図鑑の面の平らなチップ（ac-reference ⑦）。
+     実物には枠が無い。ベタ塗りだけで、しかも影も厚みも付いていない。
+     枠を1本足すと、それだけで「囲ってある＝押せる」に近づく。 */
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-3);
   min-height: 28px;
@@ -903,7 +906,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* いま選んでいる並び。塗りは変えず、朱の細枠だけ（ac-reference ⑦-6）。 */
 .bsort button.is-on {
   border-color: var(--pick);
-  box-shadow: var(--pg-lit), inset 0 0 0 2px var(--pick), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow: var(--pg-lit), 0 0 0 2px var(--pick), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 .bsort button:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
@@ -919,7 +922,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .vote svg { width: 20px; height: 19px; color: var(--accent); }
 /* もう押したもの。塗りは変えず朱の細枠だけ（ac-reference ⑦-6）。
    厚みは押せる合図なので、押したあとも同じだけ残す。 */
-.vote.is-on { border-color: var(--pick); box-shadow: inset 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
+.vote.is-on { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
 .vote.is-on svg { color: var(--accent-deep); }
 .vote:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 .vote b { font-size: var(--fs-body); font-weight: 900; }
@@ -1106,7 +1109,6 @@ a.chip:active, button.chip:active, .chip.link:active {
   /* 数えたものの札は、オリーブの平ら1種類（island-world 3.2・7.3）。
      クリームの丸のままだと、すぐ横の押せるチップと同じ形になる。 */
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-note);
@@ -1118,8 +1120,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
    金にすると「押せる板のふち」と同じ色になって、押せそうに見える。 */
 .count.is-today {
-  background: color-mix(in srgb, var(--accent) 30%, var(--paper));
-  border-color: color-mix(in srgb, var(--accent-deep) 58%, var(--paper));
+  /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
+     枠は付けない。オリーブの札と同じ「平らな1種類」のままにする。 */
+  background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
 .count.is-today b { color: var(--accent-deep); }
@@ -1205,7 +1208,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .me-pick img { width: 100%; height: 100%; object-fit: contain; }
 /* 選んでいるものは、光らせずに朱の細枠（ac-reference ⑦-6）。
    金のぼかした輪は「光って押せる」に読めるので使わない。 */
-.me-pick.is-on { border-color: var(--pick); box-shadow: inset 0 0 0 2px var(--pick); }
+.me-pick.is-on { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick); }
 .me-pick-none { width: auto; padding: 0 var(--sp-3); font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .me-row { display: block; margin-bottom: var(--sp-2); }
 .me-row span { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); margin-bottom: var(--sp-1); }

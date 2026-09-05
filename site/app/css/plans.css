@@ -50,7 +50,8 @@
   width: 14px;
   height: 4px;
   border-radius: var(--r-pill);
-  background: var(--gold);
+  /* 押せない札の中の印。金は「押せる板のふち」の色なので使わない。 */
+  background: var(--chip);
 }
 /* ベルの絵が入っている札には棒を出さない。
    同じ「ここから始まる」を2つ並べると、どちらが印なのか分からなくなる。 */
@@ -71,7 +72,6 @@
   margin-left: 1px;
   border-radius: var(--r-0);
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   color: var(--chip-ink);
   line-height: 1.5;
 }
@@ -198,7 +198,6 @@
   padding: 3px var(--sp-2);
   border-radius: var(--r-0);
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   color: var(--chip-ink);
   line-height: 1.5;
 }
@@ -225,8 +224,8 @@
   color: var(--ink);
   transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s, background 0.16s;
 }
+/* ふれたら浮く。合図は厚みだけなので、色は変えない（island-design 3章）。 */
 .nextup-card:hover .nextup-go {
-  background: linear-gradient(color-mix(in srgb, var(--gold) 65%, var(--paper)), color-mix(in srgb, var(--gold) 88%, var(--frame-dark)));
   transform: translateY(-2px);
   box-shadow: 0 6px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
 }
@@ -285,9 +284,6 @@
   font-size: var(--fs-note);
   border-width: var(--bw-1);
   background: linear-gradient(var(--paper), var(--paper-2));
-}
-.nextup-card.is-small:hover .nextup-go {
-  background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 40%, var(--paper)));
 }
 
 @media (min-width: 640px) {

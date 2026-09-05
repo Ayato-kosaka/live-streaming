@@ -76,9 +76,12 @@
 .dform select:focus {
   outline: none;
   border-color: var(--frame-deep);
+  /* フォーカスの輪は水色（island-world 3.2 の色の表）。
+     金の輪は「押せる板のふち」の色なので、ここに置くと
+     光って押せるものが1つ増えたように見える。 */
   box-shadow:
     inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
-    0 0 0 3.5px color-mix(in srgb, var(--gold) 70%, transparent);
+    0 0 0 3px var(--accent-2);
 }
 .dform textarea { line-height: var(--lh-body); resize: vertical; }
 .drow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--sp-1); }
@@ -279,7 +282,6 @@
   font-weight: 900;
   color: var(--chip-ink);
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
   padding: 3px var(--sp-2);
   line-height: 1.5;
