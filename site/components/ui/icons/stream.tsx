@@ -372,4 +372,27 @@ export const stream: Record<string, Draw> = {
       <Gl c={c} cx={19} cy={14} rx={2.6} ry={6} r={16} o={0.45} />
     </>
   ),
+
+  /**
+   * 作ってきた記録。
+   *
+   * `book`（旅のしおり＝これから読むもの）と使い回していたのが直し元。
+   * こちらは**積み上がった過去**なので、束ねた本ではなく**重ねた札**にする。
+   * 上の1枚だけ日付の帯とチェックを入れて、「済んだことが並んでいる」と分かるように。
+   */
+  log: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={24} ry={3.6} />
+      <rect x="11" y="20" width="44" height="33" rx="5" fill={c.crd} transform="rotate(7 32 36)" />
+      <rect x="9" y="16" width="44" height="33" rx="5" fill={c.cr} transform="rotate(-3 32 32)" />
+      <rect x="10" y="11" width="44" height="33" rx="5" fill={c.w} />
+      <path d="M10 16a5 5 0 0 1 5-5h34a5 5 0 0 1 5 5v5H10z" fill={c.tl} />
+      <g fill={c.crd}>
+        <rect x="27" y="27" width="22" height="4" rx="2" />
+        <rect x="27" y="35" width="16" height="4" rx="2" />
+      </g>
+      <path d="m15 29 4 4 5-7" fill="none" stroke={c.gr} strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" />
+      <Gl c={c} cx={16} cy={14} rx={5} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
 };

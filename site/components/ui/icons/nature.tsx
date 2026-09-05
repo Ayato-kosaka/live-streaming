@@ -353,4 +353,80 @@ export const nature: Record<string, Draw> = {
       <Gl c={c} cx={23} cy={23} rx={4} ry={2.4} r={-30} o={0.45} />
     </>
   ),
+
+  /**
+   * 松。
+   *
+   * `tree`（丸い広葉樹）とは別。バルトから北はこの三角の常緑樹しか生えていなくて、
+   * 国境も湖のふちも、まわりは全部これ。3段に割って、左半分だけ明るくする。
+   */
+  pine: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={16} ry={4} />
+      <rect x="28.6" y="40" width="6.8" height="16" rx="3" fill={c.brd} />
+      <path d="M32 4 46 26H18z" fill={c.grd} />
+      <path d="M32 16 50 38H14z" fill={c.grd} />
+      <path d="M32 28 54 50H10z" fill={c.grd} />
+      <path d="M32 4 46 26H32z" fill={c.gr} />
+      <path d="M32 16 50 38H32z" fill={c.gr} />
+      <path d="M32 28 54 50H32z" fill={c.gr} />
+      <Gl c={c} cx={26} cy={22} rx={2.2} ry={6} r={18} o={0.3} />
+    </>
+  ),
+
+  /**
+   * 湖。北欧は湖と松のくり返しでできている。
+   * `sea`（水平線と波）とは、**対岸が見えるかどうか**で分ける。
+   */
+  lake: (c) => (
+    <>
+      {/* 対岸の松。奥にあるので暗いほうの緑1色でよい */}
+      <g fill={c.grd}>
+        <path d="M9 30 17 8l8 22z" />
+        <path d="M26 32 32 15l6 17z" />
+        <path d="M40 30 48 9l8 21z" />
+      </g>
+      <path d="M2 29c8-3 14-3 20-1s12 2 18 0 16-2 22 1v5H2z" fill={c.gr} />
+      <ellipse cx="32" cy="45" rx="30" ry="14" fill={c.bl} />
+      <path d="M4 41c8-3 14 2 22 0s18-3 30 0a30 14 0 0 1-52 0z" fill={c.tl} />
+      {/* 松が水に落ちた影。木の影なので白ではなく、水より暗い緑で置く。
+          白い横線にすると道路の白線に見えた */}
+      <g fill={c.grd} opacity={c.flat ? 1 : 0.4}>
+        <path d="M15 36l3.4 14L15 52l-3.4-2z" />
+        <path d="M32 38l3 15-3 2-3-2z" />
+        <path d="M48 36l3.4 13-3.4 2-3.4-2z" />
+      </g>
+      <rect x="9" y="46" width="11" height="2.6" rx="1.3" fill={c.w} opacity={c.flat ? 1 : 0.6} />
+    </>
+  ),
+
+  /**
+   * 白夜。
+   *
+   * `sun`（真上の太陽）とも `sunrise`（昇る途中）とも違って、
+   * **沈まないまま水平線をなぞる**。だから太陽を水に半分だけ埋めて、
+   * 光の道を1本まっすぐ手前に伸ばす。夜なのに明るい、があの絵。
+   */
+  midnightsun: (c) => (
+    <>
+      <g stroke={c.yl} strokeWidth="4.6" strokeLinecap="round" opacity={c.flat ? 1 : 0.7}>
+        <path d="M9 20 14.5 25.5" />
+        <path d="M55 20 49.5 25.5" />
+        <path d="M32 4v6" />
+      </g>
+      <circle cx="32" cy="32" r="16" fill={c.or} />
+      <circle cx="32" cy="30.6" r="16" fill={c.yl} />
+      <Gl c={c} cx={25} cy={24} rx={4} ry={2.6} r={-28} o={0.55} />
+      {/* 海。水平線が主役なので上辺はまっすぐ。下だけ角を落とす */}
+      <path d="M1 38h62v20a5 5 0 0 1-5 5H6a5 5 0 0 1-5-5z" fill={c.bl} />
+      <path d="M1 38h62v4.6H1z" fill={c.tl} />
+      {/* 水に映る光。手前ほど広がる横の粒。
+          つないで1本の帯にすると塔か戸口に見えたので、離したまま置く */}
+      <g fill={c.yl}>
+        <rect x="27.5" y="45" width="9" height="3.4" rx="1.7" />
+        <rect x="24.5" y="51" width="15" height="3.6" rx="1.8" />
+        <rect x="21" y="57" width="22" height="3.8" rx="1.9" />
+      </g>
+    </>
+  ),
 };

@@ -636,4 +636,136 @@ export const travel: Record<string, Draw> = {
       <Gl c={c} cx={8} cy={13} rx={1.6} ry={5} r={0} o={0.4} />
     </>
   ),
+
+  /**
+   * 距離。ヒッチハイクは「あと何km」で語られるので、道端の距離標にする。
+   * 数字は 16px で読めないから彫らない。**帯2本の長さの差**だけで
+   * 「何か書いてある柱」に見せる。柱だけだと宙に立つので、草の土手を足す。
+   */
+  distance: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={4} />
+      <path d="M4 53c8-6 14-7 28-7s20 1 28 7z" fill={c.gr} />
+      <rect x="20" y="14" width="24" height="40" rx="6" fill={c.w} />
+      <path d="M32 14h6a6 6 0 0 1 6 6v34h-12z" fill={c.wd} />
+      <rect x="20" y="7" width="24" height="13" rx="6" fill={c.rd} />
+      <path d="M32 7h6a6 6 0 0 1 6 6v7H32z" fill={c.rdd} />
+      <g fill={c.nv}>
+        <rect x="24" y="27" width="16" height="4.6" rx="2.3" />
+        <rect x="24" y="36" width="11" height="4.6" rx="2.3" />
+      </g>
+      <Gl c={c} cx={24} cy={24} rx={1.8} ry={6} r={0} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 洗濯。長旅でいちばん困るのはこれ。丸窓の中に水を入れておくと、
+   * 16px でも「白い箱」ではなく洗濯機に見える。
+   */
+  laundry: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.6} />
+      <rect x="9" y="6" width="46" height="50" rx="8" fill={c.w} />
+      <path d="M32 6h14a8 8 0 0 1 8 8v34a8 8 0 0 1-8 8H32z" fill={c.wd} />
+      <rect x="14" y="11" width="36" height="7" rx="3.5" fill={c.gy} />
+      <circle cx="19.5" cy="14.5" r="2.2" fill={c.rd} />
+      <circle cx="27" cy="14.5" r="2.2" fill={c.gr} />
+      <circle cx="32" cy="36" r="15" fill={c.gyd} />
+      <circle cx="32" cy="36" r="12" fill={c.sk} />
+      <path d="M20 38c4-3 8 3 12 0s8 3 12 0v6a12 12 0 0 1-24 0z" fill={c.bl} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.85}>
+        <circle cx="26" cy="31" r="2.6" />
+        <circle cx="36.5" cy="28.5" r="1.8" />
+      </g>
+      <Gl c={c} cx={16} cy={14} rx={4} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 電源。北欧はCタイプの丸2本。四角い顔に丸い目が2つ、という形になるので、
+   * 小さくしても「プラグ」だと分かる。コードは右下へ垂らして接地影に着ける。
+   */
+  plug: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={13} ry={3.2} />
+      {/* 差し込む2本。細く長くしないと「鼻」に見える */}
+      <g fill={c.nv}>
+        <rect x="20" y="3" width="6.4" height="18" rx="3.2" />
+        <rect x="37.6" y="3" width="6.4" height="18" rx="3.2" />
+      </g>
+      {/* 本体。生成りの紙の上でも消えないよう、白ではなく灰でとる */}
+      <rect x="14" y="17" width="36" height="24" rx="9" fill={c.gy} />
+      <path d="M32 17h9a9 9 0 0 1 9 9v6a9 9 0 0 1-9 9h-9z" fill={c.gyd} />
+      {/* コード。右下へ長く垂らして、接地影に着ける */}
+      <path d="M32 41v5c0 6 7 5 7 11" fill="none" stroke={c.nv} strokeWidth="6.4" strokeLinecap="round" />
+      <Gl c={c} cx={21} cy={24} rx={2.6} ry={5} r={22} o={0.5} />
+    </>
+  ),
+
+  /**
+   * カード。北欧はほとんど現金を使わない。
+   * ICチップと磁気帯の2つだけで、他のどの札とも見分けがつく。
+   */
+  card: (c) => (
+    <>
+      <Sh c={c} cy={53} rx={24} ry={4} />
+      <rect x="4" y="14" width="56" height="36" rx="7" fill={c.bl} />
+      <path d="M32 14h21a7 7 0 0 1 7 7v22a7 7 0 0 1-7 7H32z" fill={c.bld} />
+      <rect x="4" y="21" width="56" height="8" fill={c.nv} />
+      <rect x="11" y="34" width="13" height="10" rx="2.6" fill={c.gd} />
+      <rect x="11" y="38" width="13" height="2" fill={c.gdd} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.75}>
+        <rect x="30" y="38.4" width="13" height="3.4" rx="1.7" />
+        <rect x="46" y="38.4" width="8" height="3.4" rx="1.7" />
+      </g>
+      <Gl c={c} cx={13} cy={18} rx={6} ry={1.6} r={-4} o={0.45} />
+    </>
+  ),
+
+  /**
+   * 困ったとき。救急箱。
+   * 赤い十字を面で置くだけだと医療の記号になるので、**箱の厚みと取っ手**を付けて物にする。
+   */
+  firstaid: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={4} />
+      <path d="M26 14v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3" fill="none" stroke={c.gyd} strokeWidth="4.4" strokeLinecap="round" />
+      <rect x="5" y="14" width="54" height="38" rx="8" fill={c.w} />
+      <path d="M40 14h11a8 8 0 0 1 8 8v22a8 8 0 0 1-8 8H40z" fill={c.wd} />
+      <g fill={c.rd}>
+        <rect x="26" y="20" width="11" height="26" rx="3.4" />
+        <rect x="18.5" y="27.5" width="26" height="11" rx="3.4" />
+      </g>
+      <rect x="8" y="30" width="6" height="7" rx="2.4" fill={c.gyd} />
+      <Gl c={c} cx={13} cy={19} rx={5} ry={1.8} r={-4} o={0.5} />
+    </>
+  ),
+
+  /**
+   * 行き先を書いた段ボール。
+   *
+   * ヒッチハイクの絵を親指（`thumb`）1つで済ませると、10回並べたときに
+   * 「どの区間も同じこと」に見える。実際に手に持っているのはこの板で、
+   * **書いてある地名が変わる**のが区間の違いそのもの。字は 16px で読めないから、
+   * 太い1本の帯に置き換えて「大きく書いてある」ことだけを残す。
+   */
+  hitchsign: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <g transform="rotate(-8 32 28)">
+        <rect x="8" y="8" width="48" height="34" rx="4" fill={c.wol} />
+        <path d="M32 8h20a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H32z" fill={c.wo} />
+        <rect x="14" y="16" width="36" height="8" rx="4" fill={c.bk} />
+        <rect x="14" y="29" width="22" height="5" rx="2.5" fill={c.wod} />
+      </g>
+      {/* 板を下から支える手。指を板の手前に重ねると、持っていることになる */}
+      <path d="M16 44h26a5 5 0 0 1 5 5v9H21a5 5 0 0 1-5-5z" fill={c.snd} />
+      <g fill={c.sn}>
+        <rect x="18" y="41" width="7.6" height="12" rx="3.8" />
+        <rect x="27" y="40" width="7.6" height="13" rx="3.8" />
+        <rect x="36" y="41.5" width="7.6" height="11" rx="3.8" />
+      </g>
+      <Gl c={c} cx={16} cy={14} rx={5} ry={2} r={-8} o={0.4} />
+    </>
+  ),
 };
