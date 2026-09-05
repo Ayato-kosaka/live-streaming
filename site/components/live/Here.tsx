@@ -56,6 +56,11 @@ export default function Here() {
     let onVis: (() => void) | null = null;
     /** ログアウトしたとき・島から離れたときに、置いてきたものを消す */
     let erase: (() => void) | null = null;
+    /* 最後に使った鍵。**閉じるときに待てないので、手元に置いておく。**
+       `pagehide` から `await token()` すると、待っているあいだに画面が凍って
+       消す通信が始まらないことがある。始まってさえいれば keepalive が運ぶ。
+       古くなっていて弾かれても、60秒で読む側が出さなくなる。 */
+    let key: string | null = null;
 
     (async () => {
       const st = await loadState();
@@ -82,24 +87,25 @@ export default function Here() {
         // 鍵はここで取る。取れているあいだは通信が起きない（手元で使い回される）
         const t = await token();
         if (stop || !t) return;
+        key = t;
         // 入るのはこの4つだけ。名前もアイコンも入れない（ルールでも弾いてある）
         await putHere(uid, at, x, y, t);
       };
 
-      const gone = async () => {
+      /** 置いてきたものを消す。**待たない。** 閉じるときにも通る道なので */
+      const gone = () => {
         lastX = NaN;
         lastY = NaN;
         lastAt = 0;
-        const t = await token();
-        if (t) await dropHere(uid, t);
+        if (key) void dropHere(uid, key);
       };
 
       // ページを離れたら消す。閉じるときの書き込みは届かないこともあるが、
       // 届かなくても 60秒で消える（読む側が古いものを出さない）
-      leave = () => void gone();
-      erase = () => void gone();
+      leave = gone;
+      erase = gone;
       onVis = () => {
-        if (document.visibilityState === "hidden") void gone();
+        if (document.visibilityState === "hidden") gone();
         else void put();
       };
       window.addEventListener("pagehide", leave);
