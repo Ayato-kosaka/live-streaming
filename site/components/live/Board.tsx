@@ -45,6 +45,13 @@ const FLOW = [
   { t: "企画会議に上がる", n: "週のはじめ。やることになったら「これから」に出ます" },
 ];
 
+/**
+ * 本文の頭に付いた貼り先の札（`【スウェーデン】`）。
+ * `components/nordic/CountryIdeas.tsx` が付ける。**同じ形を
+ * `NoteBoards.tsx` も見ている。** 変えるときは両方。
+ */
+const TAG = /^【([^】]{1,20})】/;
+
 /** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
 const MINE_KEY = "ayato-island-mine";
 function minePosts(): Set<string> {
@@ -417,6 +424,11 @@ export default function Board({ places }: { places: NotePlace[] }) {
           {list.map((i, n) => {
             // 票がいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "votes" && !onlyMine && n === 0 && i.votes > 0 && i.status !== "picked";
+            /* 貼り先の札を本文から外に出す。`/nordic` から貼られたものは
+               本文の頭に `【スウェーデン】` が付いていて、これが並びの中で
+               本文と同じ字の大きさ・同じ色で出ていた。読むほうは
+               どこあての話なのかを、毎回文の中から拾い直すことになる。 */
+            const to = TAG.exec(i.text);
             return (
               <li
                 key={i.id}
@@ -441,8 +453,10 @@ export default function Board({ places }: { places: NotePlace[] }) {
                   <b>{i.votes}</b>
                 </button>
                 <div className="idea-body">
-                  <p>{i.text}</p>
+                  <p>{to ? i.text.slice(to[0].length).trim() : i.text}</p>
                   <div className="idea-meta">
+                    {/* 押せない札なので、オリーブの平ら（`docs/island-world.md` 3.2） */}
+                    {to && <span className="chip">{to[1]}あて</span>}
                     {top && <em>いま、いちばん票が集まってる</em>}
                     {i.status === "picked" && <em>{BOARD.picked}</em>}
                     {isMine(i) && <em>あなたが貼った</em>}
