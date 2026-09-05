@@ -720,12 +720,6 @@
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .abadge:active { transform: translateY(5px); box-shadow: 0 1px 0 #100f0e; }
-.abadge.is-ghost {
-  background: var(--paper-2);
-  color: var(--ink);
-  box-shadow: 0 6px 0 var(--frame-dark);
-}
-
 .anote { display: grid; gap: 10px; }
 .anote-year {
   display: flex;
