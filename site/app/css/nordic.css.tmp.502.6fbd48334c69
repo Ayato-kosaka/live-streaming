@@ -262,18 +262,19 @@
   align-items: center;
   gap: 3px 9px;
   padding: 8px 11px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-1);
+  /* 押せない。だから枠も琥珀ではなく罫、角も紙の角にする。 */
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
   background: var(--paper);
 }
-.nmkeys b { font-size: 11.5px; font-weight: 900; }
+.nmkeys b { font-size: var(--fs-min); font-weight: 900; }
 .nmkeys i {
   grid-column: 2;
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 800;
   line-height: 1.45;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* 見本は地図と同じ線で描く。色の名前を書くより、線そのものを見せる。 */
 .nmkeys-s { grid-row: span 2; height: 22px; border-radius: var(--r-pill); }

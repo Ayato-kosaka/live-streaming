@@ -458,7 +458,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .ty-when {
   display: inline-flex; align-items: center; gap: var(--sp-2);
   width: fit-content;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 3px var(--sp-2);
   font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.05em;
   color: #4a3419;
@@ -520,7 +520,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .ty-go {
   display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
   min-height: 48px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 0 var(--sp-4);
   font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.05em;
   color: #402c14;

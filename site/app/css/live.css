@@ -141,7 +141,9 @@
   margin: var(--sp-4) 0 var(--sp-1);
   padding: var(--sp-3) var(--sp-3) var(--sp-3);
   border-radius: var(--r-2);
-  border: 3px dashed color-mix(in srgb, var(--frame) 88%, var(--paper));
+  /* 紙の上の区切りは細い罫線1本（ac-reference ⑦-2）。破線の太枠は、
+     厚み以外の合図をもう1つ増やしてしまう。中の3つが板なので囲みは静かでよい。 */
+  border: 1px solid var(--rule);
   background: color-mix(in srgb, var(--paper-2) 70%, var(--paper));
 }
 .nx-do > span {
@@ -222,23 +224,25 @@
 .nx-road-t > b { display: block; font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
 .nx-road-t > i { display: block; font-size: var(--fs-note); font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.7; }
 .nx-road-t:hover > b { color: var(--frame-deep); }
+/* 指で押せる最小は 48px、厚みはその段で6px（`docs/island-design.md` 3章）。
+   40px・厚み3px だと、押しどころとしても合図としても足りていなかった。 */
 .nx-road-go {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
   margin-top: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: 0 3px 0 var(--frame-deep);
-  font-size: var(--fs-min);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.nx-road-go:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--frame-deep); }
-.nx-road-go:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
+.nx-road-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 
 /* =========================================================
    5. 付箋
@@ -512,17 +516,21 @@
   gap: var(--sp-3);
   padding: var(--sp-3);
   border: 2px solid var(--pick);
-  border-radius: 6px;
+  border-radius: var(--r-0);
   background: rgba(255, 253, 240, 0.5);
 }
 .rz-star .rz-shot { aspect-ratio: 1 / 1; }
 .rz-star figcaption { min-width: 0; }
+/* 「いちばん長くいる人」は数えた事実の札。押せない札は1種類（オリーブの平ら）と
+   決まっている（`docs/island-world.md` 3.2・4章）。朱のベタ塗りにしていたのは、
+   朱が「いま選んでいる」の色で役が違ううえ、白抜きの字が 3.67 : 1 しか無かったため。
+   「ここが主役」は、まわりの朱の細枠1本がもう言っている。 */
 .rz-star-tag {
   display: inline-block;
-  padding: 2px var(--sp-2) 3px;
-  border-radius: 4px;
-  background: var(--pick);
-  color: #fffdf0;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
   font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.04em;
 }
 .rz-star figcaption > b {
@@ -535,7 +543,8 @@
 .rz-star-n { display: block; margin-top: 3px; font-size: var(--fs-min); font-weight: 800; color: var(--pap-ink-2); }
 .rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
 .rz-star .rz-bar { margin-top: var(--sp-2); }
-.rz-star .rz-bar > i { background: var(--pick); }
+/* 棒は数えたもの。まわりの枠と同じ朱にすると、朱が2つの意味を持ってしまう */
+.rz-star .rz-bar > i { background: var(--chip); }
 @media (min-width: 560px) {
   .rz-star { grid-template-columns: 200px 1fr; gap: var(--sp-5); padding: var(--sp-4); }
   .rz-star-n b { font-size: 32px; }
@@ -747,23 +756,25 @@
   background: var(--paper);
   box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--accent-2) 55%, transparent);
 }
+/* 水色は「外へ出る」の色（3.2）。この札は同じページの付箋の欄へ降りるだけなので、
+   ふちは島の中の行き先と同じ金にそろえる。48px・厚み6px。 */
 .nx-asks > a {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: 999px;
-  border: 2.5px solid color-mix(in srgb, var(--accent-2) 55%, var(--frame-dark));
-  background: var(--paper);
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep));
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  transition: transform 0.14s ease;
 }
-.nx-asks > a:hover { transform: translateY(-2px); box-shadow: 0 5px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep)); }
-.nx-asks > a:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep)); }
+.nx-asks > a:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 
 /* 島での見え方の下見。設定を並べるだけでは、押した結果が想像できない */
 .me-prev {
@@ -796,7 +807,7 @@
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
   padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 2.5px solid var(--frame);
   background: var(--paper);
   box-shadow: 0 3px 0 var(--frame-dark);
