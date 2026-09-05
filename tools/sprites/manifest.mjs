@@ -87,7 +87,7 @@ const GREYSTONE = {
 /* ---------------- たき火 ----------------
  * 石の輪だけだと、ただの石の輪にしか見えない。
  * 薪・炎・地面の明かりを足して「火が焚かれている」ところまで作る。
- * /about のたき火広場の看板になる絵なので、島でいちばん目立つ。 */
+ * いまは島に置いていない（/about の看板はあやとの家にした）。 */
 const campfire = () => [
   part(`${NK}/campfire_stones.glb`),
   part(`${NK}/campfire_logs.glb`),
@@ -284,8 +284,8 @@ const rope = (a, b, sag, seg = 8, w = 0.05) => {
   return out;
 };
 
-/* ---------------- 旅の桟橋 ----------------
- * 島の「旅の桟橋」に立っていたのは、何も書いていない道しるべ(sign.glb)。
+/* ---------------- 桟橋 ----------------
+ * かつての「旅の桟橋」に立っていたのは、何も書いていない道しるべ(sign.glb)。
  * 名前は桟橋なのに絵は道端の標識で、指しているものが違っていた(issue #114)。
  * 名前は変えない判断をしたので、絵のほうを桟橋に寄せる。
  *
@@ -317,7 +317,7 @@ const pier = () => [
  * 指していなかった。名前を「歩いた国」に変えたので、絵もそちらへ寄せる。
  *
  * 国の数を言うのは、板の枚数ではなく**色**。板を白のままにすると
- * 伝説の丘の道しるべ(legendWalk)と同じ絵になるので、
+ * 丘の道しるべ(legendWalk)と同じ絵になるので、
  * 1枚を2色の横縞にして、国旗が何枚も掛かっているように見せる。 */
 const flagPost = () => {
   /** 旗1枚。y は高さ、len は張り出し、dir は向き(度)、a/b は上下の色。 */
@@ -377,7 +377,7 @@ const globeStand = () => {
   ];
 };
 
-/* ---------------- 伝説の丘の記念碑 ----------------
+/* ---------------- 丘の記念碑（伝説の企画） ----------------
  * 丘に並ぶのは「380kmイラン横断」「GWエジプト祭り」のように、
  * 一つひとつ性格の違う企画。看板と石碑を使い回すと、どれがどれなのか
  * 分からない棚になる。企画ごとに、その日を指す形を組む。 */
@@ -623,7 +623,7 @@ const SPRITES_BASE = [
   { name: "hedge", parts: [`${BK}/hedge.glb`] },
   { name: "hedge-gate", parts: [`${BK}/hedge-gate.glb`] },
 
-  /* ---------- 伝説の丘 ----------
+  /* ---------- 丘の記念碑 ----------
      `site/content/legends.ts` の企画1つに絵1つ。名前は slug に合わせる。 */
   { name: "legend-iran-walk", parts: legendWalk() },
   { name: "legend-egypt-festival", parts: legendRuins(), opts: SANDSTONE },
@@ -707,7 +707,7 @@ const SPRITES_BASE = [
   { name: "flower-purple-mid", parts: [`${NK}/flower_purpleB.glb`] },
   { name: "firewood-large", parts: [`${NK}/log_stackLarge.glb`] },
 
-  /* ---------- 畑（キッチン小屋のまわり） ---------- */
+  /* ---------- 畑（台所の小屋のまわり） ---------- */
   { name: "crop-corn", parts: [`${NK}/crops_cornStageD.glb`] },
   { name: "crop-wheat", parts: [`${NK}/crops_wheatStageB.glb`] },
   { name: "crop-pumpkin", parts: [`${NK}/crop_pumpkin.glb`] },

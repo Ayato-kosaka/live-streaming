@@ -450,7 +450,7 @@ p.fork-was {
 p.fork-was b { font-weight: 900; color: var(--ink); }
 
 /* --- 書く道具 ---
-   `.bpost` `.bin-name` は `components/nordic` と企画掲示板で使う。
+   `.bpost` `.bin-name` は `components/nordic` と「企画をだす」で使う。
    押せるものは厚みで言う（docs/island-world.md 3.4）。
    書く欄は逆に、へこませる（`.bin` と同じ考え方）。 */
 .bin-name {
@@ -767,7 +767,10 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 }
 .nspot-meta dt { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .nspot-meta dd { margin: 0; font-size: var(--fs-min); font-weight: 900; }
-.nspot-info { margin: 10px 0 0; font-size: var(--fs-min); line-height: 1.75; font-weight: 700; color: var(--ink-2); }
+/* この一行はオリーブの札の上に乗る。墨の薄いほう（--ink-2）だと 3.82 : 1 で
+   読めない。**色を濃くしても届かない。組み合わせが間違っている。**
+   オリーブと対になっている字の色（--chip-ink）に替えると 5.67 : 1（実測）。 */
+.nspot-info { margin: 10px 0 0; font-size: var(--fs-min); line-height: 1.75; font-weight: 700; color: var(--chip-ink); }
 .nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
 .nspot-tags span {
   font-size: var(--fs-min); font-weight: 900;
@@ -928,7 +931,10 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 .gpnote { margin: 6px 0 0; font-size: var(--fs-note); line-height: 1.8; font-weight: 700; color: var(--ink-2); }
 
 .glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }
-.glist.is-dont li { color: var(--pick); }
+/* やってはいけないこと。橙（--pick）を素で紙に置くと 2.57 : 1（実測5か所）。
+   墨と混ぜて 4.77 : 1 まで沈める。橙のままなのは、
+   「やっていいこと」の並びと見分けが付く必要があるから。 */
+.glist.is-dont li { color: color-mix(in srgb, var(--pick) 35%, var(--ink)); }
 
 /* 表。紙の型なので、行の枠ではなく罫線1本で分ける。 */
 .gtable { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
@@ -960,7 +966,16 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .gwords b { font-size: 13px; font-weight: 900; }
-.gwords i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--accent-deep); }
+/* 読みがな。桃の濃いほう（--accent-deep）を素で紙に置くと、縞の暗いほうの行で
+   3.45 : 1 まで落ちる（描いた画素で40か所。11.5px なので細くて余計に効く）。
+   `--accent-deep` は「同じものの濃いほう。単独で使わない」（island-world 3.2）
+   なので、墨と混ぜて沈める。色相はそのまま、5.20 : 1 まで開く。 */
+.gwords i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: color-mix(in srgb, var(--accent-deep) 50%, var(--ink));
+}
 .gwords span { font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
 /* =========================================================
@@ -1125,13 +1140,20 @@ svg.nmap {
   stroke-opacity: 0.42;
   opacity: 0.82;
 }
+/* 字の下に敷く紙の札。
+   緑の陸と青い海では地の明るさが3倍ちがうので、字の色をどう選んでも 4.5 : 1 に
+   届かない（街の名前で実測 2.36〜4.31、距離で 1.17〜3.17）。
+   紙の縁取り（stroke）では埋まらない。**字の下に自分で地を敷く。**
+   `/map` の担当が同じ問題をこの形で解いている。 */
+.nmap .nm-lab {
+  fill: var(--paper);
+  opacity: 0.92;
+}
 .nmap .nm-city {
   fill: var(--ink);
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 8;
 }
-.nmap .nm-city.is-big { stroke-width: 9; }
+.nmap .nm-city.is-big { font-weight: 900; }
 
 /* --- ルート --- */
 .nmap .nm-leg-case,
@@ -1220,7 +1242,9 @@ svg.nmap {
   opacity: 0.75;
 }
 .nmap .nmap-pin.is-now .nm-goal .nm-chip { display: none; }
-.nmap .nm-chip.is-goal rect { fill: var(--accent); }
+/* 桃の上のクリームは 2.51 : 1 で読めない。同じ色相の濃いほう（--accent-deep）に
+   置くと 6.5 : 1 になる（`/map` の「いまここ」と同じ直し）。 */
+.nmap .nm-chip.is-goal rect { fill: var(--accent-deep); }
 .nmap .nm-chip.is-goal text { fill: var(--paper); letter-spacing: 0.14em; }
 
 /* --- 吹き出し（飛行機の時間、いまここ） --- */
@@ -1245,8 +1269,6 @@ svg.nmap {
   fill: var(--ink);
   font-size: 24px;
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 6;
 }
 
 /* --- 縮尺 --- */
@@ -1257,8 +1279,9 @@ svg.nmap {
   stroke-width: 5;
   stroke-linecap: round;
 }
+/* 白い字を陸に直に置いていた（3.93）。札を敷いたので、字は墨に戻す。 */
 .nmap .nm-scale-t {
-  fill: var(--paper);
+  fill: var(--ink);
   font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -1269,7 +1292,5 @@ svg.nmap {
   fill: var(--frame-deep);
   font-size: 27px;
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 7;
 }
 .nmap .is-ferry .nm-km { fill: var(--sea-deep); }

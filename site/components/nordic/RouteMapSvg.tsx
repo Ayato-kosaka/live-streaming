@@ -254,9 +254,20 @@ export default function RouteMapSvg({ here }: { here?: string }) {
               />
             ))}
             {l.kmAt && kmv && (
-              <text className="nm-km" x={l.kmAt[0]} y={l.kmAt[1]} textAnchor="middle">
-                {kmv}km
-              </text>
+              <>
+                {/* 数字と「km」で幅を見積もる。半角は約 0.58 文字ぶん。 */}
+                <rect
+                  className="nm-lab"
+                  x={l.kmAt[0] - (String(kmv).length + 2) * 0.58 * 27 * 0.5 - 6}
+                  y={l.kmAt[1] - 22}
+                  width={(String(kmv).length + 2) * 0.58 * 27 + 12}
+                  height="30"
+                  rx="9"
+                />
+                <text className="nm-km" x={l.kmAt[0]} y={l.kmAt[1]} textAnchor="middle">
+                  {kmv}km
+                </text>
+              </>
             )}
           </g>
         );
@@ -313,6 +324,20 @@ export default function RouteMapSvg({ here }: { here?: string }) {
                 <circle className="nm-pin-dot" cx={c.x} cy={c.y} r={r - 5} />
               </>
             )}
+            {/* 名前の下に、紙の札を敷く。
+                緑の陸と青い海では地の明るさが3倍ちがうので、字の色をどう選んでも
+                4.5 : 1 に届かない（実測 2.36〜4.31）。紙の縁取り（stroke）は
+                測る側が字といっしょに消すし、実際そこだけ見て読むものでもない。
+                **字の下に自分で地を敷く**のが答えで、`/map` も同じ形にしてある。
+                箱は押しどころ（`nm-hit`）と同じものを使い回す。 */}
+            <rect
+              className="nm-lab"
+              x={tx - 5}
+              y={c.y + lb.dy - fs * 0.82}
+              width={tw + 10}
+              height={fs * 1.12}
+              rx={fs * 0.3}
+            />
             <text
               className={`nm-city${big ? " is-big" : ""}`}
               x={c.x + lb.dx}
@@ -370,6 +395,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           <path className="nm-compass-n" d="M0 -34L11 6L0 -3L-11 6Z" />
           <path className="nm-compass-s" d="M0 34L11 6L0 -3L-11 6Z" />
         </g>
+        <rect className="nm-lab" x="-13" y="-66" width="26" height="28" rx="9" />
         <text className="nm-compass-t" x="0" y="-44" textAnchor="middle">
           N
         </text>
@@ -381,6 +407,14 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         <path
           className="nm-scale-tick"
           d={`M0 -9v18M${scale.len} -9v18M${scale.len / 2} -6v12`}
+        />
+        <rect
+          className="nm-lab"
+          x={scale.len / 2 - (String(scale.km).length + 2) * 0.58 * 26 * 0.5 - 6}
+          y="-40"
+          width={(String(scale.km).length + 2) * 0.58 * 26 + 12}
+          height="29"
+          rx="9"
         />
         <text className="nm-scale-t" x={scale.len / 2} y="-18" textAnchor="middle">
           {scale.km}km

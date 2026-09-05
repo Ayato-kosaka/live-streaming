@@ -8,7 +8,7 @@ import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
-  title: "伝説の丘",
+  title: "伝説の企画",
   description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。語り継がれている企画たち。",
 };
 
@@ -23,13 +23,13 @@ export default function LegendsPage() {
   const topDays = top.facts?.find((f) => f.unit?.includes("日"));
 
   return (
-    <PageShell crumbs={[{ label: "伝説の丘" }]}>
+    <PageShell crumbs={[{ label: "伝説の企画" }]}>
       {/* カモメは遊び方のある面だけに出す（`docs/island-ux.md` 5.2）。
           ここは読む面なので出さない。読みかた（数字だけ追えば分かる）は
           「丘に立っているもの」の1行が受け持つ。 */}
       <PageHead
         icon="hall-museum"
-        title="伝説の丘"
+        title="伝説の企画"
         lead={`いまでも話に出てくる、大きい企画と大きい日が${LEGENDS.length}つ。どれも週のはじめの企画会議から始まった。`}
       />
 
@@ -123,7 +123,7 @@ export default function LegendsPage() {
 
       <div className="tiles">
         <Link className="tile" href="/streams/meeting" style={{ ["--tile" as string]: "var(--roof-gold)" }}>
-          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
+          <img className="tile-icon" src="/sprites/tower-studio.webp" alt="" />
           <span className="tile-text">
             <b>企画会議を見る</b>
             <i>伝説が生まれる場所</i>
@@ -131,7 +131,7 @@ export default function LegendsPage() {
           <Icon name="right" size={15} className="tile-go" />
         </Link>
         <Link className="tile" href="/board" style={{ ["--tile" as string]: "var(--roof-mint)" }}>
-          <img className="tile-icon" src="/sprites/mailbox.webp" alt="" />
+          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>次の伝説を出す</b>
             <i>掲示板に書くと、会議に持っていく</i>

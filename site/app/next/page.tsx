@@ -23,7 +23,7 @@ export const metadata: Metadata = {
  * 飛び石の段がそのまま開いて中身になる。目次は無い。
  *
  * 下の1枚は「ここに並んでいるものは、どこから来て、どこへ行くのか」。
- * 掲示板（入口）とこの面（いま）と伝説の丘（出口）で一周する。
+ * 掲示板（入口）とこの面（いま）と「伝説の企画」（出口）で一周する。
  * 貼ってから出るまでの3歩の図は掲示板の面が持っているので、ここでは繰り返さない。
  */
 export default function NextPage() {
@@ -46,7 +46,7 @@ export default function NextPage() {
         <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
-            <b>企画掲示板へ</b>
+            <b>企画をだす</b>
             <i>思いついたことを、そのまま貼る</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
@@ -55,7 +55,7 @@ export default function NextPage() {
         <Link className="tile" href="/legends">
           <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
           <span className="tile-text">
-            <b>伝説の丘へ</b>
+            <b>伝説の企画へ</b>
             <i>いまも話に出てくる、終わった企画が{LEGENDS.length}つ</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />

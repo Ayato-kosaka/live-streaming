@@ -76,7 +76,7 @@ const SLUG = /^[a-z0-9-]+$/;
  * 下の「今週やること」は紙の型（記録）。本物のUIもこの2つを分けている
  * （`docs/ac-reference.md` の 7章）。混ざらないよう、台紙ごと分けて置く。
  *
- * letter を付けるのは「いまのポスト」の面だけ。
+ * letter を付けるのは「いまどこ」の面だけ。
  * あやと島についての面では板の中に入るので、紙を持ち込まない。
  */
 export default function NowLive({ letter, children }: { letter?: boolean; children?: ReactNode }) {

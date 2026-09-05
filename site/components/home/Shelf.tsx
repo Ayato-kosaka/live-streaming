@@ -62,8 +62,8 @@ export default function Shelf() {
   const boxes: Box[] = [
     {
       href: "/map",
-      mark: "pier",
-      name: "旅の桟橋",
+      mark: "flagpost",
+      name: "歩いた国",
       note: "パリからトビリシまで、どこをどう通ってきたか",
       n: s.countries,
       unit: "カ国",
@@ -80,7 +80,7 @@ export default function Shelf() {
       /* 小屋そのものの絵（`kitchen`）は上の帯と面の見出しに既に2回出ている。
          ここが数えているのは小屋ではなく**押したスタンプの数**なので、帳面のほうを出す */
       mark: "stampbook",
-      name: "キッチン小屋",
+      name: "作った料理",
       note: "その土地のものを、買い出しから作って食べる",
       n: RECIPES.length,
       unit: "品",
@@ -95,7 +95,7 @@ export default function Shelf() {
     {
       href: "/streams",
       mark: "tower",
-      name: "配信やぐら",
+      name: "配信",
       note: "配信は5つの型でできてる。型ごとにまとめて見られる",
       n: <LiveNumber statKey="streams" fallback={s.streams} />,
       unit: "本",
@@ -112,7 +112,7 @@ export default function Shelf() {
     {
       href: "/legends",
       mark: "hill",
-      name: "伝説の丘",
+      name: "伝説の企画",
       note: LEGENDS[0]?.title ?? "いまも話に出てくる企画",
       n: LEGENDS.length,
       unit: "つの伝説",
@@ -127,7 +127,7 @@ export default function Shelf() {
     {
       href: "/apps",
       mark: "workshop",
-      name: "アプリ工房",
+      name: "アプリ",
       note: "旅先で、配信しながら作っている",
       n: APPS.length,
       unit: "つのアプリ",

@@ -45,16 +45,16 @@ export default function KitchenPage() {
   const peak = Math.max(...months.map((x) => x.n));
   const busiest = months.find((x) => x.n === peak)!;
 
-  // キッチン小屋は島に建っていて、島から直接押して入る。配信やぐらの下に
+  // 「作った料理」は島に建っていて、島から直接押して入る。「配信」の下に
   // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
-    <PageShell crumbs={[{ label: "キッチン小屋" }]}>
+    <PageShell crumbs={[{ label: "作った料理" }]}>
       {/* h1 は場所の名前（`docs/island-ux.md` 4.3）。「クッキング・スタンプ帳」は
           この小屋に置いてある帳面の名前なので、1行下に降ろす。パンくずと h1 で
           名前が2つあると、どこに居るのかを画面が2通りに答えてしまう。 */}
       <PageHead
         icon="hut-kitchen"
-        title="キッチン小屋"
+        title="作った料理"
         lead={`作ってきた料理のスタンプ帳。${RECIPES.length}品を、${byCountry.size}カ国の宿のキッチンで。`}
         say={GUIDE.kitchen}
       />

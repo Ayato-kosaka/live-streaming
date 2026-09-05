@@ -11,17 +11,17 @@ import { countryBySlug } from "@/content/countries";
 import { appBySlug } from "@/content/apps";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import Days from "@/components/atlas/Days";
-import { CampArt, PackArt, PotArt, CodeArt } from "@/components/atlas/art";
+import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import "./about.css";
 
 export const metadata: Metadata = {
-  title: "たき火広場",
+  title: "あやとのこと",
   description:
     "あやとが何者で、いま何をしていて、これからどこへ行くのか。旅と配信とアプリの年表。",
 };
 
 /**
- * たき火広場。
+ * あやとのこと。
  *
  * 来た人の「この人だれ」に、読ませずに答える面。
  *
@@ -41,12 +41,12 @@ export const metadata: Metadata = {
  * ## 押せるものを増やした
  *
  * 道の石9つと、やっていること3枚を、行き先のある板にした。
- * 「パリで配信を始めた」を押すとフランスの面、「なに食べよ」を押すとアプリ工房、
- * 「イラン国境まで380km」を押すと伝説の丘。
+ * 「パリで配信を始めた」を押すとフランスの面、「なに食べよ」を押すと「アプリ」、
+ * 「イラン国境まで380km」を押すと「伝説の企画」。
  * 読むだけの年表は、読み終わったら行き止まりになる。
  *
  * h1 は場所の名前（`docs/island-world.md` 7.5）。ヘッダーの入口が
- * 「たき火広場」なので、ここで「あやと島について」と名乗ると名前が2つになる。
+ * 「あやとのこと」なので、ここで「あやと島について」と名乗ると名前が2つになる。
  *
  * 住人（愉快な仲間達）の絵はここでは出さない。`/friends` と同じ絵を
  * 2ページに並べると、どちらが本体なのか分からなくなる。
@@ -76,8 +76,8 @@ const STORY: Step[] = [
   { date: appOn("nanitabeyo", "build"), kind: "app", what: "「なに食べよ」を作り始めた", note: "ヨルダンで「みんなで外食の悩みを解決するアプリを作ろう」と言い出した", href: "/map/jordan", go: "ヨルダンの面へ" },
   { date: on("georgia"), kind: "travel", what: "ジョージアに着いた", note: "いちばん長くいる国。ここでクッキング配信が定着した", href: "/map/georgia", go: "ジョージアの面へ" },
   { date: appOn("nanitabeyo", "release"), kind: "app", what: "「なに食べよ」をリリースした", note: "クタイシから報告。いまも毎週アップデートしている", href: "/apps/nanitabeyo", go: "アプリの面へ" },
-  { date: on("iran-border"), kind: "travel", what: "アルメニアからイラン国境まで、380kmを歩いた", note: "10日間。帰りはヒッチハイクでエレバンへ", href: "/legends/iran-walk", go: "伝説の丘へ" },
-  { date: on("georgia", 1), kind: "travel", what: "トビリシに戻ってきた", note: "いまここ。毎晩22時から配信している", href: "/now", go: "いまのポストへ" },
+  { date: on("iran-border"), kind: "travel", what: "アルメニアからイラン国境まで、380kmを歩いた", note: "10日間。帰りはヒッチハイクでエレバンへ", href: "/legends/iran-walk", go: "伝説の企画へ" },
+  { date: on("georgia", 1), kind: "travel", what: "トビリシに戻ってきた", note: "いまここ。毎晩22時から配信している", href: "/now", go: "いまどこへ" },
 ];
 
 /**
@@ -114,7 +114,7 @@ const DOING = [
     art: <CodeArt size={54} />,
     title: "アプリを作る",
     note: "グルメアプリ「なに食べよ」。機能も文言も、配信で意見をもらって決めている。",
-    go: "アプリ工房へ",
+    go: "アプリへ",
   },
 ];
 
@@ -126,10 +126,10 @@ export default function AboutPage() {
   const steps = [...STORY].filter((x) => x.date).sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "たき火広場" }]}>
+    <PageShell current="friends" crumbs={[{ label: "あやとのこと" }]}>
       <PageHead
-        mark={<CampArt size={74} />}
-        title="たき火広場"
+        icon="hut-ayato"
+        title="あやとのこと"
         lead="あやとって何者で、いま何をしていて、これからどこへ行くのか。ここに座って、ひととおり。"
       />
 
@@ -152,13 +152,13 @@ export default function AboutPage() {
         </div>
         {/* 「いま何してる」「これからどこへ行く」は、名乗りの続きとして
             行き先だけ置く。前はここに <NowLive /> をまるごと呼んでいて、
-            いまのポストの2枚（今夜までの残り時間と今週やること）が
+            「いまどこ」の2枚（今夜までの残り時間と今週やること）が
             この面の中にもう一度出ていた。同じものが2面にあると、
             どちらが本体なのか分からなくなるし、それだけで 1,006px あった。 */}
         <div className="tiles" style={{ marginTop: 14 }}>
           <Link className="tile" href="/now">
             <span className="tile-mark">
-              <Icon name="mailbox" size={24} />
+              <Icon name="globe" size={24} />
             </span>
             <span className="tile-text">
               <b>いま、どこで何してる</b>
@@ -285,10 +285,10 @@ export default function AboutPage() {
             トップの棚に同じものがある。道のりの下は行き先1つでよい。 */}
         <Link className="tile" href="/map" style={{ marginTop: 14 }}>
           <span className="tile-mark">
-            <Icon name="pier" size={24} />
+            <Icon name="flagpost" size={24} />
           </span>
           <span className="tile-text">
-            <b>旅の桟橋へ</b>
+            <b>歩いた国へ</b>
             <i>歩いた{s.countries}カ国を、1枚の地図で</i>
           </span>
           <Icon name="right" size={16} className="tile-go" />

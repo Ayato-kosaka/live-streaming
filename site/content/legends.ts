@@ -16,7 +16,7 @@ export type Legend = {
    * **企画1つに絵1つ。看板や石碑を使い回さない。** 丘に並ぶのは
    * 「380km歩いた」「エジプトの遺跡を5日」のように性格の違う企画で、
    * 汎用の絵を配ると、どれがどれだか分からない棚になる。
-   * 焼くところは `tools/sprites/manifest.mjs` の「伝説の丘の記念碑」。
+   * 焼くところは `tools/sprites/manifest.mjs` の「丘の記念碑」（島の建物は丘の館のまま。札の名前だけ「伝説の企画」にした）。
    */
   icon: string;
   date: string;

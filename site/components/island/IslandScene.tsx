@@ -659,28 +659,28 @@ const BUILDINGS: Item[] = PLACES.map((sp) => ({
 
 /** 建物のまわりの飾り。場所ごとに「何をしている所か」が伝わるように置く。 */
 const DRESSING: Item[] = [
-  // 配信やぐら: 見物用のベンチ
+  // 配信(やぐら): 見物用のベンチ
   { n: "bench", x: P.streams.x - 62, y: P.streams.y + 26, s: 26 },
   { n: "bench", x: P.streams.x + 66, y: P.streams.y + 30, s: 26, flip: true },
-  // キッチン小屋: 畑の柵
+  // 作った料理(台所の小屋): 畑の柵
   { n: "fence", x: P.kitchen.x - 62, y: P.kitchen.y + 34, s: 22 },
   { n: "fence", x: P.kitchen.x - 22, y: P.kitchen.y + 40, s: 22 },
-  // アプリ工房: 作業台と丸太
+  // アプリ(工房): 作業台と丸太
   { n: "stall", x: P.apps.x + 62, y: P.apps.y + 26, s: 26 },
   { n: "log", x: P.apps.x - 58, y: P.apps.y + 30, s: 15 },
-  // 伝説の丘: 記念碑
+  // 伝説の企画(丘の館): 記念碑
   { n: "statue", x: P.legends.x - 62, y: P.legends.y + 16, s: 54 },
   { n: "statue-head", x: P.legends.x + 66, y: P.legends.y + 20, s: 40 },
   // これから: たきぎ(旅立ちの支度)
   { n: "log", x: P.next.x + 40, y: P.next.y + 18, s: 14 },
-  // たき火広場: 座る丸太
+  // あやとのこと(あやとの家): 庭の丸太
   { n: "log", x: P.friends.x - 44, y: P.friends.y + 6, s: 15 },
   { n: "log", x: P.friends.x + 46, y: P.friends.y + 10, s: 15, flip: true },
   { n: "bench", x: P.friends.x + 4, y: P.friends.y + 42, s: 26 },
-  // 企画掲示板: 立ち読み用の灯り
+  // 企画をだす(掲示板): 立ち読み用の灯り
   { n: "lantern", x: P.board.x + 74, y: P.board.y + 6, s: 52 },
   { n: "bench", x: P.now.x - 56, y: P.now.y + 24, s: 26 },
-  // 旅の桟橋: 舟
+  // 歩いた国(道しるべ): 舟
   { n: "canoe", x: 214, y: 916, s: 20, flip: true },
   // 池
   { n: "lily", x: POND.x - 24, y: POND.y + 4, s: 8 },
@@ -847,7 +847,7 @@ const ROUTES: Route[] = [
   { a: foot("now", 10), b: foot("next", 10), bend: 20 },
   { a: foot("kitchen"), b: foot("map", 6), bend: -18 },
   { a: foot("apps"), b: foot("friends", 10), bend: 24 },
-  // 伝説の丘は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。
+  // 丘の館は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。
   // 崖のふもとで止めて、そこから上は登るものとして残す。
   { a: foot("friends", 10), b: [PLATEAU.cx + 2, PLATEAU.cy + 100], bend: -26 },
 ];

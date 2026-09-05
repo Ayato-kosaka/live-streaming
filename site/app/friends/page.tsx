@@ -28,15 +28,15 @@ export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
 
   return (
-    <PageShell crumbs={[{ label: "仲間のテント" }]}>
+    <PageShell crumbs={[{ label: "住んでる人" }]}>
       {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
-          パンくずが「仲間のテント」なので、h1 もそれに合わせる。
-          「愉快な仲間達」は、そのテントに集まっている人たちの呼び名なので1行下へ。
+          パンくずが「住んでる人」なので、h1 もそれに合わせる。
+          「愉快な仲間達」は、その人たちの呼び名なので1行下へ。
           カモメは遊び方のある面だけに出す決まりなので、ここには出さない
           （`docs/island-ux.md` 5.2）。 */}
       <PageHead
         mark={<FriendsMark />}
-        title="仲間のテント"
+        title="住んでる人"
         lead="毎晩22時に集まってくる、愉快な仲間達。名前は出しませんが、ちゃんとここにいます。"
       />
 
@@ -123,7 +123,7 @@ export default function FriendsPage() {
                 <li>
                   <b>ログインしないで使う</b>
                   <i>
-                    企画掲示板は名前もログインも要りません。名前の欄は空のままでも貼れて、
+                    企画を出すのに、名前もログインも要りません。名前の欄は空のままでも貼れて、
                     書けばその名前だけが札に出ます。
                   </i>
                 </li>
@@ -146,7 +146,7 @@ export default function FriendsPage() {
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>
                   <b>島での見え方を決める</b>
-                  <i>ログインすると、企画掲示板の下に出てくる</i>
+                  <i>ログインすると、企画をだす面の下に出てくる</i>
                 </span>
                 <Icon name="right" size={14} />
               </Link>
