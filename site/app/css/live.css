@@ -487,3 +487,103 @@
   opacity: 0.85;
 }
 .pap { position: relative; }
+
+/* =========================================================
+   10. トップページの「これから」の入口
+   ここは配信に来ている人がいちばん気にしているところ。
+   しらせのベルと赤い丸を1つだけ付けて、押したくなるようにする。
+   ========================================================= */
+/* ベルを置くときは、札の中の短い金の棒を消す。合図が2つになるため */
+.nextup-eyebrow.has-bell { padding-left: 7px; gap: 6px; }
+.nextup-eyebrow.has-bell::before { display: none; }
+.nextup-n {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e04a68;
+  color: #fffdf6;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+/* 予定をぜんぶ見にいく口。札を押すと1つの企画に入ってしまうので、別に置く */
+.nextup-all {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-3);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: 0 5px 0 var(--frame-deep);
+  color: var(--ink);
+  transition: transform 0.15s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.15s;
+}
+.nextup-all:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
+.nextup-all:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
+.nextup-all span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nextup-all b { font-size: 14px; font-weight: 900; letter-spacing: 0.02em; }
+.nextup-all i { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+.nextup-all em {
+  margin-left: auto;
+  flex: none;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--frame-deep);
+}
+
+/* いまいる国の旗を、地名のとなりに。テーマの符丁（georgia など）は
+   文章としては出さない決まりなので、絵にだけ使う */
+.now-hero .now-place { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.now-flag { flex: none; filter: drop-shadow(0 2px 0 rgba(120, 80, 40, 0.18)); }
+
+/* 紙の上の引用。住人のセリフは吹き出し（板の型）ではなく、刷ってある文にする */
+.pap-quotes { display: grid; gap: 10px; }
+.pap-quote {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--pap-line);
+  border-radius: 5px;
+  background: rgba(255, 253, 240, 0.5);
+}
+.pap-quote img {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ded4a2;
+}
+.pap-quote blockquote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--pap-ink);
+}
+
+/* 貼ったあとの3歩。飛び石を1つずつ踏むのと同じ絵で見せる */
+.bd-flow { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+@media (min-width: 620px) { .bd-flow { grid-template-columns: repeat(3, 1fr); } }
+.bd-flow > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 6px;
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--paper-2) 66%, var(--paper));
+}
+.bd-flow > li > span:last-child { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bd-flow b { font-size: 13.5px; font-weight: 900; }
+.bd-flow i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.6; }

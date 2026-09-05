@@ -45,10 +45,15 @@ OUT = "site/content/nordic/map.json"
 # 西はデンマークが丸ごと入るところまで（ユトランド半島は 8.1E から）。
 # ここを切ると、スウェーデン南端との海峡が画面の縁に来て、
 # 「スカンジナビアの地図」に見えなくなる。
-# 南はクラクフの街の名札が入る余白まで下げる。48.4 だとオシフィエンチムの
-# 名札が画面の下で切れる。
+#
+# 南北は「ルートの外側にどれだけ余白を残すか」で決める。
+# クラクフ(50.06N)の下に 2.2 度、ヘルシンキ(60.17N)の上に 2.0 度。下は
+# オシフィエンチムの名札と「クタイシから」の札が入るぶんだけ余分に要る。
+# 前は 47.3〜63.6 にしていたが、誰も行かないドイツ南部とラップランドが
+# 画面の3割を占めて、地図が縦に間延びしていた。切るぶんだけ縮尺が上がって、
+# スマホでも街の名前が読める大きさになる。
 LON_MIN, LON_MAX = 7.6, 31.6
-LAT_MIN, LAT_MAX = 47.3, 63.6
+LAT_MIN, LAT_MAX = 47.85, 62.15
 
 # ランベルト正角円錐の設定
 LAT0, LON0 = 47.3, 20.0
@@ -89,24 +94,55 @@ RIVERS = {
 # 地図を見て手で決めたほうが速いので、経度緯度で持つ。
 # （投影はここで通すので、投影の設定を変えても勝手についてくる）
 COUNTRY_LABELS = {
-    "poland": (17.3, 52.3, 44),
-    "lithuania": (22.3, 54.7, 32),
-    "latvia": (26.6, 56.5, 28),
-    "estonia": (25.9, 58.15, 28),
-    "finland": (27.2, 62.2, 40),
-    "sweden": (15.2, 60.2, 40),
+    "poland": (17.0, 52.1, 46),
+    "lithuania": (22.0, 55.35, 30),
+    "latvia": (26.9, 56.9, 28),
+    "estonia": (26.2, 58.7, 26),
+    "finland": (26.7, 60.95, 40),
+    "sweden": (14.9, 59.9, 40),
 }
 
 # 海と湾の名前。地図の中で場所を指せるように、いくつかだけ置く。
+# rot は文字を寝かせる角度。湾は斜めに伸びているので、水面の向きに沿わせないと
+# 名前だけが地図の上に浮いて見える。
+# リガ湾は入れない。リガの名札と 307km の札で、すでにあの辺りは混んでいる。
 SEA_LABELS = [
-    ("バルト海", 18.7, 56.0, 32, 0),
-    ("ボスニア湾", 20.2, 62.4, 26, 0),
-    ("フィンランド湾", 28.5, 59.9, 22, 0),
-    ("リガ湾", 22.9, 57.9, 19, 0),
+    ("バルト海", 18.5, 56.3, 34, -14),
+    ("ボスニア湾", 19.5, 60.9, 26, -22),
+    ("フィンランド湾", 26.4, 59.75, 21, -4),
+]
+
+# 山なみ。標高データは持っていないので、実際の山脈の走りを経度緯度でなぞる。
+# ここに無い山（スウェーデン内陸のなだらかな丘など）は描かない。嘘の起伏を置かない。
+# (点の並び, 山の大きさ)
+RANGES = [
+    # 南ノルウェーの高原。画面の左上が緑一色になるのを、これで止める。
+    ([(13.1, 62.1), (12.5, 61.5), (12.0, 61.0), (11.1, 60.7), (10.0, 60.9),
+      (8.9, 60.8), (8.0, 60.4), (7.4, 59.9)], 11.0),
+    ([(13.6, 61.6), (13.0, 61.1), (12.6, 60.6)], 8.5),
+    # カルパチア（タトラ〜ビェシチャディ）。クラクフのすぐ南に壁がある、
+    # というのはこの旅で実際に効いてくる地形なので必ず描く。
+    ([(18.4, 49.55), (19.3, 49.3), (20.1, 49.22), (21.0, 49.35),
+      (21.9, 49.25), (22.8, 48.85)], 10.5),
+    # ズデーテン
+    ([(15.1, 50.8), (16.1, 50.5), (16.9, 50.25)], 8.5),
+]
+
+# 陸の国境を越えるところ。ヒッチハイクでは、ここが1日の山場になる。
+# （国が変わる区間は6つあるが、飛行機とフェリーの3つは陸の国境を通らない）
+# (手前の街, 向こうの街, 経度, 緯度, 検問所の名前)
+BORDERS = [
+    ("bialystok", "vilnius", 23.44, 54.13, "オグロドニキ"),
+    ("vilnius", "riga", 24.20, 56.40, "サローチャイ"),
+    ("riga", "tallinn", 24.36, 57.87, "アイナジ"),
 ]
 
 # 方位を置く場所。正角円錐なので、ここの真北の傾きも一緒に焼き込む。
-NORTH_AT = (30.1, 62.8)
+# ロシア側の、何も描いていないところへ置く。海に置くと泡ときらめきに埋もれる。
+NORTH_AT = (30.5, 61.55)
+
+# 縮尺の目盛りを置く場所。ドイツ北部の、誰も通らない空き地。
+SCALE_AT = (9.2, 49.4)
 
 
 # ---------------------------------------------------------------- 投影
@@ -401,6 +437,31 @@ def ring_to(pen: Pen, pts: list) -> None:
     pen.close()
 
 
+def tri_path(items: list, tall: float) -> str:
+    """三角形をたくさん並べたパス。森の針葉樹と、山なみに使う。
+
+    塗るだけなので輪は閉じない（`z` を書かない）。SVG は fill のとき
+    subpath を勝手に閉じるし、`z` を書くとペンの現在地が始点に戻って、
+    次の `m` の相対値が狂う。
+
+    光と影は、画面側で**同じパスを少しずらして3枚重ねる**ことで出す。
+    木1本ずつに明るい面と暗い面を持たせると、パスの文字数が倍になって
+    JSON が太る（森だけで 800 本ある）。
+
+    Args:
+        items: (x, y, 半幅) の並び。y は三角形の底辺。
+        tall: 高さ ÷ 半幅
+    Returns:
+        SVG のパス
+    """
+    pen = Pen()
+    for x, y, r in items:
+        pen.move(x - r, y)
+        pen.line(x, y - r * tall)
+        pen.line(x + r, y)
+    return pen.text()
+
+
 def line_to(pen: Pen, pts: list) -> None:
     """開いた線を、角のない曲線としてペンに書く。
 
@@ -515,7 +576,17 @@ def main() -> None:
         px, py = lcc(lon, lat)
         return (px - minx) * k, (py - miny) * k
 
-    box = (LON_MIN - pad, LAT_MIN - pad, LON_MAX + pad, LAT_MAX + pad)
+    # 粗く切る用の範囲（度）。ユーラシアの輪はシベリアまで続いているので、
+    # 投影する前にここでざっくり落とさないと点が数十万になる。広めに取る。
+    box = (LON_MIN - 8, LAT_MIN - 8, LON_MAX + 8, LAT_MAX + 8)
+
+    # 仕上げは投影したあとの座標で切る。度で切ると、正角円錐では
+    # 経線が傾いているぶん切り口が画面の中に入ってきて、
+    # **ノルウェーの真ん中に、まっすぐな砂浜のある嘘の海岸線**ができる。
+    # 画面の外 MARGIN のところで切れば、浅瀬や砂の帯（いちばん太くて 38）を
+    # 足しても切り口が画面に出てこない。
+    MARGIN = 90.0
+    vbox = (-MARGIN, -MARGIN, VIEW_W + MARGIN, view_h + MARGIN)
 
     def polys_of(geom: dict) -> list:
         if geom["type"] == "Polygon":
@@ -540,7 +611,10 @@ def main() -> None:
                 pts = clip(ring_points(arcs, ring), box)
                 if len(pts) < 3:
                     continue
-                pp = rdp([project(x, y) for x, y in pts], eps)
+                pp = clip([project(x, y) for x, y in pts], vbox)
+                if len(pp) < 3:
+                    continue
+                pp = rdp(pp, eps)
                 if len(pp) < 3 or area(pp) < min_area:
                     continue
                 out.append(pp)
@@ -565,7 +639,9 @@ def main() -> None:
     # 通る6カ国が主役だということが伝わらなくなる。
     # なので背景は国別ではなく、陸のかたまり（land）1枚で塗る。
     land = topo["objects"]["land"]["geometries"][0]
-    land_rings = rings_of(land, 0.85, 4.0)
+    # 間引きは 0.55。0.85 だとサーレマー島やボーンホルム島が消えて、
+    # バルト海が「ただの空き地」になる。小さい輪の足切りも 1.5 まで下げる。
+    land_rings = rings_of(land, 0.55, 1.5)
     out["land"] = rings_path(land_rings)
 
     country_rings: dict[str, list] = {}
@@ -574,7 +650,7 @@ def main() -> None:
         name = g["properties"]["name"]
         if name in ROUTE:
             slug = ROUTE[name]
-            rs = rings_of(g, 0.85, 4.0)
+            rs = rings_of(g, 0.55, 1.5)
             country_rings[slug] = rs
             out["countries"][slug] = rings_path(rs)
 
@@ -597,10 +673,13 @@ def main() -> None:
                     pts = clip([(c[0], c[1]) for c in ring], box)
                     if len(pts) < 3:
                         continue
+                    pp = clip([project(x, y) for x, y in pts], vbox)
+                    if len(pp) < 3:
+                        continue
                     # 湖はサイマーのように輪が細かく分かれている。
                     # 形が分かればいいので、海岸線より粗く間引く。
-                    pp = rdp([project(x, y) for x, y in pts], 2.2)
-                    if len(pp) < 3 or area(pp) < 22.0:
+                    pp = rdp(pp, 2.0)
+                    if len(pp) < 3 or area(pp) < 18.0:
                         continue
                     ring_to(pen, pp)
         out["lakes"] = pen.text()
@@ -623,10 +702,11 @@ def main() -> None:
             )
             for part in parts:
                 for seg in clip_open([(c[0], c[1]) for c in part], box):
-                    pp = rdp([project(x, y) for x, y in seg], 1.4)
-                    if len(pp) < 2:
-                        continue
-                    line_to(pen, pp)
+                    for sub in clip_open([project(x, y) for x, y in seg], vbox):
+                        pp = rdp(sub, 1.4)
+                        if len(pp) < 2:
+                            continue
+                        line_to(pen, pp)
         out["rivers"] = pen.text()
 
     # ---- 経緯線 ----------------------------------------------------
@@ -656,26 +736,34 @@ def main() -> None:
         ("helsinki", "ヘルシンキ", 24.938, 60.170, "pass", "finland"),
         ("stockholm", "ストックホルム", 18.069, 59.329, "goal", "sweden"),
     ]
+    # 首都は印を変える。全部おなじ丸だと、11個の点がただ並んでいるだけに見える。
+    CAPITALS = {"warszawa", "vilnius", "riga", "tallinn", "helsinki", "stockholm"}
     at: dict[str, tuple[float, float]] = {}
     out["cities"] = []
-    for cid, nm, lon, lat, kind, country in cities:
+    for i, (cid, nm, lon, lat, kind, country) in enumerate(cities):
         x, y = project(lon, lat)
         at[cid] = (x, y)
         out["cities"].append({
             "id": cid, "name": nm,
             "x": round(x, 1), "y": round(y, 1),
             "kind": kind, "country": country,
+            "cap": cid in CAPITALS,
+            # ルートの何番目か。ここまで来た／まだ、を塗り分けるのに使う。
+            "seq": i,
         })
 
-    # ---- 森と丘 ----------------------------------------------------
+    # ---- 森 --------------------------------------------------------
     # 「ただの塗り」に見せないための地面の情報量（ac-reference 4章）。
     # 通る6カ国の中だけに置く。海岸から離れた場所を選ぶので、
     # 距離場（辺までの距離）をいちど作って使い回す。
-    woods: list[list[int]] = []
+    #
+    # 前は 950 個の <ellipse> を並べていた。丸のまだら模様は「森」に見えないし、
+    # DOM が 950 個ぶん重い。針葉樹の形にして、パス2本（影の面と光の面）に畳む。
+    woods: list[list[float]] = []
     # 国ごとの森の濃さ。北へ行くほど森が深い、という実際の見た目に合わせる。
     DENSITY = {
-        "poland": 0.34, "lithuania": 0.40, "latvia": 0.46,
-        "estonia": 0.46, "finland": 0.62, "sweden": 0.58,
+        "poland": 0.19, "lithuania": 0.23, "latvia": 0.27,
+        "estonia": 0.27, "finland": 0.42, "sweden": 0.38,
     }
     for slug, rings in country_rings.items():
         if not rings:
@@ -693,8 +781,8 @@ def main() -> None:
         y0, y1 = max(min(ys), 8.0), min(max(ys), view_h - 8.0)
         if x1 - x0 < 20 or y1 - y0 < 20:
             continue
-        nx = max(8, min(56, int((x1 - x0) / 10)))
-        ny = max(8, min(84, int((y1 - y0) / 10)))
+        nx = max(8, min(52, int((x1 - x0) / 12)))
+        ny = max(8, min(78, int((y1 - y0) / 12)))
         rng = rnd("woods-" + slug)
         for iy in range(ny):
             for ix in range(nx):
@@ -707,9 +795,33 @@ def main() -> None:
                 if d > 13 and rng() < DENSITY[slug]:
                     jx = px + (rng() - 0.5) * (x1 - x0) / nx * 0.9
                     jy = py + (rng() - 0.5) * (y1 - y0) / ny * 0.9
-                    r = 4 + rng() * 4.5 + min(3.5, d / 24)
-                    woods.append([round(jx), round(jy), round(r)])
-    out["woods"] = woods
+                    r = 4.0 + rng() * 3.4 + min(3.2, d / 26)
+                    woods.append([jx, jy, r])
+    # 手前の木ほど下に来るように並べ替える。重なったときに奥行きが出る。
+    woods.sort(key=lambda w: w[1])
+    out["woods"] = tri_path(woods, 2.15)
+
+    # ---- 山なみ ----------------------------------------------------
+    hills: list[list[float]] = []
+    for pts, size in RANGES:
+        pp = [project(lon, lat) for lon, lat in pts]
+        rng = rnd(f"hill-{pts[0]}")
+        # 尾根に沿って、一定の間隔で山を置く。真横に並ぶと櫛に見えるので、
+        # 尾根と直角の向きにも散らす。
+        step = size * 1.55
+        for i in range(len(pp) - 1):
+            (ax, ay), (bx, by) = pp[i], pp[i + 1]
+            seg = math.hypot(bx - ax, by - ay)
+            n = max(1, int(seg / step))
+            for j in range(n):
+                t = (j + 0.5) / n
+                cx, cy = ax + (bx - ax) * t, ay + (by - ay) * t
+                nx_, ny_ = -(by - ay) / (seg or 1), (bx - ax) / (seg or 1)
+                off = (rng() - 0.5) * size * 2.6
+                hills.append([cx + nx_ * off, cy + ny_ * off + (rng() - 0.5) * size,
+                              size * (0.62 + rng() * 0.62)])
+    hills.sort(key=lambda h: h[1])
+    out["hills"] = tri_path(hills, 1.30)
 
     # ---- 海のきらめき ----------------------------------------------
     # どうぶつの森の海は白い光が散っている（ac-reference 1章）。
@@ -792,9 +904,14 @@ def main() -> None:
             tx, ty = pts[j][0] - pts[i][0], pts[j][1] - pts[i][1]
             tl = math.hypot(tx, ty) or 1.0
             km_at = [round(pts[i][0] - ty / tl * km_off), round(pts[i][1] + tx / tl * km_off)]
+        # 線のまんなか。移動手段の絵を置く場所（進行方向つき）。
+        i = n // 2
+        j = min(n, i + 1)
+        mid_ang = math.degrees(math.atan2(pts[j][1] - pts[i][1], pts[j][0] - pts[i][0]))
         return {
             "from": a, "to": b, "move": move, "d": pen.text(), "marks": marks,
             "kmAt": km_at,
+            "mid": [round(pts[i][0]), round(pts[i][1]), round(mid_ang)],
         }
 
     out["legs"] = [
@@ -809,6 +926,18 @@ def main() -> None:
         leg("tallinn", "helsinki", "ferry", 0.20, -40),
         leg("helsinki", "stockholm", "ferry", 0.14, 40),
     ]
+
+    # ---- 陸の国境 --------------------------------------------------
+    # 越える向きに直角な棒を置く。ヒッチハイクで国境を歩いて越えるのは
+    # この旅でいちばん絵になるところなので、地図の上でも印を分ける。
+    out["borders"] = []
+    for a, b, lon, lat, nm in BORDERS:
+        bx, by = project(lon, lat)
+        (ax, ay), (cx2, cy2) = at[a], at[b]
+        ang = math.degrees(math.atan2(cy2 - ay, cx2 - ax))
+        out["borders"].append({
+            "x": round(bx), "y": round(by), "deg": round(ang, 1), "name": nm,
+        })
 
     # ジョージアからの飛行機。画面の外（南東）から入ってくる。
     kx, ky = at["katowice"]
@@ -833,8 +962,7 @@ def main() -> None:
 
     # ---- 縮尺と方位 ------------------------------------------------
     # 縮尺は「画面の 200 単位が何 km か」から、きりのいい数字を選ぶ。
-    lat_s = LAT_MIN + (LAT_MAX - LAT_MIN) * 0.12
-    lon_a = LON_MIN + 2.0
+    lon_a, lat_s = SCALE_AT
     xa, _ = project(lon_a, lat_s)
     xb, _ = project(lon_a + 2.0, lat_s)
     km_per_unit = haversine((lon_a, lat_s), (lon_a + 2.0, lat_s)) / abs(xb - xa)
@@ -844,7 +972,12 @@ def main() -> None:
             break
     else:
         bar_km = 500
-    out["scale"] = {"km": bar_km, "len": round(bar_km / km_per_unit), "kmPerUnit": round(km_per_unit, 4)}
+    sx, sy = project(*SCALE_AT)
+    out["scale"] = {
+        "km": bar_km, "len": round(bar_km / km_per_unit),
+        "kmPerUnit": round(km_per_unit, 4),
+        "x": round(sx), "y": round(sy),
+    }
 
     # 方位。正角円錐なので、真北は場所によって傾く。傾きをここで出しておく。
     nlon, nlat = NORTH_AT
@@ -865,8 +998,11 @@ def main() -> None:
         print(f"  {k2:10} {len(v) / 1024:6.1f} KB")
     print(f"  woods      {len(woods)} 個 / glints {len(glints)} 個")
     print(f"  scale      {bar_km}km = {out['scale']['len']}u   north {out['north']['deg']}deg")
+    print(f"  hills      {len(hills)} 個 / woods path {len(out['woods']) / 1024:.1f} KB")
     for slug, v in out["labels"].items():
         print(f"  label {slug:10} {v}")
+    for c in out["cities"]:
+        print(f"  city  {c['id']:11} {c['x']:6.1f} {c['y']:6.1f} {c['kind']}")
 
 
 

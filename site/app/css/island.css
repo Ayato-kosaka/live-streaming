@@ -419,7 +419,10 @@
   font-weight: 700;
   padding: 8px 16px;
   border-radius: 999px;
-  backdrop-filter: blur(6px);
+  /* backdrop-filter は下にある島を毎フレームぼかし直す。島は viewBox が
+     動くたび描き直されるので、ここに1枚あるだけで起動直後が目に見えて落ちた。
+     地の色を濃くすれば読めるので、ぼかしは使わない。 */
+  border: 2px solid rgba(255, 253, 246, 0.22);
   animation: hintPulse 2.6s ease-in-out infinite;
   pointer-events: none;
   z-index: 5;
@@ -437,8 +440,12 @@
   .sway { animation: none; }
 }
 
-/* 夜だけ灯りをともす。--lamp は data-time="night" で 1 になる。 */
-.stage-lamps {
+/* 夜だけ灯りをともす。
+   mix-blend-mode の層は、透明でも画面ぜんぶを合成し直す。昼は要らないので
+   丸ごと外す。時間帯はページを開いたときに1回決まるだけなので、
+   opacity で消しておくより display で消したほうが素直に軽い。 */
+.stage-lamps { display: none; }
+[data-time="night"] .stage-lamps {
   position: absolute;
   inset: 0;
   width: 100%; height: 100%;
@@ -491,9 +498,45 @@
   .bug, .bug-wing { animation: none; }
 }
 
-.foam path { animation: foamDrift 9s linear infinite; }
-.foam path:nth-child(2) { animation-duration: 13s; animation-direction: reverse; }
-@keyframes foamDrift { to { stroke-dashoffset: -92; } }
+/* --- 水面 ---------------------------------------------------------------
+   海が止まっていると、島が絵に見える。ただし島の SVG はカメラが動くたび
+   まるごと描き直されるので、ここで形（d や r）を動かすと即座に落ちる。
+   **動かしていいのは transform と opacity だけ。**
+
+   波打ち際は「寄せた波」と「引いた波」の2組を描いておいて、濃さを入れ替える。
+   形を作り直さずに、水が上がって下がっているように見える。 */
+.surf { animation: surf 5.2s ease-in-out infinite alternate; }
+.surf-front { animation-direction: alternate-reverse; }
+@keyframes surf {
+  from { opacity: 0.32; }
+  to { opacity: 1; }
+}
+
+/* 沖のうねり。輪をゆっくり広げて消す。島の中心を軸にして拡げるので、
+   水が岸へ寄せてくるように見える。 */
+.swell-ring {
+  transform-origin: 600px 640px;
+  animation: swellOut 9.6s linear infinite;
+}
+@keyframes swellOut {
+  0% { transform: scale(0.93); opacity: 0; }
+  22% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { transform: scale(1.06); opacity: 0; }
+}
+
+/* 水面のきらめき。3層をずらして明滅させる。
+   層ごとの濃さは --o で受け取る。opacity 属性に書いても animation に上書きされる。 */
+.sea-glint path { animation: glint 6.4s ease-in-out infinite alternate; }
+@keyframes glint {
+  from { opacity: calc(var(--o, 0.3) * 0.35); }
+  to { opacity: var(--o, 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surf, .swell-ring, .sea-glint path { animation: none; }
+  .surf-front { opacity: 0.6; }
+}
 
 .smoke circle { animation: smokeUp 4.2s ease-out infinite; transform-origin: center; }
 .smoke circle:nth-child(2) { animation-delay: 1.4s; }
@@ -554,7 +597,15 @@
   /* 2段になったぶん背が要る。walk-hint もこの値を見て浮いている */
   .stage.stage { --bar-h: 98px; }
 }
+/* バーの置き場所も、島の上に乗るものなのでここで持つ。
+   前は pages.css 側にあって、あちらを整理したときに落ちてバーが
+   画面の頭に流れ出た。島のステージのことは、島のファイルで閉じておく。 */
 .stage .island-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;

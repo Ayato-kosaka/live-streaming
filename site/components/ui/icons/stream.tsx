@@ -130,7 +130,6 @@ export const stream: Record<string, Draw> = {
     </>
   ),
 
-  /** 生放送のランプ。赤い玉が光っている。 */
   /**
    * 生放送のランプ。線の弧だけだと「電波の記号」で、物になっていなかった。
    * 台と笠を付けて、点いている赤い球にする。光は左右の弧で示す。
@@ -184,6 +183,85 @@ export const stream: Record<string, Draw> = {
       <circle cx="32" cy="48" r="7" fill={c.bld} />
       <circle cx="32" cy="47" r="7" fill={c.bl} />
       <Gl c={c} cx={29.6} cy={44.6} rx={2.4} ry={1.5} r={-30} o={0.65} />
+    </>
+  ),
+
+  /** 画面。配信の見えかた。 */
+  screen: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={19} ry={3.2} />
+      <rect x="2" y="8" width="60" height="38" rx="6" fill={c.nv} />
+      <rect x="6" y="12" width="52" height="27" rx="3" fill={c.sk} />
+      <path d="M6 32c6-8 11-3 16-8s10 3 15-2 10 2 15-1v13a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" fill={c.gr} />
+      <circle cx="47" cy="19" r="4.6" fill={c.yl} />
+      <rect x="24" y="46" width="16" height="6" fill={c.gyd} />
+      <rect x="15" y="51" width="34" height="6" rx="3" fill={c.gy} />
+      <Gl c={c} cx={13} cy={17} rx={4.6} ry={2} r={-24} o={0.6} />
+    </>
+  ),
+
+  /** 写真。撮ったもの。 */
+  photo: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.6} />
+      <rect x="5" y="8" width="54" height="48" rx="5" fill={c.w} transform="rotate(-5 32 32)" />
+      <g transform="rotate(-5 32 32)">
+        <rect x="10" y="13" width="44" height="31" rx="2.6" fill={c.sk} />
+        <path d="M10 34c6-7 10-2 15-8s10 4 15-1 10 3 14 0v7.4a2.6 2.6 0 0 1-2.6 2.6H12.6A2.6 2.6 0 0 1 10 41.4z" fill={c.gr} />
+        <circle cx="44" cy="21" r="4.4" fill={c.yl} />
+        <rect x="18" y="47" width="20" height="4" rx="2" fill={c.gy} />
+      </g>
+      <Gl c={c} cx={16} cy={16} rx={5} ry={2} r={-24} o={0.7} />
+    </>
+  ),
+
+  /** リンク。よそへ渡すもの。 */
+  link: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={20} ry={3.4} />
+      <g transform="rotate(-38 32 30)">
+        <path d="M16 20h13v9h-13a6 6 0 0 0 0 12h13v9H16a15 15 0 0 1 0-30z" fill={c.tl} />
+        <path d="M48 20a15 15 0 0 1 0 30H35v-9h13a6 6 0 0 0 0-12H35v-9z" fill={c.tld} />
+        <rect x="22" y="30" width="20" height="9" rx="4.5" fill={c.tl} />
+      </g>
+      <Gl c={c} cx={22} cy={22} rx={4} ry={2} r={-38} o={0.5} />
+    </>
+  ),
+
+  /** 数字。視聴数や本数。 */
+  chart: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={24} ry={3.2} />
+      <rect x="4" y="8" width="56" height="46" rx="6" fill={c.w} />
+      <rect x="32" y="8" width="28" height="46" fill={c.wd} />
+      <rect x="4" y="8" width="56" height="46" rx="6" fill="none" stroke={c.crd} strokeWidth="3" />
+      <g>
+        <rect x="12" y="32" width="10" height="16" rx="3" fill={c.tl} />
+        <rect x="27" y="22" width="10" height="26" rx="3" fill={c.gr} />
+        <rect x="42" y="14" width="10" height="34" rx="3" fill={c.or} />
+      </g>
+      <g fill={c.w} opacity={c.flat ? 1 : 0.45}>
+        <rect x="12" y="32" width="4" height="16" rx="2" />
+        <rect x="27" y="22" width="4" height="26" rx="2" />
+        <rect x="42" y="14" width="4" height="34" rx="2" />
+      </g>
+      <Gl c={c} cx={13} cy={14} rx={5} ry={1.6} r={-4} o={0.7} />
+    </>
+  ),
+
+  /** 見ている人。3人ぶんの頭と肩。 */
+  people: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={25} ry={3.8} />
+      <circle cx="13" cy="24" r="8" fill={c.tld} />
+      <path d="M1 50c0-7 5.4-12 12-12s12 5 12 12z" fill={c.tld} />
+      <circle cx="51" cy="24" r="8" fill={c.pkd} />
+      <path d="M39 50c0-7 5.4-12 12-12s12 5 12 12z" fill={c.pkd} />
+      <circle cx="32" cy="20" r="11" fill={c.sn} />
+      <path d="M32 9a11 11 0 0 1 0 22z" fill={c.snd} />
+      <path d="M15 53c0-9.4 7.6-17 17-17s17 7.6 17 17z" fill={c.or} />
+      <path d="M32 36c9.4 0 17 7.6 17 17H32z" fill={c.ord} />
+      <Gl c={c} cx={27} cy={15} rx={3.4} ry={2.4} r={-30} o={0.5} />
     </>
   ),
 };

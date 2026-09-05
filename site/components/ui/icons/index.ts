@@ -2,6 +2,7 @@ import type { Draw } from "./bits";
 import { nav } from "./nav";
 import { brand } from "./brand";
 import { place } from "./place";
+import { scene } from "./scene";
 import { travel } from "./travel";
 import { food } from "./food";
 import { stream } from "./stream";
@@ -24,22 +25,29 @@ export type IconName =
   // 島の場所
   | "campfire" | "friends" | "tower" | "workshop" | "tent" | "board" | "pier"
   | "kitchen" | "hill" | "mailbox" | "island" | "home"
+  // 旅先の景色
+  | "mountain" | "sea" | "forest" | "bridge" | "castle" | "church" | "museum"
+  | "station" | "hotel" | "market" | "hotspring" | "bench" | "windmill" | "lighthouse"
   // 旅
   | "backpack" | "sleepingbag" | "compass" | "map" | "passport" | "ticket"
   | "thumb" | "road" | "signpost" | "camper" | "train" | "bus" | "ferry"
-  | "plane" | "bike" | "walk" | "suitcase" | "pin"
+  | "plane" | "bike" | "walk" | "suitcase" | "pin" | "tram" | "taxi" | "boat" | "fuel"
   // 料理
   | "pot" | "pan" | "knife" | "cuttingboard" | "chopsticks" | "cup" | "stove"
   | "plate" | "bowl" | "basket" | "veg" | "meat" | "fish" | "bread" | "egg"
-  | "spice" | "oil" | "eat"
+  | "spice" | "oil" | "eat" | "coffee" | "rice" | "noodle" | "soup" | "fruit"
+  | "cheese" | "drink" | "timer"
   // 配信
   | "camera" | "mic" | "headphone" | "comment" | "tip" | "subscribe" | "clock"
-  | "calendar" | "live" | "book" | "wifi"
+  | "calendar" | "live" | "book" | "wifi" | "screen" | "photo" | "link" | "chart"
+  | "people"
   // 気持ち
   | "heart" | "star" | "clap" | "idea" | "question" | "alert" | "crown"
-  | "medal" | "trophy" | "talk" | "bell" | "gift" | "coin"
+  | "medal" | "trophy" | "talk" | "bell" | "gift" | "coin" | "smile" | "sad"
+  | "sparkle" | "music" | "hourglass" | "ribbon"
   // 天気と火
   | "sun" | "moon" | "cloud" | "rain" | "snow" | "flame" | "light" | "tree"
+  | "wind" | "rainbow" | "aurora" | "thermometer" | "night"
   // そのほか
   | "shirt" | "sauna" | "brick" | "see" | "do" | "buy" | "flag";
 
@@ -47,6 +55,7 @@ export const GLYPHS = {
   ...nav,
   ...brand,
   ...place,
+  ...scene,
   ...travel,
   ...food,
   ...stream,
@@ -79,6 +88,11 @@ export const GROUPS: { title: string; note: string; names: string[] }[] = [
     title: "島の場所",
     note: "入口ごとに別の絵。同じ絵を2か所で使い回さない。",
     names: Object.keys(place),
+  },
+  {
+    title: "旅先の景色",
+    note: "国のページで「何がある場所か」を1つの絵で言うためのもの。屋根の形だけで種類を分ける。",
+    names: Object.keys(scene),
   },
   { title: "旅", note: "道具と乗り物。", names: Object.keys(travel) },
   { title: "料理", note: "クッキング配信の道具と材料。", names: Object.keys(food) },

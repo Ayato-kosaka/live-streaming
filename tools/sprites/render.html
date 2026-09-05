@@ -659,50 +659,37 @@ function mossGeometry(geo, moss, stone) {
 
 /* たき火に火が無いと、ただの石の輪にしか見えない。
  * 炎は光っているものなので、陰影を付けない(MeshBasicMaterial)。
- * 内側ほど明るい色の舌を3枚重ねると、絵として炎に見える。 */
+ *
+ * 濃いオレンジの舌を後ろに、明るい黄の舌を手前に置いて重ねる。
+ * 入れ子にすると内側が外側に完全に隠れて1色の塊になるので、
+ * 「奥と手前」で重ねる。焼くときのカメラは +X +Z の側から見ているので、
+ * z と x を足したほうが手前になる。 */
 
 /** 炎の輪郭。[中心からの太さ, 高さ] 高さ1で先端 */
 const FLAME_PROFILE = [
   [0.00, 0.00], [0.26, 0.05], [0.42, 0.16], [0.46, 0.30],
   [0.40, 0.46], [0.28, 0.64], [0.15, 0.83], [0.00, 1.00],
 ];
-/* 外側から内側へ。[色, 太さの比, 高さの比]
- * 内側の層は外側の中に入っているので、そのままでは1枚も見えない。
- * 深さ比べを切って手前に描くことで、外の炎の上に明るい芯が重なる。
- * あつ森の火もこの「切り絵を重ねた」描き方をしている。 */
-const FLAME_LAYERS = [
-  [0xff5d0e, 1.00, 1.00],
-  [0xff9a1e, 0.62, 0.78],
-  [0xffd85c, 0.30, 0.52],
-];
+/** 奥から手前へ。舌の色 */
+const FLAME_COLORS = [0xf94f0a, 0xff7a12, 0xffab23, 0xffdc63];
 
 /**
  * 炎の舌を1本つくる。
  * @param {number} r 根元の太さ
  * @param {number} h 高さ
- * @return {THREE.Group} 3枚重ねた舌
+ * @param {number} ci 色の番号(奥ほど小さい)
+ * @return {THREE.Mesh} 舌
  */
-function flameTongue(r, h) {
-  const g = new THREE.Group();
-  FLAME_LAYERS.forEach(([color, ks, kh], i) => {
-    const pts = FLAME_PROFILE.map(([px, py]) => new THREE.Vector2(px * r * 2 * ks, py * h * kh));
-    const m = new THREE.Mesh(
-      new THREE.LatheGeometry(pts, 20),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 1,
-        depthTest: i > 0 ? false : true,
-        depthWrite: i === 0,
-      }),
-    );
-    m.renderOrder = 10 + i;
-    // 炎は光源なので影を落とさない。落とすと足元が黒く沈んで嘘になる
-    m.castShadow = false;
-    m.receiveShadow = false;
-    g.add(m);
-  });
-  return g;
+function flameTongue(r, h, ci) {
+  const pts = FLAME_PROFILE.map(([px, py]) => new THREE.Vector2(px * r * 2, py * h));
+  const m = new THREE.Mesh(
+    new THREE.LatheGeometry(pts, 20),
+    new THREE.MeshBasicMaterial({ color: FLAME_COLORS[ci] ?? FLAME_COLORS[0] }),
+  );
+  // 炎は光源なので影を落とさない。落とすと足元が黒く沈んで嘘になる
+  m.castShadow = false;
+  m.receiveShadow = false;
+  return m;
 }
 
 /** 地面へのほのかな明かり。中心が濃く外へ消える円 */
@@ -750,10 +737,11 @@ async function prepare(part, opts) {
   }
   // 炎・明かりはキットに無いので、その場で組む
   if (part.flame) {
-    const { r = 0.2, h = 0.5, tongues = [[0, 0, 0, 1]] } = part.flame;
+    // tongues: [横, 前後, 傾き(度), 大きさの比, 色の番号] を奥から手前の順に
+    const { r = 0.2, h = 0.5, tongues = [[0, 0, 0, 1, 0]] } = part.flame;
     const g = new THREE.Group();
-    for (const [tx, tz, tilt, k] of tongues) {
-      const t = flameTongue(r * k, h * k);
+    for (const [tx, tz, tilt, k, ci] of tongues) {
+      const t = flameTongue(r * k, h * k, ci ?? 0);
       t.position.set(tx, 0, tz);
       t.rotation.z = (tilt * Math.PI) / 180;
       g.add(t);

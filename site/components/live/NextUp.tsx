@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PLANS, daysUntil, nextPlan, type Plan } from "@/content/plans";
+import { PLANS, planDaysLeft, nextPlan, type Plan } from "@/content/plans";
 import { HOME } from "@/content/voice";
+import Icon from "@/components/ui/Icon";
+import { NoticeBell } from "./art";
 
 /**
  * いま、いちばん近い企画。
@@ -11,34 +13,46 @@ import { HOME } from "@/content/voice";
  * 島に来た人がまっさきに知りたいのは「次に何をするのか」なので、
  * 島のすぐ下、どのコーナーよりも先に、いちばん大きく置く。
  *
+ * ここは配信に来てくれている人がいちばん気にしているところでもあるので、
+ * 「新しいものがある」と分かる合図（しらせのベルと赤い丸）を1つだけ付ける。
+ * 合図を混ぜると、どれが合図でどれが飾りか分からなくなるので、これ1種類にする。
+ *
  * 静的書き出しなので「いちばん近い」はビルド時の日付で焼き込まれてしまう。
  * 画面が出たあとに今日の日付で計算し直す。
  */
 export default function NextUp() {
   const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan());
   const [days, setDays] = useState<number | null>(null);
+  const [today, setToday] = useState<Date | null>(null);
 
   useEffect(() => {
-    const p = nextPlan(new Date());
+    const now = new Date();
+    const p = nextPlan(now);
+    setToday(now);
     setPlan(p);
-    setDays(daysUntil(p?.date, new Date()));
+    setDays(p ? planDaysLeft(p, now) : null);
   }, []);
 
   if (!plan) return null;
   // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
   // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
-  const rest = PLANS.filter((p) => p.id !== plan.id && (daysUntil(p.date) ?? -1) >= 0);
+  const rest = PLANS.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? undefined) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
+  const ahead = rest.length + 1;
 
   return (
     <section className="nextup">
-      <p className="nextup-eyebrow">{HOME.nextUp}</p>
+      <p className="nextup-eyebrow has-bell">
+        <NoticeBell size={21} />
+        {HOME.nextUp}
+        <em className="nextup-n">{ahead}</em>
+      </p>
       <Card plan={plan} days={days} />
       {big && (
         <>
           <p className="nextup-eyebrow nextup-eyebrow2">そのあと、いちばん大きい企画</p>
-          <Card plan={big} days={daysUntil(big.date)} small />
+          <Card plan={big} days={today ? planDaysLeft(big, today) : null} small />
         </>
       )}
       {others.length > 0 && (
@@ -52,6 +66,15 @@ export default function NextUp() {
           ))}
         </div>
       )}
+      {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
+          「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。 */}
+      <Link className="nextup-all" href="/next">
+        <span>
+          <b>これからの予定を、ぜんぶ見る</b>
+          <i>付箋を貼って、行き先に口を出せます</i>
+        </span>
+        <em>{ahead}件</em>
+      </Link>
     </section>
   );
 }
@@ -85,7 +108,8 @@ function Card({ plan, days, small }: { plan: Plan; days: number | null; small?: 
         </span>
       </span>
       <span className="nextup-go" aria-hidden>
-        くわしく見る →
+        くわしく見る
+        <Icon name="right" size={14} />
       </span>
     </Link>
   );

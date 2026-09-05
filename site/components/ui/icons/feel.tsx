@@ -210,4 +210,101 @@ export const feel: Record<string, Draw> = {
       <Gl c={c} cx={20} cy={21} rx={7} ry={3} r={-32} o={0.6} />
     </>
   ),
+
+  /** うれしい。顔の印。 */
+  smile: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.2} />
+      <circle cx="32" cy="31" r="27" fill={c.gdd} />
+      <circle cx="32" cy="29.5" r="27" fill={c.gd} />
+      <circle cx="32" cy="29.5" r="21" fill={c.yl} />
+      <g fill={c.ink}>
+        <ellipse cx="23" cy="25" rx="2.6" ry="3.6" />
+        <ellipse cx="41" cy="25" rx="2.6" ry="3.6" />
+      </g>
+      <path d="M21 34c3.4 7 18.6 7 22 0-.6 8-6 12.6-11 12.6S21.6 42 21 34z" fill={c.ink} />
+      <path d="M25.4 41.6c4 2 9.2 2 13.2 0-1.6 3.4-4 5-6.6 5s-5-1.6-6.6-5z" fill={c.rdl} />
+      <g fill={c.pk} opacity={c.flat ? 1 : 0.7}>
+        <ellipse cx="16.5" cy="33" rx="4" ry="2.6" />
+        <ellipse cx="47.5" cy="33" rx="4" ry="2.6" />
+      </g>
+      <Gl c={c} cx={21} cy={18} rx={6} ry={3} r={-30} o={0.55} />
+    </>
+  ),
+
+  /** うまくいかなかった。失敗の回も残す。 */
+  sad: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.2} />
+      <circle cx="32" cy="31" r="27" fill={c.skd} />
+      <circle cx="32" cy="29.5" r="27" fill={c.sk} />
+      <circle cx="32" cy="29.5" r="21" fill={c.w} opacity={c.flat ? 1 : 0.5} />
+      <g fill={c.ink}>
+        <ellipse cx="23" cy="27" rx="2.6" ry="3.6" />
+        <ellipse cx="41" cy="27" rx="2.6" ry="3.6" />
+      </g>
+      <path d="M24 44c2.4-4.6 13.6-4.6 16 0-4-2.4-12-2.4-16 0z" fill={c.ink} />
+      <path d="M45 30c2.6 4 4 6 4 8.2a4 4 0 0 1-8 0c0-2.2 1.4-4.2 4-8.2z" fill={c.bl} />
+      <g fill={c.gyd} opacity="0.55">
+        <rect x="15" y="19" width="10" height="2.6" rx="1.3" transform="rotate(-12 20 20)" />
+        <rect x="39" y="19" width="10" height="2.6" rx="1.3" transform="rotate(12 44 20)" />
+      </g>
+      <Gl c={c} cx={21} cy={18} rx={6} ry={3} r={-30} o={0.6} />
+    </>
+  ),
+
+  /** きらめき。新しい・できたて。 */
+  sparkle: (c) => (
+    <>
+      <path d="M32 2c2 15 6 19 21 21-15 2-19 6-21 21-2-15-6-19-21-21 15-2 19-6 21-21z" fill={c.gd} />
+      <path d="M32 2c2 15 6 19 21 21-15 2-19 6-21 21z" fill={c.gdd} />
+      <path d="M50 38c1.2 8 3 10 11 11-8 1-9.8 3-11 11-1.2-8-3-10-11-11 8-1 9.8-3 11-11z" fill={c.yl} />
+      <path d="M13 40c.9 6 2.2 7.4 8 8.2-5.8.8-7.1 2.2-8 8.2-.9-6-2.2-7.4-8-8.2 5.8-.8 7.1-2.2 8-8.2z" fill={c.yl} opacity={c.flat ? 1 : 0.85} />
+      <Gl c={c} cx={26} cy={16} rx={2.4} ry={5} r={22} o={0.6} />
+    </>
+  ),
+
+  /** 音。BGM や歌の回。 */
+  music: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.4} />
+      <path d="M24 46V13l30-7v33z" fill={c.pu} />
+      <path d="M40 9.3 54 6v33l-14 3z" fill={c.pud} />
+      <ellipse cx="16" cy="46" rx="10" ry="8" fill={c.pud} />
+      <ellipse cx="46" cy="39" rx="9" ry="7.4" fill={c.pu} />
+      <path d="M24 13l30-7v6l-30 7z" fill={c.pud} />
+      <Gl c={c} cx={30} cy={20} rx={1.8} ry={7} r={0} o={0.45} />
+      <Gl c={c} cx={12} cy={43} rx={3.4} ry={2} r={-24} o={0.5} />
+    </>
+  ),
+
+  /** 待ち時間。出発まで。 */
+  hourglass: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={16} ry={3.2} />
+      <rect x="12" y="4" width="40" height="7" rx="3.5" fill={c.wo} />
+      <rect x="12" y="53" width="40" height="7" rx="3.5" fill={c.wod} />
+      <path d="M17 11h30c0 10-11 16-11 21s11 11 11 21H17c0-10 11-16 11-21s-11-11-11-21z" fill={c.w} opacity={c.flat ? 1 : 0.6} />
+      <path d="M21 14h22c0 7.4-8.4 13-8.4 18h-5.2C29.4 27 21 21.4 21 14z" fill={c.yl} />
+      <path d="M32 14h11c0 7.4-8.4 13-8.4 18H32z" fill={c.yld} />
+      <path d="M27 45c0-3.4 2.2-6 5-6s5 2.6 5 6z" fill={c.yl} />
+      <path d="M22 53h20c0-3-1.4-5.6-3.4-7.4H25.4C23.4 47.4 22 50 22 53z" fill={c.yld} />
+      <rect x="31" y="30" width="2" height="10" fill={c.yld} />
+      <Gl c={c} cx={22} cy={20} rx={1.6} ry={5} r={20} o={0.6} />
+    </>
+  ),
+
+  /** しるし。企画のリボン。 */
+  ribbon: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={16} ry={3.2} />
+      <path d="M20 34 8 58l11-2 6 8 9-18z" fill={c.bld} />
+      <path d="M44 34 56 58l-11-2-6 8-9-18z" fill={c.bl} />
+      <circle cx="32" cy="26" r="22" fill={c.rdd} />
+      <circle cx="32" cy="24.5" r="22" fill={c.rd} />
+      <circle cx="32" cy="24.5" r="15" fill={c.gd} />
+      <path d="m32 13 3.4 6.9 7.6 1.1-5.5 5.4 1.3 7.6L32 30.4l-6.8 3.6 1.3-7.6-5.5-5.4 7.6-1.1z" fill={c.yl} />
+      <Gl c={c} cx={21} cy={16} rx={5.4} ry={2.6} r={-32} o={0.5} />
+    </>
+  ),
 };

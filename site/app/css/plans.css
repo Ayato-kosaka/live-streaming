@@ -36,7 +36,7 @@
   content: "";
   width: 14px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--gold);
 }
 
@@ -82,7 +82,7 @@
   right: -6px;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 3px solid var(--paper);
   background:
     linear-gradient(var(--paper), var(--paper)) 50% 5px / 4px 10px no-repeat,
@@ -117,7 +117,8 @@
     var(--gold) 55%,
     color-mix(in srgb, var(--gold) 82%, var(--frame-dark))
   );
-  box-shadow: var(--pop-lg), inset 0 2px 0 color-mix(in srgb, var(--paper) 65%, transparent);
+  /* 側面は金の濃いほう。--pop-sm の --frame-dark だと、金の板から浮いて見える。 */
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 color-mix(in srgb, var(--paper) 65%, transparent);
   font-size: 11.5px;
   font-weight: 900;
   line-height: 1.1;
@@ -138,11 +139,12 @@
 .nextup-title { font-size: clamp(19px, 5.4vw, 27px); font-weight: 900; line-height: 1.28; }
 .nextup-when {
   font-style: normal;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 900;
+  letter-spacing: var(--ls-head);
   color: var(--frame-deep);
 }
-.nextup-note { font-size: 13px; font-weight: 700; line-height: 1.75; color: var(--ink-2); }
+.nextup-note { font-size: 13px; font-weight: 700; line-height: var(--lh-body); color: var(--ink-2); }
 .nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .nextup-tags em {
   font-style: normal;

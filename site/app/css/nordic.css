@@ -309,27 +309,29 @@
    ルート地図
    ---------------------------------------------------------
    形は本物（Natural Earth の海岸線をランベルト正角円錐で投影）。
-   座標は python/build_nordic_map.py が焼き込んでいる。
+   座標は python/build_nordic_map.py が焼き込んでいる。本物との
+   重なりは面積で 99.5%。
 
    色はここで全部つける。SVG の中に生の色を書くと、島の色を
    変えたときに地図だけ取り残されて浮くため。
    ========================================================= */
 
 svg.nmap {
-  /* 通らない国。草の緑を砂の色で濁らせて、通る国と一段差をつける。 */
-  --nm-other: color-mix(in srgb, var(--grass-lo) 46%, var(--ink-3) 54%);
-  --nm-other-lo: color-mix(in srgb, var(--grass-lo) 38%, var(--ink-3) 62%);
+  /* 通らない国。草の緑を砂の色で濁らせて、通る国と一段差をつける。
+     ここを濁らせるほど、通る6カ国が前に出る。 */
+  --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
+  --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
   /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
-  --nm-hitch: color-mix(in srgb, var(--gold) 62%, var(--accent) 38%);
+  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
-  --nm-label: color-mix(in srgb, var(--ink) 52%, var(--grass-lo) 48%);
-  --nm-seaname: color-mix(in srgb, var(--foam) 66%, var(--sea-deep) 34%);
+  --nm-label: color-mix(in srgb, var(--ink) 40%, var(--grass-lo) 60%);
+  --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;
   width: 100%;
   height: auto;
   border-radius: var(--r-3);
-  border: 4px solid var(--frame-dark);
+  border: var(--bw-3) solid var(--frame-dark);
   box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
   background: var(--sea-deep);
   overflow: hidden;
@@ -356,6 +358,7 @@ svg.nmap {
 .nmap .nm-glints { opacity: 0.72; }
 
 /* --- 岸。沖から順に 浅瀬 → 泡 → 濡れた砂 → 砂浜（ac-reference 2章） --- */
+.nmap .nm-landdrop,
 .nmap .nm-shelf,
 .nmap .nm-shallow,
 .nmap .nm-foam-lace,
@@ -365,6 +368,8 @@ svg.nmap {
   fill: none;
   stroke-linejoin: round;
 }
+/* 陸が海に落とす影。これが無いと陸と海が同じ面に見える。 */
+.nmap .nm-landdrop { fill: var(--ink); opacity: 0.2; stroke: none; }
 .nmap .nm-shelf { stroke: var(--sea-shelf); stroke-width: 38; opacity: 0.55; }
 .nmap .nm-shallow { stroke: var(--sea-shallow); stroke-width: 17; opacity: 0.82; }
 /* 泡はぼかさない。不規則な弧が並ぶレースに見せる。 */
@@ -385,22 +390,29 @@ svg.nmap {
 .nmap .nm-land-b { stop-color: var(--nm-other-lo); }
 .nmap .nm-c { stroke: none; }
 .nmap .nm-c-poland { fill: var(--grass-hi); }
-.nmap .nm-c-lithuania { fill: color-mix(in srgb, var(--grass) 92%, var(--sun) 8%); }
+.nmap .nm-c-lithuania { fill: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
 .nmap .nm-c-latvia { fill: var(--grass2-hi); }
-.nmap .nm-c-estonia { fill: color-mix(in srgb, var(--grass) 82%, var(--sea-shallow) 18%); }
-.nmap .nm-c-finland { fill: color-mix(in srgb, var(--grass2-hi) 78%, var(--sea-shallow) 22%); }
-.nmap .nm-c-sweden { fill: color-mix(in srgb, var(--grass) 72%, var(--sea-shallow) 28%); }
+.nmap .nm-c-estonia { fill: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
+.nmap .nm-c-finland { fill: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
+.nmap .nm-c-sweden { fill: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
 /* 国の境。線ではなく、両側ににじむ影で分ける。 */
 .nmap .nm-seam {
   fill: none;
   stroke: var(--leaf-c);
   stroke-width: 7;
-  opacity: 0.2;
+  opacity: 0.22;
   stroke-linejoin: round;
 }
 
-/* --- 地面の情報量（ac-reference 4章） --- */
-.nmap .nm-woods { fill: var(--leaf-c); opacity: 0.2; }
+/* --- 地面の情報量（ac-reference 4章） ---
+   森も山も、同じパスを3枚ずらして重ねている。奥から 影 → 光 → 本体。
+   1本ずつに面を持たせるとパスの文字数が倍になる（森だけで 700 本）。 */
+.nmap .nm-wood { fill: var(--leaf-c); opacity: 0.34; }
+.nmap .nm-wood-hi { fill: var(--leaf-b); opacity: 0.34; }
+.nmap .nm-wood-shade { fill: var(--ink); opacity: 0.11; }
+.nmap .nm-hill { fill: color-mix(in srgb, var(--cliff) 62%, var(--ink-3) 38%); opacity: 0.78; }
+.nmap .nm-hill-hi { fill: var(--sand); opacity: 0.72; }
+.nmap .nm-hill-shade { fill: var(--ink); opacity: 0.16; }
 .nmap .nm-lake {
   fill: var(--sea-shallow);
   stroke: var(--sand);
@@ -428,21 +440,21 @@ svg.nmap {
   letter-spacing: 0.26em;
   opacity: 0.95;
 }
+/* 国名は地形の一部。ルートより下に敷いてあるので、白フチは付けない。
+   付けると、ここだけ札のように浮いて、街の名札と見分けが付かなくなる。 */
 .nmap .nm-country {
   fill: var(--nm-label);
   font-weight: 900;
-  letter-spacing: 0.22em;
-  stroke: var(--paper);
-  stroke-width: 7;
-  opacity: 0.9;
+  letter-spacing: 0.24em;
+  opacity: 0.62;
 }
 .nmap .nm-city {
   fill: var(--ink);
   font-weight: 900;
   stroke: var(--paper);
-  stroke-width: 7;
+  stroke-width: 8;
 }
-.nmap .nm-city.is-big { stroke-width: 8; }
+.nmap .nm-city.is-big { stroke-width: 9; }
 
 /* --- ルート --- */
 .nmap .nm-leg-case,
@@ -465,6 +477,17 @@ svg.nmap {
   stroke-dasharray: 16 15;
   opacity: 0.8;
 }
+/* 出発したあと。まだ行っていない道は薄く、通った道はそのまま濃く残す。
+   出発前（data-here が無い）は全部これから行く道なので、何もしない。 */
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-line { opacity: 0.42; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-case { opacity: 0.12; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-arrow { opacity: 0.4; }
+.nmap[data-here] .nmap-pin:not(.is-done) .nm-pin-dot { fill: var(--paper-2); }
+.nmap[data-here] .nmap-pin:not(.is-done) .nm-city { opacity: 0.7; }
+
+/* --- 陸の国境。赤白の遮断棒 --- */
+.nmap .nm-border-bar { fill: var(--paper); }
+.nmap .nm-border-tip { fill: var(--accent); }
 
 /* --- 街 --- */
 .nmap-pin { cursor: pointer; }
@@ -487,7 +510,7 @@ svg.nmap {
   stroke-width: 3.5;
 }
 .nmap .nm-chip.is-here rect { fill: var(--gold); }
-.nmap .nm-chip text { fill: var(--ink); font-size: 26px; font-weight: 900; }
+.nmap .nm-chip text { fill: var(--ink); font-size: 27px; font-weight: 900; }
 
 /* --- 方位 --- */
 .nmap .nm-compass-disc {
@@ -506,28 +529,27 @@ svg.nmap {
   stroke-width: 6;
 }
 
-/* --- 凡例と縮尺 --- */
-.nmap .nm-legend > rect {
-  fill: var(--paper);
-  fill-opacity: 0.94;
-  stroke: var(--frame-dark);
-  stroke-width: 3.5;
-}
-.nmap .nm-legend-t { fill: var(--ink); font-size: 27px; font-weight: 900; }
+/* --- 縮尺 --- */
 .nmap .nm-scale-bar,
 .nmap .nm-scale-tick {
   fill: none;
-  stroke: var(--ink);
-  stroke-width: 4.5;
+  stroke: var(--paper);
+  stroke-width: 5;
   stroke-linecap: round;
 }
-.nmap .nm-scale-t { fill: var(--ink); font-size: 24px; font-weight: 900; }
+.nmap .nm-scale-t {
+  fill: var(--paper);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
 /* --- 区間の距離 --- */
 .nmap .nm-km {
   fill: var(--frame-deep);
-  font-size: 25px;
+  font-size: 27px;
   font-weight: 900;
   stroke: var(--paper);
-  stroke-width: 6;
+  stroke-width: 7;
 }
 .nmap .is-ferry .nm-km { fill: var(--sea-deep); }

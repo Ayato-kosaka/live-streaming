@@ -114,4 +114,89 @@ export const nature: Record<string, Draw> = {
       <circle cx="22" cy="32" r="3" fill={c.rd} />
     </>
   ),
+
+  /** 風。北欧の海風。線ではなく、流れる面で描く。 */
+  wind: (c) => (
+    <>
+      <g fill={c.sk}>
+        <path d="M4 18h30a7 7 0 1 0-6.8-8.6l-6.6-1.6A14 14 0 1 1 34 25H4z" />
+      </g>
+      <g fill={c.skd}>
+        <path d="M4 33h38a6 6 0 1 1-5.8 7.6l-6.6 1.6A13 13 0 1 0 42 40H4z" />
+      </g>
+      <path d="M8 26h16a3.5 3.5 0 0 1 0 7H8a3.5 3.5 0 0 1 0-7z" fill={c.bl} />
+    </>
+  ),
+
+  /** 虹。雨のあと。7色は多いので4本にまとめる。 */
+  rainbow: (c) => (
+    <>
+      <g fill="none" strokeLinecap="round" strokeWidth="7">
+        <path d="M6 48a26 26 0 0 1 52 0" stroke={c.rd} />
+        <path d="M13 48a19 19 0 0 1 38 0" stroke={c.or} />
+        <path d="M20 48a12 12 0 0 1 24 0" stroke={c.gr} />
+        <path d="M27 48a5 5 0 0 1 10 0" stroke={c.bl} />
+      </g>
+      <g fill={c.w}>
+        <circle cx="10" cy="49" r="7" />
+        <circle cx="18" cy="52" r="6" />
+        <circle cx="54" cy="49" r="7" />
+        <circle cx="46" cy="52" r="6" />
+      </g>
+      <Gl c={c} cx={30} cy={26} rx={9} ry={2} r={-14} o={0.4} />
+    </>
+  ),
+
+  /** オーロラ。北欧で見たいもの。帯を3枚重ねる。 */
+  aurora: (c) => (
+    <>
+      <rect x="2" y="4" width="60" height="52" rx="12" fill={c.nv} />
+      <g opacity={c.flat ? 1 : 0.9}>
+        <path d="M8 40c2-16 8-26 14-26s6 12 12 12 8-10 14-10 6 8 8 14v6c-4-8-6-12-9-12s-6 10-13 10-7-10-12-10-9 8-11 22z" fill={c.gr} />
+        <path d="M10 46c3-14 8-22 13-22s6 10 11 10 8-8 13-8 6 6 8 12v4c-4-6-5-9-8-9s-6 8-12 8-7-8-11-8-9 6-12 18z" fill={c.tl} opacity="0.85" />
+        <path d="M14 52c3-10 7-16 11-16s5 8 9 8 7-6 11-6 5 4 7 8v4H14z" fill={c.pu} opacity="0.7" />
+      </g>
+      <g fill={c.w}>
+        <circle cx="15" cy="14" r="1.8" />
+        <circle cx="46" cy="12" r="2.2" />
+        <circle cx="55" cy="22" r="1.6" />
+        <circle cx="27" cy="9" r="1.4" />
+      </g>
+    </>
+  ),
+
+  /** 気温。旅先が暑いか寒いか。 */
+  thermometer: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={13} ry={3.2} />
+      <path d="M32 4a8 8 0 0 1 8 8v22.5a13 13 0 1 1-16 0V12a8 8 0 0 1 8-8z" fill={c.w} />
+      <path d="M32 4a8 8 0 0 1 8 8v22.5a13 13 0 0 1-8 23z" fill={c.wd} />
+      <circle cx="32" cy="45" r="8.6" fill={c.rd} />
+      <rect x="28.6" y="16" width="6.8" height="26" rx="3.4" fill={c.rd} />
+      <path d="M32 16h3.4v26H32z" fill={c.rdd} />
+      <g fill={c.gyd}>
+        <rect x="41" y="18" width="7" height="2.4" rx="1.2" />
+        <rect x="41" y="25" width="5" height="2.4" rx="1.2" />
+        <rect x="41" y="32" width="7" height="2.4" rx="1.2" />
+      </g>
+      <Gl c={c} cx={28} cy={20} rx={1.4} ry={5} r={0} o={0.6} />
+    </>
+  ),
+
+  /** 星空。夜の配信・北欧の冬。 */
+  night: (c) => (
+    <>
+      <rect x="2" y="4" width="60" height="52" rx="12" fill={c.nv} />
+      <path d="M42 10a17 17 0 1 0 12 21A18 18 0 0 1 42 10z" fill={c.cr} />
+      <g fill={c.w}>
+        <path d="m14 14 1.6 4 4 1.6-4 1.6L14 25.2l-1.6-4-4-1.6 4-1.6z" />
+        <path d="m22 34 1.2 3 3 1.2-3 1.2L22 42.6l-1.2-3-3-1.2 3-1.2z" />
+        <path d="m48 44 1.2 3 3 1.2-3 1.2L48 52.6l-1.2-3-3-1.2 3-1.2z" />
+        <circle cx="34" cy="20" r="1.6" />
+        <circle cx="11" cy="44" r="1.8" />
+        <circle cx="36" cy="48" r="1.4" />
+      </g>
+      <Gl c={c} cx={46} cy={18} rx={3} ry={5} r={-26} o={0.35} />
+    </>
+  ),
 };

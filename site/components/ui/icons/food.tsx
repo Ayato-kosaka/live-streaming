@@ -378,4 +378,139 @@ export const food: Record<string, Draw> = {
       <Gl c={c} cx={19} cy={19} rx={4.6} ry={2.4} r={-34} o={0.7} />
     </>
   ),
+
+  /** コーヒー。撮影の合間。 */
+  coffee: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={20} ry={4} />
+      <Steam c={c} x={26} y={2} />
+      <path d="M44 24h6a10 10 0 0 1 0 20h-6z" fill="none" stroke={c.w} strokeWidth="6" strokeLinejoin="round" />
+      <path d="M44 24h6a10 10 0 0 1 0 20h-6z" fill="none" stroke={c.wd} strokeWidth="2.6" strokeLinejoin="round" />
+      <path d="M8 20h38v18c0 8.8-7.2 16-16 16h-6c-8.8 0-16-7.2-16-16z" fill={c.w} />
+      <path d="M27 20h19v18c0 8.8-7.2 16-16 16h-3z" fill={c.wd} />
+      <ellipse cx="27" cy="20" rx="19" ry="6" fill={c.brd} />
+      <ellipse cx="27" cy="19" rx="15" ry="4.4" fill={c.br} />
+      <ellipse cx="22" cy="18" rx="5" ry="1.8" fill={c.wol} opacity={c.flat ? 1 : 0.7} />
+      <Gl c={c} cx={14} cy={30} rx={2.4} ry={7} r={6} o={0.6} />
+    </>
+  ),
+
+  /** ごはん。茶碗に山盛り。 */
+  rice: (c) => (
+    <>
+      <Sh c={c} cy={54} rx={20} ry={4} />
+      <path d="M14 30c1.4-9 8.4-15 18-15s16.6 6 18 15z" fill={c.w} />
+      <path d="M32 15c9.6 0 16.6 6 18 15H32z" fill={c.wd} />
+      <path d="M11 29h42c0 12-9.4 21-21 21s-21-9-21-21z" fill={c.gr} />
+      <path d="M32 29h21c0 12-9.4 21-21 21z" fill={c.grd} />
+      <path d="M12.6 33h38.8a20 20 0 0 1-1.6 5H14.2a20 20 0 0 1-1.6-5z" fill={c.cr} />
+      <path d="M24 47h16l-1.4 6a2.4 2.4 0 0 1-2.3 1.8h-8.6a2.4 2.4 0 0 1-2.3-1.8z" fill={c.grd} />
+      <Gl c={c} cx={19} cy={36} rx={2.6} ry={5} r={22} o={0.5} />
+    </>
+  ),
+
+  /** 麺。丼から箸で持ち上げる。 */
+  noodle: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={21} ry={4} />
+      <rect x="40" y="2" width="4.6" height="34" rx="2.3" fill={c.wo} transform="rotate(14 42 19)" />
+      <rect x="46" y="2" width="4.6" height="34" rx="2.3" fill={c.wod} transform="rotate(20 48 19)" />
+      <g fill="none" stroke={c.cr} strokeWidth="3.4" strokeLinecap="round">
+        <path d="M42 22c-2 8-8 10-10 16" />
+        <path d="M46 24c-1 8-9 11-10 16" />
+        <path d="M38 22c-2 8-6 12-7 17" />
+      </g>
+      <path d="M9 28h46c0 12.6-10.3 22.6-23 22.6S9 40.6 9 28z" fill={c.rd} />
+      <path d="M32 28h23c0 12.6-10.3 22.6-23 22.6z" fill={c.rdd} />
+      <ellipse cx="32" cy="28" rx="23" ry="7" fill={c.crd} />
+      <ellipse cx="32" cy="27" rx="19" ry="5.4" fill={c.cr} />
+      <circle cx="24" cy="26.6" r="4" fill={c.w} />
+      <circle cx="24" cy="26.6" r="2" fill={c.yl} />
+      <Gl c={c} cx={17} cy={34} rx={2.4} ry={5} r={22} o={0.5} />
+    </>
+  ),
+
+  /** スープ。深皿とスプーン。 */
+  soup: (c) => (
+    <>
+      <Sh c={c} cy={54} rx={24} ry={4} />
+      <Steam c={c} x={30} y={0} />
+      <rect x="46" y="14" width="4.4" height="34" rx="2.2" fill={c.gyd} transform="rotate(9 48 31)" />
+      <ellipse cx="51" cy="17" rx="5.4" ry="7" fill={c.gy} transform="rotate(9 51 17)" />
+      <path d="M4 28h50c0 11.6-9.6 20.6-22 20.6h-6C13.6 48.6 4 39.6 4 28z" fill={c.w} />
+      <path d="M29 28h25c0 11.6-9.6 20.6-22 20.6h-3z" fill={c.wd} />
+      <ellipse cx="29" cy="28" rx="25" ry="7.4" fill={c.crd} />
+      <ellipse cx="29" cy="27" rx="20" ry="5.4" fill={c.or} />
+      <g fill={c.gr}>
+        <circle cx="23" cy="26" r="2.4" />
+        <circle cx="34" cy="27.6" r="2.2" />
+      </g>
+      <circle cx="29" cy="24.6" r="2" fill={c.rd} />
+      <Gl c={c} cx={14} cy={32} rx={2.4} ry={5} r={22} o={0.5} />
+    </>
+  ),
+
+  /** くだもの。市場で買うもの。 */
+  fruit: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={20} ry={3.8} />
+      <path d="M30 18c-5-4-12-3-14 2 5 1 9 1 13 0z" fill={c.gr} />
+      <rect x="30" y="8" width="4" height="12" rx="2" fill={c.wod} transform="rotate(8 32 14)" />
+      <path d="M22 20c4-3 7-2 10 0 3-2 6-3 10 0 6 4 8 13 5 21-3 9-9 15-15 15s-12-6-15-15c-3-8-1-17 5-21z" fill={c.rd} />
+      <path d="M32 20c3-2 6-3 10 0 6 4 8 13 5 21-3 9-9 15-15 15z" fill={c.rdd} />
+      <circle cx="46" cy="34" r="9" fill={c.or} />
+      <path d="M46 25a9 9 0 0 1 0 18z" fill={c.ord} />
+      <Gl c={c} cx={24} cy={28} rx={3} ry={6} r={22} o={0.55} />
+      <Gl c={c} cx={43} cy={30} rx={2} ry={3} r={-24} o={0.5} />
+    </>
+  ),
+
+  /** チーズ。北欧の朝ごはん。 */
+  cheese: (c) => (
+    <>
+      <Sh c={c} cy={54} rx={24} ry={4} />
+      <path d="M6 26 52 12a6 6 0 0 1 8 5.7V26z" fill={c.gd} />
+      <path d="M6 26h54v14a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6z" fill={c.yl} />
+      <path d="M32 26h28v14a6 6 0 0 1-6 6H32z" fill={c.yld} />
+      <g fill={c.crd}>
+        <circle cx="18" cy="35" r="4.4" />
+        <circle cx="33" cy="39" r="3.4" />
+        <circle cx="46" cy="33" r="3.8" />
+      </g>
+      <Gl c={c} cx={20} cy={22} rx={9} ry={1.8} r={-16} o={0.45} />
+    </>
+  ),
+
+  /** 飲みもの。氷とストロー。 */
+  drink: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      <rect x="38" y="2" width="4.6" height="26" rx="2.3" fill={c.rd} transform="rotate(18 40 15)" />
+      <path d="M15 16h34l-4 36a5 5 0 0 1-5 4.4H24a5 5 0 0 1-5-4.4z" fill={c.w} opacity={c.flat ? 1 : 0.55} />
+      <path d="M17 28h30l-2.6 24a5 5 0 0 1-5 4.4H24.6a5 5 0 0 1-5-4.4z" fill={c.or} />
+      <path d="M32 28h15l-2.6 24a5 5 0 0 1-5 4.4H32z" fill={c.ord} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.7}>
+        <rect x="21" y="31" width="9" height="8" rx="2.4" transform="rotate(-12 25 35)" />
+        <rect x="34" y="36" width="8" height="7" rx="2.2" transform="rotate(14 38 39)" />
+      </g>
+      <rect x="13" y="13" width="38" height="6" rx="3" fill={c.w} />
+      <Gl c={c} cx={22} cy={30} rx={2} ry={9} r={4} o={0.55} />
+    </>
+  ),
+
+  /** 時間をはかる。煮込みの時間。 */
+  timer: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.2} />
+      <circle cx="32" cy="35" r="24" fill={c.rdd} />
+      <circle cx="32" cy="33.5" r="24" fill={c.rd} />
+      <circle cx="32" cy="33.5" r="18" fill={c.cr} />
+      <circle cx="32" cy="33.5" r="18" fill="none" stroke={c.w} strokeWidth="2.4" />
+      <path d="M32 20v13.5h11" fill="none" stroke={c.ink} strokeWidth="3.4" strokeLinecap="round" />
+      <circle cx="32" cy="33.5" r="2.6" fill={c.rdd} />
+      <rect x="26" y="4" width="12" height="8" rx="3" fill={c.gyd} />
+      <rect x="28.6" y="10" width="6.8" height="5" rx="2" fill={c.gy} />
+      <Gl c={c} cx={20} cy={22} rx={5} ry={2.6} r={-32} o={0.5} />
+    </>
+  ),
 };

@@ -351,4 +351,79 @@ export const travel: Record<string, Draw> = {
       <Gl c={c} cx={23} cy={13} rx={2.6} ry={5} r={34} o={0.5} />
     </>
   ),
+
+  /** 路面電車。ヨーロッパの街なか。 */
+  tram: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <path d="M32 3v9" stroke={c.gyd} strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M24 12h16l-8-6z" fill={c.gyd} />
+      <rect x="12" y="12" width="40" height="42" rx="8" fill={c.rd} />
+      <path d="M44 12a8 8 0 0 1 8 8v26a8 8 0 0 1-8 8H32V12z" fill={c.rdd} />
+      <rect x="17" y="18" width="30" height="14" rx="3.4" fill={c.sk} />
+      <rect x="17" y="18" width="15" height="14" rx="3.4" fill={c.skd} opacity="0.5" />
+      <rect x="16" y="37" width="32" height="4.4" rx="2.2" fill={c.cr} />
+      <g fill={c.yl}>
+        <circle cx="20" cy="47" r="3.2" />
+        <circle cx="44" cy="47" r="3.2" />
+      </g>
+      <rect x="8" y="54" width="48" height="5" rx="2.5" fill={c.gyd} />
+      <Gl c={c} cx={20} cy={20} rx={5} ry={2} r={-6} o={0.5} />
+    </>
+  ),
+
+  /** タクシー。屋根の行灯で分かる。 */
+  taxi: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={26} ry={3.8} />
+      <rect x="24" y="8" width="16" height="7" rx="3" fill={c.w} />
+      <rect x="24" y="8" width="16" height="3.4" rx="1.7" fill={c.wd} />
+      <path d="M17 21c2.6-4.4 5-6 9-6h12c4 0 6.4 1.6 9 6z" fill={c.crd} />
+      <path d="M4 24h56a4 4 0 0 1 4 4v9a5 5 0 0 1-5 5H5a5 5 0 0 1-5-5v-9a4 4 0 0 1 4-4z" fill={c.gd} />
+      <path d="M32 24h28a4 4 0 0 1 4 4v9a5 5 0 0 1-5 5H32z" fill={c.gdd} />
+      <path d="M14 24c1.6-5 4-8 8-8h20c4 0 6.4 3 8 8z" fill={c.gd} />
+      <path d="M19 22c1.2-2.8 2.8-4 5-4h16c2.2 0 3.8 1.2 5 4z" fill={c.sk} />
+      <g fill={c.bk}>
+        <rect x="12" y="30" width="6" height="4" rx="2" />
+        <rect x="46" y="30" width="6" height="4" rx="2" />
+      </g>
+      <circle cx="17" cy="44" r="7" fill={c.bk} />
+      <circle cx="17" cy="44" r="3" fill={c.gy} />
+      <circle cx="47" cy="44" r="7" fill={c.bk} />
+      <circle cx="47" cy="44" r="3" fill={c.gy} />
+      <Gl c={c} cx={14} cy={28} rx={5} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** 小舟。川と湖を渡る。 */
+  boat: (c) => (
+    <>
+      <rect x="1" y="34" width="62" height="24" rx="10" fill={c.bl} />
+      <path d="M1 42h62v6a10 10 0 0 1-10 10H11A10 10 0 0 1 1 48z" fill={c.tl} />
+      <path d="M2 47c6-3 10 3 16 0s10 3 16 0 10 3 16 0 8-.6 11-2.4v4.6c-3 1.8-7 1.6-11 3.4-6 2.6-10-3-16 0s-10-3-16 0-10 3-16 0z" fill={c.w} opacity="0.6" />
+      <path d="M6 32h52l-6 12a5 5 0 0 1-4.4 2.6H16.4A5 5 0 0 1 12 44z" fill={c.wo} />
+      <path d="M32 32h26l-6 12a5 5 0 0 1-4.4 2.6H32z" fill={c.wod} />
+      <rect x="6" y="28" width="52" height="5" rx="2.5" fill={c.wol} />
+      <path d="M36 6h3v24h-3z" fill={c.wod} />
+      <path d="M36 8 20 27h16z" fill={c.w} />
+      <path d="M40 10l12 17H40z" fill={c.rd} />
+      <Gl c={c} cx={16} cy={30} rx={6} ry={1.4} r={-3} o={0.5} />
+    </>
+  ),
+
+  /** 給油。長距離を走る日。 */
+  fuel: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.2} />
+      <path d="M50 20h4a5 5 0 0 1 5 5v16a4 4 0 0 1-8 0v-9h-4z" fill="none" stroke={c.gyd} strokeWidth="4.4" strokeLinejoin="round" />
+      <path d="M12 14a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v43H12z" fill={c.rd} />
+      <path d="M30 6h10a8 8 0 0 1 8 8v43H30z" fill={c.rdd} />
+      <rect x="18" y="14" width="24" height="14" rx="3" fill={c.cr} />
+      <rect x="30" y="14" width="12" height="14" fill={c.crd} />
+      <rect x="18" y="34" width="16" height="4.4" rx="2.2" fill={c.w} opacity={c.flat ? 1 : 0.7} />
+      <rect x="8" y="55" width="44" height="6" rx="3" fill={c.gyd} />
+      <path d="M24 42c3 4 5 6 5 8.6a5 5 0 0 1-10 0c0-2.6 2-4.6 5-8.6z" fill={c.or} />
+      <Gl c={c} cx={16} cy={20} rx={2} ry={6} r={0} o={0.4} />
+    </>
+  ),
 };

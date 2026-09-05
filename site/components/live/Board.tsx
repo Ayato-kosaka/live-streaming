@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getIdeas, postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
 import { BOARD } from "@/content/voice";
@@ -9,9 +9,31 @@ import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import SignIn from "./SignIn";
+import { EmptyBoard, Pin, Stone } from "./art";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
 const PROOF = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia"];
+
+/**
+ * 書き出しの見本。
+ *
+ * 空の枠と「はりだす」だけ置いても、人は何も書けない。
+ * 押すと書き出しが入って、続きだけ書けばいい形にする。
+ * 見本そのものが「このくらい無茶でいい」という合図にもなる。
+ */
+const SEEDS = [
+  "○○の国で、",
+  "1日だけ、",
+  "視聴者が決めた道を、",
+  "食材しばりで、",
+];
+
+/** 貼ったあと、どうなるか。ここが見えないと、書いても届かない気がして手が止まる。 */
+const FLOW = [
+  { t: "貼る", n: "名前もログインも要りません" },
+  { t: "さんせいが集まる", n: "だれでも押せます。1件につき1回" },
+  { t: "企画会議に上がる", n: "週のはじめ。やることになったら「これから」に出ます" },
+];
 
 /** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
 const MINE_KEY = "ayato-island-mine";
@@ -34,30 +56,6 @@ function rememberPost(id: string) {
 }
 
 /**
- * まだ1件も貼られていないときの絵。
- * 「空っぽ」を字で伝えるより、空の板を見せたほうが早い。
- * 輪郭線は引かず、光は左上から、接地影は右下へずらす（島の絵の決まりごと）。
- */
-function EmptyBoard() {
-  return (
-    <svg viewBox="0 0 96 68" width={128} height={91} aria-hidden style={{ display: "block", margin: "6px auto 0" }}>
-      <ellipse cx="50" cy="63" rx="34" ry="4" fill="#9fb28c" opacity="0.3" />
-      {/* 板の厚み → 板 */}
-      <rect x="10" y="10" width="76" height="50" rx="10" fill="#bd8144" />
-      <rect x="10" y="8" width="76" height="50" rx="10" fill="#e3aa6a" />
-      <rect x="14" y="12" width="68" height="42" rx="7" fill="#f3e3c8" />
-      {/* 貼るところが空いている、という絵。紙は点線ではなく淡い面で置く */}
-      <rect x="21" y="19" width="24" height="18" rx="4" fill="#fff6b8" transform="rotate(-3 33 28)" />
-      <rect x="51" y="22" width="24" height="18" rx="4" fill="#d6f0ff" transform="rotate(2.5 63 31)" />
-      <circle cx="33" cy="20" r="2.6" fill="#e8879a" />
-      <circle cx="63" cy="23" r="2.6" fill="#7fd3a2" />
-      {/* 空いている場所 */}
-      <rect x="34" y="40" width="28" height="11" rx="4" fill="#e9dcc0" />
-    </svg>
-  );
-}
-
-/**
  * 企画掲示板。
  *
  * ログインなしで貼れて、投票できる。
@@ -74,6 +72,7 @@ export default function Board() {
   const [err, setErr] = useState<string | null>(null);
   const [sort, setSort] = useState<"votes" | "new">("votes");
   const [onlyMine, setOnlyMine] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
   const { user, token } = useAuth();
 
   useEffect(() => {
@@ -125,10 +124,13 @@ export default function Board() {
   const list = onlyMine ? all.filter(isMine) : all;
   const mineCount = all.filter(isMine).length;
   const totalVotes = all.reduce((n, i) => n + i.votes, 0);
+  const pickedCount = all.filter((i) => i.status === "picked").length;
+  // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
+  const pins = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 
   return (
     <>
-      <section className="panel">
+      <section className="panel bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
           まじめじゃなくていいです。<b>むちゃな企画ほど、だいたい通ります。</b>
@@ -136,6 +138,7 @@ export default function Board() {
         </p>
 
         <textarea
+          ref={box}
           className="bin"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -167,6 +170,39 @@ export default function Board() {
           </p>
         )}
 
+        <div className="nx-seeds">
+          <span>書き出しを選ぶ</span>
+          {SEEDS.map((s) => (
+            <button
+              key={s}
+              className="nx-seed"
+              onClick={() => {
+                setText(s);
+                box.current?.focus();
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* 貼ったあとどうなるかが見えないと、書いても届かない気がして手が止まる。
+            3歩ぶんだけ、先に見せておく。 */}
+        <ol className="bd-flow">
+          {FLOW.map((f, i) => (
+            <li key={f.t}>
+              <span className="nx-stone">
+                <Stone tone={i === 0 ? "now" : "stone"} />
+                <b>{i + 1}</b>
+              </span>
+              <span>
+                <b>{f.t}</b>
+                <i>{f.n}</i>
+              </span>
+            </li>
+          ))}
+        </ol>
+
         {/* ログインは「しなくていい」ものなので、書く場所より下に、畳んで置く。 */}
         <div style={{ marginTop: 18 }}>
           <Fold title="名前とアイコンも島に出したい" lead="YouTubeのアカウントでログインすると出せます">
@@ -177,9 +213,7 @@ export default function Board() {
 
       <section className="panel">
         <h2>むちゃな企画ほど通る、の証拠</h2>
-        <p className="muted">
-          どれも「思いつき」から始まって、本当にやったものです。
-        </p>
+        <p className="muted">どれも「思いつき」から始まって、本当にやったものです。</p>
         <div className="chips" style={{ marginTop: 12 }}>
           {PROOF.map((slug) => {
             const l = LEGENDS.find((x) => x.slug === slug);
@@ -220,6 +254,7 @@ export default function Board() {
           <div className="chips" style={{ marginBottom: 14 }}>
             <span className="chip">{all.length}件</span>
             <span className="chip">さんせい {totalVotes}</span>
+            {pickedCount > 0 && <span className="chip">採用 {pickedCount}件</span>}
             {voted.size > 0 && <span className="chip">さんせいした {voted.size}件</span>}
           </div>
         )}
@@ -237,16 +272,18 @@ export default function Board() {
           <p className="muted">じぶんが貼ったものは、まだありません。</p>
         )}
 
-        <ul className="ideas">
+        <ul className="bd-list">
           {list.map((i, n) => {
-            // 票がいちばん集まっているものだけ、板の縁を変えて前に出す。
+            // 票がいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "votes" && !onlyMine && n === 0 && i.votes > 0 && i.status !== "picked";
             return (
               <li
                 key={i.id}
-                className={i.status === "picked" ? "is-picked" : ""}
-                style={top ? { borderColor: "var(--accent)", boxShadow: "var(--pg-lit), 0 4px 0 #cf4867" } : undefined}
+                className={`${i.status === "picked" ? "is-picked" : ""}${top ? " is-top" : ""}`}
               >
+                <span className="nx-pin">
+                  <Pin tone={pins[n % pins.length]} size={18} />
+                </span>
                 <button
                   className={`vote${voted.has(i.id) ? " is-on" : ""}`}
                   onClick={() => vote(i.id)}
