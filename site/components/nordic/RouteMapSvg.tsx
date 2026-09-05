@@ -291,6 +291,19 @@ export default function RouteMapSvg({ here }: { here?: string }) {
             >
               {c.name}
             </text>
+            {/* ゴール。この旅は「回る」のではなく「会いに行く」ので、
+                着く場所が地図の上でもいちばん強く見えないといけない。 */}
+            {c.kind === "goal" && (
+              <g className="nm-goal">
+                <circle className="nm-goal-halo" cx={c.x} cy={c.y} r={r + 15} />
+                <g className="nm-chip is-goal" transform={`translate(${c.x} ${c.y - r - 44})`}>
+                  <rect x="-66" y="-24" width="132" height="48" rx="24" />
+                  <text x="0" y="9" textAnchor="middle">
+                    ゴール
+                  </text>
+                </g>
+              </g>
+            )}
             {/* いる場所が分かるのは画面が出たあとのこともあるので、
                 札は全部の街に置いて、出すかどうかは CSS に任せる。 */}
             <g className="nm-here">

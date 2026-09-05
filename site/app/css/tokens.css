@@ -232,16 +232,20 @@
 /* いまいる場所で島の景色を変える。
    地形の色だけ変えるとスプライトが取り残されるので、
    島の絵ぜんぶに軽いフィルタもかける。 */
+/* 北欧。「寒い」を彩度を抜いて作らない。抜くと写真の色になって、絵から外れる。
+   前の砂は S15〜31 の灰色で、ここだけ絵ではなくグレースケールに見えていた。
+   寒さは **色相**（緑を青へ、砂を青みのクリームへ）と **明るさ**で作る。 */
 [data-theme="nordic"] {
-  --grass-hi: #c6ecb4; --grass: #a3da95; --grass-lo: #7fbd78;
-  --grass2-hi: #d4f4c2; --grass2: #b3e3a2;
-  --sand: #f4f6ee; --sand-wet: #e2e7d9; --sand-edge: #cbd1c1;
-  --sea-deep: #3684ad; --sea-mid: #55aecb; --sea-shallow: #9fe4ec;
-  --place-filter: saturate(0.94) hue-rotate(-6deg) brightness(1.06);
+  --grass-hi: #b6ecac; --grass: #8ddb8c; --grass-lo: #62be72;
+  --grass2-hi: #caf6bb; --grass2: #a3e69c;
+  --sand: #edf5e2; --sand-wet: #d8e6c2; --sand-edge: #bdd0a2;
+  --sea-deep: #0e8ab8; --sea-mid: #33b6d8; --sea-shallow: #8fecf2;
+  /* 彩度は落とさない。落とすと島ぜんぶが写真のように見える */
+  --place-filter: hue-rotate(-6deg) brightness(1.06);
 }
 [data-theme="desert"] {
-  --grass-hi: #e6e07f; --grass: #d0c761; --grass-lo: #aaa04a;
-  --grass2-hi: #f0ea90; --grass2: #dbd26e;
+  --grass-hi: #ece37a; --grass: #d8ca4e; --grass-lo: #b0a437;
+  --grass2-hi: #f5ee88; --grass2: #e3d95e;
   --sand: #fae7b2; --sand-wet: #ecd394; --sand-edge: #dbbd79;
   --place-filter: saturate(1.05) hue-rotate(-14deg) brightness(1.03);
 }

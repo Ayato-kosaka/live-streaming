@@ -109,21 +109,44 @@ const sandR = baseR.map((r, i) => {
  * 公式の写真では、浅瀬も泡も「思ったより細い」。深い青がすぐそこまで来ている。
  */
 const SHORE = {
+  /** 深い青から浅瀬へ移るところ。ここを段にすると、島に輪がはまって見える */
+  fade1: -168,
+  fade2: -134,
   /** 明るいターコイズの浅瀬 */
   shallow: -104,
   /** いちばん明るい、砂のすぐ沖 */
   shelf: -44,
-  /** 泡の外側と内側。細くしないと、せっかくの浅瀬を白が食べてしまう */
-  foamOut: -19,
-  foamIn: 4,
+  /** 泡の外側と内側。細くしないと、せっかくの浅瀬を白が食べてしまう。
+      公式の波打ち際は、白と浅瀬の色が交互に見えている。ベタ塗りにしない。 */
+  foamOut: -15,
+  foamIn: 2,
   /** 濡れた砂の内側の縁 */
   wet: 14,
 };
+
+/**
+ * 岸の色。
+ *
+ * 公式のビーチ写真を測ると、浅瀬は水色（シアン）ではなく
+ * **`#95cab6` のセージ**だった。水の色に砂の色が透けているからで、
+ * ここを純粋なシアンにすると、島のまわりだけネオンのように浮く。
+ *
+ * だから海の色に砂の色を混ぜて作る。`color-mix` にしておけば、
+ * 北欧や砂漠に移ったときも海と砂の両方に付いていく。
+ */
+const SEA_FADE1 = "color-mix(in srgb, var(--sea-deep) 62%, var(--sea-shallow) 38%)";
+const SEA_FADE2 = "color-mix(in srgb, var(--sea-deep) 28%, var(--sea-shallow) 72%)";
+const SEA_SHALLOW = "color-mix(in srgb, var(--sea-shallow) 55%, var(--sand-wet) 45%)";
+const SEA_SHELF = "color-mix(in srgb, var(--sea-shelf) 62%, var(--sand) 38%)";
+/** 濡れた砂。公式は乾いた砂より「暗い」のではなく「濃い黄色」。灰色を混ぜない。 */
+const SAND_WET = "color-mix(in srgb, var(--sand-wet) 68%, var(--gold) 32%)";
 
 const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
 
 /** 浅瀬。輪郭をそのまま外へ出すと機械的に見えるので、帯ごとに違う起伏を足す。 */
+const fade1Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade1), 71, 22), SQ);
+const fade2Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade2), 72, 18), SQ);
 const shallowPath = blob(CX, CY, wobble(inset(sandR, SHORE.shallow), 73, 15), SQ);
 const shelfPath = blob(CX, CY, wobble(inset(sandR, SHORE.shelf), 74, 9), SQ);
 
@@ -213,6 +236,26 @@ const LACE_STYLE: [number, number][] = [
   [1.9, 0.62],
   [1.3, 0.44],
 ];
+
+/**
+ * 波が引いたあとの筋と、砂粒。
+ *
+ * 公式の砂浜は無地ではない。波が上がりきったところに弧の跡が残っていて、
+ * 全体にざらっとした粒が乗っている。これが無いと、砂が板に見える。
+ * レースと同じで、位置を焼き込んで数本のパスにまとめる。
+ */
+const tideMarks = foamLace(52, 9301, 12, 26, 18, 40);
+const beachGrains = (() => {
+  const r = rng(9401);
+  const buckets = ["", ""];
+  for (let i = 0; i < 150; i++) {
+    const t = (i + r() * 0.9) / 150;
+    const [x, y] = pointAt(CX, CY, sandR, SQ, t, 6 + r() * 34);
+    const rad = 0.9 + r() * 1.6;
+    buckets[i % 2] += oval(x, y, rad, rad * 0.7);
+  }
+  return buckets;
+})();
 
 /** ちぎれた泡の粒。円をひとつずつ置かず、円弧コマンドで1本のパスにまとめる。 */
 const foamDots = (() => {
@@ -821,8 +864,8 @@ export default function IslandScene() {
           r={880}
           gradientTransform={`translate(${CX} ${CY}) scale(1 ${SQ}) translate(${-CX} ${-CY})`}
         >
-          <stop offset="0.55" stopColor="#0b3f86" stopOpacity="0" />
-          <stop offset="1" stopColor="#0b3f86" stopOpacity="0.34" />
+          <stop offset="0.6" stopColor="#0b3f86" stopOpacity="0" />
+          <stop offset="1" stopColor="#0b3f86" stopOpacity="0.16" />
         </radialGradient>
         <radialGradient id="grassG" cx="38%" cy="28%">
           <stop offset="0" stopColor="var(--grass-hi)" />
@@ -887,9 +930,13 @@ export default function IslandScene() {
         ))}
       </g>
 
-      {/* ------- 浅瀬。岸のすぐそばだけ ------- */}
-      <path d={shallowPath} fill="var(--sea-shallow)" />
-      <path d={shelfPath} fill="var(--sea-shelf)" />
+      {/* ------- 浅瀬。岸のすぐそばだけ。
+          深い青からいきなり浅瀬に変わると、島に輪がはまって見える。
+          あいだに2枚だけ挟んで、段差を目立たなくする。 ------- */}
+      <path d={fade1Path} fill={SEA_FADE1} />
+      <path d={fade2Path} fill={SEA_FADE2} />
+      <path d={shallowPath} fill={SEA_SHALLOW} />
+      <path d={shelfPath} fill={SEA_SHELF} />
 
       {/* ------- 島 ------- */}
       {/* 影。feGaussianBlur は面積に比例して重くなるので、
@@ -902,8 +949,24 @@ export default function IslandScene() {
       <g>
         <path d={sandPath} fill="var(--sand)" />
         {/* 濡れた砂は波打ち際の側。内側に敷くと逆になる。 */}
-        <path d={wetRing} fill="var(--sand-wet)" fillRule="evenodd" />
+        <path d={wetRing} fill={SAND_WET} fillRule="evenodd" />
         <path d={wetEdgeRing} fill="var(--sand-edge)" fillRule="evenodd" opacity="0.55" />
+        {/* 砂粒と、波が上がりきったところに残る弧の跡。砂が板に見えなくなる。 */}
+        <g aria-hidden>
+          <path d={beachGrains[0]} fill="var(--sand-edge)" opacity="0.34" />
+          <path d={beachGrains[1]} fill="#ffffff" opacity="0.3" />
+          {tideMarks.map((d, i) => (
+            <path
+              key={`tm${i}`}
+              d={d}
+              fill="none"
+              stroke="var(--sand-edge)"
+              strokeWidth={2.4 - i * 0.6}
+              strokeOpacity={0.3 - i * 0.07}
+              strokeLinecap="round"
+            />
+          ))}
+        </g>
         {/* 草の落とす影。砂が草に接するところを締める。 */}
         <path d={grassPath} fill="none" stroke="var(--sand-edge)" strokeOpacity="0.45" strokeWidth="4.5" />
         <path d={grassPath} fill="url(#grassG)" />
@@ -912,8 +975,8 @@ export default function IslandScene() {
       {/* ------- 泡。島の上に重ねて、砂の縁にかぶせる -------
           「寄せた波」と「引いた波」の2組を交互に濃くする。動かすのは opacity だけ。 */}
       <g fill="var(--foam)" aria-hidden>
-        <path d={foamHaze} fillRule="evenodd" opacity="0.34" />
-        <path d={foamBand} fillRule="evenodd" opacity="0.95" />
+        <path d={foamHaze} fillRule="evenodd" opacity="0.24" />
+        <path d={foamBand} fillRule="evenodd" opacity="0.68" />
         <path d={foamDots[0]} opacity="0.72" />
         <path d={foamDots[1]} opacity="0.42" />
       </g>

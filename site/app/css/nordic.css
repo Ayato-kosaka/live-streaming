@@ -1,119 +1,327 @@
 /* =========================================================
    北欧ヒッチハイク旅
    ---------------------------------------------------------
-   企画の芯は「陸路をぜんぶ人の親切でつなぐ」こと。
-   だから距離と移動手段をいちばん大きく見せる。
+   企画の芯は「会いたい人がいるので、スウェーデンまで陸路で会いに行く」こと。
+   だから「あと何日」「あと何km」「いまどこ」を、いちばん大きく見せる。
+
+   このページ群は2つの型を混ぜないように分けてある（docs/ac-reference.md 7章）。
+     - 旅の司令塔（.tnow）と地図まわり … 板の型。厚みと影がある
+     - 見どころと旅のしおり（.folds / .gchap） … 紙の型。影を落とさない
+   紙の型の下敷きは app/css/ui.css が持っている。ここではその上に足すぶんだけ書く。
    ========================================================= */
 
-/* --- 出発までのカウントダウン --- */
-.cdown {
+/* =========================================================
+   旅の司令塔
+   ---------------------------------------------------------
+   1画面で「いつ出て・あとどれだけで会えて・いまどこで・次はどこか」を言い切る。
+   ここを読んでスクロールをやめても、企画の形が分かる状態にする。
+   ========================================================= */
+.tnow {
+  position: relative;
+  margin: 0 0 26px;
+  padding: 18px 16px 20px;
+  border: var(--bw-3) solid var(--frame-dark);
+  border-radius: var(--r-3);
+  background:
+    radial-gradient(130% 90% at 50% 0%, color-mix(in srgb, var(--gold) 34%, transparent), transparent 62%),
+    linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: var(--pop-lg), var(--shadow-3);
+}
+@media (min-width: 720px) { .tnow { padding: 26px 26px 26px; } }
+
+.tnow-top h1 {
+  margin: 0;
+  font-size: clamp(21px, 6.4vw, 33px);
+  font-weight: 900;
+  line-height: 1.32;
+  letter-spacing: var(--ls-head);
+  color: var(--ink);
+}
+.tnow-top p {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.tnow-top b { font-weight: 900; color: var(--ink); }
+
+/* --- あと何日 / あと何km --- */
+.tnow-counts { display: grid; gap: 9px; margin-top: 15px; }
+@media (min-width: 620px) { .tnow-counts { grid-template-columns: 1.25fr 1fr; align-items: stretch; } }
+
+.tnow-count {
+  position: relative;
   display: grid;
-  gap: 8px;
+  gap: 5px;
   justify-items: center;
   text-align: center;
-  padding: 18px 14px;
-  border: 3px solid var(--frame-dark);
-  border-radius: 20px;
-  background:
-    radial-gradient(120% 100% at 50% 0%, rgba(255, 236, 178, 0.85), rgba(255, 253, 246, 0) 66%),
-    linear-gradient(#fffdf6, #fff4de);
-  box-shadow: 0 5px 0 var(--frame-deep);
+  padding: 13px 12px 14px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 16%, var(--paper)), var(--paper));
 }
-.cdown-label, .cdown-load { font-size: 11.5px; font-weight: 900; letter-spacing: 0.1em; color: var(--ink-3); }
-.cdown-nums { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
-.cdown-nums em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--ink-3); }
-.cdown-nums b {
-  font-size: clamp(28px, 9vw, 46px);
+.tnow-count.is-far { background: linear-gradient(color-mix(in srgb, var(--accent) 13%, var(--paper)), var(--paper)); }
+.tnow-count-l {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
+}
+.tnow-count-n { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+.tnow-count-n em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.tnow-count-n b {
+  font-size: clamp(26px, 8.4vw, 42px);
   font-weight: 900;
   line-height: 1;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.cdown-when { font-size: 11px; font-weight: 800; color: var(--ink-3); }
-.cdown.is-gone b { font-size: 20px; font-weight: 900; }
-.cdown.is-gone i { font-style: normal; font-size: 12px; color: var(--ink-3); }
+.tnow-count-n.is-wait { font-size: 19px; font-weight: 900; color: var(--ink); }
+.tnow-count-w { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-3); }
+.is-far .tnow-count-n b { color: var(--accent-deep); }
 
-/* --- 数字4つ --- */
-.nfacts {
+/* 進み具合。数字だけだと減っているのが分からない。 */
+.tnow-bar {
+  width: 100%;
+  height: 8px;
+  margin-top: 3px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--frame-dark) 24%, var(--paper));
+  overflow: hidden;
+}
+.tnow-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+}
+
+/* --- いま / つぎ --- */
+.tnow-pair {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   gap: 8px;
-  margin: 14px 0 6px;
-}
-@media (min-width: 640px) { .nfacts { grid-template-columns: repeat(4, 1fr); } }
-.nfacts span {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 11px 6px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 15px;
+  margin-top: 12px;
+  padding: 12px 12px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
   background: var(--paper);
 }
-.nfacts b { font-size: 24px; font-weight: 900; line-height: 1; }
-.nfacts i { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
-
-/* --- ルート。横に広い地図はスマホで読めないので、縦1本の線にした --- */
-.route-sum { margin: 0 0 14px; font-size: 13.5px; font-weight: 700; line-height: 1.8; }
-.route-sum b { font-size: 18px; }
-.route-list { list-style: none; margin: 0; padding: 0; }
-.rleg { position: relative; padding: 0 0 18px 42px; }
-.rleg-line {
-  position: absolute;
-  left: 15px; top: 6px; bottom: -6px;
-  width: 3px;
-  background: repeating-linear-gradient(180deg, var(--frame-dark) 0 6px, transparent 6px 12px);
-}
-.rleg:last-child .rleg-line { display: none; }
-.rleg-dot {
-  position: absolute;
-  left: 0; top: 0;
-  width: 32px; height: 32px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  border: 3px solid var(--frame-dark);
-  background: var(--paper);
-  font-size: 14px;
-  box-shadow: 0 2px 0 var(--frame-deep);
-}
-/* ヒッチハイクの区間だけ色を変える。これがこの企画の主役なので。 */
-.rleg.is-hitch .rleg-dot { background: linear-gradient(#fff6cf, var(--gold)); }
-.rleg.is-fly .rleg-dot, .rleg.is-ferry .rleg-dot { background: #e6f2fb; }
-.rleg-body { display: grid; gap: 3px; }
-.rleg-to { font-size: 15.5px; font-weight: 900; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.rleg-flag {
-  font-size: 11px;
+@media (min-width: 620px) { .tnow-pair { grid-template-columns: 1fr auto 1fr auto; } }
+.tnow-at, .tnow-to { display: grid; gap: 1px; min-width: 0; }
+.tnow-at i, .tnow-to i {
+  font-style: normal;
+  font-size: 10px;
   font-weight: 900;
-  padding: 2px 9px;
-  border-radius: 999px;
-  border: 2px solid var(--frame-dark);
-  background: var(--paper);
-  color: var(--ink);
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
 }
-.rleg-here {
+.tnow-at b, .tnow-to b { font-size: 16.5px; font-weight: 900; line-height: 1.35; }
+.tnow-at em, .tnow-to em {
   font-style: normal;
   font-size: 10.5px;
-  font-weight: 900;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--accent, #e08a3c);
-  color: #fffdf6;
+  font-weight: 800;
+  line-height: 1.55;
+  color: var(--ink-2);
 }
-.rleg-how { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
-.rleg-fixed {
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--frame-deep);
-  background: rgba(255, 236, 178, 0.6);
-  border-radius: 8px;
-  padding: 3px 8px;
-  justify-self: start;
-}
-.rleg-note { margin: 3px 0 0; font-size: 12.5px; line-height: 1.75; font-weight: 700; }
-.rleg-stay { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.tnow-to b { color: var(--frame-deep); }
+.tnow-go { flex: none; color: var(--frame-dark); display: grid; place-items: center; }
+/* 次の区間の絵。スマホでは行の下にまわす（3列に絵まで入ると全部が細くなる） */
+.tnow-art { grid-column: 1 / -1; justify-self: center; margin-top: 4px; }
+@media (min-width: 620px) { .tnow-art { grid-column: auto; margin-top: 0; } }
 
-/* --- 国のカード --- */
+.tnow-what {
+  margin: 9px 0 0;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--gold) 22%, var(--paper));
+}
+
+/* --- 一本道 ---
+   10カ所を横に並べる。スマホでは入りきらないので横に流す。
+   「どこまで来たか」がこの帯だけで分かるのが役目。 */
+.tnow-rail {
+  list-style: none;
+  display: flex;
+  gap: 0;
+  margin: 14px -16px 0;
+  padding: 4px 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tnow-rail::-webkit-scrollbar { display: none; }
+@media (min-width: 720px) { .tnow-rail { margin-left: -26px; margin-right: -26px; padding-left: 26px; padding-right: 26px; } }
+.tnow-rail li {
+  position: relative;
+  flex: 1 0 auto;
+  min-width: 68px;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding-top: 12px;
+}
+/* 街と街をつなぐ線。点の高さに合わせて、点の後ろを通す。 */
+.tnow-rail li::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: -50%;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--frame-dark) 30%, var(--paper));
+}
+.tnow-rail li:first-child::before { display: none; }
+.tnow-rail li.is-past::before,
+.tnow-rail li.is-on::before { background: var(--frame-dark); }
+.tnow-dot {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 3.5px var(--frame-dark);
+  z-index: 1;
+}
+.tnow-rail li.is-past .tnow-dot { background: var(--frame-dark); }
+.tnow-rail li.is-on .tnow-dot {
+  width: 17px; height: 17px;
+  margin-top: -2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--frame-deep);
+}
+.tnow-rail li.is-goal .tnow-dot { background: var(--gold); box-shadow: 0 0 0 4px var(--accent-deep); }
+.tnow-name {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink-3);
+}
+.tnow-rail li.is-on .tnow-name,
+.tnow-rail li.is-goal .tnow-name { color: var(--ink); }
+.tnow-goal {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--accent-deep);
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+/* --- 行き先ボタン --- */
+.tnow-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tnow-act {
+  font-size: 12.5px;
+  font-weight: 900;
+  padding: 9px 17px;
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.tnow-act:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.tnow-act.is-main { background: linear-gradient(#fff0bb, var(--gold)); }
+
+/* =========================================================
+   地図のまわり
+   ========================================================= */
+/* 線の読み方。地図の中に板で置くと、いちばん見せたいところが隠れる。 */
+.nmkeys {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+@media (min-width: 620px) { .nmkeys { grid-template-columns: repeat(3, 1fr); } }
+.nmkeys li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 3px 9px;
+  padding: 8px 11px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.nmkeys b { font-size: 11.5px; font-weight: 900; }
+.nmkeys i {
+  grid-column: 2;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+/* 見本は地図と同じ線で描く。色の名前を書くより、線そのものを見せる。 */
+.nmkeys-s { grid-row: span 2; height: 22px; border-radius: var(--r-pill); }
+.nmkeys .is-hitch .nmkeys-s { background: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%); }
+.nmkeys .is-ferry .nmkeys-s {
+  height: 8px;
+  background: repeating-linear-gradient(90deg, var(--sea-mid) 0 5px, transparent 5px 11px);
+}
+.nmkeys .is-side .nmkeys-s {
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--frame-dark) 0 4px, transparent 4px 10px);
+}
+.nmkeys .is-fly .nmkeys-s {
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--sea-deep) 0 9px, transparent 9px 16px);
+}
+.nmkeys .is-border .nmkeys-s {
+  width: 9px;
+  justify-self: center;
+  height: 24px;
+  background: linear-gradient(var(--accent) 0 30%, var(--paper) 30% 70%, var(--accent) 70%);
+  box-shadow: 0 0 0 1.5px var(--frame-dark);
+}
+.nmap-say {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+/* =========================================================
+   区間ごとの話
+   ---------------------------------------------------------
+   見出しの左には、その区間の絵。同じ親指の印を10回並べると、
+   どの区間も同じことをしているように見える（Marks.tsx）。
+   ========================================================= */
+.rleg-art {
+  flex: none;
+  border-radius: 10px;
+  box-shadow: var(--shadow-1);
+}
+.rleg-way { min-width: 0; }
+.rleg-way i { font-style: normal; color: var(--ink-3); margin: 0 2px; }
+.rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.rleg-fixed {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--marker-ink);
+  background: var(--marker);
+  border-radius: var(--r-0);
+  padding: 4px 9px;
+  display: inline-block;
+}
+.rleg-stay { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+
+/* =========================================================
+   国のカード（トップの「通る6カ国」）
+   ========================================================= */
 .ncountries { display: grid; gap: 9px; margin-top: 12px; }
+@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr; } }
 .ncountry {
   position: relative;
   display: grid;
@@ -121,188 +329,298 @@
   align-items: center;
   gap: 12px;
   padding: 13px 14px;
-  border: 3px solid var(--frame-dark);
-  border-radius: 17px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-deep);
+  box-shadow: var(--pop-sm);
   color: var(--ink);
 }
-.ncountry:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .ncountry-leg {
   width: 24px; height: 24px;
   display: grid; place-items: center;
   border-radius: 50%;
   background: var(--frame-dark);
-  color: #fffdf6;
+  color: var(--paper);
   font-size: 12px;
   font-weight: 900;
 }
 .ncountry-body { display: grid; gap: 2px; min-width: 0; }
 .ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2, var(--ink)); }
+.ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .ncountry-body em { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
 
-/* --- 見どころ --- */
-.ncity { margin: 22px 0 6px; }
+/* =========================================================
+   国のページ
+   ========================================================= */
+/* 入る道・出る道 */
+.ncways { display: grid; gap: 9px; margin-top: 13px; }
+@media (min-width: 620px) { .ncways { grid-template-columns: 1fr 1fr; } }
+.ncway {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 20%, var(--paper));
+}
+.ncway-art { flex: none; border-radius: 11px; box-shadow: var(--shadow-1); }
+.ncway-b { display: grid; gap: 2px; min-width: 0; }
+.ncway-b i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  color: var(--ink-3);
+}
+.ncway-b b { font-size: 14px; font-weight: 900; line-height: 1.45; }
+.ncway-b em { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--frame-deep); }
+.ncway-fix { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-2); }
+.ncway-note {
+  margin: 11px 0 0;
+  font-size: 13px;
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 街の見出し。青いページの地に直に置くので、白で抜く。
+   ここを --ink のままにすると、濃い青の上の濃い茶になって読めない。 */
+.ncity { margin: 24px 0 6px; }
 .ncity-name {
   margin: 0 0 10px;
   font-size: 17px;
   font-weight: 900;
   padding-left: 12px;
-  border-left: 7px solid var(--frame-dark);
+  border-left: 7px solid var(--gold);
+  color: var(--paper);
 }
-.nspots { display: grid; gap: 12px; }
-@media (min-width: 900px) { .nspots { grid-template-columns: 1fr 1fr; } }
-.nspot {
-  overflow: hidden;
-  border: 3px solid var(--frame);
-  border-radius: 20px;
-  background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-dark);
+.ncity-name em { color: color-mix(in srgb, var(--paper) 74%, var(--sea-deep)); }
+
+/* --- 見どころ1件（紙の型。段の中身） --- */
+/* 閉じているときのサムネイル。20段ならんだとき、1段ずつ違って見えるのが効く。 */
+.nspot-th {
+  flex: none;
+  width: 52px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--rule) 26%, transparent);
 }
-.nspot-img { position: relative; display: block; line-height: 0; background: #e8eef0; }
-.nspot-img img { width: 100%; height: 190px; object-fit: cover; }
+.nspot-hb { display: flex; align-items: center; gap: 7px; min-width: 0; flex-wrap: wrap; }
+.nspot-name { min-width: 0; }
+/* 種類は平らな札に言葉で。押せないものに厚みを付けない（紙の型） */
+.nspot-cat {
+  flex: none;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+}
+.nspot-img { position: relative; display: block; line-height: 0; margin-bottom: 11px; }
+.nspot-img img {
+  width: 100%;
+  height: clamp(180px, 46vw, 320px);
+  object-fit: cover;
+  border-radius: var(--r-1);
+}
 .nspot-credit {
   position: absolute;
-  right: 6px; bottom: 6px;
+  right: 7px; bottom: 7px;
   font-size: 9.5px;
   font-weight: 800;
-  color: #fffdf6;
-  background: rgba(20, 40, 50, 0.6);
-  border-radius: 6px;
-  padding: 2px 6px;
+  color: var(--paper);
+  background: rgba(30, 34, 20, 0.62);
+  border-radius: var(--r-0);
+  padding: 2px 7px;
 }
-.nspot-body { padding: 13px 15px 15px; }
-.nspot-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.nspot-cat {
-  font-style: normal;
-  font-size: 10.5px;
-  font-weight: 900;
-  padding: 2px 9px;
-  border-radius: 999px;
-  border: 2px solid var(--frame-dark);
-  background: linear-gradient(#fffdf6, #fff3da);
+.nspot-local { margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.nspot-text { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 600; }
+.nspot-tips {
+  margin: 10px 0 0;
+  padding: 9px 13px 9px 28px;
+  font-size: 12px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-left: 3px solid color-mix(in srgb, var(--rule) 60%, transparent);
 }
-.nspot-city { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
-.nspot h3 { margin: 7px 0 0; font-size: 16.5px; font-weight: 900; line-height: 1.45; }
-.nspot-local { margin: 2px 0 0; font-size: 11px; font-weight: 800; color: var(--ink-3); }
-.nspot-point {
-  margin: 8px 0 0;
-  font-size: 12.5px;
-  font-weight: 900;
-  color: var(--frame-deep);
-  background: rgba(255, 236, 178, 0.55);
-  border-radius: 10px;
-  padding: 6px 10px;
-}
-.nspot-text { margin: 9px 0 0; font-size: 13px; line-height: 1.85; font-weight: 600; }
-.nspot-tips { margin: 9px 0 0; padding-left: 1.1em; font-size: 12px; line-height: 1.8; font-weight: 700; color: var(--ink-3); }
-.nspot-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.nspot-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 11px 0 0; }
 .nspot-meta div {
-  display: flex; gap: 5px; align-items: baseline;
-  border: 2px solid var(--frame-dark);
-  border-radius: 999px;
-  padding: 2px 10px;
+  display: flex; gap: 6px; align-items: baseline;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-0);
+  padding: 3px 10px;
 }
 .nspot-meta dt { font-size: 9.5px; font-weight: 900; color: var(--ink-3); }
 .nspot-meta dd { margin: 0; font-size: 11.5px; font-weight: 900; }
-.nspot-info { margin: 9px 0 0; font-size: 11.5px; line-height: 1.7; font-weight: 700; color: var(--ink-3); }
-.nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 9px 0 0; }
+.nspot-info { margin: 10px 0 0; font-size: 11.5px; line-height: 1.75; font-weight: 700; color: var(--ink-3); }
+.nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
 .nspot-tags span {
   font-size: 10px; font-weight: 900;
   color: var(--ink-3);
-  background: rgba(0, 0, 0, 0.045);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--rule) 20%, transparent);
+  border-radius: var(--r-0);
   padding: 2px 8px;
 }
 
-/* --- 国あての企画 --- */
-.cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+/* =========================================================
+   国あての意見
+   ---------------------------------------------------------
+   ここは「読む」ところではなく「書く」ところなので、板の型のまま。
+   ========================================================= */
+.cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
 .cideas li {
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 15px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
   background: var(--paper);
-  padding: 11px 13px;
+  padding: 12px 14px;
 }
-.cideas p { margin: 0; font-size: 13px; line-height: 1.75; font-weight: 700; }
-.cidea-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; }
+.cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
+.cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
 .cidea-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
 .cidea-vote {
   font-size: 11px; font-weight: 900;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 2px solid var(--frame-dark);
-  background: linear-gradient(#fffdf6, #fff3da);
+  padding: 5px 13px;
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
+  box-shadow: var(--pop-sm);
 }
-.cidea-vote.is-on { background: linear-gradient(#fff6cf, var(--gold)); }
+.cidea-vote:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.cidea-vote.is-on { background: linear-gradient(#fff0bb, var(--gold)); }
 
-/* --- 国のページの前後リンク --- */
-.nnav { display: flex; justify-content: space-between; gap: 10px; margin: 20px 0 6px; }
+/* 国のページの前後リンク */
+.nnav { display: flex; justify-content: space-between; gap: 10px; margin: 22px 0 6px; }
 .nnav a {
   font-size: 13px; font-weight: 900;
   padding: 9px 16px;
-  border-radius: 999px;
-  border: 3px solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  border: var(--bw-2) solid var(--frame-dark);
   background: var(--paper);
-  box-shadow: 0 3px 0 var(--frame-deep);
+  box-shadow: var(--pop-sm);
   color: var(--ink);
+}
+.nnav a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+
+/* =========================================================
+   旅のしおり
+   ---------------------------------------------------------
+   紙の型（docs/ac-reference.md 7章）。章の紙と段の罫線は ui.css が持っている。
+   ここは目次と、章の中に出てくる表・札まわり。
+   ========================================================= */
+.gbook { margin-top: 4px; }
+
+/* 目次。まず全体で何章あるかを見せてから、章を並べる。 */
+.gtoc {
+  display: grid;
+  gap: 0;
+  margin: 0 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background:
+    radial-gradient(150% 90% at 8% 0%, color-mix(in srgb, var(--paper-out) 78%, transparent), transparent 56%),
+    linear-gradient(var(--paper-mottle-b), var(--paper-mottle-a));
+}
+@media (min-width: 620px) { .gtoc { grid-template-columns: 1fr 1fr; } }
+.gtoc a {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: baseline;
+  gap: 1px 10px;
+  padding: 9px 13px;
+  color: var(--ink);
+  border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+}
+.gtoc a:first-child { border-top: 0; }
+@media (min-width: 620px) { .gtoc a:nth-child(2) { border-top: 0; } }
+.gtoc a:hover { background: color-mix(in srgb, var(--marker) 55%, transparent); }
+.gtoc-n {
+  grid-row: span 2;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+.gtoc b { font-size: 13.5px; font-weight: 900; }
+.gtoc i { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--ink-2); }
+
+/* 章の番号。図鑑の面のように、通し番号を平らな札で置く。 */
+.gchap-n {
+  flex: none;
+  min-width: 26px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-variant-numeric: tabular-nums;
 }
 
-/* --- 旅のしおり --- */
-.gjump { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-.gjump a {
-  font-size: 11.5px; font-weight: 900;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
-  background: var(--paper);
-  color: var(--ink);
+/* 章の外に置く但し書き。青い地の上なので白で抜く。 */
+.gnote {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--paper) 86%, var(--sea-deep));
 }
-.gnotes { display: grid; gap: 12px; margin-top: 10px; }
-.gnote b { display: block; font-size: 14px; font-weight: 900; margin-bottom: 4px; }
-.gnote p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 600; }
-.glist { margin: 10px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.9; font-weight: 700; }
-.glist.is-dont li { color: #a8462e; }
-.gtable { display: grid; gap: 7px; margin-top: 10px; }
+
+.gsub {
+  display: inline-block;
+  margin: 16px 0 2px;
+  padding: 2px 9px;
+  font-size: 13px;
+  font-weight: 900;
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+.gsub i { font-style: normal; font-size: 11px; font-weight: 800; margin-left: 8px; }
+.gpnote { margin: 6px 0 0; font-size: 12px; line-height: 1.8; font-weight: 700; color: var(--ink-2); }
+
+.glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }
+.glist.is-dont li { color: var(--pick); }
+
+/* 表。紙の型なので、行の枠ではなく罫線1本で分ける。 */
+.gtable { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
 .grow {
   display: grid;
   gap: 2px;
-  padding: 10px 13px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 14px;
-  background: var(--paper);
+  padding: 10px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .grow b { font-size: 13.5px; font-weight: 900; }
 .grow span { font-size: 12px; font-weight: 800; }
-.grow i, .grow em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); }
-.gcards { display: grid; gap: 9px; margin-top: 10px; }
-@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; } }
-.gcard {
-  padding: 12px 14px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 15px;
-  background: var(--paper);
-}
+.grow i, .grow em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-2); }
+
+.gcards { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
+@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+.gcard { padding: 10px 4px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .gcard b { display: block; font-size: 13.5px; font-weight: 900; }
 .gcard i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
-.gcard p { margin: 6px 0 0; font-size: 12.5px; line-height: 1.8; font-weight: 600; }
-.gcard span { display: block; margin-top: 5px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
-.gphrase { margin-top: 16px; }
-.gphrase h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 15px; font-weight: 900; }
-.gphrase h3 i { font-style: normal; font-size: 11px; color: var(--ink-3); }
-.gwords { display: grid; gap: 6px; margin-top: 8px; }
-@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; } }
+.gcard p { margin: 5px 0 0; font-size: 12.5px; line-height: 1.85; font-weight: 600; }
+.gcard span { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+
+.gphrase { margin-top: 6px; }
+.gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
+@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
 .gwords div {
   display: grid;
   gap: 1px;
-  padding: 8px 12px;
-  border: 2px solid var(--frame-dark);
-  border-radius: 12px;
-  background: var(--paper);
+  padding: 8px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .gwords b { font-size: 13px; font-weight: 900; }
-.gwords i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--accent-deep, #c2691f); }
+.gwords i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--accent-deep); }
 .gwords span { font-size: 11px; font-weight: 700; color: var(--ink-3); }
 
 /* =========================================================
