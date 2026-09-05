@@ -61,6 +61,21 @@ const NOTES_PER_DAY = 20;
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
+/* ---- 北欧旅のわかれ道 ----
+   区間ごとの「どっちにしてほしい？」を、押すだけで答えられるようにする。
+   入れ物は islandPolls / islandPollVotes をそのまま借りて、
+   at: "nordic" の札を付けて仕分ける。新しいコレクションは作らない。
+
+   **問いの字も選択肢の字も、ここには置かない。** 字は Git
+   (`site/content/nordic.ts`)にあって、レビューを通ってから出る。
+   サーバーが持つのは id と数だけなので、
+   ここに人の書いた字が溜まることがない。 */
+const FORK_ID = /^nordic-[a-z0-9-]{3,40}$/;
+const FORK_OPTION = /^[a-z][a-z0-9-]{0,15}$/;
+/** 1つのわかれ道に置ける選択肢の数。知らない札が増えていくのを止める。 */
+const FORK_MAX_OPTIONS = 4;
+const FORK_VOTES_PER_DAY = 30;
+
 type Json = Record<string, unknown>;
 
 /** ログインしている人。していなければ null。 */
@@ -335,16 +350,39 @@ function shapePoll(id: string, v: Json): PollShape {
  * @return {Promise<PollShape | null>} 問い、無ければ null
  */
 async function openPoll(): Promise<PollShape | null> {
-  const snap = await POLLS.orderBy("createdAt", "desc").limit(5).get();
+  const snap = await POLLS.orderBy("createdAt", "desc").limit(12).get();
   const now = new Date().toISOString();
   for (const d of snap.docs) {
     const v = d.data() ?? {};
+    // at の付いたものは、どこか別の面のわかれ道（いまは北欧のみ）。
+    // 島の「今夜のおたずね」はこれを拾わない。同じ入れ物を使っているだけで、
+    // 問いの文も選択肢の字も持っていないので、出しても空の問いになる。
+    if (v.at) continue;
     if (v.hidden === true) continue;
     if (v.openUntil && String(v.openUntil) < now) continue;
     const p = shapePoll(d.id, v);
     if (p.question && p.options.length >= 2) return p;
   }
   return null;
+}
+
+/**
+ * わかれ道の票を、数だけの表に直す。
+ *
+ * ドキュメントの中身は誰でも増やせる形なので、そのまま返さない。
+ * 札の形が合っているものの、0より大きい整数だけを通す。
+ * @param {unknown} v ドキュメントの votes
+ * @return {Record<string, number>} 札ごとの数
+ */
+function forkCounts(v: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  const raw = (v ?? {}) as Record<string, unknown>;
+  for (const k of Object.keys(raw).slice(0, FORK_MAX_OPTIONS)) {
+    if (!FORK_OPTION.test(k)) continue;
+    const n = Math.floor(Number(raw[k]));
+    if (Number.isFinite(n) && n > 0) out[k] = n;
+  }
+  return out;
 }
 
 /**
@@ -746,6 +784,106 @@ export const islandApi = onRequest(
           return;
         }
         res.json({poll: out, mine});
+        return;
+      }
+
+      /* ---------------- 北欧旅のわかれ道 ----------------
+         「十字架の丘に寄る／先を急ぐ」のような、まだ決まっていない分かれ目を
+         押すだけで答えられるようにする(`docs/nordic-fund.md` 提案8)。
+
+         **返すのは、聞かれた id のぶんだけ。** 一覧で返すと、
+         端末IDを作り直しながら投げれば知らない id の札を並べられる。
+         画面が知っている id しか読まないので、ゴミは表に出ない。 */
+      if (method === "GET" && path === "/fork") {
+        const ids = String(req.query.ids ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => FORK_ID.test(s))
+          .slice(0, 12);
+        // 押した瞬間に数字が動くのが要なので、読みは短めに寝かせる
+        res.set(
+          "Cache-Control",
+          "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        if (ids.length === 0) {
+          res.json({forks: {}});
+          return;
+        }
+        const snaps = await db.getAll(...ids.map((id) => POLLS.doc(id)));
+        const forks: Record<string, Record<string, number>> = {};
+        for (const s of snaps) {
+          const v = s.exists ? s.data() ?? {} : {};
+          if (v.at !== "nordic" || v.hidden === true) continue;
+          forks[s.id] = forkCounts(v.votes);
+        }
+        res.json({forks});
+        return;
+      }
+
+      const forkMatch = path.match(/^\/fork\/([A-Za-z0-9_-]{4,})\/vote$/);
+      if (method === "POST" && forkMatch) {
+        const id = forkMatch[1];
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        const option = clean(body.option, 24);
+        if (!FORK_ID.test(id) || !FORK_OPTION.test(option)) {
+          res.status(400).json({error: "bad fork"});
+          return;
+        }
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        if (!(await takeQuota(who?.uid ?? cid, "fork", FORK_VOTES_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        // ログインしている人は端末が変わっても1票。していない人は端末ごと。
+        const voteRef = PVOTES.doc(`${id}_${who?.uid ?? cid}`);
+        const ref = POLLS.doc(id);
+        let out: {votes: Record<string, number>; mine: string};
+        try {
+          out = await db.runTransaction(async (tx) => {
+            const [v, p] = await Promise.all([tx.get(voteRef), tx.get(ref)]);
+            const data = p.exists ? p.data() ?? {} : {};
+            // 引っ込めたわかれ道は、id を知っていても押せない
+            if (data.hidden === true) throw new Error("closed");
+            const votes = forkCounts(data.votes);
+            // もう押している人は数えない。押し直しもさせない(1人1票)
+            if (v.exists) {
+              return {votes, mine: clean(v.data()?.option, 24)};
+            }
+            const known = option in votes;
+            if (!known && Object.keys(votes).length >= FORK_MAX_OPTIONS) {
+              throw new Error("bad option");
+            }
+            votes[option] = (votes[option] ?? 0) + 1;
+            tx.set(voteRef, {
+              at: Date.now(),
+              option,
+              cid: cid || null,
+              uid: who?.uid ?? null,
+            });
+            /* はじめの1票で入れ物ができる。問いの字はここに書かない。
+               createdAt を持たせておくのは、島の「今夜のおたずね」が
+               同じコレクションを新しい順に見ているため。 */
+            tx.set(
+              ref,
+              {
+                at: "nordic",
+                votes,
+                createdAt: (data.createdAt as number) ?? Date.now(),
+              },
+              {merge: true},
+            );
+            return {votes, mine: option};
+          });
+        } catch (e) {
+          res.status(400).json({error: String(e).replace("Error: ", "")});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({id, votes: out.votes, mine: out.mine});
         return;
       }
 

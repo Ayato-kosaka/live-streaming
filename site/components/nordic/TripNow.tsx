@@ -145,6 +145,9 @@ export default function TripNow({
     board.querySelectorAll<HTMLElement>("[data-leg]").forEach((h) => {
       const d = h.closest("details");
       if (d) d.open = want.has(h.dataset.leg ?? "");
+      // いま走っている1区間にだけ、畳んだままでも見える札を出す。
+      // 10枚のうちどれが今日の話なのかが、開けなくても分かる。
+      h.toggleAttribute("data-now", h.dataset.leg === mainLegs[at]);
     });
     // 地図の「見ている区間」の帯は、`details` が自分で出す toggle を
     // `MapSync` が捕まえて付け替える。ここから触らない。
@@ -159,6 +162,8 @@ export default function TripNow({
   const leftKm = stops.slice((idx ?? 0) + 1).reduce((a, b) => a + (b.hitch ?? 0), 0);
 
   const now = idx != null ? stops[idx] : null;
+  /** いま走っている区間。出発前と、着いたあとは無い。 */
+  const nowLeg = idx != null && idx >= 1 && idx < last ? mainLegs[idx] : null;
   const next = idx != null && idx < last ? stops[idx + 1] : null;
   const d = left != null && left > 0 ? Math.floor(left / 1000) : 0;
 
@@ -270,8 +275,12 @@ export default function TripNow({
           まったく同じ「クタイシからストックホルムまでの10区間」を3回目に描いていた。
           どこまで来たかは地図の線がいちばんよく言える。 */}
       <div className="tnow-acts">
-        <a className="tnow-act is-main" href="#carry">
-          この旅に、乗る
+        {/* 出る前は、ボードの頭へ。出たあとは**いま走っている区間のカードへ**。
+            旅の途中に来た人がまず見たいのは「今日どこを走っているか」で、
+            それは10枚目のカードかもしれない。ボードの頭に落とすと、
+            そこから自分で探すことになる。 */}
+        <a className="tnow-act is-main" href={nowLeg ? `#leg-${nowLeg}` : "#carry"}>
+          {nowLeg ? "いま走っている区間へ" : "この旅に、乗る"}
         </a>
         <a className="tnow-act" href="#map">
           通る道を見る
