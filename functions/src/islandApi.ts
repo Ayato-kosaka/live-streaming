@@ -86,15 +86,18 @@ const GAS_GOALS =
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
-/** 鍵と起点は変わらないので、一度読めたら覚えておく。 */
-let goalCache: {key: string; start: number} | null = null;
+/** 豚の貯金箱の1件ぶん。**サイトはここを配信とそっくり同じに読む。** */
+type GoalRec = {key: string; start: number; superchat: number; goal: number};
+/* 鍵は変わらないが、スパチャの額は増える。**Doneru と同じ間隔で読み直す。** */
+let goalCache: GoalRec | null = null;
+let goalAt = 0;
 
 /**
  * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
  * @return {Promise<string>} 鍵。取れなければ空文字
  */
-async function goalRecord(): Promise<{key: string; start: number} | null> {
-  if (goalCache) return goalCache;
+async function goalRecord(): Promise<GoalRec | null> {
+  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 8000);
   try {
@@ -104,12 +107,22 @@ async function goalRecord(): Promise<{key: string; start: number} | null> {
     const d = j.data ?? {};
     const k = String(d.doneruGoalKey ?? "");
     if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
-    const start = Number(d.startAmount);
-    goalCache = {key: k, start: Number.isFinite(start) ? start : 0};
+    const n = (v: unknown, def = 0) => {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : def;
+    };
+    goalCache = {
+      key: k,
+      start: n(d.startAmount),
+      superchat: n(d.superChatAmount),
+      goal: n(d.targetAmount, 50000),
+    };
+    goalAt = Date.now();
     return goalCache;
   } catch (e) {
     logger.warn("goal record read failed", String(e));
-    return null;
+    // 前に読めた値があれば、そちらを使う。数字が消えるより古いほうがまし
+    return goalCache;
   } finally {
     clearTimeout(t);
   }
@@ -1040,17 +1053,24 @@ export const islandApi = onRequest(
           const n = Number(v);
           return Number.isFinite(n) && n > 0 ? n : 0;
         };
-        // 毎日の集計(python/island_daily_stats.py)が置いていくぶん
-        const superchat = num(f.superchat);
-        /* **起点は GAS の startAmount。負の数なので num() に通さない。**
-           `docs/nordic-fund.md` 2.2 の式は
-           `currentAmount = startAmount + superChatAmount + doneruAmount` で、
-           startAmount はこの企画の起点（いまは -249,646）。ここを足していな
-           かったので、**サイトだけが配信の10倍近い額を出していた**。
-           Firestore 側の start は集計が置くことになっているが、いまは無い。
-           取れなかったときだけそちらに落ちる。 */
+        /* **配信の豚の貯金箱と、同じ数字を出す。**（あやとの指示 2026-09-05
+           「配信と同じ半額にする。貯金箱と仕様は合わせる」）
+
+           前はスパチャを BigQuery の直近365日から満額で数えていて、起点も
+           足していなかったので、**サイトだけが配信の10倍近い額（360,096円）を
+           出していた**。`docs/nordic-fund.md` が「サイトは満額で数える」と
+           決めていたのを、あやとの指示で取り消してある。
+
+           出どころは GAS の Goals（配信の OBS が読んでいるのと同じ1件）。
+             currentAmount = startAmount + superChatAmount + doneruAmount
+           startAmount はこの企画の起点で、負の数。 */
+        const superchat = goal ? goal.superchat : num(f.superchat);
         const start = goal ? goal.start : num(f.start);
         let total = (doneru ?? 0) + superchat + start;
+        /* **人が実際に出した額は、上の合計とは別物。** 合計には起点の
+           マイナスが入っているので、「N人があわせて◯円出してくれました」に
+           使うと嘘になる。そちらはマイナスを含まない額を渡す。 */
+        const given = (doneru ?? 0) + superchat;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
         /* 1円も分からないときは、200 で 0 を返さない。
@@ -1068,6 +1088,8 @@ export const islandApi = onRequest(
         );
         res.json({
           total,
+          given,
+          goal: goal ? goal.goal : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
         });

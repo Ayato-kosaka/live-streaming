@@ -17,8 +17,19 @@ import { useEffect, useState } from "react";
  */
 
 export type Fund = {
-  /** 合計（円）。スパチャは満額で数える。OBS の半額換算は真似しない */
+  /**
+   * 目標に対して、いまどこまで来ているか（円）。
+   *
+   * **配信の豚の貯金箱と同じ数字**（あやとの指示 2026-09-05「貯金箱と仕様は
+   * 合わせる」）。`startAmount + superChatAmount + doneruAmount` で、
+   * startAmount はこの企画の起点なので**負の数が入っている**。
+   * **「N人があわせて◯円出してくれました」には使わない。** そちらは `given`。
+   */
   total: number;
+  /** 人が実際に出した額（円）。起点のマイナスを含まない */
+  given: number;
+  /** 目標額（円）。GAS の targetAmount。読めなければ 0 */
+  goal: number;
   /** 出したことがある人の数。延べではなく人数。金額は誰のぶんも出さない */
   people: number;
 };
@@ -32,8 +43,17 @@ function load(): Promise<Fund | null> {
       .then((j) => {
         const total = Number(j?.total);
         if (!Number.isFinite(total) || total <= 0) return null;
-        const people = Number(j?.people);
-        return { total, people: Number.isFinite(people) && people > 0 ? people : 0 };
+        const num = (v: unknown) => {
+          const n = Number(v);
+          return Number.isFinite(n) && n > 0 ? n : 0;
+        };
+        return {
+          total,
+          // given が来ないうちは total に落ちる（古い API を読んだとき）
+          given: num(j?.given) || total,
+          goal: num(j?.goal),
+          people: num(j?.people),
+        };
       })
       .catch(() => null);
   }

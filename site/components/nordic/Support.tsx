@@ -16,6 +16,11 @@ import { useFund } from "./fund";
  *     届かない絵は「みんなが応えなかった」に見える
  *   - 1円も読めないときは、数字の行ごと消す。0円は「誰も出していない」に見える
  *     （`GET /island-api/fund` は、そのために 200 で 0 を返さず 503 を返す）
+ *
+ * **出すのは `given`（人が実際に出した額）で、`total` ではない。**
+ * `total` は配信の豚の貯金箱と同じ「目標までどこまで来たか」で、
+ * この企画の起点（負の数）が入っている。「N人があわせて◯円出してくれました」に
+ * 使うと、出してくれた額を実際より少なく言うことになる。
  */
 
 const yen = (n: number) => `${n.toLocaleString()}円`;
@@ -26,13 +31,13 @@ export default function Support() {
   if (f.people > 0) {
     return (
       <p className="nback-now">
-        いままでに <b>{f.people}人</b> が、あわせて <b>{yen(f.total)}</b> 出してくれました。
+        いままでに <b>{f.people}人</b> が、あわせて <b>{yen(f.given)}</b> 出してくれました。
       </p>
     );
   }
   return (
     <p className="nback-now">
-      いままでに <b>{yen(f.total)}</b> 集まっています。
+      いままでに <b>{yen(f.given)}</b> 集まっています。
     </p>
   );
 }
