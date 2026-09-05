@@ -918,6 +918,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* opacity を掛けると、掛けたぶんだけ地の色が字に混ざって比が落ちる。
    薄く見せたいときは色そのものを選ぶ。ここは板が濃いので --paper のまま。 */
 .ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: var(--paper); line-height: 1.8; }
+.ifoot-privacy { color: inherit; text-decoration: underline; }
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }

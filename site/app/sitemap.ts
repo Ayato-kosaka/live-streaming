@@ -20,6 +20,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
     // これからの大きい企画。専用ページを持つものはここに足す。
     "/nordic", "/nordic/guide", "/nordic/photos",
+    // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
+    "/privacy",
   ];
   return [
     ...top.map((p) => ({ url: url(p), lastModified: now, priority: p === "" ? 1 : 0.8 })),

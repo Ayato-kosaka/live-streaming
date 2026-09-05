@@ -173,7 +173,9 @@ export function IslandFooter() {
           {ALL_LABEL}
         </Link>
       </nav>
-      <p className="ifoot-note">{FOOT.note}</p>
+      <p className="ifoot-note">
+        {FOOT.note} <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
+      </p>
     </footer>
   );
 }
