@@ -180,7 +180,7 @@ def main() -> int:
         " * 1日につき1本だけ。その日いちばんコメントが多かった配信を代表にしてある。\n"
         " *\n"
         " * 静的書き出しなので、今日が何日かはビルド時に決められない。\n"
-        " * 引くのは画面が出てから（`site/lib/nightly.ts` の `jstToday`）。\n"
+        " * 引くのは画面が出てから（`site/lib/nightly.ts` の `jstNow`）。\n"
         " */\n\n"
         "export type PastStream = {\n"
         "  /** 配信のあった日。JST の YYYY-MM-DD */\n"

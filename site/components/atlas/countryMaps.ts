@@ -33,6 +33,9 @@ export type CountryMapData = {
   grid: string;
   ridges: string;
   peaks: number[][];
+  woods: number[][];
+  dunes: number[][];
+  glints: number[][];
   cities: { id: string; name: string; x: number; y: number; country: string; kind: string }[];
   legs: { from: string; to: string; move: string; d: string }[];
   scale: { km: number; len: number };

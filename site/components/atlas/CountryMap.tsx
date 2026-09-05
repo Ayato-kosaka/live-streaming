@@ -2,6 +2,7 @@ import { COUNTRY_MAPS } from "./countryMaps";
 import { peakPaths } from "./peak";
 import { NOMINAL_W, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
+import { bucket } from "./dots";
 
 /**
  * 国ひとつの寄り地図。国のページの頭に敷く。
@@ -31,6 +32,9 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
   const others = Object.entries(m.countries).filter(([s]) => s !== slug);
   const uid = `cm-${slug}`;
   const peaks = peakPaths(m.peaks);
+  const woods = bucket(m.woods ?? [], 3);
+  const dunes = bucket(m.dunes ?? [], 2);
+  const glints = bucket(m.glints ?? [], 2);
 
   // 街の名札の置き場所。近い街どうしでぶつからないよう、上下にずらして逃がす。
   // 当たり判定は px。地図の幅の見当を NOMINAL_W にして測る。
@@ -73,6 +77,11 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
 
           <rect width={w} height={h} fill={`url(#${uid}-sea)`} />
 
+          {/* 海の白いきらめき */}
+          {glints.map(([r, d]) => (
+            <path key={`g${r}`} d={d} stroke="#ffffff" strokeWidth={r * 2} strokeLinecap="round" opacity="0.2" fill="none" />
+          ))}
+
           {/* 岸。浅瀬 → 泡 → 濡れ砂 → 乾いた砂 */}
           <path d={m.land} fill="none" stroke="var(--am-shelf)" strokeWidth="30" strokeLinejoin="round" opacity="0.85" filter={`url(#${uid}-soft)`} />
           <path d={m.land} fill="none" stroke="var(--am-shelf-hi)" strokeWidth="14" strokeLinejoin="round" opacity="0.9" />
@@ -94,6 +103,14 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             <path d={peaks.face} fill="#cb9c5f" />
             <path d={peaks.cap} fill="#f7ecd2" />
           </g>
+
+          {/* 森と砂丘。更地に見えないように地面に情報量を入れる */}
+          {woods.map(([r, d]) => (
+            <path key={`w${r}`} d={d} stroke="var(--am-wood)" strokeWidth={r * 2} strokeLinecap="round" opacity="0.26" fill="none" />
+          ))}
+          {dunes.map(([r, d]) => (
+            <path key={`d${r}`} d={d} stroke="var(--am-dune)" strokeWidth={r * 2} strokeLinecap="round" opacity="0.48" fill="none" />
+          ))}
 
           <path d={m.lakes} fill="var(--am-sea-mid)" />
           <path d={m.rivers} fill="none" stroke="#60a0d8" strokeWidth="3.2" strokeLinecap="round" opacity="0.85" />

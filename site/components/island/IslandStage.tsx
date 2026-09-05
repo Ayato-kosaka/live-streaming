@@ -9,6 +9,7 @@ import { inset, insideRadii, rng } from "./geometry";
 import { UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
+import Today from "@/components/today/Today";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/Icon";
 import { daysUntil, nextPlan } from "@/content/plans";
@@ -54,8 +55,25 @@ const TALK_REACH = 74;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
-/** 同じセッションで2回目からは、演出を飛ばして最初から島にいる */
+/**
+ * 最後に島へ降りた日（JST の YYYY-MM-DD）。到着演出を出すかどうかの判断に使う。
+ *
+ * 前は sessionStorage だったので、タブを閉じるたびに 3.4 秒の演出が入っていた。
+ * 毎日来る人には毎日3.4秒の税で、1分の周回のうち 6% を占める。
+ * いい演出ほど2回目からは邪魔になるので、localStorage に移して初回だけにした。
+ * ただし長く空いた人にはもう一度見せる。帰ってきた感じがするので。
+ */
 const VISITED = "ayato-island-arrived";
+/** これだけ空いたら、もう一度カモメと降りてもらう（日） */
+const ARRIVE_AGAIN = 30;
+/**
+ * 建物に入る前にどこに立っていたか。
+ *
+ * 前は「島にもどる」で戻るたびに AYATO_HOME まで引き戻されていて、
+ * 2軒目に行く気にならなかった。出た場所に立っていれば、島がハブとして働く。
+ * タブを閉じたら忘れてよいので sessionStorage。
+ */
+const RETURN_AT = "ayato-island-at";
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -68,6 +86,20 @@ const clampToIsland = (x: number, y: number): [number, number] => {
   }
   return [ISLAND.cx, ISLAND.cy];
 };
+
+/** 日本時間の今日（YYYY-MM-DD）。端末の時計がどこの国に合っていても日本で数える。 */
+const jstDay = (now = new Date()) =>
+  new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 9 * 3600000)
+    .toISOString()
+    .slice(0, 10);
+
+/** その日付から今日までの日数。読めない値なら null。 */
+function daysSince(day: string | null): number | null {
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const [y, m, d] = day.split("-").map(Number);
+  const t = jstDay().split("-").map(Number);
+  return Math.round((Date.UTC(t[0], t[1] - 1, t[2]) - Date.UTC(y, m - 1, d)) / 86400000);
+}
 
 /** 入口の絵の、画面に出る四角。当たり判定と札の位置はここから作る。 */
 function spotBox(sp: Spot) {

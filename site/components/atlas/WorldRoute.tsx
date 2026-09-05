@@ -6,6 +6,7 @@ import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
 import { hits, NOMINAL_W, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
+import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
 
 /**
@@ -59,33 +60,6 @@ const MOVE: Record<string, { c: string; w: number; dash?: string; cap?: "round" 
   hitch: { c: "var(--am-hitch)", w: 6, dash: "13 11", cap: "round" },
   side: { c: "#e8be74", w: 4, dash: "1 10", cap: "round" },
 };
-
-/**
- * 点の絵（森・砂丘・山・きらめき）を、半径ごとにまとめて1本のパスにする。
- *
- * 900個を `<circle>` で並べると DOM が重いうえ、寄せたときに大きさを
- * 直せない。長さゼロの線を丸い端で描くと「点」になるので、
- * 太さ（= 半径×2）だけで大きさを変えられる。
- *
- * @param dots [x, y, 半径] の並び
- * @param levels いくつの太さに分けるか
- * @returns [半径, パス] の並び
- */
-function bucket(dots: number[][], levels: number): [number, string][] {
-  if (!dots.length) return [];
-  const rs = dots.map((d) => d[2]);
-  const lo = Math.min(...rs);
-  const hi = Math.max(...rs);
-  const out: [number, string[]][] = [];
-  for (let i = 0; i < levels; i += 1) {
-    out.push([lo + ((hi - lo) * (i + 0.5)) / levels, []]);
-  }
-  for (const [x, y, r] of dots) {
-    const i = hi === lo ? 0 : Math.min(levels - 1, Math.floor(((r - lo) / (hi - lo)) * levels));
-    out[i][1].push(`M${x} ${y}l0 0`);
-  }
-  return out.filter((b) => b[1].length).map((b) => [b[0], b[1].join("")] as [number, string]);
-}
 
 const WOODS = bucket(MAP.woods, 3);
 const DUNES = bucket(MAP.dunes, 2);
@@ -377,6 +351,9 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
                 />
               </svg>
               {label}
+              {/* 距離は街と街の大円距離の足しあげ（build_world_route.py）。
+                  凡例が「どの線か」だけでなく「どれだけ動いたか」も言う */}
+              {moved[move] ? <em>{moved[move].toLocaleString()}km</em> : null}
             </span>
           );
         })}

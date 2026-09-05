@@ -707,6 +707,7 @@ def build(
     eps: float,
     min_area: float,
     detail: bool,
+    dots: int = 78,
 ) -> tuple[dict, callable]:
     """指定した範囲の地形を焼く。世界1枚も国ごとの寄りも、これ1つで作る。
 
@@ -721,6 +722,7 @@ def build(
         eps: 海岸線の間引きの許容誤差（画面の単位）
         min_area: これより小さい輪は捨てる
         detail: 森・きらめきなどの飾りを入れるか
+        dots: 飾りを撒く格子の横の数。寄った地図ほど少なくてよい
     Returns:
         (焼いた中身, 経度緯度→座標に直す関数)
     """
@@ -881,7 +883,7 @@ def build(
     woods: list[list[int]] = []
     dunes: list[list[int]] = []
     rng = rnd("ground")
-    gx = 78
+    gx = dots
     gy = max(8, int(gx * view_h / view_w))
     for iy in range(gy):
         for ix in range(gx):
@@ -906,7 +908,7 @@ def build(
     # ---- 海のきらめき ----------------------------------------------
     glints: list[list[int]] = []
     rng = rnd("glint")
-    gx = 26
+    gx = max(10, dots // 3)
     gy = max(6, int(gx * view_h / view_w))
     for iy in range(gy):
         for ix in range(gx):
@@ -1076,6 +1078,18 @@ def main() -> None:
 
     out["scale"] = scale_of(project, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX)
 
+    # 移動のしかたごとの距離(km)。地図に引いた線ではなく、街と街の
+    # 大円距離から出す。線はふくらませて描いてあるので、長さを測ると水増しになる。
+    # 寄り道(side)は行って帰るので往復で数える。
+    where = {c[0]: (c[2], c[3]) for c in CITIES}
+    moved: dict[str, float] = {}
+    for fr, to, move, _bulge in LEGS:
+        if fr not in where or to not in where:
+            continue
+        d = haversine(where[fr], where[to])
+        moved[move] = moved.get(move, 0.0) + (d * 2 if move == "side" else d)
+    out["moved"] = {k: round(v) for k, v in moved.items()}
+
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"world {out['view']}  -> {OUT}  ({os.path.getsize(OUT) / 1024:.1f} KB)")
@@ -1092,9 +1106,11 @@ def main() -> None:
         # 小さい国ほど細かく。画面いっぱいに写るので、粗いと角が見える。
         span = max(b - a, d - c)
         eps = 0.34 if span < 5 else (0.5 if span < 11 else 0.8)
+        # 国の地図にも草と砂を撒く。世界の地図だけ地面に情報量があって、
+        # 国の地図が更地だと、寄ったとたんに安っぽく見える（ac-reference 4章）。
         co, cproj = build(
             topo, arcs, a, b, c, d, 900.0,
-            eps=eps, min_area=2.5, detail=False,
+            eps=eps, min_area=2.5, detail=True, dots=52,
         )
         mine = {x[0] for x in CITIES if x[4] == slug}
         co["cities"] = [
