@@ -1,6 +1,6 @@
 import { COUNTRY_MAPS } from "./countryMaps";
 import { peakPaths } from "./peak";
-import { NOMINAL_W, placeCities, type Rect } from "./labels";
+import { chrome, NOMINAL_W, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 
@@ -50,12 +50,13 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
   // 街の名札の置き場所。近い街どうしでぶつからないよう、上下にずらして逃がす。
   // 当たり判定は px。地図の幅の見当を NOMINAL_W にして測る。
   const sc = NOMINAL_W / w;
-  const taken: Rect[] = m.cities.map((c) => ({
+  const fr = { w: NOMINAL_W, h: (NOMINAL_W * h) / w };
+  const taken: Rect[] = chrome(fr.w, fr.h).concat(m.cities.map((c) => ({
     x0: c.x * sc - 9,
     y0: c.y * sc - 9,
     x1: c.x * sc + 9,
     y1: c.y * sc + 9,
-  }));
+  })));
   // この国の地図に実際に引いてある線だけを凡例に出す。
   // 距離は出さない。ここの座標はメルカトルなので、緯度で伸び縮みする。
   // 正しい距離は世界地図（大円距離で足しあげたもの）が持っている。
@@ -65,6 +66,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
     (x, y) => [x * sc, y * sc],
     taken,
     (c) => c.x > w * 0.68,
+    fr,
   );
 
   return (

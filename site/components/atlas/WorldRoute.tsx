@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
-import { hits, NOMINAL_W, placeCities, type Rect } from "./labels";
+import { chrome, hits, NOMINAL_W, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
@@ -117,7 +117,8 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     const SH = (SW * H) / W;
     const px = (x: number) => ((x * k + tx) / W) * SW;
     const py = (y: number) => ((y * k + ty) / H) * SH;
-    const taken: Rect[] = [];
+    // 方位と縮尺の下は、名札が潜ると読めない。先に埋めておく。
+    const taken: Rect[] = chrome(SW, SH);
 
     // ピンの丸そのもの。ここには何も置かせない。
     const pins = Object.entries(anchors).map(([slug, a]) => ({ slug, a, x: px(a.x), y: py(a.y) }));
@@ -148,6 +149,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       (x, y) => [px(x), py(y)],
       taken,
       (c) => c.x > box[0] + box[2] * 0.74,
+      { w: SW, h: SH },
     );
     return { country, city };
   }, [box, k, tx, ty, wide]);

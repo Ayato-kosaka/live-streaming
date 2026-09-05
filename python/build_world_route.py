@@ -1102,6 +1102,11 @@ def main() -> None:
     os.makedirs(OUT_DIR_C, exist_ok=True)
     total = 0
     for slug, (a, b, c, d) in ZOOM.items():
+        # 手で決めた範囲は国の端ぎりぎりのことがあり、ヨルダンとUAEが
+        # 画面の下辺で切れていた。四方に少し足してから横長に広げる。
+        px = (b - a) * 0.05
+        py = (d - c) * 0.08
+        a, b, c, d = a - px, b + px, c - py, d + py
         a, b, c, d = fit_aspect(a, b, c, d, 1.5)
         # 小さい国ほど細かく。画面いっぱいに写るので、粗いと角が見える。
         span = max(b - a, d - c)
