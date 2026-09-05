@@ -61,7 +61,9 @@ export const ISLAND_ART: Record<string, IslandArt> = {
       { n: "tree-date-young", s: 0.26 },
       { n: "tree-date-short", s: 0.19 },
       { n: "cactus", s: 0.18 },
-      { n: "rock-flat", s: 0.12 },
+      // 苔の生えていない岩。rock-flat は天面がまるごと苔（h0.29 s0.65）で、
+      // 乾いた土の島の上でいちばん彩度の高い緑になっていた
+      { n: "rock-dry", s: 0.12 },
       { n: "stone-small", s: 0.1 },
     ],
     seed: 330,
@@ -84,8 +86,9 @@ export const ISLAND_ART: Record<string, IslandArt> = {
     radii: [0.72, 0.78, 0.9, 0.96, 1.0, 1.12, 1.3, 1.42, 1.34, 1.14, 1.0, 0.94, 0.88, 0.8, 0.72, 0.7],
     squash: 0.56,
     props: [
-      { n: "rock-tall", s: 0.4 },
-      { n: "stone-large", s: 0.3 },
+      // 岩と土だけの島。ここも苔は生やさない（乾いた岩）
+      { n: "rock-dry-tall", s: 0.4 },
+      { n: "rock-dry-large", s: 0.3 },
       { n: "cactus-short", s: 0.24 },
     ],
     seed: 429,
