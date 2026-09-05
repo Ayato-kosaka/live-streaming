@@ -756,7 +756,10 @@
 .aapp-split p { margin: 0 !important; }
 
 @media (min-width: 700px) {
-  .aapp-hero { grid-template-columns: auto minmax(0, 1fr); align-items: start; justify-items: start; gap: 24px; }
+  /* 広い画面では端末を左、言葉を右。言葉の列は端末と同じ高さまで伸ばして、
+     中身を上下に振り分ける。上で詰めると端末の右下が 200px ぽっかり空く。 */
+  .aapp-hero { grid-template-columns: auto minmax(0, 1fr); align-items: stretch; justify-items: start; gap: 24px; }
+  .aapp-said { width: 100%; align-content: space-between; }
   .aapp-split { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
   .acards { grid-template-columns: repeat(3, 1fr); }
   .afeat { grid-template-columns: repeat(2, 1fr); }

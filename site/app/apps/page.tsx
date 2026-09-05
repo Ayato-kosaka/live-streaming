@@ -91,23 +91,25 @@ export default function AppsPage() {
                     </a>
                   ))}
                 </div>
+
+                {/* 中のページへは、何が読めるのかを言って渡す。
+                    「作ってきた記録」だけだと、21件の配信が付いていることが分からない。
+                    札を端末の下ではなく言葉の列に入れるのは、広い画面で
+                    端末の右がぽっかり空いていたから。狭い画面では同じ並びになる。 */}
+                <Link className="tile" href={`/apps/${a.slug}`}>
+                  <span className="tile-mark">
+                    <Icon name="book" size={24} />
+                  </span>
+                  <span className="tile-text">
+                    <b>作ってきた記録</b>
+                    <i>
+                      {a.name}を {fmt(grown[0].date)} から。{a.milestones.length}の節目と、その日の配信
+                    </i>
+                  </span>
+                  <Icon name="right" size={16} className="tile-go" />
+                </Link>
               </div>
             </div>
-
-            {/* 中のページへは、何が読めるのかを言って渡す。
-                「作ってきた記録」だけだと、21件の配信が付いていることが分からない。 */}
-            <Link className="tile" href={`/apps/${a.slug}`}>
-              <span className="tile-mark">
-                <Icon name="book" size={24} />
-              </span>
-              <span className="tile-text">
-                <b>作ってきた記録</b>
-                <i>
-                  {a.name}を {fmt(grown[0].date)} から。{a.milestones.length}の節目と、その日の配信
-                </i>
-              </span>
-              <Icon name="right" size={16} className="tile-go" />
-            </Link>
           </Panel>
         );
       })}
