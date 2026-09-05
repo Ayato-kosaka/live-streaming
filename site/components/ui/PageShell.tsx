@@ -8,6 +8,9 @@ export function IslandHeader({ current }: { current?: string }) {
   return (
     <header className="ih">
       <div className="ih-in">
+        {/* ここだけは先読みを残す。島は全部の面のハブで、いちばん押される。
+            それに、ほとんどの人は島から入ってくるので、島の JS はもう
+            キャッシュに乗っている。残しても実際には払わない。 */}
         <Link href="/" className="ih-home">
           <Gull size={26} shadow={false} />
           <b>あやと島</b>
@@ -33,11 +36,22 @@ export function IslandHeader({ current }: { current?: string }) {
 export function Crumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
     <nav className="crumbs" aria-label="現在地">
-      <Link href="/">島</Link>
+      {/* 上の帯にも同じ「島」があるので、ここは先読みしない。
+          途中の階層は行き先が重い。/nordic/sweden のパンくずから /nordic を
+          先読みすると、それだけで 41KB(素 646KB)。押されるとは限らないぶんは持たない。 */}
+      <Link href="/" prefetch={false}>
+        島
+      </Link>
       {items.map((it) => (
         <span key={it.label}>
           <i aria-hidden>›</i>
-          {it.href ? <Link href={it.href}>{it.label}</Link> : <b>{it.label}</b>}
+          {it.href ? (
+            <Link href={it.href} prefetch={false}>
+              {it.label}
+            </Link>
+          ) : (
+            <b>{it.label}</b>
+          )}
         </span>
       ))}
     </nav>
@@ -91,7 +105,8 @@ export function PageHead({
 export function IslandFooter() {
   return (
     <footer className="ifoot">
-      <Link href="/" className="ifoot-back">
+      {/* 上の帯の「あやと島」と同じ行き先。二重に先読みしても意味がない */}
+      <Link href="/" className="ifoot-back" prefetch={false}>
         <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
       <p className="ifoot-note">{FOOT.note}</p>
