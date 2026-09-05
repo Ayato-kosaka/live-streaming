@@ -14,6 +14,7 @@ import { jstNow } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/Icon";
 import { daysUntil, nextPlan } from "@/content/plans";
+import { todayNews, type TodayNews } from "@/lib/todayNews";
 import {
   createVillagers,
   stepVillagers,
@@ -37,21 +38,38 @@ const RESIDENT_H = 46;
 /** 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場 */
 const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
 
-/* ---- 入口の見せ方 --------------------------------------------------------
+/* ---- 建物の見せ方 --------------------------------------------------------
    **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
-   建物の形をしていて押せないものがあると、人はそれを押して、何も起きなくて
-   「壊れている」と思う。
+   だから「押せる」を印で言う必要がもう無い。建っていること自体が印になる。
 
-   押せることと、案内することは別。
-   案内する（看板を出す）のは6つだけで、残りは静かに建っている。
+   前は6つの入口に「!」の札が立っていた。全部が押せるようになると
+   それは10本になって、引きの島で10個が同時に跳ねることになる。
+   全部が叫んでいる画面では、どれも目に入らない（3-4「注目させるのは一度に1つ」）。
 
-     看板を出す6つ  遠い … 小さい札に「!」／近い … 札が開いて名前と「はいる」
-     残りの建物      遠い … 何も出ない（建物がそこにあるだけ）
-                     近い … 札が開いて名前と「はいる」
+   **「!」の意味を変えた。「今日ここに何かある」だけに使う。**
+   今日の板（`components/today`）が指している場所に1本だけ立つ。
+   どれも無い日は0本。だから、出た日に本当に目が行く。
 
-   これで「どこを押せば次のページに行けるか」が引きでも寄りでも分かり、
-   なおかつ、歩き回った人には行ける場所がもう4つ見つかる。
+     ふだん     … 何も出ない。建物がそこに建っている
+     今日の場所 … 小さい丸に「!」
+     近づいた   … 札が開いて名前と「はいる」
+
+   行き先の一覧は、下のバー（スマホ）とページの頭の並び（PC）が持っている。
+   島の上に一覧を積む必要はない。
    ------------------------------------------------------------------------ */
+/**
+ * 今日の板が指している建物。ここにだけ「!」が立つ。
+ *
+ * 板の中身は `lib/todayNews.ts` が決めていて、その種類から建物を引く。
+ * 「今夜22時から」しか無い日（tonight）は、どこも指さない。
+ * 毎日「!」が出ていたら、出ている日に目が行かなくなるので。
+ */
+const TODAY_AT: Partial<Record<TodayNews["kind"], SpotId>> = {
+  live: "streams",
+  plan: "next",
+  recipe: "kitchen",
+  past: "map",
+};
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
 /** 指で押せる最小の大きさ(画面px) */
@@ -207,9 +225,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
   /** 出発まであと何日。「これから」の札に付ける。 */
   const [days, setDays] = useState<number | null>(null);
+  /** 今日、何かある建物。「!」が立つのはここ1つだけ。 */
+  const [todaySpot, setTodaySpot] = useState<SpotId | null>(null);
   useEffect(() => {
     const p = nextPlan(new Date());
     setDays(daysUntil(p?.date, new Date()));
+    // 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める
+    setTodaySpot(TODAY_AT[todayNews().kind] ?? null);
   }, []);
 
   // キャラ画像は外から取ってくるので、先に読んでおく。
@@ -719,19 +741,19 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </svg>
 
-      {/* 建物の札。島に建っているものは全部押せる。
-          看板を出す6つは、遠くからでも小さく「!」が立っている。
-          残りは静かに建っていて、近づいた人にだけ名前が出る。 */}
+      {/* 建物の札。島に建っているものは全部押せるので、ふだんは何も出さない。
+          出るのは「今日ここに何かある」1つと、いま近づいている1つだけ。 */}
       <div className="labels">
         {DOORS.map((sp, i) => {
           const on = openSpot === sp.id;
+          const today = todaySpot === sp.id;
           return (
             <div
               key={sp.id}
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${on ? " is-on" : ""}${sp.sign ? "" : " is-quiet"}`}
+              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}`}
             >
               <button
                 data-ui
@@ -754,7 +776,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                   leaveAt.current = { x: sp.x, y: sp.y + 34 };
                 }}
               >
-                {sp.sign && (
+                {today && (
                   <span className="spot-bang" aria-hidden>
                     !
                   </span>

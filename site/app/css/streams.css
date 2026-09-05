@@ -156,27 +156,29 @@
 .zk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* 押して選ぶチップ。塗りは全部同じで、選んだものだけ細い枠が付く */
+/* 絞り込みのチップは押せる。押せる合図は厚みだけと決まっているので
+   （`docs/island-design.md` 3章）、オリーブの平らはやめて板にする。
+   オリーブの平らは「数えたもの・押せない」の意味に固定されている。 */
 .zk-pick {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
-  border-radius: 6px;
-  padding: 4px 11px;
+  min-height: 48px;
+  border-radius: var(--r-pill);
+  padding: 4px 14px;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.03em;
-  color: #40390c;
-  background: var(--zk-chip);
-  border: 2.5px solid transparent;
-  transition: border-color 0.12s, filter 0.12s;
+  color: var(--ink);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  border: 2.5px solid var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-deep);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
 }
-.zk-pick:hover { filter: brightness(1.06); }
+.zk-pick:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-deep); }
+.zk-pick:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-deep); }
+/* 選んでいるものは塗りを変えず、朱の枠だけ（紙の型と同じ示しかた） */
 .zk-pick.is-on { border-color: var(--zk-pick); }
-/* 指の当たりは48px（`docs/island-design.md`）。紙の上でチップを縦に太らせると
-   図鑑の平らさが崩れるので、見た目は40pxのまま、当たりだけ上下へ広げる */
-.zk-pick { position: relative; }
-.zk-pick::after { content: ""; position: absolute; inset: -4px 0; }
 .zk-pick em { font-style: normal; font-size: 10.5px; font-weight: 900; opacity: 0.62; }
 .zk-pick .flag { flex: none; border-radius: 2px; }
 .zk-picks { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -615,7 +617,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  /* 板になったチップは下に6pxの厚みがある。横に流す箱で切らないよう下を空ける */
+  padding-bottom: var(--sp-2);
   /* 指ではじいたとき、チップが半分切れたところで止まらないようにする。
      見出し（どこで / なにを）のぶんだけ左を空けて、そこへ吸い付かせる */
   scroll-snap-type: x proximity;
@@ -647,15 +650,19 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .kt-count b { font-size: 15px; color: var(--zk-ink); }
 /* 絞り込みを外す。押せるので、他のチップと同じ形にそろえる */
 .kt-clear {
-  margin-left: 10px;
-  border-radius: 5px;
-  padding: 4px 9px;
-  font-size: 10.5px; font-weight: 900; letter-spacing: 0.04em;
-  color: var(--zk-pick);
-  background: transparent;
+  margin-left: var(--sp-3);
+  min-height: 38px;
+  border-radius: var(--r-pill);
+  padding: 0 var(--sp-3);
+  font-size: 11.5px; font-weight: 900; letter-spacing: 0.04em;
+  color: var(--ink);
+  background: linear-gradient(var(--paper), var(--paper-2));
   border: 2px solid var(--zk-pick);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep));
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.kt-clear:hover { background: rgba(226, 82, 45, 0.1); }
+.kt-clear:hover { transform: translateY(-2px); box-shadow: 0 6px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
+.kt-clear:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
 
 /* カタログの格子。カードを1枚ずつ立てるのではなく、
    1枚の紙を細い罫線でマスに割る。 */

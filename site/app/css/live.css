@@ -116,10 +116,10 @@
 .nx-lead-head h2 { margin: 0; font-size: clamp(20px, 5.6vw, 30px); line-height: 1.32; }
 /* 時計のとなりに日付と場所を寄せる。時計の右が空いたままだと、
    いちばん大きい数字が隅に取り残されて、帯として読めない */
-.nx-when { display: flex; align-items: center; gap: 14px; }
-.nx-when-m { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.nx-when { display: flex; align-items: center; gap: var(--sp-4); }
+.nx-when-m { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
 .nx-when-m > span {
-  display: flex; align-items: center; gap: 7px;
+  display: flex; align-items: center; gap: var(--sp-2);
   font-size: 13px; font-weight: 900; line-height: 1.5;
   color: var(--ink-2);
 }
@@ -306,10 +306,10 @@
 .bd-empty { text-align: center; }
 .bd-empty > p { margin: 6px 0 0; }
 .bd-empty-go {
-  margin-top: 14px;
-  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: var(--sp-4);
+  display: inline-flex; align-items: center; gap: var(--sp-2);
   min-height: 48px;
-  padding: 0 20px;
+  padding: 0 var(--sp-5);
   border-radius: var(--r-2);
   border: var(--bw-2) solid var(--frame-dark);
   background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
@@ -438,9 +438,9 @@
 
 /* 紙の上の一覧。罫線で区切るだけ */
 /* 決まりが2通りあるとき。どちらが自分かを先に選ばせて、本文はその下に置く */
-.pap-rule { list-style: none; margin: 0 0 9px; padding: 0; display: grid; gap: 9px; }
+.pap-rule { list-style: none; margin: 0 0 var(--sp-2); padding: 0; display: grid; gap: var(--sp-2); }
 .pap-rule > li {
-  padding: 10px 12px 11px;
+  padding: var(--sp-3);
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.5);
@@ -481,12 +481,12 @@
    いちばん長くいる人だけ横いっぱいに置いて、絵を大きくする。
    紙の型なので影は付けず、赤い細枠だけで「ここ」を示す。 */
 .rz-star {
-  margin: 12px 0 0;
+  margin: var(--sp-3) 0 0;
   display: grid;
   grid-template-columns: 40% 1fr;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px 12px;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
   border: 2px solid var(--pick);
   border-radius: 6px;
   background: rgba(255, 253, 240, 0.5);
@@ -503,17 +503,17 @@
 }
 .rz-star figcaption > b {
   display: block;
-  margin-top: 7px;
+  margin-top: var(--sp-2);
   font-size: 16px; font-weight: 900; line-height: 1.4;
   color: var(--pap-ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .rz-star-n { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 800; color: var(--pap-ink-2); }
 .rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
-.rz-star .rz-bar { margin-top: 8px; }
+.rz-star .rz-bar { margin-top: var(--sp-2); }
 .rz-star .rz-bar > i { background: var(--pick); }
 @media (min-width: 560px) {
-  .rz-star { grid-template-columns: 200px 1fr; gap: 18px; padding: 14px 18px 16px; }
+  .rz-star { grid-template-columns: 200px 1fr; gap: var(--sp-5); padding: var(--sp-4); }
   .rz-star-n b { font-size: 32px; }
 }
 

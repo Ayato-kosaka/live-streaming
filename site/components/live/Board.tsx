@@ -215,7 +215,7 @@ export default function Board() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel paper">
         <h2>むちゃな企画ほど通る、の証拠</h2>
         <p className="muted">どれも「思いつき」から始まって、本当にやったものです。</p>
         <div className="chips" style={{ marginTop: 12 }}>
@@ -236,7 +236,7 @@ export default function Board() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel paper">
         <div className="bhead">
           <h2 style={{ margin: 0 }}>{BOARD.listTitle}</h2>
           {/* 1件も無いのに並べ替えの札だけ出ていると、空の板がさらに空に見える */}

@@ -142,7 +142,7 @@ export default function StreamsPage() {
         })}
       </div>
 
-      <Panel>
+      <Panel className="paper">
         <h2>配信のあとに、島に残るもの</h2>
         <p className="muted">やった日は流れていくけれど、作ったものと大きい企画はここにたまっていきます。</p>
         <div className="tiles" style={{ marginTop: 14 }}>
@@ -165,16 +165,5 @@ export default function StreamsPage() {
         </div>
       </Panel>
     </PageShell>
-  );
-}
-
-/** 数字ひとつ。`Bits.tsx` の Stat と同じ形だが、説明を必ず1行付ける。 */
-function Stat({ value, label, sub }: { value: React.ReactNode; label: string; sub: string }) {
-  return (
-    <div className="stat">
-      <b>{value}</b>
-      <span>{label}</span>
-      <i>{sub}</i>
-    </div>
   );
 }

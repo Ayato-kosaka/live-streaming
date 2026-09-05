@@ -387,12 +387,18 @@
 .poll-skel-q { height: 14px; width: 68%; margin-top: 6px; }
 .poll-skel-o { height: 40px; margin-top: 7px; }
 
-/* 問いが無い日。板にはしない。1行だけ置いて、次にすることを添える */
+/* 問いが無い日。1行だけだが、板には載せる。
+   島の上に字を直に置くと、木や草に重なって読めない。 */
 .poll-none {
-  margin: 9px 0 0;
+  margin: 7px 0 0;
+  padding: 9px 12px 10px;
   font-size: 11.5px;
   font-weight: 700;
   line-height: 1.5;
   color: var(--frame-dark);
+  background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
-.poll-none .poll-why { margin-top: 3px; margin-left: 6px; }
+.poll-none .poll-why { margin-top: 4px; }

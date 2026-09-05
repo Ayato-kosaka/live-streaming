@@ -457,16 +457,16 @@
    ずっと走る animation が1本減る。 */
 .walk-hint {
   position: absolute;
-  left: 50%;
-  top: calc(64px + env(safe-area-inset-top));
+  left: 14px;
+  top: calc(58px + env(safe-area-inset-top));
   margin: 0;
   white-space: nowrap;
-  background: rgba(56, 44, 34, 0.8);
+  background: rgba(56, 44, 34, 0.78);
   color: #fffdf6;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.01em;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
   /* backdrop-filter は下にある島を毎フレームぼかし直す。島は viewBox が
      動くたび描き直されるので、ここに1枚あるだけで起動直後が目に見えて落ちた。
@@ -476,15 +476,14 @@
   z-index: 5;
   /* 出るときにふわっと、そのまま最後の1秒で消える。時間は JS 側の HINT_SPAN と揃える */
   animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.3s both;
-  transform: translateX(-50%);
 }
 @keyframes hintIn {
-  from { opacity: 0; transform: translate(-50%, -8px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes hintOut {
-  from { opacity: 1; transform: translate(-50%, 0); }
-  to { opacity: 0; transform: translate(-50%, -6px); }
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px); }
 }
 @media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } }
 

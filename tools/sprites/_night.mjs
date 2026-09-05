@@ -11,8 +11,9 @@ await p.evaluate(() => { document.documentElement.dataset.time = "night"; });
 await p.waitForTimeout(1500);
 const cases = [
   ["a-now", ""],
-  ["b-violet", `[data-time="night"]{--grass-hi:#8b96ad;--grass:#707c94;--grass-lo:#5a6680;--grass2-hi:#98a2b8;--grass2:#7d88a0;}`],
-  ["c-violet-deep", `[data-time="night"]{--grass-hi:#7f8ba8;--grass:#65718c;--grass-lo:#4f5b78;--grass2-hi:#8b96b2;--grass2:#717d9a;--sand:#a9a8c0;--sand-wet:#9291ab;--sand-edge:#7d7c96;}`],
+  ["d-glow", `[data-time="night"]{--tint:rgba(30,32,96,0.62);--glow:rgba(60,70,255,0.34);}`],
+  ["e-glow-soft", `[data-time="night"]{--tint:rgba(28,30,92,0.56);--glow:rgba(64,80,255,0.28);}`],
+  ["f-glow-strong", `[data-time="night"]{--tint:rgba(26,28,88,0.66);--glow:rgba(56,66,255,0.38);}`],
 ];
 for (const [name, css] of cases) {
   await p.evaluate((c) => {

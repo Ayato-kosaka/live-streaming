@@ -1,10 +1,16 @@
 """
 あやと島の数字を毎日更新するスクリプト。
 
-BigQuery(youtube_chat)を集計して Firestore の island/state.stats に書き込む。
+BigQuery(youtube_chat)を集計して Firestore の island/state に書き込む。
 サイト側は /island-api/state 経由でこれを読み、焼き込みの初期値を上書きする。
 
-課金を増やさないよう、BigQuery は2クエリだけ投げる(それぞれ最小課金の10MB程度)。
+書くのは2つ。
+  stats … 配信本数・コメント数など、島じゅうで出している数字
+  fund  … 北欧旅の足代のうち、スパチャぶんと出した人数(docs/nordic-fund.md)
+          合計は /island-api/fund が Doneru の額とここを足して作る。
+          **個人の金額も順位も持たない。合計と人数だけ。**
+
+課金を増やさないよう、BigQuery は3クエリだけ投げる(それぞれ最小課金の10MB程度)。
 
 必要な環境変数:
   BQ_PROJECT_ID  BigQuery / Firestore のプロジェクトID
@@ -72,6 +78,54 @@ SELECT
 """
 
 
+# スパチャ。外貨が数件だけ混ざっているので、円の行だけ拾う。
+# 半額にしない。OBS が半額で足しているのは配信の演出上の都合で、
+# サイトで半額にすると、出した人が自分の額を見つけられない。
+FUND_DAYS = 365
+FUND_SQL = f"""
+WITH p AS (
+  SELECT
+    author_channel_id,
+    SAFE_CAST(
+      REGEXP_REPLACE(purchase_amount_text, r'[^0-9]', '') AS INT64
+    ) AS yen
+  FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages`
+  WHERE event_type = 'PAID'
+    AND purchase_amount_text LIKE '¥%'
+    AND published_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @days DAY)
+)
+SELECT
+  IFNULL(SUM(yen), 0) AS superchat,
+  COUNT(DISTINCT author_channel_id) AS people
+FROM p
+WHERE yen IS NOT NULL
+"""
+
+
+def fetch_fund() -> Dict[str, Any]:
+    """スパチャの合計と、出した人の数を取る。
+
+    人数は延べではなく人。名前も個人の額も取らない。
+
+    Returns:
+        Firestore に書き込む fund の辞書
+    """
+    client = bigquery.Client(project=BQ_PROJECT_ID)
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("days", "INT64", FUND_DAYS)
+        ]
+    )
+    row = list(client.query(FUND_SQL, job_config=job_config).result())[0]
+    client.close()
+    return {
+        "superchat": int(row["superchat"]),
+        "people": int(row["people"]),
+        "days": FUND_DAYS,
+        "updatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+    }
+
+
 def fetch_stats() -> Dict[str, Any]:
     """BigQuery から島の数字を取る。
 
@@ -116,9 +170,19 @@ def main() -> int:
         stats["activeFriends"],
     )
 
+    fund = fetch_fund()
+    logger.info(
+        "スパチャ %s円 / %s人(直近%s日)",
+        fund["superchat"],
+        fund["people"],
+        fund["days"],
+    )
+
     db = firestore.Client(project=BQ_PROJECT_ID)
-    db.collection("island").document("state").set({"stats": stats}, merge=True)
-    logger.info("Firestore island/state.stats を更新しました")
+    db.collection("island").document("state").set(
+        {"stats": stats, "fund": fund}, merge=True
+    )
+    logger.info("Firestore island/state の stats と fund を更新しました")
     return 0
 
 

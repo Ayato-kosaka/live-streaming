@@ -37,6 +37,15 @@ const DRAFTS = db.collection("islandDrafts");
 const POLLS = db.collection("islandPolls");
 const PVOTES = db.collection("islandPollVotes");
 
+/* 北欧旅の足代(docs/nordic-fund.md 提案5)。
+   doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
+   静的書き出しのページに Doneru の goal key を焼き込むことになるので、
+   鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
+const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
+/** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
+const FUND_TTL_MS = 5 * 60 * 1000;
+let fundCache: {at: number; doneru: number} | null = null;
+
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
@@ -319,6 +328,41 @@ async function openPoll(): Promise<PollShape | null> {
   return null;
 }
 
+/**
+ * Doneru に集まっている額。鍵が無い・届かないときは null。
+ *
+ * 0 を返さない。0円と出すのがいちばん悪くて、誰も出していないように見える
+ * (`docs/nordic-fund.md` 提案5)。分からないときは「分からない」で返す。
+ * @return {Promise<number | null>} 集まっている額(円)
+ */
+async function doneruNow(): Promise<number | null> {
+  const key = process.env.DONERU_GOAL_KEY ?? "";
+  if (!key) return null;
+  if (fundCache && Date.now() - fundCache.at < FUND_TTL_MS) {
+    return fundCache.doneru;
+  }
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(
+      `${DONERU_GOAL}?key=${encodeURIComponent(key)}`,
+      {signal: ctl.signal},
+    );
+    if (!r.ok) throw new Error(`doneru ${r.status}`);
+    const j = (await r.json()) as Json;
+    const n = Number(j.amount);
+    if (!Number.isFinite(n) || n < 0) throw new Error("bad amount");
+    fundCache = {at: Date.now(), doneru: n};
+    return n;
+  } catch (e) {
+    logger.warn("doneru goal read failed", String(e));
+    // 前に読めた値があれば、そちらを使う。数字が消えるより古いほうがまし
+    return fundCache?.doneru ?? null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export const islandApi = onRequest(
   {region: "us-central1", cors: true, maxInstances: 10},
   async (req, res) => {
@@ -480,6 +524,39 @@ export const islandApi = onRequest(
           ideas,
           notes,
           residents,
+        });
+        return;
+      }
+
+      /* ---------------- 北欧旅の足代 ----------------
+         返すのは合計と人数だけ。**個人の金額も順位も返さない**
+         (`docs/nordic-fund.md` の決めごと)。
+         スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
+         同じことをサイトでやると、出した人が自分の額を見つけられない。 */
+      if (method === "GET" && path === "/fund") {
+        const [doneru, snap] = await Promise.all([
+          doneruNow(),
+          STATE_DOC.get(),
+        ]);
+        const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
+        const num = (v: unknown) => {
+          const n = Number(v);
+          return Number.isFinite(n) && n > 0 ? n : 0;
+        };
+        // 毎日の集計(python/island_daily_stats.py)が置いていくぶん
+        const superchat = num(f.superchat);
+        const start = num(f.start);
+        let total = (doneru ?? 0) + superchat + start;
+        // どれも読めなかったときだけ、集計が置いていった合計に落ちる
+        if (total <= 0) total = num(f.total);
+        res.set(
+          "Cache-Control",
+          "public, max-age=300, s-maxage=600, stale-while-revalidate=1800",
+        );
+        res.json({
+          total,
+          people: num(f.people),
+          updatedAt: num(f.updatedAt) || null,
         });
         return;
       }

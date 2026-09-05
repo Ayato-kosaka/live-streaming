@@ -266,7 +266,7 @@ export default function NextPlans() {
       {/* 予定がいくつあって、どの順で来るのか。
           札を縦に読ませる前に、道のりの形だけ先に見せる。 */}
       {ahead.length > 1 && (
-        <section className="panel">
+        <section className="panel paper">
           <h2>これからの道のり</h2>
           <p className="muted">上から順に踏んでいきます。押すと、その企画のところまで飛びます。</p>
           <Road plans={ahead} today={today} />
