@@ -280,6 +280,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const edgeAt = useRef<string[]>([]);
   /** 島の隅に置いてある道具の箱。縁へ寄せた札が、この上に乗らないようにする */
   const uiBoxes = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
+  /**
+   * 札の置き直しが要るか。
+   *
+   * ふだんはカメラが動いたときだけ置き直せばいい（建物は動かないので）。
+   * ただし**札の大きさが変わったとき**は、カメラが止まっていても置き直しが要る。
+   * 「!」が立つのも、書体が届くのも、日数が入るのも、カメラが落ち着いた後なので、
+   * ここを見ないと古い寸法で詰めた並びのまま残る。
+   */
+  const platesDirty = useRef(true);
   const whoRefs = useRef<(HTMLDivElement | null)[]>([]);
   const barRef = useRef<HTMLDivElement>(null);
   /** 下のバーの背(px)。島をどれだけ上へ寄せるかの計算に使う */
@@ -410,6 +419,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [days, setDays] = useState<number | null>(null);
   /** 今日、何かある建物。「!」が立つのはここ1つだけ。 */
   const [todaySpot, setTodaySpot] = useState<SpotId | null>(null);
+  /** 毎フレームの計算から見るための控え。跳ねる札の箱を広く見るのに使う */
+  const todayRef = useRef<SpotId | null>(null);
+  todayRef.current = todaySpot;
   /**
    * いま配信の時間か（日本時間 22:00〜25:00）。
    *
@@ -593,10 +605,30 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
      **毎フレーム測らない。** offsetWidth は layout を起こすので、
      大きさが変わりうるとき（開いた・閉じた・画面が変わった・日数が動いた）だけ測る。 */
   useEffect(() => {
+    /* 札の大きさは、開いた・閉じたのほかに、「!」が立った・書体が届いた・
+       日数が入った、でも変わる。**変わったことを見張る**（状態を数え上げると、
+       数え落としたぶんだけ古い寸法で詰めることになる）。 */
+    const ro = new ResizeObserver((es) => {
+      for (const e of es) {
+        const i = Number((e.target as HTMLElement).dataset.i);
+        const bs = e.borderBoxSize?.[0];
+        signBox.current[i] = bs
+          ? { w: bs.inlineSize, h: bs.blockSize }
+          : { w: e.contentRect.width, h: e.contentRect.height };
+      }
+      platesDirty.current = true;
+    });
     for (let i = 0; i < DOORS.length; i++) {
       const el = markRefs.current[i]?.querySelector<HTMLElement>(".spot-mark");
-      signBox.current[i] = el ? { w: el.offsetWidth, h: el.offsetHeight } : { w: 0, h: 0 };
+      if (!el) continue;
+      el.dataset.i = String(i);
+      signBox.current[i] = { w: el.offsetWidth, h: el.offsetHeight };
+      ro.observe(el);
     }
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
     // 島の隅の道具（島をながめる・島の地図・今日の島）と看板ロゴ。
     // ここは動かないので、札と同じときに1回測れば足りる。
     const host = hostRef.current;
@@ -613,7 +645,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // 決めてあるので（下の data-logo）、札を動かすと二重に避けることになる。
     }
     uiBoxes.current = boxes;
-  }, [openSpot, box.w, box.h, days, onAir, barOpen]);
+    platesDirty.current = true;
+  }, [openSpot, box.w, box.h, days, onAir, barOpen, todaySpot]);
 
   const mode = modeOf(box.w);
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
@@ -920,7 +953,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       }
       // 入口は島に建っていて動かない。画面の中での位置が変わるのはカメラが動いたときだけ。
       // カメラが止まっているあいだに書き直すと、6つぶんの計算し直しがただ増える。
-      if (camMoved) {
+      if (camMoved || platesDirty.current) {
+        platesDirty.current = false;
         const k = b.w / vbW;
         /* 住人の当たりを、絵の大きさに合わせる。
            絵はカメラの倍率で 53px（スマホ）から 94px（PC）まで伸び縮みするのに、
@@ -976,7 +1010,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           // 縁へ寄せるかどうかは、6枚ぜんぶの居場所が出そろってから決める（下）
           const sz = sp.sign ? signBox.current[i] : null;
           if (sz && sz.w) {
-            const rect = { x: px - sz.w / 2, y: py - mh - 12 - sz.h, w: sz.w, h: sz.h };
+            /* 箱を少し大きく見ておく。
+               「今日ここに何かある」の1枚は 10px 跳ねる（spotHop）ので、
+               計算どおりの箱で詰めると、跳ねた先で隣に食い込む。
+               紙一重で通すより、6px ずつ広く見て余らせるほうが読める。 */
+            const gy = todayRef.current === sp.id ? 13 : 6;
+            const rect = { x: px - sz.w / 2 - 6, y: py - mh - 12 - sz.h - gy, w: sz.w + 12, h: sz.h + gy + 6 };
             const out =
               rect.x < pad ||
               rect.x + rect.w > b.w - pad ||
@@ -1043,7 +1082,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               if (!moved) break;
             }
             taken.push({ x: left, y: top, w: rect.w, h: rect.h });
-            dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "l" : "r") : dy > 0 ? "u" : "d";
+            /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す。
+               「どっちへ押しやったか」で決めると、上へはみ出した札を下げたときに
+               建物と反対を指す（札はもともと建物の頭の上に出るので）。 */
+            const ax = px - (left + rect.w / 2);
+            const ay = py - (top + rect.h / 2);
+            dir = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
           }
           if (dir !== edgeAt.current[pl.i]) {
             edgeAt.current[pl.i] = dir;

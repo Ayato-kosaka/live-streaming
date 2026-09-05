@@ -4,15 +4,19 @@
 **こちらで書いた紹介文は1つも混ぜない。** 混ぜると、どれが本当の声なのか分からなくなって、
 全部が疑わしくなる。出るのは視聴者さんが書いた文章だけで、絵文字が入っていてもそのまま出す。
 
-**名前は出さない。** 名前を出すかどうかは本人が決めるもので、いまその許可の仕組みが無い。
-誰が書いたかは動画ID（v）とイベントID（e）で BigQuery から引き直せるので、
-許可が取れたときに足せる。
+**名前とアイコンを出す。** アカウント名（YouTube の表示名）と、そのときのアイコン。
+アイコンの URL は列になっていないので、コメントの生データ（`raw_item_json`）から拾う。
+どちらも手では書かない。取れなかった人はアイコンが空になり、画面は頭文字の丸に落ちる。
 
 ## 使いかた
 
 1. 候補を引く（**BigQuery を叩くのはここだけ。1回で全部引く**）
 
-       BQ_PROJECT_ID=live-streaming-d3cac python python/build_voices.py --dump /tmp/voices.json
+       BQ_PROJECT_ID=live-streaming-d3cac python python/build_voices.py --dump /tmp/voices.json --since 2026-08-20
+
+   `--since` から先だけを新しく読む。いま出しているものは、日付によらず必ず1行返る
+   （選び直すためではなく、**名前とアイコンを取り直すため**）。
+   同じクエリで、取り込みが何日まで届いているかも返る（`k` が `d` の行）。
 
    BigQuery に繋げない環境（この開発箱がそう）は、SQL（`CANDIDATE_SQL`）を
    別の口から流して、返ってきた行を JSON で渡す:
@@ -28,7 +32,8 @@
 
 ## 課金
 
-`chat_messages` の全走査で1回およそ 20MB。**回数を増やさない**のが決まりなので、
+`chat_messages` の全走査で1回およそ 125MB（アイコンのために生データの列まで読むので増えた。
+それでも1回1円に届かない）。**回数を増やさない**のが決まりなので、
 候補は広めに引いて、絞り込みはローカルでやる（`.claude/skills/monthly-review/SKILL.md` 2章）。
 
 ## 選ぶときの決まり
@@ -37,7 +42,9 @@
 - 悪口・いじり（見た目や身長をからかうもの）は採らない
 - 内輪すぎるもの、その日の流れが分からないと意味が通らないものは採らない
 - **はじめて来た人が読んで、あやとがどんな人か分かるもの**を採る
-- 同じ人の言葉ばかりにしない。言っていることが重なるものは1つにする
+- 同じ人の言葉ばかりにしない。言っていることが重なるものは1つにする。
+  **名前が出るようになったので、ここは前より効く。** 同じ名前が並ぶと、
+  「みんなから見た」ではなく「その人から見た」になってしまう
 """
 
 import argparse
@@ -116,10 +123,15 @@ WITH base AS (
   FROM base b
   LEFT JOIN names n USING (author_channel_id)
   LEFT JOIN pics p USING (author_channel_id)
-  WHERE CHAR_LENGTH(b.t) BETWEEN 10 AND 90
+  -- いま出している13件は、選び直すためではなく**名前とアイコンを取り直すため**に引く。
+  -- 新しく読むのは {{window}} から先だけ。全期間を毎回持ってくると、
+  -- 読み手（人でも Claude でも）が1600件を読み返すことになって、選び直す手が止まる
+  WHERE b.event_id IN ({{picked}})
+     OR ({{window}}
+    AND CHAR_LENGTH(b.t) BETWEEN 10 AND 90
     AND REGEXP_CONTAINS(b.t, r'{NAME_RE}')
     AND REGEXP_CONTAINS(b.t, r'{GOOD_RE}')
-    AND NOT REGEXP_CONTAINS(b.t, r'{BAD_RE}')
+    AND NOT REGEXP_CONTAINS(b.t, r'{BAD_RE}'))
 ), days AS (
   -- 取り込みがどこまで届いているか。同じ1回のクエリで見る（2回叩かないため）。
   -- k='d' の行は候補ではない。v=その日の動画、e=件数、a=最後のコメント、i=取り込み時刻
@@ -141,16 +153,49 @@ ORDER BY k, d
 """
 
 
-def fetch_rows(project: str) -> list[dict]:
+def picked_ids() -> list[str]:
+    """いま出しているもののイベントID。名前とアイコンを取り直すために引き当てる。"""
+    if not PICKS.exists():
+        return []
+    return [p["e"] for p in json.loads(PICKS.read_text(encoding="utf-8"))["picks"]]
+
+
+def sql(project: str, since: str) -> str:
+    """候補を引く SQL。`since` から先だけを新しく読む（UTC の日付）。"""
+    ids = ", ".join("'" + i.replace("'", "") + "'" for i in picked_ids()) or "''"
+    return CANDIDATE_SQL.format(
+        project=project,
+        picked=ids,
+        window=f"b.published_at >= TIMESTAMP('{since} 00:00:00+00')",
+    )
+
+
+def fetch_rows(project: str, since: str) -> list[dict]:
     """BigQuery から候補を引く。**1回で全部引く。**"""
     from google.cloud import bigquery  # 繋げない環境でも --rows で動くよう、ここで読む
 
     client = bigquery.Client(project=project)
-    job = client.query(CANDIDATE_SQL.format(project=project))
+    job = client.query(sql(project, since))
     rows = [dict(r) for r in job.result()]
     logger.info("候補 %s件 / 課金 %.1fMB", len(rows), (job.total_bytes_billed or 0) / 1e6)
     client.close()
     return rows
+
+
+# アイコンは 32px の丸で出している。網膜の画面で2倍になるので 64px を頼む。
+# YouTube から返ってくる URL は `=s32-c-k-...` のように寸法が付いているので、
+# そこだけ差し替える（`docs/island-design.md`「アイコンの寸法は画面に出る大きさから決める」）
+ICON_PX = 64
+
+
+def icon_url(u: str | None) -> str:
+    """チャットの生データから拾ったアイコンの URL を、出す大きさに直す。"""
+    if not u:
+        return ""
+    u = u.split("?")[0]
+    # 末尾の指定（=s32-c-k-c0x00ffffff-no-rj）を、欲しい寸法の指定に置き換える
+    base = u.split("=")[0]
+    return f"{base}=s{ICON_PX}-c-k-c0x00ffffff-no-rj"
 
 
 def esc(s: str) -> str:
@@ -163,8 +208,10 @@ def build() -> int:
     picks = json.loads(PICKS.read_text(encoding="utf-8"))["picks"]
     lines = []
     for p in picks:
+        icon = icon_url(p.get("i"))
         lines.append(
             f'  {{ date: "{p["d"]}", videoId: "{p["v"]}", eventId: "{p["e"]}", '
+            f'name: "{esc(p.get("a") or "")}", icon: "{icon}", '
             f'text: "{esc(p["m"])}" }},'
         )
     body = "\n".join(lines)
@@ -178,16 +225,21 @@ def build() -> int:
  * **文章は1文字も直っていない。** 誤字も、全角カンマも、絵文字も、書かれたまま。
  * 島で絵文字を出していいのは、配信のタイトルの引用と、この文章だけ。
  *
- * **名前は入っていない。** 名前を出すかどうかは本人が決めるもので、
- * いまその許可の仕組みがログイン待ち。誰が書いたかは videoId と eventId で引き直せる。
+ * **名前とアイコンを出す。** チャットに出ている表示名と、そのときのアイコン。
+ * どちらもコメントの生データ（`raw_item_json`）から引いたもので、手では書かない。
+ * アイコンが取れなかった人は `icon` が空になる。画面は頭文字の丸に落とす。
  */
 export type Voice = {{
-  /** 配信の日（JST） */
+  /** 配信の日（UTC で切った配信日） */
   date: string;
   /** その配信 */
   videoId: string;
-  /** チャットのイベントID。あとで書いた人を引き直すための鍵 */
+  /** チャットのイベントID。書いた人を引き直すための鍵 */
   eventId: string;
+  /** YouTube の表示名 */
+  name: string;
+  /** YouTube のアイコン。取れなかったときは空 */
+  icon: string;
   /** 書かれたままの本文 */
   text: string;
 }};
@@ -207,12 +259,17 @@ def main() -> int:
     ap.add_argument("--rows", help="BigQuery に繋げないとき、引いてきた行の JSON")
     ap.add_argument("--build", action="store_true", help="picks を voices.ts に焼く")
     ap.add_argument("--sql", action="store_true", help="候補を引く SQL を出すだけ")
+    ap.add_argument(
+        "--since",
+        default="2026-08-20",
+        help="この日（UTC）から先を新しく読む。前に選んだものは日付によらず引き当てる",
+    )
     a = ap.parse_args()
 
     if a.sql:
         import os
 
-        print(CANDIDATE_SQL.format(project=os.getenv("BQ_PROJECT_ID", "live-streaming-d3cac")))
+        print(sql(os.getenv("BQ_PROJECT_ID", "live-streaming-d3cac"), a.since))
         return 0
 
     if a.dump:
@@ -225,7 +282,7 @@ def main() -> int:
             if not project:
                 logger.error("BQ_PROJECT_ID が要る（または --rows で行を渡す）")
                 return 1
-            rows = fetch_rows(project)
+            rows = fetch_rows(project, a.since)
         Path(a.dump).write_text(
             json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8"
         )

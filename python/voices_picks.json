@@ -1,24 +1,25 @@
 {
   "_": [
     "視聴者さんによる「他己紹介」。build_voices.py が引いてきた候補から、手で選んだもの。",
-    "並び順が、そのまま画面に出る順。d=配信日(JST) v=動画 e=チャットのイベントID m=本文(そのまま)。",
-    "**名前は入れない。** 名前を出すかどうかは本人が決めるもので、いまその許可の仕組みが無い。",
-    "誰が書いたかは v と e で BigQuery から引き直せるので、許可が取れたら足せる。",
-    "本文は1文字も直さない。誤字も全角カンマもそのまま。直した瞬間に引用ではなくなる。"
+    "並び順が、そのまま画面に出る順。d=配信日(UTC で切る) v=動画 e=チャットのイベントID",
+    "a=アカウント名 i=アイコンのURL(生データから拾ったもの) m=本文(そのまま)。",
+    "**a と i は手で書かない。** BigQuery から引いた行をそのまま置く。",
+    "アイコンの寸法は焼くときに直す（build_voices.py の ICON_PX）ので、s32 のままでよい。",
+    "本文は1文字も直さない。誤字も全角カンマもそのまま。直した瞬間に引用ではなくなる。",
+    "名前が出るようになったので、同じ人ばかりにならないように見ている。",
+    "いまは11件で、いちばん多い人が3件。"
   ],
   "picks": [
-    { "d": "2025-10-28", "v": "xxQ4XafROrQ", "e": "ChwKGkNMN252cGVVeDVBREZYalp3Z1FkYjBBU3l3", "m": "新参者ですが、あやとさんのお人柄とイケメンぷりにファンになりました。これからもあやとさんの魅力一杯の配信を楽しませて下さいね" },
-    { "d": "2026-09-03", "v": "5-1bHix5X1s", "e": "ChwKGkNNdmQzX19IMHBZREZWSEtMUUFkREljQm9n", "m": "あやとさんの人柄がいいんだね。" },
-    { "d": "2026-07-17", "v": "Hc-z52fs108", "e": "ChwKGkNLcVZ4Y2pvMlpVREZaX2V3Z1FkNXA4V1Bn", "m": "あやとさん毎日だから感心してた　疲れないのかなと心配してた" },
-    { "d": "2026-07-17", "v": "Hc-z52fs108", "e": "ChwKGkNOS09oSnJwMlpVREZXX0N3Z1FkYlB3Sm93", "m": "このアプリアヤトさんが作ったの？凄いな" },
-    { "d": "2026-02-11", "v": "u2bIxRNKa6g", "e": "ChwKGkNMS1U1N1BEMFpJREZSY19yUVlkWk4wRE93", "m": "あやとさんの配信まじで勉強になるし、おもろい" },
-    { "d": "2025-04-21", "v": "ouCH9DYvTAA", "e": "ChwKGkNNYXg4dWlwNll3REZYTWRyUVlkQURzRkFn", "m": "あやとくんは，日本に帰らずずーっと旅してるのは、ほんとすごいよね" },
-    { "d": "2026-05-17", "v": "c-ogYrwX8iA", "e": "ChwKGkNJenlfTXVMdnBRREZlckRMUUFkbDVNVkR3", "m": "最初アヤトさん武士の方かと思いました。　お城とかで武士の役やる人　それがIT系なのは凄すぎる" },
-    { "d": "2025-10-24", "v": "I6PVjeSYwf0", "e": "ChwKGkNQRzZ2NldMdlpBREZSSXVyUVlkRWtFcGdB", "m": "あやとさんの関西弁と言葉選びがね、本当に気持ち良くて癒されるね。同じ関西人だから嬉しくてね。" },
-    { "d": "2026-07-12", "v": "UeDyvW4zAgo", "e": "ChwKGkNOUDA2dTZqelpVREZhVk9UQWdkVV9zdVdR", "m": "みんなが熱くなる料理配信を開発したあやとさんはすごい" },
-    { "d": "2025-05-06", "v": "zlgM1S0yl2Q", "e": "ChwKGkNQbTJ5WnJPakkwREZjWEx3Z1FkUk5nZWVn", "m": "ホテルって，乾燥するし、布団も枕もなれないし、ホステル生活ずっとしてるあやとくんすごいって，改めておもった" },
-    { "d": "2026-03-05", "v": "3rKxNKHTzIc", "e": "ChwKGkNPVGpoT3J1aUpNREZZM3p3Z1FkbDRBcllR", "m": "あやとくんの優しさが溢れてる" },
-    { "d": "2025-10-18", "v": "_g65QUd51Qc", "e": "ChwKGkNPem5tSm1CcnBBREZiTEN3Z1Fkd0NneG53", "m": "あやとくんの配信をみて寝ることを楽しみに1日がんばってる" },
-    { "d": "2025-04-13", "v": "7Amy9E2U7wo", "e": "ChwKGkNOMmpoOFAzMUl3REZWWEh3Z1FkRzk4cE1n", "m": "あやとくんは大丈夫！わたしたちがついてるし！どこでも楽しく生きていける！！" }
+    { "d": "2025-10-28", "v": "xxQ4XafROrQ", "e": "ChwKGkNMN252cGVVeDVBREZYalp3Z1FkYjBBU3l3", "a": "@Blackcoffee-j5h", "i": "https://yt4.ggpht.com/ytc/AIdro_l5ZIbBEgwtZgFkpa5rNV02u-8Vx6YggfmL2j0PeAXobTQsCm2wmmfwdUlmilBjHqr4mA=s32-c-k-c0x00ffffff-no-rj", "m": "新参者ですが、あやとさんのお人柄とイケメンぷりにファンになりました。これからもあやとさんの魅力一杯の配信を楽しませて下さいね" },
+    { "d": "2026-09-03", "v": "5-1bHix5X1s", "e": "ChwKGkNNdmQzX19IMHBZREZWSEtMUUFkREljQm9n", "a": "@dekobokov6229", "i": "https://yt4.ggpht.com/TBVbh4mgVwZC5oTx0QDAV1XspuVsfsWFiiI-j1IL7WVfd4lBU59qw_zH0aMO5b6k5fSfRMqW=s32-c-k-c0x00ffffff-no-rj", "m": "あやとさんの人柄がいいんだね。" },
+    { "d": "2026-07-17", "v": "Hc-z52fs108", "e": "ChwKGkNLcVZ4Y2pvMlpVREZaX2V3Z1FkNXA4V1Bn", "a": "@竹越知枝美", "i": "https://yt4.ggpht.com/ytc/AIdro_kSgzsn-PaGdvyWXb6AMhFa1gscZpG84RXiatevNLqmSu1hqWQ=s32-c-k-c0x00ffffff-no-rj", "m": "あやとさん毎日だから感心してた　疲れないのかなと心配してた" },
+    { "d": "2026-07-17", "v": "Hc-z52fs108", "e": "ChwKGkNOS09oSnJwMlpVREZXX0N3Z1FkYlB3Sm93", "a": "@123-u8", "i": "https://yt4.ggpht.com/mb6hDyT7OoEtMgMSeB23rKdCV1KFxbBfp-_7O54Y8KR6_17tatCM4i69O18XCJyv38qsj1HkXw=s32-c-k-c0x00ffffff-no-rj", "m": "このアプリアヤトさんが作ったの？凄いな" },
+    { "d": "2026-02-11", "v": "u2bIxRNKa6g", "e": "ChwKGkNMS1U1N1BEMFpJREZSY19yUVlkWk4wRE93", "a": "@凛凛-x9w", "i": "https://yt4.ggpht.com/A8aFdZ3beFbac0zXYOnoiEGMa4TWJQU9fUmil4qFst8pS3gz-_Ht5HfGCoyNL30xvLu4RPeSgw=s32-c-k-c0x00ffffff-no-rj", "m": "あやとさんの配信まじで勉強になるし、おもろい" },
+    { "d": "2025-04-21", "v": "ouCH9DYvTAA", "e": "ChwKGkNNYXg4dWlwNll3REZYTWRyUVlkQURzRkFn", "a": "@aoi1685", "i": "https://yt4.ggpht.com/7kIqlftaj8J6wMIiqSVp8-0QP72rbfrbnEkZYFZ58LI0o6SKSYID1enifwQrpf6JSs_-7xZCk9U=s32-c-k-c0x00ffffff-no-rj", "m": "あやとくんは，日本に帰らずずーっと旅してるのは、ほんとすごいよね" },
+    { "d": "2026-05-16", "v": "c-ogYrwX8iA", "e": "ChwKGkNJenlfTXVMdnBRREZlckRMUUFkbDVNVkR3", "a": "@ゆうチャンネル-w8v", "i": "https://yt4.ggpht.com/ytc/AIdro_k7zdfwxIuWjJ--pMk0DynSkThdMtWd9MD9Go8oomyrKCiLGsN81EIIz1Bz-vH9uDmCaTq2=s32-c-k-c0x00ffffff-no-rj", "m": "最初アヤトさん武士の方かと思いました。　お城とかで武士の役やる人　それがIT系なのは凄すぎる" },
+    { "d": "2025-10-24", "v": "I6PVjeSYwf0", "e": "ChwKGkNQRzZ2NldMdlpBREZSSXVyUVlkRWtFcGdB", "a": "@Blackcoffee-j5h", "i": "https://yt4.ggpht.com/ytc/AIdro_l5ZIbBEgwtZgFkpa5rNV02u-8Vx6YggfmL2j0PeAXobTQsCm2wmmfwdUlmilBjHqr4mA=s32-c-k-c0x00ffffff-no-rj", "m": "あやとさんの関西弁と言葉選びがね、本当に気持ち良くて癒されるね。同じ関西人だから嬉しくてね。" },
+    { "d": "2026-07-12", "v": "UeDyvW4zAgo", "e": "ChwKGkNOUDA2dTZqelpVREZhVk9UQWdkVV9zdVdR", "a": "@ひめひめ-r9z", "i": "https://yt4.ggpht.com/QBYOiPtFvPHlwRojOozZMmduu8_hr_YFDuCTwPDaOHZC3hnHiJz_ol-YH6VZ-u30fUd0dgPm=s32-c-k-c0x00ffffff-no-rj", "m": "みんなが熱くなる料理配信を開発したあやとさんはすごい" },
+    { "d": "2025-10-18", "v": "_g65QUd51Qc", "e": "ChwKGkNPem5tSm1CcnBBREZiTEN3Z1Fkd0NneG53", "a": "@aoi1685", "i": "https://yt4.ggpht.com/7kIqlftaj8J6wMIiqSVp8-0QP72rbfrbnEkZYFZ58LI0o6SKSYID1enifwQrpf6JSs_-7xZCk9U=s32-c-k-c0x00ffffff-no-rj", "m": "あやとくんの配信をみて寝ることを楽しみに1日がんばってる" },
+    { "d": "2025-04-13", "v": "7Amy9E2U7wo", "e": "ChwKGkNOMmpoOFAzMUl3REZWWEh3Z1FkRzk4cE1n", "a": "@aoi1685", "i": "https://yt4.ggpht.com/7kIqlftaj8J6wMIiqSVp8-0QP72rbfrbnEkZYFZ58LI0o6SKSYID1enifwQrpf6JSs_-7xZCk9U=s32-c-k-c0x00ffffff-no-rj", "m": "あやとくんは大丈夫！わたしたちがついてるし！どこでも楽しく生きていける！！" }
   ]
 }

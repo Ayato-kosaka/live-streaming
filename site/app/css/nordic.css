@@ -245,6 +245,22 @@
    （docs/nordic-fund.md 「捨てた設計」）。畳みをやめて、上から読める表にする。
    紙の上に板を積まない。日ごとの区切りは罫線1本。
    ========================================================= */
+/* =========================================================
+   どうして、スウェーデンまで行くのか
+   ---------------------------------------------------------
+   面のいちばん上の説明。読み物なので、行間をふつうより空ける。
+   `.muted` にしない。ここは前置きではなく本文で、いちばん読んでほしい字。
+   ========================================================= */
+.nwhy { margin-top: var(--sp-3); }
+.nwhy p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.95;
+  font-weight: 700;
+  color: var(--ink);
+}
+.nwhy p + p { margin-top: var(--sp-3); }
+
 .ndays { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
 .nday {
   padding: 10px 0;
@@ -344,6 +360,23 @@ p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 7
   font-weight: 900;
   color: var(--ink-2);
 }
+/* 決まっていない日（4日目・5日目）と、予備の2日。
+   区間が無いので絵も距離も付かない。**空けたことが分かる行にする。**
+   埋めてしまうと、決まっている5日ぶんまで「たぶんこうだろう」に見える。 */
+p.nday-say {
+  margin: 0;
+  padding-left: var(--sp-3);
+  border-left: 3px solid var(--rule);
+  font-size: 12px;
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.nday.is-bare p.nday-when { margin-bottom: 7px; }
+.nday.is-bare p.nday-when b { background: none; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px var(--rule); }
+/* 区間のあとに続く一行（「リガのあと」の説明）は、区間から少し離す。 */
+.nday-go + p.nday-say { margin-top: var(--sp-3); }
+
 /* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
 .nday-log {
   margin: var(--sp-3) 0 0;
@@ -378,9 +411,21 @@ p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 7
 p.nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
 .nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
 .nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
-/* 何日目かは、問いと同じ行に。行を分けると6つで 130px 増える。 */
+/* 問いの上に「何日目・どこからどこへ」。**問いだけを並べない。**
+   「3日目行くかどうかまだ決めてません」だけが並んでいて、
+   何のことか分からないと止められた（docs/nordic-fund.md 2.5 の次の失敗）。 */
+p.fork-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 5px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 何日目か。数字の無い日は「リガのあと」のような札が入る。 */
 .fork-day {
-  margin-right: 6px;
   padding: 1px var(--sp-2);
   border-radius: var(--r-0);
   background: var(--marker);

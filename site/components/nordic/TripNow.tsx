@@ -81,8 +81,11 @@ export default function TripNow({
    * まだ決めていないことの問いは、越えた日のぶんが閉じる。
    */
   legOrder: string[];
-  /** 区間の id → 何日目。旅程表のその日へ飛ぶのと、今日の札に使う。 */
-  dayOf: Record<string, number>;
+  /**
+   * 区間の id → 旅程表のどの行か（`day-1` `day-after` など）。
+   * 何日目か分かっていない行もあるので、数字ではなく行の名前で受け取る。
+   */
+  dayOf: Record<string, string>;
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -146,9 +149,9 @@ export default function TripNow({
   // 「動きは React の外で」。ここで状態を持つと旅程表がまるごと作り直しになる）。
   useEffect(() => {
     if (at == null || at < 1) return;
-    const n = dayOf[mainLegs[at]];
+    const row = dayOf[mainLegs[at]];
     document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
-      el.toggleAttribute("data-now", el.id === `day-${n}`);
+      el.toggleAttribute("data-now", !!row && el.id === row);
     });
   }, [at, mainLegs, dayOf]);
 
@@ -188,7 +191,7 @@ export default function TripNow({
         <h1>北欧ヒッチハイク</h1>
         <p className="tnow-lead">
           <b>スウェーデンに、会いたい人がいます。</b>
-          ジョージアからそこまで、人の車だけで {hitchKm.toLocaleString()}km。
+          ポーランドからそこまで、人の車だけで {hitchKm.toLocaleString()}km。
         </p>
       </div>
 
@@ -285,7 +288,7 @@ export default function TripNow({
         {/* 出る前は旅程表の頭へ。出たあとは**今日の行へ**。
             旅の途中に来た人がまず見たいのは「今日どこにいるか」で、
             それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。 */}
-        <a className="tnow-act is-main" href={nowDay ? `#day-${nowDay}` : "#plan"}>
+        <a className="tnow-act is-main" href={nowDay ? `#${nowDay}` : "#plan"}>
           {nowDay ? "今日のところへ" : "旅のよていを見る"}
         </a>
         <a className="tnow-act" href="#map">

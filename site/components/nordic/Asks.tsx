@@ -8,7 +8,11 @@ import { useHereSeq } from "./here";
  * まだ決めていないこと。**押すだけで答えられる。**
  *
  * 提案の区画のいちばん上に置く。書くより先に、押すところがある形にしたい。
- * 何日目の話かを頭に付けるので、旅程表の中に混ぜなくても話が通る。
+ *
+ * **問いだけを並べない。** 何日目の、どこからどこへの話なのかを上に1行置いて、
+ * 問いの文そのものも、それだけ読んで通じる字にしてある
+ * （`content/nordic.ts` の `Leg.fork`）。前は「3日目行くかどうかまだ決めてません」が
+ * 並んでいて、オーナーに「何のこと？ ってなる」と止められた。
  *
  * 越えた日の問いは、ここから消えて旅程表のその日の行に答えが残る
  * （`Fork.tsx` の `Answer`）。旅が進むほど、この並びは短くなる。
@@ -21,7 +25,10 @@ import { useHereSeq } from "./here";
 export type AskItem = {
   leg: string;
   seq: number;
-  day: number;
+  /** 何日目の話か。数字の無い日は「リガのあと」のような札が入る */
+  when: string;
+  /** どこからどこへ。旅程表の行と同じ字 */
+  way: string;
   fork: { q: string; options: { id: string; label: string }[] };
 };
 
@@ -39,8 +46,10 @@ export default function Asks({ items }: { items: AskItem[] }) {
       <ul className="nasks">
         {left.map((i) => (
           <li key={i.leg} className="nask">
-            {/* 何日目かは、問いと同じ行に入れる。行を分けると6つで 130px 増える */}
-            <Ask leg={i.leg} seq={i.seq} fork={i.fork} day={i.day} />
+            {/* どこの話かを、問いの上に1行。ここを省くと
+                「3日目行くかどうかまだ決めてません」だけが並んで、
+                何のことか分からない（オーナーの指摘）。 */}
+            <Ask leg={i.leg} seq={i.seq} fork={i.fork} when={i.when} way={i.way} />
           </li>
         ))}
       </ul>

@@ -5,7 +5,7 @@
  * まとめて `ayato.png` に差し替えていた。そのせいで**島の上の12人が
  * 全員そっくり同じ**に写り、「住人が生きているか」を見ても何も分からなかった。
  *
- * ブラウザからは lh3.googleusercontent.com に出られないが、curl では取れる。
+ * ブラウザからは lh3.googleusercontent.com / ggpht.com に出られないが、curl では取れる。
  * `python3 tools/sprites/avatars.py` で先に落としておくと、ここが
  * **本番と同じ絵を1人ずつ**返す。落としていなければ ayato.png に落ちる。
  *
@@ -14,6 +14,7 @@
  *   const ctx = await b.newContext({ ... });
  *   await offline(ctx);
  */
+import { createHash } from "crypto";
 import { existsSync } from "fs";
 
 const ROOT = "/home/user/live-streaming";
@@ -28,6 +29,15 @@ export async function offline(ctx, opts = {}) {
     const m = /\/d\/([^=?/]+)/.exec(r.request().url());
     const local = m && `${AVATARS}/${m[1]}.png`;
     r.fulfill({ path: local && existsSync(local) ? local : fallback });
+  });
+
+  // 視聴者さんのアイコン（/about の他己紹介）。yt3 / yt4.ggpht.com にある。
+  // 名前は URL の「=」より前の sha1（`tools/sprites/avatars.py` と同じ決め方）。
+  // ここも1枚に潰すと11人が全員おなじ顔で写って、並びを見ても何も分からない
+  await ctx.route(/ggpht\.com/, (r) => {
+    const key = createHash("sha1").update(r.request().url().split("=")[0]).digest("hex");
+    const local = `${AVATARS}/yt/${key}.jpg`;
+    r.fulfill({ path: existsSync(local) ? local : fallback });
   });
 
   // 外から借りている写真。中身は問わないので1枚で足りる
