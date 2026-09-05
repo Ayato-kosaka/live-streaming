@@ -203,6 +203,68 @@
 .zk-rec span { display: block; margin-top: 5px; font-size: 11.5px; font-weight: 900; color: var(--zk-ink); }
 .zk-rec em { display: block; margin-top: 2px; font-style: normal; font-size: 10px; font-weight: 800; color: var(--zk-ink-2); line-height: 1.5; }
 
+/* 主役を大きく出す面。図鑑の詳細は、絵が縦の半分以上を占めている。
+   まわりを大きく空けるほど「1点もの」に見える。 */
+.zk-hero { text-align: center; }
+.zk-hero-no {
+  display: block;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.16em;
+  color: var(--zk-ink-2);
+}
+.zk-hero-art {
+  position: relative;
+  height: 168px;
+  margin-top: 14px;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+@media (min-width: 720px) { .zk-hero-art { height: 230px; } }
+/* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
+.zk-hero-art::before {
+  content: "";
+  position: absolute; left: 50%; bottom: 0;
+  width: 62%; max-width: 230px; height: 26px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fffdf0 0%, #fdf8e0 54%, var(--zk-shade) 100%);
+}
+.zk-hero-art img {
+  position: relative;
+  max-height: 100%; max-width: 80%;
+  width: auto; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(6px 7px 0 rgba(120, 140, 112, 0.22));
+}
+.zk-hero .zk-tape { margin-top: 18px; }
+/* 題名の札を h1 として置く。見出しの既定の余白を落として、札の位置だけで決める */
+.zk-tape-h { margin: 0; font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
+.zk-hero-note {
+  margin: 16px auto 0;
+  max-width: 34em;
+  font-size: 13px; font-weight: 800; line-height: 1.95;
+  color: var(--zk-ink-2);
+}
+.zk-hero-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 15px; }
+
+/* 紙の上の「読む」。板のボタンにはしない。
+   紙の型では、押せるものの合図はオレンジ赤の細枠1種類だけ。 */
+.zk-open {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 22px;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-size: 13px; font-weight: 900; letter-spacing: 0.06em;
+  color: #40390c;
+  background: var(--zk-chip);
+  border: 2.5px solid transparent;
+  transition: border-color 0.13s;
+}
+/* 紙まるごとがリンクのとき。押せることは絵の弾みと枠で伝える */
+a.zk-hero { display: block; }
+a.zk-hero:hover .zk-open,
+a.zk-hero:focus-visible .zk-open { border-color: var(--zk-pick); }
+a.zk-hero .zk-hero-art img { transition: transform 0.2s cubic-bezier(0.34, 1.5, 0.64, 1); }
+a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
+
 /* 紙に貼った白い題名の札。少し傾けて、テープで留めたように置く */
 .zk-tape {
   display: inline-block;
@@ -813,7 +875,6 @@
 .figs .fig-cap { font-size: 10px; letter-spacing: 0.06em; }
 
 /* いちばん語られている1つ。紙の見開きの上半分を丸ごと使う */
-.lg-hero { text-align: center; }
 .lg-hero-tag {
   display: inline-flex; align-items: center; gap: 6px;
   border-radius: 5px;
@@ -823,21 +884,7 @@
   background: var(--zk-chip);
 }
 .lg-hero-tag .art { width: 20px; height: 20px; }
-.lg-hero-sprite {
-  width: 108px; height: 108px;
-  margin: 14px auto 0;
-  display: block;
-  object-fit: contain; object-position: center bottom;
-  filter: drop-shadow(4px 5px 0 rgba(120, 140, 112, 0.24));
-}
-.lg-hero .zk-tape { margin-top: 14px; }
-.lg-hero-fig { margin-top: 18px; }
-.lg-hero p {
-  margin: 14px auto 0;
-  max-width: 34em;
-  font-size: 13px; font-weight: 800; line-height: 1.95;
-  color: var(--zk-ink-2);
-}
+.lg-hero-fig { margin-top: 20px; }
 
 /* 記録の一覧。プレートを立てず、罫線で仕切った行にする */
 .lg-wall { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--zk-rule-soft); }

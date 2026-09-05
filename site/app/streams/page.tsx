@@ -61,7 +61,13 @@ export default function StreamsPage() {
         {STREAM_TYPES.map((t, i) => {
           const num = NUM[t.slug];
           return (
-            <article className="ty" key={t.slug} style={{ ["--ty" as string]: t.color }}>
+            {/* いちばん本数の多いクッキングだけ横幅いっぱい。
+                5枚が均等に並ぶと、どれから見ればいいのか分からない */}
+            <article
+              className={`ty${t.slug === "cooking" ? " is-wide" : ""}`}
+              key={t.slug}
+              style={{ ["--ty" as string]: t.color }}
+            >
               <div className="ty-roof">
                 <img src={`/sprites/${t.icon}.webp`} alt="" />
                 <span className="ty-name">

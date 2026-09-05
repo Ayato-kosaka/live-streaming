@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { Panel } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
+import { RECIPES } from "@/content/recipes";
+import { LEGENDS } from "@/content/legends";
+import { STATS_FALLBACK } from "@/content/site";
 import { Vid } from "@/components/streams/Vid";
+import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import {
   ArtBasket,
   ArtBoots,
@@ -46,6 +49,47 @@ const BEAT_ART: Record<string, React.ComponentType<{ size?: number }>[]> = {
   monthly: [ArtMeeting, ArtMedal, ArtTrophy],
 };
 
+/**
+ * その型をやり続けた結果として、島に残っているもの。
+ *
+ * どの型にも同じ「配信◯本」を出しても何も分からないので、
+ * 型ごとに数えられるものだけを数える。数えられない型は出さない。
+ */
+function figures(slug: string) {
+  const cookingStreams = RECIPES.reduce((n, r) => n + r.streams.length, 0);
+  const kitchens = new Set(RECIPES.map((r) => r.country)).size;
+  switch (slug) {
+    case "cooking":
+      return [
+        { n: RECIPES.length, unit: "品", label: "作って食べた", note: "スタンプ帳に押した数" },
+        { n: cookingStreams, unit: "本", label: "そのための配信", note: "買い出しの日もふくめて" },
+        { n: kitchens, unit: "カ国", label: "借りたキッチン", note: "宿と、山の中の宿と" },
+      ];
+    case "walk":
+      return [
+        { n: STATS_FALLBACK.countries, unit: "カ国", label: "歩いた国", note: "桟橋から地図が見られる" },
+        { n: "380", unit: "km", label: "いちばん長く歩いた", note: "エレバンからイラン国境まで" },
+      ];
+    case "making":
+      return [
+        { n: 1, unit: "本", label: "公開までいったアプリ", note: "「なに食べよ」" },
+        { n: 40, unit: "件", label: "1日でやると宣言した改善", note: "出来るまで終われません" },
+      ];
+    case "meeting":
+      return [
+        { n: LEGENDS.length, unit: "つ", label: "ここから生まれた伝説", note: "丘に立っている数" },
+        { n: RECIPES.length, unit: "品", label: "ここで決まった料理", note: "メニューはこの日に決まる" },
+      ];
+    case "monthly":
+      return [
+        { n: 1, unit: "回", label: "毎月末", note: "朝日が出るまで" },
+        { n: "全部", label: "読み返すコメント", note: "その月に流れたぶん" },
+      ];
+    default:
+      return [];
+  }
+}
+
 export default async function StreamTypePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = streamTypeBySlug(slug);
@@ -54,6 +98,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   const prev = STREAM_TYPES[i - 1];
   const next = STREAM_TYPES[i + 1];
   const art = BEAT_ART[t.slug] ?? [];
+  const recs = figures(t.slug);
 
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: t.name }]}>
@@ -69,9 +114,22 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         }
       />
 
-      <div style={{ ["--ty" as string]: t.color }}>
-        <Panel>
-          <h2 style={{ ["--frame" as string]: t.color }}>この日は、こういう順で進む</h2>
+      {/*
+        5つの型を別物に見せる。
+        紙そのものを型の色でごく薄く染めて、蛍光ペンの帯をその色にする。
+        紙の作り（罫線・平らなチップ・厚みを付けない）は5つとも同じにしておく。
+      */}
+      <Sheet
+        style={{
+          ["--ty" as string]: t.color,
+          ["--zk-paper" as string]: `color-mix(in srgb, ${t.color} 8%, #efe4b6)`,
+          ["--zk-paper-lo" as string]: `color-mix(in srgb, ${t.color} 11%, #e7d9a2)`,
+          ["--zk-out" as string]: `color-mix(in srgb, ${t.color} 7%, #f4efcf)`,
+          ["--zk-mark" as string]: `color-mix(in srgb, ${t.color} 44%, #dbdc90)`,
+        }}
+      >
+        <Zone>
+          <H note="だいたい、この順で進みます">この日は、こういう順で進む</H>
           <ol className="rt">
             {t.beat.map((b, k) => {
               const A = art[k];
@@ -90,35 +148,47 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
               );
             })}
           </ol>
-          <p style={{ marginTop: 16 }}>{t.lead}</p>
-          <Fold title="この型のこと、もう少し" lead={t.body[0]} note={`${t.body.length}つ`}>
-            {t.body.map((p, k) => (
-              <p key={k}>{p}</p>
-            ))}
-          </Fold>
-        </Panel>
+        </Zone>
 
-        <Panel>
-          <h2 style={{ ["--frame" as string]: t.color }}>まずは、この回から</h2>
-          <p className="muted">どれも1本で完結します。押すと YouTube が開きます。</p>
+        {recs.length > 0 && (
+          <Zone tight>
+            <Rec items={recs} />
+          </Zone>
+        )}
+
+        <Zone>
+          <H>この型は、どういうものか</H>
+          <p className="zk-lead">{t.lead}</p>
+          <div className="folds" style={{ marginTop: 14 }}>
+            <Fold title="もう少し細かく" lead={t.body[0]} note={`${t.body.length}つ`}>
+              {t.body.map((p, k) => (
+                <p key={k}>{p}</p>
+              ))}
+            </Fold>
+          </div>
+        </Zone>
+
+        <Zone>
+          <H note={`${t.samples.length}本`}>まずは、この回から</H>
+          <p className="zk-lead">どれも1本で完結します。押すと YouTube が開きます。</p>
           <div className="vids" style={{ marginTop: 14 }}>
             {t.samples.map((v, k) => (
               <Vid key={v.videoId} {...v} no={k + 1} />
             ))}
           </div>
-        </Panel>
+        </Zone>
+      </Sheet>
 
-        {t.deeper && (
-          <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: t.color }}>
-            <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
-            <span className="tile-text">
-              <b>{t.deeper.label}</b>
-              <i>この型をやり続けて、島にたまったもの</i>
-            </span>
-            <Icon name="right" size={15} className="tile-go" />
-          </Link>
-        )}
-      </div>
+      {t.deeper && (
+        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: t.color }}>
+          <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
+          <span className="tile-text">
+            <b>{t.deeper.label}</b>
+            <i>この型をやり続けて、島にたまったもの</i>
+          </span>
+          <Icon name="right" size={15} className="tile-go" />
+        </Link>
+      )}
 
       <nav className="pager" style={{ marginTop: 18 }}>
         {prev ? (
