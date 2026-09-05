@@ -333,7 +333,9 @@
   gap: 6px;
   margin: 0 0 8px;
 }
-.rleg-seath b {
+/* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
+   席の名前は紙の h3 なので、ここが使いどころ。 */
+.rleg-seath span {
   padding: 2px 10px;
   font-size: 12px;
   font-weight: 900;
@@ -347,24 +349,22 @@
 /* --- つながりの読み上げ ---
    埋まっていない区間を灰色にしない。灰色は失敗の色になる。
    同じ明るさのまま、席が空いていることだけを言う。
-   つながった区間だけ、地の色が一段あたたかくなる。 */
+   つながったかどうかは**絵と言葉で言う。色を足さない。**
+   色に意味を1つずつ割りあててあるので、そこに無い意味の色を作らない
+   （docs/island-world.md 3章）。塗りも持たない。紙の区切りは罫線1本。 */
 .rtie {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 13px 0 0;
-  padding: 7px 11px 7px 8px;
-  border-radius: var(--r-1);
-  background: color-mix(in srgb, var(--marker) 32%, transparent);
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rule);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.65;
   color: var(--ink-2);
 }
-.rtie.is-tied {
-  background: color-mix(in srgb, var(--gold) 44%, transparent);
-  color: var(--ink);
-}
+.rtie.is-tied { color: var(--ink); }
 .rtie b { font-weight: 900; color: var(--ink); }
 
 /* --- 足代 ---
@@ -404,31 +404,30 @@
   font-weight: 800;
   color: var(--ink-3);
 }
+/* バーは押せない。だから厚みも金も付けない。
+   入った額は「数えたもの」なので、色はオリーブ（docs/island-world.md 3.2）。 */
 .fare-bar {
   display: block;
   margin: 9px 0 6px;
   height: 12px;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--rule) 26%, transparent);
+  background: color-mix(in srgb, var(--rule) 24%, transparent);
   overflow: hidden;
 }
 .fare-bar i {
   display: block;
   height: 100%;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--gold), #f0b021);
+  background: var(--chip);
 }
 .fare-got { margin: 0; font-size: 12px; font-weight: 800; color: var(--ink-2); }
 .fare-got b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* 満ちたらバーを消す。満タンのバーを出し続けると
-   「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。 */
+   「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。
+   代わりの札も作らない。1行の言葉で足りる。 */
 .fare-full {
   margin: 8px 0 0;
-  padding: 6px 11px;
-  display: inline-block;
-  border-radius: var(--r-0);
-  background: color-mix(in srgb, var(--gold) 50%, transparent);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 900;
   color: var(--ink);
 }
@@ -451,16 +450,19 @@
   color: var(--ink-2);
 }
 .carry-give b { font-weight: 900; color: var(--ink); }
+/* 押せるものなので、厚みを付ける。押せる合図は厚みだけ
+   （docs/island-world.md 3.4）。面は他のボタンと同じクリーム。 */
 .carry-go {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 16px;
+  min-height: 48px;
+  padding: 10px 18px;
   border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-2);
-  background: linear-gradient(var(--gold), #f0b021);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
   box-shadow: var(--pop-sm);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 900;
   color: var(--ink);
 }

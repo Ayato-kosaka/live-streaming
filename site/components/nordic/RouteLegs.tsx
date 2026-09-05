@@ -94,10 +94,10 @@ export default function RouteLegs() {
             {/* 道しるべ。この区間で何をしてほしいか。
                 言葉が1つも無い区間は、あやとがそこを走るだけの区間になる。 */}
             <div className="rleg-seat">
-              <p className="rleg-seath">
+              <h3 className="rleg-seath">
                 <PostMark />
-                <b>道しるべ</b>
-              </p>
+                <span>道しるべ</span>
+              </h3>
               <Signpost leg={l.id} ask={l.ask} />
             </div>
 
@@ -105,10 +105,10 @@ export default function RouteLegs() {
                 お金の要らない区間（寄り道）には、この席そのものを置かない。 */}
             {l.fare && (
               <div className="rleg-seat">
-                <p className="rleg-seath">
+                <h3 className="rleg-seath">
                   <FareMark />
-                  <b>足代</b>
-                </p>
+                  <span>足代</span>
+                </h3>
                 <Fare
                   what={l.fare.what}
                   cost={l.fare.yen}

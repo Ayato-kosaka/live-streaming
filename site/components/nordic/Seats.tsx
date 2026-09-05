@@ -91,16 +91,27 @@ export function TieMark({ tied, size = 30 }: { tied: boolean; size?: number }) {
   const gap = tied ? 0 : 4.5;
   return (
     <Svg size={size}>
-      <Ground cx="24" cy="39.5" rx="17" />
+      {/* 輪の穴は、下の紙が透けないといけない。塗りつぶしで隠すと、
+          畳みの中と外で紙の色が違うところに置いたときにズレる。
+          マスクの座標は g の変形といっしょに動くので、id は使い回してよい。 */}
+      <defs>
+        <mask id="ntieA">
+          <rect x="0" y="0" width="48" height="48" fill="#fff" />
+          <rect x="6.2" y="20.2" width="17.6" height="6.6" rx="3.3" fill="#000" />
+        </mask>
+        <mask id="ntieB">
+          <rect x="0" y="0" width="48" height="48" fill="#fff" />
+          <rect x="24.2" y="20.2" width="17.6" height="6.6" rx="3.3" fill="#000" />
+        </mask>
+      </defs>
+      <Ground cx="24.5" cy="34.5" rx="16" />
       {/* 足代の輪 */}
       <g transform={`translate(${-gap} 0)`}>
-        <rect x="2" y="16" width="26" height="15" rx="7.5" fill={C.gdd} />
-        <rect x="6.2" y="20.2" width="17.6" height="6.6" rx="3.3" fill="var(--paper)" />
+        <rect x="2" y="16" width="26" height="15" rx="7.5" fill={C.gdd} mask="url(#ntieA)" />
       </g>
       {/* 道しるべの輪。噛み合うときは、こちらが手前を通る */}
       <g transform={`translate(${gap} 0)`}>
-        <rect x="20" y="16" width="26" height="15" rx="7.5" fill={C.grd} />
-        <rect x="24.2" y="20.2" width="17.6" height="6.6" rx="3.3" fill="var(--paper)" />
+        <rect x="20" y="16" width="26" height="15" rx="7.5" fill={C.grd} mask="url(#ntieB)" />
       </g>
     </Svg>
   );
