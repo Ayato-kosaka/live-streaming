@@ -80,17 +80,20 @@ export const misc: Record<string, Draw> = {
   do: (c) => (
     <>
       <Sh c={c} cy={57} rx={16} ry={3.4} />
-      <g stroke={c.sn} strokeWidth="7" strokeLinecap="round">
-        <path d="M20 32 12 15" />
-        <path d="M44 32 52 15" />
+      {/* 小さくすると団子に見えたので、頭を大きく・腕を太く・肩幅を広げた。
+          髪の面を1つ足すと、球ではなく人の頭になる */}
+      <g stroke={c.sn} strokeWidth="8.4" strokeLinecap="round">
+        <path d="M21 34 11 14" />
+        <path d="M43 34 53 14" />
       </g>
-      <circle cx="32" cy="14" r="9" fill={c.sn} />
-      <path d="M32 5a9 9 0 0 1 0 18z" fill={c.snd} />
-      <path d="M32 25c7 0 12 5 12 12v9H20v-9c0-7 5-12 12-12z" fill={c.or} />
-      <path d="M32 25c7 0 12 5 12 12v9H32z" fill={c.ord} />
-      <g stroke={c.bld} strokeWidth="8" strokeLinecap="round">
-        <path d="M26 48v6" />
-        <path d="M38 48v6" />
+      <circle cx="32" cy="15" r="10" fill={c.sn} />
+      <path d="M32 5a10 10 0 0 1 0 20z" fill={c.snd} />
+      <path d="M22.4 11.4C23.6 6.8 27.4 4 32 4s8.4 2.8 9.6 7.4c-2.8-2.2-6-3.4-9.6-3.4s-6.8 1.2-9.6 3.4z" fill={c.brd} />
+      <path d="M32 26c8 0 13.6 5.6 13.6 13.6V48H18.4v-8.4C18.4 31.6 24 26 32 26z" fill={c.or} />
+      <path d="M32 26c8 0 13.6 5.6 13.6 13.6V48H32z" fill={c.ord} />
+      <g stroke={c.bld} strokeWidth="9" strokeLinecap="round">
+        <path d="M25.4 50v4.4" />
+        <path d="M38.6 50v4.4" />
       </g>
       <g fill={c.yl}>
         <path d="m8 6 1.3 3.2L12.5 10.5 9.3 11.8 8 15l-1.3-3.2L3.5 10.5 6.7 9.2z" />

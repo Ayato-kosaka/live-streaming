@@ -312,9 +312,14 @@ export const travel: Record<string, Draw> = {
   bike: (c) => (
     <>
       <Sh c={c} cy={56} rx={26} ry={3.4} />
+      {/* タイヤは黒。暗い下地だと消えるので、内側に明るいリムを1本入れて輪を残す */}
       <g fill="none" stroke={c.bk} strokeWidth="4.4">
         <circle cx="15" cy="40" r="12" />
         <circle cx="49" cy="40" r="12" />
+      </g>
+      <g fill="none" stroke={c.gy} strokeWidth="2.4">
+        <circle cx="15" cy="40" r="8.6" />
+        <circle cx="49" cy="40" r="8.6" />
       </g>
       <g fill="none" stroke={c.rd} strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M15 40 27 22h13l9 18" />

@@ -57,12 +57,12 @@ export const place: Record<string, Draw> = {
     <>
       <Sh c={c} cy={56} rx={25} ry={4} />
       {/* 左。とがった耳。手前の顔に隠れないよう外へ寄せて、少し下げる */}
-      <path d="M1.5 33 4 23.5l7 4.6zM19 33l-2.5-9.5-7 4.6z" fill={c.tld} />
-      <circle cx="11" cy="41" r="11" fill={c.tl} />
-      <path d="M11 30a11 11 0 0 1 0 22z" fill={c.tld} opacity="0.45" />
-      <Eye c={c} x={7.4} y={40} s={0.85} />
-      <Eye c={c} x={14.6} y={40} s={0.85} />
-      <Blush c={c} x={4.2} y={44.4} s={0.8} />
+      <path d="M3.5 33 6 23.5l7 4.6zM21 33l-2.5-9.5-7 4.6z" fill={c.tld} />
+      <circle cx="13" cy="41" r="11" fill={c.tl} />
+      <path d="M13 30a11 11 0 0 1 0 22z" fill={c.tld} opacity="0.45" />
+      <Eye c={c} x={9.4} y={40} s={0.85} />
+      <Eye c={c} x={16.6} y={40} s={0.85} />
+      <Blush c={c} x={6.2} y={44.4} s={0.8} />
 
       {/* 右。くちばし */}
       <circle cx="53" cy="41" r="11" fill={c.pk} />

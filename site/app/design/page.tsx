@@ -130,17 +130,23 @@ const label: React.CSSProperties = {
   opacity: 0.6,
 };
 
-/** 暗い下地。白い絵が明るい下地で消えていないか、その逆も見る。 */
-const night: React.CSSProperties = {
+/** 小さくしたときの見え方を見る帯。明暗2本で1組にする。 */
+const strip = (bg: string, ink: string): React.CSSProperties => ({
   display: "flex",
   alignItems: "flex-end",
+  justifyContent: "center",
   gap: 6,
   height: 26,
   padding: "0 8px",
   borderRadius: 6,
-  background: P.dark,
-  color: "#fdf6e6",
-};
+  background: bg,
+  color: ink,
+});
+
+/** 暗い下地。明るい下地で消える白い絵は、ここでしか見つからない。 */
+const night = strip(P.dark, "#fdf6e6");
+/** 明るい下地。逆に、暗い絵が紙に沈んでいないかを見る。 */
+const day = strip("#fbf6df", P.ink);
 
 export default function DesignPage() {
   return (
@@ -158,6 +164,10 @@ export default function DesignPage() {
               {g.names.map((n) => (
                 <div key={n} style={cell}>
                   <Icon name={n as IconName} size={56} />
+                  <span style={day}>
+                    <Icon name={n as IconName} size={16} />
+                    <Icon name={n as IconName} size={22} />
+                  </span>
                   <span style={night}>
                     <Icon name={n as IconName} size={16} />
                     <Icon name={n as IconName} size={22} />

@@ -309,7 +309,6 @@ export const stream: Record<string, Draw> = {
     <>
       <Sh c={c} cy={57} rx={16} ry={3.2} />
       <circle cx="32" cy="24" r="21" fill={c.yl} />
-      <circle cx="32" cy="24" r="21" fill="none" stroke={c.yld} strokeWidth="2" />
       <circle cx="32" cy="24" r="12.5" fill={c.gy} />
       <circle cx="32" cy="24" r="9" fill={c.nv} />
       <circle cx="32" cy="24" r="5" fill={c.tld} />
@@ -443,3 +442,4 @@ export const stream: Record<string, Draw> = {
       <Gl c={c} cx={19} cy={14} rx={2.6} ry={6} r={16} o={0.45} />
     </>
   ),
+};

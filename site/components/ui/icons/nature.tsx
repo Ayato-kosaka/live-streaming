@@ -61,17 +61,20 @@ export const nature: Record<string, Draw> = {
 
   snow: (c) => (
     <>
-      <g stroke={c.sk} strokeWidth="5" strokeLinecap="round">
+      {/* 白い枝だけだと、明るい紙の上で形が消えていた。
+          幹を濃い水色にして、枝を薄い水色にする。白は真ん中の芯だけに残す */}
+      <g stroke={c.skd} strokeWidth="5.4" strokeLinecap="round">
         <path d="M32 5v54" />
         <path d="M8.6 18.5 55.4 45.5" />
         <path d="M55.4 18.5 8.6 45.5" />
       </g>
-      <g stroke={c.w} strokeWidth="4.4" strokeLinecap="round">
+      <g stroke={c.sk} strokeWidth="4.4" strokeLinecap="round">
         <path d="M32 15 25 9M32 15l7-6M32 49l-7 6M32 49l7 6" />
         <path d="m17.5 23.4-8.8-1.6M17.5 23.4l-2-8.8M46.5 40.6l8.8 1.6M46.5 40.6l2 8.8" />
         <path d="m46.5 23.4 8.8-1.6M46.5 23.4l2-8.8M17.5 40.6l-8.8 1.6M17.5 40.6l-2 8.8" />
       </g>
-      <circle cx="32" cy="32" r="6" fill={c.w} />
+      <circle cx="32" cy="32" r="7" fill={c.skd} />
+      <circle cx="32" cy="32" r="4.6" fill={c.w} />
     </>
   ),
 
@@ -120,10 +123,11 @@ export const nature: Record<string, Draw> = {
   wind: (c) => (
     <>
       {/* 筋を3本、長さを変えて流す。端だけ巻くと「吹いている」に見える */}
-      <g fill="none" strokeLinecap="round" strokeWidth="6.4">
-        <path d="M4 17h32a7 7 0 1 0-7-7" stroke={c.sk} />
+      {/* 筋が細いと紙の上で消える。太さを上げて、3本とも濃さを変える */}
+      <g fill="none" strokeLinecap="round" strokeWidth="7.4">
+        <path d="M4 17h32a7 7 0 1 0-7-7" stroke={c.skd} />
         <path d="M4 32h40a6.4 6.4 0 1 1-6.4 6.4" stroke={c.bl} />
-        <path d="M4 47h22a6 6 0 1 0-6-6" stroke={c.skd} />
+        <path d="M4 47h22a6 6 0 1 0-6-6" stroke={c.tld} />
       </g>
     </>
   ),
