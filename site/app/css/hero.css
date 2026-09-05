@@ -18,7 +18,11 @@
 .hero-logo {
   margin: 0;
   line-height: 0;
-  animation: logo-in 620ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  /* 入りの動きの fill は `both` にしない。**`both` だと終わったあとも
+     アニメーションが opacity:1 を握ったままになる。** アニメーションの値は
+     ふつうの規則より強いので、下の「札が来たら引く」（opacity:0）が効かない。
+     遅れ(delay)は 0 なので、前を埋める `backwards` で足りる。 */
+  animation: logo-in 620ms cubic-bezier(0.22, 1.2, 0.36, 1) backwards;
 }
 /* display は .hero-logo-full / -mark 側で持つ。
    ここで img に display を書くと詳細度で勝ってしまい、寄り引きの出し分けが効かない。 */
