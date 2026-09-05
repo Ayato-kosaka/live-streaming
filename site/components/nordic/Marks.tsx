@@ -170,9 +170,10 @@ export const LEG_ART: Record<string, React.ReactNode> = {
         <path d="M6 40 12 20l6 20z" />
         <path d="M50 40 56 22l6 18z" />
       </g>
+      {/* 光は左上から。明るい面は左半分（島の絵の決まり） */}
       <g fill="#57a05c">
-        <path d="M6 40 12 20l1 20z" />
-        <path d="M50 40 56 22l1 18z" />
+        <path d="M6 40 12 20 12 40z" />
+        <path d="M50 40 56 22 56 40z" />
       </g>
       {/* 遮断棒 */}
       <rect x="20" y="30" width="5" height="24" rx="2.5" fill="#cfd6de" />

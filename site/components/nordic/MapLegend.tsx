@@ -12,11 +12,7 @@ const KM = (m: string) =>
   ROUTE.filter((l) => l.move === m && l.km).reduce((a, b) => a + (b.km ?? 0), 0);
 
 const KEYS: { cls: string; label: string; note: string }[] = [
-  {
-    cls: "is-hitch",
-    label: "ヒッチハイク",
-    note: `${KM("hitch").toLocaleString()}km / ${ROUTE.filter((l) => l.move === "hitch" && !l.side).length}区間`,
-  },
+  { cls: "is-hitch", label: "ヒッチハイク", note: `陸路ぜんぶ。${KM("hitch").toLocaleString()}km` },
   { cls: "is-ferry", label: "フェリー", note: "バルト海を2回わたる" },
   { cls: "is-side", label: "寄り道", note: "行って戻ってくる日帰り" },
   { cls: "is-fly", label: "飛行機", note: "クタイシ発の1本だけ" },

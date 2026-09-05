@@ -18,6 +18,18 @@ import {
 
 const { cx: CX, cy: CY, squash: SQ } = ISLAND;
 
+/**
+ * 楕円を1つ。
+ *
+ * この絵では小さな粒（砂・泡・石・花びら）を何百も置く。<ellipse> を1つずつ
+ * 置くとそのぶん要素が増えて、カメラが動くたびに全部を描き直すことになる。
+ * 円弧コマンドで書いておけば、いくつでも1本のパスにつなげられる。
+ */
+function oval(x: number, y: number, rx: number, ry: number): string {
+  const f = (n: number) => n.toFixed(1);
+  return `M${f(x - rx)},${f(y)}a${f(rx)},${f(ry)} 0 1,0 ${f(rx * 2)},0a${f(rx)},${f(ry)} 0 1,0 ${f(-rx * 2)},0`;
+}
+
 /* ---- 島の形 -------------------------------------------------------------
    まん丸に近い輪郭は「島」に見えない。実際の島には、海へ突き出した岬と、
    海が食い込んだ入り江がある。ここでその2つを足す。
@@ -290,9 +302,7 @@ const foamDots = (() => {
     const t = (i + r() * 0.9) / 74;
     const [x, y] = pointAt(CX, CY, sandR, SQ, t, -36 + r() * 26);
     const rad = 1.4 + r() * 2.8;
-    const f = (n: number) => n.toFixed(1);
-    buckets[i % 2] +=
-      `M${f(x - rad)},${f(y)}a${f(rad)},${f(rad)} 0 1,0 ${f(rad * 2)},0a${f(rad)},${f(rad)} 0 1,0 ${f(-rad * 2)},0`;
+    buckets[i % 2] += oval(x, y, rad, rad);
   }
   return buckets;
 })();
@@ -308,7 +318,6 @@ function seaPatches(count: number, seed: number, wMin: number, wMax: number, fla
   const r = rng(seed);
   const shallowEdge = inset(sandR, SHORE.shallow);
   const buckets = ["", "", ""];
-  const f = (n: number) => n.toFixed(1);
   let n = 0;
   let guard = 0;
   while (n < count && guard++ < count * 40) {
@@ -317,9 +326,7 @@ function seaPatches(count: number, seed: number, wMin: number, wMax: number, fla
     // 浅瀬より内側には出さない。島の縁で光っていると泡と喧嘩する。
     if (insideRadii(CX, CY, shallowEdge, x, y, SQ, -14)) continue;
     const w = wMin + r() * (wMax - wMin);
-    const h = Math.max(1.2, w * flat * (0.7 + r() * 0.6));
-    buckets[n % 3] +=
-      `M${f(x - w)},${f(y)}a${f(w)},${f(h)} 0 1,0 ${f(w * 2)},0a${f(w)},${f(h)} 0 1,0 ${f(-w * 2)},0`;
+    buckets[n % 3] += oval(x, y, w, Math.max(1.2, w * flat * (0.7 + r() * 0.6)));
     n++;
   }
   return buckets;
@@ -347,12 +354,6 @@ const swellPaths = [180, 262, 352].map((d, i) =>
  * 明るい葉と暗い葉で2枚に分け、大きさと角度を変えて重ねると、
  * タイルの継ぎ目と繰り返しが目につかなくなる。
  */
-/** 楕円を1つ。円弧コマンドで書くと、他の形と同じパスにまとめられる。 */
-function oval(x: number, y: number, rx: number, ry: number): string {
-  const f = (n: number) => n.toFixed(1);
-  return `M${f(x - rx)},${f(y)}a${f(rx)},${f(ry)} 0 1,0 ${f(rx * 2)},0a${f(rx)},${f(ry)} 0 1,0 ${f(-rx * 2)},0`;
-}
-
 function grassTile(seed: number, count: number, size: number) {
   const r = rng(seed);
   const f = (n: number) => n.toFixed(1);

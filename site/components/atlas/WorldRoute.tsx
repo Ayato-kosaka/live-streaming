@@ -28,6 +28,26 @@ import { COUNTRIES } from "@/content/countries";
 
 type Chapter = { id: string; label: string; box: number[] };
 
+/** 凡例に出す移動のしかた。多い順に並べる。 */
+const LEGEND: [string, string][] = [
+  ["land", "電車・バス"],
+  ["air", "飛行機"],
+  ["sea", "船"],
+  ["walk", "歩いた"],
+  ["hitch", "ヒッチハイク"],
+  ["side", "そこから日帰り"],
+];
+
+/** 凡例に出す移動のしかた。地図に出てくる順ではなく、多い順。 */
+const LEGEND: [string, string][] = [
+  ["land", "電車・バス"],
+  ["air", "飛行機"],
+  ["sea", "船"],
+  ["walk", "歩いた"],
+  ["hitch", "ヒッチハイク"],
+  ["side", "そこから日帰り"],
+];
+
 /** 国の名札の逃がし先 [左右, 上下]。上に置くのを本命に、順に空きを探す。 */
 const PIN_SLOTS: [number, number][] = [
   [0, 0], [-44, 0], [44, 0], [0, -23], [-44, -23], [44, -23],
@@ -346,22 +366,26 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       </div>
 
       <div className="amap-foot">
-        <span className="amap-key">
-          <i style={{ background: "var(--am-route)" }} />
-          電車・バス
-        </span>
-        <span className="amap-key">
-          <i style={{ background: "#fff", boxShadow: "0 0 0 1px rgba(90,66,34,.25)" }} />
-          飛行機・船
-        </span>
-        <span className="amap-key">
-          <i style={{ background: "var(--am-walk)" }} />
-          歩いた
-        </span>
-        <span className="amap-key">
-          <i style={{ background: "var(--am-hitch)" }} />
-          ヒッチハイク
-        </span>
+        {LEGEND.map(([move, label]) => {
+          const st = MOVE[move];
+          return (
+            <span className="amap-key" key={move}>
+              {/* 凡例の線は、地図に引いてある線そのものを写す。
+                  太さも点線の刻みも同じにしないと、凡例が別のものを指してしまう */}
+              <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden>
+                <path
+                  d="M1 6h28"
+                  stroke={st.c}
+                  strokeWidth={Math.min(7, st.w)}
+                  strokeLinecap={st.cap ?? "round"}
+                  strokeDasharray={st.dash}
+                  fill="none"
+                />
+              </svg>
+              {label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

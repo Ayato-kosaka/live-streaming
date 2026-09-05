@@ -100,12 +100,12 @@ export default async function NordicPage() {
 
       {/* 地図。このページの主役なので、いちばん上に、いちばん大きく。 */}
       <section className="panel is-map" id="map">
-        <h2>通る道</h2>
+        <h2>会いに行く道</h2>
         <p className="muted">街を押すと、その国のページへ。</p>
         <RouteMapSvg />
         <MapLegend />
         <p className="nmap-say">
-          いちばん上のストックホルムがゴール。そこまでの線は、ぜんぶ誰かの車と船。
+          いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
         </p>
       </section>
 
