@@ -374,8 +374,8 @@ p.nday-say {
 }
 .nday.is-bare p.nday-when { margin-bottom: 7px; }
 .nday.is-bare p.nday-when b { background: none; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px var(--rule); }
-/* 区間のあとに続く一行（「リガのあと」の説明）は、区間から少し離す。 */
-.nday-go + p.nday-say { margin-top: var(--sp-3); }
+/* 区間より先に出る一行（「リガのあと」の説明）は、区間から少し離す。 */
+p.nday-say + .nday-go { margin-top: var(--sp-3); }
 
 /* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
 .nday-log {

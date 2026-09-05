@@ -72,6 +72,12 @@ export default function Days() {
               )}
             </p>
 
+            {/* 決まっていない日と、予備の日はこれだけ。
+                「移動にあてる日」のように、言われていないことを書き足さない。
+                区間のある行（「リガのあと」）では、**区間より先に**置く。
+                何日目か分からない、と先に言わないまま3区間を読ませない。 */}
+            {day.say && <p className="nday-say">{day.say}</p>}
+
             {legs.map((l) => {
               const c = l.enters ? nordicCountry(l.enters) : undefined;
               return (
@@ -99,10 +105,6 @@ export default function Days() {
                 </div>
               );
             })}
-
-            {/* 決まっていない日と、予備の日はこれだけ。
-                「移動にあてる日」のように、言われていないことを書き足さない。 */}
-            {day.say && <p className="nday-say">{day.say}</p>}
 
             {/* 越えた日にだけ、聞いた答えが残る。まだの日の問いは、
                 下の「この旅に、言う」に並んでいる（`Asks.tsx`）。 */}

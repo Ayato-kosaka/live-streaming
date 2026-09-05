@@ -152,7 +152,7 @@ export default async function NordicPage() {
           相手の名前も素性も出さない（`docs/nordic-fund.md` 1章・GitHub #106）。
           出していいと分かったら `FRIEND.name` に入れるだけで、文は変えなくていい。 */}
       <section className="panel paper" id="why">
-        <h2>どうして、スウェーデンまで行くのか</h2>
+        <h2>会いに行く理由</h2>
         <div className="nwhy">
           {WHY.map((t, i) => (
             <p key={i}>{t}</p>
