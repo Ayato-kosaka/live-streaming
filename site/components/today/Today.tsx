@@ -30,6 +30,16 @@ const SEEN = "ayato-island-today";
 /** 中身を数え直す間隔。「あと3時間20分」が止まって見えない程度で足りる。 */
 const TICK = 60_000;
 
+/**
+ * この読み込みで、板を自分から開いたかどうか。
+ *
+ * 置き場所が corner と bar で分かれているので、画面幅が変わると部品ごと作り直される。
+ * そのたびに localStorage を読み書きすると、**2回目の判定で「今日はもう見た」になり、
+ * 自動で開かないまま終わる**。1回の読み込みのあいだは、最初に出した答えを使い回す。
+ * （画面が変わっていなくても、開発中は効果が2回走るので同じことが起きる）
+ */
+let openedThisLoad: boolean | null = null;
+
 export default function Today({ place }: { place: "corner" | "bar" }) {
   const [news, setNews] = useState<TodayNews | null>(null);
   const [open, setOpen] = useState(false);
@@ -47,12 +57,15 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     // その日はじめて来た人には、押させずに開いて渡す。
     // 「起動から今日は何が違うかまでの距離をゼロにする」のがこの板の役目なので、
     // 1回目だけは向こうから口を開く。2回目からは畳んでおく。
-    let first = true;
-    try {
-      first = localStorage.getItem(SEEN) !== jstNow().date;
-      localStorage.setItem(SEEN, jstNow().date);
-    } catch {
-      /* プライベートモードなどで読めなくても、開いて渡すだけなので気にしない */
+    let first = openedThisLoad ?? true;
+    if (openedThisLoad === null) {
+      try {
+        first = localStorage.getItem(SEEN) !== jstNow().date;
+        localStorage.setItem(SEEN, jstNow().date);
+      } catch {
+        /* プライベートモードなどで読めなくても、開いて渡すだけなので気にしない */
+      }
+      openedThisLoad = first;
     }
     setFresh(first);
     setOpen(first);
