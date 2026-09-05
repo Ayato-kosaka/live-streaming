@@ -123,7 +123,9 @@
    はみ出すのは右の数（.zk-hn）だけにする */
 .zk-hgrp {
   display: flex; align-items: baseline; gap: var(--sp-2);
-  flex: 1 1 auto; min-width: 0;
+  /* 伸ばさない。伸ばすと右の数が紙の右端まで飛んで、表の見出しに見える。
+     紙の見出しは、数まで含めてひとかたまりで左に置く。 */
+  flex: 0 1 auto; min-width: 0;
 }
 /* 見出しの左に置く小さいイラスト。2行になる見出しでは、真ん中ではなく
    1行目の隣に置く。まん中だと、行と行のあいだに絵が浮いて見える。 */
@@ -376,12 +378,10 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    名前は帯の上に置いて、帯は「週のどこか」だけを言う役にした。
    ========================================================= */
 
-.wk {
-  border-radius: var(--r-2);
-  padding: var(--sp-3) var(--sp-3) var(--sp-4);
-  box-shadow: inset 0 3px 8px rgba(120, 84, 40, 0.12);
-}
-@media (min-width: 720px) { .wk { padding: var(--sp-4) var(--sp-4) var(--sp-4); } }
+/* 紙の上に載せていい板は「押すもの・書くもの」だけ（`docs/island-world.md` 2.1）。
+   週の回りかたは読むだけの図なので、紙の上にもう1枚の台紙を敷かない。
+   地も影も持たせず、紙にそのまま刷ってあるようにする。 */
+.wk { padding: var(--sp-2) 0 var(--sp-1); }
 .wk-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -827,9 +827,18 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .dish-m .zk-chip { padding: 2px var(--sp-2); font-size: var(--fs-min); }
 
 /* 横に流す小さい棚（同じ国・同じ種類の品） */
-.kt-near { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-left: 1px solid var(--zk-rule-soft); }
+.kt-near {
+  display: flex; gap: 0;
+  overflow-x: auto; scrollbar-width: none;
+  border-left: 1px solid var(--zk-rule-soft);
+  /* 右がまだ続いていることを、紙の色へのぼかしで言う（絞り込みの列と同じ作り） */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+}
 .kt-near::-webkit-scrollbar { display: none; }
 .kt-near > a { flex: none; width: 132px; border-bottom: 0; }
+/* 2品しか無い棚では、最後のマスの右の罫が「空のマス」に見えていた */
+.kt-near > a:last-child { border-right: 0; }
 
 /* 国ごとの内わけ。棒の長さで多い少ないを見せる */
 .kt-by { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
