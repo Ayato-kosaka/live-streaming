@@ -236,17 +236,17 @@
    ========================================================= */
 .ndays { list-style: none; margin: var(--sp-4) 0 0; padding: 0; }
 .nday {
-  padding: var(--sp-4) 0;
+  padding: var(--sp-3) 0;
   border-top: 1px solid var(--rule);
 }
 .nday:last-child { padding-bottom: var(--sp-2); }
 /* 何日目。日付は切符のある2日にだけ入る（分からない日を埋めない）。 */
 .nday-when {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin: 0 0 var(--sp-2);
+  margin: 0 0 7px;
 }
 .nday-when b {
   padding: var(--sp-1) var(--sp-3);
@@ -322,13 +322,14 @@
   font-size: var(--fs-min);
   font-weight: 900;
 }
-.nday-note { margin: var(--sp-2) 0 0; font-size: 12.5px; line-height: 1.9; font-weight: 700; }
+.nday-note { margin: 5px 0 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
+/* 泊まるところ。日付の行の右へ回す。独立した行にすると10日で 370px 取る。 */
 .nday-stay {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin: var(--sp-3) 0 0;
-  font-size: var(--fs-note);
+  gap: 4px;
+  margin-left: auto;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
 }
@@ -359,15 +360,15 @@
    文章を書かない人にできることが1つも無くなる。
    ========================================================= */
 .nsub {
-  margin: var(--sp-5) 0 var(--sp-1);
+  margin: var(--sp-4) 0 var(--sp-1);
   font-size: var(--fs-body);
   font-weight: 900;
 }
 .nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
-.nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-4); }
-.nask { border-top: 1px solid var(--rule); padding-top: var(--sp-3); }
+.nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
 .nask-day {
-  margin: 0 0 var(--sp-1);
+  margin: 0 0 3px;
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
@@ -375,9 +376,9 @@
 }
 .fork { margin: 0; }
 .fork-q {
-  margin: 0 0 var(--sp-2);
+  margin: 0 0 7px;
   font-size: 12.5px;
-  line-height: 1.8;
+  line-height: 1.7;
   font-weight: 900;
   color: var(--ink);
 }

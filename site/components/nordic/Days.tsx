@@ -31,11 +31,17 @@ const MOVE: Record<Leg["move"], string> = {
   walk: "歩き",
 };
 
-/** 「2026-09-11」→「9月11日(金)」 */
+/**
+ * 「2026-09-11」→「9月11日(金)」
+ *
+ * `new Date(...)` に投げて `getDate()` を読むと、**箱の時計で日がずれる**。
+ * 書き出しは UTC で走るので、日本時間の 00:00 は前の日の 15:00 になり、
+ * 9月11日が「9月10日(木)」と焼き込まれていた（実測）。
+ * 曜日だけ UTC で出して、月日は文字列から取る。
+ */
 function when(iso: string) {
-  const d = new Date(`${iso}T00:00:00+09:00`);
-  const w = "日月火水木金土"[d.getDay()];
-  return `${d.getMonth() + 1}月${d.getDate()}日(${w})`;
+  const w = "日月火水木金土"[new Date(`${iso}T00:00:00Z`).getUTCDay()];
+  return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
 export default function Days() {
@@ -51,6 +57,13 @@ export default function Days() {
               {/* 「いま、ここ」は `TripNow` が現在地を読んでから出す。
                   どの日が今日の話なのかは、上から読まなくても分かるようにしておく。 */}
               <span className="nday-now">いま、ここ</span>
+              {/* 泊まるところは、独立した行にしない。1日あたり37px、10日で370px。 */}
+              {day.stay && (
+                <span className="nday-stay">
+                  <Icon name="home" size={14} />
+                  {day.stay}
+                </span>
+              )}
             </p>
 
             {day.legs.map((l) => {
@@ -89,12 +102,7 @@ export default function Days() {
               ) : null,
             )}
 
-            {day.stay && (
-              <p className="nday-stay">
-                <Icon name="home" size={15} />
-                泊まる: {day.stay}
-              </p>
-            )}
+
 
             {/* 越えた日にだけ入る。よていだけの表は、出発前にしか読む理由がない。 */}
             {log && (

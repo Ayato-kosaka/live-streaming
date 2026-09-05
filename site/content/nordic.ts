@@ -350,11 +350,24 @@ export const DAYS: Day[] = (() => {
 /**
  * お金が要るもの。**面のいちばん下の「応援する」だけで使う。**
  * 旅程表には金額を出さない。旅の話と、お金の話を混ぜない。
+ *
+ * 値段の分かっていないものは、1行にまとめる。「いくらで見ているか、いま調べています」が
+ * 6行並ぶと、調べていないことのほうが目立つ（実測で 220px）。
  */
-export const FARES = ROUTE.filter((l) => l.fare).map((l) => ({
-  id: l.id,
-  ...l.fare!,
-}));
+export const FARES: { what: string; src?: string }[] = [
+  ...ROUTE.filter((l) => l.fare?.yen).map((l) => ({
+    what: l.fare!.what,
+    src: l.fare!.src ?? `${l.fare!.yen!.toLocaleString()}円`,
+  })),
+];
+
+const TODO_FARES = ROUTE.filter((l) => l.fare && !l.fare.yen);
+if (TODO_FARES.length > 0) {
+  FARES.push({
+    what: `泊まる街の一泊（${TODO_FARES.length}か所）`,
+    src: "いくらで見ているか、いま調べています",
+  });
+}
 
 /**
  * その日に、実際に起きたこと。**旅が終わってから入る。**

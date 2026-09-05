@@ -239,9 +239,9 @@ export default async function NordicPage() {
         <Support />
         <ul className="nback-what">
           {FARES.map((f) => (
-            <li key={f.id}>
+            <li key={f.what}>
               <b>{f.what}</b>
-              <i>{f.src ?? (f.yen ? `${f.yen.toLocaleString()}円` : "いくらで見ているか、いま調べています")}</i>
+              <i>{f.src}</i>
             </li>
           ))}
         </ul>
