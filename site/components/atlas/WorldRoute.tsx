@@ -141,9 +141,16 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     // 章を切りかえたとき「ハンガリー」「チェコ」が地図の右に切れて出ていた。
     const inFrame = (b: Rect) => b.x0 > 2 && b.x1 < SW - 2 && b.y0 > 2 && b.y1 < SH - 2;
 
+    // 世界ぜんぶを1枚に収めた面では、18カ国ぶんの名札を置く余地が無い。
+    // 名前を出すのは「いまここ」の1つだけにする
+    // （docs/island-design.md 3章「注目させるのは一度に1つ」）。
+    const named = wide
+      ? pins.filter((v) => v.slug === here)
+      : pins.filter((v) => inBox(v.a.x, v.a.y));
+
     const country: Record<string, { dx: number; dy: number; hide: boolean }> = {};
-    if (!wide) {
-      for (const p of pins.filter((v) => inBox(v.a.x, v.a.y)).sort((a, b) => a.a.order - b.a.order)) {
+    {
+      for (const p of named.sort((a, b) => a.a.order - b.a.order)) {
         const w = (name[p.slug]?.length ?? 3) * 12 + 8;
         // 名札は .apin（48px）の下から 30px の位置に出る。実測すると
         // 丸の中心から 34px 上〜12px 上、高さ 22px。字の大きさから
@@ -182,7 +189,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       { w: SW, h: SH },
     );
     return { country, city };
-  }, [box, k, tx, ty, wide]);
+  }, [box, k, tx, ty, wide, here]);
 
   // 縮尺。寄せると 1000km の棒が地図からはみ出すので、
   // 地図の幅の2割ぐらいに収まる「1・2・5 の切りのいい距離」を選び直す。
@@ -340,7 +347,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
                 key={slug}
                 href={`/map/${slug}`}
                 className={`apin${slug === here ? " is-here" : ""}${
-                  !wide && inBox(a.x, a.y) && !labels.country[slug]?.hide ? " is-named" : ""
+                  labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""
                 }`}
                 style={pos(a.x, a.y)}
               >
