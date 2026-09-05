@@ -79,8 +79,11 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
 
       <Panel>
         <h2>どんなアプリか</h2>
+        {/* この面の主役は画面の絵（`docs/island-world.md` 2章の表）。
+            工房の一覧からは外したので、端末を出すのはここだけになった。
+            そのぶん大きく取る。 */}
         <div className="aapp-split">
-          <PhoneShot width={200} screen={SHOT[a.slug] ?? "food"} />
+          <PhoneShot width={240} screen={SHOT[a.slug] ?? "food"} />
           <div>
             <p>{a.summary}</p>
             <div className="afeat" style={{ marginTop: 12 }}>

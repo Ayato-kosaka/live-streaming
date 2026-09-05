@@ -806,15 +806,66 @@
 
 /* アプリ1本ぶん。主役はアプリの画面なので、絵を大きく置いて
    まわりに言葉を回す（docs/ac-reference.md 7章）。 */
-.aapp-hero { display: grid; gap: 16px; justify-items: center; }
-.aapp-shot { display: block; }
-.aapp-said { min-width: 0; display: grid; gap: 10px; align-content: start; }
-.aapp-id { display: flex; align-items: center; gap: 12px; }
+/* アプリ工房。2本を横に並べる作業台。
+   端末の絵はこの面から外した（`site/app/apps/page.tsx` の頭に理由）。
+   代わりに、アプリそのもの（アイコン）と見くらべる数を出す。 */
+.aworks { display: grid; gap: var(--sp-4); }
+@media (min-width: 900px) { .aworks { grid-template-columns: 1fr 1fr; align-items: start; } }
+.awork { display: grid; gap: var(--sp-4); align-content: start; }
+.awork-id { display: flex; align-items: center; gap: var(--sp-4); }
+.awork-id > div { min-width: 0; display: grid; gap: var(--sp-2); justify-items: start; }
+/* 状態。できることの札（オリーブ）と同じ形にしない。
+   `--marker` の上の字は `--marker-ink`（`docs/island-world.md` 3.2 の表）。 */
+.awork-state {
+  display: inline-flex; align-items: center;
+  border-radius: var(--r-0);
+  padding: var(--sp-1) var(--sp-3);
+  min-height: 26px;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
+  color: var(--marker-ink);
+  background: var(--marker);
+}
+/* 見くらべる数。読むものなので厚みも枠も付けず、罫で仕切る */
+.awork-num {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.awork-num > div { padding: var(--sp-3) var(--sp-2); text-align: center; }
+.awork-num > div + div { border-left: 1px solid var(--rule); }
+.awork-num dt { font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.06em; color: var(--ink-2); }
+.awork-num dd {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-h3); font-weight: 900; letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.awork-num dd i { font-style: normal; font-size: var(--fs-note); margin-left: 1px; }
+
+/* 作業台の上に、いま何が載っているか。外の配信へ出るので押せる＝厚みを付ける */
+.awork-now {
+  display: grid; gap: 3px;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 5px 0 var(--frame-deep);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.awork-now:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
+.awork-now:active { transform: translateY(5px); box-shadow: 0 0 0 var(--frame-deep); }
+.awork-now-t { font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.08em; color: var(--ink-2); }
+.awork-now > b { font-size: var(--fs-body); font-weight: 900; line-height: 1.6; color: var(--ink); }
+.awork-now-go {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--fs-note); font-weight: 900; color: var(--accent-2);
+}
+
 .aapp-logo {
   flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 15px;
+  width: 72px;
+  height: 72px;
+  border-radius: 19px;
   /* 紙の上なので厚みは付けない。物として地面に落ちる影だけ。 */
   box-shadow: var(--shadow-1);
   background: var(--paper-2);
@@ -929,10 +980,7 @@
 .aapp-split p { margin: 0 !important; }
 
 @media (min-width: 700px) {
-  /* 広い画面では端末を左、言葉を右。言葉の列は端末と同じ高さまで伸ばして、
-     中身を上下に振り分ける。上で詰めると端末の右下が 200px ぽっかり空く。 */
-  .aapp-hero { grid-template-columns: auto minmax(0, 1fr); align-items: stretch; justify-items: start; gap: 24px; }
-  .aapp-said { width: 100%; align-content: space-between; }
+  /* 広い画面ではアプリ1本の面の端末を左、言葉を右 */
   .aapp-split { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
   .acards { grid-template-columns: repeat(3, 1fr); }
   .afeat { grid-template-columns: repeat(2, 1fr); }
