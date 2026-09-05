@@ -660,6 +660,23 @@ const SPRITES_BASE = [
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
   { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
   { name: "tree-palm-bend", parts: [`${NK}/tree_palmBend.glb`] },
+  /* ナツメヤシ。中東の島の木。
+     Kenney のキットに無いので render.html の datePalm で組む
+     （`docs/island-atlas.md` 9章「まだ無いもの」に挙がっていたもの）。
+     大人の木・若木・実の付いていない木の3本。同じ木が並ぶと林が壁紙に見えるので、
+     種を変えて葉の向きと長さを振ってある。 */
+  { name: "tree-date", parts: [{ palm: {
+    seed: 7, h: 1.95, r0: 0.175, r1: 0.132, rings: 13, fronds: 13,
+    len: 1.18, w: 0.42, dates: 3,
+  } }] },
+  { name: "tree-date-short", parts: [{ palm: {
+    seed: 23, h: 0.92, r0: 0.16, r1: 0.128, rings: 7, fronds: 11,
+    len: 0.98, w: 0.40, dates: 0,
+  } }] },
+  { name: "tree-date-young", parts: [{ palm: {
+    seed: 91, h: 1.42, r0: 0.165, r1: 0.128, rings: 10, fronds: 12,
+    len: 1.06, w: 0.40, lean: -0.11, dates: 1,
+  } }] },
   // 同じ木ばかり並ぶと林が壁紙に見える。輪郭の違うものを足す
   { name: "tree-simple", parts: [`${NK}/tree_simple.glb`], opts: LEAFY },
   { name: "tree-narrow", parts: [`${NK}/tree_tall.glb`], opts: LEAFY_SOFT },
