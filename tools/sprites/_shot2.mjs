@@ -17,7 +17,7 @@ const st = await p.$(".stage");
 const views = [["close", null], ["shore", "120 700 460 420"], ["grass", "430 600 400 360"], ["wide", "-60 40 1320 1200"]];
 for (const [name, vb] of views) {
   if (vb) { await p.evaluate(v => document.querySelector(".stage-svg").setAttribute("viewBox", v), vb); await p.waitForTimeout(700); }
-  await st.screenshot({ path: `${OUT}-${name}.png`, timeout: 600000 });
+  await p.screenshot({ path: `${OUT}-${name}.png`, clip: { x: 0, y: 0, width: 390, height: 760 }, timeout: 600000 });
   console.log("saved", name);
 }
 await b.close();

@@ -139,7 +139,7 @@ export function Tie({ leg, needsFare, cost, before, reach }: TieProps) {
 
   return (
     <p className={`rtie${tied ? " is-tied" : ""}`}>
-      <TieMark tied={tied} size={30} />
+      <TieMark tied={tied} size={34} />
       <span>{say}</span>
     </p>
   );

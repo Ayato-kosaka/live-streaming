@@ -30,7 +30,10 @@ renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// PCFSoftShadowMap は今の three では廃止されていて、黙って PCF に落ちる。
+// PCF は radius を見るので、ぼかし幅を自分で決められる。落ちるのに任せると
+// 「柔らかいつもりで硬い影」になるので、こちらを名指しで使う
+renderer.shadowMap.type = THREE.PCFShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -67,7 +70,11 @@ sun.castShadow = true;
 // 2048 に半径 8 と、1024 に半径 4 は、まったく同じぼけ方になる。
 // やわらかい影の計算はソフトウェア描画でいちばん重いので、無駄に細かくしない
 sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.radius = 4;
+/* 半径 4 だと、影が物の形をそのままなぞる。葉の房のあいだの隙間まで
+ * 地面に写って、木の足元に穴の空いたドーナツができていた。あつ森の接地影は
+ * 形をなぞらない「ひとかたまりの柔らかい楕円」なので、隙間が埋まるところまで広げる。
+ * PCF の読み取り回数は半径によらず一定なので、広げても焼く時間は変わらない。 */
+sun.shadow.radius = 14;
 sun.shadow.bias = -0.0009;
 scene.add(sun);
 
@@ -663,9 +670,14 @@ function mossGeometry(geo, moss, stone) {
     // これが無いと境目が白く光って輪郭のように見えてしまう。
     // 本物の苔も、石に接するきわが少し暗い
     const rim = 1 - 0.17 * (4 * m * (1 - m));
-    col[i * 3] = (stone.r + (moss.r - stone.r) * m) * rim;
-    col[i * 3 + 1] = (stone.g + (moss.g - stone.g) * m) * rim;
-    col[i * 3 + 2] = (stone.b + (moss.b - stone.b) * m) * rim;
+    // 苔の中も一様に塗らない。縁だけギザギザにしても、中が平らだと
+    // 島に置いた大きさでは「緑のシールを貼った石」のままだった。
+    // 苔は房の集まりなので、中に濃淡を入れて初めて生えているものに見える
+    const speck = 1 + (cellNoise(x, y, z, 2.6 / feather) - 0.5) * 0.20 * m
+      + (cellNoise(x, y, z, 6.1 / feather) - 0.5) * 0.10 * m;
+    col[i * 3] = (stone.r + (moss.r - stone.r) * m) * rim * speck;
+    col[i * 3 + 1] = (stone.g + (moss.g - stone.g) * m) * rim * speck;
+    col[i * 3 + 2] = (stone.b + (moss.b - stone.b) * m) * rim * speck;
   }
   g.setAttribute("color", new THREE.BufferAttribute(col, 3));
   g.computeVertexNormals();

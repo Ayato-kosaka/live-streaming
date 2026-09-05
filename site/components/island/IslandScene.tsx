@@ -38,15 +38,24 @@ function oval(x: number, y: number, rx: number, ry: number): string {
  * 面で割れていて、角がはっきりある。多角形にして半径をばらすと、
  * 同じ要素数のまま石らしくなる。
  */
-function facet(x: number, y: number, rx: number, ry: number, n: number, r: () => number): string {
-  const f = (v: number) => v.toFixed(1);
-  let d = "";
+function facetPts(x: number, y: number, rx: number, ry: number, n: number, r: () => number): Pt[] {
+  const out: Pt[] = [];
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2 + (r() - 0.5) * 0.42;
     const k = 0.78 + r() * 0.22;
-    d += `${i ? "L" : "M"}${f(x + Math.cos(a) * rx * k)},${f(y + Math.sin(a) * ry * k)}`;
+    out.push([x + Math.cos(a) * rx * k, y + Math.sin(a) * ry * k]);
   }
-  return d + "Z";
+  return out;
+}
+
+/** 点列を1本の折れ線に。dx dy だけずらした写しも作れる（石の下面に使う）。 */
+function poly(pts: Pt[], dx = 0, dy = 0): string {
+  const f = (v: number) => v.toFixed(1);
+  return pts.map(([x, y], i) => `${i ? "L" : "M"}${f(x + dx)},${f(y + dy)}`).join("") + "Z";
+}
+
+function facet(x: number, y: number, rx: number, ry: number, n: number, r: () => number): string {
+  return poly(facetPts(x, y, rx, ry, n, r));
 }
 
 /** 草の株。葉を数枚、根元から扇に開く。草むらにも浜の草にも同じ形を使う。 */
@@ -79,6 +88,7 @@ export type Deco = { k: DecoKind; x: number; y: number; s: number };
 /** 色ごとのバケツ。塗る色が同じものは、何個あっても1本のパスに入る。 */
 type DecoPaths = {
   shade: string;
+  rockDark: string;
   rock: string;
   rockLit: string;
   bush: string;
@@ -94,7 +104,7 @@ type DecoPaths = {
 function bakeDeco(list: Deco[], seed: number): DecoPaths {
   const r = rng(seed);
   const b: DecoPaths = {
-    shade: "", rock: "", rockLit: "", bush: "", bushLit: "",
+    shade: "", rockDark: "", rock: "", rockLit: "", bush: "", bushLit: "",
     bark: "", barkTop: "", cap: "", stem: "", tuft: "", tuftLit: "",
   };
   for (const it of list) {
@@ -103,7 +113,10 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
       const w = s * 1.34;
       // 影は光源の反対（右下）へずらす。真下だと物が地面に乗って見えない
       b.shade += oval(x + w * 0.12, y + s * 0.1, w * 0.6, s * 0.3);
-      b.rock += facet(x, y - s * 0.42, w * 0.5, s * 0.5, 6, r);
+      // 同じ形を少し下にずらして暗く敷く。平らな紙に見えなくなる
+      const pts = facetPts(x, y - s * 0.42, w * 0.5, s * 0.5, 6, r);
+      b.rockDark += poly(pts, w * 0.02, s * 0.12);
+      b.rock += poly(pts);
       b.rockLit += facet(x - w * 0.12, y - s * 0.62, w * 0.28, s * 0.26, 5, r);
     } else if (it.k === "bush") {
       const w = s * 1.12;
@@ -155,6 +168,7 @@ function DecoLayer({ p, shade }: { p: DecoPaths; shade: string }) {
       <path d={p.bushLit} fill="var(--grass-hi)" />
       <path d={p.bark} fill="#8a5c36" />
       <path d={p.barkTop} fill="#c69a63" />
+      <path d={p.rockDark} fill="#6f7c84" />
       <path d={p.rock} fill="#8d9aa0" />
       <path d={p.rockLit} fill="#c3ccd0" />
       <path d={p.cap} fill="#e2522d" />

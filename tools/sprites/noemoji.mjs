@@ -8,7 +8,8 @@ import { join } from "path";
  * ただし配信のタイトルと視聴者さんの文章は引用なので、そのまま出す。
  * ここではその2つを除いて数える。
  */
-const ROOT = "/home/user/live-streaming/site/.next-verify";
+/** 見にいく書き出し先。並列で作業するとき、担当ごとに別の dist を持つので env で受ける。 */
+const ROOT = process.env.DIST || "/home/user/live-streaming/site/.next-verify";
 // 絵文字・地域表示記号（国旗）・異体字セレクタ
 const RE = /[\u{1F000}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{2600}-\u{27BF}]/gu;
 /** 引用としてそのまま出しているもの。ここに当たる行は数えない。 */
@@ -31,7 +32,9 @@ for (const f of walk(ROOT)) {
   let s = readFileSync(f, "utf8");
   s = s.replace(/<script[^>]*>[\s\S]*?<\/script>/g, "");
   // 配信タイトルなど、引用として出している塊を落とす
-  s = s.replace(/<a class="scard[\s\S]*?<\/a>/g, "").replace(/<figcaption[\s\S]*?<\/figcaption>/g, "");
+  // 配信カード（`components/streams/Vid.tsx`）の中身も YouTube の実在するタイトル。
+  // 「ジョージア🇬🇪で水餃子作りました」は引用なので、こちらで直すものではない。
+  s = s.replace(/<a class="(scard|vid)[\s\S]*?<\/a>/g, "").replace(/<figcaption[\s\S]*?<\/figcaption>/g, "");
   s = s.replace(/"title":"[^"]*"/g, "");
   for (const m of s.matchAll(RE)) {
     const k = m[0];

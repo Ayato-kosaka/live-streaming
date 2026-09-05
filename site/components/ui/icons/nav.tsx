@@ -143,10 +143,17 @@ export const nav: Record<string, Draw> = {
     </g>
   ),
 
-  /** もう一度。輪の一部を欠いて、そこに矢じりを付ける。 */
+  /** もう一度。輪を4分の3だけ描いて、切れたところに矢じりを付ける。 */
   refresh: () => (
-    <g fill="currentColor">
-      <path d="M32 8a24 24 0 1 1-22.6 32 4.6 4.6 0 0 1 8.7-3A14.8 14.8 0 1 0 32 17.2h-1.4l3.6 3.6a4.4 4.4 0 0 1-6.2 6.2l-9.4-9.4a4.4 4.4 0 0 1 0-6.2l9.4-9.4a4.4 4.4 0 0 1 6.2 6.2L30.6 12H32z" />
-    </g>
+    <>
+      <path
+        d="M32 12A20 20 0 1 1 14.8 42"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="9"
+        strokeLinecap="round"
+      />
+      <path d="M28.5 2 44 12 28.5 22z" fill="currentColor" />
+    </>
   ),
 };
