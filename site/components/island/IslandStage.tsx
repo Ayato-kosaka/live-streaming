@@ -978,7 +978,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
            寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。 */
         const taken = uiBoxes.current.slice();
         /** この画面の札の居場所。ぜんぶ出そろってから、縁へ寄せるものを決める */
-        const plates: { i: number; el: HTMLDivElement; rect: { x: number; y: number; w: number; h: number }; out: boolean }[] = [];
+        const plates: {
+          i: number;
+          el: HTMLDivElement;
+          /** 建物の足元（画面px）。矢がどっちを指すかはここから決まる */
+          fx: number;
+          fy: number;
+          rect: { x: number; y: number; w: number; h: number };
+          out: boolean;
+        }[] = [];
         const pad = 8;
         /* 上は「あと◯日」のシールのぶん、下はスマホの下バーと隅のボタンのぶん空ける。
            バーの上に札が乗ると、島の道具と行き先が同じ層で重なって読めない。 */
@@ -1014,7 +1022,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                「今日ここに何かある」の1枚は 10px 跳ねる（spotHop）ので、
                計算どおりの箱で詰めると、跳ねた先で隣に食い込む。
                紙一重で通すより、6px ずつ広く見て余らせるほうが読める。 */
-            const gy = todayRef.current === sp.id ? 13 : 6;
+            // 「あと◯日」のシールは板の外（真上）に出ているので、その背も箱に入れる
+            const gy = (todayRef.current === sp.id ? 13 : 6) + (sp.countdown ? 26 : 0);
             const rect = { x: px - sz.w / 2 - 6, y: py - mh - 12 - sz.h - gy, w: sz.w + 12, h: sz.h + gy + 6 };
             const out =
               rect.x < pad ||
@@ -1032,7 +1041,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               );
             // 画面に入っている札は、寄せる札が避ける相手になる
             if (!out) taken.push(rect);
-            plates.push({ i, el, rect, out });
+            plates.push({ i, el, fx: px, fy: py, rect, out });
           } else if (edgeAt.current[i]) {
             edgeAt.current[i] = "";
             el.removeAttribute("data-edge");
@@ -1085,8 +1094,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す。
                「どっちへ押しやったか」で決めると、上へはみ出した札を下げたときに
                建物と反対を指す（札はもともと建物の頭の上に出るので）。 */
-            const ax = px - (left + rect.w / 2);
-            const ay = py - (top + rect.h / 2);
+            const ax = pl.fx - (left + rect.w / 2);
+            const ay = pl.fy - (top + rect.h / 2);
             dir = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
           }
           if (dir !== edgeAt.current[pl.i]) {

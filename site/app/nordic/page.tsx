@@ -169,11 +169,9 @@ export default async function NordicPage() {
         <RouteMapSvg />
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
             和文の途中に空きが1つ入る（書き出した HTML の画素で拾った）。 */}
-        {/* 「下の区間を開くと、その線に帯が敷かれます」を書いていた。
-            画面の使い方の説明で、読んでも何もできない。開けば分かる。 */}
-        <p className="nmap-say">
-          いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
-        </p>
+        {/* 「いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です」
+            を書いていた。**すぐ上の説明が同じことを言っている**（飛行機はポーランドまで、
+            そこから先は人の車）。地図の下でもう一度言わない。 */}
         {/* 線の読み方。**畳んである。** 6種類の線の見本は、地図を読むために
             要るものではあるが、初めて開いた人が最初に読むものではない。
             開いたままだと 200px、地図そのものと同じだけの場所を使っていた。 */}
@@ -238,7 +236,7 @@ export default async function NordicPage() {
       <section className="panel paper" id="say">
         <h2>この旅に、言う</h2>
         <p className="muted">
-          行き先も、やることも、まだ決まっていないところがあります。行く前に全部読みます。
+          まだ決まっていないところがあります。行く前に、全部読みます。
         </p>
         <Asks items={asks} />
         <h3 className="nsub">やってほしいことを書く</h3>
@@ -246,7 +244,7 @@ export default async function NordicPage() {
           bare
           foldWrite
           country="北欧旅"
-          note="ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。"
+          note="ルートへの口出しも、やってほしい企画も、知り合いの話も。"
           placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
         />
       </section>
@@ -257,7 +255,7 @@ export default async function NordicPage() {
       <section className="panel paper" id="back">
         <h2>応援する</h2>
         <p className="muted">
-          出さなくても旅は行きます。飛行機はもう取ってあるし、乗せてもらうぶんはただです。お金が要るのは船と、泊まるところだけです。
+          出さなくても旅は行きます。乗せてもらうぶんはただで、お金が要るのは船と泊まるところだけです。
         </p>
         <Support />
         <ul className="nback-what">
