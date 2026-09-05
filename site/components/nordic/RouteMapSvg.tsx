@@ -1,200 +1,243 @@
 import Link from "next/link";
 import MAP from "@/content/nordic/map.json";
-import { NORDIC_COUNTRIES } from "@/content/nordic";
+import { NORDIC_COUNTRIES, ROUTE } from "@/content/nordic";
 
 /**
  * 北欧ルートの地図。
  *
  * 形は本物。Natural Earth の海岸線を切り出して、ランベルト正角円錐で投影してある
- * （`python/build_nordic_map.py`）。塗りと線は島とそろえていて、
- * 輪郭線を引かず、砂の縁と浅瀬の帯で陸と海を分ける。
+ * （`python/build_nordic_map.py`）。街・ルート・国名・縮尺・方位も、ぜんぶ
+ * あのスクリプトが座標まで計算して焼き込んでいる。
+ * **ここで経度緯度から座標を計算し直さないこと。必ずズレる。**
  *
- * 街とルートの座標も同じスクリプトで焼き込んである。
- * ここで経度緯度から座標を計算し直すと必ずズレるので、やらないこと。
+ * 塗りは島と同じ作り。輪郭線を引かず、
+ *   深い海 → 浅瀬 → 白い泡 → 濡れた砂 → 砂浜 → 草
+ * の帯で陸と海を分ける（docs/ac-reference.md 2章）。
+ * 色はぜんぶ CSS 変数。生の色をここに書くと、島の色を変えたときに
+ * 地図だけ取り残されて浮く。
  */
 
-/** 街の名札をどちらに出すか。近い街どうしがぶつからないよう手で決める。 */
+/**
+ * 街の名札をどちらに出すか。
+ * 近い街どうしがぶつからないよう、実際に描いた絵を見て手で決める。
+ * w は当たり判定の幅。指で押せる大きさを名札のぶんだけ稼ぐために使う。
+ */
 const LABEL: Record<string, { dx: number; dy: number; at: "start" | "middle" | "end" }> = {
-  katowice: { dx: -18, dy: -12, at: "end" },
-  krakow: { dx: 20, dy: 12, at: "start" },
-  oswiecim: { dx: -14, dy: 34, at: "end" },
-  warszawa: { dx: 20, dy: 8, at: "start" },
-  bialystok: { dx: 20, dy: 8, at: "start" },
-  vilnius: { dx: 20, dy: 10, at: "start" },
-  siauliai: { dx: -18, dy: 6, at: "end" },
-  riga: { dx: 20, dy: 6, at: "start" },
-  tallinn: { dx: 20, dy: 12, at: "start" },
-  helsinki: { dx: 20, dy: -10, at: "start" },
-  stockholm: { dx: -20, dy: 4, at: "end" },
+  katowice: { dx: -20, dy: -16, at: "end" },
+  krakow: { dx: 24, dy: 24, at: "start" },
+  oswiecim: { dx: -18, dy: 42, at: "end" },
+  warszawa: { dx: 26, dy: 10, at: "start" },
+  bialystok: { dx: 26, dy: 10, at: "start" },
+  vilnius: { dx: 26, dy: 12, at: "start" },
+  siauliai: { dx: -24, dy: 8, at: "end" },
+  riga: { dx: -26, dy: 4, at: "end" },
+  tallinn: { dx: 26, dy: 14, at: "start" },
+  helsinki: { dx: 26, dy: -10, at: "start" },
+  stockholm: { dx: -26, dy: 6, at: "end" },
 };
 
-/**
- * 国の塗り。島の草地と同じ緑で、南から北へ少しずつ寒色に寄せる。
- * 国ごとのブランド色（青や赤）で塗ると政治地図になってしまい、島の世界から浮く。
- */
-const FILL: Record<string, string> = {
-  poland: "#a8d466",
-  lithuania: "#8ac773",
-  latvia: "#a0cf7c",
-  estonia: "#79bd8b",
-  finland: "#93c98a",
-  sweden: "#6ab89b",
+/** 区間の線の描き方。太さだけここで決めて、色は CSS 変数に逃がす。 */
+const LEG: Record<string, { cls: string; width: number; dash?: string }> = {
+  hitch: { cls: "is-hitch", width: 11 },
+  ferry: { cls: "is-ferry", width: 8, dash: "4 20" },
+  side: { cls: "is-side", width: 6, dash: "3 14" },
 };
 
-/**
- * 国名の置き場所。重心だと海や隣国に出るので、地図を見て手で決める。
- * [x, y, 文字の大きさ]
- */
-const COUNTRY_AT: Record<string, [number, number, number]> = {
-  poland: [268, 800, 36],
-  lithuania: [528, 578, 25],
-  latvia: [592, 432, 25],
-  estonia: [600, 268, 25],
-  finland: [656, 96, 28],
-  sweden: [196, 336, 30],
-};
+/** ピンの大きさ。泊まる街を大きく、通るだけの街を小さく。 */
+const PIN: Record<string, number> = { goal: 15, stay: 12, pass: 9, side: 8, land: 9 };
 
-const LEG_STYLE: Record<string, { stroke: string; width: number; dash?: string }> = {
-  hitch: { stroke: "var(--route-hitch, #f0a530)", width: 9 },
-  ferry: { stroke: "var(--route-ferry, #ffffff)", width: 7, dash: "3 16" },
-  side: { stroke: "var(--route-side, #e2b46a)", width: 5, dash: "2 12" },
-};
+/** 凡例。地図の中に置くぶんは、線の見分けだけに絞る。 */
+const KEYS: { cls: string; label: string; dash?: string; width: number }[] = [
+  { cls: "is-hitch", label: "ヒッチハイク", width: 11 },
+  { cls: "is-ferry", label: "フェリー", width: 8, dash: "4 20" },
+  { cls: "is-side", label: "寄り道", width: 6, dash: "3 14" },
+];
 
 export default function RouteMapSvg({ here }: { here?: string }) {
-  const { view, land, context, countries, cities, legs, fly } = MAP;
+  const { view, land, countries, cities, legs, fly } = MAP;
+  const { lakes, rivers, grid, woods, glints, labels, seas, scale, north } = MAP;
   const name = Object.fromEntries(NORDIC_COUNTRIES.map((c) => [c.slug, c.name]));
+  const cityName = Object.fromEntries(cities.map((c) => [c.id, c.name]));
+
+  // 距離は content/nordic.ts のルートが持っているものをそのまま使う。
+  // 地図の側にもう一組 km を書くと、片方だけ直したときに黙って食い違う。
+  // 街の名前で引き当てる（「オシフィエンチム（アウシュヴィッツ）」のような
+  // 補足つきの表記があるので、括弧から先は落として比べる）。
+  const bare = (s: string) => s.replace(/（.*$/, "");
+  const km = new Map(ROUTE.map((l) => [`${bare(l.from)}|${bare(l.to)}`, l.km]));
+
+  // 凡例の板。左上はノルウェー沖で、ルートからいちばん遠い。
+  // 左下に置くとカトヴィツェとオシフィエンチムの名札にぶつかる。
+  const lg = { x: 24, y: 24, w: 330, h: 234 };
 
   return (
     <svg
       className="nmap"
       viewBox={`0 0 ${view.w} ${view.h}`}
       role="img"
-      aria-label="ジョージアを出て、ポーランドからバルト三国を北上し、北欧へ抜けるルートの地図"
+      aria-label="ジョージアを出て、ポーランドからバルト三国を北上し、フェリーで北欧へ抜けるルートの地図"
     >
       <defs>
-        <linearGradient id="nmSea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#5aa8c0" />
-          <stop offset="1" stopColor="#2f7391" />
+        <linearGradient id="nmSea" x1="0.1" y1="0" x2="0.35" y2="1">
+          <stop className="nm-sea-a" offset="0" />
+          <stop className="nm-sea-b" offset="0.52" />
+          <stop className="nm-sea-c" offset="1" />
         </linearGradient>
-        <linearGradient id="nmLand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#d7e2ae" />
-          <stop offset="1" stopColor="#c6d59c" />
+        <linearGradient id="nmLand" x1="0" y1="0" x2="0.2" y2="1">
+          <stop className="nm-land-a" offset="0" />
+          <stop className="nm-land-b" offset="1" />
         </linearGradient>
-        <filter id="nmSoft" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="6" />
+        <radialGradient id="nmGlint">
+          <stop className="nm-glint-a" offset="0" />
+          <stop className="nm-glint-b" offset="1" />
+        </radialGradient>
+        {/* 浅瀬はふちをぼかす。かたい切り替わりを作らない（島の絵の原則） */}
+        <filter id="nmShelf" x="-8%" y="-8%" width="116%" height="116%">
+          <feGaussianBlur stdDeviation="11" />
         </filter>
+        <filter id="nmDrop" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.28" />
+        </filter>
+        <clipPath id="nmLandClip">
+          <path d={land} />
+        </clipPath>
       </defs>
 
-      {/* 海 */}
+      {/* ---- 海 ---------------------------------------------------- */}
       <rect width={view.w} height={view.h} fill="url(#nmSea)" />
-      {/* 島と同じ、うっすら流れる波 */}
-      <g opacity="0.16" fill="none" stroke="#fffdf6" strokeWidth="3" strokeLinecap="round">
-        {Array.from({ length: 14 }, (_, i) => {
-          const y = 40 + i * 70;
+      {/* うねり。島の海と同じ、うっすら流れる線 */}
+      <g className="nm-swell">
+        {Array.from({ length: 17 }, (_, i) => {
+          const y = 30 + i * 58;
           return (
             <path
               key={i}
-              d={`M${(i % 3) * 90 - 40} ${y}q40 -12 80 0t80 0t80 0t80 0t80 0t80 0t80 0t80 0t80 0t80 0`}
+              d={`M${(i % 3) * 96 - 60} ${y}q46 -13 92 0t92 0t92 0t92 0t92 0t92 0t92 0t92 0t92 0t92 0t92 0t92 0`}
             />
           );
         })}
       </g>
+      {/* きらめき。陸から離れた開いた海にだけ置いてある（ac-reference 1章） */}
+      <g className="nm-glints">
+        {glints.map(([x, y, r], i) => (
+          <ellipse key={i} cx={x} cy={y} rx={r} ry={r * 0.42} fill="url(#nmGlint)" />
+        ))}
+      </g>
 
-      {/* 浅瀬 → 砂 → 陸。島の砂浜とおなじ重ね方。 */}
-      <path d={land} fill="none" stroke="#8fd0dd" strokeWidth="30" strokeLinejoin="round" opacity="0.5" filter="url(#nmSoft)" />
-      <path d={land} fill="none" stroke="#f1dcaa" strokeWidth="13" strokeLinejoin="round" />
-      <path d={land} fill="url(#nmLand)" />
-      <path d={context} fill="#c8d49b" />
+      {/* ---- 岸。沖から順に 浅瀬 → 泡 → 濡れた砂 ------------------- */}
+      <path className="nm-shelf" d={land} filter="url(#nmShelf)" />
+      <path className="nm-shallow" d={land} />
+      <path className="nm-foam-lace" d={land} />
+      <path className="nm-foam" d={land} />
 
-      {/* 通る国。島の草地と同じ緑で、北へ行くほど寒色に寄せる。 */}
+      {/* ---- 陸 ---------------------------------------------------- */}
+      {/* 通らない国どうしの境は描かない。描くと政治の地図になって、
+          通る6カ国が主役だということが伝わらなくなる。 */}
+      <path className="nm-land" d={land} fill="url(#nmLand)" />
       {Object.entries(countries).map(([slug, d]) => (
-        <path key={slug} d={d} fill={FILL[slug] ?? "#8fc95e"} />
+        <path key={slug} className={`nm-c nm-c-${slug}`} d={d} />
       ))}
-      {/* 国の境。かたい線は引かず、内側にだけ落ちる淡い影で分ける。 */}
+      {/* 国の境。かたい線は引かず、両側に落ちる淡い影だけで分ける。 */}
       {Object.entries(countries).map(([slug, d]) => (
-        <path
-          key={`e${slug}`}
-          d={d}
-          fill="none"
-          stroke="#35704a"
-          strokeWidth="4"
-          opacity="0.38"
-        />
+        <path key={`s${slug}`} className="nm-seam" d={d} />
       ))}
+      {/* 砂浜。陸の内側にだけ出す（外は濡れた砂と泡が受け持つ） */}
+      <g clipPath="url(#nmLandClip)">
+        <path className="nm-sand" d={land} />
+        <path className="nm-sand-wet" d={land} />
+      </g>
 
-      {/* 国名。塗りの上、ルートの下。 */}
-      {Object.entries(COUNTRY_AT).map(([slug, at]) => (
-        <text
-          key={slug}
-          className="nmap-country"
-          x={at[0]}
-          y={at[1]}
-          fontSize={at[2]}
-          textAnchor="middle"
-        >
+      {/* ---- 地面の情報量 ------------------------------------------ */}
+      {/* 森。海岸から離れたところにだけ散らしてある。北の国ほど濃い。 */}
+      <g className="nm-woods">
+        {woods.map(([x, y, r], i) => (
+          <ellipse key={i} cx={x} cy={y} rx={r} ry={r * 0.78} />
+        ))}
+      </g>
+      <path className="nm-lake" d={lakes} />
+      <path className="nm-river" d={rivers} />
+      <path className="nm-grid" d={grid} />
+
+      {/* ---- 名前 -------------------------------------------------- */}
+      {seas.map((s) => (
+        <text key={s.name} className="nm-sea-name" x={s.x} y={s.y} fontSize={s.size} textAnchor="middle">
+          {s.name}
+        </text>
+      ))}
+      {Object.entries(labels).map(([slug, l]) => (
+        <text key={slug} className="nm-country" x={l.x} y={l.y} fontSize={l.size} textAnchor="middle">
           {name[slug]}
         </text>
       ))}
 
-      {/* ジョージアからの飛行機。画面の外から入ってくる。 */}
-      <path d={fly.d} fill="none" stroke="#fffdf6" strokeWidth="5" strokeDasharray="14 12" opacity="0.75" strokeLinecap="round" />
-      <g className="nmap-chip" transform={`translate(${view.w - 372} ${view.h * 0.86 - 54})`}>
-        <rect x="0" y="0" width="352" height="48" rx="24" />
-        <text x="176" y="32" textAnchor="middle">
+      {/* ---- ジョージアからの飛行機。画面の外から入ってくる -------- */}
+      <path className="nm-fly" d={fly.d} />
+      <g className="nm-chip" transform={`translate(${fly.chip[0]} ${fly.chip[1]})`}>
+        <rect x="-172" y="-25" width="344" height="50" rx="25" />
+        <text x="0" y="8" textAnchor="middle">
           クタイシから 3時間35分
         </text>
       </g>
 
-      {/* ルート。ヒッチハイクの区間だけ太く濃く。 */}
+      {/* ---- ルート ------------------------------------------------ */}
       {legs.map((l) => {
-        const s = LEG_STYLE[l.move] ?? LEG_STYLE.hitch;
+        const s = LEG[l.move] ?? LEG.hitch;
         return (
-          <g key={`${l.from}-${l.to}`}>
-            <path d={l.d} fill="none" stroke="#20536b" strokeWidth={s.width + 5} strokeLinecap="round" opacity="0.28" />
-            <path
-              d={l.d}
-              fill="none"
-              stroke={s.stroke}
-              strokeWidth={s.width}
-              strokeLinecap="round"
-              strokeDasharray={s.dash}
-            />
+          <g key={`${l.from}-${l.to}`} className={`nm-leg ${s.cls}`}>
+            <path className="nm-leg-case" d={l.d} strokeWidth={s.width + 7} />
+            <path className="nm-leg-line" d={l.d} strokeWidth={s.width} strokeDasharray={s.dash} />
+            {l.marks.map(([mx, my, ang], i) => (
+              <path
+                key={i}
+                className="nm-arrow"
+                d="M-5 -7L7 0L-5 7Z"
+                transform={`translate(${mx} ${my}) rotate(${ang})`}
+              />
+            ))}
+            {l.kmAt && km.get(`${cityName[l.from]}|${cityName[l.to]}`) && (
+              <text className="nm-km" x={l.kmAt[0]} y={l.kmAt[1]} textAnchor="middle">
+                {km.get(`${cityName[l.from]}|${cityName[l.to]}`)}km
+              </text>
+            )}
           </g>
         );
       })}
 
-      {/* 街 */}
+      {/* ---- 街 ---------------------------------------------------- */}
       {cities.map((c) => {
-        const lb = LABEL[c.id] ?? { dx: 16, dy: 6, at: "start" as const };
+        const lb = LABEL[c.id] ?? { dx: 24, dy: 8, at: "start" as const };
         const big = c.kind === "stay" || c.kind === "goal";
-        const r = c.kind === "goal" ? 13 : big ? 10 : 7;
+        const r = PIN[c.kind] ?? 9;
+        const fs = big ? 32 : 26;
+        // 名札の当たり判定。文字幅はカタカナなので、字数×文字サイズでほぼ合う。
+        const tw = c.name.length * fs + 12;
+        const tx = lb.at === "end" ? c.x + lb.dx - tw : c.x + lb.dx;
         return (
-          <Link key={c.id} href={`/nordic/${c.country}`} className="nmap-pin">
-            <circle cx={c.x} cy={c.y} r={r + 4} fill="#20536b" opacity="0.3" />
-            <circle cx={c.x} cy={c.y} r={r} fill="#fffdf6" />
-            <circle
-              cx={c.x}
-              cy={c.y}
-              r={r - 4}
-              fill={c.kind === "goal" ? "#e0603c" : c.kind === "side" ? "#b9924e" : "#f0a530"}
-            />
+          <Link key={c.id} href={`/nordic/${c.country}`} className={`nmap-pin is-${c.kind}`}>
+            {/* 指で押せる幅を稼ぐ。絵は小さくても、押せる場所は絵とピンの周り。 */}
+            <rect className="nm-hit" x={c.x - 34} y={c.y - 34} width="68" height="68" rx="34" />
+            <rect className="nm-hit" x={tx} y={c.y + lb.dy - fs} width={tw} height={fs + 14} rx="10" />
+            <ellipse className="nm-pin-shadow" cx={c.x} cy={c.y + r * 0.5} rx={r * 1.15} ry={r * 0.5} />
+            <circle className="nm-pin-ring" cx={c.x} cy={c.y} r={r} />
+            <circle className="nm-pin-dot" cx={c.x} cy={c.y} r={r - 5} />
             <text
-              className={`nmap-city${big ? " is-big" : ""}`}
+              className={`nm-city${big ? " is-big" : ""}`}
               x={c.x + lb.dx}
               y={c.y + lb.dy}
+              fontSize={fs}
               textAnchor={lb.at}
             >
               {c.name}
             </text>
             {here === c.id && (
-              <g>
-                <circle cx={c.x} cy={c.y} r={r + 12} fill="none" stroke="#fffdf6" strokeWidth="4" opacity="0.9">
-                  <animate attributeName="r" values={`${r + 6};${r + 20}`} dur="1.8s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.9;0" dur="1.8s" repeatCount="indefinite" />
+              <g className="nm-here">
+                <circle cx={c.x} cy={c.y} r={r + 14} fill="none">
+                  <animate attributeName="r" values={`${r + 6};${r + 30}`} dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.95;0" dur="2s" repeatCount="indefinite" />
                 </circle>
-                <g className="nmap-chip is-here" transform={`translate(${c.x - 62} ${c.y - r - 58})`}>
-                  <rect x="0" y="0" width="124" height="42" rx="21" />
-                  <text x="62" y="29" textAnchor="middle">
+                <g className="nm-chip is-here" transform={`translate(${c.x} ${c.y - r - 44})`}>
+                  <rect x="-76" y="-24" width="152" height="48" rx="24" />
+                  <text x="0" y="9" textAnchor="middle">
                     いま ここ
                   </text>
                 </g>
@@ -203,6 +246,47 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           </Link>
         );
       })}
+
+      {/* ---- 方位 -------------------------------------------------- */}
+      {/* 正角円錐なので真北は場所で傾く。傾きも焼き込んである。 */}
+      <g className="nm-compass" transform={`translate(${north.x} ${north.y})`}>
+        <circle className="nm-compass-disc" r="46" />
+        <g transform={`rotate(${north.deg})`}>
+          <path className="nm-compass-n" d="M0 -36L11 6L0 -3L-11 6Z" />
+          <path className="nm-compass-s" d="M0 36L11 6L0 -3L-11 6Z" />
+        </g>
+        <text className="nm-compass-t" x="0" y="-46" textAnchor="middle">
+          N
+        </text>
+      </g>
+
+      {/* ---- 凡例と縮尺 -------------------------------------------- */}
+      <g className="nm-legend" transform={`translate(${lg.x} ${lg.y})`}>
+        <rect x="0" y="0" width={lg.w} height={lg.h} rx="28" filter="url(#nmDrop)" />
+        {KEYS.map((k, i) => (
+          <g key={k.label} className={`nm-leg ${k.cls}`} transform={`translate(22 ${40 + i * 42})`}>
+            <path className="nm-leg-case" d="M0 0h70" strokeWidth={k.width + 7} />
+            <path className="nm-leg-line" d="M0 0h70" strokeWidth={k.width} strokeDasharray={k.dash} />
+            <text className="nm-legend-t" x="86" y="10">
+              {k.label}
+            </text>
+          </g>
+        ))}
+        <g transform={`translate(22 ${40 + 3 * 42})`}>
+          <path className="nm-fly" d="M0 0h70" />
+          <text className="nm-legend-t" x="86" y="10">
+            飛行機
+          </text>
+        </g>
+        {/* 縮尺。km は投影から計算して焼いてある。 */}
+        <g transform={`translate(22 ${lg.h - 32})`}>
+          <path className="nm-scale-bar" d={`M0 0h${scale.len}`} />
+          <path className="nm-scale-tick" d={`M0 -8v16M${scale.len} -8v16M${scale.len / 2} -5v10`} />
+          <text className="nm-scale-t" x={scale.len + 12} y="9">
+            {scale.km}km
+          </text>
+        </g>
+      </g>
     </svg>
   );
 }

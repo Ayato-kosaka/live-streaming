@@ -1,0 +1,1156 @@
+/* =========================================================
+   ページ共通（島の外のページ）
+
+   ここは「Webページ」ではなく「ゲームの画面」に見せる場所。
+   どうぶつの森の窓を実測して分かった作りは4つで、全部この4つに落とす。
+     1. 角がとても丸い（半径が高さの 1/3 くらい）
+     2. 枠の内側にもうひとつクリームの輪がある（二重枠）
+     3. 影は真下にべたっと。ぼけた影は板が浮いた分だけ、遠くに薄く
+     4. 押せるものには下に厚みがある（沈むと厚みが減る）
+   ========================================================= */
+
+/* このファイルの中だけで使う派生値。色は必ず tokens.css の変数から作るので、
+   向こうで色が変わればここも一緒に動く。 */
+:root {
+  --pg-edge: var(--frame-dark);   /* 板の側面。下の厚みはこの色 */
+  --pg-rim: var(--paper-2);       /* 枠の内側にもう一枚あるクリームの輪 */
+  /* 落ちる影の色。黒ではなく暖かい灰緑（docs/ac-reference.md ③）。
+     真下ではなく光源の反対＝右下へずらす。 */
+  --pg-cast: color-mix(in srgb, var(--leaf-c) 30%, var(--ink));
+  --pg-drop: 5px 12px 2px color-mix(in srgb, var(--pg-cast) 26%, transparent);
+  --pg-drop-s: 3px 7px 2px color-mix(in srgb, var(--pg-cast) 22%, transparent);
+  /* 板の上面のハイライト。明るさの差だけで立体を作る */
+  --pg-lit: inset 0 2px 0 rgba(255, 255, 255, 0.85);
+  --pg-r-panel: var(--r-4);
+  --pg-r-card: var(--r-3);
+  --pg-r-tile: var(--r-3);
+}
+
+.page {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 16px 14px 72px;
+}
+@media (min-width: 720px) { .page { padding: 26px 24px 96px; } }
+
+/* 木の看板ヘッダー。
+   板は1枚の平らな木ではなく、上が明るく下が暗い「厚みのある板」に見せる。
+   下の縁を濃い色で切ると、そこが板の切り口になる。 */
+.ih {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  /* --wood は tokens.css に無い変数だった。無い変数を1つでも混ぜると
+     background ごと無効になって、看板が透明のまま h1 と重なる。
+     木目は擬似要素を足さずに背景を2枚重ねる。スクロールで貼り付いて
+     いる要素なので、重ねる層は少ないほうがいい。 */
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(255, 253, 246, 0.08) 0 2px,
+      rgba(255, 253, 246, 0) 2px 7px),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--frame) 82%, var(--paper)) 0%,
+      var(--frame) 42%,
+      var(--frame-dark) 100%);
+  border-bottom: var(--bw-3) solid var(--frame-deep);
+}
+/* 看板の下の縁を波形にする。まっすぐ切ると Web のヘッダーに戻ってしまう。
+   本物の帯（あつまれ どうぶつの森のバナー）はここが必ず波打っている。 */
+.ih::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 100%;
+  height: 11px;
+  pointer-events: none;
+  background: var(--frame-deep);
+  /* 半円を並べて波にする。画像もフィルタも使わないので描画が軽い */
+  -webkit-mask-image: radial-gradient(circle 11px at 50% 0, #000 98%, transparent 100%);
+  mask-image: radial-gradient(circle 11px at 50% 0, #000 98%, transparent 100%);
+  -webkit-mask-size: 22px 11px;
+  mask-size: 22px 11px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+.ih-in {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 11px;
+}
+@media (min-width: 720px) { .ih-in { padding: 12px 20px 13px; gap: 14px; } }
+.ih-home {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3px solid var(--frame-deep);
+  border-radius: 999px;
+  padding: 7px 16px 7px 11px;
+  font-weight: 900; font-size: 15px;
+  letter-spacing: 0.02em;
+  flex: none;
+  min-height: 44px;
+  box-shadow: 0 4px 0 rgba(74, 44, 16, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.12s ease;
+}
+.ih-home:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(74, 44, 16, 0.55); }
+.ih-nav {
+  display: flex; gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 3px 0;
+  mask-image: linear-gradient(90deg, #000 90%, transparent);
+}
+.ih-nav::-webkit-scrollbar { display: none; }
+/* 広い画面では全部並ぶので、端をぼかすと「切れている」誤解になる */
+@media (min-width: 900px) {
+  .ih-nav { flex-wrap: wrap; overflow: visible; mask-image: none; row-gap: 6px; }
+}
+.ih-link {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #fff7e6;
+  font-size: 13px; font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 7px 13px;
+  min-height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 250, 235, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  white-space: nowrap;
+  transition: transform 0.12s ease;
+}
+.ih-link img { width: 22px; height: 22px; object-fit: contain; object-position: center bottom; }
+/* いま居る場所だけ、板から浮いた紙のふだにする */
+.ih-link.is-on {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  box-shadow: 0 3px 0 rgba(74, 44, 16, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+.ih-link:active { transform: translateY(2px); }
+
+/* パンくず。海の上に直接置くと読みづらいので、紙のふだに乗せる */
+.crumbs {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  width: fit-content; max-width: 100%;
+  font-size: 12.5px; font-weight: 900;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: 2.5px solid color-mix(in srgb, var(--frame) 70%, var(--paper));
+  border-radius: 999px;
+  padding: 6px 15px;
+  margin: 0 0 16px;
+  box-shadow: 0 3px 0 rgba(8, 46, 62, 0.14);
+}
+.crumbs a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.crumbs b { color: var(--ink); }
+.crumbs i { font-style: normal; color: var(--ink-3); margin: 0 1px; }
+
+/* ページ見出し */
+.phead { text-align: center; margin: 10px 0 30px; }
+@media (min-width: 720px) { .phead { margin: 16px 0 38px; } }
+.phead-icon {
+  display: block;
+  margin: 0 auto;
+  width: 96px; height: 96px;
+  object-fit: contain;
+  object-position: center bottom;
+  /* 接地影。真下にべたっと落とすと、絵が海の上に置いてあるように見える */
+  filter: drop-shadow(0 8px 0 rgba(8, 46, 62, 0.16)) drop-shadow(0 12px 18px rgba(8, 46, 62, 0.3));
+}
+.phead h1 {
+  margin: 14px 0 0;
+  font-size: clamp(26px, 6.8vw, 42px);
+  font-weight: 900;
+  /* どうぶつの森の文字は字間が広い。詰まっているとWebの見出しに見える */
+  letter-spacing: var(--ls-head);
+  line-height: 1.3;
+  color: #fffdf6;
+  text-shadow: 0 4px 0 var(--frame-dark), 0 12px 26px rgba(8, 46, 62, 0.45);
+}
+.phead-lead {
+  margin: 12px auto 0; max-width: 40em;
+  font-size: clamp(13.5px, 3.6vw, 16px);
+  font-weight: 800; line-height: 1.85;
+  letter-spacing: 0.02em;
+  color: #f4fbfe;
+  text-shadow: 0 2px 8px rgba(8, 46, 62, 0.5);
+}
+.phead-mark {
+  display: inline-grid; place-items: center;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 4px solid var(--frame);
+  font-size: 34px;
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
+}
+.h2-icon {
+  width: 32px; height: 32px;
+  vertical-align: -8px;
+  object-fit: contain; object-position: center bottom;
+}
+/* 公式のアプリアイコン。四角い絵なので、角を丸めてアプリらしく見せる */
+.tile-logo {
+  width: 44px; height: 44px; flex: none;
+  border-radius: 11px;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(60, 40, 20, 0.22);
+  background: #fff;
+}
+.h2-logo {
+  width: 34px; height: 34px;
+  vertical-align: -9px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(60, 40, 20, 0.2);
+}
+.phead-logo {
+  display: block;
+  margin: 0 auto;
+  width: 84px; height: 84px;
+  border-radius: 20px;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(8, 46, 62, 0.35);
+}
+.tile-icon {
+  width: 44px; height: 44px; flex: none;
+  object-fit: contain; object-position: center bottom;
+}
+.phead-say { justify-content: center; margin-top: 16px; }
+.phead-say .gsay-bubble { text-align: left; max-width: 30em; }
+.phead-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+
+/* 紙のパネル。
+   ゲームの窓は「枠 → クリームの輪 → 紙」の三層でできている。
+   border で外枠、inset の影で内側の輪、background が紙。 */
+.panel {
+  position: relative;
+  background: var(--pg-ground, var(--paper));
+  /* 枠は一色で塗らない。上を明るく下を暗くすると、平らな線が面取りになる */
+  border: var(--bw-2) solid var(--frame);
+  border-top-color: color-mix(in srgb, var(--frame) 72%, var(--paper));
+  border-bottom-color: color-mix(in srgb, var(--frame) 74%, var(--frame-deep));
+  border-radius: var(--pg-r-panel);
+  box-shadow:
+    inset 0 0 0 6px var(--pg-rim),      /* 内側のクリームの輪 */
+    0 8px 0 var(--pg-edge),             /* 板の厚み。ぼかさない */
+    var(--pg-drop);
+  padding: 26px 18px 24px;
+  margin: 0 0 30px;
+}
+@media (min-width: 720px) { .panel { padding: 34px 32px 32px; margin-bottom: 38px; } }
+
+/* --- コーナーごとに地の質感を変える ------------------------------------
+   同じ白いカードが等間隔で積まれていると、どこを見ればいいのか分からない。
+   紙・棚板・台紙・コルクを描き分けて、目で区切りが付くようにする。
+   中身から判定するので、ページ側のマークアップは触らなくていい。
+   質感はぜんぶ CSS のグラデーション。画像もフィルタも使わない。
+   ----------------------------------------------------------------------- */
+
+/* 行き先が並ぶところは「棚板」。上から下へ木の色が落ちていく */
+.panel:has(.tiles),
+.panel:has(.scards),
+.panel:has(.cities) {
+  --pg-ground:
+    linear-gradient(180deg,
+      var(--paper) 0%,
+      color-mix(in srgb, var(--frame) 13%, var(--paper)) 100%);
+}
+/* 棚には奥行きの線が1本ある */
+.panel:has(.tiles)::after,
+.panel:has(.scards)::after {
+  content: "";
+  position: absolute;
+  left: 14px; right: 14px; bottom: 9px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--frame) 34%, transparent);
+  pointer-events: none;
+}
+
+/* スタンプ帳は方眼ではなく「点の台紙」。線を引くと表計算に見える */
+.panel:has(.stamps) {
+  --pg-ground:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--frame) 34%, transparent) 0 1.4px,
+      transparent 1.6px),
+    var(--paper);
+  background-size: 20px 20px, auto;
+}
+
+/* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする */
+.panel:has(.notes),
+.panel:has(.ideas),
+.panel:has(.noteform) {
+  --pg-ground:
+    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--frame-deep) 12%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--frame-deep) 10%, transparent) 0 2px, transparent 3px),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--frame) 20%, var(--paper-2)) 0%,
+      color-mix(in srgb, var(--frame) 28%, var(--paper-2)) 100%);
+  background-size: 84px 84px, 112px 112px, auto;
+}
+
+/* いまいる場所と旅の記録は、うっすら草の色を敷いて外の場所に見せる */
+.panel:has(.now-hero),
+.panel:has(.clist),
+.panel:has(.tl) {
+  --pg-ground:
+    linear-gradient(180deg,
+      var(--paper) 0%,
+      color-mix(in srgb, var(--grass2-hi) 26%, var(--paper)) 100%);
+  border-color: color-mix(in srgb, var(--grass-lo) 34%, var(--frame));
+  --pg-edge: color-mix(in srgb, var(--grass-lo) 34%, var(--frame-dark));
+}
+
+/* コルクの窓だけ枠を一段濃くする。掲示板は「外に立っている板」なので */
+.panel:has(.notes),
+.panel:has(.ideas),
+.panel:has(.noteform) {
+  border-color: var(--frame-dark);
+  --pg-edge: var(--frame-deep);
+  --pg-rim: color-mix(in srgb, var(--frame) 34%, var(--paper-2));
+}
+
+/* 見出しは「紙に書いた字」ではなく「窓の上ぶちにはめた札」にする。
+   幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
+   窓の縁をまたがせる。ここが「ゲームの窓」に見えるかどうかの分かれ目。 */
+.panel > h2,
+.panel > .bhead > h2 {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 14px;
+  padding: 9px 20px 10px 13px;
+  font-size: clamp(17.5px, 4.5vw, 23px);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  line-height: 1.4;
+  display: flex; align-items: center; gap: 11px;
+  border-radius: 999px;
+  border: var(--bw-2) solid color-mix(in srgb, var(--frame) 84%, var(--frame-deep));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 30%, var(--paper)) 0%,
+    color-mix(in srgb, var(--frame) 62%, var(--paper)) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 4px 0 color-mix(in srgb, var(--frame) 60%, var(--frame-deep)),
+    var(--pg-drop-s);
+}
+/* 先頭の見出しだけ、窓の上ぶちをまたがせる */
+.panel > h2:first-child { margin: -34px 0 14px 10px; }
+@media (min-width: 720px) {
+  .panel > h2,
+  .panel > .bhead > h2 { padding: 11px 26px 12px 16px; margin-bottom: 18px; }
+  .panel > h2:first-child { margin: -40px 0 18px 16px; }
+}
+/* 札の両端に打ってある留め具。片側だけだと箇条書きの点に見える */
+.panel > h2::before,
+.panel > h2::after,
+.panel > .bhead > h2::before,
+.panel > .bhead > h2::after {
+  content: "";
+  flex: none;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--frame-deep) 62%, var(--frame));
+  box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.panel p { margin: 0 0 11px; font-size: 15px; line-height: 1.95; font-weight: 600; }
+.panel p:last-child { margin-bottom: 0; }
+.panel > h2 + p, .panel > h2 + .muted { margin-top: 0; }
+
+/* 配信カード。押せるので下に厚みを付ける */
+.scards { display: grid; gap: 11px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .scards { grid-template-columns: 1fr 1fr; } }
+.scard {
+  display: flex; gap: 12px; align-items: stretch;
+  background: var(--paper-2);
+  border: 3px solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 9px 12px 9px 9px;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  transition: transform 0.14s ease;
+}
+.scard:hover { transform: translateY(-3px); box-shadow: 0 7px 0 var(--pg-edge), var(--pg-drop-s); }
+.scard:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--pg-edge); }
+.scard-thumb {
+  position: relative; flex: none; width: 112px; aspect-ratio: 16/9;
+  border-radius: 14px; overflow: hidden;
+  background: var(--sand-edge);
+  box-shadow: inset 0 0 0 2px rgba(255, 253, 246, 0.55);
+}
+.scard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scard-play {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #fff; font-size: 17px;
+  background: rgba(20, 12, 4, 0.28);
+  text-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.scard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; justify-content: center; }
+.scard-meta { display: flex; gap: 7px; align-items: center; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.scard-meta em {
+  font-style: normal;
+  background: var(--frame); color: #fff;
+  border-radius: 999px; padding: 2px 9px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
+}
+.scard-body b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
+
+/* タイル。ここがいちばん「押せる板」に見えないといけない */
+.tiles { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .tiles { grid-template-columns: 1fr 1fr; } }
+.tile {
+  display: flex; align-items: center; gap: 13px;
+  min-height: 66px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3.5px solid var(--tile, var(--frame));
+  border-radius: var(--pg-r-tile);
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 6px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink));
+  transition: transform 0.14s ease;
+}
+.tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 9px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink)),
+    var(--pg-drop-s);
+}
+/* 押したら沈む。厚みが減るぶんだけ下に動かすと、板が押し込まれて見える */
+.tile:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--tile, var(--frame)) 66%, var(--ink));
+}
+.tile-emoji { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--paper-2); display: grid; place-items: center; font-size: 22px; }
+.tile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tile-text b { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; }
+.tile-text i { font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); line-height: 1.6; }
+.tile-go { font-size: 17px; color: var(--frame-dark); flex: none; }
+
+/* 数字。ゲームの数字は大きくて、下に台がある */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 62%);
+  border: 3px solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 14px 10px 13px;
+  text-align: center;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.85),
+    0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+}
+.stat b {
+  display: block;
+  font-size: clamp(24px, 6.4vw, 32px);
+  font-weight: 900; line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--frame-deep);
+}
+.stat span { display: block; font-size: 12.5px; font-weight: 900; color: var(--ink); margin-top: 5px; letter-spacing: 0.03em; }
+.stat i { display: block; font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); margin-top: 3px; }
+
+/* チップ */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 2.5px solid var(--frame);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 12.5px; font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 2px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+}
+.chip.dark {
+  background: rgba(255, 253, 246, 0.22);
+  border-color: rgba(255, 253, 246, 0.72);
+  color: #fffdf6;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.28), 0 2px 0 rgba(8, 46, 62, 0.28);
+}
+
+/* 足元の木の板。上の縁を明るくすると、板の切り口に見える */
+.ifoot {
+  border-top: 5px solid color-mix(in srgb, var(--frame) 70%, var(--paper));
+  background: linear-gradient(180deg, var(--frame-dark) 0%, var(--frame-deep) 100%);
+  padding: 28px 16px calc(34px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.ifoot-back {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3.5px solid var(--frame-deep);
+  border-radius: 999px;
+  padding: 12px 26px;
+  min-height: 48px;
+  font-weight: 900; font-size: 15px;
+  letter-spacing: var(--ls-head);
+  box-shadow: 0 5px 0 rgba(60, 34, 10, 0.55), inset 0 2px 0 rgba(255, 255, 255, 0.75);
+  transition: transform 0.12s ease;
+}
+.ifoot-back:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(60, 34, 10, 0.55); }
+.ifoot-note { margin: 18px 0 0; font-size: 12px; font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
+
+/* 国リスト */
+.clist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.clist a {
+  display: flex; align-items: center; gap: 13px;
+  min-height: 60px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3px solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 12px 14px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  transition: transform 0.14s ease;
+}
+.clist a:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 7px 0 var(--pg-edge), var(--pg-drop-s); }
+.clist a:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
+.clist-flag { font-size: 27px; flex: none; line-height: 1; }
+.clist-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.clist-body b { font-size: 15.5px; font-weight: 900; display: flex; align-items: baseline; gap: 8px; }
+.clist-body b em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); letter-spacing: var(--ls-head); }
+.clist-body i { font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); line-height: 1.65; }
+
+/* ハイライト。区切りの線ではなく、紙に貼った帯にする */
+.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.hlist > li {
+  border-left: 7px solid var(--frame);
+  border-radius: 0 var(--r-2) var(--r-2) 0;
+  background: color-mix(in srgb, var(--paper-2) 62%, var(--paper));
+  padding: 12px 14px 13px 14px;
+}
+.hlist-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; }
+.hlist-head b { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; }
+.hlist-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.hlist p { margin: 6px 0 9px; font-size: 14px; line-height: 1.85; font-weight: 600; }
+
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.pager a {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3px solid var(--frame);
+  border-radius: 999px;
+  padding: 11px 20px;
+  min-height: 46px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; font-weight: 900;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 4px 0 var(--pg-edge);
+  transition: transform 0.12s ease;
+}
+.pager a:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
+
+/* スタンプ帳。台紙に押した印なので、押せる板とは逆に「へこんでいる」 */
+.stamps { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 11px; }
+.stamp {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: color-mix(in srgb, var(--paper-2) 78%, var(--paper));
+  border: 3px dashed color-mix(in srgb, var(--frame) 82%, var(--paper));
+  border-radius: var(--pg-r-card);
+  padding: 14px 7px 12px;
+  text-align: center;
+  box-shadow: inset 0 3px 7px rgba(120, 80, 40, 0.1);
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stamp:hover {
+  transform: translateY(-4px) rotate(-1.5deg);
+  border-style: solid;
+  background: var(--paper);
+  box-shadow: 0 7px 0 var(--pg-edge), var(--pg-drop-s);
+}
+.stamp:active { transform: translateY(2px) rotate(-1deg); box-shadow: 0 1px 0 var(--pg-edge); }
+.stamp-icon { display: block; width: 50px; height: 50px; object-fit: contain; object-position: center bottom; }
+.stamp b { font-size: 12px; font-weight: 900; line-height: 1.4; }
+.stamp i { font-size: 10.5px; font-style: normal; color: var(--ink-3); font-weight: 800; }
+
+/* 年表 */
+.tl { list-style: none; margin: 0; padding: 0 0 0 6px; position: relative; }
+.tl:before { content: ""; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 4px; background: var(--paper-2); border-radius: 999px; }
+.tl > li { position: relative; padding: 0 0 18px 32px; }
+.tl-dot { position: absolute; left: 4px; top: 5px; width: 19px; height: 19px; border-radius: 50%; border: 3.5px solid var(--paper); box-shadow: 0 0 0 2.5px var(--frame); }
+.tl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.tl-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+.tl-body b { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; }
+.tl-body i { display: block; font-size: 12.5px; font-style: normal; color: var(--ink-2); margin-top: 3px; line-height: 1.65; }
+.tl-body a { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 900; color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+
+/* いま */
+.now-hero { text-align: center; }
+.now-pin { display: block; margin: 0 auto 6px; width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 rgba(120, 80, 40, 0.14)); }
+.now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: 6px 0 10px; }
+.now-word { font-size: 15px; line-height: 1.95; font-weight: 600; }
+/* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
+.week { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.week li {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 2.5px solid color-mix(in srgb, var(--frame) 60%, var(--paper));
+  border-left: 8px solid var(--frame);
+  border-radius: 8px var(--r-2) var(--r-2) 8px;
+  padding: 12px 14px;
+  font-size: 14.5px; font-weight: 700; line-height: 1.75;
+  box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--frame) 60%, var(--paper-2));
+}
+
+/* 付箋 */
+/* 小見出しは本文より小さいので、色で沈めるより枠で分ける */
+.sub {
+  display: inline-flex; align-items: center;
+  font-size: 12.5px; font-weight: 900;
+  letter-spacing: var(--ls-head);
+  margin: 20px 0 10px;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 2px solid color-mix(in srgb, var(--frame) 66%, var(--paper));
+  border-radius: 999px;
+  padding: 4px 13px;
+}
+/* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
+.muted { color: var(--ink-2); font-size: 13.5px; font-weight: 600; line-height: 1.85; }
+.err { color: #c2385a; font-size: 13px; font-weight: 900; margin: 8px 0 0; }
+.notes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.notes li {
+  background: #fff6b8;
+  border: 1px solid #e8d98a;
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 13px; font-weight: 700; line-height: 1.7;
+  max-width: 220px;
+  box-shadow: 2px 4px 0 rgba(90, 70, 30, 0.14);
+  transform: rotate(-1deg);
+}
+.notes li:nth-child(2n) { background: #d6f0ff; border-color: #a8d6ee; transform: rotate(1.2deg); }
+.notes li:nth-child(3n) { background: #ffe0ec; border-color: #f0b9cd; transform: rotate(-0.6deg); }
+.noteform { display: flex; gap: 9px; margin-top: 14px; }
+.noteform input {
+  flex: 1; min-width: 0;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: 999px;
+  padding: 12px 16px;
+  font: inherit; font-size: 14px; font-weight: 700;
+  background: var(--paper-2);
+  box-shadow: inset 0 3px 5px rgba(120, 80, 40, 0.1);
+}
+.noteform button {
+  flex: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 78%, var(--paper)) 0%, var(--frame) 100%);
+  color: #fff;
+  border-radius: 999px; padding: 12px 20px;
+  min-height: 46px;
+  font-weight: 900; font-size: 14px;
+  text-shadow: 0 1px 0 rgba(120, 70, 20, 0.4);
+  box-shadow: var(--pop-sm), inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+.noteform button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.noteform button:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+
+/* 掲示板 */
+/* 書き込む場所は「へこんでいる」。押す場所（板）と逆にすると役割が伝わる */
+.bin {
+  width: 100%;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-2);
+  padding: 13px 15px;
+  font: inherit; font-size: 14.5px; font-weight: 600; line-height: 1.8;
+  background: var(--paper-2);
+  box-shadow: inset 0 3px 6px rgba(120, 80, 40, 0.11);
+  resize: vertical;
+}
+.brow { display: flex; gap: 9px; margin-top: 10px; }
+.brow .bin { flex: 1; border-radius: 999px; }
+.bbtn {
+  flex: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 100%);
+  color: #fff;
+  border-radius: 999px; padding: 13px 24px;
+  min-height: 48px;
+  font-weight: 900; font-size: 14.5px;
+  letter-spacing: var(--ls-head);
+  text-shadow: 0 1px 0 rgba(150, 40, 70, 0.35);
+  box-shadow: 0 5px 0 #cf4867, inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.bbtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #cf4867; }
+.bbtn:disabled { opacity: 0.55; box-shadow: none; transform: none; }
+.bhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.bsort { display: flex; gap: 6px; }
+.bsort button {
+  font-size: 12.5px; font-weight: 900;
+  padding: 7px 15px; min-height: 38px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 2.5px solid var(--frame);
+  box-shadow: var(--pg-lit), 0 2px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+}
+.bsort button.is-on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 70%, var(--paper)) 0%, var(--frame) 100%);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(120, 70, 20, 0.4);
+}
+.bsort button:active { transform: translateY(2px); box-shadow: none; }
+.ideas { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.ideas > li {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3px solid var(--frame);
+  border-radius: var(--pg-r-card);
+  padding: 13px;
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+}
+.ideas > li.is-picked {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #fffdf0 0%, #fff4d0 100%);
+  box-shadow: var(--pg-lit), 0 4px 0 #d9a12c;
+}
+.vote {
+  flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 54px; min-height: 54px;
+  background: var(--paper); border: 3px solid var(--frame);
+  border-radius: var(--r-1); padding: 8px 5px;
+  box-shadow: var(--pg-lit), 0 3px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.vote svg { width: 20px; height: 19px; color: #e8879a; }
+.vote.is-on { background: var(--gold); border-color: #d9a12c; box-shadow: var(--pg-lit), 0 3px 0 #b8801c; }
+.vote.is-on svg { color: #d1455f; }
+.vote:active { transform: translateY(3px); box-shadow: 0 0 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
+.vote b { font-size: 15px; font-weight: 900; }
+.idea-body { min-width: 0; flex: 1; }
+.idea-body p { margin: 0; font-size: 14.5px; line-height: 1.8; font-weight: 600; word-break: break-word; }
+.idea-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 7px; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.idea-meta em { font-style: normal; color: #a37610; }
+
+/* 仲間の群れ */
+.crowd { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.crowd-one {
+  position: relative;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--paper-2);
+  border: 3.5px solid var(--frame);
+  display: grid; place-items: center;
+  overflow: hidden;
+  font-size: 23px;
+  box-shadow: 0 4px 0 var(--frame-dark);
+}
+.crowd-one img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.scroll-cue {
+  position: absolute;
+  left: 50%; bottom: calc(var(--bar-h) + 10px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column; align-items: center; gap: 2px;
+  color: #fffdf6; font-size: 11px; font-weight: 800;
+  text-shadow: 0 2px 8px rgba(8, 46, 62, 0.6);
+  pointer-events: none;
+}
+.scroll-cue i { font-style: normal; font-size: 15px; animation: cue 1.8s ease-in-out infinite; }
+@keyframes cue { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(5px); opacity: 1; } }
+@media (min-width: 640px) { .scroll-cue { display: flex; } }
+
+/* --- 島の案内役(カモメのミナト) --- */
+.gsay {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gsay-bird {
+  flex: none;
+  display: block;
+  animation: gullBob 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 3px 4px rgba(40, 60, 40, 0.18));
+}
+@keyframes gullBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+.gull-wing { animation: gullFlap 0.42s ease-in-out infinite alternate; }
+@keyframes gullFlap { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+
+.gsay-bubble {
+  position: relative;
+  margin: 0 0 4px;
+  background: var(--paper);
+  border: var(--bw-2) solid var(--frame);
+  border-top-color: color-mix(in srgb, var(--frame) 72%, var(--paper));
+  border-radius: var(--r-3);
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 4px var(--pg-rim), 0 5px 0 var(--frame-dark), var(--pg-drop-s);
+}
+.gsay-bubble::before,
+.gsay-bubble::after {
+  content: "";
+  position: absolute;
+  left: -11px;
+  bottom: 13px;
+  border: 6px solid transparent;
+  border-right-color: var(--frame);
+}
+.gsay-bubble::after {
+  left: -6px;
+  border-right-color: var(--paper);
+}
+@media (min-width: 720px) {
+  .gsay-bubble { font-size: 15.5px; padding: 14px 22px; }
+}
+
+/* --- 島に着くまでの演出 --- */
+.arrive {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* 空の光。だんだん目が慣れていく感じ */
+.arrive-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 8%, #ffffff 0%, #dff4ff 42%, rgba(190, 232, 246, 0) 78%);
+  animation: arriveFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes arriveFlash {
+  0% { opacity: 1; }
+  55% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+/* カモメが手前を横切って、島へ降りていく */
+.arrive-gull {
+  position: absolute;
+  left: -14%;
+  top: 18%;
+  animation: arriveGull 2.8s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+  filter: drop-shadow(0 8px 12px rgba(20, 60, 80, 0.22));
+}
+@keyframes arriveGull {
+  0%   { transform: translate(0, 0) scale(1.5) rotate(-6deg); opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { transform: translate(52vw, 14vh) scale(1) rotate(3deg); opacity: 1; }
+  100% { transform: translate(104vw, 34vh) scale(0.6) rotate(8deg); opacity: 0; }
+}
+/* 着くまでは名札を出さない。島の形だけを見せる。 */
+.stage.is-arriving .labels,
+.stage.is-arriving .walk-hint,
+.stage.is-arriving .zoom-toggle {
+  animation: arriveUi 3s ease forwards;
+}
+@keyframes arriveUi {
+  0%, 52% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrive { display: none; }
+  .stage.is-arriving .labels,
+  .stage.is-arriving .walk-hint,
+  .stage.is-arriving .zoom-toggle { animation: none; }
+}
+
+/* --- 住人のひとこと ---------------------------------------------------
+   島に住んでいるのは視聴者さん本人。だから吹き出しは
+   「近づく → 話しかける → 読み終わったら自分で閉じる」の順にする。
+   勝手に消えると、読みかけで消えていちばん困る。
+   --------------------------------------------------------------------- */
+
+/* --- スマホ: 島の下にまとめた操作バー --- */
+/* 島の上に9つの名札を置くと島が見えなくなるので、行き先はここに並べる。
+   浮いたボタンを island の上に散らさないことで、重なりも起きない。 */
+.stage { --bar-h: 0px; }
+@media (max-width: 639px) {
+  .stage { --bar-h: 68px; }
+}
+.island-bar {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  height: calc(var(--bar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  background: linear-gradient(rgba(10, 60, 80, 0) 0%, rgba(10, 60, 80, 0.34) 34%, rgba(10, 60, 80, 0.5) 100%);
+}
+.island-bar-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px;
+
+}
+.island-bar-scroll::-webkit-scrollbar { display: none; }
+/* 右端が「切れている」ように見えないよう、ぼかして終わらせる */
+.island-bar-scroll {
+  padding-right: 14px;
+  mask-image: linear-gradient(90deg, #000 0 calc(100% - 26px), transparent 100%);
+}
+.bar-spot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px 5px 6px;
+  background: linear-gradient(#fffdf6, #fff2d8);
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--frame-deep);
+  font-size: 12.5px;
+  font-weight: 900;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.bar-spot img {
+  width: 26px; height: 26px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.bar-spot.is-on { background: linear-gradient(#fff6cf, var(--gold)); }
+.bar-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
+.bar-zoom {
+  flex: none;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(24, 62, 78, 0.82);
+  color: #fffdf6;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  border: 2px solid rgba(255, 253, 246, 0.45);
+}
+.bar-zoom:active { transform: translateY(2px); }
+
+/* --- 国のページ: 行った街 --- */
+.cities { display: grid; gap: 9px; margin-top: 10px; }
+.city {
+  border: 2.5px solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+.city-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 900;
+}
+.city-head::-webkit-details-marker { display: none; }
+.city-head b { font-size: 14.5px; }
+.city-head i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+/* 開くしるし。三角より、閉じ開きが伝わる線にする */
+.city-head::after {
+  content: "";
+  width: 9px; height: 9px;
+  border-right: 2.5px solid var(--frame-dark);
+  border-bottom: 2.5px solid var(--frame-dark);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+  flex: none;
+}
+.city[open] .city-head::after { transform: rotate(-135deg) translateY(-2px); }
+.city[open] .city-head { background: var(--paper); }
+.city .scards { padding: 4px 12px 13px; }
+.city.is-quiet { opacity: 0.62; }
+.city.is-quiet .city-head { cursor: default; }
+.city.is-quiet .city-head::after { display: none; }
+
+/* --- ログイン --- */
+.signin {
+  border: 2.5px solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  padding: 14px 15px;
+  margin-bottom: 14px;
+}
+.signin > b { display: block; font-size: 14px; }
+.signin ul { margin: 8px 0 10px; padding-left: 1.15em; }
+.signin li { font-size: 12.5px; font-weight: 700; line-height: 1.8; color: var(--ink-2); }
+.signin-warn {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: #fff6e2;
+  border: 2px dashed var(--frame);
+  border-radius: var(--r-1);
+  padding: 10px 12px;
+}
+.signin-warn b { color: #a5541c; }
+.signin-go {
+  background: var(--accent-2);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 900;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 #268aa6;
+}
+.signin-go:active { transform: translateY(2px); box-shadow: 0 2px 0 #268aa6; }
+.signin-go:disabled { opacity: 0.6; box-shadow: none; }
+.signin-skip { margin: 10px 0 0; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.signin-link {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.signed {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper-2);
+  border: 2.5px solid var(--frame);
+  border-radius: 999px;
+  padding: 4px 6px 4px 4px;
+  margin-bottom: 12px;
+}
+.signed img { width: 26px; height: 26px; border-radius: 50%; }
+.signed-name { font-size: 12.5px; font-weight: 900; }
+.signed-out { font-size: 11px; font-weight: 800; color: var(--ink-3); padding: 4px 8px; }
+.bin-locked {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+  background: var(--paper-2);
+}
+
+/* --- これからの予定 --- */
+.phead-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.count {
+  margin-left: auto;
+  flex: none;
+  background: var(--paper-2);
+  border: 2.5px solid var(--frame);
+  border-radius: 999px;
+  padding: 4px 13px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.count b { font-size: 17px; color: var(--accent); margin: 0 2px; }
+.count.is-today { background: var(--gold); border-color: #d9a12c; color: #6b4a06; }
+.count.is-past { opacity: 0.62; }
+
+.pphotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.pphotos figure { margin: 0; }
+.pphotos img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--r-2);
+  border: 2.5px solid var(--frame);
+  display: block;
+  background: var(--paper-2);
+}
+.pphotos figcaption {
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.pphotos figcaption a { text-decoration: underline; text-underline-offset: 2px; }
+
+.pembeds { display: grid; gap: 12px; margin: 14px 0; }
+.pembed iframe {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border: 2.5px solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  display: block;
+}
+.pembed:has(iframe[src*="youtube"]) iframe { aspect-ratio: 16 / 9; }
+.pembed-note { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-3); }
+.chip.link { background: var(--paper); border-color: var(--frame-dark); }
+
+/* --- 島での見え方の設定 -----------------------------------------------
+   名前も YouTube のアイコンも、出すか出さないかは本人が決める。
+   何もしなければキャラクターだけが島にいて、名前は出ない。
+   --------------------------------------------------------------------- */
+.me {
+  margin-top: 12px;
+  padding: 14px;
+  border: 3px solid var(--frame);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-dark);
+}
+.me-title { display: block; font-size: 14px; }
+.me-note { margin: 6px 0 12px; font-size: 12px; line-height: 1.7; color: var(--ink-3); }
+.me-label { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 6px; }
+.me-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.me-pick {
+  width: 46px; height: 46px;
+  padding: 2px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 13px;
+  background: #fffdf6;
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.me-pick img { width: 100%; height: 100%; object-fit: contain; }
+.me-pick.is-on { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 206, 84, 0.5); }
+.me-pick-none { width: auto; padding: 0 12px; font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.me-row { display: block; margin-bottom: 10px; }
+.me-row span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 4px; }
+.me-row input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 13px;
+  background: #fffdf6;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+.me-check { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; font-weight: 800; }
+.me-check input { width: 20px; height: 20px; accent-color: var(--frame-dark); }
+.me-save {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(#fff6cf, var(--gold));
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--frame-deep);
+}
+.me-save:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.me-ok { margin: 8px 0 0; font-size: 12px; font-weight: 800; color: var(--ink-3); }

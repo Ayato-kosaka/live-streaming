@@ -1,109 +1,203 @@
 /* --- いま、いちばん近い企画 -------------------------------------------
    島に来た人がまっさきに知りたいのは「次に何をするのか」。
    だから島のすぐ下に、どのコーナーよりも大きく置く。
+
+   ここはサイトでいちばん押してほしい場所なので、
+   「情報が並んだ枠」ではなく「押せる板」に見せる。
+   ・下に厚みを置く（どうぶつの森の押せるものには必ず厚みがある）
+   ・日数の札は看板そのものに見せて、数字だけを大きく
+   ・行き先の言葉はボタンの形にする（文字のままだと押せると分からない）
    --------------------------------------------------------------------- */
 .nextup { margin-bottom: 18px; }
 .nextup-eyebrow {
-  margin: 0 0 8px;
-  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 4px 13px 4px 9px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.1em;
-  color: var(--ink-3);
+  /* 置かれる面の色が変わっても読めるように、地の色ごと持たせた小さな札にする。
+     （島の海の上にも、砂色の帯の上にも同じものが出る） */
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--frame-deep);
 }
+/* 札の中の短い棒。記号を足さずに「ここから始まる」を出す。 */
+.nextup-eyebrow::before {
+  content: "";
+  width: 14px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
 .nextup-card {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas: "count body" "go go";
-  gap: 14px 16px;
+  gap: 14px 15px;
   align-items: start;
   padding: 18px;
   border: 4px solid var(--frame-dark);
-  border-radius: 24px;
+  border-radius: 28px;
   background:
-    radial-gradient(120% 90% at 8% 0%, rgba(255, 236, 178, 0.9), rgba(255, 253, 246, 0) 62%),
-    linear-gradient(#fffdf6, #fff4de);
-  box-shadow: 0 7px 0 var(--frame-deep), var(--shadow-3);
+    radial-gradient(120% 90% at 8% 0%, color-mix(in srgb, var(--gold) 34%, transparent), transparent 62%),
+    linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: 0 8px 0 var(--frame-deep), var(--shadow-3);
   color: var(--ink);
   transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s;
 }
-.nextup-card:hover { transform: translateY(-3px); box-shadow: 0 10px 0 var(--frame-deep), var(--shadow-3); }
-.nextup-card:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--frame-deep); }
+.nextup-card:hover { transform: translateY(-3px); box-shadow: 0 11px 0 var(--frame-deep), var(--shadow-3); }
+.nextup-card:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--frame-deep); }
+
 .nextup-count {
   grid-area: count;
   display: grid;
   place-items: center;
   align-content: center;
-  min-width: 86px;
-  padding: 12px 10px;
-  border-radius: 18px;
-  border: 3px solid var(--frame-dark);
-  background: linear-gradient(#fff6cf, var(--gold));
-  box-shadow: 0 3px 0 var(--frame-deep);
-  font-size: 12px;
+  min-width: 88px;
+  padding: 11px 10px;
+  border-radius: 20px;
+  border: 3.5px solid var(--frame-dark);
+  /* 上から光が当たった板。金色一色だと平たく見える。 */
+  background: linear-gradient(
+    color-mix(in srgb, var(--gold) 45%, var(--paper)),
+    var(--gold) 55%,
+    color-mix(in srgb, var(--gold) 82%, var(--frame-dark))
+  );
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 color-mix(in srgb, var(--paper) 65%, transparent);
+  font-size: 11.5px;
   font-weight: 900;
   line-height: 1.1;
+  letter-spacing: 0.06em;
   text-align: center;
+  color: var(--ink);
 }
-.nextup-count b { display: block; font-size: 30px; line-height: 1.05; }
-.nextup-body { grid-area: body; display: grid; gap: 5px; }
+.nextup-count b {
+  display: block;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin: 2px 0 1px;
+}
+
+.nextup-body { grid-area: body; display: grid; gap: 5px; align-content: start; }
 .nextup-title { font-size: clamp(19px, 5.4vw, 27px); font-weight: 900; line-height: 1.28; }
-.nextup-when { font-style: normal; font-size: 12.5px; font-weight: 900; color: var(--accent-deep, #c2691f); }
-.nextup-note { font-size: 13px; font-weight: 700; line-height: 1.75; color: var(--ink-2, var(--ink)); }
-.nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+.nextup-when {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--frame-deep);
+}
+.nextup-note { font-size: 13px; font-weight: 700; line-height: 1.75; color: var(--ink-2); }
+.nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .nextup-tags em {
   font-style: normal;
   font-size: 10.5px;
   font-weight: 900;
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--paper);
   border: 2px solid var(--frame-dark);
-  color: var(--ink-3);
+  color: var(--ink-2);
+  line-height: 1.5;
 }
+
+/* 「くわしく見る」は文字ではなくボタンの形にする。
+   ここが押せることは、札ぜんぶが押せることの合図にもなる。 */
 .nextup-go {
   grid-area: go;
   justify-self: end;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 3px solid var(--frame-dark);
+  /* いちばん近い企画の行き先は、サイトでいちばん押してほしいところ。
+     ここだけ金色にして、ほかの押せるものより一段強くする。 */
+  background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
+  box-shadow: 0 4px 0 var(--frame-deep);
+  font-size: 13.5px;
   font-weight: 900;
-  color: var(--frame-deep);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s, background 0.16s;
 }
+.nextup-card:hover .nextup-go {
+  background: linear-gradient(color-mix(in srgb, var(--gold) 65%, var(--paper)), color-mix(in srgb, var(--gold) 88%, var(--frame-dark)));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--frame-deep);
+}
+.nextup-card:active .nextup-go { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+
+/* --- そのほかの企画 --- */
 .nextup-rest {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 11.5px;
   font-weight: 900;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .nextup-rest a {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  padding: 5px 12px;
+  max-width: 100%;
+  flex-wrap: wrap;
+  padding: 6px 13px;
   border-radius: 999px;
   border: 2.5px solid var(--frame-dark);
-  background: var(--paper);
+  background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: 0 2px 0 var(--frame-deep);
+  box-shadow: 0 3px 0 var(--frame-deep);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.nextup-rest a { max-width: 100%; flex-wrap: wrap; }
+.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--frame-deep); }
+.nextup-rest a:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
 .nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
-.nextup-eyebrow2 { margin-top: 14px; }
+
+.nextup-eyebrow2 { margin-top: 16px; }
 /* ふたつ目の札はひとまわり小さく。主役は「いちばん近い企画」のまま。 */
-.nextup-card.is-small { padding: 14px; border-width: 3px; box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2); }
-.nextup-card.is-small .nextup-count { min-width: 72px; padding: 9px 8px; font-size: 11px; }
-.nextup-card.is-small .nextup-count b { font-size: 24px; }
+.nextup-card.is-small {
+  padding: 14px;
+  border-width: 3px;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-2);
+}
+.nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-2); }
+.nextup-card.is-small:active { box-shadow: 0 2px 0 var(--frame-deep); }
+.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 10.5px; border-radius: 17px; }
+.nextup-card.is-small .nextup-count b { font-size: 27px; }
 .nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
+/* ふたつ目の札の行き先は金色にしない。強い合図はページに1つだけ。 */
+.nextup-card.is-small .nextup-go {
+  padding: 7px 15px;
+  font-size: 12.5px;
+  border-width: 2.5px;
+  background: linear-gradient(var(--paper), var(--paper-2));
+}
+.nextup-card.is-small:hover .nextup-go {
+  background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 40%, var(--paper)));
+}
+
 @media (min-width: 640px) {
   .nextup-card {
     grid-template-columns: auto 1fr auto;
     grid-template-areas: "count body go";
     align-items: center;
     padding: 22px 24px;
+    gap: 18px;
   }
-  .nextup-count { min-width: 106px; }
-  .nextup-count b { font-size: 38px; }
-  .nextup-go { justify-self: end; }
+  .nextup-count { min-width: 110px; padding: 14px 12px; }
+  .nextup-count b { font-size: 42px; }
+  .nextup-go { justify-self: end; padding: 11px 20px; font-size: 14.5px; }
 }

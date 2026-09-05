@@ -56,6 +56,40 @@ export function inset(radii: number[], delta: number): number[] {
   return radii.map((r) => Math.max(4, r - delta));
 }
 
+/**
+ * 半径配列を n 点に増やす。
+ * 16方位のままだと起伏を足しても角が丸まって消えてしまうので、
+ * 波打ち際のように「細かく不規則な縁」を作りたいときは先に増やす。
+ */
+export function resample(radii: number[], n: number): number[] {
+  return Array.from({ length: n }, (_, i) => radiusAt(radii, i / n));
+}
+
+/**
+ * 輪郭に、なめらかな起伏を足す。
+ *
+ * 点ごとに乱数を振ると縁がギザギザになって手描きに見えないので、
+ * 位相をずらした正弦波を3本重ねる。周期が違うぶん規則性が消えて、
+ * それでいて隣り合う点はつながったまま。seed 固定なので SSR と CSR で同じ形。
+ */
+export function wobble(radii: number[], seed: number, amp: number, waves: [number, number, number] = [3, 7, 13]): number[] {
+  const r = rng(seed);
+  const ph = [r() * Math.PI * 2, r() * Math.PI * 2, r() * Math.PI * 2];
+  const w = [0.55, 0.3, 0.15];
+  const n = radii.length;
+  return radii.map((v, i) => {
+    const a = (i / n) * Math.PI * 2;
+    let d = 0;
+    for (let k = 0; k < 3; k++) d += Math.sin(a * waves[k] + ph[k]) * w[k];
+    return Math.max(4, v + d * amp);
+  });
+}
+
+/** 外側と内側の輪郭で作る輪。fillRule="evenodd" で塗る前提。 */
+export function ring(cx: number, cy: number, outer: number[], inner: number[], squash = 1): string {
+  return blob(cx, cy, outer, squash) + blob(cx, cy, inner, squash);
+}
+
 /** 点が輪郭の内側かどうか（半径配列を角度で線形補間して判定） */
 export function insideRadii(
   cx: number,

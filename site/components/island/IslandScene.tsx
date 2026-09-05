@@ -1,23 +1,229 @@
 import { ISLAND, GRASS_INSET, PLACES, PLATEAU, SPOTS, WORLD, type SpotId } from "./layout";
-import { blob, inset, insideRadii, pointAt, radiiToPoints, rng, type Pt } from "./geometry";
+import {
+  blob,
+  inset,
+  insideRadii,
+  pointAt,
+  radiiToPoints,
+  resample,
+  ring,
+  rng,
+  wobble,
+  type Pt,
+} from "./geometry";
 import { Sprite } from "./Sprite";
 
 /* ------------------------------------------------------------------ */
 /* 地形                                                                */
 /* ------------------------------------------------------------------ */
 
+const { cx: CX, cy: CY, squash: SQ } = ISLAND;
+
 const sandR = ISLAND.radii;
 const grassR = inset(sandR, GRASS_INSET);
-const wetR = inset(sandR, 13);
-const shelfR = inset(sandR, -42);
-const shelf2R = inset(sandR, -92);
 
-const sandPath = blob(ISLAND.cx, ISLAND.cy, sandR, ISLAND.squash);
-const wetPath = blob(ISLAND.cx, ISLAND.cy, wetR, ISLAND.squash);
-const grassPath = blob(ISLAND.cx, ISLAND.cy, grassR, ISLAND.squash);
-const shelfPath = blob(ISLAND.cx, ISLAND.cy, shelfR, ISLAND.squash);
-const shelf2Path = blob(ISLAND.cx, ISLAND.cy, shelf2R, ISLAND.squash);
-const foamPath = blob(ISLAND.cx, ISLAND.cy, inset(sandR, -16), ISLAND.squash);
+/**
+ * 岸は5本の帯でできている（`docs/ac-reference.md` 2章）。
+ * 海から陸へ「深い青 → 明るいターコイズの浅瀬 → 真っ白な泡 → 濡れた砂 → 乾いた砂」。
+ * 2 と 3 が無いと、境がただの色の切り替わりになって水辺に見えない。
+ *
+ * 数字は砂浜の輪郭からの距離。マイナスが沖、プラスが陸。
+ */
+const SHORE = {
+  /** 深い青がゆるむところ */
+  haze: -300,
+  /** 中くらいの青 */
+  mid: -205,
+  /** 明るいターコイズの浅瀬。ここは幅をしっかり取る */
+  shallow: -122,
+  /** いちばん明るい、砂のすぐ沖 */
+  shelf: -48,
+  /** 泡の外側と内側。細くしないと、せっかくの浅瀬を白が食べてしまう */
+  foamOut: -17,
+  foamIn: 3,
+  /** 濡れた砂の内側の縁。砂浜は 34 しか幅がないので、
+      濡れた帯を広く取ると乾いた砂が残らない。 */
+  wet: 12,
+};
+
+const sandPath = blob(CX, CY, sandR, SQ);
+const grassPath = blob(CX, CY, grassR, SQ);
+
+/** 沖の帯。輪郭をそのまま外へ出すと真円に見えるので、帯ごとに違う起伏を足す。 */
+const hazePath = blob(CX, CY, wobble(resample(inset(sandR, SHORE.haze), 48), 71, 30), SQ);
+const midPath = blob(CX, CY, wobble(resample(inset(sandR, SHORE.mid), 48), 72, 24), SQ);
+const shallowPath = blob(CX, CY, wobble(resample(inset(sandR, SHORE.shallow), 64), 73, 17), SQ);
+const shelfPath = blob(CX, CY, wobble(resample(inset(sandR, SHORE.shelf), 64), 74, 10), SQ);
+
+/**
+ * 濡れた砂。乾いた砂より一段濃い帯を、波打ち際の側に敷く。
+ * 乾いた砂に外へ向かう暗いグラデをかけると、こちらのほうが明るくなって逆になる。
+ * だから乾いた砂は平らな明るい色にして、濃さはこの帯だけで作る。
+ */
+const wetRing = ring(
+  CX,
+  CY,
+  sandR,
+  wobble(resample(inset(sandR, SHORE.wet), 64), 75, 5),
+  SQ,
+);
+/** 波が引いたばかりのところ。いちばん濃い。 */
+const wetEdgeRing = ring(
+  CX,
+  CY,
+  sandR,
+  wobble(resample(inset(sandR, 5), 64), 76, 2.5),
+  SQ,
+);
+
+/**
+ * 泡。ぼかさず、真っ白でくっきり描く。
+ *
+ * 1本の線にすると縫い目のように見えてしまうので、
+ *   ・不規則な幅の帯（レースの土台）
+ *   ・大小の弧をびっしり重ねたふち（レースの縁）
+ *   ・ちぎれた泡の粒
+ * の3つを重ねる。弧の向きは、その位置での外向きに合わせる。
+ */
+const foamBand = ring(
+  CX,
+  CY,
+  wobble(resample(inset(sandR, SHORE.foamOut), 96), 81, 7, [5, 11, 19]),
+  wobble(resample(inset(sandR, SHORE.foamIn), 96), 82, 5, [4, 9, 17]),
+  SQ,
+);
+
+/**
+ * 波打ち際のレース。
+ *
+ * 弧を1本ずつ <path> にすると数百要素になって、
+ * カメラを動かすたび（viewBox が毎フレーム変わる）に全部を描き直すことになる。
+ * 見た目は同じなので、置き場所と向きを座標に焼き込んで
+ * 「太さの違う3本のパス」にまとめる。
+ */
+function foamLace(
+  count: number,
+  seed: number,
+  offMin: number,
+  offMax: number,
+  sizeMin: number,
+  sizeMax: number,
+): string[] {
+  const r = rng(seed);
+  const buckets = ["", "", ""];
+  for (let i = 0; i < count; i++) {
+    const t = (i + r() * 0.9) / count;
+    const [x, y] = pointAt(CX, CY, sandR, SQ, t, offMin + r() * (offMax - offMin));
+    const w = sizeMin + r() * (sizeMax - sizeMin);
+    const h = w * (0.14 + r() * 0.22); // 平たい弧。丸いとバネの落書きに見える
+    // ふくらみが沖を向く角度。輪郭の位置 t がそのまま回転角になる。
+    const a = t * Math.PI * 2;
+    const c = Math.cos(a);
+    const sn = Math.sin(a);
+    const f = (n: number) => n.toFixed(1);
+    buckets[i % 3] +=
+      `M${f(x - w * c)},${f(y - w * sn)}` +
+      `Q${f(x + h * sn)},${f(y - h * c)} ${f(x + w * c)},${f(y + w * sn)}`;
+  }
+  return buckets;
+}
+
+/** 泡のふち。外側の大きい弧と、内側の細かい弧。 */
+const foamLaceOut = foamLace(72, 8801, -26, -13, 15, 32);
+const foamLaceIn = foamLace(112, 8802, -11, 6, 7, 17);
+/** 3本それぞれの太さと濃さ。ばらけていないとレースに見えない。 */
+const LACE_STYLE: [number, number][] = [
+  [3.4, 0.9],
+  [2.4, 0.7],
+  [1.7, 0.5],
+];
+
+/** ちぎれた泡の粒。円をひとつずつ置かず、円弧コマンドで1本のパスにまとめる。 */
+const foamDots = (() => {
+  const r = rng(8803);
+  const buckets = ["", ""];
+  for (let i = 0; i < 74; i++) {
+    const t = (i + r() * 0.9) / 74;
+    const [x, y] = pointAt(CX, CY, sandR, SQ, t, -36 + r() * 26);
+    const rad = 1.4 + r() * 2.8;
+    const f = (n: number) => n.toFixed(1);
+    buckets[i % 2] +=
+      `M${f(x - rad)},${f(y)}a${f(rad)},${f(rad)} 0 1,0 ${f(rad * 2)},0a${f(rad)},${f(rad)} 0 1,0 ${f(-rad * 2)},0`;
+  }
+  return buckets;
+})();
+
+/**
+ * 海面のきらめき。
+ * 全幅の帯を並べると縞に見えるので、短い線を散らす。島の上には出さない。
+ * これも本数ぶんの要素にせず、濃さごとに1本のパスへまとめる。
+ */
+const glints = (() => {
+  const r = rng(6161);
+  const shallowEdge = inset(sandR, SHORE.shallow);
+  const buckets = ["", "", ""];
+  let n = 0;
+  let guard = 0;
+  while (n < 120 && guard++ < 4000) {
+    const x = -80 + r() * (WORLD + 160);
+    const y = -80 + r() * (WORLD + 160);
+    // 浅瀬より内側には出さない。島の縁で光っていると泡と喧嘩する。
+    if (insideRadii(CX, CY, shallowEdge, x, y, SQ, -10)) continue;
+    const w = 4 + r() * 13;
+    buckets[n % 3] += `M${x.toFixed(1)},${y.toFixed(1)}h${w.toFixed(1)}`;
+    n++;
+  }
+  return buckets;
+})();
+/** きらめき3本の [太さ, 濃さ]。 */
+const GLINT_STYLE: [number, number][] = [
+  [2.8, 0.26],
+  [2.1, 0.16],
+  [1.6, 0.1],
+];
+
+/** 沖のうねり。島を囲む輪にして、水面が動いているように見せる。 */
+const swellPaths = [190, 268, 350].map((d, i) =>
+  blob(CX, CY, wobble(resample(inset(sandR, -d), 40), 91 + i, 16 + i * 6), SQ),
+);
+
+/**
+ * 草の地模様。
+ *
+ * 本物の草地は一面に細かい葉が入っていて、のっぺりした面がどこにも無い。
+ * 葉を1枚ずつ置くと数百要素になるので、タイル1枚に焼いて敷く。
+ * 明るい葉と暗い葉で2枚に分け、大きさと角度を変えて重ねると、
+ * タイルの継ぎ目と繰り返しが目につかなくなる。
+ */
+function grassTile(seed: number, count: number, size: number) {
+  const r = rng(seed);
+  const f = (n: number) => n.toFixed(1);
+  const SHAPES = [
+    // 三角の葉
+    (x: number, y: number, s: number) => `M${x},${y}l${f(-3.4 * s)},${f(-6.2 * s)}h${f(6.8 * s)}Z`,
+    // 二股の草
+    (x: number, y: number, s: number) =>
+      `M${x},${y}l${f(-2.6 * s)},${f(-6.6 * s)}l${f(2.6 * s)},${f(3.2 * s)}l${f(2.6 * s)},${f(-3.2 * s)}Z`,
+    // 小さなクローバー
+    (x: number, y: number, s: number) =>
+      `M${f(x - 2.2 * s)},${y}a${f(2.2 * s)},${f(1.7 * s)} 0 1,0 ${f(4.4 * s)},0a${f(2.2 * s)},${f(1.7 * s)} 0 1,0 ${f(-4.4 * s)},0`,
+  ];
+  let hi = "";
+  let lo = "";
+  for (let i = 0; i < count; i++) {
+    // 継ぎ目に葉がまたがらないよう、ふちから少し内側にだけ置く
+    const x = +(6 + r() * (size - 12)).toFixed(1);
+    const y = +(8 + r() * (size - 12)).toFixed(1);
+    const k = r();
+    const d = SHAPES[k < 0.44 ? 0 : k < 0.8 ? 1 : 2](x, y, 0.8 + r() * 0.9);
+    if (r() < 0.55) hi += d;
+    else lo += d;
+  }
+  return { hi, lo, size };
+}
+
+/** 2枚のタイルを、大きさと角度を変えて重ねる。 */
+const GRASS_TILES = [grassTile(1207, 46, 152), grassTile(3311, 30, 97)];
 
 const plateauTopPath = blob(PLATEAU.cx, PLATEAU.cy - PLATEAU.drop, PLATEAU.radii, PLATEAU.squash);
 
@@ -57,6 +263,8 @@ export type Item = {
   sway?: number;
   /** 入口になっている建物。押せるようにするため、どの場所かを持たせる。 */
   spot?: SpotId;
+  /** 揺らさない。地面の細かい飾りまで揺らすと、毎フレーム動かす要素が一気に増える。 */
+  still?: boolean;
 };
 
 /** 揺れるもの(草木)かどうか。建物や岩は揺れない。 */
@@ -273,6 +481,72 @@ const PATHS: Item[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* 地面の飾り                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 草地に散らす小物。花・雑草・小石。
+ *
+ * 建物のあいだが更地に見えるのがいちばん安っぽい（`docs/ac-reference.md` 4章）。
+ * 石畳の上と、建物・入口のまわり 92px には置かない。押す場所を飾りで隠さないため。
+ */
+const groundDetail: Item[] = (() => {
+  const r = rng(770311);
+  const out: Item[] = [];
+  let guard = 0;
+  while (out.length < 84 && guard++ < 16000) {
+    const x = ISLAND.cx + (r() - 0.5) * 900;
+    const y = ISLAND.cy + (r() - 0.5) * 840;
+    if (!insideRadii(ISLAND.cx, ISLAND.cy, grassR, x, y, ISLAND.squash, 16)) continue;
+    if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
+    if (Math.hypot(POND.x - x, (POND.y - y) * 1.8) < 78) continue;
+    if (PATHS.some((p) => Math.hypot(p.x - x, p.y - y) < 20)) continue;
+    if (out.some((p) => Math.hypot(p.x - x, p.y - y) < 21)) continue;
+    if (shrubs.some((p) => Math.hypot(p.x - x, p.y - y) < 22)) continue;
+    const k = r();
+    const it: Item =
+      k < 0.16
+        ? { n: "flower-red", x, y, s: 11 + r() * 4 }
+        : k < 0.32
+          ? { n: "flower-yellow", x, y, s: 11 + r() * 4 }
+          : k < 0.46
+            ? { n: "flower-purple", x, y, s: 11 + r() * 4 }
+            : k < 0.66
+              ? { n: "grass", x, y, s: 9 + r() * 4 }
+              : k < 0.82
+                ? { n: "grass-large", x, y, s: 10 + r() * 4 }
+                : k < 0.93
+                  ? { n: "rock-small", x, y, s: 9 + r() * 5 }
+                  : { n: "mushroom", x, y, s: 9 + r() * 3 };
+    out.push({ ...it, flip: r() < 0.5, still: true });
+  }
+  return out;
+})();
+
+/**
+ * 浜に打ち上がるもの。砂の帯だけが無地だと、岸が板に見える。
+ * 濡れた砂の帯を避けて、乾いた砂の側に置く。
+ */
+const beachDetail: Item[] = (() => {
+  const r = rng(4130);
+  const out: Item[] = [];
+  for (let i = 0; i < 20; i++) {
+    const t = (i + r() * 0.8) / 20;
+    const [x, y] = pointAt(ISLAND.cx, ISLAND.cy, sandR, ISLAND.squash, t, 17 + r() * 13);
+    if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
+    if (out.some((p) => Math.hypot(p.x - x, p.y - y) < 34)) continue;
+    const k = r();
+    out.push({
+      n: k < 0.42 ? "rock-small" : k < 0.72 ? "rock-flat" : k < 0.88 ? "grass" : "log",
+      x,
+      y,
+      s: k < 0.72 ? 8 + r() * 6 : 9 + r() * 4,
+      flip: r() < 0.5,
+      still: true,
+    });
+  }
+  return out;
+})();
 
 /**
  * 夜にともる灯り。[x, y, 半径]。
@@ -298,10 +572,12 @@ export const PROPS: Item[] = [
   ...plateauItems,
   ...innerTrees,
   ...shrubs,
+  ...groundDetail,
+  ...beachDetail,
   ...BUILDINGS,
   ...DRESSING,
 ]
-  .map((p, i) => (SWAYS.test(p.n) ? { ...p, sway: (i % 13) * 0.36 } : p))
+  .map((p, i) => (SWAYS.test(p.n) && !p.still ? { ...p, sway: (i % 13) * 0.36 } : p))
   .sort((a, b) => a.y - b.y);
 
 export default function IslandScene() {
@@ -320,17 +596,24 @@ export default function IslandScene() {
           <stop offset="0" stopColor="var(--grass2-hi)" />
           <stop offset="1" stopColor="var(--grass2)" />
         </radialGradient>
-        <radialGradient id="sandG" cx="40%" cy="32%">
-          <stop offset="0" stopColor="var(--sand)" />
-          <stop offset="1" stopColor="var(--sand-edge)" />
-        </radialGradient>
         <linearGradient id="cliffG" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="var(--cliff)" />
           <stop offset="1" stopColor="var(--cliff-lo)" />
         </linearGradient>
-        <filter id="islandShadow" x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="18" stdDeviation="20" floodColor="#06364a" floodOpacity="0.32" />
-        </filter>
+        {/* 草の地模様。葉を1枚ずつ置かず、タイル1枚を敷いて済ませる。 */}
+        {GRASS_TILES.map((t, i) => (
+          <pattern
+            key={i}
+            id={`grassTex${i}`}
+            width={t.size}
+            height={t.size}
+            patternUnits="userSpaceOnUse"
+            patternTransform={i === 0 ? undefined : "rotate(24)"}
+          >
+            <path d={t.hi} fill="var(--grass-hi)" opacity={i === 0 ? 0.52 : 0.4} />
+            <path d={t.lo} fill="var(--grass-lo)" opacity={i === 0 ? 0.34 : 0.26} />
+          </pattern>
+        ))}
         <clipPath id="grassClip">
           <path d={grassPath} />
         </clipPath>
@@ -339,12 +622,19 @@ export default function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
-      <g opacity="0.07" fill="#ffffff">
-        {Array.from({ length: 10 }, (_, i) => (
-          <rect key={i} x={-500} y={-300 + i * 190} width={WORLD + 1000} height={24} rx={12} />
+      {/* 沖のうねり。島を囲む輪にすると、海が島に向かって寄せてくるように見える。 */}
+      <g fill="none" stroke="#ffffff" strokeLinecap="round">
+        {swellPaths.map((d, i) => (
+          <path key={i} d={d} strokeWidth={26 - i * 5} strokeOpacity={0.055 - i * 0.012} />
         ))}
       </g>
-      <g fill="none" stroke="#ffffff" strokeOpacity="0.28" strokeWidth="5" strokeLinecap="round">
+      {/* きらめき。短い線を散らす。長さと濃さをばらけさせないと点描に見える。 */}
+      <g stroke="#ffffff" strokeLinecap="round" fill="none" aria-hidden>
+        {glints.map((d, i) => (
+          <path key={i} d={d} strokeWidth={GLINT_STYLE[i][0]} strokeOpacity={GLINT_STYLE[i][1]} />
+        ))}
+      </g>
+      <g fill="none" stroke="#ffffff" strokeOpacity="0.24" strokeWidth="5" strokeLinecap="round">
         {[
           [70, 210], [980, 130], [130, 1090], [1010, 1040], [30, 640],
           [1130, 700], [300, 70], [820, 1150], [560, 30], [200, 1180],
@@ -353,26 +643,60 @@ export default function IslandScene() {
         ))}
       </g>
 
-      {/* ------- 浅瀬 ------- */}
-      <path d={shelf2Path} fill="var(--sea-shallow)" opacity="0.5" />
-      <path d={shelfPath} fill="var(--sea-shelf)" opacity="0.85" />
-      <g className="foam">
-        <path d={shelfPath} fill="none" stroke="var(--foam)" strokeWidth="9" strokeOpacity="0.7" strokeDasharray="28 22" strokeLinecap="round" />
-        <path d={foamPath} fill="none" stroke="var(--foam)" strokeWidth="6" strokeOpacity="0.55" strokeDasharray="14 26" strokeLinecap="round" />
+      {/* ------- 浅瀬。沖から順に明るくしていく ------- */}
+      <path d={hazePath} fill="var(--sea-mid)" opacity="0.42" />
+      <path d={midPath} fill="var(--sea-shallow)" opacity="0.42" />
+      <path d={shallowPath} fill="var(--sea-shallow)" />
+      <path d={shelfPath} fill="var(--sea-shelf)" />
+      {/* 浅瀬の底に落ちる光。1本だけ流す。
+          破線を動かすと輪ぜんぶを描き直すので、増やすと起動直後にひっかかる。 */}
+      <g className="foam" fill="none" stroke="#ffffff" strokeLinecap="round">
+        <path d={shelfPath} strokeWidth="6" strokeOpacity="0.24" strokeDasharray="32 104" />
       </g>
 
       {/* ------- 島 ------- */}
-      <g filter="url(#islandShadow)">
-        <path d={sandPath} fill="url(#sandG)" />
-        <path d={wetPath} fill="var(--sand-wet)" opacity="0.45" />
+      {/* 影。feGaussianBlur は面積に比例して重くなるので、
+          ずらした写しを薄く重ねてぼかしの代わりにする。 */}
+      <g fill="#06364a" aria-hidden>
+        {[6, 12, 19, 27].map((dy) => (
+          <path key={dy} d={sandPath} transform={`translate(0 ${dy})`} opacity="0.075" />
+        ))}
+      </g>
+      <g>
+        <path d={sandPath} fill="var(--sand)" />
+        {/* 濡れた砂は波打ち際の側。内側に敷くと逆になる。 */}
+        <path d={wetRing} fill="var(--sand-wet)" fillRule="evenodd" />
+        <path d={wetEdgeRing} fill="var(--sand-edge)" fillRule="evenodd" opacity="0.55" />
+        {/* 草の落とす影。砂が草に接するところを締める。 */}
+        <path d={grassPath} fill="none" stroke="var(--sand-edge)" strokeOpacity="0.45" strokeWidth="4.5" />
         <path d={grassPath} fill="url(#grassG)" />
       </g>
+
+      {/* ------- 泡。島の上に重ねて、砂の縁にかぶせる ------- */}
+      <g fill="var(--foam)" aria-hidden>
+        <path d={foamBand} fillRule="evenodd" opacity="0.95" />
+        <path d={foamDots[0]} opacity="0.72" />
+        <path d={foamDots[1]} opacity="0.42" />
+      </g>
+      <g fill="none" stroke="var(--foam)" strokeLinecap="round" aria-hidden>
+        {foamLaceOut.map((d, i) => (
+          <path key={`fo${i}`} d={d} strokeWidth={LACE_STYLE[i][0]} strokeOpacity={LACE_STYLE[i][1]} />
+        ))}
+        {foamLaceIn.map((d, i) => (
+          <path key={`fi${i}`} d={d} strokeWidth={LACE_STYLE[i][0] * 0.75} strokeOpacity={LACE_STYLE[i][1]} />
+        ))}
+      </g>
+
+      {/* ------- 草地 ------- */}
       <path d={grassPath} fill="none" stroke="#ffffff" strokeOpacity="0.26" strokeWidth="5" strokeDasharray="240 460" strokeDashoffset="-40" />
       <g clipPath="url(#grassClip)">
-        <path d={blob(ISLAND.cx, ISLAND.cy + 15, grassR, ISLAND.squash)} fill="none" stroke="#2f6b34" strokeOpacity="0.14" strokeWidth="18" />
+        <path d={blob(CX, CY + 15, grassR, SQ)} fill="none" stroke="#2f6b34" strokeOpacity="0.14" strokeWidth="18" />
         <ellipse cx={430} cy={752} rx={158} ry={74} fill="var(--grass-hi)" opacity="0.3" />
         <ellipse cx={824} cy={846} rx={136} ry={60} fill="var(--grass-lo)" opacity="0.16" />
         <ellipse cx={620} cy={556} rx={120} ry={52} fill="var(--grass-hi)" opacity="0.22" />
+        {/* 草の地模様。更地の面をなくす。タイルなので要素は2つで済む。 */}
+        <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex0)" />
+        <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex1)" />
       </g>
 
       {/* ------- 高台 ------- */}

@@ -5,6 +5,7 @@ import NowLive from "@/components/live/NowLive";
 import { Panel } from "@/components/ui/Bits";
 import { PROFILE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "いま何してる",
@@ -17,7 +18,7 @@ export default function NowPage() {
       <PageHead
         icon="mailbox"
         title="いま何してる"
-        lead="今どこにいて、今週なにをするか。配信の前にここを見ておくと話が早いです。"
+        lead="今どこにいて、今週なにをするか。ここは毎日書きかわります。"
         say={GUIDE.now}
       />
       <NowLive />
@@ -44,6 +45,27 @@ export default function NowPage() {
               <Icon name="external" size={15} className="tile-go" />
             </a>
           ))}
+        </div>
+      </Panel>
+      <Panel>
+        <h2>もっと先の話</h2>
+        <div className="tiles">
+          <Link className="tile" href="/next">
+            <img className="tile-icon" src="/sprites/tent.webp" alt="" />
+            <span className="tile-text">
+              <b>これから</b>
+              <i>次に行くところ、次にやること</i>
+            </span>
+            <Icon name="right" size={15} className="tile-go" />
+          </Link>
+          <Link className="tile" href="/map">
+            <img className="tile-icon" src="/sprites/canoe.webp" alt="" />
+            <span className="tile-text">
+              <b>旅の桟橋</b>
+              <i>これまでに歩いた国</i>
+            </span>
+            <Icon name="right" size={15} className="tile-go" />
+          </Link>
         </div>
       </Panel>
     </PageShell>

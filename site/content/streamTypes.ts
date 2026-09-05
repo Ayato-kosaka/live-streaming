@@ -9,6 +9,15 @@ export type StreamType = {
   when: string;
   lead: string;
   body: string[];
+  /** カードに出す一行。lead は長いので、一覧ではこちらを出す。 */
+  short: string;
+  /**
+   * 1週間のどこに出るか。`when` を絵にするためだけの位置で、決まりではない。
+   * 0=月 … 6=日。曜日に貼りつかないものは "any"(天気しだい) / "monthend"(月末)。
+   */
+  week: { from: number; to: number } | "any" | "monthend";
+  /** よくある流れ。3つまで。番号を振って順番が見えるようにする。 */
+  beat: string[];
   /** その型の代表的な配信 */
   samples: { date: string; videoId: string; title: string }[];
   /** さらに深く見るリンク */
@@ -23,6 +32,9 @@ export const STREAM_TYPES: StreamType[] = [
     icon: "hut-kitchen",
     color: "var(--roof-coral)",
     when: "だいたい週の後半",
+    short: "何を作るかから一緒に決める、3日がかりの連続ドラマ。",
+    week: { from: 3, to: 5 },
+    beat: ["何を作るか決める", "市場へ買い出し", "作って、食べる"],
     lead: "「何を作るか」から一緒に決めて、買い出しに行って、作って食べる。3日がかりの連続ドラマみたいなクッキング。",
     body: [
       "1日目に企画会議で作るものを決め、2日目に市場やスーパーへ買い出し、3日目に調理して食べる。この3日構成が定着している。",
@@ -43,6 +55,9 @@ export const STREAM_TYPES: StreamType[] = [
     icon: "tree-palm",
     color: "var(--roof-mint)",
     when: "天気がいい日",
+    short: "目的地に着くまでの道のりごと、そのまま流す。",
+    week: "any",
+    beat: ["行き先を決める", "歩きながら喋る", "着く（着かない日もある）"],
     lead: "湖まで歩く、滝を見に行く、教会に登る。目的地に着くまでの道のりごと配信する。",
     body: [
       "トビリシ海まで歩く、リシ湖に行く、ロープウェイに乗る、山の上の湖まで歩く。歩きながら喋る時間がいちばん長い配信。",
@@ -63,6 +78,9 @@ export const STREAM_TYPES: StreamType[] = [
     icon: "hut-workshop",
     color: "var(--roof-sky)",
     when: "だいたい金曜",
+    short: "「なに食べよ」を、目の前で作っていく。",
+    week: { from: 4, to: 4 },
+    beat: ["今日のゴールを宣言", "目の前で作る", "できるまで終わらない"],
     lead: "自作のグルメアプリ「なに食べよ」を、目の前で作る。「作り切るまで終われません」と宣言して長時間やる日もある。",
     body: [
       "画面デザイン、料理の文言、検索条件、チュートリアル。何をどう作るかを配信で相談しながら決めている。",
@@ -83,6 +101,9 @@ export const STREAM_TYPES: StreamType[] = [
     icon: "signboard",
     color: "var(--roof-gold)",
     when: "週のはじめ",
+    short: "来週なにをするかを、コメントと一緒に決める会。",
+    week: { from: 0, to: 1 },
+    beat: ["「今日なにしよかー！」", "コメントの案を拾う", "来週の予定になる"],
     lead: "来週なにをするかを、視聴者さんと一緒に決める会。この島でいちばん大事な回。",
     body: [
       "「今日なにしよかー！」から始まって、コメントで出たアイデアを拾って予定にしていく。クッキングのメニューも、旅先も、ここで決まることが多い。",
@@ -103,6 +124,9 @@ export const STREAM_TYPES: StreamType[] = [
     icon: "fountain",
     color: "#c79bff",
     when: "毎月末",
+    short: "1ヶ月ぶんのチャットを全部読んで選ぶ、授賞式。",
+    week: "monthend",
+    beat: ["1ヶ月ぶんを読み返す", "表彰するものを選ぶ", "授賞式（朝まで）"],
     lead: "1ヶ月をふりかえる授賞式。出席リスナー表彰、名言アワード、おもしろコメント大賞、投げ銭ありがとう。1ヶ月分のチャットを全部読んで作っている。",
     body: [
       "その月に流れたコメントを全部読み返して、名言や流行語、盛り上がった瞬間を選んで表彰する。",

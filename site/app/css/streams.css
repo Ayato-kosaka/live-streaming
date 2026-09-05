@@ -1,0 +1,645 @@
+/* =========================================================
+   配信やぐら / キッチン小屋 / 伝説の丘
+
+   この3コーナーは「読み物」ではなく **図鑑とカタログ** として作る。
+   どうぶつの森の図鑑を実測して分かった作りを、そのまま持ち込んでいる
+   （`docs/ac-reference.md`）。
+
+     1. 台紙はクリーム。その上に薄い模様が敷いてあって、白い余白を作らない
+     2. 品物は枠の中に閉じ込めず、**台紙の上に置く**（皿・影・傾き）
+     3. 押せるものは下に厚みがある。押すと厚みが減って沈む
+     4. 影は黒くしない。暖かい灰緑を右下へずらす
+     5. 角丸は高さの 1/3。枠は太い
+
+   クラス名は接頭辞で分けてある。
+     .wk / .ty  … 配信やぐら
+     .vid       … 配信カード（共通）
+     .kt / .dish … キッチン小屋
+     .rt        … 料理1品の3日間
+     .lg        … 伝説の丘
+   ========================================================= */
+
+/* 自前のイラスト。焼いたスプライトと同じ大きさ・同じ置き方にそろえる。 */
+.art { display: block; flex: none; }
+
+/* 台紙の模様。塗りつぶしの1色は「印刷物」に見えるので、
+   どうぶつの森のカタログと同じく、ごく薄い点を敷いておく。 */
+.pat {
+  background-color: var(--paper-2);
+  background-image:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--frame) 26%, transparent) 1.6px, transparent 1.7px),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--frame) 16%, transparent) 1.2px, transparent 1.3px);
+  background-size: 22px 22px, 22px 22px;
+  background-position: 0 0, 11px 11px;
+}
+
+/* =========================================================
+   1週間の回りかた（配信やぐら）
+   「今夜は何の日か」を、表ではなく1本の帯で見せる。
+   帯の中に名前を入れると、金曜だけの型が1マスに潰れて読めなくなるので、
+   名前は帯の上に置いて、帯は「週のどこか」だけを言う役にした。
+   ========================================================= */
+.wk {
+  position: relative;
+  border-radius: var(--r-3);
+  padding: 13px 12px 15px;
+  overflow: hidden;
+}
+@media (min-width: 720px) { .wk { padding: 18px 20px 20px; } }
+.wk-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.wk-days > span {
+  display: grid; place-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  box-shadow: inset 0 -2px 0 rgba(120, 90, 50, 0.08);
+}
+/* 土日だけ色を変える。配信は毎日あるので「休み」ではなく、目印として */
+.wk-days > span.is-end { color: var(--accent); }
+
+.wk-rows { display: grid; gap: 11px; margin-top: 11px; }
+.wk-row { display: grid; gap: 5px; }
+.wk-tag { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.wk-tag img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
+.wk-tag b { font-size: 12.5px; font-weight: 900; letter-spacing: 0.02em; }
+.wk-tag i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
+.wk-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.wk-track > i {
+  grid-row: 1;
+  min-height: 26px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  box-shadow: inset 0 2px 3px rgba(120, 90, 50, 0.08);
+}
+.wk-fill {
+  grid-row: 1;
+  min-height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--ty) 58%, #ffffff) 0%,
+    var(--ty) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 3px 0 color-mix(in srgb, var(--ty) 62%, var(--ink));
+}
+/* 曜日に貼りつかないもの（天気しだい・月末）は、帯ではなく札で出す */
+.wk-free { display: grid; gap: 7px; margin-top: 13px; }
+@media (min-width: 560px) { .wk-free { grid-template-columns: 1fr 1fr; } }
+.wk-free > span {
+  display: flex; align-items: center; gap: 8px;
+  border-radius: 999px;
+  padding: 5px 14px 5px 6px;
+  font-size: 12px; font-weight: 900;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2.5px solid color-mix(in srgb, var(--ty) 70%, var(--paper));
+  box-shadow: 0 2.5px 0 color-mix(in srgb, var(--ty) 60%, var(--ink));
+}
+.wk-free img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
+.wk-free em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
+.wk-note { margin: 12px 0 0; font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+
+/* =========================================================
+   配信の型のカード
+   5つが同じ白い板に見えないように、色を「屋根」として使う。
+   ========================================================= */
+.tys { display: grid; gap: 16px; }
+@media (min-width: 800px) { .tys { grid-template-columns: 1fr 1fr; } }
+/* いちばん本数の多い型だけ横幅いっぱいにして、5枚が均等に並ぶのを崩す */
+@media (min-width: 800px) { .tys > .ty.is-wide { grid-column: 1 / -1; } }
+
+.ty {
+  position: relative;
+  border-radius: var(--r-4);
+  background: var(--paper);
+  border: 4px solid var(--ty);
+  box-shadow:
+    inset 0 0 0 5px color-mix(in srgb, var(--ty) 16%, var(--paper-2)),
+    0 8px 0 color-mix(in srgb, var(--ty) 60%, var(--ink)),
+    0 14px 3px rgba(8, 46, 62, 0.18);
+  overflow: hidden;
+}
+/* 屋根。型の色をいちばん大きい面で見せる場所 */
+.ty-roof {
+  display: flex; align-items: flex-end; gap: 12px;
+  padding: 14px 16px 12px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--ty) 62%, #ffffff) 0%,
+    var(--ty) 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.5);
+}
+.ty-roof img {
+  width: 62px; height: 62px; flex: none;
+  object-fit: contain; object-position: center bottom;
+  filter: drop-shadow(3px 5px 0 rgba(90, 110, 84, 0.28));
+}
+.ty-name { display: grid; gap: 4px; min-width: 0; flex: 1; padding-bottom: 3px; }
+.ty-name b {
+  font-size: clamp(17px, 4.6vw, 21px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #43301c;
+  line-height: 1.3;
+}
+.ty-when {
+  display: inline-flex; align-items: center; gap: 5px;
+  width: fit-content;
+  font-size: 11.5px; font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #4a3520;
+  background: color-mix(in srgb, #fffdf6 78%, transparent);
+  border-radius: 999px;
+  padding: 3px 11px;
+}
+.ty-in { padding: 14px 16px 16px; }
+@media (min-width: 720px) { .ty-in { padding: 16px 20px 18px; } }
+.ty-lead {
+  margin: 0 0 12px;
+  font-size: 14px; font-weight: 700; line-height: 1.85;
+  color: var(--ink);
+}
+
+/* よくある流れ。丸数字ではなく、絵と札で「順番」を出す */
+.beat { display: grid; gap: 7px; margin: 0 0 13px; padding: 0; list-style: none; }
+@media (min-width: 520px) { .beat { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+.beat > li {
+  position: relative;
+  display: flex; align-items: center; gap: 9px;
+  border-radius: var(--r-2);
+  padding: 8px 12px 8px 9px;
+  background: color-mix(in srgb, var(--ty, var(--frame)) 12%, var(--paper-2));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+.beat em {
+  flex: none;
+  display: grid; place-items: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  font-style: normal; font-size: 12px; font-weight: 900;
+  color: #fffdf6;
+  background: color-mix(in srgb, var(--ty, var(--frame)) 78%, var(--ink));
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.beat b { font-size: 12.5px; font-weight: 900; line-height: 1.45; letter-spacing: 0.01em; }
+/* 横に並ぶときだけ、札と札のあいだに進む向きの三角を置く */
+@media (min-width: 520px) {
+  .beat > li + li::before {
+    content: "";
+    position: absolute; left: -8px; top: 50%;
+    width: 0; height: 0;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-left-color: color-mix(in srgb, var(--ty, var(--frame)) 55%, var(--paper));
+  }
+}
+
+/* 型ごとの数字。1枚に1つだけ */
+.ty-num {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  border-radius: 999px;
+  padding: 6px 15px;
+  margin-bottom: 12px;
+  background: var(--paper-2);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 2.5px 0 color-mix(in srgb, var(--ty) 55%, var(--ink));
+}
+.ty-num b { font-size: 21px; font-weight: 900; color: color-mix(in srgb, var(--ty) 66%, var(--ink)); letter-spacing: 0.01em; }
+.ty-num i { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+
+/* 「はいる」ボタン。カードの中でいちばん押したいもの */
+.ty-go {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px;
+  border-radius: 999px;
+  font-size: 15px; font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #43301c;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--ty) 46%, #ffffff) 0%,
+    color-mix(in srgb, var(--ty) 88%, #ffffff) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 5px 0 color-mix(in srgb, var(--ty) 58%, var(--ink));
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 2px 0 rgba(255,255,255,.75), 0 7px 0 color-mix(in srgb, var(--ty) 58%, var(--ink)); }
+.ty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--ty) 58%, var(--ink)); }
+
+/* カードの中の折りたたみは、型の色を左の帯に使う */
+.ty .fold { border-color: color-mix(in srgb, var(--ty) 62%, var(--ink-3)); box-shadow: 0 3px 0 color-mix(in srgb, var(--ty) 50%, var(--ink)); margin-bottom: 12px; }
+.ty .fold > summary { border-left-color: var(--ty); }
+
+/* =========================================================
+   配信カード
+   サムネが出ない環境でも板として成立するように、
+   下地の色と再生の印を先に置いておく。
+   ========================================================= */
+.vids { display: grid; gap: 11px; }
+@media (min-width: 620px) { .vids { grid-template-columns: 1fr 1fr; } }
+.vids.is-one { grid-template-columns: 1fr; }
+.vid {
+  display: flex; gap: 12px; align-items: stretch;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3px solid color-mix(in srgb, var(--ty, var(--frame)) 74%, var(--frame));
+  border-radius: var(--r-3);
+  padding: 9px 13px 9px 9px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 5px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink));
+  transition: transform 0.14s, box-shadow 0.14s;
+}
+.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 8px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)), 0 12px 3px rgba(8,46,62,.16); }
+.vid:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)); }
+.vid-th {
+  position: relative; flex: none;
+  width: 116px; aspect-ratio: 16/9;
+  border-radius: 16px; overflow: hidden;
+  background: linear-gradient(160deg, #4f7c93 0%, #2f5c74 100%);
+  box-shadow: inset 0 0 0 2.5px rgba(255, 253, 246, 0.6);
+}
+@media (min-width: 620px) { .vid-th { width: 124px; } }
+.vid-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vid-play {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  color: #fffdf6;
+}
+.vid-play i {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(24, 14, 4, 0.42);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.28);
+}
+.vid-b { display: flex; flex-direction: column; gap: 5px; min-width: 0; justify-content: center; flex: 1; }
+.vid-m { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.vid-m em {
+  font-style: normal;
+  color: #fffdf6;
+  background: color-mix(in srgb, var(--ty, var(--frame)) 82%, var(--ink));
+  border-radius: 999px; padding: 2.5px 9px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+  letter-spacing: 0.03em;
+}
+.vid-b b { font-size: 13px; font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
+/* 何本目か。長い企画で「順番」を見せるときだけ付ける */
+.vid-no {
+  flex: none;
+  align-self: center;
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-size: 13px; font-weight: 900;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  box-shadow: inset 0 -2px 0 rgba(120, 90, 50, 0.12);
+}
+
+/* =========================================================
+   キッチン小屋 — スタンプ帳／カタログ
+   ========================================================= */
+
+/* 絞り込みの棚。指で押して切り替える場所なので、板の厚みを付ける */
+.kt-bar { display: grid; gap: 10px; margin-bottom: 16px; }
+.kt-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kt-row > b {
+  flex: none;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+.kt-pick {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px;
+  border-radius: 999px;
+  padding: 6px 15px;
+  font-size: 12.5px; font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 2.5px solid var(--frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 3px 0 color-mix(in srgb, var(--frame) 66%, var(--frame-dark));
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+}
+.kt-pick em { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.kt-pick:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--frame) 66%, var(--frame-dark)); }
+/* 選ばれているものは1つだけ。色ではなく「へこみ」で見せる */
+.kt-pick.is-on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 62%, var(--paper)) 0%, var(--gold) 100%);
+  border-color: color-mix(in srgb, var(--gold) 60%, var(--frame-deep));
+  color: #43301c;
+  box-shadow: inset 0 3px 5px rgba(140, 96, 30, 0.28);
+  transform: translateY(2px);
+}
+.kt-pick.is-on em { color: #6b4c1c; }
+
+/* カタログの棚。カードを枠で閉じず、模様の台紙の上に置く */
+.kt-shelf {
+  border-radius: var(--r-3);
+  padding: 11px 9px 13px;
+  box-shadow: inset 0 3px 8px rgba(120, 84, 40, 0.12);
+}
+@media (min-width: 720px) { .kt-shelf { padding: 18px 16px 20px; } }
+.kt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+}
+@media (min-width: 720px) { .kt-grid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 14px; } }
+.kt-none { margin: 22px 0; text-align: center; font-size: 13px; font-weight: 800; color: var(--ink-2); }
+
+/* 1品のカード。皿に乗った料理を、台紙の上に置いた札に載せる */
+.dish {
+  position: relative;
+  display: flex; flex-direction: column;
+  border-radius: var(--r-3);
+  background: linear-gradient(180deg, var(--paper) 0%, color-mix(in srgb, var(--paper-2) 60%, var(--paper)) 100%);
+  border: 3.5px solid var(--frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.9), 0 6px 0 var(--frame-dark), 0 11px 3px rgba(8, 46, 62, 0.16);
+  overflow: hidden;
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.16s;
+}
+.dish:hover { transform: translateY(-4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.9), 0 10px 0 var(--frame-dark), 0 16px 4px rgba(8, 46, 62, 0.18); }
+.dish:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-dark); }
+
+/* 皿。料理の下に必ず1枚敷いて、宙に浮かせない */
+.dish-plate {
+  position: relative;
+  display: grid; place-items: end center;
+  height: 104px;
+  background:
+    radial-gradient(120% 78% at 50% 118%, color-mix(in srgb, var(--gold) 26%, var(--paper-2)) 0%, transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-2) 70%, var(--paper)) 0%, var(--paper-2) 100%);
+}
+@media (min-width: 720px) { .dish-plate { height: 120px; } }
+.dish-plate::after {
+  /* 皿そのもの。まわりを少し濃くして、縁の立ち上がりに見せる */
+  content: "";
+  position: absolute; left: 50%; bottom: 11px;
+  width: 74%; height: 20px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fffdf6 0%, #fffdf6 58%, color-mix(in srgb, var(--frame) 34%, var(--paper-2)) 100%);
+  box-shadow: 0 3px 0 rgba(120, 90, 50, 0.1);
+}
+.dish-plate img {
+  position: relative;
+  z-index: 1;
+  width: 76px; height: 76px;
+  margin-bottom: 12px;
+  object-fit: contain; object-position: center bottom;
+  filter: drop-shadow(4px 4px 0 rgba(120, 140, 112, 0.26));
+  transition: transform 0.18s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+@media (min-width: 720px) { .dish-plate img { width: 88px; height: 88px; } }
+.dish:hover .dish-plate img { transform: translateY(-4px) scale(1.05); }
+/* 何日がかりか。皿の右上に小さく置く */
+.dish-days {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 4px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 10.5px; font-weight: 900;
+  color: #43301c;
+  background: color-mix(in srgb, var(--gold) 82%, #ffffff);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7), 0 2px 0 color-mix(in srgb, var(--gold) 50%, var(--ink));
+}
+.dish-b {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 11px 12px 13px;
+  border-top: 3px solid color-mix(in srgb, var(--frame) 52%, var(--paper));
+  background: var(--paper);
+  flex: 1;
+}
+.dish-b > b { font-size: 13.5px; font-weight: 900; line-height: 1.45; letter-spacing: 0.01em; }
+.dish-m { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 900; color: var(--ink-3); margin-top: auto; }
+.dish-m .flag { flex: none; }
+/* 3日の内わけ。点の数でひと目で分かるようにする */
+.dish-dots { display: flex; gap: 3.5px; margin-left: auto; }
+.dish-dots i { width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--frame) 62%, var(--paper)); }
+.dish-dots i.is-cook { background: var(--accent); }
+.dish-dots i.is-buy { background: var(--roof-mint); }
+.dish-dots i.is-plan { background: var(--roof-sky); }
+.dish-dots i.is-again { background: var(--gold); }
+
+/* 国ごとの内わけ。棒の長さで多い少ないを見せる */
+.kt-by { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.kt-by > li { display: flex; align-items: center; gap: 10px; }
+.kt-by .flag { flex: none; }
+.kt-by b { flex: none; font-size: 12.5px; font-weight: 900; width: 6.5em; }
+.kt-by span {
+  flex: 1;
+  height: 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper-2) 78%, var(--frame));
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(120, 90, 50, 0.14);
+}
+.kt-by span i {
+  display: block; height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 55%, #ffffff) 0%, var(--gold) 100%);
+  box-shadow: inset 0 -2px 0 rgba(150, 100, 20, 0.18);
+}
+.kt-by em { flex: none; font-style: normal; font-size: 12px; font-weight: 900; color: var(--ink-2); width: 3em; text-align: right; }
+
+/* 月ごとの本数。押した月だけスタンプが濃くなる台紙 */
+.kt-months {
+  display: flex; align-items: flex-end; gap: 3px;
+  overflow-x: auto;
+  padding: 8px 2px 4px;
+  scrollbar-width: none;
+}
+.kt-months::-webkit-scrollbar { display: none; }
+.kt-mo { display: grid; justify-items: center; gap: 5px; flex: none; width: 26px; }
+.kt-mo span {
+  width: 15px;
+  border-radius: 999px 999px 4px 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--roof-coral) 52%, #ffffff) 0%, var(--roof-coral) 100%);
+  box-shadow: inset 0 -2px 0 rgba(150, 60, 70, 0.2);
+}
+.kt-mo span.is-zero { background: color-mix(in srgb, var(--paper-2) 70%, var(--frame)); box-shadow: none; }
+.kt-mo i { font-style: normal; font-size: 9px; font-weight: 900; color: var(--ink-3); }
+.kt-mo em { font-style: normal; font-size: 9.5px; font-weight: 900; color: var(--ink-2); }
+
+/* =========================================================
+   料理1品 — 3日間のすごろく
+   ========================================================= */
+.rt { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 14px; }
+/* 道。マスとマスをつなぐ点線を、左端に1本通す */
+.rt::before {
+  content: "";
+  position: absolute;
+  left: 27px; top: 34px; bottom: 34px;
+  width: 5px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 70%, var(--paper)) 0 9px,
+    transparent 9px 17px);
+}
+@media (min-width: 720px) { .rt::before { left: 31px; } }
+.rt > li { position: relative; display: flex; gap: 12px; align-items: flex-start; }
+/* マス。丸い台の上に、その日の絵を置く */
+.rt-stop {
+  position: relative;
+  flex: none;
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3.5px solid var(--frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.85), 0 4px 0 var(--frame-dark);
+}
+@media (min-width: 720px) { .rt-stop { width: 66px; height: 66px; } }
+.rt-stop .art { width: 38px; height: 38px; }
+@media (min-width: 720px) { .rt-stop .art { width: 44px; height: 44px; } }
+.rt-n {
+  position: absolute; top: -6px; left: -6px;
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-size: 12px; font-weight: 900;
+  color: #fffdf6;
+  background: var(--frame-deep);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+.rt-body { flex: 1; min-width: 0; display: grid; gap: 7px; padding-top: 2px; }
+.rt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.rt-head b { font-size: 15px; font-weight: 900; letter-spacing: 0.03em; }
+.rt-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+
+/* 同じ国の料理を横に流す棚 */
+.kt-near { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: none; }
+.kt-near::-webkit-scrollbar { display: none; }
+.kt-near > a { flex: none; width: 132px; }
+
+/* =========================================================
+   伝説の丘 — 殿堂
+   ========================================================= */
+
+/* いちばん語られている1つ。壁に掛かった記念の額にする */
+.lg-top {
+  display: block;
+  position: relative;
+  border-radius: var(--r-4);
+  padding: 20px 16px 22px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--gold) 26%, var(--paper)) 0%, transparent 66%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 5px solid var(--gold);
+  box-shadow:
+    inset 0 0 0 5px color-mix(in srgb, var(--gold) 20%, var(--paper)),
+    0 9px 0 color-mix(in srgb, var(--gold) 52%, var(--ink)),
+    0 16px 4px rgba(8, 46, 62, 0.22);
+  text-align: center;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+@media (min-width: 720px) { .lg-top { padding: 26px 28px 28px; } }
+.lg-top-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  border-radius: 999px;
+  padding: 5px 15px 5px 7px;
+  font-size: 11.5px; font-weight: 900; letter-spacing: 0.08em;
+  color: #4a3208;
+  background: color-mix(in srgb, var(--gold) 76%, #ffffff);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 2.5px 0 color-mix(in srgb, var(--gold) 46%, var(--ink));
+}
+.lg-top-tag .art { width: 24px; height: 24px; }
+.lg-top h3 {
+  margin: 12px 0 0;
+  font-size: clamp(21px, 6vw, 30px);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.32;
+}
+.lg-top p { margin: 10px auto 0; max-width: 36em; font-size: 13.5px; font-weight: 700; line-height: 1.9; color: var(--ink-2); }
+.lg-top-sprite {
+  width: 92px; height: 92px;
+  margin: 4px auto 0;
+  display: block;
+  object-fit: contain; object-position: center bottom;
+  filter: drop-shadow(5px 6px 0 rgba(120, 140, 112, 0.24));
+}
+
+/* 一撃で伝わる数字。大きく、下に台を敷く */
+.fig {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--frame-deep);
+  line-height: 1;
+}
+.fig b { font-size: clamp(40px, 13vw, 66px); text-shadow: 0 4px 0 color-mix(in srgb, var(--gold) 40%, var(--paper)); }
+.fig i { font-style: normal; font-size: clamp(15px, 4vw, 21px); }
+.fig.is-word b { font-size: clamp(22px, 6.4vw, 32px); letter-spacing: 0.03em; }
+.fig-cap { display: block; margin-top: 4px; font-size: 11.5px; font-weight: 900; letter-spacing: 0.08em; color: var(--ink-3); }
+
+/* 数字を3つまで横に並べる棚 */
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; margin: 16px 0 0; }
+.figs > div {
+  border-radius: var(--r-2);
+  padding: 12px 8px 11px;
+  text-align: center;
+  background: color-mix(in srgb, var(--paper-2) 72%, var(--paper));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 3px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+}
+.figs .fig b { font-size: clamp(22px, 6.6vw, 30px); text-shadow: none; }
+.figs .fig i { font-size: 12.5px; }
+.figs .fig.is-word b { font-size: clamp(14px, 4vw, 17px); }
+
+/* 殿堂の壁。プレートを並べる */
+.lg-wall {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 13px;
+}
+@media (min-width: 620px) { .lg-wall { grid-template-columns: 1fr 1fr; } }
+.plaque {
+  position: relative;
+  display: flex; align-items: center; gap: 13px;
+  border-radius: var(--r-3);
+  padding: 13px 14px 13px 12px;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 3.5px solid var(--frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.85), 0 6px 0 var(--frame-dark), 0 11px 3px rgba(8, 46, 62, 0.16);
+  transition: transform 0.14s, box-shadow 0.14s;
+  overflow: hidden;
+}
+.plaque:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.85), 0 9px 0 var(--frame-dark), 0 15px 4px rgba(8,46,62,.18); }
+.plaque:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-dark); }
+/* 左に置く記念の絵。丸い台に載せて、額に入っているように見せる */
+.plaque-badge {
+  position: relative;
+  flex: none;
+  width: 74px; height: 74px;
+  border-radius: 22px;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(100% 100% at 50% 12%, color-mix(in srgb, var(--gold) 34%, var(--paper)) 0%, transparent 70%),
+    color-mix(in srgb, var(--paper-2) 84%, var(--frame));
+  box-shadow: inset 0 3px 6px rgba(120, 90, 40, 0.16);
+}
+.plaque-badge img { width: 54px; height: 54px; object-fit: contain; object-position: center bottom; filter: drop-shadow(3px 4px 0 rgba(120, 140, 112, 0.24)); }
+.plaque-b { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.plaque-b > b { font-size: 15px; font-weight: 900; line-height: 1.4; letter-spacing: 0.02em; }
+.plaque-b time { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.plaque-fig { display: flex; align-items: baseline; gap: 3px; font-weight: 900; color: var(--frame-deep); line-height: 1; margin-top: 2px; }
+.plaque-fig b { font-size: 27px; }
+.plaque-fig i { font-style: normal; font-size: 12px; }
+.plaque-fig.is-word b { font-size: 15px; letter-spacing: 0.03em; }
+.plaque-fig span { font-size: 10.5px; font-weight: 900; color: var(--ink-3); margin-left: 5px; letter-spacing: 0.05em; }
+
+/* 伝説1つ。日付の並びを1本の道で見せる */
+.days { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.days > li { display: flex; gap: 11px; align-items: center; }
+.days-n {
+  flex: none;
+  display: grid; place-items: center;
+  width: 42px; height: 42px;
+  border-radius: 15px;
+  font-size: 12px; font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  color: #43301c;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 46%, var(--paper)) 0%, color-mix(in srgb, var(--gold) 82%, var(--paper)) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 3px 0 color-mix(in srgb, var(--gold) 46%, var(--ink));
+}

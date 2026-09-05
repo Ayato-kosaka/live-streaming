@@ -1,0 +1,542 @@
+/* --- 企画ページの下書きを書く道具 ------------------------------------
+   完成形が見えないまま書かせると情報の足りない下書きになるので、
+   書いたそばから同じ部品でプレビューを出す。
+
+   入力欄も島の部品に見せる。ふつうのフォームの見た目が1枚混ざるだけで、
+   ページ全体が「作りかけのウェブサイト」に戻ってしまう。
+   --------------------------------------------------------------------- */
+.dform { display: grid; gap: 11px; margin-top: 14px; }
+.dform label { display: grid; gap: 5px; }
+.dform label span,
+.dlabel {
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.dlabel { margin-top: 10px; }
+.dform input,
+.dform textarea,
+.dform select {
+  width: 100%;
+  padding: 10px 13px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 14px;
+  background: var(--paper);
+  /* へこんだ紙。押せる板（外向きの厚み）と、書き込む欄を見分けられるようにする。 */
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--frame-deep) 20%, transparent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dform input::placeholder,
+.dform textarea::placeholder { color: var(--ink-3); font-weight: 700; }
+.dform input:focus,
+.dform textarea:focus,
+.dform select:focus {
+  outline: none;
+  border-color: var(--frame-deep);
+  box-shadow:
+    inset 0 2px 4px color-mix(in srgb, var(--frame-deep) 20%, transparent),
+    0 0 0 3.5px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.dform textarea { line-height: 1.7; resize: vertical; }
+.drow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
+.drow.is-col { grid-template-columns: 1fr; }
+
+/* 「足す」は押せる板。小さくても厚みを付けて、入力欄と取り違えないようにする。 */
+.dadd {
+  justify-self: start;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--frame-deep);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+}
+.dadd:hover { background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 35%, var(--paper))); }
+.dadd:active { transform: translateY(3px); box-shadow: 0 0 0 var(--frame-deep); }
+.dactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; }
+
+/* 貼り付ける元は、まわりの紙とはっきり別のものにする。 */
+.dsrc {
+  margin-top: 10px;
+  padding: 13px 15px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 16px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 11.5px;
+  line-height: 1.75;
+  overflow-x: auto;
+  white-space: pre;
+  box-shadow: inset 0 3px 8px color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+/* --- 北欧ルートの地図 -------------------------------------------------
+   形は本物（Natural Earth の海岸線をランベルト正角円錐で投影）。
+   塗りは島とそろえて、輪郭線を引かず、砂の縁と浅瀬の帯で陸と海を分ける。
+   --------------------------------------------------------------------- */
+.nmap {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  border: 4px solid var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  background: #2f7391;
+  overflow: hidden;
+}
+.nmap text {
+  font-family: inherit;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+.nmap-country {
+  fill: #3f7a4e;
+  font-weight: 900;
+  opacity: 0.65;
+  letter-spacing: 0.2em;
+  stroke: #f2f8e4;
+  stroke-width: 6;
+}
+.nmap-city {
+  fill: #18414f;
+  font-size: 24px;
+  font-weight: 900;
+  stroke: #fffdf6;
+  stroke-width: 6;
+}
+.nmap-city.is-big { font-size: 30px; }
+.nmap-chip.is-here rect { fill: var(--gold, #f0c040); }
+.nmap-chip rect {
+  fill: rgba(255, 253, 246, 0.94);
+  stroke: var(--frame-dark);
+  stroke-width: 3;
+}
+.nmap-chip text {
+  fill: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+.nmap-pin { cursor: pointer; }
+.nmap-pin:hover .nmap-city { fill: #0d2f3b; }
+
+/* --- デザインの見本ページ ---------------------------------------------
+   ここは押せない一覧なので、厚み（押せる合図）は付けない。
+   合図を1種類に保つため、見本は「置いてある札」のままにする。
+   --------------------------------------------------------------------- */
+.dsgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 9px; margin-top: 12px; }
+.dscell {
+  display: grid; justify-items: center; align-content: center; gap: 8px;
+  min-height: 84px;
+  padding: 13px 7px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 16px;
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+}
+.dscell i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink-2);
+  word-break: break-all;
+  text-align: center;
+  line-height: 1.4;
+}
+.ic { display: inline-block; vertical-align: -0.16em; }
+.flag { display: inline-block; vertical-align: -0.16em; }
+
+/* --- 折りたたみ -------------------------------------------------------
+   長い文章をそのまま並べない。見出しだけ並べて、押すと開く。
+
+   サイトでいちばん数の多い部品（しおり10コーナー、見どころ161件）なので、
+   「よくあるアコーディオン」ではなく、どうぶつの森の窓に寄せる。
+   ・角を大きく丸める（札の高さの 1/3 くらい）
+   ・下に厚みを置いて、板が浮いているように見せる
+   ・押すと沈む。開くと札の色そのものが変わる
+
+   高さの動きは ::details-content と interpolate-size で作る。
+   interpolate-size は継承するので .fold に置けば ::details-content にも効く。
+   対応していないブラウザではパッと開くが、中身が滑り込むので不自然に見えない。
+   --------------------------------------------------------------------- */
+.fold {
+  interpolate-size: allow-keywords;
+  border: 3px solid var(--frame-dark);
+  border-radius: 20px;
+  background: var(--paper);
+  /* 下の厚み（板）＋うっすら地面の影。ぼかした影だけだと紙に見える。 */
+  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-1);
+  overflow: hidden;
+  transition: box-shadow 0.18s ease, transform 0.12s ease, border-radius 0.2s ease;
+}
+.fold + .fold { margin-top: 9px; }
+
+/* 押している間だけ板が沈む。厚みぶん下げて、影を薄くする。 */
+.fold:has(> summary:active) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--frame-deep);
+}
+
+.fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 12px 12px;
+  cursor: pointer;
+  list-style: none;
+  /* 左の帯は「ここが押せる札の背骨」。閉じているときは枠より明るい色。 */
+  border-left: 8px solid var(--frame);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  transition: background 0.2s ease, border-left-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary:hover { background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 22%, var(--paper))); }
+
+.fold-t { display: grid; gap: 0; min-width: 0; flex: 1; }
+.fold-t b { font-size: 14.5px; font-weight: 900; line-height: 1.4; letter-spacing: 0.01em; }
+.fold-t i {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    height 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
+}
+/* 開いたら、要約の一行は畳む。本文の1行目とまるごと同じことが多く、
+   開いた直後に同じ文が二度並ぶのがいちばん安っぽく見える。
+   display:none だと開き始めに見出しが跳ねるので、高さごと本文と同じ速さで畳む。 */
+.fold[open] > summary .fold-t i { height: 0; margin-top: 0; opacity: 0; }
+
+.fold-n {
+  flex: none;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 2px solid var(--frame-dark);
+  border-radius: 999px;
+  padding: 2px 9px;
+  line-height: 1.5;
+}
+
+/* しるしは丸い札の中に入れる。文字の横の記号ではなく、押すボタンに見せる。 */
+.fold-c {
+  flex: none;
+  box-sizing: content-box;
+  width: 16px; height: 16px;
+  padding: 5px;
+  color: var(--frame-deep);
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 2px 0 var(--frame-deep);
+  transition: transform 0.24s cubic-bezier(0.34, 1.5, 0.64, 1), background 0.2s ease;
+}
+.fold[open] > summary .fold-c {
+  transform: rotate(180deg);
+  background: var(--gold);
+}
+
+/* 開いている札は、ひと目で分かるように色ごと変える。
+   （しるしの向きだけだと、並んでいるときに見分けがつかない） */
+.fold[open] {
+  box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2);
+}
+.fold[open] > summary {
+  border-left-color: var(--gold);
+  background: linear-gradient(
+    color-mix(in srgb, var(--gold) 30%, var(--paper)),
+    color-mix(in srgb, var(--gold) 16%, var(--paper))
+  );
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--frame-dark) 45%, transparent);
+}
+
+/* 高さの動き。中身の高さは CSS からは分からないので、
+   auto へ補間できる interpolate-size に頼る。 */
+.fold::details-content {
+  block-size: 0;
+  overflow: clip;
+  content-visibility: hidden;
+  transition:
+    block-size 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    content-visibility 0.3s allow-discrete;
+}
+.fold[open]::details-content {
+  block-size: auto;
+  content-visibility: visible;
+}
+
+.fold-body { padding: 14px 16px 17px; }
+.fold-body > :first-child { margin-top: 0; }
+.fold-body > :last-child { margin-bottom: 0; }
+/* 高さが動かない環境でも「開いた」と分かるように、中身だけは必ず滑り込ませる。 */
+.fold[open] > .fold-body { animation: fold-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes fold-in {
+  from { opacity: 0; transform: translateY(-7px); }
+  to { opacity: 1; transform: none; }
+}
+
+.folds { display: grid; gap: 9px; margin-top: 12px; }
+
+/* --- 北欧: 地図まわり --- */
+.panel.is-map { padding-left: 12px; padding-right: 12px; }
+.nmlegend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.nmlegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: var(--paper);
+  color: var(--ink);
+}
+.nmlegend .is-hitch { background: linear-gradient(#ffe3a6, #f6c563); }
+.nmlegend .is-ferry { background: #e6f2fb; }
+.nmlegend .is-side { background: #f3e6cd; }
+.nmlegend .is-fly { background: #eef3f6; }
+
+.rleg-h { display: inline-flex; align-items: center; gap: 6px; }
+.rleg-h .ic { color: var(--ink-3); }
+.rleg-h.is-hitch .ic { color: #c98a1c; }
+.rleg-h.is-ferry .ic { color: #3f86ab; }
+.rleg-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--frame-deep);
+}
+
+/* 引用のような、この企画の芯を言う一枚 */
+.nquote {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 3px dashed var(--frame-dark);
+  background: rgba(255, 236, 178, 0.4);
+}
+.nquote p { margin: 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; }
+.nquote b { font-weight: 900; }
+
+.ncountry-go { flex: none; color: var(--ink-3); margin-left: auto; }
+.tile-mark {
+  flex: none;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(#fffdf6, #fff3da);
+  color: var(--ink);
+}
+
+/* --- しおりのコーナー -------------------------------------------------
+   コーナー（章）と、その中の項目を、同じ札に見せない。
+   章はひとまわり太く・丸く、中の項目は一段小さく。
+   入れ子が2段あることが、開かなくても分かるようにする。
+   --------------------------------------------------------------------- */
+.gchap { margin-bottom: 11px; }
+.gchap > .fold {
+  border-width: 4px;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-1);
+}
+.gchap > .fold[open] { box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-2); }
+.gchap > .fold > summary { min-height: 60px; padding: 15px 16px; border-left-width: 10px; }
+.gchap-h { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; }
+.gchap-h .ic { color: var(--frame-deep); }
+.gchap > .fold > summary .fold-t b { font-size: 16px; }
+.gchap > .fold > .fold-body {
+  padding: 13px 12px 15px;
+  /* 中身の面をくぼませると、入れ子の札が浮いて見える */
+  background: color-mix(in srgb, var(--frame) 14%, var(--paper));
+  box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 18%, transparent);
+}
+
+/* 中の項目。厚みは残す（押した感じを揃える）が、章より一段浅く。 */
+.gchap .fold .fold {
+  border-width: 2.5px;
+  border-radius: 16px;
+  box-shadow: 0 3px 0 var(--frame-deep);
+}
+.gchap .fold .fold[open] { box-shadow: 0 3px 0 var(--frame-deep), var(--shadow-1); }
+.gchap .fold .fold > summary { border-left-width: 6px; min-height: 46px; padding: 10px 12px; }
+.gchap .fold .fold .fold-t b { font-size: 13.5px; }
+.gchap .fold .fold .fold-c {
+  width: 14px; height: 14px;
+  padding: 4px;
+  border-width: 2px;
+  box-shadow: 0 1.5px 0 var(--frame-deep);
+}
+.gchap .fold .fold .fold-body { padding: 11px 13px 13px; }
+
+/* --- 国のページ: 到着のしかた --- */
+.narrive {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 13px 15px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  background: rgba(255, 236, 178, 0.45);
+}
+.narrive b { font-size: 15px; font-weight: 900; }
+.narrive i { font-style: normal; font-size: 12px; font-weight: 900; color: var(--ink-3); }
+.narrive span { font-size: 11.5px; font-weight: 900; color: var(--frame-deep); }
+.narrive p { margin: 4px 0 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
+
+.nspot-h { display: inline-flex; align-items: center; gap: 7px; }
+.nspot-h .ic { color: var(--frame-deep); flex: none; }
+.ncity-name em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ink-3);
+  margin-left: 10px;
+}
+.nnav a { display: inline-flex; align-items: center; gap: 7px; }
+.ic.is-flip { transform: scaleX(-1); }
+.nspot-credit { display: inline-flex; align-items: center; gap: 4px; }
+
+/* 下のバー: 「これから」だけ日数を出す */
+.bar-spot em {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #fffdf6;
+  background: var(--accent-deep, #d4552a);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 2px;
+}
+
+/* --- あやと島について: 住人をちらっと -------------------------------
+   ただ並べると、切り抜きが白い紙の上に浮いて見える。
+   芝生の帯を敷いて、そこに立たせる。少しずつ重ねると人だかりになる。
+   --------------------------------------------------------------------- */
+.crowd-peek {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 0;
+  margin-top: 14px;
+  padding: 11px 14px 9px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 18px;
+  background: linear-gradient(
+    color-mix(in srgb, var(--grass-hi) 42%, var(--paper)),
+    color-mix(in srgb, var(--grass) 46%, var(--paper))
+  );
+  box-shadow: inset 0 3px 7px color-mix(in srgb, var(--frame-deep) 22%, transparent);
+}
+.crowd-peek img {
+  width: 48px; height: 48px;
+  object-fit: contain;
+  object-position: center bottom;
+  /* 少し重ねる。1人ずつ離すと「一覧」に見えて、人だかりに見えない。 */
+  margin-right: -6px;
+  /* 切り抜きなので、影は輪郭に沿って落ちる。真下ではなく光の反対（右下）へ。 */
+  filter: drop-shadow(2px 3px 1px color-mix(in srgb, var(--ink) 30%, transparent));
+}
+/* 一覧に添える小さなスプライト */
+.mini-icon {
+  width: 24px; height: 24px;
+  object-fit: contain; object-position: center bottom;
+  vertical-align: -0.34em;
+  filter: drop-shadow(1px 2px 1px color-mix(in srgb, var(--ink) 22%, transparent));
+}
+
+/* アイコンにした矢印は、文字だったときと同じ位置に置く */
+.tile-go { flex: none; color: var(--ink-3); }
+.chip .ic, .tile .ic { vertical-align: -0.16em; }
+
+/* --- 北欧: この旅でいちばん見たいもの --- */
+.nhi { display: grid; gap: 10px; margin-top: 12px; }
+@media (min-width: 720px) { .nhi { grid-template-columns: 1fr 1fr; } }
+.nhi-card {
+  display: block;
+  overflow: hidden;
+  border: 3px solid var(--frame-dark);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-deep);
+  color: var(--ink);
+}
+.nhi-card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.nhi-img { position: relative; display: block; line-height: 0; background: #dfe7e4; }
+.nhi-img img { width: 100%; height: 168px; object-fit: cover; }
+.nhi-where {
+  position: absolute;
+  left: 8px; bottom: 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 900;
+  color: var(--ink);
+  background: rgba(255, 253, 246, 0.94);
+  border: 2px solid var(--frame-dark);
+  border-radius: 999px;
+  padding: 2px 9px 2px 4px;
+  line-height: 1.4;
+}
+.nhi-body { display: grid; gap: 3px; padding: 11px 14px 13px; }
+.nhi-body b { font-size: 15px; font-weight: 900; line-height: 1.45; }
+.nhi-body i { font-style: normal; font-size: 12.5px; font-weight: 700; line-height: 1.7; color: var(--ink-2, var(--ink)); }
+.nhi-body em {
+  justify-self: end;
+  display: inline-flex; align-items: center; gap: 3px;
+  font-style: normal; font-size: 11px; font-weight: 900; color: var(--frame-deep);
+}
+
+/* --- 国のページの顔写真 --- */
+.nchero {
+  position: relative;
+  margin: -6px -4px 14px;
+  border: 4px solid var(--frame-dark);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  line-height: 0;
+  background: #dfe7e4;
+}
+.nchero img { width: 100%; height: clamp(160px, 42vw, 300px); object-fit: cover; }
+.nchero-credit {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 22px 14px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fffdf6;
+  line-height: 1.5;
+  background: linear-gradient(rgba(10, 40, 50, 0), rgba(10, 40, 50, 0.72));
+}

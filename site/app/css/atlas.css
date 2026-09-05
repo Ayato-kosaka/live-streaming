@@ -1,0 +1,587 @@
+/* =========================================================
+   あやと島 — 旅の桟橋 / たき火広場 / アプリ工房
+   世界地図・国の寄り地図・年表・アプリのノート
+
+   色は tokens.css の変数を使う。ここで新しい色を作らない。
+   地図の中だけで使う色は --am- で始める。
+   ========================================================= */
+
+:root {
+  /* 地図の色。どうぶつの森の海の実測（docs/ac-reference.md）に合わせる。
+     深い青 → 明るいターコイズの浅瀬 → 真っ白な泡 → 濡れ砂 → 乾いた砂、の順に重ねる。 */
+  --am-sea-deep: #1466c8;
+  --am-sea-mid: #2f97d8;
+  --am-shelf: #4fc8d2;
+  --am-shelf-hi: #7fe0d8;
+  --am-foam: #ffffff;
+  --am-sand: #f5e0a8;
+  --am-sand-wet: #e4c684;
+  /* 通っていない陸。北は草、南は砂。緯度で色が変わると、地図を見るだけで
+     「ヨーロッパから砂漠へ降りた旅」が分かる。 */
+  --am-off-n: #bcd39a;
+  --am-off-s: #ddd3a2;
+  --am-on-n: #8cd85a;
+  --am-on-s: #e3d383;
+  --am-wood: #4b9c46;
+  --am-dune: #d9bd7a;
+  --am-ridge: #b08a5a;
+  --am-ink: #2a4a63;
+  --am-route: #ff8a1f;
+  --am-walk: #ff4f6d;
+  --am-hitch: #ffcf4d;
+}
+
+/* ---------------------------------------------------------
+   地図の額縁
+   --------------------------------------------------------- */
+
+.amap {
+  position: relative;
+  border-radius: var(--r-3);
+  background: var(--paper);
+  padding: 7px;
+  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 8px 0 var(--frame-deep), var(--shadow-2);
+  margin-bottom: 18px;
+}
+.amap-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--am-ratio, 1400 / 1145);
+  border-radius: calc(var(--r-3) - 9px);
+  overflow: hidden;
+  background: var(--am-sea-deep);
+  touch-action: pan-y;
+}
+.amap-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.amap-move {
+  transform-origin: 0 0;
+  transition: transform 0.85s cubic-bezier(0.34, 0.9, 0.32, 1);
+}
+.amap-move path,
+.amap-move circle {
+  transition: stroke-width 0.85s cubic-bezier(0.34, 0.9, 0.32, 1);
+}
+
+/* 国名と海の名前。地図の上に置く文字は、まわりを紙色で縁取って読ませる。 */
+.am-sea {
+  fill: #d9f3ff;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  opacity: 0.72;
+  paint-order: stroke;
+  stroke: #0b4f9c;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+/* ---------------------------------------------------------
+   ピン（国）と街
+   --------------------------------------------------------- */
+
+.amap-pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.apin,
+.acity {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: transform 0.85s cubic-bezier(0.34, 0.9, 0.32, 1), opacity 0.4s ease;
+  will-change: transform;
+}
+.apin {
+  pointer-events: auto;
+  display: block;
+  /* 指で押せる最小 48px。絵は小さくても、当たり判定は確保する。 */
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+}
+.apin-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 2px 0 rgba(20, 60, 90, 0.35);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #b0562a;
+  letter-spacing: 0;
+  transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.apin-dot::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--am-route);
+}
+.apin-dot span {
+  position: relative;
+  color: #fff8e8;
+  text-shadow: 0 1px 0 rgba(140, 60, 10, 0.5);
+}
+.apin.is-here .apin-dot::before { background: var(--accent); }
+.apin.is-here::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 3px solid var(--paper);
+  animation: apin-ping 2s ease-out infinite;
+}
+@keyframes apin-ping {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.apin-name {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--frame-dark);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.apin.is-named .apin-name { opacity: 1; }
+.apin:hover .apin-dot,
+.apin:focus-visible .apin-dot { transform: scale(1.25); }
+.apin:hover .apin-name { opacity: 1; transform: translateX(-50%) translateY(-3px); }
+.apin:active .apin-dot { transform: scale(0.9); }
+
+.acity {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 0 rgba(20, 60, 90, 0.4);
+}
+.acity b {
+  position: absolute;
+  left: 12px;
+  top: -6px;
+  font-size: 10px;
+  font-weight: 900;
+  color: #123b57;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 1px 0 #fff;
+}
+.acity.is-left b { left: auto; right: 12px; }
+.amap-pins.is-wide .acity { opacity: 0; }
+
+/* ---------------------------------------------------------
+   章の切りかえ
+   --------------------------------------------------------- */
+
+.amap-tabs {
+  display: flex;
+  gap: 7px;
+  margin: 0 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.amap-tabs::-webkit-scrollbar { display: none; }
+.amap-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: var(--ls-body, 0.02em);
+  box-shadow: 0 4px 0 var(--frame-dark);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease, color 0.2s ease;
+}
+.amap-tab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.amap-tab.is-on {
+  background: var(--gold);
+  color: #6b4413;
+  box-shadow: 0 4px 0 #c8912b;
+}
+
+/* 凡例と縮尺 */
+.amap-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 11px;
+}
+.amap-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.amap-key i {
+  display: block;
+  width: 26px;
+  height: 5px;
+  border-radius: 3px;
+  flex: none;
+}
+.amap-scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+.amap-scale i {
+  display: block;
+  height: 8px;
+  border-radius: 2px;
+  border: 2.5px solid var(--ink-3);
+  border-top: 0;
+}
+
+/* 地図の上に浮かせる小さな札（縮尺・方位） */
+.amap-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 251, 240, 0.9);
+  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.22);
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink-2);
+  pointer-events: none;
+}
+
+@media (min-width: 720px) {
+  .apin { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
+  .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: 11.5px; }
+  .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
+  .apin-name { font-size: 12.5px; bottom: 38px; }
+  .acity b { font-size: 11.5px; }
+  .amap-tab { font-size: 13.5px; padding: 10px 18px; }
+}
+
+/* ---------------------------------------------------------
+   旅の年表（国の一覧）
+   --------------------------------------------------------- */
+
+.atrip { list-style: none; margin: 0; padding: 0; }
+.atrip > li { position: relative; padding-left: 46px; }
+.atrip-rail {
+  position: absolute;
+  left: 21px;
+  top: 26px;
+  bottom: -8px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--paper-2);
+}
+.atrip > li:last-child .atrip-rail { display: none; }
+.atrip-no {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 3px 0 var(--frame-dark);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--frame-deep);
+}
+.atrip-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 13px;
+  margin: 8px 0 14px;
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-1);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.atrip-card:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--frame-dark), var(--shadow-2); }
+.atrip-card:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.atrip-flag { flex: none; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
+.atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.atrip-name b { font-size: 16px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
+.atrip-name em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.atrip-when { font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.atrip-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.atrip-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.atrip-here {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* ---------------------------------------------------------
+   国のページ
+   --------------------------------------------------------- */
+
+.acty-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.acty-num {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.acty-num div {
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+  padding: 9px 6px;
+  text-align: center;
+}
+.acty-num b { display: block; font-size: 20px; font-weight: 900; line-height: 1.1; }
+.acty-num span { display: block; font-size: 10.5px; font-weight: 900; color: var(--ink-3); margin-top: 3px; }
+
+.acity-list { display: grid; gap: 9px; }
+.acity-empty {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+/* ---------------------------------------------------------
+   あやと島について
+   --------------------------------------------------------- */
+
+.abio {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+  align-items: center;
+}
+.abio-art { justify-self: center; }
+.abio-word b { font-size: 17px; font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
+
+.acards { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.acard {
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  padding: 15px 15px 16px;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.acard svg { margin-bottom: 4px; }
+.acard b { font-size: 15.5px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
+.acard p { margin: 0 !important; font-size: 13px !important; line-height: 1.85 !important; }
+
+.aline { list-style: none; margin: 0; padding: 0; display: grid; }
+.aline > li { position: relative; padding: 0 0 16px 40px; }
+.aline-rail {
+  position: absolute;
+  left: 13px;
+  top: 20px;
+  bottom: -4px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--paper-2);
+}
+.aline > li:last-child { padding-bottom: 0; }
+.aline > li:last-child .aline-rail { display: none; }
+.aline-dot {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 4px var(--paper), 0 2px 0 3px var(--frame-dark);
+  display: grid;
+  place-items: center;
+}
+.aline-dot i { display: block; width: 10px; height: 10px; border-radius: 50%; }
+.aline-when { font-size: 11px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
+.aline-what { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; margin-top: 1px; }
+.aline-note { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; margin-top: 3px; }
+
+/* ---------------------------------------------------------
+   アプリ工房
+   --------------------------------------------------------- */
+
+.ashelf { display: grid; gap: 16px; }
+.aapp {
+  border-radius: var(--r-3);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 8px 0 var(--frame-deep), var(--shadow-2);
+  overflow: hidden;
+}
+.aapp-top {
+  display: grid;
+  gap: 14px;
+  padding: 18px 16px 0;
+  justify-items: center;
+  text-align: center;
+}
+.aapp-logo {
+  width: 78px;
+  height: 78px;
+  border-radius: 20px;
+  box-shadow: 0 5px 0 rgba(90, 66, 34, 0.3);
+  background: var(--paper-2);
+}
+.aapp-name { font-size: 21px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); margin: 0; }
+.aapp-line { margin: 4px 0 0 !important; font-size: 13.5px !important; line-height: 1.8 !important; color: var(--ink-2); }
+.aapp-shot { display: block; margin: 12px auto -4px; }
+.aapp-body { padding: 14px 16px 18px; }
+.aapp-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.abadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: #2c2a28;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 900;
+  box-shadow: 0 5px 0 #100f0e;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.abadge:active { transform: translateY(4px); box-shadow: 0 1px 0 #100f0e; }
+.abadge.is-ghost {
+  background: var(--paper-2);
+  color: var(--ink);
+  box-shadow: 0 5px 0 var(--frame-dark);
+}
+
+.anote { display: grid; gap: 10px; }
+.anote-year {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 6px 0 2px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink-3);
+  letter-spacing: var(--ls-caps, 0.14em);
+}
+.anote-year::after { content: ""; flex: 1; height: 3px; border-radius: 2px; background: var(--paper-2); }
+
+.astep {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 11px;
+  align-items: start;
+  padding: 11px 13px;
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+}
+.astep-mark { flex: none; }
+.astep-body { min-width: 0; display: grid; gap: 3px; }
+.astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.astep-head time { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.astep-kind {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #4a3a22;
+}
+.astep b { font-size: 14.5px; font-weight: 900; line-height: 1.55; }
+.astep i { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; }
+.astep a {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.afeat { display: grid; gap: 9px; grid-template-columns: 1fr; }
+.afeat div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 13px;
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+}
+.afeat b { display: block; font-size: 14px; font-weight: 900; }
+.afeat i { display: block; font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
+
+@media (min-width: 700px) {
+  .acards { grid-template-columns: repeat(3, 1fr); }
+  .afeat { grid-template-columns: repeat(2, 1fr); }
+  .abio { grid-template-columns: auto 1fr; gap: 20px; }
+  .abio-art { justify-self: start; }
+  .aapp-top { grid-template-columns: auto 1fr; justify-items: start; text-align: left; padding: 20px 22px 0; }
+  .aapp-badges { justify-content: flex-start; }
+  .acty-num { grid-template-columns: repeat(3, 1fr); }
+}

@@ -17,37 +17,29 @@ export default function NextPage() {
       <PageHead
         icon="tent"
         title="これから"
-        lead="次に行くところと、やろうとしていること。予定はあやとが書きますが、中身はみんなで。知ってることがあったら付箋を貼ってください。"
+        lead="次に行くところと、やろうとしていること。日にちはあやとが決めますが、中身はみんなで。"
         say={GUIDE.next}
       />
       <NextPlans />
       <Panel>
-        <h2>もっと大きい企画を出したい</h2>
-        <p>「こういうことやってほしい」は掲示板のほうへ。投票の多いものから企画会議に上がります。</p>
-        <Link className="tile" href="/nordic" style={{ marginBottom: 8 }}>
-          <span className="tile-text">
-            <b>いちばん大きい企画は「ヒッチハイクで北欧へ」</b>
-            <i>9月11日出発。ルートと国ごとの見どころ</i>
-          </span>
-          <Icon name="right" size={15} className="tile-go" />
-        </Link>
+        <h2>自分も企画を出したい</h2>
+        <p>
+          「こういうことやってほしい」は掲示板のほうへ。ログインも名前も要りません。
+          票の集まったものから、週のはじめの会議に上がります。
+        </p>
         <Link className="tile" href="/board">
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
-            <i>ログインなしで出せます</i>
+            <i>思いついたことを、そのまま貼る</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-      </Panel>
-      <Panel>
-        <h2>企画のページを一緒に作る</h2>
-        <p>
-          これからの企画のページは、毎回ちゃんと作りたいと思っています。
-          骨組みを書いてくれる人がいると、それだけ良いページになります。
+        <p className="muted" style={{ marginTop: 16 }}>
+          ここに並ぶ企画のページも、骨組みから一緒に作っています。書いてくれる人がいると、それだけ良いページになります。
         </p>
         <Link className="tile" href="/next/new">
-          <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
+          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>企画のページを作る</b>
             <i>いまは、あやとが声をかけた人だけ</i>

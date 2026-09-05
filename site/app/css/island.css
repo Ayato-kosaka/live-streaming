@@ -1,0 +1,683 @@
+/* =========================================================
+   入口(建物)の押し方
+   ---------------------------------------------------------
+   「押せる」の合図は1種類だけ（docs/island-design.md）。
+   光ときらめきと札を混ぜると、どれが合図でどれが飾りか分からなくなる。
+   夜のランタンと取り違えられたので、光はやめて札だけにした。
+
+   6つの入口には、いつも札が立っている。
+     遠い … 小さい丸に「!」
+     近い … 開いて名前と「はいる」が出る
+   ========================================================= */
+.spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* 建物の絵にぴったり重なる、透明な押しボタン。
+   絵より小さい入口(たき火など)でも、指で押せる大きさまで広げてある。 */
+.spot-hit {
+  position: absolute;
+  left: calc(var(--hw, 48px) / -2);
+  top: calc(var(--hh, 48px) * -1);
+  width: var(--hw, 48px);
+  height: var(--hh, 48px);
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.spot-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* 札。建物の頭の上に、杭を打って立っている。
+   板そのものに厚みを持たせたいので、下向きの box-shadow を「板の側面」として使う。
+   ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。 */
+.spot-mark {
+  position: absolute;
+  left: 0;
+  top: calc(var(--mh, 48px) * -1 - 12px);
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  /* 上に白い照り返しを1点だけ入れる。丸いガラス玉のように見せて目を引く */
+  background:
+    radial-gradient(circle at 33% 24%, rgba(255, 255, 255, 0.95) 0 13%, rgba(255, 255, 255, 0) 44%),
+    linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
+  border: 3px solid var(--frame-dark);
+  border-radius: 999px;
+  box-shadow:
+    0 4px 0 var(--frame-deep),
+    0 7px 9px rgba(24, 48, 34, 0.28);
+  color: var(--ink);
+  white-space: nowrap;
+  /* 開くときは keyframes で弾ませる。ここは色と丸みだけ繋ぐ */
+  transition: border-radius 0.2s ease, background 0.2s ease, padding 0.2s ease;
+  animation: spotHop 2.8s cubic-bezier(0.32, 0.02, 0.28, 1) infinite;
+}
+/* 札を留めている杭。木目が見えるよう、縦に3色の帯を重ねる */
+.spot-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 9px;
+  height: 13px;
+  margin-left: -4.5px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, var(--frame-deep), var(--frame-dark) 42%, var(--frame-deep));
+  box-shadow: 0 2px 3px rgba(24, 48, 34, 0.3);
+}
+/* 一定の速さで上下させると機械に見える。
+   「ためて、跳んで、着地でつぶれる」の3拍にすると、生きものの動きになる。 */
+@keyframes spotHop {
+  0%, 58%, 100% { transform: translate(-50%, -100%) scale(1, 1); }
+  66% { transform: translate(-50%, -100%) scale(1.12, 0.88); }
+  78% { transform: translate(-50%, calc(-100% - 10px)) scale(0.93, 1.1); }
+  88% { transform: translate(-50%, -100%) scale(1.08, 0.93); }
+  94% { transform: translate(-50%, calc(-100% - 2px)) scale(0.98, 1.02); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-mark { animation: none; } }
+
+.spot-bang {
+  flex: none;
+  width: 28px;
+  text-align: center;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 26px;
+  color: var(--frame-deep);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.spot-text { display: none; }
+.spot-mark > .spot-text, .spot-mark > .spot-go { overflow: hidden; }
+.spot-go { display: none; }
+
+/* 近づいたら、丸い玉が木の看板にひらく。
+   width の auto はアニメーションしないので、開く勢いは keyframes 側で作る。 */
+.spot.is-on .spot-mark {
+  width: auto;
+  height: auto;
+  padding: 7px 9px 7px 5px;
+  gap: 8px;
+  border-radius: 19px;
+  background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
+  box-shadow:
+    0 5px 0 var(--frame-deep),
+    0 10px 14px rgba(24, 48, 34, 0.26),
+    inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  animation:
+    signPop 360ms cubic-bezier(0.2, 1.65, 0.36, 1) both,
+    signSway 3.4s 360ms ease-in-out infinite;
+}
+/* 開いたら杭も伸びる。板が大きくなったぶん、足が短いと倒れて見える */
+.spot.is-on .spot-mark::after { height: 17px; width: 10px; margin-left: -5px; bottom: -16px; }
+@keyframes signPop {
+  0%   { transform: translate(-50%, -100%) scale(0.34, 0.42); }
+  55%  { transform: translate(-50%, calc(-100% - 5px)) scale(1.07, 1.05); }
+  78%  { transform: translate(-50%, -100%) scale(0.98, 0.99); }
+  100% { transform: translate(-50%, -100%) scale(1, 1); }
+}
+/* 開いたあとは、風に吊られた看板のようにゆっくり揺れる */
+@keyframes signSway {
+  0%, 100% { transform: translate(-50%, -100%) rotate(0deg); }
+  32% { transform: translate(-50%, calc(-100% - 3px)) rotate(-0.9deg); }
+  66% { transform: translate(-50%, calc(-100% - 1px)) rotate(0.7deg); }
+}
+@media (prefers-reduced-motion: reduce) { .spot.is-on .spot-mark { animation: none; } }
+
+.spot.is-on .spot-bang {
+  width: 24px;
+  height: 24px;
+  line-height: 21px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 33% 26%, rgba(255, 255, 255, 0.9) 0 14%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(var(--paper-2), var(--gold));
+  border: 2px solid var(--frame-dark);
+  box-shadow: 0 2px 0 var(--frame-deep);
+  font-size: 14px;
+}
+.spot.is-on .spot-text {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+  text-align: left;
+}
+.spot.is-on .spot-text b { font-size: 14.5px; font-weight: 900; letter-spacing: 0.02em; }
+.spot.is-on .spot-text i {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+/* 「はいる」も押せる板にする。文字だけだと、看板の飾りに見えてしまう */
+.spot.is-on .spot-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--paper);
+  background: linear-gradient(var(--frame-dark), var(--frame-deep));
+  border-radius: 999px;
+  padding: 4px 9px 4px 10px;
+  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+/* 押したら沈む。アニメーションが transform を持っているので、
+   押しているあいだだけ止めないと沈みが打ち消される。 */
+.spot-mark:active {
+  animation: none;
+  transform: translate(-50%, calc(-100% + 3px));
+  box-shadow: 0 1px 0 var(--frame-deep), 0 3px 5px rgba(24, 48, 34, 0.25);
+}
+.spot.is-on .spot-mark:active {
+  box-shadow: 0 2px 0 var(--frame-deep), 0 4px 7px rgba(24, 48, 34, 0.22),
+    inset 0 2px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 出発までの日数。札の右肩に貼ったシール。
+   離して置くと島の上で迷子になるので、必ず札に食い込ませる。 */
+.spot-badge {
+  position: absolute;
+  right: -11px;
+  top: -13px;
+  font-style: normal;
+  pointer-events: none;
+  z-index: 2;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--paper);
+  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  border: 2.5px solid var(--paper);
+  border-radius: 999px;
+  padding: 2.5px 8px;
+  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32), 0 4px 8px rgba(20, 40, 30, 0.3);
+  text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
+  animation: badgePop 2.6s ease-in-out infinite;
+}
+/* ずっと同じ速さで脈打つと背景の一部になる。
+   長く止めてから、2回だけ跳ねる。目の端でも「動いた」と分かる。 */
+@keyframes badgePop {
+  0%, 60%, 100% { transform: rotate(-7deg) scale(1); }
+  67% { transform: rotate(-10deg) scale(1.2); }
+  74% { transform: rotate(-4deg) scale(0.95); }
+  81% { transform: rotate(-8deg) scale(1.1); }
+  88% { transform: rotate(-6deg) scale(0.99); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-badge { animation: none; transform: rotate(-7deg); } }
+
+/* 近づいた入口は、ふわっと弾ませる */
+.spot-art.is-on { animation: spotBob 1.6s ease-in-out infinite; }
+@keyframes spotBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) { .spot-art.is-on { animation: none; } }
+
+/* =========================================================
+   住人
+   ---------------------------------------------------------
+   島の主役はあやとと入口。住人はおまけなので、
+   当たり判定は入口より奥に置いて、行き先を塞がないようにする。
+   ========================================================= */
+.labels.is-cast { z-index: 1; }
+.who {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.who-hit {
+  position: absolute;
+  left: -22px;
+  top: -52px;
+  width: 44px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 話しかけられる人は、足元がふわっと光る。頭の上に印は出さない（島が!だらけになる） */
+.who.is-calling .who-hit::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 34px;
+  height: 12px;
+  margin-left: -17px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 246, 207, 0.9), rgba(255, 246, 207, 0));
+  animation: whoBreath 2.2s ease-in-out infinite;
+}
+@keyframes whoBreath {
+  0%, 100% { opacity: 0.45; transform: scale(0.9); }
+  50% { opacity: 0.9; transform: scale(1.15); }
+}
+.who-name {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  transform: translate(-50%, 0);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 3px;
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.92);
+  border: 2px solid var(--frame-dark);
+  box-shadow: 0 2px 0 var(--frame-deep);
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 124px;
+  overflow: hidden;
+}
+.who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.who-name b { overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   吹き出し
+   ---------------------------------------------------------
+   島の上に浮かべると見切れるので、画面の上にどんと出す。
+   ゲームのセリフ窓と同じで、どこを押しても閉じる。
+
+   どうぶつの森のセリフ窓には枠線が無い。クリーム色のかたまりが
+   ぽんと置いてあるだけで、輪郭は影だけで見せている。
+   角の丸みも上下左右で違っていて、それが手描きに見せている。
+   ここでもそれに倣って、枠線をやめて楕円の角丸にした。
+   ========================================================= */
+.talkbox {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: calc(14px + env(safe-area-inset-top));
+  z-index: 8;
+  padding: 17px 20px 13px;
+  border: 0;
+  /* 上下左右で丸みを変える。均一な角丸だと「入力欄」に見える */
+  border-radius: 30px 36px 28px 34px / 34px 28px 36px 30px;
+  background:
+    radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(var(--paper) 0 58%, var(--paper-2));
+  box-shadow:
+    0 3px 0 rgba(154, 101, 50, 0.18),
+    0 12px 26px rgba(16, 44, 58, 0.34);
+  animation: talkIn 0.26s cubic-bezier(0.24, 1.6, 0.4, 1);
+  pointer-events: none;
+}
+.talkbox p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+/* 誰が喋っているかを絵で出す枠。
+   いまは JSX 側が渡していないので閉じている。
+   style={{ "--talk-face": `url(${photo})` }} を付けた時だけ開く。 */
+.talkbox[style*="--talk-face"] { padding-left: 100px; min-height: 108px; }
+.talkbox[style*="--talk-face"]::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  margin-top: -35px;
+  border-radius: 24px;
+  border: 3px solid var(--frame-dark);
+  background-color: var(--sky-2);
+  background-image: var(--talk-face);
+  background-size: cover;
+  background-position: center 12%;
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+/* 「読み終わったら押してね」の合図。
+   どうぶつの森はここに金色の▼だけを置く。文字は添えものなので小さく。 */
+.talkbox-tap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 11px;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--ink-3);
+  text-align: center;
+}
+.talkbox-tap::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-bottom: 0;
+  border-top-color: var(--gold);
+  filter: drop-shadow(0 1px 0 var(--frame-dark));
+  animation: tapBeat 1.15s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+}
+@keyframes tapBeat {
+  0%, 60%, 100% { transform: translateY(0); }
+  75% { transform: translateY(4px); }
+  88% { transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) { .talkbox-tap::before { animation: none; } }
+
+@keyframes talkIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+/* 話しているあいだは、島の上のUIを引っ込める */
+.stage.is-talking .spot-mark,
+.stage.is-talking .spot-badge,
+.stage.is-talking .who-name { opacity: 0; transition: opacity 0.18s; }
+@media (min-width: 640px) {
+  .talkbox { left: 50%; right: auto; transform: translateX(-50%); width: min(560px, 70vw); }
+  @keyframes talkIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.94); }
+    to { opacity: 1; transform: translateX(-50%); }
+  }
+}
+
+.walk-hint {
+  position: absolute;
+  left: 12px;
+  bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom));
+  white-space: nowrap;
+  background: rgba(69, 55, 42, 0.82);
+  color: #fffdf6;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  animation: hintPulse 2.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes hintPulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.55; } }
+
+/* --- 島のモーション --- */
+/* 木と草が、そよ風でゆっくり揺れる。全部そろって揺れないよう位相をずらす。 */
+.sway { animation: sway 4.6s ease-in-out infinite alternate; }
+@keyframes sway {
+  from { transform: rotate(-1.1deg); }
+  to { transform: rotate(1.1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sway { animation: none; }
+}
+
+/* 夜だけ灯りをともす。--lamp は data-time="night" で 1 になる。 */
+.stage-lamps {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: var(--lamp, 0);
+  transition: opacity 1.2s ease;
+}
+.stage-lamps circle { animation: lampFlicker 3.4s ease-in-out infinite alternate; }
+.stage-lamps circle:nth-child(even) { animation-duration: 4.6s; }
+@keyframes lampFlicker { from { opacity: 0.78; } to { opacity: 1; } }
+
+/* 沖を行く舟。島のまわりに動くものがあると、海が止まって見えない。 */
+.boat { animation: boatSail 64s linear infinite; }
+@keyframes boatSail {
+  from { transform: translate(0, 0) rotate(-2deg); }
+  25%  { transform: translate(430px, -10px) rotate(2deg); }
+  50%  { transform: translate(860px, 4px) rotate(-2deg); }
+  75%  { transform: translate(1290px, -10px) rotate(2deg); }
+  to   { transform: translate(1720px, 0) rotate(-2deg); }
+}
+/* 空のカモメ。ゆっくり横切る */
+.skygull { animation: gullDrift 34s linear infinite; }
+@keyframes gullDrift {
+  from { transform: translate(-120px, 30px); opacity: 0; }
+  10%  { opacity: 0.85; }
+  88%  { opacity: 0.85; }
+  to   { transform: translate(300px, -80px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boat, .skygull { animation: none; }
+}
+
+/* ちょうちょ。昼だけ飛んでいる(夜は色をかぶせる層に沈む)。 */
+.bug { animation: bugFly 17s ease-in-out infinite; }
+.bug-wing { animation: bugFlap 0.26s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes bugFly {
+  0%   { transform: translate(0, 0); }
+  18%  { transform: translate(34px, -26px); }
+  36%  { transform: translate(72px, 4px); }
+  54%  { transform: translate(40px, 38px); }
+  72%  { transform: translate(-18px, 24px); }
+  86%  { transform: translate(-30px, -14px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes bugFlap { from { transform: scaleX(0.45); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .bug, .bug-wing { animation: none; }
+}
+
+.foam path { animation: foamDrift 9s linear infinite; }
+.foam path:nth-child(2) { animation-duration: 13s; animation-direction: reverse; }
+@keyframes foamDrift { to { stroke-dashoffset: -92; } }
+
+.smoke circle { animation: smokeUp 4.2s ease-out infinite; transform-origin: center; }
+.smoke circle:nth-child(2) { animation-delay: 1.4s; }
+.smoke circle:nth-child(3) { animation-delay: 2.8s; }
+@keyframes smokeUp {
+  0% { opacity: 0; transform: translateY(10px) scale(0.5); }
+  25% { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(-34px) scale(1.5); }
+}
+
+.flame { animation: flicker 0.9s ease-in-out infinite alternate; transform-origin: 880px 560px; }
+@keyframes flicker { from { transform: scaleY(0.94) scaleX(1.03); } to { transform: scaleY(1.06) scaleX(0.97); } }
+
+.blink { animation: blinkDot 1.6s steps(1) infinite; }
+@keyframes blinkDot { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0.15; } }
+
+.float-slow { animation: floaty 6.5s ease-in-out infinite; transform-origin: center; }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+.resident { animation: bob 1.5s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+.ayato { transform-box: fill-box; }
+.ayato.walking image { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-2deg); }
+}
+
+/* =========================================================
+   ヒーロー
+   ========================================================= */
+.hero { position: relative; }
+.hero-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  padding: calc(18px + env(safe-area-inset-top)) 16px 0;
+}
+.hero-copy { text-align: center; max-width: 640px; }
+
+/* =========================================================
+   スマホの操作バー
+   ---------------------------------------------------------
+   もとの見た目は pages.css にある。あちらは globals.css で
+   このファイルより後に読まれるので、上書きするには詳細度を1つ上げる。
+   島の上に乗るものは、このファイルにまとめておきたいので `.stage` を足した。
+
+   直したのは2つ。
+   ・6つのチップが横スクロールで見切れて、4つが画面の外にいた。
+     3列2段に置いて、全部いっぺんに見えるようにした。
+   ・海の上に薄い膜が乗っているだけで、バーに見えていなかった。
+     木のトレーを1枚敷いて、島の手前に置いたものにした。
+   ========================================================= */
+@media (max-width: 639px) {
+  /* 2段になったぶん背が要る。walk-hint もこの値を見て浮いている */
+  .stage.stage { --bar-h: 98px; }
+}
+.stage .island-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 7px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  background: linear-gradient(var(--paper) 0 38%, var(--paper-2));
+  border: 3px solid var(--frame-dark);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  /* 板の厚みは上ぶちの照り返しで出す。ぼかした影を足すと海が濁る */
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.8), 0 -8px 18px rgba(12, 46, 62, 0.22);
+  /* backdrop-filter は画面幅ぜんぶを毎フレーム引き伸ばすので外した */
+  backdrop-filter: none;
+}
+.stage .island-bar-scroll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  padding: 0;
+  overflow: visible;
+  /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
+  mask-image: none;
+}
+.stage .bar-spot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-width: 0;
+  padding: 2px 6px 2px 2px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 13px;
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.stage .bar-spot img { width: 24px; height: 24px; flex: none; }
+.stage .bar-spot span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* いま近くにいる入口。押せる合図ではなく「ここにいる」の印なので、色だけで言う */
+.stage .bar-spot.is-on {
+  background: linear-gradient(var(--paper-2), var(--gold));
+  border-color: var(--frame-deep);
+}
+.stage .bar-spot:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+/* 「あと◯日」はチップの中に並べると名前を押し出してしまうので、右肩に貼る */
+.stage .bar-spot em {
+  position: absolute;
+  right: -5px;
+  top: -7px;
+  margin: 0;
+  z-index: 2;
+  font-size: 9px;
+  padding: 1.5px 6px;
+  border: 2px solid var(--paper);
+  box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
+  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  transform: rotate(-6deg);
+}
+/* 引き／寄りの切り替え。行き先ではないので、色を変えて別のものだと言う */
+.stage .bar-zoom {
+  grid-column: 2;
+  align-self: stretch;
+  width: 76px;
+  padding: 6px 4px;
+  border-radius: 15px;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(var(--sea-shallow) 0 42%, var(--sea-mid));
+  color: var(--paper);
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  white-space: normal;
+  text-shadow: 0 1px 0 rgba(12, 60, 78, 0.5);
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.stage .bar-zoom:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* =========================================================
+   到着の演出
+   ---------------------------------------------------------
+   もとは pages.css。カクついて見えるのを直すためにここで上書きする。
+
+   原因は、動いているカモメに drop-shadow を掛けていたこと。
+   filter は毎フレーム再計算されるので、島の描画と重なると素直に落ちる。
+   影はやめて、動かすのは transform と opacity だけにした。
+   ========================================================= */
+.stage .arrive-flash {
+  will-change: opacity;
+  animation: arriveFlash 2s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+}
+.stage .arrive-gull {
+  /* 影を落とすのをやめる。空を横切る鳥に地面の影は要らない */
+  filter: none;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  animation: arriveGull 2.9s linear forwards;
+}
+/* 3点だけだと、点と点のあいだが直線になって折れて見える。
+   弧を刻んで、速さの変化も keyframes 側で作る（easing は linear のまま）。 */
+@keyframes arriveGull {
+  0%   { transform: translate3d(0, 0, 0) scale(1.5) rotate(-7deg); opacity: 0; }
+  10%  { transform: translate3d(9vw, 1.4vh, 0) scale(1.42) rotate(-6deg); opacity: 1; }
+  25%  { transform: translate3d(23vw, 4.4vh, 0) scale(1.29) rotate(-3deg); opacity: 1; }
+  40%  { transform: translate3d(36vw, 8.2vh, 0) scale(1.16) rotate(0deg); opacity: 1; }
+  55%  { transform: translate3d(50vw, 13vh, 0) scale(1.03) rotate(3deg); opacity: 1; }
+  70%  { transform: translate3d(66vw, 18.8vh, 0) scale(0.9) rotate(5deg); opacity: 0.94; }
+  85%  { transform: translate3d(85vw, 26vh, 0) scale(0.75) rotate(7deg); opacity: 0.6; }
+  100% { transform: translate3d(106vw, 35vh, 0) scale(0.6) rotate(8deg); opacity: 0; }
+}

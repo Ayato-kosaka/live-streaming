@@ -1,0 +1,239 @@
+/* =========================================================
+   あやと島 — デザイントークン
+   モバイルファースト。色は「昼のジョージア」を基準に、
+   時間帯(data-time)と現在地テーマ(data-theme)で上書きする。
+
+   色の基準は任天堂の公式スクリーンショット（`docs/ac-reference.md`）。
+   スポイトで拾った実測値:
+     深い海 #3070c0〜#3888d8 / 川 #60a0d8 / 砂 #f8e8a0 / 草 #60c868
+     空 #6098f8 / 会話窓の紙 #fcf8e4 / 会話窓の文字 #807054 / 強調の青 #00b0d4
+   どうぶつの森は彩度だけでなく明度も高い。影の中まで明るいので、
+   暗い色を作るときも L を落としすぎない。
+   ========================================================= */
+
+:root {
+  /* 海。灰みの青緑をやめて、実測どおりの「青」に寄せた。
+     いちばん深いところでも L44 まで。これ以上暗いと絵本に見えない。 */
+  --sea-deep: #2f7fc8;
+  --sea-mid: #45a6e6;
+  --sea-shallow: #61d8e5;
+  --sea-shelf: #9df1f1;
+  /* 泡は真っ白。公式のビーチはレース状にくっきり描いてあって、白がにごらない。 */
+  --foam: #ffffff;
+
+  /* 陸 */
+  --sand: #f9e4a9;
+  --sand-wet: #ecce8d;
+  --sand-edge: #dcb46a;
+  --grass-hi: #9be76e;
+  --grass: #7bd350;
+  --grass-lo: #5bb63a;
+  --grass2-hi: #b3ee87;
+  --grass2: #92df62;
+  --cliff: #dca96a;
+  --cliff-lo: #bf854a;
+  --cliff-line: #8f5e32;
+
+  /* 建物 */
+  --wall: #fffaf0;
+  --wall-lo: #f7eacf;
+  --roof-coral: #f97690;
+  --roof-sky: #58c1ee;
+  --roof-gold: #ffd152;
+  --roof-mint: #7be0b1;
+  --roof-wood: #d4955e;
+  --door: #bf7b40;
+  --window: #ffebad;
+
+  /* 木・草 */
+  --leaf-a: #53b540;
+  --leaf-b: #75ca58;
+  --leaf-c: #3f9a3c;
+  --trunk: #9f693c;
+
+  /* UI
+     紙は公式の会話窓 #fcf8e4 に合わせて、白ではなくクリーム。
+     文字は真っ黒に寄せない。公式は #807054 の暖かい茶で、
+     そこまで薄くすると日本語の小さい字が読めないので手前で止めている。 */
+  --paper: #fffbf0;
+  --paper-2: #fdf2d8;
+  --ink: #59422c;
+  --ink-2: #82684a;
+  --ink-3: #93794c;
+  --frame: #efb268;
+  --frame-dark: #c8853d;
+  --frame-deep: #a5642a;
+  --accent: #ff7092;
+  --accent-2: #32c1e2;
+  --gold: #ffcf4d;
+
+  /* 影。公式の影はぼけていない。板が真下にずれて落ちているだけ。
+     ぼかしを 0〜2px まで削って、そのぶん濃さを上げた。 */
+  --shadow-1: 0 3px 0 rgba(96, 66, 32, 0.18);
+  --shadow-2: 0 7px 1px rgba(20, 52, 76, 0.24);
+  --shadow-3: 0 14px 2px rgba(10, 40, 62, 0.30);
+  /* 押せるものの下の厚み。板の側面に見せる。 */
+  --pop: 0 6px 0 var(--frame-dark);
+  --pop-sm: 0 4px 0 var(--frame-dark);
+  --pop-lg: 0 8px 0 var(--frame-deep);
+
+  /* 角丸。公式の窓枠は「半径が高さの 1/3」くらい丸い。
+     r-4 は大きなパネル用、r-5 は帯や吹き出し用。 */
+  --r-1: 12px;
+  --r-2: 20px;
+  --r-3: 30px;
+  --r-4: 44px;
+  --r-5: 56px;
+
+  /* 枠の太さ。公式の窓枠はこちらより太い。
+     直に px を書いているところが多いので、これから触る CSS はこれを使う。 */
+  --bw-1: 2.5px;
+  --bw-2: 3.5px;
+  --bw-3: 5px;
+
+  /* 字間。太いゴシックで字間が広いのが本物の見え方。 */
+  --ls-body: 0.015em;
+  --ls-head: 0.06em;
+  --ls-caps: 0.14em;
+
+  /* ページの下地。ふだんは海と同じ色。夜だけ島に合わせて沈める
+     （--sea-deep 自体を夜に書きかえると、島の地形が二重に暗くなる）。 */
+  --page-bg: var(--sea-deep);
+
+  --sky-1: #79c0f6;
+  --sky-2: #bbe8fb;
+  --sun: #fff3bd;
+  --lamp: 0;
+  /* 時間帯のかぶせ色。既定（昼）は何もかけない。 */
+  --tint: transparent;
+  --glow: transparent;
+}
+
+/* 時間帯は「島全体に色をかぶせる」ことで表す。
+   地形の色だけ変えても、焼いてあるスプライトは昼のままなので、
+   夜になると木や建物だけ明るく浮いてしまう。
+   --tint は乗算、--glow はスクリーンで重ねる。 */
+[data-time="morning"] {
+  --sky-1: #ffd6a4; --sky-2: #d5f2ff;
+  --tint: rgba(255, 226, 188, 0.14);
+  --glow: rgba(255, 216, 152, 0.16);
+}
+[data-time="day"] {
+  --tint: transparent;
+  --glow: transparent;
+}
+[data-time="evening"] {
+  --sky-1: #ff8f66; --sky-2: #ffd28f;
+  --sun: #ffd79c;
+  --tint: rgba(255, 138, 76, 0.26);
+  --glow: rgba(255, 186, 110, 0.24);
+}
+/* 夜。公式の夜は「暗い」ではなく「青い」。星も草も見えている。
+   前は乗算 0.52 で島が沈んでいたので、乗算を弱めて青みと発光を足した。 */
+[data-time="night"] {
+  --sky-1: #223a7d; --sky-2: #4a6dbe;
+  --foam: #e2f2fb;
+  --tint: rgba(30, 54, 150, 0.62);
+  --glow: rgba(110, 150, 255, 0.22);
+  --page-bg: #1d4d92;
+  --lamp: 1;
+}
+/* いまいる場所で島の景色を変える。
+   地形の色だけ変えるとスプライトが取り残されるので、
+   島の絵ぜんぶに軽いフィルタもかける。 */
+[data-theme="nordic"] {
+  --grass-hi: #c6ecb4; --grass: #a3da95; --grass-lo: #7fbd78;
+  --grass2-hi: #d4f4c2; --grass2: #b3e3a2;
+  --sand: #f4f6ee; --sand-wet: #e2e7d9; --sand-edge: #cbd1c1;
+  --sea-deep: #3684ad; --sea-mid: #55aecb; --sea-shallow: #9fe4ec;
+  --place-filter: saturate(0.94) hue-rotate(-6deg) brightness(1.06);
+}
+[data-theme="desert"] {
+  --grass-hi: #e6e07f; --grass: #d0c761; --grass-lo: #aaa04a;
+  --grass2-hi: #f0ea90; --grass2: #dbd26e;
+  --sand: #fae7b2; --sand-wet: #ecd394; --sand-edge: #dbbd79;
+  --place-filter: saturate(1.05) hue-rotate(-14deg) brightness(1.03);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-maru), ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--page-bg);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  /* 本物は太いゴシックで字間が広い。丸ゴシックは字間を詰めると団子になる。 */
+  letter-spacing: var(--ls-body);
+}
+
+/* 見出しの既定。ページ側の CSS が個別に指定していればそちらが勝つ。
+   ここは「何も言われていない見出し」を本物寄りにするための下敷き。 */
+h1, h2, h3 {
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; }
+
+:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; border-radius: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* =========================================================
+   島のステージ
+   ========================================================= */
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 520px;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  background: var(--sea-deep);
+}
+@media (min-width: 1000px) {
+  .stage { height: min(92svh, 880px); }
+}
+.stage-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  filter: var(--place-filter, none);
+}
+
+/* 島ぜんぶにかぶせる時間帯の色。地形もスプライトも同じだけ染まる。 */
+.stage::before,
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 1.2s ease;
+}
+.stage::before { background: var(--tint, transparent); mix-blend-mode: multiply; }
+.stage::after { background: var(--glow, transparent); mix-blend-mode: screen; }
+/* 名札や吹き出しは色をかぶせない。読めなくなるので。 */
+.stage .labels,
+.stage .arrive,
+.stage .sheet,
+.stage .walk-hint,
+.stage .island-bar { z-index: 3; }
+
+.labels { position: absolute; inset: 0; pointer-events: none; }
