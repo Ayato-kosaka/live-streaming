@@ -94,6 +94,17 @@
   **ただし `crossOrigin` を書き忘れると汚れる**ので、そこだけ注意する。
 - **写真の置き場が要る。** Firebase Storage を使うなら、そのルールも要る
   （`firestore.rules` と同じで、書けるのはあやとだけ・読むのは誰でも）。
+  現在の置き場は `live-streaming-d3cac.firebasestorage.app`（Firestore と同じ
+  `asia-northeast1`）。書き込みは管理者認証付きの Functions 経由、読み取りは
+  ダウンロードトークン付き URL 経由とし、`storage.rules` は deny-all にする。
+  ブラウザで写真を合成するには、バケットの CORS も必要。設定は
+  `storage.cors.json` に置き、次で反映する（Storage ルールのデプロイとは別）。
+  `gcloud storage buckets update gs://live-streaming-d3cac.firebasestorage.app --cors-file=storage.cors.json`
+  CORS は GET/HEAD のみを許可し、ファイルの読み書きの権限自体は変更しない。
+  ルールのデプロイ用サービスアカウントには `roles/firebaserules.admin`、
+  `roles/serviceusage.serviceUsageConsumer`、`roles/firebasestorage.viewer` が必要。
+  最後のロールは Firebase CLI が既定バケットを参照するために使う。
+  対象バケットにも `roles/storage.bucketViewer` を付けて、バケット情報の参照を許可する。
 - **写真は重い。** 旅は10日で、1日に何枚でも貼れる。**貼るときに縮めて焼く**
   （長辺 1600px くらい、webp）。元のままだと `/nordic` が一気に太る。
 - **保存はスマホでやる人が多い。** `<a download>` は iOS Safari で効かないことがある。
