@@ -142,6 +142,32 @@ const tower = () => [
   part(`${BK}/roof-point.glb`, [0, 2, 0]),
 ];
 
+/* ---------------- 煙突 ----------------
+ * あつ森の家の煙突は「棟からまっすぐ立った素焼きのレンガ」で、
+ * 笠が一段太い。壁と同じクリーム色にすると、屋根から出た柱にしか見えない。
+ *
+ * これまでは chimney.glb 1本を [0.5, 1, 0] に置いていた。
+ * モデルの原点は中心ではなく x=0.213 から始まるので、実際に立っていたのは
+ * 中心 x=0.82 ——壁の外面が x=1.0 なので、ほぼ軒の真上だった。
+ * 棟ではなく軒から突き出しているように見えていたのはこれ。
+ *
+ * 中心を x=0.38 へ戻す。棟(z=0, y=1.571)をまたぐので、
+ * モデルに描いてある水切りの帯が、ちょうど屋根を抜けるところに来る。
+ *
+ * 色は壁と分ける。キットの煙突は木の色相帯に落ちてクリーム色の壁と
+ * 同じ色になり、屋根から出た柱にしか見えていなかった。 */
+const CHIMNEY_TINT = {
+  wood: { h: 0.045, s: 0.42, l: [0.40, 0.58] },  // レンガ本体。素焼きの赤茶
+  green: { h: 0.015, s: 0.44, l: [0.30, 0.46] }, // 水切り。屋根より一段暗い赤
+};
+/** 煙突ひと組。x は世界座標での中心。 */
+const chimney = (x) => [
+  { url: `${BK}/chimney.glb`, pos: [x - 0.319, 1.02, 0], tint: CHIMNEY_TINT },
+  // 笠。あつ森の煙突は必ず一段太い石が載っている。
+  // これが無いと、ただの角柱が屋根から生えているように見える
+  box([0.27, 0.065, 0.40], [0.085, 0.12, 0.76], [x, 2.05, 0]),
+];
+
 /** キットに無い小物は箱を組んで作る。 */
 const box = (size, color, pos, rot = [0, 0, 0]) => ({ box: size, color, pos, rot });
 
@@ -167,7 +193,7 @@ const mailbox = () => [
 
 export const SPRITES = [
   /* ---------- 建物 ---------- */
-  { name: "hut-kitchen", parts: [...cottage(), part(`${BK}/chimney.glb`, [0.5, 1, 0])], opts: house("coral") },
+  { name: "hut-kitchen", parts: [...cottage(), ...chimney(0.38)], opts: house("coral") },
   { name: "hut-workshop", parts: cottage(), opts: house("sky") },
   { name: "hut-home", parts: cottage(), opts: house("mint") },
   { name: "hall-museum", parts: hall(), opts: house("sun") },

@@ -342,19 +342,21 @@ float detailU() {
   return abs(vDetailNrm.x) > abs(vDetailNrm.z) ? vDetailPos.z : vDetailPos.x;
 }
 
-/** レンガの目地。1段 0.105・1個 0.26(壁1マスが 1.0 なので 4個弱で1マス) */
-float brickShade() {
+/** レンガの目地。
+ * @param rowH 1段の高さ / @param brickW レンガ1個の長さ / @param dark 目地の沈み具合
+ * 壁は 0.105 x 0.26(壁1マスが 1.0 なので 4個弱で1マス)。 */
+float brickShade(float rowH, float brickW, float dark) {
   if (abs(vDetailNrm.y) > 0.72) return 1.0;         // 天面・地面には引かない
-  float row = floor(vDetailPos.y / 0.105);
-  float fy = fract(vDetailPos.y / 0.105);
-  float fu = fract(detailU() / 0.26 + mod(row, 2.0) * 0.5);
+  float row = floor(vDetailPos.y / rowH);
+  float fy = fract(vDetailPos.y / rowH);
+  float fu = fract(detailU() / brickW + mod(row, 2.0) * 0.5);
   // 目地は溝。線そのものだけを沈ませる。横目地より縦目地を細く
   float h = 1.0 - smoothstep(0.0, 0.15, fy);
   float v = 1.0 - smoothstep(0.0, 0.16, min(fu, 1.0 - fu) * 2.0);
   float joint = max(h, v);
   // レンガ1個ずつの焼きムラ。これが無いと目地だけが浮いて方眼紙に見える
-  float bake = (detailHash(vec2(floor(detailU() / 0.26 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
-  return mix(1.0 + bake, 0.875, joint);
+  float bake = (detailHash(vec2(floor(detailU() / brickW + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
+  return mix(1.0 + bake, dark, joint);
 }
 
 /** 屋根の瓦。1列 0.085。列の上端に次の列がかぶさるので、そこに影が落ちる */
@@ -380,8 +382,18 @@ float tileShade() {
  * @param {THREE.Material} mat 対象
  * @param {"brick"|"tile"} kind どちらの模様か
  */
+const DETAIL_CALL = {
+  brick: "brickShade(0.105, 0.26, 0.875)",
+  // 煙突。壁と同じ細かさで刻むと、島に置いた大きさ(高さ20px前後)では
+  // 段が1px を切って消える。実際そうなっていて「のっぺりした棒」に見えていた。
+  // あつ森の煙突は、レンガが数えられるくらい大きく、目地もはっきりしている。
+  // 段を1.5倍にして数を減らし、そのぶん目地を濃くする
+  brickBold: "brickShade(0.158, 0.30, 0.79)",
+  tile: "tileShade()",
+};
+
 function addSurfaceDetail(mat, kind) {
-  const call = kind === "tile" ? "tileShade()" : "brickShade()";
+  const call = DETAIL_CALL[kind] ?? DETAIL_CALL.brick;
   mat.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vDetailPos;\nvarying vec3 vDetailNrm;")
@@ -402,7 +414,8 @@ function addSurfaceDetail(mat, kind) {
 const DETAIL_OF = (url) => {
   const f = url.split("/").pop() ?? "";
   // 煙突もレンガ。あつ森の煙突は必ず目地が見えている
-  if (/^(wall|chimney)/.test(f)) return "brick";
+  if (/^chimney/.test(f)) return "brickBold";
+  if (/^wall/.test(f)) return "brick";
   if (/^(roof|cabin-roof)/.test(f)) return "tile";
   return null;
 };
