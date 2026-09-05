@@ -11,6 +11,7 @@
  *   plans  … これからの企画のカード
  *   nordic … 北欧ヒッチハイク旅（地図・しおり・見どころ）
  *   ui     … 折りたたみ・アイコン・下書きの道具・デザインの見本
+ *   home   … トップページの章立て（これから／いま／これまで／見にいく）
  */
 @import "./css/tokens.css";
 @import "./css/island.css";
@@ -19,3 +20,5 @@
 @import "./css/plans.css";
 @import "./css/nordic.css";
 @import "./css/ui.css";
+@import "./css/home.css";
+@import "./css/streams.css";
