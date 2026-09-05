@@ -97,12 +97,12 @@ export const BRAND = new Set<string>(Object.keys(brand));
 export const GROUPS: { title: string; note: string; names: string[] }[] = [
   {
     title: "操作",
-    note: "行の中に置く印。ここだけ単色（currentColor）で、CSS 側の色に従う。",
+    note: "行の中に置く印。ここだけ単色（currentColor）で、CSS 側の色に従う。上からの光もかけない — 色を1つ足すのと同じで、置いた側の色の約束が崩れるため。",
     names: Object.keys(nav),
   },
   {
     title: "ブランド",
-    note: "本物の形を写したもの。角を丸めたり色を足したりしない。",
+    note: "本物の形を写したもの。角を丸めたり色を足したりしない。上からの光も、接地影も、ハイライトもかけない。他人のマークにこちらの絵の作法を混ぜない。",
     names: Object.keys(brand),
   },
   {
