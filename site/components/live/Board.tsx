@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { getIdeas, postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
+import {
+  getIdeas,
+  getPoll,
+  pollAnswer,
+  postIdea,
+  rememberVote,
+  voteIdea,
+  votedLocally,
+  type Idea,
+} from "@/lib/api";
 import { BOARD } from "@/content/voice";
 import { LEGENDS } from "@/content/legends";
 import { useAuth } from "@/lib/auth";
@@ -64,6 +73,8 @@ function rememberPost(id: string) {
  */
 export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
+  const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
