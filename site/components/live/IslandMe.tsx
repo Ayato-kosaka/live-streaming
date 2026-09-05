@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { RESIDENTS } from "@/content/residents";
 import { saveMe } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -12,12 +11,14 @@ import { useAuth } from "@/lib/auth";
  * ただ、名前と YouTube のアイコンを島に出すかどうかは、本人が決めることにしている。
  * 何もしなければ、キャラクターだけが島にいて、名前は出ない。
  *
- * 自分のキャラクターは自分がいちばんよく知っているので、
- * 島にいる絵の中から選んでもらう（Drive の ID を入力させたりはしない）。
+ * **どの絵が誰のものかは、ここで選ばせない。** 割り当てはあやとが表で持っていて、
+ * `content/residents.ts` の `channel` に焼いてある。本人に選ばせると、
+ * 他人のキャラクターを自分のものにできてしまう。
+ * ログインでできるのは「認可されたことをする」のと「書いたものに名前を刻む」ことで、
+ * 島の住人の割り当てはその外にある。
  */
 export default function IslandMe() {
   const { user, token } = useAuth();
-  const [pick, setPick] = useState<string | null>(null);
   const [nickname, setNickname] = useState("");
   const [showName, setShowName] = useState(true);
   const [showPhoto, setShowPhoto] = useState(true);
@@ -30,10 +31,7 @@ export default function IslandMe() {
     if (!t) return setState("error");
     setState("saving");
     try {
-      await saveMe(
-        { character: pick, nickname: nickname.trim() || null, showName, showPhoto },
-        t,
-      );
+      await saveMe({ nickname: nickname.trim() || null, showName, showPhoto }, t);
       setState("done");
     } catch {
       setState("error");
@@ -44,29 +42,9 @@ export default function IslandMe() {
     <div className="me">
       <b className="me-title">島での見え方</b>
       <p className="me-note">
-        島にいる自分のキャラクターを選ぶと、名前とアイコンが札に出ます。
-        選ばなければ、いままでどおり名前は出ません。
+        名前を出すことにすると、島にいるあなたのキャラクターの札に名前が出ます。
+        出さないままでも、キャラクターは島にいます。
       </p>
-
-      <span className="me-label">自分のキャラクター</span>
-      <div className="me-picks">
-        <button
-          className={`me-pick me-pick-none${pick === null ? " is-on" : ""}`}
-          onClick={() => setPick(null)}
-        >
-          出さない
-        </button>
-        {RESIDENTS.filter((r) => r.icon).map((r) => (
-          <button
-            key={r.icon}
-            className={`me-pick${pick === r.icon ? " is-on" : ""}`}
-            onClick={() => setPick(r.icon!)}
-            aria-label="このキャラクターが自分"
-          >
-            <img src={`https://lh3.googleusercontent.com/d/${r.icon}=s96`} alt="" loading="lazy" />
-          </button>
-        ))}
-      </div>
 
       <label className="me-row">
         <span>島に出す名前</span>
@@ -86,23 +64,21 @@ export default function IslandMe() {
         <span>YouTubeのアイコンを出す</span>
       </label>
 
-      {/* 決めたものが島でどう見えるか。
-          設定だけ並べても、押した結果が想像できない。出る形をそのまま見せる。 */}
+      {/* 決めたものがどう見えるか。設定だけ並べても、押した結果が想像できない。
+          キャラクターの絵は出さない。**どの絵があなたか、こちらでは分からない**
+          （割り当てはあやとの表にある）ので、出すと嘘の絵を見せることになる。
+          出せるのは名札そのものだけ。 */}
       <div className="me-prev">
-        <span className="me-prev-label">島でこう見えます</span>
+        <span className="me-prev-label">名札はこう出ます</span>
         <div className="me-prev-body">
-          {pick ? (
-            <img className="me-prev-char" src={`https://lh3.googleusercontent.com/d/${pick}=s160`} alt="" />
-          ) : (
-            <span className="me-prev-none">キャラクターは出ません</span>
-          )}
-          {pick && showName && (
+          {showName ? (
             <span className="me-prev-tag">
               {showPhoto && user.photo && <img src={user.photo} alt="" />}
               {nickname.trim() || user.name}
             </span>
+          ) : (
+            <span className="me-prev-none">名札は出ません</span>
           )}
-          {pick && !showName && <span className="me-prev-none">名札は出ません</span>}
         </div>
       </div>
 

@@ -34,6 +34,7 @@
  *   SPORT=4120 CSS='.sway{animation:none}' node framecpu.mjs     # CSS を足して比べる
  *   SPORT=4120 REPEAT=3 node framecpu.mjs                        # 回数（既定2）
  *   SPORT=4120 WIDE=1 node framecpu.mjs                          # PC 幅(1440×900)で
+ *   SPORT=4120 LOOK=1 node framecpu.mjs                          # 「島をながめる」の引きで
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
@@ -46,6 +47,8 @@ const REPEAT = Number(process.env.REPEAT || 2);
 const THROTTLE = Number(process.env.THROTTLE || 0);
 const CSS = process.env.CSS || "";
 const WIDE = process.env.WIDE === "1";
+/** 「島をながめる」を押してから測る。引きの絵の重さを見るとき */
+const LOOK = process.env.LOOK === "1";
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -96,6 +99,10 @@ async function once() {
   await p.waitForTimeout(4000);
   const boot = await metrics(cdp);
 
+  if (LOOK) {
+    await p.click(".stage-view").catch(() => {});
+    await p.waitForTimeout(2500);
+  }
   const get = async () => await metrics(cdp);
   const a = await get();
   const f0 = await p.evaluate(() => window.__f);

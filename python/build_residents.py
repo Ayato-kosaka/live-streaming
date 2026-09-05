@@ -30,8 +30,9 @@
 `--report` に書き出して、`residents.ts` には触らずに終わる。
 推測で結ぶと、実在する人の並び順を間違えて出すことになる（一度やっている）。
 
-島でログインが有効になれば `islandUsers` に本人が選んだキャラクターが入るので、
-そちらから作れるようになる（issue #90 / #113）。
+**ログインで本人にキャラクターを選ばせない。** 他人の絵を自分のものにできてしまう。
+ログインは「認可されたことをする」のと「書いたものに名前を刻む」ためのもので、
+島の住人の割り当てはその外にある（issue #113）。
 
 実行:
   BQ_PROJECT_ID=live-streaming-d3cac python python/build_residents.py
@@ -147,14 +148,17 @@ def read_icons() -> list:
     """
     src = OUT_TS.read_text(encoding="utf-8")
     out = []
-    for m in re.finditer(r'\{\s*icon:\s*"([^"]+)",\s*emoji:\s*"([^"]+)",\s*days:\s*(\d+)\s*\}', src):
+    for m in re.finditer(r'\{\s*icon:\s*"([^"]+)",\s*emoji:\s*"([^"]+)",\s*days:\s*(\d+)', src):
         out.append({"icon": m.group(1), "emoji": m.group(2), "days": int(m.group(3))})
     return out
 
 
 def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
     body = "\n".join(
-        f'  {{ icon: "{r["icon"]}", emoji: "{r["emoji"]}", days: {r["days"]} }},' for r in rows
+        f'  {{ icon: "{r["icon"]}", emoji: "{r["emoji"]}", days: {r["days"]}'
+        + (f', channel: "{r["channel"]}"' if r.get("channel") else "")
+        + " },"
+        for r in rows
     )
     OUT_TS.write_text(
         f'''/** 直近{WINDOW_DAYS}日で島に来てくれている仲間のうち、キャラクター登録済みの人。
@@ -166,8 +170,13 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
  *
  *  **`days` は、島に出ている人を日替わりで選ぶ重みにもなっている**
  *  （`components/island/villagers.ts` の rosterOf）。よく来てくれている人ほど
- *  島にいる日が多い、という形にするため。 */
-export type Resident = {{ icon?: string; emoji?: string; days: number }};
+ *  島にいる日が多い、という形にするため。
+ *
+ *  `channel` は YouTube のチャンネル id。**どの絵が誰のものかは、あやとが表で
+ *  持っている割り当てだけが決める**（`python/residents_map.json`）。
+ *  本人にログイン画面で選ばせない。他人の絵を自分のものにできてしまうため。
+ */
+export type Resident = {{ icon?: string; emoji?: string; days: number; channel?: string }};
 
 export const RESIDENTS: Resident[] = [
 {body}
@@ -224,7 +233,14 @@ def main() -> int:
             logger.warning("表に無いキャラクター: %s（前の値のまま残す）", cur["icon"])
             out.append(cur)
             continue
-        out.append({"icon": cur["icon"], "emoji": cur["emoji"], "days": by_cid.get(cid, 0)})
+        out.append(
+            {
+                "icon": cur["icon"],
+                "emoji": cur["emoji"],
+                "days": by_cid.get(cid, 0),
+                "channel": cid,
+            }
+        )
 
     out.sort(key=lambda r: -r["days"])
     write_ts(out, active, denom, lost_days)

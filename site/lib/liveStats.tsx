@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RESIDENTS } from "@/content/residents";
 import { getState, type IslandState, type IslandStats, type ResidentShow } from "@/lib/api";
 import { STATS_FALLBACK } from "@/content/site";
 
@@ -69,8 +70,13 @@ export function LiveNumber({
 }
 
 /**
- * 名前を出すと決めた住人の一覧。
+ * 名前を出すと決めた住人の一覧。**鍵はキャラクターの絵**。
  * 出すか出さないかは本人が決めるので、ここに載る人は少ない。
+ *
+ * サーバーは YouTube のチャンネルで返してくる。どの絵が誰のものかを決めるのは
+ * あやとの表（`content/residents.ts` に焼いてある `channel`）だけで、
+ * ログインした人が自分で絵を選ぶことはできない。他人の絵を自分のものに
+ * できてしまうため。表に無いチャンネルの人は、名前が出ないまま島にいる。
  */
 export function useResidentShow(): Map<string, ResidentShow> {
   const [m, setM] = useState<Map<string, ResidentShow>>(() => new Map());
@@ -78,7 +84,15 @@ export function useResidentShow(): Map<string, ResidentShow> {
     let alive = true;
     load().then((s) => {
       if (!alive || !s?.residents?.length) return;
-      setM(new Map(s.residents.filter((r) => r.icon).map((r) => [r.icon, r])));
+      const iconOf = new Map(
+        RESIDENTS.filter((r) => r.icon && r.channel).map((r) => [r.channel!, r.icon!]),
+      );
+      const next = new Map<string, ResidentShow>();
+      for (const r of s.residents) {
+        const icon = r.channelId && iconOf.get(r.channelId);
+        if (icon) next.set(icon, r);
+      }
+      setM(next);
     });
     return () => {
       alive = false;

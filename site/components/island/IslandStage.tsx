@@ -699,7 +699,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
          止まっているのに書き直すと、何もしていない画面でずっと GPU が回る。
          文字にしたときに同じなら、画面には出ない差なので触らない。 */
       const camMoved = vb !== lastVb;
-      if (camMoved) {
+      /* カメラが止まったのに、絵が 1.11 倍に引き伸ばされたまま残ることがある
+         （到着の寄せが終わった瞬間など）。止まった1回だけ焼き直して、等倍に戻す。
+         **止まっているあいだの絵がいちばん長く見られる。** そこがぼけていては困る。 */
+      if (!camMoved && sceneTf.current) anchor.current.span = 0;
+      if (camMoved || sceneTf.current) {
         lastVb = vb;
         /* --- 島の絵を動かす ---
            **`viewBox` は書き換えない。** 書き換えると島ぜんぶが描き直される
@@ -975,7 +979,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       className={`stage has-today${arriving ? " is-arriving" : ""}${talking ? " is-talking" : ""}`}
       /* いま配信の時間か。島の絵（やぐらの灯りと煙）を CSS で切り替える */
       data-live={onAir ? "on" : undefined}
-      data-view={follow ? "close" : "wide"}
+      /* ヒーローの見出し（看板ロゴ）の置き場。**カメラの寄りとは別のもの。**
+         PC も寄りを既定にしたが、こちらまで "close" にすると
+         ロゴが右上へ寄って「今日の島」の板と重なる。見出しの置き場は変えない。 */
+      data-view={mode === "phone" && follow ? "close" : "wide"}
       data-mode={mode}
       ref={hostRef}
       onClick={onStageClick}
