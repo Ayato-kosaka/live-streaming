@@ -86,27 +86,37 @@ for i, b0 in enumerate(d["boxes"]):
     if int(mask.sum()) < 6:
         continue
     unders = c[mask]                        # その字が乗っている地だけ
-    lt = lum(col)
-    lb = lum_a(unders)
+    # **字の色は、宣言された値ではなく描かれた画素から取る。**
+    # computed の color は opacity を含まない。0.72 で薄めてある字を
+    # そのまま使うと、実際より濃いものとして数えて合格に見えてしまう
+    # （地図の海の名前を 0/170 と報告して、実は 1.88 だったのがこれ）。
+    # にじみを拾わないよう、地との差がいちばん大きい側（上位4割）＝字の芯だけを見る。
+    diff = np.abs(a - c).sum(axis=2)[mask]
+    core = diff >= np.quantile(diff, 0.6)
+    painted = a[mask][core] if int(core.sum()) >= 4 else a[mask]
+    lt = lum_a(painted)
+    lb = lum_a(unders[core] if int(core.sum()) >= 4 else unders)
     hi_l, lo_l = np.maximum(lt, lb), np.minimum(lt, lb)
     rs = (hi_l + 0.05) / (lo_l + 0.05)
     # 合否は中央値。にじみの画素で落とさない。
     mid = float(np.median(rs))
     # 地のばらつきは、字ではなく地のほうを見る。1画素のはずれ値を拾わないよう
     # 上下 5% で切る。明るい地・暗い地それぞれとの比を出す。
-    order = np.argsort(lb)
-    lo = tuple(int(v) for v in unders[order[len(order) // 20]])
-    hi = tuple(int(v) for v in unders[order[-1 - len(order) // 20]])
-    rows.append((mid, ratio(col, hi), ratio(col, lo), b0, lo, hi))
+    ink = tuple(int(v) for v in np.median(painted, axis=0))
+    ub = unders[core] if int(core.sum()) >= 4 else unders
+    order = np.argsort(lum_a(ub))
+    lo = tuple(int(v) for v in ub[order[len(order) // 20]])
+    hi = tuple(int(v) for v in ub[order[-1 - len(order) // 20]])
+    rows.append((mid, ratio(ink, hi), ratio(ink, lo), b0, lo, hi, ink))
 
 LIM = float(sys.argv[3]) if len(sys.argv) > 3 else 4.5
 rows.sort(key=lambda r: r[0])
 print(f"{'中央':>6} {'明地':>6} {'暗地':>6} {'ふり':>5}  {'字':>9} {'暗い地':>9}  大きさ  class / 中身")
 n = 0
-for mid, rhi, rlo, b0, lo, hi in rows:
+for mid, rhi, rlo, b0, lo, hi, ink in rows:
     # 中央値が足りないか、地のムラのせいで暗いところだけ落ちているか
     if mid >= LIM and rlo >= LIM:
         continue
     n += 1
-    print(f"{mid:6.2f} {rhi:6.2f} {rlo:6.2f} {rhi - rlo:5.2f}  {b0['color'][:9]:>9} {'#%02x%02x%02x' % lo}  {b0['size']:>6}  {b0['c'][:26]} «{b0['t'][:18]}»")
+    print(f"{mid:6.2f} {rhi:6.2f} {rlo:6.2f} {rhi - rlo:5.2f}  {'#%02x%02x%02x' % ink:>9} {'#%02x%02x%02x' % lo}  {b0['size']:>6}  {b0['c'][:26]} «{b0['t'][:18]}»")
 print(f"-- {LIM} を割っているのは {n} / {len(rows)} か所（中央値、または地の暗いほうで）")
