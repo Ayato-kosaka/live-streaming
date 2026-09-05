@@ -95,6 +95,11 @@
 
 /* 見出し。蛍光ペンで引いた帯を字の後ろに敷く。これ1つで印刷物に見える */
 .zk-h {
+  /* 見出しが長いと、左の小さい絵だけが1行上に取り残されていた
+     （`/legends` の「これ、どうやって伝説になったんだろう」）。
+     見出しを縮める側にして、折り返しは絵の隣で起こす。 */
+  flex: 1 1 auto;
+  min-width: 0;
   display: inline;
   margin: 0;
   padding: 0 var(--sp-2);
@@ -242,16 +247,17 @@
    枠は絵が埋められる大きさに合わせ、`height: 100%` で枠まで伸ばす。
    320px を超える引き伸ばしはぼけるので、そこで止める。
    「ここを見ろ」は、絵の大きさではなく上下の余白で言う。 */
-.zk-hero.is-dex .zk-hero-art { height: 268px; margin: var(--sp-6) 0 var(--sp-5); }
-@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 320px; } }
+/* 枠を決め打ちにすると、平たい料理（卵焼き 248x116）だけ題名との間に
+   250px の空きができて、余白ではなく不具合に見えた。枠は絵の高さに合わせ、
+   下限だけ決めておく。「ここを見ろ」は枠の広さではなく上下の余白で言う。 */
+.zk-hero.is-dex .zk-hero-art { height: auto; min-height: 168px; margin: var(--sp-6) 0 var(--sp-6); }
+@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { min-height: 220px; } }
 .zk-hero.is-dex .zk-hero-art img {
-  height: 100%;
-  width: auto;
-  max-height: 320px;
-  /* 平たい料理（ピザ・ワッフル）は横幅で止まる。縦に引き伸ばさない */
+  /* 焼いてあるスプライトは長辺 320px まで。それ以上に伸ばしてもぼけるだけなので、
+     引き伸ばさずに natural size で置く。 */
+  max-height: 300px;
   max-width: 86%;
 }
-.zk-hero.is-dex .zk-hero-art::before { height: 34px; }
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {
   content: "";
@@ -933,7 +939,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 /* 数字を横に並べる欄。罫線で仕切る */
 .figs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  /* 92px 下限だとスマホで3列になって、4つ目が1/3幅のまま宙に浮いていた。
+     狭い画面は2列に決め打ちして、余った1つは横いっぱいまで伸ばす。 */
+  grid-template-columns: repeat(2, 1fr);
   margin: var(--sp-4) 0 0;
   border-top: 1px solid var(--zk-rule-soft);
   border-left: 1px solid var(--zk-rule-soft);
@@ -948,6 +956,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .figs .fig i { font-size: var(--fs-body); }
 .figs .fig.is-word b { font-size: clamp(14px, 4.2vw, 18px); }
 .figs .fig-cap { font-size: var(--fs-min); letter-spacing: 0.06em; }
+@media (max-width: 559px) { .figs > div:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (min-width: 560px) { .figs { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); } }
 
 /* いちばん語られている1つ。紙の見開きの上半分を丸ごと使う */
 .lg-hero-tag {

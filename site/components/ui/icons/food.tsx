@@ -900,8 +900,11 @@ export const food: Record<string, Draw> = {
   recipe: (c) => (
     <>
       <Sh c={c} cy={55} rx={26} ry={4} />
-      <path d="M3 13c8-3 17-3 27 0v39c-10-3-19-3-27 0z" fill={c.w} />
-      <path d="M61 13c-8-3-17-3-27 0v39c10-3 19-3 27 0z" fill={c.cr} />
+      {/* 白い紙 + クリームの紙では、生成りの地の上で本が丸ごと消えていた
+          （沈んでいる印を測ると 251 種でいちばん悪かった）。
+          ひらいた本は左が光を受けて右が陰になる。その差をそのまま紙の色にする */}
+      <path d="M3 13c8-3 17-3 27 0v39c-10-3-19-3-27 0z" fill={c.cr} />
+      <path d="M61 13c-8-3-17-3-27 0v39c10-3 19-3 27 0z" fill={c.crd} />
       <rect x="28.6" y="11" width="6.8" height="42" rx="3.4" fill={c.rdd} />
       <g fill={c.rd}>
         <rect x="28.6" y="14" width="6.8" height="3" rx="1.5" />

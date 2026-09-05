@@ -152,8 +152,14 @@ const strip = (bg: string, ink: string): React.CSSProperties => ({
 
 /** 暗い下地。明るい下地で消える白い絵は、ここでしか見つからない。 */
 const night = strip(P.dark, "#fdf6e6");
-/** 明るい下地。逆に、暗い絵が紙に沈んでいないかを見る。 */
-const day = strip("#fbf6df", P.ink);
+/**
+ * 明るい下地。逆に、白い絵が紙に沈んでいないかを見る。
+ *
+ * 色は `--paper`（`tokens.css`）そのもの。**本番でいちばん明るい紙**を使う。
+ * ここを少しでも暗くすると、白い絵が「読めている」ように見えてしまい、
+ * 実際の紙の上で消える絵を見落とす。検品台はいちばん厳しい地で見る。
+ */
+const day = strip("#fffae4", P.ink);
 
 export default function DesignPage() {
   return (
