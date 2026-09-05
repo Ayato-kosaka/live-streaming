@@ -155,8 +155,8 @@ export const PLACES: Place[] = [
   },
   {
     id: "fellows",
-    x: 706,
-    y: 782,
+    x: 770,
+    y: 800,
     label: "仲間のテント",
     icon: "tent-small",
     size: 56,
