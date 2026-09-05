@@ -264,6 +264,22 @@
 /* 字が 12px なので、そのままだと指の当たりが 13×21px しかない
    （docs/island-review-2.md 14章）。札を大きくすると前置きが伸びるので、
    当たりだけを字の外へ広げる。左右は区切りの「›」の幅ぶんまで。 */
+/* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
+   朱の枠で言っているのと同じことしか言っていない。
+   狭い画面で、同じ場所の名前を2回出すために 45px は使わない。
+   ただし消さない。目に見えないだけで、読み上げには残す
+   （2段以上あるパンくずは、親への行き先を持っているので出したまま）。 */
+@media (max-width: 719.98px) {
+  .crumbs:not(:has(> span + span)) {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: 0; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
 .crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .crumbs a::after { content: ""; position: absolute; inset: -12px -4px; }
 .crumbs b { color: var(--ink); }

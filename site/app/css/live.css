@@ -27,30 +27,10 @@
   74% { transform: scale(1.16); }
 }
 
-/* しらせの帯。ページの先頭で「何件あって、いちばん近いのはいつか」だけ言う */
-.nx-notice {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin: 0 0 var(--sp-3);
-  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3);
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-3);
-  background:
-    radial-gradient(120% 140% at 6% 0%, color-mix(in srgb, var(--gold) 30%, transparent), transparent 60%),
-    linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2);
-}
-.nx-notice-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.nx-notice-t b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
-/* 企画の題名は長い。2行までは折り返して見せて、それ以上は切る
-   （しらせの帯が縦に伸びると、下の札が画面から押し出される） */
-.nx-notice-t i {
-  font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); line-height: 1.55;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-}
-/* 件数を丸い札でもう一度出していた。同じ数を2回言うと、
-   どちらがしらせなのか分からなくなる。合図はベルの赤い丸ひとつに絞る */
+/* しらせの帯（`.nx-notice`）は消した。
+   「これからの予定が2件／つぎは 9/6 …」と書いてあったが、
+   そのすぐ下の札が同じことを大きい時計で言っていて、
+   押せないのに厚み5pxの板でもあった（`island-review-2` 14章）。 */
 
 /* =========================================================
    2. あと何日か（主役の企画の時計）
@@ -226,8 +206,19 @@
 .nx-road-b > .fold { border-radius: var(--r-0); background: none; }
 .nx-road-b > .fold > summary { min-height: 56px; padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2); }
 /* 日数の札は、一覧では右端に寄る作りになっている。ここでは題名の右、
-   折りたたみの印の手前に置く。 */
+   折りたたみの印の手前に置く。台紙（.fold-n のオリーブ）は要らない。
+   日数の札そのものが札の形をしているので、札の上に札が載ってしまう。 */
+.nx-road-b .fold-n { padding: 0; background: none; }
 .nx-road-b .fold-n .count { margin-left: 0; }
+/* ひとことは1行で切らない。石の右は 270px しかなく、
+   「ジョージアを…」で切れると、何の企画なのか分からないまま閉じている。 */
+.nx-road-b .fold-t i {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: var(--lh-note);
+}
 .nx-road-b .fold-body { padding-top: var(--sp-2); }
 
 /* =========================================================
@@ -249,9 +240,13 @@
   color: #5c4a2a;
   transform: rotate(-1.4deg);
 }
-.nx-notes > li:nth-child(2n) { background: linear-gradient(#dcf1ff, #c3e6fb); transform: rotate(1.2deg); }
-.nx-notes > li:nth-child(3n) { background: linear-gradient(#ffe4ee, #ffcede); transform: rotate(-0.5deg); }
-.nx-notes > li:nth-child(4n) { background: linear-gradient(#e4f7d8, #cdeeba); transform: rotate(1.8deg); }
+/* 紙の色は1種類。以前は並び順で黄・水・桃・緑に塗り分けていたが、
+   色が「何番目に貼られたか」を指しているだけで、読む人には何も言っていなかった
+   （`docs/island-world.md` 3.1「色で分けていいのは配信の型だけ」）。
+   1枚ずつ違って見せるのは、傾きだけで足りる。 */
+.nx-notes > li:nth-child(2n) { transform: rotate(1.2deg); }
+.nx-notes > li:nth-child(3n) { transform: rotate(-0.5deg); }
+.nx-notes > li:nth-child(4n) { transform: rotate(1.8deg); }
 .nx-notes .nx-pin { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); }
 /* 取りに行っているあいだの灰色。付箋と同じ形・同じ傾きで、色だけ抜く */
 .nx-notes.is-wait > li {
@@ -336,8 +331,6 @@
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 .bd-bridge-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
-/* 入力欄のほうへ下りていく合図なので、山形を下に向ける */
-.bd-bridge-go .ic { transform: rotate(90deg); }
 .bd-count {
   display: inline-flex;
   align-items: baseline;

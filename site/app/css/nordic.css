@@ -583,16 +583,22 @@ p.rtie {
 
 /* =========================================================
    国のカード（トップの「通る6カ国」）
+   ---------------------------------------------------------
+   写真つきの1行。以前はここが「旗と名前の行 6つ」で、そのすぐ上に
+   「いちばん見たいもの」の写真カードが8枚あった。行き先はどちらも
+   同じ国のページで、2つで 3,300px 使っていた（`Countries.tsx`）。
+   写真のほうが強いので、写真を国の顔にして、行のほうへ寄せてある。
    ========================================================= */
 .ncountries { display: grid; gap: 9px; margin-top: 12px; }
 @media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr; } }
 .ncountry {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
+  grid-template-columns: 104px 1fr;
+  align-items: stretch;
   gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
+  padding: 0 var(--sp-3) 0 0;
+  overflow: hidden;
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: var(--paper);
@@ -600,9 +606,21 @@ p.rtie {
   color: var(--ink);
 }
 .ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* 写真の枠。外から来る絵なので、読める前から高さを取っておく
+   （`docs/island-ux.md` 5.13）。地は海の浅いところ。 */
+.ncountry-img {
+  position: relative;
+  display: block;
+  line-height: 0;
+  min-height: 94px;
+  background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
+}
+.ncountry-img img { width: 100%; height: 100%; object-fit: cover; }
 /* 1字しか入らないので、丸も字も小さすぎると、フチのぼけで字がやせる。
    実測（描いた画素から）で 24px/12px は 4.29 : 1 まで落ちていた。 */
 .ncountry-leg {
+  position: absolute;
+  left: 6px; top: 6px;
   width: 28px; height: 28px;
   display: grid; place-items: center;
   border-radius: 50%;
@@ -615,11 +633,35 @@ p.rtie {
   color: var(--chip-ink);
   font-size: 13.5px;
   font-weight: 900;
+  /* 写真の上に載るので、絵と札の境目を1本入れる */
+  box-shadow: 0 0 0 1.5px var(--paper);
 }
-.ncountry-body { display: grid; gap: 2px; min-width: 0; }
+.ncountry-body {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-3) 0;
+}
+.ncountry-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); }
-.ncountry-body em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
+.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 900; line-height: 1.5; }
+.ncountry-body em {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.ncountry-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--frame-deep);
+}
 
 /* =========================================================
    国のページ
