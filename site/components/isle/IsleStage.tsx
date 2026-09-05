@@ -225,19 +225,34 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     return () => ro.disconnect();
   }, [world]);
 
-  /* --- 島の隅の道具。札がこの上に乗らないようにする --- */
+  /* --- 島の隅の道具。札がこの上に乗らないようにする ---
+     **表紙のときは看板ロゴもここに入れる。** カメラはあやとを追うので、
+     島の札はいつか必ずロゴの下へ入ってくる。実際に入れて撮ったら、
+     「この旅のこと」の札が「あやと島」の看板にまるごと重なって、
+     どちらも読めなかった。**札のほうを下へ逃がす**（矢が建物の方向を指す）。 */
   useEffect(() => {
-    const host = hostRef.current;
-    const hb = host?.getBoundingClientRect();
-    const boxes: { x: number; y: number; w: number; h: number }[] = [];
-    if (host && hb)
-      for (const el of host.querySelectorAll<HTMLElement>(".isle-view, .isle-atlas, .isle-sign")) {
+    const measure = () => {
+      const host = hostRef.current;
+      const hb = host?.getBoundingClientRect();
+      if (!host || !hb) return;
+      const boxes: { x: number; y: number; w: number; h: number }[] = [];
+      const add = (el: Element | null | undefined) => {
+        if (!el) return;
         const r = el.getBoundingClientRect();
+        if (r.width < 4) return;
         boxes.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
-      }
-    uiBoxes.current = boxes;
-    platesDirty.current = true;
-  }, [openSpot, box.w, box.h, left]);
+      };
+      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign")) add(el);
+      if (cover) add(host.parentElement?.querySelector(".hero-logo"));
+      uiBoxes.current = boxes;
+      platesDirty.current = true;
+    };
+    measure();
+    /* 看板の入りの動き（logo-in）が終わるまでは、小さく傾いた箱が返る。
+       終わったころにもう一度測る（毎フレーム測ると layout を起こす） */
+    const t = window.setTimeout(measure, 900);
+    return () => window.clearTimeout(t);
+  }, [openSpot, box.w, box.h, left, cover]);
 
   /* --- 出発までの日数。1分ごとに数え直す ---
      静的書き出しなので、ビルド時の「今日」を焼き込まない（`CLAUDE.md`） */
