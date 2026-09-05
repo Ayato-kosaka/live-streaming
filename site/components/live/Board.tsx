@@ -80,6 +80,8 @@ export default function Board() {
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
+  /** いま貼ったものの id。貼ったあと、それがどこへ行ったかを言うために持つ。 */
+  const [posted, setPosted] = useState<string | null>(null);
   const [voted, setVoted] = useState<Set<string>>(new Set());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
@@ -146,6 +148,10 @@ export default function Board() {
       rememberPost(idea.id);
       setMine((m) => new Set([...m, idea.id]));
       setText("");
+      // 貼ったものは票が0なので、人気順のままだといちばん下に沈む。
+      // 「貼れました」と言った先が空だと、貼れていないのと同じ。
+      setSort("new");
+      setPosted(idea.id);
     } catch (e) {
       setErr(String(e).includes("429") ? BOARD.tooMany : BOARD.failed);
     } finally {
@@ -237,6 +243,27 @@ export default function Board() {
         {err && (
           <p className="err">
             <Icon name="alert" size={13} /> {err}
+          </p>
+        )}
+
+        {/* 貼ったあと、画面の上のほうは入力欄が空になるだけで、何も起きていないように見える。
+            貼ったものは 1,800px 下の板にいるので、そこまで連れていく
+            （`docs/island-design.md` 3章「押したら必ず何かが返る」）。 */}
+        {posted && (
+          <p className="bd-done">
+            <b>貼れました。</b>
+            みんなの板の、いちばん上にあります。
+            <button
+              type="button"
+              className="bd-done-go"
+              onClick={() => {
+                const el = document.getElementById(`idea-${posted}`);
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+            >
+              貼ったものを見る
+              <Icon name="chevron" size={13} />
+            </button>
           </p>
         )}
 
@@ -383,6 +410,7 @@ export default function Board() {
             return (
               <li
                 key={i.id}
+                id={`idea-${i.id}`}
                 className={`${i.status === "picked" ? "is-picked" : ""}${top ? " is-top" : ""}`}
               >
                 <span className="nx-pin">

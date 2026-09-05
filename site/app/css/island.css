@@ -147,6 +147,32 @@
   visibility: visible;
   pointer-events: auto;
 }
+/* 看板を出す6つは、遠くからでも名前が出ている。
+   `docs/island-design.md` 6章「押せることと、案内することは別。
+   看板を出すのは sign の付いた6つだけ」。**その6つが働いていなかった。**
+   閉じた札は 34px の丸で visibility:hidden だったので、島に降りた1画面目に
+   建物の名前が1枚も出ていなかった。押せる物だと画面のどこにも書いていない。
+
+   遠くからは名前だけ。近づくと（.is-on）そこに一言と「はいる」が足される。
+   **揺らさない。** 6枚が同時に揺れたら、島ではなく看板の並びになる。
+   残り4軒は静かに建っていて、近づいた人にだけ名前が出る。ここは変えない。 */
+.spot.is-sign .spot-mark {
+  visibility: visible;
+  pointer-events: auto;
+  width: auto;
+  height: auto;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
+  box-shadow:
+    0 4px 0 var(--frame-deep),
+    3px 8px 9px var(--cast);
+}
+.spot.is-sign .spot-mark::after { height: 15px; width: 9px; margin-left: -4.5px; bottom: -14px; }
+.spot.is-sign .spot-text { display: grid; gap: 1px; line-height: 1.2; text-align: left; }
+.spot.is-sign .spot-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言は近づいてから。遠くの6枚が2行ずつ出ていると、島が字で埋まる */
+.spot.is-sign:not(.is-on) .spot-text i { display: none; }
 /* 閉じている札は 34px しかない。絵は小さいままでいいが、
    押せるものである以上、指の当たりは 48px 要る（`island-design.md` 3-2）。
    見えない当たりを外へ広げる。 */

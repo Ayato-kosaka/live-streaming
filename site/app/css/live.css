@@ -352,6 +352,37 @@
 }
 .bd-count b { font-size: var(--fs-body); color: var(--ink); }
 
+/* 貼れたあとの1行。押しどころは 48px を割らない */
+.bd-done {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: var(--lh-body);
+  color: var(--ink);
+}
+.bd-done > b { font-weight: 900; }
+.bd-done-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin-left: auto;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+.bd-done-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+
 /* 1件も貼られていないとき。空の板を見せて終わらせず、書く場所へ戻す1手を置く */
 .bd-empty { text-align: center; }
 .bd-empty > p { margin: var(--sp-2) 0 0; }

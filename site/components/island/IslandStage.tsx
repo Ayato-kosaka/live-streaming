@@ -938,7 +938,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       ref={hostRef}
       onClick={onStageClick}
     >
-      <svg ref={sceneRef} className="stage-svg" viewBox={vb0} preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <svg
+        ref={sceneRef}
+        className="stage-svg"
+        viewBox={vb0}
+        style={tf0 ? { transform: tf0 } : undefined}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
         <IslandScene />
         {layers.map((l) => {
           if (l.kind === "prop") {
@@ -1003,7 +1010,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       </svg>
 
       {/* 夜の灯り。時間帯の色かぶせより上に重ねる */}
-      <svg ref={lampRef} className="stage-lamps" viewBox={vb0} preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <svg
+        ref={lampRef}
+        className="stage-lamps"
+        viewBox={vb0}
+        style={tf0 ? { transform: tf0 } : undefined}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
         <defs>
           <radialGradient id="lampG">
             <stop offset="0" stopColor="#fff6d4" stopOpacity="1" />
@@ -1022,37 +1036,63 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           擬似要素ではなく実体を1枚置いている。 */}
       <span className="stage-shore" aria-hidden />
 
-      {/* 建物の札。島に建っているものは全部押せるので、ふだんは何も出さない。
-          出るのは「今日ここに何かある」1つと、いま近づいている1つだけ。 */}
+      {/* 建物の札。
+          **看板を出す6つ（`sign`）は、遠くからでも名前が出ている。**
+          残り4軒は静かに建っていて、近づいた人にだけ名前が出る
+          （`docs/island-design.md` 6章「押せることと、案内することは別」）。
+          「!」が立つのは「今日ここに何かある」1つだけ。 */}
       <div className="labels">
         {DOORS.map((sp, i) => {
           const on = openSpot === sp.id;
           const today = todaySpot === sp.id;
+          const sign = !!sp.sign;
+          /* 建物そのものを押したとき。
+             指とマウスは、まず**歩く**。島を歩くのがこの画面のいちばんの手ざわりで、
+             着けば札が開いて、そこから入れる。ただし
+               - もう札が開いている（＝そばに立っている）
+               - キーボードや読み上げから実行した（`detail === 0`。歩く絵が返らない）
+             このどちらかなら、歩かせる意味が無いのでそのまま入る。 */
+          const enterOrWalk = (e: React.MouseEvent) => {
+            if (e.detail === 0 || on) {
+              leaveAt.current = { x: sp.x, y: sp.y + 34 };
+              return;
+            }
+            e.preventDefault();
+            goTo(sp);
+          };
           return (
             <div
               key={sp.id}
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}`}
+              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}${sign ? " is-sign" : ""}`}
             >
-              <button
+              {/* 建物の当たり。**`<a href>` にしてある。**
+                  `<button>` だと長押しの「新しいタブで開く」が出ないし、
+                  読み上げにもキーボードにも「行き先」として見えない。
+                  建物は入口なので、まず行き先であるべき。 */}
+              <Link
                 data-ui
+                href={sp.href}
+                prefetch={false}
                 className="spot-hit"
-                onClick={() => goTo(sp)}
+                /* 1軒につき、キーボードの止まり先はいつも1つ。
+                   札が出ているときは札のほうが行き先（名前と一言と「はいる」が
+                   ぜんぶ載っている）。出ていないときだけ、この当たりが受ける。 */
+                tabIndex={on || sign ? -1 : 0}
+                onClick={enterOrWalk}
                 onMouseEnter={() => setHover(sp.id)}
                 onMouseLeave={() => setHover((v) => (v === sp.id ? null : v))}
                 onFocus={() => setHover(sp.id)}
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
-                // 押すと「歩いていく」。入るのは、着いて開いた札のほう。
-                // 「へ行く」と読み上げると、押した先で入れると思われる
-                aria-label={`${sp.label}まで歩く`}
+                aria-label={`${sp.label}にはいる`}
               />
               <Link
                 data-ui
                 href={sp.href}
                 className="spot-mark"
-                tabIndex={on ? 0 : -1}
+                tabIndex={on || sign ? 0 : -1}
                 // 10軒ぶんの札がいつも画面にいるので、先読みを止めないと
                 // 島を開いただけで全ページの RSC を取りにいく（実測で約3MB）。
                 // 静的書き出しなので、先読みで得られるものは小さい。
