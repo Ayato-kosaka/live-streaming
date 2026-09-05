@@ -514,14 +514,6 @@ const seaBlobs = seaPatches(96, 6161, 7, 26, 0.3);
 const seaStreaks = seaPatches(56, 6162, 22, 62, 0.055);
 /** 3本それぞれの濃さ。ばらけていないと「点を撒いた」ように見える。 */
 const SEA_OPACITY = [0.5, 0.32, 0.18];
-/** きらめきの濃さと、明滅の位相。濃さは CSS 変数で渡す（下のコメントの理由）。 */
-const glintStyle = (o: number, delay: number) =>
-  ({ "--o": o, animationDelay: `${delay}s` }) as React.CSSProperties;
-
-/** 沖のうねり。島を囲む輪にして、水面が動いているように見せる。 */
-const swellPaths = [180, 262, 352].map((d, i) =>
-  blob(CX, CY, wobble(resample(inset(sandR, -d), 40), 91 + i, 16 + i * 6), SQ),
-);
 
 /**
  * 草の地模様。
@@ -1124,29 +1116,34 @@ function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
-      {/* 沖のうねり。島を囲む輪にすると、海が島に向かって寄せてくるように見える。
-          ゆっくり大きくなって消えるので、水がこちらへ寄せているように見える。 */}
-      <g className="swell" fill="none" stroke="#ffffff" strokeLinecap="round" aria-hidden>
-        {swellPaths.map((d, i) => (
-          <path
-            key={i}
-            d={d}
-            className="swell-ring"
-            style={{ transformOrigin: `${CX}px ${CY}px`, animationDelay: `${i * -3.2}s` }}
-            strokeWidth={26 - i * 5}
-            strokeOpacity={0.075 - i * 0.014}
-          />
-        ))}
-      </g>
-      {/* 水面の白いかたまり。3つの層をずらして明滅させると、水が動いて見える。
-          動かすのは opacity だけ。形を毎フレーム作り直さないのが要点。
-          層ごとの濃さは --o で渡す。opacity 属性に書くと animation に消される。 */}
+      {/* 水面の白いかたまり。海が塗りに見えないように、大小2種を撒いてある。
+
+          **明滅は外した。** 島の SVG の中で何かを動かすと、その要素の
+          外接矩形ぶんが毎フレーム描き直される。この6本は島をぐるりと囲む
+          形なので、外接矩形は**画面ぜんぶ**になる。海が画面の1割しか
+          写っていなくても、1割ではなく10割ぶんの代金を払っていた。
+
+          実測（1440×900・歩かせて6秒・絞りなし・4往復の中央値）:
+
+            いまのまま                      12.2 fps
+            きらめきを止める                19.2 fps
+            沖のうねり(swell)を止める        15.5 fps
+            **両方止める                    33.8 fps**
+
+          うねりのほうは消した。白 7.5% の輪を3本、島の外に広げていたもので、
+          止めても消しても数字が同じ（32.7 / 33.8 fps）＝**見えていなかった**。
+          きらめきは見える（濃さが 0.175 ↔ 0.5 で振れる）ので、形は残して
+          動きだけ止めた。海の動きは波打ち際のレース（.surf）と舟とカモメが持つ。
+          あれらは外接矩形が小さいので、動かしても代金がつかない。
+
+          **ここに動くものを足すときは、その形の外接矩形を先に見ること。**
+          小さいものは何個動かしても無料で、島をまたぐものは1個で 20fps 持っていく。 */}
       <g className="sea-glint" fill="#ffffff" aria-hidden>
         {seaBlobs.map((d, i) => (
-          <path key={`b${i}`} d={d} style={glintStyle(SEA_OPACITY[i], i * -2.6)} />
+          <path key={`b${i}`} d={d} opacity={SEA_OPACITY[i] * 0.72} />
         ))}
         {seaStreaks.map((d, i) => (
-          <path key={`s${i}`} d={d} style={glintStyle(SEA_OPACITY[i] * 0.8, i * -3.7 - 1.3)} />
+          <path key={`s${i}`} d={d} opacity={SEA_OPACITY[i] * 0.8 * 0.72} />
         ))}
       </g>
 

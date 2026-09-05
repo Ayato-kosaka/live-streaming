@@ -15,6 +15,13 @@
  * onclick/tabindex か cursor:pointer かで見る。
  * `<details>` は summary が子なので「押せない」に出る。読むときに差し引く。
  *
+ * **数えるのは「押せないのに厚みがある」の一方向だけ。**
+ * 逆（押せるのに厚みが無い）はここでは数えない。そちらには例外があるため
+ * （`docs/island-design.md` 3章の3 / `docs/island-world.md` 3.5）:
+ * 一面に並ぶマスが全部押せるときは、1枚ずつに厚みを付けない。
+ * 料理32マス・企画8マス・住人22マスがこれで、違反ではない。
+ * こちらの向きには例外が無いので、出た数はそのまま違反の数。
+ *
  * 落ち先は /tmp/pop.json。tag と class でまとめて数えるのは読むほうの仕事。
  */
 import { chromium } from "playwright-core";
