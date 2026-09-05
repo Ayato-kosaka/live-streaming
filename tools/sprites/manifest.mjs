@@ -57,6 +57,17 @@ const LEAFY = { lobes: 1, ...TRUNK };
 /** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
 const LEAFY_SOFT = { lobes: 0.72, ...TRUNK };
 
+/* 足元に敷く葉もの(シダ・スイレン・畑の葉)。
+ *
+ * モデルのマテリアル名が樹冠と同じ `leafs*` になっている。樹冠を公式へ
+ * 寄せて青緑側(焼くと h0.43)へ振ったぶん、そのまま焼くと地面の草(h0.33)から
+ * 0.10 も離れて、足元だけ灰緑の別の植物が生えているように見えた。
+ * `grass`(茂み・草の株が使っている下草の緑)へ寄せ直す。
+ *
+ * サボテンは入れない。あちらは砂の上に立つ砂漠の植物で、
+ * 青みの残った緑のほうが正しい。 */
+const UNDERLEAF = { mat: { leafsgreen: [0.342, 0.50, 0.54], leafsdark: [0.360, 0.46, 0.44] } };
+
 /** 雪。「わずかに青い白」を無彩色として拾わせる(render.html の chromaMax)。 */
 const SNOWY = { neutral: { chromaMax: 0.20 } };
 
@@ -583,14 +594,14 @@ const SPRITES_BASE = [
   { name: "log", parts: [`${NK}/log.glb`] },
   { name: "log-large", parts: [`${NK}/log_large.glb`] },
   { name: "firewood", parts: [`${NK}/log_stack.glb`] },
-  { name: "lily", parts: [`${NK}/lily_large.glb`] },
-  { name: "lily-small", parts: [`${NK}/lily_small.glb`] },
+  { name: "lily", parts: [`${NK}/lily_large.glb`], opts: UNDERLEAF },
+  { name: "lily-small", parts: [`${NK}/lily_small.glb`], opts: UNDERLEAF },
   { name: "pot-plant", parts: [`${NK}/pot_large.glb`] },
   { name: "pot-plant-small", parts: [`${NK}/pot_small.glb`] },
   // 地面がまだ更地に見える（ac-reference.md 4）。木と建物のあいだを埋める草を足す。
   // 葉の形が違うものを混ぜないと、同じ株を敷き詰めた絨毯になる
-  { name: "fern", parts: [`${NK}/plant_flatTall.glb`] },
-  { name: "fern-short", parts: [`${NK}/plant_flatShort.glb`] },
+  { name: "fern", parts: [`${NK}/plant_flatTall.glb`], opts: UNDERLEAF },
+  { name: "fern-short", parts: [`${NK}/plant_flatShort.glb`], opts: UNDERLEAF },
   { name: "bush-spiky", parts: [`${NK}/plant_bushTriangle.glb`] },
   { name: "bush-spiky-large", parts: [`${NK}/plant_bushLargeTriangle.glb`] },
   { name: "bamboo", parts: [`${NK}/crops_bambooStageB.glb`] },
@@ -605,7 +616,7 @@ const SPRITES_BASE = [
   { name: "crop-corn", parts: [`${NK}/crops_cornStageD.glb`] },
   { name: "crop-wheat", parts: [`${NK}/crops_wheatStageB.glb`] },
   { name: "crop-pumpkin", parts: [`${NK}/crop_pumpkin.glb`] },
-  { name: "crop-melon", parts: [`${NK}/crop_melon.glb`] },
+  { name: "crop-melon", parts: [`${NK}/crop_melon.glb`], opts: UNDERLEAF },
   { name: "crop-carrot", parts: [`${NK}/crop_carrot.glb`] },
   { name: "crop-turnip", parts: [`${NK}/crop_turnip.glb`] },
   { name: "crop-row", parts: [`${NK}/crops_dirtRow.glb`] },
