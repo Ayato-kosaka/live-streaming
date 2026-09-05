@@ -85,6 +85,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SVGSVGElement>(null);
+  const lampRef = useRef<SVGSVGElement>(null);
   const ayatoRef = useRef<SVGGElement>(null);
   const ayatoShadowRef = useRef<SVGEllipseElement>(null);
   const folkRefs = useRef<(SVGGElement | null)[]>([]);
@@ -108,13 +109,13 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   /** 出発までの日数。**画面が出てから数える**（静的書き出しに焼かない） */
   const [left, setLeft] = useState<number | null>(null);
 
-  const avatar = useRef({ ...world.dock });
+  const avatar = useRef({ ...world.start });
   const facing = useRef(1);
   const walkingNow = useRef(false);
   const target = useRef<{ x: number; y: number } | null>(null);
   const walkingTo = useRef<number | null>(null);
   const keys = useRef<Record<string, boolean>>({});
-  const camRef = useRef({ x: world.dock.x, y: world.dock.y - 40, span: 0 });
+  const camRef = useRef({ x: world.start.x, y: world.start.y - 40, span: 0 });
   const anchor = useRef({ x: 0, y: 0, span: 0, w: 0, h: 0 });
   const sceneVb = useRef("");
   const sceneTf = useRef("");
@@ -135,7 +136,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     () => ({ cx: world.cx, cy: world.cy, squash: world.squash, radii: world.grass, places: world.places }),
     [world],
   );
-  const folk = useMemo(() => createFolk(spec.folk, ground, world.r), [spec.folk, ground, world.r]);
+  const folk = useMemo(
+    () => createFolk(spec.folk, ground, world.r, world.start),
+    [spec.folk, ground, world.r, world.start],
+  );
   /* 島を移ったら、挨拶と声かけの控えをまっさらにする。
      ここを持ち越すと、前の島で誰かと話した人は、次の島では誰にも声をかけられない */
   useEffect(() => resetTalk(), [spec.slug]);
@@ -164,8 +168,12 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
 
   /** 建物の並びのまん中。カメラはあやとを追いつつ、ここへ引き戻す */
   const mid = useMemo(() => {
-    const xs = world.places.map((p) => p.x);
-    const ys = world.places.map((p) => p.y);
+    /* **船着き場は入れない。** あれは浜にあるので、まん中が島の南へ寄ってしまう。
+       カメラが見るべきは「建物の並び」 */
+    const sign = world.places.filter((p) => p.id !== "pier");
+    const use = sign.length ? sign : world.places;
+    const xs = use.map((p) => p.x);
+    const ys = use.map((p) => p.y);
     return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
   }, [world]);
 
@@ -338,7 +346,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     const s = spanOf(b.w, b.h, false);
     const vh = (s * b.h) / Math.max(1, b.w);
     const pull = (d: number, max: number) => (d > max ? max : d < -max ? -max : d);
-    return { x: ex + pull(mid.x - ex, s * 0.22), y: ey + pull(mid.y - ey, vh * 0.18) };
+    /* **引き戻す量は、いまの島（0.22 / 0.18）より大きく取る。**
+       あちらは島のまん中に主人公が降りるが、こちらは浜の船着き場に着く。
+       同じ量だと、降り立った1画面に建物が1つも入らない（撮って分かった）。 */
+    return { x: ex + pull(mid.x - ex, s * 0.32), y: ey + pull(mid.y - ey, vh * 0.3) };
   }, [mid, spanOf, world]);
 
   /* ---- 動きは React の外で ------------------------------------------------
@@ -490,6 +501,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           a.h = b.h;
           sceneVb.current = anchorVb(cam.x, cam.y, cam.span, b.w, b.h);
           sceneRef.current?.setAttribute("viewBox", sceneVb.current);
+          lampRef.current?.setAttribute("viewBox", sceneVb.current);
           s = 1;
           tx = 0;
           ty = 0;
@@ -501,6 +513,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         if (tf !== sceneTf.current) {
           sceneTf.current = tf;
           if (sceneRef.current) sceneRef.current.style.transform = tf;
+          if (lampRef.current) lampRef.current.style.transform = tf;
         }
       }
       const sx = (wx: number) => ((wx - vbX) / vbW) * b.w;
@@ -824,6 +837,31 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             </g>
           );
         })}
+      </svg>
+
+      {/* 夜の灯り。**時間帯の色かぶせより上に重ねる。**
+          島の絵の中に混ぜると、夕方・夜のかぶせに沈んで見えなくなる。
+          昼は CSS で display:none なので、出ていないあいだの値段はゼロ
+          （mix-blend-mode を持つ層は、中身が透明でも画面ぜんぶを合成し直す）。 */}
+      <svg
+        ref={lampRef}
+        className="isle-lamps"
+        viewBox={sceneVb.current}
+        style={sceneTf.current ? { transform: sceneTf.current } : undefined}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
+        <defs>
+          <radialGradient id={`isleLamp-${spec.slug}`}>
+            <stop offset="0" stopColor="#fff6d4" stopOpacity="1" />
+            <stop offset="0.28" stopColor="#ffdc8a" stopOpacity="0.72" />
+            <stop offset="0.62" stopColor="#ffc860" stopOpacity="0.3" />
+            <stop offset="1" stopColor="#ffbe4d" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        {world.lamps.map(([lx, ly, lr], i) => (
+          <circle key={i} cx={lx} cy={ly} r={lr} fill={`url(#isleLamp-${spec.slug})`} />
+        ))}
       </svg>
 
       {/* 島の下ふち。海をページの地へ溶かす */}

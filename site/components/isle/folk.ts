@@ -110,6 +110,8 @@ export function createFolk(
   people: { icon: string; days: number }[],
   g: Ground,
   r: number,
+  /** 降り立つところ。**ここには必ず1人いる**（下） */
+  landing: { x: number; y: number },
   today = new Date(),
 ): Folk[] {
   const max = outToday(r);
@@ -137,9 +139,14 @@ export function createFolk(
     const n = post[i];
     const sp = g.places[n % g.places.length];
     const lap = Math.floor(n / g.places.length);
-    const hr = Math.max(48, r * (0.14 + lap * 0.08));
-    const hx = sp.x;
-    const hy = sp.y + 22;
+    /* **1人は、降り立つところで過ごしている。**
+       島に降りた1画面に誰もいないと、島が空き地に見える（撮って分かった）。
+       持ち場を建物だけに配ると、上陸した浜のまわりが必ず無人になる。
+       港のそばにいる人がいるのは、島として自然でもある。 */
+    const atDock = n === 0;
+    const hr = atDock ? 72 : Math.max(48, r * (0.14 + lap * 0.08));
+    const hx = atDock ? landing.x : sp.x;
+    const hy = atDock ? landing.y : sp.y + 22;
     const a = (i / Math.max(1, living.length)) * Math.PI * 2;
     const [x, y] = clampTo(g, g.radii, hx + Math.cos(a) * hr * 0.6, hy + Math.sin(a) * hr * 0.4, 12);
     return {

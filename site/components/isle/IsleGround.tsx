@@ -1,6 +1,7 @@
 import { memo } from "react";
 
 import { blob, ring, rng, wobble } from "@/components/island/geometry";
+import type { DecoPaths } from "./deco";
 import type { IsleWorld } from "./world";
 
 /**
@@ -42,11 +43,25 @@ function IsleGroundRaw({ w }: { w: IsleWorld }) {
       {/* 浅瀬。輪郭をそのまま外へ出すと機械的に見えるので、帯ごとに違う起伏を足す */}
       <path className="ig-shelf" d={s(wobble(out(r * 0.2), 71, r * 0.02))} />
       <path className="ig-shallow" d={s(wobble(out(r * 0.08), 72, r * 0.016))} />
-      {/* 波打ち際。浜のふちの外に、白い輪を1本 */}
+      {/* 波打ち際。**輪1本だと定規で引いた岸になる。**
+          太さと濃さの違う輪を3本かさねて、レースに見せる（いまの島と同じ考え）。
+          動かさない——島をぐるりと囲む形なので、動かすと画面ぜんぶを塗り直す */}
       <path
         className="ig-foam"
-        d={ring(g.cx, g.cy, wobble(out(r * 0.012), 73, r * 0.008), inn(r * 0.006), w.squash)}
+        d={ring(g.cx, g.cy, wobble(out(r * 0.02), 73, r * 0.014), wobble(out(r * 0.004), 78, r * 0.01), w.squash)}
         fillRule="evenodd"
+        opacity={0.34}
+      />
+      <path
+        className="ig-foam"
+        d={ring(g.cx, g.cy, wobble(out(r * 0.012), 79, r * 0.009), inn(r * 0.004), w.squash)}
+        fillRule="evenodd"
+      />
+      <path
+        className="ig-foam"
+        d={ring(g.cx, g.cy, wobble(inn(r * 0.01), 81, r * 0.007), inn(r * 0.028), w.squash)}
+        fillRule="evenodd"
+        opacity={0.42}
       />
       <path className="ig-sand" d={s(w.sand)} />
       {/* 濡れた砂。乾いた砂より「暗い」のではなく「濃い黄色」（灰色を混ぜない） */}
@@ -59,8 +74,45 @@ function IsleGroundRaw({ w }: { w: IsleWorld }) {
       {/* 草地の内側。同じ緑の1枚板にすると、島のまん中が広いだけの面になる */}
       <path className="ig-grass2" d={s(wobble(w.grass.map((v) => v * 0.72), 77, r * 0.05))} />
       <path className="ig-grass-tex" d={s(w.grass)} fill={`url(#${pat})`} />
-      {/* 道。建物どうしをつながず、まん中の広場から放射に引いてある */}
+      {/* 木の根元と道ぎわの土。一面の緑にわずかな土色が混じるだけで、
+          地面が「ただの塗り」でなくなる */}
+      <path className="ig-soil" d={w.soil} />
+      {/* 道。**建物と建物をつなぐ**（まん中の何も無いところに集めない） */}
       <path className="ig-trail" d={w.trail} />
+      <path className="ig-trail-in" d={w.trail} />
+      {/* 浜と草地の細かい飾り。**色ごとに1本のパスにまとまっている。**
+          1つずつスプライトで置くと、密度を上げたぶんだけ画像が増える */}
+      <DecoLayer p={w.sandDeco} shade={0.26} />
+      <DecoLayer p={w.deco} shade={0.4} />
+      {/* 花。色ごとに1本ずつ */}
+      <path className="ig-fl-shade" d={w.flowers.shade} />
+      {w.flowers.petals.map((d, i) => (
+        <path key={i} d={d} fill={FLOWER[i]} />
+      ))}
+      <path className="ig-fl-core" d={w.flowers.cores} />
+    </g>
+  );
+}
+
+/** 花の色。本物の花壇に合わせて、白・黄・赤・紫の4色 */
+const FLOWER = ["#ffffff", "#ffd93f", "#f4595f", "#b47bea"];
+
+/**
+ * 焼いた飾りを描く。**順番が大事。**
+ * 影 → 本体 → 明るい面、の順でないと、影が本体の上に乗る。
+ */
+function DecoLayer({ p, shade }: { p: DecoPaths; shade: number }) {
+  return (
+    <g>
+      <path className="id-shade" d={p.shade} opacity={shade} />
+      <path className="id-stump" d={p.stump} />
+      <path className="id-stump-top" d={p.stumpTop} />
+      <path className="id-rock" d={p.rock} />
+      <path className="id-rock-lit" d={p.rockLit} />
+      <path className="id-bush" d={p.bush} />
+      <path className="id-bush-hi" d={p.bushHi} />
+      <path className="id-cap" d={p.cap} />
+      <path className="id-tuft" d={p.tuft} />
     </g>
   );
 }
@@ -69,14 +121,18 @@ function IsleGroundRaw({ w }: { w: IsleWorld }) {
  * 草の手ざわり。
  *
  * 1本ずつ置くと、大きい島で数千本になる。**タイル1枚を作って敷く。**
- * タイルは大きいほど繰り返しが目につきにくいが、その中の線の数だけ
- * 焼き直しが重くなる。200四方に48株で、いまの島（208四方に268株）の
- * 5分の1にしてある——歩ける島は5つあるので、1枚ずつは軽くしておく。
+ * パターンはブラウザが1回だけ焼いて敷き詰めるので、中の線を増やしても
+ * 敷く面積ぶんの値段は増えない。
+ *
+ * **本数はいまの島に合わせた。** 208四方に268株のところ、はじめ 200四方に48株
+ * （5分の1）にしていたら、並べて撮ったときに**こちらだけ地面が素の芝**に見えた。
+ * 「歩ける島は5つあるので軽くしておく」と書いていたが、
+ * **見えている島はいつも1つ**なので、そこを削る理由が無かった。
  */
 function GrassTile({ id, seed }: { id: string; seed: number }) {
   const r = rng(seed + 7);
   const d: string[] = [];
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 250; i++) {
     const x = r() * 200;
     const y = r() * 200;
     const h = 5 + r() * 6;

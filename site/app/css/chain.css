@@ -549,16 +549,61 @@
 .ig-sand { fill: var(--sand); }
 .ig-wet { fill: var(--sand-wet); }
 .ig-grass { fill: var(--grass); }
-.ig-grass2 { fill: var(--grass2); opacity: 0.55; }
+.ig-grass2 { fill: var(--grass2); opacity: 0.36; }
 .ig-grass-tex { opacity: 0.5; }
 .ig-blade { stroke: var(--grass-hi); stroke-width: 1.6; stroke-linecap: round; fill: none; }
-/* 道。土の帯。輪郭線は引かない（`docs/island-design.md` 2章の1） */
+/* 道。土の帯を2本重ねる（外は踏み広げたところ、内は踏み固めたところ）。
+   輪郭線は引かない（`docs/island-design.md` 2章の1） */
 .ig-trail {
   fill: none;
-  stroke: color-mix(in srgb, var(--sand-wet) 62%, #a4763c 38%);
-  stroke-width: 15;
+  stroke: color-mix(in srgb, var(--sand-wet) 58%, #9c7038 42%);
+  stroke-width: 22;
   stroke-linecap: round;
-  opacity: 0.62;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+.ig-trail-in {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sand) 62%, #b78c4e 38%);
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+/* 土のしみ。一面の緑にわずかな土色が混じるだけで、地面が「ただの塗り」でなくなる */
+.ig-soil { fill: color-mix(in srgb, var(--sand-wet) 42%, var(--grass-lo) 58%); opacity: 0.34; }
+
+/* --- 地面の細かい飾り（`components/isle/deco.ts`）---
+   色は島のテーマ変数に付いていくので、北欧へ行っても中東へ行っても浮かない */
+.id-shade { fill: #0c0e34; }
+.id-rock { fill: #b2a894; }
+.id-rock-lit { fill: #d6cab4; }
+.id-bush { fill: color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%); }
+.id-bush-hi { fill: var(--grass-hi); opacity: 0.7; }
+.id-tuft { fill: color-mix(in srgb, var(--grass-hi) 82%, var(--grass) 18%); }
+.id-stump { fill: #cc995c; }
+.id-stump-top { fill: #f2ddb8; }
+.id-cap { fill: #d65158; }
+.ig-fl-shade { fill: #0c0e34; opacity: 0.16; }
+.ig-fl-core { fill: #ffd93f; }
+
+/* 夜の灯り。**昼は層ごと外す。**
+   mix-blend-mode を持つ層は、中身が透明でも画面ぜんぶを合成し直す */
+.isle-lamps { display: none; }
+[data-time="night"] .isle-lamps {
+  position: absolute;
+  left: calc(var(--scene-pad, 140px) * -1);
+  top: calc(var(--scene-pad, 140px) * -1);
+  width: calc(100% + var(--scene-pad, 140px) * 2);
+  height: calc(100% + var(--scene-pad, 140px) * 2);
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  /* いまの島の灯りより控えめ。あちらは島がいつも寄りで映るが、
+     こちらは小さい島だと1画面に灯りが5つ入る */
+  opacity: 0.6;
+  will-change: transform;
 }
 /* 建設中（`docs/island-atlas.md` 5章）。進捗バーではなく、景色そのものが育つ */
 .ig-plot { fill: rgba(90, 62, 26, 0.16); stroke: #8a6432; stroke-width: 2; stroke-dasharray: 9 7; }
