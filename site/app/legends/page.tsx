@@ -23,7 +23,7 @@ export default function LegendsPage() {
   const topDays = top.facts?.find((f) => f.unit?.includes("日"));
 
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "伝説の丘" }]}>
+    <PageShell crumbs={[{ label: "伝説の丘" }]}>
       {/* カモメは見出しの言い直しをしない（`docs/island-design.md` 5章）。
           「企画会議から生まれる」は下の節で言うので、ここは読みかたの案内だけにする。 */}
       <PageHead

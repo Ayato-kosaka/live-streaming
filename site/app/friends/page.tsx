@@ -30,7 +30,7 @@ export default function FriendsPage() {
   const says = [0, 6, 13].map((i) => VOICES[i]).filter(Boolean);
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "愉快な仲間達" }]}>
+    <PageShell crumbs={[{ label: "愉快な仲間達" }]}>
       <PageHead
         mark={<FriendsMark />}
         title="愉快な仲間達"

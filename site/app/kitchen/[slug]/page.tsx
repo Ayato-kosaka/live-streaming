@@ -53,9 +53,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
 
   return (
     <PageShell
-      current="streams"
       crumbs={[
-        { label: "配信やぐら", href: "/streams" },
         { label: "キッチン小屋", href: "/kitchen" },
         { label: r.name },
       ]}

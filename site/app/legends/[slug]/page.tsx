@@ -33,9 +33,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
 
   return (
     <PageShell
-      current="streams"
       crumbs={[
-        { label: "配信やぐら", href: "/streams" },
         { label: "伝説の丘", href: "/legends" },
         { label: l.title },
       ]}

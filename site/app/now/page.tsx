@@ -23,7 +23,7 @@ export const metadata: Metadata = {
  */
 export default function NowPage() {
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "いまのポスト" }]}>
+    <PageShell crumbs={[{ label: "いまのポスト" }]}>
       <PageHead
         icon="mailbox"
         title="いま何してる"

@@ -34,7 +34,12 @@ const WOODEN = {
   blue: { h: 0.072, s: 0.42, l: [0.34, 0.52] },
   neutral: { h: 0.10, s: 0.30, l: [0.62, 0.86] },
 };
-/** 広葉樹。樹冠を房に分ける。1で既定の効き、小さいほど元の塊に近い。 */
+/** 広葉樹。樹冠を房に分ける。1で既定の効き、小さいほど元の塊に近い。
+ *
+ * 掛けてよいのは「樹冠がひと塊のモデル」だけ。tree_detailed / tree_blocks /
+ * tree_plateau のように、はじめから葉のかたまりが枝ごとに分かれているものに
+ * 掛けると、その散らばりごと12個に複製されて、立方体が空中にばらけた絵になる。
+ * 分かれている木は、それ自体がもう「房の集まり」なので何もしない。 */
 const LEAFY = { lobes: 1 };
 /** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
 const LEAFY_SOFT = { lobes: 0.72 };
@@ -203,11 +208,14 @@ export const SPRITES = [
      広葉樹は樹冠を房に分ける(LEAFY)。針葉樹とヤシは葉がもともと分かれているので掛けない。 */
   { name: "tree-round", parts: [`${NK}/tree_oak.glb`], opts: LEAFY },
   { name: "tree-fat", parts: [`${NK}/tree_fat.glb`], opts: LEAFY },
-  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: LEAFY },
-  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: LEAFY },
+  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`] },
+  // tree_blocks は葉が立方体の集まりだが、法線をならすと1個の丸い塊に
+  // なってしまい、tree-round と見分けが付かない。房をごく弱く掛けて、
+  // 面の向きを崩し、キットの「積み木の木」らしさを戻す
+  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: { lobes: 0.34 } },
   { name: "tree-default", parts: [`${NK}/tree_default.glb`], opts: LEAFY },
   { name: "tree-small", parts: [`${NK}/tree_small.glb`], opts: LEAFY },
-  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`], opts: LEAFY },
+  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`] },
   { name: "tree-thin", parts: [`${NK}/tree_thin.glb`], opts: LEAFY_SOFT },
   { name: "tree-pine", parts: [`${NK}/tree_pineDefaultA.glb`] },
   { name: "tree-pine-tall", parts: [`${NK}/tree_pineTallA.glb`] },
