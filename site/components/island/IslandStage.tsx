@@ -1552,10 +1552,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       <span className="stage-shore" aria-hidden />
 
       {/* 建物の札。
-          **看板を出す6つ（`sign`）は、遠くからでも名前が出ている。**
-          残り4軒は静かに建っていて、近づいた人にだけ名前が出る
-          （`docs/island-design.md` 6章「押せることと、案内することは別」）。
-          「!」が立つのは「今日ここに何かある」1つだけ。 */}
+          **10軒とも静かに建っていて、名前が出るのは近づいた1軒だけ**
+          （`docs/island-design.md` 3-4「注目させるのは一度に1つ」）。
+          看板を出す6つ（`sign`）は残っているが、それが並ぶのは下のバーと、
+          島の外のページの頭。島の上には並べない（同 6章）。
+          島の上に常に出ていていいのは、1日1つの「!」と「あと◯日」だけ。 */}
       <div className="labels">
         {DOORS.map((sp, i) => {
           const on = openSpot === sp.id;
