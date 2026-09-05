@@ -1045,13 +1045,14 @@
 .nb-board { margin-top: var(--sp-5); }
 .nb-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
 .nb-head > h3 { margin: 0; }
-/* 貼ってある場所へ。押せるので板・厚み5px・48px */
+/* 貼ってある場所へ。押せるので板・厚み5px・48px。
+   スマホ幅では折り返して段が変わるので、右端に飛ばさない。
+   飛ばすと、棚の名前と切り離された札が1つ宙に浮いて見える。 */
 .nb-go {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-height: 48px;
-  margin-left: auto;
   padding: 0 var(--sp-4);
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
@@ -1062,6 +1063,10 @@
   color: var(--ink);
 }
 .nb-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+/* 1行に収まる幅でだけ、右端へ寄せる */
+@media (min-width: 620px) {
+  .nb-go { margin-left: auto; }
+}
 /* 誰が書いたか。付箋の中で、字より一段下げる */
 .nb-by {
   display: block;
