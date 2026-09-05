@@ -432,8 +432,32 @@
   grid-template-columns: 1fr;
   align-items: center;
 }
-.abio-art { justify-self: center; }
+.abio-art { justify-self: center; line-height: 0; }
+/* 写真は1枚だけ大きく。板の型の窓に貼った1枚として、厚みの影を落とす */
+.abio-art img {
+  display: block;
+  width: min(300px, 100%);
+  height: auto;
+  border-radius: var(--r-2);
+  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-1);
+}
 .abio-word b { font-size: 17px; font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
+.abio-word p { margin: 0 0 9px !important; }
+.abio-word p:last-child { margin-bottom: 0 !important; }
+
+/* 歩いた国の旗をぜんぶ並べる。数を「読ませる」のではなく「見せる」ため。 */
+.aflags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  line-height: 0;
+}
+.aflags > * {
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 0 rgba(90, 66, 34, 0.22);
+}
 
 .acards { display: grid; gap: 12px; grid-template-columns: 1fr; }
 .acard {
@@ -503,6 +527,12 @@
   box-shadow: 0 5px 0 rgba(90, 66, 34, 0.3);
   background: var(--paper-2);
 }
+/* 公式のアイコンが無いアプリは、自前の絵を同じ札に収める */
+.aapp-logo-art {
+  display: grid;
+  place-items: center;
+  background: var(--paper-2);
+}
 .aapp-name { font-size: 21px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); margin: 0; }
 .aapp-line { margin: 4px 0 0 !important; font-size: 13.5px !important; line-height: 1.8 !important; color: var(--ink-2); }
 .aapp-shot { display: block; margin: 12px auto -4px; }
@@ -550,7 +580,14 @@
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
-.astep-mark { flex: none; }
+.astep-mark { flex: none; padding-top: 4px; }
+.astep-dot {
+  display: block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--paper);
+}
 .astep-body { min-width: 0; display: grid; gap: 3px; }
 .astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .astep-head time { font-size: 11px; font-weight: 900; color: var(--ink-3); }
@@ -586,10 +623,17 @@
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
+.afeat > div > svg { color: var(--accent-2); }
 .afeat b { display: block; font-size: 14px; font-weight: 900; }
 .afeat i { display: block; font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
 
+/* アプリの中身。絵と説明を左右に並べる */
+.aapp-split { display: grid; gap: 14px; justify-items: center; }
+.aapp-split > div { min-width: 0; }
+.aapp-split p { margin: 0 !important; }
+
 @media (min-width: 700px) {
+  .aapp-split { grid-template-columns: auto 1fr; align-items: start; }
   .acards { grid-template-columns: repeat(3, 1fr); }
   .afeat { grid-template-columns: repeat(2, 1fr); }
   .abio { grid-template-columns: auto 1fr; gap: 20px; }
@@ -597,4 +641,58 @@
   .aapp-top { grid-template-columns: auto 1fr; justify-items: start; text-align: left; padding: 20px 22px 0; }
   .aapp-badges { justify-content: flex-start; }
   .acty-num { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---------------------------------------------------------
+   紙の型を、地図と料理の窓にも効かせる
+
+   pages.css は中身のクラス（.cities / .hlist / .stamps / .tl）から
+   窓の型を決めている。国の地図や料理の札はその一覧に入らないので、
+   国のページとアプリのページだけ板の型のまま取り残されて、
+   1つの面に2つの型が混ざっていた（docs/ac-reference.md 7章）。
+
+   色も地も pages.css の --pg-* をそのまま借りる。
+   あちらで紙の色を直せば、こちらも一緒に変わる。
+   --------------------------------------------------------- */
+
+.panel.paper {
+  --pg-ground: var(--pg-paper-bg);
+  --pg-rim: transparent;
+  --pg-edge: transparent;
+  border: 2px solid var(--pg-rule);
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-1);
+  padding: 22px 15px 20px;
+}
+@media (min-width: 720px) {
+  .panel.paper { padding: 28px 26px 26px; }
+}
+/* 見出しは「白い紙の札を、少し傾けてテープで貼った」もの */
+.panel.paper > h2 {
+  border: 0;
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 22px;
+  transform: rotate(-1.1deg);
+  transform-origin: left center;
+  box-shadow: var(--shadow-1);
+}
+.panel.paper > h2:first-child { margin: -30px 0 18px 6px; }
+.panel.paper > h2::before,
+.panel.paper > h2::after {
+  position: absolute;
+  width: 30px;
+  height: 12px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--gold) 26%, rgba(255, 255, 255, 0.62));
+  box-shadow: none;
+}
+.panel.paper > h2::before { left: -12px; top: -7px; transform: rotate(-29deg); }
+.panel.paper > h2::after { right: -12px; top: -7px; transform: rotate(29deg); }
+/* 紙の上の札は平ら。厚みを付けるのは押せるものだけ */
+.panel.paper :is(.chip, .stat) {
+  box-shadow: none;
+  border: 1.5px solid var(--pg-rule);
+  background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
 }

@@ -95,14 +95,14 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       </div>
 
       {hasMap && (
-        <Panel>
+        <Panel className="paper">
           <h2>この国のどこにいたんだろう</h2>
           <p className="muted">白い丸が行った街。線は移動したところです。</p>
           <CountryMap slug={c.slug} name={c.name} />
         </Panel>
       )}
 
-      <Panel>
+      <Panel className="paper">
         <h2>行った街</h2>
         <div className="cities">
           {towns.map((city) => {
@@ -134,7 +134,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
         </div>
       </Panel>
 
-      <Panel>
+      <Panel className="paper">
         <h2>この国であったこと</h2>
         <div className="hlist">
           {c.highlights.map((h, i) => (
@@ -151,7 +151,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       </Panel>
 
       {cooked.length > 0 && (
-        <Panel>
+        <Panel className="paper">
           <h2>この国で作ったごはん</h2>
           <div className="chips">
             {cooked.map((r) => (

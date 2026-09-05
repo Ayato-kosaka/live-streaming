@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
+import { hits, NOMINAL_W, placeCities, type Rect } from "./labels";
 import { COUNTRIES } from "@/content/countries";
 
 /**
@@ -34,10 +35,6 @@ const PIN_SLOTS: [number, number][] = [
 ];
 
 type City = { id: string; name: string; x: number; y: number; country: string; kind: string };
-
-/** 名札ひとつぶんの四角。重なりを測るためだけに使う。 */
-type Rect = { x0: number; y0: number; x1: number; y1: number };
-const hits = (a: Rect, b: Rect) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 
 const W = MAP.view.w;
 const H = MAP.view.h;
@@ -126,7 +123,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
    * 国の名札を先に置く。国のほうが行き先なので、街に譲らせる。
    */
   const labels = useMemo(() => {
-    const SW = 620;
+    const SW = NOMINAL_W;
     const SH = (SW * H) / W;
     const px = (x: number) => ((x * k + tx) / W) * SW;
     const py = (y: number) => ((y * k + ty) / H) * SH;
@@ -156,27 +153,12 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       }
     }
 
-    const city: { c: City; dy: number; left: boolean }[] = [];
-    for (const c of cities.filter((v) => v.kind !== "hub" && inBox(v.x, v.y)).sort((a, b) => a.y - b.y)) {
-      const x = px(c.x);
-      const y = py(c.y);
-      const w = c.name.length * 10.5 + 6;
-      const far = c.x > box[0] + box[2] * 0.74;
-      let put: { dy: number; left: boolean; box: Rect } | null = null;
-      for (const dy of [0, -13, 13, -26, 26, -40, 40, -54, 54, -68, 68]) {
-        for (const left of [far, !far]) {
-          const x0 = left ? x - 12 - w : x + 12;
-          const box2: Rect = { x0, y0: y - 7 + dy, x1: x0 + w, y1: y + 7 + dy };
-          if (!taken.some((t) => hits(t, box2))) {
-            put = { dy, left, box: box2 };
-            break;
-          }
-        }
-        if (put) break;
-      }
-      taken.push(put?.box ?? { x0: x + 12, y0: y - 7, x1: x + 12 + w, y1: y + 7 });
-      city.push({ c, dy: put?.dy ?? 0, left: put?.left ?? far });
-    }
+    const city = placeCities(
+      cities.filter((v) => v.kind !== "hub" && inBox(v.x, v.y)),
+      (x, y) => [px(x), py(y)],
+      taken,
+      (c) => c.x > box[0] + box[2] * 0.74,
+    );
     return { country, city };
   }, [box, k, tx, ty, wide]);
 

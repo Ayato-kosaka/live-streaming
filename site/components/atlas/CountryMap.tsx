@@ -1,5 +1,6 @@
 import { COUNTRY_MAPS } from "./countryMaps";
 import { peakPaths } from "./peak";
+import { NOMINAL_W, placeCities, type Rect } from "./labels";
 
 /**
  * 国ひとつの寄り地図。国のページの頭に敷く。
@@ -29,6 +30,22 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
   const others = Object.entries(m.countries).filter(([s]) => s !== slug);
   const uid = `cm-${slug}`;
   const peaks = peakPaths(m.peaks);
+
+  // 街の名札の置き場所。近い街どうしでぶつからないよう、上下にずらして逃がす。
+  // 当たり判定は px。地図の幅の見当を NOMINAL_W にして測る。
+  const sc = NOMINAL_W / w;
+  const taken: Rect[] = m.cities.map((c) => ({
+    x0: c.x * sc - 9,
+    y0: c.y * sc - 9,
+    x1: c.x * sc + 9,
+    y1: c.y * sc + 9,
+  }));
+  const labels = placeCities(
+    m.cities.filter((c) => c.country === slug),
+    (x, y) => [x * sc, y * sc],
+    taken,
+    (c) => c.x > w * 0.68,
+  );
 
   return (
     <div className="amap" style={{ ["--am-ratio" as string]: `${w} / ${h}` }}>
@@ -107,17 +124,21 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
 
         {/* 街の名前は HTML。SVG の文字だと、スマホ幅で 8px になって読めない */}
         <div className="amap-pins">
-          {m.cities
-            .filter((c) => c.country === slug)
-            .map((c) => (
-              <span
-                key={c.id}
-                className={`acity${c.x > w * 0.68 ? " is-left" : ""}`}
-                style={{ left: `${(c.x / w) * 100}%`, top: `${(c.y / h) * 100}%`, background: "transparent", boxShadow: "none" }}
-              >
-                <b>{c.name}</b>
-              </span>
-            ))}
+          {labels.map(({ c, dy, left }) => (
+            <span
+              key={c.id}
+              className={`acity${left ? " is-left" : ""}`}
+              style={{
+                left: `${(c.x / w) * 100}%`,
+                top: `${(c.y / h) * 100}%`,
+                background: "transparent",
+                boxShadow: "none",
+                ["--acity-dy" as string]: `${dy}px`,
+              }}
+            >
+              <b>{c.name}</b>
+            </span>
+          ))}
         </div>
 
         <div className="amap-badge">

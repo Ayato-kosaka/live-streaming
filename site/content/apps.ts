@@ -11,6 +11,8 @@ export type AppEntry = {
   logo?: string;
   tagline: string;
   status: "運営中" | "公開済み";
+  /** アプリの中身。配信で作ってきた機能のうち、いま画面にあるものだけ書く。 */
+  features: { title: string; note: string }[];
   links: { label: string; href: string }[];
   summary: string;
   milestones: AppMilestone[];
@@ -25,6 +27,12 @@ export const APPS: AppEntry[] = [
     emoji: "🍽️",
     tagline: "「今日なに食べよ」を、ストレスなく決められるグルメアプリ",
     status: "運営中",
+    features: [
+      { title: "気分から絞る", note: "何が食べたいか決まっていなくても、気分と条件から進める" },
+      { title: "好き嫌い投票", note: "みんなの投票が、次に出てくる料理に効く" },
+      { title: "深掘り検索", note: "条件を足して、もっと細かく探す" },
+      { title: "料理の写真と文言", note: "視聴者さんと一緒に、1枚ずつ選んで整えた" },
+    ],
     links: [
       { label: "App Store", href: "https://apps.apple.com/jp/app/id6751139648" },
       { label: "Google Play", href: "https://play.google.com/store/apps/details?id=com.nanitabeyo" },
@@ -62,6 +70,10 @@ export const APPS: AppEntry[] = [
     emoji: "🎧",
     tagline: "旅先で「これ何？」を音声で教えてくれるガイド",
     status: "公開済み",
+    features: [
+      { title: "目の前のものを説明", note: "「これ何？」に、読むのではなく耳で答える" },
+      { title: "歩きながら聞く", note: "画面を見ずに済むので、旅の足を止めない" },
+    ],
     links: [],
     summary:
       "「なに食べよ」より前に作っていたアプリ。旅をしながら、目の前のものが何なのか分からないという自分の困りごとから作った。エジプト滞在中にお試し版を公開し、そのままリリースした。",
