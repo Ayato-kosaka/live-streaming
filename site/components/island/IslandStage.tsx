@@ -154,6 +154,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const villagerRefs = useRef<(SVGGElement | null)[]>([]);
   const markRefs = useRef<(HTMLDivElement | null)[]>([]);
   const whoRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const barRef = useRef<HTMLDivElement>(null);
+  /** 下のバーの背(px)。島をどれだけ上へ寄せるかの計算に使う */
+  const barH = useRef(0);
 
   const [box, setBox] = useState({ w: 1440, h: 900 });
   /** 歩き方の案内。初めての人にだけ、数秒だけ出す。初期値は false（出さない側に倒す） */
@@ -178,6 +181,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
   /** 到着演出を飛ばす人。最初の1フレームでカメラを目的の位置に置く */
   const snapCam = useRef(false);
+  /** 到着演出を飛ばす人かどうか。画面の大きさが分かるたびにカメラを置き直す */
+  const skipArrive = useRef(false);
   /** 建物に入るときの立ち位置。戻ってきたらここから始める */
   const leaveAt = useRef<{ x: number; y: number } | null>(null);
   const dice = useRef(rng(777));
@@ -281,6 +286,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
       // 極端に寄った絵を何十フレームも描いてから所定の位置に戻ることになる。
+      //
+      // 「置き直す」は1回では足りない。画面の大きさを測るのは ResizeObserver で、
+      // それが返ってくるまでは PC の幅（＝島ぜんぶが入る引き）を仮に使っている。
+      // 1回で止めると、島ぜんぶの引きから寄りまでを ease で詰めることになって、
+      // いちばん重い絵を50フレームぶん描いてしまう。**起動直後のカクつきはこれだった。**
+      // 幅が分かるたびに置き直す。
+      skipArrive.current = true;
       snapCam.current = true;
       setArriving(false);
       return;
@@ -308,6 +320,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     if (!el) return;
     const read = () => {
       const r = el.getBoundingClientRect();
+      // 幅が分かった＝寄りの度合いが決まる。到着演出を飛ばす人は、ここで置き直す。
+      // 仮の幅（PC）で作った引きの絵から ease で寄ると、いちばん重い絵を何十枚も描く。
+      if (skipArrive.current) snapCam.current = true;
+      barH.current = barRef.current?.offsetHeight ?? 0;
       setBox({ w: r.width, h: r.height });
     };
     const ro = new ResizeObserver(read);
@@ -315,6 +331,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     read();
     return () => ro.disconnect();
   }, []);
+
+  /* バーは「今日の島」が出てから背が決まる。カメラの寄せ量がそれを見ているので、
+     出たあとに測り直す。測るのは1回でよくて、ここが変わるのは板が開いた時だけ。 */
+  useEffect(() => {
+    const h = barRef.current?.offsetHeight ?? 0;
+    if (h && h !== barH.current) barH.current = h;
+  });
 
   const mode = box.w < 640 ? "phone" : box.w < 1024 ? "tablet" : "wide";
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
@@ -328,12 +351,26 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     return Math.max(1220, 880 * aspect);
   }, [mode, wide, box.w, box.h]);
 
+  /**
+   * 下のバーに隠れるぶん、島を上へ寄せる量（ワールド単位）。
+   *
+   * スマホの「島ぜんぶ」で、島の下ふちがバーの裏に沈んでいた。
+   * 画面のまん中に置いていたが、見えているのはバーより上だけなので、
+   * そのまん中に来るように、カメラをバーの半分だけ下へ向ける。
+   * バーの背は「今日の島」が乗るかどうかで変わるので、測った値を使う。
+   */
+  const lift = useCallback(() => {
+    const b = boxRef.current;
+    if (!barH.current || !b.w) return 0;
+    return (barH.current / 2) * (span / b.w);
+  }, [span]);
+
   const camTarget = useCallback(() => {
     if (follow) return { x: avatar.current.x, y: avatar.current.y - 92 };
-    if (mode === "phone") return { x: ISLAND.cx, y: ISLAND.cy - 40 };
+    if (mode === "phone") return { x: ISLAND.cx, y: ISLAND.cy - 40 + lift() };
     if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy + 6 };
     return { x: ISLAND.cx, y: ISLAND.cy - 40 };
-  }, [follow, mode]);
+  }, [follow, mode, lift]);
 
   /* ---- 動きは React の外で ------------------------------------------------
      毎フレーム setState すると、160枚のスプライトを毎回作り直すことになって
@@ -462,18 +499,22 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
       // --- 住人 ---
       for (let i = 0; i < villagers.length; i++) {
-        const g = villagerRefs.current[i];
-        if (!g) continue;
         const v = villagers[i];
-        const pose = villagerPose(v, t);
-        g.setAttribute(
-          "transform",
-          `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
-        );
+        // 画面の外にいる住人は書かない。寄りのときは12人のうち大半が外にいて、
+        // そのぶん毎フレーム属性を書き換えては島を汚していた（外側に余白を足して、
+        // 入ってくる手前のフレームから書きはじめる）。
+        const off =
+          v.x < vbX - 120 || v.x > vbX + vbW + 120 || v.y < vbY - 160 || v.y > vbY + vbH + 160;
+        const g = villagerRefs.current[i];
+        if (g && !off) {
+          const pose = villagerPose(v, t);
+          g.setAttribute(
+            "transform",
+            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
+          );
+        }
         const w = whoRefs.current[i];
         if (w) {
-          const off =
-            v.x < vbX - 120 || v.x > vbX + vbW + 120 || v.y < vbY - 160 || v.y > vbY + vbH + 160;
           w.style.display = off ? "none" : "";
           if (!off) {
             w.style.transform = `translate(${sx(v.x).toFixed(1)}px, ${sy(v.y).toFixed(1)}px)`;
@@ -839,7 +880,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
       {/* スマホ: 行き先は下のバーにまとめる */}
       {mode === "phone" && (
-        <div className="island-bar" data-ui>
+        <div className="island-bar" data-ui ref={barRef}>
           <Today place="bar" />
           <div className="island-bar-scroll">
             {SPOTS.map((s) => (
