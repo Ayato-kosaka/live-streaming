@@ -17,6 +17,9 @@ const KEYS: { cls: string; label: string; note: string }[] = [
   { cls: "is-side", label: "寄り道", note: "行って戻ってくる日帰り" },
   { cls: "is-fly", label: "飛行機", note: "クタイシ発の1本だけ" },
   { cls: "is-border", label: "国境", note: "歩いて越えるのが3か所" },
+  // 線の種類ではなく、線の状態。ここに置いておかないと、
+  // 芯が明るい線が出たときに、何が起きたのか分からない。
+  { cls: "is-tied", label: "つながった", note: "足代も道しるべもそろった区間" },
 ];
 
 export default function MapLegend() {

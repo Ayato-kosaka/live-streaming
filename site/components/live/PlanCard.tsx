@@ -213,7 +213,7 @@ function Embeds({ plan }: { plan: Plan }) {
 function Links({ plan, mapDone }: { plan: Plan; mapDone?: boolean }) {
   if (!plan.links?.length && (!plan.place?.map || mapDone)) return null;
   return (
-    <div className="chips" style={{ marginTop: 12 }}>
+    <div className="chips" style={{ marginTop: "var(--sp-3)" }}>
       {plan.place?.map && !mapDone && (
         <a className="chip link" href={plan.place.map} target="_blank" rel="noopener noreferrer">
           地図で見る
@@ -360,7 +360,7 @@ export default function PlanCard({
         </div>
       ) : (
         <div className="phead-row">
-          <h2 style={{ margin: 0 }}>{plan.title}</h2>
+          <h2 style={{ margin: "var(--sp-1)" }}>{plan.title}</h2>
           <Count plan={plan} />
         </div>
       )}
@@ -424,7 +424,7 @@ export default function PlanCard({
 
       {/* 主役でない企画の入口は、説明のあと。 */}
       {!lead && plan.href && (
-        <Link className="tile" href={plan.href} style={{ marginTop: 16 }}>
+        <Link className="tile" href={plan.href} style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>この企画のページへ</b>

@@ -133,7 +133,11 @@ export default function TripNow({
   const d = left != null && left > 0 ? Math.floor(left / 1000) : 0;
 
   return (
-    <div className="tnow">
+    // 器は紙の正本（`.panel.paper`）をそのまま借りる。
+    // ここが板だったころ、生成りの地の上に厚み8pxの箱が925px積まれていた
+    // （`docs/island-review-2.md` 3章）。紙の作りをこちらに写経すると、
+    // 正本を直したときにこの面だけ取り残されるので、class を足すだけにする。
+    <section className="panel paper tnow">
       {/* h1 は場所の名前。文にしない（`docs/island-world.md` 7.5）。
           「会いたい人がいます」は良い一行なので消さず、すぐ下の lead に下ろす。
           前置きは h1 と1行まで。21面ぜんぶが同じ長さの前置きで始まると、
@@ -262,6 +266,6 @@ export default function TripNow({
           みんなの意見
         </a>
       </div>
-    </div>
+    </section>
   );
 }

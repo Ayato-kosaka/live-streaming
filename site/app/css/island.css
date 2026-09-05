@@ -83,10 +83,10 @@
   padding: 0;
   width: 34px;
   height: 34px;
-  /* 上に白い照り返しを1点だけ入れる。丸いガラス玉のように見せて目を引く */
-  background:
-    radial-gradient(circle at 33% 24%, rgba(255, 255, 255, 0.95) 0 13%, rgba(255, 255, 255, 0) 44%),
-    linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
+  /* 照り返しは入れない。**押せる合図は厚み1種類だけ**（`island-world.md` 3.4）。
+     光らせない。きらめかせない。ガラス玉に見せて目を引くのは、
+     厚みで言っていることを2つ目の言い方で重ねているだけになる。 */
+  background: linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
   /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
@@ -102,6 +102,19 @@
 .spot.is-on .spot-mark {
   visibility: visible;
   pointer-events: auto;
+}
+/* 閉じている札は 34px しかない。絵は小さいままでいいが、
+   押せるものである以上、指の当たりは 48px 要る（`island-design.md` 3-2）。
+   見えない当たりを外へ広げる。 */
+.spot-mark::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 48px);
+  height: max(100%, 48px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
 }
 /* 今日ここに何かある、の1本だけが跳ねる */
 .spot.is-today .spot-mark {
@@ -158,9 +171,13 @@
     0 5px 0 var(--frame-deep),
     4px 11px 13px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  /* 揺れは2往復で止める。**押す対象が止まらないのは手ざわりとして悪い。**
+     ずっと揺れていると、狙って押すのに目で追いかけることになるし、
+     開いている札のぶん animation が1本走り続ける。
+     風で揺れて、そのまま落ち着く、までを1回やって終わり。 */
   animation:
     signPop 360ms cubic-bezier(0.2, 1.65, 0.36, 1) both,
-    signSway 3.4s 360ms ease-in-out infinite;
+    signSway 3.4s 360ms ease-in-out 2 forwards;
 }
 /* 開いたら杭も伸びる。板が大きくなったぶん、足が短いと倒れて見える */
 .spot.is-on .spot-mark::after { height: 17px; width: 10px; margin-left: -5px; bottom: -16px; }
@@ -178,16 +195,17 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot.is-on .spot-mark { animation: none; } }
 
+/* 開いた札の中の「!」は、札に押してある印であって、それ自体は押せない。
+   **押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+   照り返しも厚みも外す。中に小さいボタンが入っているように見せない。 */
 .spot.is-on .spot-bang {
   width: 24px;
   height: 24px;
   line-height: 21px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 33% 26%, rgba(255, 255, 255, 0.9) 0 14%, rgba(255, 255, 255, 0) 46%),
-    linear-gradient(var(--paper-2), var(--gold));
+  background: linear-gradient(var(--paper-2), var(--gold));
   border: 2px solid var(--frame-dark);
-  box-shadow: 0 2px 0 var(--frame-deep);
+  box-shadow: none;
   font-size: 14px;
 }
 .spot.is-on .spot-text {
@@ -331,12 +349,14 @@
   background: rgba(255, 253, 246, 0.92);
   border: 2.5px solid var(--frame-dark);
   box-shadow: 0 2px 0 var(--frame-deep), 2px 4px 5px var(--cast);
-  font-size: 10px;
+  /* 字の下限は 11.5px（`docs/island-world.md` 5.4）。10px は割っていた。
+     名前が入る幅は、字を上げたぶん広げる。 */
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink);
   white-space: nowrap;
   pointer-events: none;
-  max-width: 124px;
+  max-width: 136px;
   overflow: hidden;
 }
 .who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
@@ -381,6 +401,21 @@
   color: var(--ink);
 }
 
+/* 島に降りた人への名乗り。喋っているのは案内役のカモメ（ミナト）。
+   住人の吹き出しと同じ器を使う。**新しい部品は作らない。**
+   カモメだけ、誰が言っているかが分かるように左に小さく出す。 */
+.talkbox.is-guide { padding-left: 78px; }
+.talkbox-gull {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  margin-top: -27px;
+  width: 54px;
+  height: 54px;
+  line-height: 0;
+  pointer-events: none;
+}
+
 /* 誰が喋っているかを絵で出す枠。
    いまは JSX 側が渡していないので閉じている。
    style={{ "--talk-face": `url(${photo})` }} を付けた時だけ開く。 */
@@ -410,7 +445,8 @@
   align-items: center;
   gap: 3px;
   margin-top: 11px;
-  font-size: 10px;
+  /* 添えものでも 11.5px を割らない（`docs/island-world.md` 5.4） */
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-3);
   text-align: center;
@@ -440,6 +476,12 @@
 .stage.is-talking .spot-mark,
 .stage.is-talking .spot-badge,
 .stage.is-talking .who-name { opacity: 0; transition: opacity 0.18s; }
+/* 見えない当たりも一緒に引っ込める。
+   吹き出しが出ているあいだは「どこを押しても閉じるだけ」（ゲームと同じ作法）。
+   札が消えているのに下の当たりが生きていると、
+   読み終わって画面を押した指が、そのまま知らない建物へ歩き出す。 */
+.stage.is-talking .spot-hit,
+.stage.is-talking .who-hit { pointer-events: none; }
 @media (min-width: 640px) {
   .talkbox { left: 50%; right: auto; transform: translateX(-50%); width: min(560px, 70vw); }
   @keyframes talkIn {
@@ -458,7 +500,9 @@
 .walk-hint {
   position: absolute;
   left: 14px;
-  top: calc(58px + env(safe-area-inset-top));
+  /* 「島をながめる」の真下。あちらは 12px から 48px（指で押せる最小）なので、
+     60px より下でないと重なる。 */
+  top: calc(70px + env(safe-area-inset-top));
   margin: 0;
   white-space: nowrap;
   background: rgba(56, 44, 34, 0.78);
@@ -658,12 +702,20 @@
 
    高さは1マス 48px。前は 34px で、指で押せる最小に届いていなかった
    （`docs/island-design.md` 3-2、`island-world.md` 4章の部品表）。
+
+   **そのうえで、ふだんは畳んでおく。**
+   6つを常に出しておくと、バーは 183px あって、島の面（390×726）の
+   **25% を取っていた。** 島が主役の面で、島の上に載せた道具が4分の1を占めている。
+   畳めば「今日の島」の1行だけ（68px・9%）になる。
+   行き先は島の建物そのものが持っていて、10軒とも押せば入れる。
+   歩きたくない人のために、右上の札を押すと6つが下から生えてくる。
    ========================================================= */
 @media (max-width: 639px) {
-  /* 「今日の島」が乗らないときの背。乗るときは today.css が 138px を出すが、
-     1マスを 48px にしたぶん足りないので、下でそれより強く書き直している。 */
-  .stage.stage { --bar-h: 123px; }
-  .stage.stage.stage.has-today { --bar-h: 183px; }
+  /* 畳んでいるときのバーの背。「今日の島」の1行ぶんしかない。
+     開くと 6 つのマス（48px×2段＋隙間）が下から生えて 180px になるが、
+     それは押したあいだだけの話なので、島の高さの計算はこちらを使う。 */
+  .stage.stage { --bar-h: 68px; }
+  .stage.stage.stage.has-today { --bar-h: 68px; }
 }
 /* バーの置き場所も、島の上に乗るものなのでここで持つ。
    前は pages.css 側にあって、あちらを整理したときに落ちてバーが
@@ -688,6 +740,38 @@
   /* backdrop-filter は画面幅ぜんぶを毎フレーム引き伸ばすので外した */
   backdrop-filter: none;
 }
+/* 行き先の開け閉め。バーの上に置いた札。
+   バーの中に1段作ると、畳んでいるあいだも1行ぶん島を隠すことになる。
+   `.stage-view`（島をながめる）と同じ形にしてある。どちらも行き先ではなく、
+   「島の見え方をどうするか」を決める操作なので、見た目を揃えておく。 */
+.stage .bar-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 15px 0 12px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 5px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.stage .bar-toggle:active {
+  transform: translateY(5px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.stage .bar-toggle:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 「今日の島」を開くと、その板がちょうどここへ浮いてくる。札は引っ込める */
+.stage .island-bar:has(.today.is-open) .bar-toggle { display: none; }
+
 .stage .island-bar-scroll {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -696,6 +780,21 @@
   overflow: visible;
   /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
   mask-image: none;
+}
+/* 畳んでいるあいだは場所ごと消す。透明にして残すと、
+   読み上げにもキーボードにも「開いていない6つ」が並んだままになる。 */
+.stage .island-bar:not(.is-open) .island-bar-scroll { display: none; }
+/* 開くときだけ下から生える。transform と opacity しか動かさないので、
+   バーの背（島の寄せ量の計算に使っている）は最初のフレームから確定している。 */
+.stage .island-bar.is-open .island-bar-scroll {
+  animation: barSpots 220ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes barSpots {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage .island-bar.is-open .island-bar-scroll { animation: none; }
 }
 .stage .bar-spot {
   position: relative;
@@ -719,7 +818,10 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
   color: var(--ink);
+  /* 押すと入る（<a> になった）。下線は木の板に出ると汚れに見える */
+  text-decoration: none;
 }
+.stage .bar-spot:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 .stage .bar-spot img { width: 28px; height: 28px; flex: none; }
 /* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
    ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
@@ -769,7 +871,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 7px 13px 7px 10px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。前は 39px で届いていなかった */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
@@ -785,8 +889,11 @@
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
-/* 話しているあいだは、島の上のUIと同じように引っ込める */
-.stage.is-talking .stage-view { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+/* 話しているあいだは、島の上のUIと同じように引っ込める。
+   バーごと引くのは、名乗り（カモメ）が出ているあいだ島を見せたいから。
+   板だけ消してバーの枠が残ると、空っぽの板が下に居座ることになる。 */
+.stage.is-talking .stage-view,
+.stage.is-talking .island-bar { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
 
 /* =========================================================
    島の下端
@@ -800,9 +907,13 @@
    こうしておけば、時間帯で色が変わっても勝手に付いてくる（値を写さずに済む）。
 
    動かさないので、毎フレームの負担にはならない。
+
+   **`.stage::before` / `::after` は使えない。** その2枚は tokens.css が
+   時間帯の色（乗算の --tint と スクリーンの --glow）に使っている。
+   ここで `.stage::after` を書くと、あとから読まれるぶん glow の層を
+   潰してしまい、夜の色が地面に届かなくなる。だから中に1枚置く。
    ========================================================= */
-.stage::after {
-  content: "";
+.stage-shore {
   position: absolute;
   left: 0;
   right: 0;
@@ -817,6 +928,17 @@
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
   mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
 }
+
+/* 時間帯の色をかぶせる2枚（tokens.css の .stage::before / ::after）は、
+   mix-blend-mode を持っている。中身が透明でも、画面ぜんぶを毎フレーム
+   合成し直す層が2枚あることに変わりはない。島は viewBox が動くたび
+   描き直されるので、そのたび2回ぶん余計に合成することになる。
+   **昼はどちらも transparent なので、層ごと外す。**
+   夜の灯り（.stage-lamps）を display:none にしてあるのと同じ理屈。 */
+:root[data-time="day"] .stage::before,
+:root[data-time="day"] .stage::after,
+:root:not([data-time]) .stage::before,
+:root:not([data-time]) .stage::after { content: none; }
 
 /* =========================================================
    到着の演出

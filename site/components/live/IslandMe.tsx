@@ -44,7 +44,7 @@ export default function IslandMe() {
     <div className="me">
       <b className="me-title">島での見え方</b>
       <p className="me-note">
-        島にいる自分のキャラクターを選ぶと、名前とアイコンを出せるようになります。
+        島にいる自分のキャラクターを選ぶと、名前とアイコンが札に出ます。
         選ばなければ、いままでどおり名前は出ません。
       </p>
 

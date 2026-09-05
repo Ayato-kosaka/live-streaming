@@ -5,8 +5,8 @@ import Fold from "@/components/ui/Fold";
 import { Mark } from "./Marks";
 import Signpost from "./Signpost";
 import { Fare, Tie } from "./Carry";
-import { FareMark, PostMark } from "./Seats";
-import { FARE_POUR, ROUTE, nordicCountry, type Leg } from "@/content/nordic";
+import { FareMark, LogMark, PostMark } from "./Seats";
+import { FARE_POUR, NORDIC_LOG, ROUTE, nordicCountry, type Leg } from "@/content/nordic";
 
 /**
  * 区間ごとの話であり、連れていくボード。
@@ -26,6 +26,10 @@ import { FARE_POUR, ROUTE, nordicCountry, type Leg } from "@/content/nordic";
  *
  *   足代（お金）  … その区間を越えるのに実際に要るもの1つ
  *   道しるべ（言葉）… その区間で何をしてほしいか
+ *   起きたこと      … 越えたあとに手で入れる（`content/nordic.ts` の `NORDIC_LOG`）
+ *
+ * 3つめは旅が終わってから入るので、出発前は空。空なら席そのものを出さない。
+ * これが入って、区間カードは「出した人 / 言った人 / 実際に起きたこと」の3層になる。
  *
  * **両方そろって、はじめてその区間はつながる。** どちらが欠けても半分。
  * 席の順は 足代 → 道しるべ にしない。**道しるべを先に置く。**
@@ -47,14 +51,18 @@ export default function RouteLegs() {
         const m = MOVE[l.move];
         const c = l.enters ? nordicCountry(l.enters) : undefined;
         const pour = FARE_POUR[l.id];
+        const log = NORDIC_LOG[l.id];
         return (
           <Fold
             key={l.id}
             title={
-              <span className={`rleg-h ${m.cls}`}>
+              <span className={`rleg-h ${m.cls}`} data-leg={l.id}>
                 <Mark art={l.art} size={38} className="rleg-art" />
                 <span className="rleg-way">
-                  {l.from} <i aria-hidden>→</i> {l.to}
+                  {/* 矢印は <i> にしない。`ui.css` の `.fold[open] > summary .fold-t i`
+                      が「開いたら要約の一行を消す」ために i を消すので、
+                      開いた区間だけ矢印が消えていた。 */}
+                  {l.from} <span className="rleg-arrow" aria-hidden>→</span> {l.to}
                 </span>
               </span>
             }
@@ -74,12 +82,21 @@ export default function RouteLegs() {
             {l.fixed && <p className="rleg-fixed">{l.fixed}</p>}
             {l.note && <p>{l.note}</p>}
             {l.stay && <p className="rleg-stay">泊まる: {l.stay}</p>}
-            {c && (
-              <Link className="rleg-go" href={`/nordic/${c.slug}`}>
-                {c.name}で行くところを見る
+            <p className="rleg-acts">
+              {c && (
+                <Link className="rleg-go" href={`/nordic/${c.slug}`}>
+                  {c.name}で行くところを見る
+                  <Icon name="right" size={14} />
+                </Link>
+              )}
+              {/* 地図はこの面のずっと上にあるので、開けたままここから戻れるようにする。
+                  開いているあいだ、その区間の線には帯が敷いてある（`Carry.tsx` の
+                  `MapSync`）ので、上がるとどこの話だったかが分かる。 */}
+              <a className="rleg-go" href="#map">
+                地図で見る
                 <Icon name="right" size={14} />
-              </Link>
-            )}
+              </a>
+            </p>
 
             {/* いま、この区間がどこまでつながっているか。決まりの説明ではなく、
                 いまの状態を言う。埋まると文が変わる。 */}
@@ -90,6 +107,38 @@ export default function RouteLegs() {
               before={pour.before}
               reach={pour.reach}
             />
+
+            {/* 起きたこと。越えた区間にだけ出る。
+                席の順は、そこがもう過ぎた区間なら「起きたこと」がいちばん上。
+                これから行く区間の話（道しるべ・足代）より、
+                実際に起きたことのほうが読みたいものになる。 */}
+            {log && (
+              <div className="rleg-seat">
+                {/* 日付は見出しの外に出す。紙の見出しは蛍光ペンを字の下に敷くので、
+                    h3 の中に入れると日付まで帯の中に入ってしまう。 */}
+                <div className="rleg-seath-row">
+                  <h3 className="rleg-seath">
+                    <LogMark />
+                    <span>起きたこと</span>
+                  </h3>
+                  <time className="rleg-when" dateTime={log.date}>
+                    {Number(log.date.slice(5, 7))}月{Number(log.date.slice(8, 10))}日
+                  </time>
+                </div>
+                <p className="rleg-log">{log.body}</p>
+                {log.video && (
+                  <a
+                    className="rleg-go"
+                    href={`https://www.youtube.com/watch?v=${log.video}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    その日の配信を見る
+                    <Icon name="external" size={14} />
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* 道しるべ。この区間で何をしてほしいか。
                 言葉が1つも無い区間は、あやとがそこを走るだけの区間になる。 */}

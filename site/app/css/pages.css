@@ -145,7 +145,12 @@
    横に流すのをやめたので、はみ出す・隠れるという状態が無くなった。
    幅に入るだけ折り返す。390px で3列、560px で5列、720px で6列。 */
 .ih-nav {
-  flex: 1 0 100%;
+  /* 前は flex: 1 0 100% で、6つの札を必ず「あやと島」の下の段に落としていた。
+     そのせいで狭い画面の看板が 201px あり、島の外の20面が、
+     画面の 1/4 を同じ絵で始めていた（docs/island-review-2.md 4章）。
+     受け皿を「あやと島」の**横**に置くと、札の段はそのままで 58px 減る。 */
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
   /* 余白は4の倍数の段から（docs/island-world.md 5.1）。 */
@@ -157,12 +162,29 @@
     inset 0 2px 3px color-mix(in srgb, var(--frame-deep) 44%, transparent),
     inset 0 -1.5px 0 rgba(255, 245, 220, 0.24);
 }
+/* 狭い画面では「あやと島」を鳥だけにする。
+   札3列を横に置くのに 310px 要るので、129px の帯を置く余地が無い。
+   名前は消さずに読み上げには残す（clip で隠す）。すぐ下のパンくずの
+   先頭が「島」なので、字としての行き先も画面から消えていない。 */
+@media (max-width: 519.98px) {
+  .ih-in { padding: var(--sp-2) var(--sp-2) var(--sp-2); gap: var(--sp-2); }
+  .ih-home { padding: 0; width: 48px; justify-content: center; }
+  .ih-home b {
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; padding: 0; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  /* 3列に落とすため、札の内側と最小幅を1段詰める。字は 5文字が最長。 */
+  .ih-nav { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); padding: var(--sp-1); }
+  .ih-link { padding: var(--sp-1); gap: 2px; }
+  .ih-link img { width: 18px; height: 18px; }
+}
 /* 看板ごと1行に収まる広さになったら、そこから上に貼り付ける。
    このとき高さは 70px 前後なので、貼り付いていても画面をふさがない。 */
 @media (min-width: 900px) {
   .ih { position: sticky; top: 0; }
   .ih-in { flex-wrap: nowrap; }
-  .ih-nav { flex: 1 1 auto; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
+  .ih-nav { grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
 }
 /* ふだは押せる。だから板に彫り込むのではなく、厚みのある札にする
    （ac-reference 6章「押せるものには必ず下に厚みがある」）。
@@ -204,7 +226,7 @@
   color: var(--ink);
   box-shadow:
     0 6px 0 var(--frame-deep),
-    inset 0 0 0 2px var(--pick),
+    0 0 0 2px var(--pick),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 /* 沈む量と厚みの減る量を揃える。ずれると札の下の辺が動いて見える。 */
@@ -213,7 +235,7 @@
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
 }
 .ih-link.is-on:active {
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 0 0 2px var(--pick), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 var(--frame-deep), 0 0 0 2px var(--pick), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
@@ -227,28 +249,58 @@
   border: var(--bw-1) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
   border-radius: var(--r-pill);
   padding: var(--sp-1) var(--sp-4);
-  margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--sp-3);
   /* 押すものではないので完全に平ら。厚みは「押せる」の合図1種類だけに使う
      （docs/island-world.md 3.4）。中のリンクは字の下線で押せると言う。 */
   box-shadow: none;
 }
-.crumbs a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+/* 字が 12px なので、そのままだと指の当たりが 13×21px しかない
+   （docs/island-review-2.md 14章）。札を大きくすると前置きが伸びるので、
+   当たりだけを字の外へ広げる。左右は区切りの「›」の幅ぶんまで。 */
+.crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.crumbs a::after { content: ""; position: absolute; inset: -12px -4px; }
 .crumbs b { color: var(--ink); }
-.crumbs i { font-style: normal; color: var(--ink-3); margin: 0 1px; }
+/* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
+   （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
+.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 1px; }
 
 /* ページ見出し。
    島の外のページの地は、紙より明るい生成りになった（tokens.css の --ground-paper）。
    白い字に濃い縁取り、という海の上の作りをそのまま置くと、
    明るい地の上で字が消える。**濃い字に白い縁取り**へ逆にする。 */
 /* 前置きは短くする。絵・題・1行の3段まで（docs/island-world.md 7.6）。
-   どの面でも 440〜480px の前置きが付いていたので、21面が同じ顔に見えていた。
-   絵を一段小さくして、段のあいだも余白の段（12 / 16 / 24）に寄せる。 */
-.phead { text-align: center; margin: 0 0 var(--sp-5); }
-@media (min-width: 720px) { .phead { margin: var(--sp-2) 0 var(--sp-6); } }
+
+   3段に減らしても、縦に積んでいるかぎり 195px かかる。中身が始まるのは
+   スマホで 475px、画面の 56% が20面とも同じ絵だった。
+   **絵を h1 の左へ回して、3段を2段にする。** 絵の高さ（74px）と
+   「題＋1行」の高さ（86px）がほぼ同じなので、絵のぶんがまるごと消える。
+
+   段の組み方:
+     1列目 … 絵。2段ぶんにまたがる
+     2列目 … h1（1段目）と lead（2段目）
+     カモメと meta … 2列にまたがって下に付く
+
+   絵が無い面（/design /map/[国]）では1列目が 0 幅になる。
+   すきまは column-gap ではなく絵そのものの margin で持たせてあるので、
+   1列目が消えても字が寄らない。 */
+.phead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  row-gap: var(--sp-1);
+  text-align: left;
+  margin: 0 0 var(--sp-4);
+}
+.phead > * { grid-column: 2; }
+.phead-say,
+.phead-meta { grid-column: 1 / -1; }
+@media (min-width: 720px) { .phead { margin: var(--sp-2) 0 var(--sp-5); } }
 .phead-icon {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   display: block;
-  margin: 0 auto;
-  width: clamp(72px, 19vw, 92px); height: clamp(72px, 19vw, 92px);
+  margin: 0 var(--sp-3) 0 0;
+  width: clamp(68px, 18vw, 88px); height: clamp(68px, 18vw, 88px);
   object-fit: contain;
   object-position: center bottom;
   /* 接地影。1枚だけ。2枚重ねると合成が2回走る。
@@ -256,8 +308,8 @@
   filter: drop-shadow(1px 7px 1px rgba(52, 66, 32, 0.3));
 }
 .phead h1 {
-  margin: var(--sp-3) 0 0;
-  font-size: clamp(26px, 6.8vw, 42px);
+  margin: 0;
+  font-size: clamp(24px, 6.4vw, 40px);
   font-weight: 900;
   /* どうぶつの森の文字は字間が広い。詰まっているとWebの見出しに見える */
   letter-spacing: var(--ls-head);
@@ -272,15 +324,18 @@
     0 1.5px 0 var(--paper-out), 0 -1.5px 0 var(--paper-out);
 }
 .phead-lead {
-  margin: var(--sp-3) auto 0; max-width: 40em;
+  margin: 0; max-width: 40em;
   font-size: clamp(13.5px, 3.6vw, 16px);
   font-weight: 800; line-height: 1.85;
   letter-spacing: var(--ls-body);
   color: var(--ink-2);
 }
 .phead-mark {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  margin-right: var(--sp-3);
   display: inline-grid; place-items: center;
-  width: 74px; height: 74px;
+  width: 68px; height: 68px;
   border-radius: 50%;
   background: var(--paper);
   border: 4px solid var(--frame);
@@ -297,9 +352,11 @@
   background: var(--paper);
 }
 .phead-logo {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   display: block;
-  margin: 0 auto;
-  width: 84px; height: 84px;
+  margin: 0 var(--sp-3) 0 0;
+  width: 72px; height: 72px;
   border-radius: var(--r-2);
   object-fit: cover;
   background: #fff;
@@ -309,9 +366,9 @@
   width: 44px; height: 44px; flex: none;
   object-fit: contain; object-position: center bottom;
 }
-.phead-say { justify-content: center; margin-top: var(--sp-4); }
+.phead-say { justify-content: flex-start; margin-top: var(--sp-3); }
 .phead-say .gsay-bubble { text-align: left; max-width: 30em; }
-.phead-meta { margin-top: var(--sp-3); display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; }
+.phead-meta { margin-top: var(--sp-2); display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 
 /* =========================================================
    窓の型は2つある（docs/ac-reference.md ⑦）
@@ -428,7 +485,9 @@
   border: 1px solid var(--pg-rule);
   background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
 }
-.panel.paper .city:hover { transform: none; border-color: var(--pg-pick); }
+/* 紙の上の行は、ふれただけでは色を変えない。朱は「いま選んでいる」の色で、
+   ふれている状態とは役が違う（island-world 3.2）。 */
+.panel.paper .city:hover { transform: none; }
 .panel.paper .city:active { transform: translateY(1px); border-color: var(--pg-pick); }
 .panel.paper .stat { background: color-mix(in srgb, var(--pg-sheet) 55%, var(--paper)); }
 .panel.paper .stat:first-child {
@@ -595,7 +654,7 @@
   position: relative; flex: none; width: 112px; aspect-ratio: 16/9;
   border-radius: var(--r-1); overflow: hidden;
   background: var(--sand-edge);
-  box-shadow: inset 0 0 0 2px rgba(255, 253, 246, 0.55);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--paper) 55%, transparent);
 }
 .scard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .scard-play {
@@ -723,9 +782,10 @@
 .chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .chip {
   display: inline-flex; align-items: center; gap: var(--sp-1);
-  /* 数えたもの・言うだけのもの。図鑑の面の平らなチップ（ac-reference ⑦）。 */
+  /* 数えたもの・言うだけのもの。図鑑の面の平らなチップ（ac-reference ⑦）。
+     実物には枠が無い。ベタ塗りだけで、しかも影も厚みも付いていない。
+     枠を1本足すと、それだけで「囲ってある＝押せる」に近づく。 */
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-3);
   min-height: 28px;
@@ -759,10 +819,17 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* .dark は「海の上に載る白抜きの札」だった。地が生成りになって役目が消えている。
    押せない札は1種類だけなので、.chip そのものに戻す（規則を足さない）。 */
 
-/* 足元の木の板。上の縁を明るくすると、板の切り口に見える */
+/* 足元の木の板。上の縁を明るくすると、板の切り口に見える。
+
+   板の色を一段沈めた。前は琥珀（--frame-dark）から始めていて、その上に載る
+   1行が20面とも 2.9 : 1 で読めなかった。上が明るく下が暗いという向きは
+   そのままに、いちばん明るい上のふちでも --paper が 4.8 : 1 出るところまで
+   落としてある。字の色を変えても板が明るいままでは届かない。 */
 .ifoot {
   border-top: var(--bw-3) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
-  background: linear-gradient(180deg, var(--frame-dark) 0%, var(--frame-deep) 100%);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame-deep) 92%, var(--ink)) 0%,
+    color-mix(in srgb, var(--frame-deep) 74%, var(--ink)) 100%);
   padding: 28px 16px calc(34px + env(safe-area-inset-bottom));
   text-align: center;
 }
@@ -779,7 +846,9 @@ a.chip:active, button.chip:active, .chip.link:active {
   transition: transform 0.12s ease;
 }
 .ifoot-back:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75); }
-.ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
+/* opacity を掛けると、掛けたぶんだけ地の色が字に混ざって比が落ちる。
+   薄く見せたいときは色そのものを選ぶ。ここは板が濃いので --paper のまま。 */
+.ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: var(--paper); line-height: 1.8; }
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
@@ -803,17 +872,15 @@ a.chip:active, button.chip:active, .chip.link:active {
 .now-pin { display: block; margin: 0 auto var(--sp-1); width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 color-mix(in srgb, var(--frame-deep) 26%, transparent)); }
 .now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: var(--sp-1) 0 var(--sp-2); }
 /* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
-.week { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.week { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+/* 読むだけの一覧。箱を並べず、罫で切る（island-world 4章の部品表「区切り」）。
+   1件ずつ枠で囲うと、押せないものが押せるカードの形になる。 */
 .week li {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: var(--bw-1) solid color-mix(in srgb, var(--frame) 60%, var(--paper));
-  border-left: 8px solid var(--frame);
-  border-radius: var(--r-0) var(--r-2) var(--r-2) var(--r-0);
-  padding: var(--sp-3) var(--sp-3);
+  padding: var(--sp-3) var(--sp-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
   font-size: var(--fs-body); font-weight: 700; line-height: 1.75;
-  /* 読むだけの行。押せないので平ら（island-world 3.4）。 */
-  box-shadow: none;
 }
+.week li:first-child { border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 
 /* 付箋 */
 /* 小見出しは本文より小さいので、色で沈めるより枠で分ける */
@@ -851,15 +918,23 @@ a.chip:active, button.chip:active, .chip.link:active {
 .noteform button {
   flex: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 78%, var(--paper)) 0%, var(--frame) 100%);
-  color: #fff;
+  /* 琥珀の上の白い字は 2:1 しか無い。墨にすると 5.5:1 まで戻る。 */
+  color: var(--ink);
   border-radius: var(--r-pill); padding: var(--sp-3) var(--sp-4);
   min-height: 48px;
   font-weight: 900; font-size: var(--fs-body);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   box-shadow: var(--pop), inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 .noteform button:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4); }
-.noteform button:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+/* 同上。opacity 0.5 だと琥珀の上の墨が 2.2 : 1 まで落ちていた。 */
+.noteform button:disabled {
+  background: var(--paper-out);
+  color: var(--ink-2);
+  text-shadow: none;
+  box-shadow: none;
+  transform: none;
+}
 
 /* 掲示板 */
 /* 書き込む場所は「へこんでいる」。押す場所（板）と逆にすると役割が伝わる */
@@ -873,21 +948,38 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 24%, transparent);
   resize: vertical;
 }
+/* 何を書く欄なのかを言っているのは下書きの字なので、これも読ませる字。
+   ブラウザ既定の灰色は紙の上で 3.7 : 1 しか無い。 */
+.bin::placeholder,
+.noteform input::placeholder { color: var(--ink-2); font-weight: 700; opacity: 1; }
 .brow { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
 .brow .bin { flex: 1; border-radius: var(--r-pill); }
 .bbtn {
   flex: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 100%);
-  color: #fff;
+  /* 桃の上の白い字は 2.6 : 1。前は面の上半分に桃を残していたが、
+     そこがまだ 3.9 : 1 だった。このサイトでいちばん押してほしいボタンなので、
+     色より読めるほうを取って面ぜんぶを濃い桃にする（4.8 : 1）。
+     桃そのものは、隣に並ぶ .vote の羽根と、押したときの手ごたえに残る。 */
+  background: linear-gradient(180deg,
+    var(--accent-deep) 0%,
+    color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
+  color: var(--paper);
   border-radius: var(--r-pill); padding: var(--sp-3) var(--sp-5);
   min-height: 48px;
   font-weight: 900; font-size: var(--fs-body);
   letter-spacing: var(--ls-head);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--accent-deep) 46%, transparent);
-  box-shadow: 0 6px 0 var(--accent-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  /* 側面は面より濃く。面と同じ色だと厚みが見えず、押せる合図が消える。 */
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-deep) 58%, var(--ink)), inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 .bbtn:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45); }
-.bbtn:disabled { opacity: 0.55; box-shadow: none; transform: none; }
+/* 押せない状態は「厚みが無い」で言う。opacity で薄くすると字まで薄くなって、
+   何のボタンだったのかが読めなくなる。 */
+.bbtn:disabled {
+  background: var(--paper-out);
+  color: var(--ink-2);
+  box-shadow: none;
+  transform: none;
+}
 .bhead { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-3); flex-wrap: wrap; }
 .bsort { display: flex; gap: var(--sp-1); }
 .bsort button {
@@ -902,7 +994,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* いま選んでいる並び。塗りは変えず、朱の細枠だけ（ac-reference ⑦-6）。 */
 .bsort button.is-on {
   border-color: var(--pick);
-  box-shadow: var(--pg-lit), inset 0 0 0 2px var(--pick), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow: var(--pg-lit), 0 0 0 2px var(--pick), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 .bsort button:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
@@ -918,7 +1010,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .vote svg { width: 20px; height: 19px; color: var(--accent); }
 /* もう押したもの。塗りは変えず朱の細枠だけ（ac-reference ⑦-6）。
    厚みは押せる合図なので、押したあとも同じだけ残す。 */
-.vote.is-on { border-color: var(--pick); box-shadow: inset 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
+.vote.is-on { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
 .vote.is-on svg { color: var(--accent-deep); }
 .vote:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 .vote b { font-size: var(--fs-body); font-weight: 900; }
@@ -933,8 +1025,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   transform: translateX(-50%);
   display: none;
   flex-direction: column; align-items: center; gap: 2px;
-  color: #fffdf6; font-size: var(--fs-min); font-weight: 800;
-  text-shadow: 0 2px 8px color-mix(in srgb, #05233d 62%, transparent);
+  color: var(--paper); font-size: var(--fs-min); font-weight: 800;
+  text-shadow: 0 2px 8px color-mix(in srgb, var(--sea-deep) 72%, transparent);
   pointer-events: none;
 }
 .scroll-cue i { font-style: normal; font-size: var(--fs-body); animation: cue 1.8s ease-in-out infinite; }
@@ -1054,7 +1146,8 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .signin-warn b { color: var(--frame-deep); }
 .signin-go {
-  background: var(--accent-2);
+  /* 水色の上の白い字は 2.4:1。色相はそのままに、墨を混ぜて 5:1 まで沈める。 */
+  background: color-mix(in srgb, var(--accent-2) 60%, var(--ink));
   color: #fff;
   font-size: var(--fs-body);
   font-weight: 900;
@@ -1062,17 +1155,24 @@ a.chip:active, button.chip:active, .chip.link:active {
   min-height: 48px;
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 66%, var(--ink));
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 34%, var(--ink));
 }
 .signin-go:active { transform: translateY(6px); box-shadow: none; }
 .signin-go:disabled { opacity: 0.6; box-shadow: none; }
 .signin-skip { margin: var(--sp-2) 0 0; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+/* 外へ出るリンクを水色で言うのをやめた。紙のムラの暗いところでは
+   --accent-2 が 4.3 : 1 まで落ちる（docs/island-review-2.md 5.1）。
+   リンクであることは下線が言う。色は本文と同じ墨。 */
 .signin-link {
   font-size: var(--fs-note);
   font-weight: 900;
-  color: var(--accent-2);
+  color: var(--ink);
   text-decoration: underline;
+  text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+  /* 押しどころは指の入る高さにする（island-design 3章）。 */
+  display: inline-flex; align-items: center;
+  min-height: 48px;
 }
 .signed {
   display: inline-flex;
@@ -1104,7 +1204,6 @@ a.chip:active, button.chip:active, .chip.link:active {
   /* 数えたものの札は、オリーブの平ら1種類（island-world 3.2・7.3）。
      クリームの丸のままだと、すぐ横の押せるチップと同じ形になる。 */
   background: var(--chip);
-  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-note);
@@ -1116,8 +1215,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
    金にすると「押せる板のふち」と同じ色になって、押せそうに見える。 */
 .count.is-today {
-  background: color-mix(in srgb, var(--accent) 30%, var(--paper));
-  border-color: color-mix(in srgb, var(--accent-deep) 58%, var(--paper));
+  /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
+     枠は付けない。オリーブの札と同じ「平らな1種類」のままにする。 */
+  background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
 .count.is-today b { color: var(--accent-deep); }
@@ -1130,15 +1230,23 @@ a.chip:active, button.chip:active, .chip.link:active {
   margin: var(--sp-3) 0;
 }
 .pphotos figure { margin: 0; }
+/* 写真そのものを置かない。島の中の物は全部「誰かが置いたもの」なので、
+   生成りの縁を回して、わずかに傾けて貼る（island-world 6.2-3）。
+   傾きは1枚ごとに向きを変える。全部が同じ角度だと、傾いて見えず
+   「レイアウトがずれている」に見える。 */
 .pphotos img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: var(--r-2);
-  border: var(--bw-1) solid var(--frame);
+  border: 6px solid var(--paper-out);
+  outline: 1px solid color-mix(in srgb, var(--rule) 50%, transparent);
   display: block;
   background: var(--paper-2);
+  box-shadow: var(--shadow-1);
+  transform: rotate(-0.7deg);
 }
+.pphotos figure:nth-child(even) img { transform: rotate(0.8deg); }
 .pphotos figcaption {
   margin-top: var(--sp-1);
   font-size: var(--fs-min);
@@ -1171,7 +1279,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-dark);
+  /* 中に押すものが入っているだけの入れ物。押せないので平ら。 */
+  box-shadow: none;
 }
 .me-title { display: block; font-size: var(--fs-body); }
 .me-note { margin: var(--sp-1) 0 var(--sp-3); font-size: var(--fs-note); line-height: 1.7; color: var(--ink-2); }
@@ -1194,7 +1303,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .me-pick img { width: 100%; height: 100%; object-fit: contain; }
 /* 選んでいるものは、光らせずに朱の細枠（ac-reference ⑦-6）。
    金のぼかした輪は「光って押せる」に読めるので使わない。 */
-.me-pick.is-on { border-color: var(--pick); box-shadow: inset 0 0 0 2px var(--pick); }
+.me-pick.is-on { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick); }
 .me-pick-none { width: auto; padding: 0 var(--sp-3); font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .me-row { display: block; margin-bottom: var(--sp-2); }
 .me-row span { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); margin-bottom: var(--sp-1); }

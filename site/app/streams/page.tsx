@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { GUIDE } from "@/content/voice";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
 import { RECIPES } from "@/content/recipes";
@@ -43,8 +42,7 @@ export default function StreamsPage() {
       <PageHead
         icon="tower-studio"
         title="配信やぐら"
-        lead="どんな配信をしてるか。毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
-        say={GUIDE.streams}
+        lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
       />
 
       {/* 番組表と数えたものは「やぐらに貼ってある紙」。押すものではないので、
@@ -91,12 +89,16 @@ export default function StreamsPage() {
           // いちばん本数の多いクッキングだけ横幅いっぱい。
           // 5枚が均等に並ぶと、どれから見ればいいのか分からない
           return (
-            <article
+            <details
               className={`ty${t.slug === "cooking" ? " is-wide" : ""}`}
               key={t.slug}
               style={{ ["--ty" as string]: t.color }}
+              // 5枚とも開いていると、この面だけで6画面ぶんになる。屋根（名前と曜日）は
+              // 5つとも見せたまま、中身は畳む。開いておくのは1枚目だけ
+              // （`docs/island-ux.md` 5.5・`docs/island-design.md` 4章）。
+              open={i === 0}
             >
-              <div className="ty-roof">
+              <summary className="ty-roof" style={{ ["--ty" as string]: t.color }}>
                 <img src={`/sprites/${t.icon}.webp`} alt="" />
                 <span className="ty-name">
                   <b>{t.name}</b>
@@ -105,7 +107,8 @@ export default function StreamsPage() {
                     {t.when}
                   </span>
                 </span>
-              </div>
+                <Icon name="chevron" size={20} className="ty-c" />
+              </summary>
               <div className="ty-in">
                 <p className="ty-lead">{t.short}</p>
                 <ol className="beat">
@@ -122,11 +125,11 @@ export default function StreamsPage() {
                     <i>{num.cap}</i>
                   </span>
                 )}
-                <Fold title="もっと詳しく" lead={t.lead} note={`${t.samples.length}本`} open={i === 0}>
+                <Fold title="もっと詳しく" lead={t.lead} note={`${t.samples.length}本`}>
                   {t.body.map((p, k) => (
                     <p key={k}>{p}</p>
                   ))}
-                  <div className="vids is-one" style={{ marginTop: 12 }}>
+                  <div className="vids is-one" style={{ marginTop: "var(--sp-3)" }}>
                     {t.samples.map((v) => (
                       <Vid key={v.videoId} {...v} />
                     ))}
@@ -137,15 +140,15 @@ export default function StreamsPage() {
                   <Icon name="right" size={15} />
                 </Link>
               </div>
-            </article>
+            </details>
           );
         })}
       </div>
 
       <Panel className="paper">
-        <h2>配信のあとに、島に残るもの</h2>
-        <p className="muted">やった日は流れていくけれど、作ったものと大きい企画はここにたまっていきます。</p>
-        <div className="tiles" style={{ marginTop: 14 }}>
+        <h2>配信のあと、何が島に残るんだろう</h2>
+        <p className="muted">配信した日そのものは流れていく。あとに残るのは、この2つ。</p>
+        <div className="tiles" style={{ marginTop: "var(--sp-3)" }}>
           <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-coral)" }}>
             <ArtStamp size={44} className="tile-icon" />
             <span className="tile-text">

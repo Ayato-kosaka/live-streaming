@@ -46,6 +46,16 @@ export function StreamCard({
   );
 }
 
+/**
+ * 島の外のページに置くまとまり。
+ *
+ * **既定は紙。** 島の外のページは「島で拾った紙」なので（`docs/island-world.md` 1.5）、
+ * 厚みのある板を積むのは間違い。以前は `className="paper"` と書いたときだけ紙になる
+ * 作りで、書き忘れた面がまるごと板のまま残っていた（`/nordic` `/now` `/next/new`）。
+ * 書き忘れが板になるより、書き忘れが紙になるほうが正しい。
+ *
+ * 板にしたいとき（押すもの・書くものを載せる台）だけ `board` を渡す。
+ */
 export function Panel({
   children,
   className = "",
@@ -55,8 +65,10 @@ export function Panel({
   className?: string;
   style?: React.CSSProperties;
 }) {
+  const board = /\bboard\b/.test(className);
+  const kind = board ? "" : " paper";
   return (
-    <section className={`panel ${className}`} style={style}>
+    <section className={`panel${kind} ${className}`} style={style}>
       {children}
     </section>
   );

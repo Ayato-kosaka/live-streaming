@@ -39,6 +39,7 @@ function Light() {
       {g("sgGreen", C.gr, C.grd)}
       {g("sgGreenL", C.grl, C.gr)}
       {g("sgBrown", C.br, C.brd)}
+      {g("sgPaper", C.w, C.crd)}
     </defs>
   );
 }
@@ -149,6 +150,36 @@ export function TieMark({ tied, size = 30 }: { tied: boolean; size?: number }) {
       <g transform={`translate(${gap} 0)`}>
         <rect x="20" y="16" width="26" height="15" rx="7.5" fill="url(#sgGreen)" mask="url(#ntieB)" />
       </g>
+    </Svg>
+  );
+}
+
+/**
+ * 起きたこと。**手で破った紙を1枚。**
+ *
+ * 席が3つめだと分かるように、金でも緑でもない色にする。
+ * 硬貨（これから出す）と道しるべ（これから立てる）が「これからのもの」なのに対して、
+ * こちらは旅が終わってから入る席なので、絵も「もう書いたもの」にする
+ * （`docs/nordic-fund.md` 提案4）。
+ *
+ * 写真ではなく紙にしたのは、ここに入るのが2〜3行の文だから。
+ * 絵と中身が食い違うと、席の名前を読み直すことになる。
+ */
+export function LogMark({ size = 26 }: { size?: number }) {
+  return (
+    <Svg size={size}>
+      <Ground cx="24" cy="42" rx="13" />
+      {/* 紙。下ぶちを破った形にする（きれいな長方形だと札に見える） */}
+      <path
+        d="M9 8.5a3.5 3.5 0 013.5-3.5h23A3.5 3.5 0 0139 8.5v28.7l-5 -2.6l-5 2.6l-5 -2.6l-5 2.6l-5 -2.6l-5 2.6z"
+        fill="url(#sgPaper)"
+      />
+      {/* 折れた右上。紙が1枚だと分かる合図 */}
+      <path d="M31 5h4.5A3.5 3.5 0 0139 8.5V13z" fill={C.crd} />
+      {/* 書いた3行 */}
+      <rect x="14" y="14" width="20" height="3.2" rx="1.6" fill={C.br} opacity="0.85" />
+      <rect x="14" y="21" width="16" height="3.2" rx="1.6" fill={C.br} opacity="0.7" />
+      <rect x="14" y="28" width="11" height="3.2" rx="1.6" fill={C.br} opacity="0.55" />
     </Svg>
   );
 }

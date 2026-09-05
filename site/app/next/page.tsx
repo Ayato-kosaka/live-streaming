@@ -27,8 +27,7 @@ export default function NextPage() {
       <Panel className="paper">
         <h2>自分も企画を出したい</h2>
         <p>
-          このページに並んでいるものも、ほとんどが誰かの思いつきから始まっています。
-          ここまで来る道は3歩ぶんです。
+          ここに並んでいるものも、ほとんどが誰かの思いつきから始まった。掲示板からこのページまで、3歩。
         </p>
         {/* どこへ届くのかが見えないと、書いても意味がない気がして手が止まる。
             掲示板と同じ3歩を、行き先の側からも見せておく。 */}
@@ -50,7 +49,7 @@ export default function NextPage() {
             </li>
           ))}
         </ol>
-        <Link className="tile" href="/board" style={{ marginTop: 16 }}>
+        <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
@@ -58,8 +57,8 @@ export default function NextPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <p className="muted" style={{ marginTop: 16 }}>
-          ここに並ぶ企画のページも、骨組みから一緒に作っています。書いてくれる人がいると、それだけ良いページになります。
+        <p className="muted" style={{ marginTop: "var(--sp-4)" }}>
+          企画のページも、骨組みから一緒に作っている。書いてくれる人がいるほど、中身が濃くなる。
         </p>
         <Link className="tile" href="/next/new">
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />

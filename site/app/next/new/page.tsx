@@ -24,8 +24,7 @@ export default function NewPlanPage() {
       <PageHead
         icon="signboard"
         title="企画のページを作る"
-        lead="次にやることのページを、一緒に作ってくれる人へ。骨組みだけ書いてくれれば、そこから先はあやとが仕上げます。"
-        say="書いた形がそのまま下に出るよ。見ながら足していってね。"
+        lead="骨組みだけ書いてくれれば、あとはあやとが仕上げる。書いた形は、そのまま下に出る。"
       />
       <PlanDraftEditor />
     </PageShell>

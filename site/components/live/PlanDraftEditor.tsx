@@ -146,7 +146,7 @@ export default function PlanDraftEditor() {
       <section className="panel">
         <h2>企画のページを作る</h2>
         <p>
-          いまは、あやとが「書いていいよ」と決めた人だけが書けるようになっています。
+          いまは、あやとが「書いていいよ」と決めた人だけが書けます。
           書いてみたい人は配信で言ってください。すぐ開けます。
         </p>
       </section>
@@ -274,7 +274,7 @@ export default function PlanDraftEditor() {
 
         {src && (
           <>
-            <p className="muted" style={{ marginTop: 12 }}>
+            <p className="muted" style={{ marginTop: "var(--sp-3)" }}>
               これを <code>site/content/plans.ts</code> の <code>PLANS</code> に足す。
             </p>
             <pre className="dsrc">{src}</pre>

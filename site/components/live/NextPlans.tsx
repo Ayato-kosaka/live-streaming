@@ -38,6 +38,13 @@ const SEEDS = [
  * 親の中で定義すると、1文字打つたびに作り直されて入力欄からカーソルが外れる。
  * 必ずここ（モジュールの直下）に置く。
  */
+/**
+ * 付箋の欄。
+ *
+ * 企画が5つあると、入力欄が5つ縦に並ぶ（`docs/island-ux.md` 5.8）。
+ * いちばん近い1つだけ開いておいて、残りは枚数だけ見せて畳む。
+ * 畳んだ側も、見出しに枚数が出ているので「何枚貼られているか」は分かる。
+ */
 function PlanNotes({
   plan,
   notes,
@@ -45,6 +52,7 @@ function PlanNotes({
   busy,
   onDraft,
   onAdd,
+  open = false,
 }: {
   plan: Plan;
   /** 取りに行っている最中は null。0枚と区別する（読む前に「まだ1枚もありません」と言わない） */
@@ -53,24 +61,15 @@ function PlanNotes({
   busy: boolean;
   onDraft: (v: string) => void;
   onAdd: () => void;
+  /** いちばん近い企画だけ開いておく */
+  open?: boolean;
 }) {
   const box = useRef<HTMLInputElement>(null);
   // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
   const pins = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 
-  return (
+  const body = (
     <>
-      <div className="nx-noteshead">
-        <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, margin: "18px 0 0" }}>
-          みんなの付箋
-        </h3>
-        {!!notes?.length && (
-          <span className="bd-count">
-            <b>{notes.length}</b>枚
-          </span>
-        )}
-      </div>
-
       {notes === null ? (
         /* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く。
            空の配列から始めると、読む前に「まだ1枚もありません」と嘘をつくことになる。 */
@@ -80,7 +79,7 @@ function PlanNotes({
           <li />
         </ul>
       ) : notes.length === 0 ? (
-        <p className="muted" style={{ marginTop: 10 }}>
+        <p className="muted" style={{ marginTop: "var(--sp-2)" }}>
           まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
         </p>
       ) : (
@@ -96,7 +95,7 @@ function PlanNotes({
         </ul>
       )}
 
-      <div className="noteform" style={{ marginTop: 16 }}>
+      <div className="noteform" style={{ marginTop: "var(--sp-4)" }}>
         <input
           ref={box}
           value={draft}
@@ -130,6 +129,36 @@ function PlanNotes({
         ))}
       </div>
     </>
+  );
+
+  if (open) {
+    return (
+      <>
+        <div className="nx-noteshead">
+          <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, margin: "var(--sp-4) 0 0" }}>
+            みんなの付箋
+          </h3>
+          {!!notes?.length && (
+            <span className="bd-count">
+              <b>{notes.length}</b>枚
+            </span>
+          )}
+        </div>
+        {body}
+      </>
+    );
+  }
+
+  return (
+    <div id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, marginTop: "var(--sp-4)" }}>
+      <Fold
+        title="みんなの付箋"
+        note={notes === null ? undefined : `${notes.length}枚`}
+        lead={notes?.length ? "知ってることを1行だけ足せる" : "1枚目を貼れる"}
+      >
+        {body}
+      </Fold>
+    </div>
   );
 }
 
@@ -259,7 +288,7 @@ export default function NextPlans() {
 
       {lead && (
         <PlanCard plan={lead} lead>
-          <PlanNotes {...notesProps(lead)} />
+          <PlanNotes {...notesProps(lead)} open />
         </PlanCard>
       )}
 
@@ -280,11 +309,11 @@ export default function NextPlans() {
       ))}
 
       {done.length > 0 && (
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: "var(--sp-5)" }}>
           <Fold
             title="もう行ってきた企画"
             note={`${done.length}件`}
-            lead="貼ってもらった付箋も、そのまま残してあります"
+            lead="貼ってもらった付箋も、そのまま残っている"
           >
             {done.map((p) => (
               <PlanCard plan={p} key={p.id}>

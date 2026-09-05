@@ -168,9 +168,18 @@ const ORDER = ["neutral", "green", "wood", "blue"];
  * こちらを使う。値は「あつ森ならこの色」というつもりで置いた固定色。
  */
 const MATERIALS = {
-  // 樹冠は草より深く、少し青みのある緑。黄色へ寄せすぎるとレタスに見える
-  leafsgreen: [0.300, 0.48, 0.48],
-  leafsdark: [0.315, 0.44, 0.40],
+  /* 樹冠。公式スクショの樹冠を実測して置き直した色(/tmp/acref)。
+   *
+   * 実測すると、あつ森の葉は思っているよりずっと彩度が低くて青い。
+   * 日向 #66bc78・陰 #4a7a6f で、彩度は 0.24〜0.40 しかない。
+   * ここに前の値(H0.300 S0.48)を置くと、緑が黄色へ寄って彩度も倍近くあり、
+   * 木が島でいちばん面積を取るぶん、島ぜんぶが安いCGに見えていた。
+   *
+   * 下の値は「陰も日向もひっくるめた平均がそこへ乗る」albedo。
+   * 単体で見ると青すぎるが、この上に LEAF_SHADE / LEAF_SUN の色みが乗って
+   * 陰が青緑・日向が黄緑に割れる。並べて合わせたのはその割れたあとの色。 */
+  leafsgreen: [0.377, 0.335, 0.527],
+  leafsdark: [0.411, 0.32, 0.423],
   grass: [0.275, 0.55, 0.55],
   dirt: [0.093, 0.44, 0.58],
   // あつ森の幹は思っているよりずっと明るい山吹色。暗い茶にすると急に写実的になる
@@ -333,19 +342,21 @@ float detailU() {
   return abs(vDetailNrm.x) > abs(vDetailNrm.z) ? vDetailPos.z : vDetailPos.x;
 }
 
-/** レンガの目地。1段 0.105・1個 0.26(壁1マスが 1.0 なので 4個弱で1マス) */
-float brickShade() {
+/** レンガの目地。
+ * @param rowH 1段の高さ / @param brickW レンガ1個の長さ / @param dark 目地の沈み具合
+ * 壁は 0.105 x 0.26(壁1マスが 1.0 なので 4個弱で1マス)。 */
+float brickShade(float rowH, float brickW, float dark) {
   if (abs(vDetailNrm.y) > 0.72) return 1.0;         // 天面・地面には引かない
-  float row = floor(vDetailPos.y / 0.105);
-  float fy = fract(vDetailPos.y / 0.105);
-  float fu = fract(detailU() / 0.26 + mod(row, 2.0) * 0.5);
+  float row = floor(vDetailPos.y / rowH);
+  float fy = fract(vDetailPos.y / rowH);
+  float fu = fract(detailU() / brickW + mod(row, 2.0) * 0.5);
   // 目地は溝。線そのものだけを沈ませる。横目地より縦目地を細く
   float h = 1.0 - smoothstep(0.0, 0.15, fy);
   float v = 1.0 - smoothstep(0.0, 0.16, min(fu, 1.0 - fu) * 2.0);
   float joint = max(h, v);
   // レンガ1個ずつの焼きムラ。これが無いと目地だけが浮いて方眼紙に見える
-  float bake = (detailHash(vec2(floor(detailU() / 0.26 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
-  return mix(1.0 + bake, 0.875, joint);
+  float bake = (detailHash(vec2(floor(detailU() / brickW + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
+  return mix(1.0 + bake, dark, joint);
 }
 
 /** 屋根の瓦。1列 0.085。列の上端に次の列がかぶさるので、そこに影が落ちる */
@@ -371,8 +382,18 @@ float tileShade() {
  * @param {THREE.Material} mat 対象
  * @param {"brick"|"tile"} kind どちらの模様か
  */
+const DETAIL_CALL = {
+  brick: "brickShade(0.105, 0.26, 0.875)",
+  // 煙突。壁と同じ細かさで刻むと、島に置いた大きさ(高さ20px前後)では
+  // 段が1px を切って消える。実際そうなっていて「のっぺりした棒」に見えていた。
+  // あつ森の煙突は、レンガが数えられるくらい大きく、目地もはっきりしている。
+  // 段を1.5倍にして数を減らし、そのぶん目地を濃くする
+  brickBold: "brickShade(0.158, 0.30, 0.79)",
+  tile: "tileShade()",
+};
+
 function addSurfaceDetail(mat, kind) {
-  const call = kind === "tile" ? "tileShade()" : "brickShade()";
+  const call = DETAIL_CALL[kind] ?? DETAIL_CALL.brick;
   mat.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vDetailPos;\nvarying vec3 vDetailNrm;")
@@ -393,7 +414,8 @@ function addSurfaceDetail(mat, kind) {
 const DETAIL_OF = (url) => {
   const f = url.split("/").pop() ?? "";
   // 煙突もレンガ。あつ森の煙突は必ず目地が見えている
-  if (/^(wall|chimney)/.test(f)) return "brick";
+  if (/^chimney/.test(f)) return "brickBold";
+  if (/^wall/.test(f)) return "brick";
   if (/^(roof|cabin-roof)/.test(f)) return "tile";
   return null;
 };
@@ -413,6 +435,35 @@ const foliageCache = new Map();
 /** 頂点色に焼く明るさ。上端 / 下端。あつ森の樹冠の実測(上下比 0.7 前後)に合わせた */
 const LEAF_TOP = 1.14;
 const LEAF_BOTTOM = 0.62;
+
+/* 樹冠は、明るさだけでなく色みも上下で変わる。
+ *
+ * 公式スクショを測ると、同じ1本の木の中で色相がはっきり動いている。
+ *   陰 h0.46 s0.24 → 日向 h0.37 s0.40
+ * 屋外の陰は空の青を拾い、日向は太陽の黄を拾うので、physically にもこうなる。
+ * 明るさだけを掛けて色相を固定すると、陰が「ただ暗い緑」になって、
+ * そこだけ塗り絵に見える。あやと島の木が安く見えていた正体はこれ。
+ *
+ * 頂点色は拡散色への掛け算なので、明るさの係数に色の比を掛けて渡す。
+ * 中(=1.0)で [1,1,1]、そこから陰側 / 日向側へ振り分ける。 */
+const LEAF_SHADE = [0.95, 1.02, 1.46]; // 陰: 青みへ寄せて彩度を落とす
+const LEAF_SUN = [0.93, 1.14, 0.73];   // 日向: 黄みへ寄せて彩度を上げる
+/** 色みが振り切るまでの明るさの幅。1.0 を中心に ±この値で LEAF_SHADE/SUN になる */
+const LEAF_TINT_SPAN = 0.22;
+
+/**
+ * 明るさの係数を、色みまで含んだ [r,g,b] の係数に広げる。
+ * @param {number} val 明るさの係数(1.0 が中)
+ * @param {Float32Array} col 書き込み先
+ * @param {number} i 書き込む頂点の番号
+ */
+function leafTint(val, col, i) {
+  const u = clamp01(Math.abs(val - 1) / LEAF_TINT_SPAN);
+  const t = val < 1 ? LEAF_SHADE : LEAF_SUN;
+  col[i * 3] = val * (1 + (t[0] - 1) * u);
+  col[i * 3 + 1] = val * (1 + (t[1] - 1) * u);
+  col[i * 3 + 2] = val * (1 + (t[2] - 1) * u);
+}
 
 /**
  * @param {THREE.BufferGeometry} geo 元の形
@@ -448,7 +499,10 @@ function foliageGeometry(geo, smooth) {
       const t = (pos.getY(i) - min.y) / span;
       const e = t * t * (3 - 2 * t);
       const v = LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * e;
-      col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v;
+      // 色みを振るのは樹冠(leafs*)だけ。草の株にも掛けると、
+      // 地面の草と株の色が食い違って、株だけ別の植物に見える
+      if (smooth) leafTint(v, col, i);
+      else { col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v; }
     }
     out.setAttribute("color", new THREE.BufferAttribute(col, 3));
   } catch (e) {
@@ -542,7 +596,7 @@ function leafLobes(base, amount) {
       const tg = clamp01((y - bb.min.y) / gSpan);
       const glob = 1 + (LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * (tg * tg * (3 - 2 * tg)) - 1) * LOBE_GLOBAL;
       const val = local * glob * bright;
-      col[v * 3] = val; col[v * 3 + 1] = val; col[v * 3 + 2] = val;
+      leafTint(val, col, v);
     }
     g.setAttribute("color", new THREE.BufferAttribute(col, 3));
     out.push(g);
@@ -755,6 +809,60 @@ function flameGlow(r, color, strength) {
   return m;
 }
 
+/* ------------------------------------------------------------------ */
+/* ポーズ                                                              */
+/* ------------------------------------------------------------------ */
+
+/* Kenney の mini-characters は骨とアニメを持っている(idle / walk / sit …)。
+ * 読んだままだと T字ポーズなので、島に置いても人形にしか見えない。
+ *
+ * 骨を1本ずつ回すより、入っているクリップの1コマで止めるほうが早くて確実。
+ * AnimationMixer に時刻を渡すと、その瞬間の姿勢が骨に焼かれる。 */
+
+/**
+ * アニメの1コマで固定する。
+ * @param {THREE.Object3D} root モデル
+ * @param {THREE.AnimationClip[]} clips GLB に入っているクリップ
+ * @param {string|{clip:string,t:number}} pose クリップ名と、その中のどこか(0〜1)
+ */
+function applyPose(root, clips, pose) {
+  const { clip: name, t = 0 } = typeof pose === "string" ? { clip: pose } : pose;
+  const clip = THREE.AnimationClip.findByName(clips, name);
+  if (!clip) {
+    console.warn("そのクリップは入っていない:", name, clips.map((c) => c.name).join(","));
+    return;
+  }
+  const mixer = new THREE.AnimationMixer(root);
+  mixer.clipAction(clip).play();
+  // 時刻はクリップの長さに対する比で渡す。クリップごとに秒数が違うので、
+  // 「歩きの半分」を秒で書くと、キャラを足したときに合わなくなる
+  mixer.setTime(clip.duration * t);
+  root.updateMatrixWorld(true);
+  /* 画角を決める箱は Box3 が測る。SkinnedMesh は boundingBox が null なら
+   * 骨を通した位置で測り直してくれるので、素の(T字の)形で測られないよう
+   * 空にしておく。ここを忘れると、腕を広げた幅のまま画角が決まって、
+   * 姿勢を付けたキャラだけ小さく写る。 */
+  const posed = new THREE.Box3();
+  root.traverse((n) => {
+    if (!n.isSkinnedMesh) return;
+    n.boundingBox = null;
+    n.boundingSphere = null;
+    // 骨で動いたぶんは視錐台の判定に入らないので、切られないようにする
+    n.frustumCulled = false;
+    posed.expandByObject(n);
+  });
+
+  /* 足を地面に着ける。
+   * ゲームの中で使うクリップは、腰の高さが上下する前提で作ってある。
+   * mini-characters の場合、歩きの中ほどは足が 0.018 浮き、
+   * 座りは 0.094 も地面へ沈む。そのまま焼くと、歩く人が宙に浮いて、
+   * 座る人は腰から下が地面に埋まる。いちばん低いところを y=0 に合わせる。 */
+  if (Number.isFinite(posed.min.y)) {
+    for (const c of root.children) c.position.y -= posed.min.y;
+    root.updateMatrixWorld(true);
+  }
+}
+
 const loader = new GLTFLoader();
 
 /**
@@ -795,6 +903,8 @@ async function prepare(part, opts) {
 
   const gltf = await loader.loadAsync(part.url);
   const root = gltf.scene;
+  const pose = part.pose ?? opts.pose;
+  if (pose) applyPose(root, gltf.animations, pose);
   // パーツごとの色指定が無ければ、スプライト全体の指定を使う
   const o = { ...opts, ...(part.tint ?? {}) };
   const plain = part.plain ?? opts.plain;
@@ -881,9 +991,20 @@ window.renderScene = async (parts, opts = {}) => {
   }
   scene.add(group);
 
+  /* 画角を決める箱。
+   *
+   * ふだんは物を測って決める。ただし「同じ物の別の姿勢」を何枚も焼くときは、
+   * 測り直すとコマごとに大きさと位置が変わる。site 側の Sprite は
+   * 「物体の高さ = 指定した大きさ」になるよう拡大するので、
+   * しゃがんだコマだけ 1.1 倍に引き伸ばされて、差し替えた瞬間に跳ねる。
+   * opts.fit で外から箱を渡すと、全コマが同じ画角・同じ倍率で焼ける。 */
   const box = new THREE.Box3();
-  for (const o of framed) box.expandByObject(o);
-  if (box.isEmpty()) box.setFromObject(group);
+  if (opts.fit) {
+    box.set(new THREE.Vector3(...opts.fit[0]), new THREE.Vector3(...opts.fit[1]));
+  } else {
+    for (const o of framed) box.expandByObject(o);
+    if (box.isEmpty()) box.setFromObject(group);
+  }
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;

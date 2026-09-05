@@ -166,7 +166,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           {/* 畳んだときに見える1行が、開いたあと同じ場所にもう一度出ていた。
               先頭の段落は見出しの下に置いたままにして、続きだけを中に入れる。 */}
           {t.body.length > 1 && (
-            <div className="folds" style={{ marginTop: 14 }}>
+            <div className="folds" style={{ marginTop: "var(--sp-3)" }}>
               <Fold title="もう少し細かく" lead={t.body[0]} note={`あと${t.body.length - 1}つ`}>
                 {t.body.slice(1).map((p, k) => (
                   <p key={k}>{p}</p>
@@ -181,7 +181,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
             まずは、この回から
           </H>
           <p className="zk-lead">どれも1本で完結します。押すと YouTube が開きます。</p>
-          <div className="vids" style={{ marginTop: 14 }}>
+          <div className="vids" style={{ marginTop: "var(--sp-3)" }}>
             {t.samples.map((v, k) => (
               <Vid key={v.videoId} {...v} no={k + 1} />
             ))}
@@ -200,7 +200,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Link>
       )}
 
-      <nav className="pager" style={{ marginTop: 18 }}>
+      <nav className="pager" style={{ marginTop: "var(--sp-4)" }}>
         {prev ? (
           <Link href={`/streams/${prev.slug}`}>
             <Icon name="right" size={13} className="is-flip" />

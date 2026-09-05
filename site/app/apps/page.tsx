@@ -52,7 +52,7 @@ export default function AppsPage() {
         // 増えた順。作った順に読むから「増えていった」ことが分かる。
         const grown = [...a.milestones].sort((x, y) => x.date.localeCompare(y.date));
         return (
-          <Panel className="paper" key={a.slug}>
+          <Panel key={a.slug}>
             <h2>{a.name}</h2>
 
             <div className="aapp-hero">

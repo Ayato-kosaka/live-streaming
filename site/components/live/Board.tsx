@@ -136,8 +136,8 @@ export default function Board() {
       <section className="panel bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
-          まじめじゃなくていいです。<b>むちゃな企画ほど、だいたい通ります。</b>
-          ログインも名前も要りません。
+          まじめじゃなくていい。思いついたことを、そのまま書いて。
+          <b>ログインも名前も要りません。</b>
         </p>
 
         <textarea
@@ -208,7 +208,7 @@ export default function Board() {
         </ol>
 
         {/* ログインは「しなくていい」ものなので、書く場所より下に、畳んで置く。 */}
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: "var(--sp-4)" }}>
           <Fold title="名前とアイコンも島に出したい" lead="YouTubeのアカウントでログインすると出せます">
             <SignIn />
           </Fold>
@@ -218,7 +218,7 @@ export default function Board() {
       <section className="panel paper">
         <h2>むちゃな企画ほど通る、の証拠</h2>
         <p className="muted">どれも「思いつき」から始まって、本当にやったものです。</p>
-        <div className="chips" style={{ marginTop: 12 }}>
+        <div className="chips" style={{ marginTop: "var(--sp-3)" }}>
           {PROOF.map((slug) => {
             const l = LEGENDS.find((x) => x.slug === slug);
             if (!l) return null;
@@ -260,7 +260,7 @@ export default function Board() {
         )}
 
         {all.length > 0 && (
-          <div className="chips" style={{ marginBottom: 14 }}>
+          <div className="chips" style={{ marginBottom: "var(--sp-3)" }}>
             <span className="chip">{all.length}件</span>
             <span className="chip">さんせい {totalVotes}</span>
             {pickedCount > 0 && <span className="chip">採用 {pickedCount}件</span>}

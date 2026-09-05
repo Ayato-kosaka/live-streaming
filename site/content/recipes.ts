@@ -30,7 +30,13 @@ export type Recipe = {
   slug: string;
   name: string;
   emoji: string;
-  /** スタンプに使うスプライト名(site/public/sprites の food-*) */
+  /**
+   * スタンプに使うスプライト名（`site/public/sprites` の `food-*`。一覧は `content/sprites.json`）。
+   *
+   * **1品につき1枚。同じ絵を2品で使わない。** スタンプ帳は「押した数だけ違う絵が並ぶ」から
+   * 図鑑に見える。同じ皿が2つ並んだ瞬間、絵ではなく飾りになる。
+   * food-* は105枚あるので、料理が増えても使い回す理由はない。
+   */
   icon: string;
   country: string; // countries.slug
   kind: RecipeKind;
@@ -102,7 +108,7 @@ export const RECIPES: Recipe[] = [
     slug: "az-curry",
     name: "アゼルバイジャン風チキン無水スパイスカレー",
     emoji: "🍛",
-    icon: "food-pan-stew",
+    icon: "food-pot-stew",
     country: "azerbaijan",
     kind: "soup",
     date: "2025-07-17",
@@ -163,7 +169,7 @@ export const RECIPES: Recipe[] = [
     slug: "shkmeruli-pasta",
     name: "シュクメルリパスタ",
     emoji: "🧄",
-    icon: "food-tajine",
+    icon: "food-mincemeat-pie",
     country: "georgia",
     kind: "rice",
     date: "2026-04-17",
@@ -177,7 +183,7 @@ export const RECIPES: Recipe[] = [
     slug: "tomato-chicken-rice",
     name: "トマトチキンライス",
     emoji: "🍚",
-    icon: "food-bowl",
+    icon: "food-pan-stew",
     country: "armenia",
     kind: "rice",
     date: "2026-05-16",
@@ -255,7 +261,7 @@ export const RECIPES: Recipe[] = [
     slug: "compote",
     name: "ジョージア風コンポート",
     emoji: "🍑",
-    icon: "food-pudding",
+    icon: "food-cherries",
     country: "georgia",
     kind: "sweet",
     date: "2026-07-02",
@@ -302,7 +308,7 @@ export const RECIPES: Recipe[] = [
     slug: "nanban-5",
     name: "ジョージア風南蛮漬け5種",
     emoji: "🐟",
-    icon: "food-fish",
+    icon: "food-plate-deep",
     country: "georgia",
     kind: "fish",
     date: "2026-07-16",
@@ -317,7 +323,7 @@ export const RECIPES: Recipe[] = [
     slug: "iwashi-hiyashi",
     name: "イワシの冷やし中華",
     emoji: "🍜",
-    icon: "food-bowl-broth",
+    icon: "food-chinese",
     country: "georgia",
     kind: "rice",
     date: "2026-07-22",
@@ -364,7 +370,7 @@ export const RECIPES: Recipe[] = [
     slug: "karaage-teishoku",
     name: "唐揚げ定食",
     emoji: "🍱",
-    icon: "food-plate-dinner",
+    icon: "food-plate-sauerkraut",
     country: "georgia",
     kind: "meat",
     date: "2026-07-31",
@@ -375,7 +381,7 @@ export const RECIPES: Recipe[] = [
     slug: "acqua-pazza",
     name: "アクアパッツァ",
     emoji: "🐠",
-    icon: "food-pan-stew",
+    icon: "food-frying-pan",
     country: "georgia",
     kind: "fish",
     date: "2026-08-07",
@@ -403,7 +409,7 @@ export const RECIPES: Recipe[] = [
     slug: "german-potato",
     name: "ジョージア風ジャーマンポテト",
     emoji: "🥔",
-    icon: "food-plate-sauerkraut",
+    icon: "food-bacon",
     country: "georgia",
     kind: "side",
     date: "2026-08-19",

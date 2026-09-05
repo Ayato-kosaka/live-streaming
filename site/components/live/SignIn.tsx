@@ -44,9 +44,9 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
     <div className="signin">
       <b>YouTubeのアカウントでログインすると</b>
       <ul>
-        <li>出した企画が自分のものだと分かるようになります</li>
-        <li>スマホとパソコンで同じ人として扱われます</li>
-        <li>名前を毎回入れなくてよくなります</li>
+        <li>出した企画が、自分のものだと分かる</li>
+        <li>スマホとパソコンで、同じ人として扱われる</li>
+        <li>名前を毎回入れなくていい</li>
       </ul>
       <p className="signin-warn">
         押すと Google の画面に移ります。このサイトはまだ Google の審査を受けていないので、

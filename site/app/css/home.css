@@ -58,8 +58,21 @@
 }
 
 .hchap-head {
+  position: relative;
   text-align: center;
-  margin: 0 0 22px;
+  margin: 0 0 var(--sp-4, 22px);
+}
+
+/* 白い字を海の上に直に置くと 2.2〜3.1 : 1 にしかならず、読めない。
+   看板の下に落ちる陰として、字の後ろだけ水を暗くする。
+   これで白との比が 8 : 1 を超える。 */
+.hchap-head::before {
+  content: "";
+  position: absolute;
+  inset: -10px -14px 2px;
+  background: radial-gradient(closest-side, rgba(6, 38, 74, 0.58), rgba(6, 38, 74, 0) 78%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .hchap-head h2 {
@@ -279,12 +292,22 @@
 .hstrip {
   margin: 20px -16px 0;
 }
+/* 帯の見出しも海の上。字の後ろだけ水を暗くする */
 .hstrip-head {
+  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 16px 10px;
+  padding: 0 var(--sp-3, 16px) var(--sp-2, 10px);
+}
+.hstrip-head::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0 0;
+  background: linear-gradient(180deg, rgba(6, 38, 74, 0.42), rgba(6, 38, 74, 0));
+  z-index: -1;
+  pointer-events: none;
 }
 .hstrip-head h3 {
   margin: 0;
@@ -300,8 +323,8 @@
   flex: none;
   font-size: 12px;
   font-weight: 700;
-  color: #dcefff;
-  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.45);
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(9, 44, 82, 0.55);
   text-decoration: none;
 }
 

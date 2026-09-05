@@ -30,12 +30,16 @@ export default function FriendsPage() {
   const says = [0, 6, 13].map((i) => VOICES[i]).filter(Boolean);
 
   return (
-    <PageShell crumbs={[{ label: "愉快な仲間達" }]}>
+    <PageShell crumbs={[{ label: "仲間のテント" }]}>
+      {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
+          パンくずが「仲間のテント」なので、h1 もそれに合わせる。
+          「愉快な仲間達」は、そのテントに集まっている人たちの呼び名なので1行下へ。
+          カモメは遊び方のある面だけに出す決まりなので、ここには出さない
+          （`docs/island-ux.md` 5.2）。 */}
       <PageHead
         mark={<FriendsMark />}
-        title="愉快な仲間達"
-        lead="毎晩22時に集まってくる人たち。名前は出しませんが、ちゃんとここにいます。"
-        say="自分のキャラクターも作れるよ。作った絵は、そのまま島を歩くんだ。"
+        title="仲間のテント"
+        lead="毎晩22時に集まってくる、愉快な仲間達。名前は出しませんが、ちゃんとここにいます。"
       />
 
       <div className="pap-mat">
@@ -74,7 +78,7 @@ export default function FriendsPage() {
           </section>
 
           <section className="pap-sec">
-            <h2 className="pap-h">島を歩いている仲間</h2>
+            <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
             <p className="pap-note">
               自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
             </p>
@@ -97,14 +101,14 @@ export default function FriendsPage() {
           </section>
 
           <section className="pap-sec">
-            <h2 className="pap-h">キャラクターを作りたい人へ</h2>
+            <h2 className="pap-h">自分のキャラクターも作れる?</h2>
             <p>
-              キャラクターは、100円から投げ銭してくれた方にお作りしています。作ったキャラクターは、投げ銭の演出のときに画面に出てきます。この島も歩きます。
+              100円から投げ銭してくれた方に、1人ずつ描いています。描いた絵は投げ銭の演出に出てきて、そのままこの島を歩きます。
             </p>
             <p>
-              できあがった画像は、下のGoogleドライブから自由に持っていけます。アイコンに使ってもらって大丈夫です。
+              できた絵は、下のGoogleドライブから持っていけます。アイコンに使ってもらって大丈夫。
             </p>
-            <div className="pap-gos" style={{ marginTop: 12 }}>
+            <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <a className="pap-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
                 <img src={doneru.logo} alt="" />
                 <span>
@@ -132,15 +136,15 @@ export default function FriendsPage() {
               <li>
                 <b>ログインしないで使う</b>
                 <i>
-                  企画掲示板は名前もログインも要りません。名前の欄はありますが、
-                  空のままでも貼れます。書けば、その名前だけが札に出ます。
+                  企画掲示板は名前もログインも要りません。名前の欄は空のままでも貼れて、
+                  書けばその名前だけが札に出ます。
                 </i>
               </li>
               <li>
                 <b>YouTubeでログインする</b>
                 <i>
-                  名前とアイコンが出るようになります。出したくないものは
-                  「島での見え方」で片方ずつ消せます。両方消しても、企画は出せます。
+                  名前とアイコンが札に出ます。出したくないほうは「島での見え方」で
+                  片方ずつ消せて、両方消しても企画は出せます。
                 </i>
               </li>
             </ul>
@@ -148,12 +152,12 @@ export default function FriendsPage() {
               「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
               個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。
             </p>
-            <div className="pap-gos" style={{ marginTop: 12 }}>
+            <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <Link className="pap-go" href="/board">
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>
                   <b>島での見え方を決める</b>
-                  <i>企画掲示板の下。ログインすると出てきます</i>
+                  <i>ログインすると、企画掲示板の下に出てくる</i>
                 </span>
                 <Icon name="right" size={14} />
               </Link>

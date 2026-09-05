@@ -109,7 +109,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
 
         {/* 今夜あるのか、次はいつなのか。開いて1秒で分かるべき2つを、札にして並べる。 */}
         {clock && (
-          <div className="tiles" style={{ marginTop: 18, textAlign: "left" }}>
+          <div className="tiles" style={{ marginTop: "var(--sp-4)", textAlign: "left" }}>
             {clock.onAir ? (
               <a
                 className="tile"
@@ -153,7 +153,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           </div>
         )}
 
-        <div className="chips" style={{ justifyContent: "center", marginTop: 14 }}>
+        <div className="chips" style={{ justifyContent: "center", marginTop: "var(--sp-3)" }}>
           {cur.theme && !SLUG.test(cur.theme) && (
             <span className="chip">
               <Icon name="light" size={12} />
@@ -175,7 +175,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             <span className="np-stamp">{cur.updatedAt?.replace(/-/g, ".")}</span>
             {cur.week?.length > 0 && (
               <section className="pap-sec">
-                <h2 className="pap-h">今週やること</h2>
+                <h2 className="pap-h">今週、なにをするんだろう</h2>
                 <ul className="pap-rows">
                   {cur.week.map((w, i) => (
                     <li key={i}>{w}</li>

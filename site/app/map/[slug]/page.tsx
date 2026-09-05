@@ -11,7 +11,6 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
 import Days from "@/components/atlas/Days";
-import { COUNTRY_MAPS } from "@/components/atlas/countryMaps";
 
 export function generateStaticParams() {
   return COUNTRIES.map((c) => ({ slug: c.slug }));
@@ -52,7 +51,6 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const cooked = RECIPES.filter((r) => r.country === c.slug);
   const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
   const lives = towns.reduce((n, t) => n + streamsOfCity(c.slug, t).length, 0);
-  const hasMap = Boolean(COUNTRY_MAPS[c.slug]);
   // まだ出国していない国は、書き出した日で数字が止まる。画面が出てから数え直す。
   const staying = c.stays.find((s) => !s.to);
   const days = closedDays(c.stays);
@@ -63,24 +61,39 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />
 
-      {/* パスポートの1ページ。旗・入国のスタンプ・入出国の日付・数字を、
+      {/* パスポートの1ページ。国の地図・入国のスタンプ・入出国の日付・数字を、
           1枚の紙に罫で割って収める（docs/ac-reference.md 7章）。
-          17カ国ぶんが同じ型で並ぶので、国ごとの違いが中身だけになる。 */}
-      <Panel className="paper apass">
+          17カ国ぶんが同じ型で並ぶので、国ごとの違いが中身だけになる。
+
+          **主役は地図ひとつ。** 本物の図鑑の面は、絵が縦の半分以上を占めていて、
+          そのまわりに何も載っていない（ac-reference 7章 4）。
+          前は 64px の旗と国名と丸い印を1行に並べたうえで、
+          地図を別のパネルに出していた。紙の上でいちばん大きいものが
+          「入国と出国の表」だったので、どこを見ればいいのか言えていなかった。
+
+          旗を大きくして主役にするのは試して、やめた。`Flag` は 20〜30px で
+          読めるように角丸と縁の線を決めてあるので、186px にすると
+          角丸が幅の1割、縁が 7px の灰色の帯になって、旗に見えない。
+
+          日本語の国名はここには出さない。すぐ上の h1 が国名なので、
+          同じ字が2回続く。ここに残すのはローマ字名と地方だけ。 */}
+      <Panel className="apass">
         <div className="apass-top">
-          <span className="apass-flag">
-            <Flag slug={c.slug} size={64} />
-          </span>
-          <span className="apass-who">
-            <b>{c.name}</b>
-            <em>{c.en}</em>
-            <i>{c.region}</i>
-          </span>
+          <CountryMap slug={c.slug} name={c.name} />
+          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける */}
           <span className="apass-stamp" aria-hidden>
             <b>{c.order}</b>
             <i>カ国目</i>
           </span>
         </div>
+
+        <p className="apass-who">
+          <span className="apass-flag">
+            <Flag slug={c.slug} size={30} />
+          </span>
+          <em>{c.en}</em>
+          <i>{c.region}</i>
+        </p>
 
         <dl className="apass-log">
           {c.stays.map((st, i) => (
@@ -109,15 +122,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
         </div>
       </Panel>
 
-      {hasMap && (
-        <Panel className="paper">
-          <h2>この国のどこにいたんだろう</h2>
-          <p className="muted">白い丸が行った街。線は移動したところです。</p>
-          <CountryMap slug={c.slug} name={c.name} />
-        </Panel>
-      )}
-
-      <Panel className="paper">
+      <Panel>
         <h2>行った街</h2>
         <div className="cities">
           {towns.map((city) => {
@@ -149,7 +154,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
         </div>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>この国であったこと</h2>
         <div className="hlist">
           {c.highlights.map((h, i) => (
@@ -166,7 +171,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       </Panel>
 
       {cooked.length > 0 && (
-        <Panel className="paper">
+        <Panel>
           <h2>この国で作ったごはん</h2>
           <div className="chips">
             {cooked.map((r) => (

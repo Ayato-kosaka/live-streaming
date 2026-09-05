@@ -72,7 +72,7 @@ export default function MapPage() {
         />
       </div>
 
-      <Panel className="paper">
+      <Panel>
         <h2>どこをどう回ったんだろう</h2>
         <p className="muted">
           ピンを押すと、その国のページへ行けます。上のボタンで地図を寄せられます。
@@ -80,7 +80,7 @@ export default function MapPage() {
         <WorldRoute here={here.slug} />
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>行った順に、ぜんぶ</h2>
         <p className="muted">同じ国に何度も戻っているので、番号は「初めて入った順」です。</p>
         <ol className="atrip">

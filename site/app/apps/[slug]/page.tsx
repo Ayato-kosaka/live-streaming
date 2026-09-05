@@ -73,7 +73,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         }
       />
 
-      <Panel className="paper">
+      <Panel>
         <h2>どんなアプリか</h2>
         <div className="aapp-split">
           <PhoneShot width={200} screen={SHOT[a.slug] ?? "food"} />
@@ -104,7 +104,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         )}
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>ここまで、どう作ってきたか</h2>
         <p className="muted">年を押すと開きます。配信のリンクは、その日の回そのものです。</p>
         {years.map(([year, list], i) => (

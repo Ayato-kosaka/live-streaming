@@ -101,8 +101,7 @@ export default function NordicGuidePage() {
       <PageHead
         mark={<Icon name="book" size={44} />}
         title="旅のしおり"
-        lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。"
-        say="読みたいところだけ開いてね。サウナのところは行かない人も面白いと思う。"
+        lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。目次から、読みたいところだけ開いてください。"
       />
 
       <div className="gbook">

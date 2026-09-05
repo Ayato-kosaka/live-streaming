@@ -14,7 +14,7 @@ export default function BoardPage() {
       <PageHead
         icon="signboard"
         title="企画掲示板"
-        lead="「こういうことやってほしい」を貼る板。ログインも名前も要りません。票が集まったものから、週のはじめの会議に上がります。"
+        lead="「こういうことやってほしい」を貼る板。むちゃな企画ほど、だいたい通る。"
         say={GUIDE.board}
       />
       <Board />

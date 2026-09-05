@@ -14,6 +14,7 @@ import { jstNow } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/Icon";
 import { daysUntil, nextPlan } from "@/content/plans";
+import { NOW_FALLBACK } from "@/content/site";
 import { todayNews, type TodayNews } from "@/lib/todayNews";
 import {
   createVillagers,
@@ -70,6 +71,28 @@ const TODAY_AT: Partial<Record<TodayNews["kind"], SpotId>> = {
   recipe: "kitchen",
   past: "map",
 };
+/* ---- 見せ方は、素の関数で決める ------------------------------------------
+   起動直後は画面の幅がまだ分からないので、PC の幅（1440）で1回だけ描いている。
+   幅が届いた瞬間にカメラを置き直すのだが、そのとき使う寄りの度合いが
+   useMemo の値（＝1つ前の描画で決まったもの）だと、**島ぜんぶの引きに置いてから
+   寄りへ ease で詰める**ことになる。いちばん重い絵を何十枚も描くのはこれ。
+
+   実測（390×844・到着演出を飛ばす人）: 島に降りてから寄りが決まるまで
+   viewBox の幅が 3400 → 1412 → 767 → 530 と 4 秒かけて縮んでいた。
+   **最初の4秒、島は「引きの絵」のまま**で、しかも毎フレーム描き直していた。
+
+   box を見る計算を React の外（素の関数）に出して、毎フレームその場で引く。
+   ------------------------------------------------------------------------ */
+const modeOf = (w: number) => (w < 640 ? "phone" : w < 1024 ? "tablet" : "wide");
+/** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
+const spanOf = (w: number, h: number, wide: boolean) => {
+  const aspect = w / Math.max(1, h);
+  const m = modeOf(w);
+  if (m === "phone") return wide ? 830 : 340;
+  if (m === "tablet") return Math.max(1120, 980 * aspect);
+  return Math.max(1220, 880 * aspect);
+};
+
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
 /** 指で押せる最小の大きさ(画面px) */
@@ -108,6 +131,32 @@ const RETURN_AT = "ayato-island-at";
 const WALKED = "ayato-island-walked";
 /** 案内を出しておく時間(ミリ秒)。読んで、押してみるまでの間だけ。 */
 const HINT_SPAN = 5200;
+
+/* ---- 名乗り --------------------------------------------------------------
+   島に降りた人が最初に読む文字は「押したところまで歩いていくよ」だけで、
+   **この人が誰で、何をしているのかに答える文字が1画面目に1文字も無かった。**
+   看板ロゴには書いてあるが、絵として焼き込んであるので読まれていない。
+   切り抜きから来た人は、何のサイトか分からないまま帰る。
+
+   島の上に文字を増やすと絵が死ぬ。だから増やさずに、
+   **島のほうから口を開く**（`docs/island-play.md` 仕掛け9）。
+   吹き出しは住人の会話のものをそのまま使い回す。新しい部品は作らない。
+
+   言うのは「島が何か」ではなく「**この人が何をしているか**」。
+   ロゴの副題（旅して、食べて、グルメアプリを作る、夜の居場所）と
+   同じことを二度言わないよう、言い方を変えてある。
+   地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
+   ------------------------------------------------------------------------ */
+const GREETING = `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${NOW_FALLBACK.place}だよ。`;
+/** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
+const GUIDE = -1;
+/**
+ * 今日の板が自分から開く日。
+ *
+ * その日は名乗りを出さない。カモメと板が両方開くと、また島が見えなくなる。
+ * 判断のもとは `components/today/Today.tsx` と同じで、あちらが増えたらここも足す。
+ */
+const TODAY_OPENS: TodayNews["kind"][] = ["live", "plan", "recipe"];
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -162,6 +211,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   /** 歩き方の案内。初めての人にだけ、数秒だけ出す。初期値は false（出さない側に倒す） */
   const [hint, setHint] = useState(false);
   const [wide, setWide] = useState(false); // スマホで「島ぜんぶ」
+  /**
+   * 下のバーの行き先が開いているか。
+   *
+   * **既定は閉じている。** 島を見ているあいだ、行き先の一覧は要らない。
+   * 前は6つのマスが常に出ていて、バーだけで画面の 25%（183px / 726px）を
+   * 取っていた。島が主役の面で、島の上に載せた道具が4分の1を占めていた。
+   * 畳んだバーは「今日の島」の1行だけになる。行き先は1タップで開く。
+   */
+  const [barOpen, setBarOpen] = useState(false);
   const [hover, setHover] = useState<SpotId | null>(null);
   /** 名札が開いている入口。近さと hover から決まる。1フレームごとには更新しない。 */
   const [openSpot, setOpenSpot] = useState<SpotId | null>(null);
@@ -190,6 +248,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const inviteSlot = useRef(-1);
   const boxRef = useRef(box);
   boxRef.current = box;
+  /* 毎フレームの計算が見るものは ref に置く。state を見に行くと、
+     その state が変わるたびに rAF のループを張り直すことになる。 */
+  const wideRef = useRef(wide);
+  wideRef.current = wide;
+  const hoverRef = useRef<SpotId | null>(hover);
+  hoverRef.current = hover;
 
   const show = useResidentShow();
   const villagers = useMemo(() => createVillagers(residents), [residents]);
@@ -212,7 +276,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       /* 覚えられなくても、次にもう一度出るだけ */
     }
   }, []);
+  /* 歩き方の案内は、名乗り（カモメの吹き出し）が閉じてから。
+     同時に出すと、1画面目に文字の塊が2つ並んで、島がまた隠れる。
+     カモメを閉じた指がそのまま次に押すので、順番としてもこちらが後。 */
   useEffect(() => {
+    if (hintDone.current || arriving || talking) return;
     let walked = false;
     try {
       walked = !!localStorage.getItem(WALKED);
@@ -226,7 +294,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     setHint(true);
     const t = setTimeout(() => dismissHint(), HINT_SPAN);
     return () => clearTimeout(t);
-  }, [dismissHint]);
+  }, [arriving, talking, dismissHint]);
 
   /** 出発まであと何日。「これから」の札に付ける。 */
   const [days, setDays] = useState<number | null>(null);
@@ -282,6 +350,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     }
     // 初めての人(null)には見せる。長く空いた人にも、もう一度。
     const again = apart === null || apart >= ARRIVE_AGAIN;
+    /* 名乗りも同じ人に同じ回数だけ。到着の演出は「来た」しか言っていないので、
+       そのあとに1文だけ足して、演出に中身を持たせる。
+       今日の板が自分から開く日は出さない（両方開くと島が見えない）。 */
+    const greet = again && !TODAY_OPENS.includes(todayNews().kind);
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
@@ -295,9 +367,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       skipArrive.current = true;
       snapCam.current = true;
       setArriving(false);
+      if (greet) setTalking({ i: GUIDE, text: GREETING });
       return;
     }
-    const t = setTimeout(() => setArriving(false), 3000);
+    const t = setTimeout(() => {
+      setArriving(false);
+      if (greet) setTalking({ i: GUIDE, text: GREETING });
+    }, 3000);
     return () => clearTimeout(t);
   }, []);
 
@@ -339,38 +415,32 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     if (h && h !== barH.current) barH.current = h;
   });
 
-  const mode = box.w < 640 ? "phone" : box.w < 1024 ? "tablet" : "wide";
+  const mode = modeOf(box.w);
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
   const follow = mode === "phone" && !wide;
 
-  /** 表示する横幅(ワールド単位)。縦長では「縦に何単位見せるか」から逆算する。 */
-  const span = useMemo(() => {
-    const aspect = box.w / Math.max(1, box.h);
-    if (mode === "phone") return wide ? 830 : 340;
-    if (mode === "tablet") return Math.max(1120, 980 * aspect);
-    return Math.max(1220, 880 * aspect);
-  }, [mode, wide, box.w, box.h]);
-
   /**
-   * 下のバーに隠れるぶん、島を上へ寄せる量（ワールド単位）。
+   * カメラが行きたい先。
    *
-   * スマホの「島ぜんぶ」で、島の下ふちがバーの裏に沈んでいた。
-   * 画面のまん中に置いていたが、見えているのはバーより上だけなので、
-   * そのまん中に来るように、カメラをバーの半分だけ下へ向ける。
-   * バーの背は「今日の島」が乗るかどうかで変わるので、測った値を使う。
+   * **ref だけを見る。** state を見ると、寄り引きが変わるたびに rAF のループを
+   * 張り直すことになり、そのあいだ snapCam が1つ前の寄りで置かれてしまう。
+   *
+   * スマホの「島ぜんぶ」では、下のバーに隠れるぶん島を上へ寄せる。
+   * 画面のまん中に置くと下ふちがバーの裏に沈むので、
+   * 見えている範囲（バーより上）のまん中に来るように、バーの半分だけ下を向く。
    */
-  const lift = useCallback(() => {
+  const camWant = useCallback(() => {
     const b = boxRef.current;
-    if (!barH.current || !b.w) return 0;
-    return (barH.current / 2) * (span / b.w);
-  }, [span]);
-
-  const camTarget = useCallback(() => {
-    if (follow) return { x: avatar.current.x, y: avatar.current.y - 92 };
-    if (mode === "phone") return { x: ISLAND.cx, y: ISLAND.cy - 40 + lift() };
-    if (mode === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy + 6 };
+    const m = modeOf(b.w);
+    if (m === "phone" && !wideRef.current) return { x: avatar.current.x, y: avatar.current.y - 92 };
+    if (m === "phone") {
+      const s = spanOf(b.w, b.h, wideRef.current);
+      const lift = barH.current && b.w ? (barH.current / 2) * (s / b.w) : 0;
+      return { x: ISLAND.cx, y: ISLAND.cy - 40 + lift };
+    }
+    if (m === "wide") return { x: ISLAND.cx - 40, y: ISLAND.cy + 6 };
     return { x: ISLAND.cx, y: ISLAND.cy - 40 };
-  }, [follow, mode, lift]);
+  }, []);
 
   /* ---- 動きは React の外で ------------------------------------------------
      毎フレーム setState すると、160枚のスプライトを毎回作り直すことになって
@@ -448,24 +518,28 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
       // --- カメラ ---
       const cam = camRef.current;
-      const want = camTarget();
+      const want = camWant();
+      // 寄りの度合いも、いまの画面の幅からその場で引く。
+      // 1つ前の描画で決まった値を使うと、幅が届いた最初の1フレームで
+      // 「PC の引き」に置いてしまい、そこから寄りまで ease で詰めることになる。
+      const spanNow = spanOf(b.w, b.h, wideRef.current);
       if (snapCam.current) {
         // 到着演出を飛ばす人。寄りも位置も、最初の1フレームで所定の場所に置く
         snapCam.current = false;
         cam.x = want.x;
         cam.y = want.y;
-        cam.span = span;
+        cam.span = spanNow;
       } else {
         const ease = 0.09 * (dt / 16.67);
         cam.x += (want.x - cam.x) * ease;
         cam.y += (want.y - cam.y) * ease;
-        const far = cam.span > span * 1.25;
-        cam.span += (span - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
+        const far = cam.span > spanNow * 1.25;
+        cam.span += (spanNow - cam.span) * (far ? 0.019 : 0.09) * (dt / 16.67);
         // 追いつく手前で止める。近づくほど遅くなる式なので、放っておくと
         // 目に見えない差を永遠に詰め続けて、そのあいだ島を描き直し続ける。
         if (Math.abs(want.x - cam.x) < 0.05) cam.x = want.x;
         if (Math.abs(want.y - cam.y) < 0.05) cam.y = want.y;
-        if (Math.abs(span - cam.span) < 0.05) cam.span = span;
+        if (Math.abs(spanNow - cam.span) < 0.05) cam.span = spanNow;
       }
 
       const vbW = cam.span;
@@ -524,7 +598,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       }
 
       // --- 入口の札 ---
-      let best: SpotId | null = hover;
+      let best: SpotId | null = hoverRef.current;
       if (!best) {
         let bd = HERE;
         for (const sp of DOORS) {
@@ -570,7 +644,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [camTarget, span, villagers, hover]);
+  }, [camWant, villagers]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -600,6 +674,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     dismissHint();
     setOpenSpot(s.id);
     if (wide) setWide(false);
+    setBarOpen(false);
   };
 
   const openTalk = useCallback(
@@ -647,6 +722,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       return;
     }
     if ((e.target as HTMLElement).closest("[data-ui]")) return;
+    // 島を触ったら、行き先の一覧は引っ込める。島を見に来た指の邪魔をしない
+    setBarOpen(false);
     const host = hostRef.current!;
     const r = host.getBoundingClientRect();
     const cam = camRef.current;
@@ -782,6 +859,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </svg>
 
+      {/* 島の下ふち。海をページの下地へ溶かして、切り口が出ないようにする。
+          tokens.css が .stage の ::before / ::after を時間帯の色に使っているので、
+          擬似要素ではなく実体を1枚置いている。 */}
+      <span className="stage-shore" aria-hidden />
+
       {/* 建物の札。島に建っているものは全部押せるので、ふだんは何も出さない。
           出るのは「今日ここに何かある」1つと、いま近づいている1つだけ。 */}
       <div className="labels">
@@ -804,13 +886,19 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 onMouseLeave={() => setHover((v) => (v === sp.id ? null : v))}
                 onFocus={() => setHover(sp.id)}
                 onBlur={() => setHover((v) => (v === sp.id ? null : v))}
-                aria-label={`${sp.label}へ行く`}
+                // 押すと「歩いていく」。入るのは、着いて開いた札のほう。
+                // 「へ行く」と読み上げると、押した先で入れると思われる
+                aria-label={`${sp.label}まで歩く`}
               />
               <Link
                 data-ui
                 href={sp.href}
                 className="spot-mark"
                 tabIndex={on ? 0 : -1}
+                // 10軒ぶんの札がいつも画面にいるので、先読みを止めないと
+                // 島を開いただけで全ページの RSC を取りにいく（実測で約3MB）。
+                // 静的書き出しなので、先読みで得られるものは小さい。
+                prefetch={false}
                 // 戻ってきたときに、この建物の前に立っていてほしい。
                 // 遠くから札を押して入ることもあるので、あやとの現在地ではなく建物の足元を残す。
                 onClick={() => {
@@ -865,9 +953,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </div>
 
-      {/* 吹き出し。画面の上にどんと出して、どこを押しても閉じる。 */}
+      {/* 吹き出し。画面の上にどんと出して、どこを押しても閉じる。
+          住人のセリフと、島に降りた人への名乗り（カモメ）が同じ器を使う。 */}
       {talking && (
-        <div className="talkbox" role="status">
+        <div className={`talkbox${talking.i === GUIDE ? " is-guide" : ""}`} role="status">
+          {talking.i === GUIDE && (
+            <span className="talkbox-gull" aria-hidden>
+              <Gull size={54} shadow={false} />
+            </span>
+          )}
           <p>{talking.text}</p>
           <span className="talkbox-tap">画面のどこかを押すと閉じる</span>
         </div>
@@ -878,23 +972,47 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           出し分けは mode で決まるので、同時に2枚は出ない。 */}
       {mode !== "phone" && <Today place="corner" />}
 
-      {/* スマホ: 行き先は下のバーにまとめる */}
+      {/* スマホ: 行き先は下のバーにまとめる。
+          **ふだんは畳んでおく。** 島を見ているあいだ、行き先の一覧は要らない。
+          出しっぱなしのバーは 183px あって、島の面の 25% を取っていた。
+          畳めば「今日の島」の1行だけになり、島がその分だけ広く見える。
+
+          畳んでいるあいだ、行き先は島の建物そのものが持っている（10軒とも押せる）。
+          歩きたくない人のために、1タップで6つの一覧が開く。 */}
       {mode === "phone" && (
-        <div className="island-bar" data-ui ref={barRef}>
+        <div className={`island-bar${barOpen ? " is-open" : ""}`} data-ui ref={barRef}>
           <Today place="bar" />
-          <div className="island-bar-scroll">
+          <button
+            className="bar-toggle"
+            onClick={() => setBarOpen((v) => !v)}
+            aria-expanded={barOpen}
+            aria-controls="island-bar-spots"
+          >
+            <Icon name={barOpen ? "chevron" : "up"} size={12} />
+            {barOpen ? UI.close : "行き先をみる"}
+          </button>
+          <div className="island-bar-scroll" id="island-bar-spots">
+            {/* 押したら、その場所へ行く。
+                前は `<button>` で島のあやとを歩かせるだけだった。押しても入れないので、
+                島の札の劣化版になっていたうえ、読み上げにもキーボードにも
+                行き先として見えていなかった。歩くのは島の建物のほうの役目にする。 */}
             {SPOTS.map((s) => (
-              <button
+              <Link
                 key={s.id}
+                href={s.href}
+                prefetch={false}
                 className={`bar-spot${openSpot === s.id ? " is-on" : ""}`}
-                onClick={() => goTo(s)}
+                // 戻ってきたときに、この建物の前に立っていてほしい
+                onClick={() => {
+                  leaveAt.current = { x: s.x, y: s.y + 34 };
+                }}
               >
                 <img src={`/sprites/${s.icon}.webp`} alt="" />
                 <span>{s.label}</span>
                 {s.countdown && days !== null && days >= 0 && (
                   <em>{days === 0 ? "今日" : `あと${days}日`}</em>
                 )}
-              </button>
+              </Link>
             ))}
           </div>
         </div>

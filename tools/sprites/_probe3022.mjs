@@ -1,0 +1,11 @@
+import { chromium } from "playwright-core";
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args:["--no-sandbox"]});
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile:true, hasTouch:true });
+const p = await ctx.newPage();
+const url = process.env.U || "http://localhost:3022/map/france";
+const sel = process.env.S || ".apass";
+await p.goto(url, { waitUntil:"networkidle" });
+await p.waitForTimeout(600);
+const el = await p.$(sel); await el.scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
+await el.screenshot({ path: process.env.O || "/tmp/r3/el.png" });
+await b.close();

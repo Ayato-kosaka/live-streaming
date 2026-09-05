@@ -4,10 +4,16 @@
    企画の芯は「会いたい人がいるので、スウェーデンまで陸路で会いに行く」こと。
    だから「あと何日」「あと何km」「いまどこ」を、いちばん大きく見せる。
 
-   このページ群は2つの型を混ぜないように分けてある（docs/ac-reference.md 7章）。
-     - 旅の司令塔（.tnow）と地図まわり … 板の型。厚みと影がある
-     - 見どころと旅のしおり（.folds / .gchap） … 紙の型。影を落とさない
-   紙の型の下敷きは app/css/ui.css が持っている。ここではその上に足すぶんだけ書く。
+   **この2面は紙**（docs/island-world.md 2章の表）。以前ここには
+   「司令塔と地図は板、見どころとしおりは紙」と書いてあったが、それは表と食い違う
+   決めごとを、このファイルの中だけで作っていたということ。実際 `/nordic` は
+   `.panel.paper` が0枚で、生成りの紙の地の上に厚み8pxの板が925px積まれていた。
+   `ac-reference.md` 7章が名指しで禁じている「同じ形の窓が延々と積まれる」形そのもの。
+
+   だから型の判断はここでしない。**面は紙。板にしていいのは押すものと書くものだけ**
+   （docs/island-world.md 2.1）。紙の正本は app/css/pages.css の `.panel.paper`
+   （影を落とさない／角 --r-0／枠は1pxの罫／地は --pg-paper-bg）で、
+   このファイルはそれに寄せるぶんと、寄せたあとに要る調整だけを持つ。
    ========================================================= */
 
 /* =========================================================
@@ -15,19 +21,16 @@
    ---------------------------------------------------------
    1画面で「いつ出て・あとどれだけで会えて・いまどこで・次はどこか」を言い切る。
    ここを読んでスクロールをやめても、企画の形が分かる状態にする。
+
+   器は `.panel.paper` をそのまま借りている（`TripNow.tsx` が class を付ける）。
+   紙の作りを写経すると、正本を直したときにここだけ取り残される。
    ========================================================= */
 .tnow {
   position: relative;
-  margin: 0 0 26px;
-  padding: 18px 16px 20px;
-  border: var(--bw-3) solid var(--frame-dark);
-  border-radius: var(--r-3);
-  background:
-    radial-gradient(130% 90% at 50% 0%, color-mix(in srgb, var(--gold) 34%, transparent), transparent 62%),
-    linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: var(--pop-lg), var(--shadow-3);
 }
-@media (min-width: 720px) { .tnow { padding: 26px 26px 26px; } }
+/* 一本道の帯を紙のはしまで届かせるのに、紙の左右の余白を負のマージンで使う。
+   `.panel.paper` は幅を --pp-x で持っているので、数値で書かずそれを借りる。 */
+.tnow-rail { --tnow-x: var(--pp-x, var(--sp-4)); }
 
 .tnow-top h1 {
   margin: 0;
@@ -54,6 +57,8 @@
 .tnow-counts { display: grid; gap: 9px; margin-top: 15px; }
 @media (min-width: 620px) { .tnow-counts { grid-template-columns: 1.25fr 1fr; align-items: stretch; } }
 
+/* 数字の枠。紙の上なので、厚みも茶色い枠も持たせない。
+   罫線1本で囲んで、中の地をほんの少し変えるだけで「別のまとまり」は言える。 */
 .tnow-count {
   position: relative;
   display: grid;
@@ -61,19 +66,19 @@
   justify-items: center;
   text-align: center;
   padding: 13px 12px 14px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-2);
-  background: linear-gradient(color-mix(in srgb, var(--gold) 16%, var(--paper)), var(--paper));
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--gold) 13%, var(--paper));
 }
-.tnow-count.is-far { background: linear-gradient(color-mix(in srgb, var(--accent) 13%, var(--paper)), var(--paper)); }
+.tnow-count.is-far { background: color-mix(in srgb, var(--accent) 10%, var(--paper)); }
 .tnow-count-l {
-  font-size: 11px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .tnow-count-n { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
-.tnow-count-n em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.tnow-count-n em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .tnow-count-n b {
   font-size: clamp(26px, 8.4vw, 42px);
   font-weight: 900;
@@ -82,7 +87,9 @@
   font-variant-numeric: tabular-nums;
 }
 .tnow-count-n.is-wait { font-size: 19px; font-weight: 900; color: var(--ink); }
-.tnow-count-w { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-3); }
+/* 数字の下の一行。読ませる字なので --ink-3 は使えない。
+   紙のムラの沈んでいるほうで 3.30 : 1 しか出ない（docs/island-review-2.md 5.3）。 */
+.tnow-count-w { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
 .is-far .tnow-count-n b { color: var(--accent-deep); }
 
 /* 進み具合。数字だけだと減っているのが分からない。 */
@@ -91,7 +98,7 @@
   height: 8px;
   margin-top: 3px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--frame-dark) 24%, var(--paper));
+  background: color-mix(in srgb, var(--rule) 26%, var(--paper));
   overflow: hidden;
 }
 .tnow-bar > span {
@@ -109,29 +116,29 @@
   gap: 8px;
   margin-top: 12px;
   padding: 12px 12px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-2);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
   background: var(--paper);
 }
 @media (min-width: 620px) { .tnow-pair { grid-template-columns: 1fr auto 1fr auto; } }
 .tnow-at, .tnow-to { display: grid; gap: 1px; min-width: 0; }
 .tnow-at i, .tnow-to i {
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .tnow-at b, .tnow-to b { font-size: 16.5px; font-weight: 900; line-height: 1.35; }
 .tnow-at em, .tnow-to em {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: var(--fs-min);
   font-weight: 800;
   line-height: 1.55;
   color: var(--ink-2);
 }
 .tnow-to b { color: var(--frame-deep); }
-.tnow-go { flex: none; color: var(--frame-dark); display: grid; place-items: center; }
+.tnow-go { flex: none; color: var(--rule); display: grid; place-items: center; }
 /* 次の区間の絵。スマホでは行の下にまわす（3列に絵まで入ると全部が細くなる） */
 .tnow-art { grid-column: 1 / -1; justify-self: center; margin-top: 4px; }
 @media (min-width: 620px) { .tnow-art { grid-column: auto; margin-top: 0; } }
@@ -154,13 +161,12 @@
   list-style: none;
   display: flex;
   gap: 0;
-  margin: 14px -16px 0;
-  padding: 4px 16px 10px;
+  margin: 14px calc(-1 * var(--tnow-x)) 0;
+  padding: 4px var(--tnow-x) 10px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .tnow-rail::-webkit-scrollbar { display: none; }
-@media (min-width: 720px) { .tnow-rail { margin-left: -26px; margin-right: -26px; padding-left: 26px; padding-right: 26px; } }
 .tnow-rail li {
   position: relative;
   flex: 1 0 auto;
@@ -179,38 +185,40 @@
   width: 100%;
   height: 4px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--frame-dark) 30%, var(--paper));
+  background: color-mix(in srgb, var(--rule) 34%, var(--paper));
 }
 .tnow-rail li:first-child::before { display: none; }
 .tnow-rail li.is-past::before,
-.tnow-rail li.is-on::before { background: var(--frame-dark); }
+.tnow-rail li.is-on::before { background: var(--rule); }
+/* 琥珀は「押せる板のふち」の色なので、押せない図に持ち出さない
+   （docs/island-world.md 3.2）。紙の上の図は罫の色で描く。 */
 .tnow-dot {
   position: relative;
   width: 13px; height: 13px;
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: 0 0 0 3.5px var(--frame-dark);
+  box-shadow: 0 0 0 3.5px var(--rule);
   z-index: 1;
 }
-.tnow-rail li.is-past .tnow-dot { background: var(--frame-dark); }
+.tnow-rail li.is-past .tnow-dot { background: var(--rule); }
 .tnow-rail li.is-on .tnow-dot {
   width: 17px; height: 17px;
   margin-top: -2px;
   background: var(--accent);
-  box-shadow: 0 0 0 4px var(--frame-deep);
+  box-shadow: 0 0 0 4px var(--accent-deep);
 }
 .tnow-rail li.is-goal .tnow-dot { background: var(--gold); box-shadow: 0 0 0 4px var(--accent-deep); }
 .tnow-name {
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   line-height: 1.4;
   text-align: center;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .tnow-rail li.is-on .tnow-name,
 .tnow-rail li.is-goal .tnow-name { color: var(--ink); }
 .tnow-goal {
-  font-size: 9px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.02em;
   padding: 2px 7px;
@@ -254,29 +262,36 @@
   align-items: center;
   gap: 3px 9px;
   padding: 8px 11px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-1);
+  /* 押せない。だから枠も琥珀ではなく罫、角も紙の角にする。 */
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
   background: var(--paper);
 }
-.nmkeys b { font-size: 11.5px; font-weight: 900; }
+.nmkeys b { font-size: var(--fs-min); font-weight: 900; }
 .nmkeys i {
   grid-column: 2;
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 800;
   line-height: 1.45;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* 見本は地図と同じ線で描く。色の名前を書くより、線そのものを見せる。 */
 .nmkeys-s { grid-row: span 2; height: 22px; border-radius: var(--r-pill); }
-.nmkeys .is-hitch .nmkeys-s { background: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%); }
+.nmkeys .is-hitch .nmkeys-s { background: var(--nm-hitch); }
+/* つながった区間の見本。線を増やさず、同じ線の芯が明るくなる。 */
+.nmkeys .is-tied .nmkeys-s {
+  background: linear-gradient(
+    var(--nm-hitch) 0 34%, var(--nm-tie) 34% 66%, var(--nm-hitch) 66%);
+}
 .nmkeys .is-ferry .nmkeys-s {
   height: 8px;
   background: repeating-linear-gradient(90deg, var(--sea-mid) 0 5px, transparent 5px 11px);
 }
 .nmkeys .is-side .nmkeys-s {
   height: 6px;
-  background: repeating-linear-gradient(90deg, var(--frame-dark) 0 4px, transparent 4px 10px);
+  /* 地図の寄り道の線は --frame。見本は地図と同じ色でないと凡例にならない。 */
+  background: repeating-linear-gradient(90deg, var(--frame) 0 4px, transparent 4px 10px);
 }
 .nmkeys .is-fly .nmkeys-s {
   height: 5px;
@@ -287,11 +302,11 @@
   justify-self: center;
   height: 24px;
   background: linear-gradient(var(--accent) 0 30%, var(--paper) 30% 70%, var(--accent) 70%);
-  box-shadow: 0 0 0 1.5px var(--frame-dark);
+  box-shadow: 0 0 0 1.5px var(--pg-rule);
 }
 .nmap-say {
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.7;
   color: var(--ink-2);
@@ -309,10 +324,10 @@
   box-shadow: var(--shadow-1);
 }
 .rleg-way { min-width: 0; }
-.rleg-way i { font-style: normal; color: var(--ink-3); margin: 0 2px; }
+.rleg-arrow { color: var(--ink-2); margin: 0 2px; }
 .rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .rleg-fixed {
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--marker-ink);
   background: var(--marker);
@@ -320,24 +335,43 @@
   padding: 4px 9px;
   display: inline-block;
 }
-.rleg-stay { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.rleg-stay { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+/* 開いたカードから出ていく先。国のページと、上の地図。
+   紙の上でも押せるものは板のまま（docs/island-world.md 2.1）。 */
+.rleg-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; }
 
 /* --- 区間の席 ---
    区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
    両方そろって、その区間はつながる（docs/nordic-fund.md 提案1）。
    席は罫線で仕切る。紙の型なので、中に板を積まない。 */
-.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; }
+/* 席の区切りの罫は、紙のはしからはしまで引く。本物の図鑑の紙も、
+   区切りは端まで届く1本になっている（/tmp/acref/ref_NH_Critterpedia_*.jpg）。
+   中だけで止めると、区切りではなく「もう1つの箱」に見える。
+   はしまでの幅は `ui.css` の `.fold-body` が持っているので、そこから借りる。 */
+.rleg-seat,
+.rtie {
+  --rleg-x: var(--sp-4);
+  margin-left: calc(-1 * var(--rleg-x));
+  margin-right: calc(-1 * var(--rleg-x));
+  padding-left: var(--rleg-x);
+  padding-right: var(--rleg-x);
+}
+.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; padding-bottom: 2px; }
 .rleg-seath {
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 0 0 8px;
 }
+/* 席の名前の右に日付を出す行。h3 の中に日付を入れないためだけの1枚。
+   紙の見出しは蛍光ペンを「字の下」に敷くので、h3 の中に置いた字は全部帯に入る。 */
+.rleg-seath-row { display: flex; align-items: baseline; gap: var(--sp-2); margin: 0 0 8px; }
+.rleg-seath-row .rleg-seath { margin: 0; }
 /* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
    席の名前は紙の h3 なので、ここが使いどころ。 */
 .rleg-seath span {
   padding: 2px 10px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   border-radius: var(--r-0);
@@ -345,6 +379,16 @@
   color: var(--marker-ink);
 }
 .seatmark { flex: none; display: block; }
+/* 起きたこと。越えた日と、そこで起きたこと2〜3行（docs/nordic-fund.md 提案4）。
+   日付は見出しの右へ流す。左に置くと、席の名前より先に日付を読むことになる。 */
+.rleg-when {
+  margin-left: auto;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.rleg-log { margin: 0 0 var(--sp-2); font-size: 13px; line-height: 1.95; font-weight: 700; }
 
 /* --- つながりの読み上げ ---
    埋まっていない区間を灰色にしない。灰色は失敗の色になる。
@@ -356,10 +400,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 13px 0 0;
-  padding: 10px 0 0;
+  margin-top: 13px;
+  padding-top: 10px;
   border-top: 1px solid var(--rule);
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.65;
   color: var(--ink-2);
@@ -400,9 +444,9 @@
 .fare-todo b { font-weight: 900; color: var(--ink); }
 .fare-todo i {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 800;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* バーは押せない。だから厚みも金も付けない。
    入った額は「数えたもの」なので、色はオリーブ（docs/island-world.md 3.2）。 */
@@ -420,7 +464,7 @@
   border-radius: 6px;
   background: var(--chip);
 }
-.fare-got { margin: 0; font-size: 12px; font-weight: 800; color: var(--ink-2); }
+.fare-got { margin: 0; font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
 .fare-got b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* 満ちたらバーを消す。満タンのバーを出し続けると
    「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。
@@ -510,7 +554,7 @@
 .spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
 .spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
-.spost-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.spost-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 /* 読み込み中。中身の形をした薄い板だけ置いて、場所を先に取る。
    出たとたんに下がずれるのを防ぐのが役目なので、動かさない。 */
 .spost-wait { display: grid; gap: 8px; margin: 0 0 12px; }
@@ -529,10 +573,10 @@
   margin: 0 0 10px;
   padding: 2px 0 2px 10px;
   border-left: 3px solid var(--marker);
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.75;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* =========================================================
@@ -554,19 +598,26 @@
   color: var(--ink);
 }
 .ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* 1字しか入らないので、丸も字も小さすぎると、フチのぼけで字がやせる。
+   実測（描いた画素から）で 24px/12px は 4.29 : 1 まで落ちていた。 */
 .ncountry-leg {
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--frame-dark);
-  color: var(--paper);
-  font-size: 12px;
+  /* 何カ国目か。数えたものなのでオリーブの平らな札（docs/island-world.md 3.2）。
+     琥珀の丸にクリームの数字だと 2.91 : 1 で読めない。
+     オリーブの札そのままだと 5.66 : 1 だが、1字が丸の中で細るぶんフチのぼけに
+     食われて、描いた画素では 4.04 : 1 まで落ちる。だから面を紙で薄めて
+     7.3 : 1 まで開けておく。字の色は札のまま。 */
+  background: color-mix(in srgb, var(--chip) 55%, var(--paper));
+  color: var(--chip-ink);
+  font-size: 13.5px;
   font-weight: 900;
 }
 .ncountry-body { display: grid; gap: 2px; min-width: 0; }
 .ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); }
-.ncountry-body em { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
+.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); }
+.ncountry-body em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 /* =========================================================
    国のページ
@@ -574,33 +625,57 @@
 /* 入る道・出る道 */
 .ncways { display: grid; gap: 9px; margin-top: 13px; }
 @media (min-width: 620px) { .ncways { grid-template-columns: 1fr 1fr; } }
+/* 押せない。紙の上の囲みなので、罫1本と紙の角にする。 */
 .ncway {
   display: flex;
   align-items: flex-start;
   gap: 11px;
   padding: 12px 14px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-2);
-  background: color-mix(in srgb, var(--gold) 20%, var(--paper));
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--gold) 15%, var(--paper));
 }
 .ncway-art { flex: none; border-radius: 11px; box-shadow: var(--shadow-1); }
 .ncway-b { display: grid; gap: 2px; min-width: 0; }
 .ncway-b i {
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .ncway-b b { font-size: 14px; font-weight: 900; line-height: 1.45; }
-.ncway-b em { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--frame-deep); }
-.ncway-fix { font-size: 10.5px; font-weight: 800; line-height: 1.6; color: var(--ink-2); }
+/* 琥珀は押せる板のふちの色。字に使うと紙の上で 4.35 : 1 にしかならないし、
+   押せるものと読み違える（docs/island-world.md 3.2）。 */
+.ncway-b em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+.ncway-fix { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
 .ncway-note {
   margin: 11px 0 0;
   font-size: 13px;
   line-height: 1.9;
   font-weight: 700;
   color: var(--ink);
+}
+
+/* --- 国のページの顔写真 ---
+   絵柄そのものは `app/css/ui.css` の `.nchero` が持っている。あちらは触れないので、
+   紙に寄せるぶんだけをここで上書きする。`ui.css` は `nordic.css` のあとに読まれるので、
+   同じ強さでは勝てない。だから `page.tsx` で `is-plate` を足して2枚重ねにしてある。 */
+.nchero.is-plate {
+  /* 押せない写真に厚みは付けない（docs/island-world.md 3.4）。
+     紙に貼った1枚として、罫を1本まわすだけにする。 */
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  box-shadow: none;
+}
+/* 写真の上に置く出どころの字。写真の明るさは選べないので、
+   帯の下側は色を最後まで濃くする。うすいままだと、明るい写真の上で消える
+   （実測で 1.07 : 1 の写真があった）。 */
+.nchero.is-plate .nchero-credit {
+  background: linear-gradient(
+    color-mix(in srgb, var(--ink) 0%, transparent),
+    color-mix(in srgb, var(--ink) 62%, transparent) 44%,
+    color-mix(in srgb, var(--ink) 92%, transparent));
 }
 
 /* 街の見出し。青いページの地に直に置くので、白で抜く。
@@ -631,7 +706,7 @@
 /* 種類は平らな札に言葉で。押せないものに厚みを付けない（紙の型） */
 .nspot-cat {
   flex: none;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.02em;
   padding: 2px 8px;
@@ -649,19 +724,21 @@
 .nspot-credit {
   position: absolute;
   right: 7px; bottom: 7px;
-  font-size: 9.5px;
+  font-size: var(--fs-min);
   font-weight: 800;
   color: var(--paper);
-  background: rgba(30, 34, 20, 0.62);
+  /* 写真の明るさは選べない。色の表に無い直値をやめて、墨を 82% まで濃くする。
+     うすいままだと、明るい写真の上でクリームの字が消える。 */
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
   border-radius: var(--r-0);
   padding: 2px 7px;
 }
-.nspot-local { margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.nspot-local { margin: 0 0 6px; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 .nspot-text { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 600; }
 .nspot-tips {
   margin: 10px 0 0;
   padding: 9px 13px 9px 28px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   line-height: 1.85;
   font-weight: 700;
   color: var(--ink-2);
@@ -674,13 +751,13 @@
   border-radius: var(--r-0);
   padding: 3px 10px;
 }
-.nspot-meta dt { font-size: 9.5px; font-weight: 900; color: var(--ink-3); }
-.nspot-meta dd { margin: 0; font-size: 11.5px; font-weight: 900; }
-.nspot-info { margin: 10px 0 0; font-size: 11.5px; line-height: 1.75; font-weight: 700; color: var(--ink-3); }
+.nspot-meta dt { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+.nspot-meta dd { margin: 0; font-size: var(--fs-min); font-weight: 900; }
+.nspot-info { margin: 10px 0 0; font-size: var(--fs-min); line-height: 1.75; font-weight: 700; color: var(--ink-2); }
 .nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
 .nspot-tags span {
-  font-size: 10px; font-weight: 900;
-  color: var(--ink-3);
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--ink-2);
   background: color-mix(in srgb, var(--rule) 20%, transparent);
   border-radius: var(--r-0);
   padding: 2px 8px;
@@ -689,7 +766,10 @@
 /* =========================================================
    国あての意見
    ---------------------------------------------------------
-   ここは「読む」ところではなく「書く」ところなので、板の型のまま。
+   **面は紙。板にするのは書く道具だけ**（docs/island-world.md 2章
+   「紙＋板の道具」）。ここは以前「書くところだから板」と書いてあったが、
+   それだと面まるごとが板になって、`/board` `/next/new` と作りが割れる。
+   板でいいのは `.bin` `.bin-name` `.bpost`。並んでいる意見は読むものなので紙。
    ========================================================= */
 .cidea-none { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--ink-2); }
 /* 出ている意見と、書くところの区切り。ここから下は自分の番、という札。 */
@@ -697,25 +777,33 @@
   display: inline-block;
   margin: 18px 0 8px;
   padding: 3px 11px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   border-radius: var(--r-pill);
-  background: var(--frame-dark);
-  color: var(--paper);
+  /* 琥珀の上のクリームは 2.91 : 1。紙の見出しなので蛍光ペンで敷く
+     （docs/island-world.md 3.2）。--marker-ink は紙の上で 8 : 1 を超える。 */
+  background: var(--marker);
+  color: var(--marker-ink);
 }
-.cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
+/* 出ている意見。押せないので、1枚ずつ囲まず罫線で分ける。 */
+.cideas {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--pg-rule);
+}
 .cideas li {
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+  padding: 11px 2px;
 }
 .cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
 .cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
-.cidea-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.cidea-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .cidea-vote {
-  font-size: 11px; font-weight: 900;
+  font-size: var(--fs-min); font-weight: 900;
   padding: 5px 13px;
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
@@ -772,22 +860,24 @@
 .gtoc a:first-child { border-top: 0; }
 @media (min-width: 620px) { .gtoc a:nth-child(2) { border-top: 0; } }
 .gtoc a:hover { background: color-mix(in srgb, var(--marker) 55%, transparent); }
+/* 目次の番号。罫の色（--rule）で字を書くと紙の上で 2.69 : 1 になる。
+   罫は線の色であって、字の色ではない（docs/island-world.md 3.2）。 */
 .gtoc-n {
   grid-row: span 2;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 900;
-  color: var(--rule);
+  color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 .gtoc b { font-size: 13.5px; font-weight: 900; }
-.gtoc i { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--ink-2); }
+.gtoc i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
 /* 章の番号。図鑑の面のように、通し番号を平らな札で置く。 */
 .gchap-n {
   flex: none;
   min-width: 26px;
   text-align: center;
-  font-size: 11px;
+  font-size: var(--fs-min);
   font-weight: 900;
   padding: 2px 6px;
   border-radius: var(--r-0);
@@ -799,7 +889,7 @@
 /* 章の外に置く但し書き。青い地の上なので白で抜く。 */
 .gnote {
   margin: 0 0 16px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   line-height: 1.85;
   font-weight: 700;
   color: color-mix(in srgb, var(--paper) 86%, var(--sea-deep));
@@ -815,8 +905,8 @@
   background: var(--marker);
   color: var(--marker-ink);
 }
-.gsub i { font-style: normal; font-size: 11px; font-weight: 800; margin-left: 8px; }
-.gpnote { margin: 6px 0 0; font-size: 12px; line-height: 1.8; font-weight: 700; color: var(--ink-2); }
+.gsub i { font-style: normal; font-size: var(--fs-min); font-weight: 800; margin-left: 8px; }
+.gpnote { margin: 6px 0 0; font-size: var(--fs-note); line-height: 1.8; font-weight: 700; color: var(--ink-2); }
 
 .glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }
 .glist.is-dont li { color: var(--pick); }
@@ -830,16 +920,16 @@
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .grow b { font-size: 13.5px; font-weight: 900; }
-.grow span { font-size: 12px; font-weight: 800; }
-.grow i, .grow em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-2); }
+.grow span { font-size: var(--fs-note); font-weight: 800; }
+.grow i, .grow em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 .gcards { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
 @media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
 .gcard { padding: 10px 4px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .gcard b { display: block; font-size: 13.5px; font-weight: 900; }
-.gcard i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.gcard i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .gcard p { margin: 5px 0 0; font-size: 12.5px; line-height: 1.85; font-weight: 600; }
-.gcard span { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.gcard span { display: block; margin-top: 4px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
 .gphrase { margin-top: 6px; }
 .gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
@@ -851,8 +941,8 @@
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .gwords b { font-size: 13px; font-weight: 900; }
-.gwords i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--accent-deep); }
-.gwords span { font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.gwords i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--accent-deep); }
+.gwords span { font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
 /* =========================================================
    ルート地図
@@ -865,23 +955,35 @@
    変えたときに地図だけ取り残されて浮くため。
    ========================================================= */
 
+/* 線の色は、地図と凡例の両方が使う。片方に書くともう片方が黙ってずれるので、
+   2つに効く1か所に置く（凡例は「線そのものを見本にする」作りなので、
+   色の名前ではなく同じ色でないと意味がない）。 */
+svg.nmap,
+.nmkeys {
+  /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
+  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
+  /* つながった区間の芯。色を1つ増やすのではなく、同じ線を明るくするための白み。 */
+  --nm-tie: color-mix(in srgb, var(--paper) 88%, var(--gold));
+}
+
 svg.nmap {
   /* 通らない国。草の緑を砂の色で濁らせて、通る国と一段差をつける。
      ここを濁らせるほど、通る6カ国が前に出る。 */
   --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
   --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
-  /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
-  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
-  --nm-label: color-mix(in srgb, var(--ink) 40%, var(--grass-lo) 60%);
+  /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
+  --nm-label: color-mix(in srgb, var(--ink) 82%, var(--grass-lo) 18%);
   --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;
   width: 100%;
   height: auto;
-  border-radius: var(--r-3);
-  border: var(--bw-3) solid var(--frame-dark);
-  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  /* 紙に刷った図版として置く。以前は 5px の琥珀の枠に 6px の厚みが付いていて、
+     押せないのに押せるものの合図（docs/island-world.md 3.4）を出していた。
+     枠は紙の罫を1本まわすだけにする。地の深い青が濃いので、これで縁は立つ。 */
+  border-radius: var(--r-0);
+  border: 1px solid var(--pg-rule);
   background: var(--sea-deep);
   overflow: hidden;
 }
@@ -1033,9 +1135,31 @@ svg.nmap {
   stroke-dasharray: 16 15;
   opacity: 0.8;
 }
+/* --- 区間の2つの状態（docs/nordic-fund.md 提案3） ---
+   **線を2本描かない。1本の線に2つの状態を持たせる。**
+     つながった（足代と道しるべが両方そろった） … 線の芯が明るい
+     見ている（区間カードを開いている）         … 線の下に太い帯が敷かれる
+   どちらも既定では出さない。埋まっていない区間を灰色にしないのと同じ理由で、
+   **足りないほうに印を付けず、足りたほうに印を足す**（同 3章）。
+   金額は書かない。地図はもう情報量が多いので、数字は区間カードが持つ。 */
+.nmap .nm-leg-look,
+.nmap .nm-leg-tie {
+  display: none;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nmap .nm-leg.is-tied .nm-leg-tie { display: inline; stroke: var(--nm-tie); }
+.nmap .nm-leg.is-look .nm-leg-look {
+  display: inline;
+  stroke: var(--paper);
+  opacity: 0.34;
+}
+
 /* 出発したあと。まだ行っていない道は薄く、通った道はそのまま濃く残す。
    出発前（data-here が無い）は全部これから行く道なので、何もしない。 */
 .nmap[data-here] .nm-leg:not(.is-done) .nm-leg-line { opacity: 0.42; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-tie { opacity: 0.42; }
 .nmap[data-here] .nm-leg:not(.is-done) .nm-leg-case { opacity: 0.12; }
 .nmap[data-here] .nm-leg:not(.is-done) .nm-arrow { opacity: 0.4; }
 .nmap[data-here] .nmap-pin:not(.is-done) .nm-pin-dot { fill: var(--paper-2); }

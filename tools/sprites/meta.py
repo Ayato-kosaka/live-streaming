@@ -36,6 +36,9 @@ SMALL_SIDE = 192
 SMALL = re.compile(
     r"^(grass|flower-|mushroom|bush|lily|log|firewood|path-|crop-|fence"
     r"|stump|rock-|stone-|pot-plant|fern|bamboo|moss-hanging|cactus|hedge"
+    # 住人は島を歩く大きさ(ワールド30前後)にしか出ない。
+    # 2倍画面でも 80px 弱なので、320px を配ると 4枚に 3枚ぶん捨てることになる
+    r"|villager-"
     r"|snow-pile|rocks-snow|sled)"
 )
 
@@ -45,16 +48,56 @@ def max_side(name):
     return SMALL_SIDE if SMALL.match(name) else MAX_SIDE
 
 
+# 同じ物の別コマ(住人の立ち・歩き・座り)は、1つの枠でまとめて切る。
+#
+# 1枚ずつ余白を切ると、コマごとに絵の大きさも位置も変わる。site の Sprite は
+# 「物体の高さ = 指定した大きさ」になるよう拡大するので、背の低いコマだけ
+# 引き伸ばされて、差し替えた瞬間に人が伸び縮みする。
+# 焼くほうも同じ画角に固定してある(manifest.mjs の VILLAGER)。
+GROUP = re.compile(r"^(villager-(?:male|female)-[a-z])(?:-|$)")
+
+
+def group_of(name):
+    """まとめて切る仲間の名前。まとめないものは None。"""
+    m = GROUP.match(name)
+    return m.group(1) if m else None
+
+
 # 焼きたての PNG があるものは作り直し、無いものは前に作った webp をそのまま測る。
 # 一部だけ焼き直したときに、寸法表から残りが消えないようにするため
 names = sorted({f.rsplit(".", 1)[0] for f in os.listdir(SRC) if f.endswith((".png", ".webp"))})
+
+# 仲間ごとの共通の枠。仲間の全員に焼きたての PNG があるときだけ作れる
+frames = {}
+for name in names:
+    g = group_of(name)
+    if not g:
+        continue
+    png = os.path.join(SRC, name + ".png")
+    if not os.path.exists(png):
+        # 1人でも焼き直していない人がいると枠がそろわない。今回はまとめない
+        frames[g] = None
+        continue
+    if frames.get(g, "init") is None:
+        continue
+    a = Image.open(png).convert("RGBA").getchannel("A")
+    seen = a.point(lambda v: 255 if v > VISIBLE else 0).getbbox()
+    if seen is None:
+        continue
+    old = frames.get(g)
+    frames[g] = seen if not old else (
+        min(old[0], seen[0]), min(old[1], seen[1]), max(old[2], seen[2]), max(old[3], seen[3]))
+for g, box in frames.items():
+    if box is None:
+        print(f"{g}: 焼いていないコマがあるので、まとめて切るのはやめる")
+
 meta = {}
 for name in names:
     fresh = os.path.join(SRC, name + ".png")
     if os.path.exists(fresh):
         im = Image.open(fresh).convert("RGBA")
         a = im.getchannel("A")
-        seen = a.point(lambda v: 255 if v > VISIBLE else 0).getbbox()
+        seen = frames.get(group_of(name)) or a.point(lambda v: 255 if v > VISIBLE else 0).getbbox()
         if seen is None:
             print("空:", name)
             continue
@@ -78,6 +121,21 @@ for name in names:
         "w": im.width, "h": im.height,
         "ox": ox, "oy": oy, "ow": x1 - ox, "oh": y1 - oy,
     }
+
+# 仲間の「物体の範囲」は、代表のコマ(立ち)のものを全員で使う。
+#
+# site の Sprite は、この範囲を見て「物体の高さ = 指定した大きさ」に拡大し、
+# 範囲の下端中央を足元として置く。コマごとに測ると、しゃがんだコマだけ
+# 引き伸ばされ、足元の基準もずれて、差し替えた瞬間に人が跳ねる。
+# 立ちの範囲を配れば、指定する大きさが「立ったときの背丈」の意味になり、
+# 座ったコマはそのぶん枠の中で小さく・下に寄って出る。
+for g, box in frames.items():
+    if box is None or g not in meta:
+        continue
+    base = {k: meta[g][k] for k in ("ox", "oy", "ow", "oh")}
+    for n in meta:
+        if group_of(n) == g:
+            meta[n].update(base)
 
 with open(OUT, "w") as fp:
     json.dump(meta, fp, indent=0, sort_keys=True)

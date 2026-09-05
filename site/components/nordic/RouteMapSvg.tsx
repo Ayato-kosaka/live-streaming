@@ -66,6 +66,9 @@ export default function RouteMapSvg({ here }: { here?: string }) {
   // 補足つきの表記があるので、括弧から先は落として比べる）。
   const bare = (s: string) => s.replace(/（.*$/, "");
   const km = new Map(ROUTE.map((l) => [`${bare(l.from)}|${bare(l.to)}`, l.km]));
+  // 区間の id。地図の線と、下の区間カードを同じものとして扱うのに要る
+  // （`docs/nordic-fund.md` 提案3）。付け合わせは km と同じく街の名前で行う。
+  const legId = new Map(ROUTE.map((l) => [`${bare(l.from)}|${bare(l.to)}`, l.id]));
 
   // いまどこまで来たか。`here` が分かっているときだけ、通った道と
   // これからの道を塗り分ける。分からないときは全部「これから行く道」。
@@ -208,15 +211,28 @@ export default function RouteMapSvg({ here }: { here?: string }) {
       {/* ---- ルート ------------------------------------------------ */}
       {legs.map((l) => {
         const s = LEG[l.move] ?? LEG.hitch;
-        const kmv = km.get(`${cityName[l.from]}|${cityName[l.to]}`);
+        const pair = `${cityName[l.from]}|${cityName[l.to]}`;
+        const kmv = km.get(pair);
         return (
           <g
             key={`${l.from}-${l.to}`}
             className={`nm-leg ${s.cls}${done(seqOf[l.to]) ? " is-done" : ""}`}
             data-seq={seqOf[l.to]}
+            data-leg={legId.get(pair)}
           >
+            {/* 区間カードで開いているところ。線の下に太く1本敷くだけにして、
+                線そのものの色は変えない（どの手段かが読めなくなる）。 */}
+            <path className="nm-leg-look" d={l.d} strokeWidth={s.width + 26} />
             <path className="nm-leg-case" d={l.d} strokeWidth={s.width + 8} />
             <path className="nm-leg-line" d={l.d} strokeWidth={s.width} strokeDasharray={s.dash} />
+            {/* つながった区間。線を1本増やさず、同じ線の芯を明るくする
+                （`docs/nordic-fund.md` 提案3）。金額は地図に書かない。 */}
+            <path
+              className="nm-leg-tie"
+              d={l.d}
+              strokeWidth={Math.max(3, s.width - 5)}
+              strokeDasharray={s.dash}
+            />
             {l.marks.map(([mx, my, ang], i) => (
               <path
                 key={i}

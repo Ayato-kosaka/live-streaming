@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat, TileLink } from "@/components/ui/Bits";
+import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
-import NowLive from "@/components/live/NowLive";
 import { LiveNumber } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { ACTIVE_FRIENDS } from "@/content/residents";
@@ -24,8 +24,23 @@ export const metadata: Metadata = {
  * たき火広場。
  *
  * 来た人の「この人だれ」に、読ませずに答える面。
- * 顔と3行 → 数字4つ → いまどこ → 年表 → やっていること、の5段だけ。
- * 上から目を落とすだけで一周できる長さに収める。
+ *
+ * ## 開いた瞬間に出しているもの
+ *
+ * 顔と3行、それと数字4つ。ここまでで「この人だれ」は済む。
+ * その先（いまどこ・年表・やっていること・配信の型）は畳んで、
+ * 見出しと1行だけを並べる。**深く知りたい人だけが開く。**
+ *
+ * 前は6枚ぜんぶを開いて置いていて、スマホで 5,465px（6.5画面）あった。
+ * `docs/island-ux.md` 8.1 の「入口の面は3画面まで」を倍こえていて、
+ * はじめて来た人が読み終わる前に下まで落ちる。年表だけで 1,394px ある。
+ * 年表は「あとから読むと面白いもの」であって、名乗りではない。
+ *
+ * ## 畳むのに `Fold` を使う理由
+ *
+ * `<details>` なので、開く前からページ内検索に出るし、
+ * 閉じているあいだも `lead` の1行で中身の見当がつく。
+ * 「いま、どこで何してる」は閉じたままでも居場所と配信の時間が読める。
  *
  * h1 は場所の名前（docs/island-world.md 7.5）。ヘッダーの入口が
  * 「たき火広場」なので、ここで「あやと島について」と名乗ると名前が2つになる。
@@ -90,6 +105,52 @@ export default function AboutPage() {
         lead="あやとって何者で、いま何をしていて、これからどこへ行くのか。ここに座って、ひととおり。"
       />
 
+      {/* 顔と3行が先。数字はそのあと。はじめて来た人が知りたいのは
+          「どんな人か」で、「何本配信したか」はそれを裏づける数だから。 */}
+      <Panel>
+        <h2>はじめまして</h2>
+        <div className="abio">
+          {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
+              生成りの縁を付けて、わずかに傾ける。写真そのものを裸で置かない。 */}
+          <span className="abio-art">
+            <img src="/characters/ayato-clay.jpg" alt="鍋をかきまぜているあやと" width={300} height={169} />
+          </span>
+          <div className="abio-word">
+            <b>{PROFILE.lead}</b>
+            {PROFILE.body.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
+        </div>
+        {/* 「いま何してる」「これからどこへ行く」は、名乗りの続きとして
+            行き先だけ置く。前はここに <NowLive /> をまるごと呼んでいて、
+            いまのポストの2枚（今夜までの残り時間と今週やること）が
+            この面の中にもう一度出ていた。同じものが2面にあると、
+            どちらが本体なのか分からなくなるし、それだけで 1,006px あった。 */}
+        <div className="tiles" style={{ marginTop: 14 }}>
+          <Link className="tile" href="/now">
+            <span className="tile-mark">
+              <Icon name="pin" size={24} />
+            </span>
+            <span className="tile-text">
+              <b>いま、どこで何してる</b>
+              <i>{NOW_FALLBACK.place}。今夜の配信まであと何時間か、今週やること</i>
+            </span>
+            <Icon name="right" size={16} className="tile-go" />
+          </Link>
+          <Link className="tile" href="/next">
+            <span className="tile-mark">
+              <Icon name="calendar" size={24} />
+            </span>
+            <span className="tile-text">
+              <b>これから、どこへ行く</b>
+              <i>配信で決めた、これからの企画</i>
+            </span>
+            <Icon name="right" size={16} className="tile-go" />
+          </Link>
+        </div>
+      </Panel>
+
       {/* 数字は4つだけ。「毎晩配信している人」がいちばん言いたいことなので先頭に置く
           （先頭を大きくするのは pages.css の .stat:first-child）。
           料理の数と住人の数は、それぞれキッチン小屋と仲間のテントの数字なので置かない。 */}
@@ -108,130 +169,112 @@ export default function AboutPage() {
         />
       </div>
 
-      <Panel className="paper">
-        <h2>はじめまして</h2>
-        <div className="abio">
-          {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
-              生成りの縁を付けて、わずかに傾ける。写真そのものを裸で置かない。 */}
-          <span className="abio-art">
-            <img src="/characters/ayato-clay.jpg" alt="鍋をかきまぜているあやと" width={300} height={169} />
-          </span>
-          <div className="abio-word">
-            <b>{PROFILE.lead}</b>
-            {PROFILE.body.map((p, i) => (
-              <p key={i}>{p}</p>
+      {/* ここから下は「もっと知りたい人だけが開く」ところ。
+          紙を1枚敷いて、その上に3段。閉じていても lead の1行で中身が分かる。 */}
+      <div className="folds">
+        <Fold
+          title="ここまで、何があったんだろう"
+          lead="2024年10月、パリで配信を始めてから"
+          note={`${steps.length}の節目`}
+        >
+          <p className="muted">旅の節目とアプリの節目だけ。国ぜんぶは旅の桟橋にあります。</p>
+          <div className="anote">
+            {years.map(([year, items]) => (
+              <div key={year}>
+                <div className="anote-year">{year}年</div>
+                <ul className="aline">
+                  {items.map((x) => (
+                    <li key={x.date + x.what}>
+                      <span className="aline-rail" aria-hidden />
+                      <span className="aline-dot" title={MARK[x.kind].label}>
+                        <Icon name={MARK[x.kind].icon} size={15} />
+                      </span>
+                      <span className="aline-when">{fmtMd(x.date)}</span>
+                      <b className="aline-what">{x.what}</b>
+                      <span className="aline-note">{x.note}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
           </div>
-        </div>
-      </Panel>
+          {/* 旗は「17」を読ませるのではなく、量として見せるためのもの */}
+          <div className="aflags" aria-hidden>
+            {ordered.map((c) => (
+              <Flag key={c.slug} slug={c.slug} size={26} />
+            ))}
+          </div>
+          <Link className="tile" href="/map" style={{ marginTop: 14 }}>
+            <span className="tile-mark">
+              <Icon name="signpost" size={24} />
+            </span>
+            <span className="tile-text">
+              <b>旅の桟橋へ</b>
+              <i>歩いた{s.countries}カ国を、1枚の地図で</i>
+            </span>
+            <Icon name="right" size={16} className="tile-go" />
+          </Link>
+        </Fold>
 
-      <Panel className="paper">
-        <h2>いま、どこで何してる</h2>
-        <NowLive />
-        <Link className="tile" href="/now" style={{ marginTop: 12 }}>
-          <span className="tile-mark">
-            <Icon name="pin" size={24} />
-          </span>
-          <span className="tile-text">
-            <b>いまのポスト</b>
-            <i>{NOW_FALLBACK.place}。今週やることと、今月のテーマ</i>
-          </span>
-          <Icon name="right" size={16} className="tile-go" />
-        </Link>
-      </Panel>
-
-      <Panel className="paper">
-        <h2>ここまで、何があったんだろう</h2>
-        <p className="muted">旅の節目とアプリの節目だけ。国ぜんぶは旅の桟橋にあります。</p>
-        <div className="anote">
-          {years.map(([year, items]) => (
-            <div key={year}>
-              <div className="anote-year">{year}年</div>
-              <ul className="aline">
-                {items.map((x) => (
-                  <li key={x.date + x.what}>
-                    <span className="aline-rail" aria-hidden />
-                    <span className="aline-dot" title={MARK[x.kind].label}>
-                      <Icon name={MARK[x.kind].icon} size={15} />
-                    </span>
-                    <span className="aline-when">{fmtMd(x.date)}</span>
-                    <b className="aline-what">{x.what}</b>
-                    <span className="aline-note">{x.note}</span>
-                  </li>
-                ))}
-              </ul>
+        <Fold
+          title="島でやっていること"
+          lead="歩く、作って食べる、アプリを作る"
+          note="3つ"
+        >
+          <div className="acards">
+            <div className="acard">
+              <PackArt size={54} />
+              <b>歩く</b>
+              <p>行き先は配信で相談して決める。歩いて越えた国境もある。</p>
             </div>
-          ))}
-        </div>
-        {/* 旗は「17」を読ませるのではなく、量として見せるためのもの */}
-        <div className="aflags" aria-hidden>
-          {ordered.map((c) => (
-            <Flag key={c.slug} slug={c.slug} size={26} />
-          ))}
-        </div>
-        <Link className="tile" href="/map" style={{ marginTop: 14 }}>
-          <span className="tile-mark">
-            <Icon name="signpost" size={24} />
-          </span>
-          <span className="tile-text">
-            <b>旅の桟橋へ</b>
-            <i>歩いた{s.countries}カ国を、1枚の地図で</i>
-          </span>
-          <Icon name="right" size={16} className="tile-go" />
-        </Link>
-      </Panel>
+            <div className="acard">
+              <PotArt size={54} />
+              <b>作って食べる</b>
+              <p>その土地の料理を、企画会議・買い出し・調理の3日がかりで作る。</p>
+            </div>
+            <div className="acard">
+              <CodeArt size={54} />
+              <b>アプリを作る</b>
+              <p>グルメアプリ「なに食べよ」。機能も文言も、配信で意見をもらって決めている。</p>
+            </div>
+          </div>
+          <p style={{ marginTop: 16 }}>
+            ひとりでやっているわけじゃない。島に住んでいるのは、配信に来てくれる人たち。
+            いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
+          </p>
+          <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
+            <span className="tile-mark">
+              <Icon name="talk" size={24} />
+            </span>
+            <span className="tile-text">
+              <b>愉快な仲間達</b>
+              <i>島に住んでいる人たち、全員</i>
+            </span>
+            <Icon name="right" size={16} className="tile-go" />
+          </Link>
+        </Fold>
 
-      <Panel className="paper">
-        <h2>島でやっていること</h2>
-        <div className="acards">
-          <div className="acard">
-            <PackArt size={54} />
-            <b>歩く</b>
-            <p>行き先は配信で相談して決める。歩いて越えた国境もある。</p>
+        <Fold
+          title="どんな配信をしてるんだろう"
+          lead="クッキングも、おさんぽも、アプリ作りも"
+          note={`${STREAM_TYPES.length}の型`}
+        >
+          <p className="muted">押すと、その型の配信だけまとめて見られます。</p>
+          <div className="tiles" style={{ marginTop: 12 }}>
+            {STREAM_TYPES.map((t) => (
+              <TileLink
+                key={t.slug}
+                href={`/streams/${t.slug}`}
+                icon={t.icon}
+                title={t.name}
+                note={t.when}
+                accent={t.color}
+              />
+            ))}
           </div>
-          <div className="acard">
-            <PotArt size={54} />
-            <b>作って食べる</b>
-            <p>その土地の料理を、企画会議・買い出し・調理の3日がかりで作る。</p>
-          </div>
-          <div className="acard">
-            <CodeArt size={54} />
-            <b>アプリを作る</b>
-            <p>グルメアプリ「なに食べよ」。機能も文言も、配信で意見をもらって決めている。</p>
-          </div>
-        </div>
-        <p style={{ marginTop: 16 }}>
-          ひとりでやっているわけじゃない。島に住んでいるのは、配信に来てくれる人たち。
-          いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
-        </p>
-        <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
-          <span className="tile-mark">
-            <Icon name="talk" size={24} />
-          </span>
-          <span className="tile-text">
-            <b>愉快な仲間達</b>
-            <i>島に住んでいる人たち、全員</i>
-          </span>
-          <Icon name="right" size={16} className="tile-go" />
-        </Link>
-      </Panel>
+        </Fold>
+      </div>
 
-      <Panel className="paper">
-        <h2>どんな配信をしてるんだろう</h2>
-        <p className="muted">押すと、その型の配信だけまとめて見られます。</p>
-        <div className="tiles" style={{ marginTop: 12 }}>
-          {STREAM_TYPES.map((t) => (
-            <TileLink
-              key={t.slug}
-              href={`/streams/${t.slug}`}
-              icon={t.icon}
-              title={t.name}
-              note={t.when}
-              accent={t.color}
-            />
-          ))}
-        </div>
-      </Panel>
     </PageShell>
   );
 }

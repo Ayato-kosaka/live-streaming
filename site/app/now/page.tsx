@@ -26,12 +26,13 @@ export default function NowPage() {
       {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
           （`docs/island-design.md` 6章 / `docs/island-world.md` 7.5）。
           「いま何してる」は問いなので、すぐ下の1行で受ける。
-          カモメは lead の言い直しをしないので、見る時機だけを言う。 */}
+          カモメを出さないのは、ここが読むだけの面だから。遊び方のある面
+          （掲示板・これから・キッチン小屋・道しるべ）にだけ出す
+          （`docs/island-ux.md` 5.2）。 */}
       <PageHead
         icon="mailbox"
         title="いまのポスト"
-        lead="いま何してるか。今どこにいて、今週なにをするか。毎日書きかわります。"
-        say="配信の前にのぞいておくと、その日の話が早いよ。"
+        lead="いまどこにいて、今週なにをするか。配信のある日は、22時までの残りもここに出る。"
       />
       <NowLive letter>
         <section className="pap-sec">
@@ -42,7 +43,7 @@ export default function NowPage() {
           {PROFILE.body.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
-          <div className="pap-gos" style={{ marginTop: 12 }}>
+          <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
               <a className="pap-go" key={l.id} href={l.href} target="_blank" rel="noopener noreferrer">
                 {l.logo ? <img src={l.logo} alt="" /> : <img src={`/sprites/${l.icon}.webp`} alt="" />}
@@ -57,11 +58,11 @@ export default function NowPage() {
         </section>
 
         <section className="pap-sec">
-          <h2 className="pap-h">もっと先の話</h2>
+          <h2 className="pap-h">もっと先は、どうなってる</h2>
           <p className="pap-note">
-            この島だよりは今週ぶんです。もっと先の予定と、これまで歩いた道はこちらに。
+            島だよりは今週ぶん。もっと先の予定と、これまで歩いた17カ国はこちらに。
           </p>
-          <div className="pap-gos" style={{ marginTop: 12 }}>
+          <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             <Link className="pap-go" href="/next">
               <img src="/sprites/tent.webp" alt="" />
               <span>

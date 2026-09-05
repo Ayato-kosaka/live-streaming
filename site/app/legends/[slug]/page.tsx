@@ -87,7 +87,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
               見出しの下に見せる段落は中に入れず、その続きだけを畳む。 */}
           {l.body.length === 2 && <p className="zk-lead">{l.body[1]}</p>}
           {l.body.length > 2 && (
-            <div className="folds" style={{ marginTop: 14 }}>
+            <div className="folds" style={{ marginTop: "var(--sp-3)" }}>
               <Fold title="この先に、まだ続きがある" lead={l.body[1]} note={`あと${l.body.length - 2}つ`}>
                 {l.body.slice(2).map((p, k) => (
                   <p key={k}>{p}</p>
@@ -102,7 +102,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             その時の配信
           </H>
           <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだか分かります。</p>
-          <ul className="days" style={{ marginTop: 14 }}>
+          <ul className="days" style={{ marginTop: "var(--sp-3)" }}>
             {streams.map((s, k) => (
               <li key={s.videoId}>
                 <span className="days-n">
