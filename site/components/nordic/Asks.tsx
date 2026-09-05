@@ -39,8 +39,8 @@ export default function Asks({ items }: { items: AskItem[] }) {
       <ul className="nasks">
         {left.map((i) => (
           <li key={i.leg} className="nask">
-            <p className="nask-day">{i.day}日目</p>
-            <Ask leg={i.leg} seq={i.seq} fork={i.fork} />
+            {/* 何日目かは、問いと同じ行に入れる。行を分けると6つで 130px 増える */}
+            <Ask leg={i.leg} seq={i.seq} fork={i.fork} day={i.day} />
           </li>
         ))}
       </ul>

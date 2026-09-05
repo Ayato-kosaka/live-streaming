@@ -138,6 +138,29 @@ const cottage = () => [
   ROOF_G(0.5, 0),
 ];
 
+/**
+ * 間口3マス・奥行1マスの、横に長い小屋。
+ *
+ * `/about`（あやとのこと）の入口。たき火は「あやと本人」を指さないので、
+ * **あやとの家**に建て替えた。人のことを知りたければ、その人の家へ行く。
+ * 台所(2マス・珊瑚色)と工房(2マス・空色)と間違えないように、
+ * 間口をもう1マス広げてある。遠目で分かれるのは屋根の色と横幅なので、
+ * その両方を変える。
+ */
+const cottageWide = () => [
+  W(-1, 0, 270, "wall-window-shutters"),
+  W(0, 0, 270, "wall-door"),
+  W(1, 0, 270, "wall-window-shutters"),
+  W(-1, 0, 90),
+  W(0, 0, 90),
+  W(1, 0, 90),
+  W(-1, 0, 180),
+  W(1, 0, 0),
+  ROOF_G(-1, 0),
+  ROOF_G(0, 0),
+  ROOF_G(1, 0),
+];
+
 /** 間口3マス・奥行2マスの大きい建物。 */
 const hall = () => {
   const cells = [];
@@ -215,6 +238,10 @@ const C = {
   red: [0.010, 0.66, 0.52],
   blue: [0.560, 0.52, 0.56],
   yellow: [0.128, 0.86, 0.62],
+  // 旗と地球儀のぶん。島の草(h0.33)より青へ寄せて、地面に埋もれないようにする
+  green: [0.372, 0.46, 0.44],
+  white: [0.100, 0.10, 0.93],
+  sea: [0.552, 0.48, 0.52],
 };
 
 /**
@@ -284,6 +311,68 @@ const pier = () => [
   { url: `${FK}/barrel.glb`, pos: [0.24, 0.46, 0.02], scale: 0.62, tint: WOODEN },
   { url: `${FK}/bag.glb`, pos: [-0.16, 0.46, 0.16], rot: [0, 28, 0], scale: 0.52 },
 ];
+
+/* ---------------- 歩いた国の道しるべ ----------------
+ * 桟橋は「船で出ていく」を指していて、`/map` の中身（歩いた17カ国）を
+ * 指していなかった。名前を「歩いた国」に変えたので、絵もそちらへ寄せる。
+ *
+ * 国の数を言うのは、板の枚数ではなく**色**。板を白のままにすると
+ * 伝説の丘の道しるべ(legendWalk)と同じ絵になるので、
+ * 1枚を2色の横縞にして、国旗が何枚も掛かっているように見せる。 */
+const flagPost = () => {
+  /** 旗1枚。y は高さ、len は張り出し、dir は向き(度)、a/b は上下の色。 */
+  const flag = (y, len, dir, a, b) => {
+    const rad = (dir * Math.PI) / 180;
+    // 柱(半径0.08)の外から張り出す。回すと +X が (cos, 0, -sin) へ向く
+    const d = 0.08 + len / 2;
+    const pos = (dy) => [Math.cos(rad) * d, y + dy, -Math.sin(rad) * d];
+    return [
+      box([len, 0.125, 0.035], a, pos(0.066), [0, dir, 0]),
+      box([len, 0.125, 0.035], b, pos(-0.066), [0, dir, 0]),
+    ];
+  };
+  return [
+    box([0.16, 1.56, 0.16], C.post, [0, 0.78, 0]),
+    // 笠。無いと柱の上が切り落とされたように見える
+    box([0.24, 0.10, 0.24], C.post, [0, 1.60, 0]),
+    ...flag(1.34, 0.66, 16, C.blue, C.white),
+    ...flag(1.04, 0.58, 198, C.red, C.white),
+    ...flag(0.76, 0.62, -46, C.green, C.gold),
+    ...flag(0.48, 0.52, 148, C.white, C.red),
+  ];
+};
+
+/* ---------------- いまどこの地球儀 ----------------
+ * 郵便受けは「知らせが届く」を指していて、「いま居る場所」を指していなかった。
+ * 地球にピンが1本立っていれば、押さなくても何の面か分かる。
+ * 大陸は小さい球を半分埋めて作る。板を貼ると、丸いものに平らな面が付いて
+ * シールを貼ったように見えた。 */
+const globeStand = () => {
+  const cy = 0.86;
+  const r = 0.40;
+  /** 大陸1つ。球の中心から向き n の方向へ、半分だけ出す。 */
+  const land = (n, rr) => {
+    const k = Math.hypot(...n);
+    const d = r - rr * 0.45;
+    return { ball: { r: rr }, color: C.green,
+      pos: [n[0] / k * d, cy + n[1] / k * d, n[2] / k * d] };
+  };
+  return [
+    // 台。円盤2枚で、下ほど広げる
+    { disc: { r: 0.30, r2: 0.36, h: 0.10 }, color: C.plank, pos: [0, 0.05, 0] },
+    { disc: { r: 0.20, h: 0.06 }, color: C.post, pos: [0, 0.13, 0] },
+    box([0.11, 0.34, 0.11], C.post, [0, 0.30, 0]),
+    { ball: { r }, color: C.sea, pos: [0, cy, 0] },
+    land([-0.55, 0.30, 0.78], 0.16),
+    land([0.62, -0.10, 0.60], 0.13),
+    land([0.20, 0.72, 0.30], 0.10),
+    land([-0.80, -0.42, 0.10], 0.11),
+    // ピン。真上に立てると北極に刺さって見えるので、手前へ倒す
+    { disc: { r: 0.022, r2: 0.055, h: 0.20 }, color: C.red,
+      pos: [-0.10, cy + r + 0.07, 0.15], rot: [22, 0, 8] },
+    { ball: { r: 0.085 }, color: C.red, pos: [-0.13, cy + r + 0.19, 0.22] },
+  ];
+};
 
 /* ---------------- 伝説の丘の記念碑 ----------------
  * 丘に並ぶのは「380kmイラン横断」「GWエジプト祭り」のように、
@@ -491,6 +580,7 @@ const SPRITES_BASE = [
   { name: "hut-kitchen", parts: [...cottage(), ...chimney(0.38)], opts: house("coral") },
   { name: "hut-workshop", parts: cottage(), opts: house("sky") },
   { name: "hut-home", parts: cottage(), opts: house("mint") },
+  { name: "hut-ayato", parts: [...cottageWide(), ...chimney(0.92)], opts: house("mint") },
   { name: "hall-museum", parts: hall(), opts: house("sun") },
   { name: "tower-studio", parts: tower(), opts: house("plum") },
   { name: "signboard", parts: board(), opts: WOODEN },
@@ -504,6 +594,8 @@ const SPRITES_BASE = [
   { name: "campfire", parts: campfire(), opts: CAMPFIRE },
   { name: "signpost", parts: [`${NK}/sign.glb`] },
   { name: "pier", parts: pier() },
+  { name: "signpost-flags", parts: flagPost() },
+  { name: "globe-stand", parts: globeStand() },
   { name: "statue", parts: [`${NK}/statue_obelisk.glb`] },
   { name: "statue-head", parts: [`${NK}/statue_head.glb`] },
   { name: "canoe", parts: [`${NK}/canoe.glb`] },

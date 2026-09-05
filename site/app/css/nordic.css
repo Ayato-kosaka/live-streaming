@@ -234,9 +234,9 @@
    （docs/nordic-fund.md 「捨てた設計」）。畳みをやめて、上から読める表にする。
    紙の上に板を積まない。日ごとの区切りは罫線1本。
    ========================================================= */
-.ndays { list-style: none; margin: var(--sp-4) 0 0; padding: 0; }
+.ndays { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
 .nday {
-  padding: var(--sp-3) 0;
+  padding: 10px 0;
   border-top: 1px solid var(--rule);
 }
 .nday:last-child { padding-bottom: var(--sp-2); }
@@ -245,8 +245,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: 0 0 7px;
+  gap: 6px;
+  margin: 0 0 5px;
 }
 .nday-when b {
   padding: var(--sp-1) var(--sp-3);
@@ -304,8 +304,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  margin: 3px 0 0;
+  gap: 6px;
+  margin: 2px 0 0;
   font-size: var(--fs-note);
   font-weight: 800;
   color: var(--ink-2);
@@ -314,7 +314,7 @@
 /* 切符から決まっている、動かせない事実 */
 .nday-fixed {
   display: inline-block;
-  margin: var(--sp-2) 0 0;
+  margin: 5px 0 0;
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-0);
   background: var(--marker);
@@ -322,7 +322,7 @@
   font-size: var(--fs-min);
   font-weight: 900;
 }
-.nday-note { margin: 5px 0 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
+.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.7; font-weight: 700; }
 /* 泊まるところ。日付の行の右へ回す。独立した行にすると10日で 370px 取る。 */
 .nday-stay {
   display: inline-flex;
@@ -367,12 +367,16 @@
 .nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
 .nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
 .nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
-.nask-day {
-  margin: 0 0 3px;
+/* 何日目かは、問いと同じ行に。行を分けると6つで 130px 増える。 */
+.fork-day {
+  margin-right: 6px;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
   font-size: var(--fs-min);
   font-weight: 900;
-  letter-spacing: var(--ls-caps);
-  color: var(--ink-2);
+  white-space: nowrap;
 }
 .fork { margin: 0; }
 .fork-q {

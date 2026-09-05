@@ -71,18 +71,11 @@ export default async function Countries() {
                 <Icon name="right" size={13} />
               </span>
             </span>
-            {/* 見どころの名前と、どこで見られて、なにが面白いのか。
-                国の紹介文（`c.catch`）はここでは出さない。
+            {/* 見どころの名前だけ。街と「ここが面白い」の行は落とした。
+                押した先の国のページに全部あるし、6枚で 170px 使っていた。
+                国の紹介文（`c.catch`）も出さない。
                 写真が言っていることを、字でもう一度言うことになる。 */}
-            {spot && (
-              <>
-                <i>{spot.title}</i>
-                <em>
-                  {spot.city}
-                  {spot.point ? `　${spot.point}` : ""}
-                </em>
-              </>
-            )}
+            {spot && <i>{spot.title}</i>}
           </span>
         </Link>
       ))}

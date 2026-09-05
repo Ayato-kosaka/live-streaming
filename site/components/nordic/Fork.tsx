@@ -44,6 +44,8 @@ type Props = {
   /** `ROUTE` の中での位置。もう越えた日かどうかを、ここで見分ける */
   seq: number;
   fork: NonNullable<Leg["fork"]>;
+  /** 何日目の話か。問いと同じ行に出す */
+  day?: number;
 };
 
 /** もう越えた日か。位置で決める。手書きの日記を待つと、決まったことに票が入り続ける。 */
@@ -59,7 +61,7 @@ function top(counts: Record<string, number>) {
 }
 
 /** まだ決めていないこと。押せる。越えた日と、数が読めないときは出さない。 */
-export function Ask({ leg, seq, fork }: Props) {
+export function Ask({ leg, seq, fork, day }: Props) {
   const id = forkId(leg);
   const counts = useFork(id);
   const passed = usePassed(seq);
@@ -99,7 +101,10 @@ export function Ask({ leg, seq, fork }: Props) {
 
   return (
     <div className="fork">
-      <p className="fork-q">{fork.q}</p>
+      <p className="fork-q">
+        {day && <b className="fork-day">{day}日目</b>}
+        {fork.q}
+      </p>
       <ul className="fork-list">
         {fork.options.map((o) => (
           <li key={o.id}>

@@ -137,8 +137,8 @@ export const ROUTE: Leg[] = [
     fork: {
       q: "始発まで、空港で数時間あります。",
       options: [
-        { id: "sleep", label: "寝て、朝から動く" },
-        { id: "awake", label: "起きたまま、深夜の空港を歩く" },
+        { id: "sleep", label: "寝て朝から動く" },
+        { id: "awake", label: "起きたまま歩く" },
       ],
     },
     art: "nightflight",
@@ -169,10 +169,10 @@ export const ROUTE: Leg[] = [
     side: true,
     ask: "行くとしたら、どう伝えるのがいいと思いますか？",
     fork: {
-      q: "この寄り道、行くかどうかまだ決めていません。",
+      q: "行くかどうか、まだ決めていません。",
       options: [
         { id: "go", label: "行ってほしい" },
-        { id: "skip", label: "今回は行かないでほしい" },
+        { id: "skip", label: "行かないでいい" },
       ],
     },
     art: "rails",
@@ -192,7 +192,7 @@ export const ROUTE: Leg[] = [
       q: "断られた回数、数えますか。",
       options: [
         { id: "count", label: "数えてほしい" },
-        { id: "no", label: "数えないでほしい" },
+        { id: "no", label: "数えないでいい" },
       ],
     },
     art: "gasstation",
@@ -236,10 +236,10 @@ export const ROUTE: Leg[] = [
     fare: { what: "リガの一泊" },
     ask: "十字架の丘に寄ったら、そこで何をしてほしい？",
     fork: {
-      q: "シャウレイの十字架の丘に、寄れます。",
+      q: "シャウレイの十字架の丘に寄れます。",
       options: [
         { id: "stop", label: "寄ってほしい" },
-        { id: "hurry", label: "先を急いでほしい" },
+        { id: "hurry", label: "先を急いで" },
       ],
     },
     art: "crosses",
@@ -259,8 +259,8 @@ export const ROUTE: Leg[] = [
     fork: {
       q: "雨に降られたら、どうしますか。",
       options: [
-        { id: "stand", label: "濡れても立ち続ける" },
-        { id: "wait", label: "屋根のあるところで待つ" },
+        { id: "stand", label: "濡れても立つ" },
+        { id: "wait", label: "屋根の下で待つ" },
       ],
     },
     art: "rainroad",
@@ -292,10 +292,10 @@ export const ROUTE: Leg[] = [
     fare: { what: "夜行フェリーの席と船室", yen: 20300, src: "€43＋船室€75.50" },
     ask: "17時間の夜行フェリー。朝、着いたら終点です。最後の夜に何をしてほしい？",
     fork: {
-      q: "最後の夜。着くのは、会いたい人がいる街の朝です。",
+      q: "最後の夜。着くのは翌朝です。",
       options: [
-        { id: "deck", label: "甲板で、朝が来るのを待つ" },
-        { id: "sleep", label: "寝て、着く朝にそなえる" },
+        { id: "deck", label: "甲板で朝を待つ" },
+        { id: "sleep", label: "寝ておく" },
       ],
     },
     art: "ferrynight",

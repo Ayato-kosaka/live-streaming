@@ -985,6 +985,18 @@ async function prepare(part, opts) {
     m.receiveShadow = true;
     return m;
   }
+  // 球。地球儀のように「丸いもの」は箱でも円盤でも組めない。
+  // 面の数を絞って、島のほかの物と同じくらいの粗さにする
+  if (part.ball) {
+    const { r = 0.5, seg = 20, rings = 14 } = part.ball;
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(r, seg, rings),
+      new THREE.MeshLambertMaterial({ color: setHsl(new THREE.Color(), ...part.color) }),
+    );
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
   // 炎・明かりはキットに無いので、その場で組む
   if (part.flame) {
     // tongues: [横, 前後, 傾き(度), 大きさの比, 色の番号] を奥から手前の順に
