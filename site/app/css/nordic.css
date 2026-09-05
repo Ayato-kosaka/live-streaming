@@ -954,7 +954,10 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 .gcard b { display: block; font-size: 13.5px; font-weight: 900; }
 .gcard i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .gcard p { margin: 5px 0 0; font-size: 12.5px; line-height: 1.85; font-weight: 600; }
-.gcard span { display: block; margin-top: 4px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+/* どこで買えるか。11.5px の細い字で、紙のいちばん沈んだところ（#dacb8f）に
+   乗ると 4.40 : 1 まで落ちる（中央値は 4.76 で通るが、地のムラで割る）。
+   ここだけ墨の濃いほうにして、地がどこでも 4.5 を割らないようにする。 */
+.gcard span { display: block; margin-top: 4px; font-size: var(--fs-min); font-weight: 800; color: var(--ink); }
 
 .gphrase { margin-top: 6px; }
 .gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
@@ -1288,9 +1291,12 @@ svg.nmap {
 }
 
 /* --- 区間の距離 --- */
+/* 距離の数字。札を敷いても、琥珀の濃いほうのままだと 4.18 : 1 で届かない
+   （27px でも数字は細い）。墨と混ぜて 5.11 : 1 まで沈める。色相は変えない。 */
 .nmap .nm-km {
-  fill: var(--frame-deep);
+  fill: color-mix(in srgb, var(--frame-deep) 70%, var(--ink));
   font-size: 27px;
   font-weight: 900;
 }
-.nmap .is-ferry .nm-km { fill: var(--sea-deep); }
+/* フェリーは海の色。素のままだと札の上で 3.30 : 1。同じだけ沈めて 4.62 : 1。 */
+.nmap .is-ferry .nm-km { fill: color-mix(in srgb, var(--sea-deep) 65%, var(--ink)); }

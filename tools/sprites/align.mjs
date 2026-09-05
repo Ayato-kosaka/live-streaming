@@ -58,7 +58,13 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
     const out = [];
     for (const [file, jp] of Object.entries(names)) {
       const img = imgs.find(i => i.getAttribute("href")?.includes(`/${file}.webp`));
-      const hit = spots.map(s => s.querySelector(".spot-hit")).find(h => h && h.getAttribute("aria-label")?.startsWith(jp));
+      /* 配信の時間(JST 22:00-25:00)だけ、やぐらの札は「いま配信中」に変わる。
+         名前で引くだけだと、夜に回したときに必ず「押せる場所がない」になる */
+      const alt = file === "tower-studio" ? "いま配信中" : null;
+      const hit = spots.map(s => s.querySelector(".spot-hit")).find((h) => {
+        const al = h?.getAttribute("aria-label");
+        return al && (al.startsWith(jp) || (alt && al.startsWith(alt)));
+      });
       if (!img || !hit) { out.push({ jp, err: !img ? "絵がない" : "押せる場所がない" }); continue; }
       const ir = img.getBoundingClientRect();
       const hr = hit.getBoundingClientRect();

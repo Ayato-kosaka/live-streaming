@@ -358,7 +358,9 @@ export default function RouteMapSvg({ here }: { here?: string }) {
                     この一行を差し替えるだけで済む。 */}
                 {/* 札は下に出す。上はヘルシンキからのフェリーの線が通っている。 */}
                 <g className="nm-chip is-goal" transform={`translate(${c.x - 24} ${c.y + r + 52})`}>
-                  <rect x="-172" y="-25" width="344" height="50" rx="25" />
+                  {/* 字が札のはしに触っていた。桃を濃いほうに替えて札の形が
+                      はっきり出たぶん、はみ出しも見えるようになったので広げる。 */}
+                  <rect x="-192" y="-25" width="384" height="50" rx="25" />
                   <text x="0" y="9" textAnchor="middle">
                     ここに、会いたい人がいる
                   </text>
