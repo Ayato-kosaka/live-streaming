@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MapZoom from "@/components/atlas/MapZoom";
 import MAP from "@/content/nordic/map.json";
 import Flag from "@/components/ui/Flag";
 import { NORDIC_COUNTRIES, ROUTE } from "@/content/nordic";
@@ -109,6 +110,13 @@ export default function RouteMapSvg({ here }: { here?: string }) {
 
   return (
     <>
+      {/* 紙の上に載るのは俯瞰の絵。押せる大きさの地図は、押すと別に立ち上がる。
+          390px の紙の上では、ラトビアのかたちは 28px 角しか取れない
+          （`components/atlas/MapZoom.tsx` に測った数と、そう決めた理由）。 */}
+      <MapZoom
+        label="北欧ヒッチハイクのルート地図"
+        hint="国か街を押すと、その国の紙へ。指で動かして見てください。"
+      >
       <svg
       className="nmap"
       viewBox={`0 0 ${view.w} ${view.h}`}
@@ -478,6 +486,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         </text>
       </g>
       </svg>
+      </MapZoom>
 
       {/* 地図の下に、同じ行き先を字でも置く。
           ---------------------------------------------------------

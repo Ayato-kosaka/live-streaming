@@ -150,7 +150,9 @@ export default async function NordicPage() {
           ここは class を直に書く。 */}
       <section className="panel paper is-map" id="map">
         <h2>会いに行く道</h2>
-        <p className="muted">街を押すと、その国のページへ。</p>
+        {/* 地図の上の街は、紙の上では押せない（390px だと的が 28px 角にしかならない。
+            `components/atlas/MapZoom.tsx`）。押せるのは「大きく見る」と、下の6カ国。 */}
+        <p className="muted">大きく見ると、街を押してその国のページへ行けます。</p>
         <RouteMapSvg />
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
             和文の途中に空きが1つ入る（書き出した HTML の画素で拾った）。 */}

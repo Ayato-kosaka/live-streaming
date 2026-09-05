@@ -220,15 +220,13 @@
 .apin.is-group:focus-visible .apin-many { transform: translateY(-50%) scale(1.12); }
 .apin.is-group:active .apin-many { transform: translateY(-50%) scale(0.92); }
 /* いまいる国がこのまとまりの中にあるとき。輪は札の形に合わせる。 */
-.apin.is-group.is-here::after {
-  /* 輪の 3px は札の内側に置く。外へ出すと押しどころが 62px になって、
-     たたむときに見込んだ幅（GROUP_W）より広くなる。 */
-  box-sizing: border-box;
-  width: 56px;
-  height: 26px;
-  margin: -13px 0 0 -28px;
-  border-radius: var(--r-pill);
-}
+/* いまいる国が、このまとまりの中にあるとき。
+   ピンのときと同じ輪（クリーム3px）は、クリームの札の上では見えない。
+   ピンが `--accent`（いま／新しい）で言っているのと同じ色を、札の枠で言う。
+   枠は札の内側に置く。外へ出すと押しどころが 62px になって、
+   たたむときに見込んだ幅（GROUP_W）より広くなる。 */
+.apin.is-group.is-here::after { content: none; }
+.apin.is-group.is-here .apin-many { border: 2px solid var(--accent); }
 .apin.is-group .apin-name { transform: translate(-50%, 0); }
 
 /* 国の名前。地図に刷った文字であって、押すものではない。
@@ -313,9 +311,6 @@
 .amap-pins.is-wide .apin-dot::before { inset: 2.5px; }
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
 /* まとまりの札は、世界ぜんぶの面でも小さくしない。ここでいちばん押される。 */
-.amap-pins.is-wide .apin.is-group.is-here::after {
-  box-sizing: border-box; width: 56px; height: 26px; margin: -13px 0 0 -28px;
-}
 
 /* ---------------------------------------------------------
    たどる（地図の下の送りと、開いた国の札）
@@ -1157,3 +1152,112 @@
   padding: var(--sp-2) var(--pp-x, var(--sp-4));
 }
 .panel.paper .amap-stage { border-radius: 6px; }
+
+/* =========================================================
+   地図を、押せる大きさで開く（components/atlas/MapZoom.tsx）
+   ---------------------------------------------------------
+   紙の上に載っているのは俯瞰の絵で、押せるのは「大きく見る」の1つだけ。
+   押すと全画面が立ち上がり、そちらは地図を 1,120px 幅で動かせる。
+   俯瞰を横に流して壊さずに、48px の口を作るための2枚看板。
+   ========================================================= */
+
+.mzoom {
+  position: relative;
+  border-radius: var(--r-1);
+  /* ここは前に「押せないのに厚みがある」として外された場所
+     （`docs/island-world.md` 3.4）。いまは地図そのものが押せるので、
+     合図を戻す。真下へ、ぼかさない。 */
+  box-shadow: 0 6px 0 var(--frame-deep);
+  margin-bottom: 6px;
+  /* 地図ぜんぶが押しどころ。指の形も、厚みと同じことを言う */
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+/* 押したら沈む。沈むのは札ではなく地図のほう（押しているのは地図なので）。 */
+.mzoom:has(.mzoom-open:active) {
+  transform: translateY(6px);
+  box-shadow: none;
+}
+.mzoom-still {
+  display: block;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.mzoom-open {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  /* 札は左上に置く。右上は方位、左下は縮尺、右下は乗り物の札で埋まっている
+     （390px で「クタイシから」の上に重なっていた）。 */
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--sp-2);
+  border: 0;
+  background: none;
+  border-radius: inherit;
+  cursor: pointer;
+}
+.mzoom-open span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  border: var(--bw-1) solid var(--frame);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+}
+.mzoom-open:focus-visible { outline: 3px solid var(--accent-2); outline-offset: -3px; }
+
+.mzoom-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground-paper);
+}
+.mzoom-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  padding-top: calc(var(--sp-2) + env(safe-area-inset-top));
+  background: var(--paper);
+  border-bottom: 1px solid var(--pg-rule);
+}
+.mzoom-bar p {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.mzoom-close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 16px;
+  margin-bottom: 6px;
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  cursor: pointer;
+}
+.mzoom-close:active { transform: translateY(6px); box-shadow: none; }
+.mzoom-scroll {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mzoom-in { padding: var(--sp-3); }
