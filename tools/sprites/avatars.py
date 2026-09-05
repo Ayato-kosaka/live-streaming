@@ -25,6 +25,8 @@ SRC = "/home/user/live-streaming/site/content/residents.ts"
 VOICES = "/home/user/live-streaming/site/content/voices.ts"
 # 引用の吹き出しは2面ある。片方だけ落とすと、料理の面が全員おなじ顔で写る
 KITCHEN_TALK = "/home/user/live-streaming/site/content/kitchenTalk.ts"
+# ショート動画のサムネイル。i.ytimg.com もブラウザからは出られない
+SHORTS = "/home/user/live-streaming/site/content/shorts.ts"
 OUT = "/tmp/avatars"
 UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
 
@@ -59,6 +61,19 @@ def voices() -> None:
     print(f"{got}/{len(urls)} 枚（視聴者さんのアイコン） -> {out}")
 
 
+def thumbs() -> None:
+    """ショート動画のサムネイル。
+
+    **1枚に潰さない。** 58本が全部おなじ絵で写ると、格子を並べても
+    「絵が縦に切れているか」「題名が2行で止まっているか」しか見えない。
+    """
+    out = f"{OUT}/yt-thumb"
+    os.makedirs(out, exist_ok=True)
+    ids = re.findall(r'id:\s*"([\w-]{6,})"', open(SHORTS, encoding="utf-8").read())
+    got = sum(get(f"https://i.ytimg.com/vi/{i}/hqdefault.jpg", f"{out}/{i}.jpg") for i in ids)
+    print(f"{got}/{len(ids)} 枚（ショートのサムネイル） -> {out}")
+
+
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
     ids = re.findall(r'icon:\s*"([^"]+)"', open(SRC, encoding="utf-8").read())
@@ -82,6 +97,7 @@ def main() -> None:
             print("取れなかった", i, e)
     print(f"{got}/{len(ids)} 枚 -> {OUT}")
     voices()
+    thumbs()
 
 
 if __name__ == "__main__":

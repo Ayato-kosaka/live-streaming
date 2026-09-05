@@ -72,9 +72,58 @@ const PHOTOS_PER_DAY = 120;
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
    鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
 const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
+/* 鍵の出どころ。**GitHub の Secrets には置かない**（GitHub #110 はそれ待ちで
+   止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
+   実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
+   サイトも配信も同時に追随する。
+   **金額そのものは GAS から取らない。** あちらはスパチャを配信の演出上、
+   半額で数えている。サイトは満額で数える決まりなので(下の /fund の注)、
+   ここから借りるのは鍵だけにする。 */
+const GAS_GOALS =
+  "https://script.google.com/macros/s/" +
+  "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
+  "/exec?table=Goals&id=2025-10-24";
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
+/** 鍵と起点は変わらないので、一度読めたら覚えておく。 */
+let goalCache: {key: string; start: number} | null = null;
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * @return {Promise<string>} 鍵。取れなければ空文字
+ */
+async function goalRecord(): Promise<{key: string; start: number} | null> {
+  if (goalCache) return goalCache;
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(GAS_GOALS, {signal: ctl.signal});
+    if (!r.ok) throw new Error(`gas ${r.status}`);
+    const j = (await r.json()) as {data?: Json};
+    const d = j.data ?? {};
+    const k = String(d.doneruGoalKey ?? "");
+    if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
+    const start = Number(d.startAmount);
+    goalCache = {key: k, start: Number.isFinite(start) ? start : 0};
+    return goalCache;
+  } catch (e) {
+    logger.warn("goal record read failed", String(e));
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * @return {Promise<string>} 鍵。取れなければ空文字
+ */
+async function doneruKeyOnly(): Promise<string> {
+  const env = process.env.DONERU_GOAL_KEY ?? "";
+  if (env) return env;
+  return (await goalRecord())?.key ?? "";
+}
 
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
@@ -86,20 +135,40 @@ const NOTES_PER_DAY = 20;
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
-/* ---- 北欧旅のわかれ道 ----
-   区間ごとの「どっちにしてほしい？」を、押すだけで答えられるようにする。
-   入れ物は islandPolls / islandPollVotes をそのまま借りて、
-   at: "nordic" の札を付けて仕分ける。新しいコレクションは作らない。
+/* ---- 面ごとの「押すだけの問い」----
+   北欧のわかれ道（区間ごとの「どっちにしてほしい？」）で作った入れ物。
+   islandPolls / islandPollVotes をそのまま借りて、`at` の札で仕分ける。
+   新しいコレクションは作らない。
+
+   **島の外の紙の面からも同じ入れ物を使う。** 台所の「次のスタンプ」も
+   丘の「もう一度やるなら」も、聞いていることが違うだけで、
+   サーバー側の仕事は「id ごとに札の数を数える」で同じ。
+   面ごとに口を増やすと、長さ制限も連投制限も面の数だけ書くことになる。
+   仕分けの札（`at`）は id の頭から取る。画面が名乗った文字をそのまま
+   書かないのは、知らない札が増えるとあとで数えるものが分からなくなるため。
 
    **問いの字も選択肢の字も、ここには置かない。** 字は Git
-   (`site/content/nordic.ts`)にあって、レビューを通ってから出る。
+   (`site/content/nordic.ts`・各面のページ)にあって、レビューを通ってから出る。
    サーバーが持つのは id と数だけなので、
    ここに人の書いた字が溜まることがない。 */
-const FORK_ID = /^nordic-[a-z0-9-]{3,40}$/;
+const FORK_AT = ["nordic", "kitchen", "legends", "streams"] as const;
+const FORK_ID = new RegExp(`^(${FORK_AT.join("|")})-[a-z0-9-]{3,40}$`);
 const FORK_OPTION = /^[a-z][a-z0-9-]{0,15}$/;
-/** 1つのわかれ道に置ける選択肢の数。知らない札が増えていくのを止める。 */
-const FORK_MAX_OPTIONS = 4;
+/**
+ * 1つの問いに置ける選択肢の数。知らない札が増えていくのを止める。
+ *
+ * 北欧のわかれ道は2つだが、丘の「もう一度やるなら」は4つ、
+ * 台所は種類のぶんだけ増える見込みがあるので、上限は8にしてある。
+ */
+const FORK_MAX_OPTIONS = 8;
 const FORK_VOTES_PER_DAY = 30;
+
+/**
+ * id の頭から仕分けの札を取る。`FORK_ID` を通ったものしか渡さない。
+ * @param {string} id 問いの id（"kitchen-next-kind" のような形）
+ * @return {string} 仕分けの札（"kitchen"）
+ */
+const forkAt = (id: string): string => id.slice(0, id.indexOf("-"));
 
 type Json = Record<string, unknown>;
 
@@ -289,58 +358,151 @@ async function takeQuota(
 }
 
 /**
- * 表示できる企画提案を新しい順に取る。
- * @param {number} limit 最大件数
- * @return {Promise<object[]>} 企画提案の配列
+ * 1ページぶんの読み取りの返り。
+ *
+ * `more` が true なら、**まだ古いものが残っている**。
+ * ここを持たせるためだけにこの型がある。前は上限を超えたぶんを黙って
+ * 捨てていたので、人が書いた1行が、書いた本人にも分からないまま
+ * 読めなくなっていた。「まだ在る」と言えれば、画面はそう言える。
  */
-async function listIdeas(limit = 120) {
-  // where + orderBy の組み合わせは複合インデックスが要るので、
-  // 並べ替えだけ Firestore に任せて、非表示の除外はこちらで行う。
-  const snap = await IDEAS.orderBy("createdAt", "desc")
-    .limit(limit * 2)
-    .get();
-  return snap.docs
-    .filter((d) => d.data().hidden !== true)
-    .slice(0, limit)
-    .map((d) => {
-      const v = d.data();
-      return {
-        id: d.id,
-        text: v.text as string,
-        name: (v.name as string) || undefined,
-        byUid: (v.uid as string) || undefined,
-        votes: (v.votes as number) ?? 0,
-        status: (v.status as string) ?? "open",
-        createdAt: new Date(
-          (v.createdAt as number) ?? Date.now(),
-        ).toISOString(),
-      };
-    });
+type Page<T> = {items: T[]; more: boolean; next: string | null};
+
+/**
+ * 続きの位置。`createdAt` だけだと、同じミリ秒に2件入ったときに
+ * ページの境目で1件飛ぶ。書き出すときは書類の id も添える。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 最後に返した書類
+ * @return {string} 続きの位置を表す文字列
+ */
+function cursorOf(d: FirebaseFirestore.QueryDocumentSnapshot): string {
+  return `${(d.get("createdAt") as number) ?? 0}_${d.id}`;
 }
 
 /**
- * 表示できる付箋を新しい順に取る。
- * @param {number} limit 最大件数
- * @return {Promise<object[]>} 付箋の配列
+ * `before=...` で受け取った続きの位置を、Firestore の並びに戻す。
+ * 読めない値は「頭から」として扱う。外から来る文字列なので落とさない。
+ * @param {unknown} v クエリで受け取った値
+ * @return {[number, string] | null} createdAt と書類 id の組
  */
-async function listNotes(limit = 200) {
-  const snap = await NOTES.orderBy("createdAt", "desc")
-    .limit(limit * 2)
-    .get();
-  return snap.docs
-    .filter((d) => d.data().hidden !== true)
-    .slice(0, limit)
-    .map((d) => {
-      const v = d.data();
-      return {
-        id: d.id,
-        planId: v.planId as string,
-        text: v.text as string,
-        createdAt: new Date(
-          (v.createdAt as number) ?? Date.now(),
-        ).toISOString(),
-      };
-    });
+function parseCursor(v: unknown): [number, string] | null {
+  const m = /^(\d{1,15})_(.+)$/.exec(String(v ?? ""));
+  if (!m) return null;
+  return [Number(m[1]), m[2]];
+}
+
+/**
+ * 新しい順に1ページぶん取る。非表示のぶんは飛ばして数を揃える。
+ *
+ * **`limit * 2` を1回引くだけ、という取り方はしない。** 非表示が半分を
+ * 超えると、まだ在るのに「これで全部」と言ってしまう。足りなければ
+ * 続きを引き直して、上限に当たったことだけを `more` で返す。
+ * @param {FirebaseFirestore.CollectionReference} col 読む場所
+ * @param {number} limit 1ページの件数
+ * @param {unknown} before 続きの位置(`cursorOf` が書いたもの)
+ * @param {Function} shape 書類を返す形に直す関数
+ * @return {Promise<Page<T>>} 1ページぶん
+ */
+async function pageOf<T>(
+  col: FirebaseFirestore.CollectionReference,
+  limit: number,
+  before: unknown,
+  shape: (d: FirebaseFirestore.QueryDocumentSnapshot) => T,
+): Promise<Page<T>> {
+  // where + orderBy の組み合わせは複合インデックスが要るので、
+  // 並べ替えだけ Firestore に任せて、非表示の除外はこちらで行う。
+  // 同じ時刻の書類が並んだときのために、id を第2の並び順に足しておく
+  // (単一フィールドの索引で足りる。複合索引は増えない)。
+  const base = col
+    .orderBy("createdAt", "desc")
+    .orderBy(admin.firestore.FieldPath.documentId(), "desc");
+  const from = parseCursor(before);
+  let scan: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+  const items: T[] = [];
+  let last: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+  let more = false;
+  // 非表示だらけでも止まるように、引き直す回数に蓋をする。
+  for (let round = 0; round < 8 && !more; round++) {
+    let q = base;
+    if (scan) q = q.startAfter(scan);
+    else if (from) q = q.startAfter(from[0], from[1]);
+    const snap = await q.limit(limit + 1).get();
+    if (snap.empty) break;
+    for (const d of snap.docs) {
+      scan = d;
+      if (d.get("hidden") === true) continue;
+      if (items.length >= limit) {
+        more = true;
+        break;
+      }
+      items.push(shape(d));
+      last = d;
+    }
+    if (snap.size <= limit) break;
+  }
+  return {items, more, next: more && last ? cursorOf(last) : null};
+}
+
+/**
+ * 企画提案1件を、画面に返す形に直す。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {object} 企画提案
+ */
+function ideaShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
+  const v = d.data();
+  return {
+    id: d.id,
+    text: v.text as string,
+    name: (v.name as string) || undefined,
+    byUid: (v.uid as string) || undefined,
+    votes: (v.votes as number) ?? 0,
+    status: (v.status as string) ?? "open",
+    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
+  };
+}
+
+/**
+ * 付箋1件を、画面に返す形に直す。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {object} 付箋
+ */
+function noteShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
+  const v = d.data();
+  return {
+    id: d.id,
+    planId: v.planId as string,
+    text: v.text as string,
+    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
+  };
+}
+
+/**
+ * 表示できる企画提案を新しい順に1ページぶん取る。
+ * @param {unknown} limit 1ページの件数
+ * @param {unknown} before 続きの位置
+ * @return {Promise<Page<object>>} 企画提案の1ページ
+ */
+function listIdeas(limit: unknown = 120, before?: unknown) {
+  return pageOf(IDEAS, clampPage(limit), before, ideaShape);
+}
+
+/**
+ * 表示できる付箋を新しい順に1ページぶん取る。
+ * @param {unknown} limit 1ページの件数
+ * @param {unknown} before 続きの位置
+ * @return {Promise<Page<object>>} 付箋の1ページ
+ */
+function listNotes(limit: unknown = 200, before?: unknown) {
+  return pageOf(NOTES, clampPage(limit), before, noteShape);
+}
+
+/**
+ * 1ページの件数を、外から来た値でも安全な範囲に収める。
+ * @param {unknown} v 件数
+ * @return {number} 1〜300 の整数
+ */
+function clampPage(v: unknown): number {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n) || n <= 0) return 60;
+  return Math.min(300, n);
 }
 
 /** 投票の中身。集計そのものはドキュメントの votes に入っている。 */
@@ -427,7 +589,7 @@ function forkCounts(v: unknown): Record<string, number> {
  * @return {Promise<number | null>} 集まっている額(円)
  */
 async function doneruNow(): Promise<number | null> {
-  const key = process.env.DONERU_GOAL_KEY ?? "";
+  const key = await doneruKeyOnly();
   if (!key) return null;
   if (fundCache && Date.now() - fundCache.at < FUND_TTL_MS) {
     return fundCache.doneru;
@@ -836,7 +998,7 @@ export const islandApi = onRequest(
         const [stateSnap, ideas, notes, residents] = await Promise.all([
           STATE_DOC.get(),
           listIdeas(60),
-          listNotes(),
+          listNotes(200),
           listResidents(),
         ]);
         const state = stateSnap.exists ? stateSnap.data() ?? {} : {};
@@ -844,12 +1006,20 @@ export const islandApi = onRequest(
           "Cache-Control",
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
+        /* `ideas` と `notes` は今までどおり配列で返す。そこに
+           「まだ古いものが残っている」を添える。画面はこれを見て
+           `/ideas?before=` `/notes?before=` の続きを読める。
+           **黙って切らない**ことがこの2つの役目。 */
         res.json({
           current: state.current ?? null,
           stats: state.stats ?? null,
-          ideas,
-          notes,
+          ideas: ideas.items,
+          notes: notes.items,
           residents,
+          more: {
+            ideas: ideas.more ? ideas.next : null,
+            notes: notes.more ? notes.next : null,
+          },
         });
         return;
       }
@@ -860,9 +1030,10 @@ export const islandApi = onRequest(
          スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
          同じことをサイトでやると、出した人が自分の額を見つけられない。 */
       if (method === "GET" && path === "/fund") {
-        const [doneru, snap] = await Promise.all([
+        const [doneru, snap, goal] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
+          goalRecord(),
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const num = (v: unknown) => {
@@ -871,13 +1042,20 @@ export const islandApi = onRequest(
         };
         // 毎日の集計(python/island_daily_stats.py)が置いていくぶん
         const superchat = num(f.superchat);
-        const start = num(f.start);
+        /* **起点は GAS の startAmount。負の数なので num() に通さない。**
+           `docs/nordic-fund.md` 2.2 の式は
+           `currentAmount = startAmount + superChatAmount + doneruAmount` で、
+           startAmount はこの企画の起点（いまは -249,646）。ここを足していな
+           かったので、**サイトだけが配信の10倍近い額を出していた**。
+           Firestore 側の start は集計が置くことになっているが、いまは無い。
+           取れなかったときだけそちらに落ちる。 */
+        const start = goal ? goal.start : num(f.start);
         let total = (doneru ?? 0) + superchat + start;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
         /* 1円も分からないときは、200 で 0 を返さない。
            0円は「誰も出していない」に見えるし、CDN に5分ぶん焼き付く。
-           鍵がまだ無いあいだ(GitHub #110)は毎回ここに来る。画面は 200 以外を
+           どれも読めなかったときは毎回ここに来る。画面は 200 以外を
            「読めなかった」として黙って足代の数字を消すので、これでいい。 */
         if (total <= 0) {
           res.set("Cache-Control", "no-store");
@@ -897,11 +1075,32 @@ export const islandApi = onRequest(
       }
 
       if (method === "GET" && path === "/ideas") {
+        const page = await listIdeas(
+          req.query.limit ?? 120,
+          req.query.before,
+        );
         res.set(
           "Cache-Control",
           "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
         );
-        res.json({ideas: await listIdeas()});
+        res.json({ideas: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* 付箋の続き。`/state` が返すのは新しい 200件までで、
+         それより古いぶんはここから `?before=` で順に読む。
+         上限を上げるだけにしなかったのは、上げてもいつか同じ日が来て、
+         そのときはまた黙って消えるから。 */
+      if (method === "GET" && path === "/notes") {
+        const page = await listNotes(
+          req.query.limit ?? 200,
+          req.query.before,
+        );
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({notes: page.items, more: page.more, next: page.next});
         return;
       }
 
@@ -1060,9 +1259,11 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 北欧旅のわかれ道 ----------------
+      /* ---------------- 押すだけの問い ----------------
          「十字架の丘に寄る／先を急ぐ」のような、まだ決まっていない分かれ目を
          押すだけで答えられるようにする(`docs/nordic-fund.md` 提案8)。
+         北欧の区間だけでなく、紙の面の問い(台所の「次のスタンプ」、
+         丘の「もう一度やるなら」)も同じ口を通る。
 
          **返すのは、聞かれた id のぶんだけ。** 一覧で返すと、
          端末IDを作り直しながら投げれば知らない id の札を並べられる。
@@ -1086,7 +1287,9 @@ export const islandApi = onRequest(
         const forks: Record<string, Record<string, number>> = {};
         for (const s of snaps) {
           const v = s.exists ? s.data() ?? {} : {};
-          if (v.at !== "nordic" || v.hidden === true) continue;
+          // 島の「今夜のおたずね」には `at` が無い。あちらは問いの字を
+          // 持っているので、数だけを返すこの口からは出さない
+          if (!v.at || v.hidden === true) continue;
           forks[s.id] = forkCounts(v.votes);
         }
         res.json({forks});
@@ -1143,7 +1346,7 @@ export const islandApi = onRequest(
             tx.set(
               ref,
               {
-                at: "nordic",
+                at: forkAt(id),
                 votes,
                 createdAt: (data.createdAt as number) ?? Date.now(),
               },

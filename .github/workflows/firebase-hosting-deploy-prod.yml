@@ -46,10 +46,9 @@ jobs:
       # 中身は deny-all で、写真はダウンロードの合言葉つき URL で配るから
       # ルールの外を通る。**配らなくても写真は見えるが、配らないと
       # 「置き場を直接のぞけない」ことが誰にも保証されない。**
-      # Firestore とは別の step にしてある。こちらが権限不足で落ちても、
-      # 上の Firestore ルールは配り終わっているようにするため。
+      # Firestore とは別の step にする。Storage の失敗はワークフローにも
+      # 反映し、成功表示のままルール未反映になることを防ぐ（#132）。
       - name: 🔐 Storage ルールのデプロイ
-        continue-on-error: true
         run: |
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"

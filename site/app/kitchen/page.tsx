@@ -8,8 +8,9 @@ import Flag from "@/components/ui/Flag";
 import { KINDS, RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
-import { Sheet, Zone } from "@/components/streams/Sheet";
-import { ArtBasket, ArtMeeting, ArtPot, ArtStamp } from "@/components/streams/Art";
+import { H, Sheet, Zone } from "@/components/streams/Sheet";
+import KitchenNext from "@/components/live/KitchenNext";
+import { ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
   title: "クッキング・スタンプ帳",
@@ -45,6 +46,17 @@ export default function KitchenPage() {
   const peak = Math.max(...months.map((x) => x.n));
   const busiest = months.find((x) => x.n === peak)!;
 
+  /** 月ごとの品数。「今月のマスが空いている」を画面が出てから数えるのに渡す。 */
+  const monthCounts = Object.fromEntries(months.map((mo) => [mo.key, mo.n]));
+  /**
+   * スタンプの少ない種類を4つ。**押されていない種類も入れる**（`byKind` は
+   * 0 の種類を落としているので、あちらは使えない）。空いているところを
+   * 見せるための並びなので、少ないほうが先。
+   */
+  const thin = KINDS.map((k) => ({ id: k.id, label: k.label, n: RECIPES.filter((r) => r.kind === k.id).length }))
+    .sort((a, b) => a.n - b.n)
+    .slice(0, 4);
+
   // 「作った料理」は島に建っていて、島から直接押して入る。「配信」の下に
   // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
@@ -55,7 +67,7 @@ export default function KitchenPage() {
       <PageHead
         icon="hut-kitchen"
         title="作った料理"
-        lead={`スタンプ帳になっています。${RECIPES.length}品を、${byCountry.size}カ国の宿のキッチンで。`}
+        lead={`${RECIPES.length}品ぶんのスタンプ帳。${byCountry.size}カ国の宿のキッチンで作った。`}
         say={GUIDE.kitchen}
       />
 
@@ -65,6 +77,15 @@ export default function KitchenPage() {
             開いた瞬間に同じ数字を2回読ませていた。数えたものと国別・月別のグラフは
             どちらも「読み物」なので、カタログの下にまとめる（`docs/island-ux.md` 5.6）。 */}
         <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
+
+        {/* スタンプ帳のいちばん強いところは、押した数ではなく**空いているマス**
+            （`docs/island-play.md` C・仕掛け11）。その空きマスに、書かずに
+            答えられる問いを1つ置いた。この面にしか置けない問いなのは、
+            「どの種類がうすいか」を持っているのが、この帳面だけだから。 */}
+        <Zone tight>
+          <H art={<ArtStamp size={32} />}>スタンプ帳の、空いているところ</H>
+          <KitchenNext months={monthCounts} thin={thin} />
+        </Zone>
 
         {/* 帳面の奥付。1行で足りる。
             前はここに記録の欄を4つ並べていたが（306px）、そのうち2つ
@@ -147,46 +168,10 @@ export default function KitchenPage() {
               </p>
             </Fold>
 
-            <Fold title="1品は、どうやってできる" lead="企画会議 → 買い出し → 作って食べる" note="3日">
-              <ol className="rt">
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">1</span>
-                    <ArtMeeting size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>企画会議</b>
-                    </span>
-                    <p>「今日なにしよかー！」から始めて、コメントで出た案の中から作るものを決める。</p>
-                  </span>
-                </li>
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">2</span>
-                    <ArtBasket size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>買い出し</b>
-                    </span>
-                    <p>市場やスーパーへ。無い材料は現地のもので置き換える。ここでメニューが変わる日もある。</p>
-                  </span>
-                </li>
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">3</span>
-                    <ArtPot size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>作って、食べる</b>
-                    </span>
-                    <p>宿のキッチンで作って、その場で食べる。失敗した日は翌日にリベンジすることもある。</p>
-                  </span>
-                </li>
-              </ol>
-            </Fold>
+            {/* 「企画会議 → 買い出し → 作って食べる」の3段は、`/streams/cooking` が
+                同じ字で持っている（`content/streamTypes.ts` の `beat`）。
+                この面の下に「クッキング配信そのものを見る／どういう順で進む配信なのか」の
+                札があるので、同じ3段をここでもう一度読ませない。 */}
           </div>
         </Zone>
 

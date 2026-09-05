@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
+import NoteBoards, { type NotePlace } from "./NoteBoards";
 import { EmptyBoard, Pin, Stone } from "./art";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
@@ -44,6 +45,13 @@ const FLOW = [
   { t: "企画会議に上がる", n: "週のはじめ。やることになったら「これから」に出ます" },
 ];
 
+/**
+ * 本文の頭に付いた貼り先の札（`【スウェーデン】`）。
+ * `components/nordic/CountryIdeas.tsx` が付ける。前後の空白は食わせる。
+ * **同じ形を `NoteBoards.tsx` も見ている。変えるときは両方。**
+ */
+const TAG = /^\s*【\s*([^】]{1,20}?)\s*】/;
+
 /** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
 const MINE_KEY = "ayato-island-mine";
 function minePosts(): Set<string> {
@@ -67,11 +75,15 @@ function rememberPost(id: string) {
 /**
  * 企画をだす（掲示板）。
  *
+ * `places` は「付箋がどこに貼られているか」の棚割り。面の側で組んで渡す
+ * （`app/board/page.tsx`）。ここで `content/plans.ts` や `content/nordic.ts` を
+ * 読むと、棚の名前ひとつのために 50KB がブラウザまで来る。
+ *
  * ログインなしで貼れて、投票できる。
  * だからログインの案内は畳んで下に置き、いちばん上は書く場所にする。
  * 票の多いものが目立ち、自分が貼ったもの・さんせいしたものが自分で分かるようにする。
  */
-export default function Board() {
+export default function Board({ places }: { places: NotePlace[] }) {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
   const [down, setDown] = useState(false);
@@ -330,6 +342,11 @@ export default function Board() {
         </div>
       </section>
 
+      {/* 島じゅうに散らばった付箋を、貼り先ごとにまとめて読む。
+          この板に貼られた企画は下にそのまま並ぶので、ここには集めない
+          （同じものが1つの面に2回出る）。 */}
+      <NoteBoards places={places} ideas={ideas} />
+
       <section className="panel paper">
         {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、
             パネルの直下に出して、並べ替えは次の行に置く。 */}
@@ -407,6 +424,11 @@ export default function Board() {
           {list.map((i, n) => {
             // 票がいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "votes" && !onlyMine && n === 0 && i.votes > 0 && i.status !== "picked";
+            /* 貼り先の札を本文から外に出す。`/nordic` から貼られたものは
+               本文の頭に `【スウェーデン】` が付いていて、これが並びの中で
+               本文と同じ字の大きさ・同じ色で出ていた。読むほうは
+               どこあての話なのかを、毎回文の中から拾い直すことになる。 */
+            const to = TAG.exec(i.text);
             return (
               <li
                 key={i.id}
@@ -431,8 +453,10 @@ export default function Board() {
                   <b>{i.votes}</b>
                 </button>
                 <div className="idea-body">
-                  <p>{i.text}</p>
+                  <p>{to ? i.text.slice(to[0].length).trim() : i.text}</p>
                   <div className="idea-meta">
+                    {/* 押せない札なので、オリーブの平ら（`docs/island-world.md` 3.2） */}
+                    {to && <span className="chip">{to[1]}あて</span>}
                     {top && <em>いま、いちばん票が集まってる</em>}
                     {i.status === "picked" && <em>{BOARD.picked}</em>}
                     {isMine(i) && <em>あなたが貼った</em>}

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
+import Cover from "@/components/isle/Cover";
+import { nordicSpec } from "@/components/isle/spec";
+import { NEXT_CHAPTER } from "@/content/chapters";
 import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
 import { StreamCard } from "@/components/ui/Bits";
@@ -46,7 +49,15 @@ export default function Home() {
   return (
     <main>
       <section className="hero">
-        <IslandStage residents={RESIDENTS} />
+        {/* 降り立つ島は、**いま何章か**で変わる（あやと「北欧ヒッチハイクの
+            期間に入れば、あやと島の表紙は初期表示が北欧周遊の島のものに変わる」）。
+            静的書き出しに焼くと出発の日をまたいでも変わらないので、
+            入れ替えは画面が出てから（`components/isle/Cover.tsx`）。 */}
+        {/* となりの島は渡さない。表紙になっているあいだ、ひとつ前の島は
+            まだ `/` に建っていることになっていて（章の表を書きかえるまで
+            `/island/<前の章>` は焼かれない）、押した先が無い。
+            船着き場からは島の地図へ出る。 */}
+        <Cover now={<IslandStage residents={RESIDENTS} />} next={nordicSpec(NEXT_CHAPTER)} />
         <div className="hero-ui">
           {/* 島の上に文字を重ねると絵が死ぬので、看板ロゴ1枚だけ置く。
               引き（島ぜんぶ）は上部中央にフル、寄り（あやとを追う）は右上に小さく。

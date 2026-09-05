@@ -5,7 +5,7 @@ import { APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
-import { NORDIC_COUNTRIES } from "@/content/nordic";
+import { DAY_PAGES, NORDIC_COUNTRIES, dayHref } from "@/content/nordic";
 
 export const dynamic = "force-static";
 
@@ -29,5 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...APPS.map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
     ...LEGENDS.map((l) => ({ url: url(`/legends/${l.slug}`), lastModified: now, priority: 0.6 })),
     ...NORDIC_COUNTRIES.map((c) => ({ url: url(`/nordic/${c.slug}`), lastModified: now, priority: 0.6 })),
+    // 旅の1日ぶん。出発の日と1日目から7日目まで。
+    ...DAY_PAGES.map((d) => ({ url: url(dayHref(d)), lastModified: now, priority: 0.6 })),
   ];
 }

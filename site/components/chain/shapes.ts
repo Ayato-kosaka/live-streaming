@@ -29,6 +29,13 @@ export type IslandArt = {
   props: { n: string; s: number }[];
   /** 高台を持つ島か。山のある土地だけ */
   plateau?: boolean;
+  /**
+   * 島の色。`app/css/tokens.css` の `[data-theme]` に渡す。
+   *
+   * **色は章の色ではなく、土地の色**（`docs/island-atlas.md` 3章）。
+   * 何も書かなければ既定（温帯の緑）。乾いた土地は desert、寒い土地は nordic。
+   */
+  theme?: "desert" | "nordic";
   /** 配置を決める種。変えると草木の並びが変わる */
   seed: number;
 };
@@ -78,6 +85,7 @@ export const ISLAND_ART: Record<string, IslandArt> = {
       { n: "rock-dry", s: 0.12 },
       { n: "stone-small", s: 0.1 },
     ],
+    theme: "desert",
     seed: 330,
   },
   caucasus: {
@@ -103,6 +111,7 @@ export const ISLAND_ART: Record<string, IslandArt> = {
       { n: "rock-dry-large", s: 0.3 },
       { n: "cactus-short", s: 0.24 },
     ],
+    theme: "desert",
     seed: 429,
   },
   nordic: {
@@ -115,6 +124,7 @@ export const ISLAND_ART: Record<string, IslandArt> = {
       { n: "rocks-snow", s: 0.16 },
       { n: "rock-large", s: 0.14 },
     ],
+    theme: "nordic",
     seed: 911,
   },
 };
@@ -191,3 +201,88 @@ function radiusAtUnit(radii: number[], angle: number): number {
   const f = t * n - Math.floor(t * n);
   return radii[i] * (1 - f) + radii[(i + 1) % n] * f;
 }
+
+/* ---- 章が増えたら、絵も勝手に決まる --------------------------------------
+   `ISLAND_ART` は、いまある5つの章に手で形を与えた表。ここで止めると
+   **`content/chapters.ts` に1行足しても島が建たない**（`docs/island-atlas.md` 2章は
+   「足すだけでいい」と決めている）。
+
+   そこで、表に無い章は**その章が回った土地から引く**。
+   かたちは slug から決まる乱数の起伏、草木は国の region、色も region。
+   手で「この島は大きめ」と決めないのと同じ理由で、**手で形も決めない。**
+   ------------------------------------------------------------------------ */
+
+/** 土地の種類。草木と、島の色（`app/css/tokens.css` の [data-theme]）がこれで決まる */
+export type Ground = "temperate" | "dry" | "cold";
+
+/** 島の色。`tokens.css` が持っている 3つのうちどれになるか */
+export const THEME_OF: Record<Ground, "" | "desert" | "nordic"> = {
+  temperate: "",
+  dry: "desert",
+  cold: "nordic",
+};
+
+const PLANTS_OF: Record<Ground, { n: string; s: number }[]> = {
+  temperate: [
+    { n: "tree-round", s: 0.3 },
+    { n: "tree-default", s: 0.28 },
+    { n: "tree-tall", s: 0.34 },
+    { n: "bush", s: 0.16 },
+    { n: "flower-red", s: 0.1 },
+    { n: "flower-yellow", s: 0.1 },
+  ],
+  dry: [
+    { n: "tree-date", s: 0.4 },
+    { n: "tree-date-young", s: 0.28 },
+    { n: "cactus", s: 0.18 },
+    { n: "rock-dry", s: 0.12 },
+    { n: "stone-small", s: 0.1 },
+  ],
+  cold: [
+    { n: "tree-pine-tall", s: 0.36 },
+    { n: "tree-pine", s: 0.3 },
+    { n: "tree-snow", s: 0.28 },
+    { n: "rocks-snow", s: 0.16 },
+    { n: "rock-large", s: 0.14 },
+  ],
+};
+
+/** その章が回った土地。国の region の多数決で決める。国が無ければ温帯 */
+export function groundOf(regions: string[]): Ground {
+  let dry = 0;
+  for (const r of regions) if (r === "中東・アフリカ") dry++;
+  return dry * 2 > regions.length ? "dry" : "temperate";
+}
+
+/** 文字列から決まる、いつも同じ数。島の形の種にする */
+function hashOf(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+  return h >>> 0;
+}
+
+/**
+ * その章の島の絵。表にあればそれ、無ければ土地から作る。
+ *
+ * @param slug   章の slug
+ * @param regions その章で回った国の region（`content/countries.ts`）
+ */
+export function artOf(slug: string, regions: string[] = []): IslandArt {
+  const known = ISLAND_ART[slug];
+  if (known) return known;
+  const seed = hashOf(slug);
+  const g = groundOf(regions);
+  const r = rng(seed);
+  /* かたち。真円から ±22% だけ崩す。乱数を1点ずつ振るとギザギザになるので、
+     周期の違う波を2本重ねて、隣どうしがつながったままにする（geometry の wobble と同じ考え）。 */
+  const ph = [r() * Math.PI * 2, r() * Math.PI * 2];
+  const wv: [number, number] = [2 + Math.floor(r() * 3), 5 + Math.floor(r() * 4)];
+  const radii = Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2;
+    return 1 + (Math.sin(a * wv[0] + ph[0]) * 0.14 + Math.sin(a * wv[1] + ph[1]) * 0.08);
+  });
+  return { radii, squash: 0.62, props: PLANTS_OF[g], theme: THEME_OF[g] || undefined, seed };
+}
+
+/** 島の色。表に無い章は土地から決まる */
+export const GROUND_ART: Record<Ground, { n: string; s: number }[]> = PLANTS_OF;

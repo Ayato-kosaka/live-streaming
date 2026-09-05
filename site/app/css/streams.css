@@ -195,7 +195,10 @@
 .zk-pick:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-deep); }
 /* 選んでいるものは塗りを変えず、朱の枠だけ（紙の型と同じ示しかた） */
 .zk-pick.is-on { border-color: var(--zk-pick); }
-.zk-pick em { font-style: normal; font-size: var(--fs-min); font-weight: 900; opacity: 0.62; }
+/* 品数は「読ませる字」。opacity 0.62 で薄めると、描いた画素で 3.31 : 1 しか無く、
+   4.5 を割る（`docs/island-world.md` 7.9 と同じ落ちかた。宣言は濃いのに
+   薄めているので、色の表を見ても気づけない）。薄さは色の段で言う。 */
+.zk-pick em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .zk-pick .flag { flex: none; border-radius: 2px; }
 .zk-picks { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 /* 何の絞り込みかを言う小さい見出し。行の先頭に置く */

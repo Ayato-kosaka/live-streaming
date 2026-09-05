@@ -1,22 +1,33 @@
-import { CHAPTERS, type Chapter } from "@/content/chapters";
+import { CHAPTERS, NOW_CHAPTER, type Chapter } from "@/content/chapters";
+import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 
 /**
  * 島の行き先。
  *
- * **いまの島はトップそのもの**（`docs/island-atlas.md` 7章）。
+ * **いまいる島はトップそのもの**（`docs/island-atlas.md` 7章）。
  * `/island/caucasus` を別に作ると、同じ島が2つある画面になる。
+ * それ以外の章は、ぜんぶ `/island/<章>/` に**歩ける島**が建っている。
  *
- * **次の島は、もう建っている企画のページへ**。北欧旅は `/nordic` に
- * 旅程も地図も見どころも入っている。島の中に同じものを作り直さない。
- *
- * 過去の島だけ `/island/<章>/` を持つ。あそこは**振り返る場所**なので、
- * その章のあいだのものしか出さない。
+ * `now` を渡せるようにしてあるのは、**「いまいる島」が日付で変わるから**。
+ * 静的書き出しに焼いた `NOW_CHAPTER` だけで決めると、北欧に出発した日から
+ * 誰かがビルドし直すまで、行き先が古いままになる。
+ * 画面（クライアント）は `chapterNow(new Date())` を渡すこと。
  */
-export function chapterHref(c: Chapter): string {
-  if (!c.from) return "/nordic";
-  if (!c.to && !c.branchOf) return "/";
-  return `/island/${c.slug}`;
+export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
+  return c.slug === now.slug ? "/" : `/island/${c.slug}`;
 }
 
-/** `/island/<章>/` を持つ章。終わった章と、枝 */
-export const PAST_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => c.from && c.to);
+/**
+ * `/island/<章>/` を持つ章 = **いまいる島いがい全部**。
+ *
+ * 過去の島も、まだ建っていない次の島も、同じだけ歩ける
+ * （`docs/island-atlas.md` 10章の「歩ける島にするかどうか」は "する" に決まった）。
+ * ここが `generateStaticParams` の出どころなので、`content/chapters.ts` に
+ * 章を1行足すと、**画面を1文字も触らずに島が1つ建つ。**
+ */
+export const ISLE_CHAPTERS: Chapter[] = CHAPTERS.filter((c) => c.slug !== NOW_CHAPTER.slug);
+
+/** そのうち、配信の一覧（`/island/<章>/streams`）を持つ章 */
+export const ISLE_STREAM_CHAPTERS: Chapter[] = ISLE_CHAPTERS.filter(
+  (c) => CHAPTER_STREAMS[c.slug]?.length,
+);

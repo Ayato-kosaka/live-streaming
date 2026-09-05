@@ -1,0 +1,100 @@
+/**
+ * ショート動画。**手で直さない。**
+ * `python/build_shorts.py --build` が `python/data/shorts.json` から焼く。
+ *
+ * BigQuery の `videos` 表には配信しか入っていないので、出どころはあの JSON だけ。
+ * 増えたら JSON に足して焼き直す。
+ *
+ * 鍵は `content/chapters.ts` の章の slug。ただし `before-stream` だけは章ではなく、
+ * **配信を始める前の6週間**（2024-09-17〜10-19）。島に建てず、`/map` の
+ * 「その前に、配信していない6週間がある」の段に出る。
+ *
+ * `date` は撮った日ではなく**出した日**。時差で1日ずれることがある。
+ */
+
+export type Short = {
+  id: string;
+  /** 公開日（YYYY-MM-DD） */
+  date: string;
+  /** YouTube の題名。**引用なので書き換えない** */
+  title: string;
+  /** 撮った街。全部に付いているわけではない（振り返りや告知には無い） */
+  city?: string;
+  /** 国。`before-stream` の15本にだけ付いている（`COUNTRIES` に無い国が混ざるので） */
+  country?: string;
+};
+
+export const SHORTS: Record<string, Short[]> = {
+  "iran-walk": [
+    { id: "dXfSTlKss2Y", date: "2026-04-28", title: "イランは怖い人だらけなのか確かめたいので、イランまで歩きます。ゴールデンウイーク期間、10日ほどかけて配信します。結末を一緒に見届けてください。" },
+    { id: "oSxl_dpn4_8", date: "2026-04-29", title: "1日目。波瀾万丈、喜怒哀楽すぎた" },
+    { id: "7TzWm9UaBaY", date: "2026-04-30", title: "2日目。絶景続き！" },
+    { id: "WlnK0aOJoWs", date: "2026-05-01", title: "3日目。山登り！" },
+    { id: "RNQWXqm2imU", date: "2026-05-02", title: "4日目。ポチと絶景巡り！" },
+    { id: "szr2ApO1NJo", date: "2026-05-03", title: "5日目。トラブルで中断してガキンチョ達と戯れる！" },
+    { id: "5cBqvyKGaJo", date: "2026-05-04", title: "6日目。登山、牛、湖、ホテルが閉店のトラブル！" },
+    { id: "AUpm-Vf02SM", date: "2026-05-05", title: "7日目。体力の限界、、悔しかった。けど、最後まで楽しむ！" },
+    { id: "pKTGPPeX-Jg", date: "2026-05-06", title: "8日目。滑落の危機！？" },
+    { id: "gPVDAJ_-E8c", date: "2026-05-07", title: "9日目。負債が貯まってきたけど、地元の人に助けられてなんとか旅できてる。" },
+    { id: "579xLzy054E", date: "2026-05-08", title: "10日目。最後の街へ。絶景の雪山と根性でゴールへ！" },
+    { id: "nSnGAvVh1rk", date: "2026-05-12", title: "イランまで歩きました。自分の中の偏見を壊すために11日間歩きました。大袈裟なことをしたとは思っていません。ただ、平和が訪れて欲しいなと思います。" },
+  ],
+  "europe": [
+    { id: "r6cyO9mRRGo", date: "2024-10-25", title: "フランス、パリ ひとり旅 憧れ崩壊なんてなかった...", city: "パリ" },
+    { id: "Nfk1vy68gq8", date: "2024-10-26", title: "フランス、パリに恋するひとり旅Vlog", city: "パリ" },
+    { id: "IwWUSJalE04", date: "2024-10-28", title: "【フランス】週末パリ旅行 おすすめの周り方", city: "パリ" },
+    { id: "DW0RctS9ftQ", date: "2024-11-02", title: "フランス、日帰りルーアンひとり旅が最高だった", city: "ルーアン" },
+    { id: "Op2wZbkIrE8", date: "2024-11-03", title: "【フランス】パリにいるボッチの日常", city: "パリ" },
+    { id: "qwfHh470HVI", date: "2024-11-05", title: "【フランス】世界一豪華な宮殿、ヴェルサイユ宮殿に行ってみた", city: "ヴェルサイユ" },
+    { id: "tHgkrw8ld-I", date: "2024-11-08", title: "【質問回答】ヨーロッパ3ヶ月旅の航空券情報公開します" },
+    { id: "lr3c-LaiNds", date: "2024-11-09", title: "ヨーロッパ3ヶ月旅、半分を迎えました！振り返りと始めた経緯を話します。" },
+    { id: "3dF3SdHyPdg", date: "2024-11-10", title: "【オランダ】アムステルダム定番の一日が感動ものでした", city: "アムステルダム" },
+    { id: "aYrns_JLTj4", date: "2024-11-12", title: "アムステルダム周辺旅行で感じた、オランダの魅力がハンパなかった", city: "アムステルダム" },
+    { id: "fGqGXw_5Tqc", date: "2024-11-15", title: "【オランダ】ミッフィーの街に行ってみた！ 日帰りユトレヒト旅", city: "ユトレヒト" },
+    { id: "DgRJ06s2F-A", date: "2024-11-16", title: "【ベルギー】ブリュッセル心踊る一日定番プラン", city: "ブリュッセル" },
+    { id: "Sy-pGqb7f-c", date: "2024-11-18", title: "【ベルギー】ブリュッセルスイーツ尽くしの一日", city: "ブリュッセル" },
+    { id: "SvEQaOBb3Fw", date: "2024-11-21", title: "【ハンガリー】街全体が世界遺産のブダペストの観光一日", city: "ブダペスト" },
+    { id: "eHjpFTprE-0", date: "2024-11-23", title: "【ハンガリー】美しすぎる街 ブダペスト で、温泉とグルメの一日", city: "ブダペスト" },
+    { id: "6BGw4PKNlKs", date: "2024-11-24", title: "【ハンガリー】昼と夜の顔をもつ街ブダペストでの一日", city: "ブダペスト" },
+    { id: "HIWXYpyF9kU", date: "2024-11-28", title: "【オーストリア】美しさがそこ知れない街、ウィーンでの定番一日", city: "ウィーン" },
+    { id: "sAyPjZeD2kk", date: "2024-11-30", title: "【オーストリア】ウィーンでの優雅なカフェ巡り一日", city: "ウィーン" },
+    { id: "kk97TnLZDP0", date: "2024-12-01", title: "【オーストリア】ウィーンでの宮殿巡りの一日", city: "ウィーン" },
+    { id: "7KMdjWkEviQ", date: "2024-12-04", title: "ウィーンから日帰りスロバキア、ブラチスラヴァ一日プラン", city: "ブラチスラヴァ" },
+    { id: "xoZfNspC7QM", date: "2024-12-06", title: "チェコのプラハが街全体が中世でした！", city: "プラハ" },
+    { id: "6umEtE07i9Y", date: "2024-12-07", title: "チェコの首都プラハでの旧市街散策", city: "プラハ" },
+    { id: "ShOSoRcWZVw", date: "2024-12-07", title: "おいらが作った神旅行計画アプリ Spelieve の使い方を紹介しますね。" },
+    { id: "0J0e-c_ALE4", date: "2024-12-09", title: "世界で1番美しい街と言われる、チェコ・プラハでの新市街散策", city: "プラハ" },
+    { id: "WLoKWatikxs", date: "2024-12-13", title: "【ドイツ】ベルリンの壁沿いを巡る一日", city: "ベルリン" },
+    { id: "wCxjoU7v10M", date: "2024-12-16", title: "【ドイツ】ベルリンの中心部を深堀する一日", city: "ベルリン" },
+    { id: "uJOAzsZgYS0", date: "2024-12-17", title: "【甘党必見】ベルリンでスイーツを食べ尽くす一日", city: "ベルリン" },
+    { id: "SsvyhD2jY0c", date: "2024-12-20", title: "【ドイツ】世界最古のクリスマスマーケットを見に日帰りドレスデン", city: "ドレスデン" },
+    { id: "PfZ0tVKNQRI", date: "2024-12-22", title: "【ドイツ】世界遺産の街ポツダム満喫一日プラン", city: "ポツダム" },
+    { id: "nWPQJ8Ws28o", date: "2024-12-24", title: "【ドイツ】ベルリンの魅力を満喫する一日プラン", city: "ベルリン" },
+    { id: "e-LBZz7aZOE", date: "2024-12-27", title: "ヨーロッパ周遊三ヶ月、旅が終了しました。" },
+  ],
+  "before-stream": [
+    { id: "WtDMYhb0C98", date: "2024-09-17", title: "英国王室のエレガンスを体験する一日（バッキンガム宮殿・衛兵交代式・ケンジントン宮殿）", city: "ロンドン", country: "イギリス" },
+    { id: "1kGSgVGCh_I", date: "2024-09-19", title: "大英帝国の発展とその多様性を感じるロンドン一日（ロンドン塔・カムデンマーケット）", city: "ロンドン", country: "イギリス" },
+    { id: "IfAs0GypC-4", date: "2024-09-21", title: "名作ゆかりの地を辿るロンドン一日（ハリーポッター・シャーロックホームズ・ノッティングヒル）", city: "ロンドン", country: "イギリス" },
+    { id: "OCgdPJq0EzQ", date: "2024-09-23", title: "ロンドンの魅力を建築で巡る一日（ロンドンウォール・セントポール大聖堂）", city: "ロンドン", country: "イギリス" },
+    { id: "CttG6RvRuwU", date: "2024-09-25", title: "ロンドンの物価まじ高すぎ！", city: "ロンドン", country: "イギリス" },
+    { id: "BpR7EuCtR3M", date: "2024-09-29", title: "ロンドンでの美術館と王道観光地巡りの1日（大英博物館・ビッグベン）", city: "ロンドン", country: "イギリス" },
+    { id: "m0OioIJ1Pt0", date: "2024-10-02", title: "バルセロナでガウディやそのライバル建築家たちの戦跡を巡る一日", city: "バルセロナ", country: "スペイン" },
+    { id: "j7xZ9RaOrzs", date: "2024-10-04", title: "バルセロナ散策とフラメンコ鑑賞が最高の一日すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "kHR232rOhtw", date: "2024-10-05", title: "地中海感じるバルセロナが感動の一日すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "w0X5ZM57khU", date: "2024-10-07", title: "バルセロナの絶景とアートを味わう一日が圧巻すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "PWk43q7JM64", date: "2024-10-10", title: "バルセロナ郊外モンセラット巡りと、バルはしごが最高の一日だった", city: "バルセロナ", country: "スペイン" },
+    { id: "EP8a8ffxH7E", date: "2024-10-12", title: "古代ローマを感じるひとり旅が最高の一日だった", city: "ローマ", country: "イタリア" },
+    { id: "JdF3a-7qWEk", date: "2024-10-14", title: "ローマでの定番の一日が最高だった（トレビの泉・カチョエペペ）", city: "ローマ", country: "イタリア" },
+    { id: "AwjRdhUfl84", date: "2024-10-18", title: "バチカン市国でキリスト教文化を感じる一日が圧巻すぎた", city: "ローマ", country: "イタリア" },
+    { id: "0F6K9uAfuAM", date: "2024-10-19", title: "イタリア・ナポリひとり旅 食い倒れの旅", city: "ナポリ", country: "イタリア" },
+  ],
+};
+
+/** その章のショート。無い章のほうが多い */
+export const shortsOf = (slug: string): Short[] => SHORTS[slug] ?? [];
+
+/** サムネイル。YouTube が配っている 480×360 の1枚 */
+export const shortThumb = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+
+export const shortHref = (id: string) => `https://www.youtube.com/shorts/${id}`;

@@ -160,28 +160,25 @@
   visibility: visible;
   pointer-events: auto;
 }
-/* 看板を出す6つは、遠くからでも名前が出ている。
-   `docs/island-design.md` 6章「押せることと、案内することは別。
-   看板を出すのは sign の付いた6つだけ」。**その6つが働いていなかった。**
-   閉じた札は 34px の丸で visibility:hidden だったので、島に降りた1画面目に
-   建物の名前が1枚も出ていなかった。押せる物だと画面のどこにも書いていない。
+/* 名前が出るのは、近づいた1軒だけ。
+   ---------------------------------------------------------
+   ここには一度「看板を出す6つは遠くからでも名前が出ている」があった。
+   スマホ 390×844 で数えると、島に降りた1画面目に**札6枚・名前が並んで
+   40文字**あり、島の絵の上を UI が 23% 覆っていた。本物のあつ森は
+   （`/tmp/acref/ref_NH_Plaza_Exercise.jpg`）**画面に字が1文字も無い。**
 
-   遠くからは名前だけ。近づくと（.is-on）そこに一言と「はいる」が足される。
-   **揺らさない。** 6枚が同時に揺れたら、島ではなく看板の並びになる。
-   残り4軒は静かに建っていて、近づいた人にだけ名前が出る。ここは変えない。 */
-.spot.is-sign .spot-mark {
-  visibility: visible;
-  pointer-events: auto;
-  width: auto;
-  height: auto;
-  padding: 4px 10px;
-  border-radius: 14px;
-  background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
-  box-shadow:
-    0 4px 0 var(--frame-deep),
-    3px 8px 9px var(--cast);
-}
-.spot.is-sign .spot-mark::after { height: 15px; width: 9px; margin-left: -4.5px; bottom: -14px; }
+   `docs/island-design.md` 3-4 は「注目させるのは一度に1つ。名前が出るのは
+   いちばん近い1つだけ」と決めている。6枚を常に出していたのは、その決まりの
+   ほうを破っていた。**看板を出す6つ、は残る。** ただし看板が並ぶ場所は
+   下のバー（スマホ）とページの頭（島の外）で、島の上ではない。
+
+     ふだん     … 何も出ない。建物がそこに建っている
+     今日の場所 … 小さい丸に「!」（1日1つ）
+     出発が近い … 「あと◯日」のシールだけ（1軒だけ・下の .is-count）
+     近づいた   … 札が開いて、名前と一言と「はいる」
+
+   到達性は落ちていない。建物を押すと歩いて札が開き、そこから入るので
+   どの入口も2タップのまま（`docs/island-ux.md` の到達性の表）。 */
 
 /* 縁へ寄せた札。**杭を、建物のほうを指す矢に持ち替える。**
    杭は「ここに立っている」の絵なので、建物から離れた札に付いていると嘘になる。
@@ -224,10 +221,6 @@
   margin-top: -7px;
   border-left-color: var(--frame-dark);
 }
-.spot.is-sign .spot-text { display: grid; gap: 1px; line-height: 1.2; text-align: left; }
-.spot.is-sign .spot-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
-/* 一言は近づいてから。遠くの6枚が2行ずつ出ていると、島が字で埋まる */
-.spot.is-sign:not(.is-on) .spot-text i { display: none; }
 /* 閉じている札は 34px しかない。絵は小さいままでいいが、
    押せるものである以上、指の当たりは 48px 要る（`island-design.md` 3-2）。
    見えない当たりを外へ広げる。 */
@@ -405,15 +398,24 @@
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
 }
-/* 閉じている看板の上では、シールを板の外（真上）へ出す。
-   板の右肩に貼ると、「これから」の4文字のうち3文字がシールの下に入って、
-   **何の「あと1日」なのか読めない札**になっていた（4周目レビュー1章）。
-   開いた札（.is-on）は横に長いので、いままでどおり右肩でよい。 */
-.spot.is-sign:not(.is-on) .spot-badge {
-  top: auto;
-  bottom: calc(100% + 2px);
-  right: -6px;
+/* 「あと◯日」だけは、札を閉じたままでも建物の上に貼っておく。
+   ---------------------------------------------------------
+   「これから」はいちばん目立たせると決まっている入口（`island-design.md` 6章）で、
+   日数は毎日変わる。**島に降りた瞬間に見える価値のある、数少ない字。**
+
+   札のほうは出さない。板の地も枠も杭も消して、シールだけを残す。
+   透明な板を押せてしまうと「押せるのに何も無いところ」ができるので、
+   当たりは建物そのもの（.spot-hit）に返す。
+   その日が来た日は「!」が立つので、そちらに任せて重ねない（JSX 側で外す）。 */
+.spot.is-count:not(.is-on) .spot-mark {
+  visibility: visible;
+  pointer-events: none;
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
 }
+.spot.is-count:not(.is-on) .spot-mark::before,
+.spot.is-count:not(.is-on) .spot-mark::after { display: none; }
 /* ずっと同じ速さで脈打つと背景の一部になる。
    長く止めてから、2回だけ跳ねる。目の端でも「動いた」と分かる。 */
 @keyframes badgePop {
@@ -479,7 +481,12 @@
    そのあとは12人とも押せば喋る（セリフを書いていない人も
    `content/chatter.ts` の COMMON_LINES に落ちるので、空の吹き出しは出ない）。
    選ばせるものが無いのだから、選ぶための印も要らない。 */
-.who-name {
+/* 名札は、いちばん近い1人だけ（`IslandStage.tsx` の is-near）。
+   名前を出していい人が10人いる日は、島の上が名前の一覧になっていた
+   （390×844 で実測4枚）。**注目させるのは一度に1つ**（`island-design.md` 3-4）。
+   入口の札と同じ決まりを住人にも当てる。 */
+.who-name { display: none; }
+.who.is-near .who-name {
   position: absolute;
   left: 0;
   top: 4px;
@@ -502,8 +509,114 @@
   max-width: 136px;
   overflow: hidden;
 }
-.who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
-.who-name b { overflow: hidden; text-overflow: ellipsis; }
+.who.is-near .who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.who.is-near .who-name b { overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   いま、ほんとうにここにいる人（docs/island-here.md）
+   ---------------------------------------------------------
+   上の住人（視聴者さんが作ったキャラクター）とは**別物**なので、
+   見た目でも分ける（`docs/island-here.md` 2章の表）。
+
+     住人   … 視聴者さんが作った絵。押すと喋る。日替わりの顔ぶれ
+     ここ   … 丸い YouTube のアイコン。**押せない**。開いているあいだだけ
+
+   押せないので、板（厚み）にしない。**完全に平ら**にして、
+   落ち影だけ右下へずらす（`docs/island-world.md` 3.4）。
+   丸のふちは紙の色で、島のどの地の上でも切り抜ける。
+
+   位置は `IslandStage` の rAF が transform で書く。島の SVG の外にあるので、
+   ここを何回書き換えても島は描き直されない。
+   ========================================================= */
+.labels.is-here { z-index: 2; }
+.here {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+/* 足元の接地影。**浮かせない**（`docs/island-design.md` 2章の3）。
+   自分の印はあやとの頭の上に出るので、そちらには付けない（下に影が付く）。 */
+.here::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--hs, 32px) / -4);
+  top: -3px;
+  width: calc(var(--hs, 32px) / 2);
+  height: 6px;
+  border-radius: 50%;
+  background: #134a2c;
+  opacity: 0.18;
+}
+.here.is-me::after { display: none; }
+.here-body {
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  transform: translate(-50%, 0);
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+.here-av {
+  position: relative;
+  display: block;
+  width: var(--hs, 32px);
+  height: var(--hs, 32px);
+}
+.here-icon {
+  display: block;
+  width: var(--hs, 32px);
+  height: var(--hs, 32px);
+  border-radius: 50%;
+  /* ふちは紙。海の上でも草の上でも、丸が地から切り抜ける */
+  border: 2.5px solid var(--paper);
+  background: var(--paper-2);
+  box-shadow: 2px 4px 5px var(--cast);
+  overflow: hidden;
+}
+.here-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* オンラインの印。**桃は「いま」の色**（`docs/island-world.md` 3.2）。
+   緑を新しく足すと、島の色の表に無い色が1つ増える。
+   「いまここにいる」は、まさに桃が指しているもの。 */
+.here-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 40%;
+  min-width: 10px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--paper);
+  box-sizing: border-box;
+}
+/* 名札。住人の名札（.who-name）と形をそろえるが、**厚みは付けない**。
+   あちらは押せる人に付いていて、こちらは押せない。 */
+.here-name {
+  display: block;
+  max-width: 132px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.92);
+  box-shadow: 2px 4px 5px var(--cast);
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 吹き出しが開いているあいだは、島の上の字を引かせる（住人の名札と同じ） */
+.stage.is-talking .here-name { opacity: 0; transition: opacity 0.18s; }
 
 /* =========================================================
    いま、ほんとうにここにいる人（docs/island-here.md）
@@ -974,8 +1087,9 @@
    歩きたくない人のために、右上の札を押すと6つが下から生えてくる。
    ========================================================= */
 @media (max-width: 639px) {
-  /* 畳んでいるときのバーの背。「今日の島」の1行ぶんしかない。
-     開くと 6 つのマス（48px×2段＋隙間）が下から生えて 180px になるが、
+  /* 畳んでいるときのバーの背。「今日の島」と行き先の丸で1段ぶん。
+     実測 67px（今日の1行が2行に折れる長い日だけ 71px）。
+     開くと 6 つのマス（48px×2段＋隙間）と島の連なりへの1本が下から生えるが、
      それは押したあいだだけの話なので、島の高さの計算はこちらを使う。 */
   .stage.stage { --bar-h: 68px; }
   .stage.stage.stage.has-today { --bar-h: 68px; }
@@ -1003,20 +1117,32 @@
   /* backdrop-filter は画面幅ぜんぶを毎フレーム引き伸ばすので外した */
   backdrop-filter: none;
 }
-/* 行き先の開け閉め。バーの上に置いた札。
-   バーの中に1段作ると、畳んでいるあいだも1行ぶん島を隠すことになる。
-   `.stage-view`（島をながめる）と同じ形にしてある。どちらも行き先ではなく、
+/* バーの1段目。「今日の島」と「行き先」を1行に並べる。
+   ---------------------------------------------------------
+   前は「今日の島」の板の上に「行き先をみる」の札が**浮いていた**。
+   島の下端に別々の物が2つ乗っていて、そのぶん島が縦に 60px 隠れる。
+   中身はどちらも要るので、捨てずに1行へ入れた。
+   目に入るかたまりが1つになると、下端が「バー」に見える。 */
+.stage .bar-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+.stage .bar-row .today { flex: 1 1 auto; min-width: 0; }
+
+/* 行き先の開け閉め。バーの1段目の右端。
+   `.stage-view`（島をながめる）と同じ板の型にしてある。どちらも行き先ではなく、
    「島の見え方をどうするか」を決める操作なので、見た目を揃えておく。 */
 .stage .bar-toggle {
-  position: absolute;
-  right: 12px;
-  bottom: calc(100% + 8px);
+  position: static;
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   /* 指で押せる最小（`docs/island-design.md` 3-2） */
   min-height: 48px;
-  padding: 0 15px 0 12px;
+  padding: 0 13px 0 10px;
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
@@ -1085,6 +1211,7 @@
   text-decoration: none;
 }
 .stage .bar-spot:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
 .stage .bar-spot img { width: 28px; height: 28px; flex: none; }
 /* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
    ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
@@ -1124,6 +1251,29 @@
   color: var(--paper);
   transform: rotate(-6deg);
 }
+/* 島の連なりへ（スマホ）。
+   6つは「この島の中のどこへ行くか」、こちらは**島の外へ出る**話なので、
+   同じ列に並べない。3列ぶんを1本で使って、上に線を1本引いて分ける。
+   地は紙のままで、6つのマスより静かにしておく。 */
+.stage .bar-atlas {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。実測 45px で割っていた */
+  min-height: 48px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 2px dashed var(--frame);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.stage .bar-atlas:active { transform: translateY(2px); }
+.stage .bar-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
 /* 引き／寄りの切り替え。
    行き先ではないので、行き先のバーから出して島の隅に置いた。
@@ -1163,15 +1313,101 @@
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
+/* 島の隅の道具は、スマホでは絵だけにする。
+   ---------------------------------------------------------
+   字の付いた札が3枚（島をながめる・ぜんぶ・島の地図）並んでいて、
+   島に降りた1画面目で、島より先に**道具の名前**を読むことになっていた。
+   3枚で 13文字、横 76〜120px を隅から取っている。
+
+   名前は消していない。読み上げには `aria-label` で渡っているし、
+   640px から上（PC・タブレット）は場所が余っているのでそのまま字を出す。
+   絵は `components/ui/icons/core.tsx` の自前 SVG（絵文字は使わない）。 */
+@media (max-width: 639px) {
+  .stage .tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .stage .stage-view,
+  .stage .stage-index,
+  .stage .bar-toggle {
+    width: 48px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  /* 行き先の開け閉めも同じ丸にする。
+     ここに「行き先をみる」の5文字を置くと、隣の「今日の島」の1行が
+     そのぶん詰められて、今日いちばん言いたいことが「今日は Food & Wine
+     Fest @ ム…」と切れた。**切れた1行より、絵だけの丸のほうが読める。**
+     上向きの山形は「下から出てくる」の絵で、押せば6つが生える。 */
+  .stage .bar-toggle { align-self: center; }
+  /* バーの1段目は横幅がぎりぎり。今日の1行に1文字でも多く回す。
+     絵（30px）は残す。島の絵の続きとして読めるので、字ではない情報が
+     ここに1つあるほうが、行が短くなるより効く。 */
+  .stage .bar-row { gap: 6px; }
+  .stage .island-bar { padding-left: 7px; padding-right: 7px; }
+  .stage .today[data-place="bar"] .today-tab { gap: 6px; padding: 6px 8px 6px 6px; }
+
+  /* 今日の1行は、切らずに2行まで折る。
+     ---------------------------------------------------------
+     これは島のいちばん下にある、**毎日変わる1行**。押す前に読めないなら、
+     そこに置いてある意味が薄い（`island-design.md` 4章「押す前に答えが読める」）。
+     行き先の丸を同じ行に入れたぶん幅が減って、長い日に
+     「今日は Food & Wine Fest @ ムタツミ…」と切れていた。
+
+     **幅を取り返す方向では解けない。** 出どころの中でいちばん長いのは
+     献立の「きのう、アゼルバイジャン風チキン無水スパイスカレーを作りました」で
+     全角31文字。丸を行の外へ出して幅をぜんぶ渡しても、1行には入らない。
+
+     背はほとんど伸びない。板の絵が 30px あって、2行（約34px）でようやく
+     それを超えるので、伸びるのは4px。しかも**長い日だけ**で、
+     短い日は1行のまま（実測は下の報告のとおり）。 */
+  .stage .today[data-place="bar"] .today-line b {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    /* 「Food & Wine Fest」のような切れ目のない綴りが幅を超えたときだけ折る。
+       入口のマスの名前と同じ扱い（黙って切らない） */
+    overflow-wrap: anywhere;
+    /* `word-break: auto-phrase`（文節で折る）は入れない。試して外した。
+       「ムタツミン／ダ公園」の割れ目は直るが、行の右端が余るぶん
+       2行に入らなくなって、いちばん長い献立の2つが**また切れた**。
+       字が割れて読めるほうが、切れて読めないよりいい。 */
+    line-height: 1.35;
+  }
+
+  /* 「今日の島」の名札は、バーでは出さない。
+     1行目に小さい字で毎日おなじ4文字が出ているだけで、下の1行が
+     「今日は…」と自分で名乗っている。板が1行になって、島が 14px 広くなる。
+     読み上げには残す（PC の隅では今までどおり出る）。 */
+  .stage .today[data-place="bar"] .today-line em {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 /* 島の地図（島の連なりへ）。
    ---------------------------------------------------------
    **トップは、いままでどおり「いまの島」**（`docs/island-atlas.md` 7章）なので、
    連なりへはここからしか行けない。だから隅に隠さず、右上に置く。
 
-   置き場所が縦に動くのは、右上を看板ロゴと分け合っているから。
-   スマホは寄り（既定）なら小さいマーク（124×73）、引きなら大きい看板（〜214×168）が
-   同じ隅に出る。**ロゴの下に必ず来る高さ**を、寄り引きで出し分ける。
-   640px から上はロゴが中央か左へ寄るので、右上の 12px がそのまま空く。 */
+   **ただしスマホでは出さない**（`IslandStage.tsx` が描かない）。島に降りた
+   1画面目で「別の島がある」と先に言われると、いまの島がその案内板の背景になる。
+   スマホは行き先をひらいたときに出る（`.bar-atlas`）。
+   640px から上はロゴが中央か左へ寄るので、右上の 12px がそのまま空く。
+   下の寄り引きの出し分けは、その幅では使わないが、スマホに戻す日のために残す。 */
 .stage-atlas {
   position: absolute;
   right: 12px;

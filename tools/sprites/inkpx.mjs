@@ -7,6 +7,7 @@
  *   python3 tools/sprites/inkpx.py <TAG> <_map など>
  *
  * OPEN=1 で畳んであるものを全部開く。CLICK に "|" 区切りで押す先を渡せる。
+ * GAP=6000 で、押すたびにそのぶん待つ（島の建物は歩いて着いてから2回目で入る）。
  *
  * 1. 字を持つ要素をぜんぶ拾って、位置と字の色を書き出す
  * 2. そのまま1枚撮る（shot.png）
@@ -40,6 +41,18 @@ const ctx = await b.newContext({
   reducedMotion: "reduce",
 });
 await offline(ctx);
+/* 2回撮って差を見る道具なので、**2枚のあいだに消えるものがあると差が嘘になる。**
+   歩きかたの案内は 5.6 秒で消える。1枚目には写って2枚目には写らないので、
+   その下の札が動いて、動いたぶんが「字の画素」として数えられていた
+   （札の字を「クリーム色の字が海に乗っている」と報告した）。
+   ほかの測り道具（framecpu / _abport / isleshot）と同じ鍵を置いて、
+   **2回目以降に来た人**の画面で測る。案内が出ている数秒は別に見る。 */
+await ctx.addInitScript(() => {
+  try {
+    localStorage.setItem("ayato-island-arrived", "2026-09-04");
+    localStorage.setItem("ayato-island-walked", "1");
+  } catch {}
+});
 const p = await ctx.newPage();
 
 for (const path of PATHS) {
@@ -53,7 +66,13 @@ for (const path of PATHS) {
     });
   }
   if (process.env.CLICK) {
-    for (const sel of process.env.CLICK.split("|")) await p.click(sel).catch(() => {});
+    /* 押すたびに待つ。島の建物は**1回目で歩き出して、着いてから2回目で中に入る**ので、
+       間を置かずに2回押すと板が開かないまま撮ることになる（GAP は待つミリ秒） */
+    const gap = Number(process.env.GAP || 0);
+    for (const sel of process.env.CLICK.split("|")) {
+      await p.click(sel, { force: true }).catch(() => {});
+      if (gap) await p.waitForTimeout(gap);
+    }
   }
   await p.waitForTimeout(1400);
   // 押したときに画面が動いていると、通しで撮った1枚と箱の座標がずれる

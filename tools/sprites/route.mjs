@@ -45,6 +45,18 @@ export async function offline(ctx, opts = {}) {
     r.fulfill({ path: photo }),
   );
 
+  // ショート動画のサムネイル。**1枚に潰さない。**
+  // **上の1枚返しより後に書く。** Playwright は後に登録した route から当てるので、
+  // 先に書くと ytimg をまとめて潰しているほうに全部持っていかれる
+  // 58本が全部おなじ絵で写ると、格子を見ても「絵が縦に切れているか」しか
+  // 分からない（住人を ayato.png に潰していたときと同じ失敗）。
+  // 先に `python3 tools/sprites/avatars.py` で落としておくと、ここが1枚ずつ返す
+  await ctx.route(/i\.ytimg\.com\/vi\//, (r) => {
+    const m = /\/vi\/([^/]+)\//.exec(r.request().url());
+    const local = m && `${AVATARS}/yt-thumb/${m[1]}.jpg`;
+    r.fulfill({ path: local && existsSync(local) ? local : photo });
+  });
+
   // 書体は next/font で自分のドメインから配るが、古い書き出しが残っていると叩きにいく
   await ctx.route(/fonts\.googleapis\.com/, (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }),
