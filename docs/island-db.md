@@ -54,6 +54,86 @@
 
 取り込みは `MERGE`（べき等）。同じ配信を何度流しても増えない。
 
+### `doneru_donations` — Doneru の寄付1件＝1行
+
+**スパチャは `chat_messages` に入っているが、Doneru 経由の寄付はどこにも無かった。**
+`functions/src/doneruAmount.ts` で取れるのは合計額だけで、誰がいつ出したかは取れない
+（`docs/nordic-fund.md` 2.2 / 2.3）。ここがその置き場所。
+
+| 列 | 型 | 中身 |
+| --- | --- | --- |
+| `donation_id` | STRING | Doneru 側のID（主キー）。無ければ中身の SHA-256 |
+| `donated_at` | TIMESTAMP | 出された時刻（UTC） |
+| `donor_name` | STRING | 表示名 |
+| `amount` | NUMERIC | 金額 |
+| `amount_text` | STRING | 元の表記（`¥1,000` など） |
+| `currency` | STRING | 通貨 |
+| `message_text` | STRING | 添えられた言葉 |
+| `source_year` | INT64 | どの年として取ったか |
+| `ingest_run_id` / `ingested_at` | | 取り込みの記録 |
+| `raw_json` | JSON | 元データそのまま |
+
+入れているのは `python/fetch_doneru_donations.py`（`.github/workflows/fetch_doneru_donations.yml` が毎日 5:30 に回す）。
+既定では今年ぶんだけ。過去ぶんは `workflow_dispatch` の `since` に年を入れて流す
+（`since=2024` なら 2024 年から今年まで）。
+`donation_id` で `MERGE` するので、同じ年を何度流しても増えない。
+
+**列名は決め打ちしていない。** Doneru に公開 API は無く、画面が叩いている API を
+そのまま使っているので、向こうの都合で名前が変わりうる。候補名を並べて当たったものを
+使い、当たらなくても `raw_json` に丸ごと残す。形を見るには:
+
+```bash
+DONERU_COOKIE=... python python/fetch_doneru_donations.py --probe   # キー名と件数だけ出る
+```
+
+**この表から金額の順位表を作らない。** 出す人は60人しかいないので上位が常連で固定される。
+理由は `docs/nordic-fund.md` の「やらないことにした案」にある。人数と合計のための原本。
+
+#### 手元のメモと照合する
+
+```sql
+SELECT
+  EXTRACT(YEAR FROM donated_at AT TIME ZONE 'Asia/Tokyo') AS year,
+  COUNT(*) AS count,
+  SUM(amount) AS total
+FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
+GROUP BY year
+ORDER BY year
+```
+
+**通貨が混ざっていないか先に見る。** スパチャには外貨が2件混ざっていた
+（`docs/nordic-fund.md` 2.3）ので、Doneru も同じ可能性がある。
+
+```sql
+SELECT currency, COUNT(*) AS count, SUM(amount) AS total
+FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
+GROUP BY currency
+```
+
+`amount` が NULL の行があれば、そこは `amount_text` の形が読めていない。
+`raw_json` に元が残っているので、`python/doneru/normalizer.py` の候補名か
+金額の読み取りを直せば作り直せる。
+
+```sql
+SELECT COUNT(*) FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
+WHERE amount IS NULL OR donated_at IS NULL
+```
+
+#### Doneru のセッションを入れ直す
+
+認証はブラウザの cookie（`_dt`）だけ。**切れたら自動では戻せない**（ログインが
+Google OAuth なので Actions の中では通せない）。切れると
+`fetch_doneru_donations` が終了コード 2 で落ちるので、**Actions の失敗通知メール**で気づく。
+ログの `::error::` に理由が出るため、他の失敗と区別が付く。
+
+1. ブラウザで https://doneru.jp にログインする
+2. DevTools > Application > Cookies > `https://doneru.jp` の `_dt` の値をコピーする
+3. Settings > Secrets and variables > Actions の `DONERU_COOKIE` を更新する
+4. `Fetch Doneru Donations` を `workflow_dispatch` で流し直す
+
+`_dt` は**どの IP からでも寄付一覧が読める鍵**。Secrets 以外の場所に置かない。
+`cf_clearance` や `_ga` などは要らない（貼っても捨てられる）。
+
 ### ここから作るもの
 
 | スクリプト | 出す先 | 何を |

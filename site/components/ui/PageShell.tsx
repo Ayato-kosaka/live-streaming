@@ -201,7 +201,9 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
       <nav aria-label="島に建っているもの">
         <PlaceList current={current} atAll={atAll} />
       </nav>
-      <p className="ifoot-note">{FOOT.note}</p>
+      <p className="ifoot-note">
+        {FOOT.note} <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
+      </p>
     </footer>
   );
 }

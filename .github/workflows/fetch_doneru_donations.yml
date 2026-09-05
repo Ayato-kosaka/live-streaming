@@ -1,0 +1,92 @@
+name: Fetch Doneru Donations
+
+# Doneru の寄付履歴を BigQuery に入れる。
+#
+# 認証はブラウザの cookie（`_dt`）だけ。Doneru に公開 API は無く、ログインは
+# Google OAuth なので、**切れたら自動では戻せない**。あやとが入れ直すしかない。
+#
+# 気づく道は Actions の失敗通知メールに任せる。認証切れは終了コード 2 で落として、
+# ログに ::error:: で理由を出すので、メールから飛べば他の失敗と区別が付く。
+# セッションを取り直す手順は docs/island-db.md に書いてある。
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # UTC 20:30（日本時間 5:30）。チャット取り込みの30分後
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "取り込む年（空なら今年）"
+        required: false
+        type: string
+      since:
+        description: "この年から今年までまとめて取り込む（過去ぶんの取り込み用。year より優先）"
+        required: false
+        type: string
+      probe:
+        description: "形だけ見る（BigQuery に書かない）"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: fetch-doneru-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  fetch_donations:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+      DONERU_COOKIE: ${{ secrets.DONERU_COOKIE }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      - name: DONERU_COOKIE が入っているか確認
+        run: |
+          if [ -z "${DONERU_COOKIE}" ]; then
+            echo "ERROR: secrets.DONERU_COOKIE が未設定です。" >&2
+            echo "設定の手順は docs/island-db.md の「Doneru のセッションを入れ直す」を見てください。" >&2
+            exit 1
+          fi
+
+      - name: 寄付履歴の取得
+        shell: bash
+        run: |
+          # 終了コード 2 は認証切れ。Actions の失敗通知メールで区別が付くよう、
+          # ログに理由を出してからそのコードで落とす（issue は立てない）
+          args=()
+          if [ -n "${{ inputs.since }}" ]; then
+            args+=(--since "${{ inputs.since }}")
+          elif [ -n "${{ inputs.year }}" ]; then
+            args+=(--year "${{ inputs.year }}")
+          fi
+          if [ "${{ inputs.probe }}" = "true" ]; then args+=(--probe); fi
+
+          set +e
+          python python/fetch_doneru_donations.py "${args[@]}"
+          code=$?
+          set -e
+
+          if [ "$code" = "2" ]; then
+            echo "::error::Doneru のセッションが切れました。DONERU_COOKIE を入れ直してください（手順は docs/island-db.md）"
+          fi
+          exit $code
