@@ -128,7 +128,15 @@ export const PAST_APPS: AppEntry[] = [
   },
 ];
 
-export const appBySlug = (slug: string) => APPS.find((a) => a.slug === slug);
+/**
+ * slug からアプリを引く。**`PAST_APPS` も含めて探す。**
+ *
+ * ここを `APPS` だけにしていたので、`/apps/spelieve` が 404 だった。
+ * 3本目は「配信より前」というだけで、無かったことにしていいアプリではない
+ * （日本を出た理由そのもの）。
+ */
+export const appBySlug = (slug: string) =>
+  APPS.find((a) => a.slug === slug) ?? PAST_APPS.find((a) => a.slug === slug);
 
 /** 作った順に3本。`/about` の「作ってきたアプリ」はこれを見る。 */
 export const ALL_APPS: AppEntry[] = [...APPS, ...PAST_APPS].sort(

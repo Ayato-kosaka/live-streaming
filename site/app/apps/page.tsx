@@ -2,17 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
-import { APPS } from "@/content/apps";
+import { APPS, PAST_APPS } from "@/content/apps";
 import Icon from "@/components/ui/Icon";
 import { AnvilArt, DishArt, HeadphoneArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
   title: "アプリ",
-  description: "旅先で作っている自作アプリ。「なに食べよ」と「なにこれオーディオガイド」。",
+  description:
+    "旅先で作っている自作アプリ「なに食べよ」と「なにこれオーディオガイド」、そして日本を出るきっかけになった「スペリーブ」。",
 };
 
 /**
- * アプリ。**2本を見くらべる作業台。**
+ * アプリ。**いま動いている2本を見くらべる作業台と、その前に1本。**
  *
  * ## この面から端末の絵を外した理由
  *
@@ -155,6 +156,38 @@ export default function AppsPage() {
           );
         })}
       </div>
+
+      {/* **3本目を、上の2本と同じ形で並べない。**
+          上の並びの用事は「いま動いている2本を見くらべる」ことで、
+          そこにサポートの終わった1本を混ぜると、比べる列が比べられなくなる
+          （最終更新も、節目の数も、桁が違う）。
+          かわりに、この1本にしか無いもの＝**旅に出た理由**として下に置く。
+          島の話がここから始まっているので、外すわけにもいかない。 */}
+      {PAST_APPS.map((a) => (
+        <Panel key={a.slug} className="apast">
+          <h2>その前に、もう1本あった</h2>
+          <div className="apast-in">
+            <img className="apast-logo" src={a.logo} alt="" width={64} height={64} />
+            <div>
+              <b className="apast-name">
+                {a.name}
+                <span className="chip dark">{a.status}</span>
+              </b>
+              <p>{a.summary}</p>
+              <Link className="tile" href={`/apps/${a.slug}`}>
+                <span className="tile-mark">
+                  <Icon name="log" size={24} />
+                </span>
+                <span className="tile-text">
+                  <b>{a.name}のこと</b>
+                  <i>{a.milestones.length}の節目。配信より前なので、動画は付いていない</i>
+                </span>
+                <Icon name="right" size={16} className="tile-go" />
+              </Link>
+            </div>
+          </div>
+        </Panel>
+      ))}
     </PageShell>
   );
 }

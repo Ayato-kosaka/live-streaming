@@ -867,6 +867,29 @@
   font-size: var(--fs-note); font-weight: 900; color: var(--accent-2);
 }
 
+/* 配信より前の6週間。日付を持っていないので、年表と同じ形で並べない。
+   同じ形にすると「ここにも日付があるはず」に見える。 */
+.mbefore-list { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: var(--sp-2); }
+.mbefore-list li {
+  display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw-1) solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+}
+.mbefore-list b { font-size: var(--fs-body); font-weight: 900; color: var(--ink); }
+.mbefore-list i { font-style: normal; font-size: var(--fs-note); color: var(--ink-2); }
+.mbefore-list span { margin-left: auto; font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
+
+/* 3本目（配信より前に作っていたもの）。
+   比べる2本の下に、1本ぶんの幅で置く。押せるのは中の tile だけなので、
+   この枠そのものには厚みを付けない（docs/island-design.md）。 */
+.apast-in { display: grid; gap: var(--sp-4); grid-template-columns: 64px 1fr; align-items: start; }
+.apast-logo { border-radius: 14px; display: block; }
+.apast-in > div { min-width: 0; display: grid; gap: var(--sp-3); }
+.apast-name { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--fs-h3); font-weight: 900; color: var(--ink); }
+@media (max-width: 480px) { .apast-in { grid-template-columns: 48px 1fr; gap: var(--sp-3); } .apast-logo { width: 48px; height: 48px; } }
+
 .aapp-logo {
   flex: none;
   width: 72px;
