@@ -110,6 +110,16 @@ await offline(ctx);
   「あと何日」「いちばん近い企画」「配信本数」は画面が出てから計算し直している。同じ轍を踏まない。
 - **自動生成ファイルを手で直さない** — `site/content/cityStreams.ts`、
   `site/content/nordic/*.json`、`site/content/sprites.json`。元のスクリプトを直して作り直す。
+- **描画の速さを、壁の時計で測らない** — この箱で並列に作業していると load average が
+  20を超える。rAF の間隔は**同じ条件を2回測って 33ms と 116ms** が出る。
+  「60fps になった」の誤報はこれで出た。CDP の `Performance.ProcessTime`（描画プロセスが
+  実際に使った CPU 秒）から**1フレームあたりの CPU** を出す（同条件3回で 24/25/25）。
+  道具は `tools/sprites/framecpu.mjs`。転送量（バイト数）は混み具合に影響されないので、
+  そちらは壁の時計でよい。
+- **SVG は `viewBox` を書き換えると中身を全部描き直す** — 1ドットでも動かすと、
+  画面の外にある部分まで毎フレームなぞる。島はこれで1フレーム 26.6ms（うち 20ms が
+  ラスタライズ）だった。動かすのは CSS の `transform` にして、`viewBox` は据え置く。
+  `will-change` を SVG の**中の要素**に付けるのは逆効果（133ms まで悪化した）。付けるなら `<svg>` に。
 
 ## コミットと PR
 
