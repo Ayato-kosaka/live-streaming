@@ -373,3 +373,26 @@
   border-bottom: 2px solid var(--frame-dark);
 }
 .poll-why:active { transform: translateY(1px); }
+
+
+/* --- 読んでいるあいだ／今夜は問いが無い日（`docs/island-design.md` 4章） --- */
+
+/* 中身の形をした薄い板。回るものは島に1つも無いので、ここにも置かない */
+.poll.is-waiting { padding-bottom: 12px; }
+.poll-skel {
+  display: block;
+  border-radius: 9px;
+  background: rgba(158, 151, 109, 0.18);
+}
+.poll-skel-q { height: 14px; width: 68%; margin-top: 6px; }
+.poll-skel-o { height: 40px; margin-top: 7px; }
+
+/* 問いが無い日。板にはしない。1行だけ置いて、次にすることを添える */
+.poll-none {
+  margin: 9px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--frame-dark);
+}
+.poll-none .poll-why { margin-top: 3px; margin-left: 6px; }

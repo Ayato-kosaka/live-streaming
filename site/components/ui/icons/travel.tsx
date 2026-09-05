@@ -617,9 +617,12 @@ export const travel: Record<string, Draw> = {
         <rect x="18" y="24" width="5.4" height="20" rx="2.7" transform="rotate(-5 20.7 34)" />
         <rect x="42" y="22" width="5.4" height="20" rx="2.7" transform="rotate(-5 44.7 32)" />
       </g>
-      <path d="M10 42h44a5 5 0 0 1 5 5v3H14a4 4 0 0 1-4-4z" fill={c.rdd} />
-      <path d="M10 42c-6 0-9-4.4-9-9.4h6.4c0 2.4 1 3.4 2.6 3.4z" fill={c.rd} />
-      <path d="M10 42h4v8h-4z" fill={c.rd} />
+      {/* 滑走部。前の反りをもっと巻くと、柵ではなく「そり」に見える */}
+      <path d="M13 42h41a5 5 0 0 1 5 5v3.4H17a4 4 0 0 1-4-4z" fill={c.rdd} />
+      <path d="M13 50.4c-8 0-12-5-12-11.4 0-4 1.4-7.4 4-10l5 4c-1.8 1.8-2.6 3.8-2.6 6 0 3.6 2 5.4 5.6 5.4z" fill={c.rd} />
+      <path d="M9 39c0 3.6 2 5.4 5.6 5.4H17v6h-4c-8 0-12-5-12-11.4z" fill={c.rdd} />
+      {/* 引きひも */}
+      <path d="M4 30c6-4 11-4 16-1" fill="none" stroke={c.wod} strokeWidth="3" strokeLinecap="round" />
       <Gl c={c} cx={26} cy={28} rx={8} ry={1.6} r={-5} o={0.5} />
     </>
   ),

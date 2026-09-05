@@ -70,30 +70,20 @@ export default function Board() {
   const [voted, setVoted] = useState<Set<string>>(new Set());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
-  const [loadErr, setLoadErr] = useState(false);
   const [sort, setSort] = useState<"votes" | "new">("votes");
   const [onlyMine, setOnlyMine] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const { user, token } = useAuth();
 
-  /** 取りに行く。読めなかったときは「0件」と言わずに、読めなかったと言う。 */
-  const load = () => {
-    setIdeas(null);
-    setLoadErr(false);
-    getIdeas()
-      .then((r) => setIdeas(r.ideas))
-      .catch(() => {
-        setIdeas([]);
-        setLoadErr(true);
-      });
-  };
-
   useEffect(() => {
     setVoted(votedLocally());
     setMine(minePosts());
-    load();
-    // 初回だけ。load は毎回作り直されるので、依存に入れると取りに行き続ける
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    getIdeas()
+      .then((r) => setIdeas(r.ideas))
+      // 取れなかったときは静かに空の板を出す（`docs/island-design.md` 4章）。
+      // つながらなかったのは見ている人には関係のない話で、
+      // ここで謝るより「いちばんに貼る」を出したほうが先に進める。
+      .catch(() => setIdeas([]));
   }, []);
 
   const submit = async () => {
@@ -285,15 +275,7 @@ export default function Board() {
             <li />
           </ul>
         )}
-        {loadErr && (
-          <div className="bd-empty">
-            <p className="muted">いま板が見られません。少し待ってから、もう一度。</p>
-            <button className="bd-empty-go" onClick={load}>
-              もう一度ためす
-            </button>
-          </div>
-        )}
-        {!loadErr && ideas?.length === 0 && (
+        {ideas?.length === 0 && (
           <div className="bd-empty">
             <EmptyBoard />
             <p className="muted">{BOARD.empty}</p>

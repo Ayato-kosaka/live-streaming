@@ -17,6 +17,32 @@ import { C } from "@/components/ui/icons/pal";
  * **足代は金、道しるべは緑。** つながりの絵（`TieMark`）は、この2色の輪でできている。
  */
 
+/**
+ * 上からの光。
+ *
+ * 平らな単色の絵を、階調のあるスプライトの隣に置くと、別の世界のものに見える
+ * （`docs/island-design.md` 2章）。だから面はベタ塗りにせず、上を一段明るくする。
+ * 色は増やさない。`pal.ts` にある同じ色相の明るいほうと暗いほうをつなぐだけ。
+ * 中身が同じなので、id はどの絵で重なってもよい。
+ */
+function Light() {
+  const g = (id: string, a: string, b: string) => (
+    <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stopColor={a} />
+      <stop offset="1" stopColor={b} />
+    </linearGradient>
+  );
+  return (
+    <defs>
+      {g("sgGold", C.yl, C.gd)}
+      {g("sgGoldD", C.gd, C.gdd)}
+      {g("sgGreen", C.gr, C.grd)}
+      {g("sgGreenL", C.grl, C.gr)}
+      {g("sgBrown", C.br, C.brd)}
+    </defs>
+  );
+}
+
 function Svg({ size, children }: { size: number; children: React.ReactNode }) {
   return (
     <svg
@@ -27,6 +53,7 @@ function Svg({ size, children }: { size: number; children: React.ReactNode }) {
       aria-hidden
       focusable="false"
     >
+      <Light />
       {children}
     </svg>
   );
@@ -47,12 +74,12 @@ export function FareMark({ size = 26 }: { size?: number }) {
     <Svg size={size}>
       <Ground cx="23" rx="15" />
       {/* 奥の硬貨 */}
-      <circle cx="31.5" cy="19" r="11.5" fill={C.gdd} />
-      <circle cx="31.5" cy="19" r="8.6" fill={C.gd} />
+      <circle cx="31.5" cy="19" r="11.5" fill="url(#sgGoldD)" />
+      <circle cx="31.5" cy="19" r="8.6" fill="url(#sgGold)" />
       {/* 手前の硬貨 */}
-      <circle cx="19" cy="25.5" r="13.5" fill={C.gdd} />
-      <circle cx="19" cy="25.5" r="10.6" fill={C.gd} />
-      <rect x="13.5" y="23.7" width="11" height="3.6" rx="1.8" fill={C.gdd} opacity="0.55" />
+      <circle cx="19" cy="25.5" r="13.5" fill="url(#sgGoldD)" />
+      <circle cx="19" cy="25.5" r="10.6" fill="url(#sgGold)" />
+      <rect x="13.5" y="23.7" width="11" height="3.6" rx="1.8" fill={C.gdd} opacity="0.5" />
     </Svg>
   );
 }
@@ -66,13 +93,13 @@ export function PostMark({ size = 26 }: { size?: number }) {
   return (
     <Svg size={size}>
       <Ground cx="25.5" rx="11" />
-      <rect x="21" y="7" width="6" height="33" rx="3" fill={C.br} />
+      <rect x="21" y="7" width="6" height="33" rx="3" fill="url(#sgBrown)" />
       {/* 上の板。右を向く */}
-      <rect x="7" y="11" width="25" height="10.5" rx="3.5" fill={C.grd} />
+      <rect x="7" y="11" width="25" height="10.5" rx="3.5" fill="url(#sgGreen)" />
       <path d="M30 11.6l8 5.15-8 5.15z" fill={C.grd} />
       <rect x="10" y="14.5" width="14" height="3" rx="1.5" fill={C.grl} opacity="0.75" />
       {/* 下の板。左を向く */}
-      <rect x="16" y="24.5" width="25" height="10.5" rx="3.5" fill={C.gr} />
+      <rect x="16" y="24.5" width="25" height="10.5" rx="3.5" fill="url(#sgGreenL)" />
       <path d="M18 25.1l-8 5.15 8 5.15z" fill={C.gr} />
       <rect x="24" y="28" width="14" height="3" rx="1.5" fill={C.grl} opacity="0.75" />
     </Svg>

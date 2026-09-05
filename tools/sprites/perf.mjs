@@ -61,8 +61,10 @@ const ctx = await b.newContext({
  */
 const AVATAR = process.env.PERF_AVATAR || "/home/user/live-streaming/tools/sprites/avatar-160.png";
 await ctx.route(/googleusercontent\.com/, (r) => r.fulfill({ path: AVATAR }));
+// 北欧の写真も配信のサムネイルも、本番では横 500 前後の JPEG。og.png（470KB）を
+// 返すと、写真が10枚あるだけで転送が 4.7MB 増えて、数字が読めなくなる。
 await ctx.route(/upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, (r) =>
-  r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+  r.fulfill({ path: "/home/user/live-streaming/tools/sprites/photo-480.jpg" }),
 );
 await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 

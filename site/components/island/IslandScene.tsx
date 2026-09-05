@@ -551,7 +551,7 @@ function grassTile(seed: number, count: number, size: number) {
 const GRASS_DRY = "color-mix(in srgb, var(--grass-hi) 52%, var(--gold) 48%)";
 
 /** タイル1枚。大きいほど繰り返しが目につきにくい。 */
-const GRASS_TILE = grassTile(1207, 176, 208);
+const GRASS_TILE = grassTile(1207, 224, 208);
 
 const plateauTopPath = blob(PLATEAU.cx, PLATEAU.cy - PLATEAU.drop, PLATEAU.radii, PLATEAU.squash);
 

@@ -36,8 +36,17 @@ const FALLBACK_WAIT = 3600;
 
 type Sent = "none" | "sending" | "done";
 
+/**
+ * 問いが手元に来るまでの3つの姿（`docs/island-design.md` 4章）。
+ *   reading … まだ読んでいる。中身の形をした薄い板だけ置く
+ *   open    … 問いが出ている
+ *   none    … 今夜は問いが無い。読めなかった日もここに静かに落ちる
+ */
+type Phase = "reading" | "open" | "none";
+
 export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => void }) {
   const [poll, setPoll] = useState<PollData | null>(null);
+  const [phase, setPhase] = useState<Phase>("reading");
   const [mine, setMine] = useState<string | null>(null);
   const [sent, setSent] = useState<Sent>("none");
   const [failed, setFailed] = useState<string | null>(null);
@@ -54,17 +63,24 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
     const read = () => {
       getPoll()
         .then(({ poll: p }) => {
-          if (!alive || !p || p.options.length < 2) return;
+          if (!alive) return;
+          if (!p || p.options.length < 2) {
+            setPhase("none");
+            return;
+          }
           const had = pollAnswer(p.id);
           // 前に押していた人には、開いた時点で棒を出しておく。
           // 自分の1票がまだそこにあることが分かるほうが、次も押す気になる。
           if (had) grown.current = true;
           setPoll(p);
           setMine(had);
+          setPhase("open");
           tell.current?.(!had);
         })
         .catch(() => {
-          /* 問いが無い日と、サーバーに届かない日の区別は要らない。どちらも出さない */
+          // 読めなかった日は、問いが無い日と同じ顔にする。
+          // 島の中でサーバーの失敗を見せない（`docs/island-design.md` 4章）
+          if (alive) setPhase("none");
         });
     };
     const ric = (window as unknown as { requestIdleCallback?: typeof requestIdleCallback })
@@ -127,7 +143,32 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
     [poll, mine, sent, token],
   );
 
-  if (!poll) return null;
+  // 読んでいるあいだ。場所だけ先に取って、中身の形をした薄い板を置く。
+  // 回るものは島に1つも無いので、待ちにも回るものを使わない
+  if (phase === "reading") {
+    return (
+      <div className="poll is-waiting" aria-hidden>
+        <b className="poll-ask">今夜のおたずね</b>
+        <span className="poll-skel poll-skel-q" />
+        <span className="poll-skel poll-skel-o" />
+        <span className="poll-skel poll-skel-o" />
+      </div>
+    );
+  }
+
+  // 今夜は問いが無い日。「まだ何も無い」で終わらせず、次にすることを1つ置く。
+  // 読めなかった日もここに来る。島の中でエラーを出さない
+  if (phase === "none" || !poll) {
+    return (
+      <p className="poll-none">
+        今夜のおたずねは、まだ出ていない。
+        <Link className="poll-why" href="/board">
+          掲示板に企画を貼る
+          <Arrow size={11} />
+        </Link>
+      </p>
+    );
+  }
 
   const open = grown.current && !!mine;
   // 押す前は人数を出さない。先に数字を見せると、多いほうに引っぱられる

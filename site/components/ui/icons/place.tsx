@@ -101,9 +101,10 @@ export const place: Record<string, Draw> = {
       <Sh c={c} cy={56} rx={20} ry={4} />
       {/* 電波。屋根に重ねると帽子のつばに見えたので、棟の上に間をあけて出す */}
       <rect x="30.6" y="4" width="2.8" height="9" rx="1.4" fill={c.gyd} />
-      <g fill="none" stroke={c.sk} strokeLinecap="round" opacity={c.flat ? 1 : 0.95}>
-        <path d="M23 9.5a13 13 0 0 1 18 0" strokeWidth="4.2" />
-        <path d="M17 3.5a21 21 0 0 1 30 0" strokeWidth="4" opacity="0.55" />
+      {/* 細い薄水色だと紙の上で消えて、屋根だけの塔に見えていた。太くして濃さも上げる */}
+      <g fill="none" strokeLinecap="round">
+        <path d="M22 10a14 14 0 0 1 20 0" strokeWidth="5.4" stroke={c.skd} />
+        <path d="M16 3.6a22 22 0 0 1 32 0" strokeWidth="4.6" stroke={c.sk} />
       </g>
       {/* 脚 */}
       <path d="M12 56 22 30h6L18 56z" fill={c.wod} />

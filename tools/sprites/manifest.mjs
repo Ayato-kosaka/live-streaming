@@ -224,9 +224,16 @@ export const SPRITES = [
   { name: "tree-cone", parts: [`${NK}/tree_cone.glb`] },
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
   { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
+  { name: "tree-palm-bend", parts: [`${NK}/tree_palmBend.glb`] },
+  // 同じ木ばかり並ぶと林が壁紙に見える。輪郭の違うものを足す
+  { name: "tree-simple", parts: [`${NK}/tree_simple.glb`], opts: LEAFY },
+  { name: "tree-narrow", parts: [`${NK}/tree_tall.glb`], opts: LEAFY_SOFT },
+  { name: "tree-pine-ground", parts: [`${NK}/tree_pineGroundA.glb`] },
+  { name: "tree-pine-round-b", parts: [`${NK}/tree_pineRoundE.glb`] },
   { name: "stump", parts: [`${NK}/stump_roundDetailed.glb`] },
   { name: "stump-old", parts: [`${NK}/stump_oldTall.glb`] },
   { name: "stump-square", parts: [`${NK}/stump_squareDetailed.glb`] },
+  { name: "stump-round", parts: [`${NK}/stump_round.glb`] },
 
   /* ---------- 下草 ---------- */
   { name: "bush", parts: [`${NK}/plant_bushDetailed.glb`] },

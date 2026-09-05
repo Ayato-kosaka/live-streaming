@@ -832,10 +832,10 @@ export const food: Record<string, Draw> = {
   fridge: (c) => (
     <>
       <Sh c={c} cy={57} rx={17} ry={3.4} />
-      <rect x="15" y="3" width="34" height="54" rx="6" fill={c.wd} />
-      <path d="M43 3a6 6 0 0 1 6 6v42a6 6 0 0 1-6 6h-11V3z" fill={c.gy} />
-      <rect x="15" y="21" width="34" height="3" fill={c.gyd} />
-      <g fill={c.gyd}>
+      <rect x="15" y="3" width="34" height="54" rx="6" fill={c.gy} />
+      <path d="M43 3a6 6 0 0 1 6 6v42a6 6 0 0 1-6 6h-11V3z" fill={c.gyd} />
+      <rect x="15" y="21" width="34" height="3" fill={c.w} opacity="0.7" />
+      <g fill={c.w}>
         <rect x="39" y="11" width="4" height="8" rx="2" />
         <rect x="39" y="27" width="4" height="12" rx="2" />
       </g>
