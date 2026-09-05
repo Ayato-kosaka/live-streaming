@@ -1,6 +1,6 @@
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
-import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
+import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
 import { StreamCard } from "@/components/ui/Bits";
 import { IslandFooter } from "@/components/ui/PageShell";

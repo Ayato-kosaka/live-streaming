@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
-import { LiveNumber, type StatKey } from "@/lib/liveStats";
+import { LiveNumber } from "@/lib/liveStats";
 import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
@@ -37,9 +37,8 @@ type Box = {
   href: string;
   name: string;
   note: string;
-  /** 数。Firestore から来るものは statKey を持たせて、届いたら静かに差し替える */
+  /** 数。Firestore から届くものは LiveNumber を渡して、静かに差し替えさせる */
   n: ReactNode;
-  statKey?: StatKey;
   unit: string;
   /** マスの中に置く見本。数個だけ */
   sample: ReactNode;
