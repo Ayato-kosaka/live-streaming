@@ -3,21 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { getState, postNote, type NextNote } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { PLANS, daysUntil, planDaysLeft, type Plan } from "@/content/plans";
+import { PLANS, daysUntil, type Plan } from "@/content/plans";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
-import PlanCard from "./PlanCard";
-import { NoticeBell, Pin, Stone } from "./art";
+import PlanCard, { PlanRow } from "./PlanCard";
+import { Pin } from "./art";
 
 /** 日付の早い順。日付の無いものは後ろ。 */
 const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? "9999");
-
-/** 「9/6」 */
-const short = (date?: string) => {
-  if (!date) return "";
-  const [, m, d] = date.split("-");
-  return `${Number(m)}/${Number(d)}`;
-};
 
 /**
  * 付箋に何を書けばいいのかの見本。
@@ -163,49 +156,6 @@ function PlanNotes({
 }
 
 /**
- * これからの道のり。
- *
- * 予定を縦の点線でつなぐのではなく、島の道の飛び石として並べる。
- * 何個あって、どの順に来るのかが、字を読む前に形で分かる。
- */
-function Road({ plans, today }: { plans: Plan[]; today: Date | null }) {
-  return (
-    <ul className="nx-road">
-      {plans.map((p, i) => {
-        const d = today ? planDaysLeft(p, today) : null;
-        return (
-          <li key={p.id}>
-            <span className="nx-stone">
-              <Stone tone={i === 0 ? "now" : "stone"} />
-              <b>{i + 1}</b>
-            </span>
-            <div className="nx-road-b">
-              <div className="nx-road-when">
-                <time>{p.when}</time>
-                {d !== null && (
-                  <span className={`count${d === 0 ? " is-today" : ""}`}>
-                    {d === 0 ? "今日" : <>あと<b>{d}</b>日</>}
-                  </span>
-                )}
-              </div>
-              <a className="nx-road-t" href={`#${p.id}`}>
-                <b>{p.title}</b>
-                <i>{p.note}</i>
-              </a>
-              <a className="nx-road-go" href={`#${p.id}`}>
-                {i === 0 ? "上に書いてあります" : "この企画を見る"}
-                {/* いちばん近い企画の札はこの上にあるので、矢印も上を向ける */}
-                <Icon name={i === 0 ? "up" : "chevron"} size={13} />
-              </a>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/**
  * これからの企画ぜんぶ。
  *
  * 島に来た人がまっさきに知りたいのは「次に何をするのか」。
@@ -264,64 +214,48 @@ export default function NextPlans() {
     onAdd: () => add(p.id),
   });
 
-  const leadDays = lead && today ? planDaysLeft(lead, today) : null;
-
   return (
     <>
-      {/* しらせ。「何件あって、次は何か」だけを、いちばん上で言う。
-          赤い丸は「まだ見ていないものがある」の合図で、島じゅうでこれ1種類しか使わない。
-          あと何日かは、すぐ下の札が大きい数字で言う。ここで先に言うと同じ数が2回出る。 */}
-      {ahead.length > 0 && (
-        <div className="nx-notice">
-          <NoticeBell size={34} />
-          <span className="nx-notice-t">
-            <b>これからの予定が{ahead.length}件</b>
-            {lead && (
-              <i>
-                {leadDays === 0 ? "今日は " : `つぎは ${short(lead.date)} `}
-                {lead.title}
-              </i>
-            )}
-          </span>
-        </div>
-      )}
-
+      {/* しらせの帯を外した。すぐ下の札が「あと何日」を大きい数字で言っていて、
+          帯はその同じことを小さい字でもう一度言っていた（同じ数が2回出る）。
+          件数は道のりの見出しが持っている。 */}
       {lead && (
-        <PlanCard plan={lead} lead>
+        <PlanCard plan={lead}>
           <PlanNotes {...notesProps(lead)} open />
         </PlanCard>
       )}
 
-      {/* 予定がいくつあって、どの順で来るのか。
-          札を縦に読ませる前に、道のりの形だけ先に見せる。 */}
-      {ahead.length > 1 && (
+      {/* このあとの予定。**一覧と札を分けない。**
+          飛び石の段がそのまま開いて中身になる（`docs/island-ux.md` 5.8）。
+          目次と本文を並べて置くと、押した先に同じ題名がもう一度出てくる。 */}
+      {rest.length > 0 && (
         <section className="panel paper">
-          <h2>これからの道のり</h2>
-          <p className="muted">上から順に踏んでいきます。押すと、その企画のところまで飛びます。</p>
-          <Road plans={ahead} today={today} />
+          <h2>このあと、どこへ行くんだろう</h2>
+          <p className="muted">
+            石の上の日付が、その企画の日。押すと、その場で中身が開きます。
+          </p>
+          <ul className="nx-road">
+            {rest.map((p) => (
+              <PlanRow plan={p} key={p.id}>
+                <PlanNotes {...notesProps(p)} />
+              </PlanRow>
+            ))}
+          </ul>
         </section>
       )}
 
-      {rest.map((p) => (
-        <PlanCard plan={p} key={p.id}>
-          <PlanNotes {...notesProps(p)} />
-        </PlanCard>
-      ))}
-
       {done.length > 0 && (
-        <div style={{ marginBottom: "var(--sp-5)" }}>
-          <Fold
-            title="もう行ってきた企画"
-            note={`${done.length}件`}
-            lead="貼ってもらった付箋も、そのまま残っている"
-          >
+        <section className="panel paper">
+          <h2>もう行ってきた</h2>
+          <p className="muted">貼ってもらった付箋も、そのまま残っています。</p>
+          <ul className="nx-road">
             {done.map((p) => (
-              <PlanCard plan={p} key={p.id}>
+              <PlanRow plan={p} key={p.id}>
                 <PlanNotes {...notesProps(p)} />
-              </PlanCard>
+              </PlanRow>
             ))}
-          </Fold>
-        </div>
+          </ul>
+        </section>
       )}
 
       {err && (
