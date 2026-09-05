@@ -34,8 +34,48 @@ const WOODEN = {
   blue: { h: 0.072, s: 0.42, l: [0.34, 0.52] },
   neutral: { h: 0.10, s: 0.30, l: [0.62, 0.86] },
 };
-/** 岩。nature-kit の岩は土の色をしているので、灰色へ置き換える。 */
-const STONE = { mat: { dirt: [0.105, 0.10, 0.70], grass: [0.310, 0.34, 0.42] } };
+/** 広葉樹。樹冠を房に分ける。1で既定の効き、小さいほど元の塊に近い。 */
+const LEAFY = { lobes: 1 };
+/** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
+const LEAFY_SOFT = { lobes: 0.72 };
+
+/** 岩。nature-kit の岩は土の色をしているので、灰色へ置き換える。
+ * 苔は別マテリアルの面なので、そのままだと緑のシールに見える。
+ * `moss` を付けると、縁が石の色へ溶けてギザギザになる。 */
+const STONE = {
+  mat: { dirt: [0.105, 0.10, 0.70], grass: [0.310, 0.34, 0.42] },
+  moss: { from: "dirt" },
+};
+/** 灰色の石(stone_*)。土ではなく石のマテリアルを持っている。 */
+const GREYSTONE = {
+  mat: { stone: [0.105, 0.09, 0.74], stonedark: [0.105, 0.09, 0.60], grass: [0.310, 0.34, 0.42] },
+  moss: { from: "stone" },
+};
+
+/* ---------------- たき火 ----------------
+ * 石の輪だけだと、ただの石の輪にしか見えない。
+ * 薪・炎・地面の明かりを足して「火が焚かれている」ところまで作る。
+ * /about のたき火広場の看板になる絵なので、島でいちばん目立つ。 */
+const campfire = () => [
+  part(`${NK}/campfire_stones.glb`),
+  part(`${NK}/campfire_logs.glb`),
+  // 地面の明かり。石より先に描いて、石の足元が暖まって見えるようにする
+  { glow: { r: 0.46, color: 0xffffff, strength: 0.46 }, pos: [0, -0.046, 0] },
+  // 炎。太い舌1本に、細い舌を2本添えて揺らぎを出す。
+  // 添える舌は外へ出さないと、太い舌の中に隠れて1本にしか見えない
+  {
+    flame: {
+      r: 0.085, h: 0.36,
+      tongues: [[0, 0, 0, 1], [-0.085, 0.055, 13, 0.58], [0.09, -0.05, -15, 0.48]],
+    },
+    pos: [0, -0.02, 0],
+  },
+];
+/** たき火の指定。炎そのものが光源なので、石と薪を下から暖める */
+const CAMPFIRE = {
+  lights: [{ color: 0xff9838, intensity: 0.055, distance: 1.4, decay: 2, pos: [0, 0.11, 0] }],
+  shadowSpread: 1.6,
+};
 
 /* ---------------- 建物の組み立て ---------------- */
 const part = (url, pos = [0, 0, 0], rot = [0, 0, 0]) => ({ url, pos, rot });
@@ -122,7 +162,8 @@ export const SPRITES = [
 
   /* ---------- 場所の目印 ---------- */
   { name: "tent", parts: [`${NK}/tent_detailedOpen.glb`] },
-  { name: "campfire", parts: [`${NK}/campfire_stones.glb`] },
+  { name: "tent-small", parts: [`${NK}/tent_smallOpen.glb`] },
+  { name: "campfire", parts: campfire(), opts: CAMPFIRE },
   { name: "signpost", parts: [`${NK}/sign.glb`] },
   { name: "statue", parts: [`${NK}/statue_obelisk.glb`] },
   { name: "statue-head", parts: [`${NK}/statue_head.glb`] },
@@ -131,39 +172,99 @@ export const SPRITES = [
   { name: "bench", parts: [`${HK}/bench.glb`] },
   { name: "lantern", parts: [`${HK}/lantern.glb`] },
   { name: "stall", parts: [`${BK}/stall.glb`], opts: { ...WOODEN, neutral: ROOF.coral } },
+  { name: "stall-green", parts: [`${BK}/stall-green.glb`], opts: { ...WOODEN, neutral: ROOF.mint } },
+  { name: "stall-bench", parts: [`${BK}/stall-bench.glb`], opts: WOODEN },
+  { name: "stall-stool", parts: [`${BK}/stall-stool.glb`], opts: WOODEN },
   { name: "fountain", parts: [`${BK}/fountain-round.glb`], opts: WOODEN },
+  { name: "fountain-square", parts: [`${BK}/fountain-square-detail.glb`], opts: WOODEN },
+  { name: "bench-short", parts: [`${HK}/bench-short.glb`] },
+  { name: "lantern-hanging", parts: [`${HK}/lantern-hanging.glb`] },
+  // 樽と袋は food-kit のモデル。models/ 直下にも同じものがあるが、
+  // そちらは building-kit の colormap を引いてしまって色が壊れる
+  { name: "barrel", parts: [`${FK}/barrel.glb`], opts: WOODEN },
+  { name: "sack", parts: [`${FK}/bag.glb`], opts: WOODEN },
+  { name: "cart", parts: [`${BK}/cart.glb`], opts: WOODEN },
+  { name: "hedge", parts: [`${BK}/hedge.glb`] },
+  { name: "hedge-gate", parts: [`${BK}/hedge-gate.glb`] },
 
-  /* ---------- 木 ---------- */
-  { name: "tree-round", parts: [`${NK}/tree_oak.glb`] },
-  { name: "tree-fat", parts: [`${NK}/tree_fat.glb`] },
-  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`] },
-  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`] },
+  /* ---------- 島の景色 ----------
+     押せない飾り。遠くに置いて島を広く見せる。 */
+  { name: "windmill", parts: [`${BK}/windmill.glb`], opts: house("sky") },
+  { name: "watermill", parts: [`${BK}/watermill.glb`], opts: house("coral") },
+
+  /* ---------- 木 ----------
+     広葉樹は樹冠を房に分ける(LEAFY)。針葉樹とヤシは葉がもともと分かれているので掛けない。 */
+  { name: "tree-round", parts: [`${NK}/tree_oak.glb`], opts: LEAFY },
+  { name: "tree-fat", parts: [`${NK}/tree_fat.glb`], opts: LEAFY },
+  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: LEAFY },
+  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: LEAFY },
+  { name: "tree-default", parts: [`${NK}/tree_default.glb`], opts: LEAFY },
+  { name: "tree-small", parts: [`${NK}/tree_small.glb`], opts: LEAFY },
+  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`], opts: LEAFY },
+  { name: "tree-thin", parts: [`${NK}/tree_thin.glb`], opts: LEAFY_SOFT },
   { name: "tree-pine", parts: [`${NK}/tree_pineDefaultA.glb`] },
   { name: "tree-pine-tall", parts: [`${NK}/tree_pineTallA.glb`] },
+  { name: "tree-pine-round", parts: [`${NK}/tree_pineRoundC.glb`] },
+  { name: "tree-pine-small", parts: [`${NK}/tree_pineSmallB.glb`] },
+  { name: "tree-cone", parts: [`${NK}/tree_cone.glb`] },
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
-  { name: "tree-thin", parts: [`${NK}/tree_thin.glb`] },
+  { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
   { name: "stump", parts: [`${NK}/stump_roundDetailed.glb`] },
+  { name: "stump-old", parts: [`${NK}/stump_oldTall.glb`] },
+  { name: "stump-square", parts: [`${NK}/stump_squareDetailed.glb`] },
 
   /* ---------- 下草 ---------- */
   { name: "bush", parts: [`${NK}/plant_bushDetailed.glb`] },
   { name: "bush-small", parts: [`${NK}/plant_bushSmall.glb`] },
+  { name: "bush-large", parts: [`${NK}/plant_bushLarge.glb`] },
   { name: "grass", parts: [`${NK}/grass.glb`] },
   { name: "grass-large", parts: [`${NK}/grass_large.glb`] },
+  { name: "grass-leafs", parts: [`${NK}/grass_leafsLarge.glb`] },
   { name: "flower-red", parts: [`${NK}/flower_redA.glb`] },
   { name: "flower-yellow", parts: [`${NK}/flower_yellowA.glb`] },
   { name: "flower-purple", parts: [`${NK}/flower_purpleA.glb`] },
+  { name: "flower-red-tall", parts: [`${NK}/flower_redC.glb`] },
+  { name: "flower-yellow-tall", parts: [`${NK}/flower_yellowC.glb`] },
+  { name: "flower-purple-tall", parts: [`${NK}/flower_purpleC.glb`] },
   { name: "mushroom", parts: [`${NK}/mushroom_redGroup.glb`] },
+  { name: "mushroom-tan", parts: [`${NK}/mushroom_tanGroup.glb`] },
+  { name: "cactus", parts: [`${NK}/cactus_tall.glb`] },
+  { name: "cactus-short", parts: [`${NK}/cactus_short.glb`] },
   { name: "log", parts: [`${NK}/log.glb`] },
+  { name: "log-large", parts: [`${NK}/log_large.glb`] },
+  { name: "firewood", parts: [`${NK}/log_stack.glb`] },
   { name: "lily", parts: [`${NK}/lily_large.glb`] },
+  { name: "lily-small", parts: [`${NK}/lily_small.glb`] },
+  { name: "pot-plant", parts: [`${NK}/pot_large.glb`] },
+  { name: "pot-plant-small", parts: [`${NK}/pot_small.glb`] },
+
+  /* ---------- 畑（キッチン小屋のまわり） ---------- */
+  { name: "crop-corn", parts: [`${NK}/crops_cornStageD.glb`] },
+  { name: "crop-wheat", parts: [`${NK}/crops_wheatStageB.glb`] },
+  { name: "crop-pumpkin", parts: [`${NK}/crop_pumpkin.glb`] },
+  { name: "crop-melon", parts: [`${NK}/crop_melon.glb`] },
+  { name: "crop-carrot", parts: [`${NK}/crop_carrot.glb`] },
+  { name: "crop-turnip", parts: [`${NK}/crop_turnip.glb`] },
+  { name: "crop-row", parts: [`${NK}/crops_dirtRow.glb`] },
 
   /* ---------- 岩・道 ---------- */
   { name: "rock-large", opts: STONE, parts: [`${NK}/rock_largeA.glb`] },
+  { name: "rock-large-b", opts: STONE, parts: [`${NK}/rock_largeE.glb`] },
   { name: "rock-small", opts: STONE, parts: [`${NK}/rock_smallA.glb`] },
   { name: "rock-tall", opts: STONE, parts: [`${NK}/rock_tallC.glb`] },
   { name: "rock-flat", opts: STONE, parts: [`${NK}/rock_smallFlatA.glb`] },
+  { name: "stone-large", opts: GREYSTONE, parts: [`${NK}/stone_largeC.glb`] },
+  { name: "stone-tall", opts: GREYSTONE, parts: [`${NK}/stone_tallB.glb`] },
+  { name: "stone-small", opts: GREYSTONE, parts: [`${NK}/stone_smallD.glb`] },
   { name: "path-stone", parts: [`${NK}/path_stone.glb`] },
   { name: "path-stone-circle", parts: [`${NK}/path_stoneCircle.glb`] },
+  { name: "path-wood", parts: [`${NK}/path_wood.glb`] },
   { name: "fence", parts: [`${NK}/fence_simple.glb`] },
+  { name: "fence-gate", parts: [`${NK}/fence_gate.glb`] },
+  { name: "fence-planks", parts: [`${NK}/fence_planksDouble.glb`] },
+  { name: "bridge-stone", parts: [`${NK}/bridge_stone.glb`], opts: { mat: { stone: [0.105, 0.10, 0.72] } } },
+  { name: "statue-column", parts: [`${NK}/statue_column.glb`], opts: GREYSTONE },
+  { name: "statue-ring", parts: [`${NK}/statue_ring.glb`], opts: GREYSTONE },
 
   /* ---------- 料理 ----------
      クッキングのスタンプ帳で使う。food-kit の配色はそのままで美味しそうなので、
@@ -174,6 +275,14 @@ export const SPRITES = [
     "bowl-cereal", "pancakes", "fries", "bowl-broth", "pudding", "waffle",
     "croissant", "meat-patty", "fish", "pan", "egg-cooked", "pizza",
     "plate-sauerkraut", "soda-glass", "meat-ribs", "cup-coffee", "cake",
+    // ここから下は「レパートリーが少ない」というレビューを受けて足したぶん
+    "burger-cheese", "hot-dog", "corn-dog", "sub", "chinese", "steamer",
+    "sushi-salmon", "maki-salmon", "rice-ball", "loaf-baguette", "pie",
+    "donut-sprinkles", "cupcake", "muffin", "cookie-chocolate", "sundae",
+    "ice-cream-cup", "cheese", "grapes", "strawberry", "watermelon",
+    "pineapple", "coconut", "frappe", "cup-tea", "cocktail", "honey",
+    "mortar-pestle", "frying-pan", "pot-stew", "cutting-board-japanese",
+    "carrot", "broccoli", "eggplant", "leek", "paprika", "onion",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ---------- */

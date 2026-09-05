@@ -12,7 +12,9 @@ const outDir = process.argv[2] ?? "../../site/public/sprites";
 const only = process.argv[3];
 fs.mkdirSync(outDir, { recursive: true });
 
-const list = only ? SPRITES.filter((s) => s.name.includes(only)) : SPRITES;
+// 絞り込みはカンマ区切りで複数渡せる。直したものだけ焼き直して見比べるため
+const keys = only ? only.split(",").filter(Boolean) : null;
+const list = keys ? SPRITES.filter((s) => keys.some((k) => s.name.includes(k))) : SPRITES;
 console.log(`焼く数: ${list.length}`);
 
 const b = await chromium.launch({

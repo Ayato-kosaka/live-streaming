@@ -65,13 +65,48 @@ sun.shadow.radius = 8;
 sun.shadow.bias = -0.0009;
 scene.add(sun);
 
-/* ---- 接地影を受ける板。影だけを描くので背景は透けたまま ---- */
-const shadowCatcher = new THREE.Mesh(
-  new THREE.PlaneGeometry(400, 400),
-  // 濃さはあつ森の実測(下の地面が 0.6〜0.7 倍に沈む)に合わせた。
-  // 色は黒ではなく暖かい灰緑。黒で落とすと写真の影に見える
-  new THREE.ShadowMaterial({ opacity: 0.40, color: 0x2f3d26 }),
-);
+/* ---- 接地影を受ける板。影だけを描くので背景は透けたまま ----
+ *
+ * あつ森の影は一律の濃さではない。物が地面に触れているところがいちばん濃く、
+ * 外へ向かってすっと薄れる。触れている点が濃いから物が地面に乗って見える。
+ * ShadowMaterial は一枚の濃さしか持てないので、足元からの距離で
+ * 不透明度を落とす式を差し込んで、濃い芯と薄い裾を作る。
+ *
+ * 芯の濃さ 0.52 は草の上に重ねたときの実測合わせ。
+ * 草 (168,208,106) に色 (47,61,38) を 0.52 で乗せると 0.63〜0.65 倍になり、
+ * あつ森の実測 0.62〜0.68 に入る。裾はその 0.26 倍まで薄れる。
+ */
+const SHADOW_CORE = 0.52;
+const SHADOW_EDGE = 0.26;
+const shadowFoot = new THREE.Vector3();
+const shadowSpread = { value: 1 };
+const shadowMat = new THREE.ShadowMaterial({ opacity: SHADOW_CORE, color: 0x2f3d26 });
+shadowMat.onBeforeCompile = (sh) => {
+  sh.uniforms.uFoot = { value: shadowFoot };
+  sh.uniforms.uSpread = shadowSpread;
+  sh.uniforms.uEdge = { value: SHADOW_EDGE };
+  sh.vertexShader = sh.vertexShader
+    .replace("#include <common>", "#include <common>\nvarying vec3 vGroundPos;")
+    .replace(
+      "#include <project_vertex>",
+      "#include <project_vertex>\n\tvGroundPos = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;",
+    );
+  sh.fragmentShader = sh.fragmentShader
+    .replace(
+      "#include <common>",
+      "#include <common>\nvarying vec3 vGroundPos;\nuniform vec3 uFoot;\nuniform float uSpread;\nuniform float uEdge;",
+    )
+    .replace(
+      "gl_FragColor = vec4( color, opacity * ( 1.0 - getShadowMask() ) );",
+      [
+        "float dFoot = length( vGroundPos.xz - uFoot.xz ) / uSpread;",
+        // 足元の内側は濃いまま。そこから外は滑らかに薄れる
+        "float fall = mix( 1.0, uEdge, smoothstep( 0.14, 1.0, dFoot ) );",
+        "gl_FragColor = vec4( color, opacity * fall * ( 1.0 - getShadowMask() ) );",
+      ].join("\n\t"),
+    );
+};
+const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), shadowMat);
 shadowCatcher.rotation.x = -Math.PI / 2;
 shadowCatcher.receiveShadow = true;
 scene.add(shadowCatcher);
@@ -250,6 +285,97 @@ function acTexture(src, o) {
 }
 
 /* ------------------------------------------------------------------ */
+/* 壁のレンガ・屋根の瓦                                                */
+/* ------------------------------------------------------------------ */
+
+/* あつ森の建物は、壁にレンガの目地が、屋根に瓦の列が入っている。
+ * のっぺりした面が1つも無い。ここが「まだ模型に見える」いちばんの原因だった。
+ *
+ * building-kit の UV は colormap の1色を指しているだけなので、
+ * UV にパターンを貼っても引き伸ばされて潰れる。
+ * かわりにワールド座標から模様を作る。壁を並べても目地が繋がる。
+ *
+ * 濃さは控えめにしてある。目地をはっきり描くと、島に縮めて置いたときに
+ * 網戸のようなモアレになる。 */
+const DETAIL_GLSL = /* glsl */`
+varying vec3 vDetailPos;
+varying vec3 vDetailNrm;
+
+/** 座標から 0-1 のばらつきを作る。同じ場所なら毎回同じ値になる */
+float detailHash(vec2 p) {
+  return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453);
+}
+
+/** 面のどちらへ横に伸びているか。壁の向きに関わらず目地を水平に走らせる */
+float detailU() {
+  return abs(vDetailNrm.x) > abs(vDetailNrm.z) ? vDetailPos.z : vDetailPos.x;
+}
+
+/** レンガの目地。1段 0.105・1個 0.26(壁1マスが 1.0 なので 4個弱で1マス) */
+float brickShade() {
+  if (abs(vDetailNrm.y) > 0.72) return 1.0;         // 天面・地面には引かない
+  float row = floor(vDetailPos.y / 0.105);
+  float fy = fract(vDetailPos.y / 0.105);
+  float fu = fract(detailU() / 0.26 + mod(row, 2.0) * 0.5);
+  // 目地は溝。線そのものだけを沈ませる。横目地より縦目地を細く
+  float h = 1.0 - smoothstep(0.0, 0.15, fy);
+  float v = 1.0 - smoothstep(0.0, 0.11, min(fu, 1.0 - fu) * 2.0);
+  float joint = max(h, v * 0.85);
+  // レンガ1個ずつの焼きムラ。これが無いと目地だけが浮いて方眼紙に見える
+  float bake = (detailHash(vec2(floor(detailU() / 0.26 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
+  return mix(1.0 + bake, 0.875, joint);
+}
+
+/** 屋根の瓦。1列 0.085。列の上端に次の列がかぶさるので、そこに影が落ちる */
+float tileShade() {
+  if (vDetailNrm.y < -0.3) return 1.0;              // 軒の裏には引かない
+  float rowF = vDetailPos.y / 0.085;
+  float row = floor(rowF);
+  float fy = fract(rowF);
+  float fu = fract(detailU() / 0.16 + mod(row, 2.0) * 0.5);
+  // 1枚の中の陰影。下端(手前に出ている側)が明るい
+  float bow = mix(1.035, 0.955, fy);
+  // 列の上端に落ちる、次の列の影
+  float lap = smoothstep(0.80, 1.0, fy);
+  // 瓦と瓦のあいだの継ぎ目。ここが無いと波板に見える
+  float seam = 1.0 - smoothstep(0.0, 0.15, min(fu, 1.0 - fu) * 2.0);
+  float bake = (detailHash(vec2(floor(detailU() / 0.16 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.055;
+  return bow * mix(1.0 + bake, 0.865, max(lap, seam * 0.7));
+}
+`;
+
+/**
+ * 面に目地・瓦を刻む。マテリアルの色を作ったあとに掛ける。
+ * @param {THREE.Material} mat 対象
+ * @param {"brick"|"tile"} kind どちらの模様か
+ */
+function addSurfaceDetail(mat, kind) {
+  const call = kind === "tile" ? "tileShade()" : "brickShade()";
+  mat.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vDetailPos;\nvarying vec3 vDetailNrm;")
+      .replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\n\tvDetailPos = ( modelMatrix * vec4( position, 1.0 ) ).xyz;" +
+        "\n\tvDetailNrm = normalize( mat3( modelMatrix ) * normal );",
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\n" + DETAIL_GLSL)
+      .replace("#include <color_fragment>", "#include <color_fragment>\n\tdiffuseColor.rgb *= " + call + ";");
+  };
+  // 種類ごとにシェーダを分けないと、先にできたほうを使い回してしまう
+  mat.customProgramCacheKey = () => "detail-" + kind;
+}
+
+/** ファイル名から模様を決める。building-kit は壁と屋根で名前が分かれている */
+const DETAIL_OF = (url) => {
+  const f = url.split("/").pop() ?? "";
+  if (/^wall/.test(f)) return "brick";
+  if (/^(roof|cabin-roof)/.test(f)) return "tile";
+  return null;
+};
+
+/* ------------------------------------------------------------------ */
 
 /* Kenney の葉のかたまりは、面ごとに法線が分かれた縦向きの角柱でできている。
  * そのままだと(1)面の切り替わりが段差になって多面体に見え、
@@ -310,10 +436,297 @@ function foliageGeometry(geo, smooth) {
   return out;
 }
 
+/* ------------------------------------------------------------------ */
+/* 樹冠を「葉の房の集まり」にする                                       */
+/* ------------------------------------------------------------------ */
+
+/* あつ森の木は、樹冠が丸い房の寄せ集めでできている。房と房のあいだに
+ * 濃い影が落ちていて、寄っても遠目でも「葉が集まっている」と分かる。
+ * Kenney の樹冠は角柱1個なので、法線を丸めても平らな塊のままだった。
+ *
+ * そこで同じ樹冠メッシュを縮小・回転・ずらして重ね、房を作る。
+ * 大事なのは形より陰影のほうで、房1つずつに上明るく下暗いグラデーションを
+ * 焼くと、房の下端と隣の房の上端がぶつかるところが影の筋になる。
+ * それが「隙間の濃い影」に見える。 */
+
+/* 房は外へ張り出させる。内側に隠すと輪郭が丸いままで、
+ * 「葉の房が集まっている」とは見えない。あつ森の樹冠は、輪郭そのものが
+ * ぼこぼこしている。下の並びは 下の環 → 上の環 → てっぺん の順。 */
+
+/** 房の並び。[横, 高さ, 前後, 大きさ, 明るさ] すべて樹冠の半分の大きさに対する比 */
+const LOBE_LAYOUT = [
+  [0.00, -0.10, 0.00, 0.74, 0.95],   // 芯。房のあいだを埋める
+  // 下の環。6つ。輪郭のぼこぼこはここで作る
+  [0.56, -0.16, 0.10, 0.46, 1.00],
+  [0.26, -0.20, 0.50, 0.44, 0.97],
+  [-0.30, -0.14, 0.48, 0.42, 0.93],
+  [-0.56, -0.18, 0.06, 0.45, 0.90],
+  [-0.26, -0.22, -0.48, 0.43, 0.88],
+  [0.32, -0.12, -0.50, 0.46, 0.91],
+  // 上の環。4つ。少し内へ寄せて、樹冠を丸く納める
+  [0.38, 0.22, 0.24, 0.42, 1.08],
+  [-0.34, 0.20, 0.30, 0.40, 1.04],
+  [-0.38, 0.24, -0.24, 0.40, 1.00],
+  [0.34, 0.18, -0.30, 0.41, 1.02],
+  // てっぺん
+  [0.04, 0.46, 0.02, 0.44, 1.12],
+];
+
+/** 房ひとつの中の明暗。上端 / 下端。ここが房の輪郭を見せる */
+const LOBE_TOP = 1.10;
+const LOBE_BOTTOM = 0.83;
+/** 樹冠ぜんたいの明暗を、房の明暗と掛け合わせるときの効き具合 */
+const LOBE_GLOBAL = 0.55;
+
+/**
+ * 樹冠メッシュ1つを、房を重ねたメッシュの束に置き換える。
+ * @param {THREE.BufferGeometry} base 陰影を作り直したあとの樹冠
+ * @param {number} amount 房の効き具合(1で既定。小さいほど元の形に近い)
+ * @return {THREE.BufferGeometry[]} 房ごとの形
+ */
+function leafLobes(base, amount) {
+  base.computeBoundingBox();
+  const bb = base.boundingBox;
+  const c = bb.getCenter(new THREE.Vector3());
+  const half = bb.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+  const out = [];
+  LOBE_LAYOUT.forEach(([ox, oy, oz, k, bright], i) => {
+    const s = 1 + (k - 1) * amount;
+    const m = new THREE.Matrix4()
+      // 樹冠の中心を原点に持ってきてから、縮めて・回して・置き直す
+      .makeTranslation(c.x + ox * half.x * amount, c.y + oy * half.y * amount, c.z + oz * half.z * amount)
+      // 同じ形が並ぶと繰り返しに見えるので、房ごとに向きを変える
+      .multiply(new THREE.Matrix4().makeRotationY((i * 137.5 * Math.PI) / 180))
+      // 少し傾ける。房ごとに面の向きがずれて、角が一直線に並ばなくなる
+      .multiply(new THREE.Matrix4().makeRotationX(((((i * 53) % 21) - 10) * Math.PI) / 180))
+      // 縦を少し潰すと、角柱ではなく丸い房に見える
+      .multiply(new THREE.Matrix4().makeScale(s, s * 0.93, s))
+      .multiply(new THREE.Matrix4().makeTranslation(-c.x, -c.y, -c.z));
+    const g = base.clone();
+    g.applyMatrix4(m);
+    g.computeBoundingBox();
+    const lb = g.boundingBox;
+    const lSpan = Math.max(1e-6, lb.max.y - lb.min.y);
+    const gSpan = Math.max(1e-6, (bb.max.y - bb.min.y) * 1.2);
+    const pos = g.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    for (let v = 0; v < pos.count; v++) {
+      const y = pos.getY(v);
+      // 房の中の明暗
+      const tl = (y - lb.min.y) / lSpan;
+      const local = LOBE_BOTTOM + (LOBE_TOP - LOBE_BOTTOM) * (tl * tl * (3 - 2 * tl));
+      // 樹冠ぜんたいの明暗。房の明暗を消さないよう効きを弱めてある
+      const tg = clamp01((y - bb.min.y) / gSpan);
+      const glob = 1 + (LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * (tg * tg * (3 - 2 * tg)) - 1) * LOBE_GLOBAL;
+      const val = local * glob * bright;
+      col[v * 3] = val; col[v * 3 + 1] = val; col[v * 3 + 2] = val;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    out.push(g);
+  });
+  return out;
+}
+
 /** 丸いかたまりとして陰影を付け直すマテリアル名。 */
 const SMOOTH_MAT = /^leafs/;
 /** 上下のグラデーションだけ掛けるマテリアル名(草の株・下草)。 */
 const GRAD_MAT = /^(leafs|grass)/;
+/** 岩に貼り付いている苔のマテリアル名。 */
+const MOSS_MAT = /^grass$/;
+
+/* ------------------------------------------------------------------ */
+/* 岩の苔の境目をぼかす                                                 */
+/* ------------------------------------------------------------------ */
+
+/* nature-kit の岩は、苔の部分が別マテリアルの面として貼ってある。
+ * 面の切り替わりでいきなり色が変わるので、緑のシールを貼ったように見える。
+ * 本物の苔は縁がギザギザで、石の色へ溶けていく。
+ *
+ * 面を細かく割ってから、苔の縁までの距離で色を混ぜる。
+ * 混ぜる量にまだら模様を足すと、縁が直線ではなくギザギザになる。 */
+
+/**
+ * 三角形を1枚ずつ4枚に割る。頂点ごとに色を作れるだけの細かさを稼ぐ。
+ * @param {THREE.BufferGeometry} geo 元の形
+ * @param {number} times 割る回数
+ * @return {THREE.BufferGeometry} 割ったあとの形(インデックス無し)
+ */
+function subdivide(geo, times) {
+  let g = geo.index ? geo.toNonIndexed() : geo.clone();
+  for (let t = 0; t < times; t++) {
+    const p = g.attributes.position.array;
+    const out = new Float32Array(p.length * 4);
+    let o = 0;
+    const put = (v) => { out[o++] = v[0]; out[o++] = v[1]; out[o++] = v[2]; };
+    const mid = (u, v) => [(u[0] + v[0]) / 2, (u[1] + v[1]) / 2, (u[2] + v[2]) / 2];
+    for (let i = 0; i < p.length; i += 9) {
+      const a = [p[i], p[i + 1], p[i + 2]];
+      const b = [p[i + 3], p[i + 4], p[i + 5]];
+      const c = [p[i + 6], p[i + 7], p[i + 8]];
+      const ab = mid(a, b); const bc = mid(b, c); const ca = mid(c, a);
+      for (const tri of [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]) tri.forEach(put);
+    }
+    const ng = new THREE.BufferGeometry();
+    ng.setAttribute("position", new THREE.BufferAttribute(out, 3));
+    g = ng;
+  }
+  return g;
+}
+
+/**
+ * 開いた縁(三角形1枚だけが使っている辺)を集める。苔の輪郭がこれにあたる。
+ * @param {THREE.BufferGeometry} geo 元の形
+ * @return {number[][]} 辺の両端 [x1,y1,z1,x2,y2,z2]
+ */
+function openEdges(geo) {
+  const g = geo.clone();
+  for (const a of ["normal", "uv", "uv1", "color"]) g.deleteAttribute(a);
+  const w = mergeVertices(g, 1e-4);
+  const idx = w.index ? w.index.array : null;
+  if (!idx) return [];
+  const pos = w.attributes.position;
+  const used = new Map();
+  for (let i = 0; i < idx.length; i += 3) {
+    for (const [a, b] of [[idx[i], idx[i + 1]], [idx[i + 1], idx[i + 2]], [idx[i + 2], idx[i]]]) {
+      const k = a < b ? `${a}_${b}` : `${b}_${a}`;
+      used.set(k, (used.get(k) ?? 0) + 1);
+    }
+  }
+  const segs = [];
+  for (const [k, n] of used) {
+    if (n !== 1) continue;
+    const [a, b] = k.split("_").map(Number);
+    segs.push([pos.getX(a), pos.getY(a), pos.getZ(a), pos.getX(b), pos.getY(b), pos.getZ(b)]);
+  }
+  return segs;
+}
+
+/** 点から線分までの距離 */
+function distToSeg(x, y, z, s) {
+  const dx = s[3] - s[0]; const dy = s[4] - s[1]; const dz = s[5] - s[2];
+  const l2 = dx * dx + dy * dy + dz * dz;
+  let t = l2 > 0 ? ((x - s[0]) * dx + (y - s[1]) * dy + (z - s[2]) * dz) / l2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const ux = x - (s[0] + t * dx); const uy = y - (s[1] + t * dy); const uz = z - (s[2] + t * dz);
+  return Math.sqrt(ux * ux + uy * uy + uz * uz);
+}
+
+/** 格子ごとに決まったばらつき。同じ場所なら毎回同じ値になる */
+function cellNoise(x, y, z, f) {
+  const h = Math.sin(Math.floor(x * f) * 12.9898 + Math.floor(y * f) * 78.233 + Math.floor(z * f) * 37.719) * 43758.5453;
+  return h - Math.floor(h);
+}
+
+/**
+ * 苔の面を、縁で石の色へ溶ける形に作り替える。
+ * 色は頂点色に入れる(マテリアル側は白)ので、色相ごと混ざる。
+ * @param {THREE.BufferGeometry} geo 苔の面
+ * @param {THREE.Color} moss 苔の色
+ * @param {THREE.Color} stone 石の色
+ * @return {THREE.BufferGeometry} 作り替えた形
+ */
+function mossGeometry(geo, moss, stone) {
+  const segs = openEdges(geo);
+  const g = subdivide(geo, 2);
+  g.computeBoundingBox();
+  const s = g.boundingBox.getSize(new THREE.Vector3());
+  // ぼかす幅は苔の広さに対する比。狭い苔ほど細く溶ける
+  const feather = Math.max(1e-4, 0.17 * Math.max(s.x, s.z));
+  const pos = g.attributes.position;
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i); const y = pos.getY(i); const z = pos.getZ(i);
+    let d = Infinity;
+    for (const seg of segs) d = Math.min(d, distToSeg(x, y, z, seg));
+    let t = clamp01(d / feather);
+    // まだら模様を2つ重ねて縁をギザギザにする。粗いほうが苔の房、細かいほうが縁のほつれ
+    t += (cellNoise(x, y, z, 1.1 / feather) - 0.5) * 0.52;
+    t += (cellNoise(x, y, z, 2.7 / feather) - 0.5) * 0.24;
+    t = clamp01(t);
+    const m = t * t * (3 - 2 * t);
+    col[i * 3] = stone.r + (moss.r - stone.r) * m;
+    col[i * 3 + 1] = stone.g + (moss.g - stone.g) * m;
+    col[i * 3 + 2] = stone.b + (moss.b - stone.b) * m;
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/* ------------------------------------------------------------------ */
+/* 炎                                                                  */
+/* ------------------------------------------------------------------ */
+
+/* たき火に火が無いと、ただの石の輪にしか見えない。
+ * 炎は光っているものなので、陰影を付けない(MeshBasicMaterial)。
+ * 内側ほど明るい色の舌を3枚重ねると、絵として炎に見える。 */
+
+/** 炎の輪郭。[中心からの太さ, 高さ] 高さ1で先端 */
+const FLAME_PROFILE = [
+  [0.00, 0.00], [0.26, 0.05], [0.42, 0.16], [0.46, 0.30],
+  [0.40, 0.46], [0.28, 0.64], [0.15, 0.83], [0.00, 1.00],
+];
+/* 外側から内側へ。[色, 太さの比, 高さの比]
+ * 内側の層は外側の中に入っているので、そのままでは1枚も見えない。
+ * 深さ比べを切って手前に描くことで、外の炎の上に明るい芯が重なる。
+ * あつ森の火もこの「切り絵を重ねた」描き方をしている。 */
+const FLAME_LAYERS = [
+  [0xff5d0e, 1.00, 1.00],
+  [0xff9a1e, 0.62, 0.78],
+  [0xffd85c, 0.30, 0.52],
+];
+
+/**
+ * 炎の舌を1本つくる。
+ * @param {number} r 根元の太さ
+ * @param {number} h 高さ
+ * @return {THREE.Group} 3枚重ねた舌
+ */
+function flameTongue(r, h) {
+  const g = new THREE.Group();
+  FLAME_LAYERS.forEach(([color, ks, kh], i) => {
+    const pts = FLAME_PROFILE.map(([px, py]) => new THREE.Vector2(px * r * 2 * ks, py * h * kh));
+    const m = new THREE.Mesh(
+      new THREE.LatheGeometry(pts, 20),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 1,
+        depthTest: i > 0 ? false : true,
+        depthWrite: i === 0,
+      }),
+    );
+    m.renderOrder = 10 + i;
+    // 炎は光源なので影を落とさない。落とすと足元が黒く沈んで嘘になる
+    m.castShadow = false;
+    m.receiveShadow = false;
+    g.add(m);
+  });
+  return g;
+}
+
+/** 地面へのほのかな明かり。中心が濃く外へ消える円 */
+function flameGlow(r, color, strength) {
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 128;
+  const ctx = cv.getContext("2d");
+  const gr = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, `rgba(255,196,96,${strength})`);
+  gr.addColorStop(0.45, `rgba(255,166,64,${strength * 0.42})`);
+  gr.addColorStop(1, "rgba(255,150,60,0)");
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(
+    new THREE.CircleGeometry(r, 40),
+    new THREE.MeshBasicMaterial({ map: tex, color, transparent: true, depthWrite: false }),
+  );
+  m.rotation.x = -Math.PI / 2;
+  // 接地影より後に描いて、影の上に明かりが乗るようにする
+  m.renderOrder = 5;
+  return m;
+}
 
 const loader = new GLTFLoader();
 
@@ -335,33 +748,88 @@ async function prepare(part, opts) {
     m.receiveShadow = true;
     return m;
   }
+  // 炎・明かりはキットに無いので、その場で組む
+  if (part.flame) {
+    const { r = 0.2, h = 0.5, tongues = [[0, 0, 0, 1]] } = part.flame;
+    const g = new THREE.Group();
+    for (const [tx, tz, tilt, k] of tongues) {
+      const t = flameTongue(r * k, h * k);
+      t.position.set(tx, 0, tz);
+      t.rotation.z = (tilt * Math.PI) / 180;
+      g.add(t);
+    }
+    return g;
+  }
+  if (part.glow) {
+    const { r = 1, color = 0xffffff, strength = 0.5 } = part.glow;
+    return flameGlow(r, color, strength);
+  }
+
   const gltf = await loader.loadAsync(part.url);
   const root = gltf.scene;
   // パーツごとの色指定が無ければ、スプライト全体の指定を使う
   const o = { ...opts, ...(part.tint ?? {}) };
   const plain = part.plain ?? opts.plain;
-  root.traverse((n) => {
-    if (!n.isMesh) return;
+  const detail = part.detail ?? (plain ? null : DETAIL_OF(part.url));
+  const lobes = part.lobes ?? opts.lobes ?? 0;
+  const moss = part.moss ?? opts.moss ?? null;
+
+  /** マテリアル名 → 置き換えたあとの色。苔を石の色へ溶かすのに使う */
+  const resolved = new Map();
+  /** 1つのマテリアルを島の配色に置き換える */
+  const softenMat = (m, grad) => {
+    const map = m.map && !plain ? acTexture(m.map, o) : m.map ?? null;
+    const color = map ? new THREE.Color(0xffffff) :
+      m.color ? m.color.clone() : new THREE.Color(0xffffff);
+    if (!map && !plain) {
+      const named = (o.mat ?? {})[(m.name ?? "").toLowerCase()] ??
+        MATERIALS[(m.name ?? "").toLowerCase()];
+      if (named) setHsl(color, named[0], named[1], named[2]);
+      else remapColor(color, o);
+    }
+    resolved.set((m.name ?? "").toLowerCase(), color.clone());
+    const out = new THREE.MeshLambertMaterial({ map, color, vertexColors: grad });
+    if (detail) addSurfaceDetail(out, detail);
+    return out;
+  };
+
+  // 房に分けるとメッシュが増えるので、traverse の途中では触らない
+  const meshes = [];
+  const mossMeshes = [];
+  root.traverse((n) => { if (n.isMesh) meshes.push(n); });
+  for (const n of meshes) {
     n.castShadow = true;
     n.receiveShadow = true;
     const mats = Array.isArray(n.material) ? n.material : [n.material];
     const mn = mats.length === 1 ? (mats[0].name ?? "").toLowerCase() : "";
     const grad = part.foliage ?? opts.foliage ?? (!plain && GRAD_MAT.test(mn));
     if (grad) n.geometry = foliageGeometry(n.geometry, SMOOTH_MAT.test(mn));
-    const soft = mats.map((m) => {
-      const map = m.map && !plain ? acTexture(m.map, o) : m.map ?? null;
-      const color = map ? new THREE.Color(0xffffff) :
-        m.color ? m.color.clone() : new THREE.Color(0xffffff);
-      if (!map && !plain) {
-        const named = (o.mat ?? {})[(m.name ?? "").toLowerCase()] ??
-          MATERIALS[(m.name ?? "").toLowerCase()];
-        if (named) setHsl(color, named[0], named[1], named[2]);
-        else remapColor(color, o);
-      }
-      return new THREE.MeshLambertMaterial({ map, color, vertexColors: grad });
-    });
+    const soft = mats.map((m) => softenMat(m, grad));
     n.material = Array.isArray(n.material) ? soft : soft[0];
-  });
+
+    if (lobes && SMOOTH_MAT.test(mn)) {
+      // 樹冠1枚を、房を重ねた束に差し替える
+      const parent = n.parent;
+      for (const g of leafLobes(n.geometry, lobes)) {
+        const lm = new THREE.Mesh(g, n.material);
+        lm.castShadow = true;
+        lm.receiveShadow = true;
+        parent.add(lm);
+      }
+      parent.remove(n);
+    }
+    if (moss && MOSS_MAT.test(mn)) mossMeshes.push(n);
+  }
+
+  // 苔は石の色が決まってからでないと混ぜられないので、最後にもう一度回す
+  if (moss) {
+    const from = (typeof moss === "string" ? moss : moss.from) ?? "dirt";
+    const stone = resolved.get(from) ?? new THREE.Color(0xb0aca4);
+    for (const n of mossMeshes) {
+      n.geometry = mossGeometry(n.geometry, n.material.color.clone(), stone);
+      n.material = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+    }
+  }
   return root;
 }
 
@@ -371,6 +839,8 @@ async function prepare(part, opts) {
  */
 window.renderScene = async (parts, opts = {}) => {
   const group = new THREE.Group();
+  // 明かりの円は画づくりの飾りなので、画角を決める箱には入れない
+  const framed = [];
   for (const part of parts) {
     const o = await prepare(part, opts);
     const [px, py, pz] = part.pos ?? [0, 0, 0];
@@ -379,10 +849,13 @@ window.renderScene = async (parts, opts = {}) => {
     o.rotation.set((rx * Math.PI) / 180, (ry * Math.PI) / 180, (rz * Math.PI) / 180);
     if (part.scale) o.scale.setScalar(part.scale);
     group.add(o);
+    if (!part.glow) framed.push(o);
   }
   scene.add(group);
 
-  const box = new THREE.Box3().setFromObject(group);
+  const box = new THREE.Box3();
+  for (const o of framed) box.expandByObject(o);
+  if (box.isEmpty()) box.setFromObject(group);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
@@ -422,9 +895,23 @@ window.renderScene = async (parts, opts = {}) => {
   key.target.updateMatrixWorld();
 
   shadowCatcher.position.y = box.min.y + 0.001;
+  // 影の芯を置く場所。物が地面に触れている真ん中を狙う
+  shadowFoot.set(center.x, box.min.y, center.z);
+  // 芯から外へ薄れきるまでの距離。足元の広さに、右下へ伸びるぶんを足した長さ
+  shadowSpread.value = Math.max(0.001, Math.hypot(size.x, size.z) * 0.5 * (opts.shadowSpread ?? 1.25));
+
+  // たき火のように自分で光っているものは、まわりを暖める
+  const extra = [];
+  for (const l of opts.lights ?? []) {
+    const p = new THREE.PointLight(l.color ?? 0xffb04a, l.intensity ?? 1, l.distance ?? 0, l.decay ?? 2);
+    p.position.set(...(l.pos ?? [0, 0, 0]));
+    scene.add(p);
+    extra.push(p);
+  }
 
   renderer.render(scene, cam);
   const data = renderer.domElement.toDataURL("image/png");
+  for (const l of extra) scene.remove(l);
   scene.remove(group);
   return data;
 };
