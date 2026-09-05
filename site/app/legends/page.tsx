@@ -36,12 +36,12 @@ export default function LegendsPage() {
   const ONCE_MORE = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia", "kazbegi", "iwashi-festival"];
   /** いちばん新しい伝説の日。「ついこのあいだ」の線をここから引く。 */
   const newest = [...LEGENDS].sort((a, b) => (a.date < b.date ? 1 : -1))[0].date;
-  const halfYear = new Date(new Date(newest).getTime() - 180 * 86400000).toISOString().slice(0, 10);
+  const awhile = new Date(new Date(newest).getTime() - 90 * 86400000).toISOString().slice(0, 10);
   const again = ONCE_MORE.map((slug) => LEGENDS.find((l) => l.slug === slug))
     .filter((l) => !!l)
-    // ついこのあいだ終わったものは外す。半年前にやったことなら「もう一度」だが、
-    // 先月やったことに同じ問いを出すと、答えようがない
-    .filter((l) => l.date < halfYear);
+    // ついこのあいだ終わったものは外す。3か月前にやったことなら「もう一度」だが、
+    // 先月やったことに同じ問いを出しても、答えようがない
+    .filter((l) => l.date < awhile);
 
   return (
     <PageShell crumbs={[{ label: "伝説の企画" }]}>
