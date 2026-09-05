@@ -175,7 +175,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             <span className="np-stamp">{cur.updatedAt?.replace(/-/g, ".")}</span>
             {cur.week?.length > 0 && (
               <section className="pap-sec">
-                <h2 className="pap-h">今週やること</h2>
+                <h2 className="pap-h">今週、なにをするんだろう</h2>
                 <ul className="pap-rows">
                   {cur.week.map((w, i) => (
                     <li key={i}>{w}</li>

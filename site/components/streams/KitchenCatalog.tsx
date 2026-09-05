@@ -69,7 +69,7 @@ export default function KitchenCatalog({
   return (
     <>
       <div className="zk-zone is-tight">
-        <H art={<ArtShelf size={32} />} note="押すと、その1品ができるまでの3日ぶんが出てきます">
+        <H art={<ArtShelf size={32} />} note="押すと、その1品ができるまでの3日ぶんが出てくる">
           どれから見る
         </H>
         <div className="kt-tools">

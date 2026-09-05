@@ -75,7 +75,9 @@ export default function CountryIdeas({
   const list = [...(ideas ?? [])].sort((a, b) => b.votes - a.votes);
 
   return (
-    <section className="panel">
+    // 面は紙。板にするのは書く道具（`.bin` `.bin-name` `.bpost`）だけ
+    // （`docs/island-world.md` 2章「紙＋板の道具」）。
+    <section className="panel paper">
       <h2>{title ?? `${country}でこれやって`}</h2>
       <p className="muted">
         {note ??

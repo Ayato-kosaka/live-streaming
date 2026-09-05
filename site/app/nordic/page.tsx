@@ -101,8 +101,10 @@ export default async function NordicPage() {
         hitchKm={HITCH_KM}
       />
 
-      {/* 地図。このページの主役なので、いちばん上に、いちばん大きく。 */}
-      <section className="panel is-map" id="map">
+      {/* 地図。このページの主役なので、いちばん上に、いちばん大きく。
+          面は紙（`docs/island-world.md` 2章）。`Panel` は id を取らないので、
+          ここは class を直に書く。 */}
+      <section className="panel paper is-map" id="map">
         <h2>会いに行く道</h2>
         <p className="muted">街を押すと、その国のページへ。</p>
         <RouteMapSvg />

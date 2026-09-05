@@ -83,10 +83,10 @@
   padding: 0;
   width: 34px;
   height: 34px;
-  /* 上に白い照り返しを1点だけ入れる。丸いガラス玉のように見せて目を引く */
-  background:
-    radial-gradient(circle at 33% 24%, rgba(255, 255, 255, 0.95) 0 13%, rgba(255, 255, 255, 0) 44%),
-    linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
+  /* 照り返しは入れない。**押せる合図は厚み1種類だけ**（`island-world.md` 3.4）。
+     光らせない。きらめかせない。ガラス玉に見せて目を引くのは、
+     厚みで言っていることを2つ目の言い方で重ねているだけになる。 */
+  background: linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
   /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
@@ -102,6 +102,19 @@
 .spot.is-on .spot-mark {
   visibility: visible;
   pointer-events: auto;
+}
+/* 閉じている札は 34px しかない。絵は小さいままでいいが、
+   押せるものである以上、指の当たりは 48px 要る（`island-design.md` 3-2）。
+   見えない当たりを外へ広げる。 */
+.spot-mark::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 48px);
+  height: max(100%, 48px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
 }
 /* 今日ここに何かある、の1本だけが跳ねる */
 .spot.is-today .spot-mark {
@@ -158,9 +171,13 @@
     0 5px 0 var(--frame-deep),
     4px 11px 13px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  /* 揺れは2往復で止める。**押す対象が止まらないのは手ざわりとして悪い。**
+     ずっと揺れていると、狙って押すのに目で追いかけることになるし、
+     開いている札のぶん animation が1本走り続ける。
+     風で揺れて、そのまま落ち着く、までを1回やって終わり。 */
   animation:
     signPop 360ms cubic-bezier(0.2, 1.65, 0.36, 1) both,
-    signSway 3.4s 360ms ease-in-out infinite;
+    signSway 3.4s 360ms ease-in-out 2 forwards;
 }
 /* 開いたら杭も伸びる。板が大きくなったぶん、足が短いと倒れて見える */
 .spot.is-on .spot-mark::after { height: 17px; width: 10px; margin-left: -5px; bottom: -16px; }
@@ -331,12 +348,14 @@
   background: rgba(255, 253, 246, 0.92);
   border: 2.5px solid var(--frame-dark);
   box-shadow: 0 2px 0 var(--frame-deep), 2px 4px 5px var(--cast);
-  font-size: 10px;
+  /* 字の下限は 11.5px（`docs/island-world.md` 5.4）。10px は割っていた。
+     名前が入る幅は、字を上げたぶん広げる。 */
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink);
   white-space: nowrap;
   pointer-events: none;
-  max-width: 124px;
+  max-width: 136px;
   overflow: hidden;
 }
 .who-name img { width: 14px; height: 14px; border-radius: 50%; flex: none; }
@@ -381,6 +400,21 @@
   color: var(--ink);
 }
 
+/* 島に降りた人への名乗り。喋っているのは案内役のカモメ（ミナト）。
+   住人の吹き出しと同じ器を使う。**新しい部品は作らない。**
+   カモメだけ、誰が言っているかが分かるように左に小さく出す。 */
+.talkbox.is-guide { padding-left: 78px; }
+.talkbox-gull {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  margin-top: -27px;
+  width: 54px;
+  height: 54px;
+  line-height: 0;
+  pointer-events: none;
+}
+
 /* 誰が喋っているかを絵で出す枠。
    いまは JSX 側が渡していないので閉じている。
    style={{ "--talk-face": `url(${photo})` }} を付けた時だけ開く。 */
@@ -410,7 +444,8 @@
   align-items: center;
   gap: 3px;
   margin-top: 11px;
-  font-size: 10px;
+  /* 添えものでも 11.5px を割らない（`docs/island-world.md` 5.4） */
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-3);
   text-align: center;

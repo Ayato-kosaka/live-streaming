@@ -84,7 +84,7 @@ export default function LegendsPage() {
         </Zone>
 
         <Zone tight>
-          <H art={<ArtMonument size={32} />} note={`${LEGENDS.length}つ・配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>
+          <H art={<ArtMonument size={32} />} note={`配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>
             丘に立っているもの
           </H>
           <p className="zk-lead">数字ひとつで、その日に何があったかだいたい分かる。</p>

@@ -809,6 +809,48 @@ function flameGlow(r, color, strength) {
   return m;
 }
 
+/* ------------------------------------------------------------------ */
+/* ポーズ                                                              */
+/* ------------------------------------------------------------------ */
+
+/* Kenney の mini-characters は骨とアニメを持っている(idle / walk / sit …)。
+ * 読んだままだと T字ポーズなので、島に置いても人形にしか見えない。
+ *
+ * 骨を1本ずつ回すより、入っているクリップの1コマで止めるほうが早くて確実。
+ * AnimationMixer に時刻を渡すと、その瞬間の姿勢が骨に焼かれる。 */
+
+/**
+ * アニメの1コマで固定する。
+ * @param {THREE.Object3D} root モデル
+ * @param {THREE.AnimationClip[]} clips GLB に入っているクリップ
+ * @param {string|{clip:string,t:number}} pose クリップ名と、その中のどこか(0〜1)
+ */
+function applyPose(root, clips, pose) {
+  const { clip: name, t = 0 } = typeof pose === "string" ? { clip: pose } : pose;
+  const clip = THREE.AnimationClip.findByName(clips, name);
+  if (!clip) {
+    console.warn("そのクリップは入っていない:", name, clips.map((c) => c.name).join(","));
+    return;
+  }
+  const mixer = new THREE.AnimationMixer(root);
+  mixer.clipAction(clip).play();
+  // 時刻はクリップの長さに対する比で渡す。クリップごとに秒数が違うので、
+  // 「歩きの半分」を秒で書くと、キャラを足したときに合わなくなる
+  mixer.setTime(clip.duration * t);
+  root.updateMatrixWorld(true);
+  /* 画角を決める箱は Box3 が測る。SkinnedMesh は boundingBox が null なら
+   * 骨を通した位置で測り直してくれるので、素の(T字の)形で測られないよう
+   * 空にしておく。ここを忘れると、腕を広げた幅のまま画角が決まって、
+   * 姿勢を付けたキャラだけ小さく写る。 */
+  root.traverse((n) => {
+    if (!n.isSkinnedMesh) return;
+    n.boundingBox = null;
+    n.boundingSphere = null;
+    // 骨で動いたぶんは視錐台の判定に入らないので、切られないようにする
+    n.frustumCulled = false;
+  });
+}
+
 const loader = new GLTFLoader();
 
 /**
@@ -849,6 +891,8 @@ async function prepare(part, opts) {
 
   const gltf = await loader.loadAsync(part.url);
   const root = gltf.scene;
+  const pose = part.pose ?? opts.pose;
+  if (pose) applyPose(root, gltf.animations, pose);
   // パーツごとの色指定が無ければ、スプライト全体の指定を使う
   const o = { ...opts, ...(part.tint ?? {}) };
   const plain = part.plain ?? opts.plain;

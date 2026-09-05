@@ -58,9 +58,9 @@ export default function NowPage() {
         </section>
 
         <section className="pap-sec">
-          <h2 className="pap-h">もっと先の話</h2>
+          <h2 className="pap-h">もっと先は、どうなってる</h2>
           <p className="pap-note">
-            この島だよりは今週ぶんです。もっと先の予定と、これまで歩いた道はこちらに。
+            島だよりは今週ぶん。もっと先の予定と、これまで歩いた17カ国はこちらに。
           </p>
           <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             <Link className="pap-go" href="/next">

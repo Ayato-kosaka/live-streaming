@@ -47,7 +47,9 @@ for (const url of PAGES) {
         const k = (el.tagName.toLowerCase()) + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : "");
         out.small.push(`${fs}px ${k}`);
       }
-      if (t && t.length > 0 && r.width > 4 && r.height > 4) {
+      const closed = el.closest("details:not([open])");
+      const vis = typeof el.checkVisibility === "function" ? el.checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }) : true;
+      if (t && t.length > 0 && r.width > 4 && r.height > 4 && !closed && vis) {
         const k = (el.tagName.toLowerCase()) + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : "");
         if (!seen.has(k)) { seen.set(k, true); out.texts.push({ k, fs, x: r.x, y: r.y + window.scrollY, w: Math.min(r.width, 360), h: Math.min(r.height, 40), color: cs.color }); }
       }
@@ -57,15 +59,20 @@ for (const url of PAGES) {
     return out;
   });
 
-  // 実際に描かれた画素から比を測る
+  // 実際に描かれた画素から比を測る。
+  // 1枚だけ全面を撮って、あとは 文書座標で切り出す
+  // （clip は viewport の中しか撮れないので、下のほうの字が測れない）。
+  const full = await p.screenshot({ fullPage: true, scale: "css" });
   const bad = [];
   for (const t of data.texts) {
     if (t.h < 6 || t.w < 6) continue;
-    let buf;
+    let px, info;
     try {
-      buf = await p.screenshot({ clip: { x: t.x, y: t.y, width: t.w, height: t.h }, scale: "css" });
+      const r = await sharp(full).ensureAlpha()
+        .extract({ left: Math.max(0, Math.round(t.x)), top: Math.max(0, Math.round(t.y)), width: Math.round(t.w), height: Math.round(t.h) })
+        .raw().toBuffer({ resolveWithObject: true });
+      px = r.data; info = r.info;
     } catch { continue; }
-    const { data: px, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const counts = new Map(); const lums = [];
     for (let i = 0; i < px.length; i += 4) {
       const r = px[i], g = px[i + 1], bl = px[i + 2], a = px[i + 3];
@@ -75,12 +82,18 @@ for (const url of PAGES) {
       e.n++; e.r += r; e.g += g; e.b += bl; counts.set(key, e);
       lums.push({ l: lum(r, g, bl), c: [r, g, bl] });
     }
-    if (!lums.length) continue;
+    if (lums.length < 40) continue;
     let top = null; for (const v of counts.values()) if (!top || v.n > top.n) top = v;
     const bg = [Math.round(top.r / top.n), Math.round(top.g / top.n), Math.round(top.b / top.n)];
     lums.sort((a, b) => a.l - b.l);
-    const ink = lums[Math.floor(lums.length * 0.03)].c;
+    // 字が暗いか明るいかは決めうちできない（琥珀の丸に白抜きの数字もある）。
+    // 下から3%と上から3%の両方を見て、地から遠いほうを字とする。
+    const lo = lums[Math.floor(lums.length * 0.03)].c;
+    const hi = lums[Math.floor(lums.length * 0.97)].c;
+    const ink = ratio(lo, bg) >= ratio(hi, bg) ? lo : hi;
     const cr = ratio(ink, bg);
+    // 字がまったく描かれていないところは、地と地を比べて 1.0 になる。測らない。
+    if (cr < 1.35) continue;
     if (cr < 4.5) bad.push({ k: t.k, fs: t.fs, cr: +cr.toFixed(2), ink: ink.join(","), bg: bg.join(",") });
   }
   bad.sort((a, b) => a.cr - b.cr);

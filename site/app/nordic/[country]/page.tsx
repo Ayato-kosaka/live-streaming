@@ -180,7 +180,7 @@ export default async function NordicCountryPage({
       ]}
     >
       {hero?.big && (
-        <div className="nchero">
+        <div className="nchero is-plate">
           <img src={hero.big} alt="" loading="eager" referrerPolicy="no-referrer" />
           <span className="nchero-credit">{hero.title} — Wikimedia Commons</span>
         </div>
@@ -199,7 +199,7 @@ export default async function NordicCountryPage({
         }
       />
 
-      <section className="panel is-map">
+      <section className="panel paper is-map">
         <h2>どこで入って、どこから出るのか</h2>
         <RouteMapSvg here={firstCity} />
         <div className="ncways">
