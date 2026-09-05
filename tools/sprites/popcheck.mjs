@@ -29,12 +29,17 @@ import { offline } from "./route.mjs";
 import { writeFileSync } from "node:fs";
 
 const PORT = process.env.PORT || "3130";
-const PAGES = [
-  "/", "/about", "/streams", "/streams/cooking", "/kitchen", "/kitchen/egg-sandwich",
-  "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
-  "/board", "/map", "/map/france", "/nordic", "/nordic/guide", "/nordic/finland",
-  "/friends", "/now", "/design",
-];
+/* 面が増えたら、ここに足すか PAGES=... で渡す。
+   足さないと、新しい面だけ数えないまま「0件」と出る。 */
+const PAGES = (
+  process.env.PAGES ||
+  [
+    "/", "/about", "/streams", "/streams/cooking", "/kitchen", "/kitchen/egg-sandwich",
+    "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
+    "/board", "/map", "/map/france", "/nordic", "/nordic/guide", "/nordic/finland",
+    "/nordic/photos", "/all", "/friends", "/now", "/design",
+  ].join(",")
+).split(",");
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
 await offline(ctx);

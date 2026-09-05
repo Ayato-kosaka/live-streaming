@@ -66,6 +66,14 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
    */
   const stat = countryStat(c.slug);
   const lives = stat?.lives ?? towns.reduce((n, t) => n + streamsOfCity(c.slug, t).length, 0);
+  /**
+   * いちばん人が集まった日を出すかどうか。
+   *
+   * 2本しか無い国では「いちばん」に意味が無いし、その1本は
+   * すぐ下の「この国であったこと」にもう出ている。同じ回を2回出さない。
+   */
+  const peak =
+    stat && stat.lives >= 3 && !c.highlights.some((h) => h.videoId === stat.top[1]) ? stat : null;
   // まだ出国していない国は、書き出した日で数字が止まる。画面が出てから数え直す。
   const staying = c.stays.find((s) => !s.to);
   const days = closedDays(c.stays);
@@ -153,18 +161,18 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
 
       {/* この国でいちばん人が集まった日。「盛り上がったところ」は数えれば分かる事実なので、
           こちらで選ばずに数から出す（`content/countryStats.ts`）。 */}
-      {stat && (
+      {peak && (
         <Panel>
-          <h2>この国で、いちばん人が集まった日</h2>
+          <h2>いちばん人が集まった日</h2>
           <p className="muted">
-            {c.name}にいた{stat.days}日のうち、いちばんチャットに人がいたのがこの回。
+            {c.name}にいた{peak.days}日のうち、いちばんチャットに人がいたのがこの回。
           </p>
           <div className="scards" style={{ marginTop: "var(--sp-3)" }}>
             <StreamCard
-              videoId={stat.top[1]}
-              title={stat.top[2]}
-              date={stat.top[0]}
-              tag={`${stat.top[3]}人`}
+              videoId={peak.top[1]}
+              title={peak.top[2]}
+              date={peak.top[0]}
+              tag={`${peak.top[3]}人`}
             />
           </div>
         </Panel>
