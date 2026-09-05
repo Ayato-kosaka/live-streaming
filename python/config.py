@@ -34,6 +34,10 @@ BQ_DATASET: Final[str] = "youtube_chat"
 BQ_TABLE_VIDEOS: Final[str] = "videos"
 BQ_TABLE_CHAT_MESSAGES: Final[str] = "chat_messages"
 
+# Doneru 経由の寄付。YouTube ではないが、同じ「配信でもらったもの」なので
+# データセットは分けない（分けると join のたびに跨ぐことになる）。
+BQ_TABLE_DONERU_DONATIONS: Final[str] = "doneru_donations"
+
 # MERGE 操作時の最大レコード数（BigQuery リクエストサイズ制限対策）
 # 1回の MERGE で処理するメッセージの最大件数
 MAX_MERGE_BATCH_SIZE: Final[int] = 5000
