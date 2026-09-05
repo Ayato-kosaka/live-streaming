@@ -1244,3 +1244,79 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 }
 /* 引用の吹き出しは紙の区画いっぱいに使う（`.avoices` は `ui.css`） */
 .kd-talk { margin-top: 0; }
+
+/* ───────── 伝説の企画：その期間の配信ぜんぶ ───────── */
+
+/*
+ * 抜き書き6本の下に、実際にあった15本を並べる欄。
+ * ここは**一面ぜんぶ押せる並び**なので、1行ずつに厚みを付けない
+ * （`docs/island-world.md` 3.5）。そのかわり押せない行を1つも混ぜない。
+ * 区切りは罫線でやる。紙の中に影を落とさない（5.3）。
+ */
+.lgd {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--zk-rule-soft);
+}
+.lgd > li { border-bottom: 1px solid var(--zk-rule-soft); }
+.lgd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  /* 指で押せる最小 48px（`docs/island-design.md` 3-2）。
+     字は小さいままでいいので、行の高さのほうで取る */
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-1);
+  color: var(--zk-ink);
+}
+/* 日付。等幅の数字でそろえないと、日ごとに頭がずれて日誌に見えない */
+.lgd-d {
+  flex: none;
+  width: 3.4em;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-body);
+  color: var(--zk-ink-2);
+}
+.lgd-t {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: var(--ls-body);
+  overflow-wrap: anywhere;
+}
+/*
+ * 行の中の札。押せない印なので平ら。色はオリーブ1色にそろえる
+ * （`docs/island-world.md` 3.2「オリーブ＝数えたもの・押せない」）。
+ * 朱（`--pick`）に白字も試したが、描いた画素で 3.77 : 1 しか出ない。
+ * 4.5 を割る色は使わない。**言い分けは色ではなく言葉でやる。**
+ */
+.lgd-t em {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 1px 8px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  font-size: var(--fs-min);
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--chip-ink);
+  vertical-align: 2px;
+}
+/* 何人が書いたか。数えたものなので押せない札の色（オリーブ）で平らに */
+.lgd-n {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-body);
+  color: var(--chip-ink);
+}

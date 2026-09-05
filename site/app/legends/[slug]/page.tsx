@@ -7,7 +7,8 @@ import { LEGENDS, legendBySlug } from "@/content/legends";
 import Icon from "@/components/ui/Icon";
 import { Fig, Vid } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
-import { ArtBook, ArtCam } from "@/components/streams/Art";
+import { ArtBook, ArtCam, ArtMonument } from "@/components/streams/Art";
+import { legendDays } from "@/content/legendDays";
 
 export function generateStaticParams() {
   return LEGENDS.map((l) => ({ slug: l.slug }));
@@ -28,8 +29,18 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   const prev = LEGENDS[i - 1];
   const next = LEGENDS[i + 1];
   const streams = [...l.streams].sort((a, b) => (a.date < b.date ? -1 : 1));
-  /** 何日にまたがっているか。1日で終わった日はここを出さない。 */
-  const days = new Set(streams.map((s) => s.date)).size;
+  /**
+   * その期間の配信ぜんぶ（`content/legendDays.ts`）。
+   *
+   * `l.streams` は見どころの抜き書きで、期間の配信ぜんぶではない。
+   * イランの12日間は抜き書き6本／実物15本で、面には「6本」と出ていた。
+   * **伝説だと言っている企画を、実物より小さく見せていた。**
+   */
+  const all = legendDays(l.slug);
+  /** 何日にまたがっているか。数えたほうがあれば、そちらが正しい。 */
+  const days = all?.days ?? new Set(streams.map((s) => s.date)).size;
+  /** 見どころに選んである配信。全部の並びの中で印を付けるのに使う。 */
+  const picked = new Set(streams.map((s) => s.videoId));
 
   return (
     <PageShell
@@ -65,10 +76,10 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             ))}
             <div>
               <span className="fig">
-                <b>{l.streams.length}</b>
+                <b>{all?.streams.length ?? l.streams.length}</b>
                 <i>本</i>
               </span>
-              <span className="fig-cap">残っている配信</span>
+              <span className="fig-cap">この期間の配信</span>
             </div>
             {days > 1 && (
               <div>
@@ -77,6 +88,26 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
                   <i>日</i>
                 </span>
                 <span className="fig-cap">配信のあった日</span>
+              </div>
+            )}
+            {/* のべではなく、何人が来ていたか。同じ人を何日ぶんも数えない
+                （`.claude/skills/monthly-review/SKILL.md` 3章の数えかた）。
+                個人別のコメント数は出さない。出すのは全体の数だけ。 */}
+            {!!all?.people && (
+              <div>
+                <span className="fig">
+                  <b>{all.people.toLocaleString("ja-JP")}</b>
+                  <i>人</i>
+                </span>
+                <span className="fig-cap">居合わせた人</span>
+              </div>
+            )}
+            {!!all?.msgs && (
+              <div>
+                <span className="fig">
+                  <b>{all.msgs.toLocaleString("ja-JP")}</b>
+                </span>
+                <span className="fig-cap">飛んだコメント</span>
               </div>
             )}
           </div>
@@ -101,7 +132,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
 
         <Zone>
           <H art={<ArtCam size={32} />} note={`${streams.length}本`}>
-            その時の配信
+            まず、この{streams.length}本
           </H>
           <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだか分かります。</p>
           <ul className="days" style={{ marginTop: "var(--sp-3)" }}>
@@ -117,6 +148,42 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             ))}
           </ul>
         </Zone>
+        {all && all.streams.length > streams.length && (
+          <Zone>
+            <H art={<ArtMonument size={32} />} note={`${all.streams.length}本`}>
+              この{days}日に、あった配信ぜんぶ
+            </H>
+            <p className="zk-lead">
+              上の{streams.length}本は抜き書きです。その日その日に立った枠を、古い順に全部。
+              数はその配信でコメントを書いた人。
+            </p>
+            {/* 一面ぜんぶ押せる並びなので、1行ずつに厚みを付けない。
+                押せないものを1行も混ぜない（`docs/island-world.md` 3.5）。 */}
+            <ol className="lgd">
+              {all.streams.map(([d, v, t, people]) => (
+                <li key={v}>
+                  <a
+                    className="lgd-row"
+                    href={`https://www.youtube.com/watch?v=${v}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="lgd-d">
+                      {d.slice(5, 7).replace(/^0/, "")}/{d.slice(8, 10).replace(/^0/, "")}
+                    </span>
+                    <span className="lgd-t">
+                      {t}
+                      {v === all.top && <em>いちばん人が集まった日</em>}
+                      {picked.has(v) && <em>上に出ている回</em>}
+                    </span>
+                    <span className="lgd-n">{people}人</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </Zone>
+        )}
+
       </Sheet>
 
       {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}
