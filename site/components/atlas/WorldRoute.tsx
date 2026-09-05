@@ -171,7 +171,11 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
           if (!best || n < best.n) best = { got: { dx, dy, box: box2 }, n };
         }
         const got = put ?? best?.got;
-        const dx = got?.dx ?? 0;
+        // どの逃がし先も枠に入らなかったとき（アラブ首長国連邦のように
+        // 名前が長くて、ピンが地図の端にある国）は、枠の中へ押し戻す。
+        // ここを 0 のままにすると、名札の右半分が地図の外で切れる。
+        const clamp = (v: number) => Math.max(2 - (p.x - w / 2), Math.min(SW - 2 - (p.x + w / 2), v));
+        const dx = got ? got.dx : clamp(0);
         const dy = got?.dy ?? 0;
         // 国どうしが近すぎて、どこへ逃がしても重なるなら名前を出さない
         // （オーストリアとスロバキア）。ピンの番号は残るし、下の年表に名前がある。

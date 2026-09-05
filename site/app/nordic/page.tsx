@@ -7,7 +7,7 @@ import Flag from "@/components/ui/Flag";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import RouteLegs from "@/components/nordic/RouteLegs";
-import { CarriedBy } from "@/components/nordic/Carry";
+import { CarriedBy, MapSync } from "@/components/nordic/Carry";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Highlights from "@/components/nordic/Highlights";
@@ -17,6 +17,7 @@ import {
   MAIN,
   NORDIC_COUNTRIES,
   NORDIC_GUIDE,
+  FARE_POUR,
   ROUTE,
   nordicCountry,
 } from "@/content/nordic";
@@ -108,9 +109,23 @@ export default async function NordicPage() {
         <h2>会いに行く道</h2>
         <p className="muted">街を押すと、その国のページへ。</p>
         <RouteMapSvg />
+        {/* 地図と、下の区間ボードを同じものとして見せる（docs/nordic-fund.md 提案3）。
+            見た目を持たない。区間の状態を地図の線に写すだけ。
+            `content/nordic` はここで開いて、必要な数字だけ渡す。
+            クライアント側で読むと、見どころ161件ぶんの JSON が丸ごと落ちてくる。 */}
+        <MapSync
+          legs={ROUTE.map((l) => ({
+            id: l.id,
+            needsFare: !!l.fare,
+            cost: l.fare?.yen,
+            before: FARE_POUR[l.id].before,
+            reach: FARE_POUR[l.id].reach,
+          }))}
+        />
         <MapLegend />
         <p className="nmap-say">
           いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
+          下の区間を開くと、その線に帯が敷かれます。
         </p>
       </section>
 

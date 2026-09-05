@@ -278,7 +278,12 @@
 }
 /* 見本は地図と同じ線で描く。色の名前を書くより、線そのものを見せる。 */
 .nmkeys-s { grid-row: span 2; height: 22px; border-radius: var(--r-pill); }
-.nmkeys .is-hitch .nmkeys-s { background: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%); }
+.nmkeys .is-hitch .nmkeys-s { background: var(--nm-hitch); }
+/* つながった区間の見本。線を増やさず、同じ線の芯が明るくなる。 */
+.nmkeys .is-tied .nmkeys-s {
+  background: linear-gradient(
+    var(--nm-hitch) 0 34%, var(--nm-tie) 34% 66%, var(--nm-hitch) 66%);
+}
 .nmkeys .is-ferry .nmkeys-s {
   height: 8px;
   background: repeating-linear-gradient(90deg, var(--sea-mid) 0 5px, transparent 5px 11px);
@@ -331,6 +336,9 @@
   display: inline-block;
 }
 .rleg-stay { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+/* 開いたカードから出ていく先。国のページと、上の地図。
+   紙の上でも押せるものは板のまま（docs/island-world.md 2.1）。 */
+.rleg-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; }
 
 /* --- 区間の席 ---
    区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
@@ -921,16 +929,23 @@
    変えたときに地図だけ取り残されて浮くため。
    ========================================================= */
 
+/* 線の色は、地図と凡例の両方が使う。片方に書くともう片方が黙ってずれるので、
+   2つに効く1か所に置く（凡例は「線そのものを見本にする」作りなので、
+   色の名前ではなく同じ色でないと意味がない）。 */
+svg.nmap,
+.nmkeys {
+  /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
+  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
+  /* つながった区間の芯。色を1つ増やすのではなく、同じ線を明るくするための白み。 */
+  --nm-tie: color-mix(in srgb, var(--paper) 88%, var(--gold));
+}
+
 svg.nmap {
   /* 通らない国。草の緑を砂の色で濁らせて、通る国と一段差をつける。
      ここを濁らせるほど、通る6カ国が前に出る。 */
   --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
   --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
-  /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
-  --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
-  /* つながった区間の芯。色を1つ増やすのではなく、同じ線を明るくするための白み。 */
-  --nm-tie: color-mix(in srgb, var(--paper) 88%, var(--gold));
   /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
   --nm-label: color-mix(in srgb, var(--ink) 82%, var(--grass-lo) 18%);
   --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);

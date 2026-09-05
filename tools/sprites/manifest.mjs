@@ -168,6 +168,16 @@ const chimney = (x) => [
   box([0.27, 0.065, 0.40], [0.085, 0.12, 0.76], [x, 2.05, 0]),
 ];
 
+/** 住人。48枚を1つの画角で焼くための箱と、足元だけに落とす影。
+ * 骨の原点は足元(y=0)。立ちで 0.67、歩きで少しはみ出すので 0.78 取る。 */
+const VILLAGER = {
+  plain: true,
+  fit: [[-0.42, 0, -0.42], [0.42, 0.78, 0.42]],
+  zoom: 0.80,
+  // 影の広がりは箱の対角から出るので、そのままだと人1人には広すぎる
+  shadowSpread: 0.5,
+};
+
 /** キットに無い小物は箱を組んで作る。 */
 const box = (size, color, pos, rot = [0, 0, 0]) => ({ box: size, color, pos, rot });
 
@@ -408,7 +418,11 @@ export const SPRITES = [
      頭の大きさはモデルの持ち味なので、影のほうを揃える。
 
      歩きは2コマ。同じ周期の逆位相(0.25 と 0.75)を取ると、
-     踏み出す足が左右で入れ替わり、絵の大きさもほぼ同じになる。 */
+     踏み出す足が左右で入れ替わり、絵の大きさもほぼ同じになる。
+
+     48枚とも同じ画角(fit)で焼く。姿勢ごとに測り直すと、
+     site の Sprite が「物体の高さ = 指定した大きさ」に合わせて拡大するので、
+     しゃがんだコマだけ大きく描かれて、差し替えた瞬間に跳ねる。 */
   ...["male-a", "male-b", "male-c", "male-d", "male-e", "male-f",
     "female-a", "female-b", "female-c", "female-d", "female-e", "female-f",
   ].flatMap((id) => [
@@ -420,6 +434,6 @@ export const SPRITES = [
   ].map(([suffix, clip, t]) => ({
     name: `villager-${id}${suffix}`,
     parts: [{ url: `${BK}/character-${id}.glb`, pose: { clip, t } }],
-    opts: { plain: true },
+    opts: VILLAGER,
   }))),
 ];

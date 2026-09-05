@@ -178,3 +178,58 @@ export function CarriedBy() {
     </p>
   );
 }
+
+/**
+ * 地図と区間ボードを、同じものとして見せる（`docs/nordic-fund.md` 提案3）。
+ *
+ * 区間カードは「その区間で何が起きるか」を持ち、地図は「それがどこか」を持っている。
+ * 別々に置いてあるあいだ、この2つは同じ旅の話に見えない。
+ *
+ * **線を2本描かない。1本の線に2つの状態を持たせる。**
+ *   つながった区間  … 線の芯が明るくなる（足代と道しるべが両方そろった）
+ *   見ている区間    … 線の下に太い帯が敷かれる（カードを開いているあいだ）
+ *
+ * つながっていない区間には何もしない。灰色にすると失敗の色になる（同 3章）。
+ * 金額も地図には出さない。地図はもう情報量が多い。
+ *
+ * 印は React ではなく DOM に直接付ける。ここで状態を持つと、
+ * 地図の SVG（森だけで 700 本ある）がまるごと作り直しになる
+ * （`docs/island-design.md` 3章「動きは React の外で」）。
+ * `TripNow` が `is-done` を付けているのと同じやりかた。
+ */
+export function MapSync({ legs }: { legs: LegState[] }) {
+  const f = useFund();
+  const ideas = useIdeas();
+
+  // つながったかどうか。カードの読み上げ（`Tie`）とまったく同じ条件で決める。
+  // 別々に数えると、カードが「つながりました」と言っている区間が
+  // 地図では暗いまま、ということが起きる。
+  useEffect(() => {
+    const svg = document.querySelector<SVGSVGElement>(".nmap");
+    if (!svg) return;
+    for (const l of legs) {
+      const tag = legTag(l.id);
+      const posts = ideas?.filter((i) => i.text.startsWith(tag)).length ?? 0;
+      const tied = fareDone(f?.total ?? null, l) && posts > 0;
+      svg.querySelector(`[data-leg="${l.id}"]`)?.classList.toggle("is-tied", tied);
+    }
+  }, [legs, f, ideas]);
+
+  // いま開いているカード。`toggle` は上がってこないので、捕まえる側で拾う。
+  useEffect(() => {
+    const board = document.querySelector(".rlegs");
+    const svg = document.querySelector<SVGSVGElement>(".nmap");
+    if (!board || !svg) return;
+    const sync = () => {
+      board.querySelectorAll<HTMLElement>("[data-leg]").forEach((h) => {
+        const open = h.closest("details")?.open ?? false;
+        svg.querySelector(`.nm-leg[data-leg="${h.dataset.leg}"]`)?.classList.toggle("is-look", open);
+      });
+    };
+    sync();
+    board.addEventListener("toggle", sync, true);
+    return () => board.removeEventListener("toggle", sync, true);
+  }, [legs]);
+
+  return null;
+}

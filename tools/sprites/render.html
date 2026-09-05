@@ -842,13 +842,25 @@ function applyPose(root, clips, pose) {
    * 骨を通した位置で測り直してくれるので、素の(T字の)形で測られないよう
    * 空にしておく。ここを忘れると、腕を広げた幅のまま画角が決まって、
    * 姿勢を付けたキャラだけ小さく写る。 */
+  const posed = new THREE.Box3();
   root.traverse((n) => {
     if (!n.isSkinnedMesh) return;
     n.boundingBox = null;
     n.boundingSphere = null;
     // 骨で動いたぶんは視錐台の判定に入らないので、切られないようにする
     n.frustumCulled = false;
+    posed.expandByObject(n);
   });
+
+  /* 足を地面に着ける。
+   * ゲームの中で使うクリップは、腰の高さが上下する前提で作ってある。
+   * mini-characters の場合、歩きの中ほどは足が 0.018 浮き、
+   * 座りは 0.094 も地面へ沈む。そのまま焼くと、歩く人が宙に浮いて、
+   * 座る人は腰から下が地面に埋まる。いちばん低いところを y=0 に合わせる。 */
+  if (Number.isFinite(posed.min.y)) {
+    for (const c of root.children) c.position.y -= posed.min.y;
+    root.updateMatrixWorld(true);
+  }
 }
 
 const loader = new GLTFLoader();
@@ -979,9 +991,20 @@ window.renderScene = async (parts, opts = {}) => {
   }
   scene.add(group);
 
+  /* 画角を決める箱。
+   *
+   * ふだんは物を測って決める。ただし「同じ物の別の姿勢」を何枚も焼くときは、
+   * 測り直すとコマごとに大きさと位置が変わる。site 側の Sprite は
+   * 「物体の高さ = 指定した大きさ」になるよう拡大するので、
+   * しゃがんだコマだけ 1.1 倍に引き伸ばされて、差し替えた瞬間に跳ねる。
+   * opts.fit で外から箱を渡すと、全コマが同じ画角・同じ倍率で焼ける。 */
   const box = new THREE.Box3();
-  for (const o of framed) box.expandByObject(o);
-  if (box.isEmpty()) box.setFromObject(group);
+  if (opts.fit) {
+    box.set(new THREE.Vector3(...opts.fit[0]), new THREE.Vector3(...opts.fit[1]));
+  } else {
+    for (const o of framed) box.expandByObject(o);
+    if (box.isEmpty()) box.setFromObject(group);
+  }
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;

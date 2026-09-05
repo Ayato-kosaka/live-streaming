@@ -51,7 +51,7 @@ export default function RouteLegs() {
           <Fold
             key={l.id}
             title={
-              <span className={`rleg-h ${m.cls}`}>
+              <span className={`rleg-h ${m.cls}`} data-leg={l.id}>
                 <Mark art={l.art} size={38} className="rleg-art" />
                 <span className="rleg-way">
                   {l.from} <i aria-hidden>→</i> {l.to}
@@ -74,12 +74,21 @@ export default function RouteLegs() {
             {l.fixed && <p className="rleg-fixed">{l.fixed}</p>}
             {l.note && <p>{l.note}</p>}
             {l.stay && <p className="rleg-stay">泊まる: {l.stay}</p>}
-            {c && (
-              <Link className="rleg-go" href={`/nordic/${c.slug}`}>
-                {c.name}で行くところを見る
+            <p className="rleg-acts">
+              {c && (
+                <Link className="rleg-go" href={`/nordic/${c.slug}`}>
+                  {c.name}で行くところを見る
+                  <Icon name="right" size={14} />
+                </Link>
+              )}
+              {/* 地図はこの面のずっと上にあるので、開けたままここから戻れるようにする。
+                  開いているあいだ、その区間の線には帯が敷いてある（`Carry.tsx` の
+                  `MapSync`）ので、上がるとどこの話だったかが分かる。 */}
+              <a className="rleg-go" href="#map">
+                地図でこの区間を見る
                 <Icon name="right" size={14} />
-              </Link>
-            )}
+              </a>
+            </p>
 
             {/* いま、この区間がどこまでつながっているか。決まりの説明ではなく、
                 いまの状態を言う。埋まると文が変わる。 */}

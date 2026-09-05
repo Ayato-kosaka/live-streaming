@@ -23,8 +23,21 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   await p.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await p.waitForTimeout(3000);
-  if (wide) { const z = await p.$(".stage-view") ?? await p.$(".bar-zoom"); if (z) await z.click({ force: true }); await p.waitForTimeout(2500); }
+  /* カメラが止まるまで待つ。
+   * 起動直後は島ぜんぶの引きから寄りまで数秒かけて詰めていく。
+   * 途中で測ると、同じ島なのに押せる範囲が 48x48 だったり 88x90 だったりして、
+   * ズレの許容(20px)を倍率のぶん超え、直していないものが NG で出る。 */
+  const settle = async () => {
+    let last = "";
+    for (let i = 0; i < 60; i++) {
+      await p.waitForTimeout(250);
+      const vb = await p.getAttribute(".stage-svg", "viewBox") ?? "";
+      if (vb && vb === last) return;
+      last = vb;
+    }
+  };
+  await settle();
+  if (wide) { const z = await p.$(".stage-view") ?? await p.$(".bar-zoom"); if (z) await z.click({ force: true }); await settle(); }
 
   const rows = await p.evaluate((names) => {
     const imgs = [...document.querySelectorAll(".stage-svg image")];

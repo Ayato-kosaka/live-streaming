@@ -35,7 +35,8 @@ for (const url of PAGES) {
       // 「厚み」= ぼかし 0 の下向きオフセット
       if (sh && sh !== "none" && /\brgb/.test(sh)) {
         const m = [...sh.matchAll(/(-?\d+(?:\.\d+)?)px (-?\d+(?:\.\d+)?)px (-?\d+(?:\.\d+)?)px/g)];
-        const thick = m.some(x => +x[2] >= 3 && +x[3] === 0);
+        // 厚みは真下。接地影（--shadow-1 = 1px 3px 0）は横にずれているので別物。
+        const thick = m.some(x => +x[1] === 0 && +x[2] >= 3 && +x[3] === 0);
         if (thick && !press(el)) {
           const k = el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : el.tagName;
           out.thickNoPress.push(k);
