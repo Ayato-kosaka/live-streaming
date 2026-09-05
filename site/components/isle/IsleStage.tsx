@@ -242,7 +242,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         if (r.width < 4) return;
         boxes.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
       };
-      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign")) add(el);
+      /* 歩きかたの案内も入れる。**数秒で消えるが、出ているあいだは札を隠す。**
+         測って見つけた（札の字が案内の暗い帯に半分かかって 1.81 : 1 だった）。
+         消えたらまた測り直すので、その場で戻る */
+      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint")) add(el);
       if (cover) add(host.parentElement?.querySelector(".hero-logo"));
       uiBoxes.current = boxes;
       platesDirty.current = true;
@@ -252,7 +255,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
        終わったころにもう一度測る（毎フレーム測ると layout を起こす） */
     const t = window.setTimeout(measure, 900);
     return () => window.clearTimeout(t);
-  }, [openSpot, box.w, box.h, left, cover]);
+  }, [openSpot, box.w, box.h, left, cover, hint]);
 
   /* --- 出発までの日数。1分ごとに数え直す ---
      静的書き出しなので、ビルド時の「今日」を焼き込まない（`CLAUDE.md`） */
@@ -742,7 +745,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
 
   return (
     <div
-      className={`isle${talking ? " is-talking" : ""}`}
+      className={`isle${talking ? " is-talking" : ""}${sheet ? " is-sheet" : ""}`}
       data-theme={spec.theme}
       data-mode={modeOf(box.w)}
       ref={hostRef}

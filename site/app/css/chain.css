@@ -765,8 +765,12 @@
   font-weight: 800;
   color: #7a6a4c;
 }
-/* 話しているあいだは、島の上の札を引っ込める */
-.isle.is-talking .isle-mark { opacity: 0; transition: opacity 0.18s; }
+/* 話しているあいだと、建物の中を開いているあいだは、島の上の札を引っ込める。
+   **注目させるのは一度に1つ**（`docs/island-design.md` 3-4）。
+   暗幕ごしの札は 4.38 : 1 まで落ちていて（実測）、読めないものが並んでいるだけになる */
+.isle.is-talking .isle-mark,
+.isle.is-sheet .isle-mark,
+.isle.is-sheet .isle-sign { opacity: 0; transition: opacity 0.18s; }
 .isle.is-talking .isle-hit,
 .isle.is-talking .isle-who-hit { pointer-events: none; }
 @media (min-width: 640px) {
