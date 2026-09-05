@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getState } from "@/lib/api";
+import { setHereSeq } from "./here";
 import { Mark } from "./Marks";
 
 /**
@@ -63,6 +64,7 @@ function fmt(n: number) {
 export default function TripNow({
   stops,
   mainLegs,
+  legOrder,
   depart,
   departWhen,
   hitchKm,
@@ -73,6 +75,12 @@ export default function TripNow({
    * いる場所が分かったら、下の区間ボードで**いまの区間と次の区間だけ**を開く。
    */
   mainLegs: string[];
+  /**
+   * 寄り道も入れた、`ROUTE` ぜんぶの区間の id を通る順に。
+   * いま走っている区間が何本目かを、区間カード（`here.ts`）に配るのに使う。
+   * わかれ道は、越えた区間で閉じる。
+   */
+  legOrder: string[];
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -152,6 +160,14 @@ export default function TripNow({
     // 地図の「見ている区間」の帯は、`details` が自分で出す toggle を
     // `MapSync` が捕まえて付け替える。ここから触らない。
   }, [at, mainLegs]);
+
+  // いま走っているのが何本目かを、区間カードにも配る。
+  // 越えた区間のわかれ道は、そこで閉じる（`here.ts`）。
+  useEffect(() => {
+    if (at == null || at < 1) return;
+    const i = legOrder.indexOf(mainLegs[at]);
+    setHereSeq(i >= 0 ? i : null);
+  }, [at, mainLegs, legOrder]);
 
   const last = stops.length - 1;
   const departed = left != null && left <= 0;

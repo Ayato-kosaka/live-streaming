@@ -37,15 +37,18 @@ import { addIdea, bumpVote, legTag, useLegIdeas } from "./ideas";
  */
 export default function Signpost({
   leg,
+  seq,
   ask,
   fork,
-  done,
+  logged,
 }: {
   leg: string;
+  /** `ROUTE` の中での位置。もう越えた区間かどうかを、ここで見分ける */
+  seq: number;
   ask: string;
   fork?: Leg["fork"];
-  /** その区間をもう越えたか。越えた区間のわかれ道は、結果だけになる */
-  done?: boolean;
+  /** 起きたことが書かれた区間か */
+  logged?: boolean;
 }) {
   const tag = legTag(leg);
   const items = useLegIdeas(tag);
@@ -98,7 +101,7 @@ export default function Signpost({
     <div className="spost">
       {/* わかれ道があるときは、そちらが席の問い。`ask` は書く欄の中へ降ろす。
           問いを2つ並べると、どちらも読まれない。 */}
-      {fork ? <Fork leg={leg} fork={fork} done={done} /> : <p className="spost-ask">{ask}</p>}
+      {fork ? <Fork leg={leg} seq={seq} fork={fork} logged={logged} /> : <p className="spost-ask">{ask}</p>}
 
       {list.length > 0 && (
         <ul className="spost-list">

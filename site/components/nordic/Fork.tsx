@@ -5,6 +5,7 @@ import { forkAnswer, rememberForkAnswer, voteFork } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Leg } from "@/content/nordic";
 import { bumpFork, useFork } from "./forks";
+import { useHereSeq } from "./here";
 
 /**
  * わかれ道。**押すだけで答えられる、参加のいちばん下の段。**
@@ -42,16 +43,23 @@ type Sent = "none" | "sending" | "failed";
 
 export default function Fork({
   leg,
+  seq,
   fork,
-  done,
+  logged,
 }: {
   leg: string;
+  /** `ROUTE` の中での位置 */
+  seq: number;
   fork: NonNullable<Leg["fork"]>;
-  /** その区間をもう越えたか（`NORDIC_LOG` に起きたことが入ったら） */
-  done?: boolean;
+  /** 起きたことが書かれた区間か */
+  logged?: boolean;
 }) {
   const id = forkId(leg);
   const counts = useFork(id);
+  const here = useHereSeq();
+  /* もう越えた区間。**位置で決める。** 起きたことの手書き（`NORDIC_LOG`）を
+     待つと、着いた日から数日、決まったことに票が入り続ける。 */
+  const done = !!logged || (here != null && seq < here);
   const [mine, setMine] = useState<string | null>(null);
   const [sent, setSent] = useState<Sent>("none");
   const { token } = useAuth();

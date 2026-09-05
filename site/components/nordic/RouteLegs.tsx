@@ -151,7 +151,7 @@ export default function RouteLegs() {
                 <PostMark />
                 <span>道しるべ</span>
               </h3>
-              <Signpost leg={l.id} ask={l.ask} fork={l.fork} done={!!log} />
+              <Signpost leg={l.id} seq={i} ask={l.ask} fork={l.fork} logged={!!log} />
             </div>
 
             {/* 足代。越えるのに要るもの1つに紐づける。

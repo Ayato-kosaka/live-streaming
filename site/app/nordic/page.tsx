@@ -103,6 +103,7 @@ export default async function NordicPage() {
       <TripNow
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}
+        legOrder={ROUTE.map((l) => l.id)}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30"
         hitchKm={HITCH_KM}
@@ -160,6 +161,7 @@ export default async function NordicPage() {
             **いまの状態として**言っている。決まりの説明は1回、短く。 */}
         <p className="muted">
           区間を押すと、<b>道しるべ</b>と<b>足代</b>の席が出てきます。両方そろって、区間はつながります。
+          まだ決めていないことは<b>わかれ道</b>にしてあるので、押すだけで答えられます。
         </p>
         <CarriedBy />
         <RouteLegs />
