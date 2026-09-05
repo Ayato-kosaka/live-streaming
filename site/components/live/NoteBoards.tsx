@@ -102,8 +102,11 @@ function shelves(places: NotePlace[], notes: NextNote[], ideas: Idea[]): Shelf[]
   /* 面の側が知らない貼り先。終わった企画を `content/plans.ts` から外すと
      付箋だけが残るし、`【札】` はあとから増やせる。
      **拾わないと、書いた人の1行がどこからも読めなくなる。** */
+  /* 棚の名前に企画の id をそのまま出す。「終わった企画」だと、2つ外したときに
+     同じ名前の札が2枚並んで見分けられなくなる。ここへ落ちてくるのは
+     まれなので、読みにくさより見分けを取る。 */
   for (const [key, items] of byPlan) {
-    out.push({ key, name: "終わった企画", group: "そのほか", by: "plan", items });
+    out.push({ key, name: key, group: "表から外した企画", by: "plan", items });
   }
   for (const [key, items] of byTag) {
     out.push({ key, name: key, group: "そのほか", by: "tag", items });
