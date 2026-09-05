@@ -74,8 +74,11 @@ function Row({ day }: { day: Day }) {
               わかれ道は1日ぶんのページへ移したので、この行には
               「中に答えられるものがある」とだけ書く。数はまだ出さない
               （押す前に多いほうへ引っぱらないため・`Fork.tsx`）。
-              下の行に置くと、移動と泊まりで1行あふれて、9日ぶんで 200px 太る。 */}
-          {asks > 0 && <span className="ndayr-ask">答えられることが{asks}つ</span>}
+              下の行に置くと、移動と泊まりで1行あふれて、9日ぶんで 200px 太る。
+              字数も詰める。「答えられることが1つ」だと日付のある行で折り返した。 */}
+          {asks > 0 && (
+            <span className="ndayr-ask">答えられる{asks > 1 ? `${asks}つ` : ""}</span>
+          )}
         </span>
         <span className="ndayr-way">
           {way(legs).map((c, i) => (
@@ -87,12 +90,9 @@ function Row({ day }: { day: Day }) {
         </span>
         <span className="ndayr-how">
           <span>{how(legs)}</span>
-          {day.stay && (
-            <span className="ndayr-stay">
-              <Icon name="hotel" size={13} tone="ink" />
-              {cityName(day.stay)}
-            </span>
-          )}
+          {/* 印を付けない。13px の小さな絵は、この地の上ではただの黒い塊に見えた。
+              「泊まる」の2文字のほうが、遠目でも読める。 */}
+          {day.stay && <span className="ndayr-stay">泊まる {cityName(day.stay)}</span>}
         </span>
       </span>
       <Icon name="right" size={16} className="ndayr-go" />

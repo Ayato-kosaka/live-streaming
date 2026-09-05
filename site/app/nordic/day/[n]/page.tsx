@@ -229,10 +229,16 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         {sun && sc && (
           <div className="ndsun">
             <Icon name="sunrise" size={30} />
+            {/* 仕切りの「／」を置かない。`--ink-3` で 3.43:1 しか出ず、
+                測って落ちた（`tools/sprites/inkpx.py`）。字を1つ増やさずに、
+                あいだの空きだけで2つに分ける。 */}
             <p className="ndsun-n">
-              <b>{sun.rise}</b> 明ける
-              <em aria-hidden>／</em>
-              <b>{sun.set}</b> 暮れる
+              <span>
+                <b>{sun.rise}</b> 明ける
+              </span>
+              <span>
+                <b>{sun.set}</b> 暮れる
+              </span>
             </p>
             <p className="ndsun-w">
               9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}

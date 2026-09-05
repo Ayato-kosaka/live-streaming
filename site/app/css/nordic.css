@@ -1712,14 +1712,14 @@ p.ndsun-n {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px var(--sp-4);
   margin: 0;
   font-size: var(--fs-note);
   font-weight: 800;
   color: var(--ink-2);
 }
+p.ndsun-n span { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 p.ndsun-n b { font-size: 19px; font-weight: 900; color: var(--ink); }
-p.ndsun-n em { font-style: normal; color: var(--ink-3); }
 p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight: 800; color: var(--ink-2); }
 
 /* まだ決まっていないこと。**埋めない。**
