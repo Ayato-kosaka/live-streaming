@@ -86,20 +86,40 @@ const NOTES_PER_DAY = 20;
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
-/* ---- 北欧旅のわかれ道 ----
-   区間ごとの「どっちにしてほしい？」を、押すだけで答えられるようにする。
-   入れ物は islandPolls / islandPollVotes をそのまま借りて、
-   at: "nordic" の札を付けて仕分ける。新しいコレクションは作らない。
+/* ---- 面ごとの「押すだけの問い」----
+   北欧のわかれ道（区間ごとの「どっちにしてほしい？」）で作った入れ物。
+   islandPolls / islandPollVotes をそのまま借りて、`at` の札で仕分ける。
+   新しいコレクションは作らない。
+
+   **島の外の紙の面からも同じ入れ物を使う。** 台所の「次のスタンプ」も
+   丘の「もう一度やるなら」も、聞いていることが違うだけで、
+   サーバー側の仕事は「id ごとに札の数を数える」で同じ。
+   面ごとに口を増やすと、長さ制限も連投制限も面の数だけ書くことになる。
+   仕分けの札（`at`）は id の頭から取る。画面が名乗った文字をそのまま
+   書かないのは、知らない札が増えるとあとで数えるものが分からなくなるため。
 
    **問いの字も選択肢の字も、ここには置かない。** 字は Git
-   (`site/content/nordic.ts`)にあって、レビューを通ってから出る。
+   (`site/content/nordic.ts`・各面のページ)にあって、レビューを通ってから出る。
    サーバーが持つのは id と数だけなので、
    ここに人の書いた字が溜まることがない。 */
-const FORK_ID = /^nordic-[a-z0-9-]{3,40}$/;
+const FORK_AT = ["nordic", "kitchen", "legends", "streams"] as const;
+const FORK_ID = new RegExp(`^(${FORK_AT.join("|")})-[a-z0-9-]{3,40}$`);
 const FORK_OPTION = /^[a-z][a-z0-9-]{0,15}$/;
-/** 1つのわかれ道に置ける選択肢の数。知らない札が増えていくのを止める。 */
-const FORK_MAX_OPTIONS = 4;
+/**
+ * 1つの問いに置ける選択肢の数。知らない札が増えていくのを止める。
+ *
+ * 北欧のわかれ道は2つだが、丘の「もう一度やるなら」は4つ、
+ * 台所は種類のぶんだけ増える見込みがあるので、上限は8にしてある。
+ */
+const FORK_MAX_OPTIONS = 8;
 const FORK_VOTES_PER_DAY = 30;
+
+/**
+ * id の頭から仕分けの札を取る。`FORK_ID` を通ったものしか渡さない。
+ * @param {string} id 問いの id（"kitchen-next-kind" のような形）
+ * @return {string} 仕分けの札（"kitchen"）
+ */
+const forkAt = (id: string): string => id.slice(0, id.indexOf("-"));
 
 type Json = Record<string, unknown>;
 
@@ -1182,9 +1202,11 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 北欧旅のわかれ道 ----------------
+      /* ---------------- 押すだけの問い ----------------
          「十字架の丘に寄る／先を急ぐ」のような、まだ決まっていない分かれ目を
          押すだけで答えられるようにする(`docs/nordic-fund.md` 提案8)。
+         北欧の区間だけでなく、紙の面の問い(台所の「次のスタンプ」、
+         丘の「もう一度やるなら」)も同じ口を通る。
 
          **返すのは、聞かれた id のぶんだけ。** 一覧で返すと、
          端末IDを作り直しながら投げれば知らない id の札を並べられる。
@@ -1208,7 +1230,9 @@ export const islandApi = onRequest(
         const forks: Record<string, Record<string, number>> = {};
         for (const s of snaps) {
           const v = s.exists ? s.data() ?? {} : {};
-          if (v.at !== "nordic" || v.hidden === true) continue;
+          // 島の「今夜のおたずね」には `at` が無い。あちらは問いの字を
+          // 持っているので、数だけを返すこの口からは出さない
+          if (!v.at || v.hidden === true) continue;
           forks[s.id] = forkCounts(v.votes);
         }
         res.json({forks});
@@ -1265,7 +1289,7 @@ export const islandApi = onRequest(
             tx.set(
               ref,
               {
-                at: "nordic",
+                at: forkAt(id),
                 votes,
                 createdAt: (data.createdAt as number) ?? Date.now(),
               },
