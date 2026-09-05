@@ -296,9 +296,20 @@ const sandR = baseR.map((r, i) => {
  * 公式の写真では、浅瀬も泡も「思ったより細い」。深い青がすぐそこまで来ている。
  */
 const SHORE = {
-  /** 深い青から浅瀬へ移るところ。ここを段にすると、島に輪がはまって見える */
-  fade1: -168,
-  fade2: -134,
+  /* 深い青から浅瀬へ移るところ。
+
+     **公式は、ここがほとんど無い。** ビーチの公式絵（`ref_Summer_Beach_NH_Artwork`）を
+     横に切って測ると、平らな深い青がそのまま続いて、**6〜15px**で
+     セージと白の入り混じった帯に変わる。段は付いていない。
+     段に見えないのは、浅瀬そのものの縁がぎざぎざだからで、
+     あいだに帯を挟んで色をなじませているからではない。
+
+     こちらは 1280 幅で **54px** 取っていた（27 + 27）。公式の4〜9倍。
+     引きで見ると島のまわりに淡い輪が広がって、島が水に浮いた皿に見える。
+     幅を 8 単位ずつまで詰めて、深い青を岸まで持ってくる。
+     ぶれ幅（wobble）も一緒に詰める。帯より大きいと隣を突き抜ける。 */
+  fade1: -120,
+  fade2: -112,
   /** 明るいターコイズの浅瀬 */
   shallow: -104,
   /** いちばん明るい、砂のすぐ沖 */
@@ -334,8 +345,8 @@ const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
 
 /** 浅瀬。輪郭をそのまま外へ出すと機械的に見えるので、帯ごとに違う起伏を足す。 */
-const fade1Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade1), 71, 22), SQ);
-const fade2Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade2), 72, 18), SQ);
+const fade1Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade1), 71, 8), SQ);
+const fade2Path = blob(CX, CY, wobble(inset(sandR, SHORE.fade2), 72, 6), SQ);
 const shallowPath = blob(CX, CY, wobble(inset(sandR, SHORE.shallow), 73, 15), SQ);
 const shelfPath = blob(CX, CY, wobble(inset(sandR, SHORE.shelf), 74, 9), SQ);
 
