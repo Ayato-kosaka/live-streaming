@@ -6,10 +6,34 @@
  *
  *   1. 出るまで  … FCP / LCP / DOMContentLoaded。開いてから絵が出るまで
  *   2. 重さ      … 転送バイト数、DOMノード数、SVG要素数、画像枚数
- *   3. 動き      … 最初の3秒（島の到着演出）と、そのあとのスクロール中のフレーム時間
+ *   3. 動き      … 誰も触っていないあいだと、巻いているあいだに使う CPU
  *
- * 動きは requestAnimationFrame の間隔をそのまま集める。16.7ms を超えた回数と
- * 最悪値（p95）を見れば、カクついているかどうかは数字で分かる。
+ * ## 動きは「壁の時計」で測らない
+ *
+ * この箱では担当が何人も同時に動いていて、load average が 100 を超えることがある。
+ * そのとき requestAnimationFrame の間隔（＝壁の時計）は、**同じページを2回測るだけで
+ * 33ms と 116ms が出る。** 測っているのは島の作りではなく、隣で誰が何をしていたか。
+ *
+ * かわりに CDP の `Performance.getMetrics` から **描画プロセスが使った CPU 秒**
+ * （ProcessTime、うちメインスレッドが ThreadTime）を取る。混み具合では動かない。
+ *
+ * ### CPU を測るときは、CPU の絞りを外す
+ *
+ * **`Emulation.setCPUThrottlingRate` は、それ自体が CPU を食う。** 実測（この箱）:
+ *
+ *   /board を6秒置いておくだけ   絞りなし … CPU 120ms（うちメイン 14ms）
+ *                               絞り4倍 … CPU 4710ms（うちメイン 4367ms）
+ *
+ * 4倍遅くする仕掛けは忙しく待つことで遅くしていて、その待ちが ProcessTime にも
+ * ThreadTime にも乗る。**どの面を測っても 1フレーム 13ms 前後の下駄**がつくので、
+ * 「島も北欧も掲示板も 13ms」という揃った数字が出たら、それは中身ではなく下駄。
+ *
+ * なので、読み込みは絞ったまま測り（実機のスマホに寄せるため）、**そのあと絞りを
+ * 外してから CPU を測る**。rAF の間隔も記録には残すが、参考以上には読まないこと。
+ *
+ * 「放置3秒CPU」が 0 に近くない面は、**誰も触っていないのに描き直している**。
+ * 実測では /nordic/sweden が 5,640ms（6秒で）。地図の中の SMIL `<animate>` 22本が、
+ * 380本のパスごと毎フレーム焼き直させていた。外すと 0ms になる。
  *
  * ## 転送量は「素のバイト数」で見ない
  *
@@ -160,6 +184,21 @@ for (const path of pages) {
   await Promise.all(pending.splice(0));
   const tLoad = Date.now();
 
+  // ここから先は CPU を数える。絞りを外さないと、絞りの忙しい待ちしか測れない。
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  await cdp.send("Performance.enable");
+  const metrics = async () =>
+    Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value]));
+  await p.waitForTimeout(500);
+  // 何もしないで置いておくあいだの CPU。ここが 0 でない面は、誰も見ていないのに描き直している
+  const m0 = await metrics();
+  await p.waitForTimeout(3000);
+  const m1 = await metrics();
+  const idle = {
+    cpu: Math.round((m1.ProcessTime - m0.ProcessTime) * 1000),
+    main: Math.round((m1.ThreadTime - m0.ThreadTime) * 1000),
+  };
+
   // スクロールしながらのフレーム。指で送ったときの重さはここに出る。
   // **一気に下まで飛ばさないこと。** 飛ばすと途中の <Link> が画面に入らず、
   // 先読みが起きないので「先読みは軽い」という嘘の数字になる。指で送るのと同じに刻む。
@@ -171,6 +210,12 @@ for (const path of pages) {
   await p.waitForTimeout(800);
   const scroll = await p.evaluate(() => window.__f.splice(0));
   await Promise.all(pending.splice(0));
+  const m2 = await metrics();
+  // 巻いているあいだの CPU（3秒の置いておくぶんを引く）
+  const move = {
+    cpu: Math.round((m2.ProcessTime - m1.ProcessTime) * 1000),
+    main: Math.round((m2.ThreadTime - m1.ThreadTime) * 1000),
+  };
 
   const m = await p.evaluate(() => {
     const paint = performance.getEntriesByType("paint");
@@ -221,6 +266,8 @@ for (const path of pages) {
     byKind,
     top: [...uniq].sort((a, x) => x.raw - a.raw).slice(0, 25).map((r) => ({ url: r.url, raw: kb(r.raw), br: kb(r.br) })),
     wall: Date.now() - t0,
+    idle,
+    move,
     open: stat(open),
     scroll: stat(scroll),
   };
@@ -249,17 +296,18 @@ function stat(fr) {
 const pad = (s, n) => String(s).padEnd(n);
 const num = (s, n) => String(s).padStart(n);
 
-console.log("■ 出るまでと、動き");
+console.log("■ 出るまでと、CPU（CPU は絞りを外して測っている。ms は描画プロセスの合計）");
 console.log(
   pad("page", 12) + num("FCP", 6) + num("LCP", 6) + num("nodes", 7) + num("svg", 6) +
-    num("開p50", 7) + num("開p95", 7) + num("開落ち", 7) + num("巻p95", 7) + num("巻落ち", 7),
+    num("放置3秒CPU", 12) + num("うち主", 8) + num("巻きCPU", 9) + num("うち主", 8),
 );
 for (const [k, v] of Object.entries(out)) {
   console.log(
     pad(k, 12) + num(v.fcp, 6) + num(v.lcp, 6) + num(v.nodes, 7) + num(v.svg, 6) +
-      num(v.open.p50, 7) + num(v.open.p95, 7) + num(v.open.jank, 7) + num(v.scroll.p95, 7) + num(v.scroll.jank, 7),
+      num(v.idle.cpu, 12) + num(v.idle.main, 8) + num(v.move.cpu, 9) + num(v.move.main, 8),
   );
 }
+console.log("  放置3秒CPU … 誰も触っていない3秒で使った CPU。**0 に近くない面は、見ていないのに描き直している**");
 
 console.log("\n■ 転送量（縮めたあとが本番の値段。かっこの中が素のバイト数）");
 console.log(
@@ -302,8 +350,8 @@ if (diffWith) {
         num("FCP " + d(v.fcp, o.fcp), 12) +
         num("br " + d(v.br, o.br ?? o.kb), 11) +
         num("nodes " + d(v.nodes, o.nodes), 13) +
-        num("開落ち " + d(v.open.jank, o.open.jank), 12) +
-        num("巻p95 " + d(v.scroll.p95, o.scroll.p95), 13),
+        (o.idle ? num("放置CPU " + d(v.idle.cpu, o.idle.cpu), 15) : "") +
+        (o.move ? num("巻きCPU " + d(v.move.cpu, o.move.cpu), 15) : ""),
     );
   }
 }
