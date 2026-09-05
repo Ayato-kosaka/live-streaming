@@ -11,6 +11,7 @@ import Days from "@/components/atlas/Days";
 import StayDays from "@/components/atlas/StayDays";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
+import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
 
 export const metadata: Metadata = {
   title: "歩いた国",
@@ -41,6 +42,9 @@ export const metadata: Metadata = {
 
 /** 出発の日。ここから今日までを数える。 */
 const START = "2024-10-28";
+
+/** 配信を始める前の6週間に出したショート。章ではないので、島ではなくここに出る */
+const BEFORE = shortsOf("before-stream");
 /* **「旅した日数」は日本を出た日から数える。**
    配信の初回（2024-10-28）から数えていたので、6週間ぶん足りていなかった。
    イギリス・バルセロナ・ローマを2週間ずつ回っていた47日は、配信が無いだけで
@@ -128,7 +132,8 @@ export default function MapPage() {
           日本を出たのは{PROFILE.leftJapan.replace(/-/g, "/")}、パリで配信を始めたのは
           {START.replace(/-/g, "/")}。そのあいだの6週間は、
           {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}を2週間ずつ回っていました。
-          配信が無いので、下の一覧には出てきません。
+          配信が無いので、下の一覧には出てきません。かわりに、ショート動画が
+          {BEFORE.length}本あります。
         </p>
         <ol className="mbefore-list">
           {BEFORE_STREAM.map((c) => (
@@ -139,6 +144,48 @@ export default function MapPage() {
             </li>
           ))}
         </ol>
+        {/* **ここに出すと決めた理由。**
+            この段はもともと「配信が無いので出てきません」で終わっていた。
+            でも実際には動画が15本あるので、そのままだと嘘に近い。
+
+            ヨーロッパ周遊の島には置けない。島に建つのは章のあいだにあったことだけで
+            （`docs/island-atlas.md` 4章）、この15本は公開日が 2024-09-17〜10-19、
+            章が始まる 2024-10-28 より**全部前**にある（`python/build_shorts.py`）。
+            章の外のものを島に建てると、島が嘘をつく。
+
+            畳んであるのは、地図と年表のあいだに 15枚の絵が居座ると
+            この段が主役に見えてしまうから（`docs/island-design.md` 4章）。
+            **何本あるかは畳んだままでも読める。** */}
+        <div className="hlist">
+          <Fold
+            title="この6週間に出したショート動画"
+            lead={`${BEFORE[0].city}から${BEFORE[BEFORE.length - 1].city}まで、出した順に`}
+            note={`${BEFORE.length}本`}
+          >
+            <ul className="mshorts">
+              {BEFORE.map((s) => (
+                <li key={s.id}>
+                  <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={shortThumb(s.id)}
+                      alt={s.title}
+                      width={480}
+                      height={360}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <b>{s.title}</b>
+                    {/* **日付を出さない。** この段は「2週間ずつ」しか聞いていないので
+                        日付を書かない決まりで作ってある（上の注）。ショートの日付は
+                        撮った日ではなく出した日なので、ここに並べると
+                        「9/17 にロンドンにいた」と読めてしまう */}
+                    <i>{s.city}</i>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Fold>
+        </div>
       </Panel>
 
       <Panel>

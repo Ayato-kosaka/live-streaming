@@ -959,6 +959,60 @@
 .mbefore-list i { font-style: normal; font-size: var(--fs-note); color: var(--ink-2); }
 .mbefore-list span { margin-left: auto; font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
 
+/* その6週間のショート動画。
+   **マスごとに厚みを付けない。** 一面ぜんぶが押せるマスの並びなので、
+   並びそのものが合図になる（`docs/island-design.md` 3-3 の例外）。
+   押せないマスを1枚も混ぜていない。
+
+   絵は縦（3:4）。YouTube の 480×360 は縦の絵を中心に置いて、まわりを
+   同じ絵のぼかしで埋めたもの。`cover` で縦の枠に入れると、そのぼかしが
+   左右に逃げて元の絵だけが残る。 */
+.mshorts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* **畳みの中は紙の桁より狭い**（390px の画面で 298px）。スマホでは2列で、
+     1枚 143px。3列に詰めると 91px になって、絵に焼かれた題名が読めなくなる。
+     広い画面では勝手に6列まで増える */
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--sp-4) var(--sp-3);
+}
+.mshorts a { display: block; color: var(--ink); }
+.mshorts a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; border-radius: var(--r-1); }
+.mshorts img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+}
+.mshorts a:active img { transform: translateY(2px); }
+.mshorts b {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.mshorts i {
+  display: block;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 3本目（配信より前に作っていたもの）。
    比べる2本の下に、1本ぶんの幅で置く。押せるのは中の tile だけなので、
    この枠そのものには厚みを付けない（docs/island-design.md）。 */
