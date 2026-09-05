@@ -33,6 +33,9 @@
   --pg-r-panel: var(--r-3);
   --pg-r-card: var(--r-3);
   --pg-r-tile: var(--r-2);
+  /* 見出しの縁取りに使う白。紙より一段白い。紙そのもの（--paper）で縁を取ると
+     生成りの地との差が数%しかなく、縁取りが効かない。 */
+  --pg-halo: color-mix(in srgb, #fff 72%, var(--paper));
 }
 
 .page {
@@ -42,11 +45,16 @@
 }
 @media (min-width: 720px) { .page { padding: 26px 24px 96px; } }
 
-/* パネルの裏の海。
+/* パネルの裏の地。
    ここが一色べたのままだと、窓と窓のあいだが「何も無い場所」になって、
    紙が宙に浮いて見える。任天堂の平らな絵は、近い2色のゆるい帯と
    細かい粒でできている（/tmp/acref/ref_Beach_Card_NH.png）。
-   スクロールしても動かさない。動かすと帯が毎フレーム描き直しになる。 */
+   スクロールしても動かさない。動かすと帯が毎フレーム描き直しになる。
+
+   色そのものは body が決める（tokens.css の --ground-paper / --ground-board）。
+   ここは形＝ゆるい帯だけを足す。粒は --ground-paper 側が打っているので、
+   ここで白い粒を重ねない。明るい地の上では見えないのに、
+   画面いっぱいの層を2枚ぶん塗り直すことになる。 */
 .page::before {
   content: "";
   position: fixed;
@@ -54,8 +62,6 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0 1.6px, transparent 2.1px),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 1.2px, transparent 1.7px),
     radial-gradient(ellipse 150% 26% at 50% -6%,
       rgba(255, 255, 255, 0.16) 0%, transparent 72%),
     radial-gradient(ellipse 130% 21% at 18% 33%,
@@ -64,16 +70,22 @@
       color-mix(in srgb, var(--sea-mid) 26%, transparent) 0%, transparent 72%),
     radial-gradient(ellipse 170% 34% at 50% 108%,
       color-mix(in srgb, var(--sea-deep) 72%, var(--ink)) 0%, transparent 76%);
-  background-size: 52px 52px, 78px 78px, auto, auto, auto, auto;
-  background-position: 0 0, 21px 27px, 0 0, 0 0, 0 0, 0 0;
 }
 
 /* 木の看板ヘッダー。
    板は1枚の平らな木ではなく、上が明るく下が暗い「厚みのある板」に見せる。
    下の縁を濃い色で切ると、そこが板の切り口になる。 */
 .ih {
-  position: sticky;
-  top: 0;
+  /* 島の入口は6つある（components/island/layout.ts）。
+     前は1行に押し込んで横に流していたが、スマホでは3つしか見えず、
+     しかも「横に流せる」ことが見て分からなかった。入口が半分隠れる案内板は
+     案内板として成り立たないので、看板そのものを作り直す。
+
+     ・6つぜんぶを並べる。折り返して2段になってもいい
+     ・そのぶん背が高くなるので、狭い画面では貼り付けるのをやめる
+       （画面の1/6を案内板が占めたまま動かないほうが邪魔になる）
+     ・1行に収まる広さになったら、そこから貼り付ける */
+  position: relative;
   z-index: 30;
   /* --wood は tokens.css に無い変数だった。無い変数を1つでも混ぜると
      background ごと無効になって、看板が透明のまま h1 と重なる。
@@ -112,11 +124,12 @@
   max-width: 1080px;
   margin: 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 9px 10px;
   padding: 10px 12px 11px;
 }
-@media (min-width: 720px) { .ih-in { padding: 12px 20px 13px; gap: 14px; } }
+@media (min-width: 720px) { .ih-in { padding: 12px 20px 13px; gap: 10px 14px; } }
 .ih-home {
   display: inline-flex; align-items: center; gap: 8px;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
@@ -131,67 +144,98 @@
   transition: transform 0.12s ease;
 }
 .ih-home:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-deep); }
+/* ふだを並べる受け皿。看板を彫りくぼめて、そこに札を打ちつけてある形にする。
+   横に流すのをやめたので、はみ出す・隠れるという状態が無くなった。
+   幅に入るだけ折り返す。390px で3列、560px で5列、720px で6列。 */
 .ih-nav {
-  display: flex; gap: 7px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding: 3px 0;
-  mask-image: linear-gradient(90deg, #000 90%, transparent);
-}
-.ih-nav::-webkit-scrollbar { display: none; }
-/* 広い画面では全部並ぶので、端をぼかすと「切れている」誤解になる */
-@media (min-width: 900px) {
-  .ih-nav { flex-wrap: wrap; overflow: visible; mask-image: none; row-gap: 6px; }
-}
-.ih-link {
-  flex: none;
-  display: inline-flex; align-items: center; gap: 6px;
-  color: #fff7e6;
-  font-size: 13px; font-weight: 900;
-  letter-spacing: var(--ls-body);
-  padding: 7px 13px;
-  min-height: 40px;
-  border-radius: var(--r-pill);
-  /* 板を彫って中を暗くする。半透明の白を敷くと木に溶けて、
-     押せるふだに見えなかった。 */
-  background: color-mix(in srgb, var(--frame-deep) 34%, transparent);
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--frame-deep) 26%, transparent);
   box-shadow:
-    inset 0 2px 2px color-mix(in srgb, var(--frame-deep) 46%, transparent),
-    inset 0 -1.5px 0 rgba(255, 245, 220, 0.3);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
-  white-space: nowrap;
-  transition: transform 0.12s ease;
+    inset 0 2px 3px color-mix(in srgb, var(--frame-deep) 44%, transparent),
+    inset 0 -1.5px 0 rgba(255, 245, 220, 0.24);
 }
-.ih-link img { width: 22px; height: 22px; object-fit: contain; object-position: center bottom; }
-/* いま居る場所だけ、板から浮いた紙のふだにする */
+/* 看板ごと1行に収まる広さになったら、そこから上に貼り付ける。
+   このとき高さは 70px 前後なので、貼り付いていても画面をふさがない。 */
+@media (min-width: 900px) {
+  .ih { position: sticky; top: 0; }
+  .ih-in { flex-wrap: nowrap; }
+  .ih-nav { flex: 1 1 auto; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
+}
+/* ふだは押せる。だから板に彫り込むのではなく、厚みのある札にする
+   （ac-reference 6章「押せるものには必ず下に厚みがある」）。
+   前は彫って暗くしていたので、押せるものが押せないものの形をしていた。 */
+.ih-link {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 11.5px; font-weight: 900;
+  /* 6つのふだが同じ幅の枠に収まる。字間を広げるとここだけあふれるので、
+     看板の字は本文より詰める。 */
+  letter-spacing: 0.01em;
+  padding: 5px 7px;
+  min-height: 38px;
+  /* 高さ38pxの札。角丸は高さの1/3（tokens.css の段）。 */
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 52%, var(--paper)) 0%,
+    var(--frame) 100%);
+  box-shadow:
+    0 3px 0 var(--frame-deep),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ih-link img {
+  width: 20px; height: 20px; flex: none;
+  object-fit: contain; object-position: center bottom;
+}
+/* いま居る場所だけ、木の札ではなく紙の札にする。
+   まわりが木色に揃ったので、白い1枚がどこにいるかを言う。 */
 .ih-link.is-on {
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   color: var(--ink);
-  box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 3px 0 var(--frame-deep),
+    inset 0 0 0 2px var(--gold),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
-.ih-link:active { transform: translateY(2px); }
-/* いま居る場所のふだだけ厚みを持っている。沈むときは厚みも潰す */
-.ih-link.is-on:active { box-shadow: 0 1px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7); }
+/* 沈む量と厚みの減る量を揃える。ずれると札の下の辺が動いて見える。 */
+.ih-link:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
+}
+.ih-link.is-on:active {
+  box-shadow: 0 1px 0 var(--frame-deep), inset 0 0 0 2px var(--gold), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
 
-/* パンくず。海の上に直接置くと読みづらいので、紙のふだに乗せる */
+/* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
+   紙の地の上に置く小さな札。落ちる影は右下の暖かい灰緑（tokens の決まり）。 */
 .crumbs {
   display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
   width: fit-content; max-width: 100%;
   font-size: 12.5px; font-weight: 900;
   color: var(--ink-2);
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  background: var(--paper);
   border: var(--bw-1) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
   border-radius: var(--r-pill);
   padding: 6px 15px;
   margin: 0 0 16px;
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--sea-deep) 40%, #05233d);
+  box-shadow: var(--shadow-1);
 }
 .crumbs a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .crumbs b { color: var(--ink); }
 .crumbs i { font-style: normal; color: var(--ink-3); margin: 0 1px; }
 
-/* ページ見出し */
+/* ページ見出し。
+   島の外のページの地は、紙より明るい生成りになった（tokens.css の --ground-paper）。
+   白い字に濃い縁取り、という海の上の作りをそのまま置くと、
+   明るい地の上で字が消える。**濃い字に白い縁取り**へ逆にする。 */
 .phead { text-align: center; margin: 10px 0 30px; }
 @media (min-width: 720px) { .phead { margin: 16px 0 38px; } }
 .phead-icon {
@@ -200,8 +244,9 @@
   width: 96px; height: 96px;
   object-fit: contain;
   object-position: center bottom;
-  /* 接地影。真下にべたっと1枚だけ。2枚重ねると合成が2回走る */
-  filter: drop-shadow(0 9px 1px color-mix(in srgb, #05233d 34%, transparent));
+  /* 接地影。1枚だけ。2枚重ねると合成が2回走る。
+     紺ではなく、地面の照り返しが入った暖かい灰緑（tokens の影の決まり）。 */
+  filter: drop-shadow(1px 7px 1px rgba(52, 66, 32, 0.3));
 }
 .phead h1 {
   margin: 14px 0 0;
@@ -210,22 +255,22 @@
   /* どうぶつの森の文字は字間が広い。詰まっているとWebの見出しに見える */
   letter-spacing: var(--ls-head);
   line-height: 1.3;
-  color: #fffdf6;
-  /* 白い字のまわりを濃い茶で1周する。縁取りがあるぶん字面が大きく見えて、
-     海の上でも字が沈まない。ぼかした影は文字の面積ぶん塗り直しが重いので、
-     ぼかさない影だけで作る。 */
+  color: var(--frame-deep);
+  /* 濃い字のまわりを白で1周する。縁取りのぶん字面が大きく見えて、
+     生成りの地の上でも字が浮く。ぼかした影は文字の面積ぶん塗り直しが重いので、
+     ぼかさない影だけで作る。最後の1本だけ、板の厚みのかわりの接地影。 */
   text-shadow:
-    2px 0 0 var(--frame-deep), -2px 0 0 var(--frame-deep),
-    0 2px 0 var(--frame-deep), 0 -2px 0 var(--frame-deep),
-    0 6px 0 var(--frame-dark), 0 9px 1px color-mix(in srgb, #05233d 38%, transparent);
+    2px 0 0 var(--pg-halo), -2px 0 0 var(--pg-halo),
+    0 2px 0 var(--pg-halo), 0 -2px 0 var(--pg-halo),
+    1.5px 1.5px 0 var(--pg-halo), -1.5px 1.5px 0 var(--pg-halo),
+    2px 5px 0 rgba(52, 66, 32, 0.22);
 }
 .phead-lead {
   margin: 12px auto 0; max-width: 40em;
   font-size: clamp(13.5px, 3.6vw, 16px);
   font-weight: 800; line-height: 1.85;
   letter-spacing: var(--ls-body);
-  color: #f4fbfe;
-  text-shadow: 0 2px 3px color-mix(in srgb, #05233d 58%, transparent);
+  color: var(--ink-2);
 }
 .phead-mark {
   display: inline-grid; place-items: center;
@@ -240,8 +285,9 @@
   width: 44px; height: 44px; flex: none;
   border-radius: var(--r-1);
   object-fit: cover;
-  box-shadow: 0 2px 5px rgba(60, 40, 20, 0.22);
-  background: #fff;
+  /* 真下に落ちる黒っぽい影をやめる。光は左上から来ているので右下へずらす。 */
+  box-shadow: var(--shadow-1);
+  background: var(--paper);
 }
 .phead-logo {
   display: block;
@@ -250,7 +296,7 @@
   border-radius: var(--r-2);
   object-fit: cover;
   background: #fff;
-  box-shadow: 0 7px 1px color-mix(in srgb, #05233d 34%, transparent);
+  box-shadow: var(--shadow-2);
 }
 .tile-icon {
   width: 44px; height: 44px; flex: none;
@@ -646,28 +692,77 @@
 .tile-text i { font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); line-height: 1.6; }
 .tile-go { font-size: 17px; color: var(--frame-dark); flex: none; }
 
-/* 数字。ゲームの数字は大きくて、下に台がある */
-.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
-@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
-.stat {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 62%);
+/* --- 数字 ---------------------------------------------------------------
+   前は同じ大きさの生成りの箱が4つ横に並んでいた。
+   4つとも同じ重さに見えて、どれが「この面の数字」なのか読み取れない。
+
+   1枚の計器の板にして、中を細い線で仕切る。箱が減るぶん、
+   中の1つを重くするだけで差が付く。重さは3段:
+
+     1つめ … この面の見出しになる数字。ひとまわり大きく、金を敷く
+     まんなか … 添えの数字。平ら
+     印が入っているもの（国旗など） … 数ではなく「いまの状態」。金の札にする
+
+   仕切りは隙間そのもの。1pxの隙間から下の板の色が出ているだけなので、
+   いくつ並んでも、折り返しても、線が二重になったり端に残ったりしない。
+   ----------------------------------------------------------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  /* この地が、そのまま仕切りの線になる */
+  background: color-mix(in srgb, var(--frame) 62%, var(--paper-2));
   border: var(--bw-2) solid var(--frame);
-  border-radius: var(--pg-r-card);
-  padding: 14px 10px 13px;
+  border-radius: var(--r-2);
+  overflow: hidden;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)), var(--pg-drop-s);
+}
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stat {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 0;
+  border-radius: 0;
+  padding: 13px 9px 12px;
   text-align: center;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.85),
-    0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  box-shadow: none;
 }
 .stat b {
   display: block;
-  font-size: clamp(24px, 6.4vw, 32px);
+  font-size: clamp(21px, 5.4vw, 27px);
   font-weight: 900; line-height: 1.05;
   letter-spacing: var(--ls-body);
   color: var(--frame-deep);
 }
-.stat span { display: block; font-size: 12.5px; font-weight: 900; color: var(--ink); margin-top: 5px; letter-spacing: var(--ls-body); }
-.stat i { display: block; font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); margin-top: 3px; }
+.stat span { display: block; font-size: 12px; font-weight: 900; color: var(--ink); margin-top: 5px; letter-spacing: var(--ls-body); }
+.stat i { display: block; font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); margin-top: 3px; line-height: 1.5; }
+
+/* この面の見出しになる数字。ページが最初に見せたい1つは必ず先頭に置いてある。 */
+.stat:first-child {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, color-mix(in srgb, var(--gold) 44%, transparent), transparent 72%),
+    linear-gradient(180deg, var(--paper) 0%, color-mix(in srgb, var(--gold) 22%, var(--paper-2)) 100%);
+}
+.stat:first-child b { font-size: clamp(28px, 7.6vw, 38px); }
+
+/* 印（国旗）が入っているものは数ではなく「いま」。
+   数字と同じ形で並べると、同じ種類のものに見えてしまう。 */
+.stat:has(svg) {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--gold) 34%, var(--paper)) 0%,
+    color-mix(in srgb, var(--gold) 62%, var(--paper-2)) 100%);
+}
+.stat:has(svg) b {
+  display: grid;
+  place-items: center;
+  min-height: clamp(28px, 7.6vw, 38px);
+}
+.stat:has(svg) b svg {
+  border: 2px solid var(--frame-dark);
+  border-radius: 3px;
+  /* 旗は押せないので厚みは付けない。地面に落ちる影だけ。 */
+  box-shadow: var(--shadow-1);
+}
+.stat:has(svg) span { color: var(--frame-deep); }
 
 /* チップ */
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -696,11 +791,14 @@ a.chip:active, button.chip:active, .chip.link:active {
   transform: translateY(3px);
   box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
+/* 見出しのそばに置く添えのチップ。前は海の上に載る前提で白抜きだったが、
+   ページの地が明るい生成りになったので、白抜きだと字が消える。
+   図鑑の面の平らな黄色いチップ（ac-reference ⑦の実測 #cfc202）に替える。 */
 .chip.dark {
-  background: rgba(255, 253, 246, 0.22);
-  border-color: rgba(255, 253, 246, 0.72);
-  color: #fffdf6;
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.28);
+  background: color-mix(in srgb, var(--chip) 62%, var(--paper-out));
+  border-color: color-mix(in srgb, var(--chip) 62%, var(--rule));
+  color: var(--chip-ink);
+  box-shadow: none;
 }
 
 /* 足元の木の板。上の縁を明るくすると、板の切り口に見える */
