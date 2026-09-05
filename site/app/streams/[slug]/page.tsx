@@ -124,20 +124,12 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         「この色は何を指しているか」に答えられなくなる。紙の作り（罫線・平らなチップ・
         厚みを付けない）は5つとも同じにしておく。
       */}
-      <Sheet
-        style={{
-          ["--zk-paper" as string]: `color-mix(in srgb, ${t.color} 8%, #efe4b6)`,
-          ["--zk-paper-lo" as string]: `color-mix(in srgb, ${t.color} 11%, #e7d9a2)`,
-          ["--zk-out" as string]: `color-mix(in srgb, ${t.color} 7%, #f4efcf)`,
-        }}
-      >
+      <Sheet style={{ ["--zk-tint" as string]: `color-mix(in srgb, ${t.color} 10%, transparent)` }}>
         <Zone>
           {/* 見出しは型ごとに変える。5面とも同じ問いで始めると、
               紙の作りも同じなので5つが同じ面に見える。
               添えの一行は見出しの言い直しだったので落とした。 */}
-          <H art={<ArtSignpost size={32} />} note={`${t.beat.length}つ`}>
-            {t.flow}
-          </H>
+          <H art={<ArtSignpost size={32} />}>{t.flow}</H>
           <ol className="rt">
             {t.beat.map((b, k) => {
               const A = art[k];

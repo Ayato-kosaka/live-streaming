@@ -44,11 +44,7 @@
      ここだけ別の紙にすると、同じページの中で紙が2種類になってしまう。 */
   /* 同じ値を2か所に持つと、直したほうと直さないほうで紙が2種類になる。
      紙の色・罫・蛍光ペン・チップ・選択は、ぜんぶ tokens.css の段から取る。 */
-  --zk-paper: var(--paper-mottle-b);
-  --zk-paper-lo: var(--paper-mottle-a);
   --zk-shade: color-mix(in srgb, var(--paper-mottle-a) 84%, var(--rule));
-  /* 紙の外側。紙より少しだけ明るいので、紙が「載っている」ように見える */
-  --zk-out: var(--paper-out);
   /* 罫線。黒い線は使わない。暖かいオリーブ */
   --zk-rule: var(--rule);
   --zk-rule-soft: color-mix(in srgb, var(--rule) 62%, transparent);
@@ -62,7 +58,11 @@
   /* 字は島ぜんぶと同じ茶を使う。紙の上だけ別の墨にすると、
      同じサイトの中で文字の色が2種類あるように見える。 */
   --zk-ink: var(--ink);
-  --zk-ink-2: var(--ink-2);
+  /* 添えの字。`--ink-2` は生成りの紙に対して 4.97 : 1 しかなく、
+     読める下限 4.5 に余りが無い。配信の型の紙は色で染まるぶん地が沈むので、
+     そのままだと 4.45 まで落ちて読めなくなる（クッキングの桃で実測）。
+     墨のほうへ 28% 寄せて、染まった紙でも 4.9 を切らない濃さにする。 */
+  --zk-ink-2: color-mix(in srgb, var(--ink-2) 72%, var(--ink));
 
   position: relative;
   margin-bottom: var(--sp-6);
@@ -80,9 +80,13 @@
      そのまま借りる。枠1px・角8px・影なしも、あちらの実測に合わせる。 */
   border: 1px solid var(--zk-rule);
   border-radius: var(--r-0);
-  box-shadow: none;
   overflow: hidden;
   background: var(--pg-paper-bg);
+  /* 配信の型の紙だけ、その型の色でごく薄く染まる（`docs/island-world.md` 3.3）。
+     紙の地そのもの（--pg-paper-bg）は21面で共通なので触らない。
+     inset の塗りは地の上・中身の下に入るので、1枚重ねるのに1行で足りる。
+     染めない面では transparent に落ちて、何も起きない。 */
+  box-shadow: inset 0 0 0 999px var(--zk-tint, transparent);
 }
 
 /* 紙の中の区切り。影ではなく1本の罫線 */
@@ -369,6 +373,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .zk .fold + .fold { border-top: 1px solid var(--zk-rule-soft); }
 .zk .folds { border-top: 1px solid var(--zk-rule-soft); border-bottom: 1px solid var(--zk-rule-soft); }
 .zk .fold > summary { padding: var(--sp-3) var(--sp-1); }
+/* 畳んだときに見える一行は読ませる字。紙の添え字と同じ濃さにそろえる */
+.zk .fold-t i { color: var(--zk-ink-2); }
 .zk .fold-body { padding: var(--sp-2) var(--sp-1) var(--sp-4); }
 
 /* =========================================================
@@ -392,18 +398,20 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
-  color: var(--ink-3);
+  /* --ink-3 は生成りの紙に対して 3.95 : 1。読ませる字には使わない */
+  color: var(--ink-2);
   padding-bottom: 3px;
 }
-/* 土日だけ色を変える。配信は毎日あるので「休み」ではなく、目印として */
-.wk-days > span.is-end { color: var(--accent); }
+/* 土日の目印。前は桃だったが、紙の上で 2.05 : 1 しか出ておらず読めなかった。
+   配信は毎日あるので「休み」の色ではなく、ただの目印。色ではなく濃さで言う。 */
+.wk-days > span.is-end { color: var(--ink); }
 
 .wk-rows { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
 .wk-row { display: grid; gap: var(--sp-2); }
 .wk-tag { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .wk-tag img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
 .wk-tag b { font-size: var(--fs-note); font-weight: 900; letter-spacing: 0.02em; }
-.wk-tag i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
+.wk-tag i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); margin-left: auto; flex: none; }
 .wk-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-1); }
 .wk-track > i {
   height: 17px;
@@ -435,8 +443,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ty) 52%, var(--paper));
 }
 .wk-free img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
-.wk-free em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
-.wk-note { margin: var(--sp-3) 0 0; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); }
+.wk-free em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); margin-left: auto; flex: none; }
+.wk-note { margin: var(--sp-3) 0 0; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 /* =========================================================
    配信の型（配信やぐら）— ここは板の型
@@ -626,7 +634,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   padding-left: 2px;
 }
 .vid-b { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; justify-content: center; flex: 1; }
-.vid-m { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); }
+.vid-m { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .vid-m em {
   font-style: normal;
   border-radius: 6px;
@@ -916,8 +924,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .rt-body { flex: 1; min-width: 0; display: grid; gap: var(--sp-2); padding-top: 2px; }
 .rt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); }
 .rt-head b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.03em; }
-.rt-head time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); }
-.rt-head .sub { font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); }
+.rt-head time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+.rt-head .sub { font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 /* 紙の上の道のり。丸い台から厚みを抜いて、印刷した図に見せる */
 .zk .rt::before { border-left-color: var(--zk-rule-soft); }
@@ -949,7 +957,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .fig-cap {
   display: block; margin-top: var(--sp-2);
   font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
-  color: var(--zk-ink-2, var(--ink-3));
+  /* 紙の外に出しても読める濃さに落とす。--ink-3 は 3.95 : 1 で足りない */
+  color: var(--zk-ink-2, var(--ink-2));
 }
 
 /* 数字を横に並べる欄。罫線で仕切る */
