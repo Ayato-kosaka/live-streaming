@@ -76,3 +76,26 @@ for (const [name, path] of PAGES) {
   p.off("pageerror", onErr);
 }
 await b.close();
+
+/* 撮ったものを1枚に並べる。**ばらばらに見ても不統一は見つからない。**
+   縮めて隣に置くと、地の色・見出しの重さ・余白の刻みの違いだけが残って浮き上がる。
+   HTML を組んで撮り直すだけなので、画像ライブラリを足さずに済む。 */
+const cells = PAGES.map(([name, path]) =>
+  `<figure><img src="file://${OUT}/${name}.png"><figcaption>${name} ${path}</figcaption></figure>`
+).join("");
+const b2 = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const p2 = await (await b2.newContext({ viewport: { width: 2100, height: 1200 } })).newPage();
+await p2.setContent(
+  `<style>
+     body{margin:0;background:#4a4a4a;font:12px/1.3 monospace;color:#fff;
+          display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:10px}
+     figure{margin:0}
+     img{width:100%;display:block;background:#000}
+     figcaption{padding:3px 0}
+   </style>${cells}`,
+  { waitUntil: "load" },
+);
+await p2.waitForTimeout(1500);
+await p2.screenshot({ path: `${OUT}/_sheet.png`, fullPage: true });
+await b2.close();
+console.log(`→ ${OUT}/_sheet.png`);
