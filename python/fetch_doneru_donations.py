@@ -211,6 +211,14 @@ def main() -> int:
             total += ingest_year(client, year, dry_run=args.dry_run)
     except DoneruSessionExpired as exc:
         print(f"ERROR: Doneru のセッションが切れています: {exc}", file=sys.stderr)
+        # 「貼った値が化けている」のか「セッションが死んでいる」のかを分ける手がかり。
+        # 形が合っているのに 401 なら、値ではなくセッションのほう。
+        print(f"       貼られている値の形: {client.cookie_shape}", file=sys.stderr)
+        print(
+            "       形が合っているのに 401 なら、その _dt は無効になっています"
+            "（ログアウト・再ログインで作り直されます）",
+            file=sys.stderr,
+        )
         return EXIT_SESSION_EXPIRED
     except DoneruError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
