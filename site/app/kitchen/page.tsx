@@ -74,6 +74,10 @@ export default function KitchenPage() {
           />
         </Zone>
 
+        <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
+
+        {/* 来た人が見たいのはスタンプの面そのもの。国別・月別のグラフは
+            「読み物」なので、カタログの下に置く（`docs/island-ux.md` 5.6）。 */}
         <Zone tight>
           <div className="folds">
             <Fold
@@ -183,7 +187,6 @@ export default function KitchenPage() {
           </div>
         </Zone>
 
-        <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
       </Sheet>
 
       <Link className="tile" href="/streams/cooking" style={{ ["--tile" as string]: "var(--roof-coral)" }}>

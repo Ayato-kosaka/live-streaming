@@ -300,11 +300,12 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-weight: 900;
   letter-spacing: 0.05em;
   line-height: 1.35;
-  color: #3b3418;
-  background: #fdfaec;
-  border: 1px solid #cdc6a4;
+  /* 色は段から取る。直値で置くと、紙の色を直したときここだけ取り残される。
+     紙の型なので影は落とさない。傾きとテープだけで「貼ってある」と言う。 */
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
   transform: rotate(-1.1deg);
-  box-shadow: 1px 2px 0 rgba(120, 108, 60, 0.16);
 }
 /* 留めているテープ。半透明の紙が2枚 */
 .zk-tape::before,
