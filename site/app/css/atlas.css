@@ -122,7 +122,7 @@
   box-shadow: 0 2px 0 rgba(20, 60, 90, 0.35);
   display: grid;
   place-items: center;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: #b0562a;
   letter-spacing: 0;
@@ -172,7 +172,7 @@
   transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
   white-space: nowrap;
   color: var(--am-ink);
-  font-size: 12.5px;
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: 0.03em;
   text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 6px #fff, 0 1px 0 #fff, 0 0 9px #fff;
@@ -198,7 +198,7 @@
   position: absolute;
   left: 12px;
   top: -6px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--am-ink);
   white-space: nowrap;
@@ -212,7 +212,7 @@
   width: 18px;
   height: 18px;
   margin: -9px 0 0 -9px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
 }
 .amap-pins.is-wide .apin-dot::before { inset: 2.5px; }
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
@@ -238,7 +238,7 @@
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink-2);
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-body, 0.02em);
   box-shadow: 0 6px 0 var(--frame-dark);
@@ -263,14 +263,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
 }
 /* 距離。凡例の言葉より一段引いた色で、数字だと分かるようにする */
 .amap-key em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.02em;
@@ -285,7 +285,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
   margin-left: auto;
@@ -320,7 +320,7 @@
   border-radius: 999px;
   background: rgba(255, 251, 240, 0.9);
   box-shadow: 0 3px 0 rgba(20, 60, 90, 0.22);
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
   pointer-events: none;
@@ -336,11 +336,11 @@
 
 @media (min-width: 720px) {
   .apin { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
-  .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: 11.5px; }
+  .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: var(--fs-min); }
   .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
-  .apin-name { font-size: 13.5px; bottom: 40px; }
-  .acity b { font-size: 11.5px; }
-  .amap-tab { font-size: 14px; padding: 0 22px; }
+  .apin-name { font-size: var(--fs-body); bottom: 40px; }
+  .acity b { font-size: var(--fs-min); }
+  .amap-tab { font-size: var(--fs-body); padding: 0 22px; }
 }
 
 /* ---------------------------------------------------------
@@ -370,7 +370,7 @@
   box-shadow: 0 3px 0 var(--frame-dark);
   display: grid;
   place-items: center;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 900;
   color: var(--frame-deep);
 }
@@ -391,21 +391,21 @@
 .atrip-flag { flex: none; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
 .atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.atrip-name b { font-size: 16px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
+.atrip-name b { font-size: var(--fs-h3); font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
 .atrip-name em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.1em;
 }
-.atrip-when { font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.atrip-when { font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); }
 .atrip-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
 .atrip-tags span {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
   background: var(--paper-2);
@@ -448,12 +448,12 @@
 .apass-who b { font-size: 20px; font-weight: 900; letter-spacing: var(--ls-head, 0.04em); line-height: 1.25; }
 .apass-who em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.12em;
 }
-.apass-who i { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+.apass-who i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 /* 入国のスタンプ。押せないので完全に平ら。数を言う印なのでオリーブ */
 .apass-stamp {
   flex: none;
@@ -469,7 +469,7 @@
   transform: rotate(-9deg);
 }
 .apass-stamp b { font-size: 22px; font-weight: 900; line-height: 1; }
-.apass-stamp i { font-style: normal; font-size: 11.5px; font-weight: 900; margin-top: 2px; }
+.apass-stamp i { font-style: normal; font-size: var(--fs-min); font-weight: 900; margin-top: 2px; }
 
 /* 入国と出国。日付は罫で区切った台帳にする */
 .apass-log { margin: 0; display: grid; gap: 0; }
@@ -485,14 +485,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.06em;
 }
 .apass-log dd {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 900;
   color: var(--ink);
   letter-spacing: 0.04em;
@@ -508,7 +508,7 @@
 .apass-num div { padding: 13px 6px 2px; text-align: center; border-left: 1px solid var(--rule); }
 .apass-num div:first-child { border-left: 0; }
 .apass-num b { display: block; font-size: 24px; font-weight: 900; line-height: 1.1; color: var(--frame-deep); }
-.apass-num span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-2); margin-top: 4px; }
+.apass-num span { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); margin-top: 4px; }
 
 .acity-list { display: grid; gap: 9px; }
 .acity-empty {
@@ -518,7 +518,7 @@
   padding: 11px 14px;
   border-radius: var(--r-1);
   background: var(--paper-2);
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 800;
   color: var(--ink-3);
 }
@@ -549,7 +549,7 @@
   box-shadow: var(--shadow-2);
   transform: rotate(-1.4deg);
 }
-.abio-word b { font-size: 17px; font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
+.abio-word b { font-size: var(--fs-h3); font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
 .abio-word p { margin: 0 0 9px !important; }
 .abio-word p:last-child { margin-bottom: 0 !important; }
 
@@ -577,8 +577,8 @@
   justify-items: start;
 }
 .acard svg { margin-bottom: 4px; }
-.acard b { font-size: 15.5px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
-.acard p { margin: 0 !important; font-size: 13px !important; line-height: 1.85 !important; }
+.acard b { font-size: var(--fs-h3); font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
+.acard p { margin: 0 !important; font-size: var(--fs-body) !important; line-height: 1.85 !important; }
 
 .aline { list-style: none; margin: 0; padding: 0; display: grid; }
 .aline > li { position: relative; padding: 0 0 16px 40px; }
@@ -608,9 +608,9 @@
   place-items: center;
   color: var(--ink-2);
 }
-.aline-when { font-size: 11.5px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
-.aline-what { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; margin-top: 1px; }
-.aline-note { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; margin-top: 3px; }
+.aline-when { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
+.aline-what { display: block; font-size: var(--fs-h3); font-weight: 900; line-height: 1.55; margin-top: 1px; }
+.aline-note { display: block; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.75; margin-top: 3px; }
 
 /* ---------------------------------------------------------
    アプリ工房
@@ -637,8 +637,8 @@
   place-items: center;
   background: var(--paper-2);
 }
-.aapp-line { margin: 0 !important; font-size: 13.5px !important; line-height: 1.8 !important; color: var(--ink-2); }
-.aapp-sum { margin: 0 !important; font-size: 13.5px !important; line-height: 1.9 !important; }
+.aapp-line { margin: 0 !important; font-size: var(--fs-body) !important; line-height: 1.8 !important; color: var(--ink-2); }
+.aapp-sum { margin: 0 !important; font-size: var(--fs-body) !important; line-height: 1.9 !important; }
 .aapp-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 
 /* 機能が増えた順のノート。畳んだ中身なので、罫だけで区切る */
@@ -663,12 +663,12 @@
   border: 2px solid var(--rule);
   color: var(--ink-2);
 }
-.agrow time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.04em; }
-.agrow b { font-size: 13.5px; font-weight: 900; line-height: 1.6; }
+.agrow time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); letter-spacing: 0.04em; }
+.agrow b { font-size: var(--fs-body); font-weight: 900; line-height: 1.6; }
 .agrow i {
   grid-column: 2 / -1;
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 700;
   color: var(--ink-2);
   line-height: 1.7;
@@ -681,7 +681,7 @@
   border-radius: 999px;
   background: #2c2a28;
   color: #fff;
-  font-size: 12.5px;
+  font-size: var(--fs-note);
   font-weight: 900;
   box-shadow: 0 5px 0 #100f0e;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -699,7 +699,7 @@
   align-items: center;
   gap: 9px;
   margin: 6px 0 2px;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: var(--ls-caps, 0.14em);
@@ -729,25 +729,25 @@
 }
 .astep-body { min-width: 0; display: grid; gap: 3px; }
 .astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.astep-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.astep-head time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); }
 /* 種類の言葉。数えたもの・言うだけの札と同じ、オリーブの平ら */
 .astep-kind {
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   padding: 1px 8px;
   border-radius: var(--r-0);
   background: var(--chip);
   color: var(--chip-ink);
 }
-.astep b { font-size: 14.5px; font-weight: 900; line-height: 1.55; }
-.astep i { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; }
+.astep b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
+.astep i { font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.75; }
 .astep a {
   justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   margin-top: 4px;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--accent-2);
   text-decoration: underline;
@@ -765,8 +765,8 @@
   background: var(--paper-2);
 }
 .afeat > div > svg { color: var(--accent-2); }
-.afeat b { display: block; font-size: 14px; font-weight: 900; }
-.afeat i { display: block; font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
+.afeat b { display: block; font-size: var(--fs-body); font-weight: 900; }
+.afeat i { display: block; font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
 
 /* アプリの中身。絵と説明を左右に並べる */
 .aapp-split { display: grid; gap: 14px; justify-items: center; }
@@ -796,47 +796,14 @@
    あちらで紙の色を直せば、こちらも一緒に変わる。
    --------------------------------------------------------- */
 
-.panel.paper {
-  --pg-ground: var(--pg-paper-bg);
-  --pg-rim: transparent;
-  --pg-edge: transparent;
-  border: 2px solid var(--pg-rule);
-  border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
-  padding: 22px 15px 20px;
-}
-@media (min-width: 720px) {
-  .panel.paper { padding: 28px 26px 26px; }
-}
-/* 見出しは「白い紙の札を、少し傾けてテープで貼った」もの */
-.panel.paper > h2 {
-  border: 0;
-  border-radius: 3px;
-  background: var(--paper);
-  color: var(--ink);
-  padding: 10px 22px;
-  transform: rotate(-1.1deg);
-  transform-origin: left center;
-  box-shadow: var(--shadow-1);
-}
-.panel.paper > h2:first-child { margin: -30px 0 18px 6px; }
-.panel.paper > h2::before,
-.panel.paper > h2::after {
-  position: absolute;
-  width: 30px;
-  height: 12px;
-  border-radius: 1px;
-  background: color-mix(in srgb, var(--gold) 26%, rgba(255, 255, 255, 0.62));
-  box-shadow: none;
-}
-.panel.paper > h2::before { left: -12px; top: -7px; transform: rotate(-29deg); }
-.panel.paper > h2::after { right: -12px; top: -7px; transform: rotate(29deg); }
-/* 紙の上の札は平ら。厚みを付けるのは押せるものだけ */
-.panel.paper :is(.chip, .stat) {
-  box-shadow: none;
-  border: 1.5px solid var(--pg-rule);
-  background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
-}
+/* `.panel.paper` の中身は pages.css が正本。ここには置かない。
+
+   前はこのファイルにも同じ規則があり、あとから読まれるぶん atlas 側が勝っていた。
+   `.panel.paper :is(.chip,.stat){box-shadow:none}`（詳細度 0,3,0）が
+   `a.chip`（0,1,1）に勝って、pages.css で付け直した押しものの厚み 6px を
+   消していた。見出しのテープ（`> h2::before/::after`）も二重にあった。
+   **紙の面の作りを変えたくなったら pages.css を直す。ここには足さない。**
+   ここに置くのは、地図（.amap）のような atlas だけの部品に限る。 */
 
 /* ---------------------------------------------------------
    紙の面の上の地図
@@ -848,16 +815,15 @@
    --------------------------------------------------------- */
 .panel.paper .amap {
   /* 主役の絵は大きく、まわりを大きく空ける（docs/ac-reference.md 7章 4）。
-     紙の左右いっぱいまで広げて、上下だけ罫で切る。 */
-  margin-inline: -15px;
-  margin-bottom: 14px;
+     紙の左右いっぱいまで広げて、上下だけ罫で切る。
+     はみ出しぶんは pages.css が持っている紙の左右の余白（--pp-x）から取る。
+     数を写すと、あちらで余白を変えたときにここだけずれる。 */
+  margin-inline: calc(-1 * var(--pp-x, var(--sp-4)));
+  margin-bottom: var(--sp-3);
   background: var(--paper);
   border-block: 1px solid var(--pg-rule);
   border-radius: 0;
   box-shadow: none;
-  padding: 8px 15px;
+  padding: var(--sp-2) var(--pp-x, var(--sp-4));
 }
 .panel.paper .amap-stage { border-radius: 6px; }
-@media (min-width: 720px) {
-  .panel.paper .amap { margin-inline: -26px; padding: 12px 26px; }
-}
