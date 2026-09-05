@@ -47,10 +47,10 @@ const FLOW = [
 
 /**
  * 本文の頭に付いた貼り先の札（`【スウェーデン】`）。
- * `components/nordic/CountryIdeas.tsx` が付ける。**同じ形を
- * `NoteBoards.tsx` も見ている。** 変えるときは両方。
+ * `components/nordic/CountryIdeas.tsx` が付ける。前後の空白は食わせる。
+ * **同じ形を `NoteBoards.tsx` も見ている。変えるときは両方。**
  */
-const TAG = /^【([^】]{1,20})】/;
+const TAG = /^\s*【\s*([^】]{1,20}?)\s*】/;
 
 /** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
 const MINE_KEY = "ayato-island-mine";
