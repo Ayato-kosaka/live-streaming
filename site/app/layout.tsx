@@ -58,6 +58,9 @@ export const metadata: Metadata = {
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "あやと島" }],
   },
   twitter: { card: "summary_large_image", images: ["/og.png"] },
+  // Google Search Console でのドメイン所有権確認。YouTubeログインのOAuth審査に、
+  // ホームページURLの所有証明として要る（`docs/`には置かない。すぐ終わる1回きりの確認）。
+  verification: { google: "6p-lWEfzAS0TNvI5F0bf-huSu1JuO_6eLE7UraOscYI" },
 };
 
 export const viewport: Viewport = {
