@@ -75,6 +75,16 @@ const ARRIVE_AGAIN = 30;
  * タブを閉じたら忘れてよいので sessionStorage。
  */
 const RETURN_AT = "ayato-island-at";
+/**
+ * 一度でも島を歩いたか。
+ *
+ * 「押したところまで歩いていくよ」は、一度歩けば分かる。それを毎回、
+ * 島の下に帯で出しておくのは、分かっている人から場所を取り上げているだけ。
+ * 初めての人にだけ数秒出して、そのあとは二度と出さない。
+ */
+const WALKED = "ayato-island-walked";
+/** 案内を出しておく時間(ミリ秒)。読んで、押してみるまでの間だけ。 */
+const HINT_SPAN = 5200;
 
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
@@ -113,7 +123,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const whoRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [box, setBox] = useState({ w: 1440, h: 900 });
-  const [hint, setHint] = useState(true);
+  /** 歩き方の案内。初めての人にだけ、数秒だけ出す。初期値は false（出さない側に倒す） */
+  const [hint, setHint] = useState(false);
   const [wide, setWide] = useState(false); // スマホで「島ぜんぶ」
   const [hover, setHover] = useState<SpotId | null>(null);
   /** 名札が開いている入口。近さと hover から決まる。1フレームごとには更新しない。 */
@@ -149,6 +160,35 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     v.name = s?.name ?? undefined;
     v.photo = s?.photo ?? undefined;
   }
+
+  /* 歩き方の案内。初めて島に立った人にだけ、数秒だけ出して消える。
+     覚えたことを言い続けるのは、島の下端を占領しているのと同じなので。 */
+  const hintDone = useRef(false);
+  const dismissHint = useCallback(() => {
+    if (hintDone.current) return;
+    hintDone.current = true;
+    setHint(false);
+    try {
+      localStorage.setItem(WALKED, "1");
+    } catch {
+      /* 覚えられなくても、次にもう一度出るだけ */
+    }
+  }, []);
+  useEffect(() => {
+    let walked = false;
+    try {
+      walked = !!localStorage.getItem(WALKED);
+    } catch {
+      /* 読めないときは初めての人として扱う。出しすぎるより出さないほうが害が大きい */
+    }
+    if (walked) {
+      hintDone.current = true;
+      return;
+    }
+    setHint(true);
+    const t = setTimeout(() => dismissHint(), HINT_SPAN);
+    return () => clearTimeout(t);
+  }, [dismissHint]);
 
   /** 出発まであと何日。「これから」の札に付ける。 */
   const [days, setDays] = useState<number | null>(null);
@@ -441,7 +481,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "w", "a", "s", "d"].includes(k)) {
         keys.current[k] = true;
-        setHint(false);
+        dismissHint();
         e.preventDefault();
       }
     };
@@ -461,7 +501,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const goTo = (s: Spot) => {
     target.current = { x: s.x, y: s.y + 34 };
     walkingTo.current = null;
-    setHint(false);
+    dismissHint();
     setOpenSpot(s.id);
     if (wide) setWide(false);
   };
@@ -491,7 +531,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     (i: number) => {
       const v = villagers[i];
       const me = avatar.current;
-      setHint(false);
+      dismissHint();
       if (Math.hypot(me.x - v.x, (me.y - v.y) * 1.3) <= TALK_REACH) {
         openTalk(i);
         return;
@@ -518,7 +558,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const vbH = (cam.span * r.height) / Math.max(1, r.width);
     const wx = cam.x - vbW / 2 + ((e.clientX - r.left) / r.width) * vbW;
     const wy = cam.y - vbH / 2 + ((e.clientY - r.top) / r.height) * vbH;
-    setHint(false);
+    dismissHint();
     const who = villagerAt(villagers, wx, wy, RESIDENT_H * 0.6);
     if (who) {
       approach(villagers.indexOf(who));
@@ -742,10 +782,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               </button>
             ))}
           </div>
-          <button className="bar-zoom" onClick={() => setWide((v) => !v)}>
-            {wide ? UI.comeDown : UI.lookAround}
-          </button>
         </div>
+      )}
+
+      {/* 引きと寄りの切り替え。
+          行き先ではないのでバーから出した。バーの中に混ぜると6つの入口と
+          同じ重さに見えて、そのぶん入口の名前が削られる（名前が切れたら入口は無いのと同じ）。
+          カメラの操作なので、島の隅に単独で置く。 */}
+      {mode === "phone" && (
+        <button className="stage-view" data-ui onClick={() => setWide((v) => !v)}>
+          <Icon name={wide ? "walk" : "island"} size={15} />
+          {wide ? UI.comeDown : UI.lookAround}
+        </button>
       )}
 
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}

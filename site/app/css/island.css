@@ -418,26 +418,45 @@
   }
 }
 
+/* 歩き方の案内。
+   初めての人にだけ、数秒だけ出る（出し入れは IslandStage が持っている）。
+   前は下の帯の上に居座っていて、一度歩けば分かることのために島の下端を
+   ずっと使っていた。上に移して小さくしたのは、下は「今日の島」と入口の
+   ためにあけておきたいから。
+   点滅もやめた。消えるものを点滅させる必要はないし、
+   ずっと走る animation が1本減る。 */
 .walk-hint {
   position: absolute;
-  left: 12px;
-  bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom));
+  left: 50%;
+  top: calc(64px + env(safe-area-inset-top));
+  margin: 0;
   white-space: nowrap;
-  background: rgba(69, 55, 42, 0.82);
+  background: rgba(56, 44, 34, 0.8);
   color: #fffdf6;
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 8px 16px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 6px 14px;
   border-radius: 999px;
   /* backdrop-filter は下にある島を毎フレームぼかし直す。島は viewBox が
      動くたび描き直されるので、ここに1枚あるだけで起動直後が目に見えて落ちた。
      地の色を濃くすれば読めるので、ぼかしは使わない。 */
-  border: 2px solid rgba(255, 253, 246, 0.22);
-  animation: hintPulse 2.6s ease-in-out infinite;
+  border: 2px solid rgba(255, 253, 246, 0.2);
   pointer-events: none;
   z-index: 5;
+  /* 出るときにふわっと、そのまま最後の1秒で消える。時間は JS 側の HINT_SPAN と揃える */
+  animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.3s both;
+  transform: translateX(-50%);
 }
-@keyframes hintPulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.55; } }
+@keyframes hintIn {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes hintOut {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to { opacity: 0; transform: translate(-50%, -6px); }
+}
+@media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } }
 
 /* --- 島のモーション --- */
 /* 木と草が、そよ風でゆっくり揺れる。全部そろって揺れないよう位相をずらす。 */
@@ -591,21 +610,28 @@
 .hero-copy { text-align: center; max-width: 640px; }
 
 /* =========================================================
-   スマホの操作バー
+   スマホの入口バー
    ---------------------------------------------------------
    もとの見た目は pages.css にある。あちらは globals.css で
    このファイルより後に読まれるので、上書きするには詳細度を1つ上げる。
    島の上に乗るものは、このファイルにまとめておきたいので `.stage` を足した。
 
-   直したのは2つ。
-   ・6つのチップが横スクロールで見切れて、4つが画面の外にいた。
-     3列2段に置いて、全部いっぺんに見えるようにした。
-   ・海の上に薄い膜が乗っているだけで、バーに見えていなかった。
-     木のトレーを1枚敷いて、島の手前に置いたものにした。
+   **押す先が読めないバーは、無いのと同じ。**
+   3列2段に置いたときは、名前が「こ…」「たき火…」「配信や…」と切れていた。
+   幅が足りなかった理由は2つあって、どちらも「行き先ではないもの」が
+   行き先の場所を食っていたこと。
+
+   ・引き／寄りの切り替え（島をながめる）が横 76px を持っていった
+     → バーから出して、島の隅の単独のボタンにした（.stage-view）
+   ・絵と名前を横に並べていたので、1マスの幅を絵と名前で分け合っていた
+     → 絵を上、名前を下にして、1マスの幅ぜんぶを名前に使わせた
+
+   結果、6つを1段に置いても名前が切れない。段が1つ減ったぶんバーも低い。
+   マスは指で押せる大きさ（`docs/island-design.md` 3-2）を満たす。
    ========================================================= */
 @media (max-width: 639px) {
-  /* 2段になったぶん背が要る。walk-hint もこの値を見て浮いている */
-  .stage.stage { --bar-h: 98px; }
+  /* 1段になったぶん低くなった。「今日の島」が乗るときの背は today.css が持つ */
+  .stage.stage { --bar-h: 82px; }
 }
 /* バーの置き場所も、島の上に乗るものなのでここで持つ。
    前は pages.css 側にあって、あちらを整理したときに落ちてバーが
@@ -617,10 +643,10 @@
   bottom: 0;
   z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 7px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: linear-gradient(var(--paper) 0 38%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-bottom: 0;
@@ -632,9 +658,8 @@
 }
 .stage .island-bar-scroll {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
   padding: 0;
   overflow: visible;
   /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
@@ -643,26 +668,37 @@
 .stage .bar-spot {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
-  padding: 2px 6px 2px 2px;
+  min-height: 52px;
+  padding: 4px 1px 3px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  border: 3px solid var(--frame-dark);
-  border-radius: 12px;
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  font-size: 11px;
+  /* 6つ並ぶので、1マスの縁は細くする。3px のままだと縁だけで横 36px 取られて、
+     そのぶん名前が入らない。重さは箱（バー）側が持てばいい。
+     本物の一覧も、枠は外側の板が持っていて、中のマスは軽い
+     （/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
+  border: 2px solid var(--frame-dark);
+  border-radius: 11px;
+  box-shadow: 0 2px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: var(--ink);
 }
-.stage .bar-spot img { width: 24px; height: 24px; flex: none; }
+.stage .bar-spot img { width: 25px; height: 25px; flex: none; }
+/* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
+   ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
 .stage .bar-spot span {
+  display: block;
+  width: 100%;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 /* いま近くにいる入口。押せる合図ではなく「ここにいる」の印なので、色だけで言う */
 .stage .bar-spot.is-on {
@@ -670,44 +706,89 @@
   border-color: var(--frame-deep);
 }
 .stage .bar-spot:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+/* 「あと◯日」は名前の行に置くと名前を押し出す。絵の右肩に貼ったシールにする。
+   名前の行には決してかからない。 */
+.stage .bar-spot em {
+  position: absolute;
+  right: -3px;
+  top: -5px;
+  margin: 0;
+  z-index: 2;
+  font-style: normal;
+  font-size: 8.5px;
+  line-height: 1.35;
+  letter-spacing: 0;
+  padding: 1px 5px;
+  border: 2px solid var(--paper);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
+  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  color: var(--paper);
+  transform: rotate(-6deg);
+}
+
+/* 引き／寄りの切り替え。
+   行き先ではないので、行き先のバーから出して島の隅に置いた。
+   寄りのときは看板ロゴが右上にいるので、左上が空いている。 */
+.stage-view {
+  position: absolute;
+  left: 12px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px 6px 9px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.stage-view:active {
   transform: translateY(3px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
-/* 「あと◯日」はチップの中に並べると名前を押し出してしまうので、右肩に貼る */
-.stage .bar-spot em {
+.stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 話しているあいだは、島の上のUIと同じように引っ込める */
+.stage.is-talking .stage-view { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+
+/* =========================================================
+   島の下端
+   ---------------------------------------------------------
+   海がページの下地に、はさみで切ったようにぶつかっていた。
+   下地（body の --page-bg）へ向けて海を溶かして、境目を消す。
+
+   色は --page-bg をそのまま敷いて出す。ページの下地は縦に長い
+   グラデーションなので、島のすぐ下あたりの色は「いちばん上の色」とほぼ同じ。
+   ここでは背景を十分に引き伸ばして、その上のほうだけを使っている。
+   こうしておけば、時間帯で色が変わっても勝手に付いてくる（値を写さずに済む）。
+
+   動かさないので、毎フレームの負担にはならない。
+   ========================================================= */
+.stage::after {
+  content: "";
   position: absolute;
-  right: -5px;
-  top: -7px;
-  margin: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
   z-index: 2;
-  font-size: 9px;
-  padding: 1.5px 6px;
-  border: 2px solid var(--paper);
-  box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
-  background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
-  transform: rotate(-6deg);
-}
-/* 引き／寄りの切り替え。行き先ではないので、色を変えて別のものだと言う */
-.stage .bar-zoom {
-  grid-column: 2;
-  align-self: stretch;
-  width: 76px;
-  padding: 6px 4px;
-  border-radius: 22px;
-  border: 3px solid var(--frame-dark);
-  background: linear-gradient(var(--sea-shallow) 0 42%, var(--sea-mid));
-  color: var(--paper);
-  font-size: 10.5px;
-  font-weight: 900;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-  white-space: normal;
-  text-shadow: 0 1px 0 rgba(12, 60, 78, 0.5);
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-.stage .bar-zoom:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  background-image: var(--page-bg);
+  background-size: 100% 4000px;
+  background-position: left top;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
 }
 
 /* =========================================================
