@@ -105,6 +105,14 @@
   `roles/serviceusage.serviceUsageConsumer`、`roles/firebasestorage.viewer` が必要。
   最後のロールは Firebase CLI が既定バケットを参照するために使う。
   対象バケットにも `roles/storage.bucketViewer` を付けて、バケット情報の参照を許可する。
+- ~~置き場と CORS が本当に効いているか~~ — **確かめた。効いている**（2026-09-05、本番）。
+  置き場は 403 を返す（無いバケットは 404 なので、あって拒否されている）。
+  `storage.rules` は Hosting のデプロイのログで `released rules ... to firebase.storage`。
+  CORS は `storage.googleapis.com` へのプリフライトが
+  `allow-origin: *` / `max-age: 3600` / `allow-methods: GET,HEAD` を返す
+  （`PUT` のプリフライトには何も返らない）。**`storage.cors.json` はもう当ててある。**
+  **ただし「実際に1枚置いて、合言葉つき URL で読めるか」はまだ確かめていない。**
+  貼るには `islandUsers/{uid}.admin` が要り、それがまだ誰にも立っていないため（GitHub #138）。
 - **写真は重い。** 旅は10日で、1日に何枚でも貼れる。**貼るときに縮めて焼く**
   （長辺 1600px くらい、webp）。元のままだと `/nordic` が一気に太る。
 - **保存はスマホでやる人が多い。** `<a download>` は iOS Safari で効かないことがある。
