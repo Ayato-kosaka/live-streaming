@@ -8,6 +8,7 @@ import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
+import { stayNow, type StayNow } from "@/lib/stay";
 
 /** 配信は日本時間の22時から、だいたい2〜3時間。 */
 const START_H = 22;
@@ -86,6 +87,8 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [ago, setAgo] = useState<string | null>(null);
   const [next, setNext] = useState<{ title: string; days: number } | null>(null);
+  /** いまいる国に、今日で何日目か。画面が出るまでは出さない（焼き込みの日数を見せない） */
+  const [stay, setStay] = useState<StayNow | null>(null);
   const youtube = LINKS.find((l) => l.id === "youtube")!;
 
   useEffect(() => {
@@ -109,6 +112,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
         .filter((x) => x.d !== null && x.d >= 0)
         .sort((a, b) => a.d! - b.d!)[0];
       setNext(ahead ? { title: ahead.p.title, days: ahead.d! } : null);
+      setStay(stayNow(now));
     };
     tick();
     const id = setInterval(tick, 60000);
@@ -186,6 +190,16 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
         )}
 
         <div className="chips" style={{ justifyContent: "center", marginTop: "var(--sp-3)" }}>
+          {/* いまいる国に何日いるか（`docs/island-play.md` 仕掛け10）。
+              上の「いまどこ」はあやとが手で書いたものなので、週に1度しか動かない。
+              この1つだけは毎日1ずつ増えるので、旅が止まっていないことがここに出る。
+              静的書き出しなので、画面が出てから数える（`lib/stay.ts`）。 */}
+          {stay && (
+            <span className="chip">
+              <Icon name="clock" size={12} />
+              {stay.name}に来て {stay.days.toLocaleString()}日目
+            </span>
+          )}
           {cur.theme && !SLUG.test(cur.theme) && (
             <span className="chip">
               <Icon name="light" size={12} />

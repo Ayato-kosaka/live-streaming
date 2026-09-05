@@ -33,6 +33,7 @@ import { RECIPES } from "@/content/recipes";
 import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
+import { atText, watchAt } from "@/lib/peak";
 
 /** 配信の行き先。島のやぐらの札も配信中はここへ送るので、出どころを1つにする。 */
 export const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href ?? "https://youtube.com";
@@ -267,6 +268,11 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
   const past = lastYearOn(j.md, j.y);
   if (past) {
     const when = `${past.ago}年前の今日`;
+    // 「その日を見る」の行き先が3時間の頭だと、押しても誰も再生しない。
+    // コメントがいちばん重なったところが分かっている日は、そこから開く
+    // （`content/streamPeaks.ts`・`docs/island-play.md` 仕掛け15）。
+    // **どこから始まるかを本文で言う。** 言わずに途中から始まると壊れて見える。
+    const spot = past.s.k;
     // 滞在の記録から国が引けなかった日（移動の途中など）は、場所を言わない。
     // 分からないものを埋めると、島が嘘をつくことになる。
     out.push({
@@ -274,11 +280,13 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
       icon: "signpost",
       line: past.s.p ? `${when}は${past.s.p}にいました` : `${when}も、配信していました`,
       title: past.s.p ? `${when}は、${past.s.p}` : when,
-      body: `${past.s.d.replace(/-/g, "/")} の配信。コメントは ${past.s.n.toLocaleString()} 件ついた。`,
+      body: `${past.s.d.replace(/-/g, "/")} の配信。コメントは ${past.s.n.toLocaleString()} 件ついた。${
+        spot === undefined ? "" : `いちばん重なった ${atText(spot)} のところから開きます。`
+      }`,
       quote: past.s.t,
-      href: watch(past.s.v),
+      href: spot === undefined ? watch(past.s.v) : watchAt(past.s.v, spot),
       out: true,
-      go: "その日を見る",
+      go: spot === undefined ? "その日を見る" : "そこを見る",
     });
   }
 

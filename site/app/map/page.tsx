@@ -8,6 +8,7 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
 import Days from "@/components/atlas/Days";
+import StayDays from "@/components/atlas/StayDays";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
 
@@ -95,10 +96,13 @@ export default function MapPage() {
         <Stat value={visited.length} label="歩いた国" sub="配信のあった国だけ" />
         <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
         <Stat value={<Days from={PROFILE.leftJapan} />} label="旅した日数" sub="日本を出た日から" />
+        {/* いまいる国の名前は数ヶ月変わらないので、この欄だけが止まって見えていた。
+            添え字を滞在の日数にすると、旅が進んでいることが毎日1ずつ出る
+            （`docs/island-play.md` 仕掛け10）。国の名前は上の見出しにも出ている。 */}
         <Stat
           value={<Flag slug={here.slug} size={34} />}
-          label="いまここ"
-          sub={here.name}
+          label={here.name}
+          sub={<StayDays fallback="いまここ" />}
         />
       </div>
 
