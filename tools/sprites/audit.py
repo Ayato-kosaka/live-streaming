@@ -149,16 +149,34 @@ EXCUSED = [
 
 
 def excused(name, key):
+    # `hero/` 付きの名前で来ることがある。理由は絵ごとに付いているので、
+    # どちらの1枚かは関係ない。頭の `hero/` を落としてから照らす
+    base = name.split("/")[-1]
     for pres, k, why in EXCUSED:
-        if k == key and any(name.startswith(p) for p in pres):
+        if k == key and any(base.startswith(p) for p in pres):
             return why
     return None
+
+
+def all_names():
+    """測る絵の名前。**`hero/` の下も測る。**
+
+    ここは長いあいだ `os.listdir` 1回だけで、`sprites/hero/` の45枚が
+    1枚も測られていなかった。同じ物を別の大きさで焼き直したものなので、
+    焼き方を間違えれば原則も一緒に外れる。図鑑の面でいちばん大きく出るのは
+    そちらなので、**測らないでいい理由が無い。**
+    """
+    names = [f[:-5] for f in os.listdir(SRC) if f.endswith(".webp")]
+    hero = os.path.join(SRC, "hero")
+    if os.path.isdir(hero):
+        names += ["hero/" + f[:-5] for f in os.listdir(hero) if f.endswith(".webp")]
+    return sorted(names)
 
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     show_all = "--all" in sys.argv
-    names = sorted(f[:-5] for f in os.listdir(SRC) if f.endswith(".webp"))
+    names = all_names()
     if args:
         names = [n for n in names if any(a in n for a in args)]
 
@@ -168,7 +186,7 @@ def main():
         if m:
             rows.append((n, m))
 
-    print(f"{'名前':28} {'色相':>6} {'彩度':>6} {'明度':>6} {'暗5%':>6} {'縁差':>6} {'影':>6}")
+    print(f"{'名前':33} {'色相':>6} {'彩度':>6} {'明度':>6} {'暗5%':>6} {'縁差':>6} {'影':>6}")
     bad = 0
     ok_reasons = {}
     for n, m in rows:
@@ -184,7 +202,7 @@ def main():
             bad += 1
         if not (show_all or hits):
             continue
-        print(f"{n:28} {m['hue']:6.3f} {m['sat']:6.3f} {m['val']:6.3f} "
+        print(f"{n:33} {m['hue']:6.3f} {m['sat']:6.3f} {m['val']:6.3f} "
               f"{m['dark']:6.3f} {m['rim']:6.3f} {m['shadow']:6.3f}"
               + ("  ← " + " / ".join(hits) if hits else ""))
     print(f"\n{len(rows)} 枚のうち {bad} 枚が決まりを外している")

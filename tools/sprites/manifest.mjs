@@ -889,14 +889,20 @@ const SPRITES_BASE = [
  * 長辺 640px でもう1枚焼き、`sprites/hero/` に置く。画面側は srcset で
  * 2倍の画面にだけそちらを配るので、増えるのは詳細を開いた人の1枚だけ。
  *
- * どれが主役かは recipes.ts と legends.ts が決めている。ここに名前を写すと
- * 品が増えたとき片方だけ古くなるので、その2つを読んで拾う。 */
+ * どれが主役かは recipes.ts / legends.ts / streamTypes.ts が決めている。
+ * ここに名前を写すと品が増えたとき片方だけ古くなるので、その3つを読んで拾う。
+ *
+ * `streamTypes.ts` を足したのは、`/streams/[型]` だけ 320px のまま取り残されて
+ * いたから。同じ紙の型（`docs/ac-reference.md` 7章）の面なのに、料理と伝説だけが
+ * 絵を大きく出せて、型の5面は 168px で止まっていた。**面によって
+ * 絵の扱いが変わる理由が無い。** 型の絵は島に立っている建物と同じ名前なので、
+ * 島に置くほうの 320px はそのまま残り、増えるのは詳細を開いた人の1枚だけ。 */
 const HERO_PX = 640;
 const CONTENT = new URL("../../site/content/", import.meta.url);
 
 const heroNames = () => {
   const out = new Set();
-  for (const f of ["recipes.ts", "legends.ts"]) {
+  for (const f of ["recipes.ts", "legends.ts", "streamTypes.ts"]) {
     for (const m of fs.readFileSync(new URL(f, CONTENT), "utf8").matchAll(/^\s*icon: "([^"]+)"/gm)) {
       out.add(m[1]);
     }
