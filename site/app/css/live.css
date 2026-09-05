@@ -354,7 +354,7 @@
 .bd-list > li:nth-child(3n) { transform: rotate(0.3deg); }
 .bd-list .nx-pin { position: absolute; top: -6px; left: 22px; }
 /* いちばん票が集まっているものだけ、赤い枠で前に出す（紙の型の選択と同じ作り） */
-.bd-list > li.is-top { box-shadow: 0 0 0 3px #e2522d, 2px 6px 0 rgba(120, 90, 40, 0.18); }
+.bd-list > li.is-top { box-shadow: 0 0 0 3px var(--pick), 2px 6px 0 rgba(120, 90, 40, 0.18); }
 .bd-list > li.is-picked { background: linear-gradient(#fffdf0, #fff2c8); box-shadow: 0 0 0 3px var(--gold), 2px 6px 0 rgba(120, 90, 40, 0.18); }
 
 /* =========================================================
@@ -427,7 +427,7 @@
   color: var(--pap-ink);
   transition: border-color 0.14s ease, background 0.14s ease;
 }
-.pap-go:hover { border-color: #e2522d; background: rgba(255, 253, 240, 0.9); }
+.pap-go:hover { border-color: var(--pick); background: rgba(255, 253, 240, 0.9); }
 .pap-go b { font-size: 13.5px; font-weight: 900; }
 .pap-go i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--pap-ink-2); margin-top: 2px; }
 .pap-go .ic { flex: none; margin-left: auto; color: var(--pap-ink-2); }
@@ -485,7 +485,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px 12px;
-  border: 2px solid #e2522d;
+  border: 2px solid var(--pick);
   border-radius: 6px;
   background: rgba(255, 253, 240, 0.5);
 }
@@ -495,7 +495,7 @@
   display: inline-block;
   padding: 2px 8px 3px;
   border-radius: 4px;
-  background: #e2522d;
+  background: var(--pick);
   color: #fffdf0;
   font-size: 10px; font-weight: 900; letter-spacing: 0.04em;
 }
@@ -509,7 +509,7 @@
 .rz-star-n { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 800; color: var(--pap-ink-2); }
 .rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
 .rz-star .rz-bar { margin-top: 8px; }
-.rz-star .rz-bar > i { background: #e2522d; }
+.rz-star .rz-bar > i { background: var(--pick); }
 @media (min-width: 560px) {
   .rz-star { grid-template-columns: 200px 1fr; gap: 18px; padding: 14px 18px 16px; }
   .rz-star-n b { font-size: 32px; }
@@ -566,7 +566,7 @@
 .rz-days b { font-size: 13px; color: var(--pap-ink); }
 /* 何日いっしょにいたかの帯。図鑑の「出る時間」の目盛りと同じ作り */
 .rz-bar { width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
-.rz-bar > i { display: block; height: 100%; border-radius: 3px; background: #cfc202; }
+.rz-bar > i { display: block; height: 100%; border-radius: 3px; background: var(--chip); }
 /* 名前を出していない人のマスは、名札の行そのものを出さない。
    空の行を22個並べると、そこだけ抜けて見える */
 .rz-card.is-blank .rz-days { margin-top: 5px; }

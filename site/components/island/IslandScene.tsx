@@ -1177,7 +1177,7 @@ function IslandScene() {
         <ellipse cx={430} cy={752} rx={158} ry={74} fill="var(--grass-hi)" opacity="0.3" />
         <ellipse cx={824} cy={846} rx={136} ry={60} fill="var(--grass-lo)" opacity="0.16" />
         <ellipse cx={620} cy={556} rx={120} ry={52} fill="var(--grass-hi)" opacity="0.22" />
-        {/* 草の地模様。更地の面をなくす。タイルなので要素は2つで済む。 */}
+        {/* 草の地模様。更地の面をなくす。タイル1枚なので、塗るのも1回で済む。 */}
         <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex)" />
         {/* 土の混じるところ。緑一色の面をなくす。 */}
         <path d={soilPatches} fill="var(--sand-wet)" opacity="0.2" />

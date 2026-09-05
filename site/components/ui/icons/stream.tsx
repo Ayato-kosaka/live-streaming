@@ -432,8 +432,8 @@ export const stream: Record<string, Draw> = {
   member: (c) => (
     <>
       <Sh c={c} cy={57} rx={19} ry={3.4} />
-      <path d="M32 3l6 4h11a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H19a8 8 0 0 1-8-8V11a4 4 0 0 1 4-4h11z" fill={c.tl} />
-      <path d="M38 7h11a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H32V3z" fill={c.tld} />
+      <path d="M15 7h34a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H19a8 8 0 0 1-8-8V11a4 4 0 0 1 4-4z" fill={c.tl} />
+      <path d="M32 7h17a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H32z" fill={c.tld} />
       <rect x="22" y="3" width="20" height="8" rx="4" fill={c.cr} />
       <circle cx="32" cy="24" r="8" fill={c.cr} />
       <path d="M32 34c7.4 0 13 4.6 13 10.4V47H19v-2.6C19 38.6 24.6 34 32 34z" fill={c.cr} />

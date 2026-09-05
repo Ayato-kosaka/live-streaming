@@ -713,21 +713,22 @@
    名前の行には決してかからない。 */
 .stage .bar-spot em {
   position: absolute;
-  right: -3px;
-  top: -5px;
+  left: 50%;
+  top: -6px;
   margin: 0;
   z-index: 2;
   font-style: normal;
-  font-size: 8.5px;
-  line-height: 1.35;
+  font-size: 8px;
+  line-height: 1.4;
   letter-spacing: 0;
-  padding: 1px 5px;
+  padding: 0.5px 4px;
   border: 2px solid var(--paper);
   border-radius: 999px;
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
   background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
   color: var(--paper);
-  transform: rotate(-6deg);
+  /* マスの真上に載せる。横に逃がすと、いちばん端のマスでバーの外へはみ出す */
+  transform: translateX(-50%) rotate(-6deg);
 }
 
 /* 引き／寄りの切り替え。

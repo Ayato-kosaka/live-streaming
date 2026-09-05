@@ -421,8 +421,19 @@ export const scene: Record<string, Draw> = {
       <circle cx="15" cy="14" r="9" fill={c.gd} />
       <path d="M1 30c12-8 22 2 34-2s20-6 28-2v16H1z" fill={c.crd} />
       <path d="M1 38c10-6 18 2 30-1s24-5 32-1v14a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.cr} />
-      <path d="M18 33c1-4 4-6 8-6h12c4 0 6 2 7 6l3 1c2 .6 3 2 3 4h-4l-2-3-2 3-1 8h-4l1-8h-8l-1 8h-4l1-8c-4-1-7-3-9-5z" fill={c.wo} />
-      <path d="M26 27c1-2 3-3 6-3l2 4-4 2z" fill={c.wod} />
+      {/* らくだ。ふたこぶと、上げた首。細かく描かず、影の面だけで丸みを出す */}
+      <g fill={c.wod}>
+        <rect x="18" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="25" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="34" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="41" y="38" width="3.6" height="12" rx="1.8" />
+      </g>
+      <path d="M14 36c-3-1-5-3-6-6l3-1c1 2 2 3 4 4z" fill={c.wod} />
+      <path d="M22 26c1.6-5 3.2-7.4 5-7.4s3.4 2.4 5 7.4zM34 26c1.6-5 3.2-7.4 5-7.4s3.4 2.4 5 7.4z" fill={c.wo} />
+      <path d="M14 34c0-5 4-8 11-8h14c6 0 9 3 9 8s-3 7-9 7H25c-7 0-11-2-11-7z" fill={c.wo} />
+      <path d="M32 26h7c6 0 9 3 9 8s-3 7-9 7h-7z" fill={c.wod} opacity="0.5" />
+      <path d="M44 31c0-5 1.4-9.6 3.6-14l4.4 1.6c-2 3.8-3.2 7.6-3.2 12z" fill={c.wo} />
+      <path d="M47 15.6c1.4-2.6 4.4-3.2 6.4-1.2l4 3.8-6.6 3z" fill={c.wod} />
       <g fill={c.crd} opacity="0.5">
         <ellipse cx="12" cy="50" rx="7" ry="2" />
         <ellipse cx="50" cy="53" rx="6" ry="1.8" />
