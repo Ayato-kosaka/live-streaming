@@ -117,7 +117,7 @@ export default function FriendsWall() {
                 YouTube のチャンネルを結ぶ表がまだどこにも無いため（issue #113）。
                 手で書いた値が並んでいて、実在する人の順番を間違えて出していた。
                 表ができたら python/build_residents.py が焼くので、そのとき戻す。 */}
-            <div>
+            <div className="zk-wide">
               <dt>今日いるところ</dt>
               {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
                   分からないあいだは何も言わない（island-world.md 4.3 ④）。 */}

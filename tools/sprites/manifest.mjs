@@ -36,15 +36,26 @@ const WOODEN = {
   blue: { h: 0.072, s: 0.42, l: [0.34, 0.52] },
   neutral: { h: 0.10, s: 0.30, l: [0.62, 0.86] },
 };
+/* 幹の太さ。
+ *
+ * 公式スクショの木を測ると、幹の幅は樹冠の幅の 0.35 倍ある
+ * （`/tmp/acref/crop_tree.png`。樹冠 254px に幹 90px）。
+ * Kenney の広葉樹は 0.22〜0.29 倍しかなく、樹冠の重さに対して
+ * 幹が細い棒で、遠目には「緑の玉が浮いている」ように見えていた。
+ * 1.28 倍にすると 0.28 → 0.36 で、公式とほぼ同じ比になる。
+ *
+ * 針葉樹とヤシには掛けない。あちらは公式でも細い。 */
+const TRUNK = { trunk: 1.28 };
+
 /** 広葉樹。樹冠を房に分ける。1で既定の効き、小さいほど元の塊に近い。
  *
  * 掛けてよいのは「樹冠がひと塊のモデル」だけ。tree_detailed / tree_blocks /
  * tree_plateau のように、はじめから葉のかたまりが枝ごとに分かれているものに
  * 掛けると、その散らばりごと12個に複製されて、立方体が空中にばらけた絵になる。
  * 分かれている木は、それ自体がもう「房の集まり」なので何もしない。 */
-const LEAFY = { lobes: 1 };
+const LEAFY = { lobes: 1, ...TRUNK };
 /** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
-const LEAFY_SOFT = { lobes: 0.72 };
+const LEAFY_SOFT = { lobes: 0.72, ...TRUNK };
 
 /** 雪。「わずかに青い白」を無彩色として拾わせる(render.html の chromaMax)。 */
 const SNOWY = { neutral: { chromaMax: 0.20 } };
@@ -526,20 +537,20 @@ const SPRITES_BASE = [
      広葉樹は樹冠を房に分ける(LEAFY)。針葉樹とヤシは葉がもともと分かれているので掛けない。 */
   { name: "tree-round", parts: [`${NK}/tree_oak.glb`], opts: LEAFY },
   { name: "tree-fat", parts: [`${NK}/tree_fat.glb`], opts: LEAFY },
-  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: { lobes: 0.3 } },
+  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: { lobes: 0.3, ...TRUNK } },
   // tree_blocks は葉が立方体の集まりだが、法線をならすと1個の丸い塊に
   // なってしまい、tree-round と見分けが付かない。房をごく弱く掛けて、
   // 面の向きを崩し、キットの「積み木の木」らしさを戻す
-  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: { lobes: 0.34 } },
+  { name: "tree-blocks", parts: [`${NK}/tree_blocks.glb`], opts: { lobes: 0.34, ...TRUNK } },
   { name: "tree-default", parts: [`${NK}/tree_default.glb`], opts: LEAFY },
   { name: "tree-small", parts: [`${NK}/tree_small.glb`], opts: LEAFY },
-  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`] },
+  { name: "tree-plateau", parts: [`${NK}/tree_plateau.glb`], opts: TRUNK },
   { name: "tree-thin", parts: [`${NK}/tree_thin.glb`], opts: LEAFY_SOFT },
   { name: "tree-pine", parts: [`${NK}/tree_pineDefaultA.glb`] },
   { name: "tree-pine-tall", parts: [`${NK}/tree_pineTallA.glb`] },
   { name: "tree-pine-round", parts: [`${NK}/tree_pineRoundC.glb`] },
   { name: "tree-pine-small", parts: [`${NK}/tree_pineSmallB.glb`] },
-  { name: "tree-cone", parts: [`${NK}/tree_cone.glb`] },
+  { name: "tree-cone", parts: [`${NK}/tree_cone.glb`], opts: TRUNK },
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
   { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
   { name: "tree-palm-bend", parts: [`${NK}/tree_palmBend.glb`] },

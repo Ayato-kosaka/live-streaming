@@ -73,6 +73,8 @@ function rememberPost(id: string) {
  */
 export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
+  const [down, setDown] = useState(false);
   /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
   const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
   const [text, setText] = useState("");
@@ -89,12 +91,7 @@ export default function Board() {
   useEffect(() => {
     setVoted(votedLocally());
     setMine(minePosts());
-    getIdeas()
-      .then((r) => setIdeas(r.ideas))
-      // 取れなかったときは静かに空の板を出す（`docs/island-design.md` 4章）。
-      // つながらなかったのは見ている人には関係のない話で、
-      // ここで謝るより「いちばんに貼る」を出したほうが先に進める。
-      .catch(() => setIdeas([]));
+    load();
 
     /* 「押す」から「書く」への橋を、渡ってきた側で受ける。
        島で今夜のおたずねを押した人は、押した直後に「理由も書ける？」で
@@ -113,6 +110,27 @@ export default function Board() {
         /* おたずねが読めない日は、ただ橋が出ないだけ。ここで謝らない */
       });
   }, []);
+
+  /**
+   * 一覧を取りに行く。
+   *
+   * **読めなかったときに「まだ何も貼られていない」と出さない。**
+   * 前はここで空配列を入れていたので、つながらない日には
+   * 誰かが貼った企画が並んでいる板を「いちばん乗りだよ」と言って見せていた。
+   * 嘘をつくくらいなら、つながらないと言って、もう一度押せるようにする
+   * （`docs/island-world.md` 4.1 の表）。
+   */
+  const load = () => {
+    setDown(false);
+    getIdeas()
+      .then((r) => {
+        setIdeas(r.ideas);
+      })
+      .catch(() => {
+        setIdeas([]);
+        setDown(true);
+      });
+  };
 
   const submit = async () => {
     const t = text.trim();
@@ -326,7 +344,17 @@ export default function Board() {
             <li />
           </ul>
         )}
-        {ideas?.length === 0 && (
+        {ideas !== null && down && (
+          <div className="blank is-off">
+            <b>いま、板を読みに行けなかった</b>
+            <p>貼ってある企画がある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+            <button className="blank-go" onClick={load}>
+              もう一度よみこむ
+              <Icon name="refresh" size={14} />
+            </button>
+          </div>
+        )}
+        {!down && ideas?.length === 0 && (
           <div className="bd-empty">
             <EmptyBoard />
             <p className="muted">{BOARD.empty}</p>

@@ -112,6 +112,34 @@ const spanOf = (w: number, h: number, wide: boolean) => {
   return Math.max(1220, 880 * aspect);
 };
 
+/* ---- 島の絵を動かすしかけ ------------------------------------------------
+   **`viewBox` を1ドット書き換えると、その SVG の中身が全部描き直される。**
+   島の地面は色ごとの「島いっぱいのパス」にまとめてあるので、画面の外にある
+   部分をブラウザが捨てられない。スマホは 1200 のうち 340 しか見ていないのに、
+   毎フレーム島ぜんぶをなぞっていた（内訳は `app/css/island.css` の注）。
+
+   なので **`viewBox` は据え置き、毎フレーム動かすのは `transform` だけ**にする。
+   焼いてある絵（アンカー）からのズレを translate と scale で見せて、
+   ズレが大きくなったときにだけ焼き直す。実測 23.3ms → 4.8ms。
+   ------------------------------------------------------------------------ */
+/** 画面の外に余分に焼いておく幅(px)。`--scene-pad` と必ず同じ値にする。 */
+const SCENE_PAD = 140;
+/** 焼いた絵を、これ以上の倍率で引き伸ばして見せない。1.12 倍までならぼけない。 */
+const ZOOM_Q = 1.12;
+
+/**
+ * 島の絵の viewBox。画面より各辺 SCENE_PAD だけ広く取る。
+ * ここが返す文字列で焼いた絵を「アンカー」と呼ぶ。
+ */
+function anchorVb(cx: number, cy: number, span: number, w: number, h: number): string {
+  const k = Math.max(1, w) / span; // px / ワールド単位
+  const ew = w + SCENE_PAD * 2;
+  const eh = h + SCENE_PAD * 2;
+  const vw = ew / k;
+  const vh = eh / k;
+  return `${(cx - vw / 2).toFixed(1)} ${(cy - vh / 2).toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`;
+}
+
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
 /** 指で押せる最小の大きさ(画面px) */
@@ -248,6 +276,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const walkingTo = useRef<number | null>(null);
   const keys = useRef<Record<string, boolean>>({});
   const camRef = useRef({ x: ISLAND.cx, y: ISLAND.cy - 30, span: ARRIVE_SPAN });
+  /**
+   * 島の絵を最後に焼いた場所（アンカー）と、そのときの画面の大きさ。
+   * いまのカメラとの差は transform で見せて、差が大きくなったら焼き直す。
+   */
+  const anchor = useRef({ x: 0, y: 0, span: 0, w: 0, h: 0 });
+  /** 焼いてある viewBox と、いま掛けている transform。React が描き直しても同じ値を書く */
+  const sceneVb = useRef("");
+  const sceneTf = useRef("");
   /** 到着演出を飛ばす人。最初の1フレームでカメラを目的の位置に置く */
   const snapCam = useRef(false);
   /** 到着演出を飛ばす人かどうか。画面の大きさが分かるたびにカメラを置き直す */
@@ -619,14 +655,50 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const vbX = cam.x - vbW / 2;
       const vbY = cam.y - vbH / 2;
       const vb = `${vbX.toFixed(1)} ${vbY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}`;
-      /* viewBox を書き換えると、島の SVG（画像152枚）がまるごと描き直される。
+      /* カメラが止まっているあいだは、何も書かない。
          止まっているのに書き直すと、何もしていない画面でずっと GPU が回る。
          文字にしたときに同じなら、画面には出ない差なので触らない。 */
       const camMoved = vb !== lastVb;
       if (camMoved) {
         lastVb = vb;
-        sceneRef.current?.setAttribute("viewBox", vb);
-        lampRef.current?.setAttribute("viewBox", vb);
+        /* --- 島の絵を動かす ---
+           **`viewBox` は書き換えない。** 書き換えると島ぜんぶが描き直される
+           （上の SCENE_PAD の注）。焼いてある絵とのズレを transform で見せる。 */
+        const a = anchor.current;
+        const kd = b.w / cam.span; // px / ワールド単位
+        let s = a.span / cam.span;
+        let tx = -(cam.x - a.x) * kd;
+        let ty = -(cam.y - a.y) * kd;
+        // 余白を使い切ったか、引き伸ばしすぎたか、画面の大きさが変わったら焼き直す
+        if (
+          a.w !== b.w ||
+          a.h !== b.h ||
+          s > ZOOM_Q ||
+          s < 1 / ZOOM_Q ||
+          Math.abs(tx) > SCENE_PAD * 0.85 ||
+          Math.abs(ty) > SCENE_PAD * 0.85
+        ) {
+          a.x = cam.x;
+          a.y = cam.y;
+          a.span = cam.span;
+          a.w = b.w;
+          a.h = b.h;
+          sceneVb.current = anchorVb(cam.x, cam.y, cam.span, b.w, b.h);
+          sceneRef.current?.setAttribute("viewBox", sceneVb.current);
+          lampRef.current?.setAttribute("viewBox", sceneVb.current);
+          s = 1;
+          tx = 0;
+          ty = 0;
+        }
+        const tf =
+          s === 1 && tx === 0 && ty === 0
+            ? ""
+            : `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s.toFixed(4)})`;
+        if (tf !== sceneTf.current) {
+          sceneTf.current = tf;
+          if (sceneRef.current) sceneRef.current.style.transform = tf;
+          if (lampRef.current) lampRef.current.style.transform = tf;
+        }
       }
       const sx = (wx: number) => ((wx - vbX) / vbW) * b.w;
       const sy = (wy: number) => ((wy - vbY) / vbH) * b.h;
@@ -847,10 +919,16 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     // order は「並びが変わった」ことだけを伝える合図
   }, [order, villagers, sceneArt]);
 
+  /* 島の絵の viewBox と transform は、毎フレーム rAF が ref に書いている。
+     React が描き直したときも**同じ値**を書かないと、次のフレームまで絵が飛ぶ。
+     なので JSX からも ref の中身をそのまま渡す。まだ焼いていなければ、ここで焼く。 */
   const cam = camRef.current;
-  const vbW0 = cam.span;
-  const vbH0 = (cam.span * box.h) / Math.max(1, box.w);
-  const vb0 = `${cam.x - vbW0 / 2} ${cam.y - vbH0 / 2} ${vbW0} ${vbH0}`;
+  if (!sceneVb.current) {
+    anchor.current = { x: cam.x, y: cam.y, span: cam.span, w: box.w, h: box.h };
+    sceneVb.current = anchorVb(cam.x, cam.y, cam.span, box.w, box.h);
+  }
+  const vb0 = sceneVb.current;
+  const tf0 = sceneTf.current;
 
   return (
     <div

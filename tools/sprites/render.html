@@ -646,6 +646,37 @@ const SMOOTH_MAT = /^leafs/;
 const GRAD_MAT = /^(leafs|grass)/;
 /** 岩に貼り付いている苔のマテリアル名。 */
 const MOSS_MAT = /^grass$/;
+/** 幹のマテリアル名。太らせるのはここだけ。 */
+const TRUNK_MAT = /^woodbark$/;
+
+/**
+ * 幹を横に太らせる。
+ *
+ * 公式スクショの木を測ると、幹の幅は樹冠の幅の 0.35 倍ある
+ * （`/tmp/acref/crop_tree.png`。樹冠 254px に対して幹 90px）。
+ * Kenney の広葉樹は 0.22〜0.29 倍しかなく、樹冠の重さに対して
+ * 幹が細い棒に見えていた。縦はそのままに、横だけ広げる。
+ *
+ * 幹の断面の中心を軸にする。原点をそのまま使うと、根が片側へ寄っている
+ * 木（tree_oak の板根）が地面から浮いた場所へずれる。
+ *
+ * @param {THREE.BufferGeometry} geo 幹の形（その場で書き換える）
+ * @param {number} k 横の倍率
+ */
+function thickenTrunk(geo, k) {
+  geo.computeBoundingBox();
+  const { min, max } = geo.boundingBox;
+  const cx = (min.x + max.x) / 2;
+  const cz = (min.z + max.z) / 2;
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    pos.setX(i, cx + (pos.getX(i) - cx) * k);
+    pos.setZ(i, cz + (pos.getZ(i) - cz) * k);
+  }
+  pos.needsUpdate = true;
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+}
 
 /* ------------------------------------------------------------------ */
 /* 岩の苔の境目をぼかす                                                 */
@@ -960,6 +991,7 @@ async function prepare(part, opts) {
   const detail = part.detail ?? (plain ? null : DETAIL_OF(part.url));
   const lobes = part.lobes ?? opts.lobes ?? 0;
   const moss = part.moss ?? opts.moss ?? null;
+  const trunk = part.trunk ?? opts.trunk ?? 1;
 
   /** マテリアル名 → 置き換えたあとの色。苔を石の色へ溶かすのに使う */
   const resolved = new Map();
@@ -1005,6 +1037,7 @@ async function prepare(part, opts) {
       }
       parent.remove(n);
     }
+    if (trunk !== 1 && TRUNK_MAT.test(mn)) thickenTrunk(n.geometry, trunk);
     if (moss && MOSS_MAT.test(mn)) mossMeshes.push(n);
   }
 

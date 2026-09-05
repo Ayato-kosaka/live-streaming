@@ -13,7 +13,7 @@ const PORT = process.env.PORT || "3000";
  * 島を触ったら必ず回す。
  */
 // 島に建っているものは全部押せる（docs/island-design.md 6章）。看板の有無に関わらず全部見る。
-const NAMES = { "tower-studio": "配信やぐら", "hut-workshop": "アプリ工房", "signpost": "旅の桟橋",
+const NAMES = { "tower-studio": "配信やぐら", "hut-workshop": "アプリ工房", "pier": "旅の桟橋",
   "tent": "これから", "signboard": "企画掲示板", "campfire": "たき火広場",
   "hut-kitchen": "キッチン小屋", "hall-museum": "伝説の丘", "mailbox": "いまのポスト",
   "tent-small": "仲間のテント" };
