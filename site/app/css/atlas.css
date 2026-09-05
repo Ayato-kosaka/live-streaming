@@ -295,6 +295,17 @@
 /* 押せないときは、厚みを抜いて紙に戻す。色を薄くするだけだと、
    押せるのに反応しないように見える */
 .atrace-step > button:disabled { box-shadow: none; opacity: 0.4; cursor: default; }
+/* 動きを減らす設定のときは、地図の寄せも「いまここ」の輪も止める。
+   たどりは中身が入れ替わるだけなので残す（動きではなく内容の切りかえ）。 */
+@media (prefers-reduced-motion: reduce) {
+  .amap-move,
+  .amap-move path,
+  .amap-move circle,
+  .apin,
+  .acity { transition: none; }
+  .apin.is-here::after { animation: none; opacity: 0.5; }
+}
+
 .atrace-hint {
   margin: var(--sp-3) 0 0;
   font-size: var(--fs-note); font-weight: 700; line-height: var(--lh-body);

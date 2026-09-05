@@ -97,49 +97,49 @@ export default function FriendsWall() {
   return (
     <>
       {/* 図鑑の1枚。絵が縦の半分以上を占めるのが本物の型（ac-reference 7章 4）。 */}
-      <div className="zk">
-        <div className="zk-page">
+      <div className="rzk">
+        <div className="rzk-page">
           {/* 題名の札は絵の上。テープで貼ったように少し傾ける。
               名前を出していない人は通し番号が題名になる。 */}
-          <p className="zk-tag" ref={head}>
+          <p className="rzk-tag" ref={head}>
             {name ?? `No.${at + 1}`}
           </p>
 
-          <div className="zk-art">
+          <div className="rzk-art">
             <Pedestal w={150} />
             {/* 22人ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く */}
             <img key={r.icon} src={drive(r.icon!, 512)} alt="" />
           </div>
 
-          <dl className="zk-fields">
+          <dl className="rzk-fields">
             {/* いっしょにいた日数は出さない。日数は BigQuery から正しく数えられるが、
                 その数字がこの絵の人のものだ、とは言えない。キャラクターの絵と
                 YouTube のチャンネルを結ぶ表がまだどこにも無いため（issue #113）。
                 手で書いた値が並んでいて、実在する人の順番を間違えて出していた。
                 表ができたら python/build_residents.py が焼くので、そのとき戻す。 */}
-            <div className="zk-wide">
+            <div className="rzk-wide">
               <dt>今日いるところ</dt>
               {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
                   分からないあいだは何も言わない（island-world.md 4.3 ④）。 */}
               <dd>
                 {here.size === 0 ? (
-                  <span className="zk-quiet">数えています</span>
+                  <span className="rzk-quiet">数えています</span>
                 ) : spot ? (
-                  <span className="zk-spot">
+                  <span className="rzk-spot">
                     <Icon name="pin" size={13} />
                     {spot}のあたり
                   </span>
                 ) : (
-                  <span className="zk-quiet">今日は出ていません</span>
+                  <span className="rzk-quiet">今日は出ていません</span>
                 )}
               </dd>
             </div>
             {v && (
               <>
-                <div className="zk-wide">
+                <div className="rzk-wide">
                   <dt>島で言うこと</dt>
                   <dd>
-                    <ul className="zk-lines">
+                    <ul className="rzk-lines">
                       {v.lines.slice(0, 2).map((l) => (
                         <li key={l}>{l}</li>
                       ))}
@@ -148,18 +148,18 @@ export default function FriendsWall() {
                 </div>
                 <div>
                   <dt>はじめての人に</dt>
-                  <dd className="zk-say">{v.greet.first}</dd>
+                  <dd className="rzk-say">{v.greet.first}</dd>
                 </div>
                 <div>
                   <dt>久しぶりの人に</dt>
-                  <dd className="zk-say">{v.greet.back}</dd>
+                  <dd className="rzk-say">{v.greet.back}</dd>
                 </div>
               </>
             )}
           </dl>
 
           {/* 送り。詳細ページの `.pager` と同じ役なので、同じ向きの印を使う */}
-          <nav className="zk-pager" aria-label="図鑑を送る">
+          <nav className="rzk-pager" aria-label="図鑑を送る">
             <button type="button" onClick={() => go(at - 1)}>
               <Icon name="left" size={14} />
               まえの人
@@ -176,7 +176,7 @@ export default function FriendsWall() {
 
         {/* 一覧のマス。押すと上の1枚が差し替わる。
             選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6）。 */}
-        <div className="zk-grid" role="tablist" aria-label="島の住人">
+        <div className="rzk-grid" role="tablist" aria-label="島の住人">
           {list.map((x, i) => {
             const on = i === at;
             return (
@@ -184,11 +184,11 @@ export default function FriendsWall() {
                 type="button"
                 role="tab"
                 aria-selected={on}
-                className={`zk-cell${on ? " is-on" : ""}${here.get(x.icon!) ? " is-here" : ""}`}
+                className={`rzk-cell${on ? " is-on" : ""}${here.get(x.icon!) ? " is-here" : ""}`}
                 key={x.icon}
                 onClick={() => go(i)}
               >
-                <span className="zk-cell-no">{i + 1}</span>
+                <span className="rzk-cell-no">{i + 1}</span>
                 <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" />
               </button>
             );
