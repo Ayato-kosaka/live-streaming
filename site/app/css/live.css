@@ -186,6 +186,9 @@
    4. これからの道のり（飛び石）
    予定を縦の点線でつなぐより、島を歩いていく絵にする。
    石を1つ踏むごとに1つ先の予定、という見え方。
+
+   **段はそのまま開いて中身になる。** 一覧と札を別々に置くと、
+   押した先に同じ題名がもう一度出てくる（`docs/island-ux.md` 5.8）。
    ========================================================= */
 .nx-road { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
 .nx-road > li { position: relative; display: grid; grid-template-columns: 60px 1fr; gap: var(--sp-3); padding-bottom: var(--sp-4); }
@@ -213,36 +216,19 @@
   color: var(--ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-.nx-road-b { min-width: 0; padding-top: var(--sp-1); }
-.nx-road-when { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-1); }
-/* 一覧の日数の札は右端に寄る作りになっている。道のりでは日付のとなりに置く */
-.nx-road-when .count { margin-left: 0; }
-.nx-road-when time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-/* 子セレクタで止める。ここを子孫セレクタにすると、日数の札の中の数字まで
-   ブロックになって「あと / 1 / 日」と3行に割れる（一度やった） */
-.nx-road-t { display: block; }
-.nx-road-t > b { display: block; font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
-.nx-road-t > i { display: block; font-size: var(--fs-note); font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.7; }
-.nx-road-t:hover > b { color: var(--frame-deep); }
-/* 指で押せる最小は 48px、厚みはその段で6px（`docs/island-design.md` 3章）。
-   40px・厚み3px だと、押しどころとしても合図としても足りていなかった。 */
-.nx-road-go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame);
-  background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
-}
-.nx-road-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+/* 彫ってあるのを通し番号ではなく日付にした。「2番目」は何も言わないが、
+   日付なら石を目で追うだけで、次がいつ来るのかが分かる。
+   4文字（9/11）が石の面に収まる大きさまで落とす。 */
+.nx-stone b.is-date { font-size: 15px; letter-spacing: -0.02em; }
+.nx-road-b { min-width: 0; }
+/* 段の中身は紙の上の折りたたみ。枠を1本の罫線に落として、
+   石の右に「行が1本ある」だけに見せる（紙の上に枠を積まない）。 */
+.nx-road-b > .fold { border-radius: var(--r-0); background: none; }
+.nx-road-b > .fold > summary { min-height: 56px; padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2); }
+/* 日数の札は、一覧では右端に寄る作りになっている。ここでは題名の右、
+   折りたたみの印の手前に置く。 */
+.nx-road-b .fold-n .count { margin-left: 0; }
+.nx-road-b .fold-body { padding-top: var(--sp-2); }
 
 /* =========================================================
    5. 付箋

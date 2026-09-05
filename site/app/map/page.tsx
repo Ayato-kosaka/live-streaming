@@ -108,7 +108,10 @@ export default function MapPage() {
         <p className="muted">
           同じ国に何度も戻っているので、番号は「初めて入った順」です。章は上の地図と同じ区切りです。
         </p>
-        <div className="folds">
+        {/* `.folds` は紙を1枚敷く部品なので、紙のパネルの中では使わない。
+            紙の上に紙が乗って貼り紙に見える（app/css/ui.css の注）。
+            ここは国のページの「この国であったこと」と同じ `.hlist`。 */}
+        <div className="hlist">
           {chapters.map((ch) => {
             const list = ordered.filter((c) => CHAPTER_OF[c.region] === ch.id);
             if (!list.length) return null;
