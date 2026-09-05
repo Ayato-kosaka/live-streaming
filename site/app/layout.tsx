@@ -14,7 +14,10 @@ import { NOW_FALLBACK } from "@/content/site";
  */
 const maru = Zen_Maru_Gothic({
   subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
+  // 500 はサイトのどこでも使っていない（実測: 900 が238か所、700 が59、
+  // 800 が49、600 が8、500 は0）。日本語は文字の範囲ごとにファイルが
+  // 分かれていて、太さ1つで70本近く落ちてくるので、使わない太さを持たない。
+  weight: ["400", "700", "900"],
   display: "swap",
   variable: "--font-maru",
   // 日本語は Google 側が文字の範囲ごとにファイルを分けているので、

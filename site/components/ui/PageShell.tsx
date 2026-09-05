@@ -14,7 +14,12 @@ export function IslandHeader({ current }: { current?: string }) {
         </Link>
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
-            <Link key={s.id} href={s.href} className={`ih-link${current === s.id ? " is-on" : ""}`}>
+            <Link
+              key={s.id}
+              href={s.href}
+              prefetch={false}
+              className={`ih-link${current === s.id ? " is-on" : ""}`}
+            >
               <img src={`/sprites/${s.icon}.webp`} alt="" />
               {s.label}
             </Link>

@@ -841,10 +841,17 @@
    罫で囲うだけにする（docs/ac-reference.md 7章）。
    --------------------------------------------------------- */
 .panel.paper .amap {
+  /* 主役の絵は大きく、まわりを大きく空ける（docs/ac-reference.md 7章 4）。
+     紙の左右いっぱいまで広げて、上下だけ罫で切る。 */
+  margin-inline: -15px;
+  margin-bottom: 14px;
   background: var(--paper);
-  border: 2px solid var(--pg-rule);
-  border-radius: var(--r-1);
+  border-block: 1px solid var(--pg-rule);
+  border-radius: 0;
   box-shadow: none;
-  padding: 6px;
+  padding: 8px 15px;
 }
 .panel.paper .amap-stage { border-radius: 6px; }
+@media (min-width: 720px) {
+  .panel.paper .amap { margin-inline: -26px; padding: 12px 26px; }
+}
