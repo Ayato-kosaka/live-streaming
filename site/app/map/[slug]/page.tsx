@@ -11,6 +11,9 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
 import Days from "@/components/atlas/Days";
+// キッチン小屋の印はサイトで1つ。配信やぐらの札と同じ絵をそのまま使う
+// （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
+import { ArtStamp } from "@/components/streams/Art";
 
 export function generateStaticParams() {
   return COUNTRIES.map((c) => ({ slug: c.slug }));
@@ -190,9 +193,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           </div>
           {cooked.length > DISHES && (
             <Link className="tile" href="/kitchen" style={{ marginTop: 12 }}>
-              <span className="tile-mark">
-                <Icon name="stampbook" size={24} />
-              </span>
+              <ArtStamp size={44} className="tile-icon" />
               <span className="tile-text">
                 <b>のこりの{cooked.length - DISHES}品も見る</b>
                 <i>キッチン小屋のスタンプ帳に、{c.name}の{cooked.length}品ぜんぶ</i>
