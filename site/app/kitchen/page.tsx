@@ -9,7 +9,7 @@ import { KINDS, RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
 import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
-import { ArtBasket, ArtMeeting, ArtPot } from "@/components/streams/Art";
+import { ArtBasket, ArtMeeting, ArtPot, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
   title: "クッキング・スタンプ帳",
@@ -56,7 +56,9 @@ export default function KitchenPage() {
 
       <Sheet>
         <Zone>
-          <H note={`${dates[0].replace(/-/g, "/")} からの記録`}>ここまでに押したスタンプ</H>
+          <H art={<ArtStamp size={32} />} note={`${dates[0].replace(/-/g, "/")} からの記録`}>
+            ここまでに押したスタンプ
+          </H>
           <Rec
             items={[
               { n: RECIPES.length, unit: "品", label: "押したスタンプ", note: "作って、食べたところまで" },

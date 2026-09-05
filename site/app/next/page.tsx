@@ -5,6 +5,7 @@ import NextPlans from "@/components/live/NextPlans";
 import { Panel } from "@/components/ui/Bits";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import { Stone } from "@/components/live/art";
 
 export const metadata: Metadata = {
   title: "これから",
@@ -24,10 +25,30 @@ export default function NextPage() {
       <Panel>
         <h2>自分も企画を出したい</h2>
         <p>
-          「こういうことやってほしい」は掲示板のほうへ。ログインも名前も要りません。
-          票の集まったものから、週のはじめの会議に上がります。
+          このページに並んでいるものも、ほとんどが誰かの思いつきから始まっています。
+          ここまで来る道は3歩ぶんです。
         </p>
-        <Link className="tile" href="/board">
+        {/* どこへ届くのかが見えないと、書いても意味がない気がして手が止まる。
+            掲示板と同じ3歩を、行き先の側からも見せておく。 */}
+        <ol className="bd-flow">
+          {[
+            { t: "掲示板に貼る", n: "ログインも名前も要りません" },
+            { t: "週のはじめの会議", n: "票の集まったものから見ます" },
+            { t: "このページに出る", n: "日にちが決まったら、いちばん上に" },
+          ].map((f, i) => (
+            <li key={f.t}>
+              <span className="nx-stone">
+                <Stone tone={i === 2 ? "now" : "stone"} />
+                <b>{i + 1}</b>
+              </span>
+              <span>
+                <b>{f.t}</b>
+                <i>{f.n}</i>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <Link className="tile" href="/board" style={{ marginTop: 16 }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>

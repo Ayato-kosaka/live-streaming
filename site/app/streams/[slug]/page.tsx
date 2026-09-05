@@ -22,6 +22,8 @@ import {
   ArtStamp,
   ArtSun,
   ArtTrophy,
+  ArtBook,
+  ArtSignpost,
 } from "@/components/streams/Art";
 
 export function generateStaticParams() {
@@ -129,7 +131,9 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         }}
       >
         <Zone>
-          <H note="だいたい、この順で進みます">この日は、こういう順で進む</H>
+          <H art={<ArtSignpost size={32} />} note="だいたい、この順で進みます">
+            この日は、こういう順で進む
+          </H>
           <ol className="rt">
             {t.beat.map((b, k) => {
               const A = art[k];
@@ -157,7 +161,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         )}
 
         <Zone>
-          <H>この型は、どういうものか</H>
+          <H art={<ArtBook size={32} />}>この型は、どういうものか</H>
           <p className="zk-lead">{t.lead}</p>
           <div className="folds" style={{ marginTop: 14 }}>
             <Fold title="もう少し細かく" lead={t.body[0]} note={`${t.body.length}つ`}>
@@ -169,7 +173,9 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Zone>
 
         <Zone>
-          <H note={`${t.samples.length}本`}>まずは、この回から</H>
+          <H art={<ArtCam size={32} />} note={`${t.samples.length}本`}>
+            まずは、この回から
+          </H>
           <p className="zk-lead">どれも1本で完結します。押すと YouTube が開きます。</p>
           <div className="vids" style={{ marginTop: 14 }}>
             {t.samples.map((v, k) => (

@@ -136,25 +136,23 @@ export const stream: Record<string, Draw> = {
    */
   live: (c) => (
     <>
-      <Sh c={c} cy={57} rx={15} ry={3.2} />
-      {/* 光。物の後ろに置く */}
-      <g fill="none" stroke={c.rdl} strokeLinecap="round" opacity={c.flat ? 1 : 0.75}>
-        <path d="M13 13a24 24 0 0 0-4 14" strokeWidth="5.4" />
-        <path d="M51 13a24 24 0 0 1 4 14" strokeWidth="5.4" />
-        <path d="M23 8a14 14 0 0 0-4 6" strokeWidth="5" />
-        <path d="M41 8a14 14 0 0 1 4 6" strokeWidth="5" />
+      <Sh c={c} cy={57} rx={16} ry={3.4} />
+      {/* 光。玉から放射する短い線。玉より外に出しすぎると羽根に見える */}
+      <g stroke={c.rdl} strokeWidth="5" strokeLinecap="round" opacity={c.flat ? 1 : 0.8}>
+        <path d="M32 3v6" />
+        <path d="M9.4 12.4 13.6 16.6" />
+        <path d="M54.6 12.4 50.4 16.6" />
+        <path d="M2 32h6" />
+        <path d="M56 32h6" />
       </g>
-      {/* 笠 */}
-      <path d="M20 24h24a4 4 0 0 1 3.9 4.9l-1.4 6A4 4 0 0 1 42.6 38H21.4a4 4 0 0 1-3.9-3.1l-1.4-6A4 4 0 0 1 20 24z" fill={c.gyd} />
-      <path d="M32 24h12a4 4 0 0 1 3.9 4.9l-1.4 6A4 4 0 0 1 42.6 38H32z" fill={c.gy} opacity="0.5" />
-      {/* 球 */}
-      <circle cx="32" cy="41" r="11" fill={c.rdd} />
-      <circle cx="32" cy="39.8" r="11" fill={c.rd} />
-      <circle cx="30" cy="38" r="4.6" fill={c.rdl} />
-      {/* 台 */}
-      <rect x="21" y="51" width="22" height="6" rx="3" fill={c.gyd} />
-      <rect x="29" y="47" width="6" height="6" rx="2" fill={c.gy} />
-      <Gl c={c} cx={27} cy={35} rx={3} ry={1.8} r={-30} o={0.7} />
+      {/* 玉。ここが主役なので大きく取る */}
+      <circle cx="32" cy="32" r="17" fill={c.rdd} />
+      <circle cx="32" cy="30.8" r="17" fill={c.rd} />
+      <path d="M20 19a17 17 0 0 1 24 0 17 17 0 0 0-24 0z" fill={c.rdl} />
+      <ellipse cx="25" cy="24" rx="4.6" ry="3" fill={c.w} opacity={c.flat ? 1 : 0.55} transform="rotate(-32 25 24)" />
+      {/* 台。玉が浮かないように受ける */}
+      <path d="M17 44h30l-2 8H19z" fill={c.gyd} />
+      <rect x="14" y="51" width="36" height="6" rx="3" fill={c.gy} />
     </>
   ),
 

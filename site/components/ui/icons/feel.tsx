@@ -267,14 +267,16 @@ export const feel: Record<string, Draw> = {
   /** 音。BGM や歌の回。 */
   music: (c) => (
     <>
-      <Sh c={c} cy={56} rx={22} ry={3.4} />
-      <path d="M24 46V13l30-7v33z" fill={c.pu} />
-      <path d="M40 9.3 54 6v33l-14 3z" fill={c.pud} />
-      <ellipse cx="16" cy="46" rx="10" ry="8" fill={c.pud} />
-      <ellipse cx="46" cy="39" rx="9" ry="7.4" fill={c.pu} />
-      <path d="M24 13l30-7v6l-30 7z" fill={c.pud} />
-      <Gl c={c} cx={30} cy={20} rx={1.8} ry={7} r={0} o={0.45} />
-      <Gl c={c} cx={12} cy={43} rx={3.4} ry={2} r={-24} o={0.5} />
+      <Sh c={c} cy={57} rx={22} ry={3.4} />
+      {/* 旗を面で塗ると帆に見える。連桁（横棒）でつないだ八分音符2つにする */}
+      <rect x="20" y="16" width="5.4" height="32" rx="2.4" fill={c.pu} />
+      <rect x="46" y="12" width="5.4" height="28" rx="2.4" fill={c.pud} />
+      <path d="M20 16 51.4 10v7.4L20 23.4z" fill={c.pu} />
+      <path d="M36 13 51.4 10v7.4L36 20.4z" fill={c.pud} />
+      <ellipse cx="14" cy="47" rx="9.4" ry="7.4" fill={c.pu} transform="rotate(-16 14 47)" />
+      <ellipse cx="40" cy="39" rx="9.4" ry="7.4" fill={c.pud} transform="rotate(-16 40 39)" />
+      <Gl c={c} cx={10} cy={44} rx={3.4} ry={2} r={-24} o={0.5} />
+      <Gl c={c} cx={22} cy={24} rx={1.4} ry={5} r={0} o={0.45} />
     </>
   ),
 

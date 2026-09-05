@@ -280,8 +280,6 @@
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
 .bd-write { position: relative; }
-/* 書く前の見本。付箋と同じ作り方 */
-.bd-mine { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
 .bd-count {
   display: inline-flex;
   align-items: baseline;
@@ -369,18 +367,6 @@
 .pap p { margin: 0 0 9px; font-size: 13.5px; font-weight: 600; line-height: 1.95; color: var(--pap-ink); }
 .pap p:last-child { margin-bottom: 0; }
 .pap .pap-note { font-size: 12.5px; color: var(--pap-ink-2); }
-/* 紙の上のチップ。ベタ塗りで、影は落とさない */
-.pap-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.pap-chip {
-  padding: 3px 10px;
-  border-radius: 5px;
-  background: #cfc202;
-  font-size: 11.5px;
-  font-weight: 900;
-  color: #4b4527;
-  line-height: 1.65;
-}
-.pap-chip.is-soft { background: #ded4a2; color: var(--pap-ink-2); }
 /* 紙の上の押せるもの。厚みは付けず、赤い細枠だけで「選べる」を出す */
 .pap-go {
   display: flex;

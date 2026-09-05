@@ -55,38 +55,38 @@ export const place: Record<string, Draw> = {
    */
   friends: (c) => (
     <>
-      <Sh c={c} cy={55} rx={24} ry={4.2} />
-      {/* 左。とがった耳 */}
-      <path d="M6 30 8.6 20l7.4 5zM24 30l-2.6-10-7.4 5z" fill={c.tld} />
-      <circle cx="15" cy="39" r="12" fill={c.tl} />
-      <path d="M15 27a12 12 0 0 1 0 24z" fill={c.tld} opacity="0.45" />
-      <Eye c={c} x={11} y={38} s={0.9} />
-      <Eye c={c} x={19} y={38} s={0.9} />
-      <Blush c={c} x={7.6} y={42.5} s={0.85} />
+      <Sh c={c} cy={56} rx={25} ry={4} />
+      {/* 左。とがった耳。手前の顔に隠れないよう外へ寄せて、少し下げる */}
+      <path d="M1.5 33 4 23.5l7 4.6zM19 33l-2.5-9.5-7 4.6z" fill={c.tld} />
+      <circle cx="11" cy="41" r="11" fill={c.tl} />
+      <path d="M11 30a11 11 0 0 1 0 22z" fill={c.tld} opacity="0.45" />
+      <Eye c={c} x={7.4} y={40} s={0.85} />
+      <Eye c={c} x={14.6} y={40} s={0.85} />
+      <Blush c={c} x={4.2} y={44.4} s={0.8} />
 
       {/* 右。くちばし */}
-      <circle cx="49" cy="39" r="12" fill={c.pk} />
-      <path d="M49 27a12 12 0 0 1 0 24z" fill={c.pkd} opacity="0.5" />
-      <path d="M49 39.4 60 43l-11 3.6z" fill={c.or} />
-      <Eye c={c} x={45} y={37} s={0.9} />
-      <Eye c={c} x={52.6} y={37} s={0.9} />
-      <path d="M43 22c4-4 9-4 12 0-4-1.6-8-1.6-12 0z" fill={c.pkd} />
+      <circle cx="53" cy="41" r="11" fill={c.pk} />
+      <path d="M53 30a11 11 0 0 1 0 22z" fill={c.pkd} opacity="0.5" />
+      <path d="M53 41.4 63 44.6l-10 3.2z" fill={c.or} />
+      <Eye c={c} x={49.4} y={39} s={0.85} />
+      <Eye c={c} x={56.6} y={39} s={0.85} />
+      <path d="M47.6 25.4c3.6-3.6 8-3.6 11 0-3.6-1.4-7.4-1.4-11 0z" fill={c.pkd} />
 
-      {/* 手前。いちばん大きく、丸い耳 */}
-      <circle cx="20.5" cy="17" r="6.4" fill={c.crd} />
-      <circle cx="43.5" cy="17" r="6.4" fill={c.crd} />
-      <circle cx="20.5" cy="17" r="3.2" fill={c.pk} />
-      <circle cx="43.5" cy="17" r="3.2" fill={c.pk} />
-      <circle cx="32" cy="30" r="15.5" fill={c.cr} />
-      <path d="M32 14.5a15.5 15.5 0 0 1 0 31z" fill={c.crd} opacity="0.4" />
-      <ellipse cx="32" cy="35.4" rx="8.6" ry="6" fill={c.w} />
-      <ellipse cx="32" cy="32" rx="2.8" ry="2.1" fill={c.ink} />
-      <path d="M28.6 37.6c1.8 2.2 5 2.2 6.8 0" fill="none" stroke={c.ink} strokeWidth="1.8" strokeLinecap="round" />
-      <Eye c={c} x={26} y={26.6} />
-      <Eye c={c} x={38} y={26.6} />
-      <Blush c={c} x={21.4} y={32.4} />
-      <Blush c={c} x={42.6} y={32.4} />
-      <Gl c={c} cx={25} cy={20.5} rx={5} ry={3} o={0.4} />
+      {/* 手前。丸い耳。ここだけ表情を作りこむ */}
+      <circle cx="22" cy="21" r="6" fill={c.crd} />
+      <circle cx="42" cy="21" r="6" fill={c.crd} />
+      <circle cx="22" cy="21" r="3" fill={c.pk} />
+      <circle cx="42" cy="21" r="3" fill={c.pk} />
+      <circle cx="32" cy="33" r="14" fill={c.cr} />
+      <path d="M32 19a14 14 0 0 1 0 28z" fill={c.crd} opacity="0.4" />
+      <ellipse cx="32" cy="38" rx="8" ry="5.6" fill={c.w} />
+      <ellipse cx="32" cy="34.8" rx="2.6" ry="2" fill={c.ink} />
+      <path d="M28.8 40.2c1.7 2 4.7 2 6.4 0" fill="none" stroke={c.ink} strokeWidth="1.8" strokeLinecap="round" />
+      <Eye c={c} x={26.4} y={30} />
+      <Eye c={c} x={37.6} y={30} />
+      <Blush c={c} x={22} y={35.4} />
+      <Blush c={c} x={42} y={35.4} />
+      <Gl c={c} cx={26} cy={24} rx={4.6} ry={2.8} o={0.4} />
     </>
   ),
 
@@ -98,27 +98,27 @@ export const place: Record<string, Draw> = {
    */
   tower: (c) => (
     <>
-      <Sh c={c} cy={55} rx={20} ry={4.2} />
-      {/* 電波。天辺から上へ */}
+      <Sh c={c} cy={56} rx={20} ry={4} />
+      {/* 電波。屋根に重ねると帽子のつばに見えたので、棟の上に間をあけて出す */}
+      <rect x="30.6" y="4" width="2.8" height="9" rx="1.4" fill={c.gyd} />
       <g fill="none" stroke={c.sk} strokeLinecap="round" opacity={c.flat ? 1 : 0.95}>
-        <path d="M22 15a14 14 0 0 1 20 0" strokeWidth="4.6" />
-        <path d="M15.5 8.5a23 23 0 0 1 33 0" strokeWidth="4.2" opacity="0.6" />
+        <path d="M23 9.5a13 13 0 0 1 18 0" strokeWidth="4.2" />
+        <path d="M17 3.5a21 21 0 0 1 30 0" strokeWidth="4" opacity="0.55" />
       </g>
       {/* 脚 */}
-      <path d="M12 55 22 26h6L18 55z" fill={c.wod} />
-      <path d="M52 55 42 26h-6l10 29z" fill={c.wo} />
+      <path d="M12 56 22 30h6L18 56z" fill={c.wod} />
+      <path d="M52 56 42 30h-6l10 26z" fill={c.wo} />
       <g fill={c.wol}>
-        <rect x="21" y="32" width="22" height="4.4" rx="2.2" />
-        <rect x="19" y="41" width="26" height="4.4" rx="2.2" />
-        <rect x="17" y="50" width="30" height="4.4" rx="2.2" />
+        <rect x="21" y="35" width="22" height="4.4" rx="2.2" />
+        <rect x="19" y="44" width="26" height="4.4" rx="2.2" />
+        <rect x="17" y="52" width="30" height="4.4" rx="2.2" />
       </g>
       {/* 見張り台と屋根 */}
-      <rect x="13" y="22" width="38" height="6.4" rx="3.2" fill={c.wo} />
-      <rect x="17" y="17.6" width="30" height="5.4" rx="2.7" fill={c.wol} />
-      <path d="M32 5 52 19a2 2 0 0 1-1.4 3.4H13.4A2 2 0 0 1 12 19z" fill={c.rd} />
-      <path d="M32 5 52 19a2 2 0 0 1-1.4 3.4H32z" fill={c.rdd} />
-      <rect x="30" y="18" width="4" height="4" rx="2" fill={c.gd} />
-      <Gl c={c} cx={22} cy={11} rx={4} ry={1.8} r={-34} o={0.4} />
+      <rect x="13" y="26" width="38" height="6.4" rx="3.2" fill={c.wo} />
+      <rect x="17" y="21.6" width="30" height="5.4" rx="2.7" fill={c.wol} />
+      <path d="M32 12 51 23a2 2 0 0 1-1 3.7H14A2 2 0 0 1 13 23z" fill={c.rd} />
+      <path d="M32 12 51 23a2 2 0 0 1-1 3.7H32z" fill={c.rdd} />
+      <Gl c={c} cx={22} cy={17} rx={4} ry={1.6} r={-30} o={0.4} />
     </>
   ),
 

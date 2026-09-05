@@ -64,17 +64,23 @@ export const scene: Record<string, Draw> = {
     <>
       <rect x="2" y="38" width="60" height="20" rx="8" fill={c.sk} />
       <path d="M2 46h60v4a8 8 0 0 1-8 8H10a8 8 0 0 1-8-8z" fill={c.bl} />
-      <path d="M4 20h56v9H4z" fill={c.crd} />
-      <path d="M4 15h56a3 3 0 0 1 3 3v4H1v-4a3 3 0 0 1 3-3z" fill={c.cr} />
-      <path d="M8 29h14v18H8zM42 29h14v18H42z" fill={c.crd} />
-      <path d="M22 47c0-9 4.4-16 10-16s10 7 10 16z" fill={c.crd} />
-      <path d="M8 29h14c0 6-3 11-7 14z" fill={c.crd} opacity="0.6" />
-      <g fill={c.wo}>
-        <rect x="6" y="8" width="4" height="9" rx="2" />
-        <rect x="30" y="6" width="4" height="11" rx="2" />
-        <rect x="54" y="8" width="4" height="9" rx="2" />
+      {/* 石。クリームで塗ると下地に溶けて「水の上の机」になったので、灰色の石にする */}
+      <path d="M8 29h14v18H8zM42 29h14v18H42z" fill={c.gyd} />
+      <path d="M22 47c0-9.4 4.4-16.6 10-16.6s10 7.2 10 16.6z" fill={c.gyd} />
+      <path d="M4 20h56v9.6H4z" fill={c.gyd} />
+      <path d="M4 15h56a3 3 0 0 1 3 3v3H1v-3a3 3 0 0 1 3-3z" fill={c.gy} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.45}>
+        <rect x="9" y="30.4" width="12" height="2.4" rx="1.2" />
+        <rect x="43" y="30.4" width="12" height="2.4" rx="1.2" />
       </g>
-      <Gl c={c} cx={14} cy={18} rx={7} ry={1.6} r={-3} o={0.5} />
+      {/* 欄干 */}
+      <g fill={c.wo}>
+        <rect x="6" y="7" width="4.4" height="10" rx="2.2" />
+        <rect x="29.8" y="5" width="4.4" height="12" rx="2.2" />
+        <rect x="53.6" y="7" width="4.4" height="10" rx="2.2" />
+      </g>
+      <rect x="4" y="11" width="56" height="3.4" rx="1.7" fill={c.wod} />
+      <Gl c={c} cx={14} cy={17.4} rx={7} ry={1.2} r={-3} o={0.5} />
     </>
   ),
 
@@ -266,10 +272,12 @@ export const scene: Record<string, Draw> = {
   windmill: (c) => (
     <>
       <Sh c={c} cy={56} rx={20} ry={4} />
-      <path d="M22 56 27 22h10l5 34z" fill={c.cr} />
-      <path d="M32 22h5l5 34H32z" fill={c.crd} />
-      <path d="M25 22h14l-7-9z" fill={c.rd} />
-      <path d="M32 13l7 9h-7z" fill={c.rdd} />
+      {/* 塔。クリームだと下地に溶けたので煉瓦色にして、腰に白い帯を1本まわす */}
+      <path d="M22 56 27 22h10l5 34z" fill={c.rd} />
+      <path d="M32 22h5l5 34H32z" fill={c.rdd} />
+      <path d="M23.7 46h16.6l.6 4H23.1z" fill={c.cr} />
+      <path d="M30 13h4l4 9H26z" fill={c.crd} />
+      <path d="M32 13h2l4 9h-6z" fill={c.br} opacity="0.3" />
       <g fill={c.wo}>
         <rect x="30" y="4" width="4" height="20" rx="1.6" transform="rotate(30 32 22)" />
         <rect x="30" y="4" width="4" height="20" rx="1.6" transform="rotate(120 32 22)" />

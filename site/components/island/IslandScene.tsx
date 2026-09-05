@@ -257,6 +257,31 @@ const beachGrains = (() => {
   return buckets;
 })();
 
+/**
+ * 沖に頭を出している岩。
+ *
+ * 水面に何も無いと、海が「島のまわりの塗り」に見えてしまう。
+ * 岩が数個あるだけで、そこに水面があることが分かる。
+ * スプライトだと画像が増えるので、影・岩・当たった波の3本のパスで描く。
+ */
+const seaRocks = (() => {
+  const r = rng(7788);
+  let under = "";
+  let body = "";
+  let top = "";
+  let wash = "";
+  for (const t of [0.08, 0.205, 0.375, 0.5, 0.615, 0.79, 0.865]) {
+    const [x, y] = pointAt(CX, CY, sandR, SQ, t + (r() - 0.5) * 0.02, -(52 + r() * 46));
+    const w = 9 + r() * 13;
+    const h = w * (0.62 + r() * 0.2);
+    under += oval(x + 2, y + 3, w * 1.25, h * 0.8);
+    body += oval(x, y, w, h);
+    top += oval(x - w * 0.22, y - h * 0.3, w * 0.5, h * 0.4);
+    wash += oval(x, y + h * 0.35, w * 1.5, h * 0.62);
+  }
+  return { under, body, top, wash };
+})();
+
 /** ちぎれた泡の粒。円をひとつずつ置かず、円弧コマンドで1本のパスにまとめる。 */
 const foamDots = (() => {
   const r = rng(8803);
@@ -347,6 +372,9 @@ function grassTile(seed: number, count: number, size: number) {
   ];
   let hi = "";
   let lo = "";
+  /** 黄みの強い株。公式の広場の草地には、緑の三角に混じって黄色い三角が必ず入っている。
+      これが無いと、地面が「緑一色の絨毯」になって暖かみが出ない。 */
+  let dry = "";
   /** 落ち葉と小石。緑ばかりだと草の絨毯にしか見えない。 */
   let dust = "";
   for (let i = 0; i < count; i++) {
@@ -355,15 +383,19 @@ function grassTile(seed: number, count: number, size: number) {
     const y = +(8 + r() * (size - 12)).toFixed(1);
     const k = r();
     const d = SHAPES[k < 0.34 ? 0 : k < 0.62 ? 1 : k < 0.84 ? 2 : 3](x, y, 0.8 + r() * 0.9);
-    if (r() < 0.55) hi += d;
-    else lo += d;
+    const c = r();
+    if (c < 0.44) hi += d;
+    else if (c < 0.78) lo += d;
+    else dry += d;
     if (r() < 0.22) {
       const s = 0.9 + r() * 1.1;
       dust += oval(x + 5 + r() * 9, y + 3 + r() * 7, 2.1 * s, 1.2 * s);
     }
   }
-  return { hi, lo, dust, size };
+  return { hi, lo, dry, dust, size };
 }
+/** 枯れかけの草の色。テーマが変わっても草と金色の中間に付いていく。 */
+const GRASS_DRY = "color-mix(in srgb, var(--grass-hi) 52%, var(--gold) 48%)";
 
 /** 2枚のタイルを、大きさと角度を変えて重ねる。 */
 const GRASS_TILES = [grassTile(1207, 46, 152), grassTile(3311, 30, 97)];
@@ -682,6 +714,9 @@ function groundSpots(count: number, seed: number, gap: number, avoid: { x: numbe
     if (!insideRadii(ISLAND.cx, ISLAND.cy, grassR, x, y, ISLAND.squash, 14)) continue;
     if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
     if (Math.hypot(POND.x - x, (POND.y - y) * 1.8) < 78) continue;
+    // 高台の足元。ここに置くと、崖の下に花が咲いているように見える
+    if (insideRadii(PLATEAU.cx, PLATEAU.cy, PLATEAU.radii, x, y, PLATEAU.squash, -26)) continue;
+    if (insideRadii(PLATEAU.cx, PLATEAU.cy - PLATEAU.drop, PLATEAU.radii, x, y, PLATEAU.squash, -26)) continue;
     if (TRAIL_PTS.some((p) => Math.hypot(p[0] - x, p[1] - y) < 26)) continue;
     if (pts.some((p) => Math.hypot(p[0] - x, p[1] - y) < gap)) continue;
     if (avoid.some((p) => Math.hypot(p.x - x, p.y - y) < 22)) continue;
@@ -891,6 +926,7 @@ export default function IslandScene() {
           >
             <path d={t.hi} fill="var(--grass-hi)" opacity={i === 0 ? 0.52 : 0.4} />
             <path d={t.lo} fill="var(--grass-lo)" opacity={i === 0 ? 0.34 : 0.26} />
+            <path d={t.dry} fill={GRASS_DRY} opacity={i === 0 ? 0.46 : 0.34} />
             {/* 落ち葉と小石。緑だけだと絨毯に見えるので、暖色を少しだけ混ぜる。 */}
             <path d={t.dust} fill="var(--sand-edge)" opacity={i === 0 ? 0.3 : 0.22} />
           </pattern>
@@ -937,6 +973,13 @@ export default function IslandScene() {
       <path d={fade2Path} fill={SEA_FADE2} />
       <path d={shallowPath} fill={SEA_SHALLOW} />
       <path d={shelfPath} fill={SEA_SHELF} />
+      {/* 沖に頭を出している岩。水面に何か無いと、海が塗りに見える。 */}
+      <g aria-hidden>
+        <path d={seaRocks.wash} fill="var(--foam)" opacity="0.5" />
+        <path d={seaRocks.under} fill="#0d4a72" opacity="0.22" />
+        <path d={seaRocks.body} fill="#8d9aa0" />
+        <path d={seaRocks.top} fill="#c3ccd0" />
+      </g>
 
       {/* ------- 島 ------- */}
       {/* 影。feGaussianBlur は面積に比例して重くなるので、

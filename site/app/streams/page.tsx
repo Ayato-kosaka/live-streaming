@@ -60,9 +60,9 @@ export default function StreamsPage() {
       <div className="tys">
         {STREAM_TYPES.map((t, i) => {
           const num = NUM[t.slug];
+          // いちばん本数の多いクッキングだけ横幅いっぱい。
+          // 5枚が均等に並ぶと、どれから見ればいいのか分からない
           return (
-            {/* いちばん本数の多いクッキングだけ横幅いっぱい。
-                5枚が均等に並ぶと、どれから見ればいいのか分からない */}
             <article
               className={`ty${t.slug === "cooking" ? " is-wide" : ""}`}
               key={t.slug}

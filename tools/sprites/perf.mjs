@@ -82,8 +82,11 @@ for (const path of pages) {
     requestAnimationFrame(tick);
   });
 
+  // 書き出したものを python の http.server で配ると、cleanUrls が効かない。
+  // 本番の Firebase Hosting は /nordic で nordic.html を返すので、ここでも同じに寄せる。
+  const url = BASE + (path === "/" ? "/index.html" : path.replace(/\/$/, "") + ".html");
   const t0 = Date.now();
-  await p.goto(BASE + path, { waitUntil: "load", timeout: 60000 });
+  await p.goto(url, { waitUntil: "load", timeout: 60000 });
   // 到着演出は3.4秒。終わりきるまで待って、その間のフレームを演出ぶんとして切り出す
   await p.waitForTimeout(3600);
   const open = await p.evaluate(() => window.__f.splice(0));

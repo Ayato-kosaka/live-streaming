@@ -5,6 +5,7 @@ import Link from "next/link";
 import Flag from "@/components/ui/Flag";
 import { KINDS, kindLabel, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
 import { H } from "./Sheet";
+import { ArtShelf } from "./Art";
 
 /**
  * 料理のカタログ。図鑑の見開きに並べる。
@@ -68,7 +69,9 @@ export default function KitchenCatalog({
   return (
     <>
       <div className="zk-zone is-tight">
-        <H note="押すと、その1品ができるまでの3日ぶんが出てきます">どれから見る</H>
+        <H art={<ArtShelf size={32} />} note="押すと、その1品ができるまでの3日ぶんが出てきます">
+          どれから見る
+        </H>
         <div className="kt-tools">
           <div className="zk-picks">
             <b className="zk-picks-t">どこで</b>

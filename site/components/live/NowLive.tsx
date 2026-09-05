@@ -127,14 +127,15 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               </a>
             ) : (
               // 配信の時間でなくても置き場所と形は変えない。時間が来たら中身だけ入れ替わる。
-              <div className="tile" style={{ cursor: "default" }}>
+              // 押せない板を押せる板に混ぜない決まりなので、待ち時間のあいだも行き先は持たせる。
+              <a className="tile" href={youtube.href} target="_blank" rel="noopener noreferrer">
                 <img className="tile-icon" src="/sprites/tower-studio.webp" alt="" />
                 <span className="tile-text">
                   <b>今夜の配信まで あと{span(clock.mins)}</b>
-                  <i>日本時間22時から。いま日本は {clock.jst}</i>
+                  <i>日本時間22時から。いま日本は {clock.jst}。前回の配信はここから</i>
                 </span>
-                <Icon name="clock" size={15} className="tile-go" />
-              </div>
+                <Icon name="external" size={15} className="tile-go" />
+              </a>
             )}
             {next && (
               <Link className="tile" href="/next">

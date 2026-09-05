@@ -38,10 +38,22 @@ export function Zone({
 /**
  * 区画の見出し。蛍光ペンの帯を字の後ろに敷く。
  * 帯を字の形に沿わせたいので、色を持つのは中の `span` のほう。
+ *
+ * `art` は見出しの左に置く小さいイラスト。帯の中に入れると
+ * 蛍光ペンが絵の上を通ってしまうので、帯の外に出す。
  */
-export function H({ children, note }: { children: ReactNode; note?: ReactNode }) {
+export function H({
+  children,
+  note,
+  art,
+}: {
+  children: ReactNode;
+  note?: ReactNode;
+  art?: ReactNode;
+}) {
   return (
     <h2 className="zk-hr">
+      {art && <span className="zk-hi">{art}</span>}
       <span className="zk-h">{children}</span>
       {note && <span className="zk-hn">{note}</span>}
     </h2>

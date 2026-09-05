@@ -9,7 +9,7 @@ import Icon from "@/components/ui/Icon";
 import { Vid } from "@/components/streams/Vid";
 import { Dish } from "@/components/streams/KitchenCatalog";
 import { H, Rec, Sheet, Tape, Zone } from "@/components/streams/Sheet";
-import { ArtBasket, ArtCam, ArtFlame, ArtMeeting, ArtPot } from "@/components/streams/Art";
+import { ArtBasket, ArtCam, ArtFlame, ArtMeeting, ArtPot, ArtShelf, ArtSignpost } from "@/components/streams/Art";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -93,7 +93,9 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         </Zone>
 
         <Zone>
-          <H note={`${steps.length}日ぶん`}>この1品は、こう進んだ</H>
+          <H art={<ArtSignpost size={32} />} note={`${steps.length}日ぶん`}>
+            この1品は、こう進んだ
+          </H>
           <ol className="rt">
             {steps.map((s, k) => {
               const st = STEP[s.label] ?? STEP["配信"];
@@ -123,7 +125,9 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         {sameCountry.length > 0 && c && (
           <>
             <Zone tight>
-              <H note={`${c.name}で ${sameCountry.length}品`}>同じキッチンで作ったもの</H>
+              <H art={<ArtShelf size={32} />} note={`${c.name}で ${sameCountry.length}品`}>
+                同じキッチンで作ったもの
+              </H>
             </Zone>
             <Zone flush>
               <div className="kt-near">

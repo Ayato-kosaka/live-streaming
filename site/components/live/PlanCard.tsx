@@ -21,9 +21,11 @@ function shortDate(date?: string) {
  * 何日経っても「あと1日」のままになる。
  * サーバー側では日付だけ出しておいて、画面が出てから今日の日付で数え直す。
  */
-function useDays(plan: Plan) {
+function useDays({ date, at }: Plan) {
   const [d, setD] = useState<number | null>(null);
-  useEffect(() => setD(planDaysLeft(plan, new Date())), [plan]);
+  // 依存はかならず文字列にする。企画のオブジェクトを渡すと、下書きの下見のように
+  // 毎回作り直される場所で、描くたびに数え直しが走る。
+  useEffect(() => setD(planDaysLeft({ date, at }, new Date())), [date, at]);
   return d;
 }
 

@@ -7,6 +7,7 @@ import { LEGENDS, legendBySlug } from "@/content/legends";
 import Icon from "@/components/ui/Icon";
 import { Fig, Vid } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
+import { ArtBook, ArtCam } from "@/components/streams/Art";
 
 export function generateStaticParams() {
   return LEGENDS.map((l) => ({ slug: l.slug }));
@@ -82,7 +83,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         </Zone>
 
         <Zone>
-          <H>何があったか</H>
+          <H art={<ArtBook size={32} />}>何があったか</H>
           <p className="zk-lead">{l.body[0]}</p>
           {l.body.length > 1 && (
             <div className="folds" style={{ marginTop: 14 }}>
@@ -96,7 +97,9 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         </Zone>
 
         <Zone>
-          <H note={`${streams.length}本`}>その時の配信</H>
+          <H art={<ArtCam size={32} />} note={`${streams.length}本`}>
+            その時の配信
+          </H>
           <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだか分かります。</p>
           <ul className="days" style={{ marginTop: 14 }}>
             {streams.map((s, k) => (

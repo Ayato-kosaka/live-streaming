@@ -24,26 +24,35 @@ export const travel: Record<string, Draw> = {
   ),
 
   /**
-   * 寝袋。丸めて縛った状態で描く。
-   * 断面を同心の楕円で塗ると目玉に見えたので、**渦の帯**にして巻きを見せる。
+   * 寝袋。
+   *
+   * 丸めた姿は、断面をどう描いても的か渦にしか見えなかった（2回描き直した）。
+   * **広げた姿**にする。頭のほうが広く足へすぼまるマミー型に、ファスナーを1本。
+   * 中の裏地を覗かせると、袋（入れるもの）だと分かる。
    */
   sleepingbag: (c) => (
     <>
-      <Sh c={c} cy={53} rx={23} ry={4} />
-      <rect x="12" y="18" width="44" height="30" rx="15" fill={c.tl} />
-      <path d="M41 18h0a15 15 0 0 1 0 30z" fill={c.tld} />
-      {/* 巻いた断面。塗りの渦にすると文字に見えたので、輪を3重にして巻きを見せる */}
-      <ellipse cx="27" cy="33" rx="14.8" ry="15" fill={c.tld} />
-      <g fill="none" stroke={c.cr} strokeLinecap="round">
-        <circle cx="27" cy="33" r="11.2" strokeWidth="3.2" />
-        <circle cx="27" cy="33" r="6.6" strokeWidth="3" />
-        <circle cx="27" cy="33" r="2.4" strokeWidth="2.8" />
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      {/* 外側。頭 22 → 足 14 へすぼめる */}
+      <path
+        d="M32 4c8 0 13 5.4 13 13.2v27c0 6.6-4.4 11.4-9 11.4h-8c-4.6 0-9-4.8-9-11.4v-27C19 9.4 24 4 32 4z"
+        fill={c.tl}
+      />
+      <path d="M32 4c8 0 13 5.4 13 13.2v27c0 6.6-4.4 11.4-9 11.4h-4z" fill={c.tld} />
+      {/* 開いた口から見える裏地 */}
+      <path d="M32 8.4c5.4 0 8.8 3.6 8.8 8.8v3.6H23.2v-3.6c0-5.2 3.4-8.8 8.8-8.8z" fill={c.cr} />
+      <path d="M32 8.4c5.4 0 8.8 3.6 8.8 8.8v3.6H32z" fill={c.crd} />
+      {/* ファスナー。歯を並べる */}
+      <rect x="30.4" y="20" width="3.2" height="32" rx="1.6" fill={c.gyd} />
+      <g fill={c.gy}>
+        <rect x="29" y="23" width="6" height="1.8" rx="0.9" />
+        <rect x="29" y="28" width="6" height="1.8" rx="0.9" />
+        <rect x="29" y="33" width="6" height="1.8" rx="0.9" />
+        <rect x="29" y="38" width="6" height="1.8" rx="0.9" />
+        <rect x="29" y="43" width="6" height="1.8" rx="0.9" />
       </g>
-      {/* 縛った紐。2本 */}
-      <rect x="37" y="16" width="4.6" height="34" rx="2.3" fill={c.wod} />
-      <rect x="49" y="19" width="4.6" height="28" rx="2.3" fill={c.wod} />
-      <circle cx="39.3" cy="17.4" r="2.8" fill={c.wo} />
-      <Gl c={c} cx={34} cy={22} rx={6} ry={2} r={-6} o={0.4} />
+      <path d="M28.6 50h6.8l-1.4 5.4a1.8 1.8 0 0 1-1.7 1.4h-.6a1.8 1.8 0 0 1-1.7-1.4z" fill={c.gyd} />
+      <Gl c={c} cx={24} cy={28} rx={2} ry={8} r={0} o={0.45} />
     </>
   ),
 
@@ -203,23 +212,28 @@ export const travel: Record<string, Draw> = {
   camper: (c) => (
     <>
       <Sh c={c} cy={55} rx={26} ry={3.8} />
-      <rect x="4" y="13" width="52" height="32" rx="8" fill={c.cr} />
-      <path d="M4 30h52v7a8 8 0 0 1-8 8H12a8 8 0 0 1-8-8z" fill={c.or} />
-      <path d="M32 30h24v7a8 8 0 0 1-8 8H32z" fill={c.ord} />
-      <path d="M48 13a8 8 0 0 1 8 8v9H32V13z" fill={c.crd} />
-      <rect x="4" y="27.6" width="52" height="3.6" fill={c.tl} />
-      <rect x="9" y="17" width="14" height="9" rx="3" fill={c.sk} />
-      <rect x="27" y="17" width="12" height="9" rx="3" fill={c.sk} />
-      <rect x="43" y="17" width="10" height="9" rx="3" fill={c.skd} />
-      {/* 日よけ。ここが無いと、ただのバスに見える */}
-      <path d="M40 33h20l-3 5H40z" fill={c.rd} />
-      <path d="M46 33h5l-1 5h-5zM54 33h4l-1.2 5h-4z" fill={c.w} opacity="0.75" />
-      <rect x="30" y="34" width="9" height="11" rx="2.4" fill={c.br} />
-      <circle cx="18" cy="46" r="7" fill={c.bk} />
-      <circle cx="18" cy="46" r="3" fill={c.gy} />
-      <circle cx="45" cy="46" r="7" fill={c.bk} />
-      <circle cx="45" cy="46" r="3" fill={c.gy} />
-      <Gl c={c} cx={12} cy={18} rx={5} ry={1.8} r={-4} o={0.4} />
+      {/* 日よけ。屋根の上に出すと旗に見えたので、**車体の横へ張り出させる**。
+          これが有るかどうかで、バスとキャンピングカーが分かれる */}
+      <path d="M43 22h20l-1.6 4.4H43z" fill={c.rdd} />
+      <path d="M46 22h4.4l-1.2 4.4h-4.4zM55 22h4.4l-1.2 4.4h-4.4z" fill={c.w} opacity="0.8" />
+      <rect x="60.6" y="25" width="2.4" height="20" rx="1.2" fill={c.gyd} />
+      <rect x="2" y="13" width="46" height="32" rx="8" fill={c.cr} />
+      <path d="M2 30h46v7a8 8 0 0 1-8 8H10a8 8 0 0 1-8-8z" fill={c.or} />
+      <path d="M28 30h20v7a8 8 0 0 1-8 8H28z" fill={c.ord} />
+      <path d="M40 13a8 8 0 0 1 8 8v9H28V13z" fill={c.crd} />
+      <rect x="2" y="27.6" width="46" height="3.6" fill={c.tl} />
+      <rect x="7" y="17" width="13" height="9" rx="3" fill={c.sk} />
+      <rect x="24" y="17" width="11" height="9" rx="3" fill={c.sk} />
+      <rect x="38" y="17" width="8" height="9" rx="3" fill={c.skd} />
+      {/* ルーフボックス。上に荷物を積んでいる */}
+      <rect x="14" y="7" width="22" height="7" rx="3.4" fill={c.grd} />
+      <rect x="14" y="7" width="22" height="3" rx="1.5" fill={c.gr} />
+      <rect x="26" y="34" width="9" height="11" rx="2.4" fill={c.br} />
+      <circle cx="15" cy="46" r="7" fill={c.bk} />
+      <circle cx="15" cy="46" r="3" fill={c.gy} />
+      <circle cx="39" cy="46" r="7" fill={c.bk} />
+      <circle cx="39" cy="46" r="3" fill={c.gy} />
+      <Gl c={c} cx={10} cy={18} rx={5} ry={1.8} r={-4} o={0.4} />
     </>
   ),
 

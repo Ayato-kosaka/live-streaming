@@ -319,8 +319,8 @@ float brickShade() {
   float fu = fract(detailU() / 0.26 + mod(row, 2.0) * 0.5);
   // 目地は溝。線そのものだけを沈ませる。横目地より縦目地を細く
   float h = 1.0 - smoothstep(0.0, 0.15, fy);
-  float v = 1.0 - smoothstep(0.0, 0.11, min(fu, 1.0 - fu) * 2.0);
-  float joint = max(h, v * 0.85);
+  float v = 1.0 - smoothstep(0.0, 0.16, min(fu, 1.0 - fu) * 2.0);
+  float joint = max(h, v);
   // レンガ1個ずつの焼きムラ。これが無いと目地だけが浮いて方眼紙に見える
   float bake = (detailHash(vec2(floor(detailU() / 0.26 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.05;
   return mix(1.0 + bake, 0.875, joint);
@@ -338,9 +338,9 @@ float tileShade() {
   // 列の上端に落ちる、次の列の影
   float lap = smoothstep(0.80, 1.0, fy);
   // 瓦と瓦のあいだの継ぎ目。ここが無いと波板に見える
-  float seam = 1.0 - smoothstep(0.0, 0.15, min(fu, 1.0 - fu) * 2.0);
+  float seam = 1.0 - smoothstep(0.0, 0.22, min(fu, 1.0 - fu) * 2.0);
   float bake = (detailHash(vec2(floor(detailU() / 0.16 + mod(row, 2.0) * 0.5), row)) - 0.5) * 0.055;
-  return bow * mix(1.0 + bake, 0.865, max(lap, seam * 0.7));
+  return bow * mix(1.0 + bake, 0.855, max(lap, seam * 0.95));
 }
 `;
 
@@ -370,7 +370,8 @@ function addSurfaceDetail(mat, kind) {
 /** ファイル名から模様を決める。building-kit は壁と屋根で名前が分かれている */
 const DETAIL_OF = (url) => {
   const f = url.split("/").pop() ?? "";
-  if (/^wall/.test(f)) return "brick";
+  // 煙突もレンガ。あつ森の煙突は必ず目地が見えている
+  if (/^(wall|chimney)/.test(f)) return "brick";
   if (/^(roof|cabin-roof)/.test(f)) return "tile";
   return null;
 };
@@ -474,7 +475,7 @@ const LOBE_LAYOUT = [
 
 /** 房ひとつの中の明暗。上端 / 下端。ここが房の輪郭を見せる */
 const LOBE_TOP = 1.10;
-const LOBE_BOTTOM = 0.83;
+const LOBE_BOTTOM = 0.79;
 /** 樹冠ぜんたいの明暗を、房の明暗と掛け合わせるときの効き具合 */
 const LOBE_GLOBAL = 0.55;
 
@@ -627,11 +628,13 @@ function cellNoise(x, y, z, f) {
  */
 function mossGeometry(geo, moss, stone) {
   const segs = openEdges(geo);
-  const g = subdivide(geo, 2);
+  // 3回割る(1枚が64枚)。ここを削ると、縁のギザギザが頂点のあいだで
+  // ならされてしまい、エアブラシでぼかしたようにしか見えない
+  const g = subdivide(geo, 3);
   g.computeBoundingBox();
   const s = g.boundingBox.getSize(new THREE.Vector3());
   // ぼかす幅は苔の広さに対する比。狭い苔ほど細く溶ける
-  const feather = Math.max(1e-4, 0.17 * Math.max(s.x, s.z));
+  const feather = Math.max(1e-4, 0.10 * Math.max(s.x, s.z));
   const pos = g.attributes.position;
   const col = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
@@ -639,14 +642,24 @@ function mossGeometry(geo, moss, stone) {
     let d = Infinity;
     for (const seg of segs) d = Math.min(d, distToSeg(x, y, z, seg));
     let t = clamp01(d / feather);
-    // まだら模様を2つ重ねて縁をギザギザにする。粗いほうが苔の房、細かいほうが縁のほつれ
-    t += (cellNoise(x, y, z, 1.1 / feather) - 0.5) * 0.52;
-    t += (cellNoise(x, y, z, 2.7 / feather) - 0.5) * 0.24;
+    // まだら模様を2つ重ねて縁をギザギザにする。粗いほうが苔の房、細かいほうが縁のほつれ。
+    // 縁の帯の中だけで効かせる。全体に掛けると、真ん中まで薄まって苔の色が消える
+    const band = 4 * t * (1 - t);
+    t += (cellNoise(x, y, z, 1.6 / feather) - 0.5) * 0.62 * band;
+    t += (cellNoise(x, y, z, 4.3 / feather) - 0.5) * 0.30 * band;
     t = clamp01(t);
-    const m = t * t * (3 - 2 * t);
-    col[i * 3] = stone.r + (moss.r - stone.r) * m;
-    col[i * 3 + 1] = stone.g + (moss.g - stone.g) * m;
-    col[i * 3 + 2] = stone.b + (moss.b - stone.b) * m;
+    // 苔と石のあいだは、なだらかに繋ぐのではなく短く切り替える。
+    // なだらかにすると石の明るい色へ延々と溶けて、光っているように見える。
+    // ギザギザはまだら模様のほうで作ってあるので、ここは急でいい
+    const e = clamp01((t - 0.36) / 0.28);
+    const m = e * e * (3 - 2 * e);
+    // 苔と石のあいだに、うっすら影を落とす。石は苔よりずっと明るいので、
+    // これが無いと境目が白く光って輪郭のように見えてしまう。
+    // 本物の苔も、石に接するきわが少し暗い
+    const rim = 1 - 0.17 * (4 * m * (1 - m));
+    col[i * 3] = (stone.r + (moss.r - stone.r) * m) * rim;
+    col[i * 3 + 1] = (stone.g + (moss.g - stone.g) * m) * rim;
+    col[i * 3 + 2] = (stone.b + (moss.b - stone.b) * m) * rim;
   }
   g.setAttribute("color", new THREE.BufferAttribute(col, 3));
   g.computeVertexNormals();

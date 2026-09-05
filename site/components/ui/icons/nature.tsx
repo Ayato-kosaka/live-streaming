@@ -23,9 +23,10 @@ export const nature: Record<string, Draw> = {
 
   moon: (c) => (
     <>
-      <path d="M38 5a27 27 0 1 0 20 36 21 21 0 0 1-20-36z" fill={c.crd} />
-      <path d="M34 8a27 27 0 0 0-2 54 27 27 0 0 1 2-54z" fill={c.cr} />
-      <g fill={c.crd} opacity="0.85">
+      {/* 明るい下地でも見えるように、地をクリームではなく山吹にする */}
+      <path d="M38 5a27 27 0 1 0 20 36 21 21 0 0 1-20-36z" fill={c.gdd} />
+      <path d="M34 8a27 27 0 0 0-2 54 27 27 0 0 1 2-54z" fill={c.yl} />
+      <g fill={c.gdd} opacity="0.7">
         <circle cx="24" cy="24" r="4" />
         <circle cx="19" cy="38" r="3" />
         <circle cx="31" cy="44" r="2.4" />
@@ -40,7 +41,7 @@ export const nature: Record<string, Draw> = {
       {/* 雲の陰は灰ではなく空色寄り。白のままだと明るい下地で形が消える */}
       <path d="M17 47a13 13 0 0 1-1.6-25.9A16 16 0 0 1 45.3 18 12.5 12.5 0 0 1 47 47z" fill={c.w} />
       <path d="M32 47h15a12.5 12.5 0 0 0 1.7-24.9 16 16 0 0 0-16.7-9z" fill={c.gy} />
-      <path d="M17 47a13 13 0 0 1-9.4-4h48a12.5 12.5 0 0 1-8.6 4z" fill={c.skd} opacity={c.flat ? 1 : 0.45} />
+      <path d="M13 45.6a13 13 0 0 1-5.4-2.6c7 3.4 34 3.6 48.4-.4a12.5 12.5 0 0 1-9 4.4z" fill={c.skd} opacity={c.flat ? 1 : 0.5} />
       <Gl c={c} cx={22} cy={28} rx={6} ry={3.4} r={-24} o={0.8} />
     </>
   ),
@@ -118,13 +119,12 @@ export const nature: Record<string, Draw> = {
   /** 風。北欧の海風。線ではなく、流れる面で描く。 */
   wind: (c) => (
     <>
-      <g fill={c.sk}>
-        <path d="M4 18h30a7 7 0 1 0-6.8-8.6l-6.6-1.6A14 14 0 1 1 34 25H4z" />
+      {/* 筋を3本、長さを変えて流す。端だけ巻くと「吹いている」に見える */}
+      <g fill="none" strokeLinecap="round" strokeWidth="6.4">
+        <path d="M4 17h32a7 7 0 1 0-7-7" stroke={c.sk} />
+        <path d="M4 32h40a6.4 6.4 0 1 1-6.4 6.4" stroke={c.bl} />
+        <path d="M4 47h22a6 6 0 1 0-6-6" stroke={c.skd} />
       </g>
-      <g fill={c.skd}>
-        <path d="M4 33h38a6 6 0 1 1-5.8 7.6l-6.6 1.6A13 13 0 1 0 42 40H4z" />
-      </g>
-      <path d="M8 26h16a3.5 3.5 0 0 1 0 7H8a3.5 3.5 0 0 1 0-7z" fill={c.bl} />
     </>
   ),
 

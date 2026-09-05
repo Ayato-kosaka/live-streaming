@@ -6,7 +6,7 @@ import { LEGENDS } from "@/content/legends";
 import Icon from "@/components/ui/Icon";
 import { Fig } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
-import { ArtMedal } from "@/components/streams/Art";
+import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
   title: "伝説の丘",
@@ -70,7 +70,9 @@ export default function LegendsPage() {
         </Zone>
 
         <Zone tight>
-          <H note={`${LEGENDS.length}つ・配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>丘に立っているもの</H>
+          <H art={<ArtMonument size={32} />} note={`${LEGENDS.length}つ・配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>
+            丘に立っているもの
+          </H>
           <p className="zk-lead">数字を見るだけで、その日に何があったかだいたい分かるようにしてあります。</p>
         </Zone>
 
@@ -96,7 +98,7 @@ export default function LegendsPage() {
         </Zone>
 
         <Zone>
-          <H>どうやって伝説になるのか</H>
+          <H art={<ArtMeeting size={32} />}>どうやって伝説になるのか</H>
           <p className="zk-lead">
             どれも最初は、週のはじめの企画会議で出た一言でした。「怖いイメージを変えたい」「イワシで3日いける」。
             その場で笑って終わることもあるし、そのまま来週の予定になることもある。

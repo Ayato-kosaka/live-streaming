@@ -152,7 +152,7 @@ export function nextPlan(today = new Date()): Plan | undefined {
  * ここを1か所にしておかないと、しらせの帯が「あと1日」で
  * 時計が「あと0日23時間」になる、という食い違いが出る。
  */
-export function planDaysLeft(p: Plan, now = new Date()): number | null {
+export function planDaysLeft(p: Pick<Plan, "date" | "at">, now = new Date()): number | null {
   if (p.at) return Math.floor((new Date(p.at).getTime() - now.getTime()) / 86400000);
   return daysUntil(p.date, now);
 }

@@ -236,3 +236,116 @@ export function ArtBoots({ size, className }: P) {
     </svg>
   );
 }
+
+/** 物語を読む。開いた本と、はさんだしおり。 */
+export function ArtBook({ size, className }: P) {
+  return (
+    <svg {...svg(className, size)}>
+      <Ground cx={33} cy={52} rx={23} ry={4.6} />
+      {/* 背 */}
+      <rect x="28" y="21" width="8" height="30" rx="2" fill="#8a5a30" />
+      {/* 左の紙束。厚みは色の差だけで見せる */}
+      <path d="M5 24.5c8-3.6 16-4.3 26-1.5v29c-10-2.8-18-2.1-26 1.5z" fill="#d9c69e" />
+      <path d="M7.5 25.7c7.2-3.1 14.4-3.7 22.5-1.3v26c-8.1-2.4-15.3-1.8-22.5 1.3z" fill="#fffbee" />
+      {/* 右の紙束。光の当たらない側なので一段落とす */}
+      <path d="M59 24.5c-8-3.6-16-4.3-26-1.5v29c10-2.8 18-2.1 26 1.5z" fill="#cbb68c" />
+      <path d="M56.5 25.7c-7.2-3.1-14.4-3.7-22.5-1.3v26c8.1-2.4 15.3-1.8 22.5 1.3z" fill="#f6eeda" />
+      {/* 書いてある字 */}
+      <g fill="#cbbc95">
+        <rect x="11" y="30" width="15" height="2.6" rx="1.3" transform="rotate(-4 18.5 31.3)" />
+        <rect x="11" y="36" width="15" height="2.6" rx="1.3" transform="rotate(-3 18.5 37.3)" />
+        <rect x="11" y="42" width="10" height="2.6" rx="1.3" transform="rotate(-2 16 43.3)" />
+        <rect x="38" y="30" width="15" height="2.6" rx="1.3" transform="rotate(4 45.5 31.3)" />
+        <rect x="38" y="36" width="15" height="2.6" rx="1.3" transform="rotate(3 45.5 37.3)" />
+      </g>
+      {/* しおり */}
+      <path d="M37 21h7v18l-3.5-3.6L37 39z" fill="#e2596d" />
+    </svg>
+  );
+}
+
+/** 丘に立っているもの。草の上の石碑。 */
+export function ArtMonument({ size, className }: P) {
+  return (
+    <svg {...svg(className, size)}>
+      <Ground cx={34} cy={54} rx={19} ry={4.4} />
+      {/* 草 */}
+      <path d="M11 50c0-4 2-6 3.4-8 .2 3 1 4.4 2.2 5.4-.6 1.6-1 2.6-1 2.6z" fill="#7cc24a" />
+      <path d="M53 50c0-4-2-6-3.4-8-.2 3-1 4.4-2.2 5.4.6 1.6 1 2.6 1 2.6z" fill="#68ad3c" />
+      {/* 台 */}
+      <path d="M13 45h38l-2.4 7H15.4z" fill="#9aa38c" />
+      <rect x="13" y="42" width="38" height="5" rx="2.5" fill="#bcc4aa" />
+      {/* 石。明るい面と暗い面の2枚だけで立体にする */}
+      <path d="M19 15a13 13 0 0 1 26 0v28H19z" fill="#c1c8ac" />
+      <path d="M19 15A13 13 0 0 1 32 3v40H19z" fill="#dbe0c6" />
+      {/* 銘板 */}
+      <rect x="24" y="17" width="16" height="19" rx="5" fill="#f0d888" />
+      <rect x="27.5" y="22" width="9" height="2.6" rx="1.3" fill="#bb9b3f" />
+      <rect x="27.5" y="27.5" width="9" height="2.6" rx="1.3" fill="#bb9b3f" opacity="0.62" />
+    </svg>
+  );
+}
+
+/** カタログの棚。作ったものが並んでいく場所。 */
+export function ArtShelf({ size, className }: P) {
+  return (
+    <svg {...svg(className, size)}>
+      <Ground cx={34} cy={56} rx={22} ry={4.4} />
+      {/* 立てた皿。奥から手前へ、3枚重ねる */}
+      <circle cx="20" cy="27" r="12" fill="#efe6cc" />
+      <circle cx="20" cy="27" r="7.4" fill="#ded1ae" />
+      <circle cx="44" cy="25" r="13" fill="#fff6e2" />
+      <circle cx="44" cy="25" r="8" fill="#f2e3c2" />
+      <circle cx="32" cy="29" r="14" fill="#f9a08c" />
+      <circle cx="32" cy="29" r="9.4" fill="#fffdf2" />
+      <ellipse cx="27" cy="24" rx="4.4" ry="2.6" fill="#ffffff" opacity="0.72" transform="rotate(-32 27 24)" />
+      {/* 棚板 */}
+      <rect x="6" y="41" width="52" height="8" rx="4" fill="#c1863f" />
+      <rect x="6" y="41" width="52" height="4" rx="2" fill="#e0aa6c" />
+      <rect x="11" y="48" width="7" height="9" rx="3.5" fill="#a5713f" />
+      <rect x="46" y="48" width="7" height="9" rx="3.5" fill="#a5713f" />
+    </svg>
+  );
+}
+
+/** どっちへ進むか。分かれ道の道しるべ。 */
+export function ArtSignpost({ size, className }: P) {
+  return (
+    <svg {...svg(className, size)}>
+      <Ground cx={34} cy={55} rx={14} ry={3.8} />
+      {/* 柱 */}
+      <rect x="28" y="10" width="7" height="45" rx="3.5" fill="#a5713f" />
+      <rect x="28" y="10" width="3.4" height="45" rx="1.7" fill="#c1863f" />
+      {/* 上の板。右へ */}
+      <path d="M7 15h32l7 6.5-7 6.5H7z" fill="#e8b271" />
+      <path d="M7 15h32l3 2.8H7z" fill="#f6cf9c" />
+      <rect x="12" y="19" width="17" height="3" rx="1.5" fill="#b07f3f" opacity="0.72" />
+      {/* 下の板。左へ */}
+      <path d="M57 33H25l-7 6.5 7 6.5h32z" fill="#d79a55" />
+      <path d="M57 33H25l-3 2.8h35z" fill="#eebb7c" />
+      <rect x="33" y="37" width="17" height="3" rx="1.5" fill="#a06f34" opacity="0.72" />
+    </svg>
+  );
+}
+
+/** 歩いた国。まわしている地球儀。 */
+export function ArtGlobe({ size, className }: P) {
+  return (
+    <svg {...svg(className, size)}>
+      <Ground cx={34} cy={56} rx={15} ry={3.8} />
+      {/* 台 */}
+      <path d="M24 48h16l3 8H21z" fill="#a5713f" />
+      <rect x="21" y="53" width="22" height="4.5" rx="2.25" fill="#c1863f" />
+      {/* 球 */}
+      <circle cx="32" cy="27" r="21" fill="#3f9ede" />
+      {/* 上半分だけ明るくして、球に見せる。輪郭線は引かない */}
+      <path d="M11 27a21 21 0 0 1 42 0z" fill="#55b6ee" />
+      {/* 陸 */}
+      <path d="M14 20c4-3 8-2 11 1s2 7-1 8-6-1-8 1-4 0-4-4 1-5 2-6z" fill="#7cc24a" />
+      <path d="M34 12c5-1 9 1 11 5s-1 6-4 6-4 2-6 1-4-4-3-7 1-4 2-5z" fill="#8fd158" />
+      <path d="M30 32c5-2 11 0 13 4s-2 9-7 9-9-3-9-7 1-5 3-6z" fill="#7cc24a" />
+      <path d="M15 36c3-1 6 1 6 4s-2 5-5 4-4-3-3-5 1-2 2-3z" fill="#8fd158" />
+      <ellipse cx="24" cy="17" rx="6.4" ry="3.8" fill="#dff2ff" opacity="0.5" transform="rotate(-32 24 17)" />
+    </svg>
+  );
+}

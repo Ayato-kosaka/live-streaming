@@ -394,8 +394,12 @@
 /* --- 紙の型 -------------------------------------------------------------
    一覧と詳細のパネル。図鑑の面を写す。
    厚みの板を外し、細い罫線と紙のムラだけで作る。角も板ほど丸くしない。
+
+   はじめは中身の class から :has() で当てていたが、中身の名前は
+   ページを作り直すたびに変わる。どの面を紙にするかはページ側の判断なので、
+   <Panel className="paper"> と書いてもらう形にした。
    ----------------------------------------------------------------------- */
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) {
+.panel.paper {
   --pg-ground: var(--pg-paper-bg);
   --pg-rim: transparent;
   --pg-edge: transparent;
@@ -406,36 +410,25 @@
   padding: 22px 15px 20px;
 }
 @media (min-width: 720px) {
-  .panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) {
+  .panel.paper {
     padding: 28px 26px 26px;
   }
 }
-/* スタンプ帳だけ、紙のムラに点の台紙を足す。線を引くと表計算に見える */
-.panel:has(> .stamps) {
-  --pg-ground:
-    radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--pg-rule) 46%, transparent) 0 1.4px,
-      transparent 1.6px),
-    var(--pg-paper-bg);
-  background-size: 20px 20px, auto, auto, auto, auto, auto;
-}
-
 /* 紙の面に置くものは、紙の作りに合わせる（docs/ac-reference.md ⑦-2,5,6）。
    厚みの板と細い罫線が1つの面に混ざると、どちらが押せるのか分からなくなる。
      ・区切りは影ではなく細い罫線
      ・押せない印（チップ）は平ら
      ・選んでいるものは塗りを変えず、細いオレンジ赤の枠で示す */
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city, .stat, .chip, .stamp) {
+.panel.paper :is(.scard, .city, .stat, .chip) {
   box-shadow: none;
   border-width: 1.5px;
   border-color: var(--pg-rule);
   border-style: solid;
   background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
 }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city):hover { transform: none; border-color: var(--pg-pick); }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city, .stamp):active { transform: translateY(1px); border-color: var(--pg-pick); }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) .stamp:hover { transform: translateY(-2px) rotate(-1deg); border-color: var(--pg-pick); box-shadow: none; }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) .chip {
+.panel.paper :is(.scard, .city):hover { transform: none; border-color: var(--pg-pick); }
+.panel.paper :is(.scard, .city):active { transform: translateY(1px); border-color: var(--pg-pick); }
+.panel.paper .chip {
   border-radius: var(--r-0);
   background: var(--chip);
   border-color: color-mix(in srgb, var(--chip) 72%, var(--ink));
@@ -443,7 +436,7 @@
   box-shadow: none;
 }
 /* 紙の面の見出しの下には、蛍光ペンの帯を敷く。これ1つで「印刷物」に見える。 */
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(h3, .sub) {
+.panel.paper :is(h3, .sub) {
   background: linear-gradient(180deg, transparent 46%, var(--pg-mark) 46%);
   color: var(--marker-ink);
   border: 0;
@@ -559,7 +552,7 @@
 
 /* 紙の型の見出しは「白い紙の札を、少し傾けてテープで貼った」もの。
    木の札のままだと、紙の面に板が乗って型が混ざる。 */
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2 {
+.panel.paper > h2 {
   border: 0;
   border-radius: 3px;
   background: var(--paper);
@@ -569,22 +562,22 @@
   transform-origin: left center;
   box-shadow: var(--shadow-1);
 }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2:first-child {
+.panel.paper > h2:first-child {
   margin: -30px 0 18px 6px;
 }
 /* 留め具の丸をやめて、両端に貼ったテープにする */
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::before,
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::after {
+.panel.paper > h2::before,
+.panel.paper > h2::after {
   position: absolute;
   width: 30px; height: 12px;
   border-radius: 1px;
   background: color-mix(in srgb, var(--gold) 26%, rgba(255, 255, 255, 0.62));
   box-shadow: none;
 }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::before {
+.panel.paper > h2::before {
   left: -12px; top: -7px; transform: rotate(-29deg);
 }
-.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::after {
+.panel.paper > h2::after {
   right: -12px; top: -7px; transform: rotate(29deg);
 }
 
