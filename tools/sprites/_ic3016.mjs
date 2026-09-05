@@ -21,7 +21,7 @@ const b = await chromium.launch({
 });
 const ctx = await b.newContext({
   viewport: { width: 900, height: 1000 },
-  deviceScaleFactor: names.length ? 5 : 2,
+  deviceScaleFactor: names.length ? (names.length > 12 ? 3 : 5) : 2,
 });
 const p = await ctx.newPage();
 p.on("pageerror", (e) => console.log("[pageerror]", String(e).slice(0, 300)));

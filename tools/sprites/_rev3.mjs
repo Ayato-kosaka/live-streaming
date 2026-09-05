@@ -147,7 +147,10 @@ for (const path of PAGES) {
   const r = await p.evaluate(measure);
   r.errs = [...errs];
   all.push(r);
-  await p.screenshot({ path: `${OUT}/first${path.replace(/\//g, "_") || "_top"}.png` });
+  writeFileSync(`${OUT}/measure.json`, JSON.stringify(all, null, 1));
+  try {
+    await p.screenshot({ path: `${OUT}/first${path.replace(/\//g, "_") || "_top"}.png`, animations: "disabled", timeout: 15000 });
+  } catch (e) { console.log("  [shot NG]", String(e).slice(0, 60)); }
   console.log(path, "h=", r.h, "panel=", r.panels.total + "/" + r.panels.paper, "低比=", r.contrast.length, "小字=", Object.keys(r.small).length);
 }
 writeFileSync(`${OUT}/measure.json`, JSON.stringify(all, null, 1));
