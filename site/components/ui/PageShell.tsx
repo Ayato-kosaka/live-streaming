@@ -1,15 +1,52 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { DOORS, SPOTS } from "../island/layout";
+import { SPOTS } from "../island/layout";
 import { Gull } from "../island/Guide";
 import Icon from "./Icon";
+import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import { FOOT, UI } from "@/content/voice";
 
-/** 行き先を全部並べた面。上の現在地の行と、下の砂浜の両方から行ける。 */
-export const ALL_HREF = "/all";
-export const ALL_LABEL = "島のなか ぜんぶ";
+export { ALL_HREF, ALL_LABEL };
 
-export function IslandHeader({ current }: { current?: string }) {
+type Crumb = { label: string; href?: string };
+
+/**
+ * 看板。
+ *
+ * ## 狭い画面では1段。行き先の一覧は畳んで持つ
+ *
+ * 9月5日まで、狭い画面の看板は 129px あった。6つの札が3列×2段に並ぶので、
+ * どうしても2段ぶんの背が要る。その下に現在地の行（48〜89px）が続くので、
+ * **中身が始まるまでに 177〜218px、1画面の 21〜26% を、106面ぜんぶが
+ * 同じ絵で使っていた。**
+ *
+ * `docs/island-ux.md` 5.2 の答えをそのまま採る。狭い画面の看板は
+ *
+ *     [ 島 ]   いま：○○   [ ほかの場所 ]
+ *
+ * の1段だけにして、行き先は「ほかの場所」を押すと下りてくる一覧（`PlaceList`）に
+ * 持たせる。**到達性は落ちない。** 前は帯に出ている6つが1タップ、
+ * 残り4つは砂浜まで送るか「ぜんぶ」経由で2タップだった。いまは
+ * 10軒とも「ほかの場所」→ 行き先の2タップで、砂浜まで送れば10軒とも1タップ。
+ * どこからでも2タップ、は保たれる。
+ *
+ * ## 広い画面（900px 以上）は6つの札のまま
+ *
+ * あちらは元から1段で、背は 78px しかない。畳む理由が無いので触らない。
+ * 「ぜんぶ」だけ、現在地の行から札の列の最後へ移した（口を1つに寄せるため）。
+ * どちらの器を出すかは CSS が決める（`app/css/pages.css` の `.ih-nav` / `.ihx`）。
+ * **`display: none` で消すので、隠れているほうは読み上げにも出てこない。**
+ */
+export function IslandHeader({
+  current,
+  here,
+  atAll,
+}: {
+  current?: string;
+  /** いま居る面の名前。パンくずの最後の1つ。 */
+  here?: string;
+  atAll?: boolean;
+}) {
   return (
     <header className="ih">
       <div className="ih-in">
@@ -20,6 +57,25 @@ export function IslandHeader({ current }: { current?: string }) {
           <Gull size={26} shadow={false} />
           <b>あやと島</b>
         </Link>
+        {/* 狭い画面の「いま、どこ」。札の朱枠が消えるぶんを字で言う。
+            パンくずは狭い画面で隠れる面があるので、ここは別に持つ。 */}
+        {here && (
+          <p className="ih-here">
+            <span aria-hidden>いま</span>
+            <b>{here}</b>
+          </p>
+        )}
+        {/* 狭い画面の口。中身は砂浜と同じ `PlaceList`。 */}
+        <details className="ihx">
+          <summary className="ihx-open">
+            <Icon name="signpost" size={16} />
+            ほかの場所
+            <Icon name="chevron" size={13} className="ihx-chev" />
+          </summary>
+          <div className="ihx-sheet">
+            <PlaceList variant="sheet" current={current} atAll={atAll} />
+          </div>
+        </details>
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
             <Link
@@ -32,50 +88,23 @@ export function IslandHeader({ current }: { current?: string }) {
               {s.label}
             </Link>
           ))}
+          {/* **その面自身への口は出さない。** `/all` の上に「ぜんぶ」を出すと、
+              押しても同じ紙が出てくる。厚みのある板は「どこかへ行ける」と
+              言っているので（`docs/island-design.md` 3-3）、行き先が
+              いま居る場所なら、言っていることが嘘になる。 */}
+          {!atAll && (
+            <Link href={ALL_HREF} prefetch={false} className="ih-link is-all">
+              <Icon name="signpost" size={16} />
+              ぜんぶ
+            </Link>
+          )}
         </nav>
       </div>
     </header>
   );
 }
 
-/**
- * 現在地の行。
- *
- * 左が「いまどこにいるか」、右が「どこへでも行ける口」。
- * **口を上の帯には入れない。** 帯は行き先6つの受け皿で、狭い画面では
- * 3列×2段にちょうど収まっている（`app/css/pages.css` の `.ih-nav`）。
- * ここへ7つ目を足すと列が割れて、6つの名前が切れる。名前が切れた札は
- * 入口として働かないので、器を別に立てる（`layout.ts` の `DOORS` の決まり）。
- *
- * パンくずの行はもともと全部の面にあり、狭い画面では「島 › ○○」の1段だけの
- * ときに見た目を消している（真上の帯が同じことを言っているため）。
- * その行を借りると、**新しい段を1つも増やさずに**口を置ける。
- */
-function WayRow({
-  crumbs,
-  atAll,
-}: {
-  crumbs?: { label: string; href?: string }[];
-  atAll?: boolean;
-}) {
-  return (
-    <div className="wayrow">
-      {crumbs ? <Crumbs items={crumbs} /> : <span />}
-      {/* **その面自身への口は出さない。** `/all` の上に「ぜんぶ」を出すと、
-          押しても同じ紙が出てくる。厚みのある板は「どこかへ行ける」と
-          言っているので（`docs/island-design.md` 3-3）、行き先が
-          いま居る場所なら、言っていることが嘘になる。 */}
-      {!atAll && (
-        <Link className="way-all" href={ALL_HREF} prefetch={false}>
-          <Icon name="signpost" size={16} />
-          <span className="way-all-long">島のなか</span>ぜんぶ
-        </Link>
-      )}
-    </div>
-  );
-}
-
-export function Crumbs({ items }: { items: { label: string; href?: string }[] }) {
+export function Crumbs({ items }: { items: Crumb[] }) {
   return (
     <nav className="crumbs" aria-label="現在地">
       {/* 上の帯にも同じ「島」があるので、ここは先読みしない。
@@ -147,31 +176,19 @@ export function PageHead({
 /**
  * ページの終わり。島に戻ってきたところ（`docs/island-world.md` 1.6-3）。
  *
- * **ここには10軒ぜんぶ並べる。** 上の帯を6つに絞ってあるのは、
- * 帯が「いま、どこへ行くか」を選ばせる列だからで、狭い列に10個入れると
- * どれも読めなくなる。砂浜は面を読み終わったあとの場所なので、
- * 選ばせる列ではなく**戻り道の一覧**として置ける。
- * これで、帯に出ていない4軒（作った料理・伝説の企画・いまどこ・住んでる人）へも
- * どの面からでも1回で行ける。
+ * **ここは開いたまま置く。** 上の看板の口は畳んであるので、読み終わった人が
+ * 次を選ぶときに、もう一度押させない。中身は看板の一覧と同じ部品
+ * （`PlaceList`）なので、行き先が増えても直すのは1か所。
  */
-export function IslandFooter() {
+export function IslandFooter({ current, atAll }: { current?: string; atAll?: boolean }) {
   return (
     <footer className="ifoot">
       {/* 上の帯の「あやと島」と同じ行き先。二重に先読みしても意味がない */}
       <Link href="/" className="ifoot-back" prefetch={false}>
         <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
-      <nav className="ifoot-doors" aria-label="島に建っているもの">
-        {DOORS.map((d) => (
-          <Link key={d.id} href={d.href} prefetch={false} className="ifoot-door">
-            <img src={`/sprites/${d.icon}.webp`} alt="" loading="lazy" />
-            {d.label}
-          </Link>
-        ))}
-        <Link href={ALL_HREF} prefetch={false} className="ifoot-door is-all">
-          <Icon name="signpost" size={18} />
-          {ALL_LABEL}
-        </Link>
+      <nav aria-label="島に建っているもの">
+        <PlaceList variant="foot" current={current} atAll={atAll} />
       </nav>
       <p className="ifoot-note">{FOOT.note}</p>
     </footer>
@@ -186,18 +203,29 @@ export default function PageShell({
 }: {
   children: ReactNode;
   current?: string;
-  crumbs?: { label: string; href?: string }[];
+  crumbs?: Crumb[];
   /** この面が `/all` そのものか。自分への口を出さないために渡す。 */
   atAll?: boolean;
 }) {
+  // 看板に出す現在地は、パンくずのいちばん奥。面の h1 と同じ文字列になる
+  // （`docs/island-ux.md` 4.3「1つの場所には1つの名前」）。
+  const here = crumbs?.length ? crumbs[crumbs.length - 1].label : undefined;
   return (
     <>
-      <IslandHeader current={current} />
+      <IslandHeader current={current} here={here} atAll={atAll} />
       <main className="page">
-        <WayRow crumbs={crumbs} atAll={atAll} />
+        {/* 現在地の行。**「ぜんぶ」の札は看板へ移した。**
+            残るのはパンくずだけなので、狭い画面で「島 › ○○」の1段しかない面では
+            行ごと畳まれる（`app/css/way.css`）。2段以上のパンくずは、
+            親への戻り道を持っているので出したまま。 */}
+        {crumbs && (
+          <div className="wayrow">
+            <Crumbs items={crumbs} />
+          </div>
+        )}
         {children}
       </main>
-      <IslandFooter />
+      <IslandFooter current={current} atAll={atAll} />
     </>
   );
 }
