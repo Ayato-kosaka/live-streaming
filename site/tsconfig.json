@@ -44,9 +44,10 @@
     ".next-dev3030/types/**/*.ts",
     ".next-dev3031/types/**/*.ts",
     ".next-dev3032/types/**/*.ts",
+    ".next-dev3033/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-dev3033/types/**/*.ts"
+    ".next-dev3010/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
