@@ -460,7 +460,6 @@
 .rz-bar { width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
 .rz-bar > i { display: block; height: 100%; border-radius: 3px; background: #cfc202; }
 .rz-card.is-top .rz-bar > i { background: #e2522d; }
-/* 名前を出していない人の欄。図鑑の未登録と同じで、枠だけ残す */
 /* 名前を出していない人の欄。図鑑の未登録と同じで、通し番号だけを置く */
 .rz-card.is-blank .rz-name { color: var(--pap-ink-2); font-weight: 900; letter-spacing: 0.06em; }
 
