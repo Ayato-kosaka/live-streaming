@@ -152,6 +152,8 @@ class DoneruClient:
         # 分けるための手がかり。**値そのものは持たない**（public なログに出るため）。
         # 長さだけで、貼り損ね・切れ・改行の混入は見分けられる。
         self.cookie_shape = _describe_cookie(self._cookie_header)
+        # Doneru が応答で `_dt` を配り直したか。寿命の見立てに使う（_get で立てる）
+        self.renewed_dt = False
         self._session = requests.Session()
         self._session.headers.update(DEFAULT_HEADERS)
         self._session.headers["cookie"] = self._cookie_header
@@ -166,6 +168,13 @@ class DoneruClient:
             )
         except requests.RequestException as exc:
             raise DoneruError(f"{path} への接続に失敗しました: {exc}") from exc
+
+        # Doneru が `_dt` を再発行しているかを見る。**値は持たない。**
+        # 再発行するなら、毎日の実行がそれを拾ってシークレットを更新し続けられる
+        # （yt-dlp の cookie を GH_PAT で書き戻している前例が schedule_fetch_chat.yml にある）。
+        # 再発行しないなら、セッションの寿命がそのまま取り込みの寿命になる。
+        if response.cookies.get("_dt"):
+            self.renewed_dt = True
 
         if response.status_code in (401, 403):
             raise DoneruSessionExpired(
