@@ -854,9 +854,13 @@
 .now-hero .now-place { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
 .now-flag {
   flex: none;
-  width: clamp(190px, 54vw, 260px);
+  width: clamp(210px, 60vw, 280px);
   height: auto;
-  filter: drop-shadow(0 5px 0 rgba(120, 80, 40, 0.18));
+  /* 旗は押せない。**ぼかし0で真下に出る影は「押せる」の合図**なので
+     （`docs/island-design.md` 3章）、30px のときの `0 2px 0` を
+     そのまま大きくすると、押せない絵に厚みが付く。
+     地面に落ちる影のほう（右下へずらして少しぼかす）に替える。 */
+  filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
 }
 /* 旗のふち。viewBox は幅 30 なので、260px で出すと 1.2 の線がそのまま
    10px の枠になる。外枠は svg の直接の子の rect 1枚だけ（中身は
