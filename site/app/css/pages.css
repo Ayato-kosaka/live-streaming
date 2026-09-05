@@ -159,7 +159,8 @@
   object-fit: contain;
   object-position: center bottom;
   /* 接地影。真下にべたっと落とすと、絵が海の上に置いてあるように見える */
-  filter: drop-shadow(0 8px 0 rgba(8, 46, 62, 0.16)) drop-shadow(0 12px 18px rgba(8, 46, 62, 0.3));
+  /* 接地影。真下にべたっと1枚だけ。2枚重ねると合成が2回走る */
+  filter: drop-shadow(0 9px 1px rgba(8, 46, 62, 0.32));
 }
 .phead h1 {
   margin: 14px 0 0;
@@ -169,7 +170,8 @@
   letter-spacing: var(--ls-head);
   line-height: 1.3;
   color: #fffdf6;
-  text-shadow: 0 4px 0 var(--frame-dark), 0 12px 26px rgba(8, 46, 62, 0.45);
+  /* ぼかした影は文字の面積ぶんだけ塗り直しが重い。板の影（ぼかさない）だけで立体は伝わる */
+  text-shadow: 0 4px 0 var(--frame-dark), 0 7px 1px rgba(8, 46, 62, 0.34);
 }
 .phead-lead {
   margin: 12px auto 0; max-width: 40em;
@@ -177,7 +179,7 @@
   font-weight: 800; line-height: 1.85;
   letter-spacing: 0.02em;
   color: #f4fbfe;
-  text-shadow: 0 2px 8px rgba(8, 46, 62, 0.5);
+  text-shadow: 0 2px 3px rgba(8, 46, 62, 0.55);
 }
 .phead-mark {
   display: inline-grid; place-items: center;
@@ -216,7 +218,7 @@
   border-radius: 20px;
   object-fit: cover;
   background: #fff;
-  box-shadow: 0 8px 18px rgba(8, 46, 62, 0.35);
+  box-shadow: 0 7px 1px rgba(8, 46, 62, 0.32);
 }
 .tile-icon {
   width: 44px; height: 44px; flex: none;
@@ -743,7 +745,7 @@
 
 .scroll-cue {
   position: absolute;
-  left: 50%; bottom: calc(var(--bar-h) + 10px + env(safe-area-inset-bottom));
+  left: 50%; bottom: calc(var(--bar-h, 0px) + 10px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: none;
   flex-direction: column; align-items: center; gap: 2px;
@@ -765,7 +767,6 @@
   flex: none;
   display: block;
   animation: gullBob 2.8s ease-in-out infinite;
-  filter: drop-shadow(0 3px 4px rgba(40, 60, 40, 0.18));
 }
 @keyframes gullBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
 .gull-wing { animation: gullFlap 0.42s ease-in-out infinite alternate; }
@@ -801,135 +802,6 @@
 @media (min-width: 720px) {
   .gsay-bubble { font-size: 15.5px; padding: 14px 22px; }
 }
-
-/* --- 島に着くまでの演出 --- */
-.arrive {
-  position: absolute;
-  inset: 0;
-  z-index: 7;
-  pointer-events: none;
-  overflow: hidden;
-}
-/* 空の光。だんだん目が慣れていく感じ */
-.arrive-flash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 90% at 50% 8%, #ffffff 0%, #dff4ff 42%, rgba(190, 232, 246, 0) 78%);
-  animation: arriveFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes arriveFlash {
-  0% { opacity: 1; }
-  55% { opacity: 0.5; }
-  100% { opacity: 0; }
-}
-/* カモメが手前を横切って、島へ降りていく */
-.arrive-gull {
-  position: absolute;
-  left: -14%;
-  top: 18%;
-  animation: arriveGull 2.8s cubic-bezier(0.3, 0, 0.4, 1) forwards;
-  filter: drop-shadow(0 8px 12px rgba(20, 60, 80, 0.22));
-}
-@keyframes arriveGull {
-  0%   { transform: translate(0, 0) scale(1.5) rotate(-6deg); opacity: 0; }
-  12%  { opacity: 1; }
-  55%  { transform: translate(52vw, 14vh) scale(1) rotate(3deg); opacity: 1; }
-  100% { transform: translate(104vw, 34vh) scale(0.6) rotate(8deg); opacity: 0; }
-}
-/* 着くまでは名札を出さない。島の形だけを見せる。 */
-.stage.is-arriving .labels,
-.stage.is-arriving .walk-hint,
-.stage.is-arriving .zoom-toggle {
-  animation: arriveUi 3s ease forwards;
-}
-@keyframes arriveUi {
-  0%, 52% { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .arrive { display: none; }
-  .stage.is-arriving .labels,
-  .stage.is-arriving .walk-hint,
-  .stage.is-arriving .zoom-toggle { animation: none; }
-}
-
-/* --- 住人のひとこと ---------------------------------------------------
-   島に住んでいるのは視聴者さん本人。だから吹き出しは
-   「近づく → 話しかける → 読み終わったら自分で閉じる」の順にする。
-   勝手に消えると、読みかけで消えていちばん困る。
-   --------------------------------------------------------------------- */
-
-/* --- スマホ: 島の下にまとめた操作バー --- */
-/* 島の上に9つの名札を置くと島が見えなくなるので、行き先はここに並べる。
-   浮いたボタンを island の上に散らさないことで、重なりも起きない。 */
-.stage { --bar-h: 0px; }
-@media (max-width: 639px) {
-  .stage { --bar-h: 68px; }
-}
-.island-bar {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 0;
-  height: calc(var(--bar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-left: 8px;
-  padding-right: 8px;
-  background: linear-gradient(rgba(10, 60, 80, 0) 0%, rgba(10, 60, 80, 0.34) 34%, rgba(10, 60, 80, 0.5) 100%);
-}
-.island-bar-scroll {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px 2px;
-
-}
-.island-bar-scroll::-webkit-scrollbar { display: none; }
-/* 右端が「切れている」ように見えないよう、ぼかして終わらせる */
-.island-bar-scroll {
-  padding-right: 14px;
-  mask-image: linear-gradient(90deg, #000 0 calc(100% - 26px), transparent 100%);
-}
-.bar-spot {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px 5px 6px;
-  background: linear-gradient(#fffdf6, #fff2d8);
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 999px;
-  box-shadow: 0 3px 0 var(--frame-deep);
-  font-size: 12.5px;
-  font-weight: 900;
-  white-space: nowrap;
-  color: var(--ink);
-}
-.bar-spot img {
-  width: 26px; height: 26px;
-  object-fit: contain;
-  object-position: center bottom;
-}
-.bar-spot.is-on { background: linear-gradient(#fff6cf, var(--gold)); }
-.bar-spot:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
-.bar-zoom {
-  flex: none;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: rgba(24, 62, 78, 0.82);
-  color: #fffdf6;
-  font-size: 12px;
-  font-weight: 900;
-  white-space: nowrap;
-  border: 2px solid rgba(255, 253, 246, 0.45);
-}
-.bar-zoom:active { transform: translateY(2px); }
 
 /* --- 国のページ: 行った街 --- */
 .cities { display: grid; gap: 9px; margin-top: 10px; }
