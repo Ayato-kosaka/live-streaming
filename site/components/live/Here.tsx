@@ -2,15 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { firebaseDb } from "@/lib/firebase";
+import { HERE_BEAT_MS, HERE_WRITE_MS, here, hereSpot } from "@/lib/here";
+import { dropHere, putHere } from "@/lib/hereRest";
 import { loadState } from "@/lib/liveStats";
-import {
-  HERE_BEAT_MS,
-  HERE_COL,
-  HERE_WRITE_MS,
-  here,
-  hereSpot,
-} from "@/lib/here";
 import { useAuth } from "@/lib/auth";
 
 /**
@@ -20,11 +14,17 @@ import { useAuth } from "@/lib/auth";
  * 島（`/`）にいるあいだは、その人が動かしているあやとの居場所をそのまま置く。
  * だから島を歩くと、他の人の画面でその絵が動く。
  *
+ * ## Firestore の SDK を落とさない
+ *
+ * 置くのは REST（`lib/hereRest.ts`）。`firebase/firestore` を取りにいくと
+ * それだけで 590KB。ここでやるのは2秒に1回、4つの値を置くだけなので、
+ * その塊は要らない。ルールは REST にも同じものが効く。
+ *
  * ## ログインしていない人には、何も起きない
  *
  * 置いてこられるのはログインした人だけなので、`user` が無いあいだは
- * firebase/firestore も `/state` も取りにいかない。島に来る人のほとんどは
- * ログインしないので、そこに代金を乗せない。
+ * `/state` も取りにいかない。島に来る人のほとんどはログインしないので、
+ * そこに代金を乗せない。
  *
  * ## 出したくない人は、出さない
  *
@@ -35,9 +35,9 @@ import { useAuth } from "@/lib/auth";
  * 自分の姿は、置いてこなくても自分の画面には出る（`HereFolks`）。
  */
 export default function Here() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const path = usePathname();
-  /* ページを移るたびに firestore を読み直したくないので、いまのページは ref で渡す。
+  /* ページを移るたびに名簿を読み直したくないので、いまのページは ref で渡す。
      置きにいくのは2秒に1回なので、切り替わりが1拍遅れて困ることはない。 */
   const pathRef = useRef(path);
   pathRef.current = path;
@@ -61,11 +61,8 @@ export default function Here() {
       const st = await loadState();
       // 出してよいと言った人だけ。載っていなければ、ここで終わり
       if (stop || !st?.residents?.some((r) => r.uid === uid)) return;
-      const [db, fs] = await Promise.all([firebaseDb(), import("firebase/firestore")]);
-      if (stop) return;
-      const ref = fs.doc(db, HERE_COL, uid);
 
-      const put = () => {
+      const put = async () => {
         /* 隠れているあいだは置かない。**タイマーは隠れても止まらない**
            （Chrome は1分に1回まで遅くするだけ）。ここで止めないと、
            裏に回したタブが1分おきに置き直して、その人はずっと島にいることになる。
@@ -82,33 +79,33 @@ export default function Here() {
         lastX = x;
         lastY = y;
         lastAt = now;
+        // 鍵はここで取る。取れているあいだは通信が起きない（手元で使い回される）
+        const t = await token();
+        if (stop || !t) return;
         // 入るのはこの4つだけ。名前もアイコンも入れない（ルールでも弾いてある）
-        fs.setDoc(ref, {at, x, y, seenAt: fs.serverTimestamp()}).catch(() => {
-          /* 圏外や、ログインが切れたとき。次の2秒でまた試す */
-        });
+        await putHere(uid, at, x, y, t);
       };
 
-      const gone = () => {
+      const gone = async () => {
         lastX = NaN;
         lastY = NaN;
         lastAt = 0;
-        fs.deleteDoc(ref).catch(() => {
-          /* 消せなくても、60秒で読む側が無視する */
-        });
+        const t = await token();
+        if (t) await dropHere(uid, t);
       };
 
       // ページを離れたら消す。閉じるときの書き込みは届かないこともあるが、
       // 届かなくても 60秒で消える（読む側が古いものを出さない）
-      leave = () => gone();
-      erase = () => gone();
+      leave = () => void gone();
+      erase = () => void gone();
       onVis = () => {
-        if (document.visibilityState === "hidden") gone();
-        else put();
+        if (document.visibilityState === "hidden") void gone();
+        else void put();
       };
       window.addEventListener("pagehide", leave);
       document.addEventListener("visibilitychange", onVis);
-      timer = window.setInterval(put, HERE_WRITE_MS);
-      put();
+      timer = window.setInterval(() => void put(), HERE_WRITE_MS);
+      void put();
     })();
 
     return () => {
@@ -119,6 +116,8 @@ export default function Here() {
       if (leave) window.removeEventListener("pagehide", leave);
       if (onVis) document.removeEventListener("visibilitychange", onVis);
     };
+    // token は useCallback で固定されているが、ここが組み直る理由にはしない
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
   return null;

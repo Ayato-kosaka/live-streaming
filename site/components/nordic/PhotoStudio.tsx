@@ -62,7 +62,8 @@ export default function PhotoStudio({
 
   const [chosen, setChosen] = useState<string | null>(null);
   const [out, setOut] = useState<{ url: string; blob: Blob } | null>(null);
-  const [failed, setFailed] = useState(false);
+  /** 焼けなかった理由。"photo" は写真そのもの、"chr" はキャラクターの絵 */
+  const [failed, setFailed] = useState<null | "photo" | "chr">(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export default function PhotoStudio({
     let gone = false;
     let url = "";
     setOut(null);
-    setFailed(false);
+    setFailed(null);
     (async () => {
       const [shot, chr] = await Promise.all([
         loadImage(photo.url),
@@ -87,12 +88,20 @@ export default function PhotoStudio({
       ]);
       if (gone) return;
       if (!shot) {
-        setFailed(true);
+        setFailed("photo");
+        return;
+      }
+      /* **選んだのに入っていない、を黙って通さない。**
+         キャラクターの絵が読めなかったとき、そのまま焼くと素の写真が出る。
+         見た人は「入れたつもり」で持って帰ることになるので、ここで止める。
+         写真そのものが読めなかったときと分けて言う（直しかたが違う）。 */
+      if (chosen && !chr) {
+        setFailed("chr");
         return;
       }
       const blob = await toJpeg(compose(shot, chr));
       if (gone || !blob) {
-        if (!gone) setFailed(true);
+        if (!gone) setFailed("photo");
         return;
       }
       url = URL.createObjectURL(blob);
@@ -144,6 +153,14 @@ export default function PhotoStudio({
             /* 出ているこの絵が、そのまま焼き上がりの1枚。
                長押しで保存できるのは、ここが合成後の絵だから。 */
             <img src={out.url} alt={photo.note || "北欧旅の写真"} />
+          ) : failed === "chr" ? (
+            /* 焼けていない1枚を出しておくと、長押しで持って帰れてしまう。
+               ここは絵を出さずに、次にできることだけ言う。 */
+            <p className="nstudio-off">
+              このキャラクターの絵がいま読めません。
+              <br />
+              「入れない」か、ほかの人にしてみてください。
+            </p>
           ) : failed ? (
             <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
           ) : (
@@ -206,7 +223,8 @@ export default function PhotoStudio({
             </a>
           )}
         </div>
-        <p className="nstudio-tip">写真を長押ししても保存できます。</p>
+        {/* 焼けていないときは言わない。長押しする絵がそこに無い */}
+        {out && <p className="nstudio-tip">写真を長押ししても保存できます。</p>}
       </div>
     </div>
   );
