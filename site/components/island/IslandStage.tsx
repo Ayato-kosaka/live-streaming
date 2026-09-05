@@ -639,13 +639,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const g = villagerRefs.current[i];
         if (g && !off) {
           const pose = villagerPose(v, t);
-          // 向きを絵に出す。立ち話は「向かい合っている」ことでしか読めないので、
-          // 反転が無いと、2人が並んで別々の方を見ているようにしか見えない。
-          // 住人の絵はあやとと同じで左を向いているので、
-          // 右を向かせたい（facing が 1）ときに左右を反転する。
+          // 左右は反転しない。
+          //
+          // 本番の住人の絵を実際に取ってきて見たら、横向きではなく**正面向き**の
+          // マスコットだった（本番の lh3.googleusercontent.com から4人ぶん確認）。
+          // 正面の絵を反転しても「向かい合っている」ようには見えないうえ、
+          // 持ち物（お玉・ウクレレ・花）だけが裏返る。
+          // これは視聴者さんが投げ銭で作った絵なので、勝手に裏返さない。
+          //
+          // 立ち話が向かい合って見えるかどうかは、位置と間で表す。
           g.setAttribute(
             "transform",
-            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)}) scale(${-v.facing} 1)`,
+            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
           );
         }
         const w = whoRefs.current[i];

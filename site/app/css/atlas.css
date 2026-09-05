@@ -375,7 +375,10 @@
 .atrip-card {
   display: flex;
   gap: 12px;
-  align-items: center;
+  /* 旗は名前の横に置く。真ん中で揃えると、名前が2行になった国
+     （アゼルバイジャン、アラブ首長国連邦）で旗が日付の隣まで下りて、
+     どの国の旗なのか見た目でつながらなくなる。 */
+  align-items: flex-start;
   width: 100%;
   padding: 12px 13px;
   margin: 8px 0 14px;
@@ -386,7 +389,10 @@
 }
 .atrip-card:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--frame-dark), var(--shadow-2); }
 .atrip-card:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
-.atrip-flag { flex: none; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
+/* 進む先の矢印だけは札の高さの真ん中に。旗と同じ上そろえにすると、
+   国の名前の右に矢印が並んで、名前の一部に見える。 */
+.atrip-card > .tile-go { align-self: center; }
+.atrip-flag { flex: none; margin-top: 3px; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
 .atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .atrip-name b { font-size: var(--fs-h3); font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }

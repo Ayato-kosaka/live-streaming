@@ -295,6 +295,49 @@
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
 .bd-write { position: relative; }
+
+/* 島で今夜のおたずねを押してきた人に出る、渡ってきた先の受け口。
+   板に留めた紙1枚。押すのは中のボタンだけなので、紙そのものは平ら。 */
+.bd-bridge {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-0);
+  background: linear-gradient(var(--paper), var(--paper-2));
+}
+.bd-bridge > b { font-size: var(--fs-body); font-weight: 900; line-height: var(--lh-head); }
+/* 問いのほうは添え物。押した札が主で、何を聞かれたかは思い出せればよい */
+.bd-bridge > i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: var(--lh-note);
+}
+.bd-bridge-go {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 40%, var(--paper)), var(--gold));
+  /* 押せる合図は厚み1種類だけ（`docs/island-design.md` 3章）。48px の押しどころで 6px */
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55), 0 6px 0 var(--frame-deep);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.bd-bridge-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
+/* 入力欄のほうへ下りていく合図なので、山形を下に向ける */
+.bd-bridge-go .ic { transform: rotate(90deg); }
 .bd-count {
   display: inline-flex;
   align-items: baseline;
@@ -593,6 +636,47 @@
 /* 名前を出していない人のマスは、名札の行そのものを出さない。
    空の行を22個並べると、そこだけ抜けて見える */
 .rz-card.is-blank .rz-days { margin-top: var(--sp-2); }
+
+/* 今日、島に出ている人。図鑑を名簿で終わらせないための1行。
+   島にいない人の欄には何も出さないので、印が付くのは日替わりの12人だけ。
+   紙の上の事実なので平ら。押せるのは「島へ会いに行く」の1つだけ。 */
+.rz-here {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: var(--sp-2);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pick) 12%, transparent);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--pap-ink);
+  text-align: center;
+}
+.rz-here .ic { flex: none; color: var(--pick); }
+.rz-star .rz-here { margin-top: var(--sp-3); }
+/* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く */
+.rz-today {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: var(--lh-note);
+  color: var(--pap-ink);
+}
+.rz-today > b { font-weight: 900; }
+.rz-today > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  min-height: 32px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--frame-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* =========================================================
    9. いまのポスト
