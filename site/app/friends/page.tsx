@@ -30,12 +30,16 @@ export default function FriendsPage() {
   const says = [0, 6, 13].map((i) => VOICES[i]).filter(Boolean);
 
   return (
-    <PageShell crumbs={[{ label: "愉快な仲間達" }]}>
+    <PageShell crumbs={[{ label: "仲間のテント" }]}>
+      {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
+          パンくずが「仲間のテント」なので、h1 もそれに合わせる。
+          「愉快な仲間達」は、そのテントに集まっている人たちの呼び名なので1行下へ。
+          カモメは遊び方のある面だけに出す決まりなので、ここには出さない
+          （`docs/island-ux.md` 5.2）。 */}
       <PageHead
         mark={<FriendsMark />}
-        title="愉快な仲間達"
-        lead="毎晩22時に集まってくる人たち。名前は出しませんが、ちゃんとここにいます。"
-        say="自分のキャラクターも作れるよ。作った絵は、そのまま島を歩くんだ。"
+        title="仲間のテント"
+        lead="毎晩22時に集まってくる、愉快な仲間達。名前は出しませんが、ちゃんとここにいます。"
       />
 
       <div className="pap-mat">

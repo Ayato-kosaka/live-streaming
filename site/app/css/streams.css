@@ -65,8 +65,8 @@
   --zk-ink-2: var(--ink-2);
 
   position: relative;
-  margin-bottom: 20px;
-  padding: 9px;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-2);
   border-radius: var(--r-2);
   background: var(--zk-out);
   color: var(--zk-ink);
@@ -74,7 +74,7 @@
      紙を持ち上げるのではなく「そこに敷いてある」ように、ごく浅い影だけ。 */
   box-shadow: 0 3px 0 rgba(120, 108, 60, 0.28);
 }
-@media (min-width: 720px) { .zk { padding: 12px; } }
+@media (min-width: 720px) { .zk { padding: var(--sp-3); } }
 
 /* 紙。無地にしない。明るさのムラをラジアルで重ねて作る（画像を足さない） */
 .zk-sheet {
@@ -93,10 +93,10 @@
 }
 
 /* 紙の中の区切り。影ではなく1本の罫線 */
-.zk-zone { padding: 16px 14px 18px; }
-@media (min-width: 720px) { .zk-zone { padding: 20px 22px 22px; } }
+.zk-zone { padding: var(--sp-4) var(--sp-3) var(--sp-4); }
+@media (min-width: 720px) { .zk-zone { padding: var(--sp-4) var(--sp-5) var(--sp-5); } }
 .zk-zone + .zk-zone { border-top: 1px solid var(--zk-rule); }
-.zk-zone.is-tight { padding-top: 12px; padding-bottom: 12px; }
+.zk-zone.is-tight { padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
 /* 罫線ぎりぎりまで格子を敷きたいところ（カタログ・記録の一覧） */
 .zk-zone.is-flush { padding: 0; }
 
@@ -104,7 +104,7 @@
 .zk-h {
   display: inline;
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: 0.07em;
   line-height: 2;
@@ -112,12 +112,12 @@
   background: linear-gradient(180deg, transparent 14%, var(--zk-mark) 14%, var(--zk-mark) 90%, transparent 90%);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  padding: 0 7px;
+  padding: 0 var(--sp-2);
 }
-@media (min-width: 720px) { .zk-h { font-size: 16.5px; } }
+@media (min-width: 720px) { .zk-h { font-size: var(--fs-h3); } }
 .zk-hr {
-  display: flex; align-items: baseline; flex-wrap: wrap; gap: 9px;
-  margin: 0 0 12px;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
 }
 /* 見出しの左に置く小さいイラスト。字と同じ行に揃える */
 .zk-hi { flex: none; align-self: center; }
@@ -126,12 +126,12 @@
 
 /* 見出しの右に添える数。帯の中に入れると読みにくいので外に出す */
 .zk-hn {
-  font-size: 11px; font-weight: 900; letter-spacing: 0.08em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.08em;
   color: var(--zk-ink-2);
 }
 .zk-lead {
-  margin: 11px 0 0;
-  font-size: 12.5px;
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.85;
   color: var(--zk-ink-2);
@@ -142,10 +142,10 @@
 .zk-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-2);
   border-radius: 5px;
-  padding: 4px 9px;
-  font-size: 11px;
+  padding: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #40390c;
@@ -153,7 +153,7 @@
 }
 .zk-chip.is-soft { background: var(--zk-chip-soft); color: var(--zk-ink-2); }
 .zk-chip .flag { flex: none; border-radius: 2px; }
-.zk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.zk-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 
 /* 押して選ぶチップ。塗りは全部同じで、選んだものだけ細い枠が付く */
 /* 絞り込みのチップは押せる。押せる合図は厚みだけと決まっているので
@@ -162,11 +162,11 @@
 .zk-pick {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-2);
   min-height: 48px;
   border-radius: var(--r-pill);
-  padding: 4px 14px;
-  font-size: 12px;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: 0.03em;
   color: var(--ink);
@@ -179,14 +179,14 @@
 .zk-pick:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-deep); }
 /* 選んでいるものは塗りを変えず、朱の枠だけ（紙の型と同じ示しかた） */
 .zk-pick.is-on { border-color: var(--zk-pick); }
-.zk-pick em { font-style: normal; font-size: 10.5px; font-weight: 900; opacity: 0.62; }
+.zk-pick em { font-style: normal; font-size: var(--fs-min); font-weight: 900; opacity: 0.62; }
 .zk-pick .flag { flex: none; border-radius: 2px; }
-.zk-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.zk-picks { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 /* 何の絞り込みかを言う小さい見出し。行の先頭に置く */
 .zk-picks-t {
   flex: none;
   align-self: center;
-  font-size: 10.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.12em;
   color: var(--zk-ink-2);
@@ -202,7 +202,7 @@
 }
 @media (min-width: 640px) { .zk-rec { grid-template-columns: repeat(4, 1fr); } }
 .zk-rec > div {
-  padding: 11px 10px 12px;
+  padding: var(--sp-3) var(--sp-2) var(--sp-3);
   border-right: 1px solid var(--zk-rule-soft);
   border-bottom: 1px solid var(--zk-rule-soft);
   text-align: center;
@@ -216,21 +216,21 @@
   color: var(--zk-ink);
 }
 .zk-rec b i { font-style: normal; font-size: 0.5em; margin-left: 2px; }
-.zk-rec span { display: block; margin-top: 5px; font-size: 11.5px; font-weight: 900; color: var(--zk-ink); }
-.zk-rec em { display: block; margin-top: 2px; font-style: normal; font-size: 10px; font-weight: 800; color: var(--zk-ink-2); line-height: 1.5; }
+.zk-rec span { display: block; margin-top: var(--sp-2); font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink); }
+.zk-rec em { display: block; margin-top: 2px; font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--zk-ink-2); line-height: 1.5; }
 
 /* 主役を大きく出す面。図鑑の詳細は、絵が縦の半分以上を占めている。
    まわりを大きく空けるほど「1点もの」に見える。 */
 .zk-hero { text-align: center; }
 .zk-hero-no {
   display: block;
-  font-size: 11px; font-weight: 900; letter-spacing: 0.16em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.16em;
   color: var(--zk-ink-2);
 }
 .zk-hero-art {
   position: relative;
   height: 168px;
-  margin-top: 14px;
+  margin-top: var(--sp-3);
   display: flex; align-items: flex-end; justify-content: center;
 }
 @media (min-width: 720px) { .zk-hero-art { height: 230px; } }
@@ -250,25 +250,25 @@
   object-fit: contain;
   filter: drop-shadow(6px 7px 0 rgba(120, 140, 112, 0.22));
 }
-.zk-hero .zk-tape { margin-top: 18px; }
+.zk-hero .zk-tape { margin-top: var(--sp-4); }
 /* 題名の札を h1 として置く。見出しの既定の余白を落として、札の位置だけで決める */
 .zk-tape-h { margin: 0; font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
 .zk-hero-note {
-  margin: 16px auto 0;
+  margin: var(--sp-4) auto 0;
   max-width: 34em;
-  font-size: 13px; font-weight: 800; line-height: 1.95;
+  font-size: var(--fs-body); font-weight: 800; line-height: 1.95;
   color: var(--zk-ink-2);
 }
-.zk-hero-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 15px; }
+.zk-hero-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; margin-top: var(--sp-4); }
 
 /* 紙の上の「読む」。板のボタンにはしない。
    紙の型では、押せるものの合図はオレンジ赤の細枠1種類だけ。 */
 .zk-open {
-  display: inline-flex; align-items: center; gap: 7px;
-  margin-top: 22px;
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  margin-top: var(--sp-5);
   border-radius: 6px;
-  padding: 9px 18px;
-  font-size: 13px; font-weight: 900; letter-spacing: 0.06em;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.06em;
   color: #40390c;
   background: var(--zk-chip);
   border: 2.5px solid transparent;
@@ -286,7 +286,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   display: inline-block;
   position: relative;
   margin: 0;
-  padding: 7px 20px 8px;
+  padding: var(--sp-2) var(--sp-4) var(--sp-2);
   font-size: clamp(17px, 5.4vw, 25px);
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -326,8 +326,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .zk .folds > .fold + .fold,
 .zk .fold + .fold { border-top: 1px solid var(--zk-rule-soft); }
 .zk .folds { border-top: 1px solid var(--zk-rule-soft); border-bottom: 1px solid var(--zk-rule-soft); }
-.zk .fold > summary { padding: 12px 4px; }
-.zk .fold-body { padding: 10px 4px 18px; }
+.zk .fold > summary { padding: var(--sp-3) var(--sp-1); }
+.zk .fold-body { padding: var(--sp-2) var(--sp-1) var(--sp-4); }
 
 /* =========================================================
    1週間の回りかた（配信やぐら）
@@ -338,18 +338,18 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 
 .wk {
   border-radius: var(--r-2);
-  padding: 14px 13px 16px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
   box-shadow: inset 0 3px 8px rgba(120, 84, 40, 0.12);
 }
-@media (min-width: 720px) { .wk { padding: 18px 20px 20px; } }
+@media (min-width: 720px) { .wk { padding: var(--sp-4) var(--sp-4) var(--sp-4); } }
 .wk-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: var(--sp-1);
   text-align: center;
 }
 .wk-days > span {
-  font-size: 11px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
   color: var(--ink-3);
@@ -358,13 +358,13 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 /* 土日だけ色を変える。配信は毎日あるので「休み」ではなく、目印として */
 .wk-days > span.is-end { color: var(--accent); }
 
-.wk-rows { display: grid; gap: 11px; margin-top: 11px; }
-.wk-row { display: grid; gap: 5px; }
-.wk-tag { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.wk-rows { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
+.wk-row { display: grid; gap: var(--sp-2); }
+.wk-tag { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .wk-tag img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
-.wk-tag b { font-size: 12.5px; font-weight: 900; letter-spacing: 0.02em; }
-.wk-tag i { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
-.wk-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.wk-tag b { font-size: var(--fs-note); font-weight: 900; letter-spacing: 0.02em; }
+.wk-tag i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
+.wk-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-1); }
 .wk-track > i {
   height: 17px;
   border-radius: 6px;
@@ -381,29 +381,29 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 }
 
 /* 曜日に貼りつかないもの（天気しだい・月末）は、帯ではなく札で出す */
-.wk-free { display: grid; gap: 7px; margin-top: 13px; }
+.wk-free { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
 @media (min-width: 560px) { .wk-free { grid-template-columns: 1fr 1fr; } }
 .wk-free > span {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
   border-radius: 13px;
-  padding: 8px 12px;
-  font-size: 12.5px;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-note);
   font-weight: 900;
   background: color-mix(in srgb, var(--ty) 20%, var(--paper));
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ty) 52%, var(--paper));
 }
 .wk-free img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
-.wk-free em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
-.wk-note { margin: 12px 0 0; font-size: 11.5px; font-weight: 800; color: var(--ink-3); }
+.wk-free em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); margin-left: auto; flex: none; }
+.wk-note { margin: var(--sp-3) 0 0; font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); }
 
 /* =========================================================
    配信の型（配信やぐら）— ここは板の型
    5つの入口が並ぶ面なので、押せる板のままにする。
    ========================================================= */
 
-.tys { display: grid; gap: 16px; }
+.tys { display: grid; gap: var(--sp-4); }
 @media (min-width: 800px) { .tys { grid-template-columns: 1fr 1fr; } }
 /* いちばん本数の多い型だけ横幅いっぱいにして、5枚が均等に並ぶのを崩す */
 @media (min-width: 800px) { .tys > .ty.is-wide { grid-column: 1 / -1; } }
@@ -425,8 +425,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .ty-roof {
   display: flex;
   align-items: flex-end;
-  gap: 11px;
-  padding: 13px 15px 11px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
   background: linear-gradient(180deg, color-mix(in srgb, var(--ty) 82%, #ffffff) 0%, var(--ty) 100%);
   box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--ty) 62%, var(--ink));
 }
@@ -436,9 +436,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   object-fit: contain; object-position: center bottom;
   filter: drop-shadow(3px 4px 0 rgba(90, 70, 40, 0.2));
 }
-.ty-name { display: grid; gap: 4px; min-width: 0; flex: 1; padding-bottom: 3px; }
+.ty-name { display: grid; gap: var(--sp-1); min-width: 0; flex: 1; padding-bottom: 3px; }
 .ty-name b {
-  font-size: 16.5px;
+  font-size: var(--fs-h3);
   font-weight: 900;
   letter-spacing: 0.045em;
   line-height: 1.3;
@@ -446,30 +446,30 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   text-shadow: 0 1.5px 0 rgba(255, 255, 255, 0.42);
 }
 .ty-when {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: var(--sp-2);
   width: fit-content;
   border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 10.5px; font-weight: 900; letter-spacing: 0.05em;
+  padding: 3px var(--sp-2);
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.05em;
   color: #4a3419;
   background: rgba(255, 255, 255, 0.62);
 }
-.ty-in { padding: 14px 16px 16px; }
-@media (min-width: 720px) { .ty-in { padding: 16px 20px 18px; } }
+.ty-in { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+@media (min-width: 720px) { .ty-in { padding: var(--sp-4) var(--sp-4) var(--sp-4); } }
 .ty-lead {
-  margin: 0 0 12px;
-  font-size: 13.5px; font-weight: 800; line-height: 1.85;
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body); font-weight: 800; line-height: 1.85;
   color: var(--ink-2);
 }
 
 /* よくある流れ。丸数字ではなく、絵と札で「順番」を出す */
-.beat { display: grid; gap: 7px; margin: 0 0 13px; padding: 0; list-style: none; }
-@media (min-width: 520px) { .beat { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+.beat { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: 0; list-style: none; }
+@media (min-width: 520px) { .beat { grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); } }
 .beat > li {
   position: relative;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: var(--sp-2);
   border-radius: 14px;
-  padding: 8px 11px;
+  padding: var(--sp-2) var(--sp-3);
   background: color-mix(in srgb, var(--ty) 15%, var(--paper-2));
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ty) 34%, var(--paper));
 }
@@ -478,11 +478,11 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   display: grid; place-items: center;
   width: 21px; height: 21px;
   border-radius: 50%;
-  font-style: normal; font-size: 11.5px; font-weight: 900;
+  font-style: normal; font-size: var(--fs-min); font-weight: 900;
   color: #fffdf6;
   background: color-mix(in srgb, var(--ty) 70%, var(--ink));
 }
-.beat b { font-size: 12.5px; font-weight: 900; line-height: 1.45; letter-spacing: 0.01em; }
+.beat b { font-size: var(--fs-note); font-weight: 900; line-height: 1.45; letter-spacing: 0.01em; }
 /* 横に並ぶときだけ、札と札のあいだに進む向きの三角を置く */
 @media (min-width: 520px) {
   .beat > li + li::before {
@@ -497,22 +497,22 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 
 /* 型ごとの数字。1枚に1つだけ */
 .ty-num {
-  display: flex; align-items: baseline; gap: 8px;
+  display: flex; align-items: baseline; gap: var(--sp-2);
   border-radius: 13px;
-  padding: 9px 13px;
-  margin-bottom: 12px;
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
   background: color-mix(in srgb, var(--ty) 13%, var(--paper-2));
 }
 .ty-num b { font-size: 21px; font-weight: 900; color: color-mix(in srgb, var(--ty) 66%, var(--ink)); letter-spacing: 0.01em; }
-.ty-num i { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+.ty-num i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 
 /* 「はいる」ボタン。カードの中でいちばん押したいもの */
 .ty-go {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
   min-height: 48px;
   border-radius: 999px;
-  padding: 0 20px;
-  font-size: 14px; font-weight: 900; letter-spacing: 0.05em;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.05em;
   color: #402c14;
   background: linear-gradient(180deg, color-mix(in srgb, var(--ty) 62%, #ffffff) 0%, var(--ty) 100%);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 5px 0 color-mix(in srgb, var(--ty) 58%, var(--ink));
@@ -522,20 +522,20 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .ty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--ty) 58%, var(--ink)); }
 
 /* カードの中の折りたたみは、型の色を左の帯に使う */
-.ty .fold { border-color: color-mix(in srgb, var(--ty) 62%, var(--ink-3)); box-shadow: 0 3px 0 color-mix(in srgb, var(--ty) 50%, var(--ink)); margin-bottom: 12px; }
+.ty .fold { border-color: color-mix(in srgb, var(--ty) 62%, var(--ink-3)); box-shadow: 0 3px 0 color-mix(in srgb, var(--ty) 50%, var(--ink)); margin-bottom: var(--sp-3); }
 .ty .fold > summary { border-left-color: var(--ty); }
 
 /* =========================================================
    配信カード（共通）
    ========================================================= */
 
-.vids { display: grid; gap: 11px; }
+.vids { display: grid; gap: var(--sp-3); }
 @media (min-width: 620px) { .vids { grid-template-columns: 1fr 1fr; } }
 .vids.is-one { grid-template-columns: 1fr; }
 .vid {
-  display: flex; gap: 11px;
+  display: flex; gap: var(--sp-3);
   border-radius: var(--r-2);
-  padding: 9px;
+  padding: var(--sp-2);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid color-mix(in srgb, var(--ty, var(--frame)) 62%, var(--frame));
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)), 0 9px 2px rgba(8, 46, 62, 0.14);
@@ -568,16 +568,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   box-shadow: 0 2px 0 rgba(60, 40, 14, 0.28);
   padding-left: 2px;
 }
-.vid-b { display: flex; flex-direction: column; gap: 5px; min-width: 0; justify-content: center; flex: 1; }
-.vid-m { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
+.vid-b { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; justify-content: center; flex: 1; }
+.vid-m { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); }
 .vid-m em {
   font-style: normal;
   border-radius: 6px;
-  padding: 2px 7px;
+  padding: 2px var(--sp-2);
   color: #40290f;
   background: color-mix(in srgb, var(--ty, var(--gold)) 42%, var(--paper-2));
 }
-.vid-b b { font-size: 13px; font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
+.vid-b b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
 /* 何本目か。長い企画で「順番」を見せるときだけ付ける */
 .vid-no {
   position: absolute; top: -8px; left: -8px;
@@ -585,7 +585,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   display: grid; place-items: center;
   width: 26px; height: 26px;
   border-radius: 50%;
-  font-size: 12px; font-weight: 900;
+  font-size: var(--fs-note); font-weight: 900;
   color: #fffdf6;
   background: color-mix(in srgb, var(--ty, var(--frame-deep)) 72%, var(--ink));
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
@@ -612,7 +612,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 
 /* 絞り込み。押して選ぶチップだけを並べる。
    国が6つ・種類が7つあるので、幅の狭い画面では1行を横に流す。 */
-.kt-tools { display: grid; gap: 9px; }
+.kt-tools { display: grid; gap: var(--sp-2); }
 .kt-tools .zk-picks {
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -642,19 +642,19 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 /* いま何品出ているか。絞り込むと減る数なので、チップの列の外に出す */
 .kt-count {
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
   color: var(--zk-ink-2);
 }
-.kt-count b { font-size: 15px; color: var(--zk-ink); }
+.kt-count b { font-size: var(--fs-body); color: var(--zk-ink); }
 /* 絞り込みを外す。押せるので、他のチップと同じ形にそろえる */
 .kt-clear {
   margin-left: var(--sp-3);
   min-height: 38px;
   border-radius: var(--r-pill);
   padding: 0 var(--sp-3);
-  font-size: 11.5px; font-weight: 900; letter-spacing: 0.04em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.04em;
   color: var(--ink);
   background: linear-gradient(var(--paper), var(--paper-2));
   border: 2px solid var(--zk-pick);
@@ -674,13 +674,13 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 }
 @media (min-width: 560px) { .kt-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 860px) { .kt-grid { grid-template-columns: repeat(4, 1fr); } }
-.kt-none { margin: 26px 0; text-align: center; font-size: 13px; font-weight: 800; color: var(--zk-ink-2); }
+.kt-none { margin: var(--sp-5) 0; text-align: center; font-size: var(--fs-body); font-weight: 800; color: var(--zk-ink-2); }
 
 /* 1品のマス */
 .dish {
   position: relative;
   display: flex; flex-direction: column;
-  padding: 12px 10px 13px;
+  padding: var(--sp-3) var(--sp-2) var(--sp-3);
   border-right: 1px solid var(--zk-rule-soft);
   border-bottom: 1px solid var(--zk-rule-soft);
   transition: background 0.13s;
@@ -701,7 +701,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 /* 何品目か。図鑑の番号 */
 .dish-no {
   position: absolute; top: 9px; left: 10px;
-  font-size: 10px; font-weight: 900; letter-spacing: 0.1em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
   color: var(--zk-ink-2);
   opacity: 0.72;
 }
@@ -709,8 +709,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .dish-days {
   position: absolute; top: 7px; right: 8px;
   border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 9.5px; font-weight: 900; letter-spacing: 0.03em;
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.03em;
   color: #40390c;
   background: var(--zk-chip);
 }
@@ -724,7 +724,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   /* 図鑑の面は絵が縦の半分以上を占めている（`docs/ac-reference.md` の 7章）。
      料理の絵がマスの半分を切ると、ただの一覧に戻る */
   height: 112px;
-  margin: 16px 0 11px;
+  margin: var(--sp-4) 0 var(--sp-3);
   /* grid だと行が中身の高さに広がって、縦長の料理（グラスなど）がマスから
      はみ出す。flex の definite height なら max-height: 100% がちゃんと効く。 */
   display: flex;
@@ -755,19 +755,19 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   /* 2行ぶん先に空けておく。1行の品と2行の品が混ざっても、
      下の「どこで・いつ」の行が上下にがたつかない。 */
   min-height: 3em;
-  font-size: 12.5px; font-weight: 900; line-height: 1.5; letter-spacing: 0.01em;
+  font-size: var(--fs-note); font-weight: 900; line-height: 1.5; letter-spacing: 0.01em;
   color: var(--zk-ink);
 }
-@media (min-width: 720px) { .dish-name { font-size: 13.5px; } }
+@media (min-width: 720px) { .dish-name { font-size: var(--fs-body); } }
 .dish-m {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2);
   margin-top: auto;
-  padding-top: 8px;
-  font-size: 10px; font-weight: 900;
+  padding-top: var(--sp-2);
+  font-size: var(--fs-min); font-weight: 900;
   color: var(--zk-ink-2);
 }
 .dish-m .flag { flex: none; border-radius: 2px; }
-.dish-m .zk-chip { padding: 2px 6px; font-size: 9.5px; }
+.dish-m .zk-chip { padding: 2px var(--sp-2); font-size: var(--fs-min); }
 
 /* 横に流す小さい棚（同じ国・同じ種類の品） */
 .kt-near { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-left: 1px solid var(--zk-rule-soft); }
@@ -775,10 +775,10 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .kt-near > a { flex: none; width: 132px; border-bottom: 0; }
 
 /* 国ごとの内わけ。棒の長さで多い少ないを見せる */
-.kt-by { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
-.kt-by > li { display: flex; align-items: center; gap: 10px; }
+.kt-by { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kt-by > li { display: flex; align-items: center; gap: var(--sp-2); }
 .kt-by .flag { flex: none; border-radius: 2px; }
-.kt-by b { flex: none; font-size: 12px; font-weight: 900; width: 6.5em; color: var(--zk-ink); }
+.kt-by b { flex: none; font-size: var(--fs-note); font-weight: 900; width: 6.5em; color: var(--zk-ink); }
 .kt-by span {
   flex: 1;
   height: 15px;
@@ -787,31 +787,31 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   overflow: hidden;
 }
 .kt-by span i { display: block; height: 100%; background: var(--zk-chip); }
-.kt-by em { flex: none; font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--zk-ink-2); width: 3.2em; text-align: right; }
+.kt-by em { flex: none; font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); width: 3.2em; text-align: right; }
 
 /* 月ごとの本数。押した月だけスタンプが濃くなる台紙 */
 .kt-months {
   display: flex; align-items: flex-end; gap: 3px;
   overflow-x: auto;
-  padding: 8px 2px 4px;
+  padding: var(--sp-2) 2px var(--sp-1);
   scrollbar-width: none;
 }
 .kt-months::-webkit-scrollbar { display: none; }
-.kt-mo { display: grid; justify-items: center; gap: 5px; flex: none; width: 26px; }
+.kt-mo { display: grid; justify-items: center; gap: var(--sp-2); flex: none; width: 26px; }
 .kt-mo span {
   width: 14px;
   border-radius: 3px 3px 1px 1px;
   background: var(--zk-chip);
 }
 .kt-mo span.is-zero { background: rgba(150, 140, 86, 0.2); }
-.kt-mo i { font-style: normal; font-size: 9px; font-weight: 900; color: var(--zk-ink-2); }
-.kt-mo em { font-style: normal; font-size: 9.5px; font-weight: 900; color: var(--zk-ink); }
+.kt-mo i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); }
+.kt-mo em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink); }
 
 /* =========================================================
    3日間の道のり（料理1品 / 配信の型）
    ========================================================= */
 
-.rt { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 14px; }
+.rt { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: var(--sp-3); }
 /* 道。マスとマスをつなぐ点線を、左端に1本通す */
 .rt::before {
   content: "";
@@ -821,7 +821,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-left: 3px dotted color-mix(in srgb, var(--frame) 62%, var(--paper));
 }
 @media (min-width: 720px) { .rt::before { left: 31px; } }
-.rt > li { position: relative; display: flex; gap: 12px; align-items: flex-start; }
+.rt > li { position: relative; display: flex; gap: var(--sp-3); align-items: flex-start; }
 /* マス。丸い台の上に、その日の絵を置く */
 .rt-stop {
   position: relative;
@@ -840,16 +840,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   display: grid; place-items: center;
   width: 24px; height: 24px;
   border-radius: 50%;
-  font-size: 12px; font-weight: 900;
+  font-size: var(--fs-note); font-weight: 900;
   color: #fffdf6;
   background: var(--frame-deep);
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
-.rt-body { flex: 1; min-width: 0; display: grid; gap: 7px; padding-top: 2px; }
-.rt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
-.rt-head b { font-size: 15px; font-weight: 900; letter-spacing: 0.03em; }
-.rt-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
-.rt-head .sub { font-size: 11px; font-weight: 800; color: var(--ink-3); }
+.rt-body { flex: 1; min-width: 0; display: grid; gap: var(--sp-2); padding-top: 2px; }
+.rt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); }
+.rt-head b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.03em; }
+.rt-head time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); }
+.rt-head .sub { font-size: var(--fs-min); font-weight: 800; color: var(--ink-3); }
 
 /* 紙の上の道のり。丸い台から厚みを抜いて、印刷した図に見せる */
 .zk .rt::before { border-left-color: var(--zk-rule-soft); }
@@ -861,7 +861,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .zk .rt-head b { color: var(--zk-ink); }
 .zk .rt-head time,
 .zk .rt-head .sub { color: var(--zk-ink-2); }
-.zk .rt-body p { margin: 0; font-size: 12.5px; font-weight: 800; line-height: 1.85; color: var(--zk-ink-2); }
+.zk .rt-body p { margin: 0; font-size: var(--fs-note); font-weight: 800; line-height: 1.85; color: var(--zk-ink-2); }
 
 /* =========================================================
    伝説の丘 — 記録帳（紙の型）
@@ -869,7 +869,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 
 /* 一撃で伝わる数字。紙の上に大きく刷る */
 .fig {
-  display: inline-flex; align-items: baseline; gap: 4px;
+  display: inline-flex; align-items: baseline; gap: var(--sp-1);
   font-weight: 900;
   letter-spacing: -0.015em;
   color: var(--zk-ink, var(--frame-deep));
@@ -879,8 +879,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .fig i { font-style: normal; font-size: clamp(16px, 4.4vw, 24px); }
 .fig.is-word b { font-size: clamp(23px, 7vw, 36px); letter-spacing: 0.03em; }
 .fig-cap {
-  display: block; margin-top: 5px;
-  font-size: 11.5px; font-weight: 900; letter-spacing: 0.1em;
+  display: block; margin-top: var(--sp-2);
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
   color: var(--zk-ink-2, var(--ink-3));
 }
 
@@ -888,40 +888,40 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .figs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
-  margin: 18px 0 0;
+  margin: var(--sp-4) 0 0;
   border-top: 1px solid var(--zk-rule-soft);
   border-left: 1px solid var(--zk-rule-soft);
 }
 .figs > div {
-  padding: 12px 8px 12px;
+  padding: var(--sp-3) var(--sp-2) var(--sp-3);
   text-align: center;
   border-right: 1px solid var(--zk-rule-soft);
   border-bottom: 1px solid var(--zk-rule-soft);
 }
 .figs .fig b { font-size: clamp(24px, 7vw, 32px); }
-.figs .fig i { font-size: 13px; }
+.figs .fig i { font-size: var(--fs-body); }
 .figs .fig.is-word b { font-size: clamp(14px, 4.2vw, 18px); }
-.figs .fig-cap { font-size: 10px; letter-spacing: 0.06em; }
+.figs .fig-cap { font-size: var(--fs-min); letter-spacing: 0.06em; }
 
 /* いちばん語られている1つ。紙の見開きの上半分を丸ごと使う */
 .lg-hero-tag {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: var(--sp-2);
   border-radius: 5px;
-  padding: 4px 10px;
-  font-size: 11px; font-weight: 900; letter-spacing: 0.12em;
+  padding: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.12em;
   color: #40390c;
   background: var(--zk-chip);
 }
 .lg-hero-tag .art { width: 20px; height: 20px; }
-.lg-hero-fig { margin-top: 20px; }
+.lg-hero-fig { margin-top: var(--sp-4); }
 
 /* 記録の一覧。プレートを立てず、罫線で仕切った行にする */
 .lg-wall { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--zk-rule-soft); }
 @media (min-width: 720px) { .lg-wall { grid-template-columns: 1fr 1fr; border-left: 1px solid var(--zk-rule-soft); } }
 .plaque {
   position: relative;
-  display: flex; align-items: center; gap: 13px;
-  padding: 13px 12px;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3);
   border-bottom: 1px solid var(--zk-rule-soft);
   transition: background 0.13s;
 }
@@ -957,23 +957,23 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   filter: drop-shadow(3px 4px 0 rgba(120, 140, 112, 0.24));
 }
 .plaque-b { min-width: 0; flex: 1; display: grid; gap: 3px; }
-.plaque-b > b { font-size: 14.5px; font-weight: 900; line-height: 1.4; letter-spacing: 0.02em; color: var(--zk-ink); }
-.plaque-b time { font-size: 10.5px; font-weight: 900; color: var(--zk-ink-2); }
+.plaque-b > b { font-size: var(--fs-body); font-weight: 900; line-height: 1.4; letter-spacing: 0.02em; color: var(--zk-ink); }
+.plaque-b time { font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); }
 .plaque-fig { display: flex; align-items: baseline; gap: 3px; font-weight: 900; color: var(--zk-ink); line-height: 1; margin-top: 3px; }
 .plaque-fig b { font-size: 28px; letter-spacing: -0.015em; }
-.plaque-fig i { font-style: normal; font-size: 12px; }
-.plaque-fig.is-word b { font-size: 15px; letter-spacing: 0.03em; }
-.plaque-fig span { font-size: 10px; font-weight: 900; color: var(--zk-ink-2); margin-left: 6px; letter-spacing: 0.06em; }
+.plaque-fig i { font-style: normal; font-size: var(--fs-note); }
+.plaque-fig.is-word b { font-size: var(--fs-body); letter-spacing: 0.03em; }
+.plaque-fig span { font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); margin-left: var(--sp-2); letter-spacing: 0.06em; }
 
 /* 伝説1つ。日付の並びを1本の道で見せる */
 .days { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--zk-rule-soft); }
-.days > li { display: flex; gap: 11px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--zk-rule-soft); }
+.days > li { display: flex; gap: var(--sp-3); align-items: center; padding: var(--sp-2) 0; border-bottom: 1px solid var(--zk-rule-soft); }
 .days-n {
   flex: none;
   display: grid; place-items: center;
   width: 42px; height: 42px;
   border-radius: 5px;
-  font-size: 12px; font-weight: 900;
+  font-size: var(--fs-note); font-weight: 900;
   line-height: 1.15;
   text-align: center;
   color: #40390c;

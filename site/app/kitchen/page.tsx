@@ -49,10 +49,13 @@ export default function KitchenPage() {
   // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
     <PageShell crumbs={[{ label: "キッチン小屋" }]}>
+      {/* h1 は場所の名前（`docs/island-ux.md` 4.3）。「クッキング・スタンプ帳」は
+          この小屋に置いてある帳面の名前なので、1行下に降ろす。パンくずと h1 で
+          名前が2つあると、どこに居るのかを画面が2通りに答えてしまう。 */}
       <PageHead
         icon="hut-kitchen"
-        title="クッキング・スタンプ帳"
-        lead="何を作るかを企画会議で決めて、買い出しに行って、作って食べる。3日がかりで1品。"
+        title="キッチン小屋"
+        lead={`作ってきた料理のスタンプ帳。${RECIPES.length}品を、${byCountry.size}カ国の宿のキッチンで。`}
         say={GUIDE.kitchen}
       />
 

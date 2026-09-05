@@ -31,9 +31,9 @@
 .nx-notice {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 0 0 14px;
-  padding: 11px 16px 11px 12px;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-3);
   background:
@@ -42,11 +42,11 @@
   box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2);
 }
 .nx-notice-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.nx-notice-t b { font-size: 13.5px; font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
+.nx-notice-t b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
 /* 企画の題名は長い。2行までは折り返して見せて、それ以上は切る
    （しらせの帯が縦に伸びると、下の札が画面から押し出される） */
 .nx-notice-t i {
-  font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--ink-2); line-height: 1.55;
+  font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); line-height: 1.55;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
 /* 件数を丸い札でもう一度出していた。同じ数を2回言うと、
@@ -61,7 +61,7 @@
   display: grid;
   grid-template-columns: repeat(3, auto);
   justify-content: start;
-  gap: 6px;
+  gap: var(--sp-2);
   align-items: stretch;
   margin: 0;
 }
@@ -71,7 +71,7 @@
   place-items: center;
   align-content: center;
   min-width: 56px;
-  padding: 8px 6px 7px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2);
   border-radius: 16px;
   border: 3px solid var(--frame-dark);
   background: linear-gradient(
@@ -80,14 +80,14 @@
     color-mix(in srgb, var(--gold) 84%, var(--frame-dark))
   );
   box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 color-mix(in srgb, var(--paper) 62%, transparent);
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
   color: var(--ink);
 }
 .nx-clock em b { display: block; font-size: 30px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 1px; }
 /* 「あと」は数字の上に小さく。数字を読む邪魔をしない大きさで */
-.nx-clock em span { display: block; font-size: 9.5px; letter-spacing: 0.12em; opacity: 0.78; margin-bottom: 1px; }
+.nx-clock em span { display: block; font-size: var(--fs-min); letter-spacing: 0.12em; opacity: 0.78; margin-bottom: 1px; }
 /* 日だけ大きく。人が見ているのは「あと何日」で、時分はその添え物 */
 .nx-clock em:first-child { min-width: 74px; }
 .nx-clock em:first-child b { font-size: 42px; }
@@ -100,9 +100,9 @@
 /* 時分まで刻まないものは1枚の札。開いた瞬間に読ませたい数字はこれ1つなので、
    時分の3枚組と同じ大きさまで数字を上げる */
 .nx-clock.is-one { grid-template-columns: auto; }
-.nx-clock.is-one em { min-width: 96px; padding: 10px 14px 9px; font-size: 11px; }
+.nx-clock.is-one em { min-width: 96px; padding: var(--sp-2) var(--sp-3) var(--sp-2); font-size: var(--fs-min); }
 .nx-clock.is-one em b { font-size: 42px; }
-.nx-clock.is-one em span { font-size: 10.5px; }
+.nx-clock.is-one em span { font-size: var(--fs-min); }
 
 @media (min-width: 640px) {
   .nx-clock em { min-width: 66px; }
@@ -112,7 +112,7 @@
 }
 
 /* 主役カードの頭。上の帯で「いつ・どこで」、下で「何が」 */
-.nx-lead-head { display: grid; gap: 12px; margin-bottom: 12px; }
+.nx-lead-head { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .nx-lead-head h2 { margin: 0; font-size: clamp(20px, 5.6vw, 30px); line-height: 1.32; }
 /* 時計のとなりに日付と場所を寄せる。時計の右が空いたままだと、
    いちばん大きい数字が隅に取り残されて、帯として読めない */
@@ -120,7 +120,7 @@
 .nx-when-m { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
 .nx-when-m > span {
   display: flex; align-items: center; gap: var(--sp-2);
-  font-size: 13px; font-weight: 900; line-height: 1.5;
+  font-size: var(--fs-body); font-weight: 900; line-height: 1.5;
   color: var(--ink-2);
 }
 .nx-when-m .ic { flex: none; color: var(--frame-deep); }
@@ -131,27 +131,27 @@
    ここが出てこないと、読んだ人はそこで止まる。だから説明より先に置く。
    ========================================================= */
 .nx-do {
-  margin: 16px 0 4px;
-  padding: 13px 13px 14px;
+  margin: var(--sp-4) 0 var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3);
   border-radius: var(--r-2);
   border: 3px dashed color-mix(in srgb, var(--frame) 88%, var(--paper));
   background: color-mix(in srgb, var(--paper-2) 70%, var(--paper));
 }
 .nx-do > span {
   display: inline-block;
-  margin-bottom: 10px;
-  font-size: 11px;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   color: var(--ink-2);
 }
-.nx-dos { display: grid; gap: 9px; }
+.nx-dos { display: grid; gap: var(--sp-2); }
 @media (min-width: 560px) { .nx-dos { grid-template-columns: 1fr 1fr; } }
 .nx-do-b {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 13px;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3);
   border-radius: var(--r-2);
   border: 3px solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -163,8 +163,8 @@
 .nx-do-b:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-deep); }
 .nx-do-b .ic { flex: none; }
 .nx-do-b span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.nx-do-b b { font-size: 14px; font-weight: 900; letter-spacing: 0.02em; }
-.nx-do-b i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.55; }
+.nx-do-b b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.02em; }
+.nx-do-b i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); line-height: 1.55; }
 /* いちばん押してほしい1つだけ金色。強い合図はカードに1つまで */
 .nx-do-b.is-go {
   background: linear-gradient(color-mix(in srgb, var(--gold) 40%, var(--paper)), var(--gold));
@@ -178,8 +178,8 @@
    予定を縦の点線でつなぐより、島を歩いていく絵にする。
    石を1つ踏むごとに1つ先の予定、という見え方。
    ========================================================= */
-.nx-road { list-style: none; margin: 8px 0 0; padding: 0; }
-.nx-road > li { position: relative; display: grid; grid-template-columns: 60px 1fr; gap: 12px; padding-bottom: 20px; }
+.nx-road { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
+.nx-road > li { position: relative; display: grid; grid-template-columns: 60px 1fr; gap: var(--sp-3); padding-bottom: var(--sp-4); }
 /* 道。飛び石のあいだを土の点でつなぐ。線を1本引くと年表になってしまう。
    最後の石の先には道を伸ばさない（まだ決まっていない先まで道があるように見える） */
 .nx-road > li:not(:last-child)::before {
@@ -204,28 +204,28 @@
   color: var(--ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-.nx-road-b { min-width: 0; padding-top: 4px; }
-.nx-road-when { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 4px; }
+.nx-road-b { min-width: 0; padding-top: var(--sp-1); }
+.nx-road-when { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-1); }
 /* 一覧の日数の札は右端に寄る作りになっている。道のりでは日付のとなりに置く */
 .nx-road-when .count { margin-left: 0; }
-.nx-road-when time { font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+.nx-road-when time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 /* 子セレクタで止める。ここを子孫セレクタにすると、日数の札の中の数字まで
    ブロックになって「あと / 1 / 日」と3行に割れる（一度やった） */
 .nx-road-t { display: block; }
-.nx-road-t > b { display: block; font-size: 15.5px; font-weight: 900; line-height: 1.55; }
-.nx-road-t > i { display: block; font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.7; }
+.nx-road-t > b { display: block; font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
+.nx-road-t > i { display: block; font-size: var(--fs-note); font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.7; }
 .nx-road-t:hover > b { color: var(--frame-deep); }
 .nx-road-go {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 7px;
-  padding: 5px 12px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
   border-radius: 999px;
   border: 2.5px solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   box-shadow: 0 3px 0 var(--frame-deep);
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
@@ -237,16 +237,16 @@
    5. 付箋
    貼ったものが「板に貼ってある紙」に見えるように、画びょうを1つ載せる。
    ========================================================= */
-.nx-noteshead { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
-.nx-notes { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
+.nx-noteshead { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.nx-notes { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .nx-notes > li {
   position: relative;
   max-width: 17em;
-  padding: 20px 14px 13px;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
   border-radius: 4px 4px 9px 9px;
   background: linear-gradient(#fff8bf, #fdefa2);
   box-shadow: 2px 4px 0 rgba(120, 90, 40, 0.16);
-  font-size: 13.5px;
+  font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1.8;
   color: #5c4a2a;
@@ -271,14 +271,14 @@
 }
 
 /* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
-.nx-seeds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.nx-seeds > span { font-size: 11px; font-weight: 900; color: var(--ink-3); align-self: center; }
+.nx-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.nx-seeds > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); align-self: center; }
 .nx-seed {
-  padding: 6px 13px;
+  padding: var(--sp-2) var(--sp-3);
   border-radius: 999px;
   border: 2.5px dashed color-mix(in srgb, var(--frame) 92%, var(--paper));
   background: var(--paper);
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 800;
   color: var(--ink-2);
   transition: border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
@@ -295,16 +295,16 @@
 .bd-count {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
-  font-size: 11.5px;
+  gap: var(--sp-1);
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-3);
 }
-.bd-count b { font-size: 15px; color: var(--ink); }
+.bd-count b { font-size: var(--fs-body); color: var(--ink); }
 
 /* 1件も貼られていないとき。空の板を見せて終わらせず、書く場所へ戻す1手を置く */
 .bd-empty { text-align: center; }
-.bd-empty > p { margin: 6px 0 0; }
+.bd-empty > p { margin: var(--sp-2) 0 0; }
 .bd-empty-go {
   margin-top: var(--sp-4);
   display: inline-flex; align-items: center; gap: var(--sp-2);
@@ -315,20 +315,20 @@
   background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
   box-shadow: 0 5px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.5);
   color: var(--ink);
-  font-size: 14px; font-weight: 900; letter-spacing: 0.03em;
+  font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.03em;
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .bd-empty-go:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
 .bd-empty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
 
 /* 貼られた企画。板に画びょうで留めた紙に見せる */
-.bd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.bd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
 .bd-list > li {
   position: relative;
   display: flex;
-  gap: 12px;
+  gap: var(--sp-3);
   align-items: flex-start;
-  padding: 19px 14px 14px;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
   border-radius: 5px 5px 12px 12px;
   background: linear-gradient(#fffdf3, #fdf4dd);
   box-shadow: 2px 5px 0 rgba(120, 90, 40, 0.15);
@@ -363,8 +363,8 @@
    影は落とさない。押せるものだけが厚みを持つ、という決まりを守るため。
    ========================================================= */
 .pap-mat {
-  margin: 0 0 20px;
-  padding: 10px;
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2);
   border-radius: 12px;
   background: var(--paper-out);
   box-shadow: var(--shadow-2);
@@ -375,7 +375,7 @@
   --pap-line: var(--rule);
   --pap-ink: #4b4527;
   --pap-ink-2: #736b46;
-  padding: 18px 16px 20px;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4);
   border: 1px solid var(--pap-line);
   border-radius: 6px;
   /* ムラは重ねたラジアルグラデーションで作る。画像は足さない */
@@ -391,13 +391,13 @@
 .pap-tag {
   display: block;
   width: fit-content;
-  margin: -30px auto 16px;
-  padding: 7px 20px;
+  margin: -30px auto var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
   background: #fdfaf0;
   border: 1px solid var(--pap-line);
   border-radius: 3px;
   transform: rotate(-0.8deg);
-  font-size: 14.5px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-head);
   color: var(--pap-ink);
@@ -405,24 +405,24 @@
 /* 見出しには蛍光ペンの帯を敷く。これ1つで印刷物に見える */
 .pap-h {
   display: inline-block;
-  margin: 0 0 10px;
-  padding: 1px 8px 2px;
+  margin: 0 0 var(--sp-2);
+  padding: 1px var(--sp-2) 2px;
   background: var(--marker);
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-head);
   color: var(--pap-ink);
 }
-.pap-sec + .pap-sec { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--pap-line); }
-.pap p { margin: 0 0 9px; font-size: 13.5px; font-weight: 600; line-height: 1.95; color: var(--pap-ink); }
+.pap-sec + .pap-sec { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--pap-line); }
+.pap p { margin: 0 0 var(--sp-2); font-size: var(--fs-body); font-weight: 600; line-height: 1.95; color: var(--pap-ink); }
 .pap p:last-child { margin-bottom: 0; }
-.pap .pap-note { font-size: 12.5px; color: var(--pap-ink-2); }
+.pap .pap-note { font-size: var(--fs-note); color: var(--pap-ink-2); }
 /* 紙の上の押せるもの。厚みは付けず、赤い細枠だけで「選べる」を出す */
 .pap-go {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.5);
@@ -430,11 +430,11 @@
   transition: border-color 0.14s ease, background 0.14s ease;
 }
 .pap-go:hover { border-color: var(--pick); background: rgba(255, 253, 240, 0.9); }
-.pap-go b { font-size: 13.5px; font-weight: 900; }
-.pap-go i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--pap-ink-2); margin-top: 2px; }
+.pap-go b { font-size: var(--fs-body); font-weight: 900; }
+.pap-go i { display: block; font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-top: 2px; }
 .pap-go .ic { flex: none; margin-left: auto; color: var(--pap-ink-2); }
 .pap-go img { width: 38px; height: 38px; object-fit: contain; flex: none; }
-.pap-gos { display: grid; gap: 9px; }
+.pap-gos { display: grid; gap: var(--sp-2); }
 
 /* 紙の上の一覧。罫線で区切るだけ */
 /* 決まりが2通りあるとき。どちらが自分かを先に選ばせて、本文はその下に置く */
@@ -445,27 +445,27 @@
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.5);
 }
-.pap-rule b { display: block; font-size: 13px; font-weight: 900; color: var(--pap-ink); }
+.pap-rule b { display: block; font-size: var(--fs-body); font-weight: 900; color: var(--pap-ink); }
 .pap-rule i {
-  display: block; margin-top: 4px;
-  font-style: normal; font-size: 12.5px; font-weight: 600; line-height: 1.9;
+  display: block; margin-top: var(--sp-1);
+  font-style: normal; font-size: var(--fs-note); font-weight: 600; line-height: 1.9;
   color: var(--pap-ink-2);
 }
 @media (min-width: 560px) { .pap-rule { grid-template-columns: 1fr 1fr; } }
 
 .pap-rows { list-style: none; margin: 0; padding: 0; }
-.pap-rows > li { padding: 9px 0; border-top: 1px solid var(--pap-line); font-size: 13.5px; font-weight: 700; line-height: 1.85; }
+.pap-rows > li { padding: var(--sp-2) 0; border-top: 1px solid var(--pap-line); font-size: var(--fs-body); font-weight: 700; line-height: 1.85; }
 .pap-rows > li:first-child { border-top: 0; padding-top: 0; }
 .pap-rows > li:last-child { padding-bottom: 0; }
-.pap-rows time { display: block; font-size: 11.5px; font-weight: 900; color: var(--pap-ink-2); margin-bottom: 1px; }
+.pap-rows time { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--pap-ink-2); margin-bottom: 1px; }
 
 /* 紙の上の数字。図鑑の下段と同じ、罫線で仕切った升目 */
 .pap-nums { display: grid; grid-template-columns: 1fr 1fr; }
-.pap-nums > div { padding: 10px 6px; text-align: center; border-top: 1px solid var(--pap-line); }
+.pap-nums > div { padding: var(--sp-2) var(--sp-2); text-align: center; border-top: 1px solid var(--pap-line); }
 .pap-nums > div:nth-child(2n) { border-left: 1px solid var(--pap-line); }
 .pap-nums b { display: block; font-size: 25px; font-weight: 900; letter-spacing: -0.01em; color: var(--pap-ink); }
-.pap-nums span { display: block; font-size: 11.5px; font-weight: 900; margin-top: 3px; color: var(--pap-ink); }
-.pap-nums i { display: block; font-size: 10px; font-style: normal; font-weight: 700; margin-top: 2px; color: var(--pap-ink-2); }
+.pap-nums span { display: block; font-size: var(--fs-min); font-weight: 900; margin-top: 3px; color: var(--pap-ink); }
+.pap-nums i { display: block; font-size: var(--fs-min); font-style: normal; font-weight: 700; margin-top: 2px; color: var(--pap-ink-2); }
 @media (min-width: 560px) {
   .pap-nums { grid-template-columns: repeat(4, 1fr); }
   .pap-nums > div:nth-child(2n) { border-left: 0; }
@@ -495,20 +495,20 @@
 .rz-star figcaption { min-width: 0; }
 .rz-star-tag {
   display: inline-block;
-  padding: 2px 8px 3px;
+  padding: 2px var(--sp-2) 3px;
   border-radius: 4px;
   background: var(--pick);
   color: #fffdf0;
-  font-size: 10px; font-weight: 900; letter-spacing: 0.04em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.04em;
 }
 .rz-star figcaption > b {
   display: block;
   margin-top: var(--sp-2);
-  font-size: 16px; font-weight: 900; line-height: 1.4;
+  font-size: var(--fs-h3); font-weight: 900; line-height: 1.4;
   color: var(--pap-ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.rz-star-n { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 800; color: var(--pap-ink-2); }
+.rz-star-n { display: block; margin-top: 3px; font-size: var(--fs-min); font-weight: 800; color: var(--pap-ink-2); }
 .rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
 .rz-star .rz-bar { margin-top: var(--sp-2); }
 .rz-star .rz-bar > i { background: var(--pick); }
@@ -517,7 +517,7 @@
   .rz-star-n b { font-size: 32px; }
 }
 
-.rz { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 9px; }
+.rz { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-top: var(--sp-2); }
 @media (min-width: 520px) { .rz { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 860px) { .rz { grid-template-columns: repeat(4, 1fr); } }
 .rz-card {
@@ -528,7 +528,7 @@
   flex-direction: column;
   align-items: center;
   /* 上は通し番号のぶんだけ空ける。番号と絵が重なると、どちらも読めない */
-  padding: 18px 6px 9px;
+  padding: var(--sp-4) var(--sp-2) var(--sp-2);
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.42);
@@ -536,7 +536,7 @@
 /* 図鑑の通し番号。名前を出していない人の欄が空にならないよう、隅に置く */
 .rz-no {
   position: absolute; top: 6px; left: 8px;
-  font-size: 9.5px; font-weight: 900; letter-spacing: 0.08em;
+  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.08em;
   color: var(--pap-ink-2);
   opacity: 0.7;
 }
@@ -552,8 +552,8 @@
 /* 台座。切り抜いた絵をそのまま置くと宙に浮くので、必ず地面ごと置く */
 .rz-pad { position: absolute; left: 50%; bottom: 2px; width: 82%; height: auto; transform: translateX(-50%); }
 .rz-name {
-  margin: 5px 0 0;
-  font-size: 12px;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
   font-weight: 900;
   text-align: center;
   line-height: 1.4;
@@ -564,16 +564,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rz-days { margin-top: 2px; font-size: 10px; font-weight: 900; color: var(--pap-ink-2); white-space: nowrap; }
-.rz-days b { font-size: 13px; color: var(--pap-ink); }
+.rz-days { margin-top: 2px; font-size: var(--fs-min); font-weight: 900; color: var(--pap-ink-2); white-space: nowrap; }
+.rz-days b { font-size: var(--fs-body); color: var(--pap-ink); }
 /* 何日いっしょにいたかの帯。図鑑の「出る時間」の目盛りと同じ作り */
 /* span なので display を明かす。付けないと、flex の外（主役の1枚のような
    ふつうのブロックの中）では inline のままになって、帯が消える */
-.rz-bar { display: block; width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
+.rz-bar { display: block; width: 100%; height: 6px; margin-top: var(--sp-2); border-radius: 3px; background: #ded4a2; overflow: hidden; }
 .rz-bar > i { display: block; height: 100%; border-radius: 3px; background: var(--chip); }
 /* 名前を出していない人のマスは、名札の行そのものを出さない。
    空の行を22個並べると、そこだけ抜けて見える */
-.rz-card.is-blank .rz-days { margin-top: 5px; }
+.rz-card.is-blank .rz-days { margin-top: var(--sp-2); }
 
 /* =========================================================
    9. いまのポスト
@@ -590,12 +590,12 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 9px;
+  padding: var(--sp-1) var(--sp-2);
   border: 2px solid #c07a5a;
   border-radius: 4px;
   transform: rotate(6deg);
   color: #c07a5a;
-  font-size: 10.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.08em;
   opacity: 0.85;
@@ -608,15 +608,15 @@
    しらせのベルと赤い丸を1つだけ付けて、押したくなるようにする。
    ========================================================= */
 /* ベルを置くときは、札の中の短い金の棒を消す。合図が2つになるため */
-.nextup-eyebrow.has-bell { padding-left: 7px; gap: 6px; }
+.nextup-eyebrow.has-bell { padding-left: var(--sp-2); gap: var(--sp-2); }
 .nextup-eyebrow.has-bell::before { display: none; }
 /* 予定をぜんぶ見にいく口。札を押すと1つの企画に入ってしまうので、別に置く */
 .nextup-all {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 12px 16px;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-3);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -627,30 +627,30 @@
 .nextup-all:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
 .nextup-all:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
 .nextup-all span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.nextup-all b { font-size: 14px; font-weight: 900; letter-spacing: 0.02em; }
-.nextup-all i { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+.nextup-all b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.02em; }
+.nextup-all i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 .nextup-all em {
   margin-left: auto;
   flex: none;
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--frame-deep);
 }
 
 /* いまいる国の旗を、地名のとなりに。テーマの符丁（georgia など）は
    文章としては出さない決まりなので、絵にだけ使う */
-.now-hero .now-place { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.now-hero .now-place { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); flex-wrap: wrap; }
 .now-flag { flex: none; filter: drop-shadow(0 2px 0 rgba(120, 80, 40, 0.18)); }
 
 /* 紙の上の引用。住人のセリフは吹き出し（板の型）ではなく、刷ってある文にする */
-.pap-quotes { display: grid; gap: 10px; }
+.pap-quotes { display: grid; gap: var(--sp-2); }
 .pap-quote {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--sp-3);
   margin: 0;
-  padding: 10px 12px;
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.5);
@@ -665,48 +665,48 @@
 }
 .pap-quote blockquote {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1.85;
   color: var(--pap-ink);
 }
 
 /* 貼ったあとの3歩。飛び石を1つずつ踏むのと同じ絵で見せる */
-.bd-flow { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+.bd-flow { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: var(--sp-2); }
 @media (min-width: 620px) { .bd-flow { grid-template-columns: repeat(3, 1fr); } }
 .bd-flow > li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px 8px 6px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
   border-radius: var(--r-2);
   background: color-mix(in srgb, var(--paper-2) 66%, var(--paper));
 }
 .bd-flow > li > span:last-child { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.bd-flow b { font-size: 13.5px; font-weight: 900; }
-.bd-flow i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.6; }
+.bd-flow b { font-size: var(--fs-body); font-weight: 900; }
+.bd-flow i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); line-height: 1.6; }
 
 /* まだ決まっていないこと。空いている場所を先に見せてから、付箋を頼む */
 .nx-asks {
-  margin: 18px 0 0;
-  padding: 13px 15px 14px;
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3);
   border-radius: var(--r-2);
   background: color-mix(in srgb, var(--accent-2) 9%, var(--paper));
   box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--accent-2) 26%, transparent);
 }
 .nx-asks > span {
   display: inline-block;
-  margin-bottom: 8px;
-  font-size: 11px;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   color: color-mix(in srgb, var(--accent-2) 62%, var(--ink));
 }
-.nx-asks ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.nx-asks ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
 .nx-asks li {
   position: relative;
-  padding-left: 20px;
-  font-size: 13.5px;
+  padding-left: var(--sp-4);
+  font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1.8;
   color: var(--ink);
@@ -726,14 +726,14 @@
 .nx-asks > a {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 11px;
-  padding: 6px 14px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border-radius: 999px;
   border: 2.5px solid color-mix(in srgb, var(--accent-2) 55%, var(--frame-dark));
   background: var(--paper);
   box-shadow: 0 3px 0 color-mix(in srgb, var(--accent-2) 62%, var(--frame-deep));
-  font-size: 12.5px;
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
@@ -743,21 +743,21 @@
 
 /* 島での見え方の下見。設定を並べるだけでは、押した結果が想像できない */
 .me-prev {
-  margin: 16px 0 4px;
-  padding: 12px 14px 14px;
+  margin: var(--sp-4) 0 var(--sp-1);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3);
   border-radius: var(--r-2);
   background: linear-gradient(#bfe8ff, #dff3d6);
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.55);
 }
 .me-prev-label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 10.5px;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   color: #4a6b52;
 }
-.me-prev-body { display: flex; align-items: flex-end; justify-content: center; gap: 10px; min-height: 78px; }
+.me-prev-body { display: flex; align-items: flex-end; justify-content: center; gap: var(--sp-2); min-height: 78px; }
 .me-prev-char {
   width: 74px;
   height: 74px;
@@ -769,16 +769,16 @@
 .me-prev-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 14px;
-  padding: 5px 12px 5px 6px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
   border-radius: 999px;
   border: 2.5px solid var(--frame);
   background: var(--paper);
   box-shadow: 0 3px 0 var(--frame-dark);
-  font-size: 12.5px;
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
 }
 .me-prev-tag img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
-.me-prev-none { align-self: center; font-size: 12px; font-weight: 800; color: #4a6b52; }
+.me-prev-none { align-self: center; font-size: var(--fs-note); font-weight: 800; color: #4a6b52; }
