@@ -45,6 +45,8 @@
 }
 .amap-stage {
   position: relative;
+  /* 縮尺の棒を「地図の幅の何%」で引くために、ここを測る基準にする */
+  container-type: inline-size;
   width: 100%;
   aspect-ratio: var(--am-ratio, 1400 / 1145);
   border-radius: calc(var(--r-3) - 9px);
@@ -156,7 +158,8 @@
   position: absolute;
   left: 50%;
   bottom: 34px;
-  transform: translateX(-50%);
+  /* 隣の国とぶつかるときの逃がしぶん（WorldRoute が決める） */
+  transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
   white-space: nowrap;
   background: var(--paper);
   color: var(--ink);
@@ -173,7 +176,7 @@
 .apin.is-named .apin-name { opacity: 1; }
 .apin:hover .apin-dot,
 .apin:focus-visible .apin-dot { transform: scale(1.25); }
-.apin:hover .apin-name { opacity: 1; transform: translateX(-50%) translateY(-3px); }
+.apin:hover .apin-name { opacity: 1; transform: translate(calc(-50% + var(--apin-dx, 0px)), calc(var(--apin-dy, 0px) - 3px)); }
 .apin:active .apin-dot { transform: scale(0.9); }
 
 .acity {
@@ -195,6 +198,8 @@
   text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 1px 0 #fff;
 }
 .acity.is-left b { left: auto; right: 12px; }
+/* 近い街どうしで名前が重なるときの逃がしぶん（WorldRoute が決める） */
+.acity b { transform: translateY(var(--acity-dy, 0px)); }
 .amap-pins.is-wide .acity { opacity: 0; }
 
 /* ---------------------------------------------------------
@@ -288,6 +293,14 @@
   font-weight: 900;
   color: var(--ink-2);
   pointer-events: none;
+}
+.amap-badge i {
+  display: block;
+  min-width: 20px;
+  height: 7px;
+  border-radius: 2px;
+  border: 2.5px solid currentColor;
+  border-top: 0;
 }
 
 @media (min-width: 720px) {

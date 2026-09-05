@@ -1,4 +1,5 @@
 import { COUNTRY_MAPS } from "./countryMaps";
+import { peakPaths } from "./peak";
 
 /**
  * 国ひとつの寄り地図。国のページの頭に敷く。
@@ -27,6 +28,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
   const mine = m.countries[slug];
   const others = Object.entries(m.countries).filter(([s]) => s !== slug);
   const uid = `cm-${slug}`;
+  const peaks = peakPaths(m.peaks);
 
   return (
     <div className="amap" style={{ ["--am-ratio" as string]: `${w} / ${h}` }}>
@@ -69,12 +71,11 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
 
           {/* 山 */}
           <path d={m.ridges} fill="none" stroke="var(--am-ridge)" strokeWidth="22" strokeLinecap="round" opacity="0.26" filter={`url(#${uid}-soft)`} />
-          {m.peaks.map(([x, y, r], i) => (
-            <g key={i}>
-              <circle cx={x} cy={y} r={r} fill="#9a7040" opacity="0.5" />
-              <circle cx={x} cy={y - r * 0.35} r={r * 0.55} fill="#e0c08a" opacity="0.8" />
-            </g>
-          ))}
+          <g>
+            <path d={peaks.body} fill="#a2703c" />
+            <path d={peaks.face} fill="#cb9c5f" />
+            <path d={peaks.cap} fill="#f7ecd2" />
+          </g>
 
           <path d={m.lakes} fill="var(--am-sea-mid)" />
           <path d={m.rivers} fill="none" stroke="#60a0d8" strokeWidth="3.2" strokeLinecap="round" opacity="0.85" />
@@ -120,7 +121,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
         </div>
 
         <div className="amap-badge">
-          <i style={{ display: "block", width: (m.scale.len / w) * 100 + "%", minWidth: 20, height: 7, borderRadius: 2, border: "2.5px solid currentColor", borderTop: 0 }} />
+          <i style={{ width: `calc(${(m.scale.len / w) * 100} * 1cqw)` }} />
           {m.scale.km}km
         </div>
       </div>

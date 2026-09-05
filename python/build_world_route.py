@@ -107,9 +107,10 @@ SEA_LABELS = [
     ("バルト海", 19.4, 57.4, 22, 0),
     ("地中海", 17.0, 34.6, 34, 0),
     ("黒海", 34.4, 43.4, 26, 0),
-    ("カスピ海", 51.0, 41.6, 22, 90),
-    ("紅海", 37.4, 22.6, 20, 62),
-    ("ペルシャ湾", 51.0, 27.4, 20, 40),
+    # 日本語は寝かせると読めなくなる。90度は使わない。
+    ("カスピ海", 51.0, 41.4, 20, 0),
+    ("紅海", 37.6, 21.6, 17, 0),
+    ("ペルシャ湾", 51.6, 27.0, 17, 28),
 ]
 
 # 山脈。実在の稜線をなぞった折れ線。ここに沿って山の印を置く。
@@ -859,7 +860,7 @@ def build(
                 if not (lon_min < lo < lon_max and lat_min < la < lat_max):
                     continue
                 px, py = project(lo, la)
-                peaks.append([round(px), round(py), round(6 + rng() * 7)])
+                peaks.append([round(px), round(py), round(5 + rng() * 6)])
     out["peaks"] = peaks
 
     if not detail:
