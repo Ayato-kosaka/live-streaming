@@ -296,14 +296,16 @@
    はみ出た染みに見える（卵焼きは 313px ある）。 */
 .zk-hero.is-dex .zk-hero-art::before { width: 84%; max-width: 300px; }
 
-/* 配信の型の1枚（`/streams/[型]`）。絵は島に立っている建物そのもの。
+/* 配信の型の1枚（`/streams/[型]`）は `is-dex` と同じ扱いにした。
 
-   ここだけ `is-dex` にできないのは、**焼いてあるのが長辺 320px しかない**から
-   （`sprites/hero/` に入っているのは料理32枚と伝説8枚だけ）。
-   280px まで伸ばすと dpr2 の画面で 1.7 倍に引き伸ばすことになって、
-   紙の上でここだけぼける。焼き直しが来るまでは実寸で止める。 */
-.zk-hero.is-type .zk-hero-art img { max-height: 168px; max-width: 86%; }
-@media (min-width: 720px) { .zk-hero.is-type .zk-hero-art img { max-height: 200px; } }
+   前はここだけ 168px で止めていた。**焼いてあるのが長辺 320px しか
+   なかったから**で、280px まで伸ばすと dpr2 の画面で 1.7 倍に引き伸ばすことに
+   なり、紙の上でここだけぼけていた。`sprites/hero/` に長辺 640px を
+   5枚足したので、その理由はもう無い（`tools/sprites/manifest.mjs` が
+   `streamTypes.ts` も読むようにした）。
+
+   同じ紙の型の面で、料理と伝説だけが絵を大きく出せて型の5面だけ小さい、
+   という違いを残す理由が無い。`is-type` は使う所が無くなったので消した。 */
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {
   content: "";

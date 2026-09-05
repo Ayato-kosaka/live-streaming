@@ -107,8 +107,13 @@ export default function FriendsWall() {
 
           <div className="rzk-art">
             <Pedestal w={150} />
-            {/* 22人ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く */}
-            <img key={r.icon} src={drive(r.icon!, 512)} alt="" />
+            {/* 22人ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く。
+                `=s640` なのは、ここが図鑑の主役だから。箱は 280px（PC 330px）
+                あるのに `=s512` だと dpr2 の画面で 1.1 倍に引き伸ばしていて、
+                主役の絵だけが甘かった。元は 1024px 以上あるので、640 は
+                本物の画素が返る（上限は元の大きさで頭打ちになる）。
+                一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
+            <img key={r.icon} src={drive(r.icon!, 640)} alt="" />
           </div>
 
           <dl className="rzk-fields">

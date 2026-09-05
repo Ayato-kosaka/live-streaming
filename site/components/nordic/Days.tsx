@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import { Mark } from "./Marks";
-import { DAYS, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
+import DayLogMarks from "./DayLogMarks";
+import GoalRow from "./GoalRow";
+import { DAYS, DEPART, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
 
 /**
  * 旅のよてい。**1日1行だけ。中身は1日ぶんのページにある。**
@@ -79,6 +81,11 @@ function Row({ day }: { day: Day }) {
           {asks > 0 && (
             <span className="ndayr-ask">答えられる{asks > 1 ? `${asks}つ` : ""}</span>
           )}
+          {/* その日に起きたことが書かれた行の印。**書かれるまで出ない。**
+              出すかどうかを決めるのは `DayLogMarks`（画面が出てから読む）。
+              書いたものが旅程表から見えないと、読む人は9日ぶんの行を
+              1つずつ開いて確かめることになる。 */}
+          <span className="ndayr-log">その日の話</span>
         </span>
         <span className="ndayr-way">
           {way(legs).map((c, i) => (
@@ -103,6 +110,9 @@ function Row({ day }: { day: Day }) {
 export default function Days() {
   return (
     <ol className="ndays">
+      {/* 書かれた日の行に印を付ける。字も数字も持たない（読むだけ）ので、
+          旅程表そのものを面の JS に連れてこない。 */}
+      <DayLogMarks />
       {DAYS.map((day) => (
         <li key={day.id} className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
           {day.legs?.length ? (
@@ -123,21 +133,11 @@ export default function Days() {
         </li>
       ))}
       {/* 終わり。ここが企画の芯なので、旅程表の最後の行として置く。
-          相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。 */}
+          相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。
+          **着いたあとは書き分ける。** よていの字のままだと、着いたあとも
+          「これから着く」と言い続ける（`components/nordic/GoalRow.tsx`）。 */}
       <li className="nday is-goal">
-        <div className="ndayr is-flat">
-          <span className="ndayr-body">
-            <span className="ndayr-top">
-              <b>着いた朝</b>
-            </span>
-            <span className="ndayr-way">
-              <span>ストックホルム</span>
-            </span>
-            <span className="ndayr-say">
-              船が着いたら終わりです。ここに、会いたい人がいます。友だちの家に約1週間。
-            </span>
-          </span>
-        </div>
+        <GoalRow depart={DEPART.slice(0, 10)} />
       </li>
     </ol>
   );
