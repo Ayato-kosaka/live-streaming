@@ -6,20 +6,161 @@
  * 面が無くなったらこの1枚ごと消える、という形にしておく。
  *
  * この面は紙（`docs/island-world.md` 2章）。紙の上に板を出してよいのは
- * 「押すもの」だけ（同 2.1）。ここで厚みを持つのは道の石と3枚の札だけで、
- * 読むところは全部平ら。
+ * 「押すもの」だけ（同 2.1）。ここで厚みを持つのは道の石・やっていること3枚・
+ * アプリの行き先だけで、読むところ（吹き出し・数字・終わったアプリ）は全部平ら。
  */
+
+/* ───────── はじめまして ───────── */
+
+/* 名前と年齢。名乗りの1行なので、本文より小さく、印は付けない。
+   年齢は焼き込むと止まるので `parts.tsx` の <Age> が画面で数え直す。 */
+.abio-who {
+  margin: 2px 0 6px !important;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+}
+
+/* ───────── 島のみんなから見た、あやと（視聴者さんの他己紹介） ───────── */
+
+/*
+ * 配信のコメントを**書かれたまま**出すところ。こちらで書いた紹介文は混ぜない。
+ *
+ * 吹き出しにしたのは、これが「島の人が言ったこと」だと形で分かるから。
+ * カモメの `.gsay-bubble` と同じ語彙（生成りの面・丸い角・尻尾）で、
+ * **厚みだけ付けない。** 押せないものに厚みを付けると、押せる合図が2つになる
+ * （`docs/island-world.md` 3.4）。
+ *
+ * 左右に振っているのは、コメント欄が流れている感じを出すため。
+ * 動かして出すのはやめた。画面に出た瞬間だけ動くものは、
+ * スクロールして戻ってきた人には二度と見えないし、書き出しの検査（screenshot）で
+ * 「文字が消えている」ようにしか写らない。
+ */
+.avoices {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-4);
+}
+.avoice {
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  max-width: 94%;
+}
+.avoice.is-r {
+  justify-self: end;
+  justify-items: end;
+}
+.avoice-say {
+  position: relative;
+  margin: 0;
+  padding: 11px var(--sp-4) 12px;
+  background: var(--paper);
+  border: var(--bw-1) solid var(--frame);
+  /* 上を明るく。紙に落ちる光は1方向（`docs/island-world.md` 6.2） */
+  border-top-color: color-mix(in srgb, var(--frame) 62%, var(--paper));
+  border-radius: var(--r-3);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink);
+}
+/* 尻尾。下の左（右に寄せた吹き出しは下の右）へ。2枚重ねてふちを作る */
+.avoice-say::before,
+.avoice-say::after {
+  content: "";
+  position: absolute;
+  bottom: -13px;
+  left: 20px;
+  border: 7px solid transparent;
+  border-top-color: var(--frame);
+}
+.avoice-say::after {
+  bottom: -9px;
+  border-top-color: var(--paper);
+}
+.avoice.is-r .avoice-say::before,
+.avoice.is-r .avoice-say::after {
+  left: auto;
+  right: 20px;
+}
+.avoice-when {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+  padding: 0 var(--sp-2);
+}
+
+@media (min-width: 720px) {
+  .avoice {
+    max-width: 34em;
+  }
+}
+
+/* ───────── 島でやっていること（3つ） ───────── */
+
+/*
+ * 前は縦に3枚積んでいて、この1まとまりだけで 1,106px（1.3画面）あった。
+ * 中身は「歩く・作って食べる・アプリを作る」の3語なので、横に3つ並べれば足りる。
+ * 3枚とも押せる。歩く→歩いた国、作って食べる→作った料理、アプリ→アプリ。
+ */
+.ado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.ado-card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  padding: var(--sp-3) 6px var(--sp-3);
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  /* 押せるものだけ厚みを持つ（`docs/island-world.md` 3.4） */
+  box-shadow: 0 5px 0 var(--frame-dark);
+  transition: transform 90ms ease, box-shadow 90ms ease;
+}
+.ado-card:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--frame-dark);
+}
+.ado-card > b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+}
+.ado-card > p {
+  margin: 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+.ado-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 3px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
 
 /* ───────── ここまでの道のり（横に流れる年表） ───────── */
 
 /*
- * 前は畳んだ中に、縦に9段の年表があった。
- * 畳んであるあいだ、この面は「顔と3行と数字4つ」だけの 2.02画面で、
- * はじめて来た人には**この人が何をしてきた人なのかが1つも出ていなかった**。
- *
- * 開いて縦に並べると 9段で 800px を超える。だから横に倒した。
- * 指で送る道になって、高さは 380px で済む。石は押せる。
- * 押すとその国・そのアプリ・その伝説の面へ入る。
+ * 縦に12段だと 1,000px を超える。横に倒して、指で送る道にした。
+ * 高さは 380px で済む。石は押せる。押すとその国・そのアプリ・その伝説の面へ入る。
  */
 .aroad {
   position: relative;
@@ -40,8 +181,12 @@
   width: max-content;
 }
 
-/* 年の札。年が変わるところにだけ立つ。旅の長さが目で分かる */
-.aroad-year {
+/*
+ * 島（章）の札。章が変わるところにだけ立つ。
+ * 前は「2025年」と年で切っていたが、旅の切れ目は年末ではないので、
+ * 年またぎのところで話が途切れて見えた。切りかたは `content/chapters.ts` に合わせる。
+ */
+.aroad-era {
   flex: none;
   align-self: center;
   writing-mode: vertical-rl;
@@ -49,7 +194,7 @@
   font-weight: 900;
   letter-spacing: 0.14em;
   color: var(--ink-2);
-  padding: var(--sp-2) 2px;
+  padding: var(--sp-3) 2px;
   border-left: 2px solid var(--rule);
   border-right: 2px solid var(--rule);
 }
@@ -126,41 +271,100 @@
   color: var(--ink-2);
 }
 
-/* ───────── 島でやっていること（3枚） ───────── */
+/* ───────── 作ってきたアプリ3つ ───────── */
 
-/* 前は畳んだ中にあった。ここは「何が面白いのか」への答えなので、開いて置く。
-   3枚とも押せる。歩く→歩いた国、作って食べる→作った料理、作る→アプリ。 */
-a.acard {
+/*
+ * **終わった2つと、いま動いている1つを同じ見た目にしない。**
+ * 終わったほうはアイコンの色を落として、平らな「サポート終了」の札を出す。
+ *
+ * 色を落とすことと、押せることは別の軸。なにこれオーディオガイドは
+ * 終わっているが中の面を持っているので、灰色のまま厚みがある。
+ * スペリーブは面が無いので平ら。
+ */
+.aappl {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.aappl-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  padding: 10px var(--sp-3);
+  border-radius: var(--r-2);
   text-decoration: none;
   color: var(--ink);
   border: var(--bw-1) solid var(--frame);
-  box-shadow: 0 5px 0 var(--frame-dark);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 5px 0 var(--frame-dark);
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
-a.acard:active {
+.aappl-row:active {
   transform: translateY(4px);
   box-shadow: 0 1px 0 var(--frame-dark);
 }
-.acard-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 2px;
-  font-size: var(--fs-min);
+/* 中の面を持っていないアプリ。押せないので完全に平ら */
+.aappl-row.is-flat {
+  border-color: var(--rule);
+  background: var(--paper-2);
+  box-shadow: none;
+  transform: none;
+}
+.aappl-i {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: var(--paper);
+  /* 物として地面に落ちる影だけ。厚みは付けない */
+  box-shadow: var(--shadow-1);
+}
+/* 終わったアプリ。色を落として、いま動いているものと並べても取り違えないようにする */
+.is-done .aappl-i {
+  filter: grayscale(0.92) contrast(0.94);
+  opacity: 0.82;
+}
+.aappl-t {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.aappl-t > b {
+  font-size: var(--fs-h3);
   font-weight: 900;
+  letter-spacing: var(--ls-body);
+}
+.aappl-t > i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.aappl-row .chip {
+  flex: none;
+}
+.aappl-go {
+  flex: none;
   color: var(--ink-2);
 }
 
 @media (min-width: 720px) {
-  .acards {
+  .aappl {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .aappl-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .aroad-stone,
-  a.acard {
+  .ado-card,
+  .aappl-row {
     transition: none;
   }
 }

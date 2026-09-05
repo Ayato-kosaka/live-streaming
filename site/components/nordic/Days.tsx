@@ -61,7 +61,7 @@ export default function Days() {
               {day.stay && (
                 <span className="nday-stay">
                   <Icon name="home" size={14} />
-                  {day.stay}
+                  泊まる {day.stay}
                 </span>
               )}
             </p>

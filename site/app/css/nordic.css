@@ -143,7 +143,12 @@
 
 /* --- 行き先ボタン --- */
 .tnow-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+/* 指で押せる最小は 48px（docs/island-design.md 3-2）。
+   当たり判定を中心から伸ばして測ると 42px しかなかった。 */
 .tnow-act {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
   font-size: 12.5px;
   font-weight: 900;
   padding: var(--sp-2) var(--sp-4);

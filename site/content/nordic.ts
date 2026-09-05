@@ -335,7 +335,8 @@ export const DAYS: Day[] = (() => {
     const prev = out[out.length - 1];
     if (l.sameDay && prev) {
       prev.legs.push(l);
-      if (l.stay) prev.stay = l.stay;
+      // 泊まるところは引き継がない。夜行フェリーの日は船で寝るので、
+      // 着いた先（ストックホルムの友だちの家）はその日の宿ではない。
       continue;
     }
     out.push({ n: out.length + 1, date: l.date, legs: [l], stay: l.stay });
