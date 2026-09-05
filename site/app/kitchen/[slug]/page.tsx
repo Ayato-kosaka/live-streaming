@@ -10,6 +10,9 @@ import { Vid } from "@/components/streams/Vid";
 import { Dish } from "@/components/streams/KitchenCatalog";
 import { H, Rec, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtBasket, ArtCam, ArtFlame, ArtMeeting, ArtPot, ArtShelf, ArtSignpost } from "@/components/streams/Art";
+import { kitchenTalk } from "@/content/kitchenTalk";
+import VoiceBubble from "@/components/ui/Voice";
+import KitchenDay from "@/components/streams/KitchenDay";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -44,12 +47,17 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const no = recipeNo(r.slug);
 
   /** 同じ国のキッチンで作ったもの。旅の記憶はだいたい国でつながっている。 */
-  const sameCountry = sorted.filter((x) => x.country === r.country && x.slug !== r.slug).slice(0, 10);
+  const sameCountry = sorted.filter((x) => x.country === r.country && x.slug !== r.slug).slice(0, 6);
   /** 同じ種類の品。「粉ものばかり作っていた時期」がここから見える。 */
-  const sameKind = sorted.filter((x) => x.kind === r.kind && x.slug !== r.slug).slice(0, 10);
+  const sameKind = sorted.filter((x) => x.kind === r.kind && x.slug !== r.slug).slice(0, 6);
 
   /** その日から今日まで何日か、ではなく「何品目だったか」を出す。日数は毎日ずれる。 */
   const total = RECIPES.length;
+
+  /** その晩の台所（チャットから焼いたもの）。取れていない品では undefined。 */
+  const day = kitchenTalk(r.slug);
+  /** 引用が「どの日の言葉か」。買い出しの日の助言と、作った日の助言は別のもの。 */
+  const stepOf = new Map(r.streams.map((s) => [s.videoId, s.label]));
 
   return (
     <PageShell
@@ -98,6 +106,37 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
             ]}
           />
         </Zone>
+
+        {day && day.people > 0 && (
+          <Zone>
+            <H art={<ArtPot size={32} />} note={day.there.length ? `${day.there.length}人が島にいる` : undefined}>
+              この1品は、ひとりで作っていない
+            </H>
+            <KitchenDay t={day} />
+          </Zone>
+        )}
+
+        {day && day.talk.length > 0 && (
+          <Zone>
+            <H art={<ArtMeeting size={32} />} note={`${day.talk.length}件`}>
+              チャットから飛んできた、作りかた
+            </H>
+            {/* 書かれたまま出す。誤字も全角カンマも直さない（島で絵文字を出して
+                いいのは、配信のタイトルとこの中の文章だけ）。 */}
+            <ul className="avoices kd-talk">
+              {day.talk.map((q, k) => (
+                <VoiceBubble
+                  key={`${q.v}-${k}`}
+                  icon={q.icon}
+                  name={q.name}
+                  meta={stepOf.get(q.v) ?? "配信"}
+                  text={q.text}
+                  flip={k % 2 === 1}
+                />
+              ))}
+            </ul>
+          </Zone>
+        )}
 
         <Zone>
           <H art={<ArtSignpost size={32} />} note={`${steps.length}日ぶん`}>

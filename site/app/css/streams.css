@@ -1157,3 +1157,90 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: #40390c;
   background: var(--zk-chip);
 }
+
+/* ───────── 作った料理の1枚：この晩の台所 ───────── */
+
+/*
+ * 32枚の料理の面は、面の高さの9割が「よその料理へ行く格子」で、
+ * その品について言えているのは添え書きの1文だけだった（`tools/sprites/thin.mjs` で実測）。
+ * 足りないのは飾りではなく事実なので、その日のチャットから引いた3つを置く場所。
+ *
+ * 数字はカードにしない。**1枚の紙の上に、いちばん言いたい1つだけ大きく**
+ * （`docs/island-world.md` 4.3 ①）。ここでいちばん言いたいのは人数。
+ */
+.kd {
+  display: grid;
+  gap: var(--sp-2);
+}
+.kd-lead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--zk-ink);
+}
+/* いちばん言いたい1つ。数だけを大きくして、単位は本文の大きさのまま置く */
+.kd-lead > b {
+  font-size: clamp(34px, 9vw, 46px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: var(--ls-head);
+  color: var(--zk-ink);
+}
+.kd-lead > i {
+  margin-left: calc(var(--sp-1) * -1);
+  font-style: normal;
+  font-size: var(--fs-body);
+  font-weight: 900;
+}
+.kd-sub,
+.kd-foot {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  letter-spacing: var(--ls-body);
+  /* 読ませる字なので --ink-3 まで薄くしない（`docs/island-world.md` 7.1） */
+  color: var(--zk-ink-2);
+}
+/*
+ * その日いた人。島を歩いているのと同じ絵をそのまま並べる。
+ * **名前は付けない。** 誰が誰かは絵だけが示す（`docs/island-concept.md` 6章）。
+ * 押せないので厚みは付けない。足元をそろえるために下ぞろえにする。
+ */
+.kd-folks {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-2) var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3) var(--sp-2) 0;
+  /* 地面。四角い切り替わりを作らないよう、上へ向けて紙の色へ抜く */
+  background: linear-gradient(180deg, transparent 0, var(--zk-shade) 78%);
+  border-radius: var(--r-2);
+}
+.kd-folks > li {
+  flex: none;
+  line-height: 0;
+}
+.kd-folks img {
+  width: 54px;
+  height: 62px;
+  object-fit: contain;
+  /* 足元をそろえないと、絵の縦幅の違いぶんだけ人が浮く（`island-world.md` 6.3） */
+  object-position: center bottom;
+  /* 接地影は1枚だけ。2回かけない。向きとぼかしは `--shadow-1` に合わせる
+     （右下へ 3px ぼかす。真下でぼかさないと「押せる厚み」と見分けがつかない。
+     `docs/island-world.md` 5.3） */
+  filter: drop-shadow(1px 3px 3px rgba(52, 66, 32, 0.34));
+}
+@media (min-width: 720px) {
+  .kd-folks img { width: 66px; height: 76px; }
+}
+/* 引用の吹き出しは紙の区画いっぱいに使う（`.avoices` は `ui.css`） */
+.kd-talk { margin-top: 0; }
