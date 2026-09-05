@@ -383,12 +383,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     };
     // 初めての人(null)には見せる。長く空いた人にも、もう一度。
     const firstEver = apart === null;
-    const again = firstEver || apart >= ARRIVE_AGAIN;
+    const again = firstEver || (apart ?? 0) >= ARRIVE_AGAIN;
     /* 名乗りも同じ人に同じ回数だけ。到着の演出は「来た」しか言っていないので、
        そのあとに1文だけ足して、演出に中身を持たせる。
        **初めての人には、どの日でも名乗る。** 板のほうが初回は開かないので重ならない。
        長く空いて帰ってきた人だけ、板が自分から開く日は黙る。 */
-    const greet = firstEver || !TODAY_OPENS.includes(todayNews().kind);
+    const greet = again && (firstEver || !TODAY_OPENS.includes(todayNews().kind));
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
