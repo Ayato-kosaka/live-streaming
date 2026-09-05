@@ -724,7 +724,9 @@ export const food: Record<string, Draw> = {
   wine: (c) => (
     <>
       <Sh c={c} cy={57} rx={14} ry={3.2} />
-      <path d="M17 6h30v11c0 9.6-6.7 16.4-15 16.4S17 26.6 17 17z" fill={c.w} opacity={c.flat ? 1 : 0.75} />
+      {/* ガラスの椀。透けた白（`w` の 75%）だと紙の上でワインだけが浮いていた。
+          ガラスは何も無いのではなく空を映すので、青い陰の色で塗るほうが正しい */}
+      <path d="M17 6h30v11c0 9.6-6.7 16.4-15 16.4S17 26.6 17 17z" fill={c.wd} opacity={c.flat ? 1 : 0.85} />
       <path d="M18.4 18h27.2c-.7 8.4-6.8 14.4-13.6 14.4S19.1 26.4 18.4 18z" fill={c.rdd} />
       <path d="M32 18h13.6c-.7 8.4-6.8 14.4-13.6 14.4z" fill={c.nv} opacity="0.3" />
       <rect x="29.4" y="32" width="5.2" height="16" rx="2.6" fill={c.wd} />
