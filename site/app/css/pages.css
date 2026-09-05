@@ -228,12 +228,56 @@
 .phead-say .gsay-bubble { text-align: left; max-width: 30em; }
 .phead-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
 
-/* 紙のパネル。
+/* =========================================================
+   窓の型は2つある（docs/ac-reference.md ⑦）
+
+     板の型 … 押すもの・行き先。厚みがあって、押すと沈む
+     紙の型 … 一覧と詳細。印刷したページ。影を落とさず、細い罫線で区切る
+
+   ぜんぶを板の型で作ると、同じ形のカードが延々と積まれて見える。
+   1つの面で2つを混ぜない。中身から型を決めるので、ページ側は触らなくていい。
+   ========================================================= */
+
+:root {
+  /* 紙の型の実測値（いきもの図鑑の面）。tokens の砂とクリームから作る。 */
+  --pg-sheet: color-mix(in srgb, var(--sand) 46%, var(--paper-2));   /* 紙の地 */
+  --pg-sheet-lo: color-mix(in srgb, var(--sand) 64%, var(--paper-2));
+  --pg-rule: color-mix(in srgb, var(--ink-3) 62%, var(--sand-edge)); /* 区切りの罫線。黒は使わない */
+  --pg-mark: color-mix(in srgb, var(--gold) 46%, var(--grass2-hi));  /* 見出しに敷く蛍光ペン */
+  /* 選んでいるものの枠だけ、実測のオレンジ赤をそのまま使う。
+     tokens の色を混ぜても、この赤みは作れない。 */
+  --pg-pick: #e2522d;
+
+  /* 紙の地。無地にしない。明るさが5%ほどムラになっている。
+     ラジアルを重ねてムラを作り、細い斜めの縞で紙の目を出す。画像は足さない。 */
+  --pg-paper-bg:
+    repeating-linear-gradient(58deg,
+      rgba(255, 255, 255, 0.16) 0 1px, rgba(255, 255, 255, 0) 1px 4px),
+    radial-gradient(ellipse 62% 42% at 16% 10%,
+      color-mix(in srgb, var(--paper) 82%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 54% 46% at 86% 42%,
+      color-mix(in srgb, var(--paper) 62%, transparent) 0%, transparent 74%),
+    radial-gradient(ellipse 74% 44% at 38% 92%,
+      color-mix(in srgb, var(--sand-edge) 30%, transparent) 0%, transparent 72%),
+    linear-gradient(180deg, var(--pg-sheet) 0%, var(--pg-sheet-lo) 100%);
+}
+
+/* --- 板の型（既定） -----------------------------------------------------
    ゲームの窓は「枠 → クリームの輪 → 紙」の三層でできている。
    border で外枠、inset の影で内側の輪、background が紙。 */
 .panel {
   position: relative;
-  background: var(--pg-ground, var(--paper));
+  /* 既定の地も無地にしない（docs/ac-reference.md ⑦-1）。
+     左上から光が当たって、右下に向かって紙が沈む。無地の白いカードが
+     等間隔で積まれて見えるのは、ここが真っ平らだったのが大きい。 */
+  background: var(--pg-ground,
+    radial-gradient(ellipse 58% 44% at 88% 78%,
+      color-mix(in srgb, var(--sand) 34%, transparent) 0%, transparent 72%)
+    ,
+    linear-gradient(156deg,
+      #fffdf7 0%,
+      var(--paper) 34%,
+      color-mix(in srgb, var(--paper-2) 76%, var(--sand)) 100%));
   /* 枠は一色で塗らない。上を明るく下を暗くすると、平らな線が面取りになる */
   border: var(--bw-2) solid var(--frame);
   border-top-color: color-mix(in srgb, var(--frame) 72%, var(--paper));
@@ -248,79 +292,120 @@
 }
 @media (min-width: 720px) { .panel { padding: 34px 32px 32px; margin-bottom: 38px; } }
 
-/* --- コーナーごとに地の質感を変える ------------------------------------
-   同じ白いカードが等間隔で積まれていると、どこを見ればいいのか分からない。
+/* --- 地の質感 -----------------------------------------------------------
    紙・棚板・台紙・コルクを描き分けて、目で区切りが付くようにする。
-   中身から判定するので、ページ側のマークアップは触らなくていい。
    質感はぜんぶ CSS のグラデーション。画像もフィルタも使わない。
    ----------------------------------------------------------------------- */
 
-/* 行き先が並ぶところは「棚板」。上から下へ木の色が落ちていく */
-.panel:has(.tiles),
-.panel:has(.scards),
-.panel:has(.cities) {
+/* 行き先が並ぶところは「棚板」。木目を縦に通して、上から下へ色が落ちる */
+.panel:has(> .tiles),
+.panel:has(> .scards) {
   --pg-ground:
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--frame-deep) 7%, transparent) 0 2px,
+      transparent 2px 11px),
     linear-gradient(180deg,
-      var(--paper) 0%,
-      color-mix(in srgb, var(--frame) 13%, var(--paper)) 100%);
+      color-mix(in srgb, var(--frame) 9%, var(--paper)) 0%,
+      color-mix(in srgb, var(--frame) 30%, var(--paper)) 100%);
 }
 /* 棚には奥行きの線が1本ある */
-.panel:has(.tiles)::after,
-.panel:has(.scards)::after {
+.panel:has(> .tiles)::after,
+.panel:has(> .scards)::after {
   content: "";
   position: absolute;
   left: 14px; right: 14px; bottom: 9px;
   height: 3px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--frame) 34%, transparent);
+  background: color-mix(in srgb, var(--frame) 46%, transparent);
   pointer-events: none;
 }
 
-/* スタンプ帳は方眼ではなく「点の台紙」。線を引くと表計算に見える */
-.panel:has(.stamps) {
-  --pg-ground:
-    radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--frame) 34%, transparent) 0 1.4px,
-      transparent 1.6px),
-    var(--paper);
-  background-size: 20px 20px, auto;
-}
-
 /* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする */
-.panel:has(.notes),
-.panel:has(.ideas),
+.panel:has(> .notes),
+.panel:has(> .ideas),
 .panel:has(.noteform) {
   --pg-ground:
-    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--frame-deep) 12%, transparent) 0 2px, transparent 3px),
-    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--frame-deep) 10%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--frame-deep) 20%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--frame-deep) 16%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 84%, color-mix(in srgb, var(--frame-deep) 13%, transparent) 0 1.5px, transparent 3px),
     linear-gradient(180deg,
-      color-mix(in srgb, var(--frame) 20%, var(--paper-2)) 0%,
-      color-mix(in srgb, var(--frame) 28%, var(--paper-2)) 100%);
-  background-size: 84px 84px, 112px 112px, auto;
-}
-
-/* いまいる場所と旅の記録は、うっすら草の色を敷いて外の場所に見せる */
-.panel:has(.now-hero),
-.panel:has(.clist),
-.panel:has(.tl) {
-  --pg-ground:
-    linear-gradient(180deg,
-      var(--paper) 0%,
-      color-mix(in srgb, var(--grass2-hi) 26%, var(--paper)) 100%);
-  border-color: color-mix(in srgb, var(--grass-lo) 34%, var(--frame));
-  --pg-edge: color-mix(in srgb, var(--grass-lo) 34%, var(--frame-dark));
-}
-
-/* コルクの窓だけ枠を一段濃くする。掲示板は「外に立っている板」なので */
-.panel:has(.notes),
-.panel:has(.ideas),
-.panel:has(.noteform) {
+      color-mix(in srgb, var(--frame) 30%, var(--paper-2)) 0%,
+      color-mix(in srgb, var(--frame) 42%, var(--paper-2)) 100%);
+  background-size: 84px 84px, 112px 112px, 63px 63px, auto;
   border-color: var(--frame-dark);
   --pg-edge: var(--frame-deep);
   --pg-rim: color-mix(in srgb, var(--frame) 34%, var(--paper-2));
 }
 
-/* 見出しは「紙に書いた字」ではなく「窓の上ぶちにはめた札」にする。
+/* いまいる場所と今週の予定は、うっすら草を敷いて「外の場所」に見せる */
+.panel.now-hero,
+.panel:has(> .week) {
+  --pg-ground:
+    radial-gradient(ellipse 70% 46% at 50% 108%,
+      color-mix(in srgb, var(--grass2-hi) 62%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg,
+      var(--paper) 0%,
+      color-mix(in srgb, var(--grass2-hi) 30%, var(--paper)) 100%);
+  border-color: color-mix(in srgb, var(--grass-lo) 40%, var(--frame));
+  --pg-edge: color-mix(in srgb, var(--grass-lo) 40%, var(--frame-dark));
+  --pg-rim: color-mix(in srgb, var(--grass2-hi) 34%, var(--paper));
+}
+
+/* --- 紙の型 -------------------------------------------------------------
+   一覧と詳細のパネル。図鑑の面を写す。
+   厚みの板を外し、細い罫線と紙のムラだけで作る。角も板ほど丸くしない。
+   ----------------------------------------------------------------------- */
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) {
+  --pg-ground: var(--pg-paper-bg);
+  --pg-rim: transparent;
+  --pg-edge: transparent;
+  border: 2px solid var(--pg-rule);
+  border-radius: var(--r-2);
+  /* 紙は厚みの板を持たない。水の上に置いた1枚として、ずれた影だけ落とす */
+  box-shadow: 4px 6px 0 color-mix(in srgb, var(--pg-cast) 22%, transparent);
+  padding: 22px 15px 20px;
+}
+@media (min-width: 720px) {
+  .panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) {
+    padding: 28px 26px 26px;
+  }
+}
+/* スタンプ帳だけ、紙のムラに点の台紙を足す。線を引くと表計算に見える */
+.panel:has(> .stamps) {
+  --pg-ground:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--pg-rule) 46%, transparent) 0 1.4px,
+      transparent 1.6px),
+    var(--pg-paper-bg);
+  background-size: 20px 20px, auto, auto, auto, auto, auto;
+}
+
+/* 紙の面に置くものは、紙の作りに合わせる（docs/ac-reference.md ⑦-2,5,6）。
+   厚みの板と細い罫線が1つの面に混ざると、どちらが押せるのか分からなくなる。
+     ・区切りは影ではなく細い罫線
+     ・押せない印（チップ）は平ら
+     ・選んでいるものは塗りを変えず、細いオレンジ赤の枠で示す */
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city, .stat, .chip, .stamp) {
+  box-shadow: none;
+  border-width: 1.5px;
+  border-color: var(--pg-rule);
+  border-style: solid;
+  background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
+}
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city):hover { transform: none; border-color: var(--pg-pick); }
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(.scard, .city, .stamp):active { transform: translateY(1px); border-color: var(--pg-pick); }
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) .stamp:hover { transform: translateY(-2px) rotate(-1deg); border-color: var(--pg-pick); box-shadow: none; }
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) .chip { border-radius: var(--r-1); }
+/* 紙の面の見出しの下には、蛍光ペンの帯を敷く。これ1つで「印刷物」に見える。 */
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) :is(h3, .sub) {
+  background: linear-gradient(180deg, transparent 46%, var(--pg-mark) 46%);
+  border: 0;
+  border-radius: 0;
+  padding: 0 4px 1px;
+}
+
+/* --- 見出し -------------------------------------------------------------
+   板の型では「窓の上ぶちにはめた木の札」。
    幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
    窓の縁をまたがせる。ここが「ゲームの窓」に見えるかどうかの分かれ目。 */
 .panel > h2,
@@ -335,6 +420,8 @@
   font-weight: 900;
   letter-spacing: var(--ls-head);
   line-height: 1.4;
+  /* 長い見出しが「たまっ／たか」のように1文字だけ折り返すのを防ぐ */
+  text-wrap: balance;
   display: flex; align-items: center; gap: 11px;
   border-radius: 999px;
   border: var(--bw-2) solid color-mix(in srgb, var(--frame) 84%, var(--frame-deep));
@@ -346,12 +433,16 @@
     0 4px 0 color-mix(in srgb, var(--frame) 60%, var(--frame-deep)),
     var(--pg-drop-s);
 }
-/* 先頭の見出しだけ、窓の上ぶちをまたがせる */
-.panel > h2:first-child { margin: -34px 0 14px 10px; }
+/* 先頭の見出しだけ、窓の上ぶちをまたがせる。
+   左右にはみ出させて、細いスマホでも折り返さずに入るようにする。 */
+.panel > h2:first-child {
+  margin: -34px -6px 14px -4px;
+  max-width: calc(100% + 10px);
+}
 @media (min-width: 720px) {
   .panel > h2,
   .panel > .bhead > h2 { padding: 11px 26px 12px 16px; margin-bottom: 18px; }
-  .panel > h2:first-child { margin: -40px 0 18px 16px; }
+  .panel > h2:first-child { margin: -40px 0 18px 10px; max-width: 100%; }
 }
 /* 札の両端に打ってある留め具。片側だけだと箇条書きの点に見える */
 .panel > h2::before,
@@ -365,6 +456,84 @@
   background: color-mix(in srgb, var(--frame-deep) 62%, var(--frame));
   box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
+/* 棚板の面の札は、木そのものの色にする。地が木なので、札も木で揃える。 */
+.panel:has(> .tiles) > h2,
+.panel:has(> .scards) > h2,
+.panel:has(> .tiles) > .bhead > h2,
+.panel:has(> .scards) > .bhead > h2 {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 68%, var(--paper)) 0%,
+    var(--frame) 100%);
+  border-color: var(--frame-deep);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 4px 0 var(--frame-deep),
+    var(--pg-drop-s);
+}
+/* 草の面の札は葉の色。ここだけ「外」だと分かる。 */
+.panel.now-hero > h2,
+.panel:has(> .week) > h2 {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--grass2-hi) 78%, var(--paper)) 0%,
+    var(--grass2) 100%);
+  border-color: var(--grass-lo);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.62),
+    0 4px 0 var(--grass-lo),
+    var(--pg-drop-s);
+}
+.panel.now-hero > h2::before, .panel.now-hero > h2::after,
+.panel:has(> .week) > h2::before, .panel:has(> .week) > h2::after {
+  background: color-mix(in srgb, var(--grass-lo) 74%, var(--leaf-c));
+}
+/* コルクの面の札は、板に打ちつけた札。留め具を画鋲の色にする。 */
+.panel:has(> .notes) > h2, .panel:has(> .ideas) > h2,
+.panel:has(> .notes) > .bhead > h2, .panel:has(> .ideas) > .bhead > h2 {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 40%, var(--paper)) 0%,
+    color-mix(in srgb, var(--frame) 78%, var(--frame-dark)) 100%);
+  border-color: var(--frame-deep);
+}
+.panel:has(> .notes) > h2::before, .panel:has(> .notes) > h2::after,
+.panel:has(> .ideas) > h2::before, .panel:has(> .ideas) > h2::after,
+.panel:has(> .notes) > .bhead > h2::before, .panel:has(> .notes) > .bhead > h2::after,
+.panel:has(> .ideas) > .bhead > h2::before, .panel:has(> .ideas) > .bhead > h2::after {
+  background: var(--accent);
+  box-shadow: inset 0 -2px 0 rgba(140, 30, 60, 0.3), 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* 紙の型の見出しは「白い紙の札を、少し傾けてテープで貼った」もの。
+   木の札のままだと、紙の面に板が乗って型が混ざる。 */
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2 {
+  border: 0;
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 22px;
+  transform: rotate(-1.1deg);
+  transform-origin: left center;
+  box-shadow: 2px 3px 0 color-mix(in srgb, var(--pg-cast) 18%, transparent);
+}
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2:first-child {
+  margin: -30px 0 18px 6px;
+}
+/* 留め具の丸をやめて、両端に貼ったテープにする */
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::before,
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::after {
+  position: absolute;
+  width: 30px; height: 12px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--gold) 26%, rgba(255, 255, 255, 0.62));
+  box-shadow: none;
+}
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::before {
+  left: -12px; top: -7px; transform: rotate(-29deg);
+}
+.panel:is(:has(> .stamps), :has(> .cities), :has(> .hlist), :has(> .tl)) > h2::after {
+  right: -12px; top: -7px; transform: rotate(29deg);
+}
+
 .panel p { margin: 0 0 11px; font-size: 15px; line-height: 1.95; font-weight: 600; }
 .panel p:last-child { margin-bottom: 0; }
 .panel > h2 + p, .panel > h2 + .muted { margin-top: 0; }
@@ -504,33 +673,15 @@
 .ifoot-back:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(60, 34, 10, 0.55); }
 .ifoot-note { margin: 18px 0 0; font-size: 12px; font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
 
-/* 国リスト */
-.clist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.clist a {
-  display: flex; align-items: center; gap: 13px;
-  min-height: 60px;
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: 3px solid var(--frame);
-  border-radius: var(--pg-r-card);
-  padding: 12px 14px;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
-  transition: transform 0.14s ease;
-}
-.clist a:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 7px 0 var(--pg-edge), var(--pg-drop-s); }
-.clist a:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
-.clist-flag { font-size: 27px; flex: none; line-height: 1; }
-.clist-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.clist-body b { font-size: 15.5px; font-weight: 900; display: flex; align-items: baseline; gap: 8px; }
-.clist-body b em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--ink-3); letter-spacing: var(--ls-head); }
-.clist-body i { font-size: 12.5px; font-style: normal; font-weight: 700; color: var(--ink-2); line-height: 1.65; }
-
 /* ハイライト。区切りの線ではなく、紙に貼った帯にする */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .hlist > li {
-  border-left: 7px solid var(--frame);
-  border-radius: 0 var(--r-2) var(--r-2) 0;
-  background: color-mix(in srgb, var(--paper-2) 62%, var(--paper));
-  padding: 12px 14px 13px 14px;
+  /* 紙の面なので、区切りは影ではなく線。左の1本だけ色を持たせて、
+     どこから次の話か分かるようにする。 */
+  border-left: 5px solid color-mix(in srgb, var(--frame) 62%, var(--pg-rule));
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--paper) 88%, var(--pg-sheet));
+  padding: 12px 14px 13px 15px;
 }
 .hlist-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; }
 .hlist-head b { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; }
