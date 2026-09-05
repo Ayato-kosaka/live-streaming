@@ -82,6 +82,8 @@ export type Villager = {
   mood: Mood;
   /** 立ち話の相手。いなければ null */
   mate: Villager | null;
+  /** 次に立ち話していいまで、あと何ミリ秒か */
+  chatCool: number;
   /** いまの状態があと何ミリ秒つづくか */
   left: number;
   /** 歩く速さ(1フレーム=16.7ms あたりのワールド単位) */
@@ -120,7 +122,7 @@ export function clampToGrass(x: number, y: number): [number, number] {
  * 12人が12か所でばらばらに動いているだけの島になる。
  */
 function wander(v: Villager, vs: Villager[], r: () => number): [number, number] {
-  if (r() < 0.26) {
+  if (r() < 0.14) {
     const near = vs.filter(
       (o) => o !== v && !o.says && o.mood !== "walk" && Math.hypot(o.x - v.x, (o.y - v.y) * 1.4) < 190,
     );
@@ -181,16 +183,30 @@ function rosterOf(residents: Resident[], max: number, day: number): Resident[] {
     .map((x) => x.who);
 }
 
-/**
- * 持ち場は、その人ごとに決める。
- * 日替わりで顔ぶれが変わっても、**その人はいつも同じあたりにいる。**
- * 毎日ちがう場所に立っていると、「あの人はたき火のところの人」が育たない。
- */
-function postOf(icon: string | undefined, i: number) {
+/** 名前から決まる、その人だけの番号。並べ替えの鍵にする。 */
+function keyOf(icon: string | undefined, i: number): number {
   const s = icon ?? `n${i}`;
   let h = 2166136261;
-  for (let k = 0; k < s.length; k++) h = (Math.imul(h ^ s.charCodeAt(k), 16777619) >>> 0);
-  return POSTS[h % POSTS.length];
+  for (let k = 0; k < s.length; k++) h = Math.imul(h ^ s.charCodeAt(k), 16777619) >>> 0;
+  return h;
+}
+
+/**
+ * 持ち場の配りかた。
+ *
+ * **12の持ち場に1人ずつ**。ここは崩さない。持ち場が空くと、その入口のまわりに
+ * 誰もいない一角ができて、島が広いだけの場所になる。
+ *
+ * そのうえで、並べる順はその人ごとの番号で決める。顔ぶれが変わらないかぎり
+ * 同じ人が同じ持ち場に立つので、「あの人はたき火のところの人」が育つ。
+ */
+function assignPosts(living: Resident[]): { spot: SpotId; r: number }[] {
+  const order = living.map((who, i) => ({ i, k: keyOf(who.icon, i) })).sort((a, b) => a.k - b.k);
+  const out: { spot: SpotId; r: number }[] = new Array(living.length);
+  order.forEach((o, n) => {
+    out[o.i] = POSTS[n % POSTS.length];
+  });
+  return out;
 }
 
 /**
@@ -217,8 +233,9 @@ export function createVillagers(residents: Resident[], max = OUT_TODAY, today = 
     return a;
   };
   const living = rosterOf(residents.filter((x) => x.icon), max, jstDay(today));
+  const posts = assignPosts(living);
   return living.map((who, i) => {
-    const post = postOf(who.icon, i);
+    const post = posts[i];
     const s = SPOT[post.spot];
     const a = (i / Math.max(1, living.length)) * Math.PI * 2;
     const [x, y] = clampToGrass(s.x + Math.cos(a) * post.r * 0.6, s.y + 26 + Math.sin(a) * post.r * 0.4);
@@ -236,6 +253,7 @@ export function createVillagers(residents: Resident[], max = OUT_TODAY, today = 
       facing: r() < 0.5 ? -1 : 1,
       mood: "stand" as Mood,
       mate: null,
+      chatCool: 6000 + r() * 20000,
       left: 400 + r() * 2600,
       speed: 0.34 + r() * 0.16,
       phase: r() * Math.PI * 2,
@@ -251,8 +269,13 @@ export function createVillagers(residents: Resident[], max = OUT_TODAY, today = 
 function unpair(v: Villager) {
   const o = v.mate;
   v.mate = null;
-  if (o && o.mate === v) {
+  if (!o) return;
+  // 話しおわった2人は、しばらく別のことをする。すぐ話し直すと、
+  // 同じ2人がずっと固まっている絵になって、島が動いて見えない
+  v.chatCool = 24000;
+  if (o.mate === v) {
     o.mate = null;
+    o.chatCool = 24000;
     if (o.mood === "chat") {
       o.mood = "think";
       o.left = 300;
@@ -266,10 +289,10 @@ function unpair(v: Villager) {
  */
 function pairUp(vs: Villager[], r: () => number) {
   for (const v of vs) {
-    if (v.says || v.mate || v.mood === "walk") continue;
+    if (v.says || v.mate || v.mood === "walk" || v.chatCool > 0) continue;
     for (const o of vs) {
-      if (o === v || o.says || o.mate || o.mood === "walk") continue;
-      if (Math.hypot(v.x - o.x, (v.y - o.y) * 1.6) > 42) continue;
+      if (o === v || o.says || o.mate || o.mood === "walk" || o.chatCool > 0) continue;
+      if (Math.hypot(v.x - o.x, (v.y - o.y) * 1.6) > 34) continue;
       v.mate = o;
       o.mate = v;
       // 向かい合う。住人の絵は左右を反転していないので見た目には出ないが、
@@ -278,7 +301,7 @@ function pairUp(vs: Villager[], r: () => number) {
       o.facing = v.facing === 1 ? -1 : 1;
       v.mood = "chat";
       o.mood = "chat";
-      const span = 5000 + r() * 7000;
+      const span = 4000 + r() * 4000;
       v.left = span;
       o.left = span;
       break;
@@ -348,6 +371,7 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
 
   for (const v of vs) {
     v.left -= dtMs;
+    if (v.chatCool > 0) v.chatCool -= dtMs;
     // 話している間は足を止めて、閉じられるまで待つ
     if (v.says) continue;
     if (v.mood === "walk") {
@@ -380,10 +404,11 @@ export function stepVillagers(vs: Villager[], dtMs: number, r: () => number) {
       if (dice < 0.22) {
         v.mood = "wave";
         v.left = 900 + r() * 700;
-      } else if (dice < 0.44) {
-        // じっと動かない時間。何かを見ている、として読ませる
+      } else if (dice < 0.36) {
+        // じっと動かない時間。何かを見ている、として読ませる。
+        // 長すぎると「止まっている」に見えるので、10秒は超えさせない
         v.mood = "gaze";
-        v.left = 3800 + r() * 5200;
+        v.left = 3000 + r() * 3600;
       } else {
         const [tx, ty] = wander(v, vs, r);
         v.tx = tx;
