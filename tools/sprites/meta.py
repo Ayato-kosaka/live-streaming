@@ -36,6 +36,9 @@ SMALL_SIDE = 192
 SMALL = re.compile(
     r"^(grass|flower-|mushroom|bush|lily|log|firewood|path-|crop-|fence"
     r"|stump|rock-|stone-|pot-plant|fern|bamboo|moss-hanging|cactus|hedge"
+    # 住人は島を歩く大きさ(ワールド30前後)にしか出ない。
+    # 2倍画面でも 80px 弱なので、320px を配ると 4枚に 3枚ぶん捨てることになる
+    r"|villager-"
     r"|snow-pile|rocks-snow|sled)"
 )
 

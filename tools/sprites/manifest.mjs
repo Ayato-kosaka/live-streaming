@@ -395,9 +395,31 @@ export const SPRITES = [
     "burger-double", "cake-birthday", "chocolate", "pizza-box",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
-  /* ---------- 住人 ---------- */
-  // Kenney の配色がそのままで可愛いので、色は置き換えない
+  /* ---------- 住人 ----------
+     Kenney の配色がそのままで可愛いので、色は置き換えない(plain)。
+
+     読んだままの姿勢は腕を真横に広げた T字で、島に置いても人形にしか
+     見えなかった。mini-characters は骨とアニメを持っているので、
+     クリップの1コマで止めて姿勢を焼く(render.html の applyPose)。
+
+     カメラは他のスプライトと同じ(yaw45 / pitch32)のまま。
+     低い位置から撮ったほうが頭でっかちに見えにくいが、そうすると
+     接地影の楕円だけが小屋や木と違う平たさになって、貼り付けたように見える。
+     頭の大きさはモデルの持ち味なので、影のほうを揃える。
+
+     歩きは2コマ。同じ周期の逆位相(0.25 と 0.75)を取ると、
+     踏み出す足が左右で入れ替わり、絵の大きさもほぼ同じになる。 */
   ...["male-a", "male-b", "male-c", "male-d", "male-e", "male-f",
     "female-a", "female-b", "female-c", "female-d", "female-e", "female-f",
-  ].map((id) => ({ name: `villager-${id}`, parts: [`${BK}/character-${id}.glb`], opts: { plain: true } })),
+  ].flatMap((id) => [
+    // 立ち。名前を変えないのは、いま参照している所があっても壊さないため
+    ["", "idle", 0],
+    ["-walk-a", "walk", 0.25],
+    ["-walk-b", "walk", 0.75],
+    ["-sit", "sit", 0.5],
+  ].map(([suffix, clip, t]) => ({
+    name: `villager-${id}${suffix}`,
+    parts: [{ url: `${BK}/character-${id}.glb`, pose: { clip, t } }],
+    opts: { plain: true },
+  }))),
 ];

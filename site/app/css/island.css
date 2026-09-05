@@ -731,6 +731,38 @@
   /* backdrop-filter は画面幅ぜんぶを毎フレーム引き伸ばすので外した */
   backdrop-filter: none;
 }
+/* 行き先の開け閉め。バーの上に置いた札。
+   バーの中に1段作ると、畳んでいるあいだも1行ぶん島を隠すことになる。
+   `.stage-view`（島をながめる）と同じ形にしてある。どちらも行き先ではなく、
+   「島の見え方をどうするか」を決める操作なので、見た目を揃えておく。 */
+.stage .bar-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 15px 0 12px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 5px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.stage .bar-toggle:active {
+  transform: translateY(5px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.stage .bar-toggle:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 「今日の島」を開くと、その板がちょうどここへ浮いてくる。札は引っ込める */
+.stage .island-bar:has(.today.is-open) .bar-toggle { display: none; }
+
 .stage .island-bar-scroll {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -739,6 +771,21 @@
   overflow: visible;
   /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
   mask-image: none;
+}
+/* 畳んでいるあいだは場所ごと消す。透明にして残すと、
+   読み上げにもキーボードにも「開いていない6つ」が並んだままになる。 */
+.stage .island-bar:not(.is-open) .island-bar-scroll { display: none; }
+/* 開くときだけ下から生える。transform と opacity しか動かさないので、
+   バーの背（島の寄せ量の計算に使っている）は最初のフレームから確定している。 */
+.stage .island-bar.is-open .island-bar-scroll {
+  animation: barSpots 220ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes barSpots {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage .island-bar.is-open .island-bar-scroll { animation: none; }
 }
 .stage .bar-spot {
   position: relative;
@@ -762,7 +809,10 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
   color: var(--ink);
+  /* 押すと入る（<a> になった）。下線は木の板に出ると汚れに見える */
+  text-decoration: none;
 }
+.stage .bar-spot:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 .stage .bar-spot img { width: 28px; height: 28px; flex: none; }
 /* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
    ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
@@ -812,7 +862,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 7px 13px 7px 10px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。前は 39px で届いていなかった */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
@@ -828,8 +880,11 @@
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
-/* 話しているあいだは、島の上のUIと同じように引っ込める */
-.stage.is-talking .stage-view { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+/* 話しているあいだは、島の上のUIと同じように引っ込める。
+   バーごと引くのは、名乗り（カモメ）が出ているあいだ島を見せたいから。
+   板だけ消してバーの枠が残ると、空っぽの板が下に居座ることになる。 */
+.stage.is-talking .stage-view,
+.stage.is-talking .island-bar { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
 
 /* =========================================================
    島の下端

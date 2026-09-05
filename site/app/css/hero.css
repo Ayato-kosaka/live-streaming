@@ -1,7 +1,7 @@
 /* ---- 島の上のロゴ ------------------------------------------------------
    文字で説明せず、看板1枚に言いたいことを全部入れてある。
    ・引き（島ぜんぶ / PC）… 上部中央にフルの看板
-   ・寄り（あやとを追うスマホ）… 右上に小さくバッジだけ
+   ・寄り（あやとを追うスマホ）… 右上に小さく、下がった札を落としたマークだけ
    寄り引きは IslandStage が .stage[data-view] に出しているので、
    兄弟セレクタ（.stage ~ .hero-ui）でこちらが受け取る。 */
 /* 目には見えないが、読み上げと検索には届く文字 */
@@ -52,29 +52,16 @@
 @media (min-width: 1024px) {
   .hero-ui { justify-content: flex-start; padding-left: 24px; }
   .hero-copy { text-align: left; }
-  .hero-badges { justify-content: flex-start; }
 }
 
 .stage[data-view="close"] ~ .hero-ui { justify-content: flex-end; }
 .stage[data-view="close"] ~ .hero-ui .hero-copy { max-width: none; text-align: right; }
 .stage[data-view="close"] ~ .hero-ui .hero-logo-full { display: none; }
 .stage[data-view="close"] ~ .hero-ui .hero-logo-mark { display: block; margin-left: auto; }
-.stage[data-view="close"] ~ .hero-ui .hero-badges { justify-content: flex-end; margin-top: 8px; }
-.stage[data-view="close"] ~ .hero-ui .badge { font-size: 11px; padding: 5px 11px; border-width: 2px; }
 
-.hero-badges { margin-top: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.badge {
-  pointer-events: auto;
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--paper);
-  border: 3px solid var(--frame);
-  border-radius: 999px;
-  padding: 7px 16px;
-  font-size: clamp(12px, 3.4vw, 15px);
-  font-weight: 900;
-  box-shadow: var(--pop), var(--shadow-2);
-}
-.badge em { font-style: normal; }
+/* 島の上のバッジ（今夜22時・いまどこ）は、看板ロゴ1枚に寄せたときに
+   置くのをやめている。指す先が無い規則が残っていて、そのうち1つは
+   字の下限（11.5px）を割った 11px だった。まとめて消す。 */
 
 /* ヒーローの高さ: スマホは短くして下のセクションを覗かせる */
 .stage { height: 86svh; min-height: 520px; max-height: 780px; }

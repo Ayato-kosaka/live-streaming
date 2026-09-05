@@ -85,13 +85,18 @@ for (const url of PAGES) {
     if (lums.length < 40) continue;
     let top = null; for (const v of counts.values()) if (!top || v.n > top.n) top = v;
     const bg = [Math.round(top.r / top.n), Math.round(top.g / top.n), Math.round(top.b / top.n)];
-    lums.sort((a, b) => a.l - b.l);
     // 字が暗いか明るいかは決めうちできない（琥珀の丸に白抜きの数字もある）。
-    // 下から3%と上から3%の両方を見て、地から遠いほうを字とする。
-    const lo = lums[Math.floor(lums.length * 0.03)].c;
-    const hi = lums[Math.floor(lums.length * 0.97)].c;
-    const ink = ratio(lo, bg) >= ratio(hi, bg) ? lo : hi;
-    const cr = ratio(ink, bg);
+    // パーセンタイルで取ると、小さい字ではフチのぼけた画素を拾って
+    // 実際より悪い数字が出る。だから「まとまった数のある色」の中から、
+    // 地からいちばん遠いものを字とする。
+    const min = Math.max(4, Math.floor(lums.length * 0.006));
+    let ink = bg, cr = 1;
+    for (const v of counts.values()) {
+      if (v.n < min) continue;
+      const c = [Math.round(v.r / v.n), Math.round(v.g / v.n), Math.round(v.b / v.n)];
+      const rr = ratio(c, bg);
+      if (rr > cr) { cr = rr; ink = c; }
+    }
     // 字がまったく描かれていないところは、地と地を比べて 1.0 になる。測らない。
     if (cr < 1.35) continue;
     if (cr < 4.5) bad.push({ k: t.k, fs: t.fs, cr: +cr.toFixed(2), ink: ink.join(","), bg: bg.join(",") });
