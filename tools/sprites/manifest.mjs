@@ -690,15 +690,14 @@ const SPRITES_BASE = [
   /* ナツメヤシ。中東の島の木。
      Kenney のキットに無いので render.html の datePalm で組む
      （`docs/island-atlas.md` 9章「まだ無いもの」に挙がっていたもの）。
-     大人の木・若木・実の付いていない木の3本。同じ木が並ぶと林が壁紙に見えるので、
-     種を変えて葉の向きと長さを振ってある。 */
+     大人の木と若木の2本。同じ木が並ぶと林が壁紙に見えるので、
+     種を変えて葉の向きと長さを振ってある。
+     **3本目（株立ち）も焼いてみたが外した。** 島の草木は一様に引くので、
+     種類の数がそのまま構成比になる。木を3種入れると木が半分を占めて、
+     岩とサボテンが消え、乾いた島に見えなくなった。 */
   { name: "tree-date", parts: [{ palm: {
     seed: 7, h: 1.95, r0: 0.175, r1: 0.132, rings: 13, fronds: 13,
     len: 1.18, w: 0.42, dates: 3,
-  } }] },
-  { name: "tree-date-short", parts: [{ palm: {
-    seed: 23, h: 0.92, r0: 0.16, r1: 0.128, rings: 7, fronds: 11,
-    len: 0.98, w: 0.40, dates: 0,
   } }] },
   { name: "tree-date-young", parts: [{ palm: {
     seed: 91, h: 1.42, r0: 0.165, r1: 0.128, rings: 10, fronds: 12,
