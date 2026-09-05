@@ -1034,11 +1034,20 @@
   border-radius: var(--r-pill);
   padding: 2px var(--sp-2);
 }
-/* いま選んでいる棚。塗りは変えず、朱の細枠だけ（`docs/island-world.md` 3.2） */
+/* いま選んでいる棚。**押し込まれたまま**にする
+   （`docs/island-design.md` 3-5「押したら沈む」）。
+
+   はじめ `.bsort` にならって朱の細枠を巻いていたが、48px の札を
+   ぐるりと1本の輪で囲むと、紙の面でいちばん強い赤になって
+   「注意」に見えた。朱は表では「いま選んでいる」だが、
+   **細枠と輪では強さが違う。** 色を足さずに、沈めるだけで言う。
+   下の厚み4pxが消えて、隣の札より4px低い位置に留まる。
+
+   選んでいる棚の名前は、すぐ下の見出し（蛍光ペンの帯）がもう一度言うので、
+   ここが控えめでも、どれを見ているかは分からなくならない。 */
 .nb-tab.is-on {
-  border-color: var(--pick);
-  box-shadow: var(--pg-lit), 0 0 0 2px var(--pick),
-    0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  transform: translateY(4px);
+  box-shadow: var(--pg-lit);
 }
 .nb-tab:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
 
@@ -1067,6 +1076,21 @@
 @media (min-width: 620px) {
   .nb-go { margin-left: auto; }
 }
+/* もとの貼り先。企画の表から外れた付箋にだけ付く。
+   人に読ませる名前ではないので、いちばん小さく、いちばん静かに置く。 */
+.nb-from {
+  display: block;
+  margin-top: var(--sp-1);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  /* 薄めない。`opacity: 0.85` を掛けたら、付箋の暗いほうで 4.34 : 1 まで
+     落ちた（計算した色ではなく、合成後の画素で見る）。静かにするのは
+     字の太さと大きさでやる。 */
+  color: #6b5530;
+}
+
 /* 誰が書いたか。付箋の中で、字より一段下げる */
 .nb-by {
   display: block;
