@@ -6,6 +6,7 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import { CHAIN, chapterDays, type Chapter } from "@/content/chapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
+import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import IslandMark from "@/components/chain/IslandMark";
@@ -31,14 +32,12 @@ import { chapterHref, PAST_CHAPTERS } from "@/components/chain/route";
  * ここに出る国も配信も企画も、全部その章の期間に入っているものだけ。
  * 全部を見たい人は、いまの島から `/map` や `/streams` へ行く。
  *
- * ## まだ無いもの
+ * ## 住人
  *
- * `/island/<章>/streams`（その章の配信だけを並べた面）は、まだ作っていない。
- * 章ごとの配信の一覧は BigQuery にしかなく、焼いた表がまだ無いため
- * （いまここに出しているのは、国のページが持っている「その国の見どころ配信」）。
- *
- * 住人も、キャラクターの絵と YouTube のチャンネルを結ぶ表が無いので
- * （GitHub #113）、**数だけ**出している。誰が来ていたかは出せない。
+ * **その章のあいだに来てくれていた人**（仕様 3章）。
+ * どの絵が誰かは alertbox の Viewers 表だけが決める（`python/residents_map.json`）。
+ * 表に載っていない人は絵が無いので、**人数には入るが島には立たない。**
+ * だから「258人が来た」と並んでいる顔の数は合わない。**別のものを数えている。**
  */
 
 export function generateStaticParams() {
@@ -62,24 +61,8 @@ export async function generateMetadata({
 /** その章の期間に入っている伝説の企画 */
 const legendsOf = (c: Chapter) => LEGENDS.filter((l) => l.date >= c.from && l.date <= c.to);
 
-/**
- * その章の配信。
- *
- * 国のページが持っている「見どころ配信」から、章の期間に入るものだけ拾う。
- * **`/streams` の全部を持ってこない。**（過去の島は、その章に絞る）
- */
-function streamsOf(c: Chapter) {
-  const out: { videoId: string; title: string; date: string }[] = [];
-  for (const slug of c.countries) {
-    const country = COUNTRIES.find((x) => x.slug === slug);
-    for (const h of country?.highlights ?? []) {
-      if (h.videoId && h.date && h.date >= c.from && h.date <= c.to) {
-        out.push({ videoId: h.videoId, title: h.title, date: h.date });
-      }
-    }
-  }
-  return out.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6);
-}
+/** 住人の絵。島のステージと同じ大きさで取る（`components/island/IslandStage.tsx`） */
+const residentIcon = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s128`;
 
 export default async function ChapterIsland({
   params,
@@ -94,7 +77,8 @@ export default async function ChapterIsland({
     .map((s) => COUNTRIES.find((x) => x.slug === s))
     .filter((x): x is NonNullable<typeof x> => Boolean(x));
   const legends = legendsOf(c);
-  const streams = streamsOf(c);
+  // **その章の配信だけ。** 焼いてある表を、そのままの並び（新しい順）で使う
+  const streams = CHAPTER_STREAMS[c.slug] ?? [];
 
   const i = CHAIN.indexOf(c);
   const prev = CHAIN[i - 1];
@@ -171,21 +155,47 @@ export default async function ChapterIsland({
         </Panel>
       )}
 
+      {st && st.residents.length > 0 && (
+        <Panel className="chap-sec">
+          <h2>この島にいた人</h2>
+          <p className="chap-note">
+            この期間に来てくれていた人のうち、キャラクターのある{st.residents.length}人。
+            数字は、チャットを書いてくれた日の数です。
+          </p>
+          <ul className="chap-folk">
+            {st.residents.map((r) => (
+              <li key={r.icon}>
+                <img src={residentIcon(r.icon)} alt="" loading="lazy" width={48} height={48} />
+                <b>{r.days}日</b>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
       {streams.length > 0 && (
         <Panel className="chap-sec">
           <h2>この島の配信</h2>
           <p className="chap-note">
-            この期間の配信から。いまの島から入ると
+            この期間の{streams.length}本のうち、新しい3本。
+            いまの島から入ると
             <Link href="/streams" prefetch={false}>
               全部の配信
             </Link>
             が見られます。
           </p>
           <div className="scards">
-            {streams.map((s) => (
-              <StreamCard key={s.videoId} videoId={s.videoId} title={s.title} date={s.date} />
+            {streams.slice(0, 3).map(([date, videoId, title]) => (
+              <StreamCard key={videoId} videoId={videoId} title={title} date={date} />
             ))}
           </div>
+          <Link className="chap-more" href={`/island/${c.slug}/streams`} prefetch={false}>
+            <span>
+              <b>この島の配信を全部見る</b>
+              <i>{streams.length}本。この章のぶんだけ</i>
+            </span>
+            <Icon name="right" size={16} />
+          </Link>
         </Panel>
       )}
 

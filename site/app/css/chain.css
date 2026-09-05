@@ -387,3 +387,70 @@
 @media (prefers-reduced-motion: reduce) {
   .chain-boat { display: none; }
 }
+
+/* この島にいた人。**押せない。**
+   1人ずつのページは無いので、押せる形に見せない（押して何も起きないのが最悪）。
+   だから厚みも枠も付けず、絵と数字だけ置く。 */
+.chap-folk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chap-folk li { display: grid; justify-items: center; gap: 2px; width: 52px; }
+.chap-folk img {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: var(--paper-2);
+  /* 縁は紙の上で丸を立たせるためだけ。押せる合図ではないので厚みは出さない */
+  border: 2px solid var(--frame-dark);
+}
+.chap-folk b { font-size: 11.5px; font-weight: 800; color: var(--ink-2); }
+
+/* その章の配信ぜんぶへ。並びの中で1枚だけ押せるので、ここは厚みを付ける */
+.chap-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 18px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  text-decoration: none;
+}
+.chap-more:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.chap-more:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+.chap-more b { display: block; font-size: 14px; font-weight: 900; }
+.chap-more i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+
+/* その章の配信を、月で畳んで並べる面（/island/<章>/streams） */
+.chap-scope { margin-bottom: 18px; }
+.chap-scope b { color: var(--ink); }
+.chap-month { margin: 0 0 22px; }
+.chap-month h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.chap-month h2 i {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
