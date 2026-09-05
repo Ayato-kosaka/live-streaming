@@ -854,6 +854,7 @@
 /* --- 島の隅の道具 --- */
 .isle-sign {
   position: absolute;
+  margin: 0;
   left: 14px;
   top: calc(12px + env(safe-area-inset-top));
   z-index: 4;

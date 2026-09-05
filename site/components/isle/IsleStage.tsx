@@ -897,10 +897,13 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           **表紙のときは出さない。** あそこは看板ロゴ（あやと島）が同じ隅にいる。
           隅に札が2枚あると、どちらも読まれない（`docs/island-design.md` 3-4） */}
       {!cover && (
-        <div className="isle-sign" data-ui>
+        /* **この面の見出しでもある。** 島は板なので紙の見出し（.phead）を
+           置く場所が無く、島の名前を書いた札がそのまま h1 になる。
+           表紙のときは、看板ロゴのほうが h1 を持っている */
+        <h1 className="isle-sign" data-ui>
           <b>{spec.name}</b>
           <i>{spec.note}</i>
-        </div>
+        </h1>
       )}
 
       <button className="isle-view" data-ui onClick={() => setWide((v) => !v)}>
