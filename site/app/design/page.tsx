@@ -224,7 +224,10 @@ export default function DesignPage() {
             note="視聴者さんが書いた文章を、書かれたまま出すところ。誤字も絵文字も直さない。押せないので厚みは付けない。1つおきに左右へ振る。"
           />
           <ul className="avoices">
+            {/* 見本の顔だけは島の中の絵を使う。本番は YouTube のアイコン。
+                ここで外の URL を指すと、繋がらない場所で検品台そのものが欠ける */}
             <VoiceBubble
+              icon="/characters/ayato.webp"
               name="@みほんの人"
               meta="2026年9月"
               text="アイコンが取れた人。名前は吹き出しの上に置く。中に入れると、どこまでがその人の言葉なのか読めなくなる。"
