@@ -383,11 +383,11 @@
   margin: 8px 0 14px;
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-1);
+  box-shadow: 0 6px 0 var(--frame-dark), var(--shadow-1);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.atrip-card:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--frame-dark), var(--shadow-2); }
-.atrip-card:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.atrip-card:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--frame-dark), var(--shadow-2); }
+.atrip-card:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
 .atrip-flag { flex: none; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
 .atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -673,24 +673,27 @@
   color: var(--ink-2);
   line-height: 1.7;
 }
+/* ストアのバッジ。押せるので厚みを付ける。
+   指で押せる最小 48px、48px の押しものの厚みは 6px（docs/island-design.md 3章）。 */
 .abadge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 16px;
+  min-height: 48px;
+  padding: 0 18px;
   border-radius: 999px;
   background: #2c2a28;
   color: #fff;
   font-size: var(--fs-note);
   font-weight: 900;
-  box-shadow: 0 5px 0 #100f0e;
+  box-shadow: 0 6px 0 #100f0e;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.abadge:active { transform: translateY(4px); box-shadow: 0 1px 0 #100f0e; }
+.abadge:active { transform: translateY(5px); box-shadow: 0 1px 0 #100f0e; }
 .abadge.is-ghost {
   background: var(--paper-2);
   color: var(--ink);
-  box-shadow: 0 5px 0 var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-dark);
 }
 
 .anote { display: grid; gap: 10px; }
