@@ -363,8 +363,26 @@
 .acard-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
 
 @media (min-width: 720px) {
-  /* 地図の下が横に空くので、札は2段に割る */
-  .acard { padding: var(--sp-4); }
+  /* 地図の下は横に広い。1列で積むと、配信のサムネの右が
+     ページ幅の半分ぶん空いたままになる。事実を左、行き先を右に割る。 */
+  .acard {
+    padding: var(--sp-4);
+    display: grid;
+    grid-template-columns: 1fr minmax(280px, 34%);
+    grid-template-areas:
+      "head  live"
+      "when  live"
+      "sum   live"
+      "towns go";
+    column-gap: var(--sp-5);
+    align-content: start;
+  }
+  .acard-head { grid-area: head; }
+  .acard-when { grid-area: when; }
+  .acard-sum { grid-area: sum; }
+  .acard-towns { grid-area: towns; align-content: start; }
+  .acard-live { grid-area: live; margin-top: 0; }
+  .acard-go { grid-area: go; align-self: end; margin-top: var(--sp-3); }
 }
 
 /* ---------------------------------------------------------
