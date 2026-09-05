@@ -114,6 +114,8 @@ const PIN_SM = 48;
 const PIN_LG = 56;
 /** 隣とのあいだに置く余白。0 だと箱が縁で触れて、境目の1pxが取り合いになる。 */
 const PIN_GAP = 2;
+/** まとまりの札の幅。「18カ国」が入る幅で、`atlas.css` の `.apin-many` と対。 */
+const GROUP_W = 56;
 const FIT: Record<string, number[]> = (() => {
   const out: Record<string, number[]> = {};
   const cities = MAP.cities as { country: string; x: number; y: number }[];
@@ -211,7 +213,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
         const cy = Math.min(Math.max(sy, half), stage.h - half);
         spots.push({ slug, order: a.order, x: a.x, y: a.y, sx: cx, sy: cy, ox: sx - cx, oy: sy - cy });
       }
-      return clump(spots, stage.pin + PIN_GAP);
+      return clump(spots, Math.max(stage.pin, GROUP_W) + PIN_GAP, stage.pin + PIN_GAP);
     },
     [anchors, stage],
   );

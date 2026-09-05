@@ -38,21 +38,29 @@ export type Clump = { members: Spot[]; sx: number; sy: number };
  *
  * いちばん近い組から順にたたむ。手前から順に見てたたむと、
  * 「たまたま先に見た組」が勝って、離れているほうが先にくっつく。
+ * 縦と横で別の物差しを渡す。まとまりの札は「9カ国」と書くぶん横に長く、
+ * 正方形として測ると横だけ足りなくなる。
  * @param {Spot[]} spots たたむ前のピン
- * @param {number} min これ以上は近づけない距離（px）
- * @return {Clump[]} たたんだあと。どの2つも `min` 以上離れている
+ * @param {number} minX これ以上は近づけない横の距離（px）
+ * @param {number} minY これ以上は近づけない縦の距離（px）
+ * @return {Clump[]} たたんだあと。どの2つもこれ以上離れている
  */
-export function clump(spots: Spot[], min: number): Clump[] {
+export function clump(spots: Spot[], minX: number, minY: number): Clump[] {
   const gs: Clump[] = spots.map((s) => ({ members: [s], sx: s.sx, sy: s.sy }));
   for (;;) {
     let a = -1;
     let b = -1;
-    let near = min;
+    // 「あとどれだけ足りないか」の大きいほうから片づける。
+    // 縦と横で物差しが違うので、生の距離では比べられない。
+    let worst = 0;
     for (let i = 0; i < gs.length; i++) {
       for (let j = i + 1; j < gs.length; j++) {
-        const d = Math.max(Math.abs(gs[i].sx - gs[j].sx), Math.abs(gs[i].sy - gs[j].sy));
-        if (d < near) {
-          near = d;
+        const gapX = Math.abs(gs[i].sx - gs[j].sx) - minX;
+        const gapY = Math.abs(gs[i].sy - gs[j].sy) - minY;
+        if (gapX >= 0 || gapY >= 0) continue;
+        const lack = Math.min(-gapX / minX, -gapY / minY);
+        if (lack > worst) {
+          worst = lack;
           a = i;
           b = j;
         }

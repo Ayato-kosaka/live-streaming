@@ -197,10 +197,15 @@
    押せるので、ピンと同じ 3px の厚みを付ける。 */
 .apin-many {
   position: absolute;
+  /* 幅は決め打ちにする。「9カ国」と「18カ国」で札の幅が変わると、
+     たたむかどうかの判断（WorldRoute の GROUP_W）と食い違う。 */
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 3px 8px;
+  width: 56px;
+  margin-left: -28px;
+  transform: translateY(-50%);
+  text-align: center;
+  padding: 3px 0;
   border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--am-ink);
@@ -212,13 +217,13 @@
   transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .apin.is-group:hover .apin-many,
-.apin.is-group:focus-visible .apin-many { transform: translate(-50%, -50%) scale(1.12); }
-.apin.is-group:active .apin-many { transform: translate(-50%, -50%) scale(0.92); }
+.apin.is-group:focus-visible .apin-many { transform: translateY(-50%) scale(1.12); }
+.apin.is-group:active .apin-many { transform: translateY(-50%) scale(0.92); }
 /* いまいる国がこのまとまりの中にあるとき。輪は札の形に合わせる。 */
 .apin.is-group.is-here::after {
-  width: 52px;
+  width: 56px;
   height: 26px;
-  margin: -13px 0 0 -26px;
+  margin: -13px 0 0 -28px;
   border-radius: var(--r-pill);
 }
 .apin.is-group .apin-name { transform: translate(-50%, 0); }
@@ -306,7 +311,7 @@
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
 /* まとまりの札は、世界ぜんぶの面でも小さくしない。ここでいちばん押される。 */
 .amap-pins.is-wide .apin.is-group.is-here::after {
-  width: 52px; height: 26px; margin: -13px 0 0 -26px;
+  width: 56px; height: 26px; margin: -13px 0 0 -28px;
 }
 
 /* ---------------------------------------------------------
