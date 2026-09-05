@@ -253,6 +253,14 @@
   font-weight: 900;
   color: var(--ink-2);
 }
+/* 距離。凡例の言葉より一段引いた色で、数字だと分かるようにする */
+.amap-key em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
 /* 見本の線。白い線（飛行機・船）は紙の上で消えるので、下に色の帯を敷く */
 .amap-key svg {
   display: block;

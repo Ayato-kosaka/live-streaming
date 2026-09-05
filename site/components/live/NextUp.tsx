@@ -46,10 +46,11 @@ export default function NextUp() {
       {/* ベルの赤い丸は落としてある。すぐ下の札の角に「新しいことがある」の赤い印が
           付いているので（app/css/plans.css）、同じ合図をこの狭い範囲に2つ置かない。
           ここのベルは、しらせの見出しであることを示す絵として置く。 */}
+      {/* 件数はここには置かない。この見出しが指しているのは1つの企画で、
+          「ぜんぶで何件あるか」は下の「ぜんぶ見る」の側の話。 */}
       <p className="nextup-eyebrow has-bell">
         <NoticeBell size={21} quiet />
         {HOME.nextUp}
-        <em className="nextup-n">{ahead}件</em>
       </p>
       <Card plan={plan} days={days} />
       {big && (

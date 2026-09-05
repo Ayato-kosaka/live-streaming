@@ -307,7 +307,7 @@
       color-mix(in srgb, var(--sand) 34%, transparent) 0%, transparent 72%)
     ,
     linear-gradient(156deg,
-      #fffdf7 0%,
+      color-mix(in srgb, #fff 34%, var(--paper)) 0%,
       var(--paper) 34%,
       color-mix(in srgb, var(--paper-2) 76%, var(--sand)) 100%));
   /* 枠は一色で塗らない。上を明るく下を暗くすると、平らな線が面取りになる */

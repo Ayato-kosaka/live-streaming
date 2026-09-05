@@ -22,7 +22,7 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
  * 書き出しは meta.py で長辺 320px に落とすので、その 2.4 倍あれば足りる。
  * ここを 512(=1024角)にしても、縮めたあとの絵は変わらないまま焼く時間だけ倍になる。 */
 const SUPER = 2;
-const SIZE = 384;
+const SIZE = 320;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(SIZE * SUPER, SIZE * SUPER);
@@ -63,8 +63,11 @@ scene.add(fill);
  * カメラ側の面が暗くなってしまう。 */
 const sun = new THREE.DirectionalLight(0xffffff, 0);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.radius = 8;
+// 影のぼけ幅は「半径 ÷ 地図の細かさ」で決まる。
+// 2048 に半径 8 と、1024 に半径 4 は、まったく同じぼけ方になる。
+// やわらかい影の計算はソフトウェア描画でいちばん重いので、無駄に細かくしない
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.radius = 4;
 sun.shadow.bias = -0.0009;
 scene.add(sun);
 

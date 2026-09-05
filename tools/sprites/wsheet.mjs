@@ -8,6 +8,12 @@ const PORT = process.env.PORT || "3032";
 const OUT = process.argv[2] || "/tmp/wsheet";
 const W = +(process.argv[3] || 390);
 const H = +(process.argv[4] || 1400);
+/* 並列で14人が動いていると開発サーバーが詰まって1枚も撮れないことがある。
+   書き出し済みの静的ページ（NEXT_DIST_DIR のフォルダを http.server で出したもの）を
+   撮りたいときは BASE と STATIC=1 を渡す。パスの末尾に .html が付く。 */
+const BASE = process.env.BASE || `http://localhost:${PORT}`;
+const STATIC = process.env.STATIC === "1";
+const toUrl = (path) => BASE + (STATIC ? (path === "/" ? "/index.html" : path + ".html") : path);
 mkdirSync(OUT, { recursive: true });
 
 // 並べて見たときに「島 → 島の外」の順に効くよう、島から遠い順ではなく導線の順に並べる
@@ -52,7 +58,7 @@ for (const [name, path] of PAGES) {
   let done = false;
   for (let tryN = 0; tryN < 6 && !done; tryN++) {
     try {
-      await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "domcontentloaded", timeout: 180000 });
+      await p.goto(toUrl(path), { waitUntil: "domcontentloaded", timeout: 180000 });
       await p.waitForTimeout(3500);
       await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
       const info = await p.evaluate(() => ({

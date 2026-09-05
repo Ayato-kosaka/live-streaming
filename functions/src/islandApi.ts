@@ -31,6 +31,11 @@ const VOTES = db.collection("islandVotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const DRAFTS = db.collection("islandDrafts");
+/* 今夜のおたずね。選択肢を押すだけで意思表示できる、参加のいちばん下の段。
+   作りは islandIdeas + islandVotes とまったく同じ。
+   問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
+const POLLS = db.collection("islandPolls");
+const PVOTES = db.collection("islandPollVotes");
 
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
@@ -39,6 +44,8 @@ const MAX_DRAFT_LEN = 12000;
 const DRAFTS_PER_DAY = 12;
 const IDEAS_PER_DAY = 8;
 const NOTES_PER_DAY = 20;
+// 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
+const POLL_VOTES_PER_DAY = 30;
 
 type Json = Record<string, unknown>;
 
@@ -256,6 +263,59 @@ async function listNotes(limit = 200) {
         ).toISOString(),
       };
     });
+}
+
+/** 投票の中身。集計そのものはドキュメントの votes に入っている。 */
+type PollShape = {
+  id: string;
+  question: string;
+  options: {id: string; label: string; votes: number}[];
+  total: number;
+  /** 締め切り。過ぎたものは出さない */
+  openUntil: string | null;
+};
+
+/**
+ * 問いを、そのまま画面に出せる形に整える。
+ * @param {string} id ドキュメントID
+ * @param {Json} v ドキュメントの中身
+ * @return {PollShape} 整えた問い
+ */
+function shapePoll(id: string, v: Json): PollShape {
+  const votes = (v.votes ?? {}) as Record<string, number>;
+  const raw = Array.isArray(v.options) ? v.options : [];
+  const options = raw.slice(0, 4).map((o) => {
+    const x = (o ?? {}) as Json;
+    const oid = clean(x.id, 24);
+    return {id: oid, label: clean(x.label, 40), votes: votes[oid] ?? 0};
+  });
+  return {
+    id,
+    question: clean(v.question, 80),
+    options,
+    total: options.reduce((n, o) => n + o.votes, 0),
+    openUntil: (v.openUntil as string) || null,
+  };
+}
+
+/**
+ * いま出ている問い。締め切り前で、隠していないもののうち新しい1つ。
+ *
+ * where + orderBy を組むと複合インデックスが要るので、
+ * 並べ替えだけ Firestore に任せて、締め切りの判定はこちらで行う。
+ * @return {Promise<PollShape | null>} 問い、無ければ null
+ */
+async function openPoll(): Promise<PollShape | null> {
+  const snap = await POLLS.orderBy("createdAt", "desc").limit(5).get();
+  const now = new Date().toISOString();
+  for (const d of snap.docs) {
+    const v = d.data() ?? {};
+    if (v.hidden === true) continue;
+    if (v.openUntil && String(v.openUntil) < now) continue;
+    const p = shapePoll(d.id, v);
+    if (p.question && p.options.length >= 2) return p;
+  }
+  return null;
 }
 
 export const islandApi = onRequest(
@@ -503,6 +563,83 @@ export const islandApi = onRequest(
           return cur + 1;
         });
         res.json({votes});
+        return;
+      }
+
+      /* ---------------- 今夜のおたずね ----------------
+         参加の階段のいちばん下の段。文章を書かずに、押すだけで数字が動く。
+         「さんせい」は誰かが企画を書かないと押すものが無いが、
+         こちらは**こちらから問いを出している**ので、掲示板が空でも押せる。 */
+      if (method === "GET" && path === "/poll") {
+        // 押した瞬間に数字が動くのが要なので、読みは短めに寝かせる
+        res.set(
+          "Cache-Control",
+          "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        res.json({poll: await openPoll()});
+        return;
+      }
+
+      const pollMatch = path.match(/^\/poll\/([A-Za-z0-9_-]{4,})\/vote$/);
+      if (method === "POST" && pollMatch) {
+        const id = pollMatch[1];
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        const option = clean(body.option, 24);
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        if (!option) {
+          res.status(400).json({error: "no option"});
+          return;
+        }
+        if (!(await takeQuota(who?.uid ?? cid, "poll", POLL_VOTES_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        // ログインしている人は端末が変わっても1票。していない人は端末ごと。
+        const voteRef = PVOTES.doc(`${id}_${who?.uid ?? cid}`);
+        const pollRef = POLLS.doc(id);
+        let out: PollShape | null = null;
+        let mine = "";
+        try {
+          [out, mine] = await db.runTransaction(async (tx) => {
+            const [v, p] = await Promise.all([
+              tx.get(voteRef),
+              tx.get(pollRef),
+            ]);
+            if (!p.exists) throw new Error("no poll");
+            const data = p.data() ?? {};
+            const shaped = shapePoll(id, data);
+            if (!shaped.options.some((o) => o.id === option)) {
+              throw new Error("bad option");
+            }
+            if (shaped.openUntil && shaped.openUntil < new Date().toISOString()) {
+              throw new Error("closed");
+            }
+            // もう押している人は数えない。押し直しもさせない(1人1票)
+            if (v.exists) {
+              return [shaped, clean(v.data()?.option, 24)] as const;
+            }
+            const votes = {...((data.votes ?? {}) as Record<string, number>)};
+            votes[option] = (votes[option] ?? 0) + 1;
+            tx.set(voteRef, {
+              at: Date.now(),
+              option,
+              cid: cid || null,
+              uid: who?.uid ?? null,
+            });
+            tx.update(pollRef, {votes});
+            return [shapePoll(id, {...data, votes}), option] as const;
+          });
+        } catch (e) {
+          const why = String(e);
+          const code = why.includes("no poll") ? 404 : 400;
+          res.status(code).json({error: why.replace("Error: ", "")});
+          return;
+        }
+        res.json({poll: out, mine});
         return;
       }
 

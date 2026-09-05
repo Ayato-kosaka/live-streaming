@@ -61,6 +61,9 @@ const MOVE: Record<string, { c: string; w: number; dash?: string; cap?: "round" 
   side: { c: "#e8be74", w: 4, dash: "1 10", cap: "round" },
 };
 
+/** 移動のしかたごとの距離(km)。スクリプトが大円距離で出したもの。 */
+const moved = MAP.moved as Record<string, number>;
+
 const WOODS = bucket(MAP.woods, 3);
 const DUNES = bucket(MAP.dunes, 2);
 const GLINTS = bucket(MAP.glints, 2);
@@ -334,7 +337,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       </div>
 
       <div className="amap-foot">
-        {LEGEND.map(([move, label]) => {
+        {LEGEND.filter(([move]) => moved[move]).map(([move, label]) => {
           const st = MOVE[move];
           return (
             <span className="amap-key" key={move}>
