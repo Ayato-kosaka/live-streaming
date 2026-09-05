@@ -6,17 +6,19 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
-import RouteLegs from "@/components/nordic/RouteLegs";
-import { CarriedBy, MapSync } from "@/components/nordic/Carry";
+import Days from "@/components/nordic/Days";
+import Asks, { type AskItem } from "@/components/nordic/Asks";
+import Support from "@/components/nordic/Support";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Countries from "@/components/nordic/Countries";
 import {
+  DAYS,
   DEPART,
+  FARES,
   HITCH_KM,
   MAIN,
   NORDIC_GUIDE,
-  FARE_POUR,
   ROUTE,
   nordicCountry,
 } from "@/content/nordic";
@@ -46,24 +48,28 @@ const MOVE: Record<string, string> = {
  * そのまま「会えるまでの遠さ」になる。
  * その人が誰なのかは書かない。名前も写真も出さない。
  *
- * **この面は、毎晩の配信で「見てね」と言われる面になる。** だから並びは
- * 「読み物として面白い順」ではなく、**開いた人が次にする動作の順**にしてある。
+ * **この面は、毎晩の配信で「見てね」と言われる面になる。**
  *
  *   1. いま何が起きているか  … あと何日／いまどこ／つぎどこ（TripNow）
  *   2. どこを通るのか        … 地図
- *   3. 自分に何ができるか    … 区間ボード。道しるべを書く・足代を出す
+ *   3. 何をするのか          … **旅のよてい。日付ごと**（Days）
  *   4. どこへ行けばもっと見られるか … 通る6カ国 → 国のページ
- *   5. もっと知りたい人だけが開くもの … なぜバスに乗らないのか／総論の意見
+ *   5. もっと知りたい人だけが開くもの … なぜバスに乗らないのか
+ *   6. この旅に、言う        … まだ決めていないこと／やってほしいことを書く
+ *   7. 応援する              … 投げ銭。**いちばん最後に、これだけで**
  *
- * **3 を 5 より先に置いてある。** 企画の説明（どうしてバスに乗らないのか）を
- * 参加のしかたより前に置くと、読み終わる前に離脱した人は何もできない。
- * 説明は開きたい人が開く。参加は開かなくてもできるところに置く。
+ * **3 に、言うことと出すことを混ぜない。** ここは長いあいだ、区間ごとの
+ * カード10枚の中に「足代の席」と「道しるべの席」があって、両方そろうと
+ * 区間が「つながる」という作りだった。企画に提案することと投げ銭することを
+ * 1つの言い方に押し込んでいて、**読む人には通じなかった**
+ * （`docs/nordic-fund.md` 「捨てた設計」）。
+ * 別のことは別の区画にする。言うことは 6、出すことは 7。
  *
- * 縦は 8,098px（9.6画面）あった。`docs/island-ux.md` 8.1 の目安は
- * 「入口の面は3画面まで」。畳んだのではなく、**同じものを2回出すのをやめた**のが
- * いちばん効いている（一本道の帯／見どころと6カ国／出発前の残りkm）。
+ * **画面に出す言葉は、説明なしで意味が分かるものだけにする。**
+ * 「9月12日」「フェリー」「泊まる」「応援する」「まだ決めていないこと」は
+ * 説明が要らない。要る言葉を思いついたら、それは作り直しの合図。
  *
- * 数字は意味のあるものだけ置く。読んで何も分からない数字（「0回、戻らない」）は出さない。
+ * 数字は意味のあるものだけ置く。読んで何も分からない数字は出さない。
  */
 export default async function NordicPage() {
   const plan = planById("nordic");
@@ -98,12 +104,24 @@ export default async function NordicPage() {
     if (s) s.hitch = (s.hitch ?? 0) + l.km;
   }
 
+  // 区間の id → 何日目。旅程表のその日へ飛ぶのに使う。
+  const dayOf: Record<string, number> = {};
+  for (const d of DAYS) for (const l of d.legs) dayOf[l.id] = d.n;
+
+  // まだ決めていないこと。何日目の話かを付けて、下の「言う」の区画に並べる。
+  const asks: AskItem[] = DAYS.flatMap((d) =>
+    d.legs
+      .filter((l) => l.fork)
+      .map((l) => ({ leg: l.id, seq: ROUTE.indexOf(l), day: d.n, fork: l.fork! })),
+  );
+
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
       <TripNow
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}
         legOrder={ROUTE.map((l) => l.id)}
+        dayOf={dayOf}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30"
         hitchKm={HITCH_KM}
@@ -116,19 +134,6 @@ export default async function NordicPage() {
         <h2>会いに行く道</h2>
         <p className="muted">街を押すと、その国のページへ。</p>
         <RouteMapSvg />
-        {/* 地図と、下の区間ボードを同じものとして見せる（docs/nordic-fund.md 提案3）。
-            見た目を持たない。区間の状態を地図の線に写すだけ。
-            `content/nordic` はここで開いて、必要な数字だけ渡す。
-            クライアント側で読むと、見どころ161件ぶんの JSON が丸ごと落ちてくる。 */}
-        <MapSync
-          legs={ROUTE.map((l) => ({
-            id: l.id,
-            needsFare: !!l.fare,
-            cost: l.fare?.yen,
-            before: FARE_POUR[l.id].before,
-            reach: FARE_POUR[l.id].reach,
-          }))}
-        />
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
             和文の途中に空きが1つ入る（書き出した HTML の画素で拾った）。 */}
         {/* 「下の区間を開くと、その線に帯が敷かれます」を書いていた。
@@ -142,40 +147,22 @@ export default async function NordicPage() {
         <div className="folds">
           <Fold
             title="線の読み方"
-            lead="ヒッチハイク・フェリー・寄り道・飛行機・国境・つながった区間"
+            lead="ヒッチハイク・フェリー・寄り道・飛行機・国境・通ったところ"
           >
             <MapLegend />
           </Fold>
         </div>
       </section>
 
-      {/* 連れていくボード。新しいセクションを作らず、区間カードに席を2つ置いてある
-          （`docs/nordic-fund.md` 提案1）。旅は集まらなくても行くので、
-          「届かないと行けません」とは書かない。
-
-          **企画の説明より前に置く。** ここが、開いた人がその場でできることの全部。 */}
-      <section className="panel paper" id="carry">
-        <h2>この10日を、連れていく</h2>
-        {/* 席の決まりを、ここで全部説明していた（4行）。同じことを、
-            区間カードの読み上げ（`Carry.tsx` の `Tie`）が10枚ぜんぶで
-            **いまの状態として**言っている。決まりの説明は1回、短く。 */}
-        {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
-            和文の途中に空きが1つ入る（「つながります。 まだ」と出ていた）。 */}
+      {/* 旅のよてい。**この面の本体。** 日付ごとに1つ。
+          国ごとの話は `/nordic/[国]` にあるので、ここには書かない。 */}
+      <section className="panel paper" id="plan">
+        <h2>旅のよてい</h2>
+        {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳む。 */}
         <p className="muted">
-          区間を押すと、<b>道しるべ</b>と<b>足代</b>の席が出てきます。両方そろって、区間はつながります。まだ決めていないことは<b>わかれ道</b>にしてあるので、押すだけで答えられます。
+          日付が入っているのは、切符のある最初の2日だけです。そこから先は乗せてもらえた日でずれるので、日にちを決めていません。
         </p>
-        <CarriedBy />
-        <RouteLegs />
-        <div className="carry-give">
-          <p>
-            足代は、通る順に上から入ります。どの区間に入るかは、こちらでは決めません。集まらなかったぶんは、あやとが自分で出して越えます。
-            <b>旅は止まりません。</b>
-          </p>
-          <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
-            足代を出す（Doneru）
-            <Icon name="external" size={14} />
-          </a>
-        </div>
+        <Days />
       </section>
 
       {/* 通る6カ国。**この面から国のページへ出ていく入口は、ここ1つだけ。**
@@ -208,21 +195,6 @@ export default async function NordicPage() {
               </p>
             </div>
           </Fold>
-          {/* 北欧旅ぜんぶへの意見。区間ごとの道しるべが上にあるので、
-              ここは「どの区間にも紐づかない話」の行き先。畳んでおく。 */}
-          <Fold
-            title="この旅ぜんぶに、言いたいこと"
-            lead="区間に紐づかない話は、ここへ。ルートへの口出しも、知り合いの話も"
-          >
-            <div id="voices">
-              <CountryIdeas
-                bare
-                country="北欧旅"
-                note="区間ごとの話は、上の道しるべへ。ここは、どの区間にも紐づかない話の行き先です。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。行く前に全部読みます。"
-                placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
-              />
-            </div>
-          </Fold>
         </div>
         <Link className="tile" href="/nordic/guide">
           <span className="tile-mark">
@@ -238,6 +210,46 @@ export default async function NordicPage() {
           <Icon name="right" size={16} className="tile-go" />
         </Link>
       </Panel>
+
+      {/* 言う。**旅のよていには混ぜない。**
+          押すだけで答えられるものを上に、書くところを下に置く。 */}
+      <section className="panel paper" id="say">
+        <h2>この旅に、言う</h2>
+        <p className="muted">
+          行き先も、やることも、まだ決まっていないところがあります。行く前に全部読みます。
+        </p>
+        <Asks items={asks} />
+        <h3 className="nsub">やってほしいことを書く</h3>
+        <CountryIdeas
+          bare
+          country="北欧旅"
+          note="ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。"
+          placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
+        />
+      </section>
+
+      {/* 応援。**いちばん最後に、これだけで。**
+          旅は集まっても集まらなくても行く。ヒッチハイクは元々ただだし、
+          飛行機はもう取ってある。だから「集まらないと行けません」とは書かない。 */}
+      <section className="panel paper" id="back">
+        <h2>応援する</h2>
+        <p className="muted">
+          出さなくても旅は行きます。飛行機はもう取ってあるし、乗せてもらうぶんはただです。お金が要るのは船と、泊まるところだけです。
+        </p>
+        <Support />
+        <ul className="nback-what">
+          {FARES.map((f) => (
+            <li key={f.id}>
+              <b>{f.what}</b>
+              <i>{f.src ?? (f.yen ? `${f.yen.toLocaleString()}円` : "いくらで見ているか、いま調べています")}</i>
+            </li>
+          ))}
+        </ul>
+        <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
+          投げ銭で応援する（Doneru）
+          <Icon name="external" size={14} />
+        </a>
+      </section>
     </PageShell>
   );
 }
