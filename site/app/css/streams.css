@@ -419,19 +419,19 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .wk-tag b { font-size: var(--fs-note); font-weight: 900; letter-spacing: 0.02em; }
 .wk-tag i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); margin-left: auto; flex: none; }
 .wk-track { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-1); }
+/* 紙に刷った図なので、マスも帯も平ら。彫った影も、立体に見せる縁も付けない
+   （`docs/ac-reference.md` 7章の「紙の型」）。 */
 .wk-track > i {
   height: 17px;
   border-radius: 6px;
   background: color-mix(in srgb, var(--paper) 72%, var(--frame));
-  box-shadow: inset 0 1.5px 3px rgba(120, 90, 50, 0.14);
   grid-row: 1;
 }
 .wk-fill {
   grid-row: 1;
   height: 17px;
   border-radius: 6px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ty) 55%, #ffffff) 0%, var(--ty) 100%);
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ty) 60%, var(--ink)), inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  background: var(--ty);
 }
 
 /* 曜日に貼りつかないもの（天気しだい・月末）は、帯ではなく札で出す */
