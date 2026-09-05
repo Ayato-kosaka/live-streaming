@@ -51,14 +51,26 @@ export function IslandHeader({ current }: { current?: string }) {
  * ときに見た目を消している（真上の帯が同じことを言っているため）。
  * その行を借りると、**新しい段を1つも増やさずに**口を置ける。
  */
-function WayRow({ crumbs }: { crumbs?: { label: string; href?: string }[] }) {
+function WayRow({
+  crumbs,
+  atAll,
+}: {
+  crumbs?: { label: string; href?: string }[];
+  atAll?: boolean;
+}) {
   return (
     <div className="wayrow">
       {crumbs ? <Crumbs items={crumbs} /> : <span />}
-      <Link className="way-all" href={ALL_HREF} prefetch={false}>
-        <Icon name="signpost" size={16} />
-        <span className="way-all-long">島のなか</span>ぜんぶ
-      </Link>
+      {/* **その面自身への口は出さない。** `/all` の上に「ぜんぶ」を出すと、
+          押しても同じ紙が出てくる。厚みのある板は「どこかへ行ける」と
+          言っているので（`docs/island-design.md` 3-3）、行き先が
+          いま居る場所なら、言っていることが嘘になる。 */}
+      {!atAll && (
+        <Link className="way-all" href={ALL_HREF} prefetch={false}>
+          <Icon name="signpost" size={16} />
+          <span className="way-all-long">島のなか</span>ぜんぶ
+        </Link>
+      )}
     </div>
   );
 }
@@ -170,16 +182,19 @@ export default function PageShell({
   children,
   current,
   crumbs,
+  atAll,
 }: {
   children: ReactNode;
   current?: string;
   crumbs?: { label: string; href?: string }[];
+  /** この面が `/all` そのものか。自分への口を出さないために渡す。 */
+  atAll?: boolean;
 }) {
   return (
     <>
       <IslandHeader current={current} />
       <main className="page">
-        <WayRow crumbs={crumbs} />
+        <WayRow crumbs={crumbs} atAll={atAll} />
         {children}
       </main>
       <IslandFooter />

@@ -136,10 +136,17 @@ export default function PhotoWall({ depart }: { depart: string }) {
                 className="nph"
                 onClick={() => setOpen({ day: d, i })}
               >
+                {/* **一覧のサムネにも crossOrigin を付ける。** ここと studio の
+                    canvas は同じ URL を読む。片方を素で先に読むと、CORS の
+                    ヘッダを持たない絵がキャッシュに残る端末があり、あとから
+                    canvas 用に読み直しても汚れたまま焼けなくなる。
+                    置き場は access-control-allow-origin: * を返すので、
+                    付けても絵は今までどおり出る。 */}
                 <img
                   src={p.url}
                   alt={p.note || "北欧旅の写真"}
                   loading="lazy"
+                  crossOrigin="anonymous"
                   width={p.w || undefined}
                   height={p.h || undefined}
                 />

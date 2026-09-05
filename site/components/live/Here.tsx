@@ -66,6 +66,11 @@ export default function Here() {
       const ref = fs.doc(db, HERE_COL, uid);
 
       const put = () => {
+        /* 隠れているあいだは置かない。**タイマーは隠れても止まらない**
+           （Chrome は1分に1回まで遅くするだけ）。ここで止めないと、
+           裏に回したタブが1分おきに置き直して、その人はずっと島にいることになる。
+           visibilitychange で1回消しても、次のタイマーがまた作る。 */
+        if (document.visibilityState === "hidden") return;
         const at = pathRef.current.slice(0, 60);
         const p = here.pos.live ? here.pos : hereSpot(at, uid);
         const x = Math.round(p.x);

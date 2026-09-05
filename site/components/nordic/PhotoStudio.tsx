@@ -178,7 +178,10 @@ export default function PhotoStudio({
                   aria-pressed={chosen === p.icon}
                   onClick={() => setChosen(p.icon)}
                 >
-                  <img src={drive(p.icon)} alt="" loading="lazy" />
+                  {/* canvas に描くのと同じ URL なので、ここでも crossOrigin を
+                      付ける（付けずに先に読むと、CORS ヘッダの無い絵が
+                      キャッシュに残って焼けなくなる端末がある） */}
+                  <img src={drive(p.icon)} alt="" loading="lazy" crossOrigin="anonymous" />
                   {p.name && <i>{p.name}</i>}
                 </button>
               ))}
