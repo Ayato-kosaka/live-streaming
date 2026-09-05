@@ -228,11 +228,6 @@
   border: 4px solid var(--frame);
   box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-2);
 }
-.h2-icon {
-  width: 32px; height: 32px;
-  vertical-align: -8px;
-  object-fit: contain; object-position: center bottom;
-}
 /* 公式のアプリアイコン。四角い絵なので、角を丸めてアプリらしく見せる */
 .tile-logo {
   width: 44px; height: 44px; flex: none;
@@ -240,14 +235,6 @@
   object-fit: cover;
   box-shadow: 0 2px 5px rgba(60, 40, 20, 0.22);
   background: #fff;
-}
-.h2-logo {
-  width: 34px; height: 34px;
-  vertical-align: -9px;
-  border-radius: 9px;
-  object-fit: cover;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(60, 40, 20, 0.2);
 }
 .phead-logo {
   display: block;
@@ -358,11 +345,12 @@
   pointer-events: none;
 }
 
-/* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする */
-.panel:has(> .notes),
-.panel:has(> .ideas),
+/* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする。
+   掲示板は「貼る場所」と「貼ってあるもの」で1枚の板なので、
+   書き込む面（.bin / .brow）と貼ってある面（.bd-list）の両方を板にする。 */
 .panel:has(> .bin),
 .panel:has(> .brow),
+.panel:has(> .bd-list),
 .panel:has(.noteform) {
   --pg-ground:
     radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--cliff-line) 26%, transparent) 0 2.4px, transparent 3.4px),
@@ -446,7 +434,7 @@
 
 /* コルクの上は地が濃い。添え書きの色をそのまま置くと読めないので、
    本文と同じ濃さまで戻す。 */
-.panel:is(:has(> .notes), :has(> .ideas), :has(> .bin), :has(> .brow)) :is(.muted, p) {
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(.muted, p) {
   color: var(--ink);
 }
 
@@ -534,20 +522,16 @@
   background: color-mix(in srgb, var(--grass-lo) 74%, var(--leaf-c));
 }
 /* コルクの面の札は、板に打ちつけた札。留め具を画鋲の色にする。 */
-.panel:has(> .notes) > h2, .panel:has(> .ideas) > h2, .panel:has(> .bin) > h2,
-.panel:has(> .notes) > .bhead > h2, .panel:has(> .ideas) > .bhead > h2 {
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2) {
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--frame) 40%, var(--paper)) 0%,
     color-mix(in srgb, var(--frame) 78%, var(--frame-dark)) 100%);
   border-color: var(--frame-deep);
 }
-.panel:has(> .notes) > h2::before, .panel:has(> .notes) > h2::after,
-.panel:has(> .ideas) > h2::before, .panel:has(> .ideas) > h2::after,
-.panel:has(> .bin) > h2::before, .panel:has(> .bin) > h2::after,
-.panel:has(> .notes) > .bhead > h2::before, .panel:has(> .notes) > .bhead > h2::after,
-.panel:has(> .ideas) > .bhead > h2::before, .panel:has(> .ideas) > .bhead > h2::after {
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::before,
+.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::after {
   background: var(--accent);
-  box-shadow: inset 0 -2px 0 rgba(140, 30, 60, 0.3), 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent-deep) 42%, transparent), 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* 紙の型の見出しは「白い紙の札を、少し傾けてテープで貼った」もの。
@@ -734,20 +718,8 @@ a.chip:active, button.chip:active, .chip.link:active {
 .ifoot-back:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
 .ifoot-note { margin: 18px 0 0; font-size: 12px; font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
 
-/* ハイライト。区切りの線ではなく、紙に貼った帯にする */
-.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-.hlist > li {
-  /* 紙の面なので、区切りは影ではなく線。左の1本だけ色を持たせて、
-     どこから次の話か分かるようにする。 */
-  border-left: 5px solid color-mix(in srgb, var(--frame) 62%, var(--pg-rule));
-  border-radius: 0 var(--r-1) var(--r-1) 0;
-  background: color-mix(in srgb, var(--paper) 88%, var(--pg-sheet));
-  padding: 12px 14px 13px 15px;
-}
-.hlist-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; }
-.hlist-head b { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; }
-.hlist-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
-.hlist p { margin: 6px 0 9px; font-size: 14px; line-height: 1.85; font-weight: 600; }
+/* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
+.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 
 .pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
 .pager a {
@@ -763,45 +735,10 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .pager a:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--pg-edge); }
 
-/* スタンプ帳。台紙に押した印なので、押せる板とは逆に「へこんでいる」 */
-.stamps { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 11px; }
-.stamp {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  background: color-mix(in srgb, var(--paper-2) 78%, var(--paper));
-  border: 3px dashed color-mix(in srgb, var(--frame) 82%, var(--paper));
-  border-radius: var(--pg-r-card);
-  padding: 14px 7px 12px;
-  text-align: center;
-  box-shadow: inset 0 3px 7px color-mix(in srgb, var(--frame-deep) 22%, transparent);
-  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.stamp:hover {
-  transform: translateY(-4px) rotate(-1.5deg);
-  border-style: solid;
-  background: var(--paper);
-  box-shadow: 0 7px 0 var(--pg-edge), var(--pg-drop-s);
-}
-.stamp:active { transform: translateY(2px) rotate(-1deg); box-shadow: 0 1px 0 var(--pg-edge); }
-.stamp-icon { display: block; width: 50px; height: 50px; object-fit: contain; object-position: center bottom; }
-.stamp b { font-size: 12px; font-weight: 900; line-height: 1.4; }
-.stamp i { font-size: 10.5px; font-style: normal; color: var(--ink-3); font-weight: 800; }
-
-/* 年表 */
-.tl { list-style: none; margin: 0; padding: 0 0 0 6px; position: relative; }
-.tl:before { content: ""; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 4px; background: var(--paper-2); border-radius: 999px; }
-.tl > li { position: relative; padding: 0 0 18px 32px; }
-.tl-dot { position: absolute; left: 4px; top: 5px; width: 19px; height: 19px; border-radius: 50%; border: 3.5px solid var(--paper); box-shadow: 0 0 0 2.5px var(--frame); }
-.tl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.tl-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
-.tl-body b { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; }
-.tl-body i { display: block; font-size: 12.5px; font-style: normal; color: var(--ink-2); margin-top: 3px; line-height: 1.65; }
-.tl-body a { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 900; color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
-
 /* いま */
 .now-hero { text-align: center; }
 .now-pin { display: block; margin: 0 auto 6px; width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 color-mix(in srgb, var(--frame-deep) 26%, transparent)); }
 .now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: 6px 0 10px; }
-.now-word { font-size: 15px; line-height: 1.95; font-weight: 600; }
 /* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
 .week { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
 .week li {
@@ -830,19 +767,6 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
 .muted { color: var(--ink-2); font-size: 13.5px; font-weight: 600; line-height: 1.85; }
 .err { color: var(--accent-deep); font-size: 13px; font-weight: 900; margin: 8px 0 0; }
-.notes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-.notes li {
-  background: #fff6b8;
-  border: 1px solid color-mix(in srgb, #fff6b8 66%, var(--frame-dark));
-  border-radius: 4px;
-  padding: 12px 14px;
-  font-size: 13px; font-weight: 700; line-height: 1.7;
-  max-width: 220px;
-  box-shadow: 2px 4px 0 rgba(90, 70, 30, 0.14);
-  transform: rotate(-1deg);
-}
-.notes li:nth-child(2n) { background: #d6f0ff; border-color: #a8d6ee; transform: rotate(1.2deg); }
-.notes li:nth-child(3n) { background: #ffe0ec; border-color: #f0b9cd; transform: rotate(-0.6deg); }
 .noteform { display: flex; gap: 9px; margin-top: 14px; }
 .noteform input {
   flex: 1; min-width: 0;
@@ -909,20 +833,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   text-shadow: 0 1px 0 rgba(120, 70, 20, 0.4);
 }
 .bsort button:active { transform: translateY(2px); box-shadow: none; }
-.ideas { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
-.ideas > li {
-  display: flex; gap: 12px; align-items: flex-start;
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: 3px solid var(--frame);
-  border-radius: var(--pg-r-card);
-  padding: 13px;
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
-}
-.ideas > li.is-picked {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #fffdf0 0%, #fff4d0 100%);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--gold) 62%, var(--frame-deep));
-}
+/* 提案の並べ方そのものは live.css の .bd-list が持っている。
+   ここには、どのページでも同じ形をしている「さんせいの札」だけを置く。 */
 .vote {
   flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
   min-width: 54px; min-height: 54px;
@@ -940,20 +852,6 @@ a.chip:active, button.chip:active, .chip.link:active {
 .idea-body p { margin: 0; font-size: 14.5px; line-height: 1.8; font-weight: 600; word-break: break-word; }
 .idea-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 7px; font-size: 11px; font-weight: 900; color: var(--ink-2); }
 .idea-meta em { font-style: normal; color: var(--frame-deep); }
-
-/* 仲間の群れ */
-.crowd { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-.crowd-one {
-  position: relative;
-  width: 54px; height: 54px; border-radius: 50%;
-  background: var(--paper-2);
-  border: 3.5px solid var(--frame);
-  display: grid; place-items: center;
-  overflow: hidden;
-  font-size: 23px;
-  box-shadow: 0 4px 0 var(--frame-dark);
-}
-.crowd-one img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 .scroll-cue {
   position: absolute;
