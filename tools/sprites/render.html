@@ -16,6 +16,7 @@
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 
 const SUPER = 2;      // 一度大きく描いてから縮める(輪郭を滑らかにする)
 const SIZE = 512;
@@ -31,25 +32,45 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
-/* ---- 光: 環境光を主役にして、方向光は「どちらが上か」を示す程度に弱く ---- */
-const hemi = new THREE.HemisphereLight(0xfff8ec, 0xcbe6a6, 1.85);
+/* ---- 光 ----
+ * three r155 以降は「強さ ÷ π」がそのまま拡散反射の係数になる。
+ * hemi 2.95 なら真上を向いた面で 0.94、真横で 0.74、真下でも 0.57 が残る。
+ *
+ * 明暗を作る役目を、方向光ではなく hemi の「空色 → 地面色」に持たせている。
+ * 方向光で作ると面ごとに段差が出て多面体に見えるが、hemi の差は法線の
+ * 上下成分だけで決まるので、箱の4面はまったく同じ明るさのまま、
+ * 丸いかたまりにだけ上から下への滑らかなグラデーションが乗る。
+ * あつ森の木がそう見えている。
+ */
+const hemi = new THREE.HemisphereLight(0xfff8ea, 0x8f9080, 2.95);
 scene.add(hemi);
-const key = new THREE.DirectionalLight(0xfff6e2, 1.15);
+// 左手前・上からの光。葉の法線をなだらかにしてあるので、
+// これを強めても多面体にはならず、丸みだけが出る
+const key = new THREE.DirectionalLight(0xfff4dc, 1.00);
 key.position.set(-6, 10, 7);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-key.shadow.radius = 10;
-key.shadow.bias = -0.0009;
 scene.add(key);
 // 影側が沈まないよう、反対からも当てる
-const fill = new THREE.DirectionalLight(0xe8f4ff, 0.5);
+const fill = new THREE.DirectionalLight(0xeaf4ff, 0.14);
 fill.position.set(8, 3, -6);
 scene.add(fill);
+
+/* 影専用の光。強さ 0 でも three は影を焼くので、
+ * 「陰影の付き方」と「影の落ちる向き」を別々に決められる。
+ * こうしないと、影を右下へずらすために光を後ろへ回すことになり、
+ * カメラ側の面が暗くなってしまう。 */
+const sun = new THREE.DirectionalLight(0xffffff, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.radius = 8;
+sun.shadow.bias = -0.0009;
+scene.add(sun);
 
 /* ---- 接地影を受ける板。影だけを描くので背景は透けたまま ---- */
 const shadowCatcher = new THREE.Mesh(
   new THREE.PlaneGeometry(400, 400),
-  new THREE.ShadowMaterial({ opacity: 0.2, color: 0x2f6b3a }),
+  // 濃さはあつ森の実測(下の地面が 0.6〜0.7 倍に沈む)に合わせた。
+  // 色は黒ではなく暖かい灰緑。黒で落とすと写真の影に見える
+  new THREE.ShadowMaterial({ opacity: 0.40, color: 0x2f3d26 }),
 );
 shadowCatcher.rotation.x = -Math.PI / 2;
 shadowCatcher.receiveShadow = true;
@@ -61,6 +82,14 @@ scene.add(shadowCatcher);
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
+/* three の Color は既定でリニア空間の数値として HSL を読み書きする。
+ * そのままだと「l=0.46」と書いた緑が画面では 0.71 の淡い緑になり、
+ * どうぶつの森から測った色をそのまま置けない。
+ * テクスチャ側(colormap のピクセル)は sRGB なので、どちらの経路も
+ * sRGB で揃うようにここで指定を固定する。以下の色の数値はすべて sRGB。 */
+const setHsl = (c, h, s, l) => c.setHSL(h, s, l, THREE.SRGBColorSpace);
+const getHsl = (c, t) => c.getHSL(t, THREE.SRGBColorSpace);
+
 /**
  * あつ森寄りの色に置き換える。
  * 素材の色相帯ごとに「行き先」を決めておき、明るさだけ元の色から引き継ぐ。
@@ -68,13 +97,13 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
  */
 const BANDS = {
   // 葉・草(ティール〜緑)。建物キットでは壁の本体
-  green: { lo: 0.20, hi: 0.52, h: 0.250, s: 0.60, l: [0.28, 0.47] },
+  green: { lo: 0.20, hi: 0.52, h: 0.285, s: 0.50, l: [0.34, 0.56] },
   // 木・土(オレンジ〜茶)
-  wood: { lo: 0.02, hi: 0.105, minSat: 0.25, h: 0.078, s: 0.42, l: [0.26, 0.44] },
+  wood: { lo: 0.02, hi: 0.105, minSat: 0.25, h: 0.082, s: 0.40, l: [0.36, 0.60] },
   // 屋根のスレート(青〜藍)。建物キットでは柱や窓枠
-  blue: { lo: 0.52, hi: 0.78, h: 0.552, s: 0.42, l: [0.42, 0.64] },
+  blue: { lo: 0.52, hi: 0.78, h: 0.552, s: 0.46, l: [0.46, 0.68] },
   // 彩度の低い色(石・雪・白い縁取り)。建物キットでは屋根
-  neutral: { flat: true, h: 0.09, s: 0.17, l: [0.46, 0.76] },
+  neutral: { flat: true, h: 0.095, s: 0.15, l: [0.52, 0.82] },
 };
 const ORDER = ["neutral", "green", "wood", "blue"];
 
@@ -84,24 +113,26 @@ const ORDER = ["neutral", "green", "wood", "blue"];
  * こちらを使う。値は「あつ森ならこの色」というつもりで置いた固定色。
  */
 const MATERIALS = {
-  leafsgreen: [0.248, 0.58, 0.46],
-  leafsdark: [0.272, 0.55, 0.36],
-  grass: [0.245, 0.60, 0.50],
-  dirt: [0.076, 0.44, 0.42],
-  wood: [0.086, 0.48, 0.60],
-  woodbark: [0.068, 0.40, 0.40],
-  wooddark: [0.062, 0.38, 0.34],
-  woodinner: [0.100, 0.52, 0.78],
-  stone: [0.100, 0.15, 0.80],
-  stonedark: [0.100, 0.13, 0.60],
+  // 樹冠は草より深く、少し青みのある緑。黄色へ寄せすぎるとレタスに見える
+  leafsgreen: [0.300, 0.48, 0.48],
+  leafsdark: [0.315, 0.44, 0.40],
+  grass: [0.275, 0.55, 0.55],
+  dirt: [0.093, 0.44, 0.58],
+  // あつ森の幹は思っているよりずっと明るい山吹色。暗い茶にすると急に写実的になる
+  wood: [0.088, 0.48, 0.64],
+  woodbark: [0.080, 0.40, 0.56],
+  wooddark: [0.072, 0.38, 0.48],
+  woodinner: [0.100, 0.44, 0.78],
+  stone: [0.110, 0.13, 0.72],
+  stonedark: [0.110, 0.12, 0.58],
   corn: [0.130, 0.85, 0.62],
-  colorred: [0.985, 0.72, 0.62],
-  colorpurple: [0.745, 0.55, 0.70],
-  colorwhite: [0.100, 0.20, 0.94],
-  coloryellow: [0.125, 0.90, 0.64],
-  colorgreen: [0.245, 0.60, 0.50],
-  colorblue: [0.550, 0.55, 0.62],
-  _defaultmat: [0.100, 0.16, 0.92],
+  colorred: [0.985, 0.66, 0.60],
+  colorpurple: [0.745, 0.55, 0.66],
+  colorwhite: [0.100, 0.22, 0.93],
+  coloryellow: [0.125, 0.90, 0.62],
+  colorgreen: [0.275, 0.55, 0.55],
+  colorblue: [0.550, 0.58, 0.60],
+  _defaultmat: [0.100, 0.16, 0.90],
 };
 
 /**
@@ -122,7 +153,7 @@ function acHsl(hsl, o = {}) {
     if (hit) return put(b);
   }
   // 花や布の赤・青・紫: 彩度と明度を上げて、澄んだ色にする
-  return { h: hsl.h, s: Math.min(1, hsl.s * 1.12 + 0.14), l: clamp01(0.30 + hsl.l * 0.62) };
+  return { h: hsl.h, s: Math.min(1, hsl.s * 1.15 + 0.16), l: clamp01(0.30 + hsl.l * 0.62) };
 }
 
 /**
@@ -133,9 +164,9 @@ function acHsl(hsl, o = {}) {
  */
 function remapColor(c, o) {
   const hsl = { h: 0, s: 0, l: 0 };
-  c.getHSL(hsl);
+  getHsl(c, hsl);
   const n = acHsl(hsl, o);
-  c.setHSL(n.h, n.s, n.l);
+  setHsl(c, n.h, n.s, n.l);
   return c;
 }
 
@@ -220,6 +251,70 @@ function acTexture(src, o) {
 
 /* ------------------------------------------------------------------ */
 
+/* Kenney の葉のかたまりは、面ごとに法線が分かれた縦向きの角柱でできている。
+ * そのままだと(1)面の切り替わりが段差になって多面体に見え、
+ * (2)側面はどれも真横を向いているので、光をどう置いても上下の差が出ない。
+ *
+ * あつ森の木は「丸いかたまりに、上が明るく下が暗いグラデーション」なので、
+ *   - 同じ位置の頂点を繋ぎ直して法線を平均し、段差を消す
+ *   - かたまりの高さで明るさを変える係数を頂点色に焼き込む
+ * の2つを掛ける。形は変えずに、陰影だけ丸いかたまりになる。 */
+const foliageCache = new Map();
+
+/** 頂点色に焼く明るさ。上端 / 下端。あつ森の樹冠の実測(上下比 0.7 前後)に合わせた */
+const LEAF_TOP = 1.14;
+const LEAF_BOTTOM = 0.62;
+
+/**
+ * @param {THREE.BufferGeometry} geo 元の形
+ * @param {boolean} smooth 法線も平均するか(平らな葉には掛けない)
+ * @return {THREE.BufferGeometry} 陰影を作り直した形
+ */
+function foliageGeometry(geo, smooth) {
+  const ck = geo.uuid + (smooth ? "|s" : "");
+  if (foliageCache.has(ck)) return foliageCache.get(ck);
+  let out = geo;
+  try {
+    const g = geo.clone();
+    if (smooth) {
+      // 法線とUVが違うと別の頂点として扱われて繋がらないので、先に捨てる。
+      // 葉はテクスチャを使わないマテリアルなので UV は要らない
+      g.deleteAttribute("normal");
+      g.deleteAttribute("uv");
+      g.deleteAttribute("uv1");
+      out = mergeVertices(g, 1e-3);
+      out.computeVertexNormals();
+    } else {
+      out = g;
+    }
+    // 高さで明暗を付ける。Lambert は頂点色を拡散色に掛けるだけなので、
+    // 影の中まで色が残ったまま、なだらかな上下差だけが乗る
+    out.computeBoundingBox();
+    const { min, max } = out.boundingBox;
+    const span = Math.max(1e-6, max.y - min.y);
+    const pos = out.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      // 端だけが極端にならないよう、真ん中をなだらかにした曲線を通す
+      const t = (pos.getY(i) - min.y) / span;
+      const e = t * t * (3 - 2 * t);
+      const v = LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * e;
+      col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v;
+    }
+    out.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  } catch (e) {
+    console.warn("葉の作り直しに失敗", e);
+    out = geo;
+  }
+  foliageCache.set(ck, out);
+  return out;
+}
+
+/** 丸いかたまりとして陰影を付け直すマテリアル名。 */
+const SMOOTH_MAT = /^leafs/;
+/** 上下のグラデーションだけ掛けるマテリアル名(草の株・下草)。 */
+const GRAD_MAT = /^(leafs|grass)/;
+
 const loader = new GLTFLoader();
 
 /**
@@ -234,7 +329,7 @@ async function prepare(part, opts) {
     const [w, h, d] = part.box;
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(w, h, d),
-      new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(...part.color) }),
+      new THREE.MeshLambertMaterial({ color: setHsl(new THREE.Color(), ...part.color) }),
     );
     m.castShadow = true;
     m.receiveShadow = true;
@@ -250,6 +345,9 @@ async function prepare(part, opts) {
     n.castShadow = true;
     n.receiveShadow = true;
     const mats = Array.isArray(n.material) ? n.material : [n.material];
+    const mn = mats.length === 1 ? (mats[0].name ?? "").toLowerCase() : "";
+    const grad = part.foliage ?? opts.foliage ?? (!plain && GRAD_MAT.test(mn));
+    if (grad) n.geometry = foliageGeometry(n.geometry, SMOOTH_MAT.test(mn));
     const soft = mats.map((m) => {
       const map = m.map && !plain ? acTexture(m.map, o) : m.map ?? null;
       const color = map ? new THREE.Color(0xffffff) :
@@ -257,10 +355,10 @@ async function prepare(part, opts) {
       if (!map && !plain) {
         const named = (o.mat ?? {})[(m.name ?? "").toLowerCase()] ??
           MATERIALS[(m.name ?? "").toLowerCase()];
-        if (named) color.setHSL(named[0], named[1], named[2]);
+        if (named) setHsl(color, named[0], named[1], named[2]);
         else remapColor(color, o);
       }
-      return new THREE.MeshLambertMaterial({ map, color });
+      return new THREE.MeshLambertMaterial({ map, color, vertexColors: grad });
     });
     n.material = Array.isArray(n.material) ? soft : soft[0];
   });
@@ -305,17 +403,23 @@ window.renderScene = async (parts, opts = {}) => {
   cam.updateProjectionMatrix();
 
   // 影の描画範囲をこの物体に合わせる(狭くするほど影が綺麗に出る)
-  const sc = key.shadow.camera;
-  sc.left = -maxDim * 1.7;
-  sc.right = maxDim * 1.7;
-  sc.top = maxDim * 1.7;
-  sc.bottom = -maxDim * 1.7;
+  const sc = sun.shadow.camera;
+  sc.left = -maxDim * 1.9;
+  sc.right = maxDim * 1.9;
+  sc.top = maxDim * 1.9;
+  sc.bottom = -maxDim * 1.9;
   sc.near = 0.1;
   sc.far = maxDim * 40;
-  key.position.set(look.x - maxDim * 2.6, box.min.y + maxDim * 9, look.z + maxDim * 3.2);
+  // 画面上で影が右下へ出る位置。カメラが +X+Z から見ているので、
+  // 地面の +X 方向が画面の右下にあたる。光はその反対の -X 側に置く
+  sun.position.set(look.x - maxDim * 2.3, box.min.y + maxDim * 6.6, look.z - maxDim * 0.42);
+  sun.target.position.copy(look);
+  sun.target.updateMatrixWorld();
+  sc.updateProjectionMatrix();
+  // 陰影の向きは影と切り離して、いつも左手前・上から
+  key.position.set(look.x - maxDim * 5, look.y + maxDim * 7, look.z + maxDim * 5);
   key.target.position.copy(look);
   key.target.updateMatrixWorld();
-  sc.updateProjectionMatrix();
 
   shadowCatcher.position.y = box.min.y + 0.001;
 

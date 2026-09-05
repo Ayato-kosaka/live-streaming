@@ -17,8 +17,8 @@ const BK = "./models";         // building-kit / mini-characters
 const FK = "./models/food";    // food-kit
 
 /* ---------------- 建物の配色 ---------------- */
-const WALL = { h: 0.105, s: 0.60, l: [0.68, 0.88] }; // クリーム色の壁
-const TRIM = { h: 0.075, s: 0.40, l: [0.34, 0.52] }; // あたたかい木の柱
+const WALL = { h: 0.098, s: 0.62, l: [0.80, 0.94] }; // クリーム色の壁
+const TRIM = { h: 0.075, s: 0.38, l: [0.52, 0.70] }; // あたたかい木の柱
 const ROOF = {
   coral: { h: 0.015, s: 0.60, l: [0.42, 0.62] },
   mint: { h: 0.44, s: 0.40, l: [0.42, 0.62] },
@@ -35,7 +35,7 @@ const WOODEN = {
   neutral: { h: 0.10, s: 0.30, l: [0.62, 0.86] },
 };
 /** 岩。nature-kit の岩は土の色をしているので、灰色へ置き換える。 */
-const STONE = { mat: { dirt: [0.095, 0.09, 0.64], grass: [0.245, 0.58, 0.48] } };
+const STONE = { mat: { dirt: [0.105, 0.10, 0.70], grass: [0.310, 0.34, 0.42] } };
 
 /* ---------------- 建物の組み立て ---------------- */
 const part = (url, pos = [0, 0, 0], rot = [0, 0, 0]) => ({ url, pos, rot });
