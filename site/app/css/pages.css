@@ -1053,12 +1053,14 @@ a.chip:active, button.chip:active, .chip.link:active {
 .bsort { display: flex; gap: var(--sp-1); }
 .bsort button {
   font-size: var(--fs-note); font-weight: 900;
-  padding: var(--sp-2) var(--sp-4); min-height: 38px;
+  /* 指で押せる最小 48px（island-design 3-2）。38px にしていたが、
+     実測すると当たりも 42px しか無く、決まりを割っていた。 */
+  padding: var(--sp-2) var(--sp-4); min-height: 48px;
   border-radius: var(--r-1);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  /* 38px の札なら厚みは4px（island-design 3章）。 */
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  /* 48px の札なら厚みは6px（island-design 3章）。 */
+  box-shadow: var(--pg-lit), 0 6px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 /* いま選んでいる並び。塗りは変えず、朱の細枠だけ（ac-reference ⑦-6）。 */
 /* 選ばれている札は、色ではなく**沈んだまま**で言う（island-design.md 3-5）。
@@ -1067,10 +1069,10 @@ a.chip:active, button.chip:active, .chip.link:active {
    紙の面でいちばん強い赤が2種類の意味で並ぶことになった。
    `:active` と同じ形なので、合図を1つも増やしていない。 */
 .bsort button.is-on {
-  transform: translateY(4px);
+  transform: translateY(6px);
   box-shadow: var(--pg-lit);
 }
-.bsort button:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.bsort button:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
    ここには、どのページでも同じ形をしている「さんせいの札」だけを置く。 */
 .vote {
