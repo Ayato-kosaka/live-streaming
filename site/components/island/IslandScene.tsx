@@ -341,6 +341,30 @@ const SAND_WET = "color-mix(in srgb, var(--sand-wet) 68%, var(--gold) 32%)";
 /** いちばん沖。深い青をさらに沈めた色。画面のふちで海が抜けて見えないように。 */
 const SEA_ABYSS = "color-mix(in srgb, var(--sea-deep) 84%, #0b3f86 16%)";
 
+/* ---- 空と水平線 ----------------------------------------------------------
+   4周目レビュー14章「本物には空があり、水平線がある。あやと島は上が海で終わる」。
+
+   **島は真上から見た板なので、画面の上は「北」であって「遠く」ではない。**
+   それでも、世界の北のはしに水平線を引いて向こうを空にすると、
+   板が「場所」に見えるかどうか。試して、引きの絵では効いたので置いてある。
+
+   置く高さは 170。島の北の浜（y≈288）より沖で、沖を行く舟（y=208）より奥。
+   **あやとは草地から出られない**（clampToIsland）ので、
+   歩いていって水平線の向こうへ回り込むことは起きない。
+
+   色は本物の実測（`/tmp/acref/ref_NH_Plaza_Exercise.jpg`）。
+   上 rgb(100,147,255) → 水平線ぎわ rgb(112,178,254)。雲は rgb(149,190,253)。
+   青が強い。空を水色にすると、芝の緑と喧嘩して絵が濁る。 */
+const SKY_Y = 170;
+/** 雲。丸を重ねただけの、輪郭のない塊（`island-design.md` 2章-1） */
+const CLOUDS: [number, number, number][] = [
+  [120, -30, 0.9],
+  [430, -150, 1.3],
+  [760, 20, 0.72],
+  [1030, -80, 1.05],
+  [1290, 30, 0.8],
+];
+
 const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
 
@@ -1100,6 +1124,12 @@ function IslandScene() {
               グラデーションの外側の止め色を濃くするだけで出せる。 */}
           <stop offset="1" stopColor={SEA_ABYSS} />
         </radialGradient>
+        {/* 空。本物は上ほど濃い青で、水平線ぎわが明るい */}
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6491ff" />
+          <stop offset="0.72" stopColor="#74aefe" />
+          <stop offset="1" stopColor="#8fc6fe" />
+        </linearGradient>
         <radialGradient id="grassG" cx="38%" cy="28%">
           <stop offset="0" stopColor="var(--grass-hi)" />
           <stop offset="1" stopColor="var(--grass)" />
@@ -1128,6 +1158,7 @@ function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
+
       {/* 水面の白いかたまり。海が塗りに見えないように、大小2種を撒いてある。
 
           **明滅は外した。** 島の SVG の中で何かを動かすと、その要素の
@@ -1159,6 +1190,22 @@ function IslandScene() {
         ))}
       </g>
 
+      {/* ------- 空と水平線 -------
+          世界の北のはしから向こうを空にする。上の SKY_Y の注を見る。 */}
+      <g aria-hidden>
+        <rect x={-500} y={-500} width={WORLD + 1000} height={SKY_Y + 500} fill="url(#skyG)" />
+        {CLOUDS.map(([cx, cy, k], i) => (
+          <g key={i} transform={`translate(${cx} ${cy}) scale(${k})`} fill="#95bcfd" opacity={0.85}>
+            <ellipse cx={-52} cy={16} rx={54} ry={26} />
+            <ellipse cx={30} cy={18} rx={62} ry={24} />
+            <ellipse cx={-8} cy={-8} rx={48} ry={34} />
+          </g>
+        ))}
+        {/* 水平線。線を引かずに、際をひと筋明るくして境目を作る。
+            線を引くと輪郭になる（`island-design.md` 2章-1「輪郭線を引かない」）。 */}
+        <rect x={-500} y={SKY_Y - 9} width={WORLD + 1000} height={18} fill="#cfe4ff" opacity={0.7} />
+        <rect x={-500} y={SKY_Y + 9} width={WORLD + 1000} height={34} fill="#79b0f6" opacity={0.5} />
+      </g>
       {/* ------- 浅瀬。岸のすぐそばだけ。
           深い青からいきなり浅瀬に変わると、島に輪がはまって見える。
           あいだに2枚だけ挟んで、段差を目立たなくする。 ------- */}
