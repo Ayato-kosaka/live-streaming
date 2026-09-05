@@ -101,9 +101,9 @@ export default function AppsPage() {
                 <Icon name="book" size={24} />
               </span>
               <span className="tile-text">
-                <b>{a.name}を作ってきた記録</b>
+                <b>作ってきた記録</b>
                 <i>
-                  {fmt(grown[0].date)} から{a.milestones.length}の節目。その日の配信つき
+                  {a.name}を {fmt(grown[0].date)} から。{a.milestones.length}の節目と、その日の配信
                 </i>
               </span>
               <Icon name="right" size={16} className="tile-go" />
