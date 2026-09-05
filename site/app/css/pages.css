@@ -148,7 +148,45 @@
    横に流すのをやめたので、はみ出す・隠れるという状態が無くなった。
    6つとも読める、を守ったまま幅に入るだけ折り返す。
    360〜519px で3列2段、520〜899px で3〜5列2段、900px から6列1段。 */
+/* 狭い画面の「いま、どこ」。
+   札の朱枠（`.ih-link.is-on`）は 900px から下では出ないので、
+   居る場所を字で言う。1行に収まらない名前は途中で切る
+   （切れても、すぐ下の h1 が同じ名前を最後まで書いている）。 */
+.ih-here {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  /* 板の上の字は濃いほう。生成りの字（--paper）で置いていたら、
+     琥珀の地に対して 1.93 : 1 しか出なかった（tools/sprites/inkpx.mjs で実測）。
+     看板の上の物は「明るい板に濃い字」で揃っているので、ここもそれに寄せる。 */
+  color: color-mix(in srgb, var(--ink) 88%, var(--frame-deep));
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ih-here b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--fs-note);
+  color: var(--ink);
+}
+/* 720px から上はパンくずの行が見えていて（`.crumbs` の clip が外れる）、
+   その最後が同じ名前を言っている。2回言わない。 */
+@media (min-width: 720px) { .ih-here { display: none; } }
+
 .ih-nav {
+  /* 900px から下では畳んだ一覧（`.ihx`）に譲る。
+     6つを3列×2段に置くと看板が 129px あり、その下の現在地の行と合わせて
+     106面ぜんぶが 177〜218px を同じ絵で使っていた（`docs/island-ux.md` 5.2）。
+     **`display: none` で消す。** 目に見えないだけで残すと、読み上げが
+     同じ行き先を2回読む。 */
+  display: none;
   /* 前は flex: 1 0 100% で、6つの札を必ず「あやと島」の下の段に落としていた。
      そのせいで狭い画面の看板が 201px あり、島の外の20面が、
      画面の 1/4 を同じ絵で始めていた（docs/island-review-2.md 4章）。
@@ -158,7 +196,6 @@
      375px では受け皿ごと下の段に落ちて、看板がまた 185px に戻る。 */
   flex: 1 1 0;
   min-width: 0;
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
   /* 余白は4の倍数の段から（docs/island-world.md 5.1）。 */
   gap: var(--sp-2);
@@ -170,31 +207,27 @@
     inset 0 -1.5px 0 rgba(255, 245, 220, 0.24);
 }
 /* 狭い画面では「あやと島」を鳥だけにする。
-   札3列を横に置くのに 310px 要るので、129px の帯を置く余地が無い。
-   名前は消さずに読み上げには残す（clip で隠す）。すぐ下のパンくずの
-   先頭が「島」なので、字としての行き先も画面から消えていない。 */
-@media (max-width: 519.98px) {
-  .ih-in { padding: var(--sp-2) var(--sp-2) var(--sp-2); gap: var(--sp-2); }
+   名前は消さずに読み上げには残す（clip で隠す）。すぐ横に現在地の字が
+   出るので、看板が何の看板かは分かる。 */
+@media (max-width: 899.98px) {
+  /* 1段になったので、下だけ深い余白をやめる。看板は 8+48+8+3 = 67px。 */
+  .ih-in { padding: var(--sp-2) var(--sp-3); flex-wrap: nowrap; }
+}
+@media (max-width: 599.98px) {
   .ih-home { padding: 0; width: 48px; justify-content: center; }
   .ih-home b {
     position: absolute; width: 1px; height: 1px;
     margin: -1px; padding: 0; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  /* 3列 × 2段に決め打つ。auto-fit のままだと、480px で4列に割れて
-     札が 94px になり、6つのうち4つの字が切れていた。狭い画面では
-     「6つが2段で読める」ほうが、列がきれいに埋まることより大事。
-     すきまを1段詰めるのは、360px でも3列が 90px を保つため。 */
-  .ih-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-1); padding: var(--sp-1); }
-  .ih-link { padding: var(--sp-1); gap: 2px; }
-  .ih-link img { width: 18px; height: 18px; }
 }
 /* 看板ごと1行に収まる広さになったら、そこから上に貼り付ける。
-   このとき高さは 70px 前後なので、貼り付いていても画面をふさがない。 */
+   このとき高さは 78px 前後なので、貼り付いていても画面をふさがない。
+   ここから札の列に戻す。畳んだ一覧（`.ihx`）はここで引っ込む。 */
 @media (min-width: 900px) {
   .ih { position: sticky; top: 0; }
   .ih-in { flex-wrap: nowrap; }
-  .ih-nav { grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
+  .ih-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
 }
 /* ふだは押せる。だから板に彫り込むのではなく、厚みのある札にする
    （ac-reference 6章「押せるものには必ず下に厚みがある」）。
@@ -227,28 +260,11 @@
   width: 20px; height: 20px; flex: none;
   object-fit: contain; object-position: center bottom;
 }
-/* 狭い画面の札。
-   **この3つは素の `.ih-link` より後ろに置くこと。**
-   同じ強さなので、前に置くと上の @media が負けて1つも効かない
-   （前の `padding: var(--sp-1)` は、それで何も変えていなかった）。 */
-@media (max-width: 519.98px) {
-  /* 左右の余白は 4px。8px あると、いちばん長い「あやとのこと」が
-     390px で 4px はみ出して、最後の1画が切れる。
-     札の縁までの余白より、名前が最後まで読めることのほうが先。 */
-  .ih-link { padding: var(--sp-1) 4px; }
-  .ih-link img { width: 16px; height: 16px; }
-}
-/* ここから下は、絵を取って名前だけにする。
-   3列に6文字が入らなくなる幅で、絵と名前のどちらを残すかの話になる。
-   **名前を残す。** 切れた名前は入口として働かないが、名前だけの札は働く。 */
-@media (max-width: 379.98px) {
-  .ih-link img { display: none; }
-}
-/* 名前だけにしても3列で切れる幅。ここだけ2列 × 3段にする。
-   看板は 129px から 184px に伸びるが、
-   6つのうち4つの名前が切れている状態よりはましと判断した。 */
-@media (max-width: 339.98px) {
-  .ih-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* 「ぜんぶ」だけは行き先ではなく道しるべなので、6つとは別の面にする。
+   同じ木の札にすると7軒目に見える（砂浜の `.ifoot-door.is-all` と同じ扱い）。 */
+.ih-link.is-all {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 6px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
 }
 /* いま居る場所だけ、木の札ではなく紙の札にする。
    まわりが木色に揃ったので、白い1枚がどこにいるかを言う。 */

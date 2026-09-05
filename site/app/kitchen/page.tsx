@@ -10,7 +10,7 @@ import { COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
 import { H, Sheet, Zone } from "@/components/streams/Sheet";
 import KitchenNext from "@/components/live/KitchenNext";
-import { ArtBasket, ArtMeeting, ArtPot, ArtStamp } from "@/components/streams/Art";
+import { ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
   title: "クッキング・スタンプ帳",
@@ -83,7 +83,7 @@ export default function KitchenPage() {
             答えられる問いを1つ置いた。この面にしか置けない問いなのは、
             「どの種類がうすいか」を持っているのが、この帳面だけだから。 */}
         <Zone tight>
-          <H art={<ArtStamp size={32} />}>次のスタンプ</H>
+          <H art={<ArtStamp size={32} />}>スタンプ帳の、空いているところ</H>
           <KitchenNext months={monthCounts} thin={thin} />
         </Zone>
 
@@ -168,46 +168,10 @@ export default function KitchenPage() {
               </p>
             </Fold>
 
-            <Fold title="1品は、どうやってできる" lead="企画会議 → 買い出し → 作って食べる" note="3日">
-              <ol className="rt">
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">1</span>
-                    <ArtMeeting size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>企画会議</b>
-                    </span>
-                    <p>「今日なにしよかー！」から始めて、コメントで出た案の中から作るものを決める。</p>
-                  </span>
-                </li>
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">2</span>
-                    <ArtBasket size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>買い出し</b>
-                    </span>
-                    <p>市場やスーパーへ。無い材料は現地のもので置き換える。ここでメニューが変わる日もある。</p>
-                  </span>
-                </li>
-                <li>
-                  <span className="rt-stop">
-                    <span className="rt-n">3</span>
-                    <ArtPot size={40} />
-                  </span>
-                  <span className="rt-body">
-                    <span className="rt-head">
-                      <b>作って、食べる</b>
-                    </span>
-                    <p>宿のキッチンで作って、その場で食べる。失敗した日は翌日にリベンジすることもある。</p>
-                  </span>
-                </li>
-              </ol>
-            </Fold>
+            {/* 「企画会議 → 買い出し → 作って食べる」の3段は、`/streams/cooking` が
+                同じ字で持っている（`content/streamTypes.ts` の `beat`）。
+                この面の下に「クッキング配信そのものを見る／どういう順で進む配信なのか」の
+                札があるので、同じ3段をここでもう一度読ませない。 */}
           </div>
         </Zone>
 

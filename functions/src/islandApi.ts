@@ -72,9 +72,48 @@ const PHOTOS_PER_DAY = 120;
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
    鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
 const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
+/* 鍵の出どころ。**GitHub の Secrets には置かない**（GitHub #110 はそれ待ちで
+   止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
+   実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
+   サイトも配信も同時に追随する。
+   **金額そのものは GAS から取らない。** あちらはスパチャを配信の演出上、
+   半額で数えている。サイトは満額で数える決まりなので(下の /fund の注)、
+   ここから借りるのは鍵だけにする。 */
+const GAS_GOALS =
+  "https://script.google.com/macros/s/" +
+  "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
+  "/exec?table=Goals&id=2025-10-24";
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
+/** 鍵は変わらないので、一度読めたら覚えておく。 */
+let goalKeyCache: string | null = null;
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * @return {Promise<string>} 鍵。取れなければ空文字
+ */
+async function doneruKey(): Promise<string> {
+  const env = process.env.DONERU_GOAL_KEY ?? "";
+  if (env) return env;
+  if (goalKeyCache) return goalKeyCache;
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch(GAS_GOALS, {signal: ctl.signal});
+    if (!r.ok) throw new Error(`gas ${r.status}`);
+    const j = (await r.json()) as {data?: {doneruGoalKey?: unknown}};
+    const k = String(j.data?.doneruGoalKey ?? "");
+    if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
+    goalKeyCache = k;
+    return k;
+  } catch (e) {
+    logger.warn("goal key read failed", String(e));
+    return "";
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
@@ -540,7 +579,7 @@ function forkCounts(v: unknown): Record<string, number> {
  * @return {Promise<number | null>} 集まっている額(円)
  */
 async function doneruNow(): Promise<number | null> {
-  const key = process.env.DONERU_GOAL_KEY ?? "";
+  const key = await doneruKey();
   if (!key) return null;
   if (fundCache && Date.now() - fundCache.at < FUND_TTL_MS) {
     return fundCache.doneru;
@@ -998,7 +1037,7 @@ export const islandApi = onRequest(
         if (total <= 0) total = num(f.total);
         /* 1円も分からないときは、200 で 0 を返さない。
            0円は「誰も出していない」に見えるし、CDN に5分ぶん焼き付く。
-           鍵がまだ無いあいだ(GitHub #110)は毎回ここに来る。画面は 200 以外を
+           どれも読めなかったときは毎回ここに来る。画面は 200 以外を
            「読めなかった」として黙って足代の数字を消すので、これでいい。 */
         if (total <= 0) {
           res.set("Cache-Control", "no-store");

@@ -66,6 +66,12 @@ export default function Ask({ id, q, options, after }: Props) {
 
   const counts = got ?? read;
   const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
+  /* 前に押したことは覚えているのに、数だけ読めなかった日がある
+     （`/fork` が落ちていて、`localStorage` に自分の1票が残っているとき）。
+     このとき 0 を並べて「いちばんに答えました」と出ていた。**数が無いなら黙る。**
+     読めなかったことは、こちらの都合であって、見ている人には関係がない
+     （`docs/island-design.md` 4章）。 */
+  const shows = !!mine && !!counts;
 
   const press = async (option: string) => {
     if (mine) return;
@@ -101,14 +107,16 @@ export default function Ask({ id, q, options, after }: Props) {
             >
               <span>{o.label}</span>
               {/* 押す前は数を出さない。先に見せると、多いほうに引っぱられる */}
-              {mine && <em>{counts?.[o.id] ?? 0}</em>}
+              {shows && <em>{counts?.[o.id] ?? 0}</em>}
             </button>
           </li>
         ))}
       </ul>
       {mine && !failed && (
         <p className="fork-said">
-          {total > 1 ? (
+          {!shows ? (
+            <>答えました。</>
+          ) : total > 1 ? (
             <>
               いま <b>{total}人</b> が答えています。
             </>

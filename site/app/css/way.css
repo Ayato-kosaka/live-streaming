@@ -1,20 +1,78 @@
 /* =========================================================
    導線 — 「あの話どこだっけ」から短く着くための3つ
 
-     1. 現在地の行（.wayrow）… 面のいちばん上。左が現在地、右が「ぜんぶ」への口
-     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。島の10軒ぜんぶへ戻れる
+     1. 看板の口（.ihx-open）… 面のいちばん上。「ぜんぶ」への板1枚
+     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。10軒＋「ぜんぶ」を開いたまま
      3. ぜんぶの面（.dx*）… /all。行き先を1枚に並べて、字で絞る
 
-   **上の帯（.ih-nav）は6つのまま触らない。**
-   帯は狭い画面で3列×2段にちょうど収まっていて、7つ目を足すと列が割れて
-   6つの名前が切れる（`app/css/pages.css` の .ih-nav の但し書き）。
-   名前の切れた札は入口として働かないので、器を別に立ててある。
+   **一覧を書くのは1か所**（`components/ui/PlaceList.tsx`）。2 と 3 がそこを見る。
+   `docs/island-ux.md` 5.2 が「一覧の部品を1つ作って使い回す」と決めている。
+   9月5日まで、ここは口が3つ（帯6つ・現在地の行の「ぜんぶ」・砂浜12）に
+   分かれていて、狭い画面ではヘッダーと砂浜だけで 613px を使っていた。
 
-   このファイルを分けてあるのは、pages.css が 1,000 行を超えていて、
-   同時に何人かで触ると衝突するため。ここは導線の3つだけを持つ。
+   このファイルを分けてあるのは、pages.css が 1,400 行を超えていて、
+   同時に何人かで触ると衝突するため。ここは導線だけを持つ。
    ========================================================= */
 
-/* --- 1. 現在地の行 --------------------------------------------------- */
+/* --- 1. 看板の口（狭い画面） ----------------------------------------- */
+
+/* 「ぜんぶ」への板1枚。**狭い画面ではこれが唯一の口。**
+   9月5日まで現在地の行に居たものを、看板の中へ上げた。行が1本まるごと
+   （48〜89px ＋ 余白12px）消える。
+
+   畳んだ一覧（`<details>` のシート）も作って測ったが、**紙96枚が3タップに
+   なる**ので捨てた。`/all` の1棚目が「島のなか」（10軒ぜんぶ）なので、
+   `/all` はシートの上位互換になっている（`PageShell` の但し書き）。 */
+.ihx-open {
+  flex: none;
+  /* いつも行のいちばん右。720px から上では現在地の字（`.ih-here`）が
+     引っ込むので、伸びるものが1つも無くなる。auto マージンで寄せておく。 */
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  white-space: nowrap;
+  /* 押せるので厚み。48px の板は 6px（`docs/island-design.md` 3章）。 */
+  box-shadow: var(--pop), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ihx-open:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
+/* 900px から上は6つの札が1段で並び、その列の最後に「ぜんぶ」が入る。 */
+@media (min-width: 900px) { .ihx-open { display: none; } }
+/* 狭い画面では「島のなか」を落として「ぜんぶ」だけにする。
+   **消さずに隠す。** 読み上げには「島のなか ぜんぶ」のまま残す。 */
+@media (max-width: 599.98px) {
+  .ihx-long {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ihx-open { padding: 0 var(--sp-3); }
+}
+
+/* いま居る場所。押せないので**完全に平ら**にする。
+   厚みは「押せる」の合図1種類だけに使う（`docs/island-world.md` 3.4）。 */
+.ifoot-door.is-here {
+  background: color-mix(in srgb, var(--frame-deep) 22%, transparent);
+  box-shadow: none;
+  color: color-mix(in srgb, var(--paper) 74%, var(--frame));
+  cursor: default;
+}
+
+/* --- 1b. 現在地の行 --------------------------------------------------- */
 
 .wayrow {
   display: flex;
@@ -26,45 +84,12 @@
 /* 行そのものが下の余白を持つので、中のパンくずからは外す。
    両方が持つと、行の高さが二重に空く。 */
 .wayrow .crumbs { margin: 0; }
-/* 口はいつも行の右はし。狭い画面ではパンくずが隠れる面があり
-   （`.crumbs:not(:has(> span + span))`）、そのときも位置が動かないように
-   space-between ではなく auto マージンで寄せる。 */
-.way-all { margin-left: auto; }
-
-/* 押せるので板。厚みは「48px のボタンで6px」の段（island-design 3章）。
-   パンくずは押しても場所が変わらない札なので平ら、こちらは厚みあり。
-   同じ行に並ぶ2つが、型で見分けられる。 */
-.way-all {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 48px;
-  padding: 0 var(--sp-4);
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  color: var(--ink);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-body);
-  white-space: nowrap;
-  box-shadow: var(--pop), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.way-all:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
-/* 狭い画面では「島のなか」を落として「ぜんぶ」だけにする。
-   パンくずと同じ行に並べたいので、札を短くするほうを取った。
-   **消さずに隠す。** 読み上げには「島のなか ぜんぶ」のまま残す。 */
-@media (max-width: 599.98px) {
-  .way-all-long {
-    position: absolute;
-    width: 1px; height: 1px;
-    margin: -1px; padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .way-all { padding: 0 var(--sp-3); }
+/* 「島 › ○○」の1段だけの面では、パンくずは看板の「いま：○○」と
+   同じことしか言っていない。狭い画面では行ごと畳む。
+   **消さない。** 目に見えないだけで、読み上げには残す
+   （`.crumbs` 側の clip がそれをやる）。行の余白だけをここで抜く。 */
+@media (max-width: 719.98px) {
+  .wayrow:not(:has(.crumbs > span + span)) { margin: 0; }
 }
 
 /* --- 2. 砂浜の一覧 --------------------------------------------------- */
@@ -73,12 +98,15 @@
    いまどこ・住んでる人）へも、どの面からでも1回で行けるようにする。
    ここは選ばせる列ではなく戻り道なので、10個並べても帯のようには潰れない。 */
 .ifoot-doors {
+  list-style: none;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
   gap: var(--sp-2);
   max-width: 760px;
   margin: var(--sp-5) auto 0;
 }
+.ifoot-doors > li { display: grid; min-width: 0; }
 .ifoot-door {
   display: flex;
   align-items: center;
@@ -105,8 +133,8 @@
 .ifoot-door:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
 /* 「ぜんぶ」だけは行き先ではなく道しるべなので、10軒とは別の面にする。
    同じ木の札にすると11軒目に見える。 */
+.ifoot-doors > li.is-all { grid-column: 1 / -1; }
 .ifoot-door.is-all {
-  grid-column: 1 / -1;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
   font-size: var(--fs-note);
