@@ -221,6 +221,9 @@
 .apin.is-group:active .apin-many { transform: translateY(-50%) scale(0.92); }
 /* いまいる国がこのまとまりの中にあるとき。輪は札の形に合わせる。 */
 .apin.is-group.is-here::after {
+  /* 輪の 3px は札の内側に置く。外へ出すと押しどころが 62px になって、
+     たたむときに見込んだ幅（GROUP_W）より広くなる。 */
+  box-sizing: border-box;
   width: 56px;
   height: 26px;
   margin: -13px 0 0 -28px;
@@ -311,7 +314,7 @@
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
 /* まとまりの札は、世界ぜんぶの面でも小さくしない。ここでいちばん押される。 */
 .amap-pins.is-wide .apin.is-group.is-here::after {
-  width: 56px; height: 26px; margin: -13px 0 0 -28px;
+  box-sizing: border-box; width: 56px; height: 26px; margin: -13px 0 0 -28px;
 }
 
 /* ---------------------------------------------------------
