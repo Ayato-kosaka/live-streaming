@@ -15,7 +15,10 @@ import urllib.request
 
 OUT = "/tmp/acref"
 UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
+# 風景だけ集めても、UI（枠・ボタン・カード・一覧）の作りが分からない。
+# 島の絵と、画面の部品と、両方を落とす。
 TERMS = [
+    # 島の絵
     "island scenery",
     "New Horizons screenshot",
     "resident services",
@@ -24,6 +27,19 @@ TERMS = [
     "museum",
     "plaza",
     "river bridge",
+    # 画面の部品。カード・一覧・枠・ボタンの作りを見るため
+    "NookPhone",
+    "Nook Shopping catalog",
+    "Critterpedia",
+    "DIY Recipes app",
+    "Nook Miles app",
+    "island designer app",
+    "map app New Horizons",
+    "passport New Horizons",
+    "dialogue New Horizons",
+    "inventory New Horizons",
+    "Able Sisters shop interface",
+    "Nook Stop terminal",
 ]
 
 
