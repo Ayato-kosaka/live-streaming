@@ -72,16 +72,13 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
               <Tape>{r.name}</Tape>
             </h1>
             <div className="zk-hero-art">
-              {/* この面の主役。長辺640pxで焼き直したほうを、必要な画面にだけ配る。
-                  1x/2x で書くと、等倍の画面はどれだけ大きく出しても 320px の
-                  ほうを選ぶ。いちばん大きく出す絵なので幅（`w`）で配る。
-                  一覧のマスは今までの1枚のままなので、増えるのはここを開いた人だけ */}
-              <img
-                src={`/sprites/${r.icon}.webp`}
-                srcSet={`/sprites/${r.icon}.webp 320w, /sprites/hero/${r.icon}.webp 640w`}
-                sizes="(min-width: 720px) 340px, 250px"
-                alt=""
-              />
+              {/* この面の主役。焼き直したほう（`sprites/hero/`）を直に指す。
+                  `srcset` を 1x/2x で書くと、等倍の画面は 340px に伸ばしても
+                  小さいほうを選んでここだけぼける。`w` で書く手もあるが、
+                  スプライトは中身の形に切り出してあって1枚ずつ幅が違うので
+                  （食パンは 393px、ピザは 527px）、幅の数を書くと嘘になる。
+                  この面で出す絵は1枚だけなので、大きいほうを常に配る。 */}
+              <img src={`/sprites/hero/${r.icon}.webp`} alt="" />
             </div>
             <p className="zk-hero-note">{r.note}</p>
           </div>

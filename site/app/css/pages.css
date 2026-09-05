@@ -423,9 +423,7 @@
      ラジアルを重ねてムラを作る。画像は足さない。 */
   --pg-paper-bg:
     radial-gradient(120% 40% at 8% 0%, rgba(255, 255, 255, 0.18), transparent 56%),
-    radial-gradient(80% 34% at 94% 62%, rgba(118, 110, 68, 0.14), transparent 60%),
     radial-gradient(60% 26% at 68% 18%, rgba(255, 255, 255, 0.12), transparent 72%),
-    radial-gradient(50% 22% at 22% 88%, rgba(118, 110, 68, 0.12), transparent 66%),
     linear-gradient(180deg, var(--pg-sheet) 0%, var(--pg-sheet-lo) 100%);
   /* 紙の外の地。紙より明るいので、紙が「載っている」ように見える */
   --pg-outer: var(--paper-out);

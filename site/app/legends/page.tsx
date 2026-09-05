@@ -46,12 +46,9 @@ export default function LegendsPage() {
               <Tape>{top.title}</Tape>
             </div>
             <div className="zk-hero-art">
-              {/* 主役の絵だけ、高精細画面には長辺640pxのほうを配る */}
-              <img
-                src={`/sprites/${top.icon}.webp`}
-                srcSet={`/sprites/${top.icon}.webp 1x, /sprites/hero/${top.icon}.webp 2x`}
-                alt=""
-              />
+              {/* 主役の絵は、焼き直したほう（`sprites/hero/`）を直に指す。
+                  1x/2x で配ると、等倍の画面がここだけ小さいほうを選ぶ */}
+              <img src={`/sprites/hero/${top.icon}.webp`} alt="" />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />

@@ -1,20 +1,41 @@
 """描かれた画素から字の濃さを測る（2/2。読むほう）。inkpx.mjs が撮った2枚を突き合わせる。
 
-字が乗っている画素だけを見て、その下の地といちばん悪い組み合わせを出す。
-地の平均や最頻色ではなく**いちばん悪いところ**を採るのは、
-地図の海のように濃淡のある地の上では、平均だと読めない場所を見落とすため。
+**合否は中央値で決める。字の下位10%で決めない**（`CLAUDE.md`）。
+下位10%はにじみ（アンチエイリアス）の画素で、計算値ちょうど 9.25 の字でも
+5.06 と出る。真の値が 9.25 の字がそうなるので、どんな字も落ちる。
+
+下位10%を見たかった理由は「中心だけ濃い暗幕で中央値をよく見せた」失敗を
+捕まえるためだった。あれは字ではなく**地**が場所で変わっていた話なので、
+2枚目（地だけの絵）を字の面積ぶん見て、**いちばん明るい地といちばん暗い地の
+両方で比を出す**。地のばらつきはそちらで捕まえる。
+
+出る4つ:
+  中央 … 字の画素の比の中央値。**これで合否を決める**
+  明地 … その字が乗っている地のいちばん明るいところとの比
+  暗地 … 同じく、いちばん暗いところとの比。**地のムラはここに出る**
+  ふり … 明地と暗地の差。大きいほど地がまだらで、場所によって読めなくなる
 """
 import json, sys
+import numpy as np
 from PIL import Image
-from collections import Counter
 
 tag = sys.argv[1] if len(sys.argv) > 1 else "ink"
 page = sys.argv[2] if len(sys.argv) > 2 else "_map"
 base = f"/tmp/ink/{tag}/{page}"
 d = json.load(open(base + ".json"))
 dpr = d["dpr"]
-shot = Image.open(base + ".shot.png").convert("RGB")
-bg = Image.open(base + ".bg.png").convert("RGB")
+# 面によっては字が 500 か所ある。1画素ずつ Python で回すと1面で10分を超えて、
+# 「測ってから直す」が回らなくなる。画素は numpy にまとめて渡す。
+shot = np.asarray(Image.open(base + ".shot.png").convert("RGB"), dtype=np.int16)
+bg = np.asarray(Image.open(base + ".bg.png").convert("RGB"), dtype=np.int16)
+H, W = shot.shape[:2]
+
+
+def lum_a(px):
+    """画素の並び (N,3) から相対輝度の並びを出す。"""
+    c = px.astype(np.float64) / 255.0
+    c = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    return c[..., 0] * 0.2126 + c[..., 1] * 0.7152 + c[..., 2] * 0.0722
 
 
 def lin(c):
@@ -55,39 +76,37 @@ for i, b0 in enumerate(d["boxes"]):
     x0, y0 = int(b0["x"] * dpr), int(b0["y"] * dpr)
     x1, y1 = int((b0["x"] + b0["w"]) * dpr), int((b0["y"] + b0["h"]) * dpr)
     x0, y0 = max(0, x0), max(0, y0)
-    x1, y1 = min(shot.width, x1), min(shot.height, y1)
+    x1, y1 = min(W, x1), min(H, y1)
     if x1 - x0 < 2 or y1 - y0 < 2:
         continue
-    a = shot.crop((x0, y0, x1, y1)).load()
-    c = bg.crop((x0, y0, x1, y1)).load()
-    w, h = x1 - x0, y1 - y0
-    unders = []
-    for yy in range(h):
-        for xx in range(w):
-            pa, pc = a[xx, yy], c[xx, yy]
-            # 字が乗って色が変わった画素だけ見る
-            if abs(pa[0] - pc[0]) + abs(pa[1] - pc[1]) + abs(pa[2] - pc[2]) > 40:
-                unders.append(pc)
-    if len(unders) < 6:
+    a = shot[y0:y1, x0:x1]
+    c = bg[y0:y1, x0:x1]
+    # 字が乗って色が変わった画素だけ見る
+    mask = np.abs(a - c).sum(axis=2) > 40
+    if int(mask.sum()) < 6:
         continue
-    rs = sorted(ratio(col, u) for u in unders)
-    worst = rs[len(rs) // 20]  # 下から5%。1画素のはずれ値は拾わない
-    # 4.5 を割る地の上に乗っている字の割合。縁の1画素だけなら小さくなるので、
-    # 「本当に読めない」と「輪郭がにじんでいるだけ」を分けられる。
-    bad = sum(1 for r in rs if r < 4.5) / len(rs)
-    mode = Counter(unders).most_common(1)[0][0]
-    # いちばん悪い地の色そのもの。最頻色だけ見ていると、
-    # 「地はここまで暗くなる」が表に出ないまま直しに入ってしまう。
-    wcol = min(unders, key=lambda u: ratio(col, u))
-    rows.append((worst, ratio(col, mode), b0, wcol, bad))
+    unders = c[mask]                        # その字が乗っている地だけ
+    lt = lum(col)
+    lb = lum_a(unders)
+    hi_l, lo_l = np.maximum(lt, lb), np.minimum(lt, lb)
+    rs = (hi_l + 0.05) / (lo_l + 0.05)
+    # 合否は中央値。にじみの画素で落とさない。
+    mid = float(np.median(rs))
+    # 地のばらつきは、字ではなく地のほうを見る。1画素のはずれ値を拾わないよう
+    # 上下 5% で切る。明るい地・暗い地それぞれとの比を出す。
+    order = np.argsort(lb)
+    lo = tuple(int(v) for v in unders[order[len(order) // 20]])
+    hi = tuple(int(v) for v in unders[order[-1 - len(order) // 20]])
+    rows.append((mid, ratio(col, hi), ratio(col, lo), b0, lo, hi))
 
-LIM = float(sys.argv[3]) if len(sys.argv) > 3 else 0.10
-rows.sort(key=lambda r: -r[4])
-print(f"{'割れ':>5} {'最悪':>6} {'最頻':>6}  {'字':>9} {'地':>9}  大きさ  class / 中身")
+LIM = float(sys.argv[3]) if len(sys.argv) > 3 else 4.5
+rows.sort(key=lambda r: r[0])
+print(f"{'中央':>6} {'明地':>6} {'暗地':>6} {'ふり':>5}  {'字':>9} {'暗い地':>9}  大きさ  class / 中身")
 n = 0
-for worst, m, b0, mode, bad in rows:
-    if bad < LIM:
-        break
+for mid, rhi, rlo, b0, lo, hi in rows:
+    # 中央値が足りないか、地のムラのせいで暗いところだけ落ちているか
+    if mid >= LIM and rlo >= LIM:
+        continue
     n += 1
-    print(f"{bad*100:4.0f}% {worst:6.2f} {m:6.2f}  {b0['color'][:9]:>9} {'#%02x%02x%02x' % mode}  {b0['size']:>6}  {b0['c'][:26]} «{b0['t'][:18]}»")
-print(f"-- 字の1割以上が 4.5 を割っているのは {n} / {len(rows)} か所")
+    print(f"{mid:6.2f} {rhi:6.2f} {rlo:6.2f} {rhi - rlo:5.2f}  {b0['color'][:9]:>9} {'#%02x%02x%02x' % lo}  {b0['size']:>6}  {b0['c'][:26]} «{b0['t'][:18]}»")
+print(f"-- {LIM} を割っているのは {n} / {len(rows)} か所（中央値、または地の暗いほうで）")

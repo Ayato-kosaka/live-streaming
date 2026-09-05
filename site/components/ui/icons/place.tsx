@@ -142,22 +142,31 @@ export const place: Record<string, Draw> = {
    */
   workshop: (c) => (
     <>
-      <Sh c={c} cy={56} rx={24} ry={4} />
-      {/* 屋根。ここが無いと、ただの道具になって「場所」にならない */}
-      <path d="M32 4 61 22a2.4 2.4 0 0 1-1.3 4.4H4.3A2.4 2.4 0 0 1 3 22z" fill={c.rdd} />
-      <path d="M32 4 61 22a2.4 2.4 0 0 1-1.3 4.4H32z" fill={c.rd} />
-      <rect x="8" y="26" width="48" height="5" rx="2.5" fill={c.wol} />
-      {/* 金床。角（つの）を左に伸ばすのが、金床を金床にしている形 */}
-      <path d="M16 36h32l-3.4 6H33v4h6a2.6 2.6 0 0 1 0 5.2H25a2.6 2.6 0 0 1 0-5.2h6v-4H19.4z" fill={c.gyd} />
-      <path d="M32 36h16l-3.4 6H32z" fill={c.gy} />
-      <path d="M16 36c-6-1-9 1.4-9 3.4 0 1.6 2.6 2.6 9 2.6z" fill={c.gyd} />
+      <Sh c={c} cy={57} rx={24} ry={3.6} />
+      {/*
+        金床。屋根を足したら **26px で赤い日よけになって、`scene.market` の屋台**に
+        見えた（トップの棚で実測）。屋根をやめて、道具ひとつを大きく描く。
+        角（つの）を左へ長く伸ばし、腰をくびれさせるのが金床の形。
+      */}
+      <path d="M12 44h40l-4 8H16z" fill={c.gyd} />
+      <rect x="9" y="51" width="46" height="6" rx="3" fill={c.gy} />
+      <path d="M17 22h34a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H38v9c0 3 1.4 4.4 4 5H22c2.6-.6 4-2 4-5v-9H17a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z" fill={c.gyd} />
+      <path d="M32 22h19a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H38v9c0 3 1.4 4.4 4 5H32z" fill={c.gy} opacity={c.flat ? 1 : 0.45} />
+      <path d="M15 24c-8-1.6-12 1.6-12 4 0 2.2 4 3.6 12 3z" fill={c.gyd} />
+      <rect x="15" y="22" width="38" height="3.4" rx="1.7" fill={c.gy} />
+      {/* 槌。柄を斜めに掛けると、置いてある道具ではなく**使う道具**になる */}
+      <g transform="rotate(-28 44 14)">
+        <rect x="41" y="12" width="22" height="5.4" rx="2.7" fill={c.wo} />
+        <rect x="33" y="7" width="12" height="15" rx="3.4" fill={c.brd} />
+        <rect x="33" y="7" width="12" height="5" rx="2.6" fill={c.br} />
+      </g>
       {/* 火花。金床の上に3粒だけ。線で描くと溶接に見える */}
       <g fill={c.or}>
-        <circle cx="24" cy="33" r="2.4" />
-        <circle cx="31" cy="30.4" r="1.7" />
-        <circle cx="38" cy="32.4" r="1.4" />
+        <circle cx="20" cy="16" r="2.6" />
+        <circle cx="27" cy="11" r="1.8" />
+        <circle cx="14" cy="9" r="1.5" />
       </g>
-      <Gl c={c} cx={20} cy={16} rx={4} ry={2} r={-30} o={0.4} />
+      <Gl c={c} cx={22} cy={24} rx={5} ry={1.4} r={-4} o={0.45} />
     </>
   ),
 

@@ -69,8 +69,12 @@ NEXT_DIST_DIR=.next-verify npx next build   # 確認用ビルド
 
 ```bash
 NEXT_DIST_DIR=.next-dev3130 npx next dev -p 3130
-NEXT_DIST_DIR=.next-3130 npx next build
+tools/build.sh 3130          # ビルドはこれで。1本ずつ順番に回る
 ```
+
+**ビルドは `tools/build.sh` から回す。** 並列で `next build` が3本同時に走ると
+load average が 130 まで行って、箱が `cat /proc/loadavg` すら返さなくなる（4コア）。
+1本40秒なので、待ったほうが速い。
 
 `.next` は 600MB を超える。使い終わったら消す。
 
