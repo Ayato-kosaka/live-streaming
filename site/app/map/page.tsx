@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
+import Fold from "@/components/ui/Fold";
 import { COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
@@ -22,10 +23,30 @@ export const metadata: Metadata = {
  * 主役は地図。表で17行並べても「どこをどう回ったか」は伝わらないので、
  * まず1枚の地図を出して、そのあとに順番の年表を置く。
  * 国のピンからも年表からも、同じ国のページへ行ける。
+ *
+ * ## 年表を章で畳んである理由
+ *
+ * 17カ国を素で並べると 2,648px（3.1画面）あって、この面だけで 5.1画面あった。
+ * `docs/island-ux.md` 8.1 の「入口の面は3画面まで」を大きくこえている。
+ * 主役の地図が画面から流れていくほど下に長い面は、地図を見せる面ではない。
+ *
+ * 区切りは**地図を寄せるボタンと同じ3章**を使う。国が持っている region
+ * （「中東・アフリカ」）ではなく章の名前で見出しを付けるのは、
+ * 同じ面の中でボタンと見出しが違う名前だと、別の区切りに見えるから。
+ *
+ * 開いておくのは、いまいる国が入っている章だけ。旅は続いているので、
+ * 「いまどこまで来たか」がいちばん先に読めるほうがいい。
  */
 
 /** 出発の日。ここから今日までを数える。 */
 const START = "2024-10-28";
+
+/** 国の region を、地図の章に結び直す。章の名前は route.json（＝寄せるボタン）が正本。 */
+const CHAPTER_OF: Record<string, string> = {
+  "ヨーロッパ": "europe",
+  "中東・アフリカ": "mideast",
+  "コーカサス": "caucasus",
+};
 
 const ym = (d: string) => (d ? `${d.slice(0, 4)}/${d.slice(5, 7)}` : "いま");
 
@@ -46,6 +67,8 @@ export default function MapPage() {
   const visited = COUNTRIES.filter((c) => c.slug !== "iran-border");
   const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
   const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
+  // 章は route.json（＝地図を寄せるボタン）から。「ぜんぶ」は年表の区切りにならないので外す。
+  const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋" }]}>
@@ -82,42 +105,58 @@ export default function MapPage() {
 
       <Panel>
         <h2>行った順に、ぜんぶ</h2>
-        <p className="muted">同じ国に何度も戻っているので、番号は「初めて入った順」です。</p>
-        <ol className="atrip">
-          {ordered.map((c) => {
-            const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
+        <p className="muted">
+          同じ国に何度も戻っているので、番号は「初めて入った順」です。章は上の地図と同じ区切りです。
+        </p>
+        <div className="folds">
+          {chapters.map((ch) => {
+            const list = ordered.filter((c) => CHAPTER_OF[c.region] === ch.id);
+            if (!list.length) return null;
             return (
-              <li key={c.slug}>
-                <span className="atrip-rail" aria-hidden />
-                <span className="atrip-no" aria-hidden>
-                  {c.order}
-                </span>
-                <Link className="atrip-card" href={`/map/${c.slug}`}>
-                  <span className="atrip-flag">
-                    <Flag slug={c.slug} size={34} />
-                  </span>
-                  <span className="atrip-body">
-                    <span className="atrip-name">
-                      <b>{c.name}</b>
-                      <em>{c.en}</em>
-                    </span>
-                    <span className="atrip-when">
-                      {c.stays.map(span).join("、")}
-                    </span>
-                    <span className="atrip-tags">
-                      {towns.slice(0, 5).map((t) => (
-                        <span key={t}>{t}</span>
-                      ))}
-                      {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
-                      {c.slug === here.slug && <span className="atrip-here">いまここ</span>}
-                    </span>
-                  </span>
-                  <Icon name="right" size={15} className="tile-go" />
-                </Link>
-              </li>
+              <Fold
+                key={ch.id}
+                title={ch.label}
+                lead={`${list[0].name}から${list[list.length - 1].name}まで`}
+                note={`${list.length}カ国`}
+                open={list.some((c) => c.slug === here.slug)}
+              >
+                <ol className="atrip">
+                  {list.map((c) => {
+                    const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
+                    return (
+                      <li key={c.slug}>
+                        <span className="atrip-rail" aria-hidden />
+                        <span className="atrip-no" aria-hidden>
+                          {c.order}
+                        </span>
+                        <Link className="atrip-card" href={`/map/${c.slug}`}>
+                          <span className="atrip-flag">
+                            <Flag slug={c.slug} size={34} />
+                          </span>
+                          <span className="atrip-body">
+                            <span className="atrip-name">
+                              <b>{c.name}</b>
+                              <em>{c.en}</em>
+                            </span>
+                            <span className="atrip-when">{c.stays.map(span).join("、")}</span>
+                            <span className="atrip-tags">
+                              {towns.slice(0, 5).map((t) => (
+                                <span key={t}>{t}</span>
+                              ))}
+                              {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
+                              {c.slug === here.slug && <span className="atrip-here">いまここ</span>}
+                            </span>
+                          </span>
+                          <Icon name="right" size={15} className="tile-go" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </Fold>
             );
           })}
-        </ol>
+        </div>
       </Panel>
     </PageShell>
   );
