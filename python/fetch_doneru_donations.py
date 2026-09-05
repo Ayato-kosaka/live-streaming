@@ -18,10 +18,15 @@ YouTube で投げた人しか見えていない。ここを埋める。
 同じ理由で、取ったものを成果物（artifact）に上げるのもやらない。
 出していいのは件数とキー名まで。
 
+**金額の合計もログに出さない。** 合計は BigQuery に対して SELECT すれば取れる
+（`docs/island-db.md` に照合用のクエリがある）。ログに出す理由が無い。
+
 実行:
   BQ_PROJECT_ID=live-streaming-d3cac DONERU_COOKIE=... python python/fetch_doneru_donations.py
   python python/fetch_doneru_donations.py --probe          # 形だけ見る（BigQuery を触らない）
-  python python/fetch_doneru_donations.py --year 2025      # 過去ぶんの取り込み
+  python python/fetch_doneru_donations.py --since          # 2024年から今年まで（過去ぶんの取り込み）
+  python python/fetch_doneru_donations.py --since 2023     # 遡り先を指定する
+  python python/fetch_doneru_donations.py --year 2025      # その年だけ
   python python/fetch_doneru_donations.py --dry-run        # 件数だけ数える
 """
 
@@ -37,8 +42,12 @@ from doneru import DoneruClient, DoneruError, DoneruSessionExpired  # noqa: E402
 from doneru.normalizer import describe_mapping, normalize  # noqa: E402
 
 # cookie が切れたときだけこの終了コードで落ちる。
-# ワークフローはこれを見て issue を立てる（他の失敗では立てない）。
+# ワークフローがこれを見て、失敗通知メールから理由が分かるようログに印を出す。
 EXIT_SESSION_EXPIRED = 2
+
+# --since を付けなかったときに遡る先。Doneru を使い始めたのが 2024 年なので、
+# それより前を取りに行っても空が返るだけ。
+DEFAULT_FIRST_YEAR = 2024
 
 JST = timezone(timedelta(hours=9))
 
@@ -163,6 +172,17 @@ def main() -> int:
         help="取り込む年（既定: 日本時間の今年）",
     )
     parser.add_argument(
+        "--since",
+        type=int,
+        nargs="?",
+        const=DEFAULT_FIRST_YEAR,
+        default=None,
+        help=(
+            "この年から今年までまとめて取り込む（過去ぶんの取り込み用）。"
+            f"年を省くと {DEFAULT_FIRST_YEAR} 年から"
+        ),
+    )
+    parser.add_argument(
         "--probe",
         action="store_true",
         help="1ページだけ取って、キー名と件数を出す。BigQuery を触らない",
@@ -174,16 +194,21 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    this_year = datetime.now(JST).year
+    years = list(range(args.since, this_year + 1)) if args.since else [args.year]
+
     try:
         client = DoneruClient()
 
         if args.probe:
-            records = client.fetch_donation_page(args.year, page=1, rows_per_page=10)
+            records = client.fetch_donation_page(years[-1], page=1, rows_per_page=10)
             # 値は出さない。キー名と件数だけ（public リポジトリのログに出るため）
             print(json.dumps(describe_mapping(records), ensure_ascii=False, indent=2))
             return 0
 
-        records = list(client.iter_donations(args.year))
+        total = 0
+        for year in years:
+            total += ingest_year(client, year, dry_run=args.dry_run)
     except DoneruSessionExpired as exc:
         print(f"ERROR: Doneru のセッションが切れています: {exc}", file=sys.stderr)
         return EXIT_SESSION_EXPIRED
@@ -191,7 +216,15 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    print(f"{args.year} 年の寄付を {len(records)} 件取得しました")
+    if len(years) > 1:
+        print(f"{years[0]}〜{years[-1]} 年で合わせて {total} 件")
+    return 0
+
+
+def ingest_year(client: DoneruClient, year: int, dry_run: bool = False) -> int:
+    """1年ぶんを取って MERGE する。返すのは件数。"""
+    records = list(client.iter_donations(year))
+    print(f"{year} 年の寄付を {len(records)} 件取得しました")
 
     if not records:
         return 0
@@ -209,13 +242,13 @@ def main() -> int:
     if undated:
         print(f"WARNING: 日時を読めなかったレコードが {undated} 件あります", file=sys.stderr)
 
-    if args.dry_run:
+    if dry_run:
         print("--dry-run のため BigQuery には書きません")
-        return 0
+        return len(rows)
 
-    merged = merge_rows(rows, args.year)
+    merged = merge_rows(rows, year)
     print(f"BigQuery に {merged} 件 MERGE しました")
-    return 0
+    return merged
 
 
 if __name__ == "__main__":
