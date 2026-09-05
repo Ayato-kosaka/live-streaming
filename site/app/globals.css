@@ -4,6 +4,7 @@
  * 1枚が2300行を超えて、直したい場所を探すだけで時間が溶けるようになったので分けた。
  * 迷ったら app/css/tokens.css の色と間隔から見る。
  *
+ *   fonts  … 島で使う字だけを焼いた丸ゴシック（自動生成。tools/fonts/subset.py）
  *   tokens … 色・書体・影・角丸。ここを変えるとサイト全部の印象が変わる
  *   island … 島のステージ、入口の札、住人、吹き出し
  *   hero   … 島の上に乗せる看板ロゴ
@@ -13,6 +14,7 @@
  *   ui     … 折りたたみ・アイコン・下書きの道具・デザインの見本
  *   home   … トップページの章立て（これから／いま／これまで／見にいく）
  */
+@import "./css/fonts.css";
 @import "./css/tokens.css";
 @import "./css/island.css";
 @import "./css/hero.css";

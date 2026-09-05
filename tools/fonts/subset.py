@@ -75,8 +75,8 @@ SRC_URL = "https://raw.githubusercontent.com/google/fonts/main/ofl/zenmarugothic
 FAMILY = "Maru Island"
 
 # 束の数。増やすと1面あたりは軽くなるが、焼くファイルと @font-face が増える。
-# 2〜16 で試して、6 から先は主要8面の合計がほとんど動かなくなる。
-BUCKETS = 8
+# 4〜20 で試した。10 から先は主要8面の合計がほとんど動かないので、そこで止める。
+BUCKETS = 10
 
 # データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
 # 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
@@ -84,6 +84,16 @@ PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "map"}
 
 SOURCE_EXTS = (".ts", ".tsx", ".json")
 CSS_DIR = "site/app/css"
+# 書き出した HTML のほかに、ソースから字を足す置き場所。
+#
+# **部品は足す。データは足さない。**
+#   部品 … 掲示板や住人の壁のように、開いてから組み立てる画面の文字。HTML に無い。
+#          全部で数百字しかないので、持っても安い（実測 /board の落ち 461→40KB）
+#   データ … 今日は何の日（365件）、おしゃべり、7か国の紹介文。**1回に1件しか出ない**
+#          のに字だけ全件ぶんあるので、持つと全ページが太る（実測 主要8面 2641→4043KB）。
+#          出なかった字は Google の切り分けに落ちる。落ちたぶんも数えたうえで、
+#          足さないほうが半分近く安い
+EXTRA_DIRS = ["site/components"]
 
 # どの区画にも属さない字の下敷き。
 # 日付・人数・単位は画面が出てから組み立てるので、元の文章には並びとして出てこない。
@@ -214,6 +224,8 @@ def from_source(pages: list[str]) -> dict[str, set[str]]:
                 files |= reachable(lay, cache)
         for f in files:
             rel = f.relative_to(ROOT).as_posix()
+            if not any(rel.startswith(d + "/") for d in EXTRA_DIRS):
+                continue
             # 国ごとのデータは、それを出す1枚だけのもの
             per = next((f"{r}/{f.stem}" for d, r in PER_PAGE.items() if rel.startswith(d + "/")), None)
             here = [p for p in hit if per is None or p == per] if per is None else [p for p in pages if p == per]
