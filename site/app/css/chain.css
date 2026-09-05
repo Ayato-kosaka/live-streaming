@@ -1,0 +1,362 @@
+/* =========================================================
+   あやと島 — 島の連なり（/atlas）
+   ---------------------------------------------------------
+   章ごとに島が1つ建っていて、それが日付の順に縦に並ぶ。
+   仕様は `docs/island-atlas.md`。
+
+   ここは**海の上**なので、板の型で作る（`tokens.css` の地の使い分け）。
+   紙を海に置くと、紙が「浮いた白い箱」になって紙の型が壊れる。
+
+   色は `--ci-` で始める。島の絵（`components/chain/IslandMark.tsx`）の
+   塗りは全部この変数を見ているので、章ごとの土地の色はここだけで持ち替わる。
+   ========================================================= */
+
+.chain-sea {
+  /* 1単位あたりの px。島どうしの比は SVG の幅（絵の単位）が持っていて、
+     ここを変えると連なり全体が同じ比のまま大きくなる。 */
+  --ci-px: 0.4px;
+  /* 島を置く列の幅。船の道（点線）はこの列の真ん中を通る */
+  --ci-col: 124px;
+
+  position: relative;
+  margin: 4px 0 20px;
+  padding: 16px 12px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 26px;
+  /* 沖ほど深い海。上（旅の始まり）から下（これから行く先）へ向かって明るくする。
+     旅が進むほど明るいほうへ出ていく、という向きをそのまま色にした */
+  background: linear-gradient(180deg, #0a6ab4 0%, var(--sea-deep) 46%, #2ea5ef 100%);
+  /* 板の厚み。押せるマス1枚ずつではなく、**外側の板がまとめて持つ**
+     （島の決まり「一面に並ぶマスが全部押せるときは1枚ずつに厚みを付けない」）。 */
+  box-shadow: 0 6px 0 var(--frame-deep), inset 0 3px 0 rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .chain-sea { --ci-px: 0.56px; --ci-col: 176px; padding: 22px 18px; }
+}
+@media (min-width: 1024px) {
+  .chain-sea { --ci-px: 0.68px; --ci-col: 212px; }
+}
+
+.chain {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+/* 船の道。島の列の真ん中を縦に通る点線。
+   **動かさない。** 島が5枚も乗っている面で線を流すと、
+   外接矩形が画面ぜんぶになる形を毎フレーム動かすことになる。 */
+.chain::before {
+  content: "";
+  position: absolute;
+  /* .chain-isle の内側の余白ぶん、島は右へずれている。線もそこへ合わせる */
+  left: calc(8px + var(--ci-col) / 2);
+  top: 24px;
+  bottom: 24px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 253, 246, 0.72) 0 9px,
+    rgba(255, 253, 246, 0) 9px 20px
+  );
+  pointer-events: none;
+}
+
+.chain-row { position: relative; }
+
+/* 枝（イランまで歩く）。
+   **本線と同じ列に置かない。** 西から東への1歩ではなく、
+   歩いて国境まで行って戻ってきた寄り道なので、右へ外して細い線でつなぐ。 */
+.chain-row.is-branch { margin-left: 26px; }
+.chain-row.is-branch .chain-fork {
+  position: absolute;
+  left: calc(8px + var(--ci-col) / 2 - 26px);
+  top: -14px;
+  width: 26px;
+  height: 40px;
+  border-left: 2px dashed rgba(255, 253, 246, 0.62);
+  border-bottom: 2px dashed rgba(255, 253, 246, 0.62);
+  border-bottom-left-radius: 14px;
+  pointer-events: none;
+}
+.chain-isle {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--ci-col) minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: var(--ink);
+  /* 押せる合図は厚みだけ、という決まりがあるが、この面は**並んだ全部が押せる**。
+     だから1枚ずつに厚みは付けず、外の板（.chain-sea）がまとめて持っている。
+     ここは押した瞬間に沈むことだけで返事をする。 */
+}
+.chain-isle:active { transform: translateY(2px); }
+.chain-isle:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+.chain-art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 56px;
+}
+.ci { display: block; height: auto; overflow: visible; }
+
+/* 島の名前と数字を載せる板。海の上なので紙ではなく板。
+   字は板の上に直接置かず、必ずこの中に入れる（海の青の上に茶の字は読めない）。 */
+.chain-body {
+  display: grid;
+  gap: 2px;
+  /* 指で押せる最小。名前が1行しかない島でも、ここで 48px を確保する */
+  min-height: 48px;
+  align-content: center;
+  padding: 8px 10px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 16px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.chain-name {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.chain-when {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.chain-note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.chain-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.chain-nums b { font-size: 14px; color: var(--ink); }
+
+/* 集まった額。次の島にだけ出る。目標額まで出すと「あとどれくらいか」が分かる */
+.chain-fund {
+  margin-top: 3px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.chain-fund b { font-size: 16px; color: var(--accent-deep); }
+
+/* いまここ。**色だけで言う。**押せる合図ではないので厚みは付けない */
+.chain-here {
+  justify-self: start;
+  margin-bottom: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  /* 白字が 5.9 : 1。桃色から始めると 2.5 : 1 まで落ちる（島の帯と同じ理由） */
+  background: linear-gradient(#c4123f, #96072e);
+  color: var(--paper);
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+.chain-go { color: #fffdf6; opacity: 0.85; }
+
+@media (min-width: 640px) {
+  .chain { gap: 14px; }
+  .chain-isle { grid-template-columns: var(--ci-col) minmax(0, 1fr) 18px; gap: 14px; padding: 10px; }
+  .chain::before { left: calc(10px + var(--ci-col) / 2); }
+  .chain-row.is-branch .chain-fork { left: calc(10px + var(--ci-col) / 2 - 26px); }
+  .chain-name { font-size: 18px; }
+  .chain-when, .chain-nums { font-size: 12.5px; }
+  .chain-note { font-size: 13px; }
+}
+
+.chain-foot {
+  margin: 0 0 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.chain-foot a { margin-left: 6px; font-weight: 800; color: var(--ink); }
+
+/* ---------------------------------------------------------
+   土地の色
+   ---------------------------------------------------------
+   **章の色ではなく、土地の色**（`docs/island-atlas.md` 3章）。
+   ヨーロッパの緑と中東の乾いた土が、同じ島の上で違って見えるようにする。
+   彩度は落とさない（`tokens.css` の「彩度の低い色を1つ置くと絵から浮く」）。 */
+/* 連なりの1行と、過去の島の主役の絵。同じ島は同じ色でなければならない */
+[data-ch] {
+  --ci-shelf: #7fe0d8;
+  --ci-sand: #f9e4a9;
+  --ci-grass-a: #71e76f;
+  --ci-grass-b: #52cc5e;
+  --ci-cliff: #ce853b;
+}
+[data-ch="middle-east"] {
+  /* 乾いた土。草は黄へ寄せる */
+  --ci-shelf: #86e2d0;
+  --ci-sand: #fbe8bd;
+  --ci-grass-a: #f0e37a;
+  --ci-grass-b: #d8ca4e;
+}
+[data-ch="iran-walk"] {
+  /* 岩と土だけの小島。緑は無い */
+  --ci-shelf: #7fd8d4;
+  --ci-sand: #f2dda2;
+  --ci-grass-a: #d8b273;
+  --ci-grass-b: #bd9350;
+}
+[data-ch="nordic"] {
+  /* 寒いほうの緑と、白っぽい砂 */
+  --ci-shelf: #9ef0ea;
+  --ci-sand: #eef7d9;
+  --ci-grass-a: #81f093;
+  --ci-grass-b: #57c47e;
+  --ci-cliff: #b6a487;
+}
+[data-ch="caucasus"] {
+  --ci-grass-a: #7aeb74;
+  --ci-grass-b: #4fc95c;
+}
+
+.ci-shelf { fill: var(--ci-shelf); opacity: 0.65; }
+.ci-sand { fill: var(--ci-sand); }
+.ci-grass { fill: var(--ci-grass-b); }
+.ci-grass2 { fill: var(--ci-grass-a); }
+.ci-cliff { fill: var(--ci-cliff); }
+/* 更地。草がまだ生えていない土 */
+.ci-dirt { fill: #cbab72; }
+
+/* 建設中の島。**進捗バーではない**ので、棒ではなく建物そのものを描き替える */
+.ci-plot { fill: rgba(90, 62, 26, 0.22); stroke: #8a6432; stroke-width: 1.4; }
+.ci-stake { stroke: #8a6432; stroke-width: 2.2; stroke-linecap: round; }
+.ci-rebar { stroke: #b0763a; stroke-width: 2.2; stroke-linecap: round; }
+.ci-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 1.6; }
+.ci-roof { fill: #d0553f; stroke: #9c3628; stroke-width: 1.6; stroke-linejoin: round; }
+
+/* =========================================================
+   過去の島（/island/<章>/）
+   ---------------------------------------------------------
+   ここは島の外の面なので地は紙。ただし島の絵だけは海の上に置く。
+   ========================================================= */
+
+/* 島そのもの。連なりで見たのと同じ絵を、そのまま大きく出す */
+.chap-hero {
+  --ci-px: 1.6px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 0 0 14px;
+  padding: 18px 12px 12px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #0a6ab4 0%, var(--sea-deep) 60%, #2ea5ef 100%);
+  box-shadow: 0 6px 0 var(--frame-deep), inset 0 3px 0 rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+@media (min-width: 640px) { .chap-hero { --ci-px: 2px; } }
+@media (min-width: 1024px) { .chap-hero { --ci-px: 2.4px; } }
+
+/* 事実の帯。日数・本数・人数・カ国。**島の大きさを決めているのは日数** */
+.chap-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.chap-facts > b { font-size: 13px; color: var(--ink); }
+.chap-facts b { font-size: 17px; color: var(--ink); }
+
+.chap-sec { margin-bottom: 16px; }
+.chap-sec h2 { margin: 0 0 10px; font-size: 17px; font-weight: 900; color: var(--ink); }
+.chap-note { margin: -4px 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+.chap-note a { margin: 0 2px; font-weight: 800; color: var(--ink); }
+
+/* 国。並んだ全部が押せるので、1枚ずつには厚みを付けない（外の紙が枠を持つ） */
+.chap-flags { display: flex; flex-wrap: wrap; gap: 8px; }
+.chap-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  /* 指で押せる最小 */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
+  border: 2px solid var(--frame-dark);
+  border-radius: 14px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: none;
+}
+.chap-flag:active { transform: translateY(2px); }
+.chap-flag:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+
+.chap-legends { display: grid; gap: 8px; }
+.chap-legend {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 15px;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 2px solid var(--frame-dark);
+  border-radius: 16px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  color: var(--ink);
+  text-decoration: none;
+}
+.chap-legend:active { transform: translateY(2px); }
+.chap-legend:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+.chap-legend img { width: 44px; height: 44px; object-fit: contain; }
+.chap-legend b { display: block; font-size: 14px; font-weight: 900; line-height: 1.3; }
+.chap-legend i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+
+/* となりの島へ。船はまだ無いので、いまは渡し板だけ（`docs/island-atlas.md` 6章） */
+.chap-sail { display: grid; gap: 8px; margin: 22px 0 14px; }
+@media (min-width: 640px) { .chap-sail { grid-template-columns: 1fr 1fr; } }
+.chap-sail-go {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 18px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  text-decoration: none;
+}
+.chap-sail-go.is-next { justify-content: flex-end; text-align: right; }
+.chap-sail-go:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.chap-sail-go:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+.chap-sail-go i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+.chap-sail-go b { display: block; font-size: 14.5px; font-weight: 900; }

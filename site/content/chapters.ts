@@ -27,6 +27,15 @@ export type Chapter = {
   branchOf?: string;
   /** 島の性格。1行で。連なりの画面に出る */
   note: string;
+  /**
+   * まだ始まっていない章の、予定の日数。
+   *
+   * 島の大きさは日数から出す決まりなので（`docs/island-atlas.md` 3章）、
+   * 始まっていない章にも日数が要る。**手で大きさを決めているのではない。**
+   * `content/nordic.ts` の ROUTE を日でまとめた数（22区間のうち4つが同日）。
+   * 旅程が変わったら、この数も直す。
+   */
+  plannedDays?: number;
 };
 
 export const CHAPTERS: Chapter[] = [
@@ -70,6 +79,7 @@ export const CHAPTERS: Chapter[] = [
     to: "",
     countries: [],
     note: "次の島。まだ建っていない",
+    plannedDays: 18,
   },
 ];
 
@@ -81,8 +91,35 @@ export const NEXT_CHAPTER = CHAPTERS.find((c) => !c.from)!;
 
 /** 日数。いまも続いている章は「今日まで」で数える。画面が出てから数え直す */
 export function chapterDays(c: Chapter, today = new Date()): number {
-  if (!c.from) return 0;
+  if (!c.from) return c.plannedDays ?? 0;
   const end = c.to ? new Date(`${c.to}T00:00:00+09:00`) : today;
   const ms = end.getTime() - new Date(`${c.from}T00:00:00+09:00`).getTime();
   return Math.max(1, Math.round(ms / 86_400_000) + 1);
 }
+
+/**
+ * 連なりの並び順。**本線は日付順の一列、枝はその親のすぐ下**
+ * （`docs/island-atlas.md` 2章）。並べ替えの規則をここに1つだけ置いて、
+ * 画面はこれを受け取るだけにする。章を足しても画面を直さずに済む。
+ */
+export const CHAIN: Chapter[] = (() => {
+  const main = CHAPTERS.filter((c) => !c.branchOf).sort((a, b) =>
+    // 始まっていない章（北欧）は、いちばん最後
+    (a.from || "9999").localeCompare(b.from || "9999"),
+  );
+  const out: Chapter[] = [];
+  for (const c of main) {
+    out.push(c);
+    for (const b of CHAPTERS.filter((x) => x.branchOf === c.slug)) out.push(b);
+  }
+  return out;
+})();
+
+/**
+ * 豚の貯金箱の目標額（円）。**次の島がどこまで建つかは、これに対する割合で決まる**
+ * （`docs/island-atlas.md` 5章）。
+ *
+ * `docs/nordic-fund.md` は「積み上げた足代の合計をそのまま目標にする」としていて、
+ * その合計はまだ確定していない（同 8章の7番）。決まるまではオーナーが言った5万円で置く。
+ */
+export const FUND_GOAL_YEN = 50_000;
