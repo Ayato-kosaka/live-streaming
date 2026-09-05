@@ -237,10 +237,12 @@ export default function Board() {
       </section>
 
       <section className="panel paper">
-        <div className="bhead">
-          <h2 style={{ margin: 0 }}>{BOARD.listTitle}</h2>
-          {/* 1件も無いのに並べ替えの札だけ出ていると、空の板がさらに空に見える */}
-          {all.length > 0 && (
+        {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、
+            パネルの直下に出して、並べ替えは次の行に置く。 */}
+        <h2>{BOARD.listTitle}</h2>
+        {/* 1件も無いのに並べ替えの札だけ出ていると、空の板がさらに空に見える */}
+        {all.length > 0 && (
+          <div className="bhead">
             <div className="bsort">
               <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
                 {BOARD.sortVotes}
@@ -254,8 +256,8 @@ export default function Board() {
                 </button>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {all.length > 0 && (
           <div className="chips" style={{ marginBottom: 14 }}>

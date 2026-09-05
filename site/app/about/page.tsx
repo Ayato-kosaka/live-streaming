@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat, TileLink } from "@/components/ui/Bits";
-import Icon from "@/components/ui/Icon";
+import Icon, { type IconName } from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import NowLive from "@/components/live/NowLive";
 import { LiveNumber } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
-import { RECIPES } from "@/content/recipes";
 import { ACTIVE_FRIENDS } from "@/content/residents";
 import { COUNTRIES, countryBySlug } from "@/content/countries";
 import { appBySlug } from "@/content/apps";
@@ -16,17 +15,20 @@ import Days from "@/components/atlas/Days";
 import { CampArt, PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
-  title: "あやと島について",
+  title: "たき火広場",
   description:
-    "あやとって何者で、いま何をしていて、どこへ行くのか。旅と配信とアプリの年表、島でやっていること。",
+    "あやとが何者で、いま何をしていて、これからどこへ行くのか。旅と配信とアプリの年表。",
 };
 
 /**
- * たき火広場＝あやと島について。
+ * たき火広場。
  *
  * 来た人の「この人だれ」に、読ませずに答える面。
- * 顔 → 数字 → いまどこ → 年表 → やっていること、の順で、
- * 上から下へ目を落とすだけで一周できるようにしてある。
+ * 顔と3行 → 数字4つ → いまどこ → 年表 → やっていること、の5段だけ。
+ * 上から目を落とすだけで一周できる長さに収める。
+ *
+ * h1 は場所の名前（docs/island-world.md 7.5）。ヘッダーの入口が
+ * 「たき火広場」なので、ここで「あやと島について」と名乗ると名前が2つになる。
  *
  * 住人（愉快な仲間達）の絵はここでは出さない。`/friends` と同じ絵を
  * 2ページに並べると、どちらが本体なのか分からなくなる。
@@ -52,10 +54,17 @@ const STORY: Step[] = [
   { date: on("georgia", 1), kind: "travel", what: "トビリシに戻ってきた", note: "いまここ。毎晩22時から配信している" },
 ];
 
-const DOT: Record<Step["kind"], string> = {
-  live: "#ff7092",
-  travel: "#ff8a1f",
-  app: "#4fb089",
+/**
+ * 節目の種類は、色ではなく印で分ける。
+ *
+ * 前はここに桃・橙・緑の直値を置いていた。docs/island-world.md 3.1 で
+ * 「色で分けていいのは配信の型だけ」と決まっているので、
+ * 3色の点をやめて Icon.tsx の絵に置き換えた。色は増やさず、形だけ増やす。
+ */
+const MARK: Record<Step["kind"], { icon: IconName; label: string }> = {
+  live: { icon: "mic", label: "配信" },
+  travel: { icon: "walk", label: "旅" },
+  app: { icon: "laptop", label: "アプリ" },
 };
 
 const fmtY = (d: string) => d.slice(0, 4);
@@ -74,16 +83,36 @@ export default function AboutPage() {
   const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやと島について" }]}>
+    <PageShell current="friends" crumbs={[{ label: "たき火広場" }]}>
       <PageHead
         mark={<CampArt size={74} />}
-        title="あやと島について"
-        lead="たき火のまわりで、はじめましての話を。"
-        say="ここは配信の留守番の場所。あやとが何者なのかは、この面でひととおり分かるよ。"
+        title="たき火広場"
+        lead="あやとって何者で、いま何をしていて、これからどこへ行くのか。ここに座って、ひととおり。"
       />
 
-      <Panel>
+      {/* 数字は4つだけ。「毎晩配信している人」がいちばん言いたいことなので先頭に置く
+          （先頭を大きくするのは pages.css の .stat:first-child）。
+          料理の数と住人の数は、それぞれキッチン小屋と仲間のテントの数字なので置かない。 */}
+      <div className="stats" style={{ marginBottom: 16 }}>
+        <Stat
+          value={<LiveNumber statKey="streams" fallback={s.streams} />}
+          label="配信本数"
+          sub={`${s.since.replace(/-/g, "/")} から毎晩22時`}
+        />
+        <Stat value={<Days from={s.since} />} label="旅した日数" sub="日本を出てから" />
+        <Stat value={s.countries} label="歩いた国" sub="パリからトビリシまで" />
+        <Stat
+          value={<LiveNumber statKey="people" fallback={s.people} />}
+          label="来てくれた人"
+          sub="のべ"
+        />
+      </div>
+
+      <Panel className="paper">
+        <h2>はじめまして</h2>
         <div className="abio">
+          {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
+              生成りの縁を付けて、わずかに傾ける。写真そのものを裸で置かない。 */}
           <span className="abio-art">
             <img src="/characters/ayato-clay.jpg" alt="鍋をかきまぜているあやと" width={300} height={169} />
           </span>
@@ -94,30 +123,10 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-        <div className="stats" style={{ marginTop: 16 }}>
-          <Stat
-            value={<LiveNumber statKey="streams" fallback={s.streams} />}
-            label="配信本数"
-            sub={`${s.since.replace(/-/g, "/")} から`}
-          />
-          <Stat value={<Days from={s.since} />} label="旅した日数" />
-          <Stat value={s.countries} label="歩いた国" />
-          <Stat value={RECIPES.length} label="作った料理" />
-          <Stat
-            value={<LiveNumber statKey="people" fallback={s.people} />}
-            label="来てくれた人"
-            sub="のべ"
-          />
-          <Stat
-            value={<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />}
-            label="島の住人"
-            sub="直近90日"
-          />
-        </div>
       </Panel>
 
-      <Panel>
-        <h2>いま何してる</h2>
+      <Panel className="paper">
+        <h2>いま、どこで何してる</h2>
         <NowLive />
         <Link className="tile" href="/now" style={{ marginTop: 12 }}>
           <span className="tile-mark">
@@ -131,7 +140,7 @@ export default function AboutPage() {
         </Link>
       </Panel>
 
-      <Panel>
+      <Panel className="paper">
         <h2>ここまで、何があったんだろう</h2>
         <p className="muted">旅の節目とアプリの節目だけ。国ぜんぶは旅の桟橋にあります。</p>
         <div className="anote">
@@ -142,8 +151,8 @@ export default function AboutPage() {
                 {items.map((x) => (
                   <li key={x.date + x.what}>
                     <span className="aline-rail" aria-hidden />
-                    <span className="aline-dot" aria-hidden>
-                      <i style={{ background: DOT[x.kind] }} />
+                    <span className="aline-dot" title={MARK[x.kind].label}>
+                      <Icon name={MARK[x.kind].icon} size={15} />
                     </span>
                     <span className="aline-when">{fmtMd(x.date)}</span>
                     <b className="aline-what">{x.what}</b>
@@ -152,6 +161,12 @@ export default function AboutPage() {
                 ))}
               </ul>
             </div>
+          ))}
+        </div>
+        {/* 旗は「17」を読ませるのではなく、量として見せるためのもの */}
+        <div className="aflags" aria-hidden>
+          {ordered.map((c) => (
+            <Flag key={c.slug} slug={c.slug} size={26} />
           ))}
         </div>
         <Link className="tile" href="/map" style={{ marginTop: 14 }}>
@@ -164,14 +179,9 @@ export default function AboutPage() {
           </span>
           <Icon name="right" size={16} className="tile-go" />
         </Link>
-        <div className="aflags" aria-hidden>
-          {ordered.map((c) => (
-            <Flag key={c.slug} slug={c.slug} size={26} />
-          ))}
-        </div>
       </Panel>
 
-      <Panel>
+      <Panel className="paper">
         <h2>島でやっていること</h2>
         <div className="acards">
           <div className="acard">
@@ -190,10 +200,24 @@ export default function AboutPage() {
             <p>グルメアプリ「なに食べよ」。機能も文言も、配信で意見をもらって決めている。</p>
           </div>
         </div>
+        <p style={{ marginTop: 16 }}>
+          ひとりでやっているわけじゃない。島に住んでいるのは、配信に来てくれる人たち。
+          いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
+        </p>
+        <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
+          <span className="tile-mark">
+            <Icon name="talk" size={24} />
+          </span>
+          <span className="tile-text">
+            <b>愉快な仲間達</b>
+            <i>島に住んでいる人たち、全員</i>
+          </span>
+          <Icon name="right" size={16} className="tile-go" />
+        </Link>
       </Panel>
 
-      <Panel>
-        <h2>配信の型は5つ</h2>
+      <Panel className="paper">
+        <h2>どんな配信をしてるんだろう</h2>
         <p className="muted">押すと、その型の配信だけまとめて見られます。</p>
         <div className="tiles" style={{ marginTop: 12 }}>
           {STREAM_TYPES.map((t) => (
@@ -207,25 +231,6 @@ export default function AboutPage() {
             />
           ))}
         </div>
-      </Panel>
-
-      <Panel>
-        <h2>ひとりでやっているわけじゃない</h2>
-        <p>
-          島に住んでいるのは、配信に来てくれる人たち。キャラクターはみんな自分で作ったものです。
-          いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
-          これまでにのべ<LiveNumber statKey="people" fallback={s.people} />人が来てくれました。
-        </p>
-        <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
-          <span className="tile-mark">
-            <Icon name="talk" size={24} />
-          </span>
-          <span className="tile-text">
-            <b>愉快な仲間達</b>
-            <i>島に住んでいる人たち、全員</i>
-          </span>
-          <Icon name="right" size={16} className="tile-go" />
-        </Link>
       </Panel>
     </PageShell>
   );

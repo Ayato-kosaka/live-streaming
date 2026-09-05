@@ -444,20 +444,27 @@
    あやと島について
    --------------------------------------------------------- */
 
+/* 写真と3行。PC では左右。
+   前は列を `auto 1fr` にしていて、写真の列が紙の幅ぜんぶを取り、
+   本文が1文字ずつの縦書きになっていた。列の幅は px で決め切る。 */
 .abio {
   display: grid;
   gap: 14px;
-  grid-template-columns: 1fr;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
 }
 .abio-art { justify-self: center; line-height: 0; }
-/* 写真は1枚だけ大きく。板の型の窓に貼った1枚として、厚みの影を落とす */
+/* 写真は裸で置かない。生成りの縁を付けて、わずかに傾けて紙に貼る
+   （docs/island-world.md 6.2-3）。紙の面なので板の厚みは付けない。 */
 .abio-art img {
   display: block;
-  width: min(300px, 100%);
+  width: 100%;
+  max-width: 300px;
   height: auto;
+  border: 6px solid var(--paper-out);
   border-radius: var(--r-2);
-  box-shadow: 0 5px 0 var(--frame-dark), var(--shadow-1);
+  box-shadow: var(--shadow-2);
+  transform: rotate(-1.4deg);
 }
 .abio-word b { font-size: 17px; font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
 .abio-word p { margin: 0 0 9px !important; }
@@ -494,8 +501,8 @@
 .aline > li { position: relative; padding: 0 0 16px 40px; }
 .aline-rail {
   position: absolute;
-  left: 13px;
-  top: 20px;
+  left: 12px;
+  top: 32px;
   bottom: -4px;
   width: 4px;
   border-radius: 2px;
@@ -503,19 +510,21 @@
 }
 .aline > li:last-child { padding-bottom: 0; }
 .aline > li:last-child .aline-rail { display: none; }
+/* 節目の種類は色ではなく印で分ける（docs/island-world.md 3.1）。
+   紙の上に載る印なので、厚みは付けない。罫と同じ細い輪で囲むだけ。 */
 .aline-dot {
   position: absolute;
-  left: 4px;
-  top: 4px;
-  width: 22px;
-  height: 22px;
+  left: 0;
+  top: 2px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: 0 0 0 4px var(--paper), 0 2px 0 3px var(--frame-dark);
+  border: 2px solid var(--rule);
   display: grid;
   place-items: center;
+  color: var(--ink-2);
 }
-.aline-dot i { display: block; width: 10px; height: 10px; border-radius: 50%; }
 .aline-when { font-size: 11px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
 .aline-what { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; margin-top: 1px; }
 .aline-note { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; margin-top: 3px; }
@@ -654,7 +663,7 @@
   .aapp-split { grid-template-columns: auto 1fr; align-items: start; }
   .acards { grid-template-columns: repeat(3, 1fr); }
   .afeat { grid-template-columns: repeat(2, 1fr); }
-  .abio { grid-template-columns: auto 1fr; gap: 20px; }
+  .abio { grid-template-columns: minmax(0, 312px) minmax(0, 1fr); gap: 24px; }
   .abio-art { justify-self: start; }
   .aapp-top { grid-template-columns: auto 1fr; justify-items: start; text-align: left; padding: 20px 22px 0; }
   .aapp-badges { justify-content: flex-start; }

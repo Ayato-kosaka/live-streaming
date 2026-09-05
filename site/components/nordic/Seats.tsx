@@ -60,7 +60,16 @@ function Svg({ size, children }: { size: number; children: React.ReactNode }) {
 }
 
 /** 接地影。真下ではなく右下へ寄せる。 */
-function Ground({ cx = 24.8, cy = 41, rx = 14 }: { cx?: number; cy?: number; rx?: number }) {
+/* SVG の座標は数値でも文字列でも書けるので、呼び出し側の書き方を縛らない */
+function Ground({
+  cx = 24.8,
+  cy = 41,
+  rx = 14,
+}: {
+  cx?: number | string;
+  cy?: number | string;
+  rx?: number | string;
+}) {
   return <ellipse cx={cx} cy={cy} rx={rx} ry={3.2} fill={C.sh} opacity="0.24" />;
 }
 

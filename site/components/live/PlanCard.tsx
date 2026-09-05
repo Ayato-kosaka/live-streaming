@@ -327,20 +327,14 @@ export default function PlanCard({
 }) {
   return (
     <section
-      className="panel"
+      // 企画の札は「これから」の面の本文。読むものなので紙にして、
+      // その上に載る時計・できること・付箋の道具だけを板のまま残す
+      // （`docs/island-world.md` 2.1）。
+      className="panel paper"
       id={plan.id}
-      // 主役の札だけ、板の縁を濃くして厚みを増す。
-      // 「.panel.is-lead」が無いので、ここだけ手で足している。
-      style={
-        lead ?
-          {
-            borderColor: "var(--frame-dark)",
-            boxShadow:
-              "inset 0 0 0 6px var(--pg-rim), inset 0 8px 0 -2px rgba(255,255,255,.6), 0 10px 0 var(--frame-deep), var(--shadow-3)",
-            scrollMarginTop: 78,
-          } :
-          { scrollMarginTop: 78 }
-      }
+      // 主役の札は塗りを変えず、朱の細枠だけで示す。紙の型の選択と同じ作り
+      // （`docs/ac-reference.md` 7章）。厚みは押せるものだけのものなので足さない。
+      style={lead ? { borderColor: "var(--pick)", scrollMarginTop: 78 } : { scrollMarginTop: 78 }}
     >
       {lead ? (
         // 時計だけを四角く置くと、その右が丸ごと空いて、いちばん大事な数字が

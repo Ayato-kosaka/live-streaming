@@ -567,7 +567,9 @@
 .rz-days { margin-top: 2px; font-size: 10px; font-weight: 900; color: var(--pap-ink-2); white-space: nowrap; }
 .rz-days b { font-size: 13px; color: var(--pap-ink); }
 /* 何日いっしょにいたかの帯。図鑑の「出る時間」の目盛りと同じ作り */
-.rz-bar { width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
+/* span なので display を明かす。付けないと、flex の外（主役の1枚のような
+   ふつうのブロックの中）では inline のままになって、帯が消える */
+.rz-bar { display: block; width: 100%; height: 6px; margin-top: 6px; border-radius: 3px; background: #ded4a2; overflow: hidden; }
 .rz-bar > i { display: block; height: 100%; border-radius: 3px; background: var(--chip); }
 /* 名前を出していない人のマスは、名札の行そのものを出さない。
    空の行を22個並べると、そこだけ抜けて見える */

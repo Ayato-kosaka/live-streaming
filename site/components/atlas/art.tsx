@@ -266,7 +266,12 @@ export function DishArt({ size = 48, className, style }: ArtProps) {
 /** スマホの画面まるごと。アプリのページで大きく見せる絵。
  *
  * 本物のスクリーンショットが手元にないので、アプリの作りを絵で描く。
- * 写真のふりはさせない（枠も中身も、絵として描いてあると分かる形にする）。 */
+ * 写真のふりはさせない（枠も中身も、絵として描いてあると分かる形にする）。
+ *
+ * 色は島の屋根の5色（--roof-*）と紙の色だけで塗る。
+ * 前は純度の高い橙・水色・桃の直値で塗っていて、この端末だけ
+ * 別のデザインシステムから持ってきたものに見えていた
+ * （docs/island-world.md 6.2-4）。 */
 export function PhoneShot({
   width = 190,
   screen = "food",
@@ -278,68 +283,87 @@ export function PhoneShot({
   className?: string;
 }) {
   const h = Math.round((width * 400) / 200);
+  // 屋根の5色。ここで新しい色を作らない。
+  const coral = "var(--roof-coral)";
+  const sky = "var(--roof-sky)";
+  const gold = "var(--roof-gold)";
+  const mint = "var(--roof-mint)";
+  const wood = "var(--roof-wood)";
+  const paper = "var(--paper)";
+  const paper2 = "var(--paper-2)";
+  const ink = "var(--ink)";
+  const ink3 = "var(--ink-3)";
   return (
     <svg viewBox="0 0 200 400" width={width} height={h} className={className} aria-hidden>
       <defs>
         <clipPath id={`ps-${screen}`}>
           <rect x="12" y="12" width="176" height="376" rx="26" />
         </clipPath>
+        {/* 上からの光。塗りが平らだと、焼いたスプライトの隣で浮く */}
+        <linearGradient id={`ps-lit-${screen}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.16" />
+          <stop offset="0.45" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="1" stopColor="#2a2415" stopOpacity="0.12" />
+        </linearGradient>
       </defs>
       {/* 影は暖かい灰緑で右下へ */}
       <rect x="6" y="8" width="192" height="392" rx="36" fill="#8a9a72" opacity="0.3" />
-      <rect x="2" y="2" width="192" height="392" rx="36" fill="#3d4c5e" />
-      <rect x="6" y="6" width="184" height="384" rx="32" fill="#5b6f85" />
-      <rect x="12" y="12" width="176" height="376" rx="26" fill="#fffbf0" />
+      {/* 端末そのものも島の色。黒い板を置くと、ここだけ現実の物になる */}
+      <rect x="2" y="2" width="192" height="392" rx="36" fill="var(--frame-deep)" />
+      <rect x="6" y="6" width="184" height="384" rx="32" fill="var(--frame-dark)" />
+      <rect x="12" y="12" width="176" height="376" rx="26" fill={paper} />
       <g clipPath={`url(#ps-${screen})`}>
         {screen === "food" ? (
           <>
-            <rect x="12" y="12" width="176" height="66" fill="#ff8a5c" />
-            <rect x="26" y="30" width="70" height="9" rx="4.5" fill="#ffd7c4" />
-            <rect x="26" y="46" width="112" height="14" rx="7" fill="#fffbf0" />
-            <rect x="152" y="34" width="22" height="22" rx="11" fill="#ffd7c4" />
+            <rect x="12" y="12" width="176" height="66" fill={coral} />
+            <rect x="26" y="30" width="70" height="9" rx="4.5" fill={paper} opacity="0.62" />
+            <rect x="26" y="46" width="112" height="14" rx="7" fill={paper} />
+            <rect x="152" y="34" width="22" height="22" rx="11" fill={paper} opacity="0.62" />
             {[0, 1, 2].map((i) => (
               <g key={i} transform={`translate(0 ${92 + i * 84})`}>
                 <rect x="24" y="6" width="152" height="72" rx="18" fill="#8a9a72" opacity="0.22" />
-                <rect x="22" y="2" width="152" height="72" rx="18" fill="#fdf2d8" />
-                <rect x="32" y="12" width="52" height="52" rx="14" fill={["#ffcf4d", "#7be0b1", "#8fc6ee"][i]} />
-                <circle cx="58" cy="34" r="15" fill="#fffbf0" opacity="0.75" />
-                <ellipse cx="58" cy="34" rx="9" ry="7" fill={["#ff8a5c", "#4fb089", "#5b8fc0"][i]} />
-                <rect x="94" y="16" width="66" height="9" rx="4.5" fill="#5e4731" />
-                <rect x="94" y="31" width="46" height="7" rx="3.5" fill="#b0956f" />
-                <rect x="94" y="46" width="30" height="14" rx="7" fill="#ff7092" />
-                <rect x="130" y="46" width="30" height="14" rx="7" fill="#dfe7c8" />
+                <rect x="22" y="2" width="152" height="72" rx="18" fill={paper2} />
+                <rect x="32" y="12" width="52" height="52" rx="14" fill={[gold, mint, sky][i]} />
+                <circle cx="58" cy="34" r="15" fill={paper} opacity="0.75" />
+                <ellipse cx="58" cy="34" rx="9" ry="7" fill={[wood, mint, sky][i]} />
+                <rect x="94" y="16" width="66" height="9" rx="4.5" fill={ink} />
+                <rect x="94" y="31" width="46" height="7" rx="3.5" fill={ink3} opacity="0.6" />
+                <rect x="94" y="46" width="30" height="14" rx="7" fill={coral} />
+                <rect x="130" y="46" width="30" height="14" rx="7" fill={mint} opacity="0.5" />
               </g>
             ))}
-            <rect x="12" y="344" width="176" height="44" fill="#fdf2d8" />
+            <rect x="12" y="344" width="176" height="44" fill={paper2} />
             {[0, 1, 2, 3].map((i) => (
-              <rect key={i} x={30 + i * 38} y="358" width="22" height="16" rx="8" fill={i === 0 ? "#ff8a5c" : "#d8ceb4"} />
+              <rect key={i} x={30 + i * 38} y="358" width="22" height="16" rx="8" fill={i === 0 ? coral : ink3} opacity={i === 0 ? 1 : 0.34} />
             ))}
           </>
         ) : (
           <>
-            <rect x="12" y="12" width="176" height="376" fill="#3f6f96" />
-            <rect x="12" y="12" width="176" height="200" fill="#5b8fc0" />
+            <rect x="12" y="12" width="176" height="376" fill={sky} />
+            <rect x="12" y="12" width="176" height="200" fill={sky} opacity="0.55" />
             {/* 目の前のもの、という画 */}
-            <ellipse cx="100" cy="196" rx="86" ry="26" fill="#7ba9d0" />
-            <path d="M62 196V96q0-16 16-16h44q16 0 16 16v100z" fill="#e7d8bd" />
-            <path d="M62 196V96q0-16 16-16h22v116z" fill="#fffbf0" />
-            <rect x="78" y="112" width="44" height="46" rx="22" fill="#8fa8bd" />
-            <rect x="30" y="234" width="140" height="12" rx="6" fill="#fffbf0" />
-            <rect x="30" y="256" width="104" height="10" rx="5" fill="#a8c4da" />
-            <rect x="30" y="274" width="120" height="10" rx="5" fill="#a8c4da" />
+            <ellipse cx="100" cy="196" rx="86" ry="26" fill={paper} opacity="0.3" />
+            <path d="M62 196V96q0-16 16-16h44q16 0 16 16v100z" fill={wood} />
+            <path d="M62 196V96q0-16 16-16h22v116z" fill={paper} opacity="0.85" />
+            <rect x="78" y="112" width="44" height="46" rx="22" fill={sky} opacity="0.7" />
+            <rect x="30" y="234" width="140" height="12" rx="6" fill={paper} />
+            <rect x="30" y="256" width="104" height="10" rx="5" fill={paper} opacity="0.6" />
+            <rect x="30" y="274" width="120" height="10" rx="5" fill={paper} opacity="0.6" />
             {/* 音の波 */}
-            <g fill="#ffcf4d">
+            <g fill={gold}>
               {[10, 26, 40, 30, 18, 34, 46, 24, 12].map((v, i) => (
                 <rect key={i} x={34 + i * 15} y={330 - v / 2} width="8" height={v} rx="4" />
               ))}
             </g>
-            <circle cx="100" cy="364" r="17" fill="#ff8a5c" />
-            <path d="M95 356l14 8-14 8z" fill="#fffbf0" />
+            <circle cx="100" cy="364" r="17" fill={coral} />
+            <path d="M95 356l14 8-14 8z" fill={paper} />
           </>
         )}
       </g>
+      {/* 上からの光を画面ぜんぶにかける */}
+      <rect x="12" y="12" width="176" height="376" rx="26" fill={`url(#ps-lit-${screen})`} />
       {/* 上の切りかき */}
-      <rect x="76" y="12" width="48" height="13" rx="6.5" fill="#3d4c5e" />
+      <rect x="76" y="12" width="48" height="13" rx="6.5" fill="var(--frame-deep)" />
     </svg>
   );
 }
