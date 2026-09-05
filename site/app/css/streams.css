@@ -731,7 +731,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 }
 @media (min-width: 560px) { .kt-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 860px) { .kt-grid { grid-template-columns: repeat(4, 1fr); } }
-.kt-none { margin: var(--sp-5) 0; text-align: center; font-size: var(--fs-body); font-weight: 800; color: var(--zk-ink-2); }
+/* 空っぽは `ui.css` の `.blank` を使う。紙の端まで敷いた区画の中なので、
+   枠が罫線に貼りつかないよう左右だけ空ける。 */
+.zk-zone.is-flush > .blank { margin: var(--sp-4) var(--sp-3); }
 
 /* 1品のマス */
 .dish {
