@@ -1263,6 +1263,23 @@ svg.nmap {
 .nmap .nm-border-bar { fill: var(--paper); }
 .nmap .nm-border-tip { fill: var(--accent); }
 
+/* --- 押しどころ。国のかたちそのもの ---
+   街の丸は絵として 5〜15px しかなく、390px の画面では当たりが 23px にしかならない。
+   丸を太らせると、15px しか離れていないタリンとヘルシンキが重なって
+   押し間違いが増える。**押すのは国**にして、当たりを陸のかたちから取る。
+   透明なので絵は1画素も変わらない。 */
+.nmap .nm-go { cursor: pointer; }
+.nmap .nm-cc {
+  fill: transparent;
+  stroke: none;
+  /* 透明でも押せるようにする。`visibleFill` だと塗りが透明な時点で外れる。 */
+  pointer-events: fill;
+}
+/* 押せることを、色ではなく「その国だけ明るくなる」で返す（島の原則5）。
+   指の画面では出ないので、これは飾りではなく PC のための返事。 */
+.nmap .nm-go:hover .nm-cc { fill: var(--paper); fill-opacity: 0.16; }
+.nmap .nm-go:focus-visible .nm-cc { fill: var(--paper); fill-opacity: 0.22; }
+
 /* --- 街 --- */
 .nmap-pin { cursor: pointer; }
 .nmap .nm-hit { fill: transparent; }
@@ -1350,3 +1367,290 @@ svg.nmap {
 }
 /* フェリーは海の色。素のままだと札の上で 3.30 : 1。同じだけ沈めて 4.62 : 1。 */
 .nmap .is-ferry .nm-km { fill: color-mix(in srgb, var(--sea-deep) 65%, var(--ink)); }
+
+/* =========================================================
+   旅の写真（docs/nordic-photos.md）
+   ---------------------------------------------------------
+   その日に撮った写真を、日ごとに並べる。押すと大きく出て、
+   その日いた人のキャラクターを1人入れて持って帰れる。
+
+   面は紙（`.panel.paper`）。**マスの並びには1枚ずつの厚みを付けない**
+   （docs/island-world.md 3.5）。並ぶマスは全部押せるので、
+   並びそのものが「押せる」の合図になる。押せないマスは1枚も混ぜない。
+   ========================================================= */
+
+/* 日付の見出し。何日目かは添えるだけなので、字を小さく、平らに置く。 */
+.nph-day h2 i {
+  margin-left: var(--sp-2);
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+
+.nph-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* 写真1枚。押せる。厚みは付けない（上の決めごと）かわりに、
+   紙に貼った1枚に見えるよう、罫1本でふちを取る。 */
+.nph {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
+  cursor: pointer;
+}
+.nph img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 押したら沈む。色は変えない（docs/island-design.md 3章）。 */
+.nph:active { transform: translateY(2px); }
+
+/* 旅のよていの下に出る、1行の入口。写真が貼られるまでは出ない。 */
+.nph-go { margin-top: var(--sp-4); }
+
+/* --- 貼るところ（あやとだけに出る） ---------------------------------
+   紙の上に載る作業台なので板（`.dform`）。 */
+.nph-post-h {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+.nph-post-row { grid-template-columns: 1fr; }
+/* 選ぶのはボタンのほうなので、素の file 欄は隠す。
+   隠すだけで、キーボードから触れる口はボタン側が持っている。 */
+.nph-post-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.nph-post-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.nph-post-go:active { transform: translateY(6px); box-shadow: none; }
+.nph-post-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+
+/* =========================================================
+   写真を1枚ひらいたところ
+   ---------------------------------------------------------
+   紙を1枚、手元に持ち上げた形。地は紙、押すものだけが板。
+   ========================================================= */
+.nstudio {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-3);
+}
+/* 裏。押すと閉じる。絵の裏なので、押せる合図は持たせない。 */
+.nstudio-back {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(38, 31, 12, 0.62);
+  cursor: pointer;
+}
+.nstudio-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow: auto;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: var(--pg-paper-bg);
+  background-color: var(--pg-sheet);
+  box-shadow: var(--shadow-2);
+}
+.nstudio-close {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.nstudio-close:active { transform: translateY(4px); box-shadow: none; }
+
+/* 出ているこの絵が、そのまま焼き上がりの1枚。長押しで保存できる。 */
+.nstudio-shot {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  margin: var(--sp-4) 0 0;
+}
+.nstudio-shot img {
+  display: block;
+  max-width: 100%;
+  max-height: 52vh;
+  border-radius: var(--r-0);
+  box-shadow: var(--shadow-1);
+}
+.nstudio-shot .wait { width: 100%; --wait-h: 200px; }
+.nstudio-off,
+.nstudio-note,
+.nstudio-tip {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.nstudio-ask {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* 誰を入れるか。**全部のマスが押せるので、1枚ずつに厚みは付けない。** */
+.nstudio-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: var(--sp-2);
+}
+.npick {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-1);
+  min-height: 88px;
+  padding: var(--sp-2) var(--sp-1);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
+  cursor: pointer;
+}
+.npick img,
+.npick-none {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+/* 「入れない」のマス。空けておく、を破線の枠1つで言う（`.blank` と同じ言い方）。 */
+.npick-none {
+  border: 1.5px dashed color-mix(in srgb, var(--rule) 80%, transparent);
+  border-radius: var(--r-0);
+}
+.npick i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* いま選んでいるもの。塗りではなく細い朱の枠で言う（island-world 3.2）。 */
+.npick.is-on {
+  border: var(--bw-1) solid var(--pg-pick);
+  background: color-mix(in srgb, var(--pick) 8%, var(--paper));
+}
+.npick.is-on i { color: var(--ink); }
+.npick:active { transform: translateY(2px); }
+
+/* 持って帰る。ここだけ板。 */
+.nstudio-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+.nstudio-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.nstudio-go:active { transform: translateY(6px); box-shadow: none; }
+.nstudio-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+/* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
+   板を2つ横に並べると、どちらが本筋か分からなくなる。
+   本筋は「ほぞんする」で、こちらは効かなかった人のための逃げ道。 */
+.nstudio-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+
+/* =========================================================
+   地図の下の6カ国。
+   地図の上のピンは、いちばん近いところで中心どうしが 15px しか離れておらず、
+   どうやっても 48px の当たりが取れない（`components/nordic/RouteMapSvg.tsx`）。
+   同じ行き先を、指で確実に押せる大きさで字にも置く。
+   ========================================================= */
+.nmgo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+/* 並びが全部押せるので、1枚ずつに厚みを付けない（island-design 3章の例外）。
+   紙の面の上なので、地は紙。区切りは罫1本。 */
+.nmgo-c {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  white-space: nowrap;
+}
+.nmgo-c:hover { color: var(--frame-deep); }
+.nmgo-c:active { background: color-mix(in srgb, var(--marker) 34%, transparent); }

@@ -1,0 +1,25 @@
+rules_version = '2';
+
+/**
+ * Cloud Storage のセキュリティルール。
+ *
+ * 置いてあるのは、北欧旅の「その日の写真」だけ（docs/nordic-photos.md）。
+ *
+ * 方針は Firestore と同じ。**ブラウザからは書かせない。**
+ * 貼るのは `/island-api/nordic/photos`（Cloud Functions）経由で、
+ * あちらは Admin SDK なのでこのルールを迂回する。つまりここに
+ * 「あやとだけが書ける」を書く必要がない。書けるのは誰もいない、でよい。
+ *
+ * 読みは、ファイルの metadata に付けた「ダウンロードの合言葉」で通る
+ * （`firebasestorage.googleapis.com/...?alt=media&token=…`）。
+ * これもルールの外なので、ここは deny のままで写真は誰でも見られる。
+ * ルールに `allow read: if true` を書くと、**合言葉なしで置き場を
+ * のぞける**ようになってしまうので、書かない。
+ */
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

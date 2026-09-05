@@ -58,6 +58,14 @@ service cloud.firestore {
     match /islandUsers/{docId} { allow read, write: if false; }
     match /islandDrafts/{docId} { allow read, write: if false; }
 
+    /* 北欧旅の、その日の写真とその日いた人(docs/nordic-photos.md)。
+       貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
+       ここを開けると「読むのは誰でも」を書きたくなるが、そうすると
+       写真の置き場も、その日いた人の一覧も、まとめて引けるようになる。
+       画面が要るのは「写真のある日ぶん」だけなので、Function に絞らせる。 */
+    match /nordicPhotos/{docId} { allow read, write: if false; }
+    match /nordicDays/{docId} { allow read, write: if false; }
+
     // それ以外は禁止
     match /{document=**} {
       allow read, write: if false;
