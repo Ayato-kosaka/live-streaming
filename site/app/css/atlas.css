@@ -445,7 +445,7 @@
   box-shadow: var(--shadow-1);
 }
 .apass-who { display: grid; gap: 2px; min-width: 0; }
-.apass-who b { font-size: 20px; font-weight: 900; letter-spacing: var(--ls-head, 0.04em); line-height: 1.25; }
+.apass-who b { font-size: var(--fs-h2); font-weight: 900; letter-spacing: var(--ls-head, 0.04em); line-height: 1.25; }
 .apass-who em {
   font-style: normal;
   font-size: var(--fs-min);
@@ -468,7 +468,7 @@
   color: var(--chip-ink);
   transform: rotate(-9deg);
 }
-.apass-stamp b { font-size: 22px; font-weight: 900; line-height: 1; }
+.apass-stamp b { font-size: var(--fs-h2); font-weight: 900; line-height: 1; }
 .apass-stamp i { font-style: normal; font-size: var(--fs-min); font-weight: 900; margin-top: 2px; }
 
 /* 入国と出国。日付は罫で区切った台帳にする */
@@ -507,7 +507,7 @@
 }
 .apass-num div { padding: 13px 6px 2px; text-align: center; border-left: 1px solid var(--rule); }
 .apass-num div:first-child { border-left: 0; }
-.apass-num b { display: block; font-size: 24px; font-weight: 900; line-height: 1.1; color: var(--frame-deep); }
+.apass-num b { display: block; font-size: var(--fs-h2); font-weight: 900; line-height: 1.1; color: var(--frame-deep); }
 .apass-num span { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); margin-top: 4px; }
 
 .acity-list { display: grid; gap: 9px; }
@@ -764,7 +764,9 @@
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
-.afeat > div > svg { color: var(--accent-2); }
+/* できることの印。水色は「外へ出る」の意味に取ってあるので使わない
+   （docs/island-world.md 3.2）。合図は色ではなくチェックの形が持つ。 */
+.afeat > div > svg { color: var(--ink); }
 .afeat b { display: block; font-size: var(--fs-body); font-weight: 900; }
 .afeat i { display: block; font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
 

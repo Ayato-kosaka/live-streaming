@@ -65,31 +65,24 @@
   --zk-ink-2: var(--ink-2);
 
   position: relative;
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-2);
-  border-radius: var(--r-2);
-  background: var(--zk-out);
+  margin-bottom: var(--sp-6);
   color: var(--zk-ink);
-  /* 紙そのものは影を落とさない。青い海の上に置くので、
-     紙を持ち上げるのではなく「そこに敷いてある」ように、ごく浅い影だけ。 */
-  box-shadow: 0 3px 0 rgba(120, 108, 60, 0.28);
+  /* 台紙をやめた。ページの地がもう生成り（--ground-paper）なので、
+     その上に生成りの板をもう1枚敷いて影まで落とすと、
+     「紙の外より明るい紙」という関係が二重になって、紙が箱に見える。
+     紙が載っていることは、影ではなく明度差だけで言う（ac-reference ⑦-1）。 */
 }
-@media (min-width: 720px) { .zk { padding: var(--sp-3); } }
 
 /* 紙。無地にしない。明るさのムラをラジアルで重ねて作る（画像を足さない） */
 .zk-sheet {
+  /* 紙の正本は `pages.css` の `.panel.paper`。同じ値をここにもう一度書くと、
+     片方だけ直したときに同じサイトの中で紙が2種類になる。地は --pg-paper-bg を
+     そのまま借りる。枠1px・角8px・影なしも、あちらの実測に合わせる。 */
   border: 1px solid var(--zk-rule);
-  border-radius: 6px;
+  border-radius: var(--r-0);
+  box-shadow: none;
   overflow: hidden;
-  /* ムラは「紙の中の5%」に収める。左上に白を 0.5 で敷いていたころは
-     そこだけ紙の外より明るくなって、紙が地から浮いた箱に見えていた。
-     紙の外（--paper-out）が紙より明るい、という関係を崩さない。 */
-  background:
-    radial-gradient(120% 40% at 8% 0%, rgba(255, 255, 255, 0.16), transparent 56%),
-    radial-gradient(80% 34% at 94% 62%, rgba(118, 110, 68, 0.14), transparent 60%),
-    radial-gradient(60% 26% at 68% 18%, rgba(255, 255, 255, 0.12), transparent 72%),
-    radial-gradient(50% 22% at 22% 88%, rgba(118, 110, 68, 0.12), transparent 66%),
-    linear-gradient(var(--zk-paper), var(--zk-paper-lo));
+  background: var(--pg-paper-bg);
 }
 
 /* 紙の中の区切り。影ではなく1本の罫線 */
@@ -104,17 +97,21 @@
 .zk-h {
   display: inline;
   margin: 0;
-  font-size: var(--fs-body);
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  line-height: 2;
-  color: var(--zk-ink);
-  background: linear-gradient(180deg, transparent 14%, var(--zk-mark) 14%, var(--zk-mark) 90%, transparent 90%);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
   padding: 0 var(--sp-2);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  line-height: 2;
+  color: var(--marker-ink);
+  /* 帯は背景ではなく太い下線で引く。`.panel.paper` の見出しと同じ引き方にする。
+     背景で敷くと、折り返した行の帯の高さが行間ぶんずれる。 */
+  background: none;
+  text-decoration: underline;
+  text-decoration-color: var(--zk-mark);
+  text-decoration-thickness: 1.05em;
+  text-underline-offset: -0.72em;
+  text-decoration-skip-ink: none;
 }
-@media (min-width: 720px) { .zk-h { font-size: var(--fs-h3); } }
 .zk-hr {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
@@ -215,7 +212,9 @@
   letter-spacing: -0.01em;
   color: var(--zk-ink);
 }
-.zk-rec b i { font-style: normal; font-size: 0.5em; margin-left: 2px; }
+/* 単位は数字の半分の大きさにしていたが、大きい数字の隣では 11.5px を割る。
+   字の下限は段で決まっている（island-world 5.4）。 */
+.zk-rec b i { font-style: normal; font-size: var(--fs-note); margin-left: 2px; }
 .zk-rec span { display: block; margin-top: var(--sp-2); font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink); }
 .zk-rec em { display: block; margin-top: 2px; font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--zk-ink-2); line-height: 1.5; }
 

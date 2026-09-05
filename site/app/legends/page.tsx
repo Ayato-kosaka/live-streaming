@@ -24,13 +24,13 @@ export default function LegendsPage() {
 
   return (
     <PageShell crumbs={[{ label: "伝説の丘" }]}>
-      {/* カモメは見出しの言い直しをしない（`docs/island-design.md` 5章）。
-          「企画会議から生まれる」は下の節で言うので、ここは読みかたの案内だけにする。 */}
+      {/* カモメは遊び方のある面だけに出す（`docs/island-ux.md` 5.2）。
+          ここは読む面なので出さない。読みかた（数字だけ追えば分かる）は
+          「丘に立っているもの」の1行が受け持つ。 */}
       <PageHead
         icon="hall-museum"
         title="伝説の丘"
         lead={`いまでも話に出てくる、大きい企画と大きい日が${LEGENDS.length}つ。どれも週のはじめの企画会議から始まった。`}
-        say="数字だけ追っていっても分かるよ。気になったのを押すと、その日ぜんぶが出てくる。"
       />
 
       <Sheet>

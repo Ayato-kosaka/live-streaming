@@ -66,7 +66,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       {/* パスポートの1ページ。旗・入国のスタンプ・入出国の日付・数字を、
           1枚の紙に罫で割って収める（docs/ac-reference.md 7章）。
           17カ国ぶんが同じ型で並ぶので、国ごとの違いが中身だけになる。 */}
-      <Panel className="paper apass">
+      <Panel className="apass">
         <div className="apass-top">
           <span className="apass-flag">
             <Flag slug={c.slug} size={64} />
@@ -110,14 +110,14 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       </Panel>
 
       {hasMap && (
-        <Panel className="paper">
+        <Panel>
           <h2>この国のどこにいたんだろう</h2>
           <p className="muted">白い丸が行った街。線は移動したところです。</p>
           <CountryMap slug={c.slug} name={c.name} />
         </Panel>
       )}
 
-      <Panel className="paper">
+      <Panel>
         <h2>行った街</h2>
         <div className="cities">
           {towns.map((city) => {
@@ -149,7 +149,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
         </div>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>この国であったこと</h2>
         <div className="hlist">
           {c.highlights.map((h, i) => (
@@ -166,7 +166,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       </Panel>
 
       {cooked.length > 0 && (
-        <Panel className="paper">
+        <Panel>
           <h2>この国で作ったごはん</h2>
           <div className="chips">
             {cooked.map((r) => (

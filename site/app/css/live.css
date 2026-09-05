@@ -72,14 +72,19 @@
   align-content: center;
   min-width: 56px;
   padding: var(--sp-2) var(--sp-2) var(--sp-2);
-  border-radius: 16px;
-  border: 3px solid var(--frame-dark);
+  border-radius: var(--r-2);
+  /* 日数の札は桃。色の表で桃は「いま／新しい」で、出る場所として日数バッジが
+     名指しされている（`docs/island-world.md` 3.2）。金は「押せる板のふち」の色なので、
+     押せないこの札に使うと、押せるかどうかの手がかりが1つ壊れる。
+
+     濃い桃をそのまま敷くと墨が 3.69 : 1 で読めない。紙を混ぜて 5.4 : 1 まで戻す。
+     押せない札なので厚みは付けない。合図は厚み1種類だけ（3.4）。 */
+  border: 3px solid color-mix(in srgb, var(--accent) 62%, var(--accent-deep));
   background: linear-gradient(
-    color-mix(in srgb, var(--gold) 42%, var(--paper)),
-    var(--gold) 58%,
-    color-mix(in srgb, var(--gold) 84%, var(--frame-dark))
+    color-mix(in srgb, var(--accent) 42%, var(--paper)),
+    color-mix(in srgb, var(--accent) 58%, var(--paper))
   );
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 color-mix(in srgb, var(--paper) 62%, transparent);
+  box-shadow: none;
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -91,10 +96,12 @@
 /* 日だけ大きく。人が見ているのは「あと何日」で、時分はその添え物 */
 .nx-clock em:first-child { min-width: 74px; }
 .nx-clock em:first-child b { font-size: 42px; }
+/* 時と分は日数の添え物。同じ桃で3枚並べると、どれを読めばいいか分からない。
+   こちらは紙のまま置いて、桃は「あと何日」の1枚だけにする。 */
 .nx-clock em + em {
   background: linear-gradient(var(--paper), var(--paper-2));
   border-color: var(--frame);
-  box-shadow: 0 3px 0 var(--frame-dark);
+  box-shadow: none;
 }
 .nx-clock em + em b { font-size: 22px; color: var(--ink); }
 /* 時分まで刻まないものは1枚の札。開いた瞬間に読ませたい数字はこれ1つなので、
@@ -273,18 +280,24 @@
 /* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
 .nx-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
 .nx-seeds > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); align-self: center; }
+/* 押すと書き出しが本文に入る札。破線は「厚み1種類」に無い3つ目の合図なので
+   やめて、押せるチップの型（板・厚み4px・48px）にそろえる。 */
 .nx-seed {
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: 999px;
-  border: 2.5px dashed color-mix(in srgb, var(--frame) 92%, var(--paper));
-  background: var(--paper);
+  display: inline-flex; align-items: center;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   font-size: var(--fs-note);
-  font-weight: 800;
-  color: var(--ink-2);
-  transition: border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  transition: transform 0.12s ease;
 }
-.nx-seed:hover { border-style: solid; border-color: var(--frame-dark); color: var(--ink); transform: translateY(-1px); }
-.nx-seed:active { transform: translateY(1px); }
+.nx-seed:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 
 /* =========================================================
    6. 掲示板
@@ -362,31 +375,25 @@
    紙は無地にしない。明るさを5%ほどムラにして、細い罫線で区切る。
    影は落とさない。押せるものだけが厚みを持つ、という決まりを守るため。
    ========================================================= */
-.pap-mat {
-  margin: 0 0 var(--sp-4);
-  padding: var(--sp-2);
-  border-radius: 12px;
-  background: var(--paper-out);
-  box-shadow: var(--shadow-2);
-}
+/* 台紙をやめた。ページの地がすでに生成り（--ground-paper）なので、
+   その上に生成りの台紙を敷いて影まで落とすと、紙が二重になって箱に見える。
+   紙が載っていることは影ではなく明度差で言う（ac-reference ⑦-1）。 */
+.pap-mat { margin: 0 0 var(--sp-6); }
 .pap {
-  /* 紙の色・罫・蛍光ペンは tokens.css の段から取る。ここに同じ値を持つと、
-     片方だけ直したときに同じページの中で紙が2種類になる。 */
+  /* 紙の正本は `pages.css` の `.panel.paper`。地・枠・角・墨をここでもう一度
+     決めると、片方だけ直したときにサイトの中で紙が2種類になる。
+     墨も直値（#4b4527）をやめて、島ぜんぶと同じ茶に寄せる。 */
   --pap-line: var(--rule);
-  --pap-ink: #4b4527;
-  --pap-ink-2: #736b46;
-  padding: var(--sp-4) var(--sp-4) var(--sp-4);
+  --pap-ink: var(--ink);
+  --pap-ink-2: var(--ink-2);
+  padding: var(--sp-5) var(--sp-4) var(--sp-5);
   border: 1px solid var(--pap-line);
-  border-radius: 6px;
-  /* ムラは重ねたラジアルグラデーションで作る。画像は足さない */
-  background:
-    radial-gradient(58% 40% at 16% 10%, rgba(255, 255, 255, 0.18), transparent 62%),
-    radial-gradient(46% 34% at 86% 26%, rgba(150, 140, 82, 0.14), transparent 64%),
-    radial-gradient(64% 46% at 36% 92%, rgba(150, 140, 82, 0.15), transparent 62%),
-    radial-gradient(40% 30% at 92% 84%, rgba(255, 255, 255, 0.14), transparent 60%),
-    linear-gradient(var(--paper-mottle-b), var(--paper-mottle-a));
+  border-radius: var(--r-0);
+  box-shadow: none;
+  background: var(--pg-paper-bg);
   color: var(--pap-ink);
 }
+@media (min-width: 720px) { .pap { padding: var(--sp-5) var(--sp-5) var(--sp-5); } }
 /* 紙の題名。白い札を少し傾けて、テープで貼ったように置く */
 .pap-tag {
   display: block;
@@ -403,33 +410,50 @@
   color: var(--pap-ink);
 }
 /* 見出しには蛍光ペンの帯を敷く。これ1つで印刷物に見える */
+/* 帯は背景ではなく太い下線で引く（`.panel.paper` の見出しと同じ引き方）。
+   背景で敷くと、折り返したときに帯の高さが行間ぶんずれる。 */
 .pap-h {
-  display: inline-block;
+  display: block;
   margin: 0 0 var(--sp-2);
-  padding: 1px var(--sp-2) 2px;
-  background: var(--marker);
-  font-size: var(--fs-body);
+  padding: 0;
+  background: none;
+  font-size: var(--fs-h3);
   font-weight: 900;
-  letter-spacing: var(--ls-head);
-  color: var(--pap-ink);
+  letter-spacing: var(--ls-body);
+  line-height: 2;
+  color: var(--marker-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--marker);
+  text-decoration-thickness: 1.05em;
+  text-underline-offset: -0.72em;
+  text-decoration-skip-ink: none;
 }
 .pap-sec + .pap-sec { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--pap-line); }
 .pap p { margin: 0 0 var(--sp-2); font-size: var(--fs-body); font-weight: 600; line-height: 1.95; color: var(--pap-ink); }
 .pap p:last-child { margin-bottom: 0; }
 .pap .pap-note { font-size: var(--fs-note); color: var(--pap-ink-2); }
-/* 紙の上の押せるもの。厚みは付けず、赤い細枠だけで「選べる」を出す */
+/* 紙の上でも、行き先のカードだけは板でよい（`docs/island-world.md` 2.1・4章）。
+   細枠だけだと、すぐ上にある「押せない札」と同じ形になって、
+   どれが行き先なのかを覚えてもらう前提の画面になる。合図は厚み1種類。 */
 .pap-go {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  min-height: 56px;
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--pap-line);
-  border-radius: 5px;
-  background: rgba(255, 253, 240, 0.5);
-  color: var(--pap-ink);
-  transition: border-color 0.14s ease, background 0.14s ease;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  transition: transform 0.12s ease;
 }
-.pap-go:hover { border-color: var(--pick); background: rgba(255, 253, 240, 0.9); }
+.pap-go:active {
+  transform: translateY(6px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
 .pap-go b { font-size: var(--fs-body); font-weight: 900; }
 .pap-go i { display: block; font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-top: 2px; }
 .pap-go .ic { flex: none; margin-left: auto; color: var(--pap-ink-2); }

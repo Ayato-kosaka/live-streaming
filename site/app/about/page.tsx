@@ -108,7 +108,7 @@ export default function AboutPage() {
         />
       </div>
 
-      <Panel className="paper">
+      <Panel>
         <h2>はじめまして</h2>
         <div className="abio">
           {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
@@ -125,7 +125,7 @@ export default function AboutPage() {
         </div>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>いま、どこで何してる</h2>
         <NowLive />
         <Link className="tile" href="/now" style={{ marginTop: 12 }}>
@@ -140,7 +140,7 @@ export default function AboutPage() {
         </Link>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>ここまで、何があったんだろう</h2>
         <p className="muted">旅の節目とアプリの節目だけ。国ぜんぶは旅の桟橋にあります。</p>
         <div className="anote">
@@ -181,7 +181,7 @@ export default function AboutPage() {
         </Link>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>島でやっていること</h2>
         <div className="acards">
           <div className="acard">
@@ -216,7 +216,7 @@ export default function AboutPage() {
         </Link>
       </Panel>
 
-      <Panel className="paper">
+      <Panel>
         <h2>どんな配信をしてるんだろう</h2>
         <p className="muted">押すと、その型の配信だけまとめて見られます。</p>
         <div className="tiles" style={{ marginTop: 12 }}>
