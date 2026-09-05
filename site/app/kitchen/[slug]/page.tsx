@@ -37,7 +37,10 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         lead={r.note}
         meta={
           <>
-            <span className="chip dark">🗓 {r.date.replace(/-/g, "/")}</span>
+            <span className="chip dark">
+              <Icon name="calendar" size={13} />
+              {r.date.replace(/-/g, "/")}
+            </span>
             {c && (
               <Link className="chip dark" href={`/map/${c.slug}`}>
                 <Flag slug={c.slug} size={20} />

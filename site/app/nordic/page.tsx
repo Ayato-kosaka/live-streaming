@@ -9,6 +9,7 @@ import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import RouteLegs from "@/components/nordic/RouteLegs";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
+import Highlights from "@/components/nordic/Highlights";
 import { HITCH_KM, NORDIC_COUNTRIES, NORDIC_GUIDE, ROUTE } from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
 import { planById } from "@/content/plans";
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
  *
  * 数字は意味のあるものだけ置く。読んで何も分からない数字（「0回、戻らない」）は出さない。
  */
-export default function NordicPage() {
+export default async function NordicPage() {
   const plan = planById("nordic");
   const stays = ROUTE.filter((l) => l.stay).length;
   const cities = MAP.cities.length;
@@ -89,6 +90,14 @@ export default function NordicPage() {
         <h2>区間ごとの話</h2>
         <p className="muted">押すと、その区間で何が起きるかが出てきます。</p>
         <RouteLegs />
+      </Panel>
+
+      <Panel>
+        <h2>この旅でいちばん見たいもの</h2>
+        <p className="muted">
+          161件から、通る順に8つ。写真を押すと、その国のページの、そこに飛びます。
+        </p>
+        <Highlights />
       </Panel>
 
       <Panel>

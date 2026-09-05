@@ -35,13 +35,41 @@ export default function StreamsPage() {
         <Stat value={<LiveNumber statKey="people" fallback={s.people} />} label="のべ参加人数" />
       </div>
 
+      <Panel>
+        <h2>配信からできたもの</h2>
+        <p className="muted">
+          配信でやったことは、島のこの2か所にたまっていきます。
+        </p>
+        <div className="tiles" style={{ marginTop: 12 }}>
+          <Link className="tile" href="/kitchen">
+            <img className="tile-icon" src="/sprites/hut-kitchen.webp" alt="" />
+            <span className="tile-text">
+              <b>キッチン小屋</b>
+              <i>作ってきた料理のスタンプ帳</i>
+            </span>
+            <Icon name="right" size={15} className="tile-go" />
+          </Link>
+          <Link className="tile" href="/legends">
+            <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
+            <span className="tile-text">
+              <b>伝説の丘</b>
+              <i>語り継がれてる企画。イランまで12日間歩いた話ほか</i>
+            </span>
+            <Icon name="right" size={15} className="tile-go" />
+          </Link>
+        </div>
+      </Panel>
+
       {STREAM_TYPES.map((t) => (
         <Panel key={t.slug}>
           <h2 style={{ ["--frame" as string]: t.color }}>
             <img className="h2-icon" src={`/sprites/${t.icon}.webp`} alt="" /> {t.name}
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
-            <span className="chip">🕙 {t.when}</span>
+            <span className="chip">
+              <Icon name="clock" size={14} />
+              {t.when}
+            </span>
           </div>
           <p>{t.lead}</p>
           <div className="scards" style={{ marginTop: 14 }}>

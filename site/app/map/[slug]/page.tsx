@@ -41,7 +41,8 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           <>
             {c.stays.map((s, i) => (
               <span key={i} className="chip dark">
-                🗓 {fmt(s.from)} – {fmt(s.to)}
+                <Icon name="calendar" size={13} />
+                {fmt(s.from)} – {fmt(s.to)}
               </span>
             ))}
           </>

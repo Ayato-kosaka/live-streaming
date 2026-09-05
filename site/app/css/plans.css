@@ -1,0 +1,109 @@
+/* --- いま、いちばん近い企画 -------------------------------------------
+   島に来た人がまっさきに知りたいのは「次に何をするのか」。
+   だから島のすぐ下に、どのコーナーよりも大きく置く。
+   --------------------------------------------------------------------- */
+.nextup { margin-bottom: 18px; }
+.nextup-eyebrow {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+.nextup-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "count body" "go go";
+  gap: 14px 16px;
+  align-items: start;
+  padding: 18px;
+  border: 4px solid var(--frame-dark);
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 90% at 8% 0%, rgba(255, 236, 178, 0.9), rgba(255, 253, 246, 0) 62%),
+    linear-gradient(#fffdf6, #fff4de);
+  box-shadow: 0 7px 0 var(--frame-deep), var(--shadow-3);
+  color: var(--ink);
+  transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s;
+}
+.nextup-card:hover { transform: translateY(-3px); box-shadow: 0 10px 0 var(--frame-deep), var(--shadow-3); }
+.nextup-card:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--frame-deep); }
+.nextup-count {
+  grid-area: count;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-width: 86px;
+  padding: 12px 10px;
+  border-radius: 18px;
+  border: 3px solid var(--frame-dark);
+  background: linear-gradient(#fff6cf, var(--gold));
+  box-shadow: 0 3px 0 var(--frame-deep);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+}
+.nextup-count b { display: block; font-size: 30px; line-height: 1.05; }
+.nextup-body { grid-area: body; display: grid; gap: 5px; }
+.nextup-title { font-size: clamp(19px, 5.4vw, 27px); font-weight: 900; line-height: 1.28; }
+.nextup-when { font-style: normal; font-size: 12.5px; font-weight: 900; color: var(--accent-deep, #c2691f); }
+.nextup-note { font-size: 13px; font-weight: 700; line-height: 1.75; color: var(--ink-2, var(--ink)); }
+.nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+.nextup-tags em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--frame-dark);
+  color: var(--ink-3);
+}
+.nextup-go {
+  grid-area: go;
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--frame-deep);
+}
+.nextup-rest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+}
+.nextup-rest a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 2.5px solid var(--frame-dark);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--frame-deep);
+}
+.nextup-rest a { max-width: 100%; flex-wrap: wrap; }
+.nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
+.nextup-eyebrow2 { margin-top: 14px; }
+/* ふたつ目の札はひとまわり小さく。主役は「いちばん近い企画」のまま。 */
+.nextup-card.is-small { padding: 14px; border-width: 3px; box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2); }
+.nextup-card.is-small .nextup-count { min-width: 72px; padding: 9px 8px; font-size: 11px; }
+.nextup-card.is-small .nextup-count b { font-size: 24px; }
+.nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
+@media (min-width: 640px) {
+  .nextup-card {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "count body go";
+    align-items: center;
+    padding: 22px 24px;
+  }
+  .nextup-count { min-width: 106px; }
+  .nextup-count b { font-size: 38px; }
+  .nextup-go { justify-self: end; }
+}

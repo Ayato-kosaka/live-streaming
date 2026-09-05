@@ -39,7 +39,7 @@ export const APPS: AppEntry[] = [
       { date: "2025-08-16", kind: "build", title: "英語名が決まった", videoId: "QieWHVc69q8" },
       { date: "2025-08-17", kind: "build", title: "アプリアイコン完成", videoId: "6bi2gCN4_dQ" },
       { date: "2025-08-31", kind: "milestone", title: "Android 審査通過", videoId: "3YtMCGsAcRo" },
-      { date: "2025-09-02", kind: "release", title: "リリース🎉", note: "クタイシから報告", videoId: "LjE5Zen0f7g" },
+      { date: "2025-09-02", kind: "release", title: "リリース", note: "クタイシから報告", videoId: "LjE5Zen0f7g" },
       { date: "2025-11-14", kind: "release", title: "サーバーリリース完了", videoId: "Gr4RW4u9IFs" },
       { date: "2025-11-21", kind: "milestone", title: "広告を開始", videoId: "VQKtu8xsAM0" },
       { date: "2025-12-18", kind: "build", title: "料理文言をみんなで整えた", note: "「みんなの感性の結晶」と言っていた", videoId: "w_kql8jnB30" },
@@ -67,7 +67,7 @@ export const APPS: AppEntry[] = [
       "「なに食べよ」より前に作っていたアプリ。旅をしながら、目の前のものが何なのか分からないという自分の困りごとから作った。エジプト滞在中にお試し版を公開し、そのままリリースした。",
     milestones: [
       { date: "2025-04-29", kind: "build", title: "お試し版を公開", note: "エジプトぷらり配信で", videoId: "Y-EvbeBomrU" },
-      { date: "2025-05-11", kind: "release", title: "リリース🎊", videoId: "cisSYeOGDUE" },
+      { date: "2025-05-11", kind: "release", title: "リリース", videoId: "cisSYeOGDUE" },
       { date: "2025-07-09", kind: "update", title: "大型アップデート", videoId: "-gaULSsv63Y" },
       { date: "2025-07-12", kind: "trouble", title: "不具合が直った", videoId: "4fOkTVpRVpo" },
     ],

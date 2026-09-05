@@ -30,7 +30,7 @@ export default function MapPage() {
         <Stat value="17" label="国" />
         <Stat value="40+" label="街" />
         <Stat value={days.toLocaleString()} label="旅した日数" sub="2024/10/28から" />
-        <Stat value="🇬🇪" label="いまここ" sub="ジョージア" />
+        <Stat value={<Flag slug="georgia" size={32} />} label="いまここ" sub="ジョージア" />
       </div>
 
       {REGIONS.map((region) => (

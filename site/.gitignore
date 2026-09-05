@@ -3,3 +3,6 @@ node_modules/
 .next-verify/
 out/
 next-env.d.ts
+
+# 並列作業のビルド出力
+.next-*/

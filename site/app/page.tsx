@@ -14,6 +14,7 @@ import { GUIDE, HERO, HOME } from "@/content/voice";
 import { Gull } from "@/components/island/Guide";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
+import Flag from "@/components/ui/Flag";
 
 export default function Home() {
   const s = STATS_FALLBACK;
@@ -171,7 +172,8 @@ export default function Home() {
           <div className="chips">
             {[...COUNTRIES].reverse().slice(0, 6).map((c) => (
               <Link key={c.slug} className="chip" href={`/map/${c.slug}`}>
-                {c.flag} {c.name}
+                <Flag slug={c.slug} size={18} />
+                {c.name}
               </Link>
             ))}
           </div>

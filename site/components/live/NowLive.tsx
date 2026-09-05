@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getState, type IslandCurrent } from "@/lib/api";
 import { NOW_FALLBACK } from "@/content/site";
+import Icon from "@/components/ui/Icon";
 
 export default function NowLive() {
   const [cur, setCur] = useState<IslandCurrent>({ ...NOW_FALLBACK });
@@ -31,7 +32,9 @@ export default function NowLive() {
         <b className="now-place">{cur.place}</b>
         <p className="now-word">{cur.word}</p>
         <span className="chip">
-          {live ? "🟢 最新" : "🕓"} {cur.updatedAt?.replace(/-/g, "/")} 時点
+          <Icon name={live ? "live" : "clock"} size={13} />
+          {live ? " 最新 " : " "}
+          {cur.updatedAt?.replace(/-/g, "/")} 時点
         </span>
       </section>
 

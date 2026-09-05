@@ -123,6 +123,9 @@ export default async function NordicCountryPage({
     byCity.get(k)!.push(s);
   }
 
+  // その国の顔になる写真。最初の見どころのものを使う。
+  const hero = spots.find((s) => s.big) ?? spots[0];
+
   const idx = NORDIC_COUNTRIES.findIndex((x) => x.slug === c.slug);
   const prev = NORDIC_COUNTRIES[idx - 1];
   const next = NORDIC_COUNTRIES[idx + 1];
@@ -139,6 +142,14 @@ export default async function NordicCountryPage({
         { label: c.name },
       ]}
     >
+      {hero?.big && (
+        <div className="nchero">
+          <img src={hero.big} alt="" loading="eager" referrerPolicy="no-referrer" />
+          <span className="nchero-credit">
+            {hero.title} — Wikimedia Commons
+          </span>
+        </div>
+      )}
       <PageHead
         title={c.name}
         lead={c.catch}

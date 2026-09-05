@@ -30,7 +30,12 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         icon={l.icon}
         title={l.title}
         lead={l.lead}
-        meta={<span className="chip dark">🗓 {l.span ?? l.date.replace(/-/g, "/")}</span>}
+        meta={
+          <span className="chip dark">
+            <Icon name="calendar" size={13} />
+            {l.span ?? l.date.replace(/-/g, "/")}
+          </span>
+        }
       />
       <Panel>
         <h2>何があったか</h2>

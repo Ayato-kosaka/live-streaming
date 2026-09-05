@@ -27,7 +27,10 @@ export default function AppsPage() {
           </h2>
           <div className="chips" style={{ marginBottom: 10 }}>
             <span className="chip">{a.status}</span>
-            <span className="chip">🧱 {a.milestones.length} の節目</span>
+            <span className="chip">
+              <Icon name="brick" size={13} />
+              {a.milestones.length} の節目
+            </span>
           </div>
           <p>{a.tagline}</p>
           <p>{a.summary}</p>
