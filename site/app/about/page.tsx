@@ -243,9 +243,14 @@ function Voice({ v, i }: { v: (typeof VOICES)[number]; i: number }) {
         </span>
       )}
       <div className="avoice-body">
-        <span className="avoice-who">{v.name}</span>
+        {/* 名前といつかを1行にまとめて、吹き出しの上に置く。
+            日付を吹き出しの下に置くと、次の人の名前と近くなって、
+            どちらの言葉に付いた日付なのか読み取れなくなる */}
+        <span className="avoice-who">
+          {v.name}
+          <em>{fmtYm(v.date)}</em>
+        </span>
         <p className="avoice-say">{v.text}</p>
-        <span className="avoice-when">{fmtYm(v.date)}の配信</span>
       </div>
     </li>
   );

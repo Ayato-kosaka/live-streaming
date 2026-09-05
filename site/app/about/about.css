@@ -78,6 +78,9 @@
  */
 .avoice-face {
   flex: 0 0 auto;
+  /* ふちの 2px を絵の外に出す。中を 32px 丸ごと絵にしておかないと、
+     取り寄せている 64px との「ちょうど2倍」が崩れる */
+  box-sizing: content-box;
   width: 32px;
   height: 32px;
   /* 名前の1行ぶん下げて、吹き出しの肩に並べる（名前の行送りと同じ計算） */
@@ -113,6 +116,12 @@
   letter-spacing: var(--ls-body);
   color: var(--ink-2);
   overflow-wrap: anywhere;
+}
+/* いつの配信か。名前と同じ濃さで、太さだけ落とす（薄くすると 4.5:1 を切る） */
+.avoice-who > em {
+  margin-left: var(--sp-2);
+  font-style: normal;
+  font-weight: 700;
 }
 .avoice-say {
   position: relative;
@@ -155,14 +164,6 @@
   right: -9px;
   border-left-color: var(--paper);
 }
-.avoice-when {
-  font-size: var(--fs-min);
-  font-weight: 900;
-  letter-spacing: var(--ls-body);
-  color: var(--ink-2);
-  padding: 0 var(--sp-2);
-}
-
 @media (min-width: 720px) {
   .avoice {
     max-width: 36em;
