@@ -41,11 +41,11 @@ export default function LegendsPage() {
               <ArtMedal size={20} />
               いちばん語られている
             </span>
-            <div className="zk-hero-art">
-              <img src={`/sprites/${top.icon}.webp`} alt="" />
-            </div>
             <div className="zk-tape-h">
               <Tape>{top.title}</Tape>
+            </div>
+            <div className="zk-hero-art">
+              <img src={`/sprites/${top.icon}.webp`} alt="" />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />

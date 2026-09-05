@@ -229,10 +229,18 @@
 .zk-hero-art {
   position: relative;
   height: 168px;
-  margin-top: var(--sp-3);
+  /* 題名の札が上に来たので、絵の上下に余白を先に取る。
+     本物の図鑑は絵の上下に紙の高さの2割ずつ空いていて、
+     そのぶんで「ここを見ろ」と言っている（`docs/ac-reference.md` 7-4）。 */
+  margin: var(--sp-5) 0 var(--sp-3);
   display: flex; align-items: flex-end; justify-content: center;
 }
 @media (min-width: 720px) { .zk-hero-art { height: 230px; } }
+/* 図鑑の1枚（料理の詳細）。この面の主役は料理の絵1つなので、
+   縦の半分以上を絵にする。2周目の実測では紙の 19% しかなかった。 */
+.zk-hero.is-dex .zk-hero-art { height: 268px; margin: var(--sp-6) 0 var(--sp-5); }
+@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 372px; } }
+.zk-hero.is-dex .zk-hero-art::before { height: 34px; }
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {
   content: "";
@@ -249,7 +257,7 @@
   object-fit: contain;
   filter: drop-shadow(6px 7px 0 rgba(120, 140, 112, 0.22));
 }
-.zk-hero .zk-tape { margin-top: var(--sp-4); }
+.zk-hero .zk-tape { margin-top: var(--sp-3); }
 /* 題名の札を h1 として置く。見出しの既定の余白を落として、札の位置だけで決める */
 .zk-tape-h { margin: 0; font-size: inherit; font-weight: inherit; letter-spacing: inherit; }
 .zk-hero-note {

@@ -20,35 +20,39 @@ import { loadSpots, nordicCountry, NORDIC_COUNTRIES } from "@/content/nordic";
  */
 
 /**
- * 国ごとの顔。
+ * 国ごとの顔に選ぶ見どころ。**id だけを持つ。**
+ *
+ * 題名も「ここが面白い」（`point`）も、見どころのデータがもう持っている。
+ * ここで文を書き直すと、`python/build_nordic.py` が作り直したときに
+ * こちらだけ古い文が残るし、実際に書いてみると題名の言い換えにしかならなかった
+ * （フィンランドで「岩をくり抜いた光の教会」と「岩をくり抜いて、そのまま教会にした」）。
  *
  * 選ぶ基準:
  *   1. ルートで実際に降りる街にあること（寄り道が要るものは選ばない）
  *   2. 写真1枚で伝わること
- *   3. 「なぜ見たいか」が1行で言えること
  */
-const FACE: Record<string, { id: string; why: string }> = {
-  poland: { id: "poland-krakow-main-square", why: "戦火を逃れた本物の中世が、まるごと残っている" },
-  lithuania: { id: "lithuania-s191", why: "十万本の十字架が、丘ひとつを埋めている" },
-  latvia: { id: "latvia-s166", why: "通りぜんぶがユーゲントシュティールの彫刻" },
-  estonia: { id: "estonia-s144", why: "赤い屋根の海を見下ろす、絵はがきの丘" },
-  finland: { id: "finland-s001", why: "岩をくり抜いて、そのまま教会にした" },
-  sweden: { id: "sweden-s042", why: "沈んだまま333年、ほぼ原形で引き上げられた軍艦" },
+const FACE: Record<string, string> = {
+  poland: "poland-krakow-main-square",
+  lithuania: "lithuania-s191",
+  latvia: "latvia-s166",
+  estonia: "estonia-s144",
+  finland: "finland-s001",
+  sweden: "sweden-s042",
 };
 
 export default async function Countries() {
   const cards = await Promise.all(
     NORDIC_COUNTRIES.map(async (c) => {
-      const face = FACE[c.slug];
+      const id = FACE[c.slug];
       const spots = await loadSpots(c.slug);
-      const spot = face ? spots.find((s) => s.id === face.id) : undefined;
-      return { c, spot, why: face?.why };
+      const spot = id ? spots.find((s) => s.id === id) : undefined;
+      return { c, spot };
     }),
   );
 
   return (
     <div className="ncountries">
-      {cards.map(({ c, spot, why }) => (
+      {cards.map(({ c, spot }) => (
         <Link key={c.slug} className="ncountry" href={`/nordic/${c.slug}`}>
           <span className="ncountry-img">
             {spot?.img && (
@@ -67,10 +71,18 @@ export default async function Countries() {
                 <Icon name="right" size={13} />
               </span>
             </span>
-            {/* 見どころの名前と、なぜ見たいのか。国の紹介文（`c.catch`）は
-                ここでは出さない。写真が言っていることを、字でもう一度言うことになる。 */}
-            {spot && <i>{spot.title}</i>}
-            {why && <em>{why}</em>}
+            {/* 見どころの名前と、どこで見られて、なにが面白いのか。
+                国の紹介文（`c.catch`）はここでは出さない。
+                写真が言っていることを、字でもう一度言うことになる。 */}
+            {spot && (
+              <>
+                <i>{spot.title}</i>
+                <em>
+                  {spot.city}
+                  {spot.point ? `　${spot.point}` : ""}
+                </em>
+              </>
+            )}
           </span>
         </Link>
       ))}

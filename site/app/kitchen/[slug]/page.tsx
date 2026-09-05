@@ -59,18 +59,21 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
       ]}
     >
       <Sheet>
-        {/* 図鑑の1ページ。まず絵、そのあとに名前。順番を逆にしない */}
+        {/* 図鑑の1ページ。本物（`/tmp/acref/ref_NH_Critterpedia_Coelacanth.jpg`）と
+            並べると、題名の札は絵の上にある。番号 → 名前 → 絵、の順にすると
+            h1 が絵より先に来るので、読み上げの順番も画面の順番と合う。
+            そのうえで、この面で見るものは絵だと言い切るために `is-dex` で大きく取る。 */}
         <Zone>
-          <div className="zk-hero">
+          <div className="zk-hero is-dex">
             <span className="zk-hero-no">
               No.{String(no).padStart(2, "0")} / {total}
             </span>
-            <div className="zk-hero-art">
-              <img src={`/sprites/${r.icon}.webp`} alt="" />
-            </div>
             <h1 className="zk-tape-h">
               <Tape>{r.name}</Tape>
             </h1>
+            <div className="zk-hero-art">
+              <img src={`/sprites/${r.icon}.webp`} alt="" />
+            </div>
             <p className="zk-hero-note">{r.note}</p>
           </div>
         </Zone>

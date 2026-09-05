@@ -83,8 +83,10 @@ function figures(slug: string) {
         { n: RECIPES.length, unit: "品", label: "ここで決まった料理", note: "メニューはこの日に決まる" },
       ];
     case "monthly":
+      // 「1回 / 毎月末」は読んでも何も分からない数字だったのでやめた
+      // （`docs/island-design.md` 4章）。数えられるのはこの2つ。
       return [
-        { n: 1, unit: "回", label: "毎月末", note: "朝日が出るまで" },
+        { n: 4, unit: "つ", label: "その日に出す賞", note: "出席・名言・おもしろ・投げ銭" },
         { n: "全部", label: "読み返すコメント", note: "その月に流れたぶん" },
       ];
     default:
@@ -188,8 +190,8 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Zone>
       </Sheet>
 
+      {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
       {t.deeper && (
-        {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
         <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
           <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
           <span className="tile-text">
