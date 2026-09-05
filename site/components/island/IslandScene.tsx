@@ -521,53 +521,66 @@ const swellPaths = [180, 262, 352].map((d, i) =>
  * 草地ぜんぶを2回塗るということで、しかも片方は patternTransform で回して
  * いた（回したパターンは、そのぶん引き直しが要る）。
  * タイル1枚を大きくして中身を増やせば、1回塗るだけで同じだけばらける。
+ *
+ * 中身は公式の広場の芝（`ref_NH_Plaza_Exercise` の 60,560〜800,700）を
+ * 拡大して測り直した。分かったのは3つ。
+ *
+ *   1. **ほぼ全部が同じ向きの三角**。丸い葉やクローバーは入っていない
+ *   2. 明暗の付きかたが左右で違う。
+ *      地 #5cc664 V0.78 に対して、**暗い三角 #449d59 V0.62（差 0.16）**、
+ *      明るい三角 #64d06d V0.82（差 0.04）。**暗いほうが主役**
+ *   3. 黄色い株は散らばっていない。**数株ずつ固まって生えている**
+ *
+ * 前のタイルはこの3つが全部逆だった（丸が混ざり、明るいほうが濃く、
+ * 黄が均等に散り、さらに砂色の薄い粒を撒いていた）。
+ * 薄い粒は公式には無く、拡大すると芝の上の染みに見えていたのでやめる。
+ * 塗る面も1枚減る。
  */
 function grassTile(seed: number, count: number, size: number) {
   const r = rng(seed);
   const f = (n: number) => n.toFixed(1);
   const SHAPES = [
-    // 三角の葉
+    // 三角の葉。公式の芝はほとんどこれ
     (x: number, y: number, s: number) => `M${x},${y}l${f(-3.4 * s)},${f(-6.2 * s)}h${f(6.8 * s)}Z`,
     // 二股の草
     (x: number, y: number, s: number) =>
       `M${x},${y}l${f(-2.6 * s)},${f(-6.6 * s)}l${f(2.6 * s)},${f(3.2 * s)}l${f(2.6 * s)},${f(-3.2 * s)}Z`,
-    // 小さなクローバー
-    (x: number, y: number, s: number) => oval(x, y - 1.7 * s, 2.2 * s, 1.7 * s),
-    // 三つ葉。1本だけ形の違うものを混ぜると、繰り返しが目につかなくなる
+    // 三つ葉。1割だけ形の違うものを混ぜると、繰り返しが目につかなくなる
     (x: number, y: number, s: number) =>
       `M${x},${y}l${f(-1.6 * s)},${f(-4 * s)}l${f(1.6 * s)},${f(1.4 * s)}l${f(1.6 * s)},${f(-1.4 * s)}Z` +
       oval(x - 2.6 * s, y - 4.4 * s, 1.5 * s, 1.2 * s) +
       oval(x + 2.6 * s, y - 4.4 * s, 1.5 * s, 1.2 * s),
   ];
+  /** 黄みの強い株が固まって生えるところ。タイル1枚につき数か所。 */
+  const patches = Array.from({ length: 4 }, () => ({
+    x: r() * size,
+    y: r() * size,
+    r: 22 + r() * 20,
+  }));
   let hi = "";
   let lo = "";
   /** 黄みの強い株。公式の広場の草地には、緑の三角に混じって黄色い三角が必ず入っている。
       これが無いと、地面が「緑一色の絨毯」になって暖かみが出ない。 */
   let dry = "";
-  /** 落ち葉と小石。緑ばかりだと草の絨毯にしか見えない。 */
-  let dust = "";
   for (let i = 0; i < count; i++) {
     // 継ぎ目に葉がまたがらないよう、ふちから少し内側にだけ置く
     const x = +(6 + r() * (size - 12)).toFixed(1);
     const y = +(8 + r() * (size - 12)).toFixed(1);
     const k = r();
-    const d = SHAPES[k < 0.34 ? 0 : k < 0.62 ? 1 : k < 0.84 ? 2 : 3](x, y, 0.8 + r() * 0.9);
-    const c = r();
-    if (c < 0.44) hi += d;
-    else if (c < 0.78) lo += d;
-    else dry += d;
-    if (r() < 0.22) {
-      const s = 0.9 + r() * 1.1;
-      dust += oval(x + 5 + r() * 9, y + 3 + r() * 7, 2.1 * s, 1.2 * s);
-    }
+    const d = SHAPES[k < 0.66 ? 0 : k < 0.9 ? 1 : 2](x, y, 0.8 + r() * 0.9);
+    // 黄色い株は、上で決めた数か所のまわりにだけ生やす
+    const inPatch = patches.some((p) => Math.hypot(p.x - x, p.y - y) < p.r);
+    if (inPatch && r() < 0.62) dry += d;
+    else if (r() < 0.62) lo += d;
+    else hi += d;
   }
-  return { hi, lo, dry, dust, size };
+  return { hi, lo, dry, size };
 }
 /** 枯れかけの草の色。テーマが変わっても草と金色の中間に付いていく。 */
 const GRASS_DRY = "color-mix(in srgb, var(--grass-hi) 52%, var(--gold) 48%)";
 
 /** タイル1枚。大きいほど繰り返しが目につきにくい。 */
-const GRASS_TILE = grassTile(1207, 224, 208);
+const GRASS_TILE = grassTile(1207, 268, 208);
 
 const plateauTopPath = blob(PLATEAU.cx, PLATEAU.cy - PLATEAU.drop, PLATEAU.radii, PLATEAU.squash);
 
@@ -1085,11 +1098,11 @@ function IslandScene() {
         </linearGradient>
         {/* 草の地模様。葉を1枚ずつ置かず、タイル1枚を敷いて済ませる。 */}
         <pattern id="grassTex" width={GRASS_TILE.size} height={GRASS_TILE.size} patternUnits="userSpaceOnUse">
-          <path d={GRASS_TILE.hi} fill="var(--grass-hi)" opacity="0.5" />
-          <path d={GRASS_TILE.lo} fill="var(--grass-lo)" opacity="0.32" />
-          <path d={GRASS_TILE.dry} fill={GRASS_DRY} opacity="0.44" />
-          {/* 落ち葉と小石。緑だけだと絨毯に見えるので、暖色を少しだけ混ぜる。 */}
-          <path d={GRASS_TILE.dust} fill="var(--sand-edge)" opacity="0.28" />
+          {/* 濃さの配分は公式の実測どおり。暗い三角が主役で、明るいほうは添えるだけ。
+              前は逆（明 0.5 / 暗 0.32）で、芝が白茶けて見えていた。 */}
+          <path d={GRASS_TILE.lo} fill="var(--grass-lo)" opacity="0.56" />
+          <path d={GRASS_TILE.hi} fill="var(--grass-hi)" opacity="0.26" />
+          <path d={GRASS_TILE.dry} fill={GRASS_DRY} opacity="0.5" />
         </pattern>
         <clipPath id="grassClip">
           <path d={grassPath} />
