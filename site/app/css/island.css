@@ -319,23 +319,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 .who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
-/* 話しかけられる人は、足元がふわっと光る。頭の上に印は出さない（島が!だらけになる） */
-.who.is-calling .who-hit::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 34px;
-  height: 12px;
-  margin-left: -17px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 246, 207, 0.9), rgba(255, 246, 207, 0));
-  animation: whoBreath 2.2s ease-in-out infinite;
-}
-@keyframes whoBreath {
-  0%, 100% { opacity: 0.45; transform: scale(0.9); }
-  50% { opacity: 0.9; transform: scale(1.15); }
-}
+/* 「この人が話したがっている」を、足元の光で予告するのをやめた。
+   島の合図は「入口＝札」と「新しいものがある＝赤い丸」の2つと決めてある。
+   光はそのどちらでもない3つ目で、しかも夜のランタンと同じ言い方だった。
+
+   予告そのものが要らなくなっている。**住人は向こうから話しかけてくる**
+   （`villagers.ts` の callOut）。話しかけてくることが、その合図。
+   そのあとは12人とも押せば喋る（セリフを書いていない人も
+   `content/chatter.ts` の COMMON_LINES に落ちるので、空の吹き出しは出ない）。
+   選ばせるものが無いのだから、選ぶための印も要らない。 */
 .who-name {
   position: absolute;
   left: 0;

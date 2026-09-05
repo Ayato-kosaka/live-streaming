@@ -633,10 +633,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const w = whoRefs.current[i];
         if (w) {
           w.style.display = off ? "none" : "";
-          if (!off) {
-            w.style.transform = `translate(${sx(v.x).toFixed(1)}px, ${sy(v.y).toFixed(1)}px)`;
-            w.classList.toggle("is-calling", !!v.invite);
-          }
+          // 合図を出しているかどうかは、絵に出さない（足元の光をやめた）。
+          // 誰が話したがっているかは、その人が向こうから口を開くことで伝わる。
+          if (!off) w.style.transform = `translate(${sx(v.x).toFixed(1)}px, ${sy(v.y).toFixed(1)}px)`;
         }
       }
 

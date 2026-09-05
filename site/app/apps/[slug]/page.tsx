@@ -23,7 +23,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  * アプリ1本のページ。
  *
  * 上は「いま何ができるアプリか」、下は「どうやってここまで来たか」。
- * 節目は20行を超えるので、年ごとに畳んでおく。いちばん新しい年だけ開く。
+ * 節目は20行を超えるので、年ごとに畳んでおく。閉じたままでも、
+ * その年でいちばん新しくやったことは見出しの下に1行出る。
  */
 
 /** 節目の種類。5色に塗り分けていたのをやめた。
@@ -107,8 +108,11 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       <Panel>
         <h2>ここまで、どう作ってきたか</h2>
         <p className="muted">年を押すと開きます。配信のリンクは、その日の回そのものです。</p>
-        {years.map(([year, list], i) => (
-          <Fold key={year} title={`${year}年`} note={`${list.length}件`} open={i === 0}>
+        {/* どの年も畳んでおく。前はいちばん新しい年を開いていたが、
+            2026年だけで9件（約990px）あって、この面が3.7画面になっていた。
+            閉じていても、その年でいちばん新しくやったことは見出しの下に出る。 */}
+        {years.map(([year, list]) => (
+          <Fold key={year} title={`${year}年`} lead={list[0].title} note={`${list.length}件`}>
             <div className="anote">
               {list.map((m) => (
                 <div className="astep" key={m.date + m.title}>

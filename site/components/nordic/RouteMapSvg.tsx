@@ -79,6 +79,11 @@ export default function RouteMapSvg({ here }: { here?: string }) {
   const hereSeq = here != null ? seqOf[here] : undefined;
   const done = (s: number) => hereSeq != null && s <= hereSeq;
 
+  // 飛行機の区間。地図では1本の破線で、街のピンを2つ持たない
+  // （出発地のクタイシは画面の外）。降りる街は seq が最小のところ。
+  const flySeq = Math.min(...cities.map((c) => c.seq));
+  const flyLegId = ROUTE.find((l) => l.move === "fly")?.id;
+
   return (
     <svg
       className="nmap"
@@ -199,8 +204,15 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         </text>
       ))}
 
-      {/* ---- ジョージアからの飛行機。画面の外から入ってくる -------- */}
-      <path className="nm-fly" d={fly.d} />
+      {/* ---- ジョージアからの飛行機。画面の外から入ってくる --------
+           この1本も区間カードを持っている（足代も道しるべも席がある）ので、
+           `data-leg` を付けて、ほかの区間と同じように状態を出せるようにする。
+           降りるのは、地図に出ている街のうちいちばん手前（seq が最小）のところ。 */}
+      <g className="nm-leg is-fly" data-leg={flyLegId} data-seq={flySeq}>
+        <path className="nm-leg-look" d={fly.d} strokeWidth="30" />
+        <path className="nm-fly" d={fly.d} />
+        <path className="nm-leg-tie" d={fly.d} strokeWidth="3" strokeDasharray="16 15" />
+      </g>
       <g className="nm-chip" transform={`translate(${fly.chip[0]} ${fly.chip[1]})`}>
         <rect x="-178" y="-26" width="356" height="52" rx="26" />
         <text x="0" y="9" textAnchor="middle">
