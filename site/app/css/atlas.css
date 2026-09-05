@@ -157,21 +157,24 @@
   0% { transform: scale(1); opacity: 0.9; }
   100% { transform: scale(2.6); opacity: 0; }
 }
+/* 国の名前。地図に刷った文字であって、押すものではない。
+   前はクリームの丸札に厚みを付けていて、9カ国ぶん並ぶと地形が見えなくなり、
+   しかも「押せる板」が名札の数だけ増えていた。
+   押せるのはピンの丸のほうなので、名前は縁取りの文字だけにする。 */
 .apin-name {
   position: absolute;
   left: 50%;
-  bottom: 34px;
+  /* .apin は 48px。下から 30px = 丸の中心の 6px 上に名札の下辺が来る。
+     この数は labels.ts の当たり判定と対になっている。片方だけ動かさない。 */
+  bottom: 30px;
   /* 隣の国とぶつかるときの逃がしぶん（WorldRoute が決める） */
   transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
   white-space: nowrap;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 11.5px;
+  color: var(--am-ink);
+  font-size: 12.5px;
   font-weight: 900;
-  letter-spacing: 0.02em;
-  padding: 3px 9px;
-  border-radius: 999px;
-  box-shadow: 0 2px 0 var(--frame-dark);
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 6px #fff, 0 1px 0 #fff, 0 0 9px #fff;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
@@ -334,7 +337,7 @@
   .apin { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: 11.5px; }
   .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
-  .apin-name { font-size: 12.5px; bottom: 38px; }
+  .apin-name { font-size: 13.5px; bottom: 34px; }
   .acity b { font-size: 11.5px; }
   .amap-tab { font-size: 14px; padding: 0 22px; }
 }

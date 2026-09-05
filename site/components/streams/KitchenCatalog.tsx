@@ -115,7 +115,7 @@ export default function KitchenCatalog({
           </div>
 
           <p className="kt-count">
-            <b>{shown.length}</b> 品を出しています
+            <b>{shown.length}</b> 品ならんでる
             {!reset && (
               <button
                 type="button"
@@ -125,7 +125,7 @@ export default function KitchenCatalog({
                   setKind("all");
                 }}
               >
-                絞り込みを外す
+                ぜんぶ出す
               </button>
             )}
           </p>
@@ -134,7 +134,7 @@ export default function KitchenCatalog({
 
       <div className="zk-zone is-flush">
         {shown.length === 0 ? (
-          <p className="kt-none">この組み合わせのスタンプは、まだ押されていない。</p>
+          <p className="kt-none">この組み合わせは、まだ押されていない。ほかの国か、ほかの種類を押してみて。</p>
         ) : (
           <div className="kt-grid-wrap">
             <div className="kt-grid">

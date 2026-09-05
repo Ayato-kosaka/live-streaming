@@ -174,7 +174,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
 
           {/* 街の名前は HTML。SVG の文字だと、スマホ幅で 8px になって読めない */}
           <div className="amap-pins">
-            {labels.map(({ c, dy, left }) => (
+              {labels.filter((v) => !v.hide).map(({ c, dy, left }) => (
               <span
                 key={c.id}
                 className={`acity${left ? " is-left" : ""}`}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
-import { chrome, hits, NOMINAL_W, placeCities, type Rect } from "./labels";
+import { chrome, NOMINAL_W, overlap, placeCities, type Rect } from "./labels";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
@@ -42,10 +42,16 @@ const LEGEND: [string, string][] = [
   ["side", "近くまで往復"],
 ];
 
-/** 国の名札の逃がし先 [左右, 上下]。上に置くのを本命に、順に空きを探す。 */
+/**
+ * 国の名札の逃がし先 [左右, 上下]。上に置くのを本命に、順に空きを探す。
+ *
+ * **遠くへ逃がさない。** 前は ±48px・下70px まで飛ばしていて、
+ * 「イギリス」がスコットランドの街の下に、「オーストリア」が
+ * イタリアの上に出ていた。どのピンの名前なのか分からなくなるくらいなら、
+ * 名前を出さないほうがいい（出さない判断は下の hide）。
+ */
 const PIN_SLOTS: [number, number][] = [
-  [0, 0], [-44, 0], [44, 0], [0, -23], [-44, -23], [44, -23],
-  [0, 47], [-48, 47], [48, 47], [0, -46], [0, 70],
+  [0, 0], [-28, 0], [28, 0], [0, 26], [-28, 26], [28, 26], [0, -20],
 ];
 
 type City = { id: string; name: string; x: number; y: number; country: string; kind: string };
@@ -123,24 +129,46 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     // ピンの丸そのもの。ここには何も置かせない。
     const pins = Object.entries(anchors).map(([slug, a]) => ({ slug, a, x: px(a.x), y: py(a.y) }));
     for (const p of pins) taken.push({ x0: p.x - 14, y0: p.y - 14, x1: p.x + 14, y1: p.y + 14 });
+    // 街の白い丸も埋まっているところ。名前だけ避けても、点に重なると読めない。
+    for (const c of cities) {
+      const [x, y] = [px(c.x), py(c.y)];
+      taken.push({ x0: x - 6, y0: y - 6, x1: x + 6, y1: y + 6 });
+    }
 
-    const country: Record<string, { dx: number; dy: number }> = {};
+    // 枠からはみ出していないか。前はこれを見ていなかったので、
+    // 章を切りかえたとき「ハンガリー」「チェコ」が地図の右に切れて出ていた。
+    const inFrame = (b: Rect) => b.x0 > 2 && b.x1 < SW - 2 && b.y0 > 2 && b.y1 < SH - 2;
+
+    const country: Record<string, { dx: number; dy: number; hide: boolean }> = {};
     if (!wide) {
       for (const p of pins.filter((v) => inBox(v.a.x, v.a.y)).sort((a, b) => a.a.order - b.a.order)) {
-        const w = (name[p.slug]?.length ?? 3) * 12 + 20;
+        const w = (name[p.slug]?.length ?? 3) * 12 + 8;
+        // 名札は .apin（48px）の下から 30px の位置に出る。実測すると
+        // 丸の中心から 28px 上〜6px 上、高さ 22px。字の大きさから
+        // 推し量ると必ずずれるので、測った数をそのまま書く。
+        const at = (dx: number, dy: number): Rect => ({
+          x0: p.x + dx - w / 2, y0: p.y - 28 + dy, x1: p.x + dx + w / 2, y1: p.y - 6 + dy,
+        });
         let put: { dx: number; dy: number; box: Rect } | null = null;
+        let best: { got: { dx: number; dy: number; box: Rect }; n: number } | null = null;
         for (const [dx, dy] of PIN_SLOTS) {
-          const box2: Rect = { x0: p.x + dx - w / 2, y0: p.y - 32 + dy, x1: p.x + dx + w / 2, y1: p.y - 8 + dy };
-          if (!taken.some((t) => hits(t, box2))) {
+          const box2 = at(dx, dy);
+          if (!inFrame(box2)) continue;
+          const n = overlap(box2, taken);
+          if (n === 0) {
             put = { dx, dy, box: box2 };
             break;
           }
+          if (!best || n < best.n) best = { got: { dx, dy, box: box2 }, n };
         }
-        const last = PIN_SLOTS[PIN_SLOTS.length - 1];
-        const dx = put?.dx ?? last[0];
-        const dy = put?.dy ?? last[1];
-        country[p.slug] = { dx, dy };
-        taken.push(put?.box ?? { x0: p.x + dx - w / 2, y0: p.y - 32 + dy, x1: p.x + dx + w / 2, y1: p.y - 8 + dy });
+        const got = put ?? best?.got;
+        const dx = got?.dx ?? 0;
+        const dy = got?.dy ?? 0;
+        // 国どうしが近すぎて、どこへ逃がしても重なるなら名前を出さない
+        // （オーストリアとスロバキア）。ピンの番号は残るし、下の年表に名前がある。
+        const hide = !put && (best?.n ?? Infinity) > 90;
+        country[p.slug] = { dx, dy, hide };
+        if (!hide) taken.push(got?.box ?? at(dx, dy));
       }
     }
 
@@ -296,7 +324,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
 
           {/* 国のピンと街。HTML で重ねているので、寄せても文字が小さくならない */}
           <div className={`amap-pins${wide ? " is-wide" : ""}`}>
-            {labels.city.map(({ c, dy, left }) => (
+            {labels.city.filter((v) => !v.hide).map(({ c, dy, left }) => (
               <span
                 key={c.id}
                 className={`acity${left ? " is-left" : ""}`}
@@ -309,7 +337,9 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               <Link
                 key={slug}
                 href={`/map/${slug}`}
-                className={`apin${slug === here ? " is-here" : ""}${!wide && inBox(a.x, a.y) ? " is-named" : ""}`}
+                className={`apin${slug === here ? " is-here" : ""}${
+                  !wide && inBox(a.x, a.y) && !labels.country[slug]?.hide ? " is-named" : ""
+                }`}
                 style={pos(a.x, a.y)}
               >
                 <span className="apin-dot">

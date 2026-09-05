@@ -57,6 +57,11 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     // その日はじめて来た人には、押させずに開いて渡す。
     // 「起動から今日は何が違うかまでの距離をゼロにする」のがこの板の役目なので、
     // 1回目だけは向こうから口を開く。2回目からは畳んでおく。
+    //
+    // ただし**開くのは、今日ほんとうに何かある日だけ**にする。
+    // 畳んだ札にも1行は出ているので、距離はそれでゼロになっている。
+    // 毎日かならず開くと、初めて来た人の第一印象が「島」ではなく
+    // 「板が2枚」になってしまう（島がほとんど見えなくなる）。
     let first = openedThisLoad ?? true;
     if (openedThisLoad === null) {
       try {
@@ -68,9 +73,12 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
       openedThisLoad = first;
     }
     setFresh(first);
-    setOpen(first);
+    // 配信中・企画の当日・きのう料理を作った日だけ、向こうから開く。
+    // 1年前の今日と「今夜まであとN分」は、畳んだ1行で足りる。
+    const worthOpening = first && ["live", "plan", "recipe"].includes(todayNews().kind);
+    setOpen(worthOpening);
     // 自動で開いた日は、その時点で今日ぶんを見せたことになる
-    if (first) seen.current = true;
+    if (worthOpening) seen.current = true;
 
     const id = setInterval(() => setNews(todayNews()), TICK);
     return () => clearInterval(id);

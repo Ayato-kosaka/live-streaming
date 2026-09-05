@@ -168,9 +168,18 @@ const ORDER = ["neutral", "green", "wood", "blue"];
  * こちらを使う。値は「あつ森ならこの色」というつもりで置いた固定色。
  */
 const MATERIALS = {
-  // 樹冠は草より深く、少し青みのある緑。黄色へ寄せすぎるとレタスに見える
-  leafsgreen: [0.300, 0.48, 0.48],
-  leafsdark: [0.315, 0.44, 0.40],
+  /* 樹冠。公式スクショの樹冠を実測して置き直した色(/tmp/acref)。
+   *
+   * 実測すると、あつ森の葉は思っているよりずっと彩度が低くて青い。
+   * 日向 #66bc78・陰 #4a7a6f で、彩度は 0.24〜0.40 しかない。
+   * ここに前の値(H0.300 S0.48)を置くと、緑が黄色へ寄って彩度も倍近くあり、
+   * 木が島でいちばん面積を取るぶん、島ぜんぶが安いCGに見えていた。
+   *
+   * 下の値は「陰も日向もひっくるめた平均がそこへ乗る」albedo。
+   * 単体で見ると青すぎるが、この上に LEAF_SHADE / LEAF_SUN の色みが乗って
+   * 陰が青緑・日向が黄緑に割れる。並べて合わせたのはその割れたあとの色。 */
+  leafsgreen: [0.406, 0.32, 0.537],
+  leafsdark: [0.444, 0.30, 0.428],
   grass: [0.275, 0.55, 0.55],
   dirt: [0.093, 0.44, 0.58],
   // あつ森の幹は思っているよりずっと明るい山吹色。暗い茶にすると急に写実的になる
@@ -414,6 +423,35 @@ const foliageCache = new Map();
 const LEAF_TOP = 1.14;
 const LEAF_BOTTOM = 0.62;
 
+/* 樹冠は、明るさだけでなく色みも上下で変わる。
+ *
+ * 公式スクショを測ると、同じ1本の木の中で色相がはっきり動いている。
+ *   陰 h0.46 s0.24 → 日向 h0.37 s0.40
+ * 屋外の陰は空の青を拾い、日向は太陽の黄を拾うので、physically にもこうなる。
+ * 明るさだけを掛けて色相を固定すると、陰が「ただ暗い緑」になって、
+ * そこだけ塗り絵に見える。あやと島の木が安く見えていた正体はこれ。
+ *
+ * 頂点色は拡散色への掛け算なので、明るさの係数に色の比を掛けて渡す。
+ * 中(=1.0)で [1,1,1]、そこから陰側 / 日向側へ振り分ける。 */
+const LEAF_SHADE = [0.93, 1.03, 1.60]; // 陰: 青みへ寄せて彩度を落とす
+const LEAF_SUN = [0.80, 1.17, 0.48];   // 日向: 黄みへ寄せて彩度を上げる
+/** 色みが振り切るまでの明るさの幅。1.0 を中心に ±この値で LEAF_SHADE/SUN になる */
+const LEAF_TINT_SPAN = 0.22;
+
+/**
+ * 明るさの係数を、色みまで含んだ [r,g,b] の係数に広げる。
+ * @param {number} val 明るさの係数(1.0 が中)
+ * @param {Float32Array} col 書き込み先
+ * @param {number} i 書き込む頂点の番号
+ */
+function leafTint(val, col, i) {
+  const u = clamp01(Math.abs(val - 1) / LEAF_TINT_SPAN);
+  const t = val < 1 ? LEAF_SHADE : LEAF_SUN;
+  col[i * 3] = val * (1 + (t[0] - 1) * u);
+  col[i * 3 + 1] = val * (1 + (t[1] - 1) * u);
+  col[i * 3 + 2] = val * (1 + (t[2] - 1) * u);
+}
+
 /**
  * @param {THREE.BufferGeometry} geo 元の形
  * @param {boolean} smooth 法線も平均するか(平らな葉には掛けない)
@@ -448,7 +486,10 @@ function foliageGeometry(geo, smooth) {
       const t = (pos.getY(i) - min.y) / span;
       const e = t * t * (3 - 2 * t);
       const v = LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * e;
-      col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v;
+      // 色みを振るのは樹冠(leafs*)だけ。草の株にも掛けると、
+      // 地面の草と株の色が食い違って、株だけ別の植物に見える
+      if (smooth) leafTint(v, col, i);
+      else { col[i * 3] = v; col[i * 3 + 1] = v; col[i * 3 + 2] = v; }
     }
     out.setAttribute("color", new THREE.BufferAttribute(col, 3));
   } catch (e) {
@@ -542,7 +583,7 @@ function leafLobes(base, amount) {
       const tg = clamp01((y - bb.min.y) / gSpan);
       const glob = 1 + (LEAF_BOTTOM + (LEAF_TOP - LEAF_BOTTOM) * (tg * tg * (3 - 2 * tg)) - 1) * LOBE_GLOBAL;
       const val = local * glob * bright;
-      col[v * 3] = val; col[v * 3 + 1] = val; col[v * 3 + 2] = val;
+      leafTint(val, col, v);
     }
     g.setAttribute("color", new THREE.BufferAttribute(col, 3));
     out.push(g);

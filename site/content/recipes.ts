@@ -169,7 +169,7 @@ export const RECIPES: Recipe[] = [
     slug: "shkmeruli-pasta",
     name: "シュクメルリパスタ",
     emoji: "🧄",
-    icon: "food-tajine",
+    icon: "food-mincemeat-pie",
     country: "georgia",
     kind: "rice",
     date: "2026-04-17",
