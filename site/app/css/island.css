@@ -1038,3 +1038,20 @@
   85%  { transform: translate3d(85vw, 26vh, 0) scale(0.75) rotate(7deg); opacity: 0.6; }
   100% { transform: translate3d(106vw, 35vh, 0) scale(0.6) rotate(8deg); opacity: 0; }
 }
+
+/* =========================================================
+   配信中だけ、やぐらに灯りがつく
+   ---------------------------------------------------------
+   `docs/island-play.md` 仕掛け5。日本時間 22:00〜25:00 のあいだだけ、
+   配信やぐらの窓に灯りがともって、屋根の向こうから煙が上がる。
+   **これは景色であって、押せる合図ではない**（`island-world.md` 3.4）。
+   厚みも照り返しも足さない。建物の押しかたは何も変わらない。
+
+   ふだんは display:none。出ていない21時間は、描く物が1つも増えない。
+   ========================================================= */
+.live-art { display: none; }
+.stage[data-live="on"] .live-art { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  /* 煙は止める。灯りは動かないので、そのまま点いている */
+  .stage[data-live="on"] .smoke circle { animation: none; opacity: 0.28; }
+}

@@ -11,6 +11,8 @@
  *   - ボタンは動作そのものの言葉にする（「送信」ではなく「はりだす」）
  */
 
+import { NOW_FALLBACK } from "./site";
+
 export const HERO = {
   eyebrow: "毎晩22時、世界のどこかから生放送",
   lede: [
@@ -79,6 +81,20 @@ export const UI = {
   close: "とじる",
   more: "もっと見る",
   talkTo: "話しかける",
+};
+
+/**
+ * 配信の時間（日本時間 22:00〜25:00）だけ、配信やぐらの札に出る言葉。
+ *
+ * `docs/island-play.md` 仕掛け5。この3時間は、島より向こうが本体なので
+ * 「はいる」ではなく**外へ出す**言い方にする。
+ * 地名を1つ入れて、ぼんやりした呼びかけにしない（この文書の決めごと）。
+ */
+export const LIVE = {
+  label: "いま配信中",
+  blurb: `${NOW_FALLBACK.place}から繋いでる`,
+  go: "見にいく",
+  aria: "いま配信中。YouTube を新しいタブで開く",
 };
 
 /** 企画掲示板。 */

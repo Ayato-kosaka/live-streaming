@@ -586,7 +586,7 @@
 }
 /* 題名の札。**絵の上**に来るのが実測（シーラカンスの面）。
    白い紙をテープで貼ったように、わずかに傾ける。 */
-.rzk-tag {
+.rzk-page > .rzk-tag {
   position: relative;
   z-index: 2;
   width: fit-content;
@@ -597,7 +597,8 @@
   border-radius: 3px;
   background: #fffdf3;
   transform: rotate(-1.2deg);
-  font-size: var(--fs-h3);
+  /* 題名。図鑑の1枚でいちばん大きい字は、絵の次にこれ */
+  font-size: clamp(16px, 4.6vw, 22px);
   font-weight: 900;
   line-height: 1.35;
   text-align: center;
@@ -611,7 +612,9 @@
   position: relative;
   display: grid;
   place-items: end center;
-  height: 210px;
+  /* 本物の図鑑は、絵が縦の半分以上を占める（ac-reference 7章 4）。
+     見開き全体が 640px ぐらいなので、その4割をここに渡す */
+  height: 250px;
   margin: var(--sp-4) 0 var(--sp-5);
 }
 .rzk-art img {
@@ -720,14 +723,18 @@
 
 @media (min-width: 720px) {
   /* PC は絵と欄を左右に割る。絵はここでも縦の半分以上を保つ */
-  .rzk-page { display: grid; grid-template-columns: 300px 1fr; grid-template-areas: "tag tag" "art fields" "art pager"; column-gap: var(--sp-5); align-content: start; padding: var(--sp-5); }
+  .rzk-page { display: grid; grid-template-columns: 340px 1fr; grid-template-areas: "tag tag" "art fields" "art pager"; column-gap: var(--sp-5); align-content: start; padding: var(--sp-5); }
   .rzk-tag { grid-area: tag; }
-  .rzk-art { grid-area: art; height: 330px; align-self: center; margin-bottom: 0; }
+  .rzk-art { grid-area: art; height: 360px; align-self: center; margin-bottom: 0; }
+  /* 絵は図鑑の主役。枠いっぱいまで使う（ac-reference 7章 4） */
+  .rzk-art img { max-width: 96%; }
   .rzk-fields { grid-area: fields; align-self: center; }
   .rzk-pager { grid-area: pager; }
 }
 
-/* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く */
+/* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く。
+   `.pap p`（0,1,1）に負けないよう、こちらも1段強く書く */
+.pap .rz-today,
 .rz-today {
   margin: var(--sp-4) 0 0;
   font-size: var(--fs-note);

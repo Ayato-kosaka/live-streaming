@@ -34,7 +34,8 @@ import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
 
-const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href ?? "https://youtube.com";
+/** 配信の行き先。島のやぐらの札も配信中はここへ送るので、出どころを1つにする。 */
+export const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href ?? "https://youtube.com";
 const watch = (videoId: string) => `https://www.youtube.com/watch?v=${videoId}`;
 
 /** 何日ぶんの節目を「節目」と呼ぶか。3〜4か月に1度しか当たらない間隔にする。 */
