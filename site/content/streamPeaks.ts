@@ -11,7 +11,8 @@
  *
  * **サーバー側でだけ使う。** ここをブラウザに配ると、
  * 使わない212本ぶんまで一緒に落ちていく。
- * 「1年前の今日」のぶんは `content/onThisDay.ts` に焼き込んである。
+ * 「1年前の今日」のぶんは `content/onThisDay.ts` に焼き込んであるし、
+ * 字と URL を作るだけの2つは `lib/peak.ts` に分けてある。
  */
 
 export type Peak = {
@@ -25,17 +26,3 @@ const PEAKS: Record<string, Peak> = {"-5Ihju_Nzgc":{"k":14760,"n":24},"-o85VHYmV
 
 /** その配信の山。無ければ null。 */
 export const peakOf = (videoId: string): Peak | null => PEAKS[videoId] ?? null;
-
-/**
- * 「1時間12分」。1時間に満たなければ分だけ。
- * 秒は出さない。3分の窓で数えているので、秒まで言うと精度を偽ることになる。
- */
-export function atText(sec: number): string {
-  const m = Math.round(sec / 60);
-  const h = Math.floor(m / 60);
-  return h > 0 ? `${h}時間${m % 60}分` : `${m}分`;
-}
-
-/** その時刻から開く YouTube の URL。 */
-export const watchAt = (videoId: string, sec: number) =>
-  `https://www.youtube.com/watch?v=${videoId}&t=${sec}s`;

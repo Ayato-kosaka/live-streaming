@@ -666,6 +666,14 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   background: color-mix(in srgb, var(--gold) 42%, var(--paper-2));
 }
 .vid-b b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
+/* どこから開くか。3時間の頭ではなく、コメントが重なったところから開く配信にだけ付く
+   （`components/streams/Vid.tsx`）。書かずに途中から始まると壊れて見えるので、
+   カードの中で必ず言う。押しどころはカード全体なので、ここは厚みを持たない。 */
+.vid-peak {
+  font-style: normal;
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--ink-2);
+}
 /* 何本目か。長い企画で「順番」を見せるときだけ付ける */
 .vid-no {
   position: absolute; top: -8px; left: -8px;

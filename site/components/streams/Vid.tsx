@@ -1,6 +1,7 @@
 import Icon from "@/components/ui/Icon";
 import type { Figure } from "@/content/legends";
-import { atText, peakOf, watchAt } from "@/content/streamPeaks";
+import { peakOf } from "@/content/streamPeaks";
+import { atText, watchAt } from "@/lib/peak";
 
 /**
  * 配信カード。
