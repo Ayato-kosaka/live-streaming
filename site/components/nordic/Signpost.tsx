@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
+import { postIdea, rememberVote, voteIdea, votedLocally } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import SignIn from "@/components/live/SignIn";
-import { allIdeas, legTag } from "./ideas";
+import { addIdea, bumpVote, legTag, useLegIdeas } from "./ideas";
 
 /**
  * 区間ごとの道しるべ。
@@ -18,10 +18,12 @@ import { allIdeas, legTag } from "./ideas";
  * あやとは現地に着いた日に、その区間ぶんだけ読み返せる。
  *
  * 読み込みは `ideas.ts` が1回だけまとめてやる。10区間ぶん別々に叩かない。
+ * 貼ったものもそこへ返す。同じ区間の「つながった」の表示が、同じ画面にいるので
+ * （`Carry.tsx` の `Tie`）、自分の欄だけが増えて、つながりが変わらないのはおかしい。
  */
 export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
   const tag = legTag(leg);
-  const [items, setItems] = useState<Idea[] | null>(null);
+  const items = useLegIdeas(tag);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
@@ -31,10 +33,7 @@ export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
 
   useEffect(() => {
     setVoted(votedLocally());
-    allIdeas()
-      .then((r) => setItems(r.ideas.filter((i) => i.text.startsWith(tag))))
-      .catch(() => setItems([]));
-  }, [tag]);
+  }, []);
 
   const submit = async () => {
     const t = text.trim();
@@ -46,7 +45,7 @@ export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
     setErr(null);
     try {
       const { idea } = await postIdea(tag + t, name.trim() || undefined, await token());
-      setItems((cur) => [idea, ...(cur ?? [])]);
+      addIdea(idea);
       setText("");
     } catch (e) {
       setErr(String(e).includes("429") ? "今日はもう出しすぎ。また明日。" : "貼れませんでした。もう一度どうぞ。");
@@ -57,7 +56,7 @@ export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
 
   const vote = async (id: string) => {
     if (voted.has(id)) return;
-    setItems((cur) => cur?.map((i) => (i.id === id ? { ...i, votes: i.votes + 1 } : i)) ?? cur);
+    bumpVote(id);
     rememberVote(id);
     setVoted(new Set([...voted, id]));
     try {
@@ -92,10 +91,10 @@ export default function Signpost({ leg, ask }: { leg: string; ask: string }) {
           ))}
         </ul>
       )}
-      {/* 「まだ0件」を失敗のように見せない。これから埋まる席として書く
+      {/* 「0件」を失敗のように見せない。言葉は「まだ」ではなく「これから」
           （`docs/nordic-fund.md` 3章）。 */}
       {items !== null && list.length === 0 && (
-        <p className="spost-none">この区間の道しるべは、まだ空いています。</p>
+        <p className="spost-none">この区間の道しるべは、これから立ちます。最初のひとつをどうぞ。</p>
       )}
 
       {!user && <SignIn compact />}

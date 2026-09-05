@@ -29,12 +29,20 @@ export function radiiToPoints(cx: number, cy: number, radii: number[], squash = 
   });
 }
 
-/** Catmull-Rom を三次ベジェに変換して、なめらかな閉曲線パスにする */
+/**
+ * Catmull-Rom を三次ベジェに変換して、なめらかな閉曲線パスにする。
+ *
+ * 島の輪郭は 128 点で持っていて、その形のパスが画面に 20 本以上ある。
+ * 小数第2位まで書くと、それだけで HTML が 20KB ほど太る。島は 1200 の
+ * 世界に描いてあって、画面では 1 が 0.6px にしかならない。
+ * 第1位で足りる。
+ */
 export function smoothClosedPath(points: Pt[], tension = 1): string {
   const n = points.length;
   if (n < 3) return "";
   const at = (i: number) => points[((i % n) + n) % n];
-  let d = `M${at(0)[0].toFixed(2)},${at(0)[1].toFixed(2)}`;
+  const f = (v: number) => v.toFixed(1);
+  let d = `M${f(at(0)[0])},${f(at(0)[1])}`;
   for (let i = 0; i < n; i++) {
     const p0 = at(i - 1);
     const p1 = at(i);
@@ -42,7 +50,7 @@ export function smoothClosedPath(points: Pt[], tension = 1): string {
     const p3 = at(i + 2);
     const c1: Pt = [p1[0] + ((p2[0] - p0[0]) / 6) * tension, p1[1] + ((p2[1] - p0[1]) / 6) * tension];
     const c2: Pt = [p2[0] - ((p3[0] - p1[0]) / 6) * tension, p2[1] - ((p3[1] - p1[1]) / 6) * tension];
-    d += `C${c1[0].toFixed(2)},${c1[1].toFixed(2)} ${c2[0].toFixed(2)},${c2[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+    d += `C${f(c1[0])},${f(c1[1])} ${f(c2[0])},${f(c2[1])} ${f(p2[0])},${f(p2[1])}`;
   }
   return d + "Z";
 }

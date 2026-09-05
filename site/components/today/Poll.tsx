@@ -95,13 +95,13 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
       // 自分の1票を先に足しておく。返事を待ってから足すと、
       // 「押したのに数字が動かない」がまず見えてしまう
       setPoll((p) =>
-        p ?
-          {
-            ...p,
-            total: p.total + 1,
-            options: p.options.map((o) => (o.id === option ? {...o, votes: o.votes + 1} : o)),
-          } :
-          p,
+        p
+          ? {
+              ...p,
+              total: p.total + 1,
+              options: p.options.map((o) => (o.id === option ? { ...o, votes: o.votes + 1 } : o)),
+            }
+          : p,
       );
       try {
         const t = await token();
@@ -118,9 +118,9 @@ export default function Poll({ onCount }: { onCount?: (unanswered: boolean) => v
         setSent("none");
         tell.current?.(true);
         setFailed(
-          String(e).includes("429") ?
-            "今日はたくさん押してくれた。また明日おねがい。" :
-            "いま数えられなかった。少し待ってから、もう一度おしてみて。",
+          String(e).includes("429")
+            ? "今日はたくさん押してくれた。また明日おねがい。"
+            : "いま数えられなかった。少し待ってから、もう一度おしてみて。",
         );
       }
     },

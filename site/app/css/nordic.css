@@ -319,13 +319,17 @@
 .rleg-stay { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
 
 /* --- 区間の席 ---
-   区間カードには席がある。いまは「道しるべ（言葉）」だけ。
-   足代（お金）の席は、区間ごとの実費と GET /fund が入ってから同じ形で足す。
+   区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
+   両方そろって、その区間はつながる（docs/nordic-fund.md 提案1）。
    席は罫線で仕切る。紙の型なので、中に板を積まない。 */
 .rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; }
-.rleg-seat > h3 {
-  display: inline-block;
+.rleg-seath {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 8px;
+}
+.rleg-seath b {
   padding: 2px 10px;
   font-size: 12px;
   font-weight: 900;
@@ -334,21 +338,146 @@
   background: var(--marker);
   color: var(--marker-ink);
 }
+.seatmark { flex: none; display: block; }
+
+/* --- つながりの読み上げ ---
+   埋まっていない区間を灰色にしない。灰色は失敗の色になる。
+   同じ明るさのまま、席が空いていることだけを言う。
+   つながった区間だけ、地の色が一段あたたかくなる。 */
+.rtie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 13px 0 0;
+  padding: 7px 11px 7px 8px;
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--marker) 32%, transparent);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+.rtie.is-tied {
+  background: color-mix(in srgb, var(--gold) 44%, transparent);
+  color: var(--ink);
+}
+.rtie b { font-weight: 900; color: var(--ink); }
+
+/* --- 足代 ---
+   金額は「区間の値段」と「その区間に入った額」だけ。
+   誰がいくら出したかも、順位も、どこにも出さない。 */
+.fare-what {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+.fare-what b { font-weight: 900; color: var(--ink); }
+.fare-what i {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+/* まだ値段が決まっていない区間。空欄にせず、調べていると書く。
+   「未定」と灰色で置くと、そこだけ死んでいるように見える。 */
+.fare-todo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+.fare-todo b { font-weight: 900; color: var(--ink); }
+.fare-todo i {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+.fare-bar {
+  display: block;
+  margin: 9px 0 6px;
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--rule) 26%, transparent);
+  overflow: hidden;
+}
+.fare-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--gold), #f0b021);
+}
+.fare-got { margin: 0; font-size: 12px; font-weight: 800; color: var(--ink-2); }
+.fare-got b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* 満ちたらバーを消す。満タンのバーを出し続けると
+   「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。 */
+.fare-full {
+  margin: 8px 0 0;
+  padding: 6px 11px;
+  display: inline-block;
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--gold) 50%, transparent);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* --- ボード全体 ---
+   人数はここに1回だけ。区間ごとには出さない（人違いが起きない作りにしてある）。 */
+.carried {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.carried b { font-weight: 900; color: var(--ink); }
+.carry-give { margin-top: 16px; }
+.carry-give p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.carry-give b { font-weight: 900; color: var(--ink); }
+.carry-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: linear-gradient(var(--gold), #f0b021);
+  box-shadow: var(--pop-sm);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.carry-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
 .spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
 .spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
 .spost-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
-/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。 */
+/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。
+   つながりの読み上げ（.rtie）がすぐ上にあるので、塗りは重ねず罫線1本にする。
+   同じ濃さの札が2つ続くと、どちらも読まれない。 */
 .spost-none {
   margin: 0 0 10px;
-  padding: 8px 11px;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--marker);
   font-size: 12px;
   font-weight: 800;
-  border-radius: var(--r-0);
-  background: color-mix(in srgb, var(--marker) 46%, transparent);
-  color: var(--marker-ink);
+  line-height: 1.75;
+  color: var(--ink-3);
 }
 
 /* =========================================================

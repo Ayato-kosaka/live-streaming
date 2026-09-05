@@ -30,6 +30,138 @@ function oval(x: number, y: number, rx: number, ry: number): string {
   return `M${f(x - rx)},${f(y)}a${f(rx)},${f(ry)} 0 1,0 ${f(rx * 2)},0a${f(rx)},${f(ry)} 0 1,0 ${f(-rx * 2)},0`;
 }
 
+/**
+ * 角のある面。石にだけ使う。
+ *
+ * 石を楕円で描くと、どうしても「じゃがいも」に見える。公式の石は
+ * 面で割れていて、角がはっきりある。多角形にして半径をばらすと、
+ * 同じ要素数のまま石らしくなる。
+ */
+function facet(x: number, y: number, rx: number, ry: number, n: number, r: () => number): string {
+  const f = (v: number) => v.toFixed(1);
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2 + (r() - 0.5) * 0.42;
+    const k = 0.78 + r() * 0.22;
+    d += `${i ? "L" : "M"}${f(x + Math.cos(a) * rx * k)},${f(y + Math.sin(a) * ry * k)}`;
+  }
+  return d + "Z";
+}
+
+/** 草の株。葉を数枚、根元から扇に開く。草むらにも浜の草にも同じ形を使う。 */
+function bladeClump(x: number, y: number, s: number, lean: number, n: number, r: () => number): string {
+  const f = (v: number) => v.toFixed(1);
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const dx = (i - (n - 1) / 2) * 2.6 * s;
+    const h = (5.5 + r() * 4.5) * s;
+    d += `M${f(x + dx)},${f(y)}q${f(dx * 0.4 + lean)},${f(-h * 0.6)} ${f(dx * 0.9 + lean * 2)},${f(-h)}q${f(-dx * 0.2)},${f(h * 0.55)} ${f(-dx * 0.6 - lean * 1.4)},${f(h)}Z`;
+  }
+  return d;
+}
+
+/* ---- 小さな飾り ---------------------------------------------------------
+   島にいちばん多く置いてあるのは、石・低木・切り株・きのこ・浜の草。80個あった。
+
+   これを 320px のスプライトで置いていた。島の上では 12〜30px にしか出ないので、
+   毎フレーム、元の大きさから引き直すことになる。画像は「小さく出すほど重い」。
+   実測すると、この80枚を消すだけでフレーム間隔が 67ms → 17ms になった。
+   起動直後がカクついていた原因はここ。
+
+   上から見た石は「影・面・光の当たる面」の3枚でしかない。ベクターで描いて
+   色ごとに1本のパスへまとめれば、80枚が10本のパスで済む。絵は変わらない。
+   -------------------------------------------------------------------- */
+
+type DecoKind = "rock" | "bush" | "stump" | "shroom" | "tuft";
+export type Deco = { k: DecoKind; x: number; y: number; s: number };
+
+/** 色ごとのバケツ。塗る色が同じものは、何個あっても1本のパスに入る。 */
+type DecoPaths = {
+  shade: string;
+  rock: string;
+  rockLit: string;
+  bush: string;
+  bushLit: string;
+  bark: string;
+  barkTop: string;
+  cap: string;
+  stem: string;
+  tuft: string;
+  tuftLit: string;
+};
+
+function bakeDeco(list: Deco[], seed: number): DecoPaths {
+  const r = rng(seed);
+  const b: DecoPaths = {
+    shade: "", rock: "", rockLit: "", bush: "", bushLit: "",
+    bark: "", barkTop: "", cap: "", stem: "", tuft: "", tuftLit: "",
+  };
+  for (const it of list) {
+    const { x, y, s } = it;
+    if (it.k === "rock") {
+      const w = s * 1.34;
+      // 影は光源の反対（右下）へずらす。真下だと物が地面に乗って見えない
+      b.shade += oval(x + w * 0.12, y + s * 0.1, w * 0.6, s * 0.3);
+      b.rock += facet(x, y - s * 0.42, w * 0.5, s * 0.5, 6, r);
+      b.rockLit += facet(x - w * 0.12, y - s * 0.62, w * 0.28, s * 0.26, 5, r);
+    } else if (it.k === "bush") {
+      const w = s * 1.12;
+      b.shade += oval(x + w * 0.12, y + s * 0.07, w * 0.58, s * 0.26);
+      // 玉を3つ重ねる。1つだと饅頭に見える
+      b.bush +=
+        oval(x, y - s * 0.46, w * 0.5, s * 0.48) +
+        oval(x - w * 0.3, y - s * 0.3, w * 0.31, s * 0.3) +
+        oval(x + w * 0.31, y - s * 0.32, w * 0.29, s * 0.29);
+      b.bushLit +=
+        oval(x - w * 0.13, y - s * 0.66, w * 0.29, s * 0.23) +
+        oval(x + w * 0.17, y - s * 0.56, w * 0.18, s * 0.15);
+    } else if (it.k === "stump") {
+      const hw = s * 0.44;
+      const f = (v: number) => v.toFixed(1);
+      b.shade += oval(x + hw * 0.34, y + s * 0.07, hw * 1.32, s * 0.26);
+      // 幹の側面。上下を楕円でふさぐと、切り株の「筒」になる
+      b.bark += `M${f(x - hw)},${f(y - s * 0.62)}L${f(x - hw)},${f(y - s * 0.16)}a${f(hw)},${f(s * 0.2)} 0 0,0 ${f(hw * 2)},0L${f(x + hw)},${f(y - s * 0.62)}Z`;
+      b.barkTop += oval(x, y - s * 0.62, hw, s * 0.21);
+      // 年輪。1本あるだけで切り口に見える
+      b.bark += oval(x, y - s * 0.62, hw * 0.44, s * 0.09);
+    } else if (it.k === "shroom") {
+      const f = (v: number) => v.toFixed(1);
+      b.shade += oval(x + s * 0.12, y + s * 0.04, s * 0.42, s * 0.17);
+      b.stem += `M${f(x - s * 0.15)},${f(y)}L${f(x - s * 0.12)},${f(y - s * 0.42)}h${f(s * 0.24)}L${f(x + s * 0.15)},${f(y)}Z`;
+      b.cap += `M${f(x - s * 0.44)},${f(y - s * 0.4)}a${f(s * 0.44)},${f(s * 0.38)} 0 0,1 ${f(s * 0.88)},0Z`;
+      b.stem += oval(x - s * 0.14, y - s * 0.56, s * 0.1, s * 0.07) + oval(x + s * 0.16, y - s * 0.5, s * 0.08, s * 0.06);
+    } else {
+      const k = 1.1 + r() * 1.1;
+      const d = bladeClump(x, y, k * (s / 14), (r() - 0.5) * 2.4, 3 + Math.floor(r() * 3), r);
+      if (r() < 0.5) b.tuftLit += d;
+      else b.tuft += d;
+    }
+  }
+  return b;
+}
+
+/** 飾りを描く。色は島のテーマ変数に付いていくので、北欧に行っても浮かない。 */
+function DecoLayer({ p, shade }: { p: DecoPaths; shade: string }) {
+  return (
+    <g aria-hidden>
+      <path d={p.shade} fill={shade} opacity="0.3" />
+      <path d={p.tuft} fill="var(--grass-lo)" opacity="0.75" />
+      <path d={p.tuftLit} fill="var(--grass-hi)" opacity="0.88" />
+      <path d={p.bush} fill={BUSH_DARK} />
+      <path d={p.bushLit} fill="var(--grass-hi)" />
+      <path d={p.bark} fill="#8a5c36" />
+      <path d={p.barkTop} fill="#c69a63" />
+      <path d={p.rock} fill="#8d9aa0" />
+      <path d={p.rockLit} fill="#c3ccd0" />
+      <path d={p.cap} fill="#e2522d" />
+      <path d={p.stem} fill="#f6efe0" />
+    </g>
+  );
+}
+
+/** 低木の地の色。草より一段暗くないと、地面に沈んで見えなくなる。 */
+const BUSH_DARK = "color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%)";
+
 /* ---- 島の形 -------------------------------------------------------------
    まん丸に近い輪郭は「島」に見えない。実際の島には、海へ突き出した岬と、
    海が食い込んだ入り江がある。ここでその2つを足す。
@@ -152,6 +284,8 @@ const SEA_SHALLOW = "color-mix(in srgb, var(--sea-shallow) 55%, var(--sand-wet) 
 const SEA_SHELF = "color-mix(in srgb, var(--sea-shelf) 62%, var(--sand) 38%)";
 /** 濡れた砂。公式は乾いた砂より「暗い」のではなく「濃い黄色」。灰色を混ぜない。 */
 const SAND_WET = "color-mix(in srgb, var(--sand-wet) 68%, var(--gold) 32%)";
+/** いちばん沖。深い青をさらに沈めた色。画面のふちで海が抜けて見えないように。 */
+const SEA_ABYSS = "color-mix(in srgb, var(--sea-deep) 84%, #0b3f86 16%)";
 
 const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
@@ -351,8 +485,11 @@ const swellPaths = [180, 262, 352].map((d, i) =>
  *
  * 本物の草地は一面に細かい葉が入っていて、のっぺりした面がどこにも無い。
  * 葉を1枚ずつ置くと数百要素になるので、タイル1枚に焼いて敷く。
- * 明るい葉と暗い葉で2枚に分け、大きさと角度を変えて重ねると、
- * タイルの継ぎ目と繰り返しが目につかなくなる。
+ *
+ * 前は大きさの違うタイルを2枚重ねて、繰り返しを隠していた。ただしそれは
+ * 草地ぜんぶを2回塗るということで、しかも片方は patternTransform で回して
+ * いた（回したパターンは、そのぶん引き直しが要る）。
+ * タイル1枚を大きくして中身を増やせば、1回塗るだけで同じだけばらける。
  */
 function grassTile(seed: number, count: number, size: number) {
   const r = rng(seed);
@@ -398,8 +535,8 @@ function grassTile(seed: number, count: number, size: number) {
 /** 枯れかけの草の色。テーマが変わっても草と金色の中間に付いていく。 */
 const GRASS_DRY = "color-mix(in srgb, var(--grass-hi) 52%, var(--gold) 48%)";
 
-/** 2枚のタイルを、大きさと角度を変えて重ねる。 */
-const GRASS_TILES = [grassTile(1207, 46, 152), grassTile(3311, 30, 97)];
+/** タイル1枚。大きいほど繰り返しが目につきにくい。 */
+const GRASS_TILE = grassTile(1207, 176, 208);
 
 const plateauTopPath = blob(PLATEAU.cx, PLATEAU.cy - PLATEAU.drop, PLATEAU.radii, PLATEAU.squash);
 
@@ -465,21 +602,17 @@ const DRESSING: Item[] = [
   // 配信やぐら: 見物用のベンチ
   { n: "bench", x: P.streams.x - 62, y: P.streams.y + 26, s: 26 },
   { n: "bench", x: P.streams.x + 66, y: P.streams.y + 30, s: 26, flip: true },
-  { n: "path-stone-circle", x: P.streams.x, y: P.streams.y + 40, s: 5 },
-  // キッチン小屋: 畑と樽がわりの切り株
+  // キッチン小屋: 畑の柵
   { n: "fence", x: P.kitchen.x - 62, y: P.kitchen.y + 34, s: 22 },
   { n: "fence", x: P.kitchen.x - 22, y: P.kitchen.y + 40, s: 22 },
-  { n: "stump", x: P.kitchen.x + 52, y: P.kitchen.y + 20, s: 20 },
-  { n: "mushroom", x: P.kitchen.x + 74, y: P.kitchen.y + 34, s: 16 },
   // アプリ工房: 作業台と丸太
   { n: "stall", x: P.apps.x + 62, y: P.apps.y + 26, s: 26 },
   { n: "log", x: P.apps.x - 58, y: P.apps.y + 30, s: 15 },
   // 伝説の丘: 記念碑
   { n: "statue", x: P.legends.x - 62, y: P.legends.y + 16, s: 54 },
   { n: "statue-head", x: P.legends.x + 66, y: P.legends.y + 20, s: 40 },
-  // これから: たきぎとカヌー(旅立ちの支度)
+  // これから: たきぎ(旅立ちの支度)
   { n: "log", x: P.next.x + 40, y: P.next.y + 18, s: 14 },
-  { n: "bush", x: P.next.x - 44, y: P.next.y + 14, s: 20 },
   // たき火広場: 座る丸太
   { n: "log", x: P.friends.x - 44, y: P.friends.y + 6, s: 15 },
   { n: "log", x: P.friends.x + 46, y: P.friends.y + 10, s: 15, flip: true },
@@ -489,12 +622,19 @@ const DRESSING: Item[] = [
   { n: "bench", x: P.now.x - 56, y: P.now.y + 24, s: 26 },
   // 旅の桟橋: 舟
   { n: "canoe", x: 214, y: 916, s: 20, flip: true },
-  { n: "rock-flat", x: 300, y: 906, s: 12 },
   // 池
   { n: "lily", x: POND.x - 24, y: POND.y + 4, s: 8 },
   { n: "lily", x: POND.x + 26, y: POND.y + 10, s: 7 },
-  { n: "rock-small", x: POND.x + 56, y: POND.y + 16, s: 16 },
   { n: "bridge", x: 872, y: 716, s: 22 },
+];
+
+/** 場所のそばに手で置く飾り。種類はスプライトと同じでも、描き方はベクター。 */
+const DRESS_DECO: Deco[] = [
+  { k: "stump", x: P.kitchen.x + 52, y: P.kitchen.y + 20, s: 20 },
+  { k: "shroom", x: P.kitchen.x + 74, y: P.kitchen.y + 34, s: 16 },
+  { k: "bush", x: P.next.x - 44, y: P.next.y + 14, s: 20 },
+  { k: "rock", x: 300, y: 906, s: 12 },
+  { k: "rock", x: POND.x + 56, y: POND.y + 16, s: 16 },
 ];
 
 /** 木のふち飾り。浜に近い外周はヤシ、内側は広葉樹。 */
@@ -558,22 +698,31 @@ const innerTrees = scatter(
   120,
 );
 
-const shrubs = scatter(
+/**
+ * 低木・石・切り株の散らし。
+ *
+ * ここはベクターで描く（上の「小さな飾り」を見よ）。置き場所の決め方は
+ * 木と同じなので、scatter をそのまま使って、あとから種類を読み替える。
+ */
+const shrubs: Deco[] = scatter(
   30,
   4477,
   grassR,
   22,
-  // 草と花はベクターで描くようになったので、ここは立体に見える物だけにする。
-  // 小さな絵をスプライトで置くほど <image> が増えて、起動直後が重くなる。
   (r) => {
     const k = r();
     if (k < 0.34) return { n: "bush", x: 0, y: 0, s: 22 + r() * 8 };
     if (k < 0.62) return { n: "bush-small", x: 0, y: 0, s: 17 + r() * 6 };
-    if (k < 0.86) return { n: "rock-small", x: 0, y: 0, s: 16 + r() * 8 };
+    if (k < 0.86) return { n: "rock", x: 0, y: 0, s: 16 + r() * 8 };
     return { n: "stump", x: 0, y: 0, s: 17 };
   },
   62,
-);
+).map((it) => ({
+  k: (it.n === "rock" ? "rock" : it.n === "stump" ? "stump" : "bush") as DecoKind,
+  x: it.x,
+  y: it.y,
+  s: it.n === "bush-small" ? it.s * 0.9 : it.s,
+}));
 
 /** 高台の上は針葉樹と岩。 */
 const plateauItems: Item[] = (() => {
@@ -598,15 +747,14 @@ const plateauItems: Item[] = (() => {
 })();
 
 /** 浜辺の岩。波打ち際に置くと島の縁が締まる。 */
-const shoreRocks: Item[] = (() => {
+const shoreRocks: Deco[] = (() => {
   const r = rng(555);
-  const out: Item[] = [];
+  const out: Deco[] = [];
   for (let i = 0; i < 14; i++) {
     const t = r();
     const [x, y] = pointAt(ISLAND.cx, ISLAND.cy, sandR, ISLAND.squash, t, -6 + r() * 22);
     if (out.some((p) => Math.hypot(p.x - x, p.y - y) < 60)) continue;
-    const k = r();
-    out.push({ n: k < 0.5 ? "rock-flat" : k < 0.8 ? "rock-small" : "rock-large", x, y, s: 14 + r() * 16 });
+    out.push({ k: "rock", x, y, s: 14 + r() * 16 });
   }
   return out;
 })();
@@ -759,35 +907,24 @@ const flowers = (() => {
 
 /** 草むら。パターンより一段大きい株を散らして、地面に高さの差を作る。 */
 const tufts = (() => {
-  const f = (n: number) => n.toFixed(1);
   let hi = "";
   let lo = "";
   for (const sp of groundSpots(54, 55021, 24, shrubs)) {
-    const s = 1.2 + sp.r() * 1.1;
-    const lean = (sp.r() - 0.5) * 2.4;
-    const blades = 3 + Math.floor(sp.r() * 3);
-    let d = "";
-    for (let i = 0; i < blades; i++) {
-      const dx = (i - (blades - 1) / 2) * 2.6 * s;
-      const h = (5.5 + sp.r() * 4.5) * s;
-      d += `M${f(sp.x + dx)},${f(sp.y)}q${f(dx * 0.4 + lean)},${f(-h * 0.6)} ${f(dx * 0.9 + lean * 2)},${f(-h)}q${f(-dx * 0.2)},${f(h * 0.55)} ${f(-dx * 0.6 - lean * 1.4)},${f(h)}Z`;
-    }
+    const d = bladeClump(sp.x, sp.y, 1.2 + sp.r() * 1.1, (sp.r() - 0.5) * 2.4, 3 + Math.floor(sp.r() * 3), sp.r);
     if (sp.r() < 0.5) hi += d;
     else lo += d;
   }
   return { hi, lo };
 })();
 
-/** 小石ときのこ。数は少ないので、これはスプライトのままにする。 */
-const groundDetail: Item[] = groundSpots(22, 8802211, 34, shrubs).map((sp) => {
+/** 小石ときのこ。草地のいちばん細かい飾り。 */
+const groundDetail: Deco[] = groundSpots(22, 8802211, 34, shrubs).map((sp) => {
   const k = sp.r();
   return {
-    n: k < 0.62 ? "rock-small" : k < 0.82 ? "mushroom" : "stump",
+    k: (k < 0.62 ? "rock" : k < 0.82 ? "shroom" : "stump") as DecoKind,
     x: sp.x,
     y: sp.y,
-    s: k < 0.62 ? 9 + sp.r() * 5 : k < 0.82 ? 9 + sp.r() * 3 : 14,
-    flip: sp.r() < 0.5,
-    still: true,
+    s: k < 0.62 ? 9 + sp.r() * 5 : k < 0.82 ? 10 + sp.r() * 4 : 14,
   };
 });
 
@@ -809,25 +946,21 @@ const soilPatches = (() => {
  * 浜に打ち上がるもの。砂の帯だけが無地だと、岸が板に見える。
  * 濡れた砂の帯を避けて、乾いた砂の側に置く。
  */
-const beachDetail: Item[] = (() => {
+const beachDetail = (() => {
   const r = rng(4130);
-  const out: Item[] = [];
+  const deco: Deco[] = [];
+  const logs: Item[] = [];
   for (let i = 0; i < 20; i++) {
     const t = (i + r() * 0.8) / 20;
     const [x, y] = pointAt(ISLAND.cx, ISLAND.cy, sandR, ISLAND.squash, t, 17 + r() * 13);
     if (PLACES.some((s) => Math.hypot(s.x - x, s.y - y) < 92)) continue;
-    if (out.some((p) => Math.hypot(p.x - x, p.y - y) < 34)) continue;
+    if (deco.some((p) => Math.hypot(p.x - x, p.y - y) < 34) || logs.some((p) => Math.hypot(p.x - x, p.y - y) < 34)) continue;
     const k = r();
-    out.push({
-      n: k < 0.42 ? "rock-small" : k < 0.72 ? "rock-flat" : k < 0.88 ? "grass" : "log",
-      x,
-      y,
-      s: k < 0.72 ? 8 + r() * 6 : 9 + r() * 4,
-      flip: r() < 0.5,
-      still: true,
-    });
+    // 流木だけはスプライトのまま。数が少ないうえ、形がベクターだと出しにくい
+    if (k >= 0.88) logs.push({ n: "log", x, y, s: 9 + r() * 4, flip: r() < 0.5, still: true });
+    else deco.push({ k: k < 0.72 ? "rock" : "tuft", x, y, s: k < 0.72 ? 8 + r() * 6 : 12 + r() * 5 });
   }
-  return out;
+  return { deco, logs };
 })();
 
 /**
@@ -848,14 +981,18 @@ export const LAMPS: [number, number, number][] = [
  * 島に置いてある物。手前(y が大きい)ほど後に描く。
  * 住人やあやとと重ね順を混ぜたいので、絵ではなく配列のまま外へ出す。
  */
+/**
+ * 飾りを2組に焼き分ける。砂の上と草の上とで、影に混ぜる色が違うため。
+ * 砂に緑がかった影を落とすと、そこだけ黴（かび）が生えたように見える。
+ */
+const SAND_DECO = bakeDeco([...shoreRocks, ...beachDetail.deco], 5501);
+const GRASS_DECO = bakeDeco([...shrubs, ...groundDetail, ...DRESS_DECO], 5502);
+
 export const PROPS: Item[] = [
-  ...shoreRocks,
   ...shoreTrees,
   ...plateauItems,
   ...innerTrees,
-  ...shrubs,
-  ...groundDetail,
-  ...beachDetail,
+  ...beachDetail.logs,
   ...BUILDINGS,
   ...DRESSING,
 ]
@@ -891,19 +1028,10 @@ export default function IslandScene() {
         >
           <stop offset="0.44" stopColor="var(--sea-mid)" />
           <stop offset="0.62" stopColor="var(--sea-deep)" />
-          <stop offset="1" stopColor="var(--sea-deep)" />
-        </radialGradient>
-        {/* 沖ほど深い。外側を締めないと、画面のふちで海が抜けて見える。 */}
-        <radialGradient
-          id="seaDeepG"
-          gradientUnits="userSpaceOnUse"
-          cx={CX}
-          cy={CY}
-          r={880}
-          gradientTransform={`translate(${CX} ${CY}) scale(1 ${SQ}) translate(${-CX} ${-CY})`}
-        >
-          <stop offset="0.6" stopColor="#0b3f86" stopOpacity="0" />
-          <stop offset="1" stopColor="#0b3f86" stopOpacity="0.16" />
+          {/* 沖ほど深い。前は濃い青の層をもう1枚かぶせていたが、それだと
+              画面いっぱいの面をもう一度塗ることになる。同じ絵は、この
+              グラデーションの外側の止め色を濃くするだけで出せる。 */}
+          <stop offset="1" stopColor={SEA_ABYSS} />
         </radialGradient>
         <radialGradient id="grassG" cx="38%" cy="28%">
           <stop offset="0" stopColor="var(--grass-hi)" />
@@ -918,22 +1046,13 @@ export default function IslandScene() {
           <stop offset="1" stopColor="var(--cliff-lo)" />
         </linearGradient>
         {/* 草の地模様。葉を1枚ずつ置かず、タイル1枚を敷いて済ませる。 */}
-        {GRASS_TILES.map((t, i) => (
-          <pattern
-            key={i}
-            id={`grassTex${i}`}
-            width={t.size}
-            height={t.size}
-            patternUnits="userSpaceOnUse"
-            patternTransform={i === 0 ? undefined : "rotate(24)"}
-          >
-            <path d={t.hi} fill="var(--grass-hi)" opacity={i === 0 ? 0.52 : 0.4} />
-            <path d={t.lo} fill="var(--grass-lo)" opacity={i === 0 ? 0.34 : 0.26} />
-            <path d={t.dry} fill={GRASS_DRY} opacity={i === 0 ? 0.46 : 0.34} />
-            {/* 落ち葉と小石。緑だけだと絨毯に見えるので、暖色を少しだけ混ぜる。 */}
-            <path d={t.dust} fill="var(--sand-edge)" opacity={i === 0 ? 0.3 : 0.22} />
-          </pattern>
-        ))}
+        <pattern id="grassTex" width={GRASS_TILE.size} height={GRASS_TILE.size} patternUnits="userSpaceOnUse">
+          <path d={GRASS_TILE.hi} fill="var(--grass-hi)" opacity="0.5" />
+          <path d={GRASS_TILE.lo} fill="var(--grass-lo)" opacity="0.32" />
+          <path d={GRASS_TILE.dry} fill={GRASS_DRY} opacity="0.44" />
+          {/* 落ち葉と小石。緑だけだと絨毯に見えるので、暖色を少しだけ混ぜる。 */}
+          <path d={GRASS_TILE.dust} fill="var(--sand-edge)" opacity="0.28" />
+        </pattern>
         <clipPath id="grassClip">
           <path d={grassPath} />
         </clipPath>
@@ -942,7 +1061,6 @@ export default function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
-      <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaDeepG)" />
       {/* 沖のうねり。島を囲む輪にすると、海が島に向かって寄せてくるように見える。
           ゆっくり大きくなって消えるので、水がこちらへ寄せているように見える。 */}
       <g className="swell" fill="none" stroke="#ffffff" strokeLinecap="round" aria-hidden>
@@ -985,12 +1103,13 @@ export default function IslandScene() {
       </g>
 
       {/* ------- 島 ------- */}
-      {/* 影。feGaussianBlur は面積に比例して重くなるので、
-          ずらした写しを薄く重ねてぼかしの代わりにする。 */}
-      <g fill="#06364a" aria-hidden>
-        {[6, 12, 19, 27].map((dy) => (
-          <path key={dy} d={sandPath} transform={`translate(0 ${dy})`} opacity="0.075" />
-        ))}
+      {/* 影。feGaussianBlur は面積に比例して重くなるので使わない。
+          ずらした写しを重ねてぼかしの代わりにしていたが、島ぜんぶを塗る面が
+          4枚あることになる。カメラは毎フレーム動くので、そのたび4回塗り直していた。
+          外へ広がるぶんは「同じ形を太い線でなぞる」だけで作れるので、塗りは1枚で済む。 */}
+      <g aria-hidden>
+        <path d={sandPath} transform="translate(0 22)" fill="none" stroke="#06364a" strokeOpacity="0.07" strokeWidth="26" />
+        <path d={sandPath} transform="translate(0 13)" fill="#06364a" opacity="0.16" />
       </g>
       <g>
         <path d={sandPath} fill="var(--sand)" />
@@ -1039,6 +1158,10 @@ export default function IslandScene() {
         </g>
       </g>
 
+      {/* ------- 浜の飾り -------
+          泡のあとに置く。波が石の足元まで来ているように見える。 */}
+      <DecoLayer p={SAND_DECO} shade="#8a6a3c" />
+
       {/* ------- 草地 ------- */}
       <path d={grassPath} fill="none" stroke="#ffffff" strokeOpacity="0.26" strokeWidth="5" strokeDasharray="240 460" strokeDashoffset="-40" />
       <g clipPath="url(#grassClip)">
@@ -1047,8 +1170,7 @@ export default function IslandScene() {
         <ellipse cx={824} cy={846} rx={136} ry={60} fill="var(--grass-lo)" opacity="0.16" />
         <ellipse cx={620} cy={556} rx={120} ry={52} fill="var(--grass-hi)" opacity="0.22" />
         {/* 草の地模様。更地の面をなくす。タイルなので要素は2つで済む。 */}
-        <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex0)" />
-        <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex1)" />
+        <rect x={CX - 480} y={CY - 460} width={960} height={920} fill="url(#grassTex)" />
         {/* 土の混じるところ。緑一色の面をなくす。 */}
         <path d={soilPatches} fill="var(--sand-wet)" opacity="0.2" />
       </g>
@@ -1097,6 +1219,8 @@ export default function IslandScene() {
         ))}
         <path d={flowers.cores} fill="#ffd24a" />
       </g>
+      {/* 低木・石・切り株・きのこ。スプライト80枚を、色ごとの11本のパスにした。 */}
+      <DecoLayer p={GRASS_DECO} shade="#2f4a33" />
 
       {/* ------- 沖を行く舟と、空のカモメ ------- */}
       {/* CSS の animation は transform 属性を上書きしてしまうので、

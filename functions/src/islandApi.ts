@@ -67,7 +67,8 @@ async function whoIs(header?: string): Promise<Who> {
     const saved = snap.exists ? snap.data() ?? {} : {};
     return {
       uid: t.uid,
-      name: clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) || "名無しさん",
+      name:
+        clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) || "名無しさん",
       channelId: (saved.channelId as string) || undefined,
     };
   } catch (e) {
@@ -618,7 +619,8 @@ export const islandApi = onRequest(
             if (!shaped.options.some((o) => o.id === option)) {
               throw new Error("bad option");
             }
-            if (shaped.openUntil && shaped.openUntil < new Date().toISOString()) {
+            const nowIso = new Date().toISOString();
+            if (shaped.openUntil && shaped.openUntil < nowIso) {
               throw new Error("closed");
             }
             // もう押している人は数えない。押し直しもさせない(1人1票)

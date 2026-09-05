@@ -513,4 +513,381 @@ export const food: Record<string, Draw> = {
       <Gl c={c} cx={20} cy={22} rx={5} ry={2.6} r={-32} o={0.5} />
     </>
   ),
+
+  /**
+   * 塩。瓶にすると `spice` と同じ形になるので、**木の小皿に盛った塩**にする。
+   * 白い山だけだと明るい下地で消えるから、皿の茶色で下から挟む。
+   */
+  salt: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={22} ry={4} />
+      <path d="M32 12c6.4 0 12 12 15.6 25H16.4C20 24 25.6 12 32 12z" fill={c.w} />
+      <path d="M32 12c6.4 0 12 12 15.6 25H32z" fill={c.wd} />
+      <rect x="5" y="35" width="54" height="7" rx="3.5" fill={c.wol} />
+      <path d="M8 41h48l-5.2 9.4a6 6 0 0 1-5.2 3.1H18.4a6 6 0 0 1-5.2-3.1z" fill={c.wo} />
+      <path d="M32 41h24l-5.2 9.4a6 6 0 0 1-5.2 3.1H32z" fill={c.wod} />
+      {/* こぼれた粒。これが無いと砂糖と見分けが付かない */}
+      <g fill={c.w}>
+        <circle cx="13" cy="31" r="2.2" />
+        <circle cx="52" cy="27" r="1.8" />
+        <circle cx="47" cy="19" r="1.5" />
+      </g>
+      <Gl c={c} cx={25} cy={24} rx={2.2} ry={6} r={18} o={0.6} />
+    </>
+  ),
+
+  /** こしょう。ミルの挽く部分（金属の台）で塩と分ける。 */
+  pepper: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      <rect x="27.6" y="3" width="8.8" height="6" rx="3" fill={c.gyd} />
+      <rect x="30" y="8" width="4" height="5" fill={c.gy} />
+      <path d="M21 12h22l2.6 16c1.2 7.4-4.4 12.6-13.6 12.6S16.2 35.4 17.4 28z" fill={c.wo} />
+      <path d="M32 12h11l2.6 16c1.2 7.4-4.4 12.6-13.6 12.6z" fill={c.wod} />
+      <g fill={c.wod} opacity="0.6">
+        <rect x="18.6" y="21" width="26.8" height="2.6" rx="1.3" />
+        <rect x="17.6" y="28" width="28.8" height="2.6" rx="1.3" />
+      </g>
+      <path d="M18 40h28l-1.6 8.6A4 4 0 0 1 40.4 52H23.6a4 4 0 0 1-4-3.4z" fill={c.gyd} />
+      <rect x="16.6" y="38" width="30.8" height="5" rx="2.5" fill={c.gy} />
+      <Gl c={c} cx={24} cy={22} rx={2} ry={7} r={6} o={0.5} />
+    </>
+  ),
+
+  /** 小麦粉。紙袋の折り口と、こぼれた粉で「粉もの」だと言う。 */
+  flour: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={4} />
+      <path d="M15 21h34v27a8 8 0 0 1-8 8H23a8 8 0 0 1-8-8z" fill={c.crd} />
+      <path d="M32 21h17v27a8 8 0 0 1-8 8H32z" fill={c.wod} opacity="0.45" />
+      <path d="M15 21 21 11h22l6 10z" fill={c.cr} />
+      <path d="M32 11h11l6 10H32z" fill={c.crd} />
+      <rect x="19" y="28" width="26" height="13" rx="3" fill={c.w} />
+      <path d="M32 22.6c3.4 2 5 4.6 5 8s-1.6 6-5 8c-3.4-2-5-4.6-5-8s1.6-6 5-8z" fill={c.gd} />
+      <g fill={c.w}>
+        <circle cx="10" cy="52" r="4.4" />
+        <circle cx="16.4" cy="55.4" r="2.6" />
+      </g>
+      <Gl c={c} cx={21} cy={16} rx={4.4} ry={1.6} r={-8} o={0.5} />
+    </>
+  ),
+
+  /** 牛乳。屋根型のパックにすると、瓶の油と混ざらない。 */
+  milk: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.4} />
+      <rect x="28" y="4" width="8" height="4" rx="2" fill={c.gy} />
+      <path d="M16 21 32 7l16 14z" fill={c.wd} />
+      <path d="M32 7l16 14H32z" fill={c.gy} opacity="0.55" />
+      <rect x="16" y="20" width="32" height="36" rx="4" fill={c.w} />
+      <path d="M32 20h12a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H32z" fill={c.wd} />
+      <rect x="16" y="30" width="32" height="11" fill={c.bl} />
+      <rect x="32" y="30" width="16" height="11" fill={c.bld} />
+      <path d="M27 33.4c2.6 3 4 4.6 4 6.2a4 4 0 0 1-8 0c0-1.6 1.4-3.2 4-6.2z" fill={c.w} />
+      <Gl c={c} cx={21} cy={26} rx={2.2} ry={5} r={4} o={0.55} />
+    </>
+  ),
+
+  /** バター。切り口の面を1つ見せると、四角い塊ではなく「バター」になる。 */
+  butter: (c) => (
+    <>
+      <Sh c={c} cy={53} rx={24} ry={4.2} />
+      <ellipse cx="32" cy="46" rx="27" ry="7" fill={c.w} />
+      <ellipse cx="32" cy="44.6" rx="27" ry="7" fill={c.wd} />
+      <ellipse cx="32" cy="44" rx="22" ry="5" fill={c.w} />
+      <path d="M13 24h32v14a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4z" fill={c.yld} />
+      <path d="M13 24 21 16h32l-8 8z" fill={c.gd} />
+      <path d="M45 24 53 16v14a4 4 0 0 1-4 4h-8a4 4 0 0 0 4-4z" fill={c.yld} />
+      <path d="M13 24h32v6H13z" fill={c.yl} opacity="0.55" />
+      {/* 切り取った一片。手前に倒して置く */}
+      <path d="M18 34h11l3-3v8a3 3 0 0 1-3 3h-8a3 3 0 0 1-3-3z" fill={c.gd} />
+      <Gl c={c} cx={24} cy={20} rx={7} ry={1.8} r={-8} o={0.5} />
+    </>
+  ),
+
+  /** ケーキ。段（スポンジと生クリーム）を横から見せる。 */
+  cake: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={23} ry={4} />
+      <path d="M11 26h42v22a8 8 0 0 1-8 8H19a8 8 0 0 1-8-8z" fill={c.wol} />
+      <path d="M32 26h21v22a8 8 0 0 1-8 8H32z" fill={c.wod} />
+      <rect x="11" y="33" width="42" height="8" fill={c.cr} />
+      <rect x="32" y="33" width="21" height="8" fill={c.crd} />
+      <path d="M11 26c0-5 9-8 21-8s21 3 21 8z" fill={c.w} />
+      <path d="M32 18c12 0 21 3 21 8H32z" fill={c.wd} />
+      {/* いちご。頭に1つ載せると、四角い塊がケーキになる */}
+      <path d="M32 8c4.4 0 7.4 2.8 7.4 6.4 0 3.4-3.4 6.6-7.4 6.6s-7.4-3.2-7.4-6.6C24.6 10.8 27.6 8 32 8z" fill={c.rd} />
+      <path d="M32 8c4.4 0 7.4 2.8 7.4 6.4 0 3.4-3.4 6.6-7.4 6.6z" fill={c.rdd} />
+      <path d="M32 4c2.6 0 4.6 1.4 5.4 3.4-1.6-.8-3.4-1-5.4-1s-3.8.2-5.4 1C27.4 5.4 29.4 4 32 4z" fill={c.gr} />
+      <Gl c={c} cx={20} cy={23} rx={5.4} ry={1.8} r={-6} o={0.55} />
+    </>
+  ),
+
+  /** アイス。コーンの網目を残すと、小さくしても丸い塊に見えない。 */
+  icecream: (c) => (
+    <>
+      <Sh c={c} cy={58} rx={11} ry={3} />
+      <path d="M20 32h24l-9.6 25.4a2.6 2.6 0 0 1-4.8 0z" fill={c.wol} />
+      <path d="M32 32h12l-9.6 25.4a2.6 2.6 0 0 1-2.4 1.6z" fill={c.wo} />
+      <g stroke={c.wod} strokeWidth="1.8" opacity="0.6">
+        <path d="M23 38h18M25 45h14M27.5 51h9" />
+      </g>
+      <circle cx="32" cy="28" r="13" fill={c.cr} />
+      <path d="M32 15a13 13 0 0 1 0 26z" fill={c.crd} />
+      <circle cx="32" cy="15" r="10" fill={c.pk} />
+      <path d="M32 5a10 10 0 0 1 0 20z" fill={c.pkd} />
+      <circle cx="32" cy="5.6" r="3.4" fill={c.rd} />
+      <Gl c={c} cx={26} cy={11} rx={2.4} ry={3.4} r={-30} o={0.6} />
+    </>
+  ),
+
+  /** お茶。急須。注ぎ口と持ち手の左右で「湯を注ぐもの」だと分かる。 */
+  tea: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={21} ry={4} />
+      <g fill="none" stroke={c.w} strokeWidth="3" strokeLinecap="round" opacity={c.flat ? 1 : 0.85}>
+        <path d="M26 14c-3.4-3 1.4-5 0-8" />
+        <path d="M36 12c-3.4-3 1.4-5 0-8" />
+      </g>
+      <path d="M45 26a11 11 0 0 1 0 20" fill="none" stroke={c.tld} strokeWidth="5.4" strokeLinecap="round" />
+      <path d="M17 30 4 24l1.6 12L17 39z" fill={c.tl} />
+      <path d="M17 34.4 5.2 32.6 5.6 36 17 39z" fill={c.tld} />
+      <ellipse cx="30" cy="37" rx="19" ry="15" fill={c.tl} />
+      <path d="M30 22a19 15 0 0 1 0 30z" fill={c.tld} />
+      <path d="M18 25h24a12 12 0 0 0-24 0z" fill={c.tld} />
+      <rect x="12" y="23" width="36" height="5" rx="2.5" fill={c.w} opacity={c.flat ? 1 : 0.7} />
+      <circle cx="30" cy="19" r="3.6" fill={c.gd} />
+      <Gl c={c} cx={20} cy={31} rx={5} ry={2.6} r={-28} o={0.55} />
+    </>
+  ),
+
+  /** ビール。泡を大きく取ると、遠目でもジュースと分かれる。 */
+  beer: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={18} ry={3.4} />
+      <path d="M42 24h6a9 9 0 0 1 0 18h-6z" fill="none" stroke={c.gy} strokeWidth="5" strokeLinejoin="round" />
+      <path d="M12 22h30v29a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5z" fill={c.or} />
+      <path d="M32 22h10v29a5 5 0 0 1-5 5h-5z" fill={c.ord} />
+      <path d="M12 22c0-7 6.6-11 15-11s15 4 15 11z" fill={c.w} />
+      <g fill={c.w}>
+        <circle cx="16" cy="16" r="5.4" />
+        <circle cx="27" cy="11" r="6.4" />
+        <circle cx="38" cy="16" r="5" />
+      </g>
+      <g fill={c.wd}>
+        <circle cx="38" cy="16" r="3.4" />
+        <circle cx="33" cy="12" r="2.6" />
+      </g>
+      <g fill={c.yl} opacity="0.7">
+        <circle cx="20" cy="34" r="2.2" />
+        <circle cx="26" cy="43" r="1.8" />
+        <circle cx="19" cy="46" r="1.5" />
+      </g>
+      <Gl c={c} cx={17} cy={34} rx={2} ry={9} r={0} o={0.5} />
+    </>
+  ),
+
+  /** ワイン。脚とふくらみの差を大きく取る。 */
+  wine: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={14} ry={3.2} />
+      <path d="M17 6h30v11c0 9.6-6.7 16.4-15 16.4S17 26.6 17 17z" fill={c.w} opacity={c.flat ? 1 : 0.75} />
+      <path d="M18.4 18h27.2c-.7 8.4-6.8 14.4-13.6 14.4S19.1 26.4 18.4 18z" fill={c.rdd} />
+      <path d="M32 18h13.6c-.7 8.4-6.8 14.4-13.6 14.4z" fill={c.nv} opacity="0.3" />
+      <rect x="29.4" y="32" width="5.2" height="16" rx="2.6" fill={c.wd} />
+      <path d="M18 54c0-3.6 6.3-6 14-6s14 2.4 14 6z" fill={c.w} />
+      <path d="M32 48c7.7 0 14 2.4 14 6H32z" fill={c.wd} />
+      <Gl c={c} cx={23} cy={14} rx={2.2} ry={7} r={8} o={0.65} />
+    </>
+  ),
+
+  /** はちみつ。瓶の布ぶたと、垂れた一滴。 */
+  honey: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.4} />
+      <path d="M15 24h34v22a10 10 0 0 1-10 10H25a10 10 0 0 1-10-10z" fill={c.or} />
+      <path d="M32 24h17v22a10 10 0 0 1-10 10h-7z" fill={c.ord} />
+      <rect x="18" y="31" width="28" height="12" rx="3" fill={c.cr} />
+      <path d="m32 32.6 3 5.2h-6z" fill={c.ord} />
+      <path d="M32 41.4 29 36.2h6z" fill={c.ord} />
+      <path d="M13 16h38l-2 8H15z" fill={c.rd} />
+      <path d="M32 16h19l-2 8H32z" fill={c.rdd} />
+      <rect x="17" y="10" width="30" height="7" rx="3.5" fill={c.gd} />
+      {/* 垂れた一滴 */}
+      <path d="M55 22c2.6 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1.4-4 4-8z" fill={c.gd} />
+      <Gl c={c} cx={22} cy={30} rx={2.4} ry={6} r={8} o={0.5} />
+    </>
+  ),
+
+  /** きのこ。北欧の森の回で使う。白い点で「森のきのこ」だと言う。 */
+  mushroom: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={17} ry={3.6} />
+      <path d="M24 28h16v15c0 6.4-3.2 10-8 10s-8-3.6-8-10z" fill={c.cr} />
+      <path d="M32 28h8v15c0 6.4-3.2 10-8 10z" fill={c.crd} />
+      <path d="M32 7c13.6 0 24 9.6 24 18.2 0 3-2.2 4.8-5.6 4.8H13.6C10.2 30 8 28.2 8 25.2 8 16.6 18.4 7 32 7z" fill={c.rd} />
+      <path d="M32 7c13.6 0 24 9.6 24 18.2 0 3-2.2 4.8-5.6 4.8H32z" fill={c.rdd} />
+      <g fill={c.w}>
+        <ellipse cx="20" cy="20" rx="5" ry="4" />
+        <ellipse cx="35" cy="14" rx="4.2" ry="3.4" />
+        <ellipse cx="45" cy="23" rx="4.6" ry="3.6" />
+        <ellipse cx="29" cy="25" rx="3.4" ry="2.6" />
+      </g>
+      <Gl c={c} cx={19} cy={14} rx={5} ry={2.4} r={-26} o={0.5} />
+    </>
+  ),
+
+  /** たまねぎ。縦の筋と、先の緑の芽。 */
+  onion: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={3.6} />
+      <path d="M32 15c11.4 0 19 8.4 19 19s-8.6 18-19 18-19-8-19-18 7.6-19 19-19z" fill={c.pu} />
+      <path d="M32 15c11.4 0 19 8.4 19 19s-8.6 18-19 18z" fill={c.pud} />
+      <g stroke={c.pud} strokeWidth="2" opacity="0.55" fill="none" strokeLinecap="round">
+        <path d="M24 20c-3 8-3 18 1 27" />
+        <path d="M40 20c3 8 3 18-1 27" />
+      </g>
+      <path d="M28 16c1.4-5 2.6-8 4-11 1.4 3 2.6 6 4 11z" fill={c.wol} />
+      <path d="M31 8c-4-2.6-8-2.6-11 0 3.6 3 7.4 3.6 11 2z" fill={c.gr} />
+      <path d="M33 8c4-2.6 8-2.6 11 0-3.6 3-7.4 3.6-11 2z" fill={c.grd} />
+      <Gl c={c} cx={22} cy={26} rx={2.6} ry={7} r={16} o={0.45} />
+    </>
+  ),
+
+  /** じゃがいも。芽のくぼみを2つ入れると、パンと見分けが付く。 */
+  potato: (c) => (
+    <>
+      <Sh c={c} cy={54} rx={22} ry={4} />
+      <path d="M13 30c-1-10 7-17 18-17 9 0 14 3 18 8s3 12-2 17-11 12-19 12-14-9-15-20z" fill={c.wol} />
+      <path d="M31 13c9 0 14 3 18 8s3 12-2 17-11 12-19 12c8-4 12-11 13-19s-3-14-10-18z" fill={c.wo} />
+      <g fill={c.wod} opacity="0.7">
+        <ellipse cx="24" cy="25" rx="3" ry="2.2" transform="rotate(-20 24 25)" />
+        <ellipse cx="37" cy="36" rx="2.6" ry="1.9" transform="rotate(24 37 36)" />
+        <ellipse cx="20" cy="38" rx="2.2" ry="1.6" />
+      </g>
+      <Gl c={c} cx={22} cy={20} rx={6} ry={2.4} r={-24} o={0.45} />
+    </>
+  ),
+
+  /** レモン。半分に切った面を正面に。房の割れ目を6本入れる。 */
+  lemon: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={20} ry={3.8} />
+      <circle cx="32" cy="32" r="23" fill={c.yld} />
+      <circle cx="32" cy="32" r="19.5" fill={c.cr} />
+      <circle cx="32" cy="32" r="16.5" fill={c.yl} />
+      <g stroke={c.cr} strokeWidth="2.6" strokeLinecap="round">
+        <path d="M32 32 32 16M32 32l13.8 8M32 32l-13.8 8M32 32l13.8-8M32 32l-13.8-8M32 32v16" />
+      </g>
+      <circle cx="32" cy="32" r="2.6" fill={c.cr} />
+      <path d="M46 12c5-3 10-2 13 1-4 4-9 5-13 3z" fill={c.gr} />
+      <path d="M46 16c3.4-2 7-2.4 10-1" fill="none" stroke={c.grd} strokeWidth="1.6" strokeLinecap="round" />
+      <Gl c={c} cx={22} cy={21} rx={5} ry={2.6} r={-32} o={0.5} />
+    </>
+  ),
+
+  /** エプロン。首ひもと腰ひもで「身に着けるもの」だと分かる。 */
+  apron: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <path d="M24 8a8 8 0 0 1 16 0" fill="none" stroke={c.crd} strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M23 11h18v13H23z" fill={c.rd} />
+      <path d="M32 11h9v13h-9z" fill={c.rdd} />
+      <path d="M14 26c0-2 3.6-3 9-3h18c5.4 0 9 1 9 3v22a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z" fill={c.rd} />
+      <path d="M32 23h9c5.4 0 9 1 9 3v22a8 8 0 0 1-8 8h-10z" fill={c.rdd} />
+      <g fill={c.crd}>
+        <rect x="2" y="25" width="14" height="4.4" rx="2.2" transform="rotate(-8 9 27)" />
+        <rect x="48" y="25" width="14" height="4.4" rx="2.2" transform="rotate(8 55 27)" />
+      </g>
+      <rect x="23" y="35" width="18" height="12" rx="3" fill={c.cr} />
+      <rect x="23" y="35" width="18" height="3.4" rx="1.7" fill={c.w} opacity="0.7" />
+      <Gl c={c} cx={20} cy={31} rx={2.4} ry={6} r={12} o={0.4} />
+    </>
+  ),
+
+  /** オーブン。窓の中を橙にすると「焼いている途中」になる。 */
+  oven: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.4} />
+      <rect x="5" y="8" width="54" height="48" rx="7" fill={c.gy} />
+      <path d="M52 8a7 7 0 0 1 7 7v34a7 7 0 0 1-7 7H32V8z" fill={c.gyd} />
+      <g fill={c.bk}>
+        <circle cx="14" cy="16" r="3.4" />
+        <circle cx="25" cy="16" r="3.4" />
+      </g>
+      <circle cx="50" cy="16" r="4.6" fill={c.rd} />
+      <rect x="10" y="24" width="44" height="6" rx="3" fill={c.w} />
+      <rect x="10" y="24" width="44" height="2.6" rx="1.3" fill={c.wd} />
+      <rect x="10" y="33" width="44" height="18" rx="4" fill={c.bk} />
+      <rect x="13" y="36" width="38" height="12" rx="3" fill={c.or} />
+      <rect x="13" y="36" width="38" height="5" rx="2.5" fill={c.gd} />
+      <rect x="20" y="42" width="24" height="4" rx="2" fill={c.wod} />
+      <Gl c={c} cx={13} cy={13} rx={5} ry={1.8} r={-6} o={0.5} />
+    </>
+  ),
+
+  /** 冷蔵庫。白いままだと明るい下地で消えるので、扉を薄い水色にする。 */
+  fridge: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.4} />
+      <rect x="15" y="3" width="34" height="54" rx="6" fill={c.wd} />
+      <path d="M43 3a6 6 0 0 1 6 6v42a6 6 0 0 1-6 6h-11V3z" fill={c.gy} />
+      <rect x="15" y="21" width="34" height="3" fill={c.gyd} />
+      <g fill={c.gyd}>
+        <rect x="39" y="11" width="4" height="8" rx="2" />
+        <rect x="39" y="27" width="4" height="12" rx="2" />
+      </g>
+      <rect x="20" y="8" width="12" height="9" rx="2.4" fill={c.sk} />
+      <g fill={c.rd}>
+        <circle cx="24" cy="31" r="3" />
+      </g>
+      <rect x="20" y="38" width="13" height="9" rx="2.4" fill={c.gd} />
+      <Gl c={c} cx={20} cy={12} rx={2.2} ry={7} r={6} o={0.6} />
+    </>
+  ),
+
+  /** お玉。柄を斜めにして、すくった汁を見せる。 */
+  ladle: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={3.4} />
+      <path d="M40 34 51 9" fill="none" stroke={c.gyd} strokeWidth="7" strokeLinecap="round" />
+      <path d="M40 34 51 9" fill="none" stroke={c.gy} strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M53 7a4.6 4.6 0 1 1-3.4 8" fill="none" stroke={c.gy} strokeWidth="3.4" strokeLinecap="round" />
+      <ellipse cx="26" cy="32" rx="16" ry="5" fill={c.or} />
+      <ellipse cx="26" cy="31" rx="16" ry="5" fill={c.ord} />
+      <path d="M10 32h32a16 16 0 0 1-32 0z" fill={c.gy} />
+      <path d="M26 32h16a16 16 0 0 1-16 16z" fill={c.gyd} />
+      <Gl c={c} cx={18} cy={38} rx={4.4} ry={2} r={-24} o={0.6} />
+    </>
+  ),
+
+  /** レシピ帳。開いた面に、作るものの絵と手順の行。 */
+  recipe: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={26} ry={4} />
+      <path d="M3 13c8-3 17-3 27 0v39c-10-3-19-3-27 0z" fill={c.w} />
+      <path d="M61 13c-8-3-17-3-27 0v39c10-3 19-3 27 0z" fill={c.cr} />
+      <rect x="28.6" y="11" width="6.8" height="42" rx="3.4" fill={c.rdd} />
+      <g fill={c.rd}>
+        <rect x="28.6" y="14" width="6.8" height="3" rx="1.5" />
+        <rect x="28.6" y="24" width="6.8" height="3" rx="1.5" />
+        <rect x="28.6" y="34" width="6.8" height="3" rx="1.5" />
+        <rect x="28.6" y="44" width="6.8" height="3" rx="1.5" />
+      </g>
+      <ellipse cx="15" cy="26" rx="10" ry="4" fill={c.gy} />
+      <path d="M5 25h20a10 10 0 0 1-20 0z" fill={c.gyd} />
+      <path d="M12 17c1.6 2.4 2.6 3.6 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.4 1-2.6 2.6-5z" fill={c.gy} opacity="0.7" />
+      <g fill={c.grd} opacity="0.5">
+        <rect x="8" y="36" width="16" height="2.6" rx="1.3" />
+        <rect x="8" y="43" width="12" height="2.6" rx="1.3" />
+      </g>
+      <g fill={c.crd}>
+        <rect x="40" y="20" width="16" height="2.6" rx="1.3" />
+        <rect x="40" y="28" width="14" height="2.6" rx="1.3" />
+        <rect x="40" y="36" width="16" height="2.6" rx="1.3" />
+        <rect x="40" y="44" width="10" height="2.6" rx="1.3" />
+      </g>
+      <Gl c={c} cx={12} cy={18} rx={5} ry={2} r={-14} o={0.5} />
+    </>
+  ),
 };

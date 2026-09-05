@@ -440,4 +440,231 @@ export const travel: Record<string, Draw> = {
       <Gl c={c} cx={16} cy={20} rx={2} ry={6} r={0} o={0.4} />
     </>
   ),
+
+  /** かさ。骨の割りを白い筋で入れると、丸い塊ではなく「張った布」になる。 */
+  umbrella: (c) => (
+    <>
+      <Sh c={c} cy={58} rx={13} ry={3} />
+      <rect x="30.2" y="2" width="3.6" height="7" rx="1.8" fill={c.gyd} />
+      <path d="M30 27h4v22h-4z" fill={c.wod} />
+      <path d="M34 49v1.6a5.4 5.4 0 0 1-10.8 0" fill="none" stroke={c.wod} strokeWidth="4.4" strokeLinecap="round" />
+      <path d="M5 29C5 16.3 17 6 32 6s27 10.3 27 23c-3.6 0-5.6-4.2-9-4.2s-5.4 4.2-9 4.2-5.6-4.2-9-4.2-5.4 4.2-9 4.2-5.6-4.2-9-4.2S8.6 29 5 29z" fill={c.rd} />
+      <path d="M32 6c15 0 27 10.3 27 23-3.6 0-5.6-4.2-9-4.2s-5.4 4.2-9 4.2-5.6-4.2-9-4.2z" fill={c.rdd} />
+      <g fill={c.w} opacity="0.9">
+        <path d="M32 6c1.6 0 2.6 8.2 3 18.8h-2c-.4-10.6-1.4-18.8-1-18.8z" />
+        <path d="M14.4 10.6c1.4-.8 4.4 6.4 7.6 15.2l-1.8.8C17 18 13 11.4 14.4 10.6z" />
+        <path d="M49.6 10.6c-1.4-.8-4.4 6.4-7.6 15.2l1.8.8c3.2-8.6 7.2-15.2 5.8-16z" />
+      </g>
+      <Gl c={c} cx={19} cy={17} rx={5.4} ry={2} r={-30} o={0.5} />
+    </>
+  ),
+
+  /** サングラス。レンズの反射を1本入れると、黒い塊ではなくガラスに見える。 */
+  sunglasses: (c) => (
+    <>
+      <Sh c={c} cy={52} rx={26} ry={3.4} />
+      <path d="M2 20h60v5c-3 0-4 1.4-4.6 4l-1.4 6c-1 4.4-4.6 7-9.6 7h-5c-4.6 0-7.6-2.4-9-7l-.4-1.4-.4 1.4c-1.4 4.6-4.4 7-9 7h-5c-5 0-8.6-2.6-9.6-7l-1.4-6C6 26.4 5 25 2 25z" fill={c.rd} />
+      <path d="M32 20h30v5c-3 0-4 1.4-4.6 4l-1.4 6c-1 4.4-4.6 7-9.6 7h-5c-4.6 0-7.6-2.4-9-7l-.4-1.4z" fill={c.rdd} />
+      <path d="M8 25h19l-1.6 8.6c-.8 4-3 6-6.6 6h-3.2c-3.6 0-5.8-2-6.6-6z" fill={c.nv} />
+      <path d="M37 25h19l-1.6 8.6c-.8 4-3 6-6.6 6h-3.2c-3.6 0-5.8-2-6.6-6z" fill={c.nv} />
+      <g fill={c.sk} opacity="0.7">
+        <path d="M11 26h4.4l-3.4 12h-1.4c-1.4-.8-2.2-2.2-2.6-4.4z" />
+        <path d="M40 26h4.4L41 38h-1.4c-1.4-.8-2.2-2.2-2.6-4.4z" />
+      </g>
+      <Gl c={c} cx={16} cy={22} rx={7} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** 水筒。帯を1本入れて、油の瓶と分ける。 */
+  bottle: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      <path d="M42 8h5a3.4 3.4 0 0 1 0 6.8h-3" fill="none" stroke={c.gyd} strokeWidth="3.4" strokeLinecap="round" />
+      <rect x="23" y="3" width="18" height="10" rx="4.4" fill={c.gyd} />
+      <rect x="23" y="3" width="18" height="4" rx="2" fill={c.gy} />
+      <rect x="25.6" y="12" width="12.8" height="5" fill={c.tld} />
+      <rect x="16" y="16" width="32" height="42" rx="9" fill={c.tl} />
+      <path d="M39 16a9 9 0 0 1 9 9v24a9 9 0 0 1-9 9h-7V16z" fill={c.tld} />
+      <rect x="16" y="31" width="32" height="9" fill={c.cr} />
+      <rect x="32" y="31" width="16" height="9" fill={c.crd} />
+      <Gl c={c} cx={22} cy={26} rx={2.4} ry={7} r={4} o={0.55} />
+    </>
+  ),
+
+  /** 登山靴。靴ひもと厚い底。旅を「歩いた回数」で数えるページで使う。 */
+  shoes: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.4} />
+      <path d="M15 9h13a5 5 0 0 1 5 5v13c0 4 2.4 6.6 7 8.4l11.6 4.6c4.4 1.8 6.4 4.4 6.4 8V49H15a5 5 0 0 1-5-5V14a5 5 0 0 1 5-5z" fill={c.wo} />
+      <path d="M33 27c0 4 2.4 6.6 7 8.4l11.6 4.6c4.4 1.8 6.4 4.4 6.4 8V49H33z" fill={c.wod} />
+      <rect x="11" y="8" width="24" height="7" rx="3.5" fill={c.wol} />
+      <g fill={c.cr}>
+        <rect x="12" y="20" width="22" height="3.4" rx="1.7" transform="rotate(9 23 21.7)" />
+        <rect x="12" y="29" width="22" height="3.4" rx="1.7" transform="rotate(9 23 30.7)" />
+        <rect x="12" y="38" width="22" height="3.4" rx="1.7" transform="rotate(9 23 39.7)" />
+      </g>
+      <path d="M8 47h48a5 5 0 0 1 5 5v2H10a4 4 0 0 1-4-4z" fill={c.brd} />
+      <g fill={c.bk} opacity="0.35">
+        <rect x="16" y="50" width="4" height="4" />
+        <rect x="26" y="50" width="4" height="4" />
+        <rect x="36" y="50" width="4" height="4" />
+        <rect x="46" y="50" width="4" height="4" />
+      </g>
+      <Gl c={c} cx={17} cy={14} rx={6} ry={1.8} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** 鍵。宿の鍵。持ち手の穴を濃い金にして、抜けているように見せる。 */
+  key: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={19} ry={3.4} />
+      <g transform="rotate(-32 32 32)">
+        <rect x="26" y="27.6" width="34" height="9" rx="4.5" fill={c.gd} />
+        <rect x="26" y="27.6" width="34" height="4" rx="2" fill={c.yl} />
+        <rect x="45" y="34" width="5.4" height="10" rx="2.7" fill={c.gd} />
+        <rect x="54" y="34" width="5.4" height="7" rx="2.7" fill={c.gd} />
+        <circle cx="19" cy="32" r="15" fill={c.gd} />
+        <circle cx="19" cy="32" r="6.4" fill={c.gdd} />
+        <path d="M19 17a15 15 0 0 1 0 30 15 15 0 0 1-9-3.2 15 15 0 0 0 0-23.6A15 15 0 0 1 19 17z" fill={c.gdd} opacity="0.6" />
+      </g>
+      <Gl c={c} cx={17} cy={22} rx={5} ry={2.4} r={-30} o={0.6} />
+    </>
+  ),
+
+  /** 財布。札とカードを覗かせて「入れるもの」だと言う。 */
+  wallet: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={24} ry={3.6} />
+      <rect x="13" y="10" width="26" height="16" rx="2.6" fill={c.grl} />
+      <rect x="17" y="7" width="26" height="16" rx="2.6" fill={c.gr} />
+      <rect x="34" y="9" width="22" height="14" rx="3" fill={c.sk} />
+      <rect x="37" y="13" width="6" height="4.4" rx="1.4" fill={c.gd} />
+      <rect x="5" y="20" width="54" height="31" rx="7" fill={c.br} />
+      <path d="M32 20h20a7 7 0 0 1 7 7v17a7 7 0 0 1-7 7H32z" fill={c.brd} />
+      <rect x="5" y="31" width="54" height="8" fill={c.brd} />
+      <rect x="39" y="28" width="12" height="14" rx="4" fill={c.gd} />
+      <rect x="42.6" y="32" width="4.8" height="6" rx="2.4" fill={c.gdd} />
+      <Gl c={c} cx={14} cy={25} rx={6} ry={1.8} r={-5} o={0.4} />
+    </>
+  ),
+
+  /** 入国スタンプ。押した跡まで描くと、道具ではなく「入った証」になる。 */
+  stamp: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={24} ry={3.4} />
+      <rect x="6" y="33" width="52" height="24" rx="4" fill={c.cr} />
+      <path d="M32 33h22a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H32z" fill={c.crd} />
+      <g fill="none" stroke={c.rd} strokeWidth="3.2">
+        <circle cx="32" cy="45" r="9.4" />
+      </g>
+      <rect x="22" y="43.4" width="20" height="3.2" rx="1.6" fill={c.rd} />
+      <rect x="24" y="4" width="16" height="11" rx="5" fill={c.nv} />
+      <rect x="24" y="4" width="16" height="4.4" rx="2.2" fill={c.bl} />
+      <rect x="28.4" y="14" width="7.2" height="6" fill={c.nv} />
+      <rect x="12" y="19" width="40" height="9" rx="4" fill={c.bld} />
+      <rect x="14" y="26" width="36" height="6" rx="2.6" fill={c.rdd} />
+      <Gl c={c} cx={28} cy={7} rx={4} ry={1.4} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** ロープウェイ。線から吊るすと、バスや電車と混ざらない。 */
+  cablecar: (c) => (
+    <>
+      <path d="M1 9 63 3" fill="none" stroke={c.gyd} strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M28 8h8l-1 6h-6z" fill={c.gyd} />
+      <path d="M30.4 13h3.2v7h-3.2z" fill={c.gy} />
+      <rect x="13" y="18" width="38" height="32" rx="9" fill={c.rd} />
+      <path d="M42 18a9 9 0 0 1 9 9v14a9 9 0 0 1-9 9H32V18z" fill={c.rdd} />
+      <rect x="18" y="24" width="28" height="15" rx="5" fill={c.sk} />
+      <rect x="18" y="24" width="14" height="15" rx="5" fill={c.skd} opacity="0.55" />
+      <rect x="16" y="43" width="32" height="4.4" rx="2.2" fill={c.cr} />
+      <Sh c={c} cy={57} rx={17} ry={3.2} o={0.2} />
+      <Gl c={c} cx={21} cy={26} rx={4.4} ry={2} r={-8} o={0.5} />
+    </>
+  ),
+
+  /** 気球。トルコの回。ゴア（縦の割り）を色で分ける。 */
+  balloon: (c) => (
+    <>
+      <Sh c={c} cy={59} rx={11} ry={2.8} />
+      <path d="M32 3c12.4 0 21 9.4 21 21 0 9-7.4 17-12 22H23C18.4 41 11 33 11 24 11 12.4 19.6 3 32 3z" fill={c.rd} />
+      <path d="M32 3c4.6 0 7.6 9.4 7.6 21 0 9-2.6 17-4.4 22h-6.4c-1.8-5-4.4-13-4.4-22C24.4 12.4 27.4 3 32 3z" fill={c.yl} />
+      <path d="M32 3c12.4 0 21 9.4 21 21 0 9-7.4 17-12 22h-6c1.8-5 4.4-13 4.4-22C39.4 12.4 36.6 3 32 3z" fill={c.rdd} />
+      <path d="M35.6 3c2.4 4.4 4 12 4 21 0 9-2.6 17-4.4 22h-3.2V3z" fill={c.yld} />
+      <g stroke={c.wod} strokeWidth="1.8" strokeLinecap="round">
+        <path d="M25 46l2 6M39 46l-2 6" />
+      </g>
+      <path d="M25 50h14l-1.4 9a3 3 0 0 1-3 2.4h-5.2a3 3 0 0 1-3-2.4z" fill={c.wo} />
+      <path d="M32 50h7l-1.4 9a3 3 0 0 1-3 2.4H32z" fill={c.wod} />
+      <Gl c={c} cx={22} cy={16} rx={3.4} ry={7} r={22} o={0.45} />
+    </>
+  ),
+
+  /** そり。雪の回。前が反っているかどうかだけで「そり」だと分かる。 */
+  sled: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.2} />
+      <g fill={c.wo}>
+        <rect x="12" y="26" width="42" height="6" rx="3" transform="rotate(-5 33 29)" />
+        <rect x="12" y="34" width="42" height="6" rx="3" transform="rotate(-5 33 37)" />
+      </g>
+      <g fill={c.wod}>
+        <rect x="18" y="24" width="5.4" height="20" rx="2.7" transform="rotate(-5 20.7 34)" />
+        <rect x="42" y="22" width="5.4" height="20" rx="2.7" transform="rotate(-5 44.7 32)" />
+      </g>
+      <path d="M10 42h44a5 5 0 0 1 5 5v3H14a4 4 0 0 1-4-4z" fill={c.rdd} />
+      <path d="M10 42c-6 0-9-4.4-9-9.4h6.4c0 2.4 1 3.4 2.6 3.4z" fill={c.rd} />
+      <path d="M10 42h4v8h-4z" fill={c.rd} />
+      <Gl c={c} cx={26} cy={28} rx={8} ry={1.6} r={-5} o={0.5} />
+    </>
+  ),
+
+  /** 国境。遮断機と検問所。陸路で越えた回に使う。 */
+  border: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.2} />
+      <rect x="40" y="18" width="21" height="34" rx="4" fill={c.cr} />
+      <path d="M50 18h7a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4h-7z" fill={c.crd} />
+      <path d="M50.5 8 64 19.6a2 2 0 0 1-1.3 3.4H38.3a2 2 0 0 1-1.3-3.4z" fill={c.rd} />
+      <path d="M50.5 8 64 19.6a2 2 0 0 1-1.3 3.4H50.5z" fill={c.rdd} />
+      <rect x="44" y="27" width="13" height="10" rx="2.6" fill={c.sk} />
+      <rect x="6" y="24" width="12" height="30" rx="4" fill={c.gyd} />
+      <rect x="6" y="24" width="12" height="5" rx="2.5" fill={c.gy} />
+      <g transform="rotate(-16 12 30)">
+        <rect x="10" y="26" width="40" height="9" rx="4.5" fill={c.w} />
+        <g fill={c.rd}>
+          <path d="M16 26h7l-7 9h-6z" />
+          <path d="M30 26h7l-7 9h-6z" />
+          <path d="M44 26h6v9h-6l7-9z" />
+        </g>
+      </g>
+      <Gl c={c} cx={9} cy={29} rx={2} ry={4} r={0} o={0.5} />
+    </>
+  ),
+
+  /** 2段ベッド。安宿に泊まった回。はしごが有ると一目で分かる。 */
+  bunk: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={25} ry={3.2} />
+      <g fill={c.wod}>
+        <rect x="5" y="6" width="7" height="50" rx="3.5" />
+        <rect x="52" y="6" width="7" height="50" rx="3.5" />
+      </g>
+      <rect x="9" y="24" width="46" height="6" rx="3" fill={c.wo} />
+      <rect x="9" y="48" width="46" height="6" rx="3" fill={c.wo} />
+      <rect x="11" y="17" width="42" height="8" rx="3" fill={c.w} />
+      <rect x="11" y="41" width="42" height="8" rx="3" fill={c.w} />
+      <path d="M22 17h31v8H22z" fill={c.bl} />
+      <path d="M22 41h31v8H22z" fill={c.tl} />
+      <rect x="12" y="13" width="12" height="8" rx="3.4" fill={c.cr} />
+      <rect x="12" y="37" width="12" height="8" rx="3.4" fill={c.cr} />
+      <g fill={c.wol}>
+        <rect x="30" y="26" width="5" height="24" rx="2.5" />
+        <rect x="44" y="26" width="5" height="24" rx="2.5" />
+        <rect x="30" y="30" width="19" height="4" rx="2" />
+        <rect x="30" y="40" width="19" height="4" rx="2" />
+      </g>
+      <Gl c={c} cx={8} cy={13} rx={1.6} ry={5} r={0} o={0.4} />
+    </>
+  ),
 };
