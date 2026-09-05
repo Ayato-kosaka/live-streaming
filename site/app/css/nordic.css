@@ -75,7 +75,7 @@
   letter-spacing: var(--ls-caps);
   color: var(--ink-2);
 }
-.tnow-count-n { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
+.tnow-count-n { display: flex; gap: var(--sp-1); align-items: baseline; flex-wrap: wrap; justify-content: center; }
 .tnow-count-n em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .tnow-count-n b {
   font-size: clamp(26px, 8.4vw, 42px);
@@ -297,7 +297,7 @@
 }
 .ndayr-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
 .ndayr-body { display: grid; gap: 3px; min-width: 0; flex: 1; }
-.ndayr-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ndayr-top { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1); }
 .ndayr-top b {
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-0);
@@ -348,7 +348,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-1);
   font-size: var(--fs-note);
   font-weight: 800;
   color: var(--ink-2);
@@ -390,13 +390,13 @@ p.nday-how {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--sp-1);
   margin: 2px 0 0;
   font-size: var(--fs-note);
   font-weight: 800;
   color: var(--ink-2);
 }
-.nday-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.nday-enter { display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; }
 /* 切符から決まっている、動かせない事実 */
 p.nday-fixed {
   display: inline-block;
@@ -420,7 +420,7 @@ p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 7
 .nday-vid {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-1);
   margin-top: var(--sp-2);
   font-size: var(--fs-note);
   font-weight: 900;
@@ -449,7 +449,7 @@ p.fork-where {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--sp-1);
   margin: 0 0 5px;
   font-size: var(--fs-min);
   font-weight: 900;
@@ -625,7 +625,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
    ========================================================= */
 /* スマホでも2枚ずつ並べる。1枚ずつ縦に積むと、6枚で 510px 取っていた。
    写真は国の顔なので残す。減らしたのは字のほう。 */
-.ncountries { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+.ncountries { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-top: 12px; }
 @media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr 1fr; } }
 .ncountry {
   position: relative;
@@ -680,7 +680,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   min-width: 0;
   padding: var(--sp-2) var(--sp-3) 0;
 }
-.ncountry-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ncountry-name { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
 .ncountry-body b { font-size: 14px; font-weight: 900; }
 /* 見どころの名前は1行で止める。2行に伸びると、3段で 140px 変わる。
    全部の名前は、押した先の国のページにある。 */
@@ -717,7 +717,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
    国のページ
    ========================================================= */
 /* 入る道・出る道 */
-.ncways { display: grid; gap: 9px; margin-top: 13px; }
+.ncways { display: grid; gap: var(--sp-2); margin-top: 13px; }
 @media (min-width: 620px) { .ncways { grid-template-columns: 1fr 1fr; } }
 /* 押せない。紙の上の囲みなので、罫1本と紙の角にする。 */
 .ncway {
@@ -796,7 +796,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--rule) 26%, transparent);
 }
-.nspot-hb { display: flex; align-items: center; gap: 7px; min-width: 0; flex-wrap: wrap; }
+.nspot-hb { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; flex-wrap: wrap; }
 .nspot-name { min-width: 0; }
 /* 種類は平らな札に言葉で。押せないものに厚みを付けない（紙の型） */
 .nspot-cat {
@@ -839,9 +839,9 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   color: var(--ink-2);
   border-left: 3px solid color-mix(in srgb, var(--rule) 60%, transparent);
 }
-.nspot-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 11px 0 0; }
+.nspot-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 11px 0 0; }
 .nspot-meta div {
-  display: flex; gap: 6px; align-items: baseline;
+  display: flex; gap: var(--sp-1); align-items: baseline;
   border: 1px solid var(--rule);
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-3);
@@ -898,7 +898,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   padding: var(--sp-3) var(--sp-1);
 }
 .cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
-.cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+.cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-top: 8px; }
 .cidea-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .cidea-vote {
   font-size: var(--fs-min); font-weight: 900;
@@ -1035,7 +1035,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 .grow i, .grow em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 .gcards { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
-@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+@media (min-width: 720px) { .gcards { grid-template-columns: 1fr 1fr; column-gap: var(--sp-4); } }
 .gcard { padding: 10px 4px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .gcard b { display: block; font-size: 13.5px; font-weight: 900; }
 .gcard i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
@@ -1047,7 +1047,7 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 
 .gphrase { margin-top: 6px; }
 .gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
-@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+@media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; column-gap: var(--sp-4); } }
 .gwords div {
   display: grid;
   gap: var(--sp-1);
@@ -1650,7 +1650,7 @@ svg.nmap {
 .nstudio-tab {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--sp-1);
   min-height: 48px;
   font-size: var(--fs-note);
   font-weight: 900;
@@ -1723,13 +1723,13 @@ p.ndsun-n {
   font-weight: 800;
   color: var(--ink-2);
 }
-p.ndsun-n span { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+p.ndsun-n span { display: inline-flex; align-items: baseline; gap: var(--sp-1); white-space: nowrap; }
 p.ndsun-n b { font-size: 19px; font-weight: 900; color: var(--ink); }
 p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight: 800; color: var(--ink-2); }
 
 /* まだ決まっていないこと。**埋めない。**
    決まっている行と見分けがつくよう、頭に短い罫を1本引く。 */
-.ndunsure { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: 5px; }
+.ndunsure { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: var(--sp-1); }
 .ndunsure li {
   position: relative;
   padding-left: var(--sp-4);
@@ -1779,7 +1779,7 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
   background: var(--paper-2);
 }
 .ndsp-b { display: grid; gap: 2px; min-width: 0; }
-.ndsp-h { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ndsp-h { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1); }
 .ndsp-h b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
 .ndsp-cat {
   padding: 1px var(--sp-2);

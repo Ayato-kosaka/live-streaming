@@ -162,7 +162,10 @@
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-body);
-  color: color-mix(in srgb, var(--paper) 82%, var(--frame));
+  /* 板の上の字は濃いほう。生成りの字（--paper）で置いていたら、
+     琥珀の地に対して 1.93 : 1 しか出なかった（tools/sprites/inkpx.mjs で実測）。
+     看板の上の物は「明るい板に濃い字」で揃っているので、ここもそれに寄せる。 */
+  color: color-mix(in srgb, var(--ink) 88%, var(--frame-deep));
   white-space: nowrap;
   overflow: hidden;
 }
@@ -171,11 +174,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: var(--fs-note);
-  color: var(--paper);
+  color: var(--ink);
 }
-/* 900px から上は6つの札が1段で並ぶ。そこに現在地を字で足すと、
-   朱枠と同じことを2回言うことになる。 */
-@media (min-width: 900px) { .ih-here { display: none; } }
+/* 720px から上はパンくずの行が見えていて（`.crumbs` の clip が外れる）、
+   その最後が同じ名前を言っている。2回言わない。 */
+@media (min-width: 720px) { .ih-here { display: none; } }
 
 .ih-nav {
   /* 900px から下では畳んだ一覧（`.ihx`）に譲る。

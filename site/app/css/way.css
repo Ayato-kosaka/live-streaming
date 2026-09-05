@@ -25,6 +25,9 @@
    `/all` はシートの上位互換になっている（`PageShell` の但し書き）。 */
 .ihx-open {
   flex: none;
+  /* いつも行のいちばん右。720px から上では現在地の字（`.ih-here`）が
+     引っ込むので、伸びるものが1つも無くなる。auto マージンで寄せておく。 */
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
