@@ -42,7 +42,7 @@
 | `video_id` | STRING | どの配信か |
 | `event_id` | STRING | YouTube 側のID（`video_id` と合わせて一意） |
 | `event_type` | STRING | `TEXT` / スパチャ / メンバーなど |
-| `timestamp_usec` | INT64 | 配信開始からのマイクロ秒 |
+| `timestamp_usec` | INT64 | UNIX時間のマイクロ秒（**配信開始からの経過ではない**。経過秒がほしければ `videos.actual_start_time` を引く。引いた値が動画の長さを超えることがあるので、頭打ちにして使う） |
 | `published_at` | TIMESTAMP | 書き込まれた時刻 |
 | `author_name` | STRING | 表示名（変わることがある） |
 | `author_channel_id` | STRING | チャンネルID（**人の同一性はこれで見る**） |

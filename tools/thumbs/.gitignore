@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+# 落としてきた素材と参考サムネは置きっぱなしにしない（スクリプトで取り直せる）
+src/
+ref/*.jpg
+ref/*.png
+out/*.html

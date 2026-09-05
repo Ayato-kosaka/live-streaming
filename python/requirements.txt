@@ -18,3 +18,7 @@ requests>=2.31.0
 
 # Firestore（あやと島の数字の書き込み）
 google-cloud-firestore>=2.16.0
+
+# サムネイルの棚卸し（画像を見て、未編集かどうかを判定する）
+Pillow>=10.0.0
+numpy>=1.26.0

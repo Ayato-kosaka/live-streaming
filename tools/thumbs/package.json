@@ -1,0 +1,9 @@
+{
+  "name": "thumbs",
+  "private": true,
+  "type": "module",
+  "description": "配信サムネの型カタログを描く（docs/thumbnail-automation.md）",
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}
