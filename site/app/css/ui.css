@@ -29,7 +29,7 @@
 .dlabel {
   font-size: 11.5px;
   font-weight: 900;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-body);
   color: var(--ink-2);
 }
 
@@ -80,7 +80,7 @@
     inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
     0 0 0 3.5px color-mix(in srgb, var(--gold) 70%, transparent);
 }
-.dform textarea { line-height: 1.7; resize: vertical; }
+.dform textarea { line-height: var(--lh-body); resize: vertical; }
 .drow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
 .drow.is-col { grid-template-columns: 1fr; }
 
@@ -111,7 +111,8 @@
     linear-gradient(currentColor, currentColor) center / 2.6px 11px no-repeat;
 }
 .dadd:hover { background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 35%, var(--paper))); }
-.dadd:active { transform: translateY(3px); box-shadow: 0 0 0 var(--frame-deep); }
+/* 沈む量と厚みの減る量を揃える。ずれると板の下の辺が動いて見える。 */
+.dadd:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .dactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; }
 
 /* 貼り付ける元は、まわりの紙とはっきり別のものにする。 */
@@ -123,7 +124,7 @@
   background: var(--ink);
   color: var(--paper);
   font-size: 11.5px;
-  line-height: 1.75;
+  line-height: var(--lh-body);
   overflow-x: auto;
   white-space: pre;
   box-shadow: inset 0 3px 8px color-mix(in srgb, var(--ink) 70%, transparent);
@@ -365,6 +366,8 @@
 .gchap-h { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; }
 .gchap-h .ic { color: var(--marker-ink); }
 .gchap > .fold > summary .fold-t b { font-size: 16px; }
+/* 要約の一行も帯の上に載る。紙の上の薄い字のままだと、蛍光ペンに沈んで読めない。 */
+.gchap > .fold > summary .fold-t i { color: color-mix(in srgb, var(--marker-ink) 88%, var(--rule)); }
 /* 章の帯は紙のはしからはしまで。項目の帯（内側に3px空けた札）と形を変えて、
    これは行の強調ではなく節の見出しだと分かるようにする。 */
 .gchap > .fold > summary::before {

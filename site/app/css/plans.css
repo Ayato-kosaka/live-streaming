@@ -242,11 +242,11 @@
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: 0 3px 0 var(--frame-deep);
+  box-shadow: var(--pop-sm);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--frame-deep); }
-.nextup-rest a:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-deep); }
+.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--frame-dark); }
+.nextup-rest a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
 
 .nextup-eyebrow2 { margin-top: 20px; }
@@ -259,14 +259,14 @@
 }
 .nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-3), var(--np-lip); }
 .nextup-card.is-small:active { box-shadow: var(--pop-push-lg), var(--shadow-1), var(--np-lip); }
-.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 10.5px; border-radius: 17px; }
+.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 10.5px; border-radius: var(--r-2); }
 .nextup-card.is-small .nextup-count b { font-size: 27px; }
 .nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
 /* ふたつ目の札の行き先は金色にしない。強い合図はページに1つだけ。 */
 .nextup-card.is-small .nextup-go {
   padding: 7px 15px;
   font-size: 12.5px;
-  border-width: 2.5px;
+  border-width: var(--bw-1);
   background: linear-gradient(var(--paper), var(--paper-2));
 }
 .nextup-card.is-small:hover .nextup-go {
