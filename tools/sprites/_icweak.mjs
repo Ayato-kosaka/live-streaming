@@ -23,7 +23,7 @@ await p.goto(`http://localhost:${PORT}/design`, { waitUntil: "domcontentloaded",
 await p.waitForTimeout(1500);
 
 const rows = await p.evaluate(async () => {
-  const DAY = [251, 246, 223]; // /design の明るい帯
+  const DAY = [255, 250, 228]; // /design の明るい帯 = --paper
   const NIGHT = [47, 58, 44]; // 暗い帯
   const S = 64;
   const cv = document.createElement("canvas");
