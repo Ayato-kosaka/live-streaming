@@ -1,0 +1,119 @@
+name: Fetch Doneru Donations
+
+# Doneru の寄付履歴を BigQuery に入れる。
+#
+# 認証はブラウザの cookie（`_dt`）だけ。Doneru に公開 API は無く、ログインは
+# Google OAuth なので、**切れたら自動では戻せない**。切れたことに気づける
+# ようにするのがこのワークフローの半分の仕事で、落ちたら issue が立つ。
+#
+# セッションを取り直す手順は docs/island-db.md に書いてある。
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # UTC 20:30（日本時間 5:30）。チャット取り込みの30分後
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "取り込む年（空なら今年）"
+        required: false
+        type: string
+      probe:
+        description: "形だけ見る（BigQuery に書かない）"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: fetch-doneru-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write # セッションが切れたときに issue を立てる
+
+jobs:
+  fetch_donations:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+      DONERU_COOKIE: ${{ secrets.DONERU_COOKIE }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      - name: DONERU_COOKIE が入っているか確認
+        run: |
+          if [ -z "${DONERU_COOKIE}" ]; then
+            echo "ERROR: secrets.DONERU_COOKIE が未設定です。" >&2
+            echo "設定の手順は docs/island-db.md の「Doneru のセッションを入れ直す」を見てください。" >&2
+            exit 1
+          fi
+
+      - name: 寄付履歴の取得
+        id: fetch
+        shell: bash
+        run: |
+          # 認証切れ（終了コード 2）を他の失敗と区別したいので、
+          # set -e で即死させずに終了コードを拾う
+          args=()
+          if [ -n "${{ inputs.year }}" ]; then args+=(--year "${{ inputs.year }}"); fi
+          if [ "${{ inputs.probe }}" = "true" ]; then args+=(--probe); fi
+
+          set +e
+          python python/fetch_doneru_donations.py "${args[@]}"
+          code=$?
+          set -e
+
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      - name: セッション切れを issue で知らせる
+        # 認証切れ（2）のときだけ。他の失敗で issue を増やさない
+        if: ${{ failure() && steps.fetch.outputs.exit_code == '2' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="Doneru のセッションが切れました（DONERU_COOKIE の入れ直しが必要）"
+
+          # 本文はファイルに書き出す。ヒアドキュメントは YAML のインデントと
+          # 相性が悪いので使わない
+          {
+            echo '`fetch_doneru_donations` が Doneru の認証で弾かれました。'
+            echo 'Doneru のログインは Google OAuth なので、**Actions 側では復旧できません。**'
+            echo
+            echo 'あやとの操作が要ります:'
+            echo
+            echo '1. ブラウザで https://doneru.jp にログインする'
+            echo '2. DevTools > Application > Cookies > `https://doneru.jp` から `_dt` の値をコピーする'
+            echo '3. Settings > Secrets and variables > Actions で `DONERU_COOKIE` を更新する'
+            echo '4. このワークフローを workflow_dispatch で流し直す'
+            echo
+            echo "失敗した実行: ${RUN_URL}"
+          } > /tmp/doneru-session-issue.md
+
+          # 毎日落ちるたびに立て直さない。開いている同じ issue があればコメントを足す。
+          # 検索語は ASCII の DONERU_COOKIE にする（日本語だと検索が当たらないことがある）
+          existing="$(gh issue list --state open --search 'DONERU_COOKIE in:title' --json number --jq '.[0].number // empty')"
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file /tmp/doneru-session-issue.md
+          else
+            gh issue create --title "$title" --body-file /tmp/doneru-session-issue.md
+          fi
