@@ -202,7 +202,7 @@
   --sun: #fff0c0;
   --tint: rgba(255, 222, 176, 0.18);
   --glow: rgba(255, 210, 140, 0.22);
-  --page-bg: #0d95e2;
+  --page-bg: linear-gradient(180deg, #0a86d4 0%, #1194e0 45%, #35abe9 100%);
 }
 [data-time="day"] {
   --tint: transparent;
@@ -214,7 +214,8 @@
   --sun: #ffd79c;
   --tint: rgba(255, 124, 58, 0.30);
   --glow: rgba(255, 176, 92, 0.28);
-  --page-bg: #3159d8;
+  /* 夕暮れの水は、遠くほど夕日を拾って紫に寄る */
+  --page-bg: linear-gradient(180deg, #2a4cbc 0%, #3159d8 45%, #5a6fe6 100%);
 }
 /* 夜。公式の夜は「暗い」ではなく「青い」。星も草も見えている。
    ただし実測すると青ではなく**すみれ色**だった（空 H236、地面 H250）。
@@ -225,7 +226,7 @@
   --foam: #d9ebff;
   --tint: rgba(38, 40, 116, 0.62);
   --glow: rgba(126, 142, 255, 0.24);
-  --page-bg: #192957;
+  --page-bg: linear-gradient(180deg, #101a44 0%, #192957 45%, #27407e 100%);
   --lamp: 1;
 }
 /* いまいる場所で島の景色を変える。
