@@ -215,7 +215,13 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** キッチン小屋。煙突から湯気が出ている小屋。 */
+  /**
+   * キッチン小屋。
+   *
+   * 赤い屋根・クリームの壁・青い窓の家（`home`）と**16px でほぼ同じ絵**だった。
+   * 屋根を板葺き（木）に替え、レンガの煙突を棟の上に立てて、窓を大きくとる。
+   * 遠目で分かれるのは屋根の色なので、そこを変えるのがいちばん効く。
+   */
   kitchen: (c) => (
     <>
       <Sh c={c} cy={54} rx={22} ry={4.4} />
@@ -229,12 +235,21 @@ export const place: Record<string, Draw> = {
         <circle cx="43" cy="8" r="3" />
         <circle cx="49.6" cy="4.8" r="2.2" />
       </g>
-      <rect x="39" y="11" width="9" height="12" rx="2" fill={c.rdd} />
-      <path d="M32 8 60 30a2.6 2.6 0 0 1-1.7 4.6H5.7A2.6 2.6 0 0 1 4 30z" fill={c.rd} />
-      <path d="M32 8 60 30a2.6 2.6 0 0 1-1.7 4.6H32z" fill={c.rdd} />
+      {/* レンガの煙突。棟の上に立てる（屋根の斜面から生やすと傾いて見える） */}
+      <rect x="38.4" y="11" width="9.6" height="14" rx="2" fill={c.rdd} />
+      <rect x="37" y="10" width="12.4" height="4.6" rx="2" fill={c.rd} />
+      {/* 板葺きの屋根。家の赤い屋根と分けるのはここ */}
+      <path d="M32 8 60 30a2.6 2.6 0 0 1-1.7 4.6H5.7A2.6 2.6 0 0 1 4 30z" fill={c.wo} />
+      <path d="M32 8 60 30a2.6 2.6 0 0 1-1.7 4.6H32z" fill={c.wod} />
+      <g fill={c.wol} opacity="0.6">
+        <path d="M18.8 19.6 15 34.6h-4l4.4-17.4z" />
+        <path d="M25.6 14.2 23 34.6h-4l3-23z" />
+      </g>
       <rect x="11" y="33" width="42" height="20" rx="3" fill={c.cr} />
       <rect x="34" y="33" width="19" height="20" fill={c.crd} />
-      <rect x="15" y="37" width="11" height="9" rx="2" fill={c.sk} />
+      {/* 大きな窓。中でやっていることが見える小屋にする */}
+      <rect x="14" y="36.4" width="18" height="11" rx="2.4" fill={c.sk} />
+      <rect x="14" y="36.4" width="18" height="3.4" rx="1.7" fill={c.w} opacity="0.55" />
       <rect x="37" y="39" width="12" height="14" rx="2.6" fill={c.br} />
       <circle cx="46" cy="46.5" r="1.4" fill={c.gd} />
       <Gl c={c} cx={16} cy={24} rx={3} ry={9} r={38} o={0.35} />

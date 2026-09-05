@@ -78,9 +78,25 @@ Playwright は `tools/sprites/node_modules` にある（リポジトリ直下に
 
 ### このサンドボックスから出られない先
 
-ブラウザからは `lh3.googleusercontent.com`（住人のキャラクター画像）と
+**ブラウザからは** `lh3.googleusercontent.com`（住人のキャラクター画像）と
 `upload.wikimedia.org`（北欧の写真）に届かない。本番では出る。
-確認するときは `page.route()` でローカル画像に差し替える（`tools/sprites/talk.mjs` 参照）。
+
+**ただし curl では取れる。** 住人の絵を全員 `ayato.png` に差し替えて撮ると、
+島の12人が全員そっくり同じに写って、レビューしても何も分からない。
+先に落としてから撮る:
+
+```bash
+python3 tools/sprites/avatars.py     # /tmp/avatars/<icon>.png に22人ぶん
+```
+
+差し替えは `tools/sprites/route.mjs` の `offline(ctx)` を使う。
+落としてあれば**本番と同じ絵を1人ずつ**返し、無ければ `ayato.png` に落ちる。
+
+```js
+import { offline } from "./route.mjs";
+const ctx = await b.newContext({ ... });
+await offline(ctx);
+```
 
 ## つまずきやすいところ
 

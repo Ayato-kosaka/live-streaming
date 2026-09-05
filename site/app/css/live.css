@@ -766,6 +766,15 @@
   object-fit: cover;
   background: #ded4a2;
 }
+.pap-quote-b { display: grid; gap: 2px; min-width: 0; }
+/* いつ言われるセリフなのか。セリフ本体より小さく、字の下限（11.5px）は割らない */
+.pap-when {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--pap-ink-2);
+}
 .pap-quote blockquote {
   margin: 0;
   font-size: var(--fs-body);

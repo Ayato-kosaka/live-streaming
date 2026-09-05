@@ -149,7 +149,9 @@
      そのせいで狭い画面の看板が 201px あり、島の外の20面が、
      画面の 1/4 を同じ絵で始めていた（docs/island-review-2.md 4章）。
      受け皿を「あやと島」の**横**に置くと、札の段はそのままで 58px 減る。 */
-  flex: 1 1 auto;
+  /* flex-basis は 0。auto のままだと「札3つぶんの幅をよこせ」と言うので、
+     375px では受け皿ごと下の段に落ちて、看板がまた 185px に戻る。 */
+  flex: 1 1 0;
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
@@ -1123,7 +1125,12 @@ a.chip:active, button.chip:active, .chip.link:active {
 .city[open] .city-head::after { transform: rotate(-135deg) translateY(-2px); }
 .city[open] .city-head { background: var(--paper); }
 .city .scards { padding: var(--sp-1) var(--sp-3) var(--sp-3); }
-.city.is-quiet { opacity: 0.62; }
+/* 配信の無かった街。「押せない」を opacity で言うと、街の名前まで
+   3.0 : 1 まで薄くなる。沈めるのは面のほうだけにして、字は墨のまま置く。 */
+.city.is-quiet {
+  background: color-mix(in srgb, var(--pg-sheet-lo) 62%, var(--paper-out));
+  border-style: dashed;
+}
 .city.is-quiet .city-head { cursor: default; }
 .city.is-quiet .city-head::after { display: none; }
 
@@ -1163,7 +1170,12 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 34%, var(--ink));
 }
 .signin-go:active { transform: translateY(6px); box-shadow: none; }
-.signin-go:disabled { opacity: 0.6; box-shadow: none; }
+/* 押せない状態は厚みが無いことで言う。opacity だと字が読めなくなる。 */
+.signin-go:disabled {
+  background: var(--paper-out);
+  color: var(--ink-2);
+  box-shadow: none;
+}
 .signin-skip { margin: var(--sp-2) 0 0; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 /* 外へ出るリンクを水色で言うのをやめた。紙のムラの暗いところでは
    --accent-2 が 4.3 : 1 まで落ちる（docs/island-review-2.md 5.1）。
@@ -1226,7 +1238,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   color: var(--ink);
 }
 .count.is-today b { color: var(--accent-deep); }
-.count.is-past { opacity: 0.62; }
+/* 過ぎた日。同じ理由で opacity をやめ、面だけ一段沈める。 */
+.count.is-past { background: color-mix(in srgb, var(--chip) 46%, var(--paper-out)); }
 
 .pphotos {
   display: grid;

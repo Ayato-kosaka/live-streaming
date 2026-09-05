@@ -40,6 +40,28 @@ function span(mins: number) {
   return h > 0 ? `${h}時間${m}分` : `${m}分`;
 }
 
+/**
+ * この便りを、いつ書いたか。
+ *
+ * 日付だけ出しても、それが古いのかどうかは読む人が引き算する。
+ * 「今週なにをするか」と書いてある紙が2週間前のものだったら、
+ * それは今週の話ではない。**古いことは古いと言う。**
+ * 静的書き出しなので、画面が出てから数え直す。
+ */
+function wroteAgo(updatedAt: string | undefined, now: Date): string | null {
+  if (!updatedAt) return null;
+  const [y, m, d] = updatedAt.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const days = Math.round(
+    (Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(y, m - 1, d)) / 86400000,
+  );
+  if (days < 0) return null;
+  if (days === 0) return "今日書いた";
+  if (days === 1) return "きのう書いた";
+  if (days <= 8) return `${days}日前に書いた`;
+  return "しばらく書けていません";
+}
+
 /** 場所の色テーマ（georgia / nordic …）は島の景色を変えるための符丁。文章としては出さない。 */
 const SLUG = /^[a-z0-9-]+$/;
 
@@ -61,6 +83,8 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   const [cur, setCur] = useState<IslandCurrent>({ ...NOW_FALLBACK });
   const [fresh, setFresh] = useState(false);
   const [clock, setClock] = useState<Clock | null>(null);
+  /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
+  const [ago, setAgo] = useState<string | null>(null);
   const [next, setNext] = useState<{ title: string; days: number } | null>(null);
   const youtube = LINKS.find((l) => l.id === "youtube")!;
 
@@ -93,6 +117,10 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
       clearInterval(id);
     };
   }, []);
+
+  /* 便りを書いた日からの日数だけは、便りが Firestore から届いたあとに数え直す。
+     上の useEffect に混ぜると、日付が変わるたびに便りを取りに行く輪になる。 */
+  useEffect(() => setAgo(wroteAgo(cur.updatedAt, new Date())), [cur.updatedAt]);
 
   // 場所のテーマが国の slug なら、国旗を添える。文章としては出さない符丁なので、絵にだけ使う
   const flag = cur.theme && SLUG.test(cur.theme) ? cur.theme : null;
@@ -160,10 +188,14 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               今月のテーマ｜{cur.theme}
             </span>
           )}
-          <span className="chip">
-            <Icon name={fresh ? "live" : "clock"} size={12} />
-            {cur.updatedAt?.replace(/-/g, "/")} 時点
-          </span>
+          {/* 同じ日付を、上の札と下の便りのスタンプで2回出していた。
+              ここは「どれくらい前の話か」だけを言う。日付は便りの右上にある。 */}
+          {ago && (
+            <span className="chip">
+              <Icon name={fresh ? "live" : "clock"} size={12} />
+              {ago}
+            </span>
+          )}
         </div>
       </section>
 

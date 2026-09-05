@@ -420,8 +420,10 @@ export const scene: Record<string, Draw> = {
   desert: (c) => (
     <>
       <circle cx="15" cy="14" r="9" fill={c.gd} />
-      <path d="M1 30c12-8 22 2 34-2s20-6 28-2v16H1z" fill={c.crd} />
-      <path d="M1 38c10-6 18 2 30-1s24-5 32-1v14a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.cr} />
+      {/* 砂丘をクリーム（`cr`/`crd`）で塗ると、生成りの紙の上で砂が消えて
+          らくだだけが浮いていた。同じ砂でも濃いほう（`sn`/`snd`）で塗る */}
+      <path d="M1 30c12-8 22 2 34-2s20-6 28-2v16H1z" fill={c.snd} />
+      <path d="M1 38c10-6 18 2 30-1s24-5 32-1v14a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.sn} />
       {/* らくだ。ふたこぶと、上げた首。細かく描かず、影の面だけで丸みを出す */}
       <g fill={c.wod}>
         <rect x="18" y="38" width="3.6" height="12" rx="1.8" />
@@ -447,10 +449,12 @@ export const scene: Record<string, Draw> = {
   glacier: (c) => (
     <>
       <rect x="1" y="34" width="62" height="25" rx="9" fill={c.bl} />
+      {/* 氷の陰を灰白（`wd`）にすると、紙の上で山が消えて海だけが残った。
+          氷河の陰は空を映して青い。`sk` にすると地から離れて、氷らしくもなる */}
       <path d="M20 8 34 34H4z" fill={c.w} />
-      <path d="M20 8l14 26H20z" fill={c.wd} />
+      <path d="M20 8l14 26H20z" fill={c.sk} />
       <path d="M44 16 56 34H32z" fill={c.w} />
-      <path d="M44 16l12 18H44z" fill={c.wd} />
+      <path d="M44 16l12 18H44z" fill={c.sk} />
       <path d="M2 34h60v6H2z" fill={c.sk} opacity={c.flat ? 1 : 0.85} />
       <path d="M8 40h22l-4 8H10z" fill={c.skd} opacity="0.7" />
       <path d="M36 40h18l-3 6H38z" fill={c.skd} opacity="0.7" />

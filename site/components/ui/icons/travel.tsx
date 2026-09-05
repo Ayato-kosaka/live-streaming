@@ -54,7 +54,7 @@ export const travel: Record<string, Draw> = {
         <rect x="27" y="17.6" width="6.4" height="32" rx="2.4" />
         <rect x="45" y="17.6" width="6.4" height="32" rx="2.4" />
       </g>
-      <rect x="43.6" y="29" width="9.2" height="7.4" rx="2.4" fill={c.gd} />
+      <rect x="45.4" y="30.4" width="5.6" height="6.2" rx="1.8" fill={c.gd} />
       <Gl c={c} cx={34} cy={24} rx={9} ry={2.4} r={0} o={0.4} />
     </>
   ),

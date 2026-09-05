@@ -84,6 +84,15 @@ export const GLYPHS = {
  */
 export const FLAT = new Set<string>([...Object.keys(nav), ...Object.keys(brand)]);
 
+/**
+ * ブランドのマーク。**`tone` が何であっても単色で描く。**
+ *
+ * 他社のマークは形も色も向こうが決めたもので、こちらの絵の作法（上からの光、
+ * 接地影、左上のハイライト）を足してよいものではない。`FLAT` と分けてあるのは、
+ * `FLAT` が「既定は単色」なのに対して、こちらは「例外を認めない」ため。
+ */
+export const BRAND = new Set<string>(Object.keys(brand));
+
 /** `/design` の並び。書いた順に見本ページへ出る。 */
 export const GROUPS: { title: string; note: string; names: string[] }[] = [
   {

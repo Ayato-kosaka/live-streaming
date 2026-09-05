@@ -78,19 +78,20 @@ export const food: Record<string, Draw> = {
     <>
       <Sh c={c} cy={45} rx={25} ry={3.6} />
       <g transform="rotate(-12 32 32)">
-        {/* 刃。背は直線、刃先へ向かって下ふちが持ち上がる */}
-        <path d="M36 20H15C9.6 20 5.4 26.4 2.8 33.6a2.6 2.6 0 0 0 2.4 3.6H36z" fill={c.gyd} />
+        {/* 刃。背は直線、刃先へ向かって下ふちが持ち上がる。
+            長さと高さを 2.5 : 1 にする。1 : 2 だと牛刀ではなく鉈に見えた */}
+        <path d="M38 22H16C10 22 5.6 27 3.2 32.6a2.4 2.4 0 0 0 2.2 3.4H38z" fill={c.gyd} />
         {/* 研いだ面 */}
-        <path d="M36 20H15c-4 0-7.4 3.6-10 8.8h31z" fill={c.gy} />
+        <path d="M38 22H16c-4.6 0-8.4 3-10.8 7H38z" fill={c.gy} />
         {/* 刃先。ここだけ白を残す */}
-        <path d="M36 33.6H4.2a2.6 2.6 0 0 0 1 3.6H36z" fill={c.w} opacity={c.flat ? 1 : 0.8} />
-        {/* 口金と柄 */}
-        <rect x="34.6" y="18" width="6.4" height="21" rx="2.6" fill={c.gy} />
-        <rect x="39" y="20.4" width="23" height="16.4" rx="7" fill={c.br} />
-        <path d="M39 29h23a7 7 0 0 1-7 7.8H39z" fill={c.brd} />
+        <path d="M38 32.6H4.4a2.4 2.4 0 0 0 1 3.4H38z" fill={c.w} opacity={c.flat ? 1 : 0.8} />
+        {/* 口金と柄。柄は刃より薄くする。同じ高さだと肉切り包丁になる */}
+        <rect x="36.6" y="20.4" width="5.4" height="17.2" rx="2.4" fill={c.gy} />
+        <rect x="40.6" y="23" width="21" height="12" rx="6" fill={c.br} />
+        <path d="M40.6 29h21a6 6 0 0 1-6 6h-15z" fill={c.brd} />
         <g fill={c.crd}>
-          <circle cx="46" cy="28.6" r="1.9" />
-          <circle cx="54" cy="28.6" r="1.9" />
+          <circle cx="47" cy="29" r="1.6" />
+          <circle cx="54" cy="29" r="1.6" />
         </g>
       </g>
       <Gl c={c} cx={24} cy={22} rx={10} ry={1.5} r={-12} o={0.5} />

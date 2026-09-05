@@ -1,5 +1,5 @@
 import { C, INK } from "./icons/pal";
-import { GLYPHS, FLAT, type IconName } from "./icons";
+import { GLYPHS, FLAT, BRAND, type IconName } from "./icons";
 
 export type { IconName };
 
@@ -61,11 +61,15 @@ export default function Icon({
 }) {
   const draw = GLYPHS[name];
   if (!draw) return null;
-  // 操作の印とブランドマークは、指定が無くても単色。CSS の color に従わせる
-  const flat = tone === "ink" || (tone !== "color" && FLAT.has(name));
+  // 操作の印は、指定が無くても単色。CSS の color に従わせる。
+  // ブランドマークは **`tone="color"` を渡されても単色のまま。**
+  // 他人のマークなので、こちらの都合で色や陰影を足してはいけない
+  // （`docs/island-design.md` 1章「本物の形を写す」／`icons/brand.tsx`）。
+  const flat = tone === "ink" || BRAND.has(name) || (tone !== "color" && FLAT.has(name));
 
-  // 単色の印には光を乗せない。currentColor 1色であることが、
-  // 置いた側の CSS との約束になっている（`.rleg-h .ic` など）
+  // 単色の印には光を乗せない。223 種のうちここに来る 24 種（操作 20・ブランド 4）は、
+  // currentColor 1色であることが置いた側の CSS との約束になっている（`.rleg-h .ic` など）。
+  // 上からの光は色を1つ足すのと同じなので、約束のあるものには乗せない
   if (flat) {
     return (
       <svg
