@@ -129,13 +129,15 @@
   height: 48px;
   margin: -24px 0 0 -24px;
 }
+/* `--apin-ox/oy` は、押しどころの箱を枠の中へ押し戻したぶん。
+   箱は動かしたまま、絵だけ元の点へ戻す（`components/atlas/clump.ts`）。 */
 .apin-dot {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 22px;
   height: 22px;
-  margin: -11px 0 0 -11px;
+  margin: calc(-11px + var(--apin-oy, 0px)) 0 0 calc(-11px + var(--apin-ox, 0px));
   border-radius: 50%;
   background: var(--paper);
   /* ピンは押せる。22px の丸なので、48px で6px・38pxで4px の段に乗せると 3px。 */
@@ -174,7 +176,7 @@
   top: 50%;
   width: 22px;
   height: 22px;
-  margin: -11px 0 0 -11px;
+  margin: calc(-11px + var(--apin-oy, 0px)) 0 0 calc(-11px + var(--apin-ox, 0px));
   border-radius: 50%;
   border: 3px solid var(--paper);
   animation: apin-ping 2s ease-out infinite;
@@ -183,6 +185,44 @@
   0% { transform: scale(1); opacity: 0.9; }
   100% { transform: scale(2.6); opacity: 0; }
 }
+/* 近すぎてピンを2つ置けない国を、1つにたたんだ札。
+   ---------------------------------------------------------
+   世界ぜんぶを1枚に収めると、オーストリアとスロバキアは中心どうしが
+   3.7px しか離れない。48px の口を2つ置けば必ず重なるので、
+   **口を小さくするのではなく的の数を減らす**（`components/atlas/clump.ts`）。
+
+   数は「何カ国ぶんか」。通し番号と同じ数字を丸に入れると、
+   9カ国なのか9カ国目なのか分からなくなるので、単位まで書く。
+   形も丸ではなく横長にして、ピンと見分けられるようにする。
+   押せるので、ピンと同じ 3px の厚みを付ける。 */
+.apin-many {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--am-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.4);
+  transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.apin.is-group:hover .apin-many,
+.apin.is-group:focus-visible .apin-many { transform: translate(-50%, -50%) scale(1.12); }
+.apin.is-group:active .apin-many { transform: translate(-50%, -50%) scale(0.92); }
+/* いまいる国がこのまとまりの中にあるとき。輪は札の形に合わせる。 */
+.apin.is-group.is-here::after {
+  width: 52px;
+  height: 26px;
+  margin: -13px 0 0 -26px;
+  border-radius: var(--r-pill);
+}
+.apin.is-group .apin-name { transform: translate(-50%, 0); }
+
 /* 国の名前。地図に刷った文字であって、押すものではない。
    前はクリームの丸札に厚みを付けていて、9カ国ぶん並ぶと地形が見えなくなり、
    しかも「押せる板」が名札の数だけ増えていた。
@@ -195,7 +235,10 @@
      この数は labels.ts の当たり判定と対になっている。片方だけ動かさない。 */
   bottom: 36px;
   /* 隣の国とぶつかるときの逃がしぶん（WorldRoute が決める） */
-  transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
+  transform: translate(
+    calc(-50% + var(--apin-dx, 0px) + var(--apin-ox, 0px)),
+    calc(var(--apin-dy, 0px) + var(--apin-oy, 0px))
+  );
   white-space: nowrap;
   /* 街の名前と同じ理由で、にじみをやめて紙の札に乗せる。
      ここも押すのは丸のほうなので、札は平ら（厚みを付けない）。 */
@@ -213,7 +256,13 @@
 .apin.is-named .apin-name { opacity: 1; }
 .apin:hover .apin-dot,
 .apin:focus-visible .apin-dot { transform: scale(1.25); }
-.apin:hover .apin-name { opacity: 1; transform: translate(calc(-50% + var(--apin-dx, 0px)), calc(var(--apin-dy, 0px) - 3px)); }
+.apin:hover .apin-name {
+  opacity: 1;
+  transform: translate(
+    calc(-50% + var(--apin-dx, 0px) + var(--apin-ox, 0px)),
+    calc(var(--apin-dy, 0px) + var(--apin-oy, 0px) - 3px)
+  );
+}
 .apin:active .apin-dot { transform: scale(0.9); }
 
 .acity {
@@ -255,6 +304,10 @@
 }
 .amap-pins.is-wide .apin-dot::before { inset: 2.5px; }
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+/* まとまりの札は、世界ぜんぶの面でも小さくしない。ここでいちばん押される。 */
+.amap-pins.is-wide .apin.is-group.is-here::after {
+  width: 52px; height: 26px; margin: -13px 0 0 -26px;
+}
 
 /* ---------------------------------------------------------
    たどる（地図の下の送りと、開いた国の札）
@@ -505,8 +558,14 @@
 
 @media (min-width: 720px) {
   .apin { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
-  .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: var(--fs-min); }
-  .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
+  .apin-dot {
+    width: 26px; height: 26px; font-size: var(--fs-min);
+    margin: calc(-13px + var(--apin-oy, 0px)) 0 0 calc(-13px + var(--apin-ox, 0px));
+  }
+  .apin.is-here::after {
+    width: 26px; height: 26px;
+    margin: calc(-13px + var(--apin-oy, 0px)) 0 0 calc(-13px + var(--apin-ox, 0px));
+  }
   .apin-name { font-size: var(--fs-body); bottom: 40px; }
   .acity b { font-size: var(--fs-min); }
   /* 広い画面では折り返す心配が無いので、中身なりの幅に戻す。 */
