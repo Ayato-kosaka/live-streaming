@@ -13,8 +13,16 @@
 /** 名札ひとつぶんの四角。重なりを測るためだけに使う。 */
 export type Rect = { x0: number; y0: number; x1: number; y1: number };
 
-/** 当たり判定に使う、地図の幅の見当（px）。実寸ではない。 */
-export const NOMINAL_W = 620;
+/**
+ * 当たり判定に使う、地図の幅の見当（px）。
+ *
+ * **いちばん狭いときの幅を入れる。** 名札は HTML なので地図を寄せても
+ * 縮まないが、地図のほうはスマホで 314px まで縮む。ここに PC の幅（620）を
+ * 入れていたので、名札の幅を実際の半分に見積もっていて、
+ * 390px で「ボルジョミ」と「トビリシ」が重なっていた。
+ * 狭いほうに合わせておけば、広い画面では隙間が空くだけで済む。
+ */
+export const NOMINAL_W = 330;
 
 export const hits = (a: Rect, b: Rect) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 
@@ -43,7 +51,8 @@ export function placeCities<T extends Dot>(
   // 北から順に置く。上から読む人の目の動きと同じ順に決まる。
   for (const c of [...cities].sort((a, b) => a.y - b.y)) {
     const [x, y] = toPx(c.x, c.y);
-    const w = c.name.length * 10.5 + 6;
+    // 名札の字は 11.5px。日本語は正方形なので、1文字ぶんをそのまま幅に足す
+    const w = c.name.length * 12 + 8;
     const far = preferLeft(c);
     let put: Placed<T> & { box: Rect } | null = null;
     for (const dy of DY) {

@@ -73,6 +73,15 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             <filter id={`${uid}-soft`} x="-15%" y="-15%" width="130%" height="130%">
               <feGaussianBlur stdDeviation="6" />
             </filter>
+            {/* 主役の国だけ穴が空いている膜。まわりを一段沈ませて、
+                「どこがこの国か」を線ではなく明るさで言う。
+                ジョージアのように隣も同じ緑の陸だと、塗り分けだけでは境が読めなかった。 */}
+            {mine && (
+              <mask id={`${uid}-focus`}>
+                <rect width={w} height={h} fill="#ffffff" />
+                <path d={mine} fill="#000000" />
+              </mask>
+            )}
           </defs>
 
           <rect width={w} height={h} fill={`url(#${uid}-sea)`} />
@@ -94,7 +103,6 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             <path key={s} d={d} fill="#cfdca4" opacity="0.75" />
           ))}
           {mine && <path d={mine} fill={`url(#${uid}-on)`} />}
-          {mine && <path d={mine} fill="none" stroke="#3e7c33" strokeWidth="3.4" opacity="0.32" />}
 
           {/* 山 */}
           <path d={m.ridges} fill="none" stroke="var(--am-ridge)" strokeWidth="22" strokeLinecap="round" opacity="0.26" filter={`url(#${uid}-soft)`} />
@@ -115,6 +123,12 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
           <path d={m.lakes} fill="var(--am-sea-mid)" />
           <path d={m.rivers} fill="none" stroke="#60a0d8" strokeWidth="3.2" strokeLinecap="round" opacity="0.85" />
           <path d={m.grid} fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.12" />
+
+          {/* 地形をぜんぶ描いたあとで、国の外だけを紙の色で薄く覆う。
+              移動の線と街はこのあとに描くので、沈まない。 */}
+          {mine && <rect width={w} height={h} fill="var(--paper-out)" opacity="0.4" mask={`url(#${uid}-focus)`} />}
+          {/* 国のふち。かたい線は引かず、内側に落ちる淡い影で分ける */}
+          {mine && <path d={mine} fill="none" stroke="#3e7c33" strokeWidth="4" opacity="0.3" />}
 
           {/* 移動した線 */}
           {m.legs.map((l) => {

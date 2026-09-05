@@ -59,40 +59,55 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
 
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋", href: "/map" }, { label: c.name }]}>
-      <PageHead
-        mark={<Flag slug={c.slug} size={56} />}
-        title={c.name}
-        lead={c.summary}
-        meta={
-          <>
-            <span className="chip dark">
-              <Icon name="signpost" size={13} />
-              {c.order}カ国目
-            </span>
-            {c.stays.map((s, i) => (
-              <span key={i} className="chip dark">
-                <Icon name="calendar" size={13} />
-                {fmt(s.from)} – {fmt(s.to)}
-              </span>
-            ))}
-          </>
-        }
-      />
+      {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
+          ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
+      <PageHead title={c.name} lead={c.summary} />
 
-      <div className="acty-num">
-        <div>
-          <b>{staying ? <Days from={staying.from} plus={days} /> : days.toLocaleString()}</b>
-          <span>いた日数</span>
+      {/* パスポートの1ページ。旗・入国のスタンプ・入出国の日付・数字を、
+          1枚の紙に罫で割って収める（docs/ac-reference.md 7章）。
+          17カ国ぶんが同じ型で並ぶので、国ごとの違いが中身だけになる。 */}
+      <Panel className="paper apass">
+        <div className="apass-top">
+          <span className="apass-flag">
+            <Flag slug={c.slug} size={64} />
+          </span>
+          <span className="apass-who">
+            <b>{c.name}</b>
+            <em>{c.en}</em>
+            <i>{c.region}</i>
+          </span>
+          <span className="apass-stamp" aria-hidden>
+            <b>{c.order}</b>
+            <i>カ国目</i>
+          </span>
         </div>
-        <div>
-          <b>{towns.length}</b>
-          <span>回った街</span>
+
+        <dl className="apass-log">
+          {c.stays.map((st, i) => (
+            <div key={i}>
+              <dt>入国</dt>
+              <dd>{fmt(st.from)}</dd>
+              <dt>出国</dt>
+              <dd>{st.to ? fmt(st.to) : "まだ、いる"}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="apass-num">
+          <div>
+            <b>{staying ? <Days from={staying.from} plus={days} /> : days.toLocaleString()}</b>
+            <span>いた日数</span>
+          </div>
+          <div>
+            <b>{towns.length}</b>
+            <span>回った街</span>
+          </div>
+          <div>
+            <b>{lives}</b>
+            <span>ここからの配信</span>
+          </div>
         </div>
-        <div>
-          <b>{lives}</b>
-          <span>ここからの配信</span>
-        </div>
-      </div>
+      </Panel>
 
       {hasMap && (
         <Panel className="paper">

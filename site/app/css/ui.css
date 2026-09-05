@@ -10,9 +10,9 @@
    --------------------------------------------------------------------- */
 .dform {
   display: grid;
-  gap: 11px;
-  margin-top: 14px;
-  padding: 13px 12px 16px;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
   /* 台の枠は欄の枠より弱くする。同じ太さ・同じ濃さで囲うと、
      台と欄が同じ強さで主張して、どれが書くところか分からなくなる。 */
   border: var(--bw-1) solid color-mix(in srgb, var(--frame-dark) 58%, var(--paper-2));
@@ -24,10 +24,10 @@
   );
   box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 17%, transparent);
 }
-.dform label { display: grid; gap: 5px; }
+.dform label { display: grid; gap: var(--sp-1); }
 .dform label span,
 .dlabel {
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-body);
   color: var(--ink-2);
@@ -38,8 +38,8 @@
 .dlabel {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 13px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
   letter-spacing: var(--ls-caps);
 }
 .dlabel::after {
@@ -54,7 +54,7 @@
 .dform textarea,
 .dform select {
   width: 100%;
-  padding: 10px 13px;
+  padding: var(--sp-2) var(--sp-3);
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-1);
   background: var(--paper);
@@ -64,7 +64,7 @@
     inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
     inset 0 -1.5px 0 rgba(255, 255, 255, 0.7);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: var(--ink);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -81,7 +81,7 @@
     0 0 0 3.5px color-mix(in srgb, var(--gold) 70%, transparent);
 }
 .dform textarea { line-height: var(--lh-body); resize: vertical; }
-.drow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 6px; }
+.drow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--sp-1); }
 .drow.is-col { grid-template-columns: 1fr; }
 
 /* 「足す」は押せる板。小さくても厚みを付けて、入力欄と取り違えないようにする。
@@ -90,16 +90,18 @@
   justify-self: start;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
+  gap: var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
-  padding: 7px 15px 7px 13px;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
-  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+  /* 48px のボタンなら厚みは6px（island-design 3章）。 */
+  box-shadow: var(--pop);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 .dadd::before {
   content: "";
@@ -110,20 +112,19 @@
     linear-gradient(currentColor, currentColor) center / 11px 2.6px no-repeat,
     linear-gradient(currentColor, currentColor) center / 2.6px 11px no-repeat;
 }
-.dadd:hover { background: linear-gradient(var(--paper-2), color-mix(in srgb, var(--gold) 35%, var(--paper))); }
 /* 沈む量と厚みの減る量を揃える。ずれると板の下の辺が動いて見える。 */
-.dadd:active { transform: translateY(2px); box-shadow: var(--pop-push); }
-.dactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; }
+.dadd:active { transform: translateY(6px); box-shadow: none; }
+.dactions { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-top: var(--sp-4); }
 
 /* 貼り付ける元は、まわりの紙とはっきり別のものにする。 */
 .dsrc {
-  margin-top: 10px;
-  padding: 13px 15px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: var(--ink);
   color: var(--paper);
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   line-height: var(--lh-body);
   overflow-x: auto;
   white-space: pre;
@@ -166,11 +167,12 @@
 .folds,
 .fold {
   border: 1px solid var(--rule);
-  border-radius: var(--r-1);
+  /* 紙の角は直角に近い。--r-1 まで丸めるとカードに見える（ac-reference ⑦）。 */
+  border-radius: var(--r-0);
 }
-.folds { display: grid; gap: 0; margin-top: 12px; overflow: hidden; }
+.folds { display: grid; gap: 0; margin-top: var(--sp-3); overflow: hidden; }
 /* 紙が2枚並ぶときだけ間を空ける。同じ紙の上の段は罫線で分ける。 */
-.fold + .fold { margin-top: 9px; }
+.fold + .fold { margin-top: var(--sp-2); }
 .folds > .fold + .fold { margin-top: 0; }
 
 /* 紙の上に段を並べるときは、段ごとの枠をやめて罫線1本にする。
@@ -200,10 +202,10 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--sp-2);
   /* 開くしるしが板になって高さを持ったので、その板が収まる高さにする。 */
   min-height: 56px;
-  padding: 8px 12px;
+  padding: var(--sp-2) var(--sp-3);
   cursor: pointer;
   list-style: none;
   -webkit-tap-highlight-color: transparent;
@@ -253,10 +255,10 @@
 }
 
 .fold-t { display: grid; gap: 0; min-width: 0; flex: 1; }
-.fold-t b { font-size: 14.5px; font-weight: 900; line-height: var(--lh-head); letter-spacing: var(--ls-body); }
+.fold-t b { font-size: var(--fs-body); font-weight: 900; line-height: var(--lh-head); letter-spacing: var(--ls-body); }
 .fold-t i {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 700;
   color: var(--ink-2);
   margin-top: 3px;
@@ -273,13 +275,13 @@
 .fold-n {
   flex: none;
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--chip-ink);
   background: var(--chip);
   border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
-  padding: 3px 9px;
+  padding: 3px var(--sp-2);
   line-height: 1.5;
 }
 
@@ -291,7 +293,7 @@
   flex: none;
   box-sizing: content-box;
   width: 18px; height: 18px;
-  padding: 8px;
+  padding: var(--sp-2);
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
@@ -312,7 +314,7 @@
 
 .fold-body {
   position: relative;
-  padding: 13px 15px 16px;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
   border-top: 1px solid color-mix(in srgb, var(--rule) 56%, transparent);
 }
 .fold-body > :first-child { margin-top: 0; }
@@ -325,35 +327,37 @@
 }
 
 /* --- 北欧: 地図まわり --- */
-.panel.is-map { padding-left: 12px; padding-right: 12px; }
-.rleg-h { display: inline-flex; align-items: center; gap: 6px; }
+.panel.is-map { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+.rleg-h { display: inline-flex; align-items: center; gap: var(--sp-1); }
 .rleg-h .ic { color: var(--ink-3); }
 .rleg-h.is-hitch .ic { color: #c98a1c; }
 .rleg-h.is-ferry .ic { color: #3f86ab; }
 .rleg-go {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 10px;
-  font-size: 12px;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-note);
   font-weight: 900;
-  padding: 6px 14px;
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow: var(--pop);
 }
+.rleg-go:active { transform: translateY(6px); box-shadow: none; }
 
 /* 引用のような、この企画の芯を言う一枚 */
 .nquote {
-  margin-top: 14px;
-  padding: 14px 16px;
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-2);
-  border: var(--bw-2) dashed var(--frame-dark);
-  background: color-mix(in srgb, var(--gold) 26%, var(--paper));
+  border: var(--bw-2) dashed var(--rule);
+  background: color-mix(in srgb, var(--marker) 34%, var(--paper));
 }
-.nquote p { margin: 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; }
+.nquote p { margin: 0; font-size: var(--fs-body); line-height: 1.9; font-weight: 700; }
 .nquote b { font-weight: 900; }
 
 .ncountry-go { flex: none; color: var(--ink-3); margin-left: auto; }
@@ -372,11 +376,11 @@
    章の見出しの帯は開いていなくても引いてある。これは「押せる」の合図ではなく
    「ここが節の名前」の印なので、項目の帯（押したときだけ引かれる）と役割が違う。
    --------------------------------------------------------------------- */
-.gchap { margin-bottom: 11px; }
-.gchap > .fold > summary { min-height: 58px; padding: 13px 13px; }
-.gchap-h { display: inline-flex; align-items: center; gap: 9px; font-size: 16px; }
+.gchap { margin-bottom: var(--sp-3); }
+.gchap > .fold > summary { min-height: 58px; padding: var(--sp-3) var(--sp-3); }
+.gchap-h { display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-h3); }
 .gchap-h .ic { color: var(--marker-ink); }
-.gchap > .fold > summary .fold-t b { font-size: 16px; }
+.gchap > .fold > summary .fold-t b { font-size: var(--fs-h3); }
 /* 要約の一行も帯の上に載る。紙の上の薄い字のままだと、蛍光ペンに沈んで読めない。 */
 .gchap > .fold > summary .fold-t i { color: color-mix(in srgb, var(--marker-ink) 88%, var(--rule)); }
 /* 章の帯は紙のはしからはしまで。項目の帯（内側に3px空けた札）と形を変えて、
@@ -384,7 +388,7 @@
 .gchap > .fold > summary::before {
   inset: 0;
   /* 紙の角丸から枠1本ぶん内側。ここを揃えないと帯の角だけ四角く見える。 */
-  border-radius: calc(var(--r-1) - 1px);
+  border-radius: calc(var(--r-0) - 1px);
   background: color-mix(in srgb, var(--marker) 82%, var(--rule));
   opacity: 1;
   transform: none;
@@ -393,34 +397,34 @@
 /* 章の帯はいつも引いてあるので、押した合図は色を一段濃くすることで返す。 */
 .gchap > .fold > summary:active::before { background: color-mix(in srgb, var(--marker) 58%, var(--chip)); }
 .gchap > .fold[open] > summary::before {
-  border-radius: calc(var(--r-1) - 1px) calc(var(--r-1) - 1px) 0 0;
+  border-radius: calc(var(--r-0) - 1px) calc(var(--r-0) - 1px) 0 0;
 }
 /* 章の中身は紙の一段下。罫線で区切って、その上に段を並べる。 */
 .gchap > .fold > .fold-body {
-  padding: 4px 7px 9px;
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
   border-top-color: color-mix(in srgb, var(--rule) 85%, transparent);
   background: color-mix(in srgb, var(--rule) 13%, transparent);
 }
 
 /* 中の項目は一段小さく。入れ子が2段あることを、開かなくても分かるようにする。 */
-.gchap .fold .fold > summary { min-height: 52px; padding: 6px 11px; }
-.gchap .fold .fold .fold-t b { font-size: 13.5px; }
+.gchap .fold .fold > summary { min-height: 52px; padding: var(--sp-1) var(--sp-3); }
+.gchap .fold .fold .fold-t b { font-size: var(--fs-body); }
 /* 中の段のしるしも板のまま。小さくするのは大きさだけで、型は変えない。 */
-.gchap .fold .fold .fold-c { width: 16px; height: 16px; padding: 6px; }
-.gchap .fold .fold .fold-body { padding: 11px 13px 14px; }
+.gchap .fold .fold .fold-c { width: 16px; height: 16px; padding: var(--sp-1); }
+.gchap .fold .fold .fold-body { padding: var(--sp-3) var(--sp-3) var(--sp-3); }
 
-.nspot-h { display: inline-flex; align-items: center; gap: 7px; }
+.nspot-h { display: inline-flex; align-items: center; gap: var(--sp-2); }
 .nspot-h .ic { color: var(--frame-deep); flex: none; }
 .ncity-name em {
   font-style: normal;
-  font-size: 11.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
-  margin-left: 10px;
+  margin-left: var(--sp-2);
 }
-.nnav a { display: inline-flex; align-items: center; gap: 7px; }
+.nnav a { display: inline-flex; align-items: center; gap: var(--sp-2); }
 .ic.is-flip { transform: scaleX(-1); }
-.nspot-credit { display: inline-flex; align-items: center; gap: 4px; }
+.nspot-credit { display: inline-flex; align-items: center; gap: var(--sp-1); }
 
 /* 一覧に添える小さなスプライト。
    切り抜きなので、影は輪郭に沿って落ちる。真下ではなく光の反対（右下）へ。 */
@@ -436,7 +440,7 @@
 .chip .ic, .tile .ic { vertical-align: -0.16em; }
 
 /* --- 北欧: この旅でいちばん見たいもの --- */
-.nhi { display: grid; gap: 10px; margin-top: 12px; }
+.nhi { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
 @media (min-width: 720px) { .nhi { grid-template-columns: 1fr 1fr; } }
 .nhi-card {
   display: block;
@@ -444,37 +448,37 @@
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-3);
   background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-1);
+  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-1);
   color: var(--ink);
 }
-.nhi-card:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.nhi-card:active { transform: translateY(6px); box-shadow: var(--shadow-1); }
 .nhi-img { position: relative; display: block; line-height: 0; background: #dfe7e4; }
 .nhi-img img { width: 100%; height: 168px; object-fit: cover; }
 .nhi-where {
   position: absolute;
   left: 8px; bottom: 8px;
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11.5px; font-weight: 900;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  font-size: var(--fs-min); font-weight: 900;
   color: var(--ink);
   background: rgba(255, 253, 246, 0.94);
   border: 2px solid var(--frame-dark);
   border-radius: var(--r-pill);
-  padding: 2px 9px 2px 4px;
+  padding: 2px var(--sp-2) 2px var(--sp-1);
   line-height: 1.4;
 }
-.nhi-body { display: grid; gap: 3px; padding: 11px 14px 13px; }
-.nhi-body b { font-size: 15px; font-weight: 900; line-height: 1.45; }
-.nhi-body i { font-style: normal; font-size: 12.5px; font-weight: 700; line-height: 1.7; color: var(--ink-2, var(--ink)); }
+.nhi-body { display: grid; gap: 3px; padding: var(--sp-3) var(--sp-3) var(--sp-3); }
+.nhi-body b { font-size: var(--fs-body); font-weight: 900; line-height: 1.45; }
+.nhi-body i { font-style: normal; font-size: var(--fs-note); font-weight: 700; line-height: 1.7; color: var(--ink-2, var(--ink)); }
 .nhi-body em {
   justify-self: end;
   display: inline-flex; align-items: center; gap: 3px;
-  font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--frame-deep);
+  font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--frame-deep);
 }
 
 /* --- 国のページの顔写真 --- */
 .nchero {
   position: relative;
-  margin: -6px -4px 14px;
+  margin: calc(-1 * var(--sp-1)) calc(-1 * var(--sp-1)) var(--sp-3);
   border: 4px solid var(--frame-dark);
   border-radius: var(--r-3);
   overflow: hidden;
@@ -486,10 +490,107 @@
 .nchero-credit {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  padding: 22px 14px 8px;
-  font-size: 11.5px;
+  padding: var(--sp-5) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 800;
   color: #fffdf6;
   line-height: 1.5;
   background: linear-gradient(rgba(10, 40, 50, 0), rgba(10, 40, 50, 0.72));
 }
+
+/* --- 読み込み中・空っぽ・取れなかった ---------------------------------
+   `docs/island-design.md` 4章と `docs/island-world.md` 4.1。
+   外から取ってくるもの（提案・投げ銭・今日の数字）は、出るまでのあいだ
+   何も無い時間がある。そこを面ごとに作ると、面ごとにばらばらになる。
+   3つの形をここに1回だけ置く。
+
+   決めごと3つ。
+
+     1. **ぐるぐる回すものは使わない。** 島に回っているものは1つも無い。
+        回転は「Webのローダー」の記号で、島の外から借りてきた印になる
+     2. **読み込み中は、出てくる物と同じ形・同じ大きさの薄い板を置く。**
+        場所を先に取るのが役目なので、出たときに下がずれない
+     3. **空っぽは灰色にしない。** 「0件」で終わらせず、
+        ここに何が入るか・次に何をするかを1つ書く
+
+   色は --ink-3 を 26% で（island-world 4.1）。明滅は 1.4秒。
+   それより速いと落ち着かない。
+   --------------------------------------------------------------------- */
+
+/* 読み込み中。中身の形をした薄い板を、出てくる数だけ並べる。
+   高さは --wait-h で変える。既定は本文1行ぶん。
+     .wait.is-row   … 一覧の1行（56px）
+     .wait.is-card  … カード1枚（112px）
+   最後の1枚だけ短くするのは、文章の最終行が短いのと同じ理屈。 */
+.wait {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+.wait > span {
+  display: block;
+  height: var(--wait-h, 14px);
+  border-radius: var(--wait-r, var(--r-pill));
+  background: color-mix(in srgb, var(--ink-3) 26%, transparent);
+  animation: wait-breathe 1.4s ease-in-out infinite;
+}
+.wait.is-row { --wait-h: 56px; --wait-r: var(--r-0); }
+.wait.is-card { --wait-h: 112px; --wait-r: var(--r-1); }
+/* 行やカードは端まで同じ長さ。短くするのは字の形をしているときだけ。 */
+.wait:not(.is-row):not(.is-card) > span:last-child { width: 62%; }
+/* ずらして明滅させると、板が順に置かれていくように見える。 */
+.wait > span:nth-child(2) { animation-delay: 0.16s; }
+.wait > span:nth-child(3) { animation-delay: 0.32s; }
+@keyframes wait-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+/* 動きを減らす設定の人には、置いたまま動かさない。形だけで役目は足りている。 */
+@media (prefers-reduced-motion: reduce) {
+  .wait > span { animation: none; }
+}
+
+/* 空っぽ。「まだ何も無い」で終わらせず、次にすることを1つ書く。
+   紙の型なので、影は落とさず罫で囲う。灰色の箱にしない。 */
+.blank {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1.5px dashed color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--marker) 16%, transparent);
+  text-align: center;
+}
+.blank > b { font-size: var(--fs-h3); font-weight: 900; line-height: var(--lh-head); color: var(--ink); }
+.blank > p { margin: 0; font-size: var(--fs-note); font-weight: 700; line-height: 1.8; color: var(--ink-2); }
+.blank > img, .blank > svg { margin-bottom: var(--sp-1); }
+
+/* 次にすること。ここだけ板。押せるので厚み6px・48px（island-design 3章）。 */
+.blank-go {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  padding: 0 var(--sp-5);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-body); font-weight: 900;
+  letter-spacing: var(--ls-body);
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.blank-go:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-dark); }
+.blank-go:active { transform: translateY(6px); box-shadow: none; }
+
+/* 取れなかったとき。エラーの赤にしない。
+   見ている人には関係のない話なので、静かに「あとでもう一度」とだけ言う
+   （island-design 4章）。形は空っぽと同じ。 */
+.blank.is-off {
+  background: none;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--rule) 50%, transparent);
+}
+.blank.is-off > b { color: var(--ink-2); }

@@ -119,7 +119,7 @@
   box-shadow: 0 2px 0 rgba(20, 60, 90, 0.35);
   display: grid;
   place-items: center;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
   color: #b0562a;
   letter-spacing: 0;
@@ -163,7 +163,7 @@
   white-space: nowrap;
   background: var(--paper);
   color: var(--ink);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.02em;
   padding: 3px 9px;
@@ -191,7 +191,7 @@
   position: absolute;
   left: 12px;
   top: -6px;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
   color: #123b57;
   white-space: nowrap;
@@ -201,6 +201,14 @@
 /* 近い街どうしで名前が重なるときの逃がしぶん（WorldRoute が決める） */
 .acity b { transform: translateY(var(--acity-dy, 0px)); }
 .amap-pins.is-wide .acity { opacity: 0; }
+.amap-pins.is-wide .apin-dot {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  font-size: 11.5px;
+}
+.amap-pins.is-wide .apin-dot::before { inset: 2.5px; }
+.amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
 
 /* ---------------------------------------------------------
    章の切りかえ
@@ -208,33 +216,32 @@
 
 .amap-tabs {
   display: flex;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0 0 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 4px;
 }
-.amap-tabs::-webkit-scrollbar { display: none; }
 .amap-tab {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 15px;
+  /* 指で押せる最小 48px。48px の押しものの厚みは 6px */
+  min-height: 48px;
+  padding: 0 18px;
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: var(--ls-body, 0.02em);
-  box-shadow: 0 4px 0 var(--frame-dark);
+  box-shadow: 0 6px 0 var(--frame-dark);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease, color 0.2s ease;
 }
-.amap-tab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+.amap-tab:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
 .amap-tab.is-on {
   background: var(--gold);
   color: #6b4413;
-  box-shadow: 0 4px 0 #c8912b;
+  box-shadow: 0 6px 0 var(--frame-dark);
 }
 
 /* 凡例と縮尺 */
@@ -249,14 +256,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-2);
 }
 /* 距離。凡例の言葉より一段引いた色で、数字だと分かるようにする */
 .amap-key em {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.02em;
@@ -271,8 +278,8 @@
 .amap-scale {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 10.5px;
+  gap: 8px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-3);
   margin-left: auto;
@@ -298,7 +305,7 @@
 /* 地図の上に浮かせる小さな札（縮尺・方位） */
 .amap-badge {
   position: absolute;
-  right: 10px;
+  left: 10px;
   bottom: 10px;
   display: flex;
   align-items: center;
@@ -307,7 +314,7 @@
   border-radius: 999px;
   background: rgba(255, 251, 240, 0.9);
   box-shadow: 0 3px 0 rgba(20, 60, 90, 0.22);
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-2);
   pointer-events: none;
@@ -327,7 +334,7 @@
   .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
   .apin-name { font-size: 12.5px; bottom: 38px; }
   .acity b { font-size: 11.5px; }
-  .amap-tab { font-size: 13.5px; padding: 10px 18px; }
+  .amap-tab { font-size: 14px; padding: 0 22px; }
 }
 
 /* ---------------------------------------------------------
@@ -381,7 +388,7 @@
 .atrip-name b { font-size: 16px; font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
 .atrip-name em {
   font-style: normal;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-3);
   letter-spacing: 0.1em;
@@ -392,7 +399,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--ink-2);
   background: var(--paper-2);
@@ -408,24 +415,94 @@
    国のページ
    --------------------------------------------------------- */
 
-.acty-head {
+/* ---------------------------------------------------------
+   国の1枚＝パスポートのページ
+
+   17カ国ぶんが同じ型で並ぶので、型はできるだけ静かにする。
+   紙・国旗・入国のスタンプ・罫で割った数字だけ。
+   影は落とさない（紙の型。docs/ac-reference.md 7章）。
+   --------------------------------------------------------- */
+
+.apass-top {
   display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
 }
-.acty-num {
+/* 旗は事実なので色を変えない。紙に貼ってあるように細い縁だけ付ける */
+.apass-flag {
+  line-height: 0;
+  border: 3px solid var(--paper-out);
+  border-radius: 4px;
+  box-shadow: var(--shadow-1);
+}
+.apass-who { display: grid; gap: 2px; min-width: 0; }
+.apass-who b { font-size: 20px; font-weight: 900; letter-spacing: var(--ls-head, 0.04em); line-height: 1.25; }
+.apass-who em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+}
+.apass-who i { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
+/* 入国のスタンプ。押せないので完全に平ら。数を言う印なのでオリーブ */
+.apass-stamp {
+  flex: none;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2.5px solid var(--chip);
+  box-shadow: inset 0 0 0 2.5px var(--paper), inset 0 0 0 5px var(--chip);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  place-content: center;
+  justify-items: center;
+  color: var(--chip-ink);
+  transform: rotate(-9deg);
 }
-.acty-num div {
-  border-radius: var(--r-1);
-  background: var(--paper-2);
-  padding: 9px 6px;
-  text-align: center;
+.apass-stamp b { font-size: 22px; font-weight: 900; line-height: 1; }
+.apass-stamp i { font-style: normal; font-size: 11.5px; font-weight: 900; margin-top: 2px; }
+
+/* 入国と出国。日付は罫で区切った台帳にする */
+.apass-log { margin: 0; display: grid; gap: 0; }
+.apass-log > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--rule);
 }
-.acty-num b { display: block; font-size: 20px; font-weight: 900; line-height: 1.1; }
-.acty-num span { display: block; font-size: 10.5px; font-weight: 900; color: var(--ink-3); margin-top: 3px; }
+.apass-log dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+}
+.apass-log dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+/* 数字は1枚の面を罫で割る。数字ごとにカードを作らない
+   （docs/island-world.md 4.3 ①） */
+.apass-num {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2px;
+}
+.apass-num div { padding: 13px 6px 2px; text-align: center; border-left: 1px solid var(--rule); }
+.apass-num div:first-child { border-left: 0; }
+.apass-num b { display: block; font-size: 24px; font-weight: 900; line-height: 1.1; color: var(--frame-deep); }
+.apass-num span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-2); margin-top: 4px; }
 
 .acity-list { display: grid; gap: 9px; }
 .acity-empty {
@@ -525,7 +602,7 @@
   place-items: center;
   color: var(--ink-2);
 }
-.aline-when { font-size: 11px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
+.aline-when { font-size: 11.5px; font-weight: 900; color: var(--ink-3); letter-spacing: 0.06em; }
 .aline-what { display: block; font-size: 15px; font-weight: 900; line-height: 1.55; margin-top: 1px; }
 .aline-note { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-2); line-height: 1.75; margin-top: 3px; }
 
@@ -593,7 +670,7 @@
 .abadge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   padding: 9px 16px;
   border-radius: 999px;
   background: #2c2a28;
@@ -646,7 +723,7 @@
 }
 .astep-body { min-width: 0; display: grid; gap: 3px; }
 .astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.astep-head time { font-size: 11px; font-weight: 900; color: var(--ink-3); }
+.astep-head time { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
 /* 種類の言葉。数えたもの・言うだけの札と同じ、オリーブの平ら */
 .astep-kind {
   font-size: 11.5px;
@@ -754,3 +831,20 @@
   border: 1.5px solid var(--pg-rule);
   background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
 }
+
+/* ---------------------------------------------------------
+   紙の面の上の地図
+
+   .amap は島の板（厚み8px・金のふち）として作ってあった。
+   だが地図そのものは押すものではないので、紙の面に置くと
+   「押せそうな板」がひとつ増える。紙に刷った図版として、
+   罫で囲うだけにする（docs/ac-reference.md 7章）。
+   --------------------------------------------------------- */
+.panel.paper .amap {
+  background: var(--paper);
+  border: 2px solid var(--pg-rule);
+  border-radius: var(--r-1);
+  box-shadow: none;
+  padding: 6px;
+}
+.panel.paper .amap-stage { border-radius: 6px; }
