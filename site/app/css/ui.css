@@ -452,7 +452,7 @@
   color: var(--ink);
 }
 .nhi-card:active { transform: translateY(6px); box-shadow: var(--shadow-1); }
-.nhi-img { position: relative; display: block; line-height: 0; background: #dfe7e4; }
+.nhi-img { position: relative; display: block; line-height: 0; background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out)); }
 .nhi-img img { width: 100%; height: 168px; object-fit: cover; }
 .nhi-where {
   position: absolute;
@@ -460,7 +460,7 @@
   display: inline-flex; align-items: center; gap: var(--sp-1);
   font-size: var(--fs-min); font-weight: 900;
   color: var(--ink);
-  background: rgba(255, 253, 246, 0.94);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
   border: 2px solid var(--frame-dark);
   border-radius: var(--r-pill);
   padding: 2px var(--sp-2) 2px var(--sp-1);
@@ -484,7 +484,7 @@
   overflow: hidden;
   box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
   line-height: 0;
-  background: #dfe7e4;
+  background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
 }
 .nchero img { width: 100%; height: clamp(160px, 42vw, 300px); object-fit: cover; }
 .nchero-credit {
@@ -493,9 +493,12 @@
   padding: var(--sp-5) var(--sp-3) var(--sp-2);
   font-size: var(--fs-min);
   font-weight: 800;
-  color: #fffdf6;
+  color: var(--paper);
   line-height: 1.5;
-  background: linear-gradient(rgba(10, 40, 50, 0), rgba(10, 40, 50, 0.72));
+  /* 写真の上に置く帯。表に無い色を直に書かない（island-world 3.2）。 */
+  background: linear-gradient(
+    color-mix(in srgb, var(--sea-deep) 0%, transparent),
+    color-mix(in srgb, var(--sea-deep) 74%, transparent));
 }
 
 /* --- 読み込み中・空っぽ・取れなかった ---------------------------------

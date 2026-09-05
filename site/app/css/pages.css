@@ -779,7 +779,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   transition: transform 0.12s ease;
 }
 .ifoot-back:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75); }
-.ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: #fff2df; opacity: 0.92; line-height: 1.8; }
+.ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: var(--paper); opacity: 0.92; line-height: 1.8; }
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
@@ -803,17 +803,15 @@ a.chip:active, button.chip:active, .chip.link:active {
 .now-pin { display: block; margin: 0 auto var(--sp-1); width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 color-mix(in srgb, var(--frame-deep) 26%, transparent)); }
 .now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: var(--sp-1) 0 var(--sp-2); }
 /* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
-.week { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.week { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+/* 読むだけの一覧。箱を並べず、罫で切る（island-world 4章の部品表「区切り」）。
+   1件ずつ枠で囲うと、押せないものが押せるカードの形になる。 */
 .week li {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: var(--bw-1) solid color-mix(in srgb, var(--frame) 60%, var(--paper));
-  border-left: 8px solid var(--frame);
-  border-radius: var(--r-0) var(--r-2) var(--r-2) var(--r-0);
-  padding: var(--sp-3) var(--sp-3);
+  padding: var(--sp-3) var(--sp-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
   font-size: var(--fs-body); font-weight: 700; line-height: 1.75;
-  /* 読むだけの行。押せないので平ら（island-world 3.4）。 */
-  box-shadow: none;
 }
+.week li:first-child { border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 
 /* 付箋 */
 /* 小見出しは本文より小さいので、色で沈めるより枠で分ける */
@@ -851,11 +849,12 @@ a.chip:active, button.chip:active, .chip.link:active {
 .noteform button {
   flex: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--frame) 78%, var(--paper)) 0%, var(--frame) 100%);
-  color: #fff;
+  /* 琥珀の上の白い字は 2:1 しか無い。墨にすると 5.5:1 まで戻る。 */
+  color: var(--ink);
   border-radius: var(--r-pill); padding: var(--sp-3) var(--sp-4);
   min-height: 48px;
   font-weight: 900; font-size: var(--fs-body);
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   box-shadow: var(--pop), inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 .noteform button:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4); }
@@ -877,14 +876,16 @@ a.chip:active, button.chip:active, .chip.link:active {
 .brow .bin { flex: 1; border-radius: var(--r-pill); }
 .bbtn {
   flex: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 78%, #fff) 0%, var(--accent) 100%);
+  /* 桃の上の白い字は 2.7:1 しか無い。濃いほうへ落として 4.6:1 まで戻す。 */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 76%, var(--accent-deep)) 0%, var(--accent-deep) 100%);
   color: #fff;
   border-radius: var(--r-pill); padding: var(--sp-3) var(--sp-5);
   min-height: 48px;
   font-weight: 900; font-size: var(--fs-body);
   letter-spacing: var(--ls-head);
   text-shadow: 0 1px 0 color-mix(in srgb, var(--accent-deep) 46%, transparent);
-  box-shadow: 0 6px 0 var(--accent-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  /* 側面は面より濃く。面と同じ色だと厚みが見えず、押せる合図が消える。 */
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-deep) 58%, var(--ink)), inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 .bbtn:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45); }
 .bbtn:disabled { opacity: 0.55; box-shadow: none; transform: none; }
@@ -933,8 +934,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   transform: translateX(-50%);
   display: none;
   flex-direction: column; align-items: center; gap: 2px;
-  color: #fffdf6; font-size: var(--fs-min); font-weight: 800;
-  text-shadow: 0 2px 8px color-mix(in srgb, #05233d 62%, transparent);
+  color: var(--paper); font-size: var(--fs-min); font-weight: 800;
+  text-shadow: 0 2px 8px color-mix(in srgb, var(--sea-deep) 72%, transparent);
   pointer-events: none;
 }
 .scroll-cue i { font-style: normal; font-size: var(--fs-body); animation: cue 1.8s ease-in-out infinite; }
@@ -1054,7 +1055,8 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .signin-warn b { color: var(--frame-deep); }
 .signin-go {
-  background: var(--accent-2);
+  /* 水色の上の白い字は 2.4:1。色相はそのままに、墨を混ぜて 5:1 まで沈める。 */
+  background: color-mix(in srgb, var(--accent-2) 60%, var(--ink));
   color: #fff;
   font-size: var(--fs-body);
   font-weight: 900;
@@ -1062,7 +1064,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   min-height: 48px;
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 66%, var(--ink));
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 34%, var(--ink));
 }
 .signin-go:active { transform: translateY(6px); box-shadow: none; }
 .signin-go:disabled { opacity: 0.6; box-shadow: none; }
@@ -1130,15 +1132,23 @@ a.chip:active, button.chip:active, .chip.link:active {
   margin: var(--sp-3) 0;
 }
 .pphotos figure { margin: 0; }
+/* 写真そのものを置かない。島の中の物は全部「誰かが置いたもの」なので、
+   生成りの縁を回して、わずかに傾けて貼る（island-world 6.2-3）。
+   傾きは1枚ごとに向きを変える。全部が同じ角度だと、傾いて見えず
+   「レイアウトがずれている」に見える。 */
 .pphotos img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: var(--r-2);
-  border: var(--bw-1) solid var(--frame);
+  border: 6px solid var(--paper-out);
+  outline: 1px solid color-mix(in srgb, var(--rule) 50%, transparent);
   display: block;
   background: var(--paper-2);
+  box-shadow: var(--shadow-1);
+  transform: rotate(-0.7deg);
 }
+.pphotos figure:nth-child(even) img { transform: rotate(0.8deg); }
 .pphotos figcaption {
   margin-top: var(--sp-1);
   font-size: var(--fs-min);
@@ -1171,7 +1181,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-dark);
+  /* 中に押すものが入っているだけの入れ物。押せないので平ら。 */
+  box-shadow: none;
 }
 .me-title { display: block; font-size: var(--fs-body); }
 .me-note { margin: var(--sp-1) 0 var(--sp-3); font-size: var(--fs-note); line-height: 1.7; color: var(--ink-2); }
