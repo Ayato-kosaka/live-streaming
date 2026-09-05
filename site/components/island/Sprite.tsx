@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import SPRITE_META from "@/content/sprites.json";
 
 type Meta = {
@@ -23,7 +25,7 @@ export type SpriteName = keyof typeof SPRITE_META;
  * 物体の足元の中央が (x, y) に来るように置く。
  * こうしないと木が地面から浮いたり、めり込んだりする。
  */
-export function Sprite({
+function SpriteRaw({
   name,
   x,
   y,
@@ -76,6 +78,13 @@ export function Sprite({
     </g>
   );
 }
+
+/**
+ * 島に置く物は 140 個ある。島の札を開いたり住人に話しかけたりするたび、
+ * 親が描き直されて、その 140 個ぶんが毎回作り直されていた。
+ * 渡す値はどれも数と文字なので、memo で包めば「同じなら作り直さない」で済む。
+ */
+export const Sprite = memo(SpriteRaw);
 
 /** 物体の見た目の横幅(ワールド単位)。当たり判定やラベルの位置決めに使う。 */
 export function spriteWidth(name: string, size: number): number {

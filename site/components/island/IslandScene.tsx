@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ISLAND, GRASS_INSET, PLACES, PLATEAU, SPOTS, WORLD, type SpotId } from "./layout";
 import {
   blob,
@@ -1009,7 +1010,14 @@ export const PROPS: Item[] = [
   .map((p, i) => (SWAYS.test(p.n) && !p.still && p.s >= 60 && i % 3 === 0 ? { ...p, sway: (i % 13) * 0.36 } : p))
   .sort((a, b) => a.y - b.y);
 
-export default function IslandScene() {
+/**
+ * 島の地形と飾り。
+ *
+ * ここが返すものは、いつ描いても同じ。なのに札を開いたり住人に話しかけたりする
+ * たびに、親（IslandStage）の状態が変わって、この 300 要素ぶんを作り直していた。
+ * memo で包むと、親が何回描き直しても、ここは1回で済む。
+ */
+function IslandScene() {
   return (
     <>
       <defs>
@@ -1280,3 +1288,5 @@ export default function IslandScene() {
     </>
   );
 }
+
+export default memo(IslandScene);
