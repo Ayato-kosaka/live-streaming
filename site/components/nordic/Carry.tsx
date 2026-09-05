@@ -70,10 +70,12 @@ export function Fare({ what, cost, src, before, reach }: FareProps) {
           {src ? `（${src}）` : ""}
         </i>
       </p>
-      {got !== null && !full && (
+      {/* まだ1円も届いていない区間には、バーも数字も出さない。
+          0円のバーは「誰も出していない」に見えるので、値段だけ出しておく。 */}
+      {got !== null && got > 0 && !full && (
         <>
           <span className="fare-bar">
-            <i style={{ width: `${Math.max(2, Math.round((got / cost) * 100))}%` }} />
+            <i style={{ width: `${Math.max(3, Math.round((got / cost) * 100))}%` }} />
           </span>
           <p className="fare-got">
             このうち <b>{yen(got)}</b> は、もう誰かが出してくれました
