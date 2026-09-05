@@ -279,7 +279,9 @@
 }
 .atrace-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 .atrace-step { display: inline-flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
-.atrace-step > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); min-width: 46px; text-align: center; }
+/* 紙にはムラがあって、いちばん暗いところで --ink-2 は 4.47 : 1 まで落ちる。
+   11.5px の字なので --ink にする */
+.atrace-step > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink); min-width: 46px; text-align: center; }
 .atrace-step > span > b { font-size: var(--fs-h3); color: var(--ink); }
 .atrace-step > button {
   width: 48px; height: 48px;
@@ -306,10 +308,12 @@
   .apin.is-here::after { animation: none; opacity: 0.5; }
 }
 
+/* 遊び方の1行。読ませる字なので、紙のいちばん暗いムラ（4.32 : 1）でも
+   足りる濃さにする */
 .atrace-hint {
   margin: var(--sp-3) 0 0;
   font-size: var(--fs-note); font-weight: 700; line-height: var(--lh-body);
-  color: var(--ink-2);
+  color: var(--ink);
 }
 
 /* 開いた国の札 */
