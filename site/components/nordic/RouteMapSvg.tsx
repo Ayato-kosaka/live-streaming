@@ -256,7 +256,9 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           <Link
             key={c.id}
             href={`/nordic/${c.country}`}
-            className={`nmap-pin is-${c.kind}${c.cap ? " is-cap" : ""}${done(c.seq) ? " is-done" : ""}`}
+            className={`nmap-pin is-${c.kind}${c.cap ? " is-cap" : ""}${done(c.seq) ? " is-done" : ""}${
+              here === c.id ? " is-now" : ""
+            }`}
             data-id={c.id}
             data-seq={c.seq}
           >
@@ -296,10 +298,14 @@ export default function RouteMapSvg({ here }: { here?: string }) {
             {c.kind === "goal" && (
               <g className="nm-goal">
                 <circle className="nm-goal-halo" cx={c.x} cy={c.y} r={r + 15} />
-                <g className="nm-chip is-goal" transform={`translate(${c.x} ${c.y - r - 44})`}>
-                  <rect x="-66" y="-24" width="132" height="48" rx="24" />
+                {/* 名前も、どういう人かも書かない。相手はこの企画に応募していない
+                    実在の人なので、伏せたままで成立する形にしてある
+                    （docs/nordic-fund.md 1章）。名前を出していいと分かったら、
+                    この一行を差し替えるだけで済む。 */}
+                <g className="nm-chip is-goal" transform={`translate(${c.x} ${c.y - r - 46})`}>
+                  <rect x="-172" y="-25" width="344" height="50" rx="25" />
                   <text x="0" y="9" textAnchor="middle">
-                    ゴール
+                    ここに、会いたい人がいる
                   </text>
                 </g>
               </g>

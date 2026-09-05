@@ -114,6 +114,10 @@ export default function TripNow({
     svg.querySelectorAll<SVGElement>("[data-seq]").forEach((el) => {
       el.classList.toggle("is-done", Number(el.getAttribute("data-seq")) <= seq);
     });
+    // 「いま ここ」の札はどの街にもぶら下げてある。出すのは1つだけ。
+    svg.querySelectorAll<SVGElement>(".nmap-pin").forEach((el) => {
+      el.classList.toggle("is-now", el.getAttribute("data-id") === id);
+    });
   }, [at, stops]);
 
   const last = stops.length - 1;
@@ -121,10 +125,8 @@ export default function TripNow({
   const idx = at ?? (departed ? null : 0);
   const arrived = idx === last;
 
-  // 会えるまで、あと何km。まだ通っていない区間のヒッチハイクぶんを足す。
-  const leftKm = stops
-    .slice((idx ?? 0) + 1)
-    .reduce((a, b) => a + (b.hitch ?? 0), 0);
+  // 残りの距離。まだ通っていない区間の、親指で進むぶんを足す。
+  const leftKm = stops.slice((idx ?? 0) + 1).reduce((a, b) => a + (b.hitch ?? 0), 0);
 
   const now = idx != null ? stops[idx] : null;
   const next = idx != null && idx < last ? stops[idx + 1] : null;
@@ -133,14 +135,14 @@ export default function TripNow({
   return (
     <div className="tnow">
       <div className="tnow-top">
-        <h1>会いたい人がいるので、スウェーデンまでヒッチハイクで行きます</h1>
+        <h1>スウェーデンに、会いたい人がいます</h1>
         <p>
-          ジョージアから、ストックホルムまで。飛行機は最初の1本だけ。そこから先の陸路{" "}
-          <b>{hitchKm.toLocaleString()}km</b> は、乗せてくれる人を見つけないと1mmも進まない。
+          ジョージアからそこまで <b>{hitchKm.toLocaleString()}km</b>。
+          バスにも電車にも乗らず、人の車だけで行きます。
         </p>
       </div>
 
-      {/* 1. あと何日  2. 会えるまであと何km */}
+      {/* 1. あと何日  2. あと何km */}
       <div className="tnow-counts">
         {!departed ? (
           <div className="tnow-count">
@@ -179,9 +181,12 @@ export default function TripNow({
           </div>
         )}
 
-        {/* 会えるまでの遠さ。進むほど減る。これがこの企画でいちばん意味のある数字。 */}
+        {/* 残りの遠さ。進むほど減る。この企画でいちばん意味のある数字。
+            ゴールは「会えたかどうか」ではなく「ストックホルムに着くこと」にする。
+            相手の都合で会えないことは普通にあるし、そのとき相手が
+            約束を破った人に見えるのがいちばんまずい（docs/nordic-fund.md 1章）。 */}
         <div className="tnow-count is-far">
-          <span className="tnow-count-l">会えるまで</span>
+          <span className="tnow-count-l">ストックホルムまで</span>
           <span className="tnow-count-n">
             <em>
               <b>{leftKm.toLocaleString()}</b>km
@@ -190,7 +195,7 @@ export default function TripNow({
           <span className="tnow-count-w">
             {leftKm === 0
               ? "着いた"
-              : `ストックホルムまで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
+              : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
           </span>
           <span className="tnow-bar" aria-hidden>
             <span style={{ width: `${Math.round(((hitchKm - leftKm) / hitchKm) * 100)}%` }} />

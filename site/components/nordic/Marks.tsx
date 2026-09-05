@@ -34,12 +34,8 @@ function Scene({
   return (
     <>
       <rect x="1" y="1" width="62" height="62" rx="17" fill={sky} />
-      {ground && (
-        <path
-          d={`M1 ${horizon}h62v6a17 17 0 0 1-17 17H18A17 17 0 0 1 1 46z`}
-          fill={ground}
-        />
-      )}
+      {/* はみ出しは `Mark` の角丸で切られるので、地面はただの四角でいい。 */}
+      {ground && <rect x="1" y={horizon} width="62" height={63 - horizon} fill={ground} />}
       {children}
     </>
   );
@@ -64,8 +60,8 @@ export const LEG_ART: Record<string, React.ReactNode> = {
       <circle cx="17" cy="13" r="1.7" fill="#ffe9a8" opacity="0.9" />
       <circle cx="26" cy="22" r="1.2" fill="#ffe9a8" opacity="0.7" />
       <circle cx="13" cy="26" r="1" fill="#ffe9a8" opacity="0.6" />
-      {/* 雲の海。夜の飛行機から見えるのはこれだけ */}
-      <path d="M1 47a17 17 0 0 0 17 17h28a17 17 0 0 0 17-17c-6-4-11 1-17-2s-9-5-15-2-13-1-16 0-9 3-14 4z" fill="#4d5f96" />
+      {/* 雲の海。夜の飛行機の窓から見えるのは、これと月だけ */}
+      <path d="M1 47c5-1 11-3 14-4s10 1 16 0 9-5 15-2 11-2 17 2v20H1z" fill="#4d5f96" />
       <g transform="rotate(-16 32 38)">
         <path d="M14 39h27l9-4 5 3-6 5H16z" fill="#f4f7fb" />
         <path d="M25 39l-6-9h5l10 9z" fill="#dfe6ef" />
@@ -190,7 +186,7 @@ export const LEG_ART: Record<string, React.ReactNode> = {
   /** 十字架の丘。丘ひとつが、立てられた十字架で埋まっている。 */
   crosses: (
     <Scene sky="#cfe9f5" ground="#9ec27c" horizon={38}>
-      <path d="M1 44c10-12 22-14 31-14s21 3 31 14v20H1z" fill="#8fb46f" />
+      <path d="M1 46c10-13 22-15 31-15s21 3 31 15v18H1z" fill="#8fb46f" />
       <g fill="#8a6a45">
         {[
           [12, 34, 1.0],
@@ -235,10 +231,10 @@ export const LEG_ART: Record<string, React.ReactNode> = {
         <path d="M34 26l-3 8" />
         <path d="M44 28l-3 7" />
       </g>
-      {/* 海沿いの道 */}
-      <path d="M1 44h62v6a17 17 0 0 1-17 17H18A17 17 0 0 1 1 50z" fill="#5d7a86" />
-      <path d="M4 52h56" stroke={ROAD} strokeWidth="9" strokeLinecap="round" />
-      <path d="M14 52h6M30 52h6M46 52h6" stroke="#f6efe0" strokeWidth="2.6" strokeLinecap="round" />
+      {/* 海と、その内側を走る道 */}
+      <rect x="1" y="44" width="62" height="19" fill="#5d7a86" />
+      <path d="M8 53h48" stroke={ROAD} strokeWidth="9" strokeLinecap="round" />
+      <path d="M14 53h6M30 53h6M44 53h6" stroke="#f6efe0" strokeWidth="2.6" strokeLinecap="round" />
     </Scene>
   ),
 
@@ -305,7 +301,14 @@ export function Mark({
       aria-hidden
       focusable="false"
     >
-      {a}
+      {/* 角丸の枠で切る。丘や船が枠からはみ出すのを、絵ごとに気にしなくて済む。
+          id はどの絵でも同じでよい。切る形が同じなので、重複しても結果は変わらない。 */}
+      <defs>
+        <clipPath id="nmarkClip">
+          <rect x="1" y="1" width="62" height="62" rx="17" />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#nmarkClip)">{a}</g>
     </svg>
   );
 }

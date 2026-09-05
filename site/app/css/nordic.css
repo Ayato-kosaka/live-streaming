@@ -181,6 +181,7 @@
 .tnow-rail li.is-past::before,
 .tnow-rail li.is-on::before { background: var(--frame-dark); }
 .tnow-dot {
+  position: relative;
   width: 13px; height: 13px;
   border-radius: 50%;
   background: var(--paper);
@@ -473,6 +474,19 @@
    ---------------------------------------------------------
    ここは「読む」ところではなく「書く」ところなので、板の型のまま。
    ========================================================= */
+.cidea-none { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+/* 出ている意見と、書くところの区切り。ここから下は自分の番、という札。 */
+.cidea-ask {
+  display: inline-block;
+  margin: 18px 0 8px;
+  padding: 3px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+  border-radius: var(--r-pill);
+  background: var(--frame-dark);
+  color: var(--paper);
+}
 .cideas { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
 .cideas li {
   border: var(--bw-1) solid var(--frame-dark);
@@ -752,19 +766,26 @@ svg.nmap {
 }
 
 /* --- 名前 --- */
+/* 海の名前。海の色に近い明るい青緑で、うしろに深い青をうっすら敷く。
+   白フチを付けると街の名札と同じ強さになって、どれが街か分からなくなる。 */
 .nmap .nm-sea-name {
   fill: var(--nm-seaname);
   font-weight: 800;
   letter-spacing: 0.26em;
-  opacity: 0.95;
+  stroke: var(--sea-deep);
+  stroke-width: 5;
+  stroke-opacity: 0.34;
 }
-/* 国名は地形の一部。ルートより下に敷いてあるので、白フチは付けない。
-   付けると、ここだけ札のように浮いて、街の名札と見分けが付かなくなる。 */
+/* 国名も同じ考え方。地形の一部として置くので、札には見せない。
+   ただし森の上に出すので、薄いフチが無いと木に食われて読めない。 */
 .nmap .nm-country {
   fill: var(--nm-label);
   font-weight: 900;
   letter-spacing: 0.24em;
-  opacity: 0.62;
+  stroke: var(--paper);
+  stroke-width: 6;
+  stroke-opacity: 0.42;
+  opacity: 0.82;
 }
 .nmap .nm-city {
   fill: var(--ink);
@@ -819,7 +840,24 @@ svg.nmap {
 .nmap .is-land .nm-pin-dot { fill: var(--sea-mid); }
 .nmap-pin:hover .nm-pin-ring { fill: var(--gold); }
 .nmap-pin:hover .nm-city { fill: var(--frame-deep); }
+
+/* 「いま ここ」の札は、どの街にもぶら下げてある（いる場所が分かるのは
+   画面が出たあとのことがあるので、その場で SVG を足すのは避けたい）。
+   出すのは `is-now` が付いた1つだけ。 */
+.nmap .nm-here { display: none; }
+.nmap .nmap-pin.is-now .nm-here { display: inline; }
 .nmap .nm-here circle { stroke: var(--foam); stroke-width: 5; }
+
+/* ゴール。いま居る街がゴールなら「いま ここ」が勝つ。札は1枚だけ。 */
+.nmap .nm-goal-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  opacity: 0.75;
+}
+.nmap .nmap-pin.is-now .nm-goal .nm-chip { display: none; }
+.nmap .nm-chip.is-goal rect { fill: var(--accent); }
+.nmap .nm-chip.is-goal text { fill: var(--paper); letter-spacing: 0.14em; }
 
 /* --- 吹き出し（飛行機の時間、いまここ） --- */
 .nmap .nm-chip rect {

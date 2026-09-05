@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { NORDIC_GUIDE as G } from "@/content/nordic";
 
@@ -98,7 +99,7 @@ export default function NordicGuidePage() {
       ]}
     >
       <PageHead
-        icon="mailbox"
+        mark={<Icon name="book" size={44} />}
         title="旅のしおり"
         lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。"
         say="読みたいところだけ開いてね。サウナのところは行かない人も面白いと思う。"

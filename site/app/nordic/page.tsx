@@ -10,14 +10,22 @@ import RouteLegs from "@/components/nordic/RouteLegs";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Highlights from "@/components/nordic/Highlights";
-import { DEPART, HITCH_KM, MAIN, NORDIC_COUNTRIES, NORDIC_GUIDE, nordicCountry } from "@/content/nordic";
+import {
+  DEPART,
+  HITCH_KM,
+  MAIN,
+  NORDIC_COUNTRIES,
+  NORDIC_GUIDE,
+  ROUTE,
+  nordicCountry,
+} from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
 import { planById } from "@/content/plans";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
   description:
-    "会いたい人がいるので、ジョージアからストックホルムまで陸路で行きます。2026年9月11日出発。飛行機は最初の1本だけ、あとの1,541kmはぜんぶヒッチハイク。ルート地図、国ごとの見どころ、旅のしおり。",
+    "スウェーデンに、会いたい人がいます。ジョージアからそこまで1,541km。バスにも電車にも乗らず、人の車だけで行きます。2026年9月11日出発。ルート地図、国ごとの見どころ、旅のしおり。",
 };
 
 const MOVE: Record<string, string> = {
@@ -73,6 +81,13 @@ export default async function NordicPage() {
   for (let i = 1; i < stops.length; i++) {
     if (!stops[i].country) stops[i].country = stops[i - 1].country;
   }
+  // 寄り道ぶんの距離は、その日を過ごす街に足す。
+  // 一本道に並べないだけで、親指を上げる距離には入っている（HITCH_KM と合わせる）。
+  for (const l of ROUTE) {
+    if (!l.side || l.move !== "hitch" || !l.km) continue;
+    const s = stops.find((x) => x.name === l.from.replace(/（.*$/, ""));
+    if (s) s.hitch = (s.hitch ?? 0) + l.km;
+  }
 
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
@@ -102,7 +117,7 @@ export default async function NordicPage() {
         <div className="nquote">
           <p>
             バスなら2日で終わる道です。それを親指1本で行くのは、
-            <b>その土地の人に会わないと1mmも進まない</b>から。
+            <b>そうやって行かないと、会いに行ったことにならない</b>から。
             誰の車に乗せてもらえるかで、旅の中身が毎日変わります。
           </p>
         </div>
