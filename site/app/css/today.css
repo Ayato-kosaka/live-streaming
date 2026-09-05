@@ -203,14 +203,11 @@
 
 /* --- スマホ: 下バーの1段目 --- */
 @media (max-width: 639px) {
-  /* 板が1段増えるので、バーの背を伸ばす。walk-hint もこの値を見て浮いている */
-  .stage.stage.has-today { --bar-h: 138px; }
-  .stage.has-today .island-bar { grid-template-rows: auto auto; }
-  .stage.has-today .island-bar-scroll { grid-row: 2; grid-column: 1; }
-  .stage.has-today .bar-zoom { grid-row: 2; grid-column: 2; }
-
+  /* バーの1段目を丸ごと使う。入口は下の段に並ぶ（`app/css/island.css`）。
+     板が1段増えるぶんバーの背が伸びるが、その値（--bar-h）は
+     入口のマスの高さと合わせて決まるので、島のファイルが持っている。
+     ここで別の値を出すと、2か所に同じ変数の別の数字が並ぶ。 */
   .today[data-place="bar"] {
-    grid-row: 1;
     grid-column: 1 / -1;
     min-width: 0;
   }
