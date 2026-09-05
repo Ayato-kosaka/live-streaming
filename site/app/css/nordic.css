@@ -37,13 +37,17 @@
   letter-spacing: var(--ls-head);
   color: var(--ink);
 }
-.tnow-top p {
+/* h1 のすぐ下の1行。h1 が場所の名前になったぶん、企画の芯はここが背負う。
+   だから本文より一段大きくして、頭の一文だけ濃くする（docs/island-world.md 7.5）。 */
+.tnow-lead {
   margin: 9px 0 0;
-  font-size: 13.5px;
-  line-height: 1.9;
+  font-size: 14.5px;
+  line-height: 1.85;
   font-weight: 700;
   color: var(--ink-2);
 }
+.tnow-lead b { font-weight: 900; color: var(--ink); }
+.tnow-top p { margin: 9px 0 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; color: var(--ink-2); }
 .tnow-top b { font-weight: 900; color: var(--ink); }
 
 /* --- あと何日 / あと何km --- */
