@@ -44,6 +44,9 @@ const LEAFY = { lobes: 1 };
 /** 細い木。房を大きく散らすと枝から離れて見えるので、控えめにする。 */
 const LEAFY_SOFT = { lobes: 0.72 };
 
+/** 雪。「わずかに青い白」を無彩色として拾わせる(render.html の chromaMax)。 */
+const SNOWY = { neutral: { chromaMax: 0.20 } };
+
 /** 岩。nature-kit の岩は土の色をしているので、灰色へ置き換える。
  * 苔は別マテリアルの面なので、そのままだと緑のシールに見える。
  * `moss` を付けると、縁が石の色へ溶けてギザギザになる。 */
@@ -175,6 +178,8 @@ export const SPRITES = [
   /* ---------- 場所の目印 ---------- */
   { name: "tent", parts: [`${NK}/tent_detailedOpen.glb`] },
   { name: "tent-small", parts: [`${NK}/tent_smallOpen.glb`] },
+  { name: "tent-closed", parts: [`${NK}/tent_detailedClosed.glb`] },
+  { name: "canoe-paddle", parts: [`${NK}/canoe_paddle.glb`] },
   { name: "campfire", parts: campfire(), opts: CAMPFIRE },
   { name: "signpost", parts: [`${NK}/sign.glb`] },
   { name: "statue", parts: [`${NK}/statue_obelisk.glb`] },
@@ -228,7 +233,6 @@ export const SPRITES = [
   // 同じ木ばかり並ぶと林が壁紙に見える。輪郭の違うものを足す
   { name: "tree-simple", parts: [`${NK}/tree_simple.glb`], opts: LEAFY },
   { name: "tree-narrow", parts: [`${NK}/tree_tall.glb`], opts: LEAFY_SOFT },
-  { name: "tree-pine-ground", parts: [`${NK}/tree_pineGroundA.glb`] },
   { name: "tree-pine-round-b", parts: [`${NK}/tree_pineRoundE.glb`] },
   { name: "stump", parts: [`${NK}/stump_roundDetailed.glb`] },
   { name: "stump-old", parts: [`${NK}/stump_oldTall.glb`] },
@@ -259,6 +263,19 @@ export const SPRITES = [
   { name: "lily-small", parts: [`${NK}/lily_small.glb`] },
   { name: "pot-plant", parts: [`${NK}/pot_large.glb`] },
   { name: "pot-plant-small", parts: [`${NK}/pot_small.glb`] },
+  // 地面がまだ更地に見える（ac-reference.md 4）。木と建物のあいだを埋める草を足す。
+  // 葉の形が違うものを混ぜないと、同じ株を敷き詰めた絨毯になる
+  { name: "fern", parts: [`${NK}/plant_flatTall.glb`] },
+  { name: "fern-short", parts: [`${NK}/plant_flatShort.glb`] },
+  { name: "bush-spiky", parts: [`${NK}/plant_bushTriangle.glb`] },
+  { name: "bush-spiky-large", parts: [`${NK}/plant_bushLargeTriangle.glb`] },
+  { name: "bamboo", parts: [`${NK}/crops_bambooStageB.glb`] },
+  { name: "mushroom-tall", parts: [`${NK}/mushroom_redTall.glb`] },
+  { name: "mushroom-tan-tall", parts: [`${NK}/mushroom_tanTall.glb`] },
+  { name: "flower-red-mid", parts: [`${NK}/flower_redB.glb`] },
+  { name: "flower-yellow-mid", parts: [`${NK}/flower_yellowB.glb`] },
+  { name: "flower-purple-mid", parts: [`${NK}/flower_purpleB.glb`] },
+  { name: "firewood-large", parts: [`${NK}/log_stackLarge.glb`] },
 
   /* ---------- 畑（キッチン小屋のまわり） ---------- */
   { name: "crop-corn", parts: [`${NK}/crops_cornStageD.glb`] },
@@ -268,6 +285,11 @@ export const SPRITES = [
   { name: "crop-carrot", parts: [`${NK}/crop_carrot.glb`] },
   { name: "crop-turnip", parts: [`${NK}/crop_turnip.glb`] },
   { name: "crop-row", parts: [`${NK}/crops_dirtRow.glb`] },
+  // 育ちかけの畝。実った物ばかり並べると、育てている場所に見えない
+  { name: "crop-corn-young", parts: [`${NK}/crops_cornStageB.glb`] },
+  { name: "crop-wheat-young", parts: [`${NK}/crops_wheatStageA.glb`] },
+  { name: "crop-leafs", parts: [`${NK}/crops_leafsStageB.glb`] },
+  { name: "crop-row-double", parts: [`${NK}/crops_dirtDoubleRow.glb`] },
 
   /* ---------- 岩・道 ---------- */
   { name: "rock-large", opts: STONE, parts: [`${NK}/rock_largeA.glb`] },
@@ -287,6 +309,37 @@ export const SPRITES = [
   { name: "bridge-stone", parts: [`${NK}/bridge_stone.glb`], opts: { mat: { stone: [0.105, 0.10, 0.72] } } },
   { name: "statue-column", parts: [`${NK}/statue_column.glb`], opts: GREYSTONE },
   { name: "statue-ring", parts: [`${NK}/statue_ring.glb`], opts: GREYSTONE },
+  // 岩は同じ形が2つ並ぶとすぐ「使い回し」に見える。輪郭の違うものを増やす
+  { name: "rock-wide", opts: STONE, parts: [`${NK}/rock_largeC.glb`] },
+  { name: "rock-tall-b", opts: STONE, parts: [`${NK}/rock_tallG.glb`] },
+  { name: "rock-top", opts: STONE, parts: [`${NK}/rock_smallTopA.glb`] },
+  { name: "stone-flat", opts: GREYSTONE, parts: [`${NK}/stone_smallFlatA.glb`] },
+  { name: "stone-top", opts: GREYSTONE, parts: [`${NK}/stone_smallTopB.glb`] },
+  // 道と柵は、曲がり角と端が無いと途中で切れて見える
+  { name: "path-stone-corner", parts: [`${NK}/path_stoneCorner.glb`] },
+  { name: "path-stone-end", parts: [`${NK}/path_stoneEnd.glb`] },
+  { name: "fence-high", parts: [`${NK}/fence_simpleHigh.glb`] },
+  { name: "fence-corner", parts: [`${NK}/fence_corner.glb`] },
+  { name: "fence-bend", parts: [`${NK}/fence_bend.glb`] },
+  { name: "statue-block", parts: [`${NK}/statue_block.glb`], opts: GREYSTONE },
+  { name: "statue-column-broken", parts: [`${NK}/statue_columnDamaged.glb`], opts: GREYSTONE },
+
+  /* ---------- 北欧の旅 ----------
+     /nordic で使う雪の景色。holiday-kit。
+     色は島と同じ帯の置き換えを通す。ここだけ Kenney の配色のまま出すと、
+     旅のページだけ別のゲームの絵に見える(island-world.md 6)。
+
+     雪だけは帯の振り分けに手を入れる。Kenney の雪は「わずかに青い白」で
+     彩度が 0.3 前後あり、そのままだと青の帯に落ちて水色になる。
+     白かどうかを彩度ではなく明暗の差で見て、島と同じ生成りの白へ送る。 */
+  ...[
+    ["snowman", "snowman"], ["snowman-hat", "snowman-hat"],
+    ["snow-pile", "snow-pile"], ["tree-snow", "tree-snow-b"],
+    ["tree-snow-tall", "tree-snow-a"], ["rocks-snow", "rocks-medium"],
+  ].map(([name, file]) => ({ name, parts: [`${HK}/${file}.glb`], opts: SNOWY })),
+  { name: "sled", parts: [`${HK}/sled.glb`] },
+  { name: "sled-long", parts: [`${HK}/sled-long.glb`] },
+  { name: "reindeer", parts: [`${HK}/reindeer.glb`] },
 
   /* ---------- 料理 ----------
      クッキングのスタンプ帳で使う。food-kit の配色はそのままで美味しそうなので、
@@ -305,6 +358,15 @@ export const SPRITES = [
     "pineapple", "coconut", "frappe", "cup-tea", "cocktail", "honey",
     "mortar-pestle", "frying-pan", "pot-stew", "cutting-board-japanese",
     "carrot", "broccoli", "eggplant", "leek", "paprika", "onion",
+    // recipes.ts が food-plate-dinner を5品、food-fish を3品に使い回していた。
+    // 「どれも同じ絵」に見えるのは品数のせいなので、皿・果物・甘い物を増やす
+    "sushi-egg", "maki-vegetable", "maki-roe", "frikandel-speciaal",
+    "mincemeat-pie", "ice-cream-cne", "popsicle", "lollypop", "candy-bar",
+    "cherries", "banana", "orange", "pear", "lemon", "apple", "avocado",
+    "corn", "pumpkin", "mushroom", "cabbage", "cauliflower", "celery-stick",
+    "radish", "beet", "pepper", "whole-ham", "meat-sausage", "bacon", "egg",
+    "cheese-cut", "glass-wine", "soda-can", "mug", "plate-deep",
+    "burger-double", "cake-birthday", "chocolate", "pizza-box",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ---------- */

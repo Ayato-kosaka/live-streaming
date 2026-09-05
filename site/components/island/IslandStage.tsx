@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
 import { Sprite, spriteWidth } from "./Sprite";
-import { AYATO_HOME, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
+import { AYATO_HOME, DOORS, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 import { UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
@@ -38,14 +38,19 @@ const RESIDENT_H = 46;
 const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
 
 /* ---- 入口の見せ方 --------------------------------------------------------
-   「押せる」の合図は1種類だけにする（`docs/island-design.md`）。
-   光ときらめきと札を混ぜると、どれが合図でどれが飾りか分からなくなる。
-   夜のランタンの光を「入口の合図」と取り違えられたので、光はやめて札に一本化した。
+   **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
+   建物の形をしていて押せないものがあると、人はそれを押して、何も起きなくて
+   「壊れている」と思う。
 
-   6つの入口には、いつも札が立っている。
-     遠い … 小さい札に「!」
-     近い … 札が開いて名前と「はいる」が出る
-   これで「どこを押せば次のページに行けるか」が、引きでも寄りでも一目で分かる。
+   押せることと、案内することは別。
+   案内する（看板を出す）のは6つだけで、残りは静かに建っている。
+
+     看板を出す6つ  遠い … 小さい札に「!」／近い … 札が開いて名前と「はいる」
+     残りの建物      遠い … 何も出ない（建物がそこにあるだけ）
+                     近い … 札が開いて名前と「はいる」
+
+   これで「どこを押せば次のページに行けるか」が引きでも寄りでも分かり、
+   なおかつ、歩き回った人には行ける場所がもう4つ見つかる。
    ------------------------------------------------------------------------ */
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
@@ -105,6 +110,16 @@ function daysSince(day: string): number | null {
   const t = jstNow();
   return Math.round((Date.UTC(t.y, t.m - 1, t.d) - Date.UTC(y, m - 1, d)) / 86400000);
 }
+
+/**
+ * 足元の座標から、押せる建物を引く表。
+ *
+ * 島の絵（IslandScene）は「看板を出す6つ」にだけ印を付けている。
+ * 残りの4つも押せるので、絵のほうにも近づいたら弾んでほしい。
+ * 座標は PLACES が唯一の出どころで、絵もそこから作られているから、
+ * 足元が一致するものは同じ建物だと分かる。
+ */
+const DOOR_AT = new Map(DOORS.map((d) => [`${d.x},${d.y}`, d.id] as const));
 
 /** 入口の絵の、画面に出る四角。当たり判定と札の位置はここから作る。 */
 function spotBox(sp: Spot) {
@@ -449,7 +464,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       let best: SpotId | null = hover;
       if (!best) {
         let bd = HERE;
-        for (const sp of SPOTS) {
+        for (const sp of DOORS) {
           const d = Math.hypot(me.x - sp.x, (me.y - sp.y) * 1.35);
           if (d < bd) {
             bd = d;
@@ -461,10 +476,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // カメラが止まっているあいだに書き直すと、6つぶんの計算し直しがただ増える。
       if (camMoved) {
         const k = b.w / vbW;
-        for (let i = 0; i < SPOTS.length; i++) {
+        for (let i = 0; i < DOORS.length; i++) {
           const el = markRefs.current[i];
           if (!el) continue;
-          const sp = SPOTS[i];
+          const sp = DOORS[i];
           el.style.transform = `translate(${sx(sp.x).toFixed(1)}px, ${sy(sp.y).toFixed(1)}px)`;
           // 絵の大きさは倍率で変わるので、測り直す。
           // 当たり判定は指で押せる最小(48px)まで広げるが、
@@ -631,12 +646,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           if (l.kind === "prop") {
             const p: Item = l.p;
             const art = l.art;
-            if (!p.spot) return art;
-            // 入口の建物は、札が開いているときだけ軽く弾む
+            const sid = p.spot ?? DOOR_AT.get(`${p.x},${p.y}`);
+            if (!sid) return art;
+            // 押せる建物は、札が開いているときだけ軽く弾む。近づいたら返す反応
             return (
               <g
                 key={l.key}
-                className={`spot-art${openSpot === p.spot ? " is-on" : ""}`}
+                className={`spot-art${openSpot === sid ? " is-on" : ""}`}
                 style={{ transformOrigin: `${p.x}px ${p.y}px` }}
               >
                 {art}
@@ -703,10 +719,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </svg>
 
-      {/* 入口の札。6つとも、いつも立っている。
-          遠いときは小さく「!」、近づくと開いて名前と「はいる」が出る。 */}
+      {/* 建物の札。島に建っているものは全部押せる。
+          看板を出す6つは、遠くからでも小さく「!」が立っている。
+          残りは静かに建っていて、近づいた人にだけ名前が出る。 */}
       <div className="labels">
-        {SPOTS.map((sp, i) => {
+        {DOORS.map((sp, i) => {
           const on = openSpot === sp.id;
           return (
             <div
@@ -714,7 +731,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${on ? " is-on" : ""}`}
+              className={`spot${on ? " is-on" : ""}${sp.sign ? "" : " is-quiet"}`}
             >
               <button
                 data-ui
@@ -737,9 +754,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                   leaveAt.current = { x: sp.x, y: sp.y + 34 };
                 }}
               >
-                <span className="spot-bang" aria-hidden>
-                  !
-                </span>
+                {sp.sign && (
+                  <span className="spot-bang" aria-hidden>
+                    !
+                  </span>
+                )}
                 {sp.countdown && days !== null && days >= 0 && (
                   <em className="spot-badge" aria-hidden>
                     {days === 0 ? "今日" : `あと${days}日`}

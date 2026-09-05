@@ -9,15 +9,16 @@
 }
 
 /* =========================================================
-   入口(建物)の押し方
+   建物の押し方
    ---------------------------------------------------------
-   「押せる」の合図は1種類だけ（docs/island-design.md）。
-   光ときらめきと札を混ぜると、どれが合図でどれが飾りか分からなくなる。
-   夜のランタンと取り違えられたので、光はやめて札だけにした。
+   **島に建っているものは全部押せる**（docs/island-design.md 6章）。
+   「押せる」の合図は厚み1種類だけ（island-world.md 3.4）。
+   光らせない。きらめかせない。色を変えない。
 
-   6つの入口には、いつも札が立っている。
+   案内するのは6つだけ。看板を出す6つには、いつも札が立っている。
      遠い … 小さい丸に「!」
      近い … 開いて名前と「はいる」が出る
+   残りの4つは静かに建っていて、近づいた人にだけ札が開く。
    ========================================================= */
 .spot {
   position: absolute;
@@ -102,6 +103,19 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot-mark { animation: none; } }
 
+/* 看板を出さない建物（キッチン小屋・伝説の丘・いまのポスト・仲間のテント）。
+   押せるけれど案内はしない、という状態を作る（`docs/island-design.md` 6章）。
+   遠くからは何も出さず、建物がただ建っている。近づいた人にだけ札が開く。
+   島じゅうに「!」が立つと、どれが行き先の看板か分からなくなるので。 */
+.spot.is-quiet .spot-mark {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}
+.spot.is-quiet .spot-mark::after { opacity: 0; }
+.spot.is-quiet.is-on .spot-mark { opacity: 1; pointer-events: auto; }
+.spot.is-quiet.is-on .spot-mark::after { opacity: 1; }
+
 .spot-bang {
   flex: none;
   width: 28px;
@@ -170,7 +184,7 @@
 .spot.is-on .spot-text b { font-size: 14.5px; font-weight: 900; letter-spacing: 0.02em; }
 .spot.is-on .spot-text i {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 800;
   color: var(--ink-3);
 }
@@ -180,7 +194,7 @@
   align-items: center;
   gap: 2px;
   flex: none;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--paper);
   background: linear-gradient(var(--frame-dark), var(--frame-deep));
@@ -209,7 +223,7 @@
   font-style: normal;
   pointer-events: none;
   z-index: 2;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.01em;
   color: var(--paper);
@@ -617,21 +631,24 @@
    島の上に乗るものは、このファイルにまとめておきたいので `.stage` を足した。
 
    **押す先が読めないバーは、無いのと同じ。**
-   3列2段に置いたときは、名前が「こ…」「たき火…」「配信や…」と切れていた。
-   幅が足りなかった理由は2つあって、どちらも「行き先ではないもの」が
-   行き先の場所を食っていたこと。
+   前は名前が「こ…」「たき火…」「配信や…」と切れていた。
+   幅が足りなかったのは、行き先ではないものが行き先の幅を食っていたから。
+   引き／寄りの切り替え（島をながめる）が横 76px を持っていっていたので、
+   バーから出して島の隅の単独のボタンにした（`.stage-view`）。
+   1マスが 90px から 117px になり、名前に使える幅が 49px から 72px になった。
 
-   ・引き／寄りの切り替え（島をながめる）が横 76px を持っていった
-     → バーから出して、島の隅の単独のボタンにした（.stage-view）
-   ・絵と名前を横に並べていたので、1マスの幅を絵と名前で分け合っていた
-     → 絵を上、名前を下にして、1マスの幅ぜんぶを名前に使わせた
+   字は 12.5px。`docs/island-world.md` 5.4 のいちばん小さい字（11.5px）より上。
+   6つを1段に並べる案も作って撮ってみたが、1マスが 57px しか取れず、
+   5文字を 11.5px で入れると必ずあふれる。3列2段のほうが読める。
 
-   結果、6つを1段に置いても名前が切れない。段が1つ減ったぶんバーも低い。
-   マスは指で押せる大きさ（`docs/island-design.md` 3-2）を満たす。
+   高さは1マス 48px。前は 34px で、指で押せる最小に届いていなかった
+   （`docs/island-design.md` 3-2、`island-world.md` 4章の部品表）。
    ========================================================= */
 @media (max-width: 639px) {
-  /* 1段になったぶん低くなった。「今日の島」が乗るときの背は today.css が持つ */
-  .stage.stage { --bar-h: 82px; }
+  /* 「今日の島」が乗らないときの背。乗るときは today.css が 138px を出すが、
+     1マスを 48px にしたぶん足りないので、下でそれより強く書き直している。 */
+  .stage.stage { --bar-h: 123px; }
+  .stage.stage.stage.has-today { --bar-h: 183px; }
 }
 /* バーの置き場所も、島の上に乗るものなのでここで持つ。
    前は pages.css 側にあって、あちらを整理したときに落ちてバーが
@@ -645,7 +662,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
-  gap: 7px;
+  gap: 8px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: linear-gradient(var(--paper) 0 38%, var(--paper-2));
   border: 3px solid var(--frame-dark);
@@ -658,8 +675,8 @@
 }
 .stage .island-bar-scroll {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   padding: 0;
   overflow: visible;
   /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
@@ -668,37 +685,34 @@
 .stage .bar-spot {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
+  gap: 6px;
   min-width: 0;
-  min-height: 52px;
-  padding: 4px 1px 3px;
+  /* 指で押せる最小。ここを削ると、読めても押せないバーになる */
+  min-height: 48px;
+  padding: 3px 6px 3px 3px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  /* 6つ並ぶので、1マスの縁は細くする。3px のままだと縁だけで横 36px 取られて、
-     そのぶん名前が入らない。重さは箱（バー）側が持てばいい。
-     本物の一覧も、枠は外側の板が持っていて、中のマスは軽い
-     （/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
+  /* 押せることは厚みで言う（`docs/island-world.md` 3.4）。
+     縁は細く、厚みははっきり。本物の一覧も、枠は外側の板が持っていて
+     中のマスは軽い（/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
   border: 2px solid var(--frame-dark);
-  border-radius: 11px;
-  box-shadow: 0 2px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  font-size: 10px;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12.5px;
   font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   color: var(--ink);
 }
-.stage .bar-spot img { width: 25px; height: 25px; flex: none; }
+.stage .bar-spot img { width: 28px; height: 28px; flex: none; }
 /* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
    ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
 .stage .bar-spot span {
-  display: block;
-  width: 100%;
   min-width: 0;
   white-space: normal;
   overflow-wrap: anywhere;
-  text-align: center;
+  text-align: left;
 }
 /* いま近くにいる入口。押せる合図ではなく「ここにいる」の印なので、色だけで言う */
 .stage .bar-spot.is-on {
@@ -706,29 +720,27 @@
   border-color: var(--frame-deep);
 }
 .stage .bar-spot:active {
-  transform: translateY(2px);
+  transform: translateY(4px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
-/* 「あと◯日」は名前の行に置くと名前を押し出す。絵の右肩に貼ったシールにする。
-   名前の行には決してかからない。 */
+/* 「あと◯日」は名前の行に並べると名前を押し出す。マスの右肩に貼ったシールにする。 */
 .stage .bar-spot em {
   position: absolute;
-  left: 50%;
-  top: -6px;
+  right: -4px;
+  top: -8px;
   margin: 0;
   z-index: 2;
   font-style: normal;
-  font-size: 8px;
-  line-height: 1.4;
+  font-size: 11.5px;
+  line-height: 1.25;
   letter-spacing: 0;
-  padding: 0.5px 4px;
+  padding: 1px 7px;
   border: 2px solid var(--paper);
   border-radius: 999px;
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
   background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
   color: var(--paper);
-  /* マスの真上に載せる。横に逃がすと、いちばん端のマスでバーの外へはみ出す */
-  transform: translateX(-50%) rotate(-6deg);
+  transform: rotate(-6deg);
 }
 
 /* 引き／寄りの切り替え。
@@ -742,20 +754,19 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px 6px 9px;
+  padding: 7px 13px 7px 10px;
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  font-size: 11.5px;
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.01em;
   color: var(--ink);
   white-space: nowrap;
 }
 .stage-view:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }

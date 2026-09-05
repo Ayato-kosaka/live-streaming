@@ -150,7 +150,14 @@ const BANDS = {
   wood: { lo: 0.02, hi: 0.105, minSat: 0.25, h: 0.082, s: 0.40, l: [0.36, 0.60] },
   // 屋根のスレート(青〜藍)。建物キットでは柱や窓枠
   blue: { lo: 0.52, hi: 0.78, h: 0.552, s: 0.46, l: [0.46, 0.68] },
-  // 彩度の低い色(石・雪・白い縁取り)。建物キットでは屋根
+  // 彩度の低い色(石・雪・白い縁取り)。建物キットでは屋根。
+  //
+  // 既定は HSL の彩度で見る。ただし白に近い色の彩度は当てにならない。
+  // 雪の #e0f0f8 は見た目ほとんど白なのに彩度は 0.64 もあって、
+  // 青の帯に落ちて水色に塗り替えられてしまう。
+  // chromaMax を渡したものだけ「いちばん明るい成分と暗い成分の差」で判定する。
+  // これは白でも黒でも当てになる。既定を変えると建物の色が動くので、
+  // 渡されたときだけ切り替える
   neutral: { flat: true, h: 0.095, s: 0.15, l: [0.52, 0.82] },
 };
 const ORDER = ["neutral", "green", "wood", "blue"];
@@ -196,7 +203,9 @@ function acHsl(hsl, o = {}) {
   for (const name of ORDER) {
     const b = { ...BANDS[name], ...(o[name] ?? {}) };
     const hit = b.flat ?
-      hsl.s < 0.15 :
+      (b.chromaMax === undefined ?
+        hsl.s < 0.15 :
+        (1 - Math.abs(2 * hsl.l - 1)) * hsl.s < b.chromaMax) :
       hsl.h >= b.lo && hsl.h <= b.hi && (b.minSat === undefined || hsl.s >= b.minSat);
     if (hit) return put(b);
   }

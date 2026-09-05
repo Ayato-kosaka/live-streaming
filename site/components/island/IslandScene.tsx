@@ -157,11 +157,27 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
 /** 低木の地の色。草より一段暗くないと、地面に沈んで見えなくなる。 */
 const BUSH_DARK = "color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%)";
 
+/**
+ * 落ち影の色。
+ *
+ * 公式の落ち影を、影のかかっていない同じ地面で割ると **青だけ残る**
+ * （草の上で R×0.53 G×0.58 B×0.76。`docs/ac-reference.md` 3章）。
+ * 屋外の影は空の青を拾うので、物理的にもこちらが正しい。
+ * 暖かい灰緑の影にすると、屋内の照明で撮ったように見える。
+ *
+ * 島の上に落ちる影は、全部この色にそろえる。紙の型のページだけは暖色のまま。
+ */
+const SHADOW = "#0c0e34";
+
+/** 影の濃さ。砂の上の影は草の上より薄い（実測で ×0.72 と ×0.53）。 */
+const SHADE_GRASS = 0.4;
+const SHADE_SAND = 0.26;
+
 /** 飾りを描く。色は島のテーマ変数に付いていくので、北欧に行っても浮かない。 */
-function DecoLayer({ p, shade }: { p: DecoPaths; shade: string }) {
+function DecoLayer({ p, shade }: { p: DecoPaths; shade: number }) {
   return (
     <g aria-hidden>
-      <path d={p.shade} fill={shade} opacity="0.3" />
+      <path d={p.shade} fill={SHADOW} opacity={shade} />
       <path d={p.tuft} fill="var(--grass-lo)" opacity="0.75" />
       <path d={p.tuftLit} fill="var(--grass-hi)" opacity="0.88" />
       <path d={p.bush} fill={BUSH_DARK} />
@@ -1119,7 +1135,7 @@ function IslandScene() {
       {/* 沖に頭を出している岩。水面に何か無いと、海が塗りに見える。 */}
       <g aria-hidden>
         <path d={seaRocks.wash} fill="var(--foam)" opacity="0.5" />
-        <path d={seaRocks.under} fill="#0d4a72" opacity="0.22" />
+        <path d={seaRocks.under} fill={SHADOW} opacity="0.24" />
         <path d={seaRocks.body} fill="#8d9aa0" />
         <path d={seaRocks.top} fill="#c3ccd0" />
       </g>
@@ -1130,8 +1146,8 @@ function IslandScene() {
           4枚あることになる。カメラは毎フレーム動くので、そのたび4回塗り直していた。
           外へ広がるぶんは「同じ形を太い線でなぞる」だけで作れるので、塗りは1枚で済む。 */}
       <g aria-hidden>
-        <path d={sandPath} transform="translate(0 22)" fill="none" stroke="#06364a" strokeOpacity="0.07" strokeWidth="26" />
-        <path d={sandPath} transform="translate(0 13)" fill="#06364a" opacity="0.16" />
+        <path d={sandPath} transform="translate(0 22)" fill="none" stroke={SHADOW} strokeOpacity="0.07" strokeWidth="26" />
+        <path d={sandPath} transform="translate(0 13)" fill={SHADOW} opacity="0.18" />
       </g>
       <g>
         <path d={sandPath} fill="var(--sand)" />
@@ -1182,12 +1198,12 @@ function IslandScene() {
 
       {/* ------- 浜の飾り -------
           泡のあとに置く。波が石の足元まで来ているように見える。 */}
-      <DecoLayer p={SAND_DECO} shade="#8a6a3c" />
+      <DecoLayer p={SAND_DECO} shade={SHADE_SAND} />
 
       {/* ------- 草地 ------- */}
       <path d={grassPath} fill="none" stroke="#ffffff" strokeOpacity="0.26" strokeWidth="5" strokeDasharray="240 460" strokeDashoffset="-40" />
       <g clipPath="url(#grassClip)">
-        <path d={blob(CX, CY + 15, grassR, SQ)} fill="none" stroke="#2f6b34" strokeOpacity="0.14" strokeWidth="18" />
+        <path d={blob(CX, CY + 15, grassR, SQ)} fill="none" stroke={SHADOW} strokeOpacity="0.12" strokeWidth="18" />
         <ellipse cx={430} cy={752} rx={158} ry={74} fill="var(--grass-hi)" opacity="0.3" />
         <ellipse cx={824} cy={846} rx={136} ry={60} fill="var(--grass-lo)" opacity="0.16" />
         <ellipse cx={620} cy={556} rx={120} ry={52} fill="var(--grass-hi)" opacity="0.22" />
@@ -1199,7 +1215,7 @@ function IslandScene() {
 
       {/* ------- 高台 ------- */}
       <g>
-        <path d={blob(PLATEAU.cx, PLATEAU.cy + 12, PLATEAU.radii, PLATEAU.squash)} fill="#1f5a2e" opacity="0.15" />
+        <path d={blob(PLATEAU.cx, PLATEAU.cy + 12, PLATEAU.radii, PLATEAU.squash)} fill={SHADOW} opacity="0.2" />
         <path d={cliff.band} fill="url(#cliffG)" />
         <g opacity="0.28" stroke="var(--cliff-line)" strokeWidth="2.6" strokeLinecap="round">
           {cliff.lines.map(([lx, ly], i) =>
@@ -1235,21 +1251,21 @@ function IslandScene() {
       <g className="ground" aria-hidden>
         <path d={tufts.lo} fill="var(--grass-lo)" opacity="0.72" />
         <path d={tufts.hi} fill="var(--grass-hi)" opacity="0.85" />
-        <path d={flowers.shade} fill="#2f6b34" opacity="0.16" />
+        <path d={flowers.shade} fill={SHADOW} opacity="0.2" />
         {flowers.petals.map((d, i) => (
           <path key={`fl${i}`} d={d} fill={FLOWER_COLORS[i]} />
         ))}
         <path d={flowers.cores} fill="#ffd24a" />
       </g>
       {/* 低木・石・切り株・きのこ。スプライト80枚を、色ごとの11本のパスにした。 */}
-      <DecoLayer p={GRASS_DECO} shade="#2f4a33" />
+      <DecoLayer p={GRASS_DECO} shade={SHADE_GRASS} />
 
       {/* ------- 沖を行く舟と、空のカモメ ------- */}
       {/* CSS の animation は transform 属性を上書きしてしまうので、
           置き場所は外側の g で決めて、動きは内側の g に持たせる。 */}
       <g transform="translate(-260 208)" aria-hidden>
         <g className="boat">
-          <ellipse cx={0} cy={7} rx={26} ry={6} fill="#0b3f52" opacity={0.16} />
+          <ellipse cx={0} cy={7} rx={26} ry={6} fill={SHADOW} opacity={0.18} />
           <path d="M-26 0 q26 16 52 0 q-7 11 -26 11 q-19 0 -26 -11Z" fill="#f0798d" />
           <path d="M-26 0 q26 16 52 0 q-4 4 -8 6 q-18 5 -36 0 q-4 -2 -8 -6Z" fill="#fff" opacity={0.22} />
           <rect x={-2} y={-26} width={4} height={26} rx={2} fill="#c98d55" />
@@ -1290,7 +1306,7 @@ function IslandScene() {
 
       {/* ------- 桟橋 ------- */}
       <g>
-        <ellipse cx={236} cy={882} rx={68} ry={17} fill="#134a2c" opacity={0.15} />
+        <ellipse cx={236} cy={882} rx={68} ry={17} fill={SHADOW} opacity={0.2} />
         <g transform="rotate(24 250 866)">
           <rect x={168} y={852} width={172} height={30} rx={7} fill="#d0a068" />
           <rect x={168} y={852} width={172} height={8} rx={4} fill="#e6bb87" />

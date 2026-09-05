@@ -35,9 +35,20 @@ export type SpotId =
   | "now"
   | "next"
   | "board"
-  | "friends";
+  | "friends"
+  | "fellows";
 
-/** 島に建っている物。入口になっているものと、景色として置いてあるものがある。 */
+/**
+ * 島に建っている物。
+ *
+ * **建っているものは全部押せる**（`docs/island-design.md` 6章）。
+ * 建物の形をしていて押せないものを置くと、人は押して、何も起きなくて
+ * 「壊れている」と思う。景色が要るなら木・岩・花・柵を置く。
+ *
+ * 押せることと、案内することは別。看板（島の「！」の札と下のバー）に
+ * 出すのは `sign` の付いた6つだけ。残りは静かに建っていて、
+ * 近づいた人にだけ名前が出る。
+ */
 export type Place = {
   id: SpotId;
   /** 建物の足元 */
@@ -49,58 +60,151 @@ export type Place = {
   icon: string;
   /** 絵の高さ(ワールド単位)。押せる範囲もこの大きさから作るので、絵と一致させる。 */
   size: number;
+  /** 押すと行く先 */
+  href: string;
+  /** 名札に添える、そこで分かることの一言 */
+  blurb: string;
+  /** 看板を出す6つ。島の「！」の札と、下のバーに出るのはこれだけ。 */
+  sign?: true;
+  /** 出発までの日数を出す入口。いちばん気にされるところなので目立たせる。 */
+  countdown?: true;
 };
 
 /**
  * 島に建っている物、ぜんぶ。
- * 座標はここが唯一の出どころ。飾りの配置も明かりもこれを見て置く。
+ * 座標はここが唯一の出どころ。飾りの配置も明かりも絵も、これを見て置く。
+ *
+ * 並びは足元の y の順（奥から手前）。名札が重なるときに、
+ * 手前のものが上に来るようにするため。
  */
 export const PLACES: Place[] = [
-  { id: "streams", x: 520, y: 600, label: "配信やぐら", icon: "tower-studio", size: 128 },
-  { id: "kitchen", x: 330, y: 706, label: "キッチン小屋", icon: "hut-kitchen", size: 78 },
-  { id: "apps", x: 812, y: 700, label: "アプリ工房", icon: "hut-workshop", size: 78 },
-  { id: "map", x: 262, y: 846, label: "旅の桟橋", icon: "signpost", size: 54 },
-  { id: "legends", x: 736, y: 462, label: "伝説の丘", icon: "hall-museum", size: 74 },
-  { id: "now", x: 452, y: 556, label: "いまのポスト", icon: "mailbox", size: 44 },
-  { id: "next", x: 296, y: 548, label: "これから", icon: "tent", size: 66 },
-  { id: "board", x: 610, y: 872, label: "企画掲示板", icon: "signboard", size: 62 },
-  { id: "friends", x: 886, y: 574, label: "たき火広場", icon: "campfire", size: 46 },
+  {
+    id: "legends",
+    x: 736,
+    y: 462,
+    label: "伝説の丘",
+    icon: "hall-museum",
+    size: 74,
+    href: "/legends",
+    blurb: "語りつがれている企画",
+  },
+  {
+    id: "next",
+    x: 296,
+    y: 548,
+    label: "これから",
+    icon: "tent",
+    size: 66,
+    href: "/next",
+    blurb: "これから何をするか",
+    sign: true,
+    countdown: true,
+  },
+  {
+    id: "now",
+    x: 452,
+    y: 556,
+    label: "いまのポスト",
+    icon: "mailbox",
+    size: 44,
+    href: "/now",
+    blurb: "いま、どこにいるか",
+  },
+  {
+    id: "friends",
+    x: 886,
+    y: 574,
+    label: "たき火広場",
+    icon: "campfire",
+    size: 46,
+    href: "/about",
+    blurb: "あやとって、どんな人",
+    sign: true,
+  },
+  {
+    id: "streams",
+    x: 520,
+    y: 600,
+    label: "配信やぐら",
+    icon: "tower-studio",
+    size: 128,
+    href: "/streams",
+    blurb: "どんな配信をしてるか",
+    sign: true,
+  },
+  {
+    id: "apps",
+    x: 812,
+    y: 700,
+    label: "アプリ工房",
+    icon: "hut-workshop",
+    size: 78,
+    href: "/apps",
+    blurb: "グルメアプリを作ってる",
+    sign: true,
+  },
+  {
+    id: "kitchen",
+    x: 330,
+    y: 706,
+    label: "キッチン小屋",
+    icon: "hut-kitchen",
+    size: 78,
+    href: "/kitchen",
+    blurb: "作ってきた料理",
+  },
+  {
+    id: "fellows",
+    x: 706,
+    y: 782,
+    label: "仲間のテント",
+    icon: "tent-small",
+    size: 56,
+    href: "/friends",
+    blurb: "島に住んでいる人たち",
+  },
+  {
+    id: "map",
+    x: 262,
+    y: 846,
+    label: "旅の桟橋",
+    icon: "signpost",
+    size: 54,
+    href: "/map",
+    blurb: "これまでに歩いた国",
+    sign: true,
+  },
+  {
+    id: "board",
+    x: 610,
+    y: 872,
+    label: "企画掲示板",
+    icon: "signboard",
+    size: 62,
+    href: "/board",
+    blurb: "自分も企画を出せる",
+    sign: true,
+  },
 ];
 
-export type Spot = Place & {
-  href: string;
-  /** 名札に添える、そこで分かることの一言 */
-  blurb: string;
-  /** 出発までの日数を出す入口。いちばん気にされるところなので目立たせる。 */
-  countdown?: boolean;
-};
+export type Spot = Place;
 
 /**
- * 島の入口は6つだけ。
+ * 押せる建物ぜんぶ。島の当たり判定と名札は、これを見て作る。
  *
- * 来た人が順に浮かべる問いに合わせてある（`docs/island-design.md`）。
- *   あやと島について / どんな配信 / グルメアプリ / これから / 企画掲示板 / これまでの国
- *
- * キッチン小屋・伝説の丘・いまのポストは島に建っているが押せない。
- * それぞれ親のページ（配信やぐら / あやと島について）の中から行く。
- * 入口を増やしたくなったら、どれかの中に入れる。ここは6つのまま。
+ * `SPOTS`（看板を出す6つ）と分けてあるのは、島の外のページの
+ * ヘッダーが「行き先6つ」を並べるところで使っているから。
+ * ヘッダーに10個並べると、そちらが行き先を選べない列になる。
  */
-const ENTRANCE: Record<string, Omit<Spot, keyof Place>> = {
-  friends: { href: "/about", blurb: "あやとって、どんな人", },
-  streams: { href: "/streams", blurb: "どんな配信をしてるか" },
-  apps: { href: "/apps", blurb: "グルメアプリを作ってる" },
-  next: { href: "/next", blurb: "これから何をするか", countdown: true },
-  board: { href: "/board", blurb: "自分も企画を出せる" },
-  map: { href: "/map", blurb: "これまでに歩いた国" },
-};
+export const DOORS: Spot[] = PLACES;
 
-/** 入口の並び順。名札の重なりを避けるため、上（奥）から順に並べる。 */
-const ORDER: SpotId[] = ["next", "friends", "streams", "apps", "board", "map"];
-
-export const SPOTS: Spot[] = ORDER.map((id) => {
-  const p = PLACES.find((x) => x.id === id)!;
-  return { ...p, ...ENTRANCE[id] };
-});
+/**
+ * 看板を出す6つ。
+ *
+ * 島の「！」の札、下のバー、島の外のページのヘッダーに出るのはこれだけ。
+ * 増やしたくなったら、どれかの中に入れる。ここは6つのまま。
+ */
+export const SPOTS: Spot[] = PLACES.filter((p) => p.sign);
 
 export const placeById = (id: SpotId) => PLACES.find((p) => p.id === id)!;
 
