@@ -30,7 +30,8 @@ const n = await p.evaluate((name) => {
 }, NAME);
 console.log(`${NAME}: 大きい svg ${n} 枚`);
 
-const shot = async (sel) => (await p.locator(sel).screenshot()).toString("base64");
+await p.evaluate(() => document.fonts.ready);
+const shot = async (sel) => (await p.locator(sel).screenshot({ timeout: 120000 })).toString("base64");
 
 const before2 = await shot('[data-t="t1"]');
 // 1つ目を消す。id を持っていた抜き型ごと消える
