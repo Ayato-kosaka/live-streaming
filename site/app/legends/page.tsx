@@ -36,7 +36,8 @@ export default function LegendsPage() {
       <Sheet>
         {/* いちばん語られている1つ。紙の上半分を丸ごと使って、数字を先に見せる */}
         <Zone>
-          <Link className="zk-hero lg-hero" href={`/legends/${top.slug}`}>
+          {/* 一覧のぶんは、指が乗ってから読む（prefetch={false}）。画面に入った時点では読まない */}
+          <Link className="zk-hero lg-hero" href={`/legends/${top.slug}`} prefetch={false}>
             <span className="lg-hero-tag">
               <ArtMedal size={20} />
               いちばん語られている
@@ -94,7 +95,7 @@ export default function LegendsPage() {
         <Zone flush>
           <div className="lg-wall">
             {wall.map((l) => (
-              <Link className="plaque" key={l.slug} href={`/legends/${l.slug}`}>
+              <Link className="plaque" key={l.slug} href={`/legends/${l.slug}`} prefetch={false}>
                 <span className="plaque-badge">
                   <img src={`/sprites/${l.icon}.webp`} alt="" loading="lazy" />
                 </span>

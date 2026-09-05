@@ -177,7 +177,9 @@ export default function KitchenCatalog({
  */
 export function Dish({ r }: { r: Recipe }) {
   return (
-    <Link className="dish" href={`/kitchen/${r.slug}`}>
+    // 一覧の30枚が画面に入っただけで行き先を先読みすると、この面だけで 228KB になる。
+    // prefetch={false} は「読まない」ではなく「指が乗ってから読む」なので、押した速さは変わらない。
+    <Link className="dish" href={`/kitchen/${r.slug}`} prefetch={false}>
       <span className="dish-no">No.{String(recipeNo(r.slug)).padStart(2, "0")}</span>
       {r.streams.length > 1 && <span className="dish-days">{r.streams.length}日がかり</span>}
       <span className="dish-art">

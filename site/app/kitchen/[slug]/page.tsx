@@ -156,9 +156,10 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         )}
       </Sheet>
 
+      {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}
       <nav className="pager">
         {prev ? (
-          <Link href={`/kitchen/${prev.slug}`}>
+          <Link href={`/kitchen/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
             <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
             {prev.name}
@@ -167,7 +168,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
           <span />
         )}
         {next ? (
-          <Link href={`/kitchen/${next.slug}`}>
+          <Link href={`/kitchen/${next.slug}`} prefetch={false}>
             <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
             {next.name}
             <Icon name="right" size={13} />

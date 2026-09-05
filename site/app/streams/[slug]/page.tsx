@@ -197,9 +197,10 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Link>
       )}
 
+      {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}
       <nav className="pager" style={{ marginTop: "var(--sp-4)" }}>
         {prev ? (
-          <Link href={`/streams/${prev.slug}`}>
+          <Link href={`/streams/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
             <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
             {prev.name}
@@ -208,7 +209,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           <span />
         )}
         {next ? (
-          <Link href={`/streams/${next.slug}`}>
+          <Link href={`/streams/${next.slug}`} prefetch={false}>
             <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
             {next.name}
             <Icon name="right" size={13} />
