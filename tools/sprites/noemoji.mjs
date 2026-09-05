@@ -34,7 +34,8 @@ for (const f of walk(ROOT)) {
   // 配信タイトルなど、引用として出している塊を落とす
   // 配信カード（`components/streams/Vid.tsx`）の中身も YouTube の実在するタイトル。
   // 「ジョージア🇬🇪で水餃子作りました」は引用なので、こちらで直すものではない。
-  s = s.replace(/<a class="(scard|vid)[\s\S]*?<\/a>/g, "").replace(/<figcaption[\s\S]*?<\/figcaption>/g, "");
+  // `lgd-row` は伝説の面の「その期間の配信ぜんぶ」。同じく YouTube の題名。
+  s = s.replace(/<a class="(scard|vid|lgd-row)[\s\S]*?<\/a>/g, "").replace(/<figcaption[\s\S]*?<\/figcaption>/g, "");
   s = s.replace(/"title":"[^"]*"/g, "");
   for (const m of s.matchAll(RE)) {
     const k = m[0];

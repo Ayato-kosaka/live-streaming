@@ -1,6 +1,6 @@
 import { DOORS } from "@/components/island/layout";
 import { PAST_CHAPTERS } from "@/components/chain/route";
-import { APPS } from "@/content/apps";
+import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
@@ -120,7 +120,11 @@ export const SHELVES: Shelf[] = [
     id: "apps",
     title: "アプリ",
     note: "配信で作って、配信で直しているもの",
-    items: APPS.map((a) => ({
+    /* **`APPS` ではなく `ALL_APPS`。** 工房（`/apps`）に並べているのは
+       配信のある2本だけだが、Spelieve の紙も書き出されている。
+       ここに載せないと、その1枚だけ2回では着かない（工房を通って3回になる）。
+       ここは「島にある紙、ぜんぶ」なので、建っていないものも入れる。 */
+    items: ALL_APPS.map((a) => ({
       href: `/apps/${a.slug}`,
       name: a.name,
       note: a.tagline,
