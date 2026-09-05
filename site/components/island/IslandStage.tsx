@@ -1835,6 +1835,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         <span className="tool-label">ぜんぶ</span>
       </Link>
 
+      {/* 行き先をぜんぶ並べた面への口。
+          島に建っている10軒は押せば入れるが、**その先（料理32品・国18・
+          伝説8・北欧6…）は島からは名前も見えない。** 島から3タップ以上かかる面が
+          残るので、道しるべを1本立てる。ここを通れば島からどこへでも2タップ。
+          カメラの操作（引き／寄り）の下に置くのは、どちらも「行き先」ではなく
+          島を見わたすための道具だから。バーの6つとは列を分ける。 */}
+      <Link className="stage-index" data-ui href="/all" prefetch={false}>
+        <Icon name="signpost" size={15} />
+        ぜんぶ
+      </Link>
+
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}
       {arriving && (
         <div className="arrive" aria-hidden>
