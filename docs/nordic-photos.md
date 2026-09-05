@@ -72,9 +72,9 @@
 
 ## 6. 詰まりそうなところ（先に書いておく）
 
-- **キャラクターの絵は `lh3.googleusercontent.com` にある。** よその置き場の絵を canvas に
-  描くと、canvas が汚れて（tainted）**保存ができなくなる**。CORS が付いていなければ、
-  Cloud Function 経由で取り直すか、自前の置き場に写す必要がある。**ここは先に確かめる。**
+- ~~キャラクターの絵の CORS~~ — **確かめた。付いている**（`access-control-allow-origin: *`）。
+  `<img crossOrigin="anonymous">` で読めば canvas は汚れない。取り直しも写しも要らない。
+  **ただし `crossOrigin` を書き忘れると汚れる**ので、そこだけ注意する。
 - **写真の置き場が要る。** Firebase Storage を使うなら、そのルールも要る
   （`firestore.rules` と同じで、書けるのはあやとだけ・読むのは誰でも）。
 - **写真は重い。** 旅は10日で、1日に何枚でも貼れる。**貼るときに縮めて焼く**
