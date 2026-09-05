@@ -78,39 +78,12 @@ FAMILY = "Maru Island"
 # 2〜16 で試して、6 から先は主要8面の合計がほとんど動かなくなる。
 BUCKETS = 8
 
-# 走ってから出る字を、どの区画のものとして数えるか。
-# ここが外れても字は化けない（上の「落ちる字はどうするか」）。
-SOURCE_FAMILY = {
-    "site/components/island": "index",
-    "site/components/home": "index",
-    "site/components/today": "index",
-    "site/components/live": "index",
-    "site/components/atlas": "map",
-    "site/components/nordic": "nordic",
-    "site/components/streams": "streams",
-    "site/content/chatter.ts": "index",
-    "site/content/residents.ts": "index",
-    "site/content/sprites.json": "index",
-    "site/content/onThisDay.ts": "index",
-    "site/content/voice.ts": "index",
-    "site/content/streamTypes.ts": "index",
-    "site/content/cityStreams.ts": "map",
-    "site/content/countries.ts": "map",
-    "site/content/atlas": "map",
-    "site/content/nordic.ts": "nordic",
-    "site/content/nordic": "nordic",
-    "site/content/legends.ts": "legends",
-    "site/content/apps.ts": "apps",
-    "site/content/plans.ts": "next",
-    "site/content/recipes.ts": "kitchen",
-}
-# 1回に1件しか出ないのに、字だけは全件ぶん抱えているもの。
-# ここを外すと、外れた字は Google の切り分けに落ちる（1本 12KB ほど）。
-# 入れるか外すかは両方焼いて測って決める（tools/fonts/README を見て）。
-SOURCE_SKIP: list[str] = []
+# データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
+# 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
+PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "map"}
 
-SOURCE_ROOTS = ["site/app", "site/components", "site/content", "site/lib"]
-SOURCE_EXTS = (".ts", ".tsx", ".css", ".json")
+SOURCE_EXTS = (".ts", ".tsx", ".json")
+CSS_DIR = "site/app/css"
 
 # どの区画にも属さない字の下敷き。
 # 日付・人数・単位は画面が出てから組み立てるので、元の文章には並びとして出てこない。
@@ -140,28 +113,6 @@ def ranges(pairs) -> set[str]:
     return out
 
 
-# 1つのファイルが1枚のページに対応するもの。ここを区画（nordic）でまとめてしまうと、
-# 一覧の /nordic が7か国ぶんの字を背負う（実測 849→1052KB）。
-PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "map"}
-
-
-def family_of(rel: str) -> str:
-    """置き場所から区画を決める。分からないものは全面（core）扱い。"""
-    for prefix, route in PER_PAGE.items():
-        if rel.startswith(prefix + "/"):
-            return f"{route}/{Path(rel).stem}"
-    for prefix, fam in SOURCE_FAMILY.items():
-        if rel == prefix or rel.startswith(prefix + "/") or rel.startswith(prefix.rstrip("/") + "."):
-            return fam
-    if rel.startswith("site/app/"):
-        seg = rel[len("site/app/") :].split("/")[0]
-        # app 直下のファイル（layout.tsx, globals.css …）は全面に効く
-        if "." in seg or seg == "css":
-            return "core"
-        return seg
-    return "core"
-
-
 def from_export(exp: Path) -> dict[str, set[str]]:
     """書き出した HTML から、ページごとに画面に出る字を拾う。"""
     fam: dict[str, set[str]] = collections.defaultdict(set)
@@ -176,28 +127,7 @@ def from_export(exp: Path) -> dict[str, set[str]]:
         )
         fam[key] |= {c for c in body if c.isprintable()}
         n += 1
-    print(f"書き出し {n} 面 / 区画 {len(fam)}")
-    return fam
-
-
-def from_source() -> dict[str, set[str]]:
-    """元のソースから拾う。走ってから出る字はここにしかない。"""
-    fam: dict[str, set[str]] = collections.defaultdict(set)
-    n = 0
-    for root in SOURCE_ROOTS:
-        for p in sorted((ROOT / root).rglob("*")):
-            if not p.is_file() or p.suffix not in SOURCE_EXTS:
-                continue
-            rel = str(p.relative_to(ROOT))
-            if rel in SOURCE_SKIP:
-                continue
-            t = p.read_text(encoding="utf8", errors="ignore")
-            if p.suffix != ".json":
-                t = RE_BLOCK_COMMENT.sub(" ", t)
-                t = RE_LINE_COMMENT.sub(" ", t)
-            fam[family_of(rel)] |= {c for c in t if c.isprintable()}
-            n += 1
-    print(f"ソース {n} 本 / 区画 {len(fam)}")
+    print(f"書き出し {n} 面")
     return fam
 
 
@@ -205,6 +135,102 @@ def from_source() -> dict[str, set[str]]:
 def guess(chars: set[str]) -> int:
     kana = sum(1 for c in chars if ord(c) < 0x3100 or 0xFF01 <= ord(c) <= 0xFF5E)
     return 2500 + 47 * kana + 175 * (len(chars) - kana)
+
+
+RE_IMPORT = re.compile(r"""(?:from|import)\s+["']([^"']+)["']""")
+
+
+def resolve(spec: str, here: Path) -> Path | None:
+    """import の行き先を実ファイルにする。@/ は site/ の下。"""
+    if spec.startswith("@/"):
+        base = SITE / spec[2:]
+    elif spec.startswith("."):
+        base = (here.parent / spec).resolve()
+    else:
+        return None  # node_modules は島の文章を持っていない
+    for cand in (base, *(base.with_suffix(e) for e in SOURCE_EXTS), *(base / f"index{e}" for e in SOURCE_EXTS)):
+        if cand.is_file() and cand.suffix in SOURCE_EXTS:
+            return cand
+    return None
+
+
+def text_of(p: Path) -> set[str]:
+    """そのファイルが持っている字。コメントは落とす。
+
+    コメントを落としそこねても、拾いすぎても字は化けない（上の「落ちる字はどうするか」）。
+    実測では IslandStage.tsx の漢字 354 字が 17 字まで落ちる。
+    """
+    t = p.read_text(encoding="utf8", errors="ignore")
+    if p.suffix != ".json":
+        t = RE_BLOCK_COMMENT.sub(" ", t)
+        t = RE_LINE_COMMENT.sub(" ", t)
+    return {c for c in t if c.isprintable() and ord(c) > 0x1F}
+
+
+def reachable(entry: Path, cache: dict[Path, set[Path]]) -> set[Path]:
+    """entry から import でたどり着く .ts/.tsx/.json を全部集める。"""
+    if entry in cache:
+        return cache[entry]
+    cache[entry] = seen = {entry}
+    stack = [entry]
+    while stack:
+        cur = stack.pop()
+        for spec in RE_IMPORT.findall(cur.read_text(encoding="utf8", errors="ignore")):
+            got = resolve(spec, cur)
+            if got and got not in seen:
+                seen.add(got)
+                stack.append(got)
+    return seen
+
+
+def route_of(page_tsx: Path) -> str:
+    """app/nordic/page.tsx -> nordic、app/page.tsx -> index、[slug] は * にする。"""
+    rel = page_tsx.parent.relative_to(SITE / "app").as_posix()
+    if rel == ".":
+        return "index"
+    return "/".join("*" if s.startswith("[") else s for s in rel.split("/"))
+
+
+def from_source(pages: list[str]) -> dict[str, set[str]]:
+    """
+    ページごとに、そのページが読み込んでいるファイルの字を集める。
+
+    **どのページに何が出るかは、読み込みの流れがいちばん正しい。**
+    手で「この部品はこのページ」と書いた表は、部品が使い回されたとたんに嘘になる
+    （実測: 掲示板の部品を島のものと数えていて、/board が 386KB ぶん落ちる字を持てずにいた）。
+    """
+    cache: dict[Path, set[Path]] = {}
+    fams: dict[str, set[str]] = collections.defaultdict(set)
+    # layout.tsx はその下のページ全部に効く
+    layouts = sorted((SITE / "app").rglob("layout.tsx"))
+    for page in sorted((SITE / "app").rglob("page.tsx")):
+        route = route_of(page)
+        hit = [p for p in pages if p == route or ("*" in route and _match(route, p))]
+        if not hit:
+            hit = [route.replace("/*", "")]
+        files = reachable(page, cache)
+        for lay in layouts:
+            if page.is_relative_to(lay.parent):
+                files |= reachable(lay, cache)
+        for f in files:
+            rel = f.relative_to(ROOT).as_posix()
+            # 国ごとのデータは、それを出す1枚だけのもの
+            per = next((f"{r}/{f.stem}" for d, r in PER_PAGE.items() if rel.startswith(d + "/")), None)
+            here = [p for p in hit if per is None or p == per] if per is None else [p for p in pages if p == per]
+            for p in here or hit:
+                fams[p] |= text_of(f)
+    # CSS の content: "…" も画面に出る。どのページに出るか分からないので全面に配る。
+    for css in sorted((ROOT / CSS_DIR).glob("*.css")):
+        for p in pages:
+            fams[p] |= {c for c in RE_BLOCK_COMMENT.sub(" ", css.read_text(encoding="utf8")) if c.isprintable() and ord(c) > 0x1F}
+    print(f"読み込みの流れから {len(fams)} 枚ぶん")
+    return fams
+
+
+def _match(route: str, page: str) -> bool:
+    r = route.split("/")
+    q = page.split("/")
+    return len(r) == len(q) and all(a == "*" or a == b for a, b in zip(r, q))
 
 
 def plan(fams: dict[str, set[str]]) -> list[tuple[set[str], set[str]]]:
@@ -322,22 +348,9 @@ def main() -> None:
             fams[k] |= v
     else:
         print(f"※ 書き出しが無いのでソースだけで数える: {exp}")
-    # ソース側は区画（nordic, map …）でしか分からないので、
-    # その区画に属するページ全部へ配る。まとめ方が粗いぶんは値段に出るだけで壊れない。
     pages = sorted(fams) or ["index"]
-    for k, v in from_source().items():
-        if k == "core":
-            hit = pages
-        else:
-            # nordic/index.json のように、ちょうど合うページが無いものは
-            # 1段のぼって探す（nordic/index -> nordic）
-            key = k
-            hit = []
-            while key and not hit:
-                hit = [p for p in pages if p == key or p.startswith(key + "/")]
-                key = key.rpartition("/")[0]
-        for p in hit or [k]:
-            fams[p] |= v
+    for k, v in from_source(pages).items():
+        fams[k] |= v
 
     # 下敷きは全区画に。北欧の綴りは使う区画だけに。
     core = ranges(CORE_RANGES) | set(CORE_EXTRA)
