@@ -34,6 +34,9 @@ for (const path of PAGES) {
   const rows = await p.evaluate((sel) => {
     const out = [];
     for (const el of document.querySelectorAll(sel)) {
+      // 画面の外にあるものは elementFromPoint が届かない。砂浜の一覧のように
+      // ページの終わりにあるものを測ると、全部 1x1 と出る。先に送っておく。
+      el.scrollIntoView({ block: "center" });
       const r = el.getBoundingClientRect();
       if (r.width < 1) continue;
       const cx = r.x + r.width / 2, cy = r.y + r.height / 2;

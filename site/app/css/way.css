@@ -1,0 +1,254 @@
+/* =========================================================
+   導線 — 「あの話どこだっけ」から短く着くための3つ
+
+     1. 現在地の行（.wayrow）… 面のいちばん上。左が現在地、右が「ぜんぶ」への口
+     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。島の10軒ぜんぶへ戻れる
+     3. ぜんぶの面（.dx*）… /all。行き先を1枚に並べて、字で絞る
+
+   **上の帯（.ih-nav）は6つのまま触らない。**
+   帯は狭い画面で3列×2段にちょうど収まっていて、7つ目を足すと列が割れて
+   6つの名前が切れる（`app/css/pages.css` の .ih-nav の但し書き）。
+   名前の切れた札は入口として働かないので、器を別に立ててある。
+
+   このファイルを分けてあるのは、pages.css が 1,000 行を超えていて、
+   同時に何人かで触ると衝突するため。ここは導線の3つだけを持つ。
+   ========================================================= */
+
+/* --- 1. 現在地の行 --------------------------------------------------- */
+
+.wayrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+}
+/* 行そのものが下の余白を持つので、中のパンくずからは外す。
+   両方が持つと、行の高さが二重に空く。 */
+.wayrow .crumbs { margin: 0; }
+/* 口はいつも行の右はし。狭い画面ではパンくずが隠れる面があり
+   （`.crumbs:not(:has(> span + span))`）、そのときも位置が動かないように
+   space-between ではなく auto マージンで寄せる。 */
+.way-all { margin-left: auto; }
+
+/* 押せるので板。厚みは「48px のボタンで6px」の段（island-design 3章）。
+   パンくずは押しても場所が変わらない札なので平ら、こちらは厚みあり。
+   同じ行に並ぶ2つが、型で見分けられる。 */
+.way-all {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  white-space: nowrap;
+  box-shadow: var(--pop), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.way-all:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
+/* 狭い画面では「島のなか」を落として「ぜんぶ」だけにする。
+   パンくずと同じ行に並べたいので、札を短くするほうを取った。
+   **消さずに隠す。** 読み上げには「島のなか ぜんぶ」のまま残す。 */
+@media (max-width: 599.98px) {
+  .way-all-long {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .way-all { padding: 0 var(--sp-3); }
+}
+
+/* --- 2. 砂浜の一覧 --------------------------------------------------- */
+
+/* 島に建っている10軒ぜんぶ。上の帯に出ていない4軒（作った料理・伝説の企画・
+   いまどこ・住んでる人）へも、どの面からでも1回で行けるようにする。
+   ここは選ばせる列ではなく戻り道なので、10個並べても帯のようには潰れない。 */
+.ifoot-doors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: var(--sp-2);
+  max-width: 760px;
+  margin: var(--sp-5) auto 0;
+}
+.ifoot-door {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  min-width: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-2);
+  /* 砂浜の板。ふちの色は帯の札と同じ琥珀。押せるので厚み。 */
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--frame) 52%, var(--paper)) 0%,
+    var(--frame) 100%);
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ifoot-door img { width: 18px; height: 18px; flex: none; object-fit: contain; object-position: center bottom; }
+.ifoot-door:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
+/* 「ぜんぶ」だけは行き先ではなく道しるべなので、10軒とは別の面にする。
+   同じ木の札にすると11軒目に見える。 */
+.ifoot-door.is-all {
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
+  font-size: var(--fs-note);
+}
+@media (max-width: 379.98px) {
+  .ifoot-door img { display: none; }
+}
+
+/* --- 3. ぜんぶの面（/all） ------------------------------------------- */
+
+/* 絞り込み。書く欄なので板（彫った溝）。`.dform` と同じ作りにする。 */
+.dxq {
+  position: sticky;
+  /* 900px から上は帯が貼り付くので、その下に来るように逃がす。
+     狭い画面では帯が流れていくので 0 でよい。 */
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-3);
+  border: var(--bw-1) solid color-mix(in srgb, var(--frame-dark) 58%, var(--paper-2));
+  border-radius: var(--r-2);
+  background: linear-gradient(
+    color-mix(in srgb, var(--frame) 17%, var(--paper)),
+    color-mix(in srgb, var(--frame) 9%, var(--paper))
+  );
+  box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 17%, transparent);
+}
+@media (min-width: 900px) { .dxq { top: 78px; } }
+.dxq-lab { font-size: var(--fs-min); font-weight: 900; letter-spacing: var(--ls-body); color: var(--ink-2); }
+.dxq-box { display: flex; align-items: center; gap: var(--sp-2); }
+.dxq-in {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  box-shadow:
+    inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
+    inset 0 -1.5px 0 rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+.dxq-in::placeholder { color: var(--ink-3); font-weight: 700; }
+/* 消すのは押すものなので板。 */
+.dxq-clear {
+  flex: none;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  box-shadow: var(--pop-sm), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+}
+.dxq-clear:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
+.dxq-n { margin: 0; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+
+/* 棚。行はぜんぶ押せるので、1枚ずつに厚みを付けない
+   （`docs/island-design.md` 3章の例外。並びそのものが合図になる）。
+   **押せない行を1つも混ぜないこと。** 混ぜた瞬間にこの例外が嘘になる。 */
+.dxl {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+}
+.dxl > li + li { border-top: 1px solid var(--pg-rule); }
+.dx {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  padding: var(--sp-2) 0;
+  color: var(--ink);
+}
+.dx-body { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.dx-body b { font-size: var(--fs-body); font-weight: 900; letter-spacing: var(--ls-body); line-height: var(--lh-head); }
+.dx-body i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-2);
+  /* 添え書きは2行まで。3行になると、行の高さがばらけて一覧に見えなくなる。 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.dx-go { flex: none; color: var(--ink-2); }
+.dx:hover .dx-body b { color: var(--frame-deep); }
+.dx:active { background: color-mix(in srgb, var(--marker) 30%, transparent); }
+
+/* --- 4. 島の隅の道しるべ（/ の上） ------------------------------------
+   島には帯もパンくずも無い（島は板で、紙の UI を持ち込まない）。
+   そのぶん、島から3タップ以上かかる面が残る。カメラの道具の下に1本立てる。
+
+   **island.css ではなくここに置いてある。** あちらは 1,100 行あって
+   同時に触られやすい。導線のために足したものは、導線のファイルにまとめて
+   置いたほうが、あとから外すときに1か所で済む。
+   ------------------------------------------------------------------- */
+.stage-index {
+  position: absolute;
+  left: 12px;
+  /* スマホは「島をながめる」が左上（top 12px・高さ48px）。その真下。 */
+  top: calc(68px + env(safe-area-inset-top));
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* 640px から上は「島をながめる」が左下へ降りる。その真上に付いていく。 */
+@media (min-width: 640px) {
+  .stage-index {
+    top: auto;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+.stage-index:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.stage-index:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 話しているあいだは、島の隅の道具と同じように引っ込める。 */
+.stage.is-talking .stage-index { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
