@@ -186,7 +186,10 @@ export default async function NordicPage() {
       <Panel>
         <h2>もっと知りたい人へ</h2>
         <div className="folds">
-          <Fold title="どうしてバスに乗らないのか" lead="バスなら2日で終わる道を、親指1本で行く理由">
+          <Fold
+            title="どうしてバスに乗らないのか"
+            lead="ジョージアに戻らない一方通行の旅。飛行機はクタイシ発の1本だけ"
+          >
             {plan?.about?.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
