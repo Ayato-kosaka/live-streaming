@@ -877,7 +877,7 @@
   background: var(--paper-2);
 }
 .aapp-line { margin: 0 !important; font-size: var(--fs-body) !important; line-height: 1.8 !important; color: var(--ink-2); }
-.aapp-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.aapp-badges { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-1); }
 
 /* ストアのバッジ。押せるので厚みを付ける。
    指で押せる最小 48px、48px の押しものの厚みは 6px（docs/island-design.md 3章）。 */
@@ -896,7 +896,7 @@
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .abadge:active { transform: translateY(5px); box-shadow: 0 1px 0 #100f0e; }
-.anote { display: grid; gap: 10px; }
+.anote { display: grid; gap: var(--sp-3); }
 /* 年の区切り。読ませる字なので --ink-3 は使わない（紙の上で 4.0 : 1 を割る） */
 .anote-year {
   display: flex;
@@ -913,9 +913,9 @@
 .astep {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 11px;
+  gap: var(--sp-3);
   align-items: start;
-  padding: 11px 13px;
+  padding: var(--sp-3);
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
@@ -931,8 +931,8 @@
   border: 2px solid var(--rule);
   color: var(--ink-2);
 }
-.astep-body { min-width: 0; display: grid; gap: 3px; }
-.astep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.astep-body { min-width: 0; display: grid; gap: var(--sp-1); }
+.astep-head { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
 .astep-head time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 /* 種類の言葉。数えたもの・言うだけの札と同じ、オリーブの平ら */
 .astep-kind {
@@ -970,13 +970,13 @@
   text-underline-offset: 3px;
 }
 
-.afeat { display: grid; gap: 9px; grid-template-columns: 1fr; }
+.afeat { display: grid; gap: var(--sp-2); grid-template-columns: 1fr; }
 .afeat div {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 10px;
+  gap: var(--sp-3);
   align-items: center;
-  padding: 11px 13px;
+  padding: var(--sp-3);
   border-radius: var(--r-1);
   background: var(--paper-2);
 }
@@ -987,7 +987,7 @@
 .afeat i { display: block; font-style: normal; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: 1.7; margin-top: 2px; }
 
 /* アプリの中身。絵と説明を左右に並べる */
-.aapp-split { display: grid; gap: 14px; justify-items: center; }
+.aapp-split { display: grid; gap: var(--sp-4); justify-items: center; }
 .aapp-split > div { min-width: 0; }
 .aapp-split p { margin: 0 !important; }
 
