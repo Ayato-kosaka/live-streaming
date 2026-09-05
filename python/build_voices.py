@@ -84,23 +84,60 @@ WITH base AS (
     AND author_name != '{BOT_NAME}'
     AND message_text IS NOT NULL
 ), names AS (
-  -- 表示名は変わるので最新のものを1つ取る。画面には出さないが、通読するときの目印になる
+  -- 表示名は変わるので最新のものを1つ取る。これが画面に出る名前になる
   SELECT author_channel_id,
          ARRAY_AGG(author_name ORDER BY published_at DESC LIMIT 1)[OFFSET(0)] AS author
   FROM `{{project}}.youtube_chat.chat_messages`
   WHERE event_type = 'TEXT' AND author_channel_id IS NOT NULL
   GROUP BY author_channel_id
+), pics AS (
+  -- アイコンの URL は列になっていない。生データ（raw_item_json）の中の
+  -- authorPhoto に入っているので、JSON の道をたどらずに URL そのものを拾う。
+  -- 道（liveChatTextMessageRenderer.authorPhoto...）は YouTube 側の都合で変わるが、
+  -- ggpht / googleusercontent の URL が1件目に出てくることは変わらない。
+  SELECT author_channel_id,
+         ARRAY_AGG(u IGNORE NULLS ORDER BY pa DESC LIMIT 1)[SAFE_OFFSET(0)] AS pic
+  FROM (
+    SELECT author_channel_id, published_at AS pa,
+           REGEXP_EXTRACT(
+             TO_JSON_STRING(raw_item_json),
+             r'https://(?:yt[0-9]*[.]ggpht[.]com|lh3[.]googleusercontent[.]com)/[^"]+'
+           ) AS u
+    FROM `{{project}}.youtube_chat.chat_messages`
+    WHERE event_type = 'TEXT' AND author_channel_id IS NOT NULL
+  )
+  GROUP BY author_channel_id
 ), hit AS (
-  SELECT b.video_id AS v, b.event_id AS e,
-         FORMAT_TIMESTAMP('%Y-%m-%d', b.published_at, 'Asia/Tokyo') AS d,
-         n.author AS a, b.t AS m
-  FROM base b LEFT JOIN names n USING (author_channel_id)
+  -- 日付は UTC で切る。日本時間の朝9時が境目になるので、22時開始の枠と
+  -- 0時をまたいだ続きが同じ1日に入る（.claude/skills/monthly-review/SKILL.md 3章）
+  SELECT 'v' AS k, b.video_id AS v, b.event_id AS e,
+         FORMAT_TIMESTAMP('%Y-%m-%d', b.published_at, 'UTC') AS d,
+         n.author AS a, p.pic AS i, b.t AS m
+  FROM base b
+  LEFT JOIN names n USING (author_channel_id)
+  LEFT JOIN pics p USING (author_channel_id)
   WHERE CHAR_LENGTH(b.t) BETWEEN 10 AND 90
     AND REGEXP_CONTAINS(b.t, r'{NAME_RE}')
     AND REGEXP_CONTAINS(b.t, r'{GOOD_RE}')
     AND NOT REGEXP_CONTAINS(b.t, r'{BAD_RE}')
+), days AS (
+  -- 取り込みがどこまで届いているか。同じ1回のクエリで見る（2回叩かないため）。
+  -- k='d' の行は候補ではない。v=その日の動画、e=件数、a=最後のコメント、i=取り込み時刻
+  SELECT 'd' AS k,
+         STRING_AGG(DISTINCT video_id ORDER BY video_id) AS v,
+         CAST(COUNT(*) AS STRING) AS e,
+         FORMAT_TIMESTAMP('%Y-%m-%d', published_at, 'UTC') AS d,
+         FORMAT_TIMESTAMP('%Y-%m-%d %H:%M', MAX(published_at), 'UTC') AS a,
+         FORMAT_TIMESTAMP('%Y-%m-%d %H:%M', MAX(ingested_at), 'UTC') AS i,
+         '' AS m
+  FROM `{{project}}.youtube_chat.chat_messages`
+  WHERE published_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 14 DAY)
+  GROUP BY d
 )
-SELECT d, v, e, a, m FROM hit ORDER BY d LIMIT 1600
+SELECT * FROM (SELECT * FROM hit ORDER BY d LIMIT 1600)
+UNION ALL
+SELECT * FROM days
+ORDER BY k, d
 """
 
 

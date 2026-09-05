@@ -1025,13 +1025,22 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             else if (top + rect.h > b.h - padBottom) dy = b.h - padBottom - (top + rect.h);
             left += dx;
             top += dy;
-            // 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）
-            for (const q of taken) {
-              if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
-                const push = q.y + q.h + 6 - top;
-                top += push;
-                dy += push;
+            /* 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）。
+               1周では、逃がした先でまた別のものと重なることがあるので数周する。
+               **下へしか動かさない。** 上へ戻すと、避けたはずのものへ帰っていく。 */
+            for (let pass = 0; pass < 3; pass++) {
+              let moved = false;
+              for (const q of taken) {
+                if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
+                  const push = q.y + q.h + 6 - top;
+                  if (push > 0) {
+                    top += push;
+                    dy += push;
+                    moved = true;
+                  }
+                }
               }
+              if (!moved) break;
             }
             taken.push({ x: left, y: top, w: rect.w, h: rect.h });
             dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "l" : "r") : dy > 0 ? "u" : "d";
