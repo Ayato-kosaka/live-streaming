@@ -335,6 +335,11 @@ export const COUNTRIES: Country[] = [
  * **スペインとイタリアは国の面を持っていない。** `COUNTRIES` に足すと `order`
  * （「◯カ国目」）を全部振り直すことになり、世界地図の焼き込み（`build_world_route.py`）と
  * 食い違う。歩いた国の数え直しは `/map` の担当と決める。
+ *
+ * **面は作らないまま、中身だけ入れた**（2026-09-05、GitHub #122）。この6週間には
+ * ショート動画が15本ある（`content/shorts.ts` の `before-stream`）ので、
+ * `/map` のこの段に並べてある。`/map/<国>` はチャットの集計を出す面なので、
+ * 配信が1本も無いこの6週間で面を作っても、本数0・人数0・コメント0になる。
  */
 export const BEFORE_STREAM: { slug: string; name: string; city?: string; weeks: number }[] = [
   { slug: "uk", name: "イギリス", weeks: 2 },
