@@ -1,6 +1,11 @@
 /** 直近90日で島に来てくれている仲間のうち、キャラクター登録済みの人。
  *  名前は出さない方針なので、アイコン/絵文字と「一緒にいた日数」だけを持つ。
- *  日次ジョブで Firestore から更新される想定の初期値。 */
+ *
+ *  **`days` は、島に出ている人を日替わりで選ぶ重みにもなっている**
+ *  （`components/island/villagers.ts` の rosterOf）。よく来てくれている人ほど
+ *  島にいる日が多い、という形にするため。いまは手で書いた値のままで、
+ *  更新する仕組みが無い。自動で焼き直すには、キャラクター画像と
+ *  YouTube のチャンネルを結ぶ表が要るが、それはまだどこにも無い。 */
 export type Resident = { icon?: string; emoji?: string; days: number };
 
 export const RESIDENTS: Resident[] = [

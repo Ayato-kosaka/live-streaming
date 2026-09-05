@@ -27,6 +27,27 @@
  *   伝説の丘 = 語りつがれている企画8つ / 企画掲示板 = 誰でも出せる /
  *   これから = 次の企画 / いまのポスト = いまどこにいるか
  *
+ * 口調を確かめるとき（BigQuery。`docs/island-db.md`）:
+ *
+ *   -- よく来てくれている人と、その人らしい書き込み
+ *   WITH top AS (
+ *     SELECT author_channel_id, ANY_VALUE(author_name) nm,
+ *            COUNT(DISTINCT DATE(published_at,'Asia/Tokyo')) d
+ *     FROM `live-streaming-d3cac.youtube_chat.chat_messages`
+ *     WHERE published_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 90 DAY)
+ *       AND author_name != '@あやとグルメアプリ'
+ *     GROUP BY 1 ORDER BY d DESC LIMIT 24)
+ *   SELECT t.nm, t.d, c.message_text
+ *   FROM top t JOIN `live-streaming-d3cac.youtube_chat.chat_messages` c
+ *     USING (author_channel_id)
+ *   WHERE LENGTH(c.message_text) BETWEEN 8 AND 80
+ *
+ * **キャラクター画像と YouTube のチャンネルを結ぶ表は、どこにも無い。**
+ * だから確かめられるのは「この話し方の人が本当にいるか」までで、
+ * 「この絵の人がこの話し方か」は確かめられない。結ぶ表を作るなら
+ * チャンネルIDは配信側に置く。サイトに焼くと、名前を出していない人の
+ * 身元が出てしまう（`docs/island-concept.md` 6章）。
+ *
  * 1言目だけは `greet` に分ける（`docs/island-play.md` 仕掛け6）。
  * はじめての人には「はじめまして」、しばらく空いた人には「久しぶり」。
  * **空けた日数は数えない。来なかった日を責める道具にしない。**
