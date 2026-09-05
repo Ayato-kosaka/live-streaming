@@ -32,16 +32,13 @@ export const travel: Record<string, Draw> = {
       <Sh c={c} cy={53} rx={23} ry={4} />
       <rect x="12" y="18" width="44" height="30" rx="15" fill={c.tl} />
       <path d="M41 18h0a15 15 0 0 1 0 30z" fill={c.tld} />
-      {/* 巻いた断面。外から内へ細くなる渦 */}
-      <ellipse cx="27" cy="33" rx="14.6" ry="15" fill={c.tld} />
-      <path
-        d="M27 19.6a13.4 13.4 0 1 1-9.5 22.9l3-3a9.2 9.2 0 1 0 6.5-15.7z"
-        fill={c.cr}
-      />
-      <path
-        d="M27 27.4a5.6 5.6 0 1 1-4 9.6l3-3a1.4 1.4 0 1 0 1-2.4z"
-        fill={c.cr}
-      />
+      {/* 巻いた断面。塗りの渦にすると文字に見えたので、輪を3重にして巻きを見せる */}
+      <ellipse cx="27" cy="33" rx="14.8" ry="15" fill={c.tld} />
+      <g fill="none" stroke={c.cr} strokeLinecap="round">
+        <circle cx="27" cy="33" r="11.2" strokeWidth="3.2" />
+        <circle cx="27" cy="33" r="6.6" strokeWidth="3" />
+        <circle cx="27" cy="33" r="2.4" strokeWidth="2.8" />
+      </g>
       {/* 縛った紐。2本 */}
       <rect x="37" y="16" width="4.6" height="34" rx="2.3" fill={c.wod} />
       <rect x="49" y="19" width="4.6" height="28" rx="2.3" fill={c.wod} />

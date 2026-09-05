@@ -51,13 +51,15 @@ export const stream: Record<string, Draw> = {
   comment: (c) => (
     <>
       <Sh c={c} cy={56} rx={18} ry={3.2} />
-      <path d="M12 8h40a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H29L16 55.4V44h-4a9 9 0 0 1-9-9V17a9 9 0 0 1 9-9z" fill={c.w} />
-      <path d="M32 8h20a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H32z" fill={c.wd} />
-      <g fill={c.bl}>
-        <rect x="12" y="17" width="40" height="5" rx="2.5" />
-        <rect x="12" y="26" width="30" height="5" rx="2.5" />
+      {/* 白い吹き出しは明るい下地で消える。地を青にして、文字を白で抜く */}
+      <path d="M12 8h40a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H29L16 55.4V44h-4a9 9 0 0 1-9-9V17a9 9 0 0 1 9-9z" fill={c.bl} />
+      <path d="M32 8h20a9 9 0 0 1 9 9v18a9 9 0 0 1-9 9H32z" fill={c.bld} />
+      <g fill={c.w}>
+        <rect x="12" y="16.5" width="40" height="5" rx="2.5" />
+        <rect x="12" y="25.5" width="30" height="5" rx="2.5" />
+        <rect x="12" y="34.5" width="22" height="5" rx="2.5" opacity="0.75" />
       </g>
-      <Gl c={c} cx={16} cy={13} rx={6} ry={2} r={-4} o={0.7} />
+      <Gl c={c} cx={16} cy={13} rx={6} ry={2} r={-4} o={0.5} />
     </>
   ),
 
@@ -129,15 +131,31 @@ export const stream: Record<string, Draw> = {
   ),
 
   /** 生放送のランプ。赤い玉が光っている。 */
+  /**
+   * 生放送のランプ。線の弧だけだと「電波の記号」で、物になっていなかった。
+   * 台と笠を付けて、点いている赤い球にする。光は左右の弧で示す。
+   */
   live: (c) => (
     <>
-      <path d="M13 12a26 26 0 0 0 0 40" fill="none" stroke={c.rdl} strokeWidth="6" strokeLinecap="round" opacity={c.flat ? 1 : 0.7} />
-      <path d="M51 12a26 26 0 0 1 0 40" fill="none" stroke={c.rdl} strokeWidth="6" strokeLinecap="round" opacity={c.flat ? 1 : 0.7} />
-      <path d="M23 21a14 14 0 0 0 0 22" fill="none" stroke={c.rd} strokeWidth="6" strokeLinecap="round" />
-      <path d="M41 21a14 14 0 0 1 0 22" fill="none" stroke={c.rd} strokeWidth="6" strokeLinecap="round" />
-      <circle cx="32" cy="32" r="10.5" fill={c.rdd} />
-      <circle cx="32" cy="31" r="10.5" fill={c.rd} />
-      <Gl c={c} cx={28} cy={27} rx={3.4} ry={2} r={-30} o={0.75} />
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      {/* 光。物の後ろに置く */}
+      <g fill="none" stroke={c.rdl} strokeLinecap="round" opacity={c.flat ? 1 : 0.75}>
+        <path d="M13 13a24 24 0 0 0-4 14" strokeWidth="5.4" />
+        <path d="M51 13a24 24 0 0 1 4 14" strokeWidth="5.4" />
+        <path d="M23 8a14 14 0 0 0-4 6" strokeWidth="5" />
+        <path d="M41 8a14 14 0 0 1 4 6" strokeWidth="5" />
+      </g>
+      {/* 笠 */}
+      <path d="M20 24h24a4 4 0 0 1 3.9 4.9l-1.4 6A4 4 0 0 1 42.6 38H21.4a4 4 0 0 1-3.9-3.1l-1.4-6A4 4 0 0 1 20 24z" fill={c.gyd} />
+      <path d="M32 24h12a4 4 0 0 1 3.9 4.9l-1.4 6A4 4 0 0 1 42.6 38H32z" fill={c.gy} opacity="0.5" />
+      {/* 球 */}
+      <circle cx="32" cy="41" r="11" fill={c.rdd} />
+      <circle cx="32" cy="39.8" r="11" fill={c.rd} />
+      <circle cx="30" cy="38" r="4.6" fill={c.rdl} />
+      {/* 台 */}
+      <rect x="21" y="51" width="22" height="6" rx="3" fill={c.gyd} />
+      <rect x="29" y="47" width="6" height="6" rx="2" fill={c.gy} />
+      <Gl c={c} cx={27} cy={35} rx={3} ry={1.8} r={-30} o={0.7} />
     </>
   ),
 

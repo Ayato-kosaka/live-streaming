@@ -46,58 +46,79 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** 愉快な仲間達 = 住人の紹介。3人ぶんの顔。 */
+  /**
+   * 愉快な仲間達 = 住人の紹介。
+   *
+   * 「あやと島について」と同じ絵を使い回していたのが直し元。ここは**人**の絵にする。
+   * 3人とも丸い顔にすると団子になるので、**耳の形で種類を分ける**
+   * （左＝とがった耳、中＝丸い耳、右＝くちばし）。小さくしても輪郭で数えられる。
+   */
   friends: (c) => (
     <>
-      <Sh c={c} cy={54} rx={22} ry={4.4} />
-      {/* 後ろの2人 */}
-      <circle cx="13.5" cy="27" r="5" fill={c.tld} />
-      <circle cx="14" cy="38" r="11.5" fill={c.tl} />
-      <Eye c={c} x={10} y={37} s={0.85} />
-      <Eye c={c} x={17.5} y={37} s={0.85} />
+      <Sh c={c} cy={55} rx={24} ry={4.2} />
+      {/* 左。とがった耳 */}
+      <path d="M6 30 8.6 20l7.4 5zM24 30l-2.6-10-7.4 5z" fill={c.tld} />
+      <circle cx="15" cy="39" r="12" fill={c.tl} />
+      <path d="M15 27a12 12 0 0 1 0 24z" fill={c.tld} opacity="0.45" />
+      <Eye c={c} x={11} y={38} s={0.9} />
+      <Eye c={c} x={19} y={38} s={0.9} />
+      <Blush c={c} x={7.6} y={42.5} s={0.85} />
 
-      <circle cx="50.5" cy="27" r="5" fill={c.pkd} />
-      <circle cx="50" cy="38" r="11.5" fill={c.pk} />
-      <Eye c={c} x={46.5} y={37} s={0.85} />
-      <Eye c={c} x={54} y={37} s={0.85} />
+      {/* 右。くちばし */}
+      <circle cx="49" cy="39" r="12" fill={c.pk} />
+      <path d="M49 27a12 12 0 0 1 0 24z" fill={c.pkd} opacity="0.5" />
+      <path d="M49 39.4 60 43l-11 3.6z" fill={c.or} />
+      <Eye c={c} x={45} y={37} s={0.9} />
+      <Eye c={c} x={52.6} y={37} s={0.9} />
+      <path d="M43 22c4-4 9-4 12 0-4-1.6-8-1.6-12 0z" fill={c.pkd} />
 
-      {/* 手前の1人。いちばん大きく、耳をつける */}
-      <circle cx="21" cy="18" r="6" fill={c.crd} />
-      <circle cx="43" cy="18" r="6" fill={c.crd} />
-      <circle cx="32" cy="30" r="15" fill={c.cr} />
-      <ellipse cx="32" cy="35" rx="8.4" ry="6" fill={c.w} />
-      <ellipse cx="32" cy="31.6" rx="2.6" ry="2" fill={c.ink} />
-      <Eye c={c} x={26.5} y={27} />
-      <Eye c={c} x={37.5} y={27} />
-      <Blush c={c} x={21.5} y={32} />
-      <Blush c={c} x={42.5} y={32} />
-      <Gl c={c} cx={25} cy={21} rx={5} ry={3} o={0.4} />
+      {/* 手前。いちばん大きく、丸い耳 */}
+      <circle cx="20.5" cy="17" r="6.4" fill={c.crd} />
+      <circle cx="43.5" cy="17" r="6.4" fill={c.crd} />
+      <circle cx="20.5" cy="17" r="3.2" fill={c.pk} />
+      <circle cx="43.5" cy="17" r="3.2" fill={c.pk} />
+      <circle cx="32" cy="30" r="15.5" fill={c.cr} />
+      <path d="M32 14.5a15.5 15.5 0 0 1 0 31z" fill={c.crd} opacity="0.4" />
+      <ellipse cx="32" cy="35.4" rx="8.6" ry="6" fill={c.w} />
+      <ellipse cx="32" cy="32" rx="2.8" ry="2.1" fill={c.ink} />
+      <path d="M28.6 37.6c1.8 2.2 5 2.2 6.8 0" fill="none" stroke={c.ink} strokeWidth="1.8" strokeLinecap="round" />
+      <Eye c={c} x={26} y={26.6} />
+      <Eye c={c} x={38} y={26.6} />
+      <Blush c={c} x={21.4} y={32.4} />
+      <Blush c={c} x={42.6} y={32.4} />
+      <Gl c={c} cx={25} cy={20.5} rx={5} ry={3} o={0.4} />
     </>
   ),
 
-  /** 配信やぐら = /streams。木のやぐらから電波を飛ばしている。 */
+  /**
+   * 配信やぐら = /streams。
+   *
+   * 電波を左右の弧にすると翼に見えたので、**上へ飛ばす**。
+   * 脚を太くしてハシゴを入れると、小さくしても「やぐら」の骨組みが残る。
+   */
   tower: (c) => (
     <>
-      <Sh c={c} cy={54} rx={19} ry={4.4} />
+      <Sh c={c} cy={55} rx={20} ry={4.2} />
+      {/* 電波。天辺から上へ */}
+      <g fill="none" stroke={c.sk} strokeLinecap="round" opacity={c.flat ? 1 : 0.95}>
+        <path d="M22 15a14 14 0 0 1 20 0" strokeWidth="4.6" />
+        <path d="M15.5 8.5a23 23 0 0 1 33 0" strokeWidth="4.2" opacity="0.6" />
+      </g>
       {/* 脚 */}
-      <path d="M15 53 24 23h5l-8 30z" fill={c.wod} />
-      <path d="M49 53 40 23h-5l8 30z" fill={c.wo} />
-      <rect x="19" y="37" width="26" height="4.6" rx="2.3" fill={c.wol} />
-      <rect x="20" y="45" width="24" height="4.6" rx="2.3" fill={c.wol} />
+      <path d="M12 55 22 26h6L18 55z" fill={c.wod} />
+      <path d="M52 55 42 26h-6l10 29z" fill={c.wo} />
+      <g fill={c.wol}>
+        <rect x="21" y="32" width="22" height="4.4" rx="2.2" />
+        <rect x="19" y="41" width="26" height="4.4" rx="2.2" />
+        <rect x="17" y="50" width="30" height="4.4" rx="2.2" />
+      </g>
       {/* 見張り台と屋根 */}
-      <rect x="15" y="19" width="34" height="6" rx="3" fill={c.wo} />
-      <path d="M32 4 51 19H13z" fill={c.rd} />
-      <path d="M32 4 51 19H32z" fill={c.rdd} />
-      {/* 電波 */}
-      <path
-        d="M11 20a15 15 0 0 1 4.4-10.6l3.6 3.6A9.9 9.9 0 0 0 16.1 20z"
-        fill={c.sk}
-      />
-      <path
-        d="M53 20a15 15 0 0 0-4.4-10.6L45 13a9.9 9.9 0 0 1 2.9 7z"
-        fill={c.sk}
-      />
-      <Gl c={c} cx={22} cy={10} rx={4} ry={1.8} r={-38} o={0.4} />
+      <rect x="13" y="22" width="38" height="6.4" rx="3.2" fill={c.wo} />
+      <rect x="17" y="17.6" width="30" height="5.4" rx="2.7" fill={c.wol} />
+      <path d="M32 5 52 19a2 2 0 0 1-1.4 3.4H13.4A2 2 0 0 1 12 19z" fill={c.rd} />
+      <path d="M32 5 52 19a2 2 0 0 1-1.4 3.4H32z" fill={c.rdd} />
+      <rect x="30" y="18" width="4" height="4" rx="2" fill={c.gd} />
+      <Gl c={c} cx={22} cy={11} rx={4} ry={1.8} r={-34} o={0.4} />
     </>
   ),
 
@@ -152,27 +173,44 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** 旅の桟橋 = /map。海に張り出した板。 */
+  /**
+   * 旅の桟橋 = /map。
+   *
+   * 係船柱を左端だけに置くと重心が左に寄って倒れて見えたので、
+   * **左に柱・右に小舟**で釣り合わせる。桟橋は左から右へ張り出す。
+   */
   pier: (c) => (
     <>
-      <rect x="2" y="34" width="60" height="24" rx="9" fill={c.sk} />
+      {/* 海。深い青 → 浅瀬 → 泡の順に3本（ac-reference 2） */}
+      <rect x="1" y="30" width="62" height="28" rx="10" fill={c.bl} />
+      <path d="M1 40h62v8a10 10 0 0 1-10 10H11A10 10 0 0 1 1 48z" fill={c.tl} />
       <path
-        d="M4 44c6-3.4 10 3.4 16 0s10 3.4 16 0 10 3.4 16 0 6 0 8-1.4v6c-4 2.6-8-2.6-14 .8s-10-3.4-16 0-10 3.4-16 0-6-2.6-10-1.4z"
+        d="M2 45c6-3 10 3 16 0s10 3 16 0 10 3 16 0 8-.6 11-2.4v4.6c-3 1.8-7 1.6-11 3.4-6 2.6-10-3-16 0s-10-3-16 0-10 3-16 0z"
         fill={c.w}
-        opacity="0.55"
+        opacity="0.6"
       />
-      <rect x="14" y="36" width="6" height="18" rx="2" fill={c.wod} />
-      <rect x="42" y="36" width="6" height="18" rx="2" fill={c.wod} />
-      <rect x="4" y="26" width="56" height="9" rx="3" fill={c.wo} />
-      <g fill={c.wod} opacity="0.65">
-        <rect x="16" y="26" width="2" height="9" />
-        <rect x="30" y="26" width="2" height="9" />
-        <rect x="44" y="26" width="2" height="9" />
+      {/* 桟橋の脚 */}
+      <g fill={c.wod}>
+        <rect x="12" y="34" width="5.4" height="18" rx="2.2" />
+        <rect x="28" y="34" width="5.4" height="18" rx="2.2" />
       </g>
-      {/* 係船柱。ここに船を留める */}
-      <rect x="8" y="12" width="9" height="16" rx="4.5" fill={c.wod} />
-      <rect x="6.5" y="9" width="12" height="5.5" rx="2.7" fill={c.wo} />
-      <Gl c={c} cx={10.5} cy={16} rx={1.6} ry={4} r={0} o={0.4} />
+      {/* 板張りの床 */}
+      <rect x="3" y="26" width="42" height="9" rx="3.4" fill={c.wo} />
+      <rect x="3" y="26" width="42" height="3.6" rx="1.8" fill={c.wol} />
+      <g fill={c.wod} opacity="0.6">
+        <rect x="14" y="26" width="2" height="9" />
+        <rect x="25" y="26" width="2" height="9" />
+        <rect x="36" y="26" width="2" height="9" />
+      </g>
+      {/* 係船柱 */}
+      <rect x="5" y="12" width="9" height="15" rx="4.5" fill={c.wod} />
+      <rect x="3.6" y="9" width="12" height="5.4" rx="2.7" fill={c.wo} />
+      {/* 小舟。ここに向かって出ていく */}
+      <path d="M42 41h20l-3.4 6.6a3 3 0 0 1-2.7 1.6H48a3 3 0 0 1-2.7-1.6z" fill={c.rd} />
+      <path d="M52 41h10l-3.4 6.6a3 3 0 0 1-2.7 1.6H52z" fill={c.rdd} />
+      <rect x="50" y="27" width="3.4" height="14" rx="1.7" fill={c.wod} />
+      <path d="M54 28.4 62 34l-8 5z" fill={c.w} />
+      <Gl c={c} cx={7.6} cy={17} rx={1.5} ry={4} r={0} o={0.4} />
     </>
   ),
 
@@ -180,10 +218,15 @@ export const place: Record<string, Draw> = {
   kitchen: (c) => (
     <>
       <Sh c={c} cy={54} rx={22} ry={4.4} />
-      <g fill={c.w} opacity="0.85">
-        <circle cx="44" cy="9" r="4.4" />
-        <circle cx="50" cy="5.6" r="3.2" />
-        <circle cx="39.6" cy="5" r="2.6" />
+      {/* 煙。白のままだと明るい下地で消えるので、灰を混ぜた白にする */}
+      <g fill={c.gy}>
+        <circle cx="44" cy="9" r="4.6" />
+        <circle cx="50.4" cy="5.6" r="3.4" />
+        <circle cx="39.4" cy="4.8" r="2.8" />
+      </g>
+      <g fill={c.w} opacity={c.flat ? 1 : 0.8}>
+        <circle cx="43" cy="8" r="3" />
+        <circle cx="49.6" cy="4.8" r="2.2" />
       </g>
       <rect x="39" y="11" width="9" height="12" rx="2" fill={c.rdd} />
       <path d="M32 8 60 30a2.6 2.6 0 0 1-1.7 4.6H5.7A2.6 2.6 0 0 1 4 30z" fill={c.rd} />

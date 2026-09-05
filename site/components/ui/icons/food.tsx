@@ -39,26 +39,49 @@ export const food: Record<string, Draw> = {
     </>
   ),
 
+  /**
+   * フライパン。黒い円のままだと小さくすると点になる。
+   * 目玉焼きを1つ入れると、黒の中に明るい色ができて形が残る。
+   */
   pan: (c) => (
     <>
       <Sh c={c} cy={50} rx={19} ry={4} />
-      <rect x="38" y="17" width="26" height="8" rx="4" fill={c.wo} transform="rotate(-14 51 21)" />
+      <rect x="38" y="16" width="26" height="8" rx="4" fill={c.wod} transform="rotate(-14 51 20)" />
+      <rect x="38" y="16" width="26" height="4.4" rx="2.2" fill={c.wo} transform="rotate(-14 51 18.2)" />
       <ellipse cx="26" cy="36" rx="24" ry="11" fill={c.bk} />
       <ellipse cx="26" cy="34" rx="24" ry="11" fill={c.gyd} />
-      <ellipse cx="26" cy="34" rx="18.5" ry="7.6" fill={c.bk} />
-      <ellipse cx="20" cy="31.5" rx="6" ry="2.4" fill={c.w} opacity={c.flat ? 1 : 0.22} />
+      <ellipse cx="26" cy="34" rx="19" ry="7.8" fill={c.bk} />
+      {/* 目玉焼き */}
+      <path
+        d="M20 29c4-1.6 8-1 10.4.8 2.6-1.4 6.4-1 7.4 1.6 1 2.6-1.4 4.6-5 5.2-3.4.6-6 2-10 1.4-4.2-.6-6.4-2.4-6-4.6.4-2 1.8-3.4 3.2-4.4z"
+        fill={c.w}
+      />
+      <ellipse cx="25.5" cy="33.4" rx="4.6" ry="3.4" fill={c.yl} />
+      <ellipse cx="24.2" cy="32.4" rx="2" ry="1.3" fill={c.cr} opacity={c.flat ? 1 : 0.85} />
       <Gl c={c} cx={10} cy={33} rx={2} ry={4} r={0} o={0.4} />
     </>
   ),
 
+  /**
+   * 包丁。刃を三角にすると左官のコテに見えたので、
+   * **峰を曲線・刃を直線**にした（三徳包丁の形）。刃元に口金を入れて柄と切る。
+   */
   knife: (c) => (
     <>
-      <Sh c={c} cy={56} rx={20} ry={3.4} />
-      <path d="M9 34 40 9c2.6-2 5.4 1.4 5.4 8.4 0 6.6-2.6 13-8 16.6z" fill={c.gy} />
-      <path d="M9 34h28.4c-2.6 1.6-5.6 2.4-9 2.4H9z" fill={c.gyd} />
-      <rect x="38" y="32" width="24" height="10" rx="4.4" fill={c.br} transform="rotate(24 50 37)" />
-      <rect x="36" y="31" width="6" height="10" rx="2.4" fill={c.gyd} transform="rotate(24 39 36)" />
-      <Gl c={c} cx={26} cy={22} rx={12} ry={1.8} r={-38} o={0.55} />
+      <Sh c={c} cy={55} rx={22} ry={3.4} />
+      <g transform="rotate(-9 32 32)">
+        <path d="M5 40c1.6-3 4-6 7-9 8.4-8.4 19-13.6 28-14.4V40z" fill={c.gy} />
+        {/* 研いだ面。刃先だけ明るいと金属に見える */}
+        <path d="M6.4 40h33.6v-5H10.6c-1.8 1.8-3.2 3.4-4.2 5z" fill={c.w} opacity={c.flat ? 1 : 0.7} />
+        <rect x="38.5" y="15.4" width="5.5" height="25.4" rx="2" fill={c.gyd} />
+        <path d="M44 19h13a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5H44z" fill={c.br} />
+        <path d="M44 28.5h18V33a5 5 0 0 1-5 5H44z" fill={c.brd} />
+        <g fill={c.crd}>
+          <circle cx="49" cy="28.5" r="1.7" />
+          <circle cx="56" cy="28.5" r="1.7" />
+        </g>
+      </g>
+      <Gl c={c} cx={22} cy={25} rx={11} ry={1.6} r={-26} o={0.5} />
     </>
   ),
 
@@ -82,16 +105,26 @@ export const food: Record<string, Draw> = {
     </>
   ),
 
+  /**
+   * 菜箸。2本を離して立てると「棒が2本」にしか見えなかったので、
+   * **何かをつまんでいる**ところにする。持ち手を太く、先を細くする。
+   */
   chopsticks: (c) => (
     <>
-      <Sh c={c} cy={56} rx={16} ry={3.2} />
-      <rect x="6" y="6" width="7" height="52" rx="3.5" fill={c.wo} transform="rotate(-14 9.5 32)" />
-      <rect x="6" y="6" width="4.6" height="52" rx="2.3" fill={c.wod} transform="rotate(-14 8.3 32)" />
-      <rect x="46" y="6" width="7" height="52" rx="3.5" fill={c.wo} transform="rotate(11 49.5 32)" />
-      <rect x="48.4" y="6" width="4.6" height="52" rx="2.3" fill={c.wod} transform="rotate(11 50.7 32)" />
-      <ellipse cx="32" cy="49" rx="17" ry="6" fill={c.crd} />
-      <ellipse cx="32" cy="47.4" rx="17" ry="6" fill={c.cr} />
-      <Gl c={c} cx={24} cy={46} rx={5} ry={1.6} r={-6} o={0.6} />
+      <Sh c={c} cy={57} rx={15} ry={3.2} />
+      {/* 太いと板に見える。持ち手 5px → 先 2.6px まで細らせる */}
+      <g transform="rotate(34 32 32)">
+        <path d="M28.6 2h5.6l1.4 51.4a2.2 2.2 0 0 1-2.2 2.3h-4a2.2 2.2 0 0 1-2.2-2.3z" fill={c.wo} />
+        <path d="M31.4 2h2.8l1.4 51.4a2.2 2.2 0 0 1-2.2 2.3h-2z" fill={c.wod} />
+      </g>
+      <g transform="rotate(17 32 32)">
+        <path d="M28.6 2h5.6l1.4 51.4a2.2 2.2 0 0 1-2.2 2.3h-4a2.2 2.2 0 0 1-2.2-2.3z" fill={c.wol} />
+        <path d="M31.4 2h2.8l1.4 51.4a2.2 2.2 0 0 1-2.2 2.3h-2z" fill={c.wo} />
+      </g>
+      {/* つまんでいるもの。ここが有るだけで「箸」と読める */}
+      <circle cx="40.5" cy="48" r="6.4" fill={c.gr} />
+      <path d="M40.5 41.6a6.4 6.4 0 0 1 0 12.8z" fill={c.grd} />
+      <Gl c={c} cx={38} cy={45.2} rx={2.2} ry={1.5} r={-24} o={0.6} />
     </>
   ),
 
@@ -120,33 +153,57 @@ export const food: Record<string, Draw> = {
       <ellipse cx="24" cy="34" rx="17" ry="5" fill={c.bk} />
       <ellipse cx="24" cy="32.4" rx="17" ry="5" fill={c.gyd} />
       <ellipse cx="24" cy="32.4" rx="9" ry="2.6" fill={c.bk} />
-      <path d="M24 8c1.6 5 6 6.6 6 12a6 6 0 0 1-12 0c0-2.6 1.2-4 2-6 1 1.4 1.6 2.2 2.4 2.8-.4-3.4.6-6.6 1.6-8.8z" fill={c.bl} />
-      <path d="M24 18c1.4 2 2.4 3 2.4 4.6a2.4 2.4 0 0 1-4.8 0c0-1.6 1-2.6 2.4-4.6z" fill={c.sk} />
+      {/* 火。小さな青い炎1つだと「点」になるので、輪に3つ立てて、先を橙にする */}
+      <g>
+        <path d="M24 4c2 6 7.4 8 7.4 14.6a7.4 7.4 0 0 1-14.8 0c0-3.2 1.4-5 2.4-7.4 1.2 1.8 2 2.8 3 3.6-.6-4.2.8-8.2 2-10.8z" fill={c.or} />
+        <path d="M24 10.6c1.2 4 4.6 5.2 4.6 9.2a4.6 4.6 0 0 1-9.2 0c0-2 .8-3.2 1.4-4.6.8 1.2 1.2 1.8 1.8 2.2-.4-2.6.6-5.2 1.4-6.8z" fill={c.bl} />
+        <path d="M24 19c1.2 1.8 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.2 2-4z" fill={c.sk} />
+      </g>
+      <g fill={c.bl} opacity={c.flat ? 1 : 0.85}>
+        <path d="M13.5 22c1 2.4 3 3.2 3 5.6a3 3 0 0 1-6 0c0-2.4 2-3.2 3-5.6z" />
+        <path d="M34.5 22c1 2.4 3 3.2 3 5.6a3 3 0 0 1-6 0c0-2.4 2-3.2 3-5.6z" />
+      </g>
       <Gl c={c} cx={12} cy={39} rx={2.4} ry={5} r={0} o={0.4} />
     </>
   ),
 
+  /**
+   * 皿。真っ白だと明るい下地に溶けて消える。
+   * 縁に呉須の帯を1本まわして、輪郭線なしで形の端を決める。
+   */
   plate: (c) => (
     <>
       <Sh c={c} cy={48} rx={25} ry={4.4} />
-      <ellipse cx="32" cy="34" rx="28" ry="14" fill={c.wd} />
-      <ellipse cx="32" cy="31.6" rx="28" ry="14" fill={c.w} />
-      <ellipse cx="32" cy="31.6" rx="19" ry="8.6" fill={c.wd} />
-      <ellipse cx="32" cy="31" rx="19" ry="8.6" fill={c.cr} />
-      <Gl c={c} cx={17} cy={26} rx={9} ry={2.6} r={-10} o={0.85} />
+      <ellipse cx="32" cy="34" rx="28" ry="14" fill={c.bld} />
+      <ellipse cx="32" cy="31.6" rx="28" ry="14" fill={c.bl} />
+      <ellipse cx="32" cy="31.6" rx="24" ry="11.4" fill={c.wd} />
+      <ellipse cx="32" cy="30.8" rx="24" ry="11.4" fill={c.w} />
+      <ellipse cx="32" cy="31.4" rx="15.5" ry="6.6" fill={c.wd} />
+      <ellipse cx="32" cy="30.6" rx="15.5" ry="6.6" fill={c.cr} />
+      <Gl c={c} cx={17} cy={26} rx={8} ry={2.4} r={-10} o={0.85} />
     </>
   ),
 
+  /**
+   * 丼。白い器を白いままにすると輪郭が消えるので、
+   * 縁に呉須の帯、腰に一段濃い面を置いて、色の差だけで丸みを出す。
+   */
   bowl: (c) => (
     <>
       <Sh c={c} cy={54} rx={22} ry={4.2} />
       <Steam c={c} x={32} y={2} />
-      <ellipse cx="32" cy="27" rx="21" ry="7" fill={c.w} />
-      <ellipse cx="32" cy="25.6" rx="16" ry="5" fill={c.cr} />
-      <path d="M7 25h50c0 13.6-11.2 24-25 24S7 38.6 7 25z" fill={c.w} />
-      <path d="M32 25h25c0 13.6-11.2 24-25 24z" fill={c.wd} />
-      <path d="M12 30h40c-1.4 4.6-4 8.4-7.4 11H19.4A25 25 0 0 1 12 30z" fill={c.bl} opacity={c.flat ? 1 : 0.28} />
-      <Gl c={c} cx={17} cy={33} rx={3} ry={7} r={22} o={0.6} />
+      {/* ごはん。器から盛り上がっているところが見えると「丼」になる */}
+      <path d="M15 27c1.6-8 8.6-13 17-13s15.4 5 17 13z" fill={c.w} />
+      <path d="M32 14c8.4 0 15.4 5 17 13H32z" fill={c.wd} />
+      {/* 器 */}
+      <path d="M8 26h48c0 13.4-10.8 23.6-24 23.6S8 39.4 8 26z" fill={c.w} />
+      <path d="M32 26h24c0 13.4-10.8 23.6-24 23.6z" fill={c.wd} />
+      {/* 呉須の帯。1本だけ。ここが器の輪郭の代わりになる */}
+      <path d="M8.4 29h47.2a25 25 0 0 1-1.5 5.4H9.9A25 25 0 0 1 8.4 29z" fill={c.bl} />
+      <path d="M32 29h23.6a25 25 0 0 1-1.5 5.4H32z" fill={c.bld} />
+      {/* 高台 */}
+      <path d="M23 48h18l-1.6 6a2.4 2.4 0 0 1-2.3 1.8h-10.2a2.4 2.4 0 0 1-2.3-1.8z" fill={c.wd} />
+      <Gl c={c} cx={17} cy={36} rx={2.6} ry={6} r={22} o={0.6} />
     </>
   ),
 
@@ -187,18 +244,40 @@ export const food: Record<string, Draw> = {
     </>
   ),
 
+  /**
+   * 肉。桃色の塊だと何なのか分からなかったので、骨付き肉にする。
+   * 骨を上に立てると、遠目でも「肉」と読める形になる。
+   */
   meat: (c) => (
     <>
-      <Sh c={c} cy={55} rx={21} ry={3.8} />
-      <g fill={c.cr}>
-        <circle cx="12" cy="17" r="6.4" />
-        <circle cx="12" cy="27" r="6.4" />
-        <rect x="8" y="17" width="9" height="10" />
+      <Sh c={c} cy={56} rx={20} ry={3.8} />
+      {/* 骨。こぶを2つ */}
+      <g fill={c.crd}>
+        <circle cx="24" cy="9.5" r="7" />
+        <circle cx="40" cy="9.5" r="7" />
       </g>
-      <path d="M18 16c14-8 34-4 38 9 4 13-9 25-23 25-12 0-21-9-21-19 0-6 2-11 6-15z" fill={c.pk} />
-      <path d="M32 12.4c9 .6 20 5 24 12.6 4 13-9 25-23 25-1.4 0-2.7-.1-4-.3z" fill={c.pkd} />
-      <path d="M26 24c7-4 15-3 19 3-6-2-13-2-19-3z" fill={c.w} opacity={c.flat ? 1 : 0.55} />
-      <Gl c={c} cx={26} cy={20} rx={7} ry={2.4} r={-18} o={0.5} />
+      <rect x="27" y="6" width="10" height="24" fill={c.crd} />
+      <g fill={c.cr}>
+        <circle cx="24" cy="8" r="6.4" />
+        <circle cx="40" cy="8" r="6.4" />
+        <rect x="27.5" y="5" width="9" height="22" />
+      </g>
+      {/* 肉。上を細く、下をどっしり */}
+      <path
+        d="M32 20c13 0 24 8 24 18.6C56 48.6 45.4 56 32 56S8 48.6 8 38.6C8 28 19 20 32 20z"
+        fill={c.rd}
+      />
+      <path d="M32 20c13 0 24 8 24 18.6C56 48.6 45.4 56 32 56z" fill={c.rdd} />
+      {/* 脂身。縁の白い帯 */}
+      <path
+        d="M32 20c6.4 0 12.4 2 17 5.2-4.6-1.6-10-2.4-17-2.4s-12.4.8-17 2.4C19.6 22 25.6 20 32 20z"
+        fill={c.wol}
+      />
+      <g fill={c.rdl} opacity={c.flat ? 1 : 0.8}>
+        <rect x="17" y="35" width="12" height="3" rx="1.5" transform="rotate(-10 23 36.5)" />
+        <rect x="33" y="43" width="12" height="3" rx="1.5" transform="rotate(8 39 44.5)" />
+      </g>
+      <Gl c={c} cx={20} cy={31} rx={6} ry={2.4} r={-16} o={0.4} />
     </>
   ),
 
@@ -276,14 +355,27 @@ export const food: Record<string, Draw> = {
     </>
   ),
 
+  /**
+   * 食べる。灰色の食器2本だと明るい下地で消えるので、
+   * 皿を敷いて色を作り、そのうえに食器を置く。
+   */
   eat: (c) => (
     <>
-      <Sh c={c} cy={57} rx={19} ry={3.2} />
-      <path d="M12 6h4.4v14h3V6h4.4v14h3V6H31v18c0 5-2.6 8-6 9v23a3 3 0 0 1-3 3h-1a3 3 0 0 1-3-3V33c-3.4-1-6-4-6-9z" fill={c.gy} />
-      <path d="M44 6c6 2 9 10 9 19 0 7-2.4 12-6 14v17a3 3 0 0 1-3 3h-1a3 3 0 0 1-3-3V6z" fill={c.gy} />
-      <path d="M22 6h1.4v14h3V6H31v18c0 5-2.6 8-6 9v23a3 3 0 0 1-3 3z" fill={c.gyd} />
-      <path d="M47 8c3.4 3.4 5 9.4 5 16 0 7-2 12-5.6 14v18a3 3 0 0 1-2.4 2.9V6z" fill={c.gyd} />
-      <Gl c={c} cx={16} cy={12} rx={1.4} ry={5} r={0} o={0.6} />
+      <Sh c={c} cy={54} rx={25} ry={4.2} />
+      <circle cx="32" cy="32" r="26" fill={c.tld} />
+      <circle cx="32" cy="30.6" r="26" fill={c.tl} />
+      <circle cx="32" cy="30.6" r="19.5" fill={c.wd} />
+      <circle cx="32" cy="29.8" r="19.5" fill={c.w} />
+      {/* フォーク */}
+      <path
+        d="M17 10h3v10h2.2V10h3v10h2.2V10h3v13c0 3.4-1.6 5.6-4 6.4V51a2.6 2.6 0 0 1-5.2 0V29.4c-2.4-.8-4-3-4-6.4z"
+        fill={c.gy}
+      />
+      <path d="M26.4 10h3.8v13c0 3.4-1.6 5.6-4 6.4V51a2.6 2.6 0 0 1-2.6 2.6V10z" fill={c.gyd} />
+      {/* ナイフ */}
+      <path d="M44 10c4.6 1.8 7 8 7 15 0 5.6-1.8 9.6-4.4 11.4V51a2.6 2.6 0 0 1-5.2 0V10z" fill={c.gy} />
+      <path d="M46.4 12c2.8 3 4.2 7.8 4.2 13 0 5.6-1.8 9.6-4.4 11.4V51a2.6 2.6 0 0 1-2.6 2.6V10.6z" fill={c.gyd} />
+      <Gl c={c} cx={19} cy={19} rx={4.6} ry={2.4} r={-34} o={0.7} />
     </>
   ),
 };

@@ -34,18 +34,32 @@ export const feel: Record<string, Draw> = {
         <path d="m56 12 1.3 3.2 3.2 1.3-3.2 1.3L56 21l-1.3-3.2-3.2-1.3 3.2-1.3z" />
         <path d="m32 3 1.4 3.4 3.4 1.4-3.4 1.4L32 12.6l-1.4-3.4L27.2 7.8l3.4-1.4z" />
       </g>
-      <Sh c={c} cy={57} rx={20} ry={3.2} />
-      <g transform="rotate(-16 22 38)">
-        <rect x="8" y="24" width="26" height="24" rx="10" fill={c.snd} />
-        <rect x="4" y="42" width="30" height="13" rx="6" fill={c.bld} />
-      </g>
-      <g transform="rotate(16 42 38)">
-        <rect x="30" y="22" width="26" height="24" rx="10" fill={c.sn} />
-        <g fill={c.snd} opacity="0.85">
-          <rect x="38" y="28" width="14" height="2.6" rx="1.3" />
-          <rect x="38" y="34" width="14" height="2.6" rx="1.3" />
+      <Sh c={c} cy={58} rx={19} ry={3.2} />
+      {/* 奥の手。指を4本出さないと、丸い塊にしか見えない */}
+      <g transform="rotate(-26 26 40)">
+        <g fill={c.snd}>
+          <rect x="13" y="17" width="5.4" height="16" rx="2.7" />
+          <rect x="19.4" y="14" width="5.4" height="19" rx="2.7" />
+          <rect x="25.8" y="15" width="5.4" height="18" rx="2.7" />
+          <rect x="32.2" y="18" width="5.4" height="15" rx="2.7" />
+          <rect x="12" y="26" width="26" height="22" rx="9" />
         </g>
-        <rect x="30" y="40" width="30" height="13" rx="6" fill={c.bl} />
+        <rect x="9" y="43" width="32" height="13" rx="6" fill={c.bld} />
+      </g>
+      {/* 手前の手。明るい肌にして、奥の手と面で分ける */}
+      <g transform="rotate(24 38 40)">
+        <g fill={c.sn}>
+          <rect x="26" y="15" width="5.4" height="16" rx="2.7" />
+          <rect x="32.4" y="12" width="5.4" height="19" rx="2.7" />
+          <rect x="38.8" y="13" width="5.4" height="18" rx="2.7" />
+          <rect x="45.2" y="16" width="5.4" height="15" rx="2.7" />
+          <rect x="25" y="24" width="26" height="22" rx="9" />
+        </g>
+        <g fill={c.snd} opacity="0.7">
+          <rect x="31" y="31" width="14" height="2.4" rx="1.2" />
+          <rect x="31" y="37" width="14" height="2.4" rx="1.2" />
+        </g>
+        <rect x="22" y="41" width="32" height="13" rx="6" fill={c.bl} />
       </g>
     </>
   ),
@@ -148,14 +162,15 @@ export const feel: Record<string, Draw> = {
       <Sh c={c} cy={57} rx={20} ry={3.2} />
       <path d="M26 20h26a8 8 0 0 1 8 8v13a8 8 0 0 1-8 8h-4v8.4L36 49h-10a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z" fill={c.tl} />
       <path d="M40 20h12a8 8 0 0 1 8 8v13a8 8 0 0 1-8 8h-4v8.4L40 49z" fill={c.tld} />
-      <path d="M11 4h27a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8H21l-9 7.4V31h-1a8 8 0 0 1-8-8V12a8 8 0 0 1 8-8z" fill={c.w} />
-      <path d="M32 4h6a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8H21z" fill={c.wd} />
-      <g fill={c.gyd}>
+      {/* 手前の吹き出しは暖色にする。白いままだと明るい下地で縁が消える */}
+      <path d="M11 4h27a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8H21l-9 7.4V31h-1a8 8 0 0 1-8-8V12a8 8 0 0 1 8-8z" fill={c.or} />
+      <path d="M32 4h6a8 8 0 0 1 8 8v11a8 8 0 0 1-8 8H21z" fill={c.ord} />
+      <g fill={c.w}>
         <circle cx="17" cy="17" r="3" />
         <circle cx="25" cy="17" r="3" />
         <circle cx="33" cy="17" r="3" />
       </g>
-      <Gl c={c} cx={14} cy={9} rx={5} ry={1.8} r={-4} o={0.7} />
+      <Gl c={c} cx={14} cy={9} rx={5} ry={1.8} r={-4} o={0.5} />
     </>
   ),
 
