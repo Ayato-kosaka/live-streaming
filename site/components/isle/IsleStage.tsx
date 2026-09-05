@@ -1051,6 +1051,12 @@ function placePlates(
     const mh = Math.max(12, artH);
     el.style.setProperty("--mh", `${mh.toFixed(1)}px`);
 
+    /* 建物そのものの当たりも、寄せる札が避ける相手に入れる。
+       入れないと、縁へ寄せた札が別の建物の上に乗って、
+       **建物が押せなくなる**（実測で 48px の当たりが 46px まで削られていた）。
+       絵の上に札が乗って、どちらが何なのかも分からなくなる。 */
+    taken.push({ x: px - artW / 2, y: py - Math.max(TAP_MIN, artH), w: Math.max(TAP_MIN, artW), h: Math.max(TAP_MIN, artH) });
+
     const sz = o.sizes[i];
     if (sz && sz.w) {
       const gy = sp.countdown ? 26 : 6;

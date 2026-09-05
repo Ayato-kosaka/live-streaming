@@ -603,7 +603,11 @@
 .isle-mark {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--mh, 48px) + 12px);
+  /* 建物の頭の上。**48px より低いところに置かない。**
+     札の見えない当たり（::before の 48px）が下へはみ出して、
+     建物そのものの当たり（48px）の上 9px を食っていた（実測 50x39）。
+     絵の小さい建物（船着き場）でこれが起きる */
+  bottom: calc(max(var(--mh, 48px), 46px) + 12px);
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -632,9 +636,12 @@
   transform: translate(-50%, -50%);
   border-radius: inherit;
 }
-/* 札を留めている杭 */
+/* 札を留めている杭。**押しどころにはしない。**
+   札の下 13px へ伸びるので、そのままだと建物の当たりの上端を食う
+   （実測で船着き場の 48px が 46px になっていた） */
 .isle-mark::after {
   content: "";
+  pointer-events: none;
   position: absolute;
   left: 50%;
   bottom: -13px;
