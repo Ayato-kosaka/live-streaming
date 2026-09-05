@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import Icon from "@/components/ui/Icon";
+import Icon, { type IconName } from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import { LiveNumber } from "@/lib/liveStats";
 import { COUNTRIES } from "@/content/countries";
@@ -36,6 +36,15 @@ import { ACTIVE_FRIENDS } from "@/content/residents";
 type Box = {
   href: string;
   name: string;
+  /**
+   * その場所の絵。**6マスとも別のもの。**
+   *
+   * 棚は島の入口を6つ並べたところなので、島の中の看板と同じ絵が付いていないと
+   * 「どこへ行くマスなのか」が名前を読むまで分からない。
+   * 大きく出すぶん（面の見出し）は焼いたスプライトのままで、
+   * ここは 26px なので `Icon.tsx` の絵を使う（`components/ui/Icon.tsx` の注）。
+   */
+  mark: IconName;
   note: string;
   /** 数。Firestore から届くものは LiveNumber を渡して、静かに差し替えさせる */
   n: ReactNode;
@@ -53,6 +62,7 @@ export default function Shelf() {
   const boxes: Box[] = [
     {
       href: "/map",
+      mark: "pier",
       name: "旅の桟橋",
       note: "パリからトビリシまで、どこをどう通ってきたか",
       n: s.countries,
@@ -67,6 +77,9 @@ export default function Shelf() {
     },
     {
       href: "/kitchen",
+      /* 小屋そのものの絵（`kitchen`）は上の帯と面の見出しに既に2回出ている。
+         ここが数えているのは小屋ではなく**押したスタンプの数**なので、帳面のほうを出す */
+      mark: "stampbook",
       name: "キッチン小屋",
       note: "その土地のものを、買い出しから作って食べる",
       n: RECIPES.length,
@@ -81,6 +94,7 @@ export default function Shelf() {
     },
     {
       href: "/streams",
+      mark: "tower",
       name: "配信やぐら",
       note: "配信は5つの型でできてる。型ごとにまとめて見られる",
       n: <LiveNumber statKey="streams" fallback={s.streams} />,
@@ -97,6 +111,7 @@ export default function Shelf() {
     },
     {
       href: "/legends",
+      mark: "hill",
       name: "伝説の丘",
       note: LEGENDS[0]?.title ?? "いまも話に出てくる企画",
       n: LEGENDS.length,
@@ -111,6 +126,7 @@ export default function Shelf() {
     },
     {
       href: "/apps",
+      mark: "workshop",
       name: "アプリ工房",
       note: "旅先で、配信しながら作っている",
       n: APPS.length,
@@ -125,6 +141,7 @@ export default function Shelf() {
     },
     {
       href: "/friends",
+      mark: "friends",
       name: "愉快な仲間達",
       note: "配信に来てくれる人が、そのまま島の住人になる",
       n: <LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />,
@@ -137,6 +154,9 @@ export default function Shelf() {
     <div className="shelf">
       {boxes.map((b) => (
         <Link className="shelf-box" key={b.href} href={b.href}>
+          <span className="shelf-mark" aria-hidden>
+            <Icon name={b.mark} size={26} />
+          </span>
           <span className="shelf-n">
             <em>{b.n}</em>
             <i>{b.unit}</i>

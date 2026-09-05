@@ -32,7 +32,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  *  ここは Icon.tsx の印と言葉で分ける。色は増やさない。 */
 const KIND: Record<AppMilestone["kind"], { label: string; icon: IconName }> = {
   release: { label: "リリース", icon: "flag" },
-  update: { label: "アップデート", icon: "refresh" },
+  /* `refresh`（矢印の輪）は板の「もう一度よみこむ」で使っている操作の印で、
+     しかも1色。ここは節目の絵が並ぶ列なので、同じ印を別の意味で借りない。
+     アップデートは**ストアへ新しい版を出したこと**なので、上げる絵にする。 */
+  update: { label: "アップデート", icon: "upload" },
   build: { label: "作った", icon: "laptop" },
   trouble: { label: "トラブル", icon: "alert" },
   milestone: { label: "節目", icon: "medal" },
@@ -76,8 +79,11 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
 
       <Panel>
         <h2>どんなアプリか</h2>
+        {/* この面の主役は画面の絵（`docs/island-world.md` 2章の表）。
+            工房の一覧からは外したので、端末を出すのはここだけになった。
+            そのぶん大きく取る。 */}
         <div className="aapp-split">
-          <PhoneShot width={200} screen={SHOT[a.slug] ?? "food"} />
+          <PhoneShot width={240} screen={SHOT[a.slug] ?? "food"} />
           <div>
             <p>{a.summary}</p>
             <div className="afeat" style={{ marginTop: 12 }}>

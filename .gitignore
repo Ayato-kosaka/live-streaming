@@ -66,3 +66,6 @@ tools/sprites/.perf/
 
 # 使い捨ての測定スクリプト。並列で作業していると溜まるので、追わない
 tools/sprites/_*
+
+# ビルドを1本ずつ回すための錠
+.buildlock

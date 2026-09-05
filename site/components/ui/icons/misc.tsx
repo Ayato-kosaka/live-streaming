@@ -124,4 +124,96 @@ export const misc: Record<string, Draw> = {
       <Gl c={c} cx={12} cy={14} rx={1.4} ry={6} r={0} o={0.4} />
     </>
   ),
+
+  /**
+   * おみやげ。紙で包んで紐をかけた小包。
+   * `gift`（リボンの箱＝もらうもの）と分けてある。おみやげは**持って帰るもの**で、
+   * しおりの「おみやげ20品」は値段と買う場所の話だから、箱ではなく荷にする。
+   */
+  souvenir: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={22} ry={3.4} />
+      <path d="M10 20h44a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z" fill={c.wol} />
+      <path d="M32 20h22a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H32z" fill={c.wo} />
+      {/* 包み紙の折り目。上の三角2枚で「包んである」と分かる */}
+      <path d="M6 24a4 4 0 0 1 4-4h22l-6 10H6z" fill={c.cr} />
+      <path d="M32 20h22a4 4 0 0 1 4 4v6H38z" fill={c.crd} />
+      {/* 紐。十字に回して、結び目を上に置く */}
+      <rect x="28.6" y="20" width="6.8" height="36" fill={c.rdd} />
+      <rect x="6" y="33" width="52" height="6" fill={c.rdd} />
+      <path d="M32 30c-4-6-11-5-11 0 0 3.4 4.6 4.6 11 4.6s11-1.2 11-4.6c0-5-7-6-11 0z" fill={c.rd} />
+      <circle cx="32" cy="33" r="3.4" fill={c.rdd} />
+      <Gl c={c} cx={16} cy={26} rx={5} ry={2} r={-8} o={0.45} />
+    </>
+  ),
+
+  /**
+   * やってはいけないこと。
+   *
+   * `alert`（気をつけて）と分ける。あちらは「起きるかもしれない」で、
+   * こちらは**「やるな」**。サウナの章や、しおりの禁止の段で使う。
+   * 中に何も描かないのは、禁じる中身が段ごとに違うから。輪と斜線だけで言い切る。
+   */
+  nogo: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <circle cx="32" cy="31" r="27" fill={c.rdd} />
+      <circle cx="32" cy="29.6" r="27" fill={c.rd} />
+      <circle cx="32" cy="29.6" r="18" fill={c.w} />
+      <path d="M18.4 17.6 46.6 42.6a18 18 0 0 1-28.2-25z" fill={c.rd} opacity={c.flat ? 1 : 0} />
+      <rect x="14" y="25.6" width="36" height="8" rx="4" fill={c.rdd} transform="rotate(-45 32 29.6)" />
+      <Gl c={c} cx={20} cy={17} rx={6} ry={3} r={-40} o={0.45} />
+    </>
+  ),
+
+  /**
+   * 電話。緊急番号の段に置く。
+   * 受話器の記号にすると、いまの人には「電話」に見えないので、**画面のある端末**にする。
+   * `laptop`（作るもの）とも `sim`（入れるもの）とも役目が違う。
+   */
+  phone: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={15} ry={3.4} />
+      <rect x="16" y="3" width="32" height="54" rx="7" fill={c.nv} />
+      <path d="M32 3h9a7 7 0 0 1 7 7v40a7 7 0 0 1-7 7h-9z" fill={c.bld} opacity={c.flat ? 1 : 0.45} />
+      <rect x="20" y="10" width="24" height="38" rx="3.4" fill={c.cr} />
+      <rect x="32" y="10" width="12" height="38" rx="3.4" fill={c.crd} opacity={c.flat ? 1 : 0.6} />
+      {/* 画面に出るのは緊急の呼び出し。赤い1本と、その下の短い行 */}
+      <rect x="24" y="16" width="16" height="7" rx="3.5" fill={c.rd} />
+      <g fill={c.crd}>
+        <rect x="24" y="28" width="16" height="3.4" rx="1.7" />
+        <rect x="24" y="35" width="11" height="3.4" rx="1.7" />
+      </g>
+      <rect x="27" y="50.6" width="10" height="3.4" rx="1.7" fill={c.gyd} />
+      <Gl c={c} cx={23} cy={12} rx={2.4} ry={5} r={12} o={0.4} />
+    </>
+  ),
+
+  /**
+   * 持ち物リスト。板ばさみに紙をはさんだもの。
+   * `note`（書きつけ）でも `recipe`（手順）でもなく、**あるか無いかを潰していく紙**。
+   * 印が付いた行と、まだ空いている行を両方描く。
+   */
+  checklist: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <rect x="9" y="6" width="46" height="51" rx="6" fill={c.wod} />
+      <rect x="13" y="12" width="38" height="41" rx="3.4" fill={c.w} />
+      <path d="M32 12h15a4 4 0 0 1 4 4v33a4 4 0 0 1-4 4H32z" fill={c.wd} opacity={c.flat ? 1 : 0.6} />
+      <rect x="24" y="2" width="16" height="9" rx="4.5" fill={c.gyd} />
+      <g fill={c.gr}>
+        <rect x="17" y="18" width="9" height="9" rx="3" />
+        <rect x="17" y="31" width="9" height="9" rx="3" />
+      </g>
+      <path d="M19 22.4 21.4 25l3.4-4" fill="none" stroke={c.w} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 35.4 21.4 38l3.4-4" fill="none" stroke={c.w} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="17" y="44" width="9" height="9" rx="3" fill={c.gy} />
+      <g fill={c.gyd}>
+        <rect x="29" y="21" width="18" height="3.4" rx="1.7" />
+        <rect x="29" y="34" width="18" height="3.4" rx="1.7" />
+        <rect x="29" y="47" width="13" height="3.4" rx="1.7" />
+      </g>
+      <Gl c={c} cx={17} cy={12} rx={4} ry={1.6} r={-6} o={0.4} />
+    </>
+  ),
 };

@@ -808,15 +808,18 @@ p.rtie {
     linear-gradient(var(--paper-mottle-b), var(--paper-mottle-a));
 }
 @media (min-width: 620px) { .gtoc { grid-template-columns: 1fr 1fr; } }
+/* 番号・絵・題の3列。絵は2行にまたがって、題と添え書きの両方を受ける。
+   絵を入れたぶん番号との間を詰めた（--sp-3 だと1行が 620px 未満で折れる）。 */
 .gtoc a {
   display: grid;
-  grid-template-columns: 30px 1fr;
+  grid-template-columns: 24px 24px 1fr;
   align-items: baseline;
-  gap: var(--sp-1) var(--sp-3);
+  gap: var(--sp-1) var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
   color: var(--ink);
   border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
+.gtoc a > .ic { grid-row: span 2; align-self: center; }
 .gtoc a:first-child { border-top: 0; }
 @media (min-width: 620px) { .gtoc a:nth-child(2) { border-top: 0; } }
 .gtoc a:hover { background: color-mix(in srgb, var(--marker) 55%, transparent); }
@@ -824,6 +827,7 @@ p.rtie {
    罫は線の色であって、字の色ではない（docs/island-world.md 3.2）。 */
 .gtoc-n {
   grid-row: span 2;
+  align-self: center;
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink-2);
@@ -1148,7 +1152,11 @@ svg.nmap {
    出すのは `is-now` が付いた1つだけ。 */
 .nmap .nm-here { display: none; }
 .nmap .nmap-pin.is-now .nm-here { display: inline; }
-.nmap .nm-here circle { stroke: var(--foam); stroke-width: 5; }
+/* 波を打たせない。SMIL の `<animate>` を街の数だけ置いていたが、SMIL は
+   1コマごとに SVG まるごとの焼き直しを起こす。しかも `display: none` の街の
+   ぶんも走るので、誰も触っていない6秒でこの面が 5,740ms の CPU を使っていた。
+   輪はここに残して、動かすのをやめる。「いま ここ」は金の札が言っている。 */
+.nmap .nm-here circle { stroke: var(--foam); stroke-width: 5; opacity: 0.7; }
 
 /* ゴール。いま居る街がゴールなら「いま ここ」が勝つ。札は1枚だけ。 */
 .nmap .nm-goal-halo {

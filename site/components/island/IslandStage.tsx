@@ -264,6 +264,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const barRef = useRef<HTMLDivElement>(null);
   /** 下のバーの背(px)。島をどれだけ上へ寄せるかの計算に使う */
   const barH = useRef(0);
+  /* 看板ロゴが画面のどこに居るか（ステージの左上を原点にした px）。
+     カメラがあやとを追う以上、島の札はいつかここへ入ってくる。
+     入ってきたら看板のほうが引く（下の `data-logo`）。 */
+  const logoBox = useRef<{ x: number; y: number; r: number; b: number } | null>(null);
+  /** いま看板を引かせているか。同じ値を書き続けて属性を触らないための控え */
+  const logoAway = useRef("");
 
   const [box, setBox] = useState({ w: 1440, h: 900 });
   /** 歩き方の案内。初めての人にだけ、数秒だけ出す。初期値は false（出さない側に倒す） */
@@ -526,18 +532,34 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
+    /* 看板ロゴの箱。**毎フレーム測らない。**
+       看板の入りの動き（logo-in）が終わるまでは小さく傾いた箱が返るので、
+       置き直しのついでと、動きが終わったあとの1回だけ測る。 */
+    const readLogo = () => {
+      const host = hostRef.current;
+      const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
+      if (!host || !logo) return;
+      const h = host.getBoundingClientRect();
+      const l = logo.getBoundingClientRect();
+      logoBox.current = l.width < 4 ? null : { x: l.left - h.left, y: l.top - h.top, r: l.right - h.left, b: l.bottom - h.top };
+    };
     const read = () => {
       const r = el.getBoundingClientRect();
       // 幅が分かった＝寄りの度合いが決まる。到着演出を飛ばす人は、ここで置き直す。
       // 仮の幅（PC）で作った引きの絵から ease で寄ると、いちばん重い絵を何十枚も描く。
       if (skipArrive.current) snapCam.current = true;
       barH.current = barRef.current?.offsetHeight ?? 0;
+      readLogo();
       setBox({ w: r.width, h: r.height });
     };
     const ro = new ResizeObserver(read);
     ro.observe(el);
     read();
-    return () => ro.disconnect();
+    const settle = window.setTimeout(readLogo, 900);
+    return () => {
+      window.clearTimeout(settle);
+      ro.disconnect();
+    };
   }, []);
 
   /* バーは「今日の島」が出てから背が決まる。カメラの寄せ量がそれを見ているので、
@@ -809,11 +831,26 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // カメラが止まっているあいだに書き直すと、6つぶんの計算し直しがただ増える。
       if (camMoved) {
         const k = b.w / vbW;
+        /* 札が看板ロゴの下へ入ったか。**入ったら看板のほうが引く。**
+           看板は一度読めば済む飾りで、札は今から歩いて行く先だから、
+           どちらか1枚しか読めないなら札を残す。
+           札の箱は測らずに見積もる。測ると毎フレーム layout を起こすし、
+           早めに引くぶんには困らない（半端に重なった絵がいちばん読めない）。 */
+        const lb = logoBox.current;
+        let under = false;
         for (let i = 0; i < DOORS.length; i++) {
           const el = markRefs.current[i];
           if (!el) continue;
           const sp = DOORS[i];
-          el.style.transform = `translate(${sx(sp.x).toFixed(1)}px, ${sy(sp.y).toFixed(1)}px)`;
+          const px = sx(sp.x);
+          const py = sy(sp.y);
+          el.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`;
+          if (lb && !under && (sp.sign || sp.id === lastOpen)) {
+            // 札は建物の頭の上に出る。横は中心から ±100、縦はそこから 60 上まで見る
+            const top = py - sp.size * k - 60;
+            const bottom = py - sp.size * k + 8;
+            under = px + 100 > lb.x && px - 100 < lb.r && bottom > lb.y && top < lb.b;
+          }
           // 絵の大きさは倍率で変わるので、測り直す。
           // 当たり判定は指で押せる最小(48px)まで広げるが、
           // 札の高さは絵の実寸を使う。最小に合わせると、引きで札が建物から浮いてしまう。
@@ -822,6 +859,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           el.style.setProperty("--hw", `${Math.max(TAP_MIN, artW).toFixed(1)}px`);
           el.style.setProperty("--hh", `${Math.max(TAP_MIN, artH).toFixed(1)}px`);
           el.style.setProperty("--mh", `${Math.max(12, artH).toFixed(1)}px`);
+        }
+        if (lb) {
+          const now = under ? "away" : "";
+          if (now !== logoAway.current) {
+            logoAway.current = now;
+            if (now) hostRef.current?.setAttribute("data-logo", now);
+            else hostRef.current?.removeAttribute("data-logo");
+          }
         }
       }
       if (best !== lastOpen) {

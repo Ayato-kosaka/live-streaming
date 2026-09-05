@@ -46,12 +46,9 @@ export default function LegendsPage() {
               <Tape>{top.title}</Tape>
             </div>
             <div className="zk-hero-art">
-              {/* 主役の絵だけ、高精細画面には長辺640pxのほうを配る */}
-              <img
-                src={`/sprites/${top.icon}.webp`}
-                srcSet={`/sprites/${top.icon}.webp 1x, /sprites/hero/${top.icon}.webp 2x`}
-                alt=""
-              />
+              {/* 主役の絵は、焼き直したほう（`sprites/hero/`）を直に指す。
+                  1x/2x で配ると、等倍の画面がここだけ小さいほうを選ぶ */}
+              <img src={`/sprites/hero/${top.icon}.webp`} alt="" />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />
@@ -84,17 +81,21 @@ export default function LegendsPage() {
         <Zone>
           {/* スマホ幅で「う」1文字だけが2行目に落ちていた。意味を落とさずに縮める */}
           <H art={<ArtMeeting size={32} />}>どうやって伝説になったんだろう</H>
+          {/* 2文目（「その場で笑って終わる日もあるし…」）は落とした。
+              例の2つで、企画がどこから来るかは言えている。
+              丘に立っているものより前に、読み物を3行置かない。 */}
           <p className="zk-lead">
             どれも最初は、週のはじめの企画会議で出た一言。「怖いイメージを変えたい」「イワシで3日いける」。
-            その場で笑って終わる日もあるし、そのまま来週の予定になる日もある。
           </p>
         </Zone>
 
+        {/* 読みかたの1行（「数字ひとつで…」）はここに置かない。
+            マスが絵を先に出すようになったので、絵と題名を見れば分かる。
+            読む前に読みかたを説明する行は、丘に立っているものより先に出る。 */}
         <Zone tight>
           <H art={<ArtMonument size={32} />} note={`配信 ${videos}本・${oldest.date.slice(0, 4)}年から`}>
             丘に立っているもの
           </H>
-          <p className="zk-lead">数字ひとつで、その日に何があったかだいたい分かる。</p>
         </Zone>
 
         <Zone flush>

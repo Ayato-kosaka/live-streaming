@@ -343,10 +343,14 @@ export default function RouteMapSvg({ here }: { here?: string }) {
             {/* いる場所が分かるのは画面が出たあとのこともあるので、
                 札は全部の街に置いて、出すかどうかは CSS に任せる。 */}
             <g className="nm-here">
-              <circle cx={c.x} cy={c.y} r={r + 14} fill="none">
-                <animate attributeName="r" values={`${r + 6};${r + 32}`} dur="2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.95;0" dur="2s" repeatCount="indefinite" />
-              </circle>
+              {/* 波を打たせない。SMIL の `<animate>` を22の街ぶん置いていたが、
+                  SMIL は1コマごとに SVG まるごとの焼き直しを起こす。
+                  `display: none` の街のぶんも走るので、**誰も触っていない6秒で
+                  この面は 5,740ms の CPU を使っていた**（1コマ 28.4ms、うち
+                  メインは 1.4ms でほぼ全部ラスタライズ）。
+                  街の名前の上には金色の「いま ここ」の札が既に出ているので、
+                  同じことを光る輪でもう一度言っている。輪は置いたまま止める。 */}
+              <circle cx={c.x} cy={c.y} r={r + 14} fill="none" />
               <g className="nm-chip is-here" transform={`translate(${c.x} ${c.y - r - 46})`}>
                 <rect x="-80" y="-25" width="160" height="50" rx="25" />
                 <text x="0" y="9" textAnchor="middle">

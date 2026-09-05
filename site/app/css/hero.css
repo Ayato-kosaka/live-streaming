@@ -63,6 +63,33 @@
    置くのをやめている。指す先が無い規則が残っていて、そのうち1つは
    字の下限（11.5px）を割った 11px だった。まとめて消す。 */
 
+/* ---- 札が下へ来たら、看板が引く --------------------------------------
+   カメラはあやとを追うので、**島の札はいつか必ずここへ入ってくる。**
+   PC で「これから」の札が看板の一言（世界のどこかから生配信）の上に
+   重なると、実測で札の 100% が看板の箱の中に入り、どちらも読めなくなる。
+
+   置き場所をずらしても直らない。逃がせる隅が空いていないし
+   （右上は「今日の島」の板、左下は「島をながめる」）、
+   そもそも島のどこにでも建物はあるので、避けた先にもいつかは来る。
+
+   なので**どちらが引くか**を決める。看板は一度読めば済む飾りで、
+   札はこれから歩いて行く先なので、**看板が引く。**
+   離れれば戻る。消えっぱなしにはしない。
+
+   引くのは看板だけで、うしろの空の暗がり（.hero-ui:before）は残す。
+   あれは島の上の字を読ませるためのもので、看板のためではない。
+
+   重なりの判定は IslandStage の rAF の中。data-logo="away" が付く。 */
+.stage[data-logo="away"] ~ .hero-ui .hero-logo {
+  opacity: 0;
+  /* 消えるのは急がない。歩いていて視界の隅がちらつくのがいちばん気になる */
+  transition: opacity 0.34s ease;
+}
+.hero-logo { transition: opacity 0.5s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-logo, .stage[data-logo="away"] ~ .hero-ui .hero-logo { transition: none; }
+}
+
 /* ヒーローの高さ: スマホは短くして下のセクションを覗かせる */
 .stage { height: 86svh; min-height: 520px; max-height: 780px; }
 @media (min-width: 640px) { .stage { height: 82svh; max-height: 820px; } }

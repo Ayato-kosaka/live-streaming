@@ -529,4 +529,203 @@ export const scene: Record<string, Draw> = {
       <Gl c={c} cx={16} cy={14} rx={3} ry={4.4} r={-22} o={0.5} />
     </>
   ),
+
+  /**
+   * 滝。北欧とバルトの道沿いにいちばんよくある「寄り道の理由」。
+   * `sea` と分けるために、水は横ではなく**縦の帯**で落とす。
+   */
+  waterfall: (c) => (
+    <>
+      <path d="M4 12h18v40H4z" fill={c.grd} />
+      <path d="M42 12h18v40H42z" fill={c.gr} />
+      <path d="M42 12h18v40H50z" fill={c.grd} />
+      {/* 落ちる水。上をすぼめて下を広げると、量があるように見える */}
+      <path d="M24 12h16l3 30H21z" fill={c.sk} />
+      <path d="M32 12h8l3 30H32z" fill={c.skd} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.7}>
+        <rect x="26.5" y="16" width="3" height="22" rx="1.5" />
+        <rect x="34" y="20" width="3" height="18" rx="1.5" />
+      </g>
+      {/* 落ち口の水たまり。ここを描かないと帯が宙で切れる */}
+      <ellipse cx="32" cy="45" rx="17" ry="6.4" fill={c.bl} />
+      <ellipse cx="32" cy="43.4" rx="17" ry="6.4" fill={c.sk} />
+      <ellipse cx="26" cy="42" rx="6" ry="2" fill={c.w} opacity={c.flat ? 1 : 0.55} />
+      <path d="M2 50h60v6a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill={c.bl} />
+      <Gl c={c} cx={12} cy={18} rx={4} ry={2} r={-14} o={0.35} />
+    </>
+  ),
+
+  /**
+   * 遺跡。折れた石柱。
+   * `museum`（そろった柱の建物）と見分けるために、**高さを3本ばらばら**にして
+   * 上に何も載せない。屋根が無いことが「遺跡」の合図になる。
+   */
+  ruins: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={26} ry={3.6} />
+      <path d="M6 48h52l2 6H4z" fill={c.crd} />
+      <g fill={c.cr}>
+        <path d="M11 14h11v34H11z" />
+        <path d="M27 24h11v24H27z" />
+        <path d="M43 9h11v39H43z" />
+      </g>
+      <g fill={c.crd}>
+        <path d="M17 14h5v34h-5z" />
+        <path d="M33 24h5v24h-5z" />
+        <path d="M49 9h5v39h-5z" />
+      </g>
+      {/* 折れ口。斜めに欠けさせると、切ったのではなく折れたことになる */}
+      <path d="M11 14h11l-3 3.4-4-2.4-4 2.6z" fill={c.wod} />
+      <path d="M27 24h11l-2.6 3-4.4-2-4 2.4z" fill={c.wod} />
+      <path d="M43 9h11l-3.4 3-3.6-2-4 2.4z" fill={c.wod} />
+      <path d="M8 44h48v4H8z" fill={c.crd} />
+      <ellipse cx="24" cy="50" rx="6" ry="2" fill={c.gr} opacity={c.flat ? 1 : 0.8} />
+      <Gl c={c} cx={14} cy={20} rx={2} ry={6} r={0} o={0.4} />
+    </>
+  ),
+
+  /**
+   * 広場。敷石と噴水。バルトの旧市街は、たいていここから歩き出す。
+   * `oldtown`（家並み）が「街の顔」なのに対して、こちらは**立つ場所**。
+   */
+  plaza: (c) => (
+    <>
+      <ellipse cx="32" cy="46" rx="30" ry="14" fill={c.crd} />
+      <ellipse cx="32" cy="44" rx="30" ry="14" fill={c.cr} />
+      <g fill={c.crd} opacity={c.flat ? 1 : 0.8}>
+        <path d="M4 44h56v1.8H4z" />
+        <path d="M18 33.6v20.8h1.8V33.6z" />
+        <path d="M44 33.6v20.8h1.8V33.6z" />
+      </g>
+      {/* 噴水。水は左右に開かせる。まっすぐ上へ伸ばすと柱に見える */}
+      <ellipse cx="32" cy="41" rx="15" ry="6.4" fill={c.skd} />
+      <ellipse cx="32" cy="39.6" rx="15" ry="6.4" fill={c.sk} />
+      <rect x="29" y="20" width="6" height="20" rx="3" fill={c.gy} />
+      <ellipse cx="32" cy="20" rx="9" ry="3.4" fill={c.gyd} />
+      <ellipse cx="32" cy="19" rx="9" ry="3.4" fill={c.gy} />
+      <g fill="none" stroke={c.sk} strokeWidth="3.4" strokeLinecap="round">
+        <path d="M25 18c-4 2-6 5-6.4 9" />
+        <path d="M39 18c4 2 6 5 6.4 9" />
+      </g>
+      <circle cx="32" cy="12" r="4.6" fill={c.sk} />
+      <Gl c={c} cx={28} cy={10} rx={1.8} ry={1.2} r={-20} o={0.6} />
+    </>
+  ),
+
+  /**
+   * 図書館。**建物ではなく棚**にした。
+   * 屋根の形で分ける決まりは建物どうしの話で、`museum` と `hotel` の間に
+   * もう1つ切妻を足しても 16px では見分けがつかない。中身のほうを描く。
+   */
+  library: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={24} ry={3.4} />
+      <rect x="6" y="6" width="52" height="48" rx="5" fill={c.wo} />
+      <rect x="10" y="10" width="44" height="18" rx="2.4" fill={c.wod} />
+      <rect x="10" y="32" width="44" height="18" rx="2.4" fill={c.wod} />
+      <g>
+        <rect x="13" y="12" width="7" height="14" rx="2" fill={c.rd} />
+        <rect x="21.5" y="13" width="6" height="13" rx="2" fill={c.gd} />
+        <rect x="29" y="12" width="7" height="14" rx="2" fill={c.tl} />
+        <rect x="37.5" y="14" width="6" height="12" rx="2" fill={c.pu} />
+        <rect x="45" y="12" width="6" height="14" rx="2" fill={c.grd} />
+        <rect x="13" y="35" width="6" height="13" rx="2" fill={c.bl} />
+        <rect x="20.5" y="34" width="7" height="14" rx="2" fill={c.or} />
+        <rect x="29" y="36" width="6" height="12" rx="2" fill={c.rdd} />
+        <rect x="36.5" y="34" width="7" height="14" rx="2" fill={c.tld} />
+        <rect x="45" y="35" width="6" height="13" rx="2" fill={c.gd} />
+      </g>
+      <rect x="10" y="26" width="44" height="4" rx="2" fill={c.wol} />
+      <rect x="10" y="48" width="44" height="4" rx="2" fill={c.wol} />
+      <Gl c={c} cx={14} cy={10} rx={5} ry={1.6} r={-4} o={0.4} />
+    </>
+  ),
+
+  /** 劇場。緞帳の切れ目から舞台が見えるところ。 */
+  theater: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.4} />
+      <rect x="4" y="10" width="56" height="44" rx="5" fill={c.nv} />
+      <path d="M22 26h20v28H22z" fill={c.gd} />
+      <path d="M32 26h10v28H32z" fill={c.gdd} />
+      <path d="M4 10h56v8H4z" fill={c.rdd} />
+      {/* 緞帳。左右で高さをずらすと、布が下りている途中に見える */}
+      <path d="M4 15h24c0 14-4 18-4 27v12H4z" fill={c.rd} />
+      <path d="M60 15H36c0 16 5 20 5 29v10h19z" fill={c.rd} />
+      <path d="M60 15H48c0 16 3 20 3 29v10h9z" fill={c.rdd} />
+      <path d="M4 15h9c0 14-2 18-2 27v12H4z" fill={c.rdd} />
+      <g fill={c.rdd} opacity={c.flat ? 1 : 0.55}>
+        <path d="M15 16c1 14-2 18-2 26v12h2V42c0-8 3-12 2-26z" />
+        <path d="M45 16c-1 14 2 18 2 26v12h-2V42c0-8-3-12-2-26z" />
+      </g>
+      <circle cx="32" cy="36" r="6" fill={c.yl} />
+      <Gl c={c} cx={12} cy={20} rx={2.4} ry={6} r={8} o={0.35} />
+    </>
+  ),
+
+  /**
+   * 空港。管制塔。
+   * `plane`（乗り物）は空にいるので、地上の「その場所」はこちらで言う。
+   */
+  airport: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={22} ry={3.4} />
+      <path d="M20 54 24 22h16l4 32z" fill={c.gy} />
+      <path d="M32 22h8l4 32H32z" fill={c.gyd} />
+      <path d="M16 12h32l3 8a3 3 0 0 1-3 3.6H16A3 3 0 0 1 13 20z" fill={c.w} />
+      <path d="M32 12h16l3 8a3 3 0 0 1-3 3.6H32z" fill={c.wd} />
+      <rect x="19" y="14" width="26" height="7" rx="2.6" fill={c.sk} />
+      <rect x="27" y="6" width="10" height="7" rx="3" fill={c.rd} />
+      <rect x="30.4" y="1" width="3.2" height="6" rx="1.6" fill={c.gyd} />
+      <rect x="12" y="52" width="40" height="5" rx="2.5" fill={c.gyd} />
+      {/* 電波は塔の外に短く2本。長くすると翼に見える */}
+      <g stroke={c.yl} strokeWidth="3.4" strokeLinecap="round" opacity={c.flat ? 1 : 0.9}>
+        <path d="M11 8 6 4" />
+        <path d="M53 8 58 4" />
+      </g>
+      <Gl c={c} cx={22} cy={17} rx={4} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /**
+   * トンネル。バルト三国の道より、ノルウェー側の峠で出てくる絵。
+   * `bridge` と対にして「山をどうやって越えたか」を言えるようにする。
+   */
+  tunnel: (c) => (
+    <>
+      <path d="M2 52V32C2 16 15 6 32 6s30 10 30 26v20z" fill={c.grd} />
+      <path d="M32 6c17 0 30 10 30 26v20H32z" fill={c.gr} opacity={c.flat ? 1 : 0.35} />
+      <path d="M12 52V34c0-12 9-19 20-19s20 7 20 19v18z" fill={c.gy} />
+      <path d="M17 52V35c0-9 6.6-15 15-15s15 6 15 15v17z" fill={c.nv} />
+      <path d="M32 20c8.4 0 15 6 15 15v17H32z" fill={c.bk} opacity={c.flat ? 1 : 0.35} />
+      {/* 中の道。奥へ細くする。ここが無いと、ただの黒い穴になる */}
+      <path d="M26 52h12l-3-14h-6z" fill={c.gyd} />
+      <g fill={c.yl}>
+        <rect x="30.6" y="40" width="2.8" height="4" rx="1.4" />
+        <rect x="30.4" y="47" width="3.2" height="5" rx="1.6" />
+      </g>
+      <rect x="2" y="52" width="60" height="6" rx="3" fill={c.wod} />
+      <Gl c={c} cx={16} cy={20} rx={3} ry={7} r={26} o={0.3} />
+    </>
+  ),
+
+  /**
+   * 展望台。有料の双眼鏡。
+   * 「そこから何が見えるか」を言う場所の印。`mountain` は山そのもの、こちらは**見る側**。
+   */
+  viewpoint: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.4} />
+      <path d="M22 56 30 34h6l8 22z" fill={c.gyd} />
+      <rect x="14" y="53" width="38" height="5" rx="2.5" fill={c.gy} />
+      <path d="M24 16h18a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6v-6a6 6 0 0 1 6-6z" fill={c.tl} />
+      <path d="M33 16h9a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6h-9z" fill={c.tld} />
+      <path d="M46 20h9a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-9z" fill={c.tld} />
+      <circle cx="18" cy="25" r="7" fill={c.gyd} />
+      <circle cx="18" cy="25" r="4.4" fill={c.sk} />
+      <circle cx="16.4" cy="23.4" r="1.6" fill={c.w} />
+      <rect x="27" y="34" width="10" height="5" rx="2.5" fill={c.gyd} />
+      <Gl c={c} cx={28} cy={20} rx={5} ry={1.6} r={-6} o={0.5} />
+    </>
+  ),
 };

@@ -10,9 +10,12 @@
 
    どちらにも共通する決まり:
      1. 角丸は部品の高さの 1/3。ただし大きな面は --r-3 で止める
-     2. 板の厚みは真下にまっすぐ。落ちる影は光の反対＝右下へずらす
-     3. ぼかした影を使わない。ぼかすぶん濃さで見せる
-     4. 押せるものだけに厚みがある。押すと厚みぶん沈む
+     2. 板の厚みは真下にまっすぐ、ぼかさない。
+        落ちる影は光の反対＝右下へずらして、3px ぼかす。
+        **どちらか片方だけ違えても足りない。** 一度 --shadow-1 が
+        「1px 3px 0」で、--pop-sm の「0 4px 0」と横1px・縦1pxしか
+        違わなかったことがある。厚みのある札に見える紙が 23枚あった
+     3. 押せるものだけに厚みがある。押すと厚みぶん沈む
    ========================================================= */
 
 /* このファイルの中だけで使う派生値。色・影・角丸は tokens.css のものを
@@ -248,7 +251,9 @@
 /* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
    紙の地の上に置く小さな札。落ちる影は右下の暖かい灰緑（tokens の決まり）。 */
 .crumbs {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1);
+  /* 隣り合う押しどころ（48px）がぶつからないだけの間を取る。
+     字の大きさは変えていない。 */
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2);
   width: fit-content; max-width: 100%;
   font-size: var(--fs-note); font-weight: 900;
   color: var(--ink-2);
@@ -265,11 +270,25 @@
    （docs/island-review-2.md 14章）。札を大きくすると前置きが伸びるので、
    当たりだけを字の外へ広げる。左右は区切りの「›」の幅ぶんまで。 */
 .crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
-.crumbs a::after { content: ""; position: absolute; inset: -12px -4px; }
+/* 押しどころ。「島」は字が 13x21px しかなく、指では押せない
+   （`docs/island-design.md` 3-2 の 48px を割る）。字の大きさは変えずに、
+   ここで当たり判定だけ広げる。縦は 48px、横は字の中心から最低 48px。
+   隣とぶつかるぶんは、あとから描かれる隣のほうが勝つので、
+   広げたせいで隣の押しどころを盗むことはない。 */
+.crumbs a::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: max(100%, 48px);
+  height: 48px;
+}
 .crumbs b { color: var(--ink); }
 /* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
    （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
-.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 1px; }
+/* 区切りの左右。1px だと段から外れているうえ、「島」の押しどころが
+   となりにぶつかって 48px を取れない（`.crumbs a::after`）。 */
+.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 var(--sp-1); }
 /* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
    朱の枠で言っているのと同じことしか言っていない。
    狭い画面で、同じ場所の名前を2回出すために 45px は使わない。
@@ -1087,7 +1106,12 @@ a.chip:active, button.chip:active, .chip.link:active {
   font-weight: 700;
   line-height: 1.75;
   color: var(--ink);
-  box-shadow: inset 0 0 0 4px var(--pg-rim), 0 5px 0 var(--frame-dark), var(--pg-drop-s);
+  /* カモメの吹き出しは押せない。5px の厚みを付けていたので、
+     紙の上でいちばん大きな「押せそうなもの」になっていた。
+     厚みは押せる合図1種類だけに使う（docs/island-world.md 3.4）。
+     クリームの面と二重枠は板のままでいい。板だから押せるのではなく、
+     板で厚みがあるから押せる。 */
+  box-shadow: inset 0 0 0 4px var(--pg-rim), var(--pg-drop-s);
 }
 .gsay-bubble::before,
 .gsay-bubble::after {

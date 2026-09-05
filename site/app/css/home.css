@@ -343,10 +343,23 @@
     0 1px 0 var(--frame-dark),
     0 4px 7px -5px rgba(70, 96, 74, 0.24);
 }
+/* 行き先の絵。棚の6マスは6つの入口で、**1マスずつ違う場所**へ行く。
+   数と名前だけだと、どのマスも同じ形の札に見える。右上に場所の絵を1つ置く。
+   数（左上）と行き先の丸（右下）が埋まっているので、空いているのはここだけ。 */
+.shelf-mark {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
 .shelf-n {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  /* 絵のぶん、数の行を右へ広げすぎない。単位が絵の下に潜るのを防ぐ */
+  padding-right: 34px;
 }
 .shelf-n em {
   font-style: normal;
