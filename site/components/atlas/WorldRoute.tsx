@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
 import { chrome, NOMINAL_W, overlap, placeCities, type Rect } from "./labels";
+import { clump, type Spot } from "./clump";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
@@ -103,6 +104,18 @@ const TRIP = [...COUNTRIES]
  * 見える程度の下限（幅 250）を置く。
  */
 const RATIO = W / H;
+
+/**
+ * 押しどころの一辺（px）。`atlas.css` の `.apin` と対になっている。
+ * 720px から上では CSS が 56px にするので、こちらも合わせる。
+ * **片方だけ動かさない。** たたむ判断がこの数で決まっている。
+ */
+const PIN_SM = 48;
+const PIN_LG = 56;
+/** 隣とのあいだに置く余白。0 だと箱が縁で触れて、境目の1pxが取り合いになる。 */
+const PIN_GAP = 2;
+/** まとまりの札の幅。「18カ国」が入る幅で、`atlas.css` の `.apin-many` と対。 */
+const GROUP_W = 56;
 const FIT: Record<string, number[]> = (() => {
   const out: Record<string, number[]> = {};
   const cities = MAP.cities as { country: string; x: number; y: number }[];
@@ -145,15 +158,106 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   const [pick, setPick] = useState<string | null>(null);
   /** 自動でたどっているか。押している間だけ、順に国が入れ替わる。 */
   const [walk, setWalk] = useState(false);
+  /**
+   * まとまりを押して寄った先の枠。章でも国でもない寄りかたなので、別に持つ。
+   * 章を選び直すか、国を開くと消える。
+   */
+  const [zoom, setZoom] = useState<number[] | null>(null);
   const chapters = MAP.chapters as Chapter[];
-  const box = (pick && FIT[pick]) || chapters[chap].box;
-  const wide = !pick && chap === 0;
+  const anchors = MAP.anchors as Record<string, { x: number; y: number; order: number; city: string }>;
+
+  /**
+   * ステージの実寸。
+   *
+   * **押しどころは px で決まる。** 地図をどれだけ寄せたかだけでは決まらず、
+   * 同じ寄せぐあいでもスマホと PC ではピンの離れかたが違う。
+   * だから枠を測ってから、たたむかどうかを決める。
+   * 測る前（サーバーで書き出したぶん）は、スマホの見当で置いておく。
+   */
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stage, setStage] = useState({ w: 340, h: 340 / RATIO, pin: PIN_SM });
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const read = () =>
+      setStage({
+        w: el.clientWidth || 340,
+        h: el.clientHeight || (el.clientWidth || 340) / RATIO,
+        pin: window.innerWidth >= 720 ? PIN_LG : PIN_SM,
+      });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /**
+   * ある枠で寄せたときに、ピンがどう並ぶか。
+   *
+   * 枠の外にはみ出したピンは返さない。ステージは `overflow: hidden` なので、
+   * 縁にかかったピンは**見えている場所しか押せない**。トルコが 48x35、
+   * アラブ首長国連邦が 48x47 だったのがこれ。半分を確保できないものは、
+   * 的として置かない（章の札と下の年表から行ける）。
+   */
+  const marksFor = useMemo(
+    () => (bx: number[]) => {
+      const kk = W / bx[2];
+      const half = stage.pin / 2;
+      const spots: Spot[] = [];
+      for (const [slug, a] of Object.entries(anchors)) {
+        const sx = ((a.x * kk - bx[0] * kk) / W) * stage.w;
+        const sy = ((a.y * kk - bx[1] * kk) / H) * stage.h;
+        // 枠の外に出た国は、的として置かない（章の札と下の年表から行ける）
+        if (sx < 0 || sx > stage.w || sy < 0 || sy > stage.h) continue;
+        const cx = Math.min(Math.max(sx, half), stage.w - half);
+        const cy = Math.min(Math.max(sy, half), stage.h - half);
+        spots.push({ slug, order: a.order, x: a.x, y: a.y, sx: cx, sy: cy, ox: sx - cx, oy: sy - cy });
+      }
+      return clump(spots, Math.max(stage.pin, GROUP_W) + PIN_GAP, stage.pin + PIN_GAP);
+    },
+    [anchors, stage],
+  );
+
+  /**
+   * いまの枠。
+   *
+   * 国を開いたときは、その国のピンが**1つで立っている**ところまで寄せる。
+   * まとまりに呑まれたままだと、下の札はオーストリアを開いているのに
+   * 地図の上にオーストリアが無い、という食い違いが起きる。
+   * 寄せ直しが要るのはオーストリアとスロバキアだけ（隣が 15 しか離れていない）。
+   */
+  const box = useMemo(() => {
+    if (zoom) return zoom;
+    if (!pick || !FIT[pick]) return chapters[chap].box;
+    let b = FIT[pick];
+    const a = anchors[pick];
+    for (let i = 0; i < 10; i++) {
+      const g = marksFor(b).find((m) => m.members.some((v) => v.slug === pick));
+      if (g && g.members.length === 1) break;
+      // 開いた国を真ん中に置いたまま、枠だけ縮める
+      const w = b[2] * 0.6;
+      const h = b[3] * 0.6;
+      b = [Math.max(0, Math.min(W - w, a.x - w / 2)), Math.max(0, Math.min(H - h, a.y - h / 2)), w, h];
+    }
+    return b;
+  }, [zoom, pick, chap, chapters, anchors, marksFor]);
+
+  const wide = !pick && !zoom && chap === 0;
   const at = pick ? TRIP.findIndex((c) => c.slug === pick) : -1;
   const open = at >= 0 ? TRIP[at] : null;
+
+  /** いま画面に出ている的。1つなら国のピン、2つ以上ならまとまり。 */
+  const marks = useMemo(() => marksFor(box), [marksFor, box]);
+  /** 1つで立っている国。名札を出していいのはこれだけ。 */
+  const alone = useMemo(
+    () => new Set(marks.filter((m) => m.members.length === 1).map((m) => m.members[0].slug)),
+    [marks],
+  );
 
   /** 何カ国目へ行くか。端で止める（環にしない。旅は一方通行なので）。 */
   const goTo = (n: number) => {
     const i = Math.max(0, Math.min(TRIP.length - 1, n));
+    setZoom(null);
     setPick(TRIP[i].slug);
   };
 
@@ -174,6 +278,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   /** たどりの入り／切り。開いていないときは1カ国目から、最後まで来ていたら頭から。 */
   const play = () => {
     if (walk) { setWalk(false); return; }
+    setZoom(null);
     if (at < 0 || at >= TRIP.length - 1) setPick(TRIP[0].slug);
     setWalk(true);
   };
@@ -181,7 +286,37 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   /** 人が押したときは、たどりを止めてその国を開く。 */
   const onPick = (slug: string) => {
     setWalk(false);
+    setZoom(null);
     setPick((cur) => (cur === slug ? null : slug));
+  };
+
+  /**
+   * まとまりを押したとき。中の国がぜんぶ入る枠まで寄せる。
+   *
+   * 寄せると離れるので、たいていは1回で1つずつのピンになる。
+   * 9カ国ぶんのように広いまとまりは、寄せた先でもう一度たたまれる。
+   * そこをもう一度押せばよい（地図のふつうのふるまい）。
+   * 下限を 60 にしてあるのは、2カ国が 15 しか離れていないときに
+   * 際限なく寄って、何が写っているのか分からなくなるのを止めるため。
+   */
+  const zoomTo = (ms: { x: number; y: number }[]) => {
+    setWalk(false);
+    setPick(null);
+    const xs = ms.map((m) => m.x);
+    const ys = ms.map((m) => m.y);
+    let w = Math.max(60, (Math.max(...xs) - Math.min(...xs)) * 1.7);
+    let h = Math.max(60 / RATIO, (Math.max(...ys) - Math.min(...ys)) * 1.7);
+    if (w / h < RATIO) w = h * RATIO;
+    else h = w / RATIO;
+    if (w > W) { w = W; h = H; }
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    setZoom([
+      Math.max(0, Math.min(W - w, cx - w / 2)),
+      Math.max(0, Math.min(H - h, cy - h / 2)),
+      w,
+      h,
+    ]);
   };
 
   const { k, z, tx, ty, peaks } = useMemo(() => {
@@ -198,7 +333,6 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
   });
 
   const name = Object.fromEntries(COUNTRIES.map((c) => [c.slug, c.name]));
-  const anchors = MAP.anchors as Record<string, { x: number; y: number; order: number; city: string }>;
   const cities = MAP.cities as City[];
 
   // 章の中に入っている街だけ名前を出す。外の街まで出すと、地図の縁に
@@ -246,9 +380,11 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     // 世界ぜんぶを1枚に収めた面では、18カ国ぶんの名札を置く余地が無い。
     // 名前を出すのは「いまここ」の1つだけにする
     // （docs/island-design.md 3章「注目させるのは一度に1つ」）。
+    // まとまりに入っている国の名前は出さない。まとまりの中の1つだけに
+    // 名前が付くと、その札がどのピンの名前なのか分からなくなる。
     const named = wide
-      ? pins.filter((v) => v.slug === here)
-      : pins.filter((v) => inBox(v.a.x, v.a.y));
+      ? pins.filter((v) => v.slug === here && alone.has(v.slug))
+      : pins.filter((v) => alone.has(v.slug) && inBox(v.a.x, v.a.y));
 
     const country: Record<string, { dx: number; dy: number; hide: boolean }> = {};
     {
@@ -295,7 +431,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       { w: SW, h: SH },
     );
     return { country, city };
-  }, [box, k, tx, ty, wide, here]);
+  }, [box, k, tx, ty, wide, here, alone]);
 
   // 縮尺。寄せると 1000km の棒が地図からはみ出すので、
   // 地図の幅の2割ぐらいに収まる「1・2・5 の切りのいい距離」を選び直す。
@@ -314,12 +450,13 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
             key={c.id}
             type="button"
             role="tab"
-            aria-selected={!pick && i === chap}
-            className={`amap-tab${!pick && i === chap ? " is-on" : ""}`}
+            aria-selected={!pick && !zoom && i === chap}
+            className={`amap-tab${!pick && !zoom && i === chap ? " is-on" : ""}`}
             onClick={() => {
-              // 章を選び直したら、開いていた国は閉じる。
+              // 章を選び直したら、開いていた国とまとまりへの寄りは閉じる。
               // 開いたまま章だけ変わると、札と地図が別の国を指す
               setPick(null);
+              setZoom(null);
               setWalk(false);
               setChap(i);
             }}
@@ -330,7 +467,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       </div>
 
       <div className="amap">
-        <div className="amap-stage">
+        <div className="amap-stage" ref={stageRef}>
           <svg className="amap-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="パリからジョージアまで、これまでに歩いた17カ国の地図">
             <defs>
               <linearGradient id="amSea" x1="0" y1="0" x2="0" y2="1">
@@ -462,32 +599,58 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
                 <b>{c.name}</b>
               </span>
             ))}
-            {Object.entries(anchors).map(([slug, a]) => (
-              <button
-                key={slug}
-                type="button"
-                aria-pressed={slug === pick}
-                aria-label={`${name[slug]}を地図で開く`}
-                onClick={() => onPick(slug)}
-                className={`apin${slug === here ? " is-here" : ""}${
-                  slug === pick ? " is-open" : ""
-                }${labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""}`}
-                style={pos(a.x, a.y)}
-              >
-                <span className="apin-dot">
-                  <span>{a.order}</span>
-                </span>
-                <span
-                  className="apin-name"
-                  style={{
-                    ["--apin-dx" as string]: `${labels.country[slug]?.dx ?? 0}px`,
-                    ["--apin-dy" as string]: `${labels.country[slug]?.dy ?? 0}px`,
-                  }}
+            {marks.map((g) => {
+              if (g.members.length === 1) {
+                const { slug, order, ox, oy } = g.members[0];
+                return (
+                  <button
+                    key={slug}
+                    type="button"
+                    aria-pressed={slug === pick}
+                    aria-label={`${name[slug]}を地図で開く`}
+                    onClick={() => onPick(slug)}
+                    className={`apin${slug === here ? " is-here" : ""}${
+                      slug === pick ? " is-open" : ""
+                    }${labels.country[slug] && !labels.country[slug].hide ? " is-named" : ""}`}
+                    style={{
+                      left: `${(g.sx / stage.w) * 100}%`,
+                      top: `${(g.sy / stage.h) * 100}%`,
+                      ["--apin-ox" as string]: `${ox}px`,
+                      ["--apin-oy" as string]: `${oy}px`,
+                    }}
+                  >
+                    <span className="apin-dot">
+                      <span>{order}</span>
+                    </span>
+                    <span
+                      className="apin-name"
+                      style={{
+                        ["--apin-dx" as string]: `${labels.country[slug]?.dx ?? 0}px`,
+                        ["--apin-dy" as string]: `${labels.country[slug]?.dy ?? 0}px`,
+                      }}
+                    >
+                      {name[slug]}
+                    </span>
+                  </button>
+                );
+              }
+              // まとまり。何カ国ぶんかを書く。番号を書くと、ピンの通し番号と
+              // 見分けが付かない（「9」が9カ国なのか9カ国目なのか分からない）。
+              const holds = g.members.some((m) => m.slug === here);
+              return (
+                <button
+                  key={`g${g.members.map((m) => m.slug).join("-")}`}
+                  type="button"
+                  aria-label={`${g.members.map((m) => name[m.slug]).join("、")}に寄る`}
+                  onClick={() => zoomTo(g.members)}
+                  className={`apin is-group${holds ? " is-here is-named" : ""}`}
+                  style={{ left: `${(g.sx / stage.w) * 100}%`, top: `${(g.sy / stage.h) * 100}%` }}
                 >
-                  {name[slug]}
-                </span>
-              </button>
-            ))}
+                  <span className="apin-many">{g.members.length}カ国</span>
+                  {holds && <span className="apin-name">{name[here]}</span>}
+                </button>
+              );
+            })}
           </div>
 
           {/* 方位。北がどちらかを言わない地図は、地図の顔をしていない */}
@@ -597,7 +760,8 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
           </article>
         ) : (
           <p className="atrace-hint">
-            ピンを押すと、その国が開きます。18カ国ぶん、通った街とその国からの配信が出ます。
+            ピンを押すと、その国が開きます。近くに集まっている国は「◯カ国」の札に
+            まとまっていて、押すとそこへ寄ります。18カ国ぶん、通った街とその国からの配信が出ます。
           </p>
         )}
       </div>

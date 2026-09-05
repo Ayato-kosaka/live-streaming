@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CHAIN, chapterDays, FUND_GOAL_YEN, NEXT_CHAPTER, NOW_CHAPTER, type Chapter } from "@/content/chapters";
+import {
+  CHAIN,
+  chapterDays,
+  chapterNow,
+  FUND_GOAL_YEN,
+  NEXT_CHAPTER,
+  NOW_CHAPTER,
+  type Chapter,
+} from "@/content/chapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { useFund } from "@/components/nordic/fund";
 import Icon from "@/components/ui/IconCore";
@@ -36,9 +44,14 @@ export default function Chain() {
   // 半径は日数の平方根なので数日ぶんの差は絵に出ない
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => setToday(new Date()), []);
+  /* **「いまここ」も日付で決まる。**
+     焼いた `NOW_CHAPTER` のままだと、北欧に出発しても誰かがビルドし直すまで
+     コーカサスに「いまここ」が付いたままになる。まず焼いた答えで描いて、
+     画面が出たら今日の答えに置き換える（日数と同じやりかた）。 */
+  const nowCh = today ? chapterNow(today) : NOW_CHAPTER;
   const fund = useFund();
   const pct = fund ? Math.min(100, Math.round((fund.total / FUND_GOAL_YEN) * 100)) : 0;
-  const { sail, boat, seaRef, artRef } = useSail();
+  const { sail, boat, seaRef, artRef } = useSail(nowCh);
 
   return (
     <ol className="chain" ref={seaRef}>
@@ -46,7 +59,7 @@ export default function Chain() {
       {CHAIN.map((c) => {
         const days = chapterDays(c, today ?? undefined);
         const branch = Boolean(c.branchOf);
-        const now = !c.to && !c.branchOf && c.from;
+        const now = c.slug === nowCh.slug;
         const next = c === NEXT_CHAPTER;
         const st = CHAPTER_STATS[c.slug];
         return (
@@ -60,7 +73,7 @@ export default function Chain() {
             {branch && <span className="chain-fork" aria-hidden />}
             <Link
               className="chain-isle"
-              href={chapterHref(c)}
+              href={chapterHref(c, nowCh)}
               prefetch={false}
               onClick={(e) => sail(e, c)}
             >
@@ -171,7 +184,7 @@ const ym = (d: string) => {
 /** 船が渡りきるまで。長いと待たされ、短いと何が起きたか分からない */
 const SAIL_MS = 760;
 
-function useSail() {
+function useSail(nowCh: Chapter) {
   const router = useRouter();
   const seaRef = useRef<HTMLOListElement>(null);
   const arts = useRef<Record<string, HTMLSpanElement | null>>({});
@@ -190,11 +203,11 @@ function useSail() {
       // 別のタブで開こうとしている人の邪魔をしない
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       if (trip) return; // もう船は出ている。2回目は素通し
-      if (c === NOW_CHAPTER) return; // いまいる島へは渡らない
+      if (c.slug === nowCh.slug) return; // いまいる島へは渡らない
       if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
       const sea = seaRef.current;
-      const from = arts.current[NOW_CHAPTER.slug];
+      const from = arts.current[nowCh.slug];
       const to = arts.current[c.slug];
       if (!sea || !from || !to) return;
 
@@ -210,9 +223,9 @@ function useSail() {
       // 次のフレームで行き先を書くと、そこまで transition が効く。
       // 同じフレームで書くと、ブラウザは差を見ないので瞬間移動になる
       requestAnimationFrame(() => requestAnimationFrame(() => setMoved(true)));
-      window.setTimeout(() => router.push(chapterHref(c)), SAIL_MS);
+      window.setTimeout(() => router.push(chapterHref(c, nowCh)), SAIL_MS);
     },
-    [router, trip],
+    [router, trip, nowCh],
   );
 
   const boat = trip ? (

@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import { Fig } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
+import Ask from "@/components/live/Ask";
 
 export const metadata: Metadata = {
   title: "伝説の企画",
@@ -21,6 +22,19 @@ export default function LegendsPage() {
   const oldest = [...LEGENDS].sort((a, b) => (a.date < b.date ? -1 : 1))[0];
   /** 「この12日間を読む」の12日。字で埋め込むと、いちばんの1つが入れ替わったとき嘘になる。 */
   const topDays = top.facts?.find((f) => f.unit?.includes("日"));
+
+  /**
+   * もう一度やれるもの。
+   *
+   * 「ショート動画100万再生」と「登録1000人」は、やり直せる企画ではなく
+   * 通り過ぎた出来事なので、選択肢に入れない。押しても叶わないものを混ぜると、
+   * 押した先に現実が無くなる。
+   *
+   * 札の字は `content/legends.ts` から取る。ここで書き写すと、
+   * 題名が変わったときにこちらだけ古い字が残る。
+   */
+  const AGAIN = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia", "kazbegi", "iwashi-festival"];
+  const again = AGAIN.map((slug) => LEGENDS.find((l) => l.slug === slug)).filter((l) => !!l);
 
   return (
     <PageShell crumbs={[{ label: "伝説の企画" }]}>
@@ -119,6 +133,30 @@ export default function LegendsPage() {
           </div>
         </Zone>
 
+        {/* 丘に来た人ができることが「読む」しかなかった。
+            伝説は週のはじめの企画会議から生まれる、と面の上のほうに書いてあるのに、
+            この面から会議へ渡せるものが1つも無かった（掲示板への送りはあるが、
+            そこでは200字を書かされる）。**書かずに1つ選べる段**をここに作る
+            （`docs/island-play.md` 7章の、押すと書くのあいだの断層）。
+
+            この問いはこの面にしか置けない。丘に何が立っているかを持っているのが
+            この面だけで、選択肢がそのまま丘の札になっているから。 */}
+        <Zone tight>
+          <H art={<ArtMedal size={32} />}>もう一度やるなら</H>
+          <p className="zk-lead">
+            どれも1回きりで終わった企画。同じことをもう一度やるとしたら、どれがいい?
+          </p>
+          <Ask
+            id="legends-again"
+            q="もう一度やるなら、どれ?"
+            options={again.map((l) => ({ id: l.slug, label: l.title }))}
+            after={
+              <>
+                ここに無い案は、<Link href="/board">掲示板</Link>に書けます。
+              </>
+            }
+          />
+        </Zone>
       </Sheet>
 
       <div className="tiles">

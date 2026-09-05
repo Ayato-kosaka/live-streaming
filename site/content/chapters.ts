@@ -28,6 +28,14 @@ export type Chapter = {
   /** 島の性格。1行で。連なりの画面に出る */
   note: string;
   /**
+   * まだ始まっていない章が、いつから「いまいる島」になるか（ISO の日時）。
+   *
+   * **`from` は事実の欄で、ここは予定の欄。** 出発してみたら1日ずれた、
+   * ということが起きるので、実際に始まったら `from` に日付を入れて
+   * ここは消す。両方あるときは `from` が勝つ。
+   */
+  opensAt?: string;
+  /**
    * まだ始まっていない章の、予定の日数。
    *
    * 島の大きさは日数から出す決まりなので（`docs/island-atlas.md` 3章）、
@@ -81,6 +89,11 @@ export const CHAPTERS: Chapter[] = [
     to: "",
     countries: [],
     note: "次の島。まだ建っていない",
+    // 出発の日時。**`content/nordic.ts` の DEPART と同じ値**（ジョージア時間 23:30）。
+    // あちらを読みに行かないのは、`chapters.ts` は島の連なりの画面（クライアント）が
+    // 読むもので、そこに旅程の表ぜんぶ（500行＋JSON 6本）を連れてきてしまうから。
+    // **DEPART を動かしたら、ここも動かす。**
+    opensAt: "2026-09-11T23:30:00+04:00",
     // アウシュビッツ（クラクフ泊）→ ワルシャワ → ビャウィストク → ビリニュス →
     // リガ、タリン、ヘルシンキ経由でストックホルムまで7日。雨とヒッチハイクのために
     // 2日ぶんの余裕を持たせて9日（2026-09-05 に本人が日を言い切った）。
@@ -88,18 +101,63 @@ export const CHAPTERS: Chapter[] = [
   },
 ];
 
-/** いまいる島。`to` が空で、枝ではないもの */
-export const NOW_CHAPTER = CHAPTERS.find((c) => !c.to && !c.branchOf && c.from)!;
+/**
+ * いまいる島。**日付から決まる。**
+ *
+ * 前はここが `to` の空欄を見て決めていた。それだと北欧に出発しても、
+ * 誰かが `chapters.ts` を書きかえるまで島が入れ替わらない。
+ * 旅は日付で進むので、**判定も日付でやる。**
+ *
+ * 出発の日を過ぎた章があれば、そのいちばん新しいものが「いまいる島」。
+ * どれも過ぎていなければ、始まっていて終わっていない章。
+ *
+ * **画面が出てから呼ぶこと。** 静的書き出し（`output: "export"`）なので、
+ * 引数を省いて焼き込むと、ビルドした日の答えがそのまま HTML に入る
+ * （`CLAUDE.md` の「静的書き出し」）。焼くのは `NOW_CHAPTER` 1つだけにして、
+ * 画面では必ず `chapterNow(new Date())` で引き直す。
+ */
+export function chapterNow(now: Date = new Date()): Chapter {
+  const t = now.getTime();
+  const began = (c: Chapter): number => {
+    // 事実（from）が入っていればそちら。まだなら予定（opensAt）
+    if (c.from) return Date.parse(`${c.from}T00:00:00+09:00`);
+    return c.opensAt ? Date.parse(c.opensAt) : Number.POSITIVE_INFINITY;
+  };
+  const open = CHAPTERS.filter((c) => !c.branchOf && began(c) <= t)
+    // 終わった章は、いまいる島ではない
+    .filter((c) => !c.to || Date.parse(`${c.to}T23:59:59+09:00`) >= t)
+    .sort((a, b) => began(b) - began(a));
+  return open[0] ?? CHAPTERS.find((c) => !c.to && !c.branchOf && c.from)!;
+}
+
+/**
+ * ビルドしたときの「いまいる島」。
+ *
+ * **画面の出しわけにこれを使わない。** 静的書き出しに焼かれた答えなので、
+ * 出発の日をまたいでも変わらない。`chapterNow(new Date())` を呼ぶこと。
+ * ここが要るのは、まだ画面が出ていないところ（生成する面の一覧など）だけ。
+ */
+export const NOW_CHAPTER = chapterNow();
 
 /** 次の島。まだ始まっていないもの */
 export const NEXT_CHAPTER = CHAPTERS.find((c) => !c.from)!;
 
-/** 日数。いまも続いている章は「今日まで」で数える。画面が出てから数え直す */
+/**
+ * 日数。いまも続いている章は「今日まで」で数える。画面が出てから数え直す。
+ *
+ * 始まっていない章は見立ての日数（`plannedDays`）。**出発の日を過ぎたら、
+ * `from` がまだ空でも実際に数えはじめる。** そうしないと、旅に出た当日から
+ * 誰かが `from` を書き入れるまで、島が「9日の予定」のまま止まる。
+ */
 export function chapterDays(c: Chapter, today = new Date()): number {
-  if (!c.from) return c.plannedDays ?? 0;
-  const end = c.to ? new Date(`${c.to}T00:00:00+09:00`) : today;
-  const ms = end.getTime() - new Date(`${c.from}T00:00:00+09:00`).getTime();
-  return Math.max(1, Math.round(ms / 86_400_000) + 1);
+  const from = c.from
+    ? Date.parse(`${c.from}T00:00:00+09:00`)
+    : c.opensAt
+      ? Date.parse(c.opensAt)
+      : NaN;
+  if (!Number.isFinite(from) || from > today.getTime()) return c.plannedDays ?? 0;
+  const end = c.to ? Date.parse(`${c.to}T00:00:00+09:00`) : today.getTime();
+  return Math.max(1, Math.round((end - from) / 86_400_000) + 1);
 }
 
 /**

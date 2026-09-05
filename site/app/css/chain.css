@@ -454,3 +454,559 @@
   font-weight: 800;
   color: var(--ink-2);
 }
+
+/* =========================================================
+   歩ける島（`components/isle/`）
+   ---------------------------------------------------------
+   過去の島と次の島は、絵ではなく**歩ける島**になった
+   （`docs/island-atlas.md` 10章の宿題が "する" に決まった）。
+
+   **`app/css/island.css` は触っていない。** あちらはいまの島（トップ）のもので、
+   同時に別の担当が直している。名前空間を `.isle-*` に分けて、
+   共通のもの（`.sway` `.ayato` とスプライト）だけを借りている。
+
+   色は `tokens.css` の変数から取る。だから島に `[data-theme]` を付けるだけで、
+   中東の島は乾いた土に、北欧の島は寒い緑になる。
+   **章に色を割りあてているのではない**（`docs/island-world.md` 3.1）。
+   変わるのは土地の色。
+   ========================================================= */
+
+.isle {
+  position: relative;
+  width: 100%;
+  height: 86svh;
+  min-height: 520px;
+  max-height: 780px;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  background: var(--sea-deep);
+}
+@media (min-width: 640px) { .isle { height: 82svh; max-height: 820px; } }
+@media (min-width: 1024px) { .isle { height: min(86svh, 840px); max-height: 840px; } }
+
+/* 島の絵は、画面より各辺 --scene-pad だけ大きく取る。
+   **`viewBox` を書き換えず、`transform` でずらす**ため（`IsleStage.tsx` の anchor）。
+   `will-change` は `<svg>` そのものにだけ付ける。中の要素に付けると逆に遅くなる。 */
+/* 時間帯の色。**島も海も同じだけ染まる。**
+   これが無いと、夕方の紫の海に昼の島が浮かんでいることになる（撮って見つけた）。
+   仕掛けは `tokens.css` の `.stage::before/::after` と同じもの。
+   昼は2枚とも透明なので、層ごと外す——中身が透明でも、mix-blend-mode を持つ層は
+   画面ぜんぶを合成し直す（`island.css` の同じ注）。 */
+.isle::before,
+.isle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 1.2s ease;
+}
+.isle::before { background: var(--tint, transparent); mix-blend-mode: multiply; }
+.isle::after { background: var(--glow, transparent); mix-blend-mode: screen; }
+:root[data-time="day"] .isle::before,
+:root[data-time="day"] .isle::after,
+:root:not([data-time]) .isle::before,
+:root:not([data-time]) .isle::after { content: none; }
+
+/* 島の下ふち。海をページの地へ溶かして、切り口が出ないようにする */
+.isle-shore {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+  background-image: var(--page-bg);
+  background-size: 100% 4000px;
+  background-position: left top;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+}
+
+.isle-svg {
+  position: absolute;
+  /* `island.css` が :root に置いている値と同じもの。あちらを触らないので、
+     読めなかったときのために既定値も書いてある。**`IsleStage.tsx` の
+     SCENE_PAD と必ず同じ値にする** */
+  left: calc(var(--scene-pad, 140px) * -1);
+  top: calc(var(--scene-pad, 140px) * -1);
+  width: calc(100% + var(--scene-pad, 140px) * 2);
+  height: calc(100% + var(--scene-pad, 140px) * 2);
+  display: block;
+  will-change: transform;
+}
+/* 画面の外に出た島は動かさない。**消すのではなく止める**（戻れば続きから） */
+.isle.is-away * { animation-play-state: paused; }
+
+/* --- 地面 --- */
+.ig-sea { fill: var(--foam); }
+.ig-shelf { fill: var(--sea-shelf); opacity: 0.75; }
+.ig-shallow { fill: var(--sea-shallow); opacity: 0.72; }
+.ig-foam { fill: var(--foam); opacity: 0.72; }
+.ig-sand { fill: var(--sand); }
+.ig-wet { fill: var(--sand-wet); }
+.ig-grass { fill: var(--grass); }
+.ig-grass2 { fill: var(--grass2); opacity: 0.36; }
+.ig-grass-tex { opacity: 0.5; }
+.ig-blade { stroke: var(--grass-hi); stroke-width: 1.6; stroke-linecap: round; fill: none; }
+/* 道。土の帯を2本重ねる（外は踏み広げたところ、内は踏み固めたところ）。
+   輪郭線は引かない（`docs/island-design.md` 2章の1） */
+.ig-trail {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sand-wet) 58%, #9c7038 42%);
+  stroke-width: 22;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+.ig-trail-in {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sand) 62%, #b78c4e 38%);
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+/* 土のしみ。一面の緑にわずかな土色が混じるだけで、地面が「ただの塗り」でなくなる */
+.ig-soil { fill: color-mix(in srgb, var(--sand-wet) 42%, var(--grass-lo) 58%); opacity: 0.34; }
+
+/* --- 地面の細かい飾り（`components/isle/deco.ts`）---
+   色は島のテーマ変数に付いていくので、北欧へ行っても中東へ行っても浮かない */
+.id-shade { fill: #0c0e34; }
+.id-rock { fill: #b2a894; }
+.id-rock-lit { fill: #d6cab4; }
+.id-bush { fill: color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%); }
+.id-bush-hi { fill: var(--grass-hi); opacity: 0.7; }
+.id-tuft { fill: color-mix(in srgb, var(--grass-hi) 82%, var(--grass) 18%); }
+.id-stump { fill: #cc995c; }
+.id-stump-top { fill: #f2ddb8; }
+.id-cap { fill: #d65158; }
+.ig-fl-shade { fill: #0c0e34; opacity: 0.16; }
+.ig-fl-core { fill: #ffd93f; }
+
+/* 夜の灯り。**昼は層ごと外す。**
+   mix-blend-mode を持つ層は、中身が透明でも画面ぜんぶを合成し直す */
+.isle-lamps { display: none; }
+[data-time="night"] .isle-lamps {
+  position: absolute;
+  left: calc(var(--scene-pad, 140px) * -1);
+  top: calc(var(--scene-pad, 140px) * -1);
+  width: calc(100% + var(--scene-pad, 140px) * 2);
+  height: calc(100% + var(--scene-pad, 140px) * 2);
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  /* いまの島の灯りより控えめ。あちらは島がいつも寄りで映るが、
+     こちらは小さい島だと1画面に灯りが5つ入る */
+  opacity: 0.6;
+  will-change: transform;
+}
+/* 建設中（`docs/island-atlas.md` 5章）。進捗バーではなく、景色そのものが育つ */
+.ig-plot { fill: rgba(90, 62, 26, 0.16); stroke: #8a6432; stroke-width: 2; stroke-dasharray: 9 7; }
+.ig-stake { stroke: #8a6432; stroke-width: 3; stroke-linecap: round; }
+.ig-rebar { stroke: #b0763a; stroke-width: 3; stroke-linecap: round; }
+.ig-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 2; }
+.ig-roof { fill: #d0553f; stroke: #9c3628; stroke-width: 2; stroke-linejoin: round; }
+
+/* --- 建物の札 ---
+   合図は厚み1種類だけ（`docs/island-world.md` 3.4）。
+   光らせない。きらめかせない。色を変えない。 */
+.isle-labels { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.isle-labels.is-cast { z-index: 2; }
+.isle-spot { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.isle-spot.is-on { will-change: transform; }
+
+/* 建物の絵にぴったり重なる、透明な押しどころ。
+   絵が小さくても、指で押せる大きさ（48px）まで広げてある */
+.isle-hit {
+  position: absolute;
+  left: calc(var(--hw, 48px) / -2);
+  top: calc(var(--hh, 48px) * -1);
+  width: var(--hw, 48px);
+  height: var(--hh, 48px);
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 14px;
+}
+.isle :focus-visible { outline-color: #fffdf6; }
+.isle-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* 札の入れ物。建物が画面の外に出たときだけ、ここに translate が入って縁へ寄る。
+   **建物の当たり（.isle-hit）はこの中に入れない。** 一緒に動くと、
+   絵の無いところが押せることになる */
+.isle-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+
+/* 札。建物の頭の上に、杭を打って立っている。
+   板の厚みはぼかさない下向きの影で作る。ぼかすと紙に見えて、木の板に見えない */
+.isle-mark {
+  position: absolute;
+  left: 50%;
+  /* 建物の頭の上。**48px より低いところに置かない。**
+     札の見えない当たり（::before の 48px）が下へはみ出して、
+     建物そのものの当たり（48px）の上 9px を食っていた（実測 50x39）。
+     絵の小さい建物（船着き場）でこれが起きる */
+  bottom: calc(max(var(--mh, 48px), 46px) + 12px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(74vw, 300px);
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #fff8e4 0%, #f6e6c2 100%);
+  color: var(--ink);
+  box-shadow: 0 4px 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+/* 閉じている札は 30px しかない。絵は小さいままでよいが、押せるものである以上
+   指の当たりは 48px 要る（`docs/island-design.md` 3-2）。見えない当たりを外へ広げる */
+.isle-mark::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 48px);
+  height: max(100%, 48px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+}
+/* 札を留めている杭。**押しどころにはしない。**
+   札の下 13px へ伸びるので、そのままだと建物の当たりの上端を食う
+   （実測で船着き場の 48px が 46px になっていた） */
+.isle-mark::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  width: 9px;
+  height: 14px;
+  margin-left: -4.5px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #b98b52 0%, #d9a869 45%, #a97c46 100%);
+}
+/* 縁へ寄せた札は、杭を「建物はそっち」を指す矢に持ち替える */
+.isle-spot[data-edge] .isle-mark::after {
+  width: 0;
+  height: 0;
+  margin: 0;
+  border-radius: 0;
+  background: none;
+  border: 7px solid transparent;
+}
+.isle-spot[data-edge="d"] .isle-mark::after { left: 50%; bottom: -14px; margin-left: -7px; border-top-color: #d9a869; }
+.isle-spot[data-edge="u"] .isle-mark::after { left: 50%; top: -14px; bottom: auto; margin-left: -7px; border-bottom-color: #d9a869; }
+.isle-spot[data-edge="l"] .isle-mark::after { left: -14px; top: 50%; bottom: auto; margin-top: -7px; border-right-color: #d9a869; }
+.isle-spot[data-edge="r"] .isle-mark::after { left: auto; right: -14px; top: 50%; bottom: auto; margin-top: -7px; border-left-color: #d9a869; }
+
+.isle-text { display: grid; gap: 1px; line-height: 1.2; min-width: 0; }
+.isle-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言と「みる」は近づいてから。遠くの6枚が3行ずつ出ていると、島が字で埋まる */
+.isle-spot:not(.is-on) .isle-text i,
+.isle-spot:not(.is-on) .isle-go { display: none; }
+/* 看板を出さない建物は、近づくまで札ごと出さない */
+.isle-spot:not(.is-sign):not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
+.isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
+.isle-spot.is-on .isle-text b { font-size: 14.5px; }
+.isle-text i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #6b5a3e;
+  white-space: normal;
+}
+/* 「みる」も押せる板にする。文字だけだと、看板の飾りに見える */
+.isle-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  /* **桃色（--accent）から始めない。** 白い字が 2.58 : 1 しかない。
+     いまの島の `.spot-go` と同じ濃さにして 5.41〜7.56 : 1。
+     字を明るくするのではなく板を濃くする、が島の決まり（`island-world.md` 3.4）。 */
+  background: linear-gradient(#9c580f, #7d450c);
+  color: var(--paper, #fffdf6);
+  font-size: 11.5px;
+  font-weight: 900;
+  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+/* 出発までの日数。札の右肩に貼ったシール */
+.isle-badge {
+  position: absolute;
+  /* **板の外（真上）へ出す。** 板の中に食い込ませると、札の名前の
+     後ろ半分が隠れる（「この旅のこと」が「この旅の」になっていた） */
+  top: -21px;
+  right: -6px;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 999px;
+  /* ここも同じ。桃色のままだと白い字が 2.90 : 1。濃いほうから始めて 5.89〜8.72 : 1
+     （色みはいまの島の `.spot-badge` と揃えてある） */
+  background: linear-gradient(#c4123f, #96072e);
+  color: var(--paper, #fffdf6);
+  border: 2.5px solid var(--paper, #fffdf6);
+  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32);
+  transform: rotate(-7deg);
+}
+/* 近づいた建物は、ふわっと弾ませる（`docs/island-design.md` 3-5 反応を返す） */
+.isle-art.is-on { animation: isleBob 1.6s ease-in-out infinite; }
+@keyframes isleBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) { .isle-art.is-on { animation: none; } }
+
+/* --- 住人 --- */
+.isle-who { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.isle-who-hit {
+  position: absolute;
+  left: calc(var(--ws, 48px) / -2);
+  top: calc(var(--ws, 48px) * -1);
+  width: var(--ws, 48px);
+  height: var(--ws, 48px);
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.isle-who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* --- 吹き出し --- */
+/* いまの島の `.talkbox`（`island.css`）と同じ置き場・同じ形にする。
+   同じ役目のものが面ごとに違う顔をしているのがいちばん困る
+   （`docs/island-world.md` 7.3）。
+   **押せない。** どこを押しても閉じるので、当たりは島のほうが受ける */
+.isle-talk {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: calc(14px + env(safe-area-inset-top));
+  z-index: 8;
+  padding: 17px 20px 26px;
+  /* 上下左右で丸みを変える。均一な角丸だと「入力欄」に見える */
+  border-radius: 30px 36px 28px 34px / 34px 28px 36px 30px;
+  background:
+    radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(var(--paper) 0 58%, var(--paper-2));
+  box-shadow: 0 3px 0 rgba(154, 101, 50, 0.18), 6px 14px 26px var(--cast-far, rgba(78, 96, 72, 0.34));
+  pointer-events: none;
+}
+.isle-talk p { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.8; letter-spacing: 0.02em; color: var(--ink); }
+.isle-talk-tap {
+  position: absolute;
+  right: 14px;
+  bottom: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #7a6a4c;
+}
+/* 話しているあいだと、建物の中を開いているあいだは、島の上の札を引っ込める。
+   **注目させるのは一度に1つ**（`docs/island-design.md` 3-4）。
+   暗幕ごしの札は 4.38 : 1 まで落ちていて（実測）、読めないものが並んでいるだけになる */
+.isle.is-talking .isle-mark,
+.isle.is-sheet .isle-mark,
+.isle.is-sheet .isle-sign { opacity: 0; transition: opacity 0.18s; }
+.isle.is-talking .isle-hit,
+.isle.is-talking .isle-who-hit { pointer-events: none; }
+@media (min-width: 640px) {
+  .isle-talk { left: auto; right: 20px; width: min(460px, 46vw); }
+}
+
+/* --- 建物の中（やぐら）---
+   島の上に開く板。紙にしない（`docs/island-world.md` 1.5） */
+.isle-sheet-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(12, 40, 34, 0.42);
+}
+@media (min-width: 640px) { .isle-sheet-wrap { align-items: center; } }
+.isle-sheet {
+  width: min(520px, 100%);
+  max-height: min(74%, 560px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fffdf6 0%, #fbf3dd 100%);
+  /* **厚みは付けない。** これは押すものではなく、開いた中身の入れ物。
+     厚み＝押せる、と決めてある（`docs/island-world.md` 3.4） */
+  box-shadow: 4px 14px 26px rgba(20, 50, 40, 0.34);
+  animation: isleSheetIn 0.22s ease-out both;
+}
+@keyframes isleSheetIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .isle-sheet { animation: none; } }
+.isle-sheet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.isle-sheet-head img { width: 44px; height: 44px; object-fit: contain; flex: none; }
+.isle-sheet-head span { flex: 1; min-width: 0; }
+.isle-sheet-head b { display: block; font-size: 16px; font-weight: 900; color: var(--ink); }
+.isle-sheet-head i {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.isle-sheet-x {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--ink);
+  background: #f0e5c8;
+  box-shadow: 0 3px 0 #d3c09a;
+}
+.isle-sheet-x:active { transform: translateY(2px); box-shadow: 0 1px 0 #d3c09a; }
+
+/* 数の並び。**一面ぜんぶ押せるマスの並びではない**ので、厚みは付けない
+   （`docs/island-world.md` 3.4。押せないものは完全に平ら） */
+.isle-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.isle-facts li { padding: 9px 10px; border-radius: 12px; background: rgba(214, 196, 152, 0.28); }
+.isle-facts b { display: block; font-size: 21px; font-weight: 900; line-height: 1.1; color: var(--ink); }
+.isle-facts b span { font-size: 12.5px; margin-left: 2px; }
+.isle-facts i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+
+.isle-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.isle-list a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  background: #fffdf6;
+  box-shadow: 0 3px 0 #ddcda6;
+  color: var(--ink);
+}
+.isle-list a:active { transform: translateY(2px); box-shadow: 0 1px 0 #ddcda6; }
+.isle-list a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+.isle-list img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.isle-list span { flex: 1; min-width: 0; }
+.isle-list b { display: block; font-size: 13.5px; font-weight: 900; line-height: 1.35; }
+.isle-list i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.isle-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: linear-gradient(#9c580f, #7d450c);
+  color: var(--paper, #fffdf6);
+  box-shadow: 0 4px 0 rgba(76, 48, 20, 0.55);
+}
+.isle-more span { flex: 1; min-width: 0; }
+.isle-more b { display: block; font-size: 14px; font-weight: 900; }
+.isle-more i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.9; }
+.isle-more:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+
+/* --- 島の隅の道具 --- */
+.isle-sign {
+  position: absolute;
+  margin: 0;
+  left: 14px;
+  top: calc(12px + env(safe-area-inset-top));
+  /* **札より下に置く。** 札はここを避けて動くが（IsleStage の uiBoxes）、
+     避けきれなかったときに勝つのは札のほう。名前は一度読めば済む飾りで、
+     札はこれから歩いて行く先（いまの島の看板ロゴと同じ決め方）。
+     上に置いていたときは、札の字が暗幕に半分隠れて 1.81 : 1 になっていた */
+  z-index: 2;
+  max-width: min(56vw, 320px);
+  padding: 8px 13px;
+  border-radius: 14px;
+  background: rgba(56, 44, 34, 0.72);
+  color: #fffdf6;
+  pointer-events: none;
+}
+.isle-sign b { display: block; font-size: 15px; font-weight: 900; letter-spacing: 0.02em; }
+.isle-sign i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.92; line-height: 1.45; }
+
+.isle-view,
+.isle-atlas {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: #fffdf6;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #cbbb96;
+}
+.isle-view { right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+.isle-atlas { right: 12px; top: calc(12px + env(safe-area-inset-top)); }
+.isle-view:active,
+.isle-atlas:active { transform: translateY(2px); box-shadow: 0 2px 0 #cbbb96; }
+.isle-view:focus-visible,
+.isle-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+.isle-hint {
+  position: absolute;
+  left: 14px;
+  top: calc(74px + env(safe-area-inset-top));
+  z-index: 5;
+  margin: 0;
+  max-width: min(70vw, 340px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(56, 44, 34, 0.78);
+  border: 2px solid rgba(255, 253, 246, 0.2);
+  color: #fffdf6;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.5;
+  pointer-events: none;
+  animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.7s both;
+}
+@media (prefers-reduced-motion: reduce) { .isle-hint { animation: none; } }
+
+/* 島の下に続く紙。トップと同じ形（島が板、その下が紙） */
+.isle-page { padding-top: 10px; }
+.isle-lead {
+  margin: 6px 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
