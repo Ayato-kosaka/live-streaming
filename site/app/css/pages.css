@@ -182,8 +182,9 @@
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--frame) 52%, var(--paper)) 0%,
     var(--frame) 100%);
+  /* 厚みは「38px の札なら4px」の段（island-design 3章）。 */
   box-shadow:
-    0 3px 0 var(--frame-deep),
+    0 4px 0 var(--frame-deep),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
   white-space: nowrap;
   overflow: hidden;
@@ -199,17 +200,17 @@
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   color: var(--ink);
   box-shadow:
-    0 3px 0 var(--frame-deep),
+    0 4px 0 var(--frame-deep),
     inset 0 0 0 2px var(--gold),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 /* 沈む量と厚みの減る量を揃える。ずれると札の下の辺が動いて見える。 */
 .ih-link:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
 }
 .ih-link.is-on:active {
-  box-shadow: 0 1px 0 var(--frame-deep), inset 0 0 0 2px var(--gold), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 0 0 2px var(--gold), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
@@ -804,14 +805,15 @@ a.chip, button.chip, .chip.link {
   min-height: 48px;
   font-size: 13px;
   color: var(--ink);
+  /* 厚みは「48px のボタンなら6px」の段（island-design 3章）。 */
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+    0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 /* 沈む量と厚みの減る量を揃える。ずれると板の下の辺が動いて見える。 */
 a.chip:active, button.chip:active, .chip.link:active {
-  transform: translateY(4px);
+  transform: translateY(6px);
   box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 /* .dark は「海の上に載る白抜きの札」だった。地が生成りになって役目が消えている。
