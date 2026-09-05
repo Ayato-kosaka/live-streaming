@@ -33,6 +33,32 @@
 }
 @media (min-width: 720px) { .page { padding: 26px 24px 96px; } }
 
+/* パネルの裏の海。
+   ここが一色べたのままだと、窓と窓のあいだが「何も無い場所」になって、
+   紙が宙に浮いて見える。任天堂の平らな絵は、近い2色のゆるい帯と
+   細かい粒でできている（/tmp/acref/ref_Beach_Card_NH.png）。
+   スクロールしても動かさない。動かすと帯が毎フレーム描き直しになる。 */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 1.2px, transparent 1.7px),
+    radial-gradient(ellipse 150% 26% at 50% -6%,
+      rgba(255, 255, 255, 0.16) 0%, transparent 72%),
+    radial-gradient(ellipse 130% 21% at 18% 33%,
+      color-mix(in srgb, var(--sea-mid) 34%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 140% 23% at 80% 68%,
+      color-mix(in srgb, var(--sea-mid) 26%, transparent) 0%, transparent 72%),
+    radial-gradient(ellipse 170% 34% at 50% 108%,
+      color-mix(in srgb, var(--sea-deep) 72%, var(--ink)) 0%, transparent 76%);
+  background-size: 52px 52px, 78px 78px, auto, auto, auto, auto;
+  background-position: 0 0, 21px 27px, 0 0, 0 0, 0 0, 0 0;
+}
+
 /* 木の看板ヘッダー。
    板は1枚の平らな木ではなく、上が明るく下が暗い「厚みのある板」に見せる。
    下の縁を濃い色で切ると、そこが板の切り口になる。 */
@@ -118,8 +144,11 @@
   padding: 7px 13px;
   min-height: 40px;
   border-radius: 999px;
-  background: rgba(255, 250, 235, 0.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: rgba(92, 48, 12, 0.26);
+  box-shadow:
+    inset 0 2px 2px rgba(72, 36, 6, 0.4),
+    inset 0 -1.5px 0 rgba(255, 245, 220, 0.3);
+  text-shadow: 0 1px 0 rgba(72, 36, 6, 0.55);
   white-space: nowrap;
   transition: transform 0.12s ease;
 }
@@ -170,8 +199,13 @@
   letter-spacing: var(--ls-head);
   line-height: 1.3;
   color: #fffdf6;
-  /* ぼかした影は文字の面積ぶんだけ塗り直しが重い。板の影（ぼかさない）だけで立体は伝わる */
-  text-shadow: 0 4px 0 var(--frame-dark), 0 7px 1px rgba(8, 46, 62, 0.34);
+  /* 白い字のまわりを濃い茶で1周する。縁取りがあるぶん字面が大きく見えて、
+     海の上でも字が沈まない。ぼかした影は文字の面積ぶん塗り直しが重いので、
+     ぼかさない影だけで作る。 */
+  text-shadow:
+    2px 0 0 var(--frame-deep), -2px 0 0 var(--frame-deep),
+    0 2px 0 var(--frame-deep), 0 -2px 0 var(--frame-deep),
+    0 6px 0 var(--frame-dark), 0 9px 1px rgba(8, 46, 62, 0.36);
 }
 .phead-lead {
   margin: 12px auto 0; max-width: 40em;
@@ -240,8 +274,9 @@
 
 :root {
   /* 紙の型の実測値（いきもの図鑑の面）。tokens の砂とクリームから作る。 */
-  --pg-sheet: color-mix(in srgb, var(--sand) 46%, var(--paper-2));   /* 紙の地 */
-  --pg-sheet-lo: color-mix(in srgb, var(--sand) 64%, var(--paper-2));
+  --pg-sheet: color-mix(in srgb, var(--sand) 34%, var(--paper-2));   /* 紙の地 */
+  --pg-sheet-lo: color-mix(in srgb,
+    color-mix(in srgb, var(--sand) 54%, var(--paper-2)) 96%, var(--ink-3));
   --pg-rule: color-mix(in srgb, var(--ink-3) 62%, var(--sand-edge)); /* 区切りの罫線。黒は使わない */
   --pg-mark: color-mix(in srgb, var(--gold) 46%, var(--grass2-hi));  /* 見出しに敷く蛍光ペン */
   /* 選んでいるものの枠だけ、実測のオレンジ赤をそのまま使う。
@@ -323,14 +358,16 @@
 /* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする */
 .panel:has(> .notes),
 .panel:has(> .ideas),
+.panel:has(> .bin),
+.panel:has(> .brow),
 .panel:has(.noteform) {
   --pg-ground:
-    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--frame-deep) 20%, transparent) 0 2px, transparent 3px),
-    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--frame-deep) 16%, transparent) 0 2px, transparent 3px),
-    radial-gradient(circle at 44% 84%, color-mix(in srgb, var(--frame-deep) 13%, transparent) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--cliff-line) 26%, transparent) 0 2.4px, transparent 3.4px),
+    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--cliff-line) 22%, transparent) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 84%, color-mix(in srgb, var(--cliff-line) 18%, transparent) 0 1.6px, transparent 2.6px),
     linear-gradient(180deg,
-      color-mix(in srgb, var(--frame) 30%, var(--paper-2)) 0%,
-      color-mix(in srgb, var(--frame) 42%, var(--paper-2)) 100%);
+      color-mix(in srgb, var(--cliff) 58%, var(--paper-2)) 0%,
+      color-mix(in srgb, var(--cliff-lo) 56%, var(--paper-2)) 100%);
   background-size: 84px 84px, 112px 112px, 63px 63px, auto;
   border-color: var(--frame-dark);
   --pg-edge: var(--frame-deep);
@@ -404,6 +441,12 @@
   padding: 0 4px 1px;
 }
 
+/* コルクの上は地が濃い。添え書きの色をそのまま置くと読めないので、
+   本文と同じ濃さまで戻す。 */
+.panel:is(:has(> .notes), :has(> .ideas), :has(> .bin), :has(> .brow)) :is(.muted, p) {
+  color: var(--ink);
+}
+
 /* --- 見出し -------------------------------------------------------------
    板の型では「窓の上ぶちにはめた木の札」。
    幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
@@ -415,14 +458,14 @@
   width: fit-content;
   max-width: 100%;
   margin: 0 0 14px;
-  padding: 9px 20px 10px 13px;
-  font-size: clamp(17.5px, 4.5vw, 23px);
+  padding: 8px 15px 9px 11px;
+  font-size: clamp(17px, 4.4vw, 23px);
   font-weight: 900;
   letter-spacing: var(--ls-head);
   line-height: 1.4;
   /* 長い見出しが「たまっ／たか」のように1文字だけ折り返すのを防ぐ */
   text-wrap: balance;
-  display: flex; align-items: center; gap: 11px;
+  display: flex; align-items: center; gap: 8px;
   border-radius: 999px;
   border: var(--bw-2) solid color-mix(in srgb, var(--frame) 84%, var(--frame-deep));
   background: linear-gradient(180deg,
@@ -451,7 +494,7 @@
 .panel > .bhead > h2::after {
   content: "";
   flex: none;
-  width: 8px; height: 8px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--frame-deep) 62%, var(--frame));
   box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -488,7 +531,7 @@
   background: color-mix(in srgb, var(--grass-lo) 74%, var(--leaf-c));
 }
 /* コルクの面の札は、板に打ちつけた札。留め具を画鋲の色にする。 */
-.panel:has(> .notes) > h2, .panel:has(> .ideas) > h2,
+.panel:has(> .notes) > h2, .panel:has(> .ideas) > h2, .panel:has(> .bin) > h2,
 .panel:has(> .notes) > .bhead > h2, .panel:has(> .ideas) > .bhead > h2 {
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--frame) 40%, var(--paper)) 0%,
@@ -497,6 +540,7 @@
 }
 .panel:has(> .notes) > h2::before, .panel:has(> .notes) > h2::after,
 .panel:has(> .ideas) > h2::before, .panel:has(> .ideas) > h2::after,
+.panel:has(> .bin) > h2::before, .panel:has(> .bin) > h2::after,
 .panel:has(> .notes) > .bhead > h2::before, .panel:has(> .notes) > .bhead > h2::after,
 .panel:has(> .ideas) > .bhead > h2::before, .panel:has(> .ideas) > .bhead > h2::after {
   background: var(--accent);
