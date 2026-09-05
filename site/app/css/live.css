@@ -272,7 +272,9 @@
 
 /* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
 .nx-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
-.nx-seeds > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-3); align-self: center; }
+/* 「書き出しを選ぶ」。--ink-3 は紙の上で 4.25 : 1 しか無く、読ませる字には使わない
+   決まりになっている（`docs/island-review-3.md` 6.2 a）。--ink-2 で 5.6 : 1。 */
+.nx-seeds > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); align-self: center; }
 /* 押すと書き出しが本文に入る札。破線は「厚み1種類」に無い3つ目の合図なので
    やめて、押せるチップの型（板・厚み4px・48px）にそろえる。 */
 .nx-seed {
