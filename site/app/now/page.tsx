@@ -49,7 +49,7 @@ export default function NowPage() {
       <PageHead
         icon="globe-stand"
         title="いまどこ"
-        lead="いまどこにいて、今週なにをするか。配信のある日は、22時までの残りもここに出る。"
+        lead="いまいる国と、今週やること。配信のある日は、22時までの残りもここに出る。"
       />
       <NowLive letter>
         <NowCountry />

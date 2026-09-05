@@ -55,7 +55,7 @@ export default function KitchenPage() {
       <PageHead
         icon="hut-kitchen"
         title="作った料理"
-        lead={`作ってきた料理のスタンプ帳。${RECIPES.length}品を、${byCountry.size}カ国の宿のキッチンで。`}
+        lead={`スタンプ帳になっています。${RECIPES.length}品を、${byCountry.size}カ国の宿のキッチンで。`}
         say={GUIDE.kitchen}
       />
 
