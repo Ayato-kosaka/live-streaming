@@ -1090,7 +1090,12 @@ a.chip:active, button.chip:active, .chip.link:active {
   font-weight: 700;
   line-height: 1.75;
   color: var(--ink);
-  box-shadow: inset 0 0 0 4px var(--pg-rim), 0 5px 0 var(--frame-dark), var(--pg-drop-s);
+  /* カモメの吹き出しは押せない。5px の厚みを付けていたので、
+     紙の上でいちばん大きな「押せそうなもの」になっていた。
+     厚みは押せる合図1種類だけに使う（docs/island-world.md 3.4）。
+     クリームの面と二重枠は板のままでいい。板だから押せるのではなく、
+     板で厚みがあるから押せる。 */
+  box-shadow: inset 0 0 0 4px var(--pg-rim), var(--pg-drop-s);
 }
 .gsay-bubble::before,
 .gsay-bubble::after {
