@@ -7,6 +7,7 @@ import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity } from "@/content/cityStreams";
+import { countryStat } from "@/content/countryStats";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
@@ -56,7 +57,15 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const next = ordered[idx + 1];
   const cooked = RECIPES.filter((r) => r.country === c.slug);
   const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
-  const lives = towns.reduce((n, t) => n + streamsOfCity(c.slug, t).length, 0);
+  /**
+   * その国での数（`content/countryStats.ts`）。
+   *
+   * 前は `cityStreams` の本数を足していたが、あれは**街ごとの代表**なので
+   * ジョージアが「ここからの配信 6本」と出ていた。実物は 378本。
+   * いちばん長くいた国を、6日いた国と同じ大きさに見せていた。
+   */
+  const stat = countryStat(c.slug);
+  const lives = stat?.lives ?? towns.reduce((n, t) => n + streamsOfCity(c.slug, t).length, 0);
   // まだ出国していない国は、書き出した日で数字が止まる。画面が出てから数え直す。
   const staying = c.stays.find((s) => !s.to);
   const days = closedDays(c.stays);
@@ -122,11 +131,44 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
             <span>回った街</span>
           </div>
           <div>
-            <b>{lives}</b>
+            <b>{lives.toLocaleString()}</b>
             <span>ここからの配信</span>
           </div>
+          {/* のべではなく、その国にいたあいだに来ていた人。同じ人を何日ぶんも数えない
+              （`.claude/skills/monthly-review/SKILL.md` 3章）。個人別は出さない。 */}
+          {!!stat?.people && (
+            <div>
+              <b>{stat.people.toLocaleString()}</b>
+              <span>来ていた人</span>
+            </div>
+          )}
+          {!!stat?.msgs && (
+            <div>
+              <b>{stat.msgs.toLocaleString()}</b>
+              <span>飛んだコメント</span>
+            </div>
+          )}
         </div>
       </Panel>
+
+      {/* この国でいちばん人が集まった日。「盛り上がったところ」は数えれば分かる事実なので、
+          こちらで選ばずに数から出す（`content/countryStats.ts`）。 */}
+      {stat && (
+        <Panel>
+          <h2>この国で、いちばん人が集まった日</h2>
+          <p className="muted">
+            {c.name}にいた{stat.days}日のうち、いちばんチャットに人がいたのがこの回。
+          </p>
+          <div className="scards" style={{ marginTop: "var(--sp-3)" }}>
+            <StreamCard
+              videoId={stat.top[1]}
+              title={stat.top[2]}
+              date={stat.top[0]}
+              tag={`${stat.top[3]}人`}
+            />
+          </div>
+        </Panel>
+      )}
 
       <Panel>
         <h2>行った街</h2>
