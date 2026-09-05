@@ -496,18 +496,19 @@
 /* ベルを置くときは、札の中の短い金の棒を消す。合図が2つになるため */
 .nextup-eyebrow.has-bell { padding-left: 7px; gap: 6px; }
 .nextup-eyebrow.has-bell::before { display: none; }
+/* 件数。赤にしない。赤い丸は札の角の「新しいことがある」の印だけに使う */
 .nextup-n {
   display: grid;
   place-items: center;
-  min-width: 20px;
   height: 20px;
   margin-left: 2px;
-  padding: 0 6px;
+  padding: 0 8px;
   border-radius: 999px;
-  background: #e04a68;
-  color: #fffdf6;
+  background: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: var(--ink);
   font-style: normal;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0;
 }
