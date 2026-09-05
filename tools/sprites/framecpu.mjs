@@ -34,6 +34,7 @@
  *   SPORT=4120 CSS='.sway{animation:none}' node framecpu.mjs     # CSS を足して比べる
  *   SPORT=4120 REPEAT=3 node framecpu.mjs                        # 回数（既定2）
  *   SPORT=4120 WIDE=1 node framecpu.mjs                          # PC 幅(1440×900)で
+ *   SPORT=4120 WIDE=1 DSF=1 node framecpu.mjs                    # 同じ幅で、描く画素だけ 1/4 に
  *   SPORT=4120 LOOK=1 node framecpu.mjs                          # 「島をながめる」の引きで
  */
 import { chromium } from "playwright-core";
@@ -47,6 +48,13 @@ const REPEAT = Number(process.env.REPEAT || 2);
 const THROTTLE = Number(process.env.THROTTLE || 0);
 const CSS = process.env.CSS || "";
 const WIDE = process.env.WIDE === "1";
+/**
+ * 画面1pxを何画素で描くか。既定は PC 2・スマホ 3（実機に合わせた値）。
+ * ここを動かすと、**幅はそのままで描く画素数だけ**が変わる。
+ * 「PC が遅いのは余計なことをしているからか、単に画素が多いからか」は
+ * これを 1 にして測ると分かれる。
+ */
+const DSF = Number(process.env.DSF || 0);
 /** 「島をながめる」を押してから測る。引きの絵の重さを見るとき */
 const LOOK = process.env.LOOK === "1";
 
@@ -56,8 +64,8 @@ const b = await chromium.launch({
 });
 const ctx = await b.newContext(
   WIDE
-    ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
-    : { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
+    ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: DSF || 2 }
+    : { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: DSF || 3 },
 );
 // 住人の絵は本番と同じものを1人ずつ返す（`python3 avatars.py` で落としたもの）。
 // 全員を同じ絵にすると、画像の解読とラスタが1枚ぶんで済んでしまって数字が嘘になる
@@ -161,10 +169,15 @@ const med = (k) => {
 };
 const all = (k, d = 1) => runs.map((r) => r[k].toFixed(d)).join(" / ");
 
-console.log(`■ ${PAGE}  ${WIDE ? "1440×900" : "390×844"}  CPU${THROTTLE ? `${THROTTLE}倍遅` : "絞りなし"}${CSS ? `  CSS: ${CSS}` : ""}`);
+const dsf = DSF || (WIDE ? 2 : 3);
+const dpx = (WIDE ? 1440 * 900 : 390 * 844) * dsf * dsf;
+console.log(`■ ${PAGE}  ${WIDE ? "1440×900" : "390×844"}×${dsf}  CPU${THROTTLE ? `${THROTTLE}倍遅` : "絞りなし"}${CSS ? `  CSS: ${CSS}` : ""}`);
 if (!runs[0].walked) console.log("  （この面には島が無いので、歩かせずに測っている）");
 console.log(`  1フレームのCPU   ${med("cpu").toFixed(1)} ms   (${all("cpu")})`);
 console.log(`  うちメイン       ${med("main").toFixed(1)} ms   (${all("main")})`);
 console.log(`  6秒のフレーム数  ${med("frames")}        (${runs.map((r) => r.frames).join(" / ")})   ← 混み具合で動く。参考`);
 console.log(`  起動4秒までのCPU ${med("boot").toFixed(0)} ms   (${all("boot", 0)})`);
 console.log(`  DOM ${runs[0].nodes} / SVG要素 ${runs[0].svg}`);
+// 画素あたりで見ないと、幅の違う2つは比べられない。
+// PC はスマホの 1.75 倍の画素を描いているので、CPU が 1.75 倍なら「同じ効率」
+console.log(`  描く画素 ${(dpx / 1e6).toFixed(2)} M   1msあたり ${(dpx / 1e3 / med("cpu")).toFixed(0)} k画素  ← ここが揃えば、余計なことはしていない`);
