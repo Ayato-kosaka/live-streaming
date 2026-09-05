@@ -36,6 +36,10 @@
 }
 @media (min-width: 1024px) {
   .chain-sea { --ci-px: 0.68px; --ci-col: 212px; }
+  /* 広い画面で札を端まで伸ばさない。1行が長くなるほど、次の行の頭が探しにくくなる
+     （`docs/island-world.md` の1行の長さ）。海のほうは広いままでいい。
+     幅を .chain で止めるので、船の道（.chain::before）の位置はずれない。 */
+  .chain { max-width: 820px; margin-inline: auto; }
 }
 
 .chain {
