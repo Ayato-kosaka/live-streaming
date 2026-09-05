@@ -279,6 +279,31 @@ function Doing({ plan }: { plan: Plan }) {
 }
 
 /**
+ * まだ決まっていないこと。
+ *
+ * 「日にちはあやとが決めますが、中身はみんなで」がこの島の企画の作り方。
+ * どこが空いているのかを見せないまま「付箋を貼ってください」と言っても、
+ * 何を書けばいいのか分からない。空いている場所を先に出す。
+ */
+function Asks({ plan }: { plan: Plan }) {
+  if (!plan.asks?.length) return null;
+  return (
+    <div className="nx-asks">
+      <span>まだ決まっていないこと</span>
+      <ul>
+        {plan.asks.map((a) => (
+          <li key={a}>{a}</li>
+        ))}
+      </ul>
+      <a href={`#${plan.id}-notes`}>
+        付箋で教える
+        <Icon name="right" size={12} />
+      </a>
+    </div>
+  );
+}
+
+/**
  * これからの予定ひとつ。
  *
  * lead を付けたものが、そのページの主役。
@@ -390,6 +415,8 @@ export default function PlanCard({
           <Icon name="right" size={15} className="tile-go" />
         </Link>
       )}
+
+      <Asks plan={plan} />
 
       {children}
     </section>

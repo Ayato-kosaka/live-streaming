@@ -5,6 +5,7 @@ import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
 import { VOICES } from "@/content/chatter";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
+import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
 import { FriendsMark } from "@/components/live/art";
 
@@ -134,6 +135,16 @@ export default function FriendsPage() {
               「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
               個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。
             </p>
+            <div className="pap-gos" style={{ marginTop: 12 }}>
+              <Link className="pap-go" href="/board">
+                <img src="/sprites/signboard.webp" alt="" />
+                <span>
+                  <b>島での見え方を決める</b>
+                  <i>企画掲示板の下。ログインすると出てきます</i>
+                </span>
+                <Icon name="right" size={14} />
+              </Link>
+            </div>
           </section>
         </div>
       </div>

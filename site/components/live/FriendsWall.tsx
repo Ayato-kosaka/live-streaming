@@ -35,11 +35,16 @@ export default function FriendsWall() {
           const s = show.get(r.icon!);
           return (
             <figure className={`rz-card${i === 0 ? " is-top" : ""}${s?.name ? "" : " is-blank"}`} key={r.icon}>
+              {/* 赤い枠だけだと、何が選ばれているのか分からない。理由を1つ添える */}
+              {i === 0 && <span className="rz-top">いちばん長く</span>}
               <span className="rz-shot">
                 <Pedestal />
                 <img src={drive(r.icon!, 256)} alt="" loading="lazy" />
               </span>
-              <figcaption className="rz-name">{s?.name ?? "名前は出していない人"}</figcaption>
+              {/* 名前を出していない人には通し番号を振る。
+                  「名前は出していない人」と22回書くと、それだけで面が埋まる。
+                  図鑑の番号なら、絵の邪魔をせずに一人ひとりを別のものとして扱える。 */}
+              <figcaption className="rz-name">{s?.name ?? `No.${i + 1}`}</figcaption>
               <span className="rz-days">
                 <b>{r.days}</b>日いっしょ
               </span>

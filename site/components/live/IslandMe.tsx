@@ -86,6 +86,26 @@ export default function IslandMe() {
         <span>YouTubeのアイコンを出す</span>
       </label>
 
+      {/* 決めたものが島でどう見えるか。
+          設定だけ並べても、押した結果が想像できない。出る形をそのまま見せる。 */}
+      <div className="me-prev">
+        <span className="me-prev-label">島でこう見えます</span>
+        <div className="me-prev-body">
+          {pick ? (
+            <img className="me-prev-char" src={`https://lh3.googleusercontent.com/d/${pick}=s160`} alt="" />
+          ) : (
+            <span className="me-prev-none">キャラクターは出ません</span>
+          )}
+          {pick && showName && (
+            <span className="me-prev-tag">
+              {showPhoto && user.photo && <img src={user.photo} alt="" />}
+              {nickname.trim() || user.name}
+            </span>
+          )}
+          {pick && !showName && <span className="me-prev-none">名札は出ません</span>}
+        </div>
+      </div>
+
       <button className="me-save" onClick={save} disabled={state === "saving"}>
         {state === "saving" ? "保存しています…" : "これでいく"}
       </button>
