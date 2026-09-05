@@ -525,6 +525,17 @@ export const NORDIC_LOG: Record<string, LegLog> = {};
  */
 export const MAIN: Leg[] = ROUTE.filter((l) => !l.side);
 
+/**
+ * 止まる街と、そこへ着く区間が `ROUTE` の何本目か。
+ *
+ * 1日ぶんのページが「もう越えた日か」を決めるのに、これだけを受け取る
+ * （`components/nordic/here.ts`）。**この表そのものを client に渡さない。**
+ * 渡すと見どころ161件ぶんの JSON まで付いてくる。字と数字だけにする。
+ */
+export const STOP_SEQ: { name: string; seq: number }[] = ROUTE.filter((l) => !l.side).map(
+  (l) => ({ name: l.to.replace(/（.*$/, ""), seq: ROUTE.indexOf(l) }),
+);
+
 /** 一本道の止まる場所。地図の街の id と突き合わせるのに使う。 */
 export const STOPS: { name: string; leg?: Leg }[] = [
   { name: MAIN[0].from },

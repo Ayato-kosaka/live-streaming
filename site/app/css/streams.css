@@ -261,28 +261,49 @@
   display: flex; align-items: flex-end; justify-content: center;
 }
 @media (min-width: 720px) { .zk-hero-art { height: 230px; } }
-/* 図鑑の1枚（料理の詳細）。この面の主役は料理の絵1つ。
+/* 図鑑の1枚（料理と伝説の詳細）。この面の主役は絵1つ。
 
    本物（`ref_NH_Critterpedia_Coelacanth.jpg`）は絵が画面の高さの 46〜51% を
-   占めている。ここは 35.1%（1280x720 で 253px）で止まっていた。
-   理由は焼いてあるスプライトが長辺 320px までで、枠を広げても絵が
-   natural size で止まっていたこと。**いまは長辺 640px の焼き直しがある**ので
-   （`sprites/hero/`）、枠に高さを決めて、絵をその高さまで伸ばす。
+   占めている。
 
-   `srcset` は 1x/2x ではなく幅（`w`）で配る。1x/2x だと、等倍の画面で
-   340px に伸ばしても 320px のほうが選ばれて、いちばん大きく出す絵だけが
-   ぼけていた。 */
+   ## 箱に高さを決めさせるのをやめた（そのせいで絵が皿から浮いていた）
+
+   前は箱を 250px に固定して、絵を `height: 100%` でそこまで伸ばしていた。
+   ところが `max-width` のほうが先に効く絵だと、伸びるのは**箱だけ**で、
+   中の絵は `object-fit: contain` の既定（中央）で浮く。
+   卵焼き（495x230）は 292x250 の箱の中で **292x136 しか描かれておらず、
+   皿から 57px 浮いていた**。「絵が占める割合」を箱で数えると 22.2%、
+   実際に描かれている画素で数えると 12.1%。**箱を測っていた。**
+
+   絵の大きさは絵に決めさせて、箱をそれに合わせる。
+   横に長い皿ものでは箱が縮むので、面もそのぶん短くなる。 */
 .zk-hero.is-dex .zk-hero-art {
-  height: 250px;
+  /* 皿だけが残るのを防ぐ下限。ここを下回る絵は無い */
+  height: auto;
+  min-height: 160px;
   margin: var(--sp-6) 0 var(--sp-6);
 }
-@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 340px; } }
 .zk-hero.is-dex .zk-hero-art img {
-  height: 100%;
-  max-height: 100%;
-  max-width: 86%;
   width: auto;
+  height: auto;
+  /* 焼いてあるのは長辺 640px（`sprites/hero/`）。dpr2 の画面で
+     引き伸ばさずに出せるのがこの辺り。ここを超えるとここだけぼける */
+  max-height: 280px;
+  max-width: 92%;
 }
+@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art img { max-height: 340px; } }
+/* 皿も一緒に広げる。絵が 230px の皿より広くなると、皿が絵の横から
+   はみ出た染みに見える（卵焼きは 313px ある）。 */
+.zk-hero.is-dex .zk-hero-art::before { width: 84%; max-width: 300px; }
+
+/* 配信の型の1枚（`/streams/[型]`）。絵は島に立っている建物そのもの。
+
+   ここだけ `is-dex` にできないのは、**焼いてあるのが長辺 320px しかない**から
+   （`sprites/hero/` に入っているのは料理32枚と伝説8枚だけ）。
+   280px まで伸ばすと dpr2 の画面で 1.7 倍に引き伸ばすことになって、
+   紙の上でここだけぼける。焼き直しが来るまでは実寸で止める。 */
+.zk-hero.is-type .zk-hero-art img { max-height: 168px; max-width: 86%; }
+@media (min-width: 720px) { .zk-hero.is-type .zk-hero-art img { max-height: 200px; } }
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {
   content: "";

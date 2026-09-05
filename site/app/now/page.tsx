@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import NowLive from "@/components/live/NowLive";
-import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import { NowCountry, NowTrail } from "./parts";
@@ -36,8 +35,6 @@ export const metadata: Metadata = {
  * 焼き込みにすると、国境を越えた日から次のビルドまで嘘をつく。
  */
 export default function NowPage() {
-  const youtube = LINKS.find((l) => l.id === "youtube")!;
-
   return (
     <PageShell crumbs={[{ label: "いまどこ" }]}>
       {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
@@ -60,6 +57,11 @@ export default function NowPage() {
           <p className="pap-note">
             島だよりは今週ぶん。日にちの決まっている企画は、これからの面にまとまっています。
           </p>
+          {/* YouTube への札をここから外した。上の「今夜の配信まで あと◯時間」が
+              同じ行き先を持っていて、**1つの面から同じところへ2回出ていた。**
+              いまいる国の旗を大きく出したぶん、面が 150px 伸びている
+              （`docs/island-ux.md` 8.1「入口の面は3画面まで」）。
+              減らすなら、2つあるほうから減らす。 */}
           <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             <Link className="pap-go" href="/next">
               <img src="/sprites/tent.webp" alt="" />
@@ -69,14 +71,6 @@ export default function NowPage() {
               </span>
               <Icon name="right" size={14} />
             </Link>
-            <a className="pap-go" href={youtube.href} target="_blank" rel="noopener noreferrer">
-              <img src="/sprites/tower-studio.webp" alt="" />
-              <span>
-                <b>{youtube.label}</b>
-                <i>{youtube.note}</i>
-              </span>
-              <Icon name="external" size={14} />
-            </a>
           </div>
         </section>
       </NowLive>

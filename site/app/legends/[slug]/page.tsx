@@ -50,9 +50,15 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
       ]}
     >
       <Sheet>
-        {/* この面でいちばん先に目に入るのが数字であってほしい */}
+        {/* 図鑑の1枚。この面の主役は絵1つで、数字はその次
+            （`docs/ac-reference.md` 7章4）。
+
+            前はここだけ `is-dex` を付けていなかったので、絵が 166x168 =
+            1画面の 8.5% しかなく、**縦の2割**で止まっていた。同じ紙の型を
+            使っている料理の詳細（`/kitchen/[品]`）と、絵の扱いだけが違う
+            理由が無い。 */}
         <Zone>
-          <div className="zk-hero">
+          <div className="zk-hero is-dex">
             <span className="zk-hero-no">{l.span ?? l.date.replace(/-/g, "/")}</span>
             <h1 className="zk-tape-h">
               <Tape>{l.title}</Tape>

@@ -83,7 +83,12 @@ def main() -> None:
         if os.path.exists(dst) and os.path.getsize(dst) > 1000:
             got += 1
             continue
-        url = f"https://lh3.googleusercontent.com/d/{i}=s160"
+        # 図鑑（`/friends` の住民図鑑）は本番で `=s512` を取っている。
+        # ここを s160 で落とすと、手元には**本番の3分の1の絵**が返る。
+        # 「絵が縦の半分を占めているか」を測ると絵のほうが先に尽きて、
+        # 実際より小さい値が出る（どの住人も 160x160 で頭打ちになっていた）。
+        # 本番でいちばん大きく出すところに合わせる。島の上では縮めて使う。
+        url = f"https://lh3.googleusercontent.com/d/{i}=s512"
         try:
             req = urllib.request.Request(url, headers=UA)
             with urllib.request.urlopen(req, timeout=40) as r:

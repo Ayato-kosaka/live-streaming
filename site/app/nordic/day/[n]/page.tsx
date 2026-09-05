@@ -11,6 +11,7 @@ import {
   NORDIC_GUIDE,
   NORDIC_LOG,
   ROUTE,
+  STOP_SEQ,
   SUN,
   cityCountry,
   cityName,
@@ -259,7 +260,10 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
 
       {/* わかれ道。**この面に入ったときに出す**（オーナーの指示）。
           数が読めないときは、区画ごと出ない。 */}
-      <DaySay items={asks} />
+      {/* 止まる街の並びを渡す。**この面には司令塔（`TripNow`）が居ない**ので、
+          いま何本目かはここが自分で読む。渡すのは字と数字だけにして、
+          旅程表そのものを面の JS に連れてこない。 */}
+      <DaySay items={asks} route={STOP_SEQ} />
 
       {/* その日に通る街。**中身は国のページにある。**
           ここは「その日、目の前に何があるか」だけを名前と一行で並べて、

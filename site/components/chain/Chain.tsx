@@ -6,7 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CHAIN,
   chapterDays,
+  chapterNext,
   chapterNow,
+  chapterSpan,
   FUND_GOAL_YEN,
   NEXT_CHAPTER,
   NOW_CHAPTER,
@@ -49,6 +51,11 @@ export default function Chain() {
      コーカサスに「いまここ」が付いたままになる。まず焼いた答えで描いて、
      画面が出たら今日の答えに置き換える（日数と同じやりかた）。 */
   const nowCh = today ? chapterNow(today) : NOW_CHAPTER;
+  /* **「次の島」も日付で決める。** `from` の空欄だけで決めていたころ、
+     旅の4日目の連なりが「4日の予定」と出していた。日数のほうは出発を
+     過ぎたら実際に数えはじめるのに、札だけが予定と言い続けるので、
+     **経過日数を予定と言う**ことになっていた。 */
+  const nextCh = today ? chapterNext(today) : NEXT_CHAPTER;
   const fund = useFund();
   const pct = fund ? Math.min(100, Math.round((fund.total / FUND_GOAL_YEN) * 100)) : 0;
   const { sail, boat, seaRef, artRef } = useSail(nowCh);
@@ -60,7 +67,7 @@ export default function Chain() {
         const days = chapterDays(c, today ?? undefined);
         const branch = Boolean(c.branchOf);
         const now = c.slug === nowCh.slug;
-        const next = c === NEXT_CHAPTER;
+        const next = c === nextCh;
         const st = CHAPTER_STATS[c.slug];
         return (
           <li
@@ -87,7 +94,7 @@ export default function Chain() {
               <span className="chain-body">
                 {now && <em className="chain-here">いまここ</em>}
                 <b className="chain-name">{c.name}</b>
-                <i className="chain-when">{when(c)}</i>
+                <i className="chain-when">{when(c, today)}</i>
                 <span className="chain-note">{c.note}</span>
                 {next ? (
                   <>
@@ -149,15 +156,23 @@ function Fund({ total }: { total: number | null }) {
   );
 }
 
-/** 期間の書き方。終わった章は「2024年10月 〜 2025年3月」、いまの章は「〜 いま」 */
-function when(c: Chapter): string {
-  if (!c.from) return "これから";
-  return `${ym(c.from)} 〜 ${c.to ? ym(c.to) : "いま"}`;
+/**
+ * 期間の書き方。終わった章は「2024年10月 〜 2025年3月」、いまの章は「〜 いま」。
+ *
+ * **`from` `to` の字をそのまま読まない。** 旅に出た日に手で書き入れる欄なので、
+ * 入れ忘れていると北欧が「これから」のまま、コーカサスが「〜 いま」のままになる。
+ * 日付から決めた期間（`chapterSpan`）を使う。
+ */
+function when(c: Chapter, today: Date | null): string {
+  const { from, to } = chapterSpan(c, today ?? undefined);
+  if (from == null) return "これから";
+  return `${ym(from)} 〜 ${to == null ? "いま" : ym(to)}`;
 }
 
-const ym = (d: string) => {
-  const [y, m] = d.split("-");
-  return `${y}年${Number(m)}月`;
+/** 日本時間の「2024年10月」。書き出しは UTC で走るので、時差を足してから読む。 */
+const ym = (ms: number) => {
+  const d = new Date(ms + 9 * 3600_000);
+  return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月`;
 };
 
 /* ---- 船 -----------------------------------------------------------------
