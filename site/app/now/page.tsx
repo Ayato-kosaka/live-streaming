@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { GUIDE } from "@/content/voice";
 import NowLive from "@/components/live/NowLive";
 import { PROFILE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
@@ -23,12 +22,16 @@ export const metadata: Metadata = {
  */
 export default function NowPage() {
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "いまのポスト" }]}>
+    <PageShell crumbs={[{ label: "いまのポスト" }]}>
+      {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
+          （`docs/island-design.md` 6章 / `docs/island-world.md` 7.5）。
+          「いま何してる」は問いなので、すぐ下の1行で受ける。
+          カモメは lead の言い直しをしないので、見る時機だけを言う。 */}
       <PageHead
         icon="mailbox"
-        title="いま何してる"
-        lead="今どこにいて、今週なにをするか。ここは毎日書きかわります。"
-        say={GUIDE.now}
+        title="いまのポスト"
+        lead="いま何してるか。今どこにいて、今週なにをするか。毎日書きかわります。"
+        say="配信の前にのぞいておくと、その日の話が早いよ。"
       />
       <NowLive letter>
         <section className="pap-sec">

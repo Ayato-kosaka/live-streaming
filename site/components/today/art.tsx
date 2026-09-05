@@ -72,3 +72,26 @@ export function DayLeaf({ size = 22 }: { size?: number }) {
     </svg>
   );
 }
+
+/**
+ * 押したほうに付ける印。
+ *
+ * 「自分はこれを押した」を、色の違いだけで言うと弱い。
+ * 棒の長さは人数の話なので、自分の1票がどれかは別の印で言う。
+ */
+export function Tick({ size = 14 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden focusable="false" className="poll-tick">
+      <circle cx="24" cy="25.5" r="17" fill={SHADE} opacity="0.28" />
+      <circle cx="24" cy="24" r="17" fill="#4bb04a" />
+      <path
+        d="M16 24.5l5.4 5.4L32 19.3"
+        fill="none"
+        stroke="#fffbe9"
+        strokeWidth="5.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

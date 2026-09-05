@@ -99,4 +99,66 @@ export const nav: Record<string, Draw> = {
       fill="currentColor"
     />
   ),
+
+  pause: () => (
+    <g fill="currentColor">
+      <rect x="16" y="13" width="11" height="38" rx="5.5" />
+      <rect x="37" y="13" width="11" height="38" rx="5.5" />
+    </g>
+  ),
+
+  /** もっと見る。行の右端に置く3つの点。 */
+  dots: () => (
+    <g fill="currentColor">
+      <circle cx="14" cy="32" r="5.4" />
+      <circle cx="32" cy="32" r="5.4" />
+      <circle cx="50" cy="32" r="5.4" />
+    </g>
+  ),
+
+  /** 絞り込み。じょうごの形。角は全部丸める。 */
+  filter: () => (
+    <path
+      d="M9 12h46a3 3 0 0 1 2.3 4.9L40 37.4V52a3 3 0 0 1-4.3 2.7l-8-4A3 3 0 0 1 26 48V37.4L6.7 16.9A3 3 0 0 1 9 12z"
+      fill="currentColor"
+    />
+  ),
+
+  /** 並べ替え。長さの違う3本と、下向きの矢。 */
+  sort: () => (
+    <g fill="currentColor">
+      <rect x="6" y="14" width="30" height="8" rx="4" />
+      <rect x="6" y="28" width="22" height="8" rx="4" />
+      <rect x="6" y="42" width="14" height="8" rx="4" />
+      <path d="M48 12a4 4 0 0 1 4 4v24.6l4.2-4.2a4 4 0 1 1 5.6 5.6l-11 11a4 4 0 0 1-5.6 0l-11-11a4 4 0 1 1 5.6-5.6l4.2 4.2V16a4 4 0 0 1 4-4z" />
+    </g>
+  ),
+
+  /** これは何か。輪と点と棒で作る。字を置かない。 */
+  info: () => (
+    <g fill="currentColor">
+      <path d="M32 4a28 28 0 1 1 0 56 28 28 0 0 1 0-56zm0 8a20 20 0 1 0 0 40 20 20 0 0 0 0-40z" />
+      <circle cx="32" cy="21" r="4.2" />
+      <rect x="27.8" y="28" width="8.4" height="20" rx="4.2" />
+    </g>
+  ),
+
+  /**
+   * もう一度。輪を4分の3だけ描いて、切れたところに矢じりを付ける。
+   *
+   * **これを回して読み込み中に使わない。** 島に回っているものは無い
+   * （`docs/island-design.md` 4章）。押して取り直すためのボタンの印。
+   */
+  refresh: () => (
+    <>
+      <path
+        d="M32 12A20 20 0 1 1 14.8 42"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="9"
+        strokeLinecap="round"
+      />
+      <path d="M28.5 2 44 12 28.5 22z" fill="currentColor" />
+    </>
+  ),
 };

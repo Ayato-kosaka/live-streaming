@@ -134,11 +134,15 @@ export default function TripNow({
 
   return (
     <div className="tnow">
+      {/* h1 は場所の名前。文にしない（`docs/island-world.md` 7.5）。
+          「会いたい人がいます」は良い一行なので消さず、すぐ下の lead に下ろす。
+          前置きは h1 と1行まで。21面ぜんぶが同じ長さの前置きで始まると、
+          並べたときに全部同じページに見える（同 7.6）。 */}
       <div className="tnow-top">
-        <h1>スウェーデンに、会いたい人がいます</h1>
-        <p>
-          ジョージアからそこまで <b>{hitchKm.toLocaleString()}km</b>。
-          バスにも電車にも乗らず、人の車だけで行きます。
+        <h1>北欧ヒッチハイク</h1>
+        <p className="tnow-lead">
+          <b>スウェーデンに、会いたい人がいます。</b>
+          ジョージアからそこまで、人の車だけで {hitchKm.toLocaleString()}km。
         </p>
       </div>
 

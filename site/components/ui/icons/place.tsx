@@ -57,12 +57,12 @@ export const place: Record<string, Draw> = {
     <>
       <Sh c={c} cy={56} rx={25} ry={4} />
       {/* 左。とがった耳。手前の顔に隠れないよう外へ寄せて、少し下げる */}
-      <path d="M1.5 33 4 23.5l7 4.6zM19 33l-2.5-9.5-7 4.6z" fill={c.tld} />
-      <circle cx="11" cy="41" r="11" fill={c.tl} />
-      <path d="M11 30a11 11 0 0 1 0 22z" fill={c.tld} opacity="0.45" />
-      <Eye c={c} x={7.4} y={40} s={0.85} />
-      <Eye c={c} x={14.6} y={40} s={0.85} />
-      <Blush c={c} x={4.2} y={44.4} s={0.8} />
+      <path d="M3.5 33 6 23.5l7 4.6zM21 33l-2.5-9.5-7 4.6z" fill={c.tld} />
+      <circle cx="13" cy="41" r="11" fill={c.tl} />
+      <path d="M13 30a11 11 0 0 1 0 22z" fill={c.tld} opacity="0.45" />
+      <Eye c={c} x={9.4} y={40} s={0.85} />
+      <Eye c={c} x={16.6} y={40} s={0.85} />
+      <Blush c={c} x={6.2} y={44.4} s={0.8} />
 
       {/* 右。くちばし */}
       <circle cx="53" cy="41" r="11" fill={c.pk} />
@@ -101,9 +101,10 @@ export const place: Record<string, Draw> = {
       <Sh c={c} cy={56} rx={20} ry={4} />
       {/* 電波。屋根に重ねると帽子のつばに見えたので、棟の上に間をあけて出す */}
       <rect x="30.6" y="4" width="2.8" height="9" rx="1.4" fill={c.gyd} />
-      <g fill="none" stroke={c.sk} strokeLinecap="round" opacity={c.flat ? 1 : 0.95}>
-        <path d="M23 9.5a13 13 0 0 1 18 0" strokeWidth="4.2" />
-        <path d="M17 3.5a21 21 0 0 1 30 0" strokeWidth="4" opacity="0.55" />
+      {/* 細い薄水色だと紙の上で消えて、屋根だけの塔に見えていた。太くして濃さも上げる */}
+      <g fill="none" strokeLinecap="round">
+        <path d="M22 10a14 14 0 0 1 20 0" strokeWidth="5.4" stroke={c.skd} />
+        <path d="M16 3.6a22 22 0 0 1 32 0" strokeWidth="4.6" stroke={c.sk} />
       </g>
       {/* 脚 */}
       <path d="M12 56 22 30h6L18 56z" fill={c.wod} />
@@ -310,6 +311,84 @@ export const place: Record<string, Draw> = {
       <rect x="33" y="38" width="13" height="15" rx="3" fill={c.br} />
       <circle cx="42.6" cy="45.6" r="1.5" fill={c.gd} />
       <Gl c={c} cx={17} cy={22} rx={3} ry={9} r={40} o={0.35} />
+    </>
+  ),
+
+  /** 旅のしおり = /nordic/guide。折った紙に道筋と、赤いしおりひも。 */
+  guide: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={4} />
+      <path d="M10 8h36a6 6 0 0 1 6 6v38a6 6 0 0 1-6 6H10z" fill={c.cr} />
+      <path d="M32 8h14a6 6 0 0 1 6 6v38a6 6 0 0 1-6 6H32z" fill={c.crd} />
+      <path d="M4 8h8v50H4a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" fill={c.grd} />
+      <path d="M12 8h4v50h-4z" fill={c.gr} />
+      <path d="M20 46c4-6 3-12 8-16s10 2 14-4 3-8 6-11" fill="none" stroke={c.rd} strokeWidth="3" strokeLinecap="round" strokeDasharray="1 6" />
+      <circle cx="20.5" cy="46" r="3.6" fill={c.rdd} />
+      <circle cx="47.5" cy="15.5" r="3.6" fill={c.rd} />
+      <g fill={c.crd}>
+        <rect x="19" y="22" width="18" height="2.6" rx="1.3" />
+        <rect x="19" y="29" width="13" height="2.6" rx="1.3" />
+      </g>
+      <path d="M40 8h7v18l-3.5-4-3.5 4z" fill={c.rd} />
+      <Gl c={c} cx={9} cy={14} rx={1.8} ry={5} r={0} o={0.45} />
+    </>
+  ),
+
+  /** 投票 = 企画を選ぶ。箱の口に紙が入っていく途中を描く。 */
+  vote: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={22} ry={3.4} />
+      <g transform="rotate(-10 32 16)">
+        <rect x="20" y="2" width="24" height="22" rx="3" fill={c.w} />
+        <rect x="32" y="2" width="12" height="22" rx="3" fill={c.wd} />
+        <path d="m26 13 4 4 9-9" fill="none" stroke={c.gr} strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+      <path d="M8 26h48a4 4 0 0 1 4 4v22a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V30a4 4 0 0 1 4-4z" fill={c.tl} />
+      <path d="M32 26h24a4 4 0 0 1 4 4v22a5 5 0 0 1-5 5H32z" fill={c.tld} />
+      <rect x="18" y="29" width="28" height="6" rx="3" fill={c.nv} />
+      <rect x="4" y="38" width="56" height="5" fill={c.cr} />
+      <rect x="32" y="38" width="28" height="5" fill={c.crd} />
+      <Gl c={c} cx={13} cy={31} rx={5} ry={1.8} r={-5} o={0.45} />
+    </>
+  ),
+
+  /** いまどこにいるか。地球にピンを1本立てる。 */
+  globe: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <circle cx="30" cy="32" r="26" fill={c.sk} />
+      <path d="M30 6a26 26 0 0 1 0 52z" fill={c.skd} />
+      <path d="M12 16c5 1 7 5 12 5s5-4 10-3 5 6 2 9-9 1-12 4 1 8-2 11-6-1-9-4-4-8-4-12 1-8 3-10z" fill={c.gr} />
+      <path d="M40 12c4 2 6 5 8 9s1 8-2 9-4-4-7-5-4-6-2-9 2-4 3-4z" fill={c.grd} />
+      <path d="M34 44c4-2 8-1 11 1s2 6-1 8-8 2-10-1-2-6 0-8z" fill={c.gr} />
+      <g fill="none" stroke={c.w} strokeWidth="1.6" opacity="0.5">
+        <path d="M4 32h52M30 6c-9 7-9 45 0 52M30 6c9 7 9 45 0 52" />
+      </g>
+      <path d="M48 14a10 10 0 0 1 10 10c0 7-10 19-10 19S38 31 38 24a10 10 0 0 1 10-10z" fill={c.rd} />
+      <path d="M48 14a10 10 0 0 1 10 10c0 7-10 19-10 19z" fill={c.rdd} />
+      <circle cx="48" cy="24" r="4" fill={c.w} />
+      <Gl c={c} cx={17} cy={17} rx={5} ry={2.6} r={-34} o={0.5} />
+    </>
+  ),
+
+  /** スタンプ帳 = /kitchen。押した跡が並んだ見開き。 */
+  stampbook: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={26} ry={4} />
+      <path d="M3 12c8-3 17-3 27 0v40c-10-3-19-3-27 0z" fill={c.cr} />
+      <path d="M61 12c-8-3-17-3-27 0v40c10-3 19-3 27 0z" fill={c.crd} />
+      <rect x="29" y="10" width="6" height="43" rx="3" fill={c.wod} />
+      <g fill="none" strokeWidth="2.6">
+        <circle cx="14" cy="24" r="6.4" stroke={c.rd} />
+        <circle cx="14" cy="41" r="6.4" stroke={c.tld} />
+        <circle cx="48" cy="26" r="6.4" stroke={c.gd} />
+      </g>
+      <g fill={c.grd} opacity="0.55">
+        <rect x="42" y="41" width="14" height="2.6" rx="1.3" />
+        <rect x="42" y="47" width="10" height="2.6" rx="1.3" />
+      </g>
+      <path d="m14 21 1.4 2.8 3 .4-2.2 2.2.5 3-2.7-1.4-2.7 1.4.5-3-2.2-2.2 3-.4z" fill={c.rd} />
+      <Gl c={c} cx={11} cy={17} rx={5} ry={2} r={-14} o={0.5} />
     </>
   ),
 };

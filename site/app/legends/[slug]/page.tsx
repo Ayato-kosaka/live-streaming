@@ -33,9 +33,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
 
   return (
     <PageShell
-      current="streams"
       crumbs={[
-        { label: "配信やぐら", href: "/streams" },
         { label: "伝説の丘", href: "/legends" },
         { label: l.title },
       ]}
@@ -85,10 +83,13 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         <Zone>
           <H art={<ArtBook size={32} />}>何があったか</H>
           <p className="zk-lead">{l.body[0]}</p>
-          {l.body.length > 1 && (
+          {/* 畳んだときに見える1行が、開いたあと同じ場所にもう一度出ていた。
+              見出しの下に見せる段落は中に入れず、その続きだけを畳む。 */}
+          {l.body.length === 2 && <p className="zk-lead">{l.body[1]}</p>}
+          {l.body.length > 2 && (
             <div className="folds" style={{ marginTop: 14 }}>
-              <Fold title="この先に、まだ続きがある" lead={l.body[1]} note={`あと${l.body.length - 1}つ`}>
-                {l.body.slice(1).map((p, k) => (
+              <Fold title="この先に、まだ続きがある" lead={l.body[1]} note={`あと${l.body.length - 2}つ`}>
+                {l.body.slice(2).map((p, k) => (
                   <p key={k}>{p}</p>
                 ))}
               </Fold>

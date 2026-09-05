@@ -80,6 +80,9 @@ export default function Board() {
     setMine(minePosts());
     getIdeas()
       .then((r) => setIdeas(r.ideas))
+      // 取れなかったときは静かに空の板を出す（`docs/island-design.md` 4章）。
+      // つながらなかったのは見ている人には関係のない話で、
+      // ここで謝るより「いちばんに貼る」を出したほうが先に進める。
       .catch(() => setIdeas([]));
   }, []);
 
@@ -212,7 +215,7 @@ export default function Board() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel paper">
         <h2>むちゃな企画ほど通る、の証拠</h2>
         <p className="muted">どれも「思いつき」から始まって、本当にやったものです。</p>
         <div className="chips" style={{ marginTop: 12 }}>
@@ -233,23 +236,28 @@ export default function Board() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="bhead">
-          <h2 style={{ margin: 0 }}>{BOARD.listTitle}</h2>
-          <div className="bsort">
-            <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
-              {BOARD.sortVotes}
-            </button>
-            <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
-              {BOARD.sortNew}
-            </button>
-            {mineCount > 0 && (
-              <button className={onlyMine ? "is-on" : ""} onClick={() => setOnlyMine((v) => !v)}>
-                じぶんの{mineCount}
+      <section className="panel paper">
+        {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、
+            パネルの直下に出して、並べ替えは次の行に置く。 */}
+        <h2>{BOARD.listTitle}</h2>
+        {/* 1件も無いのに並べ替えの札だけ出ていると、空の板がさらに空に見える */}
+        {all.length > 0 && (
+          <div className="bhead">
+            <div className="bsort">
+              <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
+                {BOARD.sortVotes}
               </button>
-            )}
+              <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
+                {BOARD.sortNew}
+              </button>
+              {mineCount > 0 && (
+                <button className={onlyMine ? "is-on" : ""} onClick={() => setOnlyMine((v) => !v)}>
+                  じぶんの{mineCount}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {all.length > 0 && (
           <div className="chips" style={{ marginBottom: 14 }}>
@@ -260,14 +268,32 @@ export default function Board() {
           </div>
         )}
 
-        {ideas === null && <p className="muted">{BOARD.loading}</p>}
+        {/* 取りに行っているあいだは、出てくる紙と同じ形の灰色を3枚置く。
+            「読み込み中…」の字だけだと、板に何も無いのか取りに行っているのか分からない。 */}
+        {ideas === null && (
+          <ul className="bd-list is-wait" aria-hidden>
+            <li />
+            <li />
+            <li />
+          </ul>
+        )}
         {ideas?.length === 0 && (
-          <>
+          <div className="bd-empty">
             <EmptyBoard />
-            <p className="muted" style={{ textAlign: "center" }}>
-              {BOARD.empty}
-            </p>
-          </>
+            <p className="muted">{BOARD.empty}</p>
+            {/* 空の板を見せるだけだと、そこで終わる。
+                書く場所は上にあるので、押したらそこへ連れていって、枠に入れる。 */}
+            <button
+              className="bd-empty-go"
+              onClick={() => {
+                box.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                box.current?.focus({ preventScroll: true });
+              }}
+            >
+              いちばんに貼る
+              <Icon name="up" size={13} />
+            </button>
+          </div>
         )}
         {ideas !== null && ideas.length > 0 && list.length === 0 && (
           <p className="muted">じぶんが貼ったものは、まだありません。</p>

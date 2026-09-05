@@ -2,7 +2,7 @@
 // ばらばらに見ても不統一は見つからないので、必ず並べて見る前提の連番で出す。
 //   PORT=3032 node wsheet.mjs [出力フォルダ] [幅]
 import { chromium } from "playwright-core";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 const PORT = process.env.PORT || "3032";
 const OUT = process.argv[2] || "/tmp/wsheet";
@@ -76,3 +76,26 @@ for (const [name, path] of PAGES) {
   p.off("pageerror", onErr);
 }
 await b.close();
+
+/* 撮ったものを1枚に並べる。**ばらばらに見ても不統一は見つからない。**
+   縮めて隣に置くと、地の色・見出しの重さ・余白の刻みの違いだけが残って浮き上がる。
+   HTML を1枚書いて撮り直すだけなので、画像を扱うライブラリを足さずに済む。
+   setContent ではなく実ファイルを開く。about:blank から file:// の画像は読めない。 */
+const cells = PAGES.map(([name, path]) =>
+  `<figure><img src="${name}.png"><figcaption>${name} ${path}</figcaption></figure>`
+).join("");
+writeFileSync(`${OUT}/_sheet.html`,
+  `<style>
+     body{margin:0;background:#4a4a4a;font:13px/1.3 monospace;color:#fff;
+          display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:10px}
+     figure{margin:0}
+     img{width:100%;display:block;background:#000}
+     figcaption{padding:3px 0}
+   </style>${cells}`);
+const b2 = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const p2 = await (await b2.newContext({ viewport: { width: 2100, height: 1200 } })).newPage();
+await p2.goto(`file://${OUT}/_sheet.html`, { waitUntil: "load" });
+await p2.waitForTimeout(2000);
+await p2.screenshot({ path: `${OUT}/_sheet.png`, fullPage: true });
+await b2.close();
+console.log(`\u2192 ${OUT}/_sheet.png`);

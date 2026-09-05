@@ -5,7 +5,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { APPS, appBySlug, type AppMilestone } from "@/content/apps";
-import Icon from "@/components/ui/Icon";
+import Icon, { type IconName } from "@/components/ui/Icon";
 import { DishArt, HeadphoneArt, PhoneShot } from "@/components/atlas/art";
 
 export function generateStaticParams() {
@@ -26,12 +26,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  * 節目は20行を超えるので、年ごとに畳んでおく。いちばん新しい年だけ開く。
  */
 
-const KIND: Record<AppMilestone["kind"], { label: string; color: string }> = {
-  release: { label: "リリース", color: "#f0798d" },
-  update: { label: "アップデート", color: "#5bb8e4" },
-  build: { label: "作った", color: "#7fd3a2" },
-  trouble: { label: "トラブル", color: "#ffa24d" },
-  milestone: { label: "節目", color: "#ffc94d" },
+/** 節目の種類。5色に塗り分けていたのをやめた。
+ *  docs/island-world.md 3.1 で「色で分けていいのは配信の型だけ」と決まっているので、
+ *  ここは Icon.tsx の印と言葉で分ける。色は増やさない。 */
+const KIND: Record<AppMilestone["kind"], { label: string; icon: IconName }> = {
+  release: { label: "リリース", icon: "flag" },
+  update: { label: "アップデート", icon: "refresh" },
+  build: { label: "作った", icon: "laptop" },
+  trouble: { label: "トラブル", icon: "alert" },
+  milestone: { label: "節目", icon: "medal" },
 };
 
 const SHOT: Record<string, "food" | "audio"> = { nanitabeyo: "food", nanikore: "audio" };
@@ -73,7 +76,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       <Panel className="paper">
         <h2>どんなアプリか</h2>
         <div className="aapp-split">
-          <PhoneShot width={172} screen={SHOT[a.slug] ?? "food"} />
+          <PhoneShot width={200} screen={SHOT[a.slug] ?? "food"} />
           <div>
             <p>{a.summary}</p>
             <div className="afeat" style={{ marginTop: 12 }}>
@@ -110,14 +113,12 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
               {list.map((m) => (
                 <div className="astep" key={m.date + m.title}>
                   <span className="astep-mark" aria-hidden>
-                    <span className="astep-dot" style={{ background: KIND[m.kind].color }} />
+                    <Icon name={KIND[m.kind].icon} size={17} />
                   </span>
                   <div className="astep-body">
                     <div className="astep-head">
                       <time>{m.date.replace(/-/g, "/")}</time>
-                      <span className="astep-kind" style={{ background: KIND[m.kind].color }}>
-                        {KIND[m.kind].label}
-                      </span>
+                      <span className="astep-kind">{KIND[m.kind].label}</span>
                     </div>
                     <b>{m.title}</b>
                     {m.note && <i>{m.note}</i>}

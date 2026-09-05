@@ -327,24 +327,35 @@ export default function PlanCard({
 }) {
   return (
     <section
-      className="panel"
+      // 企画の札は「これから」の面の本文。読むものなので紙にして、
+      // その上に載る時計・できること・付箋の道具だけを板のまま残す
+      // （`docs/island-world.md` 2.1）。
+      className="panel paper"
       id={plan.id}
-      // 主役の札だけ、板の縁を濃くして厚みを増す。
-      // 「.panel.is-lead」が無いので、ここだけ手で足している。
-      style={
-        lead ?
-          {
-            borderColor: "var(--frame-dark)",
-            boxShadow:
-              "inset 0 0 0 6px var(--pg-rim), inset 0 8px 0 -2px rgba(255,255,255,.6), 0 10px 0 var(--frame-deep), var(--shadow-3)",
-            scrollMarginTop: 78,
-          } :
-          { scrollMarginTop: 78 }
-      }
+      // 主役の札は塗りを変えず、朱の細枠だけで示す。紙の型の選択と同じ作り
+      // （`docs/ac-reference.md` 7章）。厚みは押せるものだけのものなので足さない。
+      style={lead ? { borderColor: "var(--pick)", scrollMarginTop: 78 } : { scrollMarginTop: 78 }}
     >
       {lead ? (
+        // 時計だけを四角く置くと、その右が丸ごと空いて、いちばん大事な数字が
+        // 隅にぽつんと残る。日付と場所を時計のとなりに引き寄せて、
+        // 「いつ・どこで」を一本の帯として読ませる。
         <div className="nx-lead-head">
-          <LeadClock plan={plan} />
+          <div className="nx-when">
+            <LeadClock plan={plan} />
+            <span className="nx-when-m">
+              <span>
+                <Icon name="calendar" size={13} />
+                {plan.when}
+              </span>
+              {plan.place && (
+                <span>
+                  <Icon name="pin" size={13} />
+                  {plan.place.name}
+                </span>
+              )}
+            </span>
+          </div>
           <h2>{plan.title}</h2>
         </div>
       ) : (
@@ -355,15 +366,20 @@ export default function PlanCard({
       )}
 
       <div className="chips" style={{ margin: "12px 0" }}>
-        <span className="chip">
-          <Icon name="calendar" size={12} />
-          {plan.when}
-        </span>
-        {plan.place && (
-          <span className="chip">
-            <Icon name="pin" size={12} />
-            {plan.place.name}
-          </span>
+        {/* 主役の札は、日付と場所を上の帯で言い終わっている。ここで繰り返さない */}
+        {!lead && (
+          <>
+            <span className="chip">
+              <Icon name="calendar" size={12} />
+              {plan.when}
+            </span>
+            {plan.place && (
+              <span className="chip">
+                <Icon name="pin" size={12} />
+                {plan.place.name}
+              </span>
+            )}
+          </>
         )}
         {plan.tags.map((t) => (
           <span className="chip" key={t}>

@@ -22,6 +22,25 @@ export type { IconName };
  * 場所や物のうち、**大きく出すもの**は今までどおりスプライト
  * （`site/public/sprites/*.webp`）を使う。ここは 12〜60px で出すもの。
  */
+/**
+ * 上からの光。
+ *
+ * 焼いたスプライトは上から光が当たっていて、上下に階調がある。SVG の塗りは平らなので、
+ * 並べると別の世界のものに見える（`docs/island-world.md` 6章）。
+ * だから絵の上に、**上を明るく・下を暗く**する薄い膜を1枚かぶせる。
+ *
+ * 中身は絵ごとに変わらないので、1つ書いて全部から参照する。
+ * 同じ id が何度も出るが、中身が同じなので最初の1つに解決されて困らない。
+ */
+const LIGHT = (
+  <linearGradient id="ic-light" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stopColor="#ffffff" stopOpacity="0.13" />
+    <stop offset="0.42" stopColor="#ffffff" stopOpacity="0" />
+    <stop offset="0.58" stopColor="#2a2415" stopOpacity="0" />
+    <stop offset="1" stopColor="#2a2415" stopOpacity="0.1" />
+  </linearGradient>
+);
+
 export default function Icon({
   name,
   size = 18,
@@ -42,6 +61,26 @@ export default function Icon({
   if (!draw) return null;
   // 操作の印とブランドマークは、指定が無くても単色。CSS の color に従わせる
   const flat = tone === "ink" || (tone !== "color" && FLAT.has(name));
+
+  // 単色の印には光を乗せない。currentColor 1色であることが、
+  // 置いた側の CSS との約束になっている（`.rleg-h .ic` など）
+  if (flat) {
+    return (
+      <svg
+        className={className ? `ic ${className}` : "ic"}
+        width={size}
+        height={size}
+        viewBox="0 0 64 64"
+        aria-hidden
+        focusable="false"
+      >
+        {draw(INK)}
+      </svg>
+    );
+  }
+
+  // 絵ごとに1つ。中身が同じなら重なっても困らないので、名前から作る
+  const gid = `ig-${name}`;
   return (
     <svg
       className={className ? `ic ${className}` : "ic"}
@@ -51,7 +90,27 @@ export default function Icon({
       aria-hidden
       focusable="false"
     >
-      {draw(flat ? INK : C)}
+      <defs>
+        {LIGHT}
+        {/*
+          光を絵の形だけに乗せるための抜き型。
+          絵をもう一度描くとマークアップが倍になるので、`use` で同じ形を借りる。
+          塗りの明るさではなく**不透明度**で抜く（`mask-type: alpha`）。
+        */}
+        <mask
+          id={`im-${name}`}
+          maskUnits="userSpaceOnUse"
+          x="0"
+          y="0"
+          width="64"
+          height="64"
+          style={{ maskType: "alpha" }}
+        >
+          <use href={`#${gid}`} />
+        </mask>
+      </defs>
+      <g id={gid}>{draw(C)}</g>
+      <rect width="64" height="64" fill="url(#ic-light)" mask={`url(#im-${name})`} />
     </svg>
   );
 }

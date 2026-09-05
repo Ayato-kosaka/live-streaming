@@ -20,34 +20,46 @@ export type IconName =
   // 操作
   | "right" | "left" | "up" | "chevron" | "close" | "plus" | "minus" | "menu"
   | "check" | "external" | "download" | "search" | "share" | "play"
+  | "pause" | "dots" | "filter" | "sort" | "info" | "refresh"
   // ブランド
   | "appstore" | "googleplay" | "instagram" | "youtube"
   // 島の場所
   | "campfire" | "friends" | "tower" | "workshop" | "tent" | "board" | "pier"
   | "kitchen" | "hill" | "mailbox" | "island" | "home"
+  | "guide" | "vote" | "globe" | "stampbook"
   // 旅先の景色
   | "mountain" | "sea" | "forest" | "bridge" | "castle" | "church" | "museum"
   | "station" | "hotel" | "market" | "hotspring" | "bench" | "windmill" | "lighthouse"
+  | "harbor" | "oldtown" | "mosque" | "pyramid" | "desert" | "glacier" | "fjord" | "cafe"
   // 旅
   | "backpack" | "sleepingbag" | "compass" | "map" | "passport" | "ticket"
   | "thumb" | "road" | "signpost" | "camper" | "train" | "bus" | "ferry"
   | "plane" | "bike" | "walk" | "suitcase" | "pin" | "tram" | "taxi" | "boat" | "fuel"
+  | "umbrella" | "sunglasses" | "bottle" | "shoes" | "key" | "wallet" | "stamp"
+  | "cablecar" | "balloon" | "sled" | "border" | "bunk"
   // 料理
   | "pot" | "pan" | "knife" | "cuttingboard" | "chopsticks" | "cup" | "stove"
   | "plate" | "bowl" | "basket" | "veg" | "meat" | "fish" | "bread" | "egg"
   | "spice" | "oil" | "eat" | "coffee" | "rice" | "noodle" | "soup" | "fruit"
   | "cheese" | "drink" | "timer"
+  | "salt" | "pepper" | "flour" | "milk" | "butter" | "cake" | "icecream"
+  | "tea" | "beer" | "wine" | "honey" | "mushroom" | "onion" | "potato"
+  | "lemon" | "apron" | "oven" | "fridge" | "ladle" | "recipe"
   // 配信
   | "camera" | "mic" | "headphone" | "comment" | "tip" | "subscribe" | "clock"
   | "calendar" | "live" | "book" | "wifi" | "screen" | "photo" | "link" | "chart"
   | "people"
+  | "laptop" | "tripod" | "ringlight" | "sdcard" | "battery" | "upload"
+  | "film" | "scissors" | "poll" | "member"
   // 気持ち
   | "heart" | "star" | "clap" | "idea" | "question" | "alert" | "crown"
   | "medal" | "trophy" | "talk" | "bell" | "gift" | "coin" | "smile" | "sad"
   | "sparkle" | "music" | "hourglass" | "ribbon"
+  | "laugh" | "surprise" | "think" | "sleep" | "hello" | "note" | "tag" | "bookmark"
   // 天気と火
   | "sun" | "moon" | "cloud" | "rain" | "snow" | "flame" | "light" | "tree"
   | "wind" | "rainbow" | "aurora" | "thermometer" | "night"
+  | "leaf" | "flower" | "wave" | "sunrise" | "fog" | "thunder" | "bird" | "reindeer"
   // そのほか
   | "shirt" | "sauna" | "brick" | "see" | "do" | "buy" | "flag";
 

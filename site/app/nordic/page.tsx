@@ -7,6 +7,7 @@ import Flag from "@/components/ui/Flag";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import RouteLegs from "@/components/nordic/RouteLegs";
+import { CarriedBy } from "@/components/nordic/Carry";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Highlights from "@/components/nordic/Highlights";
@@ -21,6 +22,7 @@ import {
 } from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
 import { planById } from "@/content/plans";
+import { LINKS } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
@@ -58,6 +60,7 @@ const MOVE: Record<string, string> = {
  */
 export default async function NordicPage() {
   const plan = planById("nordic");
+  const doneru = LINKS.find((l) => l.id === "doneru")!;
   const cityId = Object.fromEntries(MAP.cities.map((c) => [c.name, c.id]));
 
   // 一本道の止まる場所。寄り道は数えない（行って戻ってくるので旅は進まない）。
@@ -123,13 +126,28 @@ export default async function NordicPage() {
         </div>
       </Panel>
 
+      {/* 連れていくボード。新しいセクションを作らず、区間カードに席を2つ置いてある
+          （`docs/nordic-fund.md` 提案1）。旅は集まらなくても行くので、
+          「届かないと行けません」とは書かない。 */}
       <Panel>
-        <h2>この10日を、いっしょに決める</h2>
+        <h2>この10日を、連れていく</h2>
         <p className="muted">
-          区間を押すと、その日に何が起きるかと、道しるべの欄が出てきます。
-          道しるべが立っていない区間は、あやとがただ走るだけの区間になります。
+          区間を押すと、席が2つ出てきます。<b>道しるべ</b>は、その日に何をしてほしいかの言葉。
+          <b>足代</b>は、その区間を越えるのに実際に要るもの1つ。
+          両方そろって、その区間はつながります。
         </p>
+        <CarriedBy />
         <RouteLegs />
+        <div className="carry-give">
+          <p>
+            足代は、通る順に上から入ります。どの区間に入るかは、こちらでは決めません。
+            集まらなかったぶんは、あやとが自分で出して越えます。<b>旅は止まりません。</b>
+          </p>
+          <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
+            足代を出す（Doneru）
+            <Icon name="external" size={14} />
+          </a>
+        </div>
       </Panel>
 
       <Panel>
@@ -183,8 +201,8 @@ export default async function NordicPage() {
       <div id="voices">
         <CountryIdeas
           country="北欧旅"
-          title="この旅、どうなってほしい？"
-          note="行く前に全部読みます。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も、なんでも。"
+          title="この旅ぜんぶに、言いたいこと"
+          note="区間ごとの話は、上の道しるべへ。ここは、どの区間にも紐づかない話の行き先です。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。行く前に全部読みます。"
           placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
         />
       </div>

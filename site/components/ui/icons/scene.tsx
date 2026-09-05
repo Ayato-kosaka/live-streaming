@@ -318,4 +318,188 @@ export const scene: Record<string, Draw> = {
       <Gl c={c} cx={28} cy={34} rx={1.8} ry={8} r={0} o={0.45} />
     </>
   ),
+
+  /** 港町。ベルゲンのような、細くて色の違う切妻の家が並ぶ岸。 */
+  harbor: (c) => (
+    <>
+      <path d="M7 20 15 9l8 11v22H7z" fill={c.rd} />
+      <path d="M15 9l8 11v22h-8z" fill={c.rdd} />
+      <path d="M23 16 31 5l8 11v26H23z" fill={c.gd} />
+      <path d="M31 5l8 11v26h-8z" fill={c.gdd} />
+      <path d="M39 20 47 9l8 11v22H39z" fill={c.tl} />
+      <path d="M47 9l8 11v22h-8z" fill={c.tld} />
+      <g fill={c.cr}>
+        <rect x="11" y="24" width="7" height="7" rx="1.6" />
+        <rect x="27" y="21" width="7" height="7" rx="1.6" />
+        <rect x="43" y="24" width="7" height="7" rx="1.6" />
+        <rect x="12" y="35" width="6" height="7" rx="1.6" />
+        <rect x="28" y="33" width="6" height="9" rx="1.6" />
+        <rect x="44" y="35" width="6" height="7" rx="1.6" />
+      </g>
+      <rect x="2" y="41" width="60" height="5" rx="2.5" fill={c.wo} />
+      <rect x="1" y="45" width="62" height="14" rx="6" fill={c.bl} />
+      <path d="M3 50c6-3 10 3 16 0s10 3 16 0 10 3 16 0 6-.6 10-2v5c-4 1.4-6 1.6-10 3-6 2-10-3-16 0s-10-3-16 0-10 3-16 0z" fill={c.tl} opacity={c.flat ? 1 : 0.85} />
+      <Gl c={c} cx={12} cy={16} rx={2} ry={5} r={30} o={0.4} />
+    </>
+  ),
+
+  /** 旧市街。屋根の高さをずらして4棟。奥に時計塔を1本立てる。 */
+  oldtown: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={27} ry={3.4} />
+      <rect x="40" y="6" width="15" height="48" rx="3" fill={c.crd} />
+      <path d="M47.5 1 58 9.4a1.8 1.8 0 0 1-1.1 3.2H38.1A1.8 1.8 0 0 1 37 9.4z" fill={c.tld} />
+      <circle cx="47.5" cy="20" r="5.4" fill={c.w} />
+      <path d="M47.5 16.6v3.4h2.6" fill="none" stroke={c.ink} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M4 22 15 13l11 9v32H4z" fill={c.wo} />
+      <path d="M15 13l11 9v32H15z" fill={c.wod} />
+      <path d="M24 27 34 19l10 8v27H24z" fill={c.cr} />
+      <path d="M34 19l10 8v27H34z" fill={c.crd} />
+      <path d="M2 22h27l-3-4H5z" fill={c.rd} />
+      <path d="M22 27h24l-3-4H25z" fill={c.rdd} />
+      <g fill={c.sk}>
+        <rect x="9" y="28" width="6" height="8" rx="1.8" />
+        <rect x="17" y="28" width="6" height="8" rx="1.8" />
+        <rect x="29" y="33" width="6" height="8" rx="1.8" />
+        <rect x="37" y="33" width="5" height="8" rx="1.8" />
+        <rect x="44" y="33" width="7" height="8" rx="1.8" />
+      </g>
+      <rect x="12" y="43" width="9" height="11" rx="2.6" fill={c.br} />
+      <rect x="32" y="45" width="9" height="9" rx="2.4" fill={c.brd} />
+      <Gl c={c} cx={8} cy={27} rx={2} ry={5} r={12} o={0.4} />
+    </>
+  ),
+
+  /** モスク。中東の回。丸屋根と細い塔2本、上に月。 */
+  mosque: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.4} />
+      <g fill={c.cr}>
+        <rect x="4" y="24" width="9" height="32" rx="4.5" />
+        <rect x="51" y="24" width="9" height="32" rx="4.5" />
+      </g>
+      <g fill={c.crd}>
+        <rect x="8.5" y="24" width="4.5" height="32" rx="2.2" />
+        <rect x="55.5" y="24" width="4.5" height="32" rx="2.2" />
+      </g>
+      <path d="M8.5 12c3 4 4.5 7 4.5 10H4c0-3 1.5-6 4.5-10z" fill={c.tl} />
+      <path d="M55.5 12c3 4 4.5 7 4.5 10h-9c0-3 1.5-6 4.5-10z" fill={c.tl} />
+      <rect x="15" y="34" width="34" height="22" rx="3" fill={c.cr} />
+      <path d="M32 34h17v22H32z" fill={c.crd} />
+      <path d="M32 10c9.4 0 16 7.6 16 16.6 0 3-1.4 4.4-4.4 4.4H20.4c-3 0-4.4-1.4-4.4-4.4C16 17.6 22.6 10 32 10z" fill={c.tl} />
+      <path d="M32 10c9.4 0 16 7.6 16 16.6 0 3-1.4 4.4-4.4 4.4H32z" fill={c.tld} />
+      <path d="M32 1.6c1.4 2.6 2.2 4.2 2.2 5.6a2.2 2.2 0 0 1-4.4 0c0-1.4.8-3 2.2-5.6z" fill={c.gd} />
+      <path d="M25 56V45a7 7 0 0 1 14 0v11z" fill={c.br} />
+      <g fill={c.sk}>
+        <rect x="18" y="38" width="6" height="8" rx="3" />
+        <rect x="40" y="38" width="6" height="8" rx="3" />
+      </g>
+      <Gl c={c} cx={24} cy={19} rx={4} ry={6} r={38} o={0.4} />
+    </>
+  ),
+
+  /** ピラミッド。エジプトの回。日の当たる面と影の面を斜めで割る。 */
+  pyramid: (c) => (
+    <>
+      <path d="M1 46h62v6a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.crd} />
+      <circle cx="52" cy="15" r="9" fill={c.or} />
+      {/* クリームで塗ると紙の地に沈むので、砂の色（一段濃い）で塗る */}
+      <path d="M42 22 52 46H32z" fill={c.wol} />
+      <path d="M42 22 52 46h-10z" fill={c.wo} />
+      <path d="M22 8 42 46H2z" fill={c.wol} />
+      <path d="M22 8 42 46H22z" fill={c.wo} />
+      <g stroke={c.wod} strokeWidth="1.6" opacity="0.45">
+        <path d="M12 27h20M8 36h28" />
+      </g>
+      <ellipse cx="18" cy="49" rx="14" ry="3" fill={c.wod} opacity="0.4" />
+      <Gl c={c} cx={17} cy={26} rx={2} ry={9} r={22} o={0.4} />
+    </>
+  ),
+
+  /** 砂漠。稜線を3本重ねて、奥ほど淡くする。らくだで「渡った」と言う。 */
+  desert: (c) => (
+    <>
+      <circle cx="15" cy="14" r="9" fill={c.gd} />
+      <path d="M1 30c12-8 22 2 34-2s20-6 28-2v16H1z" fill={c.crd} />
+      <path d="M1 38c10-6 18 2 30-1s24-5 32-1v14a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.cr} />
+      {/* らくだ。ふたこぶと、上げた首。細かく描かず、影の面だけで丸みを出す */}
+      <g fill={c.wod}>
+        <rect x="18" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="25" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="34" y="38" width="3.6" height="12" rx="1.8" />
+        <rect x="41" y="38" width="3.6" height="12" rx="1.8" />
+      </g>
+      <path d="M14 36c-3-1-5-3-6-6l3-1c1 2 2 3 4 4z" fill={c.wod} />
+      <path d="M22 26c1.6-5 3.2-7.4 5-7.4s3.4 2.4 5 7.4zM34 26c1.6-5 3.2-7.4 5-7.4s3.4 2.4 5 7.4z" fill={c.wo} />
+      <path d="M14 34c0-5 4-8 11-8h14c6 0 9 3 9 8s-3 7-9 7H25c-7 0-11-2-11-7z" fill={c.wo} />
+      <path d="M32 26h7c6 0 9 3 9 8s-3 7-9 7h-7z" fill={c.wod} opacity="0.5" />
+      <path d="M44 31c0-5 1.4-9.6 3.6-14l4.4 1.6c-2 3.8-3.2 7.6-3.2 12z" fill={c.wo} />
+      <path d="M47 15.6c1.4-2.6 4.4-3.2 6.4-1.2l4 3.8-6.6 3z" fill={c.wod} />
+      <g fill={c.crd} opacity="0.5">
+        <ellipse cx="12" cy="50" rx="7" ry="2" />
+        <ellipse cx="50" cy="53" rx="6" ry="1.8" />
+      </g>
+      <Gl c={c} cx={10} cy={9} rx={3} ry={2} r={-30} o={0.5} />
+    </>
+  ),
+
+  /** 氷河。海に浮かぶ氷。水面の下が青く続いているのを見せる。 */
+  glacier: (c) => (
+    <>
+      <rect x="1" y="34" width="62" height="25" rx="9" fill={c.bl} />
+      <path d="M20 8 34 34H4z" fill={c.w} />
+      <path d="M20 8l14 26H20z" fill={c.wd} />
+      <path d="M44 16 56 34H32z" fill={c.w} />
+      <path d="M44 16l12 18H44z" fill={c.wd} />
+      <path d="M2 34h60v6H2z" fill={c.sk} opacity={c.flat ? 1 : 0.85} />
+      <path d="M8 40h22l-4 8H10z" fill={c.skd} opacity="0.7" />
+      <path d="M36 40h18l-3 6H38z" fill={c.skd} opacity="0.7" />
+      <path d="M4 47c6-3 10 3 16 0s10 3 16 0 10 3 16 0 6-.6 10-2v5.6a6 6 0 0 1-6 5.4H7a6 6 0 0 1-6-6z" fill={c.tl} opacity={c.flat ? 1 : 0.75} />
+      <Gl c={c} cx={17} cy={20} rx={2.2} ry={7} r={20} o={0.7} />
+    </>
+  ),
+
+  /** フィヨルド。両岸を高く立てて、あいだの水を細く残す。 */
+  fjord: (c) => (
+    <>
+      <rect x="1" y="6" width="62" height="52" rx="10" fill={c.sk} />
+      <path d="M1 40h62v8a10 10 0 0 1-10 10H11A10 10 0 0 1 1 48z" fill={c.bl} />
+      <path d="M1 38h62v6H1z" fill={c.bld} opacity="0.4" />
+      <path d="M1 16c0-5.5 4.5-10 10-10h5l14 34H1z" fill={c.gr} />
+      <path d="M16 6l14 34H14z" fill={c.grd} />
+      <path d="M63 20v28a10 10 0 0 1-10 10h-3L36 40 50 12z" fill={c.grd} />
+      <path d="M50 12 36 40h14z" fill={c.gr} />
+      <path d="M11 6h5l4 9.6c-4 1-7 .6-10-1.6z" fill={c.w} />
+      <path d="M50 12l4 8c-3 1.6-6 1.6-9 0z" fill={c.w} />
+      <path d="M4 47c5-2.4 8 2.4 13 0s8 2.4 13 0 8 2.4 13 0 6-.4 9-1.6v4.4c-3 1.4-5 1.4-9 2.8-5 1.8-8-2.4-13 0s-8-2.4-13 0-8 2.4-13 0z" fill={c.w} opacity="0.45" />
+      <path d="M30 43h9l-1.6 3.4a2 2 0 0 1-1.8 1.1h-2.2a2 2 0 0 1-1.8-1.1z" fill={c.rd} />
+      <path d="M34 33h1.8v10H34z" fill={c.wod} />
+      <path d="M36.4 34 43 39l-6.6 3z" fill={c.w} />
+      <Gl c={c} cx={10} cy={22} rx={2} ry={6} r={18} o={0.35} />
+    </>
+  ),
+
+  /** カフェ。日よけと、外に出した丸テーブル。 */
+  cafe: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={26} ry={3.4} />
+      <rect x="6" y="18" width="52" height="34" rx="4" fill={c.cr} />
+      <path d="M32 18h22a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H32z" fill={c.crd} />
+      <rect x="11" y="26" width="20" height="16" rx="3" fill={c.sk} />
+      <rect x="38" y="26" width="15" height="26" rx="3" fill={c.br} />
+      <circle cx="41.6" cy="39" r="1.6" fill={c.gd} />
+      <path d="M2 12h60v6H2z" fill={c.grd} />
+      <path d="M4 18h56l-1 3.6c-3.6 0-4.6 3.4-8 3.4s-4.4-3.4-8-3.4-4.4 3.4-8 3.4-4.4-3.4-8-3.4-4.4 3.4-8 3.4-4.4-3.4-8-3.4z" fill={c.gr} />
+      <g fill={c.w} opacity="0.85">
+        <path d="M13 18h7l-1.6 6.8c-1.8-.6-2.8-2.4-4.6-3z" />
+        <path d="M29 18h7l-1.4 7c-2 0-3.2-3-5.6-3.4z" />
+        <path d="M45 18h7l-1.4 7c-2 0-3.2-3-5.6-3.4z" />
+      </g>
+      <rect x="14" y="46" width="4" height="10" rx="2" fill={c.wod} />
+      <ellipse cx="16" cy="46" rx="11" ry="3.4" fill={c.wo} />
+      <ellipse cx="16" cy="45" rx="11" ry="3.4" fill={c.wol} />
+      <path d="M12 40h7l-.8 4a1.8 1.8 0 0 1-1.8 1.4h-1.8A1.8 1.8 0 0 1 12.8 44z" fill={c.w} />
+      <Gl c={c} cx={12} cy={22} rx={5} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
 };

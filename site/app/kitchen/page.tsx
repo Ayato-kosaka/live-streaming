@@ -45,8 +45,10 @@ export default function KitchenPage() {
   const peak = Math.max(...months.map((x) => x.n));
   const busiest = months.find((x) => x.n === peak)!;
 
+  // キッチン小屋は島に建っていて、島から直接押して入る。配信やぐらの下に
+  // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: "キッチン小屋" }]}>
+    <PageShell crumbs={[{ label: "キッチン小屋" }]}>
       <PageHead
         icon="hut-kitchen"
         title="クッキング・スタンプ帳"

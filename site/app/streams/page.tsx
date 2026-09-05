@@ -12,10 +12,11 @@ import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import WeekRail from "@/components/streams/WeekRail";
 import { Vid } from "@/components/streams/Vid";
+import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
-  title: "どんな配信をしてるか",
+  title: "配信やぐら",
   description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
 };
 
@@ -37,25 +38,52 @@ export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
     <PageShell current="streams" crumbs={[{ label: "配信やぐら" }]}>
+      {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
+          「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead
         icon="tower-studio"
-        title="どんな配信をしてるか"
-        lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つに分かれています。"
+        title="配信やぐら"
+        lead="どんな配信をしてるか。毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
         say={GUIDE.streams}
       />
 
-      <Panel>
-        <h2>
-          <ArtCam size={30} /> 今夜は、何をやってる日
-        </h2>
-        <WeekRail />
-        <div className="stats" style={{ marginTop: 16 }}>
-          <Stat value={<LiveNumber statKey="streams" fallback={s.streams} />} label="配信した回数" sub={`${s.since.replace(/-/g, "/")} から`} />
-          <Stat value={<LiveNumber statKey="streamDays" fallback={s.streamDays} />} label="配信した日数" sub="休んだ日のほうが少ない" />
-          <Stat value={<LiveNumber statKey="comments" fallback={s.comments} />} label="流れたコメント" sub="月末に全部読み返す" />
-          <Stat value={<LiveNumber statKey="people" fallback={s.people} />} label="のべ参加人数" sub="島の住人になった人も" />
-        </div>
-      </Panel>
+      {/* 番組表と数えたものは「やぐらに貼ってある紙」。押すものではないので、
+          板の見出しと板の数字カードをやめて、蛍光ペンの帯と罫のます目にする
+          （`docs/ac-reference.md` 7章 / `docs/island-world.md` 2.1）。 */}
+      <Sheet>
+        <Zone>
+          <H art={<ArtCam size={32} />}>今夜は、何をやってる日</H>
+          <WeekRail />
+        </Zone>
+        <Zone tight>
+          <Rec
+            items={[
+              {
+                n: <LiveNumber statKey="streams" fallback={s.streams} />,
+                unit: "回",
+                label: "配信した",
+                note: `${s.since.replace(/-/g, "/")} から`,
+              },
+              {
+                n: <LiveNumber statKey="streamDays" fallback={s.streamDays} />,
+                unit: "日",
+                label: "配信した日数",
+                note: "休んだ日のほうが少ない",
+              },
+              {
+                n: <LiveNumber statKey="comments" fallback={s.comments} />,
+                label: "流れたコメント",
+                note: "月末に全部読み返す",
+              },
+              {
+                n: <LiveNumber statKey="people" fallback={s.people} />,
+                label: "のべ参加人数",
+                note: "島の住人になった人も",
+              },
+            ]}
+          />
+        </Zone>
+      </Sheet>
 
       <div className="tys">
         {STREAM_TYPES.map((t, i) => {
@@ -114,7 +142,7 @@ export default function StreamsPage() {
         })}
       </div>
 
-      <Panel>
+      <Panel className="paper">
         <h2>配信のあとに、島に残るもの</h2>
         <p className="muted">やった日は流れていくけれど、作ったものと大きい企画はここにたまっていきます。</p>
         <div className="tiles" style={{ marginTop: 14 }}>
@@ -137,16 +165,5 @@ export default function StreamsPage() {
         </div>
       </Panel>
     </PageShell>
-  );
-}
-
-/** 数字ひとつ。`Bits.tsx` の Stat と同じ形だが、説明を必ず1行付ける。 */
-function Stat({ value, label, sub }: { value: React.ReactNode; label: string; sub: string }) {
-  return (
-    <div className="stat">
-      <b>{value}</b>
-      <span>{label}</span>
-      <i>{sub}</i>
-    </div>
   );
 }

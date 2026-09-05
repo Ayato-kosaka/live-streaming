@@ -9,8 +9,11 @@ const PORT = process.env.PORT || "3000";
  * 「見た目がズレている」を目視で通さないための検査（docs/island-design.md）。
  * 島を触ったら必ず回す。
  */
+// 島に建っているものは全部押せる（docs/island-design.md 6章）。看板の有無に関わらず全部見る。
 const NAMES = { "tower-studio": "配信やぐら", "hut-workshop": "アプリ工房", "signpost": "旅の桟橋",
-  "tent": "これから", "signboard": "企画掲示板", "campfire": "たき火広場" };
+  "tent": "これから", "signboard": "企画掲示板", "campfire": "たき火広場",
+  "hut-kitchen": "キッチン小屋", "hall-museum": "伝説の丘", "mailbox": "いまのポスト",
+  "tent-small": "仲間のテント" };
 
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args:["--no-sandbox"]});
 let bad = 0;
@@ -21,7 +24,7 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   await p.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await p.waitForTimeout(3000);
-  if (wide) { const z = await p.$(".bar-zoom"); if (z) await z.click(); await p.waitForTimeout(2500); }
+  if (wide) { const z = await p.$(".stage-view") ?? await p.$(".bar-zoom"); if (z) await z.click({ force: true }); await p.waitForTimeout(2500); }
 
   const rows = await p.evaluate((names) => {
     const imgs = [...document.querySelectorAll(".stage-svg image")];

@@ -163,13 +163,17 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         <Zone>
           <H art={<ArtBook size={32} />}>この型は、どういうものか</H>
           <p className="zk-lead">{t.lead}</p>
-          <div className="folds" style={{ marginTop: 14 }}>
-            <Fold title="もう少し細かく" lead={t.body[0]} note={`${t.body.length}つ`}>
-              {t.body.map((p, k) => (
-                <p key={k}>{p}</p>
-              ))}
-            </Fold>
-          </div>
+          {/* 畳んだときに見える1行が、開いたあと同じ場所にもう一度出ていた。
+              先頭の段落は見出しの下に置いたままにして、続きだけを中に入れる。 */}
+          {t.body.length > 1 && (
+            <div className="folds" style={{ marginTop: 14 }}>
+              <Fold title="もう少し細かく" lead={t.body[0]} note={`あと${t.body.length - 1}つ`}>
+                {t.body.slice(1).map((p, k) => (
+                  <p key={k}>{p}</p>
+                ))}
+              </Fold>
+            </div>
+          )}
         </Zone>
 
         <Zone>

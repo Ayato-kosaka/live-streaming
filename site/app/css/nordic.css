@@ -37,13 +37,17 @@
   letter-spacing: var(--ls-head);
   color: var(--ink);
 }
-.tnow-top p {
+/* h1 のすぐ下の1行。h1 が場所の名前になったぶん、企画の芯はここが背負う。
+   だから本文より一段大きくして、頭の一文だけ濃くする（docs/island-world.md 7.5）。 */
+.tnow-lead {
   margin: 9px 0 0;
-  font-size: 13.5px;
-  line-height: 1.9;
+  font-size: 14.5px;
+  line-height: 1.85;
   font-weight: 700;
   color: var(--ink-2);
 }
+.tnow-lead b { font-weight: 900; color: var(--ink); }
+.tnow-top p { margin: 9px 0 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; color: var(--ink-2); }
 .tnow-top b { font-weight: 900; color: var(--ink); }
 
 /* --- あと何日 / あと何km --- */
@@ -319,13 +323,19 @@
 .rleg-stay { font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
 
 /* --- 区間の席 ---
-   区間カードには席がある。いまは「道しるべ（言葉）」だけ。
-   足代（お金）の席は、区間ごとの実費と GET /fund が入ってから同じ形で足す。
+   区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
+   両方そろって、その区間はつながる（docs/nordic-fund.md 提案1）。
    席は罫線で仕切る。紙の型なので、中に板を積まない。 */
 .rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; }
-.rleg-seat > h3 {
-  display: inline-block;
+.rleg-seath {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 8px;
+}
+/* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
+   席の名前は紙の h3 なので、ここが使いどころ。 */
+.rleg-seath span {
   padding: 2px 10px;
   font-size: 12px;
   font-weight: 900;
@@ -334,21 +344,195 @@
   background: var(--marker);
   color: var(--marker-ink);
 }
+.seatmark { flex: none; display: block; }
+
+/* --- つながりの読み上げ ---
+   埋まっていない区間を灰色にしない。灰色は失敗の色になる。
+   同じ明るさのまま、席が空いていることだけを言う。
+   つながったかどうかは**絵と言葉で言う。色を足さない。**
+   色に意味を1つずつ割りあててあるので、そこに無い意味の色を作らない
+   （docs/island-world.md 3章）。塗りも持たない。紙の区切りは罫線1本。 */
+.rtie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 13px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+.rtie.is-tied { color: var(--ink); }
+.rtie b { font-weight: 900; color: var(--ink); }
+
+/* --- 足代 ---
+   金額は「区間の値段」と「その区間に入った額」だけ。
+   誰がいくら出したかも、順位も、どこにも出さない。 */
+.fare-what {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+.fare-what b { font-weight: 900; color: var(--ink); }
+.fare-what i {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+/* まだ値段が決まっていない区間。空欄にせず、調べていると書く。
+   「未定」と灰色で置くと、そこだけ死んでいるように見える。 */
+.fare-todo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 9px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+.fare-todo b { font-weight: 900; color: var(--ink); }
+.fare-todo i {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink-3);
+}
+/* バーは押せない。だから厚みも金も付けない。
+   入った額は「数えたもの」なので、色はオリーブ（docs/island-world.md 3.2）。 */
+.fare-bar {
+  display: block;
+  margin: 9px 0 6px;
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--rule) 24%, transparent);
+  overflow: hidden;
+}
+.fare-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--chip);
+}
+.fare-got { margin: 0; font-size: 12px; font-weight: 800; color: var(--ink-2); }
+.fare-got b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* 満ちたらバーを消す。満タンのバーを出し続けると
+   「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。
+   代わりの札も作らない。1行の言葉で足りる。 */
+.fare-full {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* --- 意見と道しるべを貼る道具 ---
+   `.bpost` `.bin-name` は `components/nordic` の2か所だけで使っている。
+   どこにも段が書かれていなくて、貼るボタンがただの文字に見えていた。
+   押せるものは厚みで言う（docs/island-world.md 3.4）。
+   書く欄は逆に、へこませる（`.bin` と同じ考え方）。 */
+.bin-name {
+  width: 100%;
+  max-width: 260px;
+  margin-top: 9px;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 10px 15px;
+  min-height: 44px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: var(--paper-2);
+  box-shadow: inset 0 2px 5px color-mix(in srgb, var(--frame-deep) 20%, transparent);
+}
+.bpost {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  min-height: 48px;
+  padding: 11px 22px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
+  box-shadow: var(--pop);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.bpost:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+.bpost:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+
+/* --- ボード全体 ---
+   人数はここに1回だけ。区間ごとには出さない（人違いが起きない作りにしてある）。 */
+.carried {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.carried b { font-weight: 900; color: var(--ink); }
+.carry-give { margin-top: 16px; }
+.carry-give p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.carry-give b { font-weight: 900; color: var(--ink); }
+/* 押せるものなので、厚みを付ける。押せる合図は厚みだけ
+   （docs/island-world.md 3.4）。面は他のボタンと同じクリーム。 */
+.carry-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 10px 18px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
+  box-shadow: var(--pop);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.carry-go:active { transform: translateY(4px); box-shadow: var(--pop-push); }
 .spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
 .spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
 .spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
 .spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
 .spost-foot i { font-style: normal; font-size: 10.5px; font-weight: 900; color: var(--ink-3); }
-/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。 */
+/* 読み込み中。中身の形をした薄い板だけ置いて、場所を先に取る。
+   出たとたんに下がずれるのを防ぐのが役目なので、動かさない。 */
+.spost-wait { display: grid; gap: 8px; margin: 0 0 12px; }
+.spost-wait span {
+  display: block;
+  height: 13px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--rule) 22%, transparent);
+}
+.spost-wait span:last-child { width: 62%; }
+
+/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。
+   つながりの読み上げ（.rtie）がすぐ上にあるので、塗りは重ねず罫線1本にする。
+   同じ濃さの札が2つ続くと、どちらも読まれない。 */
 .spost-none {
   margin: 0 0 10px;
-  padding: 8px 11px;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--marker);
   font-size: 12px;
   font-weight: 800;
-  border-radius: var(--r-0);
-  background: color-mix(in srgb, var(--marker) 46%, transparent);
-  color: var(--marker-ink);
+  line-height: 1.75;
+  color: var(--ink-3);
 }
 
 /* =========================================================

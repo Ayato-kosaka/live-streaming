@@ -30,12 +30,12 @@ export default function FriendsPage() {
   const says = [0, 6, 13].map((i) => VOICES[i]).filter(Boolean);
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやと島について", href: "/about" }, { label: "愉快な仲間達" }]}>
+    <PageShell crumbs={[{ label: "愉快な仲間達" }]}>
       <PageHead
         mark={<FriendsMark />}
         title="愉快な仲間達"
         lead="毎晩22時に集まってくる人たち。名前は出しませんが、ちゃんとここにいます。"
-        say="ここに並んでるのは、みんな本人だよ。自分で作った絵が、そのまま島を歩いてる。"
+        say="自分のキャラクターも作れるよ。作った絵は、そのまま島を歩くんだ。"
       />
 
       <div className="pap-mat">
@@ -126,11 +126,24 @@ export default function FriendsPage() {
 
           <section className="pap-sec">
             <h2 className="pap-h">名前を出すか、出さないか</h2>
-            <p>
-              何もしなければ、キャラクターだけが島にいて名前は出ません。
-              名前とYouTubeのアイコンを島に出したい人は、企画掲示板でログインして「島での見え方」から選べます。
-              出したあとで、やっぱり止めることもできます。
-            </p>
+            {/* 決まりが2通りあるのに、これまでログインした人の話しか書いていなかった。
+                自分がどちらなのかで読む行が変わるので、2つ並べて先に選ばせる。 */}
+            <ul className="pap-rule">
+              <li>
+                <b>ログインしないで使う</b>
+                <i>
+                  企画掲示板は名前もログインも要りません。名前の欄はありますが、
+                  空のままでも貼れます。書けば、その名前だけが札に出ます。
+                </i>
+              </li>
+              <li>
+                <b>YouTubeでログインする</b>
+                <i>
+                  名前とアイコンが出るようになります。出したくないものは
+                  「島での見え方」で片方ずつ消せます。両方消しても、企画は出せます。
+                </i>
+              </li>
+            </ul>
             <p className="pap-note">
               「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
               個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。

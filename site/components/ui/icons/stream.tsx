@@ -262,4 +262,184 @@ export const stream: Record<string, Draw> = {
       <Gl c={c} cx={27} cy={15} rx={3.4} ry={2.4} r={-30} o={0.5} />
     </>
   ),
+
+  /** ノートパソコン。編集の回。画面に並べた帯で「切って並べている」と言う。 */
+  laptop: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={27} ry={3.4} />
+      <path d="M11 7h42a4 4 0 0 1 4 4v27H7V11a4 4 0 0 1 4-4z" fill={c.nv} />
+      <rect x="11" y="11" width="42" height="23" rx="2.6" fill={c.tl} />
+      <rect x="11" y="11" width="42" height="7" rx="2.6" fill={c.tld} />
+      <g fill={c.cr}>
+        <rect x="14" y="21" width="17" height="4" rx="2" />
+        <rect x="33" y="21" width="10" height="4" rx="2" />
+        <rect x="14" y="28" width="9" height="4" rx="2" />
+        <rect x="25" y="28" width="20" height="4" rx="2" />
+      </g>
+      <rect x="46" y="21" width="4.4" height="11" rx="2.2" fill={c.or} />
+      <path d="M3 40h58a3 3 0 0 1 2.9 3.8l-1 3.6A4 4 0 0 1 59 50H5a4 4 0 0 1-3.9-2.6l-1-3.6A3 3 0 0 1 3 40z" fill={c.gy} />
+      <path d="M32 40h29a3 3 0 0 1 2.9 3.8l-1 3.6A4 4 0 0 1 59 50H32z" fill={c.gyd} />
+      <rect x="24" y="41.6" width="16" height="3" rx="1.5" fill={c.gyd} />
+      <Gl c={c} cx={16} cy={14} rx={5} ry={1.8} r={-5} o={0.45} />
+    </>
+  ),
+
+  /** 三脚。脚の開きが「据えて撮っている」の合図。 */
+  tripod: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={24} ry={3.2} />
+      <g stroke={c.gyd} strokeWidth="5.4" strokeLinecap="round">
+        <path d="M32 28 12 55" />
+        <path d="M32 28 52 55" />
+      </g>
+      <path d="M32 28v27" stroke={c.gy} strokeWidth="5.4" strokeLinecap="round" />
+      <rect x="18" y="38" width="28" height="4" rx="2" fill={c.gy} transform="rotate(-3 32 40)" />
+      <rect x="24" y="22" width="16" height="7" rx="3" fill={c.gyd} />
+      <rect x="14" y="8" width="34" height="16" rx="5" fill={c.nv} />
+      <path d="M42 8a6 6 0 0 1 6 6v4a6 6 0 0 1-6 6H32V8z" fill={c.bld} opacity="0.5" />
+      <circle cx="26" cy="16" r="6" fill={c.sk} />
+      <circle cx="26" cy="16" r="2.8" fill={c.nv} />
+      <rect x="40" y="4" width="9" height="5" rx="2.5" fill={c.gyd} />
+      <Gl c={c} cx={19} cy={11} rx={3.4} ry={1.4} r={-6} o={0.5} />
+    </>
+  ),
+
+  /** リングライト。輪の真ん中にレンズを置くと、輪の穴が抜けて見える。 */
+  ringlight: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={16} ry={3.2} />
+      <circle cx="32" cy="24" r="21" fill={c.yl} />
+      <circle cx="32" cy="24" r="12.5" fill={c.gy} />
+      <circle cx="32" cy="24" r="9" fill={c.nv} />
+      <circle cx="32" cy="24" r="5" fill={c.tld} />
+      <circle cx="29.6" cy="21.6" r="2" fill={c.w} opacity="0.8" />
+      <path d="M30 45h4v9h-4z" fill={c.gyd} />
+      <path d="M18 56h28a2.6 2.6 0 0 0 0-5.2H18a2.6 2.6 0 0 0 0 5.2z" fill={c.gy} />
+      <g fill={c.w} opacity="0.6">
+        <path d="M20 12a17 17 0 0 1 8-6l1.6 3.4A13.6 13.6 0 0 0 22.8 14z" />
+      </g>
+      <Gl c={c} cx={19} cy={16} rx={2.4} ry={5} r={30} o={0.55} />
+    </>
+  ),
+
+  /** SDカード。欠けた角と金色の端子。撮った素材の置き場。 */
+  sdcard: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={3.4} />
+      <path d="M17 6h20l10 10v34a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V11a5 5 0 0 1 5-5z" fill={c.bl} />
+      <path d="M32 6h5l10 10v34a5 5 0 0 1-5 5H32z" fill={c.bld} />
+      <g fill={c.gd}>
+        <rect x="17" y="12" width="4.4" height="12" rx="2.2" />
+        <rect x="24" y="12" width="4.4" height="12" rx="2.2" />
+        <rect x="31" y="16" width="4.4" height="8" rx="2.2" />
+        <rect x="38" y="19" width="4.4" height="5" rx="2.2" />
+      </g>
+      <rect x="17" y="31" width="30" height="18" rx="3" fill={c.w} />
+      <path d="M32 31h15v18H32z" fill={c.wd} />
+      <rect x="21" y="36" width="16" height="3" rx="1.5" fill={c.bld} opacity="0.5" />
+      <rect x="21" y="42" width="11" height="3" rx="1.5" fill={c.bld} opacity="0.5" />
+      <Gl c={c} cx={21} cy={14} rx={2} ry={5} r={4} o={0.5} />
+    </>
+  ),
+
+  /** 電池。残りが減っていく回で使う。目盛りを3つに割る。 */
+  battery: (c) => (
+    <>
+      <Sh c={c} cy={52} rx={26} ry={3.4} />
+      <rect x="56" y="24" width="7" height="14" rx="3" fill={c.gyd} />
+      <rect x="2" y="14" width="55" height="34" rx="8" fill={c.gy} />
+      <path d="M49 14a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H32V14z" fill={c.gyd} />
+      <rect x="7" y="19" width="45" height="24" rx="4" fill={c.w} />
+      <g fill={c.gr}>
+        <rect x="10" y="22" width="12" height="18" rx="2.6" />
+        <rect x="25" y="22" width="12" height="18" rx="2.6" />
+      </g>
+      <rect x="25" y="22" width="12" height="18" rx="2.6" fill={c.grd} />
+      <rect x="40" y="22" width="9" height="18" rx="2.6" fill={c.wd} />
+      <Gl c={c} cx={12} cy={20} rx={6} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** アップロード。雲へ上げる。矢は白のままだと消えるので緑を敷く。 */
+  upload: (c) => (
+    <>
+      <path d="M18 46a13 13 0 0 1-1.6-25.9A16 16 0 0 1 46.3 17 12.5 12.5 0 0 1 48 46z" fill={c.sk} />
+      <path d="M32 46h16a12.5 12.5 0 0 0 1.7-24.9 16 16 0 0 0-17.4-9z" fill={c.skd} />
+      <path d="M32 24.6c1 0 2 .4 2.8 1.2l10.4 10.4c1.8 1.8.5 4.8-2 4.8H38v9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4v-9h-5.2c-2.5 0-3.8-3-2-4.8l10.4-10.4c.8-.8 1.8-1.2 2.8-1.2z" fill={c.grd} />
+      <path d="M32 27c.5 0 1 .2 1.4.6l10.4 10.4c.9.9.3 2.4-1 2.4h-7.2v11a2 2 0 0 1-2 2h-3.2a2 2 0 0 1-2-2V40.4h-7.2c-1.3 0-1.9-1.5-1-2.4L30.6 27.6c.4-.4.9-.6 1.4-.6z" fill={c.gr} />
+      <Gl c={c} cx={22} cy={26} rx={5.4} ry={3} r={-24} o={0.7} />
+    </>
+  ),
+
+  /** フィルム。編集して切り貼りする素材。穴の列で「映像」だと分かる。 */
+  film: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={26} ry={3.4} />
+      <rect x="2" y="12" width="60" height="38" rx="6" fill={c.nv} />
+      <g fill={c.cr}>
+        <rect x="6" y="16" width="6" height="5" rx="1.8" />
+        <rect x="17" y="16" width="6" height="5" rx="1.8" />
+        <rect x="28" y="16" width="6" height="5" rx="1.8" />
+        <rect x="39" y="16" width="6" height="5" rx="1.8" />
+        <rect x="50" y="16" width="6" height="5" rx="1.8" />
+        <rect x="6" y="41" width="6" height="5" rx="1.8" />
+        <rect x="17" y="41" width="6" height="5" rx="1.8" />
+        <rect x="28" y="41" width="6" height="5" rx="1.8" />
+        <rect x="39" y="41" width="6" height="5" rx="1.8" />
+        <rect x="50" y="41" width="6" height="5" rx="1.8" />
+      </g>
+      <rect x="6" y="24" width="16" height="14" rx="2.6" fill={c.sk} />
+      <rect x="24" y="24" width="16" height="14" rx="2.6" fill={c.gr} />
+      <rect x="42" y="24" width="16" height="14" rx="2.6" fill={c.or} />
+      <path d="M6 31h16v7H6z" fill={c.skd} opacity="0.6" />
+      <path d="M24 31h16v7H24z" fill={c.grd} opacity="0.6" />
+      <path d="M42 31h16v7H42z" fill={c.ord} opacity="0.6" />
+      <Gl c={c} cx={12} cy={16} rx={6} ry={1.4} r={-4} o={0.4} />
+    </>
+  ),
+
+  /** はさみ。切るところ。刃と持ち手を別の色にして、開きを見せる。 */
+  scissors: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={17} ry={3.2} />
+      <path d="M20.6 4.6 41 40.6l-6 3.4L14.6 8z" fill={c.gy} />
+      <path d="M20.6 4.6 41 40.6l-3 1.7L17.6 6.3z" fill={c.w} opacity={c.flat ? 1 : 0.7} />
+      <path d="M43.4 4.6 23 40.6l6 3.4L49.4 8z" fill={c.gyd} />
+      <circle cx="20" cy="49" r="8.4" fill="none" stroke={c.or} strokeWidth="5" />
+      <circle cx="44" cy="49" r="8.4" fill="none" stroke={c.ord} strokeWidth="5" />
+      <circle cx="32" cy="36" r="4.4" fill={c.gd} />
+      <circle cx="32" cy="36" r="1.8" fill={c.gdd} />
+      <Gl c={c} cx={20} cy={14} rx={1.6} ry={6} r={-27} o={0.6} />
+    </>
+  ),
+
+  /** アンケート。棒を横に寝かせて、選ばれた行に印を付ける。 */
+  poll: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={25} ry={3.4} />
+      <rect x="4" y="6" width="56" height="46" rx="6" fill={c.cr} />
+      <path d="M32 6h22a6 6 0 0 1 6 6v34a6 6 0 0 1-6 6H32z" fill={c.crd} />
+      <rect x="10" y="13" width="34" height="7" rx="3.5" fill={c.tl} />
+      <rect x="10" y="25" width="44" height="7" rx="3.5" fill={c.gr} />
+      <rect x="10" y="37" width="22" height="7" rx="3.5" fill={c.or} />
+      <circle cx="52" cy="28.5" r="8" fill={c.grd} />
+      <path d="m48.4 28.6 2.8 2.8 5-5.4" fill="none" stroke={c.w} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <Gl c={c} cx={12} cy={11} rx={6} ry={1.6} r={-4} o={0.5} />
+    </>
+  ),
+
+  /** メンバー。名札に星。続けて見に来てくれる人の印。 */
+  member: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={19} ry={3.4} />
+      <path d="M15 7h34a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H19a8 8 0 0 1-8-8V11a4 4 0 0 1 4-4z" fill={c.tl} />
+      <path d="M32 7h17a4 4 0 0 1 4 4v34a8 8 0 0 1-8 8H32z" fill={c.tld} />
+      <rect x="22" y="3" width="20" height="8" rx="4" fill={c.cr} />
+      <circle cx="32" cy="24" r="8" fill={c.cr} />
+      <path d="M32 34c7.4 0 13 4.6 13 10.4V47H19v-2.6C19 38.6 24.6 34 32 34z" fill={c.cr} />
+      <path d="M32 16a8 8 0 0 1 0 16zM32 34c7.4 0 13 4.6 13 10.4V47H32z" fill={c.crd} />
+      <path d="m48 30 2.2 4.4 4.8.7-3.5 3.4.8 4.8-4.3-2.3-4.3 2.3.8-4.8-3.5-3.4 4.8-.7z" fill={c.gd} />
+      <Gl c={c} cx={19} cy={14} rx={2.6} ry={6} r={16} o={0.45} />
+    </>
+  ),
 };

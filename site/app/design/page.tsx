@@ -115,8 +115,8 @@ const cell: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: 5,
-  padding: "12px 4px 9px",
+  gap: 4,
+  padding: "8px 5px 8px",
   borderRight: `1px solid ${P.rule}55`,
   borderBottom: `1px solid ${P.rule}55`,
 };
@@ -130,17 +130,30 @@ const label: React.CSSProperties = {
   opacity: 0.6,
 };
 
-/** 暗い下地。白い絵が明るい下地で消えていないか、その逆も見る。 */
-const night: React.CSSProperties = {
+/**
+ * 見え方を見る帯。
+ *
+ * 1つの絵につき **大小2サイズ × 明暗2つの下地** の4通りを出す。
+ * 大きいほうだけ見ていると、小さくしたときに潰れる絵を見落とす。
+ * 明るいほうだけ見ていると、白い絵が消えるのを見落とす。逆も同じ。
+ */
+const strip = (bg: string, ink: string): React.CSSProperties => ({
   display: "flex",
   alignItems: "flex-end",
-  gap: 6,
-  height: 26,
-  padding: "0 8px",
-  borderRadius: 6,
-  background: P.dark,
-  color: "#fdf6e6",
-};
+  justifyContent: "center",
+  gap: 8,
+  height: 52,
+  width: "100%",
+  padding: "0 6px 4px",
+  borderRadius: 7,
+  background: bg,
+  color: ink,
+});
+
+/** 暗い下地。明るい下地で消える白い絵は、ここでしか見つからない。 */
+const night = strip(P.dark, "#fdf6e6");
+/** 明るい下地。逆に、暗い絵が紙に沈んでいないかを見る。 */
+const day = strip("#fbf6df", P.ink);
 
 export default function DesignPage() {
   return (
@@ -157,10 +170,13 @@ export default function DesignPage() {
             <div style={grid}>
               {g.names.map((n) => (
                 <div key={n} style={cell}>
-                  <Icon name={n as IconName} size={56} />
-                  <span style={night}>
+                  <span style={day}>
+                    <Icon name={n as IconName} size={40} />
                     <Icon name={n as IconName} size={16} />
-                    <Icon name={n as IconName} size={22} />
+                  </span>
+                  <span style={night}>
+                    <Icon name={n as IconName} size={40} />
+                    <Icon name={n as IconName} size={16} />
                   </span>
                   <i style={label}>{n}</i>
                 </div>

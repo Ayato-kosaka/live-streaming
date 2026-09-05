@@ -22,7 +22,9 @@ export default function NextPage() {
         say={GUIDE.next}
       />
       <NextPlans />
-      <Panel>
+      {/* この面は紙。読むまとまりは紙のパネルにして、押すもの（掲示板へ・企画を作る）
+          だけを板のまま残す（`docs/island-world.md` 2.1）。 */}
+      <Panel className="paper">
         <h2>自分も企画を出したい</h2>
         <p>
           このページに並んでいるものも、ほとんどが誰かの思いつきから始まっています。

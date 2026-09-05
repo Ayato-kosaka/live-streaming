@@ -9,15 +9,30 @@
 }
 
 /* =========================================================
-   入口(建物)の押し方
+   建物の押し方
    ---------------------------------------------------------
-   「押せる」の合図は1種類だけ（docs/island-design.md）。
-   光ときらめきと札を混ぜると、どれが合図でどれが飾りか分からなくなる。
-   夜のランタンと取り違えられたので、光はやめて札だけにした。
+   **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
+   だから「押せる」を印で言う必要がもう無い。建っていること自体が印になる。
+   合図は厚み1種類だけ（`island-world.md` 3.4）。
+   光らせない。きらめかせない。色を変えない。
 
-   6つの入口には、いつも札が立っている。
-     遠い … 小さい丸に「!」
-     近い … 開いて名前と「はいる」が出る
+   前は6つの入口に「!」の札が立っていた。全部の建物が押せるようになると
+   それは10本になり、引きの島で10個が同時に跳ねることになる。
+   全部が叫んでいる画面では、どれも目に入らない
+   （`island-design.md` 3-4「注目させるのは一度に1つ」）。
+
+   **「!」の意味を変えた。「今日ここに何かある」だけに使う。**
+   今日の板（`components/today`）が指している場所に1つだけ立つ。
+   配信中なら配信やぐら、企画の当日なら「これから」、
+   きのう料理を作った日ならキッチン小屋、1年前の今日があれば旅の桟橋。
+   どれも無い日は0本。**だから出た日に本当に目が行く。**
+
+   行き先の一覧は、下のバー（スマホ）とページの頭の並び（PC）が持っている。
+   島の上に一覧を積む必要はない。
+
+     ふだん   … 何も出ない。建物がそこに建っている
+     今日の場所 … 小さい丸に「!」
+     近づいた  … 開いて名前と「はいる」が出る
    ========================================================= */
 .spot {
   position: absolute;
@@ -26,8 +41,10 @@
   width: 0;
   height: 0;
   pointer-events: none;
-  will-change: transform;
 }
+/* 動くのは「いま出ているもの」だけ。隠れている札にまで層を作らせない */
+.spot.is-on,
+.spot.is-today { will-change: transform; }
 
 /* 建物の絵にぴったり重なる、透明な押しボタン。
    絵より小さい入口(たき火など)でも、指で押せる大きさまで広げてある。 */
@@ -49,14 +66,17 @@
 
 /* 札。建物の頭の上に、杭を打って立っている。
    板そのものに厚みを持たせたいので、下向きの box-shadow を「板の側面」として使う。
-   ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。 */
+   ぼかさない影にするのが要点。ぼかすと紙に見えて、木の板に見えない。
+
+   ふだんは出ていない。出るのは「今日の場所」と「近づいた建物」だけ。 */
 .spot-mark {
   position: absolute;
   left: 0;
   top: calc(var(--mh, 48px) * -1 - 12px);
   transform: translate(-50%, -100%);
   transform-origin: 50% 100%;
-  pointer-events: auto;
+  visibility: hidden;
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 0;
@@ -69,6 +89,7 @@
     linear-gradient(var(--paper-2) 0%, var(--gold) 52%, var(--frame) 100%);
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
+  /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
   box-shadow:
     0 4px 0 var(--frame-deep),
     3px 8px 9px var(--cast);
@@ -76,6 +97,14 @@
   white-space: nowrap;
   /* 開くときは keyframes で弾ませる。ここは色と丸みだけ繋ぐ */
   transition: border-radius 0.2s ease, background 0.2s ease, padding 0.2s ease;
+}
+.spot.is-today .spot-mark,
+.spot.is-on .spot-mark {
+  visibility: visible;
+  pointer-events: auto;
+}
+/* 今日ここに何かある、の1本だけが跳ねる */
+.spot.is-today .spot-mark {
   animation: spotHop 2.8s cubic-bezier(0.32, 0.02, 0.28, 1) infinite;
 }
 /* 札を留めている杭。木目が見えるよう、縦に3色の帯を重ねる */
@@ -100,7 +129,7 @@
   88% { transform: translate(-50%, -100%) scale(1.08, 0.93); }
   94% { transform: translate(-50%, calc(-100% - 2px)) scale(0.98, 1.02); }
 }
-@media (prefers-reduced-motion: reduce) { .spot-mark { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .spot.is-today .spot-mark { animation: none; } }
 
 .spot-bang {
   flex: none;
@@ -170,7 +199,7 @@
 .spot.is-on .spot-text b { font-size: 14.5px; font-weight: 900; letter-spacing: 0.02em; }
 .spot.is-on .spot-text i {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 800;
   color: var(--ink-3);
 }
@@ -180,7 +209,7 @@
   align-items: center;
   gap: 2px;
   flex: none;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--paper);
   background: linear-gradient(var(--frame-dark), var(--frame-deep));
@@ -201,7 +230,8 @@
 }
 
 /* 出発までの日数。札の右肩に貼ったシール。
-   離して置くと島の上で迷子になるので、必ず札に食い込ませる。 */
+   **札が出ているときだけ出す。** 前は札が閉じていても島の上に浮いていて、
+   引きで見ると「何の あと1日 なのか」が分からない札になっていた。 */
 .spot-badge {
   position: absolute;
   right: -11px;
@@ -209,14 +239,14 @@
   font-style: normal;
   pointer-events: none;
   z-index: 2;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.01em;
   color: var(--paper);
   background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
   border: 2.5px solid var(--paper);
   border-radius: 999px;
-  padding: 2.5px 8px;
+  padding: 2px 8px;
   box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
@@ -232,7 +262,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .spot-badge { animation: none; transform: rotate(-7deg); } }
 
-/* 近づいた入口は、ふわっと弾ませる */
+/* 近づいた入口は、ふわっと弾ませる（`island-design.md` 3-5 反応を返す） */
 .spot-art.is-on { animation: spotBob 1.6s ease-in-out infinite; }
 @keyframes spotBob {
   0%, 100% { transform: translateY(0) scale(1); }
@@ -418,26 +448,44 @@
   }
 }
 
+/* 歩き方の案内。
+   初めての人にだけ、数秒だけ出る（出し入れは IslandStage が持っている）。
+   前は下の帯の上に居座っていて、一度歩けば分かることのために島の下端を
+   ずっと使っていた。上に移して小さくしたのは、下は「今日の島」と入口の
+   ためにあけておきたいから。
+   点滅もやめた。消えるものを点滅させる必要はないし、
+   ずっと走る animation が1本減る。 */
 .walk-hint {
   position: absolute;
-  left: 12px;
-  bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom));
+  left: 14px;
+  top: calc(58px + env(safe-area-inset-top));
+  margin: 0;
   white-space: nowrap;
-  background: rgba(69, 55, 42, 0.82);
+  background: rgba(56, 44, 34, 0.78);
   color: #fffdf6;
-  font-size: 12.5px;
-  font-weight: 700;
-  padding: 8px 16px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 5px 12px;
   border-radius: 999px;
   /* backdrop-filter は下にある島を毎フレームぼかし直す。島は viewBox が
      動くたび描き直されるので、ここに1枚あるだけで起動直後が目に見えて落ちた。
      地の色を濃くすれば読めるので、ぼかしは使わない。 */
-  border: 2px solid rgba(255, 253, 246, 0.22);
-  animation: hintPulse 2.6s ease-in-out infinite;
+  border: 2px solid rgba(255, 253, 246, 0.2);
   pointer-events: none;
   z-index: 5;
+  /* 出るときにふわっと、そのまま最後の1秒で消える。時間は JS 側の HINT_SPAN と揃える */
+  animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.3s both;
 }
-@keyframes hintPulse { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.55; } }
+@keyframes hintIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hintOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) { .walk-hint { animation: none; } }
 
 /* --- 島のモーション --- */
 /* 木と草が、そよ風でゆっくり揺れる。全部そろって揺れないよう位相をずらす。 */
@@ -591,21 +639,31 @@
 .hero-copy { text-align: center; max-width: 640px; }
 
 /* =========================================================
-   スマホの操作バー
+   スマホの入口バー
    ---------------------------------------------------------
    もとの見た目は pages.css にある。あちらは globals.css で
    このファイルより後に読まれるので、上書きするには詳細度を1つ上げる。
    島の上に乗るものは、このファイルにまとめておきたいので `.stage` を足した。
 
-   直したのは2つ。
-   ・6つのチップが横スクロールで見切れて、4つが画面の外にいた。
-     3列2段に置いて、全部いっぺんに見えるようにした。
-   ・海の上に薄い膜が乗っているだけで、バーに見えていなかった。
-     木のトレーを1枚敷いて、島の手前に置いたものにした。
+   **押す先が読めないバーは、無いのと同じ。**
+   前は名前が「こ…」「たき火…」「配信や…」と切れていた。
+   幅が足りなかったのは、行き先ではないものが行き先の幅を食っていたから。
+   引き／寄りの切り替え（島をながめる）が横 76px を持っていっていたので、
+   バーから出して島の隅の単独のボタンにした（`.stage-view`）。
+   1マスが 90px から 117px になり、名前に使える幅が 49px から 72px になった。
+
+   字は 12.5px。`docs/island-world.md` 5.4 のいちばん小さい字（11.5px）より上。
+   6つを1段に並べる案も作って撮ってみたが、1マスが 57px しか取れず、
+   5文字を 11.5px で入れると必ずあふれる。3列2段のほうが読める。
+
+   高さは1マス 48px。前は 34px で、指で押せる最小に届いていなかった
+   （`docs/island-design.md` 3-2、`island-world.md` 4章の部品表）。
    ========================================================= */
 @media (max-width: 639px) {
-  /* 2段になったぶん背が要る。walk-hint もこの値を見て浮いている */
-  .stage.stage { --bar-h: 98px; }
+  /* 「今日の島」が乗らないときの背。乗るときは today.css が 138px を出すが、
+     1マスを 48px にしたぶん足りないので、下でそれより強く書き直している。 */
+  .stage.stage { --bar-h: 123px; }
+  .stage.stage.stage.has-today { --bar-h: 183px; }
 }
 /* バーの置き場所も、島の上に乗るものなのでここで持つ。
    前は pages.css 側にあって、あちらを整理したときに落ちてバーが
@@ -617,10 +675,10 @@
   bottom: 0;
   z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
-  gap: 7px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  gap: 8px;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: linear-gradient(var(--paper) 0 38%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-bottom: 0;
@@ -633,8 +691,7 @@
 .stage .island-bar-scroll {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
   padding: 0;
   overflow: visible;
   /* 全部見えるので、右端をぼかして「まだ先がある」と言う必要がなくなった */
@@ -645,24 +702,32 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 3px;
+  gap: 6px;
   min-width: 0;
-  padding: 2px 6px 2px 2px;
+  /* 指で押せる最小。ここを削ると、読めても押せないバーになる */
+  min-height: 48px;
+  padding: 3px 6px 3px 3px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  border: 3px solid var(--frame-dark);
-  border-radius: 12px;
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  font-size: 11px;
+  /* 押せることは厚みで言う（`docs/island-world.md` 3.4）。
+     縁は細く、厚みははっきり。本物の一覧も、枠は外側の板が持っていて
+     中のマスは軽い（/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
+  border: 2px solid var(--frame-dark);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
+  line-height: 1.2;
   color: var(--ink);
 }
-.stage .bar-spot img { width: 24px; height: 24px; flex: none; }
+.stage .bar-spot img { width: 28px; height: 28px; flex: none; }
+/* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
+   ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
 .stage .bar-spot span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 /* いま近くにいる入口。押せる合図ではなく「ここにいる」の印なので、色だけで言う */
 .stage .bar-spot.is-on {
@@ -670,44 +735,87 @@
   border-color: var(--frame-deep);
 }
 .stage .bar-spot:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
-/* 「あと◯日」はチップの中に並べると名前を押し出してしまうので、右肩に貼る */
+/* 「あと◯日」は名前の行に並べると名前を押し出す。マスの右肩に貼ったシールにする。 */
 .stage .bar-spot em {
   position: absolute;
-  right: -5px;
-  top: -7px;
+  right: -4px;
+  top: -8px;
   margin: 0;
   z-index: 2;
-  font-size: 9px;
-  padding: 1.5px 6px;
+  font-style: normal;
+  font-size: 11.5px;
+  line-height: 1.25;
+  letter-spacing: 0;
+  padding: 1px 7px;
   border: 2px solid var(--paper);
+  border-radius: 999px;
   box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
   background: linear-gradient(var(--accent), var(--accent-deep, #d4552a));
+  color: var(--paper);
   transform: rotate(-6deg);
 }
-/* 引き／寄りの切り替え。行き先ではないので、色を変えて別のものだと言う */
-.stage .bar-zoom {
-  grid-column: 2;
-  align-self: stretch;
-  width: 76px;
-  padding: 6px 4px;
-  border-radius: 22px;
-  border: 3px solid var(--frame-dark);
-  background: linear-gradient(var(--sea-shallow) 0 42%, var(--sea-mid));
-  color: var(--paper);
-  font-size: 10.5px;
+
+/* 引き／寄りの切り替え。
+   行き先ではないので、行き先のバーから出して島の隅に置いた。
+   寄りのときは看板ロゴが右上にいるので、左上が空いている。 */
+.stage-view {
+  position: absolute;
+  left: 12px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 13px 7px 10px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 999px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-size: 12px;
   font-weight: 900;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-  white-space: normal;
-  text-shadow: 0 1px 0 rgba(12, 60, 78, 0.5);
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
 }
-.stage .bar-zoom:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+.stage-view:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+.stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 話しているあいだは、島の上のUIと同じように引っ込める */
+.stage.is-talking .stage-view { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+
+/* =========================================================
+   島の下端
+   ---------------------------------------------------------
+   海がページの下地に、はさみで切ったようにぶつかっていた。
+   下地（body の --page-bg）へ向けて海を溶かして、境目を消す。
+
+   色は --page-bg をそのまま敷いて出す。ページの下地は縦に長い
+   グラデーションなので、島のすぐ下あたりの色は「いちばん上の色」とほぼ同じ。
+   ここでは背景を十分に引き伸ばして、その上のほうだけを使っている。
+   こうしておけば、時間帯で色が変わっても勝手に付いてくる（値を写さずに済む）。
+
+   動かさないので、毎フレームの負担にはならない。
+   ========================================================= */
+.stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+  background-image: var(--page-bg);
+  background-size: 100% 4000px;
+  background-position: left top;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 88%);
 }
 
 /* =========================================================

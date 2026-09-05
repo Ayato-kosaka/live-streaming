@@ -61,9 +61,11 @@ export function readNight(now: Date = new Date()): Night {
   return { onAir: false, mins };
 }
 
-/** 「3時間20分」。1時間を切ったら分だけ。 */
+/** 「3時間20分」。1時間を切ったら分だけ、ちょうどなら「3時間」。 */
 export function spanText(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return h > 0 ? `${h}時間${m}分` : `${m}分`;
+  if (h <= 0) return `${m}分`;
+  // ちょうどの時刻に「10時間0分」と出ると、機械が数えている感じがする
+  return m > 0 ? `${h}時間${m}分` : `${h}時間`;
 }

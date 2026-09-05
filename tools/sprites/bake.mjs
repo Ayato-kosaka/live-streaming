@@ -18,7 +18,15 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // 絞り込みはカンマ区切りで複数渡せる。直したものだけ焼き直して見比べるため
 const keys = only ? only.split(",").filter(Boolean) : null;
-const list = keys ? SPRITES.filter((s) => keys.some((k) => s.name.includes(k))) : SPRITES;
+let list = keys ? SPRITES.filter((s) => keys.some((k) => s.name.includes(k))) : SPRITES;
+// RESUME=1 で、まだ .png が無いものだけ焼く。
+// meta.py は webp に変えたあと .png を消すので、「.png が残っている」＝
+// 「この回で焼き終えた」の印になる。落ちても同じコマンドで続きから焼ける
+if (process.env.RESUME) {
+  const before = list.length;
+  list = list.filter((s) => !fs.existsSync(path.join(outDir, `${s.name}.png`)));
+  console.log(`焼き済みを飛ばす: ${before - list.length} 点`);
+}
 console.log(`焼く数: ${list.length}`);
 
 const BASE = process.env.BASE ?? "http://localhost:8904";

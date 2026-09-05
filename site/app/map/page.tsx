@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { GUIDE } from "@/content/voice";
 import { Panel, Stat } from "@/components/ui/Bits";
 import { COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
@@ -12,7 +11,7 @@ import MAP from "@/content/atlas/route.json";
 import { PierArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
-  title: "これまでに歩いた17カ国",
+  title: "旅の桟橋",
   description:
     "2024年10月のパリから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
 };
@@ -50,16 +49,21 @@ export default function MapPage() {
 
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋" }]}>
+      {/* h1 は場所の名前（docs/island-world.md 7.5）。
+          国の数は静的書き出しで焼き込まれるので、見出しには入れない。
+          カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。 */}
       <PageHead
         mark={<PierArt size={68} />}
-        title="これまでに歩いた17カ国"
+        title="旅の桟橋"
         lead="2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、いまはコーカサスにいます。"
-        say={GUIDE.map}
       />
 
+      {/* 4つを同じ重さで並べると、どれも「ただの数」に見える。
+          先頭を大きくするのは CSS がやるので、こちらは添え字で中身の差を言う。
+          国は旅の端から端、街は泊まった所だけ、日数は起点、いまここは数ではなく状態。 */}
       <div className="stats" style={{ marginBottom: 16 }}>
-        <Stat value={visited.length} label="歩いた国" />
-        <Stat value={cities.size} label="通った街" />
+        <Stat value={visited.length} label="歩いた国" sub="パリからトビリシまで" />
+        <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
         <Stat value={<Days from={START} />} label="旅した日数" sub="2024/10/28から" />
         <Stat
           value={<Flag slug={here.slug} size={34} />}

@@ -309,4 +309,168 @@ export const feel: Record<string, Draw> = {
       <Gl c={c} cx={21} cy={16} rx={5.4} ry={2.6} r={-32} o={0.5} />
     </>
   ),
+
+  /** 大笑い。目を弧にして口を大きく開ける。smile と表情で分ける。 */
+  laugh: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.2} />
+      <circle cx="32" cy="31" r="27" fill={c.gdd} />
+      <circle cx="32" cy="29.5" r="27" fill={c.gd} />
+      <circle cx="32" cy="29.5" r="21" fill={c.yl} />
+      <g fill="none" stroke={c.ink} strokeWidth="3.4" strokeLinecap="round">
+        <path d="M17 24c2.6-4 7.4-4 10 0" />
+        <path d="M37 24c2.6-4 7.4-4 10 0" />
+      </g>
+      <path d="M16 32h32c0 10-7.2 17-16 17s-16-7-16-17z" fill={c.ink} />
+      <path d="M22 42c6 2.6 14 2.6 20 0-2 4.4-6 7-10 7s-8-2.6-10-7z" fill={c.rdl} />
+      <g fill={c.pk} opacity={c.flat ? 1 : 0.7}>
+        <ellipse cx="14.5" cy="33" rx="4" ry="2.6" />
+        <ellipse cx="49.5" cy="33" rx="4" ry="2.6" />
+      </g>
+      <Gl c={c} cx={21} cy={18} rx={6} ry={3} r={-30} o={0.55} />
+    </>
+  ),
+
+  /** びっくり。口を縦に開けて、上に汗を1つ飛ばす。 */
+  surprise: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.2} />
+      <circle cx="32" cy="31" r="26" fill={c.ord} />
+      <circle cx="32" cy="29.5" r="26" fill={c.or} />
+      <circle cx="32" cy="29.5" r="20" fill={c.gd} />
+      <g fill={c.ink}>
+        <circle cx="24" cy="25" r="3.6" />
+        <circle cx="40" cy="25" r="3.6" />
+      </g>
+      <g fill="none" stroke={c.ink} strokeWidth="2.6" strokeLinecap="round">
+        <path d="M18.6 17c2.6-2.6 6-3.2 9-1.6" />
+        <path d="M45.4 17c-2.6-2.6-6-3.2-9-1.6" />
+      </g>
+      <ellipse cx="32" cy="40" rx="6" ry="7.6" fill={c.ink} />
+      <ellipse cx="32" cy="43" rx="3.6" ry="4" fill={c.rdl} />
+      <path d="M54 6c3 4.6 4.6 7 4.6 9.2a4.6 4.6 0 0 1-9.2 0c0-2.2 1.6-4.6 4.6-9.2z" fill={c.sk} />
+      <Gl c={c} cx={21} cy={18} rx={6} ry={3} r={-30} o={0.55} />
+    </>
+  ),
+
+  /** 考え中。角の丸い雲の吹き出しに、粒を3つ。talk（四角）と形で分ける。 */
+  think: (c) => (
+    <>
+      <Sh c={c} cy={58} rx={12} ry={2.8} />
+      <path d="M20 12a11 11 0 0 1 20-4 10 10 0 0 1 12 12 9 9 0 0 1-6 14 11 11 0 0 1-18 2 10 10 0 0 1-14-10 9 9 0 0 1 6-14z" fill={c.w} />
+      <path d="M40 8a10 10 0 0 1 12 12 9 9 0 0 1-6 14 11 11 0 0 1-14 3.4V9.6A11 11 0 0 1 40 8z" fill={c.wd} />
+      <g fill={c.pu}>
+        <circle cx="22" cy="20" r="3.6" />
+        <circle cx="32" cy="20" r="3.6" />
+        <circle cx="42" cy="20" r="3.6" />
+      </g>
+      <circle cx="20" cy="43" r="6" fill={c.w} />
+      <circle cx="20" cy="43" r="6" fill={c.wd} opacity="0.35" />
+      <circle cx="13" cy="53" r="4" fill={c.w} />
+      <circle cx="13" cy="53" r="4" fill={c.wd} opacity="0.35" />
+      <Gl c={c} cx={22} cy={12} rx={5} ry={2.4} r={-24} o={0.7} />
+    </>
+  ),
+
+  /** 寝る。移動の夜行。目を閉じた顔と、上がっていく泡。 */
+  sleep: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={19} ry={3.2} />
+      <circle cx="30" cy="35" r="23" fill={c.pud} />
+      <circle cx="30" cy="33.6" r="23" fill={c.pu} />
+      <circle cx="30" cy="33.6" r="17.5" fill={c.w} opacity={c.flat ? 1 : 0.55} />
+      <g fill="none" stroke={c.ink} strokeWidth="3" strokeLinecap="round">
+        <path d="M19 32c2.4 3 5.6 3 8 0" />
+        <path d="M33 32c2.4 3 5.6 3 8 0" />
+      </g>
+      <path d="M25 42c2.6 2.4 7.4 2.4 10 0" fill="none" stroke={c.ink} strokeWidth="2.6" strokeLinecap="round" />
+      <g fill={c.sk}>
+        <circle cx="49" cy="20" r="4.4" />
+        <circle cx="56" cy="12" r="3.2" />
+        <circle cx="60" cy="5" r="2.2" />
+      </g>
+      <Gl c={c} cx={20} cy={22} rx={5} ry={2.6} r={-30} o={0.55} />
+    </>
+  ),
+
+  /**
+   * 手を振る。あいさつ。
+   * `thumb`（ヒッチハイク）と同じ手だが、こちらは**開いた手のひら**。
+   * 指を4本ちゃんと離して、右上へ動きの弧を2本足す。
+   */
+  hello: (c) => (
+    <>
+      <Sh c={c} cy={58} rx={15} ry={3.2} />
+      <g transform="rotate(14 30 36)">
+        <g fill={c.sn}>
+          <rect x="13.6" y="14" width="7.4" height="24" rx="3.7" />
+          <rect x="21.8" y="9" width="7.4" height="29" rx="3.7" />
+          <rect x="30" y="8" width="7.4" height="30" rx="3.7" />
+          <rect x="38.2" y="12" width="7.4" height="26" rx="3.7" />
+          <rect x="13" y="26" width="33" height="22" rx="10" />
+        </g>
+        {/* 親指。手のひらの左から外へ張り出す */}
+        <rect x="4" y="26" width="15" height="8.4" rx="4.2" fill={c.sn} transform="rotate(-32 11.5 30)" />
+        <g fill={c.snd} opacity="0.55">
+          <rect x="17" y="32" width="26" height="2.6" rx="1.3" />
+        </g>
+        <path d="M32 26h4c5.6 0 10 4.4 10 10v2c0 5.6-4.4 10-10 10h-4z" fill={c.snd} opacity="0.4" />
+        <rect x="12" y="46" width="35" height="12" rx="6" fill={c.tld} />
+        <rect x="12" y="46" width="35" height="6" rx="3" fill={c.tl} />
+      </g>
+      <g fill="none" stroke={c.or} strokeWidth="4" strokeLinecap="round">
+        <path d="M52 8a10 10 0 0 1 3 8" />
+        <path d="M58 2a17 17 0 0 1 4 13" opacity="0.55" />
+      </g>
+      <Gl c={c} cx={22} cy={18} rx={2.2} ry={6} r={12} o={0.45} />
+    </>
+  ),
+
+  /** 付箋。ちょっとした覚え書き。角を1つめくる。 */
+  note: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.4} />
+      <g transform="rotate(-5 32 32)">
+        <path d="M8 8h48v34L42 56H8z" fill={c.yl} />
+        <path d="M32 8h24v34L42 56H32z" fill={c.yld} />
+        <path d="M42 56V46a4 4 0 0 1 4-4h10z" fill={c.gd} />
+        <g fill={c.wod} opacity="0.55">
+          <rect x="15" y="18" width="34" height="3.4" rx="1.7" />
+          <rect x="15" y="27" width="26" height="3.4" rx="1.7" />
+          <rect x="15" y="36" width="18" height="3.4" rx="1.7" />
+        </g>
+      </g>
+      <Gl c={c} cx={17} cy={13} rx={6} ry={1.8} r={-8} o={0.5} />
+    </>
+  ),
+
+  /** 値札。買い物の回。穴とひもで「下げる札」だと分かる。 */
+  tag: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={20} ry={3.4} />
+      <g transform="rotate(-38 32 32)">
+        <path d="M14 12h28a8 8 0 0 1 8 8v24a8 8 0 0 1-8 8H14a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z" fill={c.or} />
+        <path d="M32 12h10a8 8 0 0 1 8 8v24a8 8 0 0 1-8 8H32z" fill={c.ord} />
+        <circle cx="20" cy="32" r="5.4" fill={c.cr} />
+        <circle cx="20" cy="32" r="2.4" fill={c.wod} />
+        <g fill={c.w} opacity="0.85">
+          <rect x="30" y="24" width="16" height="3.4" rx="1.7" />
+          <rect x="30" y="33" width="12" height="3.4" rx="1.7" />
+        </g>
+      </g>
+      <path d="M6 20c-4-4-4-9 0-12" fill="none" stroke={c.brd} strokeWidth="3.4" strokeLinecap="round" />
+      <Gl c={c} cx={24} cy={17} rx={4.4} ry={2} r={-38} o={0.5} />
+    </>
+  ),
+
+  /** しおり。あとで読む・とっておく。切り込みのある帯。 */
+  bookmark: (c) => (
+    <>
+      <Sh c={c} cy={58} rx={12} ry={2.8} />
+      <path d="M14 6h36a4 4 0 0 1 4 4v45l-22-13-22 13V10a4 4 0 0 1 4-4z" fill={c.tl} />
+      <path d="M32 6h18a4 4 0 0 1 4 4v45l-22-13z" fill={c.tld} />
+      <path d="m32 16 3.4 6.9 7.6 1.1-5.5 5.4 1.3 7.6L32 33.4l-6.8 3.6 1.3-7.6-5.5-5.4 7.6-1.1z" fill={c.gd} />
+      <Gl c={c} cx={19} cy={14} rx={2.2} ry={6} r={8} o={0.45} />
+    </>
+  ),
 };

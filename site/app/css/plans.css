@@ -9,7 +9,7 @@
    ・行き先の言葉はボタンの形にする（文字のままだと押せると分からない）
    --------------------------------------------------------------------- */
 .nextup {
-  margin-bottom: 18px;
+  margin-bottom: var(--sp-4);
   /* 板の上のふち。上から光が当たっている板は、天面のきわが必ず白く光る。
      地面に落とす影（右下・暖かい灰緑）は tokens の --shadow-* をそのまま使う。 */
   --np-lip: inset 0 3px 0 rgba(255, 255, 255, 0.72);
@@ -17,10 +17,10 @@
 .nextup-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin: 0 0 10px;
-  padding: 4px 13px 4px 9px;
-  font-size: 11px;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-1) var(--sp-3) var(--sp-1) var(--sp-2);
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.1em;
   /* 置かれる面の色が変わっても読めるように、地の色ごと持たせた小さな札にする。
@@ -29,9 +29,9 @@
   background: var(--paper);
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-pill);
-  /* 押せないので厚みは付けない（厚みは押せるものだけの合図）。
-     札の上に載っているので、地面に落ちる影だけを持たせる。 */
-  box-shadow: var(--shadow-1);
+  /* 押せないものは完全に平ら（docs/island-world.md 3.4）。
+     厚みも、落ちる影も付けない。 */
+  box-shadow: none;
 }
 
 /* 本物の会話窓の名札は、窓の上に離して置くのではなく、窓の左上に重ねてある。
@@ -41,8 +41,8 @@
 .nextup-eyebrow:has(+ .nextup-card) {
   position: relative;
   z-index: 1;
-  margin-left: 16px;
-  margin-bottom: -14px;
+  margin-left: var(--sp-4);
+  margin-bottom: calc(-1 * var(--sp-3));
 }
 /* 札の中の短い棒。記号を足さずに「ここから始まる」を出す。 */
 .nextup-eyebrow::before {
@@ -55,22 +55,24 @@
 /* ベルの絵が入っている札には棒を出さない。
    同じ「ここから始まる」を2つ並べると、どちらが印なのか分からなくなる。 */
 .nextup-eyebrow.has-bell {
-  padding-left: 6px;
-  gap: 5px;
+  padding-left: var(--sp-1);
+  gap: var(--sp-1);
 }
 .nextup-eyebrow.has-bell::before { display: none; }
-/* 何件あるか。押せないので平ら（厚みを付けるのは押せるものだけ）。 */
+/* 何件あるか。数えたものの札はオリーブの平ら1種類に統一する
+   （docs/island-world.md 3.2 の色の表・7.3）。金の丸だと、
+   すぐ下にある金のボタン（押せる）と同じ色になってしまう。 */
 .nextup-n {
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: 2px var(--sp-2);
   margin-left: 1px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--gold) 52%, var(--paper));
-  border: 1.5px solid color-mix(in srgb, var(--frame-dark) 70%, transparent);
-  color: var(--ink);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
+  color: var(--chip-ink);
   line-height: 1.5;
 }
 
@@ -79,9 +81,9 @@
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas: "count body" "go go";
-  gap: 14px 15px;
+  gap: var(--sp-3) var(--sp-4);
   align-items: start;
-  padding: 18px;
+  padding: var(--sp-4);
   border: var(--bw-3) solid var(--frame-dark);
   /* 角丸は札の高さの1/3くらい（ac-reference 6章）。
      この札はスマホで 170〜200px あるので、その段の --r-4。
@@ -141,35 +143,38 @@
   place-items: center;
   align-content: center;
   min-width: 88px;
-  padding: 11px 10px;
+  padding: var(--sp-3) var(--sp-2);
   /* 日数の札は高さ 80〜100px。その段の角丸。 */
   border-radius: var(--r-3);
-  border: var(--bw-2) solid var(--frame-dark);
-  /* 上から光が当たった板。金色一色だと平たく見える。 */
+  border: var(--bw-2) solid color-mix(in srgb, var(--accent-deep) 62%, var(--paper));
+  /* 桃は「いま／新しい」の色。日数バッジはその代表（island-world 3.2）。
+     金にすると「押せる板のふち」と同じ色になって、札そのものが押せそうに見える。 */
   background: linear-gradient(
-    color-mix(in srgb, var(--gold) 45%, var(--paper)),
-    var(--gold) 55%,
-    color-mix(in srgb, var(--gold) 82%, var(--frame-dark))
+    color-mix(in srgb, var(--accent) 22%, var(--paper)),
+    color-mix(in srgb, var(--accent) 40%, var(--paper))
   );
-  /* 側面は金の濃いほう。--pop-sm の --frame-dark だと、金の板から浮いて見える。 */
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 color-mix(in srgb, var(--paper) 65%, transparent);
-  font-size: 11.5px;
+  color: var(--ink);
+  /* 押せない札は完全に平ら。厚みは、この札を載せている板がすでに持っている。 */
+  box-shadow: none;
+  font-size: var(--fs-min);
   font-weight: 900;
   line-height: 1.1;
   /* 看板の字。本物は太いゴシックで字間が広い（ac-reference 6章）。 */
   letter-spacing: 0.09em;
   text-align: center;
-  color: var(--ink);
 }
 .nextup-count b {
   display: block;
-  font-size: 34px;
+  color: var(--accent-deep);
+  /* 日数は看板の数字。字の段のいちばん上（h1 と同じ clamp）を使う。
+     ここだけ px を直に置くと、画面の幅で数字だけ段から外れる。 */
+  font-size: var(--fs-h1);
   line-height: 1;
   letter-spacing: -0.02em;
   margin: 2px 0 1px;
 }
 
-.nextup-body { grid-area: body; display: grid; gap: 5px; align-content: start; }
+.nextup-body { grid-area: body; display: grid; gap: var(--sp-1); align-content: start; }
 .nextup-title {
   font-size: clamp(19px, 5.4vw, 27px);
   font-weight: 900;
@@ -178,22 +183,23 @@
 }
 .nextup-when {
   font-style: normal;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-head);
   color: var(--frame-deep);
 }
-.nextup-note { font-size: 13px; font-weight: 700; line-height: var(--lh-body); color: var(--ink-2); }
-.nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.nextup-note { font-size: var(--fs-body); font-weight: 700; line-height: var(--lh-body); color: var(--ink-2); }
+.nextup-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1); }
+/* 何の企画かを言うだけの札。押せないので、数の札と同じ平らなオリーブにする。 */
 .nextup-tags em {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: var(--fs-min);
   font-weight: 900;
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  background: var(--paper);
-  border: 2px solid var(--frame-dark);
-  color: var(--ink-2);
+  padding: 3px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
+  color: var(--chip-ink);
   line-height: 1.5;
 }
 
@@ -204,8 +210,8 @@
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 19px;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-2) solid var(--frame-dark);
   /* いちばん近い企画の行き先は、サイトでいちばん押してほしいところ。
@@ -213,7 +219,7 @@
   background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
   /* 側面は金の濃いほう。--pop-sm の --frame-dark だと、金の板から浮いて見える。 */
   box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
-  font-size: 13.5px;
+  font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-body);
   color: var(--ink);
@@ -235,47 +241,48 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 11.5px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
 }
 .nextup-rest a {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--sp-1);
   max-width: 100%;
   flex-wrap: wrap;
-  padding: 6px 13px;
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow: var(--pop);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--frame-dark); }
-.nextup-rest a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
-.nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
+.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-dark); }
+.nextup-rest a:active { transform: translateY(6px); box-shadow: none; }
+.nextup-rest a i { font-style: normal; font-size: var(--fs-min); color: var(--ink-2); }
 
-.nextup-eyebrow2 { margin-top: 20px; }
+.nextup-eyebrow2 { margin-top: var(--sp-4); }
 /* ふたつ目の札はひとまわり小さく。主役は「いちばん近い企画」のまま。 */
 .nextup-card.is-small {
-  padding: 14px;
+  padding: var(--sp-3);
   border-width: var(--bw-2);
   border-radius: var(--r-3);
   box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-2), var(--np-lip);
 }
 .nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-3), var(--np-lip); }
 .nextup-card.is-small:active { box-shadow: var(--pop-push-lg), var(--shadow-1), var(--np-lip); }
-.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 10.5px; border-radius: var(--r-2); }
-.nextup-card.is-small .nextup-count b { font-size: 27px; }
+.nextup-card.is-small .nextup-count { min-width: 74px; padding: var(--sp-2) var(--sp-2); font-size: var(--fs-min); border-radius: var(--r-2); }
+.nextup-card.is-small .nextup-count b { font-size: var(--fs-h2); }
 .nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
 /* ふたつ目の札の行き先は金色にしない。強い合図はページに1つだけ。 */
 .nextup-card.is-small .nextup-go {
-  padding: 7px 15px;
-  font-size: 12.5px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-note);
   border-width: var(--bw-1);
   background: linear-gradient(var(--paper), var(--paper-2));
 }
@@ -288,10 +295,9 @@
     grid-template-columns: auto 1fr auto;
     grid-template-areas: "count body go";
     align-items: center;
-    padding: 22px 24px;
-    gap: 18px;
+    padding: var(--sp-5) var(--sp-5);
+    gap: var(--sp-4);
   }
-  .nextup-count { min-width: 110px; padding: 14px 12px; }
-  .nextup-count b { font-size: 42px; }
-  .nextup-go { justify-self: end; padding: 11px 20px; font-size: 14.5px; }
+  .nextup-count { min-width: 110px; padding: var(--sp-3) var(--sp-3); }
+  .nextup-go { justify-self: end; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-body); }
 }
