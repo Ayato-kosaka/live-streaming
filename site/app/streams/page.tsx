@@ -15,7 +15,7 @@ import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
-  title: "配信やぐら",
+  title: "配信",
   description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
 };
 
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
  * 数えられないもの（企画会議・月末配信）には数字を付けない。
  */
 const NUM: Record<string, { n: string; cap: string }> = {
-  cooking: { n: `${RECIPES.length}品`, cap: "キッチン小屋にたまった料理" },
+  cooking: { n: `${RECIPES.length}品`, cap: "「作った料理」にたまった品数" },
   walk: { n: `${STATS_FALLBACK.countries}カ国`, cap: "歩いた国" },
   making: { n: "1本", cap: "公開までいったアプリ" },
   meeting: { n: `${LEGENDS.length}個`, cap: "ここから生まれた伝説" },
@@ -36,12 +36,12 @@ const NUM: Record<string, { n: string; cap: string }> = {
 export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信やぐら" }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信" }]}>
       {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
           「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead
         icon="tower-studio"
-        title="配信やぐら"
+        title="配信"
         lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
       />
 
@@ -157,7 +157,7 @@ export default function StreamsPage() {
           <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
             <ArtStamp size={44} className="tile-icon" />
             <span className="tile-text">
-              <b>キッチン小屋</b>
+              <b>作った料理</b>
               <i>作ってきた {RECIPES.length}品 のスタンプ帳</i>
             </span>
             <Icon name="right" size={15} className="tile-go" />
@@ -165,7 +165,7 @@ export default function StreamsPage() {
           <Link className="tile" href="/legends" style={{ ["--tile" as string]: "var(--gold)" }}>
             <ArtMedal size={44} className="tile-icon" />
             <span className="tile-text">
-              <b>伝説の丘</b>
+              <b>伝説の企画</b>
               <i>いまも話に出てくる {LEGENDS.length}つ の企画</i>
             </span>
             <Icon name="right" size={15} className="tile-go" />

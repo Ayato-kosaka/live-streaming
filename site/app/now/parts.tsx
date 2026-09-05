@@ -10,7 +10,7 @@ import Flag from "@/components/ui/Flag";
 import Days from "@/components/atlas/Days";
 
 /**
- * いまのポストの中身のうち、「いる国」に関わるところ。
+ * 「いまどこ」の中身のうち、「いる国」に関わるところ。
  *
  * この面は「いま、どこにいるか」の面なのに、下半分が
  * 「あやとって誰」（`/about` の名乗りと同じ4段落）と

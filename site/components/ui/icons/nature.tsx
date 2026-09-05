@@ -100,7 +100,7 @@ export const nature: Record<string, Draw> = {
     </>
   ),
 
-  /** 小さい火。たき火広場（campfire）と違って薪は無い。 */
+  /** 小さい火。たき火（campfire）と違って薪は無い。 */
   flame: (c) => (
     <>
       <Sh c={c} cy={56} rx={13} ry={3.2} />

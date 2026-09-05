@@ -15,7 +15,7 @@ import { ACTIVE_FRIENDS } from "@/content/residents";
  * 顔が出るのは `/about` に入ってからだった。
  *
  * だから章まるごとを1枚の名刺にする。顔・名前・3行・数字・押しどころ。
- * 数字は読み物ではなく**入口**にする。「747本」を押すと配信やぐら、
+ * 数字は読み物ではなく**入口**にする。「747本」を押すと「配信」、
  * 「17カ国」を押すと道しるべ。読むだけの数字を4つ並べても見応えにはならない。
  *
  * 配信の型5つの帯と、3枚のカードは消した。行き先のページの1画面目を
@@ -95,7 +95,7 @@ export default function Meishi() {
           <Icon name="right" size={14} />
         </Link>
         <Link className="mei-go" href="/about">
-          <Icon name="campfire" size={22} />
+          <Icon name="cottage" size={22} />
           <span>
             <b>あやとの話をもっと聞く</b>
             <i>ここまでの節目と、島でやっていること</i>

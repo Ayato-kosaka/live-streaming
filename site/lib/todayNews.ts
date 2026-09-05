@@ -179,7 +179,7 @@ function away(now: Date, today: string, lastVisit?: string | null): TodayNews | 
     body: `${jstShift(now, -daysApart(lastVisit, today) + 1).replace(/-/g, "/")} から昨日まで。${
       dishes.length > 0 ? `いちばん新しいのは${dishes[dishes.length - 1].name}。` : "見逃したぶんは、これだけ。"
     }`,
-    // 追いつく場所へ送る。配信があったなら配信やぐら（一覧がある）、
+    // 追いつく場所へ送る。配信があったなら「配信」（一覧がある）、
     // 料理だけの留守なら、その1品のところへ直に
     href: nights > 0 ? "/streams" : `/kitchen/${dishes[dishes.length - 1].slug}`,
     go: nights > 0 ? "配信を見る" : "見にいく",

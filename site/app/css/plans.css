@@ -165,7 +165,11 @@
 }
 .nextup-count b {
   display: block;
-  color: var(--accent-deep);
+  /* 濃い桃をそのまま置くと、この札のいちばん濃いところで 3.52 : 1 しか無い。
+     桃は「いま／新しい」の色なので手放したくないが、島でいちばん大きい数字が
+     読めないほうが困る。墨を混ぜて 4.96 : 1 まで下ろす。
+     `--accent-deep` は「同じものの濃いほう。単独で使わない」（island-world 3.2）。 */
+  color: color-mix(in srgb, var(--accent-deep) 60%, var(--ink));
   /* 日数は看板の数字。字の段のいちばん上（h1 と同じ clamp）を使う。
      ここだけ px を直に置くと、画面の幅で数字だけ段から外れる。 */
   font-size: var(--fs-h1);
@@ -186,7 +190,10 @@
   font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-head);
-  color: var(--frame-deep);
+  /* 金は「押せる板のふち」の色で、砂の上では 4.35 : 1 しか無かった
+     （`docs/island-world.md` 3.2、`pages.css` 1203 行と同じ話）。
+     日付は読ませる字なので墨のうすいほうにする。 */
+  color: var(--ink-2);
 }
 .nextup-note { font-size: var(--fs-body); font-weight: 700; line-height: var(--lh-body); color: var(--ink-2); }
 .nextup-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-1); }

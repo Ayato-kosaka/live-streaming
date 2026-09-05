@@ -1164,7 +1164,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           const on = openSpot === sp.id;
           const today = todaySpot === sp.id;
           const sign = !!sp.sign;
-          /* 配信中の配信やぐらは、行き先が YouTube に変わる。
+          /* 配信中のやぐらは、行き先が YouTube に変わる。
              **島に留めずに外へ出すのが正解**（`docs/island-play.md` 5章）。
              島は留守番の場所で、配信がある3時間だけは、島より向こうが本体。 */
           const live = onAir && sp.id === "streams";

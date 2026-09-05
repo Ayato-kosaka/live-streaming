@@ -7,12 +7,12 @@ import Icon from "@/components/ui/Icon";
 import { AnvilArt, DishArt, HeadphoneArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
-  title: "アプリ工房",
+  title: "アプリ",
   description: "旅先で作っている自作アプリ。「なに食べよ」と「なにこれオーディオガイド」。",
 };
 
 /**
- * アプリ工房。**2本を見くらべる作業台。**
+ * アプリ。**2本を見くらべる作業台。**
  *
  * ## この面から端末の絵を外した理由
  *
@@ -38,10 +38,10 @@ const fmt = (d: string) => d.replace(/-/g, "/");
 
 export default function AppsPage() {
   return (
-    <PageShell current="apps" crumbs={[{ label: "アプリ工房" }]}>
+    <PageShell current="apps" crumbs={[{ label: "アプリ" }]}>
       <PageHead
         mark={<AnvilArt size={74} />}
-        title="アプリ工房"
+        title="アプリ"
         lead="旅をしながらアプリを作っています。目標は食べログ超え。設計も文言も、配信でみんなに相談しながら決めてきました。"
       />
 

@@ -143,7 +143,12 @@
 
 /* --- 行き先ボタン --- */
 .tnow-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+/* 指で押せる最小は 48px（docs/island-design.md 3-2）。
+   当たり判定を中心から伸ばして測ると 42px しかなかった。 */
 .tnow-act {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
   font-size: 12.5px;
   font-weight: 900;
   padding: var(--sp-2) var(--sp-4);
@@ -226,30 +231,56 @@
 }
 
 /* =========================================================
-   区間ごとの話
+   旅のよてい（日付ごと）
    ---------------------------------------------------------
-   見出しの左には、その区間の絵。同じ親指の印を10回並べると、
-   どの区間も同じことをしているように見える（Marks.tsx）。
+   段落の指定に `p.` を付けてあるのは、`pages.css` の
+   `.panel p { font-size: var(--fs-body); line-height: 1.95 }` が
+   クラス+要素でこちらより強いから。付けずに書いたときは、
+   その日の話が 12px/1.6 のつもりで 14.5px/1.95 で描かれていて、
+   10日ぶんで 500px 余計に取っていた（`p.rtie` と同じ轍）。
+   ---------------------------------------------------------
+   ここは区間ごとのカード10枚だった。1枚ずつ畳んであって、開くと中に
+   「足代の席」と「道しるべの席」があり、両方そろうと区間が「つながる」。
+   企画への提案と投げ銭を1つの言い方に押し込んでいて、通じなかった
+   （docs/nordic-fund.md 「捨てた設計」）。畳みをやめて、上から読める表にする。
+   紙の上に板を積まない。日ごとの区切りは罫線1本。
    ========================================================= */
-.rleg-art {
-  flex: none;
-  border-radius: 10px;
-  box-shadow: var(--shadow-1);
+.ndays { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
+.nday {
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
 }
-.rleg-way { min-width: 0; }
-/* 「いま、ここ」。旅が始まってから、いま走っている1区間にだけ出る。
+.nday:last-child { padding-bottom: var(--sp-2); }
+/* 何日目。日付は切符のある2日にだけ入る（分からない日を埋めない）。 */
+p.nday-when {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 5px;
+}
+p.nday-when b {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-caps);
+}
+p.nday-when time {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 「いま、ここ」。旅が始まってから、今日の1日にだけ出る。
    出す・出さないは `TripNow` が現在地を読んで `data-now` で切り替える
-   （React で描き直すと、地図の SVG まで作り直しになる）。 */
-.rleg-now { display: none; }
-/* 開いたカードの見出しは蛍光（--marker）で塗られているので、札も蛍光にすると
-   何も乗っていないように見える。紙の札に輪をかける。輪は厚みではないので、
-   押せるものと取り違えない（docs/island-world.md 3.4）。 */
-.rleg-h[data-now] .rleg-now {
-  /* 区間名と同じ行に置くと、名前が「リガ → タリ／ン」と割れる。
-     札を上の行に出して、名前には行を丸ごと渡す。 */
-  display: block;
-  width: fit-content;
-  margin: 0 0 3px;
+   （React で描き直すと、地図の SVG まで作り直しになる）。
+   蛍光は「何日目」がもう使っているので、こちらは紙に輪をかける。
+   輪は厚みではないので、押せるものと取り違えない。 */
+.nday-now { display: none; }
+.nday[data-now] .nday-now {
+  display: inline-block;
   padding: 1px var(--sp-2);
   border-radius: var(--r-0);
   background: var(--paper);
@@ -259,167 +290,172 @@
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   white-space: nowrap;
-  vertical-align: 1px;
 }
-/* 上の司令塔から `#leg-…` で飛んでくる。真上に貼りつくと見出しが読めない。 */
-.rleg-h { scroll-margin-top: 12px; }
-.rleg-arrow { color: var(--ink-2); margin: 0 2px; }
-.rleg-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.rleg-fixed {
+/* 上の司令塔から `#day-…` で飛んでくる。真上に貼りつくと見出しが読めない。 */
+.nday { scroll-margin-top: 12px; }
+
+.nday-go { display: flex; gap: var(--sp-3); align-items: flex-start; }
+.nday-go + .nday-go { margin-top: var(--sp-3); }
+.nday-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
+.nday-txt { min-width: 0; flex: 1; }
+p.nday-way {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: var(--lh-head);
+}
+p.nday-way i {
+  margin-left: var(--sp-2);
+  font-style: normal;
   font-size: var(--fs-min);
   font-weight: 900;
-  color: var(--marker-ink);
-  background: var(--marker);
-  border-radius: var(--r-0);
-  padding: var(--sp-1) var(--sp-2);
-  display: inline-block;
+  color: var(--ink-2);
 }
-.rleg-stay { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-/* 開いたカードから出ていく先。国のページと、上の地図。
-   紙の上でも押せるものは板のまま（docs/island-world.md 2.1）。 */
-.rleg-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; }
-
-/* --- 区間の席 ---
-   区間カードには席が2つある。**道しるべ（言葉）と、足代（お金）。**
-   両方そろって、その区間はつながる（docs/nordic-fund.md 提案1）。
-   席は罫線で仕切る。紙の型なので、中に板を積まない。 */
-/* 席の区切りの罫は、紙のはしからはしまで引く。本物の図鑑の紙も、
-   区切りは端まで届く1本になっている（/tmp/acref/ref_NH_Critterpedia_*.jpg）。
-   中だけで止めると、区切りではなく「もう1つの箱」に見える。
-   はしまでの幅は `ui.css` の `.fold-body` が持っているので、そこから借りる。 */
-.rleg-seat,
-/* p.rtie と書くのは、`pages.css` の `.panel p` が margin をまとめて上書きするから。
-   同じ強さにしておかないと、左右の負のマージンだけが黙って消える。 */
-p.rtie {
-  --rleg-x: var(--sp-4);
-  margin-left: calc(-1 * var(--rleg-x));
-  margin-right: calc(-1 * var(--rleg-x));
-  padding-left: var(--rleg-x);
-  padding-right: var(--rleg-x);
-}
-.rleg-seat { margin-top: 14px; border-top: 1px solid var(--rule); padding-top: 11px; padding-bottom: 2px; }
-.rleg-seath {
+p.nday-how {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  margin: 0 0 var(--sp-2);
-}
-/* 席の名前の右に日付を出す行。h3 の中に日付を入れないためだけの1枚。
-   紙の見出しは蛍光ペンを「字の下」に敷くので、h3 の中に置いた字は全部帯に入る。 */
-.rleg-seath-row { display: flex; align-items: baseline; gap: var(--sp-2); margin: 0 0 8px; }
-.rleg-seath-row .rleg-seath { margin: 0; }
-/* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
-   席の名前は紙の h3 なので、ここが使いどころ。 */
-.rleg-seath span {
-  padding: var(--sp-1) var(--sp-3);
+  gap: 6px;
+  margin: 2px 0 0;
   font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-caps);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.nday-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+/* 切符から決まっている、動かせない事実 */
+p.nday-fixed {
+  display: inline-block;
+  margin: 5px 0 0;
+  padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-0);
   background: var(--marker);
   color: var(--marker-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
 }
-.seatmark { flex: none; display: block; }
-/* 起きたこと。越えた日と、そこで起きたこと2〜3行（docs/nordic-fund.md 提案4）。
-   日付は見出しの右へ流す。左に置くと、席の名前より先に日付を読むことになる。 */
-.rleg-when {
+p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 700; }
+/* 泊まるところ。日付の行の右へ回す。独立した行にすると10日で 370px 取る。 */
+.nday-stay {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-left: auto;
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
 }
-.rleg-log { margin: 0 0 var(--sp-2); font-size: 13px; line-height: 1.95; font-weight: 700; }
-
-/* --- つながりの読み上げ ---
-   埋まっていない区間を灰色にしない。灰色は失敗の色になる。
-   同じ明るさのまま、席が空いていることだけを言う。
-   つながったかどうかは**絵と言葉で言う。色を足さない。**
-   色に意味を1つずつ割りあててあるので、そこに無い意味の色を作らない
-   （docs/island-world.md 3章）。塗りも持たない。紙の区切りは罫線1本。 */
-.rtie {
-  display: flex;
+/* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
+.nday-log {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left: 3px solid var(--marker);
+}
+.nday-log p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
+.nday-vid {
+  display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--rule);
+  gap: 5px;
+  margin-top: var(--sp-2);
   font-size: var(--fs-note);
-  font-weight: 800;
-  line-height: 1.65;
-  color: var(--ink-2);
-}
-.rtie.is-tied { color: var(--ink); }
-.rtie b { font-weight: 900; color: var(--ink); }
-
-/* --- 足代 ---
-   金額は「区間の値段」と「その区間に入った額」だけ。
-   誰がいくら出したかも、順位も、どこにも出さない。 */
-.fare-what {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-2);
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.8;
-}
-.fare-what b { font-weight: 900; color: var(--ink); }
-.fare-what i {
-  font-style: normal;
-  font-weight: 900;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-/* まだ値段が決まっていない区間。空欄にせず、調べていると書く。
-   「未定」と灰色で置くと、そこだけ死んでいるように見える。 */
-.fare-todo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-2);
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.8;
-}
-.fare-todo b { font-weight: 900; color: var(--ink); }
-.fare-todo i {
-  font-style: normal;
-  font-size: var(--fs-min);
-  font-weight: 800;
-  color: var(--ink-2);
-}
-/* バーは押せない。だから厚みも金も付けない。
-   入った額は「数えたもの」なので、色はオリーブ（docs/island-world.md 3.2）。 */
-.fare-bar {
-  display: block;
-  margin: var(--sp-2) 0 var(--sp-2);
-  height: 12px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--rule) 24%, transparent);
-  overflow: hidden;
-}
-.fare-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 6px;
-  background: var(--chip);
-}
-.fare-got { margin: 0; font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
-.fare-got b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
-/* 満ちたらバーを消す。満タンのバーを出し続けると
-   「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。
-   代わりの札も作らない。1行の言葉で足りる。 */
-.fare-full {
-  margin: var(--sp-2) 0 0;
-  font-size: 12.5px;
   font-weight: 900;
   color: var(--ink);
 }
+/* 終点。ここが企画の芯なので、最後の行だけ絵を持たない代わりに間を取る。 */
+.nday.is-goal p.nday-way { font-size: var(--fs-h3); }
 
-/* --- 意見と道しるべを貼る道具 ---
-   `.bpost` `.bin-name` は `components/nordic` の2か所だけで使っている。
-   どこにも段が書かれていなくて、貼るボタンがただの文字に見えていた。
+/* =========================================================
+   この旅に、言う
+   ---------------------------------------------------------
+   まだ決めていないことは押すだけで答えられて、そのあとに書く欄がある。
+   「押す」と「書く」で段が2つ。入口がいきなり作文だと、
+   文章を書かない人にできることが1つも無くなる。
+   ========================================================= */
+.nsub {
+  margin: var(--sp-4) 0 var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: 900;
+}
+p.nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
+.nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
+/* 何日目かは、問いと同じ行に。行を分けると6つで 130px 増える。 */
+.fork-day {
+  margin-right: 6px;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--marker);
+  color: var(--marker-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.fork { margin: 0; }
+p.fork-q {
+  margin: 0 0 7px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 2つを横に並べる。縦に積むと、6つの問いで画面1つぶん余計に取る。 */
+.fork-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+/* 押せるものは板。紙の上に載せていい板は「押すもの・書くもの」だけで、
+   押せる合図は厚みだけ（docs/island-world.md 3.4）。 */
+.fork-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: var(--pop);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--ink);
+}
+.fork-pick:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+/* 押したあとは、板を押し込んだままにする。自分の1票がそこにあると分かる。
+   押せないものに厚みを残すと、まだ押せるように見える。 */
+.fork-pick:disabled { transform: translateY(4px); box-shadow: var(--pop-push); }
+.fork-pick.is-mine { background: var(--marker); color: var(--marker-ink); }
+.fork-pick em {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+p.fork-said {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+p.fork-said b { font-weight: 900; color: var(--ink); }
+/* 越えた日に残る答え。旅程表のその日の行に置く。 */
+p.fork-was {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left: 3px solid var(--marker);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+p.fork-was b { font-weight: 900; color: var(--ink); }
+
+/* --- 書く道具 ---
+   `.bpost` `.bin-name` は `components/nordic` と「企画をだす」で使う。
    押せるものは厚みで言う（docs/island-world.md 3.4）。
    書く欄は逆に、へこませる（`.bin` と同じ考え方）。 */
 .bin-name {
@@ -454,32 +490,43 @@ p.rtie {
 .bpost:active { transform: translateY(4px); box-shadow: var(--pop-push); }
 .bpost:disabled { opacity: 0.5; box-shadow: none; transform: none; }
 
-/* --- ボード全体 ---
-   人数はここに1回だけ。区間ごとには出さない（人違いが起きない作りにしてある）。 */
-.carried {
+/* =========================================================
+   応援する（面のいちばん最後）
+   ---------------------------------------------------------
+   旅の話とお金の話を混ぜない。ここにしか金額を出さない。
+   個人の金額も順位も出さない。目標に対するバーも置かない。
+   ========================================================= */
+p.nback-now {
   margin: var(--sp-3) 0 0;
   font-size: 13px;
   font-weight: 800;
   color: var(--ink-2);
 }
-.carried b { font-weight: 900; color: var(--ink); }
-.carry-give { margin-top: 16px; }
-.carry-give p {
-  margin: 0 0 var(--sp-3);
-  font-size: 12.5px;
-  line-height: 1.85;
-  font-weight: 700;
+p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* 何にお金が要るのか。金額の分からないものも、消さずに「調べています」と出す。 */
+.nback-what { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
+.nback-what li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  padding: 7px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+}
+.nback-what b { font-size: 12.5px; font-weight: 900; color: var(--ink); }
+.nback-what i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
   color: var(--ink-2);
 }
-.carry-give b { font-weight: 900; color: var(--ink); }
-/* 押せるものなので、厚みを付ける。押せる合図は厚みだけ
-   （docs/island-world.md 3.4）。面は他のボタンと同じクリーム。 */
 .carry-go {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
+  margin-top: var(--sp-4);
   min-height: 48px;
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -490,117 +537,7 @@ p.rtie {
   color: var(--ink);
 }
 .carry-go:active { transform: translateY(4px); box-shadow: var(--pop-push); }
-/* --- わかれ道 ---
-   押すだけで答えられる、参加のいちばん下の段（docs/nordic-fund.md 提案8）。
-   道しるべの席の頭に置く。**書く欄より上**にあるのが要で、
-   ここが作文から始まっていると、97%の人は自分の席が無いと読む。
 
-   棒は伸ばさない。ここに置くと、すぐ下の足代のバーと同じ形のものが
-   1枚のカードに2つ並ぶ。数は字で言う。 */
-.fork { margin: 0 0 var(--sp-3); }
-.fork-q {
-  margin: 0 0 var(--sp-2);
-  font-size: 12.5px;
-  line-height: 1.8;
-  font-weight: 900;
-  color: var(--ink);
-}
-.fork-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
-@media (min-width: 560px) { .fork-list { grid-template-columns: 1fr 1fr; } }
-/* 押せるものは板。紙の上に載せていい板は「押すもの・書くもの」だけで、
-   押せる合図は厚みだけ（docs/island-world.md 3.4）。 */
-.fork-pick {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  width: 100%;
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: var(--pop);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.5;
-  text-align: left;
-  color: var(--ink);
-}
-.fork-pick:active { transform: translateY(4px); box-shadow: var(--pop-push); }
-/* 押したあとは、板を押し込んだままにする。自分の1票がそこにあると分かる。
-   押せないものに厚みを残すと、まだ押せるように見える。 */
-.fork-pick:disabled { transform: translateY(4px); box-shadow: var(--pop-push); }
-.fork-pick.is-mine {
-  background: var(--marker);
-  color: var(--marker-ink);
-  border-color: var(--frame-dark);
-}
-.fork-pick em {
-  flex: none;
-  font-style: normal;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  color: inherit;
-}
-.fork-said {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-note);
-  font-weight: 800;
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-.fork-said b { font-weight: 900; color: var(--ink); }
-/* 越えた区間。押せるものは消えて、押された数の答えだけが残る。
-   ここは3つめの席（起きたこと）の隣に並ぶ読み物になる。 */
-.fork-was {
-  margin: 0 0 var(--sp-3);
-  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
-  border-left: 3px solid var(--marker);
-  font-size: var(--fs-note);
-  font-weight: 800;
-  line-height: 1.75;
-  color: var(--ink-2);
-}
-.fork-was b { font-weight: 900; color: var(--ink); }
-
-/* --- 書く欄は、押してから開く ---
-   閉じているあいだも、そこで何ができるかは板が言っている。
-   開いたままにしていたころ、開いた区間カード 1,054px のうち 250px が
-   誰も触っていない入力欄だった（10区間ぶん、同じものが並ぶ）。 */
-.spost-write { display: block; }
-
-.spost-ask { margin: 0 0 10px; font-size: 12.5px; line-height: 1.8; font-weight: 800; color: var(--ink); }
-.spost-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 0; border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
-.spost-list li { padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
-.spost-list p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
-.spost-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
-.spost-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-/* 読み込み中。中身の形をした薄い板だけ置いて、場所を先に取る。
-   出たとたんに下がずれるのを防ぐのが役目なので、動かさない。 */
-.spost-wait { display: grid; gap: 8px; margin: 0 0 12px; }
-.spost-wait span {
-  display: block;
-  height: 13px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--rule) 22%, transparent);
-}
-.spost-wait span:last-child { width: 62%; }
-
-/* 空いている席を、失敗の色にしない。灰色にせず、これから埋まるものとして書く。
-   つながりの読み上げ（.rtie）がすぐ上にあるので、塗りは重ねず罫線1本にする。
-   同じ濃さの札が2つ続くと、どちらも読まれない。 */
-.spost-none {
-  margin: 0 0 var(--sp-3);
-  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
-  border-left: 3px solid var(--marker);
-  font-size: var(--fs-note);
-  font-weight: 800;
-  line-height: 1.75;
-  color: var(--ink-2);
-}
 
 /* =========================================================
    国のカード（トップの「通る6カ国」）
@@ -610,15 +547,17 @@ p.rtie {
    同じ国のページで、2つで 3,300px 使っていた（`Countries.tsx`）。
    写真のほうが強いので、写真を国の顔にして、行のほうへ寄せてある。
    ========================================================= */
-.ncountries { display: grid; gap: 9px; margin-top: 12px; }
-@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr; } }
+/* スマホでも2枚ずつ並べる。1枚ずつ縦に積むと、6枚で 510px 取っていた。
+   写真は国の顔なので残す。減らしたのは字のほう。 */
+.ncountries { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr 1fr; } }
 .ncountry {
   position: relative;
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-rows: auto 1fr;
   align-items: stretch;
-  gap: var(--sp-3);
-  padding: 0 var(--sp-3) 0 0;
+  gap: 0;
+  padding: 0 0 var(--sp-2);
   overflow: hidden;
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
@@ -633,7 +572,8 @@ p.rtie {
   position: relative;
   display: block;
   line-height: 0;
-  min-height: 86px;
+  min-height: 72px;
+  height: 72px;
   background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
 }
 .ncountry-img img { width: 100%; height: 100%; object-fit: cover; }
@@ -659,14 +599,25 @@ p.rtie {
 }
 .ncountry-body {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 2px;
   min-width: 0;
-  padding: var(--sp-3) 0;
+  padding: var(--sp-2) var(--sp-3) 0;
 }
 .ncountry-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 900; line-height: 1.45; }
+.ncountry-body b { font-size: 14px; font-weight: 900; }
+/* 見どころの名前は1行で止める。2行に伸びると、3段で 140px 変わる。
+   全部の名前は、押した先の国のページにある。 */
+.ncountry-body i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
 .ncountry-body em {
   font-style: normal;
   font-size: var(--fs-min);
@@ -821,7 +772,10 @@ p.rtie {
 }
 .nspot-meta dt { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .nspot-meta dd { margin: 0; font-size: var(--fs-min); font-weight: 900; }
-.nspot-info { margin: 10px 0 0; font-size: var(--fs-min); line-height: 1.75; font-weight: 700; color: var(--ink-2); }
+/* この一行はオリーブの札の上に乗る。墨の薄いほう（--ink-2）だと 3.82 : 1 で
+   読めない。**色を濃くしても届かない。組み合わせが間違っている。**
+   オリーブと対になっている字の色（--chip-ink）に替えると 5.67 : 1（実測）。 */
+.nspot-info { margin: 10px 0 0; font-size: var(--fs-min); line-height: 1.75; font-weight: 700; color: var(--chip-ink); }
 .nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
 .nspot-tags span {
   font-size: var(--fs-min); font-weight: 900;
@@ -982,7 +936,10 @@ p.rtie {
 .gpnote { margin: 6px 0 0; font-size: var(--fs-note); line-height: 1.8; font-weight: 700; color: var(--ink-2); }
 
 .glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }
-.glist.is-dont li { color: var(--pick); }
+/* やってはいけないこと。橙（--pick）を素で紙に置くと 2.57 : 1（実測5か所）。
+   墨と混ぜて 4.77 : 1 まで沈める。橙のままなのは、
+   「やっていいこと」の並びと見分けが付く必要があるから。 */
+.glist.is-dont li { color: color-mix(in srgb, var(--pick) 35%, var(--ink)); }
 
 /* 表。紙の型なので、行の枠ではなく罫線1本で分ける。 */
 .gtable { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
@@ -1002,7 +959,10 @@ p.rtie {
 .gcard b { display: block; font-size: 13.5px; font-weight: 900; }
 .gcard i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .gcard p { margin: 5px 0 0; font-size: 12.5px; line-height: 1.85; font-weight: 600; }
-.gcard span { display: block; margin-top: 4px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+/* どこで買えるか。11.5px の細い字で、紙のいちばん沈んだところ（#dacb8f）に
+   乗ると 4.40 : 1 まで落ちる（中央値は 4.76 で通るが、地のムラで割る）。
+   ここだけ墨の濃いほうにして、地がどこでも 4.5 を割らないようにする。 */
+.gcard span { display: block; margin-top: 4px; font-size: var(--fs-min); font-weight: 800; color: var(--ink); }
 
 .gphrase { margin-top: 6px; }
 .gwords { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--rule); }
@@ -1014,7 +974,16 @@ p.rtie {
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .gwords b { font-size: 13px; font-weight: 900; }
-.gwords i { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--accent-deep); }
+/* 読みがな。桃の濃いほう（--accent-deep）を素で紙に置くと、縞の暗いほうの行で
+   3.45 : 1 まで落ちる（描いた画素で40か所。11.5px なので細くて余計に効く）。
+   `--accent-deep` は「同じものの濃いほう。単独で使わない」（island-world 3.2）
+   なので、墨と混ぜて沈める。色相はそのまま、5.20 : 1 まで開く。 */
+.gwords i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: color-mix(in srgb, var(--accent-deep) 50%, var(--ink));
+}
 .gwords span { font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
 /* =========================================================
@@ -1179,13 +1148,20 @@ svg.nmap {
   stroke-opacity: 0.42;
   opacity: 0.82;
 }
+/* 字の下に敷く紙の札。
+   緑の陸と青い海では地の明るさが3倍ちがうので、字の色をどう選んでも 4.5 : 1 に
+   届かない（街の名前で実測 2.36〜4.31、距離で 1.17〜3.17）。
+   紙の縁取り（stroke）では埋まらない。**字の下に自分で地を敷く。**
+   `/map` の担当が同じ問題をこの形で解いている。 */
+.nmap .nm-lab {
+  fill: var(--paper);
+  opacity: 0.92;
+}
 .nmap .nm-city {
   fill: var(--ink);
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 8;
 }
-.nmap .nm-city.is-big { stroke-width: 9; }
+.nmap .nm-city.is-big { font-weight: 900; }
 
 /* --- ルート --- */
 .nmap .nm-leg-case,
@@ -1274,7 +1250,9 @@ svg.nmap {
   opacity: 0.75;
 }
 .nmap .nmap-pin.is-now .nm-goal .nm-chip { display: none; }
-.nmap .nm-chip.is-goal rect { fill: var(--accent); }
+/* 桃の上のクリームは 2.51 : 1 で読めない。同じ色相の濃いほう（--accent-deep）に
+   置くと 6.5 : 1 になる（`/map` の「いまここ」と同じ直し）。 */
+.nmap .nm-chip.is-goal rect { fill: var(--accent-deep); }
 .nmap .nm-chip.is-goal text { fill: var(--paper); letter-spacing: 0.14em; }
 
 /* --- 吹き出し（飛行機の時間、いまここ） --- */
@@ -1299,8 +1277,6 @@ svg.nmap {
   fill: var(--ink);
   font-size: 24px;
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 6;
 }
 
 /* --- 縮尺 --- */
@@ -1311,19 +1287,21 @@ svg.nmap {
   stroke-width: 5;
   stroke-linecap: round;
 }
+/* 白い字を陸に直に置いていた（3.93）。札を敷いたので、字は墨に戻す。 */
 .nmap .nm-scale-t {
-  fill: var(--paper);
+  fill: var(--ink);
   font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
 
 /* --- 区間の距離 --- */
+/* 距離の数字。札を敷いても、琥珀の濃いほうのままだと 4.18 : 1 で届かない
+   （27px でも数字は細い）。墨と混ぜて 5.11 : 1 まで沈める。色相は変えない。 */
 .nmap .nm-km {
-  fill: var(--frame-deep);
+  fill: color-mix(in srgb, var(--frame-deep) 70%, var(--ink));
   font-size: 27px;
   font-weight: 900;
-  stroke: var(--paper);
-  stroke-width: 7;
 }
-.nmap .is-ferry .nm-km { fill: var(--sea-deep); }
+/* フェリーは海の色。素のままだと札の上で 3.30 : 1。同じだけ沈めて 4.62 : 1。 */
+.nmap .is-ferry .nm-km { fill: color-mix(in srgb, var(--sea-deep) 65%, var(--ink)); }

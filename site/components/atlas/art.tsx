@@ -1,5 +1,5 @@
 /**
- * 旅の桟橋・たき火広場・アプリ工房で使う絵。
+ * 歩いた国・あやとのこと・アプリで使う絵。
  *
  * `components/ui/Icon.tsx` は「記号」（閉じる・外部リンク・再生）のための線画で、
  * ここに置くのは「もの」の絵。塗りだけで作り、輪郭線を引かない。
@@ -182,10 +182,10 @@ export function CampArt({ size = 64, className, style }: ArtProps) {
   );
 }
 
-/** 桟橋の杭とロープ。旅の桟橋の顔。 */
+/** 桟橋の杭とロープ。いまはどの面でも使っていない（`/map` の顔は島と同じ道しるべにした）。 */
 export function PierArt({ size = 64, className, style }: ArtProps) {
   return (
-    <Box size={size} className={className} style={style} label="旅の桟橋">
+    <Box size={size} className={className} style={style} label="桟橋">
       {/* 浅瀬 → 泡 → 砂の帯。島の岸と同じ重ね方 */}
       <path d="M0 44h64v20H0z" fill="#4fc8d2" />
       <path d="M0 48q8-3 16 0t16 0 16 0 16 0v16H0z" fill="#7fe0d8" />
@@ -208,10 +208,10 @@ export function PierArt({ size = 64, className, style }: ArtProps) {
   );
 }
 
-/** 工房のかなづち。アプリ工房の顔。 */
+/** 工房のかなづち。「アプリ」の顔。 */
 export function AnvilArt({ size = 64, className, style }: ArtProps) {
   return (
-    <Box size={size} className={className} style={style} label="アプリ工房">
+    <Box size={size} className={className} style={style} label="アプリの工房">
       <Ground cy={55} rx={24} ry={6} />
       {/* 作業台 */}
       <rect x="6" y="42" width="52" height="10" rx="5" fill="#a2683a" />

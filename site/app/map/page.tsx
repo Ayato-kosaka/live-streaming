@@ -9,16 +9,15 @@ import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
 import Days from "@/components/atlas/Days";
 import MAP from "@/content/atlas/route.json";
-import { PierArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
-  title: "旅の桟橋",
+  title: "歩いた国",
   description:
     "2024年10月のパリから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
 };
 
 /**
- * 旅の桟橋。
+ * 歩いた国。
  *
  * 主役は地図。表で17行並べても「どこをどう回ったか」は伝わらないので、
  * まず1枚の地図を出して、そのあとに順番の年表を置く。
@@ -71,13 +70,13 @@ export default function MapPage() {
   const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
   return (
-    <PageShell current="map" crumbs={[{ label: "旅の桟橋" }]}>
+    <PageShell current="map" crumbs={[{ label: "歩いた国" }]}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
           カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。 */}
       <PageHead
-        mark={<PierArt size={68} />}
-        title="旅の桟橋"
+        icon="signpost-flags"
+        title="歩いた国"
         lead="2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、いまはコーカサスにいます。"
       />
 

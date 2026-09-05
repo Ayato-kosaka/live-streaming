@@ -65,7 +65,7 @@ function rememberPost(id: string) {
 }
 
 /**
- * 企画掲示板。
+ * 企画をだす（掲示板）。
  *
  * ログインなしで貼れて、投票できる。
  * だからログインの案内は畳んで下に置き、いちばん上は書く場所にする。
@@ -185,7 +185,7 @@ export default function Board() {
 
   return (
     <>
-      <section className="panel bd-write">
+      <section className="panel paper bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
           まじめじゃなくていい。思いついたことを、そのまま書いて。

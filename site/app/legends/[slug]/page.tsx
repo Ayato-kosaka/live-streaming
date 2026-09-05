@@ -34,7 +34,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   return (
     <PageShell
       crumbs={[
-        { label: "伝説の丘", href: "/legends" },
+        { label: "伝説の企画", href: "/legends" },
         { label: l.title },
       ]}
     >

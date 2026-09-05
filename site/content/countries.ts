@@ -322,4 +322,24 @@ export const COUNTRIES: Country[] = [
   },
 ];
 
+/**
+ * 配信を始めるまえに通った国。
+ *
+ * **`COUNTRIES` は配信タイトルから復元した一覧なので、配信のない6週間がまるごと抜けている。**
+ * 日本を出たのは 2024年9月11日、パリで配信を始めたのは 10月28日。そのあいだに
+ * イギリス・バルセロナ・ローマを2週間ずつ回っている（本人の話）。
+ *
+ * ここに置いてあるのは名前と順だけで、日付を持たせていない。「2週間ずつ」しか
+ * 分かっておらず、`from`/`to` を書くと、聞いていない日付を書いたことになるから。
+ *
+ * **スペインとイタリアは国の面を持っていない。** `COUNTRIES` に足すと `order`
+ * （「◯カ国目」）を全部振り直すことになり、世界地図の焼き込み（`build_world_route.py`）と
+ * 食い違う。歩いた国の数え直しは `/map` の担当と決める。
+ */
+export const BEFORE_STREAM: { slug: string; name: string; city?: string; weeks: number }[] = [
+  { slug: "uk", name: "イギリス", weeks: 2 },
+  { slug: "spain", name: "スペイン", city: "バルセロナ", weeks: 2 },
+  { slug: "italy", name: "イタリア", city: "ローマ", weeks: 2 },
+];
+
 export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === slug);

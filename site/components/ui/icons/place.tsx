@@ -11,7 +11,7 @@ import { island } from "./core";
  */
 
 export const place: Record<string, Draw> = {
-  /** たき火広場 = /about。島の入口。 */
+  /** たき火。いまはどの面でも使っていない（`/about` の顔は `cottage`）。 */
   campfire: (c) => (
     <>
       <Sh c={c} cy={53} rx={21} ry={5} />
@@ -93,7 +93,7 @@ export const place: Record<string, Draw> = {
   ),
 
   /**
-   * 配信やぐら = /streams。
+   * 配信 = /streams。やぐら。
    *
    * 電波を左右の弧にすると翼に見えたので、**上へ飛ばす**。
    * 脚を太くしてハシゴを入れると、小さくしても「やぐら」の骨組みが残る。
@@ -133,7 +133,7 @@ export const place: Record<string, Draw> = {
   ),
 
   /**
-   * アプリ工房 = /apps。
+   * アプリ = /apps。工房。
    *
    * 前は「端末＋歯車」だった。歯車は**どの設定画面にも付いている記号**で、
    * 場所の名前になっていない。おまけに端末は `misc.phone` と当たる。
@@ -184,7 +184,7 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** 企画掲示板 = /board。コルクに紙が刺さっている。 */
+  /** 企画をだす = /board。コルクに紙が刺さっている。 */
   board: (c) => (
     <>
       <Sh c={c} cy={55} rx={20} ry={4.2} />
@@ -205,7 +205,7 @@ export const place: Record<string, Draw> = {
   ),
 
   /**
-   * 旅の桟橋 = /map。
+   * 桟橋。いまはどの面でも使っていない（`/map` の顔は `flagpost`）。
    *
    * 係船柱を左端だけに置くと重心が左に寄って倒れて見えたので、
    * **左に柱・右に小舟**で釣り合わせる。桟橋は左から右へ張り出す。
@@ -246,7 +246,7 @@ export const place: Record<string, Draw> = {
   ),
 
   /**
-   * キッチン小屋。
+   * 作った料理 = /kitchen。台所の小屋。
    *
    * 赤い屋根・クリームの壁・青い窓の家（`home`）と**16px でほぼ同じ絵**だった。
    * 屋根を板葺き（木）に替え、レンガの煙突を棟の上に立てて、窓を大きくとる。
@@ -287,7 +287,7 @@ export const place: Record<string, Draw> = {
   ),
 
   /**
-   * 伝説の丘 = /legends。
+   * 伝説の企画 = /legends。丘の館。
    *
    * 前は丘の上に星が浮いていて、台座が 8px しかなかった。
    * 16px にすると星だけが残って、`feel.star`（ただの星）と見分けがつかない。
@@ -325,7 +325,7 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** いまのポスト。旗が上がっていると新しい知らせがある、の絵。 */
+  /** 郵便受け。旗が上がっていると新しい知らせがある、の絵（留守のあいだの知らせ）。 */
   mailbox: (c) => (
     <>
       <Sh c={c} cy={55} rx={16} ry={4} />
@@ -336,6 +336,65 @@ export const place: Record<string, Draw> = {
       <rect x="46" y="12" width="4" height="20" rx="2" fill={c.gyd} />
       <path d="M50 13h11l-3.4 4.4L61 22H50z" fill={c.yl} />
       <Gl c={c} cx={21} cy={16} rx={3} ry={7} r={34} o={0.45} />
+    </>
+  ),
+
+  /**
+   * あやとのこと = /about。あやとの家。
+   *
+   * たき火（`campfire`）は「あやと本人」を指さないので、島の入口と同じ
+   * **家**に替えた。`home`（赤い屋根の汎用の家）と 16px で見分けが付くよう、
+   * 屋根を緑にして煙突を立てる。遠目で分かれるのは屋根の色。
+   */
+  cottage: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={23} ry={4.2} />
+      {/* 煙突。棟の上に立てる。斜面から生やすと傾いて見える */}
+      <rect x="42" y="9" width="8.6" height="13" rx="2" fill={c.rdd} />
+      <rect x="40.6" y="7.6" width="11.4" height="4.4" rx="2" fill={c.rd} />
+      <path d="M32 7 61 29.6a2.8 2.8 0 0 1-1.8 4.9H4.8A2.8 2.8 0 0 1 3 29.6z" fill={c.gr} />
+      <path d="M32 7 61 29.6a2.8 2.8 0 0 1-1.8 4.9H32z" fill={c.grd} />
+      <rect x="9" y="33" width="46" height="21" rx="3" fill={c.cr} />
+      <rect x="34" y="33" width="21" height="21" fill={c.crd} />
+      {/* 扉を真ん中に、窓を両脇に。間口の広い家にすると台所の小屋と分かれる */}
+      <rect x="13" y="37" width="10" height="8.6" rx="2" fill={c.sk} />
+      <rect x="41" y="37" width="10" height="8.6" rx="2" fill={c.sk} />
+      <path d="M27 54V42a5 5 0 0 1 10 0v12z" fill={c.br} />
+      <circle cx="34" cy="47.6" r="1.5" fill={c.gd} />
+      <Gl c={c} cx={16} cy={22} rx={3} ry={9} r={40} o={0.35} />
+    </>
+  ),
+
+  /**
+   * 歩いた国 = /map。国旗を掛けた道しるべ。
+   *
+   * 桟橋（`pier`）は「船で出ていく」で、歩いた国を指していなかった。
+   * 板を白のままにすると `travel.signpost`（ただの道しるべ）と同じになるので、
+   * 1枚を上下2色に割る。**色の数がそのまま国の数に見える。**
+   */
+  flagpost: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={16} ry={3.6} />
+      <rect x="28.4" y="8" width="7.2" height="49" rx="3" fill={c.wod} />
+      <rect x="25" y="4.4" width="14" height="5.6" rx="2.6" fill={c.wo} />
+      {/* 右へ2枚、左へ2枚。高さをずらして、掛かっている枚数を数えられるようにする */}
+      <g>
+        <path d="M35 12h19a2 2 0 0 1 2 2v3H35z" fill={c.bl} />
+        <path d="M35 17h21v3a2 2 0 0 1-2 2H35z" fill={c.w} />
+      </g>
+      <g>
+        <path d="M12 23h17v3H10a2 2 0 0 1 0-3z" fill={c.rd} />
+        <path d="M10 26h19v3H12a2 2 0 0 1-2-3z" fill={c.w} />
+      </g>
+      <g>
+        <path d="M35 34h17a2 2 0 0 1 2 2v2H35z" fill={c.gr} />
+        <path d="M35 38h19v2a2 2 0 0 1-2 2H35z" fill={c.gd} />
+      </g>
+      <g>
+        <path d="M13 45h16v3H11a2 2 0 0 1 0-3z" fill={c.gd} />
+        <path d="M11 48h18v3H13a2 2 0 0 1-2-3z" fill={c.gr} />
+      </g>
+      <Gl c={c} cx={30.4} cy={14} rx={1.6} ry={5} r={0} o={0.4} />
     </>
   ),
 

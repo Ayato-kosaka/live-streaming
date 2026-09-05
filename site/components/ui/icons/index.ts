@@ -26,7 +26,7 @@ export type IconName =
   // 島の場所
   | "campfire" | "friends" | "tower" | "workshop" | "tent" | "board" | "pier"
   | "kitchen" | "hill" | "mailbox" | "island" | "home"
-  | "guide" | "vote" | "globe" | "stampbook"
+  | "guide" | "vote" | "globe" | "stampbook" | "cottage" | "flagpost"
   // 旅先の景色
   | "mountain" | "sea" | "forest" | "bridge" | "castle" | "church" | "museum"
   | "station" | "hotel" | "market" | "hotspring" | "bench" | "windmill" | "lighthouse"

@@ -9,7 +9,7 @@ import SignIn from "@/components/live/SignIn";
  * 国ごとの企画募集。
  *
  * 「北欧行くならこれやって」を国ごとに受け取る。
- * 出す先は島の企画掲示板と同じ。ただし頭に国名の札を付けて貼るので、
+ * 出す先は島の掲示板と同じ。ただし頭に国名の札を付けて貼るので、
  * その国のページには、その国あての提案だけが並ぶ。
  * こうしておくと、あやとが現地に着いた日に、その国ぶんだけ読み返せる。
  */
@@ -19,6 +19,7 @@ export default function CountryIdeas({
   note,
   placeholder,
   bare = false,
+  foldWrite = false,
 }: {
   country: string;
   /** 見出し。省略すると「◯◯でこれやって」 */
@@ -31,9 +32,18 @@ export default function CountryIdeas({
    * 畳みの見出しと同じ字をもう一度出さない。
    */
   bare?: boolean;
+  /**
+   * 書く欄を、押してから開く。
+   *
+   * 出しっぱなしにすると、入力欄・名前・ボタンで 300px 近く取る。
+   * 面のいちばん下の1か所だけならそれでいいが、`/nordic` はここが
+   * 面の途中にあって、その下にまだ区画がある。押す段を1つ挟む。
+   */
+  foldWrite?: boolean;
 }) {
   const tag = `【${country}】`;
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  const [open, setOpen] = useState(!foldWrite);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
@@ -114,29 +124,38 @@ export default function CountryIdeas({
         <p className="cidea-none">まだ1件もありません。最初のひとつをどうぞ。</p>
       )}
 
-      <p className="cidea-ask">{list.length > 0 ? "自分も書く" : "書いてみる"}</p>
-      {!user && <SignIn compact />}
-      <textarea
-        className="bin"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={placeholder ?? `例）${country}の朝市に行ってほしい。地元の人しかいないやつ`}
-        maxLength={180}
-        rows={3}
-      />
-      {!user && (
-        <input
-          className="bin-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="名前（なくてもいい）"
-          maxLength={20}
-        />
+      {!open ? (
+        <button className="bpost" onClick={() => setOpen(true)}>
+          {list.length > 0 ? "自分も書く" : "書いてみる"}
+        </button>
+      ) : (
+        <>
+          {!foldWrite && <p className="cidea-ask">{list.length > 0 ? "自分も書く" : "書いてみる"}</p>}
+          {!user && <SignIn compact />}
+          <textarea
+            className="bin"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder ?? `例）${country}の朝市に行ってほしい。地元の人しかいないやつ`}
+            maxLength={180}
+            rows={3}
+            autoFocus={foldWrite}
+          />
+          {!user && (
+            <input
+              className="bin-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="名前（なくてもいい）"
+              maxLength={20}
+            />
+          )}
+          <button className="bpost" onClick={submit} disabled={sending}>
+            {sending ? "貼っています…" : "はりだす"}
+          </button>
+          {err && <p className="err">{err}</p>}
+        </>
       )}
-      <button className="bpost" onClick={submit} disabled={sending}>
-        {sending ? "貼っています…" : "はりだす"}
-      </button>
-      {err && <p className="err">{err}</p>}
     </>
   );
 

@@ -227,6 +227,29 @@
   width: 20px; height: 20px; flex: none;
   object-fit: contain; object-position: center bottom;
 }
+/* 狭い画面の札。
+   **この3つは素の `.ih-link` より後ろに置くこと。**
+   同じ強さなので、前に置くと上の @media が負けて1つも効かない
+   （前の `padding: var(--sp-1)` は、それで何も変えていなかった）。 */
+@media (max-width: 519.98px) {
+  /* 左右の余白は 4px。8px あると、いちばん長い「あやとのこと」が
+     390px で 4px はみ出して、最後の1画が切れる。
+     札の縁までの余白より、名前が最後まで読めることのほうが先。 */
+  .ih-link { padding: var(--sp-1) 4px; }
+  .ih-link img { width: 16px; height: 16px; }
+}
+/* ここから下は、絵を取って名前だけにする。
+   3列に6文字が入らなくなる幅で、絵と名前のどちらを残すかの話になる。
+   **名前を残す。** 切れた名前は入口として働かないが、名前だけの札は働く。 */
+@media (max-width: 379.98px) {
+  .ih-link img { display: none; }
+}
+/* 名前だけにしても3列で切れる幅。ここだけ2列 × 3段にする。
+   看板は 129px から 184px に伸びるが、
+   6つのうち4つの名前が切れている状態よりはましと判断した。 */
+@media (max-width: 339.98px) {
+  .ih-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* いま居る場所だけ、木の札ではなく紙の札にする。
    まわりが木色に揃ったので、白い1枚がどこにいるかを言う。 */
 /* いま居る場所。塗りは変えず、朱の細枠だけで言う（ac-reference ⑦-6）。

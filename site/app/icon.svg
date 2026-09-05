@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    あやと島のしるし。
+
+    16px で出るので、形は3つまで（海・島・木）。輪郭線は引かない
+    （docs/island-design.md 2章）。色は実測から：海 #0d87de、草 #52bd5d、
+    砂は島の浜と同じ。影は暗い青紫を薄く1枚だけ。
+
+    木を1本だけ大きく置くのは、16px では島の輪郭より木のほうが
+    先に読めるため。撮って確かめた。
+  -->
+  <rect width="32" height="32" rx="7" fill="#0d87de" />
+  <ellipse cx="16" cy="19.5" rx="12" ry="9" fill="#f0e2b8" />
+  <ellipse cx="16" cy="19" rx="10" ry="7.4" fill="#52bd5d" />
+  <ellipse cx="16" cy="24.5" rx="6" ry="1.8" fill="#0c0e34" opacity="0.16" />
+  <path d="M14.8 23.4h2.4l-.4-6h-1.6z" fill="#8a5a34" />
+  <ellipse cx="16" cy="12.6" rx="6.4" ry="5.8" fill="#3f9a52" />
+  <ellipse cx="14.4" cy="10.9" rx="4.4" ry="3.8" fill="#5fc46b" />
+</svg>

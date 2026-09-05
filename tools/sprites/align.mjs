@@ -13,10 +13,10 @@ const PORT = process.env.PORT || "3000";
  * 島を触ったら必ず回す。
  */
 // 島に建っているものは全部押せる（docs/island-design.md 6章）。看板の有無に関わらず全部見る。
-const NAMES = { "tower-studio": "配信やぐら", "hut-workshop": "アプリ工房", "pier": "旅の桟橋",
-  "tent": "これから", "signboard": "企画掲示板", "campfire": "たき火広場",
-  "hut-kitchen": "キッチン小屋", "hall-museum": "伝説の丘", "mailbox": "いまのポスト",
-  "tent-small": "仲間のテント" };
+const NAMES = { "tower-studio": "配信", "hut-workshop": "アプリ", "signpost-flags": "歩いた国",
+  "tent": "これから", "signboard": "企画をだす", "hut-ayato": "あやとのこと",
+  "hut-kitchen": "作った料理", "hall-museum": "伝説の企画", "globe-stand": "いまどこ",
+  "tent-small": "住んでる人" };
 
 /** 焼くときに測った「影を除いた物体の範囲」。ズレは絵ではなくこれで測る。 */
 const META = JSON.parse(fs.readFileSync(
@@ -58,7 +58,13 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
     const out = [];
     for (const [file, jp] of Object.entries(names)) {
       const img = imgs.find(i => i.getAttribute("href")?.includes(`/${file}.webp`));
-      const hit = spots.map(s => s.querySelector(".spot-hit")).find(h => h && h.getAttribute("aria-label")?.startsWith(jp));
+      /* 配信の時間(JST 22:00-25:00)だけ、やぐらの札は「いま配信中」に変わる。
+         名前で引くだけだと、夜に回したときに必ず「押せる場所がない」になる */
+      const alt = file === "tower-studio" ? "いま配信中" : null;
+      const hit = spots.map(s => s.querySelector(".spot-hit")).find((h) => {
+        const al = h?.getAttribute("aria-label");
+        return al && (al.startsWith(jp) || (alt && al.startsWith(alt)));
+      });
       if (!img || !hit) { out.push({ jp, err: !img ? "絵がない" : "押せる場所がない" }); continue; }
       const ir = img.getBoundingClientRect();
       const hr = hit.getBoundingClientRect();

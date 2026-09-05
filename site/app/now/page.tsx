@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * いまのポスト。
+ * いまどこ。
  *
  * 上半分は「板の型」。いまどこにいるか、今夜あるか、次の企画はいつか。
  * 押すものと、しらせだけを置く。
@@ -39,17 +39,17 @@ export default function NowPage() {
   const youtube = LINKS.find((l) => l.id === "youtube")!;
 
   return (
-    <PageShell crumbs={[{ label: "いまのポスト" }]}>
+    <PageShell crumbs={[{ label: "いまどこ" }]}>
       {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
           （`docs/island-design.md` 6章 / `docs/island-world.md` 7.5）。
           「いま何してる」は問いなので、すぐ下の1行で受ける。
           カモメを出さないのは、ここが読むだけの面だから。遊び方のある面
-          （掲示板・これから・キッチン小屋・道しるべ）にだけ出す
+          （掲示板・これから・作った料理・道しるべ）にだけ出す
           （`docs/island-ux.md` 5.2）。 */}
       <PageHead
-        icon="mailbox"
-        title="いまのポスト"
-        lead="いまどこにいて、今週なにをするか。配信のある日は、22時までの残りもここに出る。"
+        icon="globe-stand"
+        title="いまどこ"
+        lead="いまいる国と、今週やること。配信のある日は、22時までの残りもここに出る。"
       />
       <NowLive letter>
         <NowCountry />

@@ -11,7 +11,7 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
 import Days from "@/components/atlas/Days";
-// キッチン小屋の印はサイトで1つ。配信やぐらの札と同じ絵をそのまま使う
+// 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
 
-/** この面に出す料理の数。これより多い国は、のこりをキッチン小屋へ渡す。 */
+/** この面に出す料理の数。これより多い国は、のこりを「作った料理」へ渡す。 */
 const DISHES = 8;
 
 /** 終わった滞在の日数。まだ続いている滞在はここに入れない（画面側で数え直す）。 */
@@ -62,7 +62,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const days = closedDays(c.stays);
 
   return (
-    <PageShell current="map" crumbs={[{ label: "旅の桟橋", href: "/map" }, { label: c.name }]}>
+    <PageShell current="map" crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />
@@ -182,7 +182,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           {/* 押せる札は 48px＋厚み6px なので、1品で1行 48px 使う。
               ジョージアは25品あって、これだけで 1,224px（1.5画面）あった。
               ここは料理の本体ではなく「この国で何を作ったか」を言う場所なので、
-              8品まで出して、その先はキッチン小屋に渡す。 */}
+              8品まで出して、その先は「作った料理」に渡す。 */}
           <div className="chips">
             {cooked.slice(0, DISHES).map((r) => (
               <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`} prefetch={false}>
@@ -196,7 +196,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
               <ArtStamp size={44} className="tile-icon" />
               <span className="tile-text">
                 <b>のこりの{cooked.length - DISHES}品も見る</b>
-                <i>キッチン小屋のスタンプ帳に、{c.name}の{cooked.length}品ぜんぶ</i>
+                <i>作った料理のスタンプ帳に、{c.name}の{cooked.length}品ぜんぶ</i>
               </span>
               <Icon name="right" size={16} className="tile-go" />
             </Link>

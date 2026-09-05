@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { setHereSeq } from "./here";
@@ -22,8 +21,8 @@ import { Mark } from "./Marks";
  *   2. いま、どこにいるのか
  *   3. 次は、どこへ行くのか
  * これを1画面に収める。地図より先、文章より先に、いちばん上に置く。
- * **「そこで何が起きるか」はここに置かない。** 区間の話は区間カードが持っていて、
- * 開いているカードはいつも「いま走っている区間」なので、必ず同じ文を二度読むことになる。
+ * **「そこで何が起きるか」はここに置かない。** その日の話は旅程表が持っている
+ * （`Days.tsx`）ので、ここに書くと必ず同じ文を二度読むことになる。
  *
  * **大きい数字はひとつだけ置く。** 出る前は「あと何日」、出たあとは「あと何km」。
  * 2つ並べていたころ、出発前の画面には減らない 1,541km のバーが
@@ -65,6 +64,7 @@ export default function TripNow({
   stops,
   mainLegs,
   legOrder,
+  dayOf,
   depart,
   departWhen,
   hitchKm,
@@ -77,10 +77,12 @@ export default function TripNow({
   mainLegs: string[];
   /**
    * 寄り道も入れた、`ROUTE` ぜんぶの区間の id を通る順に。
-   * いま走っている区間が何本目かを、区間カード（`here.ts`）に配るのに使う。
-   * わかれ道は、越えた区間で閉じる。
+   * いま走っているのが何本目かを、下の面（`here.ts`）に配るのに使う。
+   * まだ決めていないことの問いは、越えた日のぶんが閉じる。
    */
   legOrder: string[];
+  /** 区間の id → 何日目。旅程表のその日へ飛ぶのと、今日の札に使う。 */
+  dayOf: Record<string, number>;
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -137,32 +139,21 @@ export default function TripNow({
     });
   }, [at, stops]);
 
-  // 区間ボードの、開いておくカードを動かす。
+  // 旅程表の「いま、ここ」を、今日の1日にだけ出す。
   //
-  // 静的書き出しなので、いつ誰が開いても最初のカード（クタイシ発の飛行機）が
-  // 開いている。旅が始まったあと、もう越えた区間が開きっぱなしになるので、
-  // 場所が分かった時点で**いまの区間と次の区間**に付け替える。
-  // 開くのは画面が出た直後の1回だけ。あとから勝手に開いたり閉じたりすると、
-  // 読んでいるカードが目の前で閉じることになる。
+  // 静的書き出しなので、書き出した時点では誰も走っていない。
+  // 場所が分かってから、その日の行に印を付ける（`docs/island-design.md` 3章
+  // 「動きは React の外で」。ここで状態を持つと旅程表がまるごと作り直しになる）。
   useEffect(() => {
     if (at == null || at < 1) return;
-    const board = document.querySelector(".rlegs");
-    if (!board) return;
-    // stops[at] へ来た区間が mainLegs[at - 1]。いま走っているのはその次。
-    const want = new Set([mainLegs[at], mainLegs[at + 1]].filter(Boolean));
-    board.querySelectorAll<HTMLElement>("[data-leg]").forEach((h) => {
-      const d = h.closest("details");
-      if (d) d.open = want.has(h.dataset.leg ?? "");
-      // いま走っている1区間にだけ、畳んだままでも見える札を出す。
-      // 10枚のうちどれが今日の話なのかが、開けなくても分かる。
-      h.toggleAttribute("data-now", h.dataset.leg === mainLegs[at]);
+    const n = dayOf[mainLegs[at]];
+    document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
+      el.toggleAttribute("data-now", el.id === `day-${n}`);
     });
-    // 地図の「見ている区間」の帯は、`details` が自分で出す toggle を
-    // `MapSync` が捕まえて付け替える。ここから触らない。
-  }, [at, mainLegs]);
+  }, [at, mainLegs, dayOf]);
 
-  // いま走っているのが何本目かを、区間カードにも配る。
-  // 越えた区間のわかれ道は、そこで閉じる（`here.ts`）。
+  // いま走っているのが何本目かを、下の面にも配る。
+  // 越えた日の「まだ決めていないこと」は、そこで閉じる（`here.ts`）。
   useEffect(() => {
     if (at == null || at < 1) return;
     const i = legOrder.indexOf(mainLegs[at]);
@@ -178,8 +169,8 @@ export default function TripNow({
   const leftKm = stops.slice((idx ?? 0) + 1).reduce((a, b) => a + (b.hitch ?? 0), 0);
 
   const now = idx != null ? stops[idx] : null;
-  /** いま走っている区間。出発前と、着いたあとは無い。 */
-  const nowLeg = idx != null && idx >= 1 && idx < last ? mainLegs[idx] : null;
+  /** いま走っている日。出発前と、着いたあとは無い。 */
+  const nowDay = idx != null && idx >= 1 && idx < last ? dayOf[mainLegs[idx]] : null;
   const next = idx != null && idx < last ? stops[idx + 1] : null;
   const d = left != null && left > 0 ? Math.floor(left / 1000) : 0;
 
@@ -291,19 +282,20 @@ export default function TripNow({
           まったく同じ「クタイシからストックホルムまでの10区間」を3回目に描いていた。
           どこまで来たかは地図の線がいちばんよく言える。 */}
       <div className="tnow-acts">
-        {/* 出る前は、ボードの頭へ。出たあとは**いま走っている区間のカードへ**。
-            旅の途中に来た人がまず見たいのは「今日どこを走っているか」で、
-            それは10枚目のカードかもしれない。ボードの頭に落とすと、
-            そこから自分で探すことになる。 */}
-        <a className="tnow-act is-main" href={nowLeg ? `#leg-${nowLeg}` : "#carry"}>
-          {nowLeg ? "いま走っている区間へ" : "この旅に、乗る"}
+        {/* 出る前は旅程表の頭へ。出たあとは**今日の行へ**。
+            旅の途中に来た人がまず見たいのは「今日どこにいるか」で、
+            それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。 */}
+        <a className="tnow-act is-main" href={nowDay ? `#day-${nowDay}` : "#plan"}>
+          {nowDay ? "今日のところへ" : "旅のよていを見る"}
         </a>
         <a className="tnow-act" href="#map">
           通る道を見る
         </a>
-        <Link className="tnow-act" href="/nordic/guide">
-          旅のしおり
-        </Link>
+        <a className="tnow-act" href="#back">
+          応援する
+        </a>
+        {/* しおりへの入口は、下の紙のタイルが持っている。ここに4つ目を置くと
+            行が2段に折れて 46px 増えるので、上は3つまでにする。 */}
       </div>
     </section>
   );

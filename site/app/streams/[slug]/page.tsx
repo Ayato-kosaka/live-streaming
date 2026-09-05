@@ -105,7 +105,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   const recs = figures(t.slug);
 
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信やぐら", href: "/streams" }, { label: t.name }]}>
+    <PageShell current="streams" crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
       <PageHead
         icon={t.icon}
         title={t.name}
