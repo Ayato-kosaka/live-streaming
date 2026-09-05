@@ -185,7 +185,7 @@ export default function Board() {
 
   return (
     <>
-      <section className="panel bd-write">
+      <section className="panel paper bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
           まじめじゃなくていい。思いついたことを、そのまま書いて。

@@ -131,7 +131,7 @@ export default function PlanDraftEditor() {
 
   if (!user) {
     return (
-      <section className="panel">
+      <section className="panel paper">
         <h2>企画のページを作る</h2>
         <p className="muted">
           これからの企画のページは、視聴者さんも作れます。まずはログインしてください。
@@ -143,7 +143,7 @@ export default function PlanDraftEditor() {
 
   if (state === "denied") {
     return (
-      <section className="panel">
+      <section className="panel paper">
         <h2>企画のページを作る</h2>
         <p>
           いまは、あやとが「書いていいよ」と決めた人だけが書けます。
@@ -170,7 +170,7 @@ export default function PlanDraftEditor() {
 
   return (
     <>
-      <section className="panel">
+      <section className="panel paper">
         <h2>企画のページを作る</h2>
         <p className="muted">
           骨組みだけ書いてください。文章の整えと見た目は、あやとが仕上げます。
@@ -295,7 +295,7 @@ export default function PlanDraftEditor() {
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel paper">
         <h2>できあがり</h2>
         <p className="muted">書いたものが、そのままこの形でページに出ます。</p>
         <PlanCard plan={toPlan(d)} />
