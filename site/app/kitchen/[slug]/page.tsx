@@ -72,7 +72,13 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
               <Tape>{r.name}</Tape>
             </h1>
             <div className="zk-hero-art">
-              <img src={`/sprites/${r.icon}.webp`} alt="" />
+              {/* この面の主役。高精細画面には長辺640pxで焼いたほうを配る。
+                  一覧のマスは今までの1枚のままなので、増えるのはここを開いた人だけ */}
+              <img
+                src={`/sprites/${r.icon}.webp`}
+                srcSet={`/sprites/${r.icon}.webp 1x, /sprites/hero/${r.icon}.webp 2x`}
+                alt=""
+              />
             </div>
             <p className="zk-hero-note">{r.note}</p>
           </div>

@@ -47,7 +47,12 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
               <Tape>{l.title}</Tape>
             </h1>
             <div className="zk-hero-art">
-              <img src={`/sprites/${l.icon}.webp`} alt="" />
+              {/* 主役の絵だけ、高精細画面には長辺640pxのほうを配る */}
+              <img
+                src={`/sprites/${l.icon}.webp`}
+                srcSet={`/sprites/${l.icon}.webp 1x, /sprites/hero/${l.icon}.webp 2x`}
+                alt=""
+              />
             </div>
             <div className="lg-hero-fig">
               <Fig f={l.figure} />

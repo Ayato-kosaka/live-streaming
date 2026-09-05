@@ -919,6 +919,19 @@ async function prepare(part, opts) {
     m.receiveShadow = true;
     return m;
   }
+  // 円盤。車輪・文字盤のように「丸いもの」は箱では組めない。
+  // 既定の軸は Y。rot で寝かせたり立てたりして使う
+  if (part.disc) {
+    // r2 を渡すと下だけ細くなる。杯や鉢のように口の開いたものを組める
+    const { r = 0.5, r2 = r, h = 0.1, seg = 24 } = part.disc;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r2, h, seg),
+      new THREE.MeshLambertMaterial({ color: setHsl(new THREE.Color(), ...part.color) }),
+    );
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
   // 炎・明かりはキットに無いので、その場で組む
   if (part.flame) {
     // tongues: [横, 前後, 傾き(度), 大きさの比, 色の番号] を奥から手前の順に

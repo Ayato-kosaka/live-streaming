@@ -1319,6 +1319,70 @@
 "oy": 1,
 "w": 216
 },
+"legend-egypt-festival": {
+"h": 168,
+"oh": 154,
+"ow": 218,
+"ox": 1,
+"oy": 1,
+"w": 236
+},
+"legend-iran-walk": {
+"h": 257,
+"oh": 230,
+"ow": 204,
+"ox": 3,
+"oy": 1,
+"w": 249
+},
+"legend-iwashi-festival": {
+"h": 188,
+"oh": 179,
+"ow": 280,
+"ox": 1,
+"oy": 1,
+"w": 295
+},
+"legend-kazbegi": {
+"h": 287,
+"oh": 265,
+"ow": 287,
+"ox": 3,
+"oy": 0,
+"w": 306
+},
+"legend-million-views": {
+"h": 320,
+"oh": 267,
+"ow": 137,
+"ox": 3,
+"oy": 1,
+"w": 200
+},
+"legend-newyear-24h": {
+"h": 264,
+"oh": 225,
+"ow": 120,
+"ox": 0,
+"oy": 1,
+"w": 171
+},
+"legend-roulette-georgia": {
+"h": 274,
+"oh": 249,
+"ow": 141,
+"ox": 2,
+"oy": 0,
+"w": 176
+},
+"legend-thousand-subs": {
+"h": 301,
+"oh": 261,
+"ow": 185,
+"ox": 7,
+"oy": 0,
+"w": 238
+},
 "lily": {
 "h": 120,
 "oh": 108,
@@ -1430,6 +1494,14 @@
 "ox": 0,
 "oy": 0,
 "w": 192
+},
+"pier": {
+"h": 230,
+"oh": 207,
+"ow": 258,
+"ox": 1,
+"oy": 0,
+"w": 280
 },
 "pot-plant": {
 "h": 159,
