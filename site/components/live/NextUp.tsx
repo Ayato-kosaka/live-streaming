@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PLANS, planDaysLeft, nextPlan, type Plan } from "@/content/plans";
+import { livePlans, planDaysLeft, planPhase, nextPlan, type Plan } from "@/content/plans";
 import { HOME } from "@/content/voice";
+import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import { NoticeBell } from "./art";
 
@@ -24,6 +25,8 @@ export default function NextUp() {
   const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan());
   const [days, setDays] = useState<number | null>(null);
   const [today, setToday] = useState<Date | null>(null);
+  /** 旅が終わった日。島から届く（`content/plans.ts` の `doneFromState`）。 */
+  const [arrived, setArrived] = useState<string | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -33,10 +36,26 @@ export default function NextUp() {
     setDays(p ? planDaysLeft(p, now) : null);
   }, []);
 
+  /* 着いた日が届いたら、企画の並びを組み直す。**届くまでは何もしない。**
+     読めなくても、旅の最中と同じ「進行中」のままで、嘘にはならない。 */
+  useEffect(() => {
+    let alive = true;
+    loadState().then((s) => {
+      const a = s?.nordic?.arrivedOn;
+      if (!alive || !a) return;
+      setArrived(a);
+      setPlan(nextPlan(new Date()));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   if (!plan) return null;
+  const PL = livePlans(arrived);
   // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
   // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
-  const rest = PLANS.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? undefined) ?? -1) >= 0);
+  const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? undefined) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
   const ahead = rest.length + 1;
@@ -52,11 +71,11 @@ export default function NextUp() {
         <NoticeBell size={21} quiet />
         {HOME.nextUp}
       </p>
-      <Card plan={plan} days={days} />
+      <Card plan={PL.find((p) => p.id === plan.id) ?? plan} days={days} today={today} />
       {big && (
         <>
           <p className="nextup-eyebrow nextup-eyebrow2">そのあと、いちばん大きい企画</p>
-          <Card plan={big} days={today ? planDaysLeft(big, today) : null} small />
+          <Card plan={big} days={today ? planDaysLeft(big, today) : null} today={today} small />
         </>
       )}
       {others.length > 0 && (
@@ -83,22 +102,41 @@ export default function NextUp() {
   );
 }
 
-/** 企画1つぶんの札。small はふたつ目以降に使う、ひとまわり小さいもの。 */
-function Card({ plan, days, small }: { plan: Plan; days: number | null; small?: boolean }) {
+/**
+ * 企画1つぶんの札。small はふたつ目以降に使う、ひとまわり小さいもの。
+ *
+ * **「進行中」を日数の正負で決めない。** 終わった企画も日数はマイナスなので、
+ * それだけで決めると、旅から帰ってきたあとも「進行中」と出続ける
+ * （`content/plans.ts` の `planPhase`）。
+ */
+function Card({
+  plan,
+  days,
+  today,
+  small,
+}: {
+  plan: Plan;
+  days: number | null;
+  today: Date | null;
+  small?: boolean;
+}) {
   const href = plan.href ?? `/next#${plan.id}`;
+  const phase = today ? planPhase(plan, today) : null;
   return (
     <Link className={`nextup-card${small ? " is-small" : ""}`} href={href}>
       <span className="nextup-count">
-        {days === null ? (
+        {days === null || phase === null ? (
           <b>まもなく</b>
+        ) : phase === "during" ? (
+          <b>進行中</b>
+        ) : phase === "after" ? (
+          <b>行ってきた</b>
         ) : days === 0 ? (
           <b>今日</b>
-        ) : days > 0 ? (
+        ) : (
           <>
             あと<b>{days}</b>日
           </>
-        ) : (
-          <b>進行中</b>
         )}
       </span>
       <span className="nextup-body">

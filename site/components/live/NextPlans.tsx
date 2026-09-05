@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getState, postNote, type NextNote } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { PLANS, daysUntil, type Plan } from "@/content/plans";
+import { livePlans, planPhase, type Plan } from "@/content/plans";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import PlanCard, { PlanRow } from "./PlanCard";
@@ -179,9 +179,16 @@ function PlanNotes({
  * だからいちばん近い企画だけを主役として大きく開いておき、
  * そのあとの企画は日付順に、題名と日付で追えるように並べる。
  *
+ * **いま行っているものがあれば、それが主役。** 旅の最中に来た人が
+ * まず知りたいのは「いま何が起きているか」で、次の予定ではない。
+ *
  * 静的書き出しなので「もう終わったかどうか」はビルド時の日付で焼き込まれてしまう。
  * 画面が出るまでは日付順に全部を「これから」として出し、
- * 出てから今日の日付で、終わったものを畳む。
+ * 出てから今日の日付で、いま行っているものと終わったものに分ける。
+ *
+ * **「終わった」に倒すのは、終わったと分かったときだけ。** 始まる日しか
+ * 持たせていなかったころ、出発の当日から旅のあいだじゅう
+ * 「もう行ってきた」と出ていた（`content/plans.ts` の `planPhase`）。
  */
 export default function NextPlans() {
   const [notes, setNotes] = useState<NextNote[] | null>(null);
@@ -191,6 +198,8 @@ export default function NextPlans() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [today, setToday] = useState<Date | null>(null);
+  /** 旅が終わった日。島から届く（`content/plans.ts` の `doneFromState`）。 */
+  const [arrived, setArrived] = useState<string | null>(null);
   const { token } = useAuth();
 
   // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
@@ -199,7 +208,10 @@ export default function NextPlans() {
     setNotes(null);
     setDown(false);
     getState()
-      .then((s) => setNotes(s.notes ?? []))
+      .then((s) => {
+        setNotes(s.notes ?? []);
+        setArrived(s.nordic?.arrivedOn ?? null);
+      })
       .catch(() => {
         setNotes([]);
         setDown(true);
@@ -227,9 +239,18 @@ export default function NextPlans() {
     }
   };
 
-  const sorted = [...PLANS].sort(byDate);
-  const done = today ? sorted.filter((p) => (daysUntil(p.date, today) ?? 0) < 0) : [];
-  const ahead = sorted.filter((p) => !done.includes(p));
+  /* 島から届いた「着いた日」を、企画の終わりとして貼る。
+     旅の終わりは旅の途中で起きるので、Git には入らない
+     （`content/plans.ts` の `doneFromState`・`docs/nordic-depart.md`）。 */
+  const sorted = [...livePlans(arrived)].sort(byDate);
+  /* 画面が出るまで（today が null）は、全部を「これから」として並べる。
+     焼き込みの日付で「終わった」と言わない。 */
+  const phase = (p: Plan) => (today ? planPhase(p, today) : "before");
+  const now = sorted.filter((p) => phase(p) === "during");
+  const done = sorted.filter((p) => phase(p) === "after");
+  const before = sorted.filter((p) => phase(p) === "before");
+  // いま行っているものが主役。無ければ、いちばん近いこれから
+  const ahead = [...now, ...before];
   const [lead, ...rest] = ahead;
 
   const notesFor = (p: Plan) => notes?.filter((n) => n.planId === p.id) ?? null;
@@ -257,7 +278,9 @@ export default function NextPlans() {
 
       {/* これからの予定が1つも無い日。「まだ何も無い」で終わらせず、
           次にすることを1つ置く（`docs/island-design.md` 4章）。
-          today が入るまでは出さない。焼き込みの日付で「予定なし」と言わない。 */}
+          today が入るまでは出さない。焼き込みの日付で「予定なし」と言わない。
+          **いま行っているものがあれば、ここは出さない。** 旅の最中に
+          「決まっている予定はありません」と出ていた（すぐ下に旅が並んでいるのに）。 */}
       {today && ahead.length === 0 && (
         <section className="panel paper">
           <h2>いま、決まっている予定はありません</h2>

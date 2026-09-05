@@ -59,12 +59,25 @@ export type ResidentShow = {
   photo?: string | null;
 };
 
+/**
+ * 北欧旅の、日付で言える事実。
+ *
+ * **旅の終わりは、旅の途中に起きる。** そのときあやとはヒッチハイクの
+ * 途中にいて、Git を編集して commit して Hosting を手で起動する、は回らない
+ * （`docs/nordic-depart.md`）。だから着いた日はここから届く。
+ */
+export type NordicFacts = {
+  /** ストックホルムに着いた日(YYYY-MM-DD)。着くまでは無い */
+  arrivedOn?: string;
+};
+
 export type IslandState = {
   current?: Partial<IslandCurrent>;
   stats?: Partial<IslandStats>;
   ideas?: Idea[];
   notes?: NextNote[];
   residents?: ResidentShow[];
+  nordic?: NordicFacts;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -442,4 +455,52 @@ export const deleteNordicPhoto = (id: string, token: string) =>
   req<{ id: string }>(`/nordic/photos/${id}`, {
     method: "DELETE",
     headers: auth(token),
+  });
+
+
+/* ---------------- 北欧旅の、その日に起きたこと ----------------
+   `content/nordic.ts` の `NORDIC_LOG` は Git にあって、直すには commit して
+   Hosting を手で起動しないと出ない。**旅の最中のあやとには、それは回らない。**
+   だから旅のあいだは、ここから読む（`docs/nordic-depart.md`）。 */
+
+/** 1日ぶんの「起きたこと」。`day` は旅程表の行の id（`day-1` `day-depart`）。 */
+export type NordicLogEntry = {
+  day: string;
+  /** その日が実際に何日だったか(YYYY-MM-DD)。あとから入る事実 */
+  date?: string;
+  /** 何が起きたか。スマホから打つので短い */
+  body: string;
+  /** その日の配信。YouTube の videoId */
+  video?: string;
+  at?: number;
+};
+
+export const getNordicLog = () => req<{ log: NordicLogEntry[] }>("/nordic/log");
+
+/** その日に起きたことを書く。**あやとだけ。** 同じ日に書くと上書きになる。 */
+export const postNordicLog = (
+  e: { day: string; date?: string; body: string; video?: string },
+  token: string,
+) =>
+  req<{ log: NordicLogEntry }>("/nordic/log", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(e),
+  });
+
+/** 書いたものを消す。**あやとだけ。** */
+export const deleteNordicLog = (day: string, token: string) =>
+  req<{ day: string }>(`/nordic/log/${day}`, { method: "DELETE", headers: auth(token) });
+
+/**
+ * ストックホルムに着いた、を記録する。**あやとだけ。**
+ *
+ * ここが入ると、旅が「いま行っている」から「行ってきた」に変わる
+ * （`content/plans.ts` の `planPhase`）。`date` を空にすると取り消せる。
+ */
+export const postNordicArrived = (date: string, token: string) =>
+  req<{ arrivedOn: string }>("/nordic/arrived", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ date }),
   });

@@ -52,6 +52,13 @@ const NPHOTOS = db.collection("nordicPhotos");
    python/admin/nordic_supporter.py から手で足す。
    **持つのは「その日いた」までで、金額も順位も持たない。** */
 const NDAYS = db.collection("nordicDays");
+/* 北欧旅の「その日に起きたこと」(docs/nordic-depart.md)。
+   `site/content/nordic.ts` の NORDIC_LOG は Git にあって、直すには
+   commit して Hosting を手で起動しないと出ない。**ヒッチハイクの途中の
+   あやとには、それは回らない。** 旅のあいだはここに書いて、画面が
+   出てから読む。旅が終わったら、ここの中身を Git に焼き戻す。
+   ドキュメントの id は旅程表の行の id(`day-1` `day-depart`)。 */
+const NLOG = db.collection("nordicLog");
 
 /* 写真の置き場。Functions の Admin SDK はルールを迂回するので、
    ブラウザから Storage を直接触らせない(Firestore と同じ形)。
@@ -66,6 +73,12 @@ const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const MAX_PHOTO_NOTE = 120;
 /** 1日に貼れる枚数。「何枚でも」だが、事故で無限には入らないようにする。 */
 const PHOTOS_PER_DAY = 120;
+
+/** その日に起きたこと。**スマホの親指で打つものなので、長さで縛る。**
+   長い文章は配信で話すものであって、ここに置くものではない。 */
+const MAX_LOG_BODY = 400;
+/** 1日に書き直せる回数。書き直しは普通に起きるので、写真より緩くする。 */
+const LOGS_PER_DAY = 60;
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -1006,6 +1019,121 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* ---------------- 北欧旅の、その日に起きたこと ----------------
+         書けるのはあやとだけ。読むのは誰でも(docs/nordic-depart.md)。
+
+         **なぜ Git ではなくここか。** `site/content/nordic.ts` の NORDIC_LOG は
+         直すのに commit と Hosting の手動起動が要る。旅の最中のあやとは
+         ヒッチハイクをしていて、それは回らない。ここなら、その日の宿から
+         スマホで1回書けば出る。旅が終わったら Git に焼き戻す。 */
+      if (method === "GET" && path === "/nordic/log") {
+        const snap = await NLOG.orderBy("at", "asc").limit(60).get();
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({
+          log: snap.docs.map((d) => {
+            const v = d.data() ?? {};
+            return {
+              day: d.id,
+              date: isDay(v.date) ? v.date : undefined,
+              body: String(v.body ?? ""),
+              video: (v.video as string) || undefined,
+              at: Number(v.at) || 0,
+            };
+          }),
+        });
+        return;
+      }
+
+      if (method === "POST" && path === "/nordic/log") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        /* 旅程表の行の id。字の形だけを見る。ここに旅程表そのものを
+           持ってくると、Git を直すたびに Functions も出し直しになる。 */
+        const day = String(body.day ?? "");
+        if (!/^day-[a-z0-9-]{1,16}$/.test(day)) {
+          res.status(400).json({error: "bad day"});
+          return;
+        }
+        /* 改行だけは残す。2〜3行で書くものなので、全部つながると読めない。
+           空行が続くのは事故なので1つに畳む。 */
+        const text = String(body.body ?? "")
+          .replace(/[^\S\n]+/g, " ")
+          .replace(/\n{3,}/g, "\n\n")
+          .split("\n")
+          .map((ln) => clean(ln, MAX_LOG_BODY))
+          .join("\n")
+          .trim()
+          .slice(0, MAX_LOG_BODY);
+        if (!text) {
+          res.status(400).json({error: "no body"});
+          return;
+        }
+        const date = isDay(body.date) ? body.date : undefined;
+        /* YouTube の videoId。URL を貼られても id だけ拾う。
+           取れなければ**入れない**。壊れた見に行き先を出すより、出さないほうがいい。 */
+        const vid = /([A-Za-z0-9_-]{11})/.exec(String(body.video ?? ""));
+        if (!(await takeQuota(uid, "nlog", LOGS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const rec: Json = {
+          body: text,
+          at: Date.now(),
+          uid,
+        };
+        if (date) rec.date = date;
+        rec.video = vid ? vid[1] : null;
+        await NLOG.doc(day).set(rec, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({
+          log: {day, date, body: text, video: vid ? vid[1] : undefined},
+        });
+        return;
+      }
+
+      const logMatch = path.match(/^\/nordic\/log\/(day-[a-z0-9-]{1,16})$/);
+      if (method === "DELETE" && logMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        await NLOG.doc(logMatch[1]).delete();
+        res.set("Cache-Control", "no-store");
+        res.json({day: logMatch[1]});
+        return;
+      }
+
+      /* ストックホルムに着いた日。**旅が終わったという事実は、ここにしか無い。**
+         これが入るまで、企画は「いま行っている」のまま(site/content/plans.ts)。
+         空の日付で送ると取り消せる。着く前に押してしまうことがあるので、
+         戻せない口にはしない。 */
+      if (method === "POST" && path === "/nordic/arrived") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const raw = String(body.date ?? "");
+        if (raw && !isDay(raw)) {
+          res.status(400).json({error: "bad date"});
+          return;
+        }
+        await STATE_DOC.set(
+          {nordic: {arrivedOn: raw || null, updatedAt: Date.now()}},
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({arrivedOn: raw});
+        return;
+      }
+
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
         const [stateSnap, ideas, notes, residents] = await Promise.all([
@@ -1029,6 +1157,10 @@ export const islandApi = onRequest(
           ideas: ideas.items,
           notes: notes.items,
           residents,
+          /* 北欧旅の、日付で言える事実。いまは「着いた日」だけ。
+             ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
+             (`site/content/plans.ts` の planPhase)。 */
+          nordic: state.nordic ?? null,
           more: {
             ideas: ideas.more ? ideas.next : null,
             notes: notes.more ? notes.next : null,
