@@ -93,7 +93,9 @@ export default function IsleSheet({
                     decoding="async"
                   />
                   <b>{s.title}</b>
-                  <i>{s.city ? `${s.city}・${s.date}` : s.date}</i>
+                  {/* 年は板の頭に書いてある（「2024年10月から12月まで」）ので、月日だけ。
+                      「ヴェルサイユ・2024-11-05」は 107px の桁に入らず、年のほうが切れる */}
+                  <i>{s.city ? `${s.city}・${md(s.date)}` : md(s.date)}</i>
                 </a>
               </li>
             ))}
@@ -141,6 +143,12 @@ export default function IsleSheet({
     </div>
   );
 }
+
+/** 2024-11-05 → 11/5 */
+const md = (d: string) => {
+  const [, m, day] = d.split("-");
+  return `${Number(m)}/${Number(day)}`;
+};
 
 function ItemBody({ item }: { item: NonNullable<IslePlaceSpec["items"]>[number] }) {
   return (

@@ -100,6 +100,12 @@ const ym = (d: string) => {
   return `${y}年${Number(m)}月`;
 };
 
+/** 「2024年10月から12月まで」。年が同じなら二度書かない */
+const span = (a: string, b: string) =>
+  a.slice(0, 4) === b.slice(0, 4)
+    ? `${ym(a)}から${Number(b.split("-")[1])}月まで`
+    : `${ym(a)}から${ym(b)}まで`;
+
 /** その章の期間に入っている伝説の企画 */
 const legendsOf = (c: Chapter) =>
   c.from && c.to ? LEGENDS.filter((l) => l.date >= c.from && l.date <= c.to) : [];
@@ -190,7 +196,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
          札に出る名前が違う（`docs/island-design.md` 6章「札は答えだけを言う」） */
       icon: "signboard",
       size: 58,
-      note: `${ym(shorts[0].date)}から${ym(shorts[shorts.length - 1].date)}まで、${shorts.length}本。押すと YouTube で開きます。`,
+      note: `${span(shorts[0].date, shorts[shorts.length - 1].date)}、${shorts.length}本。押すと YouTube で開きます。`,
       shorts,
     });
   }
