@@ -132,8 +132,11 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         }}
       >
         <Zone>
-          <H art={<ArtSignpost size={32} />} note="だいたい、この順で進みます">
-            この日は、こういう順で進む
+          {/* 見出しは型ごとに変える。5面とも同じ問いで始めると、
+              紙の作りも同じなので5つが同じ面に見える。
+              添えの一行は見出しの言い直しだったので落とした。 */}
+          <H art={<ArtSignpost size={32} />} note={`${t.beat.length}つ`}>
+            {t.flow}
           </H>
           <ol className="rt">
             {t.beat.map((b, k) => {
@@ -181,7 +184,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           <H art={<ArtCam size={32} />} note={`${t.samples.length}本`}>
             まずは、この回から
           </H>
-          <p className="zk-lead">どれも1本で完結します。押すと YouTube が開きます。</p>
+          <p className="zk-lead">この型がいちばん出ている回。押すと YouTube が開く。</p>
           <div className="vids" style={{ marginTop: "var(--sp-3)" }}>
             {t.samples.map((v, k) => (
               <Vid key={v.videoId} {...v} no={k + 1} />
