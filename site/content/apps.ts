@@ -1,4 +1,12 @@
-/** 旅先で作ってきたアプリ。配信で作っているところをそのまま見せている。 */
+/**
+ * あやとが作ってきたアプリ。
+ *
+ * **`APPS` は「配信で作っているところを見せてきたアプリ」。** `/apps`（アプリ工房）に並ぶのはこの2本。
+ * 日本を出るまえに作っていた3本目（Spelieve）は、配信が1本も無いので `PAST_APPS` に分けた。
+ * 同じ型にしてあるので、工房に並べたくなったら `[...APPS, ...PAST_APPS]` で足りる。
+ * ただし `/apps` は「いちばん新しくやったこと」に配信の動画があることを前提にしているので、
+ * 足すときはそこを先に直す。
+ */
 export type AppMilestone = { date: string; title: string; note?: string; videoId?: string; kind: "release" | "update" | "build" | "trouble" | "milestone" };
 
 export type AppEntry = {
@@ -10,7 +18,7 @@ export type AppEntry = {
   /** 公式のアプリアイコン(あれば、こちらを優先して出す) */
   logo?: string;
   tagline: string;
-  status: "運営中" | "公開済み";
+  status: "運営中" | "公開済み" | "サポート終了";
   /** アプリの中身。配信で作ってきた機能のうち、いま画面にあるものだけ書く。 */
   features: { title: string; note: string }[];
   links: { label: string; href: string }[];
@@ -66,17 +74,19 @@ export const APPS: AppEntry[] = [
   {
     slug: "nanikore",
     icon: "signpost",
+    // App Store の公式アイコン（iTunes Search API の artworkUrl512 を 144px に焼いた）
+    logo: "/logos/nanikore.webp",
     name: "なにこれオーディオガイド",
     emoji: "🎧",
     tagline: "旅先で「これ何？」を音声で教えてくれるガイド",
-    status: "公開済み",
+    status: "サポート終了",
     features: [
       { title: "目の前のものを説明", note: "「これ何？」に、読むのではなく耳で答える" },
       { title: "歩きながら聞く", note: "画面を見ずに済むので、旅の足を止めない" },
     ],
-    links: [],
+    links: [{ label: "App Store", href: "https://apps.apple.com/jp/app/id6745103291" }],
     summary:
-      "「なに食べよ」より前に作っていたアプリ。旅をしながら、目の前のものが何なのか分からないという自分の困りごとから作った。エジプト滞在中にお試し版を公開し、そのままリリースした。",
+      "「なに食べよ」より前に作っていたアプリ。旅をしながら、目の前のものが何なのか分からないという自分の困りごとから作った。エジプト滞在中にお試し版を公開し、そのままリリースした。「なに食べよ」を作り始めたころにサポートを終了している。",
     milestones: [
       { date: "2025-04-29", kind: "build", title: "お試し版を公開", note: "エジプトぷらり配信で", videoId: "Y-EvbeBomrU" },
       { date: "2025-05-11", kind: "release", title: "リリース", videoId: "cisSYeOGDUE" },
@@ -86,4 +96,41 @@ export const APPS: AppEntry[] = [
   },
 ];
 
+/**
+ * 配信を始めるまえに作っていたアプリ。
+ *
+ * **島の話がここから始まる。** 日本を出たのは、このアプリを広めるため。
+ * 自分の作ったアプリで計画しながら旅する様子をショート動画で撮る、というのが出発の理由だった
+ * （本人の話）。日付とストアの名前は App Store（iTunes Search API）から取っている。
+ * 配信より前の話なので節目に動画は無い。
+ */
+export const PAST_APPS: AppEntry[] = [
+  {
+    slug: "spelieve",
+    icon: "signpost",
+    logo: "/logos/spelieve.webp",
+    name: "スペリーブ",
+    emoji: "",
+    tagline: "旅行の計画を、数分で1枚のしおりにするアプリ",
+    status: "サポート終了",
+    features: [
+      { title: "しおりを作る", note: "行きたい場所を並べると、旅程が1枚になる" },
+      { title: "時間の自動調整", note: "1つ動かすと、あとの予定の時間がついてくる" },
+      { title: "移動時間の計算", note: "地点と地点のあいだを、歩きと車で自動計算" },
+    ],
+    links: [{ label: "App Store", href: "https://apps.apple.com/jp/app/id1660453134" }],
+    summary:
+      "会社に勤めていたころに作っていた旅行計画アプリ。ストアでの名前は Spelieve。これをヒットさせるために、自分のアプリで計画しながら海外を旅する様子をショート動画で撮ろうとして、日本を出た。プロモーションはうまくいかず、「なに食べよ」を作り始めたころにサポートを終了した。",
+    milestones: [
+      { date: "2023-01-09", kind: "release", title: "App Store に出した" },
+      { date: "2023-12-05", kind: "update", title: "最後のアップデート", note: "バージョン 2.5.0" },
+    ],
+  },
+];
+
 export const appBySlug = (slug: string) => APPS.find((a) => a.slug === slug);
+
+/** 作った順に3本。`/about` の「作ってきたアプリ」はこれを見る。 */
+export const ALL_APPS: AppEntry[] = [...APPS, ...PAST_APPS].sort(
+  (a, b) => (a.milestones[0]?.date ?? "").localeCompare(b.milestones[0]?.date ?? ""),
+);
