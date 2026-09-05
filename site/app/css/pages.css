@@ -33,9 +33,6 @@
   --pg-r-panel: var(--r-3);
   --pg-r-card: var(--r-3);
   --pg-r-tile: var(--r-2);
-  /* 見出しの縁取りに使う白。紙より一段白い。紙そのもの（--paper）で縁を取ると
-     生成りの地との差が数%しかなく、縁取りが効かない。 */
-  --pg-halo: color-mix(in srgb, #fff 72%, var(--paper));
 }
 
 .page {
@@ -151,8 +148,9 @@
   flex: 1 0 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
-  gap: 6px;
-  padding: 6px;
+  /* 余白は4の倍数の段から（docs/island-world.md 5.1）。 */
+  gap: 8px;
+  padding: 8px;
   border-radius: var(--r-2);
   background: color-mix(in srgb, var(--frame-deep) 26%, transparent);
   box-shadow:
@@ -226,7 +224,9 @@
   border-radius: var(--r-pill);
   padding: 6px 15px;
   margin: 0 0 16px;
-  box-shadow: var(--shadow-1);
+  /* 側面は紙の罫の濃いほう。ここに紺を置くと、生成りの地の上に
+     海のかけらが1つだけ残る（docs/island-world.md 7.1）。 */
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--rule) 76%, var(--ink));
 }
 .crumbs a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .crumbs b { color: var(--ink); }
@@ -236,12 +236,15 @@
    島の外のページの地は、紙より明るい生成りになった（tokens.css の --ground-paper）。
    白い字に濃い縁取り、という海の上の作りをそのまま置くと、
    明るい地の上で字が消える。**濃い字に白い縁取り**へ逆にする。 */
-.phead { text-align: center; margin: 10px 0 30px; }
-@media (min-width: 720px) { .phead { margin: 16px 0 38px; } }
+/* 前置きは短くする。絵・題・1行の3段まで（docs/island-world.md 7.6）。
+   どの面でも 440〜480px の前置きが付いていたので、21面が同じ顔に見えていた。
+   絵を一段小さくして、段のあいだも余白の段（12 / 16 / 24）に寄せる。 */
+.phead { text-align: center; margin: 0 0 24px; }
+@media (min-width: 720px) { .phead { margin: 8px 0 32px; } }
 .phead-icon {
   display: block;
   margin: 0 auto;
-  width: 96px; height: 96px;
+  width: clamp(72px, 19vw, 92px); height: clamp(72px, 19vw, 92px);
   object-fit: contain;
   object-position: center bottom;
   /* 接地影。1枚だけ。2枚重ねると合成が2回走る。
@@ -249,21 +252,20 @@
   filter: drop-shadow(1px 7px 1px rgba(52, 66, 32, 0.3));
 }
 .phead h1 {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   font-size: clamp(26px, 6.8vw, 42px);
   font-weight: 900;
   /* どうぶつの森の文字は字間が広い。詰まっているとWebの見出しに見える */
   letter-spacing: var(--ls-head);
   line-height: 1.3;
-  color: var(--frame-deep);
-  /* 濃い字のまわりを白で1周する。縁取りのぶん字面が大きく見えて、
-     生成りの地の上でも字が浮く。ぼかした影は文字の面積ぶん塗り直しが重いので、
-     ぼかさない影だけで作る。最後の1本だけ、板の厚みのかわりの接地影。 */
+  /* 紙に印刷した題名。中身は本文と同じ墨で、縁は生成りを細く1周するだけ。
+     白い字に濃い縁取りは板の上（島とトップ）だけに残す。
+     明るい地の上では、白い縁取りの字は「紙に貼ったシール」に見える
+     （docs/island-world.md 7.1）。 */
+  color: var(--ink);
   text-shadow:
-    2px 0 0 var(--pg-halo), -2px 0 0 var(--pg-halo),
-    0 2px 0 var(--pg-halo), 0 -2px 0 var(--pg-halo),
-    1.5px 1.5px 0 var(--pg-halo), -1.5px 1.5px 0 var(--pg-halo),
-    2px 5px 0 rgba(52, 66, 32, 0.22);
+    1.5px 0 0 var(--paper-out), -1.5px 0 0 var(--paper-out),
+    0 1.5px 0 var(--paper-out), 0 -1.5px 0 var(--paper-out);
 }
 .phead-lead {
   margin: 12px auto 0; max-width: 40em;
@@ -460,22 +462,26 @@
      ・区切りは影ではなく細い罫線
      ・押せない印（チップ）は平ら
      ・選んでいるものは塗りを変えず、細いオレンジ赤の枠で示す */
-.panel.paper :is(.scard, .city, .stat, .chip) {
+/* 紙の面でも、押せるものは板のまま残す（docs/island-world.md 2.1）。
+   平らにしていいのは「押せない印」だけ。 */
+.panel.paper :is(.city, .stat) {
   box-shadow: none;
   border-width: 1.5px;
   border-color: var(--pg-rule);
   border-style: solid;
   background: color-mix(in srgb, var(--paper) 82%, var(--pg-sheet));
 }
-.panel.paper :is(.scard, .city):hover { transform: none; border-color: var(--pg-pick); }
-.panel.paper :is(.scard, .city):active { transform: translateY(1px); border-color: var(--pg-pick); }
-.panel.paper .chip {
-  border-radius: var(--r-0);
-  background: var(--chip);
-  border-color: color-mix(in srgb, var(--chip) 72%, var(--ink));
-  color: var(--chip-ink);
+.panel.paper .city:hover { transform: none; border-color: var(--pg-pick); }
+.panel.paper .city:active { transform: translateY(1px); border-color: var(--pg-pick); }
+/* 紙の上の数字は、板の帯ではなく罫線で区切った表にする。 */
+.panel.paper .stats {
+  border-width: 1.5px;
+  border-color: var(--pg-rule);
+  background: var(--pg-rule);
   box-shadow: none;
 }
+.panel.paper .stat:first-child,
+.panel.paper .stat:has(svg) { background: color-mix(in srgb, var(--chip) 26%, var(--pg-sheet)); }
 /* 紙の面の見出しの下には、蛍光ペンの帯を敷く。これ1つで「印刷物」に見える。 */
 .panel.paper :is(h3, .sub) {
   background: linear-gradient(180deg, transparent 46%, var(--pg-mark) 46%);
@@ -650,7 +656,7 @@
   text-shadow: 0 2px 3px color-mix(in srgb, var(--ink) 70%, transparent);
 }
 .scard-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; justify-content: center; }
-.scard-meta { display: flex; gap: 7px; align-items: center; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.scard-meta { display: flex; gap: 7px; align-items: center; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
 .scard-meta em {
   font-style: normal;
   background: var(--frame); color: #fff;
@@ -734,7 +740,7 @@
   color: var(--frame-deep);
 }
 .stat span { display: block; font-size: 12px; font-weight: 900; color: var(--ink); margin-top: 5px; letter-spacing: var(--ls-body); }
-.stat i { display: block; font-size: 10.5px; font-style: normal; font-weight: 700; color: var(--ink-3); margin-top: 3px; line-height: 1.5; }
+.stat i { display: block; font-size: 11.5px; font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
 
 /* この面の見出しになる数字。ページが最初に見せたい1つは必ず先頭に置いてある。 */
 .stat:first-child {
@@ -764,42 +770,52 @@
 }
 .stat:has(svg) span { color: var(--frame-deep); }
 
-/* チップ */
-.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+/* --- 札とチップ ---------------------------------------------------------
+   押せる／押せないは、色ではなく型で分ける（docs/island-world.md 3.4）。
+
+     押せない札   … オリーブの平ら。角丸 --r-0。厚みゼロ。**1種類だけ**
+     押せるチップ … クリームの丸。厚み4px。48px（指で押せる最小）
+
+   前は両方ともクリームの丸で、違いが厚み 3px しか無かった。
+   390px で並ぶと見分けられない。しかも押せるほうが 30px で、指も当たらない。
+   ----------------------------------------------------------------------- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
+  /* 数えたもの・言うだけのもの。図鑑の面の平らなチップ（ac-reference ⑦）。 */
+  background: var(--chip);
+  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
+  border-radius: var(--r-0);
+  padding: 5px 12px;
+  min-height: 28px;
+  font-size: 11.5px; font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--chip-ink);
+  /* 押せないものは完全に平ら。つやも厚みも付けない。 */
+  box-shadow: none;
+}
+/* 押せるチップは板。面をクリームに戻して、丸くして、厚みを付けて、48px にする。
+   色・形・厚みの3つが同時に変わるので、遠目でも押せるほうが分かる。 */
+a.chip, button.chip, .chip.link {
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
-  padding: 6px 13px;
-  min-height: 30px;
-  font-size: 12.5px; font-weight: 900;
-  letter-spacing: var(--ls-body);
+  padding: 8px 16px;
+  min-height: 48px;
+  font-size: 13px;
   color: var(--ink);
-  /* 押せない印なので厚みも影も付けない。上のつやだけ残す */
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
-}
-/* 押せるチップにだけ厚みを付ける。平らなものと並んだとき、
-   厚みがあるほうだけが「押せる」と読める。 */
-a.chip, button.chip, .chip.link {
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 3px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+    0 4px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
+/* 沈む量と厚みの減る量を揃える。ずれると板の下の辺が動いて見える。 */
 a.chip:active, button.chip:active, .chip.link:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
-/* 見出しのそばに置く添えのチップ。前は海の上に載る前提で白抜きだったが、
-   ページの地が明るい生成りになったので、白抜きだと字が消える。
-   図鑑の面の平らな黄色いチップ（ac-reference ⑦の実測 #cfc202）に替える。 */
-.chip.dark {
-  background: color-mix(in srgb, var(--chip) 62%, var(--paper-out));
-  border-color: color-mix(in srgb, var(--chip) 62%, var(--rule));
-  color: var(--chip-ink);
-  box-shadow: none;
-}
+/* .dark は「海の上に載る白抜きの札」だった。地が生成りになって役目が消えている。
+   押せない札は1種類だけなので、.chip そのものに戻す（規則を足さない）。 */
 
 /* 足元の木の板。上の縁を明るくすると、板の切り口に見える */
 .ifoot {
@@ -955,7 +971,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 .vote b { font-size: 15px; font-weight: 900; }
 .idea-body { min-width: 0; flex: 1; }
 .idea-body p { margin: 0; font-size: 14.5px; line-height: 1.8; font-weight: 600; word-break: break-word; }
-.idea-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 7px; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+.idea-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 7px; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
 .idea-meta em { font-style: normal; color: var(--frame-deep); }
 
 .scroll-cue {
@@ -964,7 +980,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   transform: translateX(-50%);
   display: none;
   flex-direction: column; align-items: center; gap: 2px;
-  color: #fffdf6; font-size: 11px; font-weight: 800;
+  color: #fffdf6; font-size: 11.5px; font-weight: 800;
   text-shadow: 0 2px 8px color-mix(in srgb, #05233d 62%, transparent);
   pointer-events: none;
 }
@@ -1039,9 +1055,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 .city-head b { font-size: 14.5px; }
 .city-head i {
   font-style: normal;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  color: var(--ink-3);
+  color: var(--ink-2);
   margin-left: auto;
 }
 /* 開くしるし。三角より、閉じ開きが伝わる線にする */
@@ -1095,7 +1111,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .signin-go:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-2) 66%, var(--ink)); }
 .signin-go:disabled { opacity: 0.6; box-shadow: none; }
-.signin-skip { margin: 10px 0 0; font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.signin-skip { margin: 10px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
 .signin-link {
   font-size: 12px;
   font-weight: 900;
@@ -1115,7 +1131,7 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .signed img { width: 26px; height: 26px; border-radius: 50%; }
 .signed-name { font-size: 12.5px; font-weight: 900; }
-.signed-out { font-size: 11px; font-weight: 800; color: var(--ink-3); padding: 4px 8px; }
+.signed-out { font-size: 11.5px; font-weight: 800; color: var(--ink-2); padding: 4px 8px; }
 .bin-locked {
   display: flex;
   align-items: center;
@@ -1161,10 +1177,10 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .pphotos figcaption {
   margin-top: 5px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
   line-height: 1.6;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .pphotos figcaption a { text-decoration: underline; text-underline-offset: 2px; }
 
@@ -1178,7 +1194,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   display: block;
 }
 .pembed:has(iframe[src*="youtube"]) iframe { aspect-ratio: 16 / 9; }
-.pembed-note { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-3); }
+.pembed-note { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
 .chip.link { background: var(--paper); border-color: var(--frame-dark); }
 
 /* --- 島での見え方の設定 -----------------------------------------------
@@ -1194,8 +1210,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: 0 4px 0 var(--frame-dark);
 }
 .me-title { display: block; font-size: 14px; }
-.me-note { margin: 6px 0 12px; font-size: 12px; line-height: 1.7; color: var(--ink-3); }
-.me-label { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 6px; }
+.me-note { margin: 6px 0 12px; font-size: 12px; line-height: 1.7; color: var(--ink-2); }
+.me-label { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-2); margin-bottom: 6px; }
 .me-picks {
   display: flex;
   flex-wrap: wrap;
@@ -1213,9 +1229,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .me-pick img { width: 100%; height: 100%; object-fit: contain; }
 .me-pick.is-on { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 55%, transparent); }
-.me-pick-none { width: auto; padding: 0 12px; font-size: 11.5px; font-weight: 900; color: var(--ink-3); }
+.me-pick-none { width: auto; padding: 0 12px; font-size: 11.5px; font-weight: 900; color: var(--ink-2); }
 .me-row { display: block; margin-bottom: 10px; }
-.me-row span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-3); margin-bottom: 4px; }
+.me-row span { display: block; font-size: 11.5px; font-weight: 900; color: var(--ink-2); margin-bottom: 4px; }
 .me-row input {
   width: 100%;
   padding: 9px 12px;
@@ -1240,4 +1256,4 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: 0 4px 0 var(--frame-deep);
 }
 .me-save:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
-.me-ok { margin: 8px 0 0; font-size: 12px; font-weight: 800; color: var(--ink-3); }
+.me-ok { margin: 8px 0 0; font-size: 12px; font-weight: 800; color: var(--ink-2); }

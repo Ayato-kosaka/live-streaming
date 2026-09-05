@@ -20,7 +20,7 @@
   gap: 7px;
   margin: 0 0 10px;
   padding: 4px 13px 4px 9px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.1em;
   /* 置かれる面の色が変わっても読めるように、地の色ごと持たせた小さな札にする。
@@ -62,7 +62,7 @@
 /* 何件あるか。押せないので平ら（厚みを付けるのは押せるものだけ）。 */
 .nextup-n {
   font-style: normal;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.06em;
   padding: 2px 8px;
@@ -187,7 +187,7 @@
 .nextup-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .nextup-tags em {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   padding: 3px 10px;
   border-radius: var(--r-pill);
@@ -257,7 +257,7 @@
 }
 .nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--frame-dark); }
 .nextup-rest a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
-.nextup-rest a i { font-style: normal; font-size: 10px; color: var(--ink-3); }
+.nextup-rest a i { font-style: normal; font-size: 11.5px; color: var(--ink-2); }
 
 .nextup-eyebrow2 { margin-top: 20px; }
 /* ふたつ目の札はひとまわり小さく。主役は「いちばん近い企画」のまま。 */
@@ -269,7 +269,7 @@
 }
 .nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-3), var(--np-lip); }
 .nextup-card.is-small:active { box-shadow: var(--pop-push-lg), var(--shadow-1), var(--np-lip); }
-.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 10.5px; border-radius: var(--r-2); }
+.nextup-card.is-small .nextup-count { min-width: 74px; padding: 9px 8px; font-size: 11.5px; border-radius: var(--r-2); }
 .nextup-card.is-small .nextup-count b { font-size: 27px; }
 .nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
 /* ふたつ目の札の行き先は金色にしない。強い合図はページに1つだけ。 */

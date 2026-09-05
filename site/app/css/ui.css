@@ -192,7 +192,7 @@
    （content-visibility: hidden とちがって、ページ内検索には出る） */
 .folds > .fold {
   content-visibility: auto;
-  contain-intrinsic-size: auto 62px;
+  contain-intrinsic-size: auto 68px;
 }
 
 .fold > summary {
@@ -201,8 +201,9 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  min-height: 50px;
-  padding: 11px 12px;
+  /* 開くしるしが板になって高さを持ったので、その板が収まる高さにする。 */
+  min-height: 56px;
+  padding: 8px 12px;
   cursor: pointer;
   list-style: none;
   -webkit-tap-highlight-color: transparent;
@@ -267,36 +268,47 @@
    高さを動かして畳むと、開くたびにページ全体の版組みが走るので、そのまま消す。 */
 .fold[open] > summary .fold-t i { display: none; }
 
-/* 数の札は平ら。押せないものに厚みを付けない（ac-reference 7章）。 */
+/* 数の札は平ら。押せないものに厚みを付けない（docs/island-world.md 3.4）。
+   オリーブのベタは「数えたもの・押せない」の色（同 3.2）。 */
 .fold-n {
   flex: none;
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 900;
   color: var(--chip-ink);
-  background: color-mix(in srgb, var(--chip) 36%, var(--paper-out));
-  border: 1px solid color-mix(in srgb, var(--rule) 78%, transparent);
+  background: var(--chip);
+  border: 1.5px solid color-mix(in srgb, var(--chip) 62%, var(--rule));
   border-radius: var(--r-0);
-  padding: 2px 8px;
+  padding: 3px 9px;
   line-height: 1.5;
 }
 
-/* しるしも平らなチップ。押すと縮んで、開くと回る。
-   紙の上でいちばん動く部品なので、ここだけばねを効かせる。 */
+/* 開くしるしは押せる。だから板にする。
+   前は数の札と同じオリーブの角丸で、違いが塗りの濃さだけだった。
+   隣に並ぶと同じ札が2つあるようにしか見えない（docs/island-world.md 7.4）。
+   ここで変えるのは色と形と厚みの3つ。丸いクリームの板に厚みを4px。 */
 .fold-c {
   flex: none;
   box-sizing: content-box;
-  width: 16px; height: 16px;
-  padding: 5px;
-  color: var(--chip-ink);
-  background: var(--chip);
-  border: 1px solid color-mix(in srgb, var(--rule) 72%, var(--chip));
-  border-radius: var(--r-0);
-  transition: transform 0.26s cubic-bezier(0.34, 1.5, 0.64, 1);
+  width: 18px; height: 18px;
+  padding: 8px;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  transition: transform 0.26s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s ease;
 }
-.fold > summary:active .fold-c { transform: scale(0.86); }
+/* 沈む量と厚みの減る量を揃える。回っている最中も同じだけ沈む。 */
+.fold > summary:active .fold-c {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+}
 .fold[open] > summary .fold-c { transform: rotate(180deg); }
-.fold[open] > summary:active .fold-c { transform: rotate(180deg) scale(0.86); }
+.fold[open] > summary:active .fold-c {
+  transform: translateY(4px) rotate(180deg);
+  box-shadow: 0 0 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+}
 
 .fold-body {
   position: relative;
@@ -391,18 +403,19 @@
 }
 
 /* 中の項目は一段小さく。入れ子が2段あることを、開かなくても分かるようにする。 */
-.gchap .fold .fold > summary { min-height: 46px; padding: 10px 11px; }
+.gchap .fold .fold > summary { min-height: 52px; padding: 6px 11px; }
 .gchap .fold .fold .fold-t b { font-size: 13.5px; }
-.gchap .fold .fold .fold-c { width: 14px; height: 14px; padding: 4px; border-radius: 7px; }
+/* 中の段のしるしも板のまま。小さくするのは大きさだけで、型は変えない。 */
+.gchap .fold .fold .fold-c { width: 16px; height: 16px; padding: 6px; }
 .gchap .fold .fold .fold-body { padding: 11px 13px 14px; }
 
 .nspot-h { display: inline-flex; align-items: center; gap: 7px; }
 .nspot-h .ic { color: var(--frame-deep); flex: none; }
 .ncity-name em {
   font-style: normal;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 900;
-  color: var(--ink-3);
+  color: var(--ink-2);
   margin-left: 10px;
 }
 .nnav a { display: inline-flex; align-items: center; gap: 7px; }
@@ -441,7 +454,7 @@
   position: absolute;
   left: 8px; bottom: 8px;
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10.5px; font-weight: 900;
+  font-size: 11.5px; font-weight: 900;
   color: var(--ink);
   background: rgba(255, 253, 246, 0.94);
   border: 2px solid var(--frame-dark);
@@ -455,7 +468,7 @@
 .nhi-body em {
   justify-self: end;
   display: inline-flex; align-items: center; gap: 3px;
-  font-style: normal; font-size: 11px; font-weight: 900; color: var(--frame-deep);
+  font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--frame-deep);
 }
 
 /* --- 国のページの顔写真 --- */
@@ -474,7 +487,7 @@
   position: absolute;
   left: 0; right: 0; bottom: 0;
   padding: 22px 14px 8px;
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #fffdf6;
   line-height: 1.5;
