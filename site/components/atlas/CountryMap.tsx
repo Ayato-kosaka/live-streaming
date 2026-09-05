@@ -24,6 +24,17 @@ const MOVE: Record<string, { c: string; w: number; dash?: string }> = {
   side: { c: "#e8be74", w: 4.5, dash: "1 11" },
 };
 
+/** 凡例に出す言葉。世界地図と同じ言い方にそろえる。 */
+const MOVE_LABEL: Record<string, string> = {
+  land: "電車・バス",
+  air: "飛行機",
+  sea: "船",
+  walk: "歩いた",
+  hitch: "ヒッチハイク",
+  side: "近くまで往復",
+};
+const LEGEND_ORDER = ["land", "air", "sea", "walk", "hitch", "side"];
+
 export default function CountryMap({ slug, name }: { slug: string; name: string }) {
   const m = COUNTRY_MAPS[slug];
   if (!m) return null;
@@ -45,6 +56,10 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
     x1: c.x * sc + 9,
     y1: c.y * sc + 9,
   }));
+  // この国の地図に実際に引いてある線だけを凡例に出す。
+  // 距離は出さない。ここの座標はメルカトルなので、緯度で伸び縮みする。
+  // 正しい距離は世界地図（大円距離で足しあげたもの）が持っている。
+  const used = LEGEND_ORDER.filter((k) => m.legs.some((l) => (MOVE[l.move] ? l.move : "land") === k));
   const labels = placeCities(
     m.cities.filter((c) => c.country === slug),
     (x, y) => [x * sc, y * sc],
@@ -53,6 +68,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
   );
 
   return (
+    <>
     <div className="amap" style={{ ["--am-ratio" as string]: `${w} / ${h}` }}>
       <div className="amap-stage">
         <svg className="amap-svg" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`${name}の中を移動したところ`}>
@@ -181,5 +197,28 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
         </div>
       </div>
     </div>
+
+      {/* どの線が何なのか。線の太さも刻みも、地図に引いてあるものを写す */}
+      <div className="amap-foot">
+        {used.map((k) => {
+          const st = MOVE[k];
+          return (
+            <span className="amap-key" key={k}>
+              <svg width="30" height="12" viewBox="0 0 30 12" aria-hidden>
+                <path
+                  d="M1 6h28"
+                  stroke={st.c}
+                  strokeWidth={Math.min(7, st.w)}
+                  strokeLinecap="round"
+                  strokeDasharray={st.dash}
+                  fill="none"
+                />
+              </svg>
+              {MOVE_LABEL[k]}
+            </span>
+          );
+        })}
+      </div>
+    </>
   );
 }
