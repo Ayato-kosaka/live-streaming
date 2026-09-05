@@ -286,7 +286,9 @@
 .phead {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+  /* 絵の頭を h1 の頭にそろえる。center にすると絵が1行ぶん下がって、
+     h1 の左だけがぽっかり空く。 */
+  align-items: start;
   row-gap: var(--sp-1);
   text-align: left;
   margin: 0 0 var(--sp-4);

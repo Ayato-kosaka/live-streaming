@@ -43,7 +43,7 @@
 /* h1 のすぐ下の1行。h1 が場所の名前になったぶん、企画の芯はここが背負う。
    だから本文より一段大きくして、頭の一文だけ濃くする（docs/island-world.md 7.5）。 */
 .tnow-lead {
-  margin: 9px 0 0;
+  margin: var(--sp-2) 0 0;
   font-size: 14.5px;
   line-height: 1.85;
   font-weight: 700;
@@ -62,10 +62,10 @@
 .tnow-count {
   position: relative;
   display: grid;
-  gap: 5px;
+  gap: var(--sp-1);
   justify-items: center;
   text-align: center;
-  padding: 13px 12px 14px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--gold) 13%, var(--paper));
@@ -96,7 +96,7 @@
 .tnow-bar {
   width: 100%;
   height: 8px;
-  margin-top: 3px;
+  margin-top: var(--sp-1);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--rule) 26%, var(--paper));
   overflow: hidden;
@@ -113,9 +113,9 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 12px 12px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3);
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: var(--paper);
@@ -144,8 +144,8 @@
 @media (min-width: 620px) { .tnow-art { grid-column: auto; margin-top: 0; } }
 
 .tnow-what {
-  margin: 9px 0 0;
-  padding: 10px 13px;
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3) var(--sp-3);
   font-size: 12.5px;
   line-height: 1.85;
   font-weight: 700;
@@ -173,8 +173,8 @@
   min-width: 68px;
   display: grid;
   justify-items: center;
-  gap: 5px;
-  padding-top: 12px;
+  gap: var(--sp-1);
+  padding-top: var(--sp-3);
 }
 /* 街と街をつなぐ線。点の高さに合わせて、点の後ろを通す。 */
 .tnow-rail li::before {
@@ -203,7 +203,7 @@
 .tnow-rail li.is-past .tnow-dot { background: var(--rule); }
 .tnow-rail li.is-on .tnow-dot {
   width: 17px; height: 17px;
-  margin-top: -2px;
+  margin-top: calc(-1 * var(--sp-1));
   background: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-deep);
 }
@@ -221,7 +221,7 @@
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.02em;
-  padding: 2px 7px;
+  padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-pill);
   background: var(--accent-deep);
   color: var(--paper);
@@ -233,7 +233,7 @@
 .tnow-act {
   font-size: 12.5px;
   font-weight: 900;
-  padding: 9px 17px;
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -251,8 +251,8 @@
   list-style: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin: 12px 0 0;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
   padding: 0;
 }
 @media (min-width: 620px) { .nmkeys { grid-template-columns: repeat(3, 1fr); } }
@@ -260,8 +260,8 @@
   display: grid;
   grid-template-columns: 26px 1fr;
   align-items: center;
-  gap: 3px 9px;
-  padding: 8px 11px;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
   /* 押せない。だから枠も琥珀ではなく罫、角も紙の角にする。 */
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
@@ -305,7 +305,7 @@
   box-shadow: 0 0 0 1.5px var(--pg-rule);
 }
 .nmap-say {
-  margin: 10px 0 0;
+  margin: var(--sp-3) 0 0;
   font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.7;
@@ -332,7 +332,7 @@
   color: var(--marker-ink);
   background: var(--marker);
   border-radius: var(--r-0);
-  padding: 4px 9px;
+  padding: var(--sp-1) var(--sp-2);
   display: inline-block;
 }
 .rleg-stay { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
@@ -362,8 +362,8 @@ p.rtie {
 .rleg-seath {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 0 8px;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
 }
 /* 席の名前の右に日付を出す行。h3 の中に日付を入れないためだけの1枚。
    紙の見出しは蛍光ペンを「字の下」に敷くので、h3 の中に置いた字は全部帯に入る。 */
@@ -372,7 +372,7 @@ p.rtie {
 /* 蛍光は「紙の見出し」の意味しか持たない（docs/island-world.md 3.2）。
    席の名前は紙の h3 なので、ここが使いどころ。 */
 .rleg-seath span {
-  padding: 2px 10px;
+  padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
@@ -401,9 +401,9 @@ p.rtie {
 .rtie {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 13px;
-  padding-top: 10px;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
   border-top: 1px solid var(--rule);
   font-size: var(--fs-note);
   font-weight: 800;
@@ -420,7 +420,7 @@ p.rtie {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 9px;
+  gap: var(--sp-1) var(--sp-2);
   margin: 0;
   font-size: 12.5px;
   line-height: 1.8;
@@ -438,7 +438,7 @@ p.rtie {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 9px;
+  gap: var(--sp-1) var(--sp-2);
   margin: 0;
   font-size: 12.5px;
   line-height: 1.8;
@@ -454,7 +454,7 @@ p.rtie {
    入った額は「数えたもの」なので、色はオリーブ（docs/island-world.md 3.2）。 */
 .fare-bar {
   display: block;
-  margin: 9px 0 6px;
+  margin: var(--sp-2) 0 var(--sp-2);
   height: 12px;
   border-radius: 6px;
   background: color-mix(in srgb, var(--rule) 24%, transparent);
@@ -472,7 +472,7 @@ p.rtie {
    「もう要らないのに集めている」に見える（docs/nordic-fund.md 3章）。
    代わりの札も作らない。1行の言葉で足りる。 */
 .fare-full {
-  margin: 8px 0 0;
+  margin: var(--sp-2) 0 0;
   font-size: 12.5px;
   font-weight: 900;
   color: var(--ink);
@@ -486,10 +486,10 @@ p.rtie {
 .bin-name {
   width: 100%;
   max-width: 260px;
-  margin-top: 9px;
+  margin-top: var(--sp-2);
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
-  padding: 10px 15px;
+  padding: var(--sp-3) var(--sp-4);
   min-height: 44px;
   font: inherit;
   font-size: 13.5px;
@@ -500,9 +500,9 @@ p.rtie {
 .bpost {
   display: inline-flex;
   align-items: center;
-  margin-top: 10px;
+  margin-top: var(--sp-3);
   min-height: 48px;
-  padding: 11px 22px;
+  padding: var(--sp-3) var(--sp-5);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -518,7 +518,7 @@ p.rtie {
 /* --- ボード全体 ---
    人数はここに1回だけ。区間ごとには出さない（人違いが起きない作りにしてある）。 */
 .carried {
-  margin: 10px 0 0;
+  margin: var(--sp-3) 0 0;
   font-size: 13px;
   font-weight: 800;
   color: var(--ink-2);
@@ -526,7 +526,7 @@ p.rtie {
 .carried b { font-weight: 900; color: var(--ink); }
 .carry-give { margin-top: 16px; }
 .carry-give p {
-  margin: 0 0 10px;
+  margin: 0 0 var(--sp-3);
   font-size: 12.5px;
   line-height: 1.85;
   font-weight: 700;
@@ -538,9 +538,9 @@ p.rtie {
 .carry-go {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--sp-2);
   min-height: 48px;
-  padding: 10px 18px;
+  padding: var(--sp-3) var(--sp-4);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -572,8 +572,8 @@ p.rtie {
    つながりの読み上げ（.rtie）がすぐ上にあるので、塗りは重ねず罫線1本にする。
    同じ濃さの札が2つ続くと、どちらも読まれない。 */
 .spost-none {
-  margin: 0 0 10px;
-  padding: 2px 0 2px 10px;
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
   border-left: 3px solid var(--marker);
   font-size: var(--fs-note);
   font-weight: 800;
@@ -591,8 +591,8 @@ p.rtie {
   display: grid;
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 13px 14px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: var(--paper);
@@ -631,8 +631,8 @@ p.rtie {
 .ncway {
   display: flex;
   align-items: flex-start;
-  gap: 11px;
-  padding: 12px 14px;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--gold) 15%, var(--paper));
@@ -652,7 +652,7 @@ p.rtie {
 .ncway-b em { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .ncway-fix { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
 .ncway-note {
-  margin: 11px 0 0;
+  margin: var(--sp-3) 0 0;
   font-size: 13px;
   line-height: 1.9;
   font-weight: 700;
@@ -680,18 +680,20 @@ p.rtie {
     color-mix(in srgb, var(--ink) 92%, transparent));
 }
 
-/* 街の見出し。青いページの地に直に置くので、白で抜く。
-   ここを --ink のままにすると、濃い青の上の濃い茶になって読めない。 */
-.ncity { margin: 24px 0 6px; }
+/* 街の見出し。パネルの外、ページの地に直に置く。
+   **地は生成りになったので、白で抜かない。** ここは長いあいだ濃い青の地を前提に
+   `--paper` で抜いてあって、地が変わったあとも残っていた。実測で 1.07 : 1、
+   つまり見えていなかった（描いた画素で測ると、字がまったく出てこない）。
+.ncity { margin: var(--sp-5) 0 var(--sp-2); }
 .ncity-name {
-  margin: 0 0 10px;
+  margin: 0 0 var(--sp-3);
   font-size: 17px;
   font-weight: 900;
-  padding-left: 12px;
+  padding-left: var(--sp-3);
   border-left: 7px solid var(--gold);
-  color: var(--paper);
+  color: var(--ink);
 }
-.ncity-name em { color: color-mix(in srgb, var(--paper) 74%, var(--sea-deep)); }
+.ncity-name em { color: var(--ink-2); }
 
 /* --- 見どころ1件（紙の型。段の中身） --- */
 /* 閉じているときのサムネイル。20段ならんだとき、1段ずつ違って見えるのが効く。 */
@@ -711,7 +713,7 @@ p.rtie {
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.02em;
-  padding: 2px 8px;
+  padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-0);
   background: var(--chip);
   color: var(--chip-ink);
@@ -733,13 +735,13 @@ p.rtie {
      うすいままだと、明るい写真の上でクリームの字が消える。 */
   background: color-mix(in srgb, var(--ink) 82%, transparent);
   border-radius: var(--r-0);
-  padding: 2px 7px;
+  padding: var(--sp-1) var(--sp-2);
 }
 .nspot-local { margin: 0 0 6px; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 .nspot-text { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 600; }
 .nspot-tips {
-  margin: 10px 0 0;
-  padding: 9px 13px 9px 28px;
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-6);
   font-size: var(--fs-note);
   line-height: 1.85;
   font-weight: 700;
@@ -751,7 +753,7 @@ p.rtie {
   display: flex; gap: 6px; align-items: baseline;
   border: 1px solid var(--rule);
   border-radius: var(--r-0);
-  padding: 3px 10px;
+  padding: var(--sp-1) var(--sp-3);
 }
 .nspot-meta dt { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .nspot-meta dd { margin: 0; font-size: var(--fs-min); font-weight: 900; }
@@ -762,7 +764,7 @@ p.rtie {
   color: var(--ink-2);
   background: color-mix(in srgb, var(--rule) 20%, transparent);
   border-radius: var(--r-0);
-  padding: 2px 8px;
+  padding: var(--sp-1) var(--sp-2);
 }
 
 /* =========================================================
@@ -777,8 +779,8 @@ p.rtie {
 /* 出ている意見と、書くところの区切り。ここから下は自分の番、という札。 */
 .cidea-ask {
   display: inline-block;
-  margin: 18px 0 8px;
-  padding: 3px 11px;
+  margin: var(--sp-4) 0 var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
@@ -791,7 +793,7 @@ p.rtie {
 /* 出ている意見。押せないので、1枚ずつ囲まず罫線で分ける。 */
 .cideas {
   list-style: none;
-  margin: 14px 0 0;
+  margin: var(--sp-4) 0 0;
   padding: 0;
   display: grid;
   gap: 0;
@@ -799,14 +801,14 @@ p.rtie {
 }
 .cideas li {
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
-  padding: 11px 2px;
+  padding: var(--sp-3) var(--sp-1);
 }
 .cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
 .cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
 .cidea-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 .cidea-vote {
   font-size: var(--fs-min); font-weight: 900;
-  padding: 5px 13px;
+  padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -820,7 +822,7 @@ p.rtie {
 .nnav { display: flex; justify-content: space-between; gap: 10px; margin: 22px 0 6px; }
 .nnav a {
   font-size: 13px; font-weight: 900;
-  padding: 9px 16px;
+  padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   border: var(--bw-2) solid var(--frame-dark);
   background: var(--paper);
@@ -841,7 +843,7 @@ p.rtie {
 .gtoc {
   display: grid;
   gap: 0;
-  margin: 0 0 16px;
+  margin: 0 0 var(--sp-4);
   border: 1px solid var(--rule);
   border-radius: var(--r-1);
   overflow: hidden;
@@ -854,8 +856,8 @@ p.rtie {
   display: grid;
   grid-template-columns: 30px 1fr;
   align-items: baseline;
-  gap: 1px 10px;
-  padding: 9px 13px;
+  gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   color: var(--ink);
   border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
@@ -881,26 +883,27 @@ p.rtie {
   text-align: center;
   font-size: var(--fs-min);
   font-weight: 900;
-  padding: 2px 6px;
+  padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-0);
   background: var(--chip);
   color: var(--chip-ink);
   font-variant-numeric: tabular-nums;
 }
 
-/* 章の外に置く但し書き。青い地の上なので白で抜く。 */
+/* 章の外に置く但し書き。ここもページの地に直に置くので、生成りの上の字になる。
+   青い地のころのまま白で抜いてあって、読めなくなっていた。 */
 .gnote {
-  margin: 0 0 16px;
+  margin: 0 0 var(--sp-4);
   font-size: var(--fs-note);
   line-height: 1.85;
   font-weight: 700;
-  color: color-mix(in srgb, var(--paper) 86%, var(--sea-deep));
+  color: var(--ink-2);
 }
 
 .gsub {
   display: inline-block;
-  margin: 16px 0 2px;
-  padding: 2px 9px;
+  margin: var(--sp-4) 0 var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
   font-size: 13px;
   font-weight: 900;
   border-radius: var(--r-0);
@@ -917,8 +920,8 @@ p.rtie {
 .gtable { display: grid; gap: 0; margin-top: 10px; border-top: 1px solid var(--rule); }
 .grow {
   display: grid;
-  gap: 2px;
-  padding: 10px 4px;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-1);
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .grow b { font-size: 13.5px; font-weight: 900; }
@@ -938,8 +941,8 @@ p.rtie {
 @media (min-width: 720px) { .gwords { grid-template-columns: 1fr 1fr; column-gap: 18px; } }
 .gwords div {
   display: grid;
-  gap: 1px;
-  padding: 8px 4px;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
 }
 .gwords b { font-size: 13px; font-weight: 900; }
@@ -975,7 +978,7 @@ svg.nmap {
   --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
   /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
-  --nm-label: color-mix(in srgb, var(--ink) 82%, var(--grass-lo) 18%);
+  --nm-label: color-mix(in srgb, var(--ink) 90%, var(--grass-lo) 10%);
   --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;

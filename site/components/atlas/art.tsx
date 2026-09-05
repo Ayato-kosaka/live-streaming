@@ -282,7 +282,9 @@ export function PhoneShot({
   screen?: "food" | "audio";
   className?: string;
 }) {
-  const h = Math.round((width * 400) / 200);
+  // 額のぶんだけ絵の外へ出るので、viewBox は 230×430。
+  // 画面（12,12〜188,388）の座標は変えない。中の絵をぜんぶ描き直さずに済む。
+  const h = Math.round((width * 430) / 230);
   // 屋根の5色。ここで新しい色を作らない。
   const coral = "var(--roof-coral)";
   const sky = "var(--roof-sky)";
@@ -294,10 +296,10 @@ export function PhoneShot({
   const ink = "var(--ink)";
   const ink3 = "var(--ink-3)";
   return (
-    <svg viewBox="0 0 200 400" width={width} height={h} className={className} aria-hidden>
+    <svg viewBox="-12 -12 230 430" width={width} height={h} className={className} aria-hidden>
       <defs>
         <clipPath id={`ps-${screen}`}>
-          <rect x="12" y="12" width="176" height="376" rx="26" />
+          <rect x="12" y="12" width="176" height="376" rx="38" />
         </clipPath>
         {/* 上からの光。塗りが平らだと、焼いたスプライトの隣で浮く */}
         <linearGradient id={`ps-lit-${screen}`} x1="0" y1="0" x2="0" y2="1">
@@ -306,12 +308,16 @@ export function PhoneShot({
           <stop offset="1" stopColor="#2a2415" stopOpacity="0.12" />
         </linearGradient>
       </defs>
+      {/* 額は太く、角はうんと丸く（docs/ac-reference.md 6章
+          「窓枠はもっと太くて、角がもっと丸い。半径が高さの 1/3 くらい」）。
+          本物の端末の絵は、色の付いた分厚いふちの中に画面がはまっている。
+          前は額が 10px（幅の5%）しかなくて、板の型に見えていなかった。 */}
       {/* 影は暖かい灰緑で右下へ */}
-      <rect x="6" y="8" width="192" height="392" rx="36" fill="#8a9a72" opacity="0.3" />
+      <rect x="-2" y="-2" width="216" height="416" rx="72" fill="#8a9a72" opacity="0.3" />
       {/* 端末そのものも島の色。黒い板を置くと、ここだけ現実の物になる */}
-      <rect x="2" y="2" width="192" height="392" rx="36" fill="var(--frame-deep)" />
-      <rect x="6" y="6" width="184" height="384" rx="32" fill="var(--frame-dark)" />
-      <rect x="12" y="12" width="176" height="376" rx="26" fill={paper} />
+      <rect x="-8" y="-8" width="216" height="416" rx="72" fill="var(--frame-deep)" />
+      <rect x="-3" y="-3" width="206" height="406" rx="66" fill="var(--frame-dark)" />
+      <rect x="12" y="12" width="176" height="376" rx="38" fill={paper} />
       <g clipPath={`url(#ps-${screen})`}>
         {screen === "food" ? (
           <>
@@ -361,7 +367,7 @@ export function PhoneShot({
         )}
       </g>
       {/* 上からの光を画面ぜんぶにかける */}
-      <rect x="12" y="12" width="176" height="376" rx="26" fill={`url(#ps-lit-${screen})`} />
+      <rect x="12" y="12" width="176" height="376" rx="38" fill={`url(#ps-lit-${screen})`} />
       {/* 上の切りかき */}
       <rect x="76" y="12" width="48" height="13" rx="6.5" fill="var(--frame-deep)" />
     </svg>

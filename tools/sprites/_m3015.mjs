@@ -98,9 +98,14 @@ for (const url of PAGES) {
       const rr = ratio(c, bg);
       if (rr > cr) { cr = rr; ink = c; }
     }
-    // 字がまったく描かれていないところは、地と地を比べて 1.0 になる。測らない。
-    if (cr < 1.35) continue;
-    if (cr < 4.5) bad.push({ k: t.k, fs: t.fs, cr: +cr.toFixed(2), ink: ink.join(","), bg: bg.join(",") });
+    // 1.0 に近いのは2通りある。「そこに字が無い」（畳んだ中など）と
+    // 「字が地に沈んで見えない」。区別するために、指定されている字の色と
+    // 実際の地とで、もう一度比べる。沈んでいるほうはここで必ず出る。
+    const dec = (t.color.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const dcr = dec.length === 3 ? ratio(dec, bg) : 99;
+    if (cr < 1.35 && dcr >= 4.5) continue;
+    const worst = Math.min(cr < 1.35 ? 99 : cr, dcr);
+    if (worst < 4.5) bad.push({ k: t.k, fs: t.fs, cr: +worst.toFixed(2), ink: (cr < 1.35 ? dec : ink).join(","), bg: bg.join(",") });
   }
   bad.sort((a, b) => a.cr - b.cr);
   console.log("=== " + url + " ===");
