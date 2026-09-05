@@ -39,6 +39,27 @@
   border-radius: var(--r-pill);
   background: var(--gold);
 }
+/* ベルの絵が入っている札には棒を出さない。
+   同じ「ここから始まる」を2つ並べると、どちらが印なのか分からなくなる。 */
+.nextup-eyebrow.has-bell {
+  padding-left: 6px;
+  gap: 5px;
+}
+.nextup-eyebrow.has-bell::before { display: none; }
+/* 何件あるか。押せないので平ら（厚みを付けるのは押せるものだけ）。 */
+.nextup-n {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  margin-left: 1px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gold) 52%, var(--paper));
+  border: 1.5px solid color-mix(in srgb, var(--frame-dark) 70%, transparent);
+  color: var(--ink);
+  line-height: 1.5;
+}
 
 .nextup-card {
   position: relative;

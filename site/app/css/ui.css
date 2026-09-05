@@ -13,7 +13,9 @@
   gap: 11px;
   margin-top: 14px;
   padding: 13px 12px 16px;
-  border: var(--bw-1) solid var(--frame-dark);
+  /* 台の枠は欄の枠より弱くする。同じ太さ・同じ濃さで囲うと、
+     台と欄が同じ強さで主張して、どれが書くところか分からなくなる。 */
+  border: var(--bw-1) solid color-mix(in srgb, var(--frame-dark) 58%, var(--paper-2));
   border-radius: var(--r-2);
   /* 作業台の面。ページの紙より一段沈めて、欄がその上に彫ってあるように見せる。 */
   background: linear-gradient(
@@ -44,7 +46,7 @@
   content: "";
   flex: 1;
   height: 2px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--frame-dark) 38%, transparent);
 }
 
@@ -196,6 +198,15 @@
 .fold-body > .folds > .fold + .fold {
   border-top: 1px solid color-mix(in srgb, var(--rule) 66%, transparent);
 }
+/* 国のページは見どころが1枚に161段並ぶ。
+   画面の外にある段は、版組みも描画もしないでよいと言っておく。
+   auto を付けてあるので、いちど測った高さは覚えていて、
+   スクロールバーの長さが飛ばない。閉じている段は 60px 前後。
+   （content-visibility: hidden とちがって、ページ内検索には出る） */
+.folds > .fold {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 62px;
+}
 
 .fold > summary {
   position: relative;
@@ -208,7 +219,12 @@
   cursor: pointer;
   list-style: none;
   -webkit-tap-highlight-color: transparent;
+  /* 押しごたえ。紙の型に厚みは付けられないので、段そのものを少しだけ縮める。
+     指を離すと行きすぎてから戻る（ばね）ので、押した手ごたえが返ってくる。
+     transform しか動かさないので、161段あっても版組みは走らない。 */
+  transition: transform 0.17s cubic-bezier(0.34, 1.5, 0.64, 1);
 }
+.fold > summary:active { transform: scale(0.976); transition-duration: 0.05s; }
 .fold > summary::-webkit-details-marker { display: none; }
 
 /* 押した合図は、行いっぱいに引かれる蛍光ペンの帯。
@@ -392,13 +408,18 @@
    これは行の強調ではなく節の見出しだと分かるようにする。 */
 .gchap > .fold > summary::before {
   inset: 0;
-  border-radius: 9px;
+  /* 紙の角丸から枠1本ぶん内側。ここを揃えないと帯の角だけ四角く見える。 */
+  border-radius: calc(var(--r-1) - 1px);
   background: color-mix(in srgb, var(--marker) 82%, var(--rule));
   opacity: 1;
   transform: none;
 }
 .gchap > .fold > summary:hover::before { background: var(--marker); }
-.gchap > .fold[open] > summary::before { border-radius: 9px 9px 0 0; }
+/* 章の帯はいつも引いてあるので、押した合図は色を一段濃くすることで返す。 */
+.gchap > .fold > summary:active::before { background: color-mix(in srgb, var(--marker) 58%, var(--chip)); }
+.gchap > .fold[open] > summary::before {
+  border-radius: calc(var(--r-1) - 1px) calc(var(--r-1) - 1px) 0 0;
+}
 /* 章の中身は紙の一段下。罫線で区切って、その上に段を並べる。 */
 .gchap > .fold > .fold-body {
   padding: 4px 7px 9px;
