@@ -244,6 +244,12 @@ def main() -> int:
 
     if len(years) > 1:
         print(f"{years[0]}〜{years[-1]} 年で合わせて {total} 件")
+
+    # セッションの寿命を見立てるための手がかり。値は出さない。
+    if client.renewed_dt:
+        print("Doneru は応答で _dt を配り直しています（触るたびに寿命が延びる可能性）")
+    else:
+        print("Doneru は _dt を配り直していません（最初に取った寿命のまま）")
     return 0
 
 
