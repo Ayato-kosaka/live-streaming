@@ -70,6 +70,12 @@ function Row({ day }: { day: Day }) {
           {day.date && <time dateTime={day.date}>{when(day.date)}</time>}
           {/* 「いま、ここ」は `TripNow` が現在地を読んでから出す。 */}
           <span className="nday-now">いま、ここ</span>
+          {/* **投票の入口が、どこからも見えなくならないようにする。**
+              わかれ道は1日ぶんのページへ移したので、この行には
+              「中に答えられるものがある」とだけ書く。数はまだ出さない
+              （押す前に多いほうへ引っぱらないため・`Fork.tsx`）。
+              下の行に置くと、移動と泊まりで1行あふれて、9日ぶんで 200px 太る。 */}
+          {asks > 0 && <span className="ndayr-ask">答えられることが{asks}つ</span>}
         </span>
         <span className="ndayr-way">
           {way(legs).map((c, i) => (
@@ -87,11 +93,6 @@ function Row({ day }: { day: Day }) {
               {cityName(day.stay)}
             </span>
           )}
-          {/* **投票の入口が、どこからも見えなくならないようにする。**
-              わかれ道は1日ぶんのページへ移したので、この行には
-              「中に答えられるものがある」とだけ書く。数はまだ出さない
-              （押す前に多いほうへ引っぱらないため・`Fork.tsx`）。 */}
-          {asks > 0 && <span className="ndayr-ask">答えられることが{asks}つ</span>}
         </span>
       </span>
       <Icon name="right" size={16} className="ndayr-go" />

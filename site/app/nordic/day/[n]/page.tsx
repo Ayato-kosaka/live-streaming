@@ -19,7 +19,6 @@ import {
   dayName,
   loadSpots,
   nordicCountry,
-  type Day,
   type Leg,
   type NordicSpot,
 } from "@/content/nordic";
@@ -269,7 +268,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 {c.maybe && <em className="ndcity-if">寄るかどうかは、これから決まります</em>}
               </h3>
               <ul className="ndsps">
-                {c.list.slice(0, 5).map((s) => (
+                {/* 街が2つある日は1つあたりを減らす。**面が2〜3画面を超えないため**
+                    （`docs/island-ux.md` 8.1）。全部はその街の段に置いてある。 */}
+                {c.list.slice(0, byCity.length > 1 ? 4 : 5).map((s) => (
                   <SpotRow key={s.id} s={s} />
                 ))}
               </ul>
@@ -379,6 +380,3 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
     </PageShell>
   );
 }
-
-/** 型だけ借りる。`Day` を使わないと lint が未使用と言うので、ここで受けておく。 */
-export type { Day };

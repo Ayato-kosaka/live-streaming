@@ -239,11 +239,10 @@
    その日の話が 12px/1.6 のつもりで 14.5px/1.95 で描かれていて、
    10日ぶんで 500px 余計に取っていた（`p.rtie` と同じ轍）。
    ---------------------------------------------------------
-   ここは区間ごとのカード10枚だった。1枚ずつ畳んであって、開くと中に
-   「足代の席」と「道しるべの席」があり、両方そろうと区間が「つながる」。
-   企画への提案と投げ銭を1つの言い方に押し込んでいて、通じなかった
-   （docs/nordic-fund.md 「捨てた設計」）。畳みをやめて、上から読める表にする。
-   紙の上に板を積まない。日ごとの区切りは罫線1本。
+   ここは9日ぶんの区間・注記・国境・わかれ道を全部並べた表だった。
+   それだけで 1,764px あり、面ぜんぶ（6,369px）の3割近くを使っていた。
+   いまは1日1行で、行ぜんぶが `/nordic/day/[n]` への入口。
+   中身（道・明るいうち・通る街・わかれ道）はそちらにある。
    ========================================================= */
 /* =========================================================
    どうして、スウェーデンまで行くのか
@@ -261,21 +260,45 @@
 }
 .nwhy p + p { margin-top: var(--sp-3); }
 
-.ndays { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
-.nday {
-  padding: 10px 0;
-  border-top: 1px solid var(--rule);
-}
-.nday:last-child { padding-bottom: var(--sp-2); }
-/* 何日目。日付は切符のある2日にだけ入る（分からない日を埋めない）。 */
-p.nday-when {
+.ndays { list-style: none; display: grid; gap: var(--sp-2); margin: var(--sp-3) 0 0; padding: 0; }
+/* 上の司令塔から `#day-…` で飛んでくる。真上に貼りつくと1行目が読めない。 */
+.nday { scroll-margin-top: 12px; }
+
+/* 1日ぶんの行。**押すと、その日だけのページに入る。**
+   押せるので板。厚みは「66px の板なら 6px」の段（island-design 3章）。
+   行き先のカード（`.tile`）と同じ作りにしてある。中身が3行あるので
+   `.tile` をそのまま使わず、同じ影と同じふちを写している。 */
+.ndayr {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 5px;
+  gap: var(--sp-3);
+  min-height: 66px;
+  padding: var(--sp-3);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-1);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 6px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  color: var(--ink);
+  transition: transform 0.14s ease;
 }
-p.nday-when b {
+/* 押したら沈む。厚みが減るぶんだけ下げると、板が押し込まれて見える。 */
+.ndayr:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+}
+/* 予備の2日と、着いた朝。**中身のページが無いので、押せない。**
+   押せないものは完全に平らにする。厚みも矢印も付けない（island-design 3章）。 */
+.ndayr.is-flat {
+  background: none;
+  border: 1px solid var(--rule);
+  box-shadow: none;
+}
+.ndayr-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
+.ndayr-body { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.ndayr-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ndayr-top b {
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-0);
   background: var(--marker);
@@ -284,14 +307,15 @@ p.nday-when b {
   font-weight: 900;
   letter-spacing: var(--ls-caps);
 }
-p.nday-when time {
-  font-size: var(--fs-note);
-  font-weight: 900;
+.ndayr.is-flat .ndayr-top b {
+  background: none;
   color: var(--ink-2);
+  box-shadow: inset 0 0 0 1.5px var(--rule);
 }
+.ndayr-top time { font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
 /* 「いま、ここ」。旅が始まってから、今日の1日にだけ出る。
-   出す・出さないは `TripNow` が現在地を読んで `data-now` で切り替える
-   （React で描き直すと、地図の SVG まで作り直しになる）。
+   出す・出さないは `TripNow` が現在地を読んで `.nday` に `data-now` を付けて
+   切り替える（React で描き直すと、同じ面の地図まで作り直しになる）。
    蛍光は「何日目」がもう使っているので、こちらは紙に輪をかける。
    輪は厚みではないので、押せるものと取り違えない。 */
 .nday-now { display: none; }
@@ -307,11 +331,46 @@ p.nday-when time {
   letter-spacing: var(--ls-caps);
   white-space: nowrap;
 }
-/* 上の司令塔から `#day-…` で飛んでくる。真上に貼りつくと見出しが読めない。 */
-.nday { scroll-margin-top: 12px; }
+/* 通る街。「カトヴィツェ → クラクフ → オシフィエンチム」 */
+.ndayr-way {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: var(--lh-head);
+}
+/* 矢印は `--ink-3` にしない。生成りに対して 3.95:1 しか出ない
+   （`docs/island-world.md` 7.1）。読まなくていい飾りではなく、向きを言っている。 */
+.ndayr-way i { font-style: normal; margin-right: 4px; color: var(--ink-2); }
+.ndayr-how {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndayr-stay { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+/* 「答えられることが◯つ」。**押せない札**（数えたもの）なので、平らなオリーブ。
+   わかれ道そのものは日ごとのページの中にある。ここは入口が消えないための印で、
+   ここを押しても投票にはならない（行ぜんぶが1つの行き先）。 */
+.ndayr-ask {
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.ndayr-say { font-size: 12px; line-height: 1.7; font-weight: 700; color: var(--ink-2); }
+.ndayr-go { flex: none; color: var(--frame-dark); }
 
-.nday-go { display: flex; gap: var(--sp-3); align-items: flex-start; }
-.nday-go + .nday-go { margin-top: var(--sp-3); }
+/* 区間ひとつ。1日ぶんのページ（`/nordic/day/[n]`）の「この日の道」で使う。 */
+.nday-go { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-3); }
 .nday-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
 .nday-txt { min-width: 0; flex: 1; }
 p.nday-way {
@@ -350,32 +409,6 @@ p.nday-fixed {
   font-weight: 900;
 }
 p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 700; }
-/* 泊まるところ。日付の行の右へ回す。独立した行にすると10日で 370px 取る。 */
-.nday-stay {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-/* 決まっていない日（4日目・5日目）と、予備の2日。
-   区間が無いので絵も距離も付かない。**空けたことが分かる行にする。**
-   埋めてしまうと、決まっている5日ぶんまで「たぶんこうだろう」に見える。 */
-p.nday-say {
-  margin: 0;
-  padding-left: var(--sp-3);
-  border-left: 3px solid var(--rule);
-  font-size: 12px;
-  line-height: 1.7;
-  font-weight: 700;
-  color: var(--ink-2);
-}
-.nday.is-bare p.nday-when { margin-bottom: 7px; }
-.nday.is-bare p.nday-when b { background: none; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px var(--rule); }
-/* 区間より先に出る一行（「リガのあと」の説明）は、区間から少し離す。 */
-p.nday-say + .nday-go { margin-top: var(--sp-3); }
 
 /* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
 .nday-log {
@@ -393,8 +426,6 @@ p.nday-say + .nday-go { margin-top: var(--sp-3); }
   font-weight: 900;
   color: var(--ink);
 }
-/* 終点。ここが企画の芯なので、最後の行だけ絵を持たない代わりに間を取る。 */
-.nday.is-goal p.nday-way { font-size: var(--fs-h3); }
 
 /* =========================================================
    この旅に、言う
@@ -1654,3 +1685,119 @@ svg.nmap {
 }
 .nmgo-c:hover { color: var(--frame-deep); }
 .nmgo-c:active { background: color-mix(in srgb, var(--marker) 34%, transparent); }
+
+/* =========================================================
+   1日ぶんのページ（/nordic/day/[n]）
+   ---------------------------------------------------------
+   「もっともっと1日1日どんなふうになるのかを詳しく見たい」（オーナー）。
+   旅程表の行を押した先。その日の道・明るいうち・通る街・わかれ道が
+   ぜんぶここにある。紙の面なので、板になるのは押すものだけ。
+   ========================================================= */
+
+/* 明るいうち。**ヒッチハイクは日のあるあいだしかできない。**
+   その日の形を距離より先に決めているのがここなので、数字を大きく出す。
+   板にしない（押せない）。紙のまま、罫で囲って区切る。 */
+.ndsun {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px var(--sp-3);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+}
+.ndsun > .ic { grid-row: span 2; }
+p.ndsun-n {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+p.ndsun-n b { font-size: 19px; font-weight: 900; color: var(--ink); }
+p.ndsun-n em { font-style: normal; color: var(--ink-3); }
+p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight: 800; color: var(--ink-2); }
+
+/* まだ決まっていないこと。**埋めない。**
+   決まっている行と見分けがつくよう、頭に短い罫を1本引く。 */
+.ndunsure { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: 5px; }
+.ndunsure li {
+  position: relative;
+  padding-left: var(--sp-4);
+  font-size: 12px;
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.ndunsure li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+
+/* その日、通る街にあるもの。**押せない一覧。**
+   本文は国のページにあるので、ここは名前と一行だけ。 */
+.ndcity + .ndcity { margin-top: var(--sp-5); }
+.ndcity-if {
+  margin-left: var(--sp-2);
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+}
+.ndsps { list-style: none; margin: 0 0 var(--sp-3); padding: 0; }
+.ndsp {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--rule);
+}
+.ndsp-th {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-0);
+  object-fit: cover;
+  background: var(--paper-2);
+}
+.ndsp-b { display: grid; gap: 2px; min-width: 0; }
+.ndsp-h { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ndsp-h b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
+.ndsp-cat {
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.ndsp-b i { font-style: normal; font-size: var(--fs-note); line-height: 1.7; font-weight: 700; color: var(--ink-2); }
+
+/* その日から使う言葉。3つだけ。全部はしおり（/nordic/guide）にある。 */
+.ndph { margin-top: var(--sp-4); }
+.ndph-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.ndph-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--rule);
+}
+.ndph-list b { font-size: 14px; font-weight: 900; }
+.ndph-list em { font-style: normal; font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
+.ndph-list i { font-style: normal; margin-left: auto; font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }

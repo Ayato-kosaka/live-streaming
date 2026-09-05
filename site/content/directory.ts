@@ -3,7 +3,7 @@ import { PAST_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
-import { NORDIC_COUNTRIES } from "@/content/nordic";
+import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
 
@@ -142,6 +142,19 @@ export const SHELVES: Shelf[] = [
         note: "会いに行く理由と、通る道ぜんぶ",
         q: q("北欧ヒッチハイク nordic 旅 スウェーデン"),
       },
+      /* 1日ぶんのページ。**ここに載せないと、旅程表を通らないと着けない。**
+         どこからでも2タップの決まりは、面を足すたびにここへ1行足して守る。 */
+      ...DAY_PAGES.map((d) => ({
+        href: dayHref(d),
+        name: `北欧 ${dayName(d)}`,
+        note: d.lead ?? "",
+        q: q(
+          "北欧",
+          dayName(d),
+          d.lead,
+          (d.legs ?? []).flatMap((l) => [cityName(l.from), cityName(l.to)]).join(" "),
+        ),
+      })),
       {
         href: "/nordic/guide",
         name: "旅のしおり",

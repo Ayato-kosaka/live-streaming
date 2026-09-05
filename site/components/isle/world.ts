@@ -151,6 +151,13 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
     })
     .join("");
 
+  /* 着いた舟。船着き場につないである（`docs/island-atlas.md` 6章「島から島へは船で行く」）。
+     草木と同じ列に入れておくと、奥行きの並べ替えに一緒に乗る。
+     別に描くと、手前に立ったあやとが舟の裏に隠れる */
+  const plants = scatter(art, { cx, cy, squash: SQUASH }, grass, r, placed, hub);
+  plants.push({ n: "canoe", x: Math.round(dockAt.x) + 24, y: Math.round(dockAt.y) + 8, s: 18, flip: false });
+  plants.sort((a, b) => a.y - b.y);
+
   return {
     slug: spec.slug,
     size,
@@ -161,7 +168,7 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
     sand,
     grass,
     places: placed,
-    plants: scatter(art, { cx, cy, squash: SQUASH }, grass, r, placed, hub),
+    plants,
     trail,
     dock: { x: Math.round(dockAt.x), y: Math.round(dockAt.y) },
     art,

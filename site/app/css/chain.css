@@ -454,3 +454,429 @@
   font-weight: 800;
   color: var(--ink-2);
 }
+
+/* =========================================================
+   歩ける島（`components/isle/`）
+   ---------------------------------------------------------
+   過去の島と次の島は、絵ではなく**歩ける島**になった
+   （`docs/island-atlas.md` 10章の宿題が "する" に決まった）。
+
+   **`app/css/island.css` は触っていない。** あちらはいまの島（トップ）のもので、
+   同時に別の担当が直している。名前空間を `.isle-*` に分けて、
+   共通のもの（`.sway` `.ayato` とスプライト）だけを借りている。
+
+   色は `tokens.css` の変数から取る。だから島に `[data-theme]` を付けるだけで、
+   中東の島は乾いた土に、北欧の島は寒い緑になる。
+   **章に色を割りあてているのではない**（`docs/island-world.md` 3.1）。
+   変わるのは土地の色。
+   ========================================================= */
+
+.isle {
+  position: relative;
+  width: 100%;
+  height: 86svh;
+  min-height: 520px;
+  max-height: 780px;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  background: var(--sea-deep);
+}
+@media (min-width: 640px) { .isle { height: 82svh; max-height: 820px; } }
+@media (min-width: 1024px) { .isle { height: min(86svh, 840px); max-height: 840px; } }
+
+/* 島の絵は、画面より各辺 --scene-pad だけ大きく取る。
+   **`viewBox` を書き換えず、`transform` でずらす**ため（`IsleStage.tsx` の anchor）。
+   `will-change` は `<svg>` そのものにだけ付ける。中の要素に付けると逆に遅くなる。 */
+.isle-svg {
+  position: absolute;
+  /* `island.css` が :root に置いている値と同じもの。あちらを触らないので、
+     読めなかったときのために既定値も書いてある。**`IsleStage.tsx` の
+     SCENE_PAD と必ず同じ値にする** */
+  left: calc(var(--scene-pad, 140px) * -1);
+  top: calc(var(--scene-pad, 140px) * -1);
+  width: calc(100% + var(--scene-pad, 140px) * 2);
+  height: calc(100% + var(--scene-pad, 140px) * 2);
+  display: block;
+  will-change: transform;
+}
+/* 画面の外に出た島は動かさない。**消すのではなく止める**（戻れば続きから） */
+.isle.is-away * { animation-play-state: paused; }
+
+/* --- 地面 --- */
+.ig-shelf { fill: var(--sea-shelf); opacity: 0.75; }
+.ig-shallow { fill: var(--sea-shallow); opacity: 0.72; }
+.ig-foam { fill: var(--foam); opacity: 0.72; }
+.ig-sand { fill: var(--sand); }
+.ig-wet { fill: var(--sand-wet); }
+.ig-grass { fill: var(--grass); }
+.ig-grass2 { fill: var(--grass2); opacity: 0.55; }
+.ig-grass-tex { opacity: 0.5; }
+.ig-blade { stroke: var(--grass-hi); stroke-width: 1.6; stroke-linecap: round; fill: none; }
+/* 道。土の帯。輪郭線は引かない（`docs/island-design.md` 2章の1） */
+.ig-trail {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sand-wet) 62%, #a4763c 38%);
+  stroke-width: 15;
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+/* 建設中（`docs/island-atlas.md` 5章）。進捗バーではなく、景色そのものが育つ */
+.ig-plot { fill: rgba(90, 62, 26, 0.22); stroke: #8a6432; stroke-width: 2; }
+.ig-stake { stroke: #8a6432; stroke-width: 3; stroke-linecap: round; }
+.ig-rebar { stroke: #b0763a; stroke-width: 3; stroke-linecap: round; }
+.ig-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 2; }
+.ig-roof { fill: #d0553f; stroke: #9c3628; stroke-width: 2; stroke-linejoin: round; }
+
+/* --- 建物の札 ---
+   合図は厚み1種類だけ（`docs/island-world.md` 3.4）。
+   光らせない。きらめかせない。色を変えない。 */
+.isle-labels { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.isle-labels.is-cast { z-index: 2; }
+.isle-spot { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.isle-spot.is-on { will-change: transform; }
+
+/* 建物の絵にぴったり重なる、透明な押しどころ。
+   絵が小さくても、指で押せる大きさ（48px）まで広げてある */
+.isle-hit {
+  position: absolute;
+  left: calc(var(--hw, 48px) / -2);
+  top: calc(var(--hh, 48px) * -1);
+  width: var(--hw, 48px);
+  height: var(--hh, 48px);
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 14px;
+}
+.isle :focus-visible { outline-color: #fffdf6; }
+.isle-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* 札の入れ物。建物が画面の外に出たときだけ、ここに translate が入って縁へ寄る。
+   **建物の当たり（.isle-hit）はこの中に入れない。** 一緒に動くと、
+   絵の無いところが押せることになる */
+.isle-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+
+/* 札。建物の頭の上に、杭を打って立っている。
+   板の厚みはぼかさない下向きの影で作る。ぼかすと紙に見えて、木の板に見えない */
+.isle-mark {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--mh, 48px) + 12px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(74vw, 300px);
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #fff8e4 0%, #f6e6c2 100%);
+  color: var(--ink);
+  box-shadow: 0 4px 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+/* 札を留めている杭 */
+.isle-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  width: 9px;
+  height: 14px;
+  margin-left: -4.5px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #b98b52 0%, #d9a869 45%, #a97c46 100%);
+}
+/* 縁へ寄せた札は、杭を「建物はそっち」を指す矢に持ち替える */
+.isle-spot[data-edge] .isle-mark::after {
+  width: 0;
+  height: 0;
+  margin: 0;
+  border-radius: 0;
+  background: none;
+  border: 7px solid transparent;
+}
+.isle-spot[data-edge="d"] .isle-mark::after { left: 50%; bottom: -14px; margin-left: -7px; border-top-color: #d9a869; }
+.isle-spot[data-edge="u"] .isle-mark::after { left: 50%; top: -14px; bottom: auto; margin-left: -7px; border-bottom-color: #d9a869; }
+.isle-spot[data-edge="l"] .isle-mark::after { left: -14px; top: 50%; bottom: auto; margin-top: -7px; border-right-color: #d9a869; }
+.isle-spot[data-edge="r"] .isle-mark::after { left: auto; right: -14px; top: 50%; bottom: auto; margin-top: -7px; border-left-color: #d9a869; }
+
+.isle-text { display: grid; gap: 1px; line-height: 1.2; min-width: 0; }
+.isle-text b { font-size: 13px; font-weight: 900; letter-spacing: 0.02em; }
+/* 一言と「みる」は近づいてから。遠くの6枚が3行ずつ出ていると、島が字で埋まる */
+.isle-spot:not(.is-on) .isle-text i,
+.isle-spot:not(.is-on) .isle-go { display: none; }
+/* 看板を出さない建物は、近づくまで札ごと出さない */
+.isle-spot:not(.is-sign):not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
+.isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
+.isle-spot.is-on .isle-text b { font-size: 14.5px; }
+.isle-text i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #6b5a3e;
+  white-space: normal;
+}
+/* 「みる」も押せる板にする。文字だけだと、看板の飾りに見える */
+.isle-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--accent, #ff9a3c);
+  color: #fffdf6;
+  font-size: 11.5px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+}
+.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+/* 出発までの日数。札の右肩に貼ったシール */
+.isle-badge {
+  position: absolute;
+  top: -14px;
+  right: -8px;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ff5f6d;
+  color: #fffdf6;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.16);
+  transform: rotate(-7deg);
+}
+/* 近づいた建物は、ふわっと弾ませる（`docs/island-design.md` 3-5 反応を返す） */
+.isle-art.is-on { animation: isleBob 1.6s ease-in-out infinite; }
+@keyframes isleBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) { .isle-art.is-on { animation: none; } }
+
+/* --- 住人 --- */
+.isle-who { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.isle-who-hit {
+  position: absolute;
+  left: calc(var(--ws, 48px) / -2);
+  top: calc(var(--ws, 48px) * -1);
+  width: var(--ws, 48px);
+  height: var(--ws, 48px);
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.isle-who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* --- 吹き出し --- */
+.isle-talk {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 16px;
+  z-index: 6;
+  padding: 14px 16px 26px;
+  border-radius: 18px;
+  background: #fffdf6;
+  box-shadow: 0 5px 0 #d9c9a4, 2px 10px 14px rgba(30, 60, 40, 0.24);
+}
+.isle-talk p { margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.7; color: var(--ink); }
+.isle-talk-tap {
+  position: absolute;
+  right: 14px;
+  bottom: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #7a6a4c;
+}
+/* 話しているあいだは、島の上の札を引っ込める */
+.isle.is-talking .isle-mark { opacity: 0; transition: opacity 0.18s; }
+.isle.is-talking .isle-hit,
+.isle.is-talking .isle-who-hit { pointer-events: none; }
+@media (min-width: 640px) {
+  .isle-talk { left: auto; right: 20px; bottom: 20px; width: min(420px, 44vw); }
+}
+
+/* --- 建物の中（やぐら）---
+   島の上に開く板。紙にしない（`docs/island-world.md` 1.5） */
+.isle-sheet-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(12, 40, 34, 0.42);
+}
+@media (min-width: 640px) { .isle-sheet-wrap { align-items: center; } }
+.isle-sheet {
+  width: min(520px, 100%);
+  max-height: min(74%, 560px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fffdf6 0%, #fbf3dd 100%);
+  box-shadow: 0 6px 0 #d3c09a, 2px 14px 20px rgba(20, 50, 40, 0.3);
+  animation: isleSheetIn 0.22s ease-out both;
+}
+@keyframes isleSheetIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .isle-sheet { animation: none; } }
+.isle-sheet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.isle-sheet-head img { width: 44px; height: 44px; object-fit: contain; flex: none; }
+.isle-sheet-head span { flex: 1; min-width: 0; }
+.isle-sheet-head b { display: block; font-size: 16px; font-weight: 900; color: var(--ink); }
+.isle-sheet-head i {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.isle-sheet-x {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--ink);
+  background: #f0e5c8;
+  box-shadow: 0 3px 0 #d3c09a;
+}
+.isle-sheet-x:active { transform: translateY(2px); box-shadow: 0 1px 0 #d3c09a; }
+
+/* 数の並び。**一面ぜんぶ押せるマスの並びではない**ので、厚みは付けない
+   （`docs/island-world.md` 3.4。押せないものは完全に平ら） */
+.isle-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.isle-facts li { padding: 9px 10px; border-radius: 12px; background: rgba(214, 196, 152, 0.28); }
+.isle-facts b { display: block; font-size: 21px; font-weight: 900; line-height: 1.1; color: var(--ink); }
+.isle-facts b span { font-size: 12.5px; margin-left: 2px; }
+.isle-facts i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+
+.isle-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.isle-list a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  background: #fffdf6;
+  box-shadow: 0 3px 0 #ddcda6;
+  color: var(--ink);
+}
+.isle-list a:active { transform: translateY(2px); box-shadow: 0 1px 0 #ddcda6; }
+.isle-list a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
+.isle-list img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.isle-list span { flex: 1; min-width: 0; }
+.isle-list b { display: block; font-size: 13.5px; font-weight: 900; line-height: 1.35; }
+.isle-list i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.isle-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: var(--accent, #ff9a3c);
+  color: #fffdf6;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+}
+.isle-more span { flex: 1; min-width: 0; }
+.isle-more b { display: block; font-size: 14px; font-weight: 900; }
+.isle-more i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.9; }
+.isle-more:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+
+/* --- 島の隅の道具 --- */
+.isle-sign {
+  position: absolute;
+  left: 14px;
+  top: calc(12px + env(safe-area-inset-top));
+  z-index: 4;
+  max-width: min(56vw, 320px);
+  padding: 8px 13px;
+  border-radius: 14px;
+  background: rgba(56, 44, 34, 0.72);
+  color: #fffdf6;
+  pointer-events: none;
+}
+.isle-sign b { display: block; font-size: 15px; font-weight: 900; letter-spacing: 0.02em; }
+.isle-sign i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.92; line-height: 1.45; }
+
+.isle-view,
+.isle-atlas {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: #fffdf6;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #cbbb96;
+}
+.isle-view { right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+.isle-atlas { right: 12px; top: calc(12px + env(safe-area-inset-top)); }
+.isle-view:active,
+.isle-atlas:active { transform: translateY(2px); box-shadow: 0 2px 0 #cbbb96; }
+.isle-view:focus-visible,
+.isle-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+.isle-hint {
+  position: absolute;
+  left: 14px;
+  top: calc(74px + env(safe-area-inset-top));
+  z-index: 5;
+  margin: 0;
+  max-width: min(70vw, 340px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(56, 44, 34, 0.78);
+  border: 2px solid rgba(255, 253, 246, 0.2);
+  color: #fffdf6;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.5;
+  pointer-events: none;
+  animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.7s both;
+}
+@media (prefers-reduced-motion: reduce) { .isle-hint { animation: none; } }
+
+/* 島の下に続く紙。トップと同じ形（島が板、その下が紙） */
+.isle-page { padding-top: 10px; }
+.isle-lead {
+  margin: 6px 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
