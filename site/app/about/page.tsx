@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat, TileLink } from "@/components/ui/Bits";
+import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import NowLive from "@/components/live/NowLive";
@@ -24,8 +25,23 @@ export const metadata: Metadata = {
  * たき火広場。
  *
  * 来た人の「この人だれ」に、読ませずに答える面。
- * 顔と3行 → 数字4つ → いまどこ → 年表 → やっていること、の5段だけ。
- * 上から目を落とすだけで一周できる長さに収める。
+ *
+ * ## 開いた瞬間に出しているもの
+ *
+ * 顔と3行、それと数字4つ。ここまでで「この人だれ」は済む。
+ * その先（いまどこ・年表・やっていること・配信の型）は畳んで、
+ * 見出しと1行だけを並べる。**深く知りたい人だけが開く。**
+ *
+ * 前は6枚ぜんぶを開いて置いていて、スマホで 5,465px（6.5画面）あった。
+ * `docs/island-ux.md` 8.1 の「入口の面は3画面まで」を倍こえていて、
+ * はじめて来た人が読み終わる前に下まで落ちる。年表だけで 1,394px ある。
+ * 年表は「あとから読むと面白いもの」であって、名乗りではない。
+ *
+ * ## 畳むのに `Fold` を使う理由
+ *
+ * `<details>` なので、開く前からページ内検索に出るし、
+ * 閉じているあいだも `lead` の1行で中身の見当がつく。
+ * 「いま、どこで何してる」は閉じたままでも居場所と配信の時間が読める。
  *
  * h1 は場所の名前（docs/island-world.md 7.5）。ヘッダーの入口が
  * 「たき火広場」なので、ここで「あやと島について」と名乗ると名前が2つになる。

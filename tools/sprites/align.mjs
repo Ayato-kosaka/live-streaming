@@ -28,11 +28,17 @@ for (const [label, wide] of [["寄り", false], ["引き", true]]) {
    * 途中で測ると、同じ島なのに押せる範囲が 48x48 だったり 88x90 だったりして、
    * ズレの許容(20px)を倍率のぶん超え、直していないものが NG で出る。 */
   const settle = async () => {
+    // 動き出す前に測ってしまわないよう、まず必ず待つ
+    await p.waitForTimeout(2500);
     let last = "";
+    let same = 0;
     for (let i = 0; i < 60; i++) {
       await p.waitForTimeout(250);
       const vb = await p.getAttribute(".stage-svg", "viewBox") ?? "";
-      if (vb && vb === last) return;
+      same = vb && vb === last ? same + 1 : 0;
+      // 3回続けて同じなら止まったとみなす。1回では、寄せている途中の
+      // ゆっくりな区間をつかまえて「止まった」と誤判定する
+      if (same >= 3) return;
       last = vb;
     }
   };
