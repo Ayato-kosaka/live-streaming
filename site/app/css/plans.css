@@ -170,7 +170,12 @@
 }
 
 .nextup-body { grid-area: body; display: grid; gap: 5px; align-content: start; }
-.nextup-title { font-size: clamp(19px, 5.4vw, 27px); font-weight: 900; line-height: 1.28; }
+.nextup-title {
+  font-size: clamp(19px, 5.4vw, 27px);
+  font-weight: 900;
+  line-height: var(--lh-head);
+  letter-spacing: var(--ls-head);
+}
 .nextup-when {
   font-style: normal;
   font-size: 13px;
@@ -206,10 +211,11 @@
   /* いちばん近い企画の行き先は、サイトでいちばん押してほしいところ。
      ここだけ金色にして、ほかの押せるものより一段強くする。 */
   background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
-  box-shadow: var(--pop-sm), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  /* 側面は金の濃いほう。--pop-sm の --frame-dark だと、金の板から浮いて見える。 */
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
   font-size: 13.5px;
   font-weight: 900;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-body);
   color: var(--ink);
   transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s, background 0.16s;
 }
@@ -218,7 +224,11 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
 }
-.nextup-card:active .nextup-go { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* 沈む 2px と、厚みの減る 2px（4px→2px）を揃える。 */
+.nextup-card:active .nextup-go {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+}
 
 /* --- そのほかの企画 --- */
 .nextup-rest {
