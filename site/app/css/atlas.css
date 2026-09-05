@@ -443,13 +443,21 @@
    紙に刷った罫ではなく「カードの区切り線」に見える（review-2 11章）。 */
 .apass-top {
   position: relative;
+  /* 上は紙の余白（--sp-5）をそのまま空きにする。主役のまわりは空けておく。
+     左右は紙のはしまで伸ばす。 */
   margin-inline: calc(-1 * var(--pp-x, var(--sp-4)));
   border-bottom: 1px solid var(--rule);
 }
 /* 紙の上の地図の作りは下の `.panel.paper .amap` が持っている。
-   ここではパスポートのぶんだけ、上の余白と罫を取り消す。 */
-.apass-top .amap { margin-inline: 0; margin-bottom: 0; border-block: 0; padding-block: 0; }
-.apass-top .amap-foot { padding: var(--sp-2) var(--pp-x, var(--sp-4)) var(--sp-3); margin-top: 0; }
+   ここではパスポートのぶんだけ、上下の余白と罫を取り消す。
+   `.apass-top .amap` だと `.panel.paper .amap` に詳細度で負けるので、
+   同じ3つの重さで書く。 */
+.panel.paper .apass-top .amap {
+  margin: 0;
+  border-block: 0;
+  padding: 0;
+}
+.apass-top .amap-foot { padding: var(--sp-3) var(--pp-x, var(--sp-4)); margin-top: 0; }
 
 /* ローマ字名と地方。旗はここに小さく添える。
    `Flag` は 20〜30px で読めるように角丸と縁を決めてあるので、大きくしない。 */
