@@ -1105,29 +1105,6 @@
 }
 .stage .bar-spot:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
-/* 島の連なりへ（スマホ）。
-   6つは「この島の中のどこへ行くか」、こちらは**島の外へ出る**話なので、
-   同じ列に並べない。3列ぶんを1本で使って、上に線を1本引いて分ける。
-   地は紙のままで、6つのマスより静かにしておく。 */
-.stage .bar-atlas {
-  grid-column: 1 / -1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  /* 指で押せる最小（`docs/island-design.md` 3-2）。実測 45px で割っていた */
-  min-height: 48px;
-  margin-top: 2px;
-  padding-top: 8px;
-  border-top: 2px dashed var(--frame);
-  font-size: 12.5px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
-  text-decoration: none;
-}
-.stage .bar-atlas:active { transform: translateY(2px); }
-.stage .bar-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 .stage .bar-spot img { width: 28px; height: 28px; flex: none; }
 /* 名前は絶対に切らない。入る幅が無いときは折り返して、マスの背を伸ばす。
    ellipsis で黙って切ると、押す先が読めなくなったことに誰も気づけない。 */
@@ -1167,6 +1144,29 @@
   color: var(--paper);
   transform: rotate(-6deg);
 }
+/* 島の連なりへ（スマホ）。
+   6つは「この島の中のどこへ行くか」、こちらは**島の外へ出る**話なので、
+   同じ列に並べない。3列ぶんを1本で使って、上に線を1本引いて分ける。
+   地は紙のままで、6つのマスより静かにしておく。 */
+.stage .bar-atlas {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。実測 45px で割っていた */
+  min-height: 48px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 2px dashed var(--frame);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.stage .bar-atlas:active { transform: translateY(2px); }
+.stage .bar-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
 /* 引き／寄りの切り替え。
    行き先ではないので、行き先のバーから出して島の隅に置いた。
@@ -1267,10 +1267,11 @@
    **トップは、いままでどおり「いまの島」**（`docs/island-atlas.md` 7章）なので、
    連なりへはここからしか行けない。だから隅に隠さず、右上に置く。
 
-   置き場所が縦に動くのは、右上を看板ロゴと分け合っているから。
-   スマホは寄り（既定）なら小さいマーク（124×73）、引きなら大きい看板（〜214×168）が
-   同じ隅に出る。**ロゴの下に必ず来る高さ**を、寄り引きで出し分ける。
-   640px から上はロゴが中央か左へ寄るので、右上の 12px がそのまま空く。 */
+   **ただしスマホでは出さない**（`IslandStage.tsx` が描かない）。島に降りた
+   1画面目で「別の島がある」と先に言われると、いまの島がその案内板の背景になる。
+   スマホは行き先をひらいたときに出る（`.bar-atlas`）。
+   640px から上はロゴが中央か左へ寄るので、右上の 12px がそのまま空く。
+   下の寄り引きの出し分けは、その幅では使わないが、スマホに戻す日のために残す。 */
 .stage-atlas {
   position: absolute;
   right: 12px;
