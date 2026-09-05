@@ -8,7 +8,7 @@ import Flag from "@/components/ui/Flag";
 import { KINDS, RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
-import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
+import { Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtBasket, ArtMeeting, ArtPot, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
@@ -66,18 +66,19 @@ export default function KitchenPage() {
             どちらも「読み物」なので、カタログの下にまとめる（`docs/island-ux.md` 5.6）。 */}
         <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
 
-        <Zone>
-          <H art={<ArtStamp size={32} />} note={`${dates[0].replace(/-/g, "/")} からの記録`}>
-            ここまでに押したスタンプ
-          </H>
-          <Rec
-            items={[
-              { n: RECIPES.length, unit: "品", label: "押したスタンプ", note: "作って、食べたところまで" },
-              { n: byCountry.size, unit: "カ国", label: "借りたキッチン", note: "宿と、山の中の宿と" },
-              { n: streams, unit: "本", label: "そのための配信", note: "買い出しの日もふくめて" },
-              { n: hardest.streams.length, unit: "日", label: "いちばん長かった1品", note: hardest.name },
-            ]}
-          />
+        {/* 帳面の奥付。1行で足りる。
+            前はここに記録の欄を4つ並べていたが（306px）、そのうち2つ
+            「押したスタンプ32品」「借りたキッチン5カ国」は h1 の下の1行と
+            同じことを言っていた。同じ数字を1つの面で2回読ませない。
+            残るのは、上に出ていない2つ（配信の本数と、いちばん長かった1品）だけ。 */}
+        <Zone tight>
+          <p className="kt-colophon">
+            <ArtStamp size={26} />
+            <span>
+              {dates[0].replace(/-/g, "/")} から、{streams}本の配信で押してきました。いちばん長かったのは
+              <Link href={`/kitchen/${hardest.slug}`}>{hardest.name}</Link>の{hardest.streams.length}日がかり。
+            </span>
+          </p>
         </Zone>
 
         <Zone tight>

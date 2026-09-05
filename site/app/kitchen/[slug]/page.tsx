@@ -72,11 +72,14 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
               <Tape>{r.name}</Tape>
             </h1>
             <div className="zk-hero-art">
-              {/* この面の主役。高精細画面には長辺640pxで焼いたほうを配る。
+              {/* この面の主役。長辺640pxで焼き直したほうを、必要な画面にだけ配る。
+                  1x/2x で書くと、等倍の画面はどれだけ大きく出しても 320px の
+                  ほうを選ぶ。いちばん大きく出す絵なので幅（`w`）で配る。
                   一覧のマスは今までの1枚のままなので、増えるのはここを開いた人だけ */}
               <img
                 src={`/sprites/${r.icon}.webp`}
-                srcSet={`/sprites/${r.icon}.webp 1x, /sprites/hero/${r.icon}.webp 2x`}
+                srcSet={`/sprites/${r.icon}.webp 320w, /sprites/hero/${r.icon}.webp 640w`}
+                sizes="(min-width: 720px) 340px, 250px"
                 alt=""
               />
             </div>

@@ -259,22 +259,26 @@
 }
 @media (min-width: 720px) { .zk-hero-art { height: 230px; } }
 /* 図鑑の1枚（料理の詳細）。この面の主役は料理の絵1つ。
-   ただし焼いてあるスプライトは長辺 320px までしか無いので、枠だけ広げても
-   絵は natural size で止まって、空きが増えるだけだった（実測 197x253）。
-   枠は絵が埋められる大きさに合わせ、`height: 100%` で枠まで伸ばす。
-   320px を超える引き伸ばしはぼけるので、そこで止める。
-   「ここを見ろ」は、絵の大きさではなく上下の余白で言う。 */
-/* 枠を決め打ちにすると、平たい料理（卵焼き 248x116）だけ題名との間に
-   250px の空きができて、余白ではなく不具合に見えた。枠は絵の高さに合わせ、
-   下限だけ決めておく。「ここを見ろ」は枠の広さではなく上下の余白で言う。 */
-.zk-hero.is-dex .zk-hero-art { height: auto; min-height: 168px; margin: var(--sp-6) 0 var(--sp-6); }
-@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { min-height: 220px; } }
+
+   本物（`ref_NH_Critterpedia_Coelacanth.jpg`）は絵が画面の高さの 46〜51% を
+   占めている。ここは 35.1%（1280x720 で 253px）で止まっていた。
+   理由は焼いてあるスプライトが長辺 320px までで、枠を広げても絵が
+   natural size で止まっていたこと。**いまは長辺 640px の焼き直しがある**ので
+   （`sprites/hero/`）、枠に高さを決めて、絵をその高さまで伸ばす。
+
+   `srcset` は 1x/2x ではなく幅（`w`）で配る。1x/2x だと、等倍の画面で
+   340px に伸ばしても 320px のほうが選ばれて、いちばん大きく出す絵だけが
+   ぼけていた。 */
+.zk-hero.is-dex .zk-hero-art {
+  height: 250px;
+  margin: var(--sp-6) 0 var(--sp-6);
+}
+@media (min-width: 720px) { .zk-hero.is-dex .zk-hero-art { height: 340px; } }
 .zk-hero.is-dex .zk-hero-art img {
-  /* 主役の絵だけ、長辺 640px でもう1枚焼いてある（`sprites/hero/`）。
-     高精細画面にはそちらが配られるので、320px で頭打ちだった頃より
-     枠を広げる余地がある。いまは natural size のまま置いている。 */
-  max-height: 300px;
+  height: 100%;
+  max-height: 100%;
   max-width: 86%;
+  width: auto;
 }
 /* 皿。主役の下に必ず1枚敷いて、紙の上に浮かせない */
 .zk-hero-art::before {
@@ -736,6 +740,42 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .kt-clear:hover { transform: translateY(-2px); box-shadow: 0 6px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
 .kt-clear:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
 
+/* いま何ページ目か。数と同じ行に置く（別の行にすると、絞るたびに行が増える） */
+.kt-pageof {
+  margin-left: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--zk-rule-soft);
+}
+
+/* 帳面をめくる送り。住民図鑑の `.rzk-pager` と同じ役・同じ形。
+   紙の上に載る板なので、押せるものだけに厚みを付ける（ac-reference 7章 5）。 */
+.kt-pager { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.kt-pager > span { font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); }
+.kt-pager > span > b { font-size: var(--fs-body); color: var(--zk-ink); }
+.kt-pager > button {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-note); font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.kt-pager > button:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+/* 端のページ。押せないものから厚みを外す。押せる合図は厚みだけなので、
+   薄くなったことがそのまま「ここで止まり」になる（`docs/island-world.md` 2章）。 */
+.kt-pager > button:disabled {
+  box-shadow: none;
+  border-color: var(--zk-rule-soft);
+  background: none;
+  color: var(--zk-ink-2);
+  cursor: default;
+}
+
 /* カタログの格子。カードを1枚ずつ立てるのではなく、
    1枚の紙を細い罫線でマスに割る。 */
 .kt-grid-wrap { overflow: hidden; }
@@ -856,6 +896,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .kt-near > a { flex: none; width: 132px; border-bottom: 0; }
 /* 2品しか無い棚では、最後のマスの右の罫が「空のマス」に見えていた */
 .kt-near > a:last-child { border-right: 0; }
+
+/* 帳面の奥付。格子の下に1行。読むだけなので厚みは付けない */
+.kt-colophon {
+  display: flex; align-items: center; gap: var(--sp-3);
+  margin: 0;
+  font-size: var(--fs-note); font-weight: 700; line-height: 1.7;
+  color: var(--zk-ink);
+}
+.kt-colophon > svg { flex: none; }
+.kt-colophon a { font-weight: 900; color: var(--accent-2); text-underline-offset: 3px; }
 
 /* 国ごとの内わけ。棒の長さで多い少ないを見せる */
 .kt-by { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
@@ -1003,17 +1053,26 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .lg-hero-tag .art { width: 20px; height: 20px; }
 .lg-hero-fig { margin-top: var(--sp-4); }
 
-/* 記録の一覧。プレートを立てず、罫線で仕切った行にする */
-.lg-wall { display: grid; grid-template-columns: 1fr; border-top: 1px solid var(--zk-rule-soft); }
-@media (min-width: 720px) { .lg-wall { grid-template-columns: 1fr 1fr; border-left: 1px solid var(--zk-rule-soft); } }
+/* 記録の一覧。プレートを立てず、罫線で仕切ったマスにする。
+   企画8つには1つずつ絵が焼いてある（道しるべ・遺跡・時計・杯・ルーレット・
+   雪山の礼拝堂・まな板の3尾・お祝いの電飾）。1列の行に 66px で添えると、
+   絵ではなく右の数字が主役に見えていた。マスを2列にして絵を上に載せ、
+   その企画の絵がいちばん大きいものになるようにする。 */
+.lg-wall {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--zk-rule-soft);
+  border-left: 1px solid var(--zk-rule-soft);
+}
+@media (min-width: 720px) { .lg-wall { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1080px) { .lg-wall { grid-template-columns: repeat(4, 1fr); } }
 .plaque {
   position: relative;
-  display: flex; align-items: center; gap: var(--sp-3);
+  display: flex; flex-direction: column; gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-3);
+  border-right: 1px solid var(--zk-rule-soft);
   border-bottom: 1px solid var(--zk-rule-soft);
   transition: background 0.13s;
 }
-@media (min-width: 720px) { .plaque { border-right: 1px solid var(--zk-rule-soft); } }
 .plaque:hover { background: rgba(255, 255, 255, 0.46); }
 .plaque::after {
   content: "";
@@ -1024,34 +1083,43 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   transition: border-color 0.13s;
 }
 .plaque:hover::after, .plaque:focus-visible::after { border-color: var(--zk-pick); }
+/* その企画の絵。マスの横いっぱいを使い、縦もマスの半分に近づける
+   （`docs/ac-reference.md` 7章 4「主役の絵は大きく、まわりを大きく空ける」）。
+   絵は中身の形に切り出してあるので、縦長・横長が混ざる。高さを決めて
+   下ぞろえにすると、どの企画も同じ高さの台に載っているように見える。 */
 .plaque-badge {
   position: relative;
-  flex: none;
-  width: 66px; height: 66px;
-  display: grid; place-items: center;
+  width: 100%; height: 96px;
+  display: flex; align-items: flex-end; justify-content: center;
 }
+@media (min-width: 720px) { .plaque-badge { height: 118px; } }
 .plaque-badge::before {
   content: "";
-  position: absolute; left: 50%; bottom: 4px;
-  width: 82%; height: 12px;
+  position: absolute; left: 50%; bottom: 2px;
+  width: 72%; max-width: 130px; height: 15px;
   transform: translateX(-50%);
   border-radius: 50%;
   background: radial-gradient(closest-side, #fffdf0 0%, #fdf8e0 56%, var(--zk-shade) 100%);
 }
 .plaque-badge img {
   position: relative;
-  max-width: 100%; max-height: 100%;
+  max-width: 88%; max-height: 100%;
+  width: auto; height: auto;
   object-fit: contain;
   filter: drop-shadow(3px 4px 0 rgba(120, 140, 112, 0.24));
+  transition: transform 0.18s cubic-bezier(0.34, 1.5, 0.64, 1);
 }
-.plaque-b { min-width: 0; flex: 1; display: grid; gap: 3px; }
-.plaque-b > b { font-size: var(--fs-body); font-weight: 900; line-height: 1.4; letter-spacing: 0.02em; color: var(--zk-ink); }
+.plaque:hover .plaque-badge img { transform: translateY(-4px) scale(1.05); }
+.plaque-b { min-width: 0; display: grid; gap: 3px; }
+.plaque-b > b { font-size: var(--fs-note); font-weight: 900; line-height: 1.45; letter-spacing: 0.02em; color: var(--zk-ink); }
+@media (min-width: 720px) { .plaque-b > b { font-size: var(--fs-body); } }
 .plaque-b time { font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); }
 .plaque-fig { display: flex; align-items: baseline; gap: 3px; font-weight: 900; color: var(--zk-ink); line-height: 1; margin-top: 3px; }
-.plaque-fig b { font-size: 28px; letter-spacing: -0.015em; }
+.plaque-fig b { font-size: 26px; letter-spacing: -0.015em; }
 .plaque-fig i { font-style: normal; font-size: var(--fs-note); }
 .plaque-fig.is-word b { font-size: var(--fs-body); letter-spacing: 0.03em; }
 .plaque-fig span { font-size: var(--fs-min); font-weight: 900; color: var(--zk-ink-2); margin-left: var(--sp-2); letter-spacing: 0.06em; }
+.plaque-fig { flex-wrap: wrap; }
 
 /* 伝説1つ。日付の並びを1本の道で見せる */
 .days { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--zk-rule-soft); }

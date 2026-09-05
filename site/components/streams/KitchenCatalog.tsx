@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Flag from "@/components/ui/Flag";
-import { KINDS, kindLabel, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
+import { KINDS, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
+import Icon from "@/components/ui/Icon";
 import { H } from "./Sheet";
 import { ArtShelf } from "./Art";
 
@@ -19,7 +20,21 @@ import { ArtShelf } from "./Art";
  *
  * 並びかたを覚えさせない（localStorage を使わない）のはわざと。
  * 次に来たときも「新しい順」から始まったほうが、何が最近作られたか分かる。
+ *
+ * ## なぜ32品を一度に並べないか
+ *
+ * 32枚のマスを積むと、それだけで 3,899px あった（面の 5,515px のうち71%）。
+ * マスを小さくして詰める手も試したが、料理の絵がマスの縦半分を切ると
+ * 図鑑ではなくただの一覧に戻る（`docs/ac-reference.md` 7章 4）。
+ *
+ * だから**マスは小さくせず、帳面のようにページで送る。**
+ * スタンプ帳は本物も見開き単位でめくるものなので、この面の型に合っている。
+ * 1ページ8マス。32品がちょうど4ページに割れる数で、狭い画面で2×4、
+ * 広い画面で4×2。絞り込むと1ページ目に戻る。
  */
+
+/** 1ページに載せるマスの数。32品が端数なく4ページに割れる。 */
+const PER = 8;
 
 type Country = { slug: string; name: string };
 type Order = "new" | "old" | "work";
@@ -40,6 +55,10 @@ export default function KitchenCatalog({
   const [country, setCountry] = useState<string>("all");
   const [kind, setKind] = useState<RecipeKind | "all">("all");
   const [order, setOrder] = useState<Order>("new");
+  const [page, setPage] = useState(0);
+  // ページを送ったとき、目が迷子にならないよう格子の頭へ戻す。
+  // 最初に開いたときは動かさない（勝手にスクロールしない）。
+  const gridTop = useRef<HTMLDivElement>(null);
 
   /** 軸ごとの数。絞り込む前の数で数える。押す前に「何品あるか」が見えるように。 */
   const byCountry = useMemo(() => {
@@ -62,6 +81,20 @@ export default function KitchenCatalog({
       return order === "old" ? (a.date < b.date ? -1 : 1) : a.date < b.date ? 1 : -1;
     });
   }, [recipes, country, kind, order]);
+
+  const pages = Math.max(1, Math.ceil(shown.length / PER));
+  // 絞り込みや並びを変えたら1ページ目に戻す。25品のジョージアから
+  // 3品のイギリスへ絞ったとき、3ページ目のまま空っぽが出ていた。
+  useEffect(() => {
+    setPage(0);
+  }, [country, kind, order]);
+  const at = Math.min(page, pages - 1);
+  const sheet = shown.slice(at * PER, at * PER + PER);
+
+  const turn = (n: number) => {
+    setPage(Math.min(Math.max(n, 0), pages - 1));
+    gridTop.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
 
   const used = countries.filter((c) => byCountry.has(c.slug));
   const reset = country === "all" && kind === "all";
@@ -118,6 +151,7 @@ export default function KitchenCatalog({
 
           <p className="kt-count">
             <b>{shown.length}</b> 品ならんでる
+            {pages > 1 && <span className="kt-pageof">{at + 1} / {pages} ページ目</span>}
             {/* 0品のときは空っぽの枠のほうが「ぜんぶ出す」を出す。
                 同じボタンが1画面に2つ並ばないようにする。 */}
             {!reset && shown.length > 0 && (
@@ -156,15 +190,36 @@ export default function KitchenCatalog({
             </button>
           </div>
         ) : (
-          <div className="kt-grid-wrap">
+          <div className="kt-grid-wrap" ref={gridTop}>
             <div className="kt-grid">
-              {shown.map((r) => (
+              {sheet.map((r) => (
                 <Dish key={r.slug} r={r} />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {pages > 1 && (
+        <div className="zk-zone is-tight">
+          {/* 帳面をめくる。住民図鑑の送り（`.rzk-pager`）と同じ役なので、同じ形にする。
+              端まで来たら押せなくする。輪にすると、何周でも回れてしまって
+              「ぜんぶ見た」が分からない。 */}
+          <nav className="kt-pager" aria-label="スタンプ帳をめくる">
+            <button type="button" onClick={() => turn(at - 1)} disabled={at === 0}>
+              <Icon name="left" size={14} />
+              まえのページ
+            </button>
+            <span>
+              <b>{at + 1}</b> / {pages}
+            </span>
+            <button type="button" onClick={() => turn(at + 1)} disabled={at === pages - 1}>
+              つぎのページ
+              <Icon name="right" size={14} />
+            </button>
+          </nav>
+        </div>
+      )}
     </>
   );
 }
@@ -186,10 +241,13 @@ export function Dish({ r }: { r: Recipe }) {
         <img src={`/sprites/${r.icon}.webp`} alt="" loading="lazy" />
       </span>
       <b className="dish-name">{r.name}</b>
+      {/* 料理の種類の札は、すぐ上の「なにを」で選ぶ軸そのものなので、
+          マスの中でもう一度は言わない。「ごはん・麺」だけがこの行を
+          2行に折り返していて、その1行のために格子が3行ぶん伸びていた。
+          種類は開いた1枚（`/kitchen/[品]`）の記録の欄に出る。 */}
       <span className="dish-m">
         <Flag slug={r.country} size={16} />
         {r.date.replace(/-/g, "/")}
-        <span className="zk-chip is-soft">{kindLabel(r.kind)}</span>
       </span>
     </Link>
   );
