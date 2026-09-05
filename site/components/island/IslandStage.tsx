@@ -15,7 +15,7 @@ import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/Icon";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
-import { todayNews, type TodayNews } from "@/lib/todayNews";
+import { opensByItself, todayNews, type TodayNews } from "@/lib/todayNews";
 import {
   callOut,
   createVillagers,
@@ -62,7 +62,19 @@ const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${i
 /**
  * 今日の板が指している建物。ここにだけ「!」が立つ。
  *
- * 板の中身は `lib/todayNews.ts` が決めていて、その種類から建物を引く。
+ * **まず板の行き先から引く。** 板が送る先と「!」が立つ場所は同じでなければ、
+ * 押した人が別のところに着く。種類ごとの表だけで決めていたときは、
+ * 同じ種類で行き先が変わる日（節目は国の日も配信の日もある）に別の建物を指していた。
+ */
+const spotOfHref = (href: string): SpotId | null => {
+  if (!href.startsWith("/")) return null;
+  const top = `/${href.split("/")[1]}`;
+  return DOORS.find((d) => d.href === top)?.id ?? null;
+};
+
+/**
+ * 行き先が島の外（YouTube）の日に、代わりに指す建物。
+ *
  * 「今夜22時から」しか無い日（tonight）は、どこも指さない。
  * 毎日「!」が出ていたら、出ている日に目が行かなくなるので。
  */
@@ -151,17 +163,6 @@ const HINT_SPAN = 5200;
 const GREETING = `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${NOW_FALLBACK.place}だよ。`;
 /** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
 const GUIDE = -1;
-/**
- * 今日の板が自分から開く日。
- *
- * その日は名乗りを出さない。カモメと板が両方開くと、また島が見えなくなる。
- * ただし**初めて島に降りた人には、板のほうが開かないことになっている**ので
- * （`components/today/Today.tsx` の isFirstEverVisit）、そちらは日に関わらず名乗る。
- * ここが効くのは「長く空いて帰ってきた人」だけ。
- * 判断のもとは Today.tsx と同じで、あちらが増えたらここも足す。
- */
-const TODAY_OPENS: TodayNews["kind"][] = ["live", "plan", "recipe"];
-
 const clampToIsland = (x: number, y: number): [number, number] => {
   if (insideRadii(ISLAND.cx, ISLAND.cy, GRASS_R, x, y, ISLAND.squash, 10)) return [x, y];
   const dx = x - ISLAND.cx;
@@ -326,7 +327,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const p = nextPlan(new Date());
     setDays(daysUntil(p?.date, new Date()));
     // 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める
-    setTodaySpot(TODAY_AT[todayNews().kind] ?? null);
+    const n = todayNews();
+    setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
   }, []);
 
   // キャラ画像は外から取ってくるので、先に読んでおく。
@@ -388,7 +390,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
        そのあとに1文だけ足して、演出に中身を持たせる。
        **初めての人には、どの日でも名乗る。** 板のほうが初回は開かないので重ならない。
        長く空いて帰ってきた人だけ、板が自分から開く日は黙る。 */
-    const greet = again && (firstEver || !TODAY_OPENS.includes(todayNews().kind));
+    /* 板が自分から開く日は名乗らない。カモメと板が両方開くと、また島が見えなくなる。
+       判断は `lib/todayNews.ts` の opensByItself 1か所だけ（板側もこれを見ている）。
+       **幅はその場で測る。** この効果は1回しか走らないので、state の box は
+       まだ仮の PC 幅（1440）のままで、スマホでも「開く日」と見えてしまう。
+       板はスマホでは開かないので、そのままだと板もカモメも出ない日ができる。 */
+    const phone =
+      modeOf(hostRef.current?.getBoundingClientRect().width ?? window.innerWidth) === "phone";
+    const greet = again && (firstEver || !opensByItself(todayNews().kind, phone));
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
