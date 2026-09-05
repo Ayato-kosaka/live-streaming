@@ -61,9 +61,18 @@ npx next dev -p 3000            # 開発サーバー
 NEXT_DIST_DIR=.next-verify npx next build   # 確認用ビルド
 ```
 
-**確認用ビルドでは必ず `NEXT_DIST_DIR` を付ける。**
-付けずに `next build` を叩くと、動いている開発サーバーの `.next` を壊して
-ハイドレーションが止まり、「スマホ幅なのにPCの表示になる」といった見えづらい壊れ方をする。
+**`NEXT_DIST_DIR` は、ビルドだけでなく開発サーバーにも付ける。**
+付けないと `.next` を共有する。並列で何人も動かしていると、開発サーバー同士と
+ビルドが同じ `.next` を奪い合って、ハイドレーションが止まったり
+（「スマホ幅なのにPCの表示になる」）、`build-manifest.json が無い` で
+ビルドが落ちたりする。**1人1つ、ポートと同じ名前を付ける。**
+
+```bash
+NEXT_DIST_DIR=.next-dev3130 npx next dev -p 3130
+NEXT_DIST_DIR=.next-3130 npx next build
+```
+
+`.next` は 600MB を超える。使い終わったら消す。
 
 ページを触ったら、書き出したものを一通り回して確認する:
 
@@ -116,6 +125,11 @@ await offline(ctx);
   並べてあるので、**そのまま置いておく。** 畳むと次のビルドでまた書き足される。
   （`typescript.tsconfigPath` で逃がす手は使えない。Next はそのファイルを作り直して
   くれないので、本番のビルドが `paths` を失って落ちる。試して戻した）
+- **CPU の絞り（`Emulation.setCPUThrottlingRate`）は、それ自体が CPU を食う** —
+  `/board` を6秒で、絞りなし 120ms が 4倍絞りで 4,710ms（うちメイン 4,367ms）。
+  **どの面にも1フレーム 13ms 前後の下駄がつく。** 「島も北欧も掲示板も 13ms」が
+  揃ったら、それは下駄。読み込みの速さを見るときは絞ったまま、
+  描画の CPU を見るときは絞りを外してから測る。
 - **描画の速さを、壁の時計で測らない** — この箱で並列に作業していると load average が
   20を超える。rAF の間隔は**同じ条件を2回測って 33ms と 116ms** が出る。
   「60fps になった」の誤報はこれで出た。CDP の `Performance.ProcessTime`（描画プロセスが
@@ -138,6 +152,12 @@ await offline(ctx);
     CSS の animation を止めるだけでは足りない。島は rAF で動くので
     `window.requestAnimationFrame = () => 0` で止める。
   - **dpr は 2 以上で撮る。** dpr1 だと同じ字が 7.02、dpr2 だと 9.25 と、2〜3割低く出る。
+- **SVG の SMIL（`<animate repeatCount="indefinite">`）も、中身を全部描き直す** —
+  `/nordic/sweden` は誰も触っていない3秒で CPU 3,180ms（島 920 / 掲示板 120）だった。
+  目印のパルス22本が、そのたび 380本のパスを焼き直していた。
+  外すと 5,640ms → **0ms**。要素数でも、ぼかしでも、画素数でもない
+  （`filter` 除去・`clip-path` 除去・`opacity` を1に・dpr=1、どれも効かない）。
+  動かすものは**地図とは別の小さな要素**に載せて、CSS の `transform` / `opacity` でやる。
 - **SVG は `viewBox` を書き換えると中身を全部描き直す** — 1ドットでも動かすと、
   画面の外にある部分まで毎フレームなぞる。島はこれで1フレーム 26.6ms（うち 20ms が
   ラスタライズ）だった。動かすのは CSS の `transform` にして、`viewBox` は据え置く。
