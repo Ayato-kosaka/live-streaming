@@ -8,7 +8,8 @@ import Flag from "@/components/ui/Flag";
 import { KINDS, RECIPES } from "@/content/recipes";
 import { COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
-import { Sheet, Zone } from "@/components/streams/Sheet";
+import { H, Sheet, Zone } from "@/components/streams/Sheet";
+import KitchenNext from "@/components/live/KitchenNext";
 import { ArtBasket, ArtMeeting, ArtPot, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = {
@@ -45,6 +46,17 @@ export default function KitchenPage() {
   const peak = Math.max(...months.map((x) => x.n));
   const busiest = months.find((x) => x.n === peak)!;
 
+  /** 月ごとの品数。「今月のマスが空いている」を画面が出てから数えるのに渡す。 */
+  const monthCounts = Object.fromEntries(months.map((mo) => [mo.key, mo.n]));
+  /**
+   * スタンプの少ない種類を4つ。**押されていない種類も入れる**（`byKind` は
+   * 0 の種類を落としているので、あちらは使えない）。空いているところを
+   * 見せるための並びなので、少ないほうが先。
+   */
+  const thin = KINDS.map((k) => ({ id: k.id, label: k.label, n: RECIPES.filter((r) => r.kind === k.id).length }))
+    .sort((a, b) => a.n - b.n)
+    .slice(0, 4);
+
   // 「作った料理」は島に建っていて、島から直接押して入る。「配信」の下に
   // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
@@ -65,6 +77,15 @@ export default function KitchenPage() {
             開いた瞬間に同じ数字を2回読ませていた。数えたものと国別・月別のグラフは
             どちらも「読み物」なので、カタログの下にまとめる（`docs/island-ux.md` 5.6）。 */}
         <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
+
+        {/* スタンプ帳のいちばん強いところは、押した数ではなく**空いているマス**
+            （`docs/island-play.md` C・仕掛け11）。その空きマスに、書かずに
+            答えられる問いを1つ置いた。この面にしか置けない問いなのは、
+            「どの種類がうすいか」を持っているのが、この帳面だけだから。 */}
+        <Zone tight>
+          <H art={<ArtStamp size={32} />}>次のスタンプ</H>
+          <KitchenNext months={monthCounts} thin={thin} />
+        </Zone>
 
         {/* 帳面の奥付。1行で足りる。
             前はここに記録の欄を4つ並べていたが（306px）、そのうち2つ

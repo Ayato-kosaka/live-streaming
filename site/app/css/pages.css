@@ -1429,3 +1429,41 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .me-save:active { transform: translateY(6px); box-shadow: none; }
 .me-ok { margin: var(--sp-2) 0 0; font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
+
+/* =========================================================
+   紙の面の「押すだけの問い」（components/live/Ask.tsx）
+   ---------------------------------------------------------
+   入れ物も見た目も、北欧のわかれ道（`.fork-*`・nordic.css）と同じものを使う。
+   同じ意味の部品を2つ持たない（docs/island-world.md 4章）。
+   ここで足すのは2つだけ。
+
+   1. 紙の上のまとまりとして枠を持たせる。問いは面の途中に立つので、
+      罫で囲っておかないと、上の本文の続きに読める
+   2. **選んだことを、色ではなく沈みで言う。**
+      あちらは押したあと4つとも沈めて、自分の1票を蛍光の地で示している。
+      押せなくなったものに厚みが残っていると、まだ押せるように見えるので
+      （docs/island-design.md 3章）、こちらは選ばなかったほうを平らにして、
+      沈んでいるのが自分の1票、という読み方にそろえた。
+   ========================================================= */
+.ask {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  border: var(--bw-1) solid var(--rule);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+}
+.ask p.fork-q { font-size: 13.5px; margin-bottom: var(--sp-3); }
+/* 選ばなかったほうは、押せないので平ら。厚みも沈みも残さない */
+.ask .fork-pick:disabled { transform: none; box-shadow: none; border-color: var(--rule); color: var(--ink-2); }
+/* 自分の1票だけが沈んだまま。地の色は変えない */
+.ask .fork-pick.is-mine {
+  transform: translateY(4px);
+  box-shadow: var(--pop-push);
+  border-color: var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+}
+.ask .fork-pick em { font-variant-numeric: tabular-nums; }
+/* 島の中の行き先は水色にしない（水色は「外へ出る」。docs/island-world.md 3.2）。
+   紙に引いた下線で、押せることを言う */
+.ask p.fork-said a { color: var(--ink); font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
