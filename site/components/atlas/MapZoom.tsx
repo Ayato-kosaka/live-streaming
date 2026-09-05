@@ -78,10 +78,12 @@ export default function MapZoom({
 
   // 閉じたら、開いたボタンへ戻す。戻さないと、閉じたあとの Tab が
   // ページの頭から始まって、地図まで下りなおすことになる。
+  // **画面が出た直後は動かさない。** ここで焦点を取ると、ページを開いただけで
+  // Tab の出発点が地図に飛ぶ。
+  const opened = useRef(false);
   useEffect(() => {
-    if (!open) openRef.current?.focus({ preventScroll: true });
-    // 最初の描画では動かさない
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (open) opened.current = true;
+    else if (opened.current) openRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   if (open) {
