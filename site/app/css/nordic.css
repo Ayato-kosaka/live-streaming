@@ -432,6 +432,42 @@
   color: var(--ink);
 }
 
+/* --- 意見と道しるべを貼る道具 ---
+   `.bpost` `.bin-name` は `components/nordic` の2か所だけで使っている。
+   どこにも段が書かれていなくて、貼るボタンがただの文字に見えていた。
+   押せるものは厚みで言う（docs/island-world.md 3.4）。
+   書く欄は逆に、へこませる（`.bin` と同じ考え方）。 */
+.bin-name {
+  width: 100%;
+  max-width: 260px;
+  margin-top: 9px;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  padding: 10px 15px;
+  min-height: 44px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: var(--paper-2);
+  box-shadow: inset 0 2px 5px color-mix(in srgb, var(--frame-deep) 20%, transparent);
+}
+.bpost {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  min-height: 48px;
+  padding: 11px 22px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: var(--pop-sm);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.bpost:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.bpost:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+
 /* --- ボード全体 ---
    人数はここに1回だけ。区間ごとには出さない（人違いが起きない作りにしてある）。 */
 .carried {
