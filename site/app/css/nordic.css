@@ -241,17 +241,25 @@
    出す・出さないは `TripNow` が現在地を読んで `data-now` で切り替える
    （React で描き直すと、地図の SVG まで作り直しになる）。 */
 .rleg-now { display: none; }
+/* 開いたカードの見出しは蛍光（--marker）で塗られているので、札も蛍光にすると
+   何も乗っていないように見える。紙の札に輪をかける。輪は厚みではないので、
+   押せるものと取り違えない（docs/island-world.md 3.4）。 */
 .rleg-h[data-now] .rleg-now {
-  display: inline-block;
-  flex: none;
-  padding: 2px var(--sp-2);
+  /* 区間名と同じ行に置くと、名前が「リガ → タリ／ン」と割れる。
+     札を上の行に出して、名前には行を丸ごと渡す。 */
+  display: block;
+  width: fit-content;
+  margin: 0 0 3px;
+  padding: 1px var(--sp-2);
   border-radius: var(--r-0);
-  background: var(--marker);
-  color: var(--marker-ink);
+  background: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--frame-dark);
+  color: var(--ink);
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   white-space: nowrap;
+  vertical-align: 1px;
 }
 /* 上の司令塔から `#leg-…` で飛んでくる。真上に貼りつくと見出しが読めない。 */
 .rleg-h { scroll-margin-top: 12px; }

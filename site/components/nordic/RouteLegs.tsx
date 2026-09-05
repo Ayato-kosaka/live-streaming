@@ -58,11 +58,13 @@ export default function RouteLegs() {
             title={
               <span className={`rleg-h ${m.cls}`} id={`leg-${l.id}`} data-leg={l.id}>
                 <Mark art={l.art} size={38} className="rleg-art" />
-                {/* 「いま、この区間を走っています」。出す・出さないは `TripNow` が
-                    現在地を読んでから `data-now` で切り替える。10枚のカードのうち
-                    どれが今日の話なのかは、畳んだままでも分かるようにしておく。 */}
-                <span className="rleg-now">いま、ここ</span>
                 <span className="rleg-way">
+                  {/* 「いま、この区間を走っています」。出す・出さないは `TripNow` が
+                      現在地を読んでから `data-now` で切り替える。10枚のカードのうち
+                      どれが今日の話なのかは、畳んだままでも分かるようにしておく。
+                      見出しの flex 行に並べると、区間名と場所を取り合って
+                      「リガ → タリン」が1文字ずつ縦に積まれた。名前の中に流す。 */}
+                  <span className="rleg-now">いま、ここ</span>
                   {/* 矢印は <i> にしない。`ui.css` の `.fold[open] > summary .fold-t i`
                       が「開いたら要約の一行を消す」ために i を消すので、
                       開いた区間だけ矢印が消えていた。 */}
