@@ -37,8 +37,14 @@ const AYATO_H = 60;
 /** 住人の背丈。あやとより小さく置く。主役はあやと。 */
 const RESIDENT_H = 46;
 
-/** 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場 */
-const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s160`;
+/**
+ * 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場。
+ *
+ * `s` の後ろが取り出す大きさ。**画面に出る大きさから決める。**
+ * 実測でいちばん大きく出るのがスマホ(dpr3)の 38px で、装置の画素にすると 114。
+ * s160 だと 1枚あたり約 40KB を12人ぶん取って、その4割を捨てていた。
+ */
+const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s128`;
 
 /* ---- 建物の見せ方 --------------------------------------------------------
    **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
@@ -905,7 +911,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 className="ayato"
               >
                 <image
-                  href="/characters/ayato.png"
+                  href="/characters/ayato.webp"
                   x={-AYATO_H * 0.43}
                   y={-AYATO_H}
                   width={AYATO_H * 0.86}

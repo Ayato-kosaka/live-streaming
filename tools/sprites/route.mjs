@@ -20,7 +20,7 @@ const ROOT = "/home/user/live-streaming";
 const AVATARS = "/tmp/avatars";
 
 export async function offline(ctx, opts = {}) {
-  const fallback = opts.avatar ?? `${ROOT}/site/public/characters/ayato.png`;
+  const fallback = opts.avatar ?? `${ROOT}/site/public/characters/ayato.webp`;
   const photo = opts.photo ?? `${ROOT}/site/public/og.png`;
 
   // 住人のキャラクター画像。URL の /d/<id> から1人ずつ引く

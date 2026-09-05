@@ -84,7 +84,7 @@ export default function RouteLegs() {
             {l.stay && <p className="rleg-stay">泊まる: {l.stay}</p>}
             <p className="rleg-acts">
               {c && (
-                <Link className="rleg-go" href={`/nordic/${c.slug}`}>
+                <Link className="rleg-go" href={`/nordic/${c.slug}`} prefetch={false}>
                   {c.name}で行くところを見る
                   <Icon name="right" size={14} />
                 </Link>

@@ -140,6 +140,7 @@ export default function Home() {
                 key={t.slug}
                 className="hcard"
                 href={`/streams/${t.slug}`}
+                prefetch={false}
                 style={{ ["--hb" as string]: t.color }}
               >
                 <img src={`/sprites/${t.icon}.webp`} alt="" loading="lazy" />
@@ -190,7 +191,7 @@ export default function Home() {
           />
           <div className="hflags">
             {recentCountries.map((c) => (
-              <Link key={c.slug} className="hflag" href={`/map/${c.slug}`}>
+              <Link key={c.slug} className="hflag" href={`/map/${c.slug}`} prefetch={false}>
                 <Flag slug={c.slug} size={26} />
                 <span>{c.name}</span>
               </Link>
@@ -199,7 +200,7 @@ export default function Home() {
 
           <Strip title={HOME.recent} more="/kitchen" moreLabel="スタンプ帳へ">
             {latestRecipes.map((r) => (
-              <Link key={r.slug} className="hdish" href={`/kitchen/${r.slug}`}>
+              <Link key={r.slug} className="hdish" href={`/kitchen/${r.slug}`} prefetch={false}>
                 <span className="hdish-art">
                   <img src={`/sprites/${r.icon}.webp`} alt="" loading="lazy" />
                 </span>

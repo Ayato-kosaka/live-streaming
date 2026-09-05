@@ -272,7 +272,7 @@ export default function Board() {
             const l = LEGENDS.find((x) => x.slug === slug);
             if (!l) return null;
             return (
-              <Link className="chip link" href={`/legends/${l.slug}`} key={l.slug}>
+              <Link className="chip link" href={`/legends/${l.slug}`} key={l.slug} prefetch={false}>
                 {l.title}
                 <Icon name="right" size={12} />
               </Link>
