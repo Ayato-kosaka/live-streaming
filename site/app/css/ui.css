@@ -447,42 +447,6 @@
 .tile-go { flex: none; color: var(--ink-3); }
 .chip .ic, .tile .ic { vertical-align: -0.16em; }
 
-/* --- 北欧: この旅でいちばん見たいもの --- */
-.nhi { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
-@media (min-width: 720px) { .nhi { grid-template-columns: 1fr 1fr; } }
-.nhi-card {
-  display: block;
-  overflow: hidden;
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-3);
-  background: var(--paper);
-  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-1);
-  color: var(--ink);
-}
-.nhi-card:active { transform: translateY(6px); box-shadow: var(--shadow-1); }
-.nhi-img { position: relative; display: block; line-height: 0; background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out)); }
-.nhi-img img { width: 100%; height: 168px; object-fit: cover; }
-.nhi-where {
-  position: absolute;
-  left: 8px; bottom: 8px;
-  display: inline-flex; align-items: center; gap: var(--sp-1);
-  font-size: var(--fs-min); font-weight: 900;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--paper) 94%, transparent);
-  border: 2px solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  padding: 2px var(--sp-2) 2px var(--sp-1);
-  line-height: 1.4;
-}
-.nhi-body { display: grid; gap: 3px; padding: var(--sp-3) var(--sp-3) var(--sp-3); }
-.nhi-body b { font-size: var(--fs-body); font-weight: 900; line-height: 1.45; }
-.nhi-body i { font-style: normal; font-size: var(--fs-note); font-weight: 700; line-height: 1.7; color: var(--ink-2, var(--ink)); }
-.nhi-body em {
-  justify-self: end;
-  display: inline-flex; align-items: center; gap: 3px;
-  font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--frame-deep);
-}
-
 /* --- 国のページの顔写真 --- */
 .nchero {
   position: relative;
