@@ -218,15 +218,15 @@ const DOING = [
 const fmtMd = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
 const fmtYm = (d: string) => `${d.slice(0, 4)}年${Number(d.slice(5, 7))}月`;
 
-/** 声は6つ出して、残りは畳む。全部並べると、この面がコメント欄そのものになる。 */
-const VOICE_OPEN = 6;
+/** 声は4つ開けて、残りは畳む。全部並べると、この面がコメント欄そのものになる。 */
+const VOICE_OPEN = 4;
 
 function Voice({ v, i }: { v: (typeof VOICES)[number]; i: number }) {
   return (
     // 吹き出しは押せない。紙の上の引用なので、厚みは付けない（docs/island-world.md 3.4）
     <li className={`avoice${i % 2 ? " is-r" : ""}`}>
       <p className="avoice-say">{v.text}</p>
-      <span className="avoice-when">{fmtYm(v.date)}の配信で</span>
+      <span className="avoice-when">{fmtYm(v.date)}の配信</span>
     </li>
   );
 }
@@ -265,9 +265,10 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-        {/* 「いま何してる」「これからどこへ行く」は、名乗りの続きとして行き先だけ置く。
+        {/* 「いま何してる」だけ、名乗りの続きとして置く。
             前はここに <NowLive /> をまるごと呼んでいて、「いまどこ」の2枚が
-            この面の中にもう一度出ていた。それだけで 1,006px あった。 */}
+            この面の中にもう一度出ていた。それだけで 1,006px あった。
+            「これから」の札も外した。ヘッダーの札と、道のりの最後の石から行ける。 */}
         <div className="tiles" style={{ marginTop: 14 }}>
           <Link className="tile" href="/now">
             <span className="tile-mark">
@@ -279,26 +280,16 @@ export default function AboutPage() {
             </span>
             <Icon name="right" size={16} className="tile-go" />
           </Link>
-          <Link className="tile" href="/next">
-            <span className="tile-mark">
-              <Icon name="tent" size={24} />
-            </span>
-            <span className="tile-text">
-              <b>これから、どこへ行く</b>
-              <i>配信で決めた、これからの企画</i>
-            </span>
-            <Icon name="right" size={16} className="tile-go" />
-          </Link>
         </div>
       </Panel>
 
       {/* 数字は6つ。「毎日休まず配信している人」がいちばん言いたいことなので先頭に置く
           （先頭を大きくするのは pages.css の .stat:first-child）。
           紙の面の数字は罫のます目のまま。押せる板にしない（docs/island-world.md 4章）。 */}
-      <div className="stats" style={{ marginBottom: 16 }}>
+      <div className="stats astats" style={{ marginBottom: 16 }}>
         <Stat
           value={<Days from={PROFILE.dailySince} plus={1} />}
-          label="毎日配信して"
+          label="毎日配信の日数"
           sub={`${PROFILE.dailySince.replace(/-/g, "/")} から1日も休まず`}
         />
         <Stat
@@ -329,9 +320,7 @@ export default function AboutPage() {
           （`python/build_voices.py` → `content/voices.ts`）。 */}
       <Panel>
         <h2>島のみんなから見た、あやと</h2>
-        <p className="muted">
-          配信のコメント欄から、書かれたまま。名前を出していいかは本人に聞くものなので、伏せています。
-        </p>
+        <p className="muted">配信のコメント欄から、書かれたまま。名前は本人に聞けていないので伏せています。</p>
         <ul className="avoices">
           {VOICES.slice(0, VOICE_OPEN).map((v, i) => (
             <Voice key={v.eventId} v={v} i={i} />
@@ -430,8 +419,7 @@ export default function AboutPage() {
           </div>
         </div>
         <p className="muted" style={{ marginTop: 12 }}>
-          日本を出てからパリで配信を始めるまでの6週間は、{before}にいました。
-          この3つは配信が1本も無いので、歩いた国の地図には入っていません。
+          配信を始めるまえの6週間、{before}。ここは配信が1本も無いので、歩いた国の地図には入っていません。
         </p>
         <Link className="tile" href="/map" style={{ marginTop: 12 }}>
           <span className="tile-mark">
@@ -450,29 +438,27 @@ export default function AboutPage() {
           押せるかどうか（厚み）とは別の軸なので、なにこれは灰色だが押せる。 */}
       <Panel>
         <h2>作ってきたアプリは、3つ</h2>
-        <p className="muted">
-          1つ目を広めるために日本を出て、いまは3つ目を作っています。上の2つはサポートを終了しました。
-        </p>
+        <p className="muted">1つ目を広めるために日本を出て、いまは3つ目。上の2つは終わりました。</p>
         <div className="aappl">
           {ALL_APPS.map((a) => {
             const done = a.status === "サポート終了";
             const page = APPS.some((x) => x.slug === a.slug);
             const inner = (
               <>
-                {a.logo && <img className="aappl-i" src={a.logo} alt="" width={48} height={48} />}
-                <span className="aappl-t">
-                  <b>{a.name}</b>
-                  <i>{a.tagline}</i>
-                </span>
+                {a.logo && <img className="aappl-i" src={a.logo} alt="" width={52} height={52} />}
+                <b>{a.name}</b>
                 {/* 状態は「押せない札」（`docs/island-world.md` 4章）。平らなオリーブのまま */}
                 <span className="chip">{a.status}</span>
-                {page && <Icon name="right" size={15} className="aappl-go" />}
               </>
             );
             const cls = `aappl-row${done ? " is-done" : ""}`;
             return page ? (
               <Link className={cls} href={`/apps/${a.slug}`} key={a.slug} prefetch={false}>
                 {inner}
+                <span className="aappl-go">
+                  中を見る
+                  <Icon name="right" size={12} />
+                </span>
               </Link>
             ) : (
               <div className={`${cls} is-flat`} key={a.slug}>
