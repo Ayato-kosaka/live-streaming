@@ -274,7 +274,7 @@ export default function PlanDraftEditor() {
 
         {src && (
           <>
-            <p className="muted" style={{ marginTop: 12 }}>
+            <p className="muted" style={{ marginTop: "var(--sp-3)" }}>
               これを <code>site/content/plans.ts</code> の <code>PLANS</code> に足す。
             </p>
             <pre className="dsrc">{src}</pre>

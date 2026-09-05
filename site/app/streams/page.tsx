@@ -126,7 +126,7 @@ export default function StreamsPage() {
                   {t.body.map((p, k) => (
                     <p key={k}>{p}</p>
                   ))}
-                  <div className="vids is-one" style={{ marginTop: 12 }}>
+                  <div className="vids is-one" style={{ marginTop: "var(--sp-3)" }}>
                     {t.samples.map((v) => (
                       <Vid key={v.videoId} {...v} />
                     ))}
@@ -145,7 +145,7 @@ export default function StreamsPage() {
       <Panel className="paper">
         <h2>配信のあとに、島に残るもの</h2>
         <p className="muted">やった日は流れていくけれど、作ったものと大きい企画はここにたまっていきます。</p>
-        <div className="tiles" style={{ marginTop: 14 }}>
+        <div className="tiles" style={{ marginTop: "var(--sp-3)" }}>
           <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-coral)" }}>
             <ArtStamp size={44} className="tile-icon" />
             <span className="tile-text">

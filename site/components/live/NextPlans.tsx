@@ -80,7 +80,7 @@ function PlanNotes({
           <li />
         </ul>
       ) : notes.length === 0 ? (
-        <p className="muted" style={{ marginTop: 10 }}>
+        <p className="muted" style={{ marginTop: "var(--sp-2)" }}>
           まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
         </p>
       ) : (
@@ -96,7 +96,7 @@ function PlanNotes({
         </ul>
       )}
 
-      <div className="noteform" style={{ marginTop: 16 }}>
+      <div className="noteform" style={{ marginTop: "var(--sp-4)" }}>
         <input
           ref={box}
           value={draft}
@@ -280,7 +280,7 @@ export default function NextPlans() {
       ))}
 
       {done.length > 0 && (
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: "var(--sp-5)" }}>
           <Fold
             title="もう行ってきた企画"
             note={`${done.length}件`}

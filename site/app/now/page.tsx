@@ -43,7 +43,7 @@ export default function NowPage() {
           {PROFILE.body.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
-          <div className="pap-gos" style={{ marginTop: 12 }}>
+          <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             {LINKS.filter((l) => l.id === "youtube" || l.id === "app").map((l) => (
               <a className="pap-go" key={l.id} href={l.href} target="_blank" rel="noopener noreferrer">
                 {l.logo ? <img src={l.logo} alt="" /> : <img src={`/sprites/${l.icon}.webp`} alt="" />}
@@ -62,7 +62,7 @@ export default function NowPage() {
           <p className="pap-note">
             この島だよりは今週ぶんです。もっと先の予定と、これまで歩いた道はこちらに。
           </p>
-          <div className="pap-gos" style={{ marginTop: 12 }}>
+          <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             <Link className="pap-go" href="/next">
               <img src="/sprites/tent.webp" alt="" />
               <span>

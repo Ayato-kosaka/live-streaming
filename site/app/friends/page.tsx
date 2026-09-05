@@ -108,7 +108,7 @@ export default function FriendsPage() {
             <p>
               できあがった画像は、下のGoogleドライブから自由に持っていけます。アイコンに使ってもらって大丈夫です。
             </p>
-            <div className="pap-gos" style={{ marginTop: 12 }}>
+            <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <a className="pap-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
                 <img src={doneru.logo} alt="" />
                 <span>
@@ -152,7 +152,7 @@ export default function FriendsPage() {
               「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
               個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。
             </p>
-            <div className="pap-gos" style={{ marginTop: 12 }}>
+            <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <Link className="pap-go" href="/board">
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>

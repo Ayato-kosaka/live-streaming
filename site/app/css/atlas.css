@@ -164,9 +164,10 @@
 .apin-name {
   position: absolute;
   left: 50%;
-  /* .apin は 48px。下から 30px = 丸の中心の 6px 上に名札の下辺が来る。
+  /* .apin は 48px。下から 36px = 丸の中心の 12px 上に名札の下辺が来る。
+     丸の半径は 11px なので、これで自分のピンに乗らない。
      この数は labels.ts の当たり判定と対になっている。片方だけ動かさない。 */
-  bottom: 30px;
+  bottom: 36px;
   /* 隣の国とぶつかるときの逃がしぶん（WorldRoute が決める） */
   transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
   white-space: nowrap;
@@ -337,7 +338,7 @@
   .apin { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
   .apin-dot { width: 26px; height: 26px; margin: -13px 0 0 -13px; font-size: 11.5px; }
   .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
-  .apin-name { font-size: 13.5px; bottom: 34px; }
+  .apin-name { font-size: 13.5px; bottom: 40px; }
   .acity b { font-size: 11.5px; }
   .amap-tab { font-size: 14px; padding: 0 22px; }
 }

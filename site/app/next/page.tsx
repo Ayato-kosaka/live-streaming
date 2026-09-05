@@ -50,7 +50,7 @@ export default function NextPage() {
             </li>
           ))}
         </ol>
-        <Link className="tile" href="/board" style={{ marginTop: 16 }}>
+        <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>企画掲示板へ</b>
@@ -58,7 +58,7 @@ export default function NextPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <p className="muted" style={{ marginTop: 16 }}>
+        <p className="muted" style={{ marginTop: "var(--sp-4)" }}>
           ここに並ぶ企画のページも、骨組みから一緒に作っています。書いてくれる人がいると、それだけ良いページになります。
         </p>
         <Link className="tile" href="/next/new">

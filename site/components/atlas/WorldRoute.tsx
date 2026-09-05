@@ -128,7 +128,9 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
 
     // ピンの丸そのもの。ここには何も置かせない。
     const pins = Object.entries(anchors).map(([slug, a]) => ({ slug, a, x: px(a.x), y: py(a.y) }));
-    for (const p of pins) taken.push({ x0: p.x - 14, y0: p.y - 14, x1: p.x + 14, y1: p.y + 14 });
+    // 丸の見た目は直径 22px。当たり判定を大きく取りすぎると、
+    // 自分の名札まで弾いてコーカサス編で国名が1つも出なくなる。
+    for (const p of pins) taken.push({ x0: p.x - 12, y0: p.y - 12, x1: p.x + 12, y1: p.y + 12 });
     // 街の白い丸も埋まっているところ。名前だけ避けても、点に重なると読めない。
     for (const c of cities) {
       const [x, y] = [px(c.x), py(c.y)];
@@ -144,10 +146,10 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       for (const p of pins.filter((v) => inBox(v.a.x, v.a.y)).sort((a, b) => a.a.order - b.a.order)) {
         const w = (name[p.slug]?.length ?? 3) * 12 + 8;
         // 名札は .apin（48px）の下から 30px の位置に出る。実測すると
-        // 丸の中心から 28px 上〜6px 上、高さ 22px。字の大きさから
+        // 丸の中心から 34px 上〜12px 上、高さ 22px。字の大きさから
         // 推し量ると必ずずれるので、測った数をそのまま書く。
         const at = (dx: number, dy: number): Rect => ({
-          x0: p.x + dx - w / 2, y0: p.y - 28 + dy, x1: p.x + dx + w / 2, y1: p.y - 6 + dy,
+          x0: p.x + dx - w / 2, y0: p.y - 34 + dy, x1: p.x + dx + w / 2, y1: p.y - 12 + dy,
         });
         let put: { dx: number; dy: number; box: Rect } | null = null;
         let best: { got: { dx: number; dy: number; box: Rect }; n: number } | null = null;

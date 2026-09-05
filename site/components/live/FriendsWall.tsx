@@ -77,7 +77,7 @@ export default function FriendsWall() {
           );
         })}
       </div>
-      <p className="pap-note" style={{ marginTop: 12 }}>
+      <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
         いま{list.length}人ぶんの絵があります。
         {named > 0 ?
           `そのうち${named}人が、島に名前を出すことにしてくれました。` :
