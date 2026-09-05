@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getState } from "@/lib/api";
+import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
 import { Mark } from "./Marks";
 
@@ -108,10 +108,12 @@ export default function TripNow({
 
   useEffect(() => {
     let alive = true;
-    getState()
+    // 島の様子は面のどこか（`components/island/Theme.tsx`）でもう読んでいる。
+    // 約束を配ってもらって、同じ面から2回聞きにいかない
+    loadState()
       .then((s) => {
         if (!alive) return;
-        const p = (s.current?.place ?? "").trim();
+        const p = (s?.current?.place ?? "").trim();
         setPlace(p || null);
         // 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
         const i = stops.findIndex((st) => st.id && p.includes(st.name));
@@ -223,6 +225,19 @@ export default function TripNow({
             )}
             <span className="tnow-count-w">{departWhen}</span>
           </div>
+        ) : idx == null ? (
+          /* 出たのに、いる場所がまだ読めていない。
+             **ここで残り 1,541km と出さない。** 出発前と1文字も変わらない数字を、
+             減っていないバーと一緒に出すことになる（旅の9日目でも「あと1,541km」）。
+             足代と同じ決まりで、読めなかった数字はどこにも出さない
+             （`components/nordic/fund.ts`）。 */
+          <div className="tnow-count is-far">
+            <span className="tnow-count-l">ストックホルムまで</span>
+            <span className="tnow-count-n is-wait">数えています</span>
+            <span className="tnow-count-w">
+              いまいる街が届いたら、残りの距離を出します。ぜんぶで {hitchKm.toLocaleString()}km
+            </span>
+          </div>
         ) : (
           <div className="tnow-count is-far">
             <span className="tnow-count-l">{arrived ? "着いた" : "ストックホルムまで"}</span>
@@ -269,7 +284,11 @@ export default function TripNow({
           </svg>
         </span>
         <div className="tnow-to">
-          <i>{next ? "つぎ" : "ここまで"}</i>
+          {/* 「ここまで」は**着いた日の字**。いる場所が読めていないだけの日に出すと、
+              すぐ左に「移動中」と書いてあるのに、右で旅が終わったことになる
+              （実測：旅の4日目に「いま 移動中 → ここまで ストックホルム」）。
+              分かっていないときは、めざす先だけを言う。 */}
+          <i>{next ? "つぎ" : arrived ? "ここまで" : "めざす"}</i>
           <b>{next ? next.name : stops[last].name}</b>
           <em>{next ? next.how : "会いたい人がいる街。友だちの家に約1週間"}</em>
         </div>

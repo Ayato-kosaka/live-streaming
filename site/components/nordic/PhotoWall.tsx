@@ -57,7 +57,9 @@ export default function PhotoWall({ depart }: { depart: string }) {
 
   useEffect(() => {
     getNordicPhotos()
-      .then((r) => setDays(r.days))
+      // 形の違うものが返っても、面ごと落とさない。`days` が無いだけで
+      // `undefined.length` を読みに行って、旅の写真の面が真っ白になっていた
+      .then((r) => setDays(r?.days ?? []))
       .catch(() => {
         setDays([]);
         setOff(true);

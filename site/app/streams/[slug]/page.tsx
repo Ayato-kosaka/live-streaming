@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import PageShell, { PageHead } from "@/components/ui/PageShell";
+import PageShell from "@/components/ui/PageShell";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
@@ -9,7 +9,7 @@ import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { STATS_FALLBACK } from "@/content/site";
 import { Vid } from "@/components/streams/Vid";
-import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
+import { H, Rec, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import {
   ArtBasket,
   ArtBoots,
@@ -106,18 +106,6 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
 
   return (
     <PageShell current="streams" crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
-      <PageHead
-        icon={t.icon}
-        title={t.name}
-        lead={t.short}
-        meta={
-          <span className="chip dark">
-            <Icon name="clock" size={13} />
-            {t.when}
-          </span>
-        }
-      />
-
       {/*
         5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
         蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて
@@ -125,6 +113,29 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         厚みを付けない）は5つとも同じにしておく。
       */}
       <Sheet style={{ ["--zk-tint" as string]: `color-mix(in srgb, ${t.color} 10%, transparent)` }}>
+        {/* 図鑑の1枚。ここは紙の型なのに、頭だけが板の型の見出し（`PageHead`）で、
+            1画面目でいちばん大きい絵が見出しの印 70x70（面の 1.5%）だった。
+            伝説と料理の詳細は同じ紙なのに絵が主役になっていて、
+            **同じ型の面で絵の扱いだけが3通りある**状態だった。
+            `/legends/[企画]` と同じ組みにそろえる。番号のところには
+            「いつやるか」を置く。この型を探している人が最初に要るのはそれ。 */}
+        <Zone>
+          <div className="zk-hero is-type">
+            <span className="zk-hero-no">{t.when}</span>
+            <h1 className="zk-tape-h">
+              <Tape>{t.name}</Tape>
+            </h1>
+            <div className="zk-hero-art">
+              {/* 型の絵は、島に立っている建物そのもの。
+                  焼いてあるのは長辺 320px までなので、dpr2 で伸ばさずに
+                  出せる 168px で止めてある。`sprites/hero/` に長辺 640px の
+                  焼き直しが来たら `is-dex` に替えると 280px まで伸ばせる。 */}
+              <img src={`/sprites/${t.icon}.webp`} alt="" />
+            </div>
+            <p className="zk-hero-note">{t.short}</p>
+          </div>
+        </Zone>
+
         <Zone>
           {/* 見出しは型ごとに変える。5面とも同じ問いで始めると、
               紙の作りも同じなので5つが同じ面に見える。

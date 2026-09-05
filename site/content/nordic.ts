@@ -525,6 +525,28 @@ export const NORDIC_LOG: Record<string, LegLog> = {};
  */
 export const MAIN: Leg[] = ROUTE.filter((l) => !l.side);
 
+/**
+ * 止まる街と、そこを**出ていく**区間が `ROUTE` の何本目か。
+ *
+ * 1日ぶんのページが「もう越えた日か」を決めるのに、これだけを受け取る
+ * （`components/nordic/here.ts`）。**この表そのものを client に渡さない。**
+ * 渡すと見どころ161件ぶんの JSON まで付いてくる。字と数字だけにする。
+ *
+ * **着く区間ではなく、出ていく区間を持つ。** `TripNow` が配る数がそちらなので
+ * （`mainLegs[at]`）、揃えないと「まだ走っていない日の問い」が閉じる。
+ * リガに立っていれば、閉じてよいのはリガ→タリンの手前まで。
+ *
+ * 終点（ストックホルム）には出ていく区間が無いので、区間の数そのものを置く。
+ * 着いた時点で、道の上の問いは全部越えたことになる。
+ */
+export const STOP_SEQ: { name: string; seq: number }[] = [
+  ...ROUTE.filter((l) => !l.side).map((l) => ({
+    name: l.from.replace(/（.*$/, ""),
+    seq: ROUTE.indexOf(l),
+  })),
+  { name: MAIN[MAIN.length - 1].to.replace(/（.*$/, ""), seq: ROUTE.length },
+];
+
 /** 一本道の止まる場所。地図の街の id と突き合わせるのに使う。 */
 export const STOPS: { name: string; leg?: Leg }[] = [
   { name: MAIN[0].from },

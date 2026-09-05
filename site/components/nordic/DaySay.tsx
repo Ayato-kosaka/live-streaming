@@ -2,7 +2,7 @@
 
 import { Ask, Answer } from "./Fork";
 import { useFork } from "./forks";
-import { useHereSeq } from "./here";
+import { useHereAt } from "./here";
 
 /**
  * この日に、言う。**1日ぶんのページの中に置く。**
@@ -24,6 +24,9 @@ import { useHereSeq } from "./here";
  * どちらも出ない日は、この区画そのものが消える。
  */
 
+/** 止まる街と、そこへ着く区間が `ROUTE` の何本目か（`content/nordic.ts` の `STOP_SEQ`）。 */
+export type StopSeq = { name: string; seq: number };
+
 export type SayItem = {
   leg: string;
   /** `ROUTE` の中での位置。もう越えた日かどうかを、これで見分ける */
@@ -33,11 +36,14 @@ export type SayItem = {
   fork: { q: string; options: { id: string; label: string }[] };
 };
 
-export default function DaySay({ items }: { items: SayItem[] }) {
+export default function DaySay({ items, route }: { items: SayItem[]; route: StopSeq[] }) {
   /* 数がひとつも読めないなら、この区画そのものを出さない。
      `useFork` は読めるまで null を返すので、先頭ひとつで見分けがつく。 */
   const first = useFork(`nordic-${items[0]?.leg ?? ""}`);
-  const here = useHereSeq();
+  /* **この面には司令塔が居ない。** `/nordic` では `TripNow` がいる場所を配るが、
+     わかれ道はこちらへ移してある。ここで自分で読まないと `here` が永久に null で、
+     越えた日の問いが1つも閉じない（着いた日でも票が入り続けていた）。 */
+  const here = useHereAt(route);
   if (!items.length || first === null) return null;
   const left = items.filter((i) => here == null || i.seq >= here);
   const done = items.filter((i) => here != null && i.seq < here);

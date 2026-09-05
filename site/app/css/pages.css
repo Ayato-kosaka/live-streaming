@@ -955,7 +955,17 @@ a.chip:active, button.chip:active, .chip.link:active {
 
 /* いま */
 .now-hero { text-align: center; }
-.now-pin { display: block; margin: 0 auto var(--sp-1); width: 58px; height: 58px; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 5px 0 color-mix(in srgb, var(--frame-deep) 26%, transparent)); }
+/* 道しるべのスプライト。**この面では出さない。**
+
+   いまいる国の旗を大きく出した（`live.css` の `.now-flag`）ので、
+   1つの面に「見出しの地球儀」「道しるべ」「国旗」の3つが縦に並んでいた。
+   道しるべはどの国でも同じ絵で、この面が言いたい「いまどこ」を
+   何も言っていない。国を言っているのは旗だけなので、そちらに1本化する。
+
+   `NowLive.tsx` はここの持ち場ではないので、いまは絵だけ落としてある。
+   同じ絵は下の「◯◯でやったこと、ぜんぶ」の札でも使っているから、
+   隠しても取りに行く回数は増えない。**あちらを直すときに `<img>` ごと外す。** */
+.now-pin { display: none; }
 .now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: var(--sp-1) 0 var(--sp-2); }
 /* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
 .week { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }

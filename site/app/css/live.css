@@ -617,13 +617,20 @@
   place-items: end center;
   /* 本物の図鑑は、絵が縦の半分以上を占める（ac-reference 7章 4）。
      見開き全体が 640px ぐらいなので、その4割をここに渡す */
-  height: 250px;
+  height: 280px;
   margin: var(--sp-4) 0 var(--sp-5);
 }
+@media (min-width: 720px) { .rzk-art { height: 330px; } }
 .rzk-art img {
   position: relative;
   z-index: 1;
-  max-width: 78%;
+  /* 78% だと、横のほうが先に効いて絵が 246px で止まっていた。
+     箱を 280px にしても絵は伸びない（`docs/ac-reference.md` 7章4）。
+     キャラクターは Google ドライブから `=s512` で取っているので、
+     dpr2 の画面で引き伸ばさずに出せるのは 256px あたりまで。
+     ここは絵が主役の面なので、1割の引き伸ばしを許して幅を先に取る。
+     `=s640` にできれば引き伸ばしも消える（`FriendsWall.tsx`）。 */
+  max-width: 92%;
   max-height: 100%;
   object-fit: contain;
   object-position: center bottom;
@@ -832,10 +839,33 @@
   color: var(--ink-2);
 }
 
-/* いまいる国の旗を、地名のとなりに。テーマの符丁（georgia など）は
-   文章としては出さない決まりなので、絵にだけ使う */
-.now-hero .now-place { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); flex-wrap: wrap; }
-.now-flag { flex: none; filter: drop-shadow(0 2px 0 rgba(120, 80, 40, 0.18)); }
+/* いまいる国の旗。テーマの符丁（georgia など）は
+   文章としては出さない決まりなので、絵にだけ使う。
+
+   ## 地名のとなりの 30px から、地名の上の大きな1枚にした
+
+   この面の主役は「いまいる国」（`docs/island-world.md` 2章）なのに、
+   1画面目でいちばん大きい絵は見出しの印（70x70・面の 1.0%）で、
+   国そのものの絵は 30x20 しか無かった。**字だけで「いまジョージア」と
+   言っていて、絵で言っていない。**
+
+   旗はベクタで描いてある（`components/ui/Flag.tsx`）ので、
+   大きくしても**1バイトも増えない**。写真もスプライトも要らない。 */
+.now-hero .now-place { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+.now-flag {
+  flex: none;
+  width: clamp(210px, 60vw, 280px);
+  height: auto;
+  /* 旗は押せない。**ぼかし0で真下に出る影は「押せる」の合図**なので
+     （`docs/island-design.md` 3章）、30px のときの `0 2px 0` を
+     そのまま大きくすると、押せない絵に厚みが付く。
+     地面に落ちる影のほう（右下へずらして少しぼかす）に替える。 */
+  filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
+}
+/* 旗のふち。viewBox は幅 30 なので、260px で出すと 1.2 の線がそのまま
+   10px の枠になる。外枠は svg の直接の子の rect 1枚だけ（中身は
+   clipPath を掛けた <g> の中にいる）ので、そこだけ細くする。 */
+.now-flag > rect { stroke-width: 0.3; }
 
 /* 紙の上の引用。住人のセリフは吹き出し（板の型）ではなく、刷ってある文にする */
 .pap-quotes { display: grid; gap: var(--sp-2); }

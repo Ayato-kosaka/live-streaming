@@ -71,7 +71,9 @@ export const CHAPTERS: Chapter[] = [
     from: "2025-06-29",
     to: "",
     countries: ["azerbaijan", "georgia", "armenia"],
-    note: "いまいる島。腰を据えて、なに食べよを作った",
+    // 旅に出た日から、ここは「いまいる島」ではなくなる（いまいる島は日付で決まる）。
+    // 焼いた字は日付で書き換わらないので、**いつ読んでも本当のこと**だけを書く。
+    note: "腰を据えた島。なに食べよを作った",
   },
   {
     slug: "iran-walk",
@@ -88,7 +90,9 @@ export const CHAPTERS: Chapter[] = [
     from: "",
     to: "",
     countries: [],
-    note: "次の島。まだ建っていない",
+    // 出発したあとも焼かれたまま出る字なので、「次の島」「まだ建っていない」と
+    // 書かない。旅の中身そのものなら、出る前・最中・終わったあとのどれで読んでも合う。
+    note: "会いたい人に、ポーランドから1,541kmヒッチハイクで",
     // 出発の日時。**`content/nordic.ts` の DEPART と同じ値**（ジョージア時間 23:30）。
     // あちらを読みに行かないのは、`chapters.ts` は島の連なりの画面（クライアント）が
     // 読むもので、そこに旅程の表ぜんぶ（500行＋JSON 6本）を連れてきてしまうから。
@@ -116,13 +120,34 @@ export const CHAPTERS: Chapter[] = [
  * （`CLAUDE.md` の「静的書き出し」）。焼くのは `NOW_CHAPTER` 1つだけにして、
  * 画面では必ず `chapterNow(new Date())` で引き直す。
  */
+/**
+ * 章が始まった時刻（ms）。事実（`from`）が先で、まだなら予定（`opensAt`）。
+ *
+ * 日数も、期間の字も、いまいる島も、ぜんぶこの1つの決めかたを見る。
+ * ばらばらに書くと、島の札が「これから」なのに日数だけ数えはじめる、
+ * という食い違いが出る（実際に出た）。
+ */
+function began(c: Chapter): number {
+  if (c.from) return Date.parse(`${c.from}T00:00:00+09:00`);
+  return c.opensAt ? Date.parse(c.opensAt) : Number.POSITIVE_INFINITY;
+}
+
+/**
+ * 終わりの日が入っていない章の、事実上の終わり。
+ *
+ * **本線の次の章が始まったら、そこで終わり。** そうしないと、北欧へ出たあとも
+ * コーカサスが毎日1日ずつ増えつづける（出発の10日後に「455日 〜 いま」と出た）。
+ * 誰も居ない章が2つ同時に「〜 いま」になるのも、これで消える。
+ */
+function nextBegan(c: Chapter): number {
+  const mine = began(c);
+  return Math.min(
+    ...CHAPTERS.filter((x) => !x.branchOf && x !== c && began(x) > mine).map(began),
+  );
+}
+
 export function chapterNow(now: Date = new Date()): Chapter {
   const t = now.getTime();
-  const began = (c: Chapter): number => {
-    // 事実（from）が入っていればそちら。まだなら予定（opensAt）
-    if (c.from) return Date.parse(`${c.from}T00:00:00+09:00`);
-    return c.opensAt ? Date.parse(c.opensAt) : Number.POSITIVE_INFINITY;
-  };
   const open = CHAPTERS.filter((c) => !c.branchOf && began(c) <= t)
     // 終わった章は、いまいる島ではない
     .filter((c) => !c.to || Date.parse(`${c.to}T23:59:59+09:00`) >= t)
@@ -139,7 +164,28 @@ export function chapterNow(now: Date = new Date()): Chapter {
  */
 export const NOW_CHAPTER = chapterNow();
 
-/** 次の島。まだ始まっていないもの */
+/**
+ * 次の島。**日付で決める。**
+ *
+ * `from` の空欄だけで決めていたころ、出発しても誰かが `chapters.ts` に
+ * 日付を書き入れるまで、北欧が「次の島」のままだった。旅の4日目に
+ * 島の連なりが「4日の予定」と出す（`chapterDays` は出発を過ぎたら
+ * 実際に数えはじめるのに、札のほうは予定と言い続ける）のがそれで、
+ * **経過日数を予定と言う**という、いちばん分かりにくい嘘になっていた。
+ *
+ * 始まっていない = `from` がまだ空で、かつ出発の日時にもまだ届いていない。
+ * どれも始まっていれば `undefined`（次の島はもう無い）。
+ *
+ * **画面が出てから呼ぶこと。** `chapterNow` と同じで、焼くと出発の日を
+ * またいでも変わらない。
+ */
+export function chapterNext(now: Date = new Date()): Chapter | undefined {
+  return CHAPTERS.find(
+    (c) => !c.from && (!c.opensAt || Date.parse(c.opensAt) > now.getTime()),
+  );
+}
+
+/** ビルドしたときの「次の島」。**画面の出しわけに使わない**（`NOW_CHAPTER` と同じ理由）。 */
 export const NEXT_CHAPTER = CHAPTERS.find((c) => !c.from)!;
 
 /**
@@ -150,14 +196,29 @@ export const NEXT_CHAPTER = CHAPTERS.find((c) => !c.from)!;
  * 誰かが `from` を書き入れるまで、島が「9日の予定」のまま止まる。
  */
 export function chapterDays(c: Chapter, today = new Date()): number {
-  const from = c.from
-    ? Date.parse(`${c.from}T00:00:00+09:00`)
-    : c.opensAt
-      ? Date.parse(c.opensAt)
-      : NaN;
+  const from = began(c);
   if (!Number.isFinite(from) || from > today.getTime()) return c.plannedDays ?? 0;
-  const end = c.to ? Date.parse(`${c.to}T00:00:00+09:00`) : today.getTime();
+  const end = c.to
+    ? Date.parse(`${c.to}T00:00:00+09:00`)
+    : Math.min(today.getTime(), nextBegan(c));
   return Math.max(1, Math.round((end - from) / 86_400_000) + 1);
+}
+
+/**
+ * 章の期間。**画面に出す「2025年6月 〜 いま」はここから作る。**
+ *
+ * `to` は事実の欄で、旅に出た日に手で入れる。入れ忘れているあいだも、
+ * 次の章が始まっていれば終わったものとして返す。
+ * まだ始まっていない章は `from` が null（画面は「これから」と書く）。
+ */
+export function chapterSpan(
+  c: Chapter,
+  today = new Date(),
+): { from: number | null; to: number | null } {
+  const from = began(c);
+  if (!Number.isFinite(from) || from > today.getTime()) return { from: null, to: null };
+  const to = c.to ? Date.parse(`${c.to}T00:00:00+09:00`) : nextBegan(c);
+  return { from, to: Number.isFinite(to) && to <= today.getTime() ? to : null };
 }
 
 /**

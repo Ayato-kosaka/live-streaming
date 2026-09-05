@@ -44,6 +44,27 @@ export default function FriendsPage() {
         <div className="pap">
           <b className="pap-tag">住民図鑑</b>
 
+          {/* 図鑑の1枚を、いちばん先に出す。
+
+              前はここに数字4つと6行の説明が先にあって、住人の絵は 1画面目に
+              1画素も入っていなかった（いちばん大きい絵が見出しの印の 60x60、
+              面の 1.1%）。**字が主役の図鑑になっていた。**
+              本物の図鑑は絵が先で、数字と説明はその下に付いている
+              （`docs/ac-reference.md` 7章4）。順番を入れ替えただけなので、
+              面の長さは増えていない。
+
+              説明は絵の下へ回した。「マスを押すと1枚が開きます」は、
+              絵とマスが目の前にあれば読まなくても分かる。
+              しゃべり方の出どころは図鑑の下にもう一度書いてあったので、そちらに任せる。 */}
+          <section className="pap-sec">
+            <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
+            <FriendsWall />
+            <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
+              自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
+              しばらく来ていなかった人には「久しぶり」と言いますが、空いた日数は数えていません。
+            </p>
+          </section>
+
           <section className="pap-sec">
             <div className="pap-nums">
               <div>
@@ -73,16 +94,6 @@ export default function FriendsPage() {
                 <i>ぜんぶ読んでます</i>
               </div>
             </div>
-          </section>
-
-          <section className="pap-sec">
-            <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
-            <p className="pap-note">
-              自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
-              マスを押すと、その人の1枚が開きます。しゃべり方は、その人が配信で書いてきたコメントから写しています。
-              しばらく来ていなかった人には「久しぶり」と言いますが、空いた日数は数えていません。
-            </p>
-            <FriendsWall />
           </section>
 
           <section className="pap-sec">
