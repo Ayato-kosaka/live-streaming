@@ -17,6 +17,7 @@ import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
 import { todayNews, type TodayNews } from "@/lib/todayNews";
 import {
+  callOut,
   createVillagers,
   stepVillagers,
   talkTo,
@@ -154,7 +155,10 @@ const GUIDE = -1;
  * 今日の板が自分から開く日。
  *
  * その日は名乗りを出さない。カモメと板が両方開くと、また島が見えなくなる。
- * 判断のもとは `components/today/Today.tsx` と同じで、あちらが増えたらここも足す。
+ * ただし**初めて島に降りた人には、板のほうが開かないことになっている**ので
+ * （`components/today/Today.tsx` の isFirstEverVisit）、そちらは日に関わらず名乗る。
+ * ここが効くのは「長く空いて帰ってきた人」だけ。
+ * 判断のもとは Today.tsx と同じで、あちらが増えたらここも足す。
  */
 const TODAY_OPENS: TodayNews["kind"][] = ["live", "plan", "recipe"];
 
@@ -243,6 +247,24 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const skipArrive = useRef(false);
   /** 建物に入るときの立ち位置。戻ってきたらここから始める */
   const leaveAt = useRef<{ x: number; y: number } | null>(null);
+  /**
+   * 島に降り立った時刻。住人が向こうから声をかけるまでの間を数えるのに使う。
+   * まだ降りていないあいだは Infinity にしておく。
+   * 引き算が -Infinity になって、条件が勝手に成立しない。
+   */
+  const landedAt = useRef(Infinity);
+  /**
+   * この来訪で、島のほうから一度でも口を開いたか。
+   *
+   * **1回の来訪で、向こうから話しかけてくるのは1回だけ。**
+   * カモメの名乗り（初めて来た人）と、住人の「はじめまして／久しぶり」は
+   * どちらも「世界のほうが先に口を開く」仕掛けで、狙っている相手が違う。
+   *   カモメ … 初めて来た人。この人が誰で何をしているかに答える
+   *   住人   … 2回目以降の人。前に来たことを覚えている、を伝える
+   * 初めての人には両方あたるので、そこだけカモメを優先して住人を黙らせる。
+   * 10秒のあいだに知らない相手が2回話しかけてくるのは、島ではなく客引きになる。
+   */
+  const spokeFirst = useRef(false);
   const dice = useRef(rng(777));
   const clock = useRef(0);
   const inviteSlot = useRef(-1);
@@ -344,16 +366,29 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // 「ついさっき来た」として扱う。演出を出す側に倒すと毎回出てしまう。
       const raw = localStorage.getItem(VISITED);
       apart = raw ? daysSince(raw) ?? 0 : null;
-      localStorage.setItem(VISITED, jstNow().date);
     } catch {
       /* プライベートモードなどで読めなくても、演出を出すだけなので気にしない */
     }
+    /* 「来た」を書き留めるのは、降り終わってから。
+       **この鍵を読むだけの人がいる。** 今日の板は `ayato-island-arrived` を見て
+       「初めての人には自分から開かない」を決めている（`components/today/Today.tsx`）。
+       ここで先に書くと、初めて来た人が「2回目の人」に見えて、
+       配信中の日に板とカモメが両方開く。読ませてから書く。 */
+    const remember = () => {
+      try {
+        localStorage.setItem(VISITED, jstNow().date);
+      } catch {
+        /* 書けなくても、次にもう一度演出が出るだけ */
+      }
+    };
     // 初めての人(null)には見せる。長く空いた人にも、もう一度。
-    const again = apart === null || apart >= ARRIVE_AGAIN;
+    const firstEver = apart === null;
+    const again = firstEver || (apart ?? 0) >= ARRIVE_AGAIN;
     /* 名乗りも同じ人に同じ回数だけ。到着の演出は「来た」しか言っていないので、
        そのあとに1文だけ足して、演出に中身を持たせる。
-       今日の板が自分から開く日は出さない（両方開くと島が見えない）。 */
-    const greet = again && !TODAY_OPENS.includes(todayNews().kind);
+       **初めての人には、どの日でも名乗る。** 板のほうが初回は開かないので重ならない。
+       長く空いて帰ってきた人だけ、板が自分から開く日は黙る。 */
+    const greet = again && (firstEver || !TODAY_OPENS.includes(todayNews().kind));
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (!again || still) {
       // 最初の1フレームでカメラを置く。ここで span を 0 にしてから ease で追わせると、
@@ -367,12 +402,22 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       skipArrive.current = true;
       snapCam.current = true;
       setArriving(false);
-      if (greet) setTalking({ i: GUIDE, text: GREETING });
+      landedAt.current = performance.now();
+      remember();
+      if (greet) {
+        spokeFirst.current = true;
+        setTalking({ i: GUIDE, text: GREETING });
+      }
       return;
     }
     const t = setTimeout(() => {
       setArriving(false);
-      if (greet) setTalking({ i: GUIDE, text: GREETING });
+      landedAt.current = performance.now();
+      remember();
+      if (greet) {
+        spokeFirst.current = true;
+        setTalking({ i: GUIDE, text: GREETING });
+      }
     }, 3000);
     return () => clearTimeout(t);
   }, []);
@@ -505,6 +550,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ayatoRef.current?.classList.toggle("walking", moving);
       }
 
+      /* --- 向こうから口を開く ---
+         そばに来た人に、住人のほうから声をかける（`docs/island-play.md` 3つの原理の3番）。
+         条件が3つそろった1回だけで、あとは毎回 null が返るので毎フレーム呼んでよい。
+         カモメが名乗った来訪では黙ってもらう（向こうから話しかけるのは1来訪に1回）。 */
+      if (!spokeFirst.current) {
+        const who = callOut(villagers, avatar.current, t - landedAt.current);
+        if (who) {
+          spokeFirst.current = true;
+          openTalkRef.current?.(villagers.indexOf(who));
+        }
+      }
+
       // --- 話しかけに行った相手のそばまで来たか ---
       if (walkingTo.current !== null) {
         const i = walkingTo.current;
@@ -582,6 +639,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const g = villagerRefs.current[i];
         if (g && !off) {
           const pose = villagerPose(v, t);
+          // 左右は反転しない。
+          //
+          // 本番の住人の絵を実際に取ってきて見たら、横向きではなく**正面向き**の
+          // マスコットだった（本番の lh3.googleusercontent.com から4人ぶん確認）。
+          // 正面の絵を反転しても「向かい合っている」ようには見えないうえ、
+          // 持ち物（お玉・ウクレレ・花）だけが裏返る。
+          // これは視聴者さんが投げ銭で作った絵なので、勝手に裏返さない。
+          //
+          // 立ち話が向かい合って見えるかどうかは、位置と間で表す。
           g.setAttribute(
             "transform",
             `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
@@ -590,10 +656,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         const w = whoRefs.current[i];
         if (w) {
           w.style.display = off ? "none" : "";
-          if (!off) {
-            w.style.transform = `translate(${sx(v.x).toFixed(1)}px, ${sy(v.y).toFixed(1)}px)`;
-            w.classList.toggle("is-calling", !!v.invite);
-          }
+          // 合図を出しているかどうかは、絵に出さない（足元の光をやめた）。
+          // 誰が話したがっているかは、その人が向こうから口を開くことで伝わる。
+          if (!off) w.style.transform = `translate(${sx(v.x).toFixed(1)}px, ${sy(v.y).toFixed(1)}px)`;
         }
       }
 

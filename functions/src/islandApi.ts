@@ -36,6 +36,11 @@ const DRAFTS = db.collection("islandDrafts");
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
 const POLLS = db.collection("islandPolls");
 const PVOTES = db.collection("islandPollVotes");
+/* 今日ここに来た人の数(docs/island-play.md 仕掛け16)。
+   「いま何人います」は出さない。作れないうえに、たいていの時間帯は
+   「1人」と出て島が寂れて見える。日単位なら数十〜数百になる。
+   1日1ドキュメントに数を足すだけ。誰が来たかは持たない。 */
+const VISITS = db.collection("islandVisits");
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -158,6 +163,13 @@ function shapeDraft(b: Json): Json {
   };
 }
 
+/**
+ * 島の「1日」。UTC で切ってある。
+ *
+ * 日本時間の朝9時で変わるので、**配信の一晩（22時〜25時）が1日の中に収まる**。
+ * JST で切ると 0時をまたいだ配信が2日に割れて、連投制限も訪問者数も夜中に半分になる。
+ * 画面に出す日付は JST（`site/lib/nightly.ts`）だが、こちらは数える側の都合で決める。
+ */
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
@@ -722,6 +734,40 @@ export const islandApi = onRequest(
           return;
         }
         res.json({poll: out, mine});
+        return;
+      }
+
+      /* ---------------- 今日、島に来た人 ----------------
+         「誰かがそこにいる」を、同時接続ではなく日単位で出す
+         (docs/island-play.md 仕掛け16・および「移さないもの」の18)。
+
+         ブラウザは1日1回しか叩かない（数えた日を覚えている）。
+         それでも消された端末や新しい端末から何度も来るので、
+         takeQuota で1日1回に締める。**誰が来たかは残さない。**
+         残るのは islandRate の「visit を1回使った」だけで、これは翌日には意味を失う。 */
+      if (method === "POST" && path === "/visit") {
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        const day = today();
+        // 数える前に、この人の今日ぶんが残っているかを見る。
+        // 残っていなければ足さずに、いまの数だけ返す
+        const fresh = await takeQuota(who?.uid ?? cid, "visit", 1);
+        const ref = VISITS.doc(day);
+        /* 1日1ドキュメントなので、書き込みが集まると詰まる。
+           Firestore は同じドキュメントに毎秒1回までなので、
+           1日に数千人まではこれで足りる。足りなくなったら分割する。 */
+        const n = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          const cur = (snap.data()?.n as number) ?? 0;
+          if (!fresh) return cur;
+          tx.set(ref, {n: cur + 1, day, updatedAt: Date.now()}, {merge: true});
+          return cur + 1;
+        });
+        res.json({day, visits: n});
         return;
       }
 

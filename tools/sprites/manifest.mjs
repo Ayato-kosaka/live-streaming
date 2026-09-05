@@ -221,7 +221,9 @@ export const SPRITES = [
   { name: "statue", parts: [`${NK}/statue_obelisk.glb`] },
   { name: "statue-head", parts: [`${NK}/statue_head.glb`] },
   { name: "canoe", parts: [`${NK}/canoe.glb`] },
-  { name: "bridge", parts: [`${NK}/bridge_wood.glb`], opts: { mat: { stone: [0.086, 0.46, 0.62] } } },
+  // 橋板は stone という名前だが木。樹皮を明るくしたので、ここも上げないと
+  // 手すりだけ明るくて板だけ焦げ茶の、木が2種類の橋になる
+  { name: "bridge", parts: [`${NK}/bridge_wood.glb`], opts: { mat: { stone: [0.088, 0.58, 0.66] } } },
   { name: "bench", parts: [`${HK}/bench.glb`] },
   { name: "lantern", parts: [`${HK}/lantern.glb`] },
   { name: "stall", parts: [`${BK}/stall.glb`], opts: { ...WOODEN, neutral: ROOF.coral } },

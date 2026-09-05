@@ -6,6 +6,7 @@ import { planDaysLeft, type Plan } from "@/content/plans";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
+import { Stone } from "./art";
 
 /** 「9/6」。数え直す前に出しておく、日付だけの表示。 */
 function shortDate(date?: string) {
@@ -154,14 +155,21 @@ function Count({ plan }: { plan: Plan }) {
   );
 }
 
-/** 写真。外から借りたものは、出どころを必ず添える。 */
-function Photos({ plan }: { plan: Plan }) {
-  if (!plan.photos?.length) return null;
+/**
+ * 写真。外から借りたものは、出どころを必ず添える。
+ *
+ * `from` は「ここから先を出す」。主役の札は1枚目だけを開いておいて、
+ * 残りは畳んだ中に入れる。写真は1枚あれば「何が起きるのか」は伝わるので、
+ * 2枚目から先は見たい人のものにする。
+ */
+function Photos({ plan, from = 0, to }: { plan: Plan; from?: number; to?: number }) {
+  const list = plan.photos?.slice(from, to);
+  if (!list?.length) return null;
   return (
     // 既定は 220px 折り返しなのでスマホでは1列になり、縦に積むと下が遠くなる。
     // 2枚並ぶところまで詰めて、写真は「見当がつく大きさ」で足りるものとする。
     <div className="pphotos" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(148px, 1fr))" }}>
-      {plan.photos.map((ph) => (
+      {list.map((ph) => (
         <figure key={ph.src}>
           <img src={ph.src} alt={ph.alt} loading="lazy" referrerPolicy="no-referrer" />
           <figcaption>
@@ -287,7 +295,7 @@ function Doing({ plan }: { plan: Plan }) {
  * どこが空いているのかを見せないまま「付箋を貼ってください」と言っても、
  * 何を書けばいいのか分からない。空いている場所を先に出す。
  */
-function Asks({ plan }: { plan: Plan }) {
+function Asks({ plan, jump = true }: { plan: Plan; jump?: boolean }) {
   if (!plan.asks?.length) return null;
   return (
     <div className="nx-asks">
@@ -297,34 +305,60 @@ function Asks({ plan }: { plan: Plan }) {
           <li key={a}>{a}</li>
         ))}
       </ul>
-      <a href={`#${plan.id}-notes`}>
-        付箋で教える
-        <Icon name="right" size={12} />
-      </a>
+      {/* 付箋の欄が閉じているとき（道のりの段）だけ、そこへ連れていく。
+          主役の札は、この真下に入力欄が開いている。同じ行き先の札を
+          20px 下にもう1つ置いても、押しどころが2つに割れるだけ。 */}
+      {jump && (
+        <a href={`#${plan.id}-notes`}>
+          付箋で教える
+          <Icon name="right" size={12} />
+        </a>
+      )}
     </div>
   );
 }
 
 /**
- * これからの予定ひとつ。
+ * 企画の中身。写真・説明・去年の様子・行き先。
  *
- * lead を付けたものが、そのページの主役。
- * 開いた瞬間に3つの問いに答える形にしてある。
- *   1. あと何日か   … 時計を題名の左に、いちばん大きく
- *   2. 何が起きるのか … 題名・日付・場所・ひとこと
- *   3. 自分は何をすればいいのか … 説明より先に、押せるものを並べる
- * それ以外の企画は説明を畳んで、題名と日付だけで先へ進めるようにする。
+ * 主役の札では畳んだ中に、道のりの段では段の中に、同じものが入る。
+ * 「くわしく知りたい人だけが開く」ものはここにまとめてあって、
+ * 開くまでは1行も出さない。
  */
-export default function PlanCard({
-  plan,
-  lead,
-  children,
-}: {
-  plan: Plan;
-  /** ページでいちばん近い企画。1ページにひとつだけ。 */
-  lead?: boolean;
-  children?: React.ReactNode;
-}) {
+function PlanBody({ plan, from = 0 }: { plan: Plan; from?: number }) {
+  return (
+    <>
+      <Photos plan={plan} from={from} />
+      {plan.about?.map((a, i) => (
+        <p key={i}>{a}</p>
+      ))}
+      <Embeds plan={plan} />
+      <Links plan={plan} />
+    </>
+  );
+}
+
+/** 畳んだ中に入れるものが1つでもあるか。無いときは折りたたみ自体を出さない。 */
+const hasBody = (plan: Plan, from = 0) =>
+  (plan.photos?.length ?? 0) > from ||
+  !!plan.about?.length ||
+  !!plan.embeds?.length ||
+  !!plan.links?.length ||
+  !!plan.place?.map;
+
+/**
+ * いちばん近い企画。ページの主役。
+ *
+ * 開いた瞬間に3つの問いへ答える。ここに入れてよいのはその3つだけで、
+ * それ以外は畳んだ中に入れる（`docs/island-ux.md` 5.8）。
+ *   1. あと何日か     … 時計。この面でいちばん大きい数字
+ *   2. 何が起きるのか … 題名・日付・場所・ひとこと・写真1枚
+ *   3. 自分は何を     … 説明より先に、押せるものを並べる
+ *
+ * 写真を2枚とも開いて説明を3段落並べると、それだけで1画面を超える。
+ * 「くわしく」は畳む。読みたい人は押せば全部出てくる。
+ */
+export default function PlanCard({ plan, children }: { plan: Plan; children?: React.ReactNode }) {
   return (
     <section
       // 企画の札は「これから」の面の本文。読むものなので紙にして、
@@ -334,41 +368,73 @@ export default function PlanCard({
       id={plan.id}
       // 主役の札は塗りを変えず、朱の細枠だけで示す。紙の型の選択と同じ作り
       // （`docs/ac-reference.md` 7章）。厚みは押せるものだけのものなので足さない。
-      style={lead ? { borderColor: "var(--pick)", scrollMarginTop: 78 } : { scrollMarginTop: 78 }}
+      style={{ borderColor: "var(--pick)", scrollMarginTop: 78 }}
     >
-      {lead ? (
-        // 時計だけを四角く置くと、その右が丸ごと空いて、いちばん大事な数字が
-        // 隅にぽつんと残る。日付と場所を時計のとなりに引き寄せて、
-        // 「いつ・どこで」を一本の帯として読ませる。
-        <div className="nx-lead-head">
-          <div className="nx-when">
-            <LeadClock plan={plan} />
-            <span className="nx-when-m">
-              <span>
-                <Icon name="calendar" size={13} />
-                {plan.when}
-              </span>
-              {plan.place && (
-                <span>
-                  <Icon name="pin" size={13} />
-                  {plan.place.name}
-                </span>
-              )}
+      {/* 時計だけを四角く置くと、その右が丸ごと空いて、いちばん大事な数字が
+          隅にぽつんと残る。日付と場所を時計のとなりに引き寄せて、
+          「いつ・どこで」を一本の帯として読ませる。 */}
+      <div className="nx-lead-head">
+        <div className="nx-when">
+          <LeadClock plan={plan} />
+          <span className="nx-when-m">
+            <span>
+              <Icon name="calendar" size={13} />
+              {plan.when}
             </span>
-          </div>
-          <h2>{plan.title}</h2>
+            {plan.place && (
+              <span>
+                <Icon name="pin" size={13} />
+                {plan.place.name}
+              </span>
+            )}
+          </span>
         </div>
-      ) : (
-        <div className="phead-row">
-          <h2 style={{ margin: "var(--sp-1)" }}>{plan.title}</h2>
-          <Count plan={plan} />
+        <h2>{plan.title}</h2>
+      </div>
+
+      <p style={{ fontSize: 16 }}>{plan.note}</p>
+
+      <Doing plan={plan} />
+
+      {/* 写真は1枚だけ開く。何が起きるのかは、字より絵のほうが早い。 */}
+      <Photos plan={plan} to={1} />
+
+      {hasBody(plan, 1) && (
+        <div style={{ margin: "var(--sp-4) 0" }}>
+          <Fold title="どんなところなんだろう" lead={plan.place?.area ?? plan.tags.join(" / ")}>
+            <PlanBody plan={plan} from={1} />
+          </Fold>
         </div>
       )}
 
-      <div className="chips" style={{ margin: "12px 0" }}>
-        {/* 主役の札は、日付と場所を上の帯で言い終わっている。ここで繰り返さない */}
-        {!lead && (
-          <>
+      <Asks plan={plan} jump={false} />
+
+      {children}
+    </section>
+  );
+}
+
+/**
+ * 道のりの一段。
+ *
+ * ここが「目次と本文が同じ画面に2回出る」を直したところ（`docs/island-ux.md` 5.8）。
+ * 一覧と札を別々に置くのをやめて、**一覧の段がそのまま開いて札になる**。
+ * 閉じているあいだは日付・題名・ひとこと・あと何日だけ。押すと中身が出る。
+ *
+ * 石に彫るのは通し番号ではなく日付にした。番号は「何番目か」しか言わないが、
+ * 日付なら石を目で追うだけで、この先の予定が何日おきに来るのかが分かる。
+ */
+export function PlanRow({ plan, children }: { plan: Plan; children?: React.ReactNode }) {
+  const d = useDays(plan);
+  return (
+    <li id={plan.id} style={{ scrollMarginTop: 78 }}>
+      <span className="nx-stone">
+        <Stone tone={d !== null && d < 0 ? "past" : "stone"} />
+        <b className="is-date">{shortDate(plan.date)}</b>
+      </span>
+      <div className="nx-road-b">
+        <Fold title={plan.title} lead={plan.note} note={<Count plan={plan} />}>
+          <div className="chips" style={{ marginBottom: "var(--sp-3)" }}>
             <span className="chip">
               <Icon name="calendar" size={12} />
               {plan.when}
@@ -379,64 +445,30 @@ export default function PlanCard({
                 {plan.place.name}
               </span>
             )}
-          </>
-        )}
-        {plan.tags.map((t) => (
-          <span className="chip" key={t}>
-            #{t}
-          </span>
-        ))}
-      </div>
-
-      <p style={lead ? { fontSize: 16 } : undefined}>{plan.note}</p>
-
-      {lead && <Doing plan={plan} />}
-
-      {/* 主役は開いたまま。それ以外は「どんなところ」を畳んで、先へ進みやすくする。 */}
-      {lead ? (
-        <>
-          <Photos plan={plan} />
-          {plan.about?.map((a, i) => (
-            <p key={i}>{a}</p>
-          ))}
-          {/* 埋め込みは1枚で画面を埋めてしまう。見たい人だけ開く。 */}
-          {!!plan.embeds?.length && (
-            <div style={{ margin: "14px 0" }}>
-              <Fold title="去年の様子を見る" lead={plan.embeds[0].note ?? "投稿と動画"}>
-                <Embeds plan={plan} />
-              </Fold>
-            </div>
-          )}
-          <Links plan={plan} mapDone />
-        </>
-      ) : (
-        (plan.about?.length || plan.photos?.length || plan.embeds?.length || plan.links?.length || plan.place?.map) && (
-          <Fold title="どんなところか" lead={plan.place?.area ?? plan.tags.join(" / ")}>
-            <Photos plan={plan} />
-            {plan.about?.map((a, i) => (
-              <p key={i}>{a}</p>
+            {plan.tags.map((t) => (
+              <span className="chip" key={t}>
+                #{t}
+              </span>
             ))}
-            <Embeds plan={plan} />
-            <Links plan={plan} />
-          </Fold>
-        )
-      )}
+          </div>
 
-      {/* 主役でない企画の入口は、説明のあと。 */}
-      {!lead && plan.href && (
-        <Link className="tile" href={plan.href} style={{ marginTop: "var(--sp-4)" }}>
-          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
-          <span className="tile-text">
-            <b>この企画のページへ</b>
-            <i>ルート・行き先・国ごとの見どころ</i>
-          </span>
-          <Icon name="right" size={15} className="tile-go" />
-        </Link>
-      )}
+          <PlanBody plan={plan} />
 
-      <Asks plan={plan} />
+          {plan.href && (
+            <Link className="tile" href={plan.href} style={{ marginTop: "var(--sp-4)" }}>
+              <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
+              <span className="tile-text">
+                <b>この企画のページへ</b>
+                <i>ルート・行き先・国ごとの見どころ</i>
+              </span>
+              <Icon name="right" size={15} className="tile-go" />
+            </Link>
+          )}
 
-      {children}
-    </section>
+          <Asks plan={plan} />
+          {children}
+        </Fold>
+      </div>
+    </li>
   );
 }

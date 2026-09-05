@@ -92,7 +92,9 @@ export default function StreamsPage() {
             <details
               className={`ty${t.slug === "cooking" ? " is-wide" : ""}`}
               key={t.slug}
-              style={{ ["--ty" as string]: t.color }}
+              // 型の色は屋根の帯にだけ渡す（`docs/island-world.md` 3.3）。
+              // カードごと染めると、中の数字もボタンも動画の縁も色を持ってしまって、
+              // 「この色は何を指しているか」に答えられなくなる。
               // 5枚とも開いていると、この面だけで6画面ぶんになる。屋根（名前と曜日）は
               // 5つとも見せたまま、中身は畳む。開いておくのは1枚目だけ
               // （`docs/island-ux.md` 5.5・`docs/island-design.md` 4章）。
@@ -149,7 +151,9 @@ export default function StreamsPage() {
         <h2>配信のあと、何が島に残るんだろう</h2>
         <p className="muted">配信した日そのものは流れていく。あとに残るのは、この2つ。</p>
         <div className="tiles" style={{ marginTop: "var(--sp-3)" }}>
-          <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-coral)" }}>
+          {/* 桃（--roof-coral）はクッキング配信の型の色。行き先の飾りに使うと、
+              「桃＝クッキングの型」の対応が崩れる。小屋の屋根の色に置き換える。 */}
+          <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
             <ArtStamp size={44} className="tile-icon" />
             <span className="tile-text">
               <b>キッチン小屋</b>

@@ -18,12 +18,19 @@ export default function CountryIdeas({
   title,
   note,
   placeholder,
+  bare = false,
 }: {
   country: string;
   /** 見出し。省略すると「◯◯でこれやって」 */
   title?: string;
   note?: string;
   placeholder?: string;
+  /**
+   * 紙と見出しを持たずに、中身だけ出す。
+   * 折りたたみの中に置くときに使う。紙の上に紙は重ねないし、
+   * 畳みの見出しと同じ字をもう一度出さない。
+   */
+  bare?: boolean;
 }) {
   const tag = `【${country}】`;
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
@@ -74,11 +81,9 @@ export default function CountryIdeas({
 
   const list = [...(ideas ?? [])].sort((a, b) => b.votes - a.votes);
 
-  return (
-    // 面は紙。板にするのは書く道具（`.bin` `.bin-name` `.bpost`）だけ
-    // （`docs/island-world.md` 2章「紙＋板の道具」）。
-    <section className="panel paper">
-      <h2>{title ?? `${country}でこれやって`}</h2>
+  const inner = (
+    <>
+      {!bare && <h2>{title ?? `${country}でこれやって`}</h2>}
       <p className="muted">
         {note ??
           "行く前に読みます。現地で「今これ見てる」って言えるのがいちばん嬉しいので、知ってることがあったら書いてください。"}
@@ -132,6 +137,10 @@ export default function CountryIdeas({
         {sending ? "貼っています…" : "はりだす"}
       </button>
       {err && <p className="err">{err}</p>}
-    </section>
+    </>
   );
+
+  // 面は紙。板にするのは書く道具（`.bin` `.bin-name` `.bpost`）だけ
+  // （`docs/island-world.md` 2章「紙＋板の道具」）。
+  return bare ? inner : <section className="panel paper">{inner}</section>;
 }

@@ -16,13 +16,18 @@ import { Mark } from "./Marks";
  * その人が誰なのかは書かない。名前も写真も出さない。
  * 「会いたい人がいる」だけで、この企画は成立する。
  *
- * だから人が知りたいのは、順に5つ。
- *   1. あと何日で始まるのか
- *   2. 会えるまで、あとどれだけ残っているのか
- *   3. いま、どこにいるのか
- *   4. 次は、どこへ行くのか
- *   5. そこで何が起きるのか
+ * だから人が知りたいのは、順に4つ。
+ *   1. あとどれだけで、そこに着くのか
+ *   2. いま、どこにいるのか
+ *   3. 次は、どこへ行くのか
  * これを1画面に収める。地図より先、文章より先に、いちばん上に置く。
+ * **「そこで何が起きるか」はここに置かない。** 区間の話は区間カードが持っていて、
+ * 開いているカードはいつも「いま走っている区間」なので、必ず同じ文を二度読むことになる。
+ *
+ * **大きい数字はひとつだけ置く。** 出る前は「あと何日」、出たあとは「あと何km」。
+ * 2つ並べていたころ、出発前の画面には減らない 1,541km のバーが
+ * 空のまま出ていて、すぐ上の一行と同じ数字を2回言っていた。
+ * そのときに意味のある数字だけを、いちばん大きく出す。
  *
  * 静的書き出しなので、日付も現在地もビルド時の値を焼くわけにいかない。
  * 残り時間は画面が出てから毎秒数え直し、いる場所は `/island-api/state` の
@@ -47,8 +52,6 @@ export type Stop = {
   how?: string;
   /** その区間の絵（`Marks.tsx` の名前） */
   art?: string;
-  /** その区間で何が起きるか */
-  note?: string;
   /** ここへ来るまでにヒッチハイクで進む距離(km)。残りを数えるのに使う。 */
   hitch?: number;
 };
@@ -59,11 +62,17 @@ function fmt(n: number) {
 
 export default function TripNow({
   stops,
+  mainLegs,
   depart,
   departWhen,
   hitchKm,
 }: {
   stops: Stop[];
+  /**
+   * 一本道の区間の id を、通る順に。`stops[i]` へ来る区間が `mainLegs[i - 1]`。
+   * いる場所が分かったら、下の区間ボードで**いまの区間と次の区間だけ**を開く。
+   */
+  mainLegs: string[];
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -120,6 +129,27 @@ export default function TripNow({
     });
   }, [at, stops]);
 
+  // 区間ボードの、開いておくカードを動かす。
+  //
+  // 静的書き出しなので、いつ誰が開いても最初のカード（クタイシ発の飛行機）が
+  // 開いている。旅が始まったあと、もう越えた区間が開きっぱなしになるので、
+  // 場所が分かった時点で**いまの区間と次の区間**に付け替える。
+  // 開くのは画面が出た直後の1回だけ。あとから勝手に開いたり閉じたりすると、
+  // 読んでいるカードが目の前で閉じることになる。
+  useEffect(() => {
+    if (at == null || at < 1) return;
+    const board = document.querySelector(".rlegs");
+    if (!board) return;
+    // stops[at] へ来た区間が mainLegs[at - 1]。いま走っているのはその次。
+    const want = new Set([mainLegs[at], mainLegs[at + 1]].filter(Boolean));
+    board.querySelectorAll<HTMLElement>("[data-leg]").forEach((h) => {
+      const d = h.closest("details");
+      if (d) d.open = want.has(h.dataset.leg ?? "");
+    });
+    // 地図の「見ている区間」の帯は、`details` が自分で出す toggle を
+    // `MapSync` が捕まえて付け替える。ここから触らない。
+  }, [at, mainLegs]);
+
   const last = stops.length - 1;
   const departed = left != null && left <= 0;
   const idx = at ?? (departed ? null : 0);
@@ -150,7 +180,10 @@ export default function TripNow({
         </p>
       </div>
 
-      {/* 1. あと何日  2. あと何km */}
+      {/* 大きい数字はひとつ。出る前は日数、出たあとは残りの距離。
+          ゴールは「会えたかどうか」ではなく「ストックホルムに着くこと」にする。
+          相手の都合で会えないことは普通にあるし、そのとき相手が
+          約束を破った人に見えるのがいちばんまずい（docs/nordic-fund.md 1章）。 */}
       <div className="tnow-counts">
         {!departed ? (
           <div className="tnow-count">
@@ -176,42 +209,32 @@ export default function TripNow({
             <span className="tnow-count-w">{departWhen}</span>
           </div>
         ) : (
-          <div className="tnow-count is-gone">
-            <span className="tnow-count-l">{arrived ? "着いた" : "旅の途中"}</span>
-            <span className="tnow-count-n is-wait">
-              {arrived ? stops[last].name : (place ?? "移動中")}
+          <div className="tnow-count is-far">
+            <span className="tnow-count-l">{arrived ? "着いた" : "ストックホルムまで"}</span>
+            <span className="tnow-count-n">
+              {arrived ? (
+                <b>{stops[last].name}</b>
+              ) : (
+                <em>
+                  <b>{leftKm.toLocaleString()}</b>km
+                </em>
+              )}
             </span>
             <span className="tnow-count-w">
               {arrived
                 ? "飛行機のあとは、ぜんぶ人の車と船で来た"
-                : "いる場所は、島の「いまのポスト」と同じものを見ています"}
+                : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
             </span>
+            {!arrived && (
+              <span className="tnow-bar" aria-hidden>
+                <span style={{ width: `${Math.round(((hitchKm - leftKm) / hitchKm) * 100)}%` }} />
+              </span>
+            )}
           </div>
         )}
-
-        {/* 残りの遠さ。進むほど減る。この企画でいちばん意味のある数字。
-            ゴールは「会えたかどうか」ではなく「ストックホルムに着くこと」にする。
-            相手の都合で会えないことは普通にあるし、そのとき相手が
-            約束を破った人に見えるのがいちばんまずい（docs/nordic-fund.md 1章）。 */}
-        <div className="tnow-count is-far">
-          <span className="tnow-count-l">ストックホルムまで</span>
-          <span className="tnow-count-n">
-            <em>
-              <b>{leftKm.toLocaleString()}</b>km
-            </em>
-          </span>
-          <span className="tnow-count-w">
-            {leftKm === 0
-              ? "着いた"
-              : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
-          </span>
-          <span className="tnow-bar" aria-hidden>
-            <span style={{ width: `${Math.round(((hitchKm - leftKm) / hitchKm) * 100)}%` }} />
-          </span>
-        </div>
       </div>
 
-      {/* 2〜4. いま どこ / つぎ どこ / そこで何が起きる */}
+      {/* いま どこにいて、つぎ どこへ向かうのか */}
       <div className="tnow-pair">
         <div className="tnow-at">
           <i>いま</i>
@@ -237,34 +260,25 @@ export default function TripNow({
         </div>
         {next?.art && <Mark art={next.art} size={54} className="tnow-art" />}
       </div>
-      {next?.note && <p className="tnow-what">{next.note}</p>}
+      {/* ここに「つぎの区間で何が起きるか」（`next.note`）を出していた。
+          同じ文が、下の区間ボードの開いているカードにもそのまま出る。
+          開いているカードはいつも「いま走っている区間」なので、**必ず二度読みになる。**
+          区間の話は区間カードが持つ。ここは「どこへ向かっているか」まで。 */}
 
-      {/* 一本道。どこまで来たかが、この帯だけで分かるようにする。 */}
-      <ol className="tnow-rail" aria-label="通る順">
-        {stops.map((s, i) => (
-          <li
-            key={s.name}
-            className={`${i < (idx ?? 0) ? "is-past" : ""}${i === idx ? " is-on" : ""}${
-              i === last ? " is-goal" : ""
-            }`}
-          >
-            <span className="tnow-dot" />
-            <span className="tnow-name">{s.name}</span>
-            {i === last && <span className="tnow-goal">会いたい人がいる</span>}
-          </li>
-        ))}
-      </ol>
-
+      {/* 行き先。**一本道の帯（`.tnow-rail`）はここに置かない。**
+          10の街を横に並べる帯は、すぐ下の地図と、その下の区間ボードと、
+          まったく同じ「クタイシからストックホルムまでの10区間」を3回目に描いていた。
+          どこまで来たかは地図の線がいちばんよく言える。 */}
       <div className="tnow-acts">
-        <a className="tnow-act is-main" href="#map">
+        <a className="tnow-act is-main" href="#carry">
+          この旅に、乗る
+        </a>
+        <a className="tnow-act" href="#map">
           通る道を見る
         </a>
         <Link className="tnow-act" href="/nordic/guide">
           旅のしおり
         </Link>
-        <a className="tnow-act" href="#voices">
-          みんなの意見
-        </a>
       </div>
     </section>
   );

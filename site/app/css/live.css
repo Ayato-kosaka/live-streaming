@@ -27,30 +27,10 @@
   74% { transform: scale(1.16); }
 }
 
-/* しらせの帯。ページの先頭で「何件あって、いちばん近いのはいつか」だけ言う */
-.nx-notice {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin: 0 0 var(--sp-3);
-  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-3);
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-3);
-  background:
-    radial-gradient(120% 140% at 6% 0%, color-mix(in srgb, var(--gold) 30%, transparent), transparent 60%),
-    linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: 0 5px 0 var(--frame-deep), var(--shadow-2);
-}
-.nx-notice-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.nx-notice-t b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
-/* 企画の題名は長い。2行までは折り返して見せて、それ以上は切る
-   （しらせの帯が縦に伸びると、下の札が画面から押し出される） */
-.nx-notice-t i {
-  font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); line-height: 1.55;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-}
-/* 件数を丸い札でもう一度出していた。同じ数を2回言うと、
-   どちらがしらせなのか分からなくなる。合図はベルの赤い丸ひとつに絞る */
+/* しらせの帯（`.nx-notice`）は消した。
+   「これからの予定が2件／つぎは 9/6 …」と書いてあったが、
+   そのすぐ下の札が同じことを大きい時計で言っていて、
+   押せないのに厚み5pxの板でもあった（`island-review-2` 14章）。 */
 
 /* =========================================================
    2. あと何日か（主役の企画の時計）
@@ -186,6 +166,9 @@
    4. これからの道のり（飛び石）
    予定を縦の点線でつなぐより、島を歩いていく絵にする。
    石を1つ踏むごとに1つ先の予定、という見え方。
+
+   **段はそのまま開いて中身になる。** 一覧と札を別々に置くと、
+   押した先に同じ題名がもう一度出てくる（`docs/island-ux.md` 5.8）。
    ========================================================= */
 .nx-road { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
 .nx-road > li { position: relative; display: grid; grid-template-columns: 60px 1fr; gap: var(--sp-3); padding-bottom: var(--sp-4); }
@@ -201,7 +184,9 @@
   background: radial-gradient(circle at 50% 5px, #ddc396 0 4px, transparent 4.5px) 0 0 / 10px 13px repeat-y;
 }
 .nx-road > li:last-child { padding-bottom: 0; }
-.nx-stone { position: relative; width: 60px; height: 56px; display: grid; place-items: center; }
+/* flex の中では既定で縮む。縮むと 56px の絵が 60px の枠からはみ出して、
+   石が隣の字に重なる（掲示板の3歩で 59 > 50 になっていた）。 */
+.nx-stone { position: relative; flex: none; width: 60px; height: 56px; display: grid; place-items: center; }
 .nx-stone svg { position: absolute; inset: 0 auto auto 3px; width: 56px; height: 56px; }
 /* 石に彫ってある番号。石そのものは絵、数字は文字で乗せる */
 .nx-stone b {
@@ -213,36 +198,36 @@
   color: var(--ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-.nx-road-b { min-width: 0; padding-top: var(--sp-1); }
-.nx-road-when { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-1); }
-/* 一覧の日数の札は右端に寄る作りになっている。道のりでは日付のとなりに置く */
-.nx-road-when .count { margin-left: 0; }
-.nx-road-when time { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-/* 子セレクタで止める。ここを子孫セレクタにすると、日数の札の中の数字まで
-   ブロックになって「あと / 1 / 日」と3行に割れる（一度やった） */
-.nx-road-t { display: block; }
-.nx-road-t > b { display: block; font-size: var(--fs-body); font-weight: 900; line-height: 1.55; }
-.nx-road-t > i { display: block; font-size: var(--fs-note); font-style: normal; font-weight: 700; color: var(--ink-2); margin-top: 3px; line-height: 1.7; }
-.nx-road-t:hover > b { color: var(--frame-deep); }
-/* 指で押せる最小は 48px、厚みはその段で6px（`docs/island-design.md` 3章）。
-   40px・厚み3px だと、押しどころとしても合図としても足りていなかった。 */
-.nx-road-go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame);
-  background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
+/* 彫ってあるのを通し番号ではなく日付にした。「2番目」は何も言わないが、
+   日付なら石を目で追うだけで、次がいつ来るのかが分かる。
+   4文字（9/11）が石の面に収まる大きさまで落とす。 */
+.nx-stone b.is-date { font-size: 15px; letter-spacing: -0.02em; }
+.nx-road-b { min-width: 0; }
+/* 段の中身は紙の上の折りたたみ。枠を1本の罫線に落として、
+   石の右に「行が1本ある」だけに見せる（紙の上に枠を積まない）。 */
+.nx-road-b > .fold { border-radius: var(--r-0); background: none; }
+.nx-road-b > .fold > summary { min-height: 56px; padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2); flex-wrap: wrap; }
+/* 石の右に残る幅は 257px しかない。そこに題名・日数の札・開く印を1行で並べると、
+   題名に 111px しか回らず「ヒッチハイクで / 北欧へ」と折り返す。
+   題名とひとことで1行を使いきって、日数と開く印は次の行に下ろす。 */
+.nx-road-b > .fold > summary > .fold-t { flex: 1 0 100%; }
+.nx-road-b > .fold > summary > .fold-n { margin-left: 0; }
+.nx-road-b > .fold > summary > .fold-c { margin-left: auto; }
+/* 日数の札は、一覧では右端に寄る作りになっている。ここでは題名の右、
+   折りたたみの印の手前に置く。台紙（.fold-n のオリーブ）は要らない。
+   日数の札そのものが札の形をしているので、札の上に札が載ってしまう。 */
+.nx-road-b .fold-n { padding: 0; background: none; }
+.nx-road-b .fold-n .count { margin-left: 0; }
+/* ひとことは1行で切らない。石の右は 270px しかなく、
+   「ジョージアを…」で切れると、何の企画なのか分からないまま閉じている。 */
+.nx-road-b .fold-t i {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: var(--lh-note);
 }
-.nx-road-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+.nx-road-b .fold-body { padding-top: var(--sp-2); }
 
 /* =========================================================
    5. 付箋
@@ -263,9 +248,13 @@
   color: #5c4a2a;
   transform: rotate(-1.4deg);
 }
-.nx-notes > li:nth-child(2n) { background: linear-gradient(#dcf1ff, #c3e6fb); transform: rotate(1.2deg); }
-.nx-notes > li:nth-child(3n) { background: linear-gradient(#ffe4ee, #ffcede); transform: rotate(-0.5deg); }
-.nx-notes > li:nth-child(4n) { background: linear-gradient(#e4f7d8, #cdeeba); transform: rotate(1.8deg); }
+/* 紙の色は1種類。以前は並び順で黄・水・桃・緑に塗り分けていたが、
+   色が「何番目に貼られたか」を指しているだけで、読む人には何も言っていなかった
+   （`docs/island-world.md` 3.1「色で分けていいのは配信の型だけ」）。
+   1枚ずつ違って見せるのは、傾きだけで足りる。 */
+.nx-notes > li:nth-child(2n) { transform: rotate(1.2deg); }
+.nx-notes > li:nth-child(3n) { transform: rotate(-0.5deg); }
+.nx-notes > li:nth-child(4n) { transform: rotate(1.8deg); }
 .nx-notes .nx-pin { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); }
 /* 取りに行っているあいだの灰色。付箋と同じ形・同じ傾きで、色だけ抜く */
 .nx-notes.is-wait > li {
@@ -309,6 +298,47 @@
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
 .bd-write { position: relative; }
+
+/* 島で今夜のおたずねを押してきた人に出る、渡ってきた先の受け口。
+   板に留めた紙1枚。押すのは中のボタンだけなので、紙そのものは平ら。 */
+.bd-bridge {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-4) 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-0);
+  background: linear-gradient(var(--paper), var(--paper-2));
+}
+.bd-bridge > b { font-size: var(--fs-body); font-weight: 900; line-height: var(--lh-head); }
+/* 問いのほうは添え物。押した札が主で、何を聞かれたかは思い出せればよい */
+.bd-bridge > i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: var(--lh-note);
+}
+.bd-bridge-go {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 40%, var(--paper)), var(--gold));
+  /* 押せる合図は厚み1種類だけ（`docs/island-design.md` 3章）。48px の押しどころで 6px */
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55), 0 6px 0 var(--frame-deep);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.bd-bridge-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
 .bd-count {
   display: inline-flex;
   align-items: baseline;
@@ -608,6 +638,49 @@
    空の行を22個並べると、そこだけ抜けて見える */
 .rz-card.is-blank .rz-days { margin-top: var(--sp-2); }
 
+/* 今日、島に出ている人。図鑑を名簿で終わらせないための1行。
+   島にいない人の欄には何も出さないので、印が付くのは日替わりの12人だけ。
+   紙の上の事実なので平ら。押せるのは「島へ会いに行く」の1つだけ。 */
+.rz-here {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: var(--sp-2);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-0);
+  /* 朱は「いま選んでいるもの」の色なので使わない（`docs/ac-reference.md` 7章）。
+     数えた事実の札は、オリーブの平ら1種類にそろえる（`.rz-star-tag` と同じ）。 */
+  background: var(--chip);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--chip-ink);
+  text-align: center;
+}
+.rz-here .ic { flex: none; color: var(--chip-ink); }
+.rz-star .rz-here { margin-top: var(--sp-3); }
+/* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く */
+.rz-today {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: var(--lh-note);
+  color: var(--pap-ink);
+}
+.rz-today > b { font-weight: 900; }
+.rz-today > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  min-height: 32px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--frame-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* =========================================================
    9. いまのポスト
    上のしらせ（板の型）と、下の島だより（紙の型）を、はっきり分けて置く。
@@ -696,6 +769,15 @@
   object-fit: cover;
   background: #ded4a2;
 }
+.pap-quote-b { display: grid; gap: 2px; min-width: 0; }
+/* いつ言われるセリフなのか。セリフ本体より小さく、字の下限（11.5px）は割らない */
+.pap-when {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--pap-ink-2);
+}
 .pap-quote blockquote {
   margin: 0;
   font-size: var(--fs-body);
@@ -710,6 +792,7 @@
 .bd-flow > li {
   display: flex;
   align-items: center;
+  /* 石は 60px の枠に 56px の絵。縮められると絵が枠からはみ出す */
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
   border-radius: var(--r-2);

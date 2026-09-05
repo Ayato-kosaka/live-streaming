@@ -84,16 +84,25 @@ export const GLYPHS = {
  */
 export const FLAT = new Set<string>([...Object.keys(nav), ...Object.keys(brand)]);
 
+/**
+ * ブランドのマーク。**`tone` が何であっても単色で描く。**
+ *
+ * 他社のマークは形も色も向こうが決めたもので、こちらの絵の作法（上からの光、
+ * 接地影、左上のハイライト）を足してよいものではない。`FLAT` と分けてあるのは、
+ * `FLAT` が「既定は単色」なのに対して、こちらは「例外を認めない」ため。
+ */
+export const BRAND = new Set<string>(Object.keys(brand));
+
 /** `/design` の並び。書いた順に見本ページへ出る。 */
 export const GROUPS: { title: string; note: string; names: string[] }[] = [
   {
     title: "操作",
-    note: "行の中に置く印。ここだけ単色（currentColor）で、CSS 側の色に従う。",
+    note: "行の中に置く印。ここだけ単色（currentColor）で、CSS 側の色に従う。上からの光もかけない — 色を1つ足すのと同じで、置いた側の色の約束が崩れるため。",
     names: Object.keys(nav),
   },
   {
     title: "ブランド",
-    note: "本物の形を写したもの。角を丸めたり色を足したりしない。",
+    note: "本物の形を写したもの。角を丸めたり色を足したりしない。上からの光も、接地影も、ハイライトもかけない。他人のマークにこちらの絵の作法を混ぜない。",
     names: Object.keys(brand),
   },
   {

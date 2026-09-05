@@ -6,7 +6,7 @@
  * 1日につき1本だけ。その日いちばんコメントが多かった配信を代表にしてある。
  *
  * 静的書き出しなので、今日が何日かはビルド時に決められない。
- * 引くのは画面が出てから（`site/lib/nightly.ts` の `jstToday`）。
+ * 引くのは画面が出てから（`site/lib/nightly.ts` の `jstNow`）。
  */
 
 export type PastStream = {
@@ -40,4 +40,27 @@ export function lastYearOn(md: string, year: number): { s: PastStream; ago: numb
     if (ago >= 1) return { s, ago };
   }
   return null;
+}
+
+/**
+ * この表に入っている、いちばん新しい配信の日。
+ *
+ * **焼き込みなので、書き出した日から先は入っていない。**
+ * 「前に来てから何があったか」を数えるときは、ここより後ろを数えてはいけない。
+ * 数えると、まだ焼かれていないだけの日を「配信が無かった日」と言うことになる。
+ */
+export const LATEST_DAY = "2026-09-04";
+
+/** 日付だけを並べたもの。数えるときにしか要らないので、最初に聞かれてから作る。 */
+let days: string[] | null = null;
+
+/**
+ * after（含まない）から until（含む）までに、配信のあった日が何日あったか。
+ *
+ * **本数ではなく日数。** この表は1日1本にしぼってあるので
+ * （電波切れで分かれた配信を数え上げない）、返せるのは日数のほう。
+ */
+export function streamDaysBetween(after: string, until: string): number {
+  if (!days) days = Object.values(ON_THIS_DAY).flatMap((v) => v.map((s) => s.d));
+  return days.filter((d) => d > after && d <= until).length;
 }

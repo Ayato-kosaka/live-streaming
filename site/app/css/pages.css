@@ -143,13 +143,17 @@
 .ih-home:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7); }
 /* ふだを並べる受け皿。看板を彫りくぼめて、そこに札を打ちつけてある形にする。
    横に流すのをやめたので、はみ出す・隠れるという状態が無くなった。
-   幅に入るだけ折り返す。390px で3列、560px で5列、720px で6列。 */
+   6つとも読める、を守ったまま幅に入るだけ折り返す。
+   360〜519px で3列2段、520〜899px で3〜5列2段、900px から6列1段。 */
 .ih-nav {
   /* 前は flex: 1 0 100% で、6つの札を必ず「あやと島」の下の段に落としていた。
      そのせいで狭い画面の看板が 201px あり、島の外の20面が、
      画面の 1/4 を同じ絵で始めていた（docs/island-review-2.md 4章）。
-     受け皿を「あやと島」の**横**に置くと、札の段はそのままで 58px 減る。 */
-  flex: 1 1 auto;
+     受け皿を「あやと島」の**横**に置くと、札の段はそのままで 68px 減る。
+
+     flex-basis は 0。auto のままだと「札3つぶんの幅をよこせ」と言うので、
+     375px では受け皿ごと下の段に落ちて、看板がまた 185px に戻る。 */
+  flex: 1 1 0;
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
@@ -174,8 +178,11 @@
     margin: -1px; padding: 0; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
-  /* 3列に落とすため、札の内側と最小幅を1段詰める。字は 5文字が最長。 */
-  .ih-nav { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); padding: var(--sp-1); }
+  /* 3列 × 2段に決め打つ。auto-fit のままだと、480px で4列に割れて
+     札が 94px になり、6つのうち4つの字が切れていた。狭い画面では
+     「6つが2段で読める」ほうが、列がきれいに埋まることより大事。
+     すきまを1段詰めるのは、360px でも3列が 90px を保つため。 */
+  .ih-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-1); padding: var(--sp-1); }
   .ih-link { padding: var(--sp-1); gap: 2px; }
   .ih-link img { width: 18px; height: 18px; }
 }
@@ -263,6 +270,22 @@
 /* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
    （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
 .crumbs i { font-style: normal; color: var(--ink-2); margin: 0 1px; }
+/* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
+   朱の枠で言っているのと同じことしか言っていない。
+   狭い画面で、同じ場所の名前を2回出すために 45px は使わない。
+   ただし消さない。目に見えないだけで、読み上げには残す
+   （2段以上あるパンくずは、親への行き先を持っているので出したまま）。 */
+@media (max-width: 719.98px) {
+  .crumbs:not(:has(> span + span)) {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: 0; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
 
 /* ページ見出し。
    島の外のページの地は、紙より明るい生成りになった（tokens.css の --ground-paper）。
@@ -286,7 +309,9 @@
 .phead {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+  /* 絵の頭を h1 の頭にそろえる。center にすると絵が1行ぶん下がって、
+     h1 の左だけがぽっかり空く。 */
+  align-items: start;
   row-gap: var(--sp-1);
   text-align: left;
   margin: 0 0 var(--sp-4);
@@ -830,7 +855,9 @@ a.chip:active, button.chip:active, .chip.link:active {
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--frame-deep) 92%, var(--ink)) 0%,
     color-mix(in srgb, var(--frame-deep) 74%, var(--ink)) 100%);
-  padding: 28px 16px calc(34px + env(safe-area-inset-bottom));
+  /* 余白は段から（docs/island-world.md 5.1）。下だけ、指の届かない
+     画面の底のぶんを足す。 */
+  padding: var(--sp-6) var(--sp-4) calc(var(--sp-6) + var(--sp-1) + env(safe-area-inset-bottom));
   text-align: center;
 }
 .ifoot-back {
@@ -1118,7 +1145,12 @@ a.chip:active, button.chip:active, .chip.link:active {
 .city[open] .city-head::after { transform: rotate(-135deg) translateY(-2px); }
 .city[open] .city-head { background: var(--paper); }
 .city .scards { padding: var(--sp-1) var(--sp-3) var(--sp-3); }
-.city.is-quiet { opacity: 0.62; }
+/* 配信の無かった街。「押せない」を opacity で言うと、街の名前まで
+   3.0 : 1 まで薄くなる。沈めるのは面のほうだけにして、字は墨のまま置く。 */
+.city.is-quiet {
+  background: color-mix(in srgb, var(--pg-sheet-lo) 62%, var(--paper-out));
+  border-style: dashed;
+}
 .city.is-quiet .city-head { cursor: default; }
 .city.is-quiet .city-head::after { display: none; }
 
@@ -1158,7 +1190,12 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: 0 6px 0 color-mix(in srgb, var(--accent-2) 34%, var(--ink));
 }
 .signin-go:active { transform: translateY(6px); box-shadow: none; }
-.signin-go:disabled { opacity: 0.6; box-shadow: none; }
+/* 押せない状態は厚みが無いことで言う。opacity だと字が読めなくなる。 */
+.signin-go:disabled {
+  background: var(--paper-out);
+  color: var(--ink-2);
+  box-shadow: none;
+}
 .signin-skip { margin: var(--sp-2) 0 0; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 /* 外へ出るリンクを水色で言うのをやめた。紙のムラの暗いところでは
    --accent-2 が 4.3 : 1 まで落ちる（docs/island-review-2.md 5.1）。
@@ -1221,7 +1258,8 @@ a.chip:active, button.chip:active, .chip.link:active {
   color: var(--ink);
 }
 .count.is-today b { color: var(--accent-deep); }
-.count.is-past { opacity: 0.62; }
+/* 過ぎた日。同じ理由で opacity をやめ、面だけ一段沈める。 */
+.count.is-past { background: color-mix(in srgb, var(--chip) 46%, var(--paper-out)); }
 
 .pphotos {
   display: grid;

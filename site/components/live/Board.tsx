@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { getIdeas, postIdea, rememberVote, voteIdea, votedLocally, type Idea } from "@/lib/api";
+import {
+  getIdeas,
+  getPoll,
+  pollAnswer,
+  postIdea,
+  rememberVote,
+  voteIdea,
+  votedLocally,
+  type Idea,
+} from "@/lib/api";
 import { BOARD } from "@/content/voice";
 import { LEGENDS } from "@/content/legends";
 import { useAuth } from "@/lib/auth";
@@ -64,6 +73,8 @@ function rememberPost(id: string) {
  */
 export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
+  const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
@@ -84,6 +95,23 @@ export default function Board() {
       // つながらなかったのは見ている人には関係のない話で、
       // ここで謝るより「いちばんに貼る」を出したほうが先に進める。
       .catch(() => setIdeas([]));
+
+    /* 「押す」から「書く」への橋を、渡ってきた側で受ける。
+       島で今夜のおたずねを押した人は、押した直後に「理由も書ける？」で
+       ここへ来る（`docs/island-play.md` 7章）。ところが着いた先は
+       まっさらな入力欄で、何の話をしていたのかが消えている。
+       自分が押した札をここでもう一度見せて、その続きから書けるようにする。
+       押していない人には何も出さない。 */
+    getPoll()
+      .then(({ poll }) => {
+        if (!poll) return;
+        const mineOption = pollAnswer(poll.id);
+        const picked = poll.options.find((o) => o.id === mineOption);
+        if (picked) setAsk({ question: poll.question, label: picked.label });
+      })
+      .catch(() => {
+        /* おたずねが読めない日は、ただ橋が出ないだけ。ここで謝らない */
+      });
   }, []);
 
   const submit = async () => {
@@ -139,6 +167,27 @@ export default function Board() {
           まじめじゃなくていい。思いついたことを、そのまま書いて。
           <b>ログインも名前も要りません。</b>
         </p>
+
+        {/* 島で押してきた人だけに出る。押した札をそのまま見せて、
+            書き出しまで入れておく。ここで「何の話だっけ」に戻さない。 */}
+        {ask && (
+          <div className="bd-bridge">
+            <b>さっき「{ask.label}」を押しましたね</b>
+            <i>{ask.question}</i>
+            <button
+              className="bd-bridge-go"
+              onClick={() => {
+                const seed = `${ask.label}がいいと思う。`;
+                setText((t) => (t.startsWith(seed) ? t : seed + t));
+                box.current?.focus();
+              }}
+            >
+              その理由から書く
+              {/* 行き先は下の入力欄。矢印もそちらを向ける */}
+              <Icon name="chevron" size={13} />
+            </button>
+          </div>
+        )}
 
         <textarea
           ref={box}

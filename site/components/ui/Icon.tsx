@@ -1,5 +1,5 @@
 import { C, INK } from "./icons/pal";
-import { GLYPHS, FLAT, type IconName } from "./icons";
+import { GLYPHS, FLAT, BRAND, type IconName } from "./icons";
 
 export type { IconName };
 
@@ -30,7 +30,9 @@ export type { IconName };
  * だから絵の上に、**上を明るく・下を暗く**する薄い膜を1枚かぶせる。
  *
  * 中身は絵ごとに変わらないので、1つ書いて全部から参照する。
- * 同じ id が何度も出るが、中身が同じなので最初の1つに解決されて困らない。
+ * 同じ id が何度も出るが、**どれも中身が同じ**なので、ブラウザが文書順の1つ目に
+ * 解決しても、その1つ目が消えて2つ目に解決し直されても、描かれるものは変わらない。
+ * **中身が同じものだけを id で共有する** — このファイルの決めごとはこれ1つ。
  */
 const LIGHT = (
   <linearGradient id="ic-light" x1="0" y1="0" x2="0" y2="1">
@@ -59,11 +61,15 @@ export default function Icon({
 }) {
   const draw = GLYPHS[name];
   if (!draw) return null;
-  // 操作の印とブランドマークは、指定が無くても単色。CSS の color に従わせる
-  const flat = tone === "ink" || (tone !== "color" && FLAT.has(name));
+  // 操作の印は、指定が無くても単色。CSS の color に従わせる。
+  // ブランドマークは **`tone="color"` を渡されても単色のまま。**
+  // 他人のマークなので、こちらの都合で色や陰影を足してはいけない
+  // （`docs/island-design.md` 1章「本物の形を写す」／`icons/brand.tsx`）。
+  const flat = tone === "ink" || BRAND.has(name) || (tone !== "color" && FLAT.has(name));
 
-  // 単色の印には光を乗せない。currentColor 1色であることが、
-  // 置いた側の CSS との約束になっている（`.rleg-h .ic` など）
+  // 単色の印には光を乗せない。223 種のうちここに来る 24 種（操作 20・ブランド 4）は、
+  // currentColor 1色であることが置いた側の CSS との約束になっている（`.rleg-h .ic` など）。
+  // 上からの光は色を1つ足すのと同じなので、約束のあるものには乗せない
   if (flat) {
     return (
       <svg
@@ -79,8 +85,6 @@ export default function Icon({
     );
   }
 
-  // 絵ごとに1つ。中身が同じなら重なっても困らないので、名前から作る
-  const gid = `ig-${name}`;
   return (
     <svg
       className={className ? `ic ${className}` : "ic"}
@@ -94,8 +98,18 @@ export default function Icon({
         {LIGHT}
         {/*
           光を絵の形だけに乗せるための抜き型。
-          絵をもう一度描くとマークアップが倍になるので、`use` で同じ形を借りる。
-          塗りの明るさではなく**不透明度**で抜く（`mask-type: alpha`）。
+          塗りの明るさではなく**不透明度**で抜く（`mask-type: alpha`）ので、
+          抜き型の中の色は何でもよい。形だけを見ている。
+
+          ここで絵をもう一度描いているのは、**`<use href="#id">` で同じ形を借りると
+          絵が黙って平らになる**から。id は文書ぜんぶで1つの名前空間なので、
+          同じ印を2つ置くと id がぶつかる。ぶつかった参照は文書順の1つ目に解決され、
+          その1つ目が消えると（別のページへ移った、折りたたみを閉じた）参照先が無くなって、
+          残った印から光だけが落ちる。**壊れないので気づけない。**
+
+          いま id を持つのは「どの印でも中身が同じもの」— この抜き型と `ic-light` の
+          2つだけ。どれに解決されても結果が変わらないので、消えても困らない。
+          代わりに絵1つぶんマークアップが増える。**黙って絵が変わるよりはいい。**
         */}
         <mask
           id={`im-${name}`}
@@ -106,10 +120,10 @@ export default function Icon({
           height="64"
           style={{ maskType: "alpha" }}
         >
-          <use href={`#${gid}`} />
+          {draw(C)}
         </mask>
       </defs>
-      <g id={gid}>{draw(C)}</g>
+      {draw(C)}
       <rect width="64" height="64" fill="url(#ic-light)" mask={`url(#im-${name})`} />
     </svg>
   );

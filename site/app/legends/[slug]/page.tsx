@@ -43,12 +43,12 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         <Zone>
           <div className="zk-hero">
             <span className="zk-hero-no">{l.span ?? l.date.replace(/-/g, "/")}</span>
-            <div className="zk-hero-art">
-              <img src={`/sprites/${l.icon}.webp`} alt="" />
-            </div>
             <h1 className="zk-tape-h">
               <Tape>{l.title}</Tape>
             </h1>
+            <div className="zk-hero-art">
+              <img src={`/sprites/${l.icon}.webp`} alt="" />
+            </div>
             <div className="lg-hero-fig">
               <Fig f={l.figure} />
             </div>

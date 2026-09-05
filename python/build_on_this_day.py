@@ -171,6 +171,8 @@ def main() -> int:
         logger.warning("居た場所が引けなかった日: %d (%s ...)", len(unknown), unknown[:5])
 
     body = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
+    # 焼き込みの終わりの日。ここから先は「配信が無かった」ではなく「まだ焼いていない」
+    latest = max(e["d"] for v in table.values() for e in v)
     OUT_TS.write_text(
         "/**\n"
         " * 1年前の今日、あやとがどこで何を配信していたか。\n"
@@ -210,6 +212,26 @@ def main() -> int:
         "    if (ago >= 1) return { s, ago };\n"
         "  }\n"
         "  return null;\n"
+        "}\n\n"
+        "/**\n"
+        " * この表に入っている、いちばん新しい配信の日。\n"
+        " *\n"
+        " * **焼き込みなので、書き出した日から先は入っていない。**\n"
+        " * 「前に来てから何があったか」を数えるときは、ここより後ろを数えてはいけない。\n"
+        " * 数えると、まだ焼かれていないだけの日を「配信が無かった日」と言うことになる。\n"
+        " */\n"
+        f'export const LATEST_DAY = \"{latest}\";\n\n'
+        "/** 日付だけを並べたもの。数えるときにしか要らないので、最初に聞かれてから作る。 */\n"
+        "let days: string[] | null = null;\n\n"
+        "/**\n"
+        " * after（含まない）から until（含む）までに、配信のあった日が何日あったか。\n"
+        " *\n"
+        " * **本数ではなく日数。** この表は1日1本にしぼってあるので\n"
+        " * （電波切れで分かれた配信を数え上げない）、返せるのは日数のほう。\n"
+        " */\n"
+        "export function streamDaysBetween(after: string, until: string): number {\n"
+        "  if (!days) days = Object.values(ON_THIS_DAY).flatMap((v) => v.map((s) => s.d));\n"
+        "  return days.filter((d) => d > after && d <= until).length;\n"
         "}\n",
         encoding="utf-8",
     )

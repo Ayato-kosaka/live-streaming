@@ -5,7 +5,6 @@ import NextPlans from "@/components/live/NextPlans";
 import { Panel } from "@/components/ui/Bits";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
-import { Stone } from "@/components/live/art";
 
 export const metadata: Metadata = {
   title: "これから",
@@ -26,29 +25,12 @@ export default function NextPage() {
           だけを板のまま残す（`docs/island-world.md` 2.1）。 */}
       <Panel className="paper">
         <h2>自分も企画を出したい</h2>
+        {/* 貼ってから、ここに出るまでの3歩は掲示板の面が図で持っている。
+            同じ図をこちらにも置くと、島じゅうで3回同じことを言うことになるので、
+            ここでは行き先の側から1行だけ言う。 */}
         <p>
-          ここに並んでいるものも、ほとんどが誰かの思いつきから始まった。掲示板からこのページまで、3歩。
+          ここに並んでいるものも、ほとんどが誰かの思いつきから始まった。掲示板に貼る、週のはじめの会議で見る、日にちが決まったらこの面のいちばん上に出る。
         </p>
-        {/* どこへ届くのかが見えないと、書いても意味がない気がして手が止まる。
-            掲示板と同じ3歩を、行き先の側からも見せておく。 */}
-        <ol className="bd-flow">
-          {[
-            { t: "掲示板に貼る", n: "ログインも名前も要りません" },
-            { t: "週のはじめの会議", n: "票の集まったものから見ます" },
-            { t: "このページに出る", n: "日にちが決まったら、いちばん上に" },
-          ].map((f, i) => (
-            <li key={f.t}>
-              <span className="nx-stone">
-                <Stone tone={i === 2 ? "now" : "stone"} />
-                <b>{i + 1}</b>
-              </span>
-              <span>
-                <b>{f.t}</b>
-                <i>{f.n}</i>
-              </span>
-            </li>
-          ))}
-        </ol>
         <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
@@ -57,9 +39,6 @@ export default function NextPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <p className="muted" style={{ marginTop: "var(--sp-4)" }}>
-          企画のページも、骨組みから一緒に作っている。書いてくれる人がいるほど、中身が濃くなる。
-        </p>
         <Link className="tile" href="/next/new">
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">

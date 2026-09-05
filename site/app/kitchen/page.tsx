@@ -60,6 +60,12 @@ export default function KitchenPage() {
       />
 
       <Sheet>
+        {/* 小屋に入って最初に出るのは、スタンプの面そのもの。
+            記録の4つ（32品・5カ国…）は h1 の下の1行と同じことを言っていて、
+            開いた瞬間に同じ数字を2回読ませていた。数えたものと国別・月別のグラフは
+            どちらも「読み物」なので、カタログの下にまとめる（`docs/island-ux.md` 5.6）。 */}
+        <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
+
         <Zone>
           <H art={<ArtStamp size={32} />} note={`${dates[0].replace(/-/g, "/")} からの記録`}>
             ここまでに押したスタンプ
@@ -74,10 +80,6 @@ export default function KitchenPage() {
           />
         </Zone>
 
-        <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
-
-        {/* 来た人が見たいのはスタンプの面そのもの。国別・月別のグラフは
-            「読み物」なので、カタログの下に置く（`docs/island-ux.md` 5.6）。 */}
         <Zone tight>
           <div className="folds">
             <Fold
@@ -189,7 +191,9 @@ export default function KitchenPage() {
 
       </Sheet>
 
-      <Link className="tile" href="/streams/cooking" style={{ ["--tile" as string]: "var(--roof-coral)" }}>
+      {/* 桃はクッキング配信の型の色。型の札の帯と紙の染まり以外に持ち出さない
+          （`docs/island-world.md` 3.3）。行き先の板は小屋の屋根の木の色にする。 */}
+      <Link className="tile" href="/streams/cooking" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
         <img className="tile-icon" src="/sprites/hut-kitchen.webp" alt="" />
         <span className="tile-text">
           <b>クッキング配信そのものを見る</b>

@@ -69,7 +69,9 @@ export default function KitchenCatalog({
   return (
     <>
       <div className="zk-zone is-tight">
-        <H art={<ArtShelf size={32} />} note="押すと、その1品ができるまでの3日ぶんが出てくる">
+        {/* カモメがすぐ上で「押すと3日ぶんが出てくる」と言っている。
+            同じことを2行つづけて読ませないよう、ここは絞り込みの軸だけを言う。 */}
+        <H art={<ArtShelf size={32} />} note={`${recipes.length}品を、国と種類でしぼる`}>
           どれから見る
         </H>
         <div className="kt-tools">

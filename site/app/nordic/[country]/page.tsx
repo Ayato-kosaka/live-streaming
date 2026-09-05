@@ -209,34 +209,37 @@ export default async function NordicCountryPage({
         {arrive?.note && <p className="ncway-note">{arrive.note}</p>}
       </section>
 
+      {/* 見どころ。**街ごとに畳んである。**
+          以前はここが「街の見出し＋その街の段」を13回くり返す形で、
+          41段が全部並んでいた。フィンランドで 3,350px、面ぜんぶの半分以上。
+          詳細ページの目安は2〜3画面（`docs/island-ux.md` 8.1）。
+
+          畳みの二段組みは、しおり（`/nordic/guide`）が先にやっている
+          （章 `.gchap` の中に項目の段）。同じ形をここでも借りる。
+          街の名前を押すとその街が開いて、中に見どころの段が並ぶ。
+          開いた状態で置く街は無い。かわりに、閉じているときも
+          その街のいちばん強いものの名前が1行出る。街の一覧そのものが目次になる。 */}
       <Panel>
         <h2>{c.name}で行くところ</h2>
         <p className="muted">
-          {spots.length}件。街ごとに並べています。段を押すと開きます。
-          写真は Wikimedia Commons から借りたもので、開いてから押すと出どころに飛びます。
+          {spots.length}件を{byCity.size}の街に分けています。街を押すと、その街の段が並びます。
         </p>
-        <div className="chips" style={{ marginTop: 10 }}>
-          {[...byCity.keys()].map((city) => (
-            <a key={city} className="chip" href={`#city-${encodeURIComponent(city)}`}>
-              {city} {byCity.get(city)!.length}
-            </a>
-          ))}
-        </div>
+        {[...byCity.entries()].map(([city, list]) => (
+          <section key={city} className="gchap ncity" id={`city-${encodeURIComponent(city)}`}>
+            <Fold
+              title={<span className="gchap-h">{city}</span>}
+              lead={list[0]?.title}
+              note={`${list.length}件`}
+            >
+              <div className="folds">
+                {list.map((s) => (
+                  <Spot key={s.id} s={s} />
+                ))}
+              </div>
+            </Fold>
+          </section>
+        ))}
       </Panel>
-
-      {[...byCity.entries()].map(([city, list]) => (
-        <section key={city} className="ncity" id={`city-${encodeURIComponent(city)}`}>
-          <h2 className="ncity-name">
-            {city}
-            <em>{list.length}件</em>
-          </h2>
-          <div className="folds">
-            {list.map((s) => (
-              <Spot key={s.id} s={s} />
-            ))}
-          </div>
-        </section>
-      ))}
 
       <CountryIdeas country={c.name} />
 

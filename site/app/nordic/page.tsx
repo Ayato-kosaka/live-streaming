@@ -3,19 +3,18 @@ import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
-import Flag from "@/components/ui/Flag";
+import Fold from "@/components/ui/Fold";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import RouteLegs from "@/components/nordic/RouteLegs";
 import { CarriedBy, MapSync } from "@/components/nordic/Carry";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
-import Highlights from "@/components/nordic/Highlights";
+import Countries from "@/components/nordic/Countries";
 import {
   DEPART,
   HITCH_KM,
   MAIN,
-  NORDIC_COUNTRIES,
   NORDIC_GUIDE,
   FARE_POUR,
   ROUTE,
@@ -47,15 +46,22 @@ const MOVE: Record<string, string> = {
  * そのまま「会えるまでの遠さ」になる。
  * その人が誰なのかは書かない。名前も写真も出さない。
  *
- * 並びは「来た人の頭に浮かぶ順」。
- *   1. いつ出て、会えるまであとどれだけで、いまどこにいるのか（TripNow）
- *   2. どの道を通るのか（地図）
- *   3. どうしてバスに乗らないのか
- *   4. その道で何が起きるのか（区間ごと）
- *   5. 途中で何を見るのか
- *   6. どの国を通るのか
- *   7. 持っていくもの
- *   8. 自分は何を言えるのか（意見）
+ * **この面は、毎晩の配信で「見てね」と言われる面になる。** だから並びは
+ * 「読み物として面白い順」ではなく、**開いた人が次にする動作の順**にしてある。
+ *
+ *   1. いま何が起きているか  … あと何日／いまどこ／つぎどこ（TripNow）
+ *   2. どこを通るのか        … 地図
+ *   3. 自分に何ができるか    … 区間ボード。道しるべを書く・足代を出す
+ *   4. どこへ行けばもっと見られるか … 通る6カ国 → 国のページ
+ *   5. もっと知りたい人だけが開くもの … なぜバスに乗らないのか／総論の意見
+ *
+ * **3 を 5 より先に置いてある。** 企画の説明（どうしてバスに乗らないのか）を
+ * 参加のしかたより前に置くと、読み終わる前に離脱した人は何もできない。
+ * 説明は開きたい人が開く。参加は開かなくてもできるところに置く。
+ *
+ * 縦は 8,098px（9.6画面）あった。`docs/island-ux.md` 8.1 の目安は
+ * 「入口の面は3画面まで」。畳んだのではなく、**同じものを2回出すのをやめた**のが
+ * いちばん効いている（一本道の帯／見どころと6カ国／出発前の残りkm）。
  *
  * 数字は意味のあるものだけ置く。読んで何も分からない数字（「0回、戻らない」）は出さない。
  */
@@ -76,7 +82,6 @@ export default async function NordicPage() {
         country: c?.name,
         how: `${MOVE[l.move]}${l.km ? ` ${l.km.toLocaleString()}km` : ""}${l.time ? ` / ${l.time}` : ""}`,
         art: l.art,
-        note: l.note,
         hitch: l.move === "hitch" ? (l.km ?? 0) : 0,
       };
     }),
@@ -97,6 +102,7 @@ export default async function NordicPage() {
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
       <TripNow
         stops={stops}
+        mainLegs={MAIN.map((l) => l.id)}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30"
         hitchKm={HITCH_KM}
@@ -122,36 +128,33 @@ export default async function NordicPage() {
             reach: FARE_POUR[l.id].reach,
           }))}
         />
-        <MapLegend />
         <p className="nmap-say">
           いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です。
           下の区間を開くと、その線に帯が敷かれます。
         </p>
-      </section>
-
-      <Panel>
-        <h2>どうしてバスに乗らないのか</h2>
-        {plan?.about?.map((p, i) => (
-          <p key={i}>{p}</p>
-        ))}
-        <div className="nquote">
-          <p>
-            バスなら2日で終わる道です。それを親指1本で行くのは、
-            <b>そうやって行かないと、会いに行ったことにならない</b>から。
-            誰の車に乗せてもらえるかで、旅の中身が毎日変わります。
-          </p>
+        {/* 線の読み方。**畳んである。** 6種類の線の見本は、地図を読むために
+            要るものではあるが、初めて開いた人が最初に読むものではない。
+            開いたままだと 200px、地図そのものと同じだけの場所を使っていた。 */}
+        <div className="folds">
+          <Fold
+            title="線の読み方"
+            lead="ヒッチハイク・フェリー・寄り道・飛行機・国境・つながった区間"
+          >
+            <MapLegend />
+          </Fold>
         </div>
-      </Panel>
+      </section>
 
       {/* 連れていくボード。新しいセクションを作らず、区間カードに席を2つ置いてある
           （`docs/nordic-fund.md` 提案1）。旅は集まらなくても行くので、
-          「届かないと行けません」とは書かない。 */}
-      <Panel>
+          「届かないと行けません」とは書かない。
+
+          **企画の説明より前に置く。** ここが、開いた人がその場でできることの全部。 */}
+      <section className="panel paper" id="carry">
         <h2>この10日を、連れていく</h2>
         <p className="muted">
-          区間を押すと、席が2つ出てきます。<b>道しるべ</b>は、その日に何をしてほしいかの言葉。
-          <b>足代</b>は、その区間を越えるのに実際に要るもの1つ。
-          両方そろって、その区間はつながります。
+          区間を押すと、席が2つ出てきます。<b>道しるべ</b>はその日にしてほしいことの言葉、
+          <b>足代</b>はその区間を越えるのに要るもの1つ。両方そろって、区間はつながります。
         </p>
         <CarriedBy />
         <RouteLegs />
@@ -165,64 +168,68 @@ export default async function NordicPage() {
             <Icon name="external" size={14} />
           </a>
         </div>
-      </Panel>
+      </section>
 
-      <Panel>
-        <h2>会いに行く途中で、何を見るのか</h2>
-        <p className="muted">
-          161件から、通る順に8つ。写真を押すと、その国のページの、そこに飛びます。
-        </p>
-        <Highlights />
-      </Panel>
-
+      {/* 通る6カ国。**この面から国のページへ出ていく入口は、ここ1つだけ。**
+          以前はこのすぐ上に「いちばん見たいもの」の写真8枚があって、
+          押した先はどちらも同じ国のページだった（`Countries.tsx`）。 */}
       <Panel>
         <h2>通る6カ国</h2>
-        <div className="ncountries">
-          {NORDIC_COUNTRIES.map((c) => (
-            <Link key={c.slug} className="ncountry" href={`/nordic/${c.slug}`}>
-              <span className="ncountry-leg">{c.leg}</span>
-              <Flag slug={c.slug} size={34} />
-              <span className="ncountry-body">
-                <b>{c.name}</b>
-                <i>{c.catch}</i>
-                <em>
-                  見どころ {c.spots}件 / {c.cities.slice(0, 3).join("・")}
-                  {c.cities.length > 3 ? " ほか" : ""}
-                </em>
-              </span>
-              <Icon name="right" size={16} className="ncountry-go" />
-            </Link>
-          ))}
-        </div>
+        <p className="muted">
+          写真は、その国でいちばん見たいもの。押すと、その国の見どころが全部出ます。
+        </p>
+        <Countries />
       </Panel>
 
+      {/* ここから下は、開きたい人だけが開くもの。 */}
       <Panel>
-        <h2>持っていくもの</h2>
-        <p className="muted">
-          お金、通信、服、サウナの入り方、食べもの{NORDIC_GUIDE.food.length}品、おみやげ
-          {NORDIC_GUIDE.souvenir.length}品、困ったとき。行かない人が読んでも面白いように書いてあります。
-        </p>
+        <h2>もっと知りたい人へ</h2>
+        <div className="folds">
+          <Fold
+            title="どうしてバスに乗らないのか"
+            lead="ジョージアに戻らない一方通行の旅。飛行機はクタイシ発の1本だけ"
+          >
+            {plan?.about?.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+            <div className="nquote">
+              <p>
+                バスなら2日で終わる道です。それを親指1本で行くのは、
+                <b>そうやって行かないと、会いに行ったことにならない</b>から。
+                誰の車に乗せてもらえるかで、旅の中身が毎日変わります。
+              </p>
+            </div>
+          </Fold>
+          {/* 北欧旅ぜんぶへの意見。区間ごとの道しるべが上にあるので、
+              ここは「どの区間にも紐づかない話」の行き先。畳んでおく。 */}
+          <Fold
+            title="この旅ぜんぶに、言いたいこと"
+            lead="区間に紐づかない話は、ここへ。ルートへの口出しも、知り合いの話も"
+          >
+            <div id="voices">
+              <CountryIdeas
+                bare
+                country="北欧旅"
+                note="区間ごとの話は、上の道しるべへ。ここは、どの区間にも紐づかない話の行き先です。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。行く前に全部読みます。"
+                placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
+              />
+            </div>
+          </Fold>
+        </div>
         <Link className="tile" href="/nordic/guide">
           <span className="tile-mark">
             <Icon name="book" size={26} />
           </span>
           <span className="tile-text">
             <b>旅のしおり</b>
-            <i>10のコーナー。目次から開いて読む</i>
+            <i>
+              お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
+              {NORDIC_GUIDE.souvenir.length}品。10のコーナー
+            </i>
           </span>
           <Icon name="right" size={16} className="tile-go" />
         </Link>
       </Panel>
-
-      {/* 北欧旅ぜんぶへの意見。国ごとの募集は各国のページにある。 */}
-      <div id="voices">
-        <CountryIdeas
-          country="北欧旅"
-          title="この旅ぜんぶに、言いたいこと"
-          note="区間ごとの話は、上の道しるべへ。ここは、どの区間にも紐づかない話の行き先です。ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。行く前に全部読みます。"
-          placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
-        />
-      </div>
     </PageShell>
   );
 }

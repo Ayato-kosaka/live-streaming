@@ -247,8 +247,8 @@
 /* 開いている段は、帯を引ききったまま置く。ここが本文の見出しになる。
    帯の上に載る字は、紙の上の字のままだと沈む。蛍光ペン用の墨に替える。 */
 .fold[open] > summary::before { opacity: 1; transform: none; }
-.fold[open] > summary .fold-t b,
-.gchap > .fold > summary .fold-t b { color: var(--marker-ink); }
+.fold[open] > summary > .fold-t > b,
+.gchap > .fold > summary > .fold-t > b { color: var(--marker-ink); }
 
 /* 選んでいるものの印はオレンジ赤の細枠だけ（ac-reference 7章）。
    これは「いま指しているのはここ」の印なので、開いている段すべてには付けない。
@@ -272,8 +272,12 @@
   white-space: nowrap;
 }
 /* 開いたら要約の一行は消す。本文の1行目と同じ文が二度並ぶのがいちばん安く見える。
-   高さを動かして畳むと、開くたびにページ全体の版組みが走るので、そのまま消す。 */
-.fold[open] > summary .fold-t i { display: none; }
+   高さを動かして畳むと、開くたびにページ全体の版組みが走るので、そのまま消す。
+
+   消すのは Fold.tsx が lead として置く <i> **だけ**。子孫まで見にいくと、
+   題の中で <i> を使っている部品（北欧の区間の矢印など）を巻き添えにして、
+   開いた段からだけ矢印が消える、という直しにくい壊れかたをする。 */
+.fold[open] > summary > .fold-t > i { display: none; }
 
 /* 数の札は平ら。押せないものに厚みを付けない（docs/island-world.md 3.4）。
    オリーブのベタは「数えたもの・押せない」の色（同 3.2）。 */
@@ -442,42 +446,6 @@
 /* アイコンにした矢印は、文字だったときと同じ位置に置く */
 .tile-go { flex: none; color: var(--ink-3); }
 .chip .ic, .tile .ic { vertical-align: -0.16em; }
-
-/* --- 北欧: この旅でいちばん見たいもの --- */
-.nhi { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
-@media (min-width: 720px) { .nhi { grid-template-columns: 1fr 1fr; } }
-.nhi-card {
-  display: block;
-  overflow: hidden;
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-3);
-  background: var(--paper);
-  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-1);
-  color: var(--ink);
-}
-.nhi-card:active { transform: translateY(6px); box-shadow: var(--shadow-1); }
-.nhi-img { position: relative; display: block; line-height: 0; background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out)); }
-.nhi-img img { width: 100%; height: 168px; object-fit: cover; }
-.nhi-where {
-  position: absolute;
-  left: 8px; bottom: 8px;
-  display: inline-flex; align-items: center; gap: var(--sp-1);
-  font-size: var(--fs-min); font-weight: 900;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--paper) 94%, transparent);
-  border: 2px solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  padding: 2px var(--sp-2) 2px var(--sp-1);
-  line-height: 1.4;
-}
-.nhi-body { display: grid; gap: 3px; padding: var(--sp-3) var(--sp-3) var(--sp-3); }
-.nhi-body b { font-size: var(--fs-body); font-weight: 900; line-height: 1.45; }
-.nhi-body i { font-style: normal; font-size: var(--fs-note); font-weight: 700; line-height: 1.7; color: var(--ink-2, var(--ink)); }
-.nhi-body em {
-  justify-self: end;
-  display: inline-flex; align-items: center; gap: 3px;
-  font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--frame-deep);
-}
 
 /* --- 国のページの顔写真 --- */
 .nchero {

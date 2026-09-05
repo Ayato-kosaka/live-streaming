@@ -11,6 +11,9 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
 import Days from "@/components/atlas/Days";
+// キッチン小屋の印はサイトで1つ。配信やぐらの札と同じ絵をそのまま使う
+// （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
+import { ArtStamp } from "@/components/streams/Art";
 
 export function generateStaticParams() {
   return COUNTRIES.map((c) => ({ slug: c.slug }));
@@ -24,6 +27,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
+
+/** この面に出す料理の数。これより多い国は、のこりをキッチン小屋へ渡す。 */
+const DISHES = 8;
 
 /** 終わった滞在の日数。まだ続いている滞在はここに入れない（画面側で数え直す）。 */
 function closedDays(stays: { from: string; to: string }[]) {
@@ -173,14 +179,28 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       {cooked.length > 0 && (
         <Panel>
           <h2>この国で作ったごはん</h2>
+          {/* 押せる札は 48px＋厚み6px なので、1品で1行 48px 使う。
+              ジョージアは25品あって、これだけで 1,224px（1.5画面）あった。
+              ここは料理の本体ではなく「この国で何を作ったか」を言う場所なので、
+              8品まで出して、その先はキッチン小屋に渡す。 */}
           <div className="chips">
-            {cooked.map((r) => (
+            {cooked.slice(0, DISHES).map((r) => (
               <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`}>
                 <img className="mini-icon" src={`/sprites/${r.icon}.webp`} alt="" />
                 {r.name}
               </Link>
             ))}
           </div>
+          {cooked.length > DISHES && (
+            <Link className="tile" href="/kitchen" style={{ marginTop: 12 }}>
+              <ArtStamp size={44} className="tile-icon" />
+              <span className="tile-text">
+                <b>のこりの{cooked.length - DISHES}品も見る</b>
+                <i>キッチン小屋のスタンプ帳に、{c.name}の{cooked.length}品ぜんぶ</i>
+              </span>
+              <Icon name="right" size={16} className="tile-go" />
+            </Link>
+          )}
         </Panel>
       )}
 

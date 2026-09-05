@@ -1961,23 +1961,23 @@
 },
 "villager-female-a-walk-a": {
 "h": 192,
-"oh": 164,
-"ow": 114,
-"ox": 24,
-"oy": 0,
+"oh": 140,
+"ow": 168,
+"ox": 0,
+"oy": 4,
 "w": 184
 },
 "villager-female-a-walk-b": {
 "h": 192,
-"oh": 164,
-"ow": 114,
-"ox": 24,
-"oy": 0,
+"oh": 151,
+"ow": 94,
+"ox": 36,
+"oy": 3,
 "w": 184
 },
 "villager-female-b": {
 "h": 192,
-"oh": 153,
+"oh": 152,
 "ow": 107,
 "ox": 8,
 "oy": 6,
@@ -1985,26 +1985,26 @@
 },
 "villager-female-b-sit": {
 "h": 192,
-"oh": 153,
+"oh": 149,
 "ow": 107,
 "ox": 8,
-"oy": 6,
+"oy": 14,
 "w": 152
 },
 "villager-female-b-walk-a": {
 "h": 192,
-"oh": 153,
-"ow": 107,
-"ox": 8,
-"oy": 6,
+"oh": 149,
+"ow": 124,
+"ox": 0,
+"oy": 0,
 "w": 152
 },
 "villager-female-b-walk-b": {
 "h": 192,
-"oh": 153,
-"ow": 107,
-"ox": 8,
-"oy": 6,
+"oh": 142,
+"ow": 103,
+"ox": 14,
+"oy": 1,
 "w": 152
 },
 "villager-female-c": {
@@ -2017,26 +2017,26 @@
 },
 "villager-female-c-sit": {
 "h": 192,
-"oh": 153,
+"oh": 149,
 "ow": 97,
 "ox": 8,
-"oy": 6,
+"oy": 15,
 "w": 142
 },
 "villager-female-c-walk-a": {
 "h": 192,
-"oh": 153,
-"ow": 97,
-"ox": 8,
-"oy": 6,
+"oh": 148,
+"ow": 121,
+"ox": 0,
+"oy": 2,
 "w": 142
 },
 "villager-female-c-walk-b": {
 "h": 192,
-"oh": 153,
-"ow": 97,
-"ox": 8,
-"oy": 6,
+"oh": 144,
+"ow": 93,
+"ox": 14,
+"oy": 0,
 "w": 142
 },
 "villager-female-d": {
@@ -2049,26 +2049,26 @@
 },
 "villager-female-d-sit": {
 "h": 192,
-"oh": 153,
+"oh": 149,
 "ow": 98,
 "ox": 8,
-"oy": 5,
+"oy": 14,
 "w": 143
 },
 "villager-female-d-walk-a": {
 "h": 192,
-"oh": 153,
-"ow": 98,
-"ox": 8,
-"oy": 5,
+"oh": 148,
+"ow": 122,
+"ox": 0,
+"oy": 2,
 "w": 143
 },
 "villager-female-d-walk-b": {
 "h": 192,
-"oh": 153,
-"ow": 98,
-"ox": 8,
-"oy": 5,
+"oh": 143,
+"ow": 93,
+"ox": 14,
+"oy": 0,
 "w": 143
 },
 "villager-female-e": {
@@ -2081,26 +2081,26 @@
 },
 "villager-female-e-sit": {
 "h": 192,
-"oh": 151,
+"oh": 148,
 "ow": 109,
 "ox": 8,
-"oy": 6,
+"oy": 14,
 "w": 149
 },
 "villager-female-e-walk-a": {
 "h": 192,
-"oh": 151,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 147,
+"ow": 129,
+"ox": 0,
+"oy": 1,
 "w": 149
 },
 "villager-female-e-walk-b": {
 "h": 192,
-"oh": 151,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 141,
+"ow": 100,
+"ox": 15,
+"oy": 0,
 "w": 149
 },
 "villager-female-f": {
@@ -2113,26 +2113,26 @@
 },
 "villager-female-f-sit": {
 "h": 192,
-"oh": 150,
+"oh": 147,
 "ow": 124,
 "ox": 8,
-"oy": 5,
+"oy": 14,
 "w": 162
 },
 "villager-female-f-walk-a": {
 "h": 192,
-"oh": 150,
-"ow": 124,
-"ox": 8,
-"oy": 5,
+"oh": 147,
+"ow": 133,
+"ox": 0,
+"oy": 0,
 "w": 162
 },
 "villager-female-f-walk-b": {
 "h": 192,
-"oh": 150,
-"ow": 124,
-"ox": 8,
-"oy": 5,
+"oh": 140,
+"ow": 120,
+"ox": 15,
+"oy": 1,
 "w": 162
 },
 "villager-male-a": {
@@ -2145,26 +2145,26 @@
 },
 "villager-male-a-sit": {
 "h": 192,
-"oh": 153,
+"oh": 148,
 "ow": 107,
 "ox": 8,
-"oy": 6,
+"oy": 16,
 "w": 155
 },
 "villager-male-a-walk-a": {
 "h": 192,
-"oh": 153,
-"ow": 107,
-"ox": 8,
-"oy": 6,
+"oh": 149,
+"ow": 134,
+"ox": 0,
+"oy": 0,
 "w": 155
 },
 "villager-male-a-walk-b": {
 "h": 192,
-"oh": 153,
-"ow": 107,
-"ox": 8,
-"oy": 6,
+"oh": 141,
+"ow": 103,
+"ox": 15,
+"oy": 1,
 "w": 155
 },
 "villager-male-b": {
@@ -2177,26 +2177,26 @@
 },
 "villager-male-b-sit": {
 "h": 192,
-"oh": 152,
+"oh": 148,
 "ow": 110,
 "ox": 9,
-"oy": 6,
+"oy": 16,
 "w": 158
 },
 "villager-male-b-walk-a": {
 "h": 192,
-"oh": 152,
-"ow": 110,
-"ox": 9,
-"oy": 6,
+"oh": 148,
+"ow": 137,
+"ox": 0,
+"oy": 0,
 "w": 158
 },
 "villager-male-b-walk-b": {
 "h": 192,
-"oh": 152,
-"ow": 110,
-"ox": 9,
-"oy": 6,
+"oh": 140,
+"ow": 104,
+"ox": 16,
+"oy": 1,
 "w": 158
 },
 "villager-male-c": {
@@ -2209,26 +2209,26 @@
 },
 "villager-male-c-sit": {
 "h": 192,
-"oh": 149,
+"oh": 146,
 "ow": 97,
 "ox": 7,
-"oy": 5,
+"oy": 13,
 "w": 139
 },
 "villager-male-c-walk-a": {
 "h": 192,
-"oh": 149,
-"ow": 97,
-"ox": 7,
-"oy": 5,
+"oh": 145,
+"ow": 120,
+"ox": 0,
+"oy": 0,
 "w": 139
 },
 "villager-male-c-walk-b": {
 "h": 192,
-"oh": 149,
-"ow": 97,
-"ox": 7,
-"oy": 5,
+"oh": 138,
+"ow": 96,
+"ox": 9,
+"oy": 1,
 "w": 139
 },
 "villager-male-d": {
@@ -2241,26 +2241,26 @@
 },
 "villager-male-d-sit": {
 "h": 192,
-"oh": 152,
+"oh": 149,
 "ow": 109,
 "ox": 8,
-"oy": 6,
+"oy": 15,
 "w": 155
 },
 "villager-male-d-walk-a": {
 "h": 192,
-"oh": 152,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 149,
+"ow": 134,
+"ox": 0,
+"oy": 0,
 "w": 155
 },
 "villager-male-d-walk-b": {
 "h": 192,
-"oh": 152,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 140,
+"ow": 102,
+"ox": 15,
+"oy": 1,
 "w": 155
 },
 "villager-male-e": {
@@ -2273,26 +2273,26 @@
 },
 "villager-male-e-sit": {
 "h": 192,
-"oh": 152,
+"oh": 149,
 "ow": 109,
 "ox": 8,
-"oy": 6,
+"oy": 15,
 "w": 155
 },
 "villager-male-e-walk-a": {
 "h": 192,
-"oh": 152,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 149,
+"ow": 134,
+"ox": 0,
+"oy": 0,
 "w": 155
 },
 "villager-male-e-walk-b": {
 "h": 192,
-"oh": 152,
-"ow": 109,
-"ox": 8,
-"oy": 6,
+"oh": 140,
+"ow": 102,
+"ox": 15,
+"oy": 1,
 "w": 155
 },
 "villager-male-f": {
@@ -2305,26 +2305,26 @@
 },
 "villager-male-f-sit": {
 "h": 192,
-"oh": 152,
+"oh": 149,
 "ow": 110,
 "ox": 8,
-"oy": 6,
+"oy": 15,
 "w": 155
 },
 "villager-male-f-walk-a": {
 "h": 192,
-"oh": 152,
-"ow": 110,
-"ox": 8,
-"oy": 6,
+"oh": 149,
+"ow": 134,
+"ox": 0,
+"oy": 0,
 "w": 155
 },
 "villager-male-f-walk-b": {
 "h": 192,
-"oh": 152,
-"ow": 110,
-"ox": 8,
-"oy": 6,
+"oh": 140,
+"ow": 102,
+"ox": 15,
+"oy": 1,
 "w": 155
 },
 "watermill": {

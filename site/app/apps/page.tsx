@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
-import Fold from "@/components/ui/Fold";
 import { APPS } from "@/content/apps";
 import Icon from "@/components/ui/Icon";
 import { AnvilArt, DishArt, HeadphoneArt, PhoneShot } from "@/components/atlas/art";
@@ -18,8 +17,18 @@ export const metadata: Metadata = {
  * アプリ1本を紙1枚にする。いちばん大きく出すのは**アプリの画面**で、
  * 言葉はそのまわりに置く（docs/ac-reference.md 7章「主役の絵は大きく」）。
  *
- * 節目は「機能が増えた順」に畳んで置く。増えていく様子がこのアプリの中身なので、
- * 中のページまで行かないと見えない、という置きかたにはしない。
+ * ## この面と `/apps/[アプリ]` の分けかた
+ *
+ * 前はこの2面がほとんど同じものだった。どちらも
+ * 端末の絵・長い紹介文・できること4行・節目の一覧を持っていて、
+ * 中へ入っても新しく分かることが無かった。
+ *
+ * ここは**2本を見くらべる場所**にする。絵・一言・できることの名前・出しているところ。
+ * 紹介文と、21件の節目と、そのときの配信は中のページが持つ。
+ *
+ * できることは、行ではなく平らな札で並べる。押せないものなので厚みは付けない
+ * （ac-reference 7章 5）。4行の説明つきで置くと、それだけで 264px あって、
+ * 主役の端末より場所を取っていた。
  */
 
 /** アプリの画面の絵。本物のスクリーンショットが手元に無いので、作りを絵で描く。 */
@@ -27,15 +36,6 @@ const SHOT: Record<string, "food" | "audio"> = {
   nanitabeyo: "food",
   nanikore: "audio",
 };
-
-/** 節目の種類。色では分けない（docs/island-world.md 3.1）。印と言葉で分ける。 */
-const KIND = {
-  release: { icon: "flag", label: "出した" },
-  update: { icon: "refresh", label: "更新" },
-  build: { icon: "laptop", label: "作った" },
-  trouble: { icon: "alert", label: "つまずいた" },
-  milestone: { icon: "medal", label: "節目" },
-} as const;
 
 const fmt = (d: string) => d.replace(/-/g, "/");
 
@@ -68,13 +68,16 @@ export default function AppsPage() {
                   )}
                   <p className="aapp-line">{a.tagline}</p>
                 </div>
-                <p className="aapp-sum">{a.summary}</p>
+                {/* 状態と、できることの名前。1つずつの説明は中のページにある。
+                    印が付いているほうが「できること」、無いほうが「いまどうなっているか」。 */}
                 <div className="chips">
                   <span className="chip">{a.status}</span>
-                  <span className="chip">
-                    <Icon name="brick" size={13} />
-                    {a.milestones.length}の節目
-                  </span>
+                  {a.features.map((f) => (
+                    <span className="chip" key={f.title}>
+                      <Icon name="check" size={13} />
+                      {f.title}
+                    </span>
+                  ))}
                 </div>
                 <div className="aapp-badges">
                   {a.links.map((l) => (
@@ -87,43 +90,25 @@ export default function AppsPage() {
                       {l.label}
                     </a>
                   ))}
-                  <Link className="abadge is-ghost" href={`/apps/${a.slug}`}>
-                    <Icon name="book" size={16} />
-                    作ってきた記録
-                  </Link>
                 </div>
-              </div>
-            </div>
 
-            <h3>いま、これができる</h3>
-            <div className="afeat">
-              {a.features.map((f) => (
-                <div key={f.title}>
-                  <Icon name="check" size={18} />
-                  <span>
-                    <b>{f.title}</b>
-                    <i>{f.note}</i>
+                {/* 中のページへは、何が読めるのかを言って渡す。
+                    「作ってきた記録」だけだと、21件の配信が付いていることが分からない。
+                    札を端末の下ではなく言葉の列に入れるのは、広い画面で
+                    端末の右がぽっかり空いていたから。狭い画面では同じ並びになる。 */}
+                <Link className="tile" href={`/apps/${a.slug}`}>
+                  <span className="tile-mark">
+                    <Icon name="book" size={24} />
                   </span>
-                </div>
-              ))}
-            </div>
-
-            {/* 21行を素で並べると、2本のアプリでこの面が100行になる。畳んで置く。 */}
-            <div className="hlist" style={{ marginTop: 14 }}>
-              <Fold title="機能が増えた順" note={`${grown.length}件`}>
-                <ol className="agrow">
-                  {grown.map((m) => (
-                    <li key={m.date + m.title}>
-                      <span className="agrow-mark" aria-hidden>
-                        <Icon name={KIND[m.kind].icon} size={14} />
-                      </span>
-                      <time>{fmt(m.date)}</time>
-                      <b>{m.title}</b>
-                      {m.note && <i>{m.note}</i>}
-                    </li>
-                  ))}
-                </ol>
-              </Fold>
+                  <span className="tile-text">
+                    <b>作ってきた記録</b>
+                    <i>
+                      {a.name}を {fmt(grown[0].date)} から。{a.milestones.length}の節目と、その日の配信
+                    </i>
+                  </span>
+                  <Icon name="right" size={16} className="tile-go" />
+                </Link>
+              </div>
             </div>
           </Panel>
         );

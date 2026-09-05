@@ -83,8 +83,10 @@ function figures(slug: string) {
         { n: RECIPES.length, unit: "品", label: "ここで決まった料理", note: "メニューはこの日に決まる" },
       ];
     case "monthly":
+      // 「1回 / 毎月末」は読んでも何も分からない数字だったのでやめた
+      // （`docs/island-design.md` 4章）。数えられるのはこの2つ。
       return [
-        { n: 1, unit: "回", label: "毎月末", note: "朝日が出るまで" },
+        { n: 4, unit: "つ", label: "その日に出す賞", note: "出席・名言・おもしろ・投げ銭" },
         { n: "全部", label: "読み返すコメント", note: "その月に流れたぶん" },
       ];
     default:
@@ -117,22 +119,24 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
       />
 
       {/*
-        5つの型を別物に見せる。
-        紙そのものを型の色でごく薄く染めて、蛍光ペンの帯をその色にする。
-        紙の作り（罫線・平らなチップ・厚みを付けない）は5つとも同じにしておく。
+        5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
+        蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて
+        「この色は何を指しているか」に答えられなくなる。紙の作り（罫線・平らなチップ・
+        厚みを付けない）は5つとも同じにしておく。
       */}
       <Sheet
         style={{
-          ["--ty" as string]: t.color,
           ["--zk-paper" as string]: `color-mix(in srgb, ${t.color} 8%, #efe4b6)`,
           ["--zk-paper-lo" as string]: `color-mix(in srgb, ${t.color} 11%, #e7d9a2)`,
           ["--zk-out" as string]: `color-mix(in srgb, ${t.color} 7%, #f4efcf)`,
-          ["--zk-mark" as string]: `color-mix(in srgb, ${t.color} 44%, #dbdc90)`,
         }}
       >
         <Zone>
-          <H art={<ArtSignpost size={32} />} note="だいたい、この順で進みます">
-            この日は、こういう順で進む
+          {/* 見出しは型ごとに変える。5面とも同じ問いで始めると、
+              紙の作りも同じなので5つが同じ面に見える。
+              添えの一行は見出しの言い直しだったので落とした。 */}
+          <H art={<ArtSignpost size={32} />} note={`${t.beat.length}つ`}>
+            {t.flow}
           </H>
           <ol className="rt">
             {t.beat.map((b, k) => {
@@ -180,7 +184,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           <H art={<ArtCam size={32} />} note={`${t.samples.length}本`}>
             まずは、この回から
           </H>
-          <p className="zk-lead">どれも1本で完結します。押すと YouTube が開きます。</p>
+          <p className="zk-lead">この型がいちばん出ている回。押すと YouTube が開く。</p>
           <div className="vids" style={{ marginTop: "var(--sp-3)" }}>
             {t.samples.map((v, k) => (
               <Vid key={v.videoId} {...v} no={k + 1} />
@@ -189,8 +193,9 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
         </Zone>
       </Sheet>
 
+      {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
       {t.deeper && (
-        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: t.color }}>
+        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
           <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
           <span className="tile-text">
             <b>{t.deeper.label}</b>
