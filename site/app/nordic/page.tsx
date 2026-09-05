@@ -124,8 +124,11 @@ export default async function NordicPage() {
       </Panel>
 
       <Panel>
-        <h2>その道で、何が起きるのか</h2>
-        <p className="muted">押すと、その区間の話が出てきます。</p>
+        <h2>この10日を、いっしょに決める</h2>
+        <p className="muted">
+          区間を押すと、その日に何が起きるかと、道しるべの欄が出てきます。
+          道しるべが立っていない区間は、あやとがただ走るだけの区間になります。
+        </p>
         <RouteLegs />
       </Panel>
 

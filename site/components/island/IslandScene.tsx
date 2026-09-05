@@ -639,7 +639,9 @@ const ROUTES: Route[] = [
   { a: foot("now", 10), b: foot("next", 10), bend: 20 },
   { a: foot("kitchen"), b: foot("map", 6), bend: -18 },
   { a: foot("apps"), b: foot("friends", 10), bend: 24 },
-  { a: foot("friends", 10), b: foot("legends", 24), bend: -26 },
+  // 伝説の丘は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。
+  // 崖のふもとで止めて、そこから上は登るものとして残す。
+  { a: foot("friends", 10), b: [PLATEAU.cx + 2, PLATEAU.cy + 100], bend: -26 },
 ];
 
 /** ルートの中央の制御点。曲げないと格子になって、島が公園に見える。 */

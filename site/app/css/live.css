@@ -44,7 +44,8 @@
 .nx-notice-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nx-notice-t b { font-size: 13.5px; font-weight: 900; letter-spacing: 0.04em; line-height: 1.5; }
 .nx-notice-t i { font-style: normal; font-size: 11.5px; font-weight: 800; color: var(--ink-2); line-height: 1.55; }
-/* 件数。ベルの赤い丸と同じ色にして、同じことを指していると分かるようにする */
+/* 件数。赤にしない。赤い丸はベルの1つだけにして、
+   「まだ見ていないものがある」の合図がこの帯に2つ並ばないようにする */
 .nx-notice-n {
   margin-left: auto;
   flex: none;
@@ -54,9 +55,10 @@
   height: 34px;
   padding: 0 9px;
   border-radius: 999px;
-  background: linear-gradient(#f4718b, #e04a68);
-  box-shadow: 0 3px 0 #b93a55, inset 0 2px 0 rgba(255, 255, 255, 0.35);
-  color: #fffdf6;
+  border: 2.5px solid var(--frame-dark);
+  background: linear-gradient(color-mix(in srgb, var(--gold) 45%, var(--paper)), var(--gold));
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  color: var(--ink);
   font-size: 15px;
   font-weight: 900;
   line-height: 1;

@@ -18,8 +18,11 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 
-const SUPER = 2;      // 一度大きく描いてから縮める(輪郭を滑らかにする)
-const SIZE = 512;
+/* 一度大きく描いてから縮める(輪郭を滑らかにする)。
+ * 書き出しは meta.py で長辺 320px に落とすので、その 2.4 倍あれば足りる。
+ * ここを 512(=1024角)にしても、縮めたあとの絵は変わらないまま焼く時間だけ倍になる。 */
+const SUPER = 2;
+const SIZE = 384;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(SIZE * SUPER, SIZE * SUPER);

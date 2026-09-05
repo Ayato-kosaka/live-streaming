@@ -1,6 +1,7 @@
 import { COUNTRY_MAPS } from "./countryMaps";
 import { peakPaths } from "./peak";
 import { NOMINAL_W, placeCities, type Rect } from "./labels";
+import { Compass } from "./art";
 
 /**
  * 国ひとつの寄り地図。国のページの頭に敷く。
@@ -140,6 +141,8 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             </span>
           ))}
         </div>
+
+        <Compass size={40} className="amap-rose" />
 
         <div className="amap-badge">
           <i style={{ width: `calc(${(m.scale.len / w) * 100} * 1cqw)` }} />

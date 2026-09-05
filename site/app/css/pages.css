@@ -2,11 +2,17 @@
    ページ共通（島の外のページ）
 
    ここは「Webページ」ではなく「ゲームの画面」に見せる場所。
-   どうぶつの森の窓を実測して分かった作りは4つで、全部この4つに落とす。
-     1. 角がとても丸い（半径が高さの 1/3 くらい）
-     2. 枠の内側にもうひとつクリームの輪がある（二重枠）
-     3. 影は真下にべたっと。ぼけた影は板が浮いた分だけ、遠くに薄く
-     4. 押せるものには下に厚みがある（沈むと厚みが減る）
+
+   窓の型は2つある（docs/ac-reference.md ⑦）。1つの面で混ぜない。
+
+     板の型 … 押すもの・行き先。厚みのある板。角が丸い。二重枠
+     紙の型 … 一覧と詳細。印刷したページ。影を落とさず、細い罫線で区切る
+
+   どちらにも共通する決まり:
+     1. 角丸は部品の高さの 1/3。ただし大きな面は --r-3 で止める
+     2. 板の厚みは真下にまっすぐ。落ちる影は光の反対＝右下へずらす
+     3. ぼかした影を使わない。ぼかすぶん濃さで見せる
+     4. 押せるものだけに厚みがある。押すと厚みぶん沈む
    ========================================================= */
 
 /* このファイルの中だけで使う派生値。色・影・角丸は tokens.css のものを
@@ -114,11 +120,11 @@
 .ih-home {
   display: inline-flex; align-items: center; gap: 8px;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: 3px solid var(--frame-deep);
-  border-radius: 999px;
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
   padding: 7px 16px 7px 11px;
   font-weight: 900; font-size: 15px;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-body);
   flex: none;
   min-height: 44px;
   box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7);
@@ -143,15 +149,17 @@
   display: inline-flex; align-items: center; gap: 6px;
   color: #fff7e6;
   font-size: 13px; font-weight: 900;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-body);
   padding: 7px 13px;
   min-height: 40px;
-  border-radius: 999px;
-  background: rgba(92, 48, 12, 0.26);
+  border-radius: var(--r-pill);
+  /* 板を彫って中を暗くする。半透明の白を敷くと木に溶けて、
+     押せるふだに見えなかった。 */
+  background: color-mix(in srgb, var(--frame-deep) 34%, transparent);
   box-shadow:
-    inset 0 2px 2px rgba(72, 36, 6, 0.4),
+    inset 0 2px 2px color-mix(in srgb, var(--frame-deep) 46%, transparent),
     inset 0 -1.5px 0 rgba(255, 245, 220, 0.3);
-  text-shadow: 0 1px 0 rgba(72, 36, 6, 0.55);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--frame-deep) 62%, transparent);
   white-space: nowrap;
   transition: transform 0.12s ease;
 }
@@ -173,8 +181,8 @@
   font-size: 12.5px; font-weight: 900;
   color: var(--ink-2);
   background: color-mix(in srgb, var(--paper) 92%, transparent);
-  border: 2.5px solid color-mix(in srgb, var(--frame) 70%, var(--paper));
-  border-radius: 999px;
+  border: var(--bw-1) solid color-mix(in srgb, var(--frame) 70%, var(--paper));
+  border-radius: var(--r-pill);
   padding: 6px 15px;
   margin: 0 0 16px;
   box-shadow: 0 3px 0 color-mix(in srgb, var(--sea-deep) 40%, #05233d);
@@ -192,7 +200,6 @@
   width: 96px; height: 96px;
   object-fit: contain;
   object-position: center bottom;
-  /* 接地影。真下にべたっと落とすと、絵が海の上に置いてあるように見える */
   /* 接地影。真下にべたっと1枚だけ。2枚重ねると合成が2回走る */
   filter: drop-shadow(0 9px 1px color-mix(in srgb, #05233d 34%, transparent));
 }
@@ -216,7 +223,7 @@
   margin: 12px auto 0; max-width: 40em;
   font-size: clamp(13.5px, 3.6vw, 16px);
   font-weight: 800; line-height: 1.85;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-body);
   color: #f4fbfe;
   text-shadow: 0 2px 3px color-mix(in srgb, #05233d 58%, transparent);
 }

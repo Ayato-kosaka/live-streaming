@@ -3,6 +3,7 @@ import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import { Mark } from "./Marks";
+import Signpost from "./Signpost";
 import { ROUTE, nordicCountry, type Leg } from "@/content/nordic";
 
 /**
@@ -16,6 +17,12 @@ import { ROUTE, nordicCountry, type Leg } from "@/content/nordic";
  * 並んでいて、10行ぜんぶが同じ見た目になっていた。実際は、深夜の空港で
  * 朝を待つ日と、十字架の丘を越える日と、夜行フェリーで寝る日は別の一日なので、
  * 絵も別にする（`Marks.tsx`）。
+ *
+ * 区間カードは「連れていくボード」でもある（`docs/nordic-fund.md` 提案1）。
+ * いま入っているのは**道しるべ（言葉）**の席。
+ * もう1つの**足代（お金）**の席は、区間ごとの実費と `GET /island-api/fund` が
+ * そろってから、同じ形でここに足す。金額が無いうちに枠だけ置くと、
+ * 0円のバーが10本並ぶ。それがいちばん悪い見え方になる。
  */
 
 const MOVE: Record<Leg["move"], { label: string; cls: string }> = {
@@ -33,7 +40,7 @@ export default function RouteLegs() {
         const c = l.enters ? nordicCountry(l.enters) : undefined;
         return (
           <Fold
-            key={i}
+            key={l.id}
             title={
               <span className={`rleg-h ${m.cls}`}>
                 <Mark art={l.art} size={38} className="rleg-art" />
@@ -64,6 +71,13 @@ export default function RouteLegs() {
                 <Icon name="right" size={14} />
               </Link>
             )}
+            {/* 道しるべ。この区間で何をしてほしいか。
+                言葉が1つも無い区間は、あやとがそこを走るだけの区間になる
+                （`docs/nordic-fund.md` 提案1）。 */}
+            <div className="rleg-seat">
+              <h3>道しるべ</h3>
+              <Signpost leg={l.id} ask={l.ask} />
+            </div>
           </Fold>
         );
       })}

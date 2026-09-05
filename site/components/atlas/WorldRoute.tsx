@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import MAP from "@/content/atlas/route.json";
 import { peakPaths } from "./peak";
 import { hits, NOMINAL_W, placeCities, type Rect } from "./labels";
+import { Compass } from "./art";
 import { COUNTRIES } from "@/content/countries";
 
 /**
@@ -29,16 +30,6 @@ import { COUNTRIES } from "@/content/countries";
 type Chapter = { id: string; label: string; box: number[] };
 
 /** 凡例に出す移動のしかた。多い順に並べる。 */
-const LEGEND: [string, string][] = [
-  ["land", "電車・バス"],
-  ["air", "飛行機"],
-  ["sea", "船"],
-  ["walk", "歩いた"],
-  ["hitch", "ヒッチハイク"],
-  ["side", "そこから日帰り"],
-];
-
-/** 凡例に出す移動のしかた。地図に出てくる順ではなく、多い順。 */
 const LEGEND: [string, string][] = [
   ["land", "電車・バス"],
   ["air", "飛行機"],
@@ -355,6 +346,9 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               </Link>
             ))}
           </div>
+
+          {/* 方位。北がどちらかを言わない地図は、地図の顔をしていない */}
+          <Compass size={44} className="amap-rose" />
 
           {/* 縮尺。棒の長さは地図の幅に対する割合なので、札の幅ではなく
               ステージの幅（1cqw = ステージ幅の1%）で測る */}

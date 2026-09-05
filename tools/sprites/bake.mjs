@@ -25,11 +25,20 @@ const BASE = process.env.BASE ?? "http://localhost:8904";
 let browser = null;
 let page = null;
 
+/* 焼くたびにテクスチャと形が溜まっていく(同じモデルを使い回すための控え)。
+ * 176点を1つのブラウザで通すと数百MBになり、混んでいるときは道連れで落ちる。
+ * この数ごとに開き直して、使う量を頭打ちにする。 */
+const CHUNK = Number(process.env.CHUNK ?? 20);
+
 /** ブラウザを開いて、焼く準備ができるまで待つ。 */
 async function open() {
   browser = await chromium.launch({
     executablePath: process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    args: ["--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+    args: [
+      "--no-sandbox", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
+      // 同居している他の作業とメモリを取り合うので、使う量を絞る
+      "--disable-dev-shm-usage", "--renderer-process-limit=1", "--js-flags=--max-old-space-size=384",
+    ],
   });
   page = await browser.newPage({ viewport: { width: 820, height: 820 } });
   page.on("pageerror", (e) => console.error("\nERR", String(e).slice(0, 300)));
@@ -50,6 +59,7 @@ await open();
 let n = 0;
 let failed = [];
 for (const s of list) {
+  if (n > 0 && n % CHUNK === 0) await reopen();
   const parts = s.parts.map((x) => (typeof x === "string" ? { url: x } : x));
   let ok = false;
   for (let attempt = 0; attempt < 3 && !ok; attempt++) {
