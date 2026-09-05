@@ -213,7 +213,7 @@ export const SPRITES = [
      広葉樹は樹冠を房に分ける(LEAFY)。針葉樹とヤシは葉がもともと分かれているので掛けない。 */
   { name: "tree-round", parts: [`${NK}/tree_oak.glb`], opts: LEAFY },
   { name: "tree-fat", parts: [`${NK}/tree_fat.glb`], opts: LEAFY },
-  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`] },
+  { name: "tree-tall", parts: [`${NK}/tree_detailed.glb`], opts: { lobes: 0.3 } },
   // tree_blocks は葉が立方体の集まりだが、法線をならすと1個の丸い塊に
   // なってしまい、tree-round と見分けが付かない。房をごく弱く掛けて、
   // 面の向きを崩し、キットの「積み木の木」らしさを戻す

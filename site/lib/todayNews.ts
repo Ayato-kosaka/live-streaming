@@ -6,6 +6,7 @@
  *   1. いま配信中（JST 22:00〜25:00）
  *   2. 今日が企画の当日
  *   3. きのう新しい料理が増えた
+ *   3.5 配信まで2時間を切っている
  *   4. 1年前の今日に配信があった
  *   5. どれも無い日 → 今夜まであと何分
  *
@@ -94,6 +95,24 @@ export function todayNews(now: Date = new Date()): TodayNews {
       body: dish.note,
       href: `/kitchen/${dish.slug}`,
       go: "見にいく",
+    };
+  }
+
+  // 3.5 配信まで2時間を切ったら、それを先に言う。
+  //
+  // 1年前の記録は365日ぶん埋まっているので、放っておくと毎日4番が当たり、
+  // 「今夜22時から。あと20分」が21時台にも出なくなる。
+  // だが配信の直前だけは、思い出より「もうすぐ始まる」のほうが役に立つ。
+  if (night.mins > 0 && night.mins <= 120) {
+    return {
+      kind: "tonight",
+      icon: "lantern",
+      line: `今夜22時から。あと${spanText(night.mins)}`,
+      title: "もうすぐ始まる",
+      body: `あと${spanText(night.mins)}。日本時間の22時から、だいたい2〜3時間。`,
+      href: YOUTUBE,
+      out: true,
+      go: "チャンネルへ",
     };
   }
 

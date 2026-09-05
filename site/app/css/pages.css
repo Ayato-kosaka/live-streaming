@@ -373,67 +373,15 @@
 }
 @media (min-width: 720px) { .panel { padding: 34px 32px 32px; margin-bottom: 38px; } }
 
-/* --- 地の質感 -----------------------------------------------------------
-   紙・棚板・台紙・コルクを描き分けて、目で区切りが付くようにする。
-   質感はぜんぶ CSS のグラデーション。画像もフィルタも使わない。
+/* --- 地は1つ。素材で描き分けない -----------------------------------------
+   ここには棚板の木目・コルク・草の3つの地があった。見ためは面白かったが、
+   `docs/island-world.md` 3.1 で「色で分けていいのは配信の型だけ」と決めた以上、
+   素材も同じ理屈で読まれてしまう。「木目だから行き先、コルクだから貼る場所」
+   という対応を、見る人が探しにいく。探しても何も無い。
+
+   板の面はぜんぶ同じ板、紙の面はぜんぶ同じ紙にする。
+   何の面なのかは、地の素材ではなく見出しと中身が言う。
    ----------------------------------------------------------------------- */
-
-/* 行き先が並ぶところは「棚板」。木目を縦に通して、上から下へ色が落ちる */
-.panel:has(> .tiles),
-.panel:has(> .scards) {
-  --pg-ground:
-    repeating-linear-gradient(90deg,
-      color-mix(in srgb, var(--frame-deep) 7%, transparent) 0 2px,
-      transparent 2px 11px),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--frame) 9%, var(--paper)) 0%,
-      color-mix(in srgb, var(--frame) 30%, var(--paper)) 100%);
-}
-/* 棚には奥行きの線が1本ある */
-.panel:has(> .tiles)::after,
-.panel:has(> .scards)::after {
-  content: "";
-  position: absolute;
-  left: 14px; right: 14px; bottom: 9px;
-  height: 3px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--frame) 46%, transparent);
-  pointer-events: none;
-}
-
-/* 付箋と提案はコルク板。紙より一段暗くして、ふせんが浮くようにする。
-   掲示板は「貼る場所」と「貼ってあるもの」で1枚の板なので、
-   書き込む面（.bin / .brow）と貼ってある面（.bd-list）の両方を板にする。 */
-.panel:has(> .bin),
-.panel:has(> .brow),
-.panel:has(> .bd-list),
-.panel:has(.noteform) {
-  --pg-ground:
-    radial-gradient(circle at 18% 26%, color-mix(in srgb, var(--cliff-line) 26%, transparent) 0 2.4px, transparent 3.4px),
-    radial-gradient(circle at 72% 62%, color-mix(in srgb, var(--cliff-line) 22%, transparent) 0 2px, transparent 3px),
-    radial-gradient(circle at 44% 84%, color-mix(in srgb, var(--cliff-line) 18%, transparent) 0 1.6px, transparent 2.6px),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--cliff) 58%, var(--paper-2)) 0%,
-      color-mix(in srgb, var(--cliff-lo) 56%, var(--paper-2)) 100%);
-  background-size: 84px 84px, 112px 112px, 63px 63px, auto;
-  border-color: var(--frame-dark);
-  --pg-edge: var(--frame-deep);
-  --pg-rim: color-mix(in srgb, var(--frame) 34%, var(--paper-2));
-}
-
-/* いまいる場所と今週の予定は、うっすら草を敷いて「外の場所」に見せる */
-.panel.now-hero,
-.panel:has(> .week) {
-  --pg-ground:
-    radial-gradient(ellipse 70% 46% at 50% 108%,
-      color-mix(in srgb, var(--grass2-hi) 62%, transparent) 0%, transparent 70%),
-    linear-gradient(180deg,
-      var(--paper) 0%,
-      color-mix(in srgb, var(--grass2-hi) 30%, var(--paper)) 100%);
-  border-color: color-mix(in srgb, var(--grass-lo) 40%, var(--frame));
-  --pg-edge: color-mix(in srgb, var(--grass-lo) 40%, var(--frame-dark));
-  --pg-rim: color-mix(in srgb, var(--grass2-hi) 34%, var(--paper));
-}
 
 /* --- 紙の型 -------------------------------------------------------------
    一覧と詳細のパネル。図鑑の面を写す。
@@ -492,12 +440,6 @@
   padding: 0 4px 1px;
 }
 
-/* コルクの上は地が濃い。添え書きの色をそのまま置くと読めないので、
-   本文と同じ濃さまで戻す。 */
-.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(.muted, p) {
-  color: var(--ink);
-}
-
 /* --- 見出し -------------------------------------------------------------
    板の型では「窓の上ぶちにはめた木の札」。
    幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
@@ -549,49 +491,6 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--frame-deep) 62%, var(--frame));
   box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-/* 棚板の面の札は、木そのものの色にする。地が木なので、札も木で揃える。 */
-.panel:has(> .tiles) > h2,
-.panel:has(> .scards) > h2,
-.panel:has(> .tiles) > .bhead > h2,
-.panel:has(> .scards) > .bhead > h2 {
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--frame) 68%, var(--paper)) 0%,
-    var(--frame) 100%);
-  border-color: var(--frame-deep);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    0 4px 0 var(--frame-deep),
-    var(--pg-drop-s);
-}
-/* 草の面の札は葉の色。ここだけ「外」だと分かる。 */
-.panel.now-hero > h2,
-.panel:has(> .week) > h2 {
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--grass2-hi) 78%, var(--paper)) 0%,
-    var(--grass2) 100%);
-  border-color: var(--grass-lo);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.62),
-    0 4px 0 var(--grass-lo),
-    var(--pg-drop-s);
-}
-.panel.now-hero > h2::before, .panel.now-hero > h2::after,
-.panel:has(> .week) > h2::before, .panel:has(> .week) > h2::after {
-  background: color-mix(in srgb, var(--grass-lo) 74%, var(--leaf-c));
-}
-/* コルクの面の札は、板に打ちつけた札。留め具を画鋲の色にする。 */
-.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2) {
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--frame) 40%, var(--paper)) 0%,
-    color-mix(in srgb, var(--frame) 78%, var(--frame-dark)) 100%);
-  border-color: var(--frame-deep);
-}
-.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::before,
-.panel:is(:has(> .bin), :has(> .brow), :has(> .bd-list)) :is(> h2, > .bhead > h2)::after {
-  background: var(--accent);
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent-deep) 42%, transparent), 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* 紙の型の見出しは「白い紙の札を、少し傾けてテープで貼った」もの。
