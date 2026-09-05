@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import VoiceBubble from "@/components/ui/Voice";
 import { Panel, Stat, TileLink } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
@@ -221,39 +222,10 @@ const fmtYm = (d: string) => `${d.slice(0, 4)}年${Number(d.slice(5, 7))}月`;
 /** 声は4つ開けて、残りは畳む。全部並べると、この面がコメント欄そのものになる。 */
 const VOICE_OPEN = 4;
 
+/** 声1つ。吹き出しそのものは `components/ui/Voice.tsx`（`/kitchen/[品]` と共通）。 */
 function Voice({ v, i }: { v: (typeof VOICES)[number]; i: number }) {
-  return (
-    // 吹き出しは押せない。紙の上の引用なので、厚みは付けない（docs/island-world.md 3.4）
-    <li className={`avoice${i % 2 ? " is-r" : ""}`}>
-      {/* アイコンは YouTube から。届かないときのために alt は空にして、
-          名前を隣に文字で置く（絵が出なくても誰の言葉かは分かる） */}
-      {v.icon ? (
-        <img
-          className="avoice-face"
-          src={v.icon}
-          alt=""
-          width={32}
-          height={32}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        <span className="avoice-face is-none" aria-hidden="true">
-          {v.name.replace(/^@/, "").slice(0, 1)}
-        </span>
-      )}
-      <div className="avoice-body">
-        {/* 名前といつかを1行にまとめて、吹き出しの上に置く。
-            日付を吹き出しの下に置くと、次の人の名前と近くなって、
-            どちらの言葉に付いた日付なのか読み取れなくなる */}
-        <span className="avoice-who">
-          {v.name}
-          <em>{fmtYm(v.date)}</em>
-        </span>
-        <p className="avoice-say">{v.text}</p>
-      </div>
-    </li>
-  );
+  // 吹き出しは押せない。紙の上の引用なので、厚みは付けない（docs/island-world.md 3.4）
+  return <VoiceBubble icon={v.icon} name={v.name} meta={fmtYm(v.date)} text={v.text} flip={i % 2 === 1} />;
 }
 
 export default function AboutPage() {

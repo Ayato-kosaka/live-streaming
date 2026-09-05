@@ -3,6 +3,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { GROUPS } from "@/components/ui/icons";
 import Flag from "@/components/ui/Flag";
+import VoiceBubble from "@/components/ui/Voice";
 
 export const metadata: Metadata = {
   title: "デザインの見本",
@@ -206,6 +207,38 @@ export default function DesignPage() {
               </div>
             ))}
           </div>
+        </section>
+        {/*
+          CSS で作った部品の棚。ここが空だったので、引用の吹き出しは
+          `/about` の1面だけに住んでいた（`docs/island-world.md` 4.2）。
+          `/kitchen/[品]` で2面目になったので、`ui.css` へ移してここに置く。
+          **置いていない部品は無いものとする**、という決めのほう。
+
+          印の棚と違って、こちらは本番の CSS（`.avoice`）をそのまま出す。
+          ここだけインラインで書き写すと、本番が変わってもここが変わらない。
+        */}
+        <section style={sheet}>
+          <Head
+            title="引用の吹き出し"
+            count={2}
+            note="視聴者さんが書いた文章を、書かれたまま出すところ。誤字も絵文字も直さない。押せないので厚みは付けない。1つおきに左右へ振る。"
+          />
+          <ul className="avoices">
+            {/* 見本の顔だけは島の中の絵を使う。本番は YouTube のアイコン。
+                ここで外の URL を指すと、繋がらない場所で検品台そのものが欠ける */}
+            <VoiceBubble
+              icon="/characters/ayato.webp"
+              name="@みほんの人"
+              meta="2026年9月"
+              text="アイコンが取れた人。名前は吹き出しの上に置く。中に入れると、どこまでがその人の言葉なのか読めなくなる。"
+            />
+            <VoiceBubble
+              name="@みほんの人2"
+              meta="調理"
+              text="アイコンが取れなかった人は、頭文字の丸に落ちる。"
+              flip
+            />
+          </ul>
         </section>
       </div>
     </PageShell>

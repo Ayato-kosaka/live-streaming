@@ -74,7 +74,9 @@ export function Panel({
   );
 }
 
-export function Stat({ value, label, sub }: { value: ReactNode; label: string; sub?: string }) {
+/* sub も ReactNode。「滞在107日目」のように、画面が出てから数え直すものが入る
+   （`components/atlas/StayDays.tsx`）。静的書き出しなので、日数は焼き込めない。 */
+export function Stat({ value, label, sub }: { value: ReactNode; label: string; sub?: ReactNode }) {
   return (
     <div className="stat">
       <b>{value}</b>

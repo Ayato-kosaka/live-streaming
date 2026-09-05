@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MAP from "@/content/nordic/map.json";
+import Flag from "@/components/ui/Flag";
 import { NORDIC_COUNTRIES, ROUTE } from "@/content/nordic";
 
 /**
@@ -53,6 +54,28 @@ const LEG: Record<string, { cls: string; width: number; dash?: string }> = {
 /** ピンの大きさ。泊まる街を大きく、通るだけの街を小さく。 */
 const PIN: Record<string, number> = { goal: 16, stay: 13, pass: 10, side: 8, land: 10 };
 
+/**
+ * 街の押しどころの半径（ワールド単位）。
+ *
+ * **行き先の違う街と重ならない大きさまでしか広げない。**
+ * 街は11あるが行き先は6つで、ポーランドの5つの街はどれも `/nordic/poland` へ行く。
+ * 同じ紙へ行く街どうしなら、取り違えても同じ場所に着くので重なってよい。
+ * 困るのは**違う国どうし**で、タリン（エストニア）とヘルシンキ（フィンランド）は
+ * 45.8 しか離れていない。ここに 68 の当たりを与えると、
+ * エストニアを押したのに海の向こうのフィンランドへ行く。
+ *
+ * 距離を手で書かない。街が1つ動いたときに黙って壊れる。
+ */
+function hitRadius(c: { x: number; y: number; country: string }, all: typeof MAP.cities) {
+  let near = Infinity;
+  for (const o of all) {
+    if (o.country === c.country) continue;
+    near = Math.min(near, Math.hypot(o.x - c.x, o.y - c.y));
+  }
+  // 34 は絵より少し大きいぶんの上限。それより近い隣がいれば、真ん中で止める。
+  return Math.floor(Math.min(34, near / 2));
+}
+
 export default function RouteMapSvg({ here }: { here?: string }) {
   const { view, land, countries, cities, legs, fly, borders } = MAP;
   const { lakes, rivers, grid, woods, hills, glints, labels, seas, scale, north } = MAP;
@@ -85,7 +108,8 @@ export default function RouteMapSvg({ here }: { here?: string }) {
   const flyLegId = ROUTE.find((l) => l.move === "fly")?.id;
 
   return (
-    <svg
+    <>
+      <svg
       className="nmap"
       viewBox={`0 0 ${view.w} ${view.h}`}
       data-here={here ?? undefined}
@@ -282,6 +306,34 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         </g>
       ))}
 
+      {/* ---- 押しどころ。国のかたちそのもの ------------------------
+           街の丸は絵として正しい大きさ（5〜15px）で描いてあるので、390px の画面では
+           当たりが 23px しか取れない。**丸を太らせても直らない。**
+           タリンとヘルシンキは中心どうしが 15px しか離れていないので、
+           両方に 48px を与えると必ず重なって、押し間違いのほうが増える。
+
+           押しどころを**国のかたち**にする。「街を押すとその国へ」だったものが
+           「その国を押すとその国へ」になる。絵と当たりがずれず
+           （`docs/island-design.md` 3-1）、どの国も 48px よりはるかに大きい。
+           国境をまたぐと行き先が変わるが、それは地図として正しいふるまいで、
+           押し間違いではない。
+
+           街のピンはこのあとに描くので、重なったところではピンが勝つ。
+           どちらも同じ国の紙へ行くので、どちらが勝っても着く先は変わらない。 */}
+      <g className="nm-goes">
+        {Object.entries(countries).map(([slug, d]) => (
+          <Link
+            key={`go-${slug}`}
+            href={`/nordic/${slug}`}
+            prefetch={false}
+            className="nm-go"
+            aria-label={name[slug]}
+          >
+            <path className="nm-cc" d={d} />
+          </Link>
+        ))}
+      </g>
+
       {/* ---- 街 ---------------------------------------------------- */}
       {cities.map((c) => {
         const lb = LABEL[c.id] ?? { dx: 24, dy: 8, at: "start" as const };
@@ -291,6 +343,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         // 名札の当たり判定。文字幅はカタカナなので、字数×文字サイズでほぼ合う。
         const tw = c.name.length * fs + 12;
         const tx = lb.at === "end" ? c.x + lb.dx - tw : c.x + lb.dx;
+        const hr = hitRadius(c, cities);
         return (
           <Link
             key={c.id}
@@ -302,8 +355,10 @@ export default function RouteMapSvg({ here }: { here?: string }) {
             data-id={c.id}
             data-seq={c.seq}
           >
-            {/* 指で押せる幅を稼ぐ。絵は小さくても、押せる場所は絵とピンの周り。 */}
-            <rect className="nm-hit" x={c.x - 34} y={c.y - 34} width="68" height="68" rx="34" />
+            {/* 指で押せる幅を稼ぐ。絵は小さくても、押せる場所は絵と名前の周り。
+                **大きさは隣の街との距離から決める**（`hitRadius`）。68 の決め打ちだと
+                タリンとヘルシンキの当たりが重なって、押した国と違う国へ行っていた。 */}
+            <rect className="nm-hit" x={c.x - hr} y={c.y - hr} width={hr * 2} height={hr * 2} rx={hr} />
             <rect className="nm-hit" x={tx} y={c.y + lb.dy - fs} width={tw} height={fs + 14} rx="10" />
             <ellipse className="nm-pin-shadow" cx={c.x} cy={c.y + r * 0.55} rx={r * 1.15} ry={r * 0.5} />
             {c.cap ? (
@@ -422,6 +477,27 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           {scale.km}km
         </text>
       </g>
-    </svg>
+      </svg>
+
+      {/* 地図の下に、同じ行き先を字でも置く。
+          ---------------------------------------------------------
+          **地図の上だけでは 48px に届かない**（`docs/island-design.md` 3-2）。
+          390px の画面で地図は 340px にしかならないので、いちばん近いタリンと
+          ヘルシンキは中心どうしが 15px しか離れていない。両方に 48px の当たりを
+          置くと必ず重なる。地図を 1,060px 幅にして横に流せば届くが、
+          そうすると**旅の全体が一度に見えなくなる**。地図の役目のほうを守って、
+          48px の口は字に持たせた。
+
+          並びは全部押せるので、1枚ずつに厚みを付けない
+          （`docs/island-design.md` 3章の例外）。押せない札を1つも混ぜないこと。 */}
+      <nav className="nmgo" aria-label="通る6カ国">
+        {NORDIC_COUNTRIES.map((c) => (
+          <Link key={c.slug} className="nmgo-c" href={`/nordic/${c.slug}`} prefetch={false}>
+            <Flag slug={c.slug} size={22} />
+            {c.name}
+          </Link>
+        ))}
+      </nav>
+    </>
   );
 }

@@ -169,6 +169,31 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
 /** 低木の地の色。草より一段暗くないと、地面に沈んで見えなくなる。 */
 const BUSH_DARK = "color-mix(in srgb, var(--grass-lo) 76%, #10361c 24%)";
 
+/* 手描きの飾りの色。
+ *
+ * **焼いたスプライトから測って決める。手で選ばない。**
+ * ここは、焼いた絵の配色を直したときに置いていかれていた。
+ * 同じ島の上に、同じ物が2通りの色で並んでいた（測った値は下）。
+ *
+ *   岩    手描き #8d9aa0 H0.553 V0.63 / 焼いた rock-small H0.111 V0.69
+ *         → **色相が 0.44 ちがう。** 青い灰色と、砂の灰色。色相環の反対側
+ *   切株  手描き #8a5c36 V0.54 / 焼いた stump 暗15% #c79559 V0.78
+ *         → **明度が 0.24 暗い。** render.html の woodbark を
+ *           「暗い焦げ茶にすると急に写実的になる」で明るい山吹色へ直したとき、
+ *           こちらは直っていない。木の幹だけ明るくて、切株が焦げ茶で残っていた
+ *   きのこ 手描き #e2522d H0.034 S0.80 / 焼いた mushroom H0.992 S0.62
+ *         → 朱色と赤。並ぶと別のきのこに見える
+ *
+ * 焼いた絵の「暗15% / 中央 / 明85%」を測って、そこへ置き直した値
+ * （測る道具は `tools/sprites/audit.py`）。 */
+const DECO_ROCK_DARK = "#99907d";
+const DECO_ROCK = "#b2a894";
+const DECO_ROCK_LIT = "#d6cab4";
+const DECO_BARK = "#cc995c";
+/** 切株の天面。公式の切株は天面だけが白っぽく抜ける（woodinner と同じ扱い） */
+const DECO_BARK_TOP = "#f2ddb8";
+const DECO_CAP = "#d65158";
+
 /**
  * 落ち影の色。
  *
@@ -194,12 +219,12 @@ function DecoLayer({ p, shade }: { p: DecoPaths; shade: number }) {
       <path d={p.tuftLit} fill="var(--grass-hi)" opacity="0.88" />
       <path d={p.bush} fill={BUSH_DARK} />
       <path d={p.bushLit} fill="var(--grass-hi)" />
-      <path d={p.bark} fill="#8a5c36" />
-      <path d={p.barkTop} fill="#c69a63" />
-      <path d={p.rockDark} fill="#6f7c84" />
-      <path d={p.rock} fill="#8d9aa0" />
-      <path d={p.rockLit} fill="#c3ccd0" />
-      <path d={p.cap} fill="#e2522d" />
+      <path d={p.bark} fill={DECO_BARK} />
+      <path d={p.barkTop} fill={DECO_BARK_TOP} />
+      <path d={p.rockDark} fill={DECO_ROCK_DARK} />
+      <path d={p.rock} fill={DECO_ROCK} />
+      <path d={p.rockLit} fill={DECO_ROCK_LIT} />
+      <path d={p.cap} fill={DECO_CAP} />
       <path d={p.stem} fill="#f6efe0" />
     </g>
   );
@@ -340,6 +365,38 @@ const SEA_SHELF = "color-mix(in srgb, var(--sea-shelf) 62%, var(--sand) 38%)";
 const SAND_WET = "color-mix(in srgb, var(--sand-wet) 68%, var(--gold) 32%)";
 /** いちばん沖。深い青をさらに沈めた色。画面のふちで海が抜けて見えないように。 */
 const SEA_ABYSS = "color-mix(in srgb, var(--sea-deep) 84%, #0b3f86 16%)";
+
+/* ---- 空と水平線 ----------------------------------------------------------
+   4周目レビュー14章「本物には空があり、水平線がある。あやと島は上が海で終わる」。
+
+   **島は真上から見た板なので、画面の上は「北」であって「遠く」ではない。**
+   それでも、世界の北のはしに水平線を引いて向こうを空にすると、
+   板が「場所」に見えるかどうか。試して、引きの絵では効いたので置いてある。
+
+   置く高さは 170。島の北の浜（y≈288）より沖で、沖を行く舟（y=208）より奥。
+   **あやとは草地から出られない**（clampToIsland）ので、
+   歩いていって水平線の向こうへ回り込むことは起きない。
+
+   色は本物の実測（`/tmp/acref/ref_NH_Plaza_Exercise.jpg`）。
+   上 rgb(100,147,255) → 水平線ぎわ rgb(112,178,254)。雲は rgb(149,190,253)。
+   青が強い。空を水色にすると、芝の緑と喧嘩して絵が濁る。 */
+const SKY_Y = 170;
+/* 空の色。本物の値に海の色を少しだけ混ぜる。
+   混ぜておくと、時間帯（夕・夜）や別の島に移ったときに、空も一緒に動く。
+   混ぜずに置くと、海が紫になった夕方に空だけ真昼の青で残る。 */
+const SKY_HI = "color-mix(in srgb, #6491ff 80%, var(--sea-mid) 20%)";
+const SKY_MID = "color-mix(in srgb, #74aefe 80%, var(--sea-mid) 20%)";
+const SKY_LO = "color-mix(in srgb, #8fc6fe 78%, var(--sea-shallow) 22%)";
+/** 雲。空より明るく、白すぎない（白にすると波のしぶきと同じ強さになる） */
+const CLOUD = "color-mix(in srgb, #d7e6ff 76%, var(--foam) 24%)";
+/** 雲。丸を重ねただけの、輪郭のない塊（`island-design.md` 2章-1） */
+const CLOUDS: [number, number, number][] = [
+  [120, -30, 0.9],
+  [430, -150, 1.3],
+  [760, 20, 0.72],
+  [1030, -80, 1.05],
+  [1290, 30, 0.8],
+];
 
 const sandPath = blob(CX, CY, sandR, SQ);
 const grassPath = blob(CX, CY, grassR, SQ);
@@ -1100,6 +1157,12 @@ function IslandScene() {
               グラデーションの外側の止め色を濃くするだけで出せる。 */}
           <stop offset="1" stopColor={SEA_ABYSS} />
         </radialGradient>
+        {/* 空。本物は上ほど濃い青で、水平線ぎわが明るい */}
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={SKY_HI} />
+          <stop offset="0.72" stopColor={SKY_MID} />
+          <stop offset="1" stopColor={SKY_LO} />
+        </linearGradient>
         <radialGradient id="grassG" cx="38%" cy="28%">
           <stop offset="0" stopColor="var(--grass-hi)" />
           <stop offset="1" stopColor="var(--grass)" />
@@ -1128,6 +1191,7 @@ function IslandScene() {
 
       {/* ------- 海 ------- */}
       <rect x={-500} y={-500} width={WORLD + 1000} height={WORLD + 1000} fill="url(#seaG)" />
+
       {/* 水面の白いかたまり。海が塗りに見えないように、大小2種を撒いてある。
 
           **明滅は外した。** 島の SVG の中で何かを動かすと、その要素の
@@ -1159,6 +1223,22 @@ function IslandScene() {
         ))}
       </g>
 
+      {/* ------- 空と水平線 -------
+          世界の北のはしから向こうを空にする。上の SKY_Y の注を見る。 */}
+      <g aria-hidden>
+        <rect x={-500} y={-500} width={WORLD + 1000} height={SKY_Y + 500} fill="url(#skyG)" />
+        {CLOUDS.map(([cx, cy, k], i) => (
+          <g key={i} transform={`translate(${cx} ${cy}) scale(${k})`} fill={CLOUD} opacity={0.7}>
+            <ellipse cx={-52} cy={16} rx={54} ry={26} />
+            <ellipse cx={30} cy={18} rx={62} ry={24} />
+            <ellipse cx={-8} cy={-8} rx={48} ry={34} />
+          </g>
+        ))}
+        {/* 水平線。線を引かずに、際をひと筋明るくして境目を作る。
+            線を引くと輪郭になる（`island-design.md` 2章-1「輪郭線を引かない」）。 */}
+        <rect x={-500} y={SKY_Y - 9} width={WORLD + 1000} height={18} fill={CLOUD} opacity={0.8} />
+        <rect x={-500} y={SKY_Y + 9} width={WORLD + 1000} height={34} fill={SKY_LO} opacity={0.45} />
+      </g>
       {/* ------- 浅瀬。岸のすぐそばだけ。
           深い青からいきなり浅瀬に変わると、島に輪がはまって見える。
           あいだに2枚だけ挟んで、段差を目立たなくする。 ------- */}

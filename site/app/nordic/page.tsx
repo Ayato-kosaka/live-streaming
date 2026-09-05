@@ -12,6 +12,7 @@ import Support from "@/components/nordic/Support";
 import MapLegend from "@/components/nordic/MapLegend";
 import CountryIdeas from "@/components/nordic/CountryIdeas";
 import Countries from "@/components/nordic/Countries";
+import TripPhotos from "@/components/nordic/TripPhotos";
 import {
   DAYS,
   DAY_OF,
@@ -196,6 +197,10 @@ export default async function NordicPage() {
           決めてあるのは「何日目に、どこへ」までです。日にちは、乗せてもらえた日でずれるので決めていません。
         </p>
         <Days />
+        {/* その日の写真（`docs/nordic-photos.md`）。**貼られたときだけ出る1行。**
+            写真そのものは `/nordic/photos` にある。旅は10日で1日に何枚でも
+            貼るので、旅程表の中に並べると旅程表が写真置き場になる。 */}
+        <TripPhotos />
       </section>
 
       {/* ここから先へ出ていく区画。国のページと、旅のしおりと、企画の説明。

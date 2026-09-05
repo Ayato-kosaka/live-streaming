@@ -78,6 +78,27 @@ const STONE = {
   mat: { dirt: [0.105, 0.10, 0.70], grass: [0.298, 0.46, 0.46] },
   moss: { from: "dirt" },
 };
+/* 砂漠の岩。**苔を生やさない。**
+ *
+ * 中東とイランの島は乾いた土なのに、そこに置いていた rock-flat / rock-tall は
+ * STONE で焼いてあって、苔（h0.298 s0.46 の緑）が貼り付いていた。
+ * 島の地面が黄土（h0.14）なので、**島の上でいちばん彩度の高い緑が
+ * 「砂漠の岩に生えた苔」**になっていた。植物のふりをしていない緑は嘘になる。
+ *
+ * 苔のかわりに、石そのものを砂岩の色へ寄せる。灰色の石を desert に置くと、
+ * 砂の上で色が抜けて「灰色の粒」にしか見えない。 */
+const DRYROCK = {
+  mat: {
+    dirt: [0.086, 0.30, 0.72],
+    stone: [0.086, 0.28, 0.74],
+    stonedark: [0.086, 0.26, 0.60],
+    /* 苔のマテリアル名。緑を落とすだけだと、岩ぜんたいが一色の粘土に
+       見えた（苔が明暗を作っていたので、消すと面の差が無くなる）。
+       日に焼けて白茶けた天面として、いちばん明るい面に割り当て直す */
+    grass: [0.078, 0.30, 0.80],
+  },
+};
+
 /** 灰色の石(stone_*)。土ではなく石のマテリアルを持っている。 */
 const GREYSTONE = {
   mat: { stone: [0.105, 0.09, 0.74], stonedark: [0.105, 0.09, 0.60], grass: [0.298, 0.46, 0.46] },
@@ -415,16 +436,22 @@ const legendWalk = () => {
 const legendRuins = () => [
   { url: `${NK}/statue_obelisk.glb`, pos: [-0.10, 0, -0.16], scale: 1.25 },
   { url: `${NK}/statue_columnDamaged.glb`, pos: [0.50, 0, 0.16], scale: 0.92 },
-  // 石だけ3つ並べると、どこの遺跡だか分からない。ナツメヤシを1本足す
-  { url: `${NK}/tree_palmDetailedShort.glb`, pos: [-0.95, 0, 0.60], scale: 0.74 },
+  // 石だけ3つ並べると、どこの遺跡だか分からない。ナツメヤシを1本足す。
+  // ここは長いあいだココヤシ（tree_palmDetailedShort）だった。
+  // エジプトの遺跡の脇に生えているのはナツメヤシなので、組む側に替える
+  { palm: { seed: 41, h: 0.70, r0: 0.11, r1: 0.088, rings: 6, fronds: 11, len: 0.52, w: 0.24, dates: 2 },
+    pos: [-0.98, 0, 0.62] },
 ];
-/** 遺跡の石。灰色にすると北欧の石になるので、砂の色へ寄せる。 */
+/* 遺跡の石。灰色にすると北欧の石になるので、砂の色へ寄せる。
+ *
+ * **苔は生やさない。** エジプトの砂漠の遺跡に h0.298 の緑が貼り付いていた。
+ * 苔は水のあるところにしか生えないので、それだけで別の土地の絵になる。
+ * 緑を落として、日に焼けた石の面として扱う。 */
 const SANDSTONE = {
   mat: {
     stone: [0.105, 0.34, 0.78], stonedark: [0.100, 0.32, 0.62],
-    dirt: [0.098, 0.36, 0.70], grass: [0.298, 0.40, 0.50],
+    dirt: [0.098, 0.36, 0.70], grass: [0.092, 0.34, 0.64],
   },
-  moss: { from: "stone" },
 };
 
 /* 年越し24時間配信。
@@ -660,6 +687,22 @@ const SPRITES_BASE = [
   { name: "tree-palm", parts: [`${NK}/tree_palmDetailedTall.glb`] },
   { name: "tree-palm-short", parts: [`${NK}/tree_palmDetailedShort.glb`] },
   { name: "tree-palm-bend", parts: [`${NK}/tree_palmBend.glb`] },
+  /* ナツメヤシ。中東の島の木。
+     Kenney のキットに無いので render.html の datePalm で組む
+     （`docs/island-atlas.md` 9章「まだ無いもの」に挙がっていたもの）。
+     大人の木と若木の2本。同じ木が並ぶと林が壁紙に見えるので、
+     種を変えて葉の向きと長さを振ってある。
+     **3本目（株立ち）も焼いてみたが外した。** 島の草木は一様に引くので、
+     種類の数がそのまま構成比になる。木を3種入れると木が半分を占めて、
+     岩とサボテンが消え、乾いた島に見えなくなった。 */
+  { name: "tree-date", parts: [{ palm: {
+    seed: 7, h: 1.95, r0: 0.175, r1: 0.132, rings: 13, fronds: 13,
+    len: 1.18, w: 0.42, dates: 3,
+  } }] },
+  { name: "tree-date-young", parts: [{ palm: {
+    seed: 91, h: 1.42, r0: 0.165, r1: 0.128, rings: 10, fronds: 12,
+    len: 1.06, w: 0.40, lean: -0.11, dates: 1,
+  } }] },
   // 同じ木ばかり並ぶと林が壁紙に見える。輪郭の違うものを足す
   { name: "tree-simple", parts: [`${NK}/tree_simple.glb`], opts: LEAFY },
   { name: "tree-narrow", parts: [`${NK}/tree_tall.glb`], opts: LEAFY_SOFT },
@@ -727,6 +770,10 @@ const SPRITES_BASE = [
   { name: "rock-small", opts: STONE, parts: [`${NK}/rock_smallA.glb`] },
   { name: "rock-tall", opts: STONE, parts: [`${NK}/rock_tallC.glb`] },
   { name: "rock-flat", opts: STONE, parts: [`${NK}/rock_smallFlatA.glb`] },
+  // 砂漠の島（中東・イラン）の岩。苔を生やさない（SANDSTONE）
+  { name: "rock-dry", opts: DRYROCK, parts: [`${NK}/rock_smallFlatA.glb`] },
+  { name: "rock-dry-tall", opts: DRYROCK, parts: [`${NK}/rock_tallC.glb`] },
+  { name: "rock-dry-large", opts: DRYROCK, parts: [`${NK}/rock_largeA.glb`] },
   { name: "stone-large", opts: GREYSTONE, parts: [`${NK}/stone_largeC.glb`] },
   { name: "stone-tall", opts: GREYSTONE, parts: [`${NK}/stone_tallB.glb`] },
   { name: "stone-small", opts: GREYSTONE, parts: [`${NK}/stone_smallD.glb`] },

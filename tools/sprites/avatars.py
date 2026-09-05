@@ -10,7 +10,7 @@
 
 実行: python3 tools/sprites/avatars.py
 出力: /tmp/avatars/<icon>.png（`site/content/residents.ts` の icon がそのまま名前）
-     /tmp/avatars/yt/<url の sha1>.jpg（`site/content/voices.ts` の視聴者さんのアイコン）
+     /tmp/avatars/yt/<url の sha1>.jpg（`voices.ts` と `kitchenTalk.ts` の視聴者さんのアイコン）
 
 視聴者さんのアイコンは yt3/yt4.ggpht.com にあって、ここもブラウザからは出られない。
 落としておかないと、他己紹介の11人が全員おなじ絵で写って、並びを見ても何も分からない。
@@ -23,6 +23,8 @@ import urllib.request
 
 SRC = "/home/user/live-streaming/site/content/residents.ts"
 VOICES = "/home/user/live-streaming/site/content/voices.ts"
+# 引用の吹き出しは2面ある。片方だけ落とすと、料理の面が全員おなじ顔で写る
+KITCHEN_TALK = "/home/user/live-streaming/site/content/kitchenTalk.ts"
 OUT = "/tmp/avatars"
 UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
 
@@ -49,7 +51,10 @@ def voices() -> None:
     """他己紹介に出る視聴者さんのアイコン。名前は URL の sha1（route.mjs と同じ決め方）。"""
     out = f"{OUT}/yt"
     os.makedirs(out, exist_ok=True)
-    urls = re.findall(r'icon:\s*"(https://[^"]+)"', open(VOICES, encoding="utf-8").read())
+    urls = []
+    for f in (VOICES, KITCHEN_TALK):
+        urls += re.findall(r'icon:\s*"(https://[^"]+)"', open(f, encoding="utf-8").read())
+    urls = list(dict.fromkeys(urls))
     got = sum(get(u, f"{out}/{hashlib.sha1(u.split('=')[0].encode()).hexdigest()}.jpg") for u in urls)
     print(f"{got}/{len(urls)} 枚（視聴者さんのアイコン） -> {out}")
 

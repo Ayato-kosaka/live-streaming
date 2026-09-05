@@ -3,6 +3,7 @@ import { Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
+import Here from "@/components/live/Here";
 import { NOW_FALLBACK } from "@/content/site";
 
 /**
@@ -86,7 +87,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <IslandTheme />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {/* 「いま、このページを見ている」を置いてくる（`docs/island-here.md`）。
+              どのページからも動かないと、`/board` を読んでいる人が島に出ない。
+              ログインしていない人には何も起きない（取りにいくものも無い）。 */}
+          <Here />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

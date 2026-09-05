@@ -666,6 +666,14 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   background: color-mix(in srgb, var(--gold) 42%, var(--paper-2));
 }
 .vid-b b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
+/* どこから開くか。3時間の頭ではなく、コメントが重なったところから開く配信にだけ付く
+   （`components/streams/Vid.tsx`）。書かずに途中から始まると壊れて見えるので、
+   カードの中で必ず言う。押しどころはカード全体なので、ここは厚みを持たない。 */
+.vid-peak {
+  font-style: normal;
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--ink-2);
+}
 /* 何本目か。長い企画で「順番」を見せるときだけ付ける */
 .vid-no {
   position: absolute; top: -8px; left: -8px;
@@ -1156,4 +1164,167 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   text-align: center;
   color: #40390c;
   background: var(--zk-chip);
+}
+
+/* ───────── 作った料理の1枚：この晩の台所 ───────── */
+
+/*
+ * 32枚の料理の面は、面の高さの9割が「よその料理へ行く格子」で、
+ * その品について言えているのは添え書きの1文だけだった（`tools/sprites/thin.mjs` で実測）。
+ * 足りないのは飾りではなく事実なので、その日のチャットから引いた3つを置く場所。
+ *
+ * 数字はカードにしない。**1枚の紙の上に、いちばん言いたい1つだけ大きく**
+ * （`docs/island-world.md` 4.3 ①）。ここでいちばん言いたいのは人数。
+ */
+.kd {
+  display: grid;
+  gap: var(--sp-2);
+}
+.kd-lead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--zk-ink);
+}
+/* いちばん言いたい1つ。数だけを大きくして、単位は本文の大きさのまま置く */
+.kd-lead > b {
+  font-size: clamp(34px, 9vw, 46px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: var(--ls-head);
+  color: var(--zk-ink);
+}
+.kd-lead > i {
+  margin-left: calc(var(--sp-1) * -1);
+  font-style: normal;
+  font-size: var(--fs-body);
+  font-weight: 900;
+}
+.kd-sub,
+.kd-foot {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  letter-spacing: var(--ls-body);
+  /* 読ませる字なので --ink-3 まで薄くしない（`docs/island-world.md` 7.1） */
+  color: var(--zk-ink-2);
+}
+/*
+ * その日いた人。島を歩いているのと同じ絵をそのまま並べる。
+ * **名前は付けない。** 誰が誰かは絵だけが示す（`docs/island-concept.md` 6章）。
+ * 押せないので厚みは付けない。足元をそろえるために下ぞろえにする。
+ */
+.kd-folks {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-2) var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3) var(--sp-2) 0;
+  /* 地面。四角い切り替わりを作らないよう、上へ向けて紙の色へ抜く */
+  background: linear-gradient(180deg, transparent 0, var(--zk-shade) 78%);
+  border-radius: var(--r-2);
+}
+.kd-folks > li {
+  flex: none;
+  line-height: 0;
+}
+.kd-folks img {
+  width: 54px;
+  height: 62px;
+  object-fit: contain;
+  /* 足元をそろえないと、絵の縦幅の違いぶんだけ人が浮く（`island-world.md` 6.3） */
+  object-position: center bottom;
+  /* 接地影は1枚だけ。2回かけない。向きとぼかしは `--shadow-1` に合わせる
+     （右下へ 3px ぼかす。真下でぼかさないと「押せる厚み」と見分けがつかない。
+     `docs/island-world.md` 5.3） */
+  filter: drop-shadow(1px 3px 3px rgba(52, 66, 32, 0.34));
+}
+@media (min-width: 720px) {
+  .kd-folks img { width: 66px; height: 76px; }
+}
+/* 引用の吹き出しは紙の区画いっぱいに使う（`.avoices` は `ui.css`） */
+.kd-talk { margin-top: 0; }
+
+/* ───────── 伝説の企画：その期間の配信ぜんぶ ───────── */
+
+/*
+ * 抜き書き6本の下に、実際にあった15本を並べる欄。
+ * ここは**一面ぜんぶ押せる並び**なので、1行ずつに厚みを付けない
+ * （`docs/island-world.md` 3.5）。そのかわり押せない行を1つも混ぜない。
+ * 区切りは罫線でやる。紙の中に影を落とさない（5.3）。
+ */
+.lgd {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--zk-rule-soft);
+}
+.lgd > li { border-bottom: 1px solid var(--zk-rule-soft); }
+.lgd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  /* 指で押せる最小 48px（`docs/island-design.md` 3-2）。
+     字は小さいままでいいので、行の高さのほうで取る */
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-1);
+  color: var(--zk-ink);
+}
+/* 日付。等幅の数字でそろえないと、日ごとに頭がずれて日誌に見えない */
+.lgd-d {
+  flex: none;
+  width: 3.4em;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-body);
+  color: var(--zk-ink-2);
+}
+.lgd-t {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: var(--ls-body);
+  overflow-wrap: anywhere;
+}
+/*
+ * 行の中の札。押せない印なので平ら。色はオリーブ1色にそろえる
+ * （`docs/island-world.md` 3.2「オリーブ＝数えたもの・押せない」）。
+ * 朱（`--pick`）に白字も試したが、描いた画素で 3.77 : 1 しか出ない。
+ * 4.5 を割る色は使わない。**言い分けは色ではなく言葉でやる。**
+ */
+.lgd-t em {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 1px 8px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  font-size: var(--fs-min);
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--chip-ink);
+  vertical-align: 2px;
+}
+/* 何人が書いたか。数えたものなので押せない札の色（オリーブ）で平らに */
+.lgd-n {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: var(--r-0);
+  background: var(--chip);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-body);
+  color: var(--chip-ink);
 }

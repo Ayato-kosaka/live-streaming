@@ -4,12 +4,14 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
-import { APPS, appBySlug, type AppMilestone } from "@/content/apps";
+import { ALL_APPS, appBySlug, type AppMilestone } from "@/content/apps";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { DishArt, HeadphoneArt, PhoneShot } from "@/components/atlas/art";
 
 export function generateStaticParams() {
-  return APPS.map((a) => ({ slug: a.slug }));
+  // 配信より前に作っていた1本も面を持つ。旅に出た理由がそこにあるので、
+  // 「配信が無い＝面が無い」にしてしまうと、話が繋がらない。
+  return ALL_APPS.map((a) => ({ slug: a.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -41,6 +43,9 @@ const KIND: Record<AppMilestone["kind"], { label: string; icon: IconName }> = {
   milestone: { label: "節目", icon: "medal" },
 };
 
+/* 端末の絵は、そのアプリの画面を描き起こしてある2本ぶんしか無い。
+   **無い1本に、あるほうの絵を当てない。** 当てると、旅行計画アプリの面に
+   グルメアプリの画面が出て、面が嘘をつく。 */
 const SHOT: Record<string, "food" | "audio"> = { nanitabeyo: "food", nanikore: "audio" };
 
 export default async function AppPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -82,8 +87,8 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         {/* この面の主役は画面の絵（`docs/island-world.md` 2章の表）。
             工房の一覧からは外したので、端末を出すのはここだけになった。
             そのぶん大きく取る。 */}
-        <div className="aapp-split">
-          <PhoneShot width={240} screen={SHOT[a.slug] ?? "food"} />
+        <div className={SHOT[a.slug] ? "aapp-split" : undefined}>
+          {SHOT[a.slug] && <PhoneShot width={240} screen={SHOT[a.slug]} />}
           <div>
             <p>{a.summary}</p>
             <div className="afeat" style={{ marginTop: 12 }}>
@@ -147,7 +152,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
       </Panel>
 
       <nav className="pager">
-        {APPS.filter((x) => x.slug !== a.slug).map((x) => (
+        {ALL_APPS.filter((x) => x.slug !== a.slug).map((x) => (
           <Link key={x.slug} href={`/apps/${x.slug}`}>
             {x.name}
             <Icon name="right" size={13} />

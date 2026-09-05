@@ -13,6 +13,8 @@ import Today from "@/components/today/Today";
 import { jstNow, readNight } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
+import HereFolks from "./HereFolks";
+import { here } from "@/lib/here";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
@@ -34,8 +36,18 @@ export type { Resident };
 const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやとの背丈。島の主人公なので、住人より必ず大きい。 */
 const AYATO_H = 60;
-/** 住人の背丈。あやとより小さく置く。主役はあやと。 */
-const RESIDENT_H = 46;
+/**
+ * 住人の背丈。あやとより小さく置く。主役はあやと。
+ *
+ * 46 から 52 に上げた。本物のあつ森は、住人が画面の高さの **15〜34%**
+ * （`/tmp/acref/` の 1280×720 の実測。手前の1人で 32〜34%、奥に立っている人で 15〜24%）。
+ * こちらは PC で 11.9%、スマホで（横幅に対して）13.6% だった。
+ * カメラを寄せて近づける手もあるが、それをやると入口6つが1画面に入らなくなる
+ * （4周目レビュー1章と6章は、この1つの数字で引っぱり合っている）。
+ * **絵のほうを大きくすれば、寄りを変えずに近づける。** 小屋の背が 78 なので、
+ * 52 は「小屋の3分の2の背丈の人」。あやと（60）より小さいままにしてある。
+ */
+const RESIDENT_H = 52;
 
 /**
  * 島に住んでいる人の絵(視聴者さんが作ったキャラクター)の置き場。
@@ -636,7 +648,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     const boxes: { x: number; y: number; w: number; h: number }[] = [];
     if (host && hb) {
       for (const el of host.querySelectorAll<HTMLElement>(
-        '.stage-view, .stage-atlas, .today[data-place="corner"]',
+        '.stage-view, .stage-atlas, .stage-index, .today[data-place="corner"]',
       )) {
         const r = el.getBoundingClientRect();
         boxes.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
@@ -710,6 +722,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     let lastK = 0;
     /** 前のフレームであやとに書いた transform。同じなら書かない */
     let lastMe = "";
+    /** 住人ごとの、前に書いた transform。同じなら書かない */
+    const lastPose: string[] = [];
     /** 住人を最後に動かしてから貯めた時間(ms)。放置中は 24fps に落とす */
     let castWait = 0;
     /** 前のフレームでカメラが動いたか。動いていれば住人も 60fps で動かす */
@@ -902,6 +916,50 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         }
       }
 
+      /* --- いま島にいる人（`docs/island-here.md`） ---
+         あやとの居場所を、置いてくる側（`components/live/Here.tsx`）に渡す。
+         Firestore へ書くのは2秒に1回で、そちらが自分で間引く。
+
+         **誰も居なければ、ここは長さを見るだけで終わる。**
+         島の SVG の外にある要素なので、書いても島は描き直されない。 */
+      here.pos.x = me.x;
+      here.pos.y = me.y;
+      here.pos.live = true;
+      const marks = here.marks;
+      if (marks.length) {
+        /* 便りは2秒に1回しか来ない。届いた場所へそのまま置くと2秒ごとに飛ぶので、
+           いまの場所をそこへ寄せていく（0.4秒でほぼ着く）。歩いて見える。 */
+        const ease = 1 - Math.pow(0.02, dt / 400);
+        for (const m of marks) {
+          if (m.self) {
+            // 自分の印は、いま動かしているあやとの頭の上。便りを待たない
+            m.x = me.x;
+            m.y = me.y - AYATO_H - 4;
+          } else {
+            const dx = m.tx - m.x;
+            const dy = m.ty - m.y;
+            if (Math.abs(dx) + Math.abs(dy) > 0.05) {
+              m.x += dx * ease;
+              m.y += dy * ease;
+            } else {
+              m.x = m.tx;
+              m.y = m.ty;
+            }
+          }
+          const el = m.el;
+          if (!el) continue;
+          const off =
+            m.x < vbX - 120 || m.x > vbX + vbW + 120 || m.y < vbY - 160 || m.y > vbY + vbH + 160;
+          // 文字にして同じなら書かない。住人と同じ理由（書けば、そのぶん描き直される）
+          const tf = off ? "" : `translate(${sx(m.x).toFixed(1)}px, ${sy(m.y).toFixed(1)}px)`;
+          if (tf !== m.tf) {
+            m.tf = tf;
+            el.style.display = off ? "none" : "";
+            if (!off) el.style.transform = tf;
+          }
+        }
+      }
+
       // --- 住人 ---
       // 住人が動いたか、カメラが動いたときだけ書く。どちらも無いフレームでは
       // 画面の中の位置が1ドットも変わらないので、書くだけ島を汚すことになる。
@@ -925,10 +983,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           // これは視聴者さんが投げ銭で作った絵なので、勝手に裏返さない。
           //
           // 立ち話が向かい合って見えるかどうかは、位置と間で表す。
-          g.setAttribute(
-            "transform",
-            `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`,
-          );
+          /* 同じ姿勢なら書かない。**書いた要素は、動いていなくても描き直される。**
+             12人のうち、立ち止まって遠くを見ている人（gaze）は姿勢が変わらないし、
+             ゆっくり揺れている人も、0.1度きざみでは何フレームも同じ値になる。 */
+          const tf = `translate(${v.x.toFixed(1)} ${(v.y + pose.dy).toFixed(1)}) rotate(${pose.rot.toFixed(1)})`;
+          if (tf !== lastPose[i]) {
+            lastPose[i] = tf;
+            g.setAttribute("transform", tf);
+          }
         }
         const w = whoRefs.current[i];
         if (w) {
@@ -964,6 +1026,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         if (k !== lastK) {
           lastK = k;
           hostRef.current?.style.setProperty("--ws", `${Math.max(TAP_MIN, RESIDENT_H * k).toFixed(1)}px`);
+          /* いま島にいる人の丸いアイコンも、倍率で伸び縮みさせる。
+             固定の大きさにすると、寄ったときだけ地図のピンのように浮いて、
+             島の上に立っている感じが消える。26 ワールド単位＝住人の頭ぶん。 */
+          hostRef.current?.style.setProperty("--hs", `${Math.min(56, Math.max(26, 26 * k)).toFixed(1)}px`);
         }
         /* 札が看板ロゴの下へ入ったか。**入ったら看板のほうが引く。**
            看板は一度読めば済む飾りで、札は今から歩いて行く先だから、
@@ -1119,11 +1185,15 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         setOpenSpot(best);
       }
 
-      // --- 奥行きの並び。変わったときだけ描き直す ---
-      const sig = villagers.map((v) => Math.round(v.y / 24)).join(",") + "|" + Math.round(me.y / 24);
-      if (sig !== lastOrder) {
-        lastOrder = sig;
-        setOrder(sig);
+      /* --- 奥行きの並び。変わったときだけ描き直す ---
+         誰も動いていないフレームでは並びも変わらない。それでも文字列を作ると、
+         1秒に60回ぶんのゴミを出すだけになる。動いたフレームだけ数える。 */
+      if (stepCast || moving) {
+        const sig = villagers.map((v) => Math.round(v.y / 24)).join(",") + "|" + Math.round(me.y / 24);
+        if (sig !== lastOrder) {
+          lastOrder = sig;
+          setOrder(sig);
+        }
       }
 
       camBusy = camMoved;
@@ -1168,6 +1238,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       stop();
       io.disconnect();
       document.removeEventListener("visibilitychange", vis);
+      /* 島から離れたら、あやとの居場所を渡すのをやめる。
+         島の外のページでは、その人はページの建物のそばに立つ（`lib/here.ts`）。 */
+      here.pos.live = false;
     };
   }, [camWant, villagers]);
 
@@ -1577,6 +1650,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         ))}
       </div>
 
+      {/* いま、ほんとうにここにいる人（`docs/island-here.md`）。
+          上の住人（視聴者さんが作ったキャラクター）とは別物で、
+          こちらは丸い YouTube のアイコンに、右下のオンラインの印が付く。
+          **押せない。** 誰も居なければ何も出ないし、そのときの値段はゼロ。 */}
+      <HereFolks />
+
       {/* 吹き出し。画面の上にどんと出して、どこを押しても閉じる。
           住人のセリフと、島に降りた人への名乗り（カモメ）が同じ器を使う。 */}
       {talking && (
@@ -1662,6 +1741,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       <Link className="stage-atlas" data-ui href="/atlas" prefetch={false}>
         <Icon name="map" size={15} />
         {UI.atlas}
+      </Link>
+
+      {/* 行き先をぜんぶ並べた面への口。
+          島に建っている10軒は押せば入れるが、**その先（料理32品・国18・
+          伝説8・北欧6…）は島からは名前も見えない。** 島から3タップ以上かかる面が
+          残るので、道しるべを1本立てる。ここを通れば島からどこへでも2タップ。
+          カメラの操作（引き／寄り）の下に置くのは、どちらも「行き先」ではなく
+          島を見わたすための道具だから。バーの6つとは列を分ける。 */}
+      <Link className="stage-index" data-ui href="/all" prefetch={false}>
+        <Icon name="signpost" size={15} />
+        ぜんぶ
       </Link>
 
       {/* 到着の演出。空が白く飛んで、カモメが先に島へ降りていく */}

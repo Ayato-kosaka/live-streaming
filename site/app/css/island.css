@@ -506,6 +506,112 @@
 .who-name b { overflow: hidden; text-overflow: ellipsis; }
 
 /* =========================================================
+   いま、ほんとうにここにいる人（docs/island-here.md）
+   ---------------------------------------------------------
+   上の住人（視聴者さんが作ったキャラクター）とは**別物**なので、
+   見た目でも分ける（`docs/island-here.md` 2章の表）。
+
+     住人   … 視聴者さんが作った絵。押すと喋る。日替わりの顔ぶれ
+     ここ   … 丸い YouTube のアイコン。**押せない**。開いているあいだだけ
+
+   押せないので、板（厚み）にしない。**完全に平ら**にして、
+   落ち影だけ右下へずらす（`docs/island-world.md` 3.4）。
+   丸のふちは紙の色で、島のどの地の上でも切り抜ける。
+
+   位置は `IslandStage` の rAF が transform で書く。島の SVG の外にあるので、
+   ここを何回書き換えても島は描き直されない。
+   ========================================================= */
+.labels.is-here { z-index: 2; }
+.here {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+/* 足元の接地影。**浮かせない**（`docs/island-design.md` 2章の3）。
+   自分の印はあやとの頭の上に出るので、そちらには付けない（下に影が付く）。 */
+.here::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--hs, 32px) / -4);
+  top: -3px;
+  width: calc(var(--hs, 32px) / 2);
+  height: 6px;
+  border-radius: 50%;
+  background: #134a2c;
+  opacity: 0.18;
+}
+.here.is-me::after { display: none; }
+.here-body {
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  transform: translate(-50%, 0);
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+.here-av {
+  position: relative;
+  display: block;
+  width: var(--hs, 32px);
+  height: var(--hs, 32px);
+}
+.here-icon {
+  display: block;
+  width: var(--hs, 32px);
+  height: var(--hs, 32px);
+  border-radius: 50%;
+  /* ふちは紙。海の上でも草の上でも、丸が地から切り抜ける */
+  border: 2.5px solid var(--paper);
+  background: var(--paper-2);
+  box-shadow: 2px 4px 5px var(--cast);
+  overflow: hidden;
+}
+.here-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* オンラインの印。**桃は「いま」の色**（`docs/island-world.md` 3.2）。
+   緑を新しく足すと、島の色の表に無い色が1つ増える。
+   「いまここにいる」は、まさに桃が指しているもの。 */
+.here-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 40%;
+  min-width: 10px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--paper);
+  box-sizing: border-box;
+}
+/* 名札。住人の名札（.who-name）と形をそろえるが、**厚みは付けない**。
+   あちらは押せる人に付いていて、こちらは押せない。 */
+.here-name {
+  display: block;
+  max-width: 132px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.92);
+  box-shadow: 2px 4px 5px var(--cast);
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 吹き出しが開いているあいだは、島の上の字を引かせる（住人の名札と同じ） */
+.stage.is-talking .here-name { opacity: 0; transition: opacity 0.18s; }
+
+/* =========================================================
    吹き出し
    ---------------------------------------------------------
    島の上に浮かべると見切れるので、画面の上にどんと出す。

@@ -18,6 +18,57 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    /* いま島にいる人(docs/island-here.md)。
+       **ここだけはブラウザから直接読み書きする。**
+       他の人の動きを「動いて見える」速さで出すには、数秒ごとに Function へ
+       聞きにいくのでは足りない。onSnapshot で受けたいので、ここだけ開ける。
+
+       開けても危なくない形にしてある。
+         - **名前とアイコンを入れさせない。** 入れさせると他人の名前を名乗れる。
+           入るのは居場所と時刻だけで、誰なのかは islandApi が本人確認した
+           residents(チャンネルと、本人が出してよいと言った名前・アイコン)と
+           uid で突き合わせて、読む側が決める
+         - **書けるのは自分のぶんだけ。** ドキュメントIDが uid と一致すること
+         - **項目を4つに絞る。** 知らない項目を足せない
+         - **seenAt はサーバー時刻でなければ通さない。** 手元の時計を書かせると、
+           ずっと「オンライン」でいられる
+         - **1秒に1回より速くは書かせない。** 書いた回数で課金されるので、
+           ここを開けるのは財布を開けるのと同じでもある。ブラウザ側にも
+           2秒しばりがあるが、あれは自分で外せる。速さを決めるのは、
+           外せないほうに置く
+       読むのは誰でも。ログインしていなくても、いる人が見える。 */
+    match /islandHere/{uid} {
+      /* 置いてよい形か。create と update で同じものを見るので、1つにまとめる。
+         **exists() を使わない。** ルールの中から別のドキュメントを読むと、
+         書くたびに読み1回ぶんの代金が乗る。create は「まだ無いとき」、
+         update は「もうあるとき」に呼ばれると決まっているので、
+         前の値が要る条件は update のほうにだけ書けばよい。 */
+      function shape() {
+        return request.auth != null
+          && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(["at", "x", "y", "seenAt"])
+          && request.resource.data.seenAt == request.time
+          && request.resource.data.at is string
+          && request.resource.data.at.size() <= 60
+          && request.resource.data.at.matches("^/[A-Za-z0-9/_-]*$")
+          && request.resource.data.x is number
+          && request.resource.data.x >= 0 && request.resource.data.x <= 1200
+          && request.resource.data.y is number
+          && request.resource.data.y >= 0 && request.resource.data.y <= 1200;
+      }
+      /** 前に置いてから1秒たったか。置き直しと、消すのに掛ける。 */
+      function slow() {
+        return request.time > resource.data.seenAt + duration.value(1, 's');
+      }
+      allow read: if true;
+      allow create: if shape();
+      allow update: if shape() && slow();
+      /* 消すのも1秒に1回まで。ここを開けたままにすると、消して作り直すを
+         繰り返して update の縛りをすり抜けられる。
+         消せなかったぶんは、60秒たてば読む側が出さなくなる。 */
+      allow delete: if request.auth != null && request.auth.uid == uid && slow();
+    }
+
     // あやと島。ブラウザからは触らせない(islandApi 経由のみ)。
     match /island/{docId} { allow read, write: if false; }
     match /islandIdeas/{docId} { allow read, write: if false; }
@@ -26,6 +77,14 @@ service cloud.firestore {
     match /islandRate/{docId} { allow read, write: if false; }
     match /islandUsers/{docId} { allow read, write: if false; }
     match /islandDrafts/{docId} { allow read, write: if false; }
+
+    /* 北欧旅の、その日の写真とその日いた人(docs/nordic-photos.md)。
+       貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
+       ここを開けると「読むのは誰でも」を書きたくなるが、そうすると
+       写真の置き場も、その日いた人の一覧も、まとめて引けるようになる。
+       画面が要るのは「写真のある日ぶん」だけなので、Function に絞らせる。 */
+    match /nordicPhotos/{docId} { allow read, write: if false; }
+    match /nordicDays/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {

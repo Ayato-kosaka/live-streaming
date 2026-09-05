@@ -1,8 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { SPOTS } from "../island/layout";
+import { DOORS, SPOTS } from "../island/layout";
 import { Gull } from "../island/Guide";
+import Icon from "./Icon";
 import { FOOT, UI } from "@/content/voice";
+
+/** 行き先を全部並べた面。上の現在地の行と、下の砂浜の両方から行ける。 */
+export const ALL_HREF = "/all";
+export const ALL_LABEL = "島のなか ぜんぶ";
 
 export function IslandHeader({ current }: { current?: string }) {
   return (
@@ -30,6 +35,43 @@ export function IslandHeader({ current }: { current?: string }) {
         </nav>
       </div>
     </header>
+  );
+}
+
+/**
+ * 現在地の行。
+ *
+ * 左が「いまどこにいるか」、右が「どこへでも行ける口」。
+ * **口を上の帯には入れない。** 帯は行き先6つの受け皿で、狭い画面では
+ * 3列×2段にちょうど収まっている（`app/css/pages.css` の `.ih-nav`）。
+ * ここへ7つ目を足すと列が割れて、6つの名前が切れる。名前が切れた札は
+ * 入口として働かないので、器を別に立てる（`layout.ts` の `DOORS` の決まり）。
+ *
+ * パンくずの行はもともと全部の面にあり、狭い画面では「島 › ○○」の1段だけの
+ * ときに見た目を消している（真上の帯が同じことを言っているため）。
+ * その行を借りると、**新しい段を1つも増やさずに**口を置ける。
+ */
+function WayRow({
+  crumbs,
+  atAll,
+}: {
+  crumbs?: { label: string; href?: string }[];
+  atAll?: boolean;
+}) {
+  return (
+    <div className="wayrow">
+      {crumbs ? <Crumbs items={crumbs} /> : <span />}
+      {/* **その面自身への口は出さない。** `/all` の上に「ぜんぶ」を出すと、
+          押しても同じ紙が出てくる。厚みのある板は「どこかへ行ける」と
+          言っているので（`docs/island-design.md` 3-3）、行き先が
+          いま居る場所なら、言っていることが嘘になる。 */}
+      {!atAll && (
+        <Link className="way-all" href={ALL_HREF} prefetch={false}>
+          <Icon name="signpost" size={16} />
+          <span className="way-all-long">島のなか</span>ぜんぶ
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -102,6 +144,16 @@ export function PageHead({
   );
 }
 
+/**
+ * ページの終わり。島に戻ってきたところ（`docs/island-world.md` 1.6-3）。
+ *
+ * **ここには10軒ぜんぶ並べる。** 上の帯を6つに絞ってあるのは、
+ * 帯が「いま、どこへ行くか」を選ばせる列だからで、狭い列に10個入れると
+ * どれも読めなくなる。砂浜は面を読み終わったあとの場所なので、
+ * 選ばせる列ではなく**戻り道の一覧**として置ける。
+ * これで、帯に出ていない4軒（作った料理・伝説の企画・いまどこ・住んでる人）へも
+ * どの面からでも1回で行ける。
+ */
 export function IslandFooter() {
   return (
     <footer className="ifoot">
@@ -109,6 +161,18 @@ export function IslandFooter() {
       <Link href="/" className="ifoot-back" prefetch={false}>
         <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
+      <nav className="ifoot-doors" aria-label="島に建っているもの">
+        {DOORS.map((d) => (
+          <Link key={d.id} href={d.href} prefetch={false} className="ifoot-door">
+            <img src={`/sprites/${d.icon}.webp`} alt="" loading="lazy" />
+            {d.label}
+          </Link>
+        ))}
+        <Link href={ALL_HREF} prefetch={false} className="ifoot-door is-all">
+          <Icon name="signpost" size={18} />
+          {ALL_LABEL}
+        </Link>
+      </nav>
       <p className="ifoot-note">{FOOT.note}</p>
     </footer>
   );
@@ -118,16 +182,19 @@ export default function PageShell({
   children,
   current,
   crumbs,
+  atAll,
 }: {
   children: ReactNode;
   current?: string;
   crumbs?: { label: string; href?: string }[];
+  /** この面が `/all` そのものか。自分への口を出さないために渡す。 */
+  atAll?: boolean;
 }) {
   return (
     <>
       <IslandHeader current={current} />
       <main className="page">
-        {crumbs && <Crumbs items={crumbs} />}
+        <WayRow crumbs={crumbs} atAll={atAll} />
         {children}
       </main>
       <IslandFooter />

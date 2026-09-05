@@ -24,6 +24,14 @@ const load = () => {
   return cache;
 };
 
+/**
+ * `/state` を1回だけ取ってきて、みんなで使い回す。
+ *
+ * 「いま島にいる人」（`lib/here.ts`）も、誰なのかを引くのにこれが要る。
+ * 島の数字と同じものなので、別に取りにいかせない。
+ */
+export const loadState = load;
+
 export type StatKey = keyof typeof STATS_FALLBACK | "activeFriends";
 
 /** 焼き込みの値をまず返し、最新値が取れたら差し替える。 */

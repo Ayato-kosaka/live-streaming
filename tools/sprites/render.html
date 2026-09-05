@@ -952,6 +952,322 @@ function applyPose(root, clips, pose) {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* ナツメヤシ                                                          */
+/* ------------------------------------------------------------------ */
+
+/* 中東の島には、ずっと Kenney のヤシ(tree_palm*)が生えていた。
+ * あれはココヤシで、乾いた土に立っているのはナツメヤシ。キットに無いので組む。
+ *
+ * ココヤシと見分けている手がかりは3つで、どれも silhouette に出る。
+ *   1. **幹が太くて、うろこがある。** 落ちた葉の付け根が菱形に残る。
+ *      ココヤシは丸くつるりとした柱で、ここがいちばん違う
+ *   2. **葉が多い。** 20枚前後が四方へ出て、外側ほど深く垂れる。
+ *      ココヤシの5枚のヘラとは輪郭が別物になる
+ *   3. **実の房が重そうに垂れている。** これが無いとただのヤシ
+ * 逆に、この3つを外すと何をどう塗ってもココヤシに見える。
+ *
+ * 面の数は、幹224・葉1枚あたり62・実の房1つ180 で、1本 2,000 面ほど。
+ * Kenney の広葉樹(房に分けたあと)と同じ桁に収まっている。 */
+
+/** 三角形を1枚足す。法線はあとで一括して計算する */
+function pushTri(P, C, a, b, c, ca, cb, cc) {
+  P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+  C.push(ca[0], ca[1], ca[2], cb[0], cb[1], cb[2], cc[0], cc[1], cc[2]);
+}
+
+/** 明るさの係数を [r,g,b] に広げる。葉は色みまで振る(leafTint と同じ扱い) */
+function shade(v) { return [v, v, v]; }
+
+/**
+ * 位置と色から、そのままメッシュにできる形を作る。
+ * @param {number[]} P 頂点
+ * @param {number[]} C 頂点色
+ * @return {THREE.BufferGeometry} 形
+ */
+function rawGeo(P, C) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(P), 3));
+  g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(C), 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** 種から決まるばらつき。同じ種なら毎回同じ木になる */
+function seeded(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+/**
+ * 幹。輪ごとに半径を振り、輪と輪で頂点を半目盛ずらして菱形のうろこを作る。
+ *
+ * うろこは形だけでは出ない。島に置くと幹の幅は 6px しかないので、
+ * 出っぱりの1pxでは消える。**頂点色で明暗も一緒に焼く。**
+ * 出た輪を明るく、へこんだ輪を暗くすると、幅が1pxでも段が数えられる。
+ */
+function dateTrunk(o) {
+  const { h, r0, r1, rings, lean, seg = 9 } = o;
+  const P = [], C = [];
+  const step = (Math.PI * 2) / seg;
+  const ringAt = (k) => {
+    const t = k / rings;
+    // 上へ行くほど細く、そして少しだけ反る。まっすぐの柱は電柱に見える
+    const rr = (r0 + (r1 - r0) * t) * (k % 2 ? 1.0 : 0.895);
+    const cx = lean * t * t;
+    const cy = h * t;
+    const off = (k % 2) * step * 0.5;
+    const v = [];
+    for (let i = 0; i < seg; i++) {
+      const a = off + i * step;
+      v.push([cx + Math.cos(a) * rr, cy, Math.sin(a) * rr]);
+    }
+    // 出た輪(k 奇数)が明るい。へこんだ輪は影の側に置く
+    return { v, c: shade(k % 2 ? 1.13 : 0.80) };
+  };
+  let A = ringAt(0);
+  for (let k = 1; k <= rings; k++) {
+    const B = ringAt(k);
+    for (let i = 0; i < seg; i++) {
+      const j = (i + 1) % seg;
+      pushTri(P, C, A.v[i], B.v[i], A.v[j], A.c, B.c, A.c);
+      pushTri(P, C, B.v[i], B.v[j], A.v[j], B.c, B.c, A.c);
+    }
+    A = B;
+  }
+  // てっぺんの蓋。葉の付け根が乗るので、少しふくらませる
+  const top = [lean, h + r1 * 0.5, 0];
+  for (let i = 0; i < seg; i++) {
+    const j = (i + 1) % seg;
+    pushTri(P, C, A.v[i], top, A.v[j], A.c, shade(1.2), A.c);
+  }
+  return rawGeo(P, C);
+}
+
+/**
+ * 葉1枚。羽状(小葉が羽根のように並ぶ)を、中軸の帯＋左右の小葉で組む。
+ *
+ * 小葉を1枚の板の縁をギザギザにして表さない。ギザギザだと、
+ * 横から見たときにただの板になる。**左右に開いた V にする**と、
+ * どの向きから見ても羽根が重なって見える。
+ *
+ * @param {object} o len:長さ / w:小葉の張り出し / pitch:根元の仰角(度)
+ *                   / droop:先までに垂れる角度(度) / n:小葉の段数
+ * @param {function} rnd ばらつき
+ * @return {{P:number[],C:number[]}} 頂点と、明るさだけの頂点色
+ */
+function dateFrond(o, rnd) {
+  const { len, w, pitch, droop, n = 10 } = o;
+  const P = [], C = [];
+  const rad = (d) => (d * Math.PI) / 180;
+  // 中軸。角度を少しずつ倒しながら積む。二次曲線で置くより、
+  // 「先へ行くほど急に垂れる」ナツメヤシの反りに近い
+  const pts = [], tan = [];
+  let x = 0, y = 0;
+  const steps = n * 2;
+  for (let k = 0; k <= steps; k++) {
+    const s = k / steps;
+    const a = rad(pitch - droop * Math.pow(s, 1.45));
+    pts.push([x, y, 0]);
+    tan.push([Math.cos(a), Math.sin(a), 0]);
+    const ds = len / steps;
+    x += Math.cos(a) * ds;
+    y += Math.sin(a) * ds;
+  }
+  // 中軸の帯。先へ行くほど細く。ここが無いと小葉が空中でばらける
+  const rw = (s) => len * 0.034 * (1 - s * 0.78);
+  for (let k = 0; k < steps; k++) {
+    const s0 = k / steps, s1 = (k + 1) / steps;
+    const p0 = pts[k], p1 = pts[k + 1];
+    const a = [p0[0], p0[1], -rw(s0)], b = [p0[0], p0[1], rw(s0)];
+    const c = [p1[0], p1[1], -rw(s1)], d = [p1[0], p1[1], rw(s1)];
+    const cc = shade(1.02 - s0 * 0.1);
+    pushTri(P, C, a, b, d, cc, cc, cc);
+    pushTri(P, C, a, d, c, cc, cc, cc);
+  }
+  // 小葉。根元は短い棘、中ほどがいちばん長く、先はすぼまる
+  for (let k = 1; k <= n; k++) {
+    const s = k / (n + 0.6);
+    const i = Math.round(s * steps);
+    const p = pts[Math.min(i, steps)];
+    const t = tan[Math.min(i, steps)];
+    // 上向きの法線(中軸の面内)。V の開きはここへ持ち上げて作る
+    const nx = -t[1], ny = t[0];
+    const prof = Math.pow(Math.sin(Math.PI * Math.pow(s, 0.78)), 0.7);
+    const L = w * prof * (0.86 + rnd() * 0.28);
+    // 小葉の付け根は、小葉と小葉の間隔より広く取る。**重ねる。**
+    // 隙間を空けると、島に置いた大きさ(葉1枚が 12px)ではレースになって
+    // 形が消えた。重ねておくと、輪郭だけがギザギザの一本の弧に見える
+    const bw = (len / steps) * 1.55;
+    for (const side of [-1, 1]) {
+      // 先へ寝かせる(0.46)・横へ開く(0.88)・上へ持ち上げる(0.30)
+      const tip = [
+        p[0] + t[0] * L * 0.46 + nx * L * 0.30,
+        p[1] + t[1] * L * 0.46 + ny * L * 0.30,
+        side * L * 0.88,
+      ];
+      const b0 = [p[0] - t[0] * bw, p[1] - t[1] * bw, side * rw(s) * 0.8];
+      const b1 = [p[0] + t[0] * bw, p[1] + t[1] * bw, side * rw(s) * 0.8];
+      // 小葉1枚の中でも先を明るくする。房の重なりが出る
+      pushTri(P, C, b0, b1, tip, shade(0.9), shade(0.94), shade(1.16));
+    }
+  }
+  // 先端。小葉が2枚合わさって尖る
+  const e = pts[steps], te = tan[steps];
+  const tipL = w * 0.34;
+  pushTri(P, C,
+    [e[0] - te[0] * rw(1) * 2, e[1] - te[1] * rw(1) * 2, -rw(1)],
+    [e[0] - te[0] * rw(1) * 2, e[1] - te[1] * rw(1) * 2, rw(1)],
+    [e[0] + te[0] * tipL, e[1] + te[1] * tipL, 0],
+    shade(0.95), shade(0.95), shade(1.1));
+  return { P, C };
+}
+
+/** 実の房ひとつ。粒を下すぼまりに積む。粒は20面の球（島の粗さに合わせる） */
+function dateCluster(o, rnd) {
+  const { r = 0.035, spread = 0.17, drop = 0.34, count = 26 } = o;
+  const P = [], C = [];
+  const ico = new THREE.IcosahedronGeometry(r, 0);
+  const ip = ico.attributes.position;
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    // 上が太く下がすぼまる。房は円錐ではなく、少し膨らんだ袋の形
+    const rr = spread * Math.sin(Math.PI * (0.18 + 0.72 * (1 - t))) * (0.55 + rnd() * 0.6);
+    const a = i * 2.39996 + rnd() * 0.5;
+    const cx = Math.cos(a) * rr;
+    const cz = Math.sin(a) * rr;
+    const cy = -drop * t - rnd() * 0.02;
+    // 下の粒ほど陰になる。房に厚みが出る
+    const c = shade(1.12 - t * 0.4);
+    for (let v = 0; v < ip.count; v += 3) {
+      const q = (k) => [cx + ip.getX(k), cy + ip.getY(k), cz + ip.getZ(k)];
+      pushTri(P, C, q(v), q(v + 1), q(v + 2), c, c, c);
+    }
+  }
+  ico.dispose();
+  return { P, C };
+}
+
+/**
+ * ナツメヤシ1本。
+ * @param {object} o 下の PALM_DEFAULT を参照
+ * @return {THREE.Group} 幹・葉・実
+ */
+function datePalm(o) {
+  const {
+    h = 1.9, r0 = 0.135, r1 = 0.10, rings = 13, lean = 0.06, seed = 7,
+    fronds = 18, len = 1.05, w = 0.30, dates = 3, dateColor = [0.058, 0.80, 0.50],
+    bark = MATERIALS.woodbark, leaf = [0.446, 0.26, 0.47],
+  } = o;
+  const rnd = seeded(seed);
+  const g = new THREE.Group();
+
+  const trunkMat = new THREE.MeshLambertMaterial({
+    color: setHsl(new THREE.Color(), ...bark), vertexColors: true,
+  });
+  const tm = new THREE.Mesh(dateTrunk({ h, r0, r1, rings, lean }), trunkMat);
+  tm.castShadow = true;
+  tm.receiveShadow = true;
+  g.add(tm);
+
+  // 葉の付け根。幹の上に載る、葉柄の切り株が詰まったこぶ
+  const crownY = h + r1 * 0.35;
+  const crownX = lean;
+
+  /* 葉。外から内へ3段。外側ほど深く垂れて長い。
+   * 段ごとに向きの始まりをずらして、上から見て重ならないようにする */
+  const tiers = [
+    { n: Math.round(fronds * 0.42), pitch: 20, droop: 104, k: 1.00, off: 0.0 },
+    { n: Math.round(fronds * 0.33), pitch: 46, droop: 86, k: 0.90, off: 0.37 },
+    { n: fronds - Math.round(fronds * 0.42) - Math.round(fronds * 0.33), pitch: 72, droop: 62, k: 0.74, off: 0.71 },
+  ];
+  const FP = [], FC = [];
+  for (const t of tiers) {
+    for (let i = 0; i < t.n; i++) {
+      const az = ((i + t.off) / t.n) * Math.PI * 2 + (rnd() - 0.5) * 0.22;
+      const f = dateFrond({
+        len: len * t.k * (0.9 + rnd() * 0.2),
+        w: w * t.k,
+        pitch: t.pitch + (rnd() - 0.5) * 10,
+        droop: t.droop + (rnd() - 0.5) * 14,
+      }, rnd);
+      const ca = Math.cos(az), sa = Math.sin(az);
+      for (let v = 0; v < f.P.length; v += 3) {
+        const x = f.P[v], y = f.P[v + 1], z = f.P[v + 2];
+        FP.push(crownX + x * ca - z * sa, crownY + y, x * sa + z * ca);
+      }
+      FC.push(...f.C);
+    }
+  }
+  /* 葉ぜんたいの上下グラデーション。ここで初めて色みまで振る(leafTint)。
+   *
+   * **下端は広葉樹(LEAF_BOTTOM=0.58)ほど落とさない。** あちらは葉が詰まった
+   * 丸い塊なので、底が暗いのが正しい。ヤシの樹冠は薄くて空いていて、
+   * 垂れた葉の裏まで空の光が回る。0.58 のまま焼いたら、垂れた葉ぜんぶが
+   * 沈んで、緑ではなく灰色の傘に見えた。 */
+  const PALM_BOTTOM = 0.78;
+  {
+    let mn = Infinity, mx = -Infinity;
+    for (let v = 1; v < FP.length; v += 3) { if (FP[v] < mn) mn = FP[v]; if (FP[v] > mx) mx = FP[v]; }
+    const span = Math.max(1e-6, mx - mn);
+    const col = new Float32Array(FC.length);
+    for (let i = 0; i < FC.length / 3; i++) {
+      const t = (FP[i * 3 + 1] - mn) / span;
+      const e = t * t * (3 - 2 * t);
+      leafTint(FC[i * 3] * (PALM_BOTTOM + (LEAF_TOP - PALM_BOTTOM) * e), col, i);
+    }
+    const fg = new THREE.BufferGeometry();
+    fg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(FP), 3));
+    fg.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    fg.computeVertexNormals();
+    const fm = new THREE.Mesh(fg, new THREE.MeshLambertMaterial({
+      color: setHsl(new THREE.Color(), ...leaf), vertexColors: true, side: THREE.DoubleSide,
+    }));
+    fm.castShadow = true;
+    fm.receiveShadow = true;
+    g.add(fm);
+  }
+
+  // 実。葉のあいだから、幹の首のあたりに垂れる
+  if (dates > 0) {
+    const DP = [], DC = [];
+    for (let i = 0; i < dates; i++) {
+      const az = (i / dates) * Math.PI * 2 + 0.6;
+      const c = dateCluster({
+        r: len * 0.033, spread: len * 0.16, drop: len * 0.34, count: 26,
+      }, rnd);
+      const rr = r1 + len * 0.12;
+      const ca = Math.cos(az), sa = Math.sin(az);
+      for (let v = 0; v < c.P.length; v += 3) {
+        DP.push(crownX + c.P[v] + ca * rr, crownY - len * 0.06 + c.P[v + 1], c.P[v + 2] + sa * rr);
+      }
+      DC.push(...c.C);
+      // 房を吊る枝。無いと実が宙に浮く
+      const st = [];
+      const sc = [];
+      const top = [crownX + ca * r1 * 0.6, crownY + len * 0.02, sa * r1 * 0.6];
+      const bot = [crownX + ca * rr, crownY - len * 0.05, sa * rr];
+      const tw = len * 0.014;
+      pushTri(st, sc, [top[0], top[1], top[2] - tw], [top[0], top[1], top[2] + tw], bot,
+        shade(1.0), shade(1.0), shade(0.9));
+      pushTri(st, sc, [top[0] - tw, top[1], top[2]], [top[0] + tw, top[1], top[2]], bot,
+        shade(1.0), shade(1.0), shade(0.9));
+      DP.push(...st);
+      DC.push(...sc);
+    }
+    const dm = new THREE.Mesh(rawGeo(DP, DC), new THREE.MeshLambertMaterial({
+      color: setHsl(new THREE.Color(), ...dateColor), vertexColors: true, side: THREE.DoubleSide,
+    }));
+    dm.castShadow = true;
+    dm.receiveShadow = true;
+    g.add(dm);
+  }
+  return g;
+}
+
 const loader = new GLTFLoader();
 
 /**
@@ -997,6 +1313,8 @@ async function prepare(part, opts) {
     m.receiveShadow = true;
     return m;
   }
+  // ナツメヤシ。中東の島に生やす木。キットに無いので組む(datePalm)
+  if (part.palm) return datePalm(part.palm === true ? {} : part.palm);
   // 炎・明かりはキットに無いので、その場で組む
   if (part.flame) {
     // tongues: [横, 前後, 傾き(度), 大きさの比, 色の番号] を奥から手前の順に

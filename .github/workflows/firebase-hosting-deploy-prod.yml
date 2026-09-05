@@ -41,3 +41,18 @@ jobs:
           npx --yes firebase-tools@13 deploy --only firestore:rules \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
+
+      # storage.rules を誰も配っていなかった(北欧の写真を入れたときに増えた)。
+      # 中身は deny-all で、写真はダウンロードの合言葉つき URL で配るから
+      # ルールの外を通る。**配らなくても写真は見えるが、配らないと
+      # 「置き場を直接のぞけない」ことが誰にも保証されない。**
+      # Firestore とは別の step にしてある。こちらが権限不足で落ちても、
+      # 上の Firestore ルールは配り終わっているようにするため。
+      - name: 🔐 Storage ルールのデプロイ
+        continue-on-error: true
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only storage \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

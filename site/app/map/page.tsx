@@ -3,17 +3,19 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
-import { COUNTRIES } from "@/content/countries";
+import { BEFORE_STREAM, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
 import Days from "@/components/atlas/Days";
+import StayDays from "@/components/atlas/StayDays";
 import MAP from "@/content/atlas/route.json";
+import { PROFILE } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "歩いた国",
   description:
-    "2024年10月のパリから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
+    "2024年9月に日本を出てから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
 };
 
 /**
@@ -39,6 +41,10 @@ export const metadata: Metadata = {
 
 /** 出発の日。ここから今日までを数える。 */
 const START = "2024-10-28";
+/* **「旅した日数」は日本を出た日から数える。**
+   配信の初回（2024-10-28）から数えていたので、6週間ぶん足りていなかった。
+   イギリス・バルセロナ・ローマを2週間ずつ回っていた47日は、配信が無いだけで
+   旅ではある。`site.ts` の PROFILE から引くので、ここに日付を写さない。 */
 
 /** 国の region を、地図の章に結び直す。章の名前は route.json（＝寄せるボタン）が正本。 */
 const CHAPTER_OF: Record<string, string> = {
@@ -84,13 +90,19 @@ export default function MapPage() {
           先頭を大きくするのは CSS がやるので、こちらは添え字で中身の差を言う。
           国は旅の端から端、街は泊まった所だけ、日数は起点、いまここは数ではなく状態。 */}
       <div className="stats" style={{ marginBottom: 16 }}>
-        <Stat value={visited.length} label="歩いた国" sub="パリからトビリシまで" />
+        {/* **「パリからトビリシまで」と書かない。** すぐ下に「その前に6週間ある」と
+            書いてある面で、いちばん上の数字が「パリから」だと面が自分と喧嘩する。
+            この数は配信タイトルから復元したものなので、数えているのは配信のあった国。 */}
+        <Stat value={visited.length} label="歩いた国" sub="配信のあった国だけ" />
         <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
-        <Stat value={<Days from={START} />} label="旅した日数" sub="2024/10/28から" />
+        <Stat value={<Days from={PROFILE.leftJapan} />} label="旅した日数" sub="日本を出た日から" />
+        {/* いまいる国の名前は数ヶ月変わらないので、この欄だけが止まって見えていた。
+            添え字を滞在の日数にすると、旅が進んでいることが毎日1ずつ出る
+            （`docs/island-play.md` 仕掛け10）。国の名前は上の見出しにも出ている。 */}
         <Stat
           value={<Flag slug={here.slug} size={34} />}
-          label="いまここ"
-          sub={here.name}
+          label={here.name}
+          sub={<StayDays fallback="いまここ" />}
         />
       </div>
 
@@ -103,10 +115,36 @@ export default function MapPage() {
         <WorldRoute here={here.slug} />
       </Panel>
 
+      {/* **配信より前の6週間を、地図と年表のあいだに置く。**
+          下の一覧は配信タイトルから復元したものなので、配信の無い6週間が
+          まるごと抜けている。「1カ国目はフランス」と読めてしまうが、
+          実際はその前にイギリス・バルセロナ・ローマを回っている。
+          **日付は書かない。「2週間ずつ」しか聞いていないので、
+          from/to を書くと聞いていない日付を書いたことになる。** */}
+      <Panel className="mbefore">
+        <h2>その前に、配信していない6週間がある</h2>
+        <p>
+          日本を出たのは{PROFILE.leftJapan.replace(/-/g, "/")}、パリで配信を始めたのは
+          {START.replace(/-/g, "/")}。そのあいだの6週間は、
+          {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}を2週間ずつ回っていました。
+          配信が無いので、下の一覧には出てきません。
+        </p>
+        <ol className="mbefore-list">
+          {BEFORE_STREAM.map((c) => (
+            <li key={c.slug}>
+              <b>{c.city ?? c.name}</b>
+              <i>{c.city ? c.name : ""}</i>
+              <span>{c.weeks}週間</span>
+            </li>
+          ))}
+        </ol>
+      </Panel>
+
       <Panel>
         <h2>行った順に、ぜんぶ</h2>
         <p className="muted">
           同じ国に何度も戻っているので、番号は「初めて入った順」です。章は上の地図と同じ区切りです。
+          <b>配信のあった国だけ</b>なので、上の6週間はここに入っていません。
         </p>
         {/* `.folds` は紙を1枚敷く部品なので、紙のパネルの中では使わない。
             紙の上に紙が乗って貼り紙に見える（app/css/ui.css の注）。

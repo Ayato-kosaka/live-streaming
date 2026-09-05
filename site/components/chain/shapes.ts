@@ -20,7 +20,12 @@ export type IslandArt = {
   radii: number[];
   /** 縦の潰し。連なりの画面は地図に近い見え方なので、島のステージ(0.9)より平たい */
   squash: number;
-  /** 草木。名前は `content/sprites.json` にあるもの。手前から順に多く出る */
+  /* 草木。名前は `content/sprites.json` にあるもの。
+   *
+   * **一様に引く。並び順は出る頻度に効かない**（前のコメントは「手前から順に
+   * 多く出る」と書いてあったが、`plants()` はそうしていなかった）。
+   * だから**種類の数がそのまま構成比**になる。木を1種足すと、その島は
+   * そのぶん木が増えて岩が減る。増やすときはそこまで見ること。 */
   props: { n: string; s: number }[];
   /** 高台を持つ島か。山のある土地だけ */
   plateau?: boolean;
@@ -55,11 +60,22 @@ export const ISLAND_ART: Record<string, IslandArt> = {
     radii: [0.86, 0.9, 1.06, 1.24, 1.3, 1.2, 1.0, 0.86, 0.82, 0.9, 1.08, 1.22, 1.26, 1.12, 0.96, 0.86],
     squash: 0.58,
     props: [
-      // ナツメヤシは焼けていないので、いまはヤシで代える（報告に挙げてある）
-      { n: "tree-palm", s: 0.34 },
-      { n: "tree-palm-short", s: 0.24 },
+      /* ナツメヤシ。ここに生えているのはココヤシ（tree-palm）ではない。
+       *
+       * **サボテンの2倍以上の高さにする。** ナツメヤシは20m級で、砂漠で
+       * いちばん背の高いもの。ここが島の骨格になる。
+       * 一度 0.34 と 0.26 で置いて、撒かれたのが若木のほうだったために
+       * サボテンの1.44倍にしかならず、**低木に見えた。**
+       * 大人の木で 0.40（サボテン比 2.22倍）、若木で 0.28（1.56倍）。
+       *
+       * 種類は2つまで。3つ入れると、木が構成比の半分を占めて
+       * 岩とサボテンが消え、乾いた島に見えなくなる（実際そうなった）。 */
+      { n: "tree-date", s: 0.4 },
+      { n: "tree-date-young", s: 0.28 },
       { n: "cactus", s: 0.18 },
-      { n: "rock-flat", s: 0.12 },
+      // 苔の生えていない岩。rock-flat は天面がまるごと苔（h0.29 s0.65）で、
+      // 乾いた土の島の上でいちばん彩度の高い緑になっていた
+      { n: "rock-dry", s: 0.12 },
       { n: "stone-small", s: 0.1 },
     ],
     seed: 330,
@@ -82,8 +98,9 @@ export const ISLAND_ART: Record<string, IslandArt> = {
     radii: [0.72, 0.78, 0.9, 0.96, 1.0, 1.12, 1.3, 1.42, 1.34, 1.14, 1.0, 0.94, 0.88, 0.8, 0.72, 0.7],
     squash: 0.56,
     props: [
-      { n: "rock-tall", s: 0.4 },
-      { n: "stone-large", s: 0.3 },
+      // 岩と土だけの島。ここも苔は生やさない（乾いた岩）
+      { n: "rock-dry-tall", s: 0.4 },
+      { n: "rock-dry-large", s: 0.3 },
       { n: "cactus-short", s: 0.24 },
     ],
     seed: 429,
@@ -141,6 +158,14 @@ export function plants(art: IslandArt, r: number): Plant[] {
   if (r < 25) return [];
   const n = Math.min(14, Math.max(4, Math.round(r / 9)));
   const rand = rng(art.seed);
+  /* 種類を引く乱数は、置き場所の乱数と**別の流れ**にする。
+   *
+   * 1本の流れから交互に引いていたときは、`props` に1種足すだけで
+   * 引く回数がずれて、**その島だけでなく全部の島の草木の並びが変わった**
+   * （中東にナツメヤシを足したら、岩が消えて草地に入れ替わった）。
+   * これからキットを足すたびに同じことが起きる。
+   * 場所は場所、種類は種類で引けば、種類を足しても**位置と本数は動かない。** */
+  const pick = rng((art.seed * 2654435761) >>> 0);
   const out: Plant[] = [];
   let guard = 0;
   while (out.length < n && guard++ < n * 20) {
@@ -152,8 +177,8 @@ export function plants(art: IslandArt, r: number): Plant[] {
     const y = Math.sin(t) * rr * d * art.squash;
     // 同じところに重ねない
     if (out.some((p) => Math.hypot(p.x - x, (p.y - y) / art.squash) < r * 0.18)) continue;
-    const kind = art.props[Math.floor(rand() * art.props.length)];
-    out.push({ n: kind.n, x, y, s: kind.s * r, flip: rand() < 0.5 });
+    const kind = art.props[Math.floor(pick() * art.props.length)];
+    out.push({ n: kind.n, x, y, s: kind.s * r, flip: pick() < 0.5 });
   }
   return out.sort((a, b) => a.y - b.y);
 }

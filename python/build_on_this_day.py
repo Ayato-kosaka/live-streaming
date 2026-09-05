@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
+PEAKS_TS = ROOT / "site" / "content" / "streamPeaks.ts"
 OUT_TS = ROOT / "site" / "content" / "onThisDay.ts"
 
 # タイトルでの街の書き方のゆれ。build_city_streams.py と同じ考え方。
@@ -105,6 +106,20 @@ def fetch_videos() -> list:
     return [dict(r) for r in client.query(sql).result()]
 
 
+def read_peaks() -> dict:
+    """コメントがいちばん重なったところ（`site/content/streamPeaks.ts`）を読む。
+
+    あちらは212本ぶんあって、サーバー側でしか使わない。
+    「1年前の今日」はブラウザで引くので、この表に出る配信のぶんだけ写す。
+    まだ焼かれていなければ、何も付けない（**先に build_stream_peaks.py を回す**）。
+    """
+    if not PEAKS_TS.exists():
+        logger.warning("%s がまだ無い。山の秒は付けずに焼く", PEAKS_TS.name)
+        return {}
+    m = re.search(r"const PEAKS: Record<string, Peak> = (\{.*?\});", PEAKS_TS.read_text(encoding="utf-8"), re.S)
+    return {k: v["k"] for k, v in json.loads(m.group(1)).items()} if m else {}
+
+
 def names_of(city: str) -> list:
     """その街を指すタイトルの書き方。"""
     base = [city] + ALIASES.get(city, [])
@@ -133,7 +148,7 @@ def place_of(countries: list, date: str, title: str) -> tuple:
     return "", ""
 
 
-def build(rows: list, countries: list) -> dict:
+def build(rows: list, countries: list, peaks: dict) -> dict:
     """月日（MM-DD）ごとに、新しい順で並べる。"""
     by_md = defaultdict(list)
     for r in rows:
@@ -141,9 +156,11 @@ def build(rows: list, countries: list) -> dict:
         # タイトルに改行が入っているものがある（イラン徒歩企画）。板は1行で出すので潰す
         title = " ".join(str(r["t"]).split())
         place, slug = place_of(countries, date, title)
-        by_md[date[5:]].append(
-            {"d": date, "v": r["v"], "t": title, "p": place, "c": slug, "n": int(r["n"])}
-        )
+        e = {"d": date, "v": r["v"], "t": title, "p": place, "c": slug, "n": int(r["n"])}
+        # 山の分かっている配信だけ。分からない配信では鍵ごと出さない
+        if r["v"] in peaks:
+            e["k"] = int(peaks[r["v"]])
+        by_md[date[5:]].append(e)
     for md in by_md:
         by_md[md].sort(key=lambda x: x["d"], reverse=True)
     return dict(sorted(by_md.items()))
@@ -165,7 +182,7 @@ def main() -> int:
     )
     logger.info("配信 %d 本、国 %d カ国", len(rows), len(countries))
 
-    table = build(rows, countries)
+    table = build(rows, countries, read_peaks())
     unknown = [e["d"] for v in table.values() for e in v if not e["p"]]
     if unknown:
         logger.warning("居た場所が引けなかった日: %d (%s ...)", len(unknown), unknown[:5])
@@ -197,6 +214,12 @@ def main() -> int:
         "  c: string;\n"
         "  /** その配信に付いたコメントの数 */\n"
         "  n: number;\n"
+        "  /**\n"
+        "   * コメントがいちばん重なったところ。配信のはじめから何秒か。\n"
+        "   * 分かっている配信にしか無い（`content/streamPeaks.ts`）。\n"
+        "   * 3時間の頭から出しても誰も再生しないので、あるならここから開く。\n"
+        "   */\n"
+        "  k?: number;\n"
         "};\n\n"
         "const ON_THIS_DAY: Record<string, PastStream[]> =\n"
         f"  {body};\n\n"

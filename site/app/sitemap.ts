@@ -14,9 +14,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const url = (p: string) => `${SITE.url}${p}`;
   const top = [
     "",
+    // 行き先をぜんぶ並べた面。ここから全部の紙へリンクが1本ずつ出ているので、
+    // 検索の側から見ても島の索引になる。
+    "/all",
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
     // これからの大きい企画。専用ページを持つものはここに足す。
-    "/nordic", "/nordic/guide",
+    "/nordic", "/nordic/guide", "/nordic/photos",
   ];
   return [
     ...top.map((p) => ({ url: url(p), lastModified: now, priority: p === "" ? 1 : 0.8 })),

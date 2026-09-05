@@ -47,8 +47,17 @@ export type NextNote = { id: string; planId: string; text: string; createdAt: st
  * **キャラクターの絵ではなく YouTube のチャンネルで返る。** どの絵が誰のものかは
  * あやとが表で持っていて `content/residents.ts` に焼いてあるので、突き合わせは
  * こちら側でやる。本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
+ *
+ * `uid` も返る。「いま島にいる人」（`lib/here.ts`）は `islandHere/{uid}` に居場所しか
+ * 書かないので、誰なのかはここと突き合わせて決める。ここに載っているのは
+ * 「名前かアイコンを出してよい」と本人が言った人だけ。
  */
-export type ResidentShow = { channelId: string; name?: string | null; photo?: string | null };
+export type ResidentShow = {
+  uid?: string;
+  channelId: string;
+  name?: string | null;
+  photo?: string | null;
+};
 
 export type IslandState = {
   current?: Partial<IslandCurrent>;
@@ -347,3 +356,90 @@ export async function countVisit(token?: string | null): Promise<number | null> 
   }
 }
 
+
+/* ---------------- 北欧旅の、その日の写真 ----------------
+   その日が終わったら、あやとが写真を貼る。見た人は持って帰れて、
+   持って帰るときに、その日いた人のキャラクターを1人だけ入れられる
+   （`docs/nordic-photos.md`）。
+
+   **写真のある日しか返ってこない。** 旅は10日あるが、まだ何も起きていない
+   日に「まだありません」を並べても、読む人には何も無い。 */
+
+/** 貼ってある1枚。`w` `h` は焼いたあとの寸法（長辺1600px）。 */
+export type NordicPhoto = {
+  id: string;
+  day: string;
+  url: string;
+  w: number;
+  h: number;
+  note: string;
+  at: number;
+};
+
+/**
+ * その日の配信でスパチャしてくれた人。
+ *
+ * **どの絵の人かは、ここでは決まらない。** 返るのは YouTube のチャンネルで、
+ * 絵との対応は `content/residents.ts` にある（`ResidentShow` と同じ考え方）。
+ * Doneru の人はチャンネルが分からないことがあるので、
+ * そのときだけ手入れで `icon` が直に入る（`python/admin/nordic_supporter.py`）。
+ */
+export type NordicSupporter = {
+  channelId?: string | null;
+  icon?: string | null;
+  name?: string | null;
+};
+
+/** 1日ぶん。写真と、その日いた人。 */
+export type NordicPhotoDay = {
+  day: string;
+  photos: NordicPhoto[];
+  people: NordicSupporter[];
+};
+
+/**
+ * いま入っているのがあやとか。
+ *
+ * `/me` は「ログインした人を覚えておく」ための口で、返事に `admin` が乗っている。
+ * **これは画面に道具を出すかどうかだけに使う。** 実際に貼れるかどうかは
+ * 貼る側の口がもう一度見ているので、ここを騙しても写真は貼れない。
+ */
+export const amIOwner = async (token: string): Promise<boolean> => {
+  try {
+    const r = await req<{ admin?: boolean }>("/me", {
+      method: "POST",
+      headers: auth(token),
+      body: "{}",
+    });
+    return !!r.admin;
+  } catch {
+    return false;
+  }
+};
+
+export const getNordicPhotos = () =>
+  req<{ days: NordicPhotoDay[] }>("/nordic/photos");
+
+/**
+ * 写真を貼る。**あやとだけ。**
+ *
+ * 送るのは、ブラウザで長辺1600pxの webp に焼いたあとのもの
+ * （`components/nordic/stamp.ts` の `shrink`）。元のままの写真は送らない。
+ * 10日ぶん何枚でも貼るので、元のままだと置き場も回線も持たない。
+ */
+export const postNordicPhoto = (
+  p: { day: string; image: string; w: number; h: number; note?: string },
+  token: string,
+) =>
+  req<{ photo: NordicPhoto }>("/nordic/photos", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(p),
+  });
+
+/** 間違えて貼った1枚を消す。**あやとだけ。** 置き場の実体ごと消える。 */
+export const deleteNordicPhoto = (id: string, token: string) =>
+  req<{ id: string }>(`/nordic/photos/${id}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });

@@ -20,6 +20,7 @@
 import {onRequest} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {randomUUID} from "crypto";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -41,6 +42,30 @@ const PVOTES = db.collection("islandPollVotes");
    「1人」と出て島が寂れて見える。日単位なら数十〜数百になる。
    1日1ドキュメントに数を足すだけ。誰が来たかは持たない。 */
 const VISITS = db.collection("islandVisits");
+
+/* 北欧旅の、その日の写真(docs/nordic-photos.md)。
+   貼れるのはあやとだけ。読むのは誰でも。
+   写真そのものは Cloud Storage に置いて、ここには置き場と寸法だけを持つ。 */
+const NPHOTOS = db.collection("nordicPhotos");
+/* その日の配信でスパチャしてくれた人。BigQuery からは
+   python/nordic_supporters.py が置きにくる。Doneru は自動で取れないので
+   python/admin/nordic_supporter.py から手で足す。
+   **持つのは「その日いた」までで、金額も順位も持たない。** */
+const NDAYS = db.collection("nordicDays");
+
+/* 写真の置き場。Functions の Admin SDK はルールを迂回するので、
+   ブラウザから Storage を直接触らせない(Firestore と同じ形)。
+   バケットはこの Function が動いているプロジェクトの既定のもの。 */
+const BUCKET =
+  process.env.NORDIC_BUCKET ||
+  `${process.env.GCLOUD_PROJECT || "live-streaming-d3cac"}.firebasestorage.app`;
+
+/** 1枚あたりの上限。ブラウザ側で長辺1600pxの webp に焼いてから送る。 */
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+/** 写真に添える一言。長い文章の置き場ではない。 */
+const MAX_PHOTO_NOTE = 120;
+/** 1日に貼れる枚数。「何枚でも」だが、事故で無限には入らないようにする。 */
+const PHOTOS_PER_DAY = 120;
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -117,7 +142,15 @@ async function whoIs(header?: string): Promise<Who> {
  * 分かるのは「この YouTube チャンネルの人が、名前を出してよいと言った」
  * までで、それがどの絵の人かは向こう側で突き合わせる。
  * 本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
- * @return {Promise<Json[]>} チャンネルと、出してよい名前・アイコン
+ *
+ * **uid も返す。** 「いま島にいる人」(docs/island-here.md)は islandHere/{uid} に
+ * 居場所だけを書く。名前とアイコンをそちらに書かせると他人を名乗れるので、
+ * 誰なのかはここで返したものと uid で突き合わせて、読む側が決める。
+ * カスタムクレームにチャンネルIDを入れる手もあるが、そちらは
+ * setCustomUserClaims と再ログインが要る。ここに1つ足すほうが軽い。
+ * 出るのは「名前かアイコンを出してよい」と本人が言った人だけなので、
+ * 何もしていない人の uid はここに出ない。
+ * @return {Promise<Json[]>} uid・チャンネルと、出してよい名前・アイコン
  */
 async function listResidents(): Promise<Json[]> {
   const snap = await USERS.where("channelId", "!=", null).limit(500).get();
@@ -127,6 +160,7 @@ async function listResidents(): Promise<Json[]> {
     if (!u.channelId) return;
     if (!u.showName && !u.showPhoto) return;
     out.push({
+      uid: d.id,
       channelId: u.channelId,
       name: u.showName ?
         (u.nickname as string) || (u.name as string) || null :
@@ -420,6 +454,129 @@ async function doneruNow(): Promise<number | null> {
   }
 }
 
+/* ---- 北欧旅の、その日の写真(docs/nordic-photos.md) ---- */
+
+/**
+ * 「2026-09-12」の形か。日付がそのまま置き場の名前になるので厳しく見る。
+ * @param {unknown} v 入力
+ * @return {boolean} 日付の形なら true
+ */
+const isDay = (v: unknown): v is string =>
+  typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+/**
+ * あやとか。写真を貼れるのはこの人だけ。
+ *
+ * `islandUsers/{uid}.admin` を見る。下書き(`/drafts`)がすでにこの形なので、
+ * 判定を増やさずそこに寄せる。`admin` はコンソールからしか立たない。
+ * @param {string | undefined} header Authorization ヘッダ
+ * @return {Promise<string | null>} あやとなら uid、違えば null
+ */
+async function ownerUid(header?: string): Promise<string | null> {
+  const m = /^Bearer (.+)$/.exec(header ?? "");
+  if (!m) return null;
+  try {
+    const t = await admin.auth().verifyIdToken(m[1]);
+    const snap = await USERS.doc(t.uid).get();
+    return snap.data()?.admin ? t.uid : null;
+  } catch (e) {
+    logger.warn("owner token verify failed", String(e));
+    return null;
+  }
+}
+
+/**
+ * Storage に置いた写真の、誰でも読める URL。
+ *
+ * バケットは公開にしない。Firebase の「ダウンロードの合言葉」を
+ * ファイルの metadata に付けて、それを知っている人だけが読める形にする。
+ * この URL は `access-control-allow-origin: *` を返すので、
+ * `<img crossOrigin="anonymous">` で canvas に描いても canvas が汚れない。
+ * @param {string} path バケットの中の置き場
+ * @param {string} token ダウンロードの合言葉
+ * @return {string} 画像の URL
+ */
+const photoUrl = (path: string, token: string): string =>
+  "https://firebasestorage.googleapis.com/v0/b/" +
+  `${BUCKET}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+
+/** 画面に出す1枚ぶん。 */
+type PhotoShape = {
+  id: string;
+  day: string;
+  url: string;
+  w: number;
+  h: number;
+  note: string;
+  at: number;
+};
+
+/**
+ * 貼ってある写真を、日ごとにまとめて返す。
+ *
+ * **写真のある日しか返さない。** 旅は10日あるが、まだ何も起きていない日に
+ * 「まだありません」を並べても読む人には何も無い(docs/nordic-photos.md 7章)。
+ * @return {Promise<Json[]>} 新しい日が先の、日ごとの写真と、その日いた人
+ */
+async function listPhotoDays(): Promise<Json[]> {
+  const snap = await NPHOTOS.orderBy("at", "desc").limit(400).get();
+  const byDay = new Map<string, PhotoShape[]>();
+  snap.forEach((d) => {
+    const v = d.data() ?? {};
+    if (!isDay(v.day) || typeof v.url !== "string") return;
+    const list = byDay.get(v.day) ?? [];
+    list.push({
+      id: d.id,
+      day: v.day,
+      url: v.url,
+      w: Number(v.w) || 0,
+      h: Number(v.h) || 0,
+      note: (v.note as string) || "",
+      at: Number(v.at) || 0,
+    });
+    byDay.set(v.day, list);
+  });
+  if (byDay.size === 0) return [];
+  // その日いた人。写真のある日のぶんだけ引く
+  const days = [...byDay.keys()].sort().reverse();
+  const [people, residents] = await Promise.all([
+    db.getAll(...days.map((d) => NDAYS.doc(d))),
+    listResidents(),
+  ]);
+  /* **名前は、出してよいと言った人のぶんだけ返す。**
+     BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
+     関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
+     一覧が、本人の断りなく名前つきで並ぶことになる。
+     出すと決めた人(islandUsers の showName)だけを通す。
+     名前が出ない人も、キャラクターの絵は出る。自分の絵は自分で分かる。 */
+  const named = new Map<string, string>();
+  residents.forEach((r) => {
+    const id = r.channelId as string;
+    if (id && r.name) named.set(id, r.name as string);
+  });
+  const peopleOf = new Map<string, Json[]>();
+  people.forEach((p) => {
+    const arr = (p.data()?.people ?? []) as Json[];
+    peopleOf.set(
+      p.id,
+      arr.slice(0, 60).map((x) => {
+        const channelId = clean(x.channelId, 64) || null;
+        return {
+          channelId,
+          icon: clean(x.icon, 80) || null,
+          name: (channelId && named.get(channelId)) || null,
+        };
+      }),
+    );
+  });
+  return days.map((day) => ({
+    day,
+    // 撮った順に見たいので、その日の中は古いほうから
+    photos: (byDay.get(day) ?? []).sort((a, b) => a.at - b.at),
+    people: peopleOf.get(day) ?? [],
+  }));
+}
+
 export const islandApi = onRequest(
   {region: "us-central1", cors: true, maxInstances: 10},
   async (req, res) => {
@@ -476,6 +633,10 @@ export const islandApi = onRequest(
           nickname: (saved.nickname as string) ?? null,
           showName: !!saved.showName,
           showPhoto: !!saved.showPhoto,
+          /* あやとか。**画面に道具を出すかどうかだけに使う。**
+             実際に書けるかは、書く先のルート側でもう一度見ている。
+             ここを信じて権限を決めているわけではない。 */
+          admin: !!saved.admin,
         });
         return;
       }
@@ -555,6 +716,118 @@ export const islandApi = onRequest(
         }
 
         res.status(404).json({error: "not found"});
+        return;
+      }
+
+      /* ---------------- 北欧旅の、その日の写真 ----------------
+         貼れるのはあやとだけ。読むのは誰でも(docs/nordic-photos.md 3章)。
+
+         写真は Storage に置く。ブラウザから Storage を直接触らせないのは
+         Firestore と同じ理由で、ルールを増やさずにここ1か所で締められるから。
+         縮めて webp に焼くのはブラウザ側でやる。元のままの写真が
+         回線に乗ることも、置き場に残ることも無い。 */
+      if (method === "GET" && path === "/nordic/photos") {
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({days: await listPhotoDays()});
+        return;
+      }
+
+      if (method === "POST" && path === "/nordic/photos") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const day = body.day;
+        if (!isDay(day)) {
+          res.status(400).json({error: "bad day"});
+          return;
+        }
+        // data URL で来ても、中身だけで来ても受ける
+        const b64 = String(body.image ?? "").replace(/^data:[^,]*,/, "");
+        let buf: Buffer;
+        try {
+          buf = Buffer.from(b64, "base64");
+        } catch {
+          res.status(400).json({error: "bad image"});
+          return;
+        }
+        if (buf.length < 1024 || buf.length > MAX_PHOTO_BYTES) {
+          res.status(400).json({error: "bad size"});
+          return;
+        }
+        /* webp かどうかを、送られてきた名前ではなく中身の頭で見る。
+           RIFF....WEBP の12バイト。ここを名乗りで済ませると、
+           置き場に何でも置けるようになる。 */
+        const riff = buf.subarray(0, 4).toString("ascii");
+        const webp = buf.subarray(8, 12).toString("ascii");
+        if (riff !== "RIFF" || webp !== "WEBP") {
+          res.status(400).json({error: "not webp"});
+          return;
+        }
+        if (!(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const ref = NPHOTOS.doc();
+        const path2 = `nordic/photos/${day}/${ref.id}.webp`;
+        const token = randomUUID();
+        await admin
+          .storage()
+          .bucket(BUCKET)
+          .file(path2)
+          .save(buf, {
+            contentType: "image/webp",
+            metadata: {
+              // 置き場の名前に id が入っていて中身は変わらないので、
+              // ブラウザにも CDN にも長く持たせてよい
+              cacheControl: "public, max-age=31536000, immutable",
+              metadata: {firebaseStorageDownloadTokens: token},
+            },
+          });
+        const photo = {
+          day,
+          path: path2,
+          url: photoUrl(path2, token),
+          w: Math.max(0, Math.min(20000, Number(body.w) || 0)),
+          h: Math.max(0, Math.min(20000, Number(body.h) || 0)),
+          note: clean(body.note, MAX_PHOTO_NOTE),
+          at: Date.now(),
+          uid,
+        };
+        await ref.set(photo);
+        res.set("Cache-Control", "no-store");
+        res.json({photo: {id: ref.id, ...photo}});
+        return;
+      }
+
+      const photoMatch = path.match(/^\/nordic\/photos\/([A-Za-z0-9_-]{6,})$/);
+      if (method === "DELETE" && photoMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = NPHOTOS.doc(photoMatch[1]);
+        const snap = await ref.get();
+        const p = snap.data();
+        if (!snap.exists || typeof p?.path !== "string") {
+          res.status(404).json({error: "not found"});
+          return;
+        }
+        /* 先に置き場から消す。Firestore だけ消えて実体が残ると、
+           もう誰からも見えないのに URL を知っている人には見え続ける。 */
+        await admin
+          .storage()
+          .bucket(BUCKET)
+          .file(p.path)
+          .delete({ignoreNotFound: true});
+        await ref.delete();
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id});
         return;
       }
 
