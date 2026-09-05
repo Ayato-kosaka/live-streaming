@@ -424,13 +424,14 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   position: relative;
   border-radius: var(--r-3);
   overflow: hidden;
-  /* 型の色を紙にも薄く効かせる。屋根だけ色を変えても、
-     並べたときに「同じ白い箱が5つ」に見えてしまう */
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ty) 9%, var(--paper)) 0%, var(--paper) 46%);
-  border: var(--bw-2) solid color-mix(in srgb, var(--ty) 54%, var(--frame));
+  /* 型の色を出していいのは屋根の帯だけ（`docs/island-world.md` 3.3）。
+     箱まで染めると、5枚が5つの別デザインになって、色が「どの型か」ではなく
+     「どのデザインか」を指しはじめる。箱は5枚ともクリームの板でそろえる。 */
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-2) solid var(--frame);
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.85),
-    0 7px 0 color-mix(in srgb, var(--ty) 46%, var(--frame-dark)),
+    0 7px 0 var(--frame-dark),
     0 13px 3px rgba(8, 46, 62, 0.18);
 }
 /* 屋根。型の色をいちばん大きい面で見せる場所。
@@ -496,8 +497,8 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   display: flex; align-items: center; gap: var(--sp-2);
   border-radius: 14px;
   padding: var(--sp-2) var(--sp-3);
-  background: color-mix(in srgb, var(--ty) 15%, var(--paper-2));
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ty) 34%, var(--paper));
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--frame) 40%, var(--paper));
 }
 .beat em {
   flex: none;
@@ -506,7 +507,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 50%;
   font-style: normal; font-size: var(--fs-min); font-weight: 900;
   color: #fffdf6;
-  background: color-mix(in srgb, var(--ty) 70%, var(--ink));
+  background: var(--frame-deep);
 }
 .beat b { font-size: var(--fs-note); font-weight: 900; line-height: 1.45; letter-spacing: 0.01em; }
 /* 横に並ぶときだけ、札と札のあいだに進む向きの三角を置く */
@@ -517,7 +518,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
     width: 0; height: 0;
     transform: translateY(-50%);
     border: 5px solid transparent;
-    border-left-color: color-mix(in srgb, var(--ty) 52%, var(--frame));
+    border-left-color: var(--frame);
   }
 }
 
@@ -527,9 +528,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 13px;
   padding: var(--sp-2) var(--sp-3);
   margin-bottom: var(--sp-3);
-  background: color-mix(in srgb, var(--ty) 13%, var(--paper-2));
+  background: var(--paper-2);
 }
-.ty-num b { font-size: 21px; font-weight: 900; color: color-mix(in srgb, var(--ty) 66%, var(--ink)); letter-spacing: 0.01em; }
+.ty-num b { font-size: 21px; font-weight: 900; color: var(--ink); letter-spacing: 0.01em; }
 .ty-num i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 
 /* 「はいる」ボタン。カードの中でいちばん押したいもの */
@@ -539,17 +540,17 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: var(--r-pill);
   padding: 0 var(--sp-4);
   font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.05em;
-  color: #402c14;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ty) 62%, #ffffff) 0%, var(--ty) 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 5px 0 color-mix(in srgb, var(--ty) 58%, var(--ink));
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: var(--bw-1) solid var(--frame);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.13s, box-shadow 0.13s;
 }
-.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 2px 0 rgba(255,255,255,.75), 0 7px 0 color-mix(in srgb, var(--ty) 58%, var(--ink)); }
-.ty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--ty) 58%, var(--ink)); }
+.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.8), 0 8px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
+.ty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
 
-/* カードの中の折りたたみは、型の色を左の帯に使う */
-.ty .fold { border-color: color-mix(in srgb, var(--ty) 62%, var(--ink-3)); box-shadow: 0 3px 0 color-mix(in srgb, var(--ty) 50%, var(--ink)); margin-bottom: var(--sp-3); }
-.ty .fold > summary { border-left-color: var(--ty); }
+/* カードの中の折りたたみ。ここも型の色は持ち込まない */
+.ty .fold { border-color: var(--frame); box-shadow: 0 3px 0 var(--frame-dark); margin-bottom: var(--sp-3); }
 
 /* =========================================================
    配信カード（共通）
@@ -563,20 +564,20 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: var(--r-2);
   padding: var(--sp-2);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: var(--bw-1) solid color-mix(in srgb, var(--ty, var(--frame)) 62%, var(--frame));
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)), 0 9px 2px rgba(8, 46, 62, 0.14);
+  border: var(--bw-1) solid var(--frame);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--frame-dark), 0 9px 2px rgba(8, 46, 62, 0.14);
   transition: transform 0.14s, box-shadow 0.14s;
   position: relative;
 }
-.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 8px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)), 0 12px 3px rgba(8,46,62,.16); }
-.vid:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--ty, var(--frame)) 58%, var(--ink)); }
+.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 8px 0 var(--frame-dark), 0 12px 3px rgba(8,46,62,.16); }
+.vid:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-dark); }
 .vid-th {
   position: relative;
   flex: none;
   width: 106px; aspect-ratio: 16 / 9;
   border-radius: 12px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--ty, var(--frame)) 30%, var(--paper-2));
+  background: color-mix(in srgb, var(--frame) 30%, var(--paper-2));
 }
 @media (min-width: 620px) { .vid-th { width: 124px; } }
 .vid-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -601,7 +602,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 6px;
   padding: 2px var(--sp-2);
   color: #40290f;
-  background: color-mix(in srgb, var(--ty, var(--gold)) 42%, var(--paper-2));
+  background: color-mix(in srgb, var(--gold) 42%, var(--paper-2));
 }
 .vid-b b { font-size: var(--fs-body); font-weight: 900; line-height: 1.55; letter-spacing: 0.01em; }
 /* 何本目か。長い企画で「順番」を見せるときだけ付ける */
@@ -613,7 +614,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 50%;
   font-size: var(--fs-note); font-weight: 900;
   color: #fffdf6;
-  background: color-mix(in srgb, var(--ty, var(--frame-deep)) 72%, var(--ink));
+  background: color-mix(in srgb, var(--frame-deep) 72%, var(--ink));
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
 

@@ -117,17 +117,16 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
       />
 
       {/*
-        5つの型を別物に見せる。
-        紙そのものを型の色でごく薄く染めて、蛍光ペンの帯をその色にする。
-        紙の作り（罫線・平らなチップ・厚みを付けない）は5つとも同じにしておく。
+        5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
+        蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて
+        「この色は何を指しているか」に答えられなくなる。紙の作り（罫線・平らなチップ・
+        厚みを付けない）は5つとも同じにしておく。
       */}
       <Sheet
         style={{
-          ["--ty" as string]: t.color,
           ["--zk-paper" as string]: `color-mix(in srgb, ${t.color} 8%, #efe4b6)`,
           ["--zk-paper-lo" as string]: `color-mix(in srgb, ${t.color} 11%, #e7d9a2)`,
           ["--zk-out" as string]: `color-mix(in srgb, ${t.color} 7%, #f4efcf)`,
-          ["--zk-mark" as string]: `color-mix(in srgb, ${t.color} 44%, #dbdc90)`,
         }}
       >
         <Zone>
@@ -190,7 +189,8 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
       </Sheet>
 
       {t.deeper && (
-        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: t.color }}>
+        {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
+        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
           <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
           <span className="tile-text">
             <b>{t.deeper.label}</b>

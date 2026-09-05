@@ -189,7 +189,9 @@ export default function KitchenPage() {
 
       </Sheet>
 
-      <Link className="tile" href="/streams/cooking" style={{ ["--tile" as string]: "var(--roof-coral)" }}>
+      {/* 桃はクッキング配信の型の色。型の札の帯と紙の染まり以外に持ち出さない
+          （`docs/island-world.md` 3.3）。行き先の板は小屋の屋根の木の色にする。 */}
+      <Link className="tile" href="/streams/cooking" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
         <img className="tile-icon" src="/sprites/hut-kitchen.webp" alt="" />
         <span className="tile-text">
           <b>クッキング配信そのものを見る</b>
