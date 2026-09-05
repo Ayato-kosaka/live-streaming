@@ -913,8 +913,13 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 .cidea-vote.is-on { background: linear-gradient(#fff0bb, var(--gold)); }
 
 /* 国のページの前後リンク */
-.nnav { display: flex; justify-content: space-between; gap: 10px; margin: 22px 0 6px; }
+/* 余白は段のとおりに（`docs/island-world.md` 5.1）。10px と 22px と 6px は段に無い */
+.nnav { display: flex; justify-content: space-between; gap: var(--sp-3); margin: var(--sp-5) 0 var(--sp-2); }
 .nnav a {
+  /* 前後の送りは、6カ国と8日ぶんの14面に出る唯一の「次へ」。
+     当たりが 45px しか無く、48px を割っていた（`docs/island-design.md` 3-2）。
+     字の大きさは変えずに、押しどころだけ 48px 取る。 */
+  min-height: 48px;
   font-size: 13px; font-weight: 900;
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getState, postNote, type NextNote } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { PLANS, daysUntil, type Plan } from "@/content/plans";
@@ -41,6 +41,8 @@ const SEEDS = [
 function PlanNotes({
   plan,
   notes,
+  down,
+  onRetry,
   draft,
   busy,
   onDraft,
@@ -50,6 +52,9 @@ function PlanNotes({
   plan: Plan;
   /** 取りに行っている最中は null。0枚と区別する（読む前に「まだ1枚もありません」と言わない） */
   notes: NextNote[] | null;
+  /** 読みに行けなかった。0枚と区別する（`docs/island-ux.md` 11章） */
+  down: boolean;
+  onRetry: () => void;
   draft: string;
   busy: boolean;
   onDraft: (v: string) => void;
@@ -71,6 +76,18 @@ function PlanNotes({
           <li />
           <li />
         </ul>
+      ) : notes.length === 0 && down ? (
+        /* 読めなかった日に「まだ1枚もありません」と言うと、貼ってある付箋を
+           無かったことにする。掲示板（`Board.tsx`）は同じ形をすでに持っている。
+           同じ site の中で、同じ場面を2通りに言わない。 */
+        <div className="blank is-off">
+          <b>いま、付箋を読みに行けなかった</b>
+          <p>貼ってある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+          <button type="button" className="blank-go" onClick={onRetry}>
+            もう一度よみこむ
+            <Icon name="refresh" size={14} />
+          </button>
+        </div>
       ) : notes.length === 0 ? (
         <p className="muted" style={{ marginTop: "var(--sp-2)" }}>
           まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
@@ -168,20 +185,31 @@ function PlanNotes({
  */
 export default function NextPlans() {
   const [notes, setNotes] = useState<NextNote[] | null>(null);
+  /** 読みに行けなかった。0枚と区別して持つ */
+  const [down, setDown] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [today, setToday] = useState<Date | null>(null);
   const { token } = useAuth();
 
-  useEffect(() => {
-    setToday(new Date());
+  // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
+  // ここで手を止めさせない。ただし**0枚だとは言わない**（`down` で分ける）。
+  const load = useCallback(() => {
+    setNotes(null);
+    setDown(false);
     getState()
       .then((s) => setNotes(s.notes ?? []))
-      // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
-      // ここで手を止めさせない
-      .catch(() => setNotes([]));
+      .catch(() => {
+        setNotes([]);
+        setDown(true);
+      });
   }, []);
+
+  useEffect(() => {
+    setToday(new Date());
+    load();
+  }, [load]);
 
   const add = async (planId: string) => {
     const text = (draft[planId] ?? "").trim();
@@ -208,6 +236,8 @@ export default function NextPlans() {
   const notesProps = (p: Plan) => ({
     plan: p,
     notes: notesFor(p),
+    down,
+    onRetry: load,
     draft: draft[p.id] ?? "",
     busy: busy === p.id,
     onDraft: (v: string) => setDraft((d) => ({ ...d, [p.id]: v })),
