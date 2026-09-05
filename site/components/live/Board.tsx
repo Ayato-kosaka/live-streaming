@@ -136,8 +136,8 @@ export default function Board() {
       <section className="panel bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
-          まじめじゃなくていいです。<b>むちゃな企画ほど、だいたい通ります。</b>
-          ログインも名前も要りません。
+          まじめじゃなくていい。思いついたことを、そのまま書いて。
+          <b>ログインも名前も要りません。</b>
         </p>
 
         <textarea

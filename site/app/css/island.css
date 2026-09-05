@@ -475,6 +475,12 @@
 .stage.is-talking .spot-mark,
 .stage.is-talking .spot-badge,
 .stage.is-talking .who-name { opacity: 0; transition: opacity 0.18s; }
+/* 見えない当たりも一緒に引っ込める。
+   吹き出しが出ているあいだは「どこを押しても閉じるだけ」（ゲームと同じ作法）。
+   札が消えているのに下の当たりが生きていると、
+   読み終わって画面を押した指が、そのまま知らない建物へ歩き出す。 */
+.stage.is-talking .spot-hit,
+.stage.is-talking .who-hit { pointer-events: none; }
 @media (min-width: 640px) {
   .talkbox { left: 50%; right: auto; transform: translateX(-50%); width: min(560px, 70vw); }
   @keyframes talkIn {
