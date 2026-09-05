@@ -7,6 +7,7 @@
  *   python3 tools/sprites/inkpx.py <TAG> <_map など>
  *
  * OPEN=1 で畳んであるものを全部開く。CLICK に "|" 区切りで押す先を渡せる。
+ * GAP=6000 で、押すたびにそのぶん待つ（島の建物は歩いて着いてから2回目で入る）。
  *
  * 1. 字を持つ要素をぜんぶ拾って、位置と字の色を書き出す
  * 2. そのまま1枚撮る（shot.png）
@@ -65,7 +66,13 @@ for (const path of PATHS) {
     });
   }
   if (process.env.CLICK) {
-    for (const sel of process.env.CLICK.split("|")) await p.click(sel).catch(() => {});
+    /* 押すたびに待つ。島の建物は**1回目で歩き出して、着いてから2回目で中に入る**ので、
+       間を置かずに2回押すと板が開かないまま撮ることになる（GAP は待つミリ秒） */
+    const gap = Number(process.env.GAP || 0);
+    for (const sel of process.env.CLICK.split("|")) {
+      await p.click(sel, { force: true }).catch(() => {});
+      if (gap) await p.waitForTimeout(gap);
+    }
   }
   await p.waitForTimeout(1400);
   // 押したときに画面が動いていると、通しで撮った1枚と箱の座標がずれる

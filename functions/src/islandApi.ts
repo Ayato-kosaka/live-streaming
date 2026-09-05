@@ -86,33 +86,43 @@ const GAS_GOALS =
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
-/** 鍵は変わらないので、一度読めたら覚えておく。 */
-let goalKeyCache: string | null = null;
+/** 鍵と起点は変わらないので、一度読めたら覚えておく。 */
+let goalCache: {key: string; start: number} | null = null;
 
 /**
  * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
  * @return {Promise<string>} 鍵。取れなければ空文字
  */
-async function doneruKey(): Promise<string> {
-  const env = process.env.DONERU_GOAL_KEY ?? "";
-  if (env) return env;
-  if (goalKeyCache) return goalKeyCache;
+async function goalRecord(): Promise<{key: string; start: number} | null> {
+  if (goalCache) return goalCache;
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 8000);
   try {
     const r = await fetch(GAS_GOALS, {signal: ctl.signal});
     if (!r.ok) throw new Error(`gas ${r.status}`);
-    const j = (await r.json()) as {data?: {doneruGoalKey?: unknown}};
-    const k = String(j.data?.doneruGoalKey ?? "");
+    const j = (await r.json()) as {data?: Json};
+    const d = j.data ?? {};
+    const k = String(d.doneruGoalKey ?? "");
     if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
-    goalKeyCache = k;
-    return k;
+    const start = Number(d.startAmount);
+    goalCache = {key: k, start: Number.isFinite(start) ? start : 0};
+    return goalCache;
   } catch (e) {
-    logger.warn("goal key read failed", String(e));
-    return "";
+    logger.warn("goal record read failed", String(e));
+    return null;
   } finally {
     clearTimeout(t);
   }
+}
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * @return {Promise<string>} 鍵。取れなければ空文字
+ */
+async function doneruKeyOnly(): Promise<string> {
+  const env = process.env.DONERU_GOAL_KEY ?? "";
+  if (env) return env;
+  return (await goalRecord())?.key ?? "";
 }
 
 const MAX_IDEA_LEN = 200;
@@ -579,7 +589,7 @@ function forkCounts(v: unknown): Record<string, number> {
  * @return {Promise<number | null>} 集まっている額(円)
  */
 async function doneruNow(): Promise<number | null> {
-  const key = await doneruKey();
+  const key = await doneruKeyOnly();
   if (!key) return null;
   if (fundCache && Date.now() - fundCache.at < FUND_TTL_MS) {
     return fundCache.doneru;
@@ -1020,9 +1030,10 @@ export const islandApi = onRequest(
          スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
          同じことをサイトでやると、出した人が自分の額を見つけられない。 */
       if (method === "GET" && path === "/fund") {
-        const [doneru, snap] = await Promise.all([
+        const [doneru, snap, goal] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
+          goalRecord(),
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const num = (v: unknown) => {
@@ -1031,7 +1042,14 @@ export const islandApi = onRequest(
         };
         // 毎日の集計(python/island_daily_stats.py)が置いていくぶん
         const superchat = num(f.superchat);
-        const start = num(f.start);
+        /* **起点は GAS の startAmount。負の数なので num() に通さない。**
+           `docs/nordic-fund.md` 2.2 の式は
+           `currentAmount = startAmount + superChatAmount + doneruAmount` で、
+           startAmount はこの企画の起点（いまは -249,646）。ここを足していな
+           かったので、**サイトだけが配信の10倍近い額を出していた**。
+           Firestore 側の start は集計が置くことになっているが、いまは無い。
+           取れなかったときだけそちらに落ちる。 */
+        const start = goal ? goal.start : num(f.start);
         let total = (doneru ?? 0) + superchat + start;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);

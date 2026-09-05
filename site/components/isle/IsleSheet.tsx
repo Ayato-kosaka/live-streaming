@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/IconCore";
+import { shortHref, shortThumb } from "@/content/shorts";
 import type { IslePlaceSpec } from "./spec";
 
 /**
@@ -68,6 +69,39 @@ export default function IsleSheet({
           </ul>
         )}
 
+        {/* ショート動画。**埋め込まない。**
+            プレイヤーを31個並べると、板を開いた瞬間に外へ31本つなぎにいく。
+            サムネイル1枚は 15KB で、しかも見えるまで取りにいかない（`loading="lazy"`）。
+
+            **絵は縦。** YouTube が配っている 480×360 は、縦の絵を中心に置いて
+            まわりをぼかしで埋めたもの。縦の枠に `object-fit: cover` で入れると、
+            ぼかしの左右が落ちて**元の縦の絵だけ**が残る。
+
+            題名は絵の中に焼かれているので、外では2行で止める。
+            読み上げには `alt` で全文が渡る。 */}
+        {place.shorts && (
+          <ul className="isle-shots">
+            {place.shorts.map((s) => (
+              <li key={s.id}>
+                <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={shortThumb(s.id)}
+                    alt={s.title}
+                    width={480}
+                    height={360}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <b>{s.title}</b>
+                  {/* 年は板の頭に書いてある（「2024年10月から12月まで」）ので、月日だけ。
+                      「ヴェルサイユ・2024-11-05」は 107px の桁に入らず、年のほうが切れる */}
+                  <i>{s.city ? `${s.city}・${md(s.date)}` : md(s.date)}</i>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {place.items && (
           <ul className="isle-list">
             {place.items.map((it) => (
@@ -109,6 +143,12 @@ export default function IsleSheet({
     </div>
   );
 }
+
+/** 2024-11-05 → 11/5 */
+const md = (d: string) => {
+  const [, m, day] = d.split("-");
+  return `${Number(m)}/${Number(day)}`;
+};
 
 function ItemBody({ item }: { item: NonNullable<IslePlaceSpec["items"]>[number] }) {
   return (
