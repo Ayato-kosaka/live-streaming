@@ -60,3 +60,6 @@ site/.next/
 tools/sprites/models/
 tools/sprites/vendor/
 tools/sprites/node_modules
+
+# 性能を測った記録。手元の比較用なので持ち回らない
+tools/sprites/.perf/

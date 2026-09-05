@@ -6,59 +6,115 @@ import { Panel, Stat } from "@/components/ui/Bits";
 import { COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
+import WorldRoute from "@/components/atlas/WorldRoute";
+import Days from "@/components/atlas/Days";
+import MAP from "@/content/atlas/route.json";
+import { PierArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = {
   title: "これまでに歩いた17カ国",
-  description: "2024年10月のパリから、いまいるジョージアまで。配信しながら歩いてきた国の記録です。",
+  description:
+    "2024年10月のパリから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
 };
 
-const REGIONS = ["ヨーロッパ", "中東・アフリカ", "コーカサス"] as const;
+/**
+ * 旅の桟橋。
+ *
+ * 主役は地図。表で17行並べても「どこをどう回ったか」は伝わらないので、
+ * まず1枚の地図を出して、そのあとに順番の年表を置く。
+ * 国のピンからも年表からも、同じ国のページへ行ける。
+ */
 
-const fmt = (d: string) => (d ? d.replace(/-/g, "/").slice(0, 7) : "いま");
+/** 出発の日。ここから今日までを数える。 */
+const START = "2024-10-28";
+
+const ym = (d: string) => (d ? `${d.slice(0, 4)}/${d.slice(5, 7)}` : "いま");
+
+/** 滞在の期間を「2024/10 – 11」のように縮める。同じ年なら年を省く。 */
+function span(s: { from: string; to: string }) {
+  const a = ym(s.from);
+  const b = ym(s.to);
+  if (!s.to) return `${a} –`;
+  if (a === b) return a;
+  return a.slice(0, 4) === b.slice(0, 4) ? `${a} – ${b.slice(5)}` : `${a} – ${b}`;
+}
 
 export default function MapPage() {
-  const days = Math.round((new Date("2026-09-04").getTime() - new Date("2024-10-28").getTime()) / 86400000);
+  // いまいる国 = まだ出国していない国（滞在の終わりが空）。
+  // 並びの最後を「いまここ」にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
+  const here = COUNTRIES.find((c) => c.stays.some((s) => !s.to)) ?? COUNTRIES[0];
+  // イランは国境まで歩いただけで中に入っていない。国の数には入れない。
+  const visited = COUNTRIES.filter((c) => c.slug !== "iran-border");
+  const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
+  const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
+
   return (
     <PageShell current="map" crumbs={[{ label: "旅の桟橋" }]}>
       <PageHead
-        icon="signpost"
+        mark={<PierArt size={68} />}
         title="これまでに歩いた17カ国"
         lead="2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、いまはコーカサスにいます。"
         say={GUIDE.map}
       />
-      <div className="stats" style={{ marginBottom: 18 }}>
-        <Stat value="17" label="国" />
-        <Stat value="40+" label="街" />
-        <Stat value={days.toLocaleString()} label="旅した日数" sub="2024/10/28から" />
-        <Stat value={<Flag slug="georgia" size={32} />} label="いまここ" sub="ジョージア" />
+
+      <div className="stats" style={{ marginBottom: 16 }}>
+        <Stat value={visited.length} label="歩いた国" />
+        <Stat value={cities.size} label="通った街" />
+        <Stat value={<Days from={START} />} label="旅した日数" sub="2024/10/28から" />
+        <Stat
+          value={<Flag slug={here.slug} size={34} />}
+          label="いまここ"
+          sub={here.name}
+        />
       </div>
 
-      {REGIONS.map((region) => (
-        <Panel key={region}>
-          <h2>{region}</h2>
-          <ul className="clist">
-            {COUNTRIES.filter((c) => c.region === region).map((c) => (
+      <Panel>
+        <h2>どこをどう回ったんだろう</h2>
+        <p className="muted">
+          ピンを押すと、その国のページへ行けます。上のボタンで地図を寄せられます。
+        </p>
+        <WorldRoute here={here.slug} />
+      </Panel>
+
+      <Panel>
+        <h2>行った順に、ぜんぶ</h2>
+        <p className="muted">同じ国に何度も戻っているので、番号は「初めて入った順」です。</p>
+        <ol className="atrip">
+          {ordered.map((c) => {
+            const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
+            return (
               <li key={c.slug}>
-                <Link href={`/map/${c.slug}`}>
-                  <Flag slug={c.slug} size={28} className="clist-flag" />
-                  <span className="clist-body">
-                    <b>
-                      {c.name}
+                <span className="atrip-rail" aria-hidden />
+                <span className="atrip-no" aria-hidden>
+                  {c.order}
+                </span>
+                <Link className="atrip-card" href={`/map/${c.slug}`}>
+                  <span className="atrip-flag">
+                    <Flag slug={c.slug} size={34} />
+                  </span>
+                  <span className="atrip-body">
+                    <span className="atrip-name">
+                      <b>{c.name}</b>
                       <em>{c.en}</em>
-                    </b>
-                    <i>
-                      {c.stays.map((s) => `${fmt(s.from)}–${fmt(s.to)}`).join("、")}
-                      {" ・ "}
-                      {c.stays.flatMap((s) => s.cities).slice(0, 4).join("、")}
-                    </i>
+                    </span>
+                    <span className="atrip-when">
+                      {c.stays.map(span).join("、")}
+                    </span>
+                    <span className="atrip-tags">
+                      {towns.slice(0, 5).map((t) => (
+                        <span key={t}>{t}</span>
+                      ))}
+                      {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
+                      {c.slug === here.slug && <span className="atrip-here">いまここ</span>}
+                    </span>
                   </span>
                   <Icon name="right" size={15} className="tile-go" />
                 </Link>
               </li>
-            ))}
-          </ul>
-        </Panel>
-      ))}
+            );
+          })}
+        </ol>
+      </Panel>
     </PageShell>
   );
 }
