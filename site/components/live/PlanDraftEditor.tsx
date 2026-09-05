@@ -146,7 +146,7 @@ export default function PlanDraftEditor() {
       <section className="panel">
         <h2>企画のページを作る</h2>
         <p>
-          いまは、あやとが「書いていいよ」と決めた人だけが書けるようになっています。
+          いまは、あやとが「書いていいよ」と決めた人だけが書けます。
           書いてみたい人は配信で言ってください。すぐ開けます。
         </p>
       </section>

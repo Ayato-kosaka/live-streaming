@@ -284,7 +284,7 @@ export default function NextPlans() {
           <Fold
             title="もう行ってきた企画"
             note={`${done.length}件`}
-            lead="貼ってもらった付箋も、そのまま残してあります"
+            lead="貼ってもらった付箋も、そのまま残っている"
           >
             {done.map((p) => (
               <PlanCard plan={p} key={p.id}>

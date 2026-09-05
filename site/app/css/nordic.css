@@ -568,8 +568,10 @@
   width: 24px; height: 24px;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--frame-dark);
-  color: var(--paper);
+  /* 何カ国目か。数えたものなのでオリーブの平らな札（docs/island-world.md 3.2）。
+     琥珀の丸にクリームの数字だと 2.91 : 1 で読めない。 */
+  background: var(--chip);
+  color: var(--chip-ink);
   font-size: var(--fs-note);
   font-weight: 900;
 }
@@ -684,7 +686,9 @@
   font-size: var(--fs-min);
   font-weight: 800;
   color: var(--paper);
-  background: rgba(30, 34, 20, 0.62);
+  /* 写真の明るさは選べない。色の表に無い直値をやめて、墨を 82% まで濃くする。
+     うすいままだと、明るい写真の上でクリームの字が消える。 */
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
   border-radius: var(--r-0);
   padding: 2px 7px;
 }
@@ -736,8 +740,10 @@
   font-weight: 900;
   letter-spacing: var(--ls-caps);
   border-radius: var(--r-pill);
-  background: var(--frame-dark);
-  color: var(--paper);
+  /* 琥珀の上のクリームは 2.91 : 1。紙の見出しなので蛍光ペンで敷く
+     （docs/island-world.md 3.2）。--marker-ink は紙の上で 8 : 1 を超える。 */
+  background: var(--marker);
+  color: var(--marker-ink);
 }
 /* 出ている意見。押せないので、1枚ずつ囲まず罫線で分ける。 */
 .cideas {
@@ -813,11 +819,13 @@
 .gtoc a:first-child { border-top: 0; }
 @media (min-width: 620px) { .gtoc a:nth-child(2) { border-top: 0; } }
 .gtoc a:hover { background: color-mix(in srgb, var(--marker) 55%, transparent); }
+/* 目次の番号。罫の色（--rule）で字を書くと紙の上で 2.69 : 1 になる。
+   罫は線の色であって、字の色ではない（docs/island-world.md 3.2）。 */
 .gtoc-n {
   grid-row: span 2;
   font-size: var(--fs-note);
   font-weight: 900;
-  color: var(--rule);
+  color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 .gtoc b { font-size: 13.5px; font-weight: 900; }
@@ -914,7 +922,8 @@ svg.nmap {
   /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
   --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
-  --nm-label: color-mix(in srgb, var(--ink) 40%, var(--grass-lo) 60%);
+  /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
+  --nm-label: color-mix(in srgb, var(--ink) 82%, var(--grass-lo) 18%);
   --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;
