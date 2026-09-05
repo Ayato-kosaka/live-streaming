@@ -57,15 +57,20 @@ const subscribe = (f: () => void) => {
 };
 
 /**
- * ある区間ぶんの道しるべ。読み込み中は null。
+ * 貼られているもの全部。読み込み中は null。
  * `list` の中身は差し替えでしか変わらないので、参照の比較で足りる。
  */
-export function useLegIdeas(tag: string): Idea[] | null {
-  const all = useSyncExternalStore(
+export function useIdeas(): Idea[] | null {
+  return useSyncExternalStore(
     subscribe,
     () => list,
     () => null,
   );
+}
+
+/** ある区間ぶんの道しるべ。読み込み中は null。 */
+export function useLegIdeas(tag: string): Idea[] | null {
+  const all = useIdeas();
   return all === null ? null : all.filter((i) => i.text.startsWith(tag));
 }
 

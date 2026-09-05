@@ -221,20 +221,27 @@
    章の切りかえ
    --------------------------------------------------------- */
 
+/* 4つを1行に収める。2行に折り返すと、地図の上の押しどころが
+   縦に 104px を取って、肝心の地図が画面の外へ落ちる。
+   幅は中身の長さの比で分ける（flex: 1 1 auto）。「中東」だけ
+   極端に細くならないよう、最小の幅を指1本ぶんで止めておく。 */
 .amap-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: var(--sp-2);
   margin: 0 0 12px;
 }
 .amap-tab {
-  flex: none;
+  flex: 1 1 auto;
+  min-width: 48px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   /* 指で押せる最小 48px。48px の押しものの厚みは 6px */
   min-height: 48px;
-  padding: 0 18px;
+  padding: 0 var(--sp-2);
+  white-space: nowrap;
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink-2);
@@ -340,7 +347,9 @@
   .apin.is-here::after { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
   .apin-name { font-size: var(--fs-body); bottom: 40px; }
   .acity b { font-size: var(--fs-min); }
-  .amap-tab { font-size: var(--fs-body); padding: 0 22px; }
+  /* 広い画面では折り返す心配が無いので、中身なりの幅に戻す。 */
+  .amap-tabs { flex-wrap: wrap; }
+  .amap-tab { flex: none; font-size: var(--fs-body); padding: 0 22px; }
 }
 
 /* ---------------------------------------------------------

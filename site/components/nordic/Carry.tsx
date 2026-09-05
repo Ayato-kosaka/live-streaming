@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFund } from "./fund";
-import { legTag, useLegIdeas } from "./ideas";
+import { legTag, useIdeas, useLegIdeas } from "./ideas";
 import { TieMark } from "./Seats";
 
 /**
@@ -29,6 +30,23 @@ function poured(total: number | null, cost: number, before: number, reach: boole
   if (total === null || !reach) return null;
   return Math.max(0, Math.min(cost, total - before));
 }
+
+/** 足代がそろっているか。お金の要らない区間は、はじめからそろっている。 */
+function fareDone(total: number | null, l: LegState) {
+  if (!l.needsFare) return true;
+  const got = l.cost ? poured(total, l.cost, l.before, l.reach) : null;
+  return got !== null && !!l.cost && got >= l.cost;
+}
+
+/** 区間ごとの、足代の位置。`content/nordic.ts` が計算したものをそのまま受け取る。 */
+export type LegState = {
+  id: string;
+  /** 足代の席がそもそも要るか（寄り道は要らない） */
+  needsFare: boolean;
+  cost?: number;
+  before: number;
+  reach: boolean;
+};
 
 export type FareProps = {
   /** 何に要るのか */
@@ -107,10 +125,9 @@ export function Tie({ leg, needsFare, cost, before, reach }: TieProps) {
   const f = useFund();
   const posts = useLegIdeas(legTag(leg));
 
-  const got = cost ? poured(f?.total ?? null, cost, before, reach) : null;
-  const fareDone = !needsFare || (got !== null && !!cost && got >= cost);
+  const paid = fareDone(f?.total ?? null, { id: leg, needsFare, cost, before, reach });
   const n = posts?.length ?? 0;
-  const tied = fareDone && n > 0;
+  const tied = paid && n > 0;
 
   let say: React.ReactNode;
   if (tied) {
@@ -120,7 +137,7 @@ export function Tie({ leg, needsFare, cost, before, reach }: TieProps) {
         {needsFare ? "足代も道しるべも、そろっています" : "お金の要らない区間に、道しるべが立っています"}
       </>
     );
-  } else if (fareDone) {
+  } else if (paid) {
     say = (
       <>
         {needsFare ? "足代はそろっています" : "越えるのにお金の要らない区間です"}。

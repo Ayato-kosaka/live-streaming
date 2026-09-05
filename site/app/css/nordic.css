@@ -929,6 +929,8 @@ svg.nmap {
   /* ヒッチハイクの線。この企画の主役なので、地図でいちばん強い色にする。 */
   --nm-hitch: color-mix(in srgb, var(--gold) 58%, var(--accent) 42%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
+  /* つながった区間の芯。色を1つ増やすのではなく、同じ線を明るくするための白み。 */
+  --nm-tie: color-mix(in srgb, var(--paper) 88%, var(--gold));
   /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
   --nm-label: color-mix(in srgb, var(--ink) 82%, var(--grass-lo) 18%);
   --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
@@ -1092,9 +1094,31 @@ svg.nmap {
   stroke-dasharray: 16 15;
   opacity: 0.8;
 }
+/* --- 区間の2つの状態（docs/nordic-fund.md 提案3） ---
+   **線を2本描かない。1本の線に2つの状態を持たせる。**
+     つながった（足代と道しるべが両方そろった） … 線の芯が明るい
+     見ている（区間カードを開いている）         … 線の下に太い帯が敷かれる
+   どちらも既定では出さない。埋まっていない区間を灰色にしないのと同じ理由で、
+   **足りないほうに印を付けず、足りたほうに印を足す**（同 3章）。
+   金額は書かない。地図はもう情報量が多いので、数字は区間カードが持つ。 */
+.nmap .nm-leg-look,
+.nmap .nm-leg-tie {
+  display: none;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nmap .nm-leg.is-tied .nm-leg-tie { display: inline; stroke: var(--nm-tie); }
+.nmap .nm-leg.is-look .nm-leg-look {
+  display: inline;
+  stroke: var(--paper);
+  opacity: 0.34;
+}
+
 /* 出発したあと。まだ行っていない道は薄く、通った道はそのまま濃く残す。
    出発前（data-here が無い）は全部これから行く道なので、何もしない。 */
 .nmap[data-here] .nm-leg:not(.is-done) .nm-leg-line { opacity: 0.42; }
+.nmap[data-here] .nm-leg:not(.is-done) .nm-leg-tie { opacity: 0.42; }
 .nmap[data-here] .nm-leg:not(.is-done) .nm-leg-case { opacity: 0.12; }
 .nmap[data-here] .nm-leg:not(.is-done) .nm-arrow { opacity: 0.4; }
 .nmap[data-here] .nmap-pin:not(.is-done) .nm-pin-dot { fill: var(--paper-2); }

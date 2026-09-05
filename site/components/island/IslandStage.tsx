@@ -987,7 +987,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             aria-controls="island-bar-spots"
           >
             <Icon name={barOpen ? "chevron" : "up"} size={12} />
-            {barOpen ? UI.close : "行き先"}
+            {barOpen ? UI.close : "行き先をみる"}
           </button>
           <div className="island-bar-scroll" id="island-bar-spots">
             {/* 押したら、その場所へ行く。
