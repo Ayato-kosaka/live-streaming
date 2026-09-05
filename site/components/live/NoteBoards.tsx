@@ -243,14 +243,11 @@ export default function NoteBoards({
                 </li>
               ))}
             </ul>
+            {/* ここに全部は出さない。棚が長くなるほど、下の棚が見えなくなる。
+                続きは上の「貼ってある場所へ」から。**行き先を2つ置かない** */}
             {now.items.length > SHOW && (
               <p className="nb-more">
-                新しいものから{SHOW}枚まで出しています。
-                {now.href && (
-                  <Link href={now.href} prefetch={false}>
-                    貼ってある場所で、ぜんぶ読めます
-                  </Link>
-                )}
+                新しいものから{SHOW}枚まで。残り{now.items.length - SHOW}枚は、貼ってある場所で読めます。
               </p>
             )}
           </div>
