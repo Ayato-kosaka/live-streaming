@@ -53,8 +53,8 @@
 .dform select {
   width: 100%;
   padding: 10px 13px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 14px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
   background: var(--paper);
   /* 彫ってある溝。押せる板（外向きの厚み）と、書き込む欄を見分けられるようにする。
      上のかげと下の照りの2本だけ。ぼかしを重ねるとスマホで描き直しが重くなる。 */
@@ -92,11 +92,11 @@
   font-size: 11.5px;
   font-weight: 900;
   padding: 7px 15px 7px 13px;
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: 0 3px 0 var(--frame-deep);
+  box-shadow: var(--pop-sm);
   transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
 }
 .dadd::before {
@@ -116,8 +116,8 @@
 .dsrc {
   margin-top: 10px;
   padding: 13px 15px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 16px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
   background: var(--ink);
   color: var(--paper);
   font-size: 11.5px;
@@ -166,7 +166,7 @@
   position: absolute;
   inset: 4px;
   border: 1px solid color-mix(in srgb, var(--rule) 46%, transparent);
-  border-radius: 6px;
+  border-radius: var(--r-0);
   pointer-events: none;
   z-index: 2;
 }
@@ -220,7 +220,7 @@
   inset: 3px;
   z-index: -1;
   border: 1.5px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--r-0);
   background: var(--marker);
   opacity: 0;
   transform: scaleX(0.32);
@@ -246,11 +246,11 @@
 .fold > summary:focus-visible {
   outline: 2px solid var(--pick);
   outline-offset: -3px;
-  border-radius: 8px;
+  border-radius: var(--r-0);
 }
 
 .fold-t { display: grid; gap: 0; min-width: 0; flex: 1; }
-.fold-t b { font-size: 14.5px; font-weight: 900; line-height: 1.4; letter-spacing: 0.01em; }
+.fold-t b { font-size: 14.5px; font-weight: 900; line-height: var(--lh-head); letter-spacing: var(--ls-body); }
 .fold-t i {
   font-style: normal;
   font-size: 11.5px;
@@ -271,10 +271,10 @@
   font-style: normal;
   font-size: 10.5px;
   font-weight: 900;
-  color: color-mix(in srgb, var(--ink) 80%, #2c2a14);
-  background: color-mix(in srgb, var(--chip) 40%, #fff8d2);
+  color: var(--chip-ink);
+  background: color-mix(in srgb, var(--chip) 36%, var(--paper-out));
   border: 1px solid color-mix(in srgb, var(--rule) 78%, transparent);
-  border-radius: 5px;
+  border-radius: var(--r-0);
   padding: 2px 8px;
   line-height: 1.5;
 }
@@ -289,7 +289,7 @@
   color: var(--chip-ink);
   background: var(--chip);
   border: 1px solid color-mix(in srgb, var(--rule) 72%, var(--chip));
-  border-radius: 7px;
+  border-radius: var(--r-0);
   transition: transform 0.26s cubic-bezier(0.34, 1.5, 0.64, 1);
 }
 .fold > summary:active .fold-c { transform: scale(0.86); }
@@ -327,8 +327,8 @@
   font-size: 11px;
   font-weight: 900;
   padding: 4px 11px;
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
   background: var(--paper);
   color: var(--ink);
 }
@@ -349,20 +349,20 @@
   font-size: 12px;
   font-weight: 900;
   padding: 6px 14px;
-  border-radius: 999px;
-  border: 2.5px solid var(--frame-dark);
-  background: linear-gradient(#fffdf6, #fff3da);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: 0 2px 0 var(--frame-deep);
+  box-shadow: var(--pop-sm);
 }
 
 /* 引用のような、この企画の芯を言う一枚 */
 .nquote {
   margin-top: 14px;
   padding: 14px 16px;
-  border-radius: 16px;
-  border: 3px dashed var(--frame-dark);
-  background: rgba(255, 236, 178, 0.4);
+  border-radius: var(--r-2);
+  border: var(--bw-2) dashed var(--frame-dark);
+  background: color-mix(in srgb, var(--gold) 26%, var(--paper));
 }
 .nquote p { margin: 0; font-size: 13.5px; line-height: 1.9; font-weight: 700; }
 .nquote b { font-weight: 900; }
@@ -372,9 +372,9 @@
   flex: none;
   width: 40px; height: 40px;
   display: grid; place-items: center;
-  border-radius: 12px;
-  border: 2.5px solid var(--frame-dark);
-  background: linear-gradient(#fffdf6, #fff3da);
+  border-radius: var(--r-1);
+  border: var(--bw-1) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
 }
 
@@ -418,9 +418,9 @@
   gap: 4px;
   margin-top: 12px;
   padding: 13px 15px;
-  border: 3px solid var(--frame-dark);
-  border-radius: 16px;
-  background: rgba(255, 236, 178, 0.45);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 28%, var(--paper));
 }
 .narrive b { font-size: 15px; font-weight: 900; }
 .narrive i { font-style: normal; font-size: 12px; font-weight: 900; color: var(--ink-3); }
@@ -451,8 +451,8 @@
   gap: 4px 0;
   margin-top: 14px;
   padding: 11px 14px 9px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 18px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
   background: linear-gradient(
     color-mix(in srgb, var(--grass-hi) 42%, var(--paper)),
     color-mix(in srgb, var(--grass) 46%, var(--paper))
@@ -486,13 +486,13 @@
 .nhi-card {
   display: block;
   overflow: hidden;
-  border: 3px solid var(--frame-dark);
-  border-radius: 18px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-3);
   background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-deep);
+  box-shadow: 0 4px 0 var(--frame-deep), var(--shadow-1);
   color: var(--ink);
 }
-.nhi-card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--frame-deep); }
+.nhi-card:active { transform: translateY(2px); box-shadow: var(--pop-push); }
 .nhi-img { position: relative; display: block; line-height: 0; background: #dfe7e4; }
 .nhi-img img { width: 100%; height: 168px; object-fit: cover; }
 .nhi-where {
@@ -503,7 +503,7 @@
   color: var(--ink);
   background: rgba(255, 253, 246, 0.94);
   border: 2px solid var(--frame-dark);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 2px 9px 2px 4px;
   line-height: 1.4;
 }
@@ -521,7 +521,7 @@
   position: relative;
   margin: -6px -4px 14px;
   border: 4px solid var(--frame-dark);
-  border-radius: 22px;
+  border-radius: var(--r-3);
   overflow: hidden;
   box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
   line-height: 0;
