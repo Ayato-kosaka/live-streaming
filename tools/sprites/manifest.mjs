@@ -335,10 +335,13 @@ const flagPost = () => {
     box([0.16, 1.56, 0.16], C.post, [0, 0.78, 0]),
     // 笠。無いと柱の上が切り落とされたように見える
     box([0.24, 0.10, 0.24], C.post, [0, 1.60, 0]),
-    ...flag(1.34, 0.66, 16, C.blue, C.white),
-    ...flag(1.04, 0.58, 198, C.red, C.white),
-    ...flag(0.76, 0.62, -46, C.green, C.gold),
-    ...flag(0.48, 0.52, 148, C.white, C.red),
+    // 向きは 0 度と 180 度のあたりに寄せる。真横へ振ると絵の奥へ回って、
+    // 焼いたときに板が線になって消える(1周目はこれで2枚が見えなかった)
+    ...flag(1.36, 0.62, 8, C.blue, C.white),
+    ...flag(1.10, 0.56, 192, C.red, C.white),
+    ...flag(0.84, 0.58, -10, C.green, C.gold),
+    ...flag(0.58, 0.50, 174, C.white, C.red),
+    ...flag(0.32, 0.52, 14, C.gold, C.green),
   ];
 };
 
@@ -353,7 +356,7 @@ const globeStand = () => {
   /** 大陸1つ。球の中心から向き n の方向へ、半分だけ出す。 */
   const land = (n, rr) => {
     const k = Math.hypot(...n);
-    const d = r - rr * 0.45;
+    const d = r - rr * 0.58;
     return { ball: { r: rr }, color: C.green,
       pos: [n[0] / k * d, cy + n[1] / k * d, n[2] / k * d] };
   };
@@ -363,10 +366,10 @@ const globeStand = () => {
     { disc: { r: 0.20, h: 0.06 }, color: C.post, pos: [0, 0.13, 0] },
     box([0.11, 0.34, 0.11], C.post, [0, 0.30, 0]),
     { ball: { r }, color: C.sea, pos: [0, cy, 0] },
-    land([-0.55, 0.30, 0.78], 0.16),
-    land([0.62, -0.10, 0.60], 0.13),
-    land([0.20, 0.72, 0.30], 0.10),
-    land([-0.80, -0.42, 0.10], 0.11),
+    land([-0.50, 0.26, 0.82], 0.21),
+    land([0.66, -0.16, 0.55], 0.17),
+    land([0.16, 0.78, 0.30], 0.13),
+    land([-0.78, -0.46, 0.20], 0.15),
     // ピン。真上に立てると北極に刺さって見えるので、手前へ倒す
     { disc: { r: 0.022, r2: 0.055, h: 0.20 }, color: C.red,
       pos: [-0.10, cy + r + 0.07, 0.15], rot: [22, 0, 8] },
@@ -580,7 +583,7 @@ const SPRITES_BASE = [
   { name: "hut-kitchen", parts: [...cottage(), ...chimney(0.38)], opts: house("coral") },
   { name: "hut-workshop", parts: cottage(), opts: house("sky") },
   { name: "hut-home", parts: cottage(), opts: house("mint") },
-  { name: "hut-ayato", parts: [...cottageWide(), ...chimney(0.92)], opts: house("mint") },
+  { name: "hut-ayato", parts: [...cottageWide(), ...chimney(0.5)], opts: house("mint") },
   { name: "hall-museum", parts: hall(), opts: house("sun") },
   { name: "tower-studio", parts: tower(), opts: house("plum") },
   { name: "signboard", parts: board(), opts: WOODEN },

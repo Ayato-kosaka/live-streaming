@@ -228,6 +228,12 @@
 /* =========================================================
    旅のよてい（日付ごと）
    ---------------------------------------------------------
+   段落の指定に `p.` を付けてあるのは、`pages.css` の
+   `.panel p { font-size: var(--fs-body); line-height: 1.95 }` が
+   クラス+要素でこちらより強いから。付けずに書いたときは、
+   その日の話が 12px/1.6 のつもりで 14.5px/1.95 で描かれていて、
+   10日ぶんで 500px 余計に取っていた（`p.rtie` と同じ轍）。
+   ---------------------------------------------------------
    ここは区間ごとのカード10枚だった。1枚ずつ畳んであって、開くと中に
    「足代の席」と「道しるべの席」があり、両方そろうと区間が「つながる」。
    企画への提案と投げ銭を1つの言い方に押し込んでいて、通じなかった
@@ -241,14 +247,14 @@
 }
 .nday:last-child { padding-bottom: var(--sp-2); }
 /* 何日目。日付は切符のある2日にだけ入る（分からない日を埋めない）。 */
-.nday-when {
+p.nday-when {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
   margin: 0 0 5px;
 }
-.nday-when b {
+p.nday-when b {
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-0);
   background: var(--marker);
@@ -257,7 +263,7 @@
   font-weight: 900;
   letter-spacing: var(--ls-caps);
 }
-.nday-when time {
+p.nday-when time {
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink-2);
@@ -287,20 +293,20 @@
 .nday-go + .nday-go { margin-top: var(--sp-3); }
 .nday-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
 .nday-txt { min-width: 0; flex: 1; }
-.nday-way {
+p.nday-way {
   margin: 0;
   font-size: var(--fs-body);
   font-weight: 900;
   line-height: var(--lh-head);
 }
-.nday-way i {
+p.nday-way i {
   margin-left: var(--sp-2);
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);
 }
-.nday-how {
+p.nday-how {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -312,7 +318,7 @@
 }
 .nday-enter { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 /* 切符から決まっている、動かせない事実 */
-.nday-fixed {
+p.nday-fixed {
   display: inline-block;
   margin: 5px 0 0;
   padding: var(--sp-1) var(--sp-2);
@@ -322,7 +328,7 @@
   font-size: var(--fs-min);
   font-weight: 900;
 }
-.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.7; font-weight: 700; }
+p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 700; }
 /* 泊まるところ。日付の行の右へ回す。独立した行にすると10日で 370px 取る。 */
 .nday-stay {
   display: inline-flex;
@@ -339,7 +345,7 @@
   padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
   border-left: 3px solid var(--marker);
 }
-.nday-log p { margin: 0; font-size: 13px; line-height: 1.95; font-weight: 700; }
+.nday-log p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
 .nday-vid {
   display: inline-flex;
   align-items: center;
@@ -350,7 +356,7 @@
   color: var(--ink);
 }
 /* 終点。ここが企画の芯なので、最後の行だけ絵を持たない代わりに間を取る。 */
-.nday.is-goal .nday-way { font-size: var(--fs-h3); }
+.nday.is-goal p.nday-way { font-size: var(--fs-h3); }
 
 /* =========================================================
    この旅に、言う
@@ -364,7 +370,7 @@
   font-size: var(--fs-body);
   font-weight: 900;
 }
-.nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
+p.nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
 .nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
 .nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
 /* 何日目かは、問いと同じ行に。行を分けると6つで 130px 増える。 */
@@ -379,7 +385,7 @@
   white-space: nowrap;
 }
 .fork { margin: 0; }
-.fork-q {
+p.fork-q {
   margin: 0 0 7px;
   font-size: 12.5px;
   line-height: 1.7;
@@ -423,16 +429,16 @@
   font-variant-numeric: tabular-nums;
   color: inherit;
 }
-.fork-said {
+p.fork-said {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.7;
   color: var(--ink-2);
 }
-.fork-said b { font-weight: 900; color: var(--ink); }
+p.fork-said b { font-weight: 900; color: var(--ink); }
 /* 越えた日に残る答え。旅程表のその日の行に置く。 */
-.fork-was {
+p.fork-was {
   margin: var(--sp-3) 0 0;
   padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
   border-left: 3px solid var(--marker);
@@ -441,7 +447,7 @@
   line-height: 1.75;
   color: var(--ink-2);
 }
-.fork-was b { font-weight: 900; color: var(--ink); }
+p.fork-was b { font-weight: 900; color: var(--ink); }
 
 /* --- 書く道具 ---
    `.bpost` `.bin-name` は `components/nordic` と企画掲示板で使う。
@@ -485,13 +491,13 @@
    旅の話とお金の話を混ぜない。ここにしか金額を出さない。
    個人の金額も順位も出さない。目標に対するバーも置かない。
    ========================================================= */
-.nback-now {
+p.nback-now {
   margin: var(--sp-3) 0 0;
   font-size: 13px;
   font-weight: 800;
   color: var(--ink-2);
 }
-.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* 何にお金が要るのか。金額の分からないものも、消さずに「調べています」と出す。 */
 .nback-what { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
 .nback-what li {
@@ -536,15 +542,17 @@
    同じ国のページで、2つで 3,300px 使っていた（`Countries.tsx`）。
    写真のほうが強いので、写真を国の顔にして、行のほうへ寄せてある。
    ========================================================= */
-.ncountries { display: grid; gap: 9px; margin-top: 12px; }
-@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr; } }
+/* スマホでも2枚ずつ並べる。1枚ずつ縦に積むと、6枚で 510px 取っていた。
+   写真は国の顔なので残す。減らしたのは字のほう。 */
+.ncountries { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
+@media (min-width: 760px) { .ncountries { grid-template-columns: 1fr 1fr 1fr; } }
 .ncountry {
   position: relative;
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-rows: auto 1fr;
   align-items: stretch;
-  gap: var(--sp-3);
-  padding: 0 var(--sp-3) 0 0;
+  gap: 0;
+  padding: 0 0 var(--sp-2);
   overflow: hidden;
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
@@ -559,7 +567,8 @@
   position: relative;
   display: block;
   line-height: 0;
-  min-height: 86px;
+  min-height: 72px;
+  height: 72px;
   background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
 }
 .ncountry-img img { width: 100%; height: 100%; object-fit: cover; }
@@ -585,14 +594,25 @@
 }
 .ncountry-body {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 2px;
   min-width: 0;
-  padding: var(--sp-3) 0;
+  padding: var(--sp-2) var(--sp-3) 0;
 }
 .ncountry-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.ncountry-body b { font-size: 15.5px; font-weight: 900; }
-.ncountry-body i { font-style: normal; font-size: var(--fs-note); font-weight: 900; line-height: 1.45; }
+.ncountry-body b { font-size: 14px; font-weight: 900; }
+/* 見どころの名前は1行で止める。2行に伸びると、3段で 140px 変わる。
+   全部の名前は、押した先の国のページにある。 */
+.ncountry-body i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
 .ncountry-body em {
   font-style: normal;
   font-size: var(--fs-min);

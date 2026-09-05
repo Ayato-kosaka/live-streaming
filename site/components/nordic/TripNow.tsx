@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { setHereSeq } from "./here";
@@ -295,9 +294,8 @@ export default function TripNow({
         <a className="tnow-act" href="#back">
           応援する
         </a>
-        <Link className="tnow-act" href="/nordic/guide">
-          旅のしおり
-        </Link>
+        {/* しおりへの入口は、下の紙のタイルが持っている。ここに4つ目を置くと
+            行が2段に折れて 46px 増えるので、上は3つまでにする。 */}
       </div>
     </section>
   );

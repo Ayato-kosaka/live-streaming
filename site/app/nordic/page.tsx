@@ -216,6 +216,7 @@ export default async function NordicPage() {
         <h3 className="nsub">やってほしいことを書く</h3>
         <CountryIdeas
           bare
+          foldWrite
           country="北欧旅"
           note="ルートへの口出しも、やってほしい企画も、乗せてくれそうな知り合いの話も。"
           placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
