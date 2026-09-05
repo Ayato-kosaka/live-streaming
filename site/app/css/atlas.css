@@ -32,6 +32,8 @@
   /* 拠点から出て戻ってきた線。同じ「乗って動いた」なので橙の淡いほうにする。
      前は生成りに近い色で、緑の陸の上でほとんど見えなかった。 */
   --am-side: #ffc07a;
+  /* ピンの番号。橙と桃のどちらの丸の上でも 5.4 : 1 を超える濃さ */
+  --am-pin-ink: #401a00;
 }
 
 /* ---------------------------------------------------------
@@ -73,16 +75,27 @@
   transition: stroke-width 0.85s cubic-bezier(0.34, 0.9, 0.32, 1);
 }
 
-/* 国名と海の名前。地図の上に置く文字は、まわりを紙色で縁取って読ませる。 */
-.am-sea {
-  fill: #d9f3ff;
+/* 海の名前。
+   前は `opacity: 0.72` で薄めたうえ、4px の紺の縁取りで読ませていた。
+   実測すると **1.10〜2.85 : 1**。縁取りは比を上げない
+   （`docs/island-review-3.md` 6.2 c）。透明度を外しても、海は上が明るく
+   （#2f97d8）下が濃く（#0f57ad）、浅瀬は #7fe0d8 まで明るいので、
+   **地のほうが場所によって 3倍ちがう。** 字の色を1つ選んでも足りない。
+
+   なので字の下に、自分で地を敷く。濃い紺の札の上の #eaf7ff で 7.4 : 1。
+   札の大きさは WorldRoute が字の長さから出している。 */
+.asea {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(var(--asea-rot, 0deg));
+  padding: 2px 7px 2px 11px;
+  border-radius: 5px;
+  background: #0b4f9c;
+  color: #eaf7ff;
   font-weight: 900;
   letter-spacing: 0.34em;
-  opacity: 0.72;
-  paint-order: stroke;
-  stroke: #0b4f9c;
-  stroke-width: 4;
-  stroke-linejoin: round;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------
@@ -105,6 +118,12 @@
 .apin {
   pointer-events: auto;
   display: block;
+  /* ピンは button になった（押すと国が地図の上で開く）。
+     ボタンの既定の枠と地を落として、丸だけが見えるようにする */
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
   /* 指で押せる最小 48px。絵は小さくても、当たり判定は確保する。 */
   width: 48px;
   height: 48px;
@@ -136,12 +155,18 @@
   border-radius: 50%;
   background: var(--am-route);
 }
+/* 通し番号。橙の丸（--am-route）の上に生成りを置いていて 2.23 : 1 だった。
+   丸の色はルートの線と同じ意味を持っているので動かせない。字のほうを、
+   同じ色相のいちばん濃いところまで落とす（橙の上で 6.0 : 1）。 */
 .apin-dot span {
   position: relative;
-  color: #fff8e8;
-  text-shadow: 0 1px 0 rgba(140, 60, 10, 0.5);
+  color: var(--am-pin-ink);
 }
 .apin.is-here .apin-dot::before { background: var(--accent); }
+/* いま開いている国。塗りは変えず、朱の細い輪だけで示す
+   （`docs/ac-reference.md` 7章 6。選択は枠でやる） */
+.apin.is-open .apin-dot { box-shadow: 0 0 0 3px var(--pick), 0 3px 0 rgba(20, 60, 90, 0.4); }
+.apin.is-open .apin-name { opacity: 1; }
 .apin.is-here::after {
   content: "";
   position: absolute;
@@ -172,11 +197,15 @@
   /* 隣の国とぶつかるときの逃がしぶん（WorldRoute が決める） */
   transform: translate(calc(-50% + var(--apin-dx, 0px)), var(--apin-dy, 0px));
   white-space: nowrap;
+  /* 街の名前と同じ理由で、にじみをやめて紙の札に乗せる。
+     ここも押すのは丸のほうなので、札は平ら（厚みを付けない）。 */
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--paper);
   color: var(--am-ink);
   font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: 0.03em;
-  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 6px #fff, 0 1px 0 #fff, 0 0 9px #fff;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
@@ -195,15 +224,21 @@
   background: var(--paper);
   box-shadow: 0 1px 0 rgba(20, 60, 90, 0.4);
 }
+/* 街の名前。白いにじみで浮かせていたが、海の上では 2.51 : 1 しか無かった。
+   にじみは比を上げないので、紙の札を1枚敷く。紙の上の --am-ink で 8.8 : 1。
+   **札に厚みは付けない。** 押せるのはピンの丸だけで、街の名前は
+   地図に刷ってある字（`docs/island-world.md` 4章の部品表）。 */
 .acity b {
   position: absolute;
   left: 12px;
-  top: -6px;
+  top: -9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--paper);
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--am-ink);
   white-space: nowrap;
-  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 1px 0 #fff;
 }
 .acity.is-left b { left: auto; right: 12px; }
 /* 近い街どうしで名前が重なるときの逃がしぶん（WorldRoute が決める） */
@@ -217,6 +252,105 @@
 }
 .amap-pins.is-wide .apin-dot::before { inset: 2.5px; }
 .amap-pins.is-wide .apin.is-here::after { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+
+/* ---------------------------------------------------------
+   たどる（地図の下の送りと、開いた国の札）
+
+   地図を「読むもの」から「歩けるもの」にするための一式。
+   紙の型なので、札に影は落とさない。厚みが付くのは押すものだけ。
+   --------------------------------------------------------- */
+
+.atrace { margin: calc(var(--sp-4) * -1 + 4px) 0 var(--sp-4); }
+.atrace-bar { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+/* たどりの入り／切り。ここがこの面でいちばん押してほしいところなので、
+   板の厚みをいちばん強く付ける */
+.atrace-go {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 6px 0 var(--pg-edge);
+  font-size: var(--fs-body); font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.atrace-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+.atrace-step { display: inline-flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
+.atrace-step > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); min-width: 46px; text-align: center; }
+.atrace-step > span > b { font-size: var(--fs-h3); color: var(--ink); }
+.atrace-step > button {
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  border: var(--bw-2) solid var(--frame);
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  color: var(--ink);
+  cursor: pointer;
+}
+.atrace-step > button:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+/* 押せないときは、厚みを抜いて紙に戻す。色を薄くするだけだと、
+   押せるのに反応しないように見える */
+.atrace-step > button:disabled { box-shadow: none; opacity: 0.4; cursor: default; }
+.atrace-hint {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note); font-weight: 700; line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+
+/* 開いた国の札 */
+.acard {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1, 12px);
+  background: var(--paper);
+}
+.acard-head { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; margin: 0; }
+.acard-flag { align-self: center; line-height: 0; border-radius: 4px; overflow: hidden; }
+.acard-head > b { font-size: var(--fs-h2); font-weight: 900; letter-spacing: var(--ls-head); color: var(--ink); }
+.acard-head > em { font-style: normal; font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em; color: var(--ink-2); }
+/* 「7カ国目」は数えた事実の札。押せないので平ら */
+.acard-head > i {
+  margin-left: auto;
+  font-style: normal;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min); font-weight: 900;
+}
+.acard-when { margin: var(--sp-2) 0 0; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
+.acard-sum { margin: var(--sp-2) 0 0; font-size: var(--fs-note); font-weight: 700; line-height: var(--lh-body); color: var(--ink); }
+.acard-towns { display: flex; flex-wrap: wrap; gap: 5px; margin: var(--sp-3) 0 0; }
+.acard-towns span {
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.acard-live { margin-top: var(--sp-3); }
+.acard-go {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  min-height: 48px;
+  margin-top: var(--sp-3);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-body); font-weight: 900;
+  color: var(--ink);
+}
+.acard-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+
+@media (min-width: 720px) {
+  /* 地図の下が横に空くので、札は2段に割る */
+  .acard { padding: var(--sp-4); }
+}
 
 /* ---------------------------------------------------------
    章の切りかえ
@@ -278,11 +412,14 @@
   color: var(--ink);
 }
 /* 距離。凡例の言葉より一段引いた色で、数字だと分かるようにする */
+/* 距離。--ink-2 だと紙の暗いムラの上で 4.32 : 1 だった。
+   11.5px の数字なので、言葉と同じ --ink まで濃くする。
+   「言葉より一段引く」は色ではなく、字を数字にすることで足りている。 */
 .amap-key em {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 900;
-  color: var(--ink-2);
+  color: var(--ink);
   letter-spacing: 0.02em;
 }
 .amap-key svg { display: block; flex: none; border-radius: 4px; }
@@ -311,12 +448,14 @@
   gap: 8px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(255, 251, 240, 0.9);
+  /* 半透明にしていたので、下の海が透けて地が #d9d3a1 まで沈み 3.81 : 1 だった。
+     札は不透明にして、字も --ink まで濃くする（9.1 : 1）。 */
+  background: var(--paper);
   /* 押すものではないので厚みは付けない。地図から浮かせるのは薄い落ち影1枚だけ */
   box-shadow: 0 1px 3px rgba(20, 60, 90, 0.2);
   font-size: var(--fs-min);
   font-weight: 900;
-  color: var(--ink-2);
+  color: var(--ink);
   pointer-events: none;
 }
 .amap-badge i {
@@ -369,8 +508,9 @@
   display: grid;
   place-items: center;
   font-size: var(--fs-body);
+  /* --frame-deep は紙の上で 3.68 : 1。読ませる数字なので --ink にする */
   font-weight: 900;
-  color: var(--frame-deep);
+  color: var(--ink);
 }
 .atrip-card {
   display: flex;

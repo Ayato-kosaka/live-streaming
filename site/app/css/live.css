@@ -532,139 +532,173 @@
 
 /* =========================================================
    8. 住民図鑑（愉快な仲間達）
-   図鑑の面は、絵が縦の半分以上を占めている。
-   一人ひとりが主役に見えるように、絵を大きく、まわりを空ける。
-   ========================================================= */
-/* 面の主役。同じ大きさのマスを22個並べると、一人ひとりが見えなくなる。
-   いちばん長くいる人だけ横いっぱいに置いて、絵を大きくする。
-   紙の型なので影は付けず、赤い細枠だけで「ここ」を示す。 */
-.rz-star {
-  margin: var(--sp-3) 0 0;
-  display: grid;
-  grid-template-columns: 40% 1fr;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3);
-  border: 2px solid var(--pick);
-  border-radius: var(--r-0);
-  background: rgba(255, 253, 240, 0.5);
-}
-.rz-star .rz-shot { aspect-ratio: 1 / 1; }
-.rz-star figcaption { min-width: 0; }
-/* 「いちばん長くいる人」は数えた事実の札。押せない札は1種類（オリーブの平ら）と
-   決まっている（`docs/island-world.md` 3.2・4章）。朱のベタ塗りにしていたのは、
-   朱が「いま選んでいる」の色で役が違ううえ、白抜きの字が 3.67 : 1 しか無かったため。
-   「ここが主役」は、まわりの朱の細枠1本がもう言っている。 */
-.rz-star-tag {
-  display: inline-block;
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: var(--r-0);
-  background: var(--chip);
-  color: var(--chip-ink);
-  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.04em;
-}
-.rz-star figcaption > b {
-  display: block;
-  margin-top: var(--sp-2);
-  font-size: var(--fs-h3); font-weight: 900; line-height: 1.4;
-  color: var(--pap-ink);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.rz-star-n { display: block; margin-top: 3px; font-size: var(--fs-min); font-weight: 800; color: var(--pap-ink-2); }
-.rz-star-n b { font-size: 26px; font-weight: 900; color: var(--pap-ink); margin: 0 2px; }
-.rz-star .rz-bar { margin-top: var(--sp-2); }
-/* 棒は数えたもの。まわりの枠と同じ朱にすると、朱が2つの意味を持ってしまう */
-.rz-star .rz-bar > i { background: var(--chip); }
-@media (min-width: 560px) {
-  .rz-star { grid-template-columns: 200px 1fr; gap: var(--sp-5); padding: var(--sp-4); }
-  .rz-star-n b { font-size: 32px; }
-}
 
-.rz { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-top: var(--sp-2); }
-@media (min-width: 520px) { .rz { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 860px) { .rz { grid-template-columns: repeat(4, 1fr); } }
-.rz-card {
-  /* figure の既定の余白（左右40px）を消す。消し忘れると枠だけ細く縮む */
-  margin: 0;
+   本物の図鑑は「一覧」と「1枚」を分けている（`docs/ac-reference.md` 7章）。
+   一覧は小さいマスをぎっしり。選んだ1つだけが、絵が縦の半分を占める紙になる。
+   前はここが 22人ぶんの札の積み上げで、6.1画面あった。
+   ========================================================= */
+/* 見開きの1枚。紙の型なので影は落とさず、罫だけで割る。 */
+.zk { margin-top: var(--sp-3); }
+.zk-page {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* 上は通し番号のぶんだけ空ける。番号と絵が重なると、どちらも読めない */
-  padding: var(--sp-4) var(--sp-2) var(--sp-2);
   border: 1px solid var(--pap-line);
   border-radius: 5px;
-  background: rgba(255, 253, 240, 0.42);
+  /* 紙は無地にしない。うっすらムラを入れる（ac-reference 7章 1） */
+  background:
+    radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(90% 70% at 90% 100%, rgba(214, 200, 148, 0.28), transparent 60%),
+    rgba(255, 253, 240, 0.5);
+  padding: var(--sp-5) var(--sp-3) var(--sp-3);
 }
-/* 図鑑の通し番号。名前を出していない人の欄が空にならないよう、隅に置く */
-.rz-no {
-  position: absolute; top: 6px; left: 8px;
-  font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.08em;
-  color: var(--pap-ink-2);
-  opacity: 0.7;
-}
-.rz-shot { position: relative; width: 100%; aspect-ratio: 1 / 1; display: grid; place-items: end center; }
-.rz-shot img {
+/* 題名の札。**絵の上**に来るのが実測（シーラカンスの面）。
+   白い紙をテープで貼ったように、わずかに傾ける。 */
+.zk-tag {
   position: relative;
-  z-index: 1;
-  width: 88%;
-  height: 88%;
-  object-fit: contain;
-  object-position: center bottom;
-}
-/* 台座。切り抜いた絵をそのまま置くと宙に浮くので、必ず地面ごと置く */
-.rz-pad { position: absolute; left: 50%; bottom: 2px; width: 82%; height: auto; transform: translateX(-50%); }
-.rz-name {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-note);
+  z-index: 2;
+  width: fit-content;
+  max-width: 84%;
+  margin: 0 auto;
+  padding: var(--sp-2) var(--sp-5);
+  border: 1px solid var(--pap-line);
+  border-radius: 3px;
+  background: #fffdf3;
+  transform: rotate(-1.2deg);
+  font-size: var(--fs-h3);
   font-weight: 900;
+  line-height: 1.35;
   text-align: center;
-  line-height: 1.4;
   color: var(--pap-ink);
-  /* 名前は長い人がいる。図鑑の枠は崩さず、はみ出したぶんは切る */
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rz-days { margin-top: 2px; font-size: var(--fs-min); font-weight: 900; color: var(--pap-ink-2); white-space: nowrap; }
-.rz-days b { font-size: var(--fs-body); color: var(--pap-ink); }
-/* 何日いっしょにいたかの帯。図鑑の「出る時間」の目盛りと同じ作り */
-/* span なので display を明かす。付けないと、flex の外（主役の1枚のような
-   ふつうのブロックの中）では inline のままになって、帯が消える */
-.rz-bar { display: block; width: 100%; height: 6px; margin-top: var(--sp-2); border-radius: 3px; background: #ded4a2; overflow: hidden; }
-.rz-bar > i { display: block; height: 100%; border-radius: 3px; background: var(--chip); }
-/* 名前を出していない人のマスは、名札の行そのものを出さない。
-   空の行を22個並べると、そこだけ抜けて見える */
-.rz-card.is-blank .rz-days { margin-top: var(--sp-2); }
+/* 主役の絵。まわりを大きく空ける（ac-reference 7章 4） */
+.zk-art {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  height: 210px;
+  margin: var(--sp-4) 0 var(--sp-5);
+}
+.zk-art img {
+  position: relative;
+  z-index: 1;
+  max-width: 78%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+/* 台座。切り抜いた絵をそのまま置くと宙に浮くので、必ず地面ごと置く */
+.zk-art .rz-pad { position: absolute; left: 50%; bottom: 0; width: 46%; height: auto; transform: translateX(-50%); }
 
-/* 今日、島に出ている人。図鑑を名簿で終わらせないための1行。
-   島にいない人の欄には何も出さないので、印が付くのは日替わりの12人だけ。
-   紙の上の事実なので平ら。押せるのは「島へ会いに行く」の1つだけ。 */
-.rz-here {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: var(--sp-2);
-  padding: 2px var(--sp-2);
-  border-radius: var(--r-0);
-  /* 朱は「いま選んでいるもの」の色なので使わない（`docs/ac-reference.md` 7章）。
-     数えた事実の札は、オリーブの平ら1種類にそろえる（`.rz-star-tag` と同じ）。 */
-  background: var(--chip);
+/* 欄。細い罫で割る。見出しには蛍光ペンの帯（ac-reference 7章 3） */
+.zk-fields { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: 1px solid var(--pap-line); }
+.zk-fields > div { padding: var(--sp-3) var(--sp-2); border-bottom: 1px solid var(--pap-line); min-width: 0; }
+.zk-fields > div:nth-child(2n) { border-left: 1px solid var(--pap-line); }
+.zk-fields > .zk-wide { grid-column: 1 / -1; border-left: 0; }
+.zk-fields dt {
+  display: inline-block;
+  margin-bottom: var(--sp-2);
+  padding: 1px var(--sp-2);
+  background: var(--marker);
   font-size: var(--fs-min);
   font-weight: 900;
-  line-height: 1.5;
-  color: var(--chip-ink);
-  text-align: center;
+  letter-spacing: var(--ls-body);
+  color: var(--marker-ink);
 }
-.rz-here .ic { flex: none; color: var(--chip-ink); }
-.rz-star .rz-here { margin-top: var(--sp-3); }
+.zk-fields dd { margin: 0; font-size: var(--fs-note); font-weight: 700; line-height: 1.8; color: var(--pap-ink); }
+.zk-fields dd > b { font-size: 26px; font-weight: 900; color: var(--pap-ink); }
+.zk-fields dd > i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-left: var(--sp-2); }
+.zk-quiet { color: var(--pap-ink-2); }
+/* 今日どこにいるか。数えた事実の札はオリーブの平ら1種類（`docs/island-world.md` 4章） */
+.zk-spot {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--chip-ink);
+}
+.zk-spot .ic { flex: none; color: var(--chip-ink); }
+/* その人が島で言うこと。かぎ括弧を付けて、地の文と混ぜない */
+.zk-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.zk-lines > li::before { content: "「"; }
+.zk-lines > li::after { content: "」"; }
+.zk-say::before { content: "「"; }
+.zk-say::after { content: "」"; }
+
+/* 送り。詳細ページの `.pager` と同じ役なので、同じ形にする */
+.zk-pager { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-top: var(--sp-3); }
+.zk-pager > span { font-size: var(--fs-min); font-weight: 900; color: var(--pap-ink-2); }
+.zk-pager > span > b { font-size: var(--fs-body); color: var(--pap-ink); }
+.zk-pager > button {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-note); font-weight: 900;
+  color: var(--pap-ink);
+  cursor: pointer;
+}
+.zk-pager > button:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+
+/* 一覧のマス。押すものなので厚みを付ける。ここが唯一の「押す」 */
+.zk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin-top: var(--sp-3); }
+@media (min-width: 520px) { .zk-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 860px) { .zk-grid { grid-template-columns: repeat(8, 1fr); } }
+.zk-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  min-height: 48px;
+  padding: 0;
+  border: 1px solid var(--pap-line);
+  border-radius: 5px;
+  background: rgba(255, 253, 240, 0.55);
+  box-shadow: var(--pop-sm);
+  cursor: pointer;
+}
+.zk-cell:active { transform: translateY(2px); box-shadow: none; }
+.zk-cell img { width: 86%; height: 86%; object-fit: contain; }
+/* 選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6） */
+.zk-cell.is-on { border: 2px solid var(--pick); }
+/* マスの通し番号。絵の上に直に置くと、暗い絵のところで 1.30 : 1 まで落ちる
+   （実測）。押せない札なので厚みは付けず、紙の色を1枚だけ敷いて地を決める。 */
+.zk-cell-no {
+  position: absolute; top: 2px; left: 2px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--paper);
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--pap-ink);
+}
+/* 今日、島に出ている人のマスだけ角に印を出す。留守の札は並べない */
+.zk-cell.is-here::after {
+  content: "";
+  position: absolute; right: 4px; top: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--chip-ink);
+}
+
+@media (min-width: 720px) {
+  /* PC は絵と欄を左右に割る。絵はここでも縦の半分以上を保つ */
+  .zk-page { display: grid; grid-template-columns: 300px 1fr; grid-template-areas: "tag tag" "art fields" "art pager"; column-gap: var(--sp-5); align-content: start; padding: var(--sp-5); }
+  .zk-tag { grid-area: tag; }
+  .zk-art { grid-area: art; height: 330px; align-self: center; margin-bottom: 0; }
+  .zk-fields { grid-area: fields; align-self: center; }
+  .zk-pager { grid-area: pager; }
+}
+
 /* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く */
 .rz-today {
   margin: var(--sp-4) 0 0;
   font-size: var(--fs-note);
   font-weight: 700;
-  line-height: var(--lh-note);
+  line-height: var(--lh-body);
   color: var(--pap-ink);
 }
 .rz-today > b { font-weight: 900; }
@@ -673,10 +707,14 @@
   align-items: center;
   gap: 4px;
   margin-left: var(--sp-2);
-  min-height: 32px;
+  /* 押しどころは 48px を割らない（`docs/island-world.md` 4章） */
+  min-height: 48px;
+  padding: 0 var(--sp-2);
   font-size: var(--fs-note);
   font-weight: 900;
-  color: var(--frame-deep);
+  /* --frame-deep は紙の暗いムラの上で 3.59 : 1 だった。
+     押せることは下線と矢印がもう言っているので、色は --ink まで濃くする */
+  color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
