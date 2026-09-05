@@ -100,45 +100,64 @@ export const place: Record<string, Draw> = {
    */
   tower: (c) => (
     <>
-      <Sh c={c} cy={56} rx={20} ry={4} />
+      <Sh c={c} cy={57} rx={22} ry={3.6} />
       {/* 電波。屋根に重ねると帽子のつばに見えたので、棟の上に間をあけて出す */}
-      <rect x="30.6" y="4" width="2.8" height="9" rx="1.4" fill={c.gyd} />
-      {/* 細い薄水色だと紙の上で消えて、屋根だけの塔に見えていた。太くして濃さも上げる */}
+      <rect x="30.6" y="2" width="2.8" height="7" rx="1.4" fill={c.gyd} />
       <g fill="none" strokeLinecap="round">
-        <path d="M22 10a14 14 0 0 1 20 0" strokeWidth="5.4" stroke={c.skd} />
-        <path d="M16 3.6a22 22 0 0 1 32 0" strokeWidth="4.6" stroke={c.sk} />
+        <path d="M24 7a11 11 0 0 1 16 0" strokeWidth="4.6" stroke={c.skd} />
+        <path d="M19 1.6a18 18 0 0 1 26 0" strokeWidth="4" stroke={c.sk} />
       </g>
-      {/* 脚 */}
-      <path d="M12 56 22 30h6L18 56z" fill={c.wod} />
-      <path d="M52 56 42 30h-6l10 26z" fill={c.wo} />
+      {/*
+        脚。前は屋根 38px に対して脚が 26px しかなくて、**きのこに見えていた**。
+        屋根を 30px に絞り、脚を 22px から 57px まで伸ばして、下ほど開かせる。
+        やぐらは横幅ではなく**縦横の比**で分かる。
+      */}
+      <path d="M14 57 21 22h5.4L20 57z" fill={c.wod} />
+      <path d="M50 57 43 22h-5.4L44 57z" fill={c.wo} />
       <g fill={c.wol}>
-        <rect x="21" y="35" width="22" height="4.4" rx="2.2" />
-        <rect x="19" y="44" width="26" height="4.4" rx="2.2" />
-        <rect x="17" y="52" width="30" height="4.4" rx="2.2" />
+        <rect x="21.4" y="28" width="21.2" height="4" rx="2" />
+        <rect x="19.6" y="37" width="24.8" height="4" rx="2" />
+        <rect x="17.8" y="46" width="28.4" height="4" rx="2" />
       </g>
-      {/* 見張り台と屋根 */}
-      <rect x="13" y="26" width="38" height="6.4" rx="3.2" fill={c.wo} />
-      <rect x="17" y="21.6" width="30" height="5.4" rx="2.7" fill={c.wol} />
-      <path d="M32 12 51 23a2 2 0 0 1-1 3.7H14A2 2 0 0 1 13 23z" fill={c.rd} />
-      <path d="M32 12 51 23a2 2 0 0 1-1 3.7H32z" fill={c.rdd} />
-      <Gl c={c} cx={22} cy={17} rx={4} ry={1.6} r={-30} o={0.4} />
+      {/* 見張り台。ここに床を1枚敷かないと、屋根が脚に刺さっているように見える */}
+      <rect x="15" y="18.6" width="34" height="5.4" rx="2.7" fill={c.wo} />
+      <rect x="18" y="14.6" width="28" height="4.6" rx="2.3" fill={c.wol} />
+      <path d="M32 4.4 48 15a1.8 1.8 0 0 1-.9 3.4H16.9A1.8 1.8 0 0 1 16 15z" fill={c.rd} />
+      <path d="M32 4.4 48 15a1.8 1.8 0 0 1-.9 3.4H32z" fill={c.rdd} />
+      {/* 台の上のカメラ。やぐらが**配信**やぐらであることは、これでしか言えない */}
+      <rect x="26" y="8.6" width="13" height="7" rx="2.4" fill={c.nv} />
+      <path d="M39 10.6 44 8.4v7.4l-5-2.2z" fill={c.bld} />
+      <circle cx="30" cy="12.2" r="2" fill={c.sk} />
+      <Gl c={c} cx={22} cy={16} rx={4} ry={1.4} r={-24} o={0.4} />
     </>
   ),
 
-  /** アプリ工房 = /apps。作っているものが画面、作る道具が歯車。 */
+  /**
+   * アプリ工房 = /apps。
+   *
+   * 前は「端末＋歯車」だった。歯車は**どの設定画面にも付いている記号**で、
+   * 場所の名前になっていない。おまけに端末は `misc.phone` と当たる。
+   * `/apps` の顔はもう金床（`components/atlas/art.tsx` の `AnvilArt`）なので、
+   * 小さいほうもそれに揃える。**屋根の下に金床**、で工房になる。
+   */
   workshop: (c) => (
     <>
-      <Sh c={c} cy={55} rx={19} ry={4.2} />
-      <rect x="14" y="5" width="30" height="50" rx="7" fill={c.nv} />
-      <rect x="17.4" y="10" width="23.2" height="38" rx="3.4" fill={c.tl} />
-      <rect x="24" y="50" width="10" height="2.6" rx="1.3" fill={c.gyd} />
-      <Gl c={c} cx={23} cy={17} rx={3.6} ry={9} r={26} o={0.4} />
-      {/* 歯車。8枚の歯を丸い線で太らせて、角を残さない */}
-      <g fill={c.or} stroke={c.or} strokeWidth="4" strokeLinejoin="round">
-        <path d="M46 30.5h5.2l1.7 4.2 4.4-.9 2.6 4.6-3.2 3.1 2.4 3.8-3.6 3.8-4-1.9-3 3.1-5.2-1.4-.4-4.4-4.3-1.3-.6-5.3 4.1-1.6.4-4.4z" />
+      <Sh c={c} cy={56} rx={24} ry={4} />
+      {/* 屋根。ここが無いと、ただの道具になって「場所」にならない */}
+      <path d="M32 4 61 22a2.4 2.4 0 0 1-1.3 4.4H4.3A2.4 2.4 0 0 1 3 22z" fill={c.rdd} />
+      <path d="M32 4 61 22a2.4 2.4 0 0 1-1.3 4.4H32z" fill={c.rd} />
+      <rect x="8" y="26" width="48" height="5" rx="2.5" fill={c.wol} />
+      {/* 金床。角（つの）を左に伸ばすのが、金床を金床にしている形 */}
+      <path d="M16 36h32l-3.4 6H33v4h6a2.6 2.6 0 0 1 0 5.2H25a2.6 2.6 0 0 1 0-5.2h6v-4H19.4z" fill={c.gyd} />
+      <path d="M32 36h16l-3.4 6H32z" fill={c.gy} />
+      <path d="M16 36c-6-1-9 1.4-9 3.4 0 1.6 2.6 2.6 9 2.6z" fill={c.gyd} />
+      {/* 火花。金床の上に3粒だけ。線で描くと溶接に見える */}
+      <g fill={c.or}>
+        <circle cx="24" cy="33" r="2.4" />
+        <circle cx="31" cy="30.4" r="1.7" />
+        <circle cx="38" cy="32.4" r="1.4" />
       </g>
-      <circle cx="47.5" cy="41" r="5.2" fill={c.ord} />
-      <circle cx="47.5" cy="41" r="2.4" fill={c.cr} />
+      <Gl c={c} cx={20} cy={16} rx={4} ry={2} r={-30} o={0.4} />
     </>
   ),
 
@@ -258,24 +277,41 @@ export const place: Record<string, Draw> = {
     </>
   ),
 
-  /** 伝説の丘。丘のてっぺんに星が立っている。 */
+  /**
+   * 伝説の丘 = /legends。
+   *
+   * 前は丘の上に星が浮いていて、台座が 8px しかなかった。
+   * 16px にすると星だけが残って、`feel.star`（ただの星）と見分けがつかない。
+   * **石碑を立てる。** `/legends` の紙の中で使っている記念碑
+   * （`components/streams/Art.tsx` の `ArtMonument`）と同じ形にして、
+   * 星はその天辺に載せる。丘は台であって、主役ではない。
+   */
   hill: (c) => (
     <>
-      <path d="M2 54c5-19 14-30 30-30s25 11 30 30z" fill={c.gr} />
-      <path d="M32 24c18 0 25 11 30 30H32z" fill={c.grd} />
-      <rect x="25" y="17" width="14" height="8" rx="2.4" fill={c.gy} />
-      <rect x="25" y="17" width="14" height="3" rx="1.5" fill={c.w} opacity="0.7" />
+      <path d="M2 56c5-17 14-27 30-27s25 10 30 27z" fill={c.gr} />
+      <path d="M32 29c16 0 25 10 30 27H32z" fill={c.grd} />
+      {/* 石碑。台座を3段にすると、置いたのではなく建てたことになる */}
+      <path d="M20 47h24l3 5H17z" fill={c.gyd} />
+      <rect x="22" y="42" width="20" height="6" rx="2" fill={c.gy} />
+      <path d="M25 16h14v27H25z" fill={c.cr} />
+      <path d="M32 16h7v27h-7z" fill={c.crd} />
+      <path d="M25 16a7 7 0 0 1 14 0z" fill={c.crd} />
+      <g fill={c.crd} opacity={c.flat ? 1 : 0.7}>
+        <rect x="28" y="26" width="8" height="2.6" rx="1.3" />
+        <rect x="28" y="32" width="8" height="2.6" rx="1.3" />
+      </g>
+      {/* 星は碑の天辺に載せる。宙に浮かせると、ただの星になる */}
       <path
-        d="m32 1 3.9 7.9 8.7 1.3-6.3 6.1 1.5 8.7L32 20.9l-7.8 4.1 1.5-8.7-6.3-6.1 8.7-1.3z"
+        d="m32 1 3.2 6.4 7 1-5 4.9 1.2 7-6.4-3.3-6.4 3.3 1.2-7-5-4.9 7-1z"
         fill={c.gd}
         stroke={c.gd}
-        strokeWidth="2.4"
+        strokeWidth="2.2"
         strokeLinejoin="round"
       />
-      <Gl c={c} cx={28} cy={8} rx={2} ry={3.4} r={-20} o={0.5} />
+      <Gl c={c} cx={27} cy={22} rx={1.8} ry={5} r={0} o={0.45} />
       <g fill={c.grl} opacity="0.75">
-        <ellipse cx="14" cy="45" rx="3.4" ry="2" />
-        <ellipse cx="22" cy="51" rx="3" ry="1.8" />
+        <ellipse cx="13" cy="49" rx="3.4" ry="2" />
+        <ellipse cx="51" cy="52" rx="3" ry="1.8" />
       </g>
     </>
   ),

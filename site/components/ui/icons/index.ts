@@ -31,7 +31,8 @@ export type IconName =
   | "mountain" | "sea" | "forest" | "bridge" | "castle" | "church" | "museum"
   | "station" | "hotel" | "market" | "hotspring" | "bench" | "windmill" | "lighthouse"
   | "harbor" | "oldtown" | "mosque" | "pyramid" | "desert" | "glacier" | "fjord" | "cafe"
-  | "statue"
+  | "statue" | "waterfall" | "ruins" | "plaza" | "library" | "theater" | "airport"
+  | "tunnel" | "viewpoint"
   // 旅
   | "backpack" | "sleepingbag" | "compass" | "map" | "passport" | "ticket"
   | "thumb" | "road" | "signpost" | "camper" | "train" | "bus" | "ferry"
@@ -39,6 +40,7 @@ export type IconName =
   | "umbrella" | "sunglasses" | "bottle" | "shoes" | "key" | "wallet" | "stamp"
   | "cablecar" | "balloon" | "sled" | "border" | "bunk"
   | "distance" | "laundry" | "plug" | "card" | "firstaid" | "hitchsign"
+  | "currency" | "sim" | "jacket" | "beanie" | "gloves" | "towel" | "atm" | "powerbank"
   // 料理
   | "pot" | "pan" | "knife" | "cuttingboard" | "chopsticks" | "cup" | "stove"
   | "plate" | "bowl" | "basket" | "veg" | "meat" | "fish" | "bread" | "egg"
@@ -65,7 +67,8 @@ export type IconName =
   | "leaf" | "flower" | "wave" | "sunrise" | "fog" | "thunder" | "bird" | "reindeer"
   | "pine" | "lake" | "midnightsun"
   // そのほか
-  | "shirt" | "sauna" | "brick" | "see" | "do" | "buy" | "flag";
+  | "shirt" | "sauna" | "brick" | "see" | "do" | "buy" | "flag"
+  | "souvenir" | "nogo" | "phone" | "checklist";
 
 /**
  * 名前から絵を引く表。

@@ -768,4 +768,184 @@ export const travel: Record<string, Draw> = {
       <Gl c={c} cx={16} cy={14} rx={5} ry={2} r={-8} o={0.4} />
     </>
   ),
+
+  /**
+   * お金。北欧とバルトは通貨が4種類あって、**紙と硬貨を持ち歩く量が国境ごとに変わる**。
+   * `wallet`（入れ物）でも `coin`（1枚）でもなく、**束と枚数**を出したいときはこれ。
+   */
+  currency: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.4} />
+      {/* 紙幣は2枚ずらして重ねる。1枚だと札に見えず、ただの四角になる */}
+      <g transform="rotate(-7 30 30)">
+        <rect x="6" y="18" width="44" height="24" rx="4" fill={c.grd} />
+        <rect x="6" y="15" width="44" height="24" rx="4" fill={c.gr} />
+        <rect x="28" y="15" width="22" height="24" rx="4" fill={c.grd} opacity={c.flat ? 1 : 0.5} />
+        <circle cx="28" cy="27" r="7" fill={c.grl} />
+        <circle cx="28" cy="27" r="4" fill={c.gr} />
+        <g fill={c.grl} opacity={c.flat ? 1 : 0.9}>
+          <rect x="10" y="19" width="7" height="4" rx="2" />
+          <rect x="39" y="31" width="7" height="4" rx="2" />
+        </g>
+      </g>
+      {/* 硬貨。厚みを2枚ぶん出すと、絵が金属になる */}
+      <ellipse cx="46" cy="48" rx="13" ry="7" fill={c.gdd} />
+      <ellipse cx="46" cy="45.6" rx="13" ry="7" fill={c.gd} />
+      <ellipse cx="46" cy="45.6" rx="8" ry="4.2" fill={c.yl} />
+      <Gl c={c} cx={38} cy={43} rx={3.6} ry={1.6} r={-14} o={0.55} />
+    </>
+  ),
+
+  /**
+   * SIM。北欧は eSIM で入れる国と、物のSIMを買う国が混ざる。
+   * `wifi`（電波）は「つながっているか」で、こちらは**入れるもの**。
+   */
+  sim: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={17} ry={3.4} />
+      <path d="M16 6h22l12 12v36a5 5 0 0 1-5 5H16a5 5 0 0 1-5-5V11a5 5 0 0 1 5-5z" fill={c.gd} />
+      <path d="M32 6h6l12 12v36a5 5 0 0 1-5 5H32z" fill={c.gdd} />
+      {/* 欠けた角。SIM をSIMたらしめているのはここ1つ */}
+      <path d="M38 6l12 12H38z" fill={c.yl} />
+      <rect x="18" y="24" width="26" height="24" rx="4" fill={c.gyd} />
+      <rect x="18" y="24" width="26" height="24" rx="4" fill={c.gy} />
+      <g fill={c.gyd}>
+        <rect x="18" y="31" width="26" height="2.6" />
+        <rect x="18" y="39" width="26" height="2.6" />
+        <rect x="29.7" y="24" width="2.6" height="24" />
+      </g>
+      <Gl c={c} cx={19} cy={13} rx={2} ry={5} r={0} o={0.4} />
+    </>
+  ),
+
+  /**
+   * 防寒の上着。9月のバルトは、昼と朝で1枚ぶん違う。
+   * `shirt`（Tシャツ）と分けてあるのは、しおりの服装の章が
+   * 「何を着るか」ではなく**「何枚重ねるか」**の話だから。前を開けて中を見せる。
+   */
+  jacket: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.6} />
+      <path d="M24 9 10 15l-4 20 8 3v18a3 3 0 0 0 3 3h6V9z" fill={c.nv} />
+      <path d="M40 9l14 6 4 20-8 3v18a3 3 0 0 1-3 3h-6V9z" fill={c.bld} />
+      {/* 中に着ているもの。ここが無いと、ただの紺の板になる */}
+      <path d="M24 9h16v47H24z" fill={c.cr} />
+      <path d="M32 9h8v47h-8z" fill={c.crd} />
+      <path d="M24 9c0 5 3.6 8 8 8s8-3 8-8l-3-2c-1.6 2.6-3 3.6-5 3.6s-3.4-1-5-3.6z" fill={c.wo} />
+      {/* ファスナー。細い1本だと消えるので、玉を1つ付ける */}
+      <rect x="30.6" y="14" width="2.8" height="42" fill={c.gyd} />
+      <circle cx="32" cy="32" r="3" fill={c.gy} />
+      <path d="M6 35l8 3v6l-9-3z" fill={c.bld} />
+      <path d="M58 35l-8 3v6l9-3z" fill={c.bld} />
+      <Gl c={c} cx={17} cy={22} rx={2.4} ry={7} r={12} o={0.35} />
+    </>
+  ),
+
+  /** ニット帽。持ち物リストで「これだけは要る」と言うためのもの。 */
+  beanie: (c) => (
+    <>
+      <Sh c={c} cy={55} rx={20} ry={3.4} />
+      <path d="M32 8c12 0 20 9 20 21v9H12v-9C12 17 20 8 32 8z" fill={c.rd} />
+      <path d="M32 8c12 0 20 9 20 21v9H32z" fill={c.rdd} />
+      <g fill={c.rdd} opacity={c.flat ? 1 : 0.6}>
+        <path d="M24 12v26h2.6V11z" />
+        <path d="M38 11v27h2.6V12z" />
+      </g>
+      <rect x="7" y="36" width="50" height="14" rx="7" fill={c.cr} />
+      <path d="M32 36h18a7 7 0 0 1 0 14H32z" fill={c.crd} />
+      <circle cx="32" cy="6" r="6" fill={c.cr} />
+      <Gl c={c} cx={22} cy={16} rx={4} ry={6} r={-34} o={0.4} />
+    </>
+  ),
+
+  /** 手袋。北へ上がるほど早く要る。片方だけだと落とし物に見えるので2つ描く。 */
+  gloves: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={22} ry={3.4} />
+      <g transform="rotate(-12 20 34)">
+        <path d="M10 22h14a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6V28a6 6 0 0 1 4-6z" fill={c.tl} />
+        <path d="M6 30c-3.4-1-5.6.6-5.6 3.4S2.6 38 6 38.4z" fill={c.tl} />
+        <path d="M8 16h16a3 3 0 0 1 3 3v5H7v-5a3 3 0 0 1 1-3z" fill={c.cr} />
+        <rect x="6" y="44" width="24" height="4" rx="2" fill={c.tld} />
+      </g>
+      <g transform="rotate(12 46 34)">
+        <path d="M40 22h14a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H42a6 6 0 0 1-6-6V28a6 6 0 0 1 4-6z" fill={c.tld} />
+        <path d="M60 30c3.4-1 5.6.6 5.6 3.4S63.4 38 60 38.4z" fill={c.tld} />
+        <path d="M38 16h16a3 3 0 0 1 3 3v5H37v-5a3 3 0 0 1 1-3z" fill={c.crd} />
+      </g>
+      <Gl c={c} cx={14} cy={26} rx={3} ry={5} r={-20} o={0.4} />
+    </>
+  ),
+
+  /**
+   * タオル。サウナの章に要る。
+   * フィンランドのサウナは、座るのに敷くものが1枚要る（`misc.sauna` は桶と柄杓）。
+   */
+  towel: (c) => (
+    <>
+      <Sh c={c} cy={56} rx={21} ry={3.4} />
+      <path d="M12 10h40a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4H12z" fill={c.sk} />
+      <path d="M34 10h18a4 4 0 0 1 4 4v34a4 4 0 0 1-4 4H34z" fill={c.skd} />
+      {/* 巻いた端。渦を1つ入れると、畳んだ布ではなく巻いたタオルになる */}
+      <path d="M12 10a11 11 0 0 1 0 42z" fill={c.w} />
+      <path d="M12 18a3.4 3.4 0 0 1 0 6.8 6.8 6.8 0 0 0 0 13.6 3.4 3.4 0 0 1 0 6.8" fill="none" stroke={c.skd} strokeWidth="2.6" strokeLinecap="round" />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.8}>
+        <rect x="26" y="16" width="30" height="4" rx="2" />
+        <rect x="26" y="42" width="30" height="4" rx="2" />
+      </g>
+      <Gl c={c} cx={18} cy={18} rx={2.4} ry={5} r={-16} o={0.5} />
+    </>
+  ),
+
+  /**
+   * ATM。バルトは現金がまだ要る国があって、**下ろす場所**が日程に効く。
+   * `card`（持っているもの）と `currency`（お金そのもの）から、行為だけを分けた。
+   */
+  atm: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={20} ry={3.4} />
+      <rect x="10" y="4" width="44" height="52" rx="6" fill={c.gyd} />
+      <path d="M32 4h16a6 6 0 0 1 6 6v40a6 6 0 0 1-6 6H32z" fill={c.gy} opacity={c.flat ? 1 : 0.35} />
+      <rect x="16" y="10" width="32" height="18" rx="3.4" fill={c.tld} />
+      <rect x="16" y="10" width="32" height="18" rx="3.4" fill={c.sk} />
+      <g fill={c.w} opacity={c.flat ? 1 : 0.85}>
+        <rect x="20" y="15" width="18" height="3.4" rx="1.7" />
+        <rect x="20" y="21" width="11" height="3.4" rx="1.7" />
+      </g>
+      {/* 出てくる紙幣。斜めに突き出すと、口から出てきたことになる */}
+      <rect x="17" y="33" width="30" height="4.6" rx="2.3" fill={c.bk} />
+      <g transform="rotate(-6 32 40)">
+        <rect x="19" y="36" width="26" height="13" rx="2.6" fill={c.gr} />
+        <rect x="19" y="36" width="26" height="4" rx="2" fill={c.grl} />
+      </g>
+      <g fill={c.gy}>
+        <rect x="18" y="50" width="7" height="4" rx="2" />
+        <rect x="28" y="50" width="7" height="4" rx="2" />
+        <rect x="38" y="50" width="7" height="4" rx="2" />
+      </g>
+      <Gl c={c} cx={19} cy={9} rx={5} ry={1.6} r={-4} o={0.4} />
+    </>
+  ),
+
+  /**
+   * モバイルバッテリー。車を待つあいだ地図を出しっぱなしにするので、いちばん減るもの。
+   * `plug`（挿すところ）とは別で、こちらは**持って歩く電気**。
+   */
+  powerbank: (c) => (
+    <>
+      <Sh c={c} cy={57} rx={16} ry={3.4} />
+      <rect x="17" y="6" width="30" height="50" rx="7" fill={c.nv} />
+      <path d="M32 6h8a7 7 0 0 1 7 7v36a7 7 0 0 1-7 7h-8z" fill={c.bld} opacity={c.flat ? 1 : 0.5} />
+      <rect x="22" y="14" width="20" height="26" rx="4" fill={c.bk} />
+      <g fill={c.gr}>
+        <rect x="25" y="30" width="14" height="6" rx="2.4" />
+        <rect x="25" y="22" width="14" height="6" rx="2.4" />
+      </g>
+      <rect x="25" y="14.5" width="14" height="6" rx="2.4" fill={c.gr} opacity={c.flat ? 1 : 0.3} />
+      {/* 差し口。ここが無いと、ただの黒い板になる */}
+      <rect x="24" y="45" width="7" height="5" rx="2" fill={c.gy} />
+      <rect x="34" y="45" width="7" height="5" rx="2" fill={c.gy} />
+      <Gl c={c} cx={23} cy={13} rx={2.4} ry={5} r={10} o={0.4} />
+    </>
+  ),
 };

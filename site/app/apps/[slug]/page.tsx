@@ -32,7 +32,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  *  ここは Icon.tsx の印と言葉で分ける。色は増やさない。 */
 const KIND: Record<AppMilestone["kind"], { label: string; icon: IconName }> = {
   release: { label: "リリース", icon: "flag" },
-  update: { label: "アップデート", icon: "refresh" },
+  /* `refresh`（矢印の輪）は板の「もう一度よみこむ」で使っている操作の印で、
+     しかも1色。ここは節目の絵が並ぶ列なので、同じ印を別の意味で借りない。
+     アップデートは**ストアへ新しい版を出したこと**なので、上げる絵にする。 */
+  update: { label: "アップデート", icon: "upload" },
   build: { label: "作った", icon: "laptop" },
   trouble: { label: "トラブル", icon: "alert" },
   milestone: { label: "節目", icon: "medal" },
