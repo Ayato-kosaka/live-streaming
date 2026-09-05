@@ -403,10 +403,11 @@ export const scene: Record<string, Draw> = {
     <>
       <path d="M1 46h62v6a6 6 0 0 1-6 6H7a6 6 0 0 1-6-6z" fill={c.crd} />
       <circle cx="52" cy="15" r="9" fill={c.or} />
+      {/* クリームで塗ると紙の地に沈むので、砂の色（一段濃い）で塗る */}
       <path d="M42 22 52 46H32z" fill={c.wol} />
       <path d="M42 22 52 46h-10z" fill={c.wo} />
-      <path d="M22 8 42 46H2z" fill={c.cr} />
-      <path d="M22 8 42 46H22z" fill={c.crd} />
+      <path d="M22 8 42 46H2z" fill={c.wol} />
+      <path d="M22 8 42 46H22z" fill={c.wo} />
       <g stroke={c.wod} strokeWidth="1.6" opacity="0.45">
         <path d="M12 27h20M8 36h28" />
       </g>
