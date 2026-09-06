@@ -1182,22 +1182,38 @@ function placePlates(
       else if (top + rect.h > o.b.h - padBottom) dy = o.b.h - padBottom - (top + rect.h);
       left += dx;
       top += dy;
-      /* 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）。
-         **下へしか動かさない。** 上へ戻すと、避けたはずのものへ帰っていく */
-      for (let pass = 0; pass < 3; pass++) {
-        let moved = false;
-        for (const q of taken) {
-          if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
-            const push = q.y + q.h + 6 - top;
-            if (push > 0) {
-              top += push;
-              dy += push;
-              moved = true;
+      /* 先に置いたものと重なるなら、縦に逃がす（縦に並べば両方読める）。
+         **1回の逃がしのあいだは向きを変えない**（変えると避けたはずのものへ
+         帰っていく）。向きは建物が画面の上半分にいるか下半分にいるかで決める。
+         引きでは島が真ん中に小さく収まっていて、上にも下にも海が空いている。
+         下だけへ逃がすと、島の上半分の建物の札まで島の下に長い列を作る
+         （実測で6枚中3枚）。画面から出てしまったら反対で引き直す。 */
+      const slide = (up: boolean) => {
+        let t = top;
+        for (let pass = 0; pass < 3; pass++) {
+          let moved = false;
+          for (const q of taken) {
+            if (left < q.x + q.w && left + rect.w > q.x && t < q.y + q.h && t + rect.h > q.y) {
+              const push = up ? q.y - 8 - (t + rect.h) : q.y + q.h + 8 - t;
+              if (up ? push < 0 : push > 0) {
+                t += push;
+                moved = true;
+              }
             }
           }
+          if (!moved) break;
         }
-        if (!moved) break;
+        return t;
+      };
+      const inView = (t: number) => t >= padTop && t + rect.h <= o.b.h - padBottom;
+      const up = pl.fy < o.b.h / 2;
+      let t0 = slide(up);
+      if (!inView(t0)) {
+        const t1 = slide(!up);
+        t0 = inView(t1) ? t1 : Math.min(Math.max(t0, padTop), o.b.h - padBottom - rect.h);
       }
+      dy += t0 - top;
+      top = t0;
       taken.push({ x: left, y: top, w: rect.w, h: rect.h });
       placed.push({ x: left, y: top, w: rect.w, h: rect.h });
       /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す */

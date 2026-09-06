@@ -1195,23 +1195,44 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             else if (top + rect.h > b.h - padBottom) dy = b.h - padBottom - (top + rect.h);
             left += dx;
             top += dy;
-            /* 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）。
+            /* 先に置いたものと重なるなら、縦に逃がす（縦に並べば両方読める）。
                1周では、逃がした先でまた別のものと重なることがあるので数周する。
-               **下へしか動かさない。** 上へ戻すと、避けたはずのものへ帰っていく。 */
-            for (let pass = 0; pass < 3; pass++) {
-              let moved = false;
-              for (const q of taken) {
-                if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
-                  const push = q.y + q.h + 6 - top;
-                  if (push > 0) {
-                    top += push;
-                    dy += push;
-                    moved = true;
+
+               **1回の逃がしのあいだは、向きを変えない。** 途中で変えると、
+               避けたはずのものへ帰っていく。向きは建物が画面の上半分にいるか
+               下半分にいるかで決める。引きでは島が真ん中に小さく収まっていて、
+               **上にも下にも海が空いている。** 下だけへ逃がすと、島の上半分の
+               建物の札まで島の下に長い列を作って、どれがどれの札か分からなくなる
+               （章の島で実際にそうなった。6枚のうち3枚が島の下に並んだ）。
+
+               好きなほうへ逃がして画面から出てしまったら、反対で引き直す。
+               それも出るなら、はじめの向きのまま縁で止める。 */
+            const slide = (up: boolean) => {
+              let t = top;
+              for (let pass = 0; pass < 3; pass++) {
+                let moved = false;
+                for (const q of taken) {
+                  if (left < q.x + q.w && left + rect.w > q.x && t < q.y + q.h && t + rect.h > q.y) {
+                    const push = up ? q.y - 8 - (t + rect.h) : q.y + q.h + 8 - t;
+                    if (up ? push < 0 : push > 0) {
+                      t += push;
+                      moved = true;
+                    }
                   }
                 }
+                if (!moved) break;
               }
-              if (!moved) break;
+              return t;
+            };
+            const inView = (t: number) => t >= padTop && t + rect.h <= b.h - padBottom;
+            const up = pl.fy < b.h / 2;
+            let t0 = slide(up);
+            if (!inView(t0)) {
+              const t1 = slide(!up);
+              t0 = inView(t1) ? t1 : Math.min(Math.max(t0, padTop), b.h - padBottom - rect.h);
             }
+            dy += t0 - top;
+            top = t0;
             taken.push({ x: left, y: top, w: rect.w, h: rect.h });
             /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す。
                「どっちへ押しやったか」で決めると、上へはみ出した札を下げたときに
