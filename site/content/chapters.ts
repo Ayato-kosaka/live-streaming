@@ -148,11 +148,19 @@ function nextBegan(c: Chapter): number {
 
 export function chapterNow(now: Date = new Date()): Chapter {
   const t = now.getTime();
-  const open = CHAPTERS.filter((c) => !c.branchOf && began(c) <= t)
-    // 終わった章は、いまいる島ではない
-    .filter((c) => !c.to || Date.parse(`${c.to}T23:59:59+09:00`) >= t)
-    .sort((a, b) => began(b) - began(a));
-  return open[0] ?? CHAPTERS.find((c) => !c.to && !c.branchOf && c.from)!;
+  const begun = CHAPTERS.filter((c) => !c.branchOf && began(c) <= t).sort(
+    (a, b) => began(b) - began(a),
+  );
+  // 終わった章は、いまいる島ではない
+  const open = begun.filter((c) => !c.to || Date.parse(`${c.to}T23:59:59+09:00`) >= t);
+  /* **どれも開いていない時間帯がありうる。**
+     出発の日に `caucasus.to` を入れると、その日の 23:59:59（日本時間）から
+     北欧が始まる 9/12 04:30 までの4時間半、開いている章が1つも無くなる。
+     前はそこで `undefined` が返って、島の連なりも表紙も落ちていた
+     （型は Chapter と言っているので、誰も気づかないまま落ちる）。
+     いちばん最後に始まった章を出す。旅の途中に一瞬だけ前の島に見えるのは、
+     画面が落ちるよりずっとよい。 */
+  return open[0] ?? begun[0] ?? CHAPTERS.find((c) => !c.branchOf && c.from)!;
 }
 
 /**

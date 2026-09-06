@@ -130,7 +130,7 @@ export function LeadClock({ plan }: { plan: Plan }) {
       <p className="nx-clock is-one">
         <em>
           <b>いま</b>
-          行っているところ
+          行っている
         </em>
       </p>
     );
@@ -143,7 +143,7 @@ export function LeadClock({ plan }: { plan: Plan }) {
       <p className="nx-clock is-one">
         <em>
           <b>いま</b>
-          行っているところ
+          行っている
         </em>
       </p>
     );
