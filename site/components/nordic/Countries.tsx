@@ -32,7 +32,9 @@ import { loadSpots, nordicCountry, NORDIC_COUNTRIES } from "@/content/nordic";
  *   2. 写真1枚で伝わること
  */
 const FACE: Record<string, string> = {
-  poland: "poland-krakow-main-square",
+  // 旅程が変わってクラクフを通らなくなったので、実際に降りるワルシャワの絵にする
+  // （2026-09-06。基準1「ルートで実際に降りる街にあること」）。
+  poland: "poland-warsaw-old-town",
   lithuania: "lithuania-s191",
   latvia: "latvia-s166",
   estonia: "estonia-s144",

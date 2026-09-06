@@ -87,7 +87,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
 
   // 距離は content/nordic.ts のルートが持っているものをそのまま使う。
   // 地図の側にもう一組 km を書くと、片方だけ直したときに黙って食い違う。
-  // 街の名前で引き当てる（「オシフィエンチム（アウシュヴィッツ）」のような
+  // 街の名前で引き当てる（「ストックホルム（友だちの家に7泊）」のような
   // 補足つきの表記があるので、括弧から先は落として比べる）。
   const bare = (s: string) => s.replace(/（.*$/, "");
   const km = new Map(ROUTE.map((l) => [`${bare(l.from)}|${bare(l.to)}`, l.km]));

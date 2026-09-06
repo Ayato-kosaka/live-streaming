@@ -11,7 +11,9 @@
  *
  *   DATE     時計をここに合わせる（ISO）
  *   PLACE    島の「いまどこ」
- *   ARRIVED  着いた日（YYYY-MM-DD）。渡すと旅が終わったあとになる
+ *   ARRIVED  ストックホルムに着いた日（YYYY-MM-DD）
+ *   ENDED    旅が終わった（発った）日（YYYY-MM-DD）。**着いた日とは別。**
+ *            着いてから7泊あるので、ARRIVED だけでは旅は終わらない
  *   LOG      その日に起きたことを入れるか（1 で入れる）
  *   SPORT    書き出したものを配っている静的サーバのポート
  *   OUT      撮ったものの置き場
@@ -25,6 +27,7 @@ const OUT = process.env.OUT || "/tmp/shots-live";
 const DATE = process.env.DATE || "2026-09-15T12:00:00+09:00";
 const PLACE = process.env.PLACE || "";
 const ARRIVED = process.env.ARRIVED || "";
+const ENDED = process.env.ENDED || "";
 const WANT_LOG = process.env.LOG === "1";
 const BASE = `http://localhost:${SPORT}`;
 
@@ -48,7 +51,7 @@ function clockScript(iso) {
 const LOG = WANT_LOG ?
   [
     { day: "day-depart", date: "2026-09-11", body: "クタイシの空港で3時間待った。飛行機は満席。", at: 1 },
-    { day: "day-1", date: "2026-09-12", body: "2台目で停まってくれた。運転手さんはクラクフまで行く人だった。\nアウシュヴィッツは夕方まで。", video: "dQw4w9WgXcQ", at: 2 },
+    { day: "day-1", date: "2026-09-12", body: "2台目で停まってくれた。運転手さんはワルシャワまで行く人だった。\n空港で3時間だけ寝た。", video: "dQw4w9WgXcQ", at: 2 },
     { day: "day-2", date: "2026-09-13", body: "ガソリンスタンドで7回断られた。8台目。", at: 3 },
   ] :
   [];
@@ -56,7 +59,8 @@ const LOG = WANT_LOG ?
 const PAGES = [
   ["nordic", "/nordic.html"],
   ["day1", "/nordic/day/1.html"],
-  ["day7", "/nordic/day/7.html"],
+  ["day4", "/nordic/day/4.html"],
+  ["day9", "/nordic/day/9.html"],
   ["next", "/next.html"],
   ["top", "/index.html"],
 ];
@@ -65,7 +69,7 @@ const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
 });
-const dir = `${OUT}/${DATE.slice(0, 10)}${ARRIVED ? "-arrived" : ""}${WANT_LOG ? "-log" : ""}`;
+const dir = `${OUT}/${DATE.slice(0, 10)}${ARRIVED ? "-arrived" : ""}${ENDED ? "-ended" : ""}${WANT_LOG ? "-log" : ""}`;
 mkdirSync(dir, { recursive: true });
 const ctx = await b.newContext({
   viewport: { width: 390, height: 844 },
@@ -84,7 +88,10 @@ await ctx.route(/island-api\/state/, (r) =>
       ideas: [],
       notes: [],
       residents: [],
-      nordic: ARRIVED ? { arrivedOn: ARRIVED } : null,
+      nordic:
+        ARRIVED || ENDED ?
+          { arrivedOn: ARRIVED || undefined, endedOn: ENDED || undefined } :
+          null,
       more: { ideas: null, notes: null },
     }),
   }));

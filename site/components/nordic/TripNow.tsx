@@ -314,7 +314,10 @@ export default function TripNow({
               「いま ストックホルム → ここまで ストックホルム」と
               同じ名前を2回並べても、分かることが1つも増えない。 */}
           <b>{arrivedOn ? (place ?? stops[last].name) : now ? now.name : (place ?? "移動中")}</b>
-          <em>{now?.country ?? ""}</em>
+          {/* 国の名前は、いる街と食い違ったら出さない。**着いたあとも街は動く。**
+              旅が終わってティラナにいる日に、`stops[last].country` をそのまま
+              出していて「いま アルバニア・ティラナ / スウェーデン」と書いてあった。 */}
+          <em>{arrivedOn && place && !place.includes(stops[last].name) ? "" : (now?.country ?? "")}</em>
         </div>
         <span className="tnow-go" aria-hidden>
           <svg viewBox="0 0 40 24" width="32" height="19">
