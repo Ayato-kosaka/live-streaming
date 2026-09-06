@@ -181,17 +181,26 @@ function Hitch({ leg }: { leg: Leg }) {
       </h3>
       <dl className="ndhh-l">
         <div>
-          <dt>乗る道</dt>
+          <dt>
+            <Icon name="road" size={20} />
+            乗る道
+          </dt>
           <dd>{h.road}</dd>
         </div>
         {h.border && (
           <div>
-            <dt>陸の国境</dt>
+            <dt>
+              <Icon name="border" size={20} />
+              陸の国境
+            </dt>
             <dd>{h.border}</dd>
           </div>
         )}
         <div>
-          <dt>立つところ</dt>
+          <dt>
+            <Icon name="hitchsign" size={20} />
+            立つところ
+          </dt>
           <dd>
             {h.stand}
             <em className="ndhh-guess">見立て</em>

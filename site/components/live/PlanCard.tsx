@@ -302,6 +302,28 @@ function Links({ plan, mapDone }: { plan: Plan; mapDone?: boolean }) {
 }
 
 /**
+ * 旅の途中で越えた、いちばん大きい節目。**越えても企画は終わらない。**
+ *
+ * 北欧旅は9月20日にストックホルムへ着いて、27日に発つまで続く
+ * （`content/plans.ts` の `reached`）。着いた日を企画の終わりに貼っていたころ、
+ * 着いた瞬間に札が「おわった」になって、いちばん長い滞在が画面から消えていた。
+ * 越えたことは大きい出来事なので、時計を「いま」のままにしたうえで、ここに出す。
+ */
+function Reached({ plan }: { plan: Plan }) {
+  const phase = usePhase(plan);
+  if (!plan.reached?.on || phase !== "during") return null;
+  return (
+    <p className="nx-reached">
+      <Icon name="pin" size={22} />
+      <span>
+        <b>{plan.reached.label}</b>
+        <i>{plan.reached.say}</i>
+      </span>
+    </p>
+  );
+}
+
+/**
  * きみができること。
  *
  * 「いつ」「何が起きる」の次に来る問いは「じゃあ自分は何をすればいいのか」。
@@ -465,6 +487,8 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
       </div>
 
       <p style={{ fontSize: 16 }}>{plan.note}</p>
+
+      <Reached plan={plan} />
 
       <Doing plan={plan} />
 

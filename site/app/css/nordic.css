@@ -331,7 +331,7 @@
   letter-spacing: var(--ls-caps);
   white-space: nowrap;
 }
-/* 通る街。「カトヴィツェ → クラクフ → オシフィエンチム」 */
+/* 通る街。「トビリシ → クタイシ → カトヴィツェ」 */
 .ndayr-way {
   display: flex;
   flex-wrap: wrap;
@@ -383,6 +383,13 @@
   white-space: nowrap;
 }
 .ndayr-say { font-size: 12px; line-height: 1.7; font-weight: 700; color: var(--ink-2); }
+/* 動かせない時刻（発つ便の便名と時刻）。旅程表の最後の行だけが持つ。 */
+.ndayr-fixed {
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  font-weight: 800;
+  color: var(--ink-2);
+}
 .ndayr-go { flex: none; color: var(--frame-dark); }
 
 /* 区間ひとつ。1日ぶんのページ（`/nordic/day/[n]`）の「この日の道」で使う。 */
@@ -1893,3 +1900,83 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
 .ndph-list b { font-size: 14px; font-weight: 900; }
 .ndph-list em { font-style: normal; font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
 .ndph-list i { font-style: normal; margin-left: auto; font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
+
+/* 親指を上げるところ。**1日ぶんの面でいちばん中身の要る区画。**
+   オーナーの言葉:
+
+   > `/nordic/day/x` には、ヒッチハイク情報、ルート中のよりたい場所、
+   > その街固有の楽しみ方、などの情報があると良い
+
+   押せないので板にしない。紙のまま、罫で囲って「明るいうち」と同じ形にそろえる。
+   **事実（乗る道・国境）と見立て（立つところ・難しさ）を、同じ見た目にしない。**
+   見立てのほうには小さな札を付けて、区画の下でもう一度断る。 */
+.ndhh {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+}
+.ndhh > .nsub { margin-top: 0; }
+.ndhh-l { margin: var(--sp-3) 0 0; display: grid; gap: var(--sp-3); }
+.ndhh-l > div { display: grid; grid-template-columns: 92px 1fr; gap: var(--sp-3); align-items: start; }
+.ndhh-l dt {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.ndhh-l dt > .ic { flex: none; }
+.ndhh-l dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  font-weight: 700;
+}
+/* 見立ての札。事実と並んでいても取り違えないように、字の直後に置く。 */
+.ndhh-guess {
+  margin-left: var(--sp-2);
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}
+/* 難しさ。3本の棒と、言葉と、そう見ている理由。
+   **数字（1〜3）のままでは出さない。** 何段階のうちの何なのかが分からない。 */
+p.ndhh-hard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--rule);
+}
+.ndhh-bars { display: inline-flex; gap: 3px; align-items: center; grid-row: span 2; }
+.ndhh-bars i {
+  width: 7px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--rule);
+}
+.ndhh-bars i.is-on { background: var(--pick); }
+p.ndhh-hard b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
+p.ndhh-hard > i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+p.ndhh-src {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  font-weight: 800;
+  color: var(--ink-2);
+}
