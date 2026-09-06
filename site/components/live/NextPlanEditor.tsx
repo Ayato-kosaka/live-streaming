@@ -76,6 +76,9 @@ function sayDay(day: string): string {
   return `${y}年${mo}月${d}日(${w})`;
 }
 
+/** 言い方の頭にある日付。ここだけを差し替えて、書き足した字は残す。 */
+const SAID_DAY = /^\d{4}年\d{1,2}月\d{1,2}日(?:\([日月火水木金土]\))?/;
+
 /** 下書きを Plan の形に読み替える。プレビューは本番と同じ部品で描く。 */
 function toPlan(d: NextPlanInput): Plan {
   return {
@@ -221,16 +224,23 @@ export default function NextPlanEditor() {
   const set = (patch: Partial<NextPlanInput>) => setD((v) => ({ ...v, ...patch }));
 
   /**
-   * 日を選ぶ。**「いつ（言い方）」もいっしょに書きかえる。**
+   * 日を選ぶ。**「いつ（言い方）」の日付のところも、いっしょに書きかえる。**
    *
    * 同じ日を2回打たせると、片方だけ直して食い違う（あやとの2件がそうなった）。
-   * ただし **手で直した言い方は残す。** 「23:30 出発」を足した人の字を、
-   * 日をずらしただけで消してはいけない。前に選んだ日から作った言い方
-   * そのままのときだけ、置き換える。
+   * ただし **書き足した字は消さない。** 頭の日付だけを差し替えるので、
+   * 「2026年10月1日(木) 23:30 出発」は「23:30 出発」を残したまま日が変わる。
+   * 日付で始まっていない言い方（「桜が咲くころ」）には触らない。
    */
   const pickDay = (v: string) => {
-    const auto = !d.when.trim() || d.when === sayDay(d.date);
-    setD((x) => ({ ...x, date: v, when: auto ? sayDay(v) : x.when }));
+    const say = sayDay(v);
+    setD((x) => {
+      const when = !x.when.trim() ?
+        say :
+        SAID_DAY.test(x.when) ?
+          x.when.replace(SAID_DAY, say) :
+          x.when;
+      return { ...x, date: v, when };
+    });
   };
 
   const save = async () => {
