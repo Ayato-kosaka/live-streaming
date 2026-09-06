@@ -1300,13 +1300,24 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad size"});
           return;
         }
-        /* webp かどうかを、送られてきた名前ではなく中身の頭で見る。
-           RIFF....WEBP の12バイト。ここを名乗りで済ませると、
-           置き場に何でも置けるようになる。 */
-        const riff = buf.subarray(0, 4).toString("ascii");
-        const webp = buf.subarray(8, 12).toString("ascii");
-        if (riff !== "RIFF" || webp !== "WEBP") {
-          res.status(400).json({error: "not webp"});
+        /* 何の絵かを、送られてきた名前ではなく**中身の頭**で見る。
+           ここを名乗りで済ませると、置き場に何でも置けるようになる。
+
+           **webp だけにしない。** iOS の Safari は
+           `canvas.toDataURL("image/webp")` を黙って png に落とすことがあり、
+           そこを弾いていたので**あやとの iPhone から1枚も貼れなかった**
+           （本番で「1枚目でつまずきました。焼けなかった」）。
+           旅の途中に貼るのはその iPhone なので、webp が出ない端末を
+           締め出すほうが害が大きい。jpeg も受ける。 */
+        const kind =
+          buf.subarray(0, 4).toString("ascii") === "RIFF" &&
+          buf.subarray(8, 12).toString("ascii") === "WEBP" ?
+            "webp" :
+            buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff ?
+              "jpeg" :
+              null;
+        if (!kind) {
+          res.status(400).json({error: "not an image"});
           return;
         }
         if (!(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))) {
@@ -1314,14 +1325,14 @@ export const islandApi = onRequest(
           return;
         }
         const ref = NPHOTOS.doc();
-        const path2 = `nordic/photos/${day}/${ref.id}.webp`;
+        const path2 = `nordic/photos/${day}/${ref.id}.${kind}`;
         const token = randomUUID();
         await admin
           .storage()
           .bucket(BUCKET)
           .file(path2)
           .save(buf, {
-            contentType: "image/webp",
+            contentType: `image/${kind}`,
             metadata: {
               // 置き場の名前に id が入っていて中身は変わらないので、
               // ブラウザにも CDN にも長く持たせてよい
