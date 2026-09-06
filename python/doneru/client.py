@@ -20,6 +20,7 @@
 import csv
 import io
 import os
+import re
 from datetime import date
 from typing import Any, Dict, List, Optional
 
@@ -192,11 +193,17 @@ class DoneruClient:
 # ここに畳み戻す。名前が変わったときの受け皿も並べておく。
 MESSAGE_HEADERS = ("メッセージ", "message", "comment", "コメント", "本文", "text", "body")
 
+# 日時が入る列。「その行が新しいレコードの始まりか」を見分けるのに使う。
+DATE_HEADERS = ("どね時刻", "createdat", "created_at", "日時", "日付", "date", "datetime")
 
-def _message_index(header: List[str]) -> Optional[int]:
-    """ヘッダーの中でメッセージの列が何番目かを返す。"""
+# 2026-03-01 でも 2026/3/1 でも当たる。年月日が並んでいるかだけを見る
+_LOOKS_LIKE_DATE = re.compile(r"^\s*\d{4}[-/年]\s*\d{1,2}[-/月]\s*\d{1,2}")
+
+
+def _column_index(header: List[str], names: tuple) -> Optional[int]:
+    """ヘッダーの中でその列が何番目かを返す。"""
     lowered = [h.strip().lower() for h in header]
-    for name in MESSAGE_HEADERS:
+    for name in names:
         if name.lower() in lowered:
             return lowered.index(name.lower())
     return None
@@ -246,11 +253,25 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if width < 2:
         raise DoneruError(f"CSV のヘッダーが {width} 列しかありません")
 
-    msg_at = _message_index(header)
+    msg_at = _column_index(header, MESSAGE_HEADERS)
+    date_at = _column_index(header, DATE_HEADERS)
+
+    def starts_record(row: List[str]) -> bool:
+        """その行が新しい寄付の始まりか。
+
+        **ここを間違えると本物の寄付が消える。** 「列が足りない行は割れた行」と
+        決めつけると、末尾の列がただ空なだけの行を次の行とつないでしまい、
+        2件が1件になる（実際に 2025 年で2件消した）。
+        日時の列が日付の形をしているかで見分ける。
+        """
+        if date_at is None or len(row) <= date_at:
+            return False
+        return bool(_LOOKS_LIKE_DATE.match(row[date_at]))
 
     rows: List[List[str]] = []
     joined_lines = 0     # 改行で割れていてつないだ回数
     folded_commas = 0    # カンマではみ出していて畳み戻した行
+    padded = 0           # 末尾の列が空なだけで短かった行
     pending: Optional[List[str]] = None
 
     for row in reader:
@@ -258,13 +279,20 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
             continue  # 末尾の空行
 
         if pending is not None:
-            # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
-            row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
-            pending = None
-            joined_lines += 1
+            if starts_record(row):
+                # 続きではなく、次の寄付が始まっている。つまり pending は
+                # 割れた行ではなく「末尾の列が空なだけの行」だった。埋めて出す。
+                rows.append(pending + [""] * (width - len(pending)))
+                padded += 1
+                pending = None
+            else:
+                # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
+                row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
+                pending = None
+                joined_lines += 1
 
         if len(row) < width:
-            pending = row      # まだ足りない。次の行も続き
+            pending = row      # まだ足りない。次の行も続きかもしれない
             continue
 
         if len(row) > width:
@@ -282,13 +310,16 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
         rows.append(row)
 
     if pending is not None:
-        raise DoneruError("CSV の最後の行が途中で切れています")
+        # 最後の行。続きが来ないので、末尾が空なだけとみなして埋める
+        rows.append(pending + [""] * (width - len(pending)))
+        padded += 1
 
     # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
-    if joined_lines or folded_commas:
+    if joined_lines or folded_commas or padded:
         print(
             f"CSV の壊れた行を組み直しました（改行で割れていたもの {joined_lines} 回、"
-            f"カンマではみ出していたもの {folded_commas} 行）"
+            f"カンマではみ出していたもの {folded_commas} 行、"
+            f"末尾の列が空なだけだったもの {padded} 行）"
         )
 
     return [dict(zip(header, row)) for row in rows]
