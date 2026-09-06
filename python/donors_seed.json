@@ -1,0 +1,151 @@
+{
+ "_readme": [
+  "Doneru の どねID（viewerPk）と、YouTube のアカウントの対応表。",
+  "あやとが手で作ったもの（2026-09-06）。ここが元で、Firestore の islandDonors は写し。",
+  "handle が null のものは、その人の YouTube のアカウントがまだ分からない。",
+  "label はそのときの呼び名。カードは渡せないが、表には載っているので「新規」ではない。",
+  "python/admin/donors_import.py で Firestore に流す。表を直したら流し直す。"
+ ],
+ "donors": [
+  {
+   "viewerPk": "117763460062995449096",
+   "handle": "@ASUSHIZAMUARI",
+   "label": null
+  },
+  {
+   "viewerPk": "101760203751954301886",
+   "handle": "@ひめひめ-r9z",
+   "label": null
+  },
+  {
+   "viewerPk": "114910762433928193967",
+   "handle": null,
+   "label": "信州檸檬🍋"
+  },
+  {
+   "viewerPk": "115344581653245733797",
+   "handle": null,
+   "label": "KURA ekisu"
+  },
+  {
+   "viewerPk": "104074770928841827135",
+   "handle": "@らあ-j5s",
+   "label": null
+  },
+  {
+   "viewerPk": "106094030253479889862",
+   "handle": "@aoi1685",
+   "label": null
+  },
+  {
+   "viewerPk": "1465303778861916164",
+   "handle": "@ひめひめ-r9z",
+   "label": null
+  },
+  {
+   "viewerPk": "111562147694861699085",
+   "handle": "@まーさん7286",
+   "label": null
+  },
+  {
+   "viewerPk": "111327694089718887141",
+   "handle": "@ソラ-m2p",
+   "label": null
+  },
+  {
+   "viewerPk": "116307223444417808266",
+   "handle": "@あやとグルメアプリ",
+   "label": null
+  },
+  {
+   "viewerPk": "101857957972539172740",
+   "handle": "@SNOOPY-c9l",
+   "label": null
+  },
+  {
+   "viewerPk": "900311971051880448",
+   "handle": null,
+   "label": "信州檸檬🍋"
+  },
+  {
+   "viewerPk": "1853371255166308352",
+   "handle": null,
+   "label": "1853371255166308352"
+  },
+  {
+   "viewerPk": "114181563129874653185",
+   "handle": "@まーさん7286",
+   "label": null
+  },
+  {
+   "viewerPk": "107501175963801195080",
+   "handle": "@くろねこ.39",
+   "label": null
+  },
+  {
+   "viewerPk": "1878112718164758529",
+   "handle": "@aoi1685",
+   "label": null
+  },
+  {
+   "viewerPk": "106056698067706133296",
+   "handle": "@いち-q3z4q",
+   "label": null
+  },
+  {
+   "viewerPk": "105169970171918407047",
+   "handle": "@スカイライン-t2w",
+   "label": null
+  },
+  {
+   "viewerPk": "114027906694271638054",
+   "handle": "@ひめひめ-r9z",
+   "label": null
+  },
+  {
+   "viewerPk": "105890415299035600890",
+   "handle": "@ボケナス-v6q",
+   "label": null
+  },
+  {
+   "viewerPk": "116922888722891312047",
+   "handle": "@ひめひめ-r9z",
+   "label": null
+  },
+  {
+   "viewerPk": "114339928542993679999",
+   "handle": null,
+   "label": "Best Friendsの1人"
+  },
+  {
+   "viewerPk": "106668761271439298787",
+   "handle": "@aoi1685",
+   "label": null
+  },
+  {
+   "viewerPk": "106772910826331121099",
+   "handle": null,
+   "label": "たかこ"
+  },
+  {
+   "viewerPk": "116942153213902538258",
+   "handle": "@かこ-e",
+   "label": null
+  },
+  {
+   "viewerPk": "118428077427164802504",
+   "handle": "@nana-i6i-d8k",
+   "label": null
+  },
+  {
+   "viewerPk": "100329275912079486510",
+   "handle": "@みっちょま",
+   "label": null
+  },
+  {
+   "viewerPk": "102350919211669047693",
+   "handle": "@たぃpi",
+   "label": null
+  }
+ ]
+}
