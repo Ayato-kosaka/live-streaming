@@ -151,3 +151,16 @@ jobs:
       # merge() を通すので消えない。
       - name: その日いた人の名簿を更新
         run: python python/nordic_supporters.py --days 3
+
+      # **いちばん最後に置く。** ここは「表に無い どねID が投げ銭してきた」
+      # ときに終了コード 1 で終わる。前に置くと、落ちた時点で後ろが skip
+      # されて、配れるものが配れなくなる（#132 で2回踏んだ）。
+      #
+      # 落ちるのは異常ではなく、**あやとへの呼び出し**。Doneru は YouTube の
+      # チャンネルIDを持っていないので、新しい人にカードを渡すには
+      # python/donors_seed.json に1行足してもらう必要がある。黙って
+      # 落とすと、投げ銭してくれたのに何ももらえない人が静かに増える。
+      #
+      # 直したら（donors_import を apply で流したら）翌日に緑へ戻る。
+      - name: Doneru の投げ銭を名簿に足す（新規がいたら赤くする）
+        run: python python/doneru_supporters.py --days 3
