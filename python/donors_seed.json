@@ -1,10 +1,21 @@
 {
  "_readme": [
-  "Doneru の どねID（viewerPk）と、YouTube のアカウントの対応表。",
-  "あやとが手で作ったもの（2026-09-06）。ここが元で、Firestore の islandDonors は写し。",
+  "Doneru の どねID と、YouTube のアカウントの対応表。",
+  "あやとが手で作ったもの（2026-09-06）。python/admin/donors_import.py で Firestore に流す。",
+  "",
+  "【2026-09-07 に分かったこと。読んでから直すこと】",
+  "ここの viewerPk は21桁（Google のユーザーID）や18〜19桁だが、",
+  "BigQuery の doneru_donations.viewer_pk は **6桁** だった。",
+  "Doneru の寄付履歴の生データ（/streamer/donation-list）が持っているのは",
+  "viewerPk（6桁）・nickname・amount・message だけで、21桁のほうはどこにも無い。",
+  "**つまり、この表はいまのデータと突き合わせられない。**",
+  "",
+  "直すには、6桁のほう（寄付履歴に出てくる viewerPk）で引き直した表が要る。",
+  "あやとに聞いている。それまで doneru_supporters.py は全員を「新規」として",
+  "赤くする。表そのものは消さない（誰が Doneru で出してくれているかの記録として正しい）。",
+  "",
   "handle が null のものは、その人の YouTube のアカウントがまだ分からない。",
-  "label はそのときの呼び名。カードは渡せないが、表には載っているので「新規」ではない。",
-  "python/admin/donors_import.py で Firestore に流す。表を直したら流し直す。"
+  "label はそのときの呼び名。カードは渡せないが、表には載っているので「新規」ではない。"
  ],
  "donors": [
   {
