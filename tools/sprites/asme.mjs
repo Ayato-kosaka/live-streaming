@@ -16,6 +16,10 @@
  * ぜんぶここで差し替える。
  *
  * `ADMIN=1` を付けると、あやと（`admin`）として撮る。旅の道具が出る。
+ *
+ * ルーレット（#164）の口もここで返す。**表示側（`/roulette?s=…`）は
+ * ログインが要らない**ので、`apply` を呼ぶだけで撮れる。
+ * `RLSPIN=1` を付けると、開いた 1.2 秒あとに回りだすところから撮れる。
  */
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
@@ -59,6 +63,25 @@ const PLANS = {
   next: null,
 };
 
+/** ルーレットのセッション（#164）。id は本番と同じ 32 桁。 */
+const RL_ID = "0123456789abcdef0123456789abcdef";
+const rlItem = (id, label, name, byHand = false) => ({
+  id, label, name: byHand ? "" : name, icon: byHand ? "" : PHOTO, byHand,
+});
+let RL_ITEMS = [
+  rlItem("c1", "トビリシの温泉", "まこも"),
+  rlItem("c2", "ヒッチハイクで隣の国", "のり"),
+  rlItem("c3", "24時間クッキング", "ゆずたつ"),
+  rlItem("c4", "視聴者の家に泊まる", "まこも"),
+  rlItem("c5", "深夜の市場めぐり", "", true),
+];
+const RL_LINES = [
+  { id: "m1", name: "まこも", text: "山に登るのはどう", icon: PHOTO, channelId: "c", at: now },
+  { id: "m2", name: "のり", text: "地元の市場で買い物", icon: PHOTO, channelId: "c", at: now },
+  { id: "m3", name: "ゆずたつ", text: "ワイン作りを見にいく", icon: PHOTO, channelId: "c", at: now },
+  { id: "m4", name: "まこも", text: "温泉！", icon: PHOTO, channelId: "c", at: now },
+];
+
 export async function apply(ctx, opts = {}) {
   const admin = opts.admin ?? process.env.ADMIN === "1";
   const json = (r, body) =>
@@ -95,6 +118,31 @@ export async function apply(ctx, opts = {}) {
     }
     if (path === "/nextplans") return json(r, PLANS);
     if (path === "/nordic/log") return json(r, { log: [] });
+    if (path.startsWith("/roulette")) {
+      const spin = opts.spin ?? process.env.RLSPIN === "1";
+      const at = Date.now() + 1200;
+      const ses = {
+        id: RL_ID, status: spin ? "回っている" : "準備中", items: RL_ITEMS,
+        wait: 10, duration: 15, turns: 10, theme: "classic", sound: false,
+        result: spin ? RL_ITEMS[1].id : null, resultIndex: spin ? 1 : null,
+        spunAt: spin ? at : null, postAt: spin ? at + 25000 : null,
+        posted: false, updatedAt: spin ? 1 : 2,
+      };
+      if (path.endsWith("/comments")) {
+        // 2回目からは空。撮るたびに増えると、撮った絵が毎回変わる
+        const first = !ctx.__rlSeen;
+        ctx.__rlSeen = true;
+        return json(r, { lines: first ? RL_LINES : [], wait: 600000, live: true });
+      }
+      if (path.endsWith("/items")) {
+        try {
+          RL_ITEMS = JSON.parse(r.request().postData() || "{}").items ?? RL_ITEMS;
+        } catch {}
+        return json(r, { session: { ...ses, items: RL_ITEMS } });
+      }
+      if (path.endsWith("/start")) return json(r, { session: ses, live: true });
+      return json(r, { session: ses, now: Date.now() });
+    }
     if (path === "/state") {
       return json(r, {
         current: { place: "ジョージア・トビリシ", theme: "georgia", word: "トビリシにいます。", week: [], updatedAt: "2026-09-04" },
