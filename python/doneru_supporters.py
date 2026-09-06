@@ -33,6 +33,17 @@ BigQuery から取るが、**Doneru はチャンネルIDを持っていない**�
 であって、投げ銭が成立したかどうかではない。待ちのぶんを外すと、
 その日出してくれた人が数日あとから現れることになる。
 
+## 終了コード
+
+| | 意味 |
+| --- | --- |
+| 0 | ぜんぶ紐付いている |
+| 1 | **表に無い どねID がいる。** あやとに紐付けてほしい |
+| 2 | **元データ（doneru_donations）が読めない。** 対応表の問題ではない |
+
+1 と 2 を分けているのは、2 のときに対応表を直しにいっても直すものが
+無いから。寄付の表は作り直されることがあり（#186）、その途中は消えている。
+
 実行:
   python python/doneru_supporters.py --days 3
   python python/doneru_supporters.py --day 2026-09-06 --dry-run
@@ -117,7 +128,22 @@ def main() -> int:
     table = {d.id: (d.to_dict() or {}) for d in db.collection("islandDonors").stream()}
     logger.info("対応表: %d件", len(table))
 
-    found = fetch(d0, d1)
+    try:
+        found = fetch(d0, d1)
+    except Exception as e:
+        # **「取れなかった」を「新規の人がいる」と言わない。**
+        # 寄付の表は作り直されることがあり（#186）、その途中は消えている。
+        # そこで「紐付け待ちが3件あります」と出すと、あやとは
+        # 対応表を直しにいって、直すものが無くて困る。
+        #
+        # 終了コードを分ける。1 は「紐付けてほしい」、2 は「元データが読めない」。
+        # Actions の失敗通知メールで、どちらの用事か分かるようにする。
+        logger.error("寄付の表が読めませんでした: %s", str(e)[:200])
+        logger.error("")
+        logger.error("doneru_donations が作り直しの途中か、権限が変わったかです。")
+        logger.error("対応表（islandDonors）の問題ではないので、そちらは触らないこと。")
+        return 2
+
     now = datetime.now(timezone.utc).isoformat()
     fresh = []
 
