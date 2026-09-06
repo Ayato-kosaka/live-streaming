@@ -225,13 +225,19 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
       （日付も金額も無い行が4件、精算状態の列にメッセージの断片が1件）
     - **カンマ** → 列が増える。ヘッダー8列に対して14列の行があった
 
-    自由文が入るのはメッセージの列だけなので、**両端から数えて、余ったぶんを
-    メッセージに畳み戻す**。左の列はヘッダーの先頭から、右の列は末尾から数える。
+    ## 1件の切れ目は「長さ」ではなく「次が始まったか」で決める
 
-    これはメッセージ以外の列にカンマが入っていないことを前提にしている。
-    ニックネームにカンマが入っていたら間違えるが、**引用符が無い以上、
-    そこは区別しようがない**。せめて組み直したあとに日付と金額の形を見て、
-    おかしければ数を出す。
+    **長さで完全かどうかを決めてはいけない。** カンマと改行の両方が入っていて
+    1行目だけで既に8列を超えていると、「はみ出した完全な行」と誤認して確定させ、
+    続きを別の寄付にしてしまう（本番で1件それが残った）。
+
+    なので**日時の列が日付の形をしている行を1件の始まり**とみなし、
+    次の始まりが来るまでを1件として集める。集めてからつないで、
+    はみ出したぶんはメッセージに畳み、足りないぶんは空で埋める。
+
+    畳み戻しは**メッセージ以外の列にカンマが入っていないこと**を前提にしている。
+    ニックネームにカンマが入っていたら間違えるが、引用符が無い以上そこは
+    区別しようがない。
     """
     text: Optional[str] = None
     for encoding in ("utf-8-sig", "cp932"):
@@ -268,58 +274,55 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
             return False
         return bool(_LOOKS_LIKE_DATE.match(row[date_at]))
 
-    rows: List[List[str]] = []
-    joined_lines = 0     # 改行で割れていてつないだ回数
-    folded_commas = 0    # カンマではみ出していて畳み戻した行
-    padded = 0           # 末尾の列が空なだけで短かった行
-    pending: Optional[List[str]] = None
-
-    for row in reader:
-        if not row:
-            continue  # 末尾の空行
-
-        if pending is not None:
-            if starts_record(row):
-                # 続きではなく、次の寄付が始まっている。つまり pending は
-                # 割れた行ではなく「末尾の列が空なだけの行」だった。埋めて出す。
-                rows.append(pending + [""] * (width - len(pending)))
-                padded += 1
-                pending = None
-            else:
-                # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
-                row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
-                pending = None
-                joined_lines += 1
-
-        if len(row) < width:
-            pending = row      # まだ足りない。次の行も続きかもしれない
-            continue
+    def finish(lines: List[List[str]]) -> List[str]:
+        """1件ぶんに集めた物理行をつないで、ヘッダーの幅にそろえる。"""
+        row = lines[0]
+        for cont in lines[1:]:
+            # 改行はメッセージの中にあったもの。最後のセルに戻す
+            row = row[:-1] + [row[-1] + "\n" + cont[0]] + cont[1:]
 
         if len(row) > width:
+            # カンマもメッセージの中にあったもの。両端から数えて真ん中を畳む
             if msg_at is None:
                 raise DoneruError(
                     f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）。"
                     "メッセージの列が見つからないので畳み戻せません"
                 )
-            # 右から (width - msg_at - 1) 列が末尾の固定列。その手前までがメッセージ
             tail = width - msg_at - 1
-            end = len(row) - tail
-            row = row[:msg_at] + [",".join(row[msg_at:end])] + (row[end:] if tail else [])
-            folded_commas += 1
+            end_at = len(row) - tail
+            row = row[:msg_at] + [",".join(row[msg_at:end_at])] + (row[end_at:] if tail else [])
+        elif len(row) < width:
+            # 末尾の列が空なだけ。Doneru は空欄を省いて出すことがある
+            row = row + [""] * (width - len(row))
 
-        rows.append(row)
+        return row
 
-    if pending is not None:
-        # 最後の行。続きが来ないので、末尾が空なだけとみなして埋める
-        rows.append(pending + [""] * (width - len(pending)))
-        padded += 1
+    rows: List[List[str]] = []
+    buffer: List[List[str]] = []
+    multi_line = 0   # 1件が複数の物理行に割れていた回数
+
+    for line in reader:
+        if not line:
+            continue  # 末尾の空行
+
+        if buffer and starts_record(line):
+            # 次の寄付が始まった。ここまでが1件
+            if len(buffer) > 1:
+                multi_line += 1
+            rows.append(finish(buffer))
+            buffer = [line]
+        else:
+            buffer.append(line)
+
+    if buffer:
+        if len(buffer) > 1:
+            multi_line += 1
+        rows.append(finish(buffer))
 
     # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
-    if joined_lines or folded_commas or padded:
-        print(
-            f"CSV の壊れた行を組み直しました（改行で割れていたもの {joined_lines} 回、"
-            f"カンマではみ出していたもの {folded_commas} 行、"
-            f"末尾の列が空なだけだったもの {padded} 行）"
-        )
+    wrong_width = sum(1 for r in rows if len(r) != width)
+    assert wrong_width == 0, "finish がヘッダーの幅にそろえていない"
+    if multi_line:
+        print(f"CSV の割れた行を組み直しました（1件が複数行に割れていたもの {multi_line} 件）")
 
     return [dict(zip(header, row)) for row in rows]
