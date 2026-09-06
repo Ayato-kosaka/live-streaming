@@ -2,7 +2,11 @@
  * 「どこからでも2タップ」を、実際に踏んで確かめる。
  *
  * 数えるのは**押した回数だけ**。送る（スクロール）は数えない。
- * 面の上の口（`.ihx-open`）から `/all` へ1回、そこから行き先へ1回。
+ * 砂浜の口（`.ifoot-door.is-all`「島のなか ぜんぶ」）から `/all` へ1回、
+ * そこから行き先へ1回。
+ *
+ * **口は砂浜の1つだけ**（9月6日）。前は面の頭にも `.ihx-open` があったが、
+ * 同じ一覧を上と下から2回誘っていたので外した（`docs/island-ux.md` 5.2）。
  */
 import { chromium } from "playwright-core";
 import { readFileSync } from "fs";
@@ -19,8 +23,9 @@ let ng = 0;
 for (const from of froms) {
   await p.goto(`http://localhost:${SPORT}${from}.html`, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(300);
-  const mouth = await p.$(".ihx-open");
-  if (!mouth) { console.log(`NG ${from} 面の上に口が無い`); ng++; continue; }
+  const mouth = await p.$("footer.ifoot a[href='/all']");
+  if (!mouth) { console.log(`NG ${from} 砂浜に口が無い`); ng++; continue; }
+  await mouth.scrollIntoViewIfNeeded();
   const box = await mouth.boundingBox();
   await mouth.click();
   await p.waitForLoadState("domcontentloaded");
@@ -34,9 +39,17 @@ for (const from of froms) {
 }
 // /all そのものからは、口を出さない（押しても同じ紙）
 await p.goto(`http://localhost:${SPORT}/all.html`, { waitUntil: "domcontentloaded" });
-console.log((await p.$(".ihx-open")) ? "NG /all に自分への口が出ている" : "ok /all には自分への口が無い");
+console.log((await p.$("a[href='/all']")) ? "NG /all に自分への口が出ている" : "ok /all には自分への口が無い");
 // 砂浜からは10軒が1タップ
 const foot = await p.$$eval(".ifoot-door", as => as.map(a => a.getAttribute("href")).filter(Boolean));
 console.log(`ok 砂浜から1タップで行けるのは ${foot.length} 軒`);
+// 島の上にも、面の頭にも口は出さない（島は歩く場所で、看板は「いま、どこ」を言う場所）
+for (const path of ["/index", "/island/nordic", "/about"]) {
+  await p.goto(`http://localhost:${SPORT}${path}.html`, { waitUntil: "domcontentloaded" });
+  await p.waitForTimeout(300);
+  const extra = await p.$$eval(".stage a[href='/all'], .isle a[href='/all'], .ih a[href='/all']", as => as.length);
+  console.log(`${extra ? "NG" : "ok"} ${path} 島の上と看板の口 ${extra} 個`);
+  if (extra) ng++;
+}
 console.log("NG:", ng);
 await b.close();
