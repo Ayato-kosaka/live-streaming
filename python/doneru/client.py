@@ -194,6 +194,14 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     **文字コードを決め打ちしない。** 日本のサービスの CSV は Excel 向けに
     UTF-8 BOM や Shift_JIS(cp932) で出てくることがある。UTF-8 で読めなければ
     cp932 に落とす。BOM は `utf-8-sig` が食べる。
+
+    **割れた行を繋ぎ直す。** Doneru は改行を含むメッセージに引用符を付けずに
+    吐くことがある。素直に読むと1件の寄付が2行に割れて、後半（メッセージの
+    続き＋残りの列）が**別の寄付として入る**。本番で8件それが入っていた
+    （日付も金額も無い行が4件、メッセージの断片が精算状態の列に入った行が1件）。
+
+    列が足りない行は「途中で切れた行」なので、次の行の頭とつなぐ。
+    csv の作法どおりなら起きないが、向こうの都合には合わせるしかない。
     """
     text: Optional[str] = None
     for encoding in ("utf-8-sig", "cp932"):
@@ -205,26 +213,44 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if text is None:
         raise DoneruError("CSV の文字コードを判別できませんでした（UTF-8 でも cp932 でもない）")
 
-    rows = list(csv.DictReader(io.StringIO(text)))
+    reader = csv.reader(io.StringIO(text, newline=""))
+    try:
+        header = next(reader)
+    except StopIteration:
+        raise DoneruError("CSV が空です") from None
 
-    # ヘッダーだけで中身が無いのは「その期間に寄付が無い」。空を返すのが正しい。
-    # ヘッダーすら無いのは想定外なので、キー名も値も出さずに落とす。
-    if rows and all(key is None for key in rows[0]):
-        raise DoneruError("CSV にヘッダー行がありませんでした")
+    width = len(header)
+    if width < 2:
+        raise DoneruError(f"CSV のヘッダーが {width} 列しかありません")
 
-    # DictReader は列の数が合わない行に None のキーを作る。混ざったまま
-    # BigQuery に渡すと JSON にできないので、ここで落として気づけるようにする。
-    cleaned: List[Dict[str, str]] = []
-    ragged = 0
-    for row in rows:
-        if None in row:
-            ragged += 1
-            row = {k: v for k, v in row.items() if k is not None}
-        cleaned.append({k: ("" if v is None else v) for k, v in row.items()})
+    rows: List[List[str]] = []
+    repaired = 0
+    pending: Optional[List[str]] = None
 
-    if ragged:
-        raise DoneruError(
-            f"CSV に列数の合わない行が {ragged} 件ありました（ヘッダーと本文がずれています）"
-        )
+    for row in reader:
+        if not row:
+            continue  # 末尾の空行
 
-    return cleaned
+        if pending is not None:
+            # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
+            row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
+            pending = None
+            repaired += 1
+
+        if len(row) < width:
+            pending = row      # まだ足りない。次の行も続き
+            continue
+        if len(row) > width:
+            raise DoneruError(
+                f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）"
+            )
+        rows.append(row)
+
+    if pending is not None:
+        raise DoneruError("CSV の最後の行が途中で切れています")
+
+    if repaired:
+        # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
+        print(f"CSV の割れた行を {repaired} 件つなぎ直しました")
+
+    return [dict(zip(header, row)) for row in rows]
