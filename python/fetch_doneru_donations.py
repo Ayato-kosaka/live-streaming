@@ -131,6 +131,79 @@ WHEN NOT MATCHED THEN
 """
 
 
+RUNS_DDL = """
+CREATE TABLE IF NOT EXISTS `{table}` (
+  run_id STRING,
+  ran_at TIMESTAMP,
+  outcome STRING,
+  years STRING,
+  donations INT64,
+  cookie_shape STRING,
+  renewed_dt BOOL,
+  detail STRING
+)
+"""
+
+RUNS_INSERT = """
+INSERT INTO `{table}`
+  (run_id, ran_at, outcome, years, donations, cookie_shape, renewed_dt, detail)
+VALUES
+  (@run_id, SAFE_CAST(@ran_at AS TIMESTAMP), @outcome, @years, @donations,
+   @cookie_shape, @renewed_dt, @detail)
+"""
+
+
+def record_run(
+    outcome: str,
+    years: List[int],
+    donations: int,
+    cookie_shape: Optional[str],
+    renewed_dt: bool,
+    detail: Optional[str],
+) -> None:
+    """実行の結果を1行残す。
+
+    **セッションが何日持ったかを測るために要る。** 落ちたことは Actions の
+    通知メールで分かるが、いつからいつまで生きていたかはどこにも残らない。
+    cookie を入れ直す頻度を決めるには寿命が要る。
+
+    残すのは結果と件数だけで、寄付の中身も cookie の値も入れない。
+
+    **ここで失敗しても実行そのものを落とさない。** 記録は本題ではないので、
+    記録が取れないことで取り込みの結果を握りつぶしたくない。
+    """
+    from google.cloud import bigquery
+
+    from bq.client import get_bigquery_client
+    from config import BQ_DATASET, BQ_TABLE_DONERU_RUNS
+    from logging_util import get_run_id
+
+    table = f"{BQ_DATASET}.{BQ_TABLE_DONERU_RUNS}"
+    label = str(years[0]) if len(years) == 1 else f"{years[0]}-{years[-1]}"
+
+    try:
+        client = get_bigquery_client()
+        client.query(RUNS_DDL.format(table=table)).result()
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("run_id", "STRING", get_run_id()),
+                bigquery.ScalarQueryParameter(
+                    "ran_at", "STRING", datetime.now(timezone.utc).isoformat()
+                ),
+                bigquery.ScalarQueryParameter("outcome", "STRING", outcome),
+                bigquery.ScalarQueryParameter("years", "STRING", label),
+                bigquery.ScalarQueryParameter("donations", "INT64", donations),
+                bigquery.ScalarQueryParameter("cookie_shape", "STRING", cookie_shape),
+                bigquery.ScalarQueryParameter("renewed_dt", "BOOL", renewed_dt),
+                bigquery.ScalarQueryParameter("detail", "STRING", detail),
+            ]
+        )
+        client.query(RUNS_INSERT.format(table=table), job_config=job_config).result()
+        print(f"実行の記録を {table} に残しました（{outcome}）")
+    except Exception as exc:  # noqa: BLE001  記録の失敗で取り込みを落とさない
+        print(f"WARNING: 実行の記録に失敗しました: {exc}", file=sys.stderr)
+
+
 def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     """BigQuery に MERGE する。"""
     from google.cloud import bigquery
@@ -250,6 +323,14 @@ def main() -> int:
 
     years = resolve_years(args.year, args.since, datetime.now(JST))
 
+    client: Optional[DoneruClient] = None
+    # **初期値は失敗にする。** 成功に倒しておくと、BigQuery 側の失敗のように
+    # ここで捕まえていない例外で落ちたときに ok として記録される。
+    # 最後まで通ったときだけ ok に書き換える。
+    outcome = "error"
+    detail: Optional[str] = None
+    total = 0
+
     try:
         client = DoneruClient()
 
@@ -259,10 +340,11 @@ def main() -> int:
             print(json.dumps(describe_mapping(records), ensure_ascii=False, indent=2))
             return 0
 
-        total = 0
         for year in years:
             total += ingest_year(client, year, dry_run=args.dry_run)
+        outcome = "ok"
     except DoneruSessionExpired as exc:
+        outcome, detail = "session_expired", str(exc)
         print(f"ERROR: Doneru のセッションが切れています: {exc}", file=sys.stderr)
         # 「貼った値が化けている」のか「セッションが死んでいる」のかを分ける手がかり。
         # 形が合っているのに 401 なら、値ではなくセッションのほう。
@@ -274,8 +356,22 @@ def main() -> int:
         )
         return EXIT_SESSION_EXPIRED
     except DoneruError as exc:
+        outcome, detail = "error", str(exc)
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
+    finally:
+        # **落ちたときこそ残す。** 何日持ったかは、成功と失敗の両方が
+        # 並んでいて初めて出る。--probe と --dry-run は本番の実行ではないので残さない。
+        # （return のあとでも finally は走るので、上の3つの出口すべてを拾う）
+        if not args.probe and not args.dry_run:
+            record_run(
+                outcome=outcome,
+                years=years,
+                donations=total,
+                cookie_shape=client.cookie_shape if client else None,
+                renewed_dt=bool(client and client.renewed_dt),
+                detail=detail,
+            )
 
     if len(years) > 1:
         print(f"{years[0]}〜{years[-1]} 年で合わせて {total} 件")

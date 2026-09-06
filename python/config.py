@@ -38,6 +38,11 @@ BQ_TABLE_CHAT_MESSAGES: Final[str] = "chat_messages"
 # データセットは分けない（分けると join のたびに跨ぐことになる）。
 BQ_TABLE_DONERU_DONATIONS: Final[str] = "doneru_donations"
 
+# 取り込みを試した記録。**セッションが何日持ったかを測るために要る。**
+# 「落ちた」は Actions の通知メールで分かるが、いつからいつまで生きていたかは
+# どこにも残らない。cookie を入れ直す頻度を決めるには寿命が要る。
+BQ_TABLE_DONERU_RUNS: Final[str] = "doneru_ingest_runs"
+
 # MERGE 操作時の最大レコード数（BigQuery リクエストサイズ制限対策）
 # 1回の MERGE で処理するメッセージの最大件数
 MAX_MERGE_BATCH_SIZE: Final[int] = 5000

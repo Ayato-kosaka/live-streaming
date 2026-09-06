@@ -157,6 +157,59 @@ WHERE amount IS NULL OR donated_at IS NULL
 いまは取得側で「1ページ丸ごと既知なら打ち切る」ようにしてあるので落ちないが、
 訊く意味は無い。
 
+### `doneru_ingest_runs` — 取り込みを試した記録1回＝1行
+
+**セッションが何日持ったかを測るために置いてある。** 落ちたことは Actions の
+通知メールで分かるが、いつからいつまで生きていたかはどこにも残らない。
+`_dt` を入れ直す頻度を決めるには寿命が要る。
+
+| 列 | 型 | 中身 |
+| --- | --- | --- |
+| `run_id` / `ran_at` | STRING / TIMESTAMP | いつの実行か |
+| `outcome` | STRING | `ok` / `session_expired` / `error` |
+| `years` | STRING | 取りに行った年（`2026` や `2024-2026`） |
+| `donations` | INT64 | 入れた件数 |
+| `cookie_shape` | STRING | `_dt` の長さの判定（**値は入れない**） |
+| `renewed_dt` | BOOL | Doneru が `_dt` を配り直したか |
+| `detail` | STRING | 失敗の理由 |
+
+**落ちたときこそ残す。** 何日持ったかは、成功と失敗の両方が並んで初めて出る。
+`--probe` と `--dry-run` は本番の実行ではないので残さない。
+記録そのものが失敗しても取り込みは落とさない（記録は本題ではない）。
+
+#### 寿命を見る
+
+```sql
+SELECT
+  DATE(ran_at, 'Asia/Tokyo') AS day,
+  outcome,
+  COUNT(*) AS runs,
+  MAX(donations) AS donations
+FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
+GROUP BY day, outcome
+ORDER BY day DESC
+```
+
+`ok` が続いたあと `session_expired` が出たら、そこがそのセッションの終わり。
+**最後の `ok` と最初の `session_expired` のあいだが寿命**（日次で回しているので
+精度は1日）。入れ直すたびに1本ぶんの寿命が記録に増えていく。
+
+```sql
+-- 直近の「入れ直しから切れるまで」
+SELECT
+  MIN(ran_at) AS 生き始め,
+  MAX(IF(outcome = 'ok', ran_at, NULL)) AS 最後に通った,
+  TIMESTAMP_DIFF(
+    MAX(IF(outcome = 'ok', ran_at, NULL)), MIN(ran_at), HOUR
+  ) AS 持った時間
+FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
+WHERE ran_at > (
+  SELECT IFNULL(MAX(ran_at), TIMESTAMP('1970-01-01'))
+  FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
+  WHERE outcome = 'session_expired'
+)
+```
+
 #### Doneru のセッションを入れ直す
 
 認証はブラウザの cookie（`_dt`）だけ。**切れたら自動では戻せない**（ログインが
