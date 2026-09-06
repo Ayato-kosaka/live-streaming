@@ -103,9 +103,9 @@ export default function IsleSheet({
           </ul>
         )}
 
-        {/* 掲示板。北欧の棚だけを渡す（`spec.ts` の `nordicShelves`）。
-            仕分けは `/board` と同じものを借りている */}
-        {place.board && <IsleBoard places={place.board} />}
+        {/* 掲示板。北欧あての宛先だけを渡す（`spec.ts` の `nordicThemes`）。
+            仕分けは付箋が持っている宛先（`theme`）そのもの */}
+        {place.board && <IsleBoard themes={place.board} />}
 
         {place.items && (
           <ul className="isle-list">

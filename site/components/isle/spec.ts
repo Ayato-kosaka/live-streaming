@@ -28,7 +28,7 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import type { NotePlace } from "@/components/live/NoteBoards";
+import { THEMES, type Theme } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 
 export type IsleItem = {
@@ -70,7 +70,7 @@ export type IslePlaceSpec = {
   /** 「ぜんぶ見る」の行き先 */
   more?: { label: string; sub: string; href: string };
   /** 板の中に出す掲示板の棚割り（`components/isle/IsleBoard.tsx`） */
-  board?: NotePlace[];
+  board?: Theme[];
   /** 出発までの日数を出す。**画面が出てから数える**（焼き込まない） */
   countdown?: string;
   /** 島の「！」の札に出す6つ。いまは全部が出る（島に建つのが最大6つなので） */
@@ -312,31 +312,18 @@ function pier(prev?: Neighbour, next?: Neighbour): IslePlaceSpec {
 /**
  * この旅の掲示板の棚割り。
  *
- * **`/board` と同じ仕分けを借りている。** 付箋の本文の頭に付く `【国名】` の札で
- * 分けるところ（`components/live/NoteBoards.tsx`）はそのまま使い、
- * ここでは**北欧の棚だけ**を渡す。押すと `/board` の全企画が出てくるのを
- * やめるための最小の変更で、仕分けの規則を新しく作ってはいない。
+ * **宛先の表（`content/themes.ts`）から、北欧の棚だけを渡す。**
+ * 前は本文の頭の `【国名】` を読んで分けていたが、宛先が正式な欄になり
+ * （#160）、既存の8件もそちらへ移した（#162）。棚の名前と並びは表が持って
+ * いるので、ここは**そのうちどれを島に出すかを選ぶだけ**。
  *
  * あやとの言葉:「北欧周遊島の掲示板には、北欧周遊関連だけ見れれば良い」。
  *
- * 並びは旅で通る順。**枚数では動かさない**（`docs/island-play.md`
- * 「順位表を作らない」）。`app/board/page.tsx` の `NOTE_PLACES` が
- * 同じ並びを持っている——あちらから読ませたいが、担当が別なので報告に回した。
- *
- * ここ（サーバー側）で組むのは、`content/nordic.ts` が 44KB あるから。
- * 棚に要るのは名前と行き先だけなので、ブラウザまで運ぶのはそのぶんで足りる。
+ * 並びは表の順（旅で通る順）。**枚数では動かさない**
+ * （`docs/island-play.md`「順位表を作らない」）。
  */
-function nordicShelves(): NotePlace[] {
-  return [
-    { key: "北欧旅", name: "北欧旅ぜんぶ", group: "北欧の旅", href: "/nordic#say", by: "tag" },
-    ...NORDIC_COUNTRIES.map((c) => ({
-      key: c.name,
-      name: c.name,
-      group: "北欧の旅",
-      href: `/nordic/${c.slug}`,
-      by: "tag" as const,
-    })),
-  ];
+function nordicThemes(): Theme[] {
+  return THEMES.filter((t) => t.group === "北欧の旅");
 }
 
 /**
@@ -389,11 +376,11 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     {
       id: "board",
       label: "この旅の掲示板",
-      blurb: "北欧に来ている提案",
+      blurb: "北欧に来ている付箋",
       icon: "signboard",
       size: 58,
-      note: "北欧あての提案だけ。押すと、書いてある場所へ行けます。",
-      board: nordicShelves(),
+      note: "北欧あての付箋だけ。押すと、書いてある場所へ行けます。",
+      board: nordicThemes(),
       more: { label: "島の掲示板へ", sub: "北欧以外の企画も、ここから出せる", href: "/board" },
     },
   ];
