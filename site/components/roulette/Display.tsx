@@ -61,6 +61,8 @@ export default function Display() {
   const [ses, setSes] = useState<RouletteSession | null>(null);
   /** サーバーの時計から、この端末の時計を引いたもの */
   const skew = useRef(0);
+  /** ずれをまだ一度も測っていない */
+  const rawSkew = useRef(true);
   /** 読みにいく輪の中から、いまの状態を見るための控え */
   const now = useRef<RouletteSession | null>(null);
   now.current = ses;
@@ -82,7 +84,14 @@ export default function Display() {
         try {
           const r = await getRoulette(sid);
           if (gone) return;
-          skew.current = r.now - Date.now();
+          /* **ずれは、動いたときだけ入れ直す。** 毎回入れ直すと、
+             読むたびに数十ミリ秒だけ揺れる。回し始めの時刻がそのぶん動くと、
+             輪が「新しい号令が来た」と思って回り直してしまう。 */
+          const gap = r.now - Date.now();
+          if (rawSkew.current || Math.abs(gap - skew.current) > 1000) {
+            skew.current = gap;
+            rawSkew.current = false;
+          }
           // 中身が変わっていないなら state を触らない。触ると描き直す
           setSes((p) =>
             p && p.updatedAt === r.session.updatedAt ? p : r.session,
