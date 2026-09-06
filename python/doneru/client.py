@@ -249,12 +249,11 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if text is None:
         raise DoneruError("CSV の文字コードを判別できませんでした（UTF-8 でも cp932 でもない）")
 
-    # **引用符を解釈しない。** Doneru は引用符を使わずに生のまま吐くので、
-    # メッセージの中の `"` を引用の開始と取られると、そこから次の `"` までが
-    # 1つのセルに飲み込まれる。実データで「メッセージ＋改行＋精算状態」が
-    # まるごと精算状態の列に入る行が出た。カンマも改行も組み直せるようになった
-    # いま、引用の解釈は害しかない。
-    reader = csv.reader(io.StringIO(text, newline=""), quoting=csv.QUOTE_NONE)
+    # **引用符は解釈する。** 一度 QUOTE_NONE にして本番で試したら、ヘッダーごと
+    # 引用符が付いたまま読まれて（`"どねID"`）メッセージの列が見つからなくなり、
+    # 1行が 6802 列に割れた。Doneru は引用符を使っている。
+    # 使い方が壊れている（メッセージの中の `"` をエスケープしていない）だけ。
+    reader = csv.reader(io.StringIO(text, newline=""))
     try:
         header = next(reader)
     except StopIteration:
