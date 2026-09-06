@@ -1082,14 +1082,15 @@ export const islandApi = onRequest(
           res.status(429).json({error: "too many today"});
           return;
         }
-        const rec: Json = {
-          body: text,
-          at: Date.now(),
-          uid,
-        };
+        const ref = NLOG.doc(day);
+        const rec: Json = {body: text, uid, updatedAt: Date.now()};
         if (date) rec.date = date;
         rec.video = vid ? vid[1] : null;
-        await NLOG.doc(day).set(rec, {merge: true});
+        /* `at` は**書いた順**で、並び順に使っている(GET /nordic/log)。
+           書き直すたびに入れ替えると、直した日だけが日記のいちばん下に
+           落ちる。初めて書いたときだけ入れる。 */
+        if (!(await ref.get()).exists) rec.at = Date.now();
+        await ref.set(rec, {merge: true});
         res.set("Cache-Control", "no-store");
         res.json({
           log: {day, date, body: text, video: vid ? vid[1] : undefined},
