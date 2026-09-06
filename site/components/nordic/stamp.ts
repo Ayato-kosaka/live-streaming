@@ -237,7 +237,17 @@ export async function shrink(
   const g = cv.getContext("2d");
   if (!g) return null;
   g.drawImage(src as CanvasImageSource, 0, 0, w, h);
-  const url = cv.toDataURL("image/webp", 0.82);
-  if (!url.startsWith("data:image/webp")) return null;
+  /* **webp が出ない端末がある。** iOS の Safari は
+     `toDataURL("image/webp")` を黙って png に落とす。前はそこで諦めていて、
+     **あやとの iPhone から1枚も貼れなかった**（本番で「焼けなかった」）。
+     旅の途中に貼るのはその iPhone なので、出なければ jpeg に落とす。
+
+     png には落とさない。写真の png は jpeg の何倍にもなって、
+     細い電波で送るという、この道具の用事そのものを壊す。 */
+  let url = cv.toDataURL("image/webp", 0.82);
+  if (!url.startsWith("data:image/webp")) url = cv.toDataURL("image/jpeg", 0.82);
+  if (!url.startsWith("data:image/webp") && !url.startsWith("data:image/jpeg")) {
+    return null;
+  }
   return { image: url.slice(url.indexOf(",") + 1), w, h };
 }
