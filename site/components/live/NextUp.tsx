@@ -25,8 +25,11 @@ export default function NextUp() {
   const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan());
   const [days, setDays] = useState<number | null>(null);
   const [today, setToday] = useState<Date | null>(null);
-  /** 旅が終わった日。島から届く（`content/plans.ts` の `doneFromState`）。 */
-  const [arrived, setArrived] = useState<string | null>(null);
+  /**
+   * 島から届く2つの日。**着いた日と、旅が終わった日は別**
+   * （`content/plans.ts` の `reached` と `doneFromState`）。
+   */
+  const [facts, setFacts] = useState<{ arrived: string | null; ended: string | null } | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -36,14 +39,15 @@ export default function NextUp() {
     setDays(p ? planDaysLeft(p, now) : null);
   }, []);
 
-  /* 着いた日が届いたら、企画の並びを組み直す。**届くまでは何もしない。**
+  /* 島から日が届いたら、企画の並びを組み直す。**届くまでは何もしない。**
      読めなくても、旅の最中と同じ「進行中」のままで、嘘にはならない。 */
   useEffect(() => {
     let alive = true;
     loadState().then((s) => {
-      const a = s?.nordic?.arrivedOn;
-      if (!alive || !a) return;
-      setArrived(a);
+      const a = s?.nordic?.arrivedOn ?? null;
+      const e = s?.nordic?.endedOn ?? null;
+      if (!alive || (!a && !e)) return;
+      setFacts({ arrived: a, ended: e });
       setPlan(nextPlan(new Date()));
     });
     return () => {
@@ -52,7 +56,7 @@ export default function NextUp() {
   }, []);
 
   if (!plan) return null;
-  const PL = livePlans(arrived);
+  const PL = livePlans(facts);
   // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
   // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
   const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? undefined) ?? -1) >= 0);

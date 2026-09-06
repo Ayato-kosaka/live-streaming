@@ -260,12 +260,8 @@
   width: 20px; height: 20px; flex: none;
   object-fit: contain; object-position: center bottom;
 }
-/* 「ぜんぶ」だけは行き先ではなく道しるべなので、6つとは別の面にする。
-   同じ木の札にすると7軒目に見える（砂浜の `.ifoot-door.is-all` と同じ扱い）。 */
-.ih-link.is-all {
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 6px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
-}
+/* 看板に並ぶのは6つの札だけ。「ぜんぶ」（`/all`）はここには出さない
+   （砂浜の `.ifoot-door.is-all` が持っている。`way.css` の但し書き）。 */
 /* いま居る場所だけ、木の札ではなく紙の札にする。
    まわりが木色に揃ったので、白い1枚がどこにいるかを言う。 */
 /* いま居る場所。塗りは変えず、朱の細枠だけで言う（ac-reference ⑦-6）。

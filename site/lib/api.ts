@@ -69,6 +69,14 @@ export type ResidentShow = {
 export type NordicFacts = {
   /** ストックホルムに着いた日(YYYY-MM-DD)。着くまでは無い */
   arrivedOn?: string;
+  /**
+   * 旅が終わった日(YYYY-MM-DD)。**着いた日とは別。**
+   *
+   * あやとの言葉（2026-09-06）「ストックホルム出るまでが北欧旅です」。
+   * 9月20日に着いて、そこから7泊して27日に発つ。着いた日で終わらせると、
+   * いちばん長い滞在がまるごと「もう行ってきた」になる。
+   */
+  endedOn?: string;
 };
 
 export type IslandState = {
@@ -495,11 +503,24 @@ export const deleteNordicLog = (day: string, token: string) =>
 /**
  * ストックホルムに着いた、を記録する。**あやとだけ。**
  *
- * ここが入ると、旅が「いま行っている」から「行ってきた」に変わる
- * （`content/plans.ts` の `planPhase`）。`date` を空にすると取り消せる。
+ * **これは旅の終わりではない。** 着いてから7泊して、そこから発つ
+ * （`postNordicEnded`）。`date` を空にすると取り消せる。
  */
 export const postNordicArrived = (date: string, token: string) =>
   req<{ arrivedOn: string }>("/nordic/arrived", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ date }),
+  });
+
+/**
+ * 旅が終わった（ストックホルムを発った）、を記録する。**あやとだけ。**
+ *
+ * ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
+ * （`content/plans.ts` の `planPhase`）。`date` を空にすると取り消せる。
+ */
+export const postNordicEnded = (date: string, token: string) =>
+  req<{ endedOn: string }>("/nordic/ended", {
     method: "POST",
     headers: auth(token),
     body: JSON.stringify({ date }),

@@ -180,6 +180,66 @@
    到達性は落ちていない。建物を押すと歩いて札が開き、そこから入るので
    どの入口も2タップのまま（`docs/island-ux.md` の到達性の表）。 */
 
+/* 引き（島ぜんぶ）のときは、10軒とも名前を出す。
+   ---------------------------------------------------------
+   あやとの言葉:「引きのとき、キャラクターと会話できなくて良い。
+   それぞれのオブジェとの文字が見えて良い（以前の仕様に戻して欲しい）」。
+
+   3-4「注目させるのは一度に1つ」は**寄りの決まり**にする。
+   引きの用事は「この島に何が建っているか」を一目で見ることなので、
+   そこで1軒だけ名前を出すと、残り9軒が無名の小屋のまま残る。
+   `docs/island-design.md` 3-4 に例外として書き足した。
+
+   出すのは**名前だけ**。一言も「はいる」も付けない。引きの建物は
+   あやとの何倍も小さいので、開いた札1枚で島の3割が隠れる。
+   押せば入れるので、板は薄くしても行き先であることは変わらない。 */
+.stage[data-cam="wide"] .spot-mark {
+  visibility: visible;
+  pointer-events: auto;
+  width: auto;
+  height: auto;
+  padding: 4px 9px;
+  gap: 6px;
+  border-radius: 13px;
+  background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
+  box-shadow:
+    0 4px 0 var(--frame-deep),
+    3px 8px 9px var(--cast),
+    inset 0 2px 0 rgba(255, 255, 255, 0.8);
+}
+/* 引きでは、押しどころを札1つにする。
+   ---------------------------------------------------------
+   建物の当たり（`.spot-hit`）は指で押せる 48px まで広げてある。引きでは
+   建物の絵が 14px ほどまで小さくなるので、その 48px が**すぐ上の札に
+   かぶる。** 実測で 104x42 の札が 1x1 まで食われていた（隣の建物の
+   当たりが上に乗る。`.spot` は `will-change` で層を作るので、
+   z-index で札を上げても層の外へは出られない）。
+
+   引きでは10軒とも名前が出ているので、**札のほうが押しどころ**でよい。
+   14px の絵に 48px の当たりを付けるのは、そもそも「押す場所は物そのもの」
+   （3-1）から外れている。建物を押したときは、島の地面と同じ扱いで
+   そこまで歩く（`onStageClick`）。 */
+.stage[data-cam="wide"] .spot-hit { pointer-events: none; }
+.stage[data-cam="wide"] .spot-text { display: block; }
+/* 一言は出さない。10軒ぶん並べると、引きの画面が字で埋まる */
+.stage[data-cam="wide"] .spot-text i { display: none; }
+.stage[data-cam="wide"] .spot-text b {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+/* 「!」は引きでも札の中に入る。押せない印なので平らにする（3-3） */
+.stage[data-cam="wide"] .spot-bang {
+  width: 21px;
+  height: 21px;
+  line-height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(var(--paper-2), var(--gold));
+  border: 2px solid var(--frame-dark);
+  box-shadow: none;
+  font-size: 13px;
+}
+
 /* 縁へ寄せた札。**杭を、建物のほうを指す矢に持ち替える。**
    杭は「ここに立っている」の絵なので、建物から離れた札に付いていると嘘になる。
    矢にすれば「そっちに建っている」と読める。
@@ -1273,6 +1333,10 @@
   text-decoration: none;
 }
 .stage .bar-atlas:active { transform: translateY(2px); }
+/* 引きでは、島の隅に「島の地図」が出ている。**同じ行き先の口を2つ置かない。**
+   バーの中のこれは、寄りで隅に出さないぶんの代わりなので、
+   隅に出ている引きでは要らない（`docs/island-world.md` の「行き先を2つ置かない」）。 */
+.stage[data-cam="wide"] .bar-atlas { display: none; }
 .stage .bar-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
 /* 引き／寄りの切り替え。
@@ -1313,11 +1377,12 @@
 }
 .stage-view:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
-/* 島の隅の道具は、スマホでは絵だけにする。
+/* 島の隅の道具は、スマホの**寄り**では絵だけにする。
    ---------------------------------------------------------
    字の付いた札が3枚（島をながめる・ぜんぶ・島の地図）並んでいて、
    島に降りた1画面目で、島より先に**道具の名前**を読むことになっていた。
    3枚で 13文字、横 76〜120px を隅から取っている。
+   （そのうち「ぜんぶ」は島の上から外した。索引は島の足元にある）
 
    名前は消していない。読み上げには `aria-label` で渡っているし、
    640px から上（PC・タブレット）は場所が余っているのでそのまま字を出す。
@@ -1334,13 +1399,36 @@
     white-space: nowrap;
   }
   .stage .stage-view,
-  .stage .stage-index,
+  .stage .stage-atlas,
   .stage .bar-toggle {
     width: 48px;
     padding: 0;
     gap: 0;
     justify-content: center;
     border-radius: 50%;
+  }
+  /* 引き（島ぜんぶ）では名前を戻す。
+     絵だけにしたのは「島に降りた1画面目」の話で、引きでは島が画面の
+     真ん中に小さく収まっていて、隅は海が空いている。
+     章の島（`chain.css` の `.isle-view` / `.isle-atlas`）も引きで
+     名前を出しているので、そちらとも揃う。
+     **バーの開け閉め（.bar-toggle）は引きでも丸のまま。** あそこは
+     「今日の島」の1行と幅を分け合っていて、事情が別（下の注）。 */
+  .stage[data-cam="wide"] .stage-view .tool-label,
+  .stage[data-cam="wide"] .stage-atlas .tool-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+  }
+  .stage[data-cam="wide"] .stage-view,
+  .stage[data-cam="wide"] .stage-atlas {
+    width: auto;
+    padding: 0 13px 0 10px;
+    gap: 4px;
+    border-radius: 999px;
   }
   /* 行き先の開け閉めも同じ丸にする。
      ここに「行き先をみる」の5文字を置くと、隣の「今日の島」の1行が
@@ -1433,8 +1521,18 @@
 }
 /* スマホ・寄り（既定）。小さいマークの下 */
 .stage[data-view="close"] .stage-atlas { top: calc(104px + env(safe-area-inset-top)); }
+/* 640px から上は右上に「今日の島」の板が出ている。**そこは譲る。**
+   同じ隅を取り合って、案内板が今日の1行の上に乗っていた（PC で実測）。
+   左下へ下ろして、「島をながめる」の真上に置く。どちらも行き先ではなく
+   島を見わたすための道具なので、隅を分けずに1か所へまとめる。
+   （章の島も同じ置き方。`chain.css` の `.isle-atlas`） */
 @media (min-width: 640px) {
-  .stage .stage-atlas { top: calc(12px + env(safe-area-inset-top)); }
+  .stage .stage-atlas {
+    top: auto;
+    right: auto;
+    left: 12px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
 }
 .stage-atlas:active {
   transform: translateY(4px);

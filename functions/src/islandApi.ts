@@ -1111,11 +1111,15 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ストックホルムに着いた日。**旅が終わったという事実は、ここにしか無い。**
-         これが入るまで、企画は「いま行っている」のまま(site/content/plans.ts)。
-         空の日付で送ると取り消せる。着く前に押してしまうことがあるので、
+      /* 北欧旅の、日付で言える2つの事実。**着いた日と、旅が終わった日は別。**
+         あやとの言葉(2026-09-06)「ストックホルム出るまでが北欧旅です」。
+         9/20 に着いて、そこから7泊して 9/27 に発つ。着いた日で企画を
+         終わらせると、いちばん長い滞在がまるごと「もう行ってきた」になる。
+
+         どちらも空の日付で送ると取り消せる。押し間違いは普通に起きるので、
          戻せない口にはしない。 */
-      if (method === "POST" && path === "/nordic/arrived") {
+      const factMatch = path.match(/^\/nordic\/(arrived|ended)$/);
+      if (method === "POST" && factMatch) {
         const uid = await ownerUid(req.headers.authorization);
         if (!uid) {
           res.status(403).json({error: "not allowed"});
@@ -1126,12 +1130,13 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad date"});
           return;
         }
+        const key = factMatch[1] === "ended" ? "endedOn" : "arrivedOn";
         await STATE_DOC.set(
-          {nordic: {arrivedOn: raw || null, updatedAt: Date.now()}},
+          {nordic: {[key]: raw || null, updatedAt: Date.now()}},
           {merge: true},
         );
         res.set("Cache-Control", "no-store");
-        res.json({arrivedOn: raw});
+        res.json({[key]: raw});
         return;
       }
 

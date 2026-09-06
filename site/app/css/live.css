@@ -1136,3 +1136,27 @@
   line-height: var(--lh-body);
   color: var(--ink-2);
 }
+
+/* 旅の途中で越えた節目。**越えても企画は終わらない。**
+   北欧旅はストックホルムに着いてから7泊して、発つまでが旅
+   （`content/plans.ts` の `reached`）。時計は「いま」のままにして、
+   越えたことだけをここに出す。押せないので、厚みは付けない。 */
+.nx-reached {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--pick);
+  border-radius: var(--r-1);
+}
+.nx-reached > .ic { flex: none; margin-top: 1px; }
+.nx-reached span { display: grid; gap: 2px; min-width: 0; }
+.nx-reached b { font-size: 14.5px; font-weight: 900; line-height: 1.5; }
+.nx-reached i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--ink-2);
+}

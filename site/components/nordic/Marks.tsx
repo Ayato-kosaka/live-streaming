@@ -90,35 +90,51 @@ export const LEG_ART: Record<string, React.ReactNode> = {
     </Scene>
   ),
 
-  /** クラクフの旧市街。戦火を逃れた本物の中世が、まるごと残っている。 */
-  oldtown: (
-    <Scene sky="#9fd8f2" ground="#c9ab7e" horizon={46}>
-      <circle cx="14" cy="15" r="6" fill="#ffe9a8" opacity="0.8" />
-      {/* 織物会館と、聖マリア教会の塔ふたつ（高さが違うのがあの広場の顔） */}
-      <rect x="10" y="30" width="26" height="18" rx="3" fill="#f0e0c2" />
-      <path d="M8 30h30l-4-6H12z" fill={C.rdd} />
-      <rect x="14" y="36" width="5" height="12" rx="2" fill="#c9ab7e" />
-      <rect x="23" y="36" width="5" height="12" rx="2" fill="#c9ab7e" />
-      <rect x="38" y="18" width="9" height="30" rx="2" fill="#f0e0c2" />
-      <path d="M36 19l6.5-11L49 19z" fill={C.rdd} />
-      <rect x="48" y="26" width="8" height="22" rx="2" fill="#e7d4b3" />
-      <path d="M46 27l6-9 6 9z" fill={C.rd} />
-      <rect x="40" y="30" width="4" height="6" rx="2" fill="#8d7a5c" />
-      <rect x="50" y="36" width="4" height="6" rx="2" fill="#8d7a5c" />
+  /**
+   * 旅のいちばん最初。トビリシからクタイシの空港まで、乗り合いのワゴンで西へ。
+   * ここだけはまだジョージアで、まだ親指も上げていない。
+   */
+  marshrutka: (
+    <Scene sky="#ffd9a0" ground="#8a7f63" horizon={44}>
+      {/* コーカサスの山なみ。ジョージアを出る絵なので、後ろは山にする */}
+      <path d="M-2 44l16-19 11 13 9-11 16 17z" fill="#6f7f6a" />
+      <path d="M14 25l6 7-9 6z" fill="#e8eef2" opacity="0.85" />
+      {/* 白いワゴン。角ばった箱に窓が並ぶ */}
+      <rect x="10" y="30" width="42" height="19" rx="5" fill="#f4f7fb" />
+      <rect x="10" y="41" width="42" height="8" rx="4" fill="#dfe6ee" />
+      <rect x="14" y="34" width="9" height="6" rx="2" fill={C.sk} />
+      <rect x="26" y="34" width="9" height="6" rx="2" fill={C.sk} />
+      <rect x="38" y="34" width="9" height="6" rx="2" fill={C.sk} />
+      <circle cx="20" cy="50" r="4.2" fill="#3f4550" />
+      <circle cx="43" cy="50" r="4.2" fill="#3f4550" />
     </Scene>
   ),
 
-  /** 行くかどうかも含めて、配信で相談したい場所。線路だけを描く。 */
-  rails: (
-    <Scene sky="#a8b0b8" ground="#7f7a6e" horizon={34}>
-      <path d="M23 34 8 62h6l14-28z" fill="#5f5a52" />
-      <path d="M41 34l15 28h-6L36 34z" fill="#5f5a52" />
-      <g fill="#4c4841">
-        <rect x="18" y="40" width="28" height="3" rx="1.5" />
-        <rect x="14" y="48" width="36" height="3.4" rx="1.7" />
-        <rect x="9" y="57" width="46" height="3.8" rx="1.9" />
-      </g>
-      <path d="M1 30h62v4H1z" fill="#8b9199" opacity="0.5" />
+  /**
+   * 休息日。**動かない日は、この旅でヴィリニュスの1日だけ。**
+   * 塔の下にテーブルを1つ出して、湯気の立つカップを置くところまで。
+   */
+  restday: (
+    <Scene sky="#9fd8f2" ground="#c9ab7e" horizon={46}>
+      <circle cx="15" cy="14" r="6" fill="#ffe9a8" opacity="0.8" />
+      {/* 旧市街の塔。ヴィリニュスは塔と丸屋根で埋まっている */}
+      <rect x="8" y="24" width="11" height="24" rx="2" fill="#f0e0c2" />
+      <path d="M6 25l7.5-11L21 25z" fill={C.rdd} />
+      <rect x="22" y="31" width="13" height="17" rx="2" fill="#e7d4b3" />
+      <path d="M20 32l8.5-9 8.5 9z" fill={C.rd} />
+      {/* 外に出したテーブルと、湯気の立つカップ */}
+      <rect x="38" y="44" width="22" height="4" rx="2" fill="#b98f5e" />
+      <rect x="47" y="47" width="4" height="12" rx="2" fill="#a07a4c" />
+      <rect x="43" y="36" width="10" height="8" rx="3" fill={C.w} />
+      <rect x="52" y="38" width="4" height="4" rx="2" fill={C.w} />
+      <path
+        d="M46 33c0-2 2-2 2-4M50 33c0-2 2-2 2-4"
+        stroke={C.w}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.85"
+      />
     </Scene>
   ),
 

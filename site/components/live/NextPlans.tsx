@@ -198,8 +198,11 @@ export default function NextPlans() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [today, setToday] = useState<Date | null>(null);
-  /** 旅が終わった日。島から届く（`content/plans.ts` の `doneFromState`）。 */
-  const [arrived, setArrived] = useState<string | null>(null);
+  /**
+   * 島から届く2つの日。**着いた日と、旅が終わった日は別**
+   * （`content/plans.ts` の `reached` と `doneFromState`）。
+   */
+  const [facts, setFacts] = useState<{ arrived: string | null; ended: string | null } | null>(null);
   const { token } = useAuth();
 
   // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
@@ -210,7 +213,7 @@ export default function NextPlans() {
     getState()
       .then((s) => {
         setNotes(s.notes ?? []);
-        setArrived(s.nordic?.arrivedOn ?? null);
+        setFacts({ arrived: s.nordic?.arrivedOn ?? null, ended: s.nordic?.endedOn ?? null });
       })
       .catch(() => {
         setNotes([]);
@@ -239,10 +242,10 @@ export default function NextPlans() {
     }
   };
 
-  /* 島から届いた「着いた日」を、企画の終わりとして貼る。
-     旅の終わりは旅の途中で起きるので、Git には入らない
-     （`content/plans.ts` の `doneFromState`・`docs/nordic-depart.md`）。 */
-  const sorted = [...livePlans(arrived)].sort(byDate);
+  /* 島から届いた日を貼る。**「着いた」を企画の終わりにしない。**
+     ストックホルムに着いてから発つまでに7泊ある
+     （`content/plans.ts` の `livePlans`・`docs/nordic-depart.md`）。 */
+  const sorted = [...livePlans(facts)].sort(byDate);
   /* 画面が出るまで（today が null）は、全部を「これから」として並べる。
      焼き込みの日付で「終わった」と言わない。 */
   const phase = (p: Plan) => (today ? planPhase(p, today) : "before");

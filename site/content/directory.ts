@@ -152,7 +152,13 @@ export const SHELVES: Shelf[] = [
           "北欧",
           dayName(d),
           d.lead,
-          (d.legs ?? []).flatMap((l) => [cityName(l.from), cityName(l.to)]).join(" "),
+          // 動かない日（休息日）は区間を持たない。街の名前で引けなくなるので、
+          // `city` と「寄るかもしれない街」も混ぜる
+          [
+            ...(d.legs ?? []).flatMap((l) => [cityName(l.from), cityName(l.to), ...(l.maybe ?? [])]),
+            d.city ?? "",
+            ...(d.maybe ?? []),
+          ].join(" "),
         ),
       })),
       {

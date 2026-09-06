@@ -2,8 +2,8 @@ import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import { Mark } from "./Marks";
 import DayLogMarks from "./DayLogMarks";
-import GoalRow from "./GoalRow";
-import { DAYS, DEPART, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
+import { ArrivedRow, EndRow } from "./GoalRow";
+import { ARRIVE, DAYS, DEPART, LEAVE, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
 
 /**
  * 旅のよてい。**1日1行だけ。中身は1日ぶんのページにある。**
@@ -33,6 +33,7 @@ const MOVE: Record<Leg["move"], string> = {
   hitch: "ヒッチハイク",
   ferry: "フェリー",
   walk: "歩き",
+  van: "マシュルートカ",
 };
 
 /**
@@ -48,13 +49,18 @@ function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
-/** その日に動く道。「カトヴィツェ → クラクフ → オシフィエンチム」 */
-function way(legs: Leg[]) {
+/** その日に動く道。「トビリシ → クタイシ → カトヴィツェ」。動かない日はその街だけ。 */
+function way(day: Day) {
+  const legs = day.legs ?? [];
+  if (legs.length === 0) return day.city ? [day.city] : [];
   return [cityName(legs[0].from), ...legs.map((l) => cityName(l.to))];
 }
 
 /** その日の移動のしかた。同じものは1回だけ言う（「フェリー・フェリー」にしない）。 */
-function how(legs: Leg[]) {
+function how(day: Day) {
+  const legs = day.legs ?? [];
+  // 動かない日は、動かないと書く。距離も乗り物も無い日がこの旅に1日だけある
+  if (legs.length === 0) return "動かない日";
   const ways = [...new Set(legs.map((l) => MOVE[l.move]))].join("と");
   const km = legs.reduce((a, l) => a + (l.km ?? 0), 0);
   return km ? `${ways} ${km.toLocaleString()}km` : ways;
@@ -62,14 +68,19 @@ function how(legs: Leg[]) {
 
 function Row({ day }: { day: Day }) {
   const legs = day.legs ?? [];
-  const asks = legs.filter((l) => l.fork).length;
+  // 動かない日は、行そのものがわかれ道を持つ（`content/nordic.ts` の `Day.fork`）
+  const asks = legs.filter((l) => l.fork).length + (day.fork ? 1 : 0);
+  const art = legs[0]?.art ?? day.art;
   return (
     <Link className="ndayr" href={dayHref(day)}>
-      <Mark art={legs[0].art} size={38} className="ndayr-art" />
+      {art && <Mark art={art} size={38} className="ndayr-art" />}
       <span className="ndayr-body">
         <span className="ndayr-top">
           <b>{dayName(day)}</b>
           {day.date && <time dateTime={day.date}>{when(day.date)}</time>}
+          {/* 旅とは別の出来事（いまは出発の日の「配信2周年」だけ）。
+              日付のすぐ隣に置く。ここを離すと、どの日の話か分からなくなる。 */}
+          {day.badge && <span className="ndayr-badge">{day.badge}</span>}
           {/* 「いま、ここ」は `TripNow` が現在地を読んでから出す。 */}
           <span className="nday-now">いま、ここ</span>
           {/* **投票の入口が、どこからも見えなくならないようにする。**
@@ -88,7 +99,7 @@ function Row({ day }: { day: Day }) {
           <span className="ndayr-log">その日の話</span>
         </span>
         <span className="ndayr-way">
-          {way(legs).map((c, i) => (
+          {way(day).map((c, i) => (
             <span key={c + i}>
               {i > 0 && <i aria-hidden>→</i>}
               {c}
@@ -96,7 +107,7 @@ function Row({ day }: { day: Day }) {
           ))}
         </span>
         <span className="ndayr-how">
-          <span>{how(legs)}</span>
+          <span>{how(day)}</span>
           {/* 印を付けない。13px の小さな絵は、この地の上ではただの黒い塊に見えた。
               「泊まる」の2文字のほうが、遠目でも読める。 */}
           {day.stay && <span className="ndayr-stay">泊まる {cityName(day.stay)}</span>}
@@ -115,11 +126,11 @@ export default function Days() {
       <DayLogMarks />
       {DAYS.map((day) => (
         <li key={day.id} className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
-          {day.legs?.length ? (
+          {day.legs?.length || day.city ? (
             <Row day={day} />
           ) : (
-            /* 予備の2日。**中身のページを持たない。**
-               どこへ行くかが決まっていないから予備なので、開いても書けることが無い。
+            /* ストックホルムでの7泊。**中身のページを持たない。**
+               何をするかがまだ決まっていないので、開いても書けることが無い。
                押せないので、厚みも矢印も付けない。 */
             <div className="ndayr is-flat">
               <span className="ndayr-body">
@@ -132,12 +143,21 @@ export default function Days() {
           )}
         </li>
       ))}
-      {/* 終わり。ここが企画の芯なので、旅程表の最後の行として置く。
-          相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。
-          **着いたあとは書き分ける。** よていの字のままだと、着いたあとも
-          「これから着く」と言い続ける（`components/nordic/GoalRow.tsx`）。 */}
+      {/* **「着いた」と「旅がおわった」は別の行にする。**
+          長いあいだ、旅程表の最後は「着いた朝／船が着いたら終わりです」の1行だけで、
+          着いたら旅も終わる作りだった。あやとの言葉（2026-09-06）:
+
+          > ストックホルム出るまでが北欧旅です。
+
+          着く日（9/20）は**会いたい人に会えた日**で、旅が終わる日（9/27）は
+          ストックホルムを発つ日。あいだに7泊ある。片方の行にまとめると、
+          着いた瞬間に旅が終わったことになる。
+          相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。 */}
       <li className="nday is-goal">
-        <GoalRow depart={DEPART.slice(0, 10)} />
+        <ArrivedRow depart={DEPART.slice(0, 10)} arrive={ARRIVE} />
+      </li>
+      <li className="nday is-goal is-end">
+        <EndRow leave={LEAVE.date} fixed={LEAVE.fixed} />
       </li>
     </ol>
   );

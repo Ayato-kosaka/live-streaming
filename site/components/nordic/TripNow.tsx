@@ -10,8 +10,12 @@ import { Mark } from "./Marks";
  *
  * この企画の芯は「ヒッチハイクで北欧を回る」ではなく、
  * **会いたい人がいるので、スウェーデンまで陸路で会いに行く**こと。
- * 行為ではなく目的なので、「着いたかどうか」という終わりがあるし、
- * 1,541km がそのまま「会えるまでの遠さ」になる。
+ * 行為ではなく目的なので、「着いたかどうか」という節目があるし、
+ * 1,542km がそのまま「会えるまでの遠さ」になる。
+ *
+ * **着いたら終わり、ではない。** ストックホルムに着くのが9月20日で、
+ * そこから7泊して27日に発つまでが北欧旅（あやと 2026-09-06）。
+ * だから島から届く日も2つある（`arrivedOn` と `endedOn`）。
  *
  * その人が誰なのかは書かない。名前も写真も出さない。
  * 「会いたい人がいる」だけで、この企画は成立する。
@@ -25,7 +29,7 @@ import { Mark } from "./Marks";
  * （`Days.tsx`）ので、ここに書くと必ず同じ文を二度読むことになる。
  *
  * **大きい数字はひとつだけ置く。** 出る前は「あと何日」、出たあとは「あと何km」。
- * 2つ並べていたころ、出発前の画面には減らない 1,541km のバーが
+ * 2つ並べていたころ、出発前の画面には減らない 1,542km のバーが
  * 空のまま出ていて、すぐ上の一行と同じ数字を2回言っていた。
  * そのときに意味のある数字だけを、いちばん大きく出す。
  *
@@ -103,14 +107,21 @@ export default function TripNow({
   /** 島が持っている「いまいる場所」の文字。ルートの外にいるときはこれを出す。 */
   const [place, setPlace] = useState<string | null>(null);
   /**
-   * ストックホルムに着いた日。**旅が終わったという事実は、これだけ。**
+   * ストックホルムに着いた日。**着いた、であって、終わった、ではない。**
    *
    * ここが無かったあいだ、着いたことを言えるのは `current.place` に
    * ストックホルムが入っているあいだだけだった。そこを離れた瞬間に
-   * 「ストックホルムまで（数えています）」に戻る。旅が終わったことが
-   * データのどこにも無かった（`docs/nordic-depart.md`）。
+   * 「ストックホルムまで（数えています）」に戻る（`docs/nordic-depart.md`）。
    */
   const [arrivedOn, setArrivedOn] = useState<string | null>(null);
+  /**
+   * 旅が終わった日。**ストックホルムを発った日。**
+   *
+   * あやとの言葉（2026-09-06）「ストックホルム出るまでが北欧旅です」。
+   * 着いてから7泊あるので、着いた日で終わりにすると、いちばん長い滞在が
+   * まるごと「もう終わったこと」になる。
+   */
+  const [endedOn, setEndedOn] = useState<string | null>(null);
 
   useEffect(() => {
     const t = new Date(depart).getTime();
@@ -130,6 +141,7 @@ export default function TripNow({
         const p = (s?.current?.place ?? "").trim();
         setPlace(p || null);
         setArrivedOn(s?.nordic?.arrivedOn ?? null);
+        setEndedOn(s?.nordic?.endedOn ?? null);
         // 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
         const i = stops.findIndex((st) => st.id && p.includes(st.name));
         if (i >= 0) setAt(i);
@@ -246,8 +258,8 @@ export default function TripNow({
           </div>
         ) : idx == null ? (
           /* 出たのに、いる場所がまだ読めていない。
-             **ここで残り 1,541km と出さない。** 出発前と1文字も変わらない数字を、
-             減っていないバーと一緒に出すことになる（旅の9日目でも「あと1,541km」）。
+             **ここで残り 1,542km と出さない。** 出発前と1文字も変わらない数字を、
+             減っていないバーと一緒に出すことになる（旅の9日目でも「あと1,542km」）。
              足代と同じ決まりで、読めなかった数字はどこにも出さない
              （`components/nordic/fund.ts`）。 */
           <div className="tnow-count is-far">
@@ -259,7 +271,9 @@ export default function TripNow({
           </div>
         ) : (
           <div className="tnow-count is-far">
-            <span className="tnow-count-l">{arrived ? "着いた" : "ストックホルムまで"}</span>
+            <span className="tnow-count-l">
+              {endedOn ? "旅がおわった" : arrived ? "着いた" : "ストックホルムまで"}
+            </span>
             <span className="tnow-count-n">
               {arrived ? (
                 <b>{stops[last].name}</b>
@@ -270,12 +284,16 @@ export default function TripNow({
               )}
             </span>
             <span className="tnow-count-w">
-              {arrived
-                ? /* 着いた日が届いていれば、それも出す。「着いた」だけだと、
-                     いつ着いたのかが旅のあとに読む人に分からない。
-                     **会えたかどうかは書かない**（`docs/nordic-fund.md` 1章）。 */
-                  `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た`
-                : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
+              {endedOn
+                ? /* 発った日。**ここでやっと旅が終わる。** */
+                  `${when(endedOn)}、ストックホルムを発ちました。ここまでが北欧旅`
+                : arrived
+                  ? /* 着いた日が届いていれば、それも出す。「着いた」だけだと、
+                       いつ着いたのかが旅のあとに読む人に分からない。
+                       **旅はまだ終わっていない**ので、発つ日も添える。
+                       会えたかどうかは書かない（`docs/nordic-fund.md` 1章）。 */
+                    `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、9月27日に発ちます`
+                  : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
             </span>
             {!arrived && (
               <span className="tnow-bar" aria-hidden>
@@ -296,7 +314,10 @@ export default function TripNow({
               「いま ストックホルム → ここまで ストックホルム」と
               同じ名前を2回並べても、分かることが1つも増えない。 */}
           <b>{arrivedOn ? (place ?? stops[last].name) : now ? now.name : (place ?? "移動中")}</b>
-          <em>{now?.country ?? ""}</em>
+          {/* 国の名前は、いる街と食い違ったら出さない。**着いたあとも街は動く。**
+              旅が終わってティラナにいる日に、`stops[last].country` をそのまま
+              出していて「いま アルバニア・ティラナ / スウェーデン」と書いてあった。 */}
+          <em>{arrivedOn && place && !place.includes(stops[last].name) ? "" : (now?.country ?? "")}</em>
         </div>
         <span className="tnow-go" aria-hidden>
           <svg viewBox="0 0 40 24" width="32" height="19">
@@ -317,7 +338,7 @@ export default function TripNow({
               分かっていないときは、めざす先だけを言う。 */}
           <i>{next ? "つぎ" : arrived ? "ここまで" : "めざす"}</i>
           <b>{next ? next.name : stops[last].name}</b>
-          <em>{next ? next.how : "会いたい人がいる街。友だちの家に約1週間"}</em>
+          <em>{next ? next.how : "会いたい人がいる街。友だちの家に7泊"}</em>
         </div>
         {next?.art && <Mark art={next.art} size={54} className="tnow-art" />}
       </div>

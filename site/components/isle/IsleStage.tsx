@@ -8,6 +8,7 @@ import { rng } from "@/components/island/geometry";
 import { Sprite, spriteWidth } from "@/components/island/Sprite";
 import Icon from "@/components/ui/IconCore";
 import { hasVoice, linesOf } from "@/content/chatter";
+import { UI } from "@/content/voice";
 import IsleGround, { Building } from "./IsleGround";
 import IsleSheet from "./IsleSheet";
 import {
@@ -702,7 +703,11 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     const wx = cam.x - vbW / 2 + ((e.clientX - r.left) / r.width) * vbW;
     const wy = cam.y - vbH / 2 + ((e.clientY - r.top) / r.height) * vbH;
     dismissHint();
-    const who = folkAt(folk, wx, wy, FOLK_H * 0.6);
+    /* 引きでは話しかけない（あやと「引きのとき、キャラクターと会話できなくて良い」）。
+       押しどころのボタンは引きでは描いていないが、地面を押したときにここで
+       近くの住人を拾ってしまう。引きの住人は 20px の点なので、
+       島の別の場所を押したつもりで吹き出しが開くことになる。 */
+    const who = wideRef.current ? null : folkAt(folk, wx, wy, FOLK_H * 0.6);
     if (who) {
       approach(folk.indexOf(who));
       return;
@@ -760,6 +765,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     <div
       className={`isle${talking ? " is-talking" : ""}${sheet ? " is-sheet" : ""}`}
       data-theme={spec.theme}
+      /* カメラが引きか寄りか。引きでは札を全部出して、住人には話しかけられない
+         （いまの島の `.stage[data-cam]` と同じ決まり。`docs/island-design.md` 3-4） */
+      data-cam={wide ? "wide" : "close"}
       data-mode={modeOf(box.w)}
       ref={hostRef}
       onClick={onStageClick}
@@ -867,17 +875,20 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       {/* 島の下ふち。海をページの地へ溶かす */}
       <span className="isle-shore" aria-hidden />
 
-      {/* 建物の札。近づくと開いて、名前と一言と「みる」が出る */}
+      {/* 建物の札。寄りでは近づくと開いて、名前と一言と「みる」が出る。
+          **引き（島ぜんぶ）では、建っているもの全部の名前が出る。開かない。**
+          いまの島と同じ決まり（`docs/island-design.md` 3-4 の例外）。
+          引きの建物はあやとの何倍も小さいので、開いた札1枚で島の3割が隠れる。 */}
       <div className="isle-labels">
         {world.places.map((sp, i) => {
-          const on = openSpot === sp.id;
+          const on = openSpot === sp.id && !wide;
           /* 押したら何が起きるか。
              **中身のある建物は、島から出ない。** 島の上に板が開いて、その中に一覧が出る
              （あやとの「やぐらみたいな感じで…が見れて」）。
              行き先が1つしかないもの（旅のしおり・掲示板）だけ、そのまま外へ出る */
           const enter = () => {
             dismissHint();
-            if (sp.items || sp.facts || sp.shorts) setSheet(sp.id);
+            if (sp.items || sp.facts || sp.shorts || sp.board) setSheet(sp.id);
             else if (sp.href) router.push(sp.href);
           };
           return (
@@ -913,7 +924,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         })}
       </div>
 
-      {/* 住人。押す所は建物の当たりより奥に置く（会話はおまけ。行き先を塞がない） */}
+      {/* 住人。押す所は建物の当たりより奥に置く（会話はおまけ。行き先を塞がない）。
+          **引きでは話しかけられない。** 引きの住人は 20px ほどの点で、
+          指で狙う相手ではないし、吹き出しが開けば島ぜんぶがその下に隠れる
+          （いまの島と同じ。あやと「引きのとき、キャラクターと会話できなくて良い」）。 */}
       <div className="isle-labels is-cast">
         {folk.map((v, i) => (
           <div
@@ -923,7 +937,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             }}
             className="isle-who"
           >
-            {ready.has(v.icon) && (
+            {!wide && ready.has(v.icon) && (
               <button
                 data-ui
                 className="isle-who-hit"
@@ -962,14 +976,32 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         </h1>
       )}
 
-      <button className="isle-view" data-ui onClick={() => setWide((v) => !v)}>
+      {/* 引きと寄りの切り替え。**いまの島（`.stage-view`）と同じ言葉・同じ板。**
+          前はここだけ「島ぜんぶ」と書いてあって、紙の足元にある
+          「島のなか ぜんぶ」（行き先の索引）と1字違いだった。
+          カメラの操作と行き先の索引が同じ名前で並ぶと、押すまで区別がつかない。
+          あやとの言葉:「「島ぜんぶ」は不要」。 */}
+      <button
+        className="isle-view"
+        data-ui
+        onClick={() => {
+          // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
+          closeTalk();
+          setWide((v) => !v);
+        }}
+        aria-label={wide ? UI.comeDown : UI.lookAround}
+      >
         <Icon name={wide ? "walk" : "island"} size={15} />
-        {wide ? "島におりる" : "島ぜんぶ"}
+        <span className="tool-label">{wide ? UI.comeDown : UI.lookAround}</span>
       </button>
 
+      {/* 島の連なりへ。ここは寄りでも出す。**いまの島とここだけ違う。**
+          あちらは下のバーを開けば連なりへ行けるが（`.bar-atlas`）、
+          章の島にバーは無い。消すと、寄りから連なりへ行く道が
+          船着き場の札1枚だけになる。 */}
       <Link className="isle-atlas" data-ui href="/atlas" prefetch={false}>
         <Icon name="map" size={15} />
-        島の地図
+        <span className="tool-label">{UI.atlas}</span>
       </Link>
 
       {hint && <p className="isle-hint">押したところまで歩いていくよ。建物に近づくと、中が見られる</p>}
@@ -1064,6 +1096,13 @@ function placePlates(
   const padTop = 30;
   const padBottom = 52;
   const taken = o.taken.slice();
+  /* 「はみ出しているか」を見るときの相手。
+     **建物の当たりは入れない。** 当たりは指で押せる最小(48px)まで広げてあるので、
+     小さい建物では札の下辺と当たりの上辺が必ず重なる。入れると、小さい建物の札が
+     いつも「はみ出し」になって下へ落ちていく。
+     入れるのは島の隅の道具と、**先に置いた札**。引きでは札が全部出るので、
+     ここを見ないと2枚が同じところに重なって、どちらも読めない。 */
+  const placed = o.taken.slice();
   const plates: {
     i: number;
     el: HTMLDivElement;
@@ -1098,18 +1137,31 @@ function placePlates(
     const sz = o.sizes[i];
     if (sz && sz.w) {
       const gy = sp.countdown ? 26 : 6;
-      const rect = { x: px - sz.w / 2 - 6, y: py - mh - 12 - sz.h - gy, w: sz.w + 12, h: sz.h + gy + 6 };
+      /* 詰めるのは**見た目の箱ではなく、指の当たり**。札は 30px しかないが、
+         `::before` が 48px まで広げてある（`island-design.md` 3-2）。
+         見た目で詰めると、隣の札の見えない当たりが食い込んで両方 48px を割る。 */
+      const hw = Math.max(sz.w, 48);
+      const hh = Math.max(sz.h, 48);
+      const rect = {
+        x: px - hw / 2 - 6,
+        y: py - mh - 12 - sz.h - (hh - sz.h) / 2 - gy,
+        w: hw + 12,
+        h: hh + gy + 6,
+      };
       const out =
         rect.x < pad ||
         rect.x + rect.w > o.b.w - pad ||
         rect.y < padTop ||
         rect.y + rect.h > o.b.h - padBottom ||
-        // 島の隅の道具の下に入った札も、寄せ直す。半分隠れた札は読めない
-        o.taken.some(
+        // 島の隅の道具の下・先に置いた札の下に入った札も、寄せ直す。半分隠れた札は読めない
+        placed.some(
           (q) =>
             rect.x < q.x + q.w && rect.x + rect.w > q.x && rect.y < q.y + q.h && rect.y + rect.h > q.y,
         );
-      if (!out) taken.push(rect);
+      if (!out) {
+        taken.push(rect);
+        placed.push(rect);
+      }
       plates.push({ i, el, fx: px, fy: py, rect, out });
     }
   }
@@ -1130,23 +1182,40 @@ function placePlates(
       else if (top + rect.h > o.b.h - padBottom) dy = o.b.h - padBottom - (top + rect.h);
       left += dx;
       top += dy;
-      /* 先に置いたものと重なるなら、下へ逃がす（縦に並べば両方読める）。
-         **下へしか動かさない。** 上へ戻すと、避けたはずのものへ帰っていく */
-      for (let pass = 0; pass < 3; pass++) {
-        let moved = false;
-        for (const q of taken) {
-          if (left < q.x + q.w && left + rect.w > q.x && top < q.y + q.h && top + rect.h > q.y) {
-            const push = q.y + q.h + 6 - top;
-            if (push > 0) {
-              top += push;
-              dy += push;
-              moved = true;
+      /* 先に置いたものと重なるなら、縦に逃がす（縦に並べば両方読める）。
+         **1回の逃がしのあいだは向きを変えない**（変えると避けたはずのものへ
+         帰っていく）。向きは建物が画面の上半分にいるか下半分にいるかで決める。
+         引きでは島が真ん中に小さく収まっていて、上にも下にも海が空いている。
+         下だけへ逃がすと、島の上半分の建物の札まで島の下に長い列を作る
+         （実測で6枚中3枚）。画面から出てしまったら反対で引き直す。 */
+      const slide = (up: boolean) => {
+        let t = top;
+        for (let pass = 0; pass < 3; pass++) {
+          let moved = false;
+          for (const q of taken) {
+            if (left < q.x + q.w && left + rect.w > q.x && t < q.y + q.h && t + rect.h > q.y) {
+              const push = up ? q.y - 8 - (t + rect.h) : q.y + q.h + 8 - t;
+              if (up ? push < 0 : push > 0) {
+                t += push;
+                moved = true;
+              }
             }
           }
+          if (!moved) break;
         }
-        if (!moved) break;
+        return t;
+      };
+      const inView = (t: number) => t >= padTop && t + rect.h <= o.b.h - padBottom;
+      const up = pl.fy < o.b.h / 2;
+      let t0 = slide(up);
+      if (!inView(t0)) {
+        const t1 = slide(!up);
+        t0 = inView(t1) ? t1 : Math.min(Math.max(t0, padTop), o.b.h - padBottom - rect.h);
       }
+      dy += t0 - top;
+      top = t0;
       taken.push({ x: left, y: top, w: rect.w, h: rect.h });
+      placed.push({ x: left, y: top, w: rect.w, h: rect.h });
       /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す */
       const ax = pl.fx - (left + rect.w / 2);
       const ay = pl.fy - (top + rect.h / 2);
