@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { saveMe } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { loadMe, saveMe, type Me } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 /**
@@ -16,13 +16,45 @@ import { useAuth } from "@/lib/auth";
  * 他人のキャラクターを自分のものにできてしまう。
  * ログインでできるのは「認可されたことをする」のと「書いたものに名前を刻む」ことで、
  * 島の住人の割り当てはその外にある。
+ *
+ * **いま入っている値から始める（#163）。** ここは前まで、開くたびに
+ * 「名前を出す・アイコンを出す」の両方に印が付いた状態で始まっていた。
+ * 出さないと決めた人が開いて、何も触らずに保存すると、決めたことが
+ * ひっくり返る。設定は、いまどうなっているかを見せるところから始める。
  */
-export default function IslandMe() {
+export default function IslandMe({ me }: { me?: Me | null }) {
   const { user, token } = useAuth();
-  const [nickname, setNickname] = useState("");
-  const [showName, setShowName] = useState(true);
-  const [showPhoto, setShowPhoto] = useState(true);
+  const [nickname, setNickname] = useState(me?.nickname ?? "");
+  const [showName, setShowName] = useState(!!me?.showName);
+  const [showPhoto, setShowPhoto] = useState(!!me?.showPhoto);
+  /** いま入っている値が届くまでは、いじらせない。上書き事故を起こさないため */
+  const [ready, setReady] = useState(!!me);
   const [state, setState] = useState<"idle" | "saving" | "done" | "error">("idle");
+
+  /* 親から渡されなかったときは、自分で読む。掲示板の折りたたみから
+     切り離したので、単体で置かれることもある。 */
+  useEffect(() => {
+    if (me) return;
+    let gone = false;
+    (async () => {
+      const t = await token();
+      if (!t || gone) return;
+      try {
+        const now = await loadMe(t);
+        if (gone) return;
+        setNickname(now.nickname ?? "");
+        setShowName(now.showName);
+        setShowPhoto(now.showPhoto);
+      } catch {
+        /* 読めなければ、出さない側から始める。勝手に出すよりは安全 */
+      } finally {
+        if (!gone) setReady(true);
+      }
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [me, token]);
 
   if (!user) return null;
 
@@ -40,7 +72,6 @@ export default function IslandMe() {
 
   return (
     <div className="me">
-      <b className="me-title">島での見え方</b>
       <p className="me-note">
         名前を出すことにすると、島にいるあなたのキャラクターの札に名前が出ます。
         出さないままでも、キャラクターは島にいます。
@@ -63,14 +94,25 @@ export default function IslandMe() {
           onChange={(e) => setNickname(e.target.value)}
           placeholder={user.name}
           maxLength={20}
+          disabled={!ready}
         />
       </label>
       <label className="me-check">
-        <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={showName}
+          disabled={!ready}
+          onChange={(e) => setShowName(e.target.checked)}
+        />
         <span>名前を出す</span>
       </label>
       <label className="me-check">
-        <input type="checkbox" checked={showPhoto} onChange={(e) => setShowPhoto(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={showPhoto}
+          disabled={!ready}
+          onChange={(e) => setShowPhoto(e.target.checked)}
+        />
         <span>YouTubeのアイコンを出す</span>
       </label>
 
@@ -92,7 +134,7 @@ export default function IslandMe() {
         </div>
       </div>
 
-      <button className="me-save" onClick={save} disabled={state === "saving"}>
+      <button className="me-save" onClick={save} disabled={!ready || state === "saving"}>
         {state === "saving" ? "保存しています…" : "これでいく"}
       </button>
       {state === "done" && <p className="me-ok">保存しました。島に反映されます。</p>}

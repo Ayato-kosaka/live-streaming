@@ -43,6 +43,9 @@ const PAGES = (
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
 await offline(ctx);
+/* ログインした人にしか出ない面（じぶんのこと）を測るための差し込み口。
+   `SEED=tools/sprites/asme.mjs` を渡すと、入っている人として開く。 */
+if (process.env.SEED) await (await import(process.env.SEED)).apply(ctx);
 const p = await ctx.newPage();
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
 

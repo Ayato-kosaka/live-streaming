@@ -41,6 +41,9 @@ const ctx = await b.newContext({
   reducedMotion: "reduce",
 });
 await offline(ctx);
+/* ログインした人にしか出ない面（じぶんのこと）を測るための差し込み口。
+   `SEED=tools/sprites/asme.mjs` を渡すと、入っている人として開く。 */
+if (process.env.SEED) await (await import(process.env.SEED)).apply(ctx);
 /* 2回撮って差を見る道具なので、**2枚のあいだに消えるものがあると差が嘘になる。**
    歩きかたの案内は 5.6 秒で消える。1枚目には写って2枚目には写らないので、
    その下の札が動いて、動いたぶんが「字の画素」として数えられていた

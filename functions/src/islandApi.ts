@@ -85,6 +85,9 @@ const MAX_PHOTO_NOTE = 120;
 /** 1日に貼れる枚数。「何枚でも」だが、事故で無限には入らないようにする。 */
 const PHOTOS_PER_DAY = 120;
 
+/** 島の景色。`docs/island-world.md` 1.3 の表がそのまま入る。ここに無い値は入れない。 */
+const ISLAND_THEMES = ["georgia", "nordic", "desert"];
+
 /** その日に起きたこと。**スマホの親指で打つものなので、長さで縛る。**
    長い文章は配信で話すものであって、ここに置くものではない。 */
 const MAX_LOG_BODY = 400;
@@ -1157,8 +1160,13 @@ export const islandApi = onRequest(
         const saved = {...(prev.data() ?? {}), ...patch};
         res.json({
           uid: t.uid,
-          name,
-          channelId: channelId || undefined,
+          /* **保存してあるほうを返す。** 空の body で叩いたときは
+             `name`/`channelId` が本文から取れないので、そこだけ返すと
+             「ログインし直すまで自分のチャンネルが分からない」画面ができる。
+             じぶんのこと(`/me` の面)は、ここでキャラクターを突き合わせる。 */
+          name: name || (saved.name as string) || "",
+          channelId: (saved.channelId as string) || undefined,
+          photo: (saved.photo as string) || undefined,
           nickname: (saved.nickname as string) ?? null,
           showName: !!saved.showName,
           showPhoto: !!saved.showPhoto,
@@ -1482,6 +1490,44 @@ export const islandApi = onRequest(
         );
         res.set("Cache-Control", "no-store");
         res.json({[key]: raw});
+        return;
+      }
+
+      /* いま、どこにいるか(#163)。**旅の途中に、あやとがスマホから書きかえる。**
+
+         ここは GitHub Actions の「あやと島の『いま』を更新」と
+         `python/admin/firestore_write.py` からしか動かせなかった。
+         ヒッチハイクの途中でワークフローを起動するのは回らないので、
+         その日のことを書く口(`/nordic/log`)と同じ場所に置く。
+
+         **`week`(今週の予定)には触らない。** あれは何行もある字なので、
+         片手で打つものではない。触るのは「いる場所」「一言」「島の景色」の3つ。 */
+      if (method === "POST" && path === "/current") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const place = clean(body.place, 60);
+        const word = clean(body.word, 140);
+        const theme = clean(body.theme, 16);
+        if (!place) {
+          res.status(400).json({error: "no place"});
+          return;
+        }
+        /* 島の景色は3つしかない(`docs/island-world.md` 1.3)。
+           知らない値が入ると `data-theme` が当たらず、島が既定の色に戻る。
+           打ち間違いを画面の色で気づかせるより、ここで止める。 */
+        if (theme && !ISLAND_THEMES.includes(theme)) {
+          res.status(400).json({error: "bad theme"});
+          return;
+        }
+        const cur: Json = {place, updatedAt: today()};
+        if (word) cur.word = word;
+        if (theme) cur.theme = theme;
+        await STATE_DOC.set({current: cur}, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({current: cur});
         return;
       }
 
@@ -1954,6 +2000,36 @@ export const islandApi = onRequest(
         const theme = clean(req.query.theme, 40);
         if (theme && !THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
+          return;
+        }
+        /* じぶんが貼った付箋だけ(#163)。**ログインした人が、自分のぶんを引く。**
+           一覧の口(`stickyShape`)は uid も cid も返さないので、
+           「どれが自分のか」は画面の側では作れない。ここで絞る。
+
+           **`where` に `orderBy` を足さない。** 複合索引が要るが、その索引は
+           サービスアカウントに作る権限が無くて配れない(#168)。組んだ日に
+           本番が 500 になる。テーマで絞るとき(`listStickies`)と同じく、
+           引いてから手元で並べる。1人ぶんは多くても数十枚。
+
+           しまわれたものは出さない。掲示板から下ろしたものが、書いた人の
+           手元にだけ残っていると、まだ貼ってあるように読める。 */
+        if (req.query.mine === "1") {
+          const who = await whoIs(req.headers.authorization);
+          if (!who) {
+            res.status(401).json({error: "no token"});
+            return;
+          }
+          const snap = await NOTES.where("uid", "==", who.uid).limit(300).get();
+          const rows = snap.docs
+            .filter((d) => d.get("hidden") !== true)
+            .filter((d) => d.get("archived") !== true)
+            .sort(
+              (a, b) =>
+                (Number(b.get("createdAt")) || 0) -
+                (Number(a.get("createdAt")) || 0),
+            );
+          res.set("Cache-Control", "no-store");
+          res.json({notes: rows.map(stickyShape), more: false, next: null});
           return;
         }
         /* しまったぶんは、戻す人にしか見せない。ここを開けると

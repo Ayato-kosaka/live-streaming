@@ -1507,6 +1507,37 @@ svg.nmap {
 }
 .nph-post-go:active { transform: translateY(6px); box-shadow: none; }
 .nph-post-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+/* 電波が届いていないこと・入ったことを、押す前と押したあとに言う（#163）。
+   どちらも押せないので平ら。厚みを付けるとボタンが3つ並んでいるように見える。 */
+.nph-off, .nph-ok {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.nph-off { color: var(--pick); }
+/* 粗くしてでも入れる、の印。書く道具の中の選ぶところなので溝は要らない。
+   **`.dform label` に負けるので、そちらより強く書く。** 素の `.nph-thin` だと
+   `display: grid` のままで、印が欄の幅いっぱいに伸びる（撮って気づいた）。 */
+.dform label.nph-thin {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.dform label.nph-thin > span { font-size: var(--fs-note); color: var(--ink); }
+.dform label.nph-thin > input {
+  flex: none;
+  width: 22px; height: 22px;
+  accent-color: var(--frame-dark);
+}
 
 /* =========================================================
    写真を1枚ひらいたところ

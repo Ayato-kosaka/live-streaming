@@ -380,6 +380,16 @@ export const getStickies = (o?: {
   );
 };
 
+/**
+ * じぶんが貼った付箋。**ログインして貼ったものだけ。**
+ *
+ * 一覧の口は誰が貼ったかを返さない（返すと、同じ人の付箋を並べて数えられる）。
+ * だから「自分のぶん」はサーバー側で絞る。ログインせずに貼ったものは、
+ * こちらから見分けようがないので出てこない。
+ */
+export const getMyStickies = (token: string) =>
+  req<{ notes: Sticky[] }>("/stickies?mine=1", { headers: auth(token) });
+
 /** しまってある付箋を読む。**あやとだけ。** 戻すときにしか使わない。 */
 export const getArchivedStickies = (token: string, theme?: string) =>
   req<{ notes: Sticky[] }>(
@@ -667,6 +677,30 @@ export type NordicPhotoDay = {
 };
 
 /**
+ * サーバーが覚えている「わたし」。
+ *
+ * 名前とアイコンは Firebase のログインからも取れるが、**チャンネルと
+ * 島での見え方はここにしか無い。** `useAuth` の `channelId` は
+ * ログインを押した瞬間にしか入らないので、次に来た人の画面では空になる。
+ * じぶんのこと（`/me`）はここを引いて、キャラクターを突き合わせる。
+ */
+export type Me = {
+  uid: string;
+  name: string;
+  channelId?: string;
+  photo?: string;
+  nickname: string | null;
+  showName: boolean;
+  showPhoto: boolean;
+  /** あやとか。**画面に道具を出すかどうかだけに使う。** */
+  admin: boolean;
+};
+
+/** 覚えているものを読む。空で送ると、書きかえずに今のものが返る。 */
+export const loadMe = (token: string) =>
+  req<Me>("/me", { method: "POST", headers: auth(token), body: "{}" });
+
+/**
  * いま入っているのがあやとか。
  *
  * `/me` は「ログインした人を覚えておく」ための口で、返事に `admin` が乗っている。
@@ -675,16 +709,27 @@ export type NordicPhotoDay = {
  */
 export const amIOwner = async (token: string): Promise<boolean> => {
   try {
-    const r = await req<{ admin?: boolean }>("/me", {
-      method: "POST",
-      headers: auth(token),
-      body: "{}",
-    });
-    return !!r.admin;
+    return !!(await loadMe(token)).admin;
   } catch {
     return false;
   }
 };
+
+/**
+ * いま、どこにいるか。**あやとだけ。**
+ *
+ * 旅の途中に書きかえる（島の景色・`/now`・北欧の面が、みなここを読む）。
+ * `week`（今週の予定）には触らない。あれは片手で打つものではない。
+ */
+export const postCurrent = (
+  c: { place: string; word?: string; theme?: string },
+  token: string,
+) =>
+  req<{ current: Partial<IslandCurrent> }>("/current", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(c),
+  });
 
 export const getNordicPhotos = () =>
   req<{ days: NordicPhotoDay[] }>("/nordic/photos");

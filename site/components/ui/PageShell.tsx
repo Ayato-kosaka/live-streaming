@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { SPOTS } from "../island/layout";
 import { Gull } from "../island/Guide";
 import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
+import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
 
 export { ALL_HREF, ALL_LABEL };
@@ -90,6 +91,10 @@ export function IslandHeader({
             </Link>
           ))}
         </nav>
+        {/* 自分のアイコン。**ログインしている人にだけ出る**（`MeButton`）。
+            島での見え方・貼った付箋・出した企画・ログアウトは、
+            この先の1か所にまとめてある（#163）。 */}
+        <MeButton />
       </div>
     </header>
   );

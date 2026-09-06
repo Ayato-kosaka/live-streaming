@@ -33,6 +33,24 @@ export function dropNordicLog(day: string) {
   cache = now.then((list) => list.filter((x) => x.day !== day));
 }
 
+/**
+ * 書き出しの見本。
+ *
+ * 空の欄と「入れる」だけ置いても、疲れて宿に着いた人は何も書けない。
+ * **この旅で毎日起きることだけを並べる。** 何回断られたか、誰が停まって
+ * くれたか、どこで寝たか。順位でも点数でもない、その日そこにあった事実。
+ *
+ * 1日ぶんのページ（`DayLog`）と、じぶんのこと（`/me` の旅の道具）の
+ * 両方が同じものを出す。**書く場所が2つあっても、書き出しは1つ。**
+ */
+export const LOG_SEEDS = [
+  "何台目で停まってくれた：",
+  "乗せてくれたのは：",
+  "泊まったのは：",
+  "食べたのは：",
+  "いちばん驚いたのは：",
+];
+
 /** 旅ぜんぶぶん。旅程表の行に印を付けるのに使う。 */
 export function useNordicLog(): NordicLogEntry[] | null {
   const [log, setLog] = useState<NordicLogEntry[] | null>(null);
