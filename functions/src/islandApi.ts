@@ -30,6 +30,9 @@ import {
 /* 島の遠隔操作(#165)。このファイルはもう長いので、丸ごと新しい機能は
    外に置いて、ここには取り付けだけを足す。 */
 import {handleRemote} from "./remote";
+/* あやと島カード(#173)。同じ理由で外に置いてある。
+   **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
+import {handleCards} from "./cards";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -1349,6 +1352,19 @@ export const islandApi = onRequest(
           },
           res,
           ownerUid,
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- あやと島カード(#173) ----------------
+         中身は `cards.ts`。ここは取り付けだけ。扱ったら true が返る。
+         「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
+      if (
+        await handleCards(
+          {method, path, auth: req.headers.authorization, body},
+          res,
+          {whoIs, ownerUid, listResidents},
         )
       ) {
         return;

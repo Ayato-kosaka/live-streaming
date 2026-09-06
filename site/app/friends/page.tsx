@@ -7,6 +7,7 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
+import { PLAN_BY_DAY } from "@/content/plans";
 import { FriendsMark } from "@/components/live/art";
 
 export const metadata: Metadata = {
@@ -58,7 +59,9 @@ export default function FriendsPage() {
               しゃべり方の出どころは図鑑の下にもう一度書いてあったので、そちらに任せる。 */}
           <section className="pap-sec">
             <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
-            <FriendsWall />
+            {/* 企画の表は面（server）で引いて値だけ渡す。図鑑は client なので、
+                ここで渡さないと `content/plans.ts`（20KB）を連れていく。 */}
+            <FriendsWall plans={PLAN_BY_DAY} />
             <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
               自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
               しばらく来ていなかった人には「久しぶり」と言いますが、空いた日数は数えていません。
