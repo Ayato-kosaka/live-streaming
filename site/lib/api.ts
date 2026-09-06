@@ -130,9 +130,33 @@ export type MeSettings = {
   showPhoto?: boolean;
 };
 
-/** 企画ページの下書き。あやとが「書いていいよ」と決めた人だけが書ける。 */
-export type PlanDraft = {
-  id?: string;
+/* 企画ページの下書き（`islandDrafts`）を読み書きするところは、ここから消えた。
+   役目は下の `islandNextPlans`（#161）に移っている。**サーバーの口
+   （`GET/POST /island-api/drafts`）はまだ動いている**が、画面から呼ぶ道は1本にする。
+   2本あると、同じものを2つの入れ物に書ける日が来る。 */
+
+/* ---------------- 企画（#161） ----------------
+   **「一言の提案」と「ページ1枚の下書き」を1つにした入れ物**（`islandNextPlans`）。
+   前は `islandIdeas`（120字・ログイン不要）と `islandDrafts`（12,000字・ログイン必須）に
+   割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
+   題1つで出して、あとから日付・場所・本文・リンク・写真を足して育てる形にする。
+
+   ログインは要らない。だから「あとから直せる」の本人確認は端末の印（`cid`）になる。
+   ログインしていれば `uid` で守り、していなければ **24時間だけ**（あやと承認済み）。 */
+
+/** 企画の段。**提案 → これから → やった が1本。** */
+export type PlanStatus = "proposed" | "next" | "done";
+
+/** 段の呼び名。入れ物には英字で入れて、画面に出す字はここが持つ。 */
+export const PLAN_STATUS_NAME: Record<PlanStatus, string> = {
+  proposed: "提案",
+  next: "これから",
+  done: "やった",
+};
+
+/** 出された企画1つ。**題以外はぜんぶ空でもよい。** */
+export type NextPlan = {
+  id: string;
   title: string;
   when: string;
   date: string;
@@ -143,19 +167,153 @@ export type PlanDraft = {
   links: { label: string; href: string }[];
   photos: { src: string; alt: string; credit: string; creditHref: string }[];
   embeds: { kind: "instagram" | "youtube"; id: string; note: string }[];
+  /** 名乗った名前 */
   by?: string;
-  updatedAt?: number;
+  /** ログインして出した人。じぶんのかどうかを見分けるのに使う */
+  byUid?: string;
+  hearts: number;
+  status: PlanStatus;
+  /** ページとして立ったときの、Git 側の企画の id（`content/plans.ts`・`content/legends.ts`） */
+  planId?: string;
+  archived?: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export const getDrafts = (token: string) =>
-  req<{ drafts: PlanDraft[] }>("/drafts", { headers: auth(token) });
+/** 書くときに送る中身。id を付けると、その企画を育てる。 */
+export type NextPlanInput = Omit<
+  NextPlan,
+  "id" | "hearts" | "status" | "byUid" | "createdAt" | "updatedAt" | "archived" | "planId"
+> & { id?: string };
 
-export const saveDraft = (d: PlanDraft, token: string) =>
-  req<{ id: string; draft: PlanDraft }>("/drafts", {
+/** 何も書いていない企画。画面の初期値もサーバーの返す形も、これと同じ形。 */
+export const EMPTY_PLAN: NextPlanInput = {
+  title: "",
+  when: "",
+  date: "",
+  note: "",
+  tags: [],
+  place: { name: "", area: "", map: "" },
+  about: [],
+  links: [],
+  photos: [],
+  embeds: [],
+};
+
+export const getNextPlans = (limit = 200) =>
+  req<{ plans: NextPlan[]; more: boolean; next: string | null }>(
+    `/nextplans?limit=${limit}`,
+  );
+
+/** しまってある企画を読む。**あやとだけ。** 戻すときにしか使わない。 */
+export const getArchivedPlans = (token: string) =>
+  req<{ plans: NextPlan[] }>("/nextplans?archived=1", { headers: auth(token) });
+
+export const getNextPlan = (id: string) =>
+  req<{ plan: NextPlan }>(`/nextplans/${id}`);
+
+/** 出す。**題だけでいい。** */
+export const postNextPlan = (p: NextPlanInput, token?: string | null) =>
+  req<{ plan: NextPlan }>("/nextplans", {
     method: "POST",
     headers: auth(token),
-    body: JSON.stringify(d),
+    body: JSON.stringify({ ...p, cid: clientId() }),
   });
+
+/** 育てる。送った中身でまるごと置き換わるので、**必ず全部を持って開く。** */
+export const saveNextPlan = (id: string, p: NextPlanInput, token?: string | null) =>
+  req<{ plan: NextPlan }>(`/nextplans/${id}`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ ...p, cid: clientId() }),
+  });
+
+/** ハートを押す。**付箋とまったく同じ。** もう一度押すと外れる。 */
+export const heartNextPlan = (id: string, token?: string | null) =>
+  req<{ hearts: number; on: boolean }>(`/nextplans/${id}/heart`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ cid: clientId() }),
+  });
+
+/** 段を進める。**あやとだけ。** ページとして立ったら Git 側の id で結ぶ。 */
+export const setPlanStatus = (
+  id: string,
+  status: PlanStatus,
+  planId: string,
+  token: string,
+) =>
+  req<{ plan: NextPlan }>(`/nextplans/${id}/status`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ status, planId }),
+  });
+
+/** しまう・戻す。**あやとだけ。消えない。** */
+export const archiveNextPlan = (id: string, on: boolean, token: string) =>
+  req<{ id: string; archived: boolean }>(`/nextplans/${id}/archive`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ on }),
+  });
+
+/**
+ * じぶんが出した企画。
+ *
+ * ログインしていない人には、端末に残したこの控えしか手がかりが無い。
+ * **これはサーバーの鍵ではない。** 実際に直せるかどうかは、送った端末IDを
+ * サーバーがもう一度見て決める。ここにあるのは「直すボタンを出すかどうか」だけ。
+ */
+const MY_PLANS = "ayato-island-myplans";
+
+export function myPlans(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    return new Set(JSON.parse(localStorage.getItem(MY_PLANS) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+export function rememberMyPlan(id: string) {
+  try {
+    const s = myPlans();
+    s.add(id);
+    localStorage.setItem(MY_PLANS, JSON.stringify([...s]));
+  } catch {
+    /* localStorage が使えない環境では諦める。直すボタンが出なくなるだけ */
+  }
+}
+
+/**
+ * ログインしていない人が、自分の企画を直せる時間。
+ * サーバー側の `PLAN_EDIT_MS` と同じ値を持つ。**片方だけ変えない。**
+ */
+export const PLAN_EDIT_MS = 24 * 60 * 60 * 1000;
+
+/** あと何時間直せるか。過ぎていれば 0。 */
+export const planEditHoursLeft = (p: NextPlan, now = Date.now()): number =>
+  Math.max(0, Math.ceil((Date.parse(p.createdAt) + PLAN_EDIT_MS - now) / 3600000));
+
+/**
+ * 直せるか。**サーバーの判定と同じことを、画面の側でも言えるようにする。**
+ *
+ * ここで嘘をつくと「直す」を押したあとに 403 が返る。押す前に言う。
+ * @param p 企画
+ * @param uid ログインしている人（していなければ null）
+ * @param mine 端末に残した控え
+ */
+export function canEditPlan(
+  p: NextPlan,
+  uid: string | null | undefined,
+  mine: Set<string>,
+  now = Date.now(),
+): "ok" | "expired" | "no" {
+  // ログインして出したものは、端末の印では直せない。印のほうが弱い証なので
+  if (p.byUid) return p.byUid === uid ? "ok" : "no";
+  if (!mine.has(p.id)) return "no";
+  return Date.parse(p.createdAt) + PLAN_EDIT_MS > now ? "ok" : "expired";
+}
 
 /** 島での見え方を保存する。ログインしていないと使えない。 */
 export const saveMe = (s: MeSettings, token: string) =>
@@ -164,19 +322,8 @@ export const saveMe = (s: MeSettings, token: string) =>
     headers: auth(token),
     body: JSON.stringify(s),
   });
-export const getIdeas = () => req<{ ideas: Idea[] }>("/ideas");
-export const postIdea = (text: string, name?: string, token?: string | null) =>
-  req<{ idea: Idea }>("/ideas", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ text, name, cid: clientId() }),
-  });
-export const voteIdea = (id: string, token?: string | null) =>
-  req<{ votes: number }>(`/ideas/${id}/vote`, {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ cid: clientId() }),
-  });
+/* 企画提案（`islandIdeas`）を読み書きするところも、ここから消えた（#161）。
+   `/state` がまだ `ideas` を返すので `Idea` の型だけ残してある。 */
 export const postNote = (planId: string, text: string, token?: string | null) =>
   req<{ note: NextNote }>("/notes", {
     method: "POST",
@@ -301,25 +448,6 @@ export function rememberHeart(id: string, on: boolean) {
     localStorage.setItem(HEARTED, JSON.stringify([...s]));
   } catch {
     /* localStorage が使えない環境では諦める。サーバー側には残っている */
-  }
-}
-
-/** 自分が投票した企画（サーバーにも記録するが、UIの即時反映用にローカルにも持つ） */
-export function votedLocally(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem("ayato-island-voted") ?? "[]") as string[]);
-  } catch {
-    return new Set();
-  }
-}
-export function rememberVote(id: string) {
-  try {
-    const s = votedLocally();
-    s.add(id);
-    localStorage.setItem("ayato-island-voted", JSON.stringify([...s]));
-  } catch {
-    /* localStorage が使えない環境では諦める */
   }
 }
 

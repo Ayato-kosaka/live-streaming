@@ -438,6 +438,71 @@
 .bd-list > li.is-top { box-shadow: 0 0 0 3px var(--pick), 2px 6px 0 rgba(120, 90, 40, 0.18); }
 .bd-list > li.is-picked { background: linear-gradient(#fffdf0, #fff2c8); box-shadow: 0 0 0 3px var(--gold), 2px 6px 0 rgba(120, 90, 40, 0.18); }
 
+/* 育った企画の「ひとことで言うと」。題の下に、題より小さく置く。
+   ここに本文まで出さない。読ませる場所は、立ったページのほう。 */
+.bd-note {
+  margin: var(--sp-2) 0 0 !important;
+  font-size: var(--fs-note) !important;
+  font-weight: 700 !important;
+  color: var(--ink-2);
+  line-height: var(--lh-note);
+}
+
+/* 紙の上の行き先（育てにいく・立ったページへ）。
+   押せるので板。48px の押しどころで厚み 6px（`docs/island-design.md` 3章）。 */
+.bd-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  margin-top: var(--sp-3);
+  margin-right: var(--sp-2);
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 6px 0 var(--pg-edge);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: none;
+}
+.bd-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+
+/* もう直せない、を言う1行。**押せないので、完全に平ら。**
+   ここに厚みを付けると「押せば直せる」に見える。 */
+.bd-locked {
+  display: block;
+  margin-top: var(--sp-3);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: var(--lh-note);
+}
+
+/* あやとの道具（段を動かす・しまう）。紙の上に並ぶ板なので、行を分けて置く。
+   付箋の `.nt-own` は `.nt-foot` の中にいて `display: contents` で足りていたが、
+   こちらは紙の本文の下に直に付くので、自分で並びを持つ。 */
+.bd-own {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* 段（提案 → これから → やった）が、島のどこへ続いているか。
+   紙の上の説明なので罫だけで区切る。影も厚みも付けない。 */
+.bd-road {
+  margin: var(--sp-5) 0 var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: var(--sp-2);
+}
+.bd-road p { margin: 0; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: var(--lh-note); }
+.bd-road b { margin-right: var(--sp-2); font-weight: 900; color: var(--ink); }
+
 /* =========================================================
    7. 紙の型 — 台紙と紙
    紙は無地にしない。明るさを5%ほどムラにして、細い罫線で区切る。
@@ -1216,7 +1281,7 @@
 }
 
 /* ハート。押せるので板・厚み6px・48px（`docs/island-world.md` 3.4）。
-   形は「さんせい」（.vote）と同じ羽根。同じ「押して数が動く」ものなので、
+   形は企画のハート（.vote）と同じ羽根。同じ「押して数が動く」ものなので、
    別の絵にしない。**違うのは、もう一度押すと外れること。** */
 .nt-heart {
   display: inline-flex;

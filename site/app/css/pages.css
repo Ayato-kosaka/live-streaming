@@ -1097,7 +1097,10 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .bsort button:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 /* 提案の並べ方そのものは live.css の .bd-list が持っている。
-   ここには、どのページでも同じ形をしている「さんせいの札」だけを置く。 */
+   ここには、どのページでも同じ形をしているハートの札だけを置く。
+   「さんせい」（押しっぱなし）から「ハート」（もう一度押すと外れる）に
+   変わったが（#161）、形は付箋と同じ羽根のまま。数え方が違うだけで、
+   やっていることは「押して数が動く」で同じなので、別の絵にしない。 */
 .vote {
   flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
   min-width: 54px; min-height: 54px;

@@ -60,11 +60,13 @@ export default function NextPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
+        {/* ログイン必須をやめた（#161）。誰でも書けるようになったので、
+            札の一言も「あやとが声をかけた人だけ」から書き替える。 */}
         <Link className="tile" href="/next/new">
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>企画のページを作る</b>
-            <i>いまは、あやとが声をかけた人だけ</i>
+            <i>題ひとつでもいい。ログインは要りません</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>

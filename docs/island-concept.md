@@ -172,9 +172,10 @@ PC は島が大きく映るので、名前は薄く全部出しておき、近�
 | --- | --- | --- |
 | BigQuery `youtube_chat` | 配信本数・コメント数・住人の数・国と街ごとの代表配信 | `python/island_daily_stats.py`（毎日）/ `python/build_city_streams.py`（手動） |
 | Firestore `island/state` | 上の集計結果と、いまいる場所 | Cloud Functions `islandApi` の `GET /state` |
-| Firestore `islandIdeas` / `islandNotes` | 企画提案と付箋 | `islandApi` |
+| Firestore `islandNextPlans` | 企画。**一言でもページ1枚でも同じ入れ物**（#161） | `islandApi` の `/nextplans` |
+| Firestore `islandNotes` | 付箋。テーマにぶら下がる | `islandApi` の `/stickies` |
 | Firestore `islandUsers` | ログインした人。島での見え方の設定 | `islandApi` の `POST /me` |
-| Firestore `islandDrafts` | 企画ページの下書き | `islandApi` の `/drafts` |
+| Firestore `islandIdeas` / `islandDrafts` | 旧・企画の入れ物。**画面はもう見ていない**（#171 で畳む） | `islandApi` の `/ideas` `/drafts` |
 | Google スプレッドシート（GAS） | 視聴者さんのキャラクター画像 | 手で `content/residents.ts` に反映 |
 | 手書き | 料理・国・伝説・アプリ・企画・北欧ガイド | `site/content/*.ts` |
 

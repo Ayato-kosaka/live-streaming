@@ -82,6 +82,11 @@ service cloud.firestore {
     match /islandRate/{docId} { allow read, write: if false; }
     match /islandUsers/{docId} { allow read, write: if false; }
     match /islandDrafts/{docId} { allow read, write: if false; }
+    /* 企画(#161)。一言の提案とページ1枚の下書きを1つにした入れ物。
+       **ここには端末ID(cid)が入っている。** それは「あとから自分の企画を
+       直す鍵」なので、読めるようにすると誰でも他人の企画を直せる。
+       画面が要るのは表に出す欄だけなので、islandApi に絞らせる。 */
+    match /islandNextPlans/{docId} { allow read, write: if false; }
 
     /* 北欧旅の、その日の写真とその日いた人(docs/nordic-photos.md)。
        貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。

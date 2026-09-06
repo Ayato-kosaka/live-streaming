@@ -18,6 +18,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 検索の側から見ても島の索引になる。
     "/all",
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    // 企画のページを書くところ。**ログイン必須をやめた**ので（#161）、
+    // 誰でも入れる面になった。索引から外す理由がなくなっている。
+    "/next/new",
     // これからの大きい企画。専用ページを持つものはここに足す。
     "/nordic", "/nordic/guide", "/nordic/photos",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている

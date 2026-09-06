@@ -385,7 +385,7 @@ export default function Notes({
                   aria-pressed={hearted.has(n.id)}
                   aria-label={hearted.has(n.id) ? "ハートを外す" : "ハートを押す"}
                 >
-                  {/* 絵文字は使わない。同じ形を `Board.tsx` の「さんせい」も描いている */}
+                  {/* 絵文字は使わない。同じ形を `Board.tsx` の企画のハートも描いている */}
                   <svg viewBox="0 0 24 22" aria-hidden>
                     <path
                       d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"

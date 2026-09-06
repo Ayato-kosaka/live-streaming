@@ -5,7 +5,7 @@ import Board from "@/components/live/Board";
 
 export const metadata: Metadata = {
   title: "企画をだす",
-  description: "こういうことやってほしい、を出せる掲示板。ログイン不要。票が集まった企画は企画会議に上がります。",
+  description: "こういうことやってほしい、を出せる掲示板。ログイン不要。題ひとつで出して、あとから育てられます。",
 };
 
 /* 付箋の棚割りは、ここで組まなくなった。
