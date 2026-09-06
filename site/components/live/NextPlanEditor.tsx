@@ -44,6 +44,38 @@ import type { Plan } from "@/content/plans";
  * この画面はそれを**押す前に**言う。押してから 403 を見せない。
  */
 
+const WEEKDAY = ["日", "月", "火", "水", "木", "金", "土"];
+
+/**
+ * 「2026-9-11」のような桁の揃っていない日付を「2026-09-11」に直す。
+ *
+ * **`<input type="date">` は桁の揃っていない値を受け取らない。** 空の欄が出て、
+ * せっかく書いてあった日が消えたように見える。すでに入っているものも
+ * ここを通してから欄に載せる。日付として読めないものは空。
+ */
+function toDay(v: string): string {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec((v || "").trim());
+  if (!m) return "";
+  return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+}
+
+/**
+ * 日付から、画面に出す言い方を作る。
+ *
+ * 「2026-09-11」と「2026年9月11日」を別々に手で打たせていたので、
+ * あやとの2件が「2026年9月11日」と「2026年09月11日」で揺れた。
+ * 選んだ日から作れば揺れない。曜日まで出すのは、出発の予定を
+ * 見る人がいちばん先に知りたいのがそこだから。
+ */
+function sayDay(day: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!m) return "";
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  // ローカル時刻で作ると、日付だけの値が前日にずれる端末がある
+  const w = WEEKDAY[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()];
+  return `${y}年${mo}月${d}日(${w})`;
+}
+
 /** 下書きを Plan の形に読み替える。プレビューは本番と同じ部品で描く。 */
 function toPlan(d: NextPlanInput): Plan {
   return {
@@ -120,7 +152,7 @@ const toInput = (p: NextPlan): NextPlanInput => ({
   id: p.id,
   title: p.title,
   when: p.when,
-  date: p.date,
+  date: toDay(p.date),
   note: p.note,
   tags: p.tags,
   place: p.place,
@@ -187,6 +219,19 @@ export default function NextPlanEditor() {
   }, [user]);
 
   const set = (patch: Partial<NextPlanInput>) => setD((v) => ({ ...v, ...patch }));
+
+  /**
+   * 日を選ぶ。**「いつ（言い方）」もいっしょに書きかえる。**
+   *
+   * 同じ日を2回打たせると、片方だけ直して食い違う（あやとの2件がそうなった）。
+   * ただし **手で直した言い方は残す。** 「23:30 出発」を足した人の字を、
+   * 日をずらしただけで消してはいけない。前に選んだ日から作った言い方
+   * そのままのときだけ、置き換える。
+   */
+  const pickDay = (v: string) => {
+    const auto = !d.when.trim() || d.when === sayDay(d.date);
+    setD((x) => ({ ...x, date: v, when: auto ? sayDay(v) : x.when }));
+  };
 
   const save = async () => {
     setState("saving");
@@ -284,12 +329,13 @@ export default function NextPlanEditor() {
                 <input value={d.title} onChange={(e) => set({ title: e.target.value })} maxLength={60} placeholder="例）ヒッチハイクで北欧へ" />
               </label>
               <label>
-                <span>いつ（画面に出す言い方）</span>
-                <input value={d.when} onChange={(e) => set({ when: e.target.value })} maxLength={40} placeholder="例）2026年9月11日(金) 23:30 出発" />
+                <span>その日（あと何日かを数えるのに使う）</span>
+                <input className="dday" type="date" value={d.date} onChange={(e) => pickDay(e.target.value)} />
               </label>
               <label>
-                <span>その日（あと何日かを数えるのに使う）</span>
-                <input value={d.date} onChange={(e) => set({ date: e.target.value })} placeholder="2026-09-11" maxLength={10} />
+                <span>いつ（画面に出す言い方）</span>
+                <input value={d.when} onChange={(e) => set({ when: e.target.value })} maxLength={40} placeholder="例）2026年9月11日(金) 23:30 出発" />
+                <span className="dnote">日を選ぶと、ここも書きかわる。時刻を足したいときは、そのまま書きたす。</span>
               </label>
               <label>
                 <span>ひとことで言うと</span>

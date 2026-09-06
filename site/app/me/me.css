@@ -300,3 +300,35 @@
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .mp-outbtn:active { transform: translateY(6px); box-shadow: none; }
+
+/* --- 旅の道具の下の、行き先の札 ---------------------------------------
+   ルーレット（#164）。**3つの札の並び（`.mp-tabs`）には入れない。**
+   あちらは「その日のうちに入れる」3つで、こちらは配信中に開く別の面。
+   行き先なので板（厚み）。並びの外にあるので、厚みを付けてよい。 */
+.mp-goto {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.mp-goto:active { transform: translateY(6px); box-shadow: none; }
+.mp-goto-t { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.mp-goto-t b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: var(--lh-head);
+}
+.mp-goto-t i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}

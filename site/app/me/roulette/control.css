@@ -1,0 +1,294 @@
+/* =========================================================
+   ルーレットのコントローラー（/me/roulette・#164）
+   ---------------------------------------------------------
+   面は紙。押すものと書くものだけが板（`docs/island-world.md` 2.1）。
+   じぶんのこと（`me.css`）と同じ寸法を使う。あちらを読み込んだ上に
+   重ねているので、ここには**ここにしか無いもの**だけを置く。
+
+   **押しどころは配信中に急いで押す。** 48px を割らない。
+   回すところだけ 64px にしてある。走っている車の中でも押せる大きさ
+   （旅の道具の送りが 56px。あれより大きい押しどころはここだけ）。
+   ========================================================= */
+
+.rc-go { margin-top: var(--sp-4); }
+
+.rc-count {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rc-count b { font-size: var(--fs-h2); font-weight: 900; color: var(--ink); }
+
+/* 回す。**この面でいちばん大きい押しどころ。** */
+.rc-spin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 64px;
+  margin-top: var(--sp-3);
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 42%, var(--paper)) 0%, var(--gold) 100%);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  box-shadow: 0 8px 0 var(--frame-deep);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.rc-spin:active { transform: translateY(8px); box-shadow: none; }
+.rc-spin:disabled { opacity: 0.62; box-shadow: var(--pop-push-lg); }
+
+.rc-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.rc-lab {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+}
+
+/* 待ち秒数。3つ並ぶので、選んでいるものは沈めておく（`.mp-tab` と同じ形）。 */
+.rc-waits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.rc-wait {
+  min-height: 48px;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.rc-wait:active { transform: translateY(6px); box-shadow: none; }
+.rc-wait.is-on {
+  border-color: var(--pick);
+  transform: translateY(3px);
+  box-shadow: var(--pop-push);
+}
+
+/* 出た結果。**押しどころではないので平ら。** */
+.rc-won {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--marker) 14%, transparent);
+}
+.rc-won b { font-size: var(--fs-h3); font-weight: 900; color: var(--ink); }
+.rc-won i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rc-say {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.rc-say:active { transform: translateY(4px); box-shadow: none; }
+
+/* --- これから回すもの -------------------------------------------------- */
+.rc-picked {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+}
+.rc-picked > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: 1.5px solid var(--rule);
+}
+.rc-picked > li:first-child { border-top: 0; }
+.rc-picked-t { display: grid; gap: 2px; min-width: 0; }
+.rc-picked-t b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: var(--lh-head);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.rc-picked-t i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rc-off {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color: var(--ink);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+}
+.rc-off:active { transform: translateY(4px); box-shadow: none; }
+
+/* 手で足す欄。書く欄は板（彫った溝）、足すのは板（厚み）。 */
+.rc-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+.rc-add input { min-height: 48px; }
+.rc-add button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.rc-add button:active { transform: translateY(4px); box-shadow: none; }
+.rc-add button:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
+
+/* --- 流れてきたコメント ------------------------------------------------
+   **1行まるごとが押しどころ。** チェック箱を別に置くと、狙いが小さくなる。
+   一面ぜんぶ押せるマスの並びなので、1行ずつに厚みは付けない
+   （`docs/island-world.md` 3.5）。**押せない行を1行も混ぜない。** */
+.rc-lines {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.rc-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--paper-out) 70%, transparent);
+  text-align: left;
+}
+.rc-line.is-on {
+  border-color: var(--pick);
+  border-width: var(--bw-1);
+  background: color-mix(in srgb, var(--marker) 20%, transparent);
+}
+.rc-line:disabled { opacity: 0.5; }
+.rc-tick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-0);
+  background: var(--paper);
+  color: var(--marker-ink);
+}
+.rc-line.is-on .rc-tick { border-color: var(--pick); }
+.rc-face {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--paper-2);
+}
+.rc-line-t { display: grid; gap: 2px; min-width: 0; }
+.rc-line-t b {
+  font-size: var(--fs-body);
+  font-weight: 800;
+  line-height: var(--lh-head);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.rc-line-t i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* --- 出し先と、細かいところ -------------------------------------------- */
+.rc-url {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--paper-out) 70%, transparent);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.rc-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+.rc-quiet {
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.rc-quiet:active { transform: translateY(4px); box-shadow: none; }
+.rc-quiet:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
+
+.rc-set { display: grid; gap: var(--sp-3); }
+.rc-set input, .rc-set select { min-height: 48px; }
+
+.rc-err {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 4px solid var(--pick);
+  border-radius: 0 var(--r-0) var(--r-0) 0;
+  background: color-mix(in srgb, var(--pick) 10%, transparent);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink);
+}

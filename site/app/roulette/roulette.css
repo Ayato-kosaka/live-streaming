@@ -1,0 +1,518 @@
+/* =========================================================
+   配信のルーレット — 表示側（スマホ版 OBS が開く面）
+   ---------------------------------------------------------
+   **ここは島ではない。** 島の紙でも板でもなく、配信の画面に
+   そのまま映るもの。だから島のトークンを使わない
+   （`docs/island-world.md` 2章の表に、そう書き足した）。
+
+   いま配信で使っているルーレット
+   （life-game-roulette.nanitabey0.chatgpt.site）から色と寸法を写した。
+   **数値を「島らしく」直さない。** 直した瞬間に、その日の配信から
+   見た目が変わる。#164 であやとが心配していたのがそこ。
+
+   書体も写した元のまま。島の丸ゴシックを当てると、iOS の
+   Hiragino Maru Gothic ProN で出ているいまの字と変わってしまう。
+   ========================================================= */
+
+.rl-page {
+  --shell: #17812e;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  color: #132117;
+  background:
+    radial-gradient(circle at 15% 16%, #fffffff2 0 4%, #0000 4.2%),
+    radial-gradient(circle at 88% 78%, #ffffffa6 0 8%, #0000 8.2%),
+    linear-gradient(135deg, #d9f1da 0 23%, #fff2c6 23% 43%, #f9d6d2 43% 67%, #dbeef7 67% 100%);
+}
+/* 背景の帯2本。写した元の `.roulette-page::before/::after`。 */
+.rl-page::before,
+.rl-page::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  opacity: 0.55;
+  border-radius: 999px;
+}
+.rl-page::before {
+  left: -12vmax;
+  bottom: 2vmax;
+  width: 42vmax;
+  height: 13vmax;
+  transform: rotate(-31deg);
+  background: repeating-linear-gradient(90deg, #f8c04a 0 4.5rem, #fff7da 4.5rem 9rem);
+  box-shadow: 0 0 0 12px #ffffff8c;
+}
+.rl-page::after {
+  right: -15vmax;
+  top: 1vmax;
+  width: 40vmax;
+  height: 11vmax;
+  transform: rotate(38deg);
+  background: repeating-linear-gradient(90deg, #8fc8e7 0 4rem, #e9f7ff 4rem 8rem);
+  box-shadow: 0 0 0 12px #ffffff8c;
+}
+.rl-path {
+  position: absolute;
+  z-index: -1;
+  width: 8.5rem;
+  height: 8.5rem;
+  border: 16px solid #ffffffb8;
+  transform: rotate(14deg);
+  box-shadow: inset 0 0 0 5px #3e9a5926, 0 0 0 5px #3e9a591f;
+}
+.rl-path-a { top: 10vh; left: 7vw; border-radius: 28% 48% 36% 44%; }
+.rl-path-b {
+  right: 6vw;
+  bottom: 7vh;
+  border-color: #fff9;
+  border-radius: 48% 28% 42% 31%;
+  transform: rotate(-26deg) scale(1.25);
+}
+.rl-glow {
+  position: absolute;
+  z-index: -1;
+  width: min(94vmin, 850px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(10px);
+  background: radial-gradient(circle, #ffffffeb, #ffffff29 62%, #0000 72%);
+}
+
+/* 見出しは読み上げと索引のためだけに置く。画面には出さない。 */
+.rl-h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- 台 ------------------------------------------------------------- */
+.rl-stage {
+  position: relative;
+  width: min(88vmin, 760px);
+  aspect-ratio: 1;
+  outline: none;
+  user-select: none;
+  touch-action: manipulation;
+  filter: drop-shadow(0 28px 24px #3036224d);
+  transition: transform 0.2s, filter 0.25s;
+}
+.rl-stage[role="button"] { cursor: pointer; }
+.rl-stage[role="button"]:hover:not(.is-spinning) {
+  filter: drop-shadow(0 34px 28px #30362257);
+  transform: translateY(-4px) scale(1.008);
+}
+.rl-stage:focus-visible {
+  border-radius: 50%;
+  outline: 7px solid #ffffffe6;
+  outline-offset: 9px;
+}
+
+.rl-housing {
+  position: absolute;
+  inset: 4.5%;
+  border-radius: 47% 53% 48% 52% / 51% 47% 53% 49%;
+  border: clamp(10px, 1.8vmin, 18px) solid color-mix(in srgb, var(--shell) 68%, #07270e);
+  background:
+    radial-gradient(circle at 37% 28%, #ffffff3d, transparent 18%),
+    linear-gradient(145deg, color-mix(in srgb, var(--shell) 78%, #5ed33d), var(--shell) 56%, color-mix(in srgb, var(--shell) 70%, #06240e));
+  box-shadow:
+    inset 0 8px 0 #ffffff2e,
+    inset 0 -16px 0 #0003,
+    0 13px 0 color-mix(in srgb, var(--shell) 50%, #092510);
+}
+.rl-housing::before,
+.rl-housing::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  background: var(--shell);
+  border: inherit;
+}
+.rl-housing::before {
+  left: -5.5%;
+  bottom: 6%;
+  width: 22%;
+  height: 27%;
+  border-radius: 62% 38% 44% 56%;
+  transform: rotate(17deg);
+}
+.rl-housing::after {
+  right: -3%;
+  top: 8%;
+  width: 22%;
+  height: 22%;
+  border-radius: 45% 55% 61% 39%;
+}
+.rl-highlight {
+  position: absolute;
+  top: 6%;
+  left: 12%;
+  width: 50%;
+  height: 15%;
+  border-top: clamp(6px, 1vmin, 11px) solid #ffffff38;
+  border-radius: 50%;
+  transform: rotate(-8deg);
+}
+
+.rl-well {
+  position: absolute;
+  inset: 8.5%;
+  padding: 1.2%;
+  overflow: hidden;
+  border: clamp(8px, 1.25vmin, 13px) solid #f7fbf4;
+  border-radius: 50%;
+  background: #f8f6e9;
+  box-shadow: 0 0 0 clamp(5px, 0.8vmin, 9px) #184b28, inset 0 10px 13px #00000047, 0 8px #0003;
+}
+.rl-well-shadow {
+  position: absolute;
+  inset: 2%;
+  pointer-events: none;
+  border-radius: 50%;
+  box-shadow: inset 0 12px 18px #00000038, inset 0 -4px 7px #ffffff80;
+}
+/* 回るのはここ。**`viewBox` は動かさない。** 動かすと中身を毎フレーム
+   描き直すことになる（`CLAUDE.md`）。回すのは CSS の transform。 */
+.rl-wheel {
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+.rl-label {
+  font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", sans-serif;
+  font-weight: 900;
+  fill: #fff;
+  stroke: #252721;
+  stroke-width: 10px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: -0.06em;
+  filter: drop-shadow(0 4px #0000004d);
+}
+.rl-won {
+  filter: url(#rl-glow);
+  animation: rl-pulse 0.62s ease-in-out 3;
+}
+
+.rl-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 17%;
+  aspect-ratio: 1;
+  border: clamp(5px, 0.8vmin, 9px) solid #d0cbc0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fff 0 20%, #f5f2e9 55%, #ccc7bc 100%);
+  color: #305237;
+  transform: translate(-50%, -50%);
+  transition: transform 0.16s, box-shadow 0.16s;
+  box-shadow: 0 7px #aaa59b, 0 12px 15px #00000042, inset 0 4px 3px #fffc;
+}
+.rl-hub span {
+  font-size: clamp(0.62rem, 1.7vmin, 1rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px #fff;
+}
+.rl-stage[role="button"]:active:not(.is-spinning) .rl-hub {
+  transform: translate(-50%, -46%);
+  box-shadow: 0 3px #aaa59b, 0 6px 9px #00000038, inset 0 4px 3px #fffc;
+}
+
+.rl-pointer {
+  position: absolute;
+  top: -1.5%;
+  left: 50%;
+  z-index: 10;
+  width: 10%;
+  height: 18%;
+  transform: translate(-50%);
+  transform-origin: 50% 13%;
+  filter: drop-shadow(0 7px 3px #00000059);
+}
+.rl-pointer-cap {
+  position: absolute;
+  top: 0;
+  left: 21%;
+  width: 58%;
+  aspect-ratio: 1;
+  border: clamp(3px, 0.5vmin, 6px) solid #fff3b6;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 27%, #fffceb 0 14%, #ffc94f 38%, #df8e14 72%, #a95f0b 100%);
+  box-shadow: 0 4px #94560f;
+}
+.rl-pointer-tip {
+  position: absolute;
+  top: 32%;
+  left: 18%;
+  width: 64%;
+  height: 65%;
+  border-radius: 18%;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  background: linear-gradient(90deg, #d8790c, #ffe26f 44%, #eea31e 65%, #b36107);
+}
+.is-spinning .rl-pointer { animation: rl-tick 0.115s ease-in-out infinite; }
+
+.rl-lever {
+  position: absolute;
+  left: -5.5%;
+  bottom: 15%;
+  z-index: 7;
+  width: 18%;
+  aspect-ratio: 1;
+  border: clamp(4px, 0.7vmin, 8px) solid #eff2ef;
+  border-radius: 50%;
+  background: radial-gradient(circle at 37% 31%, #fff 0 15%, #e7ebea 16% 46%, #a6adab 48% 72%, #6c7471 75% 100%);
+  box-shadow: 0 7px #162f1b8c, 0 10px 15px #00000038;
+}
+.rl-lever span {
+  position: absolute;
+  top: 16%;
+  left: 67%;
+  width: 90%;
+  height: 25%;
+  border: clamp(3px, 0.45vmin, 5px) solid #edf1ef;
+  border-radius: 999px;
+  background: linear-gradient(#fff, #bec5c3 55%, #818a86);
+  transform: rotate(-38deg);
+  transform-origin: 0;
+  box-shadow: 0 4px #69716e;
+}
+
+/* --- 結果 ------------------------------------------------------------ */
+.rl-result {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.rl-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 64%;
+  max-width: 90%;
+  min-height: 32%;
+  padding: 4.5% 9%;
+  border: clamp(5px, 0.8vmin, 9px) solid #fff8cf;
+  border-radius: 999px;
+  background: linear-gradient(155deg, #0c3015ed, #106527f5);
+  color: #fff;
+  text-align: center;
+  animation: rl-pop 0.72s cubic-bezier(0.17, 0.89, 0.28, 1.35) both;
+  box-shadow: 0 0 0 clamp(6px, 1vmin, 11px) #ffc320e6, 0 16px 30px #0000006b;
+}
+.rl-card::before,
+.rl-card::after {
+  content: "";
+  position: absolute;
+  inset: -46%;
+  z-index: -1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #ffe653e6 0 5deg, transparent 5deg 19deg);
+  animation: rl-rays 5s linear infinite;
+}
+.rl-card::after {
+  inset: -20%;
+  background: radial-gradient(circle, #ffffffa6, #0000 68%);
+  animation: none;
+}
+.rl-kicker {
+  margin-bottom: -0.3em;
+  font-size: clamp(1.2rem, 3.4vmin, 2.15rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #ffe96a;
+  text-shadow: 0 3px #7c5310, 0 0 8px #0000004d;
+}
+.rl-card strong {
+  display: block;
+  max-width: 100%;
+  font-size: var(--result-size, clamp(4rem, 13vmin, 8rem));
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0.065em #0b3714, 0 0.11em 0.12em #0006;
+}
+/* 誰のコメントだったか。**手で足したぶんには出ない。** */
+.rl-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.4em;
+  font-size: clamp(0.9rem, 2.4vmin, 1.4rem);
+  font-weight: 900;
+  color: #ffeeb4;
+}
+.rl-by img {
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 50%;
+  border: 2px solid #ffe96a;
+  object-fit: cover;
+}
+
+/* --- これから回すもの --------------------------------------------------
+   輪は選択肢の字しか載せられない。**誰が言ったか**は、この帯で出す。
+   回り始めたら消える。回っているあいだに読ませるものではない。 */
+.rl-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(230px, 46vw), 1fr));
+  gap: 6px 10px;
+  max-height: 24vh;
+  padding: 10px clamp(10px, 3vw, 26px) clamp(10px, 2.5vh, 22px);
+  margin: 0;
+  overflow: hidden;
+  list-style: none;
+}
+.rl-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 12px 5px 5px;
+  border-radius: 999px;
+  background: #ffffffdb;
+  box-shadow: 0 3px 8px #30362233;
+}
+.rl-list img,
+.rl-list .rl-noface {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e8e3cd;
+}
+/* 手で足したものは、名前もアイコンも空にする（#164）。
+   あやとが足したものを、誰かが言ったように見せない。 */
+.rl-list .rl-noface { background: #dfe6d8; }
+.rl-list b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 900;
+  color: #1d3324;
+}
+.rl-list i {
+  flex: none;
+  max-width: 34%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5c6b5f;
+}
+.rl-more {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #1d3324a8;
+}
+
+/* --- 準備中と、値の無い URL ------------------------------------------- */
+.rl-card-flat {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  width: min(30rem, 100%);
+  padding: 2.5rem;
+  border: 7px solid #fff7c5;
+  border-radius: 2rem;
+  background: #166b2d;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 13px #0b461c, 0 22px 35px #00000040;
+}
+.rl-card-flat p { margin: 0; font-size: 1.15rem; font-weight: 900; }
+.rl-card-flat code { max-width: 100%; overflow-wrap: anywhere; color: #fff1a6; }
+.rl-mark {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffd84c;
+  color: #764409;
+  font-size: 2rem;
+  font-weight: 1000;
+}
+.rl-standby-name { font-size: 1.9rem; font-weight: 900; letter-spacing: 0.06em; }
+
+.rl-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3.4vh, 2.5rem);
+  margin: 0;
+  transform: translate(-50%);
+  font: 900 clamp(0.65rem, 1.35vmin, 0.83rem) / 1 Arial, sans-serif;
+  letter-spacing: 0.28em;
+  color: #153f1eb3;
+  animation: rl-breathe 1.8s ease-in-out infinite;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.rl-hint.is-off { opacity: 0; transform: translate(-50%, 8px); }
+
+@keyframes rl-tick {
+  0%, 100% { transform: translate(-50%) rotate(0); }
+  35% { transform: translate(-50%) rotate(7deg); }
+  70% { transform: translate(-50%) rotate(-4deg); }
+}
+@keyframes rl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.58; }
+}
+@keyframes rl-pop {
+  0% { opacity: 0; transform: scale(0.28) rotate(-9deg); }
+  58% { opacity: 1; transform: scale(1.1) rotate(2deg); }
+  78% { transform: scale(0.96) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes rl-rays { to { transform: rotate(360deg); } }
+@keyframes rl-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+
+@media (aspect-ratio <= 3 / 4) {
+  .rl-stage { width: min(96vw, 78vh); }
+  .rl-hint { bottom: 2.5vh; }
+}
+@media (aspect-ratio >= 16 / 10) {
+  .rl-stage { width: min(86vh, 760px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rl-stage, .rl-hub, .rl-hint { transition-duration: 0.01ms; }
+  .is-spinning .rl-pointer, .rl-card::before, .rl-hint { animation: none; }
+}
