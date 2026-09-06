@@ -78,6 +78,9 @@ function Row({ day }: { day: Day }) {
         <span className="ndayr-top">
           <b>{dayName(day)}</b>
           {day.date && <time dateTime={day.date}>{when(day.date)}</time>}
+          {/* 旅とは別の出来事（いまは出発の日の「配信2周年」だけ）。
+              日付のすぐ隣に置く。ここを離すと、どの日の話か分からなくなる。 */}
+          {day.badge && <span className="ndayr-badge">{day.badge}</span>}
           {/* 「いま、ここ」は `TripNow` が現在地を読んでから出す。 */}
           <span className="nday-now">いま、ここ</span>
           {/* **投票の入口が、どこからも見えなくならないようにする。**

@@ -1983,3 +1983,18 @@ p.ndhh-src {
   font-weight: 800;
   color: var(--ink-2);
 }
+
+/* 旅とは別の出来事の札（出発の日の「配信2周年」）。
+   **押せない。** すぐ左の「何日目」は蛍光（`--marker`）、右の「答えられる」は
+   平らなオリーブ（`--chip`）をもう使っているので、ここは紙に朱の輪で分ける。
+   輪は厚みではないので、押せるものとは取り違えない。 */
+.ndayr-badge {
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--pick);
+  color: var(--ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}

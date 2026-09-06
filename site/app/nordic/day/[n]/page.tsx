@@ -372,6 +372,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         meta={
           <>
             <span>{day.date ? when(day.date) : "日にちは未定"}</span>
+            {day.badge && <span className="ndayr-badge">{day.badge}</span>}
             {km > 0 && <span>{km.toLocaleString()}km</span>}
             {day.stay && <span>泊まる {cityName(day.stay)}</span>}
           </>
