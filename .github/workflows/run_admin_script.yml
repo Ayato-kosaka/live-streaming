@@ -8,6 +8,13 @@ name: 管理スクリプトを実行
 #   firestore_read   … 読む   {"collection":"islandIdeas","limit":20}
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
 #   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
+#
+# 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
+# ここはそれが使えないときの逃げ道。
+#   nordic_supporter … その日いた人を手で足す {"day":"2026-09-12","channel":"UC…"}
+#   nordic_log       … その日に起きたこと     {"day":"day-3","body":"…"}
+#                      旅のあと Git へ焼き戻す {"op":"export"}
+#   nordic_arrived   … 着いた／取り消す       {"date":"2026-09-19"}
 on:
   workflow_dispatch:
     inputs:

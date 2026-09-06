@@ -127,10 +127,12 @@ function Card({
       <span className="nextup-count">
         {days === null || phase === null ? (
           <b>まもなく</b>
-        ) : phase === "during" ? (
-          <b>進行中</b>
         ) : phase === "after" ? (
           <b>行ってきた</b>
+        ) : /* その日1日で終わるものは、当日も「今日」のまま
+               （`components/live/PlanCard.tsx` と同じ決め方）。 */
+        phase === "during" && (plan.endsWhen || days < 0) ? (
+          <b>進行中</b>
         ) : days === 0 ? (
           <b>今日</b>
         ) : (

@@ -122,10 +122,13 @@ export function LeadClock({ plan }: { plan: Plan }) {
   }
   /* いま行っているところ。**この面でいちばん大きい字はこれ。**
      旅の最中にここが「おわった」だったのが、いちばん悪い壊れ方だった。
-     終わりの合図（`endsWhen`）を持っているものは、それも添える。
      日数は出さない。旅は自分で「◯日目」を数えていて（`/nordic` の旅程表）、
-     ここで別の数え方をすると、同じ日が2つの番号を持つ。 */
-  if (phase === "during") {
+     ここで別の数え方をすると、同じ日が2つの番号を持つ。
+
+     **その日1日で終わるものは、「今日」のまま。** お祭りに行っている当日に
+     「いま行っている」と言い換えても、分かることは1つも増えない。
+     何日かかかるもの（`endsWhen` か、始まった日を過ぎたもの）だけこちら。 */
+  if (phase === "during" && (plan.endsWhen || days < 0)) {
     return (
       <p className="nx-clock is-one">
         <em>
@@ -192,10 +195,12 @@ function Count({ plan }: { plan: Plan }) {
   if (!date) return null;
   /* 「あと何日」は日数、「いま／おわった」は状態で決める。
      日数の正負だけで決めていたころ、旅の最中もここが「おわった」だった。 */
+  // その日1日で終わるものは、当日も「今日」のまま（`LeadClock` と同じ決め方）
+  const nowLong = phase === "during" && (plan.endsWhen || (d ?? 0) < 0);
   const body =
     d === null || phase === null ? <b>{shortDate(date)}</b> :
-    phase === "during" ? <b>いま</b> :
     phase === "after" ? <b>おわった</b> :
+    nowLong ? <b>いま</b> :
     d === 0 ? <b>今日</b> : (
       <>
         あと<b>{d}</b>日
@@ -203,8 +208,8 @@ function Count({ plan }: { plan: Plan }) {
     );
   return (
     <span
-      className={`count${phase === "before" && d === 0 ? " is-today" : ""}${
-        phase === "during" ? " is-now" : ""
+      className={`count${!nowLong && phase !== "after" && d === 0 ? " is-today" : ""}${
+        nowLong ? " is-now" : ""
       }${phase === "after" ? " is-past" : ""}`}
     >
       {body}
