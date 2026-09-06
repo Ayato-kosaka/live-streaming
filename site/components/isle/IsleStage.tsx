@@ -877,7 +877,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
 
       {/* 建物の札。寄りでは近づくと開いて、名前と一言と「みる」が出る。
           **引き（島ぜんぶ）では、建っているもの全部の名前が出る。開かない。**
-          いまの島と同じ決まり（`docs/island-design.md` 3-4 の例外）。
+          引きに出せる札は6つまで（`docs/island-design.md` 3-4・6章）で、
+          章の島は建つものが最大6つ（`docs/island-atlas.md` 4章、`spec.ts`）なので、
+          ここでは全部出しても超えない。10軒建っているいまの島は6つに絞っている。
           引きの建物はあやとの何倍も小さいので、開いた札1枚で島の3割が隠れる。 */}
       <div className="isle-labels">
         {world.places.map((sp, i) => {
