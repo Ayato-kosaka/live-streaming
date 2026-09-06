@@ -42,6 +42,21 @@ jobs:
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
 
+      # 複合インデックス(firestore.indexes.json)。テーマ付きの付箋を
+      # where("theme", "==", ...) で引くのに要る(#160)。
+      # ルールと同じサービスアカウントで配るが、**別の step にしてある。**
+      # 1つにまとめると、権限で落ちたときにどちらが配られなかったのか分からない。
+      # ルールと同じく continue-on-error。インデックスが無くても画面は
+      # 落ちない(そのテーマの付箋が空で返るだけ)ので、ここで止めない。
+      - name: 🔎 Firestore インデックスのデプロイ
+        continue-on-error: true
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:indexes \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
       # storage.rules を誰も配っていなかった(北欧の写真を入れたときに増えた)。
       # 中身は deny-all で、写真はダウンロードの合言葉つき URL で配るから
       # ルールの外を通る。**配らなくても写真は見えるが、配らないと

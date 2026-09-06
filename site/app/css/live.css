@@ -1160,3 +1160,148 @@
   font-weight: 700;
   color: var(--ink-2);
 }
+
+/* =========================================================
+   11. テーマ付きの付箋（#160。`components/live/Notes.tsx`）
+   宛先（テーマ）を選んでから貼る形になった。棚の選び札（.nb-*）と
+   付箋そのもの（.nx-notes）は10章と5章のものをそのまま使う。
+   ここに足すのは、**新しくできた3つ**だけ。
+     ・ハート（押せる。もう一度押すと外れる）
+     ・あやとからの返信（紙の上の紙。押せないので平ら）
+     ・書く欄の名前（本文に「by まこも」と書かせないための位置）
+   ========================================================= */
+
+/* 運営者が立てた付箋。**枠も色も足さない。**
+   おたずねの選択肢がこれになるので、誰が立てたかは字（.nt-owner）で言う。
+   紙の色を変えると「色で意味を分ける」になる（`docs/island-world.md` 3.1）。 */
+.nt-owner {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #6b5530;
+}
+
+/* あやとからの返信。1枚につき1つ。
+   付箋（黄色い紙）の上に載る、もう1枚の紙。**押せないので完全に平ら。** */
+.nt-reply {
+  display: block;
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  background: rgba(255, 255, 255, 0.72);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.75;
+  color: #4d3d21;
+}
+.nt-reply > i {
+  display: block;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #6b5530;
+}
+
+/* 付箋の足もと。ハートと、あやとの道具が並ぶ */
+.nt-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+/* ハート。押せるので板・厚み6px・48px（`docs/island-world.md` 3.4）。
+   形は「さんせい」（.vote）と同じ羽根。同じ「押して数が動く」ものなので、
+   別の絵にしない。**違うのは、もう一度押すと外れること。** */
+.nt-heart {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: var(--pg-lit), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.nt-heart svg { width: 19px; height: 18px; color: var(--accent); }
+/* 押してあるもの。塗りは変えず朱の細枠だけ（`docs/ac-reference.md` ⑦-6）。
+   厚みは押せる合図なので、押したあとも同じだけ残す——**外せるので、
+   ここはまだ押せる場所のまま。** */
+.nt-heart.is-on {
+  border-color: var(--pick);
+  box-shadow: 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+}
+.nt-heart.is-on svg { color: var(--accent-deep); }
+.nt-heart:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+.nt-heart b { font-size: var(--fs-body); font-weight: 900; }
+
+/* あやとの道具。**あやとにしか出ない。** 1枚につき返信としまうの2つだけ */
+.nt-own { display: contents; }
+.nt-obtn {
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+.nt-obtn:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-obox { display: grid; gap: var(--sp-2); width: 100%; }
+
+/* 書く欄。宛先はもう決まっているので、そこを最初に言い切る */
+.nt-write { margin-top: var(--sp-5); display: grid; gap: var(--sp-3); }
+.nt-to {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.nt-to > span {
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 名前と本文。**名前を本文より前に置く。**
+   後ろに置いていたときは、書き終えた人がそこまで目を戻さず、
+   本文の末尾に「by まこも」と書いていた（本番に実物がある）。
+   札の字も、下書きの灰色ではなく読ませる字にする。 */
+.nt-field { display: grid; gap: var(--sp-2); }
+.nt-field > span {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+
+/* 畳んである書く欄を開く（`.nt-open`）と、しまったものを見る（`.nt-bin`。
+   **あやとだけ**）。どちらも面のいちばん下に静かに置く、同じ形の板。 */
+.nt-open,
+.nt-bin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin-top: var(--sp-4);
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+.nt-open:active,
+.nt-bin:active { transform: translateY(4px); box-shadow: var(--pg-lit); }

@@ -13,12 +13,13 @@ import {
   type Idea,
 } from "@/lib/api";
 import { BOARD } from "@/content/voice";
+import { THEMES } from "@/content/themes";
 import { LEGENDS } from "@/content/legends";
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
-import NoteBoards, { type NotePlace } from "./NoteBoards";
+import Notes from "./Notes";
 import { EmptyBoard, Pin, Stone } from "./art";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
@@ -45,12 +46,11 @@ const FLOW = [
   { t: "企画会議に上がる", n: "週のはじめ。やることになったら「これから」に出ます" },
 ];
 
-/**
- * 本文の頭に付いた貼り先の札（`【スウェーデン】`）。
- * `components/nordic/CountryIdeas.tsx` が付ける。前後の空白は食わせる。
- * **同じ形を `NoteBoards.tsx` も見ている。変えるときは両方。**
- */
-const TAG = /^\s*【\s*([^】]{1,20}?)\s*】/;
+/* 本文の頭に付いた貼り先の札（`【スウェーデン】`）を読む正規表現は、ここから消した。
+   宛先は `islandNotes.theme` という正式な欄になった（#160）ので、
+   本文から推測して仕分けるところは1つも要らない。**残すと仕分けが2つ並走する。**
+   移行が終わるまでのあいだ（#162）、企画の一覧には `【】` の付いたままの
+   7件が残るが、そこは書いた人の字なのでそのまま出す。 */
 
 /** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
 const MINE_KEY = "ayato-island-mine";
@@ -75,15 +75,17 @@ function rememberPost(id: string) {
 /**
  * 企画をだす（掲示板）。
  *
- * `places` は「付箋がどこに貼られているか」の棚割り。面の側で組んで渡す
- * （`app/board/page.tsx`）。ここで `content/plans.ts` や `content/nordic.ts` を
- * 読むと、棚の名前ひとつのために 50KB がブラウザまで来る。
+ * ここが受けるのは **「新しい企画の提案」だけ**（`islandIdeas`）。
+ * すでに決まっている旅への注文は、宛先を持った付箋（`Notes`）のほうへ回る。
+ * 本番のデータでは、提案8件のうち7件が実際には後者だった（#159）。
+ * 分かれ道は面の上から見えていないと意味がないので、
+ * 「企画をだす」と「みんなの付箋」を同じ面に、この順で並べてある。
  *
  * ログインなしで貼れて、投票できる。
  * だからログインの案内は畳んで下に置き、いちばん上は書く場所にする。
  * 票の多いものが目立ち、自分が貼ったもの・さんせいしたものが自分で分かるようにする。
  */
-export default function Board({ places }: { places: NotePlace[] }) {
+export default function Board() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
   const [down, setDown] = useState(false);
@@ -200,9 +202,12 @@ export default function Board({ places }: { places: NotePlace[] }) {
       <section className="panel paper bd-write">
         <h2>{BOARD.postTitle}</h2>
         <p>
-          まじめじゃなくていい。思いついたことを、そのまま書いて。
+          まじめじゃなくていい。{BOARD.postNote}
           <b>ログインも名前も要りません。</b>
         </p>
+        {/* 何あてに書くのかを、書かせる前に言う。ここが無かったせいで、
+            提案8件のうち7件が「決まっている旅への注文」になっていた（#159）。 */}
+        <p className="muted">{BOARD.postElse}</p>
 
         {/* 島で押してきた人だけに出る。押した札をそのまま見せて、
             書き出しまで入れておく。ここで「何の話だっけ」に戻さない。 */}
@@ -225,17 +230,12 @@ export default function Board({ places }: { places: NotePlace[] }) {
           </div>
         )}
 
-        <textarea
-          ref={box}
-          className="bin"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={3}
-          maxLength={200}
-          aria-label="企画の中身"
-          placeholder={BOARD.placeholder}
-        />
-        <div className="brow">
+        {/* 名前は本文より前。**後ろに置くと、本文の末尾に名乗る人が出る。**
+            「アウシュビッツ、雑貨、家具 by まこも」が本番に貼られていて、
+            あれは名前欄が入力欄の下、送信ボタンの隣にあって見えていなかった。
+            札の字も、下書きの灰色ではなく読ませる字にする。 */}
+        <label className="nt-field">
+          <span>{BOARD.nameLabel}</span>
           {user ? (
             <span className="bin bin-locked">{user.name} として出します</span>
           ) : (
@@ -244,10 +244,23 @@ export default function Board({ places }: { places: NotePlace[] }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={20}
-              aria-label="名前"
               placeholder={BOARD.namePlaceholder}
             />
           )}
+        </label>
+        <label className="nt-field" style={{ marginTop: "var(--sp-3)" }}>
+          <span>{BOARD.textLabel}</span>
+          <textarea
+            ref={box}
+            className="bin"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            maxLength={200}
+            placeholder={BOARD.placeholder}
+          />
+        </label>
+        <div className="brow">
           <button className="bbtn" onClick={submit} disabled={sending}>
             {sending ? BOARD.submitting : BOARD.submit}
           </button>
@@ -342,10 +355,10 @@ export default function Board({ places }: { places: NotePlace[] }) {
         </div>
       </section>
 
-      {/* 島じゅうに散らばった付箋を、貼り先ごとにまとめて読む。
-          この板に貼られた企画は下にそのまま並ぶので、ここには集めない
+      {/* 島じゅうの付箋を、宛先（テーマ）ごとにまとめて読む。
+          この板に貼られた**企画の提案**は下にそのまま並ぶので、ここには集めない
           （同じものが1つの面に2回出る）。 */}
-      <NoteBoards places={places} ideas={ideas} />
+      <Notes themes={THEMES} />
 
       <section className="panel paper">
         {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、
@@ -424,11 +437,6 @@ export default function Board({ places }: { places: NotePlace[] }) {
           {list.map((i, n) => {
             // 票がいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "votes" && !onlyMine && n === 0 && i.votes > 0 && i.status !== "picked";
-            /* 貼り先の札を本文から外に出す。`/nordic` から貼られたものは
-               本文の頭に `【スウェーデン】` が付いていて、これが並びの中で
-               本文と同じ字の大きさ・同じ色で出ていた。読むほうは
-               どこあての話なのかを、毎回文の中から拾い直すことになる。 */
-            const to = TAG.exec(i.text);
             return (
               <li
                 key={i.id}
@@ -453,10 +461,8 @@ export default function Board({ places }: { places: NotePlace[] }) {
                   <b>{i.votes}</b>
                 </button>
                 <div className="idea-body">
-                  <p>{to ? i.text.slice(to[0].length).trim() : i.text}</p>
+                  <p>{i.text}</p>
                   <div className="idea-meta">
-                    {/* 押せない札なので、オリーブの平ら（`docs/island-world.md` 3.2） */}
-                    {to && <span className="chip">{to[1]}あて</span>}
                     {top && <em>いま、いちばん票が集まってる</em>}
                     {i.status === "picked" && <em>{BOARD.picked}</em>}
                     {isMine(i) && <em>あなたが貼った</em>}

@@ -287,7 +287,52 @@ island/state
 北欧の国ごとの募集も、ここに `【リトアニア】` という札を頭に付けて入る。
 別のコレクションを作らないのは、票と一覧の仕組みを分けたくないため。
 
-### `islandNotes/{id}` — 「これから」に貼られた付箋
+### `islandNotes/{id}` — 付箋
+
+**1つの入れ物に、2つの形が入っている。** 見分けるのは `planId` があるか
+`theme` があるかで、読む口（API）も別（`/notes` と `/stickies`）。
+
+#### テーマに貼られた付箋（#160。これから増えるのはこちら）
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
+| `text` | string | 中身（120字まで） |
+| `by` | string? | 名乗った名前（なくてもいい） |
+| `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
+| `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
+| `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれ** |
+| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
+| `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
+| `hidden` | boolean | 隠すとき（管理スクリプトから） |
+| `createdAt` | number | ミリ秒 |
+
+**コレクションを階層分けしていない。** `islandNotes/{theme}/notes/{id}` にすると、
+テーマ横断で新着を見るときに全テーマを舐めることになるし、テーマは
+あとから増える。平らのまま `where("theme", "==", ...)` で引く
+（#160 に理由が3つ書いてある）。そのぶんの複合インデックスは
+`firestore.indexes.json` にある。
+
+- `theme` 昇順 + `createdAt` 降順 + `__name__` 降順 … テーマの中を新しい順。
+  `__name__` を明に書いてあるのは、同じミリ秒に2件入ったときページの境目で
+  1件飛ぶのを止めるため、読む側が書類IDでも並べているから（`pageOf`）
+- `theme` 昇順 + `hearts` 降順 … テーマの中を押された順（国のページ）
+
+**おたずね（`islandPolls` / `islandPollVotes`）の行き先がここ。**
+「運営者が立てた付箋（`byOwner: true`）に、みんながハートを押していく」形に置き換わる。
+
+| いまの poll | 統合後 |
+| --- | --- |
+| `question` | テーマの表示名、または運営者の付箋1枚 |
+| `options[{id, label}]` | `byOwner: true` の付箋が2〜4枚 |
+| `votes[id]` | 各付箋の `hearts` |
+| `openUntil` | テーマ側に締め切りを持つ |
+
+**入れ物は #160 でできているが、まだ中身が移っていない。**
+移すのは #162。それまで `GET /poll` と `GET /fork` は今までどおり動く
+（画面と API を同時に切り替えて壊さない）。
+
+#### 企画に貼られた付箋（旧。移行待ち）
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
@@ -296,6 +341,17 @@ island/state
 | `cid` | string | 端末ID |
 | `hidden` | boolean | 隠すとき |
 | `createdAt` | number | ミリ秒 |
+
+### `islandHearts/{key}` — 誰がどの付箋にハートを押したか
+
+ドキュメントIDは `` `${noteId}_${uid ?? cid}` ``。**ログイン不要で、解除できる。**
+**消す＝解除**なので、票（`islandVotes`）と違って「押した」を数える側ではなく
+書類の有無で持つ。数そのものは `islandNotes.hearts` にある。
+
+| 項目 | 型 |
+| --- | --- |
+| `at` | number（押した時刻） |
+| `note` | string（どの付箋か） |
 
 ### `islandVotes/{key}` — 誰がどれに投票したか
 
@@ -308,11 +364,13 @@ island/state
 | 項目 | 型 |
 | --- | --- |
 | `n` | number（その日の回数） |
-| `kind` | string（idea / note / draft） |
+| `kind` | string（idea / note / sticky / heart / draft / poll / fork / visit） |
 | `day` | string |
 | `updatedAt` | number |
 
-上限は 企画8件 / 付箋20件 / 下書き12件 / 日。
+上限は 企画8件 / 付箋20件 / ハート120回 / 下書き12件 / 日。
+ハートは**解除も1回ぶん使う。** 使わないと、同じ付箋で押す・外すを
+繰り返して書き込みを無限に起こせる。
 
 ### `islandUsers/{uid}` — ログインした人
 
@@ -383,10 +441,20 @@ island/state
 | `GET` | `/ideas` | 誰でも | 企画提案の一覧 |
 | `POST` | `/ideas` | 誰でも | 企画提案を貼る（1日8件） |
 | `POST` | `/ideas/:id/vote` | 誰でも | いいね（1人1票） |
-| `POST` | `/notes` | 誰でも | 付箋を貼る（1日20件） |
+| `GET` | `/notes` | 誰でも | 企画に貼られた付箋（旧。移行待ち） |
+| `POST` | `/notes` | 誰でも | 企画に付箋を貼る（旧。1日20件） |
+| `GET` | `/stickies` | 誰でも | テーマに貼られた付箋。`?theme=` で1つ、無ければ横断の新着 |
+| `POST` | `/stickies` | 誰でも | テーマに付箋を貼る（1日20件） |
+| `POST` | `/stickies/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
+| `POST` | `/stickies/:id/reply` | あやとだけ | 返信する。空で送ると取り消し |
+| `POST` | `/stickies/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
 | `POST` | `/me` | ログイン済み | 島での見え方を保存する |
 | `GET` | `/drafts` | `canDraft` の人 | 自分の下書き（`admin` は全員ぶん） |
 | `POST` | `/drafts` | `canDraft` の人 | 下書きを保存する（1日12件） |
 
 ログインしていない人は端末IDで数え、ログインした人は uid で数える。
 端末を変えても同じ人として扱われるのはこのため。
+
+**`/notes` と `/stickies` は、入れ物が同じで口が別。** 画面が切り替わっている
+途中の日に、両方が混ざったものが両方の画面に出るのを止めるためで、
+旧来のぶんが移り終わったら（#162）`/notes` を畳む。

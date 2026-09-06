@@ -8,7 +8,7 @@ import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import Days from "@/components/nordic/Days";
 import Support from "@/components/nordic/Support";
 import MapLegend from "@/components/nordic/MapLegend";
-import CountryIdeas from "@/components/nordic/CountryIdeas";
+import Notes from "@/components/live/Notes";
 import Countries from "@/components/nordic/Countries";
 import TripPhotos from "@/components/nordic/TripPhotos";
 import {
@@ -247,16 +247,12 @@ export default async function NordicPage() {
             「何日目の、どこからどこへ」を1行足さないと通じなかった。
             その日の面の中なら、面ぜんぶが「どこの話か」を言っている。
             **入口が消えないように、旅程表の行に「答えられることが◯つ」と出す。** */}
-        {/* 前置きは1つだけにする。ここに `p.muted` を置くと、すぐ下の
-            `CountryIdeas` が同じ形の一行をもう1つ出して、57px の帯が2本並ぶ
-            （実測）。言いたいことは `note` にまとめて渡す。 */}
-        <CountryIdeas
-          bare
-          foldWrite
-          country="北欧旅"
-          note="行く前に全部読みます。ルートへの口出しも、やってほしい企画も、知り合いの話も。日ごとのわかれ道は、その日のページの中に。"
-          placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
-        />
+        {/* 前置きは1つだけにする。`Notes` が `content/themes.ts` の
+            `lead` で一行を出すので、ここに `p.muted` を重ねると
+            57px の帯が2本並ぶ（実測）。
+            **宛先はもう決まっている。** ここから書く人は「北欧旅ぜんぶ」に
+            貼るので、テーマを選ぶ札は出さない（#160）。 */}
+        <Notes bare foldWrite theme="nordic" />
       </section>
 
       {/* 応援。**いちばん最後に、これだけで。**

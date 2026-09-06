@@ -8,6 +8,8 @@ import Fold from "@/components/ui/Fold";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
 import DayLog from "@/components/nordic/DayLog";
+import Notes from "@/components/live/Notes";
+import { themeById } from "@/content/themes";
 import {
   DAY_PAGES,
   NORDIC_GUIDE,
@@ -335,6 +337,12 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
      休息日には区間が無いので、行そのものが問いを持つ（`content/nordic.ts` の `Day.fork`）。
      並び順の中での位置は、**その日のあと最初に走る区間**にそろえる。
      そこを越えたら、この日ももう過ぎている。 */
+  /* この日の区間のうち、付箋の宛先を持っているもの。
+     テーマの id は `leg-<区間の id>`（`content/themes.ts`）。 */
+  const legThemes = legs
+    .map((l) => themeById(`leg-${l.id}`))
+    .filter((t) => !!t);
+
   const asks: SayItem[] = [
     ...legs
       .filter((l) => l.fork)
@@ -434,6 +442,18 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           いま何本目かはここが自分で読む。渡すのは字と数字だけにして、
           旅程表そのものを面の JS に連れてこない。 */}
       <DaySay items={asks} route={STOP_SEQ} />
+
+      {/* その区間あての付箋。**宛先を持っている区間だけ出す**（#160）。
+          10区間ぶん先に並べると、そのうち9つが空の区画になる。
+          付箋が集まった区間から `content/themes.ts` に1行足していく
+          （あやとの指示「付箋が集まった日だけ足す」）。
+
+          **「言う」ではなく「貼る」。** すぐ上の `DaySay` が「この日に、言う」で、
+          あちらは押すだけの分かれ道。同じ言葉にすると、押す区画と書く区画が
+          見出しで見分けられなくなる。 */}
+      {legThemes.map((t) => (
+        <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
+      ))}
 
       {/* その街で、食べる・見る・やる・買う。**中身は国のページにある。**
           ここは4つの種類を1つずつ出して、全部読みたい人はその街の段へ送る。

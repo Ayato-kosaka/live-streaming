@@ -14,7 +14,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "theme", "order": "ASCENDING" },
-        { "fieldPath": "hearts", "order": "DESCENDING" }
+        { "fieldPath": "hearts", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     }
   ],
