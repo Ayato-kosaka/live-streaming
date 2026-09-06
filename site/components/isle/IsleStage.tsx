@@ -703,7 +703,11 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     const wx = cam.x - vbW / 2 + ((e.clientX - r.left) / r.width) * vbW;
     const wy = cam.y - vbH / 2 + ((e.clientY - r.top) / r.height) * vbH;
     dismissHint();
-    const who = folkAt(folk, wx, wy, FOLK_H * 0.6);
+    /* 引きでは話しかけない（あやと「引きのとき、キャラクターと会話できなくて良い」）。
+       押しどころのボタンは引きでは描いていないが、地面を押したときにここで
+       近くの住人を拾ってしまう。引きの住人は 20px の点なので、
+       島の別の場所を押したつもりで吹き出しが開くことになる。 */
+    const who = wideRef.current ? null : folkAt(folk, wx, wy, FOLK_H * 0.6);
     if (who) {
       approach(folk.indexOf(who));
       return;
@@ -1133,7 +1137,17 @@ function placePlates(
     const sz = o.sizes[i];
     if (sz && sz.w) {
       const gy = sp.countdown ? 26 : 6;
-      const rect = { x: px - sz.w / 2 - 6, y: py - mh - 12 - sz.h - gy, w: sz.w + 12, h: sz.h + gy + 6 };
+      /* 詰めるのは**見た目の箱ではなく、指の当たり**。札は 30px しかないが、
+         `::before` が 48px まで広げてある（`island-design.md` 3-2）。
+         見た目で詰めると、隣の札の見えない当たりが食い込んで両方 48px を割る。 */
+      const hw = Math.max(sz.w, 48);
+      const hh = Math.max(sz.h, 48);
+      const rect = {
+        x: px - hw / 2 - 6,
+        y: py - mh - 12 - sz.h - (hh - sz.h) / 2 - gy,
+        w: hw + 12,
+        h: hh + gy + 6,
+      };
       const out =
         rect.x < pad ||
         rect.x + rect.w > o.b.w - pad ||

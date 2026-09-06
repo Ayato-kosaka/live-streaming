@@ -726,6 +726,11 @@
 /* `:not(.is-sign):not(.is-on)` は class 4つぶんの強さがある。
    同じ強さでは後ろが勝つが、当てる先を1つ増やして確実に上書きする。 */
 .isle[data-cam="wide"] .isle-spot:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }
+/* 引きでは、押しどころを札1つにする（いまの島と同じ理由）。
+   建物の当たりは 48px まで広げてあるので、引きの小さい建物では
+   すぐ上の札にかぶる（実測で 141x30 の札の当たりが 142x29 に削られていた）。
+   引きでは全部の名前が出ているので、札のほうが押しどころでよい。 */
+.isle[data-cam="wide"] .isle-hit { pointer-events: none; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
 .isle-spot.is-on .isle-text b { font-size: 14.5px; }
 .isle-text i {
