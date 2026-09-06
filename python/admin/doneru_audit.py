@@ -98,7 +98,7 @@ def main() -> None:
     # 5. 「同じ人が同じ時刻に同じ額」の重なり具合。
     # 2 が普通に起きうるのか（連投）、それとも CSV の重複なのかの手がかり
     run(client, "同じ人・同じ時刻・同じ額の重なり", """
-        SELECT n AS rows_in_group, COUNT(*) AS groups
+        SELECT n AS rows_in_group, COUNT(*) AS group_count
         FROM (
           SELECT COUNT(*) AS n
           FROM `{table}`
