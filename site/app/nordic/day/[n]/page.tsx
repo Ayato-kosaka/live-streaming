@@ -176,9 +176,20 @@ function Hitch({ leg }: { leg: Leg }) {
   const h = leg.hitch!;
   return (
     <div className="ndhh">
-      <h3 className="nsub">
-        {cityName(leg.from)} → {cityName(leg.to)} で、親指を上げる
-      </h3>
+      {/* 見出しを `h3` で1行使わない。この面に区間は1つしか無いので、
+          「親指を上げる」と難しさを同じ行に並べて、40px を返す。 */}
+      <p className="ndhh-hard">
+        <span className="ndhh-bars" aria-hidden>
+          {[1, 2, 3].map((i) => (
+            <i key={i} className={i <= h.hard ? "is-on" : undefined} />
+          ))}
+        </span>
+        <b>
+          親指を上げる むずかしさ {HARD[h.hard]}
+          <em className="ndhh-guess">見立て</em>
+        </b>
+        <i>{h.why}</i>
+      </p>
       <dl className="ndhh-l">
         <div>
           <dt>
@@ -207,22 +218,68 @@ function Hitch({ leg }: { leg: Leg }) {
           </dd>
         </div>
       </dl>
-      <p className="ndhh-hard">
-        <span className="ndhh-bars" aria-hidden>
-          {[1, 2, 3].map((i) => (
-            <i key={i} className={i <= h.hard ? "is-on" : undefined} />
-          ))}
-        </span>
-        <b>
-          むずかしさ {HARD[h.hard]}
-          <em className="ndhh-guess">見立て</em>
-        </b>
-        <i>{h.why}</i>
-      </p>
-      <p className="ndhh-src">
-        道と国境の名前は地図から。立つところと難しさは、走る前の見立てです。
-      </p>
+      <p className="ndhh-src">道と国境は地図から。立つところと難しさは走る前の見立てです。</p>
     </div>
+  );
+}
+
+/**
+ * 明るいうちと、まだ決まっていないこと。
+ *
+ * **この企画では、距離より先にここが1日の形を決めている。** 親指を上げて
+ * 立てるのは日のあるあいだだけで、9月のバルトはそこが13時間しかない。
+ * 値は9月中旬の1つだけ持っている（1週間で15分しか動かないので、
+ * 日ごとに持つと同じ数字を11回書くことになる）。
+ *
+ * **「この日の道」と同じ紙に置く。** 別の紙に分けたら、見出しと紙のふちだけで
+ * 90px 増えた（実測）。区間の無い休息日だけ、1枚の紙として立てる。
+ */
+function Hours({
+  day,
+  sun,
+  sc,
+  hitch,
+  legs,
+}: {
+  day: Day;
+  sun?: { rise: string; set: string };
+  sc?: string;
+  hitch: boolean;
+  legs: Leg[];
+}) {
+  return (
+    <>
+      {sun && sc && (
+        <div className="ndsun">
+          <Icon name="sunrise" size={30} />
+          {/* 仕切りの「／」を置かない。`--ink-3` で 3.43:1 しか出ず、
+              測って落ちた（`tools/sprites/inkpx.py`）。字を1つ増やさずに、
+              あいだの空きだけで2つに分ける。 */}
+          <p className="ndsun-n">
+            <span>
+              <b>{sun.rise}</b> 明ける
+            </span>
+            <span>
+              <b>{sun.set}</b> 暮れる
+            </span>
+          </p>
+          <p className="ndsun-w">
+            9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}
+            {hitch ? "。親指を上げられるのは、そのあいだだけ" : ""}
+          </p>
+        </div>
+      )}
+
+      {/* まだ決まっていないこと。**空けてあることを、空けたまま書く。**
+          日にちは全部決まったので、ここに残るのは着く時刻と泊まるところだけ。 */}
+      <ul className="ndunsure">
+        {hitch && <li>何時に着くか。停まってくれる車しだいです</li>}
+        {legs.some((l) => l.fare && !l.fare.yen) && day.stay && (
+          <li>{cityName(day.stay)}のどこに泊まるか</li>
+        )}
+        {legs.length === 0 && <li>この日に何をするか。下のわかれ道で決めます</li>}
+      </ul>
+    </>
   );
 }
 
@@ -358,47 +415,15 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           {hitchLegs.map((l) => (
             <Hitch key={l.id} leg={l} />
           ))}
+          <Hours day={day} sun={sun} sc={sc} hitch={hitch} legs={legs} />
         </section>
       )}
 
-      {/* 明るいうちと、決まっていないこと。
-          **この企画では、距離より先にここが1日の形を決めている。**
-          親指を上げて立てるのは日のあるあいだだけで、9月のバルトは
-          そこが13時間しかない。9月中旬の値を1つだけ持っている
-          （日ごとに持つと、9月中旬の1週間で15分しか動かない数を9回書くことになる）。 */}
-      {(sun || day.stay || hitch) && (
+      {/* 動かない日は「この日の道」が無いので、時間だけを1枚の紙にする。 */}
+      {legs.length === 0 && (sun || day.stay) && (
         <section className="panel paper" id="hours">
-          <h2>{legs.length > 0 ? "この日の、明るいうち" : "この日の、時間"}</h2>
-          {sun && sc && (
-            <div className="ndsun">
-              <Icon name="sunrise" size={30} />
-              {/* 仕切りの「／」を置かない。`--ink-3` で 3.43:1 しか出ず、
-                  測って落ちた（`tools/sprites/inkpx.py`）。字を1つ増やさずに、
-                  あいだの空きだけで2つに分ける。 */}
-              <p className="ndsun-n">
-                <span>
-                  <b>{sun.rise}</b> 明ける
-                </span>
-                <span>
-                  <b>{sun.set}</b> 暮れる
-                </span>
-              </p>
-              <p className="ndsun-w">
-                9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}
-                {hitch ? "。親指を上げられるのは、そのあいだだけ" : ""}
-              </p>
-            </div>
-          )}
-
-          {/* まだ決まっていないこと。**空けてあることを、空けたまま書く。**
-              日にちは全部決まったので、ここに残るのは着く時刻と泊まるところだけ。 */}
-          <ul className="ndunsure">
-            {hitch && <li>何時に着くか。停まってくれる車しだいです</li>}
-            {legs.some((l) => l.fare && !l.fare.yen) && day.stay && (
-              <li>{cityName(day.stay)}のどこに泊まるか</li>
-            )}
-            {legs.length === 0 && <li>この日に何をするか。下のわかれ道で決めます</li>}
-          </ul>
+          <h2>この日の、明るいうち</h2>
+          <Hours day={day} sun={sun} sc={sc} hitch={hitch} legs={legs} />
         </section>
       )}
 

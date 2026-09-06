@@ -1916,8 +1916,13 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
   border: 1px solid var(--rule);
   border-radius: var(--r-1);
 }
-.ndhh > .nsub { margin-top: 0; }
-.ndhh-l { margin: var(--sp-3) 0 0; display: grid; gap: var(--sp-3); }
+.ndhh-l {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: var(--sp-2);
+}
 .ndhh-l > div { display: grid; grid-template-columns: 92px 1fr; gap: var(--sp-3); align-items: start; }
 .ndhh-l dt {
   display: flex;
@@ -1953,9 +1958,7 @@ p.ndhh-hard {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 2px var(--sp-3);
-  margin: var(--sp-3) 0 0;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--rule);
+  margin: 0;
 }
 .ndhh-bars { display: inline-flex; gap: 3px; align-items: center; grid-row: span 2; }
 .ndhh-bars i {

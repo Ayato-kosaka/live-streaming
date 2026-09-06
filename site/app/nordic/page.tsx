@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
-import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
@@ -170,23 +169,36 @@ export default async function NordicPage() {
       <section className="panel paper is-map" id="map">
         <h2>会いに行く道</h2>
         {/* 地図の上の街は、紙の上では押せない（390px だと的が 28px 角にしかならない。
-            `components/atlas/MapZoom.tsx`）。押せるのは「大きく見る」と、下の6カ国。 */}
-        <p className="muted">大きく見ると、街を押してその国のページへ行けます。</p>
+            `components/atlas/MapZoom.tsx`）。押せるのは「大きく見る」と、下の6カ国。
+            **その断りをここに書かない。** 「大きく見ると、街を押してその国の
+            ページへ行けます」と置いていたが、`MapZoom` の hint がすぐ下で
+            同じことを言っている（実測 57px、まるごと二度読み）。 */}
         <RouteMapSvg />
         {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳むので、
             和文の途中に空きが1つ入る（書き出した HTML の画素で拾った）。 */}
         {/* 「いちばん上のストックホルムが終点。そこまでの線は、ぜんぶ誰かの車と船です」
             を書いていた。**すぐ上の説明が同じことを言っている**（飛行機はポーランドまで、
             そこから先は人の車）。地図の下でもう一度言わない。 */}
-        {/* 線の読み方。**畳んである。** 6種類の線の見本は、地図を読むために
-            要るものではあるが、初めて開いた人が最初に読むものではない。
-            開いたままだと 200px、地図そのものと同じだけの場所を使っていた。 */}
+        {/* 線の読み方と、国ごとの見どころ。**どちらも畳んである。**
+            6種類の線の見本は、地図を読むために要るものではあるが、
+            初めて開いた人が最初に読むものではない（開いたままだと 200px）。
+
+            **見どころの畳みは、ここへ寄せた。** 前は「通る6カ国」という紙を
+            もう1枚立てて、その中に置いていた。地図のすぐ下に同じ6カ国への
+            入口（`.nmgo`）があるのに、見出しと紙のふちだけで 83px 使っていた。
+            国の話は、その国が描いてある地図と同じ紙に置く。 */}
         <div className="folds">
           <Fold
             title="線の読み方"
             lead="ヒッチハイク・フェリー・寄り道・飛行機・国境・通ったところ"
           >
             <MapLegend />
+          </Fold>
+          <Fold
+            title="国ごとの見どころ"
+            lead={`ポーランド / リトアニア / ラトビア / エストニア / フィンランド / スウェーデン。${NORDIC_COUNTRIES.reduce((a, c) => a + c.spots, 0)}件`}
+          >
+            <Countries />
           </Fold>
         </div>
       </section>
@@ -198,8 +210,9 @@ export default async function NordicPage() {
           というオーナーの言い方に合わせて、行は押す前に知りたいことで止める。 */}
       <section className="panel paper" id="plan">
         <h2>旅のよてい</h2>
-        {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳む。 */}
-        <p className="muted">1日押すと、その日だけのページに入れます。</p>
+        {/* 「1日押すと、その日だけのページに入れます」を置いていた。
+            行はぜんぶ板で、右に矢印まで付いている。押せることを字で言い足しても、
+            分かることが増えない（`docs/island-design.md` 3章）。 */}
         <Days />
         {/* その日の写真（`docs/nordic-photos.md`）。**貼られたときだけ出る1行。**
             写真そのものは `/nordic/photos` にある。旅は10日で1日に何枚でも
@@ -207,38 +220,22 @@ export default async function NordicPage() {
         <TripPhotos />
       </section>
 
-      {/* ここから先へ出ていく区画。国のページと、旅のしおりと、企画の説明。
-          紙を2枚に分けていたが、どちらも「もっと見たい人が押すもの」なので1枚にする。 */}
-      <Panel>
-        <h2>通る6カ国</h2>
-        {/* **畳んである。** 写真6枚で 505px あって、面の1割をここが使っていた。
-            この面でいちばん読んでほしいのは、なぜ行くのかと、何日目にどこへ行くか。
-            国ごとの見どころ161件は、読みたい人が開けば全部ある。 */}
-        <div className="folds">
-          <Fold
-            title="国ごとの見どころ"
-            lead={`ポーランド / リトアニア / ラトビア / エストニア / フィンランド / スウェーデン。${NORDIC_COUNTRIES.reduce((a, c) => a + c.spots, 0)}件`}
-          >
-            <Countries />
-          </Fold>
-        </div>
-        {/* 「どうしてバスに乗らないのか」の畳みがここにあった。
-            答え（スウェーデン行きの飛行機が高い）は面のいちばん上に移したので、
-            同じ話を2か所でしない。 */}
-        <Link className="tile" href="/nordic/guide">
-          <span className="tile-mark">
-            <Icon name="book" size={26} />
-          </span>
-          <span className="tile-text">
-            <b>旅のしおり</b>
-            <i>
-              お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
-              {NORDIC_GUIDE.souvenir.length}品。10のコーナー
-            </i>
-          </span>
-          <Icon name="right" size={16} className="tile-go" />
-        </Link>
-      </Panel>
+      {/* 旅のしおり。**紙で囲まない。** 中身が行き先1つしか無い紙は、
+          見出しとふちのほうが中身より大きくなる。タイルは板なので、
+          紙の上に置かなくてもそれだけで押せるものに見える。 */}
+      <Link className="tile" href="/nordic/guide">
+        <span className="tile-mark">
+          <Icon name="book" size={26} />
+        </span>
+        <span className="tile-text">
+          <b>旅のしおり</b>
+          <i>
+            お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
+            {NORDIC_GUIDE.souvenir.length}品。10のコーナー
+          </i>
+        </span>
+        <Icon name="right" size={16} className="tile-go" />
+      </Link>
 
       {/* 言う。**旅のよていには混ぜない。** */}
       <section className="panel paper" id="say">
@@ -248,14 +245,14 @@ export default async function NordicPage() {
             「何日目の、どこからどこへ」を1行足さないと通じなかった。
             その日の面の中なら、面ぜんぶが「どこの話か」を言っている。
             **入口が消えないように、旅程表の行に「答えられることが◯つ」と出す。** */}
-        <p className="muted">
-          行く前に、全部読みます。日ごとのわかれ道は、その日のページの中にあります。
-        </p>
+        {/* 前置きは1つだけにする。ここに `p.muted` を置くと、すぐ下の
+            `CountryIdeas` が同じ形の一行をもう1つ出して、57px の帯が2本並ぶ
+            （実測）。言いたいことは `note` にまとめて渡す。 */}
         <CountryIdeas
           bare
           foldWrite
           country="北欧旅"
-          note="ルートへの口出しも、やってほしい企画も、知り合いの話も。"
+          note="行く前に全部読みます。ルートへの口出しも、やってほしい企画も、知り合いの話も。日ごとのわかれ道は、その日のページの中に。"
           placeholder="例）ヒッチハイクで拾ってくれた人に、その国のごはんを教えてもらう企画にしてほしい"
         />
       </section>
@@ -265,18 +262,23 @@ export default async function NordicPage() {
           飛行機はもう取ってある。だから「集まらないと行けません」とは書かない。 */}
       <section className="panel paper" id="back">
         <h2>応援する</h2>
-        <p className="muted">
-          出さなくても旅は行きます。乗せてもらうぶんはただで、お金が要るのは船と泊まるところだけです。
-        </p>
+        <p className="muted">出さなくても旅は行きます。要るのは船と飛行機と、泊まるところだけ。</p>
         <Support />
-        <ul className="nback-what">
-          {FARES.map((f) => (
-            <li key={f.what}>
-              <b>{f.what}</b>
-              <i>{f.src}</i>
-            </li>
-          ))}
-        </ul>
+        {/* **畳んである。** 何にいくら要るのかは、出すかどうかを決める人が
+            開けば全部ある。開いたまま並べると 209px あって、面のいちばん下で
+            「投げ銭で応援する」のボタンが1画面ぶん遠くなっていた。 */}
+        <div className="folds">
+          <Fold title="何に、お金が要るのか" lead={`飛行機と船と、泊まるところ。${FARES.length}件`}>
+            <ul className="nback-what">
+              {FARES.map((f) => (
+                <li key={f.what}>
+                  <b>{f.what}</b>
+                  <i>{f.src}</i>
+                </li>
+              ))}
+            </ul>
+          </Fold>
+        </div>
         <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
           投げ銭で応援する（Doneru）
           <Icon name="external" size={14} />
