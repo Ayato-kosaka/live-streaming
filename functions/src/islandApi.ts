@@ -23,6 +23,9 @@ import * as admin from "firebase-admin";
 import {randomInt, randomUUID} from "crypto";
 import {readLiveChat, sayOnLive} from "./liveChat";
 import {youtube} from "./youtubeClient";
+/* 島の遠隔操作(#165)。このファイルはもう長いので、丸ごと新しい機能は
+   外に置いて、ここには取り付けだけを足す。 */
+import {handleRemote} from "./remote";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -1315,6 +1318,25 @@ export const islandApi = onRequest(
       typeof raw === "object" && raw ? (raw as Json) : ({} as Json);
 
     try {
+      /* ---------------- 島の遠隔操作(#165) ----------------
+         中身は `remote.ts`。ここは取り付けだけ。扱ったら true が返る。 */
+      const sid = req.query?.sessionId;
+      if (
+        await handleRemote(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            sessionId: typeof sid === "string" ? sid : "",
+            body,
+          },
+          res,
+          ownerUid,
+        )
+      ) {
+        return;
+      }
+
       /* ---------------- ログイン ---------------- */
       // ログインした直後に呼ばれる。誰が来たかを覚えておくだけ。
       if (method === "POST" && path === "/me") {

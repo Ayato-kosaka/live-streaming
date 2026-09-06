@@ -96,6 +96,15 @@ service cloud.firestore {
        書くほうは、当たりをサーバーで決める仕掛けそのものなので開けない。 */
     match /rouletteSessions/{docId} { allow read, write: if false; }
 
+    /* 島の遠隔操作(#165)。コントローラー(あやとの手元)と、配信に映して
+       いる島を繋ぐ入れ物。**ここを開けない。**
+       表示側(OBS)はログインできないので読ませる道が要るが、それは
+       islandApi の `GET /remote?sessionId=…` に絞る。ここを
+       「読むのは誰でも」にすると collection ごと引けるようになって、
+       **推測できない sessionId にした意味が無くなる**(1つ知られると全部読める)。
+       書くほうは、押せるのがあやとだけという仕掛けそのものなので開けない。 */
+    match /islandRemote/{docId} { allow read, write: if false; }
+
     /* 北欧旅の、その日の写真とその日いた人(docs/nordic-photos.md)。
        貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
        ここを開けると「読むのは誰でも」を書きたくなるが、そうすると
