@@ -15,6 +15,7 @@ import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
+import { REMOTE_VIEW_EVENT, remoteView } from "@/lib/remote";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
@@ -1401,6 +1402,29 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       return null;
     });
   }, [villagers]);
+
+  /* ---- 遠隔操作の「ひき／より」（#165） ----
+     配信中、あやとの手元（`/me/remote`）から寄り引きを切り替える。
+
+     **props を1つ増やさない。** 島を置いている面は1つではないので、
+     増やすとどの面もそれを渡すことになる。窓ごしの合図で受ける。
+     やっていることは下のボタン（`.stage-view`）と同じで、**カメラの
+     状態を変えるだけ**。`viewBox` は触らない（1ドットでも書き換えると
+     SVG の中身を全部描き直す。`CLAUDE.md`）。
+
+     面をまたいで来たときは、島がここで生まれる。合図はもう飛んだあとなので、
+     最後に言われた値（`remoteView()`）をその場で1回見る。 */
+  useEffect(() => {
+    const v = remoteView();
+    if (v) setWide(v === "wide");
+    const on = (e: Event) => {
+      // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
+      closeTalk();
+      setWide((e as CustomEvent<"wide" | "near">).detail === "wide");
+    };
+    window.addEventListener(REMOTE_VIEW_EVENT, on);
+    return () => window.removeEventListener(REMOTE_VIEW_EVENT, on);
+  }, [closeTalk]);
 
   /** 住人に話しかける。遠ければまず歩いて近づいてから。 */
   const approach = useCallback(
