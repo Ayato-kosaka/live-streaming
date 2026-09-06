@@ -20,6 +20,8 @@ import { themeById } from "@/content/themes";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import IslandMe from "@/components/live/IslandMe";
+import MyCards from "./MyCards";
+import type { PlanDays } from "@/components/cards/cards";
 import SignIn from "@/components/live/SignIn";
 import { Pin } from "@/components/live/art";
 
@@ -61,7 +63,7 @@ const day = (iso: string) =>
  * 途中に片手で開くのがその3つで、下に積むと畳みの向こうに行く。
  * ほかの人の画面では、貼った付箋がいちばん上。
  */
-export default function MyPage() {
+export default function MyPage({ planDays }: { planDays: PlanDays }) {
   const { user, token, signOut } = useAuth();
   const [me, setMe] = useState<Me | null>(null);
   /** 取りにいっている最中は null。0枚と区別する */
@@ -291,23 +293,14 @@ export default function MyPage() {
         )}
       </section>
 
-      {/* 壁紙の器（#163）。**まだ中身が入る仕組みがありません。**
-          「まだありません」で終わらせず、ここが何の場所かを言う
-          （`docs/island-design.md` 4章「空っぽの形」）。 */}
+      {/* あやと島カード（#173）。#163 で置いた「じぶんの壁紙」の器が、
+          ここに入れ替わった。**壁紙を作る道具ではなく、その日いてくれた印が
+          勝手に積まれていく場所**（あやとの言い直し）。
+          焼いた1枚を残す仕組みは要らなくなった。カードは焼かずに、
+          写真と名簿から組み立てているので。 */}
       <section className="panel paper">
-        <h2>じぶんの壁紙</h2>
-        <div className="blank">
-          <b>ここは、持って帰った1枚が並ぶところ</b>
-          <p>
-            旅のその日の写真に、じぶんのキャラクターを1体だけ焼いて持って帰れます。
-            焼いた1枚をここに残す仕組みは、まだありません。
-            いまは焼いたその場で、端末に保存してください。
-          </p>
-          <Link className="blank-go" href="/nordic/photos">
-            写真から1枚つくる
-            <Icon name="right" size={14} />
-          </Link>
-        </div>
+        <h2>あやと島カード</h2>
+        <MyCards channelId={me?.channelId} plans={planDays} />
       </section>
 
       {down && (

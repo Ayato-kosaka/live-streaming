@@ -1,0 +1,128 @@
+/* =========================================================
+   あやと島カード（#173）
+   ---------------------------------------------------------
+   その日に投げ銭してくれた人へ渡る1枚。写真の上に、その人の
+   キャラクターが立っている。`/cards`・`/about`・`/friends`・`/me` の
+   4か所に同じ形で出るので、見た目はここ1か所で持つ。
+
+   **紙の型**（`app/css/pages.css` の②）。一覧なので影を落とさず、
+   細い罫でふちを取る。**厚みは付けない。** カードは押すものではないので、
+   付けると「押せる」の合図が2つになる（`docs/island-design.md` 3章）。
+   ========================================================= */
+
+.akd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+/* カード1枚。写真の下に、日付と企画の帯が付く。
+   地は紙より少し明るくして、紙の上に1枚載っているように見せる。 */
+.akd {
+  /* **伸ばさない。** 縦の写真と横の写真が同じ段に並ぶので、伸ばすと
+     背の低いほうの下に、地だけの空きができる（実測で 200px 出た）。 */
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 55%, var(--paper));
+}
+
+/* 写真のところ。**縦横は写真そのものの比**（style で入る）。
+   比を持たせておかないと、絵が来るまでのあいだ高さが 0 になって、
+   並びが読み込みのたびに跳ねる。 */
+.akd-shot {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--pg-sheet-lo) 70%, var(--paper));
+}
+.akd-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 写真の上に立つキャラクター。
+   置き方（左右・足元の高さ・傾き・大きさ）は style で入る。
+   **原点は足元**。傾けたときに、足の位置が動かないようにする。 */
+.akd-chr {
+  position: absolute;
+  transform-origin: bottom center;
+  /* 地面に落ちる影。焼き込む1枚（`components/nordic/stamp.ts`）と同じ役で、
+     これが無いとキャラクターが景色に貼った紙に見える
+     （`docs/island-design.md` 2章の3）。写真の地が何色でも効くよう、薄く。 */
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.28));
+}
+
+/* 下の帯。字は3つまで（日付・その日の企画・名前）。 */
+.akd-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--pg-rule);
+}
+.akd-foot b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* その日の企画。**カードの中で唯一押せるもの。**
+   板ではなく字の行き先なので、厚みではなく下線で示す。 */
+/* **1行で切る。** 企画の名前は長い（「Food & Wine Fest @ ムタツミンダ公園」で
+   2行になった）。カードの主役は絵と日付なので、青い下線が2行あると
+   そちらへ目が行く（`docs/island-design.md` 3章の4）。 */
+.akd-plan {
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.akd-who {
+  font-style: normal;
+  font-size: var(--fs-min);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.akd-note { margin-top: var(--sp-3); font-size: var(--fs-note); }
+
+/* --- `/about` の「住んでる人」の下に出る帯 ------------------------------ */
+.akd-strip { margin-top: var(--sp-5); }
+.akd-strip-h {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+}
+.akd-strip-h b {
+  display: block;
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+.akd-strip .tile { margin-top: var(--sp-3); }
+
+
+/* 図鑑の欄から、カードの並びぜんぶへ。字の行き先なので厚みは付けない。 */
+.rz-cards-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--accent-2);
+}
+
+/* --- 図鑑の1枚（`/friends`）の中に入るぶん -------------------------------
+   罫で割った欄の中なので、器が 290px しかない。`auto-fill` に任せると
+   1列になって、1枚が欄の幅いっぱい（実測 480px の背）になる。
+   出すのは2枚と決めてあるので、そのまま2列と書く。 */
+.rzk-cards .akd-grid { grid-template-columns: repeat(2, 1fr); }

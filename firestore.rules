@@ -105,6 +105,15 @@ service cloud.firestore {
        書くほうは、押せるのがあやとだけという仕掛けそのものなので開けない。 */
     match /islandRemote/{docId} { allow read, write: if false; }
 
+    /* あやと島カード(#173)。**カードそのものはここに無い。**
+       カードは写真(nordicPhotos)とその日の名簿(nordicDays)から、
+       読むときに組み立てる(`functions/src/cards.ts` 冒頭)。ここに入るのは
+       **本人が置き方を動かしたときの上書きだけ。**
+       それでも開けない。ドキュメントIDが `<写真のID>__<チャンネルID>` なので、
+       collection ごと読めると「誰がどの日にいたか」が名簿を見ずに引ける。
+       islandApi の `GET /cards` は、名前を出してよいと言った人だけを通す。 */
+    match /islandCards/{docId} { allow read, write: if false; }
+
     /* 北欧旅の、その日の写真とその日いた人(docs/nordic-photos.md)。
        貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
        ここを開けると「読むのは誰でも」を書きたくなるが、そうすると

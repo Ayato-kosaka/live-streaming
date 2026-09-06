@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 検索の側から見ても島の索引になる。
     "/all",
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    // その日いてくれた人に渡る1枚（#173）。誰でも見られる面
+    "/cards",
     // 企画のページを書くところ。**ログイン必須をやめた**ので（#161）、
     // 誰でも入れる面になった。索引から外す理由がなくなっている。
     "/next/new",

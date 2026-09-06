@@ -8,6 +8,8 @@ import { useResidentShow } from "@/lib/liveStats";
 import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
 import Icon from "@/components/ui/IconCore";
+import CardOne from "@/components/cards/CardOne";
+import { useCards, type PlanDays } from "@/components/cards/cards";
 import { Pedestal } from "./art";
 
 /** キャラクター画像は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
@@ -69,8 +71,13 @@ function useOnIslandToday(): Map<string, string> {
  *
  * ここは紙の型。押すのはマスと送りだけなので、そこにしか厚みを付けない。
  */
-export default function FriendsWall() {
+export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const show = useResidentShow();
+  /* あやと島カード（#173）。あやとの言葉:「/friends で、持ってるカード
+     リスト見れたら面白い」。**図鑑の1枚の中に入れる。**
+     図鑑は「その人が誰か」を1枚にまとめる紙なので、その人のもらった
+     カードもその紙の欄の1つ。一覧のマスの下に別の並びを足さない。 */
+  const { cards } = useCards();
   const here = useOnIslandToday();
   const list = useMemo(() => RESIDENTS.filter((r) => r.icon), []);
   const [at, setAt] = useState(0);
@@ -85,6 +92,8 @@ export default function FriendsWall() {
   const name = r?.icon ? show.get(r.icon)?.name : undefined;
   const spot = r?.icon ? here.get(r.icon) : undefined;
   const named = list.filter((x) => show.get(x.icon!)?.name).length;
+  /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
+  const mine = (cards ?? []).filter((c) => c.icon === r?.icon);
 
   const go = (n: number) => {
     setAt((n + list.length) % list.length);
@@ -139,6 +148,29 @@ export default function FriendsWall() {
                 )}
               </dd>
             </div>
+            {/* もらったカード。**その人のぶんだけ。**
+                絵で突き合わせる（`components/cards/cards.ts` が
+                チャンネル→絵を引いている）ので、名前を出していない人でも
+                自分の絵のカードは分かる。まだ配られていないあいだは、
+                欄ごと出さない（0枚を22人ぶん並べても何も分からない）。 */}
+            {mine.length > 0 && (
+              <div className="rzk-wide rzk-cards">
+                <dt>もらったカード</dt>
+                <dd>
+                  <div className="akd-grid">
+                    {/* 2枚まで。ここは図鑑の欄の1つで、カード置き場ではない。
+                        残りは下の行き先から見る */}
+                    {mine.slice(0, 2).map((c) => (
+                      <CardOne key={c.id} card={c} plan={plans[c.day]} showName={false} />
+                    ))}
+                  </div>
+                  <Link className="rz-cards-go" href="/cards">
+                    あやと島カードを、ぜんぶ見る
+                    <Icon name="right" size={13} />
+                  </Link>
+                </dd>
+              </div>
+            )}
             {v && (
               <>
                 <div className="rzk-wide">
