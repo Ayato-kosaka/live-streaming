@@ -1,23 +1,168 @@
 {
  "_readme": [
-  "Doneru の どねID と、YouTube のアカウントの対応表。",
-  "あやとが手で作ったもの（2026-09-06）。python/admin/donors_import.py で Firestore に流す。",
+  "Doneru の どねID（6桁の viewerPk）と、YouTube のアカウントの対応表。",
+  "python/admin/donors_import.py で Firestore の islandDonors に流す。",
   "",
-  "【2026-09-07 に分かったこと。読んでから直すこと】",
-  "ここの viewerPk は21桁（Google のユーザーID）や18〜19桁だが、",
-  "BigQuery の doneru_donations.viewer_pk は **6桁** だった。",
-  "Doneru の寄付履歴の生データ（/streamer/donation-list）が持っているのは",
-  "viewerPk（6桁）・nickname・amount・message だけで、21桁のほうはどこにも無い。",
-  "**つまり、この表はいまのデータと突き合わせられない。**",
+  "鍵は **6桁の viewerPk**。寄付履歴（doneru_donations）が持っているのはこれだけで、",
+  "あやとが最初にくれた表の21桁（Google のユーザーID）は、寄付履歴のどこにも入っていない。",
+  "元の表は下の _ayatoTable に残してある。",
   "",
-  "直すには、6桁のほう（寄付履歴に出てくる viewerPk）で引き直した表が要る。",
-  "あやとに聞いている。それまで doneru_supporters.py は全員を「新規」として",
-  "赤くする。表そのものは消さない（誰が Doneru で出してくれているかの記録として正しい）。",
+  "handle が null = その人の YouTube のアカウントが分からない。カードは渡せない。",
+  "ask: true = **あやとに聞いている途中**。呼び名から決められなかった人。",
+  "isOwner: true = あやと本人。カードは渡さない。",
   "",
-  "handle が null のものは、その人の YouTube のアカウントがまだ分からない。",
-  "label はそのときの呼び名。カードは渡せないが、表には載っているので「新規」ではない。"
+  "同じ人が複数の どねID を持っている（ひめひめさん4つ、aoi さん2つ）。",
+  "どの21桁がどの6桁かは分からないが、**行き先の YouTube アカウントは同じ**なので困らない。"
  ],
  "donors": [
+  {
+   "viewerPk": "217000",
+   "handle": "@くろねこ.39",
+   "label": "くろねこ"
+  },
+  {
+   "viewerPk": "223663",
+   "handle": "@たぃpi",
+   "label": "たぃ"
+  },
+  {
+   "viewerPk": "243091",
+   "handle": "@ASUSHIZAMUARI",
+   "label": "A SUSHIZAMUARI"
+  },
+  {
+   "viewerPk": "245298",
+   "handle": "@ひめひめ-r9z",
+   "label": "ひめひめ"
+  },
+  {
+   "viewerPk": "247448",
+   "handle": "@らあ-j5s",
+   "label": "らあ"
+  },
+  {
+   "viewerPk": "248043",
+   "handle": "@aoi1685",
+   "label": "aoi"
+  },
+  {
+   "viewerPk": "250508",
+   "handle": "@ひめひめ-r9z",
+   "label": "ひめひめ"
+  },
+  {
+   "viewerPk": "250611",
+   "handle": "@まーさん7286",
+   "label": "まーさん"
+  },
+  {
+   "viewerPk": "251508",
+   "handle": "@SNOOPY-c9l",
+   "label": "SNOOPY"
+  },
+  {
+   "viewerPk": "251745",
+   "handle": "@ソラ-m2p",
+   "label": "ソラ🦊"
+  },
+  {
+   "viewerPk": "256946",
+   "handle": "@ひめひめ-r9z",
+   "label": "ひめひめ"
+  },
+  {
+   "viewerPk": "280086",
+   "handle": "@ひめひめ-r9z",
+   "label": "hime hime"
+  },
+  {
+   "viewerPk": "283045",
+   "handle": "@ボケナス-v6q",
+   "label": "ボケナス"
+  },
+  {
+   "viewerPk": "290038",
+   "handle": "@aoi1685",
+   "label": "aoi"
+  },
+  {
+   "viewerPk": "294842",
+   "handle": "@かこ-e",
+   "label": "かこ"
+  },
+  {
+   "viewerPk": "305643",
+   "handle": "@nana-i6i-d8k",
+   "label": "nana"
+  },
+  {
+   "viewerPk": "307935",
+   "handle": "@みっちょま",
+   "label": "みっちょま"
+  },
+  {
+   "viewerPk": "243587",
+   "handle": "@あやとグルメアプリ",
+   "label": "あやと【ヨーロッパ週3ひとり旅】",
+   "isOwner": true
+  },
+  {
+   "viewerPk": "245340",
+   "handle": null,
+   "label": "信州檸檬"
+  },
+  {
+   "viewerPk": "245422",
+   "handle": null,
+   "label": "KURA ekisu"
+  },
+  {
+   "viewerPk": "249085",
+   "handle": null,
+   "label": "信州檸檬（しんしゅうれもん"
+  },
+  {
+   "viewerPk": "282396",
+   "handle": null,
+   "label": "Best Friendsの1人"
+  },
+  {
+   "viewerPk": "295288",
+   "handle": null,
+   "label": "たかこ"
+  },
+  {
+   "viewerPk": "246928",
+   "handle": null,
+   "label": "タイニーチャム",
+   "ask": true
+  },
+  {
+   "viewerPk": "263042",
+   "handle": null,
+   "label": "まどさん",
+   "ask": true
+  },
+  {
+   "viewerPk": "267773",
+   "handle": null,
+   "label": "ひー",
+   "ask": true
+  },
+  {
+   "viewerPk": "283153",
+   "handle": null,
+   "label": "iona",
+   "ask": true
+  },
+  {
+   "viewerPk": "271108",
+   "handle": null,
+   "label": "いっちゃん",
+   "ask": true
+  }
+ ],
+ "_ayatoTable": [
   {
    "viewerPk": "117763460062995449096",
    "handle": "@ASUSHIZAMUARI",
