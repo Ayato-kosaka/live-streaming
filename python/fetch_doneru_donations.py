@@ -34,7 +34,7 @@ import argparse
 import json
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
@@ -67,11 +67,23 @@ CREATE TABLE IF NOT EXISTS `{table}` (
   amount_text STRING,
   currency STRING,
   message_text STRING,
+  status STRING,
+  settlement_amount NUMERIC,
+  viewer_pk STRING,
   source_year INT64,
   ingest_run_id STRING,
   ingested_at TIMESTAMP,
   raw_json JSON
 )
+"""
+
+# 既にあるテーブルには CREATE TABLE IF NOT EXISTS が効かない。
+# あとから列を足したときのために、ALTER も毎回投げる（どちらもべき等）。
+ADD_COLUMNS = """
+ALTER TABLE `{table}`
+  ADD COLUMN IF NOT EXISTS status STRING,
+  ADD COLUMN IF NOT EXISTS settlement_amount NUMERIC,
+  ADD COLUMN IF NOT EXISTS viewer_pk STRING
 """
 
 # donation_id で突き合わせる。同じ年を毎日流し直しても増えない。
@@ -87,6 +99,9 @@ WHEN MATCHED THEN
     amount_text = S.amount_text,
     currency = S.currency,
     message_text = S.message_text,
+    status = S.status,
+    settlement_amount = SAFE_CAST(S.settlement_amount AS NUMERIC),
+    viewer_pk = S.viewer_pk,
     source_year = S.source_year,
     ingest_run_id = S.ingest_run_id,
     ingested_at = SAFE_CAST(S.ingested_at AS TIMESTAMP),
@@ -94,7 +109,8 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     donation_id, donated_at, donor_name, amount, amount_text,
-    currency, message_text, source_year, ingest_run_id, ingested_at, raw_json
+    currency, message_text, status, settlement_amount, viewer_pk,
+    source_year, ingest_run_id, ingested_at, raw_json
   )
   VALUES (
     S.donation_id,
@@ -104,6 +120,9 @@ WHEN NOT MATCHED THEN
     S.amount_text,
     S.currency,
     S.message_text,
+    S.status,
+    SAFE_CAST(S.settlement_amount AS NUMERIC),
+    S.viewer_pk,
     S.source_year,
     S.ingest_run_id,
     SAFE_CAST(S.ingested_at AS TIMESTAMP),
@@ -126,9 +145,18 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     ingested_at = datetime.now(timezone.utc).isoformat()
 
     client.query(DDL.format(table=table)).result()
+    client.query(ADD_COLUMNS.format(table=table)).result()
+
+    # MERGE は「1つの行に当たる元行は1つまで」を要求する。同じ donation_id が
+    # 2つ入っていると Scalar subquery produced more than one element で落ちる
+    # （Doneru がページ送りを無視して同じページを返したときに実際に踏んだ）。
+    # 取得側でも弾いているが、BigQuery に渡す直前でも保証しておく。
+    deduped = {row["donation_id"]: row for row in rows}
+    if len(deduped) != len(rows):
+        print(f"WARNING: 同じ donation_id が {len(rows) - len(deduped)} 件重複していました", file=sys.stderr)
 
     struct_params = []
-    for row in rows:
+    for row in deduped.values():
         donated_at = row["donated_at"]
         struct_params.append(
             StructQueryParameter(
@@ -146,6 +174,13 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
                 ScalarQueryParameter("amount_text", "STRING", row["amount_text"]),
                 ScalarQueryParameter("currency", "STRING", row["currency"]),
                 ScalarQueryParameter("message_text", "STRING", row["message_text"]),
+                ScalarQueryParameter("status", "STRING", row["status"]),
+                ScalarQueryParameter(
+                    "settlement_amount",
+                    "STRING",
+                    None if row["settlement_amount"] is None else repr(row["settlement_amount"]),
+                ),
+                ScalarQueryParameter("viewer_pk", "STRING", row["viewer_pk"]),
                 ScalarQueryParameter("source_year", "INT64", year),
                 ScalarQueryParameter("ingest_run_id", "STRING", run_id),
                 ScalarQueryParameter("ingested_at", "STRING", ingested_at),
@@ -160,7 +195,26 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     )
     client.query(MERGE.format(table=table), job_config=job_config).result()
 
-    return len(rows)
+    return len(deduped)
+
+
+def resolve_years(year: Optional[int], since: Optional[int], now: datetime) -> List[int]:
+    """どの年を取りに行くかを決める。
+
+    **1月は去年ぶんも取る。** Doneru の一覧は年で区切られているので、
+    「今年ぶんだけ」にすると 12月31日の寄付を誰も取らない年またぎの穴があく。
+    1月1日 5:30 の実行が見るのは新しい年で、大晦日の寄付が入っているのは
+    古い年のほう。それを最後に取ったのは 12月31日 5:30 なので、
+    その日の夜のぶんが丸ごと落ちる。毎年ひと穴あく。
+
+    MERGE はべき等なので、去年ぶんを1月のあいだ毎日取り直しても増えない。
+    """
+    if since:
+        return list(range(since, now.year + 1))
+    if year:
+        return [year]
+    # 年またぎの穴を埋めるため、1月だけ去年も見る
+    return [now.year - 1, now.year] if now.month == 1 else [now.year]
 
 
 def main() -> int:
@@ -168,8 +222,8 @@ def main() -> int:
     parser.add_argument(
         "--year",
         type=int,
-        default=datetime.now(JST).year,
-        help="取り込む年（既定: 日本時間の今年）",
+        default=None,
+        help="取り込む年（既定: 日本時間の今年。1月は去年ぶんも一緒に取る）",
     )
     parser.add_argument(
         "--since",
@@ -194,8 +248,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    this_year = datetime.now(JST).year
-    years = list(range(args.since, this_year + 1)) if args.since else [args.year]
+    years = resolve_years(args.year, args.since, datetime.now(JST))
 
     try:
         client = DoneruClient()
@@ -226,6 +279,12 @@ def main() -> int:
 
     if len(years) > 1:
         print(f"{years[0]}〜{years[-1]} 年で合わせて {total} 件")
+
+    # セッションの寿命を見立てるための手がかり。値は出さない。
+    if client.renewed_dt:
+        print("Doneru は応答で _dt を配り直しています（触るたびに寿命が延びる可能性）")
+    else:
+        print("Doneru は _dt を配り直していません（最初に取った寿命のまま）")
     return 0
 
 

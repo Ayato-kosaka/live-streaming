@@ -9,7 +9,7 @@
 
 `cf_clearance` は解いた IP と User-Agent に紐づくので、そもそも持ち込めない。
 **要らなかったのは幸運で、Doneru 側が Cloudflare の判定を厳しくしたら詰む。**
-そのときは 403 と HTML が返るので、`DoneruSessionExpired` として issue が立つ。
+そのときは 403 と HTML が返るので、`DoneruSessionExpired` として落ちる。
 
 ## `_dt` は寄付一覧を読める鍵そのもの
 
@@ -57,7 +57,7 @@ class DoneruSessionExpired(DoneruError):
 
     これが出たら**あやとがブラウザから取り直すしかない**。自動で回復する道は
     無い（ログインが Google OAuth なので、Actions の中では通せない）。
-    ワークフローはこの例外だけを見分けて issue を立てる。
+    ワークフローはこの例外だけを終了コード 2 で見分けて、ログに印を出す。
     """
 
 
@@ -152,6 +152,8 @@ class DoneruClient:
         # 分けるための手がかり。**値そのものは持たない**（public なログに出るため）。
         # 長さだけで、貼り損ね・切れ・改行の混入は見分けられる。
         self.cookie_shape = _describe_cookie(self._cookie_header)
+        # Doneru が応答で `_dt` を配り直したか。寿命の見立てに使う（_get で立てる）
+        self.renewed_dt = False
         self._session = requests.Session()
         self._session.headers.update(DEFAULT_HEADERS)
         self._session.headers["cookie"] = self._cookie_header
@@ -166,6 +168,13 @@ class DoneruClient:
             )
         except requests.RequestException as exc:
             raise DoneruError(f"{path} への接続に失敗しました: {exc}") from exc
+
+        # Doneru が `_dt` を再発行しているかを見る。**値は持たない。**
+        # 再発行するなら、毎日の実行がそれを拾ってシークレットを更新し続けられる
+        # （yt-dlp の cookie を GH_PAT で書き戻している前例が schedule_fetch_chat.yml にある）。
+        # 再発行しないなら、セッションの寿命がそのまま取り込みの寿命になる。
+        if response.cookies.get("_dt"):
+            self.renewed_dt = True
 
         if response.status_code in (401, 403):
             raise DoneruSessionExpired(
@@ -230,14 +239,34 @@ class DoneruClient:
 
         終端の判定は「返ってきた件数が rows_per_page 未満」。
         `total` のようなフィールドを当てにしない（あるとは限らない）。
+
+        **同じレコードを二度返さない。** データの無い年（2021 など）を訊くと、
+        Doneru は `currentPage` を無視して同じページを返し続ける。素直に
+        100ページ集めると、同じ寄付が100回入った配列ができる。それを
+        そのまま BigQuery に渡すと、MERGE が「1つの行に複数の元行が当たる」で
+        落ちる（`Scalar subquery produced more than one element`）。実際に落ちた。
+
+        なので見たレコードを覚えておいて、**1ページ丸ごと既知だったらそこで終わる**。
         """
+        seen: set = set()
+
         for page in range(1, MAX_PAGES + 1):
             records = self.fetch_donation_page(year, page, rows_per_page)
             if not records:
                 return
 
+            fresh = 0
             for record in records:
+                fingerprint = json.dumps(record, ensure_ascii=False, sort_keys=True)
+                if fingerprint in seen:
+                    continue
+                seen.add(fingerprint)
+                fresh += 1
                 yield record
+
+            # 1件も新しくない = ページ送りが効いていない。ここで打ち切る
+            if fresh == 0:
+                return
 
             if len(records) < rows_per_page:
                 return

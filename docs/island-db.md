@@ -65,18 +65,27 @@
 | `donation_id` | STRING | Doneru 側のID（主キー）。無ければ中身の SHA-256 |
 | `donated_at` | TIMESTAMP | 出された時刻（UTC） |
 | `donor_name` | STRING | 表示名 |
-| `amount` | NUMERIC | 金額 |
+| `amount` | NUMERIC | 視聴者が払った額 |
+| `settlement_amount` | NUMERIC | **手数料を引いた、実際に振り込まれる額**（`amount` の約95%） |
 | `amount_text` | STRING | 元の表記（`¥1,000` など） |
-| `currency` | STRING | 通貨 |
+| `currency` | STRING | 通貨（本番データでは全件 NULL＝円） |
 | `message_text` | STRING | 添えられた言葉 |
+| `status` | STRING | `振込完了` / `振込待ち` |
+| `viewer_pk` | STRING | **人の同一性はこれで見る**（`chat_messages.author_channel_id` と同じ役目） |
 | `source_year` | INT64 | どの年として取ったか |
 | `ingest_run_id` / `ingested_at` | | 取り込みの記録 |
 | `raw_json` | JSON | 元データそのまま |
 
 入れているのは `python/fetch_doneru_donations.py`（`.github/workflows/fetch_doneru_donations.yml` が毎日 5:30 に回す）。
-既定では今年ぶんだけ。過去ぶんは `workflow_dispatch` の `since` に年を入れて流す
+既定では今年ぶん。**1月だけは去年ぶんも取る**（Doneru の一覧が年で区切られているので、
+今年ぶんだけ見ていると12月31日の寄付を誰も取らない年またぎの穴があく）。
+過去ぶんは `workflow_dispatch` の `since` に年を入れて流す
 （`since=2024` なら 2024 年から今年まで）。
 `donation_id` で `MERGE` するので、同じ年を何度流しても増えない。
+
+**毎日「その年を全件」取り直しているので、止まっても欠けない。**
+何日止まっていても、直して1回流せば止まっていた期間ごと埋まる。
+差分を積む作りにしていないことが、そのまま復旧のしやすさになっている。
 
 **列名は決め打ちしていない。** Doneru に公開 API は無く、画面が叩いている API を
 そのまま使っているので、向こうの都合で名前が変わりうる。候補名を並べて当たったものを
@@ -89,20 +98,38 @@ DONERU_COOKIE=... python python/fetch_doneru_donations.py --probe   # キー名�
 **この表から金額の順位表を作らない。** 出す人は60人しかいないので上位が常連で固定される。
 理由は `docs/nordic-fund.md` の「やらないことにした案」にある。人数と合計のための原本。
 
+#### 名前で人を数えない
+
+**`donor_name` で数えると人数が増える。** 本番の967件を名前で数えると45人、
+`viewer_pk` で数えると28人。同じ人が名前を変えて投げている。
+`chat_messages` で `author_channel_id` を見ているのと同じ理由。
+
 #### 手元のメモと照合する
+
+**どの数字と突き合わせるかを先に決める。** 3通りあって、金額が違う。
+
+| 見たいもの | 使う列 | 絞り |
+| --- | --- | --- |
+| 視聴者が出してくれた額 | `amount` | なし |
+| 実際に振り込まれる額 | `settlement_amount` | なし |
+| もう入金された額 | `settlement_amount` | `status = '振込完了'` |
 
 ```sql
 SELECT
-  EXTRACT(YEAR FROM donated_at AT TIME ZONE 'Asia/Tokyo') AS year,
+  EXTRACT(YEAR FROM DATETIME(donated_at, 'Asia/Tokyo')) AS year,
+  status,
   COUNT(*) AS count,
-  SUM(amount) AS total
+  COUNT(DISTINCT viewer_pk) AS people,
+  SUM(amount) AS paid,
+  SUM(settlement_amount) AS settlement
 FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
-GROUP BY year
-ORDER BY year
+GROUP BY year, status
+ORDER BY year, status
 ```
 
 **通貨が混ざっていないか先に見る。** スパチャには外貨が2件混ざっていた
 （`docs/nordic-fund.md` 2.3）ので、Doneru も同じ可能性がある。
+本番の967件では全件 NULL（円）だった。
 
 ```sql
 SELECT currency, COUNT(*) AS count, SUM(amount) AS total
@@ -119,12 +146,31 @@ SELECT COUNT(*) FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
 WHERE amount IS NULL OR donated_at IS NULL
 ```
 
+#### 無い年を訊かない
+
+`since` に Doneru を使い始めた年（**2024年**。最初の寄付は 2024-12-20）より前を
+入れない。**データの無い年を訊くと、Doneru は `currentPage` を無視して
+同じページを返し続ける。** 素直に集めると同じ寄付が何十回も入った配列ができて、
+`MERGE` が「1つの行に複数の元行が当たる」で落ちる
+（`Scalar subquery produced more than one element`。`since=2021` で実際に踏んだ）。
+
+いまは取得側で「1ページ丸ごと既知なら打ち切る」ようにしてあるので落ちないが、
+訊く意味は無い。
+
 #### Doneru のセッションを入れ直す
 
 認証はブラウザの cookie（`_dt`）だけ。**切れたら自動では戻せない**（ログインが
 Google OAuth なので Actions の中では通せない）。切れると
 `fetch_doneru_donations` が終了コード 2 で落ちるので、**Actions の失敗通知メール**で気づく。
 ログの `::error::` に理由が出るため、他の失敗と区別が付く。
+
+**あやとが Doneru からログアウトすると、その時点で切れる。** これは Doneru が
+サーバ側でセッションを破棄している証拠なので、直すべき欠陥ではない
+（ログアウトしても生き続けるほうが危ない）。付き合う制約として扱う。
+止まっているあいだのデータは、入れ直して1回流せば埋まる。
+
+ログの `貼られている値の形` が「Doneru の形と一致」なのに 401 なら、
+貼り損ねではなくセッションのほう。ログインし直して取り直す。
 
 1. ブラウザで https://doneru.jp にログインする
 2. DevTools > Application > Cookies > `https://doneru.jp` の `_dt` の値をコピーする
