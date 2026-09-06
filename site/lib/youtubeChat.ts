@@ -254,12 +254,15 @@ export function readLiveChatDirect(hooks: LiveChatHooks): LiveChatReader {
          呼んだ側に、今までどおりの読み方へ落ちてもらう。
          ここは島の API から来た例外なので、YouTube のもの（ApiError）とは別。 */
       if (!(e instanceof ApiError)) {
-        if (msg.includes("no doneru key")) {
-          hooks.onGiveUp("no-key");
-          return;
-        }
         if (msg.includes("no-token")) {
           hooks.onGiveUp("no-token");
+          return;
+        }
+        /* 島の API が 4xx を返した（鍵が無い・あやとではない）。
+           **叩き直しても直らないので、ここで諦める。** 諦めないと、
+           開いているあいだ数秒おきに Functions を呼び続けることになる。 */
+        if (/^Error: 4\d\d /.test(msg)) {
+          hooks.onGiveUp("no-key");
           return;
         }
       }
