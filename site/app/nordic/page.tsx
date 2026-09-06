@@ -223,7 +223,9 @@ export default async function NordicPage() {
       {/* 旅のしおり。**紙で囲まない。** 中身が行き先1つしか無い紙は、
           見出しとふちのほうが中身より大きくなる。タイルは板なので、
           紙の上に置かなくてもそれだけで押せるものに見える。 */}
-      <Link className="tile" href="/nordic/guide">
+      {/* 紙どうしのあいだは 32px 空く決まりなので、板1枚のときは自分で空ける。
+          空けないと、すぐ下の紙の見出し（貼り紙）がこの板に乗り上げる。 */}
+      <Link className="tile" href="/nordic/guide" style={{ marginBottom: "var(--sp-6)" }}>
         <span className="tile-mark">
           <Icon name="book" size={26} />
         </span>
