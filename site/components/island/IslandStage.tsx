@@ -581,20 +581,32 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     [],
   );
 
+  /* 看板ロゴの箱。**毎フレーム測らない。**
+     看板の入りの動き（logo-in）が終わるまでは小さく傾いた箱が返るので、
+     置き直しのついでと、動きが終わったあとの1回だけ測る。 */
+  const readLogo = useCallback(() => {
+    const host = hostRef.current;
+    const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
+    if (!host || !logo) return;
+    const h = host.getBoundingClientRect();
+    const l = logo.getBoundingClientRect();
+    logoBox.current =
+      l.width < 4 ? null : { x: l.left - h.left, y: l.top - h.top, r: l.right - h.left, b: l.bottom - h.top };
+    platesDirty.current = true;
+  }, []);
+
+  /* 看板は寄りと引きで置き場所も大きさも変わる（`hero.css` の `[data-view]`）。
+     **変わったら測り直す。** 測ったきりにしていたので、引きに移っても
+     寄りのときの小さい箱を持ったままで、島の上半分の札が看板に乗っても
+     看板が引かなかった（「あやとのこと」がロゴの副題に重なる）。 */
+  useEffect(() => {
+    const t = window.setTimeout(readLogo, 620);
+    return () => window.clearTimeout(t);
+  }, [wide, box.w, box.h, readLogo]);
+
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
-    /* 看板ロゴの箱。**毎フレーム測らない。**
-       看板の入りの動き（logo-in）が終わるまでは小さく傾いた箱が返るので、
-       置き直しのついでと、動きが終わったあとの1回だけ測る。 */
-    const readLogo = () => {
-      const host = hostRef.current;
-      const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
-      if (!host || !logo) return;
-      const h = host.getBoundingClientRect();
-      const l = logo.getBoundingClientRect();
-      logoBox.current = l.width < 4 ? null : { x: l.left - h.left, y: l.top - h.top, r: l.right - h.left, b: l.bottom - h.top };
-    };
     const read = () => {
       const r = el.getBoundingClientRect();
       // 幅が分かった＝寄りの度合いが決まる。到着演出を飛ばす人は、ここで置き直す。
@@ -612,7 +624,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       window.clearTimeout(settle);
       ro.disconnect();
     };
-  }, []);
+  }, [readLogo]);
 
   /* バーは「今日の島」が出てから背が決まる。カメラの寄せ量がそれを見ているので、
      出たあとに測り直す。測るのは1回でよくて、ここが変わるのは板が開いた時だけ。 */
@@ -1072,15 +1084,23 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         /* 札が看板ロゴの下へ入ったか。**入ったら看板のほうが引く。**
            看板は一度読めば済む飾りで、札は今から歩いて行く先だから、
            どちらか1枚しか読めないなら札を残す。
-           札の箱は測らずに見積もる。測ると毎フレーム layout を起こすし、
-           早めに引くぶんには困らない（半端に重なった絵がいちばん読めない）。 */
+           判定は札を置き終わってから、下の詰め合わせの中でやる（測らずに
+           見積もると、縁へ寄せた札が建物の真上にいないぶん当たらない）。 */
         const lb = logoBox.current;
         let under = false;
         /* 縁に寄せる札が避ける場所。
            島の隅のボタン（島をながめる・島の地図・今日の島）と、看板ロゴと、
            **画面に入っている札そのもの**。ここを見ずに縁へ寄せると、
-           寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。 */
+           寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。
+
+           **看板ロゴもここに入れる。** 前は入れずに「ぶつかったらロゴが引く」
+           だけにしていた。寄りでは札が1枚で、ロゴも右上の小さい印なので
+           それで足りていたが、引きではロゴが上中央に大きく出て、
+           看板の6枚のうち1枚（あやとのこと）が必ずその上に乗る。
+           引くだけにすると、引きに移るたびに島の名前が消える。
+           **どかせるなら、どかしてから引く。** どうしても乗るときだけ引く。 */
         const taken = uiBoxes.current.slice();
+        if (lb) taken.push({ x: lb.x, y: lb.y, w: lb.r - lb.x, h: lb.b - lb.y });
         /** この画面の札の居場所。ぜんぶ出そろってから、縁へ寄せるものを決める */
         const plates: {
           i: number;
@@ -1103,12 +1123,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           const px = sx(sp.x);
           const py = sy(sp.y);
           el.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`;
-          if (lb && !under && sp.id === best) {
-            // 札は建物の頭の上に出る。横は中心から ±100、縦はそこから 60 上まで見る
-            const top = py - sp.size * k - 60;
-            const bottom = py - sp.size * k + 8;
-            under = px + 100 > lb.x && px - 100 < lb.r && bottom > lb.y && top < lb.b;
-          }
           // 絵の大きさは倍率で変わるので、測り直す。
           // 当たり判定は指で押せる最小(48px)まで広げるが、
           // 札の高さは絵の実寸を使う。最小に合わせると、引きで札が建物から浮いてしまう。
@@ -1252,6 +1266,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             else pl.el.removeAttribute("data-edge");
           }
           pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
+          /* 看板ロゴの下に入ったか。**置き終わった箱で見る。**
+             前は建物の足元から「たぶんこの辺に出る」と見積もっていて、しかも
+             近づいた1軒しか見ていなかった。引きでは看板の6枚が出るうえ、
+             縁へ寄せた札は建物の真上にいないので、どちらも当たらない。
+             実際に「あやとのこと」がロゴの副題に乗ったまま、看板が引かなかった。 */
+          if (lb && !under)
+            under =
+              rect.x + dx < lb.r &&
+              rect.x + dx + rect.w > lb.x &&
+              rect.y + dy < lb.b &&
+              rect.y + dy + rect.h > lb.y;
         }
         if (lb) {
           const now = under ? "away" : "";

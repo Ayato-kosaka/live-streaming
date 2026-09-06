@@ -13,6 +13,7 @@
  *   SPORT=4141 node clutter.mjs                  島に降りたところ
  *   SPORT=4141 STATE=1 node clutter.mjs          住人の名前が出ている日（本番はこちら）
  *   SPORT=4141 OPENBAR=1 node clutter.mjs        行き先をひらいたところ
+ *   SPORT=4141 LOOK=1 node clutter.mjs           「島をながめる」の引き（島ぜんぶ）
  *   SPORT=4141 FRESH=1 node clutter.mjs          初めて来た人
  *   SPORT=4141 WIDE=1 node clutter.mjs           PC(1440×900)
  *   SPORT=4141 TIME=day SHOT=/tmp/a.png node clutter.mjs   並べて撮るとき
@@ -27,6 +28,8 @@ const WIDE = process.env.WIDE === "1";
 const SHOT = process.env.SHOT || "";
 const FRESH = process.env.FRESH === "1";
 const OPENBAR = process.env.OPENBAR === "1";
+/** 「島をながめる」を押してから数える。引きの札の枚数を見るとき */
+const LOOK = process.env.LOOK === "1";
 
 const STATE = process.env.STATE === "1";
 
@@ -70,6 +73,15 @@ await p.waitForTimeout(5000);
 if (OPENBAR) {
   await p.click(".bar-toggle").catch(() => {});
   await p.waitForTimeout(600);
+}
+if (LOOK) {
+  /* 吹き出しが出ているあいだは、どこを押しても閉じるだけ（`IslandStage` の
+     onStageClick）。**1回で切り替わるとは限らない**ので、切り替わるまで押す。 */
+  for (let k = 0; k < 3; k++) {
+    if ((await p.getAttribute(".stage", "data-cam")) === "wide") break;
+    await p.click(".stage-view").catch(() => {});
+    await p.waitForTimeout(1800);
+  }
 }
 // 時間帯の色。並べて比べるときは同じ時間に揃える（既定は実時刻のまま）
 if (process.env.TIME) await p.evaluate((t) => { document.documentElement.dataset.time = t; }, process.env.TIME);
