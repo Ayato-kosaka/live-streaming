@@ -62,6 +62,14 @@ export const SHELVES: Shelf[] = [
     note: "島に建っている10軒と、島そのもの",
     items: [
       { href: "/", name: "島", note: "ここ。10軒とも押せば入れる", q: q("島 top home ayato") },
+      /* 建物ではないが、島の直下にある面（#173）。`/about` と `/friends` と
+         `/me` の3か所から見えるので、どれかの子にはしていない。 */
+      {
+        href: "/cards",
+        name: "あやと島カード",
+        note: "その日いてくれた人に渡る、その日の1枚",
+        q: q("あやと島カード cards カード コレクション 投げ銭"),
+      },
       ...DOORS.map((d) => ({
         href: d.href,
         name: d.label,

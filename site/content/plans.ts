@@ -268,6 +268,32 @@ export const PLANS: Plan[] = [
 
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
 
+/** カードに添える、その日の企画(#173)。名前と、その企画の話がある面。 */
+export type PlanBrief = { title: string; href: string };
+
+/**
+ * 日付 → その日の企画。**あやと島カードが引く表。**
+ *
+ * カードは「その日の写真 × その日の名簿にいる人」でできていて、
+ * 企画とはどこにも結びついていない。**結んでいるのは日付だけ。**
+ * 新しい欄を足さずに済むのは、`date` がそのまま写真の `day` だから
+ * (フードワインフェスは 2026-09-06 で、その日の写真と同じ)。
+ *
+ * **`until` を持つ長い企画は、始まった日にしか付かない。**
+ * 北欧の旅のような10日ものを毎日に付けると、旅の写真ぜんぶに
+ * 同じ名前が並ぶ。全部に付く名前は、何も言っていないのと同じ。
+ *
+ * ここを画面(client)から直に読まない。この表を作るために `PLANS`
+ * (20KB)を連れていくことになる。**面(server)で引いて、値だけ渡す。**
+ */
+export const PLAN_BY_DAY: Record<string, PlanBrief> = Object.fromEntries(
+  PLANS.filter((p) => p.date).map((p) => [
+    p.date as string,
+    // 専用の面があるものはそちら、無ければ一覧のその行へ
+    { title: p.title, href: p.href ?? `/next#${p.id}` },
+  ]),
+);
+
 /**
  * 島から届いた事実を、企画に貼ったもの。
  *

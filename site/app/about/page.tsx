@@ -8,6 +8,8 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import { LiveNumber } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { ACTIVE_FRIENDS } from "@/content/residents";
+import { PLAN_BY_DAY } from "@/content/plans";
+import CardStrip from "@/components/cards/CardStrip";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/countries";
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
@@ -372,6 +374,12 @@ export default function AboutPage() {
           </span>
           <Icon name="right" size={16} className="tile-go" />
         </Link>
+
+        {/* あやと島カード（#173）。あやとの言葉:「導線は /about の
+            住んでる人の下で一覧見れると良いかも」。**住んでる人の札の下。**
+            企画の表はここ（server）で引いて値だけ渡す。client から
+            `content/plans.ts`（20KB）を読ませないため。 */}
+        <CardStrip plans={PLAN_BY_DAY} />
       </Panel>
 
       {/* 道のり。縦に12段だと 1,000px を超えるので、横に倒して指で送る道にした。

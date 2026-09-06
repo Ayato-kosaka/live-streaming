@@ -10,6 +10,7 @@
  *   hero   … 島の上に乗せる看板ロゴ
  *   pages  … 島の外のページ（パネル、タイル、見出し、各コーナー）
  *   plans  … これからの企画のカード
+ *   cards  … あやと島カード（その日いた人に渡る1枚）
  *   nordic … 北欧ヒッチハイク旅（地図・しおり・見どころ）
  *   chain  … 島の連なり（/atlas）。章ごとの島と、島から島への道
  *   ui     … 折りたたみ・アイコン・下書きの道具・デザインの見本
@@ -22,6 +23,7 @@
 @import "./css/hero.css";
 @import "./css/pages.css";
 @import "./css/plans.css";
+@import "./css/cards.css";
 @import "./css/nordic.css";
 @import "./css/ui.css";
 @import "./css/home.css";

@@ -135,3 +135,19 @@ jobs:
 
       - name: あやと島の数字を更新
         run: python python/island_daily_stats.py
+
+      # その日スパチャしてくれた人の名簿。**ここに置く理由は、真上の集計と
+      # 同じで「チャットが入ったあとに BigQuery から Firestore へ写す」もの
+      # だから。** 別のワークフローにすると、また繋ぎ忘れる。
+      #
+      # 実際に繋ぎ忘れていた。nordic_supporters.py は書いてあったのに
+      # どこからも呼ばれておらず、nordicDays.people がずっと空だった。
+      # 名簿が空だと、写真にキャラクターを入れる画面（PhotoStudio）に
+      # 選べる人が1人も出ない。**写真を貼っても何も起きない状態**が
+      # 続いていた（2026-09-06 に気づいた）。
+      #
+      # 直近3日ぶんを引き直す。1日だけだと、取り込みがこけた翌日に
+      # その日が永久に空のまま残る。手で足した Doneru のぶんは
+      # merge() を通すので消えない。
+      - name: その日いた人の名簿を更新
+        run: python python/nordic_supporters.py --days 3

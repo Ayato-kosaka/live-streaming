@@ -759,6 +759,62 @@ export const deleteNordicPhoto = (id: string, token: string) =>
   });
 
 
+/* ---------------- あやと島カード(#173) ----------------
+   その日に投げ銭してくれた人が、その日の写真を1枚もらう。
+   焼き込もうがしまいが、もらった扱いになる(あやとの言葉)。
+
+   **配られてはいない。** サーバーは、その日の写真とその日の名簿から
+   引くたびに組み立てている（`functions/src/cards.ts` 冒頭）。名簿は
+   BigQuery から翌朝に入るので、「貼った瞬間に配る」だと、その日ぶんが
+   永久に0枚になる。 */
+
+/** カード1枚。**置き場にこの形では入っていない。組み立てたもの。** */
+export type IslandCard = {
+  id: string;
+  /** その日(YYYY-MM-DD)。企画はこの日付で引く */
+  day: string;
+  photoId: string;
+  url: string;
+  w: number;
+  h: number;
+  note: string;
+  /** もらった人の YouTube チャンネル。Doneru の人は null で、持ち主が分からない */
+  channelId: string | null;
+  /** 名簿が絵まで持っていたときだけ。ふつうは `content/residents.ts` で引く */
+  icon: string | null;
+  /** 島に名前を出してよいと言った人だけ */
+  name: string | null;
+  /** 写真の中のどこに立つか。0〜1 の割合。`y` は足元の高さ */
+  x: number;
+  y: number;
+  rot: number;
+  scale: number;
+  /** 本人が動かしたか。既定のままなら false */
+  moved: boolean;
+  /** 写真が貼られた時刻。並べ替え済みなので、画面では並べ直さない */
+  at: number;
+};
+
+/** 配られたカードぜんぶ。**新しい順で返る。** */
+export const getCards = () => req<{ cards: IslandCard[] }>("/cards");
+
+/** カードの置き方。0〜1 の割合と、傾きと、大きさ。 */
+export type CardPlace = { x: number; y: number; rot: number; scale: number };
+
+/**
+ * カードを動かす。**本人だけ**（あやとは全部動かせる）。
+ *
+ * 自分のカードかどうかは、送った値ではなく `islandUsers/{uid}.channelId` を
+ * サーバーが見て決める。ここを騙しても他人のカードは動かない。
+ */
+export const moveCard = (id: string, place: CardPlace, token: string) =>
+  req<CardPlace & { id: string; moved: boolean }>(`/cards/${id}`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(place),
+  });
+
+
 /* ---------------- 北欧旅の、その日に起きたこと ----------------
    `content/nordic.ts` の `NORDIC_LOG` は Git にあって、直すには commit して
    Hosting を手で起動しないと出ない。**旅の最中のあやとには、それは回らない。**

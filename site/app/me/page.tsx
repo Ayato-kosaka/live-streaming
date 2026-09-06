@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import MyPage from "@/components/me/MyPage";
+import { PLAN_BY_DAY } from "@/content/plans";
 import "./me.css";
 
 export const metadata: Metadata = {
@@ -31,7 +32,10 @@ export default function MePage() {
            1画面から送りのボタンが押し出される（撮って決めた）。 */
         lead="貼った付箋、出した企画、島にいるじぶん。"
       />
-      <MyPage />
+      {/* 企画の表は面（server）で引いて値だけ渡す。カードに出る「その日の
+          企画」はこれで引く。client から `content/plans.ts`（20KB）を
+          読ませないため。 */}
+      <MyPage planDays={PLAN_BY_DAY} />
     </PageShell>
   );
 }
