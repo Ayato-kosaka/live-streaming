@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
-import { BEFORE_STREAM, COUNTRIES } from "@/content/countries";
+import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
@@ -123,15 +123,17 @@ export default function MapPage() {
       {/* **配信より前の6週間を、地図と年表のあいだに置く。**
           下の一覧は配信タイトルから復元したものなので、配信の無い6週間が
           まるごと抜けている。「1カ国目はフランス」と読めてしまうが、
-          実際はその前にイギリス・バルセロナ・ローマを回っている。
-          **日付は書かない。「2週間ずつ」しか聞いていないので、
-          from/to を書くと聞いていない日付を書いたことになる。** */}
+          実際はその前にロンドン・バルセロナ・ローマを回っている。
+
+          **日付が届いたので入れた**（2026-09-06、GitHub #121）。前は「2週間ずつ」と
+          書いていたが、実際は 16日・12日・12日で、そろっていなかった。
+          パリだけは滞在の途中で配信が始まっているので、その1行だけ断る。 */}
       <Panel className="mbefore">
         <h2>その前に、配信していない6週間がある</h2>
         <p>
           日本を出たのは{PROFILE.leftJapan.replace(/-/g, "/")}、パリで配信を始めたのは
-          {START.replace(/-/g, "/")}。そのあいだの6週間は、
-          {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}を2週間ずつ回っていました。
+          {START.replace(/-/g, "/")}。そのあいだの{BEFORE_STREAM_DAYS}日は、
+          {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}と歩いていました。
           配信が無いので、下の一覧には出てきません。かわりに、ショート動画が
           {BEFORE.length}本あります。
         </p>
@@ -140,7 +142,9 @@ export default function MapPage() {
             <li key={c.slug}>
               <b>{c.city ?? c.name}</b>
               <i>{c.city ? c.name : ""}</i>
-              <span>{c.weeks}週間</span>
+              {/* 日付まで出すと1行に4つ並んで読めなくなるので、日数だけ。
+                  パリは滞在の途中で配信が始まっているので、そこだけ言い添える */}
+              <span>{c.days}日{c.streamBegan ? "・この街で配信が始まった" : ""}</span>
             </li>
           ))}
         </ol>

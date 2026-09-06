@@ -92,6 +92,11 @@ export const APPS: AppEntry[] = [
       { date: "2025-05-11", kind: "release", title: "リリース", videoId: "cisSYeOGDUE" },
       { date: "2025-07-09", kind: "update", title: "大型アップデート", videoId: "-gaULSsv63Y" },
       { date: "2025-07-12", kind: "trouble", title: "不具合が直った", videoId: "4fOkTVpRVpo" },
+      // 本人は「終了した日も（スペリーブと）おなじ」と言っている（GitHub #121）が、
+      // **6月6日にはしない。** すぐ上の7月12日に不具合を直しているので、
+      // 6月6日を終了日にすると「終わったあとに直した」と読める年表になる。
+      // 最後に手を入れた日を終了日として置き、本文では「なに食べよを作り始めたころ」と言う。
+      { date: "2025-07-12", kind: "milestone", title: "サポートを終了した", note: "「なに食べよ」を作り始めたころ" },
     ],
   },
 ];
@@ -124,6 +129,9 @@ export const PAST_APPS: AppEntry[] = [
     milestones: [
       { date: "2023-01-09", kind: "release", title: "App Store に出した" },
       { date: "2023-12-05", kind: "update", title: "最後のアップデート", note: "バージョン 2.5.0" },
+      // 本人の言葉（2026-09-06、GitHub #121）「Spelieve はなに食べよ作りはじめて、
+      // サポート終了。明記して良い」。日はヨルダンで「なに食べよ」が始まった回と同じ。
+      { date: "2025-06-06", kind: "milestone", title: "サポートを終了した", note: "「なに食べよ」を作り始めた日" },
     ],
   },
 ];
