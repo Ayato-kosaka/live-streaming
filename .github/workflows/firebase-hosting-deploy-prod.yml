@@ -33,12 +33,29 @@ jobs:
       # サービスアカウントに Firebase Rules の権限が無いと 403 になるが、
       # サイトはルールに依存しない(書き込みは全部 Functions 経由)ので
       # ここで止めない。権限を付けたら自動で反映されるようになる。
+      # **continue-on-error は付けない。** 以前ここと Storage に付いていて、
+      # Storage のルールが403で落ちていたのに job が success を返し、
+      # 数日ぶん誰も気づかなかった（#132）。配れなかったなら、赤く落ちてほしい。
       - name: 🔐 Firestore ルールのデプロイ
-        continue-on-error: true
         run: |
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx --yes firebase-tools@13 deploy --only firestore:rules \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
+      # 複合インデックス(firestore.indexes.json)。テーマ付きの付箋を
+      # where("theme", "==", ...) で引くのに要る(#160)。
+      # ルールと同じサービスアカウントで配るが、**別の step にしてある。**
+      # 1つにまとめると、権限で落ちたときにどちらが配られなかったのか分からない。
+      # **ここも continue-on-error を付けない。** 「無くても画面は落ちない」は
+      # 本当だが、落ちないまま**テーマの付箋が全部そらで返る**。
+      # 静かに壊れるほうが、赤く落ちるより見つけにくい。
+      - name: 🔎 Firestore インデックスのデプロイ
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:indexes \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
 

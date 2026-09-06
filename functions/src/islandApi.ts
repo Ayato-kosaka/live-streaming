@@ -37,6 +37,11 @@ const DRAFTS = db.collection("islandDrafts");
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
 const POLLS = db.collection("islandPolls");
 const PVOTES = db.collection("islandPollVotes");
+/* 付箋のハート(#160)。1人1回だけを守るための入れ物で、
+   ドキュメントIDが `<付箋のID>_<uid か端末ID>`。
+   **消す＝解除。** 票(islandVotes)と違って取り消せるので、
+   「押した」を数える側ではなくこちらの有無で持つ。 */
+const HEARTS = db.collection("islandHearts");
 /* 今日ここに来た人の数(docs/island-play.md 仕掛け16)。
    「いま何人います」は出さない。作れないうえに、たいていの時間帯は
    「1人」と出て島が寂れて見える。日単位なら数十〜数百になる。
@@ -160,6 +165,23 @@ const IDEAS_PER_DAY = 8;
 const NOTES_PER_DAY = 20;
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
+
+/* ---- テーマ付きの付箋(#160) ----
+   `【ポーランド】` を人が自分で発明していたのは、入力欄に宛先が無かったから。
+   宛先を正式な欄（`theme`）にして、仕分けを本文の推測から外す。
+
+   テーマの表そのものは Git（`site/content/themes.ts`）にある。
+   サーバーは形だけを見て、知らないテーマも受け取る。**表と突き合わせない。**
+   突き合わせると、表を1行足すたびに Functions のデプロイが要る
+   （画面だけ先に出ると、その日ぶんの付箋がまるごと 400 で消える）。 */
+const THEME_ID = /^[a-z][a-z0-9-]{1,39}$/;
+/** 返信。あやとが旅の途中に親指で打つものなので、付箋より少しだけ長い。 */
+const MAX_REPLY_LEN = 300;
+/** 1日に貼れる付箋。企画の提案より軽い行為なので、提案(8)より多くしてある。 */
+const STICKIES_PER_DAY = 20;
+/* 1日に押せるハート。**押し直し（解除）も1回ぶん使う。**
+   使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
+const HEARTS_PER_DAY = 120;
 
 /* ---- 面ごとの「押すだけの問い」----
    北欧のわかれ道（区間ごとの「どっちにしてほしい？」）で作った入れ物。
@@ -421,17 +443,19 @@ function parseCursor(v: unknown): [number, string] | null {
  * **`limit * 2` を1回引くだけ、という取り方はしない。** 非表示が半分を
  * 超えると、まだ在るのに「これで全部」と言ってしまう。足りなければ
  * 続きを引き直して、上限に当たったことだけを `more` で返す。
- * @param {FirebaseFirestore.CollectionReference} col 読む場所
+ * @param {FirebaseFirestore.Query} col 読む場所。`where` で絞ったあとでもよい
  * @param {number} limit 1ページの件数
  * @param {unknown} before 続きの位置(`cursorOf` が書いたもの)
  * @param {Function} shape 書類を返す形に直す関数
+ * @param {Function} [skip] 飛ばす書類。hidden の判定には足す形で効く
  * @return {Promise<Page<T>>} 1ページぶん
  */
 async function pageOf<T>(
-  col: FirebaseFirestore.CollectionReference,
+  col: FirebaseFirestore.Query,
   limit: number,
   before: unknown,
   shape: (d: FirebaseFirestore.QueryDocumentSnapshot) => T,
+  skip?: (d: FirebaseFirestore.QueryDocumentSnapshot) => boolean,
 ): Promise<Page<T>> {
   // where + orderBy の組み合わせは複合インデックスが要るので、
   // 並べ替えだけ Firestore に任せて、非表示の除外はこちらで行う。
@@ -455,6 +479,7 @@ async function pageOf<T>(
     for (const d of snap.docs) {
       scan = d;
       if (d.get("hidden") === true) continue;
+      if (skip?.(d)) continue;
       if (items.length >= limit) {
         more = true;
         break;
@@ -511,13 +536,118 @@ function listIdeas(limit: unknown = 120, before?: unknown) {
 }
 
 /**
- * 表示できる付箋を新しい順に1ページぶん取る。
+ * 表示できる付箋を新しい順に1ページぶん取る。**企画に貼られたぶんだけ。**
+ *
+ * 同じコレクションに、テーマ付きの付箋(#160)が並んで入っている。
+ * あちらは `planId` を持たないので、ここで拾うと画面の側で
+ * 「もう表に無い企画」の棚に落ちる。**入れ物が同じでも、口は分ける。**
  * @param {unknown} limit 1ページの件数
  * @param {unknown} before 続きの位置
  * @return {Promise<Page<object>>} 付箋の1ページ
  */
 function listNotes(limit: unknown = 200, before?: unknown) {
-  return pageOf(NOTES, clampPage(limit), before, noteShape);
+  return pageOf(
+    NOTES,
+    clampPage(limit),
+    before,
+    noteShape,
+    (d) => !d.get("planId"),
+  );
+}
+
+/** テーマ付きの付箋1枚。画面に返す形(#160)。 */
+type StickyShape = {
+  id: string;
+  theme: string;
+  text: string;
+  /** 名乗った名前。名乗っていなければ無い */
+  by?: string;
+  hearts: number;
+  /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
+  byOwner: boolean;
+  /** あやとからの返信。1つだけ */
+  reply?: string;
+  repliedAt?: string;
+  /** しまってあるか。**しまっても消えない**ので、戻すときに要る */
+  archived?: boolean;
+  createdAt: string;
+};
+
+/**
+ * テーマ付きの付箋を、画面に返す形に直す。
+ *
+ * **`cid` と `uid` は返さない。** 誰が書いたかは名乗った名前だけで足りる。
+ * 端末IDを返すと、同じ人の付箋を並べて数えられる。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {StickyShape} 付箋
+ */
+function stickyShape(d: FirebaseFirestore.QueryDocumentSnapshot): StickyShape {
+  const v = d.data();
+  const reply = clean(v.reply, MAX_REPLY_LEN);
+  return {
+    id: d.id,
+    theme: (v.theme as string) ?? "",
+    text: (v.text as string) ?? "",
+    by: (v.by as string) || undefined,
+    hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
+    byOwner: v.byOwner === true,
+    reply: reply || undefined,
+    repliedAt: v.repliedAt ?
+      new Date(v.repliedAt as number).toISOString() :
+      undefined,
+    archived: v.archived === true ? true : undefined,
+    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
+  };
+}
+
+/**
+ * テーマ付きの付箋を1ページぶん取る。
+ *
+ * **しまったもの(`archived`)は出さない。** 出すのは、あやたが戻すときだけ
+ * (`archived=1`)。消さずにしまう決めなので、入れ物には残っている。
+ * @param {object} q 引きかた
+ * @param {string} [q.theme] テーマの id。無ければテーマ横断の新着
+ * @param {boolean} [q.archived] しまったぶんだけを出す
+ * @param {boolean} [q.byHearts] ハートの多い順にする
+ * @param {unknown} [q.limit] 1ページの件数
+ * @param {unknown} [q.before] 続きの位置
+ * @return {Promise<Page<StickyShape>>} 付箋の1ページ
+ */
+async function listStickies(q: {
+  theme?: string;
+  archived?: boolean;
+  byHearts?: boolean;
+  limit?: unknown;
+  before?: unknown;
+}): Promise<Page<StickyShape>> {
+  const limit = clampPage(q.limit);
+  const want = !!q.archived;
+  const base: FirebaseFirestore.Query = q.theme ?
+    NOTES.where("theme", "==", q.theme) :
+    NOTES;
+  /* ハートの多い順は、続きの位置を持たない。位置は createdAt で書いてあって、
+     並びが変わると意味を持たなくなる。国のページは1テーマぶんしか出さないので、
+     1回引いて終わりで足りる。 */
+  if (q.byHearts && q.theme) {
+    const snap = await base
+      .orderBy("hearts", "desc")
+      .limit(Math.min(limit, 100))
+      .get();
+    const items = snap.docs
+      .filter((d) => d.get("hidden") !== true)
+      .filter((d) => (d.get("archived") === true) === want)
+      .map(stickyShape);
+    return {items, more: false, next: null};
+  }
+  return pageOf(
+    base,
+    limit,
+    q.before,
+    stickyShape,
+    /* テーマの無い付箋（企画に貼られた旧来のぶん）は、この口からは出さない。
+       テーマ横断の新着（`theme` を渡さないとき）で混ざるのを止める。 */
+    (d) => !d.get("theme") || (d.get("archived") === true) !== want,
+  );
 }
 
 /**
@@ -1593,6 +1723,237 @@ export const islandApi = onRequest(
             createdAt: new Date(now).toISOString(),
           },
         });
+        return;
+      }
+
+      /* ---------------- テーマ付きの付箋(#160) ----------------
+         **旧来の `/notes` とは口を分けてある。** 入れ物（islandNotes）は
+         同じだが、あちらは企画に貼るもので `planId` を持ち、こちらは
+         テーマに貼るもので `theme` を持つ。同じ口にすると、画面を
+         切り替えている途中の日に、両方が混ざったものが両方の画面に出る。
+         旧来のぶんが移り終わったら（#162）、あちらの口を畳む。 */
+      if (method === "GET" && path === "/stickies") {
+        const theme = clean(req.query.theme, 40);
+        if (theme && !THEME_ID.test(theme)) {
+          res.status(400).json({error: "bad theme"});
+          return;
+        }
+        /* しまったぶんは、戻す人にしか見せない。ここを開けると
+           「消さずにしまう」が「畳んで隠しただけ」になる。 */
+        const archived = req.query.archived === "1";
+        if (archived && !(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const page = await listStickies({
+          theme: theme || undefined,
+          archived,
+          byHearts: req.query.sort === "hearts",
+          limit: req.query.limit ?? 200,
+          before: req.query.before,
+        });
+        /* ハートは押した瞬間に数字が動くのが要なので、短めに寝かせる。
+           しまったぶんは1人しか見ないので、置いておく意味がない。 */
+        res.set(
+          "Cache-Control",
+          archived ?
+            "no-store" :
+            "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        res.json({notes: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      if (method === "POST" && path === "/stickies") {
+        const who = await whoIs(req.headers.authorization);
+        const theme = clean(body.theme, 40);
+        const text = clean(body.text, MAX_NOTE_LEN);
+        const cid = String(body.cid ?? "");
+        if (!THEME_ID.test(theme)) {
+          res.status(400).json({error: "bad theme"});
+          return;
+        }
+        if (text.length < 2) {
+          res.status(400).json({error: "text too short"});
+          return;
+        }
+        if (!isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        /* 運営者が立てた付箋（おたずねの選択肢になるもの）。
+           **`/me` の admin ではなく、ここでもう一度見る。**
+           あちらは画面に道具を出すかどうかだけの返事で、
+           そこを信じて権限を決めているわけではない。 */
+        const byOwner =
+          body.byOwner === true &&
+          !!(await ownerUid(req.headers.authorization));
+        if (body.byOwner === true && !byOwner) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        if (
+          !byOwner &&
+          !(await takeQuota(who?.uid ?? cid, "sticky", STICKIES_PER_DAY))
+        ) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const now = Date.now();
+        const ref = await NOTES.add({
+          theme,
+          text,
+          /* 名乗った名前。ログインしている人は、島に出す名前をそのまま使う。
+             **本文に「by まこも」と書かせない**ための欄なので、
+             ログインしていない人にも空けてある。 */
+          by: who?.name || clean(body.by, MAX_NAME_LEN) || null,
+          hearts: 0,
+          byOwner,
+          hidden: false,
+          archived: false,
+          cid,
+          uid: who?.uid ?? null,
+          createdAt: now,
+          ip: fwd(req.headers["x-forwarded-for"]),
+        });
+        res.json({
+          note: {
+            id: ref.id,
+            theme,
+            text,
+            by: who?.name || clean(body.by, MAX_NAME_LEN) || undefined,
+            hearts: 0,
+            byOwner,
+            createdAt: new Date(now).toISOString(),
+          },
+        });
+        return;
+      }
+
+      /* ハート。**ログイン不要で、もう一度押すと外れる。**
+         企画の「さんせい」と違って取り消せるので、押したことは
+         「islandHearts に書類があるか」で持つ。消す＝解除。 */
+      const heartMatch = path.match(
+        /^\/stickies\/([A-Za-z0-9_-]{6,})\/heart$/,
+      );
+      if (method === "POST" && heartMatch) {
+        const id = heartMatch[1];
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        const key = who?.uid ?? cid;
+        if (!(await takeQuota(key, "heart", HEARTS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const heartRef = HEARTS.doc(`${id}_${key}`);
+        const noteRef = NOTES.doc(id);
+        let out: {hearts: number; on: boolean};
+        try {
+          out = await db.runTransaction(async (tx) => {
+            const [h, n] = await Promise.all([
+              tx.get(heartRef),
+              tx.get(noteRef),
+            ]);
+            if (!n.exists) throw new Error("no note");
+            const data = n.data() ?? {};
+            // しまった付箋・隠した付箋は、IDを知っていても押せない。
+            // 一覧に出さないだけだと、前に開いた画面から押し続けられる。
+            if (data.hidden === true || data.archived === true) {
+              throw new Error("closed");
+            }
+            const cur = Math.max(0, Math.floor(Number(data.hearts ?? 0)) || 0);
+            if (h.exists) {
+              tx.delete(heartRef);
+              const next = Math.max(0, cur - 1);
+              tx.update(noteRef, {hearts: next});
+              return {hearts: next, on: false};
+            }
+            tx.set(heartRef, {at: Date.now(), note: id});
+            tx.update(noteRef, {hearts: cur + 1});
+            return {hearts: cur + 1, on: true};
+          });
+        } catch (e) {
+          const why = String(e).replace("Error: ", "");
+          res.status(why === "no note" ? 404 : 400).json({error: why});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json(out);
+        return;
+      }
+
+      /* あやとからの返信。1枚につき1つ。**空で送ると取り消し。**
+         直すのも同じ口で、書き直せば上書きになる。 */
+      const replyMatch = path.match(
+        /^\/stickies\/([A-Za-z0-9_-]{6,})\/reply$/,
+      );
+      if (method === "POST" && replyMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const text = clean(body.text, MAX_REPLY_LEN);
+        const ref = NOTES.doc(replyMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        const now = Date.now();
+        await ref.set(
+          text ?
+            {reply: text, repliedAt: now, repliedBy: uid} :
+            {
+              reply: admin.firestore.FieldValue.delete(),
+              repliedAt: admin.firestore.FieldValue.delete(),
+              repliedBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+          reply: text || null,
+          repliedAt: text ? new Date(now).toISOString() : null,
+        });
+        return;
+      }
+
+      /* しまう・戻す。**あやとだけ。消さない。**
+         二重投稿も荒れたものもこれで片付く。ハートの数はそのまま残るので、
+         戻したときに数が消えていない。 */
+      const archiveMatch = path.match(
+        /^\/stickies\/([A-Za-z0-9_-]{6,})\/archive$/,
+      );
+      if (method === "POST" && archiveMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const on = body.on !== false;
+        const ref = NOTES.doc(archiveMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        await ref.set(
+          on ?
+            {archived: true, archivedAt: Date.now(), archivedBy: uid} :
+            {
+              archived: false,
+              archivedAt: admin.firestore.FieldValue.delete(),
+              archivedBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, archived: on});
         return;
       }
 

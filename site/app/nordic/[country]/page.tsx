@@ -6,7 +6,7 @@ import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
-import CountryIdeas from "@/components/nordic/CountryIdeas";
+import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import { Mark } from "@/components/nordic/Marks";
 import MAP from "@/content/nordic/map.json";
@@ -241,7 +241,9 @@ export default async function NordicCountryPage({
         ))}
       </Panel>
 
-      <CountryIdeas country={c.name} />
+      {/* その国あての付箋。**宛先はもう決まっている**ので、テーマを選ばせない。
+          テーマの id は国の slug と同じ（`content/themes.ts`）。 */}
+      <Notes theme={c.slug} title={`${c.name}でこれやって`} />
 
       <div className="nnav">
         {prev ? (

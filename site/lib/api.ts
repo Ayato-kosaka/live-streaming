@@ -184,6 +184,126 @@ export const postNote = (planId: string, text: string, token?: string | null) =>
     body: JSON.stringify({ planId, text, cid: clientId() }),
   });
 
+/* ---------------- テーマ付きの付箋（#160） ----------------
+   宛先（テーマ）を持つ付箋。ハートが押せて、あやとが1つだけ返信できて、
+   あやとがしまえる（消えない・戻せる）。
+
+   **旧来の `/notes`（企画に貼る付箋）とは口が別。** 入れ物は同じだが、
+   あちらは `planId`、こちらは `theme` を持つ。画面を切り替えている
+   途中の日に、両方が混ざったものが両方の画面に出るのを止めるため。 */
+
+/** 貼られた付箋1枚。 */
+export type Sticky = {
+  id: string;
+  /** 宛先。`content/themes.ts` の id */
+  theme: string;
+  text: string;
+  /** 名乗った名前。名乗っていなければ無い */
+  by?: string;
+  hearts: number;
+  /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
+  byOwner: boolean;
+  /** あやとからの返信。1枚につき1つ */
+  reply?: string;
+  repliedAt?: string;
+  /** しまってあるか。戻す画面でしか返ってこない */
+  archived?: boolean;
+  createdAt: string;
+};
+
+/**
+ * 付箋を読む。
+ *
+ * `theme` を渡さないと、テーマ横断の新着になる（掲示板はこちらを1回だけ引いて、
+ * テーマごとの札の数も、選んだテーマの中身も、同じ1回から出す）。
+ */
+export const getStickies = (o?: {
+  theme?: string;
+  /** ハートの多い順にする。テーマを1つに絞ったときだけ効く */
+  byHearts?: boolean;
+  limit?: number;
+}) => {
+  const q = new URLSearchParams();
+  if (o?.theme) q.set("theme", o.theme);
+  if (o?.byHearts) q.set("sort", "hearts");
+  if (o?.limit) q.set("limit", String(o.limit));
+  const s = q.toString();
+  return req<{ notes: Sticky[]; more: boolean; next: string | null }>(
+    `/stickies${s ? `?${s}` : ""}`,
+  );
+};
+
+/** しまってある付箋を読む。**あやとだけ。** 戻すときにしか使わない。 */
+export const getArchivedStickies = (token: string, theme?: string) =>
+  req<{ notes: Sticky[] }>(
+    `/stickies?archived=1${theme ? `&theme=${encodeURIComponent(theme)}` : ""}`,
+    { headers: auth(token) },
+  );
+
+/** 貼る。名前は書かなくていい（ログインしていれば島に出す名前が入る）。 */
+export const postSticky = (
+  p: { theme: string; text: string; by?: string; byOwner?: boolean },
+  token?: string | null,
+) =>
+  req<{ note: Sticky }>("/stickies", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ ...p, cid: clientId() }),
+  });
+
+/** ハートを押す。**もう一度押すと外れる。** 返るのは押したあとの数と、いまの状態。 */
+export const heartSticky = (id: string, token?: string | null) =>
+  req<{ hearts: number; on: boolean }>(`/stickies/${id}/heart`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ cid: clientId() }),
+  });
+
+/** 返信する。**あやとだけ。** 空で送ると取り消し。書き直せば上書き。 */
+export const replySticky = (id: string, text: string, token: string) =>
+  req<{ reply: string | null; repliedAt: string | null }>(
+    `/stickies/${id}/reply`,
+    { method: "POST", headers: auth(token), body: JSON.stringify({ text }) },
+  );
+
+/** しまう・戻す。**あやとだけ。消えない。** ハートの数はそのまま残る。 */
+export const archiveSticky = (id: string, on: boolean, token: string) =>
+  req<{ id: string; archived: boolean }>(`/stickies/${id}/archive`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ on }),
+  });
+
+/**
+ * 自分がハートを押した付箋。
+ *
+ * **解除できるので、サーバーの数だけでは「自分が押したか」が分からない。**
+ * 押したかどうかを毎回サーバーに聞くと、一覧を出すのにもう1往復要るうえ、
+ * ログインしていない人のぶんは端末IDを送ることになる。押した瞬間の返事
+ * （`heartSticky` の `on`）をここに写して、次に来たときも赤いままにする。
+ */
+const HEARTED = "ayato-island-hearted";
+
+export function heartedLocally(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    return new Set(JSON.parse(localStorage.getItem(HEARTED) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+export function rememberHeart(id: string, on: boolean) {
+  try {
+    const s = heartedLocally();
+    if (on) s.add(id);
+    else s.delete(id);
+    localStorage.setItem(HEARTED, JSON.stringify([...s]));
+  } catch {
+    /* localStorage が使えない環境では諦める。サーバー側には残っている */
+  }
+}
+
 /** 自分が投票した企画（サーバーにも記録するが、UIの即時反映用にローカルにも持つ） */
 export function votedLocally(): Set<string> {
   if (typeof window === "undefined") return new Set();

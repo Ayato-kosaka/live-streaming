@@ -719,10 +719,12 @@
 .isle-spot:not(.is-sign):not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
 /* 引き（島ぜんぶ）では、建っているもの全部の名前を出す。
    ---------------------------------------------------------
-   いまの島と同じ決まり（`app/css/island.css` の `[data-cam="wide"]` と
-   `docs/island-design.md` 3-4 の例外）。引きの用事は「この島に何が
-   建っているか」を一目で見ることなので、看板の有無で名前を隠すと、
-   看板を出さない建物が無名の小屋のまま残る。 */
+   引きで名前が出る数の上限は6つ（`docs/island-design.md` 3-4・6章）。
+   **章の島は建つものが最大6つ**（`docs/island-atlas.md` 4章。
+   `components/isle/spec.ts` が5つ＋船着き場で切っている）なので、
+   ここでは建っているものがそのまま6つ以内に収まる。
+   いまの島は10軒建っているので、あちらは `.is-sign` で6つに絞っている
+   （`app/css/island.css` の `[data-cam="wide"]`）。 */
 /* `:not(.is-sign):not(.is-on)` は class 4つぶんの強さがある。
    同じ強さでは後ろが勝つが、当てる先を1つ増やして確実に上書きする。 */
 .isle[data-cam="wide"] .isle-spot:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }

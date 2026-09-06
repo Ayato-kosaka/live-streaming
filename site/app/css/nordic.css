@@ -624,41 +624,10 @@ p.fork-was {
 }
 p.fork-was b { font-weight: 900; color: var(--ink); }
 
-/* --- 書く道具 ---
-   `.bpost` `.bin-name` は `components/nordic` と「企画をだす」で使う。
-   押せるものは厚みで言う（docs/island-world.md 3.4）。
-   書く欄は逆に、へこませる（`.bin` と同じ考え方）。 */
-.bin-name {
-  width: 100%;
-  max-width: 260px;
-  margin-top: var(--sp-2);
-  border: var(--bw-1) solid var(--frame);
-  border-radius: var(--r-pill);
-  padding: var(--sp-3) var(--sp-4);
-  min-height: 44px;
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  background: var(--paper-2);
-  box-shadow: inset 0 2px 5px color-mix(in srgb, var(--frame-deep) 20%, transparent);
-}
-.bpost {
-  display: inline-flex;
-  align-items: center;
-  margin-top: var(--sp-3);
-  min-height: 48px;
-  padding: var(--sp-3) var(--sp-5);
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  background: linear-gradient(var(--paper), var(--paper-2));
-  /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
-  box-shadow: var(--pop);
-  font-size: 13.5px;
-  font-weight: 900;
-  color: var(--ink);
-}
-.bpost:active { transform: translateY(4px); box-shadow: var(--pop-push); }
-.bpost:disabled { opacity: 0.5; box-shadow: none; transform: none; }
+/* 書く道具（`.bpost` `.bin-name`）は、国あての意見と一緒に消えた（#160）。
+   北欧の面で書くところは、掲示板と同じ `.bin` / `.bbtn` / `.nt-field` に
+   揃えた（`app/css/pages.css` と `app/css/live.css` の11章）。
+   **同じ意味の部品を2つ持たない**（`docs/island-world.md` 4章）。 */
 
 /* =========================================================
    応援する（面のいちばん最後）
@@ -955,56 +924,9 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
   padding: var(--sp-1) var(--sp-2);
 }
 
-/* =========================================================
-   国あての意見
-   ---------------------------------------------------------
-   **面は紙。板にするのは書く道具だけ**（docs/island-world.md 2章
-   「紙＋板の道具」）。ここは以前「書くところだから板」と書いてあったが、
-   それだと面まるごとが板になって、`/board` `/next/new` と作りが割れる。
-   板でいいのは `.bin` `.bin-name` `.bpost`。並んでいる意見は読むものなので紙。
-   ========================================================= */
-.cidea-none { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--ink-2); }
-/* 出ている意見と、書くところの区切り。ここから下は自分の番、という札。 */
-.cidea-ask {
-  display: inline-block;
-  margin: var(--sp-4) 0 var(--sp-2);
-  padding: var(--sp-1) var(--sp-3);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-caps);
-  border-radius: var(--r-pill);
-  /* 琥珀の上のクリームは 2.91 : 1。紙の見出しなので蛍光ペンで敷く
-     （docs/island-world.md 3.2）。--marker-ink は紙の上で 8 : 1 を超える。 */
-  background: var(--marker);
-  color: var(--marker-ink);
-}
-/* 出ている意見。押せないので、1枚ずつ囲まず罫線で分ける。 */
-.cideas {
-  list-style: none;
-  margin: var(--sp-4) 0 0;
-  padding: 0;
-  display: grid;
-  gap: 0;
-  border-top: 1px solid var(--pg-rule);
-}
-.cideas li {
-  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
-  padding: var(--sp-3) var(--sp-1);
-}
-.cideas p { margin: 0; font-size: 13px; line-height: 1.85; font-weight: 700; }
-.cidea-foot { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-top: 8px; }
-.cidea-foot i { font-style: normal; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-.cidea-vote {
-  font-size: var(--fs-min); font-weight: 900;
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame-dark);
-  background: linear-gradient(var(--paper), var(--paper-2));
-  color: var(--ink);
-  box-shadow: var(--pop-sm);
-}
-.cidea-vote:active { transform: translateY(2px); box-shadow: var(--pop-push); }
-.cidea-vote.is-on { background: linear-gradient(#fff0bb, var(--gold)); }
+/* 国あての意見（`.cidea*`）は、テーマ付きの付箋に置き換わって消えた（#160）。
+   宛先を本文の頭の `【国名】` で持たせるのをやめたので、国あてだけの
+   並べかたも要らなくなった。いまは `app/css/live.css` の11章が持っている。 */
 
 /* 国のページの前後リンク */
 /* 余白は段のとおりに（`docs/island-world.md` 5.1）。10px と 22px と 6px は段に無い */

@@ -581,20 +581,32 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     [],
   );
 
+  /* 看板ロゴの箱。**毎フレーム測らない。**
+     看板の入りの動き（logo-in）が終わるまでは小さく傾いた箱が返るので、
+     置き直しのついでと、動きが終わったあとの1回だけ測る。 */
+  const readLogo = useCallback(() => {
+    const host = hostRef.current;
+    const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
+    if (!host || !logo) return;
+    const h = host.getBoundingClientRect();
+    const l = logo.getBoundingClientRect();
+    logoBox.current =
+      l.width < 4 ? null : { x: l.left - h.left, y: l.top - h.top, r: l.right - h.left, b: l.bottom - h.top };
+    platesDirty.current = true;
+  }, []);
+
+  /* 看板は寄りと引きで置き場所も大きさも変わる（`hero.css` の `[data-view]`）。
+     **変わったら測り直す。** 測ったきりにしていたので、引きに移っても
+     寄りのときの小さい箱を持ったままで、島の上半分の札が看板に乗っても
+     看板が引かなかった（「あやとのこと」がロゴの副題に重なる）。 */
+  useEffect(() => {
+    const t = window.setTimeout(readLogo, 620);
+    return () => window.clearTimeout(t);
+  }, [wide, box.w, box.h, readLogo]);
+
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
-    /* 看板ロゴの箱。**毎フレーム測らない。**
-       看板の入りの動き（logo-in）が終わるまでは小さく傾いた箱が返るので、
-       置き直しのついでと、動きが終わったあとの1回だけ測る。 */
-    const readLogo = () => {
-      const host = hostRef.current;
-      const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
-      if (!host || !logo) return;
-      const h = host.getBoundingClientRect();
-      const l = logo.getBoundingClientRect();
-      logoBox.current = l.width < 4 ? null : { x: l.left - h.left, y: l.top - h.top, r: l.right - h.left, b: l.bottom - h.top };
-    };
     const read = () => {
       const r = el.getBoundingClientRect();
       // 幅が分かった＝寄りの度合いが決まる。到着演出を飛ばす人は、ここで置き直す。
@@ -612,7 +624,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       window.clearTimeout(settle);
       ro.disconnect();
     };
-  }, []);
+  }, [readLogo]);
 
   /* バーは「今日の島」が出てから背が決まる。カメラの寄せ量がそれを見ているので、
      出たあとに測り直す。測るのは1回でよくて、ここが変わるのは板が開いた時だけ。 */
@@ -1072,15 +1084,23 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         /* 札が看板ロゴの下へ入ったか。**入ったら看板のほうが引く。**
            看板は一度読めば済む飾りで、札は今から歩いて行く先だから、
            どちらか1枚しか読めないなら札を残す。
-           札の箱は測らずに見積もる。測ると毎フレーム layout を起こすし、
-           早めに引くぶんには困らない（半端に重なった絵がいちばん読めない）。 */
+           判定は札を置き終わってから、下の詰め合わせの中でやる（測らずに
+           見積もると、縁へ寄せた札が建物の真上にいないぶん当たらない）。 */
         const lb = logoBox.current;
         let under = false;
         /* 縁に寄せる札が避ける場所。
            島の隅のボタン（島をながめる・島の地図・今日の島）と、看板ロゴと、
            **画面に入っている札そのもの**。ここを見ずに縁へ寄せると、
-           寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。 */
+           寄せた札が、いま読めている札やボタンの上に乗って両方読めなくなる。
+
+           **看板ロゴもここに入れる。** 前は入れずに「ぶつかったらロゴが引く」
+           だけにしていた。寄りでは札が1枚で、ロゴも右上の小さい印なので
+           それで足りていたが、引きではロゴが上中央に大きく出て、
+           看板の6枚のうち1枚（あやとのこと）が必ずその上に乗る。
+           引くだけにすると、引きに移るたびに島の名前が消える。
+           **どかせるなら、どかしてから引く。** どうしても乗るときだけ引く。 */
         const taken = uiBoxes.current.slice();
+        if (lb) taken.push({ x: lb.x, y: lb.y, w: lb.r - lb.x, h: lb.b - lb.y });
         /** この画面の札の居場所。ぜんぶ出そろってから、縁へ寄せるものを決める */
         const plates: {
           i: number;
@@ -1103,12 +1123,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           const px = sx(sp.x);
           const py = sy(sp.y);
           el.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px)`;
-          if (lb && !under && sp.id === best) {
-            // 札は建物の頭の上に出る。横は中心から ±100、縦はそこから 60 上まで見る
-            const top = py - sp.size * k - 60;
-            const bottom = py - sp.size * k + 8;
-            under = px + 100 > lb.x && px - 100 < lb.r && bottom > lb.y && top < lb.b;
-          }
           // 絵の大きさは倍率で変わるので、測り直す。
           // 当たり判定は指で押せる最小(48px)まで広げるが、
           // 札の高さは絵の実寸を使う。最小に合わせると、引きで札が建物から浮いてしまう。
@@ -1122,9 +1136,14 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           /* 寄りで縁へ寄せるかどうかを見るのは、いま開いている1枚だけ。
              名前が出るのは近づいた1軒だけなので（`島に降りた1画面目から
              字を減らす`）、寄せる相手も1枚しかない。
-             **引きでは10枚とも見る。** 名前を10軒ぶん出す以上、
-             重なった2枚はどちらも読めない。詰め合わせが要る。 */
-          const sz = sp.id === best || wideRef.current ? signBox.current[i] : null;
+             **引きでは看板の6枚を見る。** 名前が6軒ぶん出る以上、
+             重なった2枚はどちらも読めない。詰め合わせが要る。
+
+             **出ていない札を詰めない。** `visibility: hidden` の札にも
+             大きさはあるので、引きで10枚ぶん見ると、見えない4枚が
+             48px の箱として `taken` に積まれて、見えている6枚が
+             何も無いところを避けて縁へ逃げる。 */
+          const sz = (wideRef.current ? !!sp.sign : sp.id === best) ? signBox.current[i] : null;
           if (sz && sz.w) {
             /* 箱を少し大きく見ておく。
                「今日ここに何かある」の1枚は 10px 跳ねる（spotHop）ので、
@@ -1247,6 +1266,17 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             else pl.el.removeAttribute("data-edge");
           }
           pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
+          /* 看板ロゴの下に入ったか。**置き終わった箱で見る。**
+             前は建物の足元から「たぶんこの辺に出る」と見積もっていて、しかも
+             近づいた1軒しか見ていなかった。引きでは看板の6枚が出るうえ、
+             縁へ寄せた札は建物の真上にいないので、どちらも当たらない。
+             実際に「あやとのこと」がロゴの副題に乗ったまま、看板が引かなかった。 */
+          if (lb && !under)
+            under =
+              rect.x + dx < lb.r &&
+              rect.x + dx + rect.w > lb.x &&
+              rect.y + dy < lb.b &&
+              rect.y + dy + rect.h > lb.y;
         }
         if (lb) {
           const now = under ? "away" : "";
@@ -1603,16 +1633,20 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           島の外のページの頭。島の上には並べない（同 6章）。
           島の上に常に出ていていいのは、1日1つの「!」と「あと◯日」だけ。
 
-          **引き（島ぜんぶ）は例外で、10軒とも名前を出す。**
+          **引き（島ぜんぶ）では、看板の6つ（`sign`）に名前が出る。**
           引きの用事は「この島に何が建っているか」を一目で見ることなので、
-          そこで1軒だけ選んで名前を出しても、残りの9軒は無名の小屋のままになる。
-          あやとの言葉:「引きのとき、それぞれのオブジェとの文字が見えて良い」。
-          出すのは名前だけ。一言も「はいる」も付けない（同 3-4 の主旨は残す）。 */}
+          そこだけは「近づいた1軒だけ」に絞らない。**ただし全部でもない。**
+          10軒とも出していたときに、あやとに「引きで出てくる項目が
+          めちゃくちゃ多くて、すっごい見にくい」と言われた。案内するのは6つ（同 6章）。
+          出すのは名前だけ。一言も「はいる」も付けない。 */}
       <div className="labels">
         {DOORS.map((sp, i) => {
           /* 開く（名前＋一言＋はいる）のは寄りのときだけ。
              引きでは建物があやとの何倍も小さいので、開いた札1枚が島の3割を覆う。 */
           const on = openSpot === sp.id && !wide;
+          /* 引きで名前が出ているか。出ている6軒は札が押しどころになり、
+             出ていない4軒は建物の当たりが押しどころのまま残る（`island.css`）。 */
+          const named = wide && !!sp.sign;
           const today = todaySpot === sp.id;
           /* 出発までの日数のシール。**閉じていても、この1軒にだけ貼っておく。**
              「これから」はいちばん目立たせると決まっている入口で
@@ -1621,8 +1655,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
              今日その日なら「!」が立つので、そちらに任せて重ねない。 */
           const hasDays = !!sp.countdown && days !== null && days >= 0;
           /* 「あと◯日」だけを板抜きで貼る形（.is-count）は、札が出ていないとき用。
-             引きでは札そのものが出ているので、ふつうの札の右肩に貼る。 */
-          const count = hasDays && !today && !wide;
+             引きで名前が出ている軒（看板の6つ）では、ふつうの札の右肩に貼る。 */
+          const count = hasDays && !today && !named;
           /* 配信中のやぐらは、行き先が YouTube に変わる。
              **島に留めずに外へ出すのが正解**（`docs/island-play.md` 5章）。
              島は留守番の場所で、配信がある3時間だけは、島より向こうが本体。 */
@@ -1654,7 +1688,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${on ? " is-on" : ""}${today ? " is-today" : ""}${count ? " is-count" : ""}`}
+              className={`spot${sp.sign ? " is-sign" : ""}${on ? " is-on" : ""}${today ? " is-today" : ""}${count ? " is-count" : ""}`}
             >
               {/* 建物の当たり。**`<a href>` にしてある。**
                   `<button>` だと長押しの「新しいタブで開く」が出ないし、
@@ -1668,7 +1702,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 /* 1軒につき、キーボードの止まり先はいつも1つ。
                    札が出ているときは札のほうが行き先（名前と一言と「はいる」が
                    ぜんぶ載っている）。出ていないときだけ、この当たりが受ける。 */
-                tabIndex={on || wide ? -1 : 0}
+                tabIndex={on || named ? -1 : 0}
                 onClick={enterOrWalk}
                 onMouseEnter={() => setHover(sp.id)}
                 onMouseLeave={() => setHover((v) => (v === sp.id ? null : v))}
@@ -1692,7 +1726,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 target={live ? "_blank" : undefined}
                 rel={live ? "noopener noreferrer" : undefined}
                 className="spot-mark"
-                tabIndex={on || wide ? 0 : -1}
+                tabIndex={on || named ? 0 : -1}
                 // 10軒ぶんの札がいつも画面にいるので、先読みを止めないと
                 // 島を開いただけで全ページの RSC を取りにいく（実測で約3MB）。
                 // 静的書き出しなので、先読みで得られるものは小さい。
@@ -1711,7 +1745,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 {/* 札の上に印は1つまで。「!」が立つ日は、そちらに譲る。
                     小さい丸（寄りの閉じた札）にも、名前だけの札（引き）にも、
                     「!」と「あと1日」を並べる幅は無い。どちらも読めなくなる。 */}
-                {hasDays && (count || on || (wide && !today)) && (
+                {hasDays && (count || on || (named && !today)) && (
                   <em className="spot-badge" aria-hidden>
                     {days === 0 ? "今日" : `あと${days}日`}
                   </em>
@@ -1738,7 +1772,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           「引きのとき、キャラクターと会話できなくて良い」。
           引きの住人は 20px ほどの点で、指で狙う相手ではないし、
           そこで吹き出しが開くと、いま見ている島ぜんぶがその下に隠れる。
-          10軒の名前を出しているのも引きなので、押せるものは建物に寄せる
+          **名札も出さない。** 引きに出る字は看板6枚ぶんで打ち止めで、
+          そこに住人12人の名前を足すと、島がまた字で埋まる
           （`docs/island-design.md` 3-7「重なったときは 入口 ＞ 住人」）。 */}
       <div className="labels is-cast">
         {villagers.map((v, i) => (
