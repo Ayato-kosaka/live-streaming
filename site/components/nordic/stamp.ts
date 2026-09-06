@@ -35,6 +35,9 @@ export const OUT_LONG = 2048;
 /** 貼るときに縮める長辺。10日ぶん何枚でも貼るので、元のままでは置き場が持たない。 */
 export const UPLOAD_LONG = 1600;
 
+/** 電波の細いところから貼るときの長辺。1600 のおよそ 1/3 の重さになる。 */
+export const UPLOAD_THIN = 900;
+
 export type Box = { x: number; y: number; w: number; h: number };
 
 /**
@@ -201,14 +204,19 @@ export function toJpeg(cv: HTMLCanvasElement): Promise<Blob | null> {
 export const stampFileName = (day: string) => `ayato-nordic-${day}.jpg`;
 
 /**
- * 貼るまえに縮めて焼く。長辺 1600px の webp。
+ * 貼るまえに縮めて焼く。既定は長辺 1600px の webp。
  *
  * `createImageBitmap` に `imageOrientation: "from-image"` を渡すのは、
  * スマホの縦写真が **Exif の回転を持ったまま**入ってくるため。
  * 素朴に描くと、縦で撮った写真が横に倒れて貼られる。
+ *
+ * `long` を小さくすると、そのぶん送るものが軽くなる。**電波の細いところ
+ * から貼るときのため**にある（`UPLOAD_THIN`）。旅の途中に「送れない」で
+ * 止まるくらいなら、粗くても1枚入ったほうがいい。
  */
 export async function shrink(
   file: File,
+  long: number = UPLOAD_LONG,
 ): Promise<{ image: string; w: number; h: number } | null> {
   let src: ImageBitmap | HTMLImageElement | null = null;
   try {
@@ -219,8 +227,8 @@ export async function shrink(
   if (!src) return null;
   const sw = "width" in src ? src.width : 0;
   const sh = "height" in src ? src.height : 0;
-  const long = Math.max(sw, sh);
-  const k = long > UPLOAD_LONG ? UPLOAD_LONG / long : 1;
+  const now = Math.max(sw, sh);
+  const k = now > long ? long / now : 1;
   const w = Math.max(1, Math.round(sw * k));
   const h = Math.max(1, Math.round(sh * k));
   const cv = document.createElement("canvas");

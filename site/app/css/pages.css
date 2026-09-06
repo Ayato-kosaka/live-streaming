@@ -180,6 +180,51 @@
    その最後が同じ名前を言っている。2回言わない。 */
 @media (min-width: 720px) { .ih-here { display: none; } }
 
+/* 看板の右はしの、自分のアイコン。**じぶんのこと（`/me`）への入口。**
+   ログインしている人にだけ出る（`components/ui/MeButton.tsx`）。
+
+   押せるので厚みを付ける（`island-design.md` 3章）。48px。
+   狭い画面の看板は `flex-wrap: nowrap` なので、ここは縮まない側に置く。
+   絵が落ちてきたら頭の1文字が下から出る（旅先の電波では普通に起きる）。 */
+.ih-me {
+  flex: none;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 48px; height: 48px;
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ih-me:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+.ih-me img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.ih-me-i {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* いまその面にいるとき。札の朱枠（`.ih-link.is-on`）と同じ言い方にそろえる。 */
+.ih-me.is-on { border-color: var(--pick); }
+
+/* 丸く抜いたアイコンを、行き先のカードに置くとき（ログイン済みの人の札）。 */
+.tile-icon.is-round {
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  background: var(--paper);
+}
+
 .ih-nav {
   /* 900px から下では畳んだ一覧（`.ihx`）に譲る。
      6つを3列×2段に置くと看板が 129px あり、その下の現在地の行と合わせて
@@ -1437,6 +1482,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 .me-row span { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); margin-bottom: var(--sp-1); }
 .me-row input {
   width: 100%;
+  /* 指で押すものは 48px を割らない（`island-design.md` 3-2）。
+     素のままだと 47px しかなく、測って落ちた（#163）。 */
+  min-height: 48px;
   padding: var(--sp-2) var(--sp-3);
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-1);
@@ -1445,8 +1493,10 @@ a.chip:active, button.chip:active, .chip.link:active {
   font-size: var(--fs-body);
   font-weight: 700;
 }
-.me-check { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: var(--fs-body); font-weight: 800; }
-.me-check input { width: 20px; height: 20px; accent-color: var(--frame-dark); }
+/* 印そのものは小さくてよいが、**押せるのは行ぜんぶ**なので、行を 48px にする。
+   印だけを大きくすると、字を押した人が「反応しない」と思う。 */
+.me-check { display: flex; align-items: center; gap: var(--sp-2); min-height: 48px; margin-bottom: var(--sp-2); font-size: var(--fs-body); font-weight: 800; }
+.me-check input { width: 24px; height: 24px; accent-color: var(--frame-dark); }
 .me-save {
   display: inline-flex; align-items: center;
   min-height: 48px;

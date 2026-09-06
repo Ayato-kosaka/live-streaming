@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Icon from "@/components/ui/Icon";
 import { deleteNordicLog, postNordicLog, type NordicLogEntry } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { dropNordicLog, loadNordicLog, putNordicLog, useOwner } from "./log";
+import { LOG_SEEDS, dropNordicLog, loadNordicLog, putNordicLog, useOwner } from "./log";
 
 /**
  * その日に、何が起きたか。**旅の最中に、あやとがその日の宿から書く。**
@@ -47,21 +47,6 @@ function when(iso: string) {
   const w = "日月火水木金土"[new Date(`${iso}T00:00:00Z`).getUTCDay()];
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
-
-/**
- * 書き出しの見本。
- *
- * 空の欄と「入れる」だけ置いても、疲れて宿に着いた人は何も書けない。
- * **この旅で毎日起きることだけを並べる。** 何回断られたか、誰が停まって
- * くれたか、どこで寝たか。順位でも点数でもない、その日そこにあった事実。
- */
-const SEEDS = [
-  "何台目で停まってくれた：",
-  "乗せてくれたのは：",
-  "泊まったのは：",
-  "食べたのは：",
-  "いちばん驚いたのは：",
-];
 
 export default function DayLog({
   day,
@@ -224,7 +209,7 @@ function LogForm({
       </label>
       <div className="nlog-seeds">
         <span>書き出しを選ぶ</span>
-        {SEEDS.map((s) => (
+        {LOG_SEEDS.map((s) => (
           <button
             key={s}
             type="button"

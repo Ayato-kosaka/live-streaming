@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth";
-import IslandMe from "./IslandMe";
+import Icon from "@/components/ui/IconCore";
 
 /**
  * 島へのログイン。
@@ -10,25 +11,35 @@ import IslandMe from "./IslandMe";
  * Google の審査を通していないので、同意画面の前に
  * 「このアプリは確認されていません」という警告が出る。
  * 隠すとかえって怖いので、押す前に何が起きるかを先に書いておく。
+ *
+ * **ログアウトと「島での見え方」は、ここから出ていった（#163）。**
+ * 掲示板の折りたたみの中にあって、あやとにもレビューでも
+ * 「見つからない」と言われ続けた（#152）。行き先は
+ * じぶんのこと（`/me`）で、そこへは看板の自分のアイコンから1タップで着く。
+ * ここが持つのは**入る道だけ**にする。
  */
 export default function SignIn({ compact = false }: { compact?: boolean }) {
-  const { user, signIn, signOut, error, busy } = useAuth();
+  const { user, signIn, error, busy } = useAuth();
   const [open, setOpen] = useState(false);
 
   if (user === undefined) return null;
 
+  /* 入っている人には、行き先だけ出す。出したり消したりの操作はここでしない。
+     （じぶんのことへ行けば、まとめて1か所にある） */
   if (user) {
     return (
-      <>
-        <div className="signed">
-          {user.photo && <img src={user.photo} alt="" />}
-          <span className="signed-name">{user.name}</span>
-          <button className="signed-out" onClick={signOut}>
-            ログアウト
-          </button>
-        </div>
-        {!compact && <IslandMe />}
-      </>
+      <Link className="tile" href="/me">
+        {user.photo ? (
+          <img className="tile-icon is-round" src={user.photo} alt="" />
+        ) : (
+          <img className="tile-icon" src="/sprites/hut-home.webp" alt="" />
+        )}
+        <span className="tile-text">
+          <b>{user.name} として島にいます</b>
+          <i>じぶんのことへ。島での見え方・貼った付箋・ログアウト</i>
+        </span>
+        <Icon name="right" size={15} className="tile-go" />
+      </Link>
     );
   }
 

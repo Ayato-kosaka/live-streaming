@@ -1067,7 +1067,11 @@
   object-position: center bottom;
   filter: drop-shadow(0 4px 0 rgba(90, 120, 80, 0.28));
 }
-/* 名札は島に出るものと同じ形にする */
+/* 名札は島に出るものと同じ形にする。
+   **ただし厚みは付けない。** これは下見の絵であって押しどころではないので、
+   真下に出る厚みを付けると「押せる」の合図が1つ増える
+   （`docs/island-design.md` 3-3。`popcheck.mjs` が数えているのはこれ）。
+   物として浮かせたいので、右下へずれてぼける落ち影のほうを置く。 */
 .me-prev-tag {
   display: inline-flex;
   align-items: center;
@@ -1077,7 +1081,7 @@
   border-radius: var(--r-pill);
   border: 2.5px solid var(--frame);
   background: var(--paper);
-  box-shadow: 0 3px 0 var(--frame-dark);
+  box-shadow: var(--shadow-1);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
