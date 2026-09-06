@@ -23,6 +23,10 @@ import * as admin from "firebase-admin";
 import {randomInt, randomUUID} from "crypto";
 import {readLiveChat, sayOnLive} from "./liveChat";
 import {youtube} from "./youtubeClient";
+import {
+  doneruYoutubeRefreshToken,
+  doneruYoutubeToken,
+} from "./doneruYoutube";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -1190,6 +1194,19 @@ function rouletteShape(id: string, v: Json): Json {
     posted: v.posted === true,
     updatedAt: Number(v.updatedAt) || 0,
   };
+}
+
+/**
+ * Doneru の鍵が入っているかを、鍵を見せずに伝える。
+ *
+ * **鍵そのものは返さない。** 入れ直したいときに「いま入っているのは
+ * どれか」が分からないと困るので、末尾4文字だけを見せる。
+ * @param {unknown} key しまってある鍵
+ * @return {Json} 画面に出すぶん
+ */
+function doneruHint(key: unknown): Json {
+  const s = String(key ?? "");
+  return {set: !!s, tail: s ? s.slice(-4) : ""};
 }
 
 /**
@@ -2808,7 +2825,74 @@ export const islandApi = onRequest(
         };
         await ref.set(rec);
         res.set("Cache-Control", "no-store");
-        res.json({session: rouletteShape(id, rec), live});
+        res.json({
+          session: rouletteShape(id, rec),
+          live,
+          doneru: doneruHint(user.data()?.doneruKey),
+        });
+        return;
+      }
+
+      /* Doneru の鍵をしまう。**あやとだけ。**
+
+         鍵そのものは、入れるときにここへ通るきりで、以後どの返事にも
+         出てこない(`doneruHint` は末尾4文字だけ)。静的書き出しの面に
+         鍵を載せると `dist/` に焼かれて誰でも読めるので、
+         **ブラウザに置かない**のが要点。 */
+      if (method === "POST" && path === "/roulette/doneru") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const key = clean(body.key, 200);
+        await USERS.doc(uid).set(
+          {
+            doneruKey: key ||
+              admin.firestore.FieldValue.delete(),
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({doneru: doneruHint(key)});
+        return;
+      }
+
+      /* ブラウザが YouTube を直に読むための、寿命の短いトークン。
+         **あやとだけ。**
+
+         ここを通す理由は割り当て(quota)。`liveChatMessages.list` は
+         1回5単位で、こちらの OAuth で読むと1日10,000単位の枠を
+         コントローラーが削っていく。Doneru が出したトークンなら、
+         減るのは Doneru 側の枠になる。
+
+         `refresh` が来たら、先に Doneru 側で取り直させてから取る。
+         ブラウザで 401 が出たときに1回だけ呼ばれる。 */
+      if (method === "POST" && path === "/roulette/yt-token") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const me = await USERS.doc(uid).get();
+        const key = String(me.data()?.doneruKey ?? "");
+        if (!key) {
+          /* 鍵がまだ無いだけ。**これは異常ではない。** コントローラーは
+             これを見て、今までどおり Functions ごしの読み方に落ちる。 */
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no doneru key"});
+          return;
+        }
+        try {
+          if (body.refresh === true) await doneruYoutubeRefreshToken(key);
+          const t = await doneruYoutubeToken(key);
+          res.set("Cache-Control", "no-store");
+          res.json(t);
+        } catch (e) {
+          logger.warn("doneru token failed", String(e));
+          res.set("Cache-Control", "no-store");
+          res.status(502).json({error: "doneru unavailable"});
+        }
         return;
       }
 
