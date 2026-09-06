@@ -272,7 +272,67 @@ island/state
 `stats` は `island_daily_stats.py` が毎日書く。
 `current` は `island_set_current.py` であやとが手で書く。
 
-### `islandIdeas/{id}` — 掲示板（`/board`「企画をだす」）に貼られた提案
+### `islandNextPlans/{id}` — 企画（`/board`「企画をだす」・`/next/new`）
+
+**「一言の提案」と「ページ1枚の下書き」は、同じもの**（#161）。
+前は `islandIdeas`（120字・ログイン不要）と `islandDrafts`（12,000字・ログイン必須）に
+割れていて、**一言を出したあと下書きへ進む道が無かった。**
+題ひとつで出して、あとから育てられる1つの入れ物にしてある。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `title` | string | 題（60字まで）。**これだけあれば出せる** |
+| `when` `date` | string | 画面に出す言い方と、数えるための日（YYYY-MM-DD） |
+| `note` | string | ひとことで言うと（200字まで） |
+| `tags` | string[] | ふだ（6つまで） |
+| `place` | object | `{ name, area, map }` |
+| `about` | string[] | どんなものか。段落ごと |
+| `links` | object[] | `{ label, href }` |
+| `photos` | object[] | `{ src, alt, credit, creditHref }` |
+| `embeds` | object[] | `{ kind, id, note }` |
+| `by` | string? | 名乗った名前（なくてもいい） |
+| `uid` | string? | ログインして出していれば、その人 |
+| `cid` | string | 端末ID。**「あとから直す鍵」でもある**（下） |
+| `hearts` | number | ハートの数。仕組みは付箋とまったく同じ（`islandHearts`） |
+| `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
+| `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
+| `archived` | boolean | しまってあるか。**消さずにしまう。戻せる**（あやとだけ） |
+| `hidden` | boolean | 隠すとき（管理スクリプトから） |
+| `createdAt` / `updatedAt` | number | ミリ秒 |
+
+**1件12,000字まで。1日12件まで。**
+
+#### あとから直せるのは誰か
+
+ログイン不要にした以上、本人の証は端末の印（`cid`）しか無い。
+印を推測できれば他人の企画を直せるので、**時間で縛る**（あやと承認済み・#161）。
+
+| 出したとき | 直せるのは |
+| --- | --- |
+| ログインしていた（`uid` がある） | その `uid` の人だけ。いつでも |
+| ログインしていなかった | 同じ `cid` の端末だけ。**出してから24時間だけ** |
+| — | あやと（`admin`）はいつでも |
+
+`cid` は `crypto.randomUUID()`（36文字・122ビット）。鍵として使うときは
+長さで縛る（`isStrongCid`）。8文字でも通る `isCid` は、連投を数えるためのもので、
+そのままでは鍵に使わない。
+
+**`cid` を画面に返さない。** 返すと、それを見た人が他人の企画を直せる。
+`firestore.rules` でこのコレクションを deny にしているのも同じ理由。
+
+#### `status` と Git 側の企画の関係
+
+段を動かせるのはあやとだけ（`POST /island-api/nextplans/{id}/status`）。
+「これから」に上げるときは `planId` で Git 側の企画に結び付ける。
+**結び付けないと、掲示板に出た提案と、実際に立っているページが他人のままになる。**
+
+| 段 | 島のどこに出るか |
+| --- | --- |
+| `proposed` | `/board` の一覧 |
+| `next` | `/board` に「これから」と出て、`planId` のページ（`/next` ほか）へ行ける |
+| `done` | `/board` に「やった」と出て、`LEGENDS` のページへ行ける |
+
+### `islandIdeas/{id}` — 掲示板に貼られた提案（旧・#161 で役目が終わった）
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
@@ -281,11 +341,13 @@ island/state
 | `uid` | string? | ログインしていれば、その人 |
 | `cid` | string | 端末ID（連投を止めるため） |
 | `votes` | number | いいねの数 |
+| `movedTo` | string? | 付箋へ移した先（#162） |
 | `hidden` | boolean | 隠すとき |
 | `createdAt` | number | ミリ秒 |
 
-北欧の国ごとの募集も、ここに `【リトアニア】` という札を頭に付けて入る。
-別のコレクションを作らないのは、票と一覧の仕組みを分けたくないため。
+**本番の8件は #162 で全部付箋（`islandNotes`）へ移り、`hidden: true` が付いている。**
+表に出るものは0件。読む口（`GET /ideas`）はまだ動いているが、
+画面はもう見ていない。畳むのは #171。
 
 ### `islandNotes/{id}` — 付箋
 
@@ -348,10 +410,16 @@ island/state
 **消す＝解除**なので、票（`islandVotes`）と違って「押した」を数える側ではなく
 書類の有無で持つ。数そのものは `islandNotes.hearts` にある。
 
+**企画（`islandNextPlans`）のハートも、同じ入れ物・同じ形のIDを使う**（#161）。
+書類IDは Firestore の自動IDなので、付箋と企画でぶつかることはない。
+入れ物を分けなかったのは、1日の上限（`heart`）と「消す＝解除」の作りを
+2つに割らないため。
+
 | 項目 | 型 |
 | --- | --- |
 | `at` | number（押した時刻） |
-| `note` | string（どの付箋か） |
+| `note` | string（どの付箋か。付箋のとき） |
+| `plan` | string（どの企画か。企画のとき） |
 
 ### `islandVotes/{key}` — 誰がどれに投票したか
 
@@ -364,11 +432,11 @@ island/state
 | 項目 | 型 |
 | --- | --- |
 | `n` | number（その日の回数） |
-| `kind` | string（idea / note / sticky / heart / draft / poll / fork / visit） |
+| `kind` | string（plan / idea / note / sticky / heart / draft / poll / fork / visit） |
 | `day` | string |
 | `updatedAt` | number |
 
-上限は 企画8件 / 付箋20件 / ハート120回 / 下書き12件 / 日。
+上限は 企画12件 / 付箋20件 / ハート120回 / 日（`plan` は出すのも育てるのも同じ枠）。
 ハートは**解除も1回ぶん使う。** 使わないと、同じ付箋で押す・外すを
 繰り返して書き込みを無限に起こせる。
 
@@ -383,29 +451,22 @@ island/state
 | `character` | string? | 島にいる自分のキャラクター（Drive の画像ID） | 本人が選ぶ |
 | `showName` | boolean | 名前を島に出すか | 本人 |
 | `showPhoto` | boolean | YouTube アイコンを島に出すか | 本人 |
-| `canDraft` | boolean | 企画ページの下書きを書いてよいか | あやと（コンソール） |
+| `canDraft` | boolean | 企画ページの下書きを書いてよいか（旧。#161 で誰でも書けるようになった） | あやと（コンソール） |
 | `admin` | boolean | 全員ぶんの下書きを読めるか | あやと（コンソール） |
 | `firstSeenAt` / `lastSeenAt` | number | 初回と直近 | 自動 |
 
 **`character` が入っていて、かつ `showName` か `showPhoto` のどちらかが true の人だけ**が
 `GET /state` の `residents` に載る。何もしていない人の名前は絶対に出ない。
 
-### `islandDrafts/{id}` — 企画ページの下書き
+### `islandDrafts/{id}` — 企画ページの下書き（旧・#161 で役目が終わった）
 
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `uid` | string | 書いた人 |
-| `by` | string | 書いた人の表示名 |
-| `title` `when` `date` `note` `tags` | | 企画の基本 |
-| `place` | object | `{ name, area, map }` |
-| `about` | string[] | どんなものか。段落ごと |
-| `links` | object[] | `{ label, href }` |
-| `photos` | object[] | `{ src, alt, credit, creditHref }` |
-| `embeds` | object[] | `{ kind, id, note }` |
-| `createdAt` / `updatedAt` | number | ミリ秒 |
+中身の形は `islandNextPlans` と同じ（`uid` `by` `title` `when` `date` `note`
+`tags` `place` `about[]` `links[]` `photos[]` `embeds[]` `createdAt` `updatedAt`）。
+違うのは、**ログイン必須で、あやとが `canDraft` を立てた人しか書けなかった**こと。
 
-下書きはそのままでは公開されない。
-あやとが Claude Code で仕上げて `site/content/plans.ts` に入れて、はじめてページになる。
+**本番は0件**（2026-09-06 に数えた）。移すものは無い。
+読み書きの口（`GET/POST /drafts`）はまだ動いているが、画面はもう見ていない。
+畳むのは #171。
 
 ---
 
@@ -438,9 +499,16 @@ island/state
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
 | `GET` | `/state` | 誰でも | 数字・いまいる場所・企画提案・付箋・名前を出す住人 |
-| `GET` | `/ideas` | 誰でも | 企画提案の一覧 |
-| `POST` | `/ideas` | 誰でも | 企画提案を貼る（1日8件） |
-| `POST` | `/ideas/:id/vote` | 誰でも | いいね（1人1票） |
+| `GET` | `/nextplans` | 誰でも | 企画の一覧。`?archived=1` はあやとだけ |
+| `GET` | `/nextplans/:id` | 誰でも | 企画1件（育てる画面が続きを書くために引く） |
+| `POST` | `/nextplans` | 誰でも | 企画を出す。**題だけでいい**（1日12件） |
+| `POST` | `/nextplans/:id` | 出した人 | 育てる。**送った中身でまるごと置き換わる** |
+| `POST` | `/nextplans/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
+| `POST` | `/nextplans/:id/status` | あやとだけ | 段を動かす。`planId` で Git 側の企画に結ぶ |
+| `POST` | `/nextplans/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
+| `GET` | `/ideas` | 誰でも | 企画提案の一覧（旧。画面は見ていない） |
+| `POST` | `/ideas` | 誰でも | 企画提案を貼る（旧。1日8件） |
+| `POST` | `/ideas/:id/vote` | 誰でも | いいね（旧。1人1票） |
 | `GET` | `/notes` | 誰でも | 企画に貼られた付箋（旧。移行待ち） |
 | `POST` | `/notes` | 誰でも | 企画に付箋を貼る（旧。1日20件） |
 | `GET` | `/stickies` | 誰でも | テーマに貼られた付箋。`?theme=` で1つ、無ければ横断の新着 |
@@ -449,8 +517,8 @@ island/state
 | `POST` | `/stickies/:id/reply` | あやとだけ | 返信する。空で送ると取り消し |
 | `POST` | `/stickies/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
 | `POST` | `/me` | ログイン済み | 島での見え方を保存する |
-| `GET` | `/drafts` | `canDraft` の人 | 自分の下書き（`admin` は全員ぶん） |
-| `POST` | `/drafts` | `canDraft` の人 | 下書きを保存する（1日12件） |
+| `GET` | `/drafts` | `canDraft` の人 | 自分の下書き（旧。画面は見ていない） |
+| `POST` | `/drafts` | `canDraft` の人 | 下書きを保存する（旧。1日12件） |
 
 ログインしていない人は端末IDで数え、ログインした人は uid で数える。
 端末を変えても同じ人として扱われるのはこのため。
@@ -458,3 +526,7 @@ island/state
 **`/notes` と `/stickies` は、入れ物が同じで口が別。** 画面が切り替わっている
 途中の日に、両方が混ざったものが両方の画面に出るのを止めるためで、
 旧来のぶんが移り終わったら（#162）`/notes` を畳む。
+
+**旧（`/ideas` `/drafts`）を残してあるのも同じ理由。** Functions と Hosting は
+別々に手で起動する（`CLAUDE.md`）ので、片方だけ先に出た日がある。
+そこで古い口を消すと、その日のあいだ掲示板がまるごと 404 になる。畳むのは #171。

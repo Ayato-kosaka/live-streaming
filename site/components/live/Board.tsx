@@ -1,21 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  getIdeas,
+  EMPTY_PLAN,
+  PLAN_STATUS_NAME,
+  archiveNextPlan,
+  canEditPlan,
+  getArchivedPlans,
+  getNextPlans,
   getPoll,
+  heartNextPlan,
+  heartedLocally,
+  myPlans,
   pollAnswer,
-  postIdea,
-  rememberVote,
-  voteIdea,
-  votedLocally,
-  type Idea,
+  postNextPlan,
+  rememberHeart,
+  rememberMyPlan,
+  setPlanStatus,
+  type NextPlan,
+  type PlanStatus,
 } from "@/lib/api";
 import { BOARD } from "@/content/voice";
 import { THEMES } from "@/content/themes";
 import { LEGENDS } from "@/content/legends";
+import { PLANS } from "@/content/plans";
 import { useAuth } from "@/lib/auth";
+import { useOwner } from "@/components/nordic/log";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
@@ -39,74 +50,96 @@ const SEEDS = [
   "現地の人に聞いて、",
 ];
 
-/** 貼ったあと、どうなるか。ここが見えないと、書いても届かない気がして手が止まる。 */
+/**
+ * 出したあと、どうなるか。
+ *
+ * ここが見えないと、書いても届かない気がして手が止まる。
+ * **入れ物を1つにしたので（#161）、3歩目が「別の場所」ではなくなった。**
+ * 同じ企画が段（`status`）を進んでいくだけになる。
+ */
 const FLOW = [
-  { t: "貼る", n: "名前もログインも要りません" },
-  { t: "さんせいが集まる", n: "だれでも押せます。1件につき1回" },
-  { t: "企画会議に上がる", n: "週のはじめ。やることになったら「これから」に出ます" },
+  { t: "出す", n: "題ひとつでいい。名前もログインも要りません" },
+  { t: "そだてる", n: "日にちも場所も写真も、あとから足せます" },
+  { t: "日にちが決まる", n: "「これから」に上がって、ページが1枚立ちます" },
 ];
 
-/* 本文の頭に付いた貼り先の札（`【スウェーデン】`）を読む正規表現は、ここから消した。
-   宛先は `islandNotes.theme` という正式な欄になった（#160）ので、
-   本文から推測して仕分けるところは1つも要らない。**残すと仕分けが2つ並走する。**
-   `【】` の付いたままだった8件も付箋へ移したので（#162）、この一覧に
-   札付きの字はもう出てこない。**島のどこにも同じ正規表現は残っていない。** */
+/** 段ごとの並び。**提案がいちばん上。** 出した人の目に、まず自分のものが入る。 */
+const SHELVES: { id: PlanStatus; lead: string }[] = [
+  { id: "proposed", lead: "まだ日にちが決まっていない、みんなの案。" },
+  { id: "next", lead: "日にちが決まったもの。ページが1枚立っています。" },
+  { id: "done", lead: "行ってきたもの。語り継がれると、伝説の企画になります。" },
+];
 
-/** 自分が貼った企画。ログインしていない人のために、端末にも覚えておく。 */
-const MINE_KEY = "ayato-island-mine";
-function minePosts(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(MINE_KEY) ?? "[]") as string[]);
-  } catch {
-    return new Set();
-  }
-}
-function rememberPost(id: string) {
-  try {
-    const s = minePosts();
-    s.add(id);
-    localStorage.setItem(MINE_KEY, JSON.stringify([...s]));
-  } catch {
-    /* localStorage が使えない環境では諦める */
-  }
+/**
+ * ページとして立った企画の行き先。
+ *
+ * 提案の `planId`（あやとが結び付けた Git 側の id）から、実際のページを引く。
+ * **結び付いていないものには、行き先を作らない。** 「これから」と書いてあるのに
+ * 押しても何も無い札は、壊れているのと同じ。
+ */
+function gitPlanLink(planId?: string): { label: string; href: string } | null {
+  if (!planId) return null;
+  const l = LEGENDS.find((x) => x.slug === planId);
+  if (l) return { label: l.title, href: `/legends/${l.slug}` };
+  const p = PLANS.find((x) => x.id === planId);
+  if (p) return { label: p.title, href: p.href ?? "/next" };
+  return null;
 }
 
 /**
  * 企画をだす（掲示板）。
  *
- * ここが受けるのは **「新しい企画の提案」だけ**（`islandIdeas`）。
- * すでに決まっている旅への注文は、宛先を持った付箋（`Notes`）のほうへ回る。
- * 本番のデータでは、提案8件のうち7件が実際には後者だった（#159）。
- * 分かれ道は面の上から見えていないと意味がないので、
- * 「企画をだす」と「みんなの付箋」を同じ面に、この順で並べてある。
+ * ## 入れ物が1つになった（#161）
  *
- * ログインなしで貼れて、投票できる。
- * だからログインの案内は畳んで下に置き、いちばん上は書く場所にする。
- * 票の多いものが目立ち、自分が貼ったもの・さんせいしたものが自分で分かるようにする。
+ * 前は「一言の提案（`islandIdeas`・120字）」と「ページ1枚の下書き
+ * （`islandDrafts`・12,000字・ログイン必須）」に割れていて、
+ * **一言を出したあと下書きへ進む道がありませんでした。**
+ * 同じものの粒度違いなので、`islandNextPlans` 1つにまとめてある。
+ *
+ * ここで出すのは題ひとつ。日にちも場所も本文も写真も、あとから
+ * `/next/new?id=…` で足して育てられる。出したあとの1行がそこへつないでいる。
+ *
+ * ## 段（status）
+ *
+ * 提案 → これから → やった。段を進めるのはあやとで、
+ * 「これから」に上がったものは Git 側の企画（`content/plans.ts`）と結び付く。
+ * その結び付きが読めないと、掲示板と `/next` が他人のままになる。
+ *
+ * ## 何をどこへ書くか
+ *
+ * ここが受けるのは **「まだ無い企画」だけ**。すでに決まっている旅への注文は、
+ * 宛先を持った付箋（`Notes`）のほうへ回る。本番のデータでは、提案8件のうち
+ * 7件が実際には後者だった（#159）。分かれ道は面の上から見えていないと
+ * 意味がないので、「企画をだす」と「みんなの付箋」を同じ面に、この順で並べてある。
  */
 export default function Board() {
-  const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  const [plans, setPlans] = useState<NextPlan[] | null>(null);
   /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
   const [down, setDown] = useState(false);
   /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
   const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
-  const [text, setText] = useState("");
+  const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
-  /** いま貼ったものの id。貼ったあと、それがどこへ行ったかを言うために持つ。 */
-  const [posted, setPosted] = useState<string | null>(null);
-  const [voted, setVoted] = useState<Set<string>>(new Set());
+  /** いま出したもの。出したあと、それをどう育てるかを言うために持つ。 */
+  const [posted, setPosted] = useState<NextPlan | null>(null);
+  const [hearted, setHearted] = useState<Set<string>>(new Set());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
-  const [sort, setSort] = useState<"votes" | "new">("votes");
+  const [sort, setSort] = useState<"hearts" | "new">("hearts");
   const [onlyMine, setOnlyMine] = useState(false);
+  /** 画面が出てから決める。焼き込みの時刻で「もう直せない」と言わないため */
+  const [now, setNow] = useState<number | null>(null);
+  /** しまったものを見ているか。あやとだけ */
+  const [bin, setBin] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const { user, token } = useAuth();
+  const owner = useOwner();
 
   useEffect(() => {
-    setVoted(votedLocally());
-    setMine(minePosts());
+    setHearted(heartedLocally());
+    setMine(myPlans());
+    setNow(Date.now());
     load();
 
     /* 「押す」から「書く」への橋を、渡ってきた側で受ける。
@@ -132,24 +165,41 @@ export default function Board() {
    *
    * **読めなかったときに「まだ何も貼られていない」と出さない。**
    * 前はここで空配列を入れていたので、つながらない日には
-   * 誰かが貼った企画が並んでいる板を「いちばん乗りだよ」と言って見せていた。
+   * 誰かが出した企画が並んでいる板を「いちばん乗りだよ」と言って見せていた。
    * 嘘をつくくらいなら、つながらないと言って、もう一度押せるようにする
    * （`docs/island-world.md` 4.1 の表）。
    */
   const load = () => {
     setDown(false);
-    getIdeas()
-      .then((r) => {
-        setIdeas(r.ideas);
-      })
+    setBin(false);
+    getNextPlans()
+      .then((r) => setPlans(r.plans))
       .catch(() => {
-        setIdeas([]);
+        setPlans([]);
         setDown(true);
       });
   };
 
+  /* しまったものを見にいく。あやとが押したときだけ。
+     一覧と混ぜて持たないのは、戻したときにどちらへ動いたかが
+     分からなくなるため（付箋と同じ作り）。 */
+  const loadBin = async () => {
+    const t = await token();
+    if (!t) return;
+    setPlans(null);
+    setDown(false);
+    setBin(true);
+    try {
+      const r = await getArchivedPlans(t);
+      setPlans(r.plans);
+    } catch {
+      setPlans([]);
+      setDown(true);
+    }
+  };
+
   const submit = async () => {
-    const t = text.trim();
+    const t = title.trim();
     if (t.length < 4) {
       setErr(BOARD.tooShort);
       return;
@@ -157,15 +207,18 @@ export default function Board() {
     setSending(true);
     setErr(null);
     try {
-      const { idea } = await postIdea(t, name.trim() || undefined, await token());
-      setIdeas((cur) => [idea, ...(cur ?? [])]);
-      rememberPost(idea.id);
-      setMine((m) => new Set([...m, idea.id]));
-      setText("");
-      // 貼ったものは票が0なので、人気順のままだといちばん下に沈む。
-      // 「貼れました」と言った先が空だと、貼れていないのと同じ。
+      const { plan } = await postNextPlan(
+        { ...EMPTY_PLAN, title: t, by: name.trim() || undefined },
+        await token(),
+      );
+      setPlans((cur) => [plan, ...(cur ?? [])]);
+      rememberMyPlan(plan.id);
+      setMine((m) => new Set([...m, plan.id]));
+      setTitle("");
+      // 出したものはハートが0なので、人気順のままだといちばん下に沈む。
+      // 「出せました」と言った先が空だと、出せていないのと同じ。
       setSort("new");
-      setPosted(idea.id);
+      setPosted(plan);
     } catch (e) {
       setErr(String(e).includes("429") ? BOARD.tooMany : BOARD.failed);
     } finally {
@@ -173,27 +226,70 @@ export default function Board() {
     }
   };
 
-  const vote = async (id: string) => {
-    if (voted.has(id)) return;
-    setIdeas((cur) => cur?.map((i) => (i.id === id ? { ...i, votes: i.votes + 1 } : i)) ?? cur);
-    rememberVote(id);
-    setVoted(new Set([...voted, id]));
+  /** ハートを押す。**押した瞬間に数字を動かす。** 返事を待つと手応えが遅れる。 */
+  const heart = async (p: NextPlan) => {
+    const on = !hearted.has(p.id);
+    setHearted((s) => {
+      const next = new Set(s);
+      if (on) next.add(p.id);
+      else next.delete(p.id);
+      return next;
+    });
+    setPlans(
+      (cur) =>
+        cur?.map((x) =>
+          x.id === p.id ? { ...x, hearts: Math.max(0, x.hearts + (on ? 1 : -1)) } : x,
+        ) ?? cur,
+    );
+    rememberHeart(p.id, on);
     try {
-      await voteIdea(id, await token());
+      const r = await heartNextPlan(p.id, await token());
+      // サーバーが数えた数に合わせ直す。押しっぱなしのズレはここで消える
+      setPlans((cur) => cur?.map((x) => (x.id === p.id ? { ...x, hearts: r.hearts } : x)) ?? cur);
+      rememberHeart(p.id, r.on);
+      setHearted((s) => {
+        const next = new Set(s);
+        if (r.on) next.add(p.id);
+        else next.delete(p.id);
+        return next;
+      });
     } catch {
       /* 楽観更新のまま。次の読み込みで正しい数に戻る */
     }
   };
 
-  const isMine = (i: Idea) => mine.has(i.id) || (!!user && i.byUid === user.uid);
+  /** しまう・戻す。**あやとだけ。消さない。** ハートの数はそのまま残る。 */
+  const stow = async (p: NextPlan, on: boolean) => {
+    const t = await token();
+    if (!t) return;
+    // しまったもの／出ているものは別の一覧なので、押したほうから消える
+    setPlans((cur) => cur?.filter((x) => x.id !== p.id) ?? cur);
+    try {
+      await archiveNextPlan(p.id, on, t);
+    } catch {
+      setDown(true);
+    }
+  };
 
-  const all = [...(ideas ?? [])].sort((a, b) =>
-    sort === "votes" ? b.votes - a.votes || (a.createdAt < b.createdAt ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1,
-  );
+  const isMine = (p: NextPlan) => mine.has(p.id) || (!!user && p.byUid === user.uid);
+
+  /* 並べ替えの前に、**段でひとまとまりにする。**
+     まぜて数の順に並べると、行ってきた企画がハートを持っているぶんだけ上に来て、
+     まだ決まっていない提案が下に沈む。この板の用事は「まだ無い企画を出す」ほうなので、
+     提案 → これから → やった の順に置いてから、その中で数の順・新しい順にする。 */
+  const all = useMemo(() => {
+    const rank = (p: NextPlan) => SHELVES.findIndex((s) => s.id === p.status);
+    return [...(plans ?? [])].sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        (sort === "hearts" ?
+          b.hearts - a.hearts || (a.createdAt < b.createdAt ? 1 : -1) :
+          a.createdAt < b.createdAt ? 1 : -1),
+    );
+  }, [plans, sort]);
   const list = onlyMine ? all.filter(isMine) : all;
   const mineCount = all.filter(isMine).length;
-  const totalVotes = all.reduce((n, i) => n + i.votes, 0);
-  const pickedCount = all.filter((i) => i.status === "picked").length;
+  const totalHearts = all.reduce((n, p) => n + p.hearts, 0);
   // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
   const pins = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 
@@ -218,12 +314,12 @@ export default function Board() {
             <button
               className="bd-bridge-go"
               onClick={() => {
-                const seed = `${ask.label}がいいと思う。`;
-                setText((t) => (t.startsWith(seed) ? t : seed + t));
+                const seed = `${ask.label}で、`;
+                setTitle((t) => (t.startsWith(seed) ? t : seed + t));
                 box.current?.focus();
               }}
             >
-              その理由から書く
+              その続きから書く
               {/* 行き先は下の入力欄。矢印もそちらを向ける */}
               <Icon name="chevron" size={13} />
             </button>
@@ -253,10 +349,10 @@ export default function Board() {
           <textarea
             ref={box}
             className="bin"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={3}
-            maxLength={200}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            rows={2}
+            maxLength={60}
             placeholder={BOARD.placeholder}
           />
         </label>
@@ -271,24 +367,17 @@ export default function Board() {
           </p>
         )}
 
-        {/* 貼ったあと、画面の上のほうは入力欄が空になるだけで、何も起きていないように見える。
-            貼ったものは 1,800px 下の板にいるので、そこまで連れていく
-            （`docs/island-design.md` 3章「押したら必ず何かが返る」）。 */}
+        {/* 出したあと、画面の上のほうは入力欄が空になるだけで、何も起きていないように見える。
+            **ここが「一言から下書きへ進む道」**（#161）。出したその足で、
+            日にちも場所も写真も足しにいける。 */}
         {posted && (
           <p className="bd-done">
-            <b>貼れました。</b>
-            みんなの板の、いちばん上にあります。
-            <button
-              type="button"
-              className="bd-done-go"
-              onClick={() => {
-                const el = document.getElementById(`idea-${posted}`);
-                el?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
-            >
-              貼ったものを見る
+            <b>出せました。</b>
+            日にち・場所・本文・リンク・写真は、あとから足せます。
+            <Link className="bd-done-go" href={`/next/new?id=${posted.id}`} prefetch={false}>
+              くわしく書く
               <Icon name="chevron" size={13} />
-            </button>
+            </Link>
           </p>
         )}
 
@@ -300,7 +389,7 @@ export default function Board() {
               className="nx-seed"
               onClick={() => {
                 // すでに書いてあるものを消さない。書き出しは前に足すだけ
-                setText((t) => (t.startsWith(s) ? t : s + t));
+                setTitle((t) => (t.startsWith(s) ? t : s + t));
                 box.current?.focus();
               }}
             >
@@ -309,7 +398,7 @@ export default function Board() {
           ))}
         </div>
 
-        {/* 貼ったあとどうなるかが見えないと、書いても届かない気がして手が止まる。
+        {/* 出したあとどうなるかが見えないと、書いても届かない気がして手が止まる。
             3歩ぶんだけ、先に見せておく。 */}
         <ol className="bd-flow">
           {FLOW.map((f, i) => (
@@ -325,6 +414,17 @@ export default function Board() {
             </li>
           ))}
         </ol>
+
+        {/* はじめからページ1枚で書きたい人の道。**ログインは要らない。**
+            前は「あやとが声をかけた人だけ」だった（#161 で開けた）。 */}
+        <Link className="tile" href="/next/new" style={{ marginTop: "var(--sp-4)" }}>
+          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
+          <span className="tile-text">
+            <b>はじめからページ1枚で書く</b>
+            <i>題・日付・場所・本文・リンク・写真まで、いちどに</i>
+          </span>
+          <Icon name="right" size={15} className="tile-go" />
+        </Link>
 
         {/* ログインは「しなくていい」ものなので、書く場所より下に、畳んで置く。 */}
         <div style={{ marginTop: "var(--sp-4)" }}>
@@ -356,7 +456,7 @@ export default function Board() {
       </section>
 
       {/* 島じゅうの付箋を、宛先（テーマ）ごとにまとめて読む。
-          この板に貼られた**企画の提案**は下にそのまま並ぶので、ここには集めない
+          この板に出された**企画**は下にそのまま並ぶので、ここには集めない
           （同じものが1つの面に2回出る）。 */}
       <Notes themes={THEMES} />
 
@@ -368,7 +468,7 @@ export default function Board() {
         {all.length > 0 && (
           <div className="bhead">
             <div className="bsort">
-              <button className={sort === "votes" ? "is-on" : ""} onClick={() => setSort("votes")}>
+              <button className={sort === "hearts" ? "is-on" : ""} onClick={() => setSort("hearts")}>
                 {BOARD.sortVotes}
               </button>
               <button className={sort === "new" ? "is-on" : ""} onClick={() => setSort("new")}>
@@ -386,32 +486,38 @@ export default function Board() {
         {all.length > 0 && (
           <div className="chips" style={{ marginBottom: "var(--sp-3)" }}>
             <span className="chip">{all.length}件</span>
-            <span className="chip">さんせい {totalVotes}</span>
-            {pickedCount > 0 && <span className="chip">採用 {pickedCount}件</span>}
-            {voted.size > 0 && <span className="chip">さんせいした {voted.size}件</span>}
+            <span className="chip">ハート {totalHearts}</span>
+            {SHELVES.map((s) => {
+              const n = all.filter((p) => p.status === s.id).length;
+              return n > 0 ? (
+                <span className="chip" key={s.id}>
+                  {PLAN_STATUS_NAME[s.id]} {n}
+                </span>
+              ) : null;
+            })}
           </div>
         )}
 
         {/* 取りに行っているあいだは、出てくる紙と同じ形の灰色を3枚置く。
             「読み込み中…」の字だけだと、板に何も無いのか取りに行っているのか分からない。 */}
-        {ideas === null && (
+        {plans === null && (
           <ul className="bd-list is-wait" aria-hidden>
             <li />
             <li />
             <li />
           </ul>
         )}
-        {ideas !== null && down && (
+        {plans !== null && down && (
           <div className="blank is-off">
             <b>いま、板を読みに行けなかった</b>
-            <p>貼ってある企画がある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+            <p>出してある企画がある日でも、こういうときは出てきません。少し待って、もう一度。</p>
             <button className="blank-go" onClick={load}>
               もう一度よみこむ
               <Icon name="refresh" size={14} />
             </button>
           </div>
         )}
-        {!down && ideas?.length === 0 && (
+        {!down && plans?.length === 0 && (
           <div className="bd-empty">
             <EmptyBoard />
             <p className="muted">{BOARD.empty}</p>
@@ -424,58 +530,208 @@ export default function Board() {
                 box.current?.focus({ preventScroll: true });
               }}
             >
-              いちばんに貼る
+              いちばんに出す
               <Icon name="up" size={13} />
             </button>
           </div>
         )}
-        {ideas !== null && ideas.length > 0 && list.length === 0 && (
-          <p className="muted">じぶんが貼ったものは、まだありません。</p>
+        {plans !== null && plans.length > 0 && list.length === 0 && (
+          <p className="muted">じぶんが出したものは、まだありません。</p>
         )}
 
         <ul className="bd-list">
-          {list.map((i, n) => {
-            // 票がいちばん集まっているものだけ、赤い枠で前に出す。
-            const top = sort === "votes" && !onlyMine && n === 0 && i.votes > 0 && i.status !== "picked";
+          {list.map((p, n) => {
+            // ハートがいちばん集まっているものだけ、赤い枠で前に出す。
+            const top = sort === "hearts" && !onlyMine && n === 0 && p.hearts > 0 && p.status === "proposed";
+            const edit = now ? canEditPlan(p, user?.uid, mine, now) : "no";
+            const link = gitPlanLink(p.planId);
             return (
               <li
-                key={i.id}
-                id={`idea-${i.id}`}
-                className={`${i.status === "picked" ? "is-picked" : ""}${top ? " is-top" : ""}`}
+                key={p.id}
+                id={`plan-${p.id}`}
+                className={`${p.status !== "proposed" ? "is-picked" : ""}${top ? " is-top" : ""}`}
               >
                 <span className="nx-pin">
                   <Pin tone={pins[n % pins.length]} size={18} />
                 </span>
                 <button
-                  className={`vote${voted.has(i.id) ? " is-on" : ""}`}
-                  onClick={() => vote(i.id)}
-                  aria-pressed={voted.has(i.id)}
-                  aria-label={voted.has(i.id) ? "さんせい済み" : BOARD.agree}
+                  className={`vote${hearted.has(p.id) ? " is-on" : ""}`}
+                  onClick={() => heart(p)}
+                  aria-pressed={hearted.has(p.id)}
+                  aria-label={hearted.has(p.id) ? "ハートを外す" : "ハートを押す"}
                 >
+                  {/* 絵文字は使わない。同じ形を付箋（`Notes.tsx`）も描いている */}
                   <svg viewBox="0 0 24 22" aria-hidden>
                     <path
                       d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
                       fill="currentColor"
                     />
                   </svg>
-                  <b>{i.votes}</b>
+                  <b>{p.hearts}</b>
                 </button>
                 <div className="idea-body">
-                  <p>{i.text}</p>
+                  <p>{p.title}</p>
+                  {/* 育ったぶん。ひとことがあれば、題のすぐ下に出す */}
+                  {p.note && <p className="bd-note">{p.note}</p>}
                   <div className="idea-meta">
-                    {top && <em>いま、いちばん票が集まってる</em>}
-                    {i.status === "picked" && <em>{BOARD.picked}</em>}
-                    {isMine(i) && <em>あなたが貼った</em>}
-                    {voted.has(i.id) && <span>さんせい済み</span>}
-                    {i.name && <span>{i.name} さん</span>}
-                    <time>{i.createdAt.slice(0, 10).replace(/-/g, "/")}</time>
+                    {top && <em>いま、いちばんハートが集まってる</em>}
+                    {p.status !== "proposed" && <em>{PLAN_STATUS_NAME[p.status]}</em>}
+                    {isMine(p) && <em>あなたが出した</em>}
+                    {p.when && <span>{p.when}</span>}
+                    {!p.when && p.date && <span>{p.date.replace(/-/g, "/")}</span>}
+                    {p.place.name && <span>{p.place.name}</span>}
+                    {p.by && <span>{p.by} さん</span>}
+                    <time>{p.createdAt.slice(0, 10).replace(/-/g, "/")}</time>
                   </div>
+                  {/* 段が進んで、ページが立ったもの。**その場所まで連れていく。**
+                      「これから」と書いてあるだけでは、どこにあるのか分からない。 */}
+                  {link && (
+                    <Link className="bd-go" href={link.href} prefetch={false}>
+                      {link.label}のページへ
+                      <Icon name="right" size={13} />
+                    </Link>
+                  )}
+                  {/* 育てる道。**直せる人にだけ出す。**
+                      出せない人に出すと、押した先で 403 を見ることになる。 */}
+                  {edit === "ok" && (
+                    <Link className="bd-go" href={`/next/new?id=${p.id}`} prefetch={false}>
+                      {p.about.length || p.photos.length ? "続きを書く" : "くわしく書く"}
+                      <Icon name="right" size={13} />
+                    </Link>
+                  )}
+                  {edit === "expired" && (
+                    <span className="bd-locked">
+                      出してから1日たったので、もう直せません。ログインして出すと、あとからでも直せます。
+                    </span>
+                  )}
+                  {owner && (
+                    <PlanOwnerTools
+                      plan={p}
+                      stowed={bin}
+                      onStow={(on) => stow(p, on)}
+                      onStage={(next) =>
+                        setPlans((cur) => cur?.map((x) => (x.id === next.id ? next : x)) ?? cur)
+                      }
+                    />
+                  )}
                 </div>
               </li>
             );
           })}
         </ul>
+
+        {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}
+        {owner && (
+          <button className="nt-bin" onClick={() => (bin ? load() : loadBin())}>
+            {bin ? "出ているものに戻る" : "しまったものを見る"}
+            <Icon name={bin ? "left" : "right"} size={13} />
+          </button>
+        )}
+
+        {/* 段（提案 → これから → やった）が、島のどこへ続いているのか。
+            **入れ物は1つでも、ページは別の面に立つ。** そこがつながっていないと、
+            板に出したものが、そのあとどうなったのか読めない。 */}
+        <div className="bd-road">
+          {SHELVES.map((s) => (
+            <p key={s.id}>
+              <b>{PLAN_STATUS_NAME[s.id]}</b>
+              {s.lead}
+            </p>
+          ))}
+        </div>
+        <Link className="tile" href="/next">
+          <img className="tile-icon" src="/sprites/tent.webp" alt="" />
+          <span className="tile-text">
+            <b>これから</b>
+            <i>日にちが決まった企画。いま {PLANS.length} つ立っています</i>
+          </span>
+          <Icon name="right" size={15} className="tile-go" />
+        </Link>
+        <Link className="tile" href="/legends">
+          <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
+          <span className="tile-text">
+            <b>伝説の企画</b>
+            <i>いまも話に出てくる、終わった企画が{LEGENDS.length}つ</i>
+          </span>
+          <Icon name="right" size={15} className="tile-go" />
+        </Link>
       </section>
     </>
+  );
+}
+
+/**
+ * あやとの道具。**1件につき、段を進めるのとしまうの2つだけ。**
+ *
+ * 段（提案 → これから → やった）を動かせるのはここだけ。「これから」に上げるとき、
+ * Git 側の企画の id を一緒に結び付ける。**結び付けないと、掲示板に出た提案と
+ * 実際に立っているページが、画面の上で他人のままになる。**
+ *
+ * 出るかどうかは `/me` の `admin` で決めているが、それは道具を出すかどうかの
+ * 話でしかない。実際に書けるかは、書く先の口がもう一度見ている
+ * （`functions/src/islandApi.ts` の `ownerUid`）。
+ */
+function PlanOwnerTools({
+  plan,
+  stowed,
+  onStage,
+  onStow,
+}: {
+  plan: NextPlan;
+  stowed: boolean;
+  onStage: (next: NextPlan) => void;
+  onStow: (on: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<PlanStatus>(plan.status);
+  const [planId, setPlanId] = useState(plan.planId ?? "");
+  const [busy, setBusy] = useState(false);
+  const { token } = useAuth();
+
+  const save = async () => {
+    const t = await token();
+    if (!t) return;
+    setBusy(true);
+    try {
+      const r = await setPlanStatus(plan.id, status, planId.trim(), t);
+      onStage(r.plan);
+      setOpen(false);
+    } catch {
+      /* 動かせなかったら、開いたまま。選んだものは消さない */
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <span className="bd-own">
+      <button className="nt-obtn" onClick={() => setOpen((v) => !v)}>
+        段を動かす
+      </button>
+      <button className="nt-obtn" onClick={() => onStow(!stowed)}>
+        {stowed ? "もどす" : "しまう"}
+      </button>
+      {open && (
+        <span className="nt-obox">
+          <select className="bin" value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
+            {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
+              <option value={s} key={s}>
+                {PLAN_STATUS_NAME[s]}
+              </option>
+            ))}
+          </select>
+          <input
+            className="bin"
+            value={planId}
+            onChange={(e) => setPlanId(e.target.value)}
+            maxLength={40}
+            placeholder="立ったページの id（nordic / iran-walk）。空で外す"
+          />
+          <button className="bbtn" onClick={save} disabled={busy}>
+            {busy ? "動かしています…" : "動かす"}
+          </button>
+        </span>
+      )}
+    </span>
   );
 }

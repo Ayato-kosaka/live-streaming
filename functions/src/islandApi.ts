@@ -32,6 +32,12 @@ const VOTES = db.collection("islandVotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const DRAFTS = db.collection("islandDrafts");
+/* 企画(#161)。**「一言の提案」と「ページ1枚の下書き」を1つにした入れ物。**
+   前は islandIdeas(120字・ログイン不要)と islandDrafts(12,000字・ログイン必須)に
+   割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
+   題1つで出して、あとから日付・場所・本文・リンク・写真を足して育てられる形にする。
+   名前は `/next` のルーティングに合わせてある(あやとの指定)。 */
+const NEXTPLANS = db.collection("islandNextPlans");
 /* 今夜のおたずね。選択肢を押すだけで意思表示できる、参加のいちばん下の段。
    作りは islandIdeas + islandVotes とまったく同じ。
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
@@ -183,6 +189,41 @@ const STICKIES_PER_DAY = 20;
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
 
+/* ---- 企画(#161) ----
+   題だけで出せて、あとから育てられる。**ログインは要らない。** */
+
+/** 1件ぶんの上限。旧 islandDrafts と同じ。ページ1枚ぶんの字が入る。 */
+const MAX_PLAN_LEN = 12000;
+/** 題。**これだけあれば出せる。** 1行で出すときはここしか埋まらない。 */
+const MAX_PLAN_TITLE = 60;
+/** 1日に出せる企画。書くのは付箋より重い行為なので、付箋(20)より少なくする。 */
+const PLANS_PER_DAY = 12;
+/**
+ * ログインしていない人が、自分の出した企画を直せる時間(#161・あやと承認済み)。
+ *
+ * ログインしていれば `uid` が本人の証になるが、していなければ端末の印(`cid`)しか
+ * 無い。印を推測できれば他人の企画を直せてしまうので、**書いた直後の書き直しだけ**
+ * を通して、時間が経ったものは書いた本人でも触れないようにする。
+ * なりすませる窓を短くするのと引き換えに、「あとから育てる」を24時間ぶん残す。
+ */
+const PLAN_EDIT_MS = 24 * 60 * 60 * 1000;
+/**
+ * 企画の段。**提案 → これから → やった が1本**(#159 で決めた形)。
+ *
+ * 値を日本語にしないのは、画面に出す言い方を変えたときに
+ * 入れ物の中身まで書き換えることになるため。表示名は画面側が持つ。
+ */
+const PLAN_STATUS = ["proposed", "next", "done"] as const;
+/**
+ * Git 側の企画の id(`site/content/plans.ts` の `PLANS`、
+ * `site/content/legends.ts` の `LEGENDS`)。
+ *
+ * **提案がページとして立ったときだけ、あやとが結び付ける。**
+ * これが無いと「これから」に上がった提案と、実際に立っているページが
+ * 画面の上で他人のままになる。
+ */
+const GIT_PLAN_ID = /^[a-z0-9][a-z0-9-]{1,39}$/;
+
 /* ---- 面ごとの「押すだけの問い」----
    北欧のわかれ道（区間ごとの「どっちにしてほしい？」）で作った入れ物。
    islandPolls / islandPollVotes をそのまま借りて、`at` の札で仕分ける。
@@ -289,11 +330,14 @@ async function listResidents(): Promise<Json[]> {
 }
 
 /**
- * 企画ページの下書きを、保存してよい形に整える。
+ * 企画ページの中身を、保存してよい形に整える。
  *
- * ここに入るのは、あやとが「書いていいよ」と決めた視聴者さんが書いたもの。
- * それでも受け取る側では長さと形だけは必ず切りそろえる。
- * 中身の良し悪しは、あやとが Claude Code で仕上げるときに直す。
+ * **旧 `islandDrafts` と、新しい `islandNextPlans`(#161)の両方が通る。**
+ * 入れ物は分かれているが、切りそろえる形はまったく同じものなので、
+ * ここを2つに割らない(割ると、片方だけ上限が変わる日が来る)。
+ *
+ * 中身の良し悪しは、あやとが仕上げるときに直す。ここでやるのは長さと形だけ。
+ * **足りない欄は空で返る。** 題1つで出した企画も、この形で入る。
  * @param {Json} b 送られてきた中身
  * @return {Json} 保存する形
  */
@@ -302,7 +346,7 @@ function shapeDraft(b: Json): Json {
     Array.isArray(v) ? v.slice(0, n).map((x) => f((x ?? {}) as Json)) : [];
   const place = (b.place ?? {}) as Json;
   return {
-    title: clean(b.title, 60),
+    title: clean(b.title, MAX_PLAN_TITLE),
     when: clean(b.when, 40),
     date: clean(b.date, 10),
     note: clean(b.note, 200),
@@ -376,6 +420,23 @@ const fwd = (v: unknown): string | null =>
  */
 const isCid = (v: unknown): boolean =>
   typeof v === "string" && v.length >= 8 && v.length <= 64;
+
+/**
+ * 「あとから直せる」の鍵として使ってよい端末IDか(#161)。
+ *
+ * ふつうの `isCid` より厳しくする。あちらは連投を止めるための印なので
+ * 8文字でも役に立つが、こちらは**それを知っていれば他人の企画を直せる**鍵になる。
+ * ブラウザが作るのは `crypto.randomUUID()`(36文字・122ビット)なので、
+ * 長さで縛れば総当たりは成り立たない。localStorage が使えない端末が返す
+ * "anon" のような合言葉は、ここで落ちる(全員が同じ鍵を持つことになるため)。
+ * @param {unknown} v 入力
+ * @return {boolean} 鍵として使えるなら true
+ */
+const isStrongCid = (v: unknown): boolean =>
+  typeof v === "string" &&
+  v.length >= 24 &&
+  v.length <= 64 &&
+  /^[A-Za-z0-9_-]+$/.test(v);
 
 /**
  * cid ごとの1日あたり回数を1つ消費する。
@@ -673,6 +734,142 @@ function clampPage(v: unknown): number {
   const n = Math.floor(Number(v));
   if (!Number.isFinite(n) || n <= 0) return 60;
   return Math.min(300, n);
+}
+
+/* ---- 企画(#161) ---- */
+
+/** 企画1件。画面に返す形。**`cid` は返さない**(付箋と同じ理由)。 */
+type PlanShape = {
+  id: string;
+  title: string;
+  when: string;
+  date: string;
+  note: string;
+  tags: string[];
+  place: {name: string; area: string; map: string};
+  about: string[];
+  links: {label: string; href: string}[];
+  photos: {src: string; alt: string; credit: string; creditHref: string}[];
+  embeds: {kind: string; id: string; note: string}[];
+  /** 名乗った名前。名乗っていなければ無い */
+  by?: string;
+  /**
+   * ログインして出した人。**これがあると、端末の印では直せない。**
+   * 画面が「じぶんが出したもの」を見分けるのにも使う(付箋と違って直せるので要る)。
+   */
+  byUid?: string;
+  hearts: number;
+  /** 提案 → これから → やった */
+  status: string;
+  /** ページとして立ったときの、Git 側の企画の id */
+  planId?: string;
+  archived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * 企画を、画面に返す形に直す。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {PlanShape} 企画
+ */
+function planShape(
+  d:
+    | FirebaseFirestore.QueryDocumentSnapshot
+    | FirebaseFirestore.DocumentSnapshot,
+): PlanShape {
+  const v = d.data() ?? {};
+  const arr = <T>(x: unknown): T[] => (Array.isArray(x) ? (x as T[]) : []);
+  const place = (v.place ?? {}) as Json;
+  const created = (v.createdAt as number) ?? Date.now();
+  return {
+    id: d.id,
+    title: (v.title as string) ?? "",
+    when: (v.when as string) ?? "",
+    date: (v.date as string) ?? "",
+    note: (v.note as string) ?? "",
+    tags: arr<string>(v.tags),
+    place: {
+      name: (place.name as string) ?? "",
+      area: (place.area as string) ?? "",
+      map: (place.map as string) ?? "",
+    },
+    about: arr<string>(v.about),
+    links: arr<{label: string; href: string}>(v.links),
+    photos: arr<{src: string; alt: string; credit: string; creditHref: string}>(
+      v.photos,
+    ),
+    embeds: arr<{kind: string; id: string; note: string}>(v.embeds),
+    by: (v.by as string) || undefined,
+    byUid: (v.uid as string) || undefined,
+    hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
+    status: PLAN_STATUS.includes(v.status as typeof PLAN_STATUS[number]) ?
+      (v.status as string) :
+      "proposed",
+    planId: (v.planId as string) || undefined,
+    archived: v.archived === true ? true : undefined,
+    createdAt: new Date(created).toISOString(),
+    updatedAt: new Date((v.updatedAt as number) ?? created).toISOString(),
+  };
+}
+
+/**
+ * 企画を新しい順に1ページぶん取る。
+ *
+ * **並べ替えを Firestore に頼まない。** `where` と `orderBy` を組むと複合索引が
+ * 要るが、その索引はサービスアカウントに作る権限が無くて配れない(#168)。
+ * 付箋(`listStickies`)と同じく、しまったぶんの除外は手元でやる。
+ * ハートの多い順も画面側で並べ替える(1回で全部引くので、そこで足りる)。
+ * @param {object} q 引きかた
+ * @param {boolean} [q.archived] しまったぶんだけを出す
+ * @param {unknown} [q.limit] 1ページの件数
+ * @param {unknown} [q.before] 続きの位置
+ * @return {Promise<Page<PlanShape>>} 企画の1ページ
+ */
+function listPlans(q: {
+  archived?: boolean;
+  limit?: unknown;
+  before?: unknown;
+}): Promise<Page<PlanShape>> {
+  const want = !!q.archived;
+  return pageOf(
+    NEXTPLANS,
+    clampPage(q.limit),
+    q.before,
+    planShape,
+    (d) => (d.get("archived") === true) !== want,
+  );
+}
+
+/** 直せるか。直せないときは、なぜ直せないかまで返す。 */
+type PlanGuard = "ok" | "expired" | "no";
+
+/**
+ * その人が、その企画を直してよいか(#161・あやと承認済み)。
+ *
+ * > ログインしていれば `uid` で守る。していなければ `cid` で、直せるのは24時間だけ
+ *
+ * ログインして出したものは、あとで端末の印だけで直せてはいけない。
+ * 印は localStorage にあるだけなので、そちらのほうが弱い証だから。
+ * @param {Json} cur いまの中身
+ * @param {Who} who ログインしている人
+ * @param {unknown} cid 送られてきた端末ID
+ * @param {boolean} owner あやとか
+ * @return {PlanGuard} 直せるか
+ */
+function canEditPlan(
+  cur: Json,
+  who: Who,
+  cid: unknown,
+  owner: boolean,
+): PlanGuard {
+  if (owner) return "ok";
+  const uid = (cur.uid as string) || "";
+  if (uid) return who?.uid === uid ? "ok" : "no";
+  const mine = isStrongCid(cid) && cur.cid === cid;
+  if (!mine) return "no";
+  const created = Number(cur.createdAt ?? 0);
+  return Date.now() - created <= PLAN_EDIT_MS ? "ok" : "expired";
 }
 
 /** 投票の中身。集計そのものはドキュメントの votes に入っている。 */
@@ -973,10 +1170,14 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 企画ページの下書き ---------------- */
-      /* あやとが「書いていいよ」と決めた人だけが書ける。
-         下書きはそのまま公開せず、あやとが Claude Code で仕上げてから
-         content/plans.ts に入る。ここは受け皿までを持つ。 */
+      /* ---------------- 企画ページの下書き(旧) ----------------
+         **役目は `/nextplans` に移った**(#161)。あちらはログインが要らず、
+         題1つでも出せて、あとから育てられる。ここは
+         「あやとが書いていいよと決めた人だけ・ログイン必須」のままの古い口。
+
+         画面(`/next/new`)はもう新しいほうを見ているが、Functions と Hosting は
+         別々に手で起動するので、片方だけ出た日に 404 で止まらないよう残してある。
+         畳むのは #171。**本番の `islandDrafts` は0件**なので、移すものは無い。 */
       if (path === "/drafts" || path.startsWith("/drafts/")) {
         const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
         if (!m) {
@@ -1378,6 +1579,9 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* 企画提案(旧)。**役目は `/nextplans` に移った**(#161)。
+         Functions と Hosting は別々に手で起動するので、画面が古い日でも
+         止まらないように、ここはまだ動かしてある。畳むのは #171。 */
       if (method === "GET" && path === "/ideas") {
         const page = await listIdeas(
           req.query.limit ?? 120,
@@ -1954,6 +2158,275 @@ export const islandApi = onRequest(
         const cur = await ref.get();
         if (!cur.exists) {
           res.status(404).json({error: "no note"});
+          return;
+        }
+        await ref.set(
+          on ?
+            {archived: true, archivedAt: Date.now(), archivedBy: uid} :
+            {
+              archived: false,
+              archivedAt: admin.firestore.FieldValue.delete(),
+              archivedBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, archived: on});
+        return;
+      }
+
+      /* ---------------- 企画(#161) ----------------
+         **`/ideas`(一言120字・ログイン不要)と `/drafts`(ページ1枚・ログイン必須)を
+         1つにした口。** 同じものの粒度違いだったのに入れ物が割れていて、
+         一言を出したあと下書きへ進む道が無かった。
+
+         題1つで出せて、あとから日付・場所・本文・リンク・写真を足して育てられる。
+         ログインは要らない。直せるのは、ログインしていれば自分のぶんをいつでも、
+         していなければ端末の印で24時間だけ(`canEditPlan`)。
+
+         **旧来の `/ideas` `/drafts` は動いたまま残してある。** Functions と
+         Hosting は別々に手で起動するので、画面が先に出た日も古い日も、
+         どちらかが 404 で止まらないようにする。 */
+      if (method === "GET" && path === "/nextplans") {
+        /* しまったぶんは、戻す人にしか見せない(付箋と同じ)。 */
+        const archived = req.query.archived === "1";
+        if (archived && !(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const page = await listPlans({
+          archived,
+          limit: req.query.limit ?? 200,
+          before: req.query.before,
+        });
+        res.set(
+          "Cache-Control",
+          archived ?
+            "no-store" :
+            "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        res.json({plans: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* 1件だけ読む。育てる画面(`/next/new?id=…`)が続きを書くために引く。
+         **端末IDは受け取らない。** 直せるかどうかは画面側が
+         「自分が出したもの」の控えで決めて、実際に直せるかは書く口が見る。
+         ここに端末IDを渡すと、鍵が URL とアクセスログに残る。 */
+      const planOne = path.match(/^\/nextplans\/([A-Za-z0-9_-]{6,})$/);
+      if (method === "GET" && planOne) {
+        const snap = await NEXTPLANS.doc(planOne[1]).get();
+        if (!snap.exists || snap.get("hidden") === true) {
+          res.status(404).json({error: "no plan"});
+          return;
+        }
+        res.set(
+          "Cache-Control",
+          "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        res.json({plan: planShape(snap)});
+        return;
+      }
+
+      if (method === "POST" && path === "/nextplans") {
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        if (JSON.stringify(body).length > MAX_PLAN_LEN) {
+          res.status(400).json({error: "too long"});
+          return;
+        }
+        const plan = shapeDraft(body);
+        if ((plan.title as string).length < 4) {
+          res.status(400).json({error: "title too short"});
+          return;
+        }
+        /* 端末の印は、ここでは「連投を数える鍵」ではなく
+           「あとで自分の企画を直す鍵」なので、長さで縛る。 */
+        if (!isStrongCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        if (!(await takeQuota(who?.uid ?? cid, "plan", PLANS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const now = Date.now();
+        const by = who?.name || clean(body.by, MAX_NAME_LEN) || null;
+        const ref = await NEXTPLANS.add({
+          ...plan,
+          by,
+          hearts: 0,
+          status: "proposed",
+          hidden: false,
+          archived: false,
+          cid,
+          uid: who?.uid ?? null,
+          createdAt: now,
+          updatedAt: now,
+          ip: fwd(req.headers["x-forwarded-for"]),
+        });
+        res.set("Cache-Control", "no-store");
+        res.json({plan: planShape(await ref.get())});
+        return;
+      }
+
+      /* 育てる。**同じ口で、題1つのものにも写真つきのものにも書ける。**
+         送られてきた中身でまるごと置き換える(画面は必ず全部を持って開く)。 */
+      if (method === "POST" && planOne) {
+        const who = await whoIs(req.headers.authorization);
+        const owner = !!(await ownerUid(req.headers.authorization));
+        if (JSON.stringify(body).length > MAX_PLAN_LEN) {
+          res.status(400).json({error: "too long"});
+          return;
+        }
+        const ref = NEXTPLANS.doc(planOne[1]);
+        const cur = await ref.get();
+        if (!cur.exists || cur.get("hidden") === true) {
+          res.status(404).json({error: "no plan"});
+          return;
+        }
+        const guard = canEditPlan(cur.data() ?? {}, who, body.cid, owner);
+        if (guard !== "ok") {
+          /* 「時間が切れた」と「あなたのではない」を分けて返す。
+             同じ 403 にすると、画面が「もう直せません」としか言えない。 */
+          const why = guard === "expired" ? "expired" : "not yours";
+          res.status(403).json({error: why});
+          return;
+        }
+        const plan = shapeDraft(body);
+        if ((plan.title as string).length < 4) {
+          res.status(400).json({error: "title too short"});
+          return;
+        }
+        /* あやとは数えない。仕上げるときに1件を何度も書き直すので、
+           出す側と同じ12回で止まると、その日の途中で直せなくなる
+           （付箋の `byOwner` を数えないのと同じ考え）。 */
+        const key = who?.uid ?? String(body.cid);
+        if (!owner && !(await takeQuota(key, "plan", PLANS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const patch: Json = {...plan, updatedAt: Date.now()};
+        /* 名乗り直しは受ける。ログインしている人は島に出す名前で固定。
+           **書いた人(`uid` `cid`)は上書きしない。** 直すたびに持ち主が
+           入れ替わると、24時間の窓が押すたびに延びる。 */
+        const by = who?.name || clean(body.by, MAX_NAME_LEN);
+        if (by) patch.by = by;
+        await ref.set(patch, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({plan: planShape(await ref.get())});
+        return;
+      }
+
+      /* ハート。**付箋とまったく同じ仕組み**(#161 の指定)。
+         ログイン不要で、もう一度押すと外れる。押したことは
+         `islandHearts/<企画のID>_<uid か端末ID>` の有無で持つ。 */
+      const planHeart = path.match(
+        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/heart$/,
+      );
+      if (method === "POST" && planHeart) {
+        const id = planHeart[1];
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        const key = who?.uid ?? cid;
+        if (!(await takeQuota(key, "heart", HEARTS_PER_DAY))) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        const heartRef = HEARTS.doc(`${id}_${key}`);
+        const planRef = NEXTPLANS.doc(id);
+        let out: {hearts: number; on: boolean};
+        try {
+          out = await db.runTransaction(async (tx) => {
+            const [h, p] = await Promise.all([
+              tx.get(heartRef),
+              tx.get(planRef),
+            ]);
+            if (!p.exists) throw new Error("no plan");
+            const data = p.data() ?? {};
+            if (data.hidden === true || data.archived === true) {
+              throw new Error("closed");
+            }
+            const n = Math.max(0, Math.floor(Number(data.hearts ?? 0)) || 0);
+            if (h.exists) {
+              tx.delete(heartRef);
+              const next = Math.max(0, n - 1);
+              tx.update(planRef, {hearts: next});
+              return {hearts: next, on: false};
+            }
+            tx.set(heartRef, {at: Date.now(), plan: id});
+            tx.update(planRef, {hearts: n + 1});
+            return {hearts: n + 1, on: true};
+          });
+        } catch (e) {
+          const why = String(e).replace("Error: ", "");
+          res.status(why === "no plan" ? 404 : 400).json({error: why});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json(out);
+        return;
+      }
+
+      /* 段を進める。**あやとだけ。** 提案 → これから → やった。
+         ページとして立ったら、Git 側の企画の id(`planId`)で結び付ける。
+         結び付けないと、「これから」に上がった提案と、実際に立っている
+         ページが画面の上で他人のままになる。 */
+      const planStatus = path.match(
+        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/status$/,
+      );
+      if (method === "POST" && planStatus) {
+        if (!(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const status = clean(body.status, 16);
+        if (!PLAN_STATUS.includes(status as typeof PLAN_STATUS[number])) {
+          res.status(400).json({error: "bad status"});
+          return;
+        }
+        const planId = clean(body.planId, 40);
+        if (planId && !GIT_PLAN_ID.test(planId)) {
+          res.status(400).json({error: "bad planId"});
+          return;
+        }
+        const ref = NEXTPLANS.doc(planStatus[1]);
+        if (!(await ref.get()).exists) {
+          res.status(404).json({error: "no plan"});
+          return;
+        }
+        await ref.set(
+          {
+            status,
+            // 空で送ると外れる。取り違えて結んだときに戻せるようにする
+            planId: planId || admin.firestore.FieldValue.delete(),
+            updatedAt: Date.now(),
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({plan: planShape(await ref.get())});
+        return;
+      }
+
+      /* しまう・戻す。**あやとだけ。消さない。**(付箋と同じ) */
+      const planArchive = path.match(
+        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/archive$/,
+      );
+      if (method === "POST" && planArchive) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const on = body.on !== false;
+        const ref = NEXTPLANS.doc(planArchive[1]);
+        if (!(await ref.get()).exists) {
+          res.status(404).json({error: "no plan"});
           return;
         }
         await ref.set(
