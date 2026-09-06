@@ -15,6 +15,9 @@ name: 管理スクリプトを実行
 #   nordic_log       … その日に起きたこと     {"day":"day-3","body":"…"}
 #                      旅のあと Git へ焼き戻す {"op":"export"}
 #   nordic_arrived   … 着いた／取り消す       {"date":"2026-09-19"}
+#
+# BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
+#   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）
 on:
   workflow_dispatch:
     inputs:
