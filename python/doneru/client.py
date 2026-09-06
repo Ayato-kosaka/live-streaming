@@ -188,6 +188,20 @@ class DoneruClient:
         return _parse_csv(raw)
 
 
+# 自由文が入る列。ここだけがカンマも改行も持ちうるので、はみ出したぶんは
+# ここに畳み戻す。名前が変わったときの受け皿も並べておく。
+MESSAGE_HEADERS = ("メッセージ", "message", "comment", "コメント", "本文", "text", "body")
+
+
+def _message_index(header: List[str]) -> Optional[int]:
+    """ヘッダーの中でメッセージの列が何番目かを返す。"""
+    lowered = [h.strip().lower() for h in header]
+    for name in MESSAGE_HEADERS:
+        if name.lower() in lowered:
+            return lowered.index(name.lower())
+    return None
+
+
 def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     """CSV の本文を辞書の配列にする。
 
@@ -195,13 +209,22 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     UTF-8 BOM や Shift_JIS(cp932) で出てくることがある。UTF-8 で読めなければ
     cp932 に落とす。BOM は `utf-8-sig` が食べる。
 
-    **割れた行を繋ぎ直す。** Doneru は改行を含むメッセージに引用符を付けずに
-    吐くことがある。素直に読むと1件の寄付が2行に割れて、後半（メッセージの
-    続き＋残りの列）が**別の寄付として入る**。本番で8件それが入っていた
-    （日付も金額も無い行が4件、メッセージの断片が精算状態の列に入った行が1件）。
+    ## 壊れた行を組み直す
 
-    列が足りない行は「途中で切れた行」なので、次の行の頭とつなぐ。
-    csv の作法どおりなら起きないが、向こうの都合には合わせるしかない。
+    **Doneru はメッセージをエスケープせずに吐く。** カンマも改行も引用符も
+    そのまま出てくるので、素直に読むと行が壊れる。本番で両方踏んだ。
+
+    - **改行** → 1件が2行以上に割れる。素直に読むと後半が別の寄付として入る
+      （日付も金額も無い行が4件、精算状態の列にメッセージの断片が1件）
+    - **カンマ** → 列が増える。ヘッダー8列に対して14列の行があった
+
+    自由文が入るのはメッセージの列だけなので、**両端から数えて、余ったぶんを
+    メッセージに畳み戻す**。左の列はヘッダーの先頭から、右の列は末尾から数える。
+
+    これはメッセージ以外の列にカンマが入っていないことを前提にしている。
+    ニックネームにカンマが入っていたら間違えるが、**引用符が無い以上、
+    そこは区別しようがない**。せめて組み直したあとに日付と金額の形を見て、
+    おかしければ数を出す。
     """
     text: Optional[str] = None
     for encoding in ("utf-8-sig", "cp932"):
@@ -223,8 +246,11 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if width < 2:
         raise DoneruError(f"CSV のヘッダーが {width} 列しかありません")
 
+    msg_at = _message_index(header)
+
     rows: List[List[str]] = []
-    repaired = 0
+    joined_lines = 0     # 改行で割れていてつないだ回数
+    folded_commas = 0    # カンマではみ出していて畳み戻した行
     pending: Optional[List[str]] = None
 
     for row in reader:
@@ -235,22 +261,34 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
             # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
             row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
             pending = None
-            repaired += 1
+            joined_lines += 1
 
         if len(row) < width:
             pending = row      # まだ足りない。次の行も続き
             continue
+
         if len(row) > width:
-            raise DoneruError(
-                f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）"
-            )
+            if msg_at is None:
+                raise DoneruError(
+                    f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）。"
+                    "メッセージの列が見つからないので畳み戻せません"
+                )
+            # 右から (width - msg_at - 1) 列が末尾の固定列。その手前までがメッセージ
+            tail = width - msg_at - 1
+            end = len(row) - tail
+            row = row[:msg_at] + [",".join(row[msg_at:end])] + (row[end:] if tail else [])
+            folded_commas += 1
+
         rows.append(row)
 
     if pending is not None:
         raise DoneruError("CSV の最後の行が途中で切れています")
 
-    if repaired:
-        # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
-        print(f"CSV の割れた行を {repaired} 件つなぎ直しました")
+    # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
+    if joined_lines or folded_commas:
+        print(
+            f"CSV の壊れた行を組み直しました（改行で割れていたもの {joined_lines} 回、"
+            f"カンマではみ出していたもの {folded_commas} 行）"
+        )
 
     return [dict(zip(header, row)) for row in rows]
