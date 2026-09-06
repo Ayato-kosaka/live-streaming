@@ -44,21 +44,6 @@ jobs:
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
 
-      # 複合インデックス(firestore.indexes.json)。テーマ付きの付箋を
-      # where("theme", "==", ...) で引くのに要る(#160)。
-      # ルールと同じサービスアカウントで配るが、**別の step にしてある。**
-      # 1つにまとめると、権限で落ちたときにどちらが配られなかったのか分からない。
-      # **ここも continue-on-error を付けない。** 「無くても画面は落ちない」は
-      # 本当だが、落ちないまま**テーマの付箋が全部そらで返る**。
-      # 静かに壊れるほうが、赤く落ちるより見つけにくい。
-      - name: 🔎 Firestore インデックスのデプロイ
-        run: |
-          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          npx --yes firebase-tools@13 deploy --only firestore:indexes \
-            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
-          rm -f "$RUNNER_TEMP/sa.json"
-
       # storage.rules を誰も配っていなかった(北欧の写真を入れたときに増えた)。
       # 中身は deny-all で、写真はダウンロードの合言葉つき URL で配るから
       # ルールの外を通る。**配らなくても写真は見えるが、配らないと
@@ -70,5 +55,21 @@ jobs:
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx --yes firebase-tools@13 deploy --only storage \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
+      # **いちばん最後に置く。** ここは #168（サービスアカウントに索引を作る
+      # 権限が無い）が片付くまで必ず赤くなる。前に置いていたら、落ちた時点で
+      # 後ろの Storage ルールが skip された（実際に2回そうなった）。
+      # **配れるものを全部配ってから、配れないものだけで落ちる**、の順にする。
+      #
+      # continue-on-error は付けない。落ちても画面は動く（付箋は索引に頼らず
+      # 引いている）が、赤いままにしておくのは #168 が片付いていないことを
+      # デプロイのたびに思い出すため。権限が付けば、黙って緑に戻る。
+      - name: 🔎 Firestore インデックスのデプロイ
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:indexes \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
