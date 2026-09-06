@@ -50,9 +50,11 @@ def main() -> None:
 
     # 索引を作る権限が無い(#168)ので `where` は使わず、引いてから選り分ける
     docs = list(client.collection("islandNotes").limit(500).stream())
+    # `snapshot.get("欄")` は欄が無いと KeyError を投げる（JS の版と違う）。
+    # 欠けているものを探すのがここの仕事なので、辞書にしてから見る
     todo = [
         d for d in docs
-        if d.get("planId") and not d.to_dict().get("theme")
+        if (d.to_dict() or {}).get("planId") and not (d.to_dict() or {}).get("theme")
     ]
     log.info("islandNotes %d 件のうち、宛先の無い企画の付箋は %d 件",
              len(docs), len(todo))
