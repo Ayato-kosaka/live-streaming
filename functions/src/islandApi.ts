@@ -625,19 +625,33 @@ async function listStickies(q: {
   const base: FirebaseFirestore.Query = q.theme ?
     NOTES.where("theme", "==", q.theme) :
     NOTES;
-  /* ハートの多い順は、続きの位置を持たない。位置は createdAt で書いてあって、
-     並びが変わると意味を持たなくなる。国のページは1テーマぶんしか出さないので、
-     1回引いて終わりで足りる。 */
-  if (q.byHearts && q.theme) {
-    const snap = await base
-      .orderBy("hearts", "desc")
-      .limit(Math.min(limit, 100))
-      .get();
-    const items = snap.docs
+  /* **テーマで絞るときは、Firestore に並べ替えさせない。**
+     where("theme") と orderBy を組むと複合インデックスが要る。
+     そのインデックスは本番に配られていない（サービスアカウントに
+     インデックスを作る権限が無く、403 で落ちる）。
+     並べ替えを頼むと、その場で 500 になって**テーマの付箋が1枚も出ない。**
+
+     1テーマぶんは多くて数百枚なので、引いてから手元で並べれば足りる。
+     こうしておくと、権限が付いてインデックスが配られても何も変わらないし、
+     付かなくても画面は動く。**画面の生き死にを、権限の有無に賭けない。**
+
+     続きの位置（before）も持たない。位置は createdAt で書いてあるが、
+     1テーマを1回で引き切るので送る先が無い。 */
+  if (q.theme) {
+    const snap = await base.limit(300).get();
+    const rows = snap.docs
       .filter((d) => d.get("hidden") !== true)
-      .filter((d) => (d.get("archived") === true) === want)
-      .map(stickyShape);
-    return {items, more: false, next: null};
+      .filter((d) => (d.get("archived") === true) === want);
+    rows.sort((a, b) =>
+      q.byHearts ?
+        (Number(b.get("hearts")) || 0) - (Number(a.get("hearts")) || 0) :
+        (Number(b.get("createdAt")) || 0) - (Number(a.get("createdAt")) || 0),
+    );
+    return {
+      items: rows.slice(0, limit).map(stickyShape),
+      more: false,
+      next: null,
+    };
   }
   return pageOf(
     base,
