@@ -8,7 +8,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import { LiveNumber } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { ACTIVE_FRIENDS } from "@/content/residents";
-import { BEFORE_STREAM, countryBySlug } from "@/content/countries";
+import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/countries";
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
@@ -231,7 +231,12 @@ function Voice({ v, i }: { v: (typeof VOICES)[number]; i: number }) {
 export default function AboutPage() {
   const s = STATS_FALLBACK;
   const steps = [...STORY].filter((x) => x.date).sort((a, b) => a.date.localeCompare(b.date));
-  const before = BEFORE_STREAM.map((c) => c.city ?? c.name).join("、");
+  /* 配信が始まる前だけを並べる。**パリを混ぜない。** パリは滞在の途中で配信が
+     始まった街なので（`content/countries.ts` の `streamBegan`）、
+     「配信を始めるまえ」の列に入れると、パリで配信していないことになる。 */
+  const before = BEFORE_STREAM.filter((c) => !c.streamBegan)
+    .map((c) => c.city ?? c.name)
+    .join("、");
 
   return (
     <PageShell current="friends" crumbs={[{ label: "あやとのこと" }]}>
@@ -416,7 +421,7 @@ export default function AboutPage() {
           </div>
         </div>
         <p className="muted" style={{ marginTop: 12 }}>
-          配信を始めるまえの6週間、{before}。ここは配信が1本も無いので、歩いた国の地図には入っていません。
+          配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。そこまでは配信が1本も無いので、歩いた国の地図には入っていません。
         </p>
         <Link className="tile" href="/map" style={{ marginTop: 12 }}>
           <span className="tile-mark">

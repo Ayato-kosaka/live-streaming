@@ -329,8 +329,13 @@ export const COUNTRIES: Country[] = [
  * 日本を出たのは 2024年9月11日、パリで配信を始めたのは 10月28日。そのあいだに
  * イギリス・バルセロナ・ローマを2週間ずつ回っている（本人の話）。
  *
- * ここに置いてあるのは名前と順だけで、日付を持たせていない。「2週間ずつ」しか
- * 分かっておらず、`from`/`to` を書くと、聞いていない日付を書いたことになるから。
+ * 日付は本人から届いた（2026-09-06、GitHub #121）。**「2週間ずつ」は本人の記憶で、
+ * 実際は 16日・12日・12日・15日だった。** 概算を書いておくと、あとから本物が来ても
+ * 「だいたい合っている」で流してしまう。届いた日付をそのまま持つ。
+ *
+ * **パリだけ性格が違う。** 10月22日に着いて、その滞在の途中の10月28日に配信が始まった。
+ * つまりこの4つ目は「配信のまえ」に収まりきらない。`streamBegan` で印を付けて、
+ * 画面のほうで断る。ここで滞在を10月28日に切ると、本人の言った15日が消える。
  *
  * **スペインとイタリアは国の面を持っていない。** `COUNTRIES` に足すと `order`
  * （「◯カ国目」）を全部振り直すことになり、世界地図の焼き込み（`build_world_route.py`）と
@@ -341,10 +346,26 @@ export const COUNTRIES: Country[] = [
  * `/map` のこの段に並べてある。`/map/<国>` はチャットの集計を出す面なので、
  * 配信が1本も無いこの6週間で面を作っても、本数0・人数0・コメント0になる。
  */
-export const BEFORE_STREAM: { slug: string; name: string; city?: string; weeks: number }[] = [
-  { slug: "uk", name: "イギリス", weeks: 2 },
-  { slug: "spain", name: "スペイン", city: "バルセロナ", weeks: 2 },
-  { slug: "italy", name: "イタリア", city: "ローマ", weeks: 2 },
+export const BEFORE_STREAM: {
+  slug: string;
+  name: string;
+  city?: string;
+  /** 着いた日 */
+  from: string;
+  /** 発った日 */
+  to: string;
+  /** 何日いたか。本人の数えかたをそのまま持つ（日付の引き算で出し直さない） */
+  days: number;
+  /** この滞在の途中で配信が始まったか */
+  streamBegan?: boolean;
+}[] = [
+  { slug: "uk", name: "イギリス", city: "ロンドン", from: "2024-09-12", to: "2024-09-28", days: 16 },
+  { slug: "spain", name: "スペイン", city: "バルセロナ", from: "2024-09-28", to: "2024-10-10", days: 12 },
+  { slug: "italy", name: "イタリア", city: "ローマ", from: "2024-10-10", to: "2024-10-22", days: 12 },
+  { slug: "france", name: "フランス", city: "パリ", from: "2024-10-22", to: "2024-11-06", days: 15, streamBegan: true },
 ];
+
+/** 日本を出てから、配信が始まるまでの日数。パリに着いてから6日目に始まっている */
+export const BEFORE_STREAM_DAYS = 47;
 
 export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === slug);
