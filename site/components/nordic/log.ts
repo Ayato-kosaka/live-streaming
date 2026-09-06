@@ -58,7 +58,7 @@ export function useNordicLog(): NordicLogEntry[] | null {
  * ログインしていない人には聞きにいかない。ほとんどの人はログインしない。
  */
 export function useOwner(): boolean {
-  const [owner, setOwner] = useState(process.env.NEXT_PUBLIC_FAKE_OWNER === "1");
+  const [owner, setOwner] = useState(false);
   const { user, token } = useAuth();
   useEffect(() => {
     if (!user) {

@@ -457,6 +457,15 @@ p.nday-log-when {
    写真を貼るところ（`.nph-post-*`）と同じ作りにする。旅の最中に開くのは
    同じ人で、覚えることを2つにしない。 */
 .nlog-post { margin-top: var(--sp-4); }
+/* 書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
+   `.dform` の素の欄は 45〜46px しかなく、測って落ちた
+   （`tools/sprites/hitbox.mjs`。日付の欄 47px・配信の欄 45px）。
+   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる。
+   写真を貼るところも同じ人が同じ日に触るので、まとめて足す
+   （`.nph-post-file` は隠してある file の欄なので、当てない）。 */
+.nlog-post input,
+.nlog-post textarea,
+.nph-post-row input:not(.nph-post-file) { min-height: 48px; }
 .nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .nlog-seeds > span {
   align-self: center;
