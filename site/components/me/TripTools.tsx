@@ -89,9 +89,16 @@ export default function TripTools() {
         <Icon name="right" size={14} />
       </Link>
 
-      {/* 島の遠隔操作（#165）は、まだ無い。**押せない札を並びに混ぜない**
-          （`docs/island-world.md` 3.5）ので、平らな1行で言っておく。 */}
-      <p className="mp-todo">島の遠隔操作の道具は、ここに入る予定。まだ作っていない。</p>
+      {/* 島の遠隔操作（#165）。ルーレットの隣に置く。**配信中はこの2つを
+          行き来するだけで済む**ようにする、というのが #165 の決め。 */}
+      <Link className="mp-goto" href="/me/remote">
+        <Icon name="signpost" size={22} />
+        <span className="mp-goto-t">
+          <b>島の遠隔操作</b>
+          <i>配信に映している島を、手元から動かす。OBS は remote 付きの URL で開く</i>
+        </span>
+        <Icon name="right" size={14} />
+      </Link>
     </section>
   );
 }

@@ -1,0 +1,213 @@
+/* =========================================================
+   島の遠隔操作のコントローラー（/me/remote・#165）
+   ---------------------------------------------------------
+   面は紙。押すものと書くものだけが板（`docs/island-world.md` 2.1）。
+   じぶんのこと（`me.css`）を読み込んだ上に重ねているので、ここには
+   **ここにしか無いもの**だけを置く。
+
+   寸法はルーレット（`../roulette/control.css`）にそろえてある。
+   同じ配信の、同じ端末で、行き来しながら押すものなので、
+   押しどころの大きさと沈み方が違うと手が迷う。
+
+   **押しどころは 48px を割らない。** 島の寄り引きと北欧の今日だけ 64px。
+   喋りながら、画面を見ずに押すことがある。
+   ========================================================= */
+
+/* --- 押したもの -------------------------------------------------------
+   表示側は別の端末にある。**ここに残らないと、届いたか分からない。** */
+.rm-log { margin-top: var(--sp-4); }
+
+.rm-hits {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  /* 配信1本ぶん積むので、ここだけ中で送る。押しどころではないので細く */
+  max-height: 208px;
+  overflow-y: auto;
+}
+.rm-hits li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 3px solid var(--rule);
+  background: color-mix(in srgb, var(--marker) 10%, transparent);
+  border-radius: var(--r-1);
+}
+.rm-hits b {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rm-hits i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rm-hits em {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-3);
+}
+/* 送れたものは緑の縁、駄目だったものは朱。**字でも言う**（色だけにしない）。 */
+.rm-hits li[data-state="送りました"] { border-left-color: var(--leaf-c); }
+.rm-hits li[data-state="送れませんでした"] { border-left-color: var(--pick); }
+.rm-hits li[data-state="送れませんでした"] i { color: var(--pick); }
+
+/* --- ボタンの束 -------------------------------------------------------
+   2列か3列。**1列にしない。** 縦に積むと、下の束が畳みの向こうへ行く。 */
+.rm-row {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.rm-row-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rm-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* 3列は 390px 幅で1マス 95px しかない。「だいぶ下へ」が
+   「だいぶ下 / へ」と語の途中で折れるので、余白と印だけ詰める。
+   **字は詰めない**（配信中に読むもの）。 */
+.rm-row-3 .rm-key { gap: 2px; padding-inline: 2px; }
+.rm-row-3 .rm-key svg { flex: none; }
+/* スクロールの3つだけ、いちばん右を広く取る。「いちばん上へ」が6文字で、
+   等分だと「いちばん上 / へ」と折れる。**字を削って合わせない。** */
+.rm-row-scroll { grid-template-columns: 1fr 1fr 1.25fr; }
+
+.rm-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  line-height: 1.3;
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.rm-key:active { transform: translateY(6px); box-shadow: none; }
+
+/* 島の寄り引きと、北欧の今日。**この面でいちばん押すもの。** */
+.rm-key.is-big {
+  min-height: 64px;
+  font-size: var(--fs-h3);
+  border-color: var(--frame-deep);
+  box-shadow: 0 8px 0 var(--frame-deep);
+}
+.rm-key.is-big:active { transform: translateY(8px); box-shadow: none; }
+
+/* 今日の日だけは幅いっぱい。**探さずに押せるところに置く。** */
+.rm-key.is-day {
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: 0 var(--sp-4);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 34%, var(--paper)) 0%, var(--gold) 100%);
+}
+.rm-day-t { display: grid; gap: 2px; text-align: left; min-width: 0; }
+.rm-day-t b { font-size: var(--fs-h3); font-weight: 900; }
+.rm-day-t i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.rm-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+/* --- 表示側の見え方の入切 ---------------------------------------------
+   配信の途中で「うるさい」と思ったら、その場で切れるところ。 */
+.rm-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  text-align: left;
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.rm-switch:active { transform: translateY(6px); box-shadow: none; }
+/* 入っているほうを沈める（`.mp-tab.is-on` と同じ形）。色だけで言わない */
+.rm-switch.is-on {
+  border-color: var(--pick);
+  transform: translateY(3px);
+  box-shadow: var(--pop-push);
+}
+.rm-switch-t { display: grid; gap: 2px; min-width: 0; }
+.rm-switch-t b { font-size: var(--fs-note); font-weight: 900; }
+.rm-switch-t i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* --- 出し先 ----------------------------------------------------------- */
+.rm-url {
+  margin: 0;
+  padding: var(--sp-2);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-2);
+  word-break: break-all;
+}
+.rm-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.rm-quiet {
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.rm-quiet:active { background: var(--paper-2); }
+
+.rm-err {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--pick);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink);
+}

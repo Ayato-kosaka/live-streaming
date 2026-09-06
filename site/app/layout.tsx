@@ -4,6 +4,7 @@ import "./globals.css";
 import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
 import Here from "@/components/live/Here";
+import IslandRemote from "@/components/live/IslandRemote";
 import { NOW_FALLBACK } from "@/content/site";
 
 /**
@@ -95,6 +96,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               どのページからも動かないと、`/board` を読んでいる人が島に出ない。
               ログインしていない人には何も起きない（取りにいくものも無い）。 */}
           <Here />
+          {/* 島の遠隔操作を受ける側（#165）。**`?remote=` が付いていない面では
+              タイマーも張らず、1回も聞きにいかない。** ふつうの訪問者に
+              代金を乗せないため、器に置いてあっても何も起きない。 */}
+          <IslandRemote />
           {children}
         </AuthProvider>
       </body>
