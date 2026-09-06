@@ -26,44 +26,73 @@ _JST = timezone(timedelta(hours=9))
 # 各列の候補キー。先に書いたものが優先。
 # 実データを見て確定させるまでの受け皿なので、増やすのは安い。
 FIELD_CANDIDATES: Dict[str, Tuple[str, ...]] = {
-    "donation_id": ("id", "donationId", "donation_id", "uuid", "_id", "transactionId", "orderId"),
+    # CSV に切り替えたので日本語のヘッダーも候補に入れる。**実物を見て確定させる**
+    # までの当て推量が混ざっているので、--probe の unmapped_keys を必ず確認すること。
+    "donation_id": (
+        "id", "donationId", "donation_id", "uuid", "_id", "transactionId", "orderId",
+        "ID", "取引ID", "決済ID", "注文ID",
+    ),
     "donated_at": (
         "createdAt", "created_at", "donatedAt", "donated_at",
         "paidAt", "paid_at", "date", "datetime", "timestamp",
+        "日時", "日付", "投稿日時", "支援日時", "受付日時", "決済日時",
     ),
     "donor_name": (
         "name", "donorName", "donor_name", "nickname", "userName",
         "user_name", "supporterName", "from", "sender",
+        "名前", "お名前", "支援者名", "支援者", "ニックネーム", "送信者",
     ),
-    "amount": ("amount", "price", "value", "donationAmount", "totalAmount", "total"),
+    "amount": (
+        "amount", "price", "value", "donationAmount", "totalAmount", "total",
+        "金額", "支援金額", "決済金額", "支援額",
+    ),
     "currency": ("currency", "currencyCode", "currency_code"),
-    "message_text": ("message", "comment", "text", "body", "content"),
+    "message_text": (
+        "message", "comment", "text", "body", "content",
+        "メッセージ", "コメント", "本文",
+    ),
     # 実データを見て足したもの（本番の967件で確認）
     # status: 「振込完了」「振込待ち」。手元の帳簿と突き合わせるとき、
     #   まだ振り込まれていないぶんを分けられないと数字が合わない。
-    "status": ("status", "state", "paymentStatus"),
+    "status": ("status", "state", "paymentStatus", "ステータス", "状態", "振込状況"),
     # settlementAmount: 手数料を引いたあとの、実際に振り込まれる額。
     #   amount（視聴者が払った額）とは 5% ほど違う。どちらを見たいかは用途で変わる。
-    "settlement_amount": ("settlementAmount", "settlement_amount", "netAmount", "payoutAmount"),
+    "settlement_amount": (
+        "settlementAmount", "settlement_amount", "netAmount", "payoutAmount",
+        "振込金額", "精算金額", "受取金額", "手数料差引後金額",
+    ),
     # viewerPk: 人の同一性。**名前で数えてはいけない。**
     #   967件を名前で数えると45人、viewerPk で数えると28人。名前は変わる。
     #   chat_messages で author_channel_id を見ているのと同じ理由（docs/island-db.md）。
-    "viewer_pk": ("viewerPk", "viewer_pk", "viewerId", "userPk"),
+    "viewer_pk": ("viewerPk", "viewer_pk", "viewerId", "userPk", "支援者ID", "ユーザーID"),
 }
 
 # 「200円」「¥1,000」「1000.00」から数字だけ取り出す
 _AMOUNT_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+
+# キー名を突き合わせる形にそろえるとき落とすもの（区切りだけ。文字は残す）
+_KEY_NOISE = re.compile(r"[\s_\-.・:：/／()（）]+")
+
+
+def _key(name: str) -> str:
+    """キー名を突き合わせ用にそろえる。日本語はそのまま残す。"""
+    return _KEY_NOISE.sub("", name.strip().lower())
 
 
 def _pick(record: Dict[str, Any], candidates: Tuple[str, ...]) -> Tuple[Optional[Any], Optional[str]]:
     """候補キーのうち最初に見つかったものの値と、当たったキー名を返す。
 
     キー名の表記ゆれ（camelCase / snake_case / 大文字小文字）を吸収したいので、
-    比較は英数字だけを残して小文字にしたもので行う。
+    比較は区切り文字を落として小文字にしたもので行う。
+
+    **英数字以外を捨ててはいけない。** CSV のヘッダーは日本語なので、
+    「英数字だけ残す」にすると `日時` も `名前` も `金額` も空文字になって、
+    どの候補にも当たらなくなる（JSON だけを見ていたときの作りが残っていた）。
+    落とすのは空白と `_ - . 　` などの区切りだけにする。
     """
-    normalized = {re.sub(r"[^a-z0-9]", "", key.lower()): key for key in record}
+    normalized = {_key(key): key for key in record}
     for candidate in candidates:
-        actual = normalized.get(re.sub(r"[^a-z0-9]", "", candidate.lower()))
+        actual = normalized.get(_key(candidate))
         if actual is not None and record[actual] not in (None, ""):
             return record[actual], actual
     return None, None

@@ -72,16 +72,33 @@
 | `message_text` | STRING | 添えられた言葉 |
 | `status` | STRING | `振込完了` / `振込待ち` |
 | `viewer_pk` | STRING | **人の同一性はこれで見る**（`chat_messages.author_channel_id` と同じ役目） |
-| `source_year` | INT64 | どの年として取ったか |
+| `fetched_start` / `fetched_end` | DATE | どの期間を訊いて取れた行か |
 | `ingest_run_id` / `ingested_at` | | 取り込みの記録 |
 | `raw_json` | JSON | 元データそのまま |
 
 入れているのは `python/fetch_doneru_donations.py`（`.github/workflows/fetch_doneru_donations.yml` が毎日 5:30 に回す）。
-既定では今年ぶん。**1月だけは去年ぶんも取る**（Doneru の一覧が年で区切られているので、
-今年ぶんだけ見ていると12月31日の寄付を誰も取らない年またぎの穴があく）。
+
+**取っているのは CSV。** `/streamer/donation-list/csv?start=...&end=...` を1回叩く。
+画面が使っている JSON の一覧（`?year=...`）から移した。あちらは**年でしか切れず**、
+データの無い年を訊くと**ページ送りを無視して同じページを返し続ける**。
+CSV は日付範囲で切れてページ送りが無いので、その両方が消える。
+
+既定の期間は**去年の元日から明日まで**。
+
+- 去年から: 年をまたいだ直後でも去年の大晦日が必ず入る。1回の往復で全部返るので、
+  1年ぶん多く取っても代金はほとんど変わらない
+- 明日まで: `end` が含まれるのか分からないので、**取りこぼさない側に倒す**。
+  1日多く訊いて空が返るほうが、今日ぶんを落とすより安い
+
 過去ぶんは `workflow_dispatch` の `since` に年を入れて流す
-（`since=2024` なら 2024 年から今年まで）。
-`donation_id` で `MERGE` するので、同じ年を何度流しても増えない。
+（`since=2024` なら 2024 年の元日から今日まで）。
+`donation_id` で `MERGE` するので、何度流しても増えない。
+
+**ヘッダーは日本語。** キー名を突き合わせるときに英数字以外を捨ててはいけない
+（`日時` も `名前` も `金額` も空文字になって、どの候補にも当たらなくなる）。
+`normalizer._key` は空白と区切り記号だけを落とす。
+
+**文字コードを決め打ちしない。** UTF-8 BOM でも Shift_JIS(cp932) でも読めるようにしてある。
 
 **毎日「その年を全件」取り直しているので、止まっても欠けない。**
 何日止まっていても、直して1回流せば止まっていた期間ごと埋まる。
@@ -146,16 +163,15 @@ SELECT COUNT(*) FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
 WHERE amount IS NULL OR donated_at IS NULL
 ```
 
-#### 無い年を訊かない
+#### 作り直す
 
-`since` に Doneru を使い始めた年（**2024年**。最初の寄付は 2024-12-20）より前を
-入れない。**データの無い年を訊くと、Doneru は `currentPage` を無視して
-同じページを返し続ける。** 素直に集めると同じ寄付が何十回も入った配列ができて、
-`MERGE` が「1つの行に複数の元行が当たる」で落ちる
-（`Scalar subquery produced more than one element`。`since=2021` で実際に踏んだ）。
+取り方が変わって列が変わったときは、古い行を混ぜない。
+`workflow_dispatch` の `recreate` を true にすると、取り込む前に
+`doneru_donations` を `DROP` してから作り直す（`TRUNCATE` ではなく `DROP`。
+列の並びごと作り直したいので）。
 
-いまは取得側で「1ページ丸ごと既知なら打ち切る」ようにしてあるので落ちないが、
-訊く意味は無い。
+**`doneru_ingest_runs` は消えない。** あれは寄付ではなく実行の記録で、
+取り方が変わっても過去に何日セッションが持ったかの意味は変わらないため。
 
 ### `doneru_ingest_runs` — 取り込みを試した記録1回＝1行
 
@@ -167,7 +183,7 @@ WHERE amount IS NULL OR donated_at IS NULL
 | --- | --- | --- |
 | `run_id` / `ran_at` | STRING / TIMESTAMP | いつの実行か |
 | `outcome` | STRING | `ok` / `session_expired` / `error` |
-| `years` | STRING | 取りに行った年（`2026` や `2024-2026`） |
+| `period` | STRING | 取りに行った期間（`2025-01-01..2026-09-07`） |
 | `donations` | INT64 | 入れた件数 |
 | `cookie_shape` | STRING | `_dt` の長さの判定（**値は入れない**） |
 | `renewed_dt` | BOOL | Doneru が `_dt` を配り直したか |
