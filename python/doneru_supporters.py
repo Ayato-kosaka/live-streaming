@@ -142,6 +142,9 @@ def main() -> int:
                         merge=True,
                     )
                 continue
+            if known.get("isOwner"):
+                # あやと本人。自分のカードを自分に配らない
+                continue
             cid = known.get("channelId")
             if not cid:
                 skipped += 1

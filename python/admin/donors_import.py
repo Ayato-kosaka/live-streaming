@@ -119,6 +119,8 @@ def main() -> None:
             "handle": handle,
             "label": d.get("label"),
             "channelId": cid,
+            # あやと本人。表には載せるが、カードは渡さない
+            "isOwner": bool(d.get("isOwner")),
             "state": state,
             "updatedAt": now,
         }
