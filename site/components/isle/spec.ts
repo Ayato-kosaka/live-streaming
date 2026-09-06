@@ -28,6 +28,7 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
+import type { NotePlace } from "@/components/live/NoteBoards";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 
 export type IsleItem = {
@@ -68,6 +69,8 @@ export type IslePlaceSpec = {
   note?: string;
   /** 「ぜんぶ見る」の行き先 */
   more?: { label: string; sub: string; href: string };
+  /** 板の中に出す掲示板の棚割り（`components/isle/IsleBoard.tsx`） */
+  board?: NotePlace[];
   /** 出発までの日数を出す。**画面が出てから数える**（焼き込まない） */
   countdown?: string;
   /** 島の「！」の札に出す6つ。いまは全部が出る（島に建つのが最大6つなので） */
@@ -307,6 +310,36 @@ function pier(prev?: Neighbour, next?: Neighbour): IslePlaceSpec {
 }
 
 /**
+ * この旅の掲示板の棚割り。
+ *
+ * **`/board` と同じ仕分けを借りている。** 付箋の本文の頭に付く `【国名】` の札で
+ * 分けるところ（`components/live/NoteBoards.tsx`）はそのまま使い、
+ * ここでは**北欧の棚だけ**を渡す。押すと `/board` の全企画が出てくるのを
+ * やめるための最小の変更で、仕分けの規則を新しく作ってはいない。
+ *
+ * あやとの言葉:「北欧周遊島の掲示板には、北欧周遊関連だけ見れれば良い」。
+ *
+ * 並びは旅で通る順。**枚数では動かさない**（`docs/island-play.md`
+ * 「順位表を作らない」）。`app/board/page.tsx` の `NOTE_PLACES` が
+ * 同じ並びを持っている——あちらから読ませたいが、担当が別なので報告に回した。
+ *
+ * ここ（サーバー側）で組むのは、`content/nordic.ts` が 44KB あるから。
+ * 棚に要るのは名前と行き先だけなので、ブラウザまで運ぶのはそのぶんで足りる。
+ */
+function nordicShelves(): NotePlace[] {
+  return [
+    { key: "北欧旅", name: "北欧旅ぜんぶ", group: "北欧の旅", href: "/nordic#say", by: "tag" },
+    ...NORDIC_COUNTRIES.map((c) => ({
+      key: c.name,
+      name: c.name,
+      group: "北欧の旅",
+      href: `/nordic/${c.slug}`,
+      by: "tag" as const,
+    })),
+  ];
+}
+
+/**
  * 次の島（北欧）。
  *
  * **建てるものが違う**（`docs/island-atlas.md` 4章）。過去の島は
@@ -356,10 +389,12 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     {
       id: "board",
       label: "この旅の掲示板",
-      blurb: "行き先も、やることも出せる",
+      blurb: "北欧に来ている提案",
       icon: "signboard",
       size: 58,
-      href: "/board",
+      note: "北欧あての提案だけ。押すと、書いてある場所へ行けます。",
+      board: nordicShelves(),
+      more: { label: "島の掲示板へ", sub: "北欧以外の企画も、ここから出せる", href: "/board" },
     },
   ];
   return {

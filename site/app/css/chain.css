@@ -717,6 +717,15 @@
 .isle-spot:not(.is-on) .isle-go { display: none; }
 /* 看板を出さない建物は、近づくまで札ごと出さない */
 .isle-spot:not(.is-sign):not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
+/* 引き（島ぜんぶ）では、建っているもの全部の名前を出す。
+   ---------------------------------------------------------
+   いまの島と同じ決まり（`app/css/island.css` の `[data-cam="wide"]` と
+   `docs/island-design.md` 3-4 の例外）。引きの用事は「この島に何が
+   建っているか」を一目で見ることなので、看板の有無で名前を隠すと、
+   看板を出さない建物が無名の小屋のまま残る。 */
+/* `:not(.is-sign):not(.is-on)` は class 4つぶんの強さがある。
+   同じ強さでは後ろが勝つが、当てる先を1つ増やして確実に上書きする。 */
+.isle[data-cam="wide"] .isle-spot:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
 .isle-spot.is-on .isle-text b { font-size: 14.5px; }
 .isle-text i {
@@ -887,6 +896,16 @@
 }
 .isle-sheet-x:active { transform: translateY(2px); box-shadow: 0 1px 0 #d3c09a; }
 
+/* 板の中の掲示板（`components/isle/IsleBoard.tsx`）。
+   ---------------------------------------------------------
+   中の class は `/board` の棚（`.nb-*` / `.nx-notes`）をそのまま使っている
+   ので、見た目の決まりはあちらが持っている。ここで足すのは、
+   **紙の面の途中ではなく板の中にいる**ぶんの詰めだけ。
+   板の頭（`.isle-sheet-head`）が「この旅の掲示板 / 北欧あての提案だけ」と
+   言っているので、見出しは重ねない。 */
+.isle-board { margin: 0 0 12px; }
+.isle-board .nb-tabs { margin-bottom: 10px; }
+
 /* 数の並び。**一面ぜんぶ押せるマスの並びではない**ので、厚みは付けない
    （`docs/island-world.md` 3.4。押せないものは完全に平ら） */
 .isle-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
@@ -993,7 +1012,8 @@
   position: absolute;
   margin: 0;
   left: 14px;
-  top: calc(12px + env(safe-area-inset-top));
+  /* 左上は引き／寄りのボタン（いまの島と同じ置き場）。その真下から始める */
+  top: calc(68px + env(safe-area-inset-top));
   /* **札より下に置く。** 札はここを避けて動くが（IsleStage の uiBoxes）、
      避けきれなかったときに勝つのは札のほう。名前は一度読めば済む飾りで、
      札はこれから歩いて行く先（いまの島の看板ロゴと同じ決め方）。
@@ -1009,33 +1029,96 @@
 .isle-sign b { display: block; font-size: 15px; font-weight: 900; letter-spacing: 0.02em; }
 .isle-sign i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.92; line-height: 1.45; }
 
+/* 島の隅の道具。**いまの島（`island.css` の `.stage-view` / `.stage-atlas`）と
+   同じ板にする。**
+   ---------------------------------------------------------
+   ここだけ 40px の平たい白い丸で、島に降りたときの手ざわりが違っていた。
+   - 背が 40px しかなかった（指で押せる最小は 48px。`island-design.md` 3-2）
+   - 枠が無く、厚みも1色だけ。いまの島の道具は枠と内側の照りを持つ
+   - 字が 12.5px（いまの島は 12px）
+
+   置き場もいまの島に合わせる。引きと寄りの切り替えが左上、
+   島の連なりへが右上。島の名前はその下へ降ろす（`.isle-sign`）。 */
 .isle-view,
 .isle-atlas {
   position: absolute;
   z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 40px;
-  padding: 8px 13px;
+  gap: 4px;
+  /* 指で押せる最小（`docs/island-design.md` 3-2） */
+  min-height: 48px;
+  padding: 0 13px 0 10px;
+  border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
-  background: #fffdf6;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 900;
-  box-shadow: 0 4px 0 #cbbb96;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.isle-view { right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+.isle-view { left: 12px; top: calc(12px + env(safe-area-inset-top)); }
 .isle-atlas { right: 12px; top: calc(12px + env(safe-area-inset-top)); }
+/* 640px から上は、いまの島と同じで左下へ降ろす（上に看板ロゴが出る） */
+@media (min-width: 640px) {
+  .isle-view { top: auto; bottom: calc(16px + env(safe-area-inset-bottom)); }
+}
 .isle-view:active,
-.isle-atlas:active { transform: translateY(2px); box-shadow: 0 2px 0 #cbbb96; }
+.isle-atlas:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
 .isle-view:focus-visible,
 .isle-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+/* スマホの寄りでは絵だけにする（いまの島と同じ）。
+   島に降りた1画面目で、島より先に道具の名前を読ませない。
+   引きでは名前を戻す——島が小さく収まっていて、隅は海が空いている。 */
+@media (max-width: 639px) {
+  .isle .tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .isle-view,
+  .isle-atlas {
+    width: 48px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  .isle[data-cam="wide"] .tool-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+  }
+  .isle[data-cam="wide"] .isle-view,
+  .isle[data-cam="wide"] .isle-atlas {
+    width: auto;
+    padding: 0 13px 0 10px;
+    gap: 4px;
+    border-radius: 999px;
+  }
+}
 
 .isle-hint {
   position: absolute;
   left: 14px;
-  top: calc(74px + env(safe-area-inset-top));
+  /* 左上は引き／寄りのボタン（48px）、その下が島の名前（2行で約70px）。
+     さらに下から始める。数秒で消えるものなので、低い位置でよい */
+  top: calc(146px + env(safe-area-inset-top));
   z-index: 5;
   margin: 0;
   max-width: min(70vw, 340px);

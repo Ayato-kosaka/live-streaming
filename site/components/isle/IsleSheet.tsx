@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import Flag from "@/components/ui/Flag";
+import IsleBoard from "./IsleBoard";
 import Icon from "@/components/ui/IconCore";
 import { shortHref, shortThumb } from "@/content/shorts";
 import type { IslePlaceSpec } from "./spec";
@@ -101,6 +102,10 @@ export default function IsleSheet({
             ))}
           </ul>
         )}
+
+        {/* 掲示板。北欧の棚だけを渡す（`spec.ts` の `nordicShelves`）。
+            仕分けは `/board` と同じものを借りている */}
+        {place.board && <IsleBoard places={place.board} />}
 
         {place.items && (
           <ul className="isle-list">

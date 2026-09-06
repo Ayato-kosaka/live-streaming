@@ -8,6 +8,7 @@ import { rng } from "@/components/island/geometry";
 import { Sprite, spriteWidth } from "@/components/island/Sprite";
 import Icon from "@/components/ui/IconCore";
 import { hasVoice, linesOf } from "@/content/chatter";
+import { UI } from "@/content/voice";
 import IsleGround, { Building } from "./IsleGround";
 import IsleSheet from "./IsleSheet";
 import {
@@ -760,6 +761,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     <div
       className={`isle${talking ? " is-talking" : ""}${sheet ? " is-sheet" : ""}`}
       data-theme={spec.theme}
+      /* カメラが引きか寄りか。引きでは札を全部出して、住人には話しかけられない
+         （いまの島の `.stage[data-cam]` と同じ決まり。`docs/island-design.md` 3-4） */
+      data-cam={wide ? "wide" : "close"}
       data-mode={modeOf(box.w)}
       ref={hostRef}
       onClick={onStageClick}
@@ -867,17 +871,20 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       {/* 島の下ふち。海をページの地へ溶かす */}
       <span className="isle-shore" aria-hidden />
 
-      {/* 建物の札。近づくと開いて、名前と一言と「みる」が出る */}
+      {/* 建物の札。寄りでは近づくと開いて、名前と一言と「みる」が出る。
+          **引き（島ぜんぶ）では、建っているもの全部の名前が出る。開かない。**
+          いまの島と同じ決まり（`docs/island-design.md` 3-4 の例外）。
+          引きの建物はあやとの何倍も小さいので、開いた札1枚で島の3割が隠れる。 */}
       <div className="isle-labels">
         {world.places.map((sp, i) => {
-          const on = openSpot === sp.id;
+          const on = openSpot === sp.id && !wide;
           /* 押したら何が起きるか。
              **中身のある建物は、島から出ない。** 島の上に板が開いて、その中に一覧が出る
              （あやとの「やぐらみたいな感じで…が見れて」）。
              行き先が1つしかないもの（旅のしおり・掲示板）だけ、そのまま外へ出る */
           const enter = () => {
             dismissHint();
-            if (sp.items || sp.facts || sp.shorts) setSheet(sp.id);
+            if (sp.items || sp.facts || sp.shorts || sp.board) setSheet(sp.id);
             else if (sp.href) router.push(sp.href);
           };
           return (
@@ -913,7 +920,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         })}
       </div>
 
-      {/* 住人。押す所は建物の当たりより奥に置く（会話はおまけ。行き先を塞がない） */}
+      {/* 住人。押す所は建物の当たりより奥に置く（会話はおまけ。行き先を塞がない）。
+          **引きでは話しかけられない。** 引きの住人は 20px ほどの点で、
+          指で狙う相手ではないし、吹き出しが開けば島ぜんぶがその下に隠れる
+          （いまの島と同じ。あやと「引きのとき、キャラクターと会話できなくて良い」）。 */}
       <div className="isle-labels is-cast">
         {folk.map((v, i) => (
           <div
@@ -923,7 +933,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             }}
             className="isle-who"
           >
-            {ready.has(v.icon) && (
+            {!wide && ready.has(v.icon) && (
               <button
                 data-ui
                 className="isle-who-hit"
@@ -962,14 +972,32 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         </h1>
       )}
 
-      <button className="isle-view" data-ui onClick={() => setWide((v) => !v)}>
+      {/* 引きと寄りの切り替え。**いまの島（`.stage-view`）と同じ言葉・同じ板。**
+          前はここだけ「島ぜんぶ」と書いてあって、紙の足元にある
+          「島のなか ぜんぶ」（行き先の索引）と1字違いだった。
+          カメラの操作と行き先の索引が同じ名前で並ぶと、押すまで区別がつかない。
+          あやとの言葉:「「島ぜんぶ」は不要」。 */}
+      <button
+        className="isle-view"
+        data-ui
+        onClick={() => {
+          // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
+          closeTalk();
+          setWide((v) => !v);
+        }}
+        aria-label={wide ? UI.comeDown : UI.lookAround}
+      >
         <Icon name={wide ? "walk" : "island"} size={15} />
-        {wide ? "島におりる" : "島ぜんぶ"}
+        <span className="tool-label">{wide ? UI.comeDown : UI.lookAround}</span>
       </button>
 
+      {/* 島の連なりへ。ここは寄りでも出す。**いまの島とここだけ違う。**
+          あちらは下のバーを開けば連なりへ行けるが（`.bar-atlas`）、
+          章の島にバーは無い。消すと、寄りから連なりへ行く道が
+          船着き場の札1枚だけになる。 */}
       <Link className="isle-atlas" data-ui href="/atlas" prefetch={false}>
         <Icon name="map" size={15} />
-        島の地図
+        <span className="tool-label">{UI.atlas}</span>
       </Link>
 
       {hint && <p className="isle-hint">押したところまで歩いていくよ。建物に近づくと、中が見られる</p>}
@@ -1064,6 +1092,13 @@ function placePlates(
   const padTop = 30;
   const padBottom = 52;
   const taken = o.taken.slice();
+  /* 「はみ出しているか」を見るときの相手。
+     **建物の当たりは入れない。** 当たりは指で押せる最小(48px)まで広げてあるので、
+     小さい建物では札の下辺と当たりの上辺が必ず重なる。入れると、小さい建物の札が
+     いつも「はみ出し」になって下へ落ちていく。
+     入れるのは島の隅の道具と、**先に置いた札**。引きでは札が全部出るので、
+     ここを見ないと2枚が同じところに重なって、どちらも読めない。 */
+  const placed = o.taken.slice();
   const plates: {
     i: number;
     el: HTMLDivElement;
@@ -1104,12 +1139,15 @@ function placePlates(
         rect.x + rect.w > o.b.w - pad ||
         rect.y < padTop ||
         rect.y + rect.h > o.b.h - padBottom ||
-        // 島の隅の道具の下に入った札も、寄せ直す。半分隠れた札は読めない
-        o.taken.some(
+        // 島の隅の道具の下・先に置いた札の下に入った札も、寄せ直す。半分隠れた札は読めない
+        placed.some(
           (q) =>
             rect.x < q.x + q.w && rect.x + rect.w > q.x && rect.y < q.y + q.h && rect.y + rect.h > q.y,
         );
-      if (!out) taken.push(rect);
+      if (!out) {
+        taken.push(rect);
+        placed.push(rect);
+      }
       plates.push({ i, el, fx: px, fy: py, rect, out });
     }
   }
@@ -1147,6 +1185,7 @@ function placePlates(
         if (!moved) break;
       }
       taken.push({ x: left, y: top, w: rect.w, h: rect.h });
+      placed.push({ x: left, y: top, w: rect.w, h: rect.h });
       /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す */
       const ax = pl.fx - (left + rect.w / 2);
       const ay = pl.fy - (top + rect.h / 2);
