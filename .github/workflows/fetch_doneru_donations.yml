@@ -15,15 +15,20 @@ on:
   workflow_dispatch:
     inputs:
       year:
-        description: "取り込む年（空なら今年）"
+        description: "取り込む年（空なら去年の元日から今日まで）"
         required: false
         type: string
       since:
-        description: "この年から今年までまとめて取り込む（過去ぶんの取り込み用。year より優先）"
+        description: "この年の元日から今日までまとめて取り込む（過去ぶんの取り込み用。year より優先）"
         required: false
         type: string
       probe:
         description: "形だけ見る（BigQuery に書かない）"
+        required: false
+        default: false
+        type: boolean
+      recreate:
+        description: "取り込む前に doneru_donations を DROP する（古い行を全部捨てる）"
         required: false
         default: false
         type: boolean
@@ -80,6 +85,7 @@ jobs:
             args+=(--year "${{ inputs.year }}")
           fi
           if [ "${{ inputs.probe }}" = "true" ]; then args+=(--probe); fi
+          if [ "${{ inputs.recreate }}" = "true" ]; then args+=(--recreate); fi
 
           set +e
           python python/fetch_doneru_donations.py "${args[@]}"

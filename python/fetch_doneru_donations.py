@@ -33,13 +33,13 @@ YouTube で投げた人しか見えていない。ここを埋める。
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from doneru import DoneruClient, DoneruError, DoneruSessionExpired  # noqa: E402
-from doneru.normalizer import describe_mapping, normalize  # noqa: E402
+from doneru.normalizer import describe_mapping, normalize_all  # noqa: E402
 
 # cookie が切れたときだけこの終了コードで落ちる。
 # ワークフローがこれを見て、失敗通知メールから理由が分かるようログに印を出す。
@@ -70,21 +70,18 @@ CREATE TABLE IF NOT EXISTS `{table}` (
   status STRING,
   settlement_amount NUMERIC,
   viewer_pk STRING,
-  source_year INT64,
+  platform STRING,
+  fetched_start DATE,
+  fetched_end DATE,
   ingest_run_id STRING,
   ingested_at TIMESTAMP,
   raw_json JSON
 )
 """
 
-# 既にあるテーブルには CREATE TABLE IF NOT EXISTS が効かない。
-# あとから列を足したときのために、ALTER も毎回投げる（どちらもべき等）。
-ADD_COLUMNS = """
-ALTER TABLE `{table}`
-  ADD COLUMN IF NOT EXISTS status STRING,
-  ADD COLUMN IF NOT EXISTS settlement_amount NUMERIC,
-  ADD COLUMN IF NOT EXISTS viewer_pk STRING
-"""
+# `--recreate` で投げる。**古い行を1行も残さない**ために TRUNCATE ではなく DROP。
+# 列の並びごと作り直したいので（JSON の一覧から CSV に移したときに列が変わった）。
+DROP_TABLE = "DROP TABLE IF EXISTS `{table}`"
 
 # donation_id で突き合わせる。同じ年を毎日流し直しても増えない。
 MERGE = """
@@ -102,15 +99,17 @@ WHEN MATCHED THEN
     status = S.status,
     settlement_amount = SAFE_CAST(S.settlement_amount AS NUMERIC),
     viewer_pk = S.viewer_pk,
-    source_year = S.source_year,
+    platform = S.platform,
+    fetched_start = SAFE_CAST(S.fetched_start AS DATE),
+    fetched_end = SAFE_CAST(S.fetched_end AS DATE),
     ingest_run_id = S.ingest_run_id,
     ingested_at = SAFE_CAST(S.ingested_at AS TIMESTAMP),
     raw_json = SAFE.PARSE_JSON(S.raw_json)
 WHEN NOT MATCHED THEN
   INSERT (
     donation_id, donated_at, donor_name, amount, amount_text,
-    currency, message_text, status, settlement_amount, viewer_pk,
-    source_year, ingest_run_id, ingested_at, raw_json
+    currency, message_text, status, settlement_amount, viewer_pk, platform,
+    fetched_start, fetched_end, ingest_run_id, ingested_at, raw_json
   )
   VALUES (
     S.donation_id,
@@ -123,7 +122,9 @@ WHEN NOT MATCHED THEN
     S.status,
     SAFE_CAST(S.settlement_amount AS NUMERIC),
     S.viewer_pk,
-    S.source_year,
+    S.platform,
+    SAFE_CAST(S.fetched_start AS DATE),
+    SAFE_CAST(S.fetched_end AS DATE),
     S.ingest_run_id,
     SAFE_CAST(S.ingested_at AS TIMESTAMP),
     SAFE.PARSE_JSON(S.raw_json)
@@ -136,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `{table}` (
   run_id STRING,
   ran_at TIMESTAMP,
   outcome STRING,
-  years STRING,
+  period STRING,
   donations INT64,
   cookie_shape STRING,
   renewed_dt BOOL,
@@ -144,18 +145,27 @@ CREATE TABLE IF NOT EXISTS `{table}` (
 )
 """
 
+# 記録のテーブルは**消さない**（寄付ではなく実行の履歴で、取り方が変わっても
+# 「何日セッションが持ったか」の意味は変わらない）。ので、CREATE では追いつかない
+# 列の入れ替えを ALTER でやる。years は年単位で取っていたころの名残で、
+# 日付範囲に移ったいま意味を持たない。
+RUNS_MIGRATE = (
+    "ALTER TABLE `{table}` ADD COLUMN IF NOT EXISTS period STRING",
+    "ALTER TABLE `{table}` DROP COLUMN IF EXISTS years",
+)
+
 RUNS_INSERT = """
 INSERT INTO `{table}`
-  (run_id, ran_at, outcome, years, donations, cookie_shape, renewed_dt, detail)
+  (run_id, ran_at, outcome, period, donations, cookie_shape, renewed_dt, detail)
 VALUES
-  (@run_id, SAFE_CAST(@ran_at AS TIMESTAMP), @outcome, @years, @donations,
+  (@run_id, SAFE_CAST(@ran_at AS TIMESTAMP), @outcome, @period, @donations,
    @cookie_shape, @renewed_dt, @detail)
 """
 
 
 def record_run(
     outcome: str,
-    years: List[int],
+    period: str,
     donations: int,
     cookie_shape: Optional[str],
     renewed_dt: bool,
@@ -179,11 +189,12 @@ def record_run(
     from logging_util import get_run_id
 
     table = f"{BQ_DATASET}.{BQ_TABLE_DONERU_RUNS}"
-    label = str(years[0]) if len(years) == 1 else f"{years[0]}-{years[-1]}"
 
     try:
         client = get_bigquery_client()
         client.query(RUNS_DDL.format(table=table)).result()
+        for statement in RUNS_MIGRATE:
+            client.query(statement.format(table=table)).result()
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
                 bigquery.ScalarQueryParameter("run_id", "STRING", get_run_id()),
@@ -191,7 +202,7 @@ def record_run(
                     "ran_at", "STRING", datetime.now(timezone.utc).isoformat()
                 ),
                 bigquery.ScalarQueryParameter("outcome", "STRING", outcome),
-                bigquery.ScalarQueryParameter("years", "STRING", label),
+                bigquery.ScalarQueryParameter("period", "STRING", period),
                 bigquery.ScalarQueryParameter("donations", "INT64", donations),
                 bigquery.ScalarQueryParameter("cookie_shape", "STRING", cookie_shape),
                 bigquery.ScalarQueryParameter("renewed_dt", "BOOL", renewed_dt),
@@ -204,7 +215,7 @@ def record_run(
         print(f"WARNING: 実行の記録に失敗しました: {exc}", file=sys.stderr)
 
 
-def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
+def merge_rows(rows: List[Dict[str, Any]], start: date, end: date) -> int:
     """BigQuery に MERGE する。"""
     from google.cloud import bigquery
     from google.cloud.bigquery import ScalarQueryParameter, StructQueryParameter
@@ -218,7 +229,6 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     ingested_at = datetime.now(timezone.utc).isoformat()
 
     client.query(DDL.format(table=table)).result()
-    client.query(ADD_COLUMNS.format(table=table)).result()
 
     # MERGE は「1つの行に当たる元行は1つまで」を要求する。同じ donation_id が
     # 2つ入っていると Scalar subquery produced more than one element で落ちる
@@ -254,7 +264,9 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
                     None if row["settlement_amount"] is None else repr(row["settlement_amount"]),
                 ),
                 ScalarQueryParameter("viewer_pk", "STRING", row["viewer_pk"]),
-                ScalarQueryParameter("source_year", "INT64", year),
+                ScalarQueryParameter("platform", "STRING", row["platform"]),
+                ScalarQueryParameter("fetched_start", "STRING", start.isoformat()),
+                ScalarQueryParameter("fetched_end", "STRING", end.isoformat()),
                 ScalarQueryParameter("ingest_run_id", "STRING", run_id),
                 ScalarQueryParameter("ingested_at", "STRING", ingested_at),
                 ScalarQueryParameter(
@@ -271,23 +283,30 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     return len(deduped)
 
 
-def resolve_years(year: Optional[int], since: Optional[int], now: datetime) -> List[int]:
-    """どの年を取りに行くかを決める。
+def resolve_range(
+    year: Optional[int],
+    since: Optional[int],
+    now: datetime,
+) -> "tuple[date, date]":
+    """どの期間を取りに行くかを決める。
 
-    **1月は去年ぶんも取る。** Doneru の一覧は年で区切られているので、
-    「今年ぶんだけ」にすると 12月31日の寄付を誰も取らない年またぎの穴があく。
-    1月1日 5:30 の実行が見るのは新しい年で、大晦日の寄付が入っているのは
-    古い年のほう。それを最後に取ったのは 12月31日 5:30 なので、
-    その日の夜のぶんが丸ごと落ちる。毎年ひと穴あく。
+    CSV は日付範囲で切れるので、年をまたぐ穴（12月31日の寄付を誰も取らない）を
+    考えなくてよくなった。既定は**去年の元日から明日まで**。
 
-    MERGE はべき等なので、去年ぶんを1月のあいだ毎日取り直しても増えない。
+    - 去年から: 年をまたいだ直後でも去年の大晦日が必ず入る。CSV は1回の
+      往復で全部返るので、1年ぶん多く取っても代金はほとんど変わらない。
+    - 明日まで: `end` が含まれるのか含まれないのかが分からない。含まれない場合に
+      今日ぶんを落とすほうが、1日多く訊いて空が返るより痛い。**取りこぼさない側に倒す。**
+
+    `--since` と `--year` はその範囲を上書きする。
     """
+    today = now.date()
+
     if since:
-        return list(range(since, now.year + 1))
+        return date(since, 1, 1), date(today.year + 1, 1, 1)
     if year:
-        return [year]
-    # 年またぎの穴を埋めるため、1月だけ去年も見る
-    return [now.year - 1, now.year] if now.month == 1 else [now.year]
+        return date(year, 1, 1), date(year + 1, 1, 1)
+    return date(today.year - 1, 1, 1), today + timedelta(days=1)
 
 
 def main() -> int:
@@ -296,7 +315,7 @@ def main() -> int:
         "--year",
         type=int,
         default=None,
-        help="取り込む年（既定: 日本時間の今年。1月は去年ぶんも一緒に取る）",
+        help="この年の1年ぶんを取り込む（既定: 去年の元日から明日まで）",
     )
     parser.add_argument(
         "--since",
@@ -305,23 +324,29 @@ def main() -> int:
         const=DEFAULT_FIRST_YEAR,
         default=None,
         help=(
-            "この年から今年までまとめて取り込む（過去ぶんの取り込み用）。"
+            "この年の元日から今日までまとめて取り込む（過去ぶんの取り込み用）。"
             f"年を省くと {DEFAULT_FIRST_YEAR} 年から"
         ),
     )
     parser.add_argument(
         "--probe",
         action="store_true",
-        help="1ページだけ取って、キー名と件数を出す。BigQuery を触らない",
+        help="取ってキー名と件数だけ出す。BigQuery を触らない",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="全ページ取るが BigQuery に書かない",
+        help="取るが BigQuery に書かない",
+    )
+    parser.add_argument(
+        "--recreate",
+        action="store_true",
+        help="取り込む前に doneru_donations を DROP する（古い行を全部捨てる）",
     )
     args = parser.parse_args()
 
-    years = resolve_years(args.year, args.since, datetime.now(JST))
+    start, end = resolve_range(args.year, args.since, datetime.now(JST))
+    period = f"{start}..{end}"
 
     client: Optional[DoneruClient] = None
     # **初期値は失敗にする。** 成功に倒しておくと、BigQuery 側の失敗のように
@@ -335,13 +360,15 @@ def main() -> int:
         client = DoneruClient()
 
         if args.probe:
-            records = client.fetch_donation_page(years[-1], page=1, rows_per_page=10)
+            records = client.fetch_donations(start, end)
             # 値は出さない。キー名と件数だけ（public リポジトリのログに出るため）
             print(json.dumps(describe_mapping(records), ensure_ascii=False, indent=2))
             return 0
 
-        for year in years:
-            total += ingest_year(client, year, dry_run=args.dry_run)
+        if args.recreate and not args.dry_run:
+            drop_table()
+
+        total = ingest(client, start, end, dry_run=args.dry_run)
         outcome = "ok"
     except DoneruSessionExpired as exc:
         outcome, detail = "session_expired", str(exc)
@@ -366,15 +393,12 @@ def main() -> int:
         if not args.probe and not args.dry_run:
             record_run(
                 outcome=outcome,
-                years=years,
+                period=period,
                 donations=total,
                 cookie_shape=client.cookie_shape if client else None,
                 renewed_dt=bool(client and client.renewed_dt),
                 detail=detail,
             )
-
-    if len(years) > 1:
-        print(f"{years[0]}〜{years[-1]} 年で合わせて {total} 件")
 
     # セッションの寿命を見立てるための手がかり。値は出さない。
     if client.renewed_dt:
@@ -384,10 +408,23 @@ def main() -> int:
     return 0
 
 
-def ingest_year(client: DoneruClient, year: int, dry_run: bool = False) -> int:
-    """1年ぶんを取って MERGE する。返すのは件数。"""
-    records = list(client.iter_donations(year))
-    print(f"{year} 年の寄付を {len(records)} 件取得しました")
+def drop_table() -> None:
+    """`doneru_donations` を消す。**中身も列の並びも残さない。**
+
+    JSON の一覧から CSV に移したときに、取れる列そのものが変わった。
+    古い行を残したまま混ぜると、どちらの取り方で入った行なのか区別が付かない。
+    """
+    from bq.client import get_bigquery_client
+
+    table = _table_ref()
+    get_bigquery_client().query(DROP_TABLE.format(table=table)).result()
+    print(f"{table} を DROP しました（作り直します）")
+
+
+def ingest(client: DoneruClient, start: date, end: date, dry_run: bool = False) -> int:
+    """期間ぶんを取って MERGE する。返すのは件数。"""
+    records = client.fetch_donations(start, end)
+    print(f"{start} 〜 {end} の寄付を {len(records)} 件取得しました")
 
     if not records:
         return 0
@@ -399,7 +436,7 @@ def ingest_year(client: DoneruClient, year: int, dry_run: bool = False) -> int:
         # 中身は raw_json に残っているので取りこぼしてはいない。
         print(f"未対応のキー（raw_json には入っています）: {mapping['unmapped_keys']}")
 
-    rows = [normalize(record) for record in records]
+    rows = normalize_all(records)
 
     undated = sum(1 for row in rows if row["donated_at"] is None)
     if undated:
@@ -409,7 +446,7 @@ def ingest_year(client: DoneruClient, year: int, dry_run: bool = False) -> int:
         print("--dry-run のため BigQuery には書きません")
         return len(rows)
 
-    merged = merge_rows(rows, year)
+    merged = merge_rows(rows, start, end)
     print(f"BigQuery に {merged} 件 MERGE しました")
     return merged
 

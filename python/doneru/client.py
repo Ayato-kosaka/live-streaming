@@ -17,9 +17,11 @@
 （このモジュールは値を一切ログに出さない）。
 """
 
-import json
+import csv
+import io
 import os
-from typing import Any, Dict, Iterator, List, Optional
+from datetime import date
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -29,7 +31,7 @@ API_BASE = "https://api.doneru.jp"
 # ブラウザから来たリクエストに見せるための最小限のヘッダ。
 # origin / referer を落とすと CORS ではなく Doneru 側の判定で弾かれうるので残す。
 DEFAULT_HEADERS = {
-    "accept": "application/json, text/plain, */*",
+    "accept": "*/*",
     "origin": "https://doneru.jp",
     "referer": "https://doneru.jp/",
     "user-agent": (
@@ -38,14 +40,7 @@ DEFAULT_HEADERS = {
     ),
 }
 
-# 1ページあたりの件数。画面の既定は10だが、往復を減らしたいので大きめにする。
-ROWS_PER_PAGE = 100
-
-# ページ送りの上限。API が終端を返さずに同じページを返し続けたときに
-# 無限ループしないための保険。100件 x 100ページ = 1万件で、桁として十分。
-MAX_PAGES = 100
-
-REQUEST_TIMEOUT_SECONDS = 30
+REQUEST_TIMEOUT_SECONDS = 60
 
 
 class DoneruError(Exception):
@@ -121,27 +116,6 @@ def _describe_cookie(cookie_header: str) -> str:
     )
 
 
-def _find_record_list(payload: Any, depth: int = 0) -> Optional[List[Dict[str, Any]]]:
-    """レスポンスの中から寄付レコードの配列を探す。
-
-    包み方（`{data: [...]}` なのか `{result: {list: [...]}}` なのか裸の配列なのか）を
-    決め打ちしない。**Doneru の都合で変わったときに、決め打ちだと黙って0件になる**。
-    辞書の配列を最初に見つけたところを採用して、見つからなければ None を返す。
-    """
-    if isinstance(payload, list):
-        if not payload or isinstance(payload[0], dict):
-            return payload
-        return None
-
-    if isinstance(payload, dict) and depth < 3:
-        for value in payload.values():
-            found = _find_record_list(value, depth + 1)
-            if found is not None:
-                return found
-
-    return None
-
-
 class DoneruClient:
     """`_dt` cookie で Doneru の寄付履歴を読む。"""
 
@@ -158,8 +132,8 @@ class DoneruClient:
         self._session.headers.update(DEFAULT_HEADERS)
         self._session.headers["cookie"] = self._cookie_header
 
-    def _get(self, path: str, params: Dict[str, Any]) -> Any:
-        """GET して JSON を返す。認証が切れていれば DoneruSessionExpired。"""
+    def _get_bytes(self, path: str, params: Dict[str, Any]) -> bytes:
+        """GET して本文をそのまま返す。認証が切れていれば DoneruSessionExpired。"""
         try:
             response = self._session.get(
                 f"{API_BASE}{path}",
@@ -194,83 +168,63 @@ class DoneruClient:
                 "Cloudflare のチャレンジか、ログイン画面に飛ばされています"
             )
 
+        return response.content
+
+    def fetch_donations(self, start: date, end: date) -> List[Dict[str, str]]:
+        """`start` から `end` までの寄付を CSV で取る。
+
+        画面が使っている JSON の一覧（`/streamer/donation-list?year=...`）から
+        こちらに移した。**あちらは年でしか切れないうえ、データの無い年を訊くと
+        ページ送りを無視して同じページを返し続ける。** CSV は日付範囲で切れて、
+        ページ送りが無いので、その両方が消える。
+
+        返すのは CSV のヘッダーをキーにした辞書の配列。**ヘッダー名は
+        決め打ちしない**（`normalizer.FIELD_CANDIDATES` が吸収する）。
+        """
+        raw = self._get_bytes(
+            "/streamer/donation-list/csv",
+            {"start": start.isoformat(), "end": end.isoformat()},
+        )
+        return _parse_csv(raw)
+
+
+def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
+    """CSV の本文を辞書の配列にする。
+
+    **文字コードを決め打ちしない。** 日本のサービスの CSV は Excel 向けに
+    UTF-8 BOM や Shift_JIS(cp932) で出てくることがある。UTF-8 で読めなければ
+    cp932 に落とす。BOM は `utf-8-sig` が食べる。
+    """
+    text: Optional[str] = None
+    for encoding in ("utf-8-sig", "cp932"):
         try:
-            return json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise DoneruError(f"{path} のレスポンスを JSON として読めませんでした") from exc
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        raise DoneruError("CSV の文字コードを判別できませんでした（UTF-8 でも cp932 でもない）")
 
-    def fetch_donation_page(
-        self,
-        year: int,
-        page: int,
-        rows_per_page: int = ROWS_PER_PAGE,
-    ) -> List[Dict[str, Any]]:
-        """寄付履歴を1ページ分取る。
+    rows = list(csv.DictReader(io.StringIO(text)))
 
-        `id` は画面上の絞り込み用で、空だと全件。空のまま送る。
-        """
-        payload = self._get(
-            "/streamer/donation-list",
-            {
-                "id": "",
-                "year": year,
-                "currentPage": page,
-                "rowPerPage": rows_per_page,
-            },
-        )
+    # ヘッダーだけで中身が無いのは「その期間に寄付が無い」。空を返すのが正しい。
+    # ヘッダーすら無いのは想定外なので、キー名も値も出さずに落とす。
+    if rows and all(key is None for key in rows[0]):
+        raise DoneruError("CSV にヘッダー行がありませんでした")
 
-        records = _find_record_list(payload)
-        if records is None:
-            # 認証は通っているのに配列が見つからない = 包み方が変わった。
-            # 中身は寄付者の個人情報なのでログに出さず、**キー名だけ**出す。
-            keys = sorted(payload.keys()) if isinstance(payload, dict) else type(payload).__name__
-            raise DoneruError(
-                f"レスポンスの中に寄付レコードの配列が見つかりませんでした（トップの構造: {keys}）"
-            )
+    # DictReader は列の数が合わない行に None のキーを作る。混ざったまま
+    # BigQuery に渡すと JSON にできないので、ここで落として気づけるようにする。
+    cleaned: List[Dict[str, str]] = []
+    ragged = 0
+    for row in rows:
+        if None in row:
+            ragged += 1
+            row = {k: v for k, v in row.items() if k is not None}
+        cleaned.append({k: ("" if v is None else v) for k, v in row.items()})
 
-        return records
-
-    def iter_donations(
-        self,
-        year: int,
-        rows_per_page: int = ROWS_PER_PAGE,
-    ) -> Iterator[Dict[str, Any]]:
-        """その年の寄付を全ページ舐める。
-
-        終端の判定は「返ってきた件数が rows_per_page 未満」。
-        `total` のようなフィールドを当てにしない（あるとは限らない）。
-
-        **同じレコードを二度返さない。** データの無い年（2021 など）を訊くと、
-        Doneru は `currentPage` を無視して同じページを返し続ける。素直に
-        100ページ集めると、同じ寄付が100回入った配列ができる。それを
-        そのまま BigQuery に渡すと、MERGE が「1つの行に複数の元行が当たる」で
-        落ちる（`Scalar subquery produced more than one element`）。実際に落ちた。
-
-        なので見たレコードを覚えておいて、**1ページ丸ごと既知だったらそこで終わる**。
-        """
-        seen: set = set()
-
-        for page in range(1, MAX_PAGES + 1):
-            records = self.fetch_donation_page(year, page, rows_per_page)
-            if not records:
-                return
-
-            fresh = 0
-            for record in records:
-                fingerprint = json.dumps(record, ensure_ascii=False, sort_keys=True)
-                if fingerprint in seen:
-                    continue
-                seen.add(fingerprint)
-                fresh += 1
-                yield record
-
-            # 1件も新しくない = ページ送りが効いていない。ここで打ち切る
-            if fresh == 0:
-                return
-
-            if len(records) < rows_per_page:
-                return
-
+    if ragged:
         raise DoneruError(
-            f"{MAX_PAGES} ページ読んでも終端に届きませんでした。ページ送りが効いていない可能性があります"
+            f"CSV に列数の合わない行が {ragged} 件ありました（ヘッダーと本文がずれています）"
         )
+
+    return cleaned
