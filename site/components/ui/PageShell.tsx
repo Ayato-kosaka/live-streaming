@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { SPOTS } from "../island/layout";
 import { Gull } from "../island/Guide";
-import Icon from "./Icon";
 import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import { FOOT, UI } from "@/content/voice";
 
@@ -13,52 +12,42 @@ type Crumb = { label: string; href?: string };
 /**
  * 看板。
  *
- * ## 狭い画面では1段。行き先の一覧は畳んで持つ
+ * ## 狭い画面は1段。行き先の一覧は持たない
  *
  * 9月5日まで、狭い画面の看板は 129px あった。6つの札が3列×2段に並ぶので、
  * どうしても2段ぶんの背が要る。その下に現在地の行（48〜89px）が続くので、
  * **中身が始まるまでに 177〜218px、1画面の 21〜26% を、106面ぜんぶが
  * 同じ絵で使っていた。**
  *
- * `docs/island-ux.md` 5.2 の答えを採る。狭い画面の看板は
+ * 狭い画面の看板は
  *
- *     [ 島 ]   いま：○○   [ ぜんぶ ]
+ *     [ 島 ]   いま：○○
  *
- * の1段だけにして、行き先は「ぜんぶ」の先（`/all`）に持たせる。
+ * の1段だけ。**「いま、どこ」しか言わない。**
  *
- * ## 畳んだ一覧（5.2 の「ほかの場所」のシート）は採らなかった
+ * ## 「ぜんぶ」（`/all`）は看板から外した
  *
- * 作って測って捨てた。**シートにすると、96枚の紙が3タップになる。**
+ * あやとの言葉:「あやとのこと等おした、ヘッダについて、「全部」は出さなくて良い」。
+ * 一度は狭い画面の唯一の口として看板に入れたが、紙の終わり（砂浜）が
+ * **同じ一覧を開いたまま**持っているので、面を開くたびに上と下で2回誘っていた。
  *
- *     シート  … ほかの場所 → 10軒のどれか      = 2タップ
- *               ほかの場所 → ぜんぶ → 紙        = **3タップ**
- *     ぜんぶ  … ぜんぶ → 10軒のどれか           = 2タップ
- *               ぜんぶ → 紙                     = 2タップ
- *
- * `/all` の1棚目が「島のなか」（10軒ぜんぶ）なので、**`/all` はシートの
- * 上位互換**になっている。シートが勝てるのは10軒だけで、そこも同じ2タップ。
- * 5.2 が書かれたときに `/all` はまだ無かった。決まりのほうを直す。
- *
- * **到達性は落ちない。** 前は帯に出ている6つが1タップ、残り4軒は砂浜まで
- * 送るか「ぜんぶ」経由で2タップ、紙96枚が2タップだった。いまは10軒とも
- * 2タップ（砂浜まで送れば1タップ）、紙96枚は2タップのまま。
+ * **到達性は落ちない。** 砂浜の「島のなか ぜんぶ」から `/all` が1タップ、
+ * そこから96枚が2タップ。看板に出していたときと同じ数で着く。
+ * 10軒は砂浜から1タップ（看板の6つは広い画面ならそのまま1タップ）。
  *
  * ## 広い画面（900px 以上）は6つの札のまま
  *
  * あちらは元から1段で、背は 78px しかない。畳む理由が無いので触らない。
- * 「ぜんぶ」だけ、現在地の行から札の列の最後へ移した（口を1つに寄せるため）。
- * どちらの器を出すかは CSS が決める（`app/css/pages.css` の `.ih-nav` / `.ihx`）。
+ * どちらの器を出すかは CSS が決める（`app/css/pages.css` の `.ih-nav`）。
  * **`display: none` で消すので、隠れているほうは読み上げにも出てこない。**
  */
 export function IslandHeader({
   current,
   here,
-  atAll,
 }: {
   current?: string;
   /** いま居る面の名前。パンくずの最後の1つ。 */
   here?: string;
-  atAll?: boolean;
 }) {
   return (
     <header className="ih">
@@ -78,15 +67,16 @@ export function IslandHeader({
             <b>{here}</b>
           </p>
         )}
-        {/* 狭い画面の口。**ここが唯一の口。**
-            その面自身への口は出さない（`/all` の上に「ぜんぶ」を出すと、
-            押しても同じ紙が出てくる。`docs/island-design.md` 3-3）。 */}
-        {!atAll && (
-          <Link className="ihx-open" href={ALL_HREF} prefetch={false}>
-            <Icon name="signpost" size={16} />
-            <span className="ihx-long">島のなか </span>ぜんぶ
-          </Link>
-        )}
+        {/* ここには「ぜんぶ」（`/all`）への板があった。**看板からは外した。**
+            あやとの言葉:「あやとのこと等おした、ヘッダについて、
+            「全部」は出さなくて良い」。
+
+            看板は「いま、どこ」を言うためのもので、行き先の索引は
+            紙の終わり（砂浜 `.ifoot-doors`）が開いたまま持っている。
+            上と下の両方に同じ口を出すと、面を開くたびに2回誘うことになる。
+
+            **到達性は落ちない。** 砂浜の「島のなか ぜんぶ」から `/all` が
+            1タップ、そこから96枚が2タップ。看板に出していたときと同じ数。 */}
         <nav className="ih-nav" aria-label="島のなか">
           {SPOTS.map((s) => (
             <Link
@@ -99,16 +89,6 @@ export function IslandHeader({
               {s.label}
             </Link>
           ))}
-          {/* **その面自身への口は出さない。** `/all` の上に「ぜんぶ」を出すと、
-              押しても同じ紙が出てくる。厚みのある板は「どこかへ行ける」と
-              言っているので（`docs/island-design.md` 3-3）、行き先が
-              いま居る場所なら、言っていることが嘘になる。 */}
-          {!atAll && (
-            <Link href={ALL_HREF} prefetch={false} className="ih-link is-all">
-              <Icon name="signpost" size={16} />
-              ぜんぶ
-            </Link>
-          )}
         </nav>
       </div>
     </header>
@@ -187,9 +167,9 @@ export function PageHead({
 /**
  * ページの終わり。島に戻ってきたところ（`docs/island-world.md` 1.6-3）。
  *
- * **ここは開いたまま置く。** 上の看板の口は畳んであるので、読み終わった人が
- * 次を選ぶときに、もう一度押させない。中身は看板の一覧と同じ部品
- * （`PlaceList`）なので、行き先が増えても直すのは1か所。
+ * **ここは開いたまま置く。島の中で `/all` へ行ける口は、ここだけ。**
+ * 看板からも島の上からも外したので、行き先の索引はこの1か所が持つ。
+ * 一覧を書くのは `PlaceList` なので、行き先が増えても直すのは1か所。
  */
 export function IslandFooter({ current, atAll }: { current?: string; atAll?: boolean }) {
   return (
@@ -225,10 +205,10 @@ export default function PageShell({
   const here = crumbs?.length ? crumbs[crumbs.length - 1].label : undefined;
   return (
     <>
-      <IslandHeader current={current} here={here} atAll={atAll} />
+      <IslandHeader current={current} here={here} />
       <main className="page">
-        {/* 現在地の行。**「ぜんぶ」の札は看板へ移した。**
-            残るのはパンくずだけなので、狭い画面で「島 › ○○」の1段しかない面では
+        {/* 現在地の行。残るのはパンくずだけなので、
+            狭い画面で「島 › ○○」の1段しかない面では
             行ごと畳まれる（`app/css/way.css`）。2段以上のパンくずは、
             親への戻り道を持っているので出したまま。 */}
         {crumbs && (

@@ -1,11 +1,12 @@
 /* =========================================================
-   導線 — 「あの話どこだっけ」から短く着くための3つ
+   導線 — 「あの話どこだっけ」から短く着くための2つ
 
-     1. 看板の口（.ihx-open）… 面のいちばん上。「ぜんぶ」への板1枚
-     2. 砂浜の一覧（.ifoot-doors）… 面の終わり。10軒＋「ぜんぶ」を開いたまま
-     3. ぜんぶの面（.dx*）… /all。行き先を1枚に並べて、字で絞る
+     1. 砂浜の一覧（.ifoot-doors）… 面の終わり。10軒＋「ぜんぶ」を開いたまま
+     2. ぜんぶの面（.dx*）… /all。行き先を1枚に並べて、字で絞る
 
-   **一覧を書くのは1か所**（`components/ui/PlaceList.tsx`）。2 と 3 がそこを見る。
+   **一覧を書くのは1か所**（`components/ui/PlaceList.tsx`）。1 と 2 がそこを見る。
+   看板（面の頭）と島の上には口を置かない。どちらも一度は置いたが、
+   同じ一覧を3か所から誘うことになるので外した。
    `docs/island-ux.md` 5.2 が「一覧の部品を1つ作って使い回す」と決めている。
    9月5日まで、ここは口が3つ（帯6つ・現在地の行の「ぜんぶ」・砂浜12）に
    分かれていて、狭い画面ではヘッダーと砂浜だけで 613px を使っていた。
@@ -14,54 +15,14 @@
    同時に何人かで触ると衝突するため。ここは導線だけを持つ。
    ========================================================= */
 
-/* --- 1. 看板の口（狭い画面） ----------------------------------------- */
+/* --- 1. 看板の口は、無くした ------------------------------------------
+   狭い画面の看板に「ぜんぶ」への板（`.ihx-open`）を1枚置いていた。
+   **外した。** あやとの言葉:「ヘッダについて、「全部」は出さなくて良い」。
 
-/* 「ぜんぶ」への板1枚。**狭い画面ではこれが唯一の口。**
-   9月5日まで現在地の行に居たものを、看板の中へ上げた。行が1本まるごと
-   （48〜89px ＋ 余白12px）消える。
-
-   畳んだ一覧（`<details>` のシート）も作って測ったが、**紙96枚が3タップに
-   なる**ので捨てた。`/all` の1棚目が「島のなか」（10軒ぜんぶ）なので、
-   `/all` はシートの上位互換になっている（`PageShell` の但し書き）。 */
-.ihx-open {
-  flex: none;
-  /* いつも行のいちばん右。720px から上では現在地の字（`.ih-here`）が
-     引っ込むので、伸びるものが1つも無くなる。auto マージンで寄せておく。 */
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  /* 指で押せる最小（`docs/island-design.md` 3-2） */
-  min-height: 48px;
-  padding: 0 var(--sp-4);
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  color: var(--ink);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-body);
-  white-space: nowrap;
-  /* 押せるので厚み。48px の板は 6px（`docs/island-design.md` 3章）。 */
-  box-shadow: var(--pop), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.ihx-open:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
-/* 900px から上は6つの札が1段で並び、その列の最後に「ぜんぶ」が入る。 */
-@media (min-width: 900px) { .ihx-open { display: none; } }
-/* 狭い画面では「島のなか」を落として「ぜんぶ」だけにする。
-   **消さずに隠す。** 読み上げには「島のなか ぜんぶ」のまま残す。 */
-@media (max-width: 599.98px) {
-  .ihx-long {
-    position: absolute;
-    width: 1px; height: 1px;
-    margin: -1px; padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .ihx-open { padding: 0 var(--sp-3); }
-}
+   同じ一覧を、面の終わり（下の砂浜 `.ifoot-doors`）が**開いたまま**
+   持っている。上と下の両方に口を出すと、面を開くたびに2回誘うことになる。
+   看板は「いま、どこ」だけを言う。
+   ------------------------------------------------------------------- */
 
 /* いま居る場所。押せないので**完全に平ら**にする。
    厚みは「押せる」の合図1種類だけに使う（`docs/island-world.md` 3.4）。 */
@@ -235,48 +196,14 @@
 .dx:hover .dx-body b { color: var(--frame-deep); }
 .dx:active { background: color-mix(in srgb, var(--marker) 30%, transparent); }
 
-/* --- 4. 島の隅の道しるべ（/ の上） ------------------------------------
-   島には帯もパンくずも無い（島は板で、紙の UI を持ち込まない）。
-   そのぶん、島から3タップ以上かかる面が残る。カメラの道具の下に1本立てる。
+/* --- 4. 島の隅の道しるべ（/ の上）は、外した -------------------------
+   `/all` への丸を島の左上に立てていた（`.stage-index`）。**島から外した。**
+   あやとの言葉:「「島の中全部」は島画面には不要」。
 
-   **island.css ではなくここに置いてある。** あちらは 1,100 行あって
-   同時に触られやすい。導線のために足したものは、導線のファイルにまとめて
-   置いたほうが、あとから外すときに1か所で済む。
+   島は行き先の索引ではなく歩く場所で、索引を隅に立てておくと、
+   島に降りた1画面目で「ここは選ぶ画面だ」と先に言うことになる。
+
+   **到達性は落ちていない。** 島の紙の足元（`IslandFooter` の
+   「島のなか ぜんぶ」）から `/all` が1タップ、そこから96枚が2タップ。
+   島の上に置いていたときと同じ数で着く。
    ------------------------------------------------------------------- */
-.stage-index {
-  position: absolute;
-  left: 12px;
-  /* スマホは「島をながめる」が左上（top 12px・高さ48px）。その真下。 */
-  top: calc(68px + env(safe-area-inset-top));
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  /* 指で押せる最小（`docs/island-design.md` 3-2） */
-  min-height: 48px;
-  padding: 0 13px 0 10px;
-  border: 2.5px solid var(--frame-dark);
-  border-radius: 999px;
-  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-}
-/* 640px から上は「島をながめる」が左下へ降りる。その真上に付いていく。 */
-@media (min-width: 640px) {
-  .stage-index {
-    top: auto;
-    bottom: calc(72px + env(safe-area-inset-bottom));
-  }
-}
-.stage-index:active {
-  transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-.stage-index:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
-/* 話しているあいだは、島の隅の道具と同じように引っ込める。 */
-.stage.is-talking .stage-index { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
