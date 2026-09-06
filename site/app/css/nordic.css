@@ -366,6 +366,22 @@
   font-weight: 900;
   white-space: nowrap;
 }
+/* 「その日の話」。**書かれた行にだけ出る**（`components/nordic/DayLogMarks.tsx`）。
+   「答えられる」とまったく同じ、平らなオリーブの札にする。どちらも
+   「この行の中に、これがある」と言っているだけの印で、押しても何も起きない
+   （行ぜんぶが1つの行き先）。役目が同じものに色を増やさない。
+   蛍光（`--marker`）はすぐ左の「何日目」が使っているので、ここでは使えない。 */
+.ndayr-log { display: none; }
+.nday[data-log] .ndayr-log {
+  display: inline-block;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  white-space: nowrap;
+}
 .ndayr-say { font-size: 12px; line-height: 1.7; font-weight: 700; color: var(--ink-2); }
 .ndayr-go { flex: none; color: var(--frame-dark); }
 
@@ -425,6 +441,77 @@ p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 7
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
+}
+/* その日が実際に何日だったか。よていの欄は切符のある2日しか日付を持たないので、
+   ここが入ってはじめて日にちの決まる行がある（`components/nordic/DayLog.tsx`）。 */
+p.nday-log-when {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  /* --ink-3 は紙の上で 4.25:1 しか無い。読ませる字には使わない
+     （`docs/island-review-3.md` 6.2 a）。 */
+  color: var(--ink-2);
+}
+
+/* --- その日に起きたことを書くところ（あやとだけに出る） ---------------
+   写真を貼るところ（`.nph-post-*`）と同じ作りにする。旅の最中に開くのは
+   同じ人で、覚えることを2つにしない。 */
+.nlog-post { margin-top: var(--sp-4); }
+/* 書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
+   `.dform` の素の欄は 45〜46px しかなく、測って落ちた
+   （`tools/sprites/hitbox.mjs`。日付の欄 47px・配信の欄 45px）。
+   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる。
+   写真を貼るところも同じ人が同じ日に触るので、まとめて足す
+   （`.nph-post-file` は隠してある file の欄なので、当てない）。 */
+.nlog-post input,
+.nlog-post textarea,
+.nph-post-row input:not(.nph-post-file) { min-height: 48px; }
+.nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nlog-seeds > span {
+  align-self: center;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 押すと書き出しが本文に入る札。押せるチップの型（板・厚み4px・48px）。 */
+.nlog-seed {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.nlog-seed:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
+.nlog-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  margin-top: var(--sp-2);
+}
+/* 消すのは、押し間違えると取り返しがつかない。板にせず、平らな字だけにして
+   「入れる」との差をはっきりさせる（`docs/island-world.md` 3.2）。 */
+.nlog-drop {
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: none;
+  background: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+  text-decoration: underline;
 }
 
 /* =========================================================

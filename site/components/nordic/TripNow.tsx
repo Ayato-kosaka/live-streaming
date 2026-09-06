@@ -60,6 +60,11 @@ function fmt(n: number) {
   return String(n).padStart(2, "0");
 }
 
+/** 「2026-09-19」→「9月19日」。書き出しは UTC で走るので、月日は文字列から取る。 */
+function when(iso: string) {
+  return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+}
+
 export default function TripNow({
   stops,
   mainLegs,
@@ -97,6 +102,15 @@ export default function TripNow({
   const [at, setAt] = useState<number | null>(null);
   /** 島が持っている「いまいる場所」の文字。ルートの外にいるときはこれを出す。 */
   const [place, setPlace] = useState<string | null>(null);
+  /**
+   * ストックホルムに着いた日。**旅が終わったという事実は、これだけ。**
+   *
+   * ここが無かったあいだ、着いたことを言えるのは `current.place` に
+   * ストックホルムが入っているあいだだけだった。そこを離れた瞬間に
+   * 「ストックホルムまで（数えています）」に戻る。旅が終わったことが
+   * データのどこにも無かった（`docs/nordic-depart.md`）。
+   */
+  const [arrivedOn, setArrivedOn] = useState<string | null>(null);
 
   useEffect(() => {
     const t = new Date(depart).getTime();
@@ -115,6 +129,7 @@ export default function TripNow({
         if (!alive) return;
         const p = (s?.current?.place ?? "").trim();
         setPlace(p || null);
+        setArrivedOn(s?.nordic?.arrivedOn ?? null);
         // 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
         const i = stops.findIndex((st) => st.id && p.includes(st.name));
         if (i >= 0) setAt(i);
@@ -167,7 +182,11 @@ export default function TripNow({
 
   const last = stops.length - 1;
   const departed = left != null && left <= 0;
-  const idx = at ?? (departed ? null : 0);
+  /* 着いたあとは、いる場所がどこであっても終点にいるものとして数える。
+     友だちの家に約1週間いるので、そのあいだに街を離れることもある。
+     そこで「ストックホルムまで、数えています」に戻ったら、旅が
+     終わっていないことになってしまう。 */
+  const idx = arrivedOn ? last : (at ?? (departed ? null : 0));
   const arrived = idx === last;
 
   // 残りの距離。まだ通っていない区間の、親指で進むぶんを足す。
@@ -252,7 +271,10 @@ export default function TripNow({
             </span>
             <span className="tnow-count-w">
               {arrived
-                ? "飛行機のあとは、ぜんぶ人の車と船で来た"
+                ? /* 着いた日が届いていれば、それも出す。「着いた」だけだと、
+                     いつ着いたのかが旅のあとに読む人に分からない。
+                     **会えたかどうかは書かない**（`docs/nordic-fund.md` 1章）。 */
+                  `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た`
                 : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
             </span>
             {!arrived && (
@@ -268,7 +290,12 @@ export default function TripNow({
       <div className="tnow-pair">
         <div className="tnow-at">
           <i>いま</i>
-          <b>{now ? now.name : (place ?? "移動中")}</b>
+          {/* 着いたあとも、いる街は動く（友だちの家に約1週間）。
+              **そこは島が言っているほうを出す。** 終点に着いたことは
+              上の大きい字がもう言っているので、ここまで
+              「いま ストックホルム → ここまで ストックホルム」と
+              同じ名前を2回並べても、分かることが1つも増えない。 */}
+          <b>{arrivedOn ? (place ?? stops[last].name) : now ? now.name : (place ?? "移動中")}</b>
           <em>{now?.country ?? ""}</em>
         </div>
         <span className="tnow-go" aria-hidden>

@@ -955,17 +955,17 @@ a.chip:active, button.chip:active, .chip.link:active {
 
 /* いま */
 .now-hero { text-align: center; }
-/* 道しるべのスプライト。**この面では出さない。**
+/* 道しるべのスプライト（`.now-pin`）は `NowLive.tsx` から `<img>` ごと外した。
 
    いまいる国の旗を大きく出した（`live.css` の `.now-flag`）ので、
    1つの面に「見出しの地球儀」「道しるべ」「国旗」の3つが縦に並んでいた。
    道しるべはどの国でも同じ絵で、この面が言いたい「いまどこ」を
-   何も言っていない。国を言っているのは旗だけなので、そちらに1本化する。
+   何も言っていない。国を言っているのは旗だけなので、そちらに1本化した。
 
-   `NowLive.tsx` はここの持ち場ではないので、いまは絵だけ落としてある。
-   同じ絵は下の「◯◯でやったこと、ぜんぶ」の札でも使っているから、
-   隠しても取りに行く回数は増えない。**あちらを直すときに `<img>` ごと外す。** */
-.now-pin { display: none; }
+   前は CSS で `display: none` にして隠すだけにしてあった。隠した絵は
+   出ないだけでマークアップには残るので、読み上げにも DOM にも
+   「そこに絵がある」ことになる。持ち場が分かれていて手が出せなかっただけで、
+   隠す理由は無かった。 */
 .now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: var(--sp-1) 0 var(--sp-2); }
 /* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
 .week { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
@@ -1342,6 +1342,13 @@ a.chip:active, button.chip:active, .chip.link:active {
   color: var(--ink);
 }
 .count.is-today b { color: var(--accent-deep); }
+/* いま行っている企画。桃は「いま／新しい」の色なので、今日ぶんと同じ札にする
+   （`content/plans.ts` の `planPhase`）。 */
+.count.is-now {
+  background: color-mix(in srgb, var(--accent) 34%, var(--paper));
+  color: var(--ink);
+}
+.count.is-now b { color: var(--accent-deep); }
 /* 過ぎた日。同じ理由で opacity をやめ、面だけ一段沈める。 */
 .count.is-past { background: color-mix(in srgb, var(--chip) 46%, var(--paper-out)); }
 

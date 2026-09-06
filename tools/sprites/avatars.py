@@ -74,21 +74,42 @@ def thumbs() -> None:
     print(f"{got}/{len(ids)} 枚（ショートのサムネイル） -> {out}")
 
 
+# 図鑑で出す大きさ。**`site/components/live/FriendsWall.tsx` の `drive()` と
+# 同じ数にしておくこと。** 片方だけ動かすと、測っている絵と本番の絵が別物になる。
+SIDE = 640
+
+
+def big_enough(dst: str) -> bool:
+    """すでに落としてある絵が、いま欲しい大きさに足りているか。
+
+    **「ファイルがあるかどうか」で判断してはいけない。** ここを s160 から
+    s512 へ上げたとき、手元には s160 のまま残った絵があって、そのまま
+    測り続けていた。上げた本人が気づけないのがこの罠なので、
+    落としてある絵の実寸を見て、足りなければ落とし直す。
+    """
+    if not os.path.exists(dst) or os.path.getsize(dst) <= 1000:
+        return False
+    try:
+        from PIL import Image  # 測るときだけ要る。落とすだけなら要らない
+
+        with Image.open(dst) as im:
+            return max(im.size) >= SIDE
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
     ids = re.findall(r'icon:\s*"([^"]+)"', open(SRC, encoding="utf-8").read())
     got = 0
     for i in ids:
         dst = f"{OUT}/{i}.png"
-        if os.path.exists(dst) and os.path.getsize(dst) > 1000:
+        if big_enough(dst):
             got += 1
             continue
-        # 図鑑（`/friends` の住民図鑑）は本番で `=s512` を取っている。
-        # ここを s160 で落とすと、手元には**本番の3分の1の絵**が返る。
-        # 「絵が縦の半分を占めているか」を測ると絵のほうが先に尽きて、
-        # 実際より小さい値が出る（どの住人も 160x160 で頭打ちになっていた）。
-        # 本番でいちばん大きく出すところに合わせる。島の上では縮めて使う。
-        url = f"https://lh3.googleusercontent.com/d/{i}=s512"
+        # 「絵が縦の半分を占めているか」は、本番と同じ絵で測らないと嘘になる。
+        # 島の上では縮めて使うので、いちばん大きく出すところに合わせておく。
+        url = f"https://lh3.googleusercontent.com/d/{i}=s{SIDE}"
         try:
             req = urllib.request.Request(url, headers=UA)
             with urllib.request.urlopen(req, timeout=40) as r:

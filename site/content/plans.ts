@@ -36,6 +36,40 @@ export type Plan = {
    * 時刻があるものは時間と分まで数える。
    */
   at?: string;
+  /**
+   * 終わる予定の日(YYYY-MM-DD)。**決まっているものだけ書く。**
+   *
+   * 書かなければ、`date` のその日1日で終わるものとして扱う。
+   * お祭りのように行って帰ってくるものは、それで合っている。
+   */
+  until?: string;
+  /**
+   * 終わりの合図。**終わる日が決まっていない企画だけが持つ。**
+   *
+   * これがあるあいだ、企画は**日付では終わらない**。`done`（実際に終わった日）が
+   * 入るまで、ずっと「いま行っている」。
+   *
+   * 北欧の旅がこれ。9日の見立てはあるが、ヒッチハイクなので着く日は決まっていない。
+   * 「9日目に終わる」と焼き込むと、着いていないのに終わったことになる。
+   * 逆に日付を持たせないまま「始まったら終わり」にすると、出発当日から
+   * 「もう行ってきた」と出る（**実際にそうなっていた**）。
+   */
+  endsWhen?: string;
+  /**
+   * 実際に終わった日(YYYY-MM-DD)。**終わってから入れる、事実の欄。**
+   *
+   * `until` は予定で、こちらは事実。両方あるときは、こちらが勝つ。
+   */
+  done?: string;
+  /**
+   * 終わった日が、島の様子（`/island-api/state`）から届く企画。
+   *
+   * **旅の終わりは、旅の途中で起きる。** そのときあやとはヒッチハイクの
+   * 途中にいて、Git を編集して commit して Hosting を手で起動する、は回らない
+   * （`docs/nordic-depart.md`）。だから着いた日は Firestore に入れて、
+   * 画面が出てから読む。**値はここに書かない。** 届いたら `done` として扱う。
+   */
+  doneFromState?: "nordic";
   note: string;
   tags: string[];
   place?: { name: string; area?: string; map?: string };
@@ -110,6 +144,13 @@ export const PLANS: Plan[] = [
     date: "2026-09-11",
     // クタイシ発の便の時刻。ジョージア時間(UTC+4)。`content/nordic.ts` の DEPART と同じ。
     at: "2026-09-11T23:30:00+04:00",
+    /* **終わる日を持たせない。** ヒッチハイクなので、着く日は乗せてもらえた
+       日でずれる。9日は見立てであって、切符のある日ではない
+       （`content/nordic.ts` の `DAYS` が「分からない日を埋めない」と決めているのと同じ）。
+       だから `until` ではなく `endsWhen` を持つ。着いた日は旅の途中で
+       Firestore に入る（`doneFromState`）。 */
+    endsWhen: "ストックホルムに着いたら",
+    doneFromState: "nordic",
     note: "スウェーデンに、会いたい人がいる。飛行機が高いのでポーランドまで飛んで、そこから先はヒッチハイク。",
     tags: ["北欧", "バルト", "ヒッチハイク", "会いに行く"],
     href: "/nordic",
@@ -134,15 +175,69 @@ export const PLANS: Plan[] = [
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
 
 /**
+ * 島から届いた事実を、企画に貼ったもの。
+ *
+ * いま貼るのは「着いた日」だけ（`doneFromState`）。旅の終わりは旅の途中に
+ * 起きるので、Git にも静的書き出しにも入らない。**画面が出てから貼る。**
+ *
+ * 貼るところが2つある（`/next` の一覧と、トップの「いちばん近い企画」）ので、
+ * 貼り方はここ1か所に置く。片方だけ古くなるのを防ぐ。
+ */
+export function livePlans(arrived?: string | null): Plan[] {
+  if (!arrived) return PLANS;
+  return PLANS.map((p) => (p.doneFromState && !p.done ? { ...p, done: arrived } : p));
+}
+
+/**
+ * 企画の3つの状態。**これから / いま行っている / 行ってきた。**
+ *
+ * 長いあいだ、企画は「始まる日」しか持っていなかった。始まる日を過ぎたら
+ * 終わったことになる作りで、**出発の当日から9日間ずっと `/next` が
+ * 「もう行ってきた」「おわった」と言っていた**（時計を進めて撮って見つけた）。
+ * パンくずが「これから > 北欧ヒッチハイク」なので、旅を見に来た人は
+ * 必ずここを通る。旅の最中に「終わった」と書いてある面を通ることになる。
+ *
+ * 3つに分けるのに要るのは、始まる日のほかに**終わり**だけ。
+ * 終わりは3通りある。どれも「決まっていないものを決まったことにしない」ために要る。
+ *
+ * | 何を持っているか | いつ「行ってきた」になるか |
+ * | --- | --- |
+ * | `done`（実際に終わった日） | その日を過ぎたら。**事実なので、いちばん強い** |
+ * | `until`（終わる予定の日） | その日を過ぎたら |
+ * | `endsWhen`（終わりの合図だけ） | **日付では終わらない。`done` が入るまでずっと「いま」** |
+ * | どれも無い | `date` のその日1日で終わる |
+ */
+export type PlanPhase = "before" | "during" | "after";
+
+export function planPhase(p: Plan, now = new Date()): PlanPhase {
+  // 日にちがまだ決まっていない企画は、いつまでも「これから」
+  if (!p.date && !p.at) return "before";
+  // 始まる前。時刻まで決まっていれば、その時刻まで待つ
+  const notYet = p.at ? Date.parse(p.at) > now.getTime() : (daysUntil(p.date, now) ?? 0) > 0;
+  if (notYet) return "before";
+  /* 終わりの日。事実（`done`）が先。
+     `endsWhen` を持つものは、`done` が入るまで日付では終わらせない。 */
+  const end = p.done || (p.endsWhen ? "" : p.until || p.date);
+  if (end && (daysUntil(end, now) ?? 0) < 0) return "after";
+  return "during";
+}
+
+/**
  * いま、いちばん近い企画。
- * まだ来ていないもののうち、いちばん日が近いもの。
+ *
+ * **いま行っているものがあれば、それがいちばん近い。** 旅の最中に
+ * 「次はこれ」と別のものを出すと、いま起きていることが画面から消える。
+ * 無ければ、まだ来ていないもののうちいちばん日が近いもの。
  * 全部終わっていれば big を付けたものを出す（次の大物は先に告知しておきたいので）。
  */
 export function nextPlan(today = new Date()): Plan | undefined {
-  const ahead = PLANS.filter((p) => {
-    const d = daysUntil(p.date, today);
-    return d !== null && d >= 0;
-  }).sort((a, b) => (a.date! < b.date! ? -1 : 1));
+  const now = PLANS.filter((p) => planPhase(p, today) === "during").sort((a, b) =>
+    (a.date ?? "9999").localeCompare(b.date ?? "9999"),
+  );
+  if (now.length > 0) return now[0];
+  const ahead = PLANS.filter((p) => planPhase(p, today) === "before" && p.date).sort((a, b) =>
+    a.date! < b.date! ? -1 : 1,
+  );
   return ahead[0] ?? PLANS.find((p) => p.big) ?? PLANS[0];
 }
 

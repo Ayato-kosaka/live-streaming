@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
+import DayLog from "@/components/nordic/DayLog";
 import {
   DAY_PAGES,
   NORDIC_GUIDE,
@@ -165,8 +166,6 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       way: `${cityName(l.from)} → ${cityName(l.to)}`,
       fork: l.fork!,
     }));
-
-  const log = legs.map((l) => ({ leg: l, log: NORDIC_LOG[l.id] })).filter((x) => x.log);
 
   return (
     <PageShell
@@ -334,28 +333,12 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         </section>
       )}
 
-      {/* 越えた日にだけ入る。よていだけの面は、出発前にしか読む理由がない。 */}
-      {log.length > 0 && (
-        <section className="panel paper" id="was">
-          <h2>この日、何が起きたか</h2>
-          {log.map(({ leg, log: g }) => (
-            <div key={leg.id} className="nday-log">
-              <p>{g!.body}</p>
-              {g!.video && (
-                <a
-                  className="nday-vid"
-                  href={`https://www.youtube.com/watch?v=${g!.video}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  その日の配信を見る
-                  <Icon name="external" size={14} />
-                </a>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
+      {/* 越えた日にだけ入る。よていだけの面は、出発前にしか読む理由がない。
+          **書くのは旅の最中で、そのときあやとは道の上にいる。** Git を編集して
+          commit して Hosting を手で起動する、は回らないので、ここは
+          画面が出てから読みにいく（`components/nordic/DayLog.tsx`）。
+          焼いてあるぶん（`NORDIC_LOG`）は、旅が終わってから写す正本。 */}
+      <DayLog day={day.id} dayName={dayName(day)} baked={NORDIC_LOG[day.id]} />
 
       {/* 前の日・次の日。旅は一本道なので、めくって読めるようにする。 */}
       <div className="nnav">

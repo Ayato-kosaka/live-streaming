@@ -120,17 +120,18 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
             `/legends/[企画]` と同じ組みにそろえる。番号のところには
             「いつやるか」を置く。この型を探している人が最初に要るのはそれ。 */}
         <Zone>
-          <div className="zk-hero is-type">
+          <div className="zk-hero is-dex">
             <span className="zk-hero-no">{t.when}</span>
             <h1 className="zk-tape-h">
               <Tape>{t.name}</Tape>
             </h1>
             <div className="zk-hero-art">
               {/* 型の絵は、島に立っている建物そのもの。
-                  焼いてあるのは長辺 320px までなので、dpr2 で伸ばさずに
-                  出せる 168px で止めてある。`sprites/hero/` に長辺 640px の
-                  焼き直しが来たら `is-dex` に替えると 280px まで伸ばせる。 */}
-              <img src={`/sprites/${t.icon}.webp`} alt="" />
+                  焼き直したほう（`sprites/hero/`、長辺 640px）を直に指す。
+                  料理と伝説の詳細と同じで、この面で出す絵は1枚だけなので
+                  `srcset` で配り分けない（等倍の画面が小さいほうを選ぶと、
+                  280px まで伸ばしたときにここだけぼける）。 */}
+              <img src={`/sprites/hero/${t.icon}.webp`} alt="" />
             </div>
             <p className="zk-hero-note">{t.short}</p>
           </div>

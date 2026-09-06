@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { planDaysLeft, type Plan } from "@/content/plans";
+import { planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
@@ -28,6 +28,33 @@ function useDays({ date, at }: Plan) {
   // 毎回作り直される場所で、描くたびに数え直しが走る。
   useEffect(() => setD(planDaysLeft({ date, at }, new Date())), [date, at]);
   return d;
+}
+
+/**
+ * これから／いま行っている／行ってきた。
+ *
+ * **日数の正負で決めない。** 始まる日を過ぎたら終わったことにする作りで、
+ * 出発の当日から旅のあいだじゅう「おわった」と出ていた
+ * （`content/plans.ts` の `planPhase`）。
+ *
+ * ここも数え直しと同じで、画面が出てから決める。出るまでは null にして、
+ * 焼き込みの日付で「終わった」と言わない。
+ */
+function usePhase(plan: Plan): PlanPhase | null {
+  const [ph, setPh] = useState<PlanPhase | null>(null);
+  const { date, at, until, endsWhen, done } = plan;
+  useEffect(() => {
+    setPh(planPhase({ date, at, until, endsWhen, done } as Plan, new Date()));
+  }, [date, at, until, endsWhen, done]);
+  return ph;
+}
+
+/** 「9/11 から」「9/11 〜 9/19」。始まった日と、終わった日が分かっていれば両方。 */
+function span(plan: Plan) {
+  const end = plan.done || plan.until;
+  return end && end !== plan.date ?
+    `${shortDate(plan.date)}〜${shortDate(end)}` :
+    shortDate(plan.done || plan.date);
 }
 
 /**
@@ -68,10 +95,11 @@ export function useCountdown(plan: Plan) {
 export function LeadClock({ plan }: { plan: Plan }) {
   const left = useCountdown(plan);
   const days = useDays(plan);
+  const phase = usePhase(plan);
   if (!plan.date) return null;
 
   // 画面が出るまでは日付だけ。焼き込みの日数を一瞬でも見せない
-  if (days === null || (plan.at && left === null)) {
+  if (phase === null || days === null || (plan.at && left === null)) {
     return (
       <p className="nx-clock is-one">
         <em>
@@ -80,26 +108,50 @@ export function LeadClock({ plan }: { plan: Plan }) {
       </p>
     );
   }
-  if (days < 0) {
+  /* 行ってきた。**日数の正負ではなく、終わりが分かったかどうかで決める。**
+     終わる日を持たない企画（`endsWhen`）は、ここへ落ちてこない。 */
+  if (phase === "after") {
     return (
       <p className="nx-clock is-one">
         <em>
           <b>おわった</b>
-          {shortDate(plan.date)}
+          {span(plan)}
+        </em>
+      </p>
+    );
+  }
+  /* いま行っているところ。**この面でいちばん大きい字はこれ。**
+     旅の最中にここが「おわった」だったのが、いちばん悪い壊れ方だった。
+     日数は出さない。旅は自分で「◯日目」を数えていて（`/nordic` の旅程表）、
+     ここで別の数え方をすると、同じ日が2つの番号を持つ。
+
+     **その日1日で終わるものは、「今日」のまま。** お祭りに行っている当日に
+     「いま行っている」と言い換えても、分かることは1つも増えない。
+     何日かかかるもの（`endsWhen` か、始まった日を過ぎたもの）だけこちら。 */
+  if (phase === "during" && (plan.endsWhen || days < 0)) {
+    return (
+      <p className="nx-clock is-one">
+        <em>
+          <b>いま</b>
+          行っている
+        </em>
+      </p>
+    );
+  }
+  /* 出発の瞬間だけ、時計（30秒おき）と状態（画面が出たときに1回）がずれる。
+     数え終わっているのに状態がまだ「これから」だと「あと-1日」が出るので、
+     どちらかが越えていれば「いま」に倒す。 */
+  if (plan.at && left && left.d < 0) {
+    return (
+      <p className="nx-clock is-one">
+        <em>
+          <b>いま</b>
+          行っている
         </em>
       </p>
     );
   }
   if (plan.at && left) {
-    if (left.d < 0) {
-      return (
-        <p className="nx-clock is-one">
-          <em>
-            <b>いま</b>やっているところ
-          </em>
-        </p>
-      );
-    }
     return (
       <p className="nx-clock">
         <em>
@@ -138,20 +190,30 @@ export function LeadClock({ plan }: { plan: Plan }) {
 /** 一覧のほうの日数の札。小さいほう。 */
 function Count({ plan }: { plan: Plan }) {
   const d = useDays(plan);
+  const phase = usePhase(plan);
   const date = plan.date;
   if (!date) return null;
+  /* 「あと何日」は日数、「いま／おわった」は状態で決める。
+     日数の正負だけで決めていたころ、旅の最中もここが「おわった」だった。 */
+  // その日1日で終わるものは、当日も「今日」のまま（`LeadClock` と同じ決め方）
+  const nowLong = phase === "during" && (plan.endsWhen || (d ?? 0) < 0);
   const body =
-    d === null ? <b>{shortDate(date)}</b> :
-    d === 0 ? <b>今日</b> :
-    d > 0 ? (
+    d === null || phase === null ? <b>{shortDate(date)}</b> :
+    phase === "after" ? <b>おわった</b> :
+    nowLong ? <b>いま</b> :
+    d === 0 ? <b>今日</b> : (
       <>
         あと<b>{d}</b>日
       </>
-    ) : (
-      <b>おわった</b>
     );
   return (
-    <span className={`count${d === 0 ? " is-today" : ""}${d !== null && d < 0 ? " is-past" : ""}`}>{body}</span>
+    <span
+      className={`count${!nowLong && phase !== "after" && d === 0 ? " is-today" : ""}${
+        nowLong ? " is-now" : ""
+      }${phase === "after" ? " is-past" : ""}`}
+    >
+      {body}
+    </span>
   );
 }
 
@@ -388,6 +450,15 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
                 {plan.place.name}
               </span>
             )}
+            {/* 終わる日が決まっていない企画は、**何が起きたら終わりなのか**を書く。
+                ここが無いと、時計が「いま行っているところ」とだけ言っていて、
+                いつまで続くのかがどこにも無い（`content/plans.ts` の `endsWhen`）。 */}
+            {plan.endsWhen && (
+              <span>
+                <Icon name="signpost" size={13} />
+                {plan.endsWhen}終わり
+              </span>
+            )}
           </span>
         </div>
         <h2>{plan.title}</h2>
@@ -426,11 +497,13 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
  * 日付なら石を目で追うだけで、この先の予定が何日おきに来るのかが分かる。
  */
 export function PlanRow({ plan, children }: { plan: Plan; children?: React.ReactNode }) {
-  const d = useDays(plan);
+  const phase = usePhase(plan);
   return (
     <li id={plan.id} style={{ scrollMarginTop: 78 }}>
       <span className="nx-stone">
-        <Stone tone={d !== null && d < 0 ? "past" : "stone"} />
+        {/* 石の色を落とすのは、行ってきた企画だけ。
+            いま行っているものを落とすと、旅の最中に旅が色を失う。 */}
+        <Stone tone={phase === "after" ? "past" : "stone"} />
         <b className="is-date">{shortDate(plan.date)}</b>
       </span>
       <div className="nx-road-b">

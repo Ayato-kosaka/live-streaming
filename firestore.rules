@@ -85,6 +85,11 @@ service cloud.firestore {
        画面が要るのは「写真のある日ぶん」だけなので、Function に絞らせる。 */
     match /nordicPhotos/{docId} { allow read, write: if false; }
     match /nordicDays/{docId} { allow read, write: if false; }
+    /* 旅の「その日に起きたこと」(docs/nordic-depart.md)。
+       書けるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
+       ここを開けると、書けるのは誰かの判定もここに書くことになる。
+       あやとかどうかを見るところを2つに増やさない。 */
+    match /nordicLog/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {

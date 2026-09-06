@@ -1,0 +1,146 @@
+name: 北欧へ出発した
+
+# 出発の日（2026-09-11 23:30 ジョージア時間 = 日本時間 9/12 04:30）に、
+# **1回だけ押す。** 押すとサイトが「旅に出たあと」に切り替わる。
+#
+# ## なぜ手順書ではなくボタンなのか
+#
+# やることは4つあった。
+#   1. `site/content/chapters.ts` の `caucasus.to` に日付を入れる
+#   2. `python/build_chapter_stats.py` を回す
+#   3. Hosting を配る
+#   4. 島の「いまどこ」を更新する
+#
+# **4つを覚えていられる人はいない。** しかも押す本人は、その日の朝に
+# 深夜1時のカトヴィツェへ降り立って、そこからヒッチハイクを始める。
+# `docs/` に手順書を置くと、読む・順に踏む・どこまでやったか覚えておく、
+# の3つが要る。ボタン1つなら、押したかどうかしか無い。
+#
+# 踏んだかどうかは、データそのものが持っている（`caucasus.to` が
+# 空か、入っているか）。だから「やった／やっていない」を別に持たなくてよく、
+# `CLAUDE.md` の「期限や状態を持つものは docs に置かない」にも触れない。
+#
+# **何度押しても同じ**（`nordic_depart.py` が2回目は何もしない）。
+#
+# ## 出発が延びたら
+#
+# 押さなければいい。押す前なら、サイトは出発前のままでいる
+# （切り替わりは日付ではなく `opensAt` を見ているので、日をまたぐと
+# 島だけ北欧に変わる。そのときは `content/nordic.ts` の `DEPART` と
+# `chapters.ts` の `opensAt` を新しい日時に直す。**2か所ある。**）
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "コーカサスが終わった日(YYYY-MM-DD)。空なら日本時間の今日"
+        required: false
+        default: ""
+        type: string
+      place:
+        description: "島の「いまどこ」。街の名前をそのまま（例: ポーランド・カトヴィツェ）"
+        required: false
+        default: "ポーランド・カトヴィツェ"
+        type: string
+      word:
+        description: "島のひとこと。空なら今のまま"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "書き換えを見るだけ（commit も deploy もしない）"
+        required: false
+        default: false
+        type: boolean
+
+# 出発は1回きりだが、押し間違えて2回走らせることはある。1本ずつ。
+concurrency:
+  group: nordic-depart
+  cancel-in-progress: false
+
+jobs:
+  depart:
+    runs-on: ubuntu-latest
+    permissions:
+      # chapters.ts と chapterStats.ts を master に押し戻す
+      contents: write
+      # Hosting のデプロイを、こちらから起動する
+      actions: write
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # 1. コーカサスの章を閉じる。**nordic.from は入れない**（理由はスクリプトの中）
+      - name: コーカサスの章を閉じる
+        run: python python/nordic_depart.py --to "${{ inputs.to }}"
+
+      # 2. 章ごとの人数・配信を焼き直す。閉じた日までで数え直される
+      - name: 章ごとの数字を焼き直す
+        run: python python/build_chapter_stats.py
+
+      - name: 何が変わったか
+        run: git --no-pager diff --stat
+
+      # 3. master に押し戻す。**変わっていなければ何もしない**（2回目に押したとき）
+      - name: master に入れる
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "変わっていません。commit しません"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/content/chapters.ts site/content/chapterStats.ts site/content/chapterStreams.ts
+          git commit \
+            -m "北欧へ出発したので、コーカサスの章を閉じる" \
+            -m "いつ終わったかが残らないと、旅が進んだころに島の札が「2025年6月〜」しか言えなくなる。"
+          git push origin HEAD:master
+
+      # 4. Hosting を配る。焼き込みの数字（章の日数・人数）はここで入れ替わる
+      - name: Hosting を配る
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run firebase-hosting-deploy-prod.yml --ref master
+
+      # 5. 島の「いまどこ」。**街の名前をそのまま入れる**
+      #    （`components/nordic/TripNow.tsx` が「ラトビア・リガ」でも
+      #      「リガ」でも当たるように、含んでいるかで見ている）
+      - name: 島の「いまどこ」を更新する
+        if: ${{ !inputs.dry_run && inputs.place != '' }}
+        env:
+          ISLAND_PLACE: ${{ inputs.place }}
+          ISLAND_WORD: ${{ inputs.word }}
+          ISLAND_THEME: nordic
+        run: python python/island_set_current.py
+
+      - name: このあと
+        run: |
+          echo "### 北欧へ出発しました" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Hosting のデプロイが走っています。10分ほどで出ます" >> "$GITHUB_STEP_SUMMARY"
+          echo "- いまどこ: ${{ inputs.place }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 街が変わったら「あやと島の「いま」を更新」から place だけ入れ直す" >> "$GITHUB_STEP_SUMMARY"
+          echo "- その日に起きたことは /nordic の日ごとのページから書く" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 着いたら /nordic のいちばん下「着いた朝」の行から「着いた」を押す" >> "$GITHUB_STEP_SUMMARY"
