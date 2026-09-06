@@ -73,14 +73,6 @@ type Props = {
   bare?: boolean;
   /** 見出し。省略すると「みんなの付箋」 */
   title?: string;
-  /**
-   * 書く欄を、押してから開く。
-   *
-   * 出しっぱなしにすると、名前・本文・ボタンで 300px 近く取る。
-   * 面のいちばん下の1か所ならそれでいいが、`/nordic` はここが面の途中にあって、
-   * その下にまだ区画がある。押す段を1つ挟む。
-   */
-  foldWrite?: boolean;
 };
 
 /** 運営者の付箋を先に、そのあとは新しい順。表示のたびに並びが動かないようにする。 */
@@ -91,13 +83,7 @@ function ordered(list: Sticky[]): Sticky[] {
   });
 }
 
-export default function Notes({
-  themes,
-  theme,
-  bare = false,
-  title,
-  foldWrite = false,
-}: Props) {
+export default function Notes({ themes, theme, bare = false, title }: Props) {
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -113,8 +99,9 @@ export default function Notes({
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  /** 書く欄が開いているか。畳んで置くのは、面の途中にあるときだけ */
-  const [open, setOpen] = useState(!foldWrite);
+  /** 書く欄が開いているか。**畳んだ状態から始める。** 上に置いたので、
+      開きっぱなしにすると 300px ぶん、付箋の山が下へ押し出される */
+  const [open, setOpen] = useState(false);
   /** しまったものを見ているか。あやとだけ */
   const [bin, setBin] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
@@ -183,6 +170,11 @@ export default function Notes({
     () => ordered((notes ?? []).filter((n) => fixed || n.theme === pick)),
     [notes, fixed, pick],
   );
+
+  /* 「まだ1枚も貼られていません」の空札が出ているか。
+     空札そのものが押しどころ（「いちばんに貼る」）なので、そのときは
+     書く欄を開く段をもう1つ出さない。同じ行き先の押しどころを2つ置かない。 */
+  const blank = notes !== null && !down && list.length === 0 && !bin;
 
   const submit = async () => {
     const t = text.trim();
@@ -295,6 +287,74 @@ export default function Notes({
           </div>
         ))}
 
+      {/* 書く欄。**付箋の山より前に置く。**
+          あとに置いていたときは、貼ってある枚数ぶん下までスクロールしないと
+          書き出せなかった（あやとが6枚貼った企画で実際にそうなった）。
+          読む場所と書く場所は同じ面のまま、指の移動だけ短くする。
+
+          出しっぱなしにはしない。名前・本文・ボタンで 300px 近く取るので、
+          開いたままだと今度は付箋の山が画面の外へ出る。押す段を1つ挟む。
+
+          宛先はもう決まっている。名前は本文の前に置く。あとに置いていたときは、
+          書き終えた人がそこまで目を戻さず、本文の末尾に「by まこも」と書いていた。 */}
+      {!bin && !open && !blank && (
+        <button
+          className="nt-open"
+          onClick={() => {
+            setOpen(true);
+            // 開いた先へ連れていく。開いただけだと、画面の外で欄が増える
+            requestAnimationFrame(() => box.current?.focus());
+          }}
+        >
+          {list.length > 0 ? "自分も書く" : "1枚目を書く"}
+          <Icon name="chevron" size={13} />
+        </button>
+      )}
+
+      {!bin && open && (
+        <div className="nt-write">
+          <p className="nt-to">
+            <span>{now.name}</span>あてに貼ります
+          </p>
+          <label className="nt-field">
+            <span>名前（書かなくてもいい）</span>
+            {user ? (
+              <span className="bin bin-locked">{user.name} として貼ります</span>
+            ) : (
+              <input
+                className="bin"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={20}
+                placeholder="呼ばれたい名前"
+              />
+            )}
+          </label>
+          <label className="nt-field">
+            <span>書くこと</span>
+            <textarea
+              ref={box}
+              className="bin"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={3}
+              maxLength={MAX}
+              placeholder={now.placeholder}
+            />
+          </label>
+          <div className="brow">
+            <button className="bbtn" onClick={submit} disabled={sending}>
+              {sending ? "はりだし中…" : "はりだす"}
+            </button>
+          </div>
+          {err && (
+            <p className="err">
+              <Icon name="alert" size={13} /> {err}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="nb-board">
         {!fixed && (
           <div className="nb-head">
@@ -336,7 +396,7 @@ export default function Notes({
             <p>
               {bin ?
                 "二重投稿や、荒れたものをしまうと、ここに残ります。消えてはいません。" :
-                `${now.name}あての1枚目になれます。下の欄に書いて、貼ってみて。`}
+                `${now.name}あての1枚目になれます。押すと、書く欄がひらきます。`}
             </p>
             {!bin && (
               <button
@@ -430,67 +490,6 @@ export default function Notes({
           </p>
         )}
       </div>
-
-      {/* 書く欄。**宛先はもう決まっている。**
-          名前は本文の前に置く。あとに置いていたときは、書き終えた人が
-          そこまで目を戻さず、本文の末尾に「by まこも」と書いていた。 */}
-      {!bin && !open && (
-        <button
-          className="nt-open"
-          onClick={() => {
-            setOpen(true);
-            // 開いた先へ連れていく。開いただけだと、画面の外で欄が増える
-            requestAnimationFrame(() => box.current?.focus());
-          }}
-        >
-          {list.length > 0 ? "自分も書く" : "1枚目を書く"}
-          <Icon name="chevron" size={13} />
-        </button>
-      )}
-
-      {!bin && open && (
-        <div className="nt-write">
-          <p className="nt-to">
-            <span>{now.name}</span>あてに貼ります
-          </p>
-          <label className="nt-field">
-            <span>名前（書かなくてもいい）</span>
-            {user ? (
-              <span className="bin bin-locked">{user.name} として貼ります</span>
-            ) : (
-              <input
-                className="bin"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={20}
-                placeholder="呼ばれたい名前"
-              />
-            )}
-          </label>
-          <label className="nt-field">
-            <span>書くこと</span>
-            <textarea
-              ref={box}
-              className="bin"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={3}
-              maxLength={MAX}
-              placeholder={now.placeholder}
-            />
-          </label>
-          <div className="brow">
-            <button className="bbtn" onClick={submit} disabled={sending}>
-              {sending ? "はりだし中…" : "はりだす"}
-            </button>
-          </div>
-          {err && (
-            <p className="err">
-              <Icon name="alert" size={13} /> {err}
-            </p>
-          )}
-        </div>
-      )}
 
       {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}
       {owner && (

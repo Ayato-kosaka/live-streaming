@@ -1,173 +1,49 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getState, postNote, type NextNote } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useCallback, useEffect, useState } from "react";
+import { getState } from "@/lib/api";
 import { livePlans, planPhase, type Plan } from "@/content/plans";
-import Fold from "@/components/ui/Fold";
-import Icon from "@/components/ui/IconCore";
+import { themeById } from "@/content/themes";
+import Notes from "./Notes";
 import PlanCard, { PlanRow } from "./PlanCard";
-import { Pin } from "./art";
 
 /** 日付の早い順。日付の無いものは後ろ。 */
 const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? "9999");
 
 /**
- * 付箋に何を書けばいいのかの見本。
- *
- * 空の入力欄と「貼る」ボタンだけ置いても、人は何も書けない。
- * 押すと書き出しが入るところまで用意して、続きだけ書けばいい形にする。
- */
-const SEEDS = [
-  "ここ行くといいよ：",
-  "これ食べてみて：",
-  "これ気をつけて：",
-  "去年行った人から：",
-];
-
-/**
  * 企画1つぶんの付箋。
  *
- * 親の中で定義すると、1文字打つたびに作り直されて入力欄からカーソルが外れる。
- * 必ずここ（モジュールの直下）に置く。
- */
-/**
- * 付箋の欄。
+ * **宛先はテーマ（`content/themes.ts`）で、企画の id をそのまま使う。**
  *
- * 企画が5つあると、入力欄が5つ縦に並ぶ（`docs/island-ux.md` 5.8）。
- * いちばん近い1つだけ開いておいて、残りは枚数だけ見せて畳む。
- * 畳んだ側も、見出しに枚数が出ているので「何枚貼られているか」は分かる。
+ * ここは長いあいだ、企画だけ別の口（`POST /notes` の `planId`）に書いていた。
+ * #160 でテーマ付きの付箋に作り替えたとき、移行のあいだ壊れないようにと
+ * 古い口を残したまま閉じ忘れていて、**ここから書いたものは `theme` を
+ * 持たないので、`GET /stickies` の一覧から外れていた**（あの口は
+ * `theme` の無いものを落とす）。あやとが6枚書いて1枚も出てこなかったのがこれ。
+ * `【】` のときと同じ形の失敗で、原因も同じ「書く場所と読む場所の食い違い」。
+ *
+ * だから欄そのものを `Notes` に寄せる。書くのも読むのも `/stickies` の1本になり、
+ * 貼った付箋は掲示板の棚にも同じ日に出る。
+ *
+ * **テーマの無い企画には、欄を出さない。** 書けるのに表に出ない口を残すのが、
+ * いま直した不具合そのものだった。企画に付箋を集めたくなったら
+ * `content/themes.ts` に1行足す。
  */
-function PlanNotes({
-  plan,
-  notes,
-  down,
-  onRetry,
-  draft,
-  busy,
-  onDraft,
-  onAdd,
-  open = false,
-}: {
-  plan: Plan;
-  /** 取りに行っている最中は null。0枚と区別する（読む前に「まだ1枚もありません」と言わない） */
-  notes: NextNote[] | null;
-  /** 読みに行けなかった。0枚と区別する（`docs/island-ux.md` 11章） */
-  down: boolean;
-  onRetry: () => void;
-  draft: string;
-  busy: boolean;
-  onDraft: (v: string) => void;
-  onAdd: () => void;
-  /** いちばん近い企画だけ開いておく */
-  open?: boolean;
-}) {
-  const box = useRef<HTMLInputElement>(null);
-  // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
-  const pins = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
-
-  const body = (
-    <>
-      {notes === null ? (
-        /* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く。
-           空の配列から始めると、読む前に「まだ1枚もありません」と嘘をつくことになる。 */
-        <ul className="nx-notes is-wait" aria-hidden>
-          <li />
-          <li />
-          <li />
-        </ul>
-      ) : notes.length === 0 && down ? (
-        /* 読めなかった日に「まだ1枚もありません」と言うと、貼ってある付箋を
-           無かったことにする。掲示板（`Board.tsx`）は同じ形をすでに持っている。
-           同じ site の中で、同じ場面を2通りに言わない。 */
-        <div className="blank is-off">
-          <b>いま、付箋を読みに行けなかった</b>
-          <p>貼ってある日でも、こういうときは出てきません。少し待って、もう一度。</p>
-          <button type="button" className="blank-go" onClick={onRetry}>
-            もう一度よみこむ
-            <Icon name="refresh" size={14} />
-          </button>
-        </div>
-      ) : notes.length === 0 ? (
-        <p className="muted" style={{ marginTop: "var(--sp-2)" }}>
-          まだ1枚もありません。行ったことがある、聞いたことがある、なんでも。
-        </p>
-      ) : (
-        <ul className="nx-notes">
-          {notes.map((n, i) => (
-            <li key={n.id}>
-              <span className="nx-pin">
-                <Pin tone={pins[i % pins.length]} size={19} />
-              </span>
-              {n.text}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="noteform" style={{ marginTop: "var(--sp-4)" }}>
-        <input
-          ref={box}
-          value={draft}
-          onChange={(e) => onDraft(e.target.value)}
-          placeholder="ここ行くといいよ / これ食べて / これ気をつけて"
-          maxLength={120}
-          aria-label={`${plan.title} に付箋を貼る`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onAdd();
-          }}
-        />
-        <button onClick={onAdd} disabled={busy || !draft.trim()}>
-          貼る
-        </button>
-      </div>
-
-      <div className="nx-seeds">
-        <span>書き出しを選ぶ</span>
-        {SEEDS.map((s) => (
-          <button
-            key={s}
-            className="nx-seed"
-            onClick={() => {
-              // すでに書いてあるものを消さない。書き出しは前に足すだけ
-              onDraft(draft.startsWith(s) ? draft : s + draft);
-              box.current?.focus();
-            }}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-    </>
-  );
-
-  if (open) {
-    return (
-      <>
-        <div className="nx-noteshead">
-          <h3 className="sub" id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, margin: "var(--sp-4) 0 0" }}>
-            みんなの付箋
-          </h3>
-          {!!notes?.length && (
-            <span className="bd-count">
-              <b>{notes.length}</b>枚
-            </span>
-          )}
-        </div>
-        {body}
-      </>
-    );
-  }
-
+function PlanNotes({ plan }: { plan: Plan }) {
+  const theme = themeById(plan.id);
+  if (!theme) return null;
   return (
-    <div id={`${plan.id}-notes`} style={{ scrollMarginTop: 78, marginTop: "var(--sp-4)" }}>
-      <Fold
-        title="みんなの付箋"
-        note={notes === null ? undefined : `${notes.length}枚`}
-        lead={notes?.length ? "知ってることを1行だけ足せる" : "1枚目を貼れる"}
-      >
-        {body}
-      </Fold>
+    <div
+      id={`${plan.id}-notes`}
+      style={{ scrollMarginTop: 78, marginTop: "var(--sp-5)" }}
+    >
+      <h3 className="sub" style={{ margin: 0 }}>
+        みんなの付箋
+      </h3>
+      {/* 紙の上に紙を重ねない（`bare`）。書く欄を付箋の山より前に出すのは
+          `Notes` の仕事なので、ここでは順番を組み立てない。
+          掲示板・国の面・企画の面で、置き方が1つになる。 */}
+      <Notes bare theme={theme.id} />
     </div>
   );
 }
@@ -191,56 +67,33 @@ function PlanNotes({
  * 「もう行ってきた」と出ていた（`content/plans.ts` の `planPhase`）。
  */
 export default function NextPlans() {
-  const [notes, setNotes] = useState<NextNote[] | null>(null);
-  /** 読みに行けなかった。0枚と区別して持つ */
-  const [down, setDown] = useState(false);
-  const [draft, setDraft] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [today, setToday] = useState<Date | null>(null);
   /**
    * 島から届く2つの日。**着いた日と、旅が終わった日は別**
    * （`content/plans.ts` の `reached` と `doneFromState`）。
    */
   const [facts, setFacts] = useState<{ arrived: string | null; ended: string | null } | null>(null);
-  const { token } = useAuth();
 
-  // 読めなかったときも0枚として置く。付箋は読めなくても「貼る」はできるので、
-  // ここで手を止めさせない。ただし**0枚だとは言わない**（`down` で分ける）。
+  /* ここが読むのは、島から届く日付だけになった。付箋は `PlanNotes` の中の
+     `Notes` が、テーマの口（`/stickies`）から自分で読む。
+     読めなかったときは焼いてある予定のまま出す。旅の日付が届かないことは、
+     見ている人には関係のない話なので、断りを出さない
+     （`docs/island-design.md` 4章）。 */
   const load = useCallback(() => {
-    setNotes(null);
-    setDown(false);
     getState()
-      .then((s) => {
-        setNotes(s.notes ?? []);
-        setFacts({ arrived: s.nordic?.arrivedOn ?? null, ended: s.nordic?.endedOn ?? null });
-      })
-      .catch(() => {
-        setNotes([]);
-        setDown(true);
-      });
+      .then((s) =>
+        setFacts({
+          arrived: s.nordic?.arrivedOn ?? null,
+          ended: s.nordic?.endedOn ?? null,
+        }),
+      )
+      .catch(() => setFacts(null));
   }, []);
 
   useEffect(() => {
     setToday(new Date());
     load();
   }, [load]);
-
-  const add = async (planId: string) => {
-    const text = (draft[planId] ?? "").trim();
-    if (!text) return;
-    setBusy(planId);
-    setErr(null);
-    try {
-      const { note } = await postNote(planId, text, await token());
-      setNotes((n) => [note, ...(n ?? [])]);
-      setDraft((d) => ({ ...d, [planId]: "" }));
-    } catch {
-      setErr("いま貼れなかった。少し待ってから、もう一度ためしてみて。");
-    } finally {
-      setBusy(null);
-    }
-  };
 
   /* 島から届いた日を貼る。**「着いた」を企画の終わりにしない。**
      ストックホルムに着いてから発つまでに7泊ある
@@ -256,18 +109,6 @@ export default function NextPlans() {
   const ahead = [...now, ...before];
   const [lead, ...rest] = ahead;
 
-  const notesFor = (p: Plan) => notes?.filter((n) => n.planId === p.id) ?? null;
-  const notesProps = (p: Plan) => ({
-    plan: p,
-    notes: notesFor(p),
-    down,
-    onRetry: load,
-    draft: draft[p.id] ?? "",
-    busy: busy === p.id,
-    onDraft: (v: string) => setDraft((d) => ({ ...d, [p.id]: v })),
-    onAdd: () => add(p.id),
-  });
-
   return (
     <>
       {/* しらせの帯を外した。すぐ下の札が「あと何日」を大きい数字で言っていて、
@@ -275,7 +116,7 @@ export default function NextPlans() {
           件数は道のりの見出しが持っている。 */}
       {lead && (
         <PlanCard plan={lead}>
-          <PlanNotes {...notesProps(lead)} open />
+          <PlanNotes plan={lead} />
         </PlanCard>
       )}
 
@@ -305,7 +146,7 @@ export default function NextPlans() {
           <ul className="nx-road">
             {rest.map((p) => (
               <PlanRow plan={p} key={p.id}>
-                <PlanNotes {...notesProps(p)} />
+                <PlanNotes plan={p} />
               </PlanRow>
             ))}
           </ul>
@@ -319,17 +160,11 @@ export default function NextPlans() {
           <ul className="nx-road">
             {done.map((p) => (
               <PlanRow plan={p} key={p.id}>
-                <PlanNotes {...notesProps(p)} />
+                <PlanNotes plan={p} />
               </PlanRow>
             ))}
           </ul>
         </section>
-      )}
-
-      {err && (
-        <p className="err">
-          <Icon name="alert" size={13} /> {err}
-        </p>
       )}
     </>
   );
