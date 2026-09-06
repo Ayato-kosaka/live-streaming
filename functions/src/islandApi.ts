@@ -26,14 +26,20 @@ if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 const STATE_DOC = db.collection("island").doc("state");
-const IDEAS = db.collection("islandIdeas");
-const NOTES = db.collection("islandNotes");
+/* 視聴者さんが書いた一言。**入れ物はこれ1つ。**
+   前は islandIdeas(企画の提案)と islandNotes(企画への付箋)に分かれていたが、
+   本番の8件を読むと、7件は「新しい企画の提案」ではなく、すでに決まっている
+   北欧旅への注文だった。2つの違いは**宛先を持つかどうか**の1点しかなく、
+   画面にその欄が無かったので、書く人が `【ポーランド】` を自分で発明していた。
+   宛先を正式な欄にして、入れ物を1つに寄せてある(docs/island-db.md)。
+   古い2つは移行のあいだ残す。読み書きはもうこちらだけを見る。 */
+const VOICES = db.collection("islandVoices");
 const VOTES = db.collection("islandVotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const DRAFTS = db.collection("islandDrafts");
 /* 今夜のおたずね。選択肢を押すだけで意思表示できる、参加のいちばん下の段。
-   作りは islandIdeas + islandVotes とまったく同じ。
+   作りは islandVoices + islandVotes とまったく同じ。
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
 const POLLS = db.collection("islandPolls");
 const PVOTES = db.collection("islandPollVotes");
@@ -151,13 +157,61 @@ async function doneruKeyOnly(): Promise<string> {
   return (await goalRecord())?.key ?? "";
 }
 
-const MAX_IDEA_LEN = 200;
-const MAX_NOTE_LEN = 120;
+/**
+ * 一言の長さ。**宛先のあるなしで変えない。**
+ *
+ * 前は提案200字・付箋120字だったが、書く人から見ると同じ「一言を書く欄」で、
+ * 押した先によって書ける量が変わる理由が無い。長いほう(200)に寄せてある。
+ * 短いほうに寄せると、いま貼ってある180字の一言が二度と貼れなくなる。
+ */
+const MAX_VOICE_LEN = 200;
 const MAX_NAME_LEN = 20;
 const MAX_DRAFT_LEN = 12000;
 const DRAFTS_PER_DAY = 12;
-const IDEAS_PER_DAY = 8;
-const NOTES_PER_DAY = 20;
+/* 1日に書ける数。**宛先のあるなしで分ける。**
+   宛先の無い一言(新しい企画の提案)は票が付いて並びの順位を動かすので、
+   連投の効きかたが違う。数える鍵は前のまま("idea"/"note")にしてあるので、
+   今日ぶんをすでに使った人が、口が変わったからといって書き足せることはない。 */
+const NEW_PER_DAY = 8;
+const TO_PER_DAY = 20;
+
+/**
+ * 宛先の種類。**画面の言葉はここに置かない**(`site/content/voice.ts`)。
+ * サーバーが持つのは「どの種類の、どの id か」だけ。
+ */
+const TARGET_KINDS = ["plan", "country", "leg", "day", "site"] as const;
+type TargetKind = (typeof TARGET_KINDS)[number];
+/** 宛先の id。企画の id・国の slug・区間の id・旅の日の id が入る。 */
+const TARGET_ID = /^[a-z0-9][a-z0-9_-]{0,39}$/;
+
+/** 一言の宛先。`kind` が null なら「新しい企画の提案」。 */
+type Target = {kind: TargetKind | null; id: string | null};
+
+/** 宛先なし。 */
+const NO_TARGET: Target = {kind: null, id: null};
+
+/**
+ * 外から来た宛先を、置いてよい形に直す。読めない値は宛先なしにはしない。
+ *
+ * **黙って宛先なしに落とさない。** 落とすと、国あてに書いたつもりの一言が
+ * 「新しい企画の提案」の並びに票つきで混ざる。それが前の壊れかたそのもの。
+ * @param {unknown} v 画面から来た `{kind, id}`
+ * @return {Target | null} 置いてよい宛先。読めなければ null
+ */
+function readTarget(v: unknown): Target | null {
+  if (v == null) return NO_TARGET;
+  if (typeof v !== "object") return null;
+  const t = v as Json;
+  const kind = t.kind == null ? null : String(t.kind);
+  if (kind === null) return NO_TARGET;
+  if (!(TARGET_KINDS as readonly string[]).includes(kind)) return null;
+  /* 「島とサイトへ」は行き先が1つしかないので id を持たない。
+     ここで id を受けると、同じ意味の宛先が id の数だけ増える。 */
+  if (kind === "site") return {kind: kind as TargetKind, id: null};
+  const id = String(t.id ?? "");
+  if (!TARGET_ID.test(id)) return null;
+  return {kind: kind as TargetKind, id};
+}
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
@@ -425,6 +479,7 @@ function parseCursor(v: unknown): [number, string] | null {
  * @param {number} limit 1ページの件数
  * @param {unknown} before 続きの位置(`cursorOf` が書いたもの)
  * @param {Function} shape 書類を返す形に直す関数
+ * @param {Function} keep 残すものを選ぶ。宛先で絞るときに使う
  * @return {Promise<Page<T>>} 1ページぶん
  */
 async function pageOf<T>(
@@ -432,6 +487,7 @@ async function pageOf<T>(
   limit: number,
   before: unknown,
   shape: (d: FirebaseFirestore.QueryDocumentSnapshot) => T,
+  keep?: (d: FirebaseFirestore.QueryDocumentSnapshot) => boolean,
 ): Promise<Page<T>> {
   // where + orderBy の組み合わせは複合インデックスが要るので、
   // 並べ替えだけ Firestore に任せて、非表示の除外はこちらで行う。
@@ -455,6 +511,7 @@ async function pageOf<T>(
     for (const d of snap.docs) {
       scan = d;
       if (d.get("hidden") === true) continue;
+      if (keep && !keep(d)) continue;
       if (items.length >= limit) {
         more = true;
         break;
@@ -468,56 +525,182 @@ async function pageOf<T>(
 }
 
 /**
- * 企画提案1件を、画面に返す形に直す。
- * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
- * @return {object} 企画提案
+ * 書類に入っている宛先を読む。
+ *
+ * 古い書類(移行前に貼られたもの)には `target` が無い。そのときは宛先なし。
+ * @param {FirebaseFirestore.DocumentData} v 書類の中身
+ * @return {Target} 宛先
  */
-function ideaShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
+function targetOf(v: FirebaseFirestore.DocumentData): Target {
+  const t = (v.target ?? null) as Json | null;
+  if (!t) return NO_TARGET;
+  const kind = t.kind == null ? null : String(t.kind);
+  if (!kind || !(TARGET_KINDS as readonly string[]).includes(kind)) {
+    return NO_TARGET;
+  }
+  return {kind: kind as TargetKind, id: (t.id as string) ?? null};
+}
+
+/**
+ * 一言1件を、画面に返す形に直す。
+ *
+ * **`votes` と `status` は宛先なしのときだけ意味を持つ。** 宛先のある一言は
+ * 「もう決まっている企画への注文」なので、票を集めて順位を付けるものではない。
+ * 形をそろえるために欄そのものは常に返す(画面が分岐を持たずに済む)。
+ *
+ * `reply` はあやとの返事(#154)。**いまは誰も書かない。**
+ * あとから欄を足すと、書いてある返事が急に画面へ出るか、出す側を作り直すかの
+ * どちらかになるので、返す形だけ先に決めてある。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {object} 一言
+ */
+function voiceShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
   const v = d.data();
+  const reply = (v.reply ?? null) as Json | null;
   return {
     id: d.id,
     text: v.text as string,
     name: (v.name as string) || undefined,
     byUid: (v.uid as string) || undefined,
+    target: targetOf(v),
     votes: (v.votes as number) ?? 0,
     status: (v.status as string) ?? "open",
+    reply: reply?.text ?
+      {
+        text: String(reply.text),
+        at: new Date(Number(reply.at) || Date.now()).toISOString(),
+      } :
+      undefined,
     createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
   };
 }
 
 /**
- * 付箋1件を、画面に返す形に直す。
+ * 表示できる一言を新しい順に1ページぶん取る。
+ * @param {unknown} limit 1ページの件数
+ * @param {unknown} before 続きの位置
+ * @param {Function} keep 宛先で絞るとき
+ * @return {Promise<Page<object>>} 一言の1ページ
+ */
+function listVoices(
+  limit: unknown = 200,
+  before?: unknown,
+  keep?: (d: FirebaseFirestore.QueryDocumentSnapshot) => boolean,
+) {
+  return pageOf(VOICES, clampPage(limit), before, voiceShape, keep);
+}
+
+/* ---- 古い口(`/ideas` `/notes`)のための読み替え ----
+   画面と API を同じ日に切り替えると、切り替えのあいだに開いていた人の
+   ブラウザが壊れる。静的書き出しなので、古い JS は CDN にしばらく残る。
+   **入れ物はもう islandVoices 1つ**で、ここは形を古いほうに戻すだけ。
+   画面が全部 `/voices` に移ったら、この段ごと消す。 */
+
+/**
+ * 古い `islandIdeas` に入っていたのは、宛先なしと、企画以外あて。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {boolean} 古い提案の側なら true
+ */
+function wasIdea(d: FirebaseFirestore.QueryDocumentSnapshot): boolean {
+  return targetOf(d.data()).kind !== "plan";
+}
+
+/**
+ * 古い `islandNotes` に入っていたのは、企画あて。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {boolean} 古い付箋の側なら true
+ */
+function wasNote(d: FirebaseFirestore.QueryDocumentSnapshot): boolean {
+  return targetOf(d.data()).kind === "plan";
+}
+
+/**
+ * 一言を、古い「企画提案」の形に戻す。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @return {object} 企画提案
+ */
+function ideaShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
+  const v = voiceShape(d);
+  return {
+    id: v.id,
+    text: v.text,
+    name: v.name,
+    byUid: v.byUid,
+    votes: v.votes,
+    status: v.status,
+    createdAt: v.createdAt,
+  };
+}
+
+/**
+ * 一言を、古い「付箋」の形に戻す。
  * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
  * @return {object} 付箋
  */
 function noteShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
-  const v = d.data();
+  const v = voiceShape(d);
   return {
-    id: d.id,
-    planId: v.planId as string,
-    text: v.text as string,
-    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
+    id: v.id,
+    planId: v.target.id ?? "",
+    text: v.text,
+    createdAt: v.createdAt,
   };
 }
 
 /**
- * 表示できる企画提案を新しい順に1ページぶん取る。
- * @param {unknown} limit 1ページの件数
- * @param {unknown} before 続きの位置
- * @return {Promise<Page<object>>} 企画提案の1ページ
+ * 一言を1件置く。**貼る口は3つあるが、置きかたは1つ。**
+ *
+ * `/voices` と、古い `/ideas` `/notes` が同じここを通る。
+ * 分けて書くと、連投の数えかたや欄の並びが口ごとにずれていく。
+ * 前がまさにそうで、提案は `ip` を残していたのに付箋は残していなかった。
+ *
+ * 数える鍵は宛先のあるなしで分ける。同じ人が同じ日に、
+ * 新しい企画を8件と、決まっている企画への注文を20件まで。
+ * @param {object} a 置くもの
+ * @return {Promise<object | null>} 置いた一言。今日ぶんを使い切っていれば null
  */
-function listIdeas(limit: unknown = 120, before?: unknown) {
-  return pageOf(IDEAS, clampPage(limit), before, ideaShape);
-}
-
-/**
- * 表示できる付箋を新しい順に1ページぶん取る。
- * @param {unknown} limit 1ページの件数
- * @param {unknown} before 続きの位置
- * @return {Promise<Page<object>>} 付箋の1ページ
- */
-function listNotes(limit: unknown = 200, before?: unknown) {
-  return pageOf(NOTES, clampPage(limit), before, noteShape);
+async function addVoice(a: {
+  text: string;
+  name: string;
+  cid: string;
+  who: Who;
+  target: Target;
+  ip: string | null;
+}) {
+  const fresh = a.target.kind === null;
+  const ok = await takeQuota(
+    a.who?.uid ?? a.cid,
+    fresh ? "idea" : "note",
+    fresh ? NEW_PER_DAY : TO_PER_DAY,
+  );
+  if (!ok) return null;
+  const now = Date.now();
+  const ref = await VOICES.add({
+    text: a.text,
+    name: a.name || null,
+    target: a.target,
+    /* 票と状態は宛先なしのときだけ意味を持つが、欄は常に置く。
+       無い欄を作ると、あとで宛先が外れたときに読む側が分岐を持つことになる。 */
+    votes: 0,
+    status: "open",
+    /* あやとの返事(#154)。書く口はまだ無い。 */
+    reply: null,
+    hidden: false,
+    cid: a.cid,
+    uid: a.who?.uid ?? null,
+    channelId: a.who?.channelId ?? null,
+    createdAt: now,
+    ip: a.ip,
+  });
+  return {
+    id: ref.id,
+    text: a.text,
+    name: a.name || undefined,
+    target: a.target,
+    votes: 0,
+    status: "open",
+    createdAt: new Date(now).toISOString(),
+  };
 }
 
 /**
@@ -1142,10 +1325,11 @@ export const islandApi = onRequest(
 
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, ideas, notes, residents] = await Promise.all([
+        /* **一言は1回しか引かない。** 入れ物が1つになったので、
+           古い口のための `ideas`/`notes` は、引いたものを宛先で分けるだけ。 */
+        const [stateSnap, voices, residents] = await Promise.all([
           STATE_DOC.get(),
-          listIdeas(60),
-          listNotes(200),
+          listVoices(200),
           listResidents(),
         ]);
         const state = stateSnap.exists ? stateSnap.data() ?? {} : {};
@@ -1153,24 +1337,31 @@ export const islandApi = onRequest(
           "Cache-Control",
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
-        /* `ideas` と `notes` は今までどおり配列で返す。そこに
-           「まだ古いものが残っている」を添える。画面はこれを見て
-           `/ideas?before=` `/notes?before=` の続きを読める。
-           **黙って切らない**ことがこの2つの役目。 */
+        const next = voices.more ? voices.next : null;
         res.json({
           current: state.current ?? null,
           stats: state.stats ?? null,
-          ideas: ideas.items,
-          notes: notes.items,
+          voices: voices.items,
+          /* 古い画面のための2つ。宛先で分けているだけで、出どころは上と同じ。
+             画面が全部 `voices` を読むようになったら消す。 */
+          ideas: voices.items.filter((v) => v.target.kind !== "plan"),
+          notes: voices.items
+            .filter((v) => v.target.kind === "plan")
+            .map((v) => ({
+              id: v.id,
+              planId: v.target.id ?? "",
+              text: v.text,
+              createdAt: v.createdAt,
+            })),
           residents,
           /* 北欧旅の、日付で言える事実。いまは「着いた日」だけ。
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
              (`site/content/plans.ts` の planPhase)。 */
           nordic: state.nordic ?? null,
-          more: {
-            ideas: ideas.more ? ideas.next : null,
-            notes: notes.more ? notes.next : null,
-          },
+          /* 「まだ古いものが残っている」の印。**黙って切らない**ためのもの。
+             続きは `/voices?before=` から読む。入れ物が1つなので、
+             古い口(`/ideas?before=` `/notes?before=`)にも同じ値が効く。 */
+          more: {voices: next, ideas: next, notes: next},
         });
         return;
       }
@@ -1234,10 +1425,124 @@ export const islandApi = onRequest(
         return;
       }
 
-      if (method === "GET" && path === "/ideas") {
-        const page = await listIdeas(
-          req.query.limit ?? 120,
+      /* ---------------- 一言 ----------------
+         宛先のある一言(もう決まっている企画・国・区間・サイトへの注文)も、
+         宛先の無い一言(新しい企画の提案)も、同じ入れ物・同じ口。
+         違うのは `target` の欄1つだけ。 */
+      if (method === "GET" && path === "/voices") {
+        /* 宛先で絞れる。国のページのように「その宛先ぶんだけ」出す面のため。
+           絞らないと、島じゅうの一言を全部落としてから捨てることになる。 */
+        const want = readTarget(
+          req.query.kind == null ?
+            null :
+            {kind: req.query.kind, id: req.query.id},
+        );
+        if (want === null) {
+          res.status(400).json({error: "bad target"});
+          return;
+        }
+        const keep = req.query.kind == null ?
+          undefined :
+          (d: FirebaseFirestore.QueryDocumentSnapshot) => {
+            const t = targetOf(d.data());
+            return t.kind === want.kind && t.id === want.id;
+          };
+        const page = await listVoices(
+          req.query.limit ?? 200,
           req.query.before,
+          keep,
+        );
+        res.set(
+          "Cache-Control",
+          "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
+        );
+        res.json({voices: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      if (method === "POST" && path === "/voices") {
+        const who = await whoIs(req.headers.authorization);
+        const text = clean(body.text, MAX_VOICE_LEN);
+        const name = who?.name ?? clean(body.name, MAX_NAME_LEN);
+        const cid = String(body.cid ?? "");
+        const target = readTarget(body.target);
+        if (text.length < 2) {
+          res.status(400).json({error: "text too short"});
+          return;
+        }
+        if (!isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        if (target === null) {
+          res.status(400).json({error: "bad target"});
+          return;
+        }
+        const voice = await addVoice({
+          text, name, cid, who, target,
+          ip: fwd(req.headers["x-forwarded-for"]),
+        });
+        if (!voice) {
+          res.status(429).json({error: "too many today"});
+          return;
+        }
+        res.json({voice});
+        return;
+      }
+
+      /* さんせい。**宛先の無い一言にだけ効く。**
+         「もう決まっている企画への注文」に票を集めても、順位が付くだけで
+         何も決まらない。前はそこが分かれていなかったので、北欧旅への注文が
+         新しい企画の提案と同じ並びで票を競っていた。 */
+      const voiceVote = path.match(
+        /^\/(?:voices|ideas)\/([A-Za-z0-9_-]{6,})\/vote$/,
+      );
+      if (method === "POST" && voiceVote) {
+        const id = voiceVote[1];
+        const who = await whoIs(req.headers.authorization);
+        const cid = String(body.cid ?? "");
+        if (!who && !isCid(cid)) {
+          res.status(400).json({error: "bad cid"});
+          return;
+        }
+        // ログインしている人は端末が変わっても1票。していない人は端末ごと。
+        const voteRef = VOTES.doc(`${id}_${who?.uid ?? cid}`);
+        const ref = VOICES.doc(id);
+        let refused = false;
+        const votes = await db.runTransaction(async (tx) => {
+          const [v, i] = await Promise.all([tx.get(voteRef), tx.get(ref)]);
+          if (!i.exists) throw new Error("no voice");
+          const data = i.data() ?? {};
+          const cur = (data.votes as number) ?? 0;
+          if (targetOf(data).kind !== null) {
+            refused = true;
+            return cur;
+          }
+          if (v.exists) return cur;
+          tx.set(voteRef, {at: Date.now()});
+          tx.update(ref, {votes: cur + 1});
+          return cur + 1;
+        });
+        if (refused) {
+          res.status(400).json({error: "voice has a target"});
+          return;
+        }
+        res.json({votes});
+        return;
+      }
+
+      /* ---------------- 古い口 ----------------
+         `/ideas` と `/notes` は、入れ物が2つだったころの形。
+         **入れ物はもう islandVoices 1つ**なので、ここでやるのは形を戻すことだけ。
+         残してあるのは、画面を切り替える日に古い JS が CDN に残っているため。
+         画面が全部 `/voices` に移ったら、この段ごと消す。 */
+      if (method === "GET" && path === "/ideas") {
+        const page = await pageOf(
+          VOICES,
+          clampPage(req.query.limit ?? 120),
+          req.query.before,
+          ideaShape,
+          wasIdea,
         );
         res.set(
           "Cache-Control",
@@ -1247,14 +1552,13 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* 付箋の続き。`/state` が返すのは新しい 200件までで、
-         それより古いぶんはここから `?before=` で順に読む。
-         上限を上げるだけにしなかったのは、上げてもいつか同じ日が来て、
-         そのときはまた黙って消えるから。 */
       if (method === "GET" && path === "/notes") {
-        const page = await listNotes(
-          req.query.limit ?? 200,
+        const page = await pageOf(
+          VOICES,
+          clampPage(req.query.limit ?? 200),
           req.query.before,
+          noteShape,
+          wasNote,
         );
         res.set(
           "Cache-Control",
@@ -1264,10 +1568,9 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 企画提案 ---------------- */
       if (method === "POST" && path === "/ideas") {
         const who = await whoIs(req.headers.authorization);
-        const text = clean(body.text, MAX_IDEA_LEN);
+        const text = clean(body.text, MAX_VOICE_LEN);
         const name = who?.name ?? clean(body.name, MAX_NAME_LEN);
         const cid = String(body.cid ?? "");
         if (text.length < 4) {
@@ -1278,63 +1581,27 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad cid"});
           return;
         }
-        if (!(await takeQuota(who?.uid ?? cid, "idea", IDEAS_PER_DAY))) {
+        /* **`【】` を読まない。** 古い画面はここへ札つきの本文を送ってくるが、
+           それを宛先に読み替えると、消したはずの仕分けがサーバーに残る。
+           札は本文の一部として、そのまま入る。 */
+        const voice = await addVoice({
+          text, name, cid, who, target: NO_TARGET,
+          ip: fwd(req.headers["x-forwarded-for"]),
+        });
+        if (!voice) {
           res.status(429).json({error: "too many today"});
           return;
         }
-        const now = Date.now();
-        const ref = await IDEAS.add({
-          text,
-          name: name || null,
-          votes: 0,
-          hidden: false,
-          status: "open",
-          cid,
-          uid: who?.uid ?? null,
-          channelId: who?.channelId ?? null,
-          createdAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
-        });
         res.json({
           idea: {
-            id: ref.id,
-            text,
-            name: name || undefined,
-            votes: 0,
-            status: "open",
-            createdAt: new Date(now).toISOString(),
+            id: voice.id,
+            text: voice.text,
+            name: voice.name,
+            votes: voice.votes,
+            status: voice.status,
+            createdAt: voice.createdAt,
           },
         });
-        return;
-      }
-
-      const voteMatch = path.match(
-        /^\/ideas\/([A-Za-z0-9_-]{6,})\/vote$/,
-      );
-      if (method === "POST" && voteMatch) {
-        const id = voteMatch[1];
-        const who = await whoIs(req.headers.authorization);
-        const cid = String(body.cid ?? "");
-        if (!who && !isCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        // ログインしている人は端末が変わっても1票。していない人は端末ごと。
-        const voteRef = VOTES.doc(`${id}_${who?.uid ?? cid}`);
-        const ideaRef = IDEAS.doc(id);
-        const votes = await db.runTransaction(async (tx) => {
-          const [v, i] = await Promise.all([
-            tx.get(voteRef),
-            tx.get(ideaRef),
-          ]);
-          if (!i.exists) throw new Error("no idea");
-          const cur = (i.data()?.votes as number) ?? 0;
-          if (v.exists) return cur;
-          tx.set(voteRef, {at: Date.now()});
-          tx.update(ideaRef, {votes: cur + 1});
-          return cur + 1;
-        });
-        res.json({votes});
         return;
       }
 
@@ -1557,10 +1824,9 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 付箋 ---------------- */
       if (method === "POST" && path === "/notes") {
         const who = await whoIs(req.headers.authorization);
-        const text = clean(body.text, MAX_NOTE_LEN);
+        const text = clean(body.text, MAX_VOICE_LEN);
         const planId = clean(body.planId, 40);
         const cid = String(body.cid ?? "");
         if (text.length < 2 || !planId) {
@@ -1571,26 +1837,25 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad cid"});
           return;
         }
-        if (!(await takeQuota(who?.uid ?? cid, "note", NOTES_PER_DAY))) {
+        const target = readTarget({kind: "plan", id: planId});
+        if (target === null) {
+          res.status(400).json({error: "bad input"});
+          return;
+        }
+        const voice = await addVoice({
+          text, name: who?.name ?? "", cid, who, target,
+          ip: fwd(req.headers["x-forwarded-for"]),
+        });
+        if (!voice) {
           res.status(429).json({error: "too many today"});
           return;
         }
-        const now = Date.now();
-        const ref = await NOTES.add({
-          planId,
-          text,
-          hidden: false,
-          cid,
-          uid: who?.uid ?? null,
-          name: who?.name ?? null,
-          createdAt: now,
-        });
         res.json({
           note: {
-            id: ref.id,
+            id: voice.id,
             planId,
-            text,
-            createdAt: new Date(now).toISOString(),
+            text: voice.text,
+            createdAt: voice.createdAt,
           },
         });
         return;
