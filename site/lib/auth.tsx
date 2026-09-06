@@ -79,6 +79,17 @@ function rememberSignedIn(on: boolean) {
   }
 }
 
+/**
+ * `customUrl` をハンドル（`@あやとグルメアプリ`）の形にそろえる。
+ *
+ * ハンドルが付く前からあるチャンネルは `@` の無い名前が返ることがある。
+ * `@` の有無で揺れると、同じ人が2通りの名前に見える。
+ */
+function handleOf(v: unknown): string {
+  const s = String(v ?? "").trim().replace(/^[/@]+/, "");
+  return s ? `@${s}` : "";
+}
+
 async function fetchChannel(accessToken: string) {
   const r = await fetch(
     "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
@@ -90,6 +101,11 @@ async function fetchChannel(accessToken: string) {
   if (!c) return null;
   return {
     channelId: c.id as string,
+    /* 島に出すのはチャンネル名（「あやとアプリ×海外旅」）ではなく
+       **ハンドル**（`@あやとグルメアプリ`）。配信で見えているのが
+       そちらなので、名前が違うと本人にも誰のことか分からない。
+       `part=snippet` に一緒に入っているので、取りにいく回数は増えない。 */
+    handle: handleOf(c.snippet?.customUrl),
     title: c.snippet?.title as string | undefined,
     thumbnail: c.snippet?.thumbnails?.default?.url as string | undefined,
   };
@@ -147,6 +163,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [fbUser]);
 
+  /* 覚えてもらっているほうの名前を、あとから重ねる。
+   *
+   * Firebase が持っているのは Google アカウントの表示名（`ayato_arigato`）で、
+   * **YouTube のハンドルはログインを押した瞬間にしか取れない。** ここが無いと、
+   * すでに入っている人はいつまでも古い名前のままになる。
+   * サーバーはこの1回で、チャンネルIDからハンドルを引いて覚え直す。
+   */
+  useEffect(() => {
+    if (!fbUser) return;
+    let gone = false;
+    (async () => {
+      try {
+        const idToken = await fbUser.getIdToken();
+        const r = await fetch(`${API_BASE}/me`, {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
+          body: "{}",
+        });
+        if (!r.ok || gone) return;
+        const me = (await r.json()) as { name?: string; channelId?: string };
+        if (gone) return;
+        setProfile((p) => {
+          if (!p) return p;
+          /* いま押してログインした人は、その場で取ったハンドルがもう入っている。
+             こちらの返事のほうが遅く着くことがあるので、**入っていたら消さない。**
+             （まだ Google の表示名のままの人だけ、こちらで置き換える） */
+          const already = p.name !== (fbUser.displayName ?? "名無しさん");
+          return {
+            ...p,
+            name: already ? p.name : me.name || p.name,
+            channelId: me.channelId ?? p.channelId,
+          };
+        });
+      } catch {
+        /* 取れなくても Google の表示名のまま動く。ここで止めない */
+      }
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [fbUser]);
+
   const token = useCallback(async () => {
     // 押していない端末のために、ここで firebase/auth を読み込みはしない。
     if (!everSignedIn()) return null;
@@ -181,7 +239,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => null);
       if (channel) {
         setProfile((p) =>
-          p ? { ...p, channelId: channel.channelId, name: channel.title ?? p.name } : p,
+          p ?
+            {
+              ...p,
+              channelId: channel.channelId,
+              name: channel.handle || channel.title || p.name,
+            } :
+            p,
         );
       }
     } catch (e) {

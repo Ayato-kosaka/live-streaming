@@ -818,3 +818,126 @@ export const postNordicEnded = (date: string, token: string) =>
     headers: auth(token),
     body: JSON.stringify({ date }),
   });
+
+/* ---------------- 配信のルーレット（#164） ----------------
+   コントローラー（`/me/roulette`・あやとだけ）と、表示（`/roulette?s=…`・
+   スマホ版 OBS）を、Firestore ごしに繋ぐ。
+
+   **当たりはサーバーが決める。** ここから頼むのは「回して」までで、
+   どれに決まったかは返ってくるほうにしか無い。ブラウザで決めていたころは、
+   OBS を読み込み直すたびに結果が変わっていた。 */
+
+/** ルーレットの選択肢1つ。手で足したものは名前もアイコンも空になる。 */
+export type RouletteItem = {
+  id: string;
+  label: string;
+  name: string;
+  icon: string;
+  /** あやとが手で足したもの。誰かが言ったように見せない印 */
+  byHand: boolean;
+};
+
+export type RouletteSession = {
+  id: string;
+  status: "準備中" | "回っている" | "結果が出た";
+  items: RouletteItem[];
+  /** 結果が出てから配信にコメントするまでの秒（5/10/15） */
+  wait: number;
+  duration: number;
+  turns: number;
+  theme: string;
+  sound: boolean;
+  /** 当たった選択肢の id */
+  result: string | null;
+  /** 当たった選択肢が何番目か。輪を止める位置はこれで決まる */
+  resultIndex: number | null;
+  spunAt: number | null;
+  postAt: number | null;
+  posted: boolean;
+  updatedAt: number;
+};
+
+/** 配信のチャットの1行。コントローラーに流れてくるもの。 */
+export type ChatLine = {
+  id: string;
+  name: string;
+  text: string;
+  icon: string;
+  channelId: string;
+  at: number;
+};
+
+/**
+ * コントローラーを開く。**あやとだけ。**
+ *
+ * id は作り直さない（OBS に貼った URL が変わってしまう）。
+ * `clear` を付けたときだけ、選んであるものを空にして「はじめから」にする。
+ * チャットの栞は開くたびに引き直すので、流れてくるのは**ここから先**のぶん。
+ */
+export const startRoulette = (token: string, clear = false) =>
+  req<{ session: RouletteSession; live: boolean }>("/roulette/start", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ clear }),
+  });
+
+/** 表示側（OBS）が読むところ。**ログインが要らない唯一の口。** */
+export const getRoulette = (id: string) =>
+  req<{ session: RouletteSession; now: number }>(`/roulette/${id}`);
+
+/** 新しく来たコメント。**栞が進むので、同じぶんは二度来ない。** */
+export const readRouletteChat = (id: string, token: string) =>
+  req<{ lines: ChatLine[]; wait: number; live: boolean; down?: boolean }>(
+    `/roulette/${id}/comments`,
+    { method: "POST", headers: auth(token), body: "{}" },
+  );
+
+/** 選択肢を置き換える。押す人は1人なので、丸ごと送るのがいちばん食い違わない。 */
+export const putRouletteItems = (
+  id: string,
+  items: RouletteItem[],
+  token: string,
+) =>
+  req<{ session: RouletteSession }>(`/roulette/${id}/items`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ items }),
+  });
+
+/** 待ち秒数・回る秒数・周・色。**URL を書き換える代わり。** */
+export const putRouletteSettings = (
+  id: string,
+  s: Partial<Pick<RouletteSession, "wait" | "duration" | "turns" | "theme" | "sound">>,
+  token: string,
+) =>
+  req<{ session: RouletteSession }>(`/roulette/${id}/settings`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(s),
+  });
+
+/**
+ * 回す。**返事は、結果のコメントを投げ終わってから返る**（最長30秒ほど）。
+ *
+ * 待っているあいだも表示側は回っているので、押した側はこの返事を待たない。
+ * 画面の状態は、表示側と同じように読み直して作る。
+ */
+export const spinRoulette = (
+  id: string,
+  wait: number,
+  template: string,
+  token: string,
+) =>
+  req<{ session: RouletteSession; posted: boolean }>(`/roulette/${id}/spin`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ wait, template }),
+  });
+
+/** 結果のコメントを投げ直す。もう投げてあれば、二度は投げない。 */
+export const sayRouletteResult = (id: string, token: string) =>
+  req<{ posted: boolean; already?: boolean }>(`/roulette/${id}/say`, {
+    method: "POST",
+    headers: auth(token),
+    body: "{}",
+  });

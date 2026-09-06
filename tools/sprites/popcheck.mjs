@@ -30,7 +30,12 @@ import { writeFileSync } from "node:fs";
 
 const PORT = process.env.PORT || "3130";
 /* 面が増えたら、ここに足すか PAGES=... で渡す。
-   足さないと、新しい面だけ数えないまま「0件」と出る。 */
+   足さないと、新しい面だけ数えないまま「0件」と出る。
+
+   **`/roulette`（配信の表示側）はここに入れない。** あれは島ではなく、
+   OBS に映すルーレットをそのまま写した面で（`docs/island-world.md` 2章）、
+   「準備中」の札に 13px の厚みがある。島の決まりでは違反だが、
+   厚みを取ると配信の絵が変わる。数えると毎回1件出て、それを直したくなる。 */
 const PAGES = (
   process.env.PAGES ||
   [
@@ -38,6 +43,8 @@ const PAGES = (
     "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
     "/board", "/map", "/map/france", "/nordic", "/nordic/guide", "/nordic/finland",
     "/nordic/photos", "/all", "/friends", "/now", "/design",
+    // ログインした人にしか出ない面。`SEED=` を渡したときだけ中身が出る
+    "/me", "/me/roulette",
   ].join(",")
 ).split(",");
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });

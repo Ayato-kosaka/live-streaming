@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   getState,
@@ -76,12 +77,21 @@ export default function TripTools() {
       {tab === "log" && <TripLog />}
       {tab === "place" && <TripPlace />}
 
-      {/* ルーレット（#164）と遠隔操作（#165）の道具は、まだ無い。
-          **押せない札を並びに混ぜない**（`docs/island-world.md` 3.5）ので、
-          行き先の札ではなく、平らな1行で言っておく。 */}
-      <p className="mp-todo">
-        ルーレットと、島の遠隔操作の道具は、ここに入る予定。まだ作っていない。
-      </p>
+      {/* ルーレット（#164）は建った。**3つの札の並びには入れない。**
+          あちらは「その日のうちに入れる」3つで、ここは配信中に開く別の面。
+          並びに4つ目として混ぜると、旅の道具と配信の道具が同じ列に並ぶ。 */}
+      <Link className="mp-goto" href="/me/roulette">
+        <Icon name="poll" size={22} />
+        <span className="mp-goto-t">
+          <b>ルーレット</b>
+          <i>コメントから選んで回す。配信していない方の端末で開く</i>
+        </span>
+        <Icon name="right" size={14} />
+      </Link>
+
+      {/* 島の遠隔操作（#165）は、まだ無い。**押せない札を並びに混ぜない**
+          （`docs/island-world.md` 3.5）ので、平らな1行で言っておく。 */}
+      <p className="mp-todo">島の遠隔操作の道具は、ここに入る予定。まだ作っていない。</p>
     </section>
   );
 }

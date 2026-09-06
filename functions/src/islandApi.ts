@@ -20,7 +20,9 @@
 import {onRequest} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {randomUUID} from "crypto";
+import {randomInt, randomUUID} from "crypto";
+import {readLiveChat, sayOnLive} from "./liveChat";
+import {youtube} from "./youtubeClient";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -70,6 +72,16 @@ const NDAYS = db.collection("nordicDays");
    出てから読む。旅が終わったら、ここの中身を Git に焼き戻す。
    ドキュメントの id は旅程表の行の id(`day-1` `day-depart`)。 */
 const NLOG = db.collection("nordicLog");
+
+/* 配信のルーレット(#164)。コントローラー(あやとの手元)と
+   表示(スマホ版 OBS)を繋ぐ、1人1つの入れ物。
+   **ドキュメントIDがそのまま表示側の合言葉。** OBS はログインできないので、
+   `GET /roulette/{id}` だけは誰でも読める。推測できない長さ(128ビット)にして、
+   id を知っている人だけが読める形にする。
+   id は `islandUsers/{uid}.rouletteId` に控えて**ずっと変えない**。
+   毎回変わると、配信のたびに OBS の URL を貼り替えることになって、
+   この機能が無くしたかった手間がそのまま戻る。 */
+const ROULETTE = db.collection("rouletteSessions");
 
 /* 写真の置き場。Functions の Admin SDK はルールを迂回するので、
    ブラウザから Storage を直接触らせない(Firestore と同じ形)。
@@ -168,6 +180,10 @@ async function doneruKeyOnly(): Promise<string> {
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
+/* YouTube のハンドル(`@あやとグルメアプリ`)。
+   ハンドルは最大30文字なので、`@` を足して31。名前(20)より長い。
+   **切り詰めると別人の名前になる**ので、覚えておく側はここまで受ける。 */
+const MAX_HANDLE_LEN = 31;
 const MAX_DRAFT_LEN = 12000;
 const DRAFTS_PER_DAY = 12;
 const IDEAS_PER_DAY = 8;
@@ -282,8 +298,13 @@ async function whoIs(header?: string): Promise<Who> {
     const saved = snap.exists ? snap.data() ?? {} : {};
     return {
       uid: t.uid,
+      /* ハンドルが分かっていれば、それがこの人の名前。
+         `name` には古い Google の表示名が残っている人がいるので、
+         保存し直すのを待たずにここで追い越す。 */
       name:
-        clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) || "名無しさん",
+        clean(saved.handle ?? "", MAX_HANDLE_LEN) ||
+        clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) ||
+        "名無しさん",
       channelId: (saved.channelId as string) || undefined,
     };
   } catch (e) {
@@ -333,6 +354,26 @@ async function listResidents(): Promise<Json[]> {
 }
 
 /**
+ * 企画の日付を「2026-09-11」の形にそろえる。
+ *
+ * **桁が揃っていないと並び順が壊れる。** 日付は文字のまま比べているので
+ * (`site/content/plans.ts` の `localeCompare`)、`2026-9-11` は
+ * `2026-10-01` より後ろに並ぶ。画面が日付を選ばせる形になっても、
+ * 古い口から来たものと、すでに入っているものが残るので、
+ * **入れ物の手前でそろえる。** 日付として読めないものは持たない。
+ * @param {unknown} v 送られてきた日付
+ * @return {string} YYYY-MM-DD。読めなければ空
+ */
+const shapeDay = (v: unknown): string => {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(clean(v, 10));
+  if (!m) return "";
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+  return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+};
+
+/**
  * 企画ページの中身を、保存してよい形に整える。
  *
  * **旧 `islandDrafts` と、新しい `islandNextPlans`(#161)の両方が通る。**
@@ -351,7 +392,7 @@ function shapeDraft(b: Json): Json {
   return {
     title: clean(b.title, MAX_PLAN_TITLE),
     when: clean(b.when, 40),
-    date: clean(b.date, 10),
+    date: shapeDay(b.date),
     note: clean(b.note, 200),
     tags: Array.isArray(b.tags) ?
       b.tags.slice(0, 6).map((t) => clean(t, 16)) :
@@ -407,6 +448,49 @@ const clean = (v: unknown, max: number): string => {
   }
   return out.trim().slice(0, max);
 };
+
+/* ---- YouTube のハンドル(`@あやとグルメアプリ`) ----
+   島に出す名前は、Google アカウントの表示名(`ayato_arigato`)ではなく
+   **YouTube のハンドル**にする。配信で見えているのがそちらなので、
+   Google の表示名で並んでいると、誰のことなのか本人にも分からない。 */
+
+/**
+ * `channels.list` の `customUrl` を、ハンドルの形にそろえる。
+ *
+ * ハンドルが付く前からあるチャンネルは `@` の無い名前が返ることがある。
+ * 名前として出すときに `@` の有無で揺れると、同じ人が2通りに見える。
+ * @param {unknown} v `snippet.customUrl`
+ * @return {string} `@` から始まるハンドル。取れなければ空
+ */
+const handleOf = (v: unknown): string => {
+  const s = clean(v, MAX_HANDLE_LEN).replace(/^[/@]+/, "");
+  return s ? `@${s}`.slice(0, MAX_HANDLE_LEN) : "";
+};
+
+/**
+ * チャンネルIDから、いまのハンドルを引く。
+ *
+ * **ログインし直さずに直せるようにするために要る。** ブラウザから
+ * `channels.list(mine=true)` を呼べるのはログインを押した瞬間だけで、
+ * その場を逃すと古い名前のまま何日も直らない。ハンドルは公開の
+ * `snippet` に入っているので、あやとの合言葉で動くこのクライアントから
+ * 誰のぶんでも引ける。
+ * @param {string} channelId YouTube のチャンネルID
+ * @return {Promise<string>} ハンドル。取れなければ空
+ */
+async function fetchHandle(channelId: string): Promise<string> {
+  try {
+    const r = await youtube.channels.list({
+      part: ["snippet"],
+      id: [channelId],
+    });
+    return handleOf(r.data.items?.[0]?.snippet?.customUrl);
+  } catch (e) {
+    // 取れなくてもログインは通す。名前が古いままなだけなので
+    logger.warn("handle lookup failed", channelId, String(e));
+    return "";
+  }
+}
 
 /**
  * x-forwarded-for から最初のIPだけ取る。
@@ -789,7 +873,10 @@ function planShape(
     id: d.id,
     title: (v.title as string) ?? "",
     when: (v.when as string) ?? "",
-    date: (v.date as string) ?? "",
+    /* 読むときもそろえる。**すでに入っている `2026-9-11` を、
+       書き直してもらうまで待たない。** 桁が揃わないまま返すと、
+       いちばん近い企画も「あと何日」も並び順で狂う。 */
+    date: shapeDay(v.date),
     note: (v.note as string) ?? "",
     tags: arr<string>(v.tags),
     place: {
@@ -1017,6 +1104,114 @@ async function ownerUid(header?: string): Promise<string | null> {
   }
 }
 
+/* ---------------- ルーレット(#164) ----------------
+   配信のルーレットを、URL を書き換えずにコントローラーから回す。
+
+   **当たりはここで決める。** いままではブラウザの中の
+   `Math.floor(Math.random() * n)` で決まっていたので、OBS を
+   読み込み直すと結果が変わった。コントローラーから回す形では
+   「回した」と「結果が出た」が別の瞬間になるので、サーバーで決めて
+   Firestore に書き、表示側は読むだけにする。 */
+
+/** 選択肢の上限。いまのルーレットが 36 で打ち止めなので、それに合わせる。 */
+const ROULETTE_MAX = 36;
+/** 1つの選択肢の長さ。輪の上では9文字で切れるが、結果のコメントには全文が出る。 */
+const ROULETTE_LABEL = 60;
+/** 結果を配信にコメントするまでの待ち。配信のラグに合わせてあやとが選ぶ。 */
+const ROULETTE_WAITS = [5, 10, 15];
+/** 回っている秒数と周の数。あやとがふだん使っている URL の値を既定にする。 */
+const ROULETTE_SPIN = {duration: 15, turns: 10};
+/** 色。写した4種以外は受けない(`site/components/roulette/wheel.ts` と同じ並び)。 */
+const ROULETTE_THEMES = ["classic", "ocean", "berry", "sunset"];
+/** 回すと決めてから、表示側が回り始めるまでの猶予。
+    表示側は1秒ごとに読みにくるので、いま回すと言うと初めの一瞬を飛ばす。 */
+const ROULETTE_LEAD = 1200;
+/**
+ * 結果のコメントの文面。**決まりの出どころは `site/content/roulette.ts`。**
+ * あちらの1行を直せば文面が変わるように、コントローラーから型を送らせる。
+ * ここにあるのは、それが届かなかったときの最後の受け皿。
+ */
+const ROULETTE_SAY = "ルーレットの結果、『{}』に決まりました";
+
+/** ルーレットの選択肢1つ。手で足したものには名前もアイコンも無い。 */
+type RouletteItem = {
+  id: string;
+  label: string;
+  name: string;
+  icon: string;
+  byHand: boolean;
+};
+
+/**
+ * 送られてきた選択肢を、保存してよい形に整える。
+ *
+ * **手で足したものは、名前とアイコンを空にする**(#164 のコメント)。
+ * あやとが足したものを、誰かが言ったように見せない。
+ * @param {unknown} raw 送られてきた1件
+ * @return {RouletteItem | null} 整えたもの。中身が無ければ null
+ */
+function rouletteItem(raw: unknown): RouletteItem | null {
+  const v = (typeof raw === "object" && raw ? raw : {}) as Json;
+  const label = clean(v.label, ROULETTE_LABEL);
+  if (!label) return null;
+  const byHand = v.byHand === true;
+  return {
+    id: clean(v.id, 64) || randomUUID(),
+    label,
+    name: byHand ? "" : clean(v.name, 40),
+    icon: byHand ? "" : clean(v.icon, 300),
+    byHand,
+  };
+}
+
+/**
+ * 表示側とコントローラーに返す形。
+ *
+ * **チャットの栞と持ち主の uid は返さない。** `GET /roulette/{id}` は
+ * ログイン無しで読めるので、ここに入れたものは id を知る人全員に見える。
+ * @param {string} id セッションの id
+ * @param {Json} v 保存してある中身
+ * @return {Json} 画面に出すぶん
+ */
+function rouletteShape(id: string, v: Json): Json {
+  return {
+    id,
+    status: v.status ?? "準備中",
+    items: (v.items as RouletteItem[]) ?? [],
+    wait: Number(v.wait) || ROULETTE_WAITS[1],
+    duration: Number(v.duration) || ROULETTE_SPIN.duration,
+    turns: Number(v.turns) || ROULETTE_SPIN.turns,
+    theme: (v.theme as string) || "classic",
+    sound: v.sound !== false,
+    result: (v.result as string) ?? null,
+    resultIndex: typeof v.resultIndex === "number" ? v.resultIndex : null,
+    spunAt: Number(v.spunAt) || null,
+    postAt: Number(v.postAt) || null,
+    posted: v.posted === true,
+    updatedAt: Number(v.updatedAt) || 0,
+  };
+}
+
+/**
+ * 結果のコメント1行を組み立てる。
+ * @param {unknown} template `{}` を1つ持つ型
+ * @param {string} label 当たった選択肢
+ * @return {string} 配信に投げる文
+ */
+function rouletteText(template: unknown, label: string): string {
+  const t = clean(template, 160);
+  const form = t.includes("{}") ? t : ROULETTE_SAY;
+  return form.replace("{}", label).slice(0, 190);
+}
+
+/**
+ * 指定の時刻まで待つ。**待つのは結果のコメントを投げる前だけ。**
+ * @param {number} ms 待つ長さ
+ * @return {Promise<void>} 待ち
+ */
+const naps = (ms: number): Promise<void> =>
+  new Promise((r) => setTimeout(r, Math.max(0, ms)));
+
 /**
  * Storage に置いた写真の、誰でも読める URL。
  *
@@ -1135,16 +1330,35 @@ export const islandApi = onRequest(
           res.status(401).json({error: "bad token"});
           return;
         }
-        const name = clean(body.title ?? t.name ?? "", MAX_NAME_LEN);
         const channelId = clean(body.channelId, 64);
         const now = Date.now();
         const ref = USERS.doc(t.uid);
         const prev = await ref.get();
+        const was = prev.data() ?? {};
         const patch: Json = {
           lastSeenAt: now,
-          firstSeenAt: prev.exists ? prev.data()?.firstSeenAt ?? now : now,
+          firstSeenAt: prev.exists ? was.firstSeenAt ?? now : now,
         };
-        // ログインしたときだけ届く、YouTube から取れた本人の情報
+        /* すでに入っている人のハンドルを、ログインし直さずに補う。
+           ブラウザからハンドルが取れるのはログインを押した瞬間だけなので、
+           それを逃した人はここでしか直らない。**1日に1回まで。**
+           引けなかったときに毎回叩きにいくと、その人が来るたび
+           YouTube の割り当てを削ることになる。 */
+        let handle = clean(body.handle, MAX_HANDLE_LEN);
+        const known = channelId || (was.channelId as string) || "";
+        if (!handle && !was.handle && known && was.handleAt !== today()) {
+          patch.handleAt = today();
+          handle = await fetchHandle(known);
+        }
+        /* 名前は **ハンドル > チャンネル名 > Google の表示名** の順。
+           **送られてこなかったものでは上書きしない。** ここは空の body でも
+           叩かれる口（`loadMe`）なので、無条件に `t.name` へ落とすと、
+           画面を開くたびに Google アカウントの表示名で塗り戻していた。 */
+        const name =
+          handle ||
+          clean(body.title, MAX_NAME_LEN) ||
+          clean(was.name ?? t.name ?? "", MAX_NAME_LEN);
+        if (handle) patch.handle = handle;
         if (name) patch.name = name;
         if (channelId) patch.channelId = channelId;
         if (body.thumbnail !== undefined) {
@@ -1157,7 +1371,7 @@ export const islandApi = onRequest(
         if (body.showName !== undefined) patch.showName = !!body.showName;
         if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
         await ref.set(patch, {merge: true});
-        const saved = {...(prev.data() ?? {}), ...patch};
+        const saved = {...was, ...patch};
         res.json({
           uid: t.uid,
           /* **保存してあるほうを返す。** 空の body で叩いたときは
@@ -1165,6 +1379,8 @@ export const islandApi = onRequest(
              「ログインし直すまで自分のチャンネルが分からない」画面ができる。
              じぶんのこと(`/me` の面)は、ここでキャラクターを突き合わせる。 */
           name: name || (saved.name as string) || "",
+          /** YouTube のハンドル。画面はこれがあれば名前として出す */
+          handle: (saved.handle as string) || undefined,
           channelId: (saved.channelId as string) || undefined,
           photo: (saved.photo as string) || undefined,
           nickname: (saved.nickname as string) ?? null,
@@ -2528,6 +2744,317 @@ export const islandApi = onRequest(
         );
         res.set("Cache-Control", "no-store");
         res.json({id: ref.id, archived: on});
+        return;
+      }
+
+      /* ---------------- ルーレット(#164) ----------------
+         コントローラー(`/me/roulette`・あやとだけ)と
+         表示(`/roulette?s=…`・スマホ版 OBS)を繋ぐ。
+         **読むのは表示側だけが誰でも。** それ以外は全部あやただけ。 */
+
+      /* コントローラーを開いたとき。**id は作り直さない。**
+         毎回変わると、配信のたびに OBS の URL を貼り替えることになる。
+         `clear` を付けたときだけ、選択肢を空にして「はじめから」にする。
+
+         **チャットの栞は、開くたびに引き直す。** あやとの決め(#164)で
+         流すのは「コントローラーを起動してから」のぶんだけなので、
+         ここで1回読んで、いま出ているぶんは捨てて栞だけを取る。 */
+      if (method === "POST" && path === "/roulette/start") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const user = await USERS.doc(uid).get();
+        let id = String(user.data()?.rouletteId ?? "");
+        if (!/^[0-9a-f]{32}$/.test(id)) {
+          id = randomUUID().replace(/-/g, "");
+          await USERS.doc(uid).set({rouletteId: id}, {merge: true});
+        }
+        let chatToken = "";
+        let live = false;
+        try {
+          const page = await readLiveChat();
+          chatToken = page.next;
+          live = page.live;
+        } catch (e) {
+          // 配信を読めなくても、コントローラーは開けなければならない。
+          // 手で足すぶんだけでルーレットは回る
+          logger.warn("roulette chat anchor failed", String(e));
+        }
+        const ref = ROULETTE.doc(id);
+        const had = await ref.get();
+        /* 開き直しただけなら、選んであるものをそのまま残す。
+           **配信の途中で1回読み込み直すことは普通に起きる。**
+           20件選んだところで消えると、そこで配信が止まる。 */
+        const prev: Json = had.exists && !body.clear ? had.data() ?? {} : {};
+        const rec: Json = {
+          owner: uid,
+          status: prev.status ?? "準備中",
+          items: prev.items ?? [],
+          wait: Number(prev.wait) || ROULETTE_WAITS[1],
+          duration: Number(prev.duration) || ROULETTE_SPIN.duration,
+          turns: Number(prev.turns) || ROULETTE_SPIN.turns,
+          theme: (prev.theme as string) || "classic",
+          sound: prev.sound !== false,
+          result: prev.result ?? null,
+          resultIndex: prev.resultIndex ?? null,
+          spunAt: prev.spunAt ?? null,
+          postAt: prev.postAt ?? null,
+          posted: prev.posted === true,
+          say: prev.say ?? "",
+          chatToken,
+          updatedAt: Date.now(),
+        };
+        await ref.set(rec);
+        res.set("Cache-Control", "no-store");
+        res.json({session: rouletteShape(id, rec), live});
+        return;
+      }
+
+      const rlOne = path.match(/^\/roulette\/([0-9a-f]{32})$/);
+      /* 表示側(OBS)が1秒ごとに読むところ。**ここだけログインが要らない。**
+         OBS のブラウザソースは合言葉を持てないので、
+         推測できない id を知っていることが合言葉になっている。
+         `now` を返すのは、OBS の時計とサーバーの時計がずれていても
+         回り始めが合うようにするため。 */
+      if (method === "GET" && rlOne) {
+        const snap = await ROULETTE.doc(rlOne[1]).get();
+        if (!snap.exists) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({
+          session: rouletteShape(snap.id, snap.data() ?? {}),
+          now: Date.now(),
+        });
+        return;
+      }
+
+      /* 新しく来たコメント。**栞をここで進めるので GET ではない。**
+         同じ栞で2回読むと同じコメントが2回流れる。 */
+      const rlChat = path.match(/^\/roulette\/([0-9a-f]{32})\/comments$/);
+      if (method === "POST" && rlChat) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = ROULETTE.doc(rlChat[1]);
+        const snap = await ref.get();
+        if (!snap.exists || snap.data()?.owner !== uid) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        try {
+          const page = await readLiveChat(
+            String(snap.data()?.chatToken ?? "") || undefined,
+          );
+          if (page.next) await ref.set({chatToken: page.next}, {merge: true});
+          res.set("Cache-Control", "no-store");
+          res.json({lines: page.lines, wait: page.wait, live: page.live});
+        } catch (e) {
+          /* 配信が終わった・割り当てが尽きた。**コントローラーを止めない。**
+             手で足すほうは生きているので、次の周期でまた聞く。 */
+          logger.warn("roulette chat read failed", String(e));
+          res.set("Cache-Control", "no-store");
+          res.json({lines: [], wait: 15000, live: false, down: true});
+        }
+        return;
+      }
+
+      /* 選択肢を置き換える。**丸ごと置き換えるのが正しい。**
+         押す人は1人(あやと)しかいないので、足す・消すを別々の口にすると
+         順番の食い違いだけが増える。37件目はここで落ちる。 */
+      const rlItems = path.match(/^\/roulette\/([0-9a-f]{32})\/items$/);
+      if (method === "POST" && rlItems) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = ROULETTE.doc(rlItems[1]);
+        const snap = await ref.get();
+        if (!snap.exists || snap.data()?.owner !== uid) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        if (snap.data()?.status === "回っている") {
+          res.status(409).json({error: "spinning"});
+          return;
+        }
+        const raw = Array.isArray(body.items) ? body.items : [];
+        const items: RouletteItem[] = [];
+        for (const r of raw.slice(0, ROULETTE_MAX)) {
+          const it = rouletteItem(r);
+          if (it) items.push(it);
+        }
+        /* 選び直したら、前の結果は消す。**残すと、表示側に
+           古い当たりが出たまま次の選択肢が並ぶ。** */
+        const rec: Json = {
+          items,
+          status: "準備中",
+          result: null,
+          resultIndex: null,
+          spunAt: null,
+          postAt: null,
+          posted: false,
+          updatedAt: Date.now(),
+        };
+        await ref.set(rec, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({session: rouletteShape(ref.id, {...snap.data(), ...rec})});
+        return;
+      }
+
+      /* 待ち秒数・回る秒数・周・色。**URL を書き換える代わりがここ。** */
+      const rlSet = path.match(/^\/roulette\/([0-9a-f]{32})\/settings$/);
+      if (method === "POST" && rlSet) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = ROULETTE.doc(rlSet[1]);
+        const snap = await ref.get();
+        if (!snap.exists || snap.data()?.owner !== uid) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        const rec: Json = {updatedAt: Date.now()};
+        if (ROULETTE_WAITS.includes(Number(body.wait))) {
+          rec.wait = Number(body.wait);
+        }
+        if (Number.isFinite(Number(body.duration))) {
+          rec.duration = Math.min(15, Math.max(1, Number(body.duration)));
+        }
+        if (Number.isFinite(Number(body.turns))) {
+          rec.turns = Math.round(Math.min(15, Math.max(2, Number(body.turns))));
+        }
+        if (ROULETTE_THEMES.includes(String(body.theme))) {
+          rec.theme = String(body.theme);
+        }
+        if (typeof body.sound === "boolean") rec.sound = body.sound;
+        await ref.set(rec, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({session: rouletteShape(ref.id, {...snap.data(), ...rec})});
+        return;
+      }
+
+      /* 回す。**当たりをここで決めて、結果のコメントもここから投げる。**
+
+         表示側から投げると、OBS が落ちていたら投げられない。だから
+         この1回の呼び出しが、回り終わるまで(最長 15秒)と
+         配信のラグぶん(5/10/15秒)を待ってから投げて、それから返す。
+         **コントローラーは、この返事を待たずに次の操作へ進める。**
+         画面の状態は、表示側と同じように読み直して作っている。 */
+      const rlSpin = path.match(/^\/roulette\/([0-9a-f]{32})\/spin$/);
+      if (method === "POST" && rlSpin) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = ROULETTE.doc(rlSpin[1]);
+        const snap = await ref.get();
+        const cur = snap.data() ?? {};
+        if (!snap.exists || cur.owner !== uid) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        if (cur.status === "回っている") {
+          res.status(409).json({error: "spinning"});
+          return;
+        }
+        const items = (cur.items as RouletteItem[]) ?? [];
+        if (items.length < 2) {
+          res.status(400).json({error: "need items"});
+          return;
+        }
+        const wait = ROULETTE_WAITS.includes(Number(body.wait)) ?
+          Number(body.wait) :
+          Number(cur.wait) || ROULETTE_WAITS[1];
+        const duration = Number(cur.duration) || ROULETTE_SPIN.duration;
+        /* 当たり。**crypto の乱数を使う。** `Math.random` でも実害は
+           無いが、ここは「配信で1回だけ引く籤」なので、偏りの理屈を
+           説明できるほうを取る。 */
+        const idx = randomInt(items.length);
+        const spunAt = Date.now() + ROULETTE_LEAD;
+        const postAt = spunAt + duration * 1000 + wait * 1000;
+        const text = rouletteText(body.template, items[idx].label);
+        const rec: Json = {
+          status: "回っている",
+          result: items[idx].id,
+          resultIndex: idx,
+          spunAt,
+          postAt,
+          wait,
+          say: text,
+          posted: false,
+          updatedAt: Date.now(),
+        };
+        await ref.set(rec, {merge: true});
+        await naps(postAt - Date.now());
+        let posted = false;
+        try {
+          posted = await sayOnLive(text);
+        } catch (e) {
+          logger.warn("roulette say failed", String(e));
+        }
+        await ref.set(
+          {status: "結果が出た", posted, updatedAt: Date.now()},
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+          session: rouletteShape(ref.id, {
+            ...cur, ...rec, status: "結果が出た", posted,
+          }),
+          posted,
+        });
+        return;
+      }
+
+      /* 結果のコメントを投げ直す。**投げられなかったときの受け皿。**
+         上の口は1回の呼び出しの中で待っているので、その途中で
+         入れ物が畳まれると投げられずに終わる。二重に投げないよう、
+         もう投げてあるものはここで止める。 */
+      const rlPost = path.match(/^\/roulette\/([0-9a-f]{32})\/say$/);
+      if (method === "POST" && rlPost) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = ROULETTE.doc(rlPost[1]);
+        const snap = await ref.get();
+        const cur = snap.data() ?? {};
+        if (!snap.exists || cur.owner !== uid) {
+          res.status(404).json({error: "no session"});
+          return;
+        }
+        if (cur.posted === true) {
+          res.json({posted: true, already: true});
+          return;
+        }
+        const items = (cur.items as RouletteItem[]) ?? [];
+        const won = items.find((x) => x.id === cur.result);
+        if (!won) {
+          res.status(400).json({error: "no result"});
+          return;
+        }
+        const text = clean(cur.say, 190) ||
+          rouletteText(body.template, won.label);
+        let posted = false;
+        try {
+          posted = await sayOnLive(text);
+        } catch (e) {
+          logger.warn("roulette say retry failed", String(e));
+        }
+        if (posted) await ref.set({posted: true}, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({posted});
         return;
       }
 
