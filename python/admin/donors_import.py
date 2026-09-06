@@ -56,47 +56,14 @@ from _fs import args, db, log
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+# 表示名からチャンネルIDを引くところは、毎朝の取り込み
+# （`python/doneru_supporters.py`）と共通。**引き方を2か所に書かない。**
+from donor_channels import channels  # noqa: E402
 
 SEED = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "donors_seed.json",
 )
-
-# 表示名からチャンネルIDを引く。**2つ以上に当たったものは返さない。**
-SQL = f"""
-SELECT author_name AS name,
-       ARRAY_AGG(DISTINCT author_channel_id IGNORE NULLS) AS ids
-FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages`
-WHERE author_name IN UNNEST(@names)
-GROUP BY name
-"""
-
-
-def channels(names: list) -> dict:
-    """表示名 -> チャンネルID。1つに定まったものだけ返す。"""
-    if not names:
-        return {}
-    from google.cloud import bigquery
-
-    client = bigquery.Client(project=BQ_PROJECT_ID)
-    cfg = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ArrayQueryParameter("names", "STRING", names)
-        ]
-    )
-    out = {}
-    for row in client.query(SQL, job_config=cfg).result():
-        ids = list(row["ids"] or [])
-        if len(ids) == 1:
-            out[row["name"]] = ids[0]
-        else:
-            # 同じ名前が複数のチャンネルに付いている。誰か決められない
-            log.warning("  %s は %d 個のチャンネルに当たったので引きません",
-                        row["name"], len(ids))
-    client.close()
-    return out
-
 
 def main() -> None:
     a = args()
