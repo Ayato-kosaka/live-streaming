@@ -73,6 +73,11 @@ service cloud.firestore {
     match /island/{docId} { allow read, write: if false; }
     match /islandIdeas/{docId} { allow read, write: if false; }
     match /islandNotes/{docId} { allow read, write: if false; }
+    /* 付箋のハート(#160)。1人1回を守るためだけの入れ物で、
+       ドキュメントIDが `<付箋のID>_<端末IDか uid>`。
+       **ここを開けると、誰が何を押したかが端末IDごと全部読める。**
+       押した数は islandNotes 側に持っているので、読む用事もここには無い。 */
+    match /islandHearts/{docId} { allow read, write: if false; }
     match /islandVotes/{docId} { allow read, write: if false; }
     match /islandRate/{docId} { allow read, write: if false; }
     match /islandUsers/{docId} { allow read, write: if false; }
