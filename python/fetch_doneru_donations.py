@@ -39,7 +39,7 @@ from typing import Any, Dict, List, Optional
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from doneru import DoneruClient, DoneruError, DoneruSessionExpired  # noqa: E402
-from doneru.normalizer import describe_mapping, normalize  # noqa: E402
+from doneru.normalizer import describe_mapping, normalize_all  # noqa: E402
 
 # cookie が切れたときだけこの終了コードで落ちる。
 # ワークフローがこれを見て、失敗通知メールから理由が分かるようログに印を出す。
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `{table}` (
   status STRING,
   settlement_amount NUMERIC,
   viewer_pk STRING,
+  platform STRING,
   fetched_start DATE,
   fetched_end DATE,
   ingest_run_id STRING,
@@ -98,6 +99,7 @@ WHEN MATCHED THEN
     status = S.status,
     settlement_amount = SAFE_CAST(S.settlement_amount AS NUMERIC),
     viewer_pk = S.viewer_pk,
+    platform = S.platform,
     fetched_start = SAFE_CAST(S.fetched_start AS DATE),
     fetched_end = SAFE_CAST(S.fetched_end AS DATE),
     ingest_run_id = S.ingest_run_id,
@@ -106,7 +108,7 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     donation_id, donated_at, donor_name, amount, amount_text,
-    currency, message_text, status, settlement_amount, viewer_pk,
+    currency, message_text, status, settlement_amount, viewer_pk, platform,
     fetched_start, fetched_end, ingest_run_id, ingested_at, raw_json
   )
   VALUES (
@@ -120,6 +122,7 @@ WHEN NOT MATCHED THEN
     S.status,
     SAFE_CAST(S.settlement_amount AS NUMERIC),
     S.viewer_pk,
+    S.platform,
     SAFE_CAST(S.fetched_start AS DATE),
     SAFE_CAST(S.fetched_end AS DATE),
     S.ingest_run_id,
@@ -261,6 +264,7 @@ def merge_rows(rows: List[Dict[str, Any]], start: date, end: date) -> int:
                     None if row["settlement_amount"] is None else repr(row["settlement_amount"]),
                 ),
                 ScalarQueryParameter("viewer_pk", "STRING", row["viewer_pk"]),
+                ScalarQueryParameter("platform", "STRING", row["platform"]),
                 ScalarQueryParameter("fetched_start", "STRING", start.isoformat()),
                 ScalarQueryParameter("fetched_end", "STRING", end.isoformat()),
                 ScalarQueryParameter("ingest_run_id", "STRING", run_id),
@@ -432,7 +436,7 @@ def ingest(client: DoneruClient, start: date, end: date, dry_run: bool = False) 
         # 中身は raw_json に残っているので取りこぼしてはいない。
         print(f"未対応のキー（raw_json には入っています）: {mapping['unmapped_keys']}")
 
-    rows = [normalize(record) for record in records]
+    rows = normalize_all(records)
 
     undated = sum(1 for row in rows if row["donated_at"] is None)
     if undated:
