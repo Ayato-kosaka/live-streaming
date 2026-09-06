@@ -252,7 +252,7 @@ export default async function NordicPage() {
             57px の帯が2本並ぶ（実測）。
             **宛先はもう決まっている。** ここから書く人は「北欧旅ぜんぶ」に
             貼るので、テーマを選ぶ札は出さない（#160）。 */}
-        <Notes bare foldWrite theme="nordic" />
+        <Notes bare theme="nordic" />
       </section>
 
       {/* 応援。**いちばん最後に、これだけで。**

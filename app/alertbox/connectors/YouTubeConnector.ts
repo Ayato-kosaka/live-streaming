@@ -52,6 +52,14 @@ interface LiveChatMessagesListResponse {
  * - active な liveBroadcast から liveChatId を取得
  * - liveChat/messages をポーリングして SuperChat を拾う
  * - access_token の期限切れ/認可エラー時に取り直す
+ *
+ * **同じ読み方をしているところがもう1つある。**
+ * `site/lib/youtubeChat.ts`（ルーレットのコントローラー #164）。
+ * `app/`（Expo/Metro）と `site/`（Next.js）は別のビルドで、site は
+ * `npm --prefix site ci` で自分だけの依存を入れているので、1つのファイルを
+ * 分け合えない。**ここを直したら、あちらも見ること。**
+ * 写してあるのは、pollingIntervalMillis に従うところ・nextPageToken を
+ * 持つところ・liveBroadcasts → videos の順で liveChatId を引くところ。
  */
 export class YouTubeConnector implements IConnector {
   private channelId?: string;

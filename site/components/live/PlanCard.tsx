@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
+import { themeById } from "@/content/themes";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
@@ -324,6 +325,18 @@ function Reached({ plan }: { plan: Plan }) {
 }
 
 /**
+ * この企画に付箋の欄が出るか。
+ *
+ * 出るのは、企画の id と同じ id のテーマが `content/themes.ts` にあるときだけ
+ * （`NextPlans.tsx` の `PlanNotes`）。**判定をここ1か所に置く。**
+ * 欄の有無と、そこへ送る札の有無が別々に決まっていると、
+ * 押しても何も起きない札が残る。
+ * @param {Plan} plan 企画
+ * @return {boolean} 付箋の欄が出るか
+ */
+const hasNotes = (plan: Plan) => !!themeById(plan.id);
+
+/**
  * きみができること。
  *
  * 「いつ」「何が起きる」の次に来る問いは「じゃあ自分は何をすればいいのか」。
@@ -336,13 +349,18 @@ function Doing({ plan }: { plan: Plan }) {
     <div className="nx-do">
       <span>きみができること</span>
       <div className="nx-dos">
-        <a className="nx-do-b is-go" href={`#${plan.id}-notes`}>
-          <Icon name="comment" size={26} />
-          <span>
-            <b>付箋を貼る</b>
-            <i>知ってることを教える</i>
-          </span>
-        </a>
+        {/* 宛先（`content/themes.ts`）を持つ企画にだけ、付箋の欄が出る
+            （`NextPlans.tsx` の `PlanNotes`）。無い企画でこの札を出すと、
+            押しても何も無いところへ飛ぶ。**行き先の有無を、札の有無に写す。** */}
+        {hasNotes(plan) && (
+          <a className="nx-do-b is-go" href={`#${plan.id}-notes`}>
+            <Icon name="comment" size={26} />
+            <span>
+              <b>付箋を貼る</b>
+              <i>知ってることを教える</i>
+            </span>
+          </a>
+        )}
         {plan.href && (
           <Link className="nx-do-b" href={plan.href} prefetch={false}>
             <Icon name="signpost" size={26} />
@@ -393,7 +411,7 @@ function Asks({ plan, jump = true }: { plan: Plan; jump?: boolean }) {
       {/* 付箋の欄が閉じているとき（道のりの段）だけ、そこへ連れていく。
           主役の札は、この真下に入力欄が開いている。同じ行き先の札を
           20px 下にもう1つ置いても、押しどころが2つに割れるだけ。 */}
-      {jump && (
+      {jump && hasNotes(plan) && (
         <a href={`#${plan.id}-notes`}>
           付箋で教える
           <Icon name="right" size={12} />

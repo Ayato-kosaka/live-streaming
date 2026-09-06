@@ -875,11 +875,53 @@ export type ChatLine = {
  * チャットの栞は開くたびに引き直すので、流れてくるのは**ここから先**のぶん。
  */
 export const startRoulette = (token: string, clear = false) =>
-  req<{ session: RouletteSession; live: boolean }>("/roulette/start", {
+  req<{ session: RouletteSession; live: boolean; doneru?: DoneruHint }>(
+    "/roulette/start",
+    {
+      method: "POST",
+      headers: auth(token),
+      body: JSON.stringify({ clear }),
+    },
+  );
+
+/**
+ * Doneru の鍵が入っているか。**鍵そのものは返ってこない。**
+ *
+ * 入れ直したいときに「いま入っているのはどれか」が分からないと困るので、
+ * 末尾4文字だけが来る。
+ */
+export type DoneruHint = { set: boolean; tail: string };
+
+/**
+ * Doneru の鍵をしまう。**あやとだけ。** 空文字を送ると消える。
+ *
+ * 鍵は Firestore（`islandUsers/{uid}.doneruKey`）に入って、以後ここへは
+ * 戻ってこない。**画面に焼かない**のが要点で、焼くと書き出したものから
+ * 誰でも読めてしまう（`/roulette` の URL は配信の画面に映る）。
+ */
+export const putDoneruKey = (key: string, token: string) =>
+  req<{ doneru: DoneruHint }>("/roulette/doneru", {
     method: "POST",
     headers: auth(token),
-    body: JSON.stringify({ clear }),
+    body: JSON.stringify({ key }),
   });
+
+/**
+ * ブラウザから YouTube を直に読むための、寿命の短いトークン。**あやとだけ。**
+ *
+ * これで読むと、割り当てを食うのは Doneru 側のプロジェクトになる
+ * （`lib/youtubeChat.ts` の冒頭）。鍵がまだ入っていなければ 404。
+ * @param refresh 401 が出たとき。Doneru 側で取り直させてから返す
+ */
+export const getRouletteYtToken = (token: string, refresh = false) =>
+  req<{ at: string; channel: string; expiresAt: number }>(
+    "/roulette/yt-token",
+    {
+      method: "POST",
+      headers: auth(token),
+      body: JSON.stringify({ refresh }),
+    },
+  );
 
 /** 表示側（OBS）が読むところ。**ログインが要らない唯一の口。** */
 export const getRoulette = (id: string) =>
