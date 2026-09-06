@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Icon from "@/components/ui/Icon";
-import {
-  amIOwner,
-  getNordicPhotos,
-  type NordicPhoto,
-  type NordicPhotoDay,
-} from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { getNordicPhotos, type NordicPhoto, type NordicPhotoDay } from "@/lib/api";
+import { useOwner } from "./log";
 import PhotoPost from "./PhotoPost";
 import PhotoStudio from "./PhotoStudio";
 
@@ -52,8 +47,10 @@ export default function PhotoWall({ depart }: { depart: string }) {
   const [open, setOpen] = useState<{ day: NordicPhotoDay; i: number } | null>(
     null,
   );
-  const [owner, setOwner] = useState(false);
-  const { user, token } = useAuth();
+  /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
+     （`components/nordic/log.ts` の `useOwner`）。同じ面の中で
+     「あやとか」を2通りに聞かない。 */
+  const owner = useOwner();
 
   useEffect(() => {
     getNordicPhotos()
@@ -65,24 +62,6 @@ export default function PhotoWall({ depart }: { depart: string }) {
         setOff(true);
       });
   }, []);
-
-  // 貼る道具は、あやとにだけ出す。ログインしていない人には聞きにいかない。
-  useEffect(() => {
-    if (!user) {
-      setOwner(false);
-      return;
-    }
-    let gone = false;
-    (async () => {
-      const t = await token();
-      if (!t || gone) return;
-      const yes = await amIOwner(t);
-      if (!gone) setOwner(yes);
-    })();
-    return () => {
-      gone = true;
-    };
-  }, [user, token]);
 
   /** 貼れたぶんは、取り直さずにその場で並べる。 */
   const added = (p: NordicPhoto) =>
