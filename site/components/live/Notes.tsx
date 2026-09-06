@@ -393,17 +393,21 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
         {notes !== null && !down && list.length === 0 && (
           <div className="blank">
             <b>{bin ? "しまったものはありません" : "まだ1枚も貼られていません"}</b>
+            {/* **書く欄が開いているかで、言うことを変える。**
+                開いたあとも「押すと、書く欄がひらきます」と言い続けていたころ、
+                すぐ上に開いている欄を指して、もう一度開く札が出ていた。 */}
             <p>
               {bin ?
                 "二重投稿や、荒れたものをしまうと、ここに残ります。消えてはいません。" :
-                `${now.name}あての1枚目になれます。押すと、書く欄がひらきます。`}
+                open ?
+                  `上の欄に書くと、${now.name}あての1枚目になります。` :
+                  `${now.name}あての1枚目になれます。押すと、書く欄がひらきます。`}
             </p>
-            {!bin && (
+            {!bin && !open && (
               <button
                 className="blank-go"
                 onClick={() => {
-                  // 畳んであるときは、まず開く。開かずに送ると、
-                  // 押しても何も起きない（欄がまだ画面に無い）
+                  // 書く欄はこの上にある。開いてから、そこへ連れていく
                   setOpen(true);
                   requestAnimationFrame(() => {
                     box.current?.scrollIntoView({ behavior: "smooth", block: "center" });
