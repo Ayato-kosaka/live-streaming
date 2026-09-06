@@ -1333,6 +1333,10 @@
   text-decoration: none;
 }
 .stage .bar-atlas:active { transform: translateY(2px); }
+/* 引きでは、島の隅に「島の地図」が出ている。**同じ行き先の口を2つ置かない。**
+   バーの中のこれは、寄りで隅に出さないぶんの代わりなので、
+   隅に出ている引きでは要らない（`docs/island-world.md` の「行き先を2つ置かない」）。 */
+.stage[data-cam="wide"] .bar-atlas { display: none; }
 .stage .bar-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
 /* 引き／寄りの切り替え。
@@ -1517,8 +1521,18 @@
 }
 /* スマホ・寄り（既定）。小さいマークの下 */
 .stage[data-view="close"] .stage-atlas { top: calc(104px + env(safe-area-inset-top)); }
+/* 640px から上は右上に「今日の島」の板が出ている。**そこは譲る。**
+   同じ隅を取り合って、案内板が今日の1行の上に乗っていた（PC で実測）。
+   左下へ下ろして、「島をながめる」の真上に置く。どちらも行き先ではなく
+   島を見わたすための道具なので、隅を分けずに1か所へまとめる。
+   （章の島も同じ置き方。`chain.css` の `.isle-atlas`） */
 @media (min-width: 640px) {
-  .stage .stage-atlas { top: calc(12px + env(safe-area-inset-top)); }
+  .stage .stage-atlas {
+    top: auto;
+    right: auto;
+    left: 12px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
 }
 .stage-atlas:active {
   transform: translateY(4px);

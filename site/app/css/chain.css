@@ -1067,9 +1067,17 @@
 }
 .isle-view { left: 12px; top: calc(12px + env(safe-area-inset-top)); }
 .isle-atlas { right: 12px; top: calc(12px + env(safe-area-inset-top)); }
-/* 640px から上は、いまの島と同じで左下へ降ろす（上に看板ロゴが出る） */
+/* 640px から上は、いまの島と同じで左下へ降ろす（上に看板ロゴが出る）。
+   連なりへの札もその真上へ。どちらも行き先ではなく島を見わたすための道具で、
+   隅を分けると島の四隅が道具で埋まる */
 @media (min-width: 640px) {
   .isle-view { top: auto; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .isle-atlas {
+    top: auto;
+    right: auto;
+    left: 12px;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+  }
 }
 .isle-view:active,
 .isle-atlas:active {
