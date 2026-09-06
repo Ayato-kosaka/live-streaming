@@ -10,9 +10,18 @@
    **数値を「島らしく」直さない。** 直した瞬間に、その日の配信から
    見た目が変わる。#164 であやとが心配していたのがそこ。
 
-   書体も写した元のまま。島の丸ゴシックを当てると、iOS の
-   Hiragino Maru Gothic ProN で出ているいまの字と変わってしまう。
+   書体も写した元のまま（M PLUS Rounded 1c）。島の丸ゴシックを当てると、
+   字面と太りかたが変わって、その日から配信の絵が変わる。
    ========================================================= */
+
+/* 写した元は `*,::before,::after` に border-box を掛けている。島の側は
+   `*` にしか掛かっていないので、擬似要素だけ content-box のままだった。
+   筐体の左下と右上のこぶが、枠のぶん（24px）大きく出る。**測って見つけた**
+   （画素の差が、こぶのところだけに集まっていた）。 */
+.rl-page,
+.rl-page *,
+.rl-page *::before,
+.rl-page *::after { box-sizing: border-box; }
 
 .rl-page {
   --shell: #17812e;
@@ -23,7 +32,7 @@
   place-items: center;
   overflow: hidden;
   isolation: isolate;
-  font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--font-game), "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
   color: #132117;
   background:
     radial-gradient(circle at 15% 16%, #fffffff2 0 4%, #0000 4.2%),
@@ -191,7 +200,7 @@
   will-change: transform;
 }
 .rl-label {
-  font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", sans-serif;
+  font-family: var(--font-game), "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", sans-serif;
   font-weight: 900;
   fill: #fff;
   stroke: #252721;
