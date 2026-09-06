@@ -290,7 +290,12 @@ export default function TripNow({
       <div className="tnow-pair">
         <div className="tnow-at">
           <i>いま</i>
-          <b>{now ? now.name : (place ?? "移動中")}</b>
+          {/* 着いたあとも、いる街は動く（友だちの家に約1週間）。
+              **そこは島が言っているほうを出す。** 終点に着いたことは
+              上の大きい字がもう言っているので、ここまで
+              「いま ストックホルム → ここまで ストックホルム」と
+              同じ名前を2回並べても、分かることが1つも増えない。 */}
+          <b>{arrivedOn ? (place ?? stops[last].name) : now ? now.name : (place ?? "移動中")}</b>
           <em>{now?.country ?? ""}</em>
         </div>
         <span className="tnow-go" aria-hidden>
