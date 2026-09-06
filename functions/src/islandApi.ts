@@ -22,6 +22,7 @@ import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {randomInt, randomUUID} from "crypto";
 import {readLiveChat, sayOnLive} from "./liveChat";
+import {youtube} from "./youtubeClient";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -179,6 +180,10 @@ async function doneruKeyOnly(): Promise<string> {
 const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
+/* YouTube のハンドル(`@あやとグルメアプリ`)。
+   ハンドルは最大30文字なので、`@` を足して31。名前(20)より長い。
+   **切り詰めると別人の名前になる**ので、覚えておく側はここまで受ける。 */
+const MAX_HANDLE_LEN = 31;
 const MAX_DRAFT_LEN = 12000;
 const DRAFTS_PER_DAY = 12;
 const IDEAS_PER_DAY = 8;
@@ -293,8 +298,13 @@ async function whoIs(header?: string): Promise<Who> {
     const saved = snap.exists ? snap.data() ?? {} : {};
     return {
       uid: t.uid,
+      /* ハンドルが分かっていれば、それがこの人の名前。
+         `name` には古い Google の表示名が残っている人がいるので、
+         保存し直すのを待たずにここで追い越す。 */
       name:
-        clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) || "名無しさん",
+        clean(saved.handle ?? "", MAX_HANDLE_LEN) ||
+        clean(saved.name ?? t.name ?? "", MAX_NAME_LEN) ||
+        "名無しさん",
       channelId: (saved.channelId as string) || undefined,
     };
   } catch (e) {
@@ -344,6 +354,26 @@ async function listResidents(): Promise<Json[]> {
 }
 
 /**
+ * 企画の日付を「2026-09-11」の形にそろえる。
+ *
+ * **桁が揃っていないと並び順が壊れる。** 日付は文字のまま比べているので
+ * (`site/content/plans.ts` の `localeCompare`)、`2026-9-11` は
+ * `2026-10-01` より後ろに並ぶ。画面が日付を選ばせる形になっても、
+ * 古い口から来たものと、すでに入っているものが残るので、
+ * **入れ物の手前でそろえる。** 日付として読めないものは持たない。
+ * @param {unknown} v 送られてきた日付
+ * @return {string} YYYY-MM-DD。読めなければ空
+ */
+const shapeDay = (v: unknown): string => {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(clean(v, 10));
+  if (!m) return "";
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+  return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+};
+
+/**
  * 企画ページの中身を、保存してよい形に整える。
  *
  * **旧 `islandDrafts` と、新しい `islandNextPlans`(#161)の両方が通る。**
@@ -362,7 +392,7 @@ function shapeDraft(b: Json): Json {
   return {
     title: clean(b.title, MAX_PLAN_TITLE),
     when: clean(b.when, 40),
-    date: clean(b.date, 10),
+    date: shapeDay(b.date),
     note: clean(b.note, 200),
     tags: Array.isArray(b.tags) ?
       b.tags.slice(0, 6).map((t) => clean(t, 16)) :
@@ -418,6 +448,49 @@ const clean = (v: unknown, max: number): string => {
   }
   return out.trim().slice(0, max);
 };
+
+/* ---- YouTube のハンドル(`@あやとグルメアプリ`) ----
+   島に出す名前は、Google アカウントの表示名(`ayato_arigato`)ではなく
+   **YouTube のハンドル**にする。配信で見えているのがそちらなので、
+   Google の表示名で並んでいると、誰のことなのか本人にも分からない。 */
+
+/**
+ * `channels.list` の `customUrl` を、ハンドルの形にそろえる。
+ *
+ * ハンドルが付く前からあるチャンネルは `@` の無い名前が返ることがある。
+ * 名前として出すときに `@` の有無で揺れると、同じ人が2通りに見える。
+ * @param {unknown} v `snippet.customUrl`
+ * @return {string} `@` から始まるハンドル。取れなければ空
+ */
+const handleOf = (v: unknown): string => {
+  const s = clean(v, MAX_HANDLE_LEN).replace(/^[/@]+/, "");
+  return s ? `@${s}`.slice(0, MAX_HANDLE_LEN) : "";
+};
+
+/**
+ * チャンネルIDから、いまのハンドルを引く。
+ *
+ * **ログインし直さずに直せるようにするために要る。** ブラウザから
+ * `channels.list(mine=true)` を呼べるのはログインを押した瞬間だけで、
+ * その場を逃すと古い名前のまま何日も直らない。ハンドルは公開の
+ * `snippet` に入っているので、あやとの合言葉で動くこのクライアントから
+ * 誰のぶんでも引ける。
+ * @param {string} channelId YouTube のチャンネルID
+ * @return {Promise<string>} ハンドル。取れなければ空
+ */
+async function fetchHandle(channelId: string): Promise<string> {
+  try {
+    const r = await youtube.channels.list({
+      part: ["snippet"],
+      id: [channelId],
+    });
+    return handleOf(r.data.items?.[0]?.snippet?.customUrl);
+  } catch (e) {
+    // 取れなくてもログインは通す。名前が古いままなだけなので
+    logger.warn("handle lookup failed", channelId, String(e));
+    return "";
+  }
+}
 
 /**
  * x-forwarded-for から最初のIPだけ取る。
@@ -800,7 +873,10 @@ function planShape(
     id: d.id,
     title: (v.title as string) ?? "",
     when: (v.when as string) ?? "",
-    date: (v.date as string) ?? "",
+    /* 読むときもそろえる。**すでに入っている `2026-9-11` を、
+       書き直してもらうまで待たない。** 桁が揃わないまま返すと、
+       いちばん近い企画も「あと何日」も並び順で狂う。 */
+    date: shapeDay(v.date),
     note: (v.note as string) ?? "",
     tags: arr<string>(v.tags),
     place: {
@@ -1254,16 +1330,35 @@ export const islandApi = onRequest(
           res.status(401).json({error: "bad token"});
           return;
         }
-        const name = clean(body.title ?? t.name ?? "", MAX_NAME_LEN);
         const channelId = clean(body.channelId, 64);
         const now = Date.now();
         const ref = USERS.doc(t.uid);
         const prev = await ref.get();
+        const was = prev.data() ?? {};
         const patch: Json = {
           lastSeenAt: now,
-          firstSeenAt: prev.exists ? prev.data()?.firstSeenAt ?? now : now,
+          firstSeenAt: prev.exists ? was.firstSeenAt ?? now : now,
         };
-        // ログインしたときだけ届く、YouTube から取れた本人の情報
+        /* すでに入っている人のハンドルを、ログインし直さずに補う。
+           ブラウザからハンドルが取れるのはログインを押した瞬間だけなので、
+           それを逃した人はここでしか直らない。**1日に1回まで。**
+           引けなかったときに毎回叩きにいくと、その人が来るたび
+           YouTube の割り当てを削ることになる。 */
+        let handle = clean(body.handle, MAX_HANDLE_LEN);
+        const known = channelId || (was.channelId as string) || "";
+        if (!handle && !was.handle && known && was.handleAt !== today()) {
+          patch.handleAt = today();
+          handle = await fetchHandle(known);
+        }
+        /* 名前は **ハンドル > チャンネル名 > Google の表示名** の順。
+           **送られてこなかったものでは上書きしない。** ここは空の body でも
+           叩かれる口（`loadMe`）なので、無条件に `t.name` へ落とすと、
+           画面を開くたびに Google アカウントの表示名で塗り戻していた。 */
+        const name =
+          handle ||
+          clean(body.title, MAX_NAME_LEN) ||
+          clean(was.name ?? t.name ?? "", MAX_NAME_LEN);
+        if (handle) patch.handle = handle;
         if (name) patch.name = name;
         if (channelId) patch.channelId = channelId;
         if (body.thumbnail !== undefined) {
@@ -1276,7 +1371,7 @@ export const islandApi = onRequest(
         if (body.showName !== undefined) patch.showName = !!body.showName;
         if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
         await ref.set(patch, {merge: true});
-        const saved = {...(prev.data() ?? {}), ...patch};
+        const saved = {...was, ...patch};
         res.json({
           uid: t.uid,
           /* **保存してあるほうを返す。** 空の body で叩いたときは
@@ -1284,6 +1379,8 @@ export const islandApi = onRequest(
              「ログインし直すまで自分のチャンネルが分からない」画面ができる。
              じぶんのこと(`/me` の面)は、ここでキャラクターを突き合わせる。 */
           name: name || (saved.name as string) || "",
+          /** YouTube のハンドル。画面はこれがあれば名前として出す */
+          handle: (saved.handle as string) || undefined,
           channelId: (saved.channelId as string) || undefined,
           photo: (saved.photo as string) || undefined,
           nickname: (saved.nickname as string) ?? null,
