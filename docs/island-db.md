@@ -213,11 +213,11 @@ ORDER BY day DESC
 ```sql
 -- 直近の「入れ直しから切れるまで」
 SELECT
-  MIN(ran_at) AS 生き始め,
-  MAX(IF(outcome = 'ok', ran_at, NULL)) AS 最後に通った,
+  MIN(ran_at) AS alive_from,
+  MAX(IF(outcome = 'ok', ran_at, NULL)) AS last_ok,
   TIMESTAMP_DIFF(
     MAX(IF(outcome = 'ok', ran_at, NULL)), MIN(ran_at), HOUR
-  ) AS 持った時間
+  ) AS lasted_hours
 FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
 WHERE ran_at > (
   SELECT IFNULL(MAX(ran_at), TIMESTAMP('1970-01-01'))
