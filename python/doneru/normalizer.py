@@ -38,6 +38,17 @@ FIELD_CANDIDATES: Dict[str, Tuple[str, ...]] = {
     "amount": ("amount", "price", "value", "donationAmount", "totalAmount", "total"),
     "currency": ("currency", "currencyCode", "currency_code"),
     "message_text": ("message", "comment", "text", "body", "content"),
+    # 実データを見て足したもの（本番の967件で確認）
+    # status: 「振込完了」「振込待ち」。手元の帳簿と突き合わせるとき、
+    #   まだ振り込まれていないぶんを分けられないと数字が合わない。
+    "status": ("status", "state", "paymentStatus"),
+    # settlementAmount: 手数料を引いたあとの、実際に振り込まれる額。
+    #   amount（視聴者が払った額）とは 5% ほど違う。どちらを見たいかは用途で変わる。
+    "settlement_amount": ("settlementAmount", "settlement_amount", "netAmount", "payoutAmount"),
+    # viewerPk: 人の同一性。**名前で数えてはいけない。**
+    #   967件を名前で数えると45人、viewerPk で数えると28人。名前は変わる。
+    #   chat_messages で author_channel_id を見ているのと同じ理由（docs/island-db.md）。
+    "viewer_pk": ("viewerPk", "viewer_pk", "viewerId", "userPk"),
 }
 
 # 「200円」「¥1,000」「1000.00」から数字だけ取り出す
@@ -135,6 +146,9 @@ def normalize(record: Dict[str, Any]) -> Dict[str, Any]:
     amount_raw, _ = _pick(record, FIELD_CANDIDATES["amount"])
     currency, _ = _pick(record, FIELD_CANDIDATES["currency"])
     message_text, _ = _pick(record, FIELD_CANDIDATES["message_text"])
+    status, _ = _pick(record, FIELD_CANDIDATES["status"])
+    settlement_raw, _ = _pick(record, FIELD_CANDIDATES["settlement_amount"])
+    viewer_pk, _ = _pick(record, FIELD_CANDIDATES["viewer_pk"])
 
     return {
         "donation_id": str(donation_id) if donation_id is not None else _fallback_id(record),
@@ -144,6 +158,9 @@ def normalize(record: Dict[str, Any]) -> Dict[str, Any]:
         "amount_text": str(amount_raw) if amount_raw is not None else None,
         "currency": str(currency) if currency is not None else None,
         "message_text": str(message_text) if message_text is not None else None,
+        "status": str(status) if status is not None else None,
+        "settlement_amount": _parse_amount(settlement_raw),
+        "viewer_pk": str(viewer_pk) if viewer_pk is not None else None,
         "raw_json": record,
     }
 

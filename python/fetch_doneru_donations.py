@@ -67,11 +67,23 @@ CREATE TABLE IF NOT EXISTS `{table}` (
   amount_text STRING,
   currency STRING,
   message_text STRING,
+  status STRING,
+  settlement_amount NUMERIC,
+  viewer_pk STRING,
   source_year INT64,
   ingest_run_id STRING,
   ingested_at TIMESTAMP,
   raw_json JSON
 )
+"""
+
+# 既にあるテーブルには CREATE TABLE IF NOT EXISTS が効かない。
+# あとから列を足したときのために、ALTER も毎回投げる（どちらもべき等）。
+ADD_COLUMNS = """
+ALTER TABLE `{table}`
+  ADD COLUMN IF NOT EXISTS status STRING,
+  ADD COLUMN IF NOT EXISTS settlement_amount NUMERIC,
+  ADD COLUMN IF NOT EXISTS viewer_pk STRING
 """
 
 # donation_id で突き合わせる。同じ年を毎日流し直しても増えない。
@@ -87,6 +99,9 @@ WHEN MATCHED THEN
     amount_text = S.amount_text,
     currency = S.currency,
     message_text = S.message_text,
+    status = S.status,
+    settlement_amount = SAFE_CAST(S.settlement_amount AS NUMERIC),
+    viewer_pk = S.viewer_pk,
     source_year = S.source_year,
     ingest_run_id = S.ingest_run_id,
     ingested_at = SAFE_CAST(S.ingested_at AS TIMESTAMP),
@@ -94,7 +109,8 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
   INSERT (
     donation_id, donated_at, donor_name, amount, amount_text,
-    currency, message_text, source_year, ingest_run_id, ingested_at, raw_json
+    currency, message_text, status, settlement_amount, viewer_pk,
+    source_year, ingest_run_id, ingested_at, raw_json
   )
   VALUES (
     S.donation_id,
@@ -104,6 +120,9 @@ WHEN NOT MATCHED THEN
     S.amount_text,
     S.currency,
     S.message_text,
+    S.status,
+    SAFE_CAST(S.settlement_amount AS NUMERIC),
+    S.viewer_pk,
     S.source_year,
     S.ingest_run_id,
     SAFE_CAST(S.ingested_at AS TIMESTAMP),
@@ -126,9 +145,18 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     ingested_at = datetime.now(timezone.utc).isoformat()
 
     client.query(DDL.format(table=table)).result()
+    client.query(ADD_COLUMNS.format(table=table)).result()
+
+    # MERGE は「1つの行に当たる元行は1つまで」を要求する。同じ donation_id が
+    # 2つ入っていると Scalar subquery produced more than one element で落ちる
+    # （Doneru がページ送りを無視して同じページを返したときに実際に踏んだ）。
+    # 取得側でも弾いているが、BigQuery に渡す直前でも保証しておく。
+    deduped = {row["donation_id"]: row for row in rows}
+    if len(deduped) != len(rows):
+        print(f"WARNING: 同じ donation_id が {len(rows) - len(deduped)} 件重複していました", file=sys.stderr)
 
     struct_params = []
-    for row in rows:
+    for row in deduped.values():
         donated_at = row["donated_at"]
         struct_params.append(
             StructQueryParameter(
@@ -146,6 +174,13 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
                 ScalarQueryParameter("amount_text", "STRING", row["amount_text"]),
                 ScalarQueryParameter("currency", "STRING", row["currency"]),
                 ScalarQueryParameter("message_text", "STRING", row["message_text"]),
+                ScalarQueryParameter("status", "STRING", row["status"]),
+                ScalarQueryParameter(
+                    "settlement_amount",
+                    "STRING",
+                    None if row["settlement_amount"] is None else repr(row["settlement_amount"]),
+                ),
+                ScalarQueryParameter("viewer_pk", "STRING", row["viewer_pk"]),
                 ScalarQueryParameter("source_year", "INT64", year),
                 ScalarQueryParameter("ingest_run_id", "STRING", run_id),
                 ScalarQueryParameter("ingested_at", "STRING", ingested_at),
@@ -160,7 +195,7 @@ def merge_rows(rows: List[Dict[str, Any]], year: int) -> int:
     )
     client.query(MERGE.format(table=table), job_config=job_config).result()
 
-    return len(rows)
+    return len(deduped)
 
 
 def resolve_years(year: Optional[int], since: Optional[int], now: datetime) -> List[int]:
