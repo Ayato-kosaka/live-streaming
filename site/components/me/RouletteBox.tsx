@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   getRoulette,
+  putDoneruKey,
   putRouletteItems,
   putRouletteSettings,
   readRouletteChat,
@@ -10,9 +11,11 @@ import {
   spinRoulette,
   startRoulette,
   type ChatLine,
+  type DoneruHint,
   type RouletteItem,
   type RouletteSession,
 } from "@/lib/api";
+import { readLiveChatDirect } from "@/lib/youtubeChat";
 import { useAuth } from "@/lib/auth";
 import { MAX_ITEMS, RESULT_SAY, RL_UI, WAIT_SECONDS } from "@/content/roulette";
 import { THEMES, THEME_NAME, type WheelTheme } from "@/components/roulette/wheel";
@@ -22,6 +25,35 @@ import SignIn from "@/components/live/SignIn";
 
 /** 手元に残しておくコメントの数。これより古いものは落とす。 */
 const KEEP = 200;
+
+/**
+ * コメントの読み方を、この端末だけで覚えておく。
+ *
+ * **鍵ではない。** どちらの読み方を使うかという、その端末の好みだけ。
+ * 鍵はサーバー（`islandUsers/{uid}.doneruKey`）にあって、ここには来ない。
+ */
+const WAY_KEY = "ayato-roulette-way";
+
+/**
+ * コメントの読み方。
+ *
+ * - `direct` … ブラウザから YouTube を直に読む。**割り当てを食わない**
+ *   （Doneru が出したトークンなので、減るのは向こうの枠）
+ * - `api` … Functions ごしに読む。**元からある読み方。**
+ *   こちらのプロジェクトの1日10,000単位を、1回5単位で削っていく
+ *
+ * `direct` が本番で動くのを見るまで `api` は消さない。切り替えは下の畳みから。
+ */
+type Way = "direct" | "api";
+
+function rememberedWay(): Way | null {
+  try {
+    const v = localStorage.getItem(WAY_KEY);
+    return v === "direct" || v === "api" ? v : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * ルーレットのコントローラー（#164）。**あやとだけ。**
@@ -54,6 +86,12 @@ export default function RouletteBox() {
   const [busy, setBusy] = useState(false);
   /** 秒ごとに動かして、待ち時間の表示を進める */
   const [, beat] = useState(0);
+  /** Doneru の鍵が入っているか。**鍵そのものはここに来ない** */
+  const [doneru, setDoneru] = useState<DoneruHint | null>(null);
+  /** あやとが畳みの中で選んだ読み方。選んでいなければ null */
+  const [chosen, setChosen] = useState<Way | null>(null);
+  /** 直に読もうとして駄目だったので、Functions ごしに落ちている */
+  const [fellBack, setFellBack] = useState(false);
 
   const sid = ses?.id ?? null;
   const items = ses?.items ?? [];
@@ -71,6 +109,7 @@ export default function RouletteBox() {
         const r = await startRoulette(t, clear);
         setSes(r.session);
         setLive(r.live);
+        setDoneru(r.doneru ?? { set: false, tail: "" });
         if (clear) setLines([]);
       } catch (e) {
         if (String(e).includes("403")) setDenied(true);
@@ -86,9 +125,40 @@ export default function RouletteBox() {
     if (user) open(false);
   }, [user, open]);
 
-  /* ---- コメントを流す。**コントローラーを開いてからのぶんだけ** ---- */
   useEffect(() => {
-    if (!sid) return;
+    setChosen(rememberedWay());
+  }, []);
+
+  /* どちらの読み方で読むか。
+     選んでいなければ、鍵が入っているときだけ直に読む。**鍵が無いのに
+     直に読もうとすると、開くたびに空振りが1回増える。** */
+  const way: Way = chosen ?? (doneru?.set ? "direct" : "api");
+  const reading: Way = way === "direct" && fellBack ? "api" : way;
+
+  /** 新しく来たコメントを、上に積む。どちらの読み方でもここを通す。 */
+  const push = useCallback((got: ChatLine[]) => {
+    if (!got.length) return;
+    setLines((p) => [...got].reverse().concat(p).slice(0, KEEP));
+  }, []);
+
+  /* ---- コメントを流す（直に読む）。**YouTube の割り当てを食わない** ---- */
+  useEffect(() => {
+    if (!sid || reading !== "direct") return;
+    const r = readLiveChatDirect({
+      token,
+      onLines: push,
+      onLive: setLive,
+      /* 鍵がまだ無い・ログインが切れた。**コントローラーを止めない。**
+         今までどおり Functions ごしの読み方に落ちる。 */
+      onGiveUp: () => setFellBack(true),
+    });
+    return () => r.stop();
+  }, [sid, reading, token, push]);
+
+  /* ---- コメントを流す（Functions ごし）。**元からある読み方** ----
+     直に読むほうが本番で動くのを見るまで残す。切り替えは下の畳みから。 */
+  useEffect(() => {
+    if (!sid || reading !== "api") return;
     let gone = false;
     let t: ReturnType<typeof setTimeout>;
     const tick = async () => {
@@ -100,9 +170,7 @@ export default function RouletteBox() {
           if (gone) return;
           setLive(r.live);
           wait = r.wait;
-          if (r.lines.length) {
-            setLines((p) => [...r.lines].reverse().concat(p).slice(0, KEEP));
-          }
+          push(r.lines);
         } catch {
           /* 配信が終わっただけかもしれない。次の周期でまた聞く */
           wait = 15000;
@@ -116,7 +184,7 @@ export default function RouletteBox() {
       gone = true;
       clearTimeout(t);
     };
-  }, [sid, token]);
+  }, [sid, reading, token, push]);
 
   /* ---- 回っているあいだは、状態を読み直す ---- */
   const turning =
@@ -203,6 +271,32 @@ export default function RouletteBox() {
     } catch {
       setErr("直せませんでした。もう一度おしてください。");
     }
+  };
+
+  /* ---- Doneru の鍵。**入れるのは1回だけ。以後この画面には出てこない** ---- */
+  const [keyed, setKeyed] = useState("");
+  const saveKey = async (raw: string) => {
+    const t = await token();
+    if (!t) return;
+    try {
+      const r = await putDoneruKey(raw.trim(), t);
+      setDoneru(r.doneru);
+      setKeyed("");
+      /* 入れ直したのだから、落ちていたぶんはやり直す */
+      setFellBack(false);
+    } catch {
+      setErr("鍵をしまえませんでした。もう一度おしてください。");
+    }
+  };
+
+  const chooseWay = (w: Way) => {
+    try {
+      localStorage.setItem(WAY_KEY, w);
+    } catch {
+      /* 覚えられない端末では、開くたびに選び直しになる */
+    }
+    setChosen(w);
+    setFellBack(false);
   };
 
   /* ---- 回す ---- */
@@ -459,6 +553,75 @@ export default function RouletteBox() {
           この URL を知っている人は、ルーレットを見られます。配信の画面に
           そのまま映すもの以外には貼らない。「はじめから」で、選んだものを空にする。
         </p>
+      </Fold>
+
+      {/* コメントの読み方。**決めたら滅多に触らないので畳む。** */}
+      <Fold
+        title="コメントの読み方"
+        lead={
+          reading === "direct" ?
+            "YouTube から直に読む" :
+            "Functions ごしに読む"
+        }
+      >
+        <p className="rc-note">
+          直に読むと、YouTube の1日の割り当てを食いません。読むのに使う
+          トークンは Doneru が出したもので、減るのは Doneru 側のぶんです。
+          Functions ごしだと、こちらの枠（1日10,000単位）をコメント1回あたり
+          5単位ずつ削ります。
+        </p>
+        <div className="rc-waits">
+          <button
+            className={`rc-wait${reading === "direct" ? " is-on" : ""}`}
+            onClick={() => chooseWay("direct")}
+            aria-pressed={reading === "direct"}
+            disabled={!doneru?.set}
+          >
+            直に読む
+          </button>
+          <button
+            className={`rc-wait${reading === "api" ? " is-on" : ""}`}
+            onClick={() => chooseWay("api")}
+            aria-pressed={reading === "api"}
+          >
+            Functions ごし
+          </button>
+        </div>
+        {fellBack && (
+          <p className="rc-note">
+            直に読めなかったので、Functions ごしに切り替わっています。
+            鍵を入れ直すか、配信が始まってからもう一度おしてください。
+          </p>
+        )}
+
+        <p className="rc-lab">Doneru の鍵</p>
+        <p className="rc-note">
+          {doneru?.set ?
+            `入っています（末尾 ${doneru.tail}）。入れ直すときだけ、下に打ってください。` :
+            "アラートボックスの OBS の URL の、?key= のあとの文字列です。"}
+          {" "}
+          鍵はサーバーに置いたままで、この画面にも書き出したものにも入りません。
+        </p>
+        <div className="dform rc-add">
+          <input
+            type="password"
+            value={keyed}
+            onChange={(e) => setKeyed(e.target.value)}
+            placeholder="Doneru の鍵"
+            autoComplete="off"
+            maxLength={200}
+            aria-label="Doneru の鍵"
+          />
+          <button onClick={() => saveKey(keyed)} disabled={!keyed.trim()}>
+            <Icon name="check" size={16} />
+            しまう
+          </button>
+        </div>
+        {doneru?.set && (
+          <button className="rc-quiet" onClick={() => saveKey("")}>
+            鍵を消す
+          </button>
+        )}
       </Fold>
 
       <Fold title="回りかたと色" lead={`${ses.duration}秒・${ses.turns}周`}>
