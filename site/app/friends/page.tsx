@@ -7,7 +7,7 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
-import { PLAN_BY_DAY } from "@/content/plans";
+import { PLAN_BY_DAY } from "@/content/planDays";
 import { FriendsMark } from "@/components/live/art";
 
 export const metadata: Metadata = {

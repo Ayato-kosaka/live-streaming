@@ -1539,6 +1539,74 @@ svg.nmap {
   accent-color: var(--frame-dark);
 }
 
+/* --- どの企画に付くか（#202） ---------------------------------------
+   日付の真下。**押したあとではなく、押す前に行き先が読める**位置に置く。 */
+.nph-ev { display: grid; gap: var(--sp-2); }
+/* 企画が無い日・読めなかったとき。どちらも押せないので平ら。 */
+.nph-ev-note {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+/* 1本の日。**選ばせない。**「ここに付く」を言うだけなので、押しどころにしない。 */
+.nph-ev-one {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--marker) 14%, transparent);
+}
+.nph-ev-one > span { display: grid; gap: 2px; min-width: 0; }
+.nph-ev-one i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.nph-ev-one b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: var(--lh-head);
+  color: var(--ink);
+}
+.nph-ev-ask {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+/* 2本以上の日。縦に積む。**題は長い**（「北欧旅 出発 — トビリシから
+   クタイシ、夜の便でポーランドへ」）ので、横に並べると1本も読めない。 */
+.nph-ev-list { display: grid; gap: var(--sp-2); }
+.nph-ev-pick {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: var(--lh-head);
+  text-align: left;
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.nph-ev-pick:active { transform: translateY(6px); box-shadow: none; }
+/* 選んだものは沈めて朱の細枠（`.mp-tab.is-on` と同じ決め）。光らせない。 */
+.nph-ev-pick.is-on {
+  border-color: var(--pick);
+  transform: translateY(3px);
+  box-shadow: var(--pop-push);
+}
+
 /* =========================================================
    写真を1枚ひらいたところ
    ---------------------------------------------------------

@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
 import CardWall from "@/components/cards/CardWall";
-import { PLAN_BY_DAY } from "@/content/plans";
+import { PLAN_BY_DAY } from "@/content/planDays";
 
 export const metadata: Metadata = {
   title: "あやと島カード",
