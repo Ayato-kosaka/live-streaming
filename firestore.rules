@@ -85,8 +85,39 @@ service cloud.firestore {
     /* 企画(#161)。一言の提案とページ1枚の下書きを1つにした入れ物。
        **ここには端末ID(cid)が入っている。** それは「あとから自分の企画を
        直す鍵」なので、読めるようにすると誰でも他人の企画を直せる。
-       画面が要るのは表に出す欄だけなので、islandApi に絞らせる。 */
+       画面が要るのは表に出す欄だけなので、islandApi に絞らせる。
+       #202 で `islandStreamEvent` へ改名した。旧のほうも当分残す
+       （移し終わるまで、両方に書類がある）。 */
     match /islandNextPlans/{docId} { allow read, write: if false; }
+    match /islandStreamEvent/{docId} { allow read, write: if false; }
+
+    /* 企画に付く画像(#202)。旧 nordicPhotos。
+       貼れるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
+       ここを開けると、企画ごとの写真の一覧がまとめて引ける。
+       画面が要るのは出す企画のぶんだけなので、Function に絞らせる。 */
+    match /islandStreamEventImage/{docId} { allow read, write: if false; }
+
+    /* 投げ銭の台帳(#202)。**ここは絶対に開けない。**
+       誰がいくら出したかが1件ずつ入っている。**本人以外に見えてはいけない。**
+       ドキュメントIDはハッシュなので当てられないが、collection ごと引ければ
+       関係ない。読むのは Functions（Admin SDK はルールを迂回する）と
+       日次ジョブだけ。
+
+       島の画面に金額を出す口はどこにも無い。**金額で並べない・出さない**
+       という決めは #202 でも生きている（`docs/nordic-fund.md`）。 */
+    match /islandTips/{docId} { allow read, write: if false; }
+
+    /* チャンネルIDと名前・プロフィール写真の辞書(#190・#202)。
+       名前も写真も YouTube で公開されているものだが、**ここには
+       配信に来た2,200人ぶんが並んでいる。** 「誰が来ているか」の
+       名簿になるので、collection ごとは引かせない。 */
+    match /islandChannels/{docId} { allow read, write: if false; }
+
+    /* どねID と YouTube のアカウントの対応表(#190)。
+       **どねID は Doneru の中の人の識別子。** 誰が Doneru で投げ銭して
+       いるかがそのまま並ぶので、開けない。読み書きは islandApi 経由で
+       あやとだけ。 */
+    match /islandDonors/{docId} { allow read, write: if false; }
 
     /* 配信のルーレット(#164)。コントローラーと OBS を繋ぐ入れ物。
        **ここを開けない。** 表示側(OBS)はログインできないので読ませる道が
@@ -105,12 +136,13 @@ service cloud.firestore {
        書くほうは、押せるのがあやとだけという仕掛けそのものなので開けない。 */
     match /islandRemote/{docId} { allow read, write: if false; }
 
-    /* あやと島カード(#173)。**カードそのものはここに無い。**
-       カードは写真(nordicPhotos)とその日の名簿(nordicDays)から、
-       読むときに組み立てる(`functions/src/cards.ts` 冒頭)。ここに入るのは
-       **本人が置き方を動かしたときの上書きだけ。**
-       それでも開けない。ドキュメントIDが `<写真のID>__<チャンネルID>` なので、
-       collection ごと読めると「誰がどの日にいたか」が名簿を見ずに引ける。
+    /* あやと島カード(#173)。#202 で**配ってある**形になった。
+       前は写真と名簿から読むたびに組み立てていて、ここに入るのは
+       「本人が動かしたぶんの上書き」だけだった。いまは1枚1書類ある。
+
+       それでも開けない。ドキュメントIDが `<画像のID>__<チャンネルID>` で、
+       中にも `channelId` が入っているので、**collection ごと読めると
+       「誰がどの日に投げ銭したか」が台帳を見ずに引ける。**
        islandApi の `GET /cards` は、名前を出してよいと言った人だけを通す。 */
     match /islandCards/{docId} { allow read, write: if false; }
 
