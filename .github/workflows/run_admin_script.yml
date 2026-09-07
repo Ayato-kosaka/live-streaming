@@ -84,6 +84,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
 
+      # YouTube の口は Doneru が出したトークンで叩く（枠を食わないため）。
+      # そのトークンを取るのに鍵が要る。**discover_videos と同じ抽出**。
+      #
+      # ここに無くて落ちた。写真の取り込みを island_stats に足したとき、
+      # 鍵は discover_videos の job にしか無いことを見落としていた。
+      # job をまたいで環境変数は渡らない。
+      - name: Doneru key を抽出
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}'
+          key="$(printf '%s' "$url" | sed -n 's/.*[?&]key=\([^&]*\).*/\1/p')"
+          if [ -z "$key" ]; then
+            echo "ERROR: EXPO_PUBLIC_DONERU_WSS_URL から key=... を抽出できませんでした" >&2
+            exit 1
+          fi
+          # ログに平文で出力されないようマスクする
+          echo "::add-mask::$key"
+          echo "DONERU_ALERTBOX_KEY=$key" >> "$GITHUB_ENV"
+
       - name: 実行
         working-directory: python/admin
         env:
