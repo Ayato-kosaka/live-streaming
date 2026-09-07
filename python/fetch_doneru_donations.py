@@ -365,10 +365,14 @@ def main() -> int:
             print(json.dumps(describe_mapping(records), ensure_ascii=False, indent=2))
             return 0
 
+        # **取ってから消す。** 消してから取ると、取得に失敗したときテーブルが
+        # 無いまま残る（本番で2回そうなった）。順番を逆にするだけで、
+        # 失敗しても直前のデータがそのまま残る。
+        records = client.fetch_donations(start, end)
         if args.recreate and not args.dry_run:
             drop_table()
 
-        total = ingest(client, start, end, dry_run=args.dry_run)
+        total = ingest(client, start, end, dry_run=args.dry_run, records=records)
         outcome = "ok"
     except DoneruSessionExpired as exc:
         outcome, detail = "session_expired", str(exc)
@@ -421,9 +425,21 @@ def drop_table() -> None:
     print(f"{table} を DROP しました（作り直します）")
 
 
-def ingest(client: DoneruClient, start: date, end: date, dry_run: bool = False) -> int:
-    """期間ぶんを取って MERGE する。返すのは件数。"""
-    records = client.fetch_donations(start, end)
+def ingest(
+    client: DoneruClient,
+    start: date,
+    end: date,
+    dry_run: bool = False,
+    records: Optional[List[Dict[str, Any]]] = None,
+) -> int:
+    """期間ぶんを MERGE する。返すのは件数。
+
+    `records` を渡さなければここで取りに行く。渡すのは、`--recreate` のときに
+    「取ってから消す」順にしたいため（消してから取ると、取得に失敗したときに
+    テーブルが無いまま残る）。
+    """
+    if records is None:
+        records = client.fetch_donations(start, end)
     print(f"{start} 〜 {end} の寄付を {len(records)} 件取得しました")
 
     if not records:

@@ -107,7 +107,28 @@ def main() -> None:
         GROUP BY n ORDER BY n
     """)
 
-    # 6. 取りに行った期間の外にはみ出していないか
+    # 6. **2026 が JSON のときより多いのは、本当に増えたからか。**
+    # JSON で数えたのは 2026-09-06 00:17 UTC。それより前に出された寄付だけを
+    # 数えれば、同じ土俵で比べられる。ここが 398 なら増えたぶんは本物。
+    run(client, "JSON で数えた時点（2026-09-06 00:17 UTC）までの 2026 年", """
+        SELECT
+          COUNT(*)    AS rows_before_cutoff,
+          SUM(amount) AS paid_before_cutoff
+        FROM `{table}`
+        WHERE donated_at < TIMESTAMP('2026-09-06 00:17:00+00')
+          AND EXTRACT(YEAR FROM DATETIME(donated_at, 'Asia/Tokyo')) = 2026
+    """)
+    run(client, "その時点より後に出された寄付（増えたぶん）", """
+        SELECT
+          COUNT(*)                            AS rows_after_cutoff,
+          SUM(amount)                         AS paid_after_cutoff,
+          MIN(DATE(donated_at, 'Asia/Tokyo')) AS first_day,
+          MAX(DATE(donated_at, 'Asia/Tokyo')) AS last_day
+        FROM `{table}`
+        WHERE donated_at >= TIMESTAMP('2026-09-06 00:17:00+00')
+    """)
+
+    # 7. 取りに行った期間の外にはみ出していないか
     run(client, "取りに行った期間ごとの件数", """
         SELECT fetched_start, fetched_end, COUNT(*) AS rows_now
         FROM `{table}` GROUP BY fetched_start, fetched_end

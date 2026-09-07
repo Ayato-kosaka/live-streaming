@@ -20,6 +20,7 @@
 import csv
 import io
 import os
+import re
 from datetime import date
 from typing import Any, Dict, List, Optional
 
@@ -188,6 +189,26 @@ class DoneruClient:
         return _parse_csv(raw)
 
 
+# 自由文が入る列。ここだけがカンマも改行も持ちうるので、はみ出したぶんは
+# ここに畳み戻す。名前が変わったときの受け皿も並べておく。
+MESSAGE_HEADERS = ("メッセージ", "message", "comment", "コメント", "本文", "text", "body")
+
+# 日時が入る列。「その行が新しいレコードの始まりか」を見分けるのに使う。
+DATE_HEADERS = ("どね時刻", "createdat", "created_at", "日時", "日付", "date", "datetime")
+
+# 2026-03-01 でも 2026/3/1 でも当たる。年月日が並んでいるかだけを見る
+_LOOKS_LIKE_DATE = re.compile(r"^\s*\d{4}[-/年]\s*\d{1,2}[-/月]\s*\d{1,2}")
+
+
+def _column_index(header: List[str], names: tuple) -> Optional[int]:
+    """ヘッダーの中でその列が何番目かを返す。"""
+    lowered = [h.strip().lower() for h in header]
+    for name in names:
+        if name.lower() in lowered:
+            return lowered.index(name.lower())
+    return None
+
+
 def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     """CSV の本文を辞書の配列にする。
 
@@ -195,13 +216,28 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     UTF-8 BOM や Shift_JIS(cp932) で出てくることがある。UTF-8 で読めなければ
     cp932 に落とす。BOM は `utf-8-sig` が食べる。
 
-    **割れた行を繋ぎ直す。** Doneru は改行を含むメッセージに引用符を付けずに
-    吐くことがある。素直に読むと1件の寄付が2行に割れて、後半（メッセージの
-    続き＋残りの列）が**別の寄付として入る**。本番で8件それが入っていた
-    （日付も金額も無い行が4件、メッセージの断片が精算状態の列に入った行が1件）。
+    ## 壊れた行を組み直す
 
-    列が足りない行は「途中で切れた行」なので、次の行の頭とつなぐ。
-    csv の作法どおりなら起きないが、向こうの都合には合わせるしかない。
+    **Doneru はメッセージをエスケープせずに吐く。** カンマも改行も引用符も
+    そのまま出てくるので、素直に読むと行が壊れる。本番で両方踏んだ。
+
+    - **改行** → 1件が2行以上に割れる。素直に読むと後半が別の寄付として入る
+      （日付も金額も無い行が4件、精算状態の列にメッセージの断片が1件）
+    - **カンマ** → 列が増える。ヘッダー8列に対して14列の行があった
+
+    ## 1件の切れ目は「長さ」ではなく「次が始まったか」で決める
+
+    **長さで完全かどうかを決めてはいけない。** カンマと改行の両方が入っていて
+    1行目だけで既に8列を超えていると、「はみ出した完全な行」と誤認して確定させ、
+    続きを別の寄付にしてしまう（本番で1件それが残った）。
+
+    なので**日時の列が日付の形をしている行を1件の始まり**とみなし、
+    次の始まりが来るまでを1件として集める。集めてからつないで、
+    はみ出したぶんはメッセージに畳み、足りないぶんは空で埋める。
+
+    畳み戻しは**メッセージ以外の列にカンマが入っていないこと**を前提にしている。
+    ニックネームにカンマが入っていたら間違えるが、引用符が無い以上そこは
+    区別しようがない。
     """
     text: Optional[str] = None
     for encoding in ("utf-8-sig", "cp932"):
@@ -213,6 +249,10 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if text is None:
         raise DoneruError("CSV の文字コードを判別できませんでした（UTF-8 でも cp932 でもない）")
 
+    # **引用符は解釈する。** 一度 QUOTE_NONE にして本番で試したら、ヘッダーごと
+    # 引用符が付いたまま読まれて（`"どねID"`）メッセージの列が見つからなくなり、
+    # 1行が 6802 列に割れた。Doneru は引用符を使っている。
+    # 使い方が壊れている（メッセージの中の `"` をエスケープしていない）だけ。
     reader = csv.reader(io.StringIO(text, newline=""))
     try:
         header = next(reader)
@@ -223,34 +263,70 @@ def _parse_csv(raw: bytes) -> List[Dict[str, str]]:
     if width < 2:
         raise DoneruError(f"CSV のヘッダーが {width} 列しかありません")
 
-    rows: List[List[str]] = []
-    repaired = 0
-    pending: Optional[List[str]] = None
+    msg_at = _column_index(header, MESSAGE_HEADERS)
+    date_at = _column_index(header, DATE_HEADERS)
 
-    for row in reader:
-        if not row:
+    def starts_record(row: List[str]) -> bool:
+        """その行が新しい寄付の始まりか。
+
+        **ここを間違えると本物の寄付が消える。** 「列が足りない行は割れた行」と
+        決めつけると、末尾の列がただ空なだけの行を次の行とつないでしまい、
+        2件が1件になる（実際に 2025 年で2件消した）。
+        日時の列が日付の形をしているかで見分ける。
+        """
+        if date_at is None or len(row) <= date_at:
+            return False
+        return bool(_LOOKS_LIKE_DATE.match(row[date_at]))
+
+    def finish(lines: List[List[str]]) -> List[str]:
+        """1件ぶんに集めた物理行をつないで、ヘッダーの幅にそろえる。"""
+        row = lines[0]
+        for cont in lines[1:]:
+            # 改行はメッセージの中にあったもの。最後のセルに戻す
+            row = row[:-1] + [row[-1] + "\n" + cont[0]] + cont[1:]
+
+        if len(row) > width:
+            # カンマもメッセージの中にあったもの。両端から数えて真ん中を畳む
+            if msg_at is None:
+                raise DoneruError(
+                    f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）。"
+                    "メッセージの列が見つからないので畳み戻せません"
+                )
+            tail = width - msg_at - 1
+            end_at = len(row) - tail
+            row = row[:msg_at] + [",".join(row[msg_at:end_at])] + (row[end_at:] if tail else [])
+        elif len(row) < width:
+            # 末尾の列が空なだけ。Doneru は空欄を省いて出すことがある
+            row = row + [""] * (width - len(row))
+
+        return row
+
+    rows: List[List[str]] = []
+    buffer: List[List[str]] = []
+    multi_line = 0   # 1件が複数の物理行に割れていた回数
+
+    for line in reader:
+        if not line:
             continue  # 末尾の空行
 
-        if pending is not None:
-            # 切れた行の続き。最後のセルに改行ごと足して1つのセルに戻す
-            row = pending[:-1] + [pending[-1] + "\n" + row[0]] + row[1:]
-            pending = None
-            repaired += 1
+        if buffer and starts_record(line):
+            # 次の寄付が始まった。ここまでが1件
+            if len(buffer) > 1:
+                multi_line += 1
+            rows.append(finish(buffer))
+            buffer = [line]
+        else:
+            buffer.append(line)
 
-        if len(row) < width:
-            pending = row      # まだ足りない。次の行も続き
-            continue
-        if len(row) > width:
-            raise DoneruError(
-                f"CSV に列が多すぎる行があります（ヘッダー {width} 列に対して {len(row)} 列）"
-            )
-        rows.append(row)
+    if buffer:
+        if len(buffer) > 1:
+            multi_line += 1
+        rows.append(finish(buffer))
 
-    if pending is not None:
-        raise DoneruError("CSV の最後の行が途中で切れています")
-
-    if repaired:
-        # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
-        print(f"CSV の割れた行を {repaired} 件つなぎ直しました")
+    # 黙って直さない。向こうの出し方が変わったときに気づけるようにする
+    wrong_width = sum(1 for r in rows if len(r) != width)
+    assert wrong_width == 0, "finish がヘッダーの幅にそろえていない"
+    if multi_line:
+        print(f"CSV の割れた行を組み直しました（1件が複数行に割れていたもの {multi_line} 件）")
 
     return [dict(zip(header, row)) for row in rows]
