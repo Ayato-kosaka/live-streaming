@@ -8,7 +8,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import { LiveNumber } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { ACTIVE_FRIENDS } from "@/content/residents";
-import { PLAN_BY_DAY } from "@/content/plans";
+import { PLAN_BY_DAY } from "@/content/planDays";
 import CardStrip from "@/components/cards/CardStrip";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/countries";
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";

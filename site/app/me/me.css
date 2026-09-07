@@ -56,13 +56,20 @@
 .mp-small { font-size: var(--fs-note); }
 
 /* --- 旅の道具 ---------------------------------------------------------
-   3つを縦に積まない。札を1列出して、押した1つだけを開く。
-   積むと下の2つが畳みの向こうへ行く（390×844 で見えるのは上の1つだけ）。 */
+   4つを縦に積まない。札を出して、押した1つだけを開く。
+   積むと下の3つが畳みの向こうへ行く（390×844 で見えるのは上の1つだけ）。
+
+   **375px では2×2に折る。** 4つを1列に並べると1枚 76px しかなく、
+   「その日のこと」「その日の配信」が2行に割れて札の高さが揃わない。
+   折っても4枚とも見えているので、1タップで出るのは変わらない。 */
 .mp-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-2);
   margin-top: var(--sp-3);
+}
+@media (min-width: 560px) {
+  .mp-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .mp-tab {
   display: inline-flex;
@@ -403,7 +410,8 @@
 
 /* 押した結果。**その場で、何に繋がったかまで出す。**
    出しっぱなしにして消さない（`docs/island-design.md` 3-6）。 */
-.mp-donor-said {
+.mp-donor-said,
+.mp-vid-said {
   margin: var(--sp-2) 0 0;
   padding: var(--sp-2) var(--sp-3);
   border-left: 4px solid var(--accent);
@@ -422,3 +430,86 @@
   padding-top: var(--sp-4);
   border-top: 2px solid var(--rule);
 }
+
+/* --- その日の配信を、企画に結ぶ（あやとだけ・#202） -------------------
+   0時をまたいで割れた後半を足す面。**旅のあいだ毎晩開く**ので、
+   欄と押しどころの寸法は旅の道具のまま（48px と 56px）。 */
+.mp-vid-lead {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+/* いま何本入っているか。**押しどころではないので平ら。** */
+.mp-vid-h {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 2px solid var(--rule);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+}
+.mp-vid-h i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mp-vid-list { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.mp-vid-list > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  /* 「外す」は 48px + 厚み 6px ある。**縦の余白を 8px 取らないと、
+     厚みが行の枠からはみ出す**（撮って気づいた）。 */
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--marker) 14%, transparent);
+}
+/* 動画IDは打ち直す相手なので、字を等幅にして1文字ずつ読めるようにする。 */
+.mp-vid-list code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.mp-vid-off {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.mp-vid-off:active { transform: translateY(5px); box-shadow: none; }
+/* 貼った字から読み取れた id を、足す前に出す1行。押せないので平ら。 */
+.mp-vid-add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+.mp-vid-found {
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.mp-vid-add .mp-send { margin-top: 0; flex: none; }

@@ -13,6 +13,7 @@ import { useDraft, useOnline } from "@/lib/draft";
 import { DAYS } from "@/content/nordic";
 import { LOG_SEEDS, loadNordicLog, putNordicLog } from "@/components/nordic/log";
 import PhotoPost from "@/components/nordic/PhotoPost";
+import PlanVideos from "./PlanVideos";
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
    1バイトも減らない。旅の道具はあやとの画面にしか降りてこない。 */
@@ -21,15 +22,19 @@ import Icon from "@/components/ui/Icon";
 /**
  * 旅の道具。**あやとが、ヒッチハイクの途中に片手で開くところ（#163）。**
  *
- * その日の写真・その日に起きたこと・いまどこ。この3つはもともと
- * 島の別々の面にあって（`/nordic/photos`・`/nordic/day/3`・
+ * その日の写真・その日に起きたこと・いまどこ・その日の配信。この4つは
+ * もともと島の別々の面にあって（`/nordic/photos`・`/nordic/day/3`・
  * `python/admin/firestore_write.py`）、旅に出たら回らない置き方だった。
  * 1か所に集めて、じぶんのことの**いちばん上**に置く。
  *
+ * **4つ目（配信）は #202 で増えた。** 0時をまたいで配信が2本に割れた夜に、
+ * 後半の動画IDを企画に足す用事で、**旅のあいだ毎晩起きうる。**
+ * 「その日のうちに、ここから入れる」ものなので、この並びに入れる。
+ *
  * ## 片手で使える形にする
  *
- * - **3つを縦に積まない。** 積むと下の2つが畳みの向こうへ行く。
- *   札を1列だけ出して、押した1つだけを開く。どれも1タップで出る
+ * - **4つを縦に積まない。** 積むと下の3つが畳みの向こうへ行く。
+ *   札を出して、押した1つだけを開く。どれも1タップで出る
  * - 押しどころは**画面の幅いっぱい・52px**。走っている車の中でも押せる
  * - いちばん使うものを最初に開いておく（写真）
  *
@@ -44,7 +49,7 @@ import Icon from "@/components/ui/Icon";
  * - 届いていないことは、押す前に言う（`useOnline`）
  */
 export default function TripTools() {
-  const [tab, setTab] = useState<"photo" | "log" | "place">("photo");
+  const [tab, setTab] = useState<"photo" | "log" | "place" | "video">("photo");
   return (
     <section className="panel paper mp-trip">
       <h2>旅の道具</h2>
@@ -57,6 +62,7 @@ export default function TripTools() {
             ["photo", "写真", "photo"],
             ["log", "その日のこと", "log"],
             ["place", "いまどこ", "pin"],
+            ["video", "その日の配信", "live"],
           ] as const
         ).map(([id, label, icon]) => (
           <button
@@ -76,6 +82,7 @@ export default function TripTools() {
       {tab === "photo" && <PhotoPost />}
       {tab === "log" && <TripLog />}
       {tab === "place" && <TripPlace />}
+      {tab === "video" && <PlanVideos />}
 
       {/* ルーレット（#164）は建った。**3つの札の並びには入れない。**
           あちらは「その日のうちに入れる」3つで、ここは配信中に開く別の面。

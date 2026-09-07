@@ -137,16 +137,35 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     );
   }
 
+  /* 島にいるじぶん（下の面に出るキャラクター）。**割り当てはあやとの表だけが
+     決める**（`content/residents.ts` の channel。元はスプレッドシート）。 */
   const chara = me?.channelId
     ? RESIDENTS.find((r) => r.channel === me.channelId)
     : undefined;
+
+  /* 見出しの隣に出す顔。**キャラクターとは別物で、混ぜない**（#202）。
+     こちらは YouTube のプロフィール写真で、本人が YouTube で替えたら
+     替わるのが正しい。キャラクターはあやとが割り当てたもので、
+     YouTube を替えても変わらないのが正しい。
+
+     出どころは3つあって、**新しいものから順に落ちる。**
+
+     | どこから | いつのもの |
+     | --- | --- |
+     | `islandChannels.photo`（`me.channelPhoto`） | 日次で入れ直る。**古くならない** |
+     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる |
+     | ログインの人（`user.photo`） | 同上。Google 側の写真 |
+
+     いちばん上が来ていないあいだは下に落ちる。**顔が消えるよりは、
+     少し古い顔が出ているほうがいい。** */
+  const face = me?.channelPhoto || me?.photo || user.photo;
 
   return (
     <>
       {/* いま入っている人。**押しどころではないので、平ら（紙）。** */}
       <div className="mp-who">
-        {user.photo ? (
-          <img className="mp-face" src={user.photo} alt="" />
+        {face ? (
+          <img className="mp-face" src={face} alt="" />
         ) : (
           <span className="mp-face mp-face-none" aria-hidden>
             {[...(user.name || "?")][0]}

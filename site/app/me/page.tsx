@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import MyPage from "@/components/me/MyPage";
-import { PLAN_BY_DAY } from "@/content/plans";
+import { PLAN_BY_DAY } from "@/content/planDays";
 import "./me.css";
 
 export const metadata: Metadata = {

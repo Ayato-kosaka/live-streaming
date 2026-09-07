@@ -175,6 +175,14 @@ export type NextPlan = {
   status: PlanStatus;
   /** ページとして立ったときの、Git 側の企画の id（`content/plans.ts`・`content/legends.ts`） */
   planId?: string;
+  /**
+   * この企画のものだと決めた配信（#202）。**あやとしか足せない。**
+   *
+   * 配信日の境目は日本時間の0時で、そこをまたいで配信が2本に割れた夜は、
+   * 後半が日付では当たらない。**後半の動画IDをここに足さないと、
+   * 後半に投げてくれた人にカードが渡らない**（2026-09-06 に実際に起きた）。
+   */
+  videoIds?: string[];
   archived?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -183,7 +191,18 @@ export type NextPlan = {
 /** 書くときに送る中身。id を付けると、その企画を育てる。 */
 export type NextPlanInput = Omit<
   NextPlan,
-  "id" | "hearts" | "status" | "byUid" | "createdAt" | "updatedAt" | "archived" | "planId"
+  | "id"
+  | "hearts"
+  | "status"
+  | "byUid"
+  | "createdAt"
+  | "updatedAt"
+  | "archived"
+  | "planId"
+  /* 育てる口（`saveNextPlan`）から送らない。あちらは送った中身でまるごと
+     置き換わるので、企画を1文字直すたびに配信の紐付けが消える。
+     足すのは専用の口（`setPlanVideos`）だけ。 */
+  | "videoIds"
 > & { id?: string };
 
 /** 何も書いていない企画。画面の初期値もサーバーの返す形も、これと同じ形。 */
@@ -208,6 +227,51 @@ export const getNextPlans = (limit = 200) =>
 /** しまってある企画を読む。**あやとだけ。** 戻すときにしか使わない。 */
 export const getArchivedPlans = (token: string) =>
   req<{ plans: NextPlan[] }>("/nextplans?archived=1", { headers: auth(token) });
+
+/**
+ * 運営側の企画も混ぜて読む（#202）。
+ *
+ * 掲示板（`getNextPlans`）に出るのは、みんなが出した提案だけ。
+ * **北欧◯日目もフードワインフェスも、あちらには出てこない。**
+ * 配信を結ぶ相手はたいていそちらなので、`/me` の道具はここから引く。
+ */
+export const getStreamEventPlans = (limit = 200) =>
+  req<{ plans: NextPlan[]; more: boolean; next: string | null }>(
+    `/nextplans?limit=${limit}&events=1`,
+  );
+
+/**
+ * その企画のものだと決めた配信を入れ替える。**あやとだけ。**
+ *
+ * **足す・外すではなく、送った一覧でまるごと置き換わる。**
+ * だから画面は、いま入っているものを先に出してから送る。
+ * 打ち間違えた1本を外す道が要るし、一覧で持つほうが画面が単純になる。
+ */
+export const setPlanVideos = (id: string, videoIds: string[], token: string) =>
+  req<{ plan: NextPlan }>(`/nextplans/${id}/videos`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ videoIds }),
+  });
+
+/**
+ * 打たれた字から YouTube の動画IDを取り出す。
+ *
+ * **スマホで11文字を打たせない。** 旅の途中に開くのは YouTube Studio か
+ * 配信のページで、そこから出てくるのは URL。`watch?v=` も `youtu.be/` も
+ * `live/` も `shorts/` も、埋め込みの URL も、同じ形（11文字）で入っている
+ * ので、そこだけを拾う。
+ *
+ * 送る側（`POST /nextplans/{id}/videos`）も同じことをしているが、
+ * **打ったその場で「この id になります」と見せたい**のでこちらにも置く。
+ * 送ってから返事で気づくのでは、電波の細いところでは遅い。
+ */
+export function videoIdOf(text: string): string | null {
+  const s = text.trim();
+  if (!s) return null;
+  const hit = /([A-Za-z0-9_-]{11})(?:[^A-Za-z0-9_-]|$)/.exec(s);
+  return hit ? hit[1] : null;
+}
 
 export const getNextPlan = (id: string) =>
   req<{ plan: NextPlan }>(`/nextplans/${id}`);
@@ -688,7 +752,20 @@ export type Me = {
   uid: string;
   name: string;
   channelId?: string;
+  /** ログインしたときの写真。**押した瞬間のもので、そのあと古くなる** */
   photo?: string;
+  /**
+   * YouTube のプロフィール写真。**`islandChannels.photo`（#202）。**
+   *
+   * 日次のジョブ（`python/island_channel_photos.py`）が入れ直すので、
+   * 本人が YouTube でアイコンを替えても翌日には追いつく。上の `photo` は
+   * ログインを押した日のまま止まるので、あればこちらを先に使う。
+   *
+   * **カードに乗るキャラクターの絵とは別物。混ぜない。**
+   * あちらはあやとの表が決めた割り当て（`content/residents.ts`）で、
+   * YouTube を更新しても変わらないのが正しい。
+   */
+  channelPhoto?: string | null;
   nickname: string | null;
   showName: boolean;
   showPhoto: boolean;
@@ -735,17 +812,44 @@ export const getNordicPhotos = () =>
   req<{ days: NordicPhotoDay[] }>("/nordic/photos");
 
 /**
+ * その日に立っている企画（#202）。**写真を貼るときに選ぶための一覧。**
+ *
+ * **1日に企画は何本でも立つ。** 9月11日は4本で、ジョージアバイバイ・
+ * 海外出発二周年・ヒッチハイクで北欧へ・北欧旅の出発が同じ日に乗る。
+ * だから1本に決めて返ってこない。決めるのは画面（と、あやと）。
+ */
+export type StreamEventBrief = { id: string; title: string; date: string };
+
+export const getStreamEvents = (day: string) =>
+  req<{ day: string; events: StreamEventBrief[] }>(
+    `/streamevents?day=${encodeURIComponent(day)}`,
+  );
+
+/**
  * 写真を貼る。**あやとだけ。**
  *
  * 送るのは、ブラウザで長辺1600pxの webp に焼いたあとのもの
  * （`components/nordic/stamp.ts` の `shrink`）。元のままの写真は送らない。
  * 10日ぶん何枚でも貼るので、元のままだと置き場も回線も持たない。
+ *
+ * `streamEventId` を付けると、その企画の画像になる（#202）。
+ * **付けないと、その日のいちばん古い企画に付く。** 1日に企画が何本も
+ * 立つ日は、そこで黙って別の企画に付くので、画面から選んで送る。
  */
 export const postNordicPhoto = (
-  p: { day: string; image: string; w: number; h: number; note?: string },
+  p: {
+    day: string;
+    image: string;
+    w: number;
+    h: number;
+    note?: string;
+    streamEventId?: string;
+  },
   token: string,
 ) =>
-  req<{ photo: NordicPhoto }>("/nordic/photos", {
+  /* 返事にはその日の企画も乗っている。貼ったあとに「どれに付いたか」を
+     出せるようにするため（`events`）。 */
+  req<{ photo: NordicPhoto; events?: StreamEventBrief[] }>("/nordic/photos", {
     method: "POST",
     headers: auth(token),
     body: JSON.stringify(p),
@@ -793,6 +897,14 @@ export type IslandCard = {
   moved: boolean;
   /** 写真が貼られた時刻。並べ替え済みなので、画面では並べ直さない */
   at: number;
+  /**
+   * どの企画の写真か（#202）。
+   *
+   * **札を出すのはこれではなく日付から。** 1枚の写真は1つの企画にしか
+   * 付かないが、カードの足に出すのは**その日に立っていた企画ぜんぶ**で、
+   * 9月11日はそれが4本ある。ここを札にすると、残りの3本が消える。
+   */
+  streamEventId?: string | null;
 };
 
 /** 配られたカードぜんぶ。**新しい順で返る。** */
