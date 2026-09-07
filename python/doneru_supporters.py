@@ -67,8 +67,14 @@ from nordic_supporters import merge  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-# 配信日の切り方は YouTube 側と揃える（published_at から9時間引く）。
-# ここを変えると、同じ日の投げ銭が2日に割れる。
+# 配信日の切り方は YouTube 側（nordic_supporters.py）と揃える。
+# **9時間引く＝日本時間の18時が境目**。ここを変えると、同じ日の投げ銭が
+# 2日に割れる。
+#
+# **これは古い決め。台帳（islandTips）は日本時間の0時で切る**（#201・#202）。
+# ここを合わせに行かないのは、nordicDays がもう読まれていないから
+# （nordic_supporters.py の頭に理由がある）。このファイルに残っている
+# 用事は「表に無い どねID を見つけて赤くする」ほうだけ。
 SQL = f"""
 SELECT
   FORMAT_DATE(

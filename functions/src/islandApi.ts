@@ -37,6 +37,25 @@ import {handleCards} from "./cards";
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
+/* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
+   北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
+   引き当ては N:N（1本の配信に企画が何本も乗る）なので、
+   `eventsForTip` は**当たった企画を全部返す**(`streamEvents.ts` 冒頭)。 */
+import {
+  EVENTS,
+  IMAGES,
+  IMAGE_ROLES,
+  MAX_IMAGES,
+  VIDEO_ID,
+  channelsOfDay,
+  dropCardsOfImage,
+  eventRef,
+  imageRef,
+  loadEvents,
+  mintForImage,
+  resyncCardsOfImage,
+  type ImageRole,
+} from "./streamEvents";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -52,8 +71,13 @@ const DRAFTS = db.collection("islandDrafts");
    前は islandIdeas(120字・ログイン不要)と islandDrafts(12,000字・ログイン必須)に
    割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
    題1つで出して、あとから日付・場所・本文・リンク・写真を足して育てられる形にする。
-   名前は `/next` のルーティングに合わせてある(あやとの指定)。 */
-const NEXTPLANS = db.collection("islandNextPlans");
+
+   **#202 で `islandNextPlans` から `islandStreamEvent` へ改名した。**
+   「これから」だけのものではなくなったため。北欧◯日目も、もう終わった
+   企画も、同じ入れ物に入る。**口(`/nextplans`)の名前は変えていない。**
+   画面と API を同じ日に切り替えられない(Functions と Hosting は別々に
+   手で起動する)ので、変えると片方が出た日に掲示板がまるごと落ちる。 */
+const STREAM_EVENTS = EVENTS;
 /* 今夜のおたずね。選択肢を押すだけで意思表示できる、参加のいちばん下の段。
    作りは islandIdeas + islandVotes とまったく同じ。
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
@@ -71,14 +95,14 @@ const HEARTS = db.collection("islandHearts");
 const VISITS = db.collection("islandVisits");
 
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
-   貼れるのはあやとだけ。読むのは誰でも。
-   写真そのものは Cloud Storage に置いて、ここには置き場と寸法だけを持つ。 */
+   **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
+   画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
+   `/nordic` はまだこちらを読んでいるので、消すのは移り終わってから。 */
 const NPHOTOS = db.collection("nordicPhotos");
-/* その日の配信でスパチャしてくれた人。BigQuery からは
-   python/nordic_supporters.py が置きにくる。Doneru は自動で取れないので
-   python/admin/nordic_supporter.py から手で足す。
-   **持つのは「その日いた」までで、金額も順位も持たない。** */
-const NDAYS = db.collection("nordicDays");
+/* **`nordicDays` はもう読まない**(#202)。その日いた人は台帳
+   (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
+   旅で時差が変わるたびに1日が2つに割れていた(#201)。
+   入れ物は消さない（全部動いてから消す）が、読む側はここには居ない。 */
 /* 北欧旅の「その日に起きたこと」(docs/nordic-depart.md)。
    `site/content/nordic.ts` の NORDIC_LOG は Git にあって、直すには
    commit して Hosting を手で起動しないと出ない。**ヒッチハイクの途中の
@@ -443,6 +467,12 @@ function shapeDraft(b: Json): Json {
  * 日本時間の朝9時で変わるので、**配信の一晩（22時〜25時）が1日の中に収まる**。
  * JST で切ると 0時をまたいだ配信が2日に割れて、連投制限も訪問者数も夜中に半分になる。
  * 画面に出す日付は JST（`site/lib/nightly.ts`）だが、こちらは数える側の都合で決める。
+ *
+ * **#202 の「配信日」とは別もの。** あちらは日本時間の0時で切る
+ * （`streamEvents.ts` の `jstDay`）。ここは連投制限と訪問者数の1日で、
+ * 揃える必要が無い。揃えると、いま数えている訪問者数の区切りが9時間
+ * 動いて、その日の数字が1回だけ跳ねる。**意味の違うものを、名前が
+ * 似ているというだけで揃えない。**
  * @return {string} YYYY-MM-DD
  */
 const today = () => new Date().toISOString().slice(0, 10);
@@ -864,6 +894,18 @@ type PlanShape = {
   status: string;
   /** ページとして立ったときの、Git 側の企画の id */
   planId?: string;
+  /**
+   * この企画のものだと決めた配信(#202)。**足すのはあやとだけ。**
+   *
+   * 配信日の境目は日本時間の0時にした。0時をまたいで配信が2本に
+   * 割れたら、後半の動画IDをここに足すと、その企画のカードができる。
+   * **時差を追いかけるのではなく、人が決める**(#201)。
+   *
+   * 1本の配信に企画が何本も乗る(N:N)。9月11日の配信は「北欧旅の
+   * 出発日」「海外出発二周年」「ジョージアバイバイ」の3本を兼ねている。
+   * 同じ動画IDが3つの企画に入ってよい。
+   */
+  videoIds: string[];
   archived?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -911,6 +953,8 @@ function planShape(
       (v.status as string) :
       "proposed",
     planId: (v.planId as string) || undefined,
+    // 形をそろえるのは1か所（`eventRef`）にまとめてある
+    videoIds: eventRef(d.id, v).videoIds,
     archived: v.archived === true ? true : undefined,
     createdAt: new Date(created).toISOString(),
     updatedAt: new Date((v.updatedAt as number) ?? created).toISOString(),
@@ -934,14 +978,27 @@ function listPlans(q: {
   archived?: boolean;
   limit?: unknown;
   before?: unknown;
+  /** 運営側の企画（`board: false`）も混ぜる。`/me` が企画を選ぶのに要る */
+  events?: boolean;
 }): Promise<Page<PlanShape>> {
   const want = !!q.archived;
+  const withEvents = !!q.events;
   return pageOf(
-    NEXTPLANS,
+    STREAM_EVENTS,
     clampPage(q.limit),
     q.before,
     planShape,
-    (d) => (d.get("archived") === true) !== want,
+    /* **掲示板に出すのは「みんなが出した提案」だけ。**
+       #202 で、同じ入れ物に運営側の企画（Git 側の企画と北欧◯日目）が
+       入るようになった。あれはカードを企画に紐付けるための行で、
+       誰かが出した提案ではない。混ぜると掲示板が急に14件増える。
+
+       `hidden` では隠さない。あれを立てると `loadEvents` からも
+       落ちて、カードが1枚も作られなくなる。**出さないのと、
+       無いことにするのは別。** */
+    (d) =>
+      (d.get("archived") === true) !== want ||
+      (!withEvents && d.get("board") === false),
   );
 }
 
@@ -1254,6 +1311,228 @@ const photoUrl = (path: string, token: string): string =>
   "https://firebasestorage.googleapis.com/v0/b/" +
   `${BUCKET}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 
+/* ---- 企画に付く画像(#202) ----
+   旧 `nordicPhotos`。**書く口は当面2つ動かす。**
+   旅で毎日使っているものを出発直前に作り替えたくないので、
+   `POST /nordic/photos` はそのまま残して、中で両方に書く。
+   画面が新しい口へ移ったら、古いほうを畳む。 */
+
+/** 画像に添える一言。旧 `MAX_PHOTO_NOTE` と同じ。 */
+const IMAGE_NOTE = MAX_PHOTO_NOTE;
+
+/** 候補として返す企画1件。**どの企画の写真かを画面が選べるように。** */
+type EventBrief = {id: string; title: string; date: string};
+
+/**
+ * その日に立っている企画を、古い順に返す。
+ *
+ * **1日に企画は何本でも立つ。** 9月11日は「北欧旅の出発日」「海外出発
+ * 二周年」「ジョージアバイバイ」の3本が同じ配信に乗っている。
+ * だから**1本に決めて返さない。** 選ぶのは画面（と、あやと）。
+ *
+ * 引きかたは**単一フィールドの等価だけ**（索引が要らない範囲・#168）。
+ * @param {string} day その日（YYYY-MM-DD）
+ * @return {Promise<EventBrief[]>} その日の企画。古い順
+ */
+async function eventsOnDay(day: string): Promise<EventBrief[]> {
+  if (!isDay(day)) return [];
+  const snap = await STREAM_EVENTS.where("date", "==", day).limit(30).get();
+  const rows = snap.docs
+    .filter((d) => d.get("hidden") !== true && d.get("archived") !== true)
+    .map((d) => ({
+      id: d.id,
+      title: clean(d.get("title"), MAX_PLAN_TITLE),
+      date: day,
+      /* 出しどころの見分け。**まだ誰も採っていない提案に写真を
+         付けない。** 掲示板には日付だけ入った提案が並ぶので、
+         そこへ黙って写真が付くと、提案が企画に化けたように見える。 */
+      real:
+        d.get("status") === "next" ||
+        d.get("status") === "done" ||
+        !!d.get("planId") ||
+        !!d.get("source"),
+      at: Number(d.get("createdAt")) || 0,
+    }))
+    .sort((a, b) => a.at - b.at);
+  const real = rows.filter((r) => r.real);
+  return (real.length ? real : rows).map((r) => ({
+    id: r.id,
+    title: r.title,
+    date: r.date,
+  }));
+}
+
+/** 画像を1枚置いた結果。 */
+type SavedImage =
+  | {ok: true; id: string; doc: Json; events: EventBrief[]}
+  | {ok: false; code: number; error: string};
+
+/**
+ * 送られてきた画像を置き場に焼いて、`islandStreamEventImage` に書く。
+ *
+ * **旧 `nordicPhotos` にも同じ書類IDで書く。** 画面が切り替わるまでの
+ * あいだ、`/nordic` は古いほうを読んでいる。書類IDを揃えてあるので、
+ * カードのID（`<画像のID>__<チャンネルID>`）も移行の前後で変わらない。
+ *
+ * 置いたその場でカードも作る。**画像は日次ジョブより後にできる**
+ * （あやとが夜に貼る）ので、貼った側から埋めないとその日ぶんが
+ * 翌朝まで出ない。
+ * @param {string} uid 貼った人（あやと）
+ * @param {Json} b 送られてきた中身
+ * @param {string} day その日（YYYY-MM-DD）
+ * @param {string} wantEvent どの企画か。空なら日付から選ぶ
+ * @param {ImageRole} role 役目
+ * @return {Promise<SavedImage>} 置いた結果
+ */
+async function saveEventImage(
+  uid: string,
+  b: Json,
+  day: string,
+  wantEvent: string,
+  role: ImageRole,
+): Promise<SavedImage> {
+  // data URL で来ても、中身だけで来ても受ける
+  const b64 = String(b.image ?? "").replace(/^data:[^,]*,/, "");
+  let buf: Buffer;
+  try {
+    buf = Buffer.from(b64, "base64");
+  } catch {
+    return {ok: false, code: 400, error: "bad image"};
+  }
+  if (buf.length < 1024 || buf.length > MAX_PHOTO_BYTES) {
+    return {ok: false, code: 400, error: "bad size"};
+  }
+  /* 何の絵かを、送られてきた名前ではなく**中身の頭**で見る。
+     ここを名乗りで済ませると、置き場に何でも置けるようになる。
+
+     **webp だけにしない。** iOS の Safari は
+     `canvas.toDataURL("image/webp")` を黙って png に落とすことがあり、
+     そこを弾いていたので**あやとの iPhone から1枚も貼れなかった**
+     （本番で「1枚目でつまずきました。焼けなかった」）。
+     旅の途中に貼るのはその iPhone なので、webp が出ない端末を
+     締め出すほうが害が大きい。jpeg も受ける。 */
+  const kind =
+    buf.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buf.subarray(8, 12).toString("ascii") === "WEBP" ?
+      "webp" :
+      buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff ?
+        "jpeg" :
+        null;
+  if (!kind) return {ok: false, code: 400, error: "not an image"};
+
+  const events = await eventsOnDay(day);
+  /* 打たれた企画を優先する。無ければ**その日のいちばん古い企画。**
+     ここで1本に決めるのは「この画像はどれに付くか」だけで、
+     **カードを配る先は絞らない**（配る側は当たった企画を全部見る）。 */
+  let streamEventId = clean(wantEvent, 64);
+  if (streamEventId) {
+    if (!(await STREAM_EVENTS.doc(streamEventId).get()).exists) {
+      return {ok: false, code: 404, error: "no plan"};
+    }
+  } else {
+    streamEventId = events[0]?.id ?? "";
+    if (!streamEventId) {
+      // 企画の無い日にも貼れる。あとから `POST /streamevents/images/{id}` で結ぶ
+      logger.warn("image with no stream event", day);
+    }
+  }
+
+  /* **1日の枠は、断るものを全部断ってから数える。** 先に数えると、
+     形が違って弾かれた1枚や、企画IDを打ち間違えた1枚で枠が減る。
+     旅の途中に電波の悪いところで貼り直すので、そこは減らさない。 */
+  if (!(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))) {
+    return {ok: false, code: 429, error: "too many today"};
+  }
+
+  const ref = IMAGES.doc();
+  const at = Date.now();
+  const stored = `nordic/photos/${day}/${ref.id}.${kind}`;
+  const token = randomUUID();
+  await admin
+    .storage()
+    .bucket(BUCKET)
+    .file(stored)
+    .save(buf, {
+      contentType: `image/${kind}`,
+      metadata: {
+        // 置き場の名前に id が入っていて中身は変わらないので、
+        // ブラウザにも CDN にも長く持たせてよい
+        cacheControl: "public, max-age=31536000, immutable",
+        metadata: {firebaseStorageDownloadTokens: token},
+      },
+    });
+  const url = photoUrl(stored, token);
+  const w = Math.max(0, Math.min(20000, Number(b.w) || 0));
+  const h = Math.max(0, Math.min(20000, Number(b.h) || 0));
+  const note = clean(b.note, IMAGE_NOTE);
+  const takenAt = isDay(b.takenAt) ? (b.takenAt as string) : day;
+  const sortOrder = Math.max(0, Math.min(9999, Number(b.sortOrder) || 0));
+
+  const doc: Json = {
+    streamEventId,
+    role,
+    // 日付も持つ。旧 `/nordic` の画面が日ごとに並べているため
+    day,
+    storagePath: stored,
+    url,
+    w,
+    h,
+    note,
+    takenAt,
+    sortOrder,
+    uid,
+    at,
+    createdAt: at,
+    updatedAt: at,
+  };
+  /* **古いほうにも同じ書類IDで書く。** 画面が切り替わってから畳む。
+     `path` という欄の名前は旧来のまま（あちらを読む口がまだある）。 */
+  await Promise.all([
+    ref.set(doc),
+    NPHOTOS.doc(ref.id).set({day, path: stored, url, w, h, note, at, uid}),
+  ]);
+
+  if (streamEventId) {
+    try {
+      const made = await mintForImage(imageRef(ref.id, doc));
+      logger.info("cards for image", ref.id, JSON.stringify(made));
+    } catch (e) {
+      // カードは日次ジョブでも作られる。ここで落ちても写真は貼れている
+      logger.warn("mint for image failed", ref.id, String(e));
+    }
+  }
+  return {ok: true, id: ref.id, doc, events};
+}
+
+/**
+ * 画像を1枚消す。置き場の実体と、旧来の書類と、カードもまとめて。
+ * @param {string} id 画像のID
+ * @return {Promise<boolean>} 消せたか。無ければ false
+ */
+async function dropEventImage(id: string): Promise<boolean> {
+  const [now, old] = await db.getAll(IMAGES.doc(id), NPHOTOS.doc(id));
+  const stored =
+    clean(now.get("storagePath"), 300) || clean(old.get("path"), 300);
+  if (!now.exists && !old.exists) return false;
+  /* 先に置き場から消す。Firestore だけ消えて実体が残ると、
+     もう誰からも見えないのに URL を知っている人には見え続ける。 */
+  if (stored) {
+    await admin
+      .storage()
+      .bucket(BUCKET)
+      .file(stored)
+      .delete({ignoreNotFound: true});
+  }
+  /* **カードも消す。** カードは平置きなので、画像を消しても勝手には
+     消えない。残すと `/cards` が実体の無い URL を返し続ける。 */
+  await dropCardsOfImage(id);
+  await Promise.all([
+    now.exists ? IMAGES.doc(id).delete() : Promise.resolve(),
+    old.exists ? NPHOTOS.doc(id).delete() : Promise.resolve(),
+  ]);
+  return true;
+}
+
 /** 画面に出す1枚ぶん。 */
 type PhotoShape = {
   id: string;
@@ -1293,8 +1572,18 @@ async function listPhotoDays(): Promise<Json[]> {
   if (byDay.size === 0) return [];
   // その日いた人。写真のある日のぶんだけ引く
   const days = [...byDay.keys()].sort().reverse();
-  const [people, residents] = await Promise.all([
-    db.getAll(...days.map((d) => NDAYS.doc(d))),
+  /* **元は台帳(`islandTips`)。旧 `nordicDays` はもう読まない**(#202)。
+     あちらは配信日の境目が**日本時間の18時**（`published_at` から9時間引く）
+     だった。旅で時差が9回変わるとそのたびに1日が2つに割れる(#201)ので、
+     境目を**日本時間の0時**に揃えた台帳へ移した。入れ物はまだ消していない
+     （全部動いてから消す）が、読むのはやめる。
+
+     **金額はここから出さない。** 台帳は持っているが、島の画面では
+     金額で並べない・出さない(#202)。ここが台帳と画面のあいだの口なので、
+     そもそもチャンネルIDしか持ち出さない形にしてある。 */
+  const events = await loadEvents();
+  const [peopleByDay, residents] = await Promise.all([
+    Promise.all(days.map((d) => channelsOfDay(events, d))),
     listResidents(),
   ]);
   /* **名前は、出してよいと言った人のぶんだけ返す。**
@@ -1309,18 +1598,17 @@ async function listPhotoDays(): Promise<Json[]> {
     if (id && r.name) named.set(id, r.name as string);
   });
   const peopleOf = new Map<string, Json[]>();
-  people.forEach((p) => {
-    const arr = (p.data()?.people ?? []) as Json[];
+  days.forEach((day, i) => {
     peopleOf.set(
-      p.id,
-      arr.slice(0, 60).map((x) => {
-        const channelId = clean(x.channelId, 64) || null;
-        return {
-          channelId,
-          icon: clean(x.icon, 80) || null,
-          name: (channelId && named.get(channelId)) || null,
-        };
-      }),
+      day,
+      peopleByDay[i].slice(0, 60).map((channelId) => ({
+        channelId,
+        /* 旧来は名簿が絵まで持つことがあった（手で足した Doneru の人）。
+           いまは絵の割り当てを `site/content/residents.ts` 1か所に寄せて
+           あるので、ここからは返さない。欄は画面の形を変えないために残す。 */
+        icon: null,
+        name: named.get(channelId) || null,
+      })),
     );
   });
   return days.map((day) => ({
@@ -1575,72 +1863,22 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad day"});
           return;
         }
-        // data URL で来ても、中身だけで来ても受ける
-        const b64 = String(body.image ?? "").replace(/^data:[^,]*,/, "");
-        let buf: Buffer;
-        try {
-          buf = Buffer.from(b64, "base64");
-        } catch {
-          res.status(400).json({error: "bad image"});
-          return;
-        }
-        if (buf.length < 1024 || buf.length > MAX_PHOTO_BYTES) {
-          res.status(400).json({error: "bad size"});
-          return;
-        }
-        /* 何の絵かを、送られてきた名前ではなく**中身の頭**で見る。
-           ここを名乗りで済ませると、置き場に何でも置けるようになる。
-
-           **webp だけにしない。** iOS の Safari は
-           `canvas.toDataURL("image/webp")` を黙って png に落とすことがあり、
-           そこを弾いていたので**あやとの iPhone から1枚も貼れなかった**
-           （本番で「1枚目でつまずきました。焼けなかった」）。
-           旅の途中に貼るのはその iPhone なので、webp が出ない端末を
-           締め出すほうが害が大きい。jpeg も受ける。 */
-        const kind =
-          buf.subarray(0, 4).toString("ascii") === "RIFF" &&
-          buf.subarray(8, 12).toString("ascii") === "WEBP" ?
-            "webp" :
-            buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff ?
-              "jpeg" :
-              null;
-        if (!kind) {
-          res.status(400).json({error: "not an image"});
-          return;
-        }
-        if (!(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const ref = NPHOTOS.doc();
-        const path2 = `nordic/photos/${day}/${ref.id}.${kind}`;
-        const token = randomUUID();
-        await admin
-          .storage()
-          .bucket(BUCKET)
-          .file(path2)
-          .save(buf, {
-            contentType: `image/${kind}`,
-            metadata: {
-              // 置き場の名前に id が入っていて中身は変わらないので、
-              // ブラウザにも CDN にも長く持たせてよい
-              cacheControl: "public, max-age=31536000, immutable",
-              metadata: {firebaseStorageDownloadTokens: token},
-            },
-          });
-        const photo = {
-          day,
-          path: path2,
-          url: photoUrl(path2, token),
-          w: Math.max(0, Math.min(20000, Number(body.w) || 0)),
-          h: Math.max(0, Math.min(20000, Number(body.h) || 0)),
-          note: clean(body.note, MAX_PHOTO_NOTE),
-          at: Date.now(),
+        /* 中身は新しいほう(`islandStreamEventImage`)に寄せてある。
+           **返す形は変えていない。** 企画のIDと候補は足したが、
+           古い画面はその欄を見ないので影響が無い。 */
+        const out = await saveEventImage(
           uid,
-        };
-        await ref.set(photo);
+          body,
+          day,
+          clean(body.streamEventId, 64),
+          "card",
+        );
+        if (!out.ok) {
+          res.status(out.code).json({error: out.error});
+          return;
+        }
         res.set("Cache-Control", "no-store");
-        res.json({photo: {id: ref.id, ...photo}});
+        res.json({photo: {id: out.id, ...out.doc}, events: out.events});
         return;
       }
 
@@ -1651,23 +1889,164 @@ export const islandApi = onRequest(
           res.status(403).json({error: "not allowed"});
           return;
         }
-        const ref = NPHOTOS.doc(photoMatch[1]);
-        const snap = await ref.get();
-        const p = snap.data();
-        if (!snap.exists || typeof p?.path !== "string") {
+        if (!(await dropEventImage(photoMatch[1]))) {
           res.status(404).json({error: "not found"});
           return;
         }
-        /* 先に置き場から消す。Firestore だけ消えて実体が残ると、
-           もう誰からも見えないのに URL を知っている人には見え続ける。 */
-        await admin
-          .storage()
-          .bucket(BUCKET)
-          .file(p.path)
-          .delete({ignoreNotFound: true});
-        await ref.delete();
         res.set("Cache-Control", "no-store");
-        res.json({id: ref.id});
+        res.json({id: photoMatch[1]});
+        return;
+      }
+
+      /* ---------------- 企画に付く画像(#202) ----------------
+         上の `/nordic/photos` と同じものを、**企画から見た口**で出す。
+         あちらは「日付 → 写真」で、こちらは「企画 → 画像」。
+
+         **両方を当分動かす。** 旅で毎日使っているものを出発直前に
+         作り替えない(#202 の順番)。画面が移ったら古いほうを畳む。 */
+      /* その日に立っている企画。**写真を貼るときに選ぶための一覧。**
+         1日に企画は何本でも立つので、1本に決めて返さない。 */
+      if (method === "GET" && path === "/streamevents") {
+        const day = String(req.query.day ?? "");
+        if (!isDay(day)) {
+          res.status(400).json({error: "bad day"});
+          return;
+        }
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({day, events: await eventsOnDay(day)});
+        return;
+      }
+
+      const eventImages = path.match(
+        /^\/streamevents\/([A-Za-z0-9_-]{6,})\/images$/,
+      );
+      if (method === "GET" && eventImages) {
+        /* **等価だけ。** 並べ替えと混ぜると複合索引が要る(#168)ので、
+           貼った順に並べるのは手元でやる。 */
+        const snap = await IMAGES
+          .where("streamEventId", "==", eventImages[1])
+          .limit(MAX_IMAGES)
+          .get();
+        const images = snap.docs
+          .map((d) => imageRef(d.id, d.data() ?? {}))
+          .sort((a, b) => a.at - b.at);
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({images});
+        return;
+      }
+
+      if (method === "POST" && eventImages) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ev = await STREAM_EVENTS.doc(eventImages[1]).get();
+        if (!ev.exists) {
+          res.status(404).json({error: "no plan"});
+          return;
+        }
+        /* 画像の日付は、企画の日付を既定にする。**打てば上書きできる**
+           （何日もある企画では、写真の日と企画の日が違う）。 */
+        const day = isDay(body.day) ?
+          (body.day as string) :
+          shapeDay(ev.get("date"));
+        if (!isDay(day)) {
+          res.status(400).json({error: "bad day"});
+          return;
+        }
+        const role = clean(body.role, 12);
+        const out = await saveEventImage(
+          uid,
+          body,
+          day,
+          ev.id,
+          (IMAGE_ROLES as readonly string[]).includes(role) ?
+            (role as ImageRole) :
+            "card",
+        );
+        if (!out.ok) {
+          res.status(out.code).json({error: out.error});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({image: {id: out.id, ...out.doc}});
+        return;
+      }
+
+      /* 貼ったあとに、どの企画のものかを付け替える。**あやとだけ。**
+         1日に企画が何本も立つので、貼るときの既定（その日のいちばん古い
+         企画）が当たっているとは限らない。付け替えたらカードを作り直す。 */
+      const imageOne = path.match(
+        /^\/streamevents\/images\/([A-Za-z0-9_-]{6,})$/,
+      );
+      if (method === "POST" && imageOne) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = IMAGES.doc(imageOne[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "not found"});
+          return;
+        }
+        const patch: Json = {updatedAt: Date.now()};
+        const want = clean(body.streamEventId, 64);
+        if (want) {
+          if (!(await STREAM_EVENTS.doc(want).get()).exists) {
+            res.status(404).json({error: "no plan"});
+            return;
+          }
+          patch.streamEventId = want;
+        }
+        const role = clean(body.role, 12);
+        if ((IMAGE_ROLES as readonly string[]).includes(role)) {
+          patch.role = role;
+        }
+        if (typeof body.note === "string") {
+          patch.note = clean(body.note, IMAGE_NOTE);
+        }
+        if (body.sortOrder !== undefined) {
+          patch.sortOrder = Math.max(
+            0,
+            Math.min(9999, Number(body.sortOrder) || 0),
+          );
+        }
+        await ref.set(patch, {merge: true});
+        /* 付け替えたら、カードを合わせ直す。**消してから作り直さない。**
+           消すと、本人が動かした置き方まで一緒に消える。
+           渡らなくなった人のぶんだけ消して、あとは足す。 */
+        const after = imageRef(ref.id, (await ref.get()).data() ?? {});
+        try {
+          await resyncCardsOfImage(after);
+        } catch (e) {
+          logger.warn("re-mint failed", ref.id, String(e));
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({image: after});
+        return;
+      }
+
+      if (method === "DELETE" && imageOne) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        if (!(await dropEventImage(imageOne[1]))) {
+          res.status(404).json({error: "not found"});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({id: imageOne[1]});
         return;
       }
 
@@ -2573,6 +2952,9 @@ export const islandApi = onRequest(
           archived,
           limit: req.query.limit ?? 200,
           before: req.query.before,
+          /* `?events=1` で運営側の企画も混ぜる。**掲示板は付けない。**
+             `/me` が「どの企画にこの配信を足すか」を選ぶために要る。 */
+          events: req.query.events === "1",
         });
         res.set(
           "Cache-Control",
@@ -2590,7 +2972,7 @@ export const islandApi = onRequest(
          ここに端末IDを渡すと、鍵が URL とアクセスログに残る。 */
       const planOne = path.match(/^\/nextplans\/([A-Za-z0-9_-]{6,})$/);
       if (method === "GET" && planOne) {
-        const snap = await NEXTPLANS.doc(planOne[1]).get();
+        const snap = await STREAM_EVENTS.doc(planOne[1]).get();
         if (!snap.exists || snap.get("hidden") === true) {
           res.status(404).json({error: "no plan"});
           return;
@@ -2627,7 +3009,7 @@ export const islandApi = onRequest(
         }
         const now = Date.now();
         const by = who?.name || clean(body.by, MAX_NAME_LEN) || null;
-        const ref = await NEXTPLANS.add({
+        const ref = await STREAM_EVENTS.add({
           ...plan,
           by,
           hearts: 0,
@@ -2654,7 +3036,7 @@ export const islandApi = onRequest(
           res.status(400).json({error: "too long"});
           return;
         }
-        const ref = NEXTPLANS.doc(planOne[1]);
+        const ref = STREAM_EVENTS.doc(planOne[1]);
         const cur = await ref.get();
         if (!cur.exists || cur.get("hidden") === true) {
           res.status(404).json({error: "no plan"});
@@ -2713,7 +3095,7 @@ export const islandApi = onRequest(
           return;
         }
         const heartRef = HEARTS.doc(`${id}_${key}`);
-        const planRef = NEXTPLANS.doc(id);
+        const planRef = STREAM_EVENTS.doc(id);
         let out: {hearts: number; on: boolean};
         try {
           out = await db.runTransaction(async (tx) => {
@@ -2769,7 +3151,7 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad planId"});
           return;
         }
-        const ref = NEXTPLANS.doc(planStatus[1]);
+        const ref = STREAM_EVENTS.doc(planStatus[1]);
         if (!(await ref.get()).exists) {
           res.status(404).json({error: "no plan"});
           return;
@@ -2788,6 +3170,52 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* この企画のものだと決めた配信(#202)。**あやとだけ。**
+         `/me` から打てるようにしてあるのは、これを足す用事が
+         **旅の途中に起きる**から。0時をまたいで配信が2本に割れた夜に、
+         後半の動画IDを足さないと、その日の後半に投げてくれた人の
+         カードができない。
+
+         **足す/外すではなく、送られてきた一覧で置き換える。** 打ち間違えた
+         ものを外す道が要るし、一覧で持つほうが画面が単純になる。 */
+      const planVideos = path.match(
+        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/videos$/,
+      );
+      if (method === "POST" && planVideos) {
+        if (!(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const raw = Array.isArray(body.videoIds) ? body.videoIds : [];
+        const seen = new Set<string>();
+        const videoIds: string[] = [];
+        for (const x of raw.slice(0, 40)) {
+          /* URL を貼られても受ける。旅の途中にスマホで打つものなので、
+             動画IDだけを抜き出させるほうが手間になる。 */
+          const s = clean(x, 200);
+          const hit = /([A-Za-z0-9_-]{11})(?:[^A-Za-z0-9_-]|$)/.exec(s);
+          const id = hit?.[1] ?? "";
+          if (!VIDEO_ID.test(id) || seen.has(id)) continue;
+          seen.add(id);
+          videoIds.push(id);
+        }
+        /* 打ったのに1本も読めなかったときだけ止める。**空で送るのは
+           「ぜんぶ外す」なので、それは通す。** */
+        if (raw.length > 0 && videoIds.length === 0) {
+          res.status(400).json({error: "bad video"});
+          return;
+        }
+        const ref = STREAM_EVENTS.doc(planVideos[1]);
+        if (!(await ref.get()).exists) {
+          res.status(404).json({error: "no plan"});
+          return;
+        }
+        await ref.set({videoIds, updatedAt: Date.now()}, {merge: true});
+        res.set("Cache-Control", "no-store");
+        res.json({plan: planShape(await ref.get())});
+        return;
+      }
+
       /* しまう・戻す。**あやとだけ。消さない。**(付箋と同じ) */
       const planArchive = path.match(
         /^\/nextplans\/([A-Za-z0-9_-]{6,})\/archive$/,
@@ -2799,7 +3227,7 @@ export const islandApi = onRequest(
           return;
         }
         const on = body.on !== false;
-        const ref = NEXTPLANS.doc(planArchive[1]);
+        const ref = STREAM_EVENTS.doc(planArchive[1]);
         if (!(await ref.get()).exists) {
           res.status(404).json({error: "no plan"});
           return;

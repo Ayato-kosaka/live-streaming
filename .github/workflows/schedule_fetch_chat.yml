@@ -136,6 +136,32 @@ jobs:
       - name: あやと島の数字を更新
         run: python python/island_daily_stats.py
 
+      # YouTube のプロフィール写真（#202）。**カードの絵とは別もの。**
+      # カードに乗るキャラクターはあやとのスプレッドシートが正で、
+      # YouTube を更新しても変わらないのが正しい。ここが入れるのは
+      # マイページのアイコンだけ。
+      #
+      # YouTube API を叩くので、Discovery と同じ鍵の取り出しが要る。
+      # **毎日ぜんぶは引かない**（理由は python/island_channel_photos.py）。
+      - name: Doneru key を抽出
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}'
+          key="$(printf '%s' "$url" | sed -n 's/.*[?&]key=\([^&]*\).*/\1/p')"
+          if [ -z "$key" ]; then
+            echo "ERROR: EXPO_PUBLIC_DONERU_WSS_URL から key=... を抽出できませんでした" >&2
+            exit 1
+          fi
+          echo "::add-mask::$key"
+          echo "DONERU_ALERTBOX_KEY=$key" >> "$GITHUB_ENV"
+
+      # **落ちても後ろを止めない。** 写真が古いままなだけで、
+      # カードも名簿もこれとは関係がない。
+      - name: YouTube のプロフィール写真を入れ直す
+        continue-on-error: true
+        run: python python/island_channel_photos.py
+
       # チャンネルIDと、その人がいま名乗っている名前の辞書（#190）。
       # **名簿より前に置く。** あやとが /me で名前を打って紐付けるとき、
       # ここが引き先になる。辞書が古いと、名前を変えたばかりの人が
@@ -145,6 +171,27 @@ jobs:
       # 名前が変わった人だけ書くので、ふだんは数件しか書かない。
       - name: チャンネルIDと名前の辞書を更新
         run: python python/island_channels.py
+
+      # 投げ銭の台帳（#202）。YouTube のスパチャと Doneru を1本にする。
+      # **カードの元がここに移った。** 名簿（nordicDays）は日付が鍵で、
+      # 配信日の境目が日本時間の18時だった（#201）。旅で時差が9回変わる
+      # たびに1日が2つに割れるので、境目を日本時間の0時に固定した台帳へ移す。
+      #
+      # **辞書のあとに置く。** Doneru のぶんは islandDonors を通して
+      # チャンネルIDに直すので、紐付けが新しいほうが取りこぼさない。
+      #
+      # 7日ぶんを引き直す。sourceEventId で一意なので、流し直しても増えない。
+      - name: 投げ銭の台帳を更新
+        run: python python/island_tips.py
+
+      # あやと島カード（#202）。台帳 × 企画のカード画像。
+      # **台帳のあとに置く。** 先に置くと、その日ぶんの投げ銭がまだ
+      # 台帳に無い状態でカードを作ることになって、1日遅れる。
+      #
+      # 画像を貼った時点でも Functions 側が作る（streamEvents.ts の
+      # mintForImage）。**両側から埋めて、どちらが先でも同じ結果にする。**
+      - name: カードを作る
+        run: python python/island_cards.py
 
       # その日スパチャしてくれた人の名簿。**ここに置く理由は、真上の集計と
       # 同じで「チャットが入ったあとに BigQuery から Firestore へ写す」もの

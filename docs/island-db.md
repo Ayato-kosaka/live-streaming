@@ -322,7 +322,15 @@ island/state
 `stats` は `island_daily_stats.py` が毎日書く。
 `current` は `island_set_current.py` であやとが手で書く。
 
-### `islandNextPlans/{id}` — 企画（`/board`「企画をだす」・`/next/new`）
+### `islandStreamEvent/{id}` — 企画（旧 `islandNextPlans`・#202）
+
+**#202 で `islandNextPlans` から改名した。** 「これから」だけのものでは
+なくなったため。**北欧◯日目も、もう終わった企画も、同じ入れ物に入る。**
+そうしないと、カードを企画に紐付けられない。
+
+**口（API）の名前は `/nextplans` のまま。** Functions と Hosting は別々に
+手で起動する（`CLAUDE.md`）ので、入れ物と口を同じ日に変えると、片方が
+先に出た日に掲示板がまるごと 404 になる。畳むのは画面が移ってから。
 
 **「一言の提案」と「ページ1枚の下書き」は、同じもの**（#161）。
 前は `islandIdeas`（120字・ログイン不要）と `islandDrafts`（12,000字・ログイン必須）に
@@ -346,6 +354,9 @@ island/state
 | `hearts` | number | ハートの数。仕組みは付箋とまったく同じ（`islandHearts`） |
 | `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
 | `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
+| `videoIds` | string[] | **この企画のものだと決めた配信**（#202）。あやとだけが足せる |
+| `source` | string? | `git-plan` / `nordic-day`。運営側が種から入れた行の印 |
+| `board` | boolean? | `false` なら掲示板の一覧に出さない。**`hidden` とは別**（`hidden` にするとカードの組み立てからも落ちる） |
 | `archived` | boolean | しまってあるか。**消さずにしまう。戻せる**（あやとだけ） |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
 | `createdAt` / `updatedAt` | number | ミリ秒 |
@@ -454,6 +465,135 @@ island/state
 | `hidden` | boolean | 隠すとき |
 | `createdAt` | number | ミリ秒 |
 
+### `islandTips/{tipId}` — 投げ銭の台帳（#202）
+
+**YouTube のスパチャと Doneru の寄付を1本にしたもの。**
+あやと島カードはここから組み上がる。`python/island_tips.py` が毎日置く。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>`。**一意** |
+| `source` | string | `youtube_superchat` / `doneru` |
+| `channelId` | string \| null | YouTube のチャンネル。Doneru は `islandDonors` を通して引く。紐付いていなければ null |
+| `day` | string | **日本時間で切った配信日**（YYYY-MM-DD） |
+| `donatedAt` | number | 出された時刻（ミリ秒） |
+| `videoId` | string? | どの配信か。Doneru は持っていない |
+| `videoStartedAt` | number? | その配信が始まった時刻。0時をまたいだぶんを人が拾うときに要る |
+| `amount` | number | 視聴者が払った額 |
+| `currency` | string | `JPY` ほか。**外貨が混ざる**（本番の380件に ₪ と CA$ が1件ずつ） |
+| `settlementAmount` | number? | 手数料を引いた額（Doneru だけ） |
+| `displayNameSnapshot` | string? | そのときの表示名 |
+| `viewerPk` | string? | どねID（Doneru だけ） |
+| `createdAt` / `updatedAt` | string | ISO8601 |
+
+**書類IDは `sourceEventId` の SHA-1 の頭32文字。** 生の値を使わないのは、
+YouTube の `event_id` が Base64 風で `/` を含みうるから。
+**同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
+
+#### 配信日の境目は日本時間の0時
+
+旧 `nordicDays` は `published_at` から**9時間引いていた**（＝日本時間の
+18時が境目）。旅で時差が9回変わるとそのたびに1日が2つに割れる（#201）。
+`DATE(donated_at, "Asia/Tokyo")` に固定して、**またいだぶんは人が決める**
+（`islandStreamEvent.videoIds` に後半の動画IDを足す）。
+
+実際にまたいでいる配信がある。`MoxSgyW_12k` は 8/30 と 8/31 の両方に
+スパチャが入っている。**境目をどこに置いても、機械には割れる。**
+
+#### 金額は持つ。ただし外に出さない
+
+`amount` を持つのは、いままで意図的に避けていたことの反転
+（#202 で承認）。Doneru と突き合わせるのに要る。**代わりに2つ守る。**
+
+1. **島の画面で、金額で並べない・出さない。** 決めは生きている
+   （`docs/nordic-fund.md`。出す人は60人しかいないので、上位は常連で
+   固定され、320円が1万円の隣に並ぶ）
+2. **`firestore.rules` で閉じてある。** 誰がいくら出したかは、本人以外に
+   見えてはいけない。読むのは Functions と日次ジョブだけ
+
+台帳から画面へ出る口は `channelsOfDay`（`functions/src/streamEvents.ts`）
+1つだけで、そこは**チャンネルIDしか持ち出さない。**
+
+### `islandStreamEventImage/{imageId}` — 企画に付く画像（#202）
+
+旧 `nordicPhotos`。**書類IDは移行の前後で変えない。** カードのIDが
+`<画像のID>__<チャンネルID>` なので、変えると動かしてあるカードがはぐれる。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `streamEventId` | string | どの企画のものか。空なら、まだ決まっていない |
+| `role` | string | `card` / `gallery` / `cover`。**カードになるのは `card` だけ** |
+| `day` | string | その日（YYYY-MM-DD）。旧 `/nordic` が日ごとに並べるのに使う |
+| `storagePath` | string | Cloud Storage の道 |
+| `url` | string | 合言葉つきの URL |
+| `w` / `h` | number | 寸法 |
+| `note` | string | 一言（120字まで） |
+| `takenAt` | string? | 撮った日 |
+| `sortOrder` | number? | 並び |
+| `uid` | string | 貼った人（あやと） |
+| `at` / `createdAt` / `updatedAt` | | 時刻 |
+
+**書く口は当分2つ動かす。** `POST /nordic/photos`（旧・日付から入る）と
+`POST /streamevents/{id}/images`（新・企画から入る）。前者は中で両方に
+書く。旅で毎日使っているものを出発直前に作り替えない（#202 の順番）。
+
+**1枚は1つの企画にしか付かない。** 1日に企画は何本でも立つので、
+貼るときの既定は「その日のいちばん古い企画」。あとから
+`POST /streamevents/images/{id}` で付け替えられる（カードも作り直す）。
+
+### `islandCards/{cardId}` — 配られたカード（#173・#202 で作り直し）
+
+**#202 から「置いてある」。** 前は読むたびに写真と名簿から組み立てて
+いて、ここに入るのは「本人が動かしたぶんの上書き」だけだった。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `channelId` | string | もらった人 |
+| `streamEventId` | string | どの企画のカードか |
+| `streamEventImageId` | string | どの画像か |
+| `day` | string | その日（YYYY-MM-DD）。画面が企画の札を引く |
+| `earnedAt` | number | もらった時刻（＝投げ銭の時刻） |
+| `x` / `y` / `rot` / `scale` | number | 置き方。`y` は**足元**の高さ |
+| `movedBy` / `movedAt` | | 本人が動かしたときだけ |
+| `createdAt` / `updatedAt` | number | ミリ秒 |
+
+**書類IDは `<画像のID>__<チャンネルID>`。** 決め打ちなので、
+2か所から作っても同じ書類になる。
+
+| いつ作るか | 誰が |
+| --- | --- |
+| 画像を貼ったとき | `functions/src/streamEvents.ts` の `mintForImage` |
+| 毎日 | `python/island_cards.py` |
+
+**両側から埋めて、どちらが先でも同じ結果になるようにしてある。**
+片方だけだと、「画像が先で投げ銭が後」の日か「貼った夜」のどちらかが空になる。
+
+#### 平置きにしてある
+
+`islandChannels/{channelId}/cards/{cardId}` にはできない。`/cards`
+（島じゅうのカードを新しい順）にコレクショングループ索引が要るが、
+**うちは索引を作れない**（#168）。平置きなら
+
+- 島じゅう → `orderBy("earnedAt","desc")`（単一フィールド）
+- その人の → `where("channelId","==",…)`（同じく単一フィールド）
+
+**どちらも索引を足さずに引ける。**
+
+#### 企画と配信は N:N
+
+**1本の配信に企画が何本も乗る。** 9月11日は「北欧旅の出発日」
+「海外出発二周年」「ジョージアバイバイ」の3本。だから
+「`videoId` → その配信の企画」を**1本に決めない。**
+当たった企画すべてについて、その企画のカード画像ぶんカードを作る。
+
+当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
+
+1. その企画が `videoIds` でこの配信を名乗っている
+2. 企画の日付と、投げ銭の日（日本時間）が同じ
+
+**1で当たったら2を見ない、にしない。** あやとが `videoIds` を足すのは
+たいてい1本だけなので、そこで打ち切ると残りのカードが黙って消える。
+
 ### `islandHearts/{key}` — 誰がどの付箋にハートを押したか
 
 ドキュメントIDは `` `${noteId}_${uid ?? cid}` ``。**ログイン不要で、解除できる。**
@@ -489,6 +629,48 @@ island/state
 上限は 企画12件 / 付箋20件 / ハート120回 / 日（`plan` は出すのも育てるのも同じ枠）。
 ハートは**解除も1回ぶん使う。** 使わないと、同じ付箋で押す・外すを
 繰り返して書き込みを無限に起こせる。
+
+### `islandChannels/{channelId}` — チャンネルIDと、名前と写真（#190・#202）
+
+配信に来たことがある人ぶん（2,200人以上）。`python/island_channels.py` と
+`python/island_channel_photos.py` が毎日置く。
+
+| 項目 | 型 | 中身 | 誰が |
+| --- | --- | --- | --- |
+| `name` | string | いま名乗っている名前 | `island_channels.py` |
+| `lastAt` | string | 最後に喋った時刻 | 同上 |
+| `photo` | string \| null | **YouTube のプロフィール写真** | `island_channel_photos.py` |
+| `photoAt` | string | 写真を入れた時刻 | 同上 |
+| `updatedAt` | string | | |
+
+#### `photo` はカードの絵ではない
+
+**混ぜないこと。** アイコンは2つあって、出どころも意味も違う。
+
+| | 何 | どこが正 |
+| --- | --- | --- |
+| キャラクター | カードに乗る絵（ひめひめさんのハリネズミ） | あやとのスプレッドシート（`site/content/residents.ts` に焼いてある） |
+| プロフィール写真 | YouTube のアイコン | `islandChannels.photo` |
+
+キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
+変わらないのが正しい。** `photo` はマイページのアイコンが古くならない
+ようにするためのもの。
+
+#### 毎日ぜんぶは引かない
+
+`channels.list` は `id` を50件まとめて渡せる（1回＝1ユニット）ので、
+2,200人でも45ユニットで済む。**それでも毎日ぜんぶは引かない。**
+枠は Discovery（`search.list` は1回100ユニット）と どねID の紐付けと
+分け合っていて、こちらが毎日45ユニット固定で乗ると、足りなくなった日に
+真っ先に困るのは配信の探索のほうだから。
+
+**1日500人まで（10ユニット）。** 順は
+（1）ログインしたことがある人 →（2）まだ写真が無くて最近来た人 →
+（3）残りをチャンネルID順に、日ごとに窓をずらして。
+2と3は直近90日に来た人だけ。500人ずつなら5日で1周する。
+
+**変わらなかった人には `photoAt` を書かない。** 書くと、変わっていない
+500件ぶんの書き込みを毎日払うことになる。順に回すのは窓ずらしがやる。
 
 ### `islandUsers/{uid}` — ログインした人
 
@@ -549,12 +731,18 @@ island/state
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
 | `GET` | `/state` | 誰でも | 数字・いまいる場所・企画提案・付箋・名前を出す住人 |
-| `GET` | `/nextplans` | 誰でも | 企画の一覧。`?archived=1` はあやとだけ |
+| `GET` | `/nextplans` | 誰でも | 企画の一覧。`?archived=1` はあやとだけ。**`?events=1` で運営側の企画（`board: false`）も混ぜる** |
 | `GET` | `/nextplans/:id` | 誰でも | 企画1件（育てる画面が続きを書くために引く） |
 | `POST` | `/nextplans` | 誰でも | 企画を出す。**題だけでいい**（1日12件） |
 | `POST` | `/nextplans/:id` | 出した人 | 育てる。**送った中身でまるごと置き換わる** |
 | `POST` | `/nextplans/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
 | `POST` | `/nextplans/:id/status` | あやとだけ | 段を動かす。`planId` で Git 側の企画に結ぶ |
+| `POST` | `/nextplans/:id/videos` | あやとだけ | **この企画のものだと決めた配信**（#202）。URL を貼ってもよい |
+| `GET` | `/streamevents?day=YYYY-MM-DD` | 誰でも | **その日に立っている企画**。1日に何本でも立つので配列 |
+| `GET` | `/streamevents/:id/images` | 誰でも | その企画の画像 |
+| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。貼った時点でカードも作る |
+| `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。カードも作り直す |
+| `DELETE` | `/streamevents/images/:id` | あやとだけ | 画像を消す。**カードも実体も消える** |
 | `POST` | `/nextplans/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
 | `GET` | `/ideas` | 誰でも | 企画提案の一覧（旧。画面は見ていない） |
 | `POST` | `/ideas` | 誰でも | 企画提案を貼る（旧。1日8件） |
