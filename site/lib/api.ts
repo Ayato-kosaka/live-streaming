@@ -1039,3 +1039,103 @@ export const sayRouletteResult = (id: string, token: string) =>
     headers: auth(token),
     body: "{}",
   });
+
+/* ---------------------------------------------------------------
+   Doneru の投げ銭を、YouTube のアカウントにつなぐ（#190）。**あやとだけ。**
+
+   Doneru はチャンネルIDを持っていない。持っているのは どねID と、
+   Doneru に出ていた呼び名だけ。カードは YouTube のアカウントに配るので、
+   ここを結ばないと、投げ銭してくれた人に何も渡らない。
+   --------------------------------------------------------------- */
+
+/** 対応表の状態。**「あとで引く」は無い。** 打ったその場で決まる。 */
+export type DonorState = "new" | "unlinked" | "linked";
+
+/** 対応表の1行。 */
+export type Donor = {
+  /** Doneru の どねID。**書類の id なので、直せない** */
+  viewerPk: string;
+  /** Doneru に出ていた呼び名 */
+  label: string | null;
+  /** つないだときに打った字 */
+  handle: string | null;
+  channelId: string | null;
+  /** そのチャンネルがいま名乗っている名前 */
+  channelName: string | null;
+  state: DonorState;
+  /** あやと本人。表には載るが、カードは渡さない */
+  isOwner: boolean;
+  note: string | null;
+  firstSeenAt: string | null;
+  editedAt: string | null;
+  /** 画面から足した行か。**戻ってこない行だけ、消せる** */
+  canDelete: boolean;
+};
+
+/** 何で引けたか。押した人に「何に繋がったか」を見せるために返る。 */
+export type DonorVia = "id" | "dict" | "youtube";
+
+/**
+ * つないだ結果。
+ *
+ * **決まらなかったことを、例外にしない。** 「2人に使われている」も
+ * 「見つからない」も、押した人が次にやることが変わるだけの、ふつうの返事。
+ */
+export type DonorLinked =
+  | { ok: true; donor: Donor; via: DonorVia | null }
+  | { ok: false; why: "duplicate" | "notfound" | "down" };
+
+/** 対応表をぜんぶ読む。30行ほどなので、並べ替えはサーバー側で済んでいる。 */
+export const getDonors = (token: string) =>
+  req<{ donors: Donor[] }>("/donors", { headers: auth(token) });
+
+async function postDonor(
+  pk: string,
+  body: Record<string, unknown>,
+  token: string,
+): Promise<DonorLinked> {
+  try {
+    const res = await fetch(`${API_BASE}/donors/${encodeURIComponent(pk)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...auth(token) },
+      body: JSON.stringify(body),
+    });
+    const j = (await res.json().catch(() => null)) as {
+      donor?: Donor;
+      via?: DonorVia | null;
+      error?: string;
+    } | null;
+    if (res.ok && j?.donor) return { ok: true, donor: j.donor, via: j.via ?? null };
+    const why = j?.error;
+    return {
+      ok: false,
+      why: why === "duplicate" || why === "notfound" ? why : "down",
+    };
+  } catch {
+    return { ok: false, why: "down" };
+  }
+}
+
+/**
+ * つなぐ。**打つのは表示名でも、貼り付けたチャンネルIDでもよい。**
+ *
+ * 引けたときだけ入る。引けなかったときは何も書かずに、なぜ駄目だったかが返る。
+ */
+export const linkDonor = (pk: string, handle: string, token: string) =>
+  postDonor(pk, { handle }, token);
+
+/**
+ * この人は分からない、と決める。
+ *
+ * **消すのとは違う。** 分からないと決めたことも1つの答えなので、
+ * 表に残す（残さないと、翌朝また「新規」として赤くなる）。
+ */
+export const unlinkDonor = (pk: string, token: string) =>
+  postDonor(pk, { clear: true }, token);
+
+/** 手で足した行を消す。**毎朝の取り込みが置いた行は消せない**（戻ってくる）。 */
+export const dropDonor = (pk: string, token: string) =>
+  req<{ deleted: string }>(`/donors/${encodeURIComponent(pk)}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });

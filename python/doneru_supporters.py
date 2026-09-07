@@ -23,9 +23,12 @@ BigQuery から取るが、**Doneru はチャンネルIDを持っていない**�
 
 ## 直しかた
 
-1. `python/donors_seed.json` にその どねID の行を足す
-2. 「管理スクリプトを実行」から `donors_import` を `{"apply": true}` で流す
-3. 翌日の取り込みで緑に戻る
+`/me` の「投げ銭を、YouTube につなぐ」で、その人の YouTube の名前を打つ。
+翌日の取り込みで緑に戻る（#190）。**スマホから直せる**ようにしてあるのは、
+これが赤くなるのが旅の途中だから。
+
+種（`python/donors_seed.json` → `donors_import`）からも入れられるが、
+あちらは最初の1回と、Firestore が飛んだときの戻し先。
 
 ## 入金の段階では絞らない
 
@@ -210,8 +213,7 @@ def main() -> int:
                 label = next((r["name"] for r in fresh if r["pk"] == pk), "")
             logger.error("    %s  %s", pk, label)
         logger.error("")
-        logger.error("python/donors_seed.json に行を足して、")
-        logger.error('donors_import を {"apply": true} で流してください。')
+        logger.error("/me の「投げ銭を、YouTube につなぐ」から紐付けてください。")
         return 1
 
     logger.info("紐付け待ちはありません")
