@@ -1732,6 +1732,19 @@ export const islandApi = onRequest(
         if (body.showPhoto !== undefined) patch.showPhoto = !!body.showPhoto;
         await ref.set(patch, {merge: true});
         const saved = {...was, ...patch};
+        /* 自分のチャンネルの、いまの写真。**1件だけ読む。**
+           失敗しても `/me` は返す（顔が古いだけで、ログインは通したい）。 */
+        let chPhoto: string | undefined;
+        const myCh = (saved.channelId as string) || "";
+        if (myCh) {
+          try {
+            const c = await db.collection("islandChannels").doc(myCh).get();
+            chPhoto = (c.data()?.photo as string) || undefined;
+          } catch (e) {
+            logger.warn("channel photo lookup failed", myCh, String(e));
+          }
+        }
+
         res.json({
           uid: t.uid,
           /* **保存してあるほうを返す。** 空の body で叩いたときは
@@ -1743,6 +1756,15 @@ export const islandApi = onRequest(
           handle: (saved.handle as string) || undefined,
           channelId: (saved.channelId as string) || undefined,
           photo: (saved.photo as string) || undefined,
+          /* **YouTube でいま出ている写真。** `photo` はログインを押した日の
+             ままで止まる（そのとき貰ったトークンに入っていたもの）。写真を
+             変えても、島のマイページだけ古い顔のまま残っていた。
+
+             `islandChannels` は日次で入れ直している（#202）。あそこは
+             2,200人ぶんの名簿なのでクライアントには開けていないので、
+             **自分のぶんだけここで渡す。**
+             取れなければ返さない。画面は `photo` に落ちるので顔は消えない。 */
+          channelPhoto: chPhoto,
           nickname: (saved.nickname as string) ?? null,
           showName: !!saved.showName,
           showPhoto: !!saved.showPhoto,
