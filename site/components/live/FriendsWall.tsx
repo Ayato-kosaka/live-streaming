@@ -161,7 +161,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                     {/* 2枚まで。ここは図鑑の欄の1つで、カード置き場ではない。
                         残りは下の行き先から見る */}
                     {mine.slice(0, 2).map((c) => (
-                      <CardOne key={c.id} card={c} plan={plans[c.day]} showName={false} />
+                      <CardOne key={c.id} card={c} plans={plans[c.day]} showName={false} />
                     ))}
                   </div>
                   <Link className="rz-cards-go" href="/cards">

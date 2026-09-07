@@ -32,12 +32,12 @@ import { cardIcon, cardWhen, type PlanBrief, type ShownCard } from "./cards";
  */
 export default function CardOne({
   card,
-  plan,
+  plans,
   showName = true,
 }: {
   card: ShownCard;
-  /** その日の企画。無い日は何も出さない */
-  plan?: PlanBrief;
+  /** その日の企画。**1日に何本でも立つ。** 無い日は何も出さない */
+  plans?: PlanBrief[];
   /**
    * 名前を出すか。**誰のカードかがもう分かっている並びでは出さない。**
    * 図鑑（`/friends`）とじぶんのこと（`/me`）は、その人のカードしか
@@ -82,12 +82,15 @@ export default function CardOne({
       <div className="akd-foot">
         <b>{cardWhen(card.day)}</b>
         {/* その日の企画（あやとの「フードワインフェスの企画に紐つけて欲しい」）。
-            **紐は日付1本。** カードにも写真にも企画の欄は無い。 */}
-        {plan && (
-          <Link className="akd-plan" href={plan.href} prefetch={false}>
-            {plan.title}
+
+            **1日に企画は何本でも立つ。** 9月11日がそれで、「北欧旅の
+            出発日」「海外出発二周年」「ジョージアバイバイ」の3本が同じ
+            配信に乗っている。1本しか出さないと、残りは黙って消える。 */}
+        {plans?.map((p) => (
+          <Link key={p.href} className="akd-plan" href={p.href} prefetch={false}>
+            {p.title}
           </Link>
-        )}
+        ))}
         {/* 名前が出るのは、島に名前を出してよいと言った人だけ。
             出していない人も絵は出る。自分の絵は自分で分かる。 */}
         {showName && card.name && <i className="akd-who">{card.name}</i>}

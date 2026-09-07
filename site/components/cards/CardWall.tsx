@@ -51,7 +51,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
         <>
           <div className="akd-grid">
             {cards.map((c) => (
-              <CardOne key={c.id} card={c} plan={plans[c.day]} />
+              <CardOne key={c.id} card={c} plans={plans[c.day]} />
             ))}
           </div>
           <p className="muted akd-note">
