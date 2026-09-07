@@ -203,6 +203,12 @@ def load(db: firestore.Client) -> tuple:
                 "channelId": v["channelId"],
                 "day": v.get("day") or "",
                 "videoId": v.get("videoId"),
+                # **配信の始まった時刻。落とすと日付の補正が効かない。**
+                # `events_for_tip` はこれを見て「投げ銭の日」ではなく
+                # 「配信の始まった日」で企画に当てる。ここに入れ忘れて
+                # いたので補正がまるごと死んでいた（本番で aoi さんが
+                # 翌日に落ちていた。ホワイトリストで救われていただけ）
+                "videoStartedAt": v.get("videoStartedAt"),
                 "donatedAt": int(v.get("donatedAt") or 0),
             }
         )
@@ -228,7 +234,7 @@ def main() -> int:
                 had = want.get(key)
                 if had and had["tip"]["donatedAt"] <= tip["donatedAt"]:
                     continue
-                want[key] = {"image": im, "tip": tip}
+                want[key] = {"image": im, "tip": tip, "event": ev}
     logger.info("あるべきカード: %d枚", len(want))
     if not want:
         return 0
@@ -245,11 +251,17 @@ def main() -> int:
     make, fix = [], []
     for key in keys:
         w = want[key]
+        # **投げ銭の日ではなく、企画の日。** 台帳の day は投げてくれた
+        # 瞬間の日本時間なので、0時をまたいだ配信では後半の人が翌日に
+        # なる。そのまま入れると同じ1枚の写真から出たカードが2つの日付に
+        # 割れて、画面（day で企画名を引く）で片方だけ企画名が消える。
+        # 日付の無い企画（提案）だけ、投げ銭の日に落ちる。
+        day = w["event"]["date"] or w["tip"]["day"]
         who = {
             "channelId": w["tip"]["channelId"],
             "streamEventId": w["image"]["streamEventId"],
             "streamEventImageId": w["image"]["id"],
-            "day": w["tip"]["day"],
+            "day": day,
             "earnedAt": w["tip"]["donatedAt"] or w["image"]["at"] or now_ms,
         }
         cur = have.get(key)
@@ -259,6 +271,9 @@ def main() -> int:
         elif not cur.get("streamEventImageId"):
             # 旧来の「動かしたぶんだけ」の書類。**置き方には触らない**
             fix.append((key, {**who, "updatedAt": now_ms}))
+        elif day and cur.get("day") != day:
+            # 素性はそろっているが日付が企画とずれている。日付だけ直す
+            fix.append((key, {"day": day, "updatedAt": now_ms}))
 
     logger.info("新しく作る %d枚 / 素性を足す %d枚 / そのまま %d枚",
                 len(make), len(fix), len(have) - len(fix))
