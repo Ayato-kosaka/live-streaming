@@ -22,22 +22,37 @@
  * 「この人は分からない」(`clear`)にも入れる。**分からないと決めたことも、
  * 種で上書きされてはいけない。**
  *
- * ## 名前は、ここでは引かない
+ * ## 名前は、押したその場で引く
  *
  * 画面から届くのは `@ひめひめ-r9z` のような**表示名**で、チャンネルIDでは
- * ない。名前からチャンネルIDを引くには `chat_messages`(BigQuery)が要るが、
- * **Functions からは BigQuery を叩かない。** だからここは名前を預かるだけで、
- * `state: "pending"` を置く。引くのは夜のジョブ(`doneru_supporters.py`)。
+ * ない。引く道は2つ、上から順に見る。
+ *
+ * 1. **辞書**(`islandChannels`)。毎日のジョブ(`python/island_channels.py`)が
+ *    BigQuery の `chat_messages` から作っている「チャンネルID → いま
+ *    名乗っている名前」。配信に来たことがある人はここで当たる
+ * 2. **YouTube に聞く**(`channels.list({forHandle})`)。来たことのない人と、
+ *    名前を変えたばかりの人はここで拾う
+ *
+ * **その場で決まるので、「あとで引く」状態(`pending`)は作らない。**
+ * 一度は置いていたが、置くと「打ったのに、まだつながっていない」行が
+ * 画面に残ることになる。あやとが見たいのは打った直後の答えなので、
+ * 決まらなかったときは**保存せずに、決まらなかったと返す。**
  *
  * **`UC` で始まる24文字はチャンネルIDとして受ける。** 貼り付けられる人には
- * そのほうが速いし、その場で `linked` になる。
+ * そのほうが速いし、引かずに済む。
  *
- * ## 4つの状態
+ * ## 名前が2人に使われていたら、決めない
+ *
+ * 表示名は誰でも同じにできる。**あやとの打ち間違いを疑う話ではない。
+ * 打った名前が正しくても行き先が2つある。** どちらか分からないまま
+ * 保存すると、別の人にカードが行く。だからそこで止めて、そう返す
+ * (`python/donor_channels.py` と同じ決めかた)。
+ *
+ * ## 3つの状態
  *
  * | state | 意味 | カードを渡せるか |
  * | --- | --- | --- |
  * | `linked`   | チャンネルIDまで分かっている | **渡せる** |
- * | `pending`  | 名前は入れた。夜のジョブが引く | まだ |
  * | `unlinked` | この人は分からない、と決めた | 渡せない |
  * | `new`      | 表に無い どねID が投げ銭してきた | **紐付け待ち。赤い** |
  *
@@ -50,18 +65,23 @@
  * ## 索引を使わない(#168)
  *
  * サービスアカウントに複合索引を作る権限が無いので、`where` と `orderBy` を
- * 組み合わせると本番で 500 になる。表は30行ほどしか無いので、
- * **引いてから並べ替える。**
+ * 組み合わせると本番で 500 になる。対応表は30行ほどしか無いので、
+ * **引いてから並べ替える。** 辞書を名前で引くところも
+ * **単一フィールドの等価だけ**にしてある(索引が要らない範囲)。
  */
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {youtube} from "./youtubeClient";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 /** どねID → YouTube のアカウントの対応表。ドキュメントIDが どねID。 */
 const DONORS = db.collection("islandDonors");
+
+/** チャンネルID → いま名乗っている名前。毎日のジョブが作る。 */
+const CHANNELS = db.collection("islandChannels");
 
 /** 一度に読む行数。いまは30行ほど。増えても指で見る量には限りがある。 */
 const MAX_DONORS = 300;
@@ -84,16 +104,18 @@ const MAX_HANDLE = 80;
 type Json = Record<string, unknown>;
 
 /** 対応表の状態。 */
-type DonorState = "new" | "pending" | "unlinked" | "linked";
+type DonorState = "new" | "unlinked" | "linked";
 
 /** 画面に返す1行。 */
 type Donor = {
   viewerPk: string;
   /** 呼び名。Doneru に出ていた名前か、あやとが種に書いたもの */
   label: string | null;
-  /** YouTube の表示名。夜のジョブがこれでチャンネルIDを引く */
+  /** 打った YouTube の表示名。何を打って繋いだかが分かるように残す */
   handle: string | null;
   channelId: string | null;
+  /** そのチャンネルがいま名乗っている名前。辞書から引く */
+  channelName: string | null;
   state: DonorState;
   /** あやと本人。表には載せるが、カードは渡さない */
   isOwner: boolean;
@@ -107,7 +129,8 @@ type Donor = {
    * 消せる行か。**画面から足した行だけ。**
    *
    * 毎朝の取り込みが置いた行と、種から入った行は消しても戻ってくるので、
-   * 消せるように見せるほうが嘘になる。
+   * 消せるように見せるほうが嘘になる。画面から足したときだけ `addedAt` が
+   * 入る(`editedAt` と一緒に入るが、あちらは直した行にも入る)。
    */
   canDelete: boolean;
 };
@@ -134,6 +157,20 @@ export type DonorsRes = {
 };
 
 /**
+ * 打った名前を引いた結果。
+ *
+ * `via` は**何で引けたか**。画面はこれを見て「辞書にいました」「YouTube に
+ * 聞きました」を出し分ける。押した人が、何に繋がったのかを見て確かめられる
+ * ようにするため。
+ */
+type Found =
+  | {ok: true; channelId: string; name: string | null; via: Via}
+  | {ok: false; why: "duplicate" | "notfound"};
+
+/** 引けた道。`id` は打たれたのがチャンネルIDそのものだった場合。 */
+type Via = "id" | "dict" | "youtube";
+
+/**
  * 文字列にして、前後の空白を落として、長さで切る。
  * @param {unknown} v 受け取った値
  * @param {number} max 残す長さ
@@ -145,28 +182,81 @@ function clean(v: unknown, max: number): string {
 }
 
 /**
+ * 打たれた文字から、チャンネルIDを決める。
+ *
+ * **決まらなかったら決めない。** 当てずっぽうで一番それらしいものを返すと、
+ * 別の人にカードが渡る。返せないときは、なぜ返せないかを返す。
+ * @param {string} typed 打たれた文字(表示名 か チャンネルID)
+ * @return {Promise<Found>} 引けたチャンネルID、または引けなかった理由
+ */
+async function findChannel(typed: string): Promise<Found> {
+  // 貼り付けられたIDは、引かずにそのまま使う
+  if (CHANNEL_ID.test(typed)) {
+    const got = await CHANNELS.doc(typed).get();
+    const name = got.exists ? got.data()?.name : null;
+    return {
+      ok: true,
+      channelId: typed,
+      name: typeof name === "string" ? name : null,
+      via: "id",
+    };
+  }
+
+  /* 辞書を名前で引く。**等価だけ**なので索引は要らない(#168)。
+     2件目が取れるかどうかだけ知りたいので、2件で足りる。 */
+  const hit = await CHANNELS.where("name", "==", typed).limit(2).get();
+  if (hit.size >= 2) return {ok: false, why: "duplicate"};
+  if (hit.size === 1) {
+    return {ok: true, channelId: hit.docs[0].id, name: typed, via: "dict"};
+  }
+
+  /* 辞書に無い。**配信に来たことがない人**か、**名前を変えたばかりの人**。
+     YouTube に聞けば、どちらも拾える。 */
+  try {
+    const r = await youtube.channels.list({
+      part: ["id", "snippet"],
+      forHandle: typed,
+    });
+    const it = r.data.items?.[0];
+    if (it?.id) {
+      return {
+        ok: true,
+        channelId: it.id,
+        name: it.snippet?.customUrl || it.snippet?.title || null,
+        via: "youtube",
+      };
+    }
+  } catch (e) {
+    // 聞けなくても「見つからない」と同じ扱い。押した人にできることは同じ
+    logger.warn("youtube forHandle failed", typed, String(e));
+  }
+  return {ok: false, why: "notfound"};
+}
+
+/**
  * Firestore に入っている値を、画面に返す形にそろえる。
  *
  * **チャンネルIDが入っていれば `linked`。** 状態の字は書き換わり損ねることが
- * あるが(種・夜のジョブ・画面の3か所が書く)、カードが渡せるかどうかは
+ * あるが(種・毎朝の取り込み・画面の3か所が書く)、カードが渡せるかどうかは
  * チャンネルIDがあるかどうかで決まっているので、そちらを信じる。
  * @param {string} id ドキュメントID(= どねID)
  * @param {Json} v Firestore に入っている値
+ * @param {string | null} channelName 辞書から引いたチャンネルの名前
  * @return {Donor} 画面に返す1行
  */
-function shape(id: string, v: Json): Donor {
+function shape(id: string, v: Json, channelName?: string | null): Donor {
   const channelId = typeof v.channelId === "string" ? v.channelId : null;
-  const was = v.state;
   const state: DonorState = channelId ?
     "linked" :
-    was === "new" || was === "pending" ?
-      was :
+    v.state === "new" ?
+      "new" :
       "unlinked";
   return {
     viewerPk: id,
     label: typeof v.label === "string" ? v.label : null,
     handle: typeof v.handle === "string" ? v.handle : null,
     channelId,
+    channelName: channelName ?? null,
     state,
     isOwner: v.isOwner === true,
     note: typeof v.note === "string" ? v.note : null,
@@ -179,13 +269,12 @@ function shape(id: string, v: Json): Donor {
 /** 並び順。**赤くなっている原因がいちばん上。** */
 const ORDER: Record<DonorState, number> = {
   new: 0,
-  pending: 1,
-  unlinked: 2,
-  linked: 3,
+  unlinked: 1,
+  linked: 2,
 };
 
 /**
- * 並べ替える。`new` → `pending` → `unlinked` → `linked`。
+ * 並べ替える。`new` → `unlinked` → `linked`。
  *
  * `new` の中は、見つけた日の古い順。**いちばん長く待っている人が上。**
  * ほかは呼び名で並べる(同じ人が複数の どねID を持っているので、
@@ -202,6 +291,31 @@ function byState(a: Donor, b: Donor): number {
   const an = a.handle ?? a.label ?? "";
   const bn = b.handle ?? b.label ?? "";
   return an.localeCompare(bn, "ja");
+}
+
+/**
+ * チャンネルIDから、いま名乗っている名前を引く。
+ *
+ * **1件ずつ引かない。** 対応表は30行ほどだが、指で開くたびに30往復すると
+ * 電波の悪いところで目に見えて待つ。`getAll` は1往復で済む。
+ * @param {string[]} ids 引きたいチャンネルID(重複していてよい)
+ * @return {Promise<Map<string, string>>} チャンネルID → 名前
+ */
+async function nameOf(ids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const uniq = [...new Set(ids)];
+  if (uniq.length === 0) return out;
+  try {
+    const got = await db.getAll(...uniq.map((id) => CHANNELS.doc(id)));
+    for (const d of got) {
+      const n = d.data()?.name;
+      if (typeof n === "string") out.set(d.id, n);
+    }
+  } catch (e) {
+    // 名前が出ないだけ。紐付いているかどうかは channelId で分かる
+    logger.warn("channel names failed", String(e));
+  }
+  return out;
 }
 
 /**
@@ -231,8 +345,16 @@ export async function handleDonors(
     res.set("Cache-Control", "no-store");
     try {
       const snap = await DONORS.limit(MAX_DONORS).get();
-      const donors: Donor[] = [];
-      snap.forEach((d) => donors.push(shape(d.id, d.data() ?? {})));
+      const rows: {id: string; v: Json}[] = [];
+      snap.forEach((d) => rows.push({id: d.id, v: d.data() ?? {}}));
+      const names = await nameOf(
+        rows
+          .map((r) => r.v.channelId)
+          .filter((c): c is string => typeof c === "string"),
+      );
+      const donors = rows.map((r) =>
+        shape(r.id, r.v, names.get(String(r.v.channelId ?? "")) ?? null),
+      );
       donors.sort(byState);
       res.json({donors});
     } catch (e) {
@@ -259,11 +381,24 @@ export async function handleDonors(
     }
     const clear = q.body.clear === true;
     /* 打つ欄は1つ。**名前とIDのどちらが来ても受ける。**
-       貼り付けられる人はIDのほうが速いし、その場で `linked` になる。 */
+       貼り付けられる人はIDのほうが速い。 */
     const typed = clean(q.body.handle ?? q.body.channelId, MAX_HANDLE);
     if (!clear && !typed) {
       res.status(400).json({error: "empty"});
       return true;
+    }
+    res.set("Cache-Control", "no-store");
+
+    /* **引けてから書く。** 引けないまま「あとで引く」行を残すと、
+       打ったのにつながっていない行が画面に居座る。 */
+    let found: Found | null = null;
+    if (!clear) {
+      found = await findChannel(typed);
+      if (!found.ok) {
+        // 400 番台。押した人がやり直せる話なので、理由をそのまま返す
+        res.status(409).json({error: found.why, typed});
+        return true;
+      }
     }
 
     const ref = DONORS.doc(pk);
@@ -285,25 +420,25 @@ export async function handleDonors(
       patch.label = null;
       patch.addedAt = now;
     }
-    if (clear) {
+    if (clear || !found?.ok) {
       // この人は分からない。手がかりも残さない
       patch.channelId = null;
       patch.handle = null;
       patch.state = "unlinked";
-    } else if (CHANNEL_ID.test(typed)) {
-      patch.channelId = typed;
-      patch.state = "linked";
     } else {
+      patch.channelId = found.channelId;
+      // 打った字を残す。何を打って繋いだかが、あとから分かるように
       patch.handle = typed;
-      /* **前のチャンネルIDは落とす。** 名前を打ち直すのは「別の人だった」
-         ということなので、残すと古い行き先にカードが渡り続ける。
-         夜のジョブが、この名前から引き直す。 */
-      patch.channelId = null;
-      patch.state = "pending";
+      patch.state = "linked";
     }
     await ref.set(patch, {merge: true});
-    res.set("Cache-Control", "no-store");
-    res.json({donor: shape(pk, {...had, ...patch})});
+    const name = found?.ok ? found.name : null;
+    res.json({
+      donor: shape(pk, {...had, ...patch}, name),
+      /* 何で引けたか。**画面はこれを出す。** 押した結果が
+         「つながりました」だけだと、何に繋がったのかが分からない */
+      via: found?.ok ? found.via : null,
+    });
     return true;
   }
 

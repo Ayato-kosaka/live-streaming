@@ -63,6 +63,23 @@ const PLANS = {
   next: null,
 };
 
+/**
+ * Doneru の対応表（#190）。**あやとの画面でしか出ない。**
+ *
+ * 本番の口は名前からチャンネルIDを引くが（島の名簿 → YouTube）、
+ * この箱からはどちらにも出られない。**打った字で返事を決める。**
+ *   `@ふたご`   … 2人に使われている（決めない）
+ *   `@いない…`  … 見つからない
+ *   それ以外     … つながる
+ */
+let DONORS = [
+  { viewerPk: "117763460062995449096", label: "きのう来た人", handle: null, channelId: null, channelName: null, state: "new", isOwner: false, note: null, firstSeenAt: ago(1), editedAt: null, canDelete: false },
+  { viewerPk: "115344581653245733797", label: "KURA ekisu", handle: null, channelId: null, channelName: null, state: "new", isOwner: false, note: null, firstSeenAt: ago(4), editedAt: null, canDelete: false },
+  { viewerPk: "114910762433928193967", label: "信州檸檬", handle: null, channelId: null, channelName: null, state: "unlinked", isOwner: false, note: null, firstSeenAt: null, editedAt: ago(20), canDelete: false },
+  { viewerPk: "101760203751954301886", label: null, handle: "@ひめひめ-r9z", channelId: "UCaaaaaaaaaaaaaaaaaaaaaa", channelName: "@ひめひめ-r9z", state: "linked", isOwner: false, note: null, firstSeenAt: null, editedAt: null, canDelete: false },
+  { viewerPk: "103311111111111111111", label: null, handle: "@まーさん7286", channelId: "UCbbbbbbbbbbbbbbbbbbbbbb", channelName: "@まーさん7286", state: "linked", isOwner: false, note: null, firstSeenAt: null, editedAt: null, canDelete: false },
+];
+
 /** ルーレットのセッション（#164）。id は本番と同じ 32 桁。 */
 const RL_ID = "0123456789abcdef0123456789abcdef";
 const rlItem = (id, label, name, byHand = false) => ({
@@ -117,6 +134,35 @@ export async function apply(ctx, opts = {}) {
       return json(r, u.searchParams.get("mine") === "1" ? MINE : ALL);
     }
     if (path === "/nextplans") return json(r, PLANS);
+    if (path.startsWith("/donors")) {
+      if (r.request().method() === "GET") return json(r, { donors: DONORS });
+      const pk = decodeURIComponent(path.slice("/donors/".length));
+      if (r.request().method() === "DELETE") {
+        DONORS = DONORS.filter((d) => d.viewerPk !== pk);
+        return json(r, { deleted: pk });
+      }
+      let body = {};
+      try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
+      const typed = String(body.handle || "").trim();
+      if (!body.clear && typed === "@ふたご") {
+        return r.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "duplicate", typed }) });
+      }
+      if (!body.clear && typed.startsWith("@いない")) {
+        return r.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "notfound", typed }) });
+      }
+      const had = DONORS.find((d) => d.viewerPk === pk);
+      const via = body.clear ? null : /^UC[\w-]{22}$/.test(typed) ? "id" : "dict";
+      const donor = {
+        ...(had || { viewerPk: pk, label: null, isOwner: false, note: null, firstSeenAt: null, canDelete: true }),
+        handle: body.clear ? null : typed,
+        channelId: body.clear ? null : "UCcccccccccccccccccccccc",
+        channelName: body.clear ? null : typed,
+        state: body.clear ? "unlinked" : "linked",
+        editedAt: new Date().toISOString(),
+      };
+      DONORS = had ? DONORS.map((d) => (d.viewerPk === pk ? donor : d)) : [donor, ...DONORS];
+      return json(r, { donor, via });
+    }
     if (path === "/nordic/log") return json(r, { log: [] });
     if (path.startsWith("/roulette")) {
       const spin = opts.spin ?? process.env.RLSPIN === "1";
