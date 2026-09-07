@@ -337,11 +337,13 @@ export type MintResult = {made: number; kept: number; fixed: number};
  * 一覧から消える**（並べ替えの欄が無い書類は、その問い合わせに載らない）。
  * @param {ImageRef[]} images カードになる画像
  * @param {TipRef[]} tips その企画に当たる投げ銭
+ * @param {string} eventDay その企画の日付。カードの `day` はここから決める
  * @return {Promise<MintResult>} 作った数、すでにあった数、素性を足した数
  */
 export async function mintCards(
   images: ImageRef[],
   tips: TipRef[],
+  eventDay: string,
 ): Promise<MintResult> {
   /** 同じ人が同じ日に何度も投げても、カードは1枚。いちばん早い1回を採る。 */
   const first = new Map<string, TipRef>();
@@ -376,12 +378,31 @@ export async function mintCards(
         streamEventImageId: w.image.id,
         /* 日付も持つ。画面が企画の札を引くのに使う。画像から辿れば
            出せるが、`/cards` は毎回100枚単位で返すので、そのたびに
-           企画まで往復すると読みが3倍になる。 */
-        day: w.tip.day,
+           企画まで往復すると読みが3倍になる。
+
+           **投げ銭の日ではなく、企画の日を入れる。** 台帳の `day` は
+           投げてくれた瞬間の日本時間で、0時をまたいだ配信では後半の人が
+           翌日になる。それをそのまま入れると、**同じ1枚の写真から
+           出たカードが2つの日付に割れる**（本番で実際に割れていた。
+           food-wine-fest の3枚が 09-06 と 09-07）。画面は `day` で
+           企画名を引くので、割れたほうは企画名が出ず、日付も1日ずれる。
+           カードは企画に属するものなので、企画の日付を持たせる。
+           日付の無い企画（提案）だけ、投げ銭の日に落ちる。 */
+        day: eventDay || w.tip.day,
         earnedAt: w.tip.donatedAt || w.image.at || now,
       };
       if (had[k].exists) {
         if (had[k].get("streamEventImageId")) {
+          /* 素性はそろっているが、**日付が企画とずれている**書類。
+             0時をまたいだぶんが投げ銭の日で焼かれている。ここで直す。
+             置き方には触らないので、動かしたカードは動かない。 */
+          if (who.day && had[k].get("day") !== who.day) {
+            batch.set(CARDS.doc(w.id), {day: who.day, updatedAt: now},
+              {merge: true});
+            fixed += 1;
+            n += 1;
+            return;
+          }
           kept += 1;
           return;
         }
@@ -421,7 +442,7 @@ export async function mintForImage(image: ImageRef): Promise<MintResult> {
   if (!snap.exists) return {made: 0, kept: 0, fixed: 0};
   const ev = eventRef(snap.id, snap.data() ?? {});
   const tips = await tipsForEvent(ev);
-  return mintCards([image], tips);
+  return mintCards([image], tips, ev.date);
 }
 
 /**
@@ -436,9 +457,10 @@ export async function resyncCardsOfImage(
   image: ImageRef,
 ): Promise<MintResult> {
   const snap = await EVENTS.doc(image.streamEventId).get();
-  const tips = snap.exists ?
-    await tipsForEvent(eventRef(snap.id, snap.data() ?? {})) :
-    [];
+  const ev = snap.exists ?
+    eventRef(snap.id, snap.data() ?? {}) :
+    null;
+  const tips = ev ? await tipsForEvent(ev) : [];
   const keep = new Set(
     image.role === "card" ?
       tips.map((t) => cardId(image.id, whoKey(t.channelId))) :
@@ -454,7 +476,7 @@ export async function resyncCardsOfImage(
     await batch.commit();
     logger.info("dropped stale cards", image.id, gone.length);
   }
-  return mintCards([image], tips);
+  return mintCards([image], tips, ev?.date ?? "");
 }
 
 /* ---------------- 置き方の既定値 ----------------
