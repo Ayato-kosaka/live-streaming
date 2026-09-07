@@ -33,6 +33,10 @@ import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
 import {handleCards} from "./cards";
+/* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
+   **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
+   (`donors.ts` 冒頭)。 */
+import {handleDonors} from "./donors";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -1365,6 +1369,19 @@ export const islandApi = onRequest(
           {method, path, auth: req.headers.authorization, body},
           res,
           {whoIs, ownerUid, listResidents},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- Doneru の対応表(#190) ----------------
+         中身は `donors.ts`。ここは取り付けだけ。扱ったら true が返る。
+         「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
+      if (
+        await handleDonors(
+          {method, path, auth: req.headers.authorization, body},
+          res,
+          {ownerUid},
         )
       ) {
         return;

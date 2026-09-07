@@ -332,3 +332,93 @@
   font-weight: 700;
   color: var(--ink-2);
 }
+
+/* --- 投げ銭の紐付け（あやとだけ・#190） -------------------------------
+   1人ぶんが「名前・いまの状態・書く欄2つ・押しどころ」の4段になる。
+   これが30行並ぶので、**段と段のあいだを詰める。** 空けると、1人ぶんが
+   375×812 の1画面を超えて、上の名前を見ないまま下の欄に打つことになる。 */
+.mp-donor-count {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mp-donor-count b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.mp-donor-group { margin-top: var(--sp-4); }
+/* ひとまとまりの札。**押しどころではないので、完全に平ら。**
+   罫1本で区切って、その下に何が並ぶかだけを言う。 */
+.mp-donor-h {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 2px solid var(--rule);
+}
+.mp-donor-h b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  line-height: var(--lh-head);
+  color: var(--ink);
+}
+.mp-donor-h i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 書く欄は作業台に載せる（`.dform`）。素の入力欄を紙に直に置くと、
+   そこだけ「作りかけのウェブサイト」に戻る（`app/css/ui.css` 冒頭）。
+   ただし一覧の中に30枚並ぶので、台の余白は素の `.dform` より詰める。 */
+.mp-donor-form {
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+.mp-donor-form input { min-height: 48px; }
+/* どねID は書類の id なので直せない。**彫らずに平らにして、書ける欄と
+   見た目で分ける。** 灰色に伏せるのではなく、字はそのまま読める濃さで残す
+   （読むための欄なので、読めなくなっては困る）。
+   **`.dform input` より強く書く。** クラス1つでは負けて、書ける欄と
+   まったく同じ顔になる（撮って気づいた）。 */
+.dform input.mp-donor-fixed {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--frame-dark) 55%, var(--paper));
+  background: color-mix(in srgb, var(--frame) 14%, var(--paper));
+  box-shadow: none;
+  color: var(--ink-2);
+}
+
+.mp-donor-note {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 押した結果。**その場で、何に繋がったかまで出す。**
+   出しっぱなしにして消さない（`docs/island-design.md` 3-6）。 */
+.mp-donor-said {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--r-0) var(--r-0) 0;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.8;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* 1人ふやす。一覧の外なので、罫を1本引いて離す。 */
+.mp-donor-add {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 2px solid var(--rule);
+}
