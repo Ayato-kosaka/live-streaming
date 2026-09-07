@@ -60,6 +60,9 @@ from google.cloud import firestore
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_PROJECT_ID  # noqa: E402
+# 日本時間の日付に切るところは台帳と同じものを使う。**2か所に書かない。**
+# ずれると、台帳とカードで「どの日の配信か」が食い違う
+from island_tips import jst_day  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -133,10 +136,23 @@ def events_for_tip(events: List[dict], tip: dict) -> List[dict]:
     Returns:
         当たった企画。0本のこともある
     """
+    # **配信の日は、投げ銭の日ではなく「その配信が始まった日」。**
+    #
+    # 2026-09-06 の配信で踏んだ。22時に始まった `q30MlzefQ8c` に、
+    # たぃさん（22:27）と aoi さん（翌 00:23）が投げてくれた。**同じ配信**
+    # なのに、日付で当てていたので aoi さんだけ翌日に落ちて、その日の
+    # 写真にカードが付かなかった。
+    #
+    # 配信が「どの日のものか」を決めるのは配信の始まりで、視聴者が
+    # いつ押したかではない。videoId が分かっているならそちらを使う。
+    day = tip.get("day")
+    if tip.get("videoStartedAt"):
+        day = jst_day(int(tip["videoStartedAt"]))
+
     out = []
     for e in events:
         by_video = bool(tip.get("videoId")) and tip["videoId"] in e["videoIds"]
-        by_date = bool(e["date"]) and e["date"] == tip.get("day")
+        by_date = bool(e["date"]) and e["date"] == day
         if by_video or by_date:
             out.append(e)
     return out
