@@ -1,0 +1,126 @@
+{
+  "_note": [
+    "islandStreamEvent の種（#202）。python/admin/streamevents_import.py が読む。",
+    "**最初の1回と、Firestore が飛んだときの戻し先。** 入ったあとの正は Firestore。",
+    "画面から直したもの（editedAt / updatedAt が入っているもの）は上書きしない。",
+    "",
+    "2種類ある。",
+    "  git-plan   … site/content/plans.ts に立っている企画。id は Git 側と同じ",
+    "  nordic-day … site/content/nordic.ts の DAYS。北欧◯日目も企画レコードを持つ",
+    "",
+    "**1日に企画は何本でも立つ。** 9月11日は4本（ジョージアバイバイ／海外出発",
+    "二周年／ヒッチハイクで北欧へ／北欧旅の出発日）。カードは当たった企画",
+    "すべてに配られる。1本に決めない。",
+    "",
+    "**board: false** は掲示板の一覧に出さない印。掲示板は「みんなが出した",
+    "提案」を並べる場所で、ここは運営側の企画なので混ぜない。カードの",
+    "組み立てには使われる（hidden とは別もの。hidden にすると引かれなくなる）。",
+    "",
+    "day-stay（ストックホルムで7泊）は入れていない。日付が day-9 と同じで、",
+    "配信の日ではなく滞在の行だから。要るなら足す。"
+  ],
+  "events": [
+    {
+      "id": "food-wine-fest",
+      "source": "git-plan",
+      "planId": "food-wine-fest",
+      "title": "Food & Wine Fest @ ムタツミンダ公園",
+      "when": "2026年9月6日(日)",
+      "date": "2026-09-06"
+    },
+    {
+      "id": "georgia-bye",
+      "source": "git-plan",
+      "planId": "georgia-bye",
+      "title": "ジョージアバイバイ",
+      "when": "2026年9月11日(金)",
+      "date": "2026-09-11"
+    },
+    {
+      "id": "japan-2years",
+      "source": "git-plan",
+      "planId": "japan-2years",
+      "title": "海外出発二周年記念日",
+      "when": "2026年9月11日(金)",
+      "date": "2026-09-11"
+    },
+    {
+      "id": "nordic",
+      "source": "git-plan",
+      "planId": "nordic",
+      "title": "ヒッチハイクで北欧へ",
+      "when": "2026年9月11日(金) 23:30 出発",
+      "date": "2026-09-11"
+    },
+    {
+      "id": "nordic-day-depart",
+      "source": "nordic-day",
+      "title": "北欧旅 出発 — トビリシからクタイシ、夜の便でポーランドへ",
+      "when": "2026年9月11日(金)",
+      "date": "2026-09-11"
+    },
+    {
+      "id": "nordic-day-1",
+      "source": "nordic-day",
+      "title": "北欧旅 1日目 — カトヴィツェからワルシャワへ",
+      "when": "2026年9月12日(土)",
+      "date": "2026-09-12"
+    },
+    {
+      "id": "nordic-day-2",
+      "source": "nordic-day",
+      "title": "北欧旅 2日目 — ワルシャワからビャウィストクへ",
+      "when": "2026年9月13日(日)",
+      "date": "2026-09-13"
+    },
+    {
+      "id": "nordic-day-3",
+      "source": "nordic-day",
+      "title": "北欧旅 3日目 — ビャウィストクからヴィリニュスへ",
+      "when": "2026年9月14日(月)",
+      "date": "2026-09-14"
+    },
+    {
+      "id": "nordic-day-4",
+      "source": "nordic-day",
+      "title": "北欧旅 4日目 — ヴィリニュスで休息日",
+      "when": "2026年9月15日(火)",
+      "date": "2026-09-15"
+    },
+    {
+      "id": "nordic-day-5",
+      "source": "nordic-day",
+      "title": "北欧旅 5日目 — ヴィリニュスからリガへ",
+      "when": "2026年9月16日(水)",
+      "date": "2026-09-16"
+    },
+    {
+      "id": "nordic-day-6",
+      "source": "nordic-day",
+      "title": "北欧旅 6日目 — リガからタリンへ",
+      "when": "2026年9月17日(木)",
+      "date": "2026-09-17"
+    },
+    {
+      "id": "nordic-day-7",
+      "source": "nordic-day",
+      "title": "北欧旅 7日目 — タリンからヘルシンキへ",
+      "when": "2026年9月18日(金)",
+      "date": "2026-09-18"
+    },
+    {
+      "id": "nordic-day-8",
+      "source": "nordic-day",
+      "title": "北欧旅 8日目 — ヘルシンキからトゥルク、夜行フェリー",
+      "when": "2026年9月19日(土)",
+      "date": "2026-09-19"
+    },
+    {
+      "id": "nordic-day-9",
+      "source": "nordic-day",
+      "title": "北欧旅 9日目 — ストックホルム到着",
+      "when": "2026年9月20日(日)",
+      "date": "2026-09-20"
+    }
+  ]
+}

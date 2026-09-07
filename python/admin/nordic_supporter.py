@@ -1,4 +1,17 @@
-"""北欧旅の「その日いた人」を、手で足す・外す。
+"""北欧旅の「その日いた人」を、手で足す・外す。（**#202 で用済み**）
+
+**ここが書く `nordicDays` は、もう誰も読んでいない**（#202）。
+カードの元は台帳（`islandTips`）に移った。ここから足しても、
+カードは1枚も増えない。
+
+Doneru の人にカードを渡すには、`/me` の「投げ銭を、YouTube につなぐ」
+から どねID に YouTube のアカウントを紐付ける（#190）。翌日の日次ジョブ
+（`python/island_tips.py` → `python/island_cards.py`）でカードができる。
+
+消していないのは、全部が動いたと確かめるまで置いておくため。
+
+---
+
 
 Doneru で出してくれた人は**自動で取れない**（`docs/nordic-photos.md` 4章）。
 YouTube のスパチャは `python/nordic_supporters.py` が BigQuery から
