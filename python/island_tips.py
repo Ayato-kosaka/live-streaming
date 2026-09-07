@@ -126,19 +126,63 @@ WHERE m.event_type = 'PAID'
 # --- Doneru ---------------------------------------------------------------
 # 入金の段階（`status`）では絞らない。「振込待ち」は**あやとへの入金が
 # どこまで進んだか**であって、投げ銭が成立したかどうかではない。
+#
+# ## 動画IDを、時刻から当てる
+#
+# **Doneru の投げ銭は、どの配信のものかを持っていない。** 生データにあるのは
+# 時刻・金額・呼び名だけで、videoId はどこにも無い。
+#
+# それで困ったのが 2026-09-06 だった。日本時間0時で切ったので、0時をまたいだ
+# ひめひめさんと aoi さんの投げ銭が翌日に落ち、その日の写真にカードが
+# 付かなかった。あやとの用意した逃げ道（`islandStreamEvent.videoIds` に
+# 動画IDを手で足す）は、**足す動画IDが無いので効かない。**
+#
+# なので**投げ銭の時刻を、配信の時間帯に当てる。** 配信の終わりは持って
+# いないが、**その配信の最後のチャット**が実質の終わりなので、そこから出す。
+# 当たれば videoId が入り、YouTube のスパチャと同じ土俵に乗る
+# （ホワイトリストも効くようになる）。
+#
+# **終わりから30分の猶予を置く。** チャットが止まってから投げてくれる人が
+# いる。逆に、次の配信が始まっていたらそちらが勝つ（`started_at` の新しい
+# ほうを採る）ので、猶予で2つに当たることはない。
 SQL_DONERU = f"""
+WITH win AS (
+  SELECT
+    v.video_id,
+    UNIX_MILLIS(v.actual_start_time) AS started_ms,
+    -- 配信の終わり。最後のチャット + 30分。チャットが1件も無い配信は
+    -- 当てようがないので、開始から6時間で打ち切る
+    UNIX_MILLIS(
+      COALESCE(
+        TIMESTAMP_ADD(MAX(m.published_at), INTERVAL 30 MINUTE),
+        TIMESTAMP_ADD(v.actual_start_time, INTERVAL 6 HOUR)
+      )
+    ) AS ended_ms
+  FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos` v
+  LEFT JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` m USING (video_id)
+  WHERE v.actual_start_time IS NOT NULL
+  GROUP BY v.video_id, v.actual_start_time
+)
 SELECT
-  donation_id,
-  FORMAT_DATE('%Y-%m-%d', DATE(donated_at, 'Asia/Tokyo')) AS day,
-  UNIX_MILLIS(donated_at) AS donated_ms,
-  viewer_pk,
-  donor_name,
-  amount,
-  settlement_amount,
-  currency
-FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.doneru_donations`
-WHERE donated_at IS NOT NULL
-  AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+  d.donation_id,
+  FORMAT_DATE('%Y-%m-%d', DATE(d.donated_at, 'Asia/Tokyo')) AS day,
+  UNIX_MILLIS(d.donated_at) AS donated_ms,
+  d.viewer_pk,
+  d.donor_name,
+  d.amount,
+  d.settlement_amount,
+  d.currency,
+  -- 時間帯に当たった配信。またがったら、始まりの新しいほうを採る
+  ARRAY_AGG(w.video_id ORDER BY w.started_ms DESC LIMIT 1)[SAFE_OFFSET(0)] AS video_id,
+  MAX(w.started_ms) AS started_ms
+FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.doneru_donations` d
+LEFT JOIN win w
+  ON UNIX_MILLIS(d.donated_at) BETWEEN w.started_ms AND w.ended_ms
+WHERE d.donated_at IS NOT NULL
+  AND DATE(d.donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+GROUP BY
+  d.donation_id, day, donated_ms, d.viewer_pk, d.donor_name,
+  d.amount, d.settlement_amount, d.currency
 """
 
 
@@ -277,9 +321,13 @@ def fetch_doneru(d0: str, d1: str, donors: Dict[str, dict]) -> List[dict]:
                 "channelId": None if owner else (known or {}).get("channelId"),
                 "day": r["day"],
                 "donatedAt": int(r["donated_ms"]),
-                # Doneru はどの配信のものか持っていない。**日付でしか当たらない。**
-                "videoId": None,
-                "videoStartedAt": None,
+                # Doneru 自身はどの配信のものか持っていない。**時刻を配信の
+                # 時間帯に当てて埋めている**（SQL_DONERU の頭）。当たらな
+                # かった投げ銭（配信していない時間のもの）は None のまま
+                "videoId": r["video_id"],
+                "videoStartedAt": (
+                    int(r["started_ms"]) if r["started_ms"] is not None else None
+                ),
                 "amount": float(r["amount"]) if r["amount"] is not None else None,
                 # 本番データは全件 NULL（＝円）。NULL のときは JPY と読む
                 "currency": r["currency"] or "JPY",
