@@ -54,7 +54,7 @@ export default function MyCards({
         <>
           <div className="akd-grid">
             {mine.map((c) => (
-              <CardOne key={c.id} card={c} plan={plans[c.day]} showName={false} />
+              <CardOne key={c.id} card={c} plans={plans[c.day]} showName={false} />
             ))}
           </div>
           <p className="muted akd-note">

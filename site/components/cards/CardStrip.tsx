@@ -53,7 +53,7 @@ export default function CardStrip({
       {cards !== null && cards.length > 0 && (
         <div className="akd-grid">
           {cards.slice(0, max).map((c) => (
-            <CardOne key={c.id} card={c} plan={plans[c.day]} />
+            <CardOne key={c.id} card={c} plans={plans[c.day]} />
           ))}
         </div>
       )}

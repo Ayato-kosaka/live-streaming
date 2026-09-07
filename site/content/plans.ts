@@ -286,13 +286,24 @@ export type PlanBrief = { title: string; href: string };
  * ここを画面(client)から直に読まない。この表を作るために `PLANS`
  * (20KB)を連れていくことになる。**面(server)で引いて、値だけ渡す。**
  */
-export const PLAN_BY_DAY: Record<string, PlanBrief> = Object.fromEntries(
-  PLANS.filter((p) => p.date).map((p) => [
-    p.date as string,
+export const PLAN_BY_DAY: Record<string, PlanBrief[]> = (() => {
+  /* **1日に企画は何本でも立つ。** 9月11日がまさにそれで、
+     「北欧旅の出発日」「海外出発二周年」「ジョージアバイバイ」の3本が
+     同じ日の同じ配信に乗っている。
+
+     前は `Object.fromEntries` で1日1本にしていた。**同じ日の企画は
+     最後の1本が勝って、残りは黙って消えていた**（9/11 は `nordic` だけが
+     残り、あとの2本がどこにも出なかった）。消えたことは画面に出ないので、
+     見て気づけない。配列で持つ。 */
+  const out: Record<string, PlanBrief[]> = {};
+  for (const p of PLANS) {
+    if (!p.date) continue;
     // 専用の面があるものはそちら、無ければ一覧のその行へ
-    { title: p.title, href: p.href ?? `/next#${p.id}` },
-  ]),
-);
+    const brief = { title: p.title, href: p.href ?? `/next#${p.id}` };
+    (out[p.date] ??= []).push(brief);
+  }
+  return out;
+})();
 
 /**
  * 島から届いた事実を、企画に貼ったもの。

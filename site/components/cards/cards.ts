@@ -22,7 +22,7 @@ export const cardIcon = (id: string, size: number) =>
 
 /** 面（server）から渡ってくる、その日の企画。`content/plans.ts` の表。 */
 export type PlanBrief = { title: string; href: string };
-export type PlanDays = Record<string, PlanBrief>;
+export type PlanDays = Record<string, PlanBrief[]>;
 
 /** 絵の決まったカード。**画面に出るのはこれだけ。** */
 export type ShownCard = IslandCard & { icon: string };
