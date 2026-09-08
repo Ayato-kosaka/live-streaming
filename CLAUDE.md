@@ -53,6 +53,13 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
 
+繰り返す作業は**スキルにしてある。** セッションが変わっても同じ手順で回せるように、
+毎回ここを読み直すのではなく、スキルを呼ぶ。
+
+- `/nightly-check` — 毎晩の取り込みを見届ける（走ったか・ログの読みどころ・本番との突き合わせ）
+- `/island-ship` — 直したものを本番に出す（確かめ方・dry-run・PR・デプロイ・出たものの確認）
+- `/monthly-review` — 月末配信の授賞式ページを作る
+
 ## 検証のしかた
 
 ```bash
