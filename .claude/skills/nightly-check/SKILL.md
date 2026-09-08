@@ -32,8 +32,11 @@ mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  mini
 mcp__github__get_job_logs  job_id=<island_stats の job id>  return_content=true  tail_lines=130
 ```
 
-**`minimal_output=true` を必ず付ける。** 付けないと `head_commit.message` に
-巨大なマージコミット本文が丸ごと乗って、それだけで数万トークン持っていかれる。
+**`list_workflow_runs` は `minimal_output=true` を付けても `head_commit.message`
+が丸ごと返る**（2026-09-08 に実測。数万トークン持っていかれた）。避けられないので、
+**run id を取るために1回だけ呼んで、あとは jobs 側で作業する。** 何度も引き直さない。
+
+`list_workflow_jobs` のほうは `minimal_output=true` が効く。**こちらには必ず付ける。**
 
 `island_stats` は8つのスクリプトが順に走る。ログの読みどころ:
 
