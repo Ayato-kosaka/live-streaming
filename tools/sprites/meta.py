@@ -33,6 +33,37 @@ MAX_SIDE = 320
 # 一覧のマスは今までの1枚のままなので、増えるのは詳細を開いた人の1枚だけ
 HERO_DIR = "hero"
 HERO_SIDE = 640
+# **横に長い主役だけ、もっと大きく焼く（#150）。**
+#
+# 主役の箱は、高さで止まるか幅で止まるかのどちらか。
+#
+#   正方形に近い絵 … 高さ 300px で止まる → 2倍画面で 600px。640 で足りる
+#   横に長い絵     … 幅 640px で止まる  → 2倍画面で 1280px。**640 では半分**
+#
+# `hero/food-egg-cooked`（卵焼き・2.15:1）が実測 2.0倍だった。高さで止まる
+# 絵と同じ 640 を配ると、幅で止まる絵だけが引き伸ばされる。
+#
+# **絵の形で決める。** 名前の表を持つと、料理が1品増えるたびに表を直すことに
+# なって、直し忘れたぶんだけ静かにぼける。切り出したあとの縦横比を見れば、
+# どちらで止まるかはそのまま分かる。
+WIDE_RATIO = 1.4
+WIDE_HERO_SIDE = 1280
+# **ただし 1280 を全員に配らない。** スマホでは主役の幅が 358px しかなく、
+# 2倍画面でも 716px。1280px の絵を配ると、要る量の3倍を回線に乗せる。
+# あやとの視聴者さんはスマホが主なので、そちらを重くして PC を直すのは逆。
+#
+# 大きいほうは `<name>@2x.webp` として別に書き、画面は `srcset` で
+# どちらを取るかをブラウザに選ばせる。**スマホは今までどおり 640px。**
+WIDE_SUFFIX = "@2x"
+# **1280 まで届くとは限らない。** `shrink` は縮めるだけなので、焼いたものが
+# それより小さければそのまま出る。焼く枠（`manifest.mjs` の HERO_PX = 1280）は
+# 正方形で、その中に絵を余白ごと収めるから、横に長い絵ほど実際の幅は
+# 枠より小さくなる（`food-egg-cooked` は切り出したあと 991px）。
+#
+# それで PC（1440px・2倍画面）の `/kitchen/tamagoyaki` が 1.36倍。**2.0倍
+# だったものがここまで来ている。** 1.0 に寄せるには HERO_PX を上げて全部
+# 焼き直すことになるが、2倍画面での 1.36倍は見て分からない。上げると
+# 焼く時間とバイト数だけが増えるので、ここで止める。
 # **主役の絵は、必ずここより大きく焼いてから縮める。**
 #
 # render.html は SUPER=2 で焼いて、縮めるときに平らにする(アンチエイリアス)
@@ -187,11 +218,50 @@ if os.path.isdir(hero_dir):
             print("空:", f)
             continue
         im = im.crop(seen)
-        k = min(1.0, HERO_SIDE / max(im.size))
-        if k < 1:
-            im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS)
-        im.save(os.path.join(hero_dir, f[:-4] + ".webp"), quality=82, alpha_quality=72, method=6)
+        wide = im.width >= im.height * WIDE_RATIO
+
+        def shrink(side):
+            """長辺が side に収まるまで縮める。すでに小さければそのまま。"""
+            k = min(1.0, side / max(im.size))
+            if k >= 1:
+                return im
+            return im.resize(
+                (max(1, round(im.width * k)), max(1, round(im.height * k))),
+                Image.LANCZOS,
+            )
+
+        base = f[:-4]
+        # 幅で止まる絵（横に長い）だけ、2倍のぶんも書く（#150）
+        if wide:
+            shrink(WIDE_HERO_SIDE).save(
+                os.path.join(hero_dir, base + WIDE_SUFFIX + ".webp"),
+                quality=82, alpha_quality=72, method=6,
+            )
+            n += 1
+        shrink(HERO_SIDE).save(
+            os.path.join(hero_dir, base + ".webp"),
+            quality=82, alpha_quality=72, method=6,
+        )
         os.remove(src)
         n += 1
     if n:
         print(f"主役の大きい絵 {n} 点 → {hero_dir}")
+
+# 2倍のぶんがある主役の名簿。画面が `srcset` を組むのに要る（#150）。
+#
+# **この回で焼いたぶんから作らない。ディスクにある実物から作る。**
+# `bake.mjs` は名前で絞って1枚だけ焼き直せる。そのとき「この回のぶん」で
+# 書き出すと、**触っていない絵が名簿から消えて、その面だけ静かに 1x に
+# 落ちる。** 落ちても画面は出るので、気づくのは誰かが並べて見たときになる。
+#
+# 実物を数えれば、焼き直した枚数に関係なく正しくなる。消えた絵も自動で外れる。
+WIDE_OUT = os.path.join(os.path.dirname(OUT), "heroWide.json")
+if os.path.isdir(hero_dir):
+    have = sorted(
+        f[: -len(WIDE_SUFFIX + ".webp")]
+        for f in os.listdir(hero_dir)
+        if f.endswith(WIDE_SUFFIX + ".webp")
+    )
+    with open(WIDE_OUT, "w") as fp:
+        json.dump(have, fp, indent=0)
+    print(f"横に長い主役 {len(have)} 点 → {WIDE_OUT}")

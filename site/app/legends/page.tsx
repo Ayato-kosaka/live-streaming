@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { LEGENDS } from "@/content/legends";
@@ -69,7 +70,7 @@ export default function LegendsPage() {
             <div className="zk-hero-art">
               {/* 主役の絵は、焼き直したほう（`sprites/hero/`）を直に指す。
                   1x/2x で配ると、等倍の画面がここだけ小さいほうを選ぶ */}
-              <img src={`/sprites/hero/${top.icon}.webp`} alt="" />
+              <HeroArt icon={top.icon} />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell from "@/components/ui/PageShell";
@@ -131,7 +132,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
                   料理と伝説の詳細と同じで、この面で出す絵は1枚だけなので
                   `srcset` で配り分けない（等倍の画面が小さいほうを選ぶと、
                   280px まで伸ばしたときにここだけぼける）。 */}
-              <img src={`/sprites/hero/${t.icon}.webp`} alt="" />
+              <HeroArt icon={t.icon} />
             </div>
             <p className="zk-hero-note">{t.short}</p>
           </div>

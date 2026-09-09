@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
@@ -66,7 +67,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             <div className="zk-hero-art">
               {/* 主役の絵は、焼き直したほう（`sprites/hero/`）を直に指す。
                   1x/2x で配ると、等倍の画面がここだけ小さいほうを選ぶ */}
-              <img src={`/sprites/hero/${l.icon}.webp`} alt="" />
+              <HeroArt icon={l.icon} />
             </div>
             <div className="lg-hero-fig">
               <Fig f={l.figure} />
