@@ -6,6 +6,8 @@ name: 管理スクリプトを実行
 #
 # 使えるスクリプトは python/admin/ の中にある。
 #   firestore_read   … 読む   {"collection":"islandIdeas","limit":20}
+#                      どこに何があるか  {"list":true}
+#                      **値を出さずに形だけ** {"collection":"...","keys_only":true}
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
 #   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
 #
