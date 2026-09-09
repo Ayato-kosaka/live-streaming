@@ -72,3 +72,6 @@ tools/sprites/_*
 
 # 並列で動かした担当の作業場（git worktree）。中身は各ブランチにある
 .claude/worktrees/
+
+# OpenStreetMap の生データ（数十MB。tools/nordic/osmfetch.py が落とす）
+tools/nordic/.osmcache/
