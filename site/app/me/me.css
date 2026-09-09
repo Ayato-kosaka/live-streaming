@@ -513,3 +513,46 @@
   overflow-wrap: anywhere;
 }
 .mp-vid-add .mp-send { margin-top: 0; flex: none; }
+
+/* ---- アラートボックスの URL（#180） ---- */
+
+/* 説明の1行。ここだけ字を小さくしない。**貼り替えないと通知が来ない**という
+   話なので、読み飛ばされると困る。 */
+.mp-ab-lead {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.mp-ab-lead b { color: var(--ink); font-weight: 900; }
+.mp-ab-lead code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--paper-2);
+  font-weight: 900;
+}
+/* URL そのもの。**必ず折り返す。** 32桁の合言葉が付くので 60 文字を超え、
+   折らないと 390px の紙から横へはみ出す（実測で出た）。
+   `overflow-wrap: anywhere` にするのは、URL に空白が無いため
+   `break-word` では折れる場所が見つからないから。 */
+.mp-ab-url {
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-1) dashed var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+/* 押しどころの並び。**幅いっぱいにしない。** 2つ並ぶことがある。 */
+.mp-ab-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.mp-ab-acts .mp-send { margin-top: 0; }

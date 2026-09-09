@@ -69,7 +69,7 @@ export default function AlertBoxBox() {
     return (
       <section className="panel paper">
         <h2>アラートボックス</h2>
-        <p className="rc-note">{err}</p>
+        <p className="mp-now">{err}</p>
       </section>
     );
   }
@@ -92,16 +92,16 @@ export default function AlertBoxBox() {
   return (
     <section className="panel paper">
       <h2>アラートボックス（OBS）</h2>
-      <p className="rc-note">
+      <p className="mp-ab-lead">
         この URL を、OBS のブラウザソースに貼ってください。
         <b>前の URL はもう動きません。</b>
         鍵を書き出しに焼くのをやめたので、
         <code>?k=</code> の付いていない URL は投げ銭の通知を受け取れません。
       </p>
-      <p className="rc-url">{url}</p>
-      <div className="rc-acts">
+      <p className="mp-ab-url">{url}</p>
+      <div className="mp-ab-acts">
         <button
-          className="rc-quiet"
+          className="mp-send is-small is-quiet"
           onClick={() => {
             navigator.clipboard?.writeText(url);
             setCopied(true);
@@ -111,7 +111,7 @@ export default function AlertBoxBox() {
           {copied ? "うつしました" : "URL をうつす"}
         </button>
       </div>
-      <p className="rc-note">
+      <p className="mp-ab-lead">
         ここに出ているのは<b>鍵ではありません。</b>
         こちらが出した合言葉で、鍵はサーバーに置いたままです。
         それでも、この URL を知っている人は投げ銭の通知を受け取れるので、
@@ -122,22 +122,22 @@ export default function AlertBoxBox() {
       </p>
 
       <Fold title="合言葉を作り直す" lead="漏れたと思ったときだけ">
-        <p className="rc-note">
+        <p className="mp-ab-lead">
           Doneru の鍵そのものは作り直せません。かわりに、こちらの合言葉を
           替えます。<b>押した瞬間に、いま貼ってある OBS の URL が止まります。</b>
           貼り替えられる場所にいるときだけ押してください。
         </p>
         {sure ? (
-          <div className="rc-acts">
-            <button className="rc-quiet" onClick={() => open(true)}>
+          <div className="mp-ab-acts">
+            <button className="mp-send is-small is-quiet" onClick={() => open(true)}>
               作り直す（OBS を貼り替えます）
             </button>
-            <button className="rc-quiet" onClick={() => setSure(false)}>
+            <button className="mp-send is-small is-quiet" onClick={() => setSure(false)}>
               やめる
             </button>
           </div>
         ) : (
-          <button className="rc-quiet" onClick={() => setSure(true)}>
+          <button className="mp-send is-small is-quiet" onClick={() => setSure(true)}>
             作り直す
           </button>
         )}
