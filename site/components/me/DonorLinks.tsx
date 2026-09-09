@@ -172,15 +172,35 @@ export default function DonorLinks() {
             onChanged={changed}
             onDropped={dropped}
           />
-          <Group
-            title="分からない"
-            lead="分からないと決めた人。あとから分かったら、ここで打つ"
-            rows={unknown}
-            onChanged={changed}
-            onDropped={dropped}
-          />
-          {/* つないである人は、ふだん触らない。畳んで下に置く。
-              **並びの順（紐付け待ち → 分からない → つないである）は変えない。** */}
+          {/* **分からない人は、開いて並べない。** あやとの言葉（2026-09-09）
+              「わからないと決めた人を毎回出すのはやめてほしい。ドネルは名前を
+              自由に打てるので、それで適当な名前を打たれるとこっちからすると
+              わからないのでわからないものはわからないです」。
+
+              一度「分からない」と決めた人は、**もう一度見ても分からない。**
+              毎朝そこに6人並んでいると、上の「紐付け待ち」——本当に手を
+              動かすところ——が下へ押される。
+
+              消しはしない。あとから分かることはある（配信で本人が名乗る、
+              同じ名前でスパチャが続く）ので、畳みの中には残す。 */}
+          {unknown.length > 0 && (
+            <Fold title="分からないと決めた人" lead={`${unknown.length}人`}>
+              <p className="muted mp-small">
+                分かったら、ここで打てます。ふだんは開かなくて大丈夫です。
+              </p>
+              <ul className="mp-care">
+                {unknown.map((x) => (
+                  <Row
+                    key={x.donor.viewerPk}
+                    donor={x.donor}
+                    onChanged={changed}
+                    onDropped={dropped}
+                  />
+                ))}
+              </ul>
+            </Fold>
+          )}
+          {/* つないである人は、ふだん触らない。畳んで下に置く。 */}
           {linked.length > 0 && (
             <Fold title="つないである人" lead={`${linked.length}人`}>
               <ul className="mp-care">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { startAlertbox, type DoneruHint } from "@/lib/api";
+import { putDoneruKey, startAlertbox, type DoneruHint } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
@@ -43,6 +43,33 @@ export default function AlertBoxBox() {
   const [copied, setCopied] = useState(false);
   /** 作り直しは取り返しがつかない（いまの OBS が黙って止まる）ので、二度おす */
   const [sure, setSure] = useState(false);
+  /** Doneru の鍵。**打っているあいだだけここにいる。** 送ったら空にする */
+  const [keyed, setKeyed] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  /* ---- Doneru の鍵をしまう ----
+     **入れる欄をここにも置く理由。** 前は `/me/roulette` の畳みの中
+     「コメントの読み方」にしか無かった。ところが鍵が無くて止まるのは
+     アラートボックスのほうで、実際そうなった（2026-09-09）。
+     **止まったと言っている面で直せないと、探すところから始まる。** */
+  const saveKey = useCallback(
+    async (v: string) => {
+      const t = await token();
+      if (!t) return;
+      setSaving(true);
+      setErr(null);
+      try {
+        const r = await putDoneruKey(v, t);
+        setDoneru(r.doneru);
+        setKeyed("");
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "しまえませんでした");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [token],
+  );
 
   const open = useCallback(
     async (fresh: boolean) => {
@@ -116,10 +143,69 @@ export default function AlertBoxBox() {
         こちらが出した合言葉で、鍵はサーバーに置いたままです。
         それでも、この URL を知っている人は投げ銭の通知を受け取れるので、
         配信の画面にそのまま映すもの以外には貼らないでください。
-        {doneru?.set ?
-          `（Doneru の鍵は入っています。末尾 ${doneru.tail}）` :
-          "（Doneru の鍵がまだ入っていません。/me/roulette の「コメントの読み方」から入れてください）"}
+        {doneru?.set && `（Doneru の鍵は入っています。末尾 ${doneru.tail}）`}
       </p>
+
+      {/* **鍵が無いときは、いちばん上に出す。** これが無いと URL を貼っても
+          「投げ銭のつなぎ先を取れませんでした」で止まる。実際に止まった
+          （2026-09-09）ので、止まる原因をこの面の中で直せるようにする。 */}
+      {doneru !== null && !doneru.set && (
+        <div className="mp-ab-need">
+          <b>Doneru の鍵が、まだ入っていません。</b>
+          <p>
+            これが無いと、URL を貼っても投げ銭の通知は来ません。
+            Doneru のアラートボックスの OBS の URL の、
+            <code>?key=</code> のあとの文字列です。
+            <b>入れたあとは、この画面にも書き出したものにも出てきません。</b>
+          </p>
+          <div className="dform mp-ab-key">
+            <input
+              type="password"
+              value={keyed}
+              onChange={(e) => setKeyed(e.target.value)}
+              placeholder="Doneru の鍵"
+              autoComplete="off"
+              maxLength={200}
+              aria-label="Doneru の鍵"
+            />
+            <button
+              className="mp-send is-small"
+              onClick={() => saveKey(keyed)}
+              disabled={!keyed.trim() || saving}
+            >
+              <Icon name="check" size={16} />
+              しまう
+            </button>
+          </div>
+        </div>
+      )}
+
+      {doneru?.set && (
+        <Fold title="Doneru の鍵を入れ直す" lead={`いまは末尾 ${doneru.tail}`}>
+          <p className="mp-ab-lead">
+            Doneru 側で作り直したときだけ。入れ直すと、いまの鍵は上書きされます。
+          </p>
+          <div className="dform mp-ab-key">
+            <input
+              type="password"
+              value={keyed}
+              onChange={(e) => setKeyed(e.target.value)}
+              placeholder="Doneru の鍵"
+              autoComplete="off"
+              maxLength={200}
+              aria-label="Doneru の鍵"
+            />
+            <button
+              className="mp-send is-small is-quiet"
+              onClick={() => saveKey(keyed)}
+              disabled={!keyed.trim() || saving}
+            >
+              <Icon name="check" size={16} />
+              入れ直す
+            </button>
+          </div>
+        </Fold>
+      )}
 
       <Fold title="合言葉を作り直す" lead="漏れたと思ったときだけ">
         <p className="mp-ab-lead">

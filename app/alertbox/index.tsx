@@ -320,9 +320,15 @@ export default function AlertBox() {
           sendLog("AlertBox", sessionId, "doneruWssError", {
             error: String(e),
           });
+          /* **原因は2つあるが、口はどちらも 404 を返す。** 合言葉が
+             当たったことだけを外から確かめられないようにするため。
+             だからここで両方を挙げて、先に多いほう（鍵が無い）から書く。
+             実際 2026-09-09 に止まったのは鍵のほうだった。 */
           setError(
             "投げ銭のつなぎ先を取れませんでした。" +
-              "あやと島の /me で、Doneru の鍵と URL を確かめてください。"
+              "あやと島の /me を開いて、（1）Doneru の鍵が入っているか、" +
+              "（2）この URL の ?k= が /me に出ているものと同じか、" +
+              "の順に確かめてください。"
           );
         });
       cleanupFunctions.push(() => {

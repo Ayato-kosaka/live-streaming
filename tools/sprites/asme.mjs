@@ -168,10 +168,17 @@ export async function apply(ctx, opts = {}) {
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと
        出てくる URL が本番と別物になり、押しどころも幅も測れない。 */
     if (path === "/alertbox/session") {
+      /* NOKEY=1 で「Doneru の鍵がまだ入っていない」ほうを撮れる。
+         本番で実際に止まったのがその状態だった（2026-09-09）ので、
+         **直したほうだけでなく、止まっているほうも測れるようにする。** */
+      const nokey = opts.nokey ?? process.env.NOKEY === "1";
       return json(r, {
         id: "0123456789abcdef0123456789abcdef",
-        doneru: { set: true, tail: "7f3a" },
+        doneru: nokey ? { set: false, tail: "" } : { set: true, tail: "7f3a" },
       });
+    }
+    if (path === "/roulette/doneru") {
+      return json(r, { doneru: { set: true, tail: "7f3a" } });
     }
     if (path.startsWith("/roulette")) {
       const spin = opts.spin ?? process.env.RLSPIN === "1";
