@@ -172,6 +172,12 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
  *  （`components/island/villagers.ts` の rosterOf）。よく来てくれている人ほど
  *  島にいる日が多い、という形にするため。
  *
+ *  **画面に出る日数は、ここの値ではない（#91）。** `/friends` の図鑑は
+ *  `/state` の `residentDays` を出す。あちらは毎晩 `islandChannels` に
+ *  入り直すので、旅の途中でも古くならない。**ここの値は、それが読めなかった
+ *  ときの受け皿**と、上の抽選の重み（書き出し時に1回決まる）。
+ *  数え方が2つあるのは承知のうえ。ここは直近{WINDOW_DAYS}日、あちらは全期間。
+ *
  *  `channel` は YouTube のチャンネル id。**どの絵が誰のものかは、あやとが表で
  *  持っている割り当てだけが決める**（`python/residents_map.json`）。
  *  本人にログイン画面で選ばせない。他人の絵を自分のものにできてしまうため。

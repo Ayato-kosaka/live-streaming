@@ -73,6 +73,14 @@ export type IslandState = {
   stats?: Partial<IslandStats>;
   notes?: NextNote[];
   residents?: ResidentShow[];
+  /**
+   * 「一緒にいた日数」（#91）。チャンネルID -> 日数。
+   *
+   * 毎晩 BigQuery から数え直して `islandChannels` に入っているもの。
+   * **画面はこれを次に開いたときのために控える。その場では差し替えない**
+   * （`lib/residentDays.ts` に理由）。
+   */
+  residentDays?: Record<string, number>;
   nordic?: NordicFacts;
 };
 

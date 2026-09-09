@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
+import { useResidentDays } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
 import { createVillagers } from "@/components/island/villagers";
@@ -79,6 +80,8 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
      カードもその紙の欄の1つ。一覧のマスの下に別の並びを足さない。 */
   const { cards } = useCards();
   const here = useOnIslandToday();
+  /* 一緒にいた日数（#91）。読めるまでは焼き込みの値を出す */
+  const liveDays = useResidentDays();
   const list = useMemo(() => RESIDENTS.filter((r) => r.icon), []);
   const [at, setAt] = useState(0);
   // 送りで見開きが差し替わったとき、目が迷子にならないよう見出しへ焦点を戻す。
@@ -126,11 +129,25 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
           </div>
 
           <dl className="rzk-fields">
-            {/* いっしょにいた日数は出さない。日数は BigQuery から正しく数えられるが、
-                その数字がこの絵の人のものだ、とは言えない。キャラクターの絵と
-                YouTube のチャンネルを結ぶ表がまだどこにも無いため（issue #113）。
-                手で書いた値が並んでいて、実在する人の順番を間違えて出していた。
-                表ができたら python/build_residents.py が焼くので、そのとき戻す。 */}
+            {/* いっしょにいた日数（#91）。
+
+                **前は出していなかった。** 「絵と YouTube のチャンネルを結ぶ表が
+                どこにも無い」（issue #113）というのが理由だったが、いまは
+                `content/residents.ts` の各行が `channel` を持っている。
+                前提のほうが古くなっていた。
+
+                数は毎晩 `islandChannels` に入り直す（#91）ので、読めたら
+                そちらを出す。読めないうちは焼き込みの値。**どちらにしても
+                同じ人の数**なので、入れ替わっても「増えた」としか見えない。 */}
+            <div className="rzk-wide">
+              <dt>いっしょにいた日数</dt>
+              <dd>
+                <b className="rzk-days">
+                  {(r.channel && liveDays[r.channel]) || r.days}
+                </b>
+                日
+              </dd>
+            </div>
             <div className="rzk-wide">
               <dt>今日いるところ</dt>
               {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
