@@ -138,9 +138,14 @@ const PLANS = {
   next: null,
 };
 
-/* あやと島カード。**外の写真には出られない**ので、URL は `route.mjs` の
-   `offline` が差し替える先（wikimedia）にしておく。 */
-const CARDS = Array.from({ length: 9 }, (_, i) => ({
+/* じぶんのこと（`/me`）が縦に伸びるのを測るための、**自分ぶんだけ**の9枚。
+   下の `CARDS`（写真3枚 × 12人）にも自分は入っているが、そちらは1枚の
+   写真につき1枚なので自分ぶんは3枚しかなく、「4枚出して、押すと+8」が
+   動かない。**別の写真として9枚**要る。
+
+   外の写真には出られないので、URL は `route.mjs` の `offline` が
+   差し替える先（wikimedia）にしておく。 */
+const MY_CARDS = Array.from({ length: 9 }, (_, i) => ({
   id: `k${i + 1}`,
   day: ago(i + 1).slice(0, 10),
   photoId: `ph${i + 1}`,
@@ -313,7 +318,7 @@ export async function apply(ctx, opts = {}) {
       return json(r, u.searchParams.get("mine") === "1" ? MINE : ALL);
     }
     if (path === "/nextplans") return json(r, PLANS);
-    if (path === "/cards") return json(r, { cards: CARDS });
+    if (path === "/cards") return json(r, { cards: [...CARDS, ...MY_CARDS] });
     if (path.startsWith("/donors")) {
       if (r.request().method() === "GET") return json(r, { donors: DONORS });
       const pk = decodeURIComponent(path.slice("/donors/".length));
@@ -343,7 +348,6 @@ export async function apply(ctx, opts = {}) {
       DONORS = had ? DONORS.map((d) => (d.viewerPk === pk ? donor : d)) : [donor, ...DONORS];
       return json(r, { donor, via });
     }
-    if (path === "/cards") return json(r, { cards: CARDS });
     if (path === "/nordic/log") return json(r, { log: [] });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと
