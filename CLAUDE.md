@@ -140,6 +140,22 @@ await offline(ctx);
 
 ## つまずきやすいところ
 
+- **`EXPO_PUBLIC_` は「隠す」ではなく「公開してよい」の宣言** — Expo は
+  この接頭辞の環境変数を**書き出しの中へ焼く。** GitHub Secret に入れて
+  あっても、焼いた先（`dist/_expo/static/js/web/entry-….js`）が公開されて
+  いれば誰でも読める。**鍵を入れない。** Doneru の鍵（#180）と Anthropic の
+  API キー（#217）が、実際にこれで本番の JS に出ていた。
+  鍵が要るものは Functions に置いて、ブラウザには寿命の短いトークンか、
+  こちらが出した合言葉（作り直せるもの）だけを渡す。
+  確かめかたは、書き出したものを直に見る:
+
+  ```bash
+  npx expo export --platform web --output-dir /tmp/x
+  grep -c 'sk-ant-\|push\.doneru\.jp' /tmp/x/_expo/static/js/web/entry-*.js
+  ```
+
+  **値そのものは出さない。** このリポジトリは公開で、Actions のログも誰でも読める。
+
 - **スプライトの色** — テクスチャを持つキットは `Textures/colormap.png` を共有してしまう。
   food-kit は必ず `models/food/` に自分のテクスチャごと置く。
 - **Wikimedia のサムネイル** — 2026年から使える幅が決まっている（120 / 250 / 330 / 500 / 960 / 1920）。

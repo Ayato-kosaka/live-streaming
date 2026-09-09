@@ -85,6 +85,61 @@ export async function getDoneruAmount(key: string): Promise<number> {
   return amount;
 }
 
+/* ---------------- あやと島ごしの口（#180） ----------------
+
+   Doneru の鍵を書き出しに焼くのをやめたので、鍵が要るものは
+   ぜんぶここを通す。OBS の URL に載っている 32 桁の合言葉（`k`）を
+   渡すと、サーバーが持っている鍵を使って返してくれる。
+
+   下の `getDoneruToken` / `refreshDoneruYoutubeToken` は、鍵を
+   引数に取るので**もう呼べない**。消していないのは、Doneru の口の
+   形（type=alertbox・version=1.0.0）がここにしか書き残っていないため。
+*/
+
+/** あやと島の口。OBS が開くのと同じ生い立ちなので、相対で足りる。 */
+const ISLAND_API = "/island-api";
+
+/**
+ * 投げ銭の通知が流れてくる WebSocket の URL をもらう。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @return {Promise<string>} wss:// で始まる URL
+ */
+export async function getAlertboxWss(k: string): Promise<string> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/wss`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox wss: ${res.status}`);
+  }
+  const data = await res.json();
+  const wss = String(data?.wss ?? "");
+  if (!wss.startsWith("wss://")) {
+    throw new Error("Invalid alertbox wss response");
+  }
+  return wss;
+}
+
+/**
+ * YouTube を読むための、寿命の短いトークンをもらう。
+ *
+ * **鍵は返ってこない。** スパチャを拾うのに要るのはトークンだけ。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @param {boolean} refresh Doneru 側で先に取り直させるか（401 のとき）
+ * @return {Promise<{at: string; channel: string; expiresAt: number}>} トークン
+ */
+export async function getAlertboxYoutubeToken(
+  k: string,
+  refresh = false
+): Promise<{ at: string; channel: string; expiresAt: number }> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/yt-token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox token: ${res.status}`);
+  }
+  return res.json();
+}
+
 /**
  * Get doneruToken from Cloud Functions
  * @param key Donery alertbox key

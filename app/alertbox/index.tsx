@@ -34,7 +34,13 @@ import {
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
-import { getTable, getById, insert, getDoneruAmount } from "./api.utils";
+import {
+  getTable,
+  getById,
+  insert,
+  getDoneruAmount,
+  getAlertboxWss,
+} from "./api.utils";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
 const NOTIFICATION_TYPES = [
@@ -53,7 +59,10 @@ const SUPERCHAT_CONVERSION_RATE = 0.5;
 
 export default function AlertBox() {
   // Parse URL parameters for source selection
-  const params = useLocalSearchParams<{ source?: string }>();
+  /* `k` は OBS の URL に載せる 32 桁の合言葉（#180）。
+     **鍵ではない。** これを見せた相手にサーバーが鍵を使ってくれる、
+     という引換券。漏れたら /me から作り直せる（Doneru の鍵は作り直せない）。 */
+  const params = useLocalSearchParams<{ source?: string; k?: string }>();
 
   // 視聴者情報（名前の正規化済み）
   const [normViewers, setNormViewers] = useState<
@@ -132,6 +141,9 @@ export default function AlertBox() {
     () => parseSourceParam(params.source),
     [params.source]
   );
+
+  /** OBS の URL の `?k=`。無ければ空。 */
+  const alertboxId = String(params.k ?? "");
 
   useEffect(() => {
     // 画面起動ログ
@@ -276,19 +288,52 @@ export default function AlertBox() {
       });
     };
 
+    /* 合言葉が無ければ、どちらのつなぎ先も持てない。**黙って止まらない。**
+       前の形（環境変数に焼き込む）から替わったので、OBS の URL を
+       貼り替えていないと必ずここに来る。配信の画面に出てしまうが、
+       何も起きないまま気づかないほうが悪い（#180）。 */
+    if (!/^[0-9a-f]{32}$/.test(alertboxId)) {
+      sendLog("AlertBox", sessionId, "noAlertboxId");
+      setError(
+        "OBS の URL に ?k=… が付いていません。" +
+          "あやと島の /me を開いて、アラートボックスの URL を貼り替えてください。"
+      );
+      return () => {
+        sendLog("AlertBox", sessionId, "unmount");
+      };
+    }
+
     // Initialize Doneru connector if enabled
     if (enabledSources.includes("doneru")) {
-      const doneruConnector = new DoneruConnector(
-        process.env.EXPO_PUBLIC_DONERU_WSS_URL!
-      );
-      const cleanup = doneruConnector.start(handleNotification, handleError);
-      cleanupFunctions.push(cleanup);
-      sendLog("AlertBox", sessionId, "doneruConnectorStarted");
+      /* **つなぎ先はサーバーに聞く。** 鍵を書き出しに焼くのをやめたので、
+         ここで初めて分かる。聞けるまでは繋がない。 */
+      let stopped = false;
+      let inner: (() => void) | null = null;
+      getAlertboxWss(alertboxId)
+        .then((wss) => {
+          if (stopped) return;
+          const doneruConnector = new DoneruConnector(wss);
+          inner = doneruConnector.start(handleNotification, handleError);
+          sendLog("AlertBox", sessionId, "doneruConnectorStarted");
+        })
+        .catch((e) => {
+          sendLog("AlertBox", sessionId, "doneruWssError", {
+            error: String(e),
+          });
+          setError(
+            "投げ銭のつなぎ先を取れませんでした。" +
+              "あやと島の /me で、Doneru の鍵と URL を確かめてください。"
+          );
+        });
+      cleanupFunctions.push(() => {
+        stopped = true;
+        inner?.();
+      });
     }
 
     // Initialize YouTube connector if enabled
     if (enabledSources.includes("youtube")) {
-      const youtubeConnector = new YouTubeConnector();
+      const youtubeConnector = new YouTubeConnector(alertboxId);
       const cleanup = youtubeConnector.start(handleNotification, handleError);
       cleanupFunctions.push(cleanup);
       sendLog("AlertBox", sessionId, "youtubeConnectorStarted");
@@ -304,7 +349,7 @@ export default function AlertBox() {
       // 画面離脱ログ
       sendLog("AlertBox", sessionId, "unmount");
     };
-  }, [enabledSources]);
+  }, [enabledSources, alertboxId]);
 
   /**
    * 金額に応じてアラート時間を調整
