@@ -436,6 +436,39 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         </section>
       )}
 
+      {/* 朝、どこから立つか。**区間の「立つところ」とは別もの。**
+          あちらは幹線のどこに立つかで、こちらは**宿からそこへどう出るか。**
+          ワルシャワの宿は幹線まで9.3kmあって、朝いちばんの1時間がそこに消える。
+          距離の話より先に読まれるべきなので、時間の区画のすぐ下に置く。 */}
+      {(day.wake || day.start) && (
+        <section className="panel paper" id="start">
+          <h2>朝、どこから立つか</h2>
+          {day.wake && (
+            <p className="nday-wake">
+              起きる <b>{day.wake}</b>
+            </p>
+          )}
+          {day.start && (
+            <p className="nday-lead">
+              <b>{day.start.from}</b> から。{day.start.how}
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* 気をつけること。**書いてあるのは、行程表で名指しになっている懸念だけ。**
+          「たぶん大丈夫」は書かない。埋めると、本当に危ない日が埋もれる。 */}
+      {(day.worry?.length ?? 0) > 0 && (
+        <section className="panel paper" id="worry">
+          <h2>気をつけること</h2>
+          <ul className="nday-worry">
+            {day.worry!.map((w) => (
+              <li key={w}>{w.replace(/\*\*/g, "")}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* わかれ道。**この面に入ったときに出す**（オーナーの指示）。
           数が読めないときは、区画ごと出ない。 */}
       {/* 止まる街の並びを渡す。**この面には司令塔（`TripNow`）が居ない**ので、
@@ -458,6 +491,20 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       {/* その街で、食べる・見る・やる・買う。**中身は国のページにある。**
           ここは4つの種類を1つずつ出して、全部読みたい人はその街の段へ送る。
           同じ本文を2か所に置かない。 */}
+      {/* 順調だったら、寄る。**寄ると決まっていない。**
+          ヒッチハイクは着く時刻が読めないので、予定として書くと嘘になる。
+          「順調だったら」を見出しに入れて、決まりごとに見えないようにする。 */}
+      {(day.detour?.length ?? 0) > 0 && (
+        <section className="panel paper" id="detour">
+          <h2>順調だったら、寄る</h2>
+          <ul className="nday-detour">
+            {day.detour!.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {byCity.length > 0 && (
         <section className="panel paper" id="see">
           <h2>その街で、食べる・見る・やる・買う</h2>

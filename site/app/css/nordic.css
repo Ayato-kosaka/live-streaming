@@ -2019,3 +2019,37 @@ p.ndhh-src {
   font-weight: 900;
   white-space: nowrap;
 }
+
+/* 朝の立ち上がり・順調だったら寄るところ・気をつけること（1日ぶんのページ）。
+
+   **3つとも「読み飛ばされたら困るもの」。** 起きる時刻を逃すと船に乗れず、
+   気をつけることは行程表で名指しになっている懸念だけを置いている。
+   だから畳まず、地の上にそのまま並べる。 */
+p.nday-wake {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 800;
+  line-height: var(--lh-head);
+}
+p.nday-wake b { font-size: var(--fs-h3); font-weight: 900; }
+p.nday-lead {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+}
+.nday-worry,
+.nday-detour {
+  margin: 0;
+  padding-left: 1.15em;
+  display: grid;
+  gap: var(--sp-2);
+}
+.nday-worry li,
+.nday-detour li {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+}
+/* 気をつけることだけ、行の頭を少し重くする。寄り道の一覧と見分けるため。 */
+.nday-worry li::marker { font-weight: 900; }
