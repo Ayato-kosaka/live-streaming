@@ -28,6 +28,7 @@ OpenStreetMap の Nominatim。この箱から届く（Overpass は届かない�
 
 import json
 import math
+import re
 import os
 import sys
 import time
@@ -43,20 +44,55 @@ UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic city maps)"
 API = "https://nominatim.openstreetmap.org/search"
 
 # 街の中心。**ここからの距離で、明らかに違うものを落とす。**
-CITY = {
+#
+# **どの街を焼くかは、ここで決めない。** 旅程（`nordic.ts` の ROUTE / DAYS）
+# から導く。あやとの言葉（2026-09-09）:
+#
+#   シャウレイ・ルンダーレなんか、行かなくないか？？？
+#   なぜそれの地図が必要と言う話になってる？？
+#
+# 手で街の表を作って、行く街と「寄るかもしれない街」を混ぜたのが原因。
+# `nordic.ts` には「街の名前を手で並べた表をもう1つ作らない」と書いてあった
+# のに、そのまま踏んだ（`docs/island-misses.md` #4）。
+#
+# 下の表は**中心の座標だけ**を持つ。行くかどうかは `visit_cities()` が決める。
+CENTER = {
     "カトヴィツェ": ("Katowice, Poland", 50.2599, 19.0216),
     "ワルシャワ": ("Warszawa, Poland", 52.2297, 21.0122),
     "ビャウィストク": ("Białystok, Poland", 53.1325, 23.1688),
     "ヴィリニュス": ("Vilnius, Lithuania", 54.6872, 25.2797),
-    "シャウレイ": ("Šiauliai, Lithuania", 55.9333, 23.3167),
-    "トラカイ": ("Trakai, Lithuania", 54.6383, 24.9346),
     "リガ": ("Rīga, Latvia", 56.9496, 24.1052),
-    "ルンダーレ": ("Bauska, Latvia", 56.4111, 24.1889),
     "タリン": ("Tallinn, Estonia", 59.4370, 24.7536),
-    "パルヌ": ("Pärnu, Estonia", 58.3859, 24.4971),
     "ヘルシンキ": ("Helsinki, Finland", 60.1699, 24.9384),
     "ストックホルム": ("Stockholm, Sweden", 59.3293, 18.0686),
+    # 寄るかどうかがまだ決まっていない街。**既定では焼かない。**
+    "シャウレイ": ("Šiauliai, Lithuania", 55.9333, 23.3167),
+    "トラカイ": ("Trakai, Lithuania", 54.6383, 24.9346),
+    "ルンダーレ": ("Bauska, Latvia", 56.4111, 24.1889),
+    "パルヌ": ("Pärnu, Estonia", 58.3859, 24.4971),
 }
+
+NORDIC_TS = os.path.join(ROOT, "site", "content", "nordic.ts")
+
+
+def visit_cities():
+    """**行くと決まっている街だけ**を、旅程から拾う。
+
+    `nordic.ts` の `VISIT_CITIES` と同じ作り（ROUTE の from / to / stay と
+    DAYS の city / stay）。`maybe`（寄るかもしれない街）は入れない。
+
+    TypeScript を Python から読めないので字面で拾っているが、**表は増やさない。**
+    元が変われば、ここも一緒に変わる。
+    """
+    s = open(NORDIC_TS, encoding="utf-8").read()
+    go, maybe = set(), set()
+    for m in re.finditer(r'\b(?:from|to|stay|city):\s*"([^"]+)"', s):
+        go.add(m.group(1).split("（")[0].split("(")[0].strip())
+    for m in re.finditer(r"maybe:\s*\[([^\]]*)\]", s):
+        for c in re.findall(r'"([^"]+)"', m.group(1)):
+            maybe.add(c.strip())
+    return go - maybe, maybe
+
 
 # 拾ってよい種類。ここに無いものは「あやしい」に回して、目で見る。
 GOOD = {
@@ -196,13 +232,20 @@ def pick(rows, clat, clon, far):
 
 def main() -> None:
     only = sys.argv[1] if len(sys.argv) > 1 else ""
+    go, maybe = visit_cities()
+    # 焼くのは行く街だけ。**寄るかもしれない街は、言われるまで焼かない。**
+    use = {c: v for c, v in CENTER.items() if c in go}
+    skipped = sorted(set(CENTER) - set(use))
+    print(f"行く街 {len(use)}: {'・'.join(use)}")
+    if skipped:
+        print(f"焼かない（寄るかもしれない街）: {'・'.join(skipped)}")
     spots = []
     for f in sorted(os.listdir(SRC)):
         if not f.endswith(".json") or f in ("index.json", "map.json", "geo.json"):
             continue
         d = json.load(open(os.path.join(SRC, f), encoding="utf-8"))
         for s in d.get("spots", []):
-            if s.get("city") in CITY and s.get("local"):
+            if s.get("city") in use and s.get("local"):
                 spots.append(s)
     if only:
         spots = [s for s in spots if s["city"] == only]
@@ -210,7 +253,7 @@ def main() -> None:
     print(f"引く見どころ {len(spots)}件 / 街 {len(set(s['city'] for s in spots))}")
     out, lines, odd = {}, [], 0
     for i, s in enumerate(spots, 1):
-        cq, clat, clon = CITY[s["city"]]
+        cq, clat, clon = use[s["city"]]
         name = clean(s["local"])
         if not name or name in NOT_A_PLACE:
             lines.append(f'- {s["city"]:8s} {s["title"][:26]:28s} {s["local"][:30]:32s} 場所ではない（ピンを打たない）')
