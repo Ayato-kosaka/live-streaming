@@ -129,12 +129,36 @@ Input: ${sendMessages}
         ],
     };
 
+    /* ---- ここから先は、いま届かない（#217） ----
+
+       **本番の JS に `sk-ant-…` がそのまま入っていた。** 原因は下の
+       `x-api-key` が `process.env.EXPO_PUBLIC_CLAUDE_API_KEY` を読んで
+       いたこと。`EXPO_PUBLIC_` は「隠す」ではなく「公開してよい」の
+       宣言で、Expo は**その参照を見つけた時点で値を焼く。**
+       ワークフローの `.env` から消すだけでは足りない（誰かがもう一度
+       書けば、また焼かれる）ので、**参照そのものを消した。**
+
+       読まれるだけの鍵ではない。**そのまま課金される鍵。**
+
+       ここで落とすと、呼んだ側（`app/chat-display/utils.ts`）が
+       例外を受けて「コメント、ありがとう！」に落ちる。**面は止まらない。**
+       ボットの返しが定型になるだけ。
+
+       下の中身は消していない。鍵を Functions に置いて、ここを
+       `POST /island-api/…` に差し替えれば戻る（#217 の2番目）。
+       消すと、そのときプロンプトから書き直すことになる。 */
+    throw new Error(
+        "Claude API key must not live in the browser bundle (#217)"
+    );
+
     const response: MessageResponse = await fetch(
         "https://api.anthropic.com/v1/messages",
         {
             method: "POST",
             headers: {
-                "x-api-key": process.env.EXPO_PUBLIC_CLAUDE_API_KEY ?? "",
+                /* 鍵は入れない（#217）。ここへ来る前に上で落としてある。
+                   戻すときは、この fetch ごと `POST /island-api/…` へ替える。 */
+                "x-api-key": "",
                 "anthropic-version": "2023-06-01",
                 "anthropic-dangerous-direct-browser-access": "true",
                 "Content-Type": "application/json",
