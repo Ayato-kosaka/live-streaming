@@ -1296,6 +1296,68 @@ function rouletteText(template: unknown, label: string): string {
 const naps = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
+/* ---------------- アラートボックス(#180) ----------------
+
+   OBS のブラウザソースが開く `/alertbox` に、Doneru の鍵を渡すところ。
+
+   **もともとは書き出しに焼き込んでいた。** `EXPO_PUBLIC_DONERU_WSS_URL`
+   という環境変数で、`EXPO_PUBLIC_` で始まるものは Expo が中身へ焼く。
+   焼いた先は公開されているので、`/alertbox` を開いた人は誰でも
+   `entry-….js` から鍵をそのまま読めた。GitHub Secret に入れてあっても、
+   焼き込んだ先が公開されていれば意味がない。
+
+   **そして、この鍵は作り直せない。** あやとの言葉(2026-09-08)
+   「Doneru の鍵を新しく作る仕組みはありません」。ふつうなら
+   「漏れたら作り直す」で済むところが、ここでは済まない。
+   だから **二度と外へ出さない形にするしかない。**
+
+   ## 鍵の代わりに、こちらが作った合言葉を OBS に持たせる
+
+   OBS のブラウザソースはログインできないので、URL に何かを持たせる
+   しかない。そこに置くのを **鍵そのものではなく、こちらが発行した
+   32桁の合言葉(`alertboxId`)** にする。ルーレットの表示側(#164)と
+   遠隔操作(#165)と同じ形。
+
+   これで変わるのは「誰が鍵を取れるか」:
+
+   | | 鍵を取れる人 | 漏れたとき |
+   | --- | --- | --- |
+   | 前 | `/alertbox` を開いた世界中の誰でも | 作り直せない。打つ手なし |
+   | いま | 合言葉を知っている人だけ | **合言葉のほうを作り直す**(`fresh`) |
+
+   鍵そのものは、Doneru の WebSocket を開くのにどうしても要る
+   (`wss://push.doneru.jp/alertbox?key=…` が向こうの決めた形)ので、
+   合言葉を知っている画面には渡る。**そこは避けられない。**
+   避けられるのは「書き出しに焼くこと」で、それをやめた。
+
+   YouTube のほうは渡さない。トークンを取るのはサーバーの中だけにして、
+   ブラウザには寿命の短いアクセストークンを返す(`/yt-token`)。
+   ルーレットの `/roulette/yt-token` とまったく同じ考え。
+
+   ## ルーレットと id を分けた理由
+
+   `rouletteId` を使い回さない。片方が漏れたときに、もう片方まで
+   貼り替えることになる。配信中の機材の URL を2つ同時に替えるのは、
+   いちばんやりたくない作業。
+*/
+/** Doneru の投げ銭通知が流れてくる WebSocket。向こうが決めた形。 */
+const DONERU_WSS = "wss://push.doneru.jp/alertbox";
+
+/**
+ * 合言葉から、その持ち主の Doneru の鍵を引く。
+ *
+ * **ログインを要求しない口から呼ばれる。** 合言葉(32桁)を知っていることが
+ * 合言葉なので、当てられない長さかどうかを先に見る。
+ * @param {string} id 32桁の合言葉
+ * @return {Promise<string>} Doneru の鍵。無ければ空文字
+ */
+async function alertboxKey(id: string): Promise<string> {
+  if (!/^[0-9a-f]{32}$/.test(id)) return "";
+  const q = await USERS.where("alertboxId", "==", id).limit(1).get();
+  if (q.empty) return "";
+  return String(q.docs[0].data()?.doneruKey ?? "");
+}
+
 /**
  * Storage に置いた写真の、誰でも読める URL。
  *
@@ -3395,6 +3457,79 @@ export const islandApi = onRequest(
           res.json(t);
         } catch (e) {
           logger.warn("doneru token failed", String(e));
+          res.set("Cache-Control", "no-store");
+          res.status(502).json({error: "doneru unavailable"});
+        }
+        return;
+      }
+
+      /* ---- アラートボックス(#180) ----
+
+         OBS に貼る URL の合言葉を出す。**あやとだけ。**
+         作り直さないのが既定。毎回変わると、配信のたびに OBS の URL を
+         貼り替えることになる(ルーレット #164・遠隔操作 #165 と同じ理由)。
+         `fresh` を付けたときだけ作り直す。**合言葉が漏れたときの手当てが
+         これ。** Doneru の鍵のほうは作り直せないので、こちらを替える。 */
+      if (method === "POST" && path === "/alertbox/session") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const user = await USERS.doc(uid).get();
+        let id = String(user.data()?.alertboxId ?? "");
+        if (body.fresh === true || !/^[0-9a-f]{32}$/.test(id)) {
+          id = randomUUID().replace(/-/g, "");
+          await USERS.doc(uid).set({alertboxId: id}, {merge: true});
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({id, doneru: doneruHint(user.data()?.doneruKey)});
+        return;
+      }
+
+      /* 投げ銭の通知が流れてくる WebSocket の URL。
+         **ここだけログインが要らない。** OBS のブラウザソースは
+         合言葉を持てないので、32桁の id を知っていることが合言葉。
+
+         **鍵がここでブラウザへ渡る。** Doneru の WebSocket は
+         `?key=` でしか繋げないので、避けようがない。避けられるのは
+         「書き出しに焼くこと」のほうで、それはやめた。 */
+      const abWss = path.match(/^\/alertbox\/([0-9a-f]{32})\/wss$/);
+      if (method === "GET" && abWss) {
+        const key = await alertboxKey(abWss[1]);
+        if (!key) {
+          /* 合言葉が違う・鍵がまだ入っていない。**どちらも 404 にする。**
+             書き分けると、合言葉が当たったことだけを外から確かめられる。 */
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no alertbox"});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({wss: `${DONERU_WSS}?key=${encodeURIComponent(key)}`});
+        return;
+      }
+
+      /* YouTube を読むための、寿命の短いトークン。
+         **ここは鍵を返さない。** スパチャを拾うのに要るのはトークンだけで、
+         鍵を渡す用事が無い。`/roulette/yt-token` と同じ形。
+
+         ログインが要らないのは上と同じ理由(OBS が持てない)。
+         `refresh` は、ブラウザで 401 が出たときに1回だけ来る。 */
+      const abTok = path.match(/^\/alertbox\/([0-9a-f]{32})\/yt-token$/);
+      if (method === "POST" && abTok) {
+        const key = await alertboxKey(abTok[1]);
+        if (!key) {
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no alertbox"});
+          return;
+        }
+        try {
+          if (body.refresh === true) await doneruYoutubeRefreshToken(key);
+          const t = await doneruYoutubeToken(key);
+          res.set("Cache-Control", "no-store");
+          res.json(t);
+        } catch (e) {
+          logger.warn("alertbox token failed", String(e));
           res.set("Cache-Control", "no-store");
           res.status(502).json({error: "doneru unavailable"});
         }

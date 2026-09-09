@@ -31,6 +31,7 @@ import { Pin } from "@/components/live/art";
    `ssr: false` なのは、書き出しの HTML に入れても誰の役にも立たないから。 */
 const TripTools = dynamic(() => import("./TripTools"), { ssr: false });
 const OwnerCare = dynamic(() => import("./OwnerCare"), { ssr: false });
+const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
 /* 投げ銭の紐付け（#190）。旅の途中に赤いメールが来たとき、片手で直す面。
    ここも `ssr: false`。中身は全部ログインした人のもので、焼けるものが無い。 */
 const DonorLinks = dynamic(() => import("./DonorLinks"), { ssr: false });
@@ -185,6 +186,10 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
 
       {/* あやとの道具。**旅の途中に片手で開くので、いちばん上。** */}
       {me?.admin && <TripTools />}
+      {/* OBS に貼る URL。**貼り替えが終わるまでは、島の手入れより上。**
+          鍵を書き出しから外した（#180）ので、貼り替えないと投げ銭の
+          通知が来ない。旅に出ると机が無いので、9/11 までに済ませる。 */}
+      {me?.admin && <AlertBoxBox />}
       {me?.admin && <OwnerCare />}
       {/* 紐付けは、毎朝の取り込みが赤くなった日にだけ開く。**島の手入れの下。**
           付箋も企画も毎日のものだが、これは新しい人が来た日だけの用事。 */}

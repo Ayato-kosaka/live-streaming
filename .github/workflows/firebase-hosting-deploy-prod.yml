@@ -14,7 +14,14 @@ jobs:
       - uses: actions/checkout@v3
       - name: 🏗️ `.env` ファイルの作成
         run: |
-          echo "EXPO_PUBLIC_DONERU_WSS_URL=${{ secrets.EXPO_PUBLIC_DONERU_WSS_URL }}" >> .env
+          # EXPO_PUBLIC_DONERU_WSS_URL はここに書かない（#180）。
+          # EXPO_PUBLIC_ で始まるものは Expo が書き出しへ焼くので、
+          # 焼いた先が公開されている以上、Secret に入れても意味がない。
+          # 実際に本番の entry-….js から鍵がそのまま読めた。
+          # Doneru の鍵は作り直せないので、二度と外へ出さない形にした。
+          # いまは OBS の URL の ?k=… （こちらが出した合言葉）だけを渡し、
+          # 鍵を使うのは Functions の中だけ。Secret は消していない
+          # （python の取り込みが Actions の中で使っている）。
           echo "EXPO_PUBLIC_GAS_API_URL=${{ secrets.EXPO_PUBLIC_GAS_API_URL }}" >> .env
           echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
           echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env

@@ -3,7 +3,7 @@
 import { IConnector } from "./types";
 import { NotificationData, SuperChatNotification } from "../types";
 import { sendLog } from "@/lib/log";
-import { getDoneruToken, refreshDoneruYoutubeToken } from "../api.utils";
+import { getAlertboxYoutubeToken } from "../api.utils";
 
 interface VideoListResponse {
   items: {
@@ -84,7 +84,14 @@ export class YouTubeConnector implements IConnector {
   // APIが返す推奨間隔。取得できない場合のデフォルト
   private pollingIntervalMs = 5000;
 
-  constructor() { }
+  /**
+   * @param alertboxId OBS の URL に載せた 32 桁の合言葉（#180）
+   *
+   * **鍵ではない。** 前はここで `EXPO_PUBLIC_DONERU_WSS_URL` から
+   * Doneru の鍵を取り出していて、それが書き出しに焼かれて公開されていた。
+   * いまは合言葉だけを持ち、鍵を使うのはサーバーの中だけにしてある。
+   */
+  constructor(private alertboxId: string) { }
 
   start(
     onEvent: (notification: NotificationData) => void,
@@ -168,17 +175,6 @@ export class YouTubeConnector implements IConnector {
   }
 
   /**
-   * Doneru のキーを環境変数から取り出す
-   */
-  private getDoneruKey(): string {
-    const key = process.env.EXPO_PUBLIC_DONERU_WSS_URL?.split("key=")[1];
-    if (!key) {
-      throw new Error("Doneru key is not set in environment variables");
-    }
-    return key;
-  }
-
-  /**
    * access_token が有効かどうか（期限）を確認
    * - expiry の単位が「秒」か「ミリ秒」かは getDoneruToken 実装に依存します
    * - ここでは「ミリ秒 epoch」を想定
@@ -205,15 +201,16 @@ export class YouTubeConnector implements IConnector {
   private async ensureValidToken() {
     if (this.isTokenValid()) return;
 
-    const key = this.getDoneruKey();
-    const { youtube } = await getDoneruToken(key);
+    const { at, channel, expiresAt } = await getAlertboxYoutubeToken(
+      this.alertboxId
+    );
 
-    const { at, channel, exp } = youtube;
-
-    // exp が「秒」ならここで *1000 が必要
+    /* 期限はサーバー側でミリ秒 epoch に揃えてある（functions/src/
+       doneruYoutube.ts）。Doneru の `exp` は秒とミリ秒のどちらで来るか
+       決まっていないので、そこを1か所に寄せた。 */
     this.channelId = channel;
     this.access_token = at;
-    this.expiry = exp;
+    this.expiry = expiresAt;
 
     this.log("Refreshed access_token");
   }
@@ -385,15 +382,22 @@ export class YouTubeConnector implements IConnector {
 
   /**
    * Doneru の refresh をトリガーし、その後 token を再取得する
+   *
+   * **返ってきたトークンをそのまま使う。** サーバー側の口は
+   * 「取り直させてから取る」を1回で済ませてくれるので、
+   * ここで捨てて取り直すと Doneru を2回叩くことになる（#180）。
    */
   private async refreshDoneruToken() {
     try {
-      const key = this.getDoneruKey();
       this.log("Calling Doneru refresh API");
-      await refreshDoneruYoutubeToken(key);
-      this.log("Doneru refresh successful, invalidating local token");
-      // refresh 後は必ず token を取り直す
-      this.invalidateToken();
+      const { at, channel, expiresAt } = await getAlertboxYoutubeToken(
+        this.alertboxId,
+        true
+      );
+      this.channelId = channel;
+      this.access_token = at;
+      this.expiry = expiresAt;
+      this.log("Doneru refresh successful");
     } catch (e) {
       const err = e instanceof Error ? e : new Error("Failed to refresh Doneru token");
       this.log("Error refreshing Doneru token:", err);

@@ -1091,6 +1091,24 @@ export const getRouletteYtToken = (token: string, refresh = false) =>
     },
   );
 
+/**
+ * アラートボックス（OBS）に貼る URL の合言葉を出す。**あやとだけ。**（#180）
+ *
+ * 返るのは 32 桁の合言葉であって、**Doneru の鍵ではない。**
+ * 鍵はサーバーに置いたままで、この画面にも書き出したものにも入らない。
+ *
+ * 作り直さないのが既定。毎回変わると、配信のたびに OBS の URL を
+ * 貼り替えることになる。`fresh` を付けたときだけ作り直す
+ * ——**合言葉が漏れたときの手当てがこれ。** Doneru の鍵のほうは
+ * 作り直せない（あやとの言葉 2026-09-08）ので、こちらを替える。
+ */
+export const startAlertbox = (token: string, fresh = false) =>
+  req<{ id: string; doneru: DoneruHint }>("/alertbox/session", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ fresh }),
+  });
+
 /** 表示側（OBS）が読むところ。**ログインが要らない唯一の口。** */
 export const getRoulette = (id: string) =>
   req<{ session: RouletteSession; now: number }>(`/roulette/${id}`);
