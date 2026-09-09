@@ -54,6 +54,28 @@ EVENTS = "islandStreamEvent"
 IMAGES = "islandStreamEventImage"
 
 
+def ymd(v) -> str:
+    """日付をそろえる。**掲示板から出た行は 2026-9-11 のことがある。**
+
+    画面から出した行の `date` は、打った人の端末が組んだ字がそのまま入る。
+    種（`stream_events_seed.json`）は 2026-09-11 と0を詰めてある。
+    字として比べると別物になり、**同じ企画なのに結び付かない。**
+
+    実際にそれで `japan-2years` が1件だけ取り残された。しかも
+    「候補なし」で黙って飛ばしていたので、`手で決める 0件` と出ていた。
+    """
+    t = str(v or "").strip()
+    if not t:
+        return ""
+    part = t.replace("/", "-").split("-")
+    if len(part) != 3:
+        return t
+    try:
+        return "%04d-%02d-%02d" % (int(part[0]), int(part[1]), int(part[2]))
+    except ValueError:
+        return t
+
+
 def seed_plans() -> list:
     """種のうち、Git 側に企画ページがあるもの（`planId` を持つ行）。"""
     with open(SEED, encoding="utf-8") as f:
@@ -95,9 +117,16 @@ def decide(rows: list, docs: dict, shots: dict, only=None) -> tuple:
             and not v.get("planId")
             and v.get("archived") is not True
             and str(v.get("title", "")).strip() == r["title"].strip()
-            and v.get("date") == r["date"]
+            and ymd(v.get("date")) == ymd(r["date"])
         ]
         if not same:
+            # **黙って飛ばさない。** すでに結び付いている行があるのに掲示板側の
+            # 相手が見つからないのは、種を入れただけで済んでいる（正常）か、
+            # 題か日付が食い違っている（要確認）かのどちらか。前者と区別が
+            # つかないまま 0件 と出すと、取り残しに気づけない。
+            if len(held) > 1:
+                stuck.append((git_id, f"planId を持つ行が{len(held)}件あるのに、"
+                                      f"掲示板側に題も日付も合う提案が無い: {held}"))
             continue
         if len(same) > 1:
             stuck.append((git_id, f"掲示板に同じ題の提案が{len(same)}件ある: {same}"))
