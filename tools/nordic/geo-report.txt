@@ -1,0 +1,82 @@
+○ タリン      旧市街の心臓ラエコヤ広場                 Raekoja plats                    pedestrian       中心から  0.4km
+○ タリン      絵はがきの丘コフトゥオツァ                Kohtuotsa vaateplatvorm          viewpoint        中心から  0.6km
+○ タリン      玉ねぎドームの荘厳な聖堂                 Aleksander Nevski katedraal      place_of_worship 中心から  0.8km
+○ タリン      大帝の庭とKUMUの現代美術               Kadrioru loss                    museum           中心から  2.1km
+○ タリン      中世にタイムスリップの晩餐                Olde Hansa                       restaurant       中心から  0.4km
+○ タリン      予約必須の井戸通りの名店                 Rataskaevu 16                    restaurant       中心から  0.6km
+○ タリン      駅裏に生まれた三層市場                  Balti Jaama Turg                 marketplace      中心から  1.1km
+○ タリン      1864年創業の甘党天国                 Maiasmokk                        cafe             中心から  0.5km
+○ パルヌ      夏の首都のカフェ通り                   Rüütli tänav                     pedestrian       中心から  0.2km
+○ タリン      北のクラフトビール革命                  Põhjala Tap Room                 pub              中心から  2.1km
+○ パルヌ      白砂ビーチと黒い泥パック                 Pärnu rand                       beach            中心から  1.3km
+○ タリン      格納庫に眠る潜水艦                    Lennusadam                       museum           中心から  1.8km
+○ タリン      世界最古級のクリスマス市                 Tallinna jõuluturg               pedestrian       中心から  0.4km
+○ タリン      職人が並ぶ石畳の小径                   Katariina käik                   attraction       中心から  0.3km
+○ タリン      工場跡のデザイン基地                   Telliskivi Loomelinnak           retail           中心から  1.4km
+○ タリン      城壁下のニットの壁                    Müürivahe tänav                  living_street    中心から  0.2km
+○ タリン      屋根の海に溺れるタリン旧市街               Tallinna vanalinn                restaurant       中心から  0.5km
+○ ヘルシンキ    海に浮かぶ星形の要塞島                  Suomenlinna                      administrative   中心から  3.8km
+○ ヘルシンキ    岩をくり抜いた光の教会                  Temppeliaukion kirkko            place_of_worship 中心から  0.8km
+○ ヘルシンキ    波打つ木の公共リビング                  Oodi Helsinki Central Library    library          中心から  0.4km
+○ ヘルシンキ    広場が膨らむ地下美術館                  Amos Rex                         gallery          中心から  0.1km
+○ ヘルシンキ    1889年開業の美食市場                 Vanha kauppahalli                marketplace      中心から  0.9km
+○ ヘルシンキ    港の屋台でサーモンスープ                 Kauppatori                       pedestrian       中心から  0.9km
+○ ヘルシンキ    海辺の赤い小屋カフェ                   Café Regatta                     cafe             中心から  1.9km
+○ ヘルシンキ    青い包み紙の国民的甘味                  Fazer                            cafe             中心から  0.5km
+○ ヘルシンキ    海に飛び込む建築サウナ                  Löyly                            restaurant       中心から  2.0km
+○ ヘルシンキ    ウニッコ柄の聖地アウトレット               Marimekko Outlet Herttoniemi     clothes          中心から  6.4km
+○ ヘルシンキ    北欧食器を本場価格で                   Iittala                          interior_decoration 中心から  0.7km
+○ ヘルシンキ    港町の青空ヴィンテージ市                 Hietalahden kirpputori           square           中心から  0.9km
+○ ヘルシンキ    岩をくり抜いた光のチャペル                Temppeliaukio Church             place_of_worship 中心から  0.8km
+○ ヘルシンキ    白亜の大聖堂が見下ろす大広場               Helsinki Cathedral               place_of_worship 中心から  0.8km
+- ヘルシンキ    頬っぺた形のシナモンロール                Korvapuusti（コルヴァプースティ）           場所ではない（ピンを打たない）
+- ヘルシンキ    クリーム香るサーモンスープ                Lohikeitto（ロヒケイット）               場所ではない（ピンを打たない）
+○ ヘルシンキ    北欧デザインを買い付ける一日               Design District Helsinki         company          中心から  1.3km
+○ リガ       赤煉瓦のブラックヘッドの家                Melngalvju nams                  attraction       中心から  0.3km
+○ リガ       ユーゲントの彫刻通り                   Alberta iela                     residential      中心から  1.1km
+○ リガ       塔から望む赤屋根の海                   Sv. Pētera baznīca               place_of_worship 中心から  0.3km
+○ リガ       白亜の宮殿で見る北国の絵                 Latvijas Nacionālais mākslas m   museum           中心から  0.8km
+○ ルンダーレ    バルトのベルサイユ宮殿                  Rundāles pils                    castle           中心から 10.1km
+○ リガ       飛行船格納庫が街の胃袋                  Rīgas Centrāltirgus              marketplace      中心から  0.9km
+○ リガ       灰色えんどうの現代郷土料理                Restorāns Milda                  restaurant       中心から  0.5km
+- リガ       黒い薬草リキュール体験                  Rīgas Melnais balzams            場所ではない（ピンを打たない）
+○ リガ       地下に響く民謡ビアセラー                 Folkklubs Ala Pagrabs            pub              中心から  0.4km
+○ リガ       1870年からの甘い時計                 Laima                            confectionery    中心から  0.9km
+○ リガ       木造街区の土曜マルシェ                  Kalnciema kvartāls               marketplace      中心から  2.4km
+- リガ       バルトのリネンを一枚                   Latvijas lini                    場所ではない（ピンを打たない）
+- リガ       模様が語る手編みミトン                  Latviešu cimdi                   場所ではない（ピンを打たない）
+○ ヴィリニュス   バロックが溢れる旧市街                  Vilniaus senamiestis             suburb           中心から  0.6km
+○ ヴィリニュス   建国伝説の丘に立つ塔                   Gedimino pilies bokštas          viewpoint        中心から  0.7km
+○ ヴィリニュス   ナポレオンが恋した教会                  Šv. Onos bažnyčia                place_of_worship 中心から  1.0km
+○ ヴィリニュス   芸術家たちの独立共和国                  Užupis                           quarter          中心から  1.4km
+○ トラカイ     湖に浮かぶ赤煉瓦の城                   Trakų salos pilis                castle           中心から  1.6km
+○ シャウレイ    十万の十字架が立つ丘                   Kryžių kalnas                    attraction       中心から 11.0km
+- ヴィリニュス   飛行船の形の国民食                    Cepelinai                        場所ではない（ピンを打たない）
+- トラカイ     カライム人のミートパイ                  Kibinai                          場所ではない（ピンを打たない）
+- ヴィリニュス   衝撃のピンク色冷製スープ                 Šaltibarščiai                    場所ではない（ピンを打たない）
+- ヴィリニュス   とげとげの年輪ケーキ                   Šakotis                          場所ではない（ピンを打たない）
+○ ヴィリニュス   農家ビールの深い森へ                   Šnekutis                         pub              中心から  1.0km
+- ヴィリニュス   気球で浮かぶ首都の空                   Skrydis oro balionu              場所ではない（ピンを打たない）
+○ ヴィリニュス   春を呼ぶ聖カジミエル市                  Kaziuko mugė                     pedestrian       中心から  0.5km
+○ ヴィリニュス   スーパーで買う本気土産                  Maxima                           supermarket      中心から  1.1km
+- ヴィリニュス   旧市街の真上を熱気球で                  Oro balionai virš Vilniaus       場所ではない（ピンを打たない）
+○ ヴィリニュス   自称共和国をおさんぽ                   Užupio Respublika                quarter          中心から  1.4km
+○ ワルシャワ    ゼロから建て直された旧市街                Stare Miasto                     administrative   中心から  2.2km
+○ ワルシャワ    63日間の蜂起の記録                   Muzeum Powstania Warszawskiego   museum           中心から  2.1km
+○ ワルシャワ    スターリンからの「贈り物」                Pałac Kultury i Nauki            viewpoint        中心から  0.5km
+○ ワルシャワ    孔雀が歩く王の庭で、ショパンを聴く            Łazienki Królewskie              park             中心から  2.4km
+○ ワルシャワ    ポーランドのヴェルサイユ                 Pałac w Wilanowie                museum           中心から  8.9km
+○ カトヴィツェ   空飛ぶ円盤みたいなアリーナ                Spodek                           stadium          中心から  0.7km
+○ カトヴィツェ   炭鉱跡に建った、音のためだけの建物            NOSPR                            theatre          中心から  0.7km
+○ カトヴィツェ   赤レンガの炭鉱住宅街                   Nikiszowiec                      quarter          中心から  4.6km
+○ ビャウィストク  ワルシャワとヴィリニュスの真ん中             Pałac Branickich                 attraction       中心から  0.3km
+○ ストックホルム  沈んだ王の船、ヴァーサ号                 Vasamuseet                       museum           中心から  1.3km
+○ ストックホルム  赤い広場と最古の街並み                  Stortorget, Gamla Stan           pedestrian       中心から  0.5km
+○ ストックホルム  北欧のヴェルサイユ、王の島                Drottningholms slott             castle           中心から 10.3km
+○ ストックホルム  世界一長い地下の美術館                  Tunnelbanan konst                station          中心から  0.5km
+○ ストックホルム  1888年創業の美食市場                 Östermalms Saluhall              retail           中心から  0.9km
+○ ストックホルム  フィーカの聖地、猫の名店                 Vete-Katten                      cafe             中心から  0.5km
+? ストックホルム  3万島へ、群島クルーズ                  Stockholms skärgård              archipelago      中心から 41.4km
+○ ストックホルム  花柄の巨匠、王室御用達                  Svenskt Tenn                     furniture        中心から  0.7km
+○ ストックホルム  ノーベル賞晩餐会の黄金ホール               Stockholms stadshus              townhall         中心から  0.8km
+- ストックホルム  本場のミートボールは別格                 Köttbullar med lingonsylt        場所ではない（ピンを打たない）
