@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
@@ -7,42 +6,36 @@ import Here from "@/components/live/Here";
 import IslandRemote from "@/components/live/IslandRemote";
 import { NOW_FALLBACK } from "@/content/site";
 
-/**
- * 島の書体。丸ゴシックは、あつ森の字の「角が無い・字面が大きい・線が均一」に近い。
+/* 島の書体は `app/css/fonts.css`（自動生成。`tools/fonts/subset.py`）が持っている。
+ * 丸ゴシックは、あつ森の字の「角が無い・字面が大きい・線が均一」に近い。
  *
- * これまでは <link> で Google Fonts を直に読んでいた。描き始める前に外の
- * サーバへ取りにいくので、電波の悪いところで最初の1秒が真っ白になる。
- * next/font はビルド時に取ってきて自分のドメインから配るので、その待ちが消える。
+ * **Google Fonts を <link> で直に読むのに戻さない。** 描き始める前に外のサーバへ
+ * 取りにいくので、電波の悪いところで最初の1秒が真っ白になる。焼いたものを
+ * 自分のドメインから配る、といういまの形はそのため。
+ *
+ * 太さは 400 / 700 / 900 の3つ。**これ以上は減らせない。**
+ * CSS の指定は 900 が237か所・700 が59・800 が46・600 が8で、800 は 900 の実ファイル、
+ * 600 は 700 の実ファイルに落ちる（狙いが 500 より上なら上側を近い順に見る規則）。
+ * 900 を落とすと見出しの黒さが消え、700 を落とすと添え書きまで真っ黒になる。
+ *
+ * ## next/font の Zen Maru Gothic を外した
+ *
+ * 焼いた束から漏れた字の受け皿として、ここに next/font を置いていた。
+ * **受け皿のほうが島の入口を遅くしていた。**
+ *
+ * next/font は日本語を Google の切り分けのまま渡してくる。太さ3つで
+ * `@font-face` が **367 本**、CSS だけで 266KB。字を並べるたびに
+ * 「その字はどの1本に入っているか」を 367 本に当てにいくので、
+ * 最初の Layout がそのぶん伸びる。390×844 で交互に4往復して測った中央値:
+ *
+ *   置いたまま  最初のLayout 1,543ms  FCP 1,912ms  CSS 550KB
+ *   外す        最初のLayout   203ms  FCP   632ms  CSS 284KB
+ *
+ * 漏れる字は site 全体で 83 字（竹・停・，など。多くは料理の引用文）と、
+ * 掲示板や付箋に視聴者さんがその場で書く字。どちらも端末の丸ゴシック
+ * （iPhone・Mac は Hiragino Maru Gothic ProN）で出る。Android には丸ゴシックが
+ * 無いので、そこだけ普通のゴシックになる。順番は `app/css/tokens.css`。
  */
-const maru = Zen_Maru_Gothic({
-  subsets: ["latin"],
-  /**
-   * 太さは3つ。**これ以上は減らせない。**
-   *
-   * 500 は0か所なので落とした。残る3つは、どれも本当に使われている。
-   * CSS の指定は 900 が237か所・700 が59・800 が46・600 が8。
-   * 800 と 600 は「合成」ではなく、CSS の太さの当てはめで
-   * **800 は 900 の実ファイル・600 は 700 の実ファイル**に落ちる
-   * （狙いが 500 より上なら、まず上側をいちばん近い順に見る規則）。
-   * つまり3つとも実際に使われている。
-   *
-   * 減らしたらどう見えるかは、配る CSS の @font-face を途中で抜いて撮って比べた。
-   *   - 900 を落とす → 700 に寄る。見出しの黒さが消えて、島の字の顔が変わる（237か所）
-   *   - 700 を落とす → 900 に寄る。区間の一覧や添え書きまで真っ黒になる（67か所）
-   * どちらも絵が落ちるので、3つのまま持つ。
-   *
-   * 書体はスマホ1面あたり 590〜890KB で、**縮めても小さくならない**（woff2 は
-   * もう縮んでいる）。転送でいちばん重いのはここだが、太さを削る方向では直らない。
-   * 直すなら、島で実際に使う字だけを集めて自前でサブセットを焼く。
-   */
-  weight: ["400", "700", "900"],
-  display: "swap",
-  variable: "--font-maru",
-  // 日本語は Google 側が文字の範囲ごとにファイルを分けているので、
-  // 使う文字が入っているぶんだけが落ちてくる。preload すると全部先に取りにいってしまう。
-  preload: false,
-  fallback: ["ui-rounded", "Hiragino Maru Gothic ProN", "sans-serif"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://live-streaming-d3cac.web.app"),
@@ -75,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     // 下のスクリプトが data-time を足すぶんサーバの出力と食い違うが、
     // それは承知のうえなので suppressHydrationWarning で黙らせる
-    <html lang="ja" className={maru.variable} suppressHydrationWarning>
+    <html lang="ja" suppressHydrationWarning>
       <head>
         {/* 島の空の色を見ている人の時計に、島の景色をあやとの現在地に合わせる。
             描き始める前に決めたいので、React を待たずにここで入れておく。

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { livePlans, planPhase, type Plan } from "@/content/plans";
 import { themeById } from "@/content/themes";
+import Longer from "@/components/ui/Longer";
 import Notes from "./Notes";
 import PlanCard, { PlanRow } from "./PlanCard";
 
@@ -143,13 +144,15 @@ export default function NextPlans() {
           <p className="muted">
             石の上の日付が、その企画の日。押すと、その場で中身が開きます。
           </p>
-          <ul className="nx-road">
-            {rest.map((p) => (
+          {/* 飛び石は1つ 60px ほどだが、日付の決まった企画は増える一方。
+              **どこまで先を見せるかを決めておく**（#225）。 */}
+          <Longer items={rest} first={6} step={12} unit="つ" className="nx-road">
+            {(p) => (
               <PlanRow plan={p} key={p.id}>
                 <PlanNotes plan={p} />
               </PlanRow>
-            ))}
-          </ul>
+            )}
+          </Longer>
         </section>
       )}
 
@@ -157,13 +160,15 @@ export default function NextPlans() {
         <section className="panel paper">
           <h2>もう行ってきた</h2>
           <p className="muted">貼ってもらった付箋も、そのまま残っています。</p>
-          <ul className="nx-road">
-            {done.map((p) => (
+          {/* 終わった企画は**1つも減らない。** 何年ぶんでも下に積み上がるので、
+              これからより短く出す。読み返す人は押して出す。 */}
+          <Longer items={done} first={4} step={12} unit="つ" className="nx-road">
+            {(p) => (
               <PlanRow plan={p} key={p.id}>
                 <PlanNotes plan={p} />
               </PlanRow>
-            ))}
-          </ul>
+            )}
+          </Longer>
         </section>
       )}
     </>

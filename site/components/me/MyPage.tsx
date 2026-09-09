@@ -19,6 +19,7 @@ import { RESIDENTS } from "@/content/residents";
 import { themeById } from "@/content/themes";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import IslandMe from "@/components/live/IslandMe";
 import MyCards from "./MyCards";
 import type { PlanDays } from "@/components/cards/cards";
@@ -214,18 +215,23 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
             </Link>
           </div>
         ) : (
-          <ul className="mp-notes">
-            {stickies.map((n, i) => {
+          /* 4枚だけ出す。**貼った人ほど長くなる面**なので、溜まったぶんを
+             そのまま縦に積まない（#225）。1枚が本文・札・返事の3段あるので、
+             20枚で 3,200px（スマホ4画面ぶん）まで伸びていた。 */
+          <Longer items={stickies} first={4} step={8} unit="枚" className="mp-notes">
+            {(n, i) => {
               const th = themeById(n.theme);
               return (
                 <li key={n.id}>
                   <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />
                   <p className="mp-note-text">{n.text}</p>
+                  {/* テーマと日付は札にしない。**枠と余白のぶんだけ背が伸びる**し、
+                      押せない札が押しどころの隣に並ぶと、合図が濁る。 */}
                   <p className="mp-note-foot">
-                    <span className="chip">{th?.name ?? n.theme}</span>
-                    <span className="chip">{day(n.createdAt)}</span>
+                    <span>{th?.name ?? n.theme}</span>
+                    <span>{day(n.createdAt)}</span>
                     {n.hearts > 0 && (
-                      <span className="chip mp-hearts">
+                      <span className="mp-hearts">
                         <svg viewBox="0 0 24 22" aria-hidden>
                           <path
                             d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
@@ -244,8 +250,8 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
                   )}
                 </li>
               );
-            })}
-          </ul>
+            }}
+          </Longer>
         )}
         {stickies !== null && stickies.length > 0 && (
           <p className="muted mp-small">
@@ -272,8 +278,9 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
             </Link>
           </div>
         ) : (
-          <ul className="mp-plans">
-            {plans.map((p) => {
+          /* 企画は1件が2段（題と札）なので、付箋より多めに出せる。 */
+          <Longer items={plans} first={5} step={10} unit="件" className="mp-plans">
+            {(p) => {
               const edit = canEditPlan(p, user.uid, myPlans());
               return (
                 <li key={p.id}>
@@ -293,8 +300,8 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
                   )}
                 </li>
               );
-            })}
-          </ul>
+            }}
+          </Longer>
         )}
       </section>
 

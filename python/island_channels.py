@@ -15,17 +15,36 @@ BigQuery 側で先に引けるものを Firestore へ写しておいて、画面
 
 ## いちばん新しい名前だけを持つ
 
-`islandChannels/{チャンネルID} = { name, lastAt, updatedAt }`
+`islandChannels/{チャンネルID} = { name, lastAt, days, updatedAt }`
 
 `name` は**そのチャンネルの、いちばん新しいメッセージの `author_name`**。
 名前は変わるが、古い名前は持たない（あやとの指示・2026-09-07
 「古い方はいらない」）。打つのはいま見えている名前なので、いま名乗って
 いる名前が引ければ足りる。
 
+## 「一緒にいた日数」も、ここに入れる（#91）
+
+あやとの言葉（2026-09-08）「islandChannel に一緒にいた日数を日次で記載すれば
+良いのでは？」。**置き場はここが正しい。** この辞書はもう毎晩ぜんぶ作り直して
+いるので、同じ問い合わせの中で数えて足すだけになる。新しい入れ物も、新しい
+ワークフローも要らない。
+
+`days` は**その人のコメントが1件でもあった日の数**。投げ銭した日ではなく、
+来てくれた日。`/friends` に出す数字なので、お金を出した人だけが増えるのは
+この島の言いたいことと違う。
+
+**境目は日本時間の0時**（`islandTips` と同じ）。UTC で切ると、22時に始まって
+0時をまたぐ配信が2日に割れて、出席が実際より多く出る。
+
+**期間で切らない。** 前は `residents.ts` が「直近90日」で数えていたが、
+それだと旅に出て配信の形が変わった月に、古い常連の数字が黙って減る。
+「一緒にいた日数」は減る種類の数ではない。全期間を数える。
+
 ## 名前が変わった人だけ書く
 
 2,243人いる。毎日ぜんぶ書き直すと、変わっていない 2,240 件ぶんの書き込みを
-毎日払うことになる。**いま入っているものを読んで、違うものだけ書く。**
+毎日払うことになる。**いま入っているものを読んで、違うものだけ書く**（名前か日数の
+どちらかが変わった人だけ）。
 読みは書きよりずっと安いし、この辞書は他の誰も書かない（ここが唯一の
 書き手）ので、読んだ内容が古くなることもない。
 
@@ -63,7 +82,11 @@ SQL = f"""
 SELECT
   author_channel_id AS id,
   ARRAY_AGG(author_name ORDER BY published_at DESC LIMIT 1)[OFFSET(0)] AS name,
-  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', MAX(published_at)) AS last_at
+  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', MAX(published_at)) AS last_at,
+  -- 一緒にいた日数（#91）。**日本時間で日を切る。**
+  -- UTC で切ると、22時に始まって0時をまたぐ配信が2日に割れて、
+  -- 出席が実際より多く出る。`islandTips` と同じ境目にそろえる。
+  COUNT(DISTINCT DATE(published_at, 'Asia/Tokyo')) AS days
 FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages`
 WHERE author_channel_id IS NOT NULL
   AND author_name IS NOT NULL
@@ -73,15 +96,20 @@ GROUP BY id
 
 
 def fetch() -> dict:
-    """チャンネルID -> {name, lastAt}。いま名乗っている名前。
+    """チャンネルID -> {name, lastAt, days}。
 
     Returns:
-        チャンネルID -> {"name": 表示名, "lastAt": 最後に喋った時刻}
+        チャンネルID -> {"name": 表示名, "lastAt": 最後に喋った時刻,
+        "days": 一緒にいた日数}
     """
     client = bigquery.Client(project=BQ_PROJECT_ID)
     out = {}
     for row in client.query(SQL).result():
-        out[str(row["id"])] = {"name": row["name"], "lastAt": row["last_at"]}
+        out[str(row["id"])] = {
+            "name": row["name"],
+            "lastAt": row["last_at"],
+            "days": int(row["days"] or 0),
+        }
     client.close()
     return out
 
@@ -106,13 +134,24 @@ def main() -> int:
     changed = []
     for cid, v in now.items():
         was = had.get(cid)
-        if was is not None and was.get("name") == v["name"]:
+        if (
+            was is not None
+            and was.get("name") == v["name"]
+            and int(was.get("days") or 0) == v["days"]
+        ):
             continue
-        changed.append((cid, v, was.get("name") if was else None))
+        changed.append((cid, v, was))
 
-    logger.info("名前が変わった / 新しく入る: %d人", len(changed))
-    for cid, v, before in changed[:50]:
-        logger.info("  %s  %s -> %s", cid, before or "（新規）", v["name"])
+    logger.info("名前か日数が変わった / 新しく入る: %d人", len(changed))
+    for cid, v, was in changed[:50]:
+        logger.info(
+            "  %s  %s -> %s  / 日数 %s -> %d",
+            cid,
+            (was or {}).get("name") or "（新規）",
+            v["name"],
+            (was or {}).get("days", "－"),
+            v["days"],
+        )
     if len(changed) > 50:
         logger.info("  …ほか %d人", len(changed) - 50)
 
@@ -126,7 +165,12 @@ def main() -> int:
     for cid, v, _ in changed:
         batch.set(
             col.document(cid),
-            {"name": v["name"], "lastAt": v["lastAt"], "updatedAt": stamp},
+            {
+                "name": v["name"],
+                "lastAt": v["lastAt"],
+                "days": v["days"],
+                "updatedAt": stamp,
+            },
             merge=True,
         )
         n += 1

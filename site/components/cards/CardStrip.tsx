@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Icon from "@/components/ui/IconCore";
 import CardOne from "./CardOne";
-import { useCards, type PlanDays } from "./cards";
+import { byPhoto, useCards, type PlanDays } from "./cards";
 
 /**
  * 最近のあやと島カードを数枚（#173）。**`/about` の「住んでる人」の下。**
@@ -27,6 +27,11 @@ export default function CardStrip({
   max?: number;
 }) {
   const { cards } = useCards();
+  /* **写真でまとめてから、その1枚目だけを出す。** 同じ写真から出たカードは
+     人数ぶんあるので、素の並びの先頭を2枚取ると、同じ絵が2つ出る
+     （本番の 9/6 の夜景が、いま4人ぶんある）。ここは島の紹介の面なので、
+     並んでいるものが違うということだけ分かればいい。 */
+  const some = byPhoto(cards ?? []).map((g) => g.cards[0]);
 
   return (
     <div className="akd-strip">
@@ -50,9 +55,9 @@ export default function CardStrip({
         </p>
       )}
 
-      {cards !== null && cards.length > 0 && (
+      {cards !== null && some.length > 0 && (
         <div className="akd-grid">
-          {cards.slice(0, max).map((c) => (
+          {some.slice(0, max).map((c) => (
             <CardOne key={c.id} card={c} plans={plans[c.day]} />
           ))}
         </div>

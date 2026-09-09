@@ -28,7 +28,7 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import { THEMES, type Theme } from "@/content/themes";
+import { NORDIC_GROUP, THEMES, type Theme } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 
 export type IsleItem = {
@@ -323,7 +323,7 @@ function pier(prev?: Neighbour, next?: Neighbour): IslePlaceSpec {
  * （`docs/island-play.md`「順位表を作らない」）。
  */
 function nordicThemes(): Theme[] {
-  return THEMES.filter((t) => t.group === "北欧の旅");
+  return THEMES.filter((t) => t.group === NORDIC_GROUP);
 }
 
 /**

@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import SignIn from "./SignIn";
 import Notes from "./Notes";
 import { EmptyBoard, Pin, Stone } from "./art";
@@ -70,6 +71,9 @@ const SHELVES: { id: PlanStatus; lead: string }[] = [
   { id: "done", lead: "行ってきたもの。語り継がれると、伝説の企画になります。" },
 ];
 
+/** Git 側に立っている企画1つ。`content/plans.ts` か `content/legends.ts` にある。 */
+type GitPlan = { id: string; label: string; href: string };
+
 /**
  * ページとして立った企画の行き先。
  *
@@ -77,13 +81,34 @@ const SHELVES: { id: PlanStatus; lead: string }[] = [
  * **結び付いていないものには、行き先を作らない。** 「これから」と書いてあるのに
  * 押しても何も無い札は、壊れているのと同じ。
  */
-function gitPlanLink(planId?: string): { label: string; href: string } | null {
+function gitPlanLink(planId?: string): GitPlan | null {
   if (!planId) return null;
   const l = LEGENDS.find((x) => x.slug === planId);
-  if (l) return { label: l.title, href: `/legends/${l.slug}` };
+  if (l) return { id: l.slug, label: l.title, href: `/legends/${l.slug}` };
   const p = PLANS.find((x) => x.id === planId);
-  if (p) return { label: p.title, href: p.href ?? "/next" };
+  if (p) return { id: p.id, label: p.title, href: p.href ?? "/next" };
   return null;
+}
+
+/**
+ * 結び付いていないが、**Git 側にはもうページが立っている**もの。
+ *
+ * 段（`status`）と Git 側の企画は、別々に動く。清書して
+ * `content/plans.ts` にページを立てても、掲示板の段は誰かが動かすまで
+ * 「提案」のままで、その食い違いは画面のどこにも出なかった。
+ * ジョージアバイバイと海外出発二周年が、実際にそうなっていた。
+ *
+ * **題も日付も1字も違わないものだけを候補にする。** 似ているだけのものを
+ * 拾うと、別の企画のページへ連れていく札ができる。見つけても勝手には結ばない。
+ * **あやとに「食い違っている」と見せて、押してもらう。**
+ */
+function gitPlanLike(p: NextPlan): GitPlan | null {
+  const title = p.title.trim();
+  if (!title || !p.date) return null;
+  const plan = PLANS.find((x) => x.title.trim() === title && x.date === p.date);
+  if (plan) return { id: plan.id, label: plan.title, href: plan.href ?? "/next" };
+  const l = LEGENDS.find((x) => x.title.trim() === title && x.date === p.date);
+  return l ? { id: l.slug, label: l.title, href: `/legends/${l.slug}` } : null;
 }
 
 /**
@@ -549,12 +574,23 @@ export default function Board() {
           <p className="muted">じぶんが出したものは、まだありません。</p>
         )}
 
-        <ul className="bd-list">
-          {list.map((p, n) => {
+        {/* 出された企画は消えない（段が進むだけ）ので、**板はいちばん先に
+            伸びきる。** 6件だけ出して、あとは押して出す（#225）。
+            並べ替えの札が上にあるので、いま何を上に出しているかは
+            6件でも読み取れる。 */}
+        <Longer items={list} first={6} step={12} unit="件" className="bd-list">
+          {(p, n) => {
             // ハートがいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "hearts" && !onlyMine && n === 0 && p.hearts > 0 && p.status === "proposed";
             const edit = now ? canEditPlan(p, user?.uid, mine, now) : "no";
             const link = gitPlanLink(p.planId);
+            /* 結び付いていないのに、Git 側にはページが立っているもの。
+               **あやとにだけ見せる。** 直せるのはあやとだけなので、
+               見ている人に食い違いを言っても、待つことしかできない。 */
+            const like = !p.planId ? gitPlanLike(p) : null;
+            /* 結び付け先の id が Git 側に無い。打ち間違えたか、
+               ページのほうを消したか。どちらにしても押せる先が無い。 */
+            const lost = !!p.planId && !link;
             return (
               <li
                 key={p.id}
@@ -614,9 +650,24 @@ export default function Board() {
                       出してから1日たったので、もう直せません。ログインして出すと、あとからでも直せます。
                     </span>
                   )}
+                  {/* 段と Git 側が食い違っている。**あやとにだけ、その場で言う。**
+                      掲示板を見にきた日に気づけないと、清書したページと
+                      「提案」の札が何日も並んだままになる。 */}
+                  {owner && like && (
+                    <span className="bd-mismatch">
+                      「{like.label}」のページが立っているのに、段が
+                      {PLAN_STATUS_NAME[p.status]}のままです。下の「段を動かす」で結び付けてください。
+                    </span>
+                  )}
+                  {owner && lost && (
+                    <span className="bd-mismatch">
+                      結び付け先（{p.planId}）が Git 側にありません。id を直すか、空にして外してください。
+                    </span>
+                  )}
                   {owner && (
                     <PlanOwnerTools
                       plan={p}
+                      suggest={like}
                       stowed={bin}
                       onStow={(on) => stow(p, on)}
                       onStage={(next) =>
@@ -627,8 +678,8 @@ export default function Board() {
                 </div>
               </li>
             );
-          })}
-        </ul>
+          }}
+        </Longer>
 
         {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}
         {owner && (
@@ -683,31 +734,50 @@ export default function Board() {
  */
 function PlanOwnerTools({
   plan,
+  suggest,
   stowed,
   onStage,
   onStow,
 }: {
   plan: NextPlan;
+  /** Git 側に立っているのに結び付いていないページ。**あれば先に入れておく** */
+  suggest?: GitPlan | null;
   stowed: boolean;
   onStage: (next: NextPlan) => void;
   onStow: (on: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<PlanStatus>(plan.status);
-  const [planId, setPlanId] = useState(plan.planId ?? "");
+  /* 食い違いが見つかっているときは、選び直さなくてよいところまで入れておく。
+     id を手で打ち直させると、また打ち間違えて結び直すことになる。
+     **押すのは人。** 開いた欄を見て「動かす」を押すまでは1件も動かない。 */
+  const [status, setStatus] = useState<PlanStatus>(
+    suggest && plan.status === "proposed" ? "next" : plan.status,
+  );
+  const [planId, setPlanId] = useState(plan.planId ?? suggest?.id ?? "");
   const [busy, setBusy] = useState(false);
+  /** 動かせなかった理由。**黙って閉じない。** */
+  const [err, setErr] = useState<string | null>(null);
   const { token } = useAuth();
 
   const save = async () => {
     const t = await token();
     if (!t) return;
     setBusy(true);
+    setErr(null);
     try {
       const r = await setPlanStatus(plan.id, status, planId.trim(), t);
       onStage(r.plan);
       setOpen(false);
-    } catch {
-      /* 動かせなかったら、開いたまま。選んだものは消さない */
+    } catch (e) {
+      /* 動かせなかったら、開いたまま。選んだものは消さない。
+         いちばん出るのが「その id は別の行が持っている」で、これは
+         同じ企画の行が2つある印なので、何が起きたかを言わないと
+         押し直すしかできない。 */
+      setErr(
+        String(e).includes("409") ?
+          "その id は、もう別の行が持っています。そちらを先にしまってください。" :
+          "いま動かせなかった。少し待って、もう一度。",
+      );
     } finally {
       setBusy(false);
     }
@@ -740,6 +810,7 @@ function PlanOwnerTools({
           <button className="bbtn" onClick={save} disabled={busy}>
             {busy ? "動かしています…" : "動かす"}
           </button>
+          {err && <span className="bd-mismatch">{err}</span>}
         </span>
       )}
     </span>

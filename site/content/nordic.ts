@@ -913,3 +913,83 @@ export async function loadSpots(slug: string): Promise<NordicSpot[]> {
       return [];
   }
 }
+
+/**
+ * 実際に降りる街。**出どころは `ROUTE`（`from` `to` `stay`）と `DAYS`（`city` `stay`）だけ。**
+ *
+ * 街の名前を手で並べた表をもう1つ作らない。旅程は #91 で一度ぜんぶ変わっていて、
+ * そのとき片方だけ古くなる（地図に、通らない街の点が残っていたのが実際にそれ）。
+ *
+ * 並びは通る順。旅は北へ一方通行なので、その順に読めるほうが分かる。
+ * 「ストックホルム（友だちの家に7泊）」のような添え書きは `cityName` が落とす。
+ */
+export const VISIT_CITIES: string[] = [
+  ...new Set(
+    [
+      ...ROUTE.flatMap((l) => [l.from, l.to, l.stay ?? ""]),
+      ...DAYS.flatMap((d) => [d.city ?? "", d.stay ?? ""]),
+    ]
+      .filter(Boolean)
+      .map(cityName),
+  ),
+];
+
+/**
+ * 通り道にあって、**寄るかどうかがまだ決まっていない街**（`maybe`）。
+ *
+ * 行く街とも、行かない街とも別に置く。行く街に混ぜれば寄ると決まって読めるし、
+ * 行かない街に混ぜれば、視聴者さんに押してもらう分かれ道（トラカイ）が
+ * 「行かないところ」の中に埋まる。
+ */
+export const MAYBE_CITIES: string[] = [
+  ...new Set([...ROUTE.flatMap((l) => l.maybe ?? []), ...DAYS.flatMap((d) => d.maybe ?? [])]),
+].filter((c) => !VISIT_CITIES.includes(c));
+
+/** その国で降りる街。国の面の見出しと、そこに出す説明はこれを読む。 */
+export const visitCitiesOf = (slug: string) =>
+  VISIT_CITIES.filter((c) => cityCountry(c)?.slug === slug);
+
+/**
+ * 街ではなく、その国のどこででも当てはまるもの（郷土料理など）が入っている「街」名。
+ * 見どころのデータがそう作ってある（`python/build_nordic.py`）。
+ */
+const NATIONWIDE = ["全国", "全土"];
+
+export type SpotCity = { city: string; list: NordicSpot[] };
+
+/**
+ * 見どころを **行く街 / 寄るかもしれない街 / 行かない街** に分ける。
+ *
+ * あやとの言葉（2026-09-09）:
+ *
+ * > 〇〇で行くところに行かないところが入ってる。ストックホルムしか行かない。
+ * > 行く予定はないけどこんなところもある。みたいな説明なら良い。
+ *
+ * 消さずに、行く街の下へ落とす。スウェーデンは35件のうち行く街のものが12件で、
+ * 残り23件も読みものとしては面白い。ただし**同じ見出しの下には置かない。**
+ *
+ * 国じゅうどこでも当てはまるもの（`nation`）は、その国に入るならぜんぶ届く範囲なので
+ * 行く街と同じ側に置く。
+ */
+export function splitSpots(spots: NordicSpot[]) {
+  const byCity = new Map<string, NordicSpot[]>();
+  const nation: NordicSpot[] = [];
+  for (const s of spots) {
+    if (NATIONWIDE.includes(s.city)) {
+      nation.push(s);
+      continue;
+    }
+    const k = s.city || "その他";
+    if (!byCity.has(k)) byCity.set(k, []);
+    byCity.get(k)!.push(s);
+  }
+  const pick = (names: string[]): SpotCity[] =>
+    names.filter((n) => byCity.has(n)).map((city) => ({ city, list: byCity.get(city)! }));
+  const go = pick(VISIT_CITIES);
+  const maybe = pick(MAYBE_CITIES);
+  const taken = new Set([...go, ...maybe].map((g) => g.city));
+  const skip = [...byCity.entries()]
+    .filter(([city]) => !taken.has(city))
+    .map(([city, list]) => ({ city, list }));
+  return { go, maybe, skip, nation };
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
@@ -86,7 +87,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
                   スプライトは中身の形に切り出してあって1枚ずつ幅が違うので
                   （食パンは 393px、ピザは 527px）、幅の数を書くと嘘になる。
                   この面で出す絵は1枚だけなので、大きいほうを常に配る。 */}
-              <img src={`/sprites/hero/${r.icon}.webp`} alt="" />
+              <HeroArt icon={r.icon} />
             </div>
             <p className="zk-hero-note">{r.note}</p>
           </div>

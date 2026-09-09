@@ -69,3 +69,6 @@ tools/sprites/_*
 
 # ビルドを1本ずつ回すための錠
 .buildlock
+
+# 並列で動かした担当の作業場（git worktree）。中身は各ブランチにある
+.claude/worktrees/

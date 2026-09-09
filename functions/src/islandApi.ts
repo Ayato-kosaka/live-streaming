@@ -64,6 +64,7 @@ const STATE_DOC = db.collection("island").doc("state");
 const NOTES = db.collection("islandNotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
+const CHANNELS = db.collection("islandChannels");
 /* 企画(#161)。**「一言の提案」と「ページ1枚の下書き」を1つにした入れ物。**
    前は islandIdeas(120字・ログイン不要)と islandDrafts(12,000字・ログイン必須)に
    割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
@@ -342,6 +343,30 @@ async function whoIs(header?: string): Promise<Who> {
     logger.warn("token verify failed", String(e));
     return null;
   }
+}
+
+/**
+ * 「一緒にいた日数」の上位（#91）。**チャンネルID -> 日数。**
+ *
+ * `islandChannels` は毎晩 BigQuery から作り直していて（`python/island_channels.py`）、
+ * そこに日数が入っている。ここはそれを画面へ渡すだけ。
+ *
+ * **上位だけ返す。** 辞書には 2,251人いるが、島に出るのは
+ * キャラクターを作ってくれた 22人で、その人たちは日数の上位に固まっている。
+ * 全員ぶん返すと `/state` が数十KB 太る。
+ *
+ * `days` を持っていない書類は返さない。日数を入れ始めたのが今日なので、
+ * 入るまでは画面が焼き込みの値をそのまま使う（`content/residents.ts`）。
+ * @return {Promise<Json>} チャンネルID -> 日数
+ */
+async function residentDays(): Promise<Json> {
+  const snap = await CHANNELS.orderBy("days", "desc").limit(60).get();
+  const out: Json = {};
+  snap.forEach((d) => {
+    const n = Number(d.data()?.days);
+    if (Number.isFinite(n) && n > 0) out[d.id] = n;
+  });
+  return out;
 }
 
 /**
@@ -2189,10 +2214,11 @@ export const islandApi = onRequest(
 
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, notes, residents] = await Promise.all([
+        const [stateSnap, notes, residents, days] = await Promise.all([
           STATE_DOC.get(),
           listNotes(200),
           listResidents(),
+          residentDays(),
         ]);
         const state = stateSnap.exists ? stateSnap.data() ?? {} : {};
         res.set(
@@ -2211,6 +2237,11 @@ export const islandApi = onRequest(
           stats: state.stats ?? null,
           notes: notes.items,
           residents,
+          /* 「一緒にいた日数」（#91）。チャンネルID -> 日数。
+             画面はこれを次に開いたときのために控える。**その場では
+             差し替えない。** 島に出ている人はこの数を重みに選んでいるので、
+             読み込みの途中で入れ替えると、住人が目の前で入れ替わる。 */
+          residentDays: days,
           /* 北欧旅の、日付で言える事実。いまは「着いた日」だけ。
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
              (`site/content/plans.ts` の planPhase)。 */
@@ -3055,6 +3086,25 @@ export const islandApi = onRequest(
         if (!(await ref.get()).exists) {
           res.status(404).json({error: "no plan"});
           return;
+        }
+        /* **Git 側の企画1つに、結び付く行は1つだけ。**
+           2つあると、掲示板には「提案」のまま並ぶ行と、カードの付く行が
+           別々にできる。ジョージアバイバイと海外出発二周年が実際にそうで、
+           清書したのに段が動かないように見えていた（#202 の種入れが、
+           掲示板にもう出ていた提案を見ずに同じ企画をもう1件作った）。
+           しまってあるものは数えない。付け替えの途中で行き止まりになる。 */
+        if (planId) {
+          const taken = await STREAM_EVENTS
+            .where("planId", "==", planId)
+            .limit(5)
+            .get();
+          const other = taken.docs.find(
+            (d) => d.id !== planStatus[1] && d.get("archived") !== true,
+          );
+          if (other) {
+            res.status(409).json({error: "planId taken", by: other.id});
+            return;
+          }
         }
         await ref.set(
           {

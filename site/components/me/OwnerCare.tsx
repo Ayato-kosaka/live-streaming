@@ -7,6 +7,7 @@ import {
   archiveSticky,
   getArchivedPlans,
   getArchivedStickies,
+  getMyStickies,
   getNextPlans,
   getStickies,
   replySticky,
@@ -19,6 +20,7 @@ import { useAuth } from "@/lib/auth";
 import { themeById } from "@/content/themes";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 
 /**
  * 島の手入れ。**あやとだけ。**
@@ -56,12 +58,33 @@ const day = (iso: string) =>
 /**
  * まだ返していない付箋。
  *
- * **運営者が立てた付箋（`byOwner`）は数えない。** あれは returns を待つ
+ * **運営者が立てた付箋（`byOwner`）は数えない。** あれは返事を待つ
  * 質問ではなく、こちらから出した選択肢なので、返さなくても片づいている。
+ *
+ * **あやと自身が貼った付箋も、返す一覧に出さない**（あやとの言葉・2026-09-09
+ * 「付箋返しのリストに私の付箋を載せるのはやめてほしい」）。自分の付箋に
+ * 自分で返す用事は無いのに、返していない数に入って赤いままになっていた。
+ *
+ * ## 見分けかた
+ *
+ * **名前では突き合わせない。** 表示名は本人が決めるもので、同じ名前の人が
+ * 2人いた事故がこの島で実際にある。`uid` で見分ける。
+ *
+ * ただし一覧の口（`stickyShape`）は uid も cid も返さない。返すと、
+ * 同じ人の付箋を並べて数えられてしまうので、そこは開けない決めになっている。
+ * かわりに**自分のぶんだけを返す口**（`/stickies?mine=1`。サーバー側で
+ * uid で絞る）をもう1回引いて、その id を一覧から差し引く。
+ * 公開する形は増えないし、名前を突き合わせずに済む。
+ *
+ * `byOwner` と同じ扱いにする。**消さずに、返す対象から外すだけ**なので、
+ * 「ぜんぶ見る」と「しまったもの」には今までどおり出る。自分の付箋を
+ * しまう道は残しておく。
  */
 function StickyCare() {
   const { token } = useAuth();
   const [notes, setNotes] = useState<Sticky[] | null>(null);
+  /** あやと自身が貼った付箋の id。引けるまでは null（0枚と区別する） */
+  const [own, setOwn] = useState<Set<string> | null>(null);
   /** しまったものを見ているか */
   const [bin, setBin] = useState(false);
   const [all, setAll] = useState(false);
@@ -92,18 +115,41 @@ function StickyCare() {
     load();
   }, [load]);
 
-  const shown = (notes ?? []).filter(
-    (n) => bin || all || (!n.reply && !n.byOwner),
-  );
-  const waiting = (notes ?? []).filter((n) => !n.reply && !n.byOwner).length;
+  useEffect(() => {
+    let gone = false;
+    (async () => {
+      const t = await token();
+      if (gone) return;
+      if (!t) return setOwn(new Set());
+      try {
+        const r = await getMyStickies(t);
+        if (!gone) setOwn(new Set(r.notes.map((n) => n.id)));
+      } catch {
+        /* 引けなかった日は、差し引かずに出す。**返す道が消えるより、
+           自分のぶんが混ざるほうがまし。** */
+        if (!gone) setOwn(new Set());
+      }
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [token]);
+
+  /** 返す相手のいる付箋か。**数と一覧で同じ物差しを使う**（片方だけ減らさない） */
+  const todo = (n: Sticky) => !n.reply && !n.byOwner && !own?.has(n.id);
+  const shown = (notes ?? []).filter((n) => bin || all || todo(n));
+  const waiting = (notes ?? []).filter(todo).length;
+  /* 自分のぶんを引く前に数を出すと、開いた直後だけ多い数が見えて、
+     すぐ減る。**動く数字を出すくらいなら、出るのを待つ。** */
+  const reading = notes === null || own === null;
 
   return (
     <Fold
       title="付箋に返す"
-      lead={notes === null ? "読んでいます…" : `まだ返していないのが ${waiting} 枚`}
-      note={notes === null ? undefined : String(waiting)}
+      lead={reading ? "読んでいます…" : `まだ返していないのが ${waiting} 枚`}
+      note={reading ? undefined : String(waiting)}
     >
-      {notes === null ? (
+      {reading ? (
         <div className="wait is-row" aria-hidden>
           <span />
           <span />
@@ -113,8 +159,11 @@ function StickyCare() {
           {bin ? "しまったものはありません。" : "ぜんぶ返しました。"}
         </p>
       ) : (
-        <ul className="mp-care">
-          {shown.map((n) => (
+        /* 返していない付箋は、返すまで減らない。**上から順に返す道具**なので、
+           はじめは8枚だけ出す（#225）。畳みの中でさらに縦に伸びると、
+           下にある「ぜんぶ見る」まで指が届かなくなる。 */
+        <Longer items={shown} first={8} step={16} unit="枚" className="mp-care">
+          {(n) => (
             <StickyRow
               key={n.id}
               note={n}
@@ -128,8 +177,8 @@ function StickyCare() {
                 setNotes((cur) => cur?.filter((x) => x.id !== n.id) ?? cur)
               }
             />
-          ))}
-        </ul>
+          )}
+        </Longer>
       )}
       <div className="mp-care-acts">
         <button
@@ -295,8 +344,8 @@ function PlanCare() {
       ) : plans.length === 0 ? (
         <p className="muted">{bin ? "しまったものはありません。" : "まだ1件もありません。"}</p>
       ) : (
-        <ul className="mp-care">
-          {plans.map((p) => (
+        <Longer items={plans} first={8} step={16} unit="件" className="mp-care">
+          {(p) => (
             <PlanRow
               key={p.id}
               plan={p}
@@ -306,8 +355,8 @@ function PlanCare() {
               }
               onStowed={() => setPlans((cur) => cur?.filter((x) => x.id !== p.id) ?? cur)}
             />
-          ))}
-        </ul>
+          )}
+        </Longer>
       )}
       <div className="mp-care-acts">
         <button

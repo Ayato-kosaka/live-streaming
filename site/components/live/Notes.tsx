@@ -13,10 +13,11 @@ import {
   replySticky,
   type Sticky,
 } from "@/lib/api";
-import { THEMES, themeById, type Theme } from "@/content/themes";
+import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
 import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import { Pin } from "./art";
 
 /**
@@ -55,8 +56,16 @@ import { Pin } from "./art";
 /** 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す */
 const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 
-/** 1つのテーマに出す枚数の上限。越えたぶんは、そのテーマの面へ送る。 */
-const SHOW = 24;
+/**
+ * はじめに出す枚数と、1回押すと増える枚数（#225）。
+ *
+ * 前は 24枚で**打ち切って**いて、それ以上は「この話をしている場所で読めます」
+ * と書いてあるだけだった。24枚でもスマホ2画面ぶんあり、しかも送り先の面でも
+ * 同じ24枚で切れるので、25枚目から先はどこからも読めなかった。
+ * 6枚だけ出して、押せば最後まで出る形にそろえる（`components/ui/Longer.tsx`）。
+ */
+const SHOW = 6;
+const STEP = 12;
 
 /** 付箋の長さ。サーバー側の `MAX_NOTE_LEN` と同じ。 */
 const MAX = 120;
@@ -110,8 +119,17 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
 
   const now = fixed ?? themeById(pick) ?? THEMES[0];
 
+  /* 札を並べ直すのに使う今日。**画面が出てから入れる。**
+     静的書き出しなので、ここで `new Date()` を直に呼ぶとビルドした日が
+     焼き込まれて、終わった企画がいつまでも「これからの企画」に並ぶ
+     （9月6日に終わったフード＆ワイン祭りが、実際にそうなっていた）。 */
+  const [today, setToday] = useState<Date | null>(null);
+  /** 見出しごとに束ねた札。企画は日付で「これから／行ってきた」に分かれる */
+  const groups = useMemo(() => shelves(shelf, today), [shelf, today]);
+
   useEffect(() => {
     setHearted(heartedLocally());
+    setToday(new Date());
   }, []);
 
   /* 掲示板は1回で全部読む。テーマごとの枚数も、選んだテーマの中身も、
@@ -265,27 +283,24 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
           厚みは1枚ずつ付ける。「付けなくてよい」例外が効くのは
           一面ぜんぶが押せるマスの並びのときだけで、ここは紙の面の途中にある
           （`docs/island-world.md` 3.5）。 */}
-      {shelf.length > 0 &&
-        [...new Set(shelf.map((s) => s.group))].map((g) => (
-          <div className="nb-group" key={g}>
-            <span className="nb-glabel">{g}</span>
-            <div className="nb-tabs">
-              {shelf
-                .filter((s) => s.group === g)
-                .map((s) => (
-                  <button
-                    key={s.id}
-                    className={`nb-tab${s.id === pick ? " is-on" : ""}`}
-                    aria-pressed={s.id === pick}
-                    onClick={() => setPick(s.id)}
-                  >
-                    <b>{s.name}</b>
-                    {(counts.get(s.id) ?? 0) > 0 && <i>{counts.get(s.id)}</i>}
-                  </button>
-                ))}
-            </div>
+      {groups.map((g) => (
+        <div className="nb-group" key={g.group}>
+          <span className="nb-glabel">{g.group}</span>
+          <div className="nb-tabs">
+            {g.themes.map((s) => (
+              <button
+                key={s.id}
+                className={`nb-tab${s.id === pick ? " is-on" : ""}`}
+                aria-pressed={s.id === pick}
+                onClick={() => setPick(s.id)}
+              >
+                <b>{s.name}</b>
+                {(counts.get(s.id) ?? 0) > 0 && <i>{counts.get(s.id)}</i>}
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+      ))}
 
       {/* 書く欄。**付箋の山より前に置く。**
           あとに置いていたときは、貼ってある枚数ぶん下までスクロールしないと
@@ -422,8 +437,8 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
           </div>
         )}
 
-        <ul className="nx-notes">
-          {list.slice(0, SHOW).map((n, i) => (
+        <Longer items={list} first={SHOW} step={STEP} unit="枚" className="nx-notes">
+          {(n, i) => (
             <li key={n.id} className={n.byOwner ? "is-owner" : undefined}>
               <span className="nx-pin">
                 <Pin tone={PINS[i % PINS.length]} size={19} />
@@ -481,18 +496,8 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
                 )}
               </span>
             </li>
-          ))}
-        </ul>
-
-        {/* ここに全部は出さない。1つのテーマが長くなるほど、下が見えなくなる。
-            続きは上の「この話をしている場所へ」から。**行き先を2つ置かない** */}
-        {list.length > SHOW && (
-          <p className="nb-more">
-            {fixed ?
-              `新しいものから${SHOW}枚まで出しています。` :
-              `新しいものから${SHOW}枚まで。残り${list.length - SHOW}枚は、この話をしている場所で読めます。`}
-          </p>
-        )}
+          )}
+        </Longer>
       </div>
 
       {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}

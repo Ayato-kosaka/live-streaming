@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 
 /**
  * 投げ銭を、YouTube につなぐ。**あやとだけ。**
@@ -203,16 +204,16 @@ export default function DonorLinks() {
           {/* つないである人は、ふだん触らない。畳んで下に置く。 */}
           {linked.length > 0 && (
             <Fold title="つないである人" lead={`${linked.length}人`}>
-              <ul className="mp-care">
-                {linked.map((x) => (
+              <Longer items={linked} first={5} step={10} unit="人" className="mp-care">
+                {(x) => (
                   <Row
                     key={x.donor.viewerPk}
                     donor={x.donor}
                     onChanged={changed}
                     onDropped={dropped}
                   />
-                ))}
-              </ul>
+                )}
+              </Longer>
             </Fold>
           )}
         </>
@@ -250,16 +251,19 @@ function Group({
         <b>{title}</b>
         <i>{lead}</i>
       </p>
-      <ul className="mp-care">
-        {rows.map((x) => (
+      {/* 1人ぶんが「名前・いまの状態・書く欄2つ・押しどころ」の4段。
+          **新しい人は毎晩入る**ので、はじめは5人だけ出す（#225）。
+          上から順に片づける道具なので、6人目が見えている必要はない。 */}
+      <Longer items={rows} first={5} step={10} unit="人" className="mp-care">
+        {(x) => (
           <Row
             key={x.donor.viewerPk}
             donor={x.donor}
             onChanged={onChanged}
             onDropped={onDropped}
           />
-        ))}
-      </ul>
+        )}
+      </Longer>
     </div>
   );
 }
