@@ -2083,3 +2083,62 @@ p.nday-lead {
 }
 /* 気をつけることだけ、行の頭を少し重くする。寄り道の一覧と見分けるため。 */
 .nday-worry li::marker { font-weight: 900; }
+
+/* =========================================================
+   街のまわりの地図（`components/nordic/CityMapSvg.tsx`）
+   ---------------------------------------------------------
+   色は全体図（`svg.nmap`）のものをそのまま使う。ここで足すのは、
+   **拡大したぶんで線まで太くならないようにする1行**だけ。
+
+   中身は 5倍に拡大してあるので、`viewBox` の座標で書いてある線の太さ
+   （浅瀬は 38）がそのまま 5倍に見える。`non-scaling-stroke` は
+   「線の太さは、いちばん外の座標系で数える」という指定で、これがあると
+   全体図と同じ太さで描かれる。**太さを1つずつ書き直さないための1行。**
+   ========================================================= */
+.nmap.is-city .nm-zoom * { vector-effect: non-scaling-stroke; }
+/* 押せるものを1つも置いていない地図なので、指の形も変えない
+   （押せない厚み・押せない合図を出さない。docs/island-world.md 3.4）。 */
+.nmap.is-city .nmap-pin { cursor: default; }
+/* いま見ている街。金の輪ひとつだけ。札は名前がもう出している。 */
+.nmap.is-city .nm-focus-halo {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 5;
+  opacity: 0.85;
+}
+.nmap.is-city { margin-bottom: var(--sp-3); }
+
+/* --- 教えてもらったもの（`components/nordic/WantList.tsx`） ---
+   一覧の中で、付箋から来た行だけ左に金の帯を引く。**字の色は変えない。**
+   色で区別すると、色の見え方が違う人には同じ行に見える。帯（形）で分ける。 */
+.ndsp.is-want {
+  align-items: flex-start;
+  padding-left: var(--sp-3);
+  border-left: 3px solid var(--gold);
+}
+/* 「これは 誰々さん が教えてくれたもの」。**地の紙の上の墨。**
+   薄い色にすると、いちばん出したい一行がいちばん読みにくくなる。 */
+.ndsp-by {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.7;
+  color: var(--ink);
+}
+/* 付箋の言葉と、あやとの返事。**かぎかっこは字で持たず、ここで足す。**
+   データのほうに「」を書くと、引くところを変えるたびに閉じ忘れが出る。 */
+.ndsp-say,
+.ndsp-reply {
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.ndsp-say::before,
+.ndsp-reply q::before { content: "「"; }
+.ndsp-say::after,
+.ndsp-reply q::after { content: "」"; }
+/* 返事は「あやと」と名乗ってから引く。誰の言葉か分からないと、
+   付箋の続きに読める。名乗りのほうは墨で、引用は一段淡く。 */
+.ndsp-reply b { font-weight: 900; color: var(--ink); }
+.ndsp-reply q { quotes: none; margin-left: var(--sp-1); }

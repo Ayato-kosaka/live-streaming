@@ -137,6 +137,17 @@ export default function CityMapSvg({ city }: { city: string }) {
         <clipPath id={`cm-clip-${uid}`}>
           <path d={land} />
         </clipPath>
+        {/* 海岸線は、岸の帯を作るのに9回引く（影・浅瀬・泡・濡れ砂・陸・砂浜…）。
+            **同じ字を9回書き出しに焼かない。** ここに1本置いて `use` で呼ぶ。
+            群島のある街（ヘルシンキ・ストックホルム）は島の数だけ形が長く、
+            8日目の面は 533KB あった。1本にして 176KB になっている。
+
+            `vector-effect` は受け継がれない性質なので、CSS ではなく
+            この形そのものに付ける（`use` の側に付けても中には届かない）。 */}
+        <path id={`cm-l-${uid}`} d={land} vectorEffect="non-scaling-stroke" />
+        {countries.map(([slug, d]) => (
+          <path key={`d${slug}`} id={`cm-c-${uid}-${slug}`} d={d} vectorEffect="non-scaling-stroke" />
+        ))}
       </defs>
 
       {/* ---- 海。拡大しない側に直接敷く -------------------------- */}
@@ -156,27 +167,27 @@ export default function CityMapSvg({ city }: { city: string }) {
       {/* ---- ここから拡大する側 ---------------------------------- */}
       <g className="nm-zoom" transform={`scale(${Z}) translate(${-box.x0} ${-box.y0})`}>
         {/* 岸。沖から順に 影 → 浅瀬 → 泡 → 濡れた砂（ac-reference 2章） */}
-        <path
+        <use
           className="nm-landdrop"
-          d={land}
+          href={`#cm-l-${uid}`}
           filter={`url(#cm-drop-${uid})`}
           transform={`translate(${off(3)} ${off(7)})`}
         />
-        <path className="nm-shelf" d={land} filter={`url(#cm-shelf-${uid})`} />
-        <path className="nm-shallow" d={land} />
-        <path className="nm-foam-lace" d={land} />
-        <path className="nm-foam" d={land} />
+        <use className="nm-shelf" href={`#cm-l-${uid}`} filter={`url(#cm-shelf-${uid})`} />
+        <use className="nm-shallow" href={`#cm-l-${uid}`} />
+        <use className="nm-foam-lace" href={`#cm-l-${uid}`} />
+        <use className="nm-foam" href={`#cm-l-${uid}`} />
 
-        <path className="nm-land" d={land} fill={`url(#cm-land-${uid})`} />
-        {countries.map(([slug, d]) => (
-          <path key={slug} className={`nm-c nm-c-${slug}`} d={d} />
+        <use className="nm-land" href={`#cm-l-${uid}`} fill={`url(#cm-land-${uid})`} />
+        {countries.map(([slug]) => (
+          <use key={slug} className={`nm-c nm-c-${slug}`} href={`#cm-c-${uid}-${slug}`} />
         ))}
-        {countries.map(([slug, d]) => (
-          <path key={`s${slug}`} className="nm-seam" d={d} />
+        {countries.map(([slug]) => (
+          <use key={`s${slug}`} className="nm-seam" href={`#cm-c-${uid}-${slug}`} />
         ))}
         <g clipPath={`url(#cm-clip-${uid})`}>
-          <path className="nm-sand" d={land} />
-          <path className="nm-sand-wet" d={land} />
+          <use className="nm-sand" href={`#cm-l-${uid}`} />
+          <use className="nm-sand-wet" href={`#cm-l-${uid}`} />
           <path className="nm-hill-shade" d={hills} transform={`translate(${off(4)} ${off(4)})`} />
           <path className="nm-hill-hi" d={hills} transform={`translate(${off(-3)} ${off(-4)})`} />
           <path className="nm-hill" d={hills} />
@@ -202,8 +213,15 @@ export default function CityMapSvg({ city }: { city: string }) {
       </g>
 
       {/* ---- ここから拡大しない側。字と印は等倍で置く -------------- */}
+      {/* 海の名前。**入りきらないなら出さない。**
+          窓が狭いので、名前の真ん中が窓の中にあっても字が外へ出る
+          （「フィンランド湾」がヘルシンキの窓の右端で切れていた）。
+          字幅は 字数 × 大きさ × 字間（0.26em ぶん）でほぼ合う。 */}
       {MAP.seas
-        .filter((s) => shown(s.x, s.y))
+        .filter((s) => {
+          const half = (s.name.length * s.size * 1.26) / 2;
+          return shown(s.x, s.y) && sx(s.x) - half > 0 && sx(s.x) + half < VIEW.w;
+        })
         .map((s) => (
           <text
             key={s.name}

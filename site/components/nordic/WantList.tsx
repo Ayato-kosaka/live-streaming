@@ -65,7 +65,12 @@ export default function WantList({ items }: { items: WantItem[] }) {
               </em>
             )}
             {s.say && <span className="ndsp-say">{s.say}</span>}
-            {s.reply && <span className="ndsp-reply">あやと {s.reply}</span>}
+            {s.reply && (
+              <span className="ndsp-reply">
+                <b>あやと</b>
+                <q>{s.reply}</q>
+              </span>
+            )}
           </span>
         </li>
       )}
