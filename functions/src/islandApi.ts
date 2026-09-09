@@ -3087,6 +3087,25 @@ export const islandApi = onRequest(
           res.status(404).json({error: "no plan"});
           return;
         }
+        /* **Git 側の企画1つに、結び付く行は1つだけ。**
+           2つあると、掲示板には「提案」のまま並ぶ行と、カードの付く行が
+           別々にできる。ジョージアバイバイと海外出発二周年が実際にそうで、
+           清書したのに段が動かないように見えていた（#202 の種入れが、
+           掲示板にもう出ていた提案を見ずに同じ企画をもう1件作った）。
+           しまってあるものは数えない。付け替えの途中で行き止まりになる。 */
+        if (planId) {
+          const taken = await STREAM_EVENTS
+            .where("planId", "==", planId)
+            .limit(5)
+            .get();
+          const other = taken.docs.find(
+            (d) => d.id !== planStatus[1] && d.get("archived") !== true,
+          );
+          if (other) {
+            res.status(409).json({error: "planId taken", by: other.id});
+            return;
+          }
+        }
         await ref.set(
           {
             status,

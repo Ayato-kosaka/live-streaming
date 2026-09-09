@@ -29,6 +29,8 @@
  * 区間も、実際に付箋が付いているものだけ置く。
  */
 
+import { planById, planPhase } from "./plans";
+
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
   /**
@@ -39,7 +41,13 @@ export type Theme = {
   id: string;
   /** 札に出る名前。島の画面に id は出さない */
   name: string;
-  /** 札を束ねる見出し。同じ字のものが1行にまとまる */
+  /**
+   * 札を束ねる見出し。同じ字のものが1行にまとまる。
+   *
+   * **`PLAN_GROUP` を書いたものだけは、ここで決まりきらない。**
+   * 企画は日が来れば終わるので、画面が出てから日付で
+   * 「これから」と「行ってきた」に分け直す（`shelves`）。
+   */
   group: string;
   /**
    * この宛先の話をしている面。押すとそこへ行ける。
@@ -53,6 +61,20 @@ export type Theme = {
   placeholder: string;
 };
 
+/** 旅の宛先を束ねる見出し。島の面（`components/isle/spec.ts`）もこの字で引く。 */
+export const NORDIC_GROUP = "北欧の旅";
+
+/**
+ * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
+ *
+ * ここに置いた宛先は `content/plans.ts` の企画と id が同じなので、
+ * その企画が終わったかどうかを日付で聞ける。聞かずに字で持っていたころ、
+ * 9月6日に終わったフード＆ワイン祭りが、9月9日になっても
+ * 「これからの企画」に並んでいた（あやとが見つけた）。
+ */
+export const PLAN_GROUP = "これからの企画";
+export const PLAN_DONE_GROUP = "行ってきた企画";
+
 /**
  * 宛先の一覧。**並びはここで決まる。**
  *
@@ -64,7 +86,7 @@ export const THEMES: Theme[] = [
   {
     id: "nordic",
     name: "北欧旅ぜんぶ",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic",
     lead: "旅ぜんぶに言いたいこと。国が決まっていなくていい。",
     placeholder: "例）現地のお祭りに参加してほしい。地元の人しか来ないやつ",
@@ -72,7 +94,7 @@ export const THEMES: Theme[] = [
   {
     id: "poland",
     name: "ポーランド",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/poland",
     lead: "ポーランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヴァヴェル城と、火を吹く龍の像が見たい",
@@ -80,7 +102,7 @@ export const THEMES: Theme[] = [
   {
     id: "lithuania",
     name: "リトアニア",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/lithuania",
     lead: "リトアニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）赤煉瓦の城と、十字架の丘が見たいです",
@@ -88,7 +110,7 @@ export const THEMES: Theme[] = [
   {
     id: "latvia",
     name: "ラトビア",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/latvia",
     lead: "ラトビアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）リガの中央市場で、地元の人が買うものを見たい",
@@ -96,7 +118,7 @@ export const THEMES: Theme[] = [
   {
     id: "estonia",
     name: "エストニア",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/estonia",
     lead: "エストニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）タリンの旧市街を、朝いちばんに歩いてほしい",
@@ -104,7 +126,7 @@ export const THEMES: Theme[] = [
   {
     id: "finland",
     name: "フィンランド",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/finland",
     lead: "フィンランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヘルシンキの市場で、朝ごはんを食べてほしい",
@@ -112,7 +134,7 @@ export const THEMES: Theme[] = [
   {
     id: "sweden",
     name: "スウェーデン",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/sweden",
     lead: "スウェーデンで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ストックホルムの島を、歩いて渡ってほしい",
@@ -123,7 +145,7 @@ export const THEMES: Theme[] = [
        付いたら1行足す（`【区間:kutaisi-katowice】` に1件来ている）。 */
     id: "leg-kutaisi-katowice",
     name: "クタイシ → カトヴィツェ",
-    group: "北欧の旅",
+    group: NORDIC_GROUP,
     href: "/nordic/day/depart",
     lead: "唯一の飛行機の日。深夜1時5分に着いて、始発まで数時間あります。",
     placeholder: "例）空港のなかを探検してほしい",
@@ -143,7 +165,7 @@ export const THEMES: Theme[] = [
   {
     id: "food-wine-fest",
     name: "フード＆ワイン祭り",
-    group: "これからの企画",
+    group: PLAN_GROUP,
     href: "/next#food-wine-fest",
     lead: "ムタツミンダ公園のお祭りで、食べるもの・飲むもの。",
     placeholder: "例）クヴェヴリ仕込みの赤を、3種類ならべて飲み比べてほしい",
@@ -151,7 +173,7 @@ export const THEMES: Theme[] = [
   {
     id: "georgia-bye",
     name: "ジョージアバイバイ",
-    group: "これからの企画",
+    group: PLAN_GROUP,
     href: "/next#georgia-bye",
     /* **思い出を集める欄。注文を集める欄ではない。** あやとの指示（2026-09-06）
        「ジョージア1年の方は、1年の思い出を書いて欲しい」。
@@ -163,7 +185,7 @@ export const THEMES: Theme[] = [
   {
     id: "japan-2years",
     name: "海外出発二周年",
-    group: "これからの企画",
+    group: PLAN_GROUP,
     href: "/next#japan-2years",
     /* あやとの指示（2026-09-06）「二周年の方は、付箋に 二周年に対する想い を
        書いて欲しい」。**節目に思うことを集める。** 3年目への注文は
@@ -187,3 +209,57 @@ export const THEMES: Theme[] = [
 /** id から1つ引く。知らない id は undefined。 */
 export const themeById = (id: string): Theme | undefined =>
   THEMES.find((t) => t.id === id);
+
+/** 札の一行ぶん。見出しと、そこに並ぶ宛先。 */
+export type Shelf = { group: string; themes: Theme[] };
+
+/**
+ * 見出しの並び。**ここに書いた順に出る。**
+ *
+ * 「行ってきた企画」は、これからのものより下。終わったものが上に来ると、
+ * 次に何があるのかを探すのに、済んだものを読み飛ばすことになる。
+ */
+const ORDER = [NORDIC_GROUP, PLAN_GROUP, PLAN_DONE_GROUP];
+
+/**
+ * 宛先の札を、見出しごとに束ねる。
+ *
+ * **`now` は画面が出てから渡す。** `output: "export"` なので、ここで
+ * `new Date()` を呼ぶとビルドした日が焼き込まれる（`CLAUDE.md`）。
+ * 出発の翌日には、終わったばかりの企画が「これから」に居座る。
+ * 渡すまでは `group` に書いてある字のまま出して、日付では何も動かさない。
+ *
+ * @param list 並べる宛先
+ * @param now 画面が出てからの今。まだ分からないときは null
+ */
+export function shelves(list: Theme[], now: Date | null): Shelf[] {
+  const out: Shelf[] = [];
+  for (const t of list) {
+    const g = groupOf(t, now);
+    const shelf = out.find((s) => s.group === g);
+    if (shelf) shelf.themes.push(t);
+    else out.push({ group: g, themes: [t] });
+  }
+  /* 見出しの並びは `ORDER`。表に出てこない見出し（「そのほか」）は、
+     `THEMES` に出てきた順のまま後ろへ回す。 */
+  return out.sort((a, b) => rank(a.group) - rank(b.group));
+}
+
+const rank = (g: string) => {
+  const i = ORDER.indexOf(g);
+  return i < 0 ? ORDER.length : i;
+};
+
+/**
+ * その宛先が、いまどの見出しの下にいるか。
+ *
+ * 企画あて（`PLAN_GROUP`）だけ、同じ id の企画に日付を聞く。
+ * **`planPhase` に合わせる。** `/next` が「もう行ってきた」に置いたものが
+ * 掲示板では「これから」に並ぶ、という食い違いを作らないため。
+ */
+function groupOf(t: Theme, now: Date | null): string {
+  if (!now || t.group !== PLAN_GROUP) return t.group;
+  const p = planById(t.id);
+  if (!p) return t.group;
+  return planPhase(p, now) === "after" ? PLAN_DONE_GROUP : PLAN_GROUP;
+}

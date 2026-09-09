@@ -24,6 +24,14 @@ Git にしか無い企画（ジョージアバイバイなど）と、そもそ�
 北欧へ／北欧旅の出発日）。**1本に畳まない。** カードは当たった企画
 すべてに配られる。
 
+## 種で、同じ企画をもう1件作らない
+
+**掲示板に出ている提案が、そのまま Git 側の企画になることがある。**
+そこを見ずに種を入れて、ジョージアバイバイと海外出発二周年が2行になった
+（掲示板に出るほうは `planId` を持たないので、清書してあっても
+「提案」の札が付いたままだった）。`planId` をもう別の行が持っていたら、
+種は作らない。結び付けるのは `plans_relink.py`。
+
 ## 種は上書きしない
 
 `editedAt` か `updatedAt` が入っている書類は、画面から直したもの。
@@ -102,7 +110,18 @@ def seed(client, apply: bool, force: bool) -> None:
     col = client.collection(NEW)
     have = {d.id: (d.to_dict() or {}) for d in col.stream()}
 
-    make, skip = [], []
+    # **Git 側の企画1つに、結び付く行は1つだけ。**
+    # 掲示板にもう同じ企画が出ていることを見ずに種を入れて、
+    # ジョージアバイバイと海外出発二周年が2行になった。掲示板に出るほうは
+    # `planId` を持たないので、清書してあっても「提案」のまま止まった。
+    # しまってある行は数えない（付け替えの途中で行き止まりにしない）。
+    held = {
+        v.get("planId"): i
+        for i, v in have.items()
+        if v.get("planId") and v.get("archived") is not True
+    }
+
+    make, skip, twin = [], [], []
     for r in rows:
         cur = have.get(r["id"])
         # 画面から直したものは戻さない（donors_import と同じ決め）
@@ -110,13 +129,21 @@ def seed(client, apply: bool, force: bool) -> None:
         if cur is not None and touched and not force:
             skip.append(r["id"])
             continue
+        owner = held.get(r.get("planId"))
+        if owner and owner != r["id"]:
+            # もう別の行がこの企画を持っている。**もう1件作らない。**
+            twin.append((r["id"], owner))
+            continue
         make.append(r)
 
-    log.info("種: %d件（入れる %d / 触らない %d）", len(rows), len(make), len(skip))
+    log.info("種: %d件（入れる %d / 触らない %d / 二重なので作らない %d）",
+             len(rows), len(make), len(skip), len(twin))
     for r in make:
         log.info("  %s  %s  %s", r["date"], r["id"], r["title"])
     if skip:
         log.info("  触らない: %s", ", ".join(skip))
+    for i, owner in twin:
+        log.info("  作らない: %s は %s がもう持っている", i, owner)
     if not apply or not make:
         return
 

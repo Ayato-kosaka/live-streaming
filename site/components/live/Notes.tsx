@@ -13,7 +13,7 @@ import {
   replySticky,
   type Sticky,
 } from "@/lib/api";
-import { THEMES, themeById, type Theme } from "@/content/themes";
+import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
 import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Icon from "@/components/ui/IconCore";
@@ -110,8 +110,17 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
 
   const now = fixed ?? themeById(pick) ?? THEMES[0];
 
+  /* 札を並べ直すのに使う今日。**画面が出てから入れる。**
+     静的書き出しなので、ここで `new Date()` を直に呼ぶとビルドした日が
+     焼き込まれて、終わった企画がいつまでも「これからの企画」に並ぶ
+     （9月6日に終わったフード＆ワイン祭りが、実際にそうなっていた）。 */
+  const [today, setToday] = useState<Date | null>(null);
+  /** 見出しごとに束ねた札。企画は日付で「これから／行ってきた」に分かれる */
+  const groups = useMemo(() => shelves(shelf, today), [shelf, today]);
+
   useEffect(() => {
     setHearted(heartedLocally());
+    setToday(new Date());
   }, []);
 
   /* 掲示板は1回で全部読む。テーマごとの枚数も、選んだテーマの中身も、
@@ -265,27 +274,24 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
           厚みは1枚ずつ付ける。「付けなくてよい」例外が効くのは
           一面ぜんぶが押せるマスの並びのときだけで、ここは紙の面の途中にある
           （`docs/island-world.md` 3.5）。 */}
-      {shelf.length > 0 &&
-        [...new Set(shelf.map((s) => s.group))].map((g) => (
-          <div className="nb-group" key={g}>
-            <span className="nb-glabel">{g}</span>
-            <div className="nb-tabs">
-              {shelf
-                .filter((s) => s.group === g)
-                .map((s) => (
-                  <button
-                    key={s.id}
-                    className={`nb-tab${s.id === pick ? " is-on" : ""}`}
-                    aria-pressed={s.id === pick}
-                    onClick={() => setPick(s.id)}
-                  >
-                    <b>{s.name}</b>
-                    {(counts.get(s.id) ?? 0) > 0 && <i>{counts.get(s.id)}</i>}
-                  </button>
-                ))}
-            </div>
+      {groups.map((g) => (
+        <div className="nb-group" key={g.group}>
+          <span className="nb-glabel">{g.group}</span>
+          <div className="nb-tabs">
+            {g.themes.map((s) => (
+              <button
+                key={s.id}
+                className={`nb-tab${s.id === pick ? " is-on" : ""}`}
+                aria-pressed={s.id === pick}
+                onClick={() => setPick(s.id)}
+              >
+                <b>{s.name}</b>
+                {(counts.get(s.id) ?? 0) > 0 && <i>{counts.get(s.id)}</i>}
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+      ))}
 
       {/* 書く欄。**付箋の山より前に置く。**
           あとに置いていたときは、貼ってある枚数ぶん下までスクロールしないと
