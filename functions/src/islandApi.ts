@@ -61,12 +61,9 @@ if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 const STATE_DOC = db.collection("island").doc("state");
-const IDEAS = db.collection("islandIdeas");
 const NOTES = db.collection("islandNotes");
-const VOTES = db.collection("islandVotes");
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
-const DRAFTS = db.collection("islandDrafts");
 /* 企画(#161)。**「一言の提案」と「ページ1枚の下書き」を1つにした入れ物。**
    前は islandIdeas(120字・ログイン不要)と islandDrafts(12,000字・ログイン必須)に
    割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
@@ -215,16 +212,12 @@ async function doneruKeyOnly(): Promise<string> {
   return (await goalRecord())?.key ?? "";
 }
 
-const MAX_IDEA_LEN = 200;
 const MAX_NOTE_LEN = 120;
 const MAX_NAME_LEN = 20;
 /* YouTube のハンドル(`@あやとグルメアプリ`)。
    ハンドルは最大30文字なので、`@` を足して31。名前(20)より長い。
    **切り詰めると別人の名前になる**ので、覚えておく側はここまで受ける。 */
 const MAX_HANDLE_LEN = 31;
-const MAX_DRAFT_LEN = 12000;
-const DRAFTS_PER_DAY = 12;
-const IDEAS_PER_DAY = 8;
 const NOTES_PER_DAY = 20;
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
@@ -685,24 +678,6 @@ async function pageOf<T>(
 }
 
 /**
- * 企画提案1件を、画面に返す形に直す。
- * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
- * @return {object} 企画提案
- */
-function ideaShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
-  const v = d.data();
-  return {
-    id: d.id,
-    text: v.text as string,
-    name: (v.name as string) || undefined,
-    byUid: (v.uid as string) || undefined,
-    votes: (v.votes as number) ?? 0,
-    status: (v.status as string) ?? "open",
-    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
-  };
-}
-
-/**
  * 付箋1件を、画面に返す形に直す。
  * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
  * @return {object} 付箋
@@ -715,16 +690,6 @@ function noteShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
     text: v.text as string,
     createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
   };
-}
-
-/**
- * 表示できる企画提案を新しい順に1ページぶん取る。
- * @param {unknown} limit 1ページの件数
- * @param {unknown} before 続きの位置
- * @return {Promise<Page<object>>} 企画提案の1ページ
- */
-function listIdeas(limit: unknown = 120, before?: unknown) {
-  return pageOf(IDEAS, clampPage(limit), before, ideaShape);
 }
 
 /**
@@ -1839,86 +1804,15 @@ export const islandApi = onRequest(
       }
 
       /* ---------------- 企画ページの下書き(旧) ----------------
-         **役目は `/nextplans` に移った**(#161)。あちらはログインが要らず、
-         題1つでも出せて、あとから育てられる。ここは
-         「あやとが書いていいよと決めた人だけ・ログイン必須」のままの古い口。
+         **畳んだ**(#171)。`GET/POST /drafts` はもう無い。
 
-         画面(`/next/new`)はもう新しいほうを見ているが、Functions と Hosting は
-         別々に手で起動するので、片方だけ出た日に 404 で止まらないよう残してある。
-         畳むのは #171。**本番の `islandDrafts` は0件**なので、移すものは無い。 */
-      if (path === "/drafts" || path.startsWith("/drafts/")) {
-        const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
-        if (!m) {
-          res.status(401).json({error: "no token"});
-          return;
-        }
-        let t;
-        try {
-          t = await admin.auth().verifyIdToken(m[1]);
-        } catch {
-          res.status(401).json({error: "bad token"});
-          return;
-        }
-        const meSnap = await USERS.doc(t.uid).get();
-        const me = meSnap.data() ?? {};
-        if (!me.canDraft && !me.admin) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
+         役目は `/nextplans` に移っている(#161)。残してあったのは、
+         Functions と Hosting を別々に手で起動するので、画面が古い日に
+         404 で止まらないため。両方とも本番に出て3日たったので、
+         古い画面を開きっぱなしのタブも、もう残っていない。
 
-        if (method === "GET" && path === "/drafts") {
-          const q = me.admin ?
-            DRAFTS.orderBy("updatedAt", "desc").limit(80) :
-            DRAFTS.where("uid", "==", t.uid).limit(40);
-          const snap = await q.get();
-          res.json({
-            drafts: snap.docs.map((d) => ({id: d.id, ...(d.data() ?? {})})),
-          });
-          return;
-        }
-
-        if (method === "POST" && path === "/drafts") {
-          const body2 = body;
-          if (JSON.stringify(body2).length > MAX_DRAFT_LEN) {
-            res.status(400).json({error: "too long"});
-            return;
-          }
-          const draft = shapeDraft(body2);
-          if (!(draft.title as string)) {
-            res.status(400).json({error: "no title"});
-            return;
-          }
-          if (!(await takeQuota(t.uid, "draft", DRAFTS_PER_DAY))) {
-            res.status(429).json({error: "too many"});
-            return;
-          }
-          const id = clean(body2.id, 40);
-          const now = Date.now();
-          const ref = id ? DRAFTS.doc(id) : DRAFTS.doc();
-          if (id) {
-            const cur = await ref.get();
-            if (cur.exists && cur.data()?.uid !== t.uid && !me.admin) {
-              res.status(403).json({error: "not yours"});
-              return;
-            }
-          }
-          await ref.set(
-            {
-              ...draft,
-              uid: t.uid,
-              by: clean(me.nickname ?? me.name ?? t.name ?? "", MAX_NAME_LEN),
-              updatedAt: now,
-              createdAt: id ? undefined : now,
-            },
-            {merge: true},
-          );
-          res.json({id: ref.id, draft});
-          return;
-        }
-
-        res.status(404).json({error: "not found"});
-        return;
-      }
+         **入れ物(`islandDrafts`)は消していない。** 本番0件だが、
+         `firestore.rules` は deny のままにしてある。 */
 
       /* ---------------- 北欧旅の、その日の写真 ----------------
          貼れるのはあやとだけ。読むのは誰でも(docs/nordic-photos.md 3章)。
@@ -2295,9 +2189,8 @@ export const islandApi = onRequest(
 
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, ideas, notes, residents] = await Promise.all([
+        const [stateSnap, notes, residents] = await Promise.all([
           STATE_DOC.get(),
-          listIdeas(60),
           listNotes(200),
           listResidents(),
         ]);
@@ -2306,14 +2199,16 @@ export const islandApi = onRequest(
           "Cache-Control",
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
-        /* `ideas` と `notes` は今までどおり配列で返す。そこに
-           「まだ古いものが残っている」を添える。画面はこれを見て
-           `/ideas?before=` `/notes?before=` の続きを読める。
-           **黙って切らない**ことがこの2つの役目。 */
+        /* `ideas` は返さなくなった(#171)。中身は8件とも #162 で付箋へ
+           移してあって、`hidden: true` が付いている。**誰も出していない
+           8件のために、島を開くたび Firestore を1回よけいに読んでいた。**
+
+           `notes` は今までどおり配列で返して、そこに「まだ古いものが
+           残っている」を添える。画面はこれを見て `/notes?before=` の
+           続きを読める。**黙って切らない**のがこの役目。 */
         res.json({
           current: state.current ?? null,
           stats: state.stats ?? null,
-          ideas: ideas.items,
           notes: notes.items,
           residents,
           /* 北欧旅の、日付で言える事実。いまは「着いた日」だけ。
@@ -2321,7 +2216,6 @@ export const islandApi = onRequest(
              (`site/content/plans.ts` の planPhase)。 */
           nordic: state.nordic ?? null,
           more: {
-            ideas: ideas.more ? ideas.next : null,
             notes: notes.more ? notes.next : null,
           },
         });
@@ -2387,22 +2281,6 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* 企画提案(旧)。**役目は `/nextplans` に移った**(#161)。
-         Functions と Hosting は別々に手で起動するので、画面が古い日でも
-         止まらないように、ここはまだ動かしてある。畳むのは #171。 */
-      if (method === "GET" && path === "/ideas") {
-        const page = await listIdeas(
-          req.query.limit ?? 120,
-          req.query.before,
-        );
-        res.set(
-          "Cache-Control",
-          "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
-        );
-        res.json({ideas: page.items, more: page.more, next: page.next});
-        return;
-      }
-
       /* 付箋の続き。`/state` が返すのは新しい 200件までで、
          それより古いぶんはここから `?before=` で順に読む。
          上限を上げるだけにしなかったのは、上げてもいつか同じ日が来て、
@@ -2420,79 +2298,17 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 企画提案 ---------------- */
-      if (method === "POST" && path === "/ideas") {
-        const who = await whoIs(req.headers.authorization);
-        const text = clean(body.text, MAX_IDEA_LEN);
-        const name = who?.name ?? clean(body.name, MAX_NAME_LEN);
-        const cid = String(body.cid ?? "");
-        if (text.length < 4) {
-          res.status(400).json({error: "text too short"});
-          return;
-        }
-        if (!isCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        if (!(await takeQuota(who?.uid ?? cid, "idea", IDEAS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const now = Date.now();
-        const ref = await IDEAS.add({
-          text,
-          name: name || null,
-          votes: 0,
-          hidden: false,
-          status: "open",
-          cid,
-          uid: who?.uid ?? null,
-          channelId: who?.channelId ?? null,
-          createdAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
-        });
-        res.json({
-          idea: {
-            id: ref.id,
-            text,
-            name: name || undefined,
-            votes: 0,
-            status: "open",
-            createdAt: new Date(now).toISOString(),
-          },
-        });
-        return;
-      }
+      /* ---------------- 企画提案(旧) ----------------
+         **畳んだ**(#171)。`GET/POST /ideas` と `POST /ideas/:id/vote` は
+         もう無い。役目は `/nextplans`(#161) と付箋(#160) に移っている。
 
-      const voteMatch = path.match(
-        /^\/ideas\/([A-Za-z0-9_-]{6,})\/vote$/,
-      );
-      if (method === "POST" && voteMatch) {
-        const id = voteMatch[1];
-        const who = await whoIs(req.headers.authorization);
-        const cid = String(body.cid ?? "");
-        if (!who && !isCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        // ログインしている人は端末が変わっても1票。していない人は端末ごと。
-        const voteRef = VOTES.doc(`${id}_${who?.uid ?? cid}`);
-        const ideaRef = IDEAS.doc(id);
-        const votes = await db.runTransaction(async (tx) => {
-          const [v, i] = await Promise.all([
-            tx.get(voteRef),
-            tx.get(ideaRef),
-          ]);
-          if (!i.exists) throw new Error("no idea");
-          const cur = (i.data()?.votes as number) ?? 0;
-          if (v.exists) return cur;
-          tx.set(voteRef, {at: Date.now()});
-          tx.update(ideaRef, {votes: cur + 1});
-          return cur + 1;
-        });
-        res.json({votes});
-        return;
-      }
+         残してあったのは、Functions と Hosting を別々に手で起動するので、
+         画面が古い日に 404 で止まらないため。両方とも本番に出て3日たった。
+
+         **入れ物は消していない。** `islandIdeas` の8件は #162 で付箋へ移して
+         あって、`movedTo` の印と `hidden: true` が付いた状態で残っている。
+         **書いた人の字なので消さない。** `islandVotes` の13件も同じ。
+         `firestore.rules` はどちらも deny のまま。 */
 
       /* ---------------- 今夜のおたずね ----------------
          参加の階段のいちばん下の段。文章を書かずに、押すだけで数字が動く。
