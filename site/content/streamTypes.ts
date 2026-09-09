@@ -132,7 +132,9 @@ export const STREAM_TYPES: StreamType[] = [
     slug: "monthly",
     name: "月末配信",
     emoji: "🏆",
-    icon: "fountain",
+    /* 噴水から表彰台へ（#149）。大きく出したら「中身の無い水盤」にしか
+       見えず、同じ面の流れの印（メダルとトロフィー）と食い違っていた。 */
+    icon: "stage-award",
     color: "#c79bff",
     when: "毎月末",
     short: "1ヶ月ぶんのチャットを全部読んで選ぶ、授賞式。",

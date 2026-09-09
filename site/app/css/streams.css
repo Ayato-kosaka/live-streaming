@@ -903,7 +903,13 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 }
 .dish-art img {
   position: relative;
-  max-width: 92%; max-height: 100%;
+  /* 幅は 84% まで。**焼いてある絵より大きく出さない**（#150）。
+     マスの幅は 1440 で 205px なので、92% だと 189px。高精細画面では
+     378px 要るのに、焼いてあるのは長辺 320px（meta.py の MAX_SIDE）で、
+     横長の料理だけ 1.18倍に引き伸ばしていた。84% なら 172px = 344px で、
+     ほかの面（1.06〜1.08）と同じところに収まる。
+     **縦長の料理は変わらない。** あちらは高さ（112/132px）で止まっている。 */
+  max-width: 84%; max-height: 100%;
   width: auto; height: auto;
   object-fit: contain;
   filter: drop-shadow(3px 4px 0 rgba(120, 140, 112, 0.24));
