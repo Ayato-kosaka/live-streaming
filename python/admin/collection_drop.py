@@ -19,9 +19,23 @@ from _fs import args, db, log, need
 
 # 消してよいと判断が済んだコレクション。値は「なぜ消してよいか」
 DEAD = {
-    # 例:
-    # "nordicPhotos": "#202 で islandStreamEventImage へ移した（images_migrate.py）",
+    # #171 で `POST /ideas/:id/vote` を畳んだので、**もう1件も増えない。**
+    # 中身は `{at: <押した時刻>}` だけで、書類IDが `<企画のID>_<uid か端末ID>`。
+    # **人の書いた字は1文字も入っていない**（1人1票を守るためだけの入れ物）。
+    # 票の数そのものは islandIdeas.votes に残るので、消しても数は失われない。
+    "islandVotes": "#171 で口を畳んだ。中身は押した時刻だけで、字は入っていない",
 }
+# **`islandIdeas` はここに入れない。** 8件とも視聴者さんの書いた字で、
+# #162 で付箋へ移したあとも `movedTo` の印を付けて残してある。
+# **書いた人の字は消さない。**
+#
+# **`monthlyReview` もここに入れない。** コードから参照が0に見えるが、
+# 月末配信の OBS 同期が生きている（`public/202608_monthly_review.html` と
+# `.claude/skills/monthly-review/SKILL.md`）。**数えただけで判断しない。**
+#
+# `islandDrafts` は本番に1件も無く、コレクションそのものが存在しない。
+# `nordicPhotos` / `nordicDays` は #202 で移し先ができたが、
+# **書く口をまだ両方動かしている**ので生きている。畳んでからにする。
 
 # 1回のバッチで消す数。Firestore の上限は 500
 BATCH = 400
