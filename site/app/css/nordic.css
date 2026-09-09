@@ -2143,58 +2143,117 @@ p.nday-lead {
 .ndsp-reply b { font-weight: 900; color: var(--ink); }
 .ndsp-reply q { quotes: none; margin-left: var(--sp-1); }
 
-/* ── 街を拡大した地図（`components/nordic/CityZoom.tsx`）────────────────
-   国の地図の切り抜き（`CityMapSvg`）と入れ替えたもの。あちらは 361km 四方の
-   窓で、拡大しても街の中が見えなかった。ここは幅 1〜5km。
+/* ── 街を拡大した地図（`components/nordic/CityMap.tsx`）────────────────
+   OpenStreetMap の実データ（`tools/nordic/citymap.py`）で描く街地図。
+   前の版は道路が1本も無く、ベージュに丸が4つ乗っただけだった。
 
-   色は島のトークンをそのまま使う。**地図だけ別の世界に見せない。** */
-.czoom { margin-top: 10px; }
+   **色は島のトークンだけで作る。** 地図だけ別の世界に見せない。
+   地は紙、水は島の海、緑は高台の草、道は壁のクリームに琥珀の縁取り。 */
+.cmap { margin-top: 10px; }
 
-.czoom-map {
+/* 土台（`<img>`）と、点・名前（インラインの SVG）を**ぴったり重ねる。**
+   同じ viewBox なので、枠の大きさだけ合わせれば座標は一致する。 */
+.cmap-frame {
+  position: relative;
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  /* 押せないので**厚みは付けない**（`island-design.md` 3章3）。
+     落ち影は右下へずらしてぼかす。厚み（真下・ぼかし無し）と取り違えられない */
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+.cmap-base,
+.cmap-svg {
   display: block;
   width: 100%;
   height: auto;
-  border: var(--bw-2) solid var(--frame-deep);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  box-shadow: 0 4px 0 var(--frame-deep);
-  overflow: hidden;
 }
-.cz-bg { fill: var(--paper-2); }
-/* 水は島の海と同じ青。**いちばん先に目に入るものにする**（街の向きが読める） */
-.cz-water { fill: var(--sea-shallow); opacity: 0.55; stroke: var(--sea-mid); stroke-width: 2; }
-.cz-green { fill: var(--grass2); opacity: 0.42; stroke: none; }
-/* 旧市街は「面」。線で囲うと通りに見えるので、薄い塗りだけ */
-.cz-old { fill: var(--sand); opacity: 0.5; stroke: var(--sand-edge); stroke-width: 2; }
-
-.cz-scale line { stroke: var(--ink-2); stroke-width: 3; }
-.cz-scale text {
-  fill: var(--ink-2);
-  font-size: 26px;
-  font-weight: 700;
-  text-anchor: middle;
+.cmap-svg {
+  position: absolute;
+  inset: 0;
+  height: 100%;
 }
 
-/* 点。**種類で色を変える。** 4つしかないので、色だけで読み分けられる */
-.cz-pin .cz-dot { stroke: var(--frame-deep); stroke-width: 3; }
-.cz-pin .cz-n {
+/* ── 目印 ─────────────────────────────────────────────
+   宮殿・教会・市場が「そこにある」ことだけを言う絵。名前は付けない
+   （4つも5つも名前を出すと、地図が字で埋まる）。 */
+.cm-mark .g-wall { fill: var(--wall); }
+.cm-mark .g-roof { fill: var(--roof-coral); }
+.cm-mark .g-dark { fill: var(--frame-deep); }
+.cm-mark .g-trunk { fill: var(--trunk); }
+.cm-mark .g-leaf { fill: var(--leaf-a); }
+.cm-mark .g-leafhi { fill: var(--leaf-b); }
+.cm-mark .g-steam { fill: none; stroke: var(--sea-mid); stroke-width: 1.6; }
+/* 地の上で形が沈まないよう、絵ぜんぶを紙で1度縁取る。
+   **輪郭線ではない**（`island-design.md` 2章1）。地から離すための下敷き */
+.cm-mark {
+  paint-order: stroke fill;
+  stroke: var(--paper);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+/* ── 見どころの点 ──────────────────────────────────────
+   丸は紙。**番号は必ず紙の上に乗る**ので、どの種類でも 9 : 1 で読める。
+   種類は輪の色で言う（丸を色で塗ると、番号が種類ごとに読みにくくなる）。 */
+.cm-dot { fill: var(--paper); stroke-width: 9; }
+.cm-num {
   fill: var(--ink);
-  /* 34 ≒ スマホで 12px。**番号が読める下限。** 丸(r=32)に収まる */
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 900;
   text-anchor: middle;
 }
-.cz-see .cz-dot, .cz-key-b.cz-see, i.cz-see { background: var(--roof-sky); fill: var(--roof-sky); }
-.cz-eat .cz-dot, .cz-key-b.cz-eat, i.cz-eat { background: var(--roof-coral); fill: var(--roof-coral); }
-.cz-do  .cz-dot, .cz-key-b.cz-do,  i.cz-do  { background: var(--roof-mint); fill: var(--roof-mint); }
-.cz-buy .cz-dot, .cz-key-b.cz-buy, i.cz-buy { background: var(--roof-gold); fill: var(--roof-gold); }
+.cm-see .cm-dot { stroke: var(--sea-mid); }
+.cm-eat .cm-dot { stroke: var(--accent-deep); }
+.cm-do .cm-dot { stroke: var(--leaf-c); }
+.cm-buy .cm-dot { stroke: var(--frame-dark); }
+.cm-see .cm-key-b, .cm-see i, a.cm-see i { background: var(--roof-sky); }
+.cm-eat .cm-key-b, a.cm-eat i { background: var(--roof-coral); }
+.cm-do i, a.cm-do i { background: var(--roof-mint); }
+.cm-buy i, a.cm-buy i { background: var(--roof-gold); }
+/* 一覧から押されている点。**大きくしない**（隣の点を隠す）。輪を足す */
+.cmap-svg g:target .cm-dot { stroke: var(--pick); }
+.cmap-svg g:target .cm-num { fill: var(--pick); }
 
-/* 押されている点。**大きくしない**（隣の点を隠す）。輪をひとつ足す */
-.cz-pin.is-on .cz-dot { stroke: var(--pick); stroke-width: 7; }
+/* どけた丸から本当の場所へ引く線。細く、薄く */
+.cm-lead line { stroke: var(--frame-dark); stroke-width: 3; opacity: 0.55; }
+.cm-lead circle { fill: var(--frame-dark); opacity: 0.6; }
 
-.czoom-key { list-style: none; margin: 10px 0 0; padding: 0; }
-.czoom-key > li { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
-.cz-key-b {
+/* ── 地図の上の名前 ────────────────────────────────────
+   **紙の札を敷いてから字を乗せる。** 縁取りだけだと、道や緑の上で
+   4.5 : 1 を割る（測る道具は縁取りを字といっしょに消すので、
+   地は札そのものになる。`tools/sprites/inkpx.mjs`）。 */
+.cm-label rect {
+  fill: var(--paper);
+  stroke: var(--frame-dark);
+  stroke-width: 2.5;
+  opacity: 0.94;
+}
+.cm-label text {
+  fill: var(--ink);
+  font-weight: 900;
+  text-anchor: middle;
+}
+.cm-lb-water rect { fill: var(--sea-shelf); stroke: var(--sea-mid); }
+.cm-lb-park rect { fill: var(--grass2-hi); stroke: var(--leaf-c); }
+
+/* ── 縮尺と方角 ───────────────────────────────────────── */
+.cm-scale rect, .cm-north circle {
+  fill: var(--paper);
+  stroke: var(--frame-dark);
+  stroke-width: 2.5;
+  opacity: 0.94;
+}
+.cm-scale line { stroke: var(--ink); stroke-width: 4; }
+.cm-scale text { fill: var(--ink); font-size: 30px; font-weight: 900; text-anchor: middle; }
+.cm-north path { fill: var(--accent-deep); }
+.cm-north text { fill: var(--ink); font-size: 26px; font-weight: 900; text-anchor: middle; }
+
+/* ── 地図の下の一覧 ──────────────────────────────────── */
+.cmap-key { list-style: none; margin: 10px 0 0; padding: 0; }
+.cmap-key > li { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
+.cm-key-b {
   flex: none;
   min-width: 5.2em;
   padding: 3px 8px;
@@ -2205,10 +2264,11 @@ p.nday-lead {
   font-weight: 900;
   text-align: center;
 }
-.czoom-key > li > span { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmap-key > li > span { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* 一覧の1行。**押しどころなので 44px 以上**（`island-design.md` 3章） */
-.cz-row {
+/* 一覧の1行。**押しどころなので 44px 以上**（`island-design.md` 3章2）。
+   押せるので厚みを持たせる。真下・ぼかし無し（落ち影と取り違えない） */
+a.cm-row {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2217,36 +2277,55 @@ p.nday-lead {
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-1);
   background: var(--paper);
+  box-shadow: var(--pop-sm);
   color: var(--ink);
   font-size: var(--fs-small);
   font-weight: 700;
   text-align: left;
-  cursor: pointer;
+  text-decoration: none;
 }
-.cz-row.is-on { border-color: var(--pick); background: var(--paper-2); }
-.cz-row i {
+a.cm-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
+/* 番号と絵。**地図の点と同じ番号**で、種類は地の色で言う */
+a.cm-row i {
+  position: relative;
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 26px; height: 26px;
+  display: block;
+  width: 34px;
+  height: 34px;
   border: var(--bw-1) solid var(--frame-deep);
   border-radius: 50%;
   font-style: normal;
-  font-size: var(--fs-small);
-  font-weight: 900;
 }
+a.cm-row i .cm-rowg { display: block; width: 100%; height: 100%; }
+a.cm-row i b {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  min-width: 17px;
+  padding: 0 1px;
+  border: 2px solid var(--frame-deep);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 15px;
+  text-align: center;
+}
+.cm-rowg .g-wall { fill: var(--wall); }
+.cm-rowg .g-roof { fill: var(--roof-coral); }
+.cm-rowg .g-dark { fill: var(--frame-deep); }
+.cm-rowg .g-trunk { fill: var(--trunk); }
+.cm-rowg .g-leaf { fill: var(--leaf-a); }
+.cm-rowg .g-leafhi { fill: var(--leaf-b); }
+.cm-rowg .g-steam { fill: none; stroke: var(--sea-mid); stroke-width: 1.6; }
+
 /* 窓の外のもの。**押せない**ので、厚みも枠も持たせない */
-.cz-far {
+.cm-far {
   display: inline-flex;
   flex-direction: column;
   padding: 4px 0;
   color: var(--ink-2);
   font-size: var(--fs-small);
 }
-.cz-far em { font-style: normal; font-size: var(--fs-tiny); opacity: 0.85; }
-
-/* 丸をどけたぶんの引き出し線。**細く、薄く。** 地図の主役は点と土台で、
-   線は「この丸はここのこと」と言うためだけにある */
-.cz-lead line { stroke: var(--frame-dark); stroke-width: 2.5; opacity: 0.5; }
-.cz-lead circle { fill: var(--frame-dark); opacity: 0.55; }
-.cz-lead.is-on line, .cz-lead.is-on circle { stroke: var(--pick); fill: var(--pick); opacity: 1; }
+.cm-far em { font-style: normal; font-size: var(--fs-tiny); opacity: 0.85; }
