@@ -146,39 +146,42 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     ? RESIDENTS.find((r) => r.channel === me.channelId)
     : undefined;
 
-  /* 見出しの隣に出す顔。**キャラクターとは別物で、混ぜない**（#202）。
-     こちらは YouTube のプロフィール写真で、本人が YouTube で替えたら
-     替わるのが正しい。キャラクターはあやとが割り当てたもので、
-     YouTube を替えても変わらないのが正しい。
+  /* 見出しの隣に出す丸。**前はここに YouTube の顔写真を出していた。**
 
-     出どころは3つあったが、**いま使うのは1つだけ。**
+     顔写真の出どころは3つある。
 
-     | どこから | いつのもの | 使うか |
-     | --- | --- | --- |
-     | `islandChannels.photo`（`me.channelPhoto`） | 毎晩入れ直る。**古くならない** | 使う |
-     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる | 使わない |
-     | ログインの人（`user.photo`） | 同上。Google 側の写真 | 使わない |
+     | どこから | いつのもの |
+     | --- | --- |
+     | `islandChannels.photo`（`me.channelPhoto`） | 毎晩入れ直る |
+     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる |
+     | ログインの人（`user.photo`） | 同上。Google 側の写真 |
 
-     前は下2つへ落としていた。「顔が消えるよりは少し古い顔が出ているほうが
-     いい」と考えたが、**あやとの言葉（2026-09-09）「そのカラムは使わないで
-     欲しい」。** 実際に出ていたのは何年も前の写真で、落ちるぶんだけ
-     古い顔が居座る。止まった値は、いつまでも止まったままになる。
+     **どれも使わない。** あやとの言葉（2026-09-09）「そのカラムは使わないで
+     欲しい」「YouTubeのアイコンですよ？画面中部に出てるやつ」。
 
-     毎晩入れ直るものが来ていなければ、写真は出さずに頭の1文字にする。
-     **古い顔より、顔が無いほうがいい。** */
-  const face = me?.channelPhoto || "";
+     一度は「毎晩入れ直る `channelPhoto` なら古くならない」と考えて、そこだけ
+     残した。**それは間違いだった。** 本番の中身を見ると、3つとも同じ絵を
+     指している。
+
+       islandUsers.photo    …/GUqKfpGZZ-…=s88-c-k-c0x00ffffff-no-rj
+       islandChannels.photo …/GUqKfpGZZ-…=s800-c-k-c0x00ffffff-no-rj
+
+     **ファイルの id が同じで、大きさの指定だけが違う。** 毎晩入れ直っては
+     いるが、入れ直る先が同じ YouTube の顔写真なので、あやとが「古い」と
+     言っているその絵がそのまま出続ける。片方に寄せても何も変わらない。
+
+     ここは名前の隣の小さな丸なので、**頭の1文字だけにする。** 島の
+     キャラクターはすぐ下の「島にいる、じぶん」で 256px で出しているので、
+     ここにも置くと同じ絵が1枚の面に2回出る。看板の右はし（`MeButton`）とは
+     頭文字の取り方をそろえてある（`lib/firstLetter.ts`）。 */
 
   return (
     <>
       {/* いま入っている人。**押しどころではないので、平ら（紙）。** */}
       <div className="mp-who">
-        {face ? (
-          <img className="mp-face" src={face} alt="" />
-        ) : (
-          <span className="mp-face mp-face-none" aria-hidden>
-            {firstLetter(user.name)}
-          </span>
-        )}
+        <span className="mp-face mp-face-none" aria-hidden>
+          {firstLetter(user.name)}
+        </span>
         <span className="mp-who-t">
           <b>{me?.nickname || user.name}</b>
           <i>

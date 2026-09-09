@@ -26,6 +26,11 @@ const UID = "fakeuid0001";
 const NAME = "ゆずたつ";
 /** 本番と同じ形の絵。`route.mjs` の `offline` が /tmp/avatars から1人ずつ返す */
 const PHOTO = "https://lh3.googleusercontent.com/d/1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47=s96";
+/** 本番の `islandChannels.photo` と同じ形の URL。**差し替えた絵にしない。**
+    ここを別の絵にしていたせいで「YouTube の顔が消えた」と誤認して、
+    直っていないのに直ったと報告した（2026-09-09）。本番と同じものを置く。 */
+const YT_PHOTO =
+  "https://yt3.ggpht.com/GUqKfpGZZ-RvK4x8whkP6V7GfFc4FLoPC7rBUJ5jaqOdgouJabHkcGM8et_logXB62byGalyPA=s800-c-k-c0x00ffffff-no-rj";
 /** 上の絵に割り当ててあるチャンネル（`site/content/residents.ts`） */
 const CHANNEL = "UCyct2GK_RiW5Ji3Y0gd9MMg";
 
@@ -322,7 +327,7 @@ export async function apply(ctx, opts = {}) {
            出るのはこれだけ**（#226 のあと。止まった `photo` は使わない）。
            NOCHARA=1 のときは、まだ入っていない人として空にする。 */
         uid: UID, name: who.name, channelId: who.channel, photo: PHOTO,
-        channelPhoto: nochara ? null : PHOTO,
+        channelPhoto: YT_PHOTO,
         nickname: null, showName: true, showPhoto: true, admin,
       });
     }
