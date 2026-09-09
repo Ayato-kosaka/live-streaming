@@ -15,6 +15,7 @@ import {
   DAY_OF,
   DEPART,
   FARES,
+  FARES_TOTAL,
   HITCH_KM,
   MAIN,
   NORDIC_COUNTRIES,
@@ -266,7 +267,12 @@ export default async function NordicPage() {
             開けば全部ある。開いたまま並べると 209px あって、面のいちばん下で
             「投げ銭で応援する」のボタンが1画面ぶん遠くなっていた。 */}
         <div className="folds">
-          <Fold title="何に、お金が要るのか" lead={`飛行機と船と、泊まるところ。${FARES.length}件`}>
+          {/* 件数ではなく額を出す（#107）。開くかどうかを決める人が知りたいのは
+              「ぜんぶでいくら」で、「9件」では何も分からない。 */}
+          <Fold
+            title="何に、お金が要るのか"
+            lead={`飛行機と船と、泊まるところ。ぜんぶで ${FARES_TOTAL.toLocaleString()}円`}
+          >
             <ul className="nback-what">
               {FARES.map((f) => (
                 <li key={f.what}>
