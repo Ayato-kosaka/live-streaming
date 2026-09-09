@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
+import { firstLetter } from "@/lib/firstLetter";
 
 /** 島のキャラクターの絵。`MyPage` と同じ引き方。 */
 const drive = (id: string, size: number) =>
@@ -40,7 +41,7 @@ export default function MeButton() {
   const { user } = useAuth();
   const path = usePathname();
   if (!user) return null;
-  const initial = [...(user.name || "?")][0] ?? "?";
+  const initial = firstLetter(user.name);
   /* 島にいるじぶん。**チャンネルで引く。** 本人に選ばせない（他人の絵を
      自分のものにできてしまう）ので、表に無ければ絵は出さない。 */
   const chara = user.channelId

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { firstLetter } from "@/lib/firstLetter";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -150,17 +151,22 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
      替わるのが正しい。キャラクターはあやとが割り当てたもので、
      YouTube を替えても変わらないのが正しい。
 
-     出どころは3つあって、**新しいものから順に落ちる。**
+     出どころは3つあったが、**いま使うのは1つだけ。**
 
-     | どこから | いつのもの |
-     | --- | --- |
-     | `islandChannels.photo`（`me.channelPhoto`） | 日次で入れ直る。**古くならない** |
-     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる |
-     | ログインの人（`user.photo`） | 同上。Google 側の写真 |
+     | どこから | いつのもの | 使うか |
+     | --- | --- | --- |
+     | `islandChannels.photo`（`me.channelPhoto`） | 毎晩入れ直る。**古くならない** | 使う |
+     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる | 使わない |
+     | ログインの人（`user.photo`） | 同上。Google 側の写真 | 使わない |
 
-     いちばん上が来ていないあいだは下に落ちる。**顔が消えるよりは、
-     少し古い顔が出ているほうがいい。** */
-  const face = me?.channelPhoto || me?.photo || user.photo;
+     前は下2つへ落としていた。「顔が消えるよりは少し古い顔が出ているほうが
+     いい」と考えたが、**あやとの言葉（2026-09-09）「そのカラムは使わないで
+     欲しい」。** 実際に出ていたのは何年も前の写真で、落ちるぶんだけ
+     古い顔が居座る。止まった値は、いつまでも止まったままになる。
+
+     毎晩入れ直るものが来ていなければ、写真は出さずに頭の1文字にする。
+     **古い顔より、顔が無いほうがいい。** */
+  const face = me?.channelPhoto || "";
 
   return (
     <>
@@ -170,7 +176,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
           <img className="mp-face" src={face} alt="" />
         ) : (
           <span className="mp-face mp-face-none" aria-hidden>
-            {[...(user.name || "?")][0]}
+            {firstLetter(user.name)}
           </span>
         )}
         <span className="mp-who-t">

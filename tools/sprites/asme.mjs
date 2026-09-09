@@ -263,6 +263,14 @@ const CARDS = CARD_SHOTS.flatMap((s) =>
 
 export async function apply(ctx, opts = {}) {
   const admin = opts.admin ?? process.env.ADMIN === "1";
+  /* 島のキャラクターが割り当たっていない人。**あやと自身がこれ。**
+     住人の表（`content/residents.ts`）は視聴者さんの絵なので、配信する側は
+     そこに居ない。看板の右はしがどう出るかは、この人でしか確かめられない
+     （キャラのある人で撮ると絵が出てしまい、落ちたときの形が見えない）。 */
+  const nochara = opts.nochara ?? process.env.NOCHARA === "1";
+  const who = nochara ?
+    { name: "@あやとグルメアプリ", channel: "UCnobodynobodynobody00" } :
+    { name: NAME, channel: CHANNEL };
   const json = (r, body) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
 
@@ -270,7 +278,7 @@ export async function apply(ctx, opts = {}) {
   await ctx.route(/identitytoolkit\.googleapis\.com/, (r) =>
     json(r, {
       users: [{
-        localId: UID, displayName: NAME, photoUrl: PHOTO, email: "a@example.com",
+        localId: UID, displayName: who.name, photoUrl: PHOTO, email: "a@example.com",
         emailVerified: true, providerUserInfo: [], validSince: "0",
         lastLoginAt: "1600000000000", createdAt: "1600000000000",
       }],
@@ -310,7 +318,11 @@ export async function apply(ctx, opts = {}) {
     const path = u.pathname.replace("/island-api", "");
     if (path === "/me") {
       return json(r, {
-        uid: UID, name: NAME, channelId: CHANNEL, photo: PHOTO,
+        /* `channelPhoto` は毎晩 islandChannels から入れ直る顔で、**じぶんのことに
+           出るのはこれだけ**（#226 のあと。止まった `photo` は使わない）。
+           NOCHARA=1 のときは、まだ入っていない人として空にする。 */
+        uid: UID, name: who.name, channelId: who.channel, photo: PHOTO,
+        channelPhoto: nochara ? null : PHOTO,
         nickname: null, showName: true, showPhoto: true, admin,
       });
     }
@@ -422,11 +434,11 @@ export async function apply(ctx, opts = {}) {
         uid: UID,
         email: "a@example.com",
         emailVerified: true,
-        displayName: NAME,
+        displayName: who.name,
         isAnonymous: false,
         photoURL: PHOTO,
         providerData: [
-          { providerId: "google.com", uid: "1", displayName: NAME, email: "a@example.com", phoneNumber: null, photoURL: PHOTO },
+          { providerId: "google.com", uid: "1", displayName: who.name, email: "a@example.com", phoneNumber: null, photoURL: PHOTO },
         ],
         // 期限を先にしておくと、開いた瞬間に取り直しにいかない
         stsTokenManager: { refreshToken: "FAKE_REFRESH", accessToken: "FAKE_ACCESS", expirationTime: now + 3600000 },
