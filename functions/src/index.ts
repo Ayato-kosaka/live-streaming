@@ -13,6 +13,7 @@ import {commentOnLive} from "./commentOnLive";
 import {doneruAmount} from "./doneruAmount";
 import {doneruToken} from "./doneruToken";
 import {doneruYoutubeRefresh} from "./doneruYoutubeRefresh";
+import {collectLiveChat} from "./chatCapture";
 import {nanitabeyoWeeklyReportProxy} from "./nanitabeyoWeeklyReportProxy";
 import {islandApi} from "./islandApi";
 
@@ -33,5 +34,6 @@ export const commentIfLive = onSchedule(
 export {doneruAmount};
 export {doneruToken};
 export {doneruYoutubeRefresh};
+export {collectLiveChat};
 export {nanitabeyoWeeklyReportProxy};
 export {islandApi};

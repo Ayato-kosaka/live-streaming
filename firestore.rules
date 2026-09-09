@@ -119,6 +119,20 @@ service cloud.firestore {
        あやとだけ。 */
     match /islandDonors/{docId} { allow read, write: if false; }
 
+    /* 配信中に溜めたコメント(#153)。切り抜きの下ごしらえ。
+       **ここは絶対に開けない。** 1行ごとに channelId と表示名が入っていて、
+       collection ごと引けると「誰がいつ何を書いたか」が全部読める。
+       BigQuery 側の chat_messages と違って、**配信中のものがそのまま
+       生で並ぶ**（あやとが見て消す機会が一度も無い）。
+       読むのは切り抜きを作るときだけで、それはサーバー側の仕事。 */
+    match /streamChatMessages/{docId} { allow read, write: if false; }
+
+    /* 配信1本ぶんの栞（nextPageToken）と件数。
+       栞は「ここから先を読める」券なので、渡すと他人が同じ配信の
+       コメントを読み進められる。件数だけなら害は無いが、
+       **同じ書類に栞が入っている**ので書類ごと閉じる。 */
+    match /streamChatRuns/{docId} { allow read, write: if false; }
+
     /* 配信のルーレット(#164)。コントローラーと OBS を繋ぐ入れ物。
        **ここを開けない。** 表示側(OBS)はログインできないので読ませる道が
        要るが、それは islandApi の `GET /roulette/{id}` に絞る。ここを
