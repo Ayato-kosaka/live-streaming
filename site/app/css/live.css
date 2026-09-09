@@ -480,6 +480,21 @@
   line-height: var(--lh-note);
 }
 
+/* 段と Git 側が食い違っている、を言う1行（あやとにだけ出る）。
+   **押せないので平ら。** 直すのはすぐ下の「段を動かす」なので、
+   ここに厚みを付けると押しどころが2つに見える。
+   左の罫だけで、ふつうの添え書きと見分ける。 */
+.bd-mismatch {
+  display: block;
+  margin-top: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: var(--bw-2) solid var(--frame);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: var(--lh-note);
+}
+
 /* あやとの道具（段を動かす・しまう）。紙の上に並ぶ板なので、行を分けて置く。
    付箋の `.nt-own` は `.nt-foot` の中にいて `display: contents` で足りていたが、
    こちらは紙の本文の下に直に付くので、自分で並びを持つ。 */
