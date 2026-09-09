@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import SignIn from "./SignIn";
 import Notes from "./Notes";
 import { EmptyBoard, Pin, Stone } from "./art";
@@ -573,8 +574,12 @@ export default function Board() {
           <p className="muted">じぶんが出したものは、まだありません。</p>
         )}
 
-        <ul className="bd-list">
-          {list.map((p, n) => {
+        {/* 出された企画は消えない（段が進むだけ）ので、**板はいちばん先に
+            伸びきる。** 6件だけ出して、あとは押して出す（#225）。
+            並べ替えの札が上にあるので、いま何を上に出しているかは
+            6件でも読み取れる。 */}
+        <Longer items={list} first={6} step={12} unit="件" className="bd-list">
+          {(p, n) => {
             // ハートがいちばん集まっているものだけ、赤い枠で前に出す。
             const top = sort === "hearts" && !onlyMine && n === 0 && p.hearts > 0 && p.status === "proposed";
             const edit = now ? canEditPlan(p, user?.uid, mine, now) : "no";
@@ -673,8 +678,8 @@ export default function Board() {
                 </div>
               </li>
             );
-          })}
-        </ul>
+          }}
+        </Longer>
 
         {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}
         {owner && (

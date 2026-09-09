@@ -4,6 +4,7 @@ import Link from "next/link";
 import CardOne from "@/components/cards/CardOne";
 import { useCards, type PlanDays } from "@/components/cards/cards";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 
 /**
  * じぶんのあやと島カード（#173）。
@@ -52,11 +53,14 @@ export default function MyCards({
 
       {mine.length > 0 && (
         <>
-          <div className="akd-grid">
-            {mine.map((c) => (
+          {/* カードは**勝手に増えつづける**（`useCards` の頭）。溜まるほど
+              じぶんのことの下が遠くなるので、はじめは4枚だけ出す（#225）。
+              「いま◯枚」は畳んでいても数が分かるように、下に置いたまま。 */}
+          <Longer items={mine} first={4} step={8} unit="枚" as="div" className="akd-grid">
+            {(c) => (
               <CardOne key={c.id} card={c} plans={plans[c.day]} showName={false} />
-            ))}
-          </div>
+            )}
+          </Longer>
           <p className="muted akd-note">
             いま{mine.length}枚。その日の配信で投げ銭すると、翌朝には1枚増えています。
           </p>

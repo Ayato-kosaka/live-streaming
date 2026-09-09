@@ -17,6 +17,7 @@ import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
 import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import { Pin } from "./art";
 
 /**
@@ -55,8 +56,16 @@ import { Pin } from "./art";
 /** 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す */
 const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 
-/** 1つのテーマに出す枚数の上限。越えたぶんは、そのテーマの面へ送る。 */
-const SHOW = 24;
+/**
+ * はじめに出す枚数と、1回押すと増える枚数（#225）。
+ *
+ * 前は 24枚で**打ち切って**いて、それ以上は「この話をしている場所で読めます」
+ * と書いてあるだけだった。24枚でもスマホ2画面ぶんあり、しかも送り先の面でも
+ * 同じ24枚で切れるので、25枚目から先はどこからも読めなかった。
+ * 6枚だけ出して、押せば最後まで出る形にそろえる（`components/ui/Longer.tsx`）。
+ */
+const SHOW = 6;
+const STEP = 12;
 
 /** 付箋の長さ。サーバー側の `MAX_NOTE_LEN` と同じ。 */
 const MAX = 120;
@@ -428,8 +437,8 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
           </div>
         )}
 
-        <ul className="nx-notes">
-          {list.slice(0, SHOW).map((n, i) => (
+        <Longer items={list} first={SHOW} step={STEP} unit="枚" className="nx-notes">
+          {(n, i) => (
             <li key={n.id} className={n.byOwner ? "is-owner" : undefined}>
               <span className="nx-pin">
                 <Pin tone={PINS[i % PINS.length]} size={19} />
@@ -487,18 +496,8 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
                 )}
               </span>
             </li>
-          ))}
-        </ul>
-
-        {/* ここに全部は出さない。1つのテーマが長くなるほど、下が見えなくなる。
-            続きは上の「この話をしている場所へ」から。**行き先を2つ置かない** */}
-        {list.length > SHOW && (
-          <p className="nb-more">
-            {fixed ?
-              `新しいものから${SHOW}枚まで出しています。` :
-              `新しいものから${SHOW}枚まで。残り${list.length - SHOW}枚は、この話をしている場所で読めます。`}
-          </p>
-        )}
+          )}
+        </Longer>
       </div>
 
       {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}

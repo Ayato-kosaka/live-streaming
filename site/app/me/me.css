@@ -184,15 +184,29 @@
   color: var(--ink);
   white-space: pre-wrap;
 }
+/* テーマ・日付・ハートの行。**札（`.chip`）をやめて字だけにした**（#225）。
+   札は1つ 28px の高さと左右の余白を持つので、3つ並ぶだけで1枚が1行ぶん高くなる。
+   ここは読んで場所が分かればいいだけで、押しどころではない。
+   区切りは中黒。並べても背が伸びない。 */
 .mp-note-foot {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
   align-items: center;
+  gap: 0;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  line-height: var(--lh-body);
+  color: var(--ink-2);
 }
-/* ハートの札。**数は札の字の色のまま。** 桃色にすると、オリーブの札の上で
+.mp-note-foot > span + span::before {
+  content: "・";
+  padding: 0 var(--sp-1);
+  color: var(--rule);
+}
+/* ハートの数。**数は行の字の色のまま。** 桃色にすると、紙の上で
    2.68 : 1 しか出ない（`tools/sprites/inkpx.mjs` で実測）。色を持つのは絵だけ。 */
+.mp-hearts { display: inline-flex; align-items: center; gap: 3px; }
 .mp-hearts svg { width: 12px; height: 11px; color: var(--accent-deep); }
 /* あやとからの返事。**引用の吹き出しと同じ扱いで、厚みは付けない。** */
 .mp-reply {
