@@ -1,3 +1,35 @@
+/* --- 溜まった並びを短くする押しどころ（`components/ui/Longer.tsx`・#225） ---
+   縦に伸びる並びは掲示板にも企画にもじぶんのことにもあるので、**形は1つ**。
+   面ごとに違う押しどころを置くと、同じ並びが面ごとに違うものに見える。
+
+   板の下にぶら下がる形は「しまったものを見る」（`.nt-bin`）と同じ。
+   あちらと並んで出る面があるので、そこだけ別の形にしない。
+   厚みは 4px。48px の押しどころに付ける 6px を並びの下に敷くと、
+   板そのものが浮いて、上の一覧より前に出てしまう。 */
+.longer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-3);
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: var(--lh-body);
+  color: var(--ink);
+  cursor: pointer;
+}
+.longer:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
 /* --- 企画ページの下書きを書く道具 ------------------------------------
    完成形が見えないまま書かせると情報の足りない下書きになるので、
    書いたそばから同じ部品でプレビューを出す。

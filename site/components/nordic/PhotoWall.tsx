@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Icon from "@/components/ui/Icon";
+import Longer from "@/components/ui/Longer";
 import { getNordicPhotos, type NordicPhoto, type NordicPhotoDay } from "@/lib/api";
 import { useOwner } from "./log";
 import PhotoPost from "./PhotoPost";
@@ -102,40 +103,45 @@ export default function PhotoWall({ depart }: { depart: string }) {
         </div>
       )}
 
-      {(days ?? []).map((d) => (
-        <section className="panel paper nph-day" key={d.day} id={`d${d.day}`}>
-          <h2>
-            {when(d.day)}
-            {nth(d.day, depart) && <i>{nth(d.day, depart)}</i>}
-          </h2>
-          {/* 全部のマスが押せるので、1枚ずつに厚みは付けない
-              （`docs/island-world.md` 3.5）。押せないマスを混ぜない。 */}
-          <div className="nph-grid">
-            {d.photos.map((p, i) => (
-              <button
-                key={p.id}
-                className="nph"
-                onClick={() => setOpen({ day: d, i })}
-              >
-                {/* **一覧のサムネにも crossOrigin を付ける。** ここと studio の
-                    canvas は同じ URL を読む。片方を素で先に読むと、CORS の
-                    ヘッダを持たない絵がキャッシュに残る端末があり、あとから
-                    canvas 用に読み直しても汚れたまま焼けなくなる。
-                    置き場は access-control-allow-origin: * を返すので、
-                    付けても絵は今までどおり出る。 */}
-                <img
-                  src={p.url}
-                  alt={p.note || "北欧旅の写真"}
-                  loading="lazy"
-                  crossOrigin="anonymous"
-                  width={p.w || undefined}
-                  height={p.h || undefined}
-                />
-              </button>
-            ))}
-          </div>
-        </section>
-      ))}
+      {/* 1日ぶんが1枚の紙。**旅の日数ぶんだけ増える**ので、はじめは3日ぶん
+          （#225）。写真は1日に何枚でも貼るので、10日目には送っても送っても
+          下に着かない面になっていた。 */}
+      <Longer items={days ?? []} first={3} step={6} unit="日ぶん" as="div">
+        {(d) => (
+          <section className="panel paper nph-day" key={d.day} id={`d${d.day}`}>
+            <h2>
+              {when(d.day)}
+              {nth(d.day, depart) && <i>{nth(d.day, depart)}</i>}
+            </h2>
+            {/* 全部のマスが押せるので、1枚ずつに厚みは付けない
+                （`docs/island-world.md` 3.5）。押せないマスを混ぜない。 */}
+            <div className="nph-grid">
+              {d.photos.map((p, i) => (
+                <button
+                  key={p.id}
+                  className="nph"
+                  onClick={() => setOpen({ day: d, i })}
+                >
+                  {/* **一覧のサムネにも crossOrigin を付ける。** ここと studio の
+                      canvas は同じ URL を読む。片方を素で先に読むと、CORS の
+                      ヘッダを持たない絵がキャッシュに残る端末があり、あとから
+                      canvas 用に読み直しても汚れたまま焼けなくなる。
+                      置き場は access-control-allow-origin: * を返すので、
+                      付けても絵は今までどおり出る。 */}
+                  <img
+                    src={p.url}
+                    alt={p.note || "北欧旅の写真"}
+                    loading="lazy"
+                    crossOrigin="anonymous"
+                    width={p.w || undefined}
+                    height={p.h || undefined}
+                  />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </Longer>
 
       {open && (
         <PhotoStudio
