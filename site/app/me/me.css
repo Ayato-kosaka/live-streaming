@@ -556,3 +556,52 @@
   margin-bottom: var(--sp-3);
 }
 .mp-ab-acts .mp-send { margin-top: 0; }
+
+/* 鍵が入っていないときの呼びかけ（#180）。**畳まない。**
+   これが無いとアラートボックスが止まる、いちばん効く一手なので、
+   紙の中でいちばん目に付くところに置く。 */
+.mp-ab-need {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 22%, var(--paper));
+}
+.mp-ab-need > b { display: block; font-size: var(--fs-body); font-weight: 900; color: var(--ink); }
+.mp-ab-need > p {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.mp-ab-need code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--paper-2);
+  font-weight: 900;
+}
+/* 打つ欄と押しどころ。**48px を割らない。** */
+.mp-ab-key { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
+.mp-ab-key input {
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+.mp-ab-key .mp-send { margin-top: 0; width: 100%; }
+/* 押せないあいだの「しまう」。**薄くしない。**
+   `.mp-send:disabled` の `opacity: 0.62` を金の上にかけると、字が
+   #98825c / 地 #fee39c で比 2.96 まで落ちる（実測）。打つ前にボタンの字が
+   読めないのは、この面でいちばん困る。色を落とす代わりに紙へ戻す。 */
+.mp-ab-key .mp-send:disabled {
+  opacity: 1;
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  border-color: var(--frame-dark);
+  color: var(--ink-2);
+  box-shadow: 0 5px 0 var(--frame-dark);
+}
