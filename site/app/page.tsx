@@ -64,20 +64,29 @@ export default function Home() {
               置き場所の出し分けは .stage[data-view] からの兄弟セレクタでCSS側が決める。 */}
           <div className="hero-copy">
             <h1 className="hero-logo">
-              {/* 引きは看板まるごと。寄りは下がった札を落としたバッジだけ（小さいと読めないので） */}
+              {/* 引きは看板まるごと。寄りは下がった札を落としたバッジだけ（小さいと読めないので）。
+                  看板は `loading="lazy"`。**スマホの既定は寄りなので、ここは隠れている**
+                  （`hero.css`）。隠れているあいだは1バイトも取りにいかず、
+                  「島ぜんぶ」を押して出てきたときに取る。前は焼いた HTML が引きを
+                  名乗っていたので、スマホでも 92KB の看板を取って描いてから捨てていた
+                  （実測でそれが LCP・4,756ms）。PC は最初から見えているので
+                  lazy でもすぐ取る（画面の中にある絵は後回しにされない）。 */}
               <img
                 className="hero-logo-full"
                 src="/logos/ayato-island.webp"
                 alt="あやと島 — 毎晩22時、世界のどこかから生配信"
                 width={900}
                 height={706}
+                loading="lazy"
               />
+              {/* 寄りの印はスマホの1画面目に出るので、こちらは先に取る */}
               <img
                 className="hero-logo-mark"
                 src="/logos/ayato-island-mark.webp"
                 alt=""
                 width={520}
                 height={305}
+                fetchPriority="high"
                 aria-hidden
               />
               {/* 見出しは絵だけなので、読み上げと検索のために文字も置いておく */}
