@@ -5,6 +5,10 @@
    キャラクターが立っている。`/cards`・`/about`・`/friends`・`/me` の
    4か所に同じ形で出るので、見た目はここ1か所で持つ。
 
+   **`/cards` の一覧に並ぶのは写真（`.akd-shelf` の `.akd-tile`）で、
+   カードそのものではない。** キャラクターの入った版は、押して開いた先
+   （`.akd-modal`）に1枚だけ大きく出る。理由は `CardWall.tsx` の頭に書いた。
+
    **紙の型**（`app/css/pages.css` の②）。一覧なので影を落とさず、
    細い罫でふちを取る。**厚みは付けない。** カードは押すものではないので、
    付けると「押せる」の合図が2つになる（`docs/island-design.md` 3章）。
@@ -126,3 +130,186 @@
    1列になって、1枚が欄の幅いっぱい（実測 480px の背）になる。
    出すのは2枚と決めてあるので、そのまま2列と書く。 */
 .rzk-cards .akd-grid { grid-template-columns: repeat(2, 1fr); }
+/* --- `/cards` の一覧。**押すのは写真のマス** --------------------------
+   1日ぶんの棚。日付と企画はここが1回だけ言う（マスには持たせない）。 */
+.akd-day { margin-top: var(--sp-5); }
+.akd-day h3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* その日の企画への行き先。字の行き先なので厚みは付けず、下線で示す。
+   **カードの中（`.akd-plan`）と違って1行で切らない。** ここは棚の見出しで、
+   1日に1回しか出ないので、長い名前でも折り返して全部読ませてよい。 */
+.akd-day-plan {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.akd-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+/* 写真1枚のマス。**全部押せるので、1枚ずつに厚みは付けない**
+   （`docs/island-design.md` 3章の3の例外）。旅の写真の一覧（`.nph`）と
+   同じ作りにしてある。押す相手が同じ「その日の写真」なので、
+   見た目まで変える理由が無い。 */
+.akd-tile {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
+  cursor: pointer;
+  text-align: left;
+}
+.akd-tile img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+/* 何人ぶんあるか。**写真の上に重ねない。** 写真の地は夜景から雪まで
+   何色にでもなるので、重ねると読める日と読めない日ができる
+   （字の濃さは 4.5 を下回らせない）。紙の上に置いて、地を固定する。 */
+.akd-tile-n {
+  display: block;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2);
+  border-top: 1px solid var(--pg-rule);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 押したら沈む。色は変えない（`docs/island-design.md` 3章）。 */
+.akd-tile:active { transform: translateY(2px); }
+
+/* --- 開いた1枚（`CardSheet`） -----------------------------------------
+   作りは旅の写真を開くところ（`.nstudio`）と同じ。開くのは同じ人なので、
+   覚えることを2つにしない。 */
+.akd-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-3);
+}
+/* 裏。押すと閉じる。絵の裏なので、押せる合図は持たせない。 */
+.akd-back {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(38, 31, 12, 0.62);
+  cursor: pointer;
+}
+.akd-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow: auto;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: var(--pg-paper-bg);
+  background-color: var(--pg-sheet);
+  box-shadow: var(--shadow-2);
+}
+.akd-close {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.akd-close:active { transform: translateY(4px); box-shadow: none; }
+
+/* 見出し。**閉じるボタンの下をくぐらせない**（48px + 余白ぶん空ける）。 */
+.akd-sheet-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 56px 0 0;
+  font-size: var(--fs-note);
+  color: var(--ink-2);
+}
+.akd-sheet-h b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+.akd-sheet-plan {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+/* 開いた1枚。**縦に収める。** 写真は縦長（1200×1600）が多いので、
+   高さを止めておかないと、人を入れ替える顔の列が画面の外へ出る。
+
+   **止めるのは高さではなく幅。** 写真の箱は写真そのものの縦横比を持っていて、
+   その中の割合でキャラクターが立っている（`CardOne`）。`max-height` で
+   潰すと箱の比が写真の比と食い違い、`object-fit: cover` の切り取りぶんだけ
+   人が写真の別の場所に立つ。幅で止めれば比は保たれる。
+   縦の写真は高さが幅の 4/3 になるので、その手前で止める。 */
+.akd-open { margin-top: var(--sp-4); }
+.akd-open .akd { max-width: min(380px, 70vh); margin: 0 auto; }
+.akd-open.is-tall .akd { max-width: min(380px, 40vh); }
+
+.akd-pick-h {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 誰のぶんを見るか。**全部のマスが押せるので厚みは付けない。** */
+.akd-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: var(--sp-2);
+}
+.akdp {
+  display: grid;
+  place-items: center;
+  min-height: 60px;
+  padding: var(--sp-1);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
+  cursor: pointer;
+}
+.akdp img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+/* いま出ている人。**塗りを変えず、枠だけで示す**（`docs/ac-reference.md` 7章6）。 */
+.akdp.is-on { border: 2px solid var(--frame-dark); }
+.akdp:active { transform: translateY(2px); }
