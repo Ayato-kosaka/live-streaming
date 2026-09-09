@@ -86,7 +86,7 @@ export default function NextUp() {
         <div className="nextup-rest">
           <span>ほかにも</span>
           {others.map((p) => (
-            <Link key={p.id} href={p.href ?? `/next#${p.id}`}>
+            <Link key={p.id} href={p.href ?? `/next#${p.id}`} prefetch={p.href ? false : undefined}>
               {p.title}
               <i>{p.when}</i>
             </Link>
@@ -127,7 +127,17 @@ function Card({
   const href = plan.href ?? `/next#${plan.id}`;
   const phase = today ? planPhase(plan, today) : null;
   return (
-    <Link className={`nextup-card${small ? " is-small" : ""}`} href={href}>
+    /* 企画が国の面を指しているときは先読みしない。
+       **この札は島の1画面目に出るので、島に降りただけの人が払う。**
+       国の面は地図と写真を抱えていて、書き出した RSC は 100〜265KB
+       （実測 `/map/georgia.txt` 105KB・`/map/uk.txt` 265KB）。
+       トップの 2.3MB のうち、この1本だけで 4% を占めていた。
+       `/map` の中の Link も同じ理由で先読みを切ってある。 */
+    <Link
+      className={`nextup-card${small ? " is-small" : ""}`}
+      href={href}
+      prefetch={plan.href ? false : undefined}
+    >
       <span className="nextup-count">
         {days === null || phase === null ? (
           <b>まもなく</b>

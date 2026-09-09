@@ -242,7 +242,12 @@ function Face({ news }: { news: TodayNews }) {
       <Arrow />
     </a>
   ) : (
-    <Link className="today-go" href={news.href}>
+    /* 先読みしない。**今日の板の行き先は、島の入口でいちばん高い先読みになる。**
+       今日が「新しい国に入った日」だと行き先が `/map/<国>` になり、
+       国の面は地図と写真を抱えているので、実測で `/map/georgia.txt` が 105KB。
+       島に降りただけの人の 2.6MB のうち、この1本が 4% を占めていた。
+       押す人だけが払えばいい（`/map` の中の Link も同じ理由で先読みを切ってある）。 */
+    <Link className="today-go" href={news.href} prefetch={false}>
       {news.go}
       <Arrow />
     </Link>

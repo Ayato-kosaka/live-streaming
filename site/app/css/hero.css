@@ -38,10 +38,22 @@
 /* スマホは左上をカメラの操作（島をながめる／島におりる）が使う。
    看板を真ん中に置くと必ずそこへぶつかるので、右上に寄せて、
    ぶつからない幅で止める。176px はその操作ボタンと左右の余白ぶん。 */
+/* スマホの既定は、右上の小さい印のほう。
+   **島に降り立った視点がスマホの既定なので、看板が出るのは「島ぜんぶ」を
+   押しているあいだだけ。** 焼いた HTML は幅を知らないので、
+   ここを「まず看板」にしていると、スマホで開いた人は 92KB の看板を取って
+   描いてから、hydration の直後にそれを捨てて印に入れ替えていた
+   （実測でその看板が LCP・4,756ms）。
+   出し分けを JS の `data-view` ではなく**幅そのもの**に持たせて、
+   看板は `loading="lazy"`（隠れているあいだは取りにいかない）に落とす。
+   `data-view` は測ってから付くので、押して引きに移ったときだけ下の規則が勝つ。 */
 @media (max-width: 639px) {
   .hero-ui { justify-content: flex-end; }
   .hero-copy { max-width: none; text-align: right; }
-  .hero-logo-full { width: min(232px, calc(100vw - 176px)); margin-left: auto; }
+  .hero-logo-full { display: none; width: min(232px, calc(100vw - 176px)); margin-left: auto; }
+  .hero-logo-mark { display: block; margin-left: auto; }
+  .stage[data-view="wide"] ~ .hero-ui .hero-logo-full { display: block; }
+  .stage[data-view="wide"] ~ .hero-ui .hero-logo-mark { display: none; }
 }
 @keyframes logo-in {
   from { opacity: 0; transform: translateY(-14px) scale(0.94); }

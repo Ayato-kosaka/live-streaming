@@ -4,8 +4,9 @@
  *
  * 束の切り分けは「どのページで使われるか」で決めている（tools/fonts/buckets.txt）。
  * ここに無い字（掲示板や付箋に視聴者さんが書いた字）は、tokens.css の
- * font-family の2本目 var(--font-maru) — next/font が置いていく Google の
- * 切り分け — に落ちる。その字が入っている1本だけを取りにいく。
+ * font-family の次 — 端末の丸ゴシック（iPhone・Mac は Hiragino Maru
+ * Gothic ProN）— に落ちる。Google の切り分けを2本目に置くのはやめた。
+ * @font-face が 367 本増えて、最初の Layout が 203ms → 1,543ms になっていた。
  */
 @font-face {
   font-family: "Maru Island";

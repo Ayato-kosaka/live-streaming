@@ -322,6 +322,20 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const logoAway = useRef("");
 
   const [box, setBox] = useState({ w: 1440, h: 900 });
+  /**
+   * 画面の幅を実際に測ったか。**測るまでは寄り引きを名乗らない。**
+   *
+   * 焼いた HTML は幅を知らないので、仮の PC 幅（1440）で作られる。そのまま
+   * `data-view="wide"` を書き出していると、スマホで開いた人は
+   * **看板の絵（900×706・92KB）を1枚まるごと取って描いてから**、
+   * hydration の直後にそれが消えて右上の小さい印に入れ替わっていた。
+   * 実測でその看板が LCP（4,756ms）で、しかも捨てる絵だった。
+   *
+   * 測る前は属性を出さない。どちらを出すかは CSS のメディアクエリが決める
+   * （`app/css/hero.css`）。スマホの既定は小さい印なので、
+   * 看板のほうは `loading="lazy"` で「隠れているあいだは取りにいかない」に落ちる。
+   */
+  const [sized, setSized] = useState(false);
   /** 歩き方の案内。初めての人にだけ、数秒だけ出す。初期値は false（出さない側に倒す） */
   const [hint, setHint] = useState(false);
   const [wide, setWide] = useState(false); // スマホで「島ぜんぶ」
@@ -616,6 +630,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       barH.current = barRef.current?.offsetHeight ?? 0;
       readLogo();
       setBox({ w: r.width, h: r.height });
+      setSized(true);
     };
     const ro = new ResizeObserver(read);
     ro.observe(el);
@@ -1519,7 +1534,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       /* ヒーローの見出し（看板ロゴ）の置き場。**カメラの寄りとは別のもの。**
          PC も寄りを既定にしたが、こちらまで "close" にすると
          ロゴが右上へ寄って「今日の島」の板と重なる。見出しの置き場は変えない。 */
-      data-view={mode === "phone" && follow ? "close" : "wide"}
+      data-view={!sized ? undefined : mode === "phone" && follow ? "close" : "wide"}
       /* カメラが引きか寄りか。**`data-view` とは別のもの。**
          あちらは看板ロゴの置き場で、PC は寄っていても "wide" のままにしてある。
          引きの札と道具の出し分けは、実際のカメラを見ないと決められない。 */

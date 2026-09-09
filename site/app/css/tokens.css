@@ -500,9 +500,22 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   /* 1本目は島で使う字だけを焼いたもの（fonts.css）。そこに無い字 — 掲示板や付箋に
-     視聴者さんが書いた字 — だけが2本目の var(--font-maru)、next/font が置いていく
-     Google の切り分けに落ちる。同じ書体なので、落ちても見た目は変わらない。 */
-  font-family: "Maru Island", var(--font-maru), ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
+     視聴者さんが書いた字 — は、その次の ui-rounded / Hiragino Maru Gothic ProN に落ちる。
+     iPhone と Mac はどちらも丸ゴシックなので、落ちても丸いままになる。
+
+     ここに次の砦として var(--font-maru)（next/font が置いていく Google の切り分け）を
+     置いていたが、**それが島の入口をいちばん遅くしていた。** 置くだけで
+     @font-face が 367 本増える。Chrome は文字を並べるたびに、その字が
+     どの1本に入っているかを 367 本ぜんぶに当てにいく。
+     390×844 の書き出しで測った（同じ箱で交互に4往復・中央値）:
+
+       素のまま（367本）  最初のLayout 1,543ms  FCP 1,912ms  CSS 550KB
+       この2本目を外す    最初のLayout   203ms  FCP   632ms  CSS 284KB
+
+     字のほうは、site 全体を数えて 83 字（竹・停・，など。多くは料理の引用文）が
+     焼いた束から漏れているだけで、島の入口には出てこない。
+     漏れたぶんは端末の丸ゴシックで出る。**1秒のために持つには高すぎた。** */
+  font-family: "Maru Island", ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
     "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
   color: var(--ink);
   background: var(--page-bg);
