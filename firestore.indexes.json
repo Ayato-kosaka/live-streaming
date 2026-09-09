@@ -5,8 +5,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "theme", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -14,8 +13,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "theme", "order": "ASCENDING" },
-        { "fieldPath": "hearts", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "hearts", "order": "DESCENDING" }
       ]
     }
   ],
