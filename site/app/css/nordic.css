@@ -835,7 +835,39 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
     color-mix(in srgb, var(--ink) 92%, transparent));
 }
 
+/* 行く街。**畳まない。** 面のいちばんの用事が「どこへ行くのか」なので、
+   ここだけは開いて置く（`docs/island-design.md` 4章）。
+   街の名前は紙の見出し（`pages.css` の `.panel.paper h3` の蛍光ペン）を借りる。
+   畳みの帯（`.gchap`）と見た目を分けてあるのは、**開いているものと畳んで
+   あるものが、ひと目で違って見えないといけない**から。 */
+.ncgo { margin-top: var(--sp-4); }
+.ncgo > h3 { margin: 0 0 var(--sp-2); font-size: var(--fs-h3); line-height: 2; }
+
+/* 街の中の「見たい・食べたい・やりたい・買いたい」。
+   押せないので、厚みも枠も付けない。字の太さと件数だけで段を分ける。 */
+.ncat { margin-top: var(--sp-3); }
+.ncat > h4 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  line-height: var(--lh-head);
+  color: var(--ink);
+}
+.ncat > h4 em {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+/* 種類の見出しのすぐ下に段が来る。`ui.css` の `.folds` が持つ上の余白を消す。 */
+.ncat .folds { margin-top: 0; }
+
 /* 街。**しおりの章（`.gchap`）を借りて、街ごとに畳んである。**
+   ここに残っているのは、寄るかもしれない街と、行かない街。
    以前はここが「ページの地に直に置いた見出し＋その街の段ぜんぶ」で、
    フィンランドだけで41段が並んで 3,350px あった。
    `ui.css` の `.gchap > .fold` が章の作り（帯・紙・中の段・章の間の余白）を
@@ -861,17 +893,8 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 }
 .nspot-hb { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; flex-wrap: wrap; }
 .nspot-name { min-width: 0; }
-/* 種類は平らな札に言葉で。押せないものに厚みを付けない（紙の型） */
-.nspot-cat {
-  flex: none;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  padding: var(--sp-1) var(--sp-2);
-  border-radius: var(--r-0);
-  background: var(--chip);
-  color: var(--chip-ink);
-}
+/* 種類の札（`.nspot-cat`）は消えた。見どころは「見たい・食べたい・やりたい・買いたい」の
+   見出しの下に並ぶようになったので、行の頭で同じ言葉を10回くり返すことになる。 */
 .nspot-img { position: relative; display: block; line-height: 0; margin-bottom: 11px; }
 .nspot-img img {
   width: 100%;

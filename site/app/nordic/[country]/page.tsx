@@ -10,7 +10,16 @@ import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import { Mark } from "@/components/nordic/Marks";
 import MAP from "@/content/nordic/map.json";
-import { NORDIC_COUNTRIES, ROUTE, loadSpots, nordicCountry, type NordicSpot } from "@/content/nordic";
+import {
+  NORDIC_COUNTRIES,
+  ROUTE,
+  loadSpots,
+  nordicCountry,
+  splitSpots,
+  visitCitiesOf,
+  type NordicSpot,
+  type SpotCity,
+} from "@/content/nordic";
 
 export function generateStaticParams() {
   return NORDIC_COUNTRIES.map((c) => ({ country: c.slug }));
@@ -24,31 +33,45 @@ export async function generateMetadata({
   const { country } = await params;
   const c = nordicCountry(country);
   if (!c) return {};
+  const go = visitCitiesOf(c.slug);
   return {
     title: `${c.name} — 北欧ヒッチハイク`,
-    description: `${c.catch} ${c.name}の見どころ${c.spots}件と、この国であやとにやってほしいこと。`,
+    // 降りる街を先に言う。国の名前だけだと、国じゅうを回るように読める。
+    description: `${c.catch} 行くのは${go.join("・")}。見どころ${c.spots}件と、この国であやとにやってほしいこと。`,
   };
 }
 
 /**
- * 見どころの種類。
+ * 見どころの4つの種類。**この順・この言い方で出す。**
  *
- * 印は使わない。同じ目のマークが1ページに20個並ぶと行の頭が全部同じになって、
- * どの行がどれだか分からなくなる。かわりに平らな札へ**言葉**で出す。
- * 平らな札は「押せないもの」の見た目（`docs/ac-reference.md` 7章 紙の型）。
+ * あやとの言葉（2026-09-09）:
+ *
+ * > 見たい、食べたい、やりたい、買いたい みたいにわかると良いかも。
+ *
+ * データの `cat`（see / eat / do / buy）はもともとこの4つに分かれている。
+ * これまでは1件ずつの頭に小さな札で出していただけで、街の中がどう分かれて
+ * いるのかは、20件を上から読まないと分からなかった。**まとまりの見出しにする。**
  */
-const CAT: Record<string, string> = { see: "見る", do: "やる", eat: "食べる", buy: "買う" };
+const CATS: { key: string; label: string }[] = [
+  { key: "see", label: "見たい" },
+  { key: "eat", label: "食べたい" },
+  { key: "do", label: "やりたい" },
+  { key: "buy", label: "買いたい" },
+];
 
 const MOVE: Record<string, string> = { hitch: "ヒッチハイク", ferry: "フェリー", fly: "飛行機", walk: "歩き" };
 
 /**
  * 見どころ1件。
  *
- * 閉じているときは、写真・種類の札・題名・「ここが面白い」の一行だけ。
+ * 閉じているときは、写真・題名・「ここが面白い」の一行だけ。
  * 本文まで並べると1国で数千字になって、探すのがつらくなる。
  *
  * 閉じたままでも写真を出すのは、20段ならんだときに1段ずつ違って見えるのが
  * いちばん効くから。字だけの段が20並ぶと、目が滑って何も残らない。
+ *
+ * 種類の札は持たない。4つの見出しの下に並んでいるので、行の頭にもう一度
+ * 「見る」と書いても、同じ言葉が縦に10個ならぶだけになる。
  */
 function Spot({ s }: { s: NordicSpot }) {
   return (
@@ -59,7 +82,6 @@ function Spot({ s }: { s: NordicSpot }) {
             <img className="nspot-th" src={s.img} alt="" loading="lazy" referrerPolicy="no-referrer" />
           )}
           <span className="nspot-hb">
-            <span className="nspot-cat">{CAT[s.cat] ?? "見る"}</span>
             <span className="nspot-name">{s.title}</span>
           </span>
         </span>
@@ -117,6 +139,48 @@ function Spot({ s }: { s: NordicSpot }) {
   );
 }
 
+/**
+ * 1つの街の中を、見たい・食べたい・やりたい・買いたいで分けて並べる。
+ *
+ * **4つに入らないものを押し込まない。** いまのデータは全部この4つだが、
+ * 増えたときに黙って消えるほうが悪いので、余りは最後に「そのほか」で出す。
+ */
+function Cats({ list }: { list: NordicSpot[] }) {
+  const groups = CATS.map((c) => ({ label: c.label, list: list.filter((s) => s.cat === c.key) }));
+  const rest = list.filter((s) => !CATS.some((c) => c.key === s.cat));
+  if (rest.length > 0) groups.push({ label: "そのほか", list: rest });
+  return (
+    <>
+      {groups
+        .filter((g) => g.list.length > 0)
+        .map((g) => (
+          <div key={g.label} className="ncat">
+            <h4>
+              {g.label}
+              <em>{g.list.length}件</em>
+            </h4>
+            <div className="folds">
+              {g.list.map((s) => (
+                <Spot key={s.id} s={s} />
+              ))}
+            </div>
+          </div>
+        ))}
+    </>
+  );
+}
+
+/** 街の畳み。行かない街と、寄るかもしれない街はこの形で置く。 */
+function CityFold({ city, list }: SpotCity) {
+  return (
+    <section className="gchap ncity" id={`city-${encodeURIComponent(city)}`}>
+      <Fold title={<span className="gchap-h">{city}</span>} lead={list[0]?.title} note={`${list.length}件`}>
+        <Cats list={list} />
+      </Fold>
+    </section>
+  );
+}
+
 /** 入る道・出る道。区間ごとの絵を添えて、どんな一日になるかまで見せる。 */
 function Way({ kind, leg }: { kind: string; leg: NonNullable<(typeof ROUTE)[number]> }) {
   return (
@@ -148,13 +212,11 @@ export default async function NordicCountryPage({
   if (!c) notFound();
   const spots = await loadSpots(country);
 
-  // 街ごとにまとめる。旅は街の単位で動くので、種類より街が先。
-  const byCity = new Map<string, NordicSpot[]>();
-  for (const s of spots) {
-    const k = s.city || "その他";
-    if (!byCity.has(k)) byCity.set(k, []);
-    byCity.get(k)!.push(s);
-  }
+  /* 行く街・寄るかもしれない街・行かない街。**分け方の出どころは旅程だけ**
+     （`content/nordic.ts` の `splitSpots`）。ここに街の名前を書かない。 */
+  const { go, maybe, skip, nation } = splitSpots(spots);
+  const goSpots = go.reduce((n, g) => n + g.list.length, 0) + nation.length;
+  const skipSpots = skip.reduce((n, g) => n + g.list.length, 0);
 
   // その国の顔になる写真。最初の見どころのものを使う。
   const hero = spots.find((s) => s.big) ?? spots[0];
@@ -209,37 +271,68 @@ export default async function NordicCountryPage({
         {arrive?.note && <p className="ncway-note">{arrive.note}</p>}
       </section>
 
-      {/* 見どころ。**街ごとに畳んである。**
-          以前はここが「街の見出し＋その街の段」を13回くり返す形で、
-          41段が全部並んでいた。フィンランドで 3,350px、面ぜんぶの半分以上。
-          詳細ページの目安は2〜3画面（`docs/island-ux.md` 8.1）。
+      {/* 行く街。**畳まない。この面でいちばん伝えたいのがここ。**
+          （`island-design.md` 4章「開いた状態を初期値にしていいのは1つだけ」）
 
-          畳みの二段組みは、しおり（`/nordic/guide`）が先にやっている
-          （章 `.gchap` の中に項目の段）。同じ形をここでも借りる。
-          街の名前を押すとその街が開いて、中に見どころの段が並ぶ。
-          開いた状態で置く街は無い。かわりに、閉じているときも
-          その街のいちばん強いものの名前が1行出る。街の一覧そのものが目次になる。 */}
-      <Panel>
-        <h2>{c.name}で行くところ</h2>
-        <p className="muted">
-          {spots.length}件を{byCity.size}の街に分けています。街を押すと、その街の段が並びます。
-        </p>
-        {[...byCity.entries()].map(([city, list]) => (
-          <section key={city} className="gchap ncity" id={`city-${encodeURIComponent(city)}`}>
-            <Fold
-              title={<span className="gchap-h">{city}</span>}
-              lead={list[0]?.title}
-              note={`${list.length}件`}
-            >
-              <div className="folds">
-                {list.map((s) => (
-                  <Spot key={s.id} s={s} />
-                ))}
-              </div>
-            </Fold>
-          </section>
-        ))}
-      </Panel>
+          ここは長いあいだ「国の見どころ全部を、街ごとに畳んだもの」だった。
+          スウェーデンは「35件を15の街に分けています」と言いながら、
+          あやとが降りるのはストックホルムだけで、上から3つ目に出てくる
+          ヨーテボリも、キルナも、行かない街だった。**見出しが嘘をついていた。** */}
+      {(go.length > 0 || nation.length > 0) && (
+        <Panel>
+          <h2>{c.name}で行くところ</h2>
+          <p className="muted">
+            {go.length === 1
+              ? `行くのは${go[0].city}だけ。`
+              : `行くのは${go.map((g) => g.city).join("・")}の${go.length}つ。`}
+            {goSpots}件を、見たい・食べたい・やりたい・買いたいで分けました。
+          </p>
+          {go.map((g) => (
+            <section key={g.city} className="ncgo" id={`city-${encodeURIComponent(g.city)}`}>
+              <h3>{g.city}</h3>
+              <Cats list={g.list} />
+            </section>
+          ))}
+          {/* 街に紐づかないもの（郷土料理など）。降りる街の下に置く。 */}
+          {nation.length > 0 && (
+            <section className="ncgo">
+              <h3>{c.name}のどこでも</h3>
+              <Cats list={nation} />
+            </section>
+          )}
+        </Panel>
+      )}
+
+      {/* 寄るかもしれない街。通り道にあって、まだ決まっていない
+          （`content/nordic.ts` の `maybe`）。行く街と同じ高さで開いていると、
+          寄ると決まっているように読める。 */}
+      {maybe.length > 0 && (
+        <Panel>
+          <h2>寄るかもしれないところ</h2>
+          <p className="muted">通り道にあるところ。寄るかどうかは、これから決まります。</p>
+          {maybe.map((g) => (
+            <CityFold key={g.city} {...g} />
+          ))}
+        </Panel>
+      )}
+
+      {/* 行かない街。**消さない。** あやとの言葉（2026-09-09）
+          「行く予定はないけどこんなところもある。みたいな説明なら良い」。
+          街の名前は開いたまま見せて、中身だけ畳む。何があるのかが
+          名前で分かるところまでが、この区画の用事。 */}
+      {skip.length > 0 && (
+        <Panel>
+          <h2>行く予定はないけど、こんなところもある</h2>
+          {/* 「街」と言い切らない。ラップランドや湖水地方のような、街ではない
+              ひとまとまりも混じっている。 */}
+          <p className="muted">
+            今回のルートからは外れる{skip.length}か所。{skipSpots}件。
+          </p>
+          {skip.map((g) => (
+            <CityFold key={g.city} {...g} />
+          ))}
+        </Panel>
+      )}
 
       {/* その国あての付箋。**宛先はもう決まっている**ので、テーマを選ばせない。
           テーマの id は国の slug と同じ（`content/themes.ts`）。 */}
