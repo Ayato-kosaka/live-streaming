@@ -28,17 +28,6 @@ export type IslandStats = {
   activeFriends?: number;
 };
 
-export type Idea = {
-  id: string;
-  text: string;
-  name?: string;
-  /** ログインして出した人。自分のかどうかを見分けるのに使う */
-  byUid?: string;
-  votes: number;
-  createdAt: string;
-  status?: "open" | "picked" | "done";
-};
-
 export type NextNote = { id: string; planId: string; text: string; createdAt: string };
 
 /**
@@ -82,7 +71,6 @@ export type NordicFacts = {
 export type IslandState = {
   current?: Partial<IslandCurrent>;
   stats?: Partial<IslandStats>;
-  ideas?: Idea[];
   notes?: NextNote[];
   residents?: ResidentShow[];
   nordic?: NordicFacts;
@@ -386,8 +374,10 @@ export const saveMe = (s: MeSettings, token: string) =>
     headers: auth(token),
     body: JSON.stringify(s),
   });
-/* 企画提案（`islandIdeas`）を読み書きするところも、ここから消えた（#161）。
-   `/state` がまだ `ideas` を返すので `Idea` の型だけ残してある。 */
+/* 企画提案（`islandIdeas`）を読み書きするところは、ここから消えた（#161）。
+   `Idea` の型も落とした（#171）。`/state` がもう `ideas` を返さない。
+   入れ物の8件は #162 で付箋へ移してあって、Firestore には残っている
+   （書いた人の字なので消さない）。 */
 export const postNote = (planId: string, text: string, token?: string | null) =>
   req<{ note: NextNote }>("/notes", {
     method: "POST",

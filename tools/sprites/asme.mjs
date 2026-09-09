@@ -164,6 +164,15 @@ export async function apply(ctx, opts = {}) {
       return json(r, { donor, via });
     }
     if (path === "/nordic/log") return json(r, { log: [] });
+    /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
+       画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと
+       出てくる URL が本番と別物になり、押しどころも幅も測れない。 */
+    if (path === "/alertbox/session") {
+      return json(r, {
+        id: "0123456789abcdef0123456789abcdef",
+        doneru: { set: true, tail: "7f3a" },
+      });
+    }
     if (path.startsWith("/roulette")) {
       const spin = opts.spin ?? process.env.RLSPIN === "1";
       const at = Date.now() + 1200;
