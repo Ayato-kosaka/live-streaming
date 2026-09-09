@@ -32,12 +32,23 @@
   /* 地面に落ちる影だけ。厚みを付けると押せるものに見える */
   box-shadow: var(--shadow-1);
 }
+/* 島のキャラクターが割り当たっていない人の顔。
+   **ただの白丸に字を置かない。** 島のものは全部、太い縁と紙の地と影を持って
+   いる。それが無いと「絵の読み込みに失敗した」ように見える。実際に
+   あやとから「上部のアイコンもバグるようになった。デグレです」と言われた
+   （`docs/island-misses.md`）。**受け皿も、島の顔つきにする。** */
 .mp-face-none {
   display: grid;
   place-items: center;
+  border: var(--bw-2) solid var(--frame-deep);
+  background:
+    radial-gradient(circle at 50% 34%, var(--paper) 0%, var(--paper-2) 72%);
+  box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.75);
   font-size: var(--fs-h3);
   font-weight: 900;
-  color: var(--ink);
+  /* 字は地に沈める。**主役は名前のほう** */
+  color: var(--ink-2);
+  letter-spacing: 0;
 }
 .mp-who-t { display: grid; gap: 2px; min-width: 0; }
 .mp-who-t b {
