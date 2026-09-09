@@ -7,6 +7,8 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
+import CityMapSvg from "@/components/nordic/CityMapSvg";
+import WantList, { type WantItem } from "@/components/nordic/WantList";
 import DayLog from "@/components/nordic/DayLog";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
@@ -24,6 +26,7 @@ import {
   dayName,
   loadSpots,
   nordicCountry,
+  wantsOf,
   type Day,
   type Leg,
   type NordicSpot,
@@ -100,7 +103,6 @@ const CATS: { key: string; label: string }[] = [
   { key: "do", label: "やる" },
   { key: "buy", label: "買う" },
 ];
-const CAT: Record<string, string> = Object.fromEntries(CATS.map((c) => [c.key, c.label]));
 
 /** 難しさの見立て。1〜3。**数字のまま出さない。** */
 const HARD: Record<number, string> = { 1: "みじかい", 2: "ふつう", 3: "山場" };
@@ -128,44 +130,66 @@ function sunCity(day: Day) {
 }
 
 /**
- * 街の見どころから、**4つの種類を1つずつ**選ぶ。
+ * 街の見どころを、**4つの種類が先に出そろう順**に並べ替える。
  *
  * ここは前まで、JSON に並んでいる順のまま上から4〜5件を出していた。
  * ヴィリニュスは「見る」が13件のうち9件あるので、**出てくるのが見るものばかり**で、
  * その街で何を食べられるのかも、何ができるのかも、この面からは分からなかった。
  *
  * オーナーの言い方（「食べる、見る、体験する、買う」）に合わせて、
- * まず種類ごとに1つずつ取る。それでも足りなければ、残りから順に足す。
+ * まず種類ごとに1つずつ取り、残りは元の順で後ろに付ける。
+ *
+ * **切らない。** 切るのは畳み（`Longer`）の仕事で、押せば最後まで出る。
+ * ここで上から4件に切ると、押しても5件目が出てこない一覧になる。
  */
-function byCat(list: NordicSpot[], max: number): NordicSpot[] {
+function byCat(list: NordicSpot[]): NordicSpot[] {
   const picked: NordicSpot[] = [];
   for (const c of CATS) {
     const s = list.find((x) => x.cat === c.key);
     if (s) picked.push(s);
   }
   for (const s of list) {
-    if (picked.length >= max) break;
     if (!picked.includes(s)) picked.push(s);
   }
-  return picked.slice(0, max);
+  return picked;
 }
 
-/** 見どころ1件。**開かない。** 全部は国のページにあるので、ここは名前と一行だけ。 */
-function SpotRow({ s }: { s: NordicSpot }) {
-  return (
-    <li className="ndsp">
-      {s.img && (
-        <img className="ndsp-th" src={s.img} alt="" loading="lazy" referrerPolicy="no-referrer" />
-      )}
-      <span className="ndsp-b">
-        <span className="ndsp-h">
-          <span className="ndsp-cat">{CAT[s.cat] ?? "見る"}</span>
-          <b>{s.title}</b>
-        </span>
-        {s.point && <i>{s.point}</i>}
-      </span>
-    </li>
-  );
+/**
+ * その街で見たいもの。**教えてもらったものを先に、ガイドの見どころをあとに。**
+ *
+ * 付箋で挙がったものの多くは、ガイド（`content/nordic/*.json`）にもう入っている。
+ * **同じものを2行にしない。** `id` を持つ提案はその見どころの行そのものになって、
+ * 「誰が教えてくれたか」だけが足される。ガイドに無いものは、付箋のほうが字を持つ。
+ */
+function wantItems(city: string, spots: NordicSpot[]): WantItem[] {
+  const list = spots.filter((s) => s.city === city);
+  const byId = new Map(list.map((s) => [s.id, s]));
+  const used = new Set<string>();
+  const items: WantItem[] = [];
+  for (const w of wantsOf(city)) {
+    const s = w.id ? byId.get(w.id) : undefined;
+    // 指していた見どころが消えていたら、その行は出さない。
+    // 字を持っていないので、出しても名前の無い行になる。
+    if (w.id && !s) continue;
+    if (s) used.add(s.id);
+    items.push({
+      key: s ? s.id : `${city}-${w.title}`,
+      cat: s?.cat ?? w.cat ?? "see",
+      title: s?.title ?? w.title ?? "",
+      point: s?.point ?? w.point,
+      img: s?.img,
+      want: true,
+      by: w.by,
+      // 付箋の言葉と返事は、その付箋の1件目にだけ
+      say: w.head ? w.say : undefined,
+      reply: w.head ? w.reply : undefined,
+    });
+  }
+  for (const s of byCat(list)) {
+    if (used.has(s.id)) continue;
+    items.push({ key: s.id, cat: s.cat, title: s.title, point: s.point, img: s.img });
+  }
+  return items;
 }
 
 /**
@@ -322,8 +346,12 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       maybe: maybe.includes(city),
       country: cityCountry(city),
       list: spots.filter((s) => s.city === city),
+      items: wantItems(city, spots),
     }))
-    .filter((c) => c.list.length > 0);
+    // ガイドに1件も無くても、付箋で教えてもらったものがあれば区画は立てる
+    .filter((c) => c.items.length > 0);
+  const goCities = byCity.filter((c) => !c.maybe);
+  const maybeCities = byCity.filter((c) => c.maybe);
 
   // 国が変わる区間。入る国のページと、その国の言葉へつなぐ。
   const enters = legs
@@ -505,18 +533,54 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         </section>
       )}
 
-      {byCity.length > 0 && (
-        <section className="panel paper" id="see">
-          <h2>その街で、食べる・見る・やる・買う</h2>
-          {byCity.map((c) => {
-            const list = (
-              <>
-                <ul className="ndsps">
-                  {byCat(c.list, 4).map((s) => (
-                    <SpotRow key={s.id} s={s} />
-                  ))}
-                </ul>
-                {c.country && (
+      {/* その街で見たいもの。**この日に着く街ごとに、1枚ずつ。**
+
+          あやとの言葉（2026-09-09）:
+
+          > その日程表のところに「この街で見たいもの」みたいな欄をつけてもらって、
+          > 例えば1日目だったらワルシャワがつくと思うんですけど、「ワルシャワで
+          > 見たいもの」みたいな欄をつけてもらって、もちろん1日のルートの部分は
+          > 残しつつ、（…）欄を作って地図を貼って、で、見るべきものを
+          > ポンポンってリストアップしてください
+
+          **街の名前は旅程（`DAYS` `ROUTE`）から出す。** ここにも見出しにも
+          街名を書かない。旅程は #91 で一度ぜんぶ変わっていて、そのとき
+          手で書いた街名だけが古いまま残る。
+
+          地図は全体図と同じ絵（`content/nordic/map.json`）を拡大したもので、
+          外の地図サービスは足していない。 */}
+      {goCities.map((c) => (
+        <section key={c.city} className="panel paper" id={`want-${c.city}`}>
+          <h2>{c.city}で見たいもの</h2>
+          <CityMapSvg city={c.city} />
+          <WantList items={c.items} />
+          {c.country && c.list.length > 0 && (
+            <Link
+              className="chip link"
+              href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
+            >
+              {c.city}の{c.list.length}件を読む
+              <Icon name="right" size={14} />
+            </Link>
+          )}
+        </section>
+      ))}
+
+      {/* 寄るかどうかがまだ決まっていない街。**畳んでおく。**
+          着く街と同じ高さで開いていると、寄ると決まって見える。
+          地図も畳みの中に入れる（開くまで、そこは寄る街ではない）。 */}
+      {maybeCities.length > 0 && (
+        <section className="panel paper" id="maybe">
+          <h2>寄るかもしれない街</h2>
+          {maybeCities.map((c) => (
+            <div key={c.city} className="folds ndcity">
+              <Fold
+                title={`${c.city}で見たいもの`}
+                lead={`寄るかどうかは、これから決まります。${c.items.length}件`}
+              >
+                <CityMapSvg city={c.city} />
+                <WantList items={c.items} />
+                {c.country && c.list.length > 0 && (
                   <Link
                     className="chip link"
                     href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
@@ -525,26 +589,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                     <Icon name="right" size={14} />
                   </Link>
                 )}
-              </>
-            );
-            /* 寄るかどうかがまだ決まっていない街は、畳んでおく。
-               通ると決まった街と同じ高さで開いていると、寄ると決まって見える。 */
-            return c.maybe ? (
-              <div key={c.city} className="folds ndcity">
-                <Fold
-                  title={c.city}
-                  lead={`寄るかどうかは、これから決まります。${c.list.length}件`}
-                >
-                  {list}
-                </Fold>
-              </div>
-            ) : (
-              <div key={c.city} className="ndcity">
-                <h3 className="nsub">{c.city}</h3>
-                {list}
-              </div>
-            );
-          })}
+              </Fold>
+            </div>
+          ))}
         </section>
       )}
 
