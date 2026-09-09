@@ -7,7 +7,7 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
-import CityMapSvg from "@/components/nordic/CityMapSvg";
+import CityZoom from "@/components/nordic/CityZoom";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
 import DayLog from "@/components/nordic/DayLog";
 import Notes from "@/components/live/Notes";
@@ -552,7 +552,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       {goCities.map((c) => (
         <section key={c.city} className="panel paper" id={`want-${c.city}`}>
           <h2>{c.city}で見たいもの</h2>
-          <CityMapSvg city={c.city} />
+          <CityZoom city={c.city} />
           <WantList items={c.items} />
           {c.country && c.list.length > 0 && (
             <Link
@@ -578,7 +578,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 title={`${c.city}で見たいもの`}
                 lead={`寄るかどうかは、これから決まります。${c.items.length}件`}
               >
-                <CityMapSvg city={c.city} />
+                <CityZoom city={c.city} />
                 <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (
                   <Link

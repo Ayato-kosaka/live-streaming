@@ -2142,3 +2142,111 @@ p.nday-lead {
    付箋の続きに読める。名乗りのほうは墨で、引用は一段淡く。 */
 .ndsp-reply b { font-weight: 900; color: var(--ink); }
 .ndsp-reply q { quotes: none; margin-left: var(--sp-1); }
+
+/* ── 街を拡大した地図（`components/nordic/CityZoom.tsx`）────────────────
+   国の地図の切り抜き（`CityMapSvg`）と入れ替えたもの。あちらは 361km 四方の
+   窓で、拡大しても街の中が見えなかった。ここは幅 1〜5km。
+
+   色は島のトークンをそのまま使う。**地図だけ別の世界に見せない。** */
+.czoom { margin-top: 10px; }
+
+.czoom-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow: 0 4px 0 var(--frame-deep);
+  overflow: hidden;
+}
+.cz-bg { fill: var(--paper-2); }
+/* 水は島の海と同じ青。**いちばん先に目に入るものにする**（街の向きが読める） */
+.cz-water { fill: var(--sea-shallow); opacity: 0.55; stroke: var(--sea-mid); stroke-width: 2; }
+.cz-green { fill: var(--grass2); opacity: 0.42; stroke: none; }
+/* 旧市街は「面」。線で囲うと通りに見えるので、薄い塗りだけ */
+.cz-old { fill: var(--sand); opacity: 0.5; stroke: var(--sand-edge); stroke-width: 2; }
+
+.cz-scale line { stroke: var(--ink-2); stroke-width: 3; }
+.cz-scale text {
+  fill: var(--ink-2);
+  font-size: 26px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* 点。**種類で色を変える。** 4つしかないので、色だけで読み分けられる */
+.cz-pin .cz-dot { stroke: var(--frame-deep); stroke-width: 3; }
+.cz-pin .cz-n {
+  fill: var(--ink);
+  /* 34 ≒ スマホで 12px。**番号が読める下限。** 丸(r=32)に収まる */
+  font-size: 34px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+.cz-see .cz-dot, .cz-key-b.cz-see, i.cz-see { background: var(--roof-sky); fill: var(--roof-sky); }
+.cz-eat .cz-dot, .cz-key-b.cz-eat, i.cz-eat { background: var(--roof-coral); fill: var(--roof-coral); }
+.cz-do  .cz-dot, .cz-key-b.cz-do,  i.cz-do  { background: var(--roof-mint); fill: var(--roof-mint); }
+.cz-buy .cz-dot, .cz-key-b.cz-buy, i.cz-buy { background: var(--roof-gold); fill: var(--roof-gold); }
+
+/* 押されている点。**大きくしない**（隣の点を隠す）。輪をひとつ足す */
+.cz-pin.is-on .cz-dot { stroke: var(--pick); stroke-width: 7; }
+
+.czoom-key { list-style: none; margin: 10px 0 0; padding: 0; }
+.czoom-key > li { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
+.cz-key-b {
+  flex: none;
+  min-width: 5.2em;
+  padding: 3px 8px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 900;
+  text-align: center;
+}
+.czoom-key > li > span { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 一覧の1行。**押しどころなので 44px 以上**（`island-design.md` 3章） */
+.cz-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 10px 4px 4px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.cz-row.is-on { border-color: var(--pick); background: var(--paper-2); }
+.cz-row i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  border: var(--bw-1) solid var(--frame-deep);
+  border-radius: 50%;
+  font-style: normal;
+  font-size: var(--fs-small);
+  font-weight: 900;
+}
+/* 窓の外のもの。**押せない**ので、厚みも枠も持たせない */
+.cz-far {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 4px 0;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+.cz-far em { font-style: normal; font-size: var(--fs-tiny); opacity: 0.85; }
+
+/* 丸をどけたぶんの引き出し線。**細く、薄く。** 地図の主役は点と土台で、
+   線は「この丸はここのこと」と言うためだけにある */
+.cz-lead line { stroke: var(--frame-dark); stroke-width: 2.5; opacity: 0.5; }
+.cz-lead circle { fill: var(--frame-dark); opacity: 0.55; }
+.cz-lead.is-on line, .cz-lead.is-on circle { stroke: var(--pick); fill: var(--pick); opacity: 1; }

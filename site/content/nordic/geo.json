@@ -1,0 +1,422 @@
+{
+"estonia-s143": {
+"km": 0.44,
+"lat": 59.4374,
+"lon": 24.745926,
+"type": "pedestrian"
+},
+"estonia-s144": {
+"km": 0.65,
+"lat": 59.437731,
+"lon": 24.742206,
+"type": "viewpoint"
+},
+"estonia-s145": {
+"km": 0.82,
+"lat": 59.435752,
+"lon": 24.73932,
+"type": "place_of_worship"
+},
+"estonia-s146": {
+"km": 2.12,
+"lat": 59.438466,
+"lon": 24.791025,
+"type": "museum"
+},
+"estonia-s150": {
+"km": 0.43,
+"lat": 59.436682,
+"lon": 24.745981,
+"type": "restaurant"
+},
+"estonia-s151": {
+"km": 0.63,
+"lat": 59.436867,
+"lon": 24.742519,
+"type": "restaurant"
+},
+"estonia-s152": {
+"km": 1.13,
+"lat": 59.441085,
+"lon": 24.73534,
+"type": "marketplace"
+},
+"estonia-s153": {
+"km": 0.47,
+"lat": 59.438362,
+"lon": 24.745694,
+"type": "cafe"
+},
+"estonia-s154": {
+"km": 0.16,
+"lat": 58.384531,
+"lon": 24.498095,
+"type": "pedestrian"
+},
+"estonia-s155": {
+"km": 2.1,
+"lat": 59.450211,
+"lon": 24.72716,
+"type": "pub"
+},
+"estonia-s157": {
+"km": 1.34,
+"lat": 58.37388,
+"lon": 24.496487,
+"type": "beach"
+},
+"estonia-s159": {
+"km": 1.85,
+"lat": 59.45172,
+"lon": 24.73844,
+"type": "museum"
+},
+"estonia-s160": {
+"km": 0.44,
+"lat": 59.4374,
+"lon": 24.745926,
+"type": "pedestrian"
+},
+"estonia-s161": {
+"km": 0.26,
+"lat": 59.437588,
+"lon": 24.749106,
+"type": "attraction"
+},
+"estonia-s162": {
+"km": 1.42,
+"lat": 59.438929,
+"lon": 24.728729,
+"type": "retail"
+},
+"estonia-s163": {
+"km": 0.23,
+"lat": 59.43754,
+"lon": 24.749619,
+"type": "living_street"
+},
+"estonia-s164": {
+"km": 0.52,
+"lat": 59.437291,
+"lon": 24.744377,
+"type": "restaurant"
+},
+"finland-s000": {
+"km": 3.85,
+"lat": 60.144388,
+"lon": 24.985405,
+"type": "administrative"
+},
+"finland-s001": {
+"km": 0.8,
+"lat": 60.17296,
+"lon": 24.925227,
+"type": "place_of_worship"
+},
+"finland-s002": {
+"km": 0.45,
+"lat": 60.17394,
+"lon": 24.937982,
+"type": "library"
+},
+"finland-s003": {
+"km": 0.14,
+"lat": 60.170687,
+"lon": 24.936445,
+"type": "gallery"
+},
+"finland-s010": {
+"km": 0.9,
+"lat": 60.166164,
+"lon": 24.952792,
+"type": "marketplace"
+},
+"finland-s011": {
+"km": 0.88,
+"lat": 60.167197,
+"lon": 24.953265,
+"type": "pedestrian"
+},
+"finland-s012": {
+"km": 1.86,
+"lat": 60.180167,
+"lon": 24.911787,
+"type": "cafe"
+},
+"finland-s013": {
+"km": 0.54,
+"lat": 60.168505,
+"lon": 24.947686,
+"type": "cafe"
+},
+"finland-s019": {
+"km": 2.02,
+"lat": 60.152177,
+"lon": 24.930444,
+"type": "restaurant"
+},
+"finland-s027": {
+"km": 6.36,
+"lat": 60.195413,
+"lon": 25.041369,
+"type": "clothes"
+},
+"finland-s028": {
+"km": 0.66,
+"lat": 60.167951,
+"lon": 24.949681,
+"type": "interior_decoration"
+},
+"finland-s029": {
+"km": 0.91,
+"lat": 60.1628,
+"lon": 24.930043,
+"type": "square"
+},
+"finland-s033": {
+"km": 0.8,
+"lat": 60.17296,
+"lon": 24.925227,
+"type": "place_of_worship"
+},
+"finland-s034": {
+"km": 0.76,
+"lat": 60.170422,
+"lon": 24.95218,
+"type": "place_of_worship"
+},
+"finland-s041": {
+"km": 1.33,
+"lat": 60.158813,
+"lon": 24.947288,
+"type": "company"
+},
+"latvia-s165": {
+"km": 0.29,
+"lat": 56.947155,
+"lon": 24.106789,
+"type": "attraction"
+},
+"latvia-s166": {
+"km": 1.08,
+"lat": 56.959009,
+"lon": 24.109845,
+"type": "residential"
+},
+"latvia-s167": {
+"km": 0.34,
+"lat": 56.947522,
+"lon": 24.109313,
+"type": "place_of_worship"
+},
+"latvia-s168": {
+"km": 0.84,
+"lat": 56.95578,
+"lon": 24.11307,
+"type": "museum"
+},
+"latvia-s169": {
+"km": 10.12,
+"lat": 56.413655,
+"lon": 24.024431,
+"type": "castle"
+},
+"latvia-s172": {
+"km": 0.94,
+"lat": 56.943963,
+"lon": 24.116729,
+"type": "marketplace"
+},
+"latvia-s173": {
+"km": 0.48,
+"lat": 56.946052,
+"lon": 24.10963,
+"type": "restaurant"
+},
+"latvia-s175": {
+"km": 0.41,
+"lat": 56.946156,
+"lon": 24.107815,
+"type": "pub"
+},
+"latvia-s177": {
+"km": 0.92,
+"lat": 56.946924,
+"lon": 24.119478,
+"type": "confectionery"
+},
+"latvia-s182": {
+"km": 2.44,
+"lat": 56.943126,
+"lon": 24.066697,
+"type": "marketplace"
+},
+"lithuania-s186": {
+"km": 0.62,
+"lat": 54.68285,
+"lon": 25.285623,
+"type": "suburb"
+},
+"lithuania-s187": {
+"km": 0.71,
+"lat": 54.68677,
+"lon": 25.290645,
+"type": "viewpoint"
+},
+"lithuania-s188": {
+"km": 0.98,
+"lat": 54.683024,
+"lon": 25.293214,
+"type": "place_of_worship"
+},
+"lithuania-s189": {
+"km": 1.43,
+"lat": 54.681281,
+"lon": 25.299384,
+"type": "quarter"
+},
+"lithuania-s190": {
+"km": 1.61,
+"lat": 54.65273,
+"lon": 24.933919,
+"type": "castle"
+},
+"lithuania-s191": {
+"km": 10.98,
+"lat": 56.01503,
+"lon": 23.415678,
+"type": "attraction"
+},
+"lithuania-s198": {
+"km": 1.05,
+"lat": 54.67794,
+"lon": 25.282507,
+"type": "pub"
+},
+"lithuania-s204": {
+"km": 0.48,
+"lat": 54.68563,
+"lon": 25.28664,
+"type": "pedestrian"
+},
+"lithuania-s205": {
+"km": 1.11,
+"lat": 54.678021,
+"lon": 25.2728,
+"type": "supermarket"
+},
+"lithuania-s207": {
+"km": 1.43,
+"lat": 54.681281,
+"lon": 25.299384,
+"type": "quarter"
+},
+"poland-bialystok-branicki": {
+"km": 0.32,
+"lat": 53.130788,
+"lon": 23.164863,
+"type": "attraction"
+},
+"poland-katowice-nospr": {
+"km": 0.67,
+"lat": 50.263904,
+"lon": 19.028675,
+"type": "theatre"
+},
+"poland-katowice-spodek": {
+"km": 0.74,
+"lat": 50.266107,
+"lon": 19.025328,
+"type": "stadium"
+},
+"poland-lazienki": {
+"km": 2.41,
+"lat": 52.212621,
+"lon": 21.03395,
+"type": "park"
+},
+"poland-nikiszowiec": {
+"km": 4.63,
+"lat": 50.242774,
+"lon": 19.081004,
+"type": "quarter"
+},
+"poland-palace-culture": {
+"km": 0.47,
+"lat": 52.23182,
+"lon": 21.006256,
+"type": "viewpoint"
+},
+"poland-warsaw-old-town": {
+"km": 2.2,
+"lat": 52.249515,
+"lon": 21.012244,
+"type": "administrative"
+},
+"poland-warsaw-uprising-museum": {
+"km": 2.12,
+"lat": 52.232102,
+"lon": 20.981378,
+"type": "museum"
+},
+"poland-wilanow": {
+"km": 8.95,
+"lat": 52.165099,
+"lon": 21.090469,
+"type": "museum"
+},
+"sweden-s042": {
+"km": 1.3,
+"lat": 59.328145,
+"lon": 18.091368,
+"type": "museum"
+},
+"sweden-s043": {
+"km": 0.49,
+"lat": 59.324997,
+"lon": 18.07082,
+"type": "pedestrian"
+},
+"sweden-s044": {
+"km": 10.34,
+"lat": 59.321628,
+"lon": 17.886892,
+"type": "castle"
+},
+"sweden-s051": {
+"km": 0.52,
+"lat": 59.331894,
+"lon": 18.060944,
+"type": "station"
+},
+"sweden-s052": {
+"km": 0.9,
+"lat": 59.335909,
+"lon": 18.07769,
+"type": "retail"
+},
+"sweden-s053": {
+"km": 0.54,
+"lat": 59.331013,
+"lon": 18.059722,
+"type": "cafe"
+},
+"sweden-s060": {
+"km": 41.41,
+"lat": 59.340912,
+"lon": 18.798463,
+"type": "archipelago"
+},
+"sweden-s066": {
+"km": 0.67,
+"lat": 59.332427,
+"lon": 18.078727,
+"type": "furniture"
+},
+"sweden-s071": {
+"km": 0.84,
+"lat": 59.327494,
+"lon": 18.054215,
+"type": "townhall"
+}
+}
