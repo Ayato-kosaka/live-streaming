@@ -99,6 +99,55 @@ const RL_LINES = [
   { id: "m4", name: "まこも", text: "温泉！", icon: PHOTO, channelId: "c", at: now },
 ];
 
+/* ---------------- あやと島カード（#173 / #202） ----------------
+   **本番の形をそのまま置く。** 本番はいま1枚の写真に4人ぶんだが、旅に出れば
+   1日に写真が何枚も貼られて、投げてくれた人ぶんカードが増える
+   （写真3枚 × 12人 = 36枚）。**一覧が散らかるのはそこから**なので、
+   撮るときは増えた側の形で撮る。
+
+   持ち主は `site/content/residents.ts` にある実在のチャンネルから採る。
+   絵に結びつかない人のカードは画面に出ない（`components/cards/cards.ts`）ので、
+   でたらめな ID を並べると1枚も写らない。 */
+const CARD_CHANNELS = [
+  "UCNTxy7hXktoG4V6jT6A3M9A", "UCTXgxriwnTlJ0y1tff0yU5A", "UCEw49OqT87MZEDQJVkjWNRA",
+  "UCJPDZ4SQYonw3vZvyxVKrjg", "UCHdRx9BTg6q_SF5y-4Wg5WQ", "UCfhX-rOzBe-QhWPPv03FtQA",
+  "UCbz2F3GGD_EpBzrWb8WM-cg", "UCceC2uQXoN9wt2POovos37Q", "UCsBjGz8D3lLxUhV_eNxN0CQ",
+  "UCaHTatQmUMV4TEkSDIeSzHw", "UCn4EuDFdAfeYGhuFOxpj-NA", CHANNEL,
+];
+/** 名前を出してよいと言った人だけ名前が返る。全員ぶん返すと本番と違う */
+const CARD_NAMES = { [CHANNEL]: NAME, "UCTXgxriwnTlJ0y1tff0yU5A": "まこも" };
+const SHOT = (id) =>
+  `https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F${id}.jpeg?alt=media`;
+/** 本番の3枚ぶん。縦と横を混ぜる（カードの絵の載せ方が向きで変わるため） */
+const CARD_SHOTS = [
+  { id: "oMXREHFFNMbr37TtIwlE", day: "2026-09-06", ev: "food-wine-fest", w: 1200, h: 1600, note: "ジョージア最後の街歩きの夜景" },
+  { id: "kQ2rTn5wY8bLxA1cVdEf", day: "2026-09-11", ev: "nordic-day-depart", w: 1600, h: 1200, note: "クタイシ空港へ向かう朝" },
+  { id: "p7XsWq0ZmB4nCtL9hRyU", day: "2026-09-11", ev: "georgia-bye", w: 1200, h: 1600, note: "トビリシの部屋、最後の荷造り" },
+];
+/** 置き方は本番と同じ式（`functions/src/streamEvents.ts` の `defaultPlace`）で散らす */
+const spread = (id, k) => {
+  let h = (0x811c9dc5 ^ (k * 0x9e3779b9)) >>> 0;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return (h % 100000) / 100000;
+};
+const CARDS = CARD_SHOTS.flatMap((s) =>
+  CARD_CHANNELS.map((chan, n) => {
+    const id = `${s.id}__${chan}`;
+    return {
+      id, day: s.day, photoId: s.id, url: SHOT(s.id), w: s.w, h: s.h, note: s.note,
+      channelId: chan, icon: null, name: CARD_NAMES[chan] ?? null,
+      x: 0.62 + spread(id, 0) * 0.26,
+      y: 0.88 + spread(id, 1) * 0.08,
+      rot: -4 + spread(id, 2) * 8,
+      scale: 0.92 + spread(id, 3) * 0.16,
+      moved: false, at: 1788724247800 - n, streamEventId: s.ev,
+    };
+  }),
+);
+
 export async function apply(ctx, opts = {}) {
   const admin = opts.admin ?? process.env.ADMIN === "1";
   const json = (r, body) =>
@@ -121,6 +170,28 @@ export async function apply(ctx, opts = {}) {
       project_id: "291182823114",
     }),
   );
+  /* カードの写真は Firebase Storage にある。**この箱からは出られない。**
+     1枚に潰すと3枚が同じ絵で写って、写真ごとにまとまっているかが見えないので、
+     写真のIDから色を決めて1枚ずつ違う絵を返す。`crossOrigin="anonymous"` で
+     読むので、CORS のヘッダを付けないと絵が出ない。 */
+  await ctx.route(/firebasestorage\.googleapis\.com/, (r) => {
+    const m = /photos%2F([^.]+)\.jpe?g/.exec(r.request().url());
+    const key = m ? m[1] : "x";
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600">
+      <rect width="1200" height="1600" fill="hsl(${h},42%,38%)"/>
+      <rect y="1100" width="1200" height="500" fill="hsl(${(h + 24) % 360},38%,26%)"/>
+      <circle cx="900" cy="320" r="150" fill="hsl(${(h + 40) % 360},60%,72%)"/>
+    </svg>`;
+    r.fulfill({
+      status: 200,
+      contentType: "image/svg+xml",
+      headers: { "access-control-allow-origin": "*" },
+      body: svg,
+    });
+  });
+
   await ctx.route(/\/island-api\//, (r) => {
     const u = new URL(r.request().url());
     const path = u.pathname.replace("/island-api", "");
@@ -163,6 +234,7 @@ export async function apply(ctx, opts = {}) {
       DONORS = had ? DONORS.map((d) => (d.viewerPk === pk ? donor : d)) : [donor, ...DONORS];
       return json(r, { donor, via });
     }
+    if (path === "/cards") return json(r, { cards: CARDS });
     if (path === "/nordic/log") return json(r, { log: [] });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと

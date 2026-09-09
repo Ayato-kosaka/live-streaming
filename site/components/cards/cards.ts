@@ -7,13 +7,14 @@ import { RESIDENTS } from "@/content/residents";
 /**
  * あやと島カード（#173）の、画面まわりの共通のところ。
  *
- * カードは**配られていない。** サーバーが、その日の写真とその日の名簿から
- * 引くたびに組み立てている（`functions/src/cards.ts` 冒頭）。
- * こちら側でやるのは3つだけ。
+ * カードは**置いてある**（#202）。台帳（`islandTips`）に投げ銭が入った時点で
+ * 相手が決まるので、`islandCards/{cardId}` に1枚ずつ作られている
+ * （`functions/src/cards.ts` 冒頭）。こちら側でやるのは4つだけ。
  *
  *   1. どの絵の人かを突き合わせる（絵の割り当ては residents.ts だけが持つ）
  *   2. その日の企画を日付で引く（表は面が渡してくる。`content/plans.ts`）
- *   3. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
+ *   3. 同じ写真から出たカードを、写真1枚にまとめる（`byPhoto`）
+ *   4. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
  */
 
 /** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
@@ -78,6 +79,87 @@ export function useCards(): CardsState {
       });
   }, []);
   return { cards, off };
+}
+
+/* ---------------- 写真でまとめる ----------------
+   **カードは「写真 × その日に投げてくれた人」で増える。** 写真が3枚あって
+   10人いれば30枚になり、`/cards` には同じ写真が10枚ずつ並ぶ。
+   あやとの言葉:「埋め込みキャラクターごと全部表示するのではなく、
+   カード画像を列挙してタップしたらキャラクター埋め込み版が見れるように
+   しないと、カード一覧画面が散らかる気がする」。
+
+   一覧が持つのは**写真1枚につき1つ**。キャラクターの入った版は、
+   押して開いた先に置く（図鑑と同じ「一覧と1枚を分ける」形。
+   `docs/ac-reference.md` 7章）。 */
+
+/** 同じ写真から出たカードを、ひとまとめにしたもの。**一覧のマス1つぶん。** */
+export type PhotoGroup = {
+  photoId: string;
+  url: string;
+  w: number;
+  h: number;
+  note: string;
+  /** その写真の日。まとめる単位が写真なので、中の1枚ずつは持たない */
+  day: string;
+  /** 何人ぶんか。**絵に結びついた人だけ**が入る（`withIcons` を通ったもの） */
+  cards: ShownCard[];
+};
+
+/** 1日ぶんの棚。1日に写真は何枚でも貼られる。 */
+export type DayShelf = { day: string; photos: PhotoGroup[] };
+
+/**
+ * 写真でまとめる。**並べ替えない。**
+ *
+ * サーバーがもう新しい順で返してくる（`functions/src/cards.ts` の
+ * `sortCards`）ので、出てきた順にまとめるだけにする。ここで並べ直すと、
+ * 同じものを2か所で決めることになる。
+ */
+export function byPhoto(list: ShownCard[]): PhotoGroup[] {
+  const out: PhotoGroup[] = [];
+  const at = new Map<string, PhotoGroup>();
+  for (const c of list) {
+    const had = at.get(c.photoId);
+    if (had) {
+      had.cards.push(c);
+      continue;
+    }
+    const g: PhotoGroup = {
+      photoId: c.photoId,
+      url: c.url,
+      w: c.w,
+      h: c.h,
+      note: c.note,
+      day: c.day,
+      cards: [c],
+    };
+    at.set(c.photoId, g);
+    out.push(g);
+  }
+  return out;
+}
+
+/**
+ * 日ごとに棚を作る。**日付と企画を、そこで1回だけ言うため。**
+ *
+ * 前は1枚ずつが日付と企画を持っていた。同じ写真が人数ぶん並ぶと、
+ * 「9月6日(日) / Food & Wine Fest @ ムタツミンダ公園」も人数ぶん出る。
+ * まとめる単位ができたので、字は棚の見出しへ上げる。
+ */
+export function byDay(groups: PhotoGroup[]): DayShelf[] {
+  const out: DayShelf[] = [];
+  const at = new Map<string, DayShelf>();
+  for (const g of groups) {
+    const had = at.get(g.day);
+    if (had) {
+      had.photos.push(g);
+      continue;
+    }
+    const d: DayShelf = { day: g.day, photos: [g] };
+    at.set(g.day, d);
+    out.push(d);
+  }
+  return out;
 }
 
 /** 「2026-09-06」→「9月6日(日)」。島の中の日付の言い方にそろえる。 */

@@ -34,6 +34,7 @@ export default function CardOne({
   card,
   plans,
   showName = true,
+  showWhen = true,
 }: {
   card: ShownCard;
   /** その日の企画。**1日に何本でも立つ。** 無い日は何も出さない */
@@ -44,8 +45,17 @@ export default function CardOne({
    * 並んでいないので、1枚ずつに同じ名前が付くと字が増えるだけ。
    */
   showName?: boolean;
+  /**
+   * 日付とその日の企画を出すか。**まとめた並びの中では出さない。**
+   * 写真でまとめた一覧（`CardWall`）は、日付も企画も棚の見出しが1回だけ
+   * 言う。同じ写真から出たカードは日付も企画も同じなので、1枚ずつに
+   * 付けると人数ぶん同じ字が並ぶ（あやとの「一覧画面が散らかる」）。
+   */
+  showWhen?: boolean;
 }) {
   const tall = card.h > card.w;
+  // 帯に出すものが1つも無ければ、帯ごと出さない。字の無い罫だけが残るため
+  const foot = showWhen || (showName && card.name);
   return (
     <article className="akd">
       <div
@@ -79,22 +89,25 @@ export default function CardOne({
           }}
         />
       </div>
-      <div className="akd-foot">
-        <b>{cardWhen(card.day)}</b>
-        {/* その日の企画（あやとの「フードワインフェスの企画に紐つけて欲しい」）。
+      {foot && (
+        <div className="akd-foot">
+          {showWhen && <b>{cardWhen(card.day)}</b>}
+          {/* その日の企画（あやとの「フードワインフェスの企画に紐つけて欲しい」）。
 
-            **1日に企画は何本でも立つ。** 9月11日がそれで、「北欧旅の
-            出発日」「海外出発二周年」「ジョージアバイバイ」の3本が同じ
-            配信に乗っている。1本しか出さないと、残りは黙って消える。 */}
-        {plans?.map((p) => (
-          <Link key={p.href} className="akd-plan" href={p.href} prefetch={false}>
-            {p.title}
-          </Link>
-        ))}
-        {/* 名前が出るのは、島に名前を出してよいと言った人だけ。
-            出していない人も絵は出る。自分の絵は自分で分かる。 */}
-        {showName && card.name && <i className="akd-who">{card.name}</i>}
-      </div>
+              **1日に企画は何本でも立つ。** 9月11日がそれで、「北欧旅の
+              出発日」「海外出発二周年」「ジョージアバイバイ」の3本が同じ
+              配信に乗っている。1本しか出さないと、残りは黙って消える。 */}
+          {showWhen &&
+            plans?.map((p) => (
+              <Link key={p.href} className="akd-plan" href={p.href} prefetch={false}>
+                {p.title}
+              </Link>
+            ))}
+          {/* 名前が出るのは、島に名前を出してよいと言った人だけ。
+              出していない人も絵は出る。自分の絵は自分で分かる。 */}
+          {showName && card.name && <i className="akd-who">{card.name}</i>}
+        </div>
+      )}
     </article>
   );
 }
