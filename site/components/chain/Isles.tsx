@@ -21,7 +21,7 @@ import {
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterHref } from "./route";
 import { islandRadius } from "./shapes";
-import Diorama, { buildStage } from "./Diorama";
+import Diorama, { buildStage, type BuildStage } from "./Diorama";
 
 import { dio, fit, HOME_BUILDINGS, type AtlasIsle } from "./diorama";
 
@@ -132,7 +132,14 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
 
   const days = chapterDays(cur, today ?? undefined);
   const fund = useFund();
-  const pct = fund ? Math.min(100, Math.round((fund.total / FUND_GOAL_YEN) * 100)) : 0;
+  /* **読めなかったことを、0円と同じ絵にしない。**
+     `useFund` は読めないときも 0以下のときも null を返す。それを 0% として
+     描くと、電波の弱いところで API に届かなかっただけの日に、
+     「まだ1円も集まっていない島」が出る。出した人に対して嘘になる。
+     額のほうは「読めなかったら出さない」になっているので、**絵もそろえる。** */
+  const stage: BuildStage | undefined = !fund
+    ? "unknown"
+    : buildStage(Math.min(100, Math.round((fund.total / FUND_GOAL_YEN) * 100)));
   /* 舟が渡る高さ。**島ごとに水面の広さが違う**ので、いま出ている島の
      水面の見かけの高さを CSS に渡す（`.atl-boat` が使う） */
   const curArt = isles.find((x) => x.slug === cur.slug)?.art;
@@ -195,7 +202,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                   /* **いまいる島だけ、渡る先はトップ。** あちらは10軒建って
                      いるので、章の島の作りで描くと模型が嘘をつく */
                   buildings={c.slug === nowCh.slug ? HOME_BUILDINGS : isle.buildings}
-                  stage={c === nextCh ? buildStage(pct) : undefined}
+                  stage={c === nextCh ? stage : undefined}
                 />
               </span>
             </Link>

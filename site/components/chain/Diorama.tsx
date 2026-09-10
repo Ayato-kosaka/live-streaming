@@ -24,8 +24,16 @@ import { CAM, dio, fit, side, type AtlasBuilding } from "./diorama";
  * ここに色を書かない。
  */
 
-/** 次の島の建ちぐあい（`docs/island-atlas.md` 5章）。0% 更地 → 10% 鉄筋 → 50% 壁と屋根 → 100% 完成 */
-export type BuildStage = "bare" | "frame" | "walls" | "done";
+/**
+ * 次の島の建ちぐあい（`docs/island-atlas.md` 5章）。
+ * 0% 更地 → 10% 鉄筋 → 50% 壁と屋根 → 100% 完成。
+ *
+ * **`unknown` は「0%」ではない。** 足代がまだ読めていない（読み込み中・
+ * 電波が届かない・API が落ちている）ときの姿。更地と同じ絵にすると、
+ * 届かなかっただけの日に「まだ1円も集まっていない島」が出る。
+ * 出してくれた人に対して嘘になるので、**見分けのつく別の絵にする。**
+ */
+export type BuildStage = "unknown" | "bare" | "frame" | "walls" | "done";
 
 export function buildStage(pct: number): BuildStage {
   if (pct >= 100) return "done";
@@ -250,6 +258,35 @@ function Build({ r, y, stage }: { r: number; y: number; stage: BuildStage }) {
     );
   }
 
+  if (stage === "unknown") {
+    /* **足代がまだ読めていない。** 更地（0%）と同じ絵にすると、電波が届かなかった
+       だけの日に「まだ1円も集まっていない島」が出て、出してくれた人に嘘をつく。
+       額のほうは「読めなかったら出さない」なので、**絵もそろえる。**
+
+       描くのは、島の決まりどおりの**読み込み中の姿**——
+       「場所だけ先に取る。中身の形をした薄い板を置く」（`docs/island-design.md` 4章）。
+       区画は取ってあって、そこに建つものが**薄く**見えている。
+       更地の縄張りとも、鉄筋の骨組みとも、木の色の箱とも、できあがった家とも
+       見分けがつく。 */
+    const t = r * 0.055;
+    const pins: [number, number][] = [];
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      pins.push([Math.cos(a) * w, y0 + Math.sin(a) * h]);
+    }
+    return (
+      <g className="dio-build">
+        {/* 縄張りは更地と同じ。**土を剥がしていない**ぶんだけ違う
+            （どこまで進んだか分からないので、地面のことも言い切らない） */}
+        <path d={poly(quad, t)} className="dio-rope" />
+        {pins.map(([px, py], k) => (
+          <line key={k} x1={px} y1={py} x2={px} y2={py - t} className="dio-stake" />
+        ))}
+        <Sprite name="hut-home" x={0} y={y0 + h * 0.45} size={r * 0.4} opacity={0.34} />
+      </g>
+    );
+  }
+
   const H = r * 0.36; // 立ち上がりの高さ
 
   if (stage === "frame") {
@@ -268,8 +305,18 @@ function Build({ r, y, stage }: { r: number; y: number; stage: BuildStage }) {
 
   /* 壁と屋根。**まだ塗っていないので木の色のまま。**
      手前の2面だけを見せて、奥の2面は描かない（隠れているので） */
-  const R = r * 0.13; // 屋根の高さ。とがらせすぎると家ではなくテントに見える
-  const A: [number, number] = [0, y0 - h - H - R];
+  /* 屋根。**てっぺんは屋根のまん中の真上。** 奥の角の上に置くと、傾いた三角錐に
+     なって家ではなくテントに見える。勾配は寝かせて、軒（EAVE）を壁より外へ出す。
+     出さないと箱に蓋をしただけの形になる。 */
+  const R = r * 0.11;
+  const EAVE = 1.26;
+  const rw = w * EAVE;
+  const rh = h * EAVE;
+  const yR = y0 - H;
+  const Wr: [number, number] = [-rw, yR];
+  const Sr: [number, number] = [0, yR + rh];
+  const Er: [number, number] = [rw, yR];
+  const A: [number, number] = [0, yR - R];
   return (
     <g className="dio-build">
       {plot}
@@ -283,13 +330,13 @@ function Build({ r, y, stage }: { r: number; y: number; stage: BuildStage }) {
         d={`M${f(S[0])},${f(S[1])}L${f(E[0])},${f(E[1])}L${f(E[0])},${f(E[1] - H)}L${f(S[0])},${f(S[1] - H)}Z`}
         className="dio-wall"
       />
-      {/* 屋根。てっぺんの1点へ寄せる。手前の2枚だけ */}
+      {/* 屋根。手前の2枚だけ描く（奥の2枚は隠れている） */}
       <path
-        d={`M${f(W[0])},${f(W[1] - H)}L${f(S[0])},${f(S[1] - H)}L${f(A[0])},${f(A[1])}Z`}
+        d={`M${f(Wr[0])},${f(Wr[1])}L${f(Sr[0])},${f(Sr[1])}L${f(A[0])},${f(A[1])}Z`}
         className="dio-roof-lo"
       />
       <path
-        d={`M${f(S[0])},${f(S[1] - H)}L${f(E[0])},${f(E[1] - H)}L${f(A[0])},${f(A[1])}Z`}
+        d={`M${f(Sr[0])},${f(Sr[1])}L${f(Er[0])},${f(Er[1])}L${f(A[0])},${f(A[1])}Z`}
         className="dio-roof"
       />
     </g>
