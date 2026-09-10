@@ -146,42 +146,29 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     ? RESIDENTS.find((r) => r.channel === me.channelId)
     : undefined;
 
-  /* 見出しの隣に出す丸。**前はここに YouTube の顔写真を出していた。**
+  /* 見出しの隣の顔。**毎晩入れ直る `channelPhoto` を出す。**
 
-     顔写真の出どころは3つある。
+     あやとの言葉（2026-09-10）「YouTubeのアイコン。2026/09/07だったら
+     それが新しいと思うが？」。そのとおりで、**写真は古くない。**
 
-     | どこから | いつのもの |
-     | --- | --- |
-     | `islandChannels.photo`（`me.channelPhoto`） | 毎晩入れ直る |
-     | `islandUsers.photo`（`me.photo`） | ログインを押した日のまま止まる |
-     | ログインの人（`user.photo`） | 同上。Google 側の写真 |
+     もともとの「古い」は、ログインした日のまま止まる `user.photo` を
+     出していたこと（そちらは押した日から動かない）。毎晩 islandChannels
+     から入れ直るほうを使えば、YouTube で替えれば翌日には島も替わる。
 
-     **どれも使わない。** あやとの言葉（2026-09-09）「そのカラムは使わないで
-     欲しい」「YouTubeのアイコンですよ？画面中部に出てるやつ」。
-
-     一度は「毎晩入れ直る `channelPhoto` なら古くならない」と考えて、そこだけ
-     残した。**それは間違いだった。** 本番の中身を見ると、3つとも同じ絵を
-     指している。
-
-       islandUsers.photo    …/GUqKfpGZZ-…=s88-c-k-c0x00ffffff-no-rj
-       islandChannels.photo …/GUqKfpGZZ-…=s800-c-k-c0x00ffffff-no-rj
-
-     **ファイルの id が同じで、大きさの指定だけが違う。** 毎晩入れ直っては
-     いるが、入れ直る先が同じ YouTube の顔写真なので、あやとが「古い」と
-     言っているその絵がそのまま出続ける。片方に寄せても何も変わらない。
-
-     ここは名前の隣の小さな丸なので、**頭の1文字だけにする。** 島の
-     キャラクターはすぐ下の「島にいる、じぶん」で 256px で出しているので、
-     ここにも置くと同じ絵が1枚の面に2回出る。看板の右はし（`MeButton`）とは
-     頭文字の取り方をそろえてある（`lib/firstLetter.ts`）。 */
+     **字に落とさない。** 一度そうして「バグ」と言われた。 */
+  const face = me?.channelPhoto || "";
 
   return (
     <>
       {/* いま入っている人。**押しどころではないので、平ら（紙）。** */}
       <div className="mp-who">
-        <span className="mp-face mp-face-none" aria-hidden>
-          {firstLetter(user.name)}
-        </span>
+        {face ? (
+          <img className="mp-face" src={face} alt="" />
+        ) : (
+          <span className="mp-face mp-face-none" aria-hidden>
+            {firstLetter(user.name)}
+          </span>
+        )}
         <span className="mp-who-t">
           <b>{me?.nickname || user.name}</b>
           <i>
