@@ -1,29 +1,34 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
-import PhotoWall from "@/components/nordic/PhotoWall";
-import { DAYS } from "@/content/nordic";
+import GoTo from "@/components/ui/GoTo";
+import Icon from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
   title: "旅の写真",
-  description:
-    "スウェーデンまでヒッチハイクで行く旅の、その日に撮った写真。持って帰るときに、その日いた人のキャラクターを1人だけ入れられます。",
+  description: "旅のその日の写真は、あやと島カードにまとまりました。",
+  alternates: { canonical: "/cards" },
+  robots: { index: false, follow: true },
 };
 
 /**
- * 旅の写真（`docs/nordic-photos.md`）。
+ * 旅の写真。**あやと島カード（`/cards`）へ寄せたので、ここは送るだけ。**
  *
- * 1日が終わったら、あやとがその日の写真を貼る。見た人は持って帰れて、
- * 持って帰るときに、**その日の配信でスパチャしてくれた人のキャラクターを
- * 1人だけ**入れられる。順位でも点数でもなく、その日そこにいたという
- * 事実だけが、持って帰れるものになる。
+ * あやとの言葉（2026-09-10）:
  *
- * **面を分けた理由。** `/nordic` はすでに 7.13画面ぶんある。写真は1日に
- * 何枚でも貼るので、あの旅程表の行の中に混ぜると、旅程表が写真置き場に
- * 変わる。あちらには、貼られたときだけ出る1行の入口だけを置いた
- * （`components/nordic/TripPhotos.tsx`）。
+ * > https://.../nordic/photos のルーティングがおかしい。（略）
+ * > そもそもこの画面入らなくて cards に統合すべきでは？
  *
- * 中身はぜんぶ画面が出てから取りにいく。旅はまだ始まっていないので、
- * いま焼き込めるものが1枚も無い。
+ * ## 面ごと消さない理由
+ *
+ * `output: "export"` なので、面を消すと `dist` からファイルが消える。
+ * Firebase の受け皿（`firebase.json` の `"source": "**"`）は、見つからない
+ * URL に**島の玄関を 200 で返す。** 404 にすらならないので、貼られていた
+ * URL を踏んだ人は、なぜ違う面が出たのか分からない。**貼られた URL は
+ * 生かしたまま送る。**
+ *
+ * 本筋は Hosting の 301（`firebase.json` の `redirects`）。ここはその
+ * 手前で開いた人と、設定が外れたときのための控え。
  */
 export default function NordicPhotosPage() {
   return (
@@ -35,16 +40,21 @@ export default function NordicPhotosPage() {
         { label: "旅の写真" },
       ]}
     >
+      <GoTo to="/cards" />
       <section className="panel paper">
         <h1>旅の写真</h1>
-        {/* 句点のうしろで改行しない。JSX が改行と字下げを半角空白1つに畳む。 */}
-        <p className="muted">
-          その日に撮ったものです。持って帰れます。持って帰るときに、その日いた人のキャラクターを1人だけ入れられます。
-        </p>
+        <p className="muted">あやと島カードにまとまりました。</p>
+        <Link className="tile" href="/cards">
+          <span className="tile-mark">
+            <Icon name="island" size={24} />
+          </span>
+          <span className="tile-text">
+            <b>あやと島カード</b>
+            <i>その日の写真に、キャラクターを1人だけ入れて持って帰れます</i>
+          </span>
+          <Icon name="right" size={16} className="tile-go" />
+        </Link>
       </section>
-      {/* 出発の日だけを渡す。`content/nordic.ts` をそのまま client 側で
-          読むと、しおりも見どころ161件もこの面の JS に乗る（実測 +9KB）。 */}
-      <PhotoWall depart={DAYS[0].date ?? "2026-09-11"} />
     </PageShell>
   );
 }

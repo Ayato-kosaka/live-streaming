@@ -47,7 +47,7 @@ import Longer from "@/components/ui/Longer";
  *
  * 消すのとは違う。**分からないと決めたことも1つの答え**で、表に残さないと
  * 翌朝また「新規」として赤くなる。禁止の赤い印は置かない
- * （`components/nordic/PhotoStudio.tsx` の「入れない」と同じ扱い）。
+ * （`components/cards/CardSheet.tsx` の「入れない」と同じ扱い）。
  */
 
 /** 状態の呼び名。**画面には英語を出さない。** */
