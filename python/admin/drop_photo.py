@@ -26,6 +26,19 @@ ARGS 例:
 `islandCards` は `streamEventImageId` で写真を指しているだけ。残すと
 `/cards` が実体の無い URL を返し続ける。**何枚ぶら下がっているかを
 消す前に出す**（消したあとに気づいても戻せない）。
+
+## 置き場に触れないときは、理由まで書く
+
+**GCS は権限が無いときも「無いかもしれない」と言う。** 403 の文面だけを
+読むと、バケツの名前を間違えたように見える。実際にそう読み違えて、
+合っている名前を疑って1往復した（2026-09-10）。
+どちらなのかは `storage_probe` が尋ねる。**憶測で名前を書き換えない。**
+
+## 見えているかは、外から見て決める
+
+Firestore に道が書いてあることと、URL を知っている人にまだ見えることは
+別。知りたいのは後者なので、**誰でも開ける URL をそのまま叩く。**
+合言葉は書類の `url` に入っているので、こちらで組み立てない。
 """
 
 import os
@@ -65,6 +78,27 @@ def blob_of(path: str):
     ).blob(path)
 
 
+def http_status(url: str) -> int:
+    """その URL がいま何を返すか。**合言葉は要らない**（誰でも開ける URL）。
+
+    Args:
+        url: 書類に焼いてある公開 URL（`?alt=media&token=…` 付き）
+
+    Returns:
+        int: HTTP の状態。届かなければ 0
+    """
+    import requests
+
+    try:
+        # HEAD ではなく GET。Firebase の置き場は HEAD に素直に答えない
+        r = requests.get(url, stream=True, timeout=30)
+        r.close()
+        return r.status_code
+    except Exception as e:  # noqa: BLE001 圏外と 404 を混ぜない
+        log.warning("  外から叩けませんでした: %s", type(e).__name__)
+        return 0
+
+
 def main() -> None:
     a = args()
     (image_id,) = need(a, "id")
@@ -84,6 +118,8 @@ def main() -> None:
     v = new_v or old_v
     # 新しいほうは `storagePath`、旧来は `path`。名前が違うだけで同じ道
     stored = new_v.get("storagePath") or old_v.get("path") or ""
+    # 誰でも開ける URL。**書類に焼いてある**（合言葉つき）ので組み立てない
+    url = new_v.get("url") or old_v.get("url") or ""
 
     log.info("写真 %s", image_id)
     log.info("  %s: %s", IMAGES, "あり" if now.exists else "なし")
@@ -110,6 +146,17 @@ def main() -> None:
             blob = None
             log.warning("  実体を見にいけませんでした: %s", e)
 
+    # 外から見えているか。**URL そのものは出さない**（合言葉が入っている）
+    if url:
+        s = http_status(url)
+        log.info(
+            "  外から: HTTP %s（%s）",
+            s,
+            "まだ見えています" if s == 200 else "見えていません",
+        )
+    else:
+        log.warning("  外から: 書類に url が無いので確かめられません")
+
     cards = list(
         client.collection(CARDS)
         .where("streamEventImageId", "==", image_id)
@@ -131,6 +178,13 @@ def main() -> None:
             log.error(
                 "置き場に触れないので、ここで止めます。**書類は消していません。**"
                 " 先に実体を消さないと、URL を知っている人には見え続けます"
+            )
+            # **名前を疑う前に、権限を疑う。** ここの 403 は名前違いに見える
+            log.error(
+                "  見にいったバケツ: %s。名前が合っているかと、"
+                "このサービスアカウントが storage.objects.get / .delete を"
+                "持っているかは storage_probe が尋ねます",
+                BUCKET,
             )
             raise SystemExit(2)
         try:

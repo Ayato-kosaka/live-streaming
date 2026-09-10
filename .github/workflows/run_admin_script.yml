@@ -12,8 +12,12 @@ name: 管理スクリプトを実行
 #   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
 #   drop_photo       … 貼った写真を1枚消す {"id":"画像のID"}
 #                      置き場の実体・カード・書類を、Functions の
-#                      dropEventImage と同じ順でまとめて消す。
+#                      dropEventImage に頼んでまとめて消す（あちらの
+#                      サービスアカウントしか置き場に触れないため）。
 #                      **既定は出すだけ。**消すには {"apply": true}
+#   storage_probe    … 置き場に何ができるかを尋ねる {"path":"nordic/…"}
+#                      403 が「バケツ違い」なのか「権限不足」なのかは、
+#                      GCS の文面では区別が付かない。読むだけ
 #
 # 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
 # ここはそれが使えないときの逃げ道。
@@ -103,7 +107,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
-          # 写真の置き場(Storage)を触るのは drop_photo だけなので、
+          # 置き場(Storage)を触るのは storage_probe だけなので、
           # requirements.txt ではなくここで足す
           pip install google-cloud-storage
 
