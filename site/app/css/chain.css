@@ -926,6 +926,10 @@
    `none` にすると、看板の無い6軒が引きから押せなくなる。 */
 .isle[data-cam="wide"] .isle-spot.is-sign .isle-hit { pointer-events: none; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
+/* 開いた札の一言は折り返してよいが、**折り返す幅を先に決める。**
+   決めないと札の幅が名前で決まるので、「アプリ」（3文字）の札では
+   一言の欄が 44px しか無く、15文字が5行に折れていた（実測）。 */
+.isle-spot.is-on .isle-text { min-width: 150px; }
 .isle-spot.is-on .isle-text b { font-size: 14.5px; }
 .isle-text i {
   display: block;
