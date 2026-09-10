@@ -54,9 +54,6 @@ export default function NowPage() {
 
         <section className="pap-sec">
           <h2 className="pap-h">この先の話</h2>
-          <p className="pap-note">
-            島だよりは今週ぶん。日にちの決まっている企画は、これからの面にまとまっています。
-          </p>
           {/* YouTube への札をここから外した。上の「今夜の配信まで あと◯時間」が
               同じ行き先を持っていて、**1つの面から同じところへ2回出ていた。**
               いまいる国の旗を大きく出したぶん、面が 150px 伸びている
@@ -67,7 +64,7 @@ export default function NowPage() {
               <img src="/sprites/tent.webp" alt="" />
               <span>
                 <b>これから</b>
-                <i>次に行くところ、次にやること。付箋も貼れます</i>
+                <i>次に行くところ、次にやること。付箋も貼れる</i>
               </span>
               <Icon name="right" size={14} />
             </Link>

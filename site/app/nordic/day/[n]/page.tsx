@@ -7,7 +7,11 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
-import CityMap from "@/components/nordic/CityMap";
+/* 街の地図は作り直し中（あやと 2026-09-09「なにこのカスみたいな地図」）。
+   道路が1本も無い、ベージュに丸が乗っただけのものを本番に置いていた。
+   実データ（Overpass のミラーは生きている）で作り直すまで、**出さない。**
+   一覧は残す。地図が無くても、見どころの一覧は読める。 */
+// import CityZoom from "@/components/nordic/CityZoom";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
 import DayLog from "@/components/nordic/DayLog";
 import Notes from "@/components/live/Notes";
@@ -244,8 +248,7 @@ function Hitch({ leg }: { leg: Leg }) {
           </dd>
         </div>
       </dl>
-      <p className="ndhh-src">道と国境は地図から。立つところと難しさは走る前の見立てです。</p>
-    </div>
+          </div>
   );
 }
 
@@ -552,9 +555,6 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       {goCities.map((c) => (
         <section key={c.city} className="panel paper" id={`want-${c.city}`}>
           <h2>{c.city}で見たいもの</h2>
-          {/* まず地図。**どこに何があるかが先で、一覧は後。**
-              道・川・旧市街まで描いてある実データの地図（`CityMap`）。 */}
-          <CityMap city={c.city} />
           <WantList items={c.items} />
           {c.country && c.list.length > 0 && (
             <Link
@@ -578,7 +578,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             <div key={c.city} className="folds ndcity">
               <Fold
                 title={`${c.city}で見たいもの`}
-                lead={`寄るかどうかは、これから決まります。${c.items.length}件`}
+                lead={`通り道にある${c.items.length}件`}
               >
                       <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (

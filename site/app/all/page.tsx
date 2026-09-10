@@ -8,7 +8,7 @@ import { DEST_COUNT, SHELVES } from "@/content/directory";
 export const metadata: Metadata = {
   title: "島のなか ぜんぶ",
   description:
-    "島にある紙を、ぜんぶ1枚に並べました。名前を打つと絞れます。どのページの上からでもここへ来られます。",
+    "島にある紙を、ぜんぶ1枚に並べました。名前を打つと絞れます。",
 };
 
 /**
@@ -39,7 +39,7 @@ export default function AllPage() {
       <PageHead
         mark={<Icon name="signpost" size={64} />}
         title="島のなか ぜんぶ"
-        lead={`島にある紙、${DEST_COUNT}枚。どの面の上にもこの札が出ているので、ここを通ればどこへでも1回で行けます。`}
+        lead={`島にある紙、${DEST_COUNT}枚。ここからどこへでも1回で行ける。`}
       />
 
       <DirFilter total={DEST_COUNT} />

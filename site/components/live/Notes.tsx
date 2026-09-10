@@ -276,7 +276,7 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
       <p className="muted">
         {fixed ?
           fixed.lead :
-          "何について書くかを選んでから貼ります。ハートはログインしなくても押せて、もう一度押すと外れます。"}
+          "どれあての付箋か、選んでから書いてね。"}
       </p>
 
       {/* テーマの選び札。束ねかたごとに1行にする。
@@ -401,7 +401,7 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
         {notes !== null && down && (
           <div className="blank is-off">
             <b>いま、付箋を読みに行けなかった</b>
-            <p>貼ってある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+            <p>少し待ってから、もう一度。</p>
           </div>
         )}
 
@@ -413,10 +413,10 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
                 すぐ上に開いている欄を指して、もう一度開く札が出ていた。 */}
             <p>
               {bin ?
-                "二重投稿や、荒れたものをしまうと、ここに残ります。消えてはいません。" :
+                "しまったものが、ここに並びます。" :
                 open ?
                   `上の欄に書くと、${now.name}あての1枚目になります。` :
-                  `${now.name}あての1枚目になれます。押すと、書く欄がひらきます。`}
+                  `${now.name}あての1枚目になれるよ。`}
             </p>
             {!bin && !open && (
               <button

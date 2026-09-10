@@ -58,7 +58,7 @@ export default function KitchenNext({ months, thin }: Props) {
         options={options}
         after={
           <>
-            品名まで決めたいときは、<Link href="/board">掲示板</Link>に書けます。
+            品名まで決めたいときは、<Link href="/board">掲示板</Link>へ。
           </>
         }
       />

@@ -759,10 +759,8 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
             </Link>
           </article>
         ) : (
-          <p className="atrace-hint">
-            ピンを押すと、その国が開きます。近くに集まっている国は「◯カ国」の札に
-            まとまっていて、押すとそこへ寄ります。18カ国ぶん、通った街とその国からの配信が出ます。
-          </p>
+          /* 地図の上の1行が同じことを言っているので、ここは空いた枠の名前だけ */
+          <p className="atrace-hint">ピンを押すと、ここにその国が出る。</p>
         )}
       </div>
 

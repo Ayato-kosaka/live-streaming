@@ -66,7 +66,7 @@ export default function NextPage() {
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>企画のページを作る</b>
-            <i>題ひとつでもいい。ログインは要りません</i>
+            <i>題ひとつから、ページ1枚まで</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>

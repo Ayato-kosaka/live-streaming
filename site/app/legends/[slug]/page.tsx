@@ -141,7 +141,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
           <H art={<ArtCam size={32} />} note={`${streams.length}本`}>
             まず、この{streams.length}本
           </H>
-          <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだか分かります。</p>
+          <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだかが分かる。</p>
           <ul className="days" style={{ marginTop: "var(--sp-3)" }}>
             {streams.map((s, k) => (
               <li key={s.videoId}>
@@ -160,10 +160,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             <H art={<ArtMonument size={32} />} note={`${all.streams.length}本`}>
               この{days}日に、あった配信ぜんぶ
             </H>
-            <p className="zk-lead">
-              上の{streams.length}本は抜き書きです。その日その日に立った枠を、古い順に全部。
-              数はその配信でコメントを書いた人。
-            </p>
+            <p className="zk-lead">その日その日に立った枠を、古い順に全部。</p>
             {/* 一面ぜんぶ押せる並びなので、1行ずつに厚みを付けない。
                 押せないものを1行も混ぜない（`docs/island-world.md` 3.5）。 */}
             <ol className="lgd">

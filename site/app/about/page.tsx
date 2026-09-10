@@ -323,7 +323,7 @@ export default function AboutPage() {
           （`python/build_voices.py` → `content/voices.ts`）。 */}
       <Panel>
         <h2>島のみんなから見た、あやと</h2>
-        <p className="muted">配信のコメント欄から、書かれたまま。名前とアイコンは YouTube のものです。</p>
+        <p className="muted">配信のコメント欄から、書かれたまま。</p>
         <ul className="avoices">
           {VOICES.slice(0, VOICE_OPEN).map((v, i) => (
             <Voice key={v.eventId} v={v} i={i} />
@@ -345,7 +345,7 @@ export default function AboutPage() {
       {/* ここが「何が面白いのか」への答え。畳まない。 */}
       <Panel>
         <h2>島で、なにをしているんだろう</h2>
-        <p className="muted">3つ。どれも配信しながらやっています。押すと、その中身の面へ。</p>
+        <p className="muted">3つとも、配信しながらやっている。</p>
         <div className="ado">
           {DOING.map((d) => (
             <Link className="ado-card" href={d.href} key={d.href}>
@@ -386,9 +386,7 @@ export default function AboutPage() {
           島の連なり（docs/island-atlas.md）が建ったときに言いかたが1つで済む。 */}
       <Panel>
         <h2>ここまで、何があったんだろう</h2>
-        <p className="muted">
-          日本を出るまえから、いままで。石を押すと、その国・そのアプリ・その伝説の面へ入れます。
-        </p>
+        <p className="muted">日本を出るまえから、いままで。</p>
         <div className="aroad">
           <div className="aroad-rail">
             {steps.map((x, i) => {
@@ -428,7 +426,7 @@ export default function AboutPage() {
           </div>
         </div>
         <p className="muted" style={{ marginTop: 12 }}>
-          配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。そこまでは配信が1本も無いので、歩いた国の地図には入っていません。
+          配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。
         </p>
         <Link className="tile" href="/map" style={{ marginTop: 12 }}>
           <span className="tile-mark">
@@ -447,7 +445,7 @@ export default function AboutPage() {
           押せるかどうか（厚み）とは別の軸なので、なにこれは灰色だが押せる。 */}
       <Panel>
         <h2>作ってきたアプリは、3つ</h2>
-        <p className="muted">1つ目を広めるために日本を出て、いまは3つ目。上の2つは終わりました。</p>
+        <p className="muted">1つ目を広めるために日本を出て、いまは3つ目。</p>
         <div className="aappl">
           {ALL_APPS.map((a) => {
             const done = a.status === "サポート終了";
@@ -485,7 +483,6 @@ export default function AboutPage() {
           lead="クッキングも、おさんぽも、アプリ作りも"
           note={`${STREAM_TYPES.length}の型`}
         >
-          <p className="muted">押すと、その型の配信だけまとめて見られます。</p>
           <div className="tiles" style={{ marginTop: 12 }}>
             {STREAM_TYPES.map((t) => (
               <TileLink
