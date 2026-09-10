@@ -11,6 +11,7 @@ import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
 import Icon from "@/components/ui/IconCore";
 import CardOne from "@/components/cards/CardOne";
+import ReadAgain from "@/components/me/ReadAgain";
 import { useCards, type PlanDays } from "@/components/cards/cards";
 import { Pedestal } from "./art";
 
@@ -78,8 +79,12 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   /* あやと島カード（#173）。あやとの言葉:「/friends で、持ってるカード
      リスト見れたら面白い」。**図鑑の1枚の中に入れる。**
      図鑑は「その人が誰か」を1枚にまとめる紙なので、その人のもらった
-     カードもその紙の欄の1つ。一覧のマスの下に別の並びを足さない。 */
-  const { cards } = useCards();
+     カードもその紙の欄の1つ。一覧のマスの下に別の並びを足さない。
+
+     **読めなかった日に、欄ごと消さない**（#34 #36 #43）。消すと「この人は
+     まだもらっていない」と同じ絵になる。読めていないことを欄の中で言って、
+     読み直す道を置く。 */
+  const { cards, read: cardsRead, reload: reloadCards } = useCards();
   const here = useOnIslandToday();
   /* 一緒にいた日数（#91）。読めるまでは焼き込みの値を出す */
   const liveDays = useResidentDays();
@@ -169,7 +174,18 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 絵で突き合わせる（`components/cards/cards.ts` が
                 チャンネル→絵を引いている）ので、名前を出していない人でも
                 自分の絵のカードは分かる。まだ配られていないあいだは、
-                欄ごと出さない（0枚を22人ぶん並べても何も分からない）。 */}
+                欄ごと出さない（0枚を22人ぶん並べても何も分からない）。
+
+                **ただし「読めなかった」で消さない。** 配られていないのか
+                届かなかったのかが、見ている人に区別できなくなる。 */}
+            {cardsRead === "down" && (
+              <div className="rzk-wide rzk-cards">
+                <dt>もらったカード</dt>
+                <dd>
+                  <ReadAgain what="カード" onRetry={reloadCards} />
+                </dd>
+              </div>
+            )}
             {mine.length > 0 && (
               <div className="rzk-wide rzk-cards">
                 <dt>もらったカード</dt>

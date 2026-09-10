@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Icon from "@/components/ui/IconCore";
+import ReadAgain from "@/components/me/ReadAgain";
 import { byPhoto, useCards } from "./cards";
 
 /**
@@ -21,6 +22,14 @@ import { byPhoto, useCards } from "./cards";
  * まだ1枚も無いあいだ（旅の前・名簿が入る前）は、絵の代わりに1行だけ置く。
  * 行き先の札は消さない。**「まだ何も無い」で終わらせない**という決まりの、
  * いちばん軽い形（`docs/island-design.md` 4章）。
+ *
+ * ## 「まだ1枚もありません」は、読めた上での0枚にだけ言う（#34 #36 #43）
+ *
+ * ここは読めなかった日にも同じ1行を出していた。カードの口が落ちただけで
+ * 「まだ1枚もありません」と言い切るのは、**待たせているのではなく嘘をつく**
+ * ことになる。読めなかったときは、その顔を出して読み直す道を置く
+ * （`components/me/ReadAgain.tsx`。言い回しは島じゅうで1つ）。
+ * **行き先の札はどちらでも消さない。** `/cards` は落ちていない。
  */
 export default function CardStrip({
   max = 2,
@@ -30,7 +39,7 @@ export default function CardStrip({
      カード置き場が挟まる。1段で終わる枚数にする */
   max?: number;
 }) {
-  const { cards } = useCards();
+  const { cards, read, reload } = useCards();
   /* **写真でまとめてから出す。** 素の並びの先頭を2枚取ると、同じ写真が
      2つ出る（本番の 9/6 の夜景が、いま4人ぶんある）。 */
   const some = byPhoto(cards ?? []).slice(0, max);
@@ -42,22 +51,24 @@ export default function CardStrip({
         その日の写真に、キャラクターを1人だけ入れて持って帰れます。
       </p>
 
-      {cards === null && (
+      {read === "wait" && (
         <div className="wait is-card" aria-hidden>
           <span />
           <span />
         </div>
       )}
 
-      {/* 読めなかったときも、まだ1枚も無いときも、同じこの1行でよい。
-          この面に来た人には、どちらの話も関係が無い */}
-      {cards !== null && cards.length === 0 && (
+      {/* 読みに行けなかった。**0枚とは別の顔にする。** */}
+      {read === "down" && <ReadAgain what="カード" onRetry={reload} />}
+
+      {/* **「まだ1枚もありません」と言えるのは、読めた上での0枚だけ。** */}
+      {read === "ok" && some.length === 0 && (
         <p className="muted akd-note">
           まだ1枚もありません。旅のその日の写真が貼られると、ここに並びます。
         </p>
       )}
 
-      {cards !== null && some.length > 0 && (
+      {some.length > 0 && (
         <div className="akd-shelf akd-strip-shelf">
           {some.map((g) => (
             /* 押せるのは1か所だけにする。マスそれぞれを行き先にすると、

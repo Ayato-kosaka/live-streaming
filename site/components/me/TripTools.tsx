@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  getState,
-  postCurrent,
-  postNordicLog,
-  type NordicLogEntry,
-} from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getState, postCurrent, postNordicLog } from "@/lib/api";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { DAYS } from "@/content/nordic";
 import { TRIP_PLACES, tripCity } from "@/content/tripPlaces";
-import { LOG_SEEDS, loadNordicLog, putNordicLog } from "@/components/nordic/log";
+import { LOG_SEEDS, putNordicLog, useNordicLogState } from "@/components/nordic/log";
+import ReadAgain from "./ReadAgain";
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
    1バイトも減らない。旅の道具はあやとの画面にしか降りてこない。 */
@@ -32,6 +28,18 @@ const dayName = (d: (typeof DAYS)[number]) =>
  * **あちらは「その日のページを開いた人」が書く形**で、日が決め打ち。
  * ここは旅の途中の本人が開くので、日を選ぶところから始まる。
  * 書き出しの見本は同じもの（`LOG_SEEDS`）を出す。
+ *
+ * ## 読めなかったことを言う（#34 #36 #43）
+ *
+ * ここは `loadNordicLog()` を待っていた。あちらは**読めた日にしか返事を
+ * しない**ので、電波が細いと約束が解けないまま止まる。画面には
+ * 何も出ないのに、**空の欄と「入れる」だけが出ていた。**
+ * `POST /nordic/log` は同じ日に書くと上書きなので、山の中で開いて打つと
+ * **前に書いたものが消える**（#43 で `DayLog` の側は塞いだ）。
+ *
+ * 1日ぶんのページと同じものを見る（`useNordicLogState`）。読めなかったら
+ * そう言って、**書ける口は開かない。** 読み直しは向こうが持っている
+ * （`online`・画面に戻ってきた・押されたとき）。
  */
 export function TripLog() {
   const { token } = useAuth();
@@ -44,13 +52,11 @@ export function TripLog() {
   });
   /** サーバーから持ってきた、その日の中身。打ち始めたかどうかの目印にする */
   const filled = useRef<{ day: string; body: string }>({ day: "", body: "" });
-  const [log, setLog] = useState<NordicLogEntry[] | null>(null);
+  /* 旅ぜんぶぶんと、**読めたかどうか**。1日ぶんのページ・旅程表の印と
+     同じものを見る（`components/nordic/log.ts`）。 */
+  const { log, read, reload } = useNordicLogState();
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadNordicLog().then(setLog);
-  }, []);
 
   /* 開いた日を決める。**今日にいちばん近い、過ぎている行。**
      旅の途中に開くので、たいていは「今日の行」で当たる。 */
@@ -65,15 +71,19 @@ export function TripLog() {
   }, [d.day]);
 
   /* 選んだ日にもう書いてあれば、それを出す。**打ちかけの字は上書きしない。**
-     いま出ている字が、前に入れたサーバーの字とそのまま同じときだけ差し替える。 */
+     いま出ている字が、前に入れたサーバーの字とそのまま同じときだけ差し替える。
+
+     **読めていないあいだは触らない。** `read !== "ok"` のときの `log` は
+     空（＝読めたぶんが無い）なので、そのまま入れると端末に残っている
+     打ちかけを空で消すことになる。 */
   useEffect(() => {
-    if (!log || !d.day) return;
+    if (read !== "ok" || !d.day) return;
     if (d.body && d.body !== filled.current.body) return;
     const now = log.find((x) => x.day === d.day);
     filled.current = { day: d.day, body: now?.body ?? "" };
     put({ body: now?.body ?? "", video: now?.video ?? "", date: now?.date || d.date });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [log, d.day]);
+  }, [log, read, d.day]);
 
   const send = async () => {
     const body = d.body.trim();
@@ -87,8 +97,8 @@ export function TripLog() {
         { day: d.day, date: d.date || undefined, body, video: d.video.trim() || undefined },
         t,
       );
+      // 配っているほうを入れ替える。ここだけで持たない（旅程表の印も同じものを見る）
       putNordicLog(r.log);
-      setLog((cur) => [...(cur ?? []).filter((x) => x.day !== r.log.day), r.log]);
       filled.current = { day: d.day, body };
       setState("done");
       // 端末の控えだけ片づける。欄の字は残す（書き直しはよく起きる）
@@ -99,7 +109,7 @@ export function TripLog() {
     }
   };
 
-  const has = !!log?.find((x) => x.day === d.day);
+  const has = read === "ok" && !!log.find((x) => x.day === d.day);
 
   return (
     <div className="dform mp-tool">
@@ -108,6 +118,10 @@ export function TripLog() {
           <Icon name="alert" size={13} /> いま電波が届いていません。打っておけば端末に残ります。
         </p>
       )}
+      {/* 読みに行けなかった。**いま何が書いてあるかを読めていないので、
+          「入れる」は出さない**（上書きになる。#36 #43）。
+          打った字は端末に残るので、電波が戻ってから送れる。 */}
+      {read === "down" && <ReadAgain what="その日の話" onRetry={reload} />}
       <label className="nph-post-row">
         <span>どの日の</span>
         <select value={d.day} onChange={(e) => put({ day: e.target.value })}>
@@ -115,7 +129,9 @@ export function TripLog() {
             <option key={x.id} value={x.id}>
               {dayName(x)}
               {x.date ? `（${md(x.date)}）` : ""}
-              {log?.some((l) => l.day === x.id) ? " ・書いた" : ""}
+              {/* **読めた日にだけ印を出す。** 読めていないときの空を
+                  「まだ書いていない」と読ませない（上の札がそう言っている） */}
+              {read === "ok" && log.some((l) => l.day === x.id) ? " ・書いた" : ""}
             </option>
           ))}
         </select>
@@ -159,7 +175,7 @@ export function TripLog() {
       </label>
       <button
         className="mp-send"
-        disabled={state === "sending" || !d.body.trim()}
+        disabled={state === "sending" || !d.body.trim() || read !== "ok"}
         onClick={send}
       >
         {state === "sending" ? "送っています…" : has ? "書き直す" : "入れる"}
@@ -239,24 +255,82 @@ export function TripPlace() {
   const [err, setErr] = useState<string | null>(null);
   /** 送ったあと、島がその場所をどう受け取ったか */
   const [got, setGot] = useState<string | null>(null);
+  /** 島に入っているものを読めたか。**「読んでいる最中」と混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 落ちた回数。読み直す間隔を倍にしていくのに使う */
+  const miss = useRef(0);
+  /* いまの読めぐあい。**電波が戻ったとき、落ちているときだけ読み直す**ために持つ */
+  const nowRead = useRef<Read>("wait");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
+
+  /**
+   * 島に入っているものを読む。
+   *
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない（#277）。
+   */
+  const load = useCallback(
+    (showWait: boolean) => {
+      if (showWait) {
+        nowRead.current = "wait";
+        setRead("wait");
+      }
+      /* **返事が来ないのも「読めなかった」**（`withRead` が12秒で見切る）。
+         前はここが `catch(() => setNow({}))` で、今週やることが
+         「読んでいます…」のまま何分でも残っていた。 */
+      withRead(getState())
+        .then((s) => {
+          if (!alive.current) return;
+          setNow(s.current ?? {});
+          setWeek(s.current?.week ?? []);
+          nowRead.current = "ok";
+          setRead("ok");
+          miss.current = 0;
+          if (filled.current) return;
+          filled.current = true;
+          put({
+            place: d.place || s.current?.place || "",
+            word: d.word || s.current?.word || "",
+            theme: d.theme || s.current?.theme || "georgia",
+          });
+        })
+        .catch(() => {
+          if (!alive.current) return;
+          nowRead.current = "down";
+          setRead("down");
+          miss.current += 1;
+          timers.current.push(
+            setTimeout(() => load(false), Math.min(2000 * 2 ** (miss.current - 1), 30000)),
+          );
+        });
+    },
+    // 打ちかけを消さないための読み取りしかしていない（入れるのは1回だけ）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
-    getState()
-      .then((s) => {
-        setNow(s.current ?? {});
-        setWeek(s.current?.week ?? []);
-        if (filled.current) return;
-        filled.current = true;
-        put({
-          place: d.place || s.current?.place || "",
-          word: d.word || s.current?.word || "",
-          theme: d.theme || s.current?.theme || "georgia",
-        });
-      })
-      .catch(() => setNow({}));
-    // 開いたときに1回だけ
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    alive.current = true;
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (nowRead.current === "down") load(false);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [load]);
 
   const send = async () => {
     const place = d.place.trim();
@@ -306,9 +380,14 @@ export function TripPlace() {
           <Icon name="alert" size={13} /> いま電波が届いていません。打っておけば端末に残ります。
         </p>
       )}
-      <p className="mp-now">
-        いまは <b>{now?.place ?? "…"}</b>
-      </p>
+      {/* 読みに行けなかった。**「いまは …」のまま黙らない。**
+          いま島に何が出ているかを読めていないので、そう言って読み直す道を出す。 */}
+      {read === "down" && <ReadAgain what="島に出ている場所" onRetry={() => load(true)} />}
+      {read !== "down" && (
+        <p className="mp-now">
+          いまは <b>{now?.place ?? "…"}</b>
+        </p>
+      )}
       <label className="nph-post-row">
         <span>いる場所</span>
         <input
@@ -360,7 +439,11 @@ export function TripPlace() {
           全部打ち直すためのものではないので、消すのを先に置く。 */}
       <div className="trip-week">
         <span className="trip-week-h">今週やること</span>
-        {week === null ? (
+        {/* **読めなかったことを、「1行も出ていません」に倒さない。**
+            押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
+        {read === "down" ? (
+          <ReadAgain what="今週やること" quiet />
+        ) : week === null ? (
           <p className="trip-week-none">読んでいます…</p>
         ) : week.length === 0 ? (
           <p className="trip-week-none">いまは1行も出ていません。</p>
