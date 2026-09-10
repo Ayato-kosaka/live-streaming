@@ -65,8 +65,13 @@ export default async function ChapterIsland({
   const i = CHAIN.indexOf(c);
   const prev = near(CHAIN[i - 1]);
   const next = near(CHAIN[i + 1]);
-  // まだ始まっていない章は、建てるものが違う（`docs/island-atlas.md` 4章）
-  const spec = c.from ? isleSpec(c, prev, next) : nordicSpec(c, prev);
+  /* **`nordicSpec` は「まだ始まっていない章」の spec ではなく、北欧旅の spec。**
+     中の板は `/nordic` を指し、「なぜ北欧まで行くのか」と書いてある。
+     `c.from` の有無だけで振り分けていたので、アルバニアの島に北欧の板が5枚建ち、
+     「これから歩く国 6カ国、0日」まで出ていた（島ぜんぶが別の旅のもの）。
+     出発の日の決まった旅（`opensAt`）を持つ章だけ、その旅の spec で建てる。
+     日どりの決まっていない島は、素材のあるぶんだけ建って、船着き場は残る。 */
+  const spec = !c.from && c.opensAt ? nordicSpec(c, prev) : isleSpec(c, prev, next);
 
   return (
     <>
