@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 誰でも入れる面になった。索引から外す理由がなくなっている。
     "/next/new",
     // これからの大きい企画。専用ページを持つものはここに足す。
-    "/nordic", "/nordic/guide", "/nordic/photos",
+    "/nordic", "/nordic/guide",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
     "/privacy",
   ];

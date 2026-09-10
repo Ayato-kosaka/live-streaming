@@ -95,7 +95,6 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const v = r?.icon ? say[r.icon] : undefined;
   const name = r?.icon ? show.get(r.icon)?.name : undefined;
   const spot = r?.icon ? here.get(r.icon) : undefined;
-  const named = list.filter((x) => show.get(x.icon!)?.name).length;
   /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
   const mine = (cards ?? []).filter((c) => c.icon === r?.icon);
 
@@ -255,7 +254,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
       {here.size > 0 && (
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
-          マスの角が光っているのが、その人たちです。近くまで行くと、向こうから話しかけてきます。
+          角が光っているマスの人。近くまで行くと、向こうから話しかけてくる。
           <Link href="/">
             島へ会いに行く
             <Icon name="right" size={13} />
@@ -265,10 +264,6 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
 
       <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
         いま{list.length}人ぶんの絵があります。
-        {named > 0
-          ? `そのうち${named}人が、島に名前を出すことにしてくれました。`
-          : "名前を出すかどうかは本人が決めるので、いまは誰も出していません。"}
-        セリフは、その人が配信で書いてきたコメントから口調だけを写したものです。
       </p>
     </>
   );

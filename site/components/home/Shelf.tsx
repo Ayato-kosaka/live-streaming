@@ -96,7 +96,7 @@ export default function Shelf() {
       href: "/streams",
       mark: "tower",
       name: "配信",
-      note: "配信は5つの型でできてる。型ごとにまとめて見られる",
+      note: "クッキング、おさんぽ、アプリ作り、企画会議、月末",
       n: <LiveNumber statKey="streams" fallback={s.streams} />,
       unit: "本",
       sample: (

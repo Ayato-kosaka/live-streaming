@@ -365,8 +365,7 @@ export default function RouletteBox() {
       <section className="panel paper">
         <h2>ここは、あやとのところ</h2>
         <p className="muted">
-          配信のルーレットを回すところなので、あやとだけが開けます。
-          島のほかの面は、そのまま見られます。
+          ここはあやとだけ。島のほかの面は、そのまま見られます。
         </p>
       </section>
     );
@@ -565,10 +564,7 @@ export default function RouletteBox() {
         }
       >
         <p className="rc-note">
-          直に読むと、YouTube の1日の割り当てを食いません。読むのに使う
-          トークンは Doneru が出したもので、減るのは Doneru 側のぶんです。
-          Functions ごしだと、こちらの枠（1日10,000単位）をコメント1回あたり
-          5単位ずつ削ります。
+          直に読めるなら、そちら。Functions ごしは YouTube の1日の枠を食う。
         </p>
         <div className="rc-waits">
           <button
@@ -599,8 +595,6 @@ export default function RouletteBox() {
           {doneru?.set ?
             `入っています（末尾 ${doneru.tail}）。入れ直すときだけ、下に打ってください。` :
             "アラートボックスの OBS の URL の、?key= のあとの文字列です。"}
-          {" "}
-          鍵はサーバーに置いたままで、この画面にも書き出したものにも入りません。
         </p>
         <div className="dform rc-add">
           <input

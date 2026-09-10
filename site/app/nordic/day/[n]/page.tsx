@@ -248,8 +248,7 @@ function Hitch({ leg }: { leg: Leg }) {
           </dd>
         </div>
       </dl>
-      <p className="ndhh-src">道と国境は地図から。立つところと難しさは走る前の見立てです。</p>
-    </div>
+          </div>
   );
 }
 
@@ -551,8 +550,8 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           街名を書かない。旅程は #91 で一度ぜんぶ変わっていて、そのとき
           手で書いた街名だけが古いまま残る。
 
-          地図は全体図と同じ絵（`content/nordic/map.json`）を拡大したもので、
-          外の地図サービスは足していない。 */}
+          地図は OpenStreetMap の実データを焼いたもの（`tools/nordic/citymap.py`）。
+          外の地図サービスを画面から呼ぶことはしない（書き出しに全部入っている）。 */}
       {goCities.map((c) => (
         <section key={c.city} className="panel paper" id={`want-${c.city}`}>
           <h2>{c.city}で見たいもの</h2>
@@ -579,7 +578,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             <div key={c.city} className="folds ndcity">
               <Fold
                 title={`${c.city}で見たいもの`}
-                lead={`寄るかどうかは、これから決まります。${c.items.length}件`}
+                lead={`通り道にある${c.items.length}件`}
               >
                       <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (

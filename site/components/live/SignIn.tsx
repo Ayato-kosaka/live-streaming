@@ -29,8 +29,10 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
   if (user) {
     return (
       <Link className="tile" href="/me">
-        {user.photo ? (
-          <img className="tile-icon is-round" src={user.photo} alt="" />
+        {/* 顔は**毎晩入れ直る `channelPhoto`**。ログインした日のまま止まる
+            `photo` を出すと、ここだけ古い顔になる（`docs/island-misses.md` #1）。 */}
+        {user.channelPhoto ? (
+          <img className="tile-icon is-round" src={user.channelPhoto} alt="" />
         ) : (
           <img className="tile-icon" src="/sprites/hut-home.webp" alt="" />
         )}
@@ -55,15 +57,12 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
     <div className="signin">
       <b>YouTubeのアカウントでログインすると</b>
       <ul>
-        <li>出した企画が、自分のものだと分かる</li>
-        <li>スマホとパソコンで、同じ人として扱われる</li>
-        <li>名前を毎回入れなくていい</li>
+        <li>出した企画が、自分のものになる</li>
+        <li>名前を毎回書かなくていい</li>
       </ul>
       <p className="signin-warn">
-        押すと Google の画面に移ります。このサイトはまだ Google の審査を受けていないので、
-        <b>「このアプリは確認されていません」</b>という警告が出ます。
-        あやとが作ったサイトです。進める場合は「詳細」→「あやと島（安全ではないページ）に移動」を押してください。
-        受け取るのは<b>チャンネル名とアイコンだけ</b>で、動画の投稿や変更はできません。
+        Google の画面に移ります。<b>「このアプリは確認されていません」</b>と出たら、
+        「詳細」→「あやと島（安全ではないページ）に移動」。
       </p>
       <button className="signin-go" onClick={signIn} disabled={busy}>
         {busy ? "つないでいます…" : "YouTubeでログイン"}

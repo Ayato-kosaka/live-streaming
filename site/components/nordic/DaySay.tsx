@@ -53,9 +53,7 @@ export default function DaySay({ items, route }: { items: SayItem[]; route: Stop
       <h2>この日に、言う</h2>
       {left.length > 0 ? (
         <>
-          <p className="muted">
-            まだ決まっていません。押すと数に入ります。名前は残りません。
-          </p>
+          <p className="muted">まだ決まっていません。押すだけでいい。</p>
           <ul className="nasks">
             {left.map((i) => (
               <li key={i.leg} className="nask">
@@ -67,7 +65,7 @@ export default function DaySay({ items, route }: { items: SayItem[]; route: Stop
           </ul>
         </>
       ) : (
-        <p className="muted">この日は、もう越えました。聞いた答えだけ残しておきます。</p>
+        <p className="muted">この日は、もう越えました。</p>
       )}
       {done.map((i) => (
         <Answer key={i.leg} leg={i.leg} seq={i.seq} fork={i.fork} />

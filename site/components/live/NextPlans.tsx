@@ -141,9 +141,6 @@ export default function NextPlans() {
       {rest.length > 0 && (
         <section className="panel paper">
           <h2>このあと、どこへ行くんだろう</h2>
-          <p className="muted">
-            石の上の日付が、その企画の日。押すと、その場で中身が開きます。
-          </p>
           {/* 飛び石は1つ 60px ほどだが、日付の決まった企画は増える一方。
               **どこまで先を見せるかを決めておく**（#225）。 */}
           <Longer items={rest} first={6} step={12} unit="つ" className="nx-road">
@@ -159,7 +156,6 @@ export default function NextPlans() {
       {done.length > 0 && (
         <section className="panel paper">
           <h2>もう行ってきた</h2>
-          <p className="muted">貼ってもらった付箋も、そのまま残っています。</p>
           {/* 終わった企画は**1つも減らない。** 何年ぶんでも下に積み上がるので、
               これからより短く出す。読み返す人は押して出す。 */}
           <Longer items={done} first={4} step={12} unit="つ" className="nx-road">

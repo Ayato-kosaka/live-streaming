@@ -5,6 +5,7 @@ import { Gull } from "../island/Guide";
 import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
+import HashJump from "./HashJump";
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -210,6 +211,10 @@ export default function PageShell({
   const here = crumbs?.length ? crumbs[crumbs.length - 1].label : undefined;
   return (
     <>
+      {/* `#…` 付きで着いたとき、その場所まで送る。**面が出てから伸びるので、
+          ブラウザ任せでは着かない**（`components/ui/HashJump.tsx`）。
+          島の面はどこも中身を取りにいくので、ここ1か所で持つ。 */}
+      <HashJump />
       <IslandHeader current={current} here={here} />
       <main className="page">
         {/* 現在地の行。残るのはパンくずだけなので、

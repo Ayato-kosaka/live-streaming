@@ -266,7 +266,7 @@ export default function TripNow({
             <span className="tnow-count-l">ストックホルムまで</span>
             <span className="tnow-count-n is-wait">数えています</span>
             <span className="tnow-count-w">
-              いまいる街が届いたら、残りの距離を出します。ぜんぶで {hitchKm.toLocaleString()}km
+              ぜんぶで {hitchKm.toLocaleString()}km
             </span>
           </div>
         ) : (

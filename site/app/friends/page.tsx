@@ -4,7 +4,6 @@ import { LiveNumber } from "@/lib/liveStats";
 import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
 import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
-import Fold from "@/components/ui/Fold";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
 import { PLAN_BY_DAY } from "@/content/planDays";
@@ -12,7 +11,7 @@ import { FriendsMark } from "@/components/live/art";
 
 export const metadata: Metadata = {
   title: "愉快な仲間達",
-  description: "島に住んでいる仲間たち。名前は出しませんが、みんなちゃんといます。",
+  description: "毎晩22時に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
 };
 
 /**
@@ -38,7 +37,7 @@ export default function FriendsPage() {
       <PageHead
         mark={<FriendsMark />}
         title="住んでる人"
-        lead="毎晩22時に集まってくる、愉快な仲間達。名前は出しませんが、ちゃんとここにいます。"
+        lead="毎晩22時に集まってくる、愉快な仲間達。"
       />
 
       <div className="pap-mat">
@@ -64,7 +63,6 @@ export default function FriendsPage() {
             <FriendsWall plans={PLAN_BY_DAY} />
             <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
               自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
-              しばらく来ていなかった人には「久しぶり」と言いますが、空いた日数は数えていません。
             </p>
           </section>
 
@@ -75,7 +73,7 @@ export default function FriendsPage() {
                   <LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />
                 </b>
                 <span>いまの島の住人</span>
-                <i>直近90日で5日以上</i>
+                <i>ここ3ヶ月の常連</i>
               </div>
               <div>
                 <b>{RESIDENTS.length}</b>
@@ -104,9 +102,7 @@ export default function FriendsPage() {
             <p>
               100円から投げ銭してくれた方に、1人ずつ描いています。描いた絵は投げ銭の演出に出てきて、そのままこの島を歩きます。
             </p>
-            <p>
-              できた絵は、下のGoogleドライブから持っていけます。アイコンに使ってもらって大丈夫。
-            </p>
+            <p>アイコンに使ってもらって大丈夫。</p>
             <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <a className="pap-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
                 <img src={doneru.logo} alt="" />
@@ -129,38 +125,16 @@ export default function FriendsPage() {
 
           <section className="pap-sec">
             <h2 className="pap-h">名前を出すか、出さないか</h2>
-            {/* 決まりの本文は、読む人が自分の側だけ読めば済むもの。
-                図鑑を見に来た人の前に3段落ぶん広げておく理由が無いので畳む
-                （`docs/island-design.md` 4章）。行き先の札だけは畳まず外に出す。 */}
-            <Fold title="決まりは2通り。どちらでも企画は出せる" lead="ログインしないで使う / YouTubeでログインする">
-              <ul className="pap-rule">
-                <li>
-                  <b>ログインしないで使う</b>
-                  <i>
-                    企画を出すのに、名前もログインも要りません。名前の欄は空のままでも貼れて、
-                    書けばその名前だけが札に出ます。
-                  </i>
-                </li>
-                <li>
-                  <b>YouTubeでログインする</b>
-                  <i>
-                    名前とアイコンが札に出ます。出したくないほうは「島での見え方」で
-                    片方ずつ消せて、両方消しても企画は出せます。
-                  </i>
-                </li>
-              </ul>
-              <p className="pap-note">
-                「島の住人」は、直近90日のあいだに5日以上コメントしてくれた人の数です。
-                個人ごとのコメント数や順位は出しません。出席日数は月末配信のほうで表彰しています。
-                図鑑の番号も、並べるための通し番号であって順位ではありません。
-              </p>
-            </Fold>
+            {/* 決まりを3段落ぶん広げていたところ。読む人がすることは
+                「島での見え方を決める」の1つだけなので、その札だけ残す
+                （`docs/island-misses.md` 決めごと7）。 */}
+            <p>名前もアイコンも、出すか出さないかは自分で決められる。</p>
             <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
-              <Link className="pap-go" href="/board">
+              <Link className="pap-go" href="/me">
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>
                   <b>島での見え方を決める</b>
-                  <i>ログインすると、企画をだす面の下に出てくる</i>
+                  <i>じぶんのことへ</i>
                 </span>
                 <Icon name="right" size={14} />
               </Link>

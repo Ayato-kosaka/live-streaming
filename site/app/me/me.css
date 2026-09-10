@@ -9,59 +9,90 @@
    道具の中の送り（`.mp-send`）は 56px。走っている車の中でも押せる大きさ。
    ========================================================= */
 
-/* --- いま入っている人 -------------------------------------------------
-   見出しのすぐ下に置く1行。**押しどころではないので、完全に平ら。** */
-.mp-who {
+/* --- 立ち位置（`components/me/MeHero.tsx`） ---------------------------
+   顔・キャラクター・名前・いっしょにいた日数を1枚にまとめたところ。
+   **押しどころではないので、完全に平ら。** 厚みを付けると、押して何も
+   起きないものを島に1つ増やすことになる（`docs/island-design.md` 3-3）。
+
+   キャラクターの上に YouTube の顔を重ねる。**並べない。**
+   2つ並べると「どちらが自分か」を読ませることになる。 */
+.mh {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
   /* 下は 32px 空ける。**次の紙の見出しの札は、紙の上へ 32px はみ出す**
      （`.panel > h2:first-child` の負の余白）ので、詰めると札がここに重なる。 */
-  margin: var(--sp-4) 0 var(--sp-6);
-  padding: var(--sp-2) var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-6);
+  padding: var(--sp-3);
   border: 1.5px solid var(--rule);
   border-radius: var(--r-2);
   background: color-mix(in srgb, var(--marker) 14%, transparent);
 }
-.mp-face {
-  flex: none;
-  width: 44px; height: 44px;
+.mh-pics { position: relative; flex: none; display: block; }
+.mh-chara {
+  display: block;
+  width: 84px; height: 84px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.mh-face {
+  display: block;
+  width: 60px; height: 60px;
   border-radius: 50%;
   object-fit: cover;
   background: var(--paper);
   /* 地面に落ちる影だけ。厚みを付けると押せるものに見える */
   box-shadow: var(--shadow-1);
 }
-/* 島のキャラクターが割り当たっていない人の顔。
-   **ただの白丸に字を置かない。** 島のものは全部、太い縁と紙の地と影を持って
-   いる。それが無いと「絵の読み込みに失敗した」ように見える。実際に
-   あやとから「上部のアイコンもバグるようになった。デグレです」と言われた
-   （`docs/island-misses.md`）。**受け皿も、島の顔つきにする。** */
-.mp-face-none {
+/* キャラクターがいる人は、その右下に小さく重ねる。
+   **紙の縁を巻く。** 巻かないと、絵と絵が直に触れて切り抜きに見える。 */
+.mh-face.is-badge {
+  position: absolute;
+  right: -6px; bottom: -2px;
+  width: 38px; height: 38px;
+  border: 3px solid var(--paper);
+  box-shadow: var(--shadow-1);
+}
+/* 島のキャラクターも顔も無い人の受け皿。**ただの白丸に字を置かない。**
+   島のものは全部、太い縁と紙の地と影を持っている。それが無いと
+   「絵の読み込みに失敗した」ように見える。実際にあやとから
+   「上部のアイコンもバグるようになった。デグレです」と言われた
+   （`docs/island-misses.md` #7）。 */
+.mh-face-none {
   display: grid;
   place-items: center;
   border: var(--bw-2) solid var(--frame-deep);
   background:
     radial-gradient(circle at 50% 34%, var(--paper) 0%, var(--paper-2) 72%);
   box-shadow: 0 3px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.75);
-  font-size: var(--fs-h3);
+  font-size: var(--fs-h2);
   font-weight: 900;
   /* 字は地に沈める。**主役は名前のほう** */
   color: var(--ink-2);
   letter-spacing: 0;
 }
-.mp-who-t { display: grid; gap: 2px; min-width: 0; }
-.mp-who-t b {
-  font-size: var(--fs-h3);
+.mh-face-none.is-badge { font-size: var(--fs-note); }
+.mh-t { display: grid; gap: var(--sp-1); min-width: 0; }
+.mh-t b {
+  font-size: var(--fs-h2);
   font-weight: 900;
   line-height: var(--lh-head);
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
-.mp-who-t i {
+/* いっしょにいた日数。**この面で唯一の数字**なので、数だけ大きくする。 */
+.mh-t i {
   font-style: normal;
-  font-size: var(--fs-min);
-  font-weight: 700;
+  font-size: var(--fs-note);
+  font-weight: 800;
   color: var(--ink-2);
+}
+.mh-t i em {
+  font-style: normal;
+  margin-right: 2px;
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
 }
 
 .mp-small { font-size: var(--fs-note); }
@@ -82,7 +113,24 @@
 @media (min-width: 560px) {
   .mp-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+/* じぶんのもの（付箋・企画・カード）は3つ。折らずに1列で並ぶ。 */
+.mp-tabs.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* 机の道具は8つ。**390px でも4列に並べる。** 2列にすると4行になって、
+   札の並びだけで 250px 使う。字は2〜4文字なので、1枚 88px で足りる。 */
+.mp-tabs.is-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* 札の字。3〜4文字で折らせない */
+.mp-tab-l { line-height: 1.2; }
+/* じぶんのものの札に出る数。**開かなくても何枚あるか分かる。** */
+.mp-tab-n {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+}
+.mp-tab:not(.is-on) .mp-tab-n { color: var(--ink-2); }
+
 .mp-tab {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -109,12 +157,15 @@
   box-shadow: var(--pop-push);
 }
 
-.mp-tool { margin-top: var(--sp-3); }
+.mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 書き込む欄は指で押すもの。48px を割らせない（`island-design.md` 3-2）。
    `.dform` の素の欄は 45〜46px しかない。ここだけ持ち上げる。 */
 .mp-tool .nph-post-row input,
 .mp-tool .nph-post-row select,
-.mp-tool .nph-post-row textarea { min-height: 48px; }
+.mp-tool .nph-post-row textarea,
+.mp-tool-body .nph-post-row input,
+.mp-tool-body .nph-post-row select,
+.mp-tool-body .nph-post-row textarea { min-height: 48px; }
 
 /* 送り。**旅の途中に片手で押す唯一の押しどころ**なので、幅いっぱい・56px。 */
 .mp-send {
@@ -246,11 +297,24 @@
   line-height: var(--lh-head);
   color: var(--ink);
 }
+/* 段・日付・さんせいの行。**札（`.chip`）をやめて字だけにした。**
+   札は1つ 28px の高さと左右の余白を持つので、3つ並ぶだけで1件が1行ぶん
+   高くなる。ここは読んで分かればいいだけで、押しどころではない。
+   区切りは中黒。並べても背が伸びない（付箋の `.mp-note-foot` と同じ）。 */
 .mp-plan-t i {
   font-style: normal;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
+  align-items: center;
+  gap: 0;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.mp-plan-t i > span + span::before {
+  content: "・";
+  padding: 0 var(--sp-1);
+  color: var(--rule);
 }
 .mp-go {
   flex: none;
@@ -268,27 +332,6 @@
   box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
 }
 .mp-go:active { transform: translateY(4px); box-shadow: none; }
-
-/* --- 島にいる、じぶん ------------------------------------------------- */
-.mp-chara {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  margin-top: var(--sp-3);
-}
-.mp-chara img {
-  flex: none;
-  width: 96px; height: 96px;
-  object-fit: contain;
-  object-position: center bottom;
-}
-.mp-chara p {
-  margin: 0;
-  font-size: var(--fs-note);
-  font-weight: 700;
-  line-height: 1.8;
-  color: var(--ink-2);
-}
 
 /* --- 島の手入れ（あやとだけ） ----------------------------------------- */
 .mp-care-acts {
@@ -313,7 +356,14 @@
 /* --- 島から出る -------------------------------------------------------
    **畳まない。** 畳みの向こうに置いたせいで見つからなかったのが、
    ここへ移ってきた理由（#152・#163）。 */
-.mp-out { margin-top: var(--sp-5); }
+/* 紙も見出しも置かない。**押しどころが1つあれば、字がそれを言っている。**
+   罫1本で上と離して、面の終わりだと分かるようにする。 */
+.mp-out {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1.5px solid var(--rule);
+  text-align: center;
+}
 .mp-outbtn {
   display: inline-flex;
   align-items: center;
@@ -352,6 +402,10 @@
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .mp-goto:active { transform: translateY(6px); box-shadow: none; }
+/* 紙が続くときは、下を 32px 空ける。**次の紙の見出しの札は、紙の上へ
+   32px はみ出す**（`.panel > h2:first-child` の負の余白）ので、詰めると
+   札がこの板に重なる（撮って気づいた）。 */
+.mp-goto.is-lead { margin-bottom: var(--sp-6); }
 .mp-goto-t { display: grid; gap: 2px; min-width: 0; flex: 1; }
 .mp-goto-t b {
   font-size: var(--fs-body);

@@ -5,8 +5,6 @@ import logging
 import os
 import sys
 
-from google.cloud import firestore
-
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BQ_PROJECT_ID  # noqa: E402
@@ -15,8 +13,15 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("admin")
 
 
-def db() -> firestore.Client:
-    """Firestore クライアント（GitHub Actions のサービスアカウントで動く）。"""
+def db():
+    """Firestore クライアント（GitHub Actions のサービスアカウントで動く）。
+
+    **読み込みは呼ばれたときに行う。** ここを import 文にしておくと、
+    Firestore を1度も触らないスクリプト（手元で数字だけ確かめたいときなど）まで
+    google-cloud-firestore が入っていないと起動できない。
+    """
+    from google.cloud import firestore
+
     return firestore.Client(project=BQ_PROJECT_ID)
 
 
