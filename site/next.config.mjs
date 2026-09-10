@@ -25,8 +25,14 @@ const nextConfig = {
      ずっと「これからの企画」に並ぶ**（あやと 2026-09-10。9月6日に終わった
      フード＆ワイン祭りが、9月10日の HTML でもそう並んでいた）。
      ここで埋めた値はサーバ側とブラウザ側の両方に**同じ文字**で入るので、
-     最初の1枚がずれない。画面が出たあとは、本物の今日で数え直す。 */
-  env: { NEXT_PUBLIC_BUILT_AT: new Date().toISOString() },
+     最初の1枚がずれない。画面が出たあとは、本物の今日で数え直す。
+
+     **外から渡せるようにしてある。** 焼いた答えと今日の答えがずれる日を作らないと、
+     水あわせが落ちているかどうかを**差し込み無しの本物の時計で**確かめられない
+     （時計を差し込むと、差し込みそのものが原因のずれと見分けがつかない。
+     `docs/island-standards.md` 13／`docs/island-misses.md` #30）。
+       NEXT_PUBLIC_BUILT_AT=2026-09-25T00:00:00Z NEXT_DIST_DIR=.next-x npx next build */
+  env: { NEXT_PUBLIC_BUILT_AT: process.env.NEXT_PUBLIC_BUILT_AT || new Date().toISOString() },
 };
 
 export default nextConfig;
