@@ -1,5 +1,7 @@
 /** サイト全体の固定情報。日々変わるものは Firestore(/island-api) 側で上書きする。 */
 
+import { RECIPES } from "./recipes";
+
 export const SITE = {
   name: "あやと島",
   tagline: "あやとと愉快な仲間達",
@@ -123,7 +125,12 @@ export const STATS_FALLBACK = {
   comments: 125262,
   people: 2215,
   countries: 17,
-  recipes: 32,
+  /* **手で書かない。スタンプ帳から数える**（`docs/island-standards.md` 8章）。
+     32 と書いてあって、同じ表紙の棚（`components/home/Shelf.tsx`）は
+     `RECIPES.length` の 37 を出していた。**1つの面の中で数が2つあった。**
+     どちらを押しても行き先は `/kitchen` で、あちらも 37。
+     料理が増えるたびに同じことが起きるので、出どころを1つにする。 */
+  recipes: RECIPES.length,
   since: "2024-10-28",
   updatedAt: "2026-09-04",
 };

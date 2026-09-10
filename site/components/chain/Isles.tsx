@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Icon from "@/components/ui/IconCore";
+import { BUILT_AT } from "@/lib/nightly";
 import { useFund } from "@/components/nordic/fund";
 import {
   CHAIN,
@@ -14,8 +15,6 @@ import {
   chapterNow,
   chapterSpan,
   FUND_GOAL_YEN,
-  NEXT_CHAPTER,
-  NOW_CHAPTER,
   type Chapter,
 } from "@/content/chapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
@@ -72,8 +71,21 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
      （`CLAUDE.md` の「静的書き出し」／`content/chapters.ts`） */
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => setToday(new Date()), []);
-  const nowCh = today ? chapterNow(today) : NOW_CHAPTER;
-  const nextCh = today ? chapterNext(today) : NEXT_CHAPTER;
+  /* **`today` が null のあいだは `new Date()` に落とさない。**
+     `chapterDays(cur, today ?? undefined)` と書くと既定引数の `new Date()` が
+     走るので、焼いた HTML（焼いた日で「440日」）とブラウザの最初の描画
+     （今日で「441日」）が別の字になる。水あわせが落ちて、面ごと描き直される
+     （`Minified React error #418`。焼いた**翌日から毎日**出ていた）。
+     最初の描画は焼いた日の答えを出して、本物の今日で描き直すのは画面が出てから。
+
+     **`NOW_CHAPTER` も、ここでは使えない。** あれは `content/chapters.ts` の
+     いちばん外で `chapterNow()` を呼んだ値で、**ブラウザでは読み込んだ瞬間の
+     時計で数え直される。** 焼いた HTML は「コーカサス周遊・440日」なのに、
+     出発の時刻を過ぎたブラウザでは最初の描画から「北欧周遊・1日」になる。
+     字が食い違うので水あわせが落ちた（出発の 19:30Z を境に、1分刻みで確認）。
+     焼いた日（`BUILT_AT`）を渡せば、焼いた側と最初の描画が必ず同じ答えになる。 */
+  const nowCh = chapterNow(today ?? BUILT_AT);
+  const nextCh = chapterNext(today ?? BUILT_AT);
 
   const main = useMemo(() => CHAPTERS.filter((c) => !c.branchOf), []);
   const branchOf = useMemo(() => {
@@ -85,7 +97,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
   /* 最初に出るのは**いまいる島**。あやとの「今の島が3Dモデル風に出てきて」。
      焼いた答えでまず描いて、画面が出たら今日の答えに差し替える。
      ただし**人が動かしたあとは差し替えない**（見ている島が勝手に変わる） */
-  const [pick, setPick] = useState(NOW_CHAPTER.slug);
+  const [pick, setPick] = useState(() => chapterNow(BUILT_AT).slug);
   const touched = useRef(false);
   useEffect(() => {
     if (!touched.current) setPick(chapterNow(new Date()).slug);
@@ -130,7 +142,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [left, right, branch, parent, go]);
 
-  const days = chapterDays(cur, today ?? undefined);
+  const days = chapterDays(cur, today ?? BUILT_AT);
   const fund = useFund();
   /* **読めなかったことを、0円と同じ絵にしない。**
      `useFund` は読めないときも 0以下のときも null を返す。それを 0% として
@@ -168,7 +180,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
      日どりの決まっていない島は日数を持っていないし、予定の日数を持っている島でも、
      始まる前に「17日」とだけ出せば、もう行ってきた島に見える
      （次の島は上の枝で「17日の予定」と出る）。 */
-  const begun = chapterSpan(cur, today ?? undefined).from != null;
+  const begun = chapterSpan(cur, today ?? BUILT_AT).from != null;
 
   const st = CHAPTER_STATS[cur.slug];
   const isNow = cur.slug === nowCh.slug;
@@ -192,7 +204,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
           if (!c) return null;
           const slot = slotOf(c);
           const at = slot === "at";
-          const d = chapterDays(c, today ?? undefined);
+          const d = chapterDays(c, today ?? BUILT_AT);
           return (
             <Link
               key={isle.slug}
@@ -258,7 +270,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                （`docs/island-atlas.md` 3章）。模型のほうは枠いっぱいに寄せて
                あるので、島どうしの大きさを比べられるのはここだけ。
                下駄も上限も足さない——足したら比べる意味が無くなる */
-            style={{ "--pin": `${(islandRadius(chapterDays(c, today ?? undefined)) * 0.25).toFixed(1)}px` } as React.CSSProperties}
+            style={{ "--pin": `${(islandRadius(chapterDays(c, today ?? BUILT_AT)) * 0.25).toFixed(1)}px` } as React.CSSProperties}
             onClick={() => go(c)}
             aria-label={`${c.name}を見る`}
             aria-current={c.slug === cur.slug ? "true" : undefined}
@@ -365,7 +377,7 @@ function hop(e: React.MouseEvent, run: () => void) {
  * 入れ忘れているあいだ北欧が「これから」のまま、コーカサスが「〜 いま」のままになる。
  */
 function when(c: Chapter, today: Date | null): string {
-  const { from, to } = chapterSpan(c, today ?? undefined);
+  const { from, to } = chapterSpan(c, today ?? BUILT_AT);
   if (from == null) return "これから";
   return `${ym(from)} 〜 ${to == null ? "いま" : ym(to)}`;
 }
