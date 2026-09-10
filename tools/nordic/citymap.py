@@ -239,6 +239,129 @@ def _near(a, b):
     return abs(a[0] - b[0]) < 1e-7 and abs(a[1] - b[1]) < 1e-7
 
 
+
+# ─────────────────────────────────────────────────────────────
+# 海（海岸線から面を組み立てる）
+# ─────────────────────────────────────────────────────────────
+def _perim(p, box):
+    """窓のふちの上の点を、**時計回り**の 0〜4 の目盛りに直す（y は上が正）。
+
+    0=左上 → 1=右上 → 2=右下 → 3=左下 → 4(=0)。
+    海岸線は「進行方向の**右が海**」と決まっているので、ふちを時計回りに
+    たどれば、海のほうを内側に囲える。
+    """
+    x0, y0, x1, y1 = box
+    w, h = x1 - x0, y1 - y0
+    ex, ey = w * 1e-7, h * 1e-7
+    if abs(p[1] - y1) <= ey:
+        return (p[0] - x0) / w
+    if abs(p[0] - x1) <= ex:
+        return 1 + (y1 - p[1]) / h
+    if abs(p[1] - y0) <= ey:
+        return 2 + (x1 - p[0]) / w
+    if abs(p[0] - x0) <= ex:
+        return 3 + (p[1] - y0) / h
+    return None
+
+
+def _corners(box):
+    x0, y0, x1, y1 = box
+    return [(x0, y1), (x1, y1), (x1, y0), (x0, y0)]
+
+
+def sea_polys(chains, box):
+    """海岸線の線から、**海の面**を作る。
+
+    OSM の海は面ではなく `natural=coastline` の線で置かれている（面は世界を
+    1枚にしたものが別に配られていて、Overpass からは取れない）。
+    そのままだと、タリンもヘルシンキも湾が1つも出ない。
+
+    やること:
+      1. 窓で切る。ふちからふちへ抜ける線（run）と、窓の中で閉じる輪（島）に分ける
+      2. run の終わりから、ふちを**時計回り**にたどって次の run の始まりへ渡る。
+         右が海なので、これで海だけを囲める
+      3. 島はそのまま「陸」として、海の上に重ねて描く
+
+    つじつまが合わなければ**何も返さない。** 海の形を間違えて塗ると、
+    陸と海が入れ替わった地図になる（それは無いよりずっと悪い）。
+    """
+    runs, isles = [], []
+    for ch in chains:
+        closed = _near2(ch[0], ch[-1])
+        if closed:
+            r = clip_poly(ch, box)
+            if len(r) >= 3:
+                isles.append(r)
+            continue
+        for run in clip_line(ch, box):
+            ta, tb = _perim(run[0], box), _perim(run[-1], box)
+            if ta is None or tb is None:
+                continue
+            runs.append((ta, tb, run))
+    if not runs:
+        return [], isles
+
+    ends = sorted([(t, "a", i) for i, (t, _, _) in enumerate(runs)]
+                  + [(t, "b", i) for i, (_, t, _) in enumerate(runs)])
+    corners = _corners(box)
+    out, seen = [], set()
+    for start in range(len(runs)):
+        if start in seen:
+            continue
+        poly, cur, guard = [], start, 0
+        while True:
+            guard += 1
+            if guard > len(runs) * 2 + 4:
+                return [], isles       # つじつまが合わない。海は描かない
+            seen.add(cur)
+            poly += runs[cur][2]
+            t = runs[cur][1]
+            nxt = next((e for e in ends if e[0] > t + 1e-9), ends[0])
+            # 通り過ぎるふちの角を足す
+            t2 = nxt[0] if nxt[0] > t else nxt[0] + 4
+            c = math.ceil(t + 1e-9)
+            while c < t2:
+                poly.append(corners[int(c) % 4])
+                c += 1
+            if nxt[1] != "a":
+                return [], isles       # 終わりの次が終わり。組み立てられない
+            if nxt[2] == start:
+                break
+            cur = nxt[2]
+        if len(poly) >= 3:
+            out.append(poly)
+    return out, isles
+
+
+def _near2(a, b):
+    return abs(a[0] - b[0]) < 1e-9 and abs(a[1] - b[1]) < 1e-9
+
+
+def chain_ways(els):
+    """`natural=coastline` の線を、端どうしでつなぐ。"""
+    segs = [[(g["lat"], g["lon"]) for g in (x.get("geometry") or [])]
+            for x in els if (x.get("tags") or {}).get("natural") == "coastline"]
+    segs = [s for s in segs if len(s) >= 2]
+    out = []
+    while segs:
+        cur = segs.pop(0)
+        changed = True
+        while changed:
+            changed = False
+            for i, s in enumerate(segs):
+                if _near(cur[-1], s[0]):
+                    cur += s[1:]
+                elif _near(cur[0], s[-1]):
+                    cur = s[:-1] + cur
+                else:
+                    continue
+                segs.pop(i)
+                changed = True
+                break
+        out.append(cur)
+    return out
+
+
 # ─────────────────────────────────────────────────────────────
 # 種類の割り当て
 # ─────────────────────────────────────────────────────────────
@@ -377,7 +500,11 @@ JA = {
     "Maskavas forštate": "モスクワ地区", "Centrāltirgus": "中央市場",
     "Doma laukums": "ドーム広場",
     # エストニア
-    "Vanalinn": "旧市街", "Tallinna laht": "タリン湾", "Kadriorg": "カドリオルグ",
+    "Vanalinn": "旧市街", "Tallinna laht": "タリン湾",
+    "Soome laht": "フィンランド湾", "Suomenlahti": "フィンランド湾",
+    "Finska viken": "フィンランド湾", "Läänemeri": "バルト海",
+    "Itämeri": "バルト海", "Östersjön": "バルト海", "Bałtyk": "バルト海",
+    "Kopli laht": "コプリ湾", "Paljassaare laht": "パリヤサーレ湾", "Kadriorg": "カドリオルグ",
     "Kesklinn": "中心街", "Kalamaja": "カラマヤ", "Põhja-Tallinn": "北タリン",
     "Kadrioru park": "カドリオルグ公園", "Toompea": "トームペア（丘の街）",
     "Raekoja plats": "ラエコヤ広場", "Vabaduse väljak": "自由広場",
@@ -396,7 +523,7 @@ JA = {
     "Suomenlahti": "フィンランド湾", "Kruunuvuorenselkä": "クルーヌヴオリ湾",
     "Eläintarhanlahti": "エラインタルハ湾",
     # スウェーデン
-    "Gamla stan": "旧市街（ガムラスタン）", "Riddarfjärden": "リッダー湾",
+    "Gamla stan": "旧市街", "Riddarfjärden": "リッダー湾",
     "Djurgården": "ユールゴーデン", "Södermalm": "セーデルマルム",
     "Norrmalm": "ノルマルム", "Östermalm": "エステルマルム",
     "Kungsholmen": "クングスホルメン", "Skeppsholmen": "シェップスホルメン",
@@ -470,7 +597,7 @@ def window(city, spots, geo):
     }
 
 
-def build(city, win, raw, spots_all):
+def build(city, win, raw, coast, spots_all):
     """落としてきたものを、SVG が描ける形にたたむ。"""
     s, w, n, e = win["bbox"]
     (bx0, by0), (bx1, by1) = merc(s, w), merc(n, e)
@@ -483,6 +610,10 @@ def build(city, win, raw, spots_all):
 
     # 1200 幅で 0.9単位（≒ 実寸 3.5m）より細かい曲がりは見えない
     tol = 0.9 * mw / W
+
+    # 海。**いちばん下に敷く。** 陸(.pp)を敷いてから海を重ね、島でまた陸へ戻す
+    sea, isles = sea_polys([[merc(la, lo) for la, lo in ch]
+                            for ch in chain_ways(coast)], box)
 
     polys = {}      # 層 → [(面積, [点…])]
     lines = {}      # 層 → [(長さ, [点…])]
@@ -555,6 +686,22 @@ def build(city, win, raw, spots_all):
     # ── 面。大きいものから、層ごとに1本の path にまとめる
     layers = {}
     used = 0
+    old_shape = []
+    if polys.get("old"):
+        # 旧市街の面。**名前を面の中に置く**ために、あとで使う
+        # `polys` の中身はもう地図の座標（`add_ring` が直してある）。
+        # ここでもう一度 `to()` を掛けると、窓の外へ飛んでいく
+        old_shape = max(polys["old"], key=lambda r: r[0])[1]
+    for name, rings in (("sea", sea), ("isle", isles)):
+        d = []
+        for r in rings:
+            sm = simplify(r, tol * 2.0)
+            if len(sm) < 3:
+                continue
+            d.append(dpath([to(*p) for p in sm], close=True))
+            used += len(sm)
+        if d:
+            layers[name] = "".join(d)
     cap = {"block": 150, "old": 3, "green": 60, "water": 30, "grave": 10,
            "sand": 10, "plaza": 22}
     # **どの層も、大きい面から。** 小さい面は地図の色を変えないので、
@@ -592,7 +739,7 @@ def build(city, win, raw, spots_all):
         layers[layer] = "".join(dpath(pts) for _, pts in rows)
         used += sum(len(p) for _, p in rows)
 
-    return layers, H, to, box, used
+    return layers, H, to, box, used, old_shape
 
 
 def dpath(pts, close=False):
@@ -653,7 +800,42 @@ def _name(t):
     return (t.get("name") or "").split(" / ")[0].split("/")[0].strip()
 
 
-def pick_marks_labels(raw, win, to, H, pins):
+# 札に入る字数。これより長い名前は書かない。**札が地図の1/3を覆う。**
+# 「フレデリック・ショパン博物館」（14字）で、ワルシャワの真ん中が消えた。
+LABEL_CHARS = 10
+
+
+def inside_poly(p, poly):
+    """点が多角形の中か（射線法）。"""
+    x, y = p
+    ok = False
+    for i in range(len(poly)):
+        ax, ay = poly[i]
+        bx, by = poly[i - 1]
+        if (ay > y) != (by > y) and x < (bx - ax) * (y - ay) / (by - ay) + ax:
+            ok = not ok
+    return ok
+
+
+def in_shape_spots(poly, n=7):
+    """多角形の中に、名前を置ける場所の候補を並べる（真ん中に近い順）。"""
+    if len(poly) < 3:
+        return []
+    xs = [p[0] for p in poly]
+    ys = [p[1] for p in poly]
+    cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+    out = []
+    for i in range(n):
+        for j in range(n):
+            x = min(xs) + (max(xs) - min(xs)) * (i + 0.5) / n
+            y = min(ys) + (max(ys) - min(ys)) * (j + 0.5) / n
+            if inside_poly((x, y), poly):
+                out.append((x, y))
+    out.sort(key=lambda p: math.hypot(p[0] - cx, p[1] - cy))
+    return out
+
+
+def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
     """名前の無い目印と、地図に書く名前を選ぶ。"""
     bbox = win["bbox"]
     marks, cand = [], []
@@ -668,8 +850,9 @@ def pick_marks_labels(raw, win, to, H, pins):
         ja = t.get("name:ja") or JA.get(name)
 
         # 名前（日本語で書けるものだけ）
-        if ja and ja not in NO_LABEL:
-            if t.get("natural") == "water" or t.get("waterway") in ("river", "canal"):
+        if ja and ja not in NO_LABEL and ja != city and len(ja) <= LABEL_CHARS:
+            if (t.get("natural") in ("water", "bay") or t.get("place") == "sea"
+                    or t.get("waterway") in ("river", "canal")):
                 labels["water"].append((_score(t), px, py, ja))
             elif t.get("place") in ("suburb", "quarter", "neighbourhood", "island"):
                 labels["district"].append((_score(t), px, py, ja))
@@ -712,17 +895,19 @@ def pick_marks_labels(raw, win, to, H, pins):
     # ── 名前。**札（紙）を敷くので、重なると下の名前が読めなくなる。**
     # 点・目印・すでに置いた札・縮尺・方位のどれとも重ならない場所を探す。
     # 見つからなければ、その名前は**書かない**（重ねて出すより、無いほうがいい）。
-    taken = [(p["x"] - 44, p["y"] - 44, 88, 88) for p in pins]
-    taken += [(m["x"] - 32, m["y"] - 32, 64, 64) for m in marks]
-    taken.append((0, H - 92, 300, 92))          # 縮尺の棒
-    taken.append((W - 108, 0, 108, 108))        # 方位
+    hard = [(p["x"] - 44, p["y"] - 44, 88, 88) for p in pins]
+    hard.append((0, H - 92, 300, 92))           # 縮尺の棒
+    hard.append((W - 108, 0, 108, 108))         # 方位
+    # 目印は絵なので、**旧市街の名前になら譲ってよい。** 旧市街は点が
+    # 15個も固まる街があって、ここを譲らないと名前が1つも置けない
+    taken = hard + [(m["x"] - 32, m["y"] - 32, 64, 64) for m in marks]
     out = []
     for kind in ("water", "district", "park", "square", "spot"):
         rows = labels[kind]
         rows.sort(key=lambda r: -r[0])
         n = 0
         for sc, px, py, ja in rows:
-            if any(l["t"] == ja for l in out):
+            if any(ja in l["t"] or l["t"] in ja for l in out):
                 continue
             # 番号の点のすぐ横に名前を出さない。**同じ場所を2回言うことになる**
             if kind == "spot" and any(math.hypot(px - q["x"], py - q["y"]) < 90
@@ -732,19 +917,47 @@ def pick_marks_labels(raw, win, to, H, pins):
             lw = chip_width(ja, fs)
             lh = fs * 1.5
             spot = None
-            for dx, dy in ((0, 0), (0, -52), (0, 52), (-lw * 0.62, 0), (lw * 0.62, 0),
-                           (0, -104), (0, 104), (-lw * 0.62, -52), (lw * 0.62, -52)):
-                bx, by = px + dx, py + dy
+            # 少しだけ避ける。**遠くへは逃がさない。**
+            # 一度、点が15個も固まる旧市街のために3段ぶん探すようにしたら、
+            # タリンの「旧市街」が旧市街の外へ、リガの「ドーム広場」が川の
+            # 向こう岸へ出た。**間違った場所の名前は、無い名前より悪い。**
+            # 1段で置けなければ書かない。
+            # 横にどける幅は、**札の長さに比例させない。** 比例させると
+            # 長い名前ほど遠くへ飛ぶ（「トームペア（丘の街）」が 1.7km ずれて、
+            # 丘とは別の地区の上に出た）。上限を付ける。
+            step = min(lw * 0.55, 110)
+            spots_try = [(px, py)]
+            # 地区の名前は「面」に付くものなので、2段ぶんまで避けてよい
+            # （200〜400m ずれても、まだその地区の中にいる）。
+            # 川・公園・建物は1段まで。**遠くへ逃がすと嘘になる。**
+            for ring in (1, 2) if kind == "district" else (1,):
+                for ux, uy in ((0, -1), (0, 1), (-1, 0), (1, 0),
+                               (-1, -1), (1, -1), (-1, 1), (1, 1)):
+                    spots_try.append((px + ux * step * ring, py + uy * 52 * ring))
+            # **旧市街だけは、面の中ならどこに置いてもよい。**
+            # そこは面ぜんぶが旧市街なので、真ん中から少しずれても嘘にならない。
+            # 点が15個も固まる街（タリン）は、これが無いと旧市街の名前が
+            # 1つも出せない。名前が出ないと、そこが旧市街だと分からない。
+            block = taken
+            if ja == "旧市街":
+                # 目印（絵）には譲ってもらう。点と、ほかの名前は避ける
+                block = hard
+                if len(old_shape) >= 3:
+                    # **面の中ならどこでもよい。** そこは全部が旧市街なので、
+                    # 真ん中から少しずれても嘘にならない
+                    spots_try = in_shape_spots(old_shape) or spots_try
+            for bx, by in spots_try:
                 r = (bx - lw / 2, by - fs * 0.78, lw, lh)
                 if r[0] < 8 or r[1] < 8 or r[0] + lw > W - 8 or r[1] + lh > H - 8:
                     continue
-                if any(_hit(r, q) for q in taken):
+                if any(_hit(r, q) for q in block):
                     continue
                 spot = (bx, by, r)
                 break
             if not spot:
                 continue
             taken.append(spot[2])
+            hard.append(spot[2])
             out.append({"x": int(round(spot[0])), "y": int(round(spot[1])),
                         "t": ja, "k": kind, "w": int(round(lw)), "fs": fs})
             n += 1
@@ -827,6 +1040,8 @@ def read_tokens():
 # **画面側（nordic.css）の `.cm-*` と同じ値にする。** 片方だけ変えない。
 BASE_CSS = """
 .pp{fill:%(--sand)s}
+.sea{fill:%(--sea-shallow)s;opacity:.62;stroke:%(--sea-mid)s;stroke-width:3}
+.isle{fill:%(--sand)s}
 .block{fill:%(--sand-wet)s;opacity:.34}
 .old{fill:%(--sand-wet)s;opacity:.62;stroke:%(--frame-dark)s;stroke-width:4;stroke-dasharray:14 8}
 .sand{fill:%(--sand-wet)s;opacity:.55}
@@ -888,6 +1103,10 @@ def write_base(slug, w, h, km, layers, tokens):
                    + "".join(f'<path id="{r}" d="{layers[r]}"/>' for r in roads)
                    + "</defs>")
     out.append(f'<rect class="pp" width="{int(w)}" height="{int(h)}"/>')
+    # 海 → 島（陸に戻す）→ そのほかの面、の順。海はいちばん下
+    for a in ("sea", "isle"):
+        if layers.get(a):
+            out.append(f'<path class="{a}" d="{layers[a]}"/>')
     for a in ("block", "old", "sand", "green", "grave", "water", "plaza"):
         if layers.get(a):
             out.append(f'<path class="{a}" d="{layers[a]}"/>')
@@ -995,7 +1214,10 @@ def main():
         raw = {"bbox": raw["bbox"],
                "elements": raw["elements"] + osmfetch.fetch_old(slug, win["bbox"])}
 
-        layers, H, to, box, used = build(city, win, raw, spots)
+        coast = osmfetch.fetch_sea(slug, win["bbox"])
+        layers, H, to, box, used, old_shape = build(city, win, raw, coast, spots)
+        # 湾の名前は海の問い合わせのほうに入っている。名前を選ぶときに混ぜる
+        raw = {"bbox": raw["bbox"], "elements": raw["elements"] + coast}
 
         pins = []
         for i, s in enumerate(win["near"], 1):
@@ -1005,7 +1227,7 @@ def main():
                          "cat": s.get("cat", "see"), "t": s.get("title", ""),
                          "k": glyph(g.get("type", ""), s.get("cat", "see"))})
         spread(pins, H)
-        marks, labels = pick_marks_labels(raw, win, to, H, pins)
+        marks, labels = pick_marks_labels(raw, win, to, H, pins, city, old_shape)
 
         clat, clon = win["center"]
         svg_bytes = write_base(slug, W, H, win["wkm"], layers, tokens)
