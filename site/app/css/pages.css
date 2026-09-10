@@ -464,6 +464,19 @@
   letter-spacing: var(--ls-body);
   color: var(--ink-2);
 }
+/* 前置きの中の行き先（「いまは北欧周遊のとちゅうです」）。
+   **文の中なので板にしない。** 押しどころの高さは、行の高さを変えない
+   上下の余白で稼ぐ（インラインの padding は行の箱を押し広げない）。
+   同じ理由で、隣の行に重なっても取られるものは無い（どちらもただの文字）。 */
+.phead-go {
+  color: var(--ink);
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-deep);
+  padding-block: 16px;
+}
 .phead-mark {
   grid-column: 1;
   grid-row: 1 / span 2;
