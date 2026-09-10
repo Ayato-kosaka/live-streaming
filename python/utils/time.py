@@ -2,38 +2,27 @@
 時間関連ユーティリティモジュール
 
 first_seen_at を基準としたリトライ判定ロジックを提供する。
-24時間ルール・7日間ルールの実装。
+7日間ルールと、次回リトライ時刻の置きかた。
+
+## 24時間ルールをやめた（2026-09-10）
+
+もともと `should_retry_within_24h()` があり、`handle_no_chat_file` は
+「24h + ぶれ3時間 以内なら WAITING、それを過ぎたら FAILED」で分けていた。
+
+**日に1回しか走らないジョブでは、この窓は1回しか通らない。**
+経過時間は 0h → 約22h → 約46h と飛ぶので、2回目の判定はもう 27h の外にいる。
+その結果、チャットがまだ YouTube 側に出ていないだけの配信が2晩目で FAILED になり、
+docstring が言う「7日間は拾い直す」に**構造上ぜったい到達しなかった**。
+
+チャットのファイルが無い／0件は**エラーではなく「まだ出ていない」**なので、
+7日のあいだは WAITING のままにする。本物のエラー（yt-dlp の失敗・パース失敗・
+BigQuery の失敗）は `handle_failure` が引き続き FAILED に倒す。
 """
 
 from datetime import datetime, timedelta
 from typing import Optional
 
 from config import RETRY_DELAY_SECONDS, MAX_RETRY_PERIOD_SECONDS, CRON_JITTER_SECONDS
-
-
-def should_retry_within_24h(first_seen_at: datetime, now: Optional[datetime] = None) -> bool:
-    """
-    初回確認から24時間以内かどうかを判定
-    
-    直近のアーカイブでチャットがまだ利用できない可能性がある期間。
-    この期間内なら WAITING 状態で翌日リトライを推奨。
-    
-    Args:
-        first_seen_at: 初めて処理対象になった時刻
-        now: 現在時刻（テスト用、Noneなら現在時刻を使用）
-        
-    Returns:
-        True: 24時間以内（リトライ推奨）
-        False: 24時間経過（失敗とみなすべき）
-    """
-    if now is None:
-        now = datetime.utcnow()
-    
-    elapsed = now - first_seen_at
-    # **ぶれのぶんだけ窓を広げる。** ちょうど24時間のところに窓の縁を置くと、
-    # 翌晩のジョブが数十分遅れただけで WAITING ではなく FAILED に倒れる。
-    # 倒れても7日間は拾い直すので直りはするが、失敗として記録が残る。
-    return elapsed < timedelta(seconds=RETRY_DELAY_SECONDS + CRON_JITTER_SECONDS)
 
 
 def should_skip_after_7days(first_seen_at: datetime, now: Optional[datetime] = None) -> bool:
