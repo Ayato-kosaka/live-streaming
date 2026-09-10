@@ -14,6 +14,8 @@ import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { placeWord } from "@/lib/stay";
+import NowPlace from "@/components/home/NowPlace";
 import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
@@ -279,7 +281,16 @@ export default function AboutPage() {
             </span>
             <span className="tile-text">
               <b>いま、どこで何してる</b>
-              <i>{NOW_FALLBACK.place}。今夜の配信まであと何時間か、今週やること</i>
+              {/* 「いまどこ」は、表紙の名刺・`/now` と**同じ判定・同じ言い方**で出す
+                  （`lib/stay.ts` の `placeWord`）。ここは `current.place` を素で
+                  出していたので、旅の2日目に撮ると常設のこの面だけ
+                  「ジョージア・トビリシ」と言っていた。**打つ人は走っている車の中に
+                  いて、17日間その欄を直せない。** 部品は表紙と同じものを使う
+                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。 */}
+              <i>
+                <NowPlace baked={placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt)} />
+                。今夜の配信まであと何時間か、今週やること
+              </i>
             </span>
             <Icon name="right" size={16} className="tile-go" />
           </Link>
