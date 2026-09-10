@@ -159,3 +159,23 @@ export function tripAsPlace(updatedAt: string | undefined, now: Date = new Date(
   const t = travelNow(now);
   return t && placeOutdated(updatedAt, now) ? t : null;
 }
+
+/**
+ * 「いまどこ」の**言い方**。面がどれでも、同じ日には同じ字が出る。
+ *
+ * 判定（`tripAsPlace`）は前からここにあったが、**その答えを字にするところは
+ * 面ごとに書いてあった。** `/now` の1画面目だけが `${trip.name}のとちゅう` と
+ * 書いていて、表紙の名刺は判定を通さず `current.place` をそのまま出していたので、
+ * 旅の2日目に表紙が「いま ジョージア・トビリシ」、押した先の `/now` が
+ * 「北欧周遊のとちゅう」と、**1タップで言うことが変わっていた。**
+ *
+ * 言い方をここ1か所に置けば、次に足す面も判定と字を一緒に受け取れる。
+ */
+export function placeWord(
+  place: string,
+  updatedAt: string | undefined,
+  now: Date = new Date(),
+): string {
+  const t = tripAsPlace(updatedAt, now);
+  return t ? `${t.name}のとちゅう` : place;
+}
