@@ -53,7 +53,6 @@ from utils.filesystem import (
     find_chat_file_path,
 )
 from utils.time import (
-    should_retry_within_24h,
     should_skip_after_7days,
     calculate_next_retry_at,
 )
@@ -263,17 +262,23 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
 def handle_no_chat_file(video, result: ProcessingResult, logger: VideoLogger) -> None:
     """
     チャットファイルが存在しない／0件の場合の処理
-    
-    24h ルール:
-    - first_seen_at から 24h 以内 → WAITING（翌日リトライ）
-    - 24h 経過後 → FAILED
-    
+
+    **これはエラーではなく「YouTube 側にまだ出ていない」という状態。**
+    アーカイブのチャットは配信が終わってすぐには出ないことがあるので、
+    7日のあいだは待って拾い直す。
+
     7日ルール:
-    - first_seen_at から 7日超 → SKIPPED
+    - first_seen_at から 7日超 → SKIPPED（もう出ないとみなす）
+    - 7日以内 → WAITING（次の晩にもう一度）
+
+    **24h を過ぎたら FAILED、という分けかたはやめた（2026-09-10）。**
+    ジョブは日に1回しか走らないので経過時間は 0h → 約22h → 約46h と飛び、
+    24h + ぶれ3時間 の窓は**1回しか通らない**。2晩目には必ず窓の外にいるので、
+    「まだ出ていないだけ」の配信が全部 FAILED に倒れていた。
+    本物のエラーを FAILED にするのは `handle_failure` の仕事で、そちらは変えていない。
     """
     now = datetime.now(timezone.utc)
-    
-    # 7日ルールチェック（優先）
+
     if should_skip_after_7days(video.first_seen_at, now):
         video = mark_video_skipped(
             video,
@@ -282,25 +287,21 @@ def handle_no_chat_file(video, result: ProcessingResult, logger: VideoLogger) ->
         )
         result.status = VideoStatus.SKIPPED
         logger.info("7日超過のため SKIPPED に移行")
-    
-    # 24h ルールチェック
-    elif should_retry_within_24h(video.first_seen_at, now):
+
+    else:
+        # 次回は first_seen_at から数える（`calculate_next_retry_at`）。
+        # 2晩目より先では、この値はもう過ぎているので毎晩そのまま拾われる。
+        # 「次に試してよくなる時刻」であって「次に試す時刻」ではないので、
+        # 過ぎたままで正しい。
         next_retry_at = calculate_next_retry_at(video.first_seen_at, now)
         video = mark_video_waiting(video, next_retry_at)
         result.status = VideoStatus.WAITING
-        logger.info(f"24h 以内のため WAITING に移行（次回: {next_retry_at.isoformat()}）")
-    
-    else:
-        # 24h 経過後も取得できない → FAILED
-        video = mark_video_failed(
-            video,
-            result.error_code,
-            result.error_detail,
-            next_retry_at=None
+        elapsed_h = (now - video.first_seen_at).total_seconds() / 3600
+        logger.info(
+            f"チャットがまだ出ていないため WAITING を続ける"
+            f"（初回確認から {elapsed_h:.1f}h / 次回: {next_retry_at.isoformat()}）"
         )
-        result.status = VideoStatus.FAILED
-        logger.warning("24h 経過後も取得できないため FAILED")
-    
+
     update_video(video)
 
 

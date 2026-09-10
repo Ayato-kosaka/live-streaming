@@ -39,11 +39,21 @@
 
 見つけた配信は `PENDING` で入り、チャットが取れれば `SUCCEEDED`。取れなければ
 
-- 見つけてから24時間以内 → `WAITING`（翌日もう一度）
-- 24時間を過ぎても取れない → `FAILED`
-- 見つけてから7日を過ぎても取れない → `SKIPPED`
+- チャットがまだ YouTube 側に出ていない（ファイルが無い／0件）
+  → 見つけてから7日のあいだ `WAITING`（次の晩にもう一度）
+- 本物のエラー（yt-dlp の失敗・パース失敗・BigQuery の失敗）→ `FAILED`
+- どちらも、見つけてから7日を過ぎたら → `SKIPPED`
 
-と落ちていく（`python/fetch_chat_data.py` の `handle_no_chat_file`）。
+と落ちていく（`python/fetch_chat_data.py` の `handle_no_chat_file` と
+`handle_failure`）。
+
+**「まだ出ていない」を24時間で失敗にしていた**（2026-09-10 に直した）。
+もとは「24h＋ぶれ3時間 を過ぎたら `FAILED`」で分けていたが、
+**ジョブは日に1回しか走らないので、この窓は1回しか通らない。**
+初回確認からの経過は 0h → 約22h → 約46h と飛び、2晩目にはもう窓の外にいる。
+アーカイブのチャットが出るのに1日以上かかった配信は、**全部2晩目で `FAILED`**
+になっていた。docstring は「7日間は拾い直す」と言っていたのに、
+7日ルールには**構造上ぜったい到達しなかった。**
 
 **ところが `WAITING` は落ちない。** 拾い直すクエリ
 （`python/bq/queries.py` の `QUERY_SELECT_TARGET_VIDEOS`）が
@@ -55,6 +65,12 @@ AND first_seen_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
 で7日を過ぎたものを**対象から外す**ので、7日のあいだに一度も拾われなかった
 `WAITING` は、`SKIPPED` にも `FAILED` にも落ちないまま永久に残る。
 状態を落とすのは「拾って処理したとき」だけで、拾わない相手には誰も触らない。
+
+**これは `SKIPPED` にも効く。** クエリの窓（7日以内）と `should_skip_after_7days`
+（7日以上）はちょうど裏表なので、**クエリが返した行が `SKIPPED` になれる余地が
+ほとんど無い**（拾ってから yt-dlp を回すあいだの数分だけ）。実際、
+2026-09-10 時点で `SKIPPED` は**開店以来1本も無い**（SUCCEEDED 671 / FAILED 63 /
+WAITING 28）。7日を過ぎたものを落とすには、クエリの窓を7日より広げるしかない。
 
 2026-09-10 時点で `WAITING` が28本（うち26本は 2026-02-06〜07-28）。
 **全部 `attempt_count = 1`、`last_error_code` は NULL。** 一度試したきり、
@@ -77,7 +93,12 @@ AND first_seen_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
 **手前に置く直しは入っている**（#249 で `next_retry_at` を
 `first_seen_at + 24時間 - 3時間` にした）。これから見つける配信は拾われる。
 **すでに WAITING で固まっている28本は、それでは動かない。**
-`first_seen_at` が7日より古いので、クエリの対象に入らないため。
+古い値（きっかり24時間後）のまま書いてあるため。
+
+古い行を揃えるのは `python/admin/fix_stale_retry.py`。
+`WAITING` の `next_retry_at` を `first_seen_at + 21時間` に書き直す
+（**既定は dry-run**、書くには `{"apply": true}`）。ただし7日より古い28本のうち
+26本は、値を直しても**クエリの窓の外**なのでもう拾われない。
 
 WAITING が残っているぶんだけ、**チャットの1件も無い配信日**が増える。
 その日は「誰も来なかった日」ではなく「誰が居たか読めていない日」で、
