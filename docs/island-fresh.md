@@ -20,9 +20,15 @@
 **変わらないのに緑が付く**から。「今日も回った」が並ぶと、上流（`countries.ts` など）が
 止まっていることが隠れる。動かないものを動かしても、止まっていることは直らない。
 
+**ただし「上流が人」だけでは外す理由にならない**（2026-09-10）。見るのは
+**上流が止まっているあいだ、下流も止まるか**。`cityStreams.ts` は止まらない——
+街の一覧が増えなくても、いまいる街の配信は毎晩増える——ので、①に上げた。
+下の3章に、外に置いたままの3本との違いを書いてある。
+
 ## 2. ① 機械だけで決まる — 毎晩ひとりでに焼く
 
-`.github/workflows/rebake.yml` が **21:30 UTC**（取り込みの後ろ）に回す。
+`.github/workflows/rebake.yml` が **01:00 UTC**（日本時間の朝10時ごろ）に回す。
+取り込みの実測が 21:49〜23:32 UTC なので、その後ろに置いてある。
 変わっていれば master に入れて、Hosting も配る。
 
 | 焼くもの | スクリプト | 何が変わると動くか |
@@ -31,8 +37,18 @@
 | `residents.ts` | `build_residents.py` | 直近90日が1日ずれる（**毎日動く**） |
 | `streamPeaks.ts` | `build_stream_peaks.py` | 取り込めた配信が増える |
 | `onThisDay.ts` | `build_on_this_day.py` | 配信が増える |
+| `cityStreams.ts` | `build_city_streams.py` | 配信が増える（街の一覧が増えるのは人待ち） |
 
-**4本とも入力が BigQuery だけ。** 人が何も決めなくても正しい答えが出る。
+**前の4本は入力が BigQuery だけ。** 人が何も決めなくても正しい答えが出る。
+
+`cityStreams.ts` だけ上流に人の書く `countries.ts` がある。それでも毎晩に入れたのは、
+**上流が止まっても下流が止まらない**から。ジョージアの滞在は `to: ""` で開いていて、
+街の一覧が増えなくても、配信が増えればトビリシもカズベキも増える。
+
+**そして、入れなかったからこそ嘘が半年残った**（2026-09-10）。
+一度も焼き直されないまま手で書いたものが置かれていて、**36街89本**しか入っておらず、
+拾えていない街が画面で「配信はのこっていない」を名乗っていた。焼き直して**49街322本**。
+`docs/island-misses.md` #12 に経緯がある。
 
 `build_on_this_day` は `streamPeaks.ts` を読むので、**`build_stream_peaks` のあと**に回す。
 順番はワークフロー側で固定してある（入力の並びではなく allowlist の並びで回る）。
@@ -51,35 +67,37 @@
 2. **焼いた TS で `next build` が通らなければ落とす。**
    通らないまま入れると、赤くなるのは master ではなく**次の Hosting のデプロイ**で、
    次に誰かが配るまで誰も気づかない
+3. **`countries.ts` の滞在を1件でも読み落としたら落とす**（`build_city_streams.py` の
+   `read_stays()` と `build_on_this_day.py` の `read_countries()`。**この2本だけが
+   `countries.ts` を正規表現で読む**）。読み落としは例外を出さず、
+   **国と街が黙って減るだけ**だった。減った街は画面で「配信はのこっていない」と
+   言い切るので、**落ちて赤くなるほうがずっといい**
 
 ## 3. ①b 焼けるが、上流が人 — 人が書いたあとに、続けて焼く
 
 | 焼くもの | スクリプト | 待っているもの |
 | --- | --- | --- |
-| `cityStreams.ts` | `build_city_streams.py` | `countries.ts` の街と滞在期間 |
-| `countryStats.ts` | `build_country_stats.py` | 同上 |
+| `countryStats.ts` | `build_country_stats.py` | `countries.ts` の街と滞在期間 |
 | `kitchenTalk.ts` | `build_kitchen_talk.py` | `recipes.ts` と、手で選んだ引用 |
 | `legendDays.ts` | `build_legend_days.py` | `legends.ts` に足された伝説 |
 
 **上流が止まっていれば、下流も止まる。** `countries.ts` は「どの街にいつからいつまで
-いたか」で、本人しか知らない。そこが増えるまで、街の配信も国の数字も動かない。
+いたか」で、本人しか知らない。そこが増えるまで、国の数字も料理の引用も動かない。
 
-この4本には、もう1つ落とし穴がある。**BigQuery を直に引くのは `build_city_streams` だけ。**
+**この3本は BigQuery を引かない。** ここが `cityStreams.ts` との違いで、
+毎晩に入れなかった理由でもある。
 
 | | BigQuery を引くか | 引かないなら、元は何か |
 | --- | --- | --- |
-| `build_city_streams` | 引く | — |
 | `build_country_stats` | **引かない** | `python/data/country_stats.json` |
 | `build_kitchen_talk` | **引かない** | `python/data/kitchen_*.json`（3つ） |
 | `build_legend_days` | **引かない**（`bigquery` を import すらしていない） | `python/data/legend_*.json`（2つ） |
 
-下の3本は、**先にその JSON を取り直さないと、回しても同じものが焼き直るだけ。**
-取り直す SQL は各スクリプトの `--sql` が出す。
+**先にその JSON を取り直さないと、回しても同じものが焼き直るだけ。**
+取り直す SQL は各スクリプトの `--sql` が出す。だから毎晩に入れると、
+本当に「変わらないのに緑が付く」ことになる。
 
-`cityStreams.ts` は `rebake.yml` の allowlist に**入れていない**。いまの中身は古い版の
-スクリプトで焼かれていて、焼き直すと選び方の決まりごと総取り替えになる（トビリシは
-滞在窓に配信が119本あるので、並びごと変わる）。**「新しくなる」ではなく「別物になる」。**
-入れる前に、選び方がどう変わるかを確かめる必要がある。
+（`cityStreams.ts` は 2026-09-10 に①へ移した。上の2章。）
 
 ## 4. ② 人しか決められない — 機械に決めさせると嘘になる
 
