@@ -47,6 +47,7 @@ import urllib.request
 from _fs import args, db, log
 
 TOKEN_URL = "https://api.doneru.jp/widget/token"
+REFRESH_URL = "https://api.doneru.jp/widget/youtube/refresh"
 YT = "https://www.googleapis.com/youtube/v3/"
 TOKENINFO = "https://www.googleapis.com/oauth2/v3/tokeninfo"
 TIMEOUT = 10
@@ -168,8 +169,10 @@ def node_fetch(url: str) -> str:
     js = (
         "const u=process.argv[1];"
         "fetch(u).then(async r=>{const t=await r.text();"
-        "console.log(JSON.stringify({s:r.status,"
-        "h:t.slice(0,200),ua:'default'}))})"
+        # **200 の本文は返さない。** ここにアクセストークンが載っている。
+        # 1度これを出して、公開のログにトークンを流してしまった。
+        "console.log(JSON.stringify({s:r.status,n:t.length,"
+        "h:r.status===200?'(伏せた)':t.slice(0,120)}))})"
         ".catch(e=>console.log(JSON.stringify({s:0,h:String(e)})))"
     )
     try:
@@ -181,6 +184,69 @@ def node_fetch(url: str) -> str:
         return f"node を回せず: {type(e).__name__}"
     out = (r.stdout or "").strip() or (r.stderr or "").strip()
     return hide(out)[:300]
+
+
+def _exp_age(raw) -> str:
+    """`exp` が「あと何分」なのかを、単位を見分けて文にする。
+
+    **すでに過ぎていれば、そのトークンは使えない。** Doneru は前に配った
+    ものを覚えていて、取り直させない限り同じものを返す作りなので、
+    ここが過去になっているかどうかが効く。
+    """
+    import time
+
+    try:
+        n = float(raw)
+    except (TypeError, ValueError):
+        return "無し"
+    now = time.time()
+    if n > 1e12:
+        sec = n / 1000 - now
+    elif n > 1e9:
+        sec = n - now
+    else:
+        sec = n
+    return (f"あと {sec / 60:.1f}分" if sec >= 0
+            else f"{-sec / 60:.1f}分 前に切れている")
+
+
+def refresh_and_retake(key: str) -> str:
+    """Doneru に取り直させてから、もう一度トークンをもらう。
+
+    `doneruYoutube.ts` に `doneruYoutubeRefreshToken` があるのに、
+    **`chatCapture.ts` はそれを1度も呼んでいない。** 呼べば通るのかを実測する。
+    ここが通れば、直すのはコードのほうで済む。
+    """
+    req = urllib.request.Request(
+        REFRESH_URL,
+        data=json.dumps(
+            {"key": key, "type": "alertbox", "version": "1.0.0"}).encode(),
+        headers={"content-type": "application/json", "accept": "*/*",
+                 "User-Agent": "node"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            log.info("  取り直し（refresh）HTTP %s", r.status)
+    except urllib.error.HTTPError as e:
+        log.error("  取り直し（refresh）HTTP %s: %s", e.code,
+                  head(e.read().decode("utf-8", "replace"), 120))
+        return ""
+    except Exception as e:  # noqa: BLE001
+        log.error("  取り直し（refresh）が落ちた: %s", type(e).__name__)
+        return ""
+
+    url = f"{TOKEN_URL}?key={urllib.parse.quote(key, safe='')}&type=alertbox"
+    code, body = get(url, {"User-Agent": "node"})
+    if code != 200:
+        log.error("  取り直したあとのトークン HTTP %s", code)
+        return ""
+    y = json.loads(body).get("youtube") or {}
+    at = str(y.get("at") or "")
+    _SECRETS.append(at)
+    log.info("  取り直したあとの at: %s（%d文字）/ exp=%s",
+             "あり" if at else "なし", len(at), _exp_age(y.get("exp")))
+    return at
 
 
 def step2_token(key: str) -> str:
@@ -195,7 +261,9 @@ def step2_token(key: str) -> str:
     ok = None
     for name, hdr in SHAPES:
         code, b = get(url, hdr)
-        log.info("  [%s] HTTP %s %s", name, code, head(b, 100))
+        # **200 の本文は出さない。** ここにアクセストークンが入っている
+        log.info("  [%s] HTTP %s %s", name, code,
+                 "(本文は伏せた)" if code == 200 else head(b, 100))
         if code == 200 and ok is None:
             ok, body = name, b
     if ok is None:
@@ -219,8 +287,7 @@ def step2_token(key: str) -> str:
         log.error("  → youtube.at が空。ここで止まる（#2）: %s", head(body))
         return ""
     log.info("  → at あり（%d文字）/ channel=%s / exp=%s",
-             len(at), y.get("channel") or "(無し)",
-             "あり" if y.get("exp") else "無し")
+             len(at), y.get("channel") or "(無し)", _exp_age(y.get("exp")))
 
     # トークンに何が許されているか。**#3 の原因の半分はここ。**
     code, info = get(
@@ -236,16 +303,34 @@ def step2_token(key: str) -> str:
     return at
 
 
-def step3_live(at: str) -> dict:
+def step3_live(at: str, key: str = "") -> dict:
     """3. `findLive` と同じ叩き方で、いま配信中の枠を探す。"""
     log.info("── 3. いま配信中か（findLive と同じ）")
-    code, j, body = yt(
-        "liveBroadcasts",
-        {"part": "id,snippet,status", "broadcastStatus": "active",
-         "maxResults": "1"},
-        at,
-    )
+
+    def ask(token: str):
+        return yt(
+            "liveBroadcasts",
+            {"part": "id,snippet,status", "broadcastStatus": "active",
+             "maxResults": "1"},
+            token,
+        )
+
+    code, j, body = ask(at)
     log.info("  liveBroadcasts(active) HTTP %s", code)
+    if code == 401 and key:
+        # **ここが要**。401 は「配信していない」ではなく「トークンが死んでいる」。
+        # Doneru は取り直させるまで同じものを配り続けるので、
+        # 呼ぶだけで生き返るのかを見る。
+        log.warning("  → 401（トークンが通らない）。取り直してもう一度やる")
+        at2 = refresh_and_retake(key)
+        if at2:
+            code, j, body = ask(at2)
+            log.info("  取り直したあと liveBroadcasts(active) HTTP %s", code)
+            if code != 401:
+                log.warning(
+                    "  ★ 取り直せば通る。"
+                    "chatCapture.ts は doneruYoutubeRefreshToken を呼んでいない")
+                at = at2
     if code != 200:
         log.error("  → 配信を探せない。ここで止まる（#3）: %s", head(body))
         # 探せない理由を、もう少しだけ切り分ける
@@ -279,7 +364,8 @@ def step3_live(at: str) -> dict:
         log.warning("  → videoId か liveChatId が欠けるので null 扱い（#4）")
         return {}
     log.info("  → 配信中の枠が取れた。#4 は抜ける")
-    return {"videoId": vid, "liveChatId": chat}
+    # **通ったほうのトークンを返す。** 取り直していたら、#4 もそちらで叩く
+    return {"videoId": vid, "liveChatId": chat, "at": at}
 
 
 def _other_statuses(at: str) -> None:
@@ -372,12 +458,12 @@ def main() -> None:
         log.error("結論: #2 で止まっている（トークン）")
         return
 
-    live = step3_live(at)
+    live = step3_live(at, key)
     if not live:
         log.error("結論: #3 か #4 で止まっている（上の HTTP を見る）")
         return
 
-    step4_chat(at, live)
+    step4_chat(live.get("at") or at, live)
     log.info("結論: #5 まで通る（配信中なら溜まるはず）")
 
 
