@@ -26,7 +26,14 @@
 
 import { CHAPTERS, chapterDays, chapterNow, chapterSpan, type Chapter } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
+/* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
+   （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
+   ここに置いたままだと国の表まで面の JS に付いてくる（実測 8kB）。
+   ここから読んでいた側は今までどおり `@/lib/stay` から取れる。 */
+import { placeOutdated } from "@/lib/place";
 import { jstNow } from "@/lib/nightly";
+
+export { placeOutdated };
 
 export type StayNow = {
   /** 国の名前 */
@@ -139,30 +146,6 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
     note: c.note,
     days: chapterDays(c, now),
   };
-}
-
-/**
- * 人が書いた「いまどこ」が、**いまの旅より前に書かれたまま**か。
- *
- * `/island-api/state` の `current.place`（「ジョージア・トビリシ」）は
- * あやとが手で書く欄で、**旅の17日間、ヒッチハイクの途中では書き替えられない。**
- * 書き替えられないあいだ、島は「いまジョージアにいます」と言い続ける。
- * 旅の8日目の画面で、いちばん大きい絵がジョージアの国旗だった。
- *
- * **「人が書く欄だから直せない」ではない。** 直せないのは中身で、
- * **古くなったものをそのまま「いま」として出すかどうかは、こちらが決めること。**
- *
- * 判定は、便りを書いた日（`current.updatedAt`）といまの章の始まり。
- * 章が変わるより前に書かれていれば、その場所はもう「いま」ではない。
- * 日付が読めないものも、古いものとして扱う（読めないことを「新しい」にしない）。
- */
-export function placeOutdated(updatedAt: string | undefined, now: Date = new Date()): boolean {
-  const began = chapterSpan(chapterNow(now), now).from;
-  if (began == null) return false;
-  if (!updatedAt) return true;
-  // その日いっぱいまでを「その日に書いた」とみなす
-  const t = Date.parse(`${updatedAt}T23:59:59+09:00`);
-  return Number.isNaN(t) || t < began;
 }
 
 /**

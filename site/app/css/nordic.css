@@ -128,6 +128,10 @@
   color: var(--ink-2);
 }
 .tnow-at b, .tnow-to b { font-size: 16.5px; font-weight: 900; line-height: 1.35; }
+/* 旅程の日付から引いただけの街。**「いま」と同じ濃さで言わない**
+   （`components/nordic/where.ts`）。`--ink-2` は読ませる字に使える濃さで、
+   `--ink` の隣に置くと「まだ確かではないほう」に見える。 */
+.tnow-at.is-plan b { color: var(--ink-2); }
 .tnow-at em, .tnow-to em {
   font-style: normal;
   font-size: var(--fs-min);
@@ -318,8 +322,13 @@
    切り替える（React で描き直すと、同じ面の地図まで作り直しになる）。
    蛍光は「何日目」がもう使っているので、こちらは紙に輪をかける。
    輪は厚みではないので、押せるものと取り違えない。 */
-.nday-now { display: none; }
-.nday[data-now] .nday-now {
+/* 「きょう」は、旅程の日付から引いただけの日に出る札。本人が「いまどこ」を
+   打っていれば「いま、ここ」が出る（`components/nordic/where.ts`）。
+   **予定と、いまを、同じ強さで言わない。** */
+.nday-now,
+.nday-day { display: none; }
+.nday[data-now][data-plan] .nday-day,
+.nday[data-now]:not([data-plan]) .nday-now {
   display: inline-block;
   padding: 1px var(--sp-2);
   border-radius: var(--r-0);
@@ -1380,9 +1389,17 @@ svg.nmap {
 
 /* 「いま ここ」の札は、どの街にもぶら下げてある（いる場所が分かるのは
    画面が出たあとのことがあるので、その場で SVG を足すのは避けたい）。
-   出すのは `is-now` が付いた1つだけ。 */
+   出すのは `is-now` が付いた1つだけ。
+   **札は街より上のレイヤ**（`.nm-heres`）に描いてある。街の中に置いていたころ、
+   リガの札がストックホルムの札に隠れていた（`RouteMapSvg.tsx`）。 */
 .nmap .nm-here { display: none; }
-.nmap .nmap-pin.is-now .nm-here { display: inline; }
+.nmap .nm-here.is-now { display: inline; }
+/* 札は2枚ぶら下がっている。**予定から引いただけの街を「いま ここ」と言わない。**
+   本人が「いまどこ」を打つまでは、旅程の日付から引いた「きょうは ここ」のほう
+   （`components/nordic/where.ts`）。切り替えは `TripNow` が `.nmap` に付ける。 */
+.nmap .nm-here .is-plan { display: none; }
+.nmap[data-plan] .nm-here .is-sure { display: none; }
+.nmap[data-plan] .nm-here.is-now .is-plan { display: inline; }
 /* 波を打たせない。SMIL の `<animate>` を街の数だけ置いていたが、SMIL は
    1コマごとに SVG まるごとの焼き直しを起こす。しかも `display: none` の街の
    ぶんも走るので、誰も触っていない6秒でこの面が 5,740ms の CPU を使っていた。
