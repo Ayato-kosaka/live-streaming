@@ -64,8 +64,18 @@ const NOTE_TEXTS = [
   "帰る前の日に、その旅でいちばん良かった場所へもう一度行く",
 ];
 const THEMES_SEED = ["nordic", "island", "kitchen", "nordic", "island"];
+/* 何枚あるところを測るか。**0 / 3 / 40 / 200 を差し替えて撮る**
+   （データが溜まったときに壊れないかを見るため）。既定は本番に近い20枚。
+   20枚を超えるぶんは同じ文を繰り返して水増しする。 */
+const NOTE_N = Number(process.env.NOTES ?? NOTE_TEXTS.length);
+const NOTE_ALL = Array.from(
+  { length: NOTE_N },
+  (_, i) =>
+    NOTE_TEXTS[i % NOTE_TEXTS.length] +
+    (i >= NOTE_TEXTS.length ? `（${Math.floor(i / NOTE_TEXTS.length) + 1}回目）` : ""),
+);
 const MINE = {
-  notes: NOTE_TEXTS.map((text, i) => ({
+  notes: NOTE_ALL.map((text, i) => ({
     id: `a${i + 1}`,
     theme: THEMES_SEED[i % THEMES_SEED.length],
     text,

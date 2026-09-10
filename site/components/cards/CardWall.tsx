@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Icon from "@/components/ui/IconCore";
+import Longer from "@/components/ui/Longer";
 import CardSheet from "./CardSheet";
 import { byDay, byPhoto, cardWhen, useCards, type PhotoGroup, type PlanDays } from "./cards";
 
@@ -69,7 +70,12 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
         </div>
       )}
 
-      {days.map((d) => (
+      {/* **日ごとの棚は、1日ずつ増えつづける。** 旅に出れば毎日1つ足されるので、
+          そのまま並べると溜まるほど下が遠くなる（#225 と同じ形）。
+          はじめは3日ぶんだけ出して、押せば最後まで出る
+          （`components/ui/Longer.tsx`）。 */}
+      <Longer items={days} first={3} step={6} unit="日ぶん" as="div" className="akd-days">
+        {(d) => (
         <div className="akd-day" key={d.day}>
           <h3>{cardWhen(d.day)}</h3>
           {/* その日の企画（あやとの「フードワインフェスの企画に紐つけて欲しい」）。
@@ -103,13 +109,12 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
             ))}
           </div>
         </div>
-      ))}
+        )}
+      </Longer>
 
       {cards !== null && cards.length > 0 && (
         <p className="muted akd-note">
-          写真{shots}枚に、いま{cards.length}枚。押すと、その写真に立っている人が見られます。
-          名前が出ているのは、島に名前を出してよいと言ってくれた人です。出していない人も、
-          絵はそのまま立っています。
+          写真{shots}枚に、いま{cards.length}枚。
         </p>
       )}
 

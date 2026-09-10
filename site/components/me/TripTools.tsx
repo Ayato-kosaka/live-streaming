@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   getState,
@@ -12,103 +11,10 @@ import { useAuth } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { DAYS } from "@/content/nordic";
 import { LOG_SEEDS, loadNordicLog, putNordicLog } from "@/components/nordic/log";
-import PhotoPost from "@/components/nordic/PhotoPost";
-import PlanVideos from "./PlanVideos";
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
    1バイトも減らない。旅の道具はあやとの画面にしか降りてこない。 */
 import Icon from "@/components/ui/Icon";
-
-/**
- * 旅の道具。**あやとが、ヒッチハイクの途中に片手で開くところ（#163）。**
- *
- * その日の写真・その日に起きたこと・いまどこ・その日の配信。この4つは
- * もともと島の別々の面にあって（`/nordic/photos`・`/nordic/day/3`・
- * `python/admin/firestore_write.py`）、旅に出たら回らない置き方だった。
- * 1か所に集めて、じぶんのことの**いちばん上**に置く。
- *
- * **4つ目（配信）は #202 で増えた。** 0時をまたいで配信が2本に割れた夜に、
- * 後半の動画IDを企画に足す用事で、**旅のあいだ毎晩起きうる。**
- * 「その日のうちに、ここから入れる」ものなので、この並びに入れる。
- *
- * ## 片手で使える形にする
- *
- * - **4つを縦に積まない。** 積むと下の3つが畳みの向こうへ行く。
- *   札を出して、押した1つだけを開く。どれも1タップで出る
- * - 押しどころは**画面の幅いっぱい・52px**。走っている車の中でも押せる
- * - いちばん使うものを最初に開いておく（写真）
- *
- * ## 電波の悪いところで使える形にする
- *
- * 送信が失敗するのは事故ではなく前提。
- *
- * - **打った字は、打つそばから端末に残す**（`useDraft`）。
- *   トンネルに入っても、アプリが後ろで捨てられても、開き直せば続きから
- * - **送れたら消す。残っている＝まだ送れていない**の印になる
- * - 失敗しても字を消さない。「もう一度おくる」だけを出す
- * - 届いていないことは、押す前に言う（`useOnline`）
- */
-export default function TripTools() {
-  const [tab, setTab] = useState<"photo" | "log" | "place" | "video">("photo");
-  return (
-    <section className="panel paper mp-trip">
-      <h2>旅の道具</h2>
-      <p className="muted mp-small">
-        その日のうちに、ここから入れる。打ったものは送れるまで端末に残ります。
-      </p>
-      <div className="mp-tabs" role="tablist" aria-label="旅の道具">
-        {(
-          [
-            ["photo", "写真", "photo"],
-            ["log", "その日のこと", "log"],
-            ["place", "いまどこ", "pin"],
-            ["video", "その日の配信", "live"],
-          ] as const
-        ).map(([id, label, icon]) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            className={`mp-tab${tab === id ? " is-on" : ""}`}
-            onClick={() => setTab(id)}
-          >
-            <Icon name={icon} size={18} />
-            {label}
-          </button>
-        ))}
-      </div>
-      {/* 開いていないものは、そもそも作らない。写真の欄と日誌の欄が
-          同時に生きていると、下書きの復元が2つ同時に走る。 */}
-      {tab === "photo" && <PhotoPost />}
-      {tab === "log" && <TripLog />}
-      {tab === "place" && <TripPlace />}
-      {tab === "video" && <PlanVideos />}
-
-      {/* ルーレット（#164）は建った。**3つの札の並びには入れない。**
-          あちらは「その日のうちに入れる」3つで、ここは配信中に開く別の面。
-          並びに4つ目として混ぜると、旅の道具と配信の道具が同じ列に並ぶ。 */}
-      <Link className="mp-goto" href="/me/roulette">
-        <Icon name="poll" size={22} />
-        <span className="mp-goto-t">
-          <b>ルーレット</b>
-          <i>コメントから選んで回す。配信していない方の端末で開く</i>
-        </span>
-        <Icon name="right" size={14} />
-      </Link>
-
-      {/* 島の遠隔操作（#165）。ルーレットの隣に置く。**配信中はこの2つを
-          行き来するだけで済む**ようにする、というのが #165 の決め。 */}
-      <Link className="mp-goto" href="/me/remote">
-        <Icon name="signpost" size={22} />
-        <span className="mp-goto-t">
-          <b>島の遠隔操作</b>
-          <i>配信に映している島を、手元から動かす。OBS は remote 付きの URL で開く</i>
-        </span>
-        <Icon name="right" size={14} />
-      </Link>
-    </section>
-  );
-}
 
 /** 「2026-09-14」→「9/14」。札に出す短いほう。 */
 const md = (iso?: string) =>
@@ -126,7 +32,7 @@ const dayName = (d: (typeof DAYS)[number]) =>
  * ここは旅の途中の本人が開くので、日を選ぶところから始まる。
  * 書き出しの見本は同じもの（`LOG_SEEDS`）を出す。
  */
-function TripLog() {
+export function TripLog() {
   const { token } = useAuth();
   const online = useOnline();
   const [d, put, settle] = useDraft("ayato-trip-log", {
@@ -293,7 +199,7 @@ const THEME_NAME: [string, string][] = [
  * 今週の予定（`week`）はここから触らない。何行もある字なので、
  * 走っている車の中で打つものではない。
  */
-function TripPlace() {
+export function TripPlace() {
   const { token } = useAuth();
   const online = useOnline();
   const [d, put, settle] = useDraft("ayato-trip-place", {
