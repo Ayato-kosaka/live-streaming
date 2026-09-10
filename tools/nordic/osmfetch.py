@@ -30,14 +30,12 @@
 数十MB あるのでリポジトリには入れない（`.gitignore`）。
 """
 
-import gzip
 import json
 import os
+import subprocess
 import sys
+import tempfile
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, ".osmcache")
@@ -48,6 +46,9 @@ MIRRORS = [
 ]
 UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic city maps)"
 
+# いま返してくれているミラー（`MIRRORS` の添字）。`query()` が書き換える。
+_LIVE = [0]
+
 # 1タイルの上限（km）。これより広い窓は割る。
 TILE_KM = 2.5
 
@@ -56,13 +57,21 @@ TILE_KM = 2.5
 # 全部が建物のあいだの small な芝生だった。地図には出ないのに、点数だけ3倍になる。
 AREA_Q = """
   way["natural"~"^(water|wood|beach|sand)$"]({bb});
-  rel["natural"~"^(water|wood)$"]({bb});
   way["waterway"~"^(riverbank|dock)$"]({bb});
   way["leisure"~"^(park|nature_reserve|golf_course)$"]({bb});
-  rel["leisure"~"^(park|nature_reserve)$"]({bb});
   way["landuse"~"^(forest|cemetery|recreation_ground|village_green|allotments|residential|retail|commercial|industrial|railway|military|education)$"]({bb});
   way["amenity"~"^(grave_yard|university|hospital)$"]({bb});
   way["place"~"^(square|quarter|suburb|neighbourhood|city_block)$"]({bb});
+  way["amenity"="marketplace"]({bb});
+"""
+
+# 関係（multipolygon）は**別に投げる。** 湖や湾は何十万点の関係に入っている
+# ことがあって（ストックホルムのメーラレン湖）、`out geom` を頼むと向こうが
+# 落ちる。線のぶんと一緒に投げていたので、**街の道まで巻き添えで取れなかった。**
+# ここが取れなくても止めない（取れたぶんだけ描く）。
+AREAREL_Q = """
+  rel["natural"~"^(water|wood)$"]({bb});
+  rel["leisure"~"^(park|nature_reserve)$"]({bb});
   rel["place"~"^(quarter|suburb|neighbourhood)$"]({bb});
 """
 
@@ -110,20 +119,30 @@ OLD_Q = """
 """
 
 
-def _post(url, data, timeout=300):
-    req = urllib.request.Request(
-        url,
-        data=urllib.parse.urlencode({"data": data}).encode(),
-        headers={"User-Agent": UA, "Accept-Encoding": "gzip"},
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        raw = r.read()
-        if r.headers.get("Content-Encoding") == "gzip":
-            raw = gzip.decompress(raw)
-        return raw
+def _post(url, data, timeout=180):
+    """Overpass に POST する。**curl を使う。**
+
+    urllib だと、混んでいる相手に対して**タイムアウトが効かずに固まる**
+    ことがあった（ヘルシンキの海岸線で 40分止まった。同じ問い合わせを curl に
+    投げると 2.6 秒で返ってきた）。`--max-time` は全体に効くので、
+    途中で止まっても必ず戻ってくる。
+    """
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
+        f.write(data)
+        qf = f.name
+    try:
+        r = subprocess.run(
+            ["curl", "-sS", "--compressed", "--max-time", str(timeout),
+             "-A", UA, "--data-urlencode", f"data@{qf}", url],
+            capture_output=True, timeout=timeout + 20)
+        if r.returncode != 0:
+            raise RuntimeError(r.stderr.decode("utf-8", "replace")[:160] or "curl 失敗")
+        return r.stdout
+    finally:
+        os.unlink(qf)
 
 
-def query(q, why=""):
+def query(q, why="", soft=False):
     """Overpass に1回。**JSON が返るまで掛け直す。**
 
     混んでいるときは 200 で HTML（`runtime error: ... Dispatcher_Client`）が
@@ -131,16 +150,24 @@ def query(q, why=""):
     """
     last = ""
     for attempt in range(8):
-        # **kumi を主に使う。** mail.ru は日によってずっと 504 を返す。
-        # 交互にすると、掛け直しの半分が最初から捨てになる
-        url = MIRRORS[1] if attempt % 3 == 2 else MIRRORS[0]
+        # **返したミラーを覚えて、そこを使い続ける。**
+        # 主従を決め打ちにしていたころ、主（kumi）が丸一日 180秒待って
+        # 何も返さない日に当たって、1問い合わせに 6分かかった。
+        # どちらが生きているかは日によって入れ替わるので、決め打ちにしない。
+        # 覚えたほうが黙ったら、次の掛け直しでもう一方に移る。
+        url = MIRRORS[(_LIVE[0] + attempt) % len(MIRRORS)]
         try:
             raw = _post(url, q)
             if raw[:1] == b"{":
+                _LIVE[0] = MIRRORS.index(url)
                 return json.loads(raw.decode())
             last = raw.decode("utf-8", "replace")[:200].replace("\n", " ")
         except Exception as e:  # noqa: BLE001  相手のサーバなので何が来ても待つ
             last = f"{type(e).__name__}: {e}"
+        if soft and attempt >= 2:
+            # 取れなくても止めない口（重い関係など）。**空で返す。**
+            print(f"      あきらめる（{why}）  {last[-120:]}", file=sys.stderr)
+            return {"elements": []}
         wait = 15 * (attempt + 1)
         print(f"      混んでいる（{why}）… {wait}秒待って掛け直す  {last[-120:]}",
               file=sys.stderr)
@@ -210,11 +237,11 @@ def fetch_city(slug, bbox, force=False):
     print(f"    タイル {len(tl)}枚")
     for i, bb in enumerate(tl, 1):
         s = ",".join(f"{v:.5f}" for v in bb)
-        for kind, body in (("area", AREA_Q), ("line", LINE_Q)):
+        for kind, body in (("area", AREA_Q), ("line", LINE_Q), ("arel", AREAREL_Q)):
             if (kind, i) in done:
                 continue
             q = f"[out:json][timeout:180];(\n{body.format(bb=s)});\nout geom;"
-            add(query(q, why=f"{slug} {kind} {i}/{len(tl)}"))
+            add(query(q, why=f"{slug} {kind} {i}/{len(tl)}", soft=(kind == "arel")))
             save((kind, i))
             time.sleep(4)
         print(f"      {i}/{len(tl)} まで {len(els)}件")
@@ -235,10 +262,35 @@ def fetch_city(slug, bbox, force=False):
     return out
 
 
+def fetch_sea(slug, bbox, force=False):
+    """海岸線を取る。**海は面として置かれていない。**
+
+    OSM の海は `natural=coastline` の**線**で、面は世界全体で1枚として
+    別に配られている。だからバルト海は `natural=water` では引っかからない。
+    タリンの地図に湾が1つも出ず、港町が内陸の街に見えた。
+
+    線から面を組み立てるのは `citymap.py` の `sea_polys()`。
+    """
+    # 湾の名前もここで拾う（`natural=bay`）。本体の問い合わせに足すと、
+    # 街ぜんぶを取り直すことになる
+    # **海岸線だけ。** 湾の名前（`natural=bay`）も足していたが、湾は
+    # フィンランド湾のような巨大な関係に入っていて、`out geom` を頼むと
+    # 返ってこない。名前1つのために全部を止めない。
+    # 海の無い街（ワルシャワ・ヴィリニュス）でも投げることになるので、
+    # 取れなくても止めない。内陸の街で空が返るのは正しい答えでもある。
+    return _side(slug, "sea", bbox,
+                 '  way["natural"="coastline"]({bb});\n', force, soft=True)
+
+
 def fetch_old(slug, bbox, force=False):
     """旧市街の面だけを取る。**街ぜんぶを取り直さないための別口。**"""
+    return _side(slug, "old", bbox, OLD_Q, force, soft=True)
+
+
+def _side(slug, tag, bbox, body, force=False, soft=False):
+    """本体とは別に、あとから足した小さな問い合わせ。別のファイルに控える。"""
     os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, f"{slug}-old.json")
+    path = os.path.join(CACHE, f"{slug}-{tag}.json")
     if os.path.exists(path) and not force:
         have = json.load(open(path, encoding="utf-8"))
         hb = have.get("bbox")
@@ -246,8 +298,8 @@ def fetch_old(slug, bbox, force=False):
                 and hb[2] >= bbox[2] - 1e-9 and hb[3] >= bbox[3] - 1e-9:
             return have["elements"]
     s = ",".join(f"{v:.5f}" for v in bbox)
-    r = query(f"[out:json][timeout:180];(\n{OLD_Q.format(bb=s)});\nout geom;",
-              why=f"{slug} old")
+    r = query(f"[out:json][timeout:180];(\n{body.format(bb=s)});\nout geom;",
+              why=f"{slug} {tag}", soft=soft)
     els = r.get("elements", [])
     json.dump({"bbox": list(bbox), "elements": els},
               open(path, "w", encoding="utf-8"), ensure_ascii=False)
