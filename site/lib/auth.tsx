@@ -40,6 +40,9 @@ export type IslandUser = {
   photo?: string;
   /** YouTube のチャンネルID。配信のコメントと同じ人かを見るのに使う */
   channelId?: string;
+  /** 毎晩 islandChannels から入れ直る顔。**看板に出すのはこれ。**
+      ログインのとき取った `photo` は、押した日のまま止まる。 */
+  channelPhoto?: string;
 };
 
 type AuthState = {
@@ -182,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           body: "{}",
         });
         if (!r.ok || gone) return;
-        const me = (await r.json()) as { name?: string; channelId?: string };
+        const me = (await r.json()) as { name?: string; channelId?: string; channelPhoto?: string };
         if (gone) return;
         setProfile((p) => {
           if (!p) return p;
@@ -194,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ...p,
             name: already ? p.name : me.name || p.name,
             channelId: me.channelId ?? p.channelId,
+            channelPhoto: me.channelPhoto ?? p.channelPhoto,
           };
         });
       } catch {
