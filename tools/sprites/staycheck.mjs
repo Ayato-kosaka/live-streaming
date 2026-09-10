@@ -31,12 +31,22 @@ const clockOf = (when) => `(() => {
 const PAGES = [
   ["now", "/now.html"],
   ["map", "/map.html"],
+  ["georgia", "/map/georgia.html"],
   ["caucasus", "/island/caucasus.html"],
   ["nordic", "/island/nordic.html"],
 ];
 
 /** 旅に出たあとに残っていたら不合格の字 */
-const BAD = ["に来て", "いまもここにいる", "いまはコーカサスにいます", "いまここ", "NaN"];
+const BAD = [
+  "に来て",
+  "いまもここにいる",
+  "いまはコーカサスにいます",
+  "いまここ",
+  "まだ、いる",
+  // 人が書く「いまどこ」の欄。旅に出たら書き替えられないので、そのまま出さない
+  "ジョージア・トビリシ",
+  "NaN",
+];
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -69,7 +79,16 @@ for (const [tag, when] of [
     // 面のいちばん上の言い分だけ、字で残す
     const lead = await p.evaluate(() => {
       const q = (s) => document.querySelector(s)?.textContent?.trim() ?? "";
-      return [q(".phead-lead"), q(".isle-lead"), q(".stats .stat:last-child"), q(".nowc-head"), q(".zk-hr")]
+      return [
+        q(".now-place"),
+        q(".np-word"),
+        q(".phead-lead"),
+        q(".isle-lead"),
+        q(".stats .stat:last-child"),
+        q(".nowc-head"),
+        q(".apass-log"),
+        q(".zk-hr"),
+      ]
         .filter(Boolean)
         .join(" ｜ ");
     });
