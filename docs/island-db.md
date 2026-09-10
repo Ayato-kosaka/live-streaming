@@ -727,23 +727,58 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 
 レビューして育てたいものは、DB ではなくコードに置く。
 
+### 3.1 手で書くもの
+
 | ファイル | 中身 |
 | --- | --- |
-| `site.ts` | プロフィール・外部リンク・数字の焼き込み値 |
+| `site.ts` | プロフィール・外部リンク・数字の焼き込み値（API が返るまでの控え） |
 | `streamTypes.ts` | 配信の型5つ |
-| `recipes.ts` | 作ってきた料理 |
+| `recipes.ts` | 作ってきた料理（**クッキング・スタンプ帳の元**） |
 | `countries.ts` | 歩いた国と、滞在期間 |
-| `cityStreams.ts` | 国と街ごとの代表配信（**自動生成**） |
+| `chapters.ts` | 島の連なり（章）と、その期間 |
 | `legends.ts` | 伝説の企画8つ |
 | `apps.ts` | 作っているアプリ |
 | `plans.ts` | これからの企画 |
-| `nordic.ts` + `nordic/*.json` | 北欧旅（**自動生成**。元は `python/build_nordic.py`） |
-| `residents.ts` | 島の住人（キャラクター画像と、一緒にいた日数） |
 | `chatter.ts` | 住人のセリフ |
 | `voice.ts` | 画面に出る言葉ぜんぶ |
-| `sprites.json` | スプライトの寸法（**自動生成**） |
+| `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` | 島の景色・目次・ルーレット・日付から企画を引く表 |
 
-自動生成のファイルは手で書き換えない。元のスクリプトを直してから作り直す。
+### 3.2 焼くもの（自動生成。手で書き換えない）
+
+**元のスクリプトを直してから作り直す。**
+
+| 焼かれるもの | 元 | 回すもの |
+| --- | --- | --- |
+| `chapterStats.ts` `chapterStreams.ts` | BigQuery + `chapters.ts` | `python/build_chapter_stats.py` |
+| `countryStats.ts` | BigQuery + `countries.ts` | `python/build_country_stats.py` |
+| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
+| `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
+| `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
+| `residents.ts` | BigQuery + `python/residents_map.json` | `python/build_residents.py` |
+| `kitchenTalk.ts` | BigQuery + `recipes.ts` + `residents.ts` | `python/build_kitchen_talk.py` |
+| `legendDays.ts` | BigQuery + `legends.ts` | `python/build_legend_days.py` |
+| `voices.ts` | BigQuery + `python/voices_picks.json` | `python/build_voices.py` |
+| `shorts.ts` | `python/data/shorts.json`（手で足す表） | `python/build_shorts.py --build` |
+| `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `python/build_nordic.py` / `build_nordic_map.py` |
+| `atlas/route.json` + `atlas/c/*.json` | 世界地図データ + `countries.ts` | `python/build_world_route.py` |
+| `sprites.json` | `site/public/sprites/*.webp` | `tools/sprites/manifest.mjs` |
+| `characterBox.ts` | 住人のキャラクター画像 | `tools/sprites/avatars.py` → `charbox.py` |
+
+### 3.3 **ここを回すものは、どこにも無い**
+
+**上の表のスクリプトは、ひとつも定時で走っていない。**
+`.github/workflows/` で cron を持っているのは `schedule_fetch_chat.yml` と
+`fetch_doneru_donations.yml` の2本だけで、どちらも **BigQuery と Firestore しか触らない**。
+Hosting のデプロイ（`npm run build:web`）も python を1行も通さない。
+
+つまり **BigQuery と Firestore は毎晩ひとりでに新しくなるのに、
+`site/content/` は誰かが手で焼いて commit するまで、焼いた日のまま止まる。**
+デプロイを何度しても、止まった中身がそのまま何度も出ていく。
+
+**焼き直したかどうかは、ファイルの commit 日では分からない。**
+別の理由で触られた日が付くだけで、中身は古いままのことがある。
+中身の最新を見る（`chapterStats.ts` `chapterStreams.ts` は冒頭の「数えた日」、
+`onThisDay.ts` は `LATEST_DAY`、ほかは中の日付のいちばん新しいもの）。
 
 ---
 
