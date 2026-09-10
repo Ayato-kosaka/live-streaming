@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   REMOTE_DOORS,
   REMOTE_PAGES,
@@ -16,7 +17,6 @@ import { DAY_PAGES, dayHref, dayName } from "@/content/nordic";
 import { jstNow } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
-import SignIn from "@/components/live/SignIn";
 
 /** 手元に残す押しどころの数。配信1本ぶんを遡れれば足りる。 */
 const KEEP = 20;
@@ -150,22 +150,18 @@ export default function RemoteBox() {
       </section>
     );
   }
-  if (!user) {
+  /* ここへの入口は、あやとの机（`/me/desk`）の1本だけ（#242）。
+     看板にも `/all` にもパンくずにも出していないので、ここに着くのは
+     あやとか、URL を直に打った人しかいない。**決まりの説明は置かない。**
+     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。 */
+  if (!user || denied) {
     return (
       <section className="panel paper">
-        <h2>ここは、あやとのところ</h2>
-        <p className="muted">配信中に島を動かすところ。入ると出ます。</p>
-        <SignIn />
-      </section>
-    );
-  }
-  if (denied) {
-    return (
-      <section className="panel paper">
-        <h2>ここは、あやとのところ</h2>
-        <p className="muted">
-          ここはあやとだけ。島のほかの面は、そのまま見られます。
-        </p>
+        <h2>ここは、あやとの机</h2>
+        <Link className="blank-go" href="/">
+          島へもどる
+          <Icon name="right" size={14} />
+        </Link>
       </section>
     );
   }

@@ -254,7 +254,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
       {here.size > 0 && (
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
-          角が光っているマスの人。近くまで行くと、向こうから話しかけてくる。
+          近くまで行くと、向こうから話しかけてくる。
           <Link href="/">
             島へ会いに行く
             <Icon name="right" size={13} />

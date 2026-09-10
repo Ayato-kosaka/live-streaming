@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { LiveNumber } from "@/lib/liveStats";
-import { RESIDENTS, ACTIVE_FRIENDS } from "@/content/residents";
-import { STATS_FALLBACK, CHARACTER_DRIVE, LINKS } from "@/content/site";
+import { CHARACTER_DRIVE, LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
@@ -64,37 +62,6 @@ export default function FriendsPage() {
             <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
               自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
             </p>
-          </section>
-
-          <section className="pap-sec">
-            <div className="pap-nums">
-              <div>
-                <b>
-                  <LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />
-                </b>
-                <span>いまの島の住人</span>
-                <i>ここ3ヶ月の常連</i>
-              </div>
-              <div>
-                <b>{RESIDENTS.length}</b>
-                <span>キャラクターができた人</span>
-                <i>投げ銭で1人ずつ</i>
-              </div>
-              <div>
-                <b>
-                  <LiveNumber statKey="people" fallback={STATS_FALLBACK.people} />
-                </b>
-                <span>のべ参加人数</span>
-                <i>2024/10から</i>
-              </div>
-              <div>
-                <b>
-                  <LiveNumber statKey="comments" fallback={STATS_FALLBACK.comments} />
-                </b>
-                <span>みんなのコメント</span>
-                <i>ぜんぶ読んでます</i>
-              </div>
-            </div>
           </section>
 
           <section className="pap-sec">

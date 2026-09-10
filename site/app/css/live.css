@@ -241,7 +241,10 @@
   padding: var(--sp-4) var(--sp-3) var(--sp-3);
   border-radius: 4px 4px 9px 9px;
   background: linear-gradient(#fff8bf, #fdefa2);
-  box-shadow: 2px 4px 0 rgba(120, 90, 40, 0.16);
+  /* **ぼかしを入れる。** ぼかし0で下へ出る影は「押せる厚み」の合図なので
+     （`docs/island-design.md` 3章）、押せない付箋に付けると合図が嘘になる。
+     紙が板に落としている影なので、`--shadow-*` と同じ 3px ぼかす。 */
+  box-shadow: 2px 4px 3px rgba(120, 90, 40, 0.16);
   font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1.8;
@@ -300,6 +303,8 @@
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
 .bd-write { position: relative; }
+/* 面のいちばん上に置く札。紙の外にあるので、上の余白は紙と同じだけ取る */
+.bd-pick { margin: var(--sp-4) 0 var(--sp-4); }
 
 /* 島で今夜のおたずねを押してきた人に出る、渡ってきた先の受け口。
    板に留めた紙1枚。押すのは中のボタンだけなので、紙そのものは平ら。 */
@@ -412,7 +417,8 @@
   padding: var(--sp-4) var(--sp-3) var(--sp-3);
   border-radius: 5px 5px 12px 12px;
   background: linear-gradient(#fffdf3, #fdf4dd);
-  box-shadow: 2px 5px 0 rgba(120, 90, 40, 0.15);
+  /* 付箋と同じ理由でぼかす（押せない紙に厚みを付けない） */
+  box-shadow: 2px 5px 3px rgba(120, 90, 40, 0.15);
 }
 /* 取りに行っているあいだの灰色。出てくる紙とまったく同じ形で、色だけ抜く。
    1.4秒でゆっくり明滅させる（これより速いと落ち着かない） */
@@ -435,8 +441,8 @@
 .bd-list > li:nth-child(3n) { transform: rotate(0.3deg); }
 .bd-list .nx-pin { position: absolute; top: -6px; left: 22px; }
 /* いちばん票が集まっているものだけ、赤い枠で前に出す（紙の型の選択と同じ作り） */
-.bd-list > li.is-top { box-shadow: 0 0 0 3px var(--pick), 2px 6px 0 rgba(120, 90, 40, 0.18); }
-.bd-list > li.is-picked { background: linear-gradient(#fffdf0, #fff2c8); box-shadow: 0 0 0 3px var(--gold), 2px 6px 0 rgba(120, 90, 40, 0.18); }
+.bd-list > li.is-top { box-shadow: 0 0 0 3px var(--pick), 2px 6px 3px rgba(120, 90, 40, 0.18); }
+.bd-list > li.is-picked { background: linear-gradient(#fffdf0, #fff2c8); box-shadow: 0 0 0 3px var(--gold), 2px 6px 3px rgba(120, 90, 40, 0.18); }
 
 /* 育った企画の「ひとことで言うと」。題の下に、題より小さく置く。
    ここに本文まで出さない。読ませる場所は、立ったページのほう。 */
@@ -505,18 +511,6 @@
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
-
-/* 段（提案 → これから → やった）が、島のどこへ続いているか。
-   紙の上の説明なので罫だけで区切る。影も厚みも付けない。 */
-.bd-road {
-  margin: var(--sp-5) 0 var(--sp-4);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--rule);
-  display: grid;
-  gap: var(--sp-2);
-}
-.bd-road p { margin: 0; font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); line-height: var(--lh-note); }
-.bd-road b { margin-right: var(--sp-2); font-weight: 900; color: var(--ink); }
 
 /* =========================================================
    7. 紙の型 — 台紙と紙
@@ -633,19 +627,6 @@
 .pap-rows > li:first-child { border-top: 0; padding-top: 0; }
 .pap-rows > li:last-child { padding-bottom: 0; }
 .pap-rows time { display: block; font-size: var(--fs-min); font-weight: 900; color: var(--pap-ink-2); margin-bottom: 1px; }
-
-/* 紙の上の数字。図鑑の下段と同じ、罫線で仕切った升目 */
-.pap-nums { display: grid; grid-template-columns: 1fr 1fr; }
-.pap-nums > div { padding: var(--sp-2) var(--sp-2); text-align: center; border-top: 1px solid var(--pap-line); }
-.pap-nums > div:nth-child(2n) { border-left: 1px solid var(--pap-line); }
-.pap-nums b { display: block; font-size: 25px; font-weight: 900; letter-spacing: -0.01em; color: var(--pap-ink); }
-.pap-nums span { display: block; font-size: var(--fs-min); font-weight: 900; margin-top: 3px; color: var(--pap-ink); }
-.pap-nums i { display: block; font-size: var(--fs-min); font-style: normal; font-weight: 700; margin-top: 2px; color: var(--pap-ink-2); }
-@media (min-width: 560px) {
-  .pap-nums { grid-template-columns: repeat(4, 1fr); }
-  .pap-nums > div:nth-child(2n) { border-left: 0; }
-  .pap-nums > div + div { border-left: 1px solid var(--pap-line); }
-}
 
 /* =========================================================
    8. 住民図鑑（愉快な仲間達）
@@ -985,22 +966,6 @@
   line-height: 1.85;
   color: var(--pap-ink);
 }
-
-/* 貼ったあとの3歩。飛び石を1つずつ踏むのと同じ絵で見せる */
-.bd-flow { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: var(--sp-2); }
-@media (min-width: 620px) { .bd-flow { grid-template-columns: repeat(3, 1fr); } }
-.bd-flow > li {
-  display: flex;
-  align-items: center;
-  /* 石は 60px の枠に 56px の絵。縮められると絵が枠からはみ出す */
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
-  border-radius: var(--r-2);
-  background: color-mix(in srgb, var(--paper-2) 66%, var(--paper));
-}
-.bd-flow > li > span:last-child { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.bd-flow b { font-size: var(--fs-body); font-weight: 900; }
-.bd-flow i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); line-height: 1.6; }
 
 /* まだ決まっていないこと。空いている場所を先に見せてから、付箋を頼む */
 .nx-asks {
