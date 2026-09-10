@@ -87,27 +87,45 @@ export default function Home() {
                   名乗っていたので、スマホでも 92KB の看板を取って描いてから捨てていた
                   （実測でそれが LCP・4,756ms）。PC は最初から見えているので
                   lazy でもすぐ取る（画面の中にある絵は後回しにされない）。 */}
+              {/* **帯から下は切って出す**（`width`/`height` が切ったあとの寸法）。
+                  焼いてある帯（旅して、…）と吊り板（毎晩22時、…）は、
+                  268px で 9px と 13px にしかならない。読ませたい字は絵に焼かず、
+                  下の板に本文として置く（`.hero-say`）。 */}
               <img
                 className="hero-logo-full"
                 src="/logos/ayato-island.webp"
-                alt="あやと島 — 毎晩22時、世界のどこかから生配信"
+                alt=""
+                aria-hidden
                 width={900}
-                height={706}
+                height={410}
                 loading="lazy"
               />
-              {/* 寄りの印はスマホの1画面目に出るので、こちらは先に取る */}
+              {/* 寄りの印はスマホの1画面目に出るので、こちらは先に取る。
+                  こちらも帯から下は切る（`height` が切ったあとの寸法）。
+                  124px の絵に22文字＝約5px で、dpr2 でも読めなかった */}
               <img
                 className="hero-logo-mark"
                 src="/logos/ayato-island-mark.webp"
                 alt=""
-                width={520}
-                height={305}
-                fetchPriority="high"
                 aria-hidden
+                width={520}
+                height={240}
+                fetchPriority="high"
               />
-              {/* 見出しは絵だけなので、読み上げと検索のために文字も置いておく */}
-              <span className="sr-only">あやと島 — 毎晩22時、世界のどこかから生配信</span>
+              {/* 見出しは絵なので、読み上げと検索のために字も置いておく。
+                  一言のほうは絵ではなく本文なので、ここには入れない */}
+              <span className="sr-only">あやと島</span>
             </h1>
+            {/* 看板の言葉を、**絵ではなく字で**置く。
+                焼いてある帯と吊り板は、寄りで 5px、引きでも 7〜13px にしかならず、
+                dpr2 でも読めなかった。島に降りた人が最初に読む1文がそこにあるのに
+                読めない、というのは `docs/island-play.md` 6章の 0:06 が
+                埋まっていないのと同じ。**絵は帯の手前で切って**（上の img）、
+                言葉はここが持つ。 */}
+            <p className="hero-say">
+              <b>毎晩22時、世界のどこかから生配信</b>
+              <i>旅して、食べて、グルメアプリを作る、夜の居場所</i>
+            </p>
           </div>
         </div>
         <div className="scroll-cue" aria-hidden>
