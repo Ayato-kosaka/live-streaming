@@ -275,7 +275,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
        「この島のこと」（石碑）で、これは順番の事故ではなく選んだ結果。
        石碑の4つの数字のうち、日数・本数・国数は同じ島の他の札にも出ているし、
        人数を含めた3つは、ここへ来る前に通る `/atlas` の島の札に出ている
-       （`components/chain/Chain.tsx`）。ショート31本は、どこにも無い。 */
+       （`components/chain/Isles.tsx`）。ショート31本は、どこにも無い。 */
     places: [...places.slice(0, 5), pier(prev, next)],
     folk: st?.residents ?? [],
     prev,
