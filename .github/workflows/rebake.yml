@@ -12,27 +12,51 @@ name: 島の数字を焼き直す
 #   - `run_admin_script.yml` が回せるのは `python/admin/` の中だけ
 #
 # つまり `site/content/` を焼き直す口が**どこにも無かった**。2026-09-05 で止まっていた。
-# 旅に出ているあいだも数字はずれ続けるので、**スマホから押せるもの**にする。
 #
-# ## 既定は「見るだけ」
+# ## なぜ cron を足したか（2026-09-10）
+#
+# 押せるようにしただけでは足りなかった。**押す人がいないと止まる。**
+# 押せるようにした翌日に見たら `residents.ts` は 9/05、`onThisDay.ts` は 9/04 のままで、
+# BigQuery のほうは 9/09 まで 762本入っていた。**旅に出たら、誰も押さない。**
+#
+# 機械だけで答えの決まるものは、機械に毎晩やらせる。
+# **人の判断が要るもの（料理・引用・国・章）はここには入れない。**
+# 何が機械で決まり、何が人しか決められないかは `docs/island-fresh.md` に表がある。
+#
+# cron は **21:30 UTC**。取り込み（`schedule_fetch_chat.yml` = 20:00 UTC）の後ろに置く。
+# **GitHub のスケジュールは常に遅れる**（実測 21:49〜22:26 UTC）ので、取り込みが
+# まだ終わっていない晩もある。そのときは前の晩ぶんまでが焼けるだけで、嘘の数字は
+# 出ない（BigQuery に入っているところまでしか数えない）。翌晩また回る。
+# **遅れても壊れない形にしてある。**
+#
+# ## 手で押すときの既定は「見るだけ」
 #
 # `dry_run` の既定を true にしてある。押し間違えても本番は変わらない。
 # 何がどれだけ変わるかを読んでから、`dry_run: false` でもう一度押す。
+# **cron のときだけは `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
 #
-# ## 回すもの（**この6本だけ**）
+# ## 毎晩ひとりでに回すもの（**この4本だけ**）
 #
-#   build_chapter_stats   chapterStats.ts / chapterStreams.ts   BigQuery を引く
-#   build_residents       residents.ts                          BigQuery を引く
-#   build_stream_peaks    streamPeaks.ts                        BigQuery を引く
-#   build_on_this_day     onThisDay.ts                          BigQuery を引く
-#   build_country_stats   countryStats.ts                       ※下記
-#   build_kitchen_talk    kitchenTalk.ts                        ※下記
+#   build_chapter_stats   chapterStats.ts / chapterStreams.ts
+#   build_residents       residents.ts
+#   build_stream_peaks    streamPeaks.ts
+#   build_on_this_day     onThisDay.ts
 #
-# **※ 後ろの2本は BigQuery を引かない。** 元は `python/data/*.json` に
-# 置いてある取り置きなので、回しても**同じものが焼き直るだけで数字は動かない**
+# **4本とも入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
+#
+# ## 手で押したときだけ回せるもの（+2本）
+#
+#   build_country_stats   countryStats.ts    ※
+#   build_kitchen_talk    kitchenTalk.ts     ※
+#
+# **※ この2本は BigQuery を引かない。** 元は `python/data/*.json` に置いてある
+# 取り置きなので、回しても**同じものが焼き直るだけで数字は動かない**
 # （`country_stats.json` / `kitchen_video_stats.json` / `kitchen_residents.json` /
 # `kitchen_icons.json`）。数字を新しくするには、先にその JSON を取り直す必要がある。
-# 落ちはしないので allowlist には入れてあるが、**押しても変わらないのが正しい。**
+# **毎晩に入れないのはそのため。** 変わらないものを毎晩走らせても、「今日も回った」
+# という緑が増えるだけで、上流が止まっていることが隠れる。
+# 人が上流（`countries.ts` / `recipes.ts` と取り置きの JSON）を新しくしたあとに手で押す。
+# 手順は `/island-fresh` にある。
 #
 # 順番は入力の並びではなく**下の ALL の並びで回す**。依存があるため。
 #   - `build_on_this_day` は `streamPeaks.ts` を読む → 先に `build_stream_peaks`
@@ -43,16 +67,24 @@ name: 島の数字を焼き直す
 # - **`build_city_streams.py`** — いまの `cityStreams.ts` は**古い版のスクリプトで
 #   焼かれている**。選び方の決まりが変わっているので、焼き直すと中身が総取り替えに
 #   なる（トビリシは滞在窓に配信が119本あるので、並びごと変わる）。
-#   「新しくなる」ではなく**「別物になる」**。出発前に触らない。
-#   別途、選び方がどう変わるかを確かめてから入れる。
+#   「新しくなる」ではなく**「別物になる」**。
+#   そのうえ**上流が `countries.ts`（人しか書けない）** なので、毎晩回しても
+#   人が街を足すまで答えは変わらない。人が `countries.ts` を触ったときに焼く。
+# - **`build_legend_days.py`** — **このスクリプトは BigQuery を引かない。**
+#   `bigquery` を import すらしておらず、`python/data/legend_streams.json` と
+#   `legend_totals.json`（別の口で流した SQL の結果）を焼き直すだけ。
+#   しかも**伝説の期間は8つとも過去で閉じている**（いちばん新しい `kazbegi` が
+#   2026-08-23 まで）ので、そもそも日が経っても古くならない。
+#   古くなるのは**人が `legends.ts` に新しい伝説を足したとき**だけで、そのときは
+#   先に `--sql` の SQL を流して JSON を取り直す必要がある。**機械の仕事ではない。**
 # - **`build_nordic.py`** — 元にする JSON が `/tmp/` にあってリポジトリに残っていない。
 #   **そもそも回せない**（走らせても落ちる）。
 # - **`build_shorts.py`** — 元が手書きの表（`python/data/shorts.json`）。
-#   BigQuery に無いので、回しても手で書いたものを焼き直すだけ。
+#   **BigQuery にショートは1本も入っていない。** 回しても手で書いたものを焼き直すだけ。
 # - **`build_voices.py`** — どの声を載せるかを**人が選ぶ**もの（`voices_picks.json`）。
 #   機械が選び直してよいものではない。
-# - **`build_legend_days.py` / `build_nordic_map.py` / `build_world_route.py`** —
-#   ここでは要らない。要るようになったら、上と同じ形で1本ずつ確かめてから足す。
+# - **`build_nordic_map.py` / `build_world_route.py`** — 地形データから地図を焼くもの。
+#   元が動かないので、毎晩回す理由が無い。
 #
 # ## 秘密の値
 #
@@ -62,6 +94,9 @@ name: 島の数字を焼き直す
 # （`run_admin_script.yml` はやっているが、ここでは要らない。要らないものは触らない）。
 
 on:
+  schedule:
+    # 取り込み（20:00 UTC）の後ろ。**日本時間の朝 6:30 ごろ**
+    - cron: "30 21 * * *"
   workflow_dispatch:
     inputs:
       scripts:
@@ -95,18 +130,58 @@ jobs:
       actions: write
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+      # `residents.ts` の ACTIVE_FRIENDS が、前の値の何倍まで動いてよいか。
+      # **この幅を超えたら commit せずに落とす**（下の「値が跳ねていないか」）
+      ACTIVE_FRIENDS_MAX_RATIO: "1.5"
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v4
         with:
           ref: master
+          # **浅いままだと rebase できない。** 既定の `fetch-depth: 1` では
+          # 手元の1コミットと、取り直した master の1コミットに共通の祖先が
+          # 見えず、下の `git pull --rebase` が「関係のない履歴」で落ちる。
+          # 毎晩ひとりでに走るので、押し直してくれる人はいない。
+          # 517コミット・96MB なので、全部持ってきても数秒しか変わらない
+          fetch-depth: 0
+
+      # cron のときは押す人がいない。入力も空で来る（`inputs.*` が空文字になる）。
+      # **ここで「見るだけ／配る」を決めて env に置き、以降は env だけを見る。**
+      # `!inputs.dry_run` を直接書くと、cron の空文字が false と読まれて
+      # たまたま動く、という当てにならない形になる。
+      - name: 今回の押しかたを決める
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_SCRIPTS: ${{ inputs.scripts }}
+          IN_DRY: ${{ inputs.dry_run }}
+          IN_DEPLOY: ${{ inputs.deploy }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ]; then
+            # 毎晩ぶん。**BigQuery だけで答えの決まる4本**を、配るところまで
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day" >> "$GITHUB_ENV"
+            echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
+            echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
+            echo "毎晩ぶん（cron）: 4本を焼いて、変わっていれば配ります"
+          else
+            echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
+            if [ "$IN_DRY" = "false" ]; then
+              echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
+            else
+              echo "REBAKE_DRY=1" >> "$GITHUB_ENV"
+            fi
+            if [ "$IN_DEPLOY" = "true" ]; then
+              echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
+            else
+              echo "REBAKE_DEPLOY=0" >> "$GITHUB_ENV"
+            fi
+            echo "手で押したぶん: dry_run=$IN_DRY deploy=$IN_DEPLOY"
+          fi
 
       # 入力は**シェルに直接埋め込まない**。env 経由で受けて "$..." で読む。
       # `${{ inputs.scripts }}` をそのまま run に書くと、入力の中身が
       # シェルの一部として解釈される。allowlist を通る前に走ってしまう。
       - name: 回すものを決める（allowlist）
-        env:
-          SCRIPTS_IN: ${{ inputs.scripts }}
         run: |
           set -euo pipefail
 
@@ -115,7 +190,7 @@ jobs:
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
           # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
-          raw="$(printf '%s' "${SCRIPTS_IN:-}" | tr ',' '\n' | tr -d ' \t\r' \
+          raw="$(printf '%s' "${REBAKE_IN:-}" | tr ',' '\n' | tr -d ' \t\r' \
                  | tr 'A-Z' 'a-z' | sed 's|^python/||; s/\.py$//' \
                  | grep -v '^$' | tr '\n' ' ' || true)"
 
@@ -134,7 +209,7 @@ jobs:
                 *)
                   echo "::error::$n は回してよいものに入っていません。何も走らせずに止めます"
                   echo "::error::回せるのは: $ALL"
-                  echo "::error::cityStreams / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
+                  echo "::error::cityStreams / legendDays / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
                   exit 1
                   ;;
               esac
@@ -292,15 +367,120 @@ jobs:
             echo "::endgroup::"
           done
 
+      # **数え方の不具合は、緑のまま master に入る。**
+      # 実際に `ACTIVE_FRIENDS` が 61 → 174 になったことがある（読めなかった日を
+      # 全員の出席に足していたので、1回来ただけの人が72人「ここ3ヶ月の常連」に
+      # 混ざった。`python/build_residents.py` の docstring に実測が残っている）。
+      # あのときは**目で見て止めた。毎晩ひとりでに回すなら、その目はいない。**
+      #
+      # 常連の数が一晩で 1.5倍に増える／2/3 に減るのは、人の出入りではなく
+      # 数え方が変わったときにしか起きない。**跳ねたら commit せずに落とす。**
+      # 落として赤くしておけば翌朝そこから追える（黙って直すと気づけない）。
+      - name: 値が跳ねていないか
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re, sys, pathlib
+
+          if "site/content/residents.ts" not in os.environ["REBAKE_PATHS"].split():
+              print("residents.ts は焼いていないので、見るものがありません")
+              sys.exit(0)
+
+          after_p = pathlib.Path("site/content/residents.ts")
+          before_p = pathlib.Path("/tmp/rebake-before/residents.ts")
+
+          def active(p):
+              if not p.exists():
+                  return None
+              m = re.search(r"ACTIVE_FRIENDS = (\d+)", p.read_text(encoding="utf-8"))
+              return int(m.group(1)) if m else None
+
+          before, after = active(before_p), active(after_p)
+          ratio_max = float(os.environ["ACTIVE_FRIENDS_MAX_RATIO"])
+          summary = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
+
+          def note(text):
+              with summary.open("a", encoding="utf-8") as f:
+                  f.write(text)
+
+          # 焼いた結果から読めない = 出力の形が変わっている。これも止める理由になる
+          if after is None:
+              print("::error::焼いた residents.ts から ACTIVE_FRIENDS を読めませんでした")
+              note("\n**止めました。** 焼いた `residents.ts` から `ACTIVE_FRIENDS` を"
+                   "読めません。出力の形が変わっています。commit していません。\n")
+              sys.exit(1)
+
+          if not before:
+              print(f"前の値が読めないので、跳ねの判定は飛ばします（いま {after}人）")
+              sys.exit(0)
+
+          lo, hi = before / ratio_max, before * ratio_max
+          print(f"ACTIVE_FRIENDS {before} → {after}（許す幅 {lo:.1f}〜{hi:.1f}）")
+          if lo <= after <= hi:
+              sys.exit(0)
+
+          print(f"::error::ACTIVE_FRIENDS が {before} → {after}。{ratio_max}倍の幅を超えました")
+          # **行の頭に空白を置かない。** ここは YAML のブロックスカラの中なので、
+          # 三重引用符の中身を左端から書くとブロックが終わってしまう。
+          # かといって字下げしたまま書くと、要約が丸ごとコードブロックになる
+          note("\n".join([
+              "",
+              "**止めました。commit していません。**",
+              "",
+              f"`ACTIVE_FRIENDS`（直近90日の常連の数）が **{before}人 → {after}人**。",
+              f"一晩で {ratio_max}倍の幅を超えて動くのは、人の出入りではなく",
+              "**数え方が変わったとき**にしか起きません。",
+              "",
+              "- 取り込めていない日が増えていないか（`build_residents` のログの",
+              "  「配信はあったのにチャットの取り込めていない日が N 日ある」）",
+              "- `python/build_residents.py` の数え方が変わっていないか",
+              "",
+              "を見てから、手で `dry_run: false` で押し直します。",
+              "",
+          ]))
+          sys.exit(1)
+          PY
+
+      # **焼いた TS がビルドを通ることを、commit の前に確かめる。**
+      # 自動生成なので構文が壊れることは滅多にないが、壊れたときに起きるのは
+      # 「master が赤くなる」ではなく「**Hosting のデプロイが落ちて、次に誰かが
+      # 配るまで誰も気づかない**」。commit の前に落としたほうがずっと安い。
+      #
+      # dry_run のときも通す。**dry_run は本番の予行なので、予行で確かめない
+      # ものは予行の意味がない。**
+      #
+      # 中身は Hosting が走らせている `build:island`
+      # （`npm --prefix site ci && npm --prefix site run build`）と同じ。
+      # **同じものを先にここで通す**から、通れば Hosting も通る。
+      - name: Node の用意
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci
+
+      # `NEXT_DIST_DIR` は付けない。既定の `.next` は `site/tsconfig.json` の
+      # include にもう入っているので、Next が include を書き足さずに済む
+      # （書き足されると tsconfig.json が汚れる。commit は名指しなので混ざりは
+      #   しないが、汚れずに終わるほうがよい）
+      - name: site のビルドが通るか
+        working-directory: site
+        run: npx next build
+
       - name: 見るだけで終わる
-        if: ${{ inputs.dry_run }}
+        if: env.REBAKE_DRY == '1'
         run: |
           {
             echo ""
             echo "**見るだけ（dry_run）で終わりました。** commit も deploy もしていません。"
             echo ""
+            echo "焼いた中身で \`next build\` が通ることまでは確かめてあります。"
             echo "上の数字でよければ、同じ入力のまま **dry_run のチェックを外して**もう一度押します。"
-            if [ "${{ inputs.deploy }}" = "true" ]; then
+            if [ "$REBAKE_DEPLOY" = "1" ]; then
               echo ""
               echo "> deploy を on にしてありますが、dry_run が優先なので配っていません。"
             fi
@@ -308,7 +488,7 @@ jobs:
 
       - name: master に入れる
         id: commit
-        if: ${{ !inputs.dry_run }}
+        if: env.REBAKE_DRY == '0'
         run: |
           set -euo pipefail
           if git diff --quiet -- $REBAKE_PATHS; then
@@ -324,15 +504,24 @@ jobs:
           git commit \
             -m "島に焼き込んである数字を取り直す（$REBAKE_SCRIPTS）" \
             -m "焼き込みは配り直しても動かない。取り込みが毎晩進むぶん、置いたままだと画面の数字だけが止まる。"
+          # 毎晩ひとりでに走るので、焼いているあいだに誰かが master へ入れていることが
+          # ある。**そのまま push すると落ちて、その晩ぶんが黙って消える。**
+          # 取り込んでから押す（rebase なので、載せ直すのは自分の1コミットだけ）
+          # **`--autostash` を外さない。** この直前で `next build` を通しているので、
+          # Next が `tsconfig.json` の include や `next-env.d.ts` を書き足していると
+          # 作業ツリーが汚れている。素の `git pull --rebase` は汚れていると
+          # 「unstaged changes がある」で止まり、**その晩ぶんが黙って消える。**
+          # commit は名指しなので、退避したぶんが混ざることはない
+          git pull --rebase --autostash origin master
           git push origin HEAD:master
           echo "changed=1" >> "$GITHUB_OUTPUT"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**master に入れました。**" >> "$GITHUB_STEP_SUMMARY"
 
       # 焼き込みは Hosting を配り直して初めて画面に出る。
-      # **deploy を on にしたときだけ。**（既定は off）
+      # **deploy を on にしたときだけ**（手で押したときの既定は off。cron は on）
       - name: Hosting を配る
-        if: ${{ !inputs.dry_run && inputs.deploy && steps.commit.outputs.changed == '1' }}
+        if: env.REBAKE_DRY == '0' && env.REBAKE_DEPLOY == '1' && steps.commit.outputs.changed == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -342,10 +531,31 @@ jobs:
           echo "**Hosting のデプロイを起動しました。** 10分ほどで画面に出ます。" >> "$GITHUB_STEP_SUMMARY"
 
       - name: 配っていないときの案内
-        if: ${{ !inputs.dry_run && !inputs.deploy && steps.commit.outputs.changed == '1' }}
+        if: env.REBAKE_DRY == '0' && env.REBAKE_DEPLOY != '1' && steps.commit.outputs.changed == '1'
         run: |
           {
             echo ""
             echo "**まだ画面には出ていません。** 焼き込みは配り直して初めて入れ替わります。"
             echo "Actions の「Firebase Hosting Deploy」を手で起動するか、deploy を on にしてもう一度押してください。"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに誰も
+      # 気づかない。せめてどこで落ちたかを要約に残す
+      # （要約は run の1枚目に出るので、ログを開かずに読める）
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo ""
+            echo "### 落ちました"
+            echo ""
+            echo "- 回そうとしたもの: \`${REBAKE_SCRIPTS:-（決まる前に落ちた）}\`"
+            echo "- 見るだけだったか: \`${REBAKE_DRY:-?}\`（1 なら見るだけ）"
+            echo "- **master には入れていません。**"
+            echo ""
+            echo "赤い step を開きます。よくあるのは3つです。"
+            echo ""
+            echo "1. **焼く** — BigQuery に届いていない（認証・権限）か、クエリが変わった"
+            echo "2. **値が跳ねていないか** — 数え方が変わった合図。理由がこの上に書いてあります"
+            echo "3. **site のビルドが通るか** — 焼いた TS が壊れている。ここで止めたので本番は無事です"
           } >> "$GITHUB_STEP_SUMMARY"
