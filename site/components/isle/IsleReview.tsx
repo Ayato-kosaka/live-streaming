@@ -10,8 +10,11 @@ import { chapterDays, type Chapter } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 import { shortsOf } from "@/content/shorts";
 import ChapDays from "./ChapDays";
+import IsleSpan from "./IsleSpan";
 import { MarkList, ShortGrid } from "./IsleLists";
+import { isleSpanNote } from "./span";
 import { appsOf, legendsOf } from "./spec";
+import { stayClosedOn } from "@/lib/stay";
 
 /**
  * 島の下の紙 — **その章を、その島の中で振り返る。**
@@ -70,7 +73,9 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
     <Sheet>
       {st && (
         <Zone>
-          <H note={span(c)}>この島のこと</H>
+          {/* 「2025年6月 〜 いま」は、次の島へ出発した日に閉じる。焼いたままにすると、
+              出発したあとも過去の島が「いま」と言い続ける（`./span.ts`） */}
+          <H note={<IsleSpan chapter={c} kind="note" baked={isleSpanNote(c)} />}>この島のこと</H>
           <p className="isle-note">{c.note}。</p>
           <Rec
             items={[
@@ -95,7 +100,7 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
                     <Flag slug={k.slug} size={30} />
                     <span className="isle-kuni-body">
                       <b>{k.name}</b>
-                      <i>{stayText(k.stays)}</i>
+                      <i>{stayText(k.stays, stayClosedOn(k.slug))}</i>
                       <em>{cities.slice(0, 4).join("・")}</em>
                     </span>
                     <Icon name="right" size={14} />
@@ -215,25 +220,26 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
   );
 }
 
-const ym = (d: string) => {
-  const [y, m] = d.split("-");
-  return `${y}年${Number(m)}月`;
-};
-
-/** 「2024年10月 〜 2025年3月」。いまも続いている章は「いま」で止める */
-const span = (c: Chapter) => (c.from ? `${ym(c.from)} 〜 ${c.to ? ym(c.to) : "いま"}` : "これから");
-
 /**
  * 「2024年10月〜11月、2025年3月」。同じ国に何度も寄っている章があるので、区間ごとに出す。
  *
  * **年も月も、同じなら二度書かない。** 全部書くと「2024年12月〜2024年12月」に
  * なって、1行に収まらず途中で切れる（実測で国の半分がそうなっていた）。
+ *
+ * **終わりの空いている滞在を、そのまま割らない。** `s.to` が空だと
+ * `Number(undefined)` になって、本番に **「2026年5月〜年NaN月」** が出ていた。
+ * 島を出た日が分かっていればそこで閉じ（`lib/stay.ts` の `stayClosedOn`）、
+ * まだその島にいるなら「から」で開けたままにする。
+ *
+ * @param closedOn その国を出た日（YYYY-MM-DD）。まだいるなら null
  */
-function stayText(stays: { from: string; to: string }[]) {
+function stayText(stays: { from: string; to: string }[], closedOn: string | null) {
   return stays
     .map((s) => {
       const [fy, fm] = s.from.split("-");
-      const [ty, tm] = s.to.split("-");
+      const to = s.to || closedOn;
+      if (!to) return `${fy}年${Number(fm)}月から`;
+      const [ty, tm] = to.split("-");
       if (fy === ty && fm === tm) return `${fy}年${Number(fm)}月`;
       if (fy === ty) return `${fy}年${Number(fm)}〜${Number(tm)}月`;
       return `${fy}年${Number(fm)}月〜${ty}年${Number(tm)}月`;
