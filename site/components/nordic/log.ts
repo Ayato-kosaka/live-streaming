@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getNordicLog, type NordicLogEntry } from "@/lib/api";
-import { amIOwner } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 /**
@@ -73,26 +72,18 @@ export function useNordicLog(): NordicLogEntry[] | null {
  * もう一度見ているので、ここを騙しても何も書けない
  * （`functions/src/islandApi.ts` の `ownerUid`）。
  *
- * ログインしていない人には聞きにいかない。ほとんどの人はログインしない。
+ * ## 聞きにいくのは、島でいちど（`lib/auth.tsx`）
+ *
+ * 前はここが自分で `POST /me` を叩いていた。日誌・目標・板・カードの
+ * 4か所から呼ばれるので、面を開くたびに何本も同じことを聞いていて、
+ * **細い電波では、そのうち落ちたぶんだけが「あやとではない」に化けた。**
+ * 1日ぶんのページを開いたら書く欄が消えている、というのがそれ。
+ *
+ * いまは島でひとつの答えを見る。読めなかったときは `"unknown"` で返ってきて、
+ * ここは `false`（＝道具を出さない）に落ちる。**「読めなかったから出す」には
+ * しない。** 出したら、読めなかっただけの視聴者さんにあやとの道具が見える。
+ * 前に読めた答えは端末が覚えているので、あやとの端末では消えない。
  */
 export function useOwner(): boolean {
-  const [owner, setOwner] = useState(false);
-  const { user, token } = useAuth();
-  useEffect(() => {
-    if (!user) {
-      setOwner(false);
-      return;
-    }
-    let gone = false;
-    (async () => {
-      const t = await token();
-      if (!t || gone) return;
-      const yes = await amIOwner(t);
-      if (!gone) setOwner(yes);
-    })();
-    return () => {
-      gone = true;
-    };
-  }, [user, token]);
-  return owner;
+  return useAuth().owner === "yes";
 }

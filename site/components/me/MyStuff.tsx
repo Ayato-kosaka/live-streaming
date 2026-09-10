@@ -15,6 +15,17 @@ import Longer from "@/components/ui/Longer";
 import { Pin } from "@/components/live/art";
 import CardOne from "@/components/cards/CardOne";
 import type { PlanDays, ShownCard } from "@/components/cards/cards";
+import ReadAgain, { Waiting } from "./ReadAgain";
+
+/**
+ * 取りに行った結果。**3つを別のものとして持つ。**
+ *
+ * 前は「取りに行っている最中は `null`、それ以外は配列」の2つしか無くて、
+ * 読めなかったときに空の配列を入れていた。すると札の数が **0** と出て、
+ * 中身は「まだ1枚も貼っていません」になる。20枚貼ってくれた人の画面が、
+ * 電波の細い日に「0枚」と言い切る（`docs/island-standards.md` 10）。
+ */
+export type Bag<T> = { st: "wait" } | { st: "ok"; list: T[] } | { st: "down" };
 
 /** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
 const day = (iso: string) =>
@@ -50,18 +61,23 @@ export default function MyStuff({
   planDays,
   uid,
   hasChannel,
+  onRetry,
+  quiet = false,
 }: {
-  /** 取りにいっている最中は null。0枚と区別する */
-  stickies: Sticky[] | null;
-  plans: NextPlan[] | null;
-  cards: ShownCard[] | null;
+  stickies: Bag<Sticky>;
+  plans: Bag<NextPlan>;
+  cards: Bag<ShownCard>;
   planDays: PlanDays;
   uid: string;
   /** YouTube のチャンネルが結び付いているか。カードの持ち主はこれで決まる */
   hasChannel: boolean;
+  onRetry: () => void;
+  /** 面のうえに、押しどころつきの「もう一度よみこむ」がもう出ているか */
+  quiet?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("note");
-  const count = (v: unknown[] | null) => (v === null ? "" : String(v.length));
+  /** **読めた数しか出さない。** 待っているあいだも、読めなかったときも空欄 */
+  const count = (b: Bag<unknown>) => (b.st === "ok" ? String(b.list.length) : "");
 
   return (
     <section className="panel paper">
@@ -88,28 +104,36 @@ export default function MyStuff({
       </div>
 
       <div className="mp-stuff">
-        {tab === "note" && <Notes notes={stickies} />}
-        {tab === "plan" && <Plans plans={plans} uid={uid} />}
+        {tab === "note" && <Notes notes={stickies} onRetry={onRetry} quiet={quiet} />}
+        {tab === "plan" && (
+          <Plans plans={plans} uid={uid} onRetry={onRetry} quiet={quiet} />
+        )}
         {tab === "card" && (
-          <Cards cards={cards} planDays={planDays} hasChannel={hasChannel} />
+          <Cards
+            cards={cards}
+            planDays={planDays}
+            hasChannel={hasChannel}
+            onRetry={onRetry}
+            quiet={quiet}
+          />
         )}
       </div>
     </section>
   );
 }
 
-function Waiting() {
-  return (
-    <div className="wait is-row" aria-hidden>
-      <span />
-      <span />
-    </div>
-  );
-}
-
-function Notes({ notes }: { notes: Sticky[] | null }) {
-  if (notes === null) return <Waiting />;
-  if (notes.length === 0)
+function Notes({
+  notes,
+  onRetry,
+  quiet,
+}: {
+  notes: Bag<Sticky>;
+  onRetry: () => void;
+  quiet: boolean;
+}) {
+  if (notes.st === "wait") return <Waiting />;
+  if (notes.st === "down") return <ReadAgain what="付箋" onRetry={onRetry} quiet={quiet} />;
+  if (notes.list.length === 0)
     return (
       <div className="blank">
         <b>まだ1枚も貼っていません</b>
@@ -121,7 +145,7 @@ function Notes({ notes }: { notes: Sticky[] | null }) {
       </div>
     );
   return (
-    <Longer items={notes} first={3} step={8} unit="枚" className="mp-notes">
+    <Longer items={notes.list} first={3} step={8} unit="枚" className="mp-notes">
       {(n, i) => {
         const th = themeById(n.theme);
         return (
@@ -158,9 +182,20 @@ function Notes({ notes }: { notes: Sticky[] | null }) {
   );
 }
 
-function Plans({ plans, uid }: { plans: NextPlan[] | null; uid: string }) {
-  if (plans === null) return <Waiting />;
-  if (plans.length === 0)
+function Plans({
+  plans,
+  uid,
+  onRetry,
+  quiet,
+}: {
+  plans: Bag<NextPlan>;
+  uid: string;
+  onRetry: () => void;
+  quiet: boolean;
+}) {
+  if (plans.st === "wait") return <Waiting />;
+  if (plans.st === "down") return <ReadAgain what="企画" onRetry={onRetry} quiet={quiet} />;
+  if (plans.list.length === 0)
     return (
       <div className="blank">
         <b>まだ1つも出していません</b>
@@ -172,7 +207,7 @@ function Plans({ plans, uid }: { plans: NextPlan[] | null; uid: string }) {
       </div>
     );
   return (
-    <Longer items={plans} first={4} step={10} unit="件" className="mp-plans">
+    <Longer items={plans.list} first={4} step={10} unit="件" className="mp-plans">
       {(p) => {
         const edit = canEditPlan(p, uid, myPlans());
         return (
@@ -212,19 +247,25 @@ function Cards({
   cards,
   planDays,
   hasChannel,
+  onRetry,
+  quiet,
 }: {
-  cards: ShownCard[] | null;
+  cards: Bag<ShownCard>;
   planDays: PlanDays;
   hasChannel: boolean;
+  onRetry: () => void;
+  quiet: boolean;
 }) {
-  if (cards === null && hasChannel)
+  if (cards.st === "down")
+    return <ReadAgain what="カード" onRetry={onRetry} quiet={quiet} />;
+  if (cards.st === "wait")
     return (
       <div className="wait is-card" aria-hidden>
         <span />
         <span />
       </div>
     );
-  if (!cards || cards.length === 0)
+  if (cards.list.length === 0)
     return (
       <div className="blank">
         <b>{hasChannel ? "まだ1枚もありません" : "ここに、もらったカードが並びます"}</b>
@@ -236,7 +277,7 @@ function Cards({
       </div>
     );
   return (
-    <Longer items={cards} first={4} step={8} unit="枚" as="div" className="akd-grid">
+    <Longer items={cards.list} first={4} step={8} unit="枚" as="div" className="akd-grid">
       {(c) => <CardOne key={c.id} card={c} plans={planDays[c.day]} showName={false} />}
     </Longer>
   );

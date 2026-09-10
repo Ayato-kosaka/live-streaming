@@ -3,21 +3,21 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
+  getCards,
   getMyStickies,
   getNextPlans,
-  loadMe,
   myPlans,
-  type Me,
   type NextPlan,
   type Sticky,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import IslandMe from "@/components/live/IslandMe";
 import MeHero from "./MeHero";
-import MyStuff from "./MyStuff";
-import { useCards, type PlanDays } from "@/components/cards/cards";
+import MyStuff, { type Bag } from "./MyStuff";
+import ReadAgain, { WaitingPanel } from "./ReadAgain";
+import { withIcons, type PlanDays, type ShownCard } from "@/components/cards/cards";
 import SignIn from "@/components/live/SignIn";
 
 /**
@@ -44,44 +44,50 @@ import SignIn from "@/components/live/SignIn";
  * 札で切り替えて、同時に1つしか出さない（`MyStuff`）。
  */
 export default function MyPage({ planDays }: { planDays: PlanDays }) {
-  const { user, token, signOut } = useAuth();
-  const [me, setMe] = useState<Me | null>(null);
-  /** 取りにいっている最中は null。0枚と区別する */
-  const [stickies, setStickies] = useState<Sticky[] | null>(null);
-  const [plans, setPlans] = useState<NextPlan[] | null>(null);
-  /** 読めなかったか。空っぽと読めなかったを、同じ顔で出さない */
-  const [down, setDown] = useState(false);
-  const { cards } = useCards();
+  /* 自分が誰か（`me`）は島じゅうで1回だけ引く。読み直しも向こうが持っている
+     （`lib/auth.tsx`）。ここで別に引くと、机と数字で答えが割れる。 */
+  const { user, token, signOut, me, meRead, owner, reloadMe } = useAuth();
+  /** 付箋と企画。**待っている・読めた・読めなかったの3つを別に持つ** */
+  const [stickies, setStickies] = useState<Bag<Sticky>>({ st: "wait" });
+  const [plans, setPlans] = useState<Bag<NextPlan>>({ st: "wait" });
+  /* カードは `useCards()` を使わない。**あちらは読み直せない**ので、
+     「もう一度よみこむ」を押しても灰色のままになる。ここで引いて持つ。 */
+  const [cards, setCards] = useState<Bag<ShownCard>>({ st: "wait" });
 
   const load = useCallback(async () => {
     const t = await token();
-    if (!t) return;
-    setDown(false);
-    try {
-      const now = await loadMe(t);
-      setMe(now);
-    } catch {
-      setDown(true);
+    if (!t) {
+      /* 合言葉が取れない＝ログインの道具そのものが降りてこなかった。
+         これも「読めなかった」で、0枚ではない */
+      setStickies({ st: "down" });
+      setPlans({ st: "down" });
+      setCards({ st: "down" });
+      return;
     }
     try {
-      const r = await getMyStickies(t);
-      setStickies(r.notes);
+      const r = await withRead(getMyStickies(t));
+      setStickies({ st: "ok", list: r.notes });
     } catch {
-      setStickies([]);
-      setDown(true);
+      setStickies({ st: "down" });
     }
     try {
       /* 企画は誰でも読める口から引いて、自分のぶんだけ手元で残す。
          「自分のぶんだけ」をサーバーに頼むと `where` と `orderBy` が
          組み合わさって複合索引が要る（#168）。 */
-      const r = await getNextPlans(200);
+      const r = await withRead(getNextPlans(200));
       const mine = myPlans();
-      setPlans(
-        r.plans.filter((p) => (p.byUid ? p.byUid === user?.uid : mine.has(p.id))),
-      );
+      setPlans({
+        st: "ok",
+        list: r.plans.filter((p) => (p.byUid ? p.byUid === user?.uid : mine.has(p.id))),
+      });
     } catch {
-      setPlans([]);
-      setDown(true);
+      setPlans({ st: "down" });
+    }
+    try {
+      const r = await withRead(getCards());
+      setCards({ st: "ok", list: withIcons(r?.cards ?? []) });
+    } catch {
+      setCards({ st: "down" });
     }
   }, [token, user?.uid]);
 
@@ -89,18 +95,18 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     if (user) load();
   }, [user, load]);
 
+  /** 「もう一度よみこむ」。**この面が引くもの全部を、まとめて読み直す。** */
+  const retry = useCallback(() => {
+    setStickies({ st: "wait" });
+    setPlans({ st: "wait" });
+    setCards({ st: "wait" });
+    reloadMe();
+    load();
+  }, [load, reloadMe]);
+
   // ログインの状態が決まるまで。ここで「入っていません」と言うと、
   // 引き継ぎの終わった人に一瞬だけ嘘をつくことになる
-  if (user === undefined) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  if (user === undefined) return <WaitingPanel />;
 
   if (!user) {
     return (
@@ -114,17 +120,32 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   /* 顔は**毎晩入れ直る `channelPhoto`**。ログインした日のまま止まる
      `user.photo` は使わない（`docs/island-misses.md` #1・#2）。 */
   const face = me?.channelPhoto || "";
-  const mine = me?.channelId
-    ? (cards ?? []).filter((c) => c.channelId === me.channelId)
-    : [];
+
+  /* 自分が誰かを読めていない。**このとき、下の3つもそろって落ちている。**
+     押しどころつきの札はこの1枚だけにして、下は何が欠けているかだけ言う
+     （同じボタンを縦に並べない）。 */
+  const meDown = meRead === "down" && !me;
+
+  /* カードは「自分のもの」なので、**自分のチャンネルが読めるまで数えない。**
+     読めていないのに数えると、持っている人の画面が 0枚と言い切る。 */
+  const myCards: Bag<ShownCard> =
+    meRead === "down" && !me ? { st: "down" }
+    : !me ? { st: "wait" }
+    : !me.channelId ? { st: "ok", list: [] }
+    : cards.st !== "ok" ? cards
+    : { st: "ok", list: cards.list.filter((c) => c.channelId === me.channelId) };
 
   return (
     <>
       <MeHero name={me?.nickname || user.name} face={face} channelId={me?.channelId} />
 
       {/* 島の手入れ（`/me/desk`）。**あやとだけ。じぶんのものより上。**
-          旅の途中は、ここを開くために `/me` へ来る。 */}
-      {me?.admin && (
+          旅の途中は、ここを開くために `/me` へ来る。
+
+          **`me` が読めたかではなく、`owner` で出す。** `me` が読めなかった
+          だけで消していたころ、細い電波では入口がここから消えて、画面上に
+          `/me/desk` へ行く道が1本も残らなかった（`island-standards.md` 10）。 */}
+      {owner === "yes" && (
         <Link className="mp-goto is-lead" href="/me/desk">
           <Icon name="signpost" size={22} />
           <span className="mp-goto-t">
@@ -135,20 +156,20 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
         </Link>
       )}
 
+      {/* 自分が誰かを読めなかったとき。**「あやとではない」に倒さない。**
+          押せば読み直せるので、開き直さなくていい。 */}
+      {meDown && <ReadAgain what="じぶんのこと" onRetry={retry} />}
+
       <MyStuff
         stickies={stickies}
         plans={plans}
-        cards={me?.channelId ? mine : null}
+        cards={myCards}
         planDays={planDays}
         uid={user.uid}
         hasChannel={!!me?.channelId}
+        onRetry={retry}
+        quiet={meDown}
       />
-
-      {down && (
-        <p className="muted mp-small">
-          いくつか読めませんでした。電波の届くところで開き直すと出ます。
-        </p>
-      )}
 
       {/* 島での見え方。畳んでいいのは、決めたら滅多に触らないから。
           **見出しが中身を言っている**ので、畳んでいても探せる。 */}

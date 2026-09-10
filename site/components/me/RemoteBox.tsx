@@ -12,11 +12,12 @@ import {
   type RemotePush,
   type RemoteState,
 } from "@/lib/remote";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead } from "@/lib/auth";
 import { DAY_PAGES, dayHref, dayName } from "@/content/nordic";
 import { jstNow } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
+import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 
 /** 手元に残す押しどころの数。配信1本ぶんを遡れれば足りる。 */
 const KEEP = 20;
@@ -57,8 +58,10 @@ type Hit = {
  * **同じボタンを2回押しても効く**のはそのため。
  */
 export default function RemoteBox() {
-  const { user, token } = useAuth();
+  const { user, token, owner } = useAuth();
   const [ses, setSes] = useState<RemoteState | null>(null);
+  /** 一度も開けていない。**灰色の骨のまま止めないための印** */
+  const [dead, setDead] = useState(false);
   /** あやと以外が URL を直に叩いて来たとき */
   const [denied, setDenied] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,15 +74,21 @@ export default function RemoteBox() {
   /* ---- 開く。id は作り直さない（OBS の URL が変わってしまう） ---- */
   const open = useCallback(
     async (fresh: boolean) => {
-      const t = await token();
-      if (!t) return;
       setErr(null);
+      setDead(false);
+      const t = await token();
+      /* 合言葉が取れないのも「開けなかった」。**黙って戻らない。**
+         戻っていたころ、`ses` が null のまま灰色の骨だけが残った */
+      if (!t) return setDead(true);
       try {
-        const r = await openRemote(t, fresh);
+        const r = await withRead(openRemote(t, fresh));
         setSes(r.session);
       } catch (e) {
         if (String(e).includes("403")) setDenied(true);
-        else setErr("開けませんでした。電波の届くところで、もう一度。");
+        else {
+          setErr("開けませんでした。電波の届くところで、もう一度。");
+          setDead(true);
+        }
       }
     },
     [token],
@@ -140,21 +149,16 @@ export default function RemoteBox() {
   };
 
   /* ---- 出す ---- */
-  if (user === undefined) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  if (user === undefined) return <WaitingPanel />;
   /* ここへの入口は、あやとの机（`/me/desk`）の1本だけ（#242）。
      看板にも `/all` にもパンくずにも出していないので、ここに着くのは
      あやとか、URL を直に打った人しかいない。**決まりの説明は置かない。**
-     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。 */
-  if (!user || denied) {
+     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。
+
+     `owner === "no"` を足したのは、口の 403 を待たずに返すため。
+     **`"unknown"` はここに入れない**——読めていないことは、
+     「あやとではない」ではない（`docs/island-standards.md` 10）。 */
+  if (!user || denied || owner === "no") {
     return (
       <section className="panel paper">
         <h2>ここは、あやとの机</h2>
@@ -165,16 +169,11 @@ export default function RemoteBox() {
       </section>
     );
   }
-  if (!ses) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  /* **開けなかったときに、灰色の骨を出したままにしない。**
+     骨は「もうすぐ出る」の意味で、出ないものの上に置くと、何分待っても
+     変わらない 998px の面になる。文言は下にも書いてあったが、
+     `if (!ses)` より下だったので初回に落ちると永久に届かなかった。 */
+  if (!ses) return dead ? <ReadAgainPanel what="遠隔操作" onRetry={() => open(false)} /> : <WaitingPanel />;
 
   const url =
     typeof window === "undefined" ?
