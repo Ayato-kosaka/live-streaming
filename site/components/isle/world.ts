@@ -11,6 +11,7 @@
  */
 
 import { radiusAt, resample, rng, wobble } from "@/components/island/geometry";
+import { spriteWidth } from "@/components/island/Sprite";
 import { islandRadius, type IslandArt } from "@/components/chain/shapes";
 import { bakeDeco, bakeFlowers, bakeSoil, type Deco, type DecoPaths } from "./deco";
 import type { IslePlaceSpec, IsleSpec } from "./spec";
@@ -103,7 +104,8 @@ function at(w: { cx: number; cy: number; squash: number }, radii: number[], t: n
  */
 export function buildWorld(spec: IsleSpec): IsleWorld {
   const art = spec.art;
-  const r = isleRadius(spec.days);
+  // 表紙の島だけは、日数ではなく「何軒建つか」で広さが決まる（`spec.ts` の COVER_R）
+  const r = spec.radius ?? isleRadius(spec.days);
   const maxR = r * Math.max(...art.radii);
   // 画面の外にも海が要る。カメラは島のふちまで寄るので、その先が切れていると
   // 「世界の端」が見えてしまう
@@ -142,11 +144,29 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
   const dockAt = at(w, sand, dockT, BEACH * 0.42);
 
   const ring = spec.places.filter((p) => p.id !== "pier");
+  /* **弧の取り分は、絵の幅で決める。** 等間隔にすると、やぐら（幅128）と
+     テント（幅62）が同じ幅をもらって、大きいほうだけ隣とぶつかる。
+     表紙の島は12軒建つので、ここを等間隔のままにすると重なった。
+
+     **ただし幅そのままでは効きすぎる。** 幅の比が3倍あると、小さい建物が
+     3分の1の弧に押し込まれて、そちら側だけ札が固まる。等間隔と半分ずつ混ぜて、
+     取り分のばらつきを ±50% に収める。 */
+  const w0 = ring.map((p) => Math.max(46, spriteWidth(p.icon, p.size)));
+  const avg = w0.reduce((a, b) => a + b, 0) / Math.max(1, w0.length);
+  const arc = w0.map((w) => (w + avg) / 2);
+  const arcAll = arc.reduce((a, b) => a + b, 0) || 1;
+  /* 置きはじめる向きは島ごとに違う（乱数）。
+     **舟の着くところに揃えない。** 揃えると、1軒目と最後の1軒が両方とも
+     浜のそばに来て、引き（島ぜんぶ）でその2枚の札が下でぶつかり、
+     押し出されたぶんが海の上に積み上がる（撮って分かった）。 */
   const start = rand();
+  let acc = 0;
   const placed: Placed[] = ring.map((p, i) => {
-    const t = (start + (i + 0.5) / ring.length) % 1;
+    const t = (start + (acc + arc[i] / 2) / arcAll) % 1;
+    acc += arc[i];
     const rr = radiusAt(sand, t);
-    const d = Math.min(rr - BEACH - 20, rr * (0.34 + rand() * 0.14));
+    // 内と外へ交互に振る。同じ半径にきれいに並べると、島が首飾りに見える
+    const d = Math.min(rr - BEACH - 20, rr * (0.34 + (i % 2) * 0.08 + rand() * 0.05));
     const a = t * Math.PI * 2 - Math.PI / 2;
     return {
       ...p,
@@ -158,13 +178,27 @@ export function buildWorld(spec: IsleSpec): IsleWorld {
   const pier = spec.places.find((p) => p.id === "pier");
   if (pier) placed.push({ ...pier, t: dockT, x: Math.round(dockAt.x), y: Math.round(dockAt.y) });
 
-  /* あやとが降り立つところ。舟から一歩あがった草地。
+  /* あやとが降り立つところ。舟から上がって、**1軒目の建物のそば**まで。
      **浜に立たせたままにしない。** 浜は島のいちばん外なので、そこから見ると
-     画面の半分が海になって、建物が1つも入らない。 */
+     画面の半分が海になって、建物が1つも入らない。
+     **桟橋の前で止めない。** 舟のすぐ横に立たせると、降りて最初に開く札が
+     「となりの島へ」になる。降り立った人がいちばん先に見る札が
+     「この島を出る」では、島に入ってきた意味がない。 */
   const landing = (() => {
     const a = dockT * Math.PI * 2 - Math.PI / 2;
     const d = Math.max(0, radiusAt(grass, dockT) - 26);
-    return { x: Math.round(cx + Math.cos(a) * d), y: Math.round(cy + Math.sin(a) * d * SQUASH) };
+    const from = { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d * SQUASH };
+    /* 舟からいちばん近い建物のほうへ寄せる。**どれが近いかは島ごとに違う** */
+    const ring2 = placed.filter((p) => p.id !== "pier");
+    if (!ring2.length) return { x: Math.round(from.x), y: Math.round(from.y) };
+    const first = ring2.reduce((m, p) =>
+      Math.hypot(p.x - dockAt.x, p.y - dockAt.y) < Math.hypot(m.x - dockAt.x, m.y - dockAt.y) ? p : m,
+    );
+    const k = 0.62;
+    return {
+      x: Math.round(from.x + (first.x - from.x) * k),
+      y: Math.round(from.y + (first.y - from.y) * k),
+    };
   })();
 
   /* --- 道 ---

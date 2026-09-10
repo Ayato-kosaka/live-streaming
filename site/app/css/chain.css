@@ -905,25 +905,31 @@
 /* 一言と「みる」は近づいてから。遠くの6枚が3行ずつ出ていると、島が字で埋まる */
 .isle-spot:not(.is-on) .isle-text i,
 .isle-spot:not(.is-on) .isle-go { display: none; }
-/* 看板を出さない建物は、近づくまで札ごと出さない */
-.isle-spot:not(.is-sign):not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
-/* 引き（島ぜんぶ）では、建っているもの全部の名前を出す。
+/* 寄り（降り立った画面）では、名前を出さない。近づいた1軒だけが開く。
+   **いまの島とそろえた**（`app/css/island.css` の `.spot-mark`）。
+   `docs/island-design.md` 6章「島の上には、名前を並べない」。
+   前はここが `.is-sign` の札を出しっぱなしにしていて、建物が増えるほど
+   島が字で埋まった（12軒建つ表紙の島では6枚が常に浮く）。 */
+.isle-spot:not(.is-on) .isle-mark { opacity: 0; pointer-events: none; }
+/* 引き（島ぜんぶ）では、看板の6つだけ名前を出す。
    ---------------------------------------------------------
    引きで名前が出る数の上限は6つ（`docs/island-design.md` 3-4・6章）。
-   **章の島は建つものが最大6つ**（`docs/island-atlas.md` 4章。
-   `components/isle/spec.ts` が5つ＋船着き場で切っている）なので、
-   ここでは建っているものがそのまま6つ以内に収まる。
-   いまの島は10軒建っているので、あちらは `.is-sign` で6つに絞っている
-   （`app/css/island.css` の `[data-cam="wide"]`）。 */
-/* `:not(.is-sign):not(.is-on)` は class 4つぶんの強さがある。
-   同じ強さでは後ろが勝つが、当てる先を1つ増やして確実に上書きする。 */
-.isle[data-cam="wide"] .isle-spot:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }
-/* 引きでは、押しどころを札1つにする（いまの島と同じ理由）。
+   **島に建つ数の上限ではない。** 章の島は素材のあるだけ建つし
+   （`docs/island-atlas.md` 4章）、表紙の島は常設の入口10軒＋旅＋桟橋で12軒建つ。
+   出す名前のほうを `sign` で6つに絞る（`components/isle/spec.ts` /
+   `components/isle/cover.ts`）。いまの島も同じ作り。 */
+.isle[data-cam="wide"] .isle-spot.is-sign:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }
+/* 引きでは、名前の出ている建物の押しどころを札1つにする（いまの島と同じ理由）。
    建物の当たりは 48px まで広げてあるので、引きの小さい建物では
    すぐ上の札にかぶる（実測で 141x30 の札の当たりが 142x29 に削られていた）。
-   引きでは全部の名前が出ているので、札のほうが押しどころでよい。 */
-.isle[data-cam="wide"] .isle-hit { pointer-events: none; }
+   **名前の出ていない建物は、建物のほうが押しどころ。** ここを一律で
+   `none` にすると、看板の無い6軒が引きから押せなくなる。 */
+.isle[data-cam="wide"] .isle-spot.is-sign .isle-hit { pointer-events: none; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
+/* 開いた札の一言は折り返してよいが、**折り返す幅を先に決める。**
+   決めないと札の幅が名前で決まるので、「アプリ」（3文字）の札では
+   一言の欄が 44px しか無く、15文字が5行に折れていた（実測）。 */
+.isle-spot.is-on .isle-text { min-width: 150px; }
 .isle-spot.is-on .isle-text b { font-size: 14.5px; }
 .isle-text i {
   display: block;
@@ -1347,5 +1353,167 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1.75;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------
+   島の下の紙 — その章のアーカイブ（`components/isle/IsleReview.tsx`）
+
+   紙の型（`.zk`）の中に置くものなので、**板を積まない。**
+   押せるものだけに厚みを付ける（`docs/island-design.md` 3-3）。
+   厚みは真下・ぼかしなし。落ち影（右下・ぼかしあり）と取り違えないため。
+   --------------------------------------------------------------- */
+.isle-note {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+/* 歩いた国。1国1行で、国旗・名前・いつ・どこにいたか */
+.isle-kuni,
+.isle-legends,
+.isle-apps,
+.isle-folks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.isle-kuni { display: grid; gap: 10px; }
+@media (min-width: 640px) { .isle-kuni { grid-template-columns: 1fr 1fr; } }
+.isle-kuni a,
+.isle-more,
+.isle-app-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 56px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: var(--paper-2);
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.14s ease;
+}
+.isle-kuni a:active,
+.isle-more:active,
+.isle-app-head:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-dark); }
+.isle-kuni-body { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.isle-kuni-body b { font-size: 14px; font-weight: 900; }
+.isle-kuni-body i,
+.isle-kuni-body em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* この島でやった企画。1つの数字を大きく出す（紙の「記録」と同じ読ませ方） */
+.isle-legends { display: grid; gap: 10px; }
+@media (min-width: 720px) { .isle-legends { grid-template-columns: 1fr 1fr; } }
+.isle-legends a {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: var(--paper-2);
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.14s ease;
+}
+.isle-legends a:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-dark); }
+.isle-legends img { flex: none; width: 56px; height: 56px; object-fit: contain; }
+.isle-legend-body { display: grid; gap: 3px; min-width: 0; }
+.isle-legend-body > b { font-size: 14.5px; font-weight: 900; line-height: 1.35; }
+.isle-legend-fig { display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; }
+.isle-legend-fig em { font-style: normal; font-size: 20px; font-weight: 900; line-height: 1; }
+.isle-legend-fig i { font-style: normal; font-size: 12px; font-weight: 900; }
+.isle-legend-fig span { font-size: 11.5px; font-weight: 700; color: var(--ink-2); margin-left: 3px; }
+.isle-legend-lead {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+/* この島で作っていたアプリ。頭は押せる板、その下の年表は紙のまま */
+.isle-apps { display: grid; gap: 14px; }
+.isle-app-head { width: 100%; }
+.isle-app-head img { flex: none; width: 44px; height: 44px; border-radius: 11px; object-fit: contain; }
+.isle-app-head > span { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.isle-app-head b { font-size: 14.5px; font-weight: 900; }
+.isle-app-head i {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.isle-marks { display: grid; margin: 6px 0 0; padding: 0 0 0 4px; list-style: none; }
+.isle-mark-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  /* 罫線1本で区切る。押せる行だが、年表なので板にはしない
+     （紙の中に板を混ぜない。`components/streams/Sheet.tsx`） */
+  border-top: 1.5px solid color-mix(in srgb, var(--frame) 52%, transparent);
+}
+.isle-marks li:first-child .isle-mark-row { border-top: 0; }
+.isle-mark-row time {
+  flex: none;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.isle-mark-row b { font-size: 12.5px; font-weight: 700; line-height: 1.5; flex: 1; min-width: 0; }
+a.isle-mark-row b { text-decoration: underline; text-underline-offset: 3px; }
+a.isle-mark-row:active { background: color-mix(in srgb, var(--frame) 22%, transparent); }
+
+/* 「全部見る」。段のいちばん下に1つだけ */
+.isle-more { margin-top: 12px; }
+.isle-more > span { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.isle-more b { font-size: 14px; font-weight: 900; }
+.isle-more i { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+
+/* この島にいた人。押せないので、まったく平ら */
+.isle-folks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 10px 6px;
+}
+.isle-folks li { display: grid; justify-items: center; gap: 2px; }
+.isle-folks img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(214, 196, 152, 0.4);
+}
+.isle-folks i {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--ink-2);
 }

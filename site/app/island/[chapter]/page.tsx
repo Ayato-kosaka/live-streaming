@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
+import IsleReview from "@/components/isle/IsleReview";
 import IsleStage from "@/components/isle/IsleStage";
 import { isleSpec, nordicSpec, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
@@ -64,8 +65,13 @@ export default async function ChapterIsland({
   const i = CHAIN.indexOf(c);
   const prev = near(CHAIN[i - 1]);
   const next = near(CHAIN[i + 1]);
-  // まだ始まっていない章は、建てるものが違う（`docs/island-atlas.md` 4章）
-  const spec = c.from ? isleSpec(c, prev, next) : nordicSpec(c, prev);
+  /* **`nordicSpec` は「まだ始まっていない章」の spec ではなく、北欧旅の spec。**
+     中の板は `/nordic` を指し、「なぜ北欧まで行くのか」と書いてある。
+     `c.from` の有無だけで振り分けていたので、アルバニアの島に北欧の板が5枚建ち、
+     「これから歩く国 6カ国、0日」まで出ていた（島ぜんぶが別の旅のもの）。
+     出発の日の決まった旅（`opensAt`）を持つ章だけ、その旅の spec で建てる。
+     日どりの決まっていない島は、素材のあるぶんだけ建って、船着き場は残る。 */
+  const spec = !c.from && c.opensAt ? nordicSpec(c, prev) : isleSpec(c, prev, next);
 
   return (
     <>
@@ -84,6 +90,11 @@ export default async function ChapterIsland({
                  書き入れるまで、歩いている島が空き島に読める。**時点を言わない。** */
               "これから建っていく島。"}
         </p>
+
+        {/* その章を、その島の中で振り返る紙（`components/isle/IsleReview.tsx`）。
+            島に建っている建物の板は「島から出ずに見る1枚」で、こちらは
+            **腰を据えて読むほう。** 段は中身のあるものだけ出る。 */}
+        <IsleReview chapter={c} />
 
         {/* 島から島へ。船着き場からも渡れるが、紙の上にも渡し板を置いておく */}
         <nav className="chap-sail" aria-label="となりの島">

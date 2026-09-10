@@ -155,9 +155,36 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     },
     [world],
   );
+  /**
+   * 島の実際の広がり。**縦と横を別々に測る。**
+   *
+   * `fullSpan` はいちばん長い半径1つで島を正方形とみなしている。細長い島
+   * （北欧は縦が横の1.5倍）だと、短いほうの側に海だけの帯ができて、
+   * **引き（島ぜんぶ）で島が画面の3分の1しか埋めない。**
+   * そうなると建物の札が島に載りきらず、押し出されたぶんが海の上で
+   * 積み重なる（表紙の島で3枚が重なった。撮って分かった）。
+   */
+  const ext = useMemo(() => {
+    let rx = 0;
+    let ry = 0;
+    const n = world.sand.length;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      rx = Math.max(rx, Math.abs(Math.cos(a) * world.sand[i]));
+      ry = Math.max(ry, Math.abs(Math.sin(a) * world.sand[i] * world.squash));
+    }
+    return { rx, ry };
+  }, [world]);
+
+  /** 引き（島ぜんぶ）の倍率。島の縦横のうち、先に画面へ届くほうで決める */
+  const wideSpan = useCallback(
+    (w: number, h: number) => Math.max(ext.rx * 2 * 1.08, (ext.ry * 2 * 1.08 * w) / Math.max(1, h)),
+    [ext],
+  );
+
   const spanOf = useCallback(
     (w: number, h: number, all: boolean) => {
-      if (all) return fullSpan(w, h);
+      if (all) return wideSpan(w, h);
       const m = modeOf(w);
       // 寄りは「1ワールド単位あたり何 px か」で決める。画面の幅で割ると、
       // 大きな画面ほど引いてしまって、住人の大きさが機種で変わる
@@ -165,7 +192,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       // 小さい島では、寄りすぎると島より海のほうが広く映る
       return Math.min(near, fullSpan(w, h) * 0.92);
     },
-    [fullSpan],
+    [fullSpan, wideSpan],
   );
 
   /** 建物の並びのまん中。カメラはあやとを追いつつ、ここへ引き戻す */
@@ -1212,12 +1239,21 @@ function placePlates(
         return t;
       };
       const inView = (t: number) => t >= padTop && t + rect.h <= o.b.h - padBottom;
-      const up = pl.fy < o.b.h / 2;
-      let t0 = slide(up);
-      if (!inView(t0)) {
-        const t1 = slide(!up);
-        t0 = inView(t1) ? t1 : Math.min(Math.max(t0, padTop), o.b.h - padBottom - rect.h);
-      }
+      /* **上と下の両方へ逃がしてみて、動きの少ないほうを取る。**
+         前は「画面の上半分なら上、下半分なら下」と向きを先に決めていた。
+         その決め方だと、島の下ぎわに建物が3つ並んだときに札が3枚とも
+         下へ逃げ続けて、**海の上に階段のように積み上がった**（撮って分かった）。
+         札は建物のそばにあるほど読める。島の絵に重なるのは構わない
+         （いまの島の札も島の上に載っている）。 */
+      const up = slide(true);
+      const down = slide(false);
+      const okUp = inView(up);
+      const okDown = inView(down);
+      let t0: number;
+      if (okUp && okDown) t0 = Math.abs(up - top) <= Math.abs(down - top) ? up : down;
+      else if (okUp) t0 = up;
+      else if (okDown) t0 = down;
+      else t0 = Math.min(Math.max(top, padTop), o.b.h - padBottom - rect.h);
       dy += t0 - top;
       top = t0;
       taken.push({ x: left, y: top, w: rect.w, h: rect.h });

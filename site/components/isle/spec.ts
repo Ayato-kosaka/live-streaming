@@ -21,15 +21,19 @@
  * その中に一覧が出る。島の外へ出るのは、その一覧の1つを押したときだけ。
  */
 
+import { APPS, PAST_APPS, type AppEntry, type AppMilestone } from "@/content/apps";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
-import { chapterDays, type Chapter } from "@/content/chapters";
+import { chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
 import { NORDIC_GROUP, THEMES, type Theme } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
+import { pier, type Neighbour } from "./pier";
+
+export type { Neighbour };
 
 export type IsleItem = {
   label: string;
@@ -44,9 +48,6 @@ export type IsleItem = {
 };
 
 export type IsleFact = { n: string; unit?: string; cap: string };
-
-/** となりの島。名前と、そこへの行き先 */
-export type Neighbour = { name: string; href: string };
 
 export type IslePlaceSpec = {
   id: string;
@@ -83,6 +84,15 @@ export type IsleSpec = {
   note: string;
   /** ビルドしたときの日数。**画面が出てから数え直す** */
   days: number;
+  /**
+   * 島の大きさ（ワールド単位）を、日数から出さずにここで決める。
+   *
+   * **表紙の島にだけ渡す。** 表紙は常設の入口10軒が建つ島なので、
+   * 大きさは「何日いたか」ではなく「何軒建つか」で決まる。
+   * 日数と大きさの比べ合いは `/atlas` の航路が持っている
+   * （`docs/island-atlas.md` 4.5章）。
+   */
+  radius?: number;
   from: string;
   to: string;
   /** 島の色（`app/css/tokens.css` の [data-theme]） */
@@ -109,9 +119,51 @@ const span = (a: string, b: string) =>
     ? `${ym(a)}から${Number(b.split("-")[1])}月まで`
     : `${ym(a)}から${ym(b)}まで`;
 
+/**
+ * 章の期間（ミリ秒）。**終わりの日が入っていない章は、今日まで。**
+ *
+ * 前はここが `c.from && c.to` を見ていて、`to` の空いている章——つまり
+ * **いま歩いている島**——だけ、伝説の企画もアプリも1つも拾えなかった。
+ * コーカサスの島に建っていたのが石碑と道しるべと桟橋の3つだけだったのは、
+ * 素材が無かったからではなく、ここが取りこぼしていたから。
+ */
+export function spanOf(c: Chapter, today = new Date()): [number, number] | null {
+  const { from, to } = chapterSpan(c, today);
+  if (from == null) return null;
+  return [from, to ?? today.getTime()];
+}
+
+const inSpan = (date: string, s: [number, number]) => {
+  const t = Date.parse(`${date}T00:00:00+09:00`);
+  return t >= s[0] && t <= s[1];
+};
+
 /** その章の期間に入っている伝説の企画 */
-const legendsOf = (c: Chapter) =>
-  c.from && c.to ? LEGENDS.filter((l) => l.date >= c.from && l.date <= c.to) : [];
+export const legendsOf = (c: Chapter, today = new Date()) => {
+  const s = spanOf(c, today);
+  return s ? LEGENDS.filter((l) => inSpan(l.date, s)) : [];
+};
+
+/**
+ * その章のあいだ、手を動かしていたアプリ。
+ *
+ * あやとの言葉:「この島でやったアプリのこととか（略）を**アーカイブとして
+ * 置いとかないといけない**」。
+ *
+ * **章に紐づける欄は作らない。** アプリの年表（`content/apps.ts` の
+ * `milestones`）に日付が入っているので、章の期間と重なるものを引くだけで
+ * 「その島で何をしていたアプリか」まで一緒に出る。手で紐づけると、
+ * 年表が伸びたときに**片方だけ古くなる**（`docs/island-misses.md` 決めごと3）。
+ */
+export type AppOnIsle = { app: AppEntry; marks: AppMilestone[] };
+export const appsOf = (c: Chapter, today = new Date()): AppOnIsle[] => {
+  const s = spanOf(c, today);
+  if (!s) return [];
+  return [...APPS, ...PAST_APPS]
+    .map((app) => ({ app, marks: app.milestones.filter((m) => inSpan(m.date, s)) }))
+    .filter((x) => x.marks.length > 0)
+    .sort((a, b) => b.marks.length - a.marks.length);
+};
 
 /** いちばん古い配信。「はじめての配信」をどの島に建てるかは、これで決まる */
 const FIRST_STREAM = (() => {
@@ -221,6 +273,29 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
     });
   }
 
+  /* この島で作っていたアプリ。**年表の日付から引く**（`appsOf`）。
+     工房は常設の入口（`/apps`）にもあるが、あちらは「いま出ている2本」で、
+     ここは「この島にいたあいだ、何をしていたか」。中に出るのも節目のほう。 */
+  const apps = appsOf(c);
+  if (apps.length) {
+    places.push({
+      id: "apps",
+      label: "この島で作っていたアプリ",
+      blurb: apps.map((x) => x.app.name).join("・"),
+      icon: "hut-workshop",
+      size: 78,
+      sign: true,
+      note: "旅先で、配信しながら作っていた。",
+      items: apps.map(({ app, marks }) => ({
+        label: app.name,
+        // 何本目かではなく、**この島で何があったか**。年表の頭の1件を出す
+        sub: `${marks.length}件の節目 — ${marks[0].title}`,
+        href: `/apps/${app.slug}`,
+        icon: app.icon,
+      })),
+    });
+  }
+
   /* はじめての配信。**いちばん古い配信を持っている島にだけ建つ。**
      「ヨーロッパの島に建てる」と書かずに済むので、章が増えても嘘にならない */
   if (FIRST_STREAM && streams.some(([, id]) => id === FIRST_STREAM[1])) {
@@ -249,6 +324,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       blurb: `${days.toLocaleString()}日いた`,
       icon: "statue",
       size: 54,
+      sign: true,
       note: c.note,
       facts: [
         { n: String(days), unit: "日", cap: "この島にいた" },
@@ -267,44 +343,17 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
     from: c.from,
     to: c.to,
     theme: art.theme,
-    /* **どの島も最大6つ**（`docs/island-atlas.md` 4章）。
-       あふれたら削るのは中身のほうで、船着き場は必ず残す。
-       島から出る道が消えると、島が袋小路になる。
-
-       **あふれるのはヨーロッパだけ**（6つ建つ）。押し出されるのは最後の
-       「この島のこと」（石碑）で、これは順番の事故ではなく選んだ結果。
-       石碑の4つの数字のうち、日数・本数・国数は同じ島の他の札にも出ているし、
-       人数を含めた3つは、ここへ来る前に通る `/atlas` の島の札に出ている
-       （`components/chain/Isles.tsx`）。ショート31本は、どこにも無い。 */
-    places: [...places.slice(0, 5), pier(prev, next)],
+    /* **建つ数では切らない**（`docs/island-atlas.md` 4章を書き直した）。
+       6つで切っていたころ、ヨーロッパの島からは石碑が、コーカサスの島からは
+       そもそも素材が落ちて、島が3軒しかない空き地になっていた。
+       島に建てられる数を決めているのは面の広さで、**引きで名前が出る数**の
+       6つ（`docs/island-design.md` 3-4）とは別の話。名前のほうは `sign` で
+       6つに絞ってあるので、建物は素材のあるだけ建ててよい。 */
+    places: [...places, pier(prev, next)],
     folk: st?.residents ?? [],
     prev,
     next,
     art,
-  };
-}
-
-/**
- * 船着き場。**どの島にも建つ。**
- *
- * 島から島へは船で行く（`docs/island-atlas.md` 6章）。着いた舟がつないである
- * ところから歩きはじめて、帰るときも同じところから出る。
- * これが無いと、島から出る道が画面の隅のボタンだけになって、
- * 「島の中にいる」が切れる。
- */
-function pier(prev?: Neighbour, next?: Neighbour): IslePlaceSpec {
-  const items: IsleItem[] = [];
-  if (prev) items.push({ label: prev.name, sub: "ひとつ前の島", href: prev.href, icon: "canoe" });
-  if (next) items.push({ label: next.name, sub: "つぎの島", href: next.href, icon: "canoe" });
-  items.push({ label: "島の地図", sub: "島の連なりぜんぶ", href: "/atlas", icon: "signpost" });
-  return {
-    id: "pier",
-    label: "となりの島へ",
-    blurb: "船で渡る",
-    icon: "pier",
-    size: 34,
-    note: "旅は西から東へ。",
-    items,
   };
 }
 
