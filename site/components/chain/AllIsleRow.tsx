@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import Icon from "@/components/ui/Icon";
-import { CHAPTERS, chapterNow, NOW_CHAPTER } from "@/content/chapters";
+import { BUILT_AT } from "@/lib/nightly";
+import { CHAPTERS, chapterNow } from "@/content/chapters";
 import { chapterHref } from "./route";
 
 /**
@@ -34,8 +35,18 @@ export default function AllIsleRow({
   note: string;
 }) {
   /* 焼いた答えでまず刷って、画面が出てから今日の答えに差し替える。
-     最初から `new Date()` で決めると、サーバとブラウザで刷ったものが食い違う */
-  const [now, setNow] = useState(NOW_CHAPTER);
+
+     **焼いた答えは `chapterNow(BUILT_AT)`。** 前はここが `NOW_CHAPTER` で、
+     あれは `content/chapters.ts` のいちばん外で `chapterNow()` を呼んだ値なので、
+     **ブラウザでは読み込んだ瞬間の時計で数え直される。** 焼いた HTML は
+     コーカサスの行に `note` を刷っているのに、出発の時刻を過ぎたブラウザでは
+     最初の描画から「いまここ。島に降りる」になって、字が食い違った
+     （`Minified React error #418`。19:30Z をまたいだ `/all` で毎回。
+     `docs/island-misses.md` #30。同じものを `components/chain/Isles.tsx` は
+     先に直していて、ここだけ残っていた）。
+     `BUILT_AT` は `NEXT_PUBLIC_BUILT_AT` から来るので、サーバ側とブラウザ側で
+     必ず同じ答えになる。 */
+  const [now, setNow] = useState(() => chapterNow(BUILT_AT));
   useEffect(() => setNow(chapterNow(new Date())), []);
   const here = slug === now.slug;
   /* 行き先は `chapterHref` に決めさせる。**ここで `/island/…` を組み立てない**
