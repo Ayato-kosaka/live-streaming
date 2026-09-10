@@ -3,13 +3,13 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { loadMe } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
 import { TripLog, TripPlace } from "./TripTools";
 import { PlanCare, StickyCare } from "./OwnerCare";
+import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 
 /* 投げ銭の紐付けとアラートボックスは、開いた札のぶんだけ降ろす。
    どちらも一覧を丸ごと引くので、机を開いただけで3本引かせない。 */
@@ -65,8 +65,7 @@ const LAST = "ayato-desk-tool";
  * 2本を引いて差し引かないと出ない）。開いた道具の1行目で言えば足りる。
  */
 export default function Desk() {
-  const { user, token } = useAuth();
-  const [admin, setAdmin] = useState<boolean | null>(null);
+  const { owner, meRead, reloadMe } = useAuth();
   const [tool, setTool] = useState<Tool>("photo");
 
   useEffect(() => {
@@ -88,36 +87,19 @@ export default function Desk() {
   };
 
   /* 手入れできるかは、口（`functions/src/islandApi.ts` の `ownerUid`）が
-     もう一度見ている。ここで見るのは、出すか出さないかだけ。 */
-  useEffect(() => {
-    if (!user) return setAdmin(user === null ? false : null);
-    let gone = false;
-    (async () => {
-      const t = await token();
-      if (!t || gone) return;
-      try {
-        const me = await loadMe(t);
-        if (!gone) setAdmin(!!me.admin);
-      } catch {
-        if (!gone) setAdmin(false);
-      }
-    })();
-    return () => {
-      gone = true;
-    };
-  }, [user, token]);
+     もう一度見ている。ここで見るのは、出すか出さないかだけ。
+     誰かは `useAuth()` が島じゅうで1回だけ引く（`lib/auth.tsx`）。
 
-  if (admin === null)
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
+     **「読めなかった」を「あやとではない」に倒さない。** 倒していたころ、
+     `POST /me` が1回返らないだけで、あやとの机が「ここは、あやとの机」の
+     1枚になっていた。道具の札は0枚、高さ 934px。しかも二度と読み直さないので、
+     画面を開き直すまで戻らなかった（`docs/island-standards.md` 10）。 */
+  if (owner === "unknown")
+    return meRead === "down" ?
+        <ReadAgainPanel what="机" onRetry={reloadMe} /> :
+        <WaitingPanel />;
 
-  if (!admin)
+  if (owner === "no")
     return (
       <section className="panel paper">
         <h2>ここは、あやとの机</h2>

@@ -17,11 +17,12 @@ import {
   type RouletteSession,
 } from "@/lib/api";
 import { readLiveChatDirect } from "@/lib/youtubeChat";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead } from "@/lib/auth";
 import { MAX_ITEMS, RESULT_SAY, RL_UI, WAIT_SECONDS } from "@/content/roulette";
 import { THEMES, THEME_NAME, type WheelTheme } from "@/components/roulette/wheel";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
+import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 
 /** 手元に残しておくコメントの数。これより古いものは落とす。 */
 const KEEP = 200;
@@ -76,10 +77,12 @@ function rememberedWay(): Way | null {
  * OBS が落ちていても、コメントだけは配信に出る。
  */
 export default function RouletteBox() {
-  const { user, token } = useAuth();
+  const { user, token, owner } = useAuth();
   const [ses, setSes] = useState<RouletteSession | null>(null);
   /** あやと以外が URL を直に叩いて来たとき */
   const [denied, setDenied] = useState(false);
+  /** 一度も開けていない。**灰色の骨のまま止めないための印** */
+  const [dead, setDead] = useState(false);
   const [lines, setLines] = useState<ChatLine[]>([]);
   const [live, setLive] = useState<boolean | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -101,19 +104,25 @@ export default function RouletteBox() {
   /* ---- 開く。id は作り直さない（OBS の URL が変わってしまう） ---- */
   const open = useCallback(
     async (clear: boolean) => {
-      const t = await token();
-      if (!t) return;
-      setBusy(true);
       setErr(null);
+      setDead(false);
+      const t = await token();
+      /* 合言葉が取れないのも「開けなかった」。**黙って戻らない。**
+         戻っていたころ、`ses` が null のまま灰色の骨だけが残った */
+      if (!t) return setDead(true);
+      setBusy(true);
       try {
-        const r = await startRoulette(t, clear);
+        const r = await withRead(startRoulette(t, clear));
         setSes(r.session);
         setLive(r.live);
         setDoneru(r.doneru ?? { set: false, tail: "" });
         if (clear) setLines([]);
       } catch (e) {
         if (String(e).includes("403")) setDenied(true);
-        else setErr("開けませんでした。電波の届くところで、もう一度。");
+        else {
+          setErr("開けませんでした。電波の届くところで、もう一度。");
+          setDead(true);
+        }
       } finally {
         setBusy(false);
       }
@@ -341,21 +350,16 @@ export default function RouletteBox() {
   };
 
   /* ---- 出す ---- */
-  if (user === undefined) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  if (user === undefined) return <WaitingPanel />;
   /* ここへの入口は、あやとの机（`/me/desk`）の1本だけ（#242）。
      看板にも `/all` にもパンくずにも出していないので、ここに着くのは
      あやとか、URL を直に打った人しかいない。**決まりの説明は置かない。**
-     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。 */
-  if (!user || denied) {
+     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。
+
+     `owner === "no"` を足したのは、口の 403 を待たずに返すため。
+     **`"unknown"` はここに入れない**——読めていないことは、
+     「あやとではない」ではない（`docs/island-standards.md` 10）。 */
+  if (!user || denied || owner === "no") {
     return (
       <section className="panel paper">
         <h2>ここは、あやとの机</h2>
@@ -366,16 +370,10 @@ export default function RouletteBox() {
       </section>
     );
   }
-  if (!ses) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  /* **開けなかったときに、灰色の骨を出したままにしない。**
+     骨は「もうすぐ出る」の意味で、出ないものの上に置くと、何分待っても
+     変わらない 998px の面になる（`docs/island-standards.md` 10）。 */
+  if (!ses) return dead ? <ReadAgainPanel what="ルーレット" onRetry={() => open(false)} /> : <WaitingPanel />;
 
   const url =
     typeof window === "undefined" ?
