@@ -29,12 +29,24 @@
 /* 影は動く要素ではなく中の img に掛ける。動いている要素に filter を掛けると
    毎フレームぼかし直しになって、いちばん忙しい起動直後にそれをやることになる。
    img は形が変わらないので、ぼかした結果をそのまま使い回せる。 */
-.hero-logo img { height: auto; filter: drop-shadow(0 8px 12px rgba(8, 46, 62, 0.38)); }
+/* **帯から下は切って出す。** 絵に焼いてある言葉（帯と吊り板）は、
+   寄りで 5px、引きでも 7〜13px にしかならない。読ませたい字は絵に焼かず、
+   下の板（`.hero-say`）に本文として置く。
+   切る位置は `<img>` の `width`/`height`（切ったあとの寸法）で決まる。
+   絵そのものは1枚も焼き直していない——上から見せて、下を落としているだけ。 */
+.hero-logo img {
+  height: auto;
+  object-fit: cover;
+  object-position: top center;
+  filter: drop-shadow(0 8px 12px rgba(8, 46, 62, 0.38));
+}
 /* スマホは看板を大きく見せたい。PCは島が主役なので控えめに。 */
-.hero-logo-full { display: block; width: clamp(232px, 58vw, 360px); }
+/* 切ったあとの縦横比。**`height: auto` だけでは切れない**——絵が届いた時点で
+   ブラウザは元の絵の比に戻すので、`aspect-ratio` を CSS で持たせておく */
+.hero-logo-full { display: block; width: clamp(232px, 58vw, 360px); aspect-ratio: 900 / 410; }
 @media (min-width: 640px) { .hero-logo-full { width: 300px; } }
 @media (min-width: 1024px) { .hero-logo-full { width: 268px; } }
-.hero-logo-mark { display: none; width: 124px; }
+.hero-logo-mark { display: none; width: 124px; aspect-ratio: 520 / 240; }
 /* スマホは左上をカメラの操作（島をながめる／島におりる）が使う。
    看板を真ん中に置くと必ずそこへぶつかるので、右上に寄せて、
    ぶつからない幅で止める。176px はその操作ボタンと左右の余白ぶん。 */
@@ -52,8 +64,10 @@
   .hero-copy { max-width: none; text-align: right; }
   .hero-logo-full { display: none; width: min(232px, calc(100vw - 176px)); margin-left: auto; }
   .hero-logo-mark { display: block; margin-left: auto; }
-  .stage[data-view="wide"] ~ .hero-ui .hero-logo-full { display: block; }
-  .stage[data-view="wide"] ~ .hero-ui .hero-logo-mark { display: none; }
+  .stage[data-view="wide"] ~ .hero-ui .hero-logo-full,
+  .isle[data-view="wide"] ~ .hero-ui .hero-logo-full { display: block; }
+  .stage[data-view="wide"] ~ .hero-ui .hero-logo-mark,
+  .isle[data-view="wide"] ~ .hero-ui .hero-logo-mark { display: none; }
 }
 @keyframes logo-in {
   from { opacity: 0; transform: translateY(-14px) scale(0.94); }
@@ -70,10 +84,14 @@
   .hero-copy { text-align: left; }
 }
 
-.stage[data-view="close"] ~ .hero-ui { justify-content: flex-end; }
-.stage[data-view="close"] ~ .hero-ui .hero-copy { max-width: none; text-align: right; }
-.stage[data-view="close"] ~ .hero-ui .hero-logo-full { display: none; }
-.stage[data-view="close"] ~ .hero-ui .hero-logo-mark { display: block; margin-left: auto; }
+.stage[data-view="close"] ~ .hero-ui,
+.isle[data-view="close"] ~ .hero-ui { justify-content: flex-end; }
+.stage[data-view="close"] ~ .hero-ui .hero-copy,
+.isle[data-view="close"] ~ .hero-ui .hero-copy { max-width: none; text-align: right; }
+.stage[data-view="close"] ~ .hero-ui .hero-logo-full,
+.isle[data-view="close"] ~ .hero-ui .hero-logo-full { display: none; }
+.stage[data-view="close"] ~ .hero-ui .hero-logo-mark,
+.isle[data-view="close"] ~ .hero-ui .hero-logo-mark { display: block; margin-left: auto; }
 
 /* 島の上のバッジ（今夜22時・いまどこ）は、看板ロゴ1枚に寄せたときに
    置くのをやめている。指す先が無い規則が残っていて、そのうち1つは
@@ -96,14 +114,20 @@
    あれは島の上の字を読ませるためのもので、看板のためではない。
 
    重なりの判定は IslandStage の rAF の中。data-logo="away" が付く。 */
-.stage[data-logo="away"] ~ .hero-ui .hero-logo {
+/* 引くのは看板の絵と、その下の一言の**両方**。片方だけ残すと、
+   絵の消えたところに字だけが浮く */
+.stage[data-logo="away"] ~ .hero-ui .hero-logo,
+.stage[data-logo="away"] ~ .hero-ui .hero-say {
   opacity: 0;
   /* 消えるのは急がない。歩いていて視界の隅がちらつくのがいちばん気になる */
   transition: opacity 0.34s ease;
 }
-.hero-logo { transition: opacity 0.5s ease; }
+.hero-logo, .hero-say { transition: opacity 0.5s ease; }
 @media (prefers-reduced-motion: reduce) {
-  .hero-logo, .stage[data-logo="away"] ~ .hero-ui .hero-logo { transition: none; }
+  .hero-logo,
+  .hero-say,
+  .stage[data-logo="away"] ~ .hero-ui .hero-logo,
+  .stage[data-logo="away"] ~ .hero-ui .hero-say { transition: none; }
 }
 
 /* ヒーローの高さ: スマホは短くして下のセクションを覗かせる */
@@ -124,3 +148,63 @@
   .hero-ui:before { height: 34%; }
 }
 .hero-copy { position: relative; }
+
+/* ---- 看板の一言 --------------------------------------------------------
+   看板の中の帯に焼いてある1文（旅して、食べて、グルメアプリを作る、夜の居場所）は、
+   スマホの寄りで 124px の絵に22文字＝**約5px**にしかならず、dpr2 でも読めない。
+   `docs/island-play.md` 6章の 0:06（この島が何かが1文で伝わる）が、そこで
+   止まっていた。**読ませたい字は絵に焼かない。**
+
+   空の上に直に置くと、時間帯で地の色が変わって濃さが決まらないので、
+   島のほかの読みものと同じ**板1枚**に載せる。
+   **厚みは付けない。押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+   落ち影だけ、島の板と同じ向き・同じぼかしで置く。 */
+.hero-say {
+  display: inline-block;
+  /* 看板の下ふちに掛ける。焼いてある帯が居たところに、読める字で戻す */
+  margin: -6px 0 0;
+  padding: 7px 14px 8px;
+  border: 2.5px solid var(--frame-dark);
+  border-radius: 16px 20px 16px 20px / 18px 15px 20px 16px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  /* **厚みは付けない。押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+     落ち影だけ、島のほかの板と同じ向き・同じぼかしで */
+  box-shadow: 3px 8px 9px var(--cast, rgba(78, 96, 72, 0.28));
+  color: var(--ink);
+  /* 島の上なので、指の当たりは島に通す（押すものではない） */
+  pointer-events: none;
+}
+.hero-say b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.hero-say i {
+  display: block;
+  margin-top: 2px;
+  /* 添えものでも 11.5px を割らない（`docs/island-world.md` 5.4） */
+  font-size: 11.5px;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--ink-2, #6b5a3e);
+}
+/* 320px 級の細い端末。22文字が1行に収まらないと「所」だけが次の行に落ちる。
+   字を小さくするのではなく、字間を詰めて1行に収める（11.5px は割らない） */
+@media (max-width: 389px) {
+  .hero-say { padding: 7px 10px 8px; }
+  .hero-say i { letter-spacing: -0.045em; }
+  .hero-say b { font-size: 13px; }
+}
+@media (min-width: 640px) {
+  .hero-say { padding: 8px 16px 9px; }
+  .hero-say b { font-size: 15px; }
+  .hero-say i { font-size: 12.5px; }
+}
+@media (min-width: 1024px) {
+  .hero-say b { font-size: 16px; }
+  .hero-say i { font-size: 13px; }
+}

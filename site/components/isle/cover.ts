@@ -125,7 +125,14 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
     /* **旅のことが先頭。** 島に建つ順（＝島を一周する並び）がここで決まる。
        降り立つ場所は舟からいちばん近い建物のそばなので
        （`components/isle/world.ts`）、そこが旅のことになるとは限らない。 */
-    places: [tripPlace(c, days), ...HOME_PLACES, pier()],
+    /* **船着き場に看板は出さない。** 引きに札を出せるのは6つまでで
+       （`docs/island-design.md` 6章、`island-atlas.md` 4章）、常設の6つで
+       ちょうど埋まっている。ここに7枚目を足していたので、引きの島に
+       札が7枚並んでいた。船着き場は黙って建っていて、押せば渡れる。
+       島の連なりへは、島の隅の「島の地図」からも行ける（`.isle-atlas`）ので
+       袋小路にはならない。**章の島（`/island/<章>`）はそのまま**——
+       あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
+    places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。** */
     folk:

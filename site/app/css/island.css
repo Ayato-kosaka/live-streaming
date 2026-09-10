@@ -222,7 +222,13 @@
    **札の出ていない4軒は、当たりを残す。** 押しどころが札しか無い決まりに
    すると、引きではその4軒に触りようが無くなる。押せば歩いて寄って、
    寄れば名前が出る（`enterOrWalk`）。 */
+/* **建物から離れすぎた札は出さない**（`components/isle/plates.ts`）。
+   差し棒が何も指していない札は、名前が読めても行き先になっていない
+   （`docs/island-design.md` 3-1）。
+   出さなかったぶん、押しどころは建物へ戻す（下の `[data-far]`）。 */
+.stage[data-cam="wide"] .spot.is-sign[data-far] .spot-mark { visibility: hidden; pointer-events: none; }
 .stage[data-cam="wide"] .spot.is-sign .spot-hit { pointer-events: none; }
+.stage[data-cam="wide"] .spot.is-sign[data-far] .spot-hit { pointer-events: auto; }
 .stage[data-cam="wide"] .spot.is-sign .spot-text { display: block; }
 /* 一言は出さない。6軒ぶん並べると、引きの画面が字で埋まる */
 .stage[data-cam="wide"] .spot.is-sign .spot-text i { display: none; }
@@ -798,11 +804,19 @@
    角の丸みも上下左右で違っていて、それが手描きに見せている。
    ここでもそれに倣って、枠線をやめて楕円の角丸にした。
    ========================================================= */
+/* **島の下に出す。上には出さない。**
+   ここは画面のいちばん上にいて、看板ロゴ（島の名前）と重なっていた。
+   実測で 366x126 の吹き出しがロゴの箱に 9,015px² 食い込んでいる。
+   しかも吹き出しは押さなくても勝手に開くので（`components/isle/folk.ts` の
+   `callOut`）、**降りて数秒で、島の名前と「今夜22時から」の板が両方読めなくなる。**
+   会話はおまけで、行き先を塞いではいけない（`docs/island-design.md` 3-7）ので、
+   引くのはこちら。下バー（「今日の島」の1行）の上に置く。 */
 .talkbox {
   position: absolute;
   left: 12px;
   right: 12px;
-  top: calc(14px + env(safe-area-inset-top));
+  /* 下バー（`.island-bar` の1段目。板の背 48px ＋ 上下の余白）の上 */
+  bottom: calc(76px + env(safe-area-inset-bottom));
   z-index: 8;
   padding: 17px 20px 13px;
   border: 0;
@@ -893,11 +907,15 @@
 }
 @media (prefers-reduced-motion: reduce) { .talkbox-tap::before { animation: none; } }
 
+/* 下から出るので、入りの動きも下から */
 @keyframes talkIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.94); }
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
   to { opacity: 1; transform: none; }
 }
-/* 話しているあいだは、島の上のUIを引っ込める */
+/* 話しているあいだは、島の上の**札**を引っ込める。
+   **「今日の島」の板は引っ込めない**（`app/css/today.css` に理由を書いた）。
+   あれは1画面目に残る2つのうちの1つで、行き先そのものなので、
+   おまけの会話に譲る側ではない（`docs/island-design.md` 3-7）。 */
 .stage.is-talking .spot-mark,
 .stage.is-talking .spot-badge,
 .stage.is-talking .who-name { opacity: 0; transition: opacity 0.18s; }
@@ -907,10 +925,18 @@
    読み終わって画面を押した指が、そのまま知らない建物へ歩き出す。 */
 .stage.is-talking .spot-hit,
 .stage.is-talking .who-hit { pointer-events: none; }
+/* 640px から上は「今日の島」の板が右上の隅にいる。**そこへは戻さない。**
+   下はまん中が空いている（隅の道具は左端にいる）ので、そこへ置く。 */
 @media (min-width: 640px) {
-  .talkbox { left: 50%; right: auto; transform: translateX(-50%); width: min(560px, 70vw); }
+  .talkbox {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(560px, 62vw);
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
   @keyframes talkIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.94); }
+    from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.94); }
     to { opacity: 1; transform: translateX(-50%); }
   }
 }
@@ -1115,8 +1141,21 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* **島の層より上に置く。**
+     島（`.stage` / `.isle`）は重なりの箱を作らないので、その中の
+     `z-index: 1〜3` の層（時間帯の染め・明かり・札）は、看板と同じ土俵に
+     出てくる。夜は染めの層（multiply）が看板の板の上に乗って、
+     字の濃さが 6.88 → 3.61 まで落ちていた（実測。夜の章の島）。
+     7 以上は建物の板（`.isle-sheet-wrap`）と吹き出しなので、そこは譲る。 */
+  z-index: 6;
   display: flex;
   justify-content: center;
+  /* **中の看板は、中身のぶんだけの高さにする。**
+     既定の `stretch` だと `.hero-copy` がヒーローの高さ（708px）いっぱいに
+     伸びる。島は「看板の箱を避けて札を置く」ので（`IslandStage` の `logoBox`）、
+     伸びた箱をそのまま渡すと**島じゅうが看板の下**になり、引きの札6枚が
+     全部画面の上端と下端へ逃げた（実際にそうなった）。 */
+  align-items: flex-start;
   padding: calc(18px + env(safe-area-inset-top)) 16px 0;
 }
 .hero-copy { text-align: center; max-width: 640px; }
@@ -1544,11 +1583,13 @@
 .stage-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 .stage.is-talking .stage-atlas { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
 
-/* 話しているあいだは、島の上のUIと同じように引っ込める。
-   バーごと引くのは、名乗り（カモメ）が出ているあいだ島を見せたいから。
-   板だけ消してバーの枠が残ると、空っぽの板が下に居座ることになる。 */
-.stage.is-talking .stage-view,
-.stage.is-talking .island-bar { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+/* 話しているあいだは、島の道具を引っ込める。**バーは引っ込めない。**
+   ここは前まで `.island-bar` ごと消していて、スマホでは
+   バーの中にいる「今日の島」の板も一緒に消えていた。**降りて数秒で
+   1画面目が空になる**のがそれ（`app/css/today.css` に理由を書いた）。
+   開いた行き先の一覧のほうは、話しかけた時点で畳む
+   （`IslandStage.tsx` の `openTalk`）ので、残るのは1行だけ。 */
+.stage.is-talking .stage-view { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
 
 /* =========================================================
    島の下端
