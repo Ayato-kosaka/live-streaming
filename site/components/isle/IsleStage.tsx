@@ -29,6 +29,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
+import Say from "@/components/ui/Say";
 
 /**
  * 歩ける島ひとつ。
@@ -1049,7 +1050,7 @@ function PlaceMark({
       )}
       <span className="isle-text">
         <b>{place.label}</b>
-        <i>{place.blurb}</i>
+        <i><Say t={place.blurb} /></i>
       </span>
       <span className="isle-go">
         みる

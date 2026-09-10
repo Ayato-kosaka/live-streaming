@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import NowLive from "@/components/live/NowLive";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
@@ -46,7 +48,7 @@ export default function NowPage() {
       <PageHead
         icon="globe-stand"
         title="いまどこ"
-        lead="いまいる国と、今週やること。配信のある日は、22時までの残りもここに出る。"
+        lead={<Say t={say("now")} />}
       />
       <NowLive letter>
         <NowCountry />

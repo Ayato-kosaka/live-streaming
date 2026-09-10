@@ -19,6 +19,8 @@ import { here } from "@/lib/here";
 import { REMOTE_VIEW_EVENT, remoteView } from "@/lib/remote";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
+import Say from "@/components/ui/Say";
+import { nights } from "@/content/nights";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
 import {
   callOut,
@@ -247,7 +249,10 @@ const HINT_SPAN = 5200;
    同じことを二度言わないよう、言い方を変えてある。
    地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
    ------------------------------------------------------------------------ */
-const GREETING = `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${NOW_FALLBACK.place}だよ。`;
+/* **焼き込まずに、話しかけられたときに組む。** 旅のあいだは始まる時刻が
+   決まらないので、時刻を言わない言い方に変わる（`content/nights.ts`）。 */
+const greeting = () =>
+  `ようこそ、あやと島へ。あやとは${nights().bare}、旅先から生配信してる。いまは${NOW_FALLBACK.place}だよ。`;
 /** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
 const GUIDE = -1;
 const clampToIsland = (x: number, y: number): [number, number] => {
@@ -567,7 +572,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       remember();
       if (greet) {
         spokeFirst.current = true;
-        setTalking({ i: GUIDE, text: GREETING });
+        setTalking({ i: GUIDE, text: greeting() });
       }
       return;
     }
@@ -577,7 +582,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       remember();
       if (greet) {
         spokeFirst.current = true;
-        setTalking({ i: GUIDE, text: GREETING });
+        setTalking({ i: GUIDE, text: greeting() });
       }
     }, 3000);
     return () => clearTimeout(t);
@@ -1799,7 +1804,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 )}
                 <span className="spot-text">
                   <b>{label}</b>
-                  <i>{blurb}</i>
+                  <i><Say t={blurb} /></i>
                 </span>
                 <span className="spot-go">
                   {go}

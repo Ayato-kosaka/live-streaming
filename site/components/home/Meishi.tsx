@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import { LiveNumber } from "@/lib/liveStats";
 import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
@@ -82,7 +84,7 @@ export default function Meishi() {
           <Icon name="live" size={22} />
           <span>
             <b>今夜の配信を見る</b>
-            <i>毎晩22時・YouTube</i>
+            <i><Say t={say("tile")} /></i>
           </span>
           <Icon name="external" size={14} />
         </a>
@@ -90,7 +92,7 @@ export default function Meishi() {
           <Icon name="pin" size={22} />
           <span>
             <b>いま {NOW_FALLBACK.place}</b>
-            <i>今夜まであと何時間か、今週やること</i>
+            <i><Say t={say("nowLink")} /></i>
           </span>
           <Icon name="right" size={14} />
         </Link>

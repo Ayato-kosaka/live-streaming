@@ -6,10 +6,13 @@ import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
 import { PLAN_BY_DAY } from "@/content/planDays";
 import { FriendsMark } from "@/components/live/art";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 
 export const metadata: Metadata = {
   title: "愉快な仲間達",
-  description: "毎晩22時に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
+  /* `<meta>` は焼かれたまま出るので、時刻を書かない（`content/site.ts` と同じ理由） */
+  description: "配信に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
 };
 
 /**
@@ -35,7 +38,7 @@ export default function FriendsPage() {
       <PageHead
         mark={<FriendsMark />}
         title="住んでる人"
-        lead="毎晩22時に集まってくる、愉快な仲間達。"
+        lead={<Say t={say("friends")} />}
       />
 
       <div className="pap-mat">

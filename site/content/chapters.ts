@@ -36,6 +36,18 @@ export type Chapter = {
    */
   opensAt?: string;
   /**
+   * その章のあいだ、**配信の始まる時刻が決まっていない。**
+   *
+   * ヒッチハイクなので、その日どこまで進めるかで始まる時刻が変わる。
+   * 「配信をしない期間」ではなく「**時刻を言えない期間**」という意味。
+   * 島じゅうの「毎晩22時」は、この印が立っているあいだだけ言い方が変わる
+   * （`content/voice.ts` の `nights` と `lib/nightly.ts` の `readNight`）。
+   *
+   * **期間の定数をここ以外に置かない。** 面ごとに日付を書くと、旅程が動いた
+   * ときに片方だけ古くなる（`docs/island-misses.md` の決めごと3）。
+   */
+  looseStart?: boolean;
+  /**
    * まだ始まっていない章の、予定の日数。
    *
    * 島の大きさは日数から出す決まりなので（`docs/island-atlas.md` 3章）、
@@ -103,6 +115,10 @@ export const CHAPTERS: Chapter[] = [
     // 7泊して27日に発つ。**着いた日ではなく、発つ日までが北欧旅**
     // （あやと 2026-09-06「ストックホルム出るまでが北欧旅です」）。9/11〜9/27 で17日。
     plannedDays: 17,
+    // 道の上で始めるので、始まる時刻が日によって変わる（あやと 2026-09-10
+    // 「北欧周遊期間は休息日以外12時間くらいやる予定」）。旅のあいだ島は
+    // 開始時刻を言わない。
+    looseStart: true,
   },
   {
     /* **中身はまだ何も決まっていない。** 決まっているのは「北欧のあとはここ」
@@ -175,6 +191,37 @@ function nextBegan(c: Chapter): number {
   return Math.min(
     ...CHAPTERS.filter((x) => !x.branchOf && x !== c && began(x) > mine).map(began),
   );
+}
+
+/**
+ * 章の事実上の終わり（ms）。
+ *
+ * `to` が入っていればそれが事実。まだ空なら**見立ての日数**（`plannedDays`）で置く。
+ * 旅の最中は `to` が空のままなので、これが無いと「終わったかどうか」が
+ * 誰かが手で日付を書き入れるまで決まらない。**新しく期間の定数を作らずに、
+ * すでにある旅程から終わりを出す。**
+ *
+ * 見立ては1日ぶん長めに出る（9/11 の 23:30 から17日で 9/28 の夜）。
+ * 短いより長いほうが安全。まだ道の上にいるのに「毎晩22時」に戻るより、
+ * 帰ってから1日ぶん時刻を言わないほうが、嘘にならない。
+ */
+function ended(c: Chapter): number {
+  if (c.to) return Date.parse(`${c.to}T23:59:59+09:00`);
+  const from = began(c);
+  if (!Number.isFinite(from) || !c.plannedDays) return Number.POSITIVE_INFINITY;
+  return from + c.plannedDays * 86_400_000;
+}
+
+/**
+ * いま、配信の始まる時刻が決まっていない期間か。
+ *
+ * **画面が出てから呼ぶこと。** 静的書き出し（`output: "export"`）なので、
+ * 引数を省いて焼き込むと、ビルドした日の答えがそのまま HTML に入る。
+ * 出発の前日に焼いた「まだ旅ではない」が、旅のあいだ17日ぶん残る。
+ */
+export function looseStartNow(now: Date = new Date()): boolean {
+  const t = now.getTime();
+  return CHAPTERS.some((c) => c.looseStart && began(c) <= t && t < ended(c));
 }
 
 export function chapterNow(now: Date = new Date()): Chapter {

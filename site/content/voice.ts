@@ -12,9 +12,10 @@
  */
 
 import { NOW_FALLBACK } from "./site";
+import { say } from "./nights";
 
 export const HERO = {
-  eyebrow: "毎晩22時、世界のどこかから生放送",
+  eyebrow: say("eyebrow"),
   lede: [
     "旅の途中で作ったごはんと、旅の途中で作ったアプリが置いてある島です。",
     "住んでいるのは、あやとと、配信に来てくれる人たち。",
@@ -58,8 +59,8 @@ export const HOME = {
   next: "これから何をするんだろう",
   board: "自分も企画を出せる",
   past: "これまで、どこへ行って何を作ったんだろう",
-  tonight: "今夜も22時から",
-  tonightNote: "日本時間の22時から、だいたい2〜3時間。",
+  tonight: say("tonight"),
+  tonightNote: say("span"),
 };
 
 /** 押すもの・触るものの言葉。 */
@@ -121,7 +122,7 @@ export const BOARD = {
 };
 
 export const FOOT = {
-  note: "あやと島 — あやとと愉快な仲間達。毎晩22時、世界のどこかから生放送しています。",
+  note: say("foot"),
 };
 
 /* 住人のひとことは content/chatter.ts へ移した。

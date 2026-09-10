@@ -15,6 +15,7 @@ import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
+import Say from "@/components/ui/Say";
 
 /**
  * トップページ。
@@ -74,7 +75,8 @@ export default function Home() {
               <img
                 className="hero-logo-full"
                 src="/logos/ayato-island.webp"
-                alt="あやと島 — 毎晩22時、世界のどこかから生配信"
+                /* 焼かれたまま出る字なので、時刻を書かない（`content/nights.ts`） */
+                alt="あやと島 — 世界のどこかから、毎晩生配信"
                 width={900}
                 height={706}
                 loading="lazy"
@@ -90,7 +92,7 @@ export default function Home() {
                 aria-hidden
               />
               {/* 見出しは絵だけなので、読み上げと検索のために文字も置いておく */}
-              <span className="sr-only">あやと島 — 毎晩22時、世界のどこかから生配信</span>
+              <span className="sr-only">あやと島 — 世界のどこかから、毎晩生配信</span>
             </h1>
           </div>
         </div>
@@ -138,7 +140,12 @@ export default function Home() {
           <Shelf />
         </Chapter>
 
-        <Chapter id="watch" kicker="見にいく" title={HOME.tonight} note={HOME.tonightNote}>
+        <Chapter
+          id="watch"
+          kicker="見にいく"
+          title={<Say t={HOME.tonight} />}
+          note={<Say t={HOME.tonightNote} />}
+        >
           <div className="scards">
             {STREAM_TYPES[0].samples.slice(0, 2).map((v) => (
               <StreamCard key={v.videoId} {...v} />
@@ -154,7 +161,7 @@ export default function Home() {
                 )}
                 <span className="hout-text">
                   <b>{l.label}</b>
-                  <i>{l.note}</i>
+                  <i><Say t={l.note} /></i>
                 </span>
                 <Icon name="external" size={14} className="hout-go" />
               </a>

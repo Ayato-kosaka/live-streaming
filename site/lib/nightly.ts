@@ -10,7 +10,14 @@
  * 触っているので、いまは写した状態のままにしてある。片方を直したらもう片方も直す。
  */
 
-/** 配信は日本時間の22時から、だいたい2〜3時間。 */
+import { looseStartNow } from "@/content/chapters";
+
+/**
+ * 配信は日本時間の22時から、だいたい2〜3時間。
+ *
+ * **ただし、旅の最中はここを見ない**（`readNight`）。ヒッチハイクなので
+ * 始まる時刻がその日の道で決まる。旅が終われば、また22時に戻る。
+ */
 export const START_H = 22;
 export const HOURS = 3;
 
@@ -45,20 +52,36 @@ export function jstShift(now: Date, days: number): string {
 }
 
 export type Night = {
-  /** いま配信の時間か（JST 22:00〜25:00） */
+  /** いま配信の時間か（JST 22:00〜25:00）。時刻が決まっていない期間は常に false */
   onAir: boolean;
-  /** 今夜の配信まであと何分。onAir のときは 0 */
+  /** 今夜の配信まであと何分。onAir のときと、時刻が決まっていない期間は 0 */
   mins: number;
+  /**
+   * 始まる時刻の決まっていない期間か（旅の最中）。
+   *
+   * **true のあいだ、島は時刻もカウントダウンも出さない。**
+   * 「あと3時間20分」は22時から逆算した数字なので、22時に始まらない日は
+   * ただの嘘になる。無い数字を出すくらいなら、その欄ごと出さない。
+   */
+  loose: boolean;
 };
 
-/** 今夜の配信まで、あと何分か。 */
+/**
+ * 今夜の配信まで、あと何分か。
+ *
+ * **旅のあいだかどうかで答えが変わるのは、この1つの関数だけ。**
+ * 面ごとに「旅なら」を書かない。板も札もカモメも、ここが返したものに従う
+ * （`docs/island-misses.md` の決めごと5）。
+ */
 export function readNight(now: Date = new Date()): Night {
+  // ヒッチハイクの旅は、その日の道で始まる時刻が変わる。数えられないので数えない
+  if (looseStartNow(now)) return { onAir: false, mins: 0, loose: true };
   const { h, min } = jstNow(now);
   const end = (START_H + HOURS) % 24; // 25時 = 1時
-  if (h >= START_H || h < end) return { onAir: true, mins: 0 };
+  if (h >= START_H || h < end) return { onAir: true, mins: 0, loose: false };
   let mins = (START_H - h) * 60 - min;
   if (mins <= 0) mins += 24 * 60;
-  return { onAir: false, mins };
+  return { onAir: false, mins, loose: false };
 }
 
 /** 「3時間20分」。1時間を切ったら分だけ、ちょうどなら「3時間」。 */

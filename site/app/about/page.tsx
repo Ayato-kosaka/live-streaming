@@ -14,6 +14,8 @@ import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
@@ -165,7 +167,7 @@ const STORY: Step[] = [
     date: on("georgia", 1),
     kind: "travel",
     what: "トビリシに戻ってきた",
-    note: "いまここ。毎晩22時から配信している",
+    note: say("hereNow"),
     href: "/now",
     go: "いまどこへ",
   },
@@ -264,7 +266,7 @@ export default function AboutPage() {
               {PROFILE.name}（<Age born={PROFILE.born} />歳）
             </p>
             {PROFILE.body.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><Say t={p} /></p>
             ))}
           </div>
         </div>
@@ -279,7 +281,9 @@ export default function AboutPage() {
             </span>
             <span className="tile-text">
               <b>いま、どこで何してる</b>
-              <i>{NOW_FALLBACK.place}。今夜の配信まであと何時間か、今週やること</i>
+              <i>
+                {NOW_FALLBACK.place}。<Say t={say("nowLink")} />
+              </i>
             </span>
             <Icon name="right" size={16} className="tile-go" />
           </Link>
@@ -401,7 +405,7 @@ export default function AboutPage() {
                     {x.date.slice(0, 4)}年{fmtMd(x.date)}
                   </span>
                   <b className="aroad-what">{x.what}</b>
-                  <p className="aroad-note">{x.note}</p>
+                  <p className="aroad-note"><Say t={x.note} /></p>
                   {x.href && (
                     <span className="aroad-go">
                       {x.go}

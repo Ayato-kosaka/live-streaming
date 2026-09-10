@@ -6,6 +6,7 @@ import { LEGENDS } from "@/content/legends";
 import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
+import { say } from "@/content/nights";
 
 /**
  * 島にある紙、ぜんぶ。
@@ -83,7 +84,7 @@ export const SHELVES: Shelf[] = [
   {
     id: "streams",
     title: "配信の型",
-    note: "毎晩22時。5つのうちどれかをやっている",
+    note: say("typesLong"),
     items: STREAM_TYPES.map((t) => ({
       href: `/streams/${t.slug}`,
       name: t.name,

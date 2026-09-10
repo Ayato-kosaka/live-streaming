@@ -6,6 +6,7 @@ import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
 import HashJump from "./HashJump";
+import Say from "./Say";
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -146,7 +147,8 @@ export function PageHead({
   /** 公式のアプリアイコンなど */
   logo?: string;
   title: string;
-  lead?: string;
+  /* 旅のあいだだけ言い方の変わる1行があるので、文字だけでなく部品も受ける */
+  lead?: ReactNode;
   /** 案内役のひとこと。 */
   say?: string;
   meta?: ReactNode;
@@ -188,7 +190,7 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
         <PlaceList current={current} atAll={atAll} />
       </nav>
       <p className="ifoot-note">
-        {FOOT.note} <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
+        <Say t={FOOT.note} /> <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
       </p>
     </footer>
   );
