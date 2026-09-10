@@ -67,8 +67,10 @@ export const SHELVES: Shelf[] = [
       {
         href: "/cards",
         name: "あやと島カード",
-        note: "その日いてくれた人に渡る、その日の1枚",
-        q: q("あやと島カード cards カード コレクション 投げ銭"),
+        note: "その日の写真。キャラクターを入れて持って帰れる",
+        /* 「旅の写真」で探す人がここへ着くようにする。2026-09-10 に
+           `/nordic/photos` をこの面へ寄せたので、探し言葉も引き取る */
+        q: q("あやと島カード cards カード コレクション 投げ銭 旅の写真 photos 写真 スタンプ"),
       },
       ...DOORS.map((d) => ({
         href: d.href,
@@ -174,12 +176,6 @@ export const SHELVES: Shelf[] = [
         name: "旅のしおり",
         note: "お金・通信・服・サウナ・食べもの",
         q: q("旅のしおり guide 持ち物 サウナ お金"),
-      },
-      {
-        href: "/nordic/photos",
-        name: "旅の写真",
-        note: "その日に撮った写真。持って帰れる",
-        q: q("旅の写真 photos 写真 スタンプ"),
       },
       ...NORDIC_COUNTRIES.map((c) => ({
         href: `/nordic/${c.slug}`,

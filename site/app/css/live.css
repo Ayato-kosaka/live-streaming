@@ -713,6 +713,8 @@
   max-height: 100%;
   object-fit: contain;
   object-position: center bottom;
+  /* 中に描かれた figure の大きさは人によって 1.5 倍違う。
+     1枚ずつの寄せと拡げは `FriendsWall.tsx` の `fitStyle` が付ける */
 }
 /* 台座。切り抜いた絵をそのまま置くと宙に浮くので、必ず地面ごと置く */
 .rzk-art .rz-pad { position: absolute; left: 50%; bottom: 0; width: 46%; height: auto; transform: translateX(-50%); }
@@ -789,6 +791,7 @@
   cursor: pointer;
 }
 .rzk-cell:active { transform: translateY(2px); box-shadow: none; }
+/* 枠は 86%。中に描かれた figure をそろえる寄せは `fitStyle` が付ける */
 .rzk-cell img { width: 86%; height: 86%; object-fit: contain; }
 /* 選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6） */
 .rzk-cell.is-on { border: 2px solid var(--pick); }

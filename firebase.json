@@ -6,6 +6,18 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/nordic/photos",
+        "destination": "/cards",
+        "type": 301
+      },
+      {
+        "source": "/nordic/photos/**",
+        "destination": "/cards",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "/island-api/**",
@@ -80,7 +92,8 @@
         "destination": "/index.html"
       }
     ],
-    "cleanUrls": true
+    "cleanUrls": true,
+    "trailingSlash": false
   },
   "functions": [
     {

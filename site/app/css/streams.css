@@ -1269,7 +1269,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   line-height: 0;
 }
 .kd-folks img {
-  width: 54px;
+  /* 器は正方形にする。`charFit` の寄せは「器に対する割合」で書いてあるので、
+     縦横が違うと絵の描かれる位置とずれる */
+  width: 62px;
   height: 62px;
   object-fit: contain;
   /* 足元をそろえないと、絵の縦幅の違いぶんだけ人が浮く（`island-world.md` 6.3） */

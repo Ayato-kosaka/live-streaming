@@ -147,7 +147,6 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       icon: "signpost-flags",
       size: 64,
       sign: true,
-      note: "押すと、その国の1枚へ行けます。",
       items: countries.map((k) => ({
         label: k.name,
         // その国でどこにいたか。国名だけ並べても、島の記憶に結びつかない
@@ -166,7 +165,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       icon: "tower-studio",
       size: 118,
       sign: true,
-      note: `${ym(c.from)}から${c.to ? ym(c.to) : "いま"}まで、${streams.length}本。新しいほうから3本。`,
+      note: `${ym(c.from)}から${c.to ? ym(c.to) : "いま"}まで、${streams.length}本。`,
       items: streams.slice(0, 3).map(([date, id, title]) => ({
         label: title,
         sub: date,
@@ -199,7 +198,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
          札に出る名前が違う（`docs/island-design.md` 6章「札は答えだけを言う」） */
       icon: "signboard",
       size: 58,
-      note: `${span(shorts[0].date, shorts[shorts.length - 1].date)}、${shorts.length}本。押すと YouTube で開きます。`,
+      note: `${span(shorts[0].date, shorts[shorts.length - 1].date)}、${shorts.length}本。`,
       shorts,
     });
   }
@@ -276,7 +275,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
        「この島のこと」（石碑）で、これは順番の事故ではなく選んだ結果。
        石碑の4つの数字のうち、日数・本数・国数は同じ島の他の札にも出ているし、
        人数を含めた3つは、ここへ来る前に通る `/atlas` の島の札に出ている
-       （`components/chain/Chain.tsx`）。ショート31本は、どこにも無い。 */
+       （`components/chain/Isles.tsx`）。ショート31本は、どこにも無い。 */
     places: [...places.slice(0, 5), pier(prev, next)],
     folk: st?.residents ?? [],
     prev,
@@ -304,7 +303,7 @@ function pier(prev?: Neighbour, next?: Neighbour): IslePlaceSpec {
     blurb: "船で渡る",
     icon: "pier",
     size: 34,
-    note: "旅は西から東へ。島は日付の順に並んでいます。",
+    note: "旅は西から東へ。",
     items,
   };
 }
@@ -358,7 +357,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       icon: "signpost-flags",
       size: 60,
       sign: true,
-      note: "ポーランドから入って、ストックホルムまで。押すと、その国の1枚へ。",
+      note: "ポーランドから入って、ストックホルムまで。",
       items: NORDIC_COUNTRIES.map((k) => ({
         label: k.name,
         sub: k.catch,
@@ -379,7 +378,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       blurb: "北欧に来ている付箋",
       icon: "signboard",
       size: 58,
-      note: "北欧あての付箋だけ。押すと、書いてある場所へ行けます。",
+      note: "行きたい場所も、やってほしいことも。",
       board: nordicThemes(),
       more: { label: "島の掲示板へ", sub: "北欧以外の企画も、ここから出せる", href: "/board" },
     },

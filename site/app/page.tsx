@@ -107,7 +107,6 @@ export default function Home() {
           id="next"
           kicker="これから"
           title={HOME.next}
-          note="日にちが決まっているものは、島の入口にも出ています。"
         >
           <NextUp />
           {/* 掲示板への誘いは、絵と3行と大きいボタンの箱を積んでいた（290px）。
@@ -135,7 +134,6 @@ export default function Home() {
           id="past"
           kicker="これまで"
           title={HOME.past}
-          note="押すと、その中身をぜんぶ並べた面へ行けます。"
         >
           <Shelf />
         </Chapter>

@@ -76,7 +76,7 @@ export function NowCountry() {
 
       {spots.length > 0 && (
         <>
-          <p className="pap-note">この国でいちばん喋られた回。押すとその配信に飛びます。</p>
+          <p className="pap-note">この国でいちばん喋られた回。</p>
           <ul className="nowc-spots">
             {spots.map((h) => (
               <li key={h.videoId}>

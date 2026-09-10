@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
+import { charFit } from "@/content/characterBox";
 import { useResidentDays } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
@@ -94,7 +95,6 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const v = r?.icon ? say[r.icon] : undefined;
   const name = r?.icon ? show.get(r.icon)?.name : undefined;
   const spot = r?.icon ? here.get(r.icon) : undefined;
-  const named = list.filter((x) => show.get(x.icon!)?.name).length;
   /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
   const mine = (cards ?? []).filter((c) => c.icon === r?.icon);
 
@@ -125,7 +125,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 主役の絵だけが甘かった。元は 1024px 以上あるので、640 は
                 本物の画素が返る（上限は元の大きさで頭打ちになる）。
                 一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
-            <img key={r.icon} src={drive(r.icon!, 640)} alt="" />
+            <img key={r.icon} src={drive(r.icon!, 640)} alt="" style={charFit(r.icon!, 0.94, true)} />
           </div>
 
           <dl className="rzk-fields">
@@ -243,7 +243,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 onClick={() => go(i)}
               >
                 <span className="rzk-cell-no">{i + 1}</span>
-                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" />
+                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" style={charFit(x.icon!, 0.82)} />
               </button>
             );
           })}
@@ -254,7 +254,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
       {here.size > 0 && (
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
-          マスの角が光っているのが、その人たちです。近くまで行くと、向こうから話しかけてきます。
+          角が光っているマスの人。近くまで行くと、向こうから話しかけてくる。
           <Link href="/">
             島へ会いに行く
             <Icon name="right" size={13} />
@@ -264,10 +264,6 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
 
       <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
         いま{list.length}人ぶんの絵があります。
-        {named > 0
-          ? `そのうち${named}人が、島に名前を出すことにしてくれました。`
-          : "名前を出すかどうかは本人が決めるので、いまは誰も出していません。"}
-        セリフは、その人が配信で書いてきたコメントから口調だけを写したものです。
       </p>
     </>
   );

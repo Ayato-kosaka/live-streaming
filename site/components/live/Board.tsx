@@ -59,16 +59,16 @@ const SEEDS = [
  * 同じ企画が段（`status`）を進んでいくだけになる。
  */
 const FLOW = [
-  { t: "出す", n: "題ひとつでいい。名前もログインも要りません" },
-  { t: "そだてる", n: "日にちも場所も写真も、あとから足せます" },
-  { t: "日にちが決まる", n: "「これから」に上がって、ページが1枚立ちます" },
+  { t: "出す", n: "題ひとつでいい" },
+  { t: "そだてる", n: "日にちも場所も写真も、あとから足せる" },
+  { t: "日にちが決まる", n: "「これから」のいちばん上に出る" },
 ];
 
 /** 段ごとの並び。**提案がいちばん上。** 出した人の目に、まず自分のものが入る。 */
 const SHELVES: { id: PlanStatus; lead: string }[] = [
   { id: "proposed", lead: "まだ日にちが決まっていない、みんなの案。" },
-  { id: "next", lead: "日にちが決まったもの。ページが1枚立っています。" },
-  { id: "done", lead: "行ってきたもの。語り継がれると、伝説の企画になります。" },
+  { id: "next", lead: "日にちが決まったもの。" },
+  { id: "done", lead: "行ってきたもの。語り継がれると、伝説の企画になる。" },
 ];
 
 /** Git 側に立っている企画1つ。`content/plans.ts` か `content/legends.ts` にある。 */
@@ -324,7 +324,7 @@ export default function Board() {
         <h2>{BOARD.postTitle}</h2>
         <p>
           まじめじゃなくていい。{BOARD.postNote}
-          <b>ログインも名前も要りません。</b>
+          <b>名前もログインも要らない。</b>
         </p>
         {/* 何あてに書くのかを、書かせる前に言う。ここが無かったせいで、
             提案8件のうち7件が「決まっている旅への注文」になっていた（#159）。 */}
@@ -471,7 +471,7 @@ export default function Board() {
 
       <section className="panel paper">
         <h2>むちゃな企画ほど通る、の証拠</h2>
-        <p className="muted">どれも「思いつき」から始まって、本当にやったものです。</p>
+        <p className="muted">どれも「思いつき」から始まって、本当にやった。</p>
         <div className="chips" style={{ marginTop: "var(--sp-3)" }}>
           {PROOF.map((slug) => {
             const l = LEGENDS.find((x) => x.slug === slug);
@@ -545,7 +545,7 @@ export default function Board() {
         {plans !== null && down && (
           <div className="blank is-off">
             <b>いま、板を読みに行けなかった</b>
-            <p>出してある企画がある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+            <p>少し待ってから、もう一度。</p>
             <button className="blank-go" onClick={load}>
               もう一度よみこむ
               <Icon name="refresh" size={14} />

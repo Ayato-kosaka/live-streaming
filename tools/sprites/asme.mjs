@@ -64,8 +64,18 @@ const NOTE_TEXTS = [
   "帰る前の日に、その旅でいちばん良かった場所へもう一度行く",
 ];
 const THEMES_SEED = ["nordic", "island", "kitchen", "nordic", "island"];
+/* 何枚あるところを測るか。**0 / 3 / 40 / 200 を差し替えて撮る**
+   （データが溜まったときに壊れないかを見るため）。既定は本番に近い20枚。
+   20枚を超えるぶんは同じ文を繰り返して水増しする。 */
+const NOTE_N = Number(process.env.NOTES ?? NOTE_TEXTS.length);
+const NOTE_ALL = Array.from(
+  { length: NOTE_N },
+  (_, i) =>
+    NOTE_TEXTS[i % NOTE_TEXTS.length] +
+    (i >= NOTE_TEXTS.length ? `（${Math.floor(i / NOTE_TEXTS.length) + 1}回目）` : ""),
+);
 const MINE = {
-  notes: NOTE_TEXTS.map((text, i) => ({
+  notes: NOTE_ALL.map((text, i) => ({
     id: `a${i + 1}`,
     theme: THEMES_SEED[i % THEMES_SEED.length],
     text,
@@ -266,6 +276,29 @@ const CARDS = CARD_SHOTS.flatMap((s) =>
   }),
 );
 
+/* 旅の写真（`GET /nordic/photos`）。**本番と同じ形で返す。**
+   本番はいま 2026-09-06 の1枚に4人だが、旅に出れば1日に何枚も貼られる。
+   カード（`CARDS`）と同じ写真・同じ人から作って、両方の面が同じものを
+   見ている状態で撮れるようにする（別々の種を置くと、統合したあとに
+   「同じ写真なのに枚数が違う」が撮れてしまう）。 */
+const PHOTO_DAYS = (() => {
+  const at = new Map();
+  for (const s of CARD_SHOTS) {
+    const d = at.get(s.day) ?? { day: s.day, photos: [], people: [] };
+    d.photos.push({
+      id: s.id, day: s.day, url: SHOT(s.id), w: s.w, h: s.h, note: s.note,
+      at: 1788724247800,
+    });
+    at.set(s.day, d);
+  }
+  for (const d of at.values()) {
+    d.people = CARD_CHANNELS.map((chan) => ({
+      channelId: chan, icon: null, name: CARD_NAMES[chan] ?? null,
+    }));
+  }
+  return [...at.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
+})();
+
 export async function apply(ctx, opts = {}) {
   const admin = opts.admin ?? process.env.ADMIN === "1";
   /* 島のキャラクターが割り当たっていない人。**あやと自身がこれ。**
@@ -365,6 +398,7 @@ export async function apply(ctx, opts = {}) {
       DONORS = had ? DONORS.map((d) => (d.viewerPk === pk ? donor : d)) : [donor, ...DONORS];
       return json(r, { donor, via });
     }
+    if (path === "/nordic/photos") return json(r, { days: PHOTO_DAYS });
     if (path === "/nordic/log") return json(r, { log: [] });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと

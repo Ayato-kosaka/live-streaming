@@ -29,7 +29,7 @@
  * 区間も、実際に付箋が付いているものだけ置く。
  */
 
-import { planById, planPhase } from "./plans";
+import { BUILT_AT, planById, planPhase } from "./plans";
 
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
@@ -226,8 +226,10 @@ const ORDER = [NORDIC_GROUP, PLAN_GROUP, PLAN_DONE_GROUP];
  *
  * **`now` は画面が出てから渡す。** `output: "export"` なので、ここで
  * `new Date()` を呼ぶとビルドした日が焼き込まれる（`CLAUDE.md`）。
- * 出発の翌日には、終わったばかりの企画が「これから」に居座る。
- * 渡すまでは `group` に書いてある字のまま出して、日付では何も動かさない。
+ * 渡すまでは**焼いた日**（`BUILT_AT`）で仕分ける。分からないからと
+ * 「全部これから」にすると、**終わった企画がいつまでも棚に居座る。**
+ * 焼いた日なら、古くなるのは焼いてから終わった企画だけで、
+ * しかも画面が出た時点で本物の今日に直る。
  *
  * @param list 並べる宛先
  * @param now 画面が出てからの今。まだ分からないときは null
@@ -258,8 +260,12 @@ const rank = (g: string) => {
  * 掲示板では「これから」に並ぶ、という食い違いを作らないため。
  */
 function groupOf(t: Theme, now: Date | null): string {
-  if (!now || t.group !== PLAN_GROUP) return t.group;
+  if (t.group !== PLAN_GROUP) return t.group;
   const p = planById(t.id);
   if (!p) return t.group;
-  return planPhase(p, now) === "after" ? PLAN_DONE_GROUP : PLAN_GROUP;
+  /* 画面が出る前は、**焼いた日**で仕分ける（`content/plans.ts` の `BUILT_AT`）。
+     ここを「分からないから、これから」にしていたので、9月6日に終わった
+     フード＆ワイン祭りが、9月10日に配られた HTML でも
+     「これからの企画」の棚に並んでいた（あやと 2026-09-10）。 */
+  return planPhase(p, now ?? BUILT_AT) === "after" ? PLAN_DONE_GROUP : PLAN_GROUP;
 }

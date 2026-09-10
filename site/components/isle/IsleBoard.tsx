@@ -98,12 +98,12 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
     return down ? (
       <div className="blank is-off">
         <b>いま、付箋を読みに行けなかった</b>
-        <p>貼ってある日でも、こういうときは出てきません。少し待って、もう一度。</p>
+        <p>少し待ってから、もう一度。</p>
       </div>
     ) : (
       <div className="blank">
         <b>北欧あての付箋は、まだ1枚も無い</b>
-        <p>行きたい場所も、やってほしいことも出せます。いちばん乗りをどうぞ。</p>
+        <p>行きたい場所も、やってほしいことも。いちばん乗りをどうぞ。</p>
         <Link className="blank-go" href="/nordic#say" prefetch={false}>
           この旅に、言う
           <Icon name="right" size={14} />
@@ -160,7 +160,7 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
             続きは上の「貼ってある場所へ」から。**行き先を2つ置かない** */}
         {now.items.length > SHOW && (
           <p className="nb-more">
-            新しいものから{SHOW}枚まで。残り{now.items.length - SHOW}枚は、貼ってある場所で読めます。
+            のこり{now.items.length - SHOW}枚は、貼ってある場所で。
           </p>
         )}
       </div>

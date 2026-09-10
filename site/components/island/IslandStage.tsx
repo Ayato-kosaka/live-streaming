@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
+import { charPlace } from "@/content/characterBox";
 import { Sprite, spriteWidth } from "./Sprite";
 import { AYATO_HOME, DOORS, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
@@ -1580,15 +1581,22 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 }}
                 transform={`translate(${v.x.toFixed(1)} ${v.y.toFixed(1)})`}
               >
-                <ellipse cx={0} cy={0} rx={13} ry={5} fill="#134a2c" opacity={0.18} />
-                <image
-                  href={residentIconUrl(v.icon)}
-                  x={-RESIDENT_H / 2}
-                  y={-RESIDENT_H}
-                  width={RESIDENT_H}
-                  height={RESIDENT_H}
-                  preserveAspectRatio="xMidYMax meet"
-                />
+                {(() => {
+                  /* 絵の枠ではなく、**中に描かれた figure** の大きさでそろえる。
+                     枠はどれも 640×640 だが、中身は幅 47%〜100%・高さ 59%〜100% と
+                     ばらばらで、枠で置くと島に立った大きさが人によって 1.5 倍違った
+                     （あやと「大きさも不揃い」2026-09-10）。測った値は
+                     `content/characterBox.ts`（自動生成）。 */
+                  const b = charPlace(v.icon!, RESIDENT_H);
+                  return (
+                    <>
+                      {/* 影は、描かれた figure の幅に合わせる。枠に合わせると
+                          細い人の足元に、身体の倍の影が伸びる */}
+                      <ellipse cx={0} cy={0} rx={b.fw * 0.25} ry={b.fw * 0.1} fill="#134a2c" opacity={0.18} />
+                      <image href={residentIconUrl(v.icon!)} x={b.x} y={b.y} width={b.w} height={b.h} />
+                    </>
+                  );
+                })()}
               </g>
             );
           }

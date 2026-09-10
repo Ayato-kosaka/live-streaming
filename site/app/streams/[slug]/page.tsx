@@ -189,7 +189,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
           <H art={<ArtCam size={32} />} note={`${t.samples.length}本`}>
             まずは、この回から
           </H>
-          <p className="zk-lead">この型がいちばん出ている回。押すと YouTube が開く。</p>
+          <p className="zk-lead">この型がいちばん出ている回。</p>
           <div className="vids" style={{ marginTop: "var(--sp-3)" }}>
             {t.samples.map((v, k) => (
               <Vid key={v.videoId} {...v} no={k + 1} />

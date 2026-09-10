@@ -176,10 +176,7 @@ export default function PlanVideos() {
           <Icon name="alert" size={13} /> いま電波が届いていません。届いたら押してください。
         </p>
       )}
-      <p className="mp-vid-lead">
-        0時をまたいで配信が2本に割れた夜に、後半を足す。足すと、後半に投げて
-        くれた人にもカードが渡ります。
-      </p>
+      <p className="mp-vid-lead">0時をまたいで割れた夜の、後半を足す。</p>
 
       {rows.length === 0 ? (
         <p className="muted">

@@ -32,17 +32,42 @@ export function radiiToPoints(cx: number, cy: number, radii: number[], squash = 
 /**
  * Catmull-Rom を三次ベジェに変換して、なめらかな閉曲線パスにする。
  *
- * 島の輪郭は 128 点で持っていて、その形のパスが画面に 20 本以上ある。
+ * 島の輪郭は 96 点で持っていて、その形のパスが画面に 20 本以上ある。
  * 小数第2位まで書くと、それだけで HTML が 20KB ほど太る。島は 1200 の
  * 世界に描いてあって、画面では 1 が 0.6px にしかならない。
  * 第1位で足りる。
+ *
+ * **書き方も短くする。** `301.0` は `301`、`0.5` は `.5`、続く三次ベジェの
+ * `C` は最初の1回だけ。値は変えずに、字だけで 2 割落ちる。
  */
+/**
+ * 数を、いちばん短い書き方にする。**パスの d に出す数は、全部ここを通す。**
+ *
+ * `toFixed(1)` は「301」を `301.0` と書き、「0.5」を `0.5` と書く。
+ * どちらも SVG では余分で、**島の輪郭のパスだけで HTML が 200KB ある**ので、
+ * 1つ2文字でも効く。落とすのは書き方だけで、値は 0.1 のまま。
+ */
+export function n1(v: number): string {
+  let t = (Math.round(v * 10) / 10).toString();
+  if (t.startsWith("0.")) t = t.slice(1);
+  else if (t.startsWith("-0.")) t = "-" + t.slice(2);
+  return t;
+}
+
+/** 数をつなぐ。次が `-` で始まるなら、そこが切れ目になるので区切りは要らない。 */
+function join(a: string, b: string): string {
+  return b.startsWith("-") ? a + b : a + " " + b;
+}
+
 export function smoothClosedPath(points: Pt[], tension = 1): string {
   const n = points.length;
   if (n < 3) return "";
   const at = (i: number) => points[((i % n) + n) % n];
-  const f = (v: number) => v.toFixed(1);
-  let d = `M${f(at(0)[0])},${f(at(0)[1])}`;
+  let d = "M" + join(n1(at(0)[0]), n1(at(0)[1]));
+  /* 三次ベジェが続くあいだ、`C` は最初の1回だけ書けばよい（SVG の決まり）。
+     127回ぶんの `C` が消える。 */
+  d += "C";
+  let first = true;
   for (let i = 0; i < n; i++) {
     const p0 = at(i - 1);
     const p1 = at(i);
@@ -50,7 +75,11 @@ export function smoothClosedPath(points: Pt[], tension = 1): string {
     const p3 = at(i + 2);
     const c1: Pt = [p1[0] + ((p2[0] - p0[0]) / 6) * tension, p1[1] + ((p2[1] - p0[1]) / 6) * tension];
     const c2: Pt = [p2[0] - ((p3[0] - p1[0]) / 6) * tension, p2[1] - ((p3[1] - p1[1]) / 6) * tension];
-    d += `C${f(c1[0])},${f(c1[1])} ${f(c2[0])},${f(c2[1])} ${f(p2[0])},${f(p2[1])}`;
+    for (const v of [c1[0], c1[1], c2[0], c2[1], p2[0], p2[1]]) {
+      const t = n1(v);
+      d = first ? d + t : join(d, t);
+      first = false;
+    }
   }
   return d + "Z";
 }

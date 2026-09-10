@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { livePlans, planDaysLeft, planPhase, nextPlan, type Plan } from "@/content/plans";
+import { BUILT_AT, livePlans, planDaysLeft, planPhase, nextPlan, type Plan } from "@/content/plans";
 import { HOME } from "@/content/voice";
 import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
@@ -22,7 +22,10 @@ import { NoticeBell } from "./art";
  * 画面が出たあとに今日の日付で計算し直す。
  */
 export default function NextUp() {
-  const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan());
+  /* 最初の1枚は**焼いた日**で決める（`content/plans.ts` の `BUILT_AT`）。
+     ここで `new Date()` を呼ぶと、焼いた HTML とブラウザの最初の描画が
+     別の企画を指して、1フレームだけ違う札が出る。 */
+  const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan(BUILT_AT));
   const [days, setDays] = useState<number | null>(null);
   const [today, setToday] = useState<Date | null>(null);
   /**

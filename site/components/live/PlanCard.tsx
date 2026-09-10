@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
+import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
 import { themeById } from "@/content/themes";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
@@ -42,7 +42,11 @@ function useDays({ date, at }: Plan) {
  * 焼き込みの日付で「終わった」と言わない。
  */
 function usePhase(plan: Plan): PlanPhase | null {
-  const [ph, setPh] = useState<PlanPhase | null>(null);
+  /* 出るまでは**焼いた日**の答え（`content/plans.ts` の `BUILT_AT`）。
+     null にしていたころ、終わった企画の札が「これから」の顔で焼かれていた。 */
+  const [ph, setPh] = useState<PlanPhase | null>(() =>
+    planPhase({ date: plan.date, at: plan.at, until: plan.until, endsWhen: plan.endsWhen, done: plan.done } as Plan, BUILT_AT),
+  );
   const { date, at, until, endsWhen, done } = plan;
   useEffect(() => {
     setPh(planPhase({ date, at, until, endsWhen, done } as Plan, new Date()));

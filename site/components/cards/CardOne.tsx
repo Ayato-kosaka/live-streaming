@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { cardIcon, cardWhen, type PlanBrief, type ShownCard } from "./cards";
+import { cardIcon, cardPlace, cardWhen, type PlanBrief, type ShownCard } from "./cards";
 
 /**
  * あやと島カード1枚（#173）。
@@ -10,18 +10,22 @@ import { cardIcon, cardWhen, type PlanBrief, type ShownCard } from "./cards";
  * 順位でも点数でもなく、**いたという事実だけ**が絵になっている
  * （`docs/nordic-photos.md` 2章と同じ考え）。
  *
- * ## 立ち位置は焼かない。割合で持つ
+ * ## 立ち位置は焼かない。その場で重ねる
  *
- * 置き方（x/y/rot/scale）は数として来る。写真の大きさが変わってもずれない
- * ように 0〜1 の割合で、`y` は**足元**の高さ。CSS の `left` / `bottom` に
- * そのまま入れて、絵は毎回その場で重ねる。焼いた1枚を置き場に貯めない理由は
- * #173 のコメントの3つ（同じ写真に何人も乗る／あとから動かせる／軽い）。
+ * 焼いた1枚を置き場に貯めない理由は #173 のコメントの3つ
+ * （同じ写真に何人も乗る／あとから動かせる／軽い）。
  *
- * ## 大きさの決め方
+ * ## どこに、どれだけの大きさで立つか
  *
- * `docs/nordic-photos.md` 5章の表そのまま。**縦の写真は横幅の34%、
- * 横の写真は高さの20%。** 基準にする辺が写真の向きで変わるので、
- * どちらの辺を書くかも切り替える（もう片方は絵の縦横比に任せる）。
+ * 決めるのは `cardPlace`（`./cards.ts`）。**既定は写真の右下ひとところ、
+ * 大きさも1つ。** 台帳が持っている `x/y/rot/scale` をそのまま使うと、
+ * 散らした先が右端を越えて絵が切れ、`scale` のばらつきが1人ずつ違う
+ * 大きさになる（あやと・2026-09-10「キャラクターが見切れてる。
+ * あと大きさも不揃い」）。本人が動かしたものだけ、その値で置く。
+ *
+ * 寸法は `docs/nordic-photos.md` 5章の表そのまま。**縦の写真は横幅の34%、
+ * 横の写真は高さの20%。** 焼く1枚（`components/nordic/stamp.ts`）も
+ * 同じ寸法・同じ右下なので、**画面で見えている絵と持って帰る絵が同じ**になる。
  *
  * ## 押せない
  *
@@ -53,7 +57,7 @@ export default function CardOne({
    */
   showWhen?: boolean;
 }) {
-  const tall = card.h > card.w;
+  const at = cardPlace(card);
   // 帯に出すものが1つも無ければ、帯ごと出さない。字の無い罫だけが残るため
   const foot = showWhen || (showName && card.name);
   return (
@@ -62,10 +66,9 @@ export default function CardOne({
         className="akd-shot"
         style={{ aspectRatio: card.w && card.h ? `${card.w} / ${card.h}` : "3 / 4" }}
       >
-        {/* **crossOrigin を付ける。** ここと `PhotoStudio` の canvas は同じ
+        {/* **crossOrigin を付ける。** ここと `CardSheet` の canvas は同じ
             URL を読む。片方を素で先に読むと、CORS のヘッダを持たない絵が
-            キャッシュに残る端末があり、あとから焼こうとすると汚れて落ちる
-            （`components/nordic/PhotoWall.tsx` に同じ用心がある）。 */}
+            キャッシュに残る端末があり、あとから焼こうとすると汚れて落ちる。 */}
         <img
           className="akd-photo"
           src={card.url}
@@ -79,14 +82,7 @@ export default function CardOne({
           alt=""
           loading="lazy"
           crossOrigin="anonymous"
-          style={{
-            left: `${card.x * 100}%`,
-            bottom: `${(1 - card.y) * 100}%`,
-            // 縦の写真は横幅、横の写真は高さ（nordic-photos.md 5章）
-            width: tall ? `${34 * card.scale}%` : "auto",
-            height: tall ? "auto" : `${20 * card.scale}%`,
-            transform: `translateX(-50%) rotate(${card.rot}deg)`,
-          }}
+          style={at}
         />
       </div>
       {foot && (

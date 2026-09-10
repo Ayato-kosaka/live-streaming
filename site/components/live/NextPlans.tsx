@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getState } from "@/lib/api";
-import { livePlans, planPhase, type Plan } from "@/content/plans";
+import { BUILT_AT, livePlans, planPhase, type Plan } from "@/content/plans";
 import { themeById } from "@/content/themes";
 import Longer from "@/components/ui/Longer";
 import Notes from "./Notes";
@@ -60,8 +60,7 @@ function PlanNotes({ plan }: { plan: Plan }) {
  * まず知りたいのは「いま何が起きているか」で、次の予定ではない。
  *
  * 静的書き出しなので「もう終わったかどうか」はビルド時の日付で焼き込まれてしまう。
- * 画面が出るまでは日付順に全部を「これから」として出し、
- * 出てから今日の日付で、いま行っているものと終わったものに分ける。
+ * 画面が出るまでは**焼いた日**で仕分けて、出てから今日の日付で分け直す。
  *
  * **「終わった」に倒すのは、終わったと分かったときだけ。** 始まる日しか
  * 持たせていなかったころ、出発の当日から旅のあいだじゅう
@@ -100,9 +99,10 @@ export default function NextPlans() {
      ストックホルムに着いてから発つまでに7泊ある
      （`content/plans.ts` の `livePlans`・`docs/nordic-depart.md`）。 */
   const sorted = [...livePlans(facts)].sort(byDate);
-  /* 画面が出るまで（today が null）は、全部を「これから」として並べる。
-     焼き込みの日付で「終わった」と言わない。 */
-  const phase = (p: Plan) => (today ? planPhase(p, today) : "before");
+  /* 画面が出るまで（today が null）は、**焼いた日**で仕分ける
+     （`content/plans.ts` の `BUILT_AT`）。「全部これから」にしていたので、
+     終わった企画が焼いた HTML の「これから」に残っていた。 */
+  const phase = (p: Plan) => planPhase(p, today ?? BUILT_AT);
   const now = sorted.filter((p) => phase(p) === "during");
   const done = sorted.filter((p) => phase(p) === "after");
   const before = sorted.filter((p) => phase(p) === "before");
@@ -141,9 +141,6 @@ export default function NextPlans() {
       {rest.length > 0 && (
         <section className="panel paper">
           <h2>このあと、どこへ行くんだろう</h2>
-          <p className="muted">
-            石の上の日付が、その企画の日。押すと、その場で中身が開きます。
-          </p>
           {/* 飛び石は1つ 60px ほどだが、日付の決まった企画は増える一方。
               **どこまで先を見せるかを決めておく**（#225）。 */}
           <Longer items={rest} first={6} step={12} unit="つ" className="nx-road">
@@ -159,7 +156,6 @@ export default function NextPlans() {
       {done.length > 0 && (
         <section className="panel paper">
           <h2>もう行ってきた</h2>
-          <p className="muted">貼ってもらった付箋も、そのまま残っています。</p>
           {/* 終わった企画は**1つも減らない。** 何年ぶんでも下に積み上がるので、
               これからより短く出す。読み返す人は押して出す。 */}
           <Longer items={done} first={4} step={12} unit="つ" className="nx-road">

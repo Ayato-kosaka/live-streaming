@@ -82,13 +82,13 @@ export default async function ChapterStreams({
       <PageHead
         icon="tower-studio"
         title={`${c.name}の配信`}
-        lead={`${ym(c.from)}から${ym(c.to)}まで、この島にいたあいだの${streams.length}本。新しい順に並べています。`}
+        lead={`${ym(c.from)}から${ym(c.to)}まで、この島にいたあいだの${streams.length}本。新しい順。`}
       />
 
       {/* いまの配信を探しに来た人を、行き止まりに置かない。
           この面はこの章に絞ってあるので、外への口を先に出す */}
       <p className="chap-note chap-scope">
-        ここに出るのは<b>この島にいたあいだの配信だけ</b>です。ぜんぶ見るなら
+        ぜんぶ見るなら
         <Link href="/streams" prefetch={false}>
           配信の面
         </Link>
