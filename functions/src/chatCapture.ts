@@ -331,13 +331,19 @@ export const collectLiveChat = onSchedule(
          **401 はここで取り直されるので、もう素通りしない。** */
       live = await findLive(tok);
     } catch (e) {
-      const status = e instanceof YtError ? e.status : 0;
+      /* YouTube が断ったのか、その手前（Doneru からトークンを
+         もらうところ）で転んだのかを分ける。**打ち手が違う。** */
+      if (!(e instanceof YtError)) {
+        logger.warn("collectLiveChat: トークンが取れません", String(e));
+        await note("トークンが取れない", String(e));
+        return;
+      }
       logger.warn("collectLiveChat: 配信を探せません", String(e));
       /* 取り直しても 401 なら、Doneru と YouTube の繋ぎが切れている。
          **それはあやとがブラウザで繋ぎ直すしかない。** 札にそう書く。 */
       await note(
-        status === 401 ? "取り直しても 401（Doneru の繋ぎ直しが要る）" :
-          "配信を探せない",
+        e.status === 401 ? "取り直しても 401（Doneru の繋ぎ直しが要る）" :
+          `配信を探せない（${e.status}）`,
         String(e),
       );
       return;
