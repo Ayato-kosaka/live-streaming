@@ -133,15 +133,76 @@ def step1_key() -> str:
     return key
 
 
+# Doneru は Cloudflare の後ろにいる（`python/doneru/client.py` の但し書き）。
+# **叩く側の「見た目」で 403 が返る。** だから1つの叩き方で 403 を見ても、
+# 「Doneru が鍵を拒んだ」のか「Cloudflare がこちらの姿を拒んだ」のか分からない。
+# 姿を変えて何度か叩き、どれが通るかで分ける。
+BROWSER_UA = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+)
+# Cloud Functions の `fetch()`（undici）が既定で名乗る姿。**これが本番の姿。**
+SHAPES: list[tuple[str, dict]] = [
+    ("素の Python（urllib の既定）", {}),
+    ("node（Functions の fetch と同じ名乗り）", {"User-Agent": "node"}),
+    ("undici", {"User-Agent": "undici"}),
+    ("ブラウザのふり（doneru/client.py と同じ）", {
+        "accept": "*/*",
+        "origin": "https://doneru.jp",
+        "referer": "https://doneru.jp/",
+        "user-agent": BROWSER_UA,
+    }),
+]
+
+
+def node_fetch(url: str) -> str:
+    """**Cloud Functions とまったく同じ叩き方**を node にさせる。
+
+    `doneruYoutubeToken` は Node の `fetch()` をヘッダ無しで呼んでいる。
+    Python から真似ても、名乗りも TLS の指紋も違う。Cloudflare はそこを見るので、
+    本番が何を受け取るかは node に聞くしかない。**本文は返さない**
+    （鍵が混ざりうる）。ステータスと、本文の頭だけを返す。
+    """
+    import subprocess
+
+    js = (
+        "const u=process.argv[1];"
+        "fetch(u).then(async r=>{const t=await r.text();"
+        "console.log(JSON.stringify({s:r.status,"
+        "h:t.slice(0,200),ua:'default'}))})"
+        ".catch(e=>console.log(JSON.stringify({s:0,h:String(e)})))"
+    )
+    try:
+        r = subprocess.run(
+            ["node", "-e", js, url],
+            capture_output=True, text=True, timeout=30,
+        )
+    except Exception as e:  # noqa: BLE001
+        return f"node を回せず: {type(e).__name__}"
+    out = (r.stdout or "").strip() or (r.stderr or "").strip()
+    return hide(out)[:300]
+
+
 def step2_token(key: str) -> str:
     """2. Doneru からアクセストークンを取る。"""
     log.info("── 2. Doneru のトークン")
     url = f"{TOKEN_URL}?key={urllib.parse.quote(key, safe='')}&type=alertbox"
-    code, body = get(url)
-    log.info("  HTTP %s", code)
-    if code != 200:
-        log.error("  → トークンが取れない。ここで止まる（#2）: %s", head(body))
+
+    # **まず本番と同じ叩き方**。ここが 200 なら Functions の #2 は無実。
+    log.info("  [本番と同じ] node の fetch（ヘッダ無し）: %s", node_fetch(url))
+
+    body = ""
+    ok = None
+    for name, hdr in SHAPES:
+        code, b = get(url, hdr)
+        log.info("  [%s] HTTP %s %s", name, code, head(b, 100))
+        if code == 200 and ok is None:
+            ok, body = name, b
+    if ok is None:
+        log.error("  → どの叩き方でもトークンが取れない。ここで止まる（#2）")
         return ""
+    log.info("  → 「%s」なら通る", ok)
+
     try:
         j = json.loads(body)
     except json.JSONDecodeError:
@@ -158,10 +219,12 @@ def step2_token(key: str) -> str:
         log.error("  → youtube.at が空。ここで止まる（#2）: %s", head(body))
         return ""
     log.info("  → at あり（%d文字）/ channel=%s / exp=%s",
-             len(at), y.get("channel") or "(無し)", "あり" if y.get("exp") else "無し")
+             len(at), y.get("channel") or "(無し)",
+             "あり" if y.get("exp") else "無し")
 
     # トークンに何が許されているか。**#3 の原因の半分はここ。**
-    code, info = get(f"{TOKENINFO}?access_token={urllib.parse.quote(at, safe='')}")
+    code, info = get(
+        f"{TOKENINFO}?access_token={urllib.parse.quote(at, safe='')}")
     if code == 200:
         try:
             scopes = (json.loads(info).get("scope") or "").split()
