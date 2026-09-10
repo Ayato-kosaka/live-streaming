@@ -39,24 +39,43 @@ const drive = (id: string, size: number) =>
  * 割り当ては**あやとの表だけが決める**（`content/residents.ts` の `channel`）。
  * キャラクターの無い人は、いままでどおり頭の1文字。
  *
- * ## キャラクターは丸く切り抜かない
+ * ## 絵は、丸く切り抜かない。**顔写真もふくめて**
  *
  * あやとの言葉（2026-09-10）「キャラクターが見切れてる。あと大きさも不揃い」。
  * ここは 48px の丸に `object-fit: cover` で押し込んでいたので、**全身の絵の
  * 頭と足が落ちていた**（22人とも）。しかも枠に合わせて詰めるので、
  * 描かれた大きさが人によって 1.56 倍ちがった。
  *
- * 島と図鑑と同じ `charFit`（`content/characterBox.ts`）を通して、
- * **描かれた部分の面積**でそろえる。丸の中に収める寸法は、22人の絵の
+ * キャラクターは、島と図鑑と同じ `charFit`（`content/characterBox.ts`）を
+ * 通して、**描かれた部分の面積**でそろえる。丸の中に収める寸法は、22人の絵の
  * 不透明な画素を測って決めた（`tools/sprites/charfit.mjs` の `ME=1`）。
- * **YouTube の顔写真は正方形に収まっているので、いままでどおり丸く切る。**
+ *
+ * **YouTube の顔写真も同じに切らない。** はじめ「顔写真は正方形に収まって
+ * いるから丸く切ってよい」で残していたが、**あやと本人の絵が全身のイラスト**で、
+ * 丸のふちで足が切れていた。あやとが毎日見ているのはこのアイコンで、
+ * 住人の絵を22人ぶん直しても、ここが切れていれば何も直っていない。
+ *
+ * **顔のアップか全身かは URL からは分からない。** 分けられないものを分けようと
+ * すると、また同じことが起きる。**どちらも収める。** 顔のアップの人は絵が
+ * 少し小さくなって紙の地が見えるが、島のものは全部「紙の丸に絵が乗っている」形
+ * （看板の左の案内鳥がまさにそれ）なので、むしろそちらに揃う。
  */
-/** 丸の中に、描かれた部分をどれくらいの大きさで置くか。
+/** キャラクターを、丸の中にどれくらいの大きさで置くか。
  *
  *  四角い器なら 0.86 まで入るが、**ここは丸**なので、対角のぶんだけ入らない。
  *  22人の描かれた画素を円に当てて、1画素も外に出ない上限が 0.648 だった
  *  （寝そべった絵が横に広くて、いちばん先につかえる）。切り上げない。 */
 const IN_CIRCLE = 0.64;
+/** 顔写真を、丸の中にどれくらいの大きさで置くか。
+ *
+ *  こちらは中身を測れない（外から来る絵で、透明な余白も無い）ので、
+ *  **絵の四隅が円に触れる**ところが上限になる。真四角なら 1/√2 ≒ 0.707。
+ *  `contain` で入れてあるので、縦長・横長の絵の対角はこれより短い。
+ *
+ *  ちょうど 0.707 だと四隅が円に**乗る**ので、丸く切るときのにじみに
+ *  1画素かじられる（真四角の絵を差し込んで撮ると、そこだけ差が出た）。
+ *  0.68 まで下げると、切っても切らなくても1バイトも変わらない。 */
+const IN_CIRCLE_PHOTO = 0.68;
 
 export default function MeButton() {
   const { user } = useAuth();
@@ -80,34 +99,30 @@ export default function MeButton() {
   const chara = user.channelId
     ? RESIDENTS.find((r) => r.channel === user.channelId)
     : undefined;
-  const chr = !drop && chara?.icon ? chara.icon : null;
+  /* 何を出すか。**キャラクター → YouTube の顔 → 頭の1文字**の順は変えない。
+     どちらの絵も、丸からはみ出さない寸法まで縮めてから置く。 */
+  const pic = chara?.icon ?
+    { src: drive(chara.icon, 96), style: charFit(chara.icon, IN_CIRCLE) } :
+    user.channelPhoto ?
+      { src: user.channelPhoto, style: { transform: `scale(${IN_CIRCLE_PHOTO})` } } :
+      null;
+  const shown = pic && !drop;
   return (
     <Link
       href="/me"
       prefetch={false}
-      className={`ih-me${path === "/me" ? " is-on" : ""}${chr ? " has-chara" : ""}`}
+      className={`ih-me${path === "/me" ? " is-on" : ""}${shown ? " has-pic" : ""}`}
       aria-label="じぶんのこと"
       aria-current={path === "/me" ? "page" : undefined}
     >
       <span className="ih-me-i" aria-hidden>
         {initial}
       </span>
-      {chara?.icon ? (
-        /* 落ちたら**要素ごと外す。** 残すと、Chrome が壊れた絵の記号を
-           字の上に重ねて出す（島のものが1つ「バグって見える」ことになる。
-           `docs/island-misses.md` #7）。 */
-        !drop && <img
-          ref={img}
-          className="ih-me-c"
-          src={drive(chara.icon, 96)}
-          alt=""
-          onError={() => setDrop(true)}
-          style={charFit(chara.icon, IN_CIRCLE)}
-        />
-      ) : (
-        /* 島のキャラクターが無い人（配信する側は住人の表に居ない）は、
-           毎晩入れ直る YouTube のアイコン。**字に落とさない。** */
-        user.channelPhoto && <img src={user.channelPhoto} alt="" />
+      {/* 落ちたら**要素ごと外す。** 残すと、Chrome が壊れた絵の記号を
+          字の上に重ねて出す（島のものが1つ「バグって見える」ことになる。
+          `docs/island-misses.md` #7）。 */}
+      {shown && (
+        <img ref={img} src={pic.src} alt="" onError={() => setDrop(true)} style={pic.style} />
       )}
     </Link>
   );

@@ -155,14 +155,38 @@ if (process.env.ME === "1") {
     shots.push({ n: i + 1, id: m.id, size: d ? Math.sqrt(d.dw * d.dh) : 0, mh, clipped, png: a1.toString("base64"), 字: m.字 });
     await ctx.close();
   }
-  /* 顔写真の人（あやと）。キャラクターが無いので、丸く収まっているのが正しい */
-  {
+  /* キャラクターの無い人（あやと）の、YouTube の顔写真。
+     **ここも切ってはいけない。** 「顔写真は正方形だから丸く切ってよい」で
+     残していたら、あやと自身の絵が全身のイラストで足が切れていた
+     （`docs/island-misses.md` #20）。
+
+     顔のアップの写真でも破綻しないかは、**真四角の絵を差し込んで**見る。
+     四隅まで色のある絵なら、1画素でも円の外に出れば差分に出る。 */
+  const FACE = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+    <rect width="200" height="200" fill="#2f6f8f"/>
+    <circle cx="100" cy="104" r="82" fill="#f0c9a4"/>
+    <circle cx="72" cy="92" r="10" fill="#2b2118"/><circle cx="128" cy="92" r="10" fill="#2b2118"/>
+    <path d="M64 132 q36 30 72 0" stroke="#2b2118" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <text x="100" y="192" font-size="22" text-anchor="middle" fill="#ffffff">かお</text></svg>`;
+  for (const [tag, square] of [["あやとの顔写真", false], ["真四角の顔写真", true]]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
     await apply(ctx, { nochara: true });
     await offline(ctx);
+    // **あとから登録した route が先に効く。** offline の後に書かないと差し替わらない
+    if (square) {
+      await ctx.route(/ggpht\.com|googleusercontent\.com\/ytc/, (r) =>
+        r.fulfill({ status: 200, contentType: "image/svg+xml", body: FACE }));
+    }
     const p = await ctx.newPage();
     await p.goto(`http://localhost:${SPORT}${PAGE}`, { waitUntil: "load", timeout: 60000 });
-    await p.waitForTimeout(2500);
+    await p.waitForFunction(
+      () => {
+        const im = document.querySelector(".ih-me img");
+        return !!im && im.complete && im.naturalWidth > 0;
+      },
+      { timeout: 20000 },
+    ).catch(() => {});
+    await p.waitForTimeout(400);
     const r = await p.evaluate(() => {
       const a = document.querySelector(".ih-me");
       const im = a?.querySelector("img");
@@ -170,9 +194,17 @@ if (process.env.ME === "1") {
       return a ? { x: b.x, y: b.y, w: b.width, h: b.height, 絵: im ? (im.naturalWidth > 0 ? "出ている" : "落ちた") : "無し" } : null;
     });
     if (r) {
-      const png = await p.screenshot({ clip: { x: r.x - 6, y: r.y - 6, width: r.w + 12, height: r.h + 12 } });
-      writeFileSync(`${OUT}/00-youtube.png`, png);
-      shots.push({ n: 0, id: "YouTubeの顔写真", size: 0, clipped: false, png: png.toString("base64"), 字: r.絵 });
+      const clip = { x: r.x - 6, y: r.y - 6, width: r.w + 12, height: r.h + 12 };
+      const a1 = await p.screenshot({ clip });
+      await p.evaluate(() => {
+        const a = document.querySelector(".ih-me");
+        if (a) a.style.overflow = "visible";
+      });
+      const a2 = await p.screenshot({ clip });
+      const clipped = !a1.equals(a2);
+      if (clipped) cut++;
+      writeFileSync(`${OUT}/00-${square ? "square" : "youtube"}.png`, a1);
+      shots.push({ n: 0, id: tag, size: 0, clipped, png: a1.toString("base64"), 字: r.絵 });
     }
     await ctx.close();
   }
@@ -180,9 +212,9 @@ if (process.env.ME === "1") {
   const sizes = shots.filter((x) => x.size > 0).map((x) => x.size).sort((x, y) => x - y);
   const lo = sizes[0], hi = sizes[sizes.length - 1];
   for (const x of shots) {
-    console.log(`   ${String(x.n).padStart(2)}  ${x.size ? x.size.toFixed(1).padStart(5) + "px" : "     －"}  ${x.clipped ? "★切れている" : "収まっている"}  ${x.id}`);
+    console.log(`   ${String(x.n || "顔").padStart(2)}  ${x.size ? x.size.toFixed(1).padStart(5) + "px" : "     －"}  ${x.clipped ? "★切れている" : "収まっている"}  ${x.id}`);
   }
-  console.log(`\n看板  ${shots.length - 1}人  描かれた大きさ ${lo.toFixed(1)}〜${hi.toFixed(1)}px  ばらつき ${(hi / lo).toFixed(2)}倍  切れている ${cut}人`);
+  console.log(`\n看板  ${shots.filter((x) => x.size > 0).length}人  描かれた大きさ ${lo.toFixed(1)}〜${hi.toFixed(1)}px  ばらつき ${(hi / lo).toFixed(2)}倍  切れている ${cut}人`);
   const ms = shots.filter((x) => x.mh > 0).map((x) => x.mh).sort((x, y) => x - y);
   if (ms.length) {
     console.log(`じぶんのこと（.mh-chara）  ${ms.length}人  描かれた大きさ ${ms[0].toFixed(1)}〜${ms[ms.length - 1].toFixed(1)}px  ばらつき ${(ms[ms.length - 1] / ms[0]).toFixed(2)}倍`);
@@ -200,7 +232,7 @@ if (process.env.ME === "1") {
     em { font-style:normal; color:#8a2f1f; }
   </style><div class="g">${shots
     .map(
-      (x) => `<figure><img src="data:image/png;base64,${x.png}"><b>${x.n === 0 ? "顔写真" : x.n + "人目"}</b>` +
+      (x) => `<figure><img src="data:image/png;base64,${x.png}"><b>${x.n === 0 ? x.id : x.n + "人目"}</b>` +
         `<span>${x.size ? x.size.toFixed(1) + "px" : ""}${x.clipped ? " <em>切れ</em>" : ""}</span></figure>`,
     )
     .join("")}</div>`);
