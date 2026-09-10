@@ -1,8 +1,10 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
 import Cover from "@/components/isle/Cover";
-import { nordicSpec } from "@/components/isle/spec";
-import { NEXT_CHAPTER } from "@/content/chapters";
+import { HAND_MADE_CHAPTER } from "@/components/isle/handmade";
+import { coverSpec } from "@/components/isle/cover";
+import { NOW_CHAPTER } from "@/content/chapters";
 import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
 import { StreamCard } from "@/components/ui/Bits";
@@ -43,8 +45,20 @@ import Shelf from "@/components/home/Shelf";
  *
  * 章は海の上ではなく、島の浜（砂の帯）の上に載る。理由は `Chapter.tsx` に書いた。
  */
+/* 島のエンジンは、**使う日が来てから配る。** 手で作った島が表紙のあいだ
+   （＝いまの章がその島の章のあいだ）は、1バイトも取りにいかない。
+   `ssr: false` にはしない。サーバ側で焼いておけば、島が HTML に入って
+   すぐ出る（画面が出てから組むと、スマホで 1.6秒ぶん遅れる。実測）。 */
+const IsleStage = dynamic(() => import("@/components/isle/IsleStage"));
+
 export default function Home() {
   const s = STATS_FALLBACK;
+  /* ビルドしたときの島。**手で作った島が描いている章のあいだは、あちらを焼く。**
+     章が進んでいれば、常設の入口ぜんぶが建つ表紙の島を焼く
+     （`components/isle/cover.ts`）。日付をまたいだ直後だけは、焼いた島と
+     今日が食い違うので、画面が出てから入れ替わる（`Cover.tsx`）。 */
+  const baked = NOW_CHAPTER;
+  const cover = baked.slug === HAND_MADE_CHAPTER ? null : coverSpec(baked);
 
   return (
     <main>
@@ -53,11 +67,14 @@ export default function Home() {
             期間に入れば、あやと島の表紙は初期表示が北欧周遊の島のものに変わる」）。
             静的書き出しに焼くと出発の日をまたいでも変わらないので、
             入れ替えは画面が出てから（`components/isle/Cover.tsx`）。 */}
-        {/* となりの島は渡さない。表紙になっているあいだ、ひとつ前の島は
-            まだ `/` に建っていることになっていて（章の表を書きかえるまで
-            `/island/<前の章>` は焼かれない）、押した先が無い。
-            船着き場からは島の地図へ出る。 */}
-        <Cover now={<IslandStage residents={RESIDENTS} />} next={nordicSpec(NEXT_CHAPTER)} />
+        {/* 入れ替わったあとの島にも、常設の入口はぜんぶ建つ
+            （`components/isle/cover.ts`）。となりの島は渡さない——表紙に
+            なっているあいだ、ひとつ前の島は連なりの上ではまだ `/` なので、
+            押した先が自分自身になる。船着き場からは島の地図へ出る。 */}
+        <Cover
+          baked={baked.slug}
+          now={cover ? <IsleStage spec={cover} cover /> : <IslandStage residents={RESIDENTS} />}
+        />
         <div className="hero-ui">
           {/* 島の上に文字を重ねると絵が死ぬので、看板ロゴ1枚だけ置く。
               引き（島ぜんぶ）は上部中央にフル、寄り（あやとを追う）は右上に小さく。

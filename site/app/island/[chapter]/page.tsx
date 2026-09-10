@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
+import IsleReview from "@/components/isle/IsleReview";
 import IsleStage from "@/components/isle/IsleStage";
 import { isleSpec, nordicSpec, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
@@ -84,6 +85,11 @@ export default async function ChapterIsland({
                  書き入れるまで、歩いている島が空き島に読める。**時点を言わない。** */
               "これから建っていく島。"}
         </p>
+
+        {/* その章を、その島の中で振り返る紙（`components/isle/IsleReview.tsx`）。
+            島に建っている建物の板は「島から出ずに見る1枚」で、こちらは
+            **腰を据えて読むほう。** 段は中身のあるものだけ出る。 */}
+        <IsleReview chapter={c} />
 
         {/* 島から島へ。船着き場からも渡れるが、紙の上にも渡し板を置いておく */}
         <nav className="chap-sail" aria-label="となりの島">
