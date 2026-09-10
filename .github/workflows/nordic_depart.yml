@@ -33,7 +33,7 @@ on:
   workflow_dispatch:
     inputs:
       to:
-        description: "コーカサスが終わった日(YYYY-MM-DD)。空なら日本時間の今日"
+        description: "コーカサスが終わった日(YYYY-MM-DD)。空なら出発した日（ジョージア時間）"
         required: false
         default: ""
         type: string
@@ -73,6 +73,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
+          # **浅いままだと rebase できない。** 既定の `fetch-depth: 1` では
+          # 手元の1コミットと取り直した master に共通の祖先が見えず、
+          # 下の `git pull --rebase` が「関係のない履歴」で落ちる
+          # （`rebake.yml` が同じところで一度踏んでいる）。
+          fetch-depth: 0
 
       - name: Python 環境のセットアップ
         uses: actions/setup-python@v4
@@ -115,6 +120,14 @@ jobs:
           git commit \
             -m "北欧へ出発したので、コーカサスの章を閉じる" \
             -m "いつ終わったかが残らないと、旅が進んだころに島の札が「2025年6月〜」しか言えなくなる。"
+          # **押し戻す前に、取り直す。** ここは出発の夜に1回だけひとりでに走る。
+          # チェックアウトから push までの2分ほどのあいだに誰かが master へ
+          # マージすると、素の push は non-fast-forward で落ち、
+          # **章を閉じることも Hosting を配ることも丸ごと起きない**
+          # （落ちた step より下は走らないので、「いまどこ」も更新されない）。
+          # 出発の当日、master には20分に1本の割で commit が入っていた。
+          # `--autostash` は `rebake.yml` と同じ理由（作業ツリーが汚れていても止めない）。
+          git pull --rebase --autostash origin master
           git push origin HEAD:master
 
       # 4. Hosting を配る。焼き込みの数字（章の日数・人数）はここで入れ替わる

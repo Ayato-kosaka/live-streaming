@@ -21,8 +21,22 @@
 北欧が「いまいる島」になるのは `opensAt`（出発の日時）で決まっていて、
 `from` は要らない。**countries.ts に6カ国が入るまで、ここは空のまま。**
 
+## 省いたときに入る日
+
+**出発した日**（`nordic.opensAt` の日付。ジョージア時間で 2026-09-11）。
+**日本時間の今日ではない。**
+
+出発は現地の 23:30 なので、そのとき日本時間はもう**翌日**になっている。
+「日本時間の今日」を既定にしていたころ、押した瞬間に入るのは 2026-09-12 だった。
+コーカサスが終わったのはジョージア時間の 9/11 なので、**このボタンが作られた
+まさにその場面で、既定が1日ずれていた。**
+
+`opensAt` から取るのは、出発の日をリポジトリが持っているのがそこ1か所だから。
+出発が延びて `opensAt` を書き直せば、ここも付いてくる。
+**日付をもう1か所に書き写さない。**
+
 実行:
-  python python/nordic_depart.py                 # 日本時間の今日で閉じる
+  python python/nordic_depart.py                 # 出発した日で閉じる
   python python/nordic_depart.py --to 2026-09-11 # 日を指定する
   python python/nordic_depart.py --check         # 書かずに、いまの状態だけ見る
 
@@ -76,13 +90,31 @@ def field(src: str, slug: str, name: str) -> str:
     return m.group(1) if m else ""
 
 
+def departed_on(src: str) -> str:
+    """`--to` を省いたときに入る日＝**出発した日**（現地の日付）。
+
+    `nordic.opensAt` は現地時間つきで書いてある（`2026-09-11T23:30:00+04:00`）。
+    その**日付の部分**がそのまま「コーカサスが終わった日」になる。
+
+    `opensAt` が無いときだけ日本時間の今日に落ちる。ここに来るのは出発の日どりが
+    決まっていないときなので、そもそも押す場面ではない。
+    """
+    at = field(src, OPENING, "opensAt")
+    if at[:10] and DAY.match(at[:10]):
+        return at[:10]
+    log.warning(
+        "%s.opensAt が読めませんでした。日本時間の今日で閉じます", OPENING
+    )
+    return datetime.now(JST).strftime("%Y-%m-%d")
+
+
 def main() -> int:
     """エントリポイント。"""
     ap = argparse.ArgumentParser(description="北欧へ出発した日に、前の章を閉じる")
     ap.add_argument(
         "--to",
         default="",
-        help="コーカサスが終わった日(YYYY-MM-DD)。省くと日本時間の今日",
+        help="コーカサスが終わった日(YYYY-MM-DD)。省くと出発した日（nordic.opensAt）",
     )
     ap.add_argument("--check", action="store_true", help="書かずに、いまの状態だけ見る")
     a = ap.parse_args()
@@ -106,7 +138,7 @@ def main() -> int:
     if a.check:
         return 0
 
-    to = a.to or datetime.now(JST).strftime("%Y-%m-%d")
+    to = a.to or departed_on(src)
     if not DAY.match(to):
         log.error("--to は YYYY-MM-DD で渡してください: %s", to)
         return 1
