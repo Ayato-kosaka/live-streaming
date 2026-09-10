@@ -48,7 +48,7 @@ import geocode as G  # noqa: E402  行く街の導出と距離計算を借りる
 import osmfetch  # noqa: E402
 
 # 窓（km）。下限より狭いと街に見えず、上限より広いと道が毛のようになる。
-MIN_KM, MAX_KM = 2.0, 3.4
+MIN_KM, MAX_KM = 2.0, 4.2
 NEAR_KM = 3.5          # これより遠い見どころは「ひと足のばして」へ
 PAD = 0.13             # 窓の余白（見どころのひろがりに対する割合）
 W = 1200.0             # viewBox の幅。1200 で、スマホ 358px なら 1単位 ≒ 0.3px
@@ -64,7 +64,7 @@ ROAD_CLASS = [
     ("r0", {"motorway", "motorway_link", "trunk", "trunk_link"}),
 ]
 # 点が足りなくなったとき、**細い道から捨てる。**
-ROAD_DROP = ["r5", "r4", "r3", "r2", "r1", "r0"]
+ROAD_DROP = ["r4", "r5", "r3", "r2", "r1", "r0"]
 # 1つの街に使ってよい点の数。
 #
 # 土台（道・川・緑）は `site/public/nordic/city/<街>.svg` に**外だしする。**
@@ -72,6 +72,10 @@ ROAD_DROP = ["r5", "r4", "r3", "r2", "r1", "r0"]
 # 17KB の地図が 54KB になった（実測）。外に出せば1度で済み、
 # 同じ街に何日か滞在する日程でも**2日目からは取りに行かない**（キャッシュ）。
 POINT_BUDGET = 5200
+# そのうち、面（水・緑・街区）に使ってよいぶん。**ここで区切らないと道が消える。**
+# ヘルシンキは島と入り江だらけで、海岸線だけで 3,600点を使い切り、
+# 道が2本しか残らなかった（実測）。面は地の色でしかないので、先に頭を打つ。
+AREA_BUDGET = 2200
 
 
 # ─────────────────────────────────────────────────────────────
@@ -250,10 +254,17 @@ BLOCK = {"landuse": {"residential", "retail", "commercial", "industrial",
                      "railway", "military", "education"},
          "amenity": {"university", "hospital"}}
 PLAZA = {"place": {"square"}}
+# 地区の面。**そのうち「旧市街」だけ**を別の層にして、地の色を変える。
+# ガイドブックの街地図は必ずここを塗り分けている。どこが目当ての場所かが
+# 一目で分かるのは、点でも名前でもなく**面の色**だから。
+QUARTER = {"place": {"quarter", "suburb", "neighbourhood"}}
 
 
 def kind_of(tags):
     """その形を、地図のどの層に置くか。**上から順に当てる。**"""
+    if tags.get("place") in QUARTER["place"] or tags.get("boundary") == "administrative":
+        # 旧市街だけ拾う。ほかの地区は、面を塗ると街区が読めなくなる
+        return "old" if JA.get(_name(tags)) == "旧市街" else None
     for layer, table in (("water", WATER), ("green", GREEN), ("grave", GRAVE),
                          ("sand", SANDY), ("plaza", PLAZA), ("block", BLOCK)):
         for k, vals in table.items():
@@ -295,12 +306,22 @@ GLYPH = {
     "ship": {"museum_ship", "boat", "archipelago", "marina"},
     "house": {"attraction", "yes", "house", "building", "public_building", "civic",
               "commercial", "company", "hotel", "hostel", "casino"},
+    # 広場・通り・地区。**建物ではなく「まち」そのもの**を指しているもの
+    "town": {"pedestrian", "square", "living_street", "quarter", "suburb",
+             "neighbourhood", "administrative", "residential", "city_block",
+             "island", "islet"},
 }
 GLYPH_OF = {v: k for k, vs in GLYPH.items() for v in vs}
 
 
-def glyph(t):
-    return GLYPH_OF.get(t, "spot")
+# 種類から絵が決まらないときの逃げ先。**「その他」の丸を出さない。**
+# `pedestrian` のような種類は場所の形しか言っていないので、
+# 何をしに行くのか（`cat`）で決めるほうが、見て分かる。
+BY_CAT = {"see": "house", "eat": "food", "do": "park", "buy": "market"}
+
+
+def glyph(t, cat="see"):
+    return GLYPH_OF.get(t) or BY_CAT.get(cat, "spot")
 
 
 def poi_glyph(tags):
@@ -339,6 +360,9 @@ JA = {
     # リトアニア
     "Neris": "ネリス川", "Vilnia": "ヴィルニャ川", "Vilnelė": "ヴィルニャ川",
     "Senamiestis": "旧市街", "Užupis": "ウジュピス", "Naujamiestis": "新市街",
+    # ヴィリニュスの旧市街は OSM に**点でしか置かれていない。** 面は行政区
+    # （seniūnija）のほうにある。同じところを指しているので、これを面に使う
+    "Senamiesčio seniūnija": "旧市街", "Užupio seniūnija": "ウジュピス",
     "Žvėrynas": "ジュヴェリナス", "Šnipiškės": "シュニピシュケス",
     "Bernardinų sodas": "ベルナルディン庭園", "Sereikiškių parkas": "ベルナルディン庭園",
     "Kalnų parkas": "三十字架の丘", "Vingio parkas": "ヴィンギス公園",
@@ -383,8 +407,13 @@ JA = {
     "Tantolunden": "タント公園", "Rålambshovsparken": "ロラムブスホフ公園",
 }
 
-# 名前を出す層と、その優先度（多いと地図が字で埋まるので、上から数個だけ）
-LABEL_MAX = {"water": 2, "district": 4, "park": 2, "square": 1}
+# 名前を出す層と、その数（多いと地図が字で埋まるので、上から数個だけ）
+LABEL_MAX = {"water": 2, "district": 3, "park": 2, "square": 1, "spot": 2}
+
+# **地図に書かない名前。** 「中心街」は、この地図そのものが中心街なので、
+# 書いても何も分からない（ワルシャワで「中心街」「中心街北」が2枚出て、
+# そのぶん旧市街まわりの名前が置けなかった）。
+NO_LABEL = {"中心街", "中心街北", "中心街南"}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -407,19 +436,18 @@ def window(city, spots, geo):
     """その街の窓を決める。**街の中心と、近い見どころが全部入る四角。**"""
     cq, clat, clon = G.CENTER[city]
     here = [s for s in spots if s.get("city") == city and s["id"] in geo]
-    pts = [(geo[s["id"]]["lat"], geo[s["id"]]["lon"]) for s in here]
-    near_km = NEAR_KM
-    while True:
-        near = [s for s in here
-                if G.km(clat, clon, geo[s["id"]]["lat"], geo[s["id"]]["lon"]) <= near_km]
-        lats = [clat] + [geo[s["id"]]["lat"] for s in near]
-        lons = [clon] + [geo[s["id"]]["lon"] for s in near]
-        hkm = G.km(min(lats), clon, max(lats), clon) * (1 + 2 * PAD)
-        wkm = G.km(clat, min(lons), clat, max(lons)) * (1 + 2 * PAD)
-        if max(hkm, wkm) <= MAX_KM or near_km <= 0.6:
-            break
-        near_km -= 0.25
-    wkm, hkm = max(wkm, MIN_KM), max(hkm, MIN_KM)
+    near = [s for s in here
+            if G.km(clat, clon, geo[s["id"]]["lat"], geo[s["id"]]["lon"]) <= NEAR_KM]
+    lats = [clat] + [geo[s["id"]]["lat"] for s in near]
+    lons = [clon] + [geo[s["id"]]["lon"] for s in near]
+    # **見どころを落として窓を縮めない。** 前はそうしていて、ワルシャワが
+    # 旧市街もヴィスワ川も入らない窓になった（蜂起博物館に西へ引っぱられて、
+    # 川の手前で切れた）。ここは「街の中心と近い見どころが全部入る四角」を
+    # 作って、上限で切るだけにする。切って外に出たものは「ひと足のばして」へ。
+    hkm = G.km(min(lats), clon, max(lats), clon) * (1 + 2 * PAD)
+    wkm = G.km(clat, min(lons), clat, max(lons)) * (1 + 2 * PAD)
+    wkm = min(max(wkm, MIN_KM), MAX_KM)
+    hkm = min(max(hkm, MIN_KM), MAX_KM)
     # 縦横の比をそろえる。細長い窓は、スマホの1画面に置けない
     if hkm / wkm < ASPECT[0]:
         hkm = wkm * ASPECT[0]
@@ -429,7 +457,12 @@ def window(city, spots, geo):
     mlon = (min(lons) + max(lons)) / 2
     dlat = hkm / 2 / 111.32
     dlon = wkm / 2 / (111.32 * math.cos(math.radians(mlat)))
-    far = [s for s in here if s not in near]
+    # 窓から出てしまったものも「ひと足のばして」へ回す（点が枠の外に出ない）
+    far = [s for s in here
+           if s not in near
+           or not (mlat - dlat <= geo[s["id"]]["lat"] <= mlat + dlat
+                   and mlon - dlon <= geo[s["id"]]["lon"] <= mlon + dlon)]
+    near = [s for s in near if s not in far]
     return {
         "bbox": (mlat - dlat, mlon - dlon, mlat + dlat, mlon + dlon),
         "wkm": wkm, "hkm": hkm, "center": (clat, clon), "cq": cq,
@@ -460,11 +493,18 @@ def build(city, win, raw, spots_all):
         cl = clip_poly(mr, box)
         if len(cl) < 3:
             return
-        sm = simplify(cl, tol)
+        # 面は地の色でしかないので、線より粗くたたんでよい。
+        # 海岸線をそのまま持つと、それだけで点の予算を使い切る
+        sm = simplify(cl, tol * 2.0)
         if len(sm) < 3:
             return
         a = area(sm)
-        if a < (mw / W) ** 2 * 900:      # 30x30 単位より小さい面は描かない
+        if a < (mw / W) ** 2 * 600:      # 25x25 単位より小さい面は描かない
+            return
+        # **窓の半分を覆う「旧市街」は、旧市街ではない。**
+        # 行政区の面を借りている街があるので、広すぎるものはここで落とす。
+        # 地図の半分を塗っても「ここが目当ての場所」とは言えない
+        if layer == "old" and a > mw * mh * 0.45:
             return
         polys.setdefault(layer, []).append((a, [to(*p) for p in sm]))
 
@@ -487,8 +527,14 @@ def build(city, win, raw, spots_all):
                 if cls:
                     add_line(cls, g)
                 continue
-            if t.get("railway"):
-                add_line("rail", g)
+            rw = t.get("railway")
+            if rw:
+                # **路面電車と地下鉄は描かない。** 路面電車は道の上を走るので、
+                # 道と同じ線をもう一度、濃い破線でなぞることになる。
+                # ワルシャワは 2.2km 四方に 91本あって、地図が有刺鉄線に見えた。
+                # 地下鉄は地上に無い。
+                if rw in ("rail", "light_rail", "narrow_gauge"):
+                    add_line("rail", g)
                 continue
             if t.get("waterway") in ("river", "canal", "stream"):
                 add_line("river", g)
@@ -509,12 +555,16 @@ def build(city, win, raw, spots_all):
     # ── 面。大きいものから、層ごとに1本の path にまとめる
     layers = {}
     used = 0
-    for layer in ("block", "sand", "green", "grave", "water", "plaza"):
+    cap = {"block": 150, "old": 3, "green": 60, "water": 30, "grave": 10,
+           "sand": 10, "plaza": 22}
+    # **どの層も、大きい面から。** 小さい面は地図の色を変えないので、
+    # 予算が尽きたところで切ってよい。旧市街と水と緑を先に置く
+    for layer in ("old", "water", "green", "block", "grave", "sand", "plaza"):
         rows = sorted(polys.get(layer, []), key=lambda r: -r[0])
-        cap = {"block": 150, "green": 60, "water": 30, "grave": 10,
-               "sand": 10, "plaza": 22}[layer]
         d = []
-        for _, pts in rows[:cap]:
+        for _, pts in rows[:cap[layer]]:
+            if used + len(pts) > AREA_BUDGET:
+                continue
             d.append(dpath(pts, close=True))
             used += len(pts)
         if d:
@@ -607,7 +657,7 @@ def pick_marks_labels(raw, win, to, H, pins):
     """名前の無い目印と、地図に書く名前を選ぶ。"""
     bbox = win["bbox"]
     marks, cand = [], []
-    labels = {"water": [], "district": [], "park": [], "square": []}
+    labels = {"water": [], "district": [], "park": [], "square": [], "spot": []}
     for x in raw["elements"]:
         t = x.get("tags") or {}
         sp = _spot(x, bbox)
@@ -618,7 +668,7 @@ def pick_marks_labels(raw, win, to, H, pins):
         ja = t.get("name:ja") or JA.get(name)
 
         # 名前（日本語で書けるものだけ）
-        if ja:
+        if ja and ja not in NO_LABEL:
             if t.get("natural") == "water" or t.get("waterway") in ("river", "canal"):
                 labels["water"].append((_score(t), px, py, ja))
             elif t.get("place") in ("suburb", "quarter", "neighbourhood", "island"):
@@ -627,6 +677,12 @@ def pick_marks_labels(raw, win, to, H, pins):
                 labels["park"].append((_score(t), px, py, ja))
             elif t.get("place") == "square" or t.get("historic") == "square":
                 labels["square"].append((_score(t), px, py, ja))
+            elif t.get("name:ja") and not t.get("highway") and poi_glyph(t):
+                # **OSM が日本語名を持っている建物だけ。** こちらで訳を書き足すと、
+                # 街ごとに何を訳したかで地図の密度が変わる。向こうにある名前
+                # （ゲディミナス塔・夜明けの門・無名戦士の墓）は、
+                # 現地でも案内板に出ている名前なので、地図に書く価値がある
+                labels["spot"].append((_score(t), px, py, ja))
 
         gl = poi_glyph(t)
         if gl and t.get("place") not in ("suburb", "quarter", "neighbourhood"):
@@ -636,39 +692,83 @@ def pick_marks_labels(raw, win, to, H, pins):
     # 種類ごとにも上限を置く。点を評点だけで選ぶと、街じゅうが博物館の印に
     # なった（ヴィリニュスで 22個中 14個が博物館だった）。
     cand.sort(key=lambda r: -r[0])
-    per = {"castle": 3, "church": 5, "museum": 4, "market": 3, "station": 2,
-           "tower": 3, "arena": 2, "sauna": 2, "ship": 2, "park": 1}
+    per = {"castle": 2, "church": 2, "museum": 2, "market": 2, "station": 1,
+           "tower": 1, "arena": 1, "sauna": 1, "ship": 1}
     got = {}
     for sc, px, py, gl in cand:
         if sc < 2 or gl not in per or got.get(gl, 0) >= per[gl]:
             continue
-        if any(math.hypot(px - p["x"], py - p["y"]) < 54 for p in pins):
+        if any(math.hypot(px - p["x"], py - p["y"]) < 66 for p in pins):
             continue
-        if any(math.hypot(px - m["x"], py - m["y"]) < 66 for m in marks):
+        if any(math.hypot(px - m["x"], py - m["y"]) < 118 for m in marks):
             continue
-        if not (30 <= px <= W - 30 and 30 <= py <= H - 30):
+        if not (40 <= px <= W - 40 and 40 <= py <= H - 40):
             continue
         got[gl] = got.get(gl, 0) + 1
         marks.append({"x": int(round(px)), "y": int(round(py)), "k": gl})
-        if len(marks) >= 20:
+        if len(marks) >= 9:
             break
 
+    # ── 名前。**札（紙）を敷くので、重なると下の名前が読めなくなる。**
+    # 点・目印・すでに置いた札・縮尺・方位のどれとも重ならない場所を探す。
+    # 見つからなければ、その名前は**書かない**（重ねて出すより、無いほうがいい）。
+    taken = [(p["x"] - 44, p["y"] - 44, 88, 88) for p in pins]
+    taken += [(m["x"] - 32, m["y"] - 32, 64, 64) for m in marks]
+    taken.append((0, H - 92, 300, 92))          # 縮尺の棒
+    taken.append((W - 108, 0, 108, 108))        # 方位
     out = []
-    for kind, rows in labels.items():
+    for kind in ("water", "district", "park", "square", "spot"):
+        rows = labels[kind]
         rows.sort(key=lambda r: -r[0])
-        seen = []
+        n = 0
         for sc, px, py, ja in rows:
-            if any(t == ja for _, _, t in seen):
+            if any(l["t"] == ja for l in out):
                 continue
-            if any(math.hypot(px - a, py - b) < 150 for a, b, _ in seen):
+            # 番号の点のすぐ横に名前を出さない。**同じ場所を2回言うことになる**
+            if kind == "spot" and any(math.hypot(px - q["x"], py - q["y"]) < 90
+                                      for q in pins):
                 continue
-            if not (60 <= px <= W - 60 and 30 <= py <= H - 30):
+            fs = 38 if kind == "district" else 32 if kind == "spot" else 34
+            lw = chip_width(ja, fs)
+            lh = fs * 1.5
+            spot = None
+            for dx, dy in ((0, 0), (0, -52), (0, 52), (-lw * 0.62, 0), (lw * 0.62, 0),
+                           (0, -104), (0, 104), (-lw * 0.62, -52), (lw * 0.62, -52)):
+                bx, by = px + dx, py + dy
+                r = (bx - lw / 2, by - fs * 0.78, lw, lh)
+                if r[0] < 8 or r[1] < 8 or r[0] + lw > W - 8 or r[1] + lh > H - 8:
+                    continue
+                if any(_hit(r, q) for q in taken):
+                    continue
+                spot = (bx, by, r)
+                break
+            if not spot:
                 continue
-            seen.append((px, py, ja))
-            out.append({"x": int(round(px)), "y": int(round(py)), "t": ja, "k": kind})
-            if len(seen) >= LABEL_MAX[kind]:
+            taken.append(spot[2])
+            out.append({"x": int(round(spot[0])), "y": int(round(spot[1])),
+                        "t": ja, "k": kind, "w": int(round(lw)), "fs": fs})
+            n += 1
+            if n >= LABEL_MAX[kind]:
                 break
     return marks, out
+
+
+def _hit(a, b):
+    """2つの四角が重なるか。札を置く場所を探すのに使う。"""
+    return (a[0] < b[0] + b[2] and b[0] < a[0] + a[2]
+            and a[1] < b[1] + b[3] and b[1] < a[1] + a[3])
+
+
+def chip_width(t, fs):
+    """名前の札の幅。**全角は1文字ぶん、半角は 0.55。**
+
+    画面側（`CityMap.tsx`）で同じ計算をすると、片方だけ直したときに
+    札の幅と重なりの判定がずれる。**ここで決めて、そのまま渡す。**
+    """
+    n = 0.0
+    for ch in t:
+        n += 0.55 if ord(ch) < 0x2E80 else 1.0
+    return n * fs + fs * 1.1
 
 
 def _score(t):
@@ -710,6 +810,11 @@ def read_tokens():
     土台は `<img>` で読み込む別ファイルなので、ページの CSS 変数が届かない。
     **だからといって色を手で写さない。** 写すと、島の色を直したときに
     地図だけ古い色のまま残る。ここで読んで、書き出しに焼く。
+
+    **拾うのは素の `:root` の値だけ**（同じ名前が出てきても上書きしない）。
+    あとに出てくる `[data-time]` `[data-theme]` は、島の空を朝・昼・夜で
+    持ち替えるためのもの。**地図は時刻で色を変えない。** 焼いたものは
+    変わりようがないので、画面側（`nordic.css`）でも地図に海の色を使わない。
     """
     t = {}
     for m in re.finditer(r"(--[a-z0-9-]+):\s*(#[0-9a-fA-F]{3,8})\s*;",
@@ -721,8 +826,9 @@ def read_tokens():
 # 土台の描き方。`(CSSの規則, トークン名で書いた値)`。
 # **画面側（nordic.css）の `.cm-*` と同じ値にする。** 片方だけ変えない。
 BASE_CSS = """
-.pp{fill:%(--paper-2)s}
-.block{fill:%(--sand)s;opacity:.34}
+.pp{fill:%(--sand)s}
+.block{fill:%(--sand-wet)s;opacity:.34}
+.old{fill:%(--sand-wet)s;opacity:.62;stroke:%(--frame-dark)s;stroke-width:4;stroke-dasharray:14 8}
 .sand{fill:%(--sand-wet)s;opacity:.55}
 .green{fill:%(--grass2)s;opacity:.5}
 .grave{fill:%(--grass-lo)s;opacity:.34}
@@ -730,22 +836,41 @@ BASE_CSS = """
 .water{fill:%(--sea-shallow)s;opacity:.62;stroke:%(--sea-mid)s;stroke-width:2.5}
 .river{fill:none;stroke:%(--sea-shallow)s;stroke-width:9;stroke-linecap:round;opacity:.75}
 .cs,.rd{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.cs{stroke:%(--sand-edge)s}
-.cs .r0{stroke-width:13}.cs .r1{stroke-width:11}.cs .r2{stroke-width:9}
-.cs .r3{stroke-width:7}.cs .r4{stroke-width:5}.cs .r5{stroke-width:4.5}
-.rd .r0{stroke:%(--roof-gold)s;stroke-width:9}
-.rd .r1{stroke:%(--roof-gold)s;stroke-width:7.5}
-.rd .r2{stroke:%(--window)s;stroke-width:6}
-.rd .r3{stroke:%(--wall)s;stroke-width:4.4}
-.rd .r4{stroke:%(--wall)s;stroke-width:2.8}
-.rd .r5{stroke:%(--wall)s;stroke-width:2.6;stroke-dasharray:9 5}
-.rail{fill:none;stroke:%(--ink-3)s;stroke-width:4}
-.tie{fill:none;stroke:%(--wall)s;stroke-width:2.2;stroke-dasharray:7 7}
+.cs{stroke:%(--frame-dark)s;opacity:.5}
+.cs .r0{stroke-width:%(w0c)s}.cs .r1{stroke-width:%(w1c)s}.cs .r2{stroke-width:%(w2c)s}
+.cs .r3{stroke-width:%(w3c)s}.cs .r4{stroke-width:%(w4c)s}.cs .r5{stroke-width:%(w5c)s}
+.rd .r0{stroke:%(--roof-gold)s;stroke-width:%(w0)s}
+.rd .r1{stroke:%(--roof-gold)s;stroke-width:%(w1)s}
+.rd .r2{stroke:%(--window)s;stroke-width:%(w2)s}
+.rd .r3{stroke:%(--wall)s;stroke-width:%(w3)s}
+.rd .r4{stroke:%(--wall)s;stroke-width:%(w4)s}
+.rd .r5{stroke:%(--wall)s;stroke-width:%(w5)s}
+.rail{fill:none;stroke:%(--ink-3)s;stroke-width:%(wrail)s}
+.tie{fill:none;stroke:%(--wall)s;stroke-width:%(wtie)s;stroke-dasharray:7 7}
 .wall{fill:none;stroke:%(--frame-deep)s;stroke-width:6;stroke-linecap:round}
 """
 
+# 道の太さ（2.4km 四方の窓のときの値）。窓が広い街ではここを細める。
+# **画面での太さを一定にすると、広い窓では道が地面を埋めてしまう**
+# （ワルシャワ 4.2km で、住宅街が1枚の白い面になった）。
+# かといって実寸に比例させると毛のように消えるので、平方根で中を取る。
+ROAD_W = {"r0": (11, 16), "r1": (9.5, 14), "r2": (7.5, 11.5),
+          "r3": (5.6, 9), "r4": (3.8, 6.6), "r5": (3.4, 6)}
 
-def write_base(slug, w, h, layers, tokens):
+
+def road_widths(km):
+    f = max(0.62, min(1.12, (2.4 / max(km, 0.5)) ** 0.5))
+    out = {}
+    for i in range(6):
+        a, b = ROAD_W[f"r{i}"]
+        out[f"w{i}"] = round(a * f, 2)
+        out[f"w{i}c"] = round(b * f, 2)
+    out["wrail"] = round(4 * f, 2)
+    out["wtie"] = round(2.2 * f, 2)
+    return out
+
+
+def write_base(slug, w, h, km, layers, tokens):
     """土台（紙・水・緑・街区・道・鉄道・城壁）を1枚の SVG にする。
 
     点・目印・名前は**入れない。** あちらはページの中に描いて、字として
@@ -753,15 +878,17 @@ def write_base(slug, w, h, layers, tokens):
     """
     os.makedirs(SVGDIR, exist_ok=True)
     roads = [r for r, _ in ROAD_CLASS if layers.get(r)]
+    css = dict(tokens)
+    css.update(road_widths(km))
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {int(w)} {int(h)}" '
            f'width="{int(w)}" height="{int(h)}">',
-           "<style>" + (BASE_CSS % tokens).replace("\n", "") + "</style>"]
+           "<style>" + (BASE_CSS % css).replace("\n", "") + "</style>"]
     if roads:
         out.append("<defs>"
                    + "".join(f'<path id="{r}" d="{layers[r]}"/>' for r in roads)
                    + "</defs>")
     out.append(f'<rect class="pp" width="{int(w)}" height="{int(h)}"/>')
-    for a in ("block", "sand", "green", "grave", "water", "plaza"):
+    for a in ("block", "old", "sand", "green", "grave", "water", "plaza"):
         if layers.get(a):
             out.append(f'<path class="{a}" d="{layers[a]}"/>')
     if layers.get("river"):
@@ -864,6 +991,9 @@ def main():
         print(f"\n== {city}（{slug}）窓 {win['wkm']:.2f}x{win['hkm']:.2f}km "
               f"見どころ {len(win['near'])}／ひと足 {len(win['far'])}")
         raw = osmfetch.fetch_city(slug, win["bbox"], force=force)
+        # 旧市街の面。あとから足した問い合わせなので、別口で取って混ぜる
+        raw = {"bbox": raw["bbox"],
+               "elements": raw["elements"] + osmfetch.fetch_old(slug, win["bbox"])}
 
         layers, H, to, box, used = build(city, win, raw, spots)
 
@@ -873,12 +1003,12 @@ def main():
             x, y = to(*merc(g["lat"], g["lon"]))
             pins.append({"id": s["id"], "n": i, "x": x, "y": y, "ax": x, "ay": y,
                          "cat": s.get("cat", "see"), "t": s.get("title", ""),
-                         "k": glyph(g.get("type", ""))})
+                         "k": glyph(g.get("type", ""), s.get("cat", "see"))})
         spread(pins, H)
         marks, labels = pick_marks_labels(raw, win, to, H, pins)
 
         clat, clon = win["center"]
-        svg_bytes = write_base(slug, W, H, layers, tokens)
+        svg_bytes = write_base(slug, W, H, win["wkm"], layers, tokens)
         out[city] = {
             "slug": slug, "w": int(W), "h": int(H),
             "km": round(win["wkm"], 2),
@@ -893,7 +1023,7 @@ def main():
         }
         road = sum(layers.get(c, "").count("M") for c, _ in ROAD_CLASS)
         face = sum(v.count("M") for k, v in layers.items()
-                   if k in ("block", "green", "water", "grave", "sand", "plaza"))
+                   if k in ("block", "old", "green", "water", "grave", "sand", "plaza"))
         size = len(json.dumps(out[city], ensure_ascii=False, separators=(",", ":")))
         print(f"   道 {road}本 / 面 {face}枚 / 点 {used} / 目印 {len(marks)} "
               f"/ 名前 {len(labels)} / 土台 {svg_bytes/1024:.1f}KB "

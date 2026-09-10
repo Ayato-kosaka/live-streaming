@@ -76,11 +76,17 @@ LINE_Q = """
 """
 
 # 目印とラベル。**`out center tags` なので軽い。** 形は要らない、場所と名前だけ。
+# 目印とラベル。**`out center tags` なので軽い。** 形は要らない、場所と名前だけ。
+#
+# **2本に割ってある。** 1本にまとめると、`nwr`（節点・線・関係の3つとも）の
+# 中心を全部そろえる仕事が重くて、タリンで 504 が6回続いた。
 POI_Q = """
   nwr["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]({bb});
   nwr["historic"~"^(castle|palace|monument|memorial|city_gate|tower|ruins|fort|church)$"]({bb});
-  nwr["amenity"~"^(place_of_worship|marketplace|theatre|townhall|university|library|arts_centre|casino)$"]({bb});
+  nwr["amenity"~"^(place_of_worship|marketplace|theatre|townhall|university|library|arts_centre)$"]({bb});
   nwr["building"~"^(church|cathedral|castle|palace|train_station)$"]({bb});
+"""
+POI2_Q = """
   nwr["railway"="station"]({bb});
   nwr["leisure"="sauna"]({bb});
   nwr["shop"="mall"]({bb});
@@ -88,6 +94,19 @@ POI_Q = """
   nwr["waterway"~"^(river|canal)$"]["name"]({bb});
   nwr["leisure"="park"]["name"]({bb});
   nwr["place"~"^(suburb|quarter|neighbourhood|square|city_block|island)$"]({bb});
+"""
+
+
+# 旧市街の**面**。あとから足した小さな問い合わせなので、別に控える
+# （これのために街ぜんぶを取り直すと 30分かかる）。
+#
+# 旧市街は OSM では点（`node place=suburb`）でしか置かれていない街がある
+# （ヴィリニュス）。面は行政界（`boundary=administrative` の 9〜12）のほうに
+# 入っているので、両方から拾う。
+OLD_Q = """
+  rel["boundary"="administrative"]["admin_level"~"^(9|10|11|12)$"]["name"]({bb});
+  rel["place"~"^(quarter|suburb|neighbourhood|borough)$"]["name"]({bb});
+  way["place"~"^(quarter|suburb|neighbourhood|borough)$"]["name"]({bb});
 """
 
 
@@ -111,8 +130,10 @@ def query(q, why=""):
     返ってくる。**状態コードでは分からない**ので、中身が JSON かで見る。
     """
     last = ""
-    for attempt in range(6):
-        url = MIRRORS[attempt % len(MIRRORS)]
+    for attempt in range(8):
+        # **kumi を主に使う。** mail.ru は日によってずっと 504 を返す。
+        # 交互にすると、掛け直しの半分が最初から捨てになる
+        url = MIRRORS[1] if attempt % 3 == 2 else MIRRORS[0]
         try:
             raw = _post(url, q)
             if raw[:1] == b"{":
@@ -169,22 +190,66 @@ def fetch_city(slug, bbox, force=False):
             seen.add(k)
             els.append(x)
 
+    # **1枚ごとに書き出す。** 最後にまとめて書いていたころ、タリンの POI で
+    # 6回続けて 504 になって落ち、そこまでに取った4枚（10分ぶん）が消えた。
+    part = os.path.join(CACHE, f"{slug}.part.json")
+    done = set()
+    if os.path.exists(part):
+        d = json.load(open(part, encoding="utf-8"))
+        if d.get("bbox") == list(bbox):
+            done = set(map(tuple, d.get("done", [])))
+            add({"elements": d.get("elements", [])})
+            print(f"    途中まで取ってある（{len(done)}回ぶん・{len(els)}件）")
+
+    def save(tag):
+        done.add(tag)
+        json.dump({"bbox": list(bbox), "done": [list(t) for t in done], "elements": els},
+                  open(part, "w", encoding="utf-8"), ensure_ascii=False)
+
     tl = tiles(bbox)
     print(f"    タイル {len(tl)}枚")
     for i, bb in enumerate(tl, 1):
         s = ",".join(f"{v:.5f}" for v in bb)
         for kind, body in (("area", AREA_Q), ("line", LINE_Q)):
+            if (kind, i) in done:
+                continue
             q = f"[out:json][timeout:180];(\n{body.format(bb=s)});\nout geom;"
-            r = query(q, why=f"{slug} {kind} {i}/{len(tl)}")
-            add(r)
+            add(query(q, why=f"{slug} {kind} {i}/{len(tl)}"))
+            save((kind, i))
             time.sleep(4)
         print(f"      {i}/{len(tl)} まで {len(els)}件")
+    # 目印は窓ぜんぶを一度に。**ただし2本に割る**（1本だと重すぎて 504 が続く）
     s = ",".join(f"{v:.5f}" for v in bbox)
-    add(query(f"[out:json][timeout:180];(\n{POI_Q.format(bb=s)});\nout center tags;",
-              why=f"{slug} poi"))
-    time.sleep(4)
+    for kind, body in (("poi", POI_Q), ("poi2", POI2_Q)):
+        if (kind, 0) in done:
+            continue
+        add(query(f"[out:json][timeout:180];(\n{body.format(bb=s)});\nout center tags;",
+                  why=f"{slug} {kind}"))
+        save((kind, 0))
+        time.sleep(4)
 
     out = {"bbox": list(bbox), "elements": els}
     json.dump(out, open(path, "w", encoding="utf-8"), ensure_ascii=False)
+    os.remove(part)
     print(f"    ためた {len(els)}件  {os.path.getsize(path)//1024}KB")
     return out
+
+
+def fetch_old(slug, bbox, force=False):
+    """旧市街の面だけを取る。**街ぜんぶを取り直さないための別口。**"""
+    os.makedirs(CACHE, exist_ok=True)
+    path = os.path.join(CACHE, f"{slug}-old.json")
+    if os.path.exists(path) and not force:
+        have = json.load(open(path, encoding="utf-8"))
+        hb = have.get("bbox")
+        if hb and hb[0] <= bbox[0] + 1e-9 and hb[1] <= bbox[1] + 1e-9 \
+                and hb[2] >= bbox[2] - 1e-9 and hb[3] >= bbox[3] - 1e-9:
+            return have["elements"]
+    s = ",".join(f"{v:.5f}" for v in bbox)
+    r = query(f"[out:json][timeout:180];(\n{OLD_Q.format(bb=s)});\nout geom;",
+              why=f"{slug} old")
+    els = r.get("elements", [])
+    json.dump({"bbox": list(bbox), "elements": els},
+              open(path, "w", encoding="utf-8"), ensure_ascii=False)
+    time.sleep(4)
+    return els

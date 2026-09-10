@@ -2148,7 +2148,10 @@ p.nday-lead {
    前の版は道路が1本も無く、ベージュに丸が4つ乗っただけだった。
 
    **色は島のトークンだけで作る。** 地図だけ別の世界に見せない。
-   地は紙、水は島の海、緑は高台の草、道は壁のクリームに琥珀の縁取り。 */
+   地は砂、水は島の海、緑は高台の草、道は壁のクリームに琥珀の縁取り。
+
+   道・川・緑・街区は `public/nordic/city/<街>.svg` にある（`<img>` で読む）。
+   そちらの色も同じトークンから焼いてある。**片方だけ変えない。** */
 .cmap { margin-top: 10px; }
 
 /* 土台（`<img>`）と、点・名前（インラインの SVG）を**ぴったり重ねる。**
@@ -2157,7 +2160,9 @@ p.nday-lead {
   position: relative;
   border: var(--bw-2) solid var(--frame-deep);
   border-radius: var(--r-2);
-  background: var(--paper-2);
+  /* 土台が届くまでのあいだの地。**土台と同じ砂色**にする（紙のままだと、
+     出た瞬間に地の色が変わって、地図が入れ替わったように見える） */
+  background: var(--sand);
   /* 押せないので**厚みは付けない**（`island-design.md` 3章3）。
      落ち影は右下へずらしてぼかす。厚み（真下・ぼかし無し）と取り違えられない */
   box-shadow: var(--shadow-1);
@@ -2177,21 +2182,16 @@ p.nday-lead {
 
 /* ── 目印 ─────────────────────────────────────────────
    宮殿・教会・市場が「そこにある」ことだけを言う絵。名前は付けない
-   （4つも5つも名前を出すと、地図が字で埋まる）。 */
-.cm-mark .g-wall { fill: var(--wall); }
-.cm-mark .g-roof { fill: var(--roof-coral); }
-.cm-mark .g-dark { fill: var(--frame-deep); }
-.cm-mark .g-trunk { fill: var(--trunk); }
-.cm-mark .g-leaf { fill: var(--leaf-a); }
-.cm-mark .g-leafhi { fill: var(--leaf-b); }
-.cm-mark .g-steam { fill: none; stroke: var(--sea-mid); stroke-width: 1.6; }
-/* 地の上で形が沈まないよう、絵ぜんぶを紙で1度縁取る。
-   **輪郭線ではない**（`island-design.md` 2章1）。地から離すための下敷き */
-.cm-mark {
-  paint-order: stroke fill;
-  stroke: var(--paper);
-  stroke-width: 2.4;
-  stroke-linejoin: round;
+   （4つも5つも名前を出すと、地図が字で埋まる）。絵の色は形そのものに
+   inline style で置いてある（外のセレクタは `<use>` の中まで届かない）。
+
+   下に紙の板を敷く。**壁の白い絵が、砂色の地に沈むのを止めるため。**
+   丸ではなく角丸の四角にして、番号の点（丸）と役目を見分けられるようにする。 */
+.cm-mark rect {
+  fill: var(--paper);
+  stroke: var(--frame-dark);
+  stroke-width: 3;
+  opacity: 0.96;
 }
 
 /* ── 見どころの点 ──────────────────────────────────────
@@ -2204,14 +2204,25 @@ p.nday-lead {
   font-weight: 900;
   text-anchor: middle;
 }
-.cm-see .cm-dot { stroke: var(--sea-mid); }
+/* 輪の色は、種類の色の**濃いほう。** 地図の地（砂色）の上で、
+   屋根の色（明るい4色）のままだと4つとも同じに見える */
+/* 「見たい」の輪も、時刻で動かない青にする（上と同じ理由） */
+.cm-see .cm-dot { stroke: var(--accent-2); }
 .cm-eat .cm-dot { stroke: var(--accent-deep); }
 .cm-do .cm-dot { stroke: var(--leaf-c); }
 .cm-buy .cm-dot { stroke: var(--frame-dark); }
-.cm-see .cm-key-b, .cm-see i, a.cm-see i { background: var(--roof-sky); }
-.cm-eat .cm-key-b, a.cm-eat i { background: var(--roof-coral); }
-.cm-do i, a.cm-do i { background: var(--roof-mint); }
-.cm-buy i, a.cm-buy i { background: var(--roof-gold); }
+/* 一覧の見出しと、行の丸。**地図の輪と同じ並び**（青・珊瑚・ミント・金）。
+   見出しは字が乗るので、**屋根の色をそのまま敷かない。** 珊瑚（#f97690）に
+   墨を乗せると 3.70 : 1 で読めなかった（実測）。紙と混ぜて薄くする。 */
+.cm-key-b.cm-see { background: color-mix(in srgb, var(--roof-sky) 42%, var(--paper)); }
+.cm-key-b.cm-eat { background: color-mix(in srgb, var(--roof-coral) 42%, var(--paper)); }
+.cm-key-b.cm-do { background: color-mix(in srgb, var(--roof-mint) 42%, var(--paper)); }
+.cm-key-b.cm-buy { background: color-mix(in srgb, var(--roof-gold) 42%, var(--paper)); }
+/* 行の丸は絵が乗るだけなので、屋根の色をそのまま使ってよい */
+a.cm-row.cm-see i { background: var(--roof-sky); }
+a.cm-row.cm-eat i { background: var(--roof-coral); }
+a.cm-row.cm-do i { background: var(--roof-mint); }
+a.cm-row.cm-buy i { background: var(--roof-gold); }
 /* 一覧から押されている点。**大きくしない**（隣の点を隠す）。輪を足す */
 .cmap-svg g:target .cm-dot { stroke: var(--pick); }
 .cmap-svg g:target .cm-num { fill: var(--pick); }
@@ -2235,7 +2246,13 @@ p.nday-lead {
   font-weight: 900;
   text-anchor: middle;
 }
-.cm-lb-water rect { fill: var(--sea-shelf); stroke: var(--sea-mid); }
+/* 川と湖の名前。**海の色（`--sea-*`）は使わない。**
+   島の海は時刻でごっそり色が変わる（`tokens.css` の `[data-time]`）が、
+   土台の SVG は焼いてあるので夜になっても変わらない。海の色を使うと、
+   夜だけ札が濃紺になって、字が 4.06 : 1 まで落ちた（実測）。
+   時刻で動かない青（`--accent-2`）を使う。 */
+.cm-lb-water rect { stroke: var(--accent-2); }
+.cm-lb-water text { fill: var(--accent-2); }
 .cm-lb-park rect { fill: var(--grass2-hi); stroke: var(--leaf-c); }
 
 /* ── 縮尺と方角 ───────────────────────────────────────── */
@@ -2296,7 +2313,8 @@ a.cm-row i {
   border-radius: 50%;
   font-style: normal;
 }
-a.cm-row i .cm-rowg { display: block; width: 100%; height: 100%; }
+/* 絵を丸の内側に収める。ふちまで描くと、丸で切られて何の絵か分からない */
+a.cm-row i svg { display: block; width: 78%; height: 78%; margin: 11%; }
 a.cm-row i b {
   position: absolute;
   right: -5px;
@@ -2312,20 +2330,14 @@ a.cm-row i b {
   line-height: 15px;
   text-align: center;
 }
-.cm-rowg .g-wall { fill: var(--wall); }
-.cm-rowg .g-roof { fill: var(--roof-coral); }
-.cm-rowg .g-dark { fill: var(--frame-deep); }
-.cm-rowg .g-trunk { fill: var(--trunk); }
-.cm-rowg .g-leaf { fill: var(--leaf-a); }
-.cm-rowg .g-leafhi { fill: var(--leaf-b); }
-.cm-rowg .g-steam { fill: none; stroke: var(--sea-mid); stroke-width: 1.6; }
-
-/* 窓の外のもの。**押せない**ので、厚みも枠も持たせない */
+/* 窓の外のもの。**押せない**ので、厚みも枠も持たせない。
+   字は薄めない。--ink-2 を 0.85 で薄めると、紙の暗いムラの上で
+   3.95 : 1 まで落ちた（実測）。薄めるのをやめて、段は色の濃さで作る */
 .cm-far {
   display: inline-flex;
   flex-direction: column;
   padding: 4px 0;
-  color: var(--ink-2);
+  color: var(--ink);
   font-size: var(--fs-small);
 }
-.cm-far em { font-style: normal; font-size: var(--fs-tiny); opacity: 0.85; }
+.cm-far em { font-style: normal; font-size: var(--fs-tiny); color: var(--ink-2); }

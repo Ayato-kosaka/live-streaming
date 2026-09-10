@@ -6,6 +6,7 @@ import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
+import CityMap from "@/components/nordic/CityMap";
 import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import { Mark } from "@/components/nordic/Marks";
@@ -290,6 +291,9 @@ export default async function NordicCountryPage({
           {go.map((g) => (
             <section key={g.city} className="ncgo" id={`city-${encodeURIComponent(g.city)}`}>
               <h3>{g.city}</h3>
+              {/* 街の地図。**降りる街には必ず出す。** 日ページは「その日に着く街」
+                  しか出さないので、出発の街（カトヴィツェ）はどこにも出ていなかった */}
+              <CityMap city={g.city} />
               <Cats list={g.list} />
             </section>
           ))}
