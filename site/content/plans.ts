@@ -329,6 +329,20 @@ export function livePlans(facts?: { arrived?: string | null; ended?: string | nu
  * **`reached`（途中の節目）はここに効かない。** ストックホルムに着いても、
  * 発つまでは「いま行っている」のまま。
  */
+/**
+ * 書き出した時刻。**焼いた HTML の「今日」。**
+ *
+ * `output: "export"` なので、画面が出るまでは本物の今日が分からない。
+ * そのあいだを「全部これから」で埋めると、**終わった企画が
+ * 「これからの企画」に並んだまま**の HTML が配られる（実際にそうなっていた）。
+ * 分からないなりに、いちばん近い答えは**焼いた日**なので、それを使う。
+ * 古くなるのは「焼いてから終わった企画」だけで、しかも画面が出た時点で直る。
+ *
+ * 値は `next.config.mjs` が埋める。埋まっていない（開発サーバ）ときは 1970年で、
+ * これまでどおり「全部これから」に落ちる。
+ */
+export const BUILT_AT = new Date(process.env.NEXT_PUBLIC_BUILT_AT ?? 0);
+
 export type PlanPhase = "before" | "during" | "after";
 
 export function planPhase(p: Plan, now = new Date()): PlanPhase {
