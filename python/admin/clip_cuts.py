@@ -70,6 +70,11 @@ CAP = 3
 MIN_MSGS = 6
 MIN_RATIO = 2.0
 MIN_PEOPLE = 3
+# 件数が足りなくても、**別々の人がこれだけ同時に笑っていたら候補にする。**
+# あやとの言う「わろた・www が急に増えた瞬間」（#153）。件数の下限だけで見ると
+# 落ちる。本番の 2026-09-07 で「9割種言うてたやん」に3人が同時に笑った30秒が
+# 3件しかなく（平均の1.3倍）、通読すればいちばん面白いのにここで消えていた。
+MIN_LAUGH = 3
 # 定型のあいさつ。**山として数えない。**
 # 「said hi」は YouTube が出す入室の合図で、盛り上がりではない
 SKIP_TEXT = {"said hi"}
@@ -209,7 +214,7 @@ def pick(rows: list[dict], sec: int, top: int, lead: int) -> list[dict]:
         ratio = len(got) / avg if avg else 0
         # **1人が連打しただけのところを弾く。** 3人以上が同じ時間帯に
         # 反応しているかどうかが「重なった」の最低条件
-        if len(who) < MIN_PEOPLE or len(got) < MIN_MSGS or ratio < MIN_RATIO:
+        if len(who) < MIN_PEOPLE:
             continue
         # 点数は1人3件までで数える（CAP）。連打を弾くのは人数の下限だけでは足りない
         seen: dict[str, int] = defaultdict(int)
@@ -219,6 +224,11 @@ def pick(rows: list[dict], sec: int, top: int, lead: int) -> list[dict]:
                 seen[m["a"]] += 1
                 fair.append(m)
         laugh = sum(1 for m in fair if LAUGH.search(m["t"] or ""))
+        # 「たくさん書かれた」か「みんなが笑った」か、どちらかで通す
+        if not (
+            (len(got) >= MIN_MSGS and ratio >= MIN_RATIO) or laugh >= MIN_LAUGH
+        ):
+            continue
         cand.append(
             {
                 "head": head,
@@ -280,9 +290,9 @@ def main() -> None:
     log.info("切り抜き候補 %d本（%d秒・山の %d秒前から）", len(cuts), sec, lead)
     if not cuts:
         log.info(
-            "基準（%d人以上・%d件以上・平均の%.1f倍以上）に届く時間帯が"
-            "ありません。この配信からは選べません。",
-            MIN_PEOPLE, MIN_MSGS, MIN_RATIO,
+            "基準（%d人以上で、%d件以上かつ平均の%.1f倍以上、または笑い%d件以上）に"
+            "届く時間帯がありません。この配信からは選べません。",
+            MIN_PEOPLE, MIN_MSGS, MIN_RATIO, MIN_LAUGH,
         )
         return
     if len(cuts) < top:
