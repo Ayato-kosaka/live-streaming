@@ -33,7 +33,14 @@ export function atlasIsles(): AtlasIsle[] {
       return k ? [k.region as string] : [];
     });
     const art = artOf(c.slug, regions);
-    const spec = c.from ? isleSpec(c) : nordicSpec(c);
+    /* **まだ始まっていない島でも、`nordicSpec` を当てるのは旅の予定が
+       入っている島だけ。** あちらは北欧の旅のしおり・北欧の掲示板・北欧の国を
+       建てる作りなので、行き先しか決まっていない島に当てると、
+       別の島の模型に北欧の建物が5つ建つ。中身のあるものだけを建てる
+       `isleSpec` なら、素材が無い島は船着き場だけになる
+       （`docs/island-atlas.md` 4章「素材の足りない章は、建つものが自然に減る」）。 */
+    const planned = c.opensAt || c.plannedDays;
+    const spec = c.from || !planned ? isleSpec(c) : nordicSpec(c);
     const w = buildWorld(spec);
     return {
       slug: c.slug,

@@ -138,6 +138,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
 - [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
+- [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
+  焼き込み（`site/content/*.ts`）が古いと思ったらここ
 
 繰り返す作業は**スキルにしてある。** セッションが変わっても同じ手順で回せるように、
 毎回ここを読み直すのではなく、スキルを呼ぶ。
@@ -145,6 +147,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - `/nightly-check` — 毎晩の取り込みを見届ける（走ったか・ログの読みどころ・本番との突き合わせ）
 - `/island-ship` — 直したものを本番に出す（確かめ方・dry-run・PR・デプロイ・出たものの確認）
 - `/monthly-review` — 月末配信の授賞式ページを作る
+- `/island-fresh` — 焼き込みのうち**人の判断が要るもの**を新しくする（料理のスタンプ・引用・他己紹介・歩いた国）。
+  機械だけで決まる4本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`）
 - `/clip-cut` — 配信からショートにする区間の候補を出す（切るところまで。編集はしない）
 
 ## 検証のしかた
