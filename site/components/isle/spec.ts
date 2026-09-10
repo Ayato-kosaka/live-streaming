@@ -32,6 +32,7 @@ import { shortsOf, type Short } from "@/content/shorts";
 import { NORDIC_GROUP, THEMES, type Theme } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { pier, type Neighbour } from "./pier";
+import { isleSpanRange } from "./span";
 
 export type { Neighbour };
 
@@ -217,7 +218,9 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       icon: "tower-studio",
       size: 118,
       sign: true,
-      note: `${ym(c.from)}から${c.to ? ym(c.to) : "いま"}まで、${streams.length}本。`,
+      /* **`c.from` を直に割らない。** 章の表に日付が入るのは旅から帰ったときなので、
+         その前に配信が焼かれると「年NaN月から」が出る（`./span.ts`）。 */
+      note: `${isleSpanRange(c)}、${streams.length}本。`,
       items: streams.slice(0, 3).map(([date, id, title]) => ({
         label: title,
         sub: date,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PageShell, { PageHead } from "@/components/ui/PageShell";
+import PageShell from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
@@ -8,15 +8,18 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
 import Days from "@/components/atlas/Days";
-import StayDays from "@/components/atlas/StayDays";
+import { HereStat, HereTag, MapHead } from "./parts";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
 import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
 
+/* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
+   国の名前を書くと、国境を越えた日から次のビルドまで嘘になる（前は
+   「いまいるジョージアまで」だった）。 */
 export const metadata: Metadata = {
   title: "歩いた国",
   description:
-    "2024年9月に日本を出てから、いまいるジョージアまで。歩いた線と乗り物の線を1枚の地図にしました。",
+    "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
 };
 
 /**
@@ -69,8 +72,12 @@ function span(s: { from: string; to: string }) {
 }
 
 export default function MapPage() {
-  // いまいる国 = まだ出国していない国（滞在の終わりが空）。
-  // 並びの最後を「いまここ」にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
+  /* **いちばん新しく歩いた国**（滞在の終わりが空いている国）。
+     並びの最後にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
+
+     ここは焼き込みなので「いまいる国」とは言い切れない。旅に出れば、まだこの表に
+     無い国を歩いている。**「いま」を言うところだけ、画面が出てから引き直す**
+     （`./parts.tsx`）。 */
   const here = COUNTRIES.find((c) => c.stays.some((s) => !s.to)) ?? COUNTRIES[0];
   // イランは国境まで歩いただけで中に入っていない。国の数には入れない。
   const visited = COUNTRIES.filter((c) => c.slug !== "iran-border");
@@ -83,12 +90,12 @@ export default function MapPage() {
     <PageShell current="map" crumbs={[{ label: "歩いた国" }]}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
-          カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。 */}
-      <PageHead
-        icon="signpost-flags"
-        title="歩いた国"
-        lead="2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、いまはコーカサスにいます。"
-      />
+          カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。
+
+          前置きの最後の1文だけが「いま」を言うので、そこは画面が出てから
+          引き直す（`./parts.tsx`）。焼いたままだと、旅に出た日から
+          「いまはコーカサスにいます」が残りつづける。 */}
+      <MapHead region={here.region} />
 
       {/* 4つを同じ重さで並べると、どれも「ただの数」に見える。
           先頭を大きくするのは CSS がやるので、こちらは添え字で中身の差を言う。
@@ -103,11 +110,7 @@ export default function MapPage() {
         {/* いまいる国の名前は数ヶ月変わらないので、この欄だけが止まって見えていた。
             添え字を滞在の日数にすると、旅が進んでいることが毎日1ずつ出る
             （`docs/island-play.md` 仕掛け10）。国の名前は上の見出しにも出ている。 */}
-        <Stat
-          value={<Flag slug={here.slug} size={34} />}
-          label={here.name}
-          sub={<StayDays fallback="いまここ" />}
-        />
+        <HereStat slug={here.slug} name={here.name} />
       </div>
 
       <Panel>
@@ -232,7 +235,7 @@ export default function MapPage() {
                                 <span key={t}>{t}</span>
                               ))}
                               {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
-                              {c.slug === here.slug && <span className="atrip-here">いまここ</span>}
+                              {c.slug === here.slug && <HereTag slug={c.slug} />}
                             </span>
                           </span>
                           <Icon name="right" size={15} className="tile-go" />
