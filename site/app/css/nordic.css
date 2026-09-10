@@ -1413,7 +1413,12 @@ svg.nmap {
   stroke: var(--frame-dark);
   stroke-width: 3.5;
 }
-.nmap .nm-compass-n { fill: color-mix(in srgb, var(--accent) 72%, var(--frame-deep) 28%); }
+/* 北を指す針。**地に対して 4.5 を切らないところまで濃くする。**
+   もとは accent72/frame-deep28 で、紙の地（#fffae4）に対して 2.96 しかなかった
+   （字ではなく形だが、3.0 も割っている）。accent50/ink50 で 4.66。
+   `--ink` は暗いほうで明るい色に入れ替わるので、混ぜる相手を ink にしておくと
+   暗いほうでも勝手に地から離れる。 */
+.nmap .nm-compass-n { fill: color-mix(in srgb, var(--accent) 50%, var(--ink) 50%); }
 .nmap .nm-compass-s { fill: var(--ink-3); }
 .nmap .nm-compass-t {
   fill: var(--ink);
