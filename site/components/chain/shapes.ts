@@ -163,10 +163,19 @@ export type Plant = { n: string; x: number; y: number; s: number; flip: boolean 
  * 上限を付けてあるのは、連なりの画面に島が5つ並ぶから
  * （1枚あたり14個なら、全部で70枚。島のステージ1枚ぶんより軽い）。
  */
-export function plants(art: IslandArt, r: number): Plant[] {
+export function plants(
+  art: IslandArt,
+  r: number,
+  /* 撒く量。連なりの小さい絵は 1 のまま。
+     **模型（`components/chain/Diorama.tsx`）だけ濃くする。**
+     あちらは島が1つだけ大きく出るので、同じ密度だと大きい島が更地に見える。
+     密度を上げると当たり判定で弾かれる数が増えるので、間隔も一緒に詰める */
+  opts: { density?: number; cap?: number; gap?: number } = {},
+): Plant[] {
   // 半径が小さい島は、草木が1px未満になって粒にしか見えない。撒かない
   if (r < 25) return [];
-  const n = Math.min(14, Math.max(4, Math.round(r / 9)));
+  const { density = 1, cap = 14, gap = 0.18 } = opts;
+  const n = Math.min(cap, Math.max(4, Math.round((r / 9) * density)));
   const rand = rng(art.seed);
   /* 種類を引く乱数は、置き場所の乱数と**別の流れ**にする。
    *
@@ -186,7 +195,7 @@ export function plants(art: IslandArt, r: number): Plant[] {
     const x = Math.cos(t) * rr * d;
     const y = Math.sin(t) * rr * d * art.squash;
     // 同じところに重ねない
-    if (out.some((p) => Math.hypot(p.x - x, (p.y - y) / art.squash) < r * 0.18)) continue;
+    if (out.some((p) => Math.hypot(p.x - x, (p.y - y) / art.squash) < r * gap)) continue;
     const kind = art.props[Math.floor(pick() * art.props.length)];
     out.push({ n: kind.n, x, y, s: kind.s * r, flip: pick() < 0.5 });
   }
