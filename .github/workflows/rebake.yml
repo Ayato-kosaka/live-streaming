@@ -45,6 +45,20 @@ name: 島の数字を焼き直す
 # 何がどれだけ変わるかを読んでから、`dry_run: false` でもう一度押す。
 # **cron のときだけは `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
 #
+# ## 焼いたものが縮んでいたら、commit しない
+#
+# 毎晩ひとりでに走るので、**焼き損なっても誰も見ていない。**
+# 焼いたあと commit の前に「中の数が縮んでいないか」を通し、
+# **前の晩より縮んでいたら `exit 1` で止める**（master にも Hosting にも入らない）。
+#
+# 見るのは縮みだけ。**毎晩ぶん増えるのが正常**なので、増えたほうは止めない。
+# 何をどのしきい値で見ているかと、その根拠はあちらにルールごと書いてある。
+#
+# **件数だけでは足りない。** 2026-09-10 に `read_countries()` が `countries.ts` の
+# 注釈で正規表現に外れ、ジョージアがまるごと落ちかけた。あのとき
+# `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
+# だから「中身が埋まっている割合」も一緒に見ている。
+#
 # ## 毎晩ひとりでに回すもの（**この5本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
@@ -141,9 +155,6 @@ jobs:
       actions: write
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      # `residents.ts` の ACTIVE_FRIENDS が、前の値の何倍まで動いてよいか。
-      # **この幅を超えたら commit せずに落とす**（下の「値が跳ねていないか」）
-      ACTIVE_FRIENDS_MAX_RATIO: "1.5"
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v4
@@ -312,63 +323,6 @@ jobs:
           git --no-pager diff --stat -- $REBAKE_PATHS | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      # 行の差分だけでは読めないファイルがある（onThisDay.ts と streamPeaks.ts は
-      # 中身ぜんぶが1行の JSON なので、`--stat` は「1行変わった」としか言わない）。
-      # だから**中の数を数えて、前と後を並べる**。
-      - name: 主要な数字の前後
-        run: |
-          set -euo pipefail
-          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
-          import os, re, pathlib
-
-          # ファイルごとに「何を数えれば変化が読めるか」。count=当たった数, sum=当たった数字の合計
-          METRICS = {
-              "chapterStats.ts": [("章", r'^\s{2}"[a-z0-9-]+": \{', "count"),
-                                  ("のべ人数", r"people: (\d+)", "sum"),
-                                  ("配信", r"streams: (\d+)", "sum")],
-              "chapterStreams.ts": [("配信", r'^\s{4}\["', "count")],
-              "residents.ts": [("住人", r"days: (\d+)", "count"),
-                               ("のべ日数", r"days: (\d+)", "sum")],
-              "streamPeaks.ts": [("山の出せる配信", r'"k":', "count")],
-              "onThisDay.ts": [("日めくりの日", r'"\d\d-\d\d":', "count"),
-                               ("配信", r'"v":', "count")],
-              # 街が減ったら本文の差分ではなく**この行**で気づく。
-              # 「配信はのこっていない」は街が落ちたときに出る字なので、街の数を見る
-              "cityStreams.ts": [("街", r'^\s{4}"[^"]+": \[', "count"),
-                                 ("配信", r'"videoId":', "count")],
-              "countryStats.ts": [("国", r"lives: (\d+)", "count"),
-                                  ("配信", r"lives: (\d+)", "sum"),
-                                  ("コメント", r"msgs: (\d+)", "sum")],
-              "kitchenTalk.ts": [("料理", r"people: (\d+)", "count"),
-                                 ("引用", r"\btext: ", "count")],
-          }
-
-          def measure(text, pat, mode):
-              hits = re.findall(pat, text, re.M)
-              if mode == "count":
-                  return len(hits)
-              return sum(int(h) for h in hits if str(h).isdigit())
-
-          print("")
-          print("#### 中の数")
-          print("")
-          print("| ファイル | 何を | 前 | 後 | 差 |")
-          print("| --- | --- | ---: | ---: | ---: |")
-          for p in os.environ["REBAKE_PATHS"].split():
-              name = pathlib.Path(p).name
-              after_p, before_p = pathlib.Path(p), pathlib.Path("/tmp/rebake-before") / name
-              if not after_p.exists():
-                  print(f"| {name} | — | — | — | 焼かれていない |")
-                  continue
-              after = after_p.read_text(encoding="utf-8")
-              before = before_p.read_text(encoding="utf-8") if before_p.exists() else ""
-              for label, pat, mode in METRICS.get(name, []):
-                  b, a = measure(before, pat, mode), measure(after, pat, mode)
-                  d = a - b
-                  print(f"| {name} | {label} | {b:,} | {a:,} | {'±0' if d == 0 else f'{d:+,}'} |")
-          print("")
-          PY
-
       # 中身の差分そのもの。**1行を200文字で切る。**
       # onThisDay.ts は1行が100KB近くあるので、切らずに出すとログが読めなくなる
       - name: 変わった行（先頭だけ）
@@ -384,77 +338,313 @@ jobs:
           done
 
       # **数え方の不具合は、緑のまま master に入る。**
-      # 実際に `ACTIVE_FRIENDS` が 61 → 174 になったことがある（読めなかった日を
-      # 全員の出席に足していたので、1回来ただけの人が72人「ここ3ヶ月の常連」に
-      # 混ざった。`python/build_residents.py` の docstring に実測が残っている）。
-      # あのときは**目で見て止めた。毎晩ひとりでに回すなら、その目はいない。**
       #
-      # 常連の数が一晩で 1.5倍に増える／2/3 に減るのは、人の出入りではなく
-      # 数え方が変わったときにしか起きない。**跳ねたら commit せずに落とす。**
-      # 落として赤くしておけば翌朝そこから追える（黙って直すと気づけない）。
-      - name: 値が跳ねていないか
+      # 前はここが `residents.ts` の `ACTIVE_FRIENDS` だけを見ていた。
+      # 見ていた理由は実際に起きたから（61 → 174。読めなかった日を全員の出席に
+      # 足していたので、1回来ただけの人が72人「ここ3ヶ月の常連」に混ざった。
+      # `python/build_residents.py` の docstring に実測が残っている）。
+      # **あのときは目で見て止めた。毎晩ひとりでに回すなら、その目はいない。**
+      #
+      # ほかの焼き込みには何も無かった。そして 2026-09-10、
+      # `build_on_this_day.py` の `read_countries()` が `countries.ts` の注釈で
+      # 正規表現に外れ、**ジョージアをまるごと落とす**ところだった。
+      # onThisDay.ts の618件のうち378件がジョージアなので、
+      # **61%の日から場所の字が消えたものが、そのまま commit される**ところだった。
+      #
+      # このとき**件数は1件も減らない**（`place_of()` が `("", "")` を返すだけ）。
+      # だから「日めくりの日 365 / 配信 618」は前の晩と同じ数字が並ぶ。
+      # **数を数えるだけでは捕まらない。中身が埋まっている割合まで見る。**
+      #
+      # 何をどのしきい値で見ているかと、その根拠は、下の `RULES` にルールごと
+      # 書いてある。**焼くスクリプトの中にも止め金があるが、二重ではない。**
+      # スクリプトの中は「入力を読み落とした」を、ここは「出力がやせた」を捕まえる
+      # （分担の表は、下の docstring にある）。
+      #
+      # 前と後の数を並べる表も、ここが出す。**しきい値と判定を同じ表に置く**
+      # ほうが、旅先でスマホから読んで手を打てる。
+      - name: 中の数が縮んでいないか
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import os, re, sys, pathlib
+          """焼き直したものが**縮んでいないか**を、commit の前に見る。
 
-          if "site/content/residents.ts" not in os.environ["REBAKE_PATHS"].split():
-              print("residents.ts は焼いていないので、見るものがありません")
-              sys.exit(0)
+          ## なぜ要るか
 
-          after_p = pathlib.Path("site/content/residents.ts")
-          before_p = pathlib.Path("/tmp/rebake-before/residents.ts")
+          `.github/workflows/rebake.yml` は毎晩ひとりでに走って、焼いた結果を master に
+          押し込む。**読む人はいない。** だから「落ちた」ことに誰も気づけない。
 
-          def active(p):
-              if not p.exists():
-                  return None
-              m = re.search(r"ACTIVE_FRIENDS = (\d+)", p.read_text(encoding="utf-8"))
-              return int(m.group(1)) if m else None
+          2026-09-10 に実際に起きかけた。`build_on_this_day.py` の `read_countries()` が
+          `countries.ts` の注釈で正規表現に外れ、**ジョージアをまるごと落としていた**
+          （読めた国が18ではなく17）。`onThisDay.ts` の618件のうち378件がジョージアなので、
+          **61%の日から場所の字が消えたものが、そのまま commit される**ところだった。
 
-          before, after = active(before_p), active(after_p)
-          ratio_max = float(os.environ["ACTIVE_FRIENDS_MAX_RATIO"])
-          summary = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
+          このとき**件数は1件も減らない。** `place_of()` が `("", "")` を返すだけなので、
+          「日めくりの日 365 / 配信 618」は前の晩と同じ数字が並ぶ。
+          **数を数えるだけでは捕まらない。中身が埋まっている割合まで見る。**
 
-          def note(text):
-              with summary.open("a", encoding="utf-8") as f:
-                  f.write(text)
+          ## スクリプトの中の止め金との分担（二重ではない。層が違う）
 
-          # 焼いた結果から読めない = 出力の形が変わっている。これも止める理由になる
-          if after is None:
-              print("::error::焼いた residents.ts から ACTIVE_FRIENDS を読めませんでした")
-              note("\n**止めました。** 焼いた `residents.ts` から `ACTIVE_FRIENDS` を"
-                   "読めません。出力の形が変わっています。commit していません。\n")
-              sys.exit(1)
+          | どこ | 何を捕まえるか | 例 |
+          | --- | --- | --- |
+          | スクリプトの中（`read_countries` / `read_stays`） | **読めなかった** | `countries.ts` の滞在が18件あるのに17件しか読めていない → 例外 |
+          | ここ（ワークフロー） | **結果が縮んだ** | 読めてはいるが、焼いた結果の場所が61%空になった |
 
-          if not before:
-              print(f"前の値が読めないので、跳ねの判定は飛ばします（いま {after}人）")
-              sys.exit(0)
+          **上流は「入力を読み落とした瞬間」に落ちる。ここは「出力がやせた」ときに落ちる。**
+          入力の読み落としは形が変わるたびに新しい抜け道ができるので、
+          **出口でもう一度、数で見る。** 上流が完璧なら、ここは一生鳴らない。それでよい。
 
-          lo, hi = before / ratio_max, before * ratio_max
-          print(f"ACTIVE_FRIENDS {before} → {after}（許す幅 {lo:.1f}〜{hi:.1f}）")
-          if lo <= after <= hi:
-              sys.exit(0)
+          ## しきい値の決めかた
 
-          print(f"::error::ACTIVE_FRIENDS が {before} → {after}。{ratio_max}倍の幅を超えました")
-          # **行の頭に空白を置かない。** ここは YAML のブロックスカラの中なので、
-          # 三重引用符の中身を左端から書くとブロックが終わってしまう。
-          # かといって字下げしたまま書くと、要約が丸ごとコードブロックになる
-          note("\n".join([
-              "",
-              "**止めました。commit していません。**",
-              "",
-              f"`ACTIVE_FRIENDS`（直近90日の常連の数）が **{before}人 → {after}人**。",
-              f"一晩で {ratio_max}倍の幅を超えて動くのは、人の出入りではなく",
-              "**数え方が変わったとき**にしか起きません。",
-              "",
-              "- 取り込めていない日が増えていないか（`build_residents` のログの",
-              "  「配信はあったのにチャットの取り込めていない日が N 日ある」）",
-              "- `python/build_residents.py` の数え方が変わっていないか",
-              "",
-              "を見てから、手で `dry_run: false` で押し直します。",
-              "",
-          ]))
-          sys.exit(1)
+          **「なんとなく 0.9」にしない。** 焼き込みはほぼ全部が**累積**（配信は増えるだけ）
+          なので、正常な晩の動きは「増える」か「動かない」しかない。
+          縮むのは (1) 動画が非公開になった (2) 取り込み直しで境目の値が動いた、の2つで、
+          どちらも**1〜数件**。**塊（国ひとつ・章ひとつ）が落ちると数十%動く。**
+          その2つのあいだにしきい値を置く。実測した塊の大きさは各ルールのコメントに書いた。
+
+          窓で切っているもの（`residents.ts` は直近90日）だけは正常でも上下するので、
+          そこは既存の `ACTIVE_FRIENDS` の 1.5倍幅にそろえる。
+
+          **増えるのは止めない。** 毎晩ぶん増えるのが正常なので、見るのは縮みだけ。
+
+          ## 手元で確かめる
+
+          **この step はワークフローの中に埋めてある。** 別ファイルにすると、
+          上のチェックアウトが `ref: master` なので、**枝から押しても master 側の
+          古い止め金が走る**（枝で直しても、その枝では試せない）。
+
+          手元で回すときは、この step の中身を取り出して、ファイルとして走らせる:
+
+            python3 -c "import yaml;print([s for s in yaml.safe_load(
+              open('.github/workflows/rebake.yml'))['jobs']['rebake']['steps']
+              if s['name']=='中の数が縮んでいないか'][0]['run'])" > /tmp/g.sh
+            # <<'PY' から PY までを /tmp/guard.py に切り出して
+            REBAKE_PATHS="site/content/onThisDay.ts" python3 /tmp/guard.py --before /tmp/before
+          """
+
+          import argparse
+          import os
+          import pathlib
+          import re
+          import sys
+
+          # 見かたは4つ。
+          #   keep  : 1つでも減ったら止める。**読み落としでしか減らない数**にだけ使う
+          #           （章は `chapters.ts`、国は `countries.ts` から来る。人が書いた表は消えない）
+          #   floor : 前の値の何倍まで縮んでよいか。累積の数に使う
+          #   band  : 上にも下にも幅を持たせる。窓で切っていて正常でも動く数に使う
+          #   share : 「埋まっている割合」が何ポイント落ちたら止めるか。
+          #           **件数が減らないまま中身だけ空になる壊れかた**は、これでしか捕まらない
+          KEEP, FLOOR, BAND, SHARE = "keep", "floor", "band", "share"
+
+
+          def rule(label, kind, arg, pat=None, mode="count", num=None, den=None, note=""):
+              return {
+                  "label": label, "kind": kind, "arg": arg,
+                  "pat": pat, "mode": mode, "num": num, "den": den, "note": note,
+              }
+
+
+          # 2026-09-10 の本番の値を () に入れてある。しきい値はこの値から決めた
+          RULES = {
+              "chapterStats.ts": [
+                  # 章（4）は chapters.ts から読む。章は閉じても消えないので、減ったら読み落とし
+                  rule("章", KEEP, 0, r'^\s{2}"[a-z0-9-]+": \{'),
+                  # のべ人数（2,830）。いちばん小さい章（middle-east 177人）が落ちると -6.3%。
+                  # 配信が1本消えても数人しか動かないので、そのあいだの 0.95
+                  rule("のべ人数", FLOOR, 0.95, r"people: (\d+)", mode="sum"),
+                  # 配信（676）。iran-walk は9本（1.3%）しかないので、ここでは捕まらない。
+                  # **章まるごとが落ちる形は上の「章」が先に捕まえる**
+                  rule("配信", FLOOR, 0.95, r"streams: (\d+)", mode="sum"),
+                  # 章にいた住人の行（44）。residents_map.json が読めないと44行ごと消える
+                  rule("章にいる住人", FLOOR, 0.9, r"days: (\d+)"),
+              ],
+              "chapterStreams.ts": [
+                  # 章（3）。**いまの島は入らない**ので、章が閉じたときだけ増える
+                  rule("章", KEEP, 0, r'^\s{2}"[a-z0-9-]+": \['),
+                  # 配信（240）。閉じた章ぶんだけなので、ふだんは1本も動かない
+                  rule("配信", FLOOR, 0.95, r'^\s{4}\["'),
+                  # 題名（240/240）。BigQuery の列が空で返ると、本数はそのままで字だけ消える
+                  rule("題名の入っている配信", SHARE, 5.0,
+                       num=r'^\s{4}\["[^"]*", "[^"]*", "[^"]+"', den=r'^\s{4}\["'),
+              ],
+              "residents.ts": [
+                  # 直近90日の常連（61）。**既存の止め金をそのまま持ってきた。**
+                  # 一晩で 1.5倍／2/3 に動くのは、人の出入りではなく数え方が変わったときだけ
+                  # （61 → 174 になったことがある。`python/build_residents.py` の docstring）
+                  rule("直近90日の常連", BAND, 1.5, r"ACTIVE_FRIENDS = (\d+)", mode="sum"),
+                  # 島に出ている住人（22）。90日窓なので抜ける人がいる。幅は上と同じ 1/1.5
+                  rule("住人", FLOOR, 1 / 1.5, r"days: (\d+)"),
+                  # 絵の分かっている住人（22/22）。residents_map.json が読めないと絵だけ消える
+                  rule("絵の分かっている住人", SHARE, 5.0, num=r"icon: \"", den=r"days: (\d+)"),
+              ],
+              "streamPeaks.ts": [
+                  # 山の出せる配信（251）。累積。取り込み直しで n が15を割る回があっても数本
+                  rule("山の出せる配信", FLOOR, 0.95, r'"k":'),
+              ],
+              "onThisDay.ts": [
+                  # 日めくりの日（365）。1年ぶんなのでほぼ動かない。動画が消えて、その月日が
+                  # その1本しか無かったときだけ1つ減る。数日ぶんは許す
+                  rule("日めくりの日", FLOOR, 0.98, r'"\d\d-\d\d":'),
+                  # 配信（618）
+                  rule("配信", FLOOR, 0.95, r'"v":'),
+                  # **本丸。** ジョージアが落ちたとき、件数は618のままで場所だけ 617→240 になる。
+                  # 割合で見れば 99.8% → 38.8%（-61pt）。国ひとつぶんが落ちれば必ずここに出る
+                  # （いちばん小さい国スロバキアの1件だけは -0.2pt で抜けるが、そちらは
+                  #  `read_countries()` の中の止め金が「読めなかった」として先に落とす）
+                  rule("場所の字が入っている配信", SHARE, 5.0, num=r'"p":"[^"]', den=r'"v":'),
+              ],
+              "cityStreams.ts": [
+                  # 国（18）。countries.ts の国そのもの。減ったら読み落とし。
+                  # **いちばん小さい国はオランダの配信1本**なので、本数では捕まらない。ここで捕まえる
+                  rule("国", KEEP, 0, r'^\s{2}"[a-z-]+": \{'),
+                  # 街（49）。ジョージアの7街が落ちると -14%。1街の増減では止めない
+                  rule("街", FLOOR, 0.9, r'^\s{4}"[^"]+": \['),
+                  # 配信（322）。ジョージアぶんは51本（-16%）
+                  rule("配信", FLOOR, 0.9, r'"videoId":'),
+                  rule("題名の入っている配信", SHARE, 5.0, num=r'"title": "[^"]', den=r'"videoId":'),
+              ],
+              # 下の2本は手で押したときしか回らない（BigQuery を引かず、取り置きの JSON を
+              # 焼き直すだけ）。見る人がいる場面だが、**同じ形でそろえておく**
+              "countryStats.ts": [
+                  rule("国", KEEP, 0, r"lives: (\d+)"),
+                  rule("配信", FLOOR, 0.95, r"lives: (\d+)", mode="sum"),
+                  rule("コメント", FLOOR, 0.95, r"msgs: (\d+)", mode="sum"),
+              ],
+              "kitchenTalk.ts": [
+                  rule("料理", FLOOR, 0.95, r"people: (\d+)"),
+                  rule("引用", FLOOR, 0.9, r"\btext: "),
+              ],
+          }
+
+
+          def measure(text, pat, mode):
+              """当たった数（count）か、当たった数字の合計（sum）。"""
+              hits = re.findall(pat, text, re.M)
+              if mode == "sum":
+                  return sum(int(h) for h in hits if str(h).isdigit())
+              return len(hits)
+
+
+          def num(v):
+              return f"{v:,}"
+
+
+          def pct(v):
+              return f"{v * 100:.1f}%"
+
+
+          def judge(r, before_text, after_text):
+              """1つのルールを見る。(通ったか, 前の表示, 後の表示, 許す下限の表示, 一言) を返す。"""
+              if r["kind"] == SHARE:
+                  db = measure(before_text, r["den"], "count")
+                  da = measure(after_text, r["den"], "count")
+                  if db == 0 or da == 0:
+                      # 分母が無い = 前が空か、焼いた結果が空。後者は他のルールが落とす
+                      return True, "—", "—", "—", "数えるものが無いので飛ばした"
+                  sb, sa = measure(before_text, r["num"], "count") / db, measure(after_text, r["num"], "count") / da
+                  lo = sb - r["arg"] / 100
+                  ok = sa >= lo
+                  return ok, pct(sb), pct(sa), f"{pct(lo)} 以上", f"{(sa - sb) * 100:+.1f}pt"
+
+              b = measure(before_text, r["pat"], r["mode"])
+              a = measure(after_text, r["pat"], r["mode"])
+              if b == 0:
+                  return True, num(b), num(a), "—", "前の値が0なので飛ばした"
+
+              if r["kind"] == KEEP:
+                  return a >= b, num(b), num(a), f"{num(b)} 以上", f"{a - b:+,}"
+              if r["kind"] == BAND:
+                  lo, hi = b / r["arg"], b * r["arg"]
+                  return lo <= a <= hi, num(b), num(a), f"{lo:,.1f}〜{hi:,.1f}", f"{a - b:+,}"
+              lo = b * r["arg"]
+              return a >= lo, num(b), num(a), f"{lo:,.1f} 以上", f"{a - b:+,}"
+
+
+          def main() -> int:
+              ap = argparse.ArgumentParser()
+              ap.add_argument("--before", default="/tmp/rebake-before", help="焼く前を取っておいた場所")
+              ap.add_argument("--paths", default=os.environ.get("REBAKE_PATHS", ""),
+                              help="焼いたファイル（空白区切り）")
+              args = ap.parse_args()
+
+              before_dir = pathlib.Path(args.before)
+              rows, bad = [], []
+
+              for p in args.paths.split():
+                  after_p = pathlib.Path(p)
+                  name = after_p.name
+                  if not after_p.exists():
+                      bad.append((name, "焼かれていない", "—", "—", "—", "ファイルが無い"))
+                      continue
+                  before_p = before_dir / name
+                  if not before_p.exists():
+                      rows.append((name, "（前が無い）", "—", "—", "—", "初めて焼いたので比べない"))
+                      continue
+                  after_text = after_p.read_text(encoding="utf-8")
+                  before_text = before_p.read_text(encoding="utf-8")
+                  for r in RULES.get(name, []):
+                      ok, b, a, limit, note = judge(r, before_text, after_text)
+                      rows.append((name, r["label"], b, a, limit, note if ok else f"**{note}**"))
+                      if not ok:
+                          bad.append((name, r["label"], b, a, limit, note))
+
+              md = [
+                  "",
+                  "#### 中の数（焼く前 → 焼いた後）",
+                  "",
+                  "| ファイル | 何を | 前 | 後 | 止めない範囲 | 差 |",
+                  "| --- | --- | ---: | ---: | ---: | ---: |",
+              ]
+              md += ["| " + " | ".join(str(x) for x in row) + " |" for row in rows]
+              md.append("")
+
+              if bad:
+                  # **何が何になったかを書く。** 旅先でスマホから読んで、そのまま手を
+                  # 打てるところまで。「止めました」だけでは、読んでも何もできない
+                  md += [
+                      "**止めました。commit も deploy もしていません。**",
+                      "",
+                      "焼いた結果が、焼く前より縮んでいます。**毎晩ぶんは増えるのが正常**なので、",
+                      "縮むのは数え方か読み方が変わったときです。",
+                      "",
+                      "| ファイル | 何を | 前 | 後 | 止めない範囲 |",
+                      "| --- | --- | ---: | ---: | ---: |",
+                  ]
+                  md += [f"| {n} | {l} | {b} | {a} | {lim} |" for n, l, b, a, lim, _ in bad]
+                  md += [
+                      "",
+                      "見るところは3つです。",
+                      "",
+                      "1. **割合（`%` で出ているもの）が落ちているとき** — 件数はそのままで",
+                      "   中身だけ空になっています。焼くときの入力（`countries.ts` /",
+                      "   `residents_map.json`）を読み落としている可能性がいちばん高い",
+                      "2. **件数が落ちているとき** — BigQuery から返ってきた行が減っています。",
+                      "   取り込み（Fetch YouTube Chat Data）が失敗した晩ではないか",
+                      "3. **「章」「国」が落ちているとき** — 人が書いた表を読めていません。",
+                      "   その表を触った直後なら、書き方が正規表現から外れています",
+                      "",
+                      "直したら、Actions から `dry_run: false` で押し直します。",
+                      "**master には何も入っていないので、急がなくても壊れません。**",
+                      "",
+                  ]
+              else:
+                  md += ["縮んでいるものはありませんでした。", ""]
+
+              summary = os.environ.get("GITHUB_STEP_SUMMARY")
+              if summary:
+                  with open(summary, "a", encoding="utf-8") as f:
+                      f.write("\n".join(md) + "\n")
+              print("\n".join(md))
+
+              # 注釈（run の頭に赤く出るもの）は要約とは別に、1件ずつ出す
+              for name, label, b, a, limit, note in bad:
+                  print(f"::error::{name} の「{label}」が {b} → {a}（{note}）。"
+                        f"止めない範囲は {limit} です。commit していません")
+              return 1 if bad else 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
           PY
 
       # **焼いた TS がビルドを通ることを、commit の前に確かめる。**
@@ -572,6 +762,6 @@ jobs:
             echo "赤い step を開きます。よくあるのは3つです。"
             echo ""
             echo "1. **焼く** — BigQuery に届いていない（認証・権限）か、クエリが変わった"
-            echo "2. **値が跳ねていないか** — 数え方が変わった合図。理由がこの上に書いてあります"
+            echo "2. **中の数が縮んでいないか** — 焼いた結果がやせた合図。何が何になったかが表で出ています"
             echo "3. **site のビルドが通るか** — 焼いた TS が壊れている。ここで止めたので本番は無事です"
           } >> "$GITHUB_STEP_SUMMARY"
