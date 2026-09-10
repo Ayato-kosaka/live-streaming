@@ -941,7 +941,11 @@ export const moveCard = (id: string, place: CardPlace, token: string) =>
 /* ---------------- 北欧旅の、その日に起きたこと ----------------
    `content/nordic.ts` の `NORDIC_LOG` は Git にあって、直すには commit して
    Hosting を手で起動しないと出ない。**旅の最中のあやとには、それは回らない。**
-   だから旅のあいだは、ここから読む（`docs/nordic-depart.md`）。 */
+   だから旅のあいだは、ここから読む（`docs/nordic-depart.md`）。
+
+   **読むだけ。** 入れるのは「管理スクリプトを実行」の `nordic_log`
+   （`python/admin/nordic_log.py`）。書く口（`POST /nordic/log`）は
+   Functions に残してあるが、画面からは叩かない。 */
 
 /** 1日ぶんの「起きたこと」。`day` は旅程表の行の id（`day-1` `day-depart`）。 */
 export type NordicLogEntry = {
@@ -956,21 +960,6 @@ export type NordicLogEntry = {
 };
 
 export const getNordicLog = () => req<{ log: NordicLogEntry[] }>("/nordic/log");
-
-/** その日に起きたことを書く。**あやとだけ。** 同じ日に書くと上書きになる。 */
-export const postNordicLog = (
-  e: { day: string; date?: string; body: string; video?: string },
-  token: string,
-) =>
-  req<{ log: NordicLogEntry }>("/nordic/log", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify(e),
-  });
-
-/** 書いたものを消す。**あやとだけ。** */
-export const deleteNordicLog = (day: string, token: string) =>
-  req<{ day: string }>(`/nordic/log/${day}`, { method: "DELETE", headers: auth(token) });
 
 /**
  * ストックホルムに着いた、を記録する。**あやとだけ。**

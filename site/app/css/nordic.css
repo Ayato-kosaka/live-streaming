@@ -473,47 +473,14 @@ p.nday-log-when {
   color: var(--ink-2);
 }
 
-/* --- その日に起きたことを書くところ（あやとだけに出る） ---------------
-   写真を貼るところ（`.nph-post-*`）と同じ作りにする。旅の最中に開くのは
-   同じ人で、覚えることを2つにしない。 */
-.nlog-post { margin-top: var(--sp-4); }
 /* 書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
    `.dform` の素の欄は 45〜46px しかなく、測って落ちた
    （`tools/sprites/hitbox.mjs`。日付の欄 47px・配信の欄 45px）。
-   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる。
-   写真を貼るところも同じ人が同じ日に触るので、まとめて足す
+   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる
    （`.nph-post-file` は隠してある file の欄なので、当てない）。 */
-.nlog-post input,
-.nlog-post textarea,
 .nph-post-row input:not(.nph-post-file) { min-height: 48px; }
-.nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.nlog-seeds > span {
-  align-self: center;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-/* 押すと書き出しが本文に入る札。押せるチップの型（板・厚み4px・48px）。 */
-.nlog-seed {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
-  transition: transform 0.12s ease;
-}
-.nlog-seed:active {
-  transform: translateY(4px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
-}
+
+/* 旅程表の行に「着いた」「旅がおわった」を入れる並び（`nordic/GoalRow.tsx`）。 */
 .nlog-acts {
   display: flex;
   flex-wrap: wrap;
@@ -2409,9 +2376,41 @@ p.nday-lead {
 /* ---- 旅の道具「いまどこ」（`components/me/TripTools.tsx`） ----
    走っている車の中で親指1本で触るところ。押しどころは 48px を割らない。 */
 
-/* 旅程の街の札。押すと「いる場所」に入る。書き出しの札（`.nlog-seed`）と
-   同じ形にそろえる。**いま欄に入っている街だけ、押し込まれた見え方にする。**
-   選ばれているものの出し方は、道具の札（`.mp-tab.is-on`）と同じ形にそろえる。 */
+/* 旅程の街の札。押すと「いる場所」に入る。**いま欄に入っている街だけ、
+   押し込まれた見え方にする。** 選ばれているものの出し方は、道具の札
+   （`.mp-tab.is-on`）と同じ形にそろえる。
+
+   `.nlog-seeds` / `.nlog-seed` は、その日に起きたことの「書き出しの札」と
+   共用だった。あちらの欄は外した（2026-09-10）ので、いまはここだけが使う。
+   名前は据え置く——変えると `is-on` まで含めて3か所を同時に触ることになる。 */
+.nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nlog-seeds > span {
+  align-self: center;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 押せるチップの型（板・厚み4px・48px）。 */
+.nlog-seed {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.nlog-seed:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
 .trip-cities { margin-top: calc(var(--sp-2) * -1); }
 .nlog-seed.is-on {
   border-color: var(--pick);
