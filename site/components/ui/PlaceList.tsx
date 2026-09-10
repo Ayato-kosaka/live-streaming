@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DOORS } from "../island/layout";
 import Icon from "./Icon";
+import TripDoor from "./TripDoor";
 
 /** 行き先を全部並べた面。 */
 export const ALL_HREF = "/all";
@@ -30,6 +31,12 @@ export default function PlaceList({
 }) {
   return (
     <ul className="ifoot-doors">
+      {/* **いま歩いている旅**は、島に建っていないので `DOORS` に入らない。
+          それで、出発したあとの砂浜には「伝説の企画」も「作った料理」も
+          並んでいるのに、**いま起きていることだけが常設の外**にあった。
+          先頭に置くのは、そこがいちばん見せたいものだから。
+          旅のあいだだけ出る（`components/ui/TripDoor.tsx`）。 */}
+      <TripDoor />
       {DOORS.map((d) => (
         <li key={d.id}>
           {current === d.id ? (
