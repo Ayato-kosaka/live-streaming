@@ -132,19 +132,22 @@
 .rzk-cards .akd-grid { grid-template-columns: repeat(2, 1fr); }
 /* --- `/cards` の一覧。**押すのは写真のマス** --------------------------
    1日ぶんの棚。日付と企画はここが1回だけ言う（マスには持たせない）。 */
-.akd-day { margin-top: var(--sp-5); }
-.akd-day h3 {
-  margin: 0;
-  font-size: var(--fs-h3);
-  font-weight: 900;
-  color: var(--ink);
-}
+/* 1日ぶんが1枚の紙。見出しは紙が持つ（`.panel.paper h2`）ので、
+   ここでは何も足さない。 */
 /* その日の企画への行き先。字の行き先なので厚みは付けず、下線で示す。
    **カードの中（`.akd-plan`）と違って1行で切らない。** ここは棚の見出しで、
    1日に1回しか出ないので、長い名前でも折り返して全部読ませてよい。 */
+.akd-day-plans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  margin-top: var(--sp-1);
+}
 .akd-day-plan {
-  display: block;
-  margin-top: 2px;
+  /* 字の行き先だが、指で押す。48px は高さで取る（`docs/island-design.md` 3の2） */
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
   font-size: var(--fs-note);
   font-weight: 700;
   line-height: 1.6;
@@ -154,9 +157,18 @@
   overflow-wrap: anywhere;
 }
 
+/* その日の写真の並び。**`auto-fit`。`auto-fill` にしない。**
+   1日に1枚しか貼られていない日がふつうにある（本番はいま全部そう）。
+   `auto-fill` だと空の列がそのまま残って、紙の右半分が地のまま空く。
+   `auto-fit` は空の列を畳むので、1枚の日もその1枚がちゃんと大きく出る。
+
+   **列の数は `1fr` で決めて、大きさはマスの側で止める**（`.akd-tile` の
+   `max-width`）。列の上限を `minmax(132px, 260px)` と書くと、Chrome は
+   **上限のほうで列の数を数える**ので、390px では1列になって、2枚ある日の
+   写真が縦に積み上がった。 */
 .akd-shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
@@ -167,6 +179,9 @@
 .akd-tile {
   display: block;
   width: 100%;
+  /* 1枚しか無い日に、写真が紙いっぱいに伸びないよう止める。
+     止めないと PC 幅で 840px 四方の写真が1枚だけ出る（実測）。 */
+  max-width: 260px;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--pg-rule);
@@ -181,19 +196,12 @@
   aspect-ratio: 1;
   object-fit: cover;
 }
-/* 何人ぶんあるか。**写真の上に重ねない。** 写真の地は夜景から雪まで
-   何色にでもなるので、重ねると読める日と読めない日ができる
-   （字の濃さは 4.5 を下回らせない）。紙の上に置いて、地を固定する。 */
-.akd-tile-n {
-  display: block;
-  padding: var(--sp-2) var(--sp-2) var(--sp-2);
-  border-top: 1px solid var(--pg-rule);
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink);
-}
 /* 押したら沈む。色は変えない（`docs/island-design.md` 3章）。 */
 .akd-tile:active { transform: translateY(2px); }
+/* `/about` の帯に出す見本。**押せない**ので沈まない（行き先はすぐ下の札1つ）。 */
+.akd-tile.is-flat { cursor: default; }
+.akd-tile.is-flat:active { transform: none; }
+.akd-strip-shelf { grid-template-columns: repeat(2, 1fr); margin-top: var(--sp-3); }
 
 /* --- 開いた1枚（`CardSheet`） -----------------------------------------
    作りは旅の写真を開くところ（`.nstudio`）と同じ。開くのは同じ人なので、
@@ -258,9 +266,21 @@
   font-weight: 900;
   color: var(--ink);
 }
+/* その日の企画への行き先。**紙のいちばん下。** 1日に4本立つ日があるので、
+   横に流して折り返す。縦に4行積むと、青い字の柱が1本立つ。 */
+.akd-sheet-plans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--pg-rule);
+}
 .akd-sheet-plan {
-  display: block;
-  margin-top: var(--sp-1);
+  /* 字の行き先だが、指で押す。48px は高さで取る（`docs/island-design.md` 3の2） */
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
   font-size: var(--fs-note);
   font-weight: 700;
   line-height: 1.6;
@@ -270,46 +290,184 @@
   overflow-wrap: anywhere;
 }
 
-/* 開いた1枚。**縦に収める。** 写真は縦長（1200×1600）が多いので、
-   高さを止めておかないと、人を入れ替える顔の列が画面の外へ出る。
+/* =========================================================
+   写真を1枚ひらいたところ（`components/cards/CardSheet.tsx`）
+   ---------------------------------------------------------
+   紙を1枚、手元に持ち上げた形。地は紙、押すものだけが板。
 
-   **止めるのは高さではなく幅。** 写真の箱は写真そのものの縦横比を持っていて、
-   その中の割合でキャラクターが立っている（`CardOne`）。`max-height` で
-   潰すと箱の比が写真の比と食い違い、`object-fit: cover` の切り取りぶんだけ
-   人が写真の別の場所に立つ。幅で止めれば比は保たれる。
-   縦の写真は高さが幅の 4/3 になるので、その手前で止める。 */
-.akd-open { margin-top: var(--sp-4); }
-.akd-open .akd { max-width: min(380px, 70vh); margin: 0 auto; }
-.akd-open.is-tall .akd { max-width: min(380px, 40vh); }
+   **もとは旅の写真の面のもの**（`app/css/nordic.css`）。2026-09-10 に
+   あやと島カードへ寄せたので、こちらへ移した。**名前は変えていない。**
+   同じ手ざわりのものに別の名前を付け直しても、読む人にも押す人にも
+   何も増えない。 */
+.nstudio {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-3);
+}
+/* 裏。押すと閉じる。絵の裏なので、押せる合図は持たせない。 */
+.nstudio-back {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(38, 31, 12, 0.62);
+  cursor: pointer;
+}
+.nstudio-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow: auto;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: var(--pg-paper-bg);
+  background-color: var(--pg-sheet);
+  box-shadow: var(--shadow-2);
+}
+.nstudio-close {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.nstudio-close:active { transform: translateY(4px); box-shadow: none; }
 
-.akd-pick-h {
+/* 出ているこの絵が、そのまま焼き上がりの1枚。長押しで保存できる。 */
+.nstudio-shot {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  margin: var(--sp-4) 0 0;
+}
+.nstudio-shot img {
+  display: block;
+  max-width: 100%;
+  max-height: 42vh;
+  border-radius: var(--r-0);
+  box-shadow: var(--shadow-1);
+}
+.nstudio-shot .wait { width: 100%; --wait-h: 200px; }
+.nstudio-off,
+.nstudio-note,
+.nstudio-tip {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.nstudio-ask {
   margin: var(--sp-5) 0 var(--sp-2);
   font-size: var(--fs-body);
   font-weight: 900;
   color: var(--ink);
 }
-/* 誰のぶんを見るか。**全部のマスが押せるので厚みは付けない。** */
-.akd-pick {
+
+/* 誰を入れるか。**全部のマスが押せるので、1枚ずつに厚みは付けない。** */
+.nstudio-pick {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
   gap: var(--sp-2);
 }
-.akdp {
+.npick {
   display: grid;
-  place-items: center;
-  min-height: 60px;
-  padding: var(--sp-1);
+  justify-items: center;
+  gap: var(--sp-1);
+  min-height: 88px;
+  padding: var(--sp-2) var(--sp-1);
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
   cursor: pointer;
 }
-.akdp img {
-  width: 48px;
-  height: 48px;
+.npick img,
+.npick-none {
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   object-position: center bottom;
 }
-/* いま出ている人。**塗りを変えず、枠だけで示す**（`docs/ac-reference.md` 7章6）。 */
-.akdp.is-on { border: 2px solid var(--frame-dark); }
-.akdp:active { transform: translateY(2px); }
+/* 「入れない」のマス。空けておく、を破線の枠1つで言う（`.blank` と同じ言い方）。 */
+.npick-none {
+  border: 1.5px dashed color-mix(in srgb, var(--rule) 80%, transparent);
+  border-radius: var(--r-0);
+}
+.npick i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* いま選んでいるもの。塗りではなく細い朱の枠で言う（island-world 3.2）。 */
+.npick.is-on {
+  border: var(--bw-1) solid var(--pg-pick);
+  background: color-mix(in srgb, var(--pick) 8%, var(--paper));
+}
+.npick.is-on i { color: var(--ink); }
+.npick:active { transform: translateY(2px); }
+
+/* 持って帰る。ここだけ板。
+   **紙の底に貼り付ける。** 立てる人が12人いると選ぶマスだけで3段になり、
+   いちばんやりたいこと（持って帰る）が紙の外へ出る。地は紙と同じ色で
+   敷いて、下をくぐる絵が透けないようにする。 */
+.nstudio-save {
+  position: sticky;
+  bottom: calc(var(--sp-5) * -1);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+  padding: var(--sp-3) 0 var(--sp-5);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--pg-sheet) var(--sp-3),
+    var(--pg-sheet)
+  );
+}
+.nstudio-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  box-shadow: var(--pop);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.nstudio-go:active { transform: translateY(6px); box-shadow: none; }
+.nstudio-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+/* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
+   板を2つ横に並べると、どちらが本筋か分からなくなる。
+   本筋は「ほぞんする」で、こちらは効かなかった人のための逃げ道。 */
+.nstudio-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+}

@@ -103,14 +103,14 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
               },
               { n: <Flag slug={r.country} size={30} />, label: "借りたキッチン", note: c?.name },
               { n: steps.length, unit: "日", label: "かかった日数", note: steps.map((s) => s.label).join(" → ") },
-              { n: kindLabel(r.kind), label: "どんな料理", note: "スタンプ帳の分けかた" },
+              { n: kindLabel(r.kind), label: "どんな料理" },
             ]}
           />
         </Zone>
 
         {day && day.people > 0 && (
           <Zone>
-            <H art={<ArtPot size={32} />} note={day.there.length ? `${day.there.length}人が島にいる` : undefined}>
+            <H art={<ArtPot size={32} />}>
               この1品は、ひとりで作っていない
             </H>
             <KitchenDay t={day} />

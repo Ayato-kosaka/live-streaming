@@ -58,7 +58,13 @@ export default function MeButton() {
       <span className="ih-me-i" aria-hidden>
         {initial}
       </span>
-      {chara?.icon && <img src={drive(chara.icon, 96)} alt="" />}
+      {chara?.icon ? (
+        <img src={drive(chara.icon, 96)} alt="" />
+      ) : (
+        /* 島のキャラクターが無い人（配信する側は住人の表に居ない）は、
+           毎晩入れ直る YouTube のアイコン。**字に落とさない。** */
+        user.channelPhoto && <img src={user.channelPhoto} alt="" />
+      )}
     </Link>
   );
 }

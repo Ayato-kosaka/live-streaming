@@ -25,13 +25,10 @@ export const metadata: Metadata = {
 export default function MePage() {
   return (
     <PageShell crumbs={[{ label: "じぶんのこと" }]}>
-      <PageHead
-        icon="hut-home"
-        title="じぶんのこと"
-        /* 1行に収める。**旅の道具はこの下に来る。** 2文書くと 390×844 の
-           1画面から送りのボタンが押し出される（撮って決めた）。 */
-        lead="貼った付箋、出した企画、島にいるじぶん。"
-      />
+      {/* 添え書きは置かない。**すぐ下に顔と名前が出る**ので、何の面かは
+          読まなくても分かる。中身を言い直すだけの1行は、1画面ぶんの
+          いちばん上を使うだけ（`docs/island-design.md` 5章）。 */}
+      <PageHead icon="hut-home" title="じぶんのこと" />
       {/* 企画の表は面（server）で引いて値だけ渡す。カードに出る「その日の
           企画」はこれで引く。client から `content/plans.ts`（20KB）を
           読ませないため。 */}

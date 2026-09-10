@@ -47,7 +47,7 @@ import Longer from "@/components/ui/Longer";
  *
  * 消すのとは違う。**分からないと決めたことも1つの答え**で、表に残さないと
  * 翌朝また「新規」として赤くなる。禁止の赤い印は置かない
- * （`components/nordic/PhotoStudio.tsx` の「入れない」と同じ扱い）。
+ * （`components/cards/CardSheet.tsx` の「入れない」と同じ扱い）。
  */
 
 /** 状態の呼び名。**画面には英語を出さない。** */
@@ -136,13 +136,7 @@ export default function DonorLinks() {
   const live = (rows ?? []).map((x) => x.donor.state);
 
   return (
-    <section className="panel paper">
-      <h2>投げ銭を、YouTube につなぐ</h2>
-      <p className="muted">
-        {"Doneru はチャンネルを持っていません。ここで結ぶと、" +
-          "翌朝からその人にもカードが届きます。"}
-      </p>
-
+    <>
       {rows === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
@@ -151,10 +145,7 @@ export default function DonorLinks() {
       ) : rows.length === 0 ? (
         <div className="blank">
           <b>まだ1人も入っていません</b>
-          <p>
-            投げ銭が届くと、翌朝の取り込みがここに並べます。先に分かっている人が
-            いれば、下から入れておけます。
-          </p>
+          <p>分かっている人がいれば、下から先に入れておけます。</p>
         </div>
       ) : (
         <>
@@ -168,7 +159,6 @@ export default function DonorLinks() {
               1人でも残っているあいだ落ち続ける（`doneru_supporters.py`）。 */}
           <Group
             title="紐付け待ち"
-            lead="ここが空になると、毎朝の取り込みが緑に戻る"
             rows={waiting}
             onChanged={changed}
             onDropped={dropped}
@@ -186,19 +176,18 @@ export default function DonorLinks() {
               同じ名前でスパチャが続く）ので、畳みの中には残す。 */}
           {unknown.length > 0 && (
             <Fold title="分からないと決めた人" lead={`${unknown.length}人`}>
-              <p className="muted mp-small">
-                分かったら、ここで打てます。ふだんは開かなくて大丈夫です。
-              </p>
-              <ul className="mp-care">
-                {unknown.map((x) => (
+              {/* **ここも畳む。** 一度「分からない」と決めた人は減らないので、
+                  積み上がる一方の並びになる（`components/ui/Longer.tsx`）。 */}
+              <Longer items={unknown} first={5} step={10} unit="人" className="mp-care">
+                {(x) => (
                   <Row
                     key={x.donor.viewerPk}
                     donor={x.donor}
                     onChanged={changed}
                     onDropped={dropped}
                   />
-                ))}
-              </ul>
+                )}
+              </Longer>
             </Fold>
           )}
           {/* つないである人は、ふだん触らない。畳んで下に置く。 */}
@@ -226,20 +215,18 @@ export default function DonorLinks() {
           いま読めませんでした。電波の届くところで開き直すと出ます。
         </p>
       )}
-    </section>
+    </>
   );
 }
 
 /** ひとまとまり。0人のときは、見出しごと出さない（空の見出しを並べない）。 */
 function Group({
   title,
-  lead,
   rows,
   onChanged,
   onDropped,
 }: {
   title: string;
-  lead: string;
   rows: Slot[];
   onChanged: (d: Donor) => void;
   onDropped: (pk: string) => void;
@@ -249,12 +236,11 @@ function Group({
     <div className="mp-donor-group">
       <p className="mp-donor-h">
         <b>{title}</b>
-        <i>{lead}</i>
       </p>
       {/* 1人ぶんが「名前・いまの状態・書く欄2つ・押しどころ」の4段。
-          **新しい人は毎晩入る**ので、はじめは5人だけ出す（#225）。
-          上から順に片づける道具なので、6人目が見えている必要はない。 */}
-      <Longer items={rows} first={5} step={10} unit="人" className="mp-care">
+          **新しい人は毎晩入る**ので、はじめは4人だけ出す。
+          上から順に片づける道具なので、5人目が見えている必要はない。 */}
+      <Longer items={rows} first={4} step={12} unit="人" className="mp-care">
         {(x) => (
           <Row
             key={x.donor.viewerPk}
