@@ -832,95 +832,100 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 
 ---
 
-## 3. Git（`site/content/`）— 手で書くもの
+## 3. Git（`site/content/`）— 人が書くものと、機械が焼くもの
 
-レビューして育てたいものは、DB ではなくコードに置く。
+レビューして育てたいものは、DB ではなくコードに置く。置き方は2つに分かれる。
 
-### 3.1 手で書くもの
+**分かれ目は「BigQuery を読めば答えが出るか」。** 数える・並べる・絞るは機械にできる。
+**どれを載せるかは、載せる理由がいる。** 理由は BigQuery に入っていない。
+仕分けの全体と、そう決めた理由は [`island-fresh.md`](island-fresh.md)。
 
-| ファイル | 中身 |
-| --- | --- |
-| `site.ts` | プロフィール・外部リンク・数字の焼き込み値（API が返るまでの控え） |
-| `streamTypes.ts` | 配信の型5つ |
-| `recipes.ts` | 作ってきた料理（**クッキング・スタンプ帳の元**） |
-| `countries.ts` | 歩いた国と、滞在期間 |
-| `chapters.ts` | 島の連なり（章）と、その期間 |
-| `legends.ts` | 伝説の企画8つ |
-| `apps.ts` | 作っているアプリ |
-| `plans.ts` | これからの企画 |
-| `chatter.ts` | 住人のセリフ |
-| `voice.ts` | 画面に出る言葉ぜんぶ |
-| `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` | 島の景色・目次・ルーレット・日付から企画を引く表 |
+### 3.1 人が書く（**機械に決めさせると嘘になる**）
 
-### 3.2 焼くもの（自動生成。手で書き換えない）
+| ファイル | 中身 | なぜ機械にできないか |
+| --- | --- | --- |
+| `recipes.ts` | 作ってきた料理（**クッキング・スタンプ帳の元**） | 料理名・種類・**スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
+| `countries.ts` | 歩いた国と、滞在期間 | どの街にいつからいつまでいたか。本人しか知らない |
+| `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
+| `legends.ts` | 伝説の企画8つ | どれを伝説と呼ぶか |
+| `plans.ts` `apps.ts` | これからの企画／作っているアプリ | 選定 |
+| `python/data/shorts.json` | ショートの一覧（`shorts.ts` の元） | **BigQuery にショートは1本も入っていない** |
+| `python/voices_picks.json` | 他己紹介の抜粋（`voices.ts` の元） | どの声を載せるか |
+| `python/kitchen_talk_picks.json` | その日の台所の引用（`kitchenTalk.ts` の元） | 機械が選ぶと「こんばんは」が並ぶ |
+| `site.ts` `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章 |
+| `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表 | 決めごと |
 
-**元のスクリプトを直してから作り直す。**
+### 3.2 機械が焼く（**手で書き換えない**）
+
+**元のスクリプトを直してから作り直す。** さらに2つに分かれる。
+
+**(a) 毎晩ひとりでに焼ける** — 入力が BigQuery だけ。人が何も決めなくてよい
 
 | 焼かれるもの | 元 | 回すもの |
 | --- | --- | --- |
 | `chapterStats.ts` `chapterStreams.ts` | BigQuery + `chapters.ts` | `python/build_chapter_stats.py` |
-| `countryStats.ts` | BigQuery + `countries.ts` | `python/build_country_stats.py` |
-| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
-| `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
-| `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
 | `residents.ts` | BigQuery + `python/residents_map.json` | `python/build_residents.py` |
-| `kitchenTalk.ts` | BigQuery + `recipes.ts` + `residents.ts` | `python/build_kitchen_talk.py` |
-| `legendDays.ts` | BigQuery + `legends.ts` | `python/build_legend_days.py` |
-| `voices.ts` | BigQuery + `python/voices_picks.json` | `python/build_voices.py` |
-| `shorts.ts` | `python/data/shorts.json`（手で足す表） | `python/build_shorts.py --build` |
-| `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `python/build_nordic.py` / `build_nordic_map.py` |
-| `atlas/route.json` + `atlas/c/*.json` | 世界地図データ + `countries.ts` | `python/build_world_route.py` |
-| `sprites.json` | `site/public/sprites/*.webp` | `tools/sprites/manifest.mjs` |
-| `characterBox.ts` | 住人のキャラクター画像 | `tools/sprites/avatars.py` → `charbox.py` |
+| `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
+| `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
 
-### 3.3 **ここを回すものは、どこにも無い**
+**(b) 人が上流を書いたあとに焼く** — 上流が止まっていれば、下流も止まる
 
-**上の表のスクリプトは、ひとつも定時で走っていない。**
-`.github/workflows/` で cron を持っているのは `schedule_fetch_chat.yml` と
-`fetch_doneru_donations.yml` の2本だけで、どちらも **BigQuery と Firestore しか触らない**。
-Hosting のデプロイ（`npm run build:web`）も python を1行も通さない。
+| 焼かれるもの | 元 | 回すもの | 待っているもの |
+| --- | --- | --- | --- |
+| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` | `countries.ts` |
+| `countryStats.ts` | `python/data/country_stats.json` | `python/build_country_stats.py --build` | `countries.ts`（＋取り置きの取り直し） |
+| `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `python/build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` |
+| `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `python/build_legend_days.py` | `legends.ts` |
+| `voices.ts` | `python/voices_picks.json` | `python/build_voices.py --build` | `voices_picks.json` |
+| `shorts.ts` | `python/data/shorts.json` | `python/build_shorts.py --build` | `shorts.json` |
+| `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `python/build_nordic.py` / `build_nordic_map.py` | 元の JSON（**リポジトリに無い**） |
+| `atlas/route.json` + `atlas/c/*.json` | 世界地図データ + `countries.ts` | `python/build_world_route.py` | `countries.ts` |
+| `sprites.json` | `site/public/sprites/*.webp` | `tools/sprites/manifest.mjs` | 絵の追加 |
+| `characterBox.ts` | 住人のキャラクター画像 | `tools/sprites/avatars.py` → `charbox.py` | 絵の追加 |
 
-つまり **BigQuery と Firestore は毎晩ひとりでに新しくなるのに、
-`site/content/` は誰かが手で焼いて commit するまで、焼いた日のまま止まる。**
-デプロイを何度しても、止まった中身がそのまま何度も出ていく。
+**(b) の4本は BigQuery を引かない。** `build_country_stats` `build_kitchen_talk`
+`build_legend_days` `build_voices` は、取り置きの JSON を焼き直すだけ
+（`build_legend_days` は `bigquery` を import すらしていない）。
+**先にその JSON を取り直さないと、回しても同じものが出る。**
+取り直す SQL は各スクリプトの `--sql` が出す。
 
-**焼き直したかどうかは、ファイルの commit 日では分からない。**
-別の理由で触られた日が付くだけで、中身は古いままのことがある。
-中身の最新を見る（`chapterStats.ts` `chapterStreams.ts` は冒頭の「数えた日」、
-`onThisDay.ts` は `LATEST_DAY`、ほかは中の日付のいちばん新しいもの）。
+### 3.3 毎晩ひとりでに焼く口（`rebake.yml`）
 
-### 焼き込んである数字を新しくする
+**焼き込みは、Hosting を配り直しても動かない**（`npm run build:web` は expo export →
+public コピー → next build で、python を1行も通らない）。置いたままにすると、
+取り込みだけが進んで**画面の数字が止まる。** 実際に 2026-09-05 で止まっていた。
 
-**毎晩ひとりでに新しくなるのは BigQuery と Firestore だけ。** `site/content/` に
-焼き込んである数字は、cron でも Hosting のデプロイでも動かない
-（`npm run build:web` は expo export → public コピー → next build で、python を1行も通らない）。
-置いたままにすると、取り込みだけが進んで**画面の数字が止まる。**
+`.github/workflows/rebake.yml`（**島の数字を焼き直す**）が
 
-新しくするのは Actions の **「島の数字を焼き直す」**（`.github/workflows/rebake.yml`）。
-`workflow_dispatch` だけで、cron は付けていない。**押すもの。**
+- **`schedule` 21:30 UTC**（取り込み 20:00 UTC の後ろ）に、上の **(a) の4本**を焼いて、
+  変わっていれば master に入れ、Hosting も配る
+- **`workflow_dispatch`** で手からも押せる。既定は `dry_run: true`（**見るだけ**）。
+  `scripts` に名前を書けば選べる。**allowlist に無い名前は走らずに落ちる**
 
-| スクリプト | 焼く先 | 元 |
-| --- | --- | --- |
-| `build_chapter_stats.py` | `chapterStats.ts` `chapterStreams.ts` | BigQuery |
-| `build_residents.py` | `residents.ts` | BigQuery |
-| `build_stream_peaks.py` | `streamPeaks.ts` | BigQuery |
-| `build_on_this_day.py` | `onThisDay.ts` | BigQuery |
-| `build_country_stats.py` | `countryStats.ts` | `python/data/country_stats.json`（取り置き） |
-| `build_kitchen_talk.py` | `kitchenTalk.ts` | `python/data/kitchen_*.json`（取り置き） |
+commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` が 1.5倍の幅を
+超えて動いたら落とす**（実際に 61 → 174 になったことがある）のと、
+**焼いた TS で `next build` が通らなければ落とす**。
 
-**下の2本は BigQuery を引かない。** 取り置きの JSON を焼き直すだけなので、
-回しても数字は動かない。新しくするには先にその JSON を取り直す。
-
-依存が2つある。`build_on_this_day` は `streamPeaks.ts` を読み、
-`build_kitchen_talk` は `residents.ts` を読む。**焼く順はワークフロー側で固定してある。**
-
-入力は3つ。`scripts`（空なら6本ぜんぶ。**allowlist に無い名前は走らずに落ちる**）、
-`dry_run`（既定 **true**。何がどれだけ変わるかを出して終わる）、
-`deploy`（既定 false。true なら commit のあと Hosting も起動する）。
-
-`cityStreams.ts` はここに入れていない。**いまの中身は古い版のスクリプトで焼かれていて、
-焼き直すと選び直しになる**（並びごと変わる）。入れる前に、選び方の変化を確かめる必要がある。
+`cityStreams.ts` は allowlist に入れていない。**いまの中身は古い版のスクリプトで
+焼かれていて、焼き直すと選び直しになる**（トビリシは滞在窓に配信が119本あるので
+並びごと変わる）。「新しくなる」ではなく**「別物になる」**。
 `nordic.ts` は元の JSON がリポジトリに無いので、そもそも回せない。
+
+**(b) を新しくするのは人の仕事。** 手順は `/island-fresh`。
+
+### 3.4 焼き直したかどうかは、commit 日では分からない
+
+別の理由で触られた日が付くだけで、中身は古いままのことがある。**中身の最新を見る。**
+
+| ファイル | どこを見るか |
+| --- | --- |
+| `chapterStats.ts` `chapterStreams.ts` | 冒頭の「数えた日」 |
+| `onThisDay.ts` | `LATEST_DAY` |
+| `residents.ts` | `ACTIVE_FRIENDS` と `STREAM_DAYS` |
+| `streamPeaks.ts` | `"k":` の数（日付を持たない） |
+| ほか | 中の日付のいちばん新しいもの |
+
+一覧を出すコマンドは `/island-fresh` の1章にある。
 
 ---
 
