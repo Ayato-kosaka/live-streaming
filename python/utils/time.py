@@ -8,7 +8,7 @@ first_seen_at を基準としたリトライ判定ロジックを提供する。
 from datetime import datetime, timedelta
 from typing import Optional
 
-from config import RETRY_DELAY_SECONDS, MAX_RETRY_PERIOD_SECONDS
+from config import RETRY_DELAY_SECONDS, MAX_RETRY_PERIOD_SECONDS, CRON_JITTER_SECONDS
 
 
 def should_retry_within_24h(first_seen_at: datetime, now: Optional[datetime] = None) -> bool:
@@ -30,7 +30,10 @@ def should_retry_within_24h(first_seen_at: datetime, now: Optional[datetime] = N
         now = datetime.utcnow()
     
     elapsed = now - first_seen_at
-    return elapsed < timedelta(seconds=RETRY_DELAY_SECONDS)
+    # **ぶれのぶんだけ窓を広げる。** ちょうど24時間のところに窓の縁を置くと、
+    # 翌晩のジョブが数十分遅れただけで WAITING ではなく FAILED に倒れる。
+    # 倒れても7日間は拾い直すので直りはするが、失敗として記録が残る。
+    return elapsed < timedelta(seconds=RETRY_DELAY_SECONDS + CRON_JITTER_SECONDS)
 
 
 def should_skip_after_7days(first_seen_at: datetime, now: Optional[datetime] = None) -> bool:
@@ -62,9 +65,13 @@ def calculate_next_retry_at(
     """
     次回リトライ時刻を計算
     
-    初回確認時刻 + 24時間を基準とする。
-    これにより、翌日の同時刻頃に再実行される。
-    
+    初回確認時刻 + 24時間から、**定時実行のぶれのぶんだけ手前に置く。**
+
+    きっかり24時間後に置くと、翌晩のジョブが前の晩より少しでも早く走った
+    ときに拾われず、まる1日待つことになる（`CRON_JITTER_SECONDS` に実例）。
+    選ぶのは「翌日のジョブで拾われること」であって、24時間という数字そのもの
+    ではない。日に1回しか走らないので、手前に置いても同じ晩に二度拾わない。
+
     Args:
         first_seen_at: 初めて処理対象になった時刻
         now: 現在時刻（使用しない、インターフェース統一のため保持）
@@ -72,7 +79,7 @@ def calculate_next_retry_at(
     Returns:
         次回リトライ予定時刻
     """
-    return first_seen_at + timedelta(seconds=RETRY_DELAY_SECONDS)
+    return first_seen_at + timedelta(seconds=RETRY_DELAY_SECONDS - CRON_JITTER_SECONDS)
 
 
 def get_current_utc() -> datetime:
