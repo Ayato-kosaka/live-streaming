@@ -2,6 +2,7 @@
 
 import { firstLetter } from "@/lib/firstLetter";
 import { RESIDENTS } from "@/content/residents";
+import { charFit } from "@/content/characterBox";
 import { useResidentDays } from "@/lib/residentDays";
 
 /** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
@@ -27,6 +28,11 @@ const drive = (id: string, size: number) =>
  *
  * 顔に出すのは `channelPhoto`（毎晩 islandChannels から入れ直る）。
  * ログインした日のまま止まる `photo` は使わない（`docs/island-misses.md` #1）。
+ *
+ * キャラクターは**枠ではなく、中に描かれた部分**でそろえる
+ * （`content/characterBox.ts`。島・図鑑・台所と同じ）。枠に合わせて詰めると、
+ * 同じ 84px の器でも、描かれた大きさが人によって 1.50 倍ちがう
+ * （寝そべった絵は枠の高さの 59% しか使っていない）。
  *
  * ## 数字は1つだけ
  *
@@ -55,7 +61,15 @@ export default function MeHero({
     <div className="mh">
       <span className="mh-pics">
         {chara?.icon ? (
-          <img className="mh-chara" src={drive(chara.icon, 256)} alt="" />
+          <img
+            className="mh-chara"
+            src={drive(chara.icon, 256)}
+            alt=""
+            /* 0.72 は、84px の器から**誰も出ない**上限（0.73）のすぐ下。
+               ここを 0.8 にすると、寝そべった絵（横に 1.37 倍広い）が
+               紙の左の縁まで届いて、切れているように見える。撮って戻した。 */
+            style={charFit(chara.icon, 0.72, true)}
+          />
         ) : null}
         {face ? (
           <img className={`mh-face${chara?.icon ? " is-badge" : ""}`} src={face} alt="" />

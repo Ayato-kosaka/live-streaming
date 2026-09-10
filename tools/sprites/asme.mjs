@@ -317,9 +317,13 @@ export async function apply(ctx, opts = {}) {
      そこに居ない。看板の右はしがどう出るかは、この人でしか確かめられない
      （キャラのある人で撮ると絵が出てしまい、落ちたときの形が見えない）。 */
   const nochara = opts.nochara ?? process.env.NOCHARA === "1";
+  /* 誰として撮るか。**看板の右はしは1人ぶんしか出ない**ので、22人の絵を
+     見るには人を差し替えて撮り直すしかない。チャンネルを渡すと、
+     その人のキャラクターで撮れる（`ASCHAN=` でも渡せる）。 */
+  const channel = opts.channel ?? process.env.ASCHAN ?? CHANNEL;
   const who = nochara ?
     { name: "@あやとグルメアプリ", channel: "UCnobodynobodynobody00" } :
-    { name: NAME, channel: CHANNEL };
+    { name: NAME, channel };
   const json = (r, body) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
 

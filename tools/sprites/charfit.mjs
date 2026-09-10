@@ -3,6 +3,12 @@
  *
  *   SPORT=4502 node charfit.mjs            # 島・図鑑・章の島をまとめて
  *   SPORT=4502 PAGES=/index.html node charfit.mjs
+ *   SPORT=4502 ME=1 node charfit.mjs       # 看板の右はし（22人に化けて1人ずつ）
+ *
+ * **看板の右はしは1人ぶんしか出ない。** ログインした人のキャラクターだけを
+ * 出すところなので、一覧のように「1枚の絵の中でばらつきを数える」ができない。
+ * 22人に化けて撮り直し、**別々の絵を並べて**ばらつきを見る。
+ * 並べた1枚は /tmp/hdrfit/sheet.png に置く（**出す前に自分で開いて見ること**）。
  *
  * 見るのは3つ。
  *
@@ -15,12 +21,20 @@
  *              画像の枠ではなく **中身（不透明な画素）の高さ**で測る。
  *              枠が同じ 640×640 でも、中の絵は幅 47% だったり高さ 59% だったりする
  *
+ * 器が**丸い**とき（看板の右はし）は、矩形で見ても切れているか分からない。
+ * 円の外は器の矩形の中にあるからで、`getBoundingClientRect` では出ない。
+ * **切ったものと切らないものの2枚を撮って、絵が変わるかで見る**（`overflow` を
+ * 外して撮り直し、1バイトでも違えば、その差ぶんが円で切られていた画素）。
+ *
  * 絵は `python3 tools/sprites/avatars.py` で先に落としておくこと。
  * 落とさずに撮ると全員が同じ1枚になって、ばらつきを数えても意味が無い。
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { readFileSync } from "fs";
+import { apply } from "./asme.mjs";
+import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 
 const SPORT = process.env.SPORT || "4502";
 const PAGES = (process.env.PAGES || "/index.html,/friends.html,/island/nordic.html").split(",");
@@ -32,7 +46,171 @@ const inkBox = new Map(
   Object.entries(box).map(([k, [x, y, w, h, ar]]) => [k, { x0: x, y0: y, fw: w, fh: h, ar }]),
 );
 
+/**
+ * 器の中で、絵の**描かれた部分**が画面のどこに来るか。
+ *
+ * contain / meet なら収まる最大の相似形、cover / slice なら覆う最小、
+ * `none` は枠そのまま。`transform` は `getBoundingClientRect` に既に
+ * 入っているので、ここでは見なくてよい。
+ */
+function drawn(f, ink) {
+  const cover = f.fit.includes("slice") || f.fit === "cover";
+  const none = f.fit === "none" || f.fit === "fill";
+  const kx = f.w, ky = f.h / ink.ar; // 枠の幅を1としたときの尺度
+  const fw = none ? f.w : cover ? Math.max(kx, ky) : Math.min(kx, ky);
+  const fh = none ? f.h : fw / ink.ar;
+  const dw = ink.fw * fw, dh = ink.fh * fh;
+  // 枠の左上（object-position は中央、下ぞろえのものだけ下端に合わせる）
+  const bottom = f.fit.includes("YMax") || f.fit.includes("bottom");
+  const fx = f.x + (f.w - fw) / 2;
+  const fy = bottom ? f.y + f.h - fh : f.y + (f.h - fh) / 2;
+  const L = fx + ink.x0 * fw, T = fy + ink.y0 * fh;
+  return { L, T, R: L + dw, B: T + dh, dw, dh };
+}
+
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+
+/* ───────── 看板の右はし（1人ぶんしか出ないところ） ───────── */
+if (process.env.ME === "1") {
+  const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const PAGE = process.env.MEPAGE || "/board.html";
+  const OUT = "/tmp/hdrfit";
+  mkdirSync(OUT, { recursive: true });
+  /* 誰の絵があるかは名簿だけが持っている。**ここで並べ直さない**
+     （`docs/island-misses.md` 決めごと3）。 */
+  const src = readFileSync(`${ROOT}/site/content/residents.ts`, "utf8");
+  const folk = [...src.matchAll(/icon:\s*"([^"]+)"[^}]*channel:\s*"([^"]+)"/g)]
+    .map((m) => ({ icon: m[1], channel: m[2] }));
+
+  const shots = [];
+  let cut = 0;
+  for (const [i, who] of folk.entries()) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
+    await apply(ctx, { channel: who.channel });
+    await offline(ctx);
+    const p = await ctx.newPage();
+    await p.goto(`http://localhost:${SPORT}${PAGE}`, { waitUntil: "load", timeout: 60000 });
+    await p.waitForFunction(
+      () => {
+        const im = document.querySelector(".ih-me img");
+        return !!im && im.complete && im.naturalWidth > 0;
+      },
+      { timeout: 20000 },
+    ).catch(() => {});
+    await p.waitForTimeout(400);
+    const m = await p.evaluate(() => {
+      const a = document.querySelector(".ih-me");
+      const im = a?.querySelector("img");
+      if (!a || !im) return null;
+      const ra = a.getBoundingClientRect(), ri = im.getBoundingClientRect();
+      const cs = getComputedStyle(im), ca = getComputedStyle(a);
+      const sm = /googleusercontent\.com\/d\/([^=?/]+)/.exec(im.getAttribute("src") || "");
+      return {
+        id: sm ? sm[1] : "",
+        fit: cs.objectFit,
+        x: ri.x, y: ri.y, w: ri.width, h: ri.height,
+        bx: ra.x, by: ra.y, bw: ra.width, bh: ra.height,
+        round: ca.borderRadius,
+        字: a.querySelector(".ih-me-i") ? getComputedStyle(a.querySelector(".ih-me-i")).visibility : "無し",
+      };
+    });
+    if (!m || !m.id) { console.log(`  ${i + 1}人目 看板に絵が出ていない`); await ctx.close(); continue; }
+    const ink = inkBox.get(m.id);
+    const d = ink ? drawn(m, ink) : null;
+    /* 丸で切られた画素があるか。**切るのを外して撮り直し、絵が変わるかで見る。**
+       矩形で測ると、円の外・器の中にある画素が「切れていない」と出る。 */
+    const clip = { x: m.bx - 6, y: m.by - 6, width: m.bw + 12, height: m.bh + 12 };
+    const a1 = await p.screenshot({ clip });
+    await p.evaluate(() => {
+      const a = document.querySelector(".ih-me");
+      if (a) a.style.overflow = "visible";
+    });
+    const a2 = await p.screenshot({ clip });
+    const clipped = !a1.equals(a2);
+    if (clipped) cut++;
+    writeFileSync(`${OUT}/${String(i + 1).padStart(2, "0")}-${m.id}.png`, a1);
+    /* じぶんのこと（`/me`）の、島のキャラクター。**看板と同じ人の絵**なので
+       ついでに測る。ここも1人ぶんしか出ないので、一覧では数えられない。 */
+    let mh = 0;
+    await p.goto(`http://localhost:${SPORT}/me.html`, { waitUntil: "load", timeout: 60000 }).catch(() => {});
+    await p.waitForFunction(
+      () => {
+        const im = document.querySelector(".mh-chara");
+        return !!im && im.complete && im.naturalWidth > 0;
+      },
+      { timeout: 20000 },
+    ).catch(() => {});
+    const mm = await p.evaluate(() => {
+      const im = document.querySelector(".mh-chara");
+      if (!im) return null;
+      const r = im.getBoundingClientRect();
+      const sm = /googleusercontent\.com\/d\/([^=?/]+)/.exec(im.getAttribute("src") || "");
+      return { id: sm ? sm[1] : "", fit: getComputedStyle(im).objectFit + " " + getComputedStyle(im).objectPosition,
+        x: r.x, y: r.y, w: r.width, h: r.height };
+    });
+    if (mm && inkBox.has(mm.id)) {
+      const dd = drawn(mm, inkBox.get(mm.id));
+      mh = Math.sqrt(dd.dw * dd.dh);
+    }
+    shots.push({ n: i + 1, id: m.id, size: d ? Math.sqrt(d.dw * d.dh) : 0, mh, clipped, png: a1.toString("base64"), 字: m.字 });
+    await ctx.close();
+  }
+  /* 顔写真の人（あやと）。キャラクターが無いので、丸く収まっているのが正しい */
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
+    await apply(ctx, { nochara: true });
+    await offline(ctx);
+    const p = await ctx.newPage();
+    await p.goto(`http://localhost:${SPORT}${PAGE}`, { waitUntil: "load", timeout: 60000 });
+    await p.waitForTimeout(2500);
+    const r = await p.evaluate(() => {
+      const a = document.querySelector(".ih-me");
+      const im = a?.querySelector("img");
+      const b = a?.getBoundingClientRect();
+      return a ? { x: b.x, y: b.y, w: b.width, h: b.height, 絵: im ? (im.naturalWidth > 0 ? "出ている" : "落ちた") : "無し" } : null;
+    });
+    if (r) {
+      const png = await p.screenshot({ clip: { x: r.x - 6, y: r.y - 6, width: r.w + 12, height: r.h + 12 } });
+      writeFileSync(`${OUT}/00-youtube.png`, png);
+      shots.push({ n: 0, id: "YouTubeの顔写真", size: 0, clipped: false, png: png.toString("base64"), 字: r.絵 });
+    }
+    await ctx.close();
+  }
+
+  const sizes = shots.filter((x) => x.size > 0).map((x) => x.size).sort((x, y) => x - y);
+  const lo = sizes[0], hi = sizes[sizes.length - 1];
+  for (const x of shots) {
+    console.log(`   ${String(x.n).padStart(2)}  ${x.size ? x.size.toFixed(1).padStart(5) + "px" : "     －"}  ${x.clipped ? "★切れている" : "収まっている"}  ${x.id}`);
+  }
+  console.log(`\n看板  ${shots.length - 1}人  描かれた大きさ ${lo.toFixed(1)}〜${hi.toFixed(1)}px  ばらつき ${(hi / lo).toFixed(2)}倍  切れている ${cut}人`);
+  const ms = shots.filter((x) => x.mh > 0).map((x) => x.mh).sort((x, y) => x - y);
+  if (ms.length) {
+    console.log(`じぶんのこと（.mh-chara）  ${ms.length}人  描かれた大きさ ${ms[0].toFixed(1)}〜${ms[ms.length - 1].toFixed(1)}px  ばらつき ${(ms[ms.length - 1] / ms[0]).toFixed(2)}倍`);
+  }
+
+  /* 並べた1枚。**作って終わりにしない。開いて見る。** */
+  const sheet = await b.newContext({ viewport: { width: 1180, height: 900 }, deviceScaleFactor: 2 });
+  const sp = await sheet.newPage();
+  await sp.setContent(`<style>
+    body { margin:0; padding:18px; background:#efe6cf; font:13px/1.4 sans-serif; color:#3a3222; }
+    .g { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+    figure { margin:0; display:grid; justify-items:center; gap:4px; }
+    img { width:132px; height:132px; image-rendering:auto; }
+    b { font-weight:700; }
+    em { font-style:normal; color:#8a2f1f; }
+  </style><div class="g">${shots
+    .map(
+      (x) => `<figure><img src="data:image/png;base64,${x.png}"><b>${x.n === 0 ? "顔写真" : x.n + "人目"}</b>` +
+        `<span>${x.size ? x.size.toFixed(1) + "px" : ""}${x.clipped ? " <em>切れ</em>" : ""}</span></figure>`,
+    )
+    .join("")}</div>`);
+  await sp.waitForTimeout(300);
+  await sp.screenshot({ path: `${OUT}/sheet.png`, fullPage: true });
+  console.log(`      並べた1枚 → ${OUT}/sheet.png`);
+  await b.close();
+  process.exit(0);
+}
+
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
 await offline(ctx);
 const p = await ctx.newPage();
@@ -79,22 +257,7 @@ for (const page of PAGES) {
     const ink = inkBox.get(f.id);
     if (!ink) continue;
     shots++;
-    /* 器の中で、絵の枠がどう置かれるか。contain / meet なら収まる最大の相似形、
-       cover / slice なら覆う最小。`none` は枠そのまま。 */
-    const cover = f.fit.includes("slice") || f.fit === "cover";
-    const none = f.fit === "none" || f.fit === "fill";
-    const kx = f.w, ky = f.h / ink.ar; // 枠の幅を1としたときの尺度
-    const fw = none ? f.w : cover ? Math.max(kx, ky) : Math.min(kx, ky);
-    const fh = none ? f.h : fw / ink.ar;
-    // 描かれた部分の大きさ（画面px）
-    const dw = ink.fw * fw;
-    const dh = ink.fh * fh;
-    // 枠の左上（object-position は中央、下ぞろえのものだけ下端に合わせる）
-    const bottom = f.fit.includes("YMax") || f.fit.includes("bottom");
-    const fx = f.x + (f.w - fw) / 2;
-    const fy = bottom ? f.y + f.h - fh : f.y + (f.h - fh) / 2;
-    const L = fx + ink.x0 * fw, T = fy + ink.y0 * fh;
-    const R = L + dw, B = T + dh;
+    const { L, T, R, B, dw, dh } = drawn(f, ink);
     let cut = 0;
     if (f.box) {
       const o = f.box;
