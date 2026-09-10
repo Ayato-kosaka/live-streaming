@@ -6,9 +6,7 @@ import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
-/* 街の地図は作り直し中（別のブランチで実データから焼いている）。
-   出せる出来になるまで、ここには置かない。一覧は地図が無くても読める。 */
-// import CityMap from "@/components/nordic/CityMap";
+import CityMap from "@/components/nordic/CityMap";
 import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import { Mark } from "@/components/nordic/Marks";
@@ -288,11 +286,14 @@ export default async function NordicCountryPage({
             {go.length === 1
               ? `行くのは${go[0].city}だけ。`
               : `行くのは${go.map((g) => g.city).join("・")}の${go.length}つ。`}
-            {goSpots}件。
+            {goSpots}件を、見たい・食べたい・やりたい・買いたいで分けました。
           </p>
           {go.map((g) => (
             <section key={g.city} className="ncgo" id={`city-${encodeURIComponent(g.city)}`}>
               <h3>{g.city}</h3>
+              {/* 街の地図。**降りる街には必ず出す。** 日ページは「その日に着く街」
+                  しか出さないので、出発の街（カトヴィツェ）はどこにも出ていなかった */}
+              <CityMap city={g.city} />
               <Cats list={g.list} />
             </section>
           ))}
@@ -312,6 +313,7 @@ export default async function NordicCountryPage({
       {maybe.length > 0 && (
         <Panel>
           <h2>寄るかもしれないところ</h2>
+          <p className="muted">通り道にあるところ。寄るかどうかは、これから決まります。</p>
           {maybe.map((g) => (
             <CityFold key={g.city} {...g} />
           ))}
