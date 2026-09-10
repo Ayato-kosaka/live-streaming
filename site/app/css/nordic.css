@@ -1332,7 +1332,11 @@ svg.nmap {
 .nmap[data-here] .nm-leg:not(.is-done) .nm-leg-case { opacity: 0.12; }
 .nmap[data-here] .nm-leg:not(.is-done) .nm-arrow { opacity: 0.4; }
 .nmap[data-here] .nmap-pin:not(.is-done) .nm-pin-dot { fill: var(--paper-2); }
-.nmap[data-here] .nmap-pin:not(.is-done) .nm-city { opacity: 0.7; }
+/* まだ行っていない街の名前。**薄めない。** `opacity: .7` は、札の紙の上で
+   3.84〜4.05 : 1 まで落ちていた（`inkpx` の実測）。computed の `color` には
+   opacity が出ないので、宣言だけ見ていると気づけない（`CLAUDE.md`）。
+   段は薄さではなく**色の濃さ**で作る（`.cm-far` と同じ直しかた）。6.0 : 1 ある */
+.nmap[data-here] .nmap-pin:not(.is-done) .nm-city { fill: var(--ink-2); }
 
 /* --- 陸の国境。赤白の遮断棒 --- */
 .nmap .nm-border-bar { fill: var(--paper); }
@@ -2168,6 +2172,21 @@ p.nday-lead {
   box-shadow: var(--shadow-1);
   overflow: hidden;
 }
+/* 拡大図は本図のすぐ下。**間を空けすぎない。** 離すと2枚が別の街に見える */
+.cmap-frame + .cmap-frame { margin-top: 8px; }
+/* 2枚目の見出し。本図の四角に付けた札と同じ言葉・同じ紙。
+   押せないので平ら（`island-design.md` 3章3） */
+.cmap-cap {
+  display: inline-block;
+  margin: 8px 0 4px;
+  padding: 2px 12px;
+  border: var(--bw-1) solid var(--accent-deep);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 900;
+}
 .cmap-base,
 .cmap-svg {
   display: block;
@@ -2255,6 +2274,29 @@ a.cm-row.cm-buy i { background: var(--roof-gold); }
 .cm-lb-water text { fill: var(--accent-2); }
 .cm-lb-park rect { fill: var(--grass2-hi); stroke: var(--leaf-c); }
 
+/* ── 「ここを拡大した」の四角 ──────────────────────────
+   本図の上に、拡大図が写している範囲を示す。**破線にする。**
+   実線だと、地図の上の別の何か（城壁・公園のふち）に見える。
+   名前の札は、地図の名前（`.cm-label`）と同じ紙・同じ角丸で出す。 */
+.cm-zoom > rect {
+  fill: none;
+  stroke: var(--accent-deep);
+  stroke-width: 5;
+  stroke-dasharray: 20 12;
+  opacity: 0.9;
+}
+.cm-zoom-tab rect {
+  fill: var(--paper);
+  stroke: var(--accent-deep);
+  stroke-width: 3;
+  opacity: 0.96;
+}
+.cm-zoom-tab text {
+  fill: var(--ink);
+  font-weight: 900;
+  text-anchor: middle;
+}
+
 /* ── 縮尺と方角 ───────────────────────────────────────── */
 .cm-scale rect, .cm-north circle {
   fill: var(--paper);
@@ -2283,13 +2325,14 @@ a.cm-row.cm-buy i { background: var(--roof-gold); }
 }
 .cmap-key > li > span { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* 一覧の1行。**押しどころなので 44px 以上**（`island-design.md` 3章2）。
+/* 一覧の1行。**押しどころなので 48px 以上**（`island-design.md` 3章2）。
+   44px にしていたころ、実測 46px で決まりを割っていた（`hitbox.mjs`）。
    押せるので厚みを持たせる。真下・ぼかし無し（落ち影と取り違えない） */
 a.cm-row {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 48px;
   padding: 4px 10px 4px 4px;
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-1);
@@ -2330,14 +2373,49 @@ a.cm-row i b {
   line-height: 15px;
   text-align: center;
 }
-/* 窓の外のもの。**押せない**ので、厚みも枠も持たせない。
+/* 窓の外のもの。**旅程には入っている。** 地図に載らないだけなので、
+   消さずに、**同じ島の紙**で出す。裸の文で置いていたころ、上下の札から
+   浮いて「作りかけ」に見えた。
+
+   **押せないので、厚み（真下・ぼかし無しの影）は付けない**
+   （`island-design.md` 3章3）。枠と紙は持たせて、影だけ持たせない。
+   これで「札ではあるが、押すものではない」が形で分かる。
+
    字は薄めない。--ink-2 を 0.85 で薄めると、紙の暗いムラの上で
    3.95 : 1 まで落ちた（実測）。薄めるのをやめて、段は色の濃さで作る */
 .cm-far {
   display: inline-flex;
-  flex-direction: column;
-  padding: 4px 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 4px 10px 4px 4px;
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
   color: var(--ink);
   font-size: var(--fs-small);
+  font-weight: 700;
 }
-.cm-far em { font-style: normal; font-size: var(--fs-tiny); color: var(--ink-2); }
+.cm-far > span { display: flex; flex-direction: column; }
+.cm-far em { font-style: normal; font-size: var(--fs-tiny); font-weight: 700; color: var(--ink-2); }
+/* 方角の矢印。**8方位の字だけだと、どっちか分かるのに一拍かかる。**
+   丸の地は種類の色（一覧の丸と同じ並び）。矢印は焼くときに出した
+   角度ぶんだけ回してある（真北が 0）。 */
+.cm-far i {
+  flex: none;
+  display: block;
+  width: 34px;
+  height: 34px;
+  border: var(--bw-1) solid var(--frame-deep);
+  border-radius: 50%;
+  background: var(--paper);
+  font-style: normal;
+}
+.cm-far i svg { display: block; width: 74%; height: 74%; margin: 13%; }
+.cm-far i svg path { fill: var(--frame-deep); }
+.cm-far.cm-see i { background: var(--roof-sky); }
+.cm-far.cm-eat i { background: var(--roof-coral); }
+.cm-far.cm-do i { background: var(--roof-mint); }
+.cm-far.cm-buy i { background: var(--roof-gold); }
+/* 「足をのばす」の見出し。ほかの見出しと同じ形で、色だけ地（砂）に寄せる */
+.cm-key-b.cm-key-out { background: color-mix(in srgb, var(--sand-wet) 70%, var(--paper)); }

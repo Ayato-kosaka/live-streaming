@@ -376,7 +376,12 @@ SANDY = {"natural": {"beach", "sand"}}
 BLOCK = {"landuse": {"residential", "retail", "commercial", "industrial",
                      "railway", "military", "education"},
          "amenity": {"university", "hospital"}}
-PLAZA = {"place": {"square"}}
+# 広場。**`place=square` だけを見ない。**
+# OSM で広場をどう置くかは街によってばらばらで、`place=square` は少数派。
+# 歩行者専用の面（`highway=pedestrian` + `area=yes`）と市場も同じ「広場」。
+# ここを狭く見ていたので、カトヴィツェの中央広場（Rynek）が1つも拾えず、
+# 地図に出る名前が「ラヴァ川」だけになった。
+PLAZA = {"place": {"square"}, "amenity": {"marketplace"}}
 # 地区の面。**そのうち「旧市街」だけ**を別の層にして、地の色を変える。
 # ガイドブックの街地図は必ずここを塗り分けている。どこが目当ての場所かが
 # 一目で分かるのは、点でも名前でもなく**面の色**だから。
@@ -476,10 +481,22 @@ JA = {
     "Park Kościuszki": "コシチュシュコ公園", "Rynek": "中央広場",
     "Katowice": "カトヴィツェ", "Osiedle Paderewskiego": "パデレフスキ団地",
     "Dolina Trzech Stawów": "三つ池の谷", "Rawa": "ラヴァ川",
+    "Strefa Kultury": "文化地区", "Koszutka": "コシュトカ",
+    "Spodek": "スポデック",
+    "Narodowa Orkiestra Symfoniczna Polskiego Radia": "NOSPR",
+    "Muzeum Śląskie": "シレジア博物館", "Plac Wolności": "自由広場",
+    "Park Bogucki": "ボグツキ公園",
+    "Teatr Śląski im. Stanisława Wyspiańskiego": "シレジア劇場",
+    "Pomnik Powstańców Śląskich": "蜂起者の碑",
     "Białystok": "ビャウィストク", "Rynek Kościuszki": "コシチュシュコ広場",
-    "Planty": "プランティ公園", "Biała": "ビャワ川",
+    "Planty": "プランティ公園", "Park Planty": "プランティ公園",
+    "Park Centralny": "中央公園", "Biała": "ビャワ川",
     "Park Branickich": "ブラニツキ庭園", "Centrum": "中心街",
     "Bojary": "ボヤルィ", "Ogród Branickich": "ブラニツキ庭園",
+    "Cerkiew Świętego Mikołaja": "聖ニコライ教会",
+    "Bazylika Archikatedralna Wniebowzięcia Najświętszej Maryi Panny": "大聖堂",
+    "Muzeum Podlaskie w Białymstoku - Ratusz": "旧市庁舎",
+    "Warszawa": "ワルシャワ",
     # リトアニア
     "Neris": "ネリス川", "Vilnia": "ヴィルニャ川", "Vilnelė": "ヴィルニャ川",
     "Senamiestis": "旧市街", "Užupis": "ウジュピス", "Naujamiestis": "新市街",
@@ -490,7 +507,7 @@ JA = {
     "Bernardinų sodas": "ベルナルディン庭園", "Sereikiškių parkas": "ベルナルディン庭園",
     "Kalnų parkas": "三十字架の丘", "Vingio parkas": "ヴィンギス公園",
     "Katedros aikštė": "大聖堂広場", "Rotušės aikštė": "市庁舎広場",
-    "Antakalnis": "アンタカルニス",
+    "Antakalnis": "アンタカルニス", "Vilnius": "ヴィリニュス",
     # ラトビア
     "Daugava": "ダウガヴァ川", "Vecrīga": "旧市街", "Centrs": "中心街",
     "Rīgas kanāls": "運河", "Pilsētas kanāls": "運河",
@@ -498,7 +515,15 @@ JA = {
     "Esplanāde": "エスプラナーデ公園", "Vērmanes dārzs": "ヴェールマネ公園",
     "Āgenskalns": "アーゲンスカルンス", "Klusais centrs": "静かな中心街",
     "Maskavas forštate": "モスクワ地区", "Centrāltirgus": "中央市場",
-    "Doma laukums": "ドーム広場",
+    "Doma laukums": "ドーム広場", "Rīga": "リガ", "Ķīpsala": "キープサラ",
+    "Rīgas Pils": "リガ城", "Rīgas Doms": "大聖堂",
+    "Melngalvju nams": "ブラックヘッドの家", "Trīs brāļi": "三人兄弟",
+    "Svētā Pētera baznīca": "聖ペテロ教会",
+    "Brīvības piemineklis": "自由の記念碑",
+    "Rīgas Centrālā stacija": "リガ中央駅",
+    "Latvijas Nacionālais Mākslas muzejs": "国立美術館",
+    "Latvijas Nacionālā opera un balets": "国立オペラ座",
+    "Līvu laukums": "リーヴ広場",
     # エストニア
     "Vanalinn": "旧市街", "Tallinna laht": "タリン湾",
     "Soome laht": "フィンランド湾", "Suomenlahti": "フィンランド湾",
@@ -510,7 +535,14 @@ JA = {
     "Raekoja plats": "ラエコヤ広場", "Vabaduse väljak": "自由広場",
     "Tammsaare park": "タムサーレ公園", "Hirvepark": "鹿公園",
     "Snelli tiik": "スネッリ池", "Ülemiste järv": "ユレミステ湖",
-    "Pirita": "ピリタ", "Lasnamäe": "ラスナメエ",
+    "Pirita": "ピリタ", "Lasnamäe": "ラスナメエ", "Tallinn": "タリン",
+    "Maakri": "マークリ", "Toompark": "トーム公園",
+    "Toompea loss": "トームペア城", "Kadrioru loss": "カドリオルグ宮殿",
+    "Aleksander Nevski katedraal": "ネフスキー聖堂",
+    "Oleviste kirik": "聖オレフ教会", "Niguliste kirik": "聖ニコラス教会",
+    "Raekoda": "市庁舎", "Viru värav": "ヴィル門",
+    "Lennusadam": "水上飛行機港", "Patarei merekindlus": "パタレイ要塞",
+    "Estonia teatrihoone": "エストニア劇場",
     # フィンランド
     "Töölönlahti": "トーロ湾", "Kruununhaka": "クルーヌンハカ",
     "Kaivopuisto": "カイヴォプイスト公園", "Esplanadin puisto": "エスプラナーディ公園",
@@ -521,7 +553,7 @@ JA = {
     "Kauppatori": "マーケット広場", "Senaatintori": "元老院広場",
     "Sibeliuksen puisto": "シベリウス公園", "Tähtitorninvuoren puisto": "天文台の丘",
     "Suomenlahti": "フィンランド湾", "Kruunuvuorenselkä": "クルーヌヴオリ湾",
-    "Eläintarhanlahti": "エラインタルハ湾",
+    "Eläintarhanlahti": "エラインタルハ湾", "Helsinki": "ヘルシンキ",
     # スウェーデン
     "Gamla stan": "旧市街", "Riddarfjärden": "リッダー湾",
     "Djurgården": "ユールゴーデン", "Södermalm": "セーデルマルム",
@@ -532,10 +564,11 @@ JA = {
     "Stortorget": "大広場", "Slussen": "スルッセン", "Strömmen": "ストロンメン",
     "Nybroviken": "ニーブロ湾", "Vasaparken": "ヴァーサ公園",
     "Tantolunden": "タント公園", "Rålambshovsparken": "ロラムブスホフ公園",
+    "Stockholm": "ストックホルム",
 }
 
 # 名前を出す層と、その数（多いと地図が字で埋まるので、上から数個だけ）
-LABEL_MAX = {"water": 2, "district": 3, "park": 2, "square": 1, "spot": 2}
+LABEL_MAX = {"water": 2, "district": 3, "park": 2, "square": 2, "spot": 4}
 
 # **地図に書かない名前。** 「中心街」は、この地図そのものが中心街なので、
 # 書いても何も分からない（ワルシャワで「中心街」「中心街北」が2枚出て、
@@ -654,6 +687,13 @@ def build(city, win, raw, coast, spots_all):
             g = [(p["lat"], p["lon"]) for p in x["geometry"]]
             hw = t.get("highway")
             if hw:
+                # 歩行者の道でも、**閉じた面（`area=yes`）は道ではなく広場。**
+                # 線としてなぞると、広場のまん中を1本の道が横切るだけになって、
+                # 広場そのものが地図から消える
+                if (hw == "pedestrian" and t.get("area") == "yes"
+                        and len(g) >= 4 and _near(g[0], g[-1])):
+                    add_ring("plaza", g)
+                    continue
                 cls = road_class(hw)
                 if cls:
                     add_line(cls, g)
@@ -768,7 +808,7 @@ def dpath(pts, close=False):
 
 
 def _spot(x, bbox):
-    """その要素を、**窓の中のどこに置くか。**
+    """その要素を、**窓の中のどこに置くか。** `(緯度, 経度, その形の広がり)`。
 
     `out center` で来たものは center を持つが、`out geom` で来たものは持たない。
     しかも川は窓の外まで続いているので、全体の真ん中を取ると窓の外に出る。
@@ -789,15 +829,33 @@ def _spot(x, bbox):
     if not inside:
         c = x.get("center")
         if c and s <= c["lat"] <= n and w <= c["lon"] <= e:
-            return c["lat"], c["lon"]
+            return c["lat"], c["lon"], (c["lat"], c["lon"], c["lat"], c["lon"])
         return None
     inside.sort()
-    return inside[len(inside) // 2]
+    mid = inside[len(inside) // 2]
+    # 形の広がりも返す。**公園や地区は「真ん中」から遠いところに点がある。**
+    # 中心からの距離だけで「その点の名前か」を見ると、ブラニツキ庭園のように
+    # 庭ぜんぶが見どころの場所を取りこぼす
+    return mid[0], mid[1], (min(p[0] for p in inside), min(p[1] for p in inside),
+                            max(p[0] for p in inside), max(p[1] for p in inside))
 
 
 def _name(t):
     """OSM の名前を1つに寄せる。`Neris / Вілія` のような並記を落とす。"""
     return (t.get("name") or "").split(" / ")[0].split("/")[0].strip()
+
+
+def is_square(t):
+    """広場（または歩行者に開かれた通り）か。**`place=square` だけを見ない。**
+
+    どの街も中心に広場があるのに、`place=square` で置かれているのは一部だけ。
+    カトヴィツェの Rynek は `highway=pedestrian` + `area=yes`、
+    リガの中央市場は `amenity=marketplace`。ここを広げないと、
+    **街でいちばん有名な場所が地図に出ない。**
+    """
+    return (t.get("place") == "square" or t.get("historic") == "square"
+            or t.get("amenity") == "marketplace"
+            or (t.get("highway") == "pedestrian" and t.get("name")))
 
 
 # 札に入る字数。これより長い名前は書かない。**札が地図の1/3を覆う。**
@@ -835,8 +893,13 @@ def in_shape_spots(poly, n=7):
     return out
 
 
-def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
-    """名前の無い目印と、地図に書く名前を選ぶ。"""
+def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=(), avoid=(),
+                      blocks=(), label_blocks=()):
+    """名前の無い目印と、地図に書く名前を選ぶ。
+
+    `avoid` は**もう別の紙に書いた名前。** 本図と拡大図に同じ名前を2度
+    書くと、2枚が同じ場所の別の街に見える。
+    """
     bbox = win["bbox"]
     marks, cand = [], []
     labels = {"water": [], "district": [], "park": [], "square": [], "spot": []}
@@ -845,52 +908,51 @@ def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
         sp = _spot(x, bbox)
         if not sp:
             continue
-        px, py = to(*merc(*sp))
+        px, py = to(*merc(sp[0], sp[1]))
         name = _name(t)
-        ja = t.get("name:ja") or JA.get(name)
+        # **こちらの訳を先に見る。** OSM の `name:ja` は付け方がばらばらで、
+        # 同じものが街ごとに違う書き方になる（`スポデク` と `スポデック`）。
+        # 地図と本文で書き方が割れると、同じ場所だと分からない
+        ja = JA.get(name) or t.get("name:ja")
+        # 中央駅は、街と同じ名前で置かれていることがある（`Katowice`）。
+        # そのままだと「街の名前と同じ」で落とされて、**駅が地図から消える。**
+        if ja and ja == city and t.get("railway") == "station":
+            ja = f"{ja}駅"
+
+        # **番号を振った見どころは、名前も出す。** 旅程に入れて番号まで
+        # 打ったのに、地図の上では名無しの丸だった（カトヴィツェのスポデックと
+        # NOSPR、ビャウィストクのブラニツキ庭園がそうだった）。
+        # 点と同じ場所にあるものを、ただの劇場や近所の公園より上に出す
+        sc = _score(t)
+        (gs, gw, gn, ge) = sp[2]
+        (ex0, ey0), (ex1, ey1) = to(*merc(gn, gw)), to(*merc(gs, ge))
+        if any(ex0 - 70 <= q["ax"] <= ex1 + 70 and ey0 - 70 <= q["ay"] <= ey1 + 70
+               for q in pins):
+            sc += 6
 
         # 名前（日本語で書けるものだけ）
         if ja and ja not in NO_LABEL and ja != city and len(ja) <= LABEL_CHARS:
             if (t.get("natural") in ("water", "bay") or t.get("place") == "sea"
                     or t.get("waterway") in ("river", "canal")):
-                labels["water"].append((_score(t), px, py, ja))
+                labels["water"].append((sc, px, py, ja))
             elif t.get("place") in ("suburb", "quarter", "neighbourhood", "island"):
-                labels["district"].append((_score(t), px, py, ja))
+                labels["district"].append((sc, px, py, ja))
             elif t.get("leisure") == "park":
-                labels["park"].append((_score(t), px, py, ja))
-            elif t.get("place") == "square" or t.get("historic") == "square":
-                labels["square"].append((_score(t), px, py, ja))
-            elif t.get("name:ja") and not t.get("highway") and poi_glyph(t):
-                # **OSM が日本語名を持っている建物だけ。** こちらで訳を書き足すと、
-                # 街ごとに何を訳したかで地図の密度が変わる。向こうにある名前
-                # （ゲディミナス塔・夜明けの門・無名戦士の墓）は、
-                # 現地でも案内板に出ている名前なので、地図に書く価値がある
-                labels["spot"].append((_score(t), px, py, ja))
+                labels["park"].append((sc, px, py, ja))
+            elif is_square(t):
+                labels["square"].append((sc, px, py, ja))
+            elif not t.get("highway") and poi_glyph(t):
+                # **建物や駅の名前も出す。** 前は「OSM が `name:ja` を持って
+                # いるものだけ」に絞っていたが、`name:ja` が付いているのは
+                # 有名な首都の有名な建物だけで、カトヴィツェには1つも無い。
+                # そのせいで、駅もスポデックも NOSPR も地図に出ず、
+                # 番号の点が2つ浮いているだけの地図になった。
+                # 訳語は `JA` に置いてあるものだけ使う（訳を無限に増やさない）
+                labels["spot"].append((sc, px, py, ja))
 
         gl = poi_glyph(t)
         if gl and t.get("place") not in ("suburb", "quarter", "neighbourhood"):
             cand.append((_score(t), px, py, gl))
-
-    # 目印。**濃いところで間引く。** 教会が5つ固まっても地図は読めない。
-    # 種類ごとにも上限を置く。点を評点だけで選ぶと、街じゅうが博物館の印に
-    # なった（ヴィリニュスで 22個中 14個が博物館だった）。
-    cand.sort(key=lambda r: -r[0])
-    per = {"castle": 2, "church": 2, "museum": 2, "market": 2, "station": 1,
-           "tower": 1, "arena": 1, "sauna": 1, "ship": 1}
-    got = {}
-    for sc, px, py, gl in cand:
-        if sc < 2 or gl not in per or got.get(gl, 0) >= per[gl]:
-            continue
-        if any(math.hypot(px - p["x"], py - p["y"]) < 66 for p in pins):
-            continue
-        if any(math.hypot(px - m["x"], py - m["y"]) < 118 for m in marks):
-            continue
-        if not (40 <= px <= W - 40 and 40 <= py <= H - 40):
-            continue
-        got[gl] = got.get(gl, 0) + 1
-        marks.append({"x": int(round(px)), "y": int(round(py)), "k": gl})
-        if len(marks) >= 9:
-            break
 
     # ── 名前。**札（紙）を敷くので、重なると下の名前が読めなくなる。**
     # 点・目印・すでに置いた札・縮尺・方位のどれとも重ならない場所を探す。
@@ -898,9 +960,12 @@ def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
     hard = [(p["x"] - 44, p["y"] - 44, 88, 88) for p in pins]
     hard.append((0, H - 92, 300, 92))           # 縮尺の棒
     hard.append((W - 108, 0, 108, 108))         # 方位
-    # 目印は絵なので、**旧市街の名前になら譲ってよい。** 旧市街は点が
-    # 15個も固まる街があって、ここを譲らないと名前が1つも置けない
-    taken = hard + [(m["x"] - 32, m["y"] - 32, 64, 64) for m in marks]
+    hard += list(blocks)                        # 拡大の四角に付ける札など
+    # **名前だけが避けるもの。** 拡大した四角の中がこれ。名前を敷き詰めると
+    # 同じ場所を2枚で言うことになるが、**目印（絵）まで消すと穴があく。**
+    # 一度そうしてみたら、本図の真ん中だけ何も無い四角になって、
+    # 8街に並べたとき、そこだけ作りかけに見えた
+    lonly = list(label_blocks)
     out = []
     for kind in ("water", "district", "park", "square", "spot"):
         rows = labels[kind]
@@ -909,10 +974,13 @@ def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
         for sc, px, py, ja in rows:
             if any(ja in l["t"] or l["t"] in ja for l in out):
                 continue
-            # 番号の点のすぐ横に名前を出さない。**同じ場所を2回言うことになる**
-            if kind == "spot" and any(math.hypot(px - q["x"], py - q["y"]) < 90
-                                      for q in pins):
+            if any(ja in a or a in ja for a in avoid):
                 continue
+            # 番号の点のそばでも名前を出す。**番号は名前を言っていない。**
+            # 前は「同じ場所を2回言うことになる」として避けていたが、
+            # そのせいで、番号を振ってある見どころ（スポデック・NOSPR）が
+            # 地図の上では名無しの丸になっていた。点の四角は `hard` に
+            # 入っているので、重なりはそこで避けられる
             fs = 38 if kind == "district" else 32 if kind == "spot" else 34
             lw = chip_width(ja, fs)
             lh = fs * 1.5
@@ -934,14 +1002,22 @@ def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
                 for ux, uy in ((0, -1), (0, 1), (-1, 0), (1, 0),
                                (-1, -1), (1, -1), (-1, 1), (1, 1)):
                     spots_try.append((px + ux * step * ring, py + uy * 52 * ring))
+            # **紙のふちに寄った名前を、そのまま捨てない。**
+            # ふちの近くにあるものは、8方向のどれに逃がしても札が紙から
+            # はみ出して、そこで「書かない」に落ちていた。タリンの
+            # カドリオルグ宮殿とリガのいくつかがこれで消えていた。
+            # 横だけ紙の中へ寄せる。**寄せてよいのは 160 まで**
+            # （4.2km の窓で 560m。それ以上動かすと別の場所を指す）
+            cx = min(max(px, lw / 2 + 10), W - lw / 2 - 10)
+            if 1 < abs(cx - px) <= 160:
+                spots_try += [(cx, py), (cx, py - 52), (cx, py + 52)]
             # **旧市街だけは、面の中ならどこに置いてもよい。**
             # そこは面ぜんぶが旧市街なので、真ん中から少しずれても嘘にならない。
             # 点が15個も固まる街（タリン）は、これが無いと旧市街の名前が
             # 1つも出せない。名前が出ないと、そこが旧市街だと分からない。
-            block = taken
+            block = hard + lonly
             if ja == "旧市街":
-                # 目印（絵）には譲ってもらう。点と、ほかの名前は避ける
-                block = hard
+                block = hard          # 目印には譲ってもらう
                 if len(old_shape) >= 3:
                     # **面の中ならどこでもよい。** そこは全部が旧市街なので、
                     # 真ん中から少しずれても嘘にならない
@@ -956,13 +1032,38 @@ def pick_marks_labels(raw, win, to, H, pins, city="", old_shape=()):
                 break
             if not spot:
                 continue
-            taken.append(spot[2])
             hard.append(spot[2])
             out.append({"x": int(round(spot[0])), "y": int(round(spot[1])),
                         "t": ja, "k": kind, "w": int(round(lw)), "fs": fs})
             n += 1
             if n >= LABEL_MAX[kind]:
                 break
+    # ── 名前の無い目印。**名前を置いたあとで選ぶ。**
+    # 前は先に目印を置いていて、そのぶんの四角が名前の置き場所をふさいで
+    # いた。目印は「ここに教会がある」しか言わないが、名前は「どこか」を
+    # 言う。**同じ場所を取り合ったら、名前のほうが強い。**
+    # 濃いところでは間引く（教会が5つ固まっても地図は読めない）。種類ごとの
+    # 上限も置く。評点だけで選ぶと街じゅうが博物館の印になった（ヴィリニュス）。
+    cand.sort(key=lambda r: -r[0])
+    per = {"castle": 2, "church": 2, "museum": 2, "market": 2, "station": 1,
+           "tower": 1, "arena": 1, "sauna": 1, "ship": 1}
+    got = {}
+    for sc, px, py, gl in cand:
+        if sc < 2 or gl not in per or got.get(gl, 0) >= per[gl]:
+            continue
+        if any(math.hypot(px - p["x"], py - p["y"]) < 66 for p in pins):
+            continue
+        if any(math.hypot(px - m["x"], py - m["y"]) < 118 for m in marks):
+            continue
+        if not (40 <= px <= W - 40 and 40 <= py <= H - 40):
+            continue
+        if any(_hit((px - 32, py - 32, 64, 64), q) for q in hard):
+            continue
+        got[gl] = got.get(gl, 0) + 1
+        marks.append({"x": int(round(px)), "y": int(round(py)), "k": gl})
+        if len(marks) >= 9:
+            break
+
     return marks, out
 
 
@@ -1171,10 +1272,95 @@ def spread(pins, H, rounds=180):
         q["ax"], q["ay"] = int(round(q["ax"])), int(round(q["ay"]))
 
 
+def bearing(a, b):
+    """a から b を見た方位（真北が 0、時計回り）。
+
+    **経度の縮みを入れる。** 北緯60度（タリン・ヘルシンキ）では経度1度の
+    幅が緯度1度の半分しかない。生の差で角度を出すと、東寄りに振れて出る。
+    """
+    dy = b[0] - a[0]
+    dx = (b[1] - a[1]) * math.cos(math.radians((a[0] + b[0]) / 2))
+    return (math.degrees(math.atan2(dx, dy)) + 360) % 360
+
+
 def compass(a, b):
-    dy, dx = b[0] - a[0], b[1] - a[1]
-    ang = (math.degrees(math.atan2(dx, dy)) + 360) % 360
+    ang = bearing(a, b)
     return ["北", "北東", "東", "南東", "南", "南西", "西", "北西"][round(ang / 45) % 8]
+
+
+# ── 拡大（インセット）─────────────────────────────────────
+# 旧市街に見どころが15個も固まる街がある（タリン）。押しのけ（`spread`）だけ
+# では、390px で番号が読めない。ガイドブックと同じで、**そこだけをもう一枚
+# に拡大して出す。** 本図には四角で「ここを拡大した」と示す。
+#
+# **点をどけるのではなく、紙を増やす。** どけると本当の場所から離れるし、
+# 引き出し線が15本かかると地図が糸くずに埋まる。
+INSET_MIN = 8          # これだけ固まっていたら拡大する
+INSET_FRAC = 0.55      # かつ、その街の見どころの何割がそこに居るか
+INSET_R_KM = 0.55      # かたまりと見なす半径
+INSET_MIN_KM = 0.85    # 拡大の窓の下限。これより狭いと道しか写らない
+INSET_MAX_FRAC = 0.62  # 本図の何割まで。これを超えると「拡大」にならない
+
+
+def plan_inset(win, pins):
+    """点が固まりすぎているところの、拡大窓を決める。無ければ None。"""
+    if len(pins) < INSET_MIN:
+        return None
+    best = []
+    for a in pins:
+        grp = [b for b in pins
+               if G.km(a["lat"], a["lon"], b["lat"], b["lon"]) <= INSET_R_KM]
+        if len(grp) > len(best):
+            best = grp
+    # **数だけで決めない。** ヘルシンキは13個あって、そのうち6〜7個が
+    # 港のまわりに寄っているが、残りが街じゅうに散っている。あそこを拡大
+    # しても、本図から点が半分しか減らない（2枚とも混んだままになる）。
+    # 「街の見どころのほとんどが1か所にある」ときだけ、紙を分ける
+    if len(best) < INSET_MIN or len(best) < len(pins) * INSET_FRAC:
+        return None
+    lats = [p["lat"] for p in best]
+    lons = [p["lon"] for p in best]
+    mlat, mlon = (min(lats) + max(lats)) / 2, (min(lons) + max(lons)) / 2
+    hkm = max(G.km(min(lats), mlon, max(lats), mlon) * (1 + 2 * PAD), INSET_MIN_KM)
+    wkm = max(G.km(mlat, min(lons), mlat, max(lons)) * (1 + 2 * PAD), INSET_MIN_KM)
+    if hkm / wkm < ASPECT[0]:
+        hkm = wkm * ASPECT[0]
+    if hkm / wkm > ASPECT[1]:
+        wkm = hkm / ASPECT[1]
+    if wkm > win["wkm"] * INSET_MAX_FRAC:
+        return None
+    dlat = hkm / 2 / 111.32
+    dlon = wkm / 2 / (111.32 * math.cos(math.radians(mlat)))
+    bbox = (mlat - dlat, mlon - dlon, mlat + dlat, mlon + dlon)
+    ids = {p["id"] for p in pins
+           if bbox[0] <= p["lat"] <= bbox[2] and bbox[1] <= p["lon"] <= bbox[3]}
+    if len(ids) < INSET_MIN:
+        return None
+    return {"bbox": bbox, "wkm": wkm, "hkm": hkm, "ids": ids,
+            "center": win["center"], "cq": win["cq"]}
+
+
+def inset_title(raw, bbox, city):
+    """拡大した場所の名前。**「拡大図」とは書かない。**
+
+    どこを拡大したのかが分からない拡大図は、ただの2枚目。旧市街を拡大した
+    なら「旧市街」と書く。名前が見つからなければ拡大そのものをやめる
+    （名前の無い四角を本図に置いても、読む人には何も伝わらない）。
+    """
+    got = []
+    for x in raw["elements"]:
+        t = x.get("tags") or {}
+        if t.get("place") not in ("quarter", "suburb", "neighbourhood") \
+                and t.get("boundary") != "administrative":
+            continue
+        ja = t.get("name:ja") or JA.get(_name(t))
+        if not ja or ja in NO_LABEL or ja == city:
+            continue
+        if _spot(x, bbox):
+            got.append(ja)
+    if "旧市街" in got:
+        return "旧市街"
+    return got[0] if got else None
 
 
 def main():
@@ -1219,18 +1405,74 @@ def main():
         # 湾の名前は海の問い合わせのほうに入っている。名前を選ぶときに混ぜる
         raw = {"bbox": raw["bbox"], "elements": raw["elements"] + coast}
 
-        pins = []
+        all_pins = []
         for i, s in enumerate(win["near"], 1):
             g = geo[s["id"]]
-            x, y = to(*merc(g["lat"], g["lon"]))
-            pins.append({"id": s["id"], "n": i, "x": x, "y": y, "ax": x, "ay": y,
-                         "cat": s.get("cat", "see"), "t": s.get("title", ""),
-                         "k": glyph(g.get("type", ""), s.get("cat", "see"))})
-        spread(pins, H)
-        marks, labels = pick_marks_labels(raw, win, to, H, pins, city, old_shape)
+            all_pins.append({"id": s["id"], "n": i,
+                             "lat": g["lat"], "lon": g["lon"],
+                             "cat": s.get("cat", "see"), "t": s.get("title", ""),
+                             "k": glyph(g.get("type", ""), s.get("cat", "see"))})
+
+        # 点が固まりすぎていたら、そこだけの拡大をもう一枚作る
+        ins = plan_inset(win, all_pins)
+        ins_t = inset_title(raw, ins["bbox"], city) if ins else None
+        if ins and not ins_t:
+            ins = None          # 名前の付けられない拡大は出さない
+
+        def place(ps, conv, hh):
+            """点を、その紙の座標に置いて、重なりを押しのける。"""
+            got = []
+            for q in ps:
+                x, y = conv(*merc(q["lat"], q["lon"]))
+                got.append({k: v for k, v in q.items() if k not in ("lat", "lon")}
+                           | {"x": x, "y": y, "ax": x, "ay": y})
+            spread(got, hh)
+            return got
+
+        svg_bytes = write_base(slug, W, H, win["wkm"], layers, tokens)
+        inset = None
+        if ins:
+            ilayers, iH, ito, _ibox, _iu, iold = build(city, ins, raw, coast, spots)
+            svg_bytes += write_base(f"{slug}-in", W, iH, ins["wkm"], ilayers, tokens)
+            ipins = place([p for p in all_pins if p["id"] in ins["ids"]], ito, iH)
+            imarks, ilabels = pick_marks_labels(raw, ins, ito, iH, ipins, city, iold)
+            s0, w0, n0, e0 = ins["bbox"]
+            (rx0, ry0) = to(*merc(n0, w0))
+            (rx1, ry1) = to(*merc(s0, e0))
+            # 四角に付ける名前の札。**幅も置き場所もここで決める。**
+            # 画面側で同じ計算をすると、片方だけ直したときにずれる
+            # （`chip_width` の注と同じ理由）
+            tfs = 36
+            tw = chip_width(ins_t, tfs)
+            tx = min(max((rx0 + rx1) / 2, tw / 2 + 8), W - tw / 2 - 8)
+            ty = ry0 - 14 if ry0 > 66 else ry0 + 52
+            tab = {"x": int(round(tx)), "y": int(round(ty)),
+                   "w": int(round(tw)), "fs": tfs}
+            inset = {"slug": f"{slug}-in", "w": int(W), "h": int(iH),
+                     "km": round(ins["wkm"], 2), "t": ins_t,
+                     "rect": [int(rx0), int(ry0), int(rx1 - rx0), int(ry1 - ry0)],
+                     "tab": tab,
+                     "pins": ipins, "marks": imarks, "labels": ilabels}
+
+        pins = place([p for p in all_pins if not ins or p["id"] not in ins["ids"]],
+                     to, H)
+        used_names = [l["t"] for l in (inset["labels"] if inset else [])]
+        blocks, label_blocks = [], []
+        if inset:
+            used_names.append(inset["t"])
+            t2 = inset["tab"]
+            blocks.append((t2["x"] - t2["w"] / 2, t2["y"] - t2["fs"] * 1.16,
+                           t2["w"], t2["fs"] * 1.5))
+            # **拡大した四角の中には、本図の名前を置かない。**
+            # そこは「拡大図を見て」と言っている場所なので、本図に細かい
+            # 名前を敷き詰めると、同じ場所を2枚で言うことになる。
+            # 空けたぶんは、四角の外の名前に回る
+            label_blocks.append(tuple(inset["rect"]))
+        marks, labels = pick_marks_labels(raw, win, to, H, pins, city, old_shape,
+                                          avoid=used_names, blocks=blocks,
+                                          label_blocks=label_blocks)
 
         clat, clon = win["center"]
-        svg_bytes = write_base(slug, W, H, win["wkm"], layers, tokens)
         out[city] = {
             "slug": slug, "w": int(W), "h": int(H),
             "km": round(win["wkm"], 2),
@@ -1240,16 +1482,27 @@ def main():
                      "km": round(G.km(clat, clon, geo[s["id"]]["lat"],
                                       geo[s["id"]]["lon"]), 1),
                      "dir": compass((clat, clon),
-                                    (geo[s["id"]]["lat"], geo[s["id"]]["lon"]))}
+                                    (geo[s["id"]]["lat"], geo[s["id"]]["lon"])),
+                     # 矢印で指すので、8方位の字とは別に角度も渡す
+                     "deg": int(round(bearing((clat, clon),
+                                              (geo[s["id"]]["lat"],
+                                               geo[s["id"]]["lon"])))),
+                     }
                     for s in win["far"]],
         }
+        if inset:
+            out[city]["inset"] = inset
         road = sum(layers.get(c, "").count("M") for c, _ in ROAD_CLASS)
         face = sum(v.count("M") for k, v in layers.items()
                    if k in ("block", "old", "green", "water", "grave", "sand", "plaza"))
         size = len(json.dumps(out[city], ensure_ascii=False, separators=(",", ":")))
         print(f"   道 {road}本 / 面 {face}枚 / 点 {used} / 目印 {len(marks)} "
-              f"/ 名前 {len(labels)} / 土台 {svg_bytes/1024:.1f}KB "
-              f"+ 点と名前 {size/1024:.1f}KB")
+              f"/ 名前 {len(labels)}{'・'.join([''] + [l['t'] for l in labels])} "
+              f"/ 土台 {svg_bytes/1024:.1f}KB + 点と名前 {size/1024:.1f}KB"
+              + (f"\n   拡大『{inset['t']}』{inset['km']}km  点 {len(inset['pins'])}"
+                 f" / 名前 {len(inset['labels'])}"
+                 f"{'・'.join([''] + [l['t'] for l in inset['labels']])}"
+                 if inset else ""))
 
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False,
               separators=(",", ":"))

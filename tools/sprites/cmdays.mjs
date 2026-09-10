@@ -9,9 +9,11 @@
 import { readFileSync, readdirSync, writeFileSync } from "fs";
 
 const DIST = process.env.DIST || "/home/user/live-streaming/site/.next-3170";
-const maps = JSON.parse(
-  readFileSync("/home/user/live-streaming/site/content/nordic/citymaps.json", "utf8"),
-);
+// **地図の元は、書き出しと同じ木から読む。** ここだけ絶対パスで別の木を
+// 見ていたので、worktree で焼き直した地図を確かめようとすると、
+// 書き出しは新しいのに名簿だけ古い、という食い違いが出た（`DIST` は
+// `<木>/site/.next-*` なので、2つ上が `<木>/site`）
+const maps = JSON.parse(readFileSync(`${DIST}/../content/nordic/citymaps.json`, "utf8"));
 const where = new Map();
 const add = (path, id, rank) => {
   const prev = where.get(id);

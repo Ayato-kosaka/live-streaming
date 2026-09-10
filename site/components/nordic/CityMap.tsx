@@ -32,12 +32,21 @@ type Pin = {
   id: string; n: number; x: number; y: number; ax: number; ay: number;
   cat: string; t: string; k: string;
 };
-type Far = { id: string; cat: string; t: string; km: number; dir: string };
+type Far = { id: string; cat: string; t: string; km: number; dir: string; deg: number };
 type Mark = { x: number; y: number; k: string };
 type Label = { x: number; y: number; t: string; k: string; w: number; fs: number };
+/** 拡大の紙。点が固まりすぎている街だけ持つ（`tools/nordic/citymap.py`）。 */
+type Inset = {
+  slug: string; w: number; h: number; km: number; t: string;
+  /** 本図のどこを拡大したか。本図の座標で `[x, y, 幅, 高さ]` */
+  rect: number[];
+  /** 四角に付ける名前の札。幅も置き場所も焼くときに決めてある */
+  tab: { x: number; y: number; w: number; fs: number };
+  pins: Pin[]; marks: Mark[]; labels: Label[];
+};
 type CityMapData = {
   slug: string; w: number; h: number; km: number;
-  pins: Pin[]; marks: Mark[]; labels: Label[]; far: Far[];
+  pins: Pin[]; marks: Mark[]; labels: Label[]; far: Far[]; inset?: Inset;
 };
 
 /** 見どころの種類。**この4つ以外は来ない**（`nordic/*.json` の `cat`）。 */
@@ -166,122 +175,174 @@ function Glyph({ k }: { k: string }) {
   );
 }
 
+/** 縮尺の棒の長さ。**窓の実寸から出す。** 街ごとに窓の広さが違うので、
+    棒が無いと「歩ける旧市街」と「地下鉄で移動する街」を読み違える。 */
+function bar(km: number, w: number) {
+  const barKm = km > 3.6 ? 1 : km > 2.4 ? 0.5 : km > 1.4 ? 0.3 : 0.2;
+  return { barKm, barW: Math.round((barKm / km) * w) };
+}
+
+/**
+ * 地図1枚。**本図も拡大図もこれで描く。**
+ *
+ * 拡大図を別の作りにすると、片方だけ縮尺を直したり、片方だけ札の色が
+ * 変わったりする。同じ紙・同じ札・同じ縮尺の棒で出す。
+ */
+function Frame({
+  d, uid, alt, zoom,
+}: {
+  d: { slug: string; w: number; h: number; km: number;
+       pins: Pin[]; marks: Mark[]; labels: Label[] };
+  uid: (k: string) => string;
+  alt: string;
+  /** 本図にだけ載る「ここを拡大した」の四角 */
+  zoom?: { rect: number[]; t: string;
+           tab: { x: number; y: number; w: number; fs: number } };
+}) {
+  const marks = d.marks.filter((k) => GLYPHS[k.k]);
+  const kinds = [...new Set(marks.map((k) => k.k))];
+  /* 絵の `<symbol>` の id は**その紙ごと。** 本図と拡大図で同じ id を置くと、
+     1枚のページに同じ id が2つ出て、2枚目の絵が1枚目のほうを指す。
+     点の id（`uid`）は街で1つ。点はどちらか片方の紙にしか居ない */
+  const gid = (k: string) => `cm-${d.slug}-${k}`;
+  const { barKm, barW } = bar(d.km, d.w);
+
+  return (
+    <div className="cmap-frame" style={{ aspectRatio: `${d.w} / ${d.h}` }}>
+      {/* 土台。道・川・緑・街区・旧市街。`tools/nordic/citymap.py` が焼く */}
+      <img className="cmap-base" src={`/nordic/city/${d.slug}.svg`} width={d.w} height={d.h} alt="" />
+      <svg className="cmap-svg" viewBox={`0 0 ${d.w} ${d.h}`} role="img" aria-label={alt}>
+        <defs>
+          {kinds.map((k) => (
+            <symbol key={k} id={gid(`g-${k}`)} viewBox="0 0 24 24">
+              <Glyph k={k} />
+            </symbol>
+          ))}
+        </defs>
+
+        {/* どこを拡大したか。**四角だけ置いても伝わらない**ので、名前を付ける */}
+        {zoom && (
+          <g className="cm-zoom">
+            <rect x={zoom.rect[0]} y={zoom.rect[1]} width={zoom.rect[2]} height={zoom.rect[3]} rx="18" />
+            <g className="cm-zoom-tab">
+              <rect
+                x={zoom.tab.x - zoom.tab.w / 2}
+                y={zoom.tab.y - zoom.tab.fs * 1.16}
+                width={zoom.tab.w}
+                height={zoom.tab.fs * 1.5}
+                rx={zoom.tab.fs * 0.62}
+              />
+              <text x={zoom.tab.x} y={zoom.tab.y - zoom.tab.fs * 0.02} style={{ fontSize: zoom.tab.fs }}>
+                {zoom.t}
+              </text>
+            </g>
+          </g>
+        )}
+
+        {/* 名前のついていない目印。宮殿・教会・市場が「そこにある」ことだけ
+            を言う。押せないので厚みは付けない（`island-design.md` 3章3） */}
+        {marks.map((k, i) => (
+          <g key={i} className="cm-mark">
+            {/* 紙の下敷き。**壁の白い絵が、クリームの地に沈むのを止める。**
+                丸ではなく角丸の四角にして、番号の点（丸）と役目を分ける */}
+            <rect x={k.x - 28} y={k.y - 28} width="56" height="56" rx="17" />
+            <use href={`#${gid(`g-${k.k}`)}`} x={k.x - 23} y={k.y - 23} width="46" height="46" />
+          </g>
+        ))}
+
+        {/* 地図の上の名前。**日本語で書く。** 読めない字を並べても
+            「ここがどこか」は伝わらない。地の色は場所によって変わるので、
+            札（紙）を敷いてから字を乗せる。置き場所は焼くときに、点とも
+            ほかの札とも重ならないところを探してある */}
+        {d.labels.map((l, i) => (
+          <g key={i} className={`cm-label cm-lb-${l.k}`}>
+            <rect
+              x={l.x - l.w / 2}
+              y={l.y - l.fs * 0.78}
+              width={l.w}
+              height={l.fs * 1.5}
+              rx={l.fs * 0.62}
+            />
+            <text x={l.x} y={l.y + l.fs * 0.36} style={{ fontSize: l.fs }}>
+              {l.t}
+            </text>
+          </g>
+        ))}
+
+        {/* どけた丸から、本当の場所へ引く線。丸より先に描く */}
+        {d.pins.map((p) =>
+          Math.hypot(p.x - p.ax, p.y - p.ay) > 4 ? (
+            <g key={`l${p.id}`} className="cm-lead">
+              <line x1={p.ax} y1={p.ay} x2={p.x} y2={p.y} />
+              <circle cx={p.ax} cy={p.ay} r="6" />
+            </g>
+          ) : null,
+        )}
+        {d.pins.map((p) => (
+          <g key={p.id} id={uid(`p${p.n}`)} className={`cm-pin cm-${p.cat}`}>
+            <circle className="cm-dot" cx={p.x} cy={p.y} r="36" />
+            <text className="cm-num" x={p.x} y={p.y + 13}>
+              {p.n}
+            </text>
+          </g>
+        ))}
+
+        {/* 縮尺と方角。**歩ける距離かどうかは、これが無いと読めない** */}
+        <g className="cm-scale" transform={`translate(26 ${d.h - 30})`}>
+          <rect x="-12" y="-46" width={barW + 24} height="62" rx="16" />
+          <line x1="0" y1="0" x2={barW} y2="0" />
+          <line x1="0" y1="-8" x2="0" y2="8" />
+          <line x1={barW} y1="-8" x2={barW} y2="8" />
+          <text x={barW / 2} y="-16">
+            {barKm < 1 ? `${barKm * 1000}m` : `${barKm}km`}
+          </text>
+        </g>
+        <g className="cm-north" transform={`translate(${d.w - 54} 54)`}>
+          <circle r="36" />
+          <path d="M0 -24L9 8L0 1L-9 8Z" />
+          <text y="30">N</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function CityMap({ city }: { city: string }) {
   const m = (MAPS as Record<string, CityMapData>)[city];
-  if (!m || !m.pins.length) return null;
+  if (!m || !(m.pins.length || m.inset)) return null;
   const uid = (k: string) => `cm-${m.slug}-${k}`;
-  /* この街で出る絵だけを `<defs>` に置く。13種類ぜんぶ置くと、
-     使わない絵のぶんまで毎ページに乗る */
-  const marks = m.marks.filter((k) => GLYPHS[k.k]);
-  const kinds = [...new Set(marks.map((k) => k.k))];
 
   const byCat = CATS.map((c) => ({
     ...c,
-    rows: m.pins.filter((p) => p.cat === c.k),
-    far: m.far.filter((f) => f.cat === c.k),
-  })).filter((g) => g.rows.length || g.far.length);
-
-  /* 縮尺の棒。**窓の実寸から出す。** 街ごとに窓の広さが違うので、
-     棒が無いと「歩ける旧市街」と「地下鉄で移動する街」を読み違える。 */
-  const barKm = m.km > 3.6 ? 1 : m.km > 2.4 ? 0.5 : 0.3;
-  const barW = Math.round((barKm / m.km) * m.w);
+    rows: [...m.pins, ...(m.inset?.pins ?? [])]
+      .filter((p) => p.cat === c.k)
+      .sort((a, b) => a.n - b.n),
+  })).filter((g) => g.rows.length);
 
   return (
     <div className="cmap">
-      <div className="cmap-frame" style={{ aspectRatio: `${m.w} / ${m.h}` }}>
-        {/* 土台。道・川・緑・街区・旧市街。`tools/nordic/citymap.py` が焼く */}
-        <img
-          className="cmap-base"
-          src={`/nordic/city/${m.slug}.svg`}
-          width={m.w}
-          height={m.h}
-          alt=""
-        />
-        <svg
-          className="cmap-svg"
-          viewBox={`0 0 ${m.w} ${m.h}`}
-          role="img"
-          aria-label={`${city}の街の地図。道路と川と公園、見どころ${m.pins.length}か所`}
-        >
-          <defs>
-            {kinds.map((k) => (
-              <symbol key={k} id={uid(`g-${k}`)} viewBox="0 0 24 24">
-                <Glyph k={k} />
-              </symbol>
-            ))}
-          </defs>
+      <Frame
+        d={m}
+        uid={uid}
+        alt={`${city}の街の地図。道路と川と公園、見どころ${m.pins.length}か所`}
+        zoom={m.inset ? { rect: m.inset.rect, t: m.inset.t, tab: m.inset.tab } : undefined}
+      />
 
-          {/* 名前のついていない目印。宮殿・教会・市場が「そこにある」ことだけ
-              を言う。押せないので厚みは付けない（`island-design.md` 3章3） */}
-          {marks.map((k, i) => (
-            <g key={i} className="cm-mark">
-              {/* 紙の下敷き。**壁の白い絵が、クリームの地に沈むのを止める。**
-                  丸ではなく角丸の四角にして、番号の点（丸）と役目を分ける */}
-              <rect x={k.x - 28} y={k.y - 28} width="56" height="56" rx="17" />
-              <use
-                href={`#${uid(`g-${k.k}`)}`}
-                x={k.x - 23}
-                y={k.y - 23}
-                width="46"
-                height="46"
-              />
-            </g>
-          ))}
-
-          {/* 地図の上の名前。**日本語で書く。** 読めない字を並べても
-              「ここがどこか」は伝わらない。地の色は場所によって変わるので、
-              札（紙）を敷いてから字を乗せる。置き場所は焼くときに、点とも
-              ほかの札とも重ならないところを探してある */}
-          {m.labels.map((l, i) => (
-            <g key={i} className={`cm-label cm-lb-${l.k}`}>
-              <rect
-                x={l.x - l.w / 2}
-                y={l.y - l.fs * 0.78}
-                width={l.w}
-                height={l.fs * 1.5}
-                rx={l.fs * 0.62}
-              />
-              <text x={l.x} y={l.y + l.fs * 0.36} style={{ fontSize: l.fs }}>
-                {l.t}
-              </text>
-            </g>
-          ))}
-
-          {/* どけた丸から、本当の場所へ引く線。丸より先に描く */}
-          {m.pins.map((p) =>
-            Math.hypot(p.x - p.ax, p.y - p.ay) > 4 ? (
-              <g key={`l${p.id}`} className="cm-lead">
-                <line x1={p.ax} y1={p.ay} x2={p.x} y2={p.y} />
-                <circle cx={p.ax} cy={p.ay} r="6" />
-              </g>
-            ) : null,
-          )}
-          {m.pins.map((p) => (
-            <g key={p.id} id={uid(`p${p.n}`)} className={`cm-pin cm-${p.cat}`}>
-              <circle className="cm-dot" cx={p.x} cy={p.y} r="36" />
-              <text className="cm-num" x={p.x} y={p.y + 13}>
-                {p.n}
-              </text>
-            </g>
-          ))}
-
-          {/* 縮尺と方角。**歩ける距離かどうかは、これが無いと読めない** */}
-          <g className="cm-scale" transform={`translate(26 ${m.h - 30})`}>
-            <rect x="-12" y="-46" width={barW + 24} height="62" rx="16" />
-            <line x1="0" y1="0" x2={barW} y2="0" />
-            <line x1="0" y1="-8" x2="0" y2="8" />
-            <line x1={barW} y1="-8" x2={barW} y2="8" />
-            <text x={barW / 2} y="-16">
-              {barKm < 1 ? `${barKm * 1000}m` : `${barKm}km`}
-            </text>
-          </g>
-          <g className="cm-north" transform={`translate(${m.w - 54} 54)`}>
-            <circle r="36" />
-            <path d="M0 -24L9 8L0 1L-9 8Z" />
-            <text y="30">N</text>
-          </g>
-        </svg>
-      </div>
+      {/* 見どころが1か所に固まっている街は、そこだけをもう一枚に拡大する。
+          **本図の上で番号を押しのけると、番号が読めなくなる**（タリンは
+          1km 四方に15個ある）。紙を増やして、どちらも大きいまま出す。 */}
+      {m.inset && (
+        <>
+          {/* 2枚目が本図のどこなのかを、**紙の上でも言う。**
+              本図の四角に付けた札と同じ言葉にして、2枚を結ぶ */}
+          <b className="cmap-cap">{m.inset.t}</b>
+          <Frame
+            d={m.inset}
+            uid={uid}
+            alt={`${city}の${m.inset.t}を拡大した地図。見どころ${m.inset.pins.length}か所`}
+          />
+        </>
+      )}
 
       <ul className="cmap-key">
         {byCat.map((g) => (
@@ -299,18 +360,41 @@ export default function CityMap({ city }: { city: string }) {
                   {p.t}
                 </a>
               ))}
-              {/* 窓に入らなかったもの。**消さずに、どっちへ何km かを言う。** */}
-              {g.far.map((f) => (
-                <span key={f.id} className="cm-far">
-                  {f.t}
-                  <em>
-                    中心から{f.dir}へ{f.km}km
-                  </em>
+            </span>
+          </li>
+        ))}
+
+        {/* 窓に入らなかったもの。**消さない。** 旅程に入っている以上、
+            その日に行く場所なので、地図に載らないだけ。
+            方角と距離を持っているので、**その向きへ矢印を向けて**渡す。
+            押せないので、**完全に平ら**にする。厚み（真下の影）は
+            「押せる」の合図なので、押せないものには付けない
+            （`island-design.md` 3章3）。 */}
+        {m.far.length > 0 && (
+          <li>
+            <b className="cm-key-b cm-key-out">足をのばす</b>
+            <span>
+              {m.far.map((f) => (
+                <span key={f.id} className={`cm-far cm-${f.cat}`}>
+                  <i aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M12 2.6l6.2 18.4L12 16.6 5.8 21z"
+                        transform={`rotate(${f.deg} 12 12)`}
+                      />
+                    </svg>
+                  </i>
+                  <span>
+                    {f.t}
+                    <em>
+                      {f.dir}へ{f.km}km
+                    </em>
+                  </span>
                 </span>
               ))}
             </span>
           </li>
-        ))}
+        )}
       </ul>
     </div>
   );

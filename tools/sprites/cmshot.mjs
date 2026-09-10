@@ -41,11 +41,23 @@ for (const [slug, path, city] of ROWS) {
     `section[id="city-${encodeURIComponent(city)}"]`;
   const sec = await p.$(sel);
   if (!sec) { console.log(`${slug}: 面が無い（${path}）`); continue; }
-  const frame = await sec.$(".cmap-frame");
-  if (!frame) { console.log(`${slug}: 地図が無い（${path}）`); continue; }
-  await frame.scrollIntoViewIfNeeded();
+  const frames = await sec.$$(".cmap-frame");
+  if (!frames.length) { console.log(`${slug}: 地図が無い（${path}）`); continue; }
+  await frames[0].scrollIntoViewIfNeeded();
   await p.waitForTimeout(400);
-  await frame.screenshot({ path: `${OUT}/${slug}.png` });
+  await frames[0].screenshot({ path: `${OUT}/${slug}.png` });
+  // 拡大図を持つ街は2枚目も撮る。**1枚目だけ見て「読める」と言わない**
+  if (frames[1]) {
+    await frames[1].scrollIntoViewIfNeeded();
+    await p.waitForTimeout(300);
+    await frames[1].screenshot({ path: `${OUT}/${slug}-in.png` });
+  }
+  const cmap = await sec.$(".cmap");
+  if (cmap) {
+    await cmap.scrollIntoViewIfNeeded();
+    await p.waitForTimeout(300);
+    await cmap.screenshot({ path: `${OUT}/${slug}-cmap.png` });
+  }
   await sec.screenshot({ path: `${OUT}/${slug}-sec.png` });
   const info = await p.evaluate((s) => {
     const sec = document.querySelector(s);
@@ -56,6 +68,9 @@ for (const [slug, path, city] of ROWS) {
       w: Math.round(r.width), h: Math.round(r.height),
       pins: sec.querySelectorAll(".cm-pin").length,
       marks: sec.querySelectorAll(".cm-mark").length,
+      inset: sec.querySelectorAll(".cmap-frame").length > 1
+        ? sec.querySelector(".cm-zoom-tab text").textContent
+        : "",
       labels: [...sec.querySelectorAll(".cm-label text")].map((t) => t.textContent),
       rows: sec.querySelectorAll(".cm-row").length,
       far: sec.querySelectorAll(".cm-far").length,
@@ -65,7 +80,8 @@ for (const [slug, path, city] of ROWS) {
   console.log(
     `${slug.padEnd(10)} ${String(path).padEnd(20)} ${info.w}x${info.h} 点${String(info.pins).padStart(2)} ` +
       `目印${String(info.marks).padStart(2)} 一覧${String(info.rows).padStart(2)} ひと足${info.far} ` +
-      `土台${info.loaded ? "○" : "×"} 名前:${info.labels.join("・")}`,
+      `土台${info.loaded ? "○" : "×"} ${info.inset ? `拡大『${info.inset}』 ` : ""}` +
+      `名前:${info.labels.join("・")}`,
   );
 }
 if (bad.length) console.log("JSエラー:", bad.slice(0, 5));

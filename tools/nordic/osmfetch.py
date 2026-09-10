@@ -46,6 +46,9 @@ MIRRORS = [
 ]
 UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic city maps)"
 
+# いま返してくれているミラー（`MIRRORS` の添字）。`query()` が書き換える。
+_LIVE = [0]
+
 # 1タイルの上限（km）。これより広い窓は割る。
 TILE_KM = 2.5
 
@@ -59,6 +62,7 @@ AREA_Q = """
   way["landuse"~"^(forest|cemetery|recreation_ground|village_green|allotments|residential|retail|commercial|industrial|railway|military|education)$"]({bb});
   way["amenity"~"^(grave_yard|university|hospital)$"]({bb});
   way["place"~"^(square|quarter|suburb|neighbourhood|city_block)$"]({bb});
+  way["amenity"="marketplace"]({bb});
 """
 
 # 関係（multipolygon）は**別に投げる。** 湖や湾は何十万点の関係に入っている
@@ -146,12 +150,16 @@ def query(q, why="", soft=False):
     """
     last = ""
     for attempt in range(8):
-        # **kumi を主に使う。** mail.ru は日によってずっと 504 を返す。
-        # 交互にすると、掛け直しの半分が最初から捨てになる
-        url = MIRRORS[1] if attempt % 3 == 2 else MIRRORS[0]
+        # **返したミラーを覚えて、そこを使い続ける。**
+        # 主従を決め打ちにしていたころ、主（kumi）が丸一日 180秒待って
+        # 何も返さない日に当たって、1問い合わせに 6分かかった。
+        # どちらが生きているかは日によって入れ替わるので、決め打ちにしない。
+        # 覚えたほうが黙ったら、次の掛け直しでもう一方に移る。
+        url = MIRRORS[(_LIVE[0] + attempt) % len(MIRRORS)]
         try:
             raw = _post(url, q)
             if raw[:1] == b"{":
+                _LIVE[0] = MIRRORS.index(url)
                 return json.loads(raw.decode())
             last = raw.decode("utf-8", "replace")[:200].replace("\n", " ")
         except Exception as e:  # noqa: BLE001  相手のサーバなので何が来ても待つ
