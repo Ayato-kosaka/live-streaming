@@ -348,6 +348,30 @@
   color: var(--ink-2);
 }
 .atl-nums b { font-size: 17px; color: var(--ink); margin-right: 2px; }
+/* 数字が1つしか分かっていない島。
+   ---------------------------------------------------------
+   章ごとの本数・人数（`content/chapterStats.ts`）は、**始まった日を書き入れて
+   から**でないと焼けない。旅に出たばかりの島は日数しか持っていないので、
+   4つ並ぶはずの列に「8日」だけが残って、抜けた3つぶんが空きに見えていた
+   （`/tmp/dep/J-atlas-card-day7.png`）。
+
+   **無い数字を 0 で埋めない**（`docs/island-standards.md` 10）。
+   代わりに、1つのときは列ではなく**1つの事実**として置く。
+   数字が焼けた晩に、ひとりでに4つの列へ戻る。
+
+   **足代の行がぶら下がっている札には当てない。** まだ始まっていない島の
+   「17日の予定 / 目標5万円」は2行あるので、そもそも間が抜けていない
+   （`docs/island-standards.md` 12。当てる先を間違えると絵が壊れる）。 */
+.atl-nums:not(:has(span + span)):not(:has(+ .atl-fund)) {
+  margin-top: 2px;
+  align-items: baseline;
+  font-size: 13.5px;
+}
+.atl-nums:not(:has(span + span)):not(:has(+ .atl-fund)) b {
+  font-size: 27px;
+  line-height: 1.1;
+  margin-right: 3px;
+}
 .atl-fund { margin: 6px 0 0; font-size: 12.5px; font-weight: 800; color: var(--ink-2); }
 .atl-fund b { font-size: 19px; color: var(--accent-deep); margin-right: 2px; }
 

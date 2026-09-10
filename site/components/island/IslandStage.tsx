@@ -11,6 +11,7 @@ import { LIVE, UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
+import { rememberVisit, VISITED } from "@/components/today/visit";
 import { jstNow, readNight } from "@/lib/nightly";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
@@ -202,15 +203,16 @@ const NAME_NEAR = 108;
 
 /** 島に着くまでの演出。船ではなく、カモメについて空から降りてくる。 */
 const ARRIVE_SPAN = 3400;
-/**
- * 最後に島へ降りた日（JST の YYYY-MM-DD）。到着演出を出すかどうかの判断に使う。
- *
- * 前は sessionStorage だったので、タブを閉じるたびに 3.4 秒の演出が入っていた。
- * 毎日来る人には毎日3.4秒の税で、1分の周回のうち 6% を占める。
- * いい演出ほど2回目からは邪魔になるので、localStorage に移して初回だけにした。
- * ただし長く空いた人にはもう一度見せる。帰ってきた感じがするので。
- */
-const VISITED = "ayato-island-arrived";
+/* 最後に島へ降りた日（JST の YYYY-MM-DD）は `components/today/visit.ts` が持つ。
+   到着演出を出すかどうかの判断に使う。
+
+   前は sessionStorage だったので、タブを閉じるたびに 3.4 秒の演出が入っていた。
+   毎日来る人には毎日3.4秒の税で、1分の周回のうち 6% を占める。
+   いい演出ほど2回目からは邪魔になるので、localStorage に移して初回だけにした。
+   ただし長く空いた人にはもう一度見せる。帰ってきた感じがするので。
+
+   **鍵の名前をここに書かない。** 章から組む島（表紙が入れ替わったあと）も
+   同じ鍵に書く。片方だけが書くと、旅のあいだ「前に来てから」が出なくなる。 */
 /** これだけ空いたら、もう一度カモメと降りてもらう（日） */
 const ARRIVE_AGAIN = 30;
 /**
@@ -528,13 +530,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
        「初めての人には自分から開かない」を決めている（`components/today/Today.tsx`）。
        ここで先に書くと、初めて来た人が「2回目の人」に見えて、
        配信中の日に板とカモメが両方開く。読ませてから書く。 */
-    const remember = () => {
-      try {
-        localStorage.setItem(VISITED, jstNow().date);
-      } catch {
-        /* 書けなくても、次にもう一度演出が出るだけ */
-      }
-    };
+    const remember = rememberVisit;
     // 初めての人(null)には見せる。長く空いた人にも、もう一度。
     const firstEver = apart === null;
     const again = firstEver || (apart ?? 0) >= ARRIVE_AGAIN;
