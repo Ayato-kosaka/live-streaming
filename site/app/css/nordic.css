@@ -2376,3 +2376,76 @@ p.nday-lead {
    一覧があり、その真下に見どころの一覧（写真・種類・題・ひとこと）が同じ
    ものを並べていた。**まったく同じ件数が上下で2回**出ていたので、番号は
    一覧の行の写真の角へ移した（`.ndsp-n` / `.nspot-n`）。 */
+
+/* ---- 旅の道具「いまどこ」（`components/me/TripTools.tsx`） ----
+   走っている車の中で親指1本で触るところ。押しどころは 48px を割らない。 */
+
+/* 旅程の街の札。押すと「いる場所」に入る。書き出しの札（`.nlog-seed`）と
+   同じ形にそろえる。**いま欄に入っている街だけ、押し込まれた見え方にする。**
+   選ばれているものの出し方は、道具の札（`.mp-tab.is-on`）と同じ形にそろえる。 */
+.trip-cities { margin-top: calc(var(--sp-2) * -1); }
+.nlog-seed.is-on {
+  border-color: var(--pick);
+  transform: translateY(4px);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 今週やること。**消すためのところ**なので、行と「消す」を横に並べる。 */
+.trip-week {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: var(--bw-1) dashed color-mix(in srgb, var(--frame) 55%, transparent);
+}
+.trip-week-h {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.trip-week-none {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.trip-week-rows { display: flex; flex-direction: column; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.trip-week-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+}
+.trip-week-row > span {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.trip-week-x,
+.trip-week-plus {
+  flex: none;
+  min-height: 48px;
+  min-width: 64px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.trip-week-x:active,
+.trip-week-plus:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+.trip-week-plus:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
+.trip-week-add { display: flex; gap: var(--sp-2); align-items: stretch; }
+.trip-week-add input { flex: 1; min-width: 0; min-height: 48px; }

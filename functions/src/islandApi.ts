@@ -136,6 +136,18 @@ const PHOTOS_PER_DAY = 120;
 /** 島の景色。`docs/island-world.md` 1.3 の表がそのまま入る。ここに無い値は入れない。 */
 const ISLAND_THEMES = ["georgia", "nordic", "desert"];
 
+/* 島だよりの「今週やること」。**1行ずつ消せる形で受ける。**
+   ここに触る口が無かったあいだ、日付印だけが「今日書いた」と新しくなって、
+   中身は2週間前の予定（「9/11 から北欧へ」）のまま出ていた。
+   **日付が新しいのに中身だけ古いのは、いちばん気づかれにくい。**
+
+   1行の長さは長めに取る。**GitHub Actions から入った長い行を、
+   切り詰めて書き戻さない**ため(あちらは長さで縛っていない。
+   `python/island_set_current.py`)。短く切ると「1行消しただけ」のつもりが
+   別の行まで書き換わる。 */
+const MAX_WEEK_LINE = 120;
+const MAX_WEEK_LINES = 8;
+
 /** その日に起きたこと。**スマホの親指で打つものなので、長さで縛る。**
    長い文章は配信で話すものであって、ここに置くものではない。 */
 const MAX_LOG_BODY = 400;
@@ -2181,8 +2193,9 @@ export const islandApi = onRequest(
          ヒッチハイクの途中でワークフローを起動するのは回らないので、
          その日のことを書く口(`/nordic/log`)と同じ場所に置く。
 
-         **`week`(今週の予定)には触らない。** あれは何行もある字なので、
-         片手で打つものではない。触るのは「いる場所」「一言」「島の景色」の3つ。 */
+         **`week`(今週の予定)は、送られてきたときだけ書く。** 何行もある字なので
+         親指で全部打ち直すものではないが、**消せないのはもっと悪い。**
+         送らなければ今までどおり触らない(既存の呼び出しはそのまま動く)。 */
       if (method === "POST" && path === "/current") {
         const uid = await ownerUid(req.headers.authorization);
         if (!uid) {
@@ -2206,6 +2219,15 @@ export const islandApi = onRequest(
         const cur: Json = {place, updatedAt: today()};
         if (word) cur.word = word;
         if (theme) cur.theme = theme;
+        /* 今週やること。**欄ごと送られてきたときだけ差し替える。**
+           空の配列は「ぜんぶ消す」。1行だけ消すのは、残る行を送ってもらう。
+           送ってこない呼び出し(GitHub Actions・今までの画面)は素通りする。 */
+        if (Array.isArray(body.week)) {
+          cur.week = (body.week as unknown[])
+            .map((x) => clean(x, MAX_WEEK_LINE))
+            .filter((x) => !!x)
+            .slice(0, MAX_WEEK_LINES);
+        }
         await STATE_DOC.set({current: cur}, {merge: true});
         res.set("Cache-Control", "no-store");
         res.json({current: cur});

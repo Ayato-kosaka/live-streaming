@@ -374,3 +374,29 @@ export const BEFORE_STREAM: {
 export const BEFORE_STREAM_DAYS = 47;
 
 export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === slug);
+
+/**
+ * これから歩く国。**`COUNTRIES` には入れない。**
+ *
+ * `COUNTRIES` は「歩いた国」の一覧で、`/map` の17カ国も、世界地図の焼き込み
+ * （`build_world_route.py`）も、`order`（何カ国目）も、そこから数えている。
+ * まだ歩いていない国を混ぜると、**歩く前から歩いたことになる。**
+ * 歩き終わったら、記録（滞在・見どころ）を持たせて `COUNTRIES` へ移す。
+ *
+ * ここが持つのは、**名前と、国旗を引く鍵だけ。** 旅の途中に「リトアニア・
+ * ヴィリニュス」と書かれた日に、リトアニアの旗を出すためだけのもの
+ * （`content/place.ts`）。
+ *
+ * 国そのものは旅程のほう（`content/nordic/index.json`）が持っているが、
+ * **あれを `/now` から読むと、旅のしおりごと 17KB ぶん付いてくる**（実測）。
+ * 国の名前と slug は歩き終わるまで変わらないので、ここに置く。
+ * 万一ずれても、出るのは「旗が出ない」までで、別の国の旗は出ない。
+ */
+export const AHEAD_COUNTRIES: { slug: string; name: string }[] = [
+  { slug: "poland", name: "ポーランド" },
+  { slug: "lithuania", name: "リトアニア" },
+  { slug: "latvia", name: "ラトビア" },
+  { slug: "estonia", name: "エストニア" },
+  { slug: "finland", name: "フィンランド" },
+  { slug: "sweden", name: "スウェーデン" },
+];

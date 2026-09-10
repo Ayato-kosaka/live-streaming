@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
+import { samePlace } from "@/lib/place";
 import { Mark } from "./Marks";
 
 /**
@@ -142,8 +143,11 @@ export default function TripNow({
         setPlace(p || null);
         setArrivedOn(s?.nordic?.arrivedOn ?? null);
         setEndedOn(s?.nordic?.endedOn ?? null);
-        // 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
-        const i = stops.findIndex((st) => st.id && p.includes(st.name));
+        /* 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
+           **1字ずれても当たるようにする**（`lib/place.ts`）。走っている車の中で
+           打つので「ヴィリニュス」が「ビリニュス」になるのはふつうに起きる。
+           前はここで外れて、地図が黙って出発前の姿に戻っていた（実測）。 */
+        const i = stops.findIndex((st) => st.id && samePlace(p, st.name));
         if (i >= 0) setAt(i);
       })
       .catch(() => {
@@ -317,7 +321,7 @@ export default function TripNow({
           {/* 国の名前は、いる街と食い違ったら出さない。**着いたあとも街は動く。**
               旅が終わってティラナにいる日に、`stops[last].country` をそのまま
               出していて「いま アルバニア・ティラナ / スウェーデン」と書いてあった。 */}
-          <em>{arrivedOn && place && !place.includes(stops[last].name) ? "" : (now?.country ?? "")}</em>
+          <em>{arrivedOn && place && !samePlace(place, stops[last].name) ? "" : (now?.country ?? "")}</em>
         </div>
         <span className="tnow-go" aria-hidden>
           <svg viewBox="0 0 40 24" width="32" height="19">

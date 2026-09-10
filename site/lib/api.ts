@@ -794,10 +794,14 @@ export const amIOwner = async (token: string): Promise<boolean> => {
  * いま、どこにいるか。**あやとだけ。**
  *
  * 旅の途中に書きかえる（島の景色・`/now`・北欧の面が、みなここを読む）。
- * `week`（今週の予定）には触らない。あれは片手で打つものではない。
+ *
+ * `week`（今週やること）は**渡したときだけ**書き替わる。渡さなければ島に
+ * 入っているものがそのまま残る。**空の配列を渡すと消える。**
+ * 日付印だけ新しくなって中身が先週のまま、というのがいちばん悪いので、
+ * せめて消せるようにしてある。
  */
 export const postCurrent = (
-  c: { place: string; word?: string; theme?: string },
+  c: { place: string; word?: string; theme?: string; week?: string[] },
   token: string,
 ) =>
   req<{ current: Partial<IslandCurrent> }>("/current", {
