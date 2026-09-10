@@ -745,6 +745,39 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 
 自動生成のファイルは手で書き換えない。元のスクリプトを直してから作り直す。
 
+### 焼き込んである数字を新しくする
+
+**毎晩ひとりでに新しくなるのは BigQuery と Firestore だけ。** `site/content/` に
+焼き込んである数字は、cron でも Hosting のデプロイでも動かない
+（`npm run build:web` は expo export → public コピー → next build で、python を1行も通らない）。
+置いたままにすると、取り込みだけが進んで**画面の数字が止まる。**
+
+新しくするのは Actions の **「島の数字を焼き直す」**（`.github/workflows/rebake.yml`）。
+`workflow_dispatch` だけで、cron は付けていない。**押すもの。**
+
+| スクリプト | 焼く先 | 元 |
+| --- | --- | --- |
+| `build_chapter_stats.py` | `chapterStats.ts` `chapterStreams.ts` | BigQuery |
+| `build_residents.py` | `residents.ts` | BigQuery |
+| `build_stream_peaks.py` | `streamPeaks.ts` | BigQuery |
+| `build_on_this_day.py` | `onThisDay.ts` | BigQuery |
+| `build_country_stats.py` | `countryStats.ts` | `python/data/country_stats.json`（取り置き） |
+| `build_kitchen_talk.py` | `kitchenTalk.ts` | `python/data/kitchen_*.json`（取り置き） |
+
+**下の2本は BigQuery を引かない。** 取り置きの JSON を焼き直すだけなので、
+回しても数字は動かない。新しくするには先にその JSON を取り直す。
+
+依存が2つある。`build_on_this_day` は `streamPeaks.ts` を読み、
+`build_kitchen_talk` は `residents.ts` を読む。**焼く順はワークフロー側で固定してある。**
+
+入力は3つ。`scripts`（空なら6本ぜんぶ。**allowlist に無い名前は走らずに落ちる**）、
+`dry_run`（既定 **true**。何がどれだけ変わるかを出して終わる）、
+`deploy`（既定 false。true なら commit のあと Hosting も起動する）。
+
+`cityStreams.ts` はここに入れていない。**いまの中身は古い版のスクリプトで焼かれていて、
+焼き直すと選び直しになる**（並びごと変わる）。入れる前に、選び方の変化を確かめる必要がある。
+`nordic.ts` は元の JSON がリポジトリに無いので、そもそも回せない。
+
 ---
 
 ## 4. API（`/island-api/*`）
