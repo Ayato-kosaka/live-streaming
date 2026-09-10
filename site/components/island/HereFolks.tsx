@@ -77,7 +77,9 @@ export default function HereFolks() {
     } else {
       m.delete(SELF);
     }
-    setRows(list(m, { [SELF]: { name: user?.name, photo: user?.photo } }));
+    /* 顔は `channelPhoto`。止まった `photo` を出すと、島の上で自分だけ
+       古い顔で立つことになる（`docs/island-misses.md` #1）。 */
+    setRows(list(m, { [SELF]: { name: user?.name, photo: user?.channelPhoto } }));
     // 名前とアイコンは user から取る。ここは自分のぶんだけなので突き合わせが要らない
   }, [user]);
 
@@ -237,10 +239,10 @@ export default function HereFolks() {
 /** 名前とアイコンの引き先。自分だけは user から、他の人は residents から。 */
 function meta(
   who: Map<string, { name?: string | null; photo?: string | null }> | null,
-  user: { name?: string; photo?: string } | null | undefined,
+  user: { name?: string; channelPhoto?: string } | null | undefined,
 ) {
   const out: Record<string, { name?: string | null; photo?: string | null }> = {
-    [SELF]: { name: user?.name, photo: user?.photo },
+    [SELF]: { name: user?.name, photo: user?.channelPhoto },
   };
   for (const [k, v] of who ?? []) out[k] = v;
   return out;

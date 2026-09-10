@@ -18,38 +18,8 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { themeById } from "@/content/themes";
-import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
-
-/**
- * 島の手入れ。**あやとだけ。**
- *
- * 付箋への返信も、企画の段も、いままで掲示板（`/board`）の中にあった。
- * あれは**貼ってある順に並んだ板**なので、「まだ返していないもの」を
- * 探すには全部を目で追うことになる。返す側の用事は「返していないものが
- * 何枚あるか」なので、そこだけを抜いた一覧をここに置く。
- *
- * 掲示板側の道具は**そのまま残してある。** 読んでいる流れで返せるのが
- * あちらの良さで、ここは「たまった順に片づける」ほう。用事が違う。
- *
- * 出るかどうかは `/me` の `admin` で決めているが、それは道具を出すかどうかの
- * 話でしかない。実際に書けるかは、書く先の口がもう一度見ている
- * （`functions/src/islandApi.ts` の `ownerUid`）。
- *
- * **畳んで置く。** 旅の途中に開くものではないので、旅の道具の下。
- */
-export default function OwnerCare() {
-  return (
-    <section className="panel paper">
-      <h2>島の手入れ</h2>
-      <div className="folds">
-        <StickyCare />
-        <PlanCare />
-      </div>
-    </section>
-  );
-}
 
 /** 「2026-09-06T…」→「9月6日」 */
 const day = (iso: string) =>
@@ -80,7 +50,7 @@ const day = (iso: string) =>
  * 「ぜんぶ見る」と「しまったもの」には今までどおり出る。自分の付箋を
  * しまう道は残しておく。
  */
-function StickyCare() {
+export function StickyCare() {
   const { token } = useAuth();
   const [notes, setNotes] = useState<Sticky[] | null>(null);
   /** あやと自身が貼った付箋の id。引けるまでは null（0枚と区別する） */
@@ -144,11 +114,10 @@ function StickyCare() {
   const reading = notes === null || own === null;
 
   return (
-    <Fold
-      title="付箋に返す"
-      lead={reading ? "読んでいます…" : `まだ返していないのが ${waiting} 枚`}
-      note={reading ? undefined : String(waiting)}
-    >
+    <>
+      <p className="mp-now">
+        {reading ? "読んでいます…" : <>まだ返していないのが <b>{waiting}</b> 枚</>}
+      </p>
       {reading ? (
         <div className="wait is-row" aria-hidden>
           <span />
@@ -160,9 +129,10 @@ function StickyCare() {
         </p>
       ) : (
         /* 返していない付箋は、返すまで減らない。**上から順に返す道具**なので、
-           はじめは8枚だけ出す（#225）。畳みの中でさらに縦に伸びると、
-           下にある「ぜんぶ見る」まで指が届かなくなる。 */
-        <Longer items={shown} first={8} step={16} unit="枚" className="mp-care">
+           はじめは4枚だけ出す。1枚が「本文・札・打つ欄・押しどころ2つ」の
+           4段（約 350px）あるので、8枚出すと机が 3,600px になる（実測）。
+           片づけるのに、6枚目が見えている必要はない。 */
+        <Longer items={shown} first={4} step={12} unit="枚" className="mp-care">
           {(n) => (
             <StickyRow
               key={n.id}
@@ -203,7 +173,7 @@ function StickyCare() {
           {bin ? "貼ってあるものに戻る" : "しまったものを見る"}
         </button>
       </div>
-    </Fold>
+    </>
   );
 }
 
@@ -300,7 +270,7 @@ function StickyRow({
  * 結び付ける。**結び付けないと、板に出た提案と、実際に立っているページが、
  * 画面の上で他人のまま**になる（掲示板の道具と同じ決まり）。
  */
-function PlanCare() {
+export function PlanCare() {
   const { token } = useAuth();
   const [plans, setPlans] = useState<NextPlan[] | null>(null);
   const [bin, setBin] = useState(false);
@@ -332,10 +302,10 @@ function PlanCare() {
   }, [load]);
 
   return (
-    <Fold
-      title="企画の段を動かす"
-      lead={plans === null ? "読んでいます…" : `いま ${plans.length} 件`}
-    >
+    <>
+      <p className="mp-now">
+        {plans === null ? "読んでいます…" : <>いま <b>{plans.length}</b> 件</>}
+      </p>
       {plans === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
@@ -344,7 +314,9 @@ function PlanCare() {
       ) : plans.length === 0 ? (
         <p className="muted">{bin ? "しまったものはありません。" : "まだ1件もありません。"}</p>
       ) : (
-        <Longer items={plans} first={8} step={16} unit="件" className="mp-care">
+        /* 1件が「題・札・段の欄・id の欄・押しどころ2つ」の6段ある。
+           付箋と同じ理由で4件（`StickyCare`）。 */
+        <Longer items={plans} first={4} step={12} unit="件" className="mp-care">
           {(p) => (
             <PlanRow
               key={p.id}
@@ -370,7 +342,7 @@ function PlanCare() {
           {bin ? "出ているものに戻る" : "しまったものを見る"}
         </button>
       </div>
-    </Fold>
+    </>
   );
 }
 

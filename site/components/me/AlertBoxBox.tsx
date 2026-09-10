@@ -92,24 +92,14 @@ export default function AlertBoxBox() {
     open(false);
   }, [open]);
 
-  if (err) {
+  if (err) return <p className="mp-now">{err}</p>;
+  if (!id)
     return (
-      <section className="panel paper">
-        <h2>アラートボックス</h2>
-        <p className="mp-now">{err}</p>
-      </section>
+      <div className="wait is-row" aria-hidden>
+        <span />
+        <span />
+      </div>
     );
-  }
-  if (!id) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
 
   /* 生い立ちは書き出しに焼かない。**ここは静的書き出しの面**なので、
      ビルドした箱の名前が焼き付く（`CLAUDE.md`）。出てから読む。 */
@@ -117,13 +107,9 @@ export default function AlertBoxBox() {
   const url = `${origin}/alertbox?k=${id}`;
 
   return (
-    <section className="panel paper">
-      <h2>アラートボックス（OBS）</h2>
+    <>
       <p className="mp-ab-lead">
-        この URL を、OBS のブラウザソースに貼ってください。
-        <b>前の URL はもう動きません。</b>
-        鍵を書き出しに焼くのをやめたので、
-        <code>?k=</code> の付いていない URL は投げ銭の通知を受け取れません。
+        OBS のブラウザソースに、これを貼る。
       </p>
       <p className="mp-ab-url">{url}</p>
       <div className="mp-ab-acts">
@@ -139,11 +125,7 @@ export default function AlertBoxBox() {
         </button>
       </div>
       <p className="mp-ab-lead">
-        ここに出ているのは<b>鍵ではありません。</b>
-        こちらが出した合言葉で、鍵はサーバーに置いたままです。
-        それでも、この URL を知っている人は投げ銭の通知を受け取れるので、
-        配信の画面にそのまま映すもの以外には貼らないでください。
-        {doneru?.set && `（Doneru の鍵は入っています。末尾 ${doneru.tail}）`}
+        この URL を知っている人には、投げ銭の通知が届く。配信に映すところ以外には貼らない。
       </p>
 
       {/* **鍵が無いときは、いちばん上に出す。** これが無いと URL を貼っても
@@ -153,10 +135,7 @@ export default function AlertBoxBox() {
         <div className="mp-ab-need">
           <b>Doneru の鍵が、まだ入っていません。</b>
           <p>
-            これが無いと、URL を貼っても投げ銭の通知は来ません。
-            Doneru のアラートボックスの OBS の URL の、
-            <code>?key=</code> のあとの文字列です。
-            <b>入れたあとは、この画面にも書き出したものにも出てきません。</b>
+            Doneru のアラートボックスの OBS の URL の、<code>?key=</code> のあとの文字列。
           </p>
           <div className="dform mp-ab-key">
             <input
@@ -182,9 +161,6 @@ export default function AlertBoxBox() {
 
       {doneru?.set && (
         <Fold title="Doneru の鍵を入れ直す" lead={`いまは末尾 ${doneru.tail}`}>
-          <p className="mp-ab-lead">
-            Doneru 側で作り直したときだけ。入れ直すと、いまの鍵は上書きされます。
-          </p>
           <div className="dform mp-ab-key">
             <input
               type="password"
@@ -209,9 +185,8 @@ export default function AlertBoxBox() {
 
       <Fold title="合言葉を作り直す" lead="漏れたと思ったときだけ">
         <p className="mp-ab-lead">
-          Doneru の鍵そのものは作り直せません。かわりに、こちらの合言葉を
-          替えます。<b>押した瞬間に、いま貼ってある OBS の URL が止まります。</b>
-          貼り替えられる場所にいるときだけ押してください。
+          <b>押した瞬間に、いま貼ってある OBS の URL が止まる。</b>
+          貼り替えられる場所にいるときだけ押す。
         </p>
         {sure ? (
           <div className="mp-ab-acts">
@@ -228,6 +203,6 @@ export default function AlertBoxBox() {
           </button>
         )}
       </Fold>
-    </section>
+    </>
   );
 }

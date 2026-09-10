@@ -1,12 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { firstLetter } from "@/lib/firstLetter";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
-  PLAN_STATUS_NAME,
-  canEditPlan,
   getMyStickies,
   getNextPlans,
   loadMe,
@@ -16,58 +12,36 @@ import {
   type Sticky,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { RESIDENTS } from "@/content/residents";
-import { themeById } from "@/content/themes";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
-import Longer from "@/components/ui/Longer";
 import IslandMe from "@/components/live/IslandMe";
-import MyCards from "./MyCards";
-import type { PlanDays } from "@/components/cards/cards";
+import MeHero from "./MeHero";
+import MyStuff from "./MyStuff";
+import { useCards, type PlanDays } from "@/components/cards/cards";
 import SignIn from "@/components/live/SignIn";
-import { Pin } from "@/components/live/art";
-
-/* あやとの道具は、あやとの画面でしか読み込まない。
-   旅の道具は旅程表（`content/nordic.ts`・44KB）を連れてくるし、
-   島の手入れは付箋と企画をまとめて引く。**島に来る人のほとんどには要らない。**
-   `ssr: false` なのは、書き出しの HTML に入れても誰の役にも立たないから。 */
-const TripTools = dynamic(() => import("./TripTools"), { ssr: false });
-const OwnerCare = dynamic(() => import("./OwnerCare"), { ssr: false });
-const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
-/* 投げ銭の紐付け（#190）。旅の途中に赤いメールが来たとき、片手で直す面。
-   ここも `ssr: false`。中身は全部ログインした人のもので、焼けるものが無い。 */
-const DonorLinks = dynamic(() => import("./DonorLinks"), { ssr: false });
-
-/** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
-const drive = (id: string, size: number) =>
-  `https://lh3.googleusercontent.com/d/${id}=s${size}`;
-
-/** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
 
 /**
- * じぶんのこと。**ログインした人が、自分のものを見つけられる1か所。**
+ * じぶんのこと。**ログインした人が、自分の島での立ち位置を見る1枚。**
  *
- * ## なぜ要るのか
+ * ## 何を置いて、何を置かないか
  *
- * 貼った付箋も、出した企画も、島での見え方も、ログアウトも、
- * いままで「島のどこか」にはあった。付箋は掲示板の新着に紛れ、
- * 見え方とログアウトは掲示板の折りたたみの中にいた（#152 で
- * 「見つからない」と報告されたのがそこ）。**自分のものだけを集めた面が
- * 無かった**ので、自分が何をしたのかを見返す道が無かった。
+ * 置くのは「あなたは誰で、島に何を置いてきたか」だけ。
+ *   - 立ち位置（`MeHero`）… 顔・キャラクター・名前・いっしょにいた日数
+ *   - じぶんのもの（`MyStuff`）… 付箋・企画・カードを札で切り替える
+ *   - 島に名前を出すか（畳み）
+ *   - 島から出る
  *
- * ## 誰が入れるか
+ * **運営の道具はここに置かない**（`/me/desk`）。旅の道具・付箋への返事・
+ * 企画の段・投げ銭の紐付け・アラートボックスは、じぶんのことではなく
+ * 島の手入れで、用事も開く回数も違う。同じ紙に積んだ結果、あやとの画面は
+ * 390px 幅で 8,336px——スマホ10画面ぶん——になっていた。
+ * あやとの言葉（2026-09-10）「整理されてなさすぎる。ux 悪すぎ。縦長すぎる」。
  *
- * ログインした人は全員（あやとの言葉・#163）。`canDraft`（認可ユーザー）は
- * 捨ててある。残っているのは `admin`（あやと）だけで、そこにだけ
- * 旅の道具と島の手入れが増える。
+ * ## 溜まっても背が変わらない形にする
  *
- * ## 並び順
- *
- * **あやとの画面では、旅の道具がいちばん上に来る。** ヒッチハイクの
- * 途中に片手で開くのがその3つで、下に積むと畳みの向こうに行く。
- * ほかの人の画面では、貼った付箋がいちばん上。
+ * 付箋も企画もカードも、来てくれるほど増える。前は3つとも独立した紙で
+ * 縦に積んであったので、**貼った人ほど下が遠くなる**面だった。
+ * 札で切り替えて、同時に1つしか出さない（`MyStuff`）。
  */
 export default function MyPage({ planDays }: { planDays: PlanDays }) {
   const { user, token, signOut } = useAuth();
@@ -77,6 +51,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   const [plans, setPlans] = useState<NextPlan[] | null>(null);
   /** 読めなかったか。空っぽと読めなかったを、同じ顔で出さない */
   const [down, setDown] = useState(false);
+  const { cards } = useCards();
 
   const load = useCallback(async () => {
     const t = await token();
@@ -131,210 +106,44 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     return (
       <section className="panel paper">
         <h2>ここは、入った人のところ</h2>
-        <p className="muted">
-          貼った付箋、出した企画、島にいるじぶん。ログインすると、この面に集まります。
-          島は入らなくても遊べるので、入らないままでも構いません。
-        </p>
+        <p className="muted">島は、入らないままでも遊べます。</p>
         <SignIn />
       </section>
     );
   }
 
-  /* 島にいるじぶん（下の面に出るキャラクター）。**割り当てはあやとの表だけが
-     決める**（`content/residents.ts` の channel。元はスプレッドシート）。 */
-  const chara = me?.channelId
-    ? RESIDENTS.find((r) => r.channel === me.channelId)
-    : undefined;
-
-  /* 見出しの隣の顔。**毎晩入れ直る `channelPhoto` を出す。**
-
-     あやとの言葉（2026-09-10）「YouTubeのアイコン。2026/09/07だったら
-     それが新しいと思うが？」。そのとおりで、**写真は古くない。**
-
-     もともとの「古い」は、ログインした日のまま止まる `user.photo` を
-     出していたこと（そちらは押した日から動かない）。毎晩 islandChannels
-     から入れ直るほうを使えば、YouTube で替えれば翌日には島も替わる。
-
-     **字に落とさない。** 一度そうして「バグ」と言われた。 */
+  /* 顔は**毎晩入れ直る `channelPhoto`**。ログインした日のまま止まる
+     `user.photo` は使わない（`docs/island-misses.md` #1・#2）。 */
   const face = me?.channelPhoto || "";
+  const mine = me?.channelId
+    ? (cards ?? []).filter((c) => c.channelId === me.channelId)
+    : [];
 
   return (
     <>
-      {/* いま入っている人。**押しどころではないので、平ら（紙）。** */}
-      <div className="mp-who">
-        {face ? (
-          <img className="mp-face" src={face} alt="" />
-        ) : (
-          <span className="mp-face mp-face-none" aria-hidden>
-            {firstLetter(user.name)}
+      <MeHero name={me?.nickname || user.name} face={face} channelId={me?.channelId} />
+
+      {/* 島の手入れ（`/me/desk`）。**あやとだけ。じぶんのものより上。**
+          旅の途中は、ここを開くために `/me` へ来る。 */}
+      {me?.admin && (
+        <Link className="mp-goto is-lead" href="/me/desk">
+          <Icon name="signpost" size={22} />
+          <span className="mp-goto-t">
+            <b>島の手入れ</b>
+            <i>写真・その日・いまどこ・配信・付箋・企画・投げ銭・OBS</i>
           </span>
-        )}
-        <span className="mp-who-t">
-          <b>{me?.nickname || user.name}</b>
-          <i>
-            {me
-              ? me.showName || me.showPhoto
-                ? "島に名前を出しています"
-                : "島には出していません（キャラクターだけがいます）"
-              : "島での見え方を読んでいます…"}
-          </i>
-        </span>
-      </div>
+          <Icon name="right" size={14} />
+        </Link>
+      )}
 
-      {/* あやとの道具。**旅の途中に片手で開くので、いちばん上。** */}
-      {me?.admin && <TripTools />}
-      {/* OBS に貼る URL。**貼り替えが終わるまでは、島の手入れより上。**
-          鍵を書き出しから外した（#180）ので、貼り替えないと投げ銭の
-          通知が来ない。旅に出ると机が無いので、9/11 までに済ませる。 */}
-      {me?.admin && <AlertBoxBox />}
-      {me?.admin && <OwnerCare />}
-      {/* 紐付けは、毎朝の取り込みが赤くなった日にだけ開く。**島の手入れの下。**
-          付箋も企画も毎日のものだが、これは新しい人が来た日だけの用事。 */}
-      {me?.admin && <DonorLinks />}
-
-      <section className="panel paper">
-        <h2>貼った付箋</h2>
-        {stickies === null ? (
-          <div className="wait is-row" aria-hidden>
-            <span />
-            <span />
-          </div>
-        ) : stickies.length === 0 ? (
-          <div className="blank">
-            <b>まだ1枚も貼っていません</b>
-            <p>
-              思いついたことを1行だけ書くところです。むちゃな注文ほど、だいたい通ります。
-            </p>
-            <Link className="blank-go" href="/board">
-              板に貼りにいく
-              <Icon name="right" size={14} />
-            </Link>
-          </div>
-        ) : (
-          /* 4枚だけ出す。**貼った人ほど長くなる面**なので、溜まったぶんを
-             そのまま縦に積まない（#225）。1枚が本文・札・返事の3段あるので、
-             20枚で 3,200px（スマホ4画面ぶん）まで伸びていた。 */
-          <Longer items={stickies} first={4} step={8} unit="枚" className="mp-notes">
-            {(n, i) => {
-              const th = themeById(n.theme);
-              return (
-                <li key={n.id}>
-                  <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />
-                  <p className="mp-note-text">{n.text}</p>
-                  {/* テーマと日付は札にしない。**枠と余白のぶんだけ背が伸びる**し、
-                      押せない札が押しどころの隣に並ぶと、合図が濁る。 */}
-                  <p className="mp-note-foot">
-                    <span>{th?.name ?? n.theme}</span>
-                    <span>{day(n.createdAt)}</span>
-                    {n.hearts > 0 && (
-                      <span className="mp-hearts">
-                        <svg viewBox="0 0 24 22" aria-hidden>
-                          <path
-                            d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                        {n.hearts}
-                      </span>
-                    )}
-                  </p>
-                  {n.reply && (
-                    <p className="mp-reply">
-                      <b>あやとから</b>
-                      {n.reply}
-                    </p>
-                  )}
-                </li>
-              );
-            }}
-          </Longer>
-        )}
-        {stickies !== null && stickies.length > 0 && (
-          <p className="muted mp-small">
-            ログインして貼ったものだけが出ます。名前を書かずに貼ったぶんは、
-            こちらから見分けられません。
-          </p>
-        )}
-      </section>
-
-      <section className="panel paper">
-        <h2>出した企画</h2>
-        {plans === null ? (
-          <div className="wait is-row" aria-hidden>
-            <span />
-            <span />
-          </div>
-        ) : plans.length === 0 ? (
-          <div className="blank">
-            <b>まだ1つも出していません</b>
-            <p>題ひとつで出せます。日にちも場所も写真も、あとから足せます。</p>
-            <Link className="blank-go" href="/board">
-              企画を出しにいく
-              <Icon name="right" size={14} />
-            </Link>
-          </div>
-        ) : (
-          /* 企画は1件が2段（題と札）なので、付箋より多めに出せる。 */
-          <Longer items={plans} first={5} step={10} unit="件" className="mp-plans">
-            {(p) => {
-              const edit = canEditPlan(p, user.uid, myPlans());
-              return (
-                <li key={p.id}>
-                  <span className="mp-plan-t">
-                    <b>{p.title || "（題なし）"}</b>
-                    <i>
-                      <span className="chip">{PLAN_STATUS_NAME[p.status]}</span>
-                      <span className="chip">{day(p.createdAt)}</span>
-                      {p.hearts > 0 && <span className="chip">さんせい {p.hearts}</span>}
-                    </i>
-                  </span>
-                  {edit === "ok" && (
-                    <Link className="mp-go" href={`/next/new?id=${p.id}`}>
-                      そだてる
-                      <Icon name="right" size={13} />
-                    </Link>
-                  )}
-                </li>
-              );
-            }}
-          </Longer>
-        )}
-      </section>
-
-      <section className="panel paper">
-        <h2>島にいる、じぶん</h2>
-        {chara?.icon ? (
-          <div className="mp-chara">
-            <img src={drive(chara.icon, 256)} alt="島にいるあなたのキャラクター" />
-            <p>
-              この絵で島を歩いています。今日いるかどうかは日替わりで、
-              よく来てくれている人ほど島にいる日が多くなります。
-            </p>
-          </div>
-        ) : (
-          <div className="blank">
-            <b>キャラクターは、まだありません</b>
-            <p>
-              島の住人の絵は、あやとが1人ずつ割り当てています。
-              配信で顔を出していると、そのうち増えます。
-            </p>
-            <Link className="blank-go" href="/friends">
-              住んでいる人を見る
-              <Icon name="right" size={14} />
-            </Link>
-          </div>
-        )}
-      </section>
-
-      {/* あやと島カード（#173）。#163 で置いた「じぶんの壁紙」の器が、
-          ここに入れ替わった。**壁紙を作る道具ではなく、その日いてくれた印が
-          勝手に積まれていく場所**（あやとの言い直し）。
-          焼いた1枚を残す仕組みは要らなくなった。カードは焼かずに、
-          写真と名簿から組み立てているので。 */}
-      <section className="panel paper">
-        <h2>あやと島カード</h2>
-        <MyCards channelId={me?.channelId} plans={planDays} />
-      </section>
+      <MyStuff
+        stickies={stickies}
+        plans={plans}
+        cards={me?.channelId ? mine : null}
+        planDays={planDays}
+        uid={user.uid}
+        hasChannel={!!me?.channelId}
+      />
 
       {down && (
         <p className="muted mp-small">
@@ -358,16 +167,13 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       </Fold>
 
       {/* ログアウトは畳まない。**畳みの向こうに置いたせいで見つからなかった**
-          のが、ここへ移ってきた理由（#152・#163）。 */}
-      <section className="panel paper mp-out">
-        <h2>島から出る</h2>
-        <p className="muted">
-          出ても、貼った付箋と出した企画は残ります。また入れば、この面に戻ってきます。
-        </p>
+          のが、ここへ移ってきた理由（#152・#163）。紙も見出しも要らない。
+          押しどころが1つあれば、それが何をするかは字が言っている。 */}
+      <div className="mp-out">
         <button className="mp-outbtn" onClick={signOut}>
           ログアウト
         </button>
-      </section>
+      </div>
     </>
   );
 }
