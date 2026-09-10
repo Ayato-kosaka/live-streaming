@@ -203,12 +203,20 @@
   transform: translateY(4px);
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7);
 }
+/* **絵は切らない。島のキャラクターも、YouTube の顔写真も。**
+   丸に `cover` で押し込むと、全身の絵は頭と足が落ちる
+   （あやと「キャラクターが見切れてる」2026-09-10。あやと自身の顔写真も
+   全身のイラストで、足が切れていた）。器いっぱいに入れてから、縮めて
+   丸の中へ収める。寸法は `components/ui/MeButton.tsx` が絵ごとに決める。 */
 .ih-me img {
   position: absolute;
   inset: 0;
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
+/* 絵が出ているあいだは、下の1文字を隠す。絵の周りは紙が見えているので、
+   出したままだと字と絵が重なる。落ちたら字に戻る（`drop`）。 */
+.ih-me.has-pic .ih-me-i { visibility: hidden; }
 .ih-me-i {
   font-size: var(--fs-body);
   font-weight: 900;
