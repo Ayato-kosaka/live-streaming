@@ -507,7 +507,12 @@ jobs:
           # 毎晩ひとりでに走るので、焼いているあいだに誰かが master へ入れていることが
           # ある。**そのまま push すると落ちて、その晩ぶんが黙って消える。**
           # 取り込んでから押す（rebase なので、載せ直すのは自分の1コミットだけ）
-          git pull --rebase origin master
+          # **`--autostash` を外さない。** この直前で `next build` を通しているので、
+          # Next が `tsconfig.json` の include や `next-env.d.ts` を書き足していると
+          # 作業ツリーが汚れている。素の `git pull --rebase` は汚れていると
+          # 「unstaged changes がある」で止まり、**その晩ぶんが黙って消える。**
+          # commit は名指しなので、退避したぶんが混ざることはない
+          git pull --rebase --autostash origin master
           git push origin HEAD:master
           echo "changed=1" >> "$GITHUB_OUTPUT"
           echo "" >> "$GITHUB_STEP_SUMMARY"
