@@ -9,7 +9,7 @@ import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
 import { isleSpec, nordicSpec, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { CHAIN, type Chapter } from "@/content/chapters";
+import { chapterNeighbours, type Chapter } from "@/content/chapters";
 
 /**
  * 過去の島と、次の島。**歩ける。**
@@ -64,9 +64,14 @@ export default async function ChapterIsland({
 }) {
   const { chapter } = await params;
   const c = ISLE_CHAPTERS.find((x) => x.slug === chapter)!;
-  const i = CHAIN.indexOf(c);
-  const prev = near(CHAIN[i - 1]);
-  const next = near(CHAIN[i + 1]);
+  /* **となりの島は本線でたどる**（`content/chapters.ts` の `chapterNeighbours`）。
+     前はここが連なりの並び（`CHAIN`）から前後を取っていて、あれは枝を親の
+     すぐ後ろに差し込んだ**航路の絵の並び**なので、本線の島の「ひとつ前」に
+     枝が割り込んでいた（北欧の島のひとつ前が、4ヶ月前に終わった
+     「イランまで歩く」になっていた）。 */
+  const { prev: back, next: on } = chapterNeighbours(c);
+  const prev = near(back);
+  const next = near(on);
   /* **`nordicSpec` は「まだ始まっていない章」の spec ではなく、北欧旅の spec。**
      中の板は `/nordic` を指し、「なぜ北欧まで行くのか」と書いてある。
      `c.from` の有無だけで振り分けていたので、アルバニアの島に北欧の板が5枚建ち、

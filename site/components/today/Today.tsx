@@ -7,6 +7,7 @@ import { jstNow } from "@/lib/nightly";
 import { countVisit } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Arrow, NewDot, Wedge } from "./art";
+import { VISITED } from "./visit";
 import { whenIdle } from "./idle";
 import Poll from "./Poll";
 
@@ -31,8 +32,6 @@ import Poll from "./Poll";
 /** その日はじめて開いたかどうかを覚えておく鍵。中身は JST の YYYY-MM-DD。 */
 const SEEN = "ayato-island-today";
 
-/** 島に降りた日を覚えている鍵。書くのは島のほう（`components/island/IslandStage.tsx`）。 */
-const VISITED = "ayato-island-arrived";
 
 /** 中身を数え直す間隔。「あと3時間20分」が止まって見えない程度で足りる。 */
 const TICK = 60_000;

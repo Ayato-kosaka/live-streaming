@@ -269,8 +269,28 @@
   .today[data-place="bar"] .today-open:not(.today-more) { margin: 0; }
 }
 
-/* 住人と話しているあいだは、島の上のUIを引っ込める（入口の札と同じ扱い） */
-.stage.is-talking .today { opacity: 0; transition: opacity 0.18s; pointer-events: none; }
+/* --- 章から組んだ島が表紙になっているとき（`components/isle/IsleStage.tsx`） --- */
+/* 板そのものは1つも変えない。**変わるのは置き場所だけ。**
+   PC・タブレットは `corner` をそのまま使う（島の隅の道具は左側に寄せてあるので、
+   右は空いている）。スマホは下バーが無いので、島の下ふちに板1枚を浮かせる。 */
+@media (max-width: 639px) {
+  .isle-today {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    /* 島の道具（`.isle-view` / `.isle-atlas`）はスマホでは上の隅にいる。
+       下ふちは空いているので、板はそこに寝かせる */
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 4;
+  }
+}
+
+/* 住人と話しているあいだは、島の上のUIを引っ込める（入口の札と同じ扱い）。
+   板が開いているところに吹き出しが重なると、どちらも読めない。
+   章の島（`.isle`）も同じ決まりにそろえる——建物の板が開いているあいだも同じ */
+.stage.is-talking .today,
+.isle.is-talking .today,
+.isle.is-sheet .today { opacity: 0; transition: opacity 0.18s; pointer-events: none; }
 
 
 /* =========================================================
