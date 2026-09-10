@@ -118,7 +118,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
 
       <Panel>
         <h2>ここまで、どう作ってきたか</h2>
-        <p className="muted">年を押すと開きます。配信のリンクは、その日の回そのものです。</p>
+        <p className="muted">古い年ほど下。押すと、その年の節目が出てくる。</p>
         {/* どの年も畳んでおく。前はいちばん新しい年を開いていたが、
             2026年だけで9件（約990px）あって、この面が3.7画面になっていた。
             閉じていても、その年でいちばん新しくやったことは見出しの下に出る。 */}

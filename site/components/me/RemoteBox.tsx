@@ -164,8 +164,7 @@ export default function RemoteBox() {
       <section className="panel paper">
         <h2>ここは、あやとのところ</h2>
         <p className="muted">
-          配信の画面を動かすところなので、あやとだけが開けます。
-          島のほかの面は、そのまま見られます。
+          ここはあやとだけ。島のほかの面は、そのまま見られます。
         </p>
       </section>
     );
@@ -208,7 +207,7 @@ export default function RemoteBox() {
         <h2>押したもの</h2>
         {hits.length === 0 ? (
           <p className="rm-note">
-            まだ何も押していません。下のボタンが、そのまま表示側に届きます。
+            まだ何も押していません。
           </p>
         ) : (
           <ul className="rm-hits">
@@ -236,9 +235,6 @@ export default function RemoteBox() {
             よってみる
           </button>
         </div>
-        <p className="rm-note">
-          島にいなければ、島へ行ってから寄り引きが変わります。
-        </p>
       </section>
 
       {/* スクロール。**飛ばずに、送る。** */}
@@ -256,10 +252,7 @@ export default function RemoteBox() {
             </button>
           ))}
         </div>
-        <p className="rm-note">
-          飛ばずに、滑らかに送ります。押している間ずっと動くのではなく、
-          1回で1回ぶん。
-        </p>
+        <p className="rm-note">1回で1画面ぶん、滑らかに送る。</p>
       </section>
 
       {/* 面 */}
@@ -284,7 +277,7 @@ export default function RemoteBox() {
             </button>
           ))}
         </div>
-        <p className="rm-note">島の看板に出ている6つ。押すと、その面が出ます。</p>
+        <p className="rm-note">島の看板に出ている6つ。</p>
       </section>
 
       {/* 北欧の日。**今日だけを出して、残りは畳む。** */}
@@ -318,9 +311,7 @@ export default function RemoteBox() {
             ))}
           </div>
         </Fold>
-        <p className="rm-note">
-          押すと、その日のページが出ます。旅程表ぜんぶは、いまは送れません。
-        </p>
+        <p className="rm-note">押すと、その日のページが出る。</p>
       </section>
 
       {/* 表示側の見え方と、出し先 */}

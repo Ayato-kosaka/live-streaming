@@ -159,7 +159,7 @@ export default function LegendsPage() {
             options={again.map((l) => ({ id: l.slug, label: l.title }))}
             after={
               <>
-                ここに無い案は、<Link href="/board">掲示板</Link>に書けます。
+                ここに無い案は、<Link href="/board">掲示板</Link>へ。
               </>
             }
           />

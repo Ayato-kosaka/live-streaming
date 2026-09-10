@@ -131,10 +131,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     return (
       <section className="panel paper">
         <h2>ここは、入った人のところ</h2>
-        <p className="muted">
-          貼った付箋、出した企画、島にいるじぶん。ログインすると、この面に集まります。
-          島は入らなくても遊べるので、入らないままでも構いません。
-        </p>
         <SignIn />
       </section>
     );
@@ -175,7 +171,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
             {me
               ? me.showName || me.showPhoto
                 ? "島に名前を出しています"
-                : "島には出していません（キャラクターだけがいます）"
+                : "島には名前を出していません"
               : "島での見え方を読んでいます…"}
           </i>
         </span>
@@ -249,12 +245,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
             }}
           </Longer>
         )}
-        {stickies !== null && stickies.length > 0 && (
-          <p className="muted mp-small">
-            ログインして貼ったものだけが出ます。名前を書かずに貼ったぶんは、
-            こちらから見分けられません。
-          </p>
-        )}
       </section>
 
       <section className="panel paper">
@@ -306,18 +296,12 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
         {chara?.icon ? (
           <div className="mp-chara">
             <img src={drive(chara.icon, 256)} alt="島にいるあなたのキャラクター" />
-            <p>
-              この絵で島を歩いています。今日いるかどうかは日替わりで、
-              よく来てくれている人ほど島にいる日が多くなります。
-            </p>
+            <p>この絵で島を歩いています。</p>
           </div>
         ) : (
           <div className="blank">
             <b>キャラクターは、まだありません</b>
-            <p>
-              島の住人の絵は、あやとが1人ずつ割り当てています。
-              配信で顔を出していると、そのうち増えます。
-            </p>
+            <p>100円から投げ銭してくれた人に、あやとが1人ずつ描いています。</p>
             <Link className="blank-go" href="/friends">
               住んでいる人を見る
               <Icon name="right" size={14} />
@@ -361,9 +345,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
           のが、ここへ移ってきた理由（#152・#163）。 */}
       <section className="panel paper mp-out">
         <h2>島から出る</h2>
-        <p className="muted">
-          出ても、貼った付箋と出した企画は残ります。また入れば、この面に戻ってきます。
-        </p>
+        <p className="muted">出ても、貼った付箋と出した企画は残ります。</p>
         <button className="mp-outbtn" onClick={signOut}>
           ログアウト
         </button>

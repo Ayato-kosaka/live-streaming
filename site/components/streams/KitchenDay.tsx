@@ -32,7 +32,9 @@ function span(mins: number): string {
  * （`docs/island-concept.md` 6章）。
  *
  * `there` に出るのは、その日コメントしていた人のうち**いまも島に絵がある人**
- * だけなので、人数（`people`）とは一致しない。一致しないことを文で言う。
+ * だけなので、人数（`people`）とは一致しない。**その食い違いを画面で断らない。**
+ * 中の決めごとの説明になるうえ、読む人のすることが1つも変わらない
+ * （`docs/island-misses.md` 決めごと7）。
  */
 export default function KitchenDay({ t }: { t: KitchenTalk }) {
   // 数が取れていない日（チャットの残っていない配信）は、数字を出さずに黙る。
@@ -62,9 +64,6 @@ export default function KitchenDay({ t }: { t: KitchenTalk }) {
               </li>
             ))}
           </ul>
-          <p className="kd-foot">
-            いまも島を歩いている人だと、この{t.there.length}人が来ていた。
-          </p>
         </>
       )}
     </div>
