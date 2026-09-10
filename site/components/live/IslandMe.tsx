@@ -72,14 +72,14 @@ export default function IslandMe({ me }: { me?: Me | null }) {
 
   return (
     <div className="me">
-      {/* **1行だけ残す。** 「いま島にいる人」もこの同意にそろえてある
-          （`docs/island-here.md`）ので、出すと決めた人には
-          「開いているあいだ島に立つ」ことまで起きる。
-          そこは仕組みの話ではなく**その人の身に起きること**なので、書く。
-          仕組みの説明（何が条件で、何が出ないか）は書かない
-          （`docs/island-misses.md` #7）。 */}
+      <p className="me-note">名前を出すと、島のキャラクターの札に、その名前が出ます。</p>
+      {/* 「いま島にいる人」も、この同意にそろえてある（`docs/island-here.md`）。
+          いま見ているかどうかは、名前を出すより踏み込んだことなので、
+          出さないと決めた人のぶんは、そもそも置きにいかない。
+          ここで言っておかないと、名前を出した人が
+          「見ているのが知られる」ことを知らないまま出すことになる。 */}
       <p className="me-note">
-        どちらかを出すと、開いているあいだ、島の上にあなたが立ちます。
+        どちらかを出すと、島を開いているあいだ、いま見ているところに丸いアイコンが立ちます。
       </p>
 
       <label className="me-row">
@@ -120,12 +120,7 @@ export default function IslandMe({ me }: { me?: Me | null }) {
         <div className="me-prev-body">
           {showName ? (
             <span className="me-prev-tag">
-              {/* 出すのは**毎晩入れ直る顔**（`channelPhoto`）。ログインした日
-                  のまま止まる `photo` を出すと、名札の見本だけが古い顔になる
-                  （`docs/island-misses.md` #1）。 */}
-              {showPhoto && user.channelPhoto && (
-                <img src={user.channelPhoto} alt="" />
-              )}
+              {showPhoto && user.photo && <img src={user.photo} alt="" />}
               {nickname.trim() || user.name}
             </span>
           ) : (
@@ -137,7 +132,7 @@ export default function IslandMe({ me }: { me?: Me | null }) {
       <button className="me-save" onClick={save} disabled={!ready || state === "saving"}>
         {state === "saving" ? "保存しています…" : "これでいく"}
       </button>
-      {state === "done" && <p className="me-ok">保存しました。</p>}
+      {state === "done" && <p className="me-ok">保存しました。島に反映されます。</p>}
       {state === "error" && <p className="err">保存できませんでした。もう一度ためしてみてください。</p>}
     </div>
   );

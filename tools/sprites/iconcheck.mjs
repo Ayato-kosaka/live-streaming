@@ -28,24 +28,29 @@ for (const nochara of [false, true]) {
   const r = await p.evaluate(() => {
     const me = document.querySelector(".ih-me");
     const img = me?.querySelector("img");
-    const face = document.querySelector(".mp-face");
-    const chara = document.querySelector(".mp-chara img");
+    /* じぶんのことを作り直したとき（#239）、顔は `.mp-face` から
+       `.mh-face`（YouTube の顔）と `.mh-chara`（島のキャラクター）に分かれた。
+       **面を作り替えたら、判定の指す先も直す。** 古い名前のままだと
+       「正しく出ているのに無し」と読んで、直っているものを落とす。 */
+    const face = document.querySelector(".mh-face");
+    const chara = document.querySelector(".mh-chara");
+    const ok = (e) => (e ? (e.naturalWidth > 0 ? "出ている" : "落ちた") : "無し");
     return {
       看板字: me?.querySelector(".ih-me-i")?.textContent ?? "(無し)",
-      看板絵: img ? (img.naturalWidth > 0 ? "出ている" : "落ちた") : "無し",
-      中部: face ? (face.tagName === "IMG" ? "写真" : `字「${face.textContent}」`) : "(無し)",
-      島のじぶん: chara ? "キャラクター" : "（絵なし）",
+      看板絵: ok(img),
+      中部: ok(face),
+      島のじぶん: chara ? ok(chara) : "（絵なし）",
     };
   });
   /* **判定の向きを、いまの目的に合わせる。**
      一度「YouTube の顔を消す」が目的だったときの判定（取りに行ったら失敗）を
      そのまま使っていて、正しく出ているものを「だめ」と読んだ。
      いまの正解は「顔が出ていること」。字に落ちていたら失敗。 */
-  const ng = r.中部 !== "写真" || r.看板絵 === "無し";
+  const ng = r.中部 !== "出ている" || r.看板絵 !== "出ている";
   if (ng) bad++;
   console.log(
-    `${nochara ? "絵の無い人(あやと)" : "絵のある人      "} 看板=「${r.看板字}」${r.看板絵} / ` +
-      `中部=${r.中部} / 島のじぶん=${r.島のじぶん} / 顔の取得=${yt.length}回${ng ? "  ← だめ" : ""}`,
+    `${nochara ? "絵の無い人(あやと)" : "絵のある人      "} 看板=${r.看板絵} / ` +
+      `YouTubeの顔=${r.中部} / 島のじぶん=${r.島のじぶん} / 顔の取得=${yt.length}回${ng ? "  ← だめ" : ""}`,
   );
   await ctx.close();
 }

@@ -106,7 +106,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     return (
       <section className="panel paper">
         <h2>ここは、入った人のところ</h2>
-        <p className="muted">島は、入らないままでも遊べます。</p>
         <SignIn />
       </section>
     );

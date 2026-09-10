@@ -180,7 +180,7 @@ export default function AppsPage() {
                 </span>
                 <span className="tile-text">
                   <b>{a.name}のこと</b>
-                  <i>{a.milestones.length}の節目。配信より前なので、動画は付いていない</i>
+                  <i>{a.milestones.length}の節目。日本にいたころの話</i>
                 </span>
                 <Icon name="right" size={16} className="tile-go" />
               </Link>

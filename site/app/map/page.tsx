@@ -113,9 +113,7 @@ export default function MapPage() {
       <Panel>
         <h2>どこをどう回ったんだろう</h2>
         <p className="muted">
-          ピンを押すと、その国が地図の上で開きます。近い国どうしは「◯カ国」の札に
-          まとまっていて、押すとそこへ寄ります。「パリから、たどる」を押すと、
-          出発から今日まで、入った順に18カ国を回ります。
+          ピンを押すと、その国のことが出てくる。「パリから、たどる」で、出発から今日までを順に回る。
         </p>
         <WorldRoute here={here.slug} />
       </Panel>
@@ -134,7 +132,7 @@ export default function MapPage() {
           日本を出たのは{PROFILE.leftJapan.replace(/-/g, "/")}、パリで配信を始めたのは
           {START.replace(/-/g, "/")}。そのあいだの{BEFORE_STREAM_DAYS}日は、
           {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}と歩いていました。
-          配信が無いので、下の一覧には出てきません。かわりに、ショート動画が
+          この6週間のぶんは、下の一覧には出てきません。かわりに、ショート動画が
           {BEFORE.length}本あります。
         </p>
         <ol className="mbefore-list">
@@ -194,10 +192,7 @@ export default function MapPage() {
 
       <Panel>
         <h2>行った順に、ぜんぶ</h2>
-        <p className="muted">
-          同じ国に何度も戻っているので、番号は「初めて入った順」です。章は上の地図と同じ区切りです。
-          <b>配信のあった国だけ</b>なので、上の6週間はここに入っていません。
-        </p>
+        <p className="muted">番号は、初めてその国に入った順。</p>
         {/* `.folds` は紙を1枚敷く部品なので、紙のパネルの中では使わない。
             紙の上に紙が乗って貼り紙に見える（app/css/ui.css の注）。
             ここは国のページの「この国であったこと」と同じ `.hlist`。 */}

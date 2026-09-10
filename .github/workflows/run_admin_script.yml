@@ -30,6 +30,14 @@ name: 管理スクリプトを実行
 #
 # BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
 #   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）
+#
+# 切り抜き（#153）。どちらも読むだけ。
+#   clip_cuts        … ショートにする区間の候補を出す {"video":"...","top":5}
+#                      省くと、いちばん新しい配信を見る。当日は Firestore
+#                      (streamChatMessages)、翌日以降は BigQuery を自動で選ぶ
+#   functions_log    … 勝手に動く Functions のログを読む {"name":"collectLiveChat"}
+#                      「溜まっていない」の原因（鍵・トークン・配信なし）を
+#                      区別するのに要る。Firestore を数えるだけでは分からない
 on:
   workflow_dispatch:
     inputs:
