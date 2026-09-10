@@ -224,8 +224,14 @@ export function toJpeg(cv: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise((done) => cv.toBlob(done, "image/jpeg", 0.92));
 }
 
-/** 焼き上がりの1枚に付ける名前。日付が入っていれば、あとから探せる。 */
-export const stampFileName = (day: string) => `ayato-nordic-${day}.jpg`;
+/**
+ * 焼き上がりの1枚に付ける名前。日付が入っていれば、あとから探せる。
+ *
+ * **`nordic` ではなく `island-card`。** 旅の写真の面をあやと島カードへ
+ * 寄せたので（2026-09-10）、端末の写真フォルダに残る名前も面と揃える。
+ * 旅が終わっても、この1枚は「あやと島カード」であり続ける。
+ */
+export const stampFileName = (day: string) => `ayato-island-card-${day}.jpg`;
 
 /**
  * 貼るまえに縮めて焼く。既定は長辺 1600px の webp。
