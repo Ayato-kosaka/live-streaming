@@ -9,6 +9,7 @@ import { Sprite, spriteWidth } from "@/components/island/Sprite";
 import Icon from "@/components/ui/IconCore";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { UI } from "@/content/voice";
+import { charPlace } from "@/content/characterBox";
 import IsleGround, { Building } from "./IsleGround";
 import IsleSheet from "./IsleSheet";
 import {
@@ -805,15 +806,18 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
                 }}
                 transform={`translate(${v.x.toFixed(1)} ${v.y.toFixed(1)})`}
               >
-                <ellipse cx={0} cy={0} rx={13} ry={5} fill="#134a2c" opacity={0.18} />
-                <image
-                  href={folkIconUrl(v.icon)}
-                  x={-FOLK_H / 2}
-                  y={-FOLK_H}
-                  width={FOLK_H}
-                  height={FOLK_H}
-                  preserveAspectRatio="xMidYMax meet"
-                />
+                {(() => {
+                  /* いまの島と同じそろえ方（`content/characterBox.ts`）。
+                     枠で置くと、中に描かれた figure の大きさが人によって
+                     1.5 倍違う。片方だけ直すと、島によって背丈が変わる。 */
+                  const b = charPlace(v.icon, FOLK_H);
+                  return (
+                    <>
+                      <ellipse cx={0} cy={0} rx={b.fw * 0.25} ry={b.fw * 0.1} fill="#134a2c" opacity={0.18} />
+                      <image href={folkIconUrl(v.icon)} x={b.x} y={b.y} width={b.w} height={b.h} />
+                    </>
+                  );
+                })()}
               </g>
             );
           }

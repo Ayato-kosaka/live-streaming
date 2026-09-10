@@ -1,4 +1,5 @@
 import type { KitchenTalk } from "@/content/kitchenTalk";
+import { charFit } from "@/content/characterBox";
 
 /** キャラクターの絵は Google ドライブ。s の後ろが取り出す大きさ（`FriendsWall` と同じ道）。 */
 const drive = (id: string, size: number) => `https://lh3.googleusercontent.com/d/${id}=s${size}`;
@@ -58,7 +59,10 @@ export default function KitchenDay({ t }: { t: KitchenTalk }) {
               <li key={icon}>
                 {/* 島を歩いているのと同じ絵。名前は付けない（本人が決めること）。
                     絵が届かないときのために alt は空にする */}
-                <img src={drive(icon, 256)} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                {/* 枠ではなく、**中に描かれた figure** の大きさでそろえる
+                    （`content/characterBox.ts`。島と図鑑と同じそろえ方）。
+                    枠で並べると、1列の中で人によって 1.45 倍の差がついていた。 */}
+                <img src={drive(icon, 256)} alt="" loading="lazy" referrerPolicy="no-referrer" style={charFit(icon, 0.86, true)} />
               </li>
             ))}
           </ul>
