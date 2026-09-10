@@ -118,16 +118,24 @@ msg AS (
     AND DATE(TIMESTAMP_SUB(published_at, INTERVAL 9 HOUR)) BETWEEN win.d0 AND win.d1
 ),
 vid AS (
-  SELECT DISTINCT DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) AS d
+  SELECT DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) AS d, status
   FROM `{PROJECT}.{DATASET}.videos`, win
   WHERE actual_start_time IS NOT NULL
     AND DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) BETWEEN win.d0 AND win.d1
 ),
--- チャットが実際に残っている日。**誰が居たかが読めているのはここだけ。**
 have AS (SELECT DISTINCT d FROM msg),
--- 配信はあったのに、チャットが1件も残っていない日。
--- **「誰も来なかった日」ではなく「読めていない日」。** 出席にも分母にも入れない。
-lost AS (SELECT d FROM vid WHERE d NOT IN (SELECT d FROM have)),
+-- **読めた日。** チャットが残っている日と、取り込みは通ったのに
+-- コメントが1件も無かった日（SUCCEEDED）。後者は本物の0なので分母に入れる。
+-- 「読めていない」と「0だった」を同じ扱いにしないのは、こちら向きも同じ。
+seen AS (
+  SELECT d FROM have
+  UNION DISTINCT
+  SELECT DISTINCT d FROM vid WHERE status = 'SUCCEEDED'
+),
+-- 配信はあったのに、取り込めていない日（WAITING / FAILED / SKIPPED のまま）。
+-- **「誰も来なかった日」ではなく「誰が居たか読めていない日」。**
+-- 出席にも分母にも入れない。
+lost AS (SELECT DISTINCT d FROM vid WHERE d NOT IN (SELECT d FROM seen)),
 per AS (
   SELECT cid,
          ARRAY_AGG(author_name ORDER BY published_at DESC LIMIT 1)[OFFSET(0)] AS name,
@@ -135,14 +143,14 @@ per AS (
          MIN(d) AS first_day
   FROM msg GROUP BY cid
 )
--- **分母は have（チャットの残っている日）にそろえる。**
+-- **分母は seen（読めた日）にそろえる。**
 -- vid（配信のあった日）にすると、読めていない日のぶんだけ全員が減って見える。
--- have には「チャットはあるのに videos に開始時刻が無い日」も入るので、
+-- seen には「チャットはあるのに videos に開始時刻が無い日」も入るので、
 -- vid で数えると attend が denom を超える人が出る（本番で2日ある）。
 SELECT p.cid,
        p.name,
        p.seen_days AS attend,
-       (SELECT COUNT(*) FROM have) AS denom,
+       (SELECT COUNT(*) FROM seen) AS denom,
        (SELECT COUNT(*) FROM lost) AS lost_days,
        CAST(p.first_day AS STRING) AS first_day
 FROM per p
