@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Chain from "@/components/chain/Chain";
 
@@ -30,24 +29,17 @@ export default function AtlasPage() {
       <PageHead
         icon="signpost-flags"
         title="島の地図"
-        lead="旅の章ごとに、島が1つ建っています。島の大きさは、そこにいた日数そのもの。長くいた島ほど大きい。"
+        lead="旅の章ごとに、島が1つ建っています。島の大きさは、そこにいた日数そのもの。"
         /* **島の名前を焼き込まない。** 「いまいるのはコーカサスの島」と書いてあると、
            北欧へ出発した日から嘘になる（いまいる島は日付で決まる）。
            かわりに、ここでしか言えないこと——**押した先は歩ける**——を言う。 */
-        say="押すと、その島へ渡れるよ。どの島も、中を歩けるからね。"
+        say="押すと、その島に渡れる。どの島も、中を歩けるからね。"
       />
 
       <div className="chain-sea">
         <Chain />
       </div>
 
-      <p className="chain-foot">
-        島の中に建っているものは、その章のときにやっていたことだけ。
-        いまの島の6つを、過去の島に写してはいません。
-        <Link href="/" prefetch={false}>
-          いまの島にもどる
-        </Link>
-      </p>
     </PageShell>
   );
 }

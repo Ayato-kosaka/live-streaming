@@ -164,9 +164,6 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       {peak && (
         <Panel>
           <h2>いちばん人が集まった日</h2>
-          <p className="muted">
-            {c.name}にいた{peak.days}日のうち、いちばんチャットに人がいたのがこの回。
-          </p>
           <div className="scards" style={{ marginTop: "var(--sp-3)" }}>
             <StreamCard
               videoId={peak.top[1]}

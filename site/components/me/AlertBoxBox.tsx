@@ -139,10 +139,8 @@ export default function AlertBoxBox() {
         </button>
       </div>
       <p className="mp-ab-lead">
-        ここに出ているのは<b>鍵ではありません。</b>
-        こちらが出した合言葉で、鍵はサーバーに置いたままです。
-        それでも、この URL を知っている人は投げ銭の通知を受け取れるので、
-        配信の画面にそのまま映すもの以外には貼らないでください。
+        <b>この URL を、OBS のブラウザソースに貼る。</b>
+        知っている人は誰でも投げ銭の通知を受け取れるので、ほかには貼らない。
         {doneru?.set && `（Doneru の鍵は入っています。末尾 ${doneru.tail}）`}
       </p>
 
@@ -156,7 +154,7 @@ export default function AlertBoxBox() {
             これが無いと、URL を貼っても投げ銭の通知は来ません。
             Doneru のアラートボックスの OBS の URL の、
             <code>?key=</code> のあとの文字列です。
-            <b>入れたあとは、この画面にも書き出したものにも出てきません。</b>
+
           </p>
           <div className="dform mp-ab-key">
             <input

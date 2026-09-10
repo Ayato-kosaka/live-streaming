@@ -286,7 +286,7 @@ export default async function NordicCountryPage({
             {go.length === 1
               ? `行くのは${go[0].city}だけ。`
               : `行くのは${go.map((g) => g.city).join("・")}の${go.length}つ。`}
-            {goSpots}件を、見たい・食べたい・やりたい・買いたいで分けました。
+            {goSpots}件。
           </p>
           {go.map((g) => (
             <section key={g.city} className="ncgo" id={`city-${encodeURIComponent(g.city)}`}>
@@ -313,7 +313,6 @@ export default async function NordicCountryPage({
       {maybe.length > 0 && (
         <Panel>
           <h2>寄るかもしれないところ</h2>
-          <p className="muted">通り道にあるところ。寄るかどうかは、これから決まります。</p>
           {maybe.map((g) => (
             <CityFold key={g.city} {...g} />
           ))}

@@ -117,7 +117,7 @@ export default function NordicGuidePage() {
       <PageHead
         mark={<Icon name="book" size={44} />}
         title="旅のしおり"
-        lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。目次から、読みたいところだけ開いてください。"
+        lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。"
       />
 
       <div className="gbook">
@@ -132,11 +132,6 @@ export default function NordicGuidePage() {
             </a>
           ))}
         </nav>
-
-        <p className="gnote">
-          もとは北欧7カ国ぶんに調べたもの。今回のルートから外れるノルウェーとデンマークの項目は
-          落としてあります。地域全体を比べている文章の中には、まだ7カ国ぶんの数字が出てきます。
-        </p>
 
         <Chapter id="basic" n={1} title="まず知っておくこと" note={`ビザ、入国、物価。${G.basic.length}項目`}>
           <Notes items={G.basic} />

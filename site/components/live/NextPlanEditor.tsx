@@ -279,10 +279,7 @@ export default function NextPlanEditor() {
         {/* 書けない人にこの案内を出さない。すぐ下に「もう直せません」が出るので、
             「あとから足せます」と並ぶと、どちらが本当なのか分からなくなる。 */}
         {!locked && (
-          <p className="muted">
-            題だけでも出せます。日にち・場所・本文・リンク・写真は、あとから足せます。
-            文章の整えと見た目は、あやとが仕上げます。
-          </p>
+          <p className="muted">文章の整えと見た目は、あやとが仕上げます。</p>
         )}
 
         {/* いま開いている企画が、どの段にいるか。**掲示板と同じ言い方をする。** */}
@@ -300,7 +297,7 @@ export default function NextPlanEditor() {
           <div className="blank is-off">
             <b>この企画は、もう直せません</b>
             <p>
-              ログインしていないと、直せるのは出してから1日だけです。端末の印しか本人の証が無いので、そこを長く開けておくと、他の人にも直せてしまいます。直したいことがあれば、配信で言ってください。
+              直したいことがあれば、配信で言ってください。
             </p>
           </div>
         )}
@@ -308,7 +305,7 @@ export default function NextPlanEditor() {
           <div className="blank is-off">
             <b>これは、ほかの人が出した企画です</b>
             <p>
-              読むことはできますが、直せるのは出した本人だけです。言いたいことがあれば、掲示板の付箋へどうぞ。
+              言いたいことがあれば、掲示板の付箋へどうぞ。
             </p>
           </div>
         )}
@@ -339,13 +336,13 @@ export default function NextPlanEditor() {
                 <input value={d.title} onChange={(e) => set({ title: e.target.value })} maxLength={60} placeholder="例）ヒッチハイクで北欧へ" />
               </label>
               <label>
-                <span>その日（あと何日かを数えるのに使う）</span>
+                <span>その日</span>
                 <input className="dday" type="date" value={d.date} onChange={(e) => pickDay(e.target.value)} />
               </label>
               <label>
-                <span>いつ（画面に出す言い方）</span>
+                <span>いつ</span>
                 <input value={d.when} onChange={(e) => set({ when: e.target.value })} maxLength={40} placeholder="例）2026年9月11日(金) 23:30 出発" />
-                <span className="dnote">日を選ぶと、ここも書きかわる。時刻を足したいときは、そのまま書きたす。</span>
+                <span className="dnote">時刻も書きたせる。</span>
               </label>
               <label>
                 <span>ひとことで言うと</span>
@@ -474,7 +471,6 @@ export default function NextPlanEditor() {
       {!locked && (
         <section className="panel paper">
           <h2>できあがり</h2>
-          <p className="muted">書いたものが、そのままこの形でページに出ます。</p>
           <PlanCard plan={toPlan(d)} />
         </section>
       )}

@@ -244,8 +244,7 @@ function Hitch({ leg }: { leg: Leg }) {
           </dd>
         </div>
       </dl>
-      <p className="ndhh-src">道と国境は地図から。立つところと難しさは走る前の見立てです。</p>
-    </div>
+          </div>
   );
 }
 
@@ -578,7 +577,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             <div key={c.city} className="folds ndcity">
               <Fold
                 title={`${c.city}で見たいもの`}
-                lead={`寄るかどうかは、これから決まります。${c.items.length}件`}
+                lead={`通り道にある${c.items.length}件`}
               >
                       <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (
