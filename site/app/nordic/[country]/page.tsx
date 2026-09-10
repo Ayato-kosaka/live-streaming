@@ -6,7 +6,8 @@ import { Panel } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
-import CityMap from "@/components/nordic/CityMap";
+import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
+import FarMark from "@/components/nordic/FarMark";
 import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import { Mark } from "@/components/nordic/Marks";
@@ -73,17 +74,41 @@ const MOVE: Record<string, string> = { hitch: "ヒッチハイク", ferry: "フ�
  *
  * 種類の札は持たない。4つの見出しの下に並んでいるので、行の頭にもう一度
  * 「見る」と書いても、同じ言葉が縦に10個ならぶだけになる。
+ *
+ * ## 地図の番号は、この段が持つ
+ *
+ * 街の地図の下には前まで、番号つきの札が種類ごとに並んでいた。その真下に
+ * この段が同じ見どころを並べるので、**同じものが上下で2回**出ていた。
+ * 番号は写真の角に付けて、札のほうをやめた（`CityMap` の `cityKeys`）。
+ *
+ * ここの番号は**押せない。** この行そのものが押すと開く畳みなので、中に
+ * もう1つ押しどころを入れると、押した先が2つになる。だから厚みも付けない
+ * （`island-design.md` 3章3）。番号を押して点を光らせられるのは日ページ。
  */
-function Spot({ s }: { s: NordicSpot }) {
+function Spot({ s, k }: { s: NordicSpot; k?: SpotKey }) {
   return (
     <Fold
       title={
         <span className="nspot-h">
-          {s.img && (
-            <img className="nspot-th" src={s.img} alt="" loading="lazy" referrerPolicy="no-referrer" />
+          {(s.img || k?.n != null || k?.far) && (
+            <span className="nspot-fig">
+              {s.img ? (
+                <img className="nspot-th" src={s.img} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="nspot-th" aria-hidden="true" />
+              )}
+              {k?.n != null && <b className={`nspot-n cm-${k.cat}`}>{k.n}</b>}
+              {k?.far && <FarMark deg={k.far.deg} className={`nspot-ar cm-${k.cat}`} />}
+            </span>
           )}
           <span className="nspot-hb">
             <span className="nspot-name">{s.title}</span>
+            {/* 地図の窓に入らなかったもの。**消さずに、どっちへどれだけかを言う** */}
+            {k?.far && (
+              <em className="nspot-out">
+                街の中心から{k.far.dir}へ{k.far.km}km
+              </em>
+            )}
           </span>
         </span>
       }
@@ -146,7 +171,7 @@ function Spot({ s }: { s: NordicSpot }) {
  * **4つに入らないものを押し込まない。** いまのデータは全部この4つだが、
  * 増えたときに黙って消えるほうが悪いので、余りは最後に「そのほか」で出す。
  */
-function Cats({ list }: { list: NordicSpot[] }) {
+function Cats({ list, keys }: { list: NordicSpot[]; keys?: Record<string, SpotKey> }) {
   const groups = CATS.map((c) => ({ label: c.label, list: list.filter((s) => s.cat === c.key) }));
   const rest = list.filter((s) => !CATS.some((c) => c.key === s.cat));
   if (rest.length > 0) groups.push({ label: "そのほか", list: rest });
@@ -162,7 +187,7 @@ function Cats({ list }: { list: NordicSpot[] }) {
             </h4>
             <div className="folds">
               {g.list.map((s) => (
-                <Spot key={s.id} s={s} />
+                <Spot key={s.id} s={s} k={keys?.[s.id]} />
               ))}
             </div>
           </div>
@@ -294,7 +319,8 @@ export default async function NordicCountryPage({
               {/* 街の地図。**降りる街には必ず出す。** 日ページは「その日に着く街」
                   しか出さないので、出発の街（カトヴィツェ）はどこにも出ていなかった */}
               <CityMap city={g.city} />
-              <Cats list={g.list} />
+              {/* 地図の下に番号の札を並べない。番号はこの段の行が持っている */}
+              <Cats list={g.list} keys={cityKeys(g.city)} />
             </section>
           ))}
           {/* 街に紐づかないもの（郷土料理など）。降りる街の下に置く。 */}
