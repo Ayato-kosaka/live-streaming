@@ -228,7 +228,7 @@ export const RESIDENTS: Resident[] = [
 /** 直近{WINDOW_DAYS}日で{MIN_DAYS}日以上コメントしてくれた人の総数(キャラ未登録も含む) */
 export const ACTIVE_FRIENDS = {active};
 
-/** 出席の分母。期間内にチャットの残っている日数
+/** 出席の分母。期間内に**読めた**配信日の数
  *  （配信はあったのに取り込めていない{lost_days}日は、出席にも分母にも入れていない） */
 export const STREAM_DAYS = {denom};
 ''',
@@ -250,7 +250,7 @@ def main() -> int:
     denom = int(rows[0]["denom"])
     lost_days = int(rows[0]["lost_days"])
     active = sum(1 for r in rows if int(r["attend"]) >= MIN_DAYS)
-    logger.info("チャットの残っている日 %d", denom)
+    logger.info("読めた日 %d（出席の分母）", denom)
     # **黙って落とさない。** 読めていない日が増えたら、それは取り込みが
     # 止まっている合図（`python/bq/queries.py` の7日ルール）。数だけは必ず出す。
     if lost_days:
