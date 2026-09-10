@@ -155,6 +155,18 @@ class Token {
   /** @param {string} key Doneru のアラートボックスの鍵 */
   constructor(private readonly key: string) {}
 
+  /**
+   * 取り直しを済ませたか。**ログの字を変えるために要る。**
+   *
+   * 取り直す前の 401 と、取り直しても消えない 401 は、まったく別の話。
+   * 前者はここが勝手に直す。後者は Doneru と YouTube の繋ぎが切れていて、
+   * あやとがブラウザで繋ぎ直すまで直らない。
+   * **同じ字で出すと、次に詰まった人がまた5段階の切り分けから始める。**
+   */
+  get didRefresh(): boolean {
+    return this.refreshed;
+  }
+
   /** いま持っているトークン。無ければもらってくる。 */
   private async get(): Promise<string> {
     if (!this.at) this.at = (await doneruYoutubeToken(this.key)).at;
@@ -338,11 +350,20 @@ export const collectLiveChat = onSchedule(
         await note("トークンが取れない", String(e));
         return;
       }
-      logger.warn("collectLiveChat: 配信を探せません", String(e));
       /* 取り直しても 401 なら、Doneru と YouTube の繋ぎが切れている。
-         **それはあやとがブラウザで繋ぎ直すしかない。** 札にそう書く。 */
+         **それはあやとがブラウザで繋ぎ直すしかない。**
+         ログの字を変えておく。次に詰まったとき、`functions_log` の1行で
+         「こちらで直せるのか、繋ぎ直しが要るのか」が分かるように。 */
+      const stuck = tok.didRefresh && e.status === 401;
+      logger.warn(
+        stuck ?
+          "collectLiveChat: 取り直しても配信を探せません" +
+            "（Doneru の繋ぎ直しが要る）" :
+          "collectLiveChat: 配信を探せません",
+        String(e),
+      );
       await note(
-        e.status === 401 ? "取り直しても 401（Doneru の繋ぎ直しが要る）" :
+        stuck ? "取り直しても 401（Doneru の繋ぎ直しが要る）" :
           `配信を探せない（${e.status}）`,
         String(e),
       );
@@ -381,8 +402,15 @@ export const collectLiveChat = onSchedule(
       await note("溜めた", `${live.videoId} のべ${total}件`);
     } catch (e) {
       /* **栞を進めずに終わる。** 次の回が同じところから読み直す。 */
-      logger.warn("collectLiveChat: 読めませんでした", String(e));
-      await note("読めなかった", String(e));
+      const stuck = tok.didRefresh && e instanceof YtError && e.status === 401;
+      logger.warn(
+        stuck ?
+          "collectLiveChat: 取り直しても読めません（Doneru の繋ぎ直しが要る）" :
+          "collectLiveChat: 読めませんでした",
+        String(e),
+      );
+      await note(stuck ? "取り直しても 401（読むところ）" : "読めなかった",
+        String(e));
     }
   },
 );
