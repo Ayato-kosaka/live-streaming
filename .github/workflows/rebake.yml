@@ -45,14 +45,21 @@ name: 島の数字を焼き直す
 # 何がどれだけ変わるかを読んでから、`dry_run: false` でもう一度押す。
 # **cron のときだけは `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
 #
-# ## 毎晩ひとりでに回すもの（**この4本だけ**）
+# ## 毎晩ひとりでに回すもの（**この5本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
 #   build_stream_peaks    streamPeaks.ts
 #   build_on_this_day     onThisDay.ts
+#   build_city_streams    cityStreams.ts
 #
-# **4本とも入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
+# 前の4本は**入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
+#
+# `build_city_streams` だけは上流に人の書く `countries.ts` がある。それでも
+# 毎晩に入れたのは、**街の一覧が止まっても、街ごとの本数は機械だけで動くから**。
+# ジョージアの滞在は `to: ""` で開いていて、配信が増えればトビリシもカズベキも増える。
+# 「上流が止まっているのに緑が付いて、止まっていることが隠れる」（`docs/island-fresh.md` 1章）は、
+# ここには当たらない。**変わらないから緑になるのではなく、実際に変わる。**
 #
 # ## 手で押したときだけ回せるもの（+2本）
 #
@@ -74,12 +81,6 @@ name: 島の数字を焼き直す
 #
 # ## 🔴 ここから回してはいけないもの（allowlist に入れていない理由）
 #
-# - **`build_city_streams.py`** — いまの `cityStreams.ts` は**古い版のスクリプトで
-#   焼かれている**。選び方の決まりが変わっているので、焼き直すと中身が総取り替えに
-#   なる（トビリシは滞在窓に配信が119本あるので、並びごと変わる）。
-#   「新しくなる」ではなく**「別物になる」**。
-#   そのうえ**上流が `countries.ts`（人しか書けない）** なので、毎晩回しても
-#   人が街を足すまで答えは変わらない。人が `countries.ts` を触ったときに焼く。
 # - **`build_legend_days.py`** — **このスクリプトは BigQuery を引かない。**
 #   `bigquery` を import すらしておらず、`python/data/legend_streams.json` と
 #   `legend_totals.json`（別の口で流した SQL の結果）を焼き直すだけ。
@@ -100,7 +101,7 @@ name: 島の数字を焼き直す
 #
 # このリポジトリは公開で、Actions のログも誰でも読める。
 # **入力もログも、数字とファイル名しか出さない。**
-# ここで回す6本は YouTube API を叩かないので、**Doneru の鍵は取り出さない**
+# ここで回す7本は YouTube API を叩かないので、**Doneru の鍵は取り出さない**
 # （`run_admin_script.yml` はやっているが、ここでは要らない。要らないものは触らない）。
 
 on:
@@ -110,7 +111,7 @@ on:
   workflow_dispatch:
     inputs:
       scripts:
-        description: "回すもの（カンマ区切り。空なら6本ぜんぶ）例: build_residents,build_stream_peaks"
+        description: "回すもの（カンマ区切り。空なら7本ぜんぶ）例: build_residents,build_stream_peaks"
         required: false
         default: ""
         type: string
@@ -168,11 +169,11 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$EVENT" = "schedule" ]; then
-            # 毎晩ぶん。**BigQuery だけで答えの決まる4本**を、配るところまで
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day" >> "$GITHUB_ENV"
+            # 毎晩ぶん。**機械だけで答えの決まる5本**を、配るところまで
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（cron）: 4本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（cron）: 5本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -196,7 +197,7 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_country_stats build_kitchen_talk"
+          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_kitchen_talk"
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
           # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
@@ -206,7 +207,7 @@ jobs:
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので6本ぜんぶ回します"
+            echo "入力が空なので7本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -219,7 +220,7 @@ jobs:
                 *)
                   echo "::error::$n は回してよいものに入っていません。何も走らせずに止めます"
                   echo "::error::回せるのは: $ALL"
-                  echo "::error::cityStreams / legendDays / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
+                  echo "::error::legendDays / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
                   exit 1
                   ;;
               esac
@@ -243,6 +244,7 @@ jobs:
               build_residents)     p="site/content/residents.ts" ;;
               build_stream_peaks)  p="site/content/streamPeaks.ts" ;;
               build_on_this_day)   p="site/content/onThisDay.ts" ;;
+              build_city_streams)  p="site/content/cityStreams.ts" ;;
               build_country_stats) p="site/content/countryStats.ts" ;;
               build_kitchen_talk)  p="site/content/kitchenTalk.ts" ;;
               *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
@@ -330,6 +332,10 @@ jobs:
               "streamPeaks.ts": [("山の出せる配信", r'"k":', "count")],
               "onThisDay.ts": [("日めくりの日", r'"\d\d-\d\d":', "count"),
                                ("配信", r'"v":', "count")],
+              # 街が減ったら本文の差分ではなく**この行**で気づく。
+              # 「配信はのこっていない」は街が落ちたときに出る字なので、街の数を見る
+              "cityStreams.ts": [("街", r'^\s{4}"[^"]+": \[', "count"),
+                                 ("配信", r'"videoId":', "count")],
               "countryStats.ts": [("国", r"lives: (\d+)", "count"),
                                   ("配信", r"lives: (\d+)", "sum"),
                                   ("コメント", r"msgs: (\d+)", "sum")],
