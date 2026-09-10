@@ -618,7 +618,12 @@
   border-style: solid;
   border-color: color-mix(in srgb, var(--rule) 50%, transparent);
 }
-.blank.is-off > b { color: var(--ink-2); }
+.blank.is-off > b {
+  color: var(--ink-2);
+  /* 「いま、〜を読みに行けなかった」は名前のぶんだけ長さが変わる。
+     390px で最後の1文字だけが2行目に落ちるので、行の長さを均す。 */
+  text-wrap: balance;
+}
 
 /* ───────── 引用の吹き出し（視聴者さんが書いた文章を、書かれたまま出す） ───────── */
 

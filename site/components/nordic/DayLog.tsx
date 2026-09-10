@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Icon from "@/components/ui/Icon";
+import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 import { deleteNordicLog, postNordicLog, type NordicLogEntry } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { LOG_SEEDS, dropNordicLog, loadNordicLog, putNordicLog, useOwner } from "./log";
+import {
+  LOG_SEEDS,
+  dropNordicLog,
+  putNordicLog,
+  useNordicLogState,
+  useOwner,
+} from "./log";
 
 /**
  * その日に、何が起きたか。**旅の最中に、あやとがその日の宿から書く。**
@@ -62,20 +69,40 @@ export default function DayLog({
 }) {
   const owner = useOwner();
   const { token } = useAuth();
-  const [live, setLive] = useState<NordicLogEntry | null | undefined>(undefined);
-
-  useEffect(() => {
-    let alive = true;
-    loadNordicLog().then((l) => {
-      if (alive) setLive(l.find((x) => x.day === day) ?? null);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [day]);
+  /* 読めたかどうかまで持つ（`./log`）。**「読めなかった」を「まだ書いて
+     いません」に倒さない**（`docs/island-standards.md` 10、#34 #36）。 */
+  const { log, read, reload } = useNordicLogState();
+  const live = read === "ok" ? log.find((x) => x.day === day) ?? null : null;
 
   // 届いたほうが勝つ。写し忘れているあいだ、新しいほうが古い焼き付けに負けない
   const shown = live ?? baked ?? null;
+
+  /* 読みに行けなかった。**焼いてあるぶんは出せるが、「まだ書いていません」
+     とは言えないし、書く欄も出せない。** `POST /nordic/log` は同じ日に
+     書くと上書きなので、いま書かれているものを読めていない相手に
+     「入れる」を出すと、山の中で開いた本人が前の日の記録を消す
+     （#36「読めていない相手に、書ける口を開かない」）。 */
+  if (read === "down")
+    return (
+      <section className="panel paper" id="was">
+        <h2>この日、何が起きたか</h2>
+        {shown && <Written entry={shown} />}
+        <ReadAgain what="その日の話" onRetry={reload} />
+      </section>
+    );
+
+  /* まだ返事を待っている。焼いてあるぶんがあればそれを出し、無いときは
+     あやとにだけ骨を出す（見に来た人には、出るかどうかも分からない区画を
+     先に取らせない）。 */
+  if (read === "wait" && !shown) {
+    if (!owner) return null;
+    return (
+      <section className="panel paper" id="was">
+        <h2>この日、何が起きたか</h2>
+        <Waiting />
+      </section>
+    );
+  }
 
   // 書くものも読むものも無い日は、区画そのものを出さない。
   // 「まだ何も起きていません」と書くと、旅がうまくいっていないように読める。
@@ -84,45 +111,42 @@ export default function DayLog({
   return (
     <section className="panel paper" id="was">
       <h2>この日、何が起きたか</h2>
-      {shown ? (
-        <div className="nday-log">
-          {shown.date && <p className="nday-log-when">{when(shown.date)}</p>}
-          {/* 改行のまま出す。2〜3行で書くものなので、つなげると読めない */}
-          {shown.body.split("\n").map((ln, i) => (
-            <p key={i}>{ln}</p>
-          ))}
-          {shown.video && (
-            <a
-              className="nday-vid"
-              href={`https://www.youtube.com/watch?v=${shown.video}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              その日の配信を見る
-              <Icon name="external" size={14} />
-            </a>
-          )}
-        </div>
-      ) : (
-        <p className="muted">まだ書いていません。</p>
-      )}
+      {shown ? <Written entry={shown} /> : <p className="muted">まだ書いていません。</p>}
       {owner && (
         <LogForm
           day={day}
           dayName={dayName}
           now={live ?? undefined}
           token={token}
-          onSaved={(e) => {
-            putNordicLog(e);
-            setLive(e);
-          }}
-          onDropped={() => {
-            dropNordicLog(day);
-            setLive(null);
-          }}
+          onSaved={putNordicLog}
+          onDropped={() => dropNordicLog(day)}
         />
       )}
     </section>
+  );
+}
+
+/** 書かれたもの。読めたぶんと、焼いてあるぶんを同じ形で出す。 */
+function Written({ entry }: { entry: { date?: string; body: string; video?: string } }) {
+  return (
+    <div className="nday-log">
+      {entry.date && <p className="nday-log-when">{when(entry.date)}</p>}
+      {/* 改行のまま出す。2〜3行で書くものなので、つなげると読めない */}
+      {entry.body.split("\n").map((ln, i) => (
+        <p key={i}>{ln}</p>
+      ))}
+      {entry.video && (
+        <a
+          className="nday-vid"
+          href={`https://www.youtube.com/watch?v=${entry.video}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          その日の配信を見る
+          <Icon name="external" size={14} />
+        </a>
+      )}
+    </div>
   );
 }
 

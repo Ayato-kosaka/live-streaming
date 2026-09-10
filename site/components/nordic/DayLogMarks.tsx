@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { loadNordicLog } from "./log";
+import ReadAgain from "@/components/me/ReadAgain";
+import { useNordicLogState } from "./log";
 
 /**
  * その日に起きたことが書かれた行に、印を付ける。
@@ -15,22 +16,33 @@ import { loadNordicLog } from "./log";
  * 「いま、ここ」を付けるのと同じやり方にしてある
  * （`docs/island-design.md` 3章「動きは React の外で」）。
  *
- * 読めなかった日は、何も付かない。書いてあるのに印が出ないのは残念だが、
- * 「読めませんでした」の箱が旅程表に9個並ぶほうが悪い。
+ * ## 読めなかったときに、黙らない（#34 #36）
+ *
+ * ここには「読めなかった日は何も付かない。『読めませんでした』の箱が
+ * 旅程表に9個並ぶほうが悪い」と書いてあった。**箱を9個並べない**ところまでは
+ * 正しい。正しくなかったのは、そのために**読めなかったことまで黙った**こと。
+ * 印が1つも付かない旅程表は「まだ誰も何も書いていない旅」に見えるので、
+ * 電波の細い日に、書いてある9日ぶんを無かったことにする。
+ *
+ * **箱は9個ではなく、旅程表にひとつ。** 押せば読み直せるし、押されなくても
+ * 電波が戻れば黙って直る（`./log`）。読めた瞬間に箱は消えて、印が付く。
  */
 export default function DayLogMarks() {
+  const { log, read, reload } = useNordicLogState();
+
   useEffect(() => {
-    let alive = true;
-    loadNordicLog().then((list) => {
-      if (!alive || list.length === 0) return;
-      const has = new Set(list.map((x) => x.day));
-      document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
-        el.toggleAttribute("data-log", has.has(el.id));
-      });
+    if (read !== "ok") return;
+    const has = new Set(log.map((x) => x.day));
+    document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
+      el.toggleAttribute("data-log", has.has(el.id));
     });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return null;
+  }, [log, read]);
+
+  if (read !== "down") return null;
+  /* 旅程表（`ol.ndays`）の中に置くので、包むのは li。並びの先頭に1枚だけ出る。 */
+  return (
+    <li className="nday-off">
+      <ReadAgain what="その日の話" onRetry={reload} />
+    </li>
+  );
 }

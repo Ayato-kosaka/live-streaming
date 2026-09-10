@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCards,
   getNordicPhotos,
   type IslandCard,
   type NordicPhoto,
 } from "@/lib/api";
+import { withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
 
 /**
@@ -254,43 +255,143 @@ export function shelves(
 export type WallState = {
   /** 取りにいっている最中は null。0枚と区別する */
   days: DayShelf[] | null;
-  /** 両方とも読めなかった。読み込み中・空っぽと同じ顔で出さない */
-  off: boolean;
+  /** 写真の口（`GET /nordic/photos`）が読めたか */
+  photosRead: Read;
+  /** カードの口（`GET /cards`）が読めたか */
+  cardsRead: Read;
   /** 貼れた1枚を、取り直さずにその場で並べる（あやとだけ） */
   add: (p: NordicPhoto) => void;
+  /** 落ちたぶんだけ読み直す。「もう一度よみこむ」の札から呼ぶ */
+  reload: () => void;
 };
 
+/**
+ * 一覧の中身を取ってくる。**口が2つあるので、読めたかどうかも2つ持つ。**
+ *
+ * 前はここが `bad >= 2`——**両方落ちたときだけ**「いまつながりません」で、
+ * **片方だけ落ちると「まだ1枚もありません」と言い切っていた。**
+ * 細い電波でいちばん多いのは、そろって落ちることではなく**片方だけ落ちる**
+ * ことなので、いちばん出る落ち方が、いちばん嘘をつく落ち方になっていた。
+ * しかも読み直す道が無く、画面を開き直すまで直らない（#34 と同じ形）。
+ *
+ * いまは口ごとに `wait / ok / down` を持つ。**「まだ1枚もありません」と
+ * 言ってよいのは、2つとも `ok` で、そのうえで0枚だったときだけ。**
+ * 片方でも読めていれば、読めたぶんは並べる（写真の口が落ちても、カードの
+ * 持っている写真で並ぶ）。
+ *
+ * 返事が来ないのも「読めなかった」（`withRead` が12秒で見切る）。
+ * 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）。電波が戻った合図
+ * （`online`・画面に戻ってきた）でも読み直す。**画面を開き直させない。**
+ */
 export function useCardWall(): WallState {
   const [photos, setPhotos] = useState<NordicPhoto[] | null>(null);
   const [cards, setCards] = useState<ShownCard[] | null>(null);
-  const [bad, setBad] = useState(0);
+  const [photosRead, setPhotosRead] = useState<Read>("wait");
+  const [cardsRead, setCardsRead] = useState<Read>("wait");
+  /** 落ちたぶんの読み直し。口ごとに間隔を持つ（片方だけ落ちるため） */
+  const again = useRef<{ photos: number; cards: number }>({ photos: 0, cards: 0 });
+  /* いまの読めぐあい。**電波が戻ったとき、落ちている口だけを読み直す**ために
+     持つ（状態そのものは描くのに使うので、効果の中からは見えない）。 */
+  const now = useRef<{ photos: Read; cards: Read }>({ photos: "wait", cards: "wait" });
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
+
+  /**
+   * 落ちている口だけを読み直す。
+   *
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない。
+   */
+  const load = useCallback((showWait: boolean, which: "both" | "photos" | "cards" = "both") => {
+    const wait = (ms: number, f: () => void) => {
+      timers.current.push(setTimeout(f, ms));
+    };
+    const back = (n: number) => Math.min(2000 * 2 ** (n - 1), 30000);
+
+    if (which !== "cards") {
+      if (showWait) {
+        now.current.photos = "wait";
+        setPhotosRead("wait");
+      }
+      withRead(getNordicPhotos())
+        // 形の違うものが返っても、面ごと落とさない
+        .then((r) => {
+          if (!alive.current) return;
+          setPhotos((r?.days ?? []).flatMap((d) => d.photos ?? []));
+          now.current.photos = "ok";
+          setPhotosRead("ok");
+          again.current.photos = 0;
+        })
+        .catch(() => {
+          if (!alive.current) return;
+          now.current.photos = "down";
+          setPhotosRead("down");
+          again.current.photos += 1;
+          wait(back(again.current.photos), () => load(false, "photos"));
+        });
+    }
+    if (which !== "photos") {
+      if (showWait) {
+        now.current.cards = "wait";
+        setCardsRead("wait");
+      }
+      withRead(getCards())
+        .then((r) => {
+          if (!alive.current) return;
+          setCards(withIcons(r?.cards ?? []));
+          now.current.cards = "ok";
+          setCardsRead("ok");
+          again.current.cards = 0;
+        })
+        .catch(() => {
+          if (!alive.current) return;
+          now.current.cards = "down";
+          setCardsRead("down");
+          again.current.cards += 1;
+          wait(back(again.current.cards), () => load(false, "cards"));
+        });
+    }
+  }, []);
 
   useEffect(() => {
-    getNordicPhotos()
-      // 形の違うものが返っても面ごと落とさない
-      .then((r) => setPhotos((r?.days ?? []).flatMap((d) => d.photos ?? [])))
-      .catch(() => {
-        setPhotos([]);
-        setBad((n) => n + 1);
-      });
-    getCards()
-      .then((r) => setCards(withIcons(r?.cards ?? [])))
-      .catch(() => {
-        setCards([]);
-        setBad((n) => n + 1);
-      });
-  }, []);
+    alive.current = true;
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       **落ちている口だけ**にする。読めている口まで叩くと、画面に戻るたびに
+       往復が増える（細い電波でいちばんやってはいけないこと）。 */
+    const wake = () => {
+      const bad = now.current;
+      if (bad.photos === "down" && bad.cards === "down") return load(false);
+      if (bad.photos === "down") return load(false, "photos");
+      if (bad.cards === "down") return load(false, "cards");
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [load]);
 
   const add = useCallback(
     (p: NordicPhoto) => setPhotos((cur) => [p, ...(cur ?? [])]),
     [],
   );
 
+  /* 片方でも読めたら、読めたぶんで並べる。**両方 `wait` のあいだだけ null。** */
   const days = useMemo(
-    () => (photos && cards ? shelves(photos, cards) : null),
+    () =>
+      photos || cards ? shelves(photos ?? [], cards ?? []) : null,
     [photos, cards],
   );
-  return { days, off: bad >= 2, add };
+  return { days, photosRead, cardsRead, add, reload: () => load(true) };
 }
 
 /* ---------------- 立ち位置 ----------------

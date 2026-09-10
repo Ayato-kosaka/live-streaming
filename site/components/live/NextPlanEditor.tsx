@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   EMPTY_PLAN,
@@ -16,8 +16,9 @@ import {
   type NextPlan,
   type NextPlanInput,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
+import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import PlanCard from "./PlanCard";
 import type { Plan } from "@/content/plans";
@@ -36,6 +37,19 @@ import type { Plan } from "@/content/plans";
  * **「掲示板で出した企画を、あとから育てるところ」**になった。
  * `?id=…` を付けて来ると、その企画の続きから書ける。
  * 何も付けずに来た人は、はじめからページ1枚ぶん書ける。ログインは要らない。
+ *
+ * ## 読めなかったときに、書ける口を開かない（#34 #36）
+ *
+ * ここは口を2つ読む。`?id=` で開いた企画そのものと、じぶんが出した企画の一覧。
+ * 前はどちらも `catch` で空にしていたので、
+ *
+ *   - 一覧が落ちると、**出した企画が1件も無い人の画面になる**
+ *   - 開いた企画が落ちると、**空の書く欄が「書きたす」付きで出る。**
+ *     そのまま押せば、書いてあったものが空で上書きされる
+ *
+ * 読めていないあいだと読めなかったときは、**書く欄を出さない。**
+ * 区画は残して、読み直す道だけを出す。落ちたら黙って読み直すし、
+ * 電波が戻った合図でも読み直す（**画面を開き直させない**）。
  *
  * ## 直せる時間（あやと承認済み）
  *
@@ -173,13 +187,21 @@ export default function NextPlanEditor() {
   /** いま開いている企画。新しく書いているあいだは null */
   const [cur, setCur] = useState<NextPlan | null>(null);
   /** じぶんが出した企画。育てる先を選ばせるために引く */
-  const [mineList, setMineList] = useState<NextPlan[] | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
+  const [mineList, setMineList] = useState<NextPlan[]>([]);
+  /** その一覧が読めたか。**空の配列を「0件」と読ませない**（#34 #36） */
+  const [mineRead, setMineRead] = useState<Read>("wait");
+  /** `?id=` で開いた企画が読めたか。**読む口と書く口の失敗を混ぜない** */
+  const [curRead, setCurRead] = useState<Read>("ok");
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   /** 直せない理由。**押す前に言う。** */
   const [locked, setLocked] = useState<"expired" | "no" | null>(null);
   const [src, setSrc] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [mine, setMine] = useState<Set<string>>(new Set());
+  /* 「もう一度よみこむ」から呼ぶ。読み直す仕掛けは、聞きに行く効果の中に
+     ある（そこが片づけまで持っている）ので、入口だけをここに置く。 */
+  const retryCur = useRef<() => void>(() => {});
+  const retryMine = useRef<() => void>(() => {});
 
   /** 開いた企画を、書く欄に載せる。直せるかどうかもここで決める。 */
   const open = useCallback(
@@ -199,26 +221,111 @@ export default function NextPlanEditor() {
     setMine(ids);
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
-    setState("loading");
-    getNextPlan(id)
-      .then((r) => {
-        open(r.plan, ids);
-        setState("idle");
-      })
-      .catch(() => setState("error"));
+    let alive = true;
+    let miss = 0;
+    /** 落ちているか。**電波が戻ったとき、落ちているときだけ読み直す** */
+    let down = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    /* `showWait` は、はじめの1回と、押されて読み直すときだけ。**ひとりでに
+       読み直すときに骨へ戻さない**——灰色の骨と「読みに行けなかった」が
+       数秒おきに入れ替わる面になる（`lib/auth.tsx`・`forks.ts` と同じ）。 */
+    const run = (showWait = false) => {
+      if (showWait) setCurRead("wait");
+      /* **返事が来ないのも「読めなかった」**（`withRead` が12秒で見切る）。
+         細い電波では、断られるより固まるほうが多い。 */
+      withRead(getNextPlan(id))
+        .then((r) => {
+          if (!alive) return;
+          open(r.plan, ids);
+          setCurRead("ok");
+          down = false;
+          miss = 0;
+        })
+        .catch(() => {
+          if (!alive) return;
+          setCurRead("down");
+          down = true;
+          // 押されるまで待たない。間隔を倍にしながら30秒おきまで落とす
+          miss += 1;
+          timer = setTimeout(() => run(), Math.min(2000 * 2 ** (miss - 1), 30000));
+        });
+    };
+    run(true);
+    /** 電波が戻った合図。**画面を開き直させない。** */
+    const wake = (showWait = false) => {
+      // ひとりでに読み直すのは、落ちているときだけ（押されたときは行く）
+      if (!showWait && !down) return;
+      if (timer) clearTimeout(timer);
+      miss = 0;
+      run(showWait);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    const on = () => wake();
+    window.addEventListener("online", on);
+    document.addEventListener("visibilitychange", back);
+    // 押されたときだけ骨に戻す（「いま行った」と分かるように）
+    retryCur.current = () => wake(true);
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("online", on);
+      document.removeEventListener("visibilitychange", back);
+    };
   }, [open]);
 
   /* じぶんが出したもの。端末の控えとログインの両方から拾う。
      一覧を1回引いて手元で絞る（1件ずつ聞くと、出した数だけ往復する）。 */
   useEffect(() => {
-    getNextPlans()
-      .then((r) => {
-        const ids = myPlans();
-        setMineList(
-          r.plans.filter((p) => ids.has(p.id) || (!!user && p.byUid === user.uid)),
-        );
-      })
-      .catch(() => setMineList([]));
+    let alive = true;
+    let miss = 0;
+    let down = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const run = (showWait = false) => {
+      if (showWait) setMineRead("wait");
+      withRead(getNextPlans())
+        .then((r) => {
+          if (!alive) return;
+          const ids = myPlans();
+          setMineList(
+            r.plans.filter((p) => ids.has(p.id) || (!!user && p.byUid === user.uid)),
+          );
+          setMineRead("ok");
+          down = false;
+          miss = 0;
+        })
+        .catch(() => {
+          if (!alive) return;
+          /* **`setMineList([])` にしない。** 空の配列は「読めた上で、1件も
+             出していない」のことばで、出した人の企画を消してしまう。 */
+          setMineRead("down");
+          down = true;
+          miss += 1;
+          timer = setTimeout(() => run(), Math.min(2000 * 2 ** (miss - 1), 30000));
+        });
+    };
+    run();
+    const wake = (showWait = false) => {
+      // ひとりでに読み直すのは、落ちているときだけ（押されたときは行く）
+      if (!showWait && !down) return;
+      if (timer) clearTimeout(timer);
+      miss = 0;
+      run(showWait);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    const on = () => wake();
+    window.addEventListener("online", on);
+    document.addEventListener("visibilitychange", back);
+    retryMine.current = () => wake(true);
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("online", on);
+      document.removeEventListener("visibilitychange", back);
+    };
   }, [user]);
 
   const set = (patch: Partial<NextPlanInput>) => setD((v) => ({ ...v, ...patch }));
@@ -277,8 +384,9 @@ export default function NextPlanEditor() {
       <section className="panel paper">
         <h2>{cur ? "この企画を、そだてる" : "企画のページを作る"}</h2>
         {/* 書けない人にこの案内を出さない。すぐ下に「もう直せません」が出るので、
-            「あとから足せます」と並ぶと、どちらが本当なのか分からなくなる。 */}
-        {!locked && (
+            「あとから足せます」と並ぶと、どちらが本当なのか分からなくなる。
+            **書く欄が出ていないときも出さない**（仕上げる相手がいない）。 */}
+        {!locked && curRead === "ok" && (
           <p className="muted">文章の整えと見た目は、あやとが仕上げます。</p>
         )}
 
@@ -315,9 +423,18 @@ export default function NextPlanEditor() {
           </p>
         )}
 
-        {state === "loading" && <p className="muted">読みこんでいます…</p>}
+        {/* 開こうとした企画が、まだ返ってきていない */}
+        {curRead === "wait" && <Waiting />}
 
-        {!locked && (
+        {/* 開こうとした企画が読めなかった。**書く欄は出さない。**
+            中身が読めていないまま「書きたす」を出すと、空の欄がそのまま
+            送られて、書いてあったものを上書きする（#36「読めていない相手に、
+            書ける口を開かない」）。 */}
+        {curRead === "down" && (
+          <ReadAgain what="この企画" onRetry={() => retryCur.current()} />
+        )}
+
+        {!locked && curRead === "ok" && (
           <>
             <div className="dform">
               {!user && (
@@ -453,7 +570,22 @@ export default function NextPlanEditor() {
 
         {/* じぶんが出した企画。**育てる先をここから選ぶ。**
             ログインしていない人は端末の控えから、している人は uid からも拾う。 */}
-        {mineList && mineList.length > 0 && (
+        {/* **この端末が1つも出していなくて、ログインもしていない人には言わない。**
+            読めていたとしても空だったので、欠けたものが無い。 */}
+        {mineRead === "down" && (mine.size > 0 || !!user) && (
+          <>
+            <h3 className="sub">じぶんが出した企画</h3>
+            {/* **0件に化けさせない。** 上に押しどころつきの札がもう出ている
+                ときは、ここでは何が欠けているかだけ言う（同じボタンを
+                縦に並べない）。 */}
+            <ReadAgain
+              what="じぶんが出した企画"
+              onRetry={() => retryMine.current()}
+              quiet={curRead === "down"}
+            />
+          </>
+        )}
+        {mineRead === "ok" && mineList.length > 0 && (
           <>
             <h3 className="sub">じぶんが出した企画</h3>
             <div className="chips">
@@ -468,7 +600,9 @@ export default function NextPlanEditor() {
         )}
       </section>
 
-      {!locked && (
+      {/* できあがりの見本。**読めていない企画の「できあがり」は出さない。**
+          空の欄から作った1枚は、その企画が空だと言っているのと同じになる。 */}
+      {!locked && curRead === "ok" && (
         <section className="panel paper">
           <h2>できあがり</h2>
           <PlanCard plan={toPlan(d)} />
