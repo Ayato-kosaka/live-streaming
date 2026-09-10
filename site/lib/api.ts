@@ -24,7 +24,16 @@ export type IslandStats = {
   recipes: number;
   since: string;
   updatedAt: string;
-  latest?: { videoId: string; title: string; date: string }[];
+  /**
+   * 直近の配信5本（新しい順）。
+   *
+   * **鍵は `video_id`。** ここは長らく `videoId` と書いてあったが、
+   * 入れているのは BigQuery の `SELECT AS STRUCT video_id, ...` を
+   * そのまま焼いた形（`python/island_daily_stats.py`）で、**本番は
+   * ずっと `video_id` を返している。** 誰も読んでいなかったので気づかれず、
+   * 最初に読んだ画面が `undefined` の動画IDでサムネイルを引くところだった。
+   */
+  latest?: { video_id: string; title: string; date: string }[];
   activeFriends?: number;
 };
 

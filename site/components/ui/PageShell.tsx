@@ -146,7 +146,9 @@ export function PageHead({
   /** 公式のアプリアイコンなど */
   logo?: string;
   title: string;
-  lead?: string;
+  /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
+      （`app/map/parts.tsx`）。ほとんどの面は文字列のまま渡す。 */
+  lead?: ReactNode;
   /** 案内役のひとこと。 */
   say?: string;
   meta?: ReactNode;

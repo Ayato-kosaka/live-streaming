@@ -943,12 +943,20 @@
    出す名前のほうを `sign` で6つに絞る（`components/isle/spec.ts` /
    `components/isle/cover.ts`）。いまの島も同じ作り。 */
 .isle[data-cam="wide"] .isle-spot.is-sign:not(.is-on) .isle-mark { opacity: 1; pointer-events: auto; }
+/* **建物から離れすぎた札は出さない**（`components/isle/plates.ts`）。
+   差し棒が何も指していない札は、名前が読めても行き先になっていない
+   （`docs/island-design.md` 3-1）。実測で「あやとのこと」の札が画面の
+   いちばん下、島から外れた海の上に浮いていた（建物まで 249px）。 */
+.isle[data-cam="wide"] .isle-spot.is-sign[data-far] .isle-mark { opacity: 0; pointer-events: none; }
 /* 引きでは、名前の出ている建物の押しどころを札1つにする（いまの島と同じ理由）。
    建物の当たりは 48px まで広げてあるので、引きの小さい建物では
    すぐ上の札にかぶる（実測で 141x30 の札の当たりが 142x29 に削られていた）。
    **名前の出ていない建物は、建物のほうが押しどころ。** ここを一律で
    `none` にすると、看板の無い6軒が引きから押せなくなる。 */
 .isle[data-cam="wide"] .isle-spot.is-sign .isle-hit { pointer-events: none; }
+/* 札を出さなかった建物は、押しどころを建物に戻す。
+   札しか押せない決まりのままだと、触りようが無くなる */
+.isle[data-cam="wide"] .isle-spot.is-sign[data-far] .isle-hit { pointer-events: auto; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
 /* 開いた札の一言は折り返してよいが、**折り返す幅を先に決める。**
    決めないと札の幅が名前で決まるので、「アプリ」（3文字）の札では
@@ -1031,11 +1039,19 @@
    同じ役目のものが面ごとに違う顔をしているのがいちばん困る
    （`docs/island-world.md` 7.3）。
    **押せない。** どこを押しても閉じるので、当たりは島のほうが受ける */
+/* **島の下に出す。上には出さない。**
+   ここは画面のいちばん上にいて、看板ロゴ（島の名前）と重なっていた。
+   実測で 366x70 の吹き出しがロゴの箱に 8,184px² 食い込んでいて、しかも
+   吹き出しは押さなくても勝手に開く（`components/isle/folk.ts` の `callOut`）。
+   **降りて数秒で、島の名前と「今夜22時から」の板が両方読めなくなる。**
+   会話はおまけで、行き先を塞いではいけない（`docs/island-design.md` 3-7）ので、
+   引くのはこちら。下ふちの「今日の島」の板の上に置く。 */
 .isle-talk {
   position: absolute;
   left: 12px;
   right: 12px;
-  top: calc(14px + env(safe-area-inset-top));
+  /* 「今日の島」の板（下ふち 10px ＋ 背 52px）の上。板とのすき間は 10px */
+  bottom: calc(74px + env(safe-area-inset-bottom));
   z-index: 8;
   padding: 17px 20px 26px;
   /* 上下左右で丸みを変える。均一な角丸だと「入力欄」に見える */
@@ -1063,8 +1079,18 @@
 .isle.is-sheet .isle-sign { opacity: 0; transition: opacity 0.18s; }
 .isle.is-talking .isle-hit,
 .isle.is-talking .isle-who-hit { pointer-events: none; }
+/* 640px から上は「今日の島」の板が右上の隅にいる。**そこへは戻さない。**
+   前はここで右上へ寄せていて、板と 17,646px² 重なっていた（PC で実測）。
+   島の下は隅の道具（`.isle-view` / `.isle-atlas`）が左端にいるだけなので、
+   まん中に置けばどれとも当たらない。 */
 @media (min-width: 640px) {
-  .isle-talk { left: auto; right: 20px; width: min(460px, 46vw); }
+  .isle-talk {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(520px, 58vw);
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
 }
 
 /* --- 建物の中（やぐら）---
@@ -1288,7 +1314,13 @@
   white-space: nowrap;
 }
 .isle-view { left: 12px; top: calc(12px + env(safe-area-inset-top)); }
-.isle-atlas { right: 12px; top: calc(12px + env(safe-area-inset-top)); }
+/* **右上へは置かない。そこは看板ロゴの場所。**
+   ここは `right: 12px; top: 12px` にいて、看板ロゴ（右上）に重なっていた。
+   実測で 寄り 44x42px（ロゴの 20%）、引き 90x42px（ロゴの 42%）——引きでは
+   「あ**や と** 島」のまん中がボタンの下だった。
+   道具どうしは左の列にまとめる。どちらも行き先ではなく島を見わたすためのもので、
+   隅を分けると島の四隅が道具で埋まる（640px から上の置き方と同じ考え方）。 */
+.isle-atlas { left: 12px; top: calc(70px + env(safe-area-inset-top)); }
 /* 640px から上は、いまの島と同じで左下へ降ろす（上に看板ロゴが出る）。
    連なりへの札もその真上へ。どちらも行き先ではなく島を見わたすための道具で、
    隅を分けると島の四隅が道具で埋まる */
@@ -1296,7 +1328,6 @@
   .isle-view { top: auto; bottom: calc(16px + env(safe-area-inset-bottom)); }
   .isle-atlas {
     top: auto;
-    right: auto;
     left: 12px;
     bottom: calc(72px + env(safe-area-inset-bottom));
   }

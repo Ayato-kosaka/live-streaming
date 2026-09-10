@@ -12,11 +12,14 @@ import Notes from "@/components/live/Notes";
 import Countries from "@/components/nordic/Countries";
 import TripPhotos from "@/components/nordic/TripPhotos";
 import {
+  ARRIVE,
+  DAYS,
   DAY_OF,
   DEPART,
   FARES,
   FARES_TOTAL,
   HITCH_KM,
+  LEAVE,
   MAIN,
   NORDIC_COUNTRIES,
   NORDIC_GUIDE,
@@ -29,8 +32,11 @@ import { LINKS } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
-  description:
-    "スウェーデンに、会いたい人がいます。スウェーデン行きの飛行機が高いので、安いポーランド行きで飛んで、そこから1,542kmを人の車で北上します。2026年9月11日出発、9月20日ストックホルム着、27日に発つまで。旅のよてい、ルート地図、国ごとの見どころ、旅のしおり。",
+  /* 距離は `HITCH_KM` から出す。**手で書かない。**
+     ここは「1,542km」で焼いてあって、画面が出す 1,377km と食い違っていた。
+     旅程が変わったときに、手で書いた数だけが古いまま残る
+     （`docs/island-standards.md` 8）。 */
+  description: `スウェーデンに、会いたい人がいます。スウェーデン行きの飛行機が高いので、安いポーランド行きで飛んで、そこから${HITCH_KM.toLocaleString()}kmを人の車で北上します。2026年9月11日出発、9月20日ストックホルム着、27日に発つまで。旅のよてい、ルート地図、国ごとの見どころ、旅のしおり。`,
 };
 
 const MOVE: Record<string, string> = {
@@ -82,7 +88,13 @@ export default async function NordicPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
   const cityId = Object.fromEntries(MAP.cities.map((c) => [c.name, c.id]));
 
-  // 一本道の止まる場所。寄り道は数えない（行って戻ってくるので旅は進まない）。
+  /* 一本道の止まる場所。寄り道は数えない（行って戻ってくるので旅は進まない）。
+
+     **日付を一緒に渡す。** いる場所の一次情報はここ（旅程表と同じ日付）で、
+     手で打つ `current.place` は上書きに降りている。人が毎日タイプしないと
+     動かない作りだったころ、旅の17日間ずっと「いま ジョージア・トビリシ」と
+     出ていた（`components/nordic/where.ts`）。
+     `stops[i]` を発つのが `MAIN[i]`、`stops[i]` へ着くのが `MAIN[i-1]`。 */
   const stops: Stop[] = [
     { name: MAIN[0].from, country: "ジョージア" },
     ...MAIN.map((l) => {
@@ -95,9 +107,11 @@ export default async function NordicPage() {
         how: `${MOVE[l.move]}${l.km ? ` ${l.km.toLocaleString()}km` : ""}${l.time ? ` / ${l.time}` : ""}`,
         art: l.art,
         hitch: l.move === "hitch" ? (l.km ?? 0) : 0,
+        arriveOn: l.date,
       };
     }),
   ];
+  for (let i = 0; i < stops.length; i++) stops[i].leaveOn = MAIN[i]?.date;
   // 国が変わらない区間は、直前の国をそのまま引き継ぐ。
   for (let i = 1; i < stops.length; i++) {
     if (!stops[i].country) stops[i].country = stops[i - 1].country;
@@ -115,6 +129,12 @@ export default async function NordicPage() {
   const dayOf: Record<string, string> = Object.fromEntries(
     Object.entries(DAY_OF).map(([id, d]) => [id, d.id]),
   );
+  /* 日付 → 旅程表のどの行か。**動かない日には区間が無い**ので、上の表では引けない
+     （9/15 に休むヴィリニュスを発つ区間は 9/16 の行）。
+     同じ日付の行が2つあるときは先に来るほうを採る（9/20 は「9日目」で、
+     そのあとに続く「ストックホルムで7泊」ではない）。 */
+  const dayByDate: Record<string, string> = {};
+  for (const d of DAYS) if (d.date && !(d.date in dayByDate)) dayByDate[d.date] = d.id;
 
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
@@ -123,9 +143,12 @@ export default async function NordicPage() {
         mainLegs={MAIN.map((l) => l.id)}
         legOrder={ROUTE.map((l) => l.id)}
         dayOf={dayOf}
+        dayByDate={dayByDate}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30。この日は配信2周年"
         hitchKm={HITCH_KM}
+        arriveOn={ARRIVE}
+        until={LEAVE.date}
       />
 
       {/* なぜこの旅が起きるのか。**地図より先。**

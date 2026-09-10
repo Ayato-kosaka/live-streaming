@@ -20,6 +20,7 @@ import { here } from "@/lib/here";
 import { REMOTE_VIEW_EVENT, remoteView } from "@/lib/remote";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
+import { MAX_LEAD, around, hits, lead } from "@/components/isle/plates";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
 import {
   callOut,
@@ -302,6 +303,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const signBox = useRef<{ w: number; h: number }[]>([]);
   /** いま縁に寄せている向き。同じ値を書き続けて属性を触らないための控え */
   const edgeAt = useRef<string[]>([]);
+  /** 建物から離れすぎて出さないことにした札（`components/isle/plates.ts`） */
+  const farAt = useRef<boolean[]>([]);
   /** 島の隅に置いてある道具の箱。縁へ寄せた札が、この上に乗らないようにする */
   const uiBoxes = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
   /**
@@ -598,7 +601,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
      置き直しのついでと、動きが終わったあとの1回だけ測る。 */
   const readLogo = useCallback(() => {
     const host = hostRef.current;
-    const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-logo");
+    /* 看板は絵と一言で1かたまり。**絵だけを見ると、札が一言の上に乗る** */
+    const logo = host?.parentElement?.querySelector<HTMLElement>(".hero-copy");
     if (!host || !logo) return;
     const h = host.getBoundingClientRect();
     const l = logo.getBoundingClientRect();
@@ -1123,6 +1127,9 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           fy: number;
           rect: { x: number; y: number; w: number; h: number };
           out: boolean;
+          /** 建物の絵の幅と高さ。ふさがったとき、札をまわりへ回すのに要る */
+          artW: number;
+          mh: number;
         }[] = [];
         const pad = 8;
         /* 上は「あと◯日」のシールのぶん、下はスマホの下バーと隅のボタンのぶん空ける。
@@ -1195,7 +1202,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               );
             // 画面に入っている札は、寄せる札が避ける相手になる
             if (!out) taken.push(rect);
-            plates.push({ i, el, fx: px, fy: py, rect, out });
+            plates.push({ i, el, fx: px, fy: py, rect, out, artW, mh });
           } else if (edgeAt.current[i]) {
             edgeAt.current[i] = "";
             el.removeAttribute("data-edge");
@@ -1218,7 +1225,36 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           let dx = 0;
           let dy = 0;
           let dir = "";
+          let far = false;
           if (pl.out) {
+            /* **まず建物のまわりを回る**（上・下・右・左）。
+               上下へ運ぶのは、まわりが全部ふさがっていたときだけ。
+               章の島と同じ決めごと（`components/isle/plates.ts`）。 */
+            const spot = around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(
+              (c) =>
+                c.x >= pad &&
+                c.x + c.w <= b.w - pad &&
+                c.y >= padTop &&
+                c.y + c.h <= b.h - padBottom &&
+                !taken.some((q) => hits(c, q)),
+            );
+            if (spot) {
+              dx = spot.x - rect.x;
+              dy = spot.y - rect.y;
+              taken.push({ ...spot });
+              const sax = pl.fx - (spot.x + spot.w / 2);
+              const say = pl.fy - (spot.y + spot.h / 2);
+              dir =
+                spot === rect
+                  ? ""
+                  : Math.abs(sax) > Math.abs(say)
+                    ? sax < 0
+                      ? "l"
+                      : "r"
+                    : say < 0
+                      ? "u"
+                      : "d";
+            } else {
             let left = rect.x;
             let top = rect.y;
             if (left < pad) dx = pad - left;
@@ -1265,18 +1301,31 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
             }
             dy += t0 - top;
             top = t0;
-            taken.push({ x: left, y: top, w: rect.w, h: rect.h });
+            const box = { x: left, y: top, w: rect.w, h: rect.h };
+            /* **建物から離れすぎたら、その札は出さない**（`components/isle/plates.ts`）。
+               差し棒が何も指していない札は、名前が読めても行き先になっていない。 */
+            /* **落とすのは引きだけ**（章の島と同じ。`components/isle/plates.ts`）。
+               寄りで出ている札は「いま近づいている1軒」の名前1枚なので、
+               画面の外の建物でも名前は読めていなければならない。 */
+            far = wideRef.current && lead(box, pl.fx, pl.fy) > MAX_LEAD;
+            if (!far) taken.push(box);
             /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す。
                「どっちへ押しやったか」で決めると、上へはみ出した札を下げたときに
                建物と反対を指す（札はもともと建物の頭の上に出るので）。 */
             const ax = pl.fx - (left + rect.w / 2);
             const ay = pl.fy - (top + rect.h / 2);
             dir = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
+            }
           }
           if (dir !== edgeAt.current[pl.i]) {
             edgeAt.current[pl.i] = dir;
             if (dir) pl.el.setAttribute("data-edge", dir);
             else pl.el.removeAttribute("data-edge");
+          }
+          if (far !== farAt.current[pl.i]) {
+            farAt.current[pl.i] = far;
+            if (far) pl.el.setAttribute("data-far", "1");
+            else pl.el.removeAttribute("data-far");
           }
           pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
           /* 看板ロゴの下に入ったか。**置き終わった箱で見る。**
@@ -1402,6 +1451,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       });
       talkTo(villagers[i], linesOf(villagers[i].icon));
       setTalking({ i, text: villagers[i].says ?? "" });
+      /* 開いていた行き先の一覧は畳む。
+         吹き出しは下バーのすぐ上に出るので（`island.css` の `.talkbox`）、
+         6つが開いたままだと吹き出しがその上に乗る。**バーごと消す**のは
+         もうやらない（「今日の島」の板まで一緒に消えていた）ので、
+         代わりに1行の姿へ戻す。 */
+      setBarOpen(false);
     },
     [villagers],
   );

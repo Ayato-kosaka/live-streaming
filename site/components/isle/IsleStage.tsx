@@ -31,6 +31,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
+import { MAX_LEAD, around, hits, lead, type Box } from "./plates";
 
 /**
  * 歩ける島ひとつ。
@@ -98,6 +99,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const pinRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const signBox = useRef<{ w: number; h: number }[]>([]);
   const edgeAt = useRef<string[]>([]);
+  /** 建物から離れすぎて出さないことにした札 */
+  const farAt = useRef<boolean[]>([]);
   const platesDirty = useRef(true);
   const uiBoxes = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
 
@@ -295,7 +298,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
          測って見つけた（札の字が案内の暗い帯に半分かかって 1.81 : 1 だった）。
          消えたらまた測り直すので、その場で戻る */
       for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint")) add(el);
-      if (cover) add(host.parentElement?.querySelector(".hero-logo"));
+      /* 看板は絵と一言で1かたまり。**絵だけを避けると、札が一言の上に乗る** */
+      if (cover) add(host.parentElement?.querySelector(".hero-copy"));
       uiBoxes.current = boxes;
       platesDirty.current = true;
     };
@@ -624,6 +628,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           pins: pinRefs.current,
           sizes: signBox.current,
           edges: edgeAt.current,
+          fars: farAt.current,
+          wide: wideRef.current,
           taken: uiBoxes.current,
           open: lastOpen,
         });
@@ -808,6 +814,12 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       /* カメラが引きか寄りか。引きでは札を全部出して、住人には話しかけられない
          （いまの島の `.stage[data-cam]` と同じ決まり。`docs/island-design.md` 3-4） */
       data-cam={wide ? "wide" : "close"}
+      /* 看板ロゴの置き場。**カメラの寄りとは別のもの**（いまの島と同じ決まり。
+         `components/island/IslandStage.tsx` の `data-view`）。
+         ここが無いあいだ、章の島では `hero.css` の出し分けがどれも当たらず、
+         **スマホは引きに移っても 124px の小さい印のまま**だった。
+         スマホの寄りだけが小さい印で、あとは看板まるごと。 */
+      data-view={modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
       data-mode={modeOf(box.w)}
       ref={hostRef}
       onClick={onStageClick}
@@ -1156,6 +1168,10 @@ function placePlates(
     pins: (HTMLSpanElement | null)[];
     sizes: { w: number; h: number }[];
     edges: string[];
+    /** 建物から離れすぎて出さないことにした札。前と変わったときだけ書き換える */
+    fars: boolean[];
+    /** 引き（島ぜんぶ）か。**離れすぎた札を落とすのは引きだけ**（下の `far`） */
+    wide: boolean;
     taken: { x: number; y: number; w: number; h: number }[];
     open: string | null;
   },
@@ -1176,8 +1192,11 @@ function placePlates(
     el: HTMLDivElement;
     fx: number;
     fy: number;
-    rect: { x: number; y: number; w: number; h: number };
+    rect: Box;
     out: boolean;
+    /** 建物の絵の幅と高さ。まわりへ回すときに要る */
+    artW: number;
+    mh: number;
   }[] = [];
 
   for (let i = 0; i < places.length; i++) {
@@ -1230,7 +1249,7 @@ function placePlates(
         taken.push(rect);
         placed.push(rect);
       }
-      plates.push({ i, el, fx: px, fy: py, rect, out });
+      plates.push({ i, el, fx: px, fy: py, rect, out, artW, mh });
     }
   }
 
@@ -1241,7 +1260,42 @@ function placePlates(
     let dx = 0;
     let dy = 0;
     let dir = "";
+    let far = false;
     if (pl.out) {
+      /* **まず建物のまわりを回る。** 上がふさがっていても、下・右・左が
+         空いていることが多い。ここを見ずに上下へ運んでいたので、混んだ島では
+         札が海の上まで運ばれていた（`./plates.ts` に実測を書いた）。 */
+      const spot = around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(
+        (c) =>
+          c.x >= pad &&
+          c.x + c.w <= o.b.w - pad &&
+          c.y >= padTop &&
+          c.y + c.h <= o.b.h - padBottom &&
+          /* **`taken` で見る（`placed` ではない）。** `taken` には建物の当たり
+             （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
+             見えない当たりの下になって、札の押しどころが削られる */
+          !taken.some((q) => hits(c, q)),
+      );
+      if (spot) {
+        dx = spot.x - rect.x;
+        dy = spot.y - rect.y;
+        taken.push({ ...spot });
+        placed.push({ ...spot });
+        const ax = pl.fx - (spot.x + spot.w / 2);
+        const ay = pl.fy - (spot.y + spot.h / 2);
+        dir = spot === rect ? "" : Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
+        if (dir !== o.edges[pl.i]) {
+          o.edges[pl.i] = dir;
+          if (dir) pl.el.setAttribute("data-edge", dir);
+          else pl.el.removeAttribute("data-edge");
+        }
+        if (o.fars[pl.i]) {
+          o.fars[pl.i] = false;
+          pl.el.removeAttribute("data-far");
+        }
+        pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
+        continue;
+      }
       let left = rect.x;
       let top = rect.y;
       if (left < pad) dx = pad - left;
@@ -1291,8 +1345,20 @@ function placePlates(
       else t0 = Math.min(Math.max(top, padTop), o.b.h - padBottom - rect.h);
       dy += t0 - top;
       top = t0;
-      taken.push({ x: left, y: top, w: rect.w, h: rect.h });
-      placed.push({ x: left, y: top, w: rect.w, h: rect.h });
+      const box = { x: left, y: top, w: rect.w, h: rect.h };
+      /* **建物から離れすぎたら、その札は出さない。**
+         差し棒が何も指していない札は、名前が読めても行き先になっていない
+         （`docs/island-design.md` 3-1）。建物そのものは押せるまま残るので、
+         押せば歩いて寄って、寄れば名前が出る。 */
+      /* **落とすのは引きだけ。** 寄りで出ている札は「いま近づいている1軒」の
+         名前1枚で、画面の外の建物でも名前は読めていなければならない
+         （縁へ寄せて矢で指す、というのがこの関数の元の仕事）。
+         落とすと、近づいた建物の名前が出ない画面ができる。 */
+      far = o.wide && lead(box, pl.fx, pl.fy) > MAX_LEAD;
+      if (!far) {
+        taken.push(box);
+        placed.push(box);
+      }
       /* 矢は、寄せた先から見て**建物が実際にどっちにあるか**を指す */
       const ax = pl.fx - (left + rect.w / 2);
       const ay = pl.fy - (top + rect.h / 2);
@@ -1302,6 +1368,11 @@ function placePlates(
       o.edges[pl.i] = dir;
       if (dir) pl.el.setAttribute("data-edge", dir);
       else pl.el.removeAttribute("data-edge");
+    }
+    if (far !== o.fars[pl.i]) {
+      o.fars[pl.i] = far;
+      if (far) pl.el.setAttribute("data-far", "1");
+      else pl.el.removeAttribute("data-far");
     }
     pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
   }
