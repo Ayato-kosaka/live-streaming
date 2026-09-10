@@ -10,6 +10,10 @@ name: 管理スクリプトを実行
 #                      **値を出さずに形だけ** {"collection":"...","keys_only":true}
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
 #   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
+#   drop_photo       … 貼った写真を1枚消す {"id":"画像のID"}
+#                      置き場の実体・カード・書類を、Functions の
+#                      dropEventImage と同じ順でまとめて消す。
+#                      **既定は出すだけ。**消すには {"apply": true}
 #
 # 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
 # ここはそれが使えないときの逃げ道。
@@ -99,6 +103,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
+          # 写真の置き場(Storage)を触るのは drop_photo だけなので、
+          # requirements.txt ではなくここで足す
+          pip install google-cloud-storage
 
       # YouTube の口は Doneru が出したトークンで叩く（枠を食わないため）。
       # そのトークンを取るのに鍵が要る。**discover_videos と同じ抽出**。
