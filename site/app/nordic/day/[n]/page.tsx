@@ -14,6 +14,8 @@ import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
 import {
   DAY_PAGES,
+  LEAVE,
+  MAIN,
   NORDIC_GUIDE,
   NORDIC_LOG,
   ROUTE,
@@ -380,10 +382,32 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
     .map((c) => NORDIC_GUIDE.phrases.find((p) => p.country === c.name))
     .filter(Boolean) as (typeof NORDIC_GUIDE.phrases)[number][];
 
+  /* 止まる街の並びに、旅程の日付を足す。**いる場所の一次情報はこちら。**
+     手で打つ `current.place` は上書きに降りている（`components/nordic/where.ts`）。
+     ここが無かったあいだ、この面は本番の「ジョージア・トビリシ」（打たれたのは
+     出発の1週間前）をそのまま読んでいたので、旅のあいだじゅう**すでに越えた日の
+     問いに票が入り続けていた**。
+
+     組み方は `/nordic` の `stops` と同じ。`route[i]` を発つのが `MAIN[i]`、
+     `route[i]` へ着くのが `MAIN[i-1]`。 */
+  const route = STOP_SEQ.map((s, i) => ({
+    ...s,
+    leaveOn: MAIN[i]?.date,
+    arriveOn: i > 0 ? MAIN[i - 1]?.date : undefined,
+  }));
+
   /* わかれ道。区間にぶら下がっているものと、動かない日（休息日）のぶん。
      休息日には区間が無いので、行そのものが問いを持つ（`content/nordic.ts` の `Day.fork`）。
-     並び順の中での位置は、**その日のあと最初に走る区間**にそろえる。
-     そこを越えたら、この日ももう過ぎている。 */
+
+     **動かない日の位置は、その街そのもの**＝その街を発つ区間の半歩手前
+     （`components/nordic/here.ts`）。区間にそろえていたころ、9月15日
+     （ヴィリニュスの休息日）の問いが、翌16日にヴィリニュスを発っても閉じなかった。
+     どちらの日も「ヴィリニュスにいる」ので、街の番号だけでは見分けられない。
+
+     旅程に無い街だったら、閉じない側に倒す（終点より先の数を置く）。
+     判断がつかないときに黙って閉じると、まだ決まっていないことに答えられなくなる。 */
+  const restAt = day.city ? route.findIndex((s) => s.name === day.city) : -1;
+  const restSeq = restAt >= 0 ? route[restAt].seq - 0.5 : ROUTE.length + 1;
   /* この日の区間のうち、付箋の宛先を持っているもの。
      テーマの id は `leg-<区間の id>`（`content/themes.ts`）。 */
   const legThemes = legs
@@ -403,7 +427,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       ? [
           {
             leg: day.id,
-            seq: ROUTE.findIndex((l) => cityName(l.from) === day.city),
+            seq: restSeq,
             way: day.city,
             fork: day.fork,
           },
@@ -518,10 +542,10 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
 
       {/* わかれ道。**この面に入ったときに出す**（オーナーの指示）。
           数が読めないときは、区画ごと出ない。 */}
-      {/* 止まる街の並びを渡す。**この面には司令塔（`TripNow`）が居ない**ので、
-          いま何本目かはここが自分で読む。渡すのは字と数字だけにして、
-          旅程表そのものを面の JS に連れてこない。 */}
-      <DaySay items={asks} route={STOP_SEQ} />
+      {/* 止まる街の並びと、旅程の日付を渡す。**この面には司令塔（`TripNow`）が
+          居ない**ので、いまどこかはここが自分で読む。渡すのは字と数字と日付だけに
+          して、旅程表そのものを面の JS に連れてこない。 */}
+      <DaySay items={asks} route={route} until={LEAVE.date} />
 
       {/* その区間あての付箋。**宛先を持っている区間だけ出す**（#160）。
           10区間ぶん先に並べると、そのうち9つが空の区画になる。
