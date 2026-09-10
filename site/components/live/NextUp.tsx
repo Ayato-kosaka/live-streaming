@@ -62,7 +62,13 @@ export default function NextUp() {
   const PL = livePlans(facts);
   // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
   // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
-  const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? undefined) ?? -1) >= 0);
+  /* 画面が出るまでは**焼いた日**で数える（`lib/nightly.ts` の `BUILT_AT`）。
+     `?? undefined` にすると既定引数の `new Date()` が走り、焼いた HTML は
+     焼いた日で、ブラウザの最初の描画は今日で数えることになる。日が変われば
+     残る企画が変わるので、字が食い違って水あわせが落ちる
+     （`Minified React error #418`。出発の時刻を過ぎた瞬間から実際に出ていた）。
+     数え直すのは `today` が入ってから。 */
+  const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? BUILT_AT) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
   const ahead = rest.length + 1;

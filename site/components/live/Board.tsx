@@ -24,7 +24,7 @@ import {
 import { BOARD } from "@/content/voice";
 import { THEMES } from "@/content/themes";
 import { LEGENDS } from "@/content/legends";
-import { PLANS } from "@/content/plans";
+import { BUILT_AT, PLANS, daysUntil, planPhase } from "@/content/plans";
 import { useAuth } from "@/lib/auth";
 import { useOwner } from "@/components/nordic/log";
 import Fold from "@/components/ui/Fold";
@@ -98,6 +98,31 @@ function gitPlanLike(p: NextPlan): GitPlan | null {
   if (plan) return { id: plan.id, label: plan.title, href: plan.href ?? "/next" };
   const l = LEGENDS.find((x) => x.title.trim() === title && x.date === p.date);
   return l ? { id: l.slug, label: l.title, href: `/legends/${l.slug}` } : null;
+}
+
+/**
+ * 段の**見え方**。「これから」と書いてよいのは、まだ来ていないものだけ。
+ *
+ * 段（`status`）は Firestore に入っている、あやとが手で動かす欄。
+ * 動かし忘れているあいだ、**過ぎた日の企画が「これから」と出る。**
+ * 2026-09-18 の板で、ジョージアバイバイ（9/11）と海外出発二周年（9/11）が
+ * 両方とも「これから／2026年09月11日」と並んでいた。
+ *
+ * 日付で分かることを、人の操作待ちにしない。**日付は日付で決める**
+ * （`content/plans.ts` の `planPhase` / `daysUntil`。どちらも日本時間で切る）。
+ * 直すのは見え方だけで、入れ物の値は動かさない。あやとが段を戻せなくなるため。
+ */
+function shownStatus(p: NextPlan, git: GitPlan | null, now: number | null): PlanStatus {
+  if (p.status !== "next") return p.status;
+  const t = now == null ? BUILT_AT : new Date(now);
+  const gp = git ? PLANS.find((x) => x.id === git.id) : undefined;
+  // Git 側にページが立っているなら、終わりの決めかたもあちらに任せる
+  // （`until` / `endsWhen` / 島から届いた `done` まで見る）
+  if (gp) return planPhase(gp, t) === "after" ? "done" : "next";
+  // 伝説（`content/legends.ts`）に当たったものは、終わった企画しかない
+  if (git) return "done";
+  // 掲示板だけの企画。日にちが入っていれば、その日で決める
+  return (daysUntil(p.date || undefined, t) ?? 1) < 0 ? "done" : "next";
 }
 
 /**
@@ -296,7 +321,10 @@ export default function Board() {
      まだ決まっていない提案が下に沈む。この板の用事は「まだ無い企画を出す」ほうなので、
      提案 → これから → やった の順に置いてから、その中で数の順・新しい順にする。 */
   const all = useMemo(() => {
-    const rank = (p: NextPlan) => SHELVES.indexOf(p.status);
+    /* 段は**見え方**で並べる（`shownStatus`）。入れ物の値のままだと、
+       日が過ぎた企画が「これから」のかたまりに残って、まだ来ていないものより
+       上に出る。 */
+    const rank = (p: NextPlan) => SHELVES.indexOf(shownStatus(p, gitPlanLink(p.planId) ?? gitPlanLike(p), now));
     return [...(plans ?? [])].sort(
       (a, b) =>
         rank(a) - rank(b) ||
@@ -304,7 +332,14 @@ export default function Board() {
           b.hearts - a.hearts || (a.createdAt < b.createdAt ? 1 : -1) :
           a.createdAt < b.createdAt ? 1 : -1),
     );
-  }, [plans, sort]);
+  }, [plans, sort, now]);
+  /* 「これから」の札に出す数。**焼き込まない**（`CLAUDE.md`「静的書き出し」）。
+     `PLANS.length` を焼いていたので、9/12 を過ぎても「いま 4 つ立っています」の
+     ままだった。実際にこれからのものは旅ひとつ。画面が出てから数え直す。 */
+  const aheadCount = useMemo(
+    () => PLANS.filter((p) => planPhase(p, now == null ? BUILT_AT : new Date(now)) !== "after").length,
+    [now],
+  );
   const list = onlyMine ? all.filter(isMine) : all;
   const mineCount = all.filter(isMine).length;
   // 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す
@@ -586,6 +621,10 @@ export default function Board() {
               /* 結び付け先の id が Git 側に無い。打ち間違えたか、
                  ページのほうを消したか。どちらにしても押せる先が無い。 */
               const lost = !!p.planId && !link;
+              /* 画面に出す段。**日が過ぎたものは「これから」と言わない**（`shownStatus`）。
+                 入れ物の `p.status` は動かさないので、あやとの「段を動かす」は
+                 これまでどおり元の段を見せる。 */
+              const stage = shownStatus(p, link ?? like, now);
               return (
                 <li
                   key={p.id}
@@ -616,7 +655,7 @@ export default function Board() {
                     {p.note && <p className="bd-note">{p.note}</p>}
                     <div className="idea-meta">
                       {top && <em>いま、いちばんハートが集まってる</em>}
-                      {p.status !== "proposed" && <em>{PLAN_STATUS_NAME[p.status]}</em>}
+                      {stage !== "proposed" && <em>{PLAN_STATUS_NAME[stage]}</em>}
                       {isMine(p) && <em>あなたが出した</em>}
                       {p.when && <span>{p.when}</span>}
                       {!p.when && p.date && <span>{p.date.replace(/-/g, "/")}</span>}
@@ -688,7 +727,7 @@ export default function Board() {
             <img className="tile-icon" src="/sprites/tent.webp" alt="" />
             <span className="tile-text">
               <b>これから</b>
-              <i>日にちが決まった企画。いま {PLANS.length} つ立っています</i>
+              <i>日にちが決まった企画。いま {aheadCount} つ立っています</i>
             </span>
             <Icon name="right" size={15} className="tile-go" />
           </Link>

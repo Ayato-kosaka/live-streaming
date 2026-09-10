@@ -6,6 +6,8 @@
  * 行く前から一緒に楽しみにできるようにする。
  */
 
+import { jstNow } from "@/lib/nightly";
+
 export type PlanLink = { label: string; href: string; note?: string };
 
 /** 写真。外のものを借りるときは、出どころと使ってよい条件を必ず持たせる。 */
@@ -332,16 +334,15 @@ export function livePlans(facts?: { arrived?: string | null; ended?: string | nu
 /**
  * 書き出した時刻。**焼いた HTML の「今日」。**
  *
- * `output: "export"` なので、画面が出るまでは本物の今日が分からない。
- * そのあいだを「全部これから」で埋めると、**終わった企画が
+ * 画面が出るまでのあいだを「全部これから」で埋めると、**終わった企画が
  * 「これからの企画」に並んだまま**の HTML が配られる（実際にそうなっていた）。
- * 分からないなりに、いちばん近い答えは**焼いた日**なので、それを使う。
- * 古くなるのは「焼いてから終わった企画」だけで、しかも画面が出た時点で直る。
  *
- * 値は `next.config.mjs` が埋める。埋まっていない（開発サーバ）ときは 1970年で、
- * これまでどおり「全部これから」に落ちる。
+ * **中身は `lib/nightly.ts` へ移した。** 焼いた今日が要るのは企画だけではなく、
+ * 島の連なり（`/atlas`）も同じものを見る。企画の表をその置き場にすると、
+ * 島の連なりが企画の表まるごとを抱えることになる。
+ * ここは今までどおりの名前で引けるように残してある。
  */
-export const BUILT_AT = new Date(process.env.NEXT_PUBLIC_BUILT_AT ?? 0);
+export { BUILT_AT } from "@/lib/nightly";
 
 export type PlanPhase = "before" | "during" | "after";
 
@@ -392,10 +393,24 @@ export function planDaysLeft(p: Pick<Plan, "date" | "at">, now = new Date()): nu
   return daysUntil(p.date, now);
 }
 
-/** その日まであと何日か。過ぎていればマイナス。 */
+/**
+ * その日まであと何日か。過ぎていればマイナス。
+ *
+ * **「今日」は日本時間で切る**（`lib/nightly.ts` の `jstNow`）。
+ * 島の日付はどこも日本時間で決まっている——配信が22時からで、料理も歩いた国も
+ * その線で数えている——のに、ここだけ UTC で切っていた。UTC は9時間遅れなので、
+ * **毎日 00:00〜09:00 JST のあいだ「今日」が前の日を指す。**
+ *
+ * 北欧への出発は 04:30 JST。**出発の瞬間から、まるごとその窓に入っていた。**
+ * その4時間半、表紙の「いちばん近い企画」が過ぎた「ジョージアバイバイ」を
+ * 今日として出し、旅そのものが一覧から落ちていた（`daysLeft` が -1 になるため）。
+ *
+ * 企画の日付（`date`）は日本時間の暦日なので、比べる相手も日本時間の暦日にする。
+ */
 export function daysUntil(date: string | undefined, today = new Date()): number | null {
   if (!date) return null;
-  const t = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const j = jstNow(today);
+  const t = Date.UTC(j.y, j.m - 1, j.d);
   const [y, m, d] = date.split("-").map(Number);
   return Math.round((Date.UTC(y, m - 1, d) - t) / 86400000);
 }
