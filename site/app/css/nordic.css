@@ -536,6 +536,11 @@ p.nday-log-when {
 p.nsub-note { margin: 0 0 var(--sp-3); font-size: var(--fs-note); font-weight: 800; color: var(--ink-2); }
 .nasks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
 .nask { border-top: 1px solid var(--rule); padding-top: var(--sp-2); }
+/* 数が読めなかった区間（`components/me/ReadAgain.tsx`）。余白は行の間隔に任せる。 */
+.nask > .blank { margin: 0; }
+/* 「いま、みんなの答えを読みに行けなかった」は390pxで2行になる。
+   ほうっておくと最後の1字だけが次の行に落ちるので、行の長さをそろえる。 */
+#say .blank > b { text-wrap: balance; }
 /* 問いの上に「何日目・どこからどこへ」。**問いだけを並べない。**
    「3日目行くかどうかまだ決めてません」だけが並んでいて、
    何のことか分からないと止められた（docs/nordic-fund.md 2.5 の次の失敗）。 */
@@ -1582,6 +1587,9 @@ svg.nmap {
 /* --- どの企画に付くか（#202） ---------------------------------------
    日付の真下。**押したあとではなく、押す前に行き先が読める**位置に置く。 */
 .nph-ev { display: grid; gap: var(--sp-2); }
+/* 企画が読みに行けなかったとき。区画は grid で並ぶので、余白は gap に任せる。 */
+.nph-ev > .blank { margin: 0; padding: var(--sp-4) var(--sp-3); }
+.nph-ev > .blank > b { text-wrap: balance; }
 /* 企画が無い日・読めなかったとき。どちらも押せないので平ら。 */
 .nph-ev-note {
   margin: 0;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/Icon";
 import {
   getStreamEvents,
@@ -8,7 +9,7 @@ import {
   type NordicPhoto,
   type StreamEventBrief,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useOnline } from "@/lib/draft";
 import { UPLOAD_THIN, shrink } from "./stamp";
 
@@ -44,6 +45,11 @@ import { UPLOAD_THIN, shrink } from "./stamp";
  * 企画の一覧が引けないだけで写真が貼れなくなるほうが害が大きい。
  * そのときは日付だけで送って、サーバー側の既定に任せる。
  *
+ * **ただし、灰色に上限を置く**（#34）。`fetch` は自分では諦めないので、
+ * 45秒返さない回では骨がいつまでも残っていた。12秒で見切って
+ * （`withRead`）、読み直す道を出す。言い回しは板や `/me` と同じものを使う
+ * （`components/me/ReadAgain.tsx`）。**同じ意味を何通りにも書かない。**
+ *
  * ## 電波の悪いところで押す（#163）
  *
  * 貼るのはヒッチハイクの途中で、片手で、電波の細いところ。
@@ -78,10 +84,12 @@ export default function PhotoPost({
   const [done, setDone] = useState(0);
   /** まだ送れていないぶん。選び直しをさせないために持っておく */
   const [rest, setRest] = useState<File[]>([]);
-  /** その日に立っている企画。取りにいっている最中は null。0本と区別する */
-  const [events, setEvents] = useState<StreamEventBrief[] | null>(null);
-  /** 企画が読めなかった。**このときは止めない**（日付だけで送る） */
-  const [evOff, setEvOff] = useState(false);
+  /** その日に立っている企画。**読めたぶんだけ入る** */
+  const [events, setEvents] = useState<StreamEventBrief[]>([]);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [evRead, setEvRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える */
+  const [again, setAgain] = useState(0);
   /** どの企画に付けるか。1本の日は勝手に決まる */
   const [pick, setPick] = useState("");
   const file = useRef<HTMLInputElement>(null);
@@ -90,33 +98,47 @@ export default function PhotoPost({
      日付の欄はキーを押すたびに変わるので、電波が細いと返事の順が入れ替わる。 */
   useEffect(() => {
     let alive = true;
-    setEvents(null);
-    setEvOff(false);
+    setEvents([]);
+    setEvRead("wait");
     setPick("");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      setEvents([]);
+      setEvRead("ok");
       return;
     }
-    getStreamEvents(day)
+    withRead(getStreamEvents(day))
       .then((r) => {
         if (!alive) return;
         const list = r?.events ?? [];
         setEvents(list);
+        setEvRead("ok");
         // 1本しかない日は選ばせない。そのまま決める
         if (list.length === 1) setPick(list[0].id);
       })
       .catch(() => {
         if (!alive) return;
-        setEvents([]);
-        setEvOff(true);
+        // 空の配列は「読めた上での0本」のことば。届かなかった日に言わない
+        setEvRead("down");
       });
     return () => {
       alive = false;
     };
-  }, [day]);
+  }, [day, again]);
+
+  /* 電波が戻ったら、押されるのを待たずに引き直す。**落ちている最中に
+     引き直しを掛けると止まらない**ので、切れてから戻ったときだけ。 */
+  const wasOff = useRef(false);
+  useEffect(() => {
+    if (!online) {
+      wasOff.current = true;
+      return;
+    }
+    if (!wasOff.current) return;
+    wasOff.current = false;
+    setAgain((n) => n + 1);
+  }, [online]);
 
   /** 選ぶ番になっているのに、まだ選んでいない。ここだけ送らせない */
-  const waiting = !evOff && !!events && events.length > 1 && !pick;
+  const waiting = evRead === "ok" && events.length > 1 && !pick;
 
   const send = async (files: File[]) => {
     if (files.length === 0) return;
@@ -176,25 +198,24 @@ export default function PhotoPost({
       {/* どの企画に付くか。**日付の真下に置く。** 打った日の答えなので、
           写真を選ぶ押しどころより上でなければ、押したあとに気づくことになる */}
       <div className="nph-ev">
-        {events === null && (
-          <div className="wait is-row" aria-hidden>
-            <span />
-          </div>
+        {evRead === "wait" && <Waiting />}
+
+        {/* 読めなかったとき。**「この日は企画が無い」と言わない。**
+            貼るのは止めないので、そのことだけ1行で足す。 */}
+        {evRead === "down" && (
+          <>
+            <ReadAgain what="この日の企画" onRetry={() => setAgain((n) => n + 1)} />
+            <p className="nph-ev-note">選ばなくても、写真はこのまま貼れます。</p>
+          </>
         )}
 
-        {events !== null && evOff && (
-          <p className="nph-ev-note">
-            企画の一覧が読めませんでした。このまま貼れます。日付から結びます。
-          </p>
-        )}
-
-        {events !== null && !evOff && events.length === 0 && (
+        {evRead === "ok" && events.length === 0 && (
           <p className="nph-ev-note">
             この日に立っている企画はありません。写真はこのまま貼れます。
           </p>
         )}
 
-        {events !== null && !evOff && events.length === 1 && (
+        {evRead === "ok" && events.length === 1 && (
           <p className="nph-ev-one">
             <Icon name="check" size={13} />
             <span>
@@ -204,7 +225,7 @@ export default function PhotoPost({
           </p>
         )}
 
-        {events !== null && !evOff && events.length > 1 && (
+        {evRead === "ok" && events.length > 1 && (
           <>
             <p className="nph-ev-ask">
               この日は{events.length}本あります。どれに付けますか。
