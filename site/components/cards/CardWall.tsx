@@ -5,6 +5,7 @@ import { useState } from "react";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import PhotoPost from "@/components/nordic/PhotoPost";
+import ReadAgain from "@/components/me/ReadAgain";
 import { useOwner } from "@/components/nordic/log";
 import CardSheet from "./CardSheet";
 import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
@@ -35,6 +36,13 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
  * 貼った本人が「入らなかった」と思う。写真の一覧を土台にして、
  * 立てる人をカードから重ねる（`cards.ts` の `useCardWall`）。
  *
+ * **口が2つあるということは、落ち方が3通りあるということ**（#34 #36）。
+ * ここは長いあいだ「2つとも落ちたときだけ」つながらないと言っていて、
+ * **片方だけ落ちると「まだ1枚もありません」と言い切っていた。**
+ * 細い電波でいちばん多いのは片方だけ落ちることなので、いちばんよく起きる
+ * 落ち方が、いちばん大きな嘘になっていた。
+ * 「まだ1枚もありません」と言ってよいのは、**2つとも読めた上での0枚だけ。**
+ *
  * ## マスに、代表の1人を埋めない
  *
  * あやとの言葉:「代表でキャラクターを埋めるのはやめて欲しい」。
@@ -47,11 +55,23 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
  * 3章の3の例外）。押せないマスをこの並びに混ぜないこと。
  */
 export default function CardWall({ plans }: { plans: PlanDays }) {
-  const { days, off, add } = useCardWall();
+  const { days, photosRead, cardsRead, add, reload } = useCardWall();
   const [open, setOpen] = useState<PhotoGroup | null>(null);
   /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
      （`components/nordic/log.ts` の `useOwner`）。 */
   const owner = useOwner();
+
+  /* まだ返事を待っている口がある。骨を出してよいのはここだけ */
+  const waiting = photosRead === "wait" || cardsRead === "wait";
+  /* 2つとも読めた。**「まだ1枚もありません」と言ってよいのは、このときだけ。** */
+  const read = photosRead === "ok" && cardsRead === "ok";
+  /* 読みに行けなかった口。**片方だけ落ちた日がいちばん多い。**
+     両方落ちていても札は1つ（読み直すのはまとめて）で、写真のほうを名乗る。
+     写真は並びの土台なので、そこが読めていないと欠けたことに気づけない。 */
+  const missing =
+    photosRead === "down" ? "旅の写真"
+    : cardsRead === "down" ? "カード"
+    : null;
 
   return (
     <>
@@ -59,7 +79,8 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
           紙に入れると枠が二重になる（`docs/island-design.md` 3章）。 */}
       {owner && <PhotoPost onAdded={add} />}
 
-      {days === null && (
+      {/* まだ待っている口がある。**「無い」とも「読めなかった」とも言えない** */}
+      {waiting && (days === null || days.length === 0) && (
         <section className="panel paper">
           <div className="wait is-card" aria-hidden>
             <span />
@@ -68,14 +89,16 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
         </section>
       )}
 
-      {days !== null && days.length === 0 && (
-        <div className={`blank${off ? " is-off" : ""}`}>
-          <b>{off ? "いまつながりません" : "まだ1枚もありません"}</b>
-          <p>
-            {off
-              ? "あとでもう一度ひらいてみてください。"
-              : "旅に出た日の夜から、その日に撮った写真がここに並びます。"}
-          </p>
+      {/* 読みに行けなかった口があるとき。**片方だけでもここに出る。**
+          押しどころは1つでよく（読み直すのは両方まとめて）、
+          何が欠けているかだけ名前で言う。 */}
+      {missing && <ReadAgain what={missing} onRetry={reload} />}
+
+      {/* **「まだ1枚もありません」と言えるのは、2つとも読めた上での0枚だけ。** */}
+      {read && days !== null && days.length === 0 && (
+        <div className="blank">
+          <b>まだ1枚もありません</b>
+          <p>旅に出た日の夜から、その日に撮った写真がここに並びます。</p>
           <Link className="blank-go" href="/nordic">
             旅のよていを見る
             <Icon name="right" size={15} />
