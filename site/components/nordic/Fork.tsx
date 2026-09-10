@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ReadAgain from "@/components/me/ReadAgain";
 import { forkAnswer, rememberForkAnswer, voteFork } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Leg } from "@/content/nordic";
-import { bumpFork, useFork } from "./forks";
+import { bumpFork, useForkState } from "./forks";
 import { useHereSeq } from "./here";
 
 /**
@@ -72,10 +73,10 @@ function top(counts: Record<string, number>) {
   return s[0] && (!s[1] || s[0][1] > s[1][1]) ? s[0][0] : null;
 }
 
-/** まだ決めていないこと。押せる。越えた日と、数が読めないときは出さない。 */
+/** まだ決めていないこと。押せる。越えた日は出さない。 */
 export function Ask({ leg, seq, fork, when, way }: Props) {
   const id = forkId(leg);
-  const counts = useFork(id);
+  const got = useForkState(id);
   const passed = usePassed(seq);
   const [mine, setMine] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -86,9 +87,14 @@ export function Ask({ leg, seq, fork, when, way }: Props) {
     setMine(forkAnswer(id));
   }, [id]);
 
-  // 数が読めないときは、問いそのものを出さない。
-  // ボタンだけ出して押されても、返せるものが何も無い。
-  if (counts === null || passed) return null;
+  if (passed) return null;
+  /* 数が読めないときは、押しどころを出さない。ボタンだけ出して押されても、
+     返せるものが何も無い。**ただし黙って消えない**（#34）。
+     区画ぜんぶが落ちている日は `DaySay` が読み直す札を1枚出しているので、
+     ここは何が欠けているかだけ言う（`quiet`）。 */
+  if (got.read === "wait") return null;
+  if (got.read === "down" || !got.counts) return <ReadAgain what="みんなの答え" quiet />;
+  const counts = got.counts;
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
@@ -162,9 +168,13 @@ export function Ask({ leg, seq, fork, when, way }: Props) {
 
 /** 越えた日に残る答え。旅程表の、その日の行に置く。 */
 export function Answer({ leg, seq, fork }: Props) {
-  const counts = useFork(forkId(leg));
+  const got = useForkState(forkId(leg));
+  const counts = got.counts;
   const passed = usePassed(seq);
-  if (!passed || counts === null) return null;
+  /* 読めていないときは、ここでは何も言わない。**「割れました」と言わない**
+     ——読めなかっただけの日に、決まっていない答えを決まったことにするため。
+     読めなかったことは `DaySay` が区画ごと1回だけ言う。 */
+  if (!passed || !counts) return null;
   const label = fork.options.find((o) => o.id === top(counts))?.label;
   return (
     <p className="fork-was">
