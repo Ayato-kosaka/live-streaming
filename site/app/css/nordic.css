@@ -883,8 +883,9 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 
 /* --- 見どころ1件（紙の型。段の中身） --- */
 /* 閉じているときのサムネイル。20段ならんだとき、1段ずつ違って見えるのが効く。 */
+.nspot-fig { position: relative; flex: none; line-height: 0; }
 .nspot-th {
-  flex: none;
+  display: block;
   width: 52px;
   height: 40px;
   object-fit: cover;
@@ -1335,7 +1336,7 @@ svg.nmap {
 /* まだ行っていない街の名前。**薄めない。** `opacity: .7` は、札の紙の上で
    3.84〜4.05 : 1 まで落ちていた（`inkpx` の実測）。computed の `color` には
    opacity が出ないので、宣言だけ見ていると気づけない（`CLAUDE.md`）。
-   段は薄さではなく**色の濃さ**で作る（`.cm-far` と同じ直しかた）。6.0 : 1 ある */
+   段は薄さではなく**色の濃さ**で作る（`.ndsp-out` と同じ直しかた）。6.0 : 1 ある */
 .nmap[data-here] .nmap-pin:not(.is-done) .nm-city { fill: var(--ink-2); }
 
 /* --- 陸の国境。赤白の遮断棒 --- */
@@ -1919,14 +1920,72 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
   padding: var(--sp-2) 0;
   border-top: 1px solid var(--rule);
 }
+/* 写真と、その角に付く番号。**番号は写真の外に列を作らない。**
+   別の列にすると、番号を持たない行（郷土料理など、場所を持たないもの）が
+   1文字ぶん空いた行になって、並びが櫛の歯になる。 */
+.ndsp-fig { position: relative; flex: none; line-height: 0; }
 .ndsp-th {
-  flex: none;
+  display: block;
   width: 52px;
   height: 52px;
   border-radius: var(--r-0);
   object-fit: cover;
   background: var(--paper-2);
 }
+/* 地図の点と同じ形（紙の地・種類の色の輪・墨の数字）。**押すとその点が光る**
+   （CSS の `:target`。JavaScript は足していない）。
+   押せるので厚みを持たせる。真下・ぼかし無し（落ち影と取り違えない）。
+   見た目は 28px だが、**当たり判定は 48px** まで `::after` で広げる
+   （`island-design.md` 3章2。測るのは `tools/sprites/hitbox.mjs`）。 */
+.ndsp-n,
+.nspot-n {
+  position: absolute;
+  left: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--frame-dark);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+}
+a.ndsp-n { box-shadow: var(--pop-sm); }
+/* `inset` は**枠の内側（padding box）から**測られる。見た目 28px の丸は
+   3px の輪を持っているので中身は 22px しかなく、-10px では 42px にしか
+   ならなかった（`hitbox.mjs` の実測）。-14px で 50px。 */
+a.ndsp-n::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
+a.ndsp-n:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-dark); }
+/* 輪の色は地図の点と同じ並び。**地の砂色の上で読めるほうの濃い色**を使う */
+.ndsp-n.cm-see, .nspot-n.cm-see { border-color: var(--accent-2); }
+.ndsp-n.cm-eat, .nspot-n.cm-eat { border-color: var(--accent-deep); }
+.ndsp-n.cm-do, .nspot-n.cm-do { border-color: var(--leaf-c); }
+.ndsp-n.cm-buy, .nspot-n.cm-buy { border-color: var(--frame-dark); }
+/* 地図の窓に入らなかったもの。番号の代わりに**向きの矢印**を付ける。
+   押しても行き先が無いので、**厚みは付けない**（`island-design.md` 3章3）。 */
+.ndsp-ar,
+.nspot-ar {
+  position: absolute;
+  left: -5px;
+  bottom: -5px;
+  width: 28px;
+  height: 28px;
+  border: var(--bw-1) solid var(--frame-deep);
+  border-radius: 50%;
+  background: var(--paper);
+  font-style: normal;
+}
+.ndsp-ar svg, .nspot-ar svg { display: block; width: 74%; height: 74%; margin: 13%; }
+.ndsp-ar svg path, .nspot-ar svg path { fill: var(--frame-deep); }
+.ndsp-ar.cm-see, .nspot-ar.cm-see { background: var(--roof-sky); }
+.ndsp-ar.cm-eat, .nspot-ar.cm-eat { background: var(--roof-coral); }
+.ndsp-ar.cm-do, .nspot-ar.cm-do { background: var(--roof-mint); }
+.ndsp-ar.cm-buy, .nspot-ar.cm-buy { background: var(--roof-gold); }
 .ndsp-b { display: grid; gap: 2px; min-width: 0; }
 .ndsp-h { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1); }
 .ndsp-h b { font-size: 13.5px; font-weight: 900; line-height: 1.5; }
@@ -1940,6 +1999,16 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
   white-space: nowrap;
 }
 .ndsp-b i { font-style: normal; font-size: var(--fs-note); line-height: 1.7; font-weight: 700; color: var(--ink-2); }
+/* 街から離れているもの。**字を薄めない**（薄めると紙の暗いムラの上で
+   4.5 : 1 を割る）。段は色の濃さで作る。 */
+.ndsp-out,
+.nspot-out {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
 
 /* その日から使う言葉。3つだけ。全部はしおり（/nordic/guide）にある。 */
 .ndph { margin-top: var(--sp-4); }
@@ -2230,18 +2299,6 @@ p.nday-lead {
 .cm-eat .cm-dot { stroke: var(--accent-deep); }
 .cm-do .cm-dot { stroke: var(--leaf-c); }
 .cm-buy .cm-dot { stroke: var(--frame-dark); }
-/* 一覧の見出しと、行の丸。**地図の輪と同じ並び**（青・珊瑚・ミント・金）。
-   見出しは字が乗るので、**屋根の色をそのまま敷かない。** 珊瑚（#f97690）に
-   墨を乗せると 3.70 : 1 で読めなかった（実測）。紙と混ぜて薄くする。 */
-.cm-key-b.cm-see { background: color-mix(in srgb, var(--roof-sky) 42%, var(--paper)); }
-.cm-key-b.cm-eat { background: color-mix(in srgb, var(--roof-coral) 42%, var(--paper)); }
-.cm-key-b.cm-do { background: color-mix(in srgb, var(--roof-mint) 42%, var(--paper)); }
-.cm-key-b.cm-buy { background: color-mix(in srgb, var(--roof-gold) 42%, var(--paper)); }
-/* 行の丸は絵が乗るだけなので、屋根の色をそのまま使ってよい */
-a.cm-row.cm-see i { background: var(--roof-sky); }
-a.cm-row.cm-eat i { background: var(--roof-coral); }
-a.cm-row.cm-do i { background: var(--roof-mint); }
-a.cm-row.cm-buy i { background: var(--roof-gold); }
 /* 一覧から押されている点。**大きくしない**（隣の点を隠す）。輪を足す */
 .cmap-svg g:target .cm-dot { stroke: var(--pick); }
 .cmap-svg g:target .cm-num { fill: var(--pick); }
@@ -2309,113 +2366,8 @@ a.cm-row.cm-buy i { background: var(--roof-gold); }
 .cm-north path { fill: var(--accent-deep); }
 .cm-north text { fill: var(--ink); font-size: 26px; font-weight: 900; text-anchor: middle; }
 
-/* ── 地図の下の一覧 ──────────────────────────────────── */
-.cmap-key { list-style: none; margin: 10px 0 0; padding: 0; }
-.cmap-key > li { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
-.cm-key-b {
-  flex: none;
-  min-width: 5.2em;
-  padding: 3px 8px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-1);
-  color: var(--ink);
-  font-size: var(--fs-small);
-  font-weight: 900;
-  text-align: center;
-}
-.cmap-key > li > span { display: flex; flex-wrap: wrap; gap: 6px; }
-
-/* 一覧の1行。**押しどころなので 48px 以上**（`island-design.md` 3章2）。
-   44px にしていたころ、実測 46px で決まりを割っていた（`hitbox.mjs`）。
-   押せるので厚みを持たせる。真下・ぼかし無し（落ち影と取り違えない） */
-a.cm-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 4px 10px 4px 4px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-1);
-  background: var(--paper);
-  box-shadow: var(--pop-sm);
-  color: var(--ink);
-  font-size: var(--fs-small);
-  font-weight: 700;
-  text-align: left;
-  text-decoration: none;
-}
-a.cm-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-dark); }
-/* 番号と絵。**地図の点と同じ番号**で、種類は地の色で言う */
-a.cm-row i {
-  position: relative;
-  flex: none;
-  display: block;
-  width: 34px;
-  height: 34px;
-  border: var(--bw-1) solid var(--frame-deep);
-  border-radius: 50%;
-  font-style: normal;
-}
-/* 絵を丸の内側に収める。ふちまで描くと、丸で切られて何の絵か分からない */
-a.cm-row i svg { display: block; width: 78%; height: 78%; margin: 11%; }
-a.cm-row i b {
-  position: absolute;
-  right: -5px;
-  bottom: -4px;
-  min-width: 17px;
-  padding: 0 1px;
-  border: 2px solid var(--frame-deep);
-  border-radius: 9px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 900;
-  line-height: 15px;
-  text-align: center;
-}
-/* 窓の外のもの。**旅程には入っている。** 地図に載らないだけなので、
-   消さずに、**同じ島の紙**で出す。裸の文で置いていたころ、上下の札から
-   浮いて「作りかけ」に見えた。
-
-   **押せないので、厚み（真下・ぼかし無しの影）は付けない**
-   （`island-design.md` 3章3）。枠と紙は持たせて、影だけ持たせない。
-   これで「札ではあるが、押すものではない」が形で分かる。
-
-   字は薄めない。--ink-2 を 0.85 で薄めると、紙の暗いムラの上で
-   3.95 : 1 まで落ちた（実測）。薄めるのをやめて、段は色の濃さで作る */
-.cm-far {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 4px 10px 4px 4px;
-  border: var(--bw-1) solid var(--frame-dark);
-  border-radius: var(--r-1);
-  background: var(--paper);
-  color: var(--ink);
-  font-size: var(--fs-small);
-  font-weight: 700;
-}
-.cm-far > span { display: flex; flex-direction: column; }
-.cm-far em { font-style: normal; font-size: var(--fs-tiny); font-weight: 700; color: var(--ink-2); }
-/* 方角の矢印。**8方位の字だけだと、どっちか分かるのに一拍かかる。**
-   丸の地は種類の色（一覧の丸と同じ並び）。矢印は焼くときに出した
-   角度ぶんだけ回してある（真北が 0）。 */
-.cm-far i {
-  flex: none;
-  display: block;
-  width: 34px;
-  height: 34px;
-  border: var(--bw-1) solid var(--frame-deep);
-  border-radius: 50%;
-  background: var(--paper);
-  font-style: normal;
-}
-.cm-far i svg { display: block; width: 74%; height: 74%; margin: 13%; }
-.cm-far i svg path { fill: var(--frame-deep); }
-.cm-far.cm-see i { background: var(--roof-sky); }
-.cm-far.cm-eat i { background: var(--roof-coral); }
-.cm-far.cm-do i { background: var(--roof-mint); }
-.cm-far.cm-buy i { background: var(--roof-gold); }
-/* 「足をのばす」の見出し。ほかの見出しと同じ形で、色だけ地（砂）に寄せる */
-.cm-key-b.cm-key-out { background: color-mix(in srgb, var(--sand-wet) 70%, var(--paper)); }
+/* ── 地図の下 ────────────────────────────────────────
+   **番号つきの札を並べない。** ここには前まで、種類ごとに区切った番号札の
+   一覧があり、その真下に見どころの一覧（写真・種類・題・ひとこと）が同じ
+   ものを並べていた。**まったく同じ件数が上下で2回**出ていたので、番号は
+   一覧の行の写真の角へ移した（`.ndsp-n` / `.nspot-n`）。 */

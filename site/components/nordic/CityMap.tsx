@@ -49,14 +49,6 @@ type CityMapData = {
   pins: Pin[]; marks: Mark[]; labels: Label[]; far: Far[]; inset?: Inset;
 };
 
-/** 見どころの種類。**この4つ以外は来ない**（`nordic/*.json` の `cat`）。 */
-const CATS = [
-  { k: "see", label: "見たい" },
-  { k: "eat", label: "食べたい" },
-  { k: "do", label: "やりたい" },
-  { k: "buy", label: "買いたい" },
-] as const;
-
 /* ── 目印の絵 ─────────────────────────────────────────────
    **絵文字は使わない**（`island-design.md` 1章）。11px で出るので、
    輪郭線は引かず、面だけで形を作る（2章1）。上を明るく、屋根に色を置いて、
@@ -312,13 +304,6 @@ export default function CityMap({ city }: { city: string }) {
   if (!m || !(m.pins.length || m.inset)) return null;
   const uid = (k: string) => `cm-${m.slug}-${k}`;
 
-  const byCat = CATS.map((c) => ({
-    ...c,
-    rows: [...m.pins, ...(m.inset?.pins ?? [])]
-      .filter((p) => p.cat === c.k)
-      .sort((a, b) => a.n - b.n),
-  })).filter((g) => g.rows.length);
-
   return (
     <div className="cmap">
       <Frame
@@ -343,59 +328,44 @@ export default function CityMap({ city }: { city: string }) {
           />
         </>
       )}
-
-      <ul className="cmap-key">
-        {byCat.map((g) => (
-          <li key={g.k}>
-            <b className={`cm-key-b cm-${g.k}`}>{g.label}</b>
-            <span>
-              {g.rows.map((p) => (
-                <a key={p.id} className={`cm-row cm-${p.cat}`} href={`#${uid(`p${p.n}`)}`}>
-                  <i>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <Glyph k={p.k} />
-                    </svg>
-                    <b>{p.n}</b>
-                  </i>
-                  {p.t}
-                </a>
-              ))}
-            </span>
-          </li>
-        ))}
-
-        {/* 窓に入らなかったもの。**消さない。** 旅程に入っている以上、
-            その日に行く場所なので、地図に載らないだけ。
-            方角と距離を持っているので、**その向きへ矢印を向けて**渡す。
-            押せないので、**完全に平ら**にする。厚み（真下の影）は
-            「押せる」の合図なので、押せないものには付けない
-            （`island-design.md` 3章3）。 */}
-        {m.far.length > 0 && (
-          <li>
-            <b className="cm-key-b cm-key-out">足をのばす</b>
-            <span>
-              {m.far.map((f) => (
-                <span key={f.id} className={`cm-far cm-${f.cat}`}>
-                  <i aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path
-                        d="M12 2.6l6.2 18.4L12 16.6 5.8 21z"
-                        transform={`rotate(${f.deg} 12 12)`}
-                      />
-                    </svg>
-                  </i>
-                  <span>
-                    {f.t}
-                    <em>
-                      {f.dir}へ{f.km}km
-                    </em>
-                  </span>
-                </span>
-              ))}
-            </span>
-          </li>
-        )}
-      </ul>
     </div>
   );
+}
+
+/**
+ * 見どころ id → **その街の地図での居場所。**
+ *
+ * ## なぜ地図から一覧を切り離したか
+ *
+ * ここは前まで、地図の下に**番号つきの札を種類ごとに並べていた**。その真下に
+ * 同じ見どころが写真つきでもう一度並ぶので、**まったく同じ5件が上下で2回**
+ * 出ていた（`/nordic/day/1` のワルシャワ、`/nordic/<国>` の街の段も同じ形）。
+ *
+ * 1行が「番号・写真・種類・題・ひとこと」を全部持てるなら、2つに分ける理由が
+ * ない。**番号だけをここから渡して、並べるのは見どころの一覧に任せる。**
+ * 地図の点（`:target`）との結びは、行が持つ `href` がそのまま引き継ぐ。
+ */
+export type SpotKey = {
+  /** 見どころの種類。番号の丸の輪の色になる（地図の点と同じ並び） */
+  cat: string;
+  /** 地図の点の番号。窓の外にあるものは持たない */
+  n?: number;
+  /** 押すと、その点が光る。`:target` の行き先 */
+  href?: string;
+  /** 窓に入らなかったもの。街の中心からの向きと距離 */
+  far?: { km: number; dir: string; deg: number };
+};
+
+/** その街の見どころの居場所。**地図の出ない街は空**（押しても行き先が無い）。 */
+export function cityKeys(city: string): Record<string, SpotKey> {
+  const out: Record<string, SpotKey> = {};
+  const m = (MAPS as Record<string, CityMapData>)[city];
+  if (!m || !(m.pins.length || m.inset)) return out;
+  for (const p of [...m.pins, ...(m.inset?.pins ?? [])]) {
+    out[p.id] = { cat: p.cat, n: p.n, href: `#cm-${m.slug}-p${p.n}` };
+  }
+  for (const f of m.far) {
+    out[f.id] = { cat: f.cat, far: { km: f.km, dir: f.dir, deg: f.deg } };
+  }
+  return out;
 }

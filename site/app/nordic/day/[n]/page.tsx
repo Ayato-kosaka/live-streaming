@@ -7,7 +7,7 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
-import CityMap from "@/components/nordic/CityMap";
+import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
 import DayLog from "@/components/nordic/DayLog";
 import Notes from "@/components/live/Notes";
@@ -161,7 +161,11 @@ function byCat(list: NordicSpot[]): NordicSpot[] {
  * **同じものを2行にしない。** `id` を持つ提案はその見どころの行そのものになって、
  * 「誰が教えてくれたか」だけが足される。ガイドに無いものは、付箋のほうが字を持つ。
  */
-function wantItems(city: string, spots: NordicSpot[]): WantItem[] {
+function wantItems(
+  city: string,
+  spots: NordicSpot[],
+  keys: Record<string, SpotKey>,
+): WantItem[] {
   const list = spots.filter((s) => s.city === city);
   const byId = new Map(list.map((s) => [s.id, s]));
   const used = new Set<string>();
@@ -172,12 +176,16 @@ function wantItems(city: string, spots: NordicSpot[]): WantItem[] {
     // 字を持っていないので、出しても名前の無い行になる。
     if (w.id && !s) continue;
     if (s) used.add(s.id);
+    const k = s ? keys[s.id] : undefined;
     items.push({
       key: s ? s.id : `${city}-${w.title}`,
       cat: s?.cat ?? w.cat ?? "see",
       title: s?.title ?? w.title ?? "",
       point: s?.point ?? w.point,
       img: s?.img,
+      n: k?.n,
+      href: k?.href,
+      far: k?.far,
       want: true,
       by: w.by,
       // 付箋の言葉と返事は、その付箋の1件目にだけ
@@ -187,7 +195,17 @@ function wantItems(city: string, spots: NordicSpot[]): WantItem[] {
   }
   for (const s of byCat(list)) {
     if (used.has(s.id)) continue;
-    items.push({ key: s.id, cat: s.cat, title: s.title, point: s.point, img: s.img });
+    const k = keys[s.id];
+    items.push({
+      key: s.id,
+      cat: s.cat,
+      title: s.title,
+      point: s.point,
+      img: s.img,
+      n: k?.n,
+      href: k?.href,
+      far: k?.far,
+    });
   }
   return items;
 }
@@ -345,7 +363,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       maybe: maybe.includes(city),
       country: cityCountry(city),
       list: spots.filter((s) => s.city === city),
-      items: wantItems(city, spots),
+      // 番号は地図の点への行き先を持つ。地図を出さない「寄るかもしれない街」に
+      // 渡すと、どこへも行けない番号になる
+      items: wantItems(city, spots, maybe.includes(city) ? {} : cityKeys(city)),
     }))
     // ガイドに1件も無くても、付箋で教えてもらったものがあれば区画は立てる
     .filter((c) => c.items.length > 0);
@@ -515,9 +535,6 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
       ))}
 
-      {/* その街で、食べる・見る・やる・買う。**中身は国のページにある。**
-          ここは4つの種類を1つずつ出して、全部読みたい人はその街の段へ送る。
-          同じ本文を2か所に置かない。 */}
       {/* 順調だったら、寄る。**寄ると決まっていない。**
           ヒッチハイクは着く時刻が読めないので、予定として書くと嘘になる。
           「順調だったら」を見出しに入れて、決まりごとに見えないようにする。 */}
@@ -552,7 +569,8 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         <section key={c.city} className="panel paper" id={`want-${c.city}`}>
           <h2>{c.city}で見たいもの</h2>
           {/* まず地図。**どこに何があるかが先で、一覧は後。**
-              道・川・旧市街まで描いてある実データの地図（`CityMap`）。 */}
+              道・川・旧市街まで描いてある実データの地図（`CityMap`）。
+              **地図の下に番号の札を並べない。** 番号は一覧の行が持っている */}
           <CityMap city={c.city} />
           <WantList items={c.items} />
           {c.country && c.list.length > 0 && (
