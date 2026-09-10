@@ -1,0 +1,351 @@
+name: 島の数字を焼き直す
+
+# `site/content/` に**焼き込んである数字**を、BigQuery から取り直して置き換える。
+#
+# ## なぜ要るか
+#
+# 毎晩ひとりでに新しくなるのは **BigQuery と Firestore だけ**だった。
+#   - cron を持つのは `schedule_fetch_chat.yml` と `fetch_doneru_donations.yml` の2本。
+#     どちらも BQ と Firestore しか触らない
+#   - Hosting の `npm run build:web` は expo export → public コピー → next build で、
+#     **python を1行も通らない**。だから配り直しても数字は動かない
+#   - `run_admin_script.yml` が回せるのは `python/admin/` の中だけ
+#
+# つまり `site/content/` を焼き直す口が**どこにも無かった**。2026-09-05 で止まっていた。
+# 旅に出ているあいだも数字はずれ続けるので、**スマホから押せるもの**にする。
+#
+# ## 既定は「見るだけ」
+#
+# `dry_run` の既定を true にしてある。押し間違えても本番は変わらない。
+# 何がどれだけ変わるかを読んでから、`dry_run: false` でもう一度押す。
+#
+# ## 回すもの（**この6本だけ**）
+#
+#   build_chapter_stats   chapterStats.ts / chapterStreams.ts   BigQuery を引く
+#   build_residents       residents.ts                          BigQuery を引く
+#   build_stream_peaks    streamPeaks.ts                        BigQuery を引く
+#   build_on_this_day     onThisDay.ts                          BigQuery を引く
+#   build_country_stats   countryStats.ts                       ※下記
+#   build_kitchen_talk    kitchenTalk.ts                        ※下記
+#
+# **※ 後ろの2本は BigQuery を引かない。** 元は `python/data/*.json` に
+# 置いてある取り置きなので、回しても**同じものが焼き直るだけで数字は動かない**
+# （`country_stats.json` / `kitchen_video_stats.json` / `kitchen_residents.json` /
+# `kitchen_icons.json`）。数字を新しくするには、先にその JSON を取り直す必要がある。
+# 落ちはしないので allowlist には入れてあるが、**押しても変わらないのが正しい。**
+#
+# 順番は入力の並びではなく**下の ALL の並びで回す**。依存があるため。
+#   - `build_on_this_day` は `streamPeaks.ts` を読む → 先に `build_stream_peaks`
+#   - `build_kitchen_talk` は `residents.ts` を読む   → 先に `build_residents`
+#
+# ## 🔴 ここから回してはいけないもの（allowlist に入れていない理由）
+#
+# - **`build_city_streams.py`** — いまの `cityStreams.ts` は**古い版のスクリプトで
+#   焼かれている**。選び方の決まりが変わっているので、焼き直すと中身が総取り替えに
+#   なる（トビリシは滞在窓に配信が119本あるので、並びごと変わる）。
+#   「新しくなる」ではなく**「別物になる」**。出発前に触らない。
+#   別途、選び方がどう変わるかを確かめてから入れる。
+# - **`build_nordic.py`** — 元にする JSON が `/tmp/` にあってリポジトリに残っていない。
+#   **そもそも回せない**（走らせても落ちる）。
+# - **`build_shorts.py`** — 元が手書きの表（`python/data/shorts.json`）。
+#   BigQuery に無いので、回しても手で書いたものを焼き直すだけ。
+# - **`build_voices.py`** — どの声を載せるかを**人が選ぶ**もの（`voices_picks.json`）。
+#   機械が選び直してよいものではない。
+# - **`build_legend_days.py` / `build_nordic_map.py` / `build_world_route.py`** —
+#   ここでは要らない。要るようになったら、上と同じ形で1本ずつ確かめてから足す。
+#
+# ## 秘密の値
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# **入力もログも、数字とファイル名しか出さない。**
+# ここで回す6本は YouTube API を叩かないので、**Doneru の鍵は取り出さない**
+# （`run_admin_script.yml` はやっているが、ここでは要らない。要らないものは触らない）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      scripts:
+        description: "回すもの（カンマ区切り。空なら6本ぜんぶ）例: build_residents,build_stream_peaks"
+        required: false
+        default: ""
+        type: string
+      dry_run:
+        description: "見るだけ（commit も deploy もしない）。まずこのまま押す"
+        required: false
+        default: true
+        type: boolean
+      deploy:
+        description: "commit のあと Hosting も配る（dry_run が false のときだけ効く）"
+        required: false
+        default: false
+        type: boolean
+
+# 2回押したときに、同じファイルを2本が同時に書いて push が競らないように1本ずつ
+concurrency:
+  group: rebake
+  cancel-in-progress: false
+
+jobs:
+  rebake:
+    runs-on: ubuntu-latest
+    permissions:
+      # 焼き直した site/content/*.ts を master に押し戻す
+      contents: write
+      # Hosting のデプロイを、こちらから起動する
+      actions: write
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      # 入力は**シェルに直接埋め込まない**。env 経由で受けて "$..." で読む。
+      # `${{ inputs.scripts }}` をそのまま run に書くと、入力の中身が
+      # シェルの一部として解釈される。allowlist を通る前に走ってしまう。
+      - name: 回すものを決める（allowlist）
+        env:
+          SCRIPTS_IN: ${{ inputs.scripts }}
+        run: |
+          set -euo pipefail
+
+          # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
+          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_country_stats build_kitchen_talk"
+
+          # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
+          # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
+          raw="$(printf '%s' "${SCRIPTS_IN:-}" | tr ',' '\n' | tr -d ' \t\r' \
+                 | tr 'A-Z' 'a-z' | sed 's|^python/||; s/\.py$//' \
+                 | grep -v '^$' | tr '\n' ' ' || true)"
+
+          if [ -z "$raw" ]; then
+            sel="$ALL"
+            echo "入力が空なので6本ぜんぶ回します"
+          else
+            for n in $raw; do
+              # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
+              if ! printf '%s' "$n" | grep -qE '^[a-z0-9_]+$'; then
+                echo "::error::スクリプト名に使えるのは英小文字・数字・_ だけです: $n"
+                exit 1
+              fi
+              case " $ALL " in
+                *" $n "*) ;;
+                *)
+                  echo "::error::$n は回してよいものに入っていません。何も走らせずに止めます"
+                  echo "::error::回せるのは: $ALL"
+                  echo "::error::cityStreams / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
+                  exit 1
+                  ;;
+              esac
+            done
+            # 入力の並びではなく ALL の並びに直す（依存があるため）
+            sel=""
+            for a in $ALL; do
+              case " $raw " in
+                *" $a "*) sel="$sel $a" ;;
+              esac
+            done
+            sel="$(printf '%s' "$sel" | sed 's/^ //')"
+          fi
+
+          # そのスクリプトが書き換えるファイル。**commit するのはここに挙げたものだけ**
+          # （`git add -A` を使わない。別のものが混ざって master に入らないように）
+          paths=""
+          for s in $sel; do
+            case "$s" in
+              build_chapter_stats) p="site/content/chapterStats.ts site/content/chapterStreams.ts" ;;
+              build_residents)     p="site/content/residents.ts" ;;
+              build_stream_peaks)  p="site/content/streamPeaks.ts" ;;
+              build_on_this_day)   p="site/content/onThisDay.ts" ;;
+              build_country_stats) p="site/content/countryStats.ts" ;;
+              build_kitchen_talk)  p="site/content/kitchenTalk.ts" ;;
+              *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
+            esac
+            paths="$paths $p"
+          done
+          paths="$(printf '%s' "$paths" | sed 's/^ //')"
+
+          echo "回すもの: $sel"
+          echo "書き換わりうるファイル: $paths"
+          echo "REBAKE_SCRIPTS=$sel" >> "$GITHUB_ENV"
+          echo "REBAKE_PATHS=$paths" >> "$GITHUB_ENV"
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # 焼く前の姿を取っておく。あとで「前 → 後」を並べて出すため
+      - name: 焼く前を取っておく
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rebake-before
+          for p in $REBAKE_PATHS; do
+            if [ -f "$p" ]; then cp "$p" "/tmp/rebake-before/$(basename "$p")"; fi
+          done
+          ls -l /tmp/rebake-before
+
+      - name: 焼く
+        run: |
+          set -euo pipefail
+          for s in $REBAKE_SCRIPTS; do
+            echo "::group::$s"
+            case "$s" in
+              # この2本は取り置きの JSON から焼き直すだけ。--build は本人の docstring に合わせた形
+              build_country_stats|build_kitchen_talk) python "python/$s.py" --build ;;
+              *) python "python/$s.py" ;;
+            esac
+            echo "::endgroup::"
+          done
+
+      - name: 何がどれだけ変わったか
+        run: |
+          set -euo pipefail
+          echo "### 焼き直した結果" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if git diff --quiet -- $REBAKE_PATHS; then
+            echo "**変わりませんでした。**" >> "$GITHUB_STEP_SUMMARY"
+            echo "変わりませんでした"
+          fi
+
+          echo "#### ファイル" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git --no-pager diff --stat -- $REBAKE_PATHS | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # 行の差分だけでは読めないファイルがある（onThisDay.ts と streamPeaks.ts は
+      # 中身ぜんぶが1行の JSON なので、`--stat` は「1行変わった」としか言わない）。
+      # だから**中の数を数えて、前と後を並べる**。
+      - name: 主要な数字の前後
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import os, re, pathlib
+
+          # ファイルごとに「何を数えれば変化が読めるか」。count=当たった数, sum=当たった数字の合計
+          METRICS = {
+              "chapterStats.ts": [("章", r'^\s{2}"[a-z0-9-]+": \{', "count"),
+                                  ("のべ人数", r"people: (\d+)", "sum"),
+                                  ("配信", r"streams: (\d+)", "sum")],
+              "chapterStreams.ts": [("配信", r'^\s{4}\["', "count")],
+              "residents.ts": [("住人", r"days: (\d+)", "count"),
+                               ("のべ日数", r"days: (\d+)", "sum")],
+              "streamPeaks.ts": [("山の出せる配信", r'"k":', "count")],
+              "onThisDay.ts": [("日めくりの日", r'"\d\d-\d\d":', "count"),
+                               ("配信", r'"v":', "count")],
+              "countryStats.ts": [("国", r"lives: (\d+)", "count"),
+                                  ("配信", r"lives: (\d+)", "sum"),
+                                  ("コメント", r"msgs: (\d+)", "sum")],
+              "kitchenTalk.ts": [("料理", r"people: (\d+)", "count"),
+                                 ("引用", r"\btext: ", "count")],
+          }
+
+          def measure(text, pat, mode):
+              hits = re.findall(pat, text, re.M)
+              if mode == "count":
+                  return len(hits)
+              return sum(int(h) for h in hits if str(h).isdigit())
+
+          print("")
+          print("#### 中の数")
+          print("")
+          print("| ファイル | 何を | 前 | 後 | 差 |")
+          print("| --- | --- | ---: | ---: | ---: |")
+          for p in os.environ["REBAKE_PATHS"].split():
+              name = pathlib.Path(p).name
+              after_p, before_p = pathlib.Path(p), pathlib.Path("/tmp/rebake-before") / name
+              if not after_p.exists():
+                  print(f"| {name} | — | — | — | 焼かれていない |")
+                  continue
+              after = after_p.read_text(encoding="utf-8")
+              before = before_p.read_text(encoding="utf-8") if before_p.exists() else ""
+              for label, pat, mode in METRICS.get(name, []):
+                  b, a = measure(before, pat, mode), measure(after, pat, mode)
+                  d = a - b
+                  print(f"| {name} | {label} | {b:,} | {a:,} | {'±0' if d == 0 else f'{d:+,}'} |")
+          print("")
+          PY
+
+      # 中身の差分そのもの。**1行を200文字で切る。**
+      # onThisDay.ts は1行が100KB近くあるので、切らずに出すとログが読めなくなる
+      - name: 変わった行（先頭だけ）
+        run: |
+          set -euo pipefail
+          for p in $REBAKE_PATHS; do
+            if git diff --quiet -- "$p"; then continue; fi
+            echo "::group::$p"
+            git --no-pager diff -U0 -- "$p" \
+              | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' \
+              | cut -c1-200 | head -60 || true
+            echo "::endgroup::"
+          done
+
+      - name: 見るだけで終わる
+        if: ${{ inputs.dry_run }}
+        run: |
+          {
+            echo ""
+            echo "**見るだけ（dry_run）で終わりました。** commit も deploy もしていません。"
+            echo ""
+            echo "上の数字でよければ、同じ入力のまま **dry_run のチェックを外して**もう一度押します。"
+            if [ "${{ inputs.deploy }}" = "true" ]; then
+              echo ""
+              echo "> deploy を on にしてありますが、dry_run が優先なので配っていません。"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: master に入れる
+        id: commit
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- $REBAKE_PATHS; then
+            echo "変わっていません。commit しません"
+            echo "changed=0" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**変わっていないので commit しませんでした。**" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $REBAKE_PATHS
+          git commit \
+            -m "島に焼き込んである数字を取り直す（$REBAKE_SCRIPTS）" \
+            -m "焼き込みは配り直しても動かない。取り込みが毎晩進むぶん、置いたままだと画面の数字だけが止まる。"
+          git push origin HEAD:master
+          echo "changed=1" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**master に入れました。**" >> "$GITHUB_STEP_SUMMARY"
+
+      # 焼き込みは Hosting を配り直して初めて画面に出る。
+      # **deploy を on にしたときだけ。**（既定は off）
+      - name: Hosting を配る
+        if: ${{ !inputs.dry_run && inputs.deploy && steps.commit.outputs.changed == '1' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run firebase-hosting-deploy-prod.yml --ref master
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Hosting のデプロイを起動しました。** 10分ほどで画面に出ます。" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 配っていないときの案内
+        if: ${{ !inputs.dry_run && !inputs.deploy && steps.commit.outputs.changed == '1' }}
+        run: |
+          {
+            echo ""
+            echo "**まだ画面には出ていません。** 焼き込みは配り直して初めて入れ替わります。"
+            echo "Actions の「Firebase Hosting Deploy」を手で起動するか、deploy を on にしてもう一度押してください。"
+          } >> "$GITHUB_STEP_SUMMARY"
