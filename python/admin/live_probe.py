@@ -82,6 +82,38 @@ def get(url: str, headers: dict | None = None) -> tuple[int, str]:
         return 0, f"{type(e).__name__}: {e}"
 
 
+def scopes_of(at: str) -> str:
+    """そのトークンに何が許されているかを、名前だけ並べる。**値は出さない。**
+
+    「`liveBroadcasts` はスコープが強すぎて使えないのでは」を潰すのに要る。
+    切れたトークンだと 400 しか返らないので、**必ず生きているほうで見る。**
+    """
+    code, body = get(f"{TOKENINFO}?access_token={urllib.parse.quote(at, safe='')}")
+    if code != 200:
+        return f"(見られず HTTP {code})"
+    try:
+        j = json.loads(body)
+    except json.JSONDecodeError:
+        return "(本文が JSON でない)"
+    names = [s.rsplit("/", 1)[-1] for s in (j.get("scope") or "").split()]
+    return " / ".join(names) or "(空)"
+
+
+def reason_of(body: str) -> str:
+    """YouTube が断った理由（`reason`）だけを抜く。
+
+    401 でも `authorizationRequired`（トークンが死んでいる）と
+    `insufficientPermissions`（スコープが足りない）では打ち手が違う。
+    **前者はコードで直せる。後者は繋ぎ直しが要る。**
+    """
+    try:
+        err = (json.loads(body).get("error") or {})
+    except json.JSONDecodeError:
+        return "(本文が JSON でない)"
+    rs = [str(e.get("reason") or "") for e in (err.get("errors") or [])]
+    return ", ".join(r for r in rs if r) or str(err.get("status") or "(無し)")
+
+
 def head(body: str, n: int = 240) -> str:
     """本文の頭だけ。**伏せてから切る。**"""
     s = hide(body).replace("\n", " ").strip()
@@ -246,6 +278,10 @@ def refresh_and_retake(key: str) -> str:
     _SECRETS.append(at)
     log.info("  取り直したあとの at: %s（%d文字）/ exp=%s",
              "あり" if at else "なし", len(at), _exp_age(y.get("exp")))
+    # **生きているトークンで見ないと、スコープは分からない。**
+    # 「liveBroadcasts はスコープが強すぎるのでは」を、ここで潰す
+    if at:
+        log.info("  生きているトークンの許し: %s", scopes_of(at))
     return at
 
 
@@ -316,7 +352,8 @@ def step3_live(at: str, key: str = "") -> dict:
         )
 
     code, j, body = ask(at)
-    log.info("  liveBroadcasts(active) HTTP %s", code)
+    log.info("  liveBroadcasts(active) HTTP %s / 断った理由=%s",
+             code, "-" if code == 200 else reason_of(body))
     if code == 401 and key:
         # **ここが要**。401 は「配信していない」ではなく「トークンが死んでいる」。
         # Doneru は取り直させるまで同じものを配り続けるので、
@@ -325,7 +362,8 @@ def step3_live(at: str, key: str = "") -> dict:
         at2 = refresh_and_retake(key)
         if at2:
             code, j, body = ask(at2)
-            log.info("  取り直したあと liveBroadcasts(active) HTTP %s", code)
+            log.info("  取り直したあと liveBroadcasts(active) HTTP %s / 理由=%s",
+                     code, "-" if code == 200 else reason_of(body))
             if code != 401:
                 log.warning(
                     "  ★ 取り直せば通る。"
