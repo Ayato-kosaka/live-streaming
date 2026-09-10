@@ -33,6 +33,9 @@ import { RECIPES } from "@/content/recipes";
 import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
+/* 「いまどこ」の言い方は1か所（`lib/stay.ts` の `placeWord`）。
+   板がここだけ独自に場所を言うと、同じ表紙の中で名刺と食い違う。 */
+import { placeWord, stayNow } from "@/lib/stay";
 import { atText, watchAt } from "@/lib/peak";
 
 /** 配信の行き先。島のやぐらの札も配信中はここへ送るので、出どころを1つにする。 */
@@ -94,7 +97,7 @@ function daysApart(from: string, to: string): number {
  * 実際の日付だけで、どれも年に数回しか当たらない。
  * 毎日必ず何かが当たるようにすると、3日で背景になる（`docs/island-play.md` 1章 G）。
  */
-function milestone(today: string): TodayNews | null {
+function milestone(today: string, now: Date): TodayNews | null {
   // 新しい国に入った日。旅そのものが動いた日なので、いちばん強い
   for (const c of COUNTRIES) {
     for (const s of c.stays) {
@@ -127,22 +130,29 @@ function milestone(today: string): TodayNews | null {
     };
   }
 
-  // いまいる国に、今日で何日いるか。100日ごとにだけ言う
-  const now = COUNTRIES.find((c) => c.stays.some((s) => !s.to));
-  const stay = now?.stays.find((s) => !s.to);
-  if (now && stay) {
-    const days = daysApart(stay.from, today) + 1;
-    if (days > 0 && days % STAY_STEP === 0) {
-      return {
-        kind: "milestone",
-        icon: "signpost",
-        line: `${now.name}にいて、今日で${days}日`,
-        title: `${now.name} ${days}日目`,
-        body: `${stay.from.replace(/-/g, "/")} に入って、まだいる。${stay.cities.join("・")}。`,
-        href: `/map/${now.slug}`,
-        go: "地図で見る",
-      };
-    }
+  /* いまいる国に、今日で何日いるか。100日ごとにだけ言う。
+
+     **「終わりの日が空いている滞在」を、自分で探さない。** ここは
+     `c.stays.some((s) => !s.to)` で開いた滞在を引いていた。`to` は旅に出た日に
+     あやとが手で入れる欄で、**その17日間あやとは画面を直せない。** だから北欧へ
+     出発しても止まらず、「ジョージアにいて、今日で◯日」「まだいる。」と言う。
+     閉じ方は `lib/stay.ts` の `stayNow()` が1つだけ持っている
+     （次の章が始まったら、そこで終わり）。**同じ判定を2か所に書かない**
+     （`docs/island-misses.md` #24）。旅に出ていれば `null` が返るので、
+     節目そのものが出ない。旅の日数は `/now` の札が言う。 */
+  const here = stayNow(now);
+  const c = here && COUNTRIES.find((x) => x.slug === here.slug);
+  const stay = c?.stays.find((s) => !s.to);
+  if (here && c && stay && here.days > 0 && here.days % STAY_STEP === 0) {
+    return {
+      kind: "milestone",
+      icon: "signpost",
+      line: `${c.name}にいて、今日で${here.days}日`,
+      title: `${c.name} ${here.days}日目`,
+      body: `${stay.from.replace(/-/g, "/")} に入って、まだいる。${stay.cities.join("・")}。`,
+      href: `/map/${c.slug}`,
+      go: "地図で見る",
+    };
   }
   return null;
 }
@@ -203,7 +213,17 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
       icon: "tower-studio",
       line: "いま、配信の時間",
       title: "いま、配信の時間",
-      body: `${NOW_FALLBACK.place}から繋いでます。`,
+      /* **焼いた「いまどこ」を、そのまま言わない。**
+         `NOW_FALLBACK.place` はあやとが手で打つ欄の焼き込みで、本番の値は
+         出発の1週間前（2026-09-04「ジョージア・トビリシ」）。旅の17日間その人は
+         走っている車の中にいて打ち直せないので、ここは配信のある3時間のあいだ
+         毎晩「ジョージア・トビリシから繋いでます。」と言い続けていた（実測）。
+         旅に出ていて欄が古いままなら、旅そのものを言う（`lib/stay.ts`）。
+
+         **ここは便りを読みに行かない。** この板は島に降りた瞬間に出すもので、
+         往復を1つも増やさない決まり（このファイルの冒頭）。日付だけで決まる
+         ぶんはそれで正しく、あやとが旅先で打ち直した細かい地名までは出ない。 */
+      body: `${placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, now)}から繋いでます。`,
       href: YOUTUBE,
       out: true,
       go: "見にいく",
@@ -225,7 +245,7 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
   }
 
   // 3. 節目。年に数回しか当たらない
-  const mile = milestone(j.date);
+  const mile = milestone(j.date, now);
   if (mile) out.push(mile);
 
   // 4. きのう、新しい料理が増えた

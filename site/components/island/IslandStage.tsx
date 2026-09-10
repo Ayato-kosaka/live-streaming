@@ -20,6 +20,8 @@ import { here } from "@/lib/here";
 import { REMOTE_VIEW_EVENT, remoteView } from "@/lib/remote";
 import { daysUntil, nextPlan } from "@/content/plans";
 import { NOW_FALLBACK } from "@/content/site";
+/* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
+import { placeWord } from "@/lib/stay";
 import { MAX_LEAD, around, hits, lead } from "@/components/isle/plates";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
 import {
@@ -250,7 +252,18 @@ const HINT_SPAN = 5200;
    同じことを二度言わないよう、言い方を変えてある。
    地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
    ------------------------------------------------------------------------ */
-const GREETING = `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${NOW_FALLBACK.place}だよ。`;
+/* **場所は、呼ぶときに決める。** ここは `NOW_FALLBACK.place` を直に埋めた定数
+   だったので、旅に出ても「いまはジョージア・トビリシだよ。」と言い続けていた
+   （あの欄は出発の1週間前で止まっていて、旅の17日間は打ち直せない）。
+   定数のまま `placeWord` を通すこともできない——**焼くときとブラウザで答えが
+   変わるので、水あわせが崩れる。** カモメが喋るのは画面が出たあとなので、
+   そのときの日付で作る。 */
+const greeting = (now: Date = new Date()) =>
+  `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${placeWord(
+    NOW_FALLBACK.place,
+    NOW_FALLBACK.updatedAt,
+    now,
+  )}だよ。`;
 /** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
 const GUIDE = -1;
 const clampToIsland = (x: number, y: number): [number, number] => {
@@ -472,6 +485,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
    * しかも見た人が取る行動（配信を見にいく）が、このサイトの目的そのもの。
    */
   const [onAir, setOnAir] = useState(false);
+  /* 配信中の札に出す「いまどこ」。**焼かない。** 焼くと配った日の場所で固まり、
+     旅に出た晩に前の国から繋いでいることになる（`content/voice.ts` の LIVE）。 */
+  const [nowPlace, setNowPlace] = useState(() =>
+    placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt),
+  );
   useEffect(() => {
     /* 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める。
        **1分ごとに数え直す。** 21:59 に開いたまま22時をまたぐ人がいる。
@@ -482,6 +500,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const n = todayNews(now);
       setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
       setOnAir(readNight(now).onAir);
+      setNowPlace(placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, now));
     };
     read();
     const id = setInterval(read, 60_000);
@@ -566,7 +585,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       remember();
       if (greet) {
         spokeFirst.current = true;
-        setTalking({ i: GUIDE, text: GREETING });
+        setTalking({ i: GUIDE, text: greeting() });
       }
       return;
     }
@@ -576,7 +595,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       remember();
       if (greet) {
         spokeFirst.current = true;
-        setTalking({ i: GUIDE, text: GREETING });
+        setTalking({ i: GUIDE, text: greeting() });
       }
     }, 3000);
     return () => clearTimeout(t);
@@ -1761,7 +1780,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           const live = onAir && sp.id === "streams";
           const href = live ? YOUTUBE : sp.href;
           const label = live ? LIVE.label : sp.label;
-          const blurb = live ? LIVE.blurb : sp.blurb;
+          const blurb = live ? LIVE.blurb(nowPlace) : sp.blurb;
           const go = live ? LIVE.go : UI.enter;
           /* 建物そのものを押したとき。
              指とマウスは、まず**歩く**。島を歩くのがこの画面のいちばんの手ざわりで、
