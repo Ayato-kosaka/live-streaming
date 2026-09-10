@@ -7,7 +7,7 @@ import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
-import { stayDays, travelNow, type TravelNow } from "@/lib/stay";
+import { stayDays, travelNow, tripAsPlace, type TravelNow } from "@/lib/stay";
 
 /**
  * 「いまどこ」の中身のうち、「いる国」に関わるところ。
@@ -36,19 +36,28 @@ import { stayDays, travelNow, type TravelNow } from "@/lib/stay";
 /** 場所のテーマが国の slug かどうか。文章としては出さない符丁なので、絵と引きにだけ使う。 */
 const SLUG = /^[a-z0-9-]+$/;
 
-function useCurrentCountry(): Country | undefined {
+/**
+ * いまいる国と、その便りをいつ書いたか。
+ *
+ * 日付まで持つのは、**上の帯（`components/live/NowLive.tsx`）と同じ答えを
+ * 出すため。** 上が「いまどこ」を旅で言っている日に、下でもう一度旅のことを
+ * 書くと、1つの面が同じことを2回言う。
+ */
+function useCurrent(): { country: Country | undefined; updatedAt: string | undefined } {
   const [slug, setSlug] = useState<string>(NOW_FALLBACK.theme);
+  const [updatedAt, setUpdatedAt] = useState<string | undefined>(NOW_FALLBACK.updatedAt);
   useEffect(() => {
     getState()
       .then((s) => {
         const t = s.current?.theme;
         if (typeof t === "string" && SLUG.test(t) && countryBySlug(t)) setSlug(t);
+        if (typeof s.current?.updatedAt === "string") setUpdatedAt(s.current.updatedAt);
       })
       .catch(() => {
         /* 読めないときは焼き込みの国のまま。国は月ごとにしか変わらないので害が小さい */
       });
   }, []);
-  return countryBySlug(slug);
+  return { country: countryBySlug(slug), updatedAt };
 }
 
 /**
@@ -70,12 +79,19 @@ function StayDay({ from }: { from: string }) {
 
 /** いまいる国のこと。旅に出ているあいだは、国ではなく旅のこと。 */
 export function NowCountry() {
-  const c = useCurrentCountry();
+  const { country: c, updatedAt } = useCurrent();
   /* 旅に出たかどうかは日付で変わる。静的書き出しに焼くと、出発の日をまたいでも
      ビルドした日の答えのままになるので、画面が出てから引き直す。 */
   const [trip, setTrip] = useState<TravelNow | null>(null);
-  useEffect(() => setTrip(travelNow(new Date())), []);
+  /** 上の帯が「いまどこ」を旅で言っている日。ここでは繰り返さない */
+  const [above, setAbove] = useState(false);
+  useEffect(() => {
+    setTrip(travelNow(new Date()));
+    setAbove(Boolean(tripAsPlace(updatedAt, new Date())));
+  }, [updatedAt]);
 
+  /* 上が旅を言っているなら、ここは黙る。**1つの面で同じことを2回言わない。** */
+  if (above) return null;
   if (trip) return <NowTrip trip={trip} />;
   if (!c) return null;
   // いまの滞在はいちばん新しいもの。同じ国に2回入っていることがある
@@ -167,7 +183,7 @@ function NowTrip({ trip }: { trip: TravelNow }) {
  * 17カ国ぜんぶ並べるのは `/map` の仕事なので、ここは4つで止める。
  */
 export function NowTrail() {
-  const c = useCurrentCountry();
+  const { country: c } = useCurrent();
   /* 旅に出たら、直前までいた国も「その前は」に並ぶ。上が旅の話になっているので、
      ここで外すと**いちばん長くいた国だけが、どこにも出てこない**。 */
   const [trip, setTrip] = useState<TravelNow | null>(null);

@@ -150,3 +150,16 @@
     transition: none;
   }
 }
+
+/* ───────── 旅に出ているあいだの「いまどこ」 ─────────
+   人が書いた場所（`current.place`）が旅より前のままの日は、旗ではなく旅を出す
+   （`lib/stay.ts` の `tripAsPlace`）。旗の 210〜280px をそのまま当てると、
+   スプライトは 304px しか無いのでにじむ。**絵の持っている大きさで止める。** */
+.now-hero .now-trip-art {
+  flex: none;
+  width: clamp(148px, 42vw, 188px);
+  height: auto;
+  /* 押せない絵なので、厚み（ぼかし0で真下の影）ではなく地面に落ちる影
+     （`docs/island-design.md` 3章。旗と同じ扱い） */
+  filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
+}

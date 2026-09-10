@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHead } from "@/components/ui/PageShell";
 import { Stat } from "@/components/ui/Bits";
 import Flag from "@/components/ui/Flag";
-import { stayNow, travelNow, type TravelNow } from "@/lib/stay";
+import { stayClosedOn, stayNow, travelNow, type TravelNow } from "@/lib/stay";
 
 /**
  * 「歩いた国」のうち、**いまどこにいるか**を言っているところ。
@@ -90,4 +90,40 @@ export function HereTag({ slug }: { slug: string }) {
   const [on, setOn] = useState(true);
   useEffect(() => setOn(stayNow(new Date())?.slug === slug), [slug]);
   return on ? <span className="atrip-here">いまここ</span> : null;
+}
+
+/**
+ * パスポートの「出国」。**まだ書き入れられていないだけの空欄を、「まだ、いる」にしない。**
+ *
+ * 出国の日は旅から帰ったあやとが手で入れる欄だが、旅の17日間は入らない。
+ * そのあいだ、もう出た国のページが「出国：まだ、いる」と言い続ける。
+ * 次の島へ渡った日が、そのまま出国の日（`lib/stay.ts` の `stayClosedOn`）。
+ */
+export function StayOut({ slug }: { slug: string }) {
+  const [out, setOut] = useState<string | null>(null);
+  useEffect(() => setOut(stayClosedOn(slug, new Date())), [slug]);
+  return <>{out ? out.replace(/-/g, "/") : "まだ、いる"}</>;
+}
+
+/**
+ * その国にいた日数。**出国したら、そこで止まる。**
+ *
+ * 数えかたは `components/atlas/Days.tsx` と同じ（入った日は0日目）。
+ * この面のほかの日数——終わった滞在ぶん（`closedDays`）——がその数えかたなので、
+ * 足し合わせるこちらだけ1日目から数えると、合計が1日ずれる。
+ *
+ * @param plus 終わった滞在ぶんの日数
+ */
+export function StayLen({ slug, from, plus }: { slug: string; from: string; plus: number }) {
+  const [n, setN] = useState<number | null>(null);
+  useEffect(() => {
+    const out = stayClosedOn(slug, new Date());
+    const end = out ? Date.parse(`${out}T00:00:00Z`) : Date.now();
+    setN(Math.floor((end - new Date(from).getTime()) / 86400000) + plus);
+  }, [slug, from, plus]);
+  /* 画面が出るまでのあいだ出す数。`Days.tsx` が持っている基準日と**同じ日**にする。
+     ずらすと、直す前と後で焼いた HTML の字が変わる */
+  const baked =
+    Math.floor((new Date("2026-09-05").getTime() - new Date(from).getTime()) / 86400000) + plus;
+  return <>{(n ?? baked).toLocaleString()}</>;
 }
