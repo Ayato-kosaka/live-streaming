@@ -64,8 +64,15 @@ export type WantItem = {
 const CAT: Record<string, string> = { see: "見る", eat: "食べる", do: "やる", buy: "買う" };
 
 export default function WantList({ items }: { items: WantItem[] }) {
+  /* **地図に番号を打ったものは、畳みの向こうへ入れない。**
+     地図は点を15個見せているのに一覧が5行だと、残り10個は
+     「押しても名前が分からない番号」になる。**面が約束したぶんは、面が出す。**
+     場所を持たないもの（郷土料理・ミトン・気球）だけを畳みの向こうへ回す。
+     番号も方角も無いものは 5件までにして、それより手前で切らない。 */
+  const pinned = items.filter((s) => s.n != null || s.far).length;
+  const first = Math.max(5, pinned);
   return (
-    <Longer items={items} first={5} step={5} unit="件" className="ndsps">
+    <Longer items={items} first={first} step={5} unit="件" className="ndsps">
       {(s: WantItem) => (
         <li key={s.key} className={`ndsp${s.want ? " is-want" : ""}`}>
           {(s.img || s.n != null || s.far) && (
