@@ -92,6 +92,42 @@
 }
 .ifoot-door img { width: 18px; height: 18px; flex: none; object-fit: contain; object-position: center bottom; }
 .ifoot-door:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
+/* いま歩いている旅。**建物ではないので、10軒の木の板とは別の面にする。**
+   横いっぱいに敷いて先頭に置くのは、旅のあいだ島でいちばん見せたいものだから。
+   地は「ぜんぶ」と同じ紙。木の板を1枚だけ別の色にすると11軒目に見えるし、
+   紙のほうが赤い「いま」の印が効く（島の「！」の丸と同じ役目）。 */
+.ifoot-doors > li.is-trip { grid-column: 1 / -1; }
+.ifoot-door.is-trip {
+  gap: var(--sp-2);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1.5px 0 rgba(255, 255, 255, 0.75);
+  font-size: var(--fs-note);
+}
+.ifoot-door.is-trip img { width: 24px; height: 24px; }
+/* 「いま」の印。色は年表の「いまここ」と同じ（`app/css/atlas.css`）。
+   同じことを言う印を、面ごとに違う色にしない */
+.ifoot-door.is-trip em {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+}
+/* 旅の名前は、板の名前より一段下げる。「この旅のこと」が押しどころの名前で、
+   こちらはどの旅かを言い添えているだけ */
+.ifoot-door.is-trip i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 「ぜんぶ」だけは行き先ではなく道しるべなので、10軒とは別の面にする。
    同じ木の札にすると11軒目に見える。 */
 .ifoot-doors > li.is-all { grid-column: 1 / -1; }
@@ -101,7 +137,9 @@
   font-size: var(--fs-note);
 }
 @media (max-width: 379.98px) {
-  .ifoot-door img { display: none; }
+  /* 板が10枚並ぶところは字だけにする。旅の板は横いっぱいで1枚しかないので、
+     絵を落とすと逆に「木の板の仲間」に見えてしまう。残す */
+  .ifoot-door:not(.is-trip) img { display: none; }
 }
 
 /* --- 3. ぜんぶの面（/all） ------------------------------------------- */

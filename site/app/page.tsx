@@ -7,9 +7,7 @@ import { coverSpec } from "@/components/isle/cover";
 import { NOW_CHAPTER } from "@/content/chapters";
 import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
-import { StreamCard } from "@/components/ui/Bits";
 import { IslandFooter } from "@/components/ui/PageShell";
-import { STREAM_TYPES } from "@/content/streamTypes";
 import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { HERO, HOME } from "@/content/voice";
 import NextUp from "@/components/live/NextUp";
@@ -17,6 +15,7 @@ import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
+import Latest from "@/components/home/Latest";
 
 /**
  * トップページ。
@@ -156,11 +155,12 @@ export default function Home() {
         </Chapter>
 
         <Chapter id="watch" kicker="見にいく" title={HOME.tonight} note={HOME.tonightNote}>
-          <div className="scards">
-            {STREAM_TYPES[0].samples.slice(0, 2).map((v) => (
-              <StreamCard key={v.videoId} {...v} />
-            ))}
-          </div>
+          {/* **直近の2本。手で選んだ見本ではない。**
+              ここは「クッキング配信の代表」として選んだ見本の先頭2本を出していて、
+              旅に出る前日の本番で 3週間前と2ヶ月前の回が「今夜も22時から」の下に
+              並んでいた。直近は `/island-api/state` に毎晩入っていて、この面が
+              もう読んでいる（`components/home/Latest.tsx`）。 */}
+          <Latest />
           <div className="houts">
             {LINKS.map((l) => (
               <a key={l.id} className="hout" href={l.href} target="_blank" rel="noopener noreferrer">

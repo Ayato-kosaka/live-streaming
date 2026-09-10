@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PageHead } from "@/components/ui/PageShell";
 import { Stat } from "@/components/ui/Bits";
 import Flag from "@/components/ui/Flag";
 import { stayClosedOn, stayNow, travelNow, type TravelNow } from "@/lib/stay";
+import { tripPageOf } from "@/content/trip";
 
 /**
  * 「歩いた国」のうち、**いまどこにいるか**を言っているところ。
@@ -29,11 +31,35 @@ const LEAD =
  */
 export function MapHead({ region }: { region: string }) {
   const [trip, setTrip] = useState<TravelNow | null>(null);
-  useEffect(() => setTrip(travelNow(new Date())), []);
-  const tail = trip
-    ? `${region}まで来ました。いまは${trip.name}のとちゅうです。`
-    : `いまは${region}にいます。`;
-  return <PageHead icon="signpost-flags" title="歩いた国" lead={`${LEAD}${tail}`} />;
+  /* **旅の名前から、その旅の面へ送る。** ここは「いまは北欧周遊のとちゅうです」と
+     書きながら、そこへ行く道を1本も持っていなかった。名前を出しておいて
+     行けないのは、書いていないより悪い（`docs/island-misses.md` #12）。
+     旅の面を持たない章もあるので、無ければ字のまま出す。
+     **この字が出ているあいだは、旅が終わっていても押せる。** 名前と行き先を
+     別の条件で出しわけると、名前だけ残って行けない日がまた来る。 */
+  const [dest, setDest] = useState<string | null>(null);
+  useEffect(() => {
+    const now = new Date();
+    setTrip(travelNow(now));
+    setDest(tripPageOf(travelNow(now)?.slug));
+  }, []);
+  const lead = trip ? (
+    <>
+      {LEAD}
+      {region}まで来ました。いまは
+      {dest ? (
+        <Link className="phead-go" href={dest}>
+          {trip.name}
+        </Link>
+      ) : (
+        trip.name
+      )}
+      のとちゅうです。
+    </>
+  ) : (
+    `${LEAD}いまは${region}にいます。`
+  );
+  return <PageHead icon="signpost-flags" title="歩いた国" lead={lead} />;
 }
 
 /**
