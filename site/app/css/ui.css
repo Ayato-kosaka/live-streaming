@@ -763,3 +763,87 @@
     max-width: 36em;
   }
 }
+
+
+/* =========================================================
+   札で切り替える（`.mp-tabs`）
+
+   **増えるものが2つ以上ある面は、畳むだけでは足りない**
+   （`docs/island-standards.md` 7章）。畳んだものが縦に並ぶので、
+   札を出して同時に1つだけ出す。じぶんのこと（`/me`）の3つと、
+   机（`/me/desk`）の8つと、掲示板（`/board`）の2つが同じ札。
+   ========================================================= */
+/* --- 旅の道具 ---------------------------------------------------------
+   4つを縦に積まない。札を出して、押した1つだけを開く。
+   積むと下の3つが畳みの向こうへ行く（390×844 で見えるのは上の1つだけ）。
+
+   **375px では2×2に折る。** 4つを1列に並べると1枚 76px しかなく、
+   「その日のこと」「その日の配信」が2行に割れて札の高さが揃わない。
+   折っても4枚とも見えているので、1タップで出るのは変わらない。 */
+.mp-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+@media (min-width: 560px) {
+  .mp-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* じぶんのもの（付箋・企画・カード）は3つ。折らずに1列で並ぶ。 */
+.mp-tabs.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* 机の道具は8つ。**390px でも4列に並べる。** 2列にすると4行になって、
+   札の並びだけで 250px 使う。字は2〜4文字なので、1枚 88px で足りる。 */
+.mp-tabs.is-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* 札の字。3〜4文字で折らせない */
+.mp-tab-l { line-height: 1.2; }
+/* じぶんのものの札に出る数。**開かなくても何枚あるか分かる。** */
+.mp-tab-n {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+}
+.mp-tab:not(.is-on) .mp-tab-n { color: var(--ink-2); }
+
+.mp-tab {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--sp-1) var(--sp-1);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  box-shadow: var(--pop);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.mp-tab:active { transform: translateY(6px); box-shadow: none; }
+/* 選んでいるものは、光らせずに朱の細枠（`island-world.md` 3.2 の色の表）。
+   沈めておくと「いまこれが開いている」が形で分かる。 */
+.mp-tab.is-on {
+  border-color: var(--pick);
+  transform: translateY(3px);
+  box-shadow: var(--pop-push);
+}
+
+/* 掲示板は2枚。**広い画面でも2枚のまま**（4列にすると札が横に痩せる） */
+.mp-tabs.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* 札の下に付ける添え書き。**何を書く場所かを、選ぶところで言う。**
+   これが無かったころ、提案8件のうち7件が「決まっている旅への注文」だった（#159）。 */
+.mp-tab-s {
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.mp-tab.is-on .mp-tab-s { color: var(--ink); }
+
+/* 出ていないほうの面は、背も持たない */
+.bd-pane[hidden] { display: none; }

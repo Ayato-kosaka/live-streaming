@@ -82,6 +82,12 @@ type Props = {
   bare?: boolean;
   /** 見出し。省略すると「みんなの付箋」 */
   title?: string;
+  /**
+   * 読めた枚数を、外へ返す。
+   * 掲示板の札（`Board.tsx`）が「開く前から枚数を出す」ために使う。
+   * 読めていないあいだは呼ばない（0枚と読めなかったを同じ顔にしない）。
+   */
+  onCount?: (n: number) => void;
 };
 
 /** 運営者の付箋を先に、そのあとは新しい順。表示のたびに並びが動かないようにする。 */
@@ -92,7 +98,7 @@ function ordered(list: Sticky[]): Sticky[] {
   });
 }
 
-export default function Notes({ themes, theme, bare = false, title }: Props) {
+export default function Notes({ themes, theme, bare = false, title, onCount }: Props) {
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -177,6 +183,12 @@ export default function Notes({ themes, theme, bare = false, title }: Props) {
       gone = true;
     };
   }, [bin, owner, token, fixed]);
+
+  /* 読めた枚数を親へ返す。**しまったものを見ているあいだは返さない**
+     （札に出る数が、貼ってある枚数ではなくなる）。 */
+  useEffect(() => {
+    if (notes && !bin) onCount?.(notes.length);
+  }, [notes, bin, onCount]);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();

@@ -92,12 +92,18 @@ const MINE = {
   more: false,
   next: null,
 };
+/* 掲示板（`/board`）に並ぶ「島じゅうの付箋」。**ここも `NOTES=` で増減する。**
+   前は 20枚に固定してあって、`NOTES=200` を渡してもじぶんのこと（`/me`）の
+   ほうしか増えなかった。掲示板は付箋と企画の2つが溜まる面なので、
+   溜まったときに背が伸びないかは、こちらで測らないと分からない。 */
+const ALL_N = Math.max(0, NOTE_N - 3);
 const ALL = {
-  notes: [
+  notes: (NOTE_N === 0 ? [] : [
     { id: "b1", theme: "nordic", text: "友達へのプレゼントを決める", by: "まこも", hearts: 2, byOwner: false, createdAt: ago(1) },
     { id: "b2", theme: "island", text: "LINEのグループを作ってほしい", by: "のり", hearts: 1, byOwner: false, createdAt: ago(2) },
     { id: "b3", theme: "kitchen", text: "現地の粉でおやき", by: "", hearts: 0, byOwner: false, createdAt: ago(3) },
-    ...NOTE_TEXTS.map((text, i) => ({
+  ].slice(0, NOTE_N)).concat(
+    Array.from({ length: ALL_N }, (_, i) => [NOTE_TEXTS[i % NOTE_TEXTS.length] + (i >= NOTE_TEXTS.length ? `（${Math.floor(i / NOTE_TEXTS.length) + 1}回目）` : ""), i]).map(([text, i]) => ({
       id: `c${i + 1}`,
       theme: THEMES_SEED[i % THEMES_SEED.length],
       text,
@@ -107,11 +113,7 @@ const ALL = {
       ...(i % 4 === 0 ? { reply: "これ、やってみます。", repliedAt: ago(i + 1) } : {}),
       createdAt: ago(i + 3),
     })),
-    /* 本番の一覧（`/stickies`）には**あやと自身が貼った付箋も混ざる。**
-       混ぜておかないと、「返す一覧から自分のぶんを外す」が効いているか
-       測れない。返事の付いていない4枚（a2・a3・a5・a6）を入れる。 */
-    ...MINE.notes.filter((n) => ["a2", "a3", "a5", "a6"].includes(n.id)),
-  ],
+  ),
   more: false,
   next: null,
 };
@@ -132,8 +134,10 @@ const MY_PLAN_TITLES = [
   "夜行列車で国をまたぐところを丸ごと",
   "帰りの空港で、この旅をふりかえる",
 ];
-const PLANS = {
-  plans: [
+/* 出された企画の件数。**0 / 3 / 40 / 200 を差し替えて撮る。**
+   付箋と同じで、溜まったときに背が伸びないかを見るための口。 */
+const PLAN_N = Number(process.env.NPLANS ?? MY_PLAN_TITLES.length + 2);
+const PLANS_ALL = [
     ...MY_PLAN_TITLES.map((title, i) =>
       plan({
         id: `p${i + 1}`,
@@ -148,7 +152,14 @@ const PLANS = {
     ),
     plan({ id: "q1", title: "みんなで献立を決める日", by: "まこも", hearts: 9, createdAt: ago(9) }),
     plan({ id: "q2", title: "現地の市場で、名前の分からない野菜を買う", by: "のり", hearts: 3, createdAt: ago(11) }),
-  ],
+];
+const PLANS = {
+  plans: Array.from({ length: PLAN_N }, (_, i) => {
+    const b = PLANS_ALL[i % PLANS_ALL.length];
+    return i < PLANS_ALL.length ?
+      b :
+      { ...b, id: `x${i}`, title: `${b.title}（${Math.floor(i / PLANS_ALL.length) + 1}回目）`, createdAt: ago(i + 3) };
+  }),
   more: false,
   next: null,
 };

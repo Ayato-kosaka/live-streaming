@@ -302,15 +302,6 @@
 }
 .atl-pin:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: -4px; border-radius: 14px; }
 
-/* 模型を寄せてあることのことわり。**丸のほうが本当の比** */
-.atl-scale {
-  margin: -6px 0 12px;
-  font-size: 12px;
-  line-height: 1.6;
-  text-align: center;
-  color: var(--ink-2);
-}
-
 /* ---- 選んでいる島のこと ------------------------------------------------
    **押せない。だからまっ平らにする**（厚みも落ち影も付けない）。 */
 .atl-card {

@@ -252,10 +252,6 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
           />
         ))}
       </nav>
-      {/* **模型は寄せてある**ので、大きさの比べ合いは丸のほうだと言っておく。
-          言わないと「北欧とコーカサスが同じ大きさの島」に読める */}
-      <p className="atl-scale">丸の大きさが、島の大きさ。模型はどれも枠いっぱいに寄せてあります。</p>
-
       {/* 選んでいる島のこと。**押せないので、まっ平らにする** */}
       <div className="atl-card" data-ch={cur.slug}>
         <p className="atl-when">

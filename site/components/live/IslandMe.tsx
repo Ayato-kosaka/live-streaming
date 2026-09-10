@@ -72,7 +72,8 @@ export default function IslandMe({ me }: { me?: Me | null }) {
 
   return (
     <div className="me">
-      <p className="me-note">名前を出すと、島のキャラクターの札に、その名前が出ます。</p>
+      {/* 「名前を出すと札に出ます」は下の見本（`.me-prev`）が見せている。
+          仕組みの言い足しは置かない（`docs/island-standards.md` 6章）。 */}
       {/* 「いま島にいる人」も、この同意にそろえてある（`docs/island-here.md`）。
           いま見ているかどうかは、名前を出すより踏み込んだことなので、
           出さないと決めた人のぶんは、そもそも置きにいかない。

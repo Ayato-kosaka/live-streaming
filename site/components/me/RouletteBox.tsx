@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   getRoulette,
   putDoneruKey,
@@ -21,7 +22,6 @@ import { MAX_ITEMS, RESULT_SAY, RL_UI, WAIT_SECONDS } from "@/content/roulette";
 import { THEMES, THEME_NAME, type WheelTheme } from "@/components/roulette/wheel";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
-import SignIn from "@/components/live/SignIn";
 
 /** 手元に残しておくコメントの数。これより古いものは落とす。 */
 const KEEP = 200;
@@ -351,22 +351,18 @@ export default function RouletteBox() {
       </section>
     );
   }
-  if (!user) {
+  /* ここへの入口は、あやとの机（`/me/desk`）の1本だけ（#242）。
+     看板にも `/all` にもパンくずにも出していないので、ここに着くのは
+     あやとか、URL を直に打った人しかいない。**決まりの説明は置かない。**
+     場所の名前と、戻る道だけ出す（`/me/desk` と同じ形）。 */
+  if (!user || denied) {
     return (
       <section className="panel paper">
-        <h2>ここは、あやとのところ</h2>
-        <p className="muted">配信のルーレットを回すところ。入ると出ます。</p>
-        <SignIn />
-      </section>
-    );
-  }
-  if (denied) {
-    return (
-      <section className="panel paper">
-        <h2>ここは、あやとのところ</h2>
-        <p className="muted">
-          ここはあやとだけ。島のほかの面は、そのまま見られます。
-        </p>
+        <h2>ここは、あやとの机</h2>
+        <Link className="blank-go" href="/">
+          島へもどる
+          <Icon name="right" size={14} />
+        </Link>
       </section>
     );
   }
