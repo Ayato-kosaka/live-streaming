@@ -38,3 +38,19 @@ export const ISLE_CHAPTERS: Chapter[] = CHAPTERS;
 export const ISLE_STREAM_CHAPTERS: Chapter[] = ISLE_CHAPTERS.filter(
   (c) => CHAPTER_STREAMS[c.slug]?.length,
 );
+
+/**
+ * `/all` が「章の島の行」を見分けるための表（行き先 → 章の slug）。
+ *
+ * **いまいる島は `/island/<章>` ではない。トップそのもの**（`chapterHref`）。
+ * それを知っているのは日付なので、焼いた一覧（`content/directory.ts`）では
+ * 決められない。一覧のほうは全部の章を並べておいて、
+ * 画面が出てから行き先を引き直す（`components/chain/AllIsleRow.tsx`）。
+ *
+ * これが無かったころ、旅に出ると `/all` だけが `/island/nordic` を
+ * 「これから建っていく島」として案内していた。**同じ島が2か所にあり、
+ * しかも片方は紙1行の薄い面**という状態が、旅のあいだ17日つづく。
+ */
+export const ISLE_ROW: Record<string, string> = Object.fromEntries(
+  ISLE_CHAPTERS.map((c) => [`/island/${c.slug}`, c.slug]),
+);
