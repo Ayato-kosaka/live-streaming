@@ -3,20 +3,52 @@
 **数え方は `.claude/skills/monthly-review/SKILL.md` の3章と同じにする。**
 月末配信の表彰と島の日数が食い違っていると、同じ人が別々の数字で2回出ることになる。
 
-数え方は4つの決まりでできている。
+**いまは食い違っている。** 下の3で「読めなかった日は数えない」に変えたが、
+SKILL.md 3章にはまだ「コメント消失日は当時すでに来ていた人を出席扱いにする」と
+書いてある。**月末の表彰も同じ直しが要る**（分母＝チャットの残っている日数、
+出席＝実際にコメントのあった日数）。あちらは皆勤賞の分母にもなるので、
+直すと「皆勤」の顔ぶれが変わる。
+
+数え方は3つの決まりでできている。
 
 1. **日ごとに数える。** 同じ日に2本配信していても1日。その日どれかに1コメントでも
    あれば出席。本数で数えると、2本ある日に両方来た人だけが伸びる。
 2. **配信日は UTC で切る。** 日本時間の朝9時で日が変わるので、22時から始まって
    0時をまたぐ配信が1日の中に収まる。日本時間で切ると、日付をまたいだ配信が
    2日に割れて、出席が実際より多く出る。
-3. **コメントが取れなかった日は、当時すでに来ていた人を出席扱いにする。**
-   YouTube 側の不具合や取り込みの失敗で、配信はあったのにコメントが1件も
-   残っていない日がある。そこを「来なかった日」として数えると、
-   **その日に実際いた人が、いなかったことにされる。**
-   初コメントがその日以前の人を、全員その日は出席として数える。
-4. **分母は、期間内に配信があった日数。** コメントの取れなかった日も配信は
-   あったので、分母には入れる。
+3. **チャットの取り込めなかった日は、出席にも分母にも入れない。**
+   配信はあったのにコメントが1件も残っていない日がある（取り込みが
+   WAITING や FAILED のまま止まっている日）。そこは**誰が居たかが読めていない**
+   のであって、誰が居たか分かっている日ではない。
+
+## なぜ「読めなかった日」を出席にしないのか
+
+前はここを「初コメントがその日以前の人を、全員その日は出席として数える」に
+していた。**読めていないものを「居た」と言い切っている**ので、
+`docs/island-standards.md` 10（読めていないことを、値0と同じ絵にしない）の
+裏返しになる。
+
+**そして実際に嘘になっていた。** 2026-09-10 に本番で数えた値:
+
+| | 人数 |
+| --- | --- |
+| 直近90日にコメントした人 | 318人 |
+| 本当に5日以上いた人 | 59人 |
+| 読めなかった日を全員に足したときの人数 | 174人 |
+| **1日しか来ていないのに常連に数えられた人** | **72人** |
+
+読めなかった日が6日あるので、1日＋6日＝7日 で `MIN_DAYS`(5) を超える。
+**1回来ただけの人が「ここ3ヶ月の常連」になる。** 3倍に水増しされた 174 を
+`/friends` に出すと、画面が嘘をつく。
+
+「読めなかった日に来ていた人を、来なかったことにしてしまう」という心配は
+その通りだが、埋め合わせが「1回の人を常連にする」のは行き過ぎ。
+**読めていない日は、出席にも分母にも数えない**（黙って落とすのではなく、
+`lost_days` としてログに出す）。
+
+元を断つほうは `python/bq/queries.py` の再取得クエリにある。
+7日を過ぎた WAITING が SKIPPED にも FAILED にも落ちないので、取り込めない
+配信が WAITING のまま永久に残り、そのぶん「読めない日」が増え続ける。
 
 ## キャラクターと人を結ぶ表
 
@@ -86,38 +118,43 @@ msg AS (
     AND DATE(TIMESTAMP_SUB(published_at, INTERVAL 9 HOUR)) BETWEEN win.d0 AND win.d1
 ),
 vid AS (
-  SELECT DISTINCT DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) AS d
+  SELECT DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) AS d, status
   FROM `{PROJECT}.{DATASET}.videos`, win
   WHERE actual_start_time IS NOT NULL
     AND DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 9 HOUR)) BETWEEN win.d0 AND win.d1
 ),
 have AS (SELECT DISTINCT d FROM msg),
--- 配信はあったのにコメントが1件も残っていない日
-lost AS (SELECT d FROM vid WHERE d NOT IN (SELECT d FROM have)),
-alldays AS (SELECT d FROM vid UNION DISTINCT SELECT d FROM have),
+-- **読めた日。** チャットが残っている日と、取り込みは通ったのに
+-- コメントが1件も無かった日（SUCCEEDED）。後者は本物の0なので分母に入れる。
+-- 「読めていない」と「0だった」を同じ扱いにしないのは、こちら向きも同じ。
+seen AS (
+  SELECT d FROM have
+  UNION DISTINCT
+  SELECT DISTINCT d FROM vid WHERE status = 'SUCCEEDED'
+),
+-- 配信はあったのに、取り込めていない日（WAITING / FAILED / SKIPPED のまま）。
+-- **「誰も来なかった日」ではなく「誰が居たか読めていない日」。**
+-- 出席にも分母にも入れない。
+lost AS (SELECT DISTINCT d FROM vid WHERE d NOT IN (SELECT d FROM seen)),
 per AS (
   SELECT cid,
          ARRAY_AGG(author_name ORDER BY published_at DESC LIMIT 1)[OFFSET(0)] AS name,
          COUNT(DISTINCT d) AS seen_days,
          MIN(d) AS first_day
   FROM msg GROUP BY cid
-),
--- 初コメントがその日以前なら、コメントの残っていない日も出席として数える
-bonus AS (
-  SELECT p.cid, COUNT(l.d) AS lost_credit
-  FROM per p LEFT JOIN lost l ON l.d >= p.first_day
-  GROUP BY p.cid
 )
+-- **分母は seen（読めた日）にそろえる。**
+-- vid（配信のあった日）にすると、読めていない日のぶんだけ全員が減って見える。
+-- seen には「チャットはあるのに videos に開始時刻が無い日」も入るので、
+-- vid で数えると attend が denom を超える人が出る（本番で2日ある）。
 SELECT p.cid,
        p.name,
-       p.seen_days,
-       b.lost_credit,
-       p.seen_days + b.lost_credit AS attend,
-       (SELECT COUNT(*) FROM alldays) AS denom,
+       p.seen_days AS attend,
+       (SELECT COUNT(*) FROM seen) AS denom,
        (SELECT COUNT(*) FROM lost) AS lost_days,
        CAST(p.first_day AS STRING) AS first_day
-FROM per p JOIN bonus b USING (cid)
-ORDER BY attend DESC, p.seen_days DESC
+FROM per p
+ORDER BY attend DESC, p.cid
 """
 
 
@@ -165,8 +202,8 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
  *  名前は出さない方針なので、アイコン/絵文字と「一緒にいた日数」だけを持つ。
  *
  *  **手で直さない。** `python/build_residents.py` が BigQuery から焼く。
- *  数え方は `.claude/skills/monthly-review/SKILL.md` 3章と同じで、
- *  日ごとに数え、コメントの残っていない日は当時すでに来ていた人を出席として扱う。
+ *  日ごとに数える。**チャットが取り込めていない日は、出席にも分母にも入れない**
+ *  （読めていない日を「居た」ことにすると、1回来ただけの人が常連になる）。
  *
  *  **`days` は、島に出ている人を日替わりで選ぶ重みにもなっている**
  *  （`components/island/villagers.ts` の rosterOf）。よく来てくれている人ほど
@@ -191,7 +228,8 @@ export const RESIDENTS: Resident[] = [
 /** 直近{WINDOW_DAYS}日で{MIN_DAYS}日以上コメントしてくれた人の総数(キャラ未登録も含む) */
 export const ACTIVE_FRIENDS = {active};
 
-/** 出席の分母。期間内に配信があった日数（コメントの残っていない{lost_days}日を含む） */
+/** 出席の分母。期間内に**読めた**配信日の数
+ *  （配信はあったのに取り込めていない{lost_days}日は、出席にも分母にも入れていない） */
 export const STREAM_DAYS = {denom};
 ''',
         encoding="utf-8",
@@ -212,7 +250,15 @@ def main() -> int:
     denom = int(rows[0]["denom"])
     lost_days = int(rows[0]["lost_days"])
     active = sum(1 for r in rows if int(r["attend"]) >= MIN_DAYS)
-    logger.info("配信のあった日 %d（うちコメントの残っていない日 %d）", denom, lost_days)
+    logger.info("読めた日 %d（出席の分母）", denom)
+    # **黙って落とさない。** 読めていない日が増えたら、それは取り込みが
+    # 止まっている合図（`python/bq/queries.py` の7日ルール）。数だけは必ず出す。
+    if lost_days:
+        logger.warning(
+            "配信はあったのにチャットの取り込めていない日が %d 日ある。"
+            "この日は出席にも分母にも入れていない",
+            lost_days,
+        )
     logger.info("%d日以上いた人 %d 人", MIN_DAYS, active)
 
     if args.report:
