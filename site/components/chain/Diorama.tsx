@@ -1,7 +1,9 @@
+import { Fragment } from "react";
+
 import { blob } from "@/components/island/geometry";
 import { Sprite } from "@/components/island/Sprite";
 import { plants, type IslandArt } from "./shapes";
-import { CAM, dio, side, type AtlasBuilding } from "./diorama";
+import { CAM, dio, fit, side, type AtlasBuilding } from "./diorama";
 
 /**
  * 島ひとつの模型。
@@ -53,12 +55,16 @@ export default function Diorama({
 }) {
   const d = dio(art, days);
   const { r, D, Dh, y1, y2, D2, yB, yG, sand, grass, box } = d;
-  // 更地と鉄筋のあいだは、まだ草が生えていない
-  const bare = stage === "bare" || stage === "frame";
 
   /* 草木。**模型は島が1つだけ大きく出る**ので、連なりの絵より濃く撒く。
      選ばれていない島は 0 にする（小さく写っていて、1本ずつは見えない） */
-  const green = detail && (!stage || stage === "done")
+  /* 草木。**建設中でも生やす。**
+     `docs/island-atlas.md` 5章は「歩ける島では草木まで消さない。育つのは建物の
+     ほうで、島そのものは最初からそこにある。0% は『まだ杭しか打っていない区画』が
+     島のまん中にある姿」と決めている。土だけで描くのは**連なりの小さな絵**の
+     決まりで、あれはもう無い。ここは主役の1枚なので、歩ける島のほうに合わせる
+     （土だけの島を大きく出すと、島ではなく茶色い塊に見える。あやとの指摘）。 */
+  const green = detail
     ? plants({ ...art, squash: CAM }, r, { density: 1.9, cap: 26, gap: 0.15 }).map((p) => ({
         /* **草木は連なりの絵より小さく描く。** `props` の大きさは島を数cmで
            描く連なり用に決めてあって、そのまま模型に持ってくると木が建物より
@@ -71,7 +77,17 @@ export default function Diorama({
   /* 建物。歩ける島（`components/isle/world.ts`）で決めた並びをそのまま縮めて置く。
      **押した先に建っているものが、押す前に見えている。**
      小さい島は建物どうしが重なるので、大きいものから3つだけにする */
-  const bs = !detail || stage ? [] : r < 52 ? [...buildings].sort((a, b) => b.size - a.size).slice(0, 3) : buildings;
+  /* 建設中の島でも、**船着き場だけは建てる。**
+     どの島の浜にも船着き場があって舟がつないである（`docs/island-atlas.md` 6章）。
+     あれは足代で建てるものではなく、そこへ着くための場所なので、
+     0% の島から消すと「行けない島」になる */
+  const bs = !detail
+    ? []
+    : stage
+      ? buildings.filter((x) => x.icon === "pier")
+      : r < 52
+        ? [...buildings].sort((a, b) => b.size - a.size).slice(0, 3)
+        : buildings;
   const built = bs.map((b) => ({
     n: b.icon,
     x: b.nx * r,
@@ -81,14 +97,16 @@ export default function Diorama({
     flip: false,
   }));
   const things = [...green.map((p) => ({ ...p, y: yG + p.y })), ...built].sort((a, b) => a.y - b.y);
+  /* 建設中のものは、区画の**いちばん手前の角**の奥行きで列に入る */
+  const buildY = stage && detail ? yG + r * 0.42 * CAM : null;
 
   return (
     <svg
       className="dio"
       viewBox={`${box.x.toFixed(1)} ${box.y.toFixed(1)} ${box.w.toFixed(1)} ${box.h.toFixed(1)}`}
-      /* 島どうしの比は、この幅がそのまま持つ。**1単位あたりの px はどの島でも同じ**
-         なので、434日の島は17日の島より本当に大きく出る */
-      style={{ width: `calc(var(--dio-px) * ${box.w.toFixed(1)})` }}
+      /* **枠いっぱいまで寄る。** どの島も同じくらい枠を埋める。
+         島どうしの大きさの比は、下の航路の丸が持っている（`./diorama.ts` の fit） */
+      style={{ width: `calc(var(--dio-u) * ${(box.w * fit(box)).toFixed(2)})` }}
       role="img"
       aria-hidden
     >
@@ -144,12 +162,11 @@ export default function Diorama({
       {/* 島。**同じ輪郭を下にずらして2枚描く**と、はみ出した三日月が側面になる */}
       <path d={blob(0, 0, sand, CAM)} className="dio-wet" />
       <path d={blob(0, yB, sand, CAM)} className="dio-sand" />
-      <path d={blob(0, yB, grass, CAM)} className={bare ? "dio-dirt-side" : "dio-cliff"} />
-      <path d={blob(0, yG, grass, CAM)} className={bare ? "dio-dirt" : "dio-grass"} />
-      {!bare && (
-        // 草地のてっぺんだけ明るく。輪郭線を引かずに面の向きを見せる
-        <path d={blob(0, yG - r * 0.02, grass.map((v) => v * 0.86), CAM)} className="dio-grass-hi" />
-      )}
+      <path d={blob(0, yB, grass, CAM)} className="dio-cliff" />
+      <path d={blob(0, yG, grass, CAM)} className="dio-grass" />
+      {/* てっぺんだけ明るく。輪郭線を引かずに面の向きを見せる。
+          **更地にも入れる。** 入れないと、土の島が1色の板になって平らに見える */}
+      <path d={blob(0, yG - r * 0.02, grass.map((v) => v * 0.86), CAM)} className="dio-grass-hi" />
 
       {art.plateau && !stage && (
         // 山のある土地。高台を1段だけ乗せる
@@ -165,11 +182,20 @@ export default function Diorama({
         </>
       )}
 
-      {stage && detail ? <Build r={r} y={yG} stage={stage} /> : null}
-
+      {/* 建設中のものも、**草木と同じ列に並べて奥から手前へ描く。**
+          先にまとめて描くと、奥にある木が家の手前に出て、家が地面に埋まって見える */}
       {things.map((p, i) => (
-        <Sprite key={i} name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} />
+        <Fragment key={i}>
+          {buildY !== null && (i === 0 || things[i - 1].y < buildY) && p.y >= buildY && (
+            <Build r={r} y={yG} stage={stage!} />
+          )}
+          <Sprite name={p.n} x={p.x} y={p.y} size={p.s} flip={p.flip} />
+        </Fragment>
       ))}
+      {/* いちばん手前まで来ても出番が無ければ、最後に置く（全部が区画より奥） */}
+      {buildY !== null && (things.length === 0 || things[things.length - 1].y < buildY) && (
+        <Build r={r} y={yG} stage={stage!} />
+      )}
     </svg>
   );
 }
@@ -183,49 +209,89 @@ export default function Diorama({
 function Build({ r, y, stage }: { r: number; y: number; stage: BuildStage }) {
   if (stage === "done") return <Sprite name="hut-home" x={0} y={y + r * 0.1} size={r * 0.5} />;
 
-  const w = r * 0.6;
-  const h = r * 0.5 * CAM;
-  const x = -w / 2;
-  const y0 = y - h * 0.4;
+  /* 区画は**ひし形**に置く。真四角に描くと、地面ではなく「立っている枠」に見える
+     （斜め見下ろしの絵で、地面の四角がひし形になるのはそういうもの）。
+     建つものも同じひし形の上に、**面を2つ見せる立体**として組む。
+     カメラに正対した板を1枚置くと、窓か扉に見える（撮って分かった）。 */
+  const w = r * 0.42;
+  const h = w * CAM;
+  const y0 = y - r * 0.02;
+  const f = (v: number) => v.toFixed(1);
+  // ひし形の角。北・東・南・西
+  const N: [number, number] = [0, y0 - h];
+  const E: [number, number] = [w, y0];
+  const S: [number, number] = [0, y0 + h];
+  const W: [number, number] = [-w, y0];
+  const quad = [N, E, S, W];
+  const poly = (pts: [number, number][], dy = 0) =>
+    pts.map(([px, py], k) => `${k ? "L" : "M"}${f(px)},${f(py - dy)}`).join("") + "Z";
+  // 草を剥がして均した土。**ここだけが更地**
+  const plot = <path d={poly(quad)} className="dio-plot" />;
 
   if (stage === "bare") {
-    // 更地。杭を4本打っただけ。ここに何か建つ、ということだけが分かる
+    // 更地。**均した地面と、低い杭と縄だけ。** 背の高いものを立てない
+    const t = r * 0.055;
+    const pins: [number, number][] = [];
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      pins.push([Math.cos(a) * w, y0 + Math.sin(a) * h]);
+    }
     return (
       <g className="dio-build">
-        <path d={`M${x},${y0} L${x + w},${y0} L${x + w},${y0 + h} L${x},${y0 + h} Z`} className="dio-plot" />
-        {[
-          [x, y0],
-          [x + w, y0],
-          [x, y0 + h],
-          [x + w, y0 + h],
-        ].map(([px, py], i) => (
-          <line key={i} x1={px} y1={py} x2={px} y2={py - r * 0.2} className="dio-stake" />
+        {plot}
+        {/* 掘り返した土の山。**これから工事をするところ**、と言う */}
+        <ellipse cx={w * 1.5} cy={y0 + h * 1.5} rx={r * 0.1} ry={r * 0.1 * CAM} className="dio-mound" />
+        <ellipse cx={-w * 1.6} cy={y0 - h * 0.9} rx={r * 0.075} ry={r * 0.075 * CAM} className="dio-mound" />
+        <path d={poly(quad, t)} className="dio-rope" />
+        {pins.map(([px, py], k) => (
+          <line key={k} x1={px} y1={py} x2={px} y2={py - t} className="dio-stake" />
         ))}
       </g>
     );
   }
+
+  const H = r * 0.36; // 立ち上がりの高さ
 
   if (stage === "frame") {
-    // 鉄筋。柱と梁だけ。まだ屋根も壁も無い
+    // 鉄筋。**四隅の柱と、上の梁だけ。** 壁も屋根もまだ無い
     return (
       <g className="dio-build">
-        <path d={`M${x},${y0} L${x + w},${y0} L${x + w},${y0 + h} L${x},${y0 + h} Z`} className="dio-plot" />
-        {[x, x + w / 2, x + w].map((px, i) => (
-          <line key={i} x1={px} y1={y0 + h} x2={px} y2={y0 - r * 0.34} className="dio-rebar" />
+        {plot}
+        <path d={poly(quad, H)} className="dio-rebar-line" />
+        <path d={poly(quad, H * 0.52)} className="dio-rebar-line" />
+        {quad.map(([px, py], k) => (
+          <line key={k} x1={px} y1={py} x2={px} y2={py - H} className="dio-rebar" />
         ))}
-        <line x1={x} y1={y0 - r * 0.34} x2={x + w} y2={y0 - r * 0.34} className="dio-rebar" />
-        <line x1={x} y1={y0 - r * 0.1} x2={x + w} y2={y0 - r * 0.1} className="dio-rebar" />
       </g>
     );
   }
 
-  // 壁と屋根。まだ塗っていないので木の色のまま
-  const top = y0 - r * 0.38;
+  /* 壁と屋根。**まだ塗っていないので木の色のまま。**
+     手前の2面だけを見せて、奥の2面は描かない（隠れているので） */
+  const R = r * 0.13; // 屋根の高さ。とがらせすぎると家ではなくテントに見える
+  const A: [number, number] = [0, y0 - h - H - R];
   return (
     <g className="dio-build">
-      <path d={`M${x},${y0 + h} L${x + w},${y0 + h} L${x + w},${top} L${x},${top} Z`} className="dio-wall" />
-      <path d={`M${x - r * 0.08},${top} L0,${top - r * 0.24} L${x + w + r * 0.08},${top} Z`} className="dio-roof" />
-      <line x1={x + w * 0.5} y1={y0 + h} x2={x + w * 0.5} y2={top} className="dio-rebar" />
+      {plot}
+      {/* 左の面（暗いほう）と右の面。**明るさの差だけで立体を見せる**
+          （`docs/island-design.md` 2章「輪郭線を引かない」） */}
+      <path
+        d={`M${f(W[0])},${f(W[1])}L${f(S[0])},${f(S[1])}L${f(S[0])},${f(S[1] - H)}L${f(W[0])},${f(W[1] - H)}Z`}
+        className="dio-wall-lo"
+      />
+      <path
+        d={`M${f(S[0])},${f(S[1])}L${f(E[0])},${f(E[1])}L${f(E[0])},${f(E[1] - H)}L${f(S[0])},${f(S[1] - H)}Z`}
+        className="dio-wall"
+      />
+      {/* 屋根。てっぺんの1点へ寄せる。手前の2枚だけ */}
+      <path
+        d={`M${f(W[0])},${f(W[1] - H)}L${f(S[0])},${f(S[1] - H)}L${f(A[0])},${f(A[1])}Z`}
+        className="dio-roof-lo"
+      />
+      <path
+        d={`M${f(S[0])},${f(S[1] - H)}L${f(E[0])},${f(E[1] - H)}L${f(A[0])},${f(A[1])}Z`}
+        className="dio-roof"
+      />
     </g>
   );
 }

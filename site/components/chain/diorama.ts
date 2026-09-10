@@ -49,15 +49,6 @@ export const CAM = 0.56;
 
 /** 島のいちばん外側から、水面の縁までの余裕 */
 const DISC_PAD = 1.18;
-/**
- * 水面の円盤の、いちばん小さい半径。
- *
- * **島の大きさは日数そのままで、下駄を履かせていない**（`docs/island-atlas.md` 3章）。
- * ただし 17日の島は 438日の島の 3.5分の1 しかないので、円盤まで比例させると
- * 模型そのものが豆粒になって、選んでいる島が**となりの島より小さく写る**
- * （撮って分かった）。**台のほうに下限を置く。** 島どうしの比は 1つも動かない。
- */
-const MIN_D = 78;
 
 /** 円盤の厚み（土の層・岩の層）と、底のすぼまり */
 const SOIL = 0.17;
@@ -88,7 +79,7 @@ export type Dio = {
 export function dio(art: IslandArt, days: number): Dio {
   const r = islandRadius(days);
   const maxR = r * Math.max(...art.radii);
-  const D = Math.max(maxR * DISC_PAD + 6, MIN_D);
+  const D = maxR * DISC_PAD + 6;
   const Dh = D * CAM;
   const y1 = D * SOIL;
   const y2 = y1 + D * ROCK;
@@ -161,4 +152,26 @@ export const HOME_BUILDINGS: AtlasBuilding[] = (() => {
 /* 焼き出す HTML に入る数なので、桁を落とす */
 function round(v: number) {
   return Math.round(v * 1000) / 1000;
+}
+
+/* ---- 主役は、枠に合わせて寄る --------------------------------------------
+   **島の大きさの式（`islandRadius`）は1文字も変えていない。**
+   変えたのは、主役として1つだけ出すときの**カメラの寄り**。
+
+   下駄（`ISLE_BASE`）は「小さく並べたときに島に見えなくなる」のを避けるために
+   決めた値で、**全画面で1つを主役にする画面のために決めた値ではない。**
+   17日の北欧を日数どおりの縮尺で1枚に出すと、大きな水色の皿に小さな茶色い塊が
+   乗っているだけで、島に見えなかった（撮って分かった。あやとの判断で寄せる）。
+
+   **大きさの比べ合いは、下の航路（`.atl-route`）が持つ。** あそこの丸は
+   直径が島の半径そのままなので、面積が日数に比例している。日数の差はそこで読む。
+   ---------------------------------------------------------------------- */
+
+/** 枠。この中に模型ぜんぶ（水の皿も落ち影も）が収まるところまで寄る */
+const FRAME_W = 100;
+const FRAME_H = 84;
+
+/** その島を枠いっぱいにするための倍率 */
+export function fit(box: Dio["box"]): number {
+  return Math.min(FRAME_W / box.w, FRAME_H / box.h);
 }

@@ -20,9 +20,10 @@ import {
 } from "@/content/chapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterHref } from "./route";
+import { islandRadius } from "./shapes";
 import Diorama, { buildStage } from "./Diorama";
 
-import { dio, HOME_BUILDINGS, type AtlasIsle } from "./diorama";
+import { dio, fit, HOME_BUILDINGS, type AtlasIsle } from "./diorama";
 
 /**
  * 島の地図。**模型を1つずつ見て、選んで、渡る。**
@@ -43,10 +44,15 @@ import { dio, HOME_BUILDINGS, type AtlasIsle } from "./diorama";
  * 左右は本線、**上はその枝**。コーカサスで上を押すとイランが出て、
  * イランで下を押すとコーカサスに戻る。他の島に上は出ない。
  *
- * ## 島の大きさは、ここでも日数そのもの
+ * ## 主役は寄る。大きさの比べ合いは、下の航路が持つ
  *
- * 模型の縮尺は全部同じ（`--dio-px`）。**434日の島は17日の島より本当に大きく出る。**
- * 見やすさのために小さい島を持ち上げていない（同 3章「手で大きめと決めない」）。
+ * **島の大きさの式（`islandRadius`）は1文字も変えていない**（同 3章）。
+ * 変えたのは、1つだけ主役として出すときのカメラの寄りだけ。日数どおりの縮尺で
+ * 17日の北欧を1枚に出すと、大きな水色の皿に小さな茶色い塊が乗っているだけで
+ * 島に見えなかった（あやとの判断で寄せた。`docs/island-atlas.md` 8章）。
+ *
+ * 代わりに、下の航路の丸は**直径が島の半径そのもの**にしてある。
+ * 面積が日数に比例するので、島どうしの大きさはそこで読む。
  *
  * ## 動かすのは CSS の transform だけ
  *
@@ -130,7 +136,12 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
   /* 舟が渡る高さ。**島ごとに水面の広さが違う**ので、いま出ている島の
      水面の見かけの高さを CSS に渡す（`.atl-boat` が使う） */
   const curArt = isles.find((x) => x.slug === cur.slug)?.art;
-  const water = curArt ? Math.round(dio(curArt, days).Dh) : 90;
+  const water = (() => {
+    if (!curArt) return 40;
+    const d = dio(curArt, days);
+    // 模型は枠に合わせて寄せてあるので、寄せたぶんを掛けてから渡す
+    return Math.round(d.Dh * fit(d.box) * 10) / 10;
+  })();
   const { sail, boat, stageRef } = useSail(nowCh, water);
   /* 指ではらっても島が変わる。**矢印を狙わせない。**
      スマホで模型を見ている人は、まず横に払う */
@@ -144,7 +155,13 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
 
   return (
     <div className="atl">
-      <div className="atl-stage" ref={stageRef} {...swipe}>
+      {/* 端の島は、片側にとなりが無い。**そのぶん空が空くので、寄せて釣り合わせる**
+          （あやと「北欧の右側に矢印が無くて、右半分が空いています」） */}
+      <div
+        className={`atl-stage${!right && left ? " is-end-r" : ""}${!left && right ? " is-end-l" : ""}`}
+        ref={stageRef}
+        {...swipe}
+      >
         {/* 空。雲は動かさない（島ぜんぶを覆う大きさの形なので、動かすと高い） */}
         <span className="atl-cloud is-a" aria-hidden />
         <span className="atl-cloud is-b" aria-hidden />
@@ -217,12 +234,20 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
             key={c.slug}
             type="button"
             className={`atl-pin${c.branchOf ? " is-branch" : ""}${c.slug === cur.slug ? " is-at" : ""}`}
+            /* **丸の直径が、島の半径そのもの。** 面積が日数に比例する
+               （`docs/island-atlas.md` 3章）。模型のほうは枠いっぱいに寄せて
+               あるので、島どうしの大きさを比べられるのはここだけ。
+               下駄も上限も足さない——足したら比べる意味が無くなる */
+            style={{ "--pin": `${(islandRadius(chapterDays(c, today ?? undefined)) * 0.25).toFixed(1)}px` } as React.CSSProperties}
             onClick={() => go(c)}
             aria-label={`${c.name}を見る`}
             aria-current={c.slug === cur.slug ? "true" : undefined}
           />
         ))}
       </nav>
+      {/* **模型は寄せてある**ので、大きさの比べ合いは丸のほうだと言っておく。
+          言わないと「北欧とコーカサスが同じ大きさの島」に読める */}
+      <p className="atl-scale">丸の大きさが、島の大きさ。模型はどれも枠いっぱいに寄せてあります。</p>
 
       {/* 選んでいる島のこと。**押せないので、まっ平らにする** */}
       <div className="atl-card" data-ch={cur.slug}>

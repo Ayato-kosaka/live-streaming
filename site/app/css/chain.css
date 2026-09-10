@@ -16,19 +16,21 @@
    ========================================================= */
 
 .atl {
-  /* 絵の単位あたりの px。**どの島も同じ値。**
-     島の大小（滞在日数）は SVG の幅がそのまま持っている */
-  --dio-px: 0.85px;
+  /* 枠1単位あたりの px。模型は枠（100×84）いっぱいに寄せてあるので、
+     **どの島もだいたい同じ大きさで出る**（`components/chain/diorama.ts` の fit）。
+     島どうしの大きさの比は、下の航路の丸が持っている */
+  --dio-u: 2.9px;
   /* となりの島を、まん中からどれだけ外へ置くか */
   --atl-side: 196px;
-  --atl-up: 104px;
+  --atl-up: 112px;
+  /* 端の島のとき、空いた側へ寄せるぶん。狭い画面はとなりが見えていないので寄せない */
+  --atl-nudge: 0px;
   /* 枝の島は、矢印の真下に置かない。**矢印に隠れて島が見えなくなる。**
      本線から横へずらすのは `docs/island-atlas.md` 2章の決まりでもある */
   --atl-branch: 68px;
-  /* となりの島の縮尺。**まん中の島より必ず小さく見せる。**
-     0.42 で撮ったら、17日の島を選んでいるときに となりの 438日の島のほうが
-     大きく写って、どれを選んでいるのか分からなくなった */
-  --atl-far: 0.32;
+  /* となりの島の縮尺。どの島も枠いっぱいに寄せてあるので、
+     この1つの値でまん中より必ず小さくなる */
+  --atl-far: 0.36;
   margin: 4px 0 14px;
 }
 
@@ -75,32 +77,32 @@
     transform 0.56s cubic-bezier(0.22, 1.12, 0.36, 1),
     opacity 0.34s ease;
 }
-.atl-isle.is-at { transform: translate(-50%, -50%) scale(1); opacity: 1; z-index: 4; }
+.atl-isle.is-at { transform: translate(calc(-50% + var(--atl-nudge)), -50%) scale(1); opacity: 1; z-index: 4; }
 .atl-isle.is-left {
-  transform: translate(calc(-50% - var(--atl-side)), -50%) scale(var(--atl-far));
+  transform: translate(calc(-50% + var(--atl-nudge) - var(--atl-side)), -50%) scale(var(--atl-far));
   opacity: 0.62;
   z-index: 2;
 }
 .atl-isle.is-right {
-  transform: translate(calc(-50% + var(--atl-side)), -50%) scale(var(--atl-far));
+  transform: translate(calc(-50% + var(--atl-nudge) + var(--atl-side)), -50%) scale(var(--atl-far));
   opacity: 0.72;
   z-index: 2;
 }
 .atl-isle.is-up {
-  transform: translate(calc(-50% + var(--atl-branch)), calc(-50% - var(--atl-up)))
+  transform: translate(calc(-50% + var(--atl-nudge) + var(--atl-branch)), calc(-50% - var(--atl-up)))
     scale(var(--atl-far));
   opacity: 0.68;
   z-index: 3;
 }
 .atl-isle.is-down {
-  /* 下は札があるぶん狭い。上と同じだけ下げると札に潜る */
-  transform: translate(calc(-50% + var(--atl-branch)), calc(-50% + var(--atl-up) * 0.72))
+  /* 下は札と主役の裾があるぶん狭い。横へも多めに逃がす */
+  transform: translate(calc(-50% + var(--atl-nudge) + var(--atl-branch) * 1.5), calc(-50% + var(--atl-up) * 0.86))
     scale(var(--atl-far));
   opacity: 0.68;
   z-index: 3;
 }
 .atl-isle.is-off {
-  transform: translate(-50%, -50%) scale(0.24);
+  transform: translate(calc(-50% + var(--atl-nudge)), -50%) scale(0.24);
   opacity: 0;
   z-index: 1;
   /* 見えないものを塗らせない。opacity:0 のままだと画素は作られる */
@@ -140,7 +142,7 @@
   left: 50%;
   bottom: 12px;
   z-index: 5;
-  transform: translateX(-50%);
+  transform: translateX(calc(-50% + var(--atl-nudge)));
   display: flex;
   align-items: center;
   gap: 10px;
@@ -171,7 +173,7 @@
   border-radius: 999px;
   background: var(--accent-deep);
 }
-.atl-tag:active { transform: translate(-50%, 4px); box-shadow: 0 2px 0 var(--frame-deep); }
+.atl-tag:active { transform: translate(calc(-50% + var(--atl-nudge)), 4px); box-shadow: 0 2px 0 var(--frame-deep); }
 .atl-tag:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 
 /* ---- 矢印 --------------------------------------------------------------
@@ -220,11 +222,11 @@
   /* **水の上を渡らせる。** 手前の水ぎわから、島の浜へ。
      空を飛ばすと、浮いている模型の外を舟が横切ることになる。
      水面の見かけの高さ（--atl-wy）は島ごとに違うので、JS が渡す */
-  transform: translateY(calc(var(--dio-px) * var(--atl-wy, 90) * 0.86)) scale(1);
+  transform: translateY(calc(var(--dio-u) * var(--atl-wy, 30) * 0.9)) scale(1);
   transition: transform 720ms cubic-bezier(0.34, 0.02, 0.2, 1);
 }
 .atl-boat.is-there {
-  transform: translateY(calc(var(--dio-px) * var(--atl-wy, 90) * 0.24)) scale(0.56);
+  transform: translateY(calc(var(--dio-u) * var(--atl-wy, 30) * 0.26)) scale(0.56);
 }
 .atl-boat img { width: 46px; height: 32px; }
 @media (prefers-reduced-motion: reduce) {
@@ -249,7 +251,7 @@
   position: absolute;
   left: 12%;
   right: 12%;
-  bottom: 21px;
+  bottom: 20px;
   height: 3px;
   border-radius: 2px;
   background: repeating-linear-gradient(90deg, var(--frame-dark) 0 7px, transparent 7px 13px);
@@ -258,7 +260,7 @@
 .atl-pin {
   position: relative;
   width: 58px;
-  height: 52px;
+  height: 56px;
   padding: 0;
   border: 0;
   background: none;
@@ -269,33 +271,29 @@
   content: "";
   position: absolute;
   left: 50%;
-  bottom: 14px;
-  width: 15px;
-  height: 15px;
-  margin-left: -7.5px;
+  /* **直径は島の半径そのもの**（JS が `--pin` で渡す）。面積が日数に比例する。
+     いま選んでいる丸を大きくして目立たせない——大きさは数字を持っているので、
+     選んでいる印は**色**で出す */
+  width: var(--pin, 14px);
+  height: var(--pin, 14px);
+  bottom: calc(21px - var(--pin, 14px) / 2);
+  margin-left: calc(var(--pin, 14px) / -2);
   border-radius: 50%;
-  border: 3px solid var(--frame-deep);
+  border: 2px solid var(--frame-deep);
   background: var(--paper);
   pointer-events: none;
 }
-.atl-pin.is-at::after {
-  bottom: 11px;
-  width: 21px;
-  height: 21px;
-  margin-left: -10.5px;
-  background: var(--accent-deep);
-}
+.atl-pin.is-at::after { background: var(--accent-deep); border-color: var(--frame-deep); }
 /* 枝は本線から上へ外して、細い柱でつなぐ。
    「先へ進んだのではなく、逸れて戻ってきた」を、線の細さで言う */
-.atl-pin.is-branch::after { bottom: 34px; width: 11px; height: 11px; margin-left: -5.5px; }
-.atl-pin.is-branch.is-at::after { bottom: 31px; width: 16px; height: 16px; margin-left: -8px; }
+.atl-pin.is-branch::after { bottom: calc(38px - var(--pin, 14px) / 2); }
 .atl-pin.is-branch::before {
   content: "";
   position: absolute;
   left: 50%;
   bottom: 22px;
+  height: 16px;
   width: 2px;
-  height: 14px;
   margin-left: -1px;
   border-radius: 1px;
   background: var(--frame-dark);
@@ -303,6 +301,15 @@
   pointer-events: none;
 }
 .atl-pin:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: -4px; border-radius: 14px; }
+
+/* 模型を寄せてあることのことわり。**丸のほうが本当の比** */
+.atl-scale {
+  margin: -6px 0 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--ink-2);
+}
 
 /* ---- 選んでいる島のこと ------------------------------------------------
    **押せない。だからまっ平らにする**（厚みも落ち影も付けない）。 */
@@ -353,8 +360,15 @@
 .atl-fund { margin: 6px 0 0; font-size: 12.5px; font-weight: 800; color: var(--ink-2); }
 .atl-fund b { font-size: 19px; color: var(--accent-deep); margin-right: 2px; }
 
+/* 端の島の寄せ。**狭い画面ではとなりが見えていないので寄せない**
+   （寄せると主役が理由なく片側へずれる） */
 @media (min-width: 640px) {
-  .atl { --dio-px: 1.06px; --atl-side: 236px; --atl-up: 118px; --atl-branch: 96px; }
+  .atl-stage.is-end-r { --atl-nudge: calc(var(--atl-side) * 0.34); }
+  .atl-stage.is-end-l { --atl-nudge: calc(var(--atl-side) * -0.34); }
+}
+
+@media (min-width: 640px) {
+  .atl { --dio-u: 3.66px; --atl-side: 236px; --atl-up: 126px; --atl-branch: 96px; }
   .atl-stage { height: 396px; }
   .atl-arm { width: 58px; height: 58px; }
   .atl-arm.is-left { left: 16px; }
@@ -364,7 +378,7 @@
   .atl-card { padding: 16px 20px; }
 }
 @media (min-width: 1024px) {
-  .atl { --dio-px: 1.24px; --atl-side: 300px; --atl-up: 128px; --atl-branch: 106px; }
+  .atl { --dio-u: 4.16px; --atl-side: 300px; --atl-up: 138px; --atl-branch: 106px; }
   .atl-stage { height: 442px; }
 }
 
@@ -446,16 +460,26 @@
 /* 水面のふち。**線だけ。** 塗りを書き忘れると黒い楕円になって島を覆う（一度やった） */
 .dio-rim { fill: none; stroke: rgba(255, 255, 255, 0.5); stroke-width: 2.4; }
 .dio-strata { fill: #ffffff; opacity: 0.22; }
-/* 更地。草がまだ生えていない土 */
-.dio-dirt { fill: #cbab72; }
-.dio-dirt-side { fill: #9d7c46; }
+/* 草を剥がして均した土。**島ぜんぶではなく、区画だけ**
+   （`docs/island-atlas.md` 5章「島そのものは最初からそこにある」） */
+.dio-plot-dirt { fill: #c7a56a; }
 
 /* 建設中の島。**進捗バーではない**ので、棒ではなく建物そのものを描き替える */
-.dio-plot { fill: rgba(90, 62, 26, 0.22); stroke: #8a6432; stroke-width: 1.4; }
-.dio-stake { stroke: #8a6432; stroke-width: 2.4; stroke-linecap: round; }
-.dio-rebar { stroke: #b0763a; stroke-width: 2.4; stroke-linecap: round; }
-.dio-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 1.6; }
-.dio-roof { fill: #d0553f; stroke: #9c3628; stroke-width: 1.6; stroke-linejoin: round; }
+/* 更地。**均した地面＋縄張り＋掘り返した土。**
+   背の高い杭を4本立てただけだと小屋に見える（あやとに言われた） */
+.dio-plot { fill: #c2a066; stroke: none; }
+.dio-mound { fill: #a87d43; opacity: 0.55; }
+/* 縄。**塗りを書き忘れると真っ黒な板になって島を覆う**（`.dio-rim` で一度やった） */
+.dio-rope { fill: none; stroke: #ad8248; stroke-width: 1.3; stroke-linejoin: round; }
+.dio-stake { stroke: #8a6432; stroke-width: 2; stroke-linecap: round; }
+.dio-rebar { stroke: #b0763a; stroke-width: 2.2; stroke-linecap: round; }
+.dio-rebar-line { fill: none; stroke: #b0763a; stroke-width: 2.2; stroke-linejoin: round; }
+/* 壁と屋根。**まだ塗っていないので木の色。**
+   立体は明るさの差だけで見せる（輪郭線を引かない） */
+.dio-wall { fill: #e8cf9c; }
+.dio-wall-lo { fill: #c8a86f; }
+.dio-roof { fill: #c98a52; }
+.dio-roof-lo { fill: #a86e3c; }
 
 
 .chain-foot {
