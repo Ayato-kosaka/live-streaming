@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
+import { charFit } from "@/content/characterBox";
 import { useResidentDays } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
@@ -124,7 +125,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 主役の絵だけが甘かった。元は 1024px 以上あるので、640 は
                 本物の画素が返る（上限は元の大きさで頭打ちになる）。
                 一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
-            <img key={r.icon} src={drive(r.icon!, 640)} alt="" />
+            <img key={r.icon} src={drive(r.icon!, 640)} alt="" style={charFit(r.icon!, 0.94, true)} />
           </div>
 
           <dl className="rzk-fields">
@@ -242,7 +243,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 onClick={() => go(i)}
               >
                 <span className="rzk-cell-no">{i + 1}</span>
-                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" />
+                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" style={charFit(x.icon!, 0.82)} />
               </button>
             );
           })}

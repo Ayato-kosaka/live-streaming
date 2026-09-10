@@ -14,7 +14,7 @@
  * 中東の島では乾いた色、北欧の島では寒い色になる。
  */
 
-import { rng } from "@/components/island/geometry";
+import { rng, n1 } from "@/components/island/geometry";
 
 export type DecoKind = "rock" | "bush" | "tuft" | "shroom" | "stump";
 export type Deco = { k: DecoKind; x: number; y: number; s: number };
@@ -32,7 +32,7 @@ export type DecoPaths = {
   cap: string;
 };
 
-const f = (v: number) => v.toFixed(1);
+const f = n1;
 
 /** 楕円を1本のパスコマンドで。`<ellipse>` を並べるより文字数が少ない */
 export function oval(x: number, y: number, rx: number, ry: number): string {

@@ -6,6 +6,7 @@ import {
   insideRadii,
   pointAt,
   radiiToPoints,
+  n1,
   resample,
   ring,
   rng,
@@ -27,7 +28,7 @@ const { cx: CX, cy: CY, squash: SQ } = ISLAND;
  * 円弧コマンドで書いておけば、いくつでも1本のパスにつなげられる。
  */
 function oval(x: number, y: number, rx: number, ry: number): string {
-  const f = (n: number) => n.toFixed(1);
+  const f = n1;
   return `M${f(x - rx)},${f(y)}a${f(rx)},${f(ry)} 0 1,0 ${f(rx * 2)},0a${f(rx)},${f(ry)} 0 1,0 ${f(-rx * 2)},0`;
 }
 
@@ -50,7 +51,7 @@ function facetPts(x: number, y: number, rx: number, ry: number, n: number, r: ()
 
 /** 点列を1本の折れ線に。dx dy だけずらした写しも作れる（石の下面に使う）。 */
 function poly(pts: Pt[], dx = 0, dy = 0): string {
-  const f = (v: number) => v.toFixed(1);
+  const f = n1;
   return pts.map(([x, y], i) => `${i ? "L" : "M"}${f(x + dx)},${f(y + dy)}`).join("") + "Z";
 }
 
@@ -60,7 +61,7 @@ function facet(x: number, y: number, rx: number, ry: number, n: number, r: () =>
 
 /** 草の株。葉を数枚、根元から扇に開く。草むらにも浜の草にも同じ形を使う。 */
 function bladeClump(x: number, y: number, s: number, lean: number, n: number, r: () => number): string {
-  const f = (v: number) => v.toFixed(1);
+  const f = n1;
   let d = "";
   for (let i = 0; i < n; i++) {
     const dx = (i - (n - 1) / 2) * 2.6 * s;
@@ -143,7 +144,7 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
         oval(x + w * 0.17, y - s * 0.56, w * 0.18, s * 0.15);
     } else if (it.k === "stump") {
       const hw = s * 0.44;
-      const f = (v: number) => v.toFixed(1);
+      const f = n1;
       b.shade += oval(x + hw * 0.34, y + s * 0.07, hw * 1.32, s * 0.26);
       // 幹の側面。上下を楕円でふさぐと、切り株の「筒」になる
       b.bark += `M${f(x - hw)},${f(y - s * 0.62)}L${f(x - hw)},${f(y - s * 0.16)}a${f(hw)},${f(s * 0.2)} 0 0,0 ${f(hw * 2)},0L${f(x + hw)},${f(y - s * 0.62)}Z`;
@@ -151,7 +152,7 @@ function bakeDeco(list: Deco[], seed: number): DecoPaths {
       // 年輪。1本あるだけで切り口に見える
       b.bark += oval(x, y - s * 0.62, hw * 0.44, s * 0.09);
     } else if (it.k === "shroom") {
-      const f = (v: number) => v.toFixed(1);
+      const f = n1;
       b.shade += oval(x + s * 0.12, y + s * 0.04, s * 0.42, s * 0.17);
       b.stem += `M${f(x - s * 0.15)},${f(y)}L${f(x - s * 0.12)},${f(y - s * 0.42)}h${f(s * 0.24)}L${f(x + s * 0.15)},${f(y)}Z`;
       b.cap += `M${f(x - s * 0.44)},${f(y - s * 0.4)}a${f(s * 0.44)},${f(s * 0.38)} 0 0,1 ${f(s * 0.88)},0Z`;
@@ -246,8 +247,16 @@ function DecoLayer({ p, shade }: { p: DecoPaths; shade: number }) {
    外へ出してはいけない。** 出すと、歩けない場所に緑が生えることになる。
    -------------------------------------------------------------------- */
 
-/** 輪郭を何点で持つか。少ないと起伏を足しても角が丸まって消える。 */
-const COAST_N = 128;
+/**
+ * 輪郭を何点で持つか。少ないと起伏を足しても角が丸まって消える。
+ *
+ * **128 から 96 に落とした。** 輪郭の形のパスは画面に20本あって、
+ * それだけで焼いた HTML の半分（202KB）を占めていた。いちばん細かい起伏は
+ * 1周19山（`wobble` の `[5,11,19]`）なので、96点でも1山あたり5点あって
+ * 形は保てる。落としたぶんはそのまま、開くときに読む字と、
+ * 描き直すときになぞる線が減る。
+ */
+const COAST_N = 96;
 
 /** 岬・入り江。t は北から時計回りの割合、w は広がり、amp は沖(+)/陸(-)への深さ。 */
 type Feature = { t: number; w: number; amp: number };
@@ -468,7 +477,7 @@ function foamLace(
     const a = t * Math.PI * 2;
     const c = Math.cos(a);
     const sn = Math.sin(a);
-    const f = (n: number) => n.toFixed(1);
+    const f = n1;
     buckets[i % 3] +=
       `M${f(x - w * c)},${f(y - w * sn)}` +
       `Q${f(x + h * sn)},${f(y - h * c)} ${f(x + w * c)},${f(y + w * sn)}`;
@@ -611,7 +620,7 @@ const SEA_OPACITY = [0.5, 0.32, 0.18];
  */
 function grassTile(seed: number, count: number, size: number) {
   const r = rng(seed);
-  const f = (n: number) => n.toFixed(1);
+  const f = n1;
   const SHAPES = [
     // 三角の葉。公式の芝はほとんどこれ
     (x: number, y: number, s: number) => `M${x},${y}l${f(-3.4 * s)},${f(-6.2 * s)}h${f(6.8 * s)}Z`,
@@ -668,9 +677,9 @@ const cliff = (() => {
     if (upper[k][1] >= PLATEAU.cy - PLATEAU.drop - 2) seq.push(k);
   }
   if (seq.length < 2) return { band: "", lines: [] as Pt[] };
-  let d = `M${upper[seq[0]][0].toFixed(1)},${upper[seq[0]][1].toFixed(1)}`;
-  for (const i of seq.slice(1)) d += `L${upper[i][0].toFixed(1)},${upper[i][1].toFixed(1)}`;
-  for (let k = seq.length - 1; k >= 0; k--) d += `L${lower[seq[k]][0].toFixed(1)},${lower[seq[k]][1].toFixed(1)}`;
+  let d = `M${n1(upper[seq[0]][0])},${n1(upper[seq[0]][1])}`;
+  for (const i of seq.slice(1)) d += `L${n1(upper[i][0])},${n1(upper[i][1])}`;
+  for (let k = seq.length - 1; k >= 0; k--) d += `L${n1(lower[seq[k]][0])},${n1(lower[seq[k]][1])}`;
   return { band: d + "Z", lines: seq.map((i) => upper[i]) };
 })();
 
@@ -920,7 +929,7 @@ function control({ a, b, bend }: Route): Pt {
 /** 土の帯。全ルートを1本の d にまとめる。 */
 const TRAIL_D = ROUTES.map((rt) => {
   const c = control(rt);
-  const f = (n: number) => n.toFixed(1);
+  const f = n1;
   return `M${f(rt.a[0])},${f(rt.a[1])}Q${f(c[0])},${f(c[1])} ${f(rt.b[0])},${f(rt.b[1])}`;
 }).join("");
 
