@@ -25,6 +25,8 @@ import {
   type Folk,
   type Ground,
 } from "./folk";
+import Today from "@/components/today/Today";
+import { rememberVisit } from "@/components/today/visit";
 import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
@@ -110,6 +112,16 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const [order, setOrder] = useState("");
   /** 出発までの日数。**画面が出てから数える**（静的書き出しに焼かない） */
   const [left, setLeft] = useState<number | null>(null);
+
+  /* **表紙のときは、ここが「島に降りた」を書き留める。**
+     手で作った島（`components/island/IslandStage.tsx`）だけが書いていたころ、
+     表紙が章の島に入れ替わった日から誰も書かなくなり、今日の板の
+     「前に来てから、あったこと」が旅のあいだ二度と出なくなっていた。
+     読むのは板（子）で、書くのは島（親）。React は子の効果を先に走らせるので、
+     ここから呼べば「読ませてから書く」の順番が守られる。 */
+  useEffect(() => {
+    if (cover) rememberVisit();
+  }, [cover]);
 
   const avatar = useRef({ ...world.start });
   const facing = useRef(1);
@@ -984,6 +996,29 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           </div>
         ))}
       </div>
+
+      {/* 今日の島。**表紙のときだけ出す。**
+          ---------------------------------------------------------
+          出発すると表紙は章の島に入れ替わる（`components/isle/Cover.tsx`）。
+          板を手で作った島の中にしか置いていなかったので、**入れ替わった日から
+          「今日の1行」「1年前の今日」「今夜のおたずね」「今日の訪問者数」が
+          表紙から丸ごと消えていた。** 毎晩ひとりでに焼き直している
+          `content/onThisDay.ts` が、旅の初日からどこにも出なくなる。
+
+          **部品は書き写さない。** 出しているのは手で作った島とまったく同じ
+          `components/today/Today.tsx`。置き場所の決めかたも同じで、
+          PC・タブレットは島の隅、スマホは島の下ふち（`app/css/today.css`）。
+
+          過去の島（`/island/<章>`）には出さない。あそこは「その章を振り返る島」で、
+          今日は関係が無い。 */}
+      {cover &&
+        (modeOf(box.w) === "phone" ? (
+          <div className="isle-today">
+            <Today place="bar" />
+          </div>
+        ) : (
+          <Today place="corner" />
+        ))}
 
       {/* 吹き出し。画面の上にどんと出して、どこを押しても閉じる */}
       {talking && (

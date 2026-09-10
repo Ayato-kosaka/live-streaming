@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
 import IsleReview from "@/components/isle/IsleReview";
+import IsleSpan from "@/components/isle/IsleSpan";
 import IsleStage from "@/components/isle/IsleStage";
+import { isleLead } from "@/components/isle/span";
 import { isleSpec, nordicSpec, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { CHAIN, type Chapter } from "@/content/chapters";
+import { chapterNeighbours, type Chapter } from "@/content/chapters";
 
 /**
  * 過去の島と、次の島。**歩ける。**
@@ -62,16 +64,33 @@ export default async function ChapterIsland({
 }) {
   const { chapter } = await params;
   const c = ISLE_CHAPTERS.find((x) => x.slug === chapter)!;
-  const i = CHAIN.indexOf(c);
-  const prev = near(CHAIN[i - 1]);
-  const next = near(CHAIN[i + 1]);
+  /* **となりの島は本線でたどる**（`content/chapters.ts` の `chapterNeighbours`）。
+     前はここが連なりの並び（`CHAIN`）から前後を取っていて、あれは枝を親の
+     すぐ後ろに差し込んだ**航路の絵の並び**なので、本線の島の「ひとつ前」に
+     枝が割り込んでいた（北欧の島のひとつ前が、4ヶ月前に終わった
+     「イランまで歩く」になっていた）。 */
+  const { prev: back, next: on } = chapterNeighbours(c);
+  const prev = near(back);
+  const next = near(on);
   /* **`nordicSpec` は「まだ始まっていない章」の spec ではなく、北欧旅の spec。**
      中の板は `/nordic` を指し、「なぜ北欧まで行くのか」と書いてある。
      `c.from` の有無だけで振り分けていたので、アルバニアの島に北欧の板が5枚建ち、
      「これから歩く国 6カ国、0日」まで出ていた（島ぜんぶが別の旅のもの）。
-     出発の日の決まった旅（`opensAt`）を持つ章だけ、その旅の spec で建てる。
-     日どりの決まっていない島は、素材のあるぶんだけ建って、船着き場は残る。 */
-  const spec = !c.from && c.opensAt ? nordicSpec(c, prev) : isleSpec(c, prev, next);
+
+     **振り分けは「日付が入っているか」ではなく「建てるものがあるか」で決める。**
+     `!c.from` で見ていたころ、旅から帰って章の表に `from` を書き入れた瞬間に
+     `isleSpec` へ落ちる作りだった。北欧の6カ国は歩いてから `countries.ts` に
+     足す決まりなので（#140）、その日は歩いた国0・配信0・伝説0で、
+     **桟橋しか建っていない島**になる。日付を1つ入れると島が消える地雷を、
+     ここに置いたままにしない。
+
+     素材が1つも無い島は、旅の spec を持っていればそちらで建てる。
+     日どりの決まっていない島（アルバニア）は旅の spec を持たないので、
+     いままでどおり素材のあるぶんだけ建って、船着き場は残る。 */
+  const isle = isleSpec(c, prev, next);
+  // 桟橋は素材が無くても建つので、それ以外が1つも無ければ「何も建っていない島」
+  const bare = isle.places.length <= 1;
+  const spec = bare && c.opensAt ? nordicSpec(c, prev) : isle;
 
   return (
     <>
@@ -82,13 +101,12 @@ export default async function ChapterIsland({
           <Crumbs items={[{ label: "島の地図", href: "/atlas" }, { label: c.name }]} />
         </div>
 
+        {/* **「〜いままで」を焼かない。** ここは `c.to` を直に見ていたので、
+            北欧へ出発したあとも、コーカサスが「2025年6月からいままでいた島。」と
+            言い続けていた。閉じ方は `chapterSpan()` が1か所で持っている
+            （`components/isle/span.ts`）。画面が出てから引き直す。 */}
         <p className="isle-lead">
-          {c.from
-            ? `${ym(c.from)}から${c.to ? ym(c.to) : "いま"}までいた島。`
-            : /* from が入るのは、出発の日にあやとが章の表を書き入れたとき（#140）。
-                 それまでのあいだ「まだ誰も上陸していない」と言うと、出発した日から
-                 書き入れるまで、歩いている島が空き島に読める。**時点を言わない。** */
-              "これから建っていく島。"}
+          <IsleSpan chapter={c} kind="lead" baked={isleLead(c)} />
         </p>
 
         {/* その章を、その島の中で振り返る紙（`components/isle/IsleReview.tsx`）。
@@ -130,7 +148,3 @@ export default async function ChapterIsland({
   );
 }
 
-const ym = (d: string) => {
-  const [y, m] = d.split("-");
-  return `${y}年${Number(m)}月`;
-};

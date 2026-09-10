@@ -227,8 +227,38 @@ export function chapterNext(now: Date = new Date()): Chapter | undefined {
   );
 }
 
-/** 本線の島だけ（枝を抜いたもの）。 */
-const MAIN_CHAPTERS = CHAPTERS.filter((c) => !c.branchOf);
+/**
+ * **本線の島だけを、日付順に一列にしたもの。枝は入らない。**
+ *
+ * 島から島へたどるのは、いつでもこの列。連なりの並び（`CHAIN`）は枝を
+ * 親のすぐ後ろに差し込むので、**そちらを一列だと思って前後を取ると、
+ * 枝が本線の途中に割り込む。** 実際そうなっていて、北欧の島の「ひとつ前の島」が
+ * 4ヶ月前に終わった枝（イランまで歩く）を指していた。
+ * 連なりの絵（`/atlas` の航路）と、島から島への渡りは、別のものを見る。
+ */
+const MAIN_CHAIN: Chapter[] = CHAPTERS.filter((c) => !c.branchOf).sort((a, b) =>
+  // 始まっていない章（北欧・アルバニア）は、いちばん最後
+  (a.from || "9999").localeCompare(b.from || "9999"),
+);
+
+/**
+ * となりの島。**「ひとつ前」も「つぎ」も、本線でたどる。**
+ *
+ * 枝（イランまで歩く）は本線の1歩ではない（`content/chapters.ts` の `branchOf`）。
+ * だから
+ *
+ *   - 本線の島 … ひとつ前／つぎは、**枝を飛ばした**本線のとなり
+ *   - 枝の島   … ひとつ前は**逸れてきた親**。つぎは、その親の次の本線
+ *
+ * 枝を親の位置に置いて数えるので、枝から見た前後は、親から見た前後と同じになる。
+ */
+export function chapterNeighbours(c: Chapter): { prev?: Chapter; next?: Chapter } {
+  const parent = c.branchOf ? MAIN_CHAIN.find((x) => x.slug === c.branchOf) : undefined;
+  const i = MAIN_CHAIN.indexOf(parent ?? c);
+  // 本線にも枝にも見つからない章は、となりを作らない（前後が入れ替わるより静かに消す）
+  if (i < 0) return {};
+  return { prev: parent ?? MAIN_CHAIN[i - 1], next: MAIN_CHAIN[i + 1] };
+}
 
 /**
  * ビルドしたときの「次の島」。**画面の出しわけに使わない**（`NOW_CHAPTER` と同じ理由）。
@@ -249,7 +279,7 @@ const MAIN_CHAPTERS = CHAPTERS.filter((c) => !c.branchOf);
  * 呼ぶこと。**受けているだけで、足さなくてよくなったわけではない。**
  */
 export const NEXT_CHAPTER: Chapter =
-  CHAPTERS.find((c) => !c.from) ?? MAIN_CHAPTERS[MAIN_CHAPTERS.length - 1];
+  CHAPTERS.find((c) => !c.from) ?? MAIN_CHAIN[MAIN_CHAIN.length - 1];
 
 /**
  * 日数。いまも続いている章は「今日まで」で数える。画面が出てから数え直す。
@@ -288,14 +318,14 @@ export function chapterSpan(
  * 連なりの並び順。**本線は日付順の一列、枝はその親のすぐ下**
  * （`docs/island-atlas.md` 2章）。並べ替えの規則をここに1つだけ置いて、
  * 画面はこれを受け取るだけにする。章を足しても画面を直さずに済む。
+ *
+ * **これは「航路の絵の並び」であって、島から島へたどる列ではない。**
+ * 枝が本線の途中に入っているので、ここから前後を取ると枝が割り込む。
+ * となりの島は `chapterNeighbours()` を呼ぶこと。
  */
 export const CHAIN: Chapter[] = (() => {
-  const main = CHAPTERS.filter((c) => !c.branchOf).sort((a, b) =>
-    // 始まっていない章（北欧）は、いちばん最後
-    (a.from || "9999").localeCompare(b.from || "9999"),
-  );
   const out: Chapter[] = [];
-  for (const c of main) {
+  for (const c of MAIN_CHAIN) {
     out.push(c);
     for (const b of CHAPTERS.filter((x) => x.branchOf === c.slug)) out.push(b);
   }

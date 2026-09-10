@@ -4,6 +4,8 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import DirFilter from "@/components/ui/DirFilter";
 import Icon from "@/components/ui/Icon";
 import { DEST_COUNT, SHELVES } from "@/content/directory";
+import AllIsleRow from "@/components/chain/AllIsleRow";
+import { ISLE_ROW } from "@/components/chain/route";
 
 export const metadata: Metadata = {
   title: "島のなか ぜんぶ",
@@ -51,13 +53,22 @@ export default function AllPage() {
           <ul className="dxl">
             {s.items.map((d) => (
               <li key={d.href} data-q={d.q}>
-                <Link className="dx" href={d.href} prefetch={false}>
-                  <span className="dx-body">
-                    <b>{d.name}</b>
-                    <i>{d.note}</i>
-                  </span>
-                  <Icon name="right" size={15} className="dx-go" />
-                </Link>
+                {/* 章の島の行だけ、行き先を画面が出てから引き直す。
+                    **いまいる島はトップそのもの**（`docs/island-atlas.md` 7章）で、
+                    どれがいまいる島かは日付で変わる。焼いたままだと、旅に出た日から
+                    ここだけが `/island/<章>` の薄い面へ案内しつづける
+                    （`components/chain/AllIsleRow.tsx`）。 */}
+                {ISLE_ROW[d.href] ? (
+                  <AllIsleRow slug={ISLE_ROW[d.href]} name={d.name} note={d.note} />
+                ) : (
+                  <Link className="dx" href={d.href} prefetch={false}>
+                    <span className="dx-body">
+                      <b>{d.name}</b>
+                      <i>{d.note}</i>
+                    </span>
+                    <Icon name="right" size={15} className="dx-go" />
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

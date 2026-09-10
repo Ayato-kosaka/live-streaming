@@ -11,7 +11,7 @@ import { countryStat } from "@/content/countryStats";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
-import Days from "@/components/atlas/Days";
+import { StayLen, StayOut } from "../parts";
 // 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
@@ -74,7 +74,9 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
    */
   const peak =
     stat && stat.lives >= 3 && !c.highlights.some((h) => h.videoId === stat.top[1]) ? stat : null;
-  // まだ出国していない国は、書き出した日で数字が止まる。画面が出てから数え直す。
+  /* 出国の日が入っていない滞在。書き出した日で数字が止まるので画面が出てから数え直すが、
+     **次の島へ渡っていれば、そこで止める**（`../parts.tsx` の `StayLen`）。
+     でないと、もう出た国の日数が毎日1ずつ増えつづける。 */
   const staying = c.stays.find((s) => !s.to);
   const days = closedDays(c.stays);
 
@@ -124,14 +126,18 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
               <dt>入国</dt>
               <dd>{fmt(st.from)}</dd>
               <dt>出国</dt>
-              <dd>{st.to ? fmt(st.to) : "まだ、いる"}</dd>
+              {/* 出国の欄が空いているのは「まだいる」とは限らない。
+                  次の島へ渡った日で閉じる（`../parts.tsx`） */}
+              <dd>{st.to ? fmt(st.to) : <StayOut slug={c.slug} />}</dd>
             </div>
           ))}
         </dl>
 
         <div className="apass-num">
           <div>
-            <b>{staying ? <Days from={staying.from} plus={days} /> : days.toLocaleString()}</b>
+            <b>
+              {staying ? <StayLen slug={c.slug} from={staying.from} plus={days} /> : days.toLocaleString()}
+            </b>
             <span>いた日数</span>
           </div>
           <div>
