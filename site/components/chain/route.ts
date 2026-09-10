@@ -9,9 +9,14 @@ import { CHAPTER_STREAMS } from "@/content/chapterStreams";
  * `/island/<章>/` に**歩ける島**が建っている。
  *
  * `now` を渡せるようにしてあるのは、**「いまいる島」が日付で変わるから**。
- * 静的書き出しに焼いた `NOW_CHAPTER` だけで決めると、北欧に出発した日から
+ * 焼いた答え（`NOW_CHAPTER`＝焼いた時刻の島）だけで決めると、北欧に出発した日から
  * 誰かがビルドし直すまで、行き先が古いままになる。
  * 画面（クライアント）は `chapterNow(new Date())` を渡すこと。
+ *
+ * **渡さなかったときの答えは、焼いた時刻で固定されている。** そこを
+ * `chapterNow()`（引数なし）にすると、ブラウザでは開いた瞬間の時計で数え直されて、
+ * 焼いた HTML と最初の描画で `href` が食い違う（`content/chapters.ts` の
+ * `NOW_CHAPTER`／`docs/island-misses.md` #30）。
  */
 export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
   return c.slug === now.slug ? "/" : `/island/${c.slug}`;
@@ -27,7 +32,7 @@ export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
  *
  * **いまいる島も焼く。** 前はここで `NOW_CHAPTER` を外していた。いまいる島は
  * トップそのものなので、確かに誰もそこへは行かない——**ビルドした日のあいだは。**
- * `NOW_CHAPTER` は焼かれた答えで、いまいる島は日付で変わる。北欧へ出発した瞬間、
+ * `NOW_CHAPTER` は焼いた時刻の答えで、いまいる島は日付で変わる。北欧へ出発した瞬間、
  * 連なりのコーカサスの行き先が `/island/caucasus` に変わり、**その面が無かった**
  * （436本・1,893人の島が、出発の日から丸ごと開けなくなる）。
  * 1面ぶん増えるだけなので、日付で消えるほうの面を先に焼いておく。
