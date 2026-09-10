@@ -425,11 +425,56 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    週の回りかたは読むだけの図なので、紙の上にもう1枚の台紙を敷かない。
    地も影も持たせず、紙にそのまま刷ってあるようにする。 */
 .wk { padding: var(--sp-2) 0 var(--sp-1); }
+
+/* 「今夜は、何をやってる日」の答え。**見出しのすぐ下に、字で先に置く。**
+   図の上なので、紙にそのまま刷ってある型（地も影も持たない）。 */
+.wk-now {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.wk-now b { color: var(--ink); font-weight: 900; }
+/* 旅のあいだの答え。ここだけ行き先を持つので、押せることが分かる形にする。
+   文の中なので板にしない。押しどころの高さは、行の箱を押し広げない
+   上下の余白で稼ぐ（`app/css/pages.css` の `.phead-go` と同じ手）。 */
+.wk-now-go {
+  color: var(--ink);
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-deep);
+  padding-block: 16px;
+}
+
+/* 曜日の見出しと帯は、同じ7列の格子。今日の列は、その両方を通す1本にする。
+   `position: relative` の親をここに置いて、下の `.wk-col` を敷く。 */
+.wk-grid { position: relative; }
+/* 今日の列。**列の幅は、格子と同じ式で出す**（7等分から隙間ぶんを引く）。
+   図の地なので、いちばん下に敷いて帯には触らない。 */
+.wk-col {
+  --g: var(--sp-1);
+  --w: calc((100% - 6 * var(--g)) / 7);
+  position: absolute;
+  top: -2px;
+  bottom: -4px;
+  width: var(--w);
+  left: calc((var(--w) + var(--g)) * var(--i));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-deep) 9%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent-deep) 34%, transparent);
+  pointer-events: none;
+}
 .wk-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: var(--sp-1);
   text-align: center;
+  /* 今日の列（`.wk-col`）は位置指定なので、地のままの曜日より上に来てしまう。
+     こちらも位置指定にして、DOM の順（列 → 曜日 → 帯）どおりに重ねる */
+  position: relative;
 }
 .wk-days > span {
   font-size: var(--fs-min);
@@ -442,8 +487,19 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 /* 土日の目印。前は桃だったが、紙の上で 2.05 : 1 しか出ておらず読めなかった。
    配信は毎日あるので「休み」の色ではなく、ただの目印。色ではなく濃さで言う。 */
 .wk-days > span.is-end { color: var(--ink); }
+/* 今日。曜日の下に「今夜」を1つだけ出す。土日の目印は濃さで言っているので、
+   こちらは色で言う（同じ言い方を2つ重ねると、どちらが今日か分からない） */
+.wk-days > span.is-today { color: var(--accent-deep); padding-bottom: 0; }
+.wk-days > span.is-today b {
+  display: block;
+  margin-top: 1px;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--accent-deep);
+}
 
-.wk-rows { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
+.wk-rows { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); position: relative; }
 .wk-row { display: grid; gap: var(--sp-2); }
 .wk-tag { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .wk-tag img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }

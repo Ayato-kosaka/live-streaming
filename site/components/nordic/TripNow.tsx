@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
-import { samePlace } from "@/lib/place";
+import { placeOutdated, samePlace } from "@/lib/place";
+import { planStop, tripDate } from "./where";
 import { Mark } from "./Marks";
 
 /**
@@ -59,6 +60,14 @@ export type Stop = {
   art?: string;
   /** ここへ来るまでにヒッチハイクで進む距離(km)。残りを数えるのに使う。 */
   hitch?: number;
+  /**
+   * ここを発つ日／ここへ着く日(YYYY-MM-DD)。**旅程表と同じ日付。**
+   *
+   * いる場所の一次情報がこれ。手打ちの `current.place` は上書きに降りた
+   * （`components/nordic/where.ts` に理由）。
+   */
+  leaveOn?: string;
+  arriveOn?: string;
 };
 
 function fmt(n: number) {
@@ -75,9 +84,12 @@ export default function TripNow({
   mainLegs,
   legOrder,
   dayOf,
+  dayByDate,
   depart,
   departWhen,
   hitchKm,
+  arriveOn,
+  until,
 }: {
   stops: Stop[];
   /**
@@ -96,16 +108,38 @@ export default function TripNow({
    * 何日目か分かっていない行もあるので、数字ではなく行の名前で受け取る。
    */
   dayOf: Record<string, string>;
+  /**
+   * 日付(YYYY-MM-DD) → 旅程表のどの行か。
+   *
+   * **動かない日には区間が無い。** `dayOf` は区間から引く表なので、休息日
+   * （ヴィリニュス 9/15・リガ 9/17）を引くと**翌日の行**が返る。
+   * 日付しか分かっていない日は、日付で引く。
+   */
+  dayByDate: Record<string, string>;
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
   departWhen: string;
   hitchKm: number;
+  /** ストックホルムに着くよていの日(YYYY-MM-DD) */
+  arriveOn: string;
+  /** 旅が終わる日(YYYY-MM-DD)。ここを過ぎたら、旅程からは何も引かない */
+  until: string;
 }) {
   const [left, setLeft] = useState<number | null>(null);
-  /** いる場所。ルートの何番目か。分からないうちは null。 */
-  const [at, setAt] = useState<number | null>(null);
-  /** 島が持っている「いまいる場所」の文字。ルートの外にいるときはこれを出す。 */
+  /**
+   * 旅をしている土地の暦で、きょうの日付。
+   *
+   * 静的書き出しなので、ビルドの日を焼くわけにいかない（`docs/island-design.md`）。
+   * カウントダウンと同じ拍で数え直す。日付は日に1度しか変わらない。
+   */
+  const [today, setToday] = useState<string | null>(null);
+  /**
+   * 本人が打った「いまいる場所」。**旅より前のまま**なら受け取らない。
+   *
+   * 「ジョージア・トビリシ / 2026-09-04」は出発の1週間前に打たれた字で、
+   * 旅の17日間そのまま残る（`lib/stay.ts` の `placeOutdated`）。
+   */
   const [place, setPlace] = useState<string | null>(null);
   /**
    * ストックホルムに着いた日。**着いた、であって、終わった、ではない。**
@@ -126,7 +160,14 @@ export default function TripNow({
 
   useEffect(() => {
     const t = new Date(depart).getTime();
-    const tick = () => setLeft(t - Date.now());
+    const tick = () => {
+      setLeft(t - Date.now());
+      // 日付は日に1度しか変わらない。同じ字なら state を触らない
+      setToday((d) => {
+        const n = tripDate(new Date());
+        return d === n ? d : n;
+      });
+    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -140,15 +181,12 @@ export default function TripNow({
       .then((s) => {
         if (!alive) return;
         const p = (s?.current?.place ?? "").trim();
-        setPlace(p || null);
+        /* **古い字は「いま」ではない。** ここを素通しにしていたので、旅の17日間
+           ずっと「いま ジョージア・トビリシ」と出ていた（`where.ts` に経緯）。
+           日付が読めないものも古いものとして扱う（`lib/stay.ts`）。 */
+        setPlace(p && !placeOutdated(s?.current?.updatedAt) ? p : null);
         setArrivedOn(s?.nordic?.arrivedOn ?? null);
         setEndedOn(s?.nordic?.endedOn ?? null);
-        /* 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
-           **1字ずれても当たるようにする**（`lib/place.ts`）。走っている車の中で
-           打つので「ヴィリニュス」が「ビリニュス」になるのはふつうに起きる。
-           前はここで外れて、地図が黙って出発前の姿に戻っていた（実測）。 */
-        const i = stops.findIndex((st) => st.id && samePlace(p, st.name));
-        if (i >= 0) setAt(i);
       })
       .catch(() => {
         /* 島の様子が取れなくても、カウントダウンだけは出す */
@@ -156,7 +194,41 @@ export default function TripNow({
     return () => {
       alive = false;
     };
-  }, [stops]);
+  }, []);
+
+  /**
+   * 本人の字が指しているルートの街。無ければ -1。
+   *
+   * 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
+   * **1字ずれても当たるようにする**（`lib/place.ts`）。走っている車の中で
+   * 打つので「ヴィリニュス」が「ビリニュス」になるのはふつうに起きる。
+   */
+  const typedAt = place ? stops.findIndex((st) => st.id && samePlace(place, st.name)) : -1;
+  /** 旅程の日付から引いた、きょうの居どころ。**予定であって「いま」ではない。** */
+  const planAt = planStop(stops, today, until);
+  const at = typedAt >= 0 ? typedAt : planAt;
+  /**
+   * 居どころを、**旅程の予定ではなく事実で押さえられている**か。
+   *
+   * 旅程の日付から引いただけのときは false。ヒッチハイクは乗せてもらえなければ
+   * その日は進まないので、予定の街を「いま ここ」と言い切ってはいけない。
+   * 地図の札・旅程表の印・残り距離の一行が、ここで言い方を変える。
+   */
+  const sure = typedAt >= 0 || !!arrivedOn;
+  const last = stops.length - 1;
+  /**
+   * 旅程表のどの行に「いま、ここ」を出すか。
+   *
+   * **分かっているものに合わせて、引く表を変える。**
+   * 居どころが分かっていれば、そこを発つ区間の行（＝いま走っている区間）。
+   * 日付しか分かっていなければ、その日付の行。区間から引くと、**動かない日が
+   * 翌日の行を指す**（9/15 に休むヴィリニュスを発つのは 9/16）。
+   */
+  const nowRow = sure
+    ? at != null && at >= 1 && at < last
+      ? (dayOf[mainLegs[at]] ?? null)
+      : null
+    : (today && dayByDate[today]) || null;
 
   // 分かった現在地を、同じ画面の地図にも反映する。
   useEffect(() => {
@@ -165,15 +237,19 @@ export default function TripNow({
     const svg = document.querySelector<SVGSVGElement>(".nmap");
     if (!svg || !id) return;
     svg.dataset.here = id;
+    // 札の字が「いま ここ」と「きょうは ここ」で入れ替わる（`app/css/nordic.css`）
+    if (sure) delete svg.dataset.plan;
+    else svg.dataset.plan = "1";
     const seq = Number(svg.querySelector(`[data-id="${id}"]`)?.getAttribute("data-seq") ?? -1);
     svg.querySelectorAll<SVGElement>("[data-seq]").forEach((el) => {
       el.classList.toggle("is-done", Number(el.getAttribute("data-seq")) <= seq);
     });
     // 「いま ここ」の札はどの街にもぶら下げてある。出すのは1つだけ。
-    svg.querySelectorAll<SVGElement>(".nmap-pin").forEach((el) => {
+    // 札は街より上のレイヤ（`.nm-heres`）にいるので、そちらにも付ける。
+    svg.querySelectorAll<SVGElement>(".nmap-pin, .nm-here").forEach((el) => {
       el.classList.toggle("is-now", el.getAttribute("data-id") === id);
     });
-  }, [at, stops]);
+  }, [at, stops, sure]);
 
   // 旅程表の「いま、ここ」を、今日の1日にだけ出す。
   //
@@ -182,11 +258,13 @@ export default function TripNow({
   // 「動きは React の外で」。ここで状態を持つと旅程表がまるごと作り直しになる）。
   useEffect(() => {
     if (at == null || at < 1) return;
-    const row = dayOf[mainLegs[at]];
     document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
-      el.toggleAttribute("data-now", !!row && el.id === row);
+      const on = !!nowRow && el.id === nowRow;
+      el.toggleAttribute("data-now", on);
+      // 旅程から引いただけの日は「きょう」。本人の字があるときだけ「いま、ここ」
+      el.toggleAttribute("data-plan", on && !sure);
     });
-  }, [at, mainLegs, dayOf]);
+  }, [at, nowRow, sure]);
 
   // いま走っているのが何本目かを、下の面にも配る。
   // 越えた日の「まだ決めていないこと」は、そこで閉じる（`here.ts`）。
@@ -196,23 +274,65 @@ export default function TripNow({
     setHereSeq(i >= 0 ? i : null);
   }, [at, mainLegs, legOrder]);
 
-  const last = stops.length - 1;
   const departed = left != null && left <= 0;
   /* 着いたあとは、いる場所がどこであっても終点にいるものとして数える。
      友だちの家に約1週間いるので、そのあいだに街を離れることもある。
      そこで「ストックホルムまで、数えています」に戻ったら、旅が
      終わっていないことになってしまう。 */
   const idx = arrivedOn ? last : (at ?? (departed ? null : 0));
-  const arrived = idx === last;
+  /**
+   * 着いた。**島から届いた事実か、本人の字で終点にいるときだけ。**
+   *
+   * 旅程の日付だけで「着いた」と言わない。9月20日になったからといって
+   * 着いているとは限らないし、着いたことは本人が島に一度押せば届く。
+   */
+  const arrived = idx === last && sure;
+  /** 旅程では、もう終点にいる日。**着いたとは言えない。** */
+  const goalByPlan = idx === last && !sure;
 
   // 残りの距離。まだ通っていない区間の、親指で進むぶんを足す。
   const leftKm = stops.slice((idx ?? 0) + 1).reduce((a, b) => a + (b.hitch ?? 0), 0);
+  /**
+   * 親指で進むぶんが、もう残っていない。**「ストックホルムまで 0km」と言わない。**
+   *
+   * タリンから先は船が2本（`content/nordic.ts` の ROUTE）。数えているのは
+   * ヒッチハイクの距離なので、タリンに立った時点で 0 になる。まだ2日あるのに
+   * 「あと0km」と出ていた（本人が「タリン」と打った日に出る、前からの姿）。
+   */
+  const ferryLeft = !arrived && !goalByPlan && idx != null && idx < last && leftKm === 0;
 
   const now = idx != null ? stops[idx] : null;
-  /** いま走っている日。出発前と、着いたあとは無い。 */
-  const nowDay = idx != null && idx >= 1 && idx < last ? dayOf[mainLegs[idx]] : null;
   const next = idx != null && idx < last ? stops[idx + 1] : null;
   const d = left != null && left > 0 ? Math.floor(left / 1000) : 0;
+
+  /**
+   * 本人が、いま出している街とは別の街を打っている。**その字をそのまま出す。**
+   *
+   * 旅程から外れるのはヒッチハイクではふつうに起きる（足止め・寄り道）。
+   * 打ってあるのに旅程の街で上書きしたら、また画面が嘘をつく。
+   */
+  const off = !arrivedOn && !!place && !(now && samePlace(place, now.name));
+  /**
+   * 出しているのが、**旅程から引いただけの街**か。
+   *
+   * そのときだけ「きょうは」。本人の字も島からの事実もあれば「いま」、
+   * どちらも無く旅程からも引けなければ、今までどおり「いま 移動中」。
+   */
+  const fromPlan = !place && !arrivedOn && at != null;
+  /** 「いま」に出す字 */
+  const nowName = arrivedOn
+    ? (place ?? stops[last].name)
+    : off
+      ? place!
+      : (now?.name ?? "移動中");
+  /* 国の名前は、出している街と食い違ったら出さない。**着いたあとも街は動く。**
+     旅が終わってティラナにいる日に、`stops[last].country` をそのまま出していて
+     「いま アルバニア・ティラナ / スウェーデン」と書いてあった。
+     ルートの外の街も同じで、打った字にはたいてい国が入っている。 */
+  const nowCountry =
+    off || (arrivedOn && place && !samePlace(place, stops[last].name))
+      ? ""
+      : (now?.country ?? "");
 
   return (
     // 器は紙の正本（`.panel.paper`）をそのまま借りる。
@@ -276,10 +396,18 @@ export default function TripNow({
         ) : (
           <div className="tnow-count is-far">
             <span className="tnow-count-l">
-              {endedOn ? "旅がおわった" : arrived ? "着いた" : "ストックホルムまで"}
+              {endedOn
+                ? "旅がおわった"
+                : arrived
+                  ? "着いた"
+                  : goalByPlan
+                    ? "きょうのよてい"
+                    : ferryLeft
+                      ? "あとは船で"
+                      : "ストックホルムまで"}
             </span>
             <span className="tnow-count-n">
-              {arrived ? (
+              {arrived || goalByPlan || ferryLeft ? (
                 <b>{stops[last].name}</b>
               ) : (
                 <em>
@@ -296,8 +424,20 @@ export default function TripNow({
                        いつ着いたのかが旅のあとに読む人に分からない。
                        **旅はまだ終わっていない**ので、発つ日も添える。
                        会えたかどうかは書かない（`docs/nordic-fund.md` 1章）。 */
-                    `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、9月27日に発ちます`
-                  : `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`}
+                    `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、${when(until)}に発ちます`
+                  : goalByPlan
+                    ? /* 旅程ではもう着いている日。**着いたとは言わない。**
+                         着いたことは本人が島に押せば届く（`arrivedOn`）。 */
+                      `${when(arriveOn)}に着いて、${when(until)}に発つよてい。ここから7泊`
+                    : ferryLeft
+                      ? sure
+                        ? `親指で進むぶんは、ここまで。ぜんぶで ${hitchKm.toLocaleString()}km`
+                        : `よていでは、ここから先は船。ぜんぶで ${hitchKm.toLocaleString()}km`
+                      : sure
+                        ? `会いたい人がいる街まで、親指で進むぶん。ぜんぶで ${hitchKm.toLocaleString()}km`
+                        : /* 旅程から引いた距離。**進んだ距離ではない。**
+                             乗せてもらえなければその日は進まないので、言い切らない。 */
+                          `よていどおりなら、会いたい人がいる街まで。ぜんぶで ${hitchKm.toLocaleString()}km`}
             </span>
             {!arrived && (
               <span className="tnow-bar" aria-hidden>
@@ -310,18 +450,19 @@ export default function TripNow({
 
       {/* いま どこにいて、つぎ どこへ向かうのか */}
       <div className="tnow-pair">
-        <div className="tnow-at">
-          <i>いま</i>
+        <div className={`tnow-at${fromPlan ? " is-plan" : ""}`}>
+          {/* **「いま」と「きょうは」を、同じ強さで言わない。**
+              本人が打った字か、島から届いた事実（着いた日）で押さえられている
+              ときだけ「いま」。旅程の日付から引いただけの日は「きょうは」。
+              ヒッチハイクなので、乗せてもらえなければその日は進まない。 */}
+          <i>{fromPlan ? "きょうは" : "いま"}</i>
           {/* 着いたあとも、いる街は動く（友だちの家に約1週間）。
               **そこは島が言っているほうを出す。** 終点に着いたことは
               上の大きい字がもう言っているので、ここまで
               「いま ストックホルム → ここまで ストックホルム」と
               同じ名前を2回並べても、分かることが1つも増えない。 */}
-          <b>{arrivedOn ? (place ?? stops[last].name) : now ? now.name : (place ?? "移動中")}</b>
-          {/* 国の名前は、いる街と食い違ったら出さない。**着いたあとも街は動く。**
-              旅が終わってティラナにいる日に、`stops[last].country` をそのまま
-              出していて「いま アルバニア・ティラナ / スウェーデン」と書いてあった。 */}
-          <em>{arrivedOn && place && !samePlace(place, stops[last].name) ? "" : (now?.country ?? "")}</em>
+          <b>{nowName}</b>
+          <em>{nowCountry}</em>
         </div>
         <span className="tnow-go" aria-hidden>
           <svg viewBox="0 0 40 24" width="32" height="19">
@@ -340,7 +481,7 @@ export default function TripNow({
               すぐ左に「移動中」と書いてあるのに、右で旅が終わったことになる
               （実測：旅の4日目に「いま 移動中 → ここまで ストックホルム」）。
               分かっていないときは、めざす先だけを言う。 */}
-          <i>{next ? "つぎ" : arrived ? "ここまで" : "めざす"}</i>
+          <i>{next ? "つぎ" : arrived || goalByPlan ? "ここまで" : "めざす"}</i>
           <b>{next ? next.name : stops[last].name}</b>
           <em>{next ? next.how : "会いたい人がいる街。友だちの家に7泊"}</em>
         </div>
@@ -359,8 +500,8 @@ export default function TripNow({
         {/* 出る前は旅程表の頭へ。出たあとは**今日の行へ**。
             旅の途中に来た人がまず見たいのは「今日どこにいるか」で、
             それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。 */}
-        <a className="tnow-act is-main" href={nowDay ? `#${nowDay}` : "#plan"}>
-          {nowDay ? "今日のところへ" : "旅のよていを見る"}
+        <a className="tnow-act is-main" href={nowRow ? `#${nowRow}` : "#plan"}>
+          {nowRow ? "今日のところへ" : "旅のよていを見る"}
         </a>
         <a className="tnow-act" href="#map">
           通る道を見る

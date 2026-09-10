@@ -14,7 +14,13 @@
  * ここは、その1字を吸収するためだけの道具。**街の表は持たない**（旅程から
  * 導出されたものが `content/nordic.ts` にある。`docs/island-misses.md` #3）。
  * 文字を寄せるところだけを引き受けて、突き合わせる相手は呼ぶ側が渡す。
+ *
+ * 打たれた字が**いつのものか**を見る `placeOutdated` も、ここに置いてある。
+ * 字を読む話なので同じ道具箱でよく、`lib/stay.ts` に置いておくと国の表まで
+ * 旅の面の JS に付いてくる。
  */
+
+import { chapterNow, chapterSpan } from "@/content/chapters";
 
 /**
  * 突き合わせるための形にそろえる。
@@ -69,4 +75,28 @@ export function pickPlace<T>(
     }
   }
   return best;
+}
+
+/**
+ * 人が書いた「いまどこ」が、**いまの旅より前に書かれたまま**か。
+ *
+ * `/island-api/state` の `current.place`（「ジョージア・トビリシ」）は
+ * あやとが手で書く欄で、**旅の17日間、ヒッチハイクの途中では書き替えられない。**
+ * 書き替えられないあいだ、島は「いまジョージアにいます」と言い続ける。
+ * 旅の8日目の画面で、いちばん大きい絵がジョージアの国旗だった。
+ *
+ * **「人が書く欄だから直せない」ではない。** 直せないのは中身で、
+ * **古くなったものをそのまま「いま」として出すかどうかは、こちらが決めること。**
+ *
+ * 判定は、便りを書いた日（`current.updatedAt`）といまの章の始まり。
+ * 章が変わるより前に書かれていれば、その場所はもう「いま」ではない。
+ * 日付が読めないものも、古いものとして扱う（読めないことを「新しい」にしない）。
+ */
+export function placeOutdated(updatedAt: string | undefined, now: Date = new Date()): boolean {
+  const began = chapterSpan(chapterNow(now), now).from;
+  if (began == null) return false;
+  if (!updatedAt) return true;
+  // その日いっぱいまでを「その日に書いた」とみなす
+  const t = Date.parse(`${updatedAt}T23:59:59+09:00`);
+  return Number.isNaN(t) || t < began;
 }
