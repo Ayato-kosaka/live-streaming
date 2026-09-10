@@ -471,3 +471,89 @@
   font-weight: 900;
   color: var(--ink);
 }
+
+/* =========================================================
+   貼った写真を1枚消す（`components/cards/DropPhoto.tsx`）
+   **あやとにだけ出る。** ここでやることは「入れて、持って帰る」なので、
+   消す道はいちばん下でいちばん静かにしておく。板にしない——板にすると、
+   本筋（「ほぞんする」）と同じ強さで並んでしまう。
+   ========================================================= */
+.akd-drop {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--pg-rule);
+}
+/* 畳んでいるときは字1本。48px は高さで取る（`docs/island-design.md` 3の2） */
+.akd-drop-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  /* 赤くしない。畳んでいるあいだは、まだ何も起きない */
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* 開いたら、そこだけ地を変えて「いま別のことを聞かれている」と分かるように */
+.akd-drop.is-ask {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: var(--bw-2) solid var(--accent-deep);
+  border-radius: var(--r-3);
+  background: color-mix(in srgb, var(--accent-deep) 7%, var(--paper));
+}
+.akd-drop-say {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+}
+.akd-drop-say b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.akd-drop-say i {
+  font-size: var(--fs-note);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.akd-drop-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.akd-drop-no,
+.akd-drop-yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+/* やめるほうを本筋にする。**戻せない側を、いちばん押しやすい形にしない。** */
+.akd-drop-no {
+  border: var(--bw-2) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop);
+}
+.akd-drop-no:active { transform: translateY(6px); box-shadow: none; }
+/* 消すほうは字だけ。押せることは分かるが、指が先に行く形にはしない */
+.akd-drop-yes {
+  border: var(--bw-2) solid transparent;
+  background: none;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.akd-drop-no:disabled,
+.akd-drop-yes:disabled { opacity: 0.6; box-shadow: none; }

@@ -109,6 +109,18 @@ export type PhotoGroup = {
   day: string;
   /** 何人ぶんか。**絵に結びついた人だけ**が入る（`withIcons` を通ったもの） */
   cards: ShownCard[];
+  /**
+   * この写真からできたカードの、本当の枚数。**`cards.length` とは違う。**
+   *
+   * `cards` に入るのは絵に結びついた人だけで、絵の無い人のぶんは落ちている。
+   * 並べるぶんにはそれでよいが、**消す前に「◯枚あります」と言うときに
+   * 落ちたあとの数を言うと嘘になる。** サーバーは絵の有無に関わらず
+   * 全部消す（`functions/src/islandApi.ts` の `dropCardsOfImage`）。
+   *
+   * カードの口が読めていないときは入らない。
+   * **入っていないことを「0枚」と読まないこと**（#34）。
+   */
+  cardCount?: number;
 };
 
 /** 1日ぶんの棚。1日に写真は何枚でも貼られる。 */
@@ -213,10 +225,16 @@ const newest = (a: { day: string; at: number }, b: { day: string; at: number }) 
  * 写真とカードを1つにまとめて、日ごとの棚にする。
  *
  * 写真の口が落ちてもカードだけで並ぶし、逆も同じ。どちらも空なら空の棚。
+ *
+ * @param photos 写真の口から来たぶん
+ * @param cards 絵に結びついた人のカード（並べるのはこちら）
+ * @param counts 写真ごとの**本当の**カードの枚数（絵の無い人も数えたもの）。
+ *   渡さないと `cardCount` は入らない。**入らないことと0枚は別**
  */
 export function shelves(
   photos: NordicPhoto[],
   cards: ShownCard[],
+  counts?: Map<string, number>,
 ): DayShelf[] {
   const at = new Map<string, PhotoSheet>();
   const order: PhotoSheet[] = [];
@@ -234,6 +252,13 @@ export function shelves(
       order.push(g);
     }
     g.cards.push(c);
+  }
+  /* 本当の枚数は、絵で絞る前に数えたものしか知らない。**数えられた写真にだけ
+     入れる。** 全部に 0 を置くと、カードの口が落ちた日に「0枚」と言い切る */
+  if (counts) {
+    // 表に無い写真は「まだ誰も投げていない」＝0枚。**渡された表そのものが、
+    // カードの口を読めた証。** 読めていないときは counts ごと渡ってこない
+    for (const g of order) g.cardCount = counts.get(g.photoId) ?? 0;
   }
   order.sort(newest);
   const days = new Map<string, DayShelf>();
@@ -261,6 +286,14 @@ export type WallState = {
   cardsRead: Read;
   /** 貼れた1枚を、取り直さずにその場で並べる（あやとだけ） */
   add: (p: NordicPhoto) => void;
+  /**
+   * 消えた1枚を、取り直さずにその場で落とす（あやとだけ）。
+   *
+   * **読み直しに行かせない。** 消したのはこちらなので、消えたことは
+   * もう分かっている。細い電波で往復を増やすと、消えた絵がしばらく
+   * 残ったままになる。カードも一緒に落とす（サーバーもそうしている）。
+   */
+  drop: (photoId: string) => void;
   /** 落ちたぶんだけ読み直す。「もう一度よみこむ」の札から呼ぶ */
   reload: () => void;
 };
@@ -285,7 +318,10 @@ export type WallState = {
  */
 export function useCardWall(): WallState {
   const [photos, setPhotos] = useState<NordicPhoto[] | null>(null);
-  const [cards, setCards] = useState<ShownCard[] | null>(null);
+  /* **絵で絞る前のまま持つ。** 絞ってしまうと、絵の無い人のぶんが数えられず、
+     消す前の「カードが◯枚あります」が少なく出る（`PhotoGroup.cardCount`）。
+     並べるのに使うぶんは、出すときに `withIcons` を通す。 */
+  const [cards, setCards] = useState<IslandCard[] | null>(null);
   const [photosRead, setPhotosRead] = useState<Read>("wait");
   const [cardsRead, setCardsRead] = useState<Read>("wait");
   /** 落ちたぶんの読み直し。口ごとに間隔を持つ（片方だけ落ちるため） */
@@ -338,7 +374,7 @@ export function useCardWall(): WallState {
       withRead(getCards())
         .then((r) => {
           if (!alive.current) return;
-          setCards(withIcons(r?.cards ?? []));
+          setCards(r?.cards ?? []);
           now.current.cards = "ok";
           setCardsRead("ok");
           again.current.cards = 0;
@@ -385,13 +421,27 @@ export function useCardWall(): WallState {
     [],
   );
 
+  /* 消したぶんを、その場で落とす。**読み直しに行かない。**
+     カードも一緒に消える（サーバーの `dropCardsOfImage` と同じ）ので、
+     ここでも一緒に落とす。残すと、絵の無い写真を指したカードが並ぶ。 */
+  const drop = useCallback((photoId: string) => {
+    setPhotos((cur) => cur?.filter((p) => p.id !== photoId) ?? cur);
+    setCards((cur) => cur?.filter((c) => c.photoId !== photoId) ?? cur);
+  }, []);
+
   /* 片方でも読めたら、読めたぶんで並べる。**両方 `wait` のあいだだけ null。** */
-  const days = useMemo(
-    () =>
-      photos || cards ? shelves(photos ?? [], cards ?? []) : null,
-    [photos, cards],
-  );
-  return { days, photosRead, cardsRead, add, reload: () => load(true) };
+  const days = useMemo(() => {
+    if (!photos && !cards) return null;
+    /* 本当の枚数は、絵で絞る前にしか数えられない。**カードの口が読めた
+       ときだけ表を作る**（読めていないのに「0枚」と言わないため）。 */
+    let counts: Map<string, number> | undefined;
+    if (cards) {
+      counts = new Map<string, number>();
+      for (const c of cards) counts.set(c.photoId, (counts.get(c.photoId) ?? 0) + 1);
+    }
+    return shelves(photos ?? [], withIcons(cards ?? []), counts);
+  }, [photos, cards]);
+  return { days, photosRead, cardsRead, add, drop, reload: () => load(true) };
 }
 
 /* ---------------- 立ち位置 ----------------

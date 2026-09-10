@@ -55,7 +55,7 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
  * 3章の3の例外）。押せないマスをこの並びに混ぜないこと。
  */
 export default function CardWall({ plans }: { plans: PlanDays }) {
-  const { days, photosRead, cardsRead, add, reload } = useCardWall();
+  const { days, photosRead, cardsRead, add, drop, reload } = useCardWall();
   const [open, setOpen] = useState<PhotoGroup | null>(null);
   /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
      （`components/nordic/log.ts` の `useOwner`）。 */
@@ -151,7 +151,17 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       </Longer>
 
       {open && (
-        <CardSheet group={open} plans={plans[open.day]} onClose={() => setOpen(null)} />
+        <CardSheet
+          group={open}
+          plans={plans[open.day]}
+          onClose={() => setOpen(null)}
+          /* 消えたら、その場で棚から落として紙を閉じる。**読み直しに行かない。**
+             消したのはこちらなので、消えたことはもう分かっている。 */
+          onDropped={(id) => {
+            drop(id);
+            setOpen(null);
+          }}
+        />
       )}
     </>
   );
