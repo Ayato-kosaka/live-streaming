@@ -46,6 +46,15 @@ const LABEL: Record<string, { dx: number; dy: number; at: "start" | "middle" | "
   stockholm: { dx: -28, dy: 6, at: "end" },
 };
 
+/**
+ * 「いま ここ」の札を、街の真上からどれだけ横へずらすか。
+ *
+ * 既定は真上（0）。**隣の街の名札とぶつかる街だけ**手で逃がす。
+ * タリンとヘルシンキは 45.8 しか離れていないので、タリンの札を真上に置くと
+ * ヘルシンキの名札が「シンキ」だけになる（撮って確認）。
+ */
+const HERE_DX: Record<string, number> = { tallinn: -70 };
+
 /** 区間の線の描き方。太さだけここで決めて、色は CSS 変数に逃がす。 */
 const LEG: Record<string, { cls: string; width: number; dash?: string }> = {
   hitch: { cls: "is-hitch", width: 12 },
@@ -431,9 +440,27 @@ export default function RouteMapSvg({ here }: { here?: string }) {
                 </g>
               </g>
             )}
-            {/* いる場所が分かるのは画面が出たあとのこともあるので、
-                札は全部の街に置いて、出すかどうかは CSS に任せる。 */}
-            <g className="nm-here">
+          </Link>
+        );
+      })}
+
+      {/* ---- いま ここ ---------------------------------------------- */}
+      {/* **街の名札より上に描く。** 札を街の `<Link>` の中に置いていたころ、
+          リガの札はストックホルムの「ここに、会いたい人がいる」に、タリンの札は
+          ヘルシンキの名札に、それぞれ左右を隠されていた（SVG はあとに書いたものが
+          上になる）。人が「いまどこ」を打たなかった日でも札は毎日出るように
+          なったので、隠れているのが見えるのは毎日になる。
+          いる場所が分かるのは画面が出たあとのこともあるので、札は全部の街に
+          置いて、出すかどうかは `TripNow` が `is-now` を付けて決める。 */}
+      <g className="nm-heres" aria-hidden>
+        {cities.map((c) => {
+          const r = PIN[c.kind] ?? 9;
+          return (
+            <g
+              key={c.id}
+              className={`nm-here${here === c.id ? " is-now" : ""}`}
+              data-id={c.id}
+            >
               {/* 波を打たせない。SMIL の `<animate>` を22の街ぶん置いていたが、
                   SMIL は1コマごとに SVG まるごとの焼き直しを起こす。
                   `display: none` の街のぶんも走るので、**誰も触っていない6秒で
@@ -442,16 +469,32 @@ export default function RouteMapSvg({ here }: { here?: string }) {
                   街の名前の上には金色の「いま ここ」の札が既に出ているので、
                   同じことを光る輪でもう一度言っている。輪は置いたまま止める。 */}
               <circle cx={c.x} cy={c.y} r={r + 14} fill="none" />
-              <g className="nm-chip is-here" transform={`translate(${c.x} ${c.y - r - 46})`}>
+              {/* 札は2枚。**旅程の日付から引いただけの街を「いま ここ」と言わない**
+                  （`components/nordic/where.ts`）。本人が打った字で押さえられて
+                  いれば「いま ここ」、予定から引いただけなら「きょう ここ」。
+                  出すかどうかは `.nmap[data-plan]` で切り替える。 */}
+              <g
+                className="nm-chip is-here is-sure"
+                transform={`translate(${c.x + (HERE_DX[c.id] ?? 0)} ${c.y - r - 46})`}
+              >
                 <rect x="-80" y="-25" width="160" height="50" rx="25" />
                 <text x="0" y="9" textAnchor="middle">
                   いま ここ
                 </text>
               </g>
+              <g
+                className="nm-chip is-here is-plan"
+                transform={`translate(${c.x + (HERE_DX[c.id] ?? 0)} ${c.y - r - 46})`}
+              >
+                <rect x="-88" y="-25" width="176" height="50" rx="25" />
+                <text x="0" y="9" textAnchor="middle">
+                  きょう ここ
+                </text>
+              </g>
             </g>
-          </Link>
-        );
-      })}
+          );
+        })}
+      </g>
 
       {/* ---- 方位 -------------------------------------------------- */}
       {/* 正角円錐なので真北は場所で傾く。傾きも焼き込んである。 */}

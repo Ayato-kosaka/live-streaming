@@ -6,6 +6,16 @@ import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
 
 /**
+ * 「2024-09-11」→「2024年9月11日」。
+ *
+ * 書き出しは UTC で走るので、`new Date()` に投げて `getDate()` を読むと日がずれる。
+ * 月日は文字列から取る（`components/nordic/Days.tsx` と同じ理由）。
+ */
+function when(iso: string) {
+  return `${iso.slice(0, 4)}年${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+}
+
+/**
  * 名刺。「いま」の章の顔。
  *
  * 切り抜きから飛んできた人が最初に知りたいのは3つだけ
@@ -72,9 +82,16 @@ export default function Meishi() {
         </Link>
       </div>
 
-      {/* 日本を出てからの日数は焼き込めない。Days が画面の出たあとで数え直す。 */}
+      {/* 日本を出てからの日数は焼き込めない。Days が画面の出たあとで数え直す。
+
+          **日付は `PROFILE.leftJapan`（日本を出た日）から出す。**
+          ここだけ `STATS_FALLBACK.since`（＝**初回の配信日** 2024-10-28）を
+          使っていて、表紙が「10月28日に日本を出て 685日目」、`/about` と `/map` が
+          「9月11日／732日」と、同じことを47日ちがえて言っていた。
+          `content/site.ts` の冒頭にその反省が書いてあるのに、表紙だけ残っていた。
+          字も日付から作る。手で書くと、また片方だけ古くなる。 */}
       <p className="mei-since">
-        2024年10月28日に日本を出て、きょうで <Days from={s.since} /> 日目。
+        {when(PROFILE.leftJapan)}に日本を出て、きょうで <Days from={PROFILE.leftJapan} /> 日目。
       </p>
 
       <div className="mei-gos">
