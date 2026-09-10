@@ -156,12 +156,14 @@ if (process.env.ME === "1") {
     await ctx.close();
   }
   /* キャラクターの無い人（あやと）の、YouTube の顔写真。
-     **ここも切ってはいけない。** 「顔写真は正方形だから丸く切ってよい」で
-     残していたら、あやと自身の絵が全身のイラストで足が切れていた
-     （`docs/island-misses.md` #20）。
+     **こちらは丸で切るのが正しい。** 一度「切らない」に揃えたら、
+     あやとから「円の中に正方形になっちゃってる」（2026-09-10）。
+     不透明な真四角を縮めて丸に入れると、四角が浮いて見える。
+     不透明な絵を丸に入れる方法は、丸で切り抜く以外に無い。
 
-     顔のアップの写真でも破綻しないかは、**真四角の絵を差し込んで**見る。
-     四隅まで色のある絵なら、1画素でも円の外に出れば差分に出る。 */
+     つまりここは**切れているのが合格**。判定の向きを、いまの目的に合わせる
+     （`docs/island-standards.md` 4・13）。見るのは「四角が見えていないか」で、
+     真四角の絵を差し込んで、**丸の外にはみ出していないこと**を確かめる。 */
   const FACE = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
     <rect width="200" height="200" fill="#2f6f8f"/>
     <circle cx="100" cy="104" r="82" fill="#f0c9a4"/>
@@ -212,9 +214,15 @@ if (process.env.ME === "1") {
   const sizes = shots.filter((x) => x.size > 0).map((x) => x.size).sort((x, y) => x - y);
   const lo = sizes[0], hi = sizes[sizes.length - 1];
   for (const x of shots) {
-    console.log(`   ${String(x.n || "顔").padStart(2)}  ${x.size ? x.size.toFixed(1).padStart(5) + "px" : "     －"}  ${x.clipped ? "★切れている" : "収まっている"}  ${x.id}`);
+    /* 顔写真（`n` を持たない行）は、丸で切るのが正しい。
+       キャラクターだけ「切れている」を失点として出す。 */
+    const ok = x.n ? (x.clipped ? "★切れている" : "収まっている") : (x.clipped ? "丸に満ちている" : "★四角が見えている");
+    console.log(`   ${String(x.n || "顔").padStart(2)}  ${x.size ? x.size.toFixed(1).padStart(5) + "px" : "     －"}  ${ok}  ${x.id}`);
   }
-  console.log(`\n看板  ${shots.filter((x) => x.size > 0).length}人  描かれた大きさ ${lo.toFixed(1)}〜${hi.toFixed(1)}px  ばらつき ${(hi / lo).toFixed(2)}倍  切れている ${cut}人`);
+  /* 失点は**キャラクターの切れ**だけ。顔写真の切れは正しい姿なので数えない */
+  const cutChara = shots.filter((x) => x.n && x.clipped).length;
+  const sqPhoto = shots.filter((x) => !x.n && !x.clipped).length;
+  console.log(`\n看板  ${shots.filter((x) => x.size > 0).length}人  描かれた大きさ ${lo.toFixed(1)}〜${hi.toFixed(1)}px  ばらつき ${(hi / lo).toFixed(2)}倍  キャラクターの切れ ${cutChara}人  顔写真に四角が見えている ${sqPhoto}件`);
   const ms = shots.filter((x) => x.mh > 0).map((x) => x.mh).sort((x, y) => x - y);
   if (ms.length) {
     console.log(`じぶんのこと（.mh-chara）  ${ms.length}人  描かれた大きさ ${ms[0].toFixed(1)}〜${ms[ms.length - 1].toFixed(1)}px  ばらつき ${(ms[ms.length - 1] / ms[0]).toFixed(2)}倍`);
