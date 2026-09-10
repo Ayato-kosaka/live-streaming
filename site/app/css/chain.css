@@ -478,8 +478,11 @@
    立体は明るさの差だけで見せる（輪郭線を引かない） */
 .dio-wall { fill: #e8cf9c; }
 .dio-wall-lo { fill: #c8a86f; }
-.dio-roof { fill: #c98a52; }
-.dio-roof-lo { fill: #a86e3c; }
+/* 屋根。右の面がいちばん明るく、左、奥、の順に落とす
+   （`docs/island-design.md` 2章の上からの光） */
+.dio-roof { fill: #e2a869; }
+.dio-roof-lo { fill: #c68a4a; }
+.dio-roof-far { fill: #a97239; }
 
 
 

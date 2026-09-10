@@ -287,58 +287,115 @@ function Build({ r, y, stage }: { r: number; y: number; stage: BuildStage }) {
     );
   }
 
-  const H = r * 0.36; // 立ち上がりの高さ
+  /* --- 建つもの ---
+     **100% の家（`hut-home`）を測って、そこから引き算で作る。**
+     50% を独立に組んだら完成品より大きい家が建って、「建設中のほうが大きい」
+     という絵になった（あやとの指摘 2026-09-10）。寸法は完成品の不透明画素を
+     1行ずつ数えて出してある（`hut-home.webp` 物体 258×263px）:
+
+       軒は上から 45.2%、底面の左右の角は 71%、いちばん下（手前の角）が 100%。
+       つまり **軒の高さ = 全高の 25.8%、てっぺん = 全高の 71%、
+       見かけの半幅 = 全高の 48%、底面の半奥行き = 全高の 29%。**
+       全高は 100% に渡している `r * 0.5`。
+
+     **向きも 100% に合わせる。** あの絵は角をこちらに向けた見え方で、
+     左右2面の壁と、2枚の屋根が見えている。**別の向きで組むと、
+     隣に並べたときに別の建物に見える。**
+
+     前に「頂点を1点に集める」形で外した（開いた段ボール箱に見えた）が、
+     原因は寄棟にしたことではなく、**頂点を奥の角の上に置いていた**こと。
+     まん中の真上に戻すと、手前の角へ下りる稜線がまっすぐ出て、屋根に見える。 */
+  const TH = r * 0.5; // 100% と同じ全高
+  /* 100% の絵から出した2本の地面の軸。角をこちらに向けた見え方。
+     見かけの半幅 0.481 = 0.60 × (棟方向 + 桁方向)、
+     手前の角の落ち 0.29 = 0.362 × (同) になるように取ってある */
+  const AX = 0.6;
+  const AY = 0.362;
+  const SA = 0.5 * TH; // 棟にそった半分の長さ
+  const SB = 0.302 * TH; // それと直角の半分の長さ
+  const OV = 1.04; // 軒の出
+  const WALL = 0.258 * TH; // 軒の高さ。**100% と同じ**
+  /* 棟の高さ。**100% の「いちばん高いところ」に合わせる。**
+     棟は奥へ上がっていくので、奥の端は棟の高さ＋SA*AY まで上がる。
+     0.71 をそのまま棟の高さにすると、そのぶん背が高くなって
+     完成品より 19% 大きい家が建つ（測って分かった） */
+  const TOP = 0.71 * TH - SA * OV * AY;
+  // 手前の角が、100% の家の足元と同じところに来るように置く
+  const yb = y0 - r * 0.025;
+
+  type P = [number, number];
+  /** 棟方向 u・桁方向 v・高さ z を、画面の点にする */
+  const pt = (u: number, v: number, z: number): P => [
+    (u + v) * AX,
+    yb + (-u + v) * AY - z,
+  ];
+  const pg = (...pts: P[]) => pts.map((q, k) => `${k ? "L" : "M"}${f(q[0])},${f(q[1])}`).join("") + "Z";
+
+  // 足元と、壁のてっぺん
+  const bL = pt(-SA, -SB, 0);
+  const bN = pt(-SA, SB, 0);
+  const bR = pt(SA, SB, 0);
+  const bF = pt(SA, -SB, 0);
+  const tL = pt(-SA, -SB, WALL);
+  const tN = pt(-SA, SB, WALL);
+  const tR = pt(SA, SB, WALL);
+  const tF = pt(SA, -SB, WALL);
+  // 軒
+  const eL = pt(-SA * OV, -SB * OV, WALL);
+  const eN = pt(-SA * OV, SB * OV, WALL);
+  const eR = pt(SA * OV, SB * OV, WALL);
+  const eF = pt(SA * OV, -SB * OV, WALL);
+  // 棟。両端は軒まで出す
+  const kA = pt(-SA * OV, 0, TOP);
+  const kB = pt(SA * OV, 0, TOP);
+  // 妻のてっぺん（壁の面の上）
+  const gA = pt(-SA, 0, TOP);
 
   if (stage === "frame") {
-    // 鉄筋。**四隅の柱と、上の梁だけ。** 壁も屋根もまだ無い
+    /* 鉄筋。**同じ家の骨組みだけ。** 柱・軒桁・棟木・垂木。
+       棟木が1本通っているので、この時点で屋根の向きと形が読める */
+    const posts: [P, P][] = [
+      [bL, tL],
+      [bN, tN],
+      [bR, tR],
+      [bF, tF],
+    ];
+    const rafters: [P, P][] = [
+      [tL, kA],
+      [tN, kA],
+      [tR, kB],
+      [tF, kB],
+    ];
     return (
       <g className="dio-build">
         {plot}
-        <path d={poly(quad, H)} className="dio-rebar-line" />
-        <path d={poly(quad, H * 0.52)} className="dio-rebar-line" />
-        {quad.map(([px, py], k) => (
-          <line key={k} x1={px} y1={py} x2={px} y2={py - H} className="dio-rebar" />
+        <g className="dio-house">
+        <path d={pg(tL, tN, tR, tF)} className="dio-rebar-line" />
+        {[...posts, ...rafters].map(([m, n], k) => (
+          <line key={k} x1={m[0]} y1={m[1]} x2={n[0]} y2={n[1]} className="dio-rebar" />
         ))}
+        {/* 棟木 */}
+        <line x1={kA[0]} y1={kA[1]} x2={kB[0]} y2={kB[1]} className="dio-rebar" />
+        </g>
       </g>
     );
   }
 
   /* 壁と屋根。**まだ塗っていないので木の色のまま。**
-     手前の2面だけを見せて、奥の2面は描かない（隠れているので） */
-  /* 屋根。**てっぺんは屋根のまん中の真上。** 奥の角の上に置くと、傾いた三角錐に
-     なって家ではなくテントに見える。勾配は寝かせて、軒（EAVE）を壁より外へ出す。
-     出さないと箱に蓋をしただけの形になる。 */
-  const R = r * 0.11;
-  const EAVE = 1.26;
-  const rw = w * EAVE;
-  const rh = h * EAVE;
-  const yR = y0 - H;
-  const Wr: [number, number] = [-rw, yR];
-  const Sr: [number, number] = [0, yR + rh];
-  const Er: [number, number] = [rw, yR];
-  const A: [number, number] = [0, yR - R];
+     見えているのは、手前の桁面の壁・手前の妻・屋根2枚。
+     明るさの差だけで立体を見せる（`docs/island-design.md` 2章「輪郭線を引かない」） */
   return (
     <g className="dio-build">
       {plot}
-      {/* 左の面（暗いほう）と右の面。**明るさの差だけで立体を見せる**
-          （`docs/island-design.md` 2章「輪郭線を引かない」） */}
-      <path
-        d={`M${f(W[0])},${f(W[1])}L${f(S[0])},${f(S[1])}L${f(S[0])},${f(S[1] - H)}L${f(W[0])},${f(W[1] - H)}Z`}
-        className="dio-wall-lo"
-      />
-      <path
-        d={`M${f(S[0])},${f(S[1])}L${f(E[0])},${f(E[1])}L${f(E[0])},${f(E[1] - H)}L${f(S[0])},${f(S[1] - H)}Z`}
-        className="dio-wall"
-      />
-      {/* 屋根。手前の2枚だけ描く（奥の2枚は隠れている） */}
-      <path
-        d={`M${f(Wr[0])},${f(Wr[1])}L${f(Sr[0])},${f(Sr[1])}L${f(A[0])},${f(A[1])}Z`}
-        className="dio-roof-lo"
-      />
-      <path
-        d={`M${f(Sr[0])},${f(Sr[1])}L${f(Er[0])},${f(Er[1])}L${f(A[0])},${f(A[1])}Z`}
-        className="dio-roof"
-      />
+      <g className="dio-house">
+      {/* 奥の流れ。棟の向こう側。上に少しだけ覗く */}
+      <path d={pg(eL, eF, kB, kA)} className="dio-roof-far" />
+      {/* 手前の妻（三角に立ち上がる壁）と、手前の桁面 */}
+      <path d={pg(bL, bN, tN, gA, tL)} className="dio-wall-lo" />
+      <path d={pg(bN, bR, tR, tN)} className="dio-wall" />
+      {/* 手前の流れ */}
+      <path d={pg(eN, eR, kB, kA)} className="dio-roof" />
+      </g>
     </g>
   );
 }
