@@ -42,6 +42,9 @@ name: 管理スクリプトを実行
 #   functions_log    … 勝手に動く Functions のログを読む {"name":"collectLiveChat"}
 #                      「溜まっていない」の原因（鍵・トークン・配信なし）を
 #                      区別するのに要る。Firestore を数えるだけでは分からない
+#   live_probe       … その Cloud Logging が読めないとき（#236 の IAM 待ち）に、
+#                      collectLiveChat と同じ順で鍵→トークン→配信→コメントを
+#                      自分でなぞって、どこで止まるかを見る。**読むだけ**
 on:
   workflow_dispatch:
     inputs:
