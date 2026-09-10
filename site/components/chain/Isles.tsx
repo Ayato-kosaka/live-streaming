@@ -157,6 +157,19 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
     () => go(right),
   );
 
+  /* 次の島の予定が、どこまで決まっているか。**日どり（`opensAt`）も見立ての日数
+     （`plannedDays`）も無い島は、行き先しか決まっていない。** そういう島に
+     「0日の予定」「目標5万円」と出すと、決まっていないことを決まったことのように
+     言うことになる（足代の5万円は、北欧へ行くために立てた目標）。
+     建設中の区画も同じ理由で置かない。決まったら欄が埋まって、勝手に出る。 */
+  const planned = !!nextCh && !!(nextCh.opensAt || nextCh.plannedDays);
+
+  /* まだ始まっていない島は、日数を出さない。**「0日」は「0日いた」に読める。**
+     日どりの決まっていない島は日数を持っていないし、予定の日数を持っている島でも、
+     始まる前に「17日」とだけ出せば、もう行ってきた島に見える
+     （次の島は上の枝で「17日の予定」と出る）。 */
+  const begun = chapterSpan(cur, today ?? undefined).from != null;
+
   const st = CHAPTER_STATS[cur.slug];
   const isNow = cur.slug === nowCh.slug;
 
@@ -202,7 +215,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                   /* **いまいる島だけ、渡る先はトップ。** あちらは10軒建って
                      いるので、章の島の作りで描くと模型が嘘をつく */
                   buildings={c.slug === nowCh.slug ? HOME_BUILDINGS : isle.buildings}
-                  stage={c === nextCh ? stage : undefined}
+                  stage={c === nextCh && planned ? stage : undefined}
                 />
               </span>
             </Link>
@@ -261,15 +274,17 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
         <h2 className="atl-name">{cur.name}</h2>
         <p className="atl-note">{cur.note}</p>
         {cur === nextCh ? (
-          <>
-            <p className="atl-nums">
-              <span>
-                <b>{days}</b>日の予定
-              </span>
-            </p>
-            <Fund total={fund?.total ?? null} />
-          </>
-        ) : (
+          planned && (
+            <>
+              <p className="atl-nums">
+                <span>
+                  <b>{days}</b>日の予定
+                </span>
+              </p>
+              <Fund total={fund?.total ?? null} />
+            </>
+          )
+        ) : begun ? (
           <p className="atl-nums">
             {/* 日数を先頭に置く。**島の大きさを決めているのはこれ** */}
             <span>
@@ -289,7 +304,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
               </>
             )}
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );
