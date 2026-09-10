@@ -140,3 +140,39 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
     days: chapterDays(c, now),
   };
 }
+
+/**
+ * 人が書いた「いまどこ」が、**いまの旅より前に書かれたまま**か。
+ *
+ * `/island-api/state` の `current.place`（「ジョージア・トビリシ」）は
+ * あやとが手で書く欄で、**旅の17日間、ヒッチハイクの途中では書き替えられない。**
+ * 書き替えられないあいだ、島は「いまジョージアにいます」と言い続ける。
+ * 旅の8日目の画面で、いちばん大きい絵がジョージアの国旗だった。
+ *
+ * **「人が書く欄だから直せない」ではない。** 直せないのは中身で、
+ * **古くなったものをそのまま「いま」として出すかどうかは、こちらが決めること。**
+ *
+ * 判定は、便りを書いた日（`current.updatedAt`）といまの章の始まり。
+ * 章が変わるより前に書かれていれば、その場所はもう「いま」ではない。
+ * 日付が読めないものも、古いものとして扱う（読めないことを「新しい」にしない）。
+ */
+export function placeOutdated(updatedAt: string | undefined, now: Date = new Date()): boolean {
+  const began = chapterSpan(chapterNow(now), now).from;
+  if (began == null) return false;
+  if (!updatedAt) return true;
+  // その日いっぱいまでを「その日に書いた」とみなす
+  const t = Date.parse(`${updatedAt}T23:59:59+09:00`);
+  return Number.isNaN(t) || t < began;
+}
+
+/**
+ * 「いまどこ」を、人の書いた欄ではなく**旅そのもの**で言う日か。
+ *
+ * 旅に出ていて、かつ人の欄がその旅より前のままのときだけ。
+ * あやとが旅の途中で書き替えたら（「リガ・ラトビア」）、そちらのほうが細かいので
+ * **人の字が勝つ。** ここが返すのは、誰も書けていない日の答え。
+ */
+export function tripAsPlace(updatedAt: string | undefined, now: Date = new Date()): TravelNow | null {
+  const t = travelNow(now);
+  return t && placeOutdated(updatedAt, now) ? t : null;
+}

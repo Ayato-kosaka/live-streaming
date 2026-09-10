@@ -3,12 +3,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getState, type IslandCurrent } from "@/lib/api";
 import { NOW_FALLBACK, LINKS } from "@/content/site";
-import { PLANS, planDaysLeft } from "@/content/plans";
+import { nextPlan, planDaysLeft, planPhase, type PlanPhase } from "@/content/plans";
+import { placeCountry } from "@/content/place";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
-import { stayNow, type StayNow } from "@/lib/stay";
+import { stayNow, travelNow, tripAsPlace, type StayNow, type TravelNow } from "@/lib/stay";
 
 /** 配信は日本時間の22時から、だいたい2〜3時間。 */
 const START_H = 22;
@@ -86,9 +87,15 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   const [clock, setClock] = useState<Clock | null>(null);
   /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [ago, setAgo] = useState<string | null>(null);
-  const [next, setNext] = useState<{ title: string; days: number } | null>(null);
+  const [next, setNext] = useState<{ title: string; days: number | null; phase: PlanPhase } | null>(
+    null,
+  );
   /** いまいる国に、今日で何日目か。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [stay, setStay] = useState<StayNow | null>(null);
+  /** 人の書いた「いまどこ」が古くなった日、かわりに出す旅（`lib/stay.ts`） */
+  const [trip, setTrip] = useState<TravelNow | null>(null);
+  /** いま歩いている旅。**人の字が勝っている日も、旅は進んでいる**（日数の札に使う） */
+  const [travel, setTravel] = useState<TravelNow | null>(null);
   const youtube = LINKS.find((l) => l.id === "youtube")!;
 
   useEffect(() => {
@@ -108,11 +115,16 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
     const tick = () => {
       const now = new Date();
       setClock(readClock(now));
-      const ahead = PLANS.map((p) => ({ p, d: planDaysLeft(p, now) }))
-        .filter((x) => x.d !== null && x.d >= 0)
-        .sort((a, b) => a.d! - b.d!)[0];
-      setNext(ahead ? { title: ahead.p.title, days: ahead.d! } : null);
+      /* いちばん近い企画。**「あと何日」で選ばない。**
+         旅は出発の日を過ぎると日数がマイナスになるので、残り日数で絞ると
+         17日間そのあいだ、いま行っている旅がここから丸ごと落ちる
+         （実測：旅の4日目の `/now` に企画の札が1枚も無い）。
+         いま行っているものを先に出す決めかたは、島の1画面目と同じものを見る
+         （`content/plans.ts` の `nextPlan`）。 */
+      const p = nextPlan(now);
+      setNext(p ? { title: p.title, days: planDaysLeft(p, now), phase: planPhase(p, now) } : null);
       setStay(stayNow(now));
+      setTravel(travelNow(now));
     };
     tick();
     const id = setInterval(tick, 60000);
@@ -126,8 +138,17 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
      上の useEffect に混ぜると、日付が変わるたびに便りを取りに行く輪になる。 */
   useEffect(() => setAgo(wroteAgo(cur.updatedAt, new Date())), [cur.updatedAt]);
 
-  // 場所のテーマが国の slug なら、国旗を添える。文章としては出さない符丁なので、絵にだけ使う
-  const flag = cur.theme && SLUG.test(cur.theme) ? cur.theme : null;
+  /* 「いまどこ」を、人の字で言うか旅で言うか。**便りの日付で決まる**ので、
+     便りが届いたあとにもう一度見る。 */
+  useEffect(() => setTrip(tripAsPlace(cur.updatedAt, new Date())), [cur.updatedAt]);
+
+  /* 国旗は、**人が書いた場所の字**から引く（`content/place.ts`）。
+     島の景色（`theme`）から引いていたころ、景色に入れてよい3つのうち
+     `nordic` は国ではないので、リトアニアの街の上でジョージアの旗が出るか、
+     景色を替えると旗ごと消えるかの2つしかなかった（実測 2026-09-15）。
+     旅を出しているとき（`trip`）はテントの絵が場所を言うので、旗は添えない。 */
+  const here = placeCountry(cur.place);
+  const flag = trip ? null : here?.slug ?? null;
 
   return (
     <>
@@ -136,11 +157,20 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           厚み8pxの板を、押せないまま紙の地に積んでいた
           （`docs/island-review-2` 3章）。 */}
       <section className="panel paper now-hero">
+        {/* **いちばん大きい絵が、いちばん大きい嘘になりうる。**
+            旅に出るとあやとはこの欄を書き替えられないので、書き替えられないあいだ
+            260px のジョージアの国旗が「いまここ」と言い続ける。
+            誰も書けていない日は、旅そのものを出す（`lib/stay.ts` の `tripAsPlace`）。
+            あやとが旅先で書き替えたら、そちらのほうが細かいので人の字が勝つ。 */}
         <b className="now-place">
-          {flag && <Flag slug={flag} size={30} className="now-flag" />}
-          {cur.place}
+          {trip ? (
+            <img className="now-trip-art" src="/sprites/tent.webp" alt="" width={304} height={249} />
+          ) : (
+            flag && <Flag slug={flag} size={30} className="now-flag" />
+          )}
+          {trip ? `${trip.name}のとちゅう` : cur.place}
         </b>
-        <p className="np-word">{cur.word}</p>
+        <p className="np-word">{trip ? `${trip.note}。` : cur.word}</p>
 
         {/* 今夜あるのか、次はいつなのか。開いて1秒で分かるべき2つを、札にして並べる。 */}
         {clock && (
@@ -172,6 +202,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                 <Icon name="external" size={15} className="tile-go" />
               </a>
             )}
+            {/* 旅のあいだだけ。「いまどこ ＝ 北欧周遊のとちゅう」と読んだ人が
+                次に行きたいのはこの島（旅の中身がぜんぶある）。 */}
+            {trip && (
+              <Link className="tile" href={trip.href} prefetch={false}>
+                <img className="tile-icon" src="/sprites/signpost-flags.webp" alt="" />
+                <span className="tile-text">
+                  <b>{trip.name}の島へ</b>
+                  <i>この旅のこと、これから歩く国、旅のしおり</i>
+                </span>
+                <Icon name="right" size={15} className="tile-go" />
+              </Link>
+            )}
             {next && (
               <Link className="tile" href="/next">
                 {/* しらせの合図はサイト全体でこのベル1種類。予定の入口には必ず付ける */}
@@ -179,7 +221,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                   <NoticeBell size={32} />
                 </span>
                 <span className="tile-text">
-                  <b>次の企画まで {next.days === 0 ? "今日" : `あと${next.days}日`}</b>
+                  <b>
+                    {next.phase === "during"
+                      ? "いま、この企画のとちゅう"
+                      : next.days === null
+                        ? "次の企画"
+                        : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
+                  </b>
                   <i>{next.title}</i>
                 </span>
                 <Icon name="right" size={15} className="tile-go" />
@@ -197,6 +245,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             <span className="chip">
               <Icon name="clock" size={12} />
               {stay.name}に来て {stay.days.toLocaleString()}日目
+            </span>
+          )}
+          {/* 国が引けない日も、旅が止まっていないことはここに出る */}
+          {trip && (
+            <span className="chip">
+              <Icon name="clock" size={12} />
+              旅に出て {trip.days.toLocaleString()}日目
             </span>
           )}
           {cur.theme && !SLUG.test(cur.theme) && (
