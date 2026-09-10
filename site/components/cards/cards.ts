@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCards, type IslandCard } from "@/lib/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  getCards,
+  getNordicPhotos,
+  type IslandCard,
+  type NordicPhoto,
+} from "@/lib/api";
 import { RESIDENTS } from "@/content/residents";
 
 /**
@@ -71,7 +76,7 @@ export function useCards(): CardsState {
   const [off, setOff] = useState(false);
   useEffect(() => {
     getCards()
-      // 形の違うものが返っても面ごと落とさない（`PhotoWall` と同じ用心）
+      // 形の違うものが返っても、面ごと落とさない
       .then((r) => setCards(withIcons(r?.cards ?? [])))
       .catch(() => {
         setCards([]);
@@ -166,4 +171,191 @@ export function byDay(groups: PhotoGroup[]): DayShelf[] {
 export function cardWhen(iso: string): string {
   const w = "日月火水木金土"[new Date(`${iso}T00:00:00Z`).getUTCDay()] ?? "";
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
+}
+
+
+/* ---------------- 写真の側からまとめる ----------------
+   **一覧に並ぶのは写真で、カードではない。** カードは「写真 × その日に
+   投げてくれた人」なので、カードだけを見ていると**まだ誰も投げていない
+   写真が1枚も出ない。** あやとが貼った直後がちょうどそれで、貼った本人が
+   「入らなかった」と思う。
+
+   だから写真の一覧（`GET /nordic/photos`）を土台にして、そこへカードを
+   重ねる。写真がどれだけあるかは写真の口が、誰が立てるかはカードの口が
+   決める。片方が読めなくても、もう片方のぶんは出る。 */
+
+/** 写真1枚に、その写真に立てる人を重ねたもの。**一覧のマス1つぶん。** */
+export type PhotoSheet = PhotoGroup & { at: number };
+
+const sheetOf = (p: NordicPhoto): PhotoSheet => ({
+  photoId: p.id,
+  url: p.url,
+  w: p.w,
+  h: p.h,
+  note: p.note,
+  day: p.day,
+  at: p.at,
+  cards: [],
+});
+
+/**
+ * 新しい順。**まず「その日」で、同じ日のなかは貼った順。**
+ *
+ * `at` だけで並べない。貼った時刻とその写真の日付は別のもので（旅の
+ * 途中に前の日のぶんをまとめて貼る）、`at` で並べると**画面に出ている
+ * 日付が飛ぶ。** 見出しになるのは日付なので、そちらを先に見る。
+ */
+const newest = (a: { day: string; at: number }, b: { day: string; at: number }) =>
+  a.day === b.day ? b.at - a.at : a.day < b.day ? 1 : -1;
+
+/**
+ * 写真とカードを1つにまとめて、日ごとの棚にする。
+ *
+ * 写真の口が落ちてもカードだけで並ぶし、逆も同じ。どちらも空なら空の棚。
+ */
+export function shelves(
+  photos: NordicPhoto[],
+  cards: ShownCard[],
+): DayShelf[] {
+  const at = new Map<string, PhotoSheet>();
+  const order: PhotoSheet[] = [];
+  for (const p of photos) {
+    const g = sheetOf(p);
+    at.set(p.id, g);
+    order.push(g);
+  }
+  for (const c of cards) {
+    let g = at.get(c.photoId);
+    if (!g) {
+      // 写真の口が落ちていても、カードの持っている写真で並べられる
+      g = { ...sheetOf({ ...c, id: c.photoId, at: c.at }), cards: [] };
+      at.set(c.photoId, g);
+      order.push(g);
+    }
+    g.cards.push(c);
+  }
+  order.sort(newest);
+  const days = new Map<string, DayShelf>();
+  const out: DayShelf[] = [];
+  for (const g of order) {
+    const had = days.get(g.day);
+    if (had) {
+      had.photos.push(g);
+      continue;
+    }
+    const d: DayShelf = { day: g.day, photos: [g] };
+    days.set(g.day, d);
+    out.push(d);
+  }
+  return out;
+}
+
+/** 一覧が持つ状態。写真とカードを別々に取りにいって、ここで合わせる。 */
+export type WallState = {
+  /** 取りにいっている最中は null。0枚と区別する */
+  days: DayShelf[] | null;
+  /** 両方とも読めなかった。読み込み中・空っぽと同じ顔で出さない */
+  off: boolean;
+  /** 貼れた1枚を、取り直さずにその場で並べる（あやとだけ） */
+  add: (p: NordicPhoto) => void;
+};
+
+export function useCardWall(): WallState {
+  const [photos, setPhotos] = useState<NordicPhoto[] | null>(null);
+  const [cards, setCards] = useState<ShownCard[] | null>(null);
+  const [bad, setBad] = useState(0);
+
+  useEffect(() => {
+    getNordicPhotos()
+      // 形の違うものが返っても面ごと落とさない
+      .then((r) => setPhotos((r?.days ?? []).flatMap((d) => d.photos ?? [])))
+      .catch(() => {
+        setPhotos([]);
+        setBad((n) => n + 1);
+      });
+    getCards()
+      .then((r) => setCards(withIcons(r?.cards ?? [])))
+      .catch(() => {
+        setCards([]);
+        setBad((n) => n + 1);
+      });
+  }, []);
+
+  const add = useCallback(
+    (p: NordicPhoto) => setPhotos((cur) => [p, ...(cur ?? [])]),
+    [],
+  );
+
+  const days = useMemo(
+    () => (photos && cards ? shelves(photos, cards) : null),
+    [photos, cards],
+  );
+  return { days, off: bad >= 2, add };
+}
+
+/* ---------------- 立ち位置 ----------------
+   **既定の置き方は、写真の右下ひとところに決め打つ。**
+
+   もとは ID から少しずつ散らしていた（`defaultPlace`）。一覧に同じ写真の
+   カードが人数ぶん並んでいたころ、全員が寸分たがわず同じ場所に立つと
+   「同じ絵が人数ぶん」に見えたため。**一覧が写真1枚につき1マスになり、
+   立っている人は開いた先で1人ずつ入れ替えるようになったので、散らす
+   理由が消えた。** 残っていたのは害だけで、あやとの言葉（2026-09-10）:
+
+   > たいpi のキャラクターが見切れてる。あと大きさも不揃い。
+
+   散らした先が写真の右端を越えると絵が切れ、`scale` の 0.92〜1.08 が
+   1人ずつ大きさの違うカードになっていた。
+
+   **本人が動かしたもの（`moved`）だけは、その値で置く。** 動かせるのは
+   本人だけで、動かしたことを黙って戻さない。そのときも枠から出さない。 */
+
+/** 焼く1枚（`components/nordic/stamp.ts` の `STAMP`）と同じ寸法。 */
+const BASE = { byWidth: 0.34, byHeight: 0.2, right: 0.02, bottom: 0.05 };
+
+/** 画面に出すときの置き方。そのまま CSS に入る。 */
+export type CardPlace = {
+  /** 縦の写真は横幅、横の写真は高さ。もう片方の辺は絵の比に任せる */
+  width?: string;
+  height?: string;
+  /** 既定の置き方は右端から測る。**絵の比を知らなくても枠から出ない** */
+  right?: string;
+  /** 本人が動かしたぶんだけ、左から測る（原点は絵の中心） */
+  left?: string;
+  bottom: string;
+  transform: string;
+};
+
+/**
+ * カード1枚の置き方を決める。**焼く1枚と同じところに立つようにする。**
+ *
+ * 絵の縦横比は読むまで分からないので、基準になる辺だけを決めて、もう片方は
+ * 絵に任せる。既定は右端から測るので、比が何であっても枠から出ない。
+ * 焼くほう（`stamp.ts` の `stampBox`）も右下から同じ寸法で置くので、
+ * 画面に出ている絵と、持って帰る1枚が同じになる。
+ */
+export function cardPlace(card: ShownCard): CardPlace {
+  const tall = card.h > card.w;
+  const size = tall ? BASE.byWidth : BASE.byHeight;
+  const side = tall ? { width: `${size * 100}%` } : { height: `${size * 100}%` };
+  if (!card.moved) {
+    return {
+      ...side,
+      right: `${BASE.right * 100}%`,
+      bottom: `${BASE.bottom * 100}%`,
+      transform: "none",
+    };
+  }
+  /* 動かしたぶん。**枠から出さない。** 横の写真は高さで決めているので、
+     横幅は写真の縦横比から見積もる（絵はおおむね正方形）。 */
+  const k = Math.min(2, Math.max(0.4, card.scale || 1));
+  const w = (tall ? size : (size * card.h) / Math.max(1, card.w)) * k;
+  const half = Math.min(0.5, w / 2);
+  const cx = Math.min(1 - half, Math.max(half, card.x));
+  return {
+    ...(tall ? { width: `${size * k * 100}%` } : { height: `${size * k * 100}%` }),
+    left: `${cx * 100}%`,
+    bottom: `${Math.min(0.9, Math.max(0, 1 - card.y)) * 100}%`,
+    transform: `translateX(-50%) rotate(${Math.max(-20, Math.min(20, card.rot || 0))}deg)`,
+  };
 }

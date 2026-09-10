@@ -42,7 +42,7 @@ const PAGES = (
     "/", "/about", "/streams", "/streams/cooking", "/kitchen", "/kitchen/egg-sandwich",
     "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
     "/board", "/map", "/map/france", "/nordic", "/nordic/guide", "/nordic/finland",
-    "/nordic/photos", "/all", "/friends", "/now", "/design",
+    "/nordic/photos", "/cards", "/all", "/friends", "/now", "/design",
     // ログインした人にしか出ない面。`SEED=` を渡したときだけ中身が出る
     "/me", "/me/roulette",
   ].join(",")

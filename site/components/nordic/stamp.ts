@@ -105,25 +105,45 @@ export function opaqueBox(img: HTMLImageElement): Box {
 }
 
 /**
+ * 本人が動かした置き方。**動かしていないカードは渡さない。**
+ * 割合（0〜1）で、`y` は足元の高さ（`docs/island-cards.md` 5章）。
+ */
+export type Place = { x: number; y: number; rot: number; scale: number };
+
+/**
  * キャラクターを置くところ。返るのは**見えている中身**の矩形。
  *
  * 縦の写真は横幅で、横の写真は高さで決める（`docs/nordic-photos.md` 5章）。
  * 縦の写真で高さを基準にすると小さすぎ、横の写真で横幅を基準にすると
  * 画面の3分の1がキャラクターになる。
  *
+ * **既定は右下ひとところ、大きさも1つ。** 台帳の `x/y/scale` を素直に
+ * 使うと、散らした先が右端を越えて絵が切れ、1人ずつ大きさが変わる
+ * （あやと・2026-09-10）。本人が動かしたぶんだけ `place` で受けて、
+ * そのときも枠から出さない。**画面側（`components/cards/cards.ts` の
+ * `cardPlace`）と同じ決め方にしてある。** 片方だけ直すと、見えている絵と
+ * 持って帰る絵がずれる。
+ *
  * @param pw 写真の横幅 @param ph 写真の高さ
  * @param cw キャラクターの中身の横幅 @param ch 同じく高さ
  */
-export function stampBox(pw: number, ph: number, cw: number, ch: number): Box {
+export function stampBox(
+  pw: number,
+  ph: number,
+  cw: number,
+  ch: number,
+  place?: Place | null,
+): Box {
   const aspect = cw / Math.max(1, ch);
-  const w = ph > pw ? pw * STAMP.byWidth : ph * STAMP.byHeight * aspect;
+  const k = place ? Math.min(2, Math.max(0.4, place.scale || 1)) : 1;
+  const w = (ph > pw ? pw * STAMP.byWidth : ph * STAMP.byHeight * aspect) * k;
   const h = w / aspect;
-  return {
-    x: pw - pw * STAMP.right - w,
-    y: ph - ph * STAMP.bottom - h,
-    w,
-    h,
-  };
+  if (!place) {
+    return { x: pw - pw * STAMP.right - w, y: ph - ph * STAMP.bottom - h, w, h };
+  }
+  const x = Math.min(pw - w, Math.max(0, place.x * pw - w / 2));
+  const y = Math.min(ph - h, Math.max(0, place.y * ph - h));
+  return { x, y, w, h };
 }
 
 /**
@@ -162,6 +182,8 @@ function groundShadow(g: CanvasRenderingContext2D, at: Box) {
 export function compose(
   photo: HTMLImageElement,
   chr: HTMLImageElement | null,
+  /** 本人が動かしたときだけ渡す。既定（右下）でよければ渡さない */
+  place?: Place | null,
 ): HTMLCanvasElement {
   const long = Math.max(photo.naturalWidth, photo.naturalHeight);
   const k = long > OUT_LONG ? OUT_LONG / long : 1;
@@ -176,16 +198,18 @@ export function compose(
   if (!chr) return cv;
 
   const src = opaqueBox(chr);
-  const at = stampBox(pw, ph, src.w, src.h);
+  const at = stampBox(pw, ph, src.w, src.h, place);
   groundShadow(g, at);
-  if (STAMP.tilt) {
+  // 傾きの原点は足元。傾けても足の位置が動かないようにする（画面側と同じ）
+  const tilt = place ? Math.max(-20, Math.min(20, place.rot || 0)) : STAMP.tilt;
+  if (tilt) {
     g.save();
     g.translate(at.x + at.w / 2, at.y + at.h);
-    g.rotate((STAMP.tilt * Math.PI) / 180);
+    g.rotate((tilt * Math.PI) / 180);
     g.translate(-(at.x + at.w / 2), -(at.y + at.h));
   }
   g.drawImage(chr, src.x, src.y, src.w, src.h, at.x, at.y, at.w, at.h);
-  if (STAMP.tilt) g.restore();
+  if (tilt) g.restore();
   return cv;
 }
 
