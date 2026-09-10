@@ -63,28 +63,101 @@ export function withIcons(list: IslandCard[]): ShownCard[] {
 }
 
 /** 取りにいっている最中は `cards` が null。0枚と区別する。 */
-export type CardsState = { cards: ShownCard[] | null; off: boolean };
+export type CardsState = {
+  /** 読めたカード。**`read !== "ok"` のあいだの空を「0枚」と読まないこと** */
+  cards: ShownCard[] | null;
+  /** カードの口（`GET /cards`）が読めたか */
+  read: Read;
+  /** 落ちたぶんを読み直す。「もう一度よみこむ」の札から呼ぶ */
+  reload: () => void;
+};
 
 /**
  * 配られたカードを取ってくる。**新しい順で返ってくるので、並べ直さない。**
  *
- * 読めなかったときは空にして `off` を立てる。読み込み中と、
- * 空っぽと、読めなかったを、同じ顔で出さないため
- * （`docs/island-design.md` 4章）。
+ * ## 空の配列を返さない（#34 #36 #43）
+ *
+ * ここは長いあいだ `catch(() => setCards([]))` だった。**空の配列は
+ * 「読めた上での0枚」のことば**で、届かなかった日に言ってよい嘘ではない。
+ * `/about` はそれを受けて「まだ1枚もありません」と言い切り、`/friends` は
+ * もらったカードの欄ごと消していた。しかも**読み直す道が無い**ので、
+ * 画面を開き直すまで直らなかった（同じ口を読む `useCardWall` は直っていて、
+ * こちらだけ残っていた）。
+ *
+ * 答えは3つ持つ（`lib/auth.tsx` の `Read`）。
+ *   - `wait` … まだ返っていない。骨を出してよい
+ *   - `ok`   … 読めた。**ここではじめて「まだ1枚もありません」と言ってよい**
+ *   - `down` … 読めなかった。0枚ではない
+ *
+ * 返事が来ないのも「読めなかった」（`withRead` が12秒で見切る）。
+ * 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）。電波が戻った合図
+ * （`online`・画面に戻ってきた）でも読み直す。**画面を開き直させない。**
  */
 export function useCards(): CardsState {
   const [cards, setCards] = useState<ShownCard[] | null>(null);
-  const [off, setOff] = useState(false);
-  useEffect(() => {
-    getCards()
+  const [read, setRead] = useState<Read>("wait");
+  /** 落ちた回数。読み直す間隔を倍にしていくのに使う */
+  const miss = useRef(0);
+  /* いまの読めぐあい。**電波が戻ったとき、落ちているときだけ読み直す**ために
+     持つ（状態そのものは描くのに使うので、効果の中からは見えない）。 */
+  const now = useRef<Read>("wait");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
+
+  /**
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない——灰色の骨と
+   * 「読みに行けなかった」が数秒おきに入れ替わる面になる（#277）。
+   */
+  const load = useCallback((showWait: boolean) => {
+    if (showWait) {
+      now.current = "wait";
+      setRead("wait");
+    }
+    withRead(getCards())
       // 形の違うものが返っても、面ごと落とさない
-      .then((r) => setCards(withIcons(r?.cards ?? [])))
+      .then((r) => {
+        if (!alive.current) return;
+        setCards(withIcons(r?.cards ?? []));
+        now.current = "ok";
+        setRead("ok");
+        miss.current = 0;
+      })
       .catch(() => {
-        setCards([]);
-        setOff(true);
+        if (!alive.current) return;
+        now.current = "down";
+        setRead("down");
+        miss.current += 1;
+        timers.current.push(
+          setTimeout(() => load(false), Math.min(2000 * 2 ** (miss.current - 1), 30000)),
+        );
       });
   }, []);
-  return { cards, off };
+
+  useEffect(() => {
+    alive.current = true;
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       読めているうちは何もしない（画面に戻るたびに往復を1本増やさない）。 */
+    const wake = () => {
+      if (now.current === "down") load(false);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [load]);
+
+  return { cards, read, reload: () => load(true) };
 }
 
 /* ---------------- 写真でまとめる ----------------

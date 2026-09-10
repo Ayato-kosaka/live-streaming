@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/Icon";
 import {
@@ -50,6 +50,18 @@ import { UPLOAD_THIN, shrink } from "./stamp";
  * （`withRead`）、読み直す道を出す。言い回しは板や `/me` と同じものを使う
  * （`components/me/ReadAgain.tsx`）。**同じ意味を何通りにも書かない。**
  *
+ * **押されなくても読み直す。** ここは長いあいだ、押したときにしか直らな
+ * かった。`useOnline()` を見て「切れてから戻ったとき」だけ引き直していたが、
+ * `navigator.onLine` は**電波が細いだけでは倒れない。** 503 でも、45秒
+ * 返さないままでも、端末はずっと「つながっている」と言う。だから戻っても
+ * 何も起きなかった。島のほかの読みものと同じ形にそろえる（`lib/auth.tsx`・
+ * `components/nordic/forks.ts`）。
+ *
+ *   - 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）
+ *   - `online`・画面に戻ってきたでも読み直す（**落ちているときだけ**）
+ *   - **骨に戻すのは押されたときだけ。** ひとりでに読み直すたびに戻すと、
+ *     灰色と文言が数秒おきに入れ替わる（#277）
+ *
  * ## 電波の悪いところで押す（#163）
  *
  * 貼るのはヒッチハイクの途中で、片手で、電波の細いところ。
@@ -88,54 +100,92 @@ export default function PhotoPost({
   const [events, setEvents] = useState<StreamEventBrief[]>([]);
   /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
   const [evRead, setEvRead] = useState<Read>("wait");
-  /** 「もう一度よみこむ」を押されたら増える */
-  const [again, setAgain] = useState(0);
   /** どの企画に付けるか。1本の日は勝手に決まる */
   const [pick, setPick] = useState("");
   const file = useRef<HTMLInputElement>(null);
+  /* いまの読めぐあい。**電波が戻ったとき、落ちているときだけ読み直す**ために
+     持つ（状態そのものは描くのに使うので、聞き手の中からは見えない）。 */
+  const nowRead = useRef<Read>("wait");
+  /** 落ちた回数。読み直す間隔を倍にしていくのに使う */
+  const miss = useRef(0);
+  /** 何回目の問い合わせか。**遅れて届いた古い返事で上書きしない。**
+      日付の欄はキーを押すたびに変わるので、電波が細いと返事の順が入れ替わる。 */
+  const turn = useRef(0);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
 
-  /* 日を打ち替えるたびに引き直す。**遅れて届いた古い返事で上書きしない。**
-     日付の欄はキーを押すたびに変わるので、電波が細いと返事の順が入れ替わる。 */
-  useEffect(() => {
-    let alive = true;
-    setEvents([]);
-    setEvRead("wait");
-    setPick("");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      setEvRead("ok");
-      return;
-    }
-    withRead(getStreamEvents(day))
-      .then((r) => {
-        if (!alive) return;
-        const list = r?.events ?? [];
-        setEvents(list);
+  /**
+   * その日に立っている企画を引く。
+   *
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない。
+   */
+  const load = useCallback(
+    (showWait: boolean) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+        nowRead.current = "ok";
         setEvRead("ok");
-        // 1本しかない日は選ばせない。そのまま決める
-        if (list.length === 1) setPick(list[0].id);
-      })
-      .catch(() => {
-        if (!alive) return;
-        // 空の配列は「読めた上での0本」のことば。届かなかった日に言わない
-        setEvRead("down");
-      });
-    return () => {
-      alive = false;
-    };
-  }, [day, again]);
+        return;
+      }
+      if (showWait) {
+        nowRead.current = "wait";
+        setEvRead("wait");
+      }
+      const mine = ++turn.current;
+      withRead(getStreamEvents(day))
+        .then((r) => {
+          if (!alive.current || mine !== turn.current) return;
+          const list = r?.events ?? [];
+          setEvents(list);
+          nowRead.current = "ok";
+          setEvRead("ok");
+          miss.current = 0;
+          // 1本しかない日は選ばせない。そのまま決める
+          if (list.length === 1) setPick(list[0].id);
+        })
+        .catch(() => {
+          if (!alive.current || mine !== turn.current) return;
+          // 空の配列は「読めた上での0本」のことば。届かなかった日に言わない
+          nowRead.current = "down";
+          setEvRead("down");
+          miss.current += 1;
+          timers.current.push(
+            setTimeout(() => load(false), Math.min(2000 * 2 ** (miss.current - 1), 30000)),
+          );
+        });
+    },
+    [day],
+  );
 
-  /* 電波が戻ったら、押されるのを待たずに引き直す。**落ちている最中に
-     引き直しを掛けると止まらない**ので、切れてから戻ったときだけ。 */
-  const wasOff = useRef(false);
+  /* 日を打ち替えるたびに引き直す。日が変われば答えも変わるので、
+     ここは骨から始めてよい（押されたときと同じ）。 */
   useEffect(() => {
-    if (!online) {
-      wasOff.current = true;
-      return;
-    }
-    if (!wasOff.current) return;
-    wasOff.current = false;
-    setAgain((n) => n + 1);
-  }, [online]);
+    alive.current = true;
+    setEvents([]);
+    setPick("");
+    miss.current = 0;
+    nowRead.current = "wait";
+    setEvRead("wait");
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       落ちているときだけにする（引き直しが止まらなくなる）。 */
+    const wake = () => {
+      if (nowRead.current === "down") load(false);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [day, load]);
 
   /** 選ぶ番になっているのに、まだ選んでいない。ここだけ送らせない */
   const waiting = evRead === "ok" && events.length > 1 && !pick;
@@ -204,7 +254,7 @@ export default function PhotoPost({
             貼るのは止めないので、そのことだけ1行で足す。 */}
         {evRead === "down" && (
           <>
-            <ReadAgain what="この日の企画" onRetry={() => setAgain((n) => n + 1)} />
+            <ReadAgain what="この日の企画" onRetry={() => load(true)} />
             <p className="nph-ev-note">選ばなくても、写真はこのまま貼れます。</p>
           </>
         )}
