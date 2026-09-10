@@ -16,14 +16,90 @@ import {
   type PlanStatus,
   type Sticky,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { themeById } from "@/content/themes";
+import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 
 /** 「2026-09-06T…」→「9月6日」 */
 const day = (iso: string) =>
   `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+
+/**
+ * 机の道具が読む一覧を、1本だけ引く。**付箋と企画で同じものを使う。**
+ *
+ * ## なぜ `catch` で空にしないか（#34 #36 #43）
+ *
+ * ここは長いあいだ `catch { setNotes([]) }` / `catch { setPlans([]) }` だった。
+ * **空の配列は「読めた上での0件」のことば**なので、電波が細い日の机が
+ *
+ *   - 「まだ返していないのが **0** 枚」「ぜんぶ返しました。」
+ *   - 「いま **0** 件」「まだ1件もありません。」
+ *
+ * と言い切っていた。ここは**あやとが旅先で開く面**で、これを見たら
+ * 「返信は済んでいる」と思ってそのまま閉じる。17日間そう思ったままになる。
+ *
+ * 答えは3つ持つ（`lib/auth.tsx` の `Read`）。返事が来ないのも「読めなかった」
+ * （`withRead` が12秒で見切る）。落ちたら黙って読み直し（間隔を倍にしながら
+ * 30秒まで）、`online`・画面に戻ってきたでも読み直す。**画面を開き直させない。**
+ * 骨に戻すのは押されたときだけ（ひとりでに戻すと、灰色と文言が入れ替わる）。
+ */
+function useCare<T>(read1: () => Promise<T[]>) {
+  const [list, setList] = useState<T[] | null>(null);
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
+
+  useEffect(() => {
+    let gone = false;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
+
+    const go = async () => {
+      try {
+        const r = await withRead(read1());
+        if (gone) return;
+        ok = true;
+        miss = 0;
+        setList(r);
+        setRead("ok");
+      } catch {
+        if (gone) return;
+        setRead("down");
+        miss += 1;
+        wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
+      }
+    };
+
+    setList(null);
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       読めているうちは何もしない（画面に戻るたびに往復を1本増やさない）。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [read1, again]);
+
+  return { list, read, setList, reload: () => setAgain((n) => n + 1) };
+}
 
 /**
  * まだ返していない付箋。
@@ -52,51 +128,37 @@ const day = (iso: string) =>
  */
 export function StickyCare() {
   const { token } = useAuth();
-  const [notes, setNotes] = useState<Sticky[] | null>(null);
   /** あやと自身が貼った付箋の id。引けるまでは null（0枚と区別する） */
   const [own, setOwn] = useState<Set<string> | null>(null);
   /** しまったものを見ているか */
   const [bin, setBin] = useState(false);
   const [all, setAll] = useState(false);
 
-  const load = useCallback(async () => {
-    setNotes(null);
-    try {
-      const r = await getStickies({ limit: 300 });
-      setNotes(r.notes);
-    } catch {
-      setNotes([]);
-    }
-  }, []);
-
-  const loadBin = useCallback(async () => {
-    setNotes(null);
-    const t = await token();
-    if (!t) return setNotes([]);
-    try {
-      const r = await getArchivedStickies(t);
-      setNotes(r.notes);
-    } catch {
-      setNotes([]);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  /* 貼ってあるぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
+     そのまま読み直しになる（`bin` が変わると `read1` の顔が変わる）。 */
+  const read1 = useCallback(async () => {
+    if (!bin) return (await getStickies({ limit: 300 })).notes;
+    const t = await withRead(token());
+    if (!t) throw new Error("no-token");
+    return (await getArchivedStickies(t)).notes;
+  }, [bin, token]);
+  const { list: notes, read, setList: setNotes, reload } = useCare(read1);
 
   useEffect(() => {
     let gone = false;
     (async () => {
-      const t = await token();
+      /* **`withRead` を通す。** ここが返ってこないと `own` が null のままで、
+         付箋のほうが読めていても灰色が残り続ける（下の `reading`）。 */
+      const t = await withRead(token()).catch(() => null);
       if (gone) return;
       if (!t) return setOwn(new Set());
       try {
-        const r = await getMyStickies(t);
+        const r = await withRead(getMyStickies(t));
         if (!gone) setOwn(new Set(r.notes.map((n) => n.id)));
       } catch {
         /* 引けなかった日は、差し引かずに出す。**返す道が消えるより、
-           自分のぶんが混ざるほうがまし。** */
+           自分のぶんが混ざるほうがまし。** 数は多いほうへ寄るので、
+           「ぜんぶ返しました」と言ってしまうことはない。 */
         if (!gone) setOwn(new Set());
       }
     })();
@@ -111,14 +173,26 @@ export function StickyCare() {
   const waiting = (notes ?? []).filter(todo).length;
   /* 自分のぶんを引く前に数を出すと、開いた直後だけ多い数が見えて、
      すぐ減る。**動く数字を出すくらいなら、出るのを待つ。** */
-  const reading = notes === null || own === null;
+  const reading = read === "wait" || own === null;
+  /** **数を言ってよいのは、読めた上でのことだけ。** */
+  const counted = read === "ok" && own !== null;
 
   return (
     <>
-      <p className="mp-now">
-        {reading ? "読んでいます…" : <>まだ返していないのが <b>{waiting}</b> 枚</>}
-      </p>
-      {reading ? (
+      {/* **読めなかった日に「読んでいます…」と言わない**（面の上と下で
+          違うことを言うことになる）。数の行ごと出さず、下の札に任せる。 */}
+      {read !== "down" && (
+        <p className="mp-now">
+          {counted ?
+            <>まだ返していないのが <b>{waiting}</b> 枚</> :
+            "読んでいます…"}
+        </p>
+      )}
+      {read === "down" ?
+        /* 読みに行けなかった。**「ぜんぶ返しました。」とは別の顔にする。**
+           あれは読めた上でのことばで、届かなかった日に言ってよい嘘ではない。 */
+        <ReadAgain what={bin ? "しまったもの" : "付箋"} onRetry={reload} /> :
+      reading ? (
         <div className="wait is-row" aria-hidden>
           <span />
           <span />
@@ -151,12 +225,13 @@ export function StickyCare() {
         </Longer>
       )}
       <div className="mp-care-acts">
+        {/* 札を切り替えるだけ。読み直しは `useCare` が受け持つ（`bin` が
+            変わると、そのまま次の一覧を取りに行く）。 */}
         <button
           className="nt-obtn"
           onClick={() => {
             setBin(false);
             setAll((v) => !v);
-            if (bin) load();
           }}
         >
           {all && !bin ? "返していないものだけ" : "ぜんぶ見る"}
@@ -164,10 +239,8 @@ export function StickyCare() {
         <button
           className="nt-obtn"
           onClick={() => {
-            const next = !bin;
-            setBin(next);
+            setBin((v) => !v);
             setAll(false);
-            next ? loadBin() : load();
           }}
         >
           {bin ? "貼ってあるものに戻る" : "しまったものを見る"}
@@ -272,41 +345,31 @@ function StickyRow({
  */
 export function PlanCare() {
   const { token } = useAuth();
-  const [plans, setPlans] = useState<NextPlan[] | null>(null);
   const [bin, setBin] = useState(false);
 
-  const load = useCallback(async () => {
-    setPlans(null);
-    try {
-      const r = await getNextPlans(200);
-      setPlans(r.plans);
-    } catch {
-      setPlans([]);
-    }
-  }, []);
-
-  const loadBin = useCallback(async () => {
-    setPlans(null);
-    const t = await token();
-    if (!t) return setPlans([]);
-    try {
-      const r = await getArchivedPlans(t);
-      setPlans(r.plans);
-    } catch {
-      setPlans([]);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  /* 出ているぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
+     そのまま読み直しになる（`StickyCare` と同じ）。 */
+  const read1 = useCallback(async () => {
+    if (!bin) return (await getNextPlans(200)).plans;
+    const t = await withRead(token());
+    if (!t) throw new Error("no-token");
+    return (await getArchivedPlans(t)).plans;
+  }, [bin, token]);
+  const { list: plans, read, setList: setPlans, reload } = useCare(read1);
 
   return (
     <>
-      <p className="mp-now">
-        {plans === null ? "読んでいます…" : <>いま <b>{plans.length}</b> 件</>}
-      </p>
-      {plans === null ? (
+      {/* **数を言ってよいのは、読めたときだけ。** 読めなかった日は
+          「読んでいます…」とも言わない（下の札と食い違う）。 */}
+      {read !== "down" && (
+        <p className="mp-now">
+          {read === "ok" && plans ? <>いま <b>{plans.length}</b> 件</> : "読んでいます…"}
+        </p>
+      )}
+      {read === "down" ?
+        /* 読みに行けなかった。**「まだ1件もありません。」とは別の顔にする。** */
+        <ReadAgain what={bin ? "しまったもの" : "企画"} onRetry={reload} /> :
+      plans === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
           <span />
@@ -331,14 +394,8 @@ export function PlanCare() {
         </Longer>
       )}
       <div className="mp-care-acts">
-        <button
-          className="nt-obtn"
-          onClick={() => {
-            const next = !bin;
-            setBin(next);
-            next ? loadBin() : load();
-          }}
-        >
+        {/* 札を切り替えるだけ。読み直しは `useCare` が受け持つ */}
+        <button className="nt-obtn" onClick={() => setBin((v) => !v)}>
           {bin ? "出ているものに戻る" : "しまったものを見る"}
         </button>
       </div>
