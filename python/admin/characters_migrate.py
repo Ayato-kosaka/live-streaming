@@ -62,6 +62,7 @@ ARGS 例:
   {"limit": 3}                   … 3人ぶんだけ試す
   {"apply": true}                … 口に頼んで Storage と Firestore に書く
   {"apply": true, "only": "🐟"}  … 絵文字で1人だけ
+  {"apply": true, "redo": true}  … 済んでいる人もやり直す（ふだんは要らない）
 """
 
 import base64
@@ -376,6 +377,9 @@ def main() -> None:
     a = args()
     apply = a.get("apply") is True
     only = emoji_key(a.get("only") or "")
+    # 済んでいる人もやり直す。**ふだんは要らない**（元が変わっていなければ
+    # 同じものが入るだけ）。絵を差し替えたのに反映されないときだけ使う
+    redo = bool(a.get("redo"))
     limit = int(a.get("limit") or 0)
 
     log.info("フォルダを一覧します（ログイン無し）")
@@ -408,7 +412,27 @@ def main() -> None:
     n_baked = 0
     n_baked_bytes = 0
     done = 0
+    skipped = 0
     for c in chars:
+        # **済んだ人は、絵を落とす前に飛ばす。** 落ちたところから続けられる
+        # ようにするため。97人ぶんで25分かかり、時間のほとんどはドライブから
+        # 落とすところ。1人こけただけで最初からやり直すと、その25分ぶん
+        # ドライブと置き場を無駄に叩く（2026-09-11 に65人目で落ちた）。
+        #
+        # **元が同じかどうかで見る。** ドライブの画像IDが両方とも前と同じ
+        # なら、もう一度落として置き直しても同じものになる。
+        # `redo` を付けると、済んでいても全部やり直す。
+        if apply and not redo:
+            was = (client.collection(COLLECTION).document(c["id"]).get().to_dict()
+                   or {}).get("migratedFrom") or {}
+            same = (
+                (was.get("plain") or {}).get("driveId") == (c["drivePlain"] or None)
+                and (was.get("scene") or {}).get("driveId") == (c["driveScene"] or None)
+            )
+            if was and same:
+                skipped += 1
+                continue
+
         images = {}
         # 口へ渡すぶん（apply のときだけ溜まる）
         send: dict = {}
@@ -472,6 +496,7 @@ def main() -> None:
             ref = client.collection(COLLECTION).document(c["id"])
             # **1回だけ引く。** 前は同じ書類を2回引いていた（97人ぶんで194回）
             had = ref.get().to_dict() or {}
+
             # **画面から直した行を、移行で戻さない。** あやとが旅先で
             # 絵を入れ替えたあとにこれを流し直しても、そこは元に戻らない
             if had.get("editedAt"):
@@ -518,9 +543,11 @@ def main() -> None:
         done += 1
 
     log.info(
-        "%s %d人ぶん / 元の絵 %d枚 %.1fMB / 焼いた webp %d枚 %.1fMB / 画像でなかった %d枚",
+        "%s %d人ぶん（済んでいて飛ばした %d人）/ "
+        "元の絵 %d枚 %.1fMB / 焼いた webp %d枚 %.1fMB / 画像でなかった %d枚",
         "書きました" if apply else "空回しです（1バイトも書いていません）",
         done,
+        skipped,
         n_img,
         n_bytes / 1048576,
         n_baked,

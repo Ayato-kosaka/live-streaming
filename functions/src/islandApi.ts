@@ -1690,7 +1690,24 @@ async function listPhotoDays(): Promise<Json[]> {
 }
 
 export const islandApi = onRequest(
-  {region: "us-central1", cors: true, maxInstances: 10},
+  /* **512MiB。既定の 256MiB では絵を1枚受け取れないことがある。**
+     2026-09-11、キャラクターの移行が 65人目で 500 を返して止まった。
+     ログは `Memory limit of 256 MiB exceeded with 256 MiB used`。
+
+     絵は base64 で本文に乗ってくる。4MB の元絵なら本文が 5.3MB になり、
+     受け取った生のバイト列・JSON にした文字列・`Buffer.from` で戻した
+     バイト列が同時に載る。そこへ幅ごとに焼いたものが4枚加わる。
+
+     旅の写真（`/nordic/photos`）が 256MiB で何か月も落ちていないのは、
+     ブラウザ側が長辺 1600px の webp に焼いてから送っていて、1枚
+     200〜400KB しか来ないから。**キャラクターの `full` は縮めない**
+     （持ち帰るものなので。`islandCharacter.ts` の `WIDTHS` の説明）ので、
+     元絵の大きさがそのまま効く。
+
+     **移行だけの話ではない。** あやとが旅先のスマホから絵を入れ替える道
+     （`site/components/me/Characters.tsx`）も同じ本文を送る。17日間、
+     落ちても原因を見に行けないので、受け取れる側を広げておく。 */
+  {region: "us-central1", cors: true, maxInstances: 10, memory: "512MiB"},
   async (req, res) => {
     // Hosting の rewrite 経由でも直叩きでも動くように、前置きのパスを落とす
     const path = (req.path || "/").replace(/^\/island-api/, "") || "/";
