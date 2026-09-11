@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import { LiveNumber } from "@/lib/liveStats";
 import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
@@ -105,7 +107,7 @@ export default function Meishi() {
           <Icon name="live" size={22} />
           <span>
             <b>今夜の配信を見る</b>
-            <i>毎晩22時・YouTube</i>
+            <i><Say t={say("tile")} /></i>
           </span>
           <Icon name="external" size={14} />
         </a>
@@ -115,11 +117,12 @@ export default function Meishi() {
             {/* 「いまどこ」は `/now` と同じ判定・同じ言い方で出す（`lib/stay.ts`
                 の `placeWord`）。ここだけ `current.place` を素で出していたので、
                 旅のあいだ表紙が「いま ジョージア・トビリシ」、押した先の `/now` が
-                「北欧周遊のとちゅう」と食い違っていた。 */}
+                「北欧周遊のとちゅう」と食い違っていた。
+                添え字のほうは、旅のあいだカウントダウンが消えるので `Say` に任せる。 */}
             <b>
               いま <NowPlace baked={place} />
             </b>
-            <i>今夜まであと何時間か、今週やること</i>
+            <i><Say t={say("nowLink")} /></i>
           </span>
           <Icon name="right" size={14} />
         </Link>

@@ -3,6 +3,8 @@
  * 絵・当たり判定・カメラ・歩行が全部この座標系(WORLD x WORLD)を共有する。
  */
 
+import { say } from "@/content/nights";
+
 export const WORLD = 1200;
 
 /** 島(砂浜)の中心と輪郭 */
@@ -133,7 +135,7 @@ export const PLACES: Place[] = [
     icon: "tower-studio",
     size: 128,
     href: "/streams",
-    blurb: "毎晩22時。5つの型でやってる",
+    blurb: say("types"),
     sign: true,
   },
   {

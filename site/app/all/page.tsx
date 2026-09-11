@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import { DEST_COUNT, SHELVES } from "@/content/directory";
 import AllIsleRow from "@/components/chain/AllIsleRow";
 import { ISLE_ROW } from "@/components/chain/route";
+import Say from "@/components/ui/Say";
 
 export const metadata: Metadata = {
   title: "島のなか ぜんぶ",
@@ -49,7 +50,7 @@ export default function AllPage() {
       {SHELVES.map((s) => (
         <section className="panel paper dxs" key={s.id} id={s.id}>
           <h2>{s.title}</h2>
-          <p className="muted">{s.note}</p>
+          <p className="muted"><Say t={s.note} /></p>
           <ul className="dxl">
             {s.items.map((d) => (
               <li key={d.href} data-q={d.q}>
@@ -64,7 +65,7 @@ export default function AllPage() {
                   <Link className="dx" href={d.href} prefetch={false}>
                     <span className="dx-body">
                       <b>{d.name}</b>
-                      <i>{d.note}</i>
+                      <i><Say t={d.note} /></i>
                     </span>
                     <Icon name="right" size={15} className="dx-go" />
                   </Link>

@@ -38,8 +38,9 @@ export default function Chapter({
   id: "next" | "now" | "past" | "watch";
   /** 看板の上に小さく出る一言。章の立ち位置。 */
   kicker: string;
-  title: string;
-  note?: string;
+  /* 旅のあいだだけ言い方の変わる見出しがあるので、文字だけでなく部品も受ける */
+  title: ReactNode;
+  note?: ReactNode;
   children: ReactNode;
 }) {
   return (

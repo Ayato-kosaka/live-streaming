@@ -4,7 +4,7 @@ import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
 import Here from "@/components/live/Here";
 import IslandRemote from "@/components/live/IslandRemote";
-import { NOW_FALLBACK } from "@/content/site";
+import { NOW_FALLBACK, SITE } from "@/content/site";
 
 /* 島の書体は `app/css/fonts.css`（自動生成。`tools/fonts/subset.py`）が持っている。
  * 丸ゴシックは、あつ森の字の「角が無い・字面が大きい・線が均一」に近い。
@@ -43,8 +43,9 @@ export const metadata: Metadata = {
     default: "あやと島 — あやとと愉快な仲間達",
     template: "%s｜あやと島",
   },
-  description:
-    "毎晩22時、世界のどこかから生配信。旅とごはんとアプリ作りを、愉快な仲間達と一緒に進めている島です。",
+  /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、旅に出た日から
+     次のビルドまで直せない。いつ読んでも本当のことだけにする（`content/site.ts`）。 */
+  description: SITE.description,
   openGraph: {
     type: "website",
     siteName: "あやと島",

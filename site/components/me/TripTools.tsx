@@ -233,11 +233,14 @@ export function TripPlace() {
       </div>
       <label className="nph-post-row">
         <span>ひとこと</span>
+        {/* 見本に時刻を書かない。旅のあいだは始まる時刻が日で変わるので、
+            ここを真似して打つと、島の「いまどこ」に嘘の時刻が乗る
+            （`docs/island-misses.md` #53）。 */}
         <textarea
           value={d.word}
           rows={2}
           maxLength={140}
-          placeholder="ヴィリニュスまで来ました。今夜も22時から配信します。"
+          placeholder="ヴィリニュスまで来ました。今日はこのあたりから配信します。"
           onChange={(e) => put({ word: e.target.value })}
         />
       </label>
