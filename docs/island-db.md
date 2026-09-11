@@ -238,6 +238,7 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
 | 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
 | キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
+| 豚の貯金箱の元（鍵・起点・スパチャ・目標） | Firestore `islandGoal/2025-10-24`（サイトが読む） | GAS の `Goals` 表（配信の OBS が読む） | **移行中で、どちらも生きている**（#305）。サイトは Firestore → 無ければ GAS の順。**スパチャが増えるのはまだ GAS 側だけ**なので、配信のあった晩は `goal_migrate` で写し直す。GAS を切るのは OBS を移してから |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
 ---
@@ -419,6 +420,8 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 **この22本に無いもの**（コードにはあるが、いま本番に書類が0件）:
 `islandHere`（居場所。すぐ消える）、`streamChatMessages` / `streamChatRuns`
 （配信中だけ溜まる）、`islandDrafts`、`islandVotes`。
+**`islandGoal` はこれから作る**（#305・下の b）。`goal_migrate` を
+`{"apply": true}` で流すまで0件で、そのあいだ豚の貯金箱は GAS の表から読む。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
 
@@ -627,6 +630,36 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 **同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
+
+**`islandGoal/{id}`** — 豚の貯金箱の元（#305）
+
+**サイトの豚（`GET /island-api/fund`）が読む1書類。** 書類IDは GAS の `Goals`
+表の id をそのまま使う（いまは `2025-10-24` の1件だけ）。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `doneruGoalKey` | string | Doneru の goal key。16〜64桁の16進。**形が違うと本番は GAS に落ちる** |
+| `startAmount` | number | この企画の起点。**負の数**（これまでに使った額） |
+| `superChatAmount` | number | スパチャの積み上がり。**合計してから半分**（1件ずつ半分にすると奇数円のぶんだけずれる） |
+| `targetAmount` | number | 目標額（バーの高さ）。欠けていたら 50,000 に落ちる |
+
+    total = doneruAmount + superChatAmount + startAmount
+    given = doneruAmount + superChatAmount   （起点を含まない。人が出した額）
+
+**`doneruAmount` はここに持たない。** Doneru 側が持っている累計を、読むときに
+足す（`functions/src/islandApi.ts` の `doneruNow`）。
+
+**書くのは `python/admin/goal_migrate.py` だけ。** GAS の `Goals` を読んで
+写す。`{"apply": true}` を付けたときだけ書き、書く前に本番の
+`/island-api/fund` と Doneru の累計に突き合わせて、**1円でも違えば書かない。**
+
+**`label` はまだここに無い。** 配信の OBS（`app/alertbox`）が GAS から読んで
+いるので、そちらを移すときに一緒に入れる（#305）。
+
+**読めなかったときに 0 を返さない。** `goalRecord()` は
+Firestore → GAS → 前に読めた値、の順に落ちる。どれも無ければ
+`island/state.fund` の集計値、それも空なら 503 を返して画面が数字を消す
+（[`island-standards.md`](./island-standards.md) 10章）。
 
 #### c. 押した・数えた
 
