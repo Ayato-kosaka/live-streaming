@@ -103,7 +103,7 @@ export default function CardSheet({
     (async () => {
       const [photo, chr] = await Promise.all([
         loadImage(shot),
-        icon ? loadImage(cardIcon(icon, 512)) : Promise.resolve(null),
+        icon ? loadImage(cardIcon(icon, 640)) : Promise.resolve(null),
       ]);
       if (gone) return;
       if (!photo) {

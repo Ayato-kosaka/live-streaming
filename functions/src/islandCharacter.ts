@@ -123,6 +123,8 @@ export type CharacterRes = {
   set(k: string, v: string): unknown;
   status(n: number): CharacterRes;
   json(b: unknown): unknown;
+  /** 絵そのものを返す（下の「短い名前で絵を返す」だけが使う） */
+  send(body: Buffer): unknown;
 };
 
 /**
@@ -419,6 +421,78 @@ export async function handleCharacters(
       res.json({characters});
     } catch (e) {
       logger.warn("alertbox characters failed", String(e));
+      res.status(502).json({error: "unavailable"});
+    }
+    return true;
+  }
+
+  /* ---- 短い名前で絵を返す。**焼き込みから呼べるように。** ----
+
+     絵は Google ドライブから置き場（Firebase Storage）へ移した（#284）。
+     置き場の URL は1本 200字あって、しかも**1枚ずつ違う合言葉が付いている。**
+     焼き込めない（95人ぶんで 150KB）し、島の絵は画面が出た瞬間に要るので、
+     口から名簿を取ってから描くのも遅い。
+
+     短い名前をここで受けて、**絵そのものを返す。**
+
+       /island-api/characters/{id}/plain-128.webp
+
+     ドライブの `lh3.googleusercontent.com/d/{id}=s128` の置き換えで、
+     形をそろえてある。呼ぶ側は絵の id さえ知っていればよい。
+
+     ## 送らずに、こちらから返す理由
+
+     置き場へ 302 で送るほうが安いが、**カードの絵を canvas に描いている**
+     （`components/cards/CardSheet.tsx`）。canvas は、途中で別のドメインへ
+     渡った絵を描くと汚れて、書き出せなくなることがある。ここから同じ
+     生い立ちのまま返せば、その筋の心配が丸ごと消える。往復も1本で済む。
+
+     ## Firestore を読まない
+
+     置き場の名前は id と役どころと幅で決まるので、書類を引く必要がない。
+     島は22枚まとめて呼ぶ。**1枚ごとに書類を1回読んでいたら 22回**になる。
+
+     ## 1年キャッシュしない
+
+     あやとが画面から絵を入れ替えると、同じ名前のまま中身が変わる。
+     長く焼き付けると、入れ替えたのに古い絵が出続ける。
+     手前（CDN）は1時間、ブラウザは10分。 */
+  const img = /^\/characters\/([^/]+)\/(plain|scene)-(128|256|640)\.webp$/
+    .exec(q.path);
+  if (img && q.method === "GET") {
+    const [, rawId, role, size] = img;
+    const id = decodeURIComponent(rawId);
+    if (!CHARACTER_ID.test(id)) {
+      res.status(400).json({error: "bad id"});
+      return true;
+    }
+    /* 頼まれた幅が無ければ**大きいほうへ上げる。引き伸ばさない。**
+       元が 640px より小さい人は 640 を焼いていない
+       （`characters_migrate.py`「大きさは、こちらで焼く」）。
+       それも無ければ、焼いてあるいちばん大きいものへ落とす。 */
+    const want = Number(size);
+    const order = [
+      ...WIDTHS.filter((w) => w >= want),
+      ...WIDTHS.filter((w) => w < want).reverse(),
+    ];
+    try {
+      const bucket = admin.storage().bucket(BUCKET);
+      for (const w of order) {
+        const file = bucket.file(`island/characters/${id}/${role}-${w}.webp`);
+        const [ok] = await file.exists();
+        if (!ok) continue;
+        const [buf] = await file.download();
+        res.set("Content-Type", "image/webp");
+        res.set("Cache-Control", "public, max-age=600, s-maxage=3600");
+        res.send(buf);
+        return true;
+      }
+      /* 絵がまだ無い人。**長く覚えさせない**（あとから入る） */
+      res.set("Cache-Control", "public, max-age=60");
+      res.status(404).json({error: "no image"});
+    } catch (e) {
+      logger.warn("character image failed", String(e));
+      res.set("Cache-Control", "no-store");
       res.status(502).json({error: "unavailable"});
     }
     return true;
