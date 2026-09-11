@@ -1281,10 +1281,11 @@ export const dropDonor = (pk: string, token: string) =>
 
 /** 1つの役どころの絵。`sizes` は幅ごとの焼き上がり。 */
 export type CharacterPicture = {
-  url: string | null;
+  /** 縮める前のまま。**落とすのはこれ**（縮めたものを渡さない） */
+  full: string | null;
   sizes: Record<string, string>;
-  w?: number;
-  h?: number;
+  w: number | null;
+  h: number | null;
 };
 
 /** 図鑑に出る1人。**名前は入らない。** */

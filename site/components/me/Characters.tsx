@@ -151,7 +151,7 @@ async function save(url: string, name: string) {
 const thumb = (c: Character, role: Role) => {
   const p = c[role];
   if (!p) return null;
-  return p.sizes?.["128"] ?? p.sizes?.["256"] ?? p.url ?? null;
+  return p.sizes?.["128"] ?? p.sizes?.["256"] ?? p.full ?? null;
 };
 
 /** 打ったものと当たるか。名前と呼び名の**どちらでも**探せるようにする。 */
@@ -398,17 +398,17 @@ export default function Characters() {
           return (
             <div className="ch-pic" key={role}>
               <span className="ch-pic-h">{ROLE_NAME[role]}</span>
-              {now?.url && !picked && (
+              {now?.full && !picked && (
                 <img
                   className="ch-pic-now"
-                  src={thumb(cur!, role) ?? now.url}
+                  src={thumb(cur!, role) ?? now.full!}
                   alt=""
                 />
               )}
               {picked && <p className="ch-pic-new">{picked.name} を入れます</p>}
               <div className="ch-pic-row">
                 <label className="ch-pick">
-                  {now?.url || picked ? "入れ替える" : "選ぶ"}
+                  {now?.full || picked ? "入れ替える" : "選ぶ"}
                   <input
                     type="file"
                     accept="image/*"
@@ -418,11 +418,11 @@ export default function Characters() {
                     }}
                   />
                 </label>
-                {now?.url && (
+                {now?.full && (
                   <button
                     className="ch-get"
                     onClick={() =>
-                      save(now.url!, `${draft.channelName || draft.id}-${role}`)
+                      save(now.full!, `${draft.channelName || draft.id}-${role}`)
                     }
                   >
                     <Icon name="download" /> 落とす

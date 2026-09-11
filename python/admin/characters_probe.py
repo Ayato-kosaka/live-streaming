@@ -114,7 +114,10 @@ def main() -> None:
         },
     )
     ch = out.get("character") or {}
-    url = ((ch.get("plain") or {}).get("url")) or ""
+    # **`url` ではなく `full`。** 口が返す形は `picture()`（islandCharacter.ts）で
+    # 決まっていて、縮める前のものが `full` に入る。ここを間違えたまま
+    # 画面も書いていて、この試しで捕まえた
+    url = ((ch.get("plain") or {}).get("full")) or ""
     if not url:
         raise SystemExit("置いたはずの絵の URL が返ってきませんでした")
 
