@@ -478,8 +478,21 @@ export default function AlertBox() {
       currentNotification
     );
 
-    // 表示ソースを決定（画像/動画）し、表示前に preload
-    const source = await calculateAdjustedSource(currentNotification);
+    /* 表示ソースを決定（画像/動画）し、表示前に preload。
+       **ここで投げさせない。** 投げると下の `setNotification` に届かず、
+       アラートが出ないままキューの先頭も減らない。そのあとの投げ銭が
+       全部そこで詰まって、**配信のあいだアラートが二度と出なくなる。**
+       `calculateAdjustedSource` の中は投げないようにしてあるが、
+       ここでも受けておく（絵は飾りで、アラートの前提ではない）。 */
+    let source: { type: "image" | "video"; url: string | null } = {
+      type: "image",
+      url: imageUrl(currentNotification.type),
+    };
+    try {
+      source = await calculateAdjustedSource(currentNotification);
+    } catch (error) {
+      sendLog("AlertBox", sessionId, "sourceError", { error: String(error) });
+    }
     setDisplaySource(source);
 
     // 表示開始（フェードイン）
@@ -533,6 +546,30 @@ export default function AlertBox() {
     []
   );
 
+  /**
+   * 温めておく。**取れなくても投げない。**
+   *
+   * `Image.prefetch` は 404 や電波切れで reject する。ここで投げると
+   * 呼んだ側（`processNotificationQueue`）が `setNotification` まで
+   * 辿り着かず、**アラートが1つも出ないまま、キューの先頭も減らない。**
+   * そのあとの投げ銭も全部そこで詰まる。**配信中に、あやとが直せない。**
+   *
+   * 絵が1枚取れないのは「絵が出ない」で済ませてよい話で、
+   * 「アラートが止まる」にしてよい話ではない。
+   */
+  const warm = useCallback(async (url: string | null): Promise<boolean> => {
+    if (!url) return false;
+    try {
+      await Image.prefetch(url);
+      return true;
+    } catch (error) {
+      sendLog("AlertBox", sessionId, "imagePrefetchFailed", {
+        error: String(error),
+      });
+      return false;
+    }
+  }, []);
+
   async function calculateAdjustedSource(
     n: NotificationData
   ): Promise<{ type: "image" | "video"; url: string | null }> {
@@ -549,22 +586,21 @@ export default function AlertBox() {
       // preload は事前ウォームアップだけにする
       preloadVideo(viewer.videoUrl);
 
-      // フォールバック用画像も先に温めておく
-      if (fallbackIconUrl) {
-        Image.prefetch(fallbackIconUrl);
-      } else {
-        Image.prefetch(fallbackImageUrl);
-      }
+      // フォールバック用画像も先に温めておく（待たない）
+      warm(fallbackIconUrl ?? fallbackImageUrl);
 
       return { type: "video", url: viewer.videoUrl };
     }
 
-    if (fallbackIconUrl) {
-      await Image.prefetch(fallbackIconUrl);
+    // その人の絵。取れなければ通知タイプごとの既定の絵に落とす
+    if (await warm(fallbackIconUrl)) {
       return { type: "image", url: fallbackIconUrl };
     }
 
-    await Image.prefetch(fallbackImageUrl);
+    /* 既定の絵まで取れないこともある（電波が切れている）。
+       **それでも url を返す。** `<Image>` は出ないが、名前と金額と
+       本文は出る。**何も出ないより、字だけでも出るほうがよい。** */
+    await warm(fallbackImageUrl);
     return { type: "image", url: fallbackImageUrl };
   }
 
@@ -572,16 +608,15 @@ export default function AlertBox() {
     if (!notification) return;
 
     const fallbackIconUrl = iconUrl(notification);
-    if (fallbackIconUrl) {
-      await Image.prefetch(fallbackIconUrl);
+    if (await warm(fallbackIconUrl)) {
       setDisplaySource({ type: "image", url: fallbackIconUrl });
       return;
     }
 
     const fallbackImageUrl = imageUrl(notification.type);
-    await Image.prefetch(fallbackImageUrl);
+    await warm(fallbackImageUrl);
     setDisplaySource({ type: "image", url: fallbackImageUrl });
-  }, [iconUrl, imageUrl, notification]);
+  }, [iconUrl, imageUrl, notification, warm]);
 
   // play() の失敗を拾う useEffect
   useEffect(() => {
