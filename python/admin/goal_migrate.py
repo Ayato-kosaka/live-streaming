@@ -1,26 +1,49 @@
-"""豚の貯金箱の元（GAS の `Goals` 1行）を Firestore へ移す。
+"""豚の貯金箱の元（GAS の `Goals` 1行）の控えを、Firestore に作る。
 
-## 何を移すのか
+## 何のためか
+
+**スプレッドシートを消しても、貯金箱が止まらないようにするため**（#305）。
+
+`functions/src/islandApi.ts` の `goalRecord()` は
+**GAS → 無ければ Firestore** の順に読む。**GAS が正のままで、ここは控え。**
+表が消えた瞬間から Firestore が正になる。
+
+**順が GAS 先なのは、額が伸びるのが GAS 側だからだ。** 配信の OBS
+（`app/alertbox`）がスパチャを1件ずつ表に書き足していて、`superChatAmount`
+はそこでしか増えない。Firestore を先に読ませると、配信で投げ銭が入っても
+サイトの豚が伸びず、人が写し直すまで止まったままになる。
+Firestore を正にしてよくなるのは、スパチャの書き込み先を移したあと
+（#305 の3）。
+
+**つまり、これを流しても本番の見た目は1円も変わらない。** 変わるのは
+「表が消えても平気になる」ことだけ。
+
+## 何を写すのか
 
 | 何を | どこから | どこへ |
 | --- | --- | --- |
 | 鍵と額 | GAS の `Goals`（id `2025-10-24`） | `islandGoal/2025-10-24` |
 
-移すのは**4つだけ**。`functions/src/islandApi.ts` の `goalRecord()` が
-読んでいるのと同じ4つで、これがサイトの豚の貯金箱
-（`GET /island-api/fund`）の元になっている。
+写すのは**4つだけ**。`goalRecord()` が読んでいるのと同じ4つで、これが
+サイトの豚の貯金箱（`GET /island-api/fund`）の元になっている。
 
     doneruGoalKey    … Doneru の goal key
     startAmount      … この企画の起点（負の数）
     superChatAmount  … スパチャの積み上がり（合計してから半分）
     targetAmount     … 目標額（バーの高さ）
 
-**`label` は移さない。** いま読んでいるのは配信の OBS（`app/alertbox`）だけで、
+**`label` は写さない。** いま読んでいるのは配信の OBS（`app/alertbox`）だけで、
 そちらは #305 の別の回で一緒に移す。ここで先に置くと、正が2か所になる。
 
-## 移して狂わないこと
+## いつ流すのか
 
-**貯金箱の額が1円でも動いたら移行しない。**
+**表を消す前に1回。** それと、**控えを新しくしたいとき**（配信のあった晩など）。
+控えが古くても本番の額はずれない（GAS を先に読むので）。**古いのは、
+表が消えた瞬間に見える。** そのとき出るのが最後に流した日の額になる。
+
+## 写して狂わないこと
+
+**控えが本番と違う額なら書かない。**
 
 本番の `GET /island-api/fund` は
 
@@ -34,11 +57,6 @@
 気づけない。** 別に読んで初めて3つとも独立に突き合わせられる。
 
 合わなければ1行も書かずに 1 で落ちる。
-
-`goalRecord()` は **Firestore → 無ければ GAS** の順に読むので、
-本番は「Firestore に書く前は GAS の値」「書いたあとは Firestore の値」を
-出している。どちらの側とも合わなければ、こちらが見ている表が
-本番の元ではないということなので、書かない。
 
 **本番は5分ぶん寝かせた値を返す**（`FUND_TTL_MS` と CDN）。配信中や
 投げ銭が入った直後は、こちらが読む GAS と本番の返り値がずれる。
@@ -79,12 +97,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import fund_box as fb  # noqa: E402
 
-# 移す先。**書類IDは GAS の表の id と同じ文字にする。**
+# 控えの置き場。**書類IDは GAS の表の id と同じ文字にする。**
 # `functions/src/islandApi.ts` の GOAL_ID と揃っていること。
 COLLECTION = "islandGoal"
 GOAL_ID = "2025-10-24"
 
-# 移す4つ。**この順で並べて出す。**
+# 写す4つ。**この順で並べて出す。**
 FIELDS = ("doneruGoalKey", "startAmount", "superChatAmount", "targetAmount")
 # 額の3つ（鍵だけは扱いが違うので分けておく）
 YEN_FIELDS = ("startAmount", "superChatAmount", "targetAmount")
@@ -128,12 +146,22 @@ def fb_key_ok(key: str) -> bool:
 
 
 def gas_goal() -> dict:
-    """GAS の `Goals` から、移す4つを取る。
+    """GAS の `Goals` から、写す4つを取る。
 
     Returns:
-        4つの辞書。行が無ければ空の辞書
+        4つの辞書。行が無ければ空の辞書。**表そのものが読めなければ None**
     """
-    rows = fb.gas_table("Goals")
+    try:
+        rows = fb.gas_table("Goals")
+    except (urllib.error.URLError, ValueError, TimeoutError) as e:
+        log.error(
+            "GAS の表が読めません（%s）。表がもう消えているなら、"
+            "控えを作る仕事はここでは終わっています。"
+            "**本番は Firestore の控えを読んでいるはずなので、"
+            "/island-api/fund の額を見て確かめる**",
+            type(e).__name__,
+        )
+        return {}
     row = {}
     for r in rows:
         if str(r.get("id") or "") == GOAL_ID:
@@ -208,7 +236,7 @@ def doneru_now(key: str):
 
 
 def show(name: str, gas: dict, fs: dict) -> None:
-    """移す前の値と、いま Firestore にある値を並べて出す。
+    """GAS のいまの値と、Firestore の控えを並べて出す。
 
     Args:
         name: 見出し
@@ -216,7 +244,7 @@ def show(name: str, gas: dict, fs: dict) -> None:
         fs: Firestore 側の4つ
     """
     log.info("---- %s ----", name)
-    log.info("%-16s %-24s %s", "欄", "GAS（いまの正）", "Firestore（移す先）")
+    log.info("%-16s %-24s %s", "欄", "GAS（いまの正）", "Firestore（控え）")
     log.info(
         "%-16s %-24s %s",
         "doneruGoalKey",
@@ -286,15 +314,16 @@ def main() -> int:
     a = args()
     apply = bool(a.get("apply", False))
 
-    # ---- 1. 移す中身（GAS）----
+    # ---- 1. 写す中身（GAS。いまの正）----
     gas = gas_goal()
     if not gas:
-        log.error("GAS の Goals に行がありません。移行しません")
+        log.error("GAS の Goals に行がありません。書きません")
         return 1
     if not fb_key_ok(gas["doneruGoalKey"]):
         log.error(
             "GAS の doneruGoalKey が、Functions の通す形（16〜64桁の16進）に "
-            "なっていません（%s）。書いても本番は GAS に落ち続けます",
+            "なっていません（%s）。**このまま書くと控えとして使えません**"
+            "（表が消えたとき、落ちる先が無くなる）",
             mask(gas["doneruGoalKey"]),
         )
         return 1
@@ -302,12 +331,13 @@ def main() -> int:
     # ---- 2. いま Firestore に何があるか ----
     client = db()
     before = fs_goal(client)
-    show("移す前", gas, before)
+    show("いまの値", gas, before)
 
     # ---- 3. 本番がいま出している額と突き合わせる ----
-    # **ここが「間違った表を移さない」の担保。** 本番は
-    # Firestore → 無ければ GAS の順に読むので、本番の額はどちらか片方から
-    # 出ているはず。**両方と違うなら、こちらが見ている表は本番の元ではない。**
+    # **ここが「間違ったものを控えにしない」の担保。**
+    # 本番（`goalRecord()`）は GAS → 無ければ Firestore の順に読むので、
+    # 表が生きているあいだ、本番の額は GAS から出ているはず。
+    # **GAS と合わないなら、こちらが見ている表が本番の元ではない。**
     prod = prod_fund()
     if not prod:
         log.error("本番と突き合わせられませんでした。**この状態で書かない**")
@@ -335,39 +365,38 @@ def main() -> int:
         from_gas,
         from_fs,
     )
-    if not from_gas and not from_fs:
+    if not from_gas:
         log.error(
-            "本番が出している額が、GAS の表からも Firestore からも出て "
-            "きません。**移す表を間違えている可能性があるので書かない。**"
-            "投げ銭が入った直後なら数分おいて流し直す"
-            "（本番は5分ぶん寝かせた値を返す）"
+            "本番がいま出している額が、GAS の表から出てきません。"
+            "**書かない。** 本番は5分ぶん寝かせた値を返すので、"
+            "投げ銭が入った直後なら数分おいて流し直す。"
+            "何度やっても合わないなら、見ている表が本番の元ではない"
         )
+        if from_fs:
+            log.error(
+                "（本番の額は Firestore の控えと一致しています。"
+                "**GAS 側が本番から読めなくなっているかもしれない。**"
+                "そうなら控えはもう正なので、上書きする前に中身を見る）"
+            )
         return 1
+    log.info("本番がいま出している額と、GAS の表が1円まで一致しています")
 
     if before and before == gas:
-        log.info("Firestore は既に同じ4つを持っています（やることなし）")
+        log.info("Firestore の控えは既に同じ4つです（やることなし）")
         return 0
 
-    # ---- 3.5 移行そのものか、あとからの追いつきか ----
+    # ---- 3.5 初めての控えか、新しくするのか ----
     if not before:
-        # **初回。ここは1円も動いてはいけない。** 本番はいま GAS を見て
-        # いるので、GAS と一致していなければ、書いた瞬間に額が変わる。
-        if not from_gas:
-            log.error(
-                "Firestore が空なのに、本番の額が GAS から出ていません。"
-                "**書くと額が動くので書かない**"
-            )
-            return 1
-        log.info("初回の移行。本番がいま出している額と1円まで一致しています")
+        log.info("初めての控えを作ります")
     else:
         # 2回目以降。**配信のあいだ、スパチャは GAS 側だけが増える**
-        # （OBS の書き込み先を移すのは #305 の次の回）。だから額が動くのは
-        # 正しい。動いてよいのは「増える」方向だけで、減るのは表が
-        # 読めていないときの形なので止める。
+        # （OBS の書き込み先を移すのは #305 の3）。だから控えとの差が
+        # 出るのは正しい。動いてよいのは「増える」方向だけで、
+        # 減るのは表が読めていないときの形なので止める。
         for f in YEN_FIELDS:
             if gas[f] != before[f]:
                 log.info(
-                    "追いつき: %s が %s円 → %s円（%+d円）",
+                    "控えを新しくします: %s が %s円 → %s円（%+d円）",
                     f, before[f], gas[f], gas[f] - before[f],
                 )
         if gas["superChatAmount"] < before["superChatAmount"]:
@@ -399,9 +428,12 @@ def main() -> int:
     show("書いたあと", gas, after)
     bad = [f for f in FIELDS if after.get(f) != gas.get(f)]
     if bad:
-        log.error("読み直したら合いません: %s。**このまま本番を切り替えない**", bad)
+        log.error(
+            "読み直したら合いません: %s。"
+            "**控えとして当てにできないので、表を消さないこと**", bad,
+        )
         return 1
-    log.info("4つとも一致しました。Firestore が正になれます")
+    log.info("4つとも一致しました。**表を消しても貯金箱は止まりません**")
     return 0
 
 
