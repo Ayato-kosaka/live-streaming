@@ -8,7 +8,7 @@ import { placeCountry, type PlaceCountry } from "@/content/place";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
-import { stayDays, travelNow, tripAsPlace, type TravelNow } from "@/lib/stay";
+import { stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type TravelNow } from "@/lib/stay";
 
 /**
  * 「いまどこ」の中身のうち、「いる国」に関わるところ。
@@ -77,9 +77,16 @@ function useCurrent(): {
  *
  * 静的書き出しなので、画面が出てから数える。焼いた日数は出さない。
  */
-function StayDay({ from }: { from: string }) {
+function StayDay({ slug, from }: { slug: string; from: string }) {
   const [n, setN] = useState<number | null>(null);
-  useEffect(() => setN(stayDays(from, new Date())), [from]);
+  /* **出国した国の日数は、出さない。** 滞在の `to` は帰ってから手で入れる欄なので、
+     旅に出ても止まらない（`lib/stay.ts` の `stayClosedOn`）。上の帯の
+     「ジョージアに来て ◯日目」は出国した日に消えるのに、ここだけ
+     旅から帰ったあとも増えつづけていた。 */
+  useEffect(() => {
+    const now = new Date();
+    setN(stayClosedOn(slug, now) ? null : stayDays(from, now));
+  }, [slug, from]);
   if (n === null) return null;
   return <span className="nowc-day">この滞在で {n.toLocaleString()} 日目</span>;
 }
@@ -111,7 +118,7 @@ export function NowCountry() {
       <p className="nowc-head">
         <Flag slug={c.slug} size={30} />
         <b>{c.name}</b>
-        {stay && <StayDay from={stay.from} />}
+        {stay && <StayDay slug={c.slug} from={stay.from} />}
       </p>
       <p>{c.summary}</p>
 
@@ -171,9 +178,10 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
       <p className="nowc-head">
         {here && <Flag slug={here.slug} size={30} />}
         <b>{title}</b>
-        {trip && (
-          <span className="nowc-day">旅に出て {trip.days.toLocaleString()} 日目</span>
-        )}
+        {/* 数え方も言い方も `lib/stay.ts` に1つ（`tripDayWord`）。**上の帯と
+            旅程表と、同じ日には同じ番号を出す。** 前はここだけ別に書いてあって、
+            9/13 に上の帯が「3日目」、`/nordic` の旅程表が「2日目」と出ていた。 */}
+        {trip && <span className="nowc-day">{tripDayWord(trip.days)}</span>}
       </p>
       {trip && <p>{trip.note}。</p>}
 
@@ -182,7 +190,7 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
           <img src="/sprites/tent.webp" alt="" />
           <span>
             <b>{trip.name}の島へ</b>
-            <i>この旅のこと、これから歩く国、旅のしおり</i>
+            <i>この旅のこと、旅の6カ国、旅のしおり</i>
           </span>
           <Icon name="right" size={14} />
         </Link>
