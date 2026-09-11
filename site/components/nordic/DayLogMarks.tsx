@@ -33,7 +33,10 @@ export default function DayLogMarks() {
   useEffect(() => {
     if (read !== "ok") return;
     const has = new Set(log.map((x) => x.day));
-    document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
+    /* `.nday` は旅程表の行、`.ndayc` はまとめた行の中の番号の札
+       （ストックホルムの7泊は1行にまとめてあるので、日ごとの印は札に付く）。
+       **両方に付けないと、まとめた6日ぶんだけ印が出ない。** */
+    document.querySelectorAll<HTMLElement>(".nday, .ndayc").forEach((el) => {
       el.toggleAttribute("data-log", has.has(el.id));
     });
   }, [log, read]);

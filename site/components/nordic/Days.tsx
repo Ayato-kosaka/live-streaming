@@ -59,7 +59,11 @@ function way(day: Day) {
 /** その日の移動のしかた。同じものは1回だけ言う（「フェリー・フェリー」にしない）。 */
 function how(day: Day) {
   const legs = day.legs ?? [];
-  // 動かない日は、動かないと書く。距離も乗り物も無い日がこの旅に1日だけある
+  /* **動いていないとは限らない。** 9/27 は夜の便で発つが、飛行機は
+     旅程表の「旅のおわり」の行が持っていて `legs` に無い。区間が無い＝
+     動かない日、と決め打つと「動かない日／泊まる 飛行機の中」になる。 */
+  if (day.how) return day.how;
+  // 動かない日は、動かないと書く。距離も乗り物も無い日がこの旅にいくつかある
   if (legs.length === 0) return "動かない日";
   const ways = [...new Set(legs.map((l) => MOVE[l.move]))].join("と");
   const km = legs.reduce((a, l) => a + (l.km ?? 0), 0);
@@ -122,31 +126,111 @@ function Row({ day }: { day: Day }) {
   );
 }
 
+/**
+ * 同じ `group` が続く日を、1行にまとめる。
+ *
+ * ストックホルムの7泊は、日ごとに見ると書けることが同じになる
+ * （動かない・同じ街・同じ宿）。**同じ行を6つ並べても、増えるのは
+ * 縦の長さだけ。** 実際に並べてみたら旅程表が 2,529px になって、
+ * 20行のうち8行が見分けの付かない行だった。
+ *
+ * **面は日ごとに残す。** その日に起きたことの置き場が要るので
+ * （`nordicLog` は行の id ごとに1件しか持てない）、畳むのは
+ * 旅程表の見た目だけにして、日ごとの面へは番号の札から入る。
+ */
+function groupRows(days: Day[]): (Day | Day[])[] {
+  const out: (Day | Day[])[] = [];
+  for (const d of days) {
+    const last = out[out.length - 1];
+    if (d.group && Array.isArray(last) && last[0].group === d.group) last.push(d);
+    else out.push(d.group ? [d] : d);
+  }
+  return out;
+}
+
+/** まとめた何日かを、1行で。日ごとの面へは番号の札から入る。 */
+function GroupRow({ days }: { days: Day[] }) {
+  const first = days[0];
+  const last = days[days.length - 1];
+  return (
+    <div className="ndayr is-group">
+      {first.art && <Mark art={first.art} size={38} className="ndayr-art" />}
+      <span className="ndayr-body">
+        <span className="ndayr-top">
+          {/* `n` は「本人が言い切った日」にしか入らない欄なので、
+              無い日が混ざっても字が崩れないようにしておく。 */}
+          <b>
+            {first.n && last.n
+              ? `${first.n}〜${last.n}日目`
+              : `${dayName(first)}〜${dayName(last)}`}
+          </b>
+          {first.date && last.date && (
+            <time dateTime={first.date}>
+              {when(first.date)}〜{when(last.date)}
+            </time>
+          )}
+        </span>
+        <span className="ndayr-way">
+          <span>{first.city}</span>
+        </span>
+        <span className="ndayr-how">
+          <span>{how(first)}</span>
+          {first.stay && (
+            <span className="ndayr-stay">泊まる {cityName(first.stay)}</span>
+          )}
+        </span>
+        {/* 日ごとの面への入口。**その日の話が書かれた札には印が付く**
+            （`DayLogMarks` が `.ndayc` にも同じ印を付ける）。 */}
+        <span className="ndayg-days">
+          {days.map((d) => (
+            <Link key={d.id} className="ndayc" id={d.id} href={dayHref(d)}>
+              {d.n}
+            </Link>
+          ))}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** 1日ぶんの行。**面のある日は押せる。無い日は平らな紙のまま。** */
+function DayLi({ day }: { day: Day }) {
+  return (
+    <li className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
+      {day.legs?.length || day.city ? (
+        <Row day={day} />
+      ) : (
+        /* 面を持たない行。**押せないので、厚みも矢印も付けない。**
+           いまここに落ちる行は無い（`bare` を立てている行が1つも無い）が、
+           旅程が動いて中身の無い行が増えたときの受け皿として残してある。 */
+        <div className="ndayr is-flat">
+          <span className="ndayr-body">
+            <span className="ndayr-top">
+              <b>{dayName(day)}</b>
+            </span>
+            {day.say && <span className="ndayr-say">{day.say}</span>}
+          </span>
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default function Days() {
   return (
     <ol className="ndays">
       {/* 書かれた日の行に印を付ける。字も数字も持たない（読むだけ）ので、
           旅程表そのものを面の JS に連れてこない。 */}
       <DayLogMarks />
-      {DAYS.map((day) => (
-        <li key={day.id} className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
-          {day.legs?.length || day.city ? (
-            <Row day={day} />
-          ) : (
-            /* ストックホルムでの7泊。**中身のページを持たない。**
-               何をするかがまだ決まっていないので、開いても書けることが無い。
-               押せないので、厚みも矢印も付けない。 */
-            <div className="ndayr is-flat">
-              <span className="ndayr-body">
-                <span className="ndayr-top">
-                  <b>{dayName(day)}</b>
-                </span>
-                {day.say && <span className="ndayr-say">{day.say}</span>}
-              </span>
-            </div>
-          )}
-        </li>
-      ))}
+      {groupRows(DAYS).map((row) =>
+        Array.isArray(row) ? (
+          <li key={row[0].group} className="nday is-groupli">
+            <GroupRow days={row} />
+          </li>
+        ) : (
+          <DayLi key={row.id} day={row} />
+        ),
+      )}
       {/* **「着いた」と「旅がおわった」は別の行にする。**
           長いあいだ、旅程表の最後は「着いた朝／船が着いたら終わりです」の1行だけで、
           着いたら旅も終わる作りだった。あやとの言葉（2026-09-06）:

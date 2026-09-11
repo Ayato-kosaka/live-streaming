@@ -258,7 +258,11 @@ export default function TripNow({
   // 「動きは React の外で」。ここで状態を持つと旅程表がまるごと作り直しになる）。
   useEffect(() => {
     if (at == null || at < 1) return;
-    document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
+    /* `.nday` は旅程表の行、`.ndayc` はまとめた行の中の番号の札。
+       **ストックホルムの7泊は1行にまとまっていて、あの行に id が無い。**
+       札のほうにしか日ごとの id が無いので、両方に付ける。
+       付けないと、9/21〜9/26 の6日は旅程表のどこにも「きょう」が出ない。 */
+    document.querySelectorAll<HTMLElement>(".nday, .ndayc").forEach((el) => {
       const on = !!nowRow && el.id === nowRow;
       el.toggleAttribute("data-now", on);
       // 旅程から引いただけの日は「きょう」。本人の字があるときだけ「いま、ここ」

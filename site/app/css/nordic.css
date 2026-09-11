@@ -396,6 +396,64 @@
   white-space: nowrap;
 }
 .ndayr-say { font-size: 12px; line-height: 1.7; font-weight: 700; color: var(--ink-2); }
+
+/* ---- まとめた何日か（ストックホルムの7泊） ----------------------------
+   日ごとに書けることが同じになる日は、1行にまとめる。
+   **行そのものは押せない**（どの日へ行くのかが決まらないので）。
+   入るのは下の番号の札から。厚みを付けないのはそのため
+   （`docs/island-design.md` 3章「押せない行は完全に平らにする」）。 */
+.ndayr.is-group {
+  box-shadow: none;
+  border-style: dashed;
+  background: var(--paper);
+  align-items: flex-start;
+}
+.ndayg-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+/* 日ごとの入口。**48px を割らせない**（走っている車の中でも押せる大きさ）。 */
+.ndayc {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-1);
+  border: var(--bw-2) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 4px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.12s ease;
+}
+.ndayc:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+/* その日の話が書かれた札。**行の印（`.ndayr-log`）と同じオリーブ**にする。
+   まとめた中の1日に何か書かれたことが、開かなくても分かるようにする。 */
+.ndayc[data-log] {
+  background: var(--chip);
+  border-color: var(--chip);
+  color: var(--chip-ink);
+}
+/* きょうの札。**行の `data-now` と同じことを、まとめた行の中で言う。**
+   1行にまとめた6日のうち、どれが今日かが分からないと、
+   旅程表からその日の面へ入れない。 */
+.ndayc[data-now] {
+  background: var(--marker);
+  border-color: var(--frame-dark);
+  /* **蛍光の上の字は `--marker-ink`。**（`docs/island-world.md` 3.2 の表）
+     `--ink` を乗せると、島の景色を替えたときに比が落ちる組み合わせが出る。 */
+  color: var(--marker-ink);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 4px 0 var(--frame-dark);
+}
 /* 動かせない時刻（発つ便の便名と時刻）。旅程表の最後の行だけが持つ。 */
 .ndayr-fixed {
   font-size: var(--fs-min);
