@@ -90,12 +90,19 @@ def main() -> None:
     log.info("Icon の並び %d人", len(order))
 
     client = db()
-    have = {d.id for d in client.collection(COLLECTION).select([]).stream()}
+    # **`select([])` を使わない。** 空の射影は数え落としが起きうるので、
+    # 素直に全部引いて id だけ取る（97件なので重くない）。
+    have = {d.id for d in client.collection(COLLECTION).stream()}
     log.info("islandCharacter に入っている %d人", len(have))
 
     hit = [(cid, n) for n, (cid, _) in enumerate(order) if cid in have]
     miss = [cid for cid, _ in order if cid not in have]
     log.info("番号を付けられる %d人 / 表にあるが島に無い %d人", len(hit), len(miss))
+    # **どれが欠けているかを出す。** 数だけ出しても追いかけられない。
+    # ここに出るのはドライブの画像ID（`residents.ts` の `icon:` と同じもので、
+    # もともと公開されている値）。名前は出さない。
+    for cid in miss:
+        log.info("  島に無い: %s", cid)
     # **島にあるが表に無い人**は、画面から足した人。末尾へ回す（createdAt 順）
     extra = sorted(have - {cid for cid, _ in order})
     if extra:
