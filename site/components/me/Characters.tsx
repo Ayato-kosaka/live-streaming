@@ -350,7 +350,10 @@ export default function Characters() {
         </label>
 
         <div className="nph-post-row">
-          <span>ほかの呼び名</span>
+          {/* ここだけ label ではなく div（中が入力欄1つではないため）。
+              `.dform label span` に当たらないので、同じ見た目の `.dlabel` を
+              明示する。**付けないと、この行だけ札が大きく出て見出しに見える。** */}
+          <span className="dlabel">ほかの呼び名</span>
           <div className="ch-aliases">
             {draft.aliases.map((a, i) => (
               <button
