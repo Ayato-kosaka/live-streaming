@@ -87,9 +87,6 @@
         "source": "/ve-postit/**",
         "destination": "/expo-app.html"
       },
-      // 消えた束を、島の HTML で受けない。**あるファイルはここより先の
-      // 「そのままの静的ファイル」で配られる**ので、ここに落ちてくるのは
-      // もう無いものだけ。行き先を実在しない道にして 404 で終わらせる。
       {
         "source": "/_next/static/**",
         "destination": "/__gone__"
@@ -104,64 +101,41 @@
       }
     ],
     "headers": [
-      // ---- なぜこれを足したか（2026-09-11 の本番落ち） ----
-      //
-      // 焼き直して配ると、束のファイル名（内容ハッシュ）が変わり、
-      // **前の名前のファイルは消える。** ところが上の rewrites のいちばん
-      // 最後に総取りの `**` があるので、消えた束を取りにいくと 404 ではなく
-      // **200 + index.html** が返っていた。ブラウザはそれを JavaScript として
-      // 読んで `SyntaxError: Unexpected token '<'` を投げ、面が丸ごと落ちる
-      // （`Application error: a client-side exception has occurred`）。
-      // 返るものは上の `/__gone__` の2本で 404 にしたが、**そもそも消えた束を
-      // 取りにいかせない**のがこちらの仕事。
-      //
-      // 引き金は、HTML が Firebase Hosting の既定（`max-age=3600`）で
-      // **端末に1時間そのまま残る**こと。配った直後の1時間、島を見ていた人が
-      // 古い HTML のまま開くと必ず踏む。旅のあいだは毎晩 01:00 UTC に
-      // 焼き直しが自動で出るので、**毎晩1時間ぶん、視聴者さんが踏む。**
-      //
-      // ## HTML は溜めさせない
-      //
-      // `no-cache` は「持っていてよいが、使う前に必ず聞き直す」。変わって
-      // いなければ 304 が返るだけなので往復は軽い。`max-age=0,
-      // must-revalidate` でも同じことができるが、`must-revalidate` は
-      // 「期限切れのものを出すな」の話で、間に入る箱によって読みが分かれる。
-      // **どこでも同じに読まれるほう**を選んだ。
-      //
-      // ## 名前に内容ハッシュが付いているものは、逆に1年置かせる
-      //
-      // `/_next/static/**`（Next の束と CSS）と `/_expo/static/**`
-      // （`entry-<hash>.js`）は、中身が変わればファイル名が変わる。
-      // 古いものを掴む心配が無いので `immutable` にしてよく、
-      // **HTML を毎回聞き直すぶんの往復は、ここで取り返せる。**
-      // ハッシュの付いていないもの（`/sprites/**` `/characters/**`
-      // `/og.png` `/favicon.ico`）には付けない。名前が変わらないので、
-      // 1年置かせると差し替えても誰にも届かなくなる。
-      //
-      // ## 並び順は、外しても壊れないほうに倒してある
-      //
-      // 同じ道に2つ当たったとき、Hosting が先に書いたほうを採るのか
-      // 後に書いたほうを採るのかは、公式には書かれていない。なので
-      // **総取りの `no-cache` を先頭に置いた。** 後勝ちなら下の2つが効いて
-      // 速くなる。先勝ちなら全部 `no-cache` のままで、遅いだけで**落ちない。**
-      // どちらに転んでも、直したかった落ち方は起きない。
       {
         "source": "**",
-        "headers": [{"key": "Cache-Control", "value": "no-cache"}]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       },
-      // 絵と字は、名前が変わらないぶん長くは置けないが、毎回聞き直すほどでもない。
-      // いままでの既定（1時間）と同じにして、島の絵で往復が増えないようにする。
       {
         "source": "**/*.@(png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|mp3)",
-        "headers": [{"key": "Cache-Control", "value": "public, max-age=3600"}]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
       },
       {
         "source": "/_next/static/**",
-        "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       },
       {
         "source": "/_expo/static/**",
-        "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       }
     ],
     "cleanUrls": true,
