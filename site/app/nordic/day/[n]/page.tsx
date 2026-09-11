@@ -119,11 +119,16 @@ function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
-/** 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。 */
+/**
+ * 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。
+ *
+ * **分に0を詰めない。** 「12時間06分」は数字の表の書き方で、文の中では
+ * 読みがつまずく。ちょうどの時は「12時間」まで。
+ */
 function daylight(rise: string, set: string) {
   const m = (t: string) => Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
   const d = m(set) - m(rise);
-  return `${Math.floor(d / 60)}時間${String(d % 60).padStart(2, "0")}分`;
+  return `${Math.floor(d / 60)}時間${d % 60 ? `${d % 60}分` : ""}`;
 }
 
 /**
