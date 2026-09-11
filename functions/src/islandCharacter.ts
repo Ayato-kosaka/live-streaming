@@ -229,6 +229,13 @@ function shapePublic(id: string, v: Json): Json {
     emoji: typeof v.emoji === "string" ? v.emoji : "",
     plain: picture(im.plain),
     scene: picture(im.scene),
+    /* 作った順（`python/admin/characters_order.py` が入れる）。
+       **名前ではないので、誰にでも返してよい。** 図鑑はこの順に並べる。
+       入っていない人は末尾（画面から足したばかりで、まだ番号が無い）。 */
+    order: typeof v.order === "number" ? v.order : null,
+    /* 画面から足した時刻。**番号が無い人どうしを並べるのに使う。**
+       番号は表から作るので、表に無い新しい人には付かない。 */
+    createdAt: typeof v.createdAt === "string" ? v.createdAt : null,
   };
 }
 
