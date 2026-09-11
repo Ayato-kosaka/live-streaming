@@ -16,6 +16,7 @@ ARGS 例:
 """
 
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -39,6 +40,20 @@ def wait_port(port: int, sec: int = 180) -> bool:
     return False
 
 
+def kill(p: subprocess.Popen) -> None:
+    """npx も firebase-tools も java も、まとめて落とす。"""
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(os.getpgid(p.pid), sig)
+        except ProcessLookupError:
+            return
+        try:
+            p.wait(timeout=15)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+
+
 def main() -> None:
     a = args()
     col = a.get("collection", "islandNotes")
@@ -55,13 +70,18 @@ def main() -> None:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        # **孫まで落とせるようにする。** npx → firebase-tools → java の3段なので、
+        # 親だけ terminate すると java が残る（実際に Actions の後片付けで
+        # 「Terminate orphan process: java」が出た）。8080 を掴んだまま
+        # 残ると、次に立てるときにぶつかる
+        start_new_session=True,
     )
     try:
         if not wait_port(port):
-            out = ""
-            if emu.stdout:
-                emu.terminate()
-                out = emu.stdout.read()[-3000:]
+            # **先に殺してから読む。** 生きたまま read() すると、
+            # 孫が stdout を握っているので EOF が来ずに固まる
+            kill(emu)
+            out = emu.stdout.read()[-3000:] if emu.stdout else ""
             log.error("エミュレータが立ちませんでした:\n%s", out)
             raise SystemExit(1)
         log.info("立ちました。戻します")
@@ -84,11 +104,7 @@ def main() -> None:
         )
         raise SystemExit(r.returncode)
     finally:
-        emu.terminate()
-        try:
-            emu.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            emu.kill()
+        kill(emu)
 
 
 main()
