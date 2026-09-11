@@ -1455,9 +1455,13 @@ svg.nmap {
 .nmap .nm-chip text { fill: var(--ink); font-size: 27px; font-weight: 900; }
 
 /* --- 方位 --- */
+/* 円盤は、N が乗る地そのもの（`RouteMapSvg.tsx`）。
+   0.9 だと下の陸と海が1割すけて、同じ N でも乗る場所で地の明るさが変わる。
+   道具（`tools/sprites/inkpx.py`）の「明地／暗地」はそこを見ている。
+   紙の札（`.nm-lab`）が 0.92 なので、こちらはもう一段上げて地をならす。 */
 .nmap .nm-compass-disc {
   fill: var(--paper);
-  fill-opacity: 0.9;
+  fill-opacity: 0.96;
   stroke: var(--frame-dark);
   stroke-width: 3.5;
 }
@@ -1468,10 +1472,13 @@ svg.nmap {
    暗いほうでも勝手に地から離れる。 */
 .nmap .nm-compass-n { fill: color-mix(in srgb, var(--accent) 50%, var(--ink) 50%); }
 .nmap .nm-compass-s { fill: var(--ink-3); }
+/* N。円盤の中に入ったので、敷いていた札（.nm-lab）は要らない。
+   大きさは地図のほかの字にそろえる（縮尺 26px・距離 27px・札 27px）。 */
 .nmap .nm-compass-t {
   fill: var(--ink);
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
+  letter-spacing: 0.04em;
 }
 
 /* --- 縮尺 --- */
