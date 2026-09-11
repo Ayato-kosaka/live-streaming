@@ -229,6 +229,28 @@ def bake(buf: bytes, widths) -> list:
     return out
 
 
+def can_write(bucket) -> bool:
+    """置き場にオブジェクトを置けるかを、**1件も書かずに**尋ねる。
+
+    GCS は権限が無いときも「無いかもしれない」と言うので、置いてみて
+    403 を読むやり方では名前違いと権限不足の区別が付かない
+    （`python/admin/storage_probe.py` の冒頭）。`testIamPermissions` は
+    持っているものだけを返すので、それで先に見る。
+
+    **半分だけ移すのがいちばん悪い。** 絵の入っていない行が97件できると、
+    画面はそれを「絵の無いキャラクター」として並べる。
+    """
+    want = ["storage.objects.create", "storage.objects.delete"]
+    try:
+        got = set(bucket.test_iam_permissions(want))
+    except Exception as e:  # noqa: BLE001 尋ねられない＝持っていないのと同じ
+        log.warning("置き場の権限を尋ねられません: %s", type(e).__name__)
+        return False
+    for w in want:
+        log.info("  %-24s %s", w, "持っている" if w in got else "持っていない")
+    return "storage.objects.create" in got
+
+
 def put(bucket, path: str, buf: bytes, ctype: str) -> str:
     """Storage に1枚置いて、合言葉つきの URL を返す。
 
@@ -357,6 +379,16 @@ def main() -> None:
         from google.cloud import storage
 
         bucket = storage.Client(project=os.getenv("BQ_PROJECT_ID")).bucket(BUCKET)
+        # 置き場に書けるかを、**1件も書く前に**尋ねる。
+        if not can_write(bucket):
+            log.error(
+                "置き場 %s に書けません（storage.objects.create がありません）。"
+                "**Firestore にも1件も書きません。** 絵の無い行だけが入ると、"
+                "画面が空の枠を97個並べることになります。"
+                "権限は issue #283 であやとの操作待ちです",
+                BUCKET,
+            )
+            sys.exit(1)
 
     n_img = 0
     n_bad = 0
