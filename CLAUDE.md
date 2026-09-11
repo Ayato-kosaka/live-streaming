@@ -136,7 +136,11 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
   **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）
 - [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
-- [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
+- [`docs/island-db.md`](docs/island-db.md) — **データ設計。ERD・用語・責務の表・列の一覧。**
+  「何が正で、誰が書いて、誰が読むか」は3章。列を1つ引きに来たら4章
+- [`docs/island-api.md`](docs/island-api.md) — 口（`/island-api/*`）の一覧。誰が叩けるか・1日の上限
+- [`docs/island-db-notes.md`](docs/island-db-notes.md) — データ設計の**検討メモ**。
+  なぜそう決めたか・何に躓いたか。**日付の付いた記録なので、あとから直さない**
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
 - [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
   焼き込み（`site/content/*.ts`）が古いと思ったらここ

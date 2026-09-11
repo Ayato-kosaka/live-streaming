@@ -1989,3 +1989,77 @@ Claude が返す面だった。呼び出しを落としたので、返しは
 （`npx expo export --platform web` → `_sitemap.html` と出力のルート一覧）と、
 `git grep` で名前が0件になることの両方を見る。**片方だけだと、
 `firebase.json` の rewrite が残って「配れるが中身が無い URL」になる。**
+
+### #57 仕様書を、実物と突き合わせずに書き足していた（2026-09-11。`island-db.md` の列の説明）
+
+**言われたこと**「`docs/island-db.md` の `doneru_donations` のカラム説明が嘘に
+なってる。また、大企業レベルのベストプラクティスなドキュメントになってない気がする。
+すごく見にくい。**特に責務分割が分かりにくい。検討メモが多くて見にくい。db 設計なら
+ERD を先頭に置くのが一般的だと思う。api 設計が混ざっているのは意味わからなさすぎる。**」
+
+指摘は `doneru_donations` の1件だった。**本番と全部突き合わせたら、食い違いは13か所あった。**
+
+| どこ | 書いてあったこと | 実物 |
+| --- | --- | --- |
+| `chat_messages.timestamp_usec` | 配信開始からのマイクロ秒 | エポックからのマイクロ秒 |
+| `doneru_donations` | 15列 | `platform` があって16列 |
+| `island/state` | `stats` と `current` | `fund` と `nordic` もある |
+| `stats.updatedAt` | `number` | `"YYYY-MM-DD"` の文字列 |
+| `stats.latest[]` | `{ videoId, … }` | `{ video_id, … }` |
+| `islandChannels` | 5欄 | `days` があって6欄 |
+| `islandUsers.character` | 「本人が選ぶ」 | **そんな欄も口も無い** |
+| `residents` に載る条件 | `character` がある人 | `channelId` がある人 |
+| `islandTips.videoId` | 「Doneru は持っていない」 | 時刻を当てて埋めている |
+| `islandRate.kind` | `idea` `draft` がある | 無い。代わりに `nphoto` `nlog` がある |
+| `rebake.yml` | 21:30 UTC に4本 | 01:00 UTC に5本 |
+| `islandVotes` | 「13件のまま残してある」 | **本番に無い** |
+| `firestore.rules` | 「島のコレクションを全部 deny」 | `monthlyReview` と `islandHere` は開いている |
+
+そして `islandNotes` と `islandStreamEvent` に **`ip`（書いた人のIPアドレス）が
+1件ずつ入っている**ことは、`docs/` のどこにも書かれていなかった。
+
+**なぜ外したか**
+
+**文書を「前の文書」から更新していた。** 欄を1つ足すとき、本番を引き直さずに
+表へ1行足す。そのとき**残りの行が今も本当かは誰も見ない。** 一度そうすると、
+嘘は増える一方で減らない。`islandVotes` の「13件のまま残してある」がそれで、
+**「残してある」と書いた入れ物が消えても、誰も気づかなかった。**
+
+**混ざっていたのが原因でもある。** 1つの文書に (1) いまの仕様 (2) 口の一覧
+(3) 躓いた記録 が同居していた。(3) は**日付の付いた記録なので直してはいけない**、
+(1) は**本番が変わるたび直さないと嘘になる。** 直してよいものと直してはいけない
+ものが同じ表に並んでいると、**どちらも直されなくなる。**
+
+**対策**
+
+- **仕様・口・検討メモを3つのファイルに割った**（`island-db.md` / `island-api.md` /
+  `island-db-notes.md`）。**直し続ける面を小さくする**のが目的。
+  検討メモは `<details>` で畳まずに出した。畳んでも検索には出るし目次にも残る
+- **各文書の末尾に「確かめかた」を置いた。** どの行を何で確かめたかと、
+  同じことをするコマンド。**確かめていない欄は「コードから起こした」と明記する**
+- **仕様に書いてよいのは「いま、どうなっているか」だけ。**
+  「なぜそう決めたか」「何に躓いたか」は notes 側へ。日付を必ず入れる
+- **「◯件残してある」のような、本番を指す数字を書くときは、数えた日を添える。**
+  数えた日が無い数字は、次の人が確かめようがない
+
+**確かめかた** 本番から取り直す。**書き写さない。**
+
+```
+# BigQuery — 列名・型・NULL 可否・行数
+mcp__Google_Cloud_BigQuery__list_table_ids / get_table_info
+  projectId: live-streaming-d3cac  datasetId: youtube_chat
+
+# Firestore — 何が何件あるか（値もIDも出ない）
+run_admin_script.yml  script: collections_audit      args: {}
+# Firestore — 欄の形だけ（値もIDも出ない）
+run_admin_script.yml  script: firestore_read
+                      args: {"collection":"islandNotes","keys_only":true}
+```
+
+**このリポジトリは公開で、Actions のログも誰でも読める。**
+Firestore は必ず `keys_only`、BigQuery はスキーマと数字だけ。**行の中身を貼らない。**
+
+**`run_admin_script.yml` は並行して走らない**（`concurrency: admin-script`）。
+ほかの担当も同じワークフローを使っているので、**ログの `ARGS` を見て、
+自分が投げたものかを毎回確かめる。** 今回、別の担当の run を自分のものと
+読みかけた（`islandStreamEvent` を頼んだのに `islandChannels` が返ってきた）。

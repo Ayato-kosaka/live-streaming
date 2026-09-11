@@ -1,737 +1,141 @@
 # あやと島 — データ設計
 
-保存している場所は3つ。**BigQuery**（配信とコメントの生データ）、
-**Firestore**（島の状態と、みんなが書いたもの）、**Git**（手で書いたコンテンツ）。
+**この文書は「いま、本番がどうなっているか」だけを書く。**
+なぜそう決めたか・何に躓いたかは [`island-db-notes.md`](./island-db-notes.md)、
+口（API）の一覧は [`island-api.md`](./island-api.md) にある。
 
-大きな方針:
+置き場は4つ。**BigQuery**（配信とコメントの原本）、**Firestore**（島の状態と、
+みんなが書いたもの）、**Git**（人が書いたコンテンツと、機械が焼いたもの）、
+**Cloud Storage**（旅の写真の実体）。
 
-- **ブラウザから Firestore を直接触らせない。** 読み書きはすべて Cloud Functions
-  (`islandApi`) を通す。`firestore.rules` は島のコレクションを全部 deny にしてある
-  （Admin SDK はルールを迂回するので、これで足りる）。
-- **原本は BigQuery。** Firestore に置くのは、そこから集計した「表示用の答え」だけ。
-  サイトから重いクエリを投げない。
-- **手で書くものは Git に置く。** 料理・国・伝説・北欧ガイドのような、
-  レビューして育てたいものはコードとして扱う。
+読む順は上から。急ぐなら **1章の絵**と **3章の表**だけで全体像になる。
 
 ---
 
-## 1. BigQuery — `live-streaming-d3cac.youtube_chat`
+## 1. 全体像
 
-配信のアーカイブとチャットの原本。GitHub Actions が毎日流し込む。
+### 1.1 島ぜんぶ（粗く）
 
-### `videos` — 配信1本＝1行
+```mermaid
+erDiagram
+    videos                 ||--o{ chat_messages          : "video_id"
+    videos                 ||--o{ islandTips             : "videoId"
+    chat_messages          ||--o| islandTips             : "スパチャ1件が台帳1行に"
+    doneru_donations       ||--o| islandTips             : "寄付1件が台帳1行に"
 
-| 列 | 型 | 中身 |
-| --- | --- | --- |
-| `video_id` | STRING | YouTube の動画ID（主キー） |
-| `title` | STRING | タイトル |
-| `actual_start_time` | TIMESTAMP | 実際に始まった時刻 |
-| `status` | STRING | 取り込みの状態（`PENDING` / `WAITING` / `FAILED` / `SUCCEEDED` / `SKIPPED`） |
-| `first_seen_at` | TIMESTAMP | 見つけた時刻 |
-| `next_retry_at` | TIMESTAMP | 次に試す時刻 |
-| `attempt_count` | INT64 | 試した回数 |
-| `last_attempt_at` | TIMESTAMP | 最後に試した時刻 |
-| `last_error_code` / `last_error_detail` | STRING | 失敗の理由 |
-| `succeeded_at` | TIMESTAMP | 取り込めた時刻 |
-| `yt_dlp_version` | STRING | 取り込みに使った版 |
+    islandChannels         ||--o{ chat_messages          : "author_channel_id"
+    islandChannels         ||--o{ islandTips             : "channelId"
+    islandChannels         ||--o{ islandCards            : "channelId"
+    islandChannels         |o--o| islandUsers            : "channelId"
+    islandDonors           ||--o{ doneru_donations       : "viewer_pk"
+    islandDonors           |o--o| islandChannels         : "どねIDをチャンネルに結ぶ"
 
-#### 取り込みの状態は、WAITING で止まったまま戻ってこない
+    islandStreamEvent      ||--o{ islandStreamEventImage : "streamEventId"
+    islandStreamEvent      ||--o{ islandHearts           : "plan"
+    islandStreamEvent      |o--o| plans_ts               : "planId"
+    islandStreamEventImage ||--o{ islandCards            : "streamEventImageId"
+    islandTips             ||--o{ islandCards            : "誰に配るかを決める"
+    islandStreamEventImage ||--|| storage_photos         : "storagePath"
 
-見つけた配信は `PENDING` で入り、チャットが取れれば `SUCCEEDED`。取れなければ
+    themes_ts              ||--o{ islandNotes            : "theme"
+    islandStreamEvent      ||--o{ islandNotes            : "planId（旧）"
+    islandNotes            ||--o{ islandHearts           : "note"
 
-- チャットがまだ YouTube 側に出ていない（ファイルが無い／0件）
-  → 見つけてから7日のあいだ `WAITING`（次の晩にもう一度）
-- 本物のエラー（yt-dlp の失敗・パース失敗・BigQuery の失敗）→ `FAILED`
-- どちらも、見つけてから7日を過ぎたら → `SKIPPED`
-
-と落ちていく（`python/fetch_chat_data.py` の `handle_no_chat_file` と
-`handle_failure`）。
-
-**「まだ出ていない」を24時間で失敗にしていた**（2026-09-10 に直した）。
-もとは「24h＋ぶれ3時間 を過ぎたら `FAILED`」で分けていたが、
-**ジョブは日に1回しか走らないので、この窓は1回しか通らない。**
-初回確認からの経過は 0h → 約22h → 約46h と飛び、2晩目にはもう窓の外にいる。
-アーカイブのチャットが出るのに1日以上かかった配信は、**全部2晩目で `FAILED`**
-になっていた。docstring は「7日間は拾い直す」と言っていたのに、
-7日ルールには**構造上ぜったい到達しなかった。**
-
-**ところが `WAITING` は落ちない。** 拾い直すクエリ
-（`python/bq/queries.py` の `QUERY_SELECT_TARGET_VIDEOS`）が
-
-```sql
-AND first_seen_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+    islandPolls            ||--o{ islandPollVotes        : "pollId"
 ```
 
-で7日を過ぎたものを**対象から外す**ので、7日のあいだに一度も拾われなかった
-`WAITING` は、`SKIPPED` にも `FAILED` にも落ちないまま永久に残る。
-状態を落とすのは「拾って処理したとき」だけで、拾わない相手には誰も触らない。
+読み方: **左が「1」、右が「多」。** 名前で置き場が分かる。
+**`snake_case` は BigQuery**（`videos` `chat_messages` `doneru_donations`）、
+**`islandXxx` は Firestore**、`plans_ts` `themes_ts` は Git
+（`site/content/plans.ts` / `themes.ts`）、`storage_photos` は Cloud Storage。
 
-**これは `SKIPPED` にも効く。** クエリの窓（7日以内）と `should_skip_after_7days`
-（7日以上）はちょうど裏表なので、**クエリが返した行が `SKIPPED` になれる余地が
-ほとんど無い**（拾ってから yt-dlp を回すあいだの数分だけ）。実際、
-2026-09-10 時点で `SKIPPED` は**開店以来1本も無い**（SUCCEEDED 671 / FAILED 63 /
-WAITING 28）。7日を過ぎたものを落とすには、クエリの窓を7日より広げるしかない。
+**カードは、写真と投げ銭の掛け算でできる。** 1枚の写真に対して、その企画の日に
+投げ銭した人ぶんカードができる。だから `islandCards` に矢印が2本入っている。
 
-2026-09-10 時点で `WAITING` が28本（うち26本は 2026-02-06〜07-28）。
-**全部 `attempt_count = 1`、`last_error_code` は NULL。** 一度試したきり、
-二度と拾われていない。
+### 1.2 配信とコメント（BigQuery）
 
-なぜ一度も拾われないかは、`next_retry_at` の置き方で説明が付く。
-`next_retry_at` は `first_seen_at + 24時間`ちょうど。ところが定時実行
-（`0 20 * * *`）は毎晩ぶれる。本番の実測:
-
-| 晩 | 実際に走った時刻(UTC) |
-| --- | --- |
-| 09-07 | 22:26 |
-| 09-08 | 22:16 |
-| 09-09 | 22:09 |
-
-09-08 に見つけた配信の `next_retry_at` は 09-09 の 22:16。
-翌晩のジョブは 22:09 に動いたので、**7分足りずに拾われなかった。**
-そのまま7日が過ぎれば、もう誰も見ない。
-
-**手前に置く直しは入っている**（#249 で `next_retry_at` を
-`first_seen_at + 24時間 - 3時間` にした）。これから見つける配信は拾われる。
-**すでに WAITING で固まっている28本は、それでは動かない。**
-古い値（きっかり24時間後）のまま書いてあるため。
-
-古い行を揃えるのは `python/admin/fix_stale_retry.py`。
-`WAITING` の `next_retry_at` を `first_seen_at + 21時間` に書き直す
-（**既定は dry-run**、書くには `{"apply": true}`）。ただし7日より古い28本のうち
-26本は、値を直しても**クエリの窓の外**なのでもう拾われない。
-
-WAITING が残っているぶんだけ、**チャットの1件も無い配信日**が増える。
-その日は「誰も来なかった日」ではなく「誰が居たか読めていない日」で、
-数え方は次のとおり。
-
-### `chat_messages` — コメント1件＝1行
-
-| 列 | 型 | 中身 |
-| --- | --- | --- |
-| `video_id` | STRING | どの配信か |
-| `event_id` | STRING | YouTube 側のID（`video_id` と合わせて一意） |
-| `event_type` | STRING | `TEXT` / スパチャ / メンバーなど |
-| `timestamp_usec` | INT64 | 配信開始からのマイクロ秒 |
-| `published_at` | TIMESTAMP | 書き込まれた時刻 |
-| `author_name` | STRING | 表示名（変わることがある） |
-| `author_channel_id` | STRING | チャンネルID（**人の同一性はこれで見る**） |
-| `message_text` | STRING | 本文 |
-| `message_runs_json` | JSON | 絵文字などを含む元の構造 |
-| `purchase_amount_text` | STRING | スパチャの金額表記 |
-| `ingest_run_id` / `ingested_at` / `source_file` / `source_line_no` | | 取り込みの記録 |
-| `raw_item_json` | JSON | 元データそのまま |
-
-取り込みは `MERGE`（べき等）。同じ配信を何度流しても増えない。
-
-### `doneru_donations` — Doneru の寄付1件＝1行
-
-**スパチャは `chat_messages` に入っているが、Doneru 経由の寄付はどこにも無かった。**
-`functions/src/doneruAmount.ts` で取れるのは合計額だけで、誰がいつ出したかは取れない
-（`docs/nordic-fund.md` 2.2 / 2.3）。ここがその置き場所。
-
-| 列 | 型 | 中身 |
-| --- | --- | --- |
-| `donation_id` | STRING | Doneru 側のID（主キー）。無ければ中身の SHA-256 |
-| `donated_at` | TIMESTAMP | 出された時刻（UTC） |
-| `donor_name` | STRING | 表示名 |
-| `amount` | NUMERIC | 視聴者が払った額 |
-| `settlement_amount` | NUMERIC | **手数料を引いた、実際に振り込まれる額**（`amount` の約95%） |
-| `amount_text` | STRING | 元の表記（`¥1,000` など） |
-| `currency` | STRING | 通貨（本番データでは全件 NULL＝円） |
-| `message_text` | STRING | 添えられた言葉 |
-| `status` | STRING | `振込完了` / `振込待ち` |
-| `viewer_pk` | STRING | **人の同一性はこれで見る**（`chat_messages.author_channel_id` と同じ役目） |
-| `fetched_start` / `fetched_end` | DATE | どの期間を訊いて取れた行か |
-| `ingest_run_id` / `ingested_at` | | 取り込みの記録 |
-| `raw_json` | JSON | 元データそのまま |
-
-入れているのは `python/fetch_doneru_donations.py`（`.github/workflows/fetch_doneru_donations.yml` が毎日 5:30 に回す）。
-
-**取っているのは CSV。** `/streamer/donation-list/csv?start=...&end=...` を1回叩く。
-画面が使っている JSON の一覧（`?year=...`）から移した。あちらは**年でしか切れず**、
-データの無い年を訊くと**ページ送りを無視して同じページを返し続ける**。
-CSV は日付範囲で切れてページ送りが無いので、その両方が消える。
-
-既定の期間は**去年の元日から明日まで**。
-
-- 去年から: 年をまたいだ直後でも去年の大晦日が必ず入る。1回の往復で全部返るので、
-  1年ぶん多く取っても代金はほとんど変わらない
-- 明日まで: `end` が含まれるのか分からないので、**取りこぼさない側に倒す**。
-  1日多く訊いて空が返るほうが、今日ぶんを落とすより安い
-
-過去ぶんは `workflow_dispatch` の `since` に年を入れて流す
-（`since=2024` なら 2024 年の元日から今日まで）。
-`donation_id` で `MERGE` するので、何度流しても増えない。
-
-#### Doneru の CSV は壊れている（いちばん時間を取られたところ）
-
-**メッセージの中のカンマ・改行・引用符をエスケープしていない。** 引用符は
-使っているのに、メッセージの中の `"` をそのまま出すので、そこで引用が
-終わったことにされる。素直に読むと行がずれる。
-
-本番で順に踏んだもの:
-
-| 何が起きるか | 症状 |
-| --- | --- |
-| メッセージに改行 → 1件が2行に割れる | 後半が別の寄付として入る（日付も金額も無い行が4件） |
-| メッセージにカンマ → 列が増える | ヘッダー8列に対して14列。取得ごと落ちる |
-| 末尾の列が空 → 列が減る | 「割れた行」と誤認すると**本物を消す**（2025 が 568→566 になった） |
-| 1行目だけで既に8列超え | 「完全な行」と誤認して、続きを別の寄付にする |
-| メッセージの中の `"` | そこから次の `"` までが1つのセルに飲まれる |
-
-**組み直しの規則は1本にまとめてある**（`python/doneru/client.py`）。
-
-1. 引用符は**解釈する**（ヘッダーにも付いている。切ると 6802 列に割れる）
-2. **日時の列が日付の形をしている行**を1件の始まりとみなす
-3. 次の始まりが来るまでを1件として集める
-4. つないで、はみ出したぶんはメッセージに畳み、足りないぶんは空で埋める
-
-**長さで「完全な行か」を決めてはいけない。** はみ出しも不足も両方あるので、
-長さは何も保証しない。切れ目は「次が始まったか」でしか決まらない。
-
-組み直した件数はログに出る。**0 でなくなったり急に増えたりしたら、
-向こうの出し方が変わった合図。**
-
-**メッセージの中の `"` だけは直しようがない。** どこまでがメッセージで
-どこからが次の列か、情報として区別が付かない。いま1件それがあり、
-`精算状態` の列にメッセージが流れ込んでいる。金額と日時は正しいので
-件数にも合計にも影響しない。元は `raw_json` にある。
-
-**ヘッダーは日本語。** キー名を突き合わせるときに英数字以外を捨ててはいけない
-（`日時` も `名前` も `金額` も空文字になって、どの候補にも当たらなくなる）。
-`normalizer._key` は空白と区切り記号だけを落とす。
-
-**文字コードを決め打ちしない。** UTF-8 BOM でも Shift_JIS(cp932) でも読めるようにしてある。
-
-**毎日「その年を全件」取り直しているので、止まっても欠けない。**
-何日止まっていても、直して1回流せば止まっていた期間ごと埋まる。
-差分を積む作りにしていないことが、そのまま復旧のしやすさになっている。
-
-**列名は決め打ちしていない。** Doneru に公開 API は無く、画面が叩いている API を
-そのまま使っているので、向こうの都合で名前が変わりうる。候補名を並べて当たったものを
-使い、当たらなくても `raw_json` に丸ごと残す。形を見るには:
-
-```bash
-DONERU_COOKIE=... python python/fetch_doneru_donations.py --probe   # キー名と件数だけ出る
+```mermaid
+erDiagram
+    videos {
+        STRING video_id PK "YouTube の動画ID"
+        STRING status "PENDING WAITING SUCCEEDED FAILED SKIPPED"
+        TIMESTAMP first_seen_at "見つけた時刻。7日の起点"
+        TIMESTAMP actual_start_time "配信が始まった時刻。NULL がある"
+        STRING title "NULL がある"
+    }
+    chat_messages {
+        STRING video_id PK "どの配信か"
+        STRING event_id PK "video_id と合わせて一意"
+        STRING event_type "TEXT PAID MEMBERSHIP SYSTEM"
+        TIMESTAMP published_at "書き込まれた時刻。日付でパーティション"
+        STRING author_channel_id "人の同一性はこれ。NULL がある"
+        STRING message_text "本文"
+    }
+    doneru_donations {
+        STRING donation_id PK "Doneru 側のID"
+        TIMESTAMP donated_at "出された時刻"
+        NUMERIC amount "視聴者が払った額"
+        NUMERIC settlement_amount "手数料を引いた額"
+        STRING viewer_pk "人の同一性はこれ"
+        STRING status "振込完了 振込待ち"
+    }
+    doneru_ingest_runs {
+        STRING run_id PK "いつの実行か"
+        TIMESTAMP ran_at "走った時刻"
+        STRING outcome "ok session_expired error"
+        INT64 donations "入れた件数"
+    }
+    videos ||--o{ chat_messages : "video_id"
 ```
 
-**この表から金額の順位表を作らない。** 出す人は60人しかいないので上位が常連で固定される。
-理由は `docs/nordic-fund.md` の「やらないことにした案」にある。人数と合計のための原本。
+`doneru_donations` と `doneru_ingest_runs` は**互いに親子ではない。**
+片方は寄付、もう片方は「取りに行った記録」で、寄付が0件の実行も残る。
 
-#### 名前で人を数えない
+### 1.3 企画・写真・カード
 
-**`donor_name` で数えると人数が増える。** 本番の967件を名前で数えると45人、
-`viewer_pk` で数えると28人。同じ人が名前を変えて投げている。
-`chat_messages` で `author_channel_id` を見ているのと同じ理由。
-
-#### 手元のメモと照合する
-
-**どの数字と突き合わせるかを先に決める。** 3通りあって、金額が違う。
-
-| 見たいもの | 使う列 | 絞り |
-| --- | --- | --- |
-| 視聴者が出してくれた額 | `amount` | なし |
-| 実際に振り込まれる額 | `settlement_amount` | なし |
-| もう入金された額 | `settlement_amount` | `status = '振込完了'` |
-
-```sql
-SELECT
-  EXTRACT(YEAR FROM DATETIME(donated_at, 'Asia/Tokyo')) AS year,
-  status,
-  COUNT(*) AS count,
-  COUNT(DISTINCT viewer_pk) AS people,
-  SUM(amount) AS paid,
-  SUM(settlement_amount) AS settlement
-FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
-GROUP BY year, status
-ORDER BY year, status
+```mermaid
+erDiagram
+    islandStreamEvent {
+        string id PK "Firestore の自動ID"
+        string title "題。これだけあれば出せる"
+        string date "YYYY-MM-DD"
+        string status "proposed next done"
+        string planId "Git 側の企画。結ぶと1対1"
+        string_array videoIds "この企画のものだと決めた配信"
+        string cid "端末ID。あとから直す鍵でもある"
+    }
+    islandStreamEventImage {
+        string id PK "書類IDは移行の前後で変えない"
+        string streamEventId FK "空なら、まだ決まっていない"
+        string role "card gallery cover"
+        string storagePath "Cloud Storage の道"
+        string day "YYYY-MM-DD"
+    }
+    islandCards {
+        string id PK "画像のID__チャンネルID"
+        string channelId FK "もらった人"
+        string streamEventImageId FK "どの画像か"
+        string streamEventId FK "どの企画か"
+        number earnedAt "もらった時刻（投げ銭の時刻）"
+        number x "0..1。置き方"
+        number y "0..1。足元の高さ"
+    }
+    islandTips {
+        string id PK "sourceEventId の SHA-1 の頭32文字"
+        string sourceEventId "yt:videoId:eventId か doneru:donationId"
+        string source "youtube_superchat doneru"
+        string channelId FK "紐付いていなければ null"
+        string day "日本時間で切った配信日"
+        number amount "外に出さない"
+    }
+    islandStreamEvent      ||--o{ islandStreamEventImage : "streamEventId"
+    islandStreamEventImage ||--o{ islandCards            : "streamEventImageId"
+    islandTips             ||--o{ islandCards            : "その日に出した人ぶん"
 ```
 
-**通貨が混ざっていないか先に見る。** スパチャには外貨が2件混ざっていた
-（`docs/nordic-fund.md` 2.3）ので、Doneru も同じ可能性がある。
-本番の967件では全件 NULL（円）だった。
-
-```sql
-SELECT currency, COUNT(*) AS count, SUM(amount) AS total
-FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
-GROUP BY currency
-```
-
-`amount` が NULL の行があれば、そこは `amount_text` の形が読めていない。
-`raw_json` に元が残っているので、`python/doneru/normalizer.py` の候補名か
-金額の読み取りを直せば作り直せる。
-
-```sql
-SELECT COUNT(*) FROM `live-streaming-d3cac.youtube_chat.doneru_donations`
-WHERE amount IS NULL OR donated_at IS NULL
-```
-
-#### 作り直す
-
-取り方が変わって列が変わったときは、古い行を混ぜない。
-`workflow_dispatch` の `recreate` を true にすると、取り込む前に
-`doneru_donations` を `DROP` してから作り直す（`TRUNCATE` ではなく `DROP`。
-列の並びごと作り直したいので）。
-
-**`doneru_ingest_runs` は消えない。** あれは寄付ではなく実行の記録で、
-取り方が変わっても過去に何日セッションが持ったかの意味は変わらないため。
-
-### `doneru_ingest_runs` — 取り込みを試した記録1回＝1行
-
-**セッションが何日持ったかを測るために置いてある。** 落ちたことは Actions の
-通知メールで分かるが、いつからいつまで生きていたかはどこにも残らない。
-`_dt` を入れ直す頻度を決めるには寿命が要る。
-
-| 列 | 型 | 中身 |
-| --- | --- | --- |
-| `run_id` / `ran_at` | STRING / TIMESTAMP | いつの実行か |
-| `outcome` | STRING | `ok` / `session_expired` / `error` |
-| `period` | STRING | 取りに行った期間（`2025-01-01..2026-09-07`） |
-| `donations` | INT64 | 入れた件数 |
-| `cookie_shape` | STRING | `_dt` の長さの判定（**値は入れない**） |
-| `renewed_dt` | BOOL | Doneru が `_dt` を配り直したか |
-| `detail` | STRING | 失敗の理由 |
-
-**落ちたときこそ残す。** 何日持ったかは、成功と失敗の両方が並んで初めて出る。
-`--probe` と `--dry-run` は本番の実行ではないので残さない。
-記録そのものが失敗しても取り込みは落とさない（記録は本題ではない）。
-
-#### 寿命を見る
-
-```sql
-SELECT
-  DATE(ran_at, 'Asia/Tokyo') AS day,
-  outcome,
-  COUNT(*) AS runs,
-  MAX(donations) AS donations
-FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
-GROUP BY day, outcome
-ORDER BY day DESC
-```
-
-`ok` が続いたあと `session_expired` が出たら、そこがそのセッションの終わり。
-**最後の `ok` と最初の `session_expired` のあいだが寿命**（日次で回しているので
-精度は1日）。入れ直すたびに1本ぶんの寿命が記録に増えていく。
-
-```sql
--- 直近の「入れ直しから切れるまで」
-SELECT
-  MIN(ran_at) AS alive_from,
-  MAX(IF(outcome = 'ok', ran_at, NULL)) AS last_ok,
-  TIMESTAMP_DIFF(
-    MAX(IF(outcome = 'ok', ran_at, NULL)), MIN(ran_at), HOUR
-  ) AS lasted_hours
-FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
-WHERE ran_at > (
-  SELECT IFNULL(MAX(ran_at), TIMESTAMP('1970-01-01'))
-  FROM `live-streaming-d3cac.youtube_chat.doneru_ingest_runs`
-  WHERE outcome = 'session_expired'
-)
-```
-
-#### Doneru のセッションを入れ直す
-
-認証はブラウザの cookie（`_dt`）だけ。**切れたら自動では戻せない**（ログインが
-Google OAuth なので Actions の中では通せない）。切れると
-`fetch_doneru_donations` が終了コード 2 で落ちるので、**Actions の失敗通知メール**で気づく。
-ログの `::error::` に理由が出るため、他の失敗と区別が付く。
-
-**あやとが Doneru からログアウトすると、その時点で切れる。** これは Doneru が
-サーバ側でセッションを破棄している証拠なので、直すべき欠陥ではない
-（ログアウトしても生き続けるほうが危ない）。付き合う制約として扱う。
-止まっているあいだのデータは、入れ直して1回流せば埋まる。
-
-ログの `貼られている値の形` が「Doneru の形と一致」なのに 401 なら、
-貼り損ねではなくセッションのほう。ログインし直して取り直す。
-
-1. ブラウザで https://doneru.jp にログインする
-2. DevTools > Application > Cookies > `https://doneru.jp` の `_dt` の値をコピーする
-3. Settings > Secrets and variables > Actions の `DONERU_COOKIE` を更新する
-4. `Fetch Doneru Donations` を `workflow_dispatch` で流し直す
-
-`_dt` は**どの IP からでも寄付一覧が読める鍵**。Secrets 以外の場所に置かない。
-`cf_clearance` や `_ga` などは要らない（貼っても捨てられる）。
-
-### 出席の数え方 — 読めていない日は、出席にも分母にも入れない
-
-`python/build_residents.py`（直近90日）と月末の表彰で使う。
-
-- **日ごとに数える。** 同じ日に2本配信していても1日
-- **配信日は UTC で切る**（日本時間の朝9時が境目。22時開始の枠と、0時を
-  またいだ続きが同じ日に入る）
-- **取り込めていない配信日は、出席にも分母にも入れない**
-
-3つめの「取り込めていない日」は、**その日の配信がどれも `SUCCEEDED` に
-なっていない日**。取り込みは通ったのにコメントが1件も無かった日
-（`SUCCEEDED` なのにチャット0。本番に1日ある）は**本物の0**なので、
-分母には入れる。読めていないのと0だったのを混ぜないのは、こちら向きも同じ。
-
-3つめが `docs/island-standards.md` 10（読めていないことを、値0と同じ絵に
-しない）そのもの。前は「初コメントがその日以前の人を、その日は全員出席と
-みなす」にしていた。**読めていないものを「居た」と言い切っている。**
-
-そして実害が出ていた（2026-09-10 の実測、直近90日）:
-
-| | 日数・人数 |
-| --- | --- |
-| 配信のあった日 | 87日 |
-| チャットの残っている日 | 83日 |
-| チャットが1件も無い日 | 6日 |
-| 期間内にコメントした人 | 318人 |
-| 本当に5日以上いた人 | **59人** |
-| 読めない6日を全員に足したときの人数 | **174人** |
-| 1日しかコメントしていない人 | 200人 |
-| **うち「常連」に数えられていた人** | **72人** |
-
-読めない日が6日あると、1日＋6日＝7日で常連の線（5日）を超える。
-**1回来ただけの人が72人、常連として数えられていた。**
-
-**分母は「読めた日」にそろえる**（配信のあった日ではない）。
-`videos` に開始時刻が無いのにチャットだけある日が本番に2日あるので、
-配信日で割ると出席が分母を超える人が出る。
-
-全期間で見ると、配信はあったのにチャットが1件も無い日は30日ある。
-内訳は **WAITING が15日**（2026-02-06〜09-09）、FAILED が14日、
-そして「取り込めたのに本当に0だった日」が1日。
-**WAITING を拾い直せれば、15日は読めるようになる。**
-
-#### 常連の数は3か所で数えている。**食い違わせない**
-
-| どこ | 期間 | 日の切り方 | 読めない日 |
-| --- | --- | --- | --- |
-| `python/island_daily_stats.py` → `island/state.stats.activeFriends` | 直近90日 | 日本時間 | 足していない |
-| `python/build_residents.py` → `ACTIVE_FRIENDS`（焼き込み） | 直近90日 | UTC | 足していた → **やめた** |
-| `python/island_channels.py` → `islandChannels.days` | 全期間 | 日本時間 | 足していない |
-
-画面に出るのは1つめ（本番の実測で60）。**焼き込みは、それが読めなかった
-ときの受け皿。** 直す前の数え方のまま焼き直すと受け皿が174になるので、
-`/state` が読めない人にだけ「住人174人」と出る。
-**読めなかったときに数字が3倍になる受け皿**は、受け皿ではない。
-
-`.claude/skills/monthly-review/SKILL.md` 3章にはまだ古い決めごと
-（コメント消失日は当時すでに来ていた人を出席扱い）が残っている。
-**月末の表彰も同じ直しが要る。** あちらは皆勤賞の分母にもなるので、
-直すと皆勤の顔ぶれが変わる。
-
-### ここから作るもの
-
-| スクリプト | 出す先 | 何を |
-| --- | --- | --- |
-| `python/island_daily_stats.py` | Firestore `island/state.stats` | 配信本数・配信日数・コメント数・のべ人数・直近90日の常連の数 |
-| `python/build_city_streams.py` | `site/content/cityStreams.ts` | 国と街ごとの代表配信（滞在期間とキーワードで割り当て） |
-| `site/content/chatter.ts` | 手で | 住人のセリフの元ネタ（口調を写すために読む） |
-
----
-
-## 2. Firestore
-
-### `island/state` — 島の状態（1ドキュメントだけ）
-
-```
-island/state
-  stats: {
-    streams: number         配信本数
-    streamDays: number      配信した日数
-    since: "YYYY-MM-DD"     最初の配信日
-    comments: number        コメント総数
-    people: number          のべ人数
-    activeFriends: number   直近90日で5日以上来てくれた人
-    recentPeople: number    直近90日に来た人
-    latest: [{ videoId, title, date }]   最近の配信5本
-    updatedAt: number
-  }
-  current: {
-    place: "ジョージア・トビリシ"   いまいる場所
-    word: string                    ひとこと
-    week: string[]                  今週やること
-    theme: string                   今月のテーマ
-    updatedAt: "YYYY-MM-DD"
-  }
-```
-
-`stats` は `island_daily_stats.py` が毎日書く。
-`current` は `island_set_current.py` であやとが手で書く。
-
-### `islandStreamEvent/{id}` — 企画（旧 `islandNextPlans`・#202）
-
-**#202 で `islandNextPlans` から改名した。** 「これから」だけのものでは
-なくなったため。**北欧◯日目も、もう終わった企画も、同じ入れ物に入る。**
-そうしないと、カードを企画に紐付けられない。
-
-**口（API）の名前は `/nextplans` のまま。** Functions と Hosting は別々に
-手で起動する（`CLAUDE.md`）ので、入れ物と口を同じ日に変えると、片方が
-先に出た日に掲示板がまるごと 404 になる。畳むのは画面が移ってから。
-
-**「一言の提案」と「ページ1枚の下書き」は、同じもの**（#161）。
-前は `islandIdeas`（120字・ログイン不要）と `islandDrafts`（12,000字・ログイン必須）に
-割れていて、**一言を出したあと下書きへ進む道が無かった。**
-題ひとつで出して、あとから育てられる1つの入れ物にしてある。
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `title` | string | 題（60字まで）。**これだけあれば出せる** |
-| `when` `date` | string | 画面に出す言い方と、数えるための日（YYYY-MM-DD） |
-| `note` | string | ひとことで言うと（200字まで） |
-| `tags` | string[] | ふだ（6つまで） |
-| `place` | object | `{ name, area, map }` |
-| `about` | string[] | どんなものか。段落ごと |
-| `links` | object[] | `{ label, href }` |
-| `photos` | object[] | `{ src, alt, credit, creditHref }` |
-| `embeds` | object[] | `{ kind, id, note }` |
-| `by` | string? | 名乗った名前（なくてもいい） |
-| `uid` | string? | ログインして出していれば、その人 |
-| `cid` | string | 端末ID。**「あとから直す鍵」でもある**（下） |
-| `hearts` | number | ハートの数。仕組みは付箋とまったく同じ（`islandHearts`） |
-| `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
-| `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
-| `videoIds` | string[] | **この企画のものだと決めた配信**（#202）。あやとだけが足せる |
-| `source` | string? | `git-plan` / `nordic-day`。運営側が種から入れた行の印 |
-| `board` | boolean? | `false` なら掲示板の一覧に出さない。**`hidden` とは別**（`hidden` にするとカードの組み立てからも落ちる） |
-| `archived` | boolean | しまってあるか。**消さずにしまう。戻せる**（あやとだけ） |
-| `hidden` | boolean | 隠すとき（管理スクリプトから） |
-| `createdAt` / `updatedAt` | number | ミリ秒 |
-
-**1件12,000字まで。1日12件まで。**
-
-#### あとから直せるのは誰か
-
-ログイン不要にした以上、本人の証は端末の印（`cid`）しか無い。
-印を推測できれば他人の企画を直せるので、**時間で縛る**（あやと承認済み・#161）。
-
-| 出したとき | 直せるのは |
-| --- | --- |
-| ログインしていた（`uid` がある） | その `uid` の人だけ。いつでも |
-| ログインしていなかった | 同じ `cid` の端末だけ。**出してから24時間だけ** |
-| — | あやと（`admin`）はいつでも |
-
-`cid` は `crypto.randomUUID()`（36文字・122ビット）。鍵として使うときは
-長さで縛る（`isStrongCid`）。8文字でも通る `isCid` は、連投を数えるためのもので、
-そのままでは鍵に使わない。
-
-**`cid` を画面に返さない。** 返すと、それを見た人が他人の企画を直せる。
-`firestore.rules` でこのコレクションを deny にしているのも同じ理由。
-
-#### `status` と Git 側の企画の関係
-
-段を動かせるのはあやとだけ（`POST /island-api/nextplans/{id}/status`）。
-「これから」に上げるときは `planId` で Git 側の企画に結び付ける。
-**結び付けないと、掲示板に出た提案と、実際に立っているページが他人のままになる。**
-
-| 段 | 島のどこに出るか |
-| --- | --- |
-| `proposed` | `/board` の一覧 |
-| `next` | `/board` に「これから」と出て、`planId` のページ（`/next` ほか）へ行ける |
-| `done` | `/board` に「やった」と出て、`LEGENDS` のページへ行ける |
-
-**Git 側の企画1つに、結び付く行は1つだけ。** しまってある行は数えない。
-`POST /nextplans/{id}/status` は、その `planId` を別の行が持っていたら 409 で断る。
-
-これは実際に破れていた。#202 の種入れ（`python/admin/streamevents_import.py`）が、
-**同じ企画がもう掲示板に提案として出ていることを見ずに**もう1件作って、
-ジョージアバイバイと海外出発二周年が2行になった。掲示板に出るほう（人が出した行）は
-`planId` を持たないので、**清書してページが立っても「提案」の札のまま**で、
-カードの付く行だけが別に「これから」になっていた。
-
-- 種は、その `planId` を持つ行がもうあれば作らない
-- 二重になっているものを畳むのは `python/admin/plans_relink.py`
-  （**掲示板に出ているほうを残す。** 人が書いた行で、ハートも名前も付いている）
-- 段と Git 側が食い違っている行は、`/board` であやとにだけ「食い違っている」と出る
-  （`site/components/live/Board.tsx` の `gitPlanLike`）
-
-### `islandIdeas/{id}` — 掲示板に貼られた提案（旧・#161 で役目が終わった）
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `text` | string | 提案（200字まで） |
-| `name` | string | 名乗った名前（なくてもいい） |
-| `uid` | string? | ログインしていれば、その人 |
-| `cid` | string | 端末ID（連投を止めるため） |
-| `votes` | number | いいねの数 |
-| `movedTo` | string? | 付箋へ移した先（#162） |
-| `hidden` | boolean | 隠すとき |
-| `createdAt` | number | ミリ秒 |
-
-**本番の8件は #162 で全部付箋（`islandNotes`）へ移り、`hidden: true` が付いている。**
-表に出るものは0件。**口は畳んだ（#171）。** `GET/POST /ideas` も
-`POST /ideas/:id/vote` も、もう無い。`/state` も `ideas` を返さない。
-
-**入れ物は残す。書いた人の字なので消さない。** `firestore.rules` は deny のまま。
-
-### `islandNotes/{id}` — 付箋
-
-**1つの入れ物に、2つの形が入っている。** 見分けるのは `planId` があるか
-`theme` があるかで、読む口（API）も別（`/notes` と `/stickies`）。
-
-#### テーマに貼られた付箋（#160。これから増えるのはこちら）
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
-| `text` | string | 中身（120字まで） |
-| `by` | string? | 名乗った名前（なくてもいい） |
-| `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
-| `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
-| `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれ** |
-| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
-| `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
-| `hidden` | boolean | 隠すとき（管理スクリプトから） |
-| `createdAt` | number | ミリ秒 |
-
-**コレクションを階層分けしていない。** `islandNotes/{theme}/notes/{id}` にすると、
-テーマ横断で新着を見るときに全テーマを舐めることになるし、テーマは
-あとから増える。平らのまま `where("theme", "==", ...)` で引く
-（#160 に理由が3つ書いてある）。そのぶんの複合インデックスは
-`firestore.indexes.json` にある。
-
-- `theme` 昇順 + `createdAt` 降順 + `__name__` 降順 … テーマの中を新しい順。
-  `__name__` を明に書いてあるのは、同じミリ秒に2件入ったときページの境目で
-  1件飛ぶのを止めるため、読む側が書類IDでも並べているから（`pageOf`）
-- `theme` 昇順 + `hearts` 降順 … テーマの中を押された順（国のページ）
-
-**おたずね（`islandPolls` / `islandPollVotes`）の行き先がここ。**
-「運営者が立てた付箋（`byOwner: true`）に、みんながハートを押していく」形に置き換わる。
-
-| いまの poll | 統合後 |
-| --- | --- |
-| `question` | テーマの表示名、または運営者の付箋1枚 |
-| `options[{id, label}]` | `byOwner: true` の付箋が2〜4枚 |
-| `votes[id]` | 各付箋の `hearts` |
-| `openUntil` | テーマ側に締め切りを持つ |
-
-**入れ物は #160 でできているが、まだ中身が移っていない。**
-移すのは #162。それまで `GET /poll` と `GET /fork` は今までどおり動く
-（画面と API を同時に切り替えて壊さない）。
-
-#### 企画に貼られた付箋（旧。移行待ち）
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `planId` | string | どの企画への付箋か |
-| `text` | string | 中身（120字まで） |
-| `cid` | string | 端末ID |
-| `hidden` | boolean | 隠すとき |
-| `createdAt` | number | ミリ秒 |
-
-### `islandTips/{tipId}` — 投げ銭の台帳（#202）
-
-**YouTube のスパチャと Doneru の寄付を1本にしたもの。**
-あやと島カードはここから組み上がる。`python/island_tips.py` が毎日置く。
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>`。**一意** |
-| `source` | string | `youtube_superchat` / `doneru` |
-| `channelId` | string \| null | YouTube のチャンネル。Doneru は `islandDonors` を通して引く。紐付いていなければ null |
-| `day` | string | **日本時間で切った配信日**（YYYY-MM-DD） |
-| `donatedAt` | number | 出された時刻（ミリ秒） |
-| `videoId` | string? | どの配信か。Doneru は持っていない |
-| `videoStartedAt` | number? | その配信が始まった時刻。0時をまたいだぶんを人が拾うときに要る |
-| `amount` | number | 視聴者が払った額 |
-| `currency` | string | `JPY` ほか。**外貨が混ざる**（本番の380件に ₪ と CA$ が1件ずつ） |
-| `settlementAmount` | number? | 手数料を引いた額（Doneru だけ） |
-| `displayNameSnapshot` | string? | そのときの表示名 |
-| `viewerPk` | string? | どねID（Doneru だけ） |
-| `createdAt` / `updatedAt` | string | ISO8601 |
-
-**書類IDは `sourceEventId` の SHA-1 の頭32文字。** 生の値を使わないのは、
-YouTube の `event_id` が Base64 風で `/` を含みうるから。
-**同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
-
-#### 配信日の境目は日本時間の0時
-
-旧 `nordicDays` は `published_at` から**9時間引いていた**（＝日本時間の
-18時が境目）。旅で時差が9回変わるとそのたびに1日が2つに割れる（#201）。
-`DATE(donated_at, "Asia/Tokyo")` に固定して、**またいだぶんは人が決める**
-（`islandStreamEvent.videoIds` に後半の動画IDを足す）。
-
-実際にまたいでいる配信がある。`MoxSgyW_12k` は 8/30 と 8/31 の両方に
-スパチャが入っている。**境目をどこに置いても、機械には割れる。**
-
-#### 金額は持つ。ただし外に出さない
-
-`amount` を持つのは、いままで意図的に避けていたことの反転
-（#202 で承認）。Doneru と突き合わせるのに要る。**代わりに2つ守る。**
-
-1. **島の画面で、金額で並べない・出さない。** 決めは生きている
-   （`docs/nordic-fund.md`。出す人は60人しかいないので、上位は常連で
-   固定され、320円が1万円の隣に並ぶ）
-2. **`firestore.rules` で閉じてある。** 誰がいくら出したかは、本人以外に
-   見えてはいけない。読むのは Functions と日次ジョブだけ
-
-台帳から画面へ出る口は `channelsOfDay`（`functions/src/streamEvents.ts`）
-1つだけで、そこは**チャンネルIDしか持ち出さない。**
-
-### `islandStreamEventImage/{imageId}` — 企画に付く画像（#202）
-
-旧 `nordicPhotos`。**書類IDは移行の前後で変えない。** カードのIDが
-`<画像のID>__<チャンネルID>` なので、変えると動かしてあるカードがはぐれる。
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `streamEventId` | string | どの企画のものか。空なら、まだ決まっていない |
-| `role` | string | `card` / `gallery` / `cover`。**カードになるのは `card` だけ** |
-| `day` | string | その日（YYYY-MM-DD）。旧 `/nordic` が日ごとに並べるのに使う |
-| `storagePath` | string | Cloud Storage の道 |
-| `url` | string | 合言葉つきの URL |
-| `w` / `h` | number | 寸法 |
-| `note` | string | 一言（120字まで） |
-| `takenAt` | string? | 撮った日 |
-| `sortOrder` | number? | 並び |
-| `uid` | string | 貼った人（あやと） |
-| `at` / `createdAt` / `updatedAt` | | 時刻 |
-
-**書く口は当分2つ動かす。** `POST /nordic/photos`（旧・日付から入る）と
-`POST /streamevents/{id}/images`（新・企画から入る）。前者は中で両方に
-書く。旅で毎日使っているものを出発直前に作り替えない（#202 の順番）。
-
-**1枚は1つの企画にしか付かない。** 1日に企画は何本でも立つので、
-貼るときの既定は「その日のいちばん古い企画」。あとから
-`POST /streamevents/images/{id}` で付け替えられる（カードも作り直す）。
-
-### `islandCards/{cardId}` — 配られたカード（#173・#202 で作り直し）
-
-**#202 から「置いてある」。** 前は読むたびに写真と名簿から組み立てて
-いて、ここに入るのは「本人が動かしたぶんの上書き」だけだった。
-
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `channelId` | string | もらった人 |
-| `streamEventId` | string | どの企画のカードか |
-| `streamEventImageId` | string | どの画像か |
-| `day` | string | その日（YYYY-MM-DD）。画面が企画の札を引く |
-| `earnedAt` | number | もらった時刻（＝投げ銭の時刻） |
-| `x` / `y` / `rot` / `scale` | number | 置き方。`y` は**足元**の高さ |
-| `movedBy` / `movedAt` | | 本人が動かしたときだけ |
-| `createdAt` / `updatedAt` | number | ミリ秒 |
-
-**書類IDは `<画像のID>__<チャンネルID>`。** 決め打ちなので、
-2か所から作っても同じ書類になる。
-
-| いつ作るか | 誰が |
-| --- | --- |
-| 画像を貼ったとき | `functions/src/streamEvents.ts` の `mintForImage` |
-| 毎日 | `python/island_cards.py` |
-
-**両側から埋めて、どちらが先でも同じ結果になるようにしてある。**
-片方だけだと、「画像が先で投げ銭が後」の日か「貼った夜」のどちらかが空になる。
-
-#### 平置きにしてある
-
-`islandChannels/{channelId}/cards/{cardId}` にはできない。`/cards`
-（島じゅうのカードを新しい順）にコレクショングループ索引が要るが、
-**うちは索引を作れない**（#168）。平置きなら
-
-- 島じゅう → `orderBy("earnedAt","desc")`（単一フィールド）
-- その人の → `where("channelId","==",…)`（同じく単一フィールド）
-
-**どちらも索引を足さずに引ける。**
-
-#### 企画と配信は N:N
-
-**1本の配信に企画が何本も乗る。** 9月11日は「北欧旅の出発日」
-「海外出発二周年」「ジョージアバイバイ」の3本。だから
+**企画と配信は N:N。** 1本の配信に企画が何本も乗る（9月11日は「北欧旅の出発日」
+「海外出発二周年」「ジョージアバイバイ」の3本）。だから
 「`videoId` → その配信の企画」を**1本に決めない。**
-当たった企画すべてについて、その企画のカード画像ぶんカードを作る。
 
 当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
 
@@ -741,16 +145,494 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 **1で当たったら2を見ない、にしない。** あやとが `videoIds` を足すのは
 たいてい1本だけなので、そこで打ち切ると残りのカードが黙って消える。
 
-### `islandHearts/{key}` — 誰がどの付箋にハートを押したか
+---
 
-ドキュメントIDは `` `${noteId}_${uid ?? cid}` ``。**ログイン不要で、解除できる。**
-**消す＝解除**なので、票（`islandVotes`）と違って「押した」を数える側ではなく
-書類の有無で持つ。数そのものは `islandNotes.hearts` にある。
+## 2. 用語 — 読み違えると事故になるもの
 
-**企画（`islandNextPlans`）のハートも、同じ入れ物・同じ形のIDを使う**（#161）。
-書類IDは Firestore の自動IDなので、付箋と企画でぶつかることはない。
-入れ物を分けなかったのは、1日の上限（`heart`）と「消す＝解除」の作りを
-2つに割らないため。
+### 2.1 人を指すもの が4つある
+
+| 名前 | 何 | どこで使う | 混ぜるとどうなるか |
+| --- | --- | --- | --- |
+| `channelId` / `author_channel_id` | YouTube のチャンネルID（`UC…`） | `chat_messages` `islandChannels` `islandTips` `islandCards` | **人の同一性はこれ。** 表示名で数えると同じ人が増える |
+| `uid` | Firebase のログインID | `islandUsers` `islandHere` `islandHearts` | ログインした人にしか無い |
+| `cid` | 端末ID（`crypto.randomUUID()`・36文字） | `islandStreamEvent` `islandNotes` `islandRate` `islandHearts` | **企画では「あとから直す鍵」。** 画面に返してはいけない |
+| `viewer_pk` / `viewerPk` | どねID（Doneru の中の人の識別子） | `doneru_donations` `islandDonors` `islandTips` | Doneru 側でしか通じない。`islandDonors` で `channelId` に結ぶ |
+
+**`cid` には強さが2段ある。** 鍵として使うときは長さで縛る（`isStrongCid`）。
+8文字でも通る `isCid` は連投を数えるためのもので、**そのままでは鍵に使わない。**
+
+### 2.2 `video_id` と `videoId` は同じものだが、綴りが場所で違う
+
+| 綴り | どこ |
+| --- | --- |
+| `video_id` | BigQuery の全部。**`island/state.stats.latest[]` も**（BigQuery の struct をそのまま焼いているため） |
+| `videoId` | Firestore の `islandTips` `streamChatMessages` `streamChatRuns`、`islandStreamEvent.videoIds[]` |
+
+`stats.latest[]` を `videoId` で読むと `undefined` になる。
+（`site/lib/api.ts` の `IslandStats` に、この経緯ごと注記がある）
+
+### 2.3 「1日」の切り方が3つある
+
+| 切り方 | 境目 | どこで |
+| --- | --- | --- |
+| **日本時間の0時** | JST 00:00 | 投げ銭の「配信日」（`islandTips.day` / カード / `islandChannels.days` / `island/state.stats`） |
+| **UTC**（＝JST 朝9時） | JST 09:00 | 出席の数え方（`python/build_residents.py`）と、口の1日の上限（`islandRate`・`today()`） |
+| **配信の一晩** | 人が決める | 0時をまたいだぶんは `islandStreamEvent.videoIds` に後半の動画IDを足す |
+
+**UTC で切るのは、22時開始の枠と0時をまたいだ続きを1日にまとめるため。**
+JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分になる。
+**JST 0時で切るのは、投げ銭を「その日の配信のもの」として人が読むため。**
+どちらも正しく、**用途が違う。混ぜない。**
+
+### 2.4 `photo` と キャラクター は別物
+
+| | 何 | どこが正 |
+| --- | --- | --- |
+| キャラクター | カードや島に乗る絵（ひめひめさんのハリネズミ） | **あやとのスプレッドシート**（`site/content/residents.ts` に焼いてある） |
+| プロフィール写真 | YouTube のアイコン | `islandChannels.photo` / `islandUsers.photo` |
+
+キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
+変わらないのが正しい。** `photo` はマイページのアイコンが古くならないようにするもの。
+**本人にキャラクターを選ばせる口は無い**（他人の絵を自分のものにできてしまう）。
+
+---
+
+## 3. 責務 — 何が正で、誰が書いて、誰が読むか
+
+**置き場（BigQuery / Firestore / Git）は「どこにあるか」の話で、責務の話ではない。**
+責務はこの表で見る。
+
+### 3.1 正本（ここが壊れたら作り直せない）
+
+| データ | 正はどこか | 書く人／仕組み | 読む先 | 消えたらどうなるか |
+| --- | --- | --- | --- | --- |
+| 配信の一覧と取り込み状態 | BigQuery `videos` | `python/discover_videos.py`（毎晩） | 取り込み・全部の集計 | YouTube から引き直せる。**取り込み履歴だけ失う** |
+| コメント | BigQuery `chat_messages` | `python/fetch_chat_data.py`（毎晩） | 島の数字・住人・切り抜き・月末表彰 | **アーカイブが消えていれば戻らない** |
+| Doneru の寄付 | BigQuery `doneru_donations` | `python/fetch_doneru_donations.py`（毎晩） | 投げ銭台帳・足代 | Doneru に残っていれば1回流せば戻る |
+| 旅の写真の実体 | Cloud Storage | あやと（写真を貼る口から） | 企画のページ・カード | **戻らない。** 手元にしか原本が無い |
+| 人が書いた企画・付箋 | Firestore `islandStreamEvent` `islandNotes` | 視聴者さん（口経由） | 掲示板・国のページ | **戻らない。** 人の字 |
+| 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
+| どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
+| 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
+| いまいる場所・今週 | Firestore `island/state.current` | あやと（口から、または `island_set_current.py`） | 島の看板 | 入れ直せる |
+
+### 3.2 写し（正から作り直せる。壊れても焼き直せばよい）
+
+| データ | 写し先 | 元 | 作り直すもの |
+| --- | --- | --- | --- |
+| 島の数字 | Firestore `island/state.stats` `island/state.fund` | BigQuery | `python/island_daily_stats.py` |
+| 投げ銭台帳 | Firestore `islandTips` | BigQuery（スパチャ＋Doneru） | `python/island_tips.py` |
+| カード | Firestore `islandCards` | 写真 × 台帳 | `python/island_cards.py` / `functions/src/streamEvents.ts` |
+| チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
+| チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
+| 焼き込み | Git `site/content/*`（自動生成ぶん） | BigQuery ほか | `.github/workflows/rebake.yml`（5.2） |
+| 旧・北欧の写真 | Firestore `nordicPhotos` | `islandStreamEventImage` | 書く口が両方に書いている |
+
+### 3.3 同じ事実が2か所にあるもの — **どちらが正か**
+
+| 事実 | 正 | 写し | 食い違ったら |
+| --- | --- | --- | --- |
+| 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
+| 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
+| 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
+| 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
+| 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
+| キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
+| 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
+
+---
+
+## 4. 置き場ごとの詳細
+
+**型は本番のスキーマそのもの**（4.1 は BigQuery の `get_table_info`、
+4.2 は本番の書類に実際に入っている欄）。確かめかたは8章。
+
+### 4.1 BigQuery — `live-streaming-d3cac.youtube_chat`
+
+BigQuery は `INT64` を `INTEGER`、`BOOL` を `BOOLEAN` と返す。ここでは
+SQL で書く名前（`INT64` / `BOOL`）で書いてある。
+
+#### `videos` — 配信1本＝1行（本番 763行）
+
+テーブルの説明は「YouTube 動画の処理進捗管理テーブル（リトライ制御、ステータス管理）」。
+**配信の一覧であると同時に、取り込みの進捗表でもある。**
+
+| 列 | 型 | NULL | 中身 |
+| --- | --- | --- | --- |
+| `video_id` | STRING | 不可 | YouTube の動画ID（主キー） |
+| `status` | STRING | 不可 | `PENDING` / `WAITING` / `SUCCEEDED` / `FAILED` / `SKIPPED` |
+| `first_seen_at` | TIMESTAMP | 不可 | 初めて処理対象になった時刻（**7日で諦める起点**） |
+| `next_retry_at` | TIMESTAMP | 可 | 次に試す時刻（`WAITING` の制御用） |
+| `attempt_count` | INT64 | 不可 | 試した回数 |
+| `last_attempt_at` | TIMESTAMP | 可 | 最後に試した時刻 |
+| `last_error_code` | STRING | 可 | `YTDLP_FAILED` / `NO_CHAT_FILE` / `PARSE_FAILED` など |
+| `last_error_detail` | STRING | 可 | 例外メッセージ |
+| `succeeded_at` | TIMESTAMP | 可 | 取り込めた時刻 |
+| `yt_dlp_version` | STRING | 可 | 取り込みに使った版 |
+| `title` | STRING | 可 | タイトル（YouTube API から） |
+| `actual_start_time` | TIMESTAMP | 可 | 実際に始まった時刻（`liveStreamingDetails.actualStartTime`） |
+
+状態の落ち方: `PENDING` → 取れれば `SUCCEEDED`。取れなければ、見つけてから
+24時間以内は `WAITING`、24時間を過ぎたら `FAILED`、7日を過ぎたら `SKIPPED`
+（`python/fetch_chat_data.py` の `handle_no_chat_file`）。
+
+⚠ **`WAITING` は自分では落ちない。** 拾い直すクエリが `first_seen_at` の
+7日より古いものを対象から外すので、一度も拾われなかった `WAITING` は
+そのまま残る。
+
+⚠ **`SKIPPED` は開店以来1本も無い**（2026-09-10 に数えて
+SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
+拾うクエリの窓（7日以内）と `SKIPPED` にする条件（7日以上）が**ちょうど裏表**なので、
+クエリが返した行が `SKIPPED` になれる余地が、拾ってから yt-dlp を回すあいだの
+数分しかない。**表にはある状態だが、実際には通らない。**
+
+どちらも詳しくは [`island-db-notes.md` の1](./island-db-notes.md)。
+
+#### `chat_messages` — コメント1件＝1行（本番 135,427行）
+
+`published_at` で日ごとにパーティション、`video_id` と `event_type` でクラスタ。
+
+| 列 | 型 | NULL | 中身 |
+| --- | --- | --- | --- |
+| `video_id` | STRING | 不可 | どの配信か |
+| `event_id` | STRING | 不可 | YouTube 側のID（`renderer.id`）。`video_id` と合わせて一意 |
+| `event_type` | STRING | 不可 | `TEXT` / `PAID` / `MEMBERSHIP` / `SYSTEM` など |
+| `timestamp_usec` | INT64 | 不可 | **エポックからのマイクロ秒。** 配信開始からの経過ではない |
+| `published_at` | TIMESTAMP | 不可 | 書き込まれた時刻（`timestamp_usec` を変換したもの） |
+| `author_name` | STRING | 可 | 表示名（**変わる**） |
+| `author_channel_id` | STRING | 可 | チャンネルID（**人の同一性はこれで見る**） |
+| `message_text` | STRING | 可 | 本文（`runs` を文字列化したもの） |
+| `message_runs_json` | JSON | 可 | 絵文字などを含む元の構造 |
+| `purchase_amount_text` | STRING | 可 | スパチャなどの金額表記 |
+| `ingest_run_id` | STRING | 可 | 取り込み実行単位の UUID |
+| `ingested_at` | TIMESTAMP | 可 | BigQuery に入れた時刻 |
+| `source_file` | STRING | 可 | 元データのファイル名（デバッグ用） |
+| `source_line_no` | INT64 | 可 | 元データ内の行番号（デバッグ用） |
+| `raw_item_json` | JSON | 不可 | `addChatItemAction.item` の生データ |
+
+**配信内の経過時間が要るときは `published_at − videos.actual_start_time`。**
+`timestamp_usec` はエポック時刻なので使えない（`python/build_stream_peaks.py`
+がそう書いてある）。
+
+取り込みは `MERGE`（べき等）。同じ配信を何度流しても増えない。
+
+#### `doneru_donations` — Doneru の寄付1件＝1行（本番 974行）
+
+**スパチャは `chat_messages` に入っているが、Doneru 経由の寄付はどこにも無かった。**
+`functions/src/doneruAmount.ts` で取れるのは合計額だけで、誰がいつ出したかは
+取れない（`docs/nordic-fund.md` 2.2 / 2.3）。ここがその置き場所。
+
+**列は本番のスキーマの並びで書いてある。**
+
+| 列 | 型 | NULL | 中身 |
+| --- | --- | --- | --- |
+| `donation_id` | STRING | 不可 | Doneru 側のID（主キー）。無ければ中身の SHA-256 |
+| `donated_at` | TIMESTAMP | 可 | 出された時刻（UTC） |
+| `donor_name` | STRING | 可 | 表示名（**変わる。これで人を数えない**） |
+| `amount` | NUMERIC | 可 | 視聴者が払った額 |
+| `amount_text` | STRING | 可 | 元の表記（`¥1,000` など） |
+| `currency` | STRING | 可 | 通貨。**本番は全件 NULL（＝円）** |
+| `message_text` | STRING | 可 | 添えられた言葉 |
+| `status` | STRING | 可 | `振込完了` / `振込待ち` |
+| `settlement_amount` | NUMERIC | 可 | **手数料を引いた、実際に振り込まれる額**（`amount` の約95%） |
+| `viewer_pk` | STRING | 可 | どねID（**人の同一性はこれで見る**） |
+| `platform` | STRING | 可 | 寄付が通ったプラットフォーム。CSV の「プラットホーム」列 |
+| `fetched_start` | DATE | 可 | どの期間を訊いて取れた行か（始まり） |
+| `fetched_end` | DATE | 可 | 同（終わり） |
+| `ingest_run_id` | STRING | 可 | 取り込み実行単位 |
+| `ingested_at` | TIMESTAMP | 可 | BigQuery に入れた時刻 |
+| `raw_json` | JSON | 可 | 元データそのまま |
+
+入れているのは `python/fetch_doneru_donations.py`
+（`.github/workflows/fetch_doneru_donations.yml` が毎日 20:30 UTC ＝ 日本時間 5:30 に回す）。
+`donation_id` で `MERGE` するので、何度流しても増えない。
+
+**取っているのは CSV**（`/streamer/donation-list/csv?start=…&end=…` を1回）。
+既定の期間は**去年の元日から明日まで**。過去ぶんは `workflow_dispatch` の
+`since` に年を入れる。**その CSV は壊れていて、組み直して読んでいる** —
+[`island-db-notes.md` の2](./island-db-notes.md)。
+
+**金額を見るときは、どの数字と突き合わせるかを先に決める。** 3通りある。
+
+| 見たいもの | 使う列 | 絞り |
+| --- | --- | --- |
+| 視聴者が出してくれた額 | `amount` | なし |
+| 実際に振り込まれる額 | `settlement_amount` | なし |
+| もう入金された額 | `settlement_amount` | `status = '振込完了'` |
+
+**この表から金額の順位表を作らない**（`docs/nordic-fund.md`）。人数と合計のための原本。
+
+**列を変えたときは作り直す。** `workflow_dispatch` の `recreate` を true にすると、
+取り込む前に `DROP` してから作り直す（`TRUNCATE` ではなく `DROP`。列の並びごと
+作り直したいので）。**`doneru_ingest_runs` は消えない。**
+
+#### `doneru_ingest_runs` — 取り込みを試した記録1回＝1行（本番 14行）
+
+**セッションが何日持ったかを測るために置いてある。** 落ちたことは Actions の
+通知メールで分かるが、いつからいつまで生きていたかはどこにも残らない。
+`_dt` を入れ直す頻度を決めるには寿命が要る。
+
+| 列 | 型 | NULL | 中身 |
+| --- | --- | --- | --- |
+| `run_id` | STRING | 可 | 実行のID |
+| `ran_at` | TIMESTAMP | 可 | 走った時刻 |
+| `outcome` | STRING | 可 | `ok` / `session_expired` / `error` |
+| `donations` | INT64 | 可 | 入れた件数 |
+| `cookie_shape` | STRING | 可 | `_dt` の長さの判定（**値は入れない**） |
+| `renewed_dt` | BOOL | 可 | Doneru が `_dt` を配り直したか |
+| `detail` | STRING | 可 | 失敗の理由 |
+| `period` | STRING | 可 | 取りに行った期間（`2025-01-01..2026-09-07`） |
+
+**落ちたときこそ残す。** 何日持ったかは、成功と失敗の両方が並んで初めて出る。
+`--probe` と `--dry-run` は本番の実行ではないので残さない。
+記録そのものが失敗しても取り込みは落とさない（記録は本題ではない）。
+
+### 4.2 Firestore
+
+**本番のルートコレクションは22本**（2026-09-11 に数えた）。件数はその日のもの。
+
+| コレクション | 件数 | 何 | 書く人 | 4.2 の節 |
+| --- | --- | --- | --- | --- |
+| `islandChannels` | 2,260 | チャンネルIDと名前・写真・日数 | 日次ジョブ | a |
+| `islandTips` | 1,357 | 投げ銭の台帳 | 日次ジョブ | b |
+| `islandRate` | 150 | 1日の上限 | 口 | c |
+| `islandHearts` | 31 | 誰がどれにハートを押したか | 口 | c |
+| `islandDonors` | 28 | どねID と YouTube の対応表 | 毎朝の種＋あやと | a |
+| `islandNotes` | 25 | 付箋（2つの形が入っている） | 視聴者さん | d |
+| `islandStreamEvent` | 16 | 企画 | 視聴者さん＋あやと | b |
+| `islandPollVotes` | 10 | おたずね／わかれ道の票 | 口 | c |
+| `islandIdeas` | 8 | 旧・掲示板の提案（全部 `hidden`） | — | e |
+| `islandPolls` | 7 | おたずね／わかれ道 | あやと | c |
+| `islandVisits` | 7 | その日の訪問者数 | 口 | c |
+| `nordicDays` | 6 | 旧・その日いた人（**もう読まない**） | — | e |
+| `islandCards` | 4 | 配られたカード | 日次ジョブ＋口 | b |
+| `islandNextPlans` | 2 | 旧・企画（`islandStreamEvent` へ移行済み） | — | e |
+| `islandStreamEventImage` | 2 | 企画に付く画像 | あやと | b |
+| `islandUsers` | 2 | ログインした人 | 本人＋あやと | a |
+| `nordicPhotos` | 2 | 旧・北欧の写真（**新と同じ書類IDで両方に書く**） | あやと | e |
+| `island` | 1 | 島の状態（書類は `state` ひとつ） | 日次ジョブ＋あやと | b |
+| `islandRemote` | 1 | 島の遠隔操作の席 | あやと | f |
+| `monthlyReview` | 1 | 月末配信の進行同期（島とは別の機能） | OBS とコントローラー | f |
+| `rouletteSessions` | 1 | 配信のルーレットの席 | あやと | f |
+| `streamChatHealth` | 1 | 配信中のコメント収集の「札」 | `collectLiveChat` | f |
+
+**この22本に無いもの**（コードにはあるが、いま本番に書類が0件）:
+`islandHere`（居場所。すぐ消える）、`streamChatMessages` / `streamChatRuns`
+（配信中だけ溜まる）、`nordicLog`、`islandDrafts`、`islandVotes`。
+
+#### a. 人
+
+**`island/state`** — 島の状態（書類は `state` ひとつ。トップレベルの欄は4つ）
+
+```
+island/state
+  stats: {                        python/island_daily_stats.py が毎晩
+    streams: number               videos の全行数
+    streamDays: number            actual_start_time のある日数（JST）
+    since: "YYYY-MM-DD"           最初の配信日（JST）
+    comments: number              TEXT の件数（ボットを除く）
+    people: number                のべ人数
+    activeFriends: number         直近90日で5日以上来てくれた人
+    recentPeople: number          直近90日に来た人
+    latest: [{ video_id, title, date }]   最近の配信5本。**鍵は video_id**
+    updatedAt: "YYYY-MM-DD"       **文字列。数値ではない**
+  }
+  fund: {                         同じジョブが毎晩
+    superchat: number             スパチャの合計
+    people: number                出した人の数（のべではない）
+    days: number                  何日ぶんで数えたか
+    updatedAt: "YYYY-MM-DD"
+  }
+  current: {                      あやとが手で（口／island_set_current.py）
+    place: string                 いまいる場所
+    word: string                  ひとこと
+    week: string[]                今週やること
+    theme: string                 georgia / nordic / desert / default
+    updatedAt: "YYYY-MM-DD"
+  }
+  nordic: {                       あやとが手で（旅の事実を書く口）           
+    arrivedOn: "YYYY-MM-DD"|null  ストックホルムに着いた日
+    endedOn:   "YYYY-MM-DD"|null  旅が終わった日。**着いた日とは別**
+    updatedAt: number
+  }
+```
+
+**`islandChannels/{channelId}`** — 配信に来たことがある人ぶん（2,260人）
+
+| 項目 | 型 | 中身 | 誰が |
+| --- | --- | --- | --- |
+| `name` | string | いま名乗っている名前 | `python/island_channels.py` |
+| `lastAt` | string | 最後に喋った時刻 | 同上 |
+| `days` | number | **一緒にいた日数**（全期間・日本時間で数えた日数）。島の状態の `residentDays` の元 | 同上 |
+| `photo` | string \| null | YouTube のプロフィール写真 | `python/island_channel_photos.py` |
+| `photoAt` | string | 写真を入れた時刻 | 同上 |
+| `updatedAt` | string | | 両方 |
+
+**写真は1日500人まで。** 順は（1）ログインしたことがある人 →（2）まだ写真が
+無くて最近来た人 →（3）残りをチャンネルID順に、日ごとに窓をずらして。
+2と3は直近90日に来た人だけ。500人ずつなら5日で1周する。
+**変わらなかった人には `photoAt` を書かない**（[`island-db-notes.md` の8](./island-db-notes.md)）。
+
+**`islandUsers/{uid}`** — ログインした人
+
+| 項目 | 型 | 中身 | 誰が書くか |
+| --- | --- | --- | --- |
+| `name` | string | 島に出す名前。**ハンドル > チャンネル名 > Google の表示名**の順 | ログイン時に自動 |
+| `handle` | string? | YouTube のハンドル（`@…`） | 自動。**引けなかった人は1日1回だけ追いに行く** |
+| `handleAt` | string? | ハンドルを追いに行った日 | 同上 |
+| `channelId` | string | YouTube のチャンネルID | ログイン時に自動 |
+| `photo` | string \| null | YouTube のアイコンURL | ログイン時に自動 |
+| `nickname` | string? | 島で出す名前（本名以外にしたいとき） | 本人 |
+| `showName` | boolean | 名前を島に出すか | 本人 |
+| `showPhoto` | boolean | YouTube アイコンを島に出すか | 本人 |
+| `admin` | boolean | あやとか（全部の「あやとだけ」の口はこれを見る） | あやと（コンソール） |
+| `canDraft` | boolean | 旧。**どこからも読まれない**（#171） | あやと（コンソール） |
+| `firstSeenAt` / `lastSeenAt` | number | 初回と直近（ミリ秒） | 自動 |
+
+**`channelId` があって、かつ `showName` か `showPhoto` のどちらかが true の人だけ**が
+島の状態の `residents` に載る。何もしていない人の名前は絶対に出ない。
+`showName` が false なら名前は `null`、`showPhoto` が false なら写真は `null` で返る。
+
+**`islandDonors/{viewerPk}`** — どねID と YouTube の対応表（#190）
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `viewerPk` | string | どねID（書類IDと同じ） |
+| `label` / `handle` | string \| null | Doneru 側の表示名／YouTube のハンドル |
+| `channelId` / `channelName` | string \| null | 結んだ相手 |
+| `state` | string | 結べたか・分からないか |
+| `isOwner` | boolean | あやと本人の寄付か（**カードを自分に配らないため**） |
+| `note` | string \| null | あやとのメモ |
+| `firstSeenAt` | string \| null | 初めて見た時刻 |
+| `addedAt` | string? | **画面から足した行だけに付く。** これがある行だけ消せる |
+| `editedAt` / `editedBy` / `updatedAt` | | 種に上書きさせないための印 |
+
+#### b. 企画・写真・カード・投げ銭
+
+**`islandStreamEvent/{id}`** — 企画（旧 `islandNextPlans`・#202）
+
+**北欧◯日目も、もう終わった企画も、同じ入れ物に入る。** そうしないとカードを
+企画に紐付けられない。**「一言の提案」と「ページ1枚の下書き」も同じもの**（#161）。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `title` | string | 題（4〜60字）。**これだけあれば出せる** |
+| `when` / `date` | string | 画面に出す言い方（40字）と、数えるための日（YYYY-MM-DD） |
+| `note` | string | ひとことで言うと（200字まで） |
+| `tags` | string[] | ふだ（6つまで・各16字） |
+| `place` | object | `{ name, area, map }` |
+| `about` | string[] | どんなものか。段落ごと（8つまで・各600字） |
+| `links` | object[] | `{ label, href }`（8つまで） |
+| `photos` | object[] | `{ src, alt, credit, creditHref }`（8つまで） |
+| `embeds` | object[] | `{ kind, id, note }`（4つまで。`kind` は `youtube` か `instagram`） |
+| `by` | string \| null | 名乗った名前（なくてもいい・20字） |
+| `uid` | string \| null | ログインして出していれば、その人 |
+| `cid` | string | 端末ID。**「あとから直す鍵」でもある** |
+| `ip` | string \| null | `x-forwarded-for` の先頭。**荒れたときに辿るためだけのもの** |
+| `hearts` | number | ハートの数。仕組みは付箋と同じ（`islandHearts`） |
+| `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
+| `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
+| `videoIds` | string[] | **この企画のものだと決めた配信**。あやとだけが足せる |
+| `source` | string? | `git-plan` / `nordic-day`。運営側が種から入れた行の印 |
+| `board` | boolean? | `false` なら掲示板の一覧に出さない。**`hidden` とは別**（`hidden` はカードの組み立てからも落ちる） |
+| `archived` | boolean | しまってあるか。**消さずにしまう。戻せる**（あやとだけ） |
+| `mergedInto` | string? | 二重だった行を畳んだとき、残したほうのID（`plans_relink.py`） |
+| `hidden` | boolean | 隠すとき（管理スクリプトから） |
+| `createdAt` / `updatedAt` | number | ミリ秒 |
+
+**1件12,000バイトまで。1日12件まで。** 段（`status`）を動かせるのはあやとだけで、
+「これから」に上げるときは `planId` で Git 側の企画に結び付ける。
+
+| 段 | 島のどこに出るか |
+| --- | --- |
+| `proposed` | `/board` の一覧 |
+| `next` | `/board` に「これから」と出て、`planId` のページへ行ける |
+| `done` | `/board` に「やった」と出て、`LEGENDS` のページへ行ける |
+
+**Git 側の企画1つに、結び付く行は1つだけ**（別の行が持っていたら 409 で断る）。
+一度これが破れている — [`island-db-notes.md` の9](./island-db-notes.md)。
+
+**`islandStreamEventImage/{imageId}`** — 企画に付く画像（旧 `nordicPhotos`）
+
+**書類IDは移行の前後で変えない。** カードのIDが `<画像のID>__<チャンネルID>` なので、
+変えると動かしてあるカードがはぐれる。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `streamEventId` | string | どの企画のものか。**空なら、まだ決まっていない** |
+| `role` | string | `card` / `gallery` / `cover`。**カードになるのは `card` だけ** |
+| `day` | string | その日（YYYY-MM-DD）。旧・北欧の画面が日ごとに並べるのに使う |
+| `storagePath` | string | Cloud Storage の道（4.4） |
+| `url` | string | 合言葉つきの URL |
+| `w` / `h` | number | 寸法（0〜20000） |
+| `note` | string | 一言（200字まで） |
+| `takenAt` | string | 撮った日。送らなければその日 |
+| `sortOrder` | number | 並び（0〜9999） |
+| `uid` | string | 貼った人（あやと） |
+| `at` / `createdAt` / `updatedAt` | number | ミリ秒 |
+
+**1枚は1つの企画にしか付かない。** 1日に企画は何本でも立つので、貼るときの
+既定は「その日のいちばん古い企画」。あとから付け替えられる（カードも作り直す）。
+
+**`islandCards/{cardId}`** — 配られたカード（#173・#202 で作り直し）
+
+**書類IDは `<画像のID>__<チャンネルID>`。** 決め打ちなので、2か所から作っても
+同じ書類になる。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `channelId` | string | もらった人 |
+| `streamEventId` | string | どの企画のカードか |
+| `streamEventImageId` | string | どの画像か |
+| `day` | string | その日（YYYY-MM-DD）。画面が企画の札を引く |
+| `earnedAt` | number | もらった時刻（＝投げ銭の時刻） |
+| `x` / `y` / `rot` / `scale` | number | 置き方。`x` `y` は 0〜1、`y` は**足元**の高さ。`rot` は ±180、`scale` は 0.2〜3 |
+| `movedBy` / `movedAt` | | 本人が動かしたときだけ |
+| `createdAt` / `updatedAt` | number | ミリ秒 |
+
+| いつ作るか | 誰が |
+| --- | --- |
+| 画像を貼ったとき | `functions/src/streamEvents.ts` の `mintForImage` |
+| 毎日 | `python/island_cards.py` |
+
+**両側から埋めて、どちらが先でも同じ結果になるようにしてある。** 片方だけだと
+「画像が先で投げ銭が後」の日か「貼った夜」のどちらかが空になる。
+**平置きにしてあるのは索引の都合** — [`island-db-notes.md` の6](./island-db-notes.md)。
+
+**`islandTips/{tipId}`** — 投げ銭の台帳（#202）
+
+**YouTube のスパチャと Doneru の寄付を1本にしたもの。** あやと島カードはここから
+組み上がる。`python/island_tips.py` が毎日置く。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>`。**一意** |
+| `source` | string | `youtube_superchat` / `doneru` |
+| `channelId` | string \| null | YouTube のチャンネル。Doneru は `islandDonors` を通して引く。紐付いていなければ null |
+| `day` | string | **日本時間で切った配信日**（YYYY-MM-DD） |
+| `donatedAt` | number | 出された時刻（ミリ秒） |
+| `videoId` | string \| null | どの配信か。**Doneru のぶんは、時刻を配信の時間帯に当てて埋めている。** 配信していない時間のものは null |
+| `videoStartedAt` | number \| null | その配信が始まった時刻。0時をまたいだぶんを人が拾うときに要る |
+| `amount` | number \| null | 視聴者が払った額 |
+| `currency` | string | `JPY` ほか。**外貨が混ざる**（本番の380件に ₪ と CA$ が1件ずつあった） |
+| `settlementAmount` | number \| null | 手数料を引いた額（Doneru だけ） |
+| `displayNameSnapshot` | string \| null | そのときの表示名 |
+| `viewerPk` | string \| null | どねID（Doneru だけ） |
+| `createdAt` / `updatedAt` | string | ISO8601 |
+
+**書類IDは `sourceEventId` の SHA-1 の頭32文字。** 生の値を使わないのは、
+YouTube の `event_id` が Base64 風で `/` を含みうるから。
+**同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
+
+**金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
+
+#### c. 押した・数えた
+
+**`islandHearts/{noteId_uid}` または `{planId_cid}`** — 誰がどれにハートを押したか
+
+ドキュメントIDは `` `${対象のID}_${uid ?? cid}` ``。**ログイン不要で、解除できる。**
+**消す＝解除**なので、書類の有無で持つ。数そのものは `islandNotes.hearts` /
+`islandStreamEvent.hearts` にある。
 
 | 項目 | 型 |
 | --- | --- |
@@ -758,129 +640,176 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 | `note` | string（どの付箋か。付箋のとき） |
 | `plan` | string（どの企画か。企画のとき） |
 
-### `islandVotes/{key}` — 誰がどれに投票したか（旧・#171 で口が消えた）
+**付箋と企画で入れ物を分けていない。** 書類IDは Firestore の自動IDなので
+ぶつからない。分けなかったのは、1日の上限（`heart`）と「消す＝解除」の作りを
+2つに割らないため。
 
-ドキュメントIDは `` `${ideaId}_${uid ?? cid}` ``。1人1票にするためだけのもの。
-`/ideas/:id/vote` を畳んだので、**もう増えない。** 13件のまま残してある。
-
-### `islandRate/{key}` — 1日の上限
-
-ドキュメントIDは `` `${kind}_${YYYY-MM-DD}_${uid ?? cid}` ``。
+**`islandRate/{kind_YYYY-MM-DD_uid|cid}`** — 1日の上限
 
 | 項目 | 型 |
 | --- | --- |
 | `n` | number（その日の回数） |
-| `kind` | string（plan / idea / note / sticky / heart / draft / poll / fork / visit） |
-| `day` | string |
+| `kind` | string（下の表） |
+| `day` | string（**UTC で切った日**） |
 | `updatedAt` | number |
 
-上限は 企画12件 / 付箋20件 / ハート120回 / 日（`plan` は出すのも育てるのも同じ枠）。
-ハートは**解除も1回ぶん使う。** 使わないと、同じ付箋で押す・外すを
-繰り返して書き込みを無限に起こせる。
-
-### `islandChannels/{channelId}` — チャンネルIDと、名前と写真（#190・#202）
-
-配信に来たことがある人ぶん（2,200人以上）。`python/island_channels.py` と
-`python/island_channel_photos.py` が毎日置く。
-
-| 項目 | 型 | 中身 | 誰が |
-| --- | --- | --- | --- |
-| `name` | string | いま名乗っている名前 | `island_channels.py` |
-| `lastAt` | string | 最後に喋った時刻 | 同上 |
-| `photo` | string \| null | **YouTube のプロフィール写真** | `island_channel_photos.py` |
-| `photoAt` | string | 写真を入れた時刻 | 同上 |
-| `updatedAt` | string | | |
-
-#### `photo` はカードの絵ではない
-
-**混ぜないこと。** アイコンは2つあって、出どころも意味も違う。
-
-| | 何 | どこが正 |
+| `kind` | 上限／日 | 何 |
 | --- | --- | --- |
-| キャラクター | カードに乗る絵（ひめひめさんのハリネズミ） | あやとのスプレッドシート（`site/content/residents.ts` に焼いてある） |
-| プロフィール写真 | YouTube のアイコン | `islandChannels.photo` |
+| `plan` | 12 | 企画を出す・育てる（**同じ枠**） |
+| `note` | 20 | 企画への付箋（旧） |
+| `sticky` | 20 | テーマへの付箋 |
+| `heart` | 120 | ハート。**解除も1回ぶん使う** |
+| `poll` | 30 | 今夜のおたずねに投票 |
+| `fork` | 30 | わかれ道に投票 |
+| `nphoto` | 120 | 写真を貼る（あやと） |
+| `nlog` | 60 | 旅の日記を書く（あやと） |
+| `visit` | 1 | 「今日はもう数えたか」の印。上限ではなく目印 |
 
-キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
-変わらないのが正しい。** `photo` はマイページのアイコンが古くならない
-ようにするためのもの。
+ハートの解除が1回ぶん使うのは、使わないと同じ付箋で押す・外すを繰り返して
+書き込みを無限に起こせるから。
 
-#### 毎日ぜんぶは引かない
+**`islandVisits/{YYYY-MM-DD}`** — その日の訪問者数。`{ n, day, updatedAt }`。
+1日1書類なので、Firestore の「同じ書類に毎秒1回」に当たる。数千人まではこれで足りる。
 
-`channels.list` は `id` を50件まとめて渡せる（1回＝1ユニット）ので、
-2,200人でも45ユニットで済む。**それでも毎日ぜんぶは引かない。**
-枠は Discovery（`search.list` は1回100ユニット）と どねID の紐付けと
-分け合っていて、こちらが毎日45ユニット固定で乗ると、足りなくなった日に
-真っ先に困るのは配信の探索のほうだから。
+**`islandPolls/{id}` / `islandPollVotes/{pollId_uid|cid}`** — おたずねとわかれ道
 
-**1日500人まで（10ユニット）。** 順は
-（1）ログインしたことがある人 →（2）まだ写真が無くて最近来た人 →
-（3）残りをチャンネルID順に、日ごとに窓をずらして。
-2と3は直近90日に来た人だけ。500人ずつなら5日で1周する。
+**1つの入れ物に2つの用途が相乗りしている。** `at` を持つ書類は「わかれ道」、
+持たない書類は「今夜のおたずね」。
+`question` / `options[{id,label}]` / `votes{id:数}` / `createdAt` / `hidden` を持つ。
+票は `islandPollVotes` に「誰がどれに入れたか」で1人1票を守る。
 
-**変わらなかった人には `photoAt` を書かない。** 書くと、変わっていない
-500件ぶんの書き込みを毎日払うことになる。順に回すのは窓ずらしがやる。
+#### d. 付箋（`islandNotes`）
 
-### `islandUsers/{uid}` — ログインした人
+**1つの入れ物に、2つの形が入っている。** 見分けるのは `planId` があるか
+`theme` があるかで、読む口も別（[`island-api.md`](./island-api.md) の「付箋」）。
 
-| 項目 | 型 | 中身 | 誰が書くか |
-| --- | --- | --- | --- |
-| `name` | string | YouTube のチャンネル名 | ログイン時に自動 |
-| `channelId` | string | YouTube のチャンネルID | ログイン時に自動 |
-| `photo` | string | YouTube のアイコンURL | ログイン時に自動 |
-| `nickname` | string? | 島で出す名前（本名以外にしたいとき） | 本人 |
-| `character` | string? | 島にいる自分のキャラクター（Drive の画像ID） | 本人が選ぶ |
-| `showName` | boolean | 名前を島に出すか | 本人 |
-| `showPhoto` | boolean | YouTube アイコンを島に出すか | 本人 |
-| `canDraft` | boolean | 企画ページの下書きを書いてよいか（旧。#161 で誰でも書けるようになり、#171 で**どこからも読まれなくなった**） | あやと（コンソール） |
-| `admin` | boolean | 全員ぶんの下書きを読めるか | あやと（コンソール） |
-| `firstSeenAt` / `lastSeenAt` | number | 初回と直近 | 自動 |
+**テーマに貼られた付箋**（#160。これから増えるのはこちら）
 
-**`character` が入っていて、かつ `showName` か `showPhoto` のどちらかが true の人だけ**が
-`GET /state` の `residents` に載る。何もしていない人の名前は絶対に出ない。
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
+| `text` | string | 中身（120字まで） |
+| `by` | string \| null | 名乗った名前（なくてもいい） |
+| `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
+| `ip` | string \| null | `x-forwarded-for` の先頭 |
+| `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
+| `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
+| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
+| `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
+| `hidden` | boolean | 隠すとき（管理スクリプトから） |
+| `createdAt` | number | ミリ秒 |
 
-### `islandDrafts/{id}` — 企画ページの下書き（旧・#161 で役目が終わった）
+**企画に貼られた付箋**（旧。移行待ち）: `planId` `text` `cid` `hidden` `createdAt`。
 
-中身の形は `islandNextPlans` と同じ（`uid` `by` `title` `when` `date` `note`
-`tags` `place` `about[]` `links[]` `photos[]` `embeds[]` `createdAt` `updatedAt`）。
-違うのは、**ログイン必須で、あやとが `canDraft` を立てた人しか書けなかった**こと。
+**移ってきたぶんに残っている欄**: `movedFrom` `movedAt`（`islandIdeas` から
+#162 で移した印）、`name`（旧 `islandIdeas` の名乗り）、`heartsMovedTo`。
+**新しく書かれることはない。**
 
-**本番は0件**（2026-09-06 に数えた）。移すものは無かった。
-**口は畳んだ（#171）。** `GET/POST /drafts` は、もう無い。
+**コレクションを階層分けしていない**（[`island-db-notes.md` の7](./island-db-notes.md)）。
+そのぶんの複合インデックスが `firestore.indexes.json` に2本ある。
 
-`islandUsers.canDraft` は、これで**どこからも読まれない欄**になった。
-消していないのは、立ててある人に「前は書けた」という記録が残るのと、
-消しても誰も得をしないため。**新しく立てる意味は無い。**
+| 索引 | 何に使う |
+| --- | --- |
+| `theme` 昇順 + `createdAt` 降順 | テーマの中を新しい順 |
+| `theme` 昇順 + `hearts` 降順 | テーマの中を押された順（国のページ） |
 
----
+**読む側は、`createdAt` だけでなく書類IDでも並べている**（`cursorOf` / `pageOf`）。
+同じミリ秒に2件入ったとき、ページの境目で1件飛ぶのを止めるため。
+なお `firestore.indexes.json` に書いてあるのは**上の2欄だけで、`__name__` は書いていない**
+（前の版のこの文書は「`__name__` を明に書いてある」としていた）。
 
-## 3. Git（`site/content/`）— 人が書くものと、機械が焼くもの
+#### e. もう書かれないもの
 
-レビューして育てたいものは、DB ではなくコードに置く。置き方は2つに分かれる。
+| コレクション | いま | どうするか |
+| --- | --- | --- |
+| `islandIdeas` | 8件。**全部 `hidden: true`** | 中身は #162 で付箋へ移した。**入れ物は残す。書いた人の字なので消さない** |
+| `islandNextPlans` | 2件 | `islandStreamEvent` へ移した残り |
+| `nordicPhotos` | 2件 | 書く口が新旧の両方に書いている。**畳むのは画面が移ってから** |
+| `nordicDays` | 6件 | もう読んでいない。その日いた人は `islandTips` から引く |
+| `islandDrafts` | **無い**（0件） | 移すものが無かった（#171） |
+| `islandVotes` | **無い** | 前の版のこの文書は「13件残してある」と書いていた。**いま本番に無い** |
+| `nordicLog` | **無い**（0件） | 口はまだ動いている。旅が始まれば書かれる |
 
-**分かれ目は「BigQuery を読めば答えが出るか」。** 数える・並べる・絞るは機械にできる。
-**どれを載せるかは、載せる理由がいる。** 理由は BigQuery に入っていない。
-仕分けの全体と、そう決めた理由は [`island-fresh.md`](island-fresh.md)。
+`islandIdeas` に入っている欄（もう書かれない）:
+`text`（提案・200字）/ `name`（名乗った名前）/ `uid` / `cid` /
+`votes`（いいねの数。`islandVotes` で1人1票にしていた）/
+`movedTo`（付箋へ移した先・#162）/ `hidden` / `createdAt`。
 
-### 3.1 人が書く（**機械に決めさせると嘘になる**）
+`islandDrafts` の中身の形は `islandStreamEvent` と同じだった。違うのは
+**ログイン必須で、あやとが `canDraft` を立てた人しか書けなかった**こと。
+
+#### f. 島の外にある入れ物
+
+**島のページとは別の機能だが、同じ Firestore にいる。**
+
+| コレクション | 何 | 形 |
+| --- | --- | --- |
+| `monthlyReview/{docId}` | 月末配信の進行同期（OBS ⇄ スマホ） | **ここだけルールが `allow read, write: if true`。** 合言葉つきの書類IDを知っている人だけが使う想定 |
+| `islandHere/{uid}` | いま島にいる人（`docs/island-here.md`） | `{ at, x, y, seenAt }` の4つだけ。**ここだけブラウザから直接読み書きする** |
+| `rouletteSessions/{32hex}` | 配信のルーレット | `owner` `status` `items` `wait` `duration` `turns` `theme` `sound` `result` `resultIndex` `spunAt` `postAt` |
+| `islandRemote/{32hex}` | 島の遠隔操作 | `owner` `at` `view` `scrollTo` `say` `showSay` `seq` `updatedAt` |
+| `streamChatMessages/{videoId_messageId}` | 配信中に溜めたコメント（#153） | `videoId` `messageId` `at` `text` `channelId` `name` `kind` |
+| `streamChatRuns/{videoId}` | 配信1本ぶんの栞と件数 | `videoId` `liveChatId` `next` `count` `startedAt` `lastPolledAt` `done` |
+| `streamChatHealth/collectLiveChat` | **どこまで進んだかの札** | `step` `detail` `at` |
+
+`streamChatHealth` があるのは、`collectLiveChat` が5分おきに勝手に動くので
+**壊れても誰も気づかない**から。Cloud Logging は権限が足りず 403 で読めない
+（#236）。札を1枚置いておけば、ログが読めなくても `firestore_read` で理由まで分かる。
+
+#### g. セキュリティルール（`firestore.rules`）
+
+**方針は「島のデータはブラウザから触らせない」。** 読み書きはすべて
+Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回するので、
+ルール側は deny にしておけばよい。**明示していないものは全部 deny。**
+
+⚠ **「全部 deny」ではない。例外が2つある。**
+
+| 入れ物 | 開けてあるもの | なぜ |
+| --- | --- | --- |
+| `monthlyReview/{docId}` | **read も write も誰でも** | 月末配信の同期。合言葉つきの書類IDを知っている人だけが使う想定 |
+| `islandHere/{uid}` | read は誰でも、write は**本人のぶんだけ** | 他の人の動きを「動いて見える」速さで出すには `onSnapshot` が要る。数秒ごとに Function へ聞きにいくのでは足りない |
+
+`islandHere` を開けても危なくない形にしてある: **名前とアイコンを入れさせない**
+（誰なのかは、島の状態が返す `residents` と `uid` で突き合わせて読む側が決める）、
+**書けるのは自分のぶんだけ**、**項目は4つだけ**、**`seenAt` はサーバー時刻でないと通らない**、
+**1秒に1回より速くは書かせない**（書いた回数で課金されるので、ここを開けるのは
+財布を開けるのと同じ。ブラウザ側の2秒しばりは自分で外せるので、速さを決めるのは
+外せないほうに置く）。
+
+置きっぱなしは `python/island_daily_stats.py` の `sweep_here` が毎日片づける
+（10分より古いものを最大500件）。
+
+**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` には
+名指しのルールが無い**（末尾の `match /{document=**}` の deny に落ちている）。
+**閉じてはいるが、意図して閉じたのか落ちただけなのかが読めない** — 7章。
+
+### 4.3 Git（`site/content/`）— 人が書くものと、機械が焼くもの
+
+レビューして育てたいものは、DB ではなくコードに置く。
+**分かれ目は「BigQuery を読めば答えが出るか」。** 数える・並べる・絞るは機械に
+できる。**どれを載せるかは、載せる理由がいる。** 理由は BigQuery に入っていない。
+仕分けの全体と、そう決めた理由は [`island-fresh.md`](./island-fresh.md)。
+
+#### 人が書く（**機械に決めさせると嘘になる**）
 
 | ファイル | 中身 | なぜ機械にできないか |
 | --- | --- | --- |
-| `recipes.ts` | 作ってきた料理（**クッキング・スタンプ帳の元**） | 料理名・種類・**スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
+| `recipes.ts` | 作ってきた料理（クッキング・スタンプ帳の元） | **スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
 | `countries.ts` | 歩いた国と、滞在期間 | どの街にいつからいつまでいたか。本人しか知らない |
 | `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
-| `legends.ts` | 伝説の企画8つ | どれを伝説と呼ぶか |
+| `legends.ts` | 伝説の企画 | どれを伝説と呼ぶか |
 | `plans.ts` `apps.ts` | これからの企画／作っているアプリ | 選定 |
 | `python/data/shorts.json` | ショートの一覧（`shorts.ts` の元） | **BigQuery にショートは1本も入っていない** |
 | `python/voices_picks.json` | 他己紹介の抜粋（`voices.ts` の元） | どの声を載せるか |
 | `python/kitchen_talk_picks.json` | その日の台所の引用（`kitchenTalk.ts` の元） | 機械が選ぶと「こんばんは」が並ぶ |
 | `site.ts` `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章 |
-| `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表 | 決めごと |
+| `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` `nights.ts` `place.ts` `trip.ts` `tripPlaces.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表・夜の言い方・場所・旅 | 決めごと |
 
-### 3.2 機械が焼く（**手で書き換えない**）
+#### 機械が焼く（**手で書き換えない**）
 
-**元のスクリプトを直してから作り直す。** さらに2つに分かれる。
+**元のスクリプトを直してから作り直す。** 2つに分かれる。
 
-**(a) 毎晩ひとりでに焼ける** — 入力が BigQuery だけ。人が何も決めなくてよい
+**(a) 毎晩ひとりでに焼ける**（`rebake.yml` の cron。この5本）
 
 | 焼かれるもの | 元 | 回すもの |
 | --- | --- | --- |
@@ -888,55 +817,36 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 | `residents.ts` | BigQuery + `python/residents_map.json` | `python/build_residents.py` |
 | `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
 | `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
+| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
+
+前の4本は**入力が BigQuery だけ**。`build_city_streams` だけは上流に人の書く
+`countries.ts` があるが、**街の一覧が止まっても街ごとの本数は機械だけで動く**ので
+毎晩に入れてある。
 
 **(b) 人が上流を書いたあとに焼く** — 上流が止まっていれば、下流も止まる
 
-| 焼かれるもの | 元 | 回すもの | 待っているもの |
-| --- | --- | --- | --- |
-| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` | `countries.ts` |
-| `countryStats.ts` | `python/data/country_stats.json` | `python/build_country_stats.py --build` | `countries.ts`（＋取り置きの取り直し） |
-| `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `python/build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` |
-| `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `python/build_legend_days.py` | `legends.ts` |
-| `voices.ts` | `python/voices_picks.json` | `python/build_voices.py --build` | `voices_picks.json` |
-| `shorts.ts` | `python/data/shorts.json` | `python/build_shorts.py --build` | `shorts.json` |
-| `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `python/build_nordic.py` / `build_nordic_map.py` | 元の JSON（**リポジトリに無い**） |
-| `atlas/route.json` + `atlas/c/*.json` | 世界地図データ + `countries.ts` | `python/build_world_route.py` | `countries.ts` |
-| `sprites.json` | `site/public/sprites/*.webp` | `tools/sprites/manifest.mjs` | 絵の追加 |
-| `characterBox.ts` | 住人のキャラクター画像 | `tools/sprites/avatars.py` → `charbox.py` | 絵の追加 |
+| 焼かれるもの | 元 | 回すもの | 待っているもの | `rebake` から |
+| --- | --- | --- | --- | --- |
+| `countryStats.ts` | `python/data/country_stats.json` | `build_country_stats.py --build` | `countries.ts`＋取り置きの取り直し | 手で押せば回る |
+| `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` | 手で押せば回る |
+| `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `build_legend_days.py` | `legends.ts` | **回せない** |
+| `voices.ts` | `python/voices_picks.json` | `build_voices.py --build` | `voices_picks.json` | **回せない** |
+| `shorts.ts` | `python/data/shorts.json` | `build_shorts.py --build` | `shorts.json` | **回せない** |
+| `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `build_nordic.py` / `build_nordic_map.py` | 元の JSON（**リポジトリに無い**） | **回せない** |
+| `atlas/route.json` + `atlas/c/*.json` | 世界地図データ + `countries.ts` | `build_world_route.py` | `countries.ts` | **回せない** |
+| `sprites.json` | `site/public/sprites/*.webp` | `tools/sprites/manifest.mjs` | 絵の追加 | — |
+| `characterBox.ts` | 住人のキャラクター画像 | `tools/sprites/avatars.py` → `charbox.py` | 絵の追加 | — |
 
-**(b) の4本は BigQuery を引かない。** `build_country_stats` `build_kitchen_talk`
-`build_legend_days` `build_voices` は、取り置きの JSON を焼き直すだけ
-（`build_legend_days` は `bigquery` を import すらしていない）。
-**先にその JSON を取り直さないと、回しても同じものが出る。**
-取り直す SQL は各スクリプトの `--sql` が出す。
+**(b) は「取り置きの JSON を焼き直す」だけ。** 先にその JSON を取り直さないと、
+**回しても同じものが出る。** 取り直す SQL は各スクリプトの `--sql` が出す。
 
-### 3.3 毎晩ひとりでに焼く口（`rebake.yml`）
+`build_country_stats` `build_kitchen_talk` `build_legend_days` `build_shorts` は
+**`bigquery` を import すらしていない。** `build_voices` だけは BigQuery を引く道を
+持っているが、それは**候補を集めるとき**で、`--build`（焼く側）は
+`voices_picks.json` しか読まない。
 
-**焼き込みは、Hosting を配り直しても動かない**（`npm run build:web` は expo export →
-public コピー → next build で、python を1行も通らない）。置いたままにすると、
-取り込みだけが進んで**画面の数字が止まる。** 実際に 2026-09-05 で止まっていた。
-
-`.github/workflows/rebake.yml`（**島の数字を焼き直す**）が
-
-- **`schedule` 21:30 UTC**（取り込み 20:00 UTC の後ろ）に、上の **(a) の4本**を焼いて、
-  変わっていれば master に入れ、Hosting も配る
-- **`workflow_dispatch`** で手からも押せる。既定は `dry_run: true`（**見るだけ**）。
-  `scripts` に名前を書けば選べる。**allowlist に無い名前は走らずに落ちる**
-
-commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` が 1.5倍の幅を
-超えて動いたら落とす**（実際に 61 → 174 になったことがある）のと、
-**焼いた TS で `next build` が通らなければ落とす**。
-
-`cityStreams.ts` は allowlist に入れていない。**いまの中身は古い版のスクリプトで
-焼かれていて、焼き直すと選び直しになる**（トビリシは滞在窓に配信が119本あるので
-並びごと変わる）。「新しくなる」ではなく**「別物になる」**。
-`nordic.ts` は元の JSON がリポジトリに無いので、そもそも回せない。
-
-**(b) を新しくするのは人の仕事。** 手順は `/island-fresh`。
-
-### 3.4 焼き直したかどうかは、commit 日では分からない
-
-別の理由で触られた日が付くだけで、中身は古いままのことがある。**中身の最新を見る。**
+**焼き直したかどうかは、commit 日では分からない。** 別の理由で触られた日が
+付くだけで、中身は古いままのことがある。**中身の最新を見る。**
 
 | ファイル | どこを見るか |
 | --- | --- |
@@ -948,43 +858,296 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 
 一覧を出すコマンドは `/island-fresh` の1章にある。
 
+### 4.4 Cloud Storage
+
+置いてあるのは、旅の写真の実体だけ。
+
+| | |
+| --- | --- |
+| 道 | `nordic/photos/{YYYY-MM-DD}/{imageId}.{jpeg\|png\|webp}` |
+| 1枚の上限 | 4MB |
+| キャッシュ | `public, max-age=31536000, immutable`（道に id が入っていて中身が変わらないため） |
+| 読ませ方 | ファイルの metadata に付けた**ダウンロードの合言葉**（`?alt=media&token=…`） |
+
+`storage.rules` は **`allow read, write: if false`**。
+
+- **書きは Functions（Admin SDK）がルールを迂回する**ので、「あやとだけが書ける」を
+  ルールに書く必要がない。書けるのは誰もいない、でよい
+- **読みは合言葉がルールの外なので、deny のままでも写真は誰でも見られる。**
+  `allow read: if true` を書くと、**合言葉なしで置き場をのぞける**ようになる。書かない
+
 ---
 
-## 4. API（`/island-api/*`）
+## 5. データの流れ
 
-| メソッド | パス | 誰が | 何を |
-| --- | --- | --- | --- |
-| `GET` | `/state` | 誰でも | 数字・いまいる場所・企画提案・付箋・名前を出す住人 |
-| `GET` | `/nextplans` | 誰でも | 企画の一覧。`?archived=1` はあやとだけ。**`?events=1` で運営側の企画（`board: false`）も混ぜる** |
-| `GET` | `/nextplans/:id` | 誰でも | 企画1件（育てる画面が続きを書くために引く） |
-| `POST` | `/nextplans` | 誰でも | 企画を出す。**題だけでいい**（1日12件） |
-| `POST` | `/nextplans/:id` | 出した人 | 育てる。**送った中身でまるごと置き換わる** |
-| `POST` | `/nextplans/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
-| `POST` | `/nextplans/:id/status` | あやとだけ | 段を動かす。`planId` で Git 側の企画に結ぶ |
-| `POST` | `/nextplans/:id/videos` | あやとだけ | **この企画のものだと決めた配信**（#202）。URL を貼ってもよい |
-| `GET` | `/streamevents?day=YYYY-MM-DD` | 誰でも | **その日に立っている企画**。1日に何本でも立つので配列 |
-| `GET` | `/streamevents/:id/images` | 誰でも | その企画の画像 |
-| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。貼った時点でカードも作る |
-| `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。カードも作り直す |
-| `DELETE` | `/streamevents/images/:id` | あやとだけ | 画像を消す。**カードも実体も消える** |
-| `POST` | `/nextplans/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
-| `GET` | `/notes` | 誰でも | 企画に貼られた付箋（旧。移行待ち） |
-| `POST` | `/notes` | 誰でも | 企画に付箋を貼る（旧。1日20件） |
-| `GET` | `/stickies` | 誰でも | テーマに貼られた付箋。`?theme=` で1つ、無ければ横断の新着 |
-| `POST` | `/stickies` | 誰でも | テーマに付箋を貼る（1日20件） |
-| `POST` | `/stickies/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
-| `POST` | `/stickies/:id/reply` | あやとだけ | 返信する。空で送ると取り消し |
-| `POST` | `/stickies/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
-| `POST` | `/me` | ログイン済み | 島での見え方を保存する |
+### 5.1 取り込み（毎晩）
 
-ログインしていない人は端末IDで数え、ログインした人は uid で数える。
-端末を変えても同じ人として扱われるのはこのため。
+```
+YouTube                    Doneru
+   │                          │
+   │ discover_videos.py       │ fetch_doneru_donations.py
+   ▼                          ▼
+ videos ──fetch_chat_data.py──▶ chat_messages      doneru_donations
+   │                                │                    │
+   └────────────┬───────────────────┴────────────────────┘
+                ▼
+        island_daily_stats.py   → island/state.stats, .fund
+        island_channels.py      → islandChannels（name, lastAt, days）
+        island_channel_photos.py→ islandChannels.photo（1日500人）
+        island_tips.py          → islandTips（スパチャ＋寄付を1本に）
+        island_cards.py         → islandCards（写真 × 台帳）
+```
 
-**`/notes` と `/stickies` は、入れ物が同じで口が別。** 画面が切り替わっている
-途中の日に、両方が混ざったものが両方の画面に出るのを止めるためで、
-旧来のぶんが移り終わったら（#162）`/notes` を畳む。
+配信中は別の線が動く。`collectLiveChat`（Functions・5分おき）が
+`streamChatMessages` / `streamChatRuns` に溜めて、`streamChatHealth` に札を置く。
+**BigQuery に入るのは翌日の取り込みで、この2つとは別物。**
 
-**旧（`/ideas` `/drafts`）は畳んだ（#171）。** 残してあったのは同じ理由で、
-Functions と Hosting を別々に手で起動する（`CLAUDE.md`）ので、片方だけ先に
-出た日に掲示板がまるごと 404 になるのを避けるため。両方が本番に出て3日たった
-ので、古い画面を開きっぱなしのタブも、もう残っていない。
+### 5.2 焼き直し（毎晩）
+
+**焼き込みは Hosting を配り直しても動かない**（`npm run build:web` は
+expo export → public コピー → next build で、python を1行も通らない）。
+置いたままにすると取り込みだけが進んで**画面の数字が止まる**（実際に 2026-09-05 で止まった）。
+
+`.github/workflows/rebake.yml` が
+
+- **`schedule` `0 1 * * *`（01:00 UTC ＝ 日本時間の朝10時ごろ）** に、
+  4.3 (a) の**5本**を焼いて、変わっていれば master に入れ、Hosting も配る
+- **`workflow_dispatch`** で手からも押せる。既定は `dry_run: true`（**見るだけ**）。
+  `scripts` に名前を書けば選べる。**allowlist（7本）に無い名前は走らずに落ちる**
+
+commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` が1.5倍の幅を
+超えて動いたら落とす**（実際に 61 → 174 になったことがある）のと、
+**焼いた TS で `next build` が通らなければ落とす**。
+
+### 5.3 画面が読む道
+
+```
+ブラウザ
+  ├─ ビルド時に焼き込んだもの（site/content/*）……… 何もしなくても出る
+  ├─ 島の状態の口 …………………………… 数字・いまどこ・付箋・住人
+  ├─ 企画／付箋／カードの口 ……………… 掲示板・国のページ・カード
+  └─ islandHere/{uid} に onSnapshot …… いま島にいる人（**ここだけ Firestore を直接**）
+```
+
+口ごとの一覧は [`island-api.md`](./island-api.md)。
+
+**焼き込みは、島の状態の口が読めなかったときの受け皿でもある。**
+だから焼き込みの数字が本番とかけ離れていると、読めなかった人にだけ嘘が出る。
+
+---
+
+## 6. 運用
+
+### 6.1 毎晩何が走るか
+
+| 時刻(UTC) | ワークフロー | 何を |
+| --- | --- | --- |
+| `0 20 * * *` | `schedule_fetch_chat.yml`（Fetch YouTube Chat Data） | 配信を探す → チャットを取る → 島の数字・チャンネル・写真・台帳・カード |
+| `30 20 * * *` | `fetch_doneru_donations.yml` | Doneru の寄付（去年の元日から明日まで、毎回全件） |
+| `0 1 * * *` | `rebake.yml` | 焼き込み5本 → 変わっていれば commit → Hosting |
+
+**手で押すもの:** `island_update.yml`（いまどこを直す）、`nordic_depart.yml`（出発）、
+`run_admin_script.yml`（`python/admin/` の何でも）。
+
+**定時実行の時刻はぶれる。** 実測で 20:00 指定に対して 21:49〜23:32 に走っている。
+「◯時ちょうどに走る」を前提にした作りを置かない（[`island-db-notes.md` の1](./island-db-notes.md)）。
+
+### 6.2 止まったらどうなるか
+
+| 止まったもの | すぐ起きること | 直したら |
+| --- | --- | --- |
+| チャットの取り込み | 島の数字が止まる。**その日が「誰も来なかった日」ではなく「読めていない日」になる** | 7日以内なら翌晩に拾う。7日を過ぎると `WAITING` のまま残る |
+| Doneru の取り込み | 台帳とカードが止まる | **1回流せば止まっていた期間ごと埋まる**（毎回全件取り直しているため） |
+| 焼き直し | 画面の数字だけが古くなる（本番の島の状態そのものは動いている） | 手で押せば追いつく |
+| `collectLiveChat` | 配信中のコメントが溜まらない。**切り抜きの材料が無くなる** | BigQuery 側は翌日の取り込みで入るので、切り抜き以外は影響しない |
+| Doneru のセッション（`_dt`） | `fetch_doneru_donations` が終了コード2で落ちる | 6.4 |
+
+### 6.3 どこを見るか
+
+| 見たいこと | 見るところ |
+| --- | --- |
+| 取り込みが走ったか・何をしたか | Actions の run。**`conclusion` ではなく step を見る**（`list_workflow_jobs`） |
+| いま Firestore に何が何件あるか | `run_admin_script.yml` → `collections_audit`（**読むだけ・名前と件数だけ**） |
+| ある入れ物の欄の形 | 同 → `firestore_read` に `{"collection":"…","keys_only":true}`（**値も書類IDも出さない**） |
+| 配信中のコメント収集が止まった理由 | `streamChatHealth/collectLiveChat` の `step` と `detail` |
+| Doneru のセッションが何日持ったか | `doneru_ingest_runs`。`ok` が続いたあとの最初の `session_expired` がそのセッションの終わり |
+| 寄付の件数・合計・重なり | 同 → `doneru_audit`（**数字だけ出す**） |
+| 焼き込みが新しいか | 4.3 の「どこを見るか」の表 |
+
+**このリポジトリは公開で、Actions のログも誰でも読める。**
+Firestore を覗くときは `keys_only`、BigQuery はスキーマと数字だけ。
+**行の中身・人の名前・鍵は、ログに出さない。**
+
+### 6.4 Doneru のセッションを入れ直す
+
+認証はブラウザの cookie（`_dt`）だけ。**切れたら自動では戻せない**（ログインが
+Google OAuth なので Actions の中では通せない）。切れると
+`fetch_doneru_donations` が終了コード2で落ちるので、**Actions の失敗通知メール**で
+気づく。ログの `::error::` に理由が出るため、他の失敗と区別が付く。
+
+ログの `貼られている値の形` が「Doneru の形と一致」なのに 401 なら、
+貼り損ねではなくセッションのほう。
+
+1. ブラウザで https://doneru.jp にログインする
+2. DevTools > Application > Cookies > `https://doneru.jp` の `_dt` の値をコピーする
+3. Settings > Secrets and variables > Actions の `DONERU_COOKIE` を更新する
+4. `Fetch Doneru Donations` を `workflow_dispatch` で流し直す
+
+**あやとが Doneru からログアウトすると、その時点で切れる。** これは Doneru が
+サーバ側でセッションを破棄している証拠なので、**直すべき欠陥ではない**
+（ログアウトしても生き続けるほうが危ない）。付き合う制約として扱う。
+
+`_dt` は**どの IP からでも寄付一覧が読める鍵**。Secrets 以外の場所に置かない。
+`cf_clearance` や `_ga` などは要らない（貼っても捨てられる）。
+
+### 6.5 出席の数え方 — 読めていない日は、出席にも分母にも入れない
+
+`python/build_residents.py`（直近90日）と月末の表彰で使う。
+
+- **日ごとに数える。** 同じ日に2本配信していても1日
+- **配信日は UTC で切る**（`published_at` から9時間引く。日本時間の朝9時が境目。
+  22時開始の枠と、0時をまたいだ続きが同じ日に入る）
+- **取り込めていない配信日は、出席にも分母にも入れない**
+
+3つめは、**その日の配信がどれも `SUCCEEDED` になっていない日**。取り込みは通ったのに
+コメントが1件も無かった日（`SUCCEEDED` なのにチャット0。本番に1日ある）は
+**本物の0**なので分母には入れる。**読めていないのと0だったのを混ぜない**
+（`docs/island-standards.md` 10）。
+
+**分母は「読めた日」にそろえる**（配信のあった日ではない）。`videos` に開始時刻が
+無いのにチャットだけある日が本番に2日あるので、配信日で割ると出席が分母を超える人が出る。
+
+直したときの実測は [`island-db-notes.md` の4](./island-db-notes.md)。
+
+⚠ **常連の数は3か所で数えていて、切り方が揃っていない** — 7章。
+
+---
+
+## 7. 気づいたこと（責務のねじれ）
+
+**設計は直していない。** この文書を実物と突き合わせるあいだに見つけたものを並べる。
+直すかどうかは別の担当の判断。
+
+1. **`islandNotes` と `islandStreamEvent` に `ip` が入っている。** 中身は
+   `x-forwarded-for` の先頭で、**付箋と企画を書いた人ぶん全部残っている。**
+   `firestore.rules` で閉じてはいるが、この文書にも `docs/` のどこにも書かれて
+   いなかった。**消す期限も、使ってよい場面も決まっていない。**
+
+2. **常連の数を3か所で数えていて、日の切り方が揃っていない。**
+   `island_daily_stats.py`（直近90日・**日本時間**）、
+   `build_residents.py`（直近90日・**UTC**）、`island_channels.py` の `days`
+   （**全期間・日本時間**）。画面に出るのは1つめで、2つめはそれが読めなかった
+   ときの受け皿。**受け皿と本物が違う数え方をしている。**
+
+3. **`islandPolls` に、用途の違う2つが相乗りしている。** 見分けは `at` を持つか
+   だけで、欄の名前にはどちらのものか書いていない。両方の口が
+   「自分のでないほうを読み飛ばす」を各自で実装している。
+
+4. **`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` に、
+   名指しのルールが無い。** 末尾の catch-all で deny にはなっているが、
+   **意図して閉じたのか、書き忘れて落ちただけなのかが読めない。**
+   他の入れ物は全部「なぜ閉じるか」がコメントで書いてある。
+
+5. **`islandUsers.canDraft` が、どこからも読まれないまま残っている**（#171）。
+   残す理由（記録）は書いてあるが、**残す期限が無い。**
+
+6. **`nordicPhotos` へ二重書きしている口が、いつ畳まれるか決まっていない。**
+   「画面が移ってから」とだけ書いてあり、移ったかを判定する条件が無い。
+   同じことが `islandNextPlans`（2件）と、企画への付箋の旧い口にも当たる。
+
+7. **`islandTips.videoId` は、Doneru のぶんを「時刻を配信の時間帯に当てて」
+   埋めている。** つまり**推測が入った値が、原本と同じ欄に入っている。**
+   どちらの由来かは `source` を見れば分かるが、欄そのものは区別を持っていない。
+
+8. **前の版のこの文書が「13件のまま残してある」と書いていた `islandVotes` が、
+   本番に無い。** いつ・誰が消したかは追えなかった。
+   **「残してある」と書いたものが消えても、誰も気づかない**状態だった。
+
+9. **出席の数え方の直し（6.5）が、月末の表彰に入っていない。**
+   `.claude/skills/monthly-review/SKILL.md` の3章に、まだ
+   「コメント消失日は、当時すでに来ていた人（初出席がその日以前）を出席扱いにする」
+   と書いてある。**`build_residents.py` でやめた数え方が、そのまま残っている。**
+   あちらは皆勤賞の分母にもなるので、直すと皆勤の顔ぶれが変わる。
+
+---
+
+## 8. 確かめかた
+
+**この文書の数字と欄は、2026-09-11 に本番から取り直したもの。**
+書き写しではない。同じことをするコマンドを置いておく。
+
+### BigQuery（列名・型・NULL 可否）
+
+`mcp__Google_Cloud_BigQuery__list_table_ids` と `get_table_info`。
+プロジェクト `live-streaming-d3cac`、データセット `youtube_chat`。
+**返ってくる `schema.fields` が4.1 の表そのもの**（`mode: REQUIRED` が「NULL 不可」）。
+行数は同じ返りの `numRows`。**行の中身は引いていない。**
+
+### Firestore（何があるか・欄の形）
+
+`run_admin_script.yml` を `workflow_dispatch` で。**どちらも読むだけ。**
+
+```
+script: collections_audit   args: {}
+    → ルートコレクションの名前と件数（値もIDも出ない）
+
+script: firestore_read      args: {"collection":"islandNotes","keys_only":true}
+    → 件数とフィールド名だけ（値もドキュメントIDも出ない）
+```
+
+4.2 の表は `collections_audit` の返り。欄の一覧は、次の5本を `keys_only` で
+実際に引いて突き合わせた: `island` `islandChannels` `islandNotes`
+`islandStreamEvent` `islandTips`。
+**残りの入れ物の欄は、書いている側のコード**（`functions/src/*.ts` と
+`python/*.py`）から起こしてある。本番に古い欄が残っていても、その5本以外では
+見えていない可能性がある。
+
+### Git に焼いてあるもの
+
+型定義そのもの（`site/content/*.ts`、`site/lib/api.ts` の `IslandState`）。
+どれが自動生成かは `.github/workflows/rebake.yml` の `ALL` の並び。
+
+### ルールと索引
+
+`firestore.rules` / `storage.rules` / `firestore.indexes.json` を直に読む。
+**`island-db.md` に「全部 deny」と書いてあっても、ルールを読むまで信じない**
+（実際に例外が2つあった）。
+
+### 口の1日の上限・「あやとだけ」の判定
+
+```bash
+grep -nE '^const [A-Z_]+(_PER_DAY|_LEN) =' functions/src/islandApi.ts
+grep -rnoE 'takeQuota\([^,]+, *"[a-z]+"' functions/src/*.ts   # kind の一覧
+grep -n 'ownerUid(req.headers.authorization)' functions/src/islandApi.ts
+```
+
+### 直したときに、前の版が間違っていたところ
+
+**この改訂で実物と食い違っていた14か所と、書かれていなかったもの1つ**（何で確かめたかは上のとおり）:
+
+| どこ | 前の版 | 実物 |
+| --- | --- | --- |
+| `chat_messages.timestamp_usec` | 配信開始からのマイクロ秒 | **エポックからのマイクロ秒** |
+| `doneru_donations` | 15列 | **`platform` を入れて16列** |
+| `island/state` | `stats` と `current` の2つ | **`fund` と `nordic` を入れて4つ** |
+| `stats.updatedAt` | `number` | **`"YYYY-MM-DD"` の文字列** |
+| `stats.latest[]` | `{ videoId, title, date }` | **`{ video_id, title, date }`** |
+| `islandChannels` | 5欄 | **`days` を入れて6欄** |
+| `islandUsers.character` | 「本人が選ぶ」 | **そんな欄も口も無い**。キャラクターはあやとの表が決める |
+| `residents` に載る条件 | `character` があって、かつ `showName`/`showPhoto` | **`channelId` があって、かつ `showName`/`showPhoto`** |
+| `islandTips.videoId` | 「Doneru は持っていない」 | **時刻を配信の時間帯に当てて埋めている** |
+| `islandRate.kind` | `plan/idea/note/sticky/heart/draft/poll/fork/visit` | **`idea` と `draft` はもう使わない。`nphoto` と `nlog` が抜けていた** |
+| `rebake.yml` | 21:30 UTC に4本。`cityStreams` は allowlist 外 | **01:00 UTC に5本。`cityStreams` は毎晩ぶんに入っている** |
+| `islandVotes` | 「13件のまま残してある」 | **本番に無い** |
+| `firestore.rules` | 「島のコレクションを全部 deny」 | **`monthlyReview` と `islandHere` は開いている** |
+| `islandNotes` の索引 | `theme` + `createdAt` + **`__name__`** | **`firestore.indexes.json` は2欄だけ。`__name__` は書いていない** |
+| `islandNotes` / `islandStreamEvent` | — | **`ip` が入っている**（書かれていなかった） |
+
+---
+
+**関連**: [`island-api.md`](./island-api.md)（口の一覧）/
+[`island-db-notes.md`](./island-db-notes.md)（なぜそう決めたか）/
+[`island-fresh.md`](./island-fresh.md)（焼き込みの仕分け）/
+[`island-here.md`](./island-here.md)（いま島にいる人）/
+[`island-cards.md`](./island-cards.md)（カード）/
+[`nordic-fund.md`](./nordic-fund.md)（足代と、金額を出さない決め）

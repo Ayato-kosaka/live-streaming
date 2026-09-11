@@ -174,5 +174,5 @@
 
 ---
 
-**関連**: [`island-db.md`](island-db.md) 3章（どのファイルを誰が書くか）、
+**関連**: [`island-db.md`](island-db.md) 4.3（どのファイルを誰が書くか）、
 `.github/workflows/rebake.yml`（毎晩の焼き直し）、`/island-fresh`（人の側の手順）。
