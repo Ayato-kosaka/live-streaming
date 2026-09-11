@@ -112,7 +112,13 @@ def get(url: str, timeout: int = 60) -> bytes:
 
 
 def get_retry(url: str, tries: int = 3) -> bytes:
-    """絵は数十MB落とすので、1回の失敗で全部やり直さない。"""
+    """1回の失敗で全部やり直さない。
+
+    絵は数十MB落とすので、途中で1枚こけただけで最初からになると辛い。
+    表（GAS 越しのスプシ）も同じ扱いにしてある。**あちらは混むと 503 を
+    返す**ので、素通しだと入口で落ちる。`HTTPError` は `URLError` の
+    仲間なので、下の except で受かる。
+    """
     last = None
     for i in range(tries):
         try:
@@ -155,7 +161,11 @@ def viewers() -> list:
             "EXPO_PUBLIC_GAS_API_URL を環境変数で渡してください"
         )
         sys.exit(1)
-    j = json.loads(get(VIEWERS_URL + "?table=Viewers"))
+    # **1回で諦めない。** スプシは GAS 越しなので、混んでいると 503 を返す。
+    # 2026-09-11 の移行が実際にここで落ちた（8分前の下見は通っていたので、
+    # 中身の問題ではなく、そのときの混み具合）。絵の取得は前から
+    # `get_retry` を通していたのに、**入口のここだけ素通しだった。**
+    j = json.loads(get_retry(VIEWERS_URL + "?table=Viewers"))
     if not j.get("ok"):
         log.error("Viewers 表が読めません: %s", j.get("error"))
         sys.exit(1)
