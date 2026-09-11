@@ -80,10 +80,14 @@ export async function generateMetadata({
   const day = dayBySlug(n);
   if (!day) return {};
   const legs = day.legs ?? [];
+  /* 区間のある日は「◯から◯」、無い日は「◯で休む」。
+     **休んでいない日は `way` で上書きする**（9/27 は動く区間を持たないが
+     夜の便で発つので、自動だと「ストックホルムで休む」と名乗ってしまう）。 */
   const way =
-    legs.length > 0
+    day.way ??
+    (legs.length > 0
       ? `${cityName(legs[0].from)}から${cityName(legs[legs.length - 1].to)}`
-      : `${day.city}で休む`;
+      : `${day.city}で休む`);
   return {
     title: `${dayName(day)} ${way} — 北欧ヒッチハイク`,
     description: day.lead,
