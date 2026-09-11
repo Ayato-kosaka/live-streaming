@@ -64,7 +64,12 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
     return {
       id: "trip",
       label: "この旅のこと",
-      blurb: `${NORDIC_COUNTRIES.length}カ国、${days}日`,
+      /* **日数をここで数えない。** ここは `chapterDays` で「何日目か」を出して
+         いて、章の島（`spec.ts` の `nordicSpec`）は焼いた見立て（17日）を
+         出していた。**同じ名前・同じ絵の札が、面によって違う数を言っていた。**
+         出どころを揃える——見立て（`plannedDays`）を両方が直に読む。
+         何日目かは、下の「この島のこと」の札が持っている。 */
+      blurb: `${NORDIC_COUNTRIES.length}カ国、${c.plannedDays ?? 0}日`,
       icon: "tent",
       size: 62,
       note: "ポーランドから入って、ストックホルムまで。",
@@ -76,7 +81,9 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
           href: `/nordic/${k.slug}`,
         })),
       ],
-      more: { label: "この旅のこと", sub: "なぜ北欧まで行くのか", href: "/nordic" },
+      /* 「なぜ北欧まで行くのか」と書いてあった。**帰ってきたあとも
+         出しっぱなしになる字**なので、時点を言わない形にする */
+      more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/nordic" },
     };
   }
   /* 旅の面を持たない章。**行き先を作らない。**
