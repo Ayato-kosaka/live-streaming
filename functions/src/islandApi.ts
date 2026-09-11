@@ -37,6 +37,11 @@ import {handleCards} from "./cards";
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
+/* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
+   **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
+   引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
+   どちらも単一フィールドで引く（`islandCharacter.ts` 冒頭）。 */
+import {handleCharacters} from "./islandCharacter";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -1735,6 +1740,26 @@ export const islandApi = onRequest(
           {method, path, auth: req.headers.authorization, body},
           res,
           {ownerUid},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- キャラクター(#284) ----------------
+         中身は `islandCharacter.ts`。ここは取り付けだけ。扱ったら true。
+         「誰か」を見るところと、OBS の合言葉を見るところを増やさない
+         よう、どちらも関数で渡す。 */
+      if (
+        await handleCharacters(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            query: (req.query ?? {}) as Json,
+            body,
+          },
+          res,
+          {ownerUid, alertboxKey},
         )
       ) {
         return;
