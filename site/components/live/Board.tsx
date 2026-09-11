@@ -25,7 +25,8 @@ import { BOARD } from "@/content/voice";
 import { THEMES } from "@/content/themes";
 import { LEGENDS } from "@/content/legends";
 import { BUILT_AT, PLANS, daysUntil, planPhase } from "@/content/plans";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
+import ReadAgain from "@/components/me/ReadAgain";
 import { useOwner } from "@/components/nordic/log";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
@@ -153,8 +154,10 @@ function shownStatus(p: NextPlan, git: GitPlan | null, now: number | null): Plan
  */
 export default function Board() {
   const [plans, setPlans] = useState<NextPlan[] | null>(null);
-  /** 一覧が読めなかったか。空っぽと読めなかったを、同じ顔で出さないための印。 */
-  const [down, setDown] = useState(false);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
   /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
   const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
   const [title, setTitle] = useState("");
@@ -183,7 +186,6 @@ export default function Board() {
     setHearted(heartedLocally());
     setMine(myPlans());
     setNow(Date.now());
-    load();
 
     /* 「押す」から「書く」への橋を、渡ってきた側で受ける。
        島で今夜のおたずねを押した人は、押した直後に「理由も書ける？」で
@@ -211,35 +213,69 @@ export default function Board() {
    * 誰かが出した企画が並んでいる板を「いちばん乗りだよ」と言って見せていた。
    * 嘘をつくくらいなら、つながらないと言って、もう一度押せるようにする
    * （`docs/island-world.md` 4.1 の表）。
+   *
+   * **押しどころだけでは足りない**（#34 #36 #43）。ここは長いあいだ
+   * `withRead` を通さず、`online` も見ていなかったので、
+   *
+   *   - 45秒返さない回では、灰色の骨がいつまでも残る（`fetch` は自分では諦めない）
+   *   - 電波が戻っても、押すまで直らない
+   *
+   * しまったものも同じ器で読む（`bin` が変わると、そのまま次の一覧を取りに行く）。
+   * 一覧と混ぜて持たないのは、戻したときにどちらへ動いたかが分からなくなるため。
    */
-  const load = () => {
-    setDown(false);
-    setBin(false);
-    getNextPlans()
-      .then((r) => setPlans(r.plans))
-      .catch(() => {
-        setPlans([]);
-        setDown(true);
-      });
-  };
+  useEffect(() => {
+    let gone = false;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
 
-  /* しまったものを見にいく。あやとが押したときだけ。
-     一覧と混ぜて持たないのは、戻したときにどちらへ動いたかが
-     分からなくなるため（付箋と同じ作り）。 */
-  const loadBin = async () => {
-    const t = await token();
-    if (!t) return;
+    const go = async () => {
+      try {
+        let list: NextPlan[];
+        if (!bin) {
+          list = (await withRead(getNextPlans())).plans;
+        } else {
+          const t = await withRead(token());
+          if (!t) throw new Error("no-token");
+          list = (await withRead(getArchivedPlans(t))).plans;
+        }
+        if (gone) return;
+        ok = true;
+        miss = 0;
+        setPlans(list);
+        setRead("ok");
+      } catch {
+        if (gone) return;
+        /* **空の配列にしない。** 空は「読めた上での0件」のことば。 */
+        setRead("down");
+        miss += 1;
+        wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
+      }
+    };
+
     setPlans(null);
-    setDown(false);
-    setBin(true);
-    try {
-      const r = await getArchivedPlans(t);
-      setPlans(r.plans);
-    } catch {
-      setPlans([]);
-      setDown(true);
-    }
-  };
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [bin, token, again]);
 
   const submit = async () => {
     const t = title.trim();
@@ -310,7 +346,10 @@ export default function Board() {
     try {
       await archiveNextPlan(p.id, on, t);
     } catch {
-      setDown(true);
+      /* しまえなかったぶんは戻す。**「読みに行けなかった」の顔にしない。**
+         読めてはいるので、そう言うと直せない1件が板ぜんぶを覆う
+         （並びは出すときに作り直すので、末尾に戻せばよい）。 */
+      setPlans((cur) => (cur ? [...cur, p] : cur));
     }
   };
 
@@ -364,7 +403,9 @@ export default function Board() {
       <div className="mp-tabs is-2 bd-pick" role="tablist" aria-label="この板でできること">
         {(
           [
-            ["plan", "企画をだす", "まだ無いこと", plans === null ? "" : String(all.length)],
+            /* **数を言ってよいのは、読めたときだけ。** 読めなかった日に
+               「まだ無いこと 0」と出すと、並んでいる板を空だと言うことになる */
+            ["plan", "企画をだす", "まだ無いこと", read === "ok" ? String(all.length) : ""],
             ["note", "付箋をはる", "決まっている旅へ", noteCount === null ? "" : String(noteCount)],
           ] as const
         ).map(([id, label, sub, n]) => (
@@ -383,6 +424,11 @@ export default function Board() {
       </div>
 
       <div className="bd-pane" hidden={tab !== "plan"}>
+        {/* 出す口は、**板が読めているときだけ開く**（#36 #43）。
+            読めないまま出すと、出した1件だけが「板ぜんぶ」の顔で並ぶ。
+            区画（下の一覧）は残して、押しどころだけ出さない。
+            読めなかったことと読み直す道は、すぐ下の札が言っている。 */}
+        {read === "ok" && (
         <section className="panel paper bd-write">
           <h2>{BOARD.postTitle}</h2>
           <p>
@@ -538,6 +584,7 @@ export default function Board() {
             )}
           </div>
         </section>
+        )}
 
         <section className="panel paper">
           {/* 見出しは紙の札。`.bhead` の中に入れると板の木札のままになるので、
@@ -564,24 +611,22 @@ export default function Board() {
 
           {/* 取りに行っているあいだは、出てくる紙と同じ形の灰色を3枚置く。
               「読み込み中…」の字だけだと、板に何も無いのか取りに行っているのか分からない。 */}
-          {plans === null && (
+          {read === "wait" && (
             <ul className="bd-list is-wait" aria-hidden>
               <li />
               <li />
               <li />
             </ul>
           )}
-          {plans !== null && down && (
-            <div className="blank is-off">
-              <b>いま、板を読みに行けなかった</b>
-              <p>少し待ってから、もう一度。</p>
-              <button className="blank-go" onClick={load}>
-                もう一度よみこむ
-                <Icon name="refresh" size={14} />
-              </button>
-            </div>
+          {/* 読みに行けなかった。札は島じゅうで1つ
+              （`components/me/ReadAgain.tsx`）。手で同じ字を書かない。 */}
+          {read === "down" && (
+            <ReadAgain
+              what={bin ? "しまったもの" : "板"}
+              onRetry={() => setAgain((n) => n + 1)}
+            />
           )}
-          {!down && plans?.length === 0 && (
+          {read === "ok" && plans?.length === 0 && (
             <div className="bd-empty">
               <EmptyBoard />
               <p className="muted">{BOARD.empty}</p>
@@ -717,7 +762,7 @@ export default function Board() {
 
           {/* しまったものを見る。あやとだけ。**消していないので、戻せる。** */}
           {owner && (
-            <button className="nt-bin" onClick={() => (bin ? load() : loadBin())}>
+            <button className="nt-bin" onClick={() => setBin((v) => !v)}>
               {bin ? "出ているものに戻る" : "しまったものを見る"}
               <Icon name={bin ? "left" : "right"} size={13} />
             </button>

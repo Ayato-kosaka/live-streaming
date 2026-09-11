@@ -166,9 +166,21 @@ const peek = (p) =>
       紹介の1行: txt(".akd-strip .akd-note"),
       カードへの札: document.querySelectorAll(".akd-strip a[href='/cards']").length,
       図鑑のカード欄: document.querySelectorAll(".rzk-cards").length,
+      // 章の島の板（`IsleBoard`）
+      島の板: document.querySelectorAll(".isle-board").length,
+      島の板の骨: document.querySelectorAll(".isle-sheet .nx-notes.is-wait, .isle-board .nx-notes.is-wait").length,
       // みんなの付箋（`/board`）
       付箋: document.querySelectorAll(".nx-notes:not(.is-wait) > li").length,
       付箋を書く口: txt(".nt-open"),
+      // 島での見え方（`/me` の畳みの中）
+      見え方の欄: document.querySelectorAll(".me .me-check").length,
+      これでいく: [...document.querySelectorAll(".me-save")].map(
+        (e) => `${e.textContent.trim()}${e.disabled ? "（押せない）" : ""}`,
+      ),
+      名前を出す: [...document.querySelectorAll(".me-check input")].map((e) => e.checked),
+      // 机の道具（付箋・企画・投げ銭）。数は下の「いまは」と同じ `.mp-now`
+      ぜんぶ返した: txt(".mp-tool > .muted, .mp-tool .blank > b"),
+      手で入れる口: document.querySelectorAll(".mp-donor-add").length,
       // 旅の道具（`/me/desk`）
       いまは: txt(".mp-now"),
       今週やること: txt(".trip-week-none"),
@@ -189,7 +201,15 @@ const peek = (p) =>
   });
 
 /** 机で開く道具ごとの、押す札の名前（`components/me/ReadAgain.tsx` の `what`） */
-const DESK_WORD = { photo: "この日の企画", log: "その日の話", place: "島に出ている場所" };
+const DESK_WORD = {
+  photo: "この日の企画",
+  log: "その日の話",
+  place: "島に出ている場所",
+  sticky: "付箋",
+  plan: "企画",
+  donor: "投げ銭の一覧",
+  video: "企画",
+};
 
 /**
  * 面と、**その面で自分が名乗っている名前**。
@@ -205,7 +225,14 @@ const PAGES = [
   ["/nordic/day/4.html", "day4", "その日の話"],
   ["/about.html", "about", "カード"],
   ["/friends.html", "friends", "カード"],
-  ["/board.html", "board", "付箋"],
+  /* 板は札が2つ（企画・付箋）。**開いているほうの札を押す**
+     （`TAP=付箋をはる` で付箋に切り替えたときは、押すのも付箋の札）。 */
+  ["/board.html", "board", process.env.TAP === "付箋をはる" ? "付箋" : "板"],
+  /* じぶんのこと。**島での見え方**（`IslandMe`）は畳みの中に入っている */
+  ["/me.html", "me", "島での見え方"],
+  /* 章の島の板（`IsleBoard`）。建物を押すまで出ないので
+     `TAP=この旅の掲示板` で開いてから撮る */
+  ["/island/nordic.html", "isle", "付箋"],
   /* 開く道具は `DESKTOOL` で決める。`log` と `place` は押しどころが
      別々に落ちるので、1回で両方は見られない */
   ["/me/desk.html", "desk", DESK_WORD[process.env.DESKTOOL || "photo"]],

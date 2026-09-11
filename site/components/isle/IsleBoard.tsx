@@ -5,7 +5,9 @@ import Link from "next/link";
 
 import { Pin } from "@/components/live/art";
 import Icon from "@/components/ui/IconCore";
+import ReadAgain from "@/components/me/ReadAgain";
 import { getStickies, type Sticky } from "@/lib/api";
+import { withRead, type Read } from "@/lib/auth";
 import type { Theme } from "@/content/themes";
 
 /**
@@ -34,6 +36,18 @@ import type { Theme } from "@/content/themes";
  * ハートも書き込みも置いていない。島の板は**その旅に何が来ているかを見る**
  * ところで、押す・書くは掲示板（`components/live/Notes.tsx`）の仕事。
  * 同じ機能を2か所に置くと、押した数がどちらで動いたのか読めなくなる。
+ *
+ * ## 読めなかったときは、読み直す道を出す（#34 #36 #43）
+ *
+ * 文言（「いま、付箋を読みに行けなかった」）はここにも書いてあったが、
+ * **押しどころが無く、電波が戻っても直らなかった。** ここは島の上の板なので、
+ * 開き直すには島ごと読み込み直すことになる。島のほかの読みものと同じ形にする。
+ *
+ *   - `withRead`（12秒）を通す。**`fetch` は自分では諦めない**ので、
+ *     45秒返さない回では灰色の骨がいつまでも残っていた
+ *   - 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）。
+ *     `online`・画面に戻ってきたでも読み直す
+ *   - 骨に戻すのは押されたときだけ（ひとりでに戻すと、灰色と文言が入れ替わる）
  */
 
 /** 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す */
@@ -57,34 +71,68 @@ function shelves(themes: Theme[], notes: Sticky[]): Shelf[] {
 export default function IsleBoard({ themes }: { themes: Theme[] }) {
   /** 取りに行っている最中は null。0枚と区別する */
   const [notes, setNotes] = useState<Sticky[] | null>(null);
-  /** 読めなかったか。空っぽと読めなかったを、同じ顔で出さない */
-  const [down, setDown] = useState(false);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
   const [pick, setPick] = useState<string | null>(null);
 
   useEffect(() => {
-    let alive = true;
+    let gone = false;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
+
     /* テーマを渡さずに1回だけ引く。棚は多くて7つなので、テーマごとに
        聞きに行くと、板を開いただけで7往復する。 */
-    getStickies({ limit: 300 })
-      .then((r) => {
-        if (alive) setNotes(r.notes);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setNotes([]);
-        setDown(true);
-      });
-    return () => {
-      alive = false;
+    const go = () => {
+      withRead(getStickies({ limit: 300 }))
+        .then((r) => {
+          if (gone) return;
+          ok = true;
+          miss = 0;
+          setNotes(r.notes);
+          setRead("ok");
+        })
+        .catch(() => {
+          if (gone) return;
+          /* **空の配列にしない。** 空は「読めた上での0枚」のことば。 */
+          setRead("down");
+          miss += 1;
+          wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
+        });
     };
-  }, []);
+
+    setNotes(null);
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**島を読み込み直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [again]);
 
   const list = useMemo(() => shelves(themes, notes ?? []), [themes, notes]);
 
   /* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く。
      「読み込み中…」の字だけだと、何も無いのか取りに行っているのか分からない
      （`docs/island-world.md` 4.1）。 */
-  if (notes === null) {
+  if (read === "wait") {
     return (
       <ul className="nx-notes is-wait" aria-hidden>
         <li />
@@ -95,11 +143,10 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
   }
 
   if (!list.length) {
-    return down ? (
-      <div className="blank is-off">
-        <b>いま、付箋を読みに行けなかった</b>
-        <p>少し待ってから、もう一度。</p>
-      </div>
+    return read === "down" ? (
+      /* 札は島じゅうで1つ（`components/me/ReadAgain.tsx`）。
+         **「まだ1枚も無い」とは別の顔にする。** */
+      <ReadAgain what="付箋" onRetry={() => setAgain((n) => n + 1)} />
     ) : (
       <div className="blank">
         <b>北欧あての付箋は、まだ1枚も無い</b>
