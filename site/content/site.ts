@@ -102,9 +102,6 @@ export const LINKS: LinkItem[] = [
   },
 ];
 
-/** キャラクター置き場（視聴者さんが自由にダウンロードできる） */
-export const CHARACTER_DRIVE = "https://drive.google.com/drive/folders/1S-EFPuayr8p73_Yi6mRf4OkN91qHdzXn";
-
 /** 「いま」の初期値。/island-api/state の current で上書きされる。 */
 export const NOW_FALLBACK = {
   place: "ジョージア・トビリシ",

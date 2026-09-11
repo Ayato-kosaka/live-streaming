@@ -7,6 +7,8 @@ import { charFit } from "@/content/characterBox";
 import { useResidentDays } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
+import { useCharacters } from "@/lib/characters";
+import { saveFile, saveName } from "@/lib/saveFile";
 import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
 import Icon from "@/components/ui/IconCore";
@@ -14,9 +16,6 @@ import CardOne from "@/components/cards/CardOne";
 import ReadAgain from "@/components/me/ReadAgain";
 import { useCards, type PlanDays } from "@/components/cards/cards";
 import { Pedestal } from "./art";
-
-/** キャラクター画像は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
-const drive = (id: string, size: number) => `https://lh3.googleusercontent.com/d/${id}=s${size}`;
 
 /**
  * 今日、島に出ている人。
@@ -53,27 +52,38 @@ function useOnIslandToday(): Map<string, string> {
  * 本物の図鑑（`docs/ac-reference.md` 7章、いきもの図鑑のシーラカンスの面）は
  * **一覧と1枚を分けている。** 一覧は小さいマスをぎっしり並べるだけ。
  * 選んだ1匹だけが、絵が縦の半分を占める大きな紙になる。
- * この形にすると、22人ぶんの縦を使わずに、1人あたりの中身は増える。
+ * この形にすると、何人いても縦は増えず、1人あたりの中身は増える。
  *
  * 題名の札は**絵の上**（実測。白い紙を少し傾けて貼ってある）。
  * 欄は罫で割って、見出しに蛍光ペンの帯を敷く。影は落とさない。
  *
- * ## 何を書いて、何を書かないか
+ * ## 出るのは「絵のある人ぜんぶ」
  *
- * 島にいるのは視聴者さんご本人なので、**こちらが書いた人物評は出さない。**
- * `chatter.ts` の `note` には「毒舌」「夜勤明けが多い」のような、
- * セリフを書くための手控えが入っている。あれは本人の紹介文ではない。
+ * あやとの言葉（2026-09-11）:
  *
- * 出すのは**その人が島で実際に言うこと**だけにする。口調はその人のものを
- * 写してあるので（`content/chatter.ts`）、セリフを並べれば人柄はそれで伝わる。
- * はじめての人への1言目と、久しぶりの人への1言目も、島で出るものと同じ。
+ * > /friends からダウンロードできるようにしてもらって大丈夫。
+ * > 全員分を、キャラクター作成順に出せば良い。
  *
- * 名前を出すか出さないかは本人が決める（`docs/island-concept.md`）。
- * `/island-api/state` の residents に載っている人だけ名札を付け、
- * そのほかは通し番号だけ。誰が誰かは、絵だけが示す。
+ * 前はここが**島に立つ22人だけ**だった。焼き込み（`content/residents.ts`）に
+ * 載っているのがその22人しかいないため。絵のある人は95人いる。
+ * 図鑑を口（`GET /characters`）から引くようにして、全員を作った順に並べる。
  *
- * ここは紙の型。押すのはマスと送りだけなので、そこにしか厚みを付けない。
+ * **絵はもうドライブから取らない。** Firebase Storage に移してあるので
+ * （#284）、そちらの 128 / 640 を使う。ドライブのフォルダを畳んでも
+ * 図鑑は欠けない。
+ *
+ * ## 島の中身は、22人ぶんしか無い
+ *
+ * 日数・セリフ・今日いるところは、島に立つ人だけが持っている。
+ * **持っていない人の欄を、それらしい言葉で埋めない。** 欄ごと出さない。
+ * 誰にでも出せるのは、絵と、絵を持ち帰る道と、もらったカード。
  */
+/** 絵の役どころと、画面に出す名前。**落とすファイル名にも使う。** */
+const ROLES = [
+  ["plain", "背景なし"],
+  ["scene", "背景あり"],
+] as const;
+
 export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const show = useResidentShow();
   /* あやと島カード（#173）。あやとの言葉:「/friends で、持ってるカード
@@ -85,10 +95,13 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
      まだもらっていない」と同じ絵になる。読めていないことを欄の中で言って、
      読み直す道を置く。 */
   const { cards, read: cardsRead, reload: reloadCards } = useCards();
+  /* 図鑑に並ぶ人。**焼き込みではなく口から。** 旅のあいだにあやとが
+     スマホから足した人も、焼き直しを待たずに出る（`lib/characters.ts`）。 */
+  const { chars, read: charsRead, reload: reloadChars } = useCharacters();
   const here = useOnIslandToday();
   /* 一緒にいた日数（#91）。読めるまでは焼き込みの値を出す */
   const liveDays = useResidentDays();
-  const list = useMemo(() => RESIDENTS.filter((r) => r.icon), []);
+  const list = chars ?? [];
   const [at, setAt] = useState(0);
   // 送りで見開きが差し替わったとき、目が迷子にならないよう見出しへ焦点を戻す。
   // ただし最初に開いたときは動かさない（勝手にスクロールしない）。
@@ -96,12 +109,26 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const head = useRef<HTMLParagraphElement>(null);
 
   const say = useMemo(() => Object.fromEntries(VOICES.map((v) => [v.icon, v])), []);
+  /* 島に立つ人だけが持っている中身（日数を引くチャンネル）。
+     `residents.ts` の並びには依らない。**絵の id で引く。** */
+  const onIsland = useMemo(
+    () => new Map(RESIDENTS.filter((r) => r.icon).map((r) => [r.icon!, r])),
+    [],
+  );
+
   const r = list[at];
-  const v = r?.icon ? say[r.icon] : undefined;
-  const name = r?.icon ? show.get(r.icon)?.name : undefined;
-  const spot = r?.icon ? here.get(r.icon) : undefined;
+  const res = r ? onIsland.get(r.id) : undefined;
+  const v = r ? say[r.id] : undefined;
+  const name = r ? show.get(r.id)?.name : undefined;
+  const spot = r ? here.get(r.id) : undefined;
   /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
-  const mine = (cards ?? []).filter((c) => c.icon === r?.icon);
+  const mine = (cards ?? []).filter((c) => c.icon === r?.id);
+  /* 持ち帰るのは**縮める前のもの**。無ければいちばん大きい焼き上がり */
+  const take = (role: "plain" | "scene") => {
+    const p = r?.[role];
+    if (!p) return null;
+    return p.full ?? p.sizes?.["640"] ?? p.sizes?.["256"] ?? null;
+  };
 
   const go = (n: number) => {
     setAt((n + list.length) % list.length);
@@ -109,7 +136,19 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
     first.current = false;
   };
 
-  if (!r) return null;
+  /* 取りに行っている最中。**空の図鑑を出さない。** マスの形だけ置いて、
+     何が来るのかは分かるようにする（`docs/island-standards.md` 10）。 */
+  if (charsRead === "wait" && !r)
+    return (
+      <div className="rzk-grid is-wait" aria-hidden>
+        {Array.from({ length: 24 }, (_, i) => (
+          <span className="rzk-cell is-wait" key={i} />
+        ))}
+      </div>
+    );
+
+  /* 読めなかった。**「まだ誰もいません」とは言わない。** */
+  if (!r) return <ReadAgain what="図鑑" onRetry={reloadChars} />;
 
   return (
     <>
@@ -117,64 +156,106 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
       <div className="rzk">
         <div className="rzk-page">
           {/* 題名の札は絵の上。テープで貼ったように少し傾ける。
-              名前を出していない人は通し番号が題名になる。 */}
+              名前を出していない人は通し番号が題名になる。
+              絵文字はその人の印（投げ銭の演出でも同じものが出る）なので、
+              番号だけの人でも、札に顔の代わりが1つ乗る。 */}
           <p className="rzk-tag" ref={head}>
+            {r.emoji && <span className="rzk-emoji">{r.emoji}</span>}
             {name ?? `No.${at + 1}`}
           </p>
 
           <div className="rzk-art">
             <Pedestal w={150} />
-            {/* 22人ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く。
-                `=s640` なのは、ここが図鑑の主役だから。箱は 280px（PC 330px）
-                あるのに `=s512` だと dpr2 の画面で 1.1 倍に引き伸ばしていて、
-                主役の絵だけが甘かった。元は 1024px 以上あるので、640 は
-                本物の画素が返る（上限は元の大きさで頭打ちになる）。
+            {/* 全員ぶんを先読みさせない。見開きに出ている1枚だけ取りに行く。
+                640 なのは、ここが図鑑の主役だから。箱は 280px（PC 330px）
+                あるので、dpr2 の画面でも引き伸ばさずに出せる。
                 一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
-            <img key={r.icon} src={drive(r.icon!, 640)} alt="" style={charFit(r.icon!, 0.94, true)} />
+            <img
+              key={r.id}
+              src={r.plain?.sizes?.["640"] ?? r.plain?.full ?? r.plain?.sizes?.["256"] ?? ""}
+              alt=""
+              style={charFit(r.id, 0.94, true)}
+            />
           </div>
 
           <dl className="rzk-fields">
-            {/* いっしょにいた日数（#91）。
+            {/* 絵を持ち帰る。**誰の1枚でも落とせる。**
 
-                **前は出していなかった。** 「絵と YouTube のチャンネルを結ぶ表が
-                どこにも無い」（issue #113）というのが理由だったが、いまは
-                `content/residents.ts` の各行が `channel` を持っている。
-                前提のほうが古くなっていた。
+                あやとの言葉（2026-09-11）:「/friends からダウンロード
+                できるようにしてもらって大丈夫」。前はドライブのフォルダへの
+                行き先が面の下にあるだけで、**自分の絵にたどり着くのに
+                97枚の中から探す**必要があった。図鑑で開いている人の絵を
+                そのまま落とせるようにする。
 
-                数は毎晩 `islandChannels` に入り直す（#91）ので、読めたら
-                そちらを出す。読めないうちは焼き込みの値。**どちらにしても
-                同じ人の数**なので、入れ替わっても「増えた」としか見えない。 */}
-            <div className="rzk-wide">
-              <dt>いっしょにいた日数</dt>
+                渡すのは**縮める前のもの**。アイコンにも印刷にも使えるように
+                （`characters_migrate.py`「大きさは、こちらで焼く」）。 */}
+            <div className="rzk-wide rzk-take">
+              <dt>絵を持ち帰る</dt>
               <dd>
-                <b className="rzk-days">
-                  {(r.channel && liveDays[r.channel]) || r.days}
-                </b>
-                日
+                <div className="rzk-gets">
+                  {ROLES.map(([role, label]) => {
+                    const url = take(role);
+                    if (!url) return null;
+                    return (
+                      <button
+                        type="button"
+                        className="rzk-get"
+                        key={role}
+                        onClick={() =>
+                          // 落ちた先で見分けが付く名前にする。役どころは
+                          // 画面と同じ日本語（`plain` では何のことか分からない）
+                          saveFile(url, saveName(`${name ?? `No.${at + 1}`}-${label}`, url))
+                        }
+                      >
+                        <Icon name="download" size={14} />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <i>アイコンに使ってもらって大丈夫。</i>
               </dd>
             </div>
-            <div className="rzk-wide">
-              <dt>今日いるところ</dt>
-              {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
-                  分からないあいだは何も言わない（island-world.md 4.3 ④）。 */}
-              <dd>
-                {here.size === 0 ? (
-                  <span className="rzk-quiet">数えています</span>
-                ) : spot ? (
-                  <span className="rzk-spot">
-                    <Icon name="pin" size={13} />
-                    {spot}のあたり
-                  </span>
-                ) : (
-                  <span className="rzk-quiet">今日は出ていません</span>
-                )}
-              </dd>
-            </div>
+
+            {/* いっしょにいた日数（#91）と、今日いるところ。
+                **島に立つ人だけが持っている。** 持っていない人には欄を出さない
+                （「0日」「今日は出ていません」と書くと、来ていないことに
+                なってしまう。実際は島に立てる22人に入っていないだけ）。 */}
+            {res && (
+              <div className="rzk-wide">
+                <dt>いっしょにいた日数</dt>
+                <dd>
+                  <b className="rzk-days">
+                    {(res.channel && liveDays[res.channel]) || res.days}
+                  </b>
+                  日
+                </dd>
+              </div>
+            )}
+            {res && (
+              <div className="rzk-wide">
+                <dt>今日いるところ</dt>
+                {/* 島の顔ぶれは日替わり。画面が出るまでは分からないので、
+                    分からないあいだは何も言わない（island-world.md 4.3 ④）。 */}
+                <dd>
+                  {here.size === 0 ? (
+                    <span className="rzk-quiet">数えています</span>
+                  ) : spot ? (
+                    <span className="rzk-spot">
+                      <Icon name="pin" size={13} />
+                      {spot}のあたり
+                    </span>
+                  ) : (
+                    <span className="rzk-quiet">今日は出ていません</span>
+                  )}
+                </dd>
+              </div>
+            )}
             {/* もらったカード。**その人のぶんだけ。**
                 絵で突き合わせる（`components/cards/cards.ts` が
                 チャンネル→絵を引いている）ので、名前を出していない人でも
                 自分の絵のカードは分かる。まだ配られていないあいだは、
-                欄ごと出さない（0枚を22人ぶん並べても何も分からない）。
+                欄ごと出さない（0枚を並べても何も分からない）。
 
                 **ただし「読めなかった」で消さない。** 配られていないのか
                 届かなかったのかが、見ている人に区別できなくなる。 */}
@@ -182,7 +263,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               <div className="rzk-wide rzk-cards">
                 <dt>もらったカード</dt>
                 <dd>
-                  <ReadAgain what="カード" onRetry={reloadCards} />
+                  <ReadAgain what="カード" onRetry={reloadCards} quiet />
                 </dd>
               </div>
             )}
@@ -254,12 +335,17 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 type="button"
                 role="tab"
                 aria-selected={on}
-                className={`rzk-cell${on ? " is-on" : ""}${here.get(x.icon!) ? " is-here" : ""}`}
-                key={x.icon}
+                className={`rzk-cell${on ? " is-on" : ""}${here.get(x.id) ? " is-here" : ""}`}
+                key={x.id}
                 onClick={() => go(i)}
               >
                 <span className="rzk-cell-no">{i + 1}</span>
-                <img src={drive(x.icon!, 128)} alt={`${i + 1}人目`} loading="lazy" style={charFit(x.icon!, 0.82)} />
+                <img
+                  src={x.plain?.sizes?.["128"] ?? x.plain?.full ?? ""}
+                  alt={`${i + 1}人目`}
+                  loading="lazy"
+                  style={charFit(x.id, 0.82)}
+                />
               </button>
             );
           })}
