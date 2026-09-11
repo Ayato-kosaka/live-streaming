@@ -15,7 +15,7 @@
  *
  * - `site/app/apple-icon.png` … あやと島（Next.js）の面がホーム画面に置かれたとき
  * - `assets/images/favicon.png` … Expo の web ビルドが `/favicon.ico` にするもの。
- *   `/alertbox` と `/credits` がこれを見ていて、**ブラウザが既定で取りにいく
+ *   `/alertbox` などの OBS の面がこれを見ていて、**ブラウザが既定で取りにいく
  *   `/favicon.ico` もこれ。** SVG のファビコンを読めないブラウザはここに落ちる
  *
  * ## ホーム画面のほうは、透けさせない
