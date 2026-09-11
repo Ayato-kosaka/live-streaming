@@ -31,6 +31,8 @@ runUrl        その実行のログ
 ```
 
 **退避が本番の Firestore に書くのは、この1書類だけ。** ほかは全部読むだけ。
+（`firestore.rules` はこの入れ物を名指ししていないが、いちばん下の
+catch-all で deny に落ちるので、ブラウザからは読めない）
 （`functions/src/chatCapture.ts` の `streamChatHealth`、
 `python/fund_daily.py` の `islandFundHealth` と同じ手）
 

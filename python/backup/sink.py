@@ -164,6 +164,21 @@ def sweep(c: bigquery.Client) -> int:
 HEALTH_COLLECTION = "islandBackupHealth"
 
 
+def run_url() -> str:
+    """この実行のログの在りか。
+
+    **`RUN_URL` に頼らない。** あれを渡しているのは backup.yml だけで、
+    `run_admin_script.yml` から手で回したときは空になる（実際に空で入った）。
+    Actions なら GITHUB_* は必ず立っているので、そちらから組み立てる。
+    """
+    if os.getenv("RUN_URL"):
+        return os.environ["RUN_URL"]
+    server = os.getenv("GITHUB_SERVER_URL")
+    repo = os.getenv("GITHUB_REPOSITORY")
+    rid = os.getenv("GITHUB_RUN_ID")
+    return f"{server}/{repo}/actions/runs/{rid}" if server and repo and rid else ""
+
+
 def record_health(ok: bool, took: float, err: str, detail: dict) -> None:
     """札を1枚置く。**置けなくても退避そのものは止めない。**"""
     from google.cloud import firestore
@@ -183,7 +198,7 @@ def record_health(ok: bool, took: float, err: str, detail: dict) -> None:
             "bqRows": sum((v or {}).get("rows") or 0 for v in bq.values()),
             "photosOk": bool(ph.get("ok")),
             "photosAdded": ph.get("n", 0),
-            "runUrl": os.getenv("RUN_URL") or "",
+            "runUrl": run_url(),
         }
     )
 
@@ -197,7 +212,7 @@ def record_run(c: bigquery.Client, ok: bool, took: float, err: str, detail: dict
         "took_sec": round(took, 1),
         "error": (err or "")[:2000] or None,
         "detail_json": json.dumps(detail, ensure_ascii=False, sort_keys=True),
-        "run_url": os.getenv("RUN_URL") or None,
+        "run_url": run_url() or None,
     }
     errs = c.insert_rows_json(RUNS_TABLE, [row])
     if errs:
