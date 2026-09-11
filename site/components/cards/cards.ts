@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
+import { charImg } from "@/lib/charImg";
 
 /**
  * あやと島カード（#173）の、画面まわりの共通のところ。
@@ -23,9 +24,8 @@ import { RESIDENTS } from "@/content/residents";
  *   4. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
  */
 
-/** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
-export const cardIcon = (id: string, size: number) =>
-  `https://lh3.googleusercontent.com/d/${id}=s${size}`;
+/** カードに乗せるキャラクターの絵。焼いてある幅は 128 / 256 / 640 の3つ。 */
+export const cardIcon = (id: string, size: 128 | 256 | 640) => charImg(id, size);
 
 /** 面（server）から渡ってくる、その日の企画。`content/plans.ts` の表。 */
 export type PlanBrief = { title: string; href: string };

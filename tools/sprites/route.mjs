@@ -59,7 +59,16 @@ export async function offline(ctx, opts = {}) {
     r.fulfill({ path: local && existsSync(local) ? local : photo });
   });
 
-  // キャラクターの絵の置き場（#284 で Google ドライブから移した）。
+  // キャラクターの絵。島も図鑑もカードも、口ごしに置き場から取る（#284）。
+  // 静的に配って撮るときは口が無いので、落としてあるものを返す。
+  //   /island-api/characters/{id}/plain-128.webp
+  await ctx.route(/\/island-api\/characters\/[^/]+\/(plain|scene)-\d+\.webp/, (r) => {
+    const m = /\/characters\/([^/]+)\/((?:plain|scene)-\d+\.webp)/.exec(r.request().url());
+    const local = m && `${CHARS}/island__characters__${decodeURIComponent(m[1])}__${m[2]}`;
+    r.fulfill({ path: local && existsSync(local) ? local : fallback });
+  });
+
+  // 置き場を直に指した URL（図鑑が名簿から受け取るもの）。
   // **1枚に潰さない。** 図鑑は95人が並ぶ面なので、同じ絵で埋めると
   // 「大きさが揃っているか」すら見られなくなる（上の住人と同じ失敗）。
   // 先に落としておく: python3 tools/sprites/chars.py

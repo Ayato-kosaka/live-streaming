@@ -33,6 +33,7 @@ import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
 import { MAX_LEAD, around, hits, lead, type Box } from "./plates";
 import Say from "@/components/ui/Say";
+import { charImg } from "@/lib/charImg";
 
 /**
  * 歩ける島ひとつ。
@@ -67,7 +68,7 @@ import Say from "@/components/ui/Say";
 const AYATO_H = 60;
 /** 住人の背丈 */
 const FOLK_H = 52;
-const folkIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s128`;
+const folkIconUrl = (id: string) => charImg(id, 128);
 
 /** 画面の外に余分に焼いておく幅(px)。`--scene-pad` と必ず同じ値にする */
 const SCENE_PAD = 140;

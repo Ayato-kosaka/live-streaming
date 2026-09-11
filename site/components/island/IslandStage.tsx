@@ -38,6 +38,7 @@ import {
   type Resident,
   type Villager,
 } from "./villagers";
+import { charImg } from "@/lib/charImg";
 
 export type { Resident };
 
@@ -64,7 +65,7 @@ const RESIDENT_H = 52;
  * 実測でいちばん大きく出るのがスマホ(dpr3)の 38px で、装置の画素にすると 114。
  * s160 だと 1枚あたり約 40KB を12人ぶん取って、その4割を捨てていた。
  */
-const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s128`;
+const residentIconUrl = (id: string) => charImg(id, 128);
 
 /* ---- 建物の見せ方 --------------------------------------------------------
    **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。

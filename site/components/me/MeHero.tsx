@@ -4,10 +4,10 @@ import { firstLetter } from "@/lib/firstLetter";
 import { RESIDENTS } from "@/content/residents";
 import { charFit } from "@/content/characterBox";
 import { useResidentDays } from "@/lib/residentDays";
+import { charImg } from "@/lib/charImg";
 
-/** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
-const drive = (id: string, size: number) =>
-  `https://lh3.googleusercontent.com/d/${id}=s${size}`;
+/* キャラクターの絵は `lib/charImg.ts`（口ごしに置き場から）。
+   ドライブから移した（#284）ので、URL を組み立てるところはもう無い。 */
 
 /**
  * 開いた瞬間に、じぶんの島での立ち位置が分かる1枚。
@@ -63,7 +63,7 @@ export default function MeHero({
         {chara?.icon ? (
           <img
             className="mh-chara"
-            src={drive(chara.icon, 256)}
+            src={charImg(chara.icon, 256)}
             alt=""
             /* 0.72 は、84px の器から**誰も出ない**上限（0.73）のすぐ下。
                ここを 0.8 にすると、寝そべった絵（横に 1.37 倍広い）が
