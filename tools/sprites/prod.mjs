@@ -15,7 +15,11 @@ import { execFileSync } from "node:child_process";
 import { apply } from "./asme.mjs";
 
 export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com/;
+/* 通す先。**置き場（firebasestorage）も通す。** 図鑑の「落とす」は名簿が
+   持っている置き場の URL を直に取りに行く。ここを止めたまま撮ると
+   「絵が落ちた」と出て、直っているものを直っていないと読む
+   （2026-09-10 に1回やった。同じ轍）。 */
+const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
