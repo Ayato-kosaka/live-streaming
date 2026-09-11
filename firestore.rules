@@ -232,6 +232,16 @@ service cloud.firestore {
        Actions のログを開かなくても firestore_read で理由まで読めるようにする
        (chatCapture.ts の streamChatHealth と同じ手)。読む用事は画面には無い。 */
     match /islandFundHealth/{docId} { allow read, write: if false; }
+    /* 配信中のコメント溜めが、最後にどこまで行ったかを置く札(#153)。
+       上の islandFundHealth と同じ理由でここに1行だけ書いてある。 */
+    match /streamChatHealth/{docId} { allow read, write: if false; }
+    /* キャラクターの絵と呼び名(#284)。**名前が入っているので開けない。**
+       島は視聴者さんの名前を出さない方針で(site/content/residents.ts)、
+       だから図鑑の口(GET /characters)も絵と絵文字しか返さない。
+       ここを開けると、その決めが画面を作らなくても破れる。
+       移す前のスプレッドシートは URL を知っていれば誰でも全件読めた
+       (#284 の (i))。**そこは閉じるほうへ変える、と決めた。** */
+    match /islandCharacter/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {
