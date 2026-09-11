@@ -14,8 +14,7 @@ import {
   type Sticky,
 } from "@/lib/api";
 import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
-import { useAuth } from "@/lib/auth";
-import { useOwner } from "@/components/nordic/log";
+import { useAuth, useOwner } from "@/lib/auth";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { Pin } from "./art";

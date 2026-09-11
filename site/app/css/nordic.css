@@ -268,10 +268,6 @@
 /* 上の司令塔から `#day-…` で飛んでくる。真上に貼りつくと1行目が読めない。 */
 .nday { scroll-margin-top: 12px; }
 
-/* 「その日の話」が読めなかったときの1枚（`DayLogMarks`）。旅程表の中に
-   置くので、`.blank` の上下の余白は並びの gap に任せる。 */
-.nday-off > .blank { margin: 0; }
-
 /* 1日ぶんの行。**押すと、その日だけのページに入る。**
    押せるので板。厚みは「66px の板なら 6px」の段（island-design 3章）。
    行き先のカード（`.tile`）と同じ作りにしてある。中身が3行あるので
@@ -473,18 +469,12 @@ p.nday-log-when {
   color: var(--ink-2);
 }
 
-/* --- その日に起きたことを書くところ（あやとだけに出る） ---------------
-   写真を貼るところ（`.nph-post-*`）と同じ作りにする。旅の最中に開くのは
-   同じ人で、覚えることを2つにしない。 */
-.nlog-post { margin-top: var(--sp-4); }
-/* 書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
+/* --- あやとの欄に共通で効くもの --------------------------------------
+   書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
    `.dform` の素の欄は 45〜46px しかなく、測って落ちた
    （`tools/sprites/hitbox.mjs`。日付の欄 47px・配信の欄 45px）。
-   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる。
-   写真を貼るところも同じ人が同じ日に触るので、まとめて足す
+   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる
    （`.nph-post-file` は隠してある file の欄なので、当てない）。 */
-.nlog-post input,
-.nlog-post textarea,
 .nph-post-row input:not(.nph-post-file) { min-height: 48px; }
 .nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .nlog-seeds > span {

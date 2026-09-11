@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
-import { TripLog, TripPlace } from "./TripTools";
+import { TripPlace } from "./TripTools";
 import { PlanCare, StickyCare } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 
@@ -16,12 +16,11 @@ import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 const DonorLinks = dynamic(() => import("./DonorLinks"), { ssr: false });
 const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
 
-type Tool = "photo" | "log" | "place" | "video" | "sticky" | "plan" | "donor" | "obs";
+type Tool = "photo" | "place" | "video" | "sticky" | "plan" | "donor" | "obs";
 
 /** 机の上に出せる道具。**並び順は、旅のあいだに開く回数の多い順。** */
 const TOOLS: { id: Tool; label: string; icon: IconName }[] = [
   { id: "photo", label: "写真", icon: "photo" },
-  { id: "log", label: "その日", icon: "log" },
   { id: "place", label: "いまどこ", icon: "pin" },
   { id: "video", label: "配信", icon: "live" },
   { id: "sticky", label: "付箋", icon: "pinup" },
@@ -56,7 +55,7 @@ const LAST = "ayato-desk-tool";
  * ## 開き直したら、続きから
  *
  * ヒッチハイクの途中に開くので、**前に使っていた道具から始める。**
- * 毎晩「その日のこと」を書くなら、次に開いたときも「その日のこと」が出ている。
+ * 毎晩写真を貼るなら、次に開いたときも写真の欄が出ている。
  *
  * ## 残っている数は、道具の1行目にある
  *
@@ -129,11 +128,10 @@ export default function Desk() {
           ))}
         </div>
 
-        {/* 開いていないものは、そもそも作らない。写真の欄と日誌の欄が
-            同時に生きていると、下書きの復元が2つ同時に走る。 */}
+        {/* 開いていないものは、そもそも作らない。同時に生きていると、
+            下書きの復元が2つ同時に走る。 */}
         <div className="mp-tool-body">
           {tool === "photo" && <PhotoPost />}
-          {tool === "log" && <TripLog />}
           {tool === "place" && <TripPlace />}
           {tool === "video" && <PlanVideos />}
           {tool === "sticky" && <StickyCare />}

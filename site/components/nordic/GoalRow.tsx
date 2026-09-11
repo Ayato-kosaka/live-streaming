@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { postNordicArrived, postNordicEnded } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useOwner } from "@/lib/auth";
 import { loadState } from "@/lib/liveStats";
-import { useOwner } from "./log";
 
 /**
  * 旅程表のいちばん下の2行。**「着いた」と「旅がおわった」を分ける。**

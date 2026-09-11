@@ -1,9 +1,19 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import { Mark } from "./Marks";
-import DayLogMarks from "./DayLogMarks";
 import { ArrivedRow, EndRow } from "./GoalRow";
-import { ARRIVE, DAYS, DEPART, LEAVE, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
+import {
+  ARRIVE,
+  DAYS,
+  DEPART,
+  LEAVE,
+  NORDIC_LOG,
+  cityName,
+  dayHref,
+  dayName,
+  type Day,
+  type Leg,
+} from "@/content/nordic";
 
 /**
  * 旅のよてい。**1日1行だけ。中身は1日ぶんのページにある。**
@@ -97,9 +107,9 @@ function Row({ day }: { day: Day }) {
             <span className="ndayr-ask">答えられる{asks > 1 ? `${asks}つ` : ""}</span>
           )}
           {/* その日に起きたことが書かれた行の印。**書かれるまで出ない。**
-              出すかどうかを決めるのは `DayLogMarks`（画面が出てから読む）。
-              書いたものが旅程表から見えないと、読む人は9日ぶんの行を
-              1つずつ開いて確かめることになる。 */}
+              出すかどうかは焼いてあるもの（`NORDIC_LOG`）で決まるので、
+              画面が出てから読み直さない。書いたものが旅程表から見えないと、
+              読む人は9日ぶんの行を1つずつ開いて確かめることになる。 */}
           <span className="ndayr-log">その日の話</span>
         </span>
         <span className="ndayr-way">
@@ -125,11 +135,14 @@ function Row({ day }: { day: Day }) {
 export default function Days() {
   return (
     <ol className="ndays">
-      {/* 書かれた日の行に印を付ける。字も数字も持たない（読むだけ）ので、
-          旅程表そのものを面の JS に連れてこない。 */}
-      <DayLogMarks />
       {DAYS.map((day) => (
-        <li key={day.id} className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
+        <li
+          key={day.id}
+          className={`nday${day.bare ? " is-bare" : ""}`}
+          id={day.id}
+          /* 書かれた日の行に印を付ける。焼いてあるので、ここで決まる */
+          data-log={NORDIC_LOG[day.id] ? "" : undefined}
+        >
           {day.legs?.length || day.city ? (
             <Row day={day} />
           ) : (

@@ -8,6 +8,10 @@
  *   python3 -m http.server 4710 --directory site/.next-lie &
  *   SPORT=4710 OUT=/tmp/lie node tools/sprites/lieshot.mjs
  *
+ * **その日の話は、もう落ちない。** 日誌は Firestore をやめて焼き込みに変えた
+ * （`site/content/nordic.ts` の `NORDIC_LOG`）ので、読めなくなる口が無い。
+ * 撮るのは残してあるが、ここで嘘が出ることはもう無い。
+ *
  * 落とし方は3通り（`readbase.mjs`）。**`abort` だけで判定しない。**
  * 本命は「45秒返さない」で、`fetch` は自分では諦めないのでそこが一番出る。
  *
@@ -59,11 +63,6 @@ const MY_PLAN = {
   by: "あやと", byUid: UID, hearts: 3, status: "idea",
   createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z",
 };
-const LOG = [
-  { day: "day-1", date: "2026-09-12", body: "2台目で停まってくれた。", at: 1757000002000 },
-  { day: "day-4", date: "2026-09-15", body: "国境の手前で降ろされた。\n3時間立った。", at: 1757000003000 },
-];
-
 /**
  * `EMPTYCARDS=1` … カードの口が**読めた上で0枚**を返す（旅に出る前がこれ）。
  *
@@ -81,7 +80,6 @@ async function seed(ctx) {
       r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
     if (path === "/nordic/photos") return json({ days: PHOTO_DAYS });
     if (path === "/cards") return json({ cards: EMPTY_CARDS ? [] : CARDS });
-    if (path === "/nordic/log") return json({ log: LOG });
     if (path === "/nextplans") return json({ plans: [MY_PLAN], more: false, next: null });
     if (path.startsWith("/nextplans/")) return json({ plan: MY_PLAN });
     return r.fallback();
