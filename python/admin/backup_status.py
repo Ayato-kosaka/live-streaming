@@ -8,6 +8,7 @@ ARGS 例:
   {"limit": 30}
 """
 
+import datetime as dt
 import json
 import os
 import sys
@@ -69,12 +70,36 @@ def main() -> None:
         except Exception:  # noqa: BLE001
             log.info("  %-18s まだ無い", t)
 
+    # ---- 合否。**「直近10回に1回でも赤があれば赤」にしない。**
+    # 旅の17日でひと晩こければ、そのあと何日通っても赤のままになる。
+    # **赤が出っぱなしになると、赤が意味を失う**（島の決めごと）。
+    # 見るのは2つだけ。**いちばん新しい回が通ったか**と、**古びていないか。**
     if not rows:
         log.error("**1回も取れていません。**")
         raise SystemExit(1)
+
+    latest = rows[0]
+    age_h = (
+        dt.datetime.now(dt.timezone.utc) - latest["at"]
+    ).total_seconds() / 3600
+    log.info("--- 合否 ---")
     if bad:
-        log.error("**直近 %d 回のうち %d 回落ちています。**", len(rows), bad)
+        # 落ちた回があること自体は出す。**ただしそれでは赤くしない**
+        log.info("  直近 %d 回のうち %d 回は落ちている（過去のぶん）", len(rows), bad)
+
+    ng = False
+    if not latest["ok"]:
+        log.error("**いちばん新しい退避が落ちています**（%s）", latest["at"].isoformat())
+        ng = True
+    # 毎晩 02:00 UTC なので、36時間あいたら「走っていない」。
+    # **ワークフローが赤くなる形では捕まえられない唯一の壊れ方**
+    # （cron そのものが動いていないときは、赤い実行すら残らない）
+    if age_h > 36:
+        log.error("**%.0f 時間、退避が走っていません**（毎晩のはず）", age_h)
+        ng = True
+    if ng:
         raise SystemExit(1)
+    log.info("  ○ いちばん新しい退避は %.1f 時間前に通っています", age_h)
 
 
 main()
