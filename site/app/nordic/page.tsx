@@ -24,11 +24,16 @@ import {
   NORDIC_COUNTRIES,
   NORDIC_GUIDE,
   ROUTE,
+  THANKS,
+  THEMES,
+  THEME_WORD,
+  UNPLANNED,
   WHY,
   nordicCountry,
 } from "@/content/nordic";
 import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
+import "./themes.css";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
@@ -151,6 +156,33 @@ export default async function NordicPage() {
         until={LEAVE.date}
       />
 
+      {/* 何をしに行く旅なのか。**「なぜ行くのか」より先。**
+
+          この面は長いあいだ、いちばん上が「あと何日・いまどこ」で、その次が
+          「会いに行く理由」だった。**行き先と理由はあるのに、道中に何をするのかが
+          どこにも無かった。** 本人は投稿で3語に決めている（人との交流・綺麗な景色・
+          ご当地グルメ）ので、そのまま、いちばん上に置く。
+
+          押せない。3つとも行き先ではなく、この旅がどんな旅かを言っているだけなので、
+          厚みは付けない（`docs/island-design.md` 3-3）。
+          下の1段は本人の言葉そのまま（`content/nordic.ts` の `THEME_WORD`）。
+          **ここに2段目を置かない。** 地図はこの面の主役で、テーマの節ぶんだけ下がる。
+          ヒッチハイクで予定が崩れる話（`UNPLANNED`）は、それが要る旅程表の頭へ置いた。 */}
+      <section className="panel paper" id="themes">
+        <h2>旅のテーマは、3つ</h2>
+        <ul className="nthemes">
+          {THEMES.map((t) => (
+            <li key={t.name}>
+              <Icon name={t.icon} size={26} />
+              <b>{t.name}</b>
+            </li>
+          ))}
+        </ul>
+        <div className="nwords">
+          <p>{THEME_WORD}</p>
+        </div>
+      </section>
+
       {/* なぜこの旅が起きるのか。**地図より先。**
           ここが無いあいだ、面には「ヒッチハイクで行く」としか書いていなかった。
           会いたい人がいることも、スウェーデン行きの飛行機が高いから
@@ -234,6 +266,12 @@ export default async function NordicPage() {
           というオーナーの言い方に合わせて、行は押す前に知りたいことで止める。 */}
       <section className="panel paper" id="plan">
         <h2>旅のよてい</h2>
+        {/* 9日ぶんの時刻と距離で組んであるが、ヒッチハイクなので**その通りには進まない。**
+            ずれることをどう思っているかを、本人の言葉で先に置く。
+            ここが無いと、旅程表が「守れなかった約束の表」に見える。 */}
+        <div className="nwords">
+          <p>{UNPLANNED}</p>
+        </div>
         {/* 「1日押すと、その日だけのページに入れます」を置いていた。
             行はぜんぶ板で、右に矢印まで付いている。押せることを字で言い足しても、
             分かることが増えない（`docs/island-design.md` 3章）。 */}
@@ -305,6 +343,14 @@ export default async function NordicPage() {
               ))}
             </ul>
           </Fold>
+        </div>
+        {/* 出す人がいちばん最後に読むところ。**本人の言葉で終える。**
+            すぐ上の「何に、お金が要るのか」は要るものの話で、ここは
+            この2年ぶんの礼。`content/nordic.ts` の `THANKS`。1字も直さない。 */}
+        <div className="nwords is-thanks">
+          {THANKS.map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
         </div>
         <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
           投げ銭で応援する（Doneru）

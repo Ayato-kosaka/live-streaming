@@ -1,0 +1,81 @@
+/*
+ * 北欧旅（/nordic）の、いちばん上の「旅のテーマは、3つ」と、
+ * 面の中に置く本人の言葉だけの見た目。
+ *
+ * `app/css/nordic.css` に入れなかったのは、あの1枚を旅の全面で分け合っていて、
+ * いま何人かで並行して直しているから。この面だけのものは、この面の隣に置く
+ * （`app/about/about.css` と同じ置きかた）。
+ */
+
+/* ───────── 旅のテーマ3つ ───────── */
+
+/*
+ * 押せない。行き先ではなく「どんな旅か」を言っているだけなので、厚みを付けない
+ * （`docs/island-design.md` 3-3）。枠は琥珀ではなく罫、角も紙の角にする
+ * （地図の「線の読み方」の `.nmkeys` と同じ扱い）。
+ *
+ * 390px で3列にすると1枡 106px。「ご当地グルメ」が 6字あるので、
+ * 字は 12.5px に落として、折り返さないところで止める。
+ */
+.nthemes {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+}
+.nthemes li {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 5px;
+  padding: var(--sp-3) 4px;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: var(--paper);
+  color: var(--ink-2);
+}
+.nthemes b {
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ───────── 本人の言葉 ───────── */
+
+/*
+ * 読み物。`.muted` にしない——ここは前置きではなく本文で、いちばん読んでほしい字。
+ * 左に罫を1本引いて、こちらが書いた文と見分けがつくようにする
+ * （`/about` の `.awords` と同じ引きかた）。
+ */
+.nwords {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: var(--bw-2) solid var(--rule);
+}
+.nwords p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.95;
+  font-weight: 700;
+  color: var(--ink);
+}
+/* 投げ銭の口のすぐ上に置くほう。ボタンと近すぎると礼が押しつけに見えるので空ける */
+.nwords.is-thanks {
+  margin-top: var(--sp-4);
+}
+
+/* 広い画面では1枡が 500px 近くになる。12.5px の字と 26px の絵のままだと、
+   大きな空箱が3つ並んでいるように見えるので、中身のほうを大きくする。 */
+@media (min-width: 640px) {
+  .nthemes { gap: var(--sp-3); }
+  .nthemes li { padding: var(--sp-4) var(--sp-3); gap: var(--sp-2); }
+  .nthemes li .ic { width: 40px; height: 40px; }
+  .nthemes b { font-size: var(--fs-h3); }
+}
