@@ -442,11 +442,18 @@ def _other_statuses(at: str) -> None:
             )
 
 
-def step4_chat(at: str, live: dict) -> None:
-    """4. `liveChatMessages.list` を**1ページだけ**叩く。"""
+def step4_chat(at: str, live: dict) -> bool:
+    """4. コメントを**1ページだけ**叩く。
+
+    **道は `liveChat/messages`。`liveChatMessages` ではない。**
+    SDK（`googleapis`）では `youtube.liveChatMessages.list(…)` と書くので、
+    その名前をそのまま URL に置いていた。REST にそんな道は無いので 404。
+    **この道具も同じ間違いを持っていたので、Functions の 404 を
+    「YouTube 側の問題」に見せていた**（2026-09-11 に両方直した）。
+    """
     log.info("── 4. コメントを1ページだけ読む")
     code, j, body = yt(
-        "liveChatMessages",
+        "liveChat/messages",
         {"liveChatId": live["liveChatId"], "part": "snippet,authorDetails",
          "maxResults": "200"},
         at,
@@ -454,7 +461,7 @@ def step4_chat(at: str, live: dict) -> None:
     log.info("  HTTP %s", code)
     if code != 200:
         log.error("  → 読めない（#5 の手前）: %s", head(body))
-        return
+        return False
     items = j.get("items") or []
     log.info(
         "  %d件 / nextPageToken=%s / pollingIntervalMillis=%s",
@@ -463,6 +470,7 @@ def step4_chat(at: str, live: dict) -> None:
         j.get("pollingIntervalMillis"),
     )
     log.info("  → ここまで通るなら、Functions は streamChatRuns に書ける（#5）")
+    return True
 
 
 def counts() -> None:
@@ -507,8 +515,14 @@ def main() -> None:
         log.error("結論: #3 か #4 で止まっている（上の HTTP を見る）")
         return
 
-    step4_chat(live.get("at") or at, live)
-    log.info("結論: #5 まで通る（配信中なら溜まるはず）")
+    # ここは #4 の HTTP を見て結論を出す。**見ずに「通る」と言っていた**
+    # （2026-09-11。404 が出ているのに「#5 まで通る」と書いていた）。
+    # island-standards 13「当座の判定は、まずその判定を疑う」。
+    # 判定が嘘をつくと、直す先を探しに行けない。
+    if step4_chat(live.get("at") or at, live):
+        log.info("結論: #5 まで通る（配信中なら溜まるはず）")
+    else:
+        log.error("結論: #4 で止まっている（コメントが読めない。上の HTTP を見る）")
 
 
 if __name__ == "__main__":

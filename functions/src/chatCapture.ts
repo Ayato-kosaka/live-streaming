@@ -261,7 +261,14 @@ async function drain(
       maxResults: "200",
     };
     if (token) qs.pageToken = token;
-    const r = await tok.call((at) => yt("liveChatMessages", qs, at));
+    /* **口の名前は `liveChat/messages`。`liveChatMessages` ではない。**
+       `googleapis` の SDK では `youtube.liveChatMessages.list(…)` と書くので
+       （`functions/src/liveChat.ts` がそれ）、その名前をそのまま URL に
+       置いてしまっていた。REST の道は `/youtube/v3/liveChat/messages` で、
+       `liveChatMessages` は**そんな道が無いので 404**。
+       アラートボックス（`app/alertbox/connectors/YouTubeConnector.ts`）は
+       最初から `liveChat/messages` を叩いていて、あちらは動いている。 */
+    const r = await tok.call((at) => yt("liveChat/messages", qs, at));
 
     const items = (r.items as Array<Record<string, never>> | undefined) ?? [];
     const rows: Msg[] = [];
