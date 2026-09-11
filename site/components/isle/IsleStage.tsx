@@ -1183,12 +1183,43 @@ function placePlates(
   const padBottom = 52;
   const taken = o.taken.slice();
   /* 「はみ出しているか」を見るときの相手。
-     **建物の当たりは入れない。** 当たりは指で押せる最小(48px)まで広げてあるので、
-     小さい建物では札の下辺と当たりの上辺が必ず重なる。入れると、小さい建物の札が
-     いつも「はみ出し」になって下へ落ちていく。
-     入れるのは島の隅の道具と、**先に置いた札**。引きでは札が全部出るので、
-     ここを見ないと2枚が同じところに重なって、どちらも読めない。 */
+     **自分の建物の当たりは入れない。** 当たりは指で押せる最小(48px)まで
+     広げてあるので、小さい建物では札の下辺と自分の当たりの上辺が必ず重なる。
+     入れると、小さい建物の札がいつも「はみ出し」になって下へ落ちていく。
+     入れるのは島の隅の道具と、**先に置いた札**と、**ほかの建物の当たり**
+     （`hitBoxes`。下の `other()`）。 */
   const placed = o.taken.slice();
+  /* 建物の当たり（指で押せる最小 48px まで広げたもの）を、**先に全部そろえる。**
+     ---------------------------------------------------------------------
+     前は札を1枚置くたびに `taken` へ足していたので、**自分より後ろに並んで
+     いる建物の当たりは、まだ `taken` に無かった。** 既定の置き場所（建物の
+     真上）はそもそも当たりを見ていなかったので、**開いた札が隣の建物を
+     丸ごと覆っても、誰も気づかなかった。**
+
+     実測（390px・寄り・`tools/sprites/islehit.mjs`）:
+
+         /island/nordic   これから歩く国  見た目 49x69  当たり 0x0
+         /island/europe   はじめての配信  見た目 48x48  当たり 0x0
+         /island/caucasus この島の代表的な企画 見た目 102x85 当たり 0x0
+
+     開いた札は最大 340px あるので、隣の建物1軒はすっぽり入る。
+     `docs/island-design.md` 3-1「押す場所は物そのもの」が、そこだけ嘘になる。
+     北欧固有ではなく島の共通の穴なので、**順番に依らない形**にする。 */
+  const hitBoxes: Box[] = [];
+  /** 自分の建物だけ外した、ほかの建物の当たり */
+  const other = (i: number) => hitBoxes.filter((_, j) => j !== i);
+  /**
+   * その札が**いま画面に出ているか**。`chain.css` の `.isle-mark` の
+   * opacity と同じ条件（寄りは近づいた1軒だけ、引きは看板の6つだけ）。
+   *
+   * **出ていない札を避ける相手に入れない。** 入れていたので、寄りの島では
+   * 出ていない札5枚が場所を押さえてしまい、**たった1枚の開いた札**が
+   * 上にも下にも逃げられなくなっていた（実測: 390px の `/island/europe` で
+   * 上 -2px・下 655px、どちらも板の外。逃げ場が無いので元の位置に残り、
+   * そこが隣の建物の上だった）。出ていない札は見えないし押せないので、
+   * 場所を取る理由が無い。
+   */
+  const shown = (sp: Placed) => (o.wide ? !!sp.sign : sp.id === o.open);
   const plates: {
     i: number;
     el: HTMLDivElement;
@@ -1199,8 +1230,14 @@ function placePlates(
     /** 建物の絵の幅と高さ。まわりへ回すときに要る */
     artW: number;
     mh: number;
+    /** いま画面に出ている札か。出ていない札は場所を押さえない */
+    shown: boolean;
   }[] = [];
 
+  /* --- 1巡目。建物を置いて、当たりを**全部そろえる** ---
+     札の置き場所を決めるのは2巡目。分けないと、順番の後ろにいる建物の
+     当たりを見ないまま札を置くことになる（上の `hitBoxes`）。 */
+  const art: { px: number; py: number; artW: number; mh: number }[] = [];
   for (let i = 0; i < places.length; i++) {
     const el = o.marks[i];
     if (!el) continue;
@@ -1221,8 +1258,24 @@ function placePlates(
        入れないと、縁へ寄せた札が別の建物の上に乗って、
        **建物が押せなくなる**（実測で 48px の当たりが 46px まで削られていた）。
        絵の上に札が乗って、どちらが何なのかも分からなくなる。 */
-    taken.push({ x: px - artW / 2, y: py - Math.max(TAP_MIN, artH), w: Math.max(TAP_MIN, artW), h: Math.max(TAP_MIN, artH) });
+    /* **絵の幅ではなく、当たりの幅で中心をとる。**
+       当たりは CSS で `left: calc(var(--hw) / -2)`（`--hw` は 48px まで
+       広げたほう）に置いてある。`artW / 2` で寄せると、絵が 48px より
+       小さい建物で当たりの箱が (48 - artW) / 2 だけ右へずれる。
+       引きでは絵が 20px ほどまで縮むので、14px ずれた場所を避けていた。 */
+    const hw = Math.max(TAP_MIN, artW);
+    const hh = Math.max(TAP_MIN, artH);
+    hitBoxes[i] = { x: px - hw / 2, y: py - hh, w: hw, h: hh };
+    art[i] = { px, py, artW, mh };
+  }
 
+  /* --- 2巡目。札を置く --- */
+  for (let i = 0; i < places.length; i++) {
+    const el = o.marks[i];
+    const a = art[i];
+    if (!el || !a) continue;
+    const sp = places[i];
+    const { px, py, artW, mh } = a;
     const sz = o.sizes[i];
     if (sz && sz.w) {
       const gy = sp.countdown ? 26 : 6;
@@ -1231,9 +1284,16 @@ function placePlates(
          見た目で詰めると、隣の札の見えない当たりが食い込んで両方 48px を割る。 */
       const hw = Math.max(sz.w, 48);
       const hh = Math.max(sz.h, 48);
+      /* 札が実際に立っている高さ。**CSS と同じ式で出す。**
+         `chain.css` の `.isle-mark` は `bottom: calc(max(var(--mh), 46px) + 12px)`
+         で、絵の低い建物では 46px のほうが効く。ここが `mh` のままだったので、
+         **引きのように絵が 20px まで縮む場面で、札の実物が計算より最大 34px
+         上にいた。** 重なりを見る箱がそこだけ実物とずれるので、
+         「避けたはずの建物」が札の下に入っていた。 */
+      const stand = Math.max(mh, 46);
       const rect = {
         x: px - hw / 2 - 6,
-        y: py - mh - 12 - sz.h - (hh - sz.h) / 2 - gy,
+        y: py - stand - 12 - sz.h - (hh - sz.h) / 2 - gy,
         w: hw + 12,
         h: hh + gy + 6,
       };
@@ -1246,18 +1306,28 @@ function placePlates(
         placed.some(
           (q) =>
             rect.x < q.x + q.w && rect.x + rect.w > q.x && rect.y < q.y + q.h && rect.y + rect.h > q.y,
-        );
-      if (!out) {
+        ) ||
+        /* **ほかの建物の当たりの上にも置かない。**
+           ここを見ていなかったので、開いた札が隣の建物を丸ごと覆って、
+           その建物が押せなくなっていた（上の `hitBoxes` に実測）。
+           自分の建物は外す。48px まで広げた自分の当たりは、札の下辺と
+           必ず重なるので、入れると札がいつも下へ落ちていく。 */
+        other(i).some((q) => hits(rect, q));
+      if (!out && shown(sp)) {
         taken.push(rect);
         placed.push(rect);
       }
-      plates.push({ i, el, fx: px, fy: py, rect, out, artW, mh });
+      plates.push({ i, el, fx: px, fy: py, rect, out, artW, mh, shown: shown(sp) });
     }
   }
 
   for (const pl of plates) {
     const pin = o.pins[pl.i];
     if (!pin) continue;
+    /* この札が避ける相手。島の隅の道具＋先に置いた札（`taken`）に、
+       **自分以外の建物の当たり**を足したもの。自分の当たりは外す
+       （48px まで広げてあるので、自分の札の下辺と必ず重なる）。 */
+    const tkn = taken.concat(other(pl.i));
     const { rect } = pl;
     let dx = 0;
     let dy = 0;
@@ -1273,16 +1343,18 @@ function placePlates(
           c.x + c.w <= o.b.w - pad &&
           c.y >= padTop &&
           c.y + c.h <= o.b.h - padBottom &&
-          /* **`taken` で見る（`placed` ではない）。** `taken` には建物の当たり
+          /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
              （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
              見えない当たりの下になって、札の押しどころが削られる */
-          !taken.some((q) => hits(c, q)),
+          !tkn.some((q) => hits(c, q)),
       );
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
-        taken.push({ ...spot });
-        placed.push({ ...spot });
+        if (pl.shown) {
+          taken.push({ ...spot });
+          placed.push({ ...spot });
+        }
         const ax = pl.fx - (spot.x + spot.w / 2);
         const ay = pl.fy - (spot.y + spot.h / 2);
         dir = spot === rect ? "" : Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? "l" : "r") : ay < 0 ? "u" : "d";
@@ -1316,7 +1388,7 @@ function placePlates(
         let t = top;
         for (let pass = 0; pass < 3; pass++) {
           let moved = false;
-          for (const q of taken) {
+          for (const q of tkn) {
             if (left < q.x + q.w && left + rect.w > q.x && t < q.y + q.h && t + rect.h > q.y) {
               const push = up ? q.y - 8 - (t + rect.h) : q.y + q.h + 8 - t;
               if (up ? push < 0 : push > 0) {
@@ -1344,7 +1416,20 @@ function placePlates(
       if (okUp && okDown) t0 = Math.abs(up - top) <= Math.abs(down - top) ? up : down;
       else if (okUp) t0 = up;
       else if (okDown) t0 = down;
-      else t0 = Math.min(Math.max(top, padTop), o.b.h - padBottom - rect.h);
+      else {
+        /* 上にも下にも逃げ場が無いとき、**元の位置に残さない。**
+           元の位置が隣の建物の上だったから `out` になっている。残すと、
+           その建物の当たりが札に丸ごと食われる（実測 0x0）。
+           板の中へ収めた3つ（上・下・元）から、**建物に乗る数がいちばん
+           少ないもの**を取る。同じなら動きの小さいほうを取る。 */
+        const fit = (t: number) => Math.min(Math.max(t, padTop), Math.max(padTop, o.b.h - padBottom - rect.h));
+        const onArt = (t: number) =>
+          other(pl.i).reduce((n, q) => n + (hits({ x: left, y: t, w: rect.w, h: rect.h }, q) ? 1 : 0), 0);
+        t0 = [fit(up), fit(down), fit(top)].reduce((best, c) => {
+          const d = onArt(c) - onArt(best);
+          return d < 0 || (d === 0 && Math.abs(c - top) < Math.abs(best - top)) ? c : best;
+        });
+      }
       dy += t0 - top;
       top = t0;
       const box = { x: left, y: top, w: rect.w, h: rect.h };
@@ -1356,8 +1441,18 @@ function placePlates(
          名前1枚で、画面の外の建物でも名前は読めていなければならない
          （縁へ寄せて矢で指す、というのがこの関数の元の仕事）。
          落とすと、近づいた建物の名前が出ない画面ができる。 */
-      far = o.wide && lead(box, pl.fx, pl.fy) > MAX_LEAD;
-      if (!far) {
+      /* **ほかの建物の当たりに乗ったままなら、その札は出さない。**
+         逃げ場が無くて元の場所に残った札は、隣の建物を覆っている。
+         覆われた建物は、引きでは押しどころが札1枚に寄せてあるぶん
+         （`chain.css` の `.is-sign .isle-hit`）、札を落とされた建物にとって
+         **唯一の押しどころ**になる。そこが札の下だと、触りようが無くなる。
+         名前は1つ減るが、建物は押せる。寄れば名前も出る。
+         **落とすのは引きだけ**（寄りの札は「近づいた1軒」の名前1枚なので、
+         落とすと名前の出ない画面ができる）。 */
+      far =
+        o.wide &&
+        (lead(box, pl.fx, pl.fy) > MAX_LEAD || other(pl.i).some((q) => hits(box, q)));
+      if (!far && pl.shown) {
         taken.push(box);
         placed.push(box);
       }
