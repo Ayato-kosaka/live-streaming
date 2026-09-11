@@ -47,7 +47,11 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 - `public/2026MM_monthly_review.html` **単一ファイル・実行時の外部依存なし**(オフラインでも開ける。例外はFirestore同期時のgstatic SDKのみ)。
 - シーン/ステップ進行機構: `SCENES`配列+`[data-step]`表示制御+進行ドット+紙吹雪+`?auto=秒`の自動進行。クリック/Enterで進む、←で戻る。1920×1080前提、横スクロール禁止。
 - **アバター**: YouTubeチャンネルページの og:image をビルド時に取得し `=s176-c-rj`(JPEG)でdata URI埋め込み。取れない人はイニシャルの丸にフォールバック。投げ銭アバターはユーザー提供URLから取得。巨大なdata URIはEditツールでなくnodeスクリプトのプレースホルダ置換で注入する。
-- **Firestore同期**: `?role=ctrl`(スマホコントローラ) / `?role=view`(OBS側)。firebaseConfig は焼き込み済みの参考実装からコピー。ドキュメントは `monthlyReview/2026MM-<ランダム>` を月ごとに新規発行。
+- **Firestore同期**: `?role=ctrl`(スマホコントローラ) / `?role=view`(OBS側)。**同期まわりは `public/202608_monthly_review.html` からまるごとコピーする**(firebaseConfig・SDKの版・ログイン・札の出しかたが1式で噛み合っている)。ドキュメントは `monthlyReview/2026MM-<ランダム>` を月ごとに新規発行。
+- **書けるのはあやとだけ**(2026-09-11〜)。`firestore.rules` の monthlyReview は「読むのは誰でも1件ずつ／書くのは `islandUsers/{uid}.admin` が立っている人だけ」。前は誰でも書けて、**外から進行を飛ばせた**。
+  - **ctrl はログインしていないと進行を送れない。** 同じ端末で島(`/`)にログイン済みなら押さずに繋がる(SDKの版と apiKey を島に合わせてあるのがその仕掛け)。繋がらないときだけ「Google でログイン」が出る。
+  - **SDKの版を勝手に下げない。** 島(`site/package.json` の firebase ^12)と大版がずれると、ログインの引き継ぎが効かなくなって、配信の当日に押させることになる。
+  - **OBS(view)は今までどおりログイン不要。** 読みは開けてある。
 - **ctrlの教訓(重要)**: ①グローバルの pointerdown/contextmenu ハンドラは ctrl では登録しない(ボタンclickと二重発火し1タップで複数進むバグになる) ②自分の書き込みエコー(`snap.metadata.hasPendingWrites`)と手元より古い `ts` のスナップショットは無視 ③ボタンに `touch-action: manipulation`。
 - コンテンツポリシー: 引用はほぼ原文(絵文字コードは実絵文字に)、名前は「〜さん」付け、`escapeHtml` を必ず通す。
 
@@ -55,7 +59,9 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 
 - Playwright(`playwright-core` + `executablePath: '/opt/pw-browsers/chromium-*/chrome-linux/chrome'`, `args: ['--no-sandbox']`)+ `python3 -m http.server`。
 - 確認項目: 全シーンのスクリーンショット / Enter連打で最後まで→Backspaceで先頭まで戻る / 横スクロールなし / **ctrlで5タップ=ちょうど5進む** / 個人コメント数が出ていないことをgrep。
-- Firestoreはこの環境のブラウザから外部接続できないため、**RESTで書込/読出スモーク**(`https://firestore.googleapis.com/v1/projects/live-streaming-d3cac/databases/(default)/documents/monthlyReview/<docId>?key=<apiKey>`)。最後に scene:0/step:0 に初期化しておく。
+- Firestore の読みは REST で確かめられる(`GET https://firestore.googleapis.com/v1/projects/live-streaming-d3cac/databases/(default)/documents/monthlyReview/<docId>?key=<apiKey>` が 200)。**書きは apiKey では通らない**(403。2026-09-11 に閉じた)。
+  - **書類の作成と初期化(scene:0/step:0)は `.github/workflows/run_admin_script.yml` から。** `python/admin/firestore_write.py` に `{"collection":"monthlyReview","doc":"<docId>","data":{"scene":0,"step":0,"ts":1,"confetti":0}}`。サービスアカウントはルールを迂回する。
+  - **同期そのものを確かめるなら、Firestore と Auth のエミュレータにブラウザ2枚を繋ぐ。** この箱のブラウザは gstatic に届かないので、SDK を curl で落として Playwright の `route` で差し替える。見るのは「ログイン前は送れない／あやと以外も送れない／あやとは送れて OBS が追う／古い `ts` では巻き戻らない」。
 
 ## 8. デプロイ・運用
 
