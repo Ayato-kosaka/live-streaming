@@ -173,6 +173,15 @@ service cloud.firestore {
        あやとかどうかを見るところを2つに増やさない。 */
     match /nordicLog/{docId} { allow read, write: if false; }
 
+    /* 豚の貯金箱(docs/nordic-fund.md 9章)。**1件ずつは絶対に開けない。**
+       スパチャの控えは他人の名前と額が1行ずつ並んでいるもので、開けると
+       「誰がいくら出したかを出さない」という決め(4章)が、画面を作らなくても
+       破れる。支出も、あやとが何に使ったかの並び。
+       画面が要るのは合計だけなので、islandApi 経由に絞る。 */
+    match /islandFundSuperChats/{docId} { allow read, write: if false; }
+    match /islandFundSpends/{docId} { allow read, write: if false; }
+    match /islandFundGoals/{docId} { allow read, write: if false; }
+
     // それ以外は禁止
     match /{document=**} {
       allow read, write: if false;
