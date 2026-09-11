@@ -400,10 +400,12 @@ export default function Characters() {
                   <button
                     className="ch-get"
                     onClick={() =>
-                      saveFile(
-                        now.full!,
-                        saveName(`${draft.channelName || draft.id}-${role}`, now.full!),
-                      )
+                      /* 名前ではなく書類IDを使う。**チャンネル名はたいてい
+                         日本語**で、`<a download>` に日本語が1文字でも入ると
+                         Chrome は名前ごと捨てて `download` にする
+                         （`lib/saveFile.ts` に実測）。IDなら誰のものか分かるし、
+                         2人ぶん落としても混ざらない。 */
+                      saveFile(now.full!, saveName(`${draft.id}-${role}`, now.full!))
                     }
                   >
                     <Icon name="download" /> 落とす
