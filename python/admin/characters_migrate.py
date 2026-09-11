@@ -40,13 +40,31 @@
 先頭のバイトが PNG / JPEG / WebP のどれかであることを見てから置く。
 違ったものは置かずに数える。
 
+## 置き場には、ここから書かない
+
+Actions のサービスアカウントには `storage.objects.create` が無い。
+**無いままでよい。** 置き場に書けるのは Functions のサービスアカウントで、
+そちらは旅の写真（`islandApi.ts` の `/nordic/photos`）で前から書けている。
+ここは口（`POST /characters/{id}`）に頼むだけにする。
+
+はじめは「Actions に権限を付けてもらう」で止めていた（#283）が、
+**あれはこちらの設計ミスだった。** 通ることは `characters_probe` を本番で
+1回通して確かめてある（権限が無いことを測ったうえで、置いて・読んで・消した）。
+
+## 画面から直した行は、流し直しても戻らない
+
+口は書くたびに `editedAt` を押す。あれは**人が画面から直した印**なので、
+機械が移しただけの行では消す。消さないと、次に流したとき全員が
+「画面から直されている」判定に当たって、**1人も直らなくなる。**
+
 ARGS 例:
   {}                             … 数えるだけ（1バイトも書かない）
   {"limit": 3}                   … 3人ぶんだけ試す
-  {"apply": true}                … Storage と Firestore に書く
+  {"apply": true}                … 口に頼んで Storage と Firestore に書く
   {"apply": true, "only": "🐟"}  … 絵文字で1人だけ
 """
 
+import base64
 import hashlib
 import io
 import json
@@ -59,6 +77,7 @@ import urllib.error
 import urllib.request
 
 from _fs import args, db, log
+from _owner import call, owner_token
 
 # ---- 出どころ ----------------------------------------------------------
 
@@ -72,9 +91,6 @@ FOLDER_SCENE = "1f2y7EmDinA726epfTq_jNX_rbkpKeP-6"
 VIEWERS_URL = os.getenv("EXPO_PUBLIC_GAS_API_URL") or os.getenv("VIEWERS_TABLE_URL")
 
 COLLECTION = "islandCharacter"
-BUCKET = os.getenv("NORDIC_BUCKET") or (
-    (os.getenv("BQ_PROJECT_ID") or "live-streaming-d3cac") + ".firebasestorage.app"
-)
 
 #: 表示用に焼く幅。画面が使っているのは 96/128/256/512/640 の5つ。
 #: 96 は 128 で、512 は 640 で足りる（引き伸ばさない）。
@@ -229,46 +245,40 @@ def bake(buf: bytes, widths) -> list:
     return out
 
 
-def can_write(bucket) -> bool:
-    """置き場にオブジェクトを置けるかを、**1件も書かずに**尋ねる。
+def put_roles(token: str, cid: str, doc: dict, send: dict) -> dict:
+    """1人ぶんを口へ渡す。**役どころは1つずつ送る。**
 
-    GCS は権限が無いときも「無いかもしれない」と言うので、置いてみて
-    403 を読むやり方では名前違いと権限不足の区別が付かない
-    （`python/admin/storage_probe.py` の冒頭）。`testIamPermissions` は
-    持っているものだけを返すので、それで先に見る。
+    ## なぜ置き場へ直に書かないか
 
-    **半分だけ移すのがいちばん悪い。** 絵の入っていない行が97件できると、
-    画面はそれを「絵の無いキャラクター」として並べる。
+    Actions のサービスアカウントには `storage.objects.create` が無い。
+    **無いままでよい**（#283 は取り下げた）。置き場に書けるのは Functions の
+    サービスアカウントで、そちらは旅の写真（`islandApi.ts` の `/nordic/photos`）
+    で前から書けている。こちらは口に頼むだけにする。
+    通ることは `characters_probe` で本番で1回確かめてある。
+
+    ## なぜ役どころを1つずつ送るか
+
+    背景ありの元は実測で最大4MB弱ある。base64 にすると5MB を超えるので、
+    背景なしと一緒に投げると1回の本体が10MB を回る。口は**送ったぶんだけ**
+    差し替えるので、分けて送っても触っていないほうは消えない。
+
+    Args:
+        token: オーナーの札（`_owner.owner_token`）
+        cid: 書類ID（ドライブの画像ID）
+        doc: 名前・絵文字・呼び名
+        send: 役どころ -> {"full": base64, "sizes": {幅: base64}}
+
+    Returns:
+        口が返した最後の1人ぶん
     """
-    want = ["storage.objects.create", "storage.objects.delete"]
-    try:
-        got = set(bucket.test_iam_permissions(want))
-    except Exception as e:  # noqa: BLE001 尋ねられない＝持っていないのと同じ
-        log.warning("置き場の権限を尋ねられません: %s", type(e).__name__)
-        return False
-    for w in want:
-        log.info("  %-24s %s", w, "持っている" if w in got else "持っていない")
-    return "storage.objects.create" in got
-
-
-def put(bucket, path: str, buf: bytes, ctype: str) -> str:
-    """Storage に1枚置いて、合言葉つきの URL を返す。
-
-    **置き場のルールは `deny` のまま**（`storage.rules`）。読めるのは
-    ファイルに付けた合言葉つきの URL からだけ。写真（#202）と同じ形。
-    """
-    import uuid
-
-    token = str(uuid.uuid4())
-    blob = bucket.blob(path)
-    blob.metadata = {"firebaseStorageDownloadTokens": token}
-    # 道に中身の指紋が入っていて中身は変わらないので、長く持たせてよい
-    blob.cache_control = "public, max-age=31536000, immutable"
-    blob.upload_from_string(buf, content_type=ctype)
-    return (
-        "https://firebasestorage.googleapis.com/v0/b/"
-        f"{BUCKET}/o/{urllib.request.quote(path, safe='')}?alt=media&token={token}"
-    )
+    roles = [r for r in ("plain", "scene") if r in send]
+    if not roles:
+        # 絵が1枚も無い人。名前と呼び名だけ入れる
+        return call("POST", f"/characters/{cid}", token, doc)
+    out = {}
+    for r in roles:
+        out = call("POST", f"/characters/{cid}", token, {**doc, r: send[r]})
+    return out
 
 
 # ---- 本体 --------------------------------------------------------------
@@ -374,21 +384,13 @@ def main() -> None:
         chars = chars[:limit]
 
     client = db() if apply else None
-    bucket = None
+    token = None
     if apply:
-        from google.cloud import storage
-
-        bucket = storage.Client(project=os.getenv("BQ_PROJECT_ID")).bucket(BUCKET)
-        # 置き場に書けるかを、**1件も書く前に**尋ねる。
-        if not can_write(bucket):
-            log.error(
-                "置き場 %s に書けません（storage.objects.create がありません）。"
-                "**Firestore にも1件も書きません。** 絵の無い行だけが入ると、"
-                "画面が空の枠を97個並べることになります。"
-                "権限は issue #283 であやとの操作待ちです",
-                BUCKET,
-            )
-            sys.exit(1)
+        # **置き場には、ここから書かない。** 口に頼む（`put_roles` の説明）。
+        # 札が取れなければ1件も書かずに止まる。半分だけ移すのがいちばん悪い
+        # （絵の入っていない行が97件できると、画面が空の枠を並べる）。
+        token = owner_token(client)
+        log.info("口に頼む札を取りました")
 
     n_img = 0
     n_bad = 0
@@ -398,6 +400,8 @@ def main() -> None:
     done = 0
     for c in chars:
         images = {}
+        # 口へ渡すぶん（apply のときだけ溜まる）
+        send: dict = {}
         for role, fid, widths in (
             ("plain", c["drivePlain"], WIDTHS_PLAIN),
             ("scene", c["driveScene"], WIDTHS_SCENE),
@@ -430,21 +434,20 @@ def main() -> None:
             digest = hashlib.sha256(buf).hexdigest()[:12]
             rec = {"kind": kind, "bytes": len(buf), "sha": digest, "driveId": fid}
             if apply:
-                base = f"island/characters/{c['id']}"
-                rec["url"] = put(
-                    bucket, f"{base}/{role}-full.{kind}", buf, f"image/{kind}"
-                )
-                rec["path"] = f"{base}/{role}-full.{kind}"
-                rec["sizes"] = {
-                    str(w): put(
-                        bucket, f"{base}/{role}-{w}.webp", b, "image/webp"
-                    )
-                    for w, b in baked
+                # 口へ渡す形（`islandCharacter.ts` の `saveRole`）。
+                # **置き場の道も URL も、向こうが決める。** こちらで組み立てて
+                # Firestore に書くと、置いた実体と食い違ったときに気づけない
+                send[role] = {
+                    "full": base64.b64encode(buf).decode("ascii"),
+                    "sizes": {
+                        str(w): base64.b64encode(b).decode("ascii") for w, b in baked
+                    },
                 }
-            else:
-                rec["sizes"] = {str(w): len(b) for w, b in baked}
+            rec["sizes"] = {str(w): len(b) for w, b in baked}
             images[role] = rec
 
+        # 空回しのときに何が入るかを読むための形。**書くのはこれではない**
+        # （名前も鍵も絵も口が入れる。下の `put_roles`）。
         doc = {
             "channelName": c["channelName"],
             "emoji": c["emoji"],
@@ -452,21 +455,56 @@ def main() -> None:
             "channelKeys": c["channelKeys"],
             "lookupKeys": c["lookupKeys"],
             "images": images,
-            # 移行の出どころ。突き合わせが終わるまで消さない
-            "drivePlainId": c["drivePlain"],
-            "driveSceneId": c["driveScene"],
-            "source": "viewers-sheet",
-            "updatedAt": int(time.time() * 1000),
         }
         if apply:
+            from google.cloud import firestore
+
             ref = client.collection(COLLECTION).document(c["id"])
-            if not ref.get().exists:
-                doc["createdAt"] = doc["updatedAt"]
-            # **画面から直した行を、移行で戻さない。** `editedAt` のある行は触らない
-            elif (ref.get().to_dict() or {}).get("editedAt"):
+            # **1回だけ引く。** 前は同じ書類を2回引いていた（97人ぶんで194回）
+            had = ref.get().to_dict() or {}
+            # **画面から直した行を、移行で戻さない。** あやとが旅先で
+            # 絵を入れ替えたあとにこれを流し直しても、そこは元に戻らない
+            if had.get("editedAt"):
                 log.info("%s は画面から直されているので飛ばします", c["emoji"])
                 continue
-            ref.set(doc, merge=True)
+
+            put_roles(
+                token,
+                c["id"],
+                {
+                    "channelName": c["channelName"],
+                    "emoji": c["emoji"],
+                    "aliases": c["aliases"],
+                },
+                send,
+            )
+
+            # 出どころだけ、こちらで足す。**口が持っていない欄**なので、
+            # 口に足させるより、移行の側で持つほうが後始末しやすい
+            # （突き合わせが終わったら、この3欄ごと消せばいい）。
+            #
+            # `editedAt` / `editedBy` は口が押していく。あれは**人が画面から
+            # 直した印**で、機械が移しただけの行に付いていてはいけない。
+            # 付いたままにすると、上の「飛ばす」判定が次から全員に当たって、
+            # **流し直しても1人も直らない**状態になる。
+            ref.set(
+                {
+                    "migratedFrom": {
+                        r: {
+                            "driveId": v["driveId"],
+                            "sha": v["sha"],
+                            "bytes": v["bytes"],
+                        }
+                        for r, v in images.items()
+                    },
+                    "drivePlainId": c["drivePlain"],
+                    "driveSceneId": c["driveScene"],
+                    "source": "viewers-sheet",
+                    "editedAt": firestore.DELETE_FIELD,
+                    "editedBy": firestore.DELETE_FIELD,
+                },
+                merge=True,
+            )
         done += 1
 
     log.info(
