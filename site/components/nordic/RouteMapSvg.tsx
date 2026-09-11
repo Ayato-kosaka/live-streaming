@@ -87,12 +87,32 @@ function hitRadius(c: { x: number; y: number; country: string }, all: typeof MAP
   return Math.floor(Math.min(34, near / 2));
 }
 
+/**
+ * 方位磁針の円盤の半径（ワールド単位）と、紙のふちから空ける余白。
+ *
+ * **描いたものの大きさぶん、内側へ寄せる。** 焼き込み（`map.json` の `north`）が
+ * 持っているのは点ひとつで、そこに何を描くかは知らない。その点をそのまま
+ * 中心にすると、円盤も字も紙の外にはみ出す。実際、焼き込みの北緯 62 の端は
+ * y 46 で、44 の円盤と 66 上の札を描くと **21 単位ぶんが viewBox の外**に出て、
+ * N が丸ごと切り落とされていた。
+ *
+ * 焼き込みは直さない（`content/nordic/map.json` は自動生成）。**描く側が、
+ * 自分の大きさを知って内側へ寄せる。**
+ */
+const COMPASS_R = 50;
+const COMPASS_PAD = COMPASS_R + 8;
+
 export default function RouteMapSvg({ here }: { here?: string }) {
   const { view, land, countries, cities, legs, fly, borders } = MAP;
   const { lakes, rivers, grid, woods, hills, glints, labels, seas, scale, north } = MAP;
   const name = Object.fromEntries(NORDIC_COUNTRIES.map((c) => [c.slug, c.name]));
   const cityName = Object.fromEntries(cities.map((c) => [c.id, c.name]));
   const seqOf = Object.fromEntries(cities.map((c) => [c.id, c.seq]));
+
+  // 方位磁針を紙の内側へ寄せる。切り落とされた N は、濃くしても読めない。
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const cx = clamp(north.x, COMPASS_PAD, view.w - COMPASS_PAD);
+  const cy = clamp(north.y, COMPASS_PAD, view.h - COMPASS_PAD);
 
   // 距離は content/nordic.ts のルートが持っているものをそのまま使う。
   // 地図の側にもう一組 km を書くと、片方だけ直したときに黙って食い違う。
@@ -497,17 +517,27 @@ export default function RouteMapSvg({ here }: { here?: string }) {
       </g>
 
       {/* ---- 方位 -------------------------------------------------- */}
-      {/* 正角円錐なので真北は場所で傾く。傾きも焼き込んである。 */}
-      <g className="nm-compass" transform={`translate(${north.x} ${north.y})`}>
-        <circle className="nm-compass-disc" r="44" />
+      {/* 正角円錐なので真北は場所で傾く。傾きも焼き込んである。
+
+          **N は針といっしょに回す。** 前は針だけ回して N を紙の真上に固定して
+          いたので、N の指す先と針の指す先が 8.7° 食い違っていた。方角の印が
+          方角と違うほうを指しているなら、それは印ではない。
+
+          **N は円盤の中に置く。** 前は円盤の外（y -66〜-38）に札を出していた。
+          焼き込みの位置は北緯 62 の端（y 46）で、円盤の上に 66 も余白が無い。
+          SVG は viewBox の外を切るので、**札も N も地図の上ふちで切り落とされて
+          いた**（画面に出ていたのは字の下 2 単位ぶん、390px で 0.7px）。
+          円盤は自分の地を持っているので、中に入れれば地図のどこへ置いても
+          地が変わらない。 */}
+      <g className="nm-compass" transform={`translate(${cx} ${cy})`}>
+        <circle className="nm-compass-disc" r={COMPASS_R} />
         <g transform={`rotate(${north.deg})`}>
-          <path className="nm-compass-n" d="M0 -34L11 6L0 -3L-11 6Z" />
-          <path className="nm-compass-s" d="M0 34L11 6L0 -3L-11 6Z" />
+          <text className="nm-compass-t" x="0" y="-25" textAnchor="middle">
+            N
+          </text>
+          <path className="nm-compass-n" d="M0 -22L11 14L0 6L-11 14Z" />
+          <path className="nm-compass-s" d="M0 42L11 14L0 6L-11 14Z" />
         </g>
-        <rect className="nm-lab" x="-13" y="-66" width="26" height="28" rx="9" />
-        <text className="nm-compass-t" x="0" y="-44" textAnchor="middle">
-          N
-        </text>
       </g>
 
       {/* ---- 縮尺。km は投影から計算して焼いてある ------------------ */}
