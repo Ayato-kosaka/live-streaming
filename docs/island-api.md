@@ -124,16 +124,11 @@ BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているた�
 | `POST` | `/fork/:id/vote` | 誰でも | 投票（1日30回） |
 | `POST` | `/visit` | 誰でも | その日の訪問者を1つ数える。**1人1日1回** |
 
-## 6. 旅の日記
+## 6. 旅の日記 ── **ここには無い**
 
-| メソッド | パス | 誰が | 何を |
-| --- | --- | --- | --- |
-| `GET` | `/nordic/log` | 誰でも | その日に起きたこと |
-| `POST` | `/nordic/log` | あやとだけ | 書く・直す（400字まで／1日60件） |
-| `DELETE` | `/nordic/log/:day` | あやとだけ | 消す（`day` は `day-…` の形） |
-
-**旅の終わりは旅の途中に起きる。** そのときあやとはヒッチハイクの途中にいて、
-Git を編集して commit して Hosting を手で起動する、は回らない。だからここから届く。
+その日に起きたことは `site/content/nordic.ts` の `NORDIC_LOG`（焼き込み）で、
+口を通らない。あやとが送ってきた一言を、受け取った側が焼いて出す
+（`docs/nordic-depart.md` 2章）。`GET`/`POST`/`DELETE /nordic/log` は外した。
 
 ## 7. ログイン
 

@@ -457,7 +457,6 @@ export async function apply(ctx, opts = {}) {
       return json(r, { donor, via });
     }
     if (path === "/nordic/photos") return json(r, { days: PHOTO_DAYS });
-    if (path === "/nordic/log") return json(r, { log: [] });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと
        出てくる URL が本番と別物になり、押しどころも幅も測れない。 */

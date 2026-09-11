@@ -1,9 +1,19 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import { Mark } from "./Marks";
-import DayLogMarks from "./DayLogMarks";
 import { ArrivedRow, EndRow } from "./GoalRow";
-import { ARRIVE, DAYS, DEPART, LEAVE, cityName, dayHref, dayName, type Day, type Leg } from "@/content/nordic";
+import {
+  ARRIVE,
+  DAYS,
+  DEPART,
+  LEAVE,
+  NORDIC_LOG,
+  cityName,
+  dayHref,
+  dayName,
+  type Day,
+  type Leg,
+} from "@/content/nordic";
 
 /**
  * 旅のよてい。**1日1行だけ。中身は1日ぶんのページにある。**
@@ -101,9 +111,9 @@ function Row({ day }: { day: Day }) {
             <span className="ndayr-ask">答えられる{asks > 1 ? `${asks}つ` : ""}</span>
           )}
           {/* その日に起きたことが書かれた行の印。**書かれるまで出ない。**
-              出すかどうかを決めるのは `DayLogMarks`（画面が出てから読む）。
-              書いたものが旅程表から見えないと、読む人は9日ぶんの行を
-              1つずつ開いて確かめることになる。 */}
+              出すかどうかは焼いてあるもの（`NORDIC_LOG`）で決まるので、
+              画面が出てから読み直さない。書いたものが旅程表から見えないと、
+              読む人は9日ぶんの行を1つずつ開いて確かめることになる。 */}
           <span className="ndayr-log">その日の話</span>
         </span>
         <span className="ndayr-way">
@@ -135,7 +145,7 @@ function Row({ day }: { day: Day }) {
  * 20行のうち8行が見分けの付かない行だった。
  *
  * **面は日ごとに残す。** その日に起きたことの置き場が要るので
- * （`nordicLog` は行の id ごとに1件しか持てない）、畳むのは
+ * （`NORDIC_LOG` は行の id ごとに1件しか持てない）、畳むのは
  * 旅程表の見た目だけにして、日ごとの面へは番号の札から入る。
  */
 function groupRows(days: Day[]): (Day | Day[])[] {
@@ -179,11 +189,18 @@ function GroupRow({ days }: { days: Day[] }) {
             <span className="ndayr-stay">泊まる {cityName(first.stay)}</span>
           )}
         </span>
-        {/* 日ごとの面への入口。**その日の話が書かれた札には印が付く**
-            （`DayLogMarks` が `.ndayc` にも同じ印を付ける）。 */}
+        {/* 日ごとの面への入口。**その日の話が書かれた札には印が付く。** */}
         <span className="ndayg-days">
           {days.map((d) => (
-            <Link key={d.id} className="ndayc" id={d.id} href={dayHref(d)}>
+            <Link
+              key={d.id}
+              className="ndayc"
+              id={d.id}
+              href={dayHref(d)}
+              /* まとめた行は本体に印を付けられない（6日ぶんが1行なので、
+                 どの日の話か分からなくなる）。**札のほうに付ける。** */
+              data-log={NORDIC_LOG[d.id] ? "" : undefined}
+            >
               {d.n}
             </Link>
           ))}
@@ -196,7 +213,12 @@ function GroupRow({ days }: { days: Day[] }) {
 /** 1日ぶんの行。**面のある日は押せる。無い日は平らな紙のまま。** */
 function DayLi({ day }: { day: Day }) {
   return (
-    <li className={`nday${day.bare ? " is-bare" : ""}`} id={day.id}>
+    <li
+      className={`nday${day.bare ? " is-bare" : ""}`}
+      id={day.id}
+      /* その日の話が書かれた行の印。焼いてあるので、ここで決まる */
+      data-log={NORDIC_LOG[day.id] ? "" : undefined}
+    >
       {day.legs?.length || day.city ? (
         <Row day={day} />
       ) : (
@@ -219,9 +241,6 @@ function DayLi({ day }: { day: Day }) {
 export default function Days() {
   return (
     <ol className="ndays">
-      {/* 書かれた日の行に印を付ける。字も数字も持たない（読むだけ）ので、
-          旅程表そのものを面の JS に連れてこない。 */}
-      <DayLogMarks />
       {groupRows(DAYS).map((row) =>
         Array.isArray(row) ? (
           <li key={row[0].group} className="nday is-groupli">

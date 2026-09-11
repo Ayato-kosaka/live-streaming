@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import Icon from "@/components/ui/IconCore";
-import { useOwner } from "@/components/nordic/log";
 import { deleteNordicPhoto } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useOwner } from "@/lib/auth";
 
 /**
  * 貼った写真を1枚消す。**あやとにだけ出る。**

@@ -694,11 +694,10 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       )}
 
       {/* 越えた日にだけ入る。よていだけの面は、出発前にしか読む理由がない。
-          **入るのは旅の最中で、そのときあやとは道の上にいる。** Git を編集して
-          commit して Hosting を手で起動する、は回らないので、ここは
-          画面が出てから読みにいく（`components/nordic/DayLog.tsx`）。
-          焼いてあるぶん（`NORDIC_LOG`）は、旅が終わってから写す正本。 */}
-      <DayLog day={day.id} baked={NORDIC_LOG[day.id]} />
+          **焼いてあるものをそのまま出す**（`NORDIC_LOG`）。あやとが送ってきた
+          一言は、受け取った側が Git に焼いて出す運用になった
+          （`components/nordic/DayLog.tsx`）。 */}
+      <DayLog entry={NORDIC_LOG[day.id]} />
 
       {/* 前の日・次の日。旅は一本道なので、めくって読めるようにする。 */}
       <div className="nnav">

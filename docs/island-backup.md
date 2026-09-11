@@ -153,7 +153,7 @@ SELECT * EXCEPT(_rn) FROM (
 | 何 | なぜ |
 | --- | --- |
 | 視聴者さんの書いた字（`islandNotes` `islandIdeas` `islandStreamEvent` `islandNextPlans` `islandPolls`） | **どこからも作り直せない** |
-| 旅の日記（`nordicLog`）と「いまどこ」（`island`） | 人しか書けない。旅のあいだ毎日増える |
+| 旅の日記（`nordicLog`）と「いまどこ」（`island`） | 人しか書けない。日記は焼き込みへ移ってもう増えないが、**入れ物は消さない** |
 | 手で紐付けた対応表（`islandDonors`）と、名前を出してよいという同意（`islandUsers`） | 人の作業と、本人の意思表示 |
 | 豚の貯金箱（`islandFundSuperChats` `islandFundSpends` `islandFundGoals`） | 手で入れたぶんと支出は、どこからも作り直せない |
 | 投げ銭の台帳（`islandTips`） | 作り直せることになっているが、**お金の記録を「たぶん戻る」に賭けない** |
