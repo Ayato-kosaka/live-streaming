@@ -11,7 +11,30 @@
 
 ## いますぐ確かめたいとき
 
-Actions を開けない旅の途中でも、これだけで「昨日ちゃんと取れたか」が分かる。
+**いちばん軽いのは、Firestore に置いてある札を1枚読むこと。**
+
+```
+run_admin_script.yml → firestore_read
+  {"collection": "islandBackupHealth", "doc": "last"}
+```
+
+```
+at            いつ取ったか
+ok            true / false
+error         落ちた理由（型と一行だけ）
+tookSec       何秒かかったか
+firestoreDocs 何件取ったか
+firestoreBytes 何バイトぶんか
+bqRows        BigQuery から何行積んだか
+photosOk      写真が取れているか（権限が来るまで false）
+runUrl        その実行のログ
+```
+
+**退避が本番の Firestore に書くのは、この1書類だけ。** ほかは全部読むだけ。
+（`functions/src/chatCapture.ts` の `streamChatHealth`、
+`python/fund_daily.py` の `islandFundHealth` と同じ手）
+
+もっと詳しく見たいとき:
 
 ```
 run_admin_script.yml → backup_status  {}
@@ -190,7 +213,9 @@ Firestore の世代は1晩あたり 1MB 弱なので、90日でも 90MB。
 ## 落ちたらどう分かるか
 
 1. **ワークフローが赤くなる。** `continue-on-error` をどこにも使っていない
-2. `island_backup.runs` に `ok=false` と理由が残る → `backup_status` で読める
-3. **取るだけでなく、毎晩「戻せるか」も試している。**
+2. **`islandBackupHealth/last` に `ok: false` と理由が残る。**
+   旅の途中は、これを `firestore_read` で1枚読むのがいちばん早い
+3. `island_backup.runs` にも1回ぶんが残る → `backup_status` で直近10回まとめて読める
+4. **取るだけでなく、毎晩「戻せるか」も試している。**
    `backup.yml` の `drill` が、エミュレータへ1コレクション戻して
    件数と中身の指紋を突き合わせる。**壊れた退避で緑を出さないため**

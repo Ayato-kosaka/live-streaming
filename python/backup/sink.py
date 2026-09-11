@@ -152,6 +152,42 @@ def sweep(c: bigquery.Client) -> int:
     return int(job.num_dml_affected_rows or 0)
 
 
+# 旅のあいだ、Actions を開けなくても生死が読める札。**Firestore に1書類だけ。**
+# `functions/src/chatCapture.ts` の `streamChatHealth` と、
+# `python/fund_daily.py` の `islandFundHealth` と同じ手。
+#
+#     run_admin_script.yml → firestore_read
+#       {"collection": "islandBackupHealth", "doc": "last"}
+#
+# **退避が本番の Firestore に書くのは、ここ1書類だけ。** ほかは全部読むだけ。
+# 中身は数だけで、人に結びつく値は1つも入れない。
+HEALTH_COLLECTION = "islandBackupHealth"
+
+
+def record_health(ok: bool, took: float, err: str, detail: dict) -> None:
+    """札を1枚置く。**置けなくても退避そのものは止めない。**"""
+    from google.cloud import firestore
+
+    fs = detail.get("firestore", {})
+    bq = detail.get("bigquery", {})
+    ph = detail.get("photos", {})
+    firestore.Client(project=PROJECT).collection(HEALTH_COLLECTION).document("last").set(
+        {
+            "at": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "ok": ok,
+            # 落ちた理由は**型と一行だけ**。値は入れない
+            "error": (err or "")[:300],
+            "tookSec": round(took, 1),
+            "firestoreDocs": fs.get("docs", 0),
+            "firestoreBytes": fs.get("bytes", 0),
+            "bqRows": sum((v or {}).get("rows") or 0 for v in bq.values()),
+            "photosOk": bool(ph.get("ok")),
+            "photosAdded": ph.get("n", 0),
+            "runUrl": os.getenv("RUN_URL") or "",
+        }
+    )
+
+
 def record_run(c: bigquery.Client, ok: bool, took: float, err: str, detail: dict) -> None:
     """1回ぶんの記録を残す。**旅の途中で「昨日ちゃんと取れたか」を見る札。**"""
     ensure_table(c, "runs", RUNS_SCHEMA, partition_field="at")

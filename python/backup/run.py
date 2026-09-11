@@ -421,6 +421,15 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             log.error("runs に記録できませんでした: %s", e)
             ok = False
+        # **旅のあいだ Actions を開けなくても読める札。**
+        # ここが置けなくても退避そのものの成否は変えない（置き場には入っている）。
+        # ただし黙らない。札が置けないと、旅の途中の見張りが効かなくなる
+        try:
+            sink.record_health(ok, took, err, detail)
+        except Exception as e:  # noqa: BLE001
+            log.error("islandBackupHealth の札を置けませんでした: %s", e)
+            print("::warning::islandBackupHealth の札を置けませんでした。"
+                  "旅の途中に firestore_read で生死が読めません")
 
     fs = detail.get("firestore", {})
     bq = detail.get("bigquery", {})
