@@ -1239,6 +1239,28 @@ label     = island/state.fund.box.goal.label
 
 `−249,646 + 119,036 + 175,020 = 44,410`。**本番と1円まで合っている。**
 
+### 9.10.5 落ちたときに、落ちたと分かること
+
+毎晩の掃除は**ひとりでに走るので、壊れても誰も気づかない。** 2つ置いた。
+
+1. **`schedule_fetch_chat.yml` の中で job を分けた**（`fund_box`）。
+   `island_stats` の途中に `continue-on-error` で置くと**落ちても緑のまま**で、
+   ステップを開くまで分からない（`island-misses.md` #55 と同じ形）。
+   かといって同じ job の中で赤くすると、後ろの台帳・カード・名簿が skip される。
+   **額が1日古いだけのことで、カードが配れなくなる。** job を分ければどちらも起きない
+2. **`islandFundHealth/last` に札を1枚置く**（`chatCapture.ts` の
+   `streamChatHealth` と同じ手）。旅のあいだ Actions を開けないときは、これを読む
+
+```
+管理スクリプトを実行  script: firestore_read
+args: {"collection":"islandFundHealth","limit":1}
+
+{ at, ok, error, added, claimed, count, superchat, spend, box, days }
+```
+
+`ok: false` なら `error` に理由が入っている。`at` が今日でなければ、
+**掃除そのものが走っていない**（札は置けているのに古い、なら Firestore は生きている）。
+
 ### 9.11 残っていること
 
 **まだ本番の Firestore には1行も書いていない。** apply と、読む側の切り替えと、

@@ -60,10 +60,49 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> int:
-    """エントリポイント。
+    """エントリポイント。**落ちたときに札を1枚置いてから落ちる。**
+
+    毎晩ひとりでに走るものなので、**壊れても誰も気づかない。**
+    `functions/src/chatCapture.ts` の `streamChatHealth` と同じ手を使う。
+    Actions のログを開かなくても `firestore_read` で理由まで読める。
+
+        管理スクリプトを実行  script: firestore_read
+        args: {"collection":"islandFundHealth","limit":1}
 
     Returns:
-        0。落ちる理由が無いところ（毎晩の掃除）なので、後ろを止めない
+        0 なら通った。1 なら落ちた（**ワークフローも赤くする**）
+    """
+    started = datetime.now(timezone.utc).isoformat()
+    try:
+        note = run()
+        ok, err = True, ""
+    except Exception as e:  # noqa: BLE001  何で落ちても札は置く
+        logger.exception("貯金箱の掃除が落ちました")
+        note, ok, err = {}, False, f"{type(e).__name__}: {e}"
+
+    # 見るだけのときは札を書き替えない。**本物の掃除の跡を消さない**
+    if note.get("dryRun"):
+        logger.info("FUND_DAILY dry-run")
+        return 0
+
+    # 札を置く。**Firestore まで落ちていたら置けない**ので、そこは黙って諦める
+    try:
+        firestore.Client(project=BQ_PROJECT_ID).collection(
+            "islandFundHealth"
+        ).document("last").set({"at": started, "ok": ok, "error": err, **note})
+    except Exception as e:  # noqa: BLE001
+        logger.error("札も置けませんでした: %s", type(e).__name__)
+
+    # ログの字でも見分けられるようにする（札が置けなかったとき用）
+    logger.info("FUND_DAILY %s", "ok" if ok else "NG " + err)
+    return 0 if ok else 1
+
+
+def run() -> dict:
+    """掃除の本体。
+
+    Returns:
+        札に残す数字。落ちたときは例外を投げる
     """
     p = argparse.ArgumentParser()
     p.add_argument("--days", type=int, default=3, help="BigQuery を何日ぶん見るか")
@@ -82,7 +121,7 @@ def main() -> int:
             "先に見るだけで流して差を読み、それから --sweep を付けてください",
             a.days,
         )
-        return 1
+        raise SystemExit(1)
 
     db = firestore.Client(project=BQ_PROJECT_ID)
 
@@ -94,7 +133,7 @@ def main() -> int:
             "（先に python/admin/fund_migrate.py を apply で流す）",
             fb.C_SUPERCHAT,
         )
-        return 0
+        return {"skipped": "移行前（控えが空）"}
 
     # ---- 漏れを埋める ----
     rows = fb.bq_superchats(BQ_PROJECT_ID, BQ_DATASET, a.days)
@@ -186,7 +225,7 @@ def main() -> int:
         logger.info("いまの目標: %s %s円", goal.get("label"), goal.get("yen"))
 
     if a.dry_run:
-        return 0
+        return {"dryRun": True}
 
     db.collection("island").document("state").set(
         {
@@ -209,7 +248,15 @@ def main() -> int:
         merge=True,
     )
     logger.info("island/state.fund.box を更新しました")
-    return 0
+    return {
+        "added": len(added),
+        "claimed": len(claimed),
+        "count": s["count"],
+        "superchat": s["superchat"],
+        "spend": s["spend"],
+        "box": boxed,
+        "days": a.days,
+    }
 
 
 if __name__ == "__main__":

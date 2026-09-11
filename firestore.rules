@@ -181,6 +181,10 @@ service cloud.firestore {
     match /islandFundSuperChats/{docId} { allow read, write: if false; }
     match /islandFundSpends/{docId} { allow read, write: if false; }
     match /islandFundGoals/{docId} { allow read, write: if false; }
+    /* 毎晩の掃除が最後に置いていく札。**壊れても誰も気づかない**ところなので、
+       Actions のログを開かなくても firestore_read で理由まで読めるようにする
+       (chatCapture.ts の streamChatHealth と同じ手)。読む用事は画面には無い。 */
+    match /islandFundHealth/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {
