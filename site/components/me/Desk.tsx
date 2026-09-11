@@ -15,8 +15,19 @@ import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
    どちらも一覧を丸ごと引くので、机を開いただけで3本引かせない。 */
 const DonorLinks = dynamic(() => import("./DonorLinks"), { ssr: false });
 const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
+/* キャラクターも同じ理由で、開いた札のぶんだけ降ろす。**こちらは
+   97人ぶんの絵を引く**ので、机を開いただけで降ろすと重い。 */
+const Characters = dynamic(() => import("./Characters"), { ssr: false });
 
-type Tool = "photo" | "place" | "video" | "sticky" | "plan" | "donor" | "obs";
+type Tool =
+  | "photo"
+  | "place"
+  | "video"
+  | "sticky"
+  | "plan"
+  | "donor"
+  | "chara"
+  | "obs";
 
 /** 机の上に出せる道具。**並び順は、旅のあいだに開く回数の多い順。**
     その日に起きたことを書く欄はここにあったが、外した（2026-09-10）。
@@ -28,6 +39,9 @@ const TOOLS: { id: Tool; label: string; icon: IconName }[] = [
   { id: "sticky", label: "付箋", icon: "pinup" },
   { id: "plan", label: "企画", icon: "checklist" },
   { id: "donor", label: "投げ銭", icon: "coin" },
+  /* 投げ銭の下。**紐付けたあとに絵を足す**という順で使うことが多い
+     （知らない どねID が来た → つないだ → その人の絵をまだ持っていない）。 */
+  { id: "chara", label: "キャラ", icon: "friends" },
   { id: "obs", label: "OBS", icon: "screen" },
 ];
 
@@ -139,6 +153,7 @@ export default function Desk() {
           {tool === "sticky" && <StickyCare />}
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
+          {tool === "chara" && <Characters />}
           {tool === "obs" && <AlertBoxBox />}
         </div>
       </section>

@@ -47,6 +47,10 @@ name: 管理スクリプトを実行
 #   characters_migrate … Viewers 表とドライブのフォルダ2つを突き合わせて、
 #                        絵を Storage に置き、islandCharacter に名前と
 #                        絵文字と呼び名を入れる。{"limit":3} で試せる
+#   characters_probe   … **絵を1枚置いて、読んで、消す**（入力なし）。
+#                        Actions は置き場に書けないまま（#283）でも、
+#                        Functions に頼めば置けることを本番で1回通す。
+#                        本番に何も残さない
 #
 # BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
 #   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）

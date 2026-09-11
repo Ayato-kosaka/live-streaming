@@ -628,3 +628,160 @@
   color: var(--ink-2);
   box-shadow: 0 5px 0 var(--frame-dark);
 }
+
+/* ---------------- キャラクター(#284) ----------------
+   スパチャと Doneru のアラートに出る絵。原本がスプレッドシートと
+   ドライブから `islandCharacter` に来たので、あやとの机から直せるようにした。
+
+   **旅先のスマホ1台で使う面。** 押しどころは他の道具と同じ 48px 以上、
+   送りは 56px（このファイル冒頭の決め）。 */
+
+.ch-top { display: flex; gap: var(--sp-2); align-items: stretch; }
+.ch-find { flex: 1; min-width: 0; min-height: 48px; }
+
+/* 図鑑。**3列**。390px 幅で1マス 106px になり、絵が誰か分かる大きさに残る。
+   4列だと 76px で、顔が潰れて「押してみないと誰か分からない」棚になる。 */
+.ch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+@media (min-width: 560px) {
+  .ch-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.ch-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  transition: transform 0.12s ease;
+}
+.ch-cell:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+.ch-cell img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.ch-cell-none {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  font-size: var(--fs-note);
+  color: var(--ink-2);
+}
+/* 絵文字は絵の右上に重ねる。1行取ると、3列のマスが縦に伸びて棚が長くなる。 */
+.ch-cell-emoji {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: var(--fs-note);
+}
+.ch-cell-name {
+  width: 100%;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+  /* **2行で切る。** 長い名前で1マスだけ背が伸びると、棚の行がガタつく。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.ch-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.ch-aliases { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.ch-alias {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.ch-alias-add { display: flex; gap: var(--sp-2); align-items: stretch; margin-top: var(--sp-2); }
+.ch-alias-add input { flex: 1; min-width: 0; min-height: 48px; }
+
+.ch-pic {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+}
+.ch-pic-h { font-size: var(--fs-note); font-weight: 900; color: var(--ink); }
+/* 市松にするのは、**背景なしの絵の透明が見えるようにする**ため。
+   白地に置くと、白い縁が付いたまま保存された絵に気づけない。 */
+.ch-pic-now {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  border-radius: var(--r-2);
+  background-color: var(--paper-2);
+  background-image:
+    linear-gradient(45deg, color-mix(in srgb, var(--frame) 40%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--frame) 40%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--frame) 40%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--frame) 40%, transparent) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.ch-pic-new { font-size: var(--fs-note); font-weight: 800; color: var(--ink); margin: 0; overflow-wrap: anywhere; }
+.ch-pic-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.ch-pick,
+.ch-get {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  min-width: 96px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+}
+.ch-pick input { display: none; }
+
+/* 消すのは、送りより弱く見せる。**押し間違えるのは走っている車の中。** */
+.ch-drop {
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
