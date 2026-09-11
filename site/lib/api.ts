@@ -1294,6 +1294,14 @@ export type CharacterPublic = {
   emoji: string;
   plain: CharacterPicture | null;
   scene: CharacterPicture | null;
+  /**
+   * 作った順（`python/admin/characters_order.py` が入れる）。
+   * **`createdAt` で並べないこと。** あれは Storage へ移した時刻で、
+   * 移行が65人目で落ちて再開しているため、そこで前後が入れ替わっている。
+   */
+  order: number | null;
+  /** 画面から足した時刻。番号の無い人（表より後に足した人）を末尾で並べるのに使う */
+  createdAt: string | null;
 };
 
 /** あやとの画面に出る1人。名前と、何で引けるかまで付く。 */
@@ -1309,13 +1317,24 @@ export type Character = CharacterPublic & {
 };
 
 /**
- * 図鑑。**札を付けると名前まで返る。**
+ * 図鑑。**札を付けると名前まで返る。** あやとの画面（`/me`）から呼ぶ。
  *
- * 付けないときの返りは `CharacterPublic` だが、呼ぶ側は必ずあやとの
- * 画面なので `Character` で受ける。名前の欄が空文字で来るだけ。
+ * 誰でも見られる図鑑（`/friends`）は `getPublicCharacters` のほう。
+ * 名前は本人が出すと決めた人のぶんだけ `/state` の residents に載るので、
+ * ここの `channelName` を図鑑に流さない。
  */
 export const getCharacters = (token?: string | null) =>
   req<{ characters: Character[] }>("/characters", { headers: auth(token) });
+
+/**
+ * 図鑑。**札を付けない。名前は返らない。**
+ *
+ * `/friends` はここから全員を取る。焼き込み（`content/residents.ts`）は
+ * 島に立つ22人ぶんしか無いので、あれを出すと図鑑が22人で止まる。
+ * 旅のあいだにあやとがスマホから足した人も、ここからなら出る。
+ */
+export const getPublicCharacters = () =>
+  req<{ characters: CharacterPublic[]; total: number }>("/characters");
 
 /** 送る絵。ブラウザで幅ごとに焼いてから渡す（`stamp.ts` の `shrink`）。 */
 export type CharacterUpload = {

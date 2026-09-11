@@ -9,6 +9,7 @@ import {
   type CharacterUpload,
 } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
+import { saveFile, saveName } from "@/lib/saveFile";
 import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/Icon";
 
@@ -118,33 +119,6 @@ async function bake(
     w: Math.max(1, Math.round(sw * fullK)),
     h: Math.max(1, Math.round(sh * fullK)),
   };
-}
-
-/**
- * 1枚を端末に落とす。
- *
- * **`<a download>` だけでは足りない。** 絵は置き場（別のドメイン）に
- * あるので、`download` の指定は無視されて、ただそのページへ飛ぶ。
- * いったん取ってから blob にすると名前を付けて落とせる。
- * 取れなかったときは、新しい面で開くところまでは必ずやる
- * （スマホなら、そこから長押しで保存できる）。
- */
-async function save(url: string, name: string) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(String(res.status));
-    const blob = await res.blob();
-    const href = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = href;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(href), 10000);
-  } catch {
-    window.open(url, "_blank", "noopener");
-  }
 }
 
 /** 絵の URL を、小さいほうから選ぶ。無ければ元のまま。 */
@@ -426,7 +400,10 @@ export default function Characters() {
                   <button
                     className="ch-get"
                     onClick={() =>
-                      save(now.full!, `${draft.channelName || draft.id}-${role}`)
+                      saveFile(
+                        now.full!,
+                        saveName(`${draft.channelName || draft.id}-${role}`, now.full!),
+                      )
                     }
                   >
                     <Icon name="download" /> 落とす
