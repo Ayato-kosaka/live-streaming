@@ -179,10 +179,12 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
         <div className="rzk-page">
           {/* 題名の札は絵の上。テープで貼ったように少し傾ける。
               名前を出していない人は通し番号が題名になる。
-              絵文字はその人の印（投げ銭の演出でも同じものが出る）なので、
-              番号だけの人でも、札に顔の代わりが1つ乗る。 */}
+
+              **絵文字は置かない。** その人の印（`emoji`）を札に乗せていたが、
+              このサイトは UI にもコンテンツにも絵文字を1文字も置かない
+              （`docs/island-design.md` 1章。例外はない）。
+              顔の代わりは、すぐ下にその人の絵そのものがある。 */}
           <p className="rzk-tag" ref={head}>
-            {r.emoji && <span className="rzk-emoji">{r.emoji}</span>}
             {name ?? `No.${at + 1}`}
           </p>
 
