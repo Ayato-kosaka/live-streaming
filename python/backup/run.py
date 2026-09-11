@@ -18,6 +18,7 @@
 
 import argparse
 import datetime as dt
+import decimal
 import hashlib
 import json
 import os
@@ -114,25 +115,44 @@ def dump_firestore(dry: bool, taken_at: str, out) -> dict:
 
 
 def _jsonable(field, v):
-    """BigQuery から読んだ値を、載せ直せる形にする。"""
+    """BigQuery から読んだ値を、載せ直せる形にする。
+
+    **型を落とさないのがここの仕事。** `default=str` で丸めると、
+    NUMERIC が浮動小数点になったり、JSON の列が文字列になったりする。
+    そうなっても載りはするので、**戻すまで気づけない。**
+    """
+    if v is None:
+        return None
+    # 繰り返しの列は、中身1つずつを同じ規則で
+    if getattr(field, "mode", "") == "REPEATED" and isinstance(v, (list, tuple)):
+        return [_one(field, x) for x in v]
+    return _one(field, v)
+
+
+def _one(field, v):
     if v is None:
         return None
     t = field.field_type
+    if t in ("RECORD", "STRUCT"):
+        return {f.name: _jsonable(f, v.get(f.name)) for f in field.fields}
     if t == "JSON":
         # クライアントの版によって、字で返るときと組み立てて返るときがある。
         # **字のまま載せると JSON 型ではなく文字列になってしまう**ので、
         # 字なら一度ほどく
         return json.loads(v) if isinstance(v, str) else v
+    if t in ("NUMERIC", "BIGNUMERIC"):
+        # **Decimal は JSON にできない。** 浮動小数点に落とすと桁が狂うので、
+        # 字のまま渡す（BigQuery は NUMERIC を字から読める）。
+        # 額の列（doneru_donations.amount）がこれ。**1円ずれてはいけない**
+        return str(v)
     if isinstance(v, (dt.datetime, dt.date, dt.time)):
         return v.isoformat()
     if isinstance(v, (bytes, bytearray)):
         import base64
 
         return base64.b64encode(bytes(v)).decode()
-    if isinstance(v, list):
-        return [_jsonable(field, x) for x in v]
-    if isinstance(v, dict):
-        return {k: x for k, x in v.items()}
+    if isinstance(v, decimal.Decimal):
+        return str(v)
     return v
 
 
@@ -311,10 +331,14 @@ def dump_photos(c, dry: bool) -> dict:
 
     import base64
 
-    rows = []
+    # **まとめて投げない。** 1枚 4MB まで許してあるので（islandApi.ts の
+    # MAX_PHOTO_BYTES）、10枚まとめると 40MB になって送れる大きさを超える
+    written = 0
+    chunk: list[dict] = []
+    chunk_bytes = 0
     for b in new:
         body = b.download_as_bytes()
-        rows.append({
+        chunk.append({
             "path": b.name,
             "taken_at": (b.updated or dt.datetime.now(dt.timezone.utc)).isoformat(),
             "size": len(body),
@@ -322,10 +346,19 @@ def dump_photos(c, dry: bool) -> dict:
             "content_type": b.content_type,
             "body": base64.b64encode(body).decode(),
         })
-    errs = c.insert_rows_json(tbl, rows)
-    if errs:
-        raise RuntimeError(f"写真を置き場に書けませんでした: {errs}")
-    return {"ok": True, "n_all": len(blobs), "n": len(new), "bytes": total, "written": len(rows)}
+        chunk_bytes += len(body)
+        if chunk_bytes > 4 * 1024 * 1024:
+            errs = c.insert_rows_json(tbl, chunk)
+            if errs:
+                raise RuntimeError(f"写真を置き場に書けませんでした: {errs}")
+            written += len(chunk)
+            chunk, chunk_bytes = [], 0
+    if chunk:
+        errs = c.insert_rows_json(tbl, chunk)
+        if errs:
+            raise RuntimeError(f"写真を置き場に書けませんでした: {errs}")
+        written += len(chunk)
+    return {"ok": True, "n_all": len(blobs), "n": len(new), "bytes": total, "written": written}
 
 
 # ------------------------------------------------------------------ 本体
