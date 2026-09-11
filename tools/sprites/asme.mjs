@@ -369,6 +369,14 @@ export async function apply(ctx, opts = {}) {
   await ctx.route(/\/island-api\//, (r) => {
     const u = new URL(r.request().url());
     const path = u.pathname.replace("/island-api", "");
+    /* **キャラクターの絵は差し替えない。本物を通す。**
+       絵も `/island-api/...` から来るようになったので（#284）、ここの
+       受け皿（最後の `json(r, {})`）が絵まで JSON にしていた。
+       島の住人が1人も出なくなって、**本番が壊れているように見えた**
+       （2026-09-11。`route.mjs` の「1枚に潰さない」と同じ失敗）。 */
+    if (/^\/characters\/[^/]+\/(plain|scene)-\d+\.webp$/.test(path)) {
+      return r.fallback();
+    }
     if (path === "/me") {
       return json(r, {
         /* `channelPhoto` は毎晩 islandChannels から入れ直る顔で、**じぶんのことに

@@ -9,6 +9,7 @@ import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
 import { useCharacters } from "@/lib/characters";
 import { saveFile, saveName } from "@/lib/saveFile";
+import { charImg } from "@/lib/charImg";
 import { createVillagers } from "@/components/island/villagers";
 import { placeById } from "@/components/island/layout";
 import Icon from "@/components/ui/IconCore";
@@ -130,6 +131,13 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const spot = r ? here.get(r.id) : undefined;
   /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
   const mine = (cards ?? []).filter((c) => c.icon === r?.id);
+  /* **画面に出す絵は `charImg`（口ごしの短い名前）。名簿が持っている
+     置き場の URL をそのまま使わない。** 島もカードも /me も口ごしなので、
+     ここだけ別の道にすると、絵の出しかたが2通りになる。口ごしなら
+     同じ生い立ちで、Hosting の手前にも乗る（実測 MISS → HIT）。
+
+     **持ち帰るぶんだけは名簿の URL を使う。** 縮める前のものは png だったり
+     jpeg だったりで、口の `-{幅}.webp` の形に収まらない。 */
   /* 持ち帰るのは**縮める前のもの**。無ければいちばん大きい焼き上がり */
   const take = (role: "plain" | "scene") => {
     const p = r?.[role];
@@ -154,8 +162,15 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
       </div>
     );
 
-  /* 読めなかった。**「まだ誰もいません」とは言わない。** */
-  if (!r) return <ReadAgain what="図鑑" onRetry={reloadChars} />;
+  /* 読めなかった。**「まだ誰もいません」とは言わない**（#34 #36 #43）。 */
+  if (!r && charsRead === "down")
+    return <ReadAgain what="図鑑" onRetry={reloadChars} />;
+
+  /* 読めた上での0人。**ここではじめて「まだ」と言ってよい。**
+     いま95人いるので起きないはずだが、**起きないはずのことを
+     「読めなかった」と読み替えない。** 逆に読み替えると、口が空を
+     返している日に「電波のせい」に見えて、誰も直しに来なくなる。 */
+  if (!r) return <p className="pap-note">まだ、誰の絵もありません。</p>;
 
   return (
     <>
@@ -177,12 +192,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 640 なのは、ここが図鑑の主役だから。箱は 280px（PC 330px）
                 あるので、dpr2 の画面でも引き伸ばさずに出せる。
                 一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
-            <img
-              key={r.id}
-              src={r.plain?.sizes?.["640"] ?? r.plain?.full ?? r.plain?.sizes?.["256"] ?? ""}
-              alt=""
-              style={charFit(r.id, 0.94, true)}
-            />
+            <img key={r.id} src={charImg(r.id, 640)} alt="" style={charFit(r.id, 0.94, true)} />
           </div>
 
           <dl className="rzk-fields">
@@ -348,7 +358,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               >
                 <span className="rzk-cell-no">{i + 1}</span>
                 <img
-                  src={x.plain?.sizes?.["128"] ?? x.plain?.full ?? ""}
+                  src={charImg(x.id, 128)}
                   alt={`${i + 1}人目`}
                   loading="lazy"
                   style={charFit(x.id, 0.82)}
