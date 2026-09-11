@@ -159,65 +159,162 @@ const MAX_WEEK_LINES = 8;
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
    鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
 const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
-/* 鍵の出どころ。**GitHub の Secrets には置かない**（GitHub #110 はそれ待ちで
-   止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
-   実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
-   サイトも配信も同時に追随する。
-   **金額そのものは、いずれ GAS から取らなくなる。** 移し先は Firestore の
-   `island/state.fund.box`(`docs/nordic-fund.md` 9章)。切り替えるのは、
-   両方の額が1円まで合っているのを本番で見てから。それまではここから
-   額も借りる。 */
+/* 豚の貯金箱の元（#305）。**いま額が正しいのは、こちらの GAS。**
+   配信の OBS（app/alertbox）がスパチャを1件ずつこの表に書き足していて、
+   `superChatAmount` が伸びるのはここだけ。だから読む順も GAS が先。
+
+   鍵を GitHub の Secrets に置かないのは前のまま（GitHub #110 はそれ待ちで
+   止まっていた）。OBS が読んでいるのと同じ表から実行時に引くので、
+   鍵を2か所で持たずに済む。 */
+const GOAL_ID = "2025-10-24";
 const GAS_GOALS =
   "https://script.google.com/macros/s/" +
   "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
-  "/exec?table=Goals&id=2025-10-24";
+  `/exec?table=Goals&id=${GOAL_ID}`;
+/* GAS が消えたときの控え（#305）。**表を消しても貯金箱が止まらないため**に
+   置いてある。`python/admin/goal_migrate.py` が GAS の4欄をここへ写す。
+
+   **順を逆にしない。** Firestore を先に読むと、配信で投げ銭が入っても
+   サイトの豚が伸びなくなる（伸びるのは GAS 側だけで、こちらは人が
+   写し直すまで止まったままになる）。あやとは旅のあいだ17日つながらないので、
+   「配信のたびに人が写し直す」は置いていけない。
+   **視聴者さんから見れば、自分が出したお金が島に出てこない。**
+
+   Firestore を正にしてよくなるのは、スパチャの書き込み先を
+   `POST /island-api/superchat` へ移したあと（#305 の3）。
+   **額が増える側が正** ——それまではこの順が辻褄の合う唯一の順。 */
+const GOAL_DOC = db.collection("islandGoal").doc(GOAL_ID);
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
 /** 豚の貯金箱の1件ぶん。**サイトはここを配信とそっくり同じに読む。** */
 type GoalRec = {key: string; start: number; superchat: number; goal: number};
+/** 読んだままの4欄。**Firestore も GAS も、同じ名前で同じものを持つ。** */
+type GoalRaw = {
+  doneruGoalKey?: unknown;
+  startAmount?: unknown;
+  superChatAmount?: unknown;
+  targetAmount?: unknown;
+};
 /* 鍵は変わらないが、スパチャの額は増える。**Doneru と同じ間隔で読み直す。** */
 let goalCache: GoalRec | null = null;
 let goalAt = 0;
+/* 前回どちらから読めたか。**切り替わった回をログに立てるためだけに持つ。** */
+let goalFrom: string | null = null;
 
 /**
- * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
- * @return {Promise<string>} 鍵。取れなければ空文字
+ * 読んだ4欄を、使える形にする。**半端に読めたものは通さない。**
+ *
+ * 欠けた欄を 0 で埋めない。起点（`startAmount`。25万円ほどの負の数）が
+ * 欠けたまま 0 になると、貯金箱は実際より25万円多い額を出す。
+ * **黙って違う額を出すくらいなら、次の出どころへ落とすほうがいい。**
+ * @param {GoalRaw} d 読んだ4欄
+ * @param {string} from どこから読んだか（ログ用。額は出さない）
+ * @return {GoalRec | null} 使える値。1つでも欠けていれば null
  */
-async function goalRecord(): Promise<GoalRec | null> {
-  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
+function goalRec(d: GoalRaw, from: string): GoalRec | null {
+  const k = String(d.doneruGoalKey ?? "");
+  if (!/^[0-9a-f]{16,64}$/.test(k)) {
+    logger.warn("goal record: bad key", from);
+    return null;
+  }
+  const start = Number(d.startAmount);
+  const superchat = Number(d.superChatAmount);
+  if (!Number.isFinite(start) || !Number.isFinite(superchat)) {
+    logger.warn("goal record: bad amounts", from);
+    return null;
+  }
+  /* 目標額だけは「いま貯まっている額」ではなく、バーの高さ。
+     ここで落とすと貯まっている額まで消えるので、既定に落として通す。 */
+  const goal = Number(d.targetAmount);
+  return {key: k, start, superchat, goal: Number.isFinite(goal) ? goal : 50000};
+}
+
+/**
+ * 貯金箱の元を Firestore（`islandGoal/{id}`）から読む。
+ * **GAS の表が消えたときの控え。**
+ * @return {Promise<GoalRec | null>} 読めた値。書類が無い・欠けていれば null
+ */
+async function goalFromFirestore(): Promise<GoalRec | null> {
+  try {
+    const snap = await GOAL_DOC.get();
+    if (!snap.exists) return null;
+    return goalRec((snap.data() ?? {}) as GoalRaw, "firestore");
+  } catch (e) {
+    logger.warn("goal record read failed (firestore)", String(e));
+    return null;
+  }
+}
+
+/**
+ * 貯金箱の元を GAS の表から読む。**いまはこちらが正**（額が伸びる側）。
+ * @return {Promise<GoalRec | null>} 読めた値。読めなければ null
+ */
+async function goalFromGas(): Promise<GoalRec | null> {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 8000);
   try {
     const r = await fetch(GAS_GOALS, {signal: ctl.signal});
     if (!r.ok) throw new Error(`gas ${r.status}`);
     const j = (await r.json()) as {data?: Json};
-    const d = j.data ?? {};
-    const k = String(d.doneruGoalKey ?? "");
-    if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
-    const n = (v: unknown, def = 0) => {
-      const x = Number(v);
-      return Number.isFinite(x) ? x : def;
-    };
-    goalCache = {
-      key: k,
-      start: n(d.startAmount),
-      superchat: n(d.superChatAmount),
-      goal: n(d.targetAmount, 50000),
-    };
-    goalAt = Date.now();
-    return goalCache;
+    return goalRec((j.data ?? {}) as GoalRaw, "gas");
   } catch (e) {
-    logger.warn("goal record read failed", String(e));
-    // 前に読めた値があれば、そちらを使う。数字が消えるより古いほうがまし
-    return goalCache;
+    logger.warn("goal record read failed (gas)", String(e));
+    return null;
   } finally {
     clearTimeout(t);
   }
 }
 
 /**
- * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * 豚の貯金箱の元（鍵・起点・スパチャ・目標）を1件返す。
+ *
+ * 読む順は **GAS → 無ければ Firestore**。
+ *
+ * **Firestore を先にしない。** スパチャを書き足しているのは配信の OBS で、
+ * 書き先はまだ GAS の表しかない。Firestore を先に読むと、配信で投げ銭が
+ * 入ってもサイトの豚が伸びず、人が写し直すまで止まったままになる。
+ * あやとは旅のあいだ17日つながらないので、その運用は置いていけない。
+ * Firestore が正になるのは `SuperChats` の書き込み先を移したあと（#305 の3）。
+ * **それまでは、額が増える側が正。**
+ *
+ * どちらも読めなかったときに **0 を作らない。** 前に読めた値（`goalCache`）が
+ * あればそれを返し、それも無ければ null を返す。null を受けた `GET /fund` は
+ * `island/state.fund` の集計値に落ち、そこも空なら 503 を返して、
+ * 画面は足代の数字を黙って消す。
+ * **貯金箱が「0円」と出るのは、止まるより悪い**
+ * （`docs/island-standards.md` 10章）。
+ * @return {Promise<GoalRec | null>} 元。1つも読めなければ null
+ */
+async function goalRecord(): Promise<GoalRec | null> {
+  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
+  let from = "gas";
+  let rec = await goalFromGas();
+  if (!rec) {
+    from = "firestore";
+    rec = await goalFromFirestore();
+  }
+  if (!rec) {
+    // 数字が消えるより古いほうがまし。無ければ「無い」と言う（0 にしない）
+    logger.warn("goal record: no source readable");
+    return goalCache;
+  }
+  /* **どちらから読んだかを毎回残す。** 旅のあいだに GAS が切れても
+     誰も見ていないので、「いつ控えに切り替わったか」がログにしか無い。
+     切り替わった回だけは warn にして、grep で1行に絞れるようにする。 */
+  if (goalFrom && goalFrom !== from) {
+    logger.warn(`goal record: source changed ${goalFrom} -> ${from}`);
+  }
+  logger.info(`goal record: from ${from}`);
+  goalFrom = from;
+  goalCache = rec;
+  goalAt = Date.now();
+  return rec;
+}
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ貯金箱の元
+ * （Firestore → GAS）から。
  * @return {Promise<string>} 鍵。取れなければ空文字
  */
 async function doneruKeyOnly(): Promise<string> {
