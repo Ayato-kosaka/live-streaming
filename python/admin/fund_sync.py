@@ -13,9 +13,11 @@
     script: fund_sync
     args:   {}                         … 何が入るか見るだけ（既定）
     args:   {"apply": true}            … 直近3日ぶんを控えに足して、合計を焼く
-    args:   {"days": 400, "apply": true}
-                                       … **全期間。貯金箱の額が動く。**
-                                          流す前に dry-run の差を読むこと
+    args:   {"days": 400}              … **全期間の下見。** 何がいくら増えるか
+    args:   {"days": 400, "apply": true, "sweep": true}
+                                       … **全期間を書く。貯金箱の額が動く。**
+                                          `sweep` が無いと 31日より前は書かない
+                                          （押し間違いで額を動かさないため）
 
 **既定は書かない。** 額の話なので、先に何がいくら増えるかを出す。
 """
@@ -34,6 +36,8 @@ def main() -> None:
     """エントリポイント。"""
     a = args()
     argv = [sys.argv[0], "--days", str(int(a.get("days", 3)))]
+    if a.get("sweep", False):
+        argv.append("--sweep")
     if not a.get("apply", False):
         argv.append("--dry-run")
 

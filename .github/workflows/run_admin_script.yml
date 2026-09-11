@@ -38,7 +38,8 @@ name: 管理スクリプトを実行
 #                   **移行前と1円でも違ったら書かずに 1 で落ちる**
 #   fund_sync     … 掃除を手で流す {"apply": true}。毎晩のぶんは
 #                   schedule_fetch_chat.yml から走る。
-#                   {"days": 400} は遡り。**貯金箱の額が動く**
+#                   {"days":400,"apply":true,"sweep":true} は遡り。
+#                   **貯金箱の額が動く。** sweep が無いと31日より前は書かない
 #   fund_add      … 手で1件足す／消す（スパチャ・支出・目標）。
 #                   {"kind":"spend","day":"2026-09-11","title":"宿代","yen":4000}
 #
