@@ -28,6 +28,21 @@ name: 管理スクリプトを実行
 #   images_migrate      … nordicPhotos → islandStreamEventImage へ移す。
 #                         **書類IDは変えない**（カードのIDがそこから決まる）
 #
+# 豚の貯金箱（docs/nordic-fund.md 9章）。**どれも既定では1行も書かない。**
+# 額の話なので、先に何がいくら動くかを出す。
+#   fund_check    … 移行の下見。**Firestore を1行も触らない。**
+#                   411件を2回流して増えないこと、BigQuery を重ねても増えない
+#                   こと、本番の /island-api/fund と1円まで合うことを見る
+#   fund_migrate  … GAS の SuperChats → islandFundSuperChats（411件）と、
+#                   支出7件・目標1件。{"apply": true} で書く。
+#                   **移行前と1円でも違ったら書かずに 1 で落ちる**
+#   fund_sync     … 掃除を手で流す {"apply": true}。毎晩のぶんは
+#                   schedule_fetch_chat.yml から走る。
+#                   {"days":400,"apply":true,"sweep":true} は遡り。
+#                   **貯金箱の額が動く。** sweep が無いと31日より前は書かない
+#   fund_add      … 手で1件足す／消す（スパチャ・支出・目標）。
+#                   {"kind":"spend","day":"2026-09-11","title":"宿代","yen":4000}
+#
 # BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
 #   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）
 #   fix_stale_retry  … WAITING で止まった配信の next_retry_at を、いまの決まり

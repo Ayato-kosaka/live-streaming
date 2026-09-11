@@ -163,9 +163,10 @@ const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
    止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
    実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
    サイトも配信も同時に追随する。
-   **金額そのものは GAS から取らない。** あちらはスパチャを配信の演出上、
-   半額で数えている。サイトは満額で数える決まりなので(下の /fund の注)、
-   ここから借りるのは鍵だけにする。 */
+   **金額そのものは、いずれ GAS から取らなくなる。** 移し先は Firestore の
+   `island/state.fund.box`(`docs/nordic-fund.md` 9章)。切り替えるのは、
+   両方の額が1円まで合っているのを本番で見てから。それまではここから
+   額も借りる。 */
 const GAS_GOALS =
   "https://script.google.com/macros/s/" +
   "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
@@ -2278,8 +2279,12 @@ export const islandApi = onRequest(
       /* ---------------- 北欧旅の足代 ----------------
          返すのは合計と人数だけ。**個人の金額も順位も返さない**
          (`docs/nordic-fund.md` の決めごと)。
-         スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
-         同じことをサイトでやると、出した人が自分の額を見つけられない。 */
+
+         **スパチャは半分だけ貯金箱に入る。これは仕様。** あやとの言葉
+         「スパチャは投げ銭してくれたお金の半分を貯金箱に入れている」
+         (2026-09-11)。ここに長いあいだ「OBS が半額にしているのは配信の
+         演出上の都合」と書いてあったが、**それが間違いだった**
+         (`docs/nordic-fund.md` 9.1)。 */
       if (method === "GET" && path === "/fund") {
         const [doneru, snap, goal] = await Promise.all([
           doneruNow(),
