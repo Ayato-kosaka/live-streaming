@@ -238,6 +238,7 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
 | 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
 | キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
+| 豚の貯金箱の元（鍵・起点・スパチャ・目標） | GAS の `Goals` 表 | Firestore `islandGoal/2025-10-24` | **GAS が正**（#305）。スパチャを書き足す OBS の書き先がそこしかなく、**額が伸びるのは表の側だけ**だから。サイトは GAS → 無ければ Firestore の順に読む。控えは `goal_migrate` で作る。**表を消した瞬間から控えが正になる。** 順を入れ替えてよくなるのは、`SuperChats` の書き込み先を移したあと |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
 ---
@@ -419,6 +420,9 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 **この22本に無いもの**（コードにはあるが、いま本番に書類が0件）:
 `islandHere`（居場所。すぐ消える）、`streamChatMessages` / `streamChatRuns`
 （配信中だけ溜まる）、`islandDrafts`、`islandVotes`。
+**`islandGoal` はこれから作る**（#305・下の b）。GAS の `Goals` 表の
+**控え**で、表を消しても豚の貯金箱が止まらないようにするためのもの。
+`goal_migrate` を `{"apply": true}` で流すまで0件。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
 
@@ -627,6 +631,46 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 **同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
+
+**`islandGoal/{id}`** — 豚の貯金箱の元の、**控え**（#305）
+
+**サイトの豚（`GET /island-api/fund`）が、GAS の表を読めなかったときに読む
+1書類。** 書類IDは GAS の `Goals` 表の id をそのまま使う（いまは
+`2025-10-24` の1件だけ）。**表を消しても貯金箱が止まらないように置く。**
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `doneruGoalKey` | string | Doneru の goal key。16〜64桁の16進。**形が違うと本番は GAS に落ちる** |
+| `startAmount` | number | この企画の起点。**負の数**（これまでに使った額） |
+| `superChatAmount` | number | スパチャの積み上がり。**合計してから半分**（1件ずつ半分にすると奇数円のぶんだけずれる） |
+| `targetAmount` | number | 目標額（バーの高さ）。欠けていたら 50,000 に落ちる |
+
+    total = doneruAmount + superChatAmount + startAmount
+    given = doneruAmount + superChatAmount   （起点を含まない。人が出した額）
+
+**`doneruAmount` はここに持たない。** Doneru 側が持っている累計を、読むときに
+足す（`functions/src/islandApi.ts` の `doneruNow`）。
+
+**書くのは `python/admin/goal_migrate.py` だけ。** GAS の `Goals` を読んで
+写す。`{"apply": true}` を付けたときだけ書き、書く前に本番の
+`/island-api/fund` と Doneru の累計に突き合わせて、**GAS と1円でも違えば
+書かない。** 流しても本番の見た目は変わらない（控えを作るだけ）。
+
+**`label` はまだここに無い。** 配信の OBS（`app/alertbox`）が GAS から読んで
+いるので、そちらを移すときに一緒に入れる（#305）。
+
+**読む順は GAS → 無ければここ。** 逆にしない。スパチャを書き足しているのは
+配信の OBS で、書き先はまだ GAS の表しかない。ここを先に読ませると、
+**配信で投げ銭が入ってもサイトの豚が伸びなくなる**（人が写し直すまで
+止まったまま）。ここが正になるのは `SuperChats` の書き込み先を移したあと
+（#305 の3）。**それまでは、額が増える側が正。**
+
+**読めなかったときに 0 を返さない。** `goalRecord()` は
+GAS → Firestore → 前に読めた値、の順に落ちる。どれも無ければ
+`island/state.fund` の集計値、それも空なら 503 を返して画面が数字を消す
+（[`island-standards.md`](./island-standards.md) 10章）。
+**どちらから読んだかは毎回ログに出る**（`goal record: from gas` /
+`from firestore`。切り替わった回だけ `source changed …` が warn で立つ）。
 
 #### c. 押した・数えた
 
