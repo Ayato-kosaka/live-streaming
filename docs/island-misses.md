@@ -2354,3 +2354,64 @@ tools/build.sh 3130
 DIST=…/site/.next-3130 node tools/sprites/noemoji.mjs        # 書き出しの絵文字
 node tools/sprites/shot-friends-states.mjs 4130              # 0件/落ちた/3件/30件/95件
 ```
+
+---
+
+### #63 下見の道具が、本番と同じ間違いを持っていた（2026-09-11。配信中のコメント）
+
+配信中のコメントを溜める `collectLiveChat` は、出した日から**一度も溜めて
+いなかった**。9/10 に「Doneru のトークンが切れたまま使われて 401」を直して
+出したが、それでも 0 件のままだった。
+
+**本当の原因は、口の名前の綴りだった。**
+
+    誤  https://www.googleapis.com/youtube/v3/liveChatMessages
+    正  https://www.googleapis.com/youtube/v3/liveChat/messages
+
+`googleapis` の SDK では `youtube.liveChatMessages.list(…)` と書く
+（`functions/src/liveChat.ts` がそれ）。**その「メソッド名」を、そのまま
+REST の「道」に置いていた。** そんな道は無いので、YouTube は 404 を返す。
+
+**なぜ2日も見つからなかったか**
+
+下見の道具（`python/admin/live_probe.py`）が、**同じ綴り間違いを持っていた。**
+Function と同じ順に鍵→トークン→配信探し→コメント読みをなぞる道具なので、
+なぞった結果も同じ 404 になる。**「YouTube 側で読めない」ように見えて、
+こちらの綴りに目が行かなかった。**
+
+道具を本番と同じに作るのは正しい。**ただし、本番から写した間違いも一緒に
+写る。** 写した道具は、本番の間違いを「外の世界の性質」に見せる。
+
+**しかも下見の結論が嘘をついていた。** #4 が 404 でも
+
+    結論: #5 まで通る（配信中なら溜まるはず）
+
+と書いていた。そこまで辿り着いたことを「通った」と数えていて、**HTTP を
+見ていなかった。** 判定が嘘をつくと、直す先を探しに行けない
+（`docs/island-standards.md` 13）。
+
+**対策**
+
+- **道具と本番が同じところで落ちたら、落ちているのは外ではなくこちら**を
+  まず疑う。**同じ人が両方を書いているなら、同じ間違いが両方に入る**
+- **写して作った道具は、写していない実装と突き合わせる。** 今回は
+  `app/alertbox/connectors/YouTubeConnector.ts` が最初から
+  `liveChat/messages` を叩いていて、**あちらは前から動いていた。**
+  動いている実装が隣にあるなら、そこと1行ずつ見比べる
+- **下見の結論は、最後の HTTP を見てから書く。** 手前まで来たことを
+  「通った」にしない
+
+**確かめかた（配信中にしか通せない）**
+
+```
+run_admin_script.yml  script: live_probe        args: {}
+run_admin_script.yml  script: firestore_read    args: {"collection":"streamChatHealth","limit":5}
+run_admin_script.yml  script: clip_cuts         args: {"source":"live","top":5}
+```
+
+直したあとの実測（2026-09-11 13:47〜13:51 UTC・本番の配信 `kyzCpe5Znyk`）:
+
+```
+streamChatHealth  step=溜めた  detail="kyzCpe5Znyk のべ72件"
+clip_cuts         コメント72件 → 切り抜き候補 1本（平均の 4.0倍の山）
+```
