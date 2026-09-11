@@ -19,27 +19,23 @@ import { styles } from "./styles";
 import { FireworkDisplay, RainEffect } from "./components";
 import {
   NotificationData,
-  Viewer,
+  AlertViewer,
   GoalState,
   SuperChatRecord,
   GoalRecord,
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { sendLog } from "@/lib/log";
-import {
-  matchViewerByNickname,
-  normalizeName,
-  normalizeNameNoEmoji,
-} from "./matching.utils";
+import { matchViewerByNickname, toViewers } from "./matching.utils";
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
 import {
-  getTable,
   getById,
   insert,
   getDoneruAmount,
   getAlertboxWss,
+  getAlertboxCharacters,
 } from "./api.utils";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
@@ -64,10 +60,9 @@ export default function AlertBox() {
      という引換券。漏れたら /me から作り直せる（Doneru の鍵は作り直せない）。 */
   const params = useLocalSearchParams<{ source?: string; k?: string }>();
 
-  // 視聴者情報（名前の正規化済み）
-  const [normViewers, setNormViewers] = useState<
-    (Viewer & { norm: string; normNoEmoji: string })[]
-  >([]);
+  /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
+     ので、当てる相手はここで開いて並べ直したもの。 */
+  const [normViewers, setNormViewers] = useState<AlertViewer[]>([]);
 
   // Goals 情報（起動時に取得し currentAmount を算出して保持）
   const [goal, setGoal] = useState<GoalState | null>(null);
@@ -149,26 +144,39 @@ export default function AlertBox() {
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount", { enabledSources });
 
-    // 初期化処理（Viewers / Goals / doneruAmount を取得）
+    /* キャラクターの名簿。**スプレッドシートではない**（#284）。
+       原本は Firestore で、合言葉(`k`)を持っている人だけが読める。
+
+       **名前ごとに1つへ開く。** 1人がチャンネル名と他の呼び名を持って
+       いるので、表が141行あったのと同じ形に戻してから当てる
+       （`matching.utils.ts` はこの形を待っている）。
+
+       **落ちても、ここで止めない。** 名簿はアラートの飾りで、前提ではない。
+       取れなければ通知タイプごとの既定の絵が出るだけで、通知そのものは
+       ちゃんと出る。ひとつの口が落ちた日に、ブタの貯金箱まで消さない
+       （前は Viewers がこけると Goals も doneruAmount も止まっていた）。 */
+    const fetchCharacters = async () => {
+      try {
+        const characters = await getAlertboxCharacters(alertboxId);
+        const normViewers = toViewers(characters);
+        setNormViewers(normViewers);
+        sendLog("AlertBox", sessionId, "fetchCharactersSuccess", {
+          characters: characters.length,
+          names: normViewers.length,
+          /* **絵の無い人は当たっても既定の絵になる。** 数だけ見えるように
+             しておく（名前は出さない。ログは誰でも読める） */
+          withIcon: normViewers.filter((v) => v.iconUrl).length,
+          withVideo: normViewers.filter((v) => v.videoUrl).length,
+        });
+      } catch (error) {
+        // **絵が出ないだけ。** 画面には出さない（配信に映るので）
+        sendLog("AlertBox", sessionId, "fetchCharactersError", { error: String(error) });
+      }
+    };
+
+    // 初期化処理（Goals / doneruAmount を取得）
     const fetchInitialData = async () => {
       try {
-        // 1. Viewers を取得
-        const viewersResponse = await getTable<Viewer[]>("Viewers");
-        if (!viewersResponse.ok) {
-          throw new Error("Failed to fetch Viewers");
-        }
-        const viewers = viewersResponse.data || [];
-        const normViewers = viewers.map((v: Viewer) => ({
-          ...v,
-          norm: normalizeName(v.name),
-          normNoEmoji: normalizeNameNoEmoji(v.name),
-        }));
-        setNormViewers(normViewers);
-        sendLog("AlertBox", sessionId, "fetchViewersSuccess", {
-          viewers,
-          normViewers,
-        });
-
         // 2. Goals を取得（id 固定: 2025-10-24）
         const goalsResponse = await getById<GoalRecord>("Goals", GOAL_ID);
         if (!goalsResponse.ok) {
@@ -198,10 +206,11 @@ export default function AlertBox() {
         // 失敗ログ
         sendLog("AlertBox", sessionId, "initError", { error });
         setError(
-          "初期化に失敗しました。Viewers / Goals / doneruAmount の取得を確認してください。"
+          "初期化に失敗しました。Goals / doneruAmount の取得を確認してください。"
         );
       }
     };
+    fetchCharacters();
     fetchInitialData();
 
     // Initialize connectors based on URL parameter
@@ -386,10 +395,7 @@ export default function AlertBox() {
   const matchedViewer = useCallback(
     (notification: NotificationData | null) => {
       return notification
-        ? (matchViewerByNickname(
-            normViewers,
-            notification.nickname
-          ) as (typeof normViewers)[0])
+        ? matchViewerByNickname(normViewers, notification.nickname)
         : null;
     },
     [normViewers]
@@ -398,15 +404,15 @@ export default function AlertBox() {
   // エフェクト用絵文字
   const emoji = useMemo(() => {
     const viewer = matchedViewer(notification);
-    return viewer?.Emoji || null;
+    return viewer?.emoji || null;
   }, [matchedViewer, notification]);
 
-  // 視聴者のカスタムアイコン URL（存在する場合のみ差し替え）
+  /* 視聴者のキャラクターの絵（当たった人だけ差し替える）。
+     **URL は名簿がそのまま持っている。** 前はドライブの画像IDから
+     `lh3.googleusercontent.com/d/…` を組み立てていたが、絵は置き場へ
+     移したので（#284）、組み立てる相手がもういない。 */
   const iconUrl = useCallback(
-    (n: NotificationData | null) =>
-      n && matchedViewer(n)?.Icon
-        ? "https://lh3.googleusercontent.com/d/" + matchedViewer(n)?.Icon
-        : null,
+    (n: NotificationData | null) => (n ? matchedViewer(n)?.iconUrl ?? null : null),
     [matchedViewer]
   );
 
