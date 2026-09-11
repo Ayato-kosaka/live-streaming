@@ -85,7 +85,7 @@ export const CHAPTERS: Chapter[] = [
     slug: "caucasus",
     name: "コーカサス周遊",
     from: "2025-06-29",
-    to: "",
+    to: "2026-09-11",
     countries: ["azerbaijan", "georgia", "armenia"],
     // 旅に出た日から、ここは「いまいる島」ではなくなる（いまいる島は日付で決まる）。
     // 焼いた字は日付で書き換わらないので、**いつ読んでも本当のこと**だけを書く。
