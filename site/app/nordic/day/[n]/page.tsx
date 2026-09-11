@@ -126,14 +126,19 @@ function daylight(rise: string, set: string) {
   return `${Math.floor(d / 60)}時間${String(d % 60).padStart(2, "0")}分`;
 }
 
-/** その日いる街。日の出を出すのは、朝そこに立つ場所。分からなければ着く先。 */
+/**
+ * その日いる街。**朝そこに立つ場所だけ。着く先で代わりを出さない。**
+ *
+ * 前は、朝の街を持っていなければ「その日どこかで着く街」に落としていた。
+ * 出発の日（9/11）はそれで **カトヴィツェの日の出**が出ていた。あやとは
+ * その日ジョージアにいて、カトヴィツェに降りるのは**翌日の1時5分**。
+ * **その日一度も見ない空の明るさ**を「この日の、明るいうち」として
+ * 出していたことになる。落とすくらいなら、出さない。
+ */
 function sunCity(day: Day) {
   const has = (c?: string) => !!c && SUN_CITIES.includes(c);
-  const legs = day.legs ?? [];
-  if (legs.length === 0) return has(day.city) ? day.city : undefined;
-  const from = cityName(legs[0].from);
-  if (has(from)) return from;
-  return legs.map((l) => cityName(l.to)).find(has);
+  const from = day.legs?.length ? cityName(day.legs[0].from) : day.city;
+  return has(from) ? from : undefined;
 }
 
 /**
