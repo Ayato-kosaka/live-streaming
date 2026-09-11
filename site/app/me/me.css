@@ -710,6 +710,16 @@
   color: var(--ink);
 }
 
+/* 「ほかの呼び名」の札。**中が入力欄1つではないので label にできない**ので、
+   `.dform label span`（ui.css）と同じ見た目をここで作る。
+   `.dlabel` を借りると罫が1本伸びて、上の2つの札とそろわない。 */
+.ch-edit .ch-sub {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+}
+
 .ch-aliases { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 .ch-alias {
   display: inline-flex;
