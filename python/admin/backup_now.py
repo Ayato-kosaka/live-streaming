@@ -8,14 +8,16 @@ ARGS 例:
   {"dry_run": true}     … 何をどれだけ取るかだけ出す（1バイトも書かない）
 """
 
+import json
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from _fs import args  # noqa: E402
 from backup import run  # noqa: E402
 
-a = args()
+# **`_fs` を通さない。** あちらは import した時点で logging.basicConfig を張るので、
+# backup 側のログと二重に出る（下見の実行で実際に全行2回出た）
+a = json.loads(os.getenv("ARGS") or "{}")
 sys.argv = ["run.py"] + (["--dry-run"] if a.get("dry_run") else [])
 raise SystemExit(run.main())

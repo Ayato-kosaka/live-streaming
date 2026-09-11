@@ -44,6 +44,12 @@ KEEP = {
         "毎晩の再実行は7日ぶんだけで、しかも islandDonors の紐付けを通す。"
         "**お金の記録を「たぶん戻る」に賭けない**"
     ),
+    "islandFundSuperChats": (
+        "豚の貯金箱のスパチャの控え。**手で入れたぶん（`manual-…`）と、GAS から"
+        "移した16件が混ざっている。** BigQuery から作り直せるのは片方だけ"
+    ),
+    "islandFundSpends": "貯金箱から出したお金。**あやとが手で入れる。**どこからも作り直せない",
+    "islandFundGoals": "貯金箱の目標。人が決めた数字",
     "islandVisits": "1日1書類の訪問者数。**BigQuery から出せない**（#291 の実測）。過去は数え直せない",
     "islandHearts": "誰が押したかの重複よけ。失うと押し直せて、付箋のハートの数が壊れる。31件しかない",
     "islandPollVotes": "同上（票の重複よけ）",
@@ -62,6 +68,7 @@ SKIP = {
     "rouletteSessions": "ルーレット1回ぶん。その場限り",
     "monthlyReview": "OBS 同期のその場限り。次の月末配信で作り直る",
     "streamChatHealth": "取り込みの健康状態。次の晩に戻る",
+    "islandFundHealth": "毎晩の掃除が通ったかの札（`last` 1書類）。次の晩に書き替わる",
     "islandHere": "いま島にいる人。60秒で消える入れ物",
     "islandVotes": "#171 で口を畳んだ。本番に0件（collection_drop.py の DEAD）",
     "islandDrafts": "本番に0件。入れ物そのものが無い",
