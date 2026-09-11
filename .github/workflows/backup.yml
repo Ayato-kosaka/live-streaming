@@ -1,0 +1,118 @@
+name: 退避（失ったら戻らないものを取る）
+
+# 何を取って何を取らないかは python/backup/plan.py に理由つきで書いてある。
+# 置き場は BigQuery の `island_backup`（asia-northeast1）。**本番は US。**
+# 戻しかたは docs/island-backup.md。
+#
+# ## なぜ 02:00 UTC なのか
+#
+# **取り込みより後ろに置く。** `schedule_fetch_chat.yml` の cron は 20:00 UTC と
+# 書いてあるが、実際に走り出すのは 21:49〜23:32 UTC（rebake.yml の実測）。
+# 焼き直し（rebake）が 01:00 UTC なので、そのさらに後ろ。
+# GitHub の定時実行は2時間ほど遅れるが、02:00 が 04:00 になっても
+# 取り込みの後ろのまま。**1日ぶん古いものを退避し続ける形にしない。**
+#
+# ## 落ちたら分かる
+#
+# **`continue-on-error` をどこにも使っていない。** 落ちたら赤くなる。
+# そのうえで、Actions を開けない旅の途中でも分かるように、1回ぶんの記録を
+# `island_backup.runs` に残している（`run_admin_script.yml` → `backup_status`）。
+#
+# ## 取るだけでは足りないので、毎晩「戻せるか」も試す
+#
+# 退避が壊れていても、取っているあいだは緑のまま気づけない。
+# `drill` の job で、毎晩 Firestore エミュレータへ1コレクション戻して、
+# **件数と中身の指紋が合うか**まで確かめる。**本番には1バイトも書かない。**
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "何をどれだけ取るかだけ出す（1バイトも書かない）"
+        required: false
+        default: false
+        type: boolean
+      drill_collection:
+        description: "戻す試しに使うコレクション"
+        required: false
+        default: islandNotes
+        type: string
+
+# 同時に走らせない。栞（置き場に入っている最新の ingested_at）を
+# 取り合うと、同じ行を二度積む
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  take:
+    name: 取る
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # ここに continue-on-error を付けない。**落ちたら赤くする。**
+      - name: 退避する
+        run: python python/backup/run.py ${{ inputs.dry_run && '--dry-run' || '' }}
+
+  drill:
+    name: 戻せるか試す
+    runs-on: ubuntu-latest
+    # 取ったものを戻すので、取るのが先。**取るのが落ちたらここも走らせない**
+    # （古い世代で緑を出すと「戻せる」が嘘になる）
+    needs: take
+    if: ${{ !inputs.dry_run }}
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # エミュレータは Java で動く
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **本番には書かない。** エミュレータを立てて、そこへ戻して突き合わせる
+      - name: エミュレータへ戻して突き合わせる
+        working-directory: python/admin
+        env:
+          ARGS: '{"collection": "${{ inputs.drill_collection || ''islandNotes'' }}"}'
+        run: python backup_restore_test.py

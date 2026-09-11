@@ -18,3 +18,8 @@ requests>=2.31.0
 
 # Firestore（あやと島の数字の書き込み）
 google-cloud-firestore>=2.16.0
+
+# Cloud Storage（退避。旅の写真の実体と、書き出したものの置き場）
+# python/backup/ が使う。requirements を分けないのは、run_admin_script.yml が
+# ここしか入れないため（下見も戻しも、あの入口から回す）
+google-cloud-storage>=2.14.0
