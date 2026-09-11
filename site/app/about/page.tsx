@@ -14,6 +14,7 @@ import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { GAVE_UP, PROMISE, THAT_DAY, WORDS } from "@/content/aboutWords";
 import { placeWord } from "@/lib/stay";
 import NowPlace from "@/components/home/NowPlace";
 import Say from "@/components/ui/Say";
@@ -54,7 +55,8 @@ export const metadata: Metadata = {
  * ## 積んである順と、その理由
  *
  *   はじめまして … 顔と4行。ここで「何をしている人か」に着地させる
- *   数字 … その4行の裏づけ
+ *   いつまで、やるんだろう … **本人の言葉**（`content/aboutWords.ts`）。なぜまだ続けているか
+ *   数字 … その裏づけ
  *   視聴者さんの声 … こちらの言葉ではなく、来ている人の言葉で言ってもらう
  *   島でやっていること … 3つ。押すとその中身の面へ
  *   ここまでの道のり … 横に倒して指で送る。章（`content/chapters.ts`）で区切る
@@ -298,6 +300,67 @@ export default function AboutPage() {
             <Icon name="right" size={16} className="tile-go" />
           </Link>
         </div>
+      </Panel>
+
+      {/* 本人の言葉。**この面でいちばん新しく、いちばん強い一節。**
+
+          上の「はじめまして」は、この人が何をしている人かまでしか言っていない
+          （日本を出た理由と、いま作っているアプリ）。**なぜまだ続けているのかが
+          1行も無かった。** 数字（620日／747本）はその裏づけであって、理由ではない。
+
+          2026年9月11日、海外に出て丸二年の日に本人が書いた文に、その筋がぜんぶあった。
+          期限を3ヶ月と決めて出て、届かず2年に決め直して、そして**期限そのものを捨てた**。
+          ここを読めば「いつまでやるんだろう」に答えが出る。
+
+          置き場所は「はじめまして」のすぐ下。**数字より上。**
+          上の紙は「3ヶ月で帰るつもりだった」で終わっていて、この段は
+          「でも、3ヶ月経っても」で始まる。あいだに数字の6枡（0.5画面）を挟むと、
+          その「でも」が何を受けているのか分からなくなる。
+          名乗り → **本人の言葉** → 数字（その裏づけ）→ みんなの言葉、の順にする。
+
+          **1字も直さない**（`content/aboutWords.ts`）。数字の入った段があるので、
+          いつ書かれたものかを必ず添える。日付が無いと「1万インストール」が
+          来月には嘘になる。 */}
+      <Panel>
+        <h2>いつまで、やるんだろう</h2>
+        <p className="muted">2026年9月11日、海外に出て丸二年の日に、本人が書いたもの。</p>
+        <div className="awords">
+          <p>{WORDS[0]}</p>
+        </div>
+        {/* 2つ目のアプリの話は、上の段と下の段のあいだに起きたこと。
+            順番を守りたいので、ここに畳んで置く。 */}
+        <div className="folds">
+          <Fold
+            title="そのあいだに、もう1つ作っていた"
+            lead="待っていたのは、収益化という壁"
+          >
+            <div className="awords">
+              {GAVE_UP.map((t, i) => (
+                <p key={i}>{t}</p>
+              ))}
+            </div>
+          </Fold>
+        </div>
+        <div className="awords">
+          {WORDS.slice(1).map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
+        </div>
+        <div className="folds">
+          <Fold
+            title="それでも、二周年は特別な日"
+            lead="あの日の自分に、言ってあげられること"
+          >
+            <div className="awords">
+              {THAT_DAY.map((t, i) => (
+                <p key={i}>{t}</p>
+              ))}
+            </div>
+          </Fold>
+        </div>
+        {/* 最後の1行だけ、囲って出す。この面で、いちばん読んでほしいところ。
+            押せないので厚みは付けない（`docs/island-design.md` 3-3）。 */}
+        <p className="awords-last">{PROMISE}</p>
       </Panel>
 
       {/* 数字は6つ。「毎日休まず配信している人」がいちばん言いたいことなので先頭に置く

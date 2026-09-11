@@ -292,3 +292,50 @@
     transition: none;
   }
 }
+
+/* ───────── 本人の言葉（2026年9月11日の投稿から） ───────── */
+
+/*
+ * 紙の上に貼った、本人の書いた文。**読むだけのところなので、厚みは付けない。**
+ * 左に罫を1本引いて、こちらが書いた文（`.muted` の添え書き）と見分けがつくようにする。
+ * 引用であることを鉤括弧で足さない——文の中に本人の鉤括弧が何度も出てくるので、
+ * 外側にもう一組付けると、どこからどこまでが本人の言葉か読み取れなくなる。
+ */
+.awords {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: var(--bw-2) solid var(--rule);
+}
+.awords p {
+  margin: 0;
+  font-size: var(--fs-body);
+  /* 段が4つ続く。行が詰まっていると読み進められないので、本文より広く取る */
+  line-height: 2;
+  letter-spacing: var(--ls-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+/* 畳みの中に入れたときは、外の罫と二重にならないように内側の余白だけにする */
+.fold .awords {
+  margin-top: 0;
+}
+
+/*
+ * いちばん最後の1行。**この面で、いちばん読んでほしいところ。**
+ * 段のひとつとして流すと、4段目のあとに続く5段目にしか見えない。
+ * 囲って、地の色を変えて、ここで止まるようにする。押せないので厚みは無し。
+ */
+.awords-last {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-2);
+  border: var(--bw-2) dashed var(--rule);
+  background: color-mix(in srgb, var(--marker) 34%, var(--paper));
+  font-size: var(--fs-body);
+  line-height: 1.95;
+  letter-spacing: var(--ls-body);
+  font-weight: 900;
+  color: var(--ink);
+}
