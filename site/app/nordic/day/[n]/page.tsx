@@ -20,7 +20,6 @@ import {
   NORDIC_LOG,
   ROUTE,
   STOP_SEQ,
-  SUN,
   cityCountry,
   cityName,
   dayBySlug,
@@ -33,6 +32,7 @@ import {
   type Leg,
   type NordicSpot,
 } from "@/content/nordic";
+import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -128,11 +128,12 @@ function daylight(rise: string, set: string) {
 
 /** その日いる街。日の出を出すのは、朝そこに立つ場所。分からなければ着く先。 */
 function sunCity(day: Day) {
+  const has = (c?: string) => !!c && SUN_CITIES.includes(c);
   const legs = day.legs ?? [];
-  if (legs.length === 0) return day.city && SUN[day.city] ? day.city : undefined;
+  if (legs.length === 0) return has(day.city) ? day.city : undefined;
   const from = cityName(legs[0].from);
-  if (SUN[from]) return from;
-  return legs.map((l) => cityName(l.to)).find((c) => SUN[c]);
+  if (has(from)) return from;
+  return legs.map((l) => cityName(l.to)).find(has);
 }
 
 /**
@@ -277,8 +278,11 @@ function Hitch({ leg }: { leg: Leg }) {
  *
  * **この企画では、距離より先にここが1日の形を決めている。** 親指を上げて
  * 立てるのは日のあるあいだだけで、9月のバルトはそこが13時間しかない。
- * 値は9月中旬の1つだけ持っている（1週間で15分しか動かないので、
- * 日ごとに持つと同じ数字を11回書くことになる）。
+ *
+ * 値は**その日のもの**を出す（`content/nordicSun.ts`）。前は9月15日の値を
+ * 街ごとに1つ持って「9月中旬の◯◯」と断って出していた。旅が9日で
+ * 終わるあいだは足りていたが、ストックホルムの7泊を日ごとの面に割って
+ * 9月27日まで伸びたので、**最終日は1時間ちがう値を分まで出していた。**
  *
  * **「この日の道」と同じ紙に置く。** 別の紙に分けたら、見出しと紙のふちだけで
  * 90px 増えた（実測）。区間の無い休息日だけ、1枚の紙として立てる。
@@ -313,7 +317,8 @@ function Hours({
             </span>
           </p>
           <p className="ndsun-w">
-            9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}
+            {/* 日付はこの面の見出しにもう出ている。ここで繰り返さない */}
+            この日の{sc}。明るいのは {daylight(sun.rise, sun.set)}
             {hitch ? "。親指を上げられるのは、そのあいだだけ" : ""}
           </p>
         </div>
@@ -346,7 +351,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const hitchLegs = legs.filter((l) => l.hitch);
   const hitch = legs.some((l) => l.move === "hitch");
   const sc = sunCity(day);
-  const sun = sc ? SUN[sc] : undefined;
+  const sun = sunOn(sc, day.date);
   const art = legs[0]?.art ?? day.art;
 
   // 通る街と、寄るかもしれない街。**分けて出す。**
