@@ -245,8 +245,13 @@ def _exp_age(raw) -> str:
 def refresh_and_retake(key: str) -> str:
     """Doneru に取り直させてから、もう一度トークンをもらう。
 
-    `doneruYoutube.ts` に `doneruYoutubeRefreshToken` があるのに、
-    **`chatCapture.ts` はそれを1度も呼んでいない。** 呼べば通るのかを実測する。
+    **2026-09-10 に `chatCapture.ts` も同じことをするようになった**
+    （401 を見たら1度だけ取り直して、同じ問い合わせをやり直す）。
+    ここでなぞるのは、その道が本当に通るかを本番の値で見るため。
+
+    **ここは Python の写しであって、Functions のコードそのものではない。**
+    通ったからといって、TypeScript 側が正しいことの証明にはならない。
+    最後は配信中に `streamChatRuns` が増えるかで見る。
     ここが通れば、直すのはコードのほうで済む。
     """
     req = urllib.request.Request(
@@ -366,8 +371,9 @@ def step3_live(at: str, key: str = "") -> dict:
                      code, "-" if code == 200 else reason_of(body))
             if code != 401:
                 log.warning(
-                    "  ★ 取り直せば通る。"
-                    "chatCapture.ts は doneruYoutubeRefreshToken を呼んでいない")
+                    "  ★ 取り直せば通る。**chatCapture.ts も同じことをする**"
+                    "（2026-09-10 に入れた。401 を見たら1度だけ取り直して"
+                    "やり直す）ので、ここが通れば本番も通る見込み")
                 at = at2
     if code != 200:
         log.error("  → 配信を探せない。ここで止まる（#3）: %s", head(body))
