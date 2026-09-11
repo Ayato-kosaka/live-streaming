@@ -26,6 +26,17 @@
 そのため、はじめの1分と終わりの3分は候補から外してある（`build_stream_peaks.py`
 と同じ理由。「おつかれさま」が重なるのは話の中身ではない）。
 
+## 0分がどこか（**当日ぶんはここを間違えやすい**）
+
+タイムコードは「配信が始まってから何秒か」。起点は `videos.actual_start_time`、
+無ければ YouTube の `liveStreamingDetails.actualStartTime` から取る。
+
+**いちばん古いコメントを0分にしない。** キャッシュ（`streamChatMessages`）は
+`collectLiveChat` が動き出したところから溜まるので、配信の途中から溜まり
+はじめた日は、そこが0分になってしまう。2026-09-11 の配信で実際に
+**2時間18分ずれた。** どちらからも起点が取れなかったときは代用するが、
+**ずれている可能性があることを出力に書く**（黙って出さない）。
+
 ## コメントは、出来事の**あと**に来る
 
 あやと（#153）「その正確な時間っていうのが大体1、2分ずれると思う」。
@@ -97,7 +108,7 @@ def hms(sec: int) -> str:
     return f"{sec // 3600}:{sec % 3600 // 60:02d}:{sec % 60:02d}"
 
 
-def from_bq(video: str | None) -> tuple[str, list[dict]]:
+def from_bq(video: str | None) -> tuple[str, list[dict], str]:
     """BigQuery の `chat_messages`。**配信1本ぶんに絞ってから引く。**"""
     from google.cloud import bigquery
 
@@ -117,7 +128,7 @@ def from_bq(video: str | None) -> tuple[str, list[dict]]:
         """
         rows = list(client.query(sql).result())
         if not rows:
-            return "", []
+            return "", [], ""
         video = rows[0]["video_id"]
 
     # published_at で切ってからでないとテーブル全体を舐める（分割列がそれ）
@@ -141,11 +152,93 @@ def from_bq(video: str | None) -> tuple[str, list[dict]]:
             query_parameters=[bigquery.ScalarQueryParameter("v", "STRING", video)]
         ),
     )
-    return video, [dict(r) for r in job.result()]
+    return video, [dict(r) for r in job.result()], "videos.actual_start_time"
 
 
-def from_firestore(video: str | None) -> tuple[str, list[dict]]:
-    """配信中に溜めたぶん（`streamChatMessages`）。**その日のうちに切るならこちら。**"""
+def start_ms_from_bq(video: str) -> int | None:
+    """`videos.actual_start_time` を epoch ミリ秒で。無ければ None。"""
+    try:
+        from google.cloud import bigquery
+
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+
+        ds = f"{BQ_PROJECT_ID}.{BQ_DATASET}"
+        client = bigquery.Client(project=BQ_PROJECT_ID)
+        sql = f"""
+        SELECT UNIX_MILLIS(actual_start_time) AS ms FROM `{ds}.videos`
+        WHERE video_id = @v AND actual_start_time IS NOT NULL LIMIT 1
+        """
+        job = client.query(
+            sql,
+            job_config=bigquery.QueryJobConfig(
+                query_parameters=[bigquery.ScalarQueryParameter("v", "STRING", video)]
+            ),
+        )
+        rows = list(job.result())
+        return int(rows[0]["ms"]) if rows and rows[0]["ms"] is not None else None
+    except Exception as e:  # 読めないだけ。次の手（YouTube）へ落とす
+        log.info("videos.actual_start_time を読めませんでした: %s", e)
+        return None
+
+
+def start_ms_from_youtube(video: str) -> int | None:
+    """YouTube の `liveStreamingDetails.actualStartTime`。無ければ None。
+
+    **配信当日は BigQuery にまだ行が無い。** Discovery が拾うのは翌朝なので、
+    その日のうちに切りたいときは、こちらしか起点を知らない。
+    """
+    try:
+        from datetime import datetime
+
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from youtube_api.client import (  # noqa: E402
+            execute_api_request,
+            get_youtube_client,
+        )
+
+        yt = get_youtube_client(log)
+        res = execute_api_request(
+            yt.videos().list(part="liveStreamingDetails", id=video), logger=log
+        )
+        items = res.get("items") or []
+        if not items:
+            return None
+        raw = (items[0].get("liveStreamingDetails") or {}).get("actualStartTime")
+        if not raw:
+            return None
+        t = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        return int(t.timestamp() * 1000)
+    except Exception as e:
+        log.info("YouTube から actualStartTime を取れませんでした: %s", e)
+        return None
+
+
+def stream_start_ms(video: str) -> tuple[int | None, str]:
+    """配信が始まった時刻（epoch ミリ秒）と、その出どころ。
+
+    **ここを間違えると、出すタイムコードが全部ずれる。**
+    2026-09-11 の配信で実際に 2時間18分ずれた。キャッシュ（`streamChatMessages`）が
+    配信の途中から溜まりはじめた日で、いちばん古いコメントを0分として
+    数えていたため。溜まりはじめる時刻は `collectLiveChat` が動き出した時刻で、
+    配信の開始とは何の関係もない。
+    """
+    ms = start_ms_from_bq(video)
+    if ms is not None:
+        return ms, "videos.actual_start_time"
+    ms = start_ms_from_youtube(video)
+    if ms is not None:
+        return ms, "YouTube の actualStartTime"
+    return None, ""
+
+
+def from_firestore(video: str | None) -> tuple[str, list[dict], str]:
+    """配信中に溜めたぶん（`streamChatMessages`）。**その日のうちに切るならこちら。**
+
+    3つめに返すのは**起点の出どころ**。空文字なら、配信の開始時刻が
+    どこからも取れずにいちばん古いコメントで代用したという意味で、
+    そのときタイムコードは**丸ごとずれている可能性がある**（呼び元が明記する）。
+    """
     client = db()
     runs = client.collection("streamChatRuns")
 
@@ -156,34 +249,37 @@ def from_firestore(video: str | None) -> tuple[str, list[dict]]:
             reverse=True,
         )
         if not docs:
-            return "", []
+            return "", [], ""
         video = docs[0].id
 
     run = runs.document(video).get()
     if not run.exists:
-        return video, []
-    # 配信の開始時刻は、溜め始めた時刻ではなく**いちばん古いコメント**から取る。
-    # 溜め始めるのは配信が始まってから最大5分後なので、栞の startedAt を
-    # 起点にすると全部のタイムコードがその分ずれる
+        return video, [], ""
     docs = list(
         client.collection("streamChatMessages").where("videoId", "==", video).stream()
     )
     msgs = [d.to_dict() or {} for d in docs]
     msgs = [m for m in msgs if m.get("at")]
     if not msgs:
-        return video, []
-    base = min(int(m["at"]) for m in msgs)
-    return video, sorted(
-        (
-            {
-                "s": (int(m["at"]) - base) // 1000,
-                "a": m.get("name", ""),
-                "t": m.get("text", ""),
-            }
-            for m in msgs
-        ),
-        key=lambda r: r["s"],
-    )
+        return video, [], ""
+
+    # **起点は配信の開始時刻。** 溜め始めた時刻でも、いちばん古いコメントでもない。
+    # 溜め始めるのは `collectLiveChat` が動き出したときで、配信の途中から
+    # 溜まり始めた日はそこが0分になってしまう（2026-09-11 に 2時間18分ずれた）。
+    base, origin = stream_start_ms(video)
+    if base is None:
+        # どちらからも取れなかった。**黙って代用しない。** ここを 0分 とみなすと、
+        # 溜まり始めが遅かった日にずれた数字を、ずれていない顔で出すことになる
+        base = min(int(m["at"]) for m in msgs)
+
+    rows = []
+    for m in msgs:
+        s = (int(m["at"]) - base) // 1000
+        if s < 0:
+            # 開始時刻より前の打刻。起点が正しければ起きないので、混ぜない
+            continue
+        rows.append({"s": s, "a": m.get("name", ""), "t": m.get("text", "")})
+    return video, sorted(rows, key=lambda r: r["s"]), origin
 
 
 def pick(rows: list[dict], sec: int, top: int, lead: int) -> list[dict]:
@@ -273,14 +369,14 @@ def main() -> None:
     if a.get("rows_file"):
         rows = json.loads(open(a["rows_file"], encoding="utf-8").read())
         video = video or "ROWS"
-        used = "rows_file"
+        used, origin = "rows_file", "rows_file の 0秒"
     else:
-        rows, used = [], ""
+        rows, used, origin = [], "", ""
         if src in ("auto", "live"):
-            video, rows = from_firestore(video)
+            video, rows, origin = from_firestore(video)
             used = "streamChatMessages（配信中に溜めたぶん）"
         if not rows and src in ("auto", "archive"):
-            video, rows = from_bq(video if src == "archive" else None)
+            video, rows, origin = from_bq(video if src == "archive" else None)
             used = "BigQuery chat_messages（アーカイブ）"
 
     if not rows:
@@ -291,6 +387,20 @@ def main() -> None:
 
     cuts = pick(rows, sec, top, lead)
     log.info("配信 %s / コメント %d件 / 出どころ %s", video, len(rows), used)
+    if origin:
+        log.info("0分の起点: %s", origin)
+    else:
+        # **黙ってずれた数字を出さない。** 配信の開始時刻がどこからも取れず、
+        # いちばん古いコメントを0分として数えている。溜まり始めが遅かった日は
+        # その遅れぶん、下のタイムコードが丸ごと手前にずれる
+        log.warning(
+            "0分の起点が取れませんでした。**下のタイムコードはずれている"
+            "可能性があります。** いちばん古いコメントを0分として数えています。"
+        )
+        log.warning(
+            "確かめかた: YouTube でその配信を開き、いちばん下のコメントの"
+            "話題が 0:00 付近にあるかを見る。ずれていれば、その差を足す。"
+        )
     log.info("切り抜き候補 %d本（%d秒・山の %d秒前から）", len(cuts), sec, lead)
     if not cuts:
         log.info(

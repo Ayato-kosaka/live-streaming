@@ -1,0 +1,134 @@
+name: 切り抜きを mp4 で作る
+
+# 配信の一部を mp4 に切り出して、成果物（artifact）として持ち帰る。
+# 「どこを切るか」を出すのは `clip_cuts`（run_admin_script.yml）で、
+# **その出力の区間をここに貼ると、実物が落ちてくる。**
+#
+# ここに置いた理由は1つで、**YouTube の Cookie が GitHub Secret にしかない**から。
+# 手元の箱からは、どの player_client を使っても
+# 「Sign in to confirm you're not a bot」で弾かれる（2026-09-11 に実測）。
+#
+# ## Cookie について（**ここを読んでから押す**）
+#
+# `AnimMouse/setup-yt-dlp/cookies@v3` がやるのは
+# `base64 -d > ~/.cache/yt-dlp/youtube/cookies.txt` だけで、**Secret は書き換えない。**
+# 書き換えるのは `cookies/update@v3` のほうで、あれは `GH_PAT` が要る。
+# **このワークフローに update は入れない。**（毎晩の取り込みが持っている
+# Cookie を、こちらが上書きすることは無い）
+#
+# ただし**使えば YouTube 側でも回る。** 新しい Cookie が発行されたとき、
+# Secret に残っている古いほうがいつまで通るかは、こちらからは分からない。
+# 毎晩の取り込み（schedule_fetch_chat.yml）はその Secret で動いていて、
+# 7日つづけて失敗した配信は SKIPPED に落ちて**もう拾われない**
+# （python/fetch_chat_data.py の7日ルール）。
+#
+# だから既定では**切り抜き専用の Cookie**（`YOUTUBE_COOKIES_CLIP`）を使う。
+# 毎晩のぶんと同じものを使うことも選べるが、そのときは毎晩の取り込みと
+# 時間が重ならないようにする（下の「時間帯の見張り」）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      video:
+        description: "YouTube の動画ID（11文字）例: kyzCpe5Znyk"
+        required: true
+        type: string
+      ranges:
+        description: '切り出す区間。カンマ区切りで複数。例: 2:55:20-3:08:20,4:31:20-4:36:00'
+        required: true
+        type: string
+      height:
+        description: "縦の画素数（既定 1080）"
+        required: false
+        default: "1080"
+        type: string
+      cookies:
+        description: "使う Cookie。clip = 切り抜き専用 / nightly = 毎晩の取り込みと同じもの"
+        required: false
+        default: clip
+        type: choice
+        options:
+          - clip
+          - nightly
+
+# **毎晩の取り込み（fetch-chat-*）とは別の群にする。**
+# あちらを待たせない・止めない。こちら同士は1本ずつ
+concurrency:
+  group: clip-make
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      # 毎晩の取り込みと同じ Cookie を使うときだけ、時間帯を見る。
+      # cron は 20:00 UTC だが、実際に走り出すのは 1時間49分〜3時間32分あと
+      # （CLAUDE.md の実測）。**同じ Cookie を2か所で同時に使わない**
+      - name: 時間帯の見張り
+        if: ${{ inputs.cookies == 'nightly' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 10# を付ける。付けないと 0930 が8進数として読まれて落ちる
+          now=$((10#$(date -u +%H%M)))
+          if [ "$now" -ge 1930 ] || [ "$now" -le 30 ]; then
+            echo "::error::いまは毎晩の取り込みが走る時間帯です（UTC $now）。"
+            echo "::error::時間をずらすか、cookies を clip にしてください。"
+            exit 1
+          fi
+          echo "UTC $now。毎晩の取り込みの時間帯からは外れています"
+
+      - name: Cookie があるかを見る
+        shell: bash
+        env:
+          # 値はログに出さない。**空かどうかだけ**を見る
+          CK: ${{ inputs.cookies == 'nightly' && secrets.YOUTUBE_COOKIES || secrets.YOUTUBE_COOKIES_CLIP }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CK}" ]; then
+            echo "::error::Cookie（${{ inputs.cookies }}）が入っていません。"
+            echo "::error::切り抜き専用のものを作るときは、捨ててよい YouTube アカウントで"
+            echo "::error::cookies.txt を出し、base64 -w 0 して Secret"
+            echo "::error::YOUTUBE_COOKIES_CLIP に入れてください。"
+            exit 1
+          fi
+          echo "Cookie（${{ inputs.cookies }}）は入っています"
+
+      - name: yt-dlp と ffmpeg を用意
+        uses: AnimMouse/setup-yt-dlp@v3
+
+      # **読むだけ。** ここは cookies.txt を置くだけで、Secret には触らない。
+      # 書き戻す `cookies/update@v3` は入れない
+      - name: YouTube の Cookie を置く
+        uses: AnimMouse/setup-yt-dlp/cookies@v3
+        with:
+          cookies: ${{ inputs.cookies == 'nightly' && secrets.YOUTUBE_COOKIES || secrets.YOUTUBE_COOKIES_CLIP }}
+
+      - name: 切り出す
+        id: cut
+        shell: bash
+        env:
+          VIDEO: ${{ inputs.video }}
+          RANGES: ${{ inputs.ranges }}
+          HEIGHT: ${{ inputs.height }}
+          OUT: out
+        run: bash tools/clip/make.sh
+
+      # **切り出しが赤くても上げる。** 3本頼んで2本が良ければ、その2本は
+      # 持ち帰れたほうがいい。赤いままにするのは、気づかずに使わないため
+      - name: 持ち帰れるようにする
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: clip-${{ inputs.video }}-${{ github.run_id }}
+          path: out/*.mp4
+          # 切り出しが落ちたときは out/ が空になる。ここまで赤くすると
+          # **本当の理由（Cookie・区間）が2つめの赤に埋もれる**ので、警告に留める
+          if-no-files-found: warn
+          retention-days: 7
