@@ -18,3 +18,10 @@ requests>=2.31.0
 
 # Firestore（あやと島の数字の書き込み）
 google-cloud-firestore>=2.16.0
+
+# Firebase Storage（キャラクターの絵の置き場・#284）
+google-cloud-storage>=2.14.0
+
+# 画像の縮小（キャラクターの絵を幅ごとに焼く）。
+# **ドライブは `=s256` を勝手に作ってくれていたが、Storage はやってくれない。**
+Pillow>=10.0.0
