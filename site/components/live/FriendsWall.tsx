@@ -78,10 +78,17 @@ function useOnIslandToday(): Map<string, string> {
  * **持っていない人の欄を、それらしい言葉で埋めない。** 欄ごと出さない。
  * 誰にでも出せるのは、絵と、絵を持ち帰る道と、もらったカード。
  */
-/** 絵の役どころと、画面に出す名前。**落とすファイル名にも使う。** */
+/**
+ * 絵の役どころ。画面に出す名前と、落とすファイルに付ける名前。
+ *
+ * **ファイル名のほうは日本語にしない。** `<a download>` に日本語が1文字でも
+ * 入っていると、Chrome は名前ごと捨てて `download`（拡張子なし）にする
+ * （`lib/saveFile.ts` に実測）。番号だけは残るので、何枚か落としても
+ * 混ざらない。
+ */
 const ROLES = [
-  ["plain", "背景なし"],
-  ["scene", "背景あり"],
+  ["plain", "背景なし", "nobg"],
+  ["scene", "背景あり", "bg"],
 ] as const;
 
 export default function FriendsWall({ plans }: { plans: PlanDays }) {
@@ -193,7 +200,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               <dt>絵を持ち帰る</dt>
               <dd>
                 <div className="rzk-gets">
-                  {ROLES.map(([role, label]) => {
+                  {ROLES.map(([role, label, file]) => {
                     const url = take(role);
                     if (!url) return null;
                     return (
@@ -202,9 +209,9 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                         className="rzk-get"
                         key={role}
                         onClick={() =>
-                          // 落ちた先で見分けが付く名前にする。役どころは
-                          // 画面と同じ日本語（`plain` では何のことか分からない）
-                          saveFile(url, saveName(`${name ?? `No.${at + 1}`}-${label}`, url))
+                          // 落ちた先で見分けが付く名前にする。名前は入れない
+                          // （日本語だと Chrome が名前ごと捨てる。`saveFile.ts`）
+                          saveFile(url, saveName(`ayato-island-${at + 1}-${file}`, url))
                         }
                       >
                         <Icon name="download" size={14} />

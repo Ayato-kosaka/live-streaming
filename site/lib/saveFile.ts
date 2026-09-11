@@ -31,7 +31,22 @@ export async function saveFile(url: string, name: string): Promise<void> {
 }
 
 /**
- * 落とすときのファイル名。**拡張子は元の URL から取る。**
+ * 落とすときのファイル名。
+ *
+ * ## 日本語を入れない
+ *
+ * `<a download>` に日本語が1文字でも入っていると、**Chrome は名前ごと
+ * 捨てて `download`（拡張子なし）にする。** 実測:
+ *
+ *     "ascii-plain.png"     → ascii-plain.png
+ *     "No.1-背景なし.png"    → download
+ *     "No1-背景.png"         → download
+ *
+ * 拡張子まで落ちるので、落とした人は何のファイルか分からなくなる。
+ * 名前（YouTube のチャンネル名）もここに入れない——**人の名前は
+ * たいてい日本語**なので、入れた人だけ `download` になる。
+ *
+ * ## 拡張子は元の URL から取る
  *
  * 置き場に入っているのは元の絵そのままなので、png のことも jpeg のことも
  * ある（背景ありは透明を持たないので jpeg で焼いてある）。決め打つと、
@@ -39,10 +54,9 @@ export async function saveFile(url: string, name: string): Promise<void> {
  */
 export function saveName(base: string, url: string): string {
   const m = /\.(png|jpe?g|webp|gif)(?:\?|$)/i.exec(decodeURIComponent(url));
-  /* 名前は人が付けたものが入る（YouTube のチャンネル名）。**そのまま
-     ファイル名にしない。** `/` が入っていると、落ちる先が変わったり
-     名前が切れたりする。空になったら番号だけの名前になるので、
-     呼ぶ側が「No.5」のような代わりを渡している。 */
-  const safe = base.replace(/[\\/:*?"<>|]/g, "-").trim() || "character";
-  return `${safe}.${(m?.[1] ?? "png").toLowerCase()}`;
+  /* ASCII の英数と `.-_` だけ残す。日本語が混ざると名前ごと捨てられる
+     （上の実測）ので、**置き換えるのではなく落とす。** 全部落ちたら
+     呼ぶ側の渡した名前が日本語だけだったということなので、既定の名前にする。 */
+  const safe = base.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return `${safe || "ayato-island"}.${(m?.[1] ?? "png").toLowerCase()}`;
 }
