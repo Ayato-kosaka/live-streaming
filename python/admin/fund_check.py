@@ -121,12 +121,23 @@ def main() -> int:
         log.info("2回流しても1件も増えませんでした")
 
     # ---- 3. BigQuery を重ねる ----
+    # **鍵が無いのと、SQL が壊れているのを、同じ扱いにしない。**
+    # 一度これで隠れた。手元は鍵が無いので DefaultCredentialsError になり、
+    # 本番では `AS at`（BigQuery の予約語）で BadRequest になっていたのに、
+    # どちらも「引けませんでした」の警告1行で通していた。
+    # **SQL が壊れていたら毎晩ぜんぶ落ちる。** 警告ではなく落とす。
     project = os.getenv("BQ_PROJECT_ID") or ""
     try:
         bq = fb.bq_superchats(project, "youtube_chat", days) if project else []
-    except Exception as e:  # noqa: BLE001  鍵が無いだけのこともある
-        log.warning("BigQuery を引けませんでした（3 は飛ばします）: %s", type(e).__name__)
-        bq = None
+    except Exception as e:  # noqa: BLE001
+        name = type(e).__name__
+        if "Credential" in name or "DefaultCredentials" in name:
+            log.warning("鍵が無いので 3 は飛ばします: %s", name)
+            bq = None
+        else:
+            log.error("**BigQuery が引けません（SQL が壊れている）**: %s: %s", name, e)
+            log.error("このまま毎晩の掃除を回すと、漏れが1件も埋まらない")
+            return 1
     if bq is not None:
         have = fake.docs.get(fb.C_SUPERCHAT, {})
         dup = sum(1 for doc, _ in bq if doc in have)

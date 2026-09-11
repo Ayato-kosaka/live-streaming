@@ -324,13 +324,17 @@ def gas_superchats() -> list:
     return out
 
 
+# **`at` を列の名前にしない。** BigQuery の予約語（`AT TIME ZONE`）なので、
+# `AS at` と書くと `Unexpected keyword AT` で落ちる。**構文エラーなので、
+# 毎晩ぜんぶ落ちる**（2026-09-11 に本番の fund_check で見つけた。手元は鍵が
+# 無くて `DefaultCredentialsError` に化けていたので、そこでは出なかった）。
 BQ_PAID_SQL = """
 SELECT
   event_id,
   purchase_amount_text AS amt,
   SAFE_CAST(REGEXP_REPLACE(purchase_amount_text, r'[^0-9]', '') AS INT64) AS yen,
-  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', published_at, 'Asia/Tokyo') AS at,
-  FORMAT_TIMESTAMP('%Y-%m-%d', published_at, 'Asia/Tokyo') AS day,
+  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', published_at, 'Asia/Tokyo') AS at_iso,
+  FORMAT_TIMESTAMP('%Y-%m-%d', published_at, 'Asia/Tokyo') AS jst_day,
   author_name AS who
 FROM `{p}.{d}.chat_messages`
 WHERE event_type = 'PAID'
@@ -375,8 +379,8 @@ def bq_superchats(project: str, dataset: str, days: int) -> list:
                 doc,
                 {
                     "yen": yen,
-                    "at": r["at"],
-                    "day": r["day"],
+                    "at": r["at_iso"],
+                    "day": r["jst_day"],
                     "who": str(r["who"] or ""),
                     "currency": "円",
                     "src": "bigquery",
