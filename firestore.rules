@@ -215,9 +215,9 @@ service cloud.firestore {
     match /nordicPhotos/{docId} { allow read, write: if false; }
     match /nordicDays/{docId} { allow read, write: if false; }
     /* 旅の「その日に起きたこと」(docs/nordic-depart.md)。
-       書けるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
-       ここを開けると、書けるのは誰かの判定もここに書くことになる。
-       あやとかどうかを見るところを2つに増やさない。 */
+       **読み書きの口はもう無い。** 日記はリポジトリに焼く形に変えた
+       (`site/content/nordic.ts` の NORDIC_LOG)。書類は残してあるので、
+       閉じたままにする。**開けない。** */
     match /nordicLog/{docId} { allow read, write: if false; }
 
     /* 豚の貯金箱(docs/nordic-fund.md 9章)。**1件ずつは絶対に開けない。**

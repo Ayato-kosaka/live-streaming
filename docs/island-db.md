@@ -418,7 +418,9 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 
 **この22本に無いもの**（コードにはあるが、いま本番に書類が0件）:
 `islandHere`（居場所。すぐ消える）、`streamChatMessages` / `streamChatRuns`
-（配信中だけ溜まる）、`nordicLog`、`islandDrafts`、`islandVotes`。
+（配信中だけ溜まる）、`islandDrafts`、`islandVotes`。
+`nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
+（書類は残してある。下の表を見る）。
 
 #### a. 人
 
@@ -728,7 +730,7 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 | `nordicDays` | 6件 | もう読んでいない。その日いた人は `islandTips` から引く |
 | `islandDrafts` | **無い**（0件） | 移すものが無かった（#171） |
 | `islandVotes` | **無い** | 前の版のこの文書は「13件残してある」と書いていた。**いま本番に無い** |
-| `nordicLog` | **無い**（0件） | 口はまだ動いている。旅が始まれば書かれる |
+| `nordicLog` | 1件（`day-depart`） | **口は外した。**日記は `site/content/nordic.ts` の `NORDIC_LOG` に焼く。入れ物と中身は残してある |
 
 `islandIdeas` に入っている欄（もう書かれない）:
 `text`（提案・200字）/ `name`（名乗った名前）/ `uid` / `cid` /

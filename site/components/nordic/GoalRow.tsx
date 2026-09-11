@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { postNordicArrived, postNordicEnded } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useOwner } from "@/lib/auth";
 import { loadState } from "@/lib/liveStats";
-import { useOwner } from "./log";
 import { planOver, tripDate } from "./where";
 
 /**

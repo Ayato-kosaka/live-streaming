@@ -938,29 +938,6 @@ export const moveCard = (id: string, place: CardPlace, token: string) =>
   });
 
 
-/* ---------------- 北欧旅の、その日に起きたこと ----------------
-   `content/nordic.ts` の `NORDIC_LOG` は Git にあって、直すには commit して
-   Hosting を手で起動しないと出ない。**旅の最中のあやとには、それは回らない。**
-   だから旅のあいだは、ここから読む（`docs/nordic-depart.md`）。
-
-   **読むだけ。** 入れるのは「管理スクリプトを実行」の `nordic_log`
-   （`python/admin/nordic_log.py`）。書く口（`POST /nordic/log`）は
-   Functions に残してあるが、画面からは叩かない。 */
-
-/** 1日ぶんの「起きたこと」。`day` は旅程表の行の id（`day-1` `day-depart`）。 */
-export type NordicLogEntry = {
-  day: string;
-  /** その日が実際に何日だったか(YYYY-MM-DD)。あとから入る事実 */
-  date?: string;
-  /** 何が起きたか。スマホから打つので短い */
-  body: string;
-  /** その日の配信。YouTube の videoId */
-  video?: string;
-  at?: number;
-};
-
-export const getNordicLog = () => req<{ log: NordicLogEntry[] }>("/nordic/log");
-
 /**
  * ストックホルムに着いた、を記録する。**あやとだけ。**
  *

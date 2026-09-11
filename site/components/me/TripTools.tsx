@@ -6,6 +6,7 @@ import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { TRIP_PLACES, tripCity } from "@/content/tripPlaces";
 import ReadAgain from "./ReadAgain";
+
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
    1バイトも減らない。旅の道具はあやとの画面にしか降りてこない。 */
@@ -14,7 +15,8 @@ import Icon from "@/components/ui/Icon";
 /* その日に起きたことを書く欄（`TripLog`）は、ここにあった。**外した**
    （2026-09-10）。旅の最中は、あやとが秘書に一言送って、そこから整えて
    焼く。書く口を2つ持つと、片方が古くなる。
-   入れる道は `python/admin/nordic_log.py`（「管理スクリプトを実行」から）。 */
+   入れる先は `site/content/nordic.ts` の `NORDIC_LOG`（焼き込み）。 */
+
 
 /** 島の景色。`docs/island-world.md` 1.3 の3つ。サーバー側の `ISLAND_THEMES` と同じ。 */
 const THEME_NAME: [string, string][] = [

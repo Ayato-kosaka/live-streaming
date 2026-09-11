@@ -529,7 +529,7 @@ GAS の `Goals` テーブル（id は `2025-10-24` で固定）から来る。
 ### 提案4 着いたら、区間カードに「起きたこと」が入る
 
 **重さ: 小（画面）＋ 運用** / 触るファイル:
-`site/content/nordicLog.ts`（新規・手書き） `site/components/nordic/RouteLegs.tsx`
+`site/content/nordic.ts` の `NORDIC_LOG`（手書き） `site/components/nordic/RouteLegs.tsx`
 `python/island_set_current.py` `.github/workflows/island_update.yml`
 
 区間カードの席は、じつは3つ目がある。**旅が終わってから入る席。**
@@ -769,7 +769,7 @@ POST /island-api/fork/nordic-vilnius-riga/vote      { option: "stop", cid }
 | 集まった合計 | Firestore `island/state.fund` | **自動**。Doneru API ＋ BigQuery | 毎日 |
 | どの区間まで埋まったか | どこにも持たない | 合計を区間の値段に上から流して**計算する** | — |
 | いまどこに着いたか | Firestore `island/state.current` | `island_update.yml` で手動 | 街に着くたび（10回） |
-| 区間で起きたこと | `site/content/nordicLog.ts` | Git（手書き） | 区間ごと（10回） |
+| その日に起きたこと | `site/content/nordic.ts` の `NORDIC_LOG` | あやとが送ってきたものを、受け取った側が焼く | 日ごと |
 | 道しるべ（意見） | Firestore `islandIdeas`（`【区間:xxx】`） | 視聴者さん | 随時 |
 
 ### Firestore に足すもの
@@ -801,7 +801,7 @@ island/state
 
 「出した名前を残したい人」への道は、旅が始まって運用が回ってから足す。
 やるなら、Doneru のメッセージに区間名を書いてもらって、あやとが手で拾って
-`nordicLog.ts` に書く形（1区間1回）。**自動照合は作らない。**
+`NORDIC_LOG` に書く形（1区間1回）。**自動照合は作らない。**
 
 この順にする理由はもう1つある。**いきなり金額と名前を結ぶと、金が名前を買う構図になる。**
 先に「言葉を置いた人の名前が並ぶ」状態を作っておけば、あとから金の名前が入っても、
@@ -1013,7 +1013,8 @@ island/state
 ### 運用のこと
 
 14. **街に着いたら「いま」を更新する**（`island_update.yml` を回す）。10回。誰がやるか
-15. **区間で起きたことを2〜3行書く**（`nordicLog.ts`）。10回。旅の途中で書けるか、帰ってからか
+15. **その日に起きたことを2〜3行書く**（`NORDIC_LOG`）。あやとが送ってきたものを、
+    受け取った側が焼いて出す（`docs/nordic-depart.md` 2章）
 16. **OBS の1枚を出すか**（提案7）。出すなら、豚の貯金箱と並べるか、差し替えるか
 
 ---

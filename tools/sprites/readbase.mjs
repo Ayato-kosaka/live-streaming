@@ -83,7 +83,6 @@ export async function newCtx(b, { admin = true, mode = "ok", memo = null } = {})
     }
     const json = (body, status = 200) =>
       r.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
-    if (path === "/nordic/log") return json({ log: [] });
     /* **本番と同じで、あやと以外には 403 を返す**（`functions/src/remote.ts`）。
        ここを 200 にすると、視聴者さんにコントローラーが丸ごと写る */
     if (path === "/remote/session" || path === "/remote") {

@@ -14,8 +14,6 @@ name: 管理スクリプトを実行
 # 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
 # ここはそれが使えないときの逃げ道。
 #   nordic_supporter … その日いた人を手で足す {"day":"2026-09-12","channel":"UC…"}
-#   nordic_log       … その日に起きたこと     {"day":"day-3","body":"…"}
-#                      旅のあと Git へ焼き戻す {"op":"export"}
 #   nordic_arrived   … 着いた／取り消す       {"date":"2026-09-19"}
 #
 # カードを北欧旅から切り離して企画に寄せるぶん（#202）。

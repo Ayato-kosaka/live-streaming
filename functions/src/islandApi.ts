@@ -106,13 +106,14 @@ const NPHOTOS = db.collection("nordicPhotos");
    (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
    旅で時差が変わるたびに1日が2つに割れていた(#201)。
    入れ物は消さない（全部動いてから消す）が、読む側はここには居ない。 */
-/* 北欧旅の「その日に起きたこと」(docs/nordic-depart.md)。
-   `site/content/nordic.ts` の NORDIC_LOG は Git にあって、直すには
-   commit して Hosting を手で起動しないと出ない。**ヒッチハイクの途中の
-   あやとには、それは回らない。** 旅のあいだはここに書いて、画面が
-   出てから読む。旅が終わったら、ここの中身を Git に焼き戻す。
-   ドキュメントの id は旅程表の行の id(`day-1` `day-depart`)。 */
-const NLOG = db.collection("nordicLog");
+/* 北欧旅の「その日に起きたこと」は、**ここには無い**(docs/nordic-depart.md)。
+   `nordicLog` は**あやと本人が旅先のスマホから自分で打つ**ために置いた。
+   commit と Hosting の手動起動が道の上では回らない、というのが理由。
+
+   **書く人が変わった。** いまはあやとが送ってきた一言を、受け取った側が
+   `site/content/nordic.ts` の NORDIC_LOG に焼いて本番へ出す。打つ本人が
+   ヒッチハイクをしていないので commit も deploy も回る。
+   Firestore を経由する理由のほうが無くなったので、読み書きの口を外した。 */
 
 /* 配信のルーレット(#164)。コントローラー(あやとの手元)と
    表示(スマホ版 OBS)を繋ぐ、1人1つの入れ物。
@@ -152,12 +153,6 @@ const ISLAND_THEMES = ["georgia", "nordic", "desert"];
    別の行まで書き換わる。 */
 const MAX_WEEK_LINE = 120;
 const MAX_WEEK_LINES = 8;
-
-/** その日に起きたこと。**スマホの親指で打つものなので、長さで縛る。**
-   長い文章は配信で話すものであって、ここに置くものではない。 */
-const MAX_LOG_BODY = 400;
-/** 1日に書き直せる回数。書き直しは普通に起きるので、写真より緩くする。 */
-const LOGS_PER_DAY = 60;
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -2108,98 +2103,6 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 北欧旅の、その日に起きたこと ----------------
-         書けるのはあやとだけ。読むのは誰でも(docs/nordic-depart.md)。
-
-         **なぜ Git ではなくここか。** `site/content/nordic.ts` の NORDIC_LOG は
-         直すのに commit と Hosting の手動起動が要る。旅の最中のあやとは
-         ヒッチハイクをしていて、それは回らない。ここなら、その日の宿から
-         スマホで1回書けば出る。旅が終わったら Git に焼き戻す。 */
-      if (method === "GET" && path === "/nordic/log") {
-        const snap = await NLOG.orderBy("at", "asc").limit(60).get();
-        res.set(
-          "Cache-Control",
-          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
-        );
-        res.json({
-          log: snap.docs.map((d) => {
-            const v = d.data() ?? {};
-            return {
-              day: d.id,
-              date: isDay(v.date) ? v.date : undefined,
-              body: String(v.body ?? ""),
-              video: (v.video as string) || undefined,
-              at: Number(v.at) || 0,
-            };
-          }),
-        });
-        return;
-      }
-
-      if (method === "POST" && path === "/nordic/log") {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        /* 旅程表の行の id。字の形だけを見る。ここに旅程表そのものを
-           持ってくると、Git を直すたびに Functions も出し直しになる。 */
-        const day = String(body.day ?? "");
-        if (!/^day-[a-z0-9-]{1,16}$/.test(day)) {
-          res.status(400).json({error: "bad day"});
-          return;
-        }
-        /* 改行だけは残す。2〜3行で書くものなので、全部つながると読めない。
-           空行が続くのは事故なので1つに畳む。 */
-        const text = String(body.body ?? "")
-          .replace(/[^\S\n]+/g, " ")
-          .replace(/\n{3,}/g, "\n\n")
-          .split("\n")
-          .map((ln) => clean(ln, MAX_LOG_BODY))
-          .join("\n")
-          .trim()
-          .slice(0, MAX_LOG_BODY);
-        if (!text) {
-          res.status(400).json({error: "no body"});
-          return;
-        }
-        const date = isDay(body.date) ? body.date : undefined;
-        /* YouTube の videoId。URL を貼られても id だけ拾う。
-           取れなければ**入れない**。壊れた見に行き先を出すより、出さないほうがいい。 */
-        const vid = /([A-Za-z0-9_-]{11})/.exec(String(body.video ?? ""));
-        if (!(await takeQuota(uid, "nlog", LOGS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const ref = NLOG.doc(day);
-        const rec: Json = {body: text, uid, updatedAt: Date.now()};
-        if (date) rec.date = date;
-        rec.video = vid ? vid[1] : null;
-        /* `at` は**書いた順**で、並び順に使っている(GET /nordic/log)。
-           書き直すたびに入れ替えると、直した日だけが日記のいちばん下に
-           落ちる。初めて書いたときだけ入れる。 */
-        if (!(await ref.get()).exists) rec.at = Date.now();
-        await ref.set(rec, {merge: true});
-        res.set("Cache-Control", "no-store");
-        res.json({
-          log: {day, date, body: text, video: vid ? vid[1] : undefined},
-        });
-        return;
-      }
-
-      const logMatch = path.match(/^\/nordic\/log\/(day-[a-z0-9-]{1,16})$/);
-      if (method === "DELETE" && logMatch) {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        await NLOG.doc(logMatch[1]).delete();
-        res.set("Cache-Control", "no-store");
-        res.json({day: logMatch[1]});
-        return;
-      }
-
       /* 北欧旅の、日付で言える2つの事実。**着いた日と、旅が終わった日は別。**
          あやとの言葉(2026-09-06)「ストックホルム出るまでが北欧旅です」。
          9/20 に着いて、そこから7泊して 9/27 に発つ。着いた日で企画を
@@ -2234,7 +2137,7 @@ export const islandApi = onRequest(
          ここは GitHub Actions の「あやと島の『いま』を更新」と
          `python/admin/firestore_write.py` からしか動かせなかった。
          ヒッチハイクの途中でワークフローを起動するのは回らないので、
-         その日のことを書く口(`/nordic/log`)と同じ場所に置く。
+         スマホから1回押せば出る口をここに置いた。
 
          **`week`(今週の予定)は、送られてきたときだけ書く。** 何行もある字なので
          親指で全部打ち直すものではないが、**消せないのはもっと悪い。**

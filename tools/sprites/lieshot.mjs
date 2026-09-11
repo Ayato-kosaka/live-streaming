@@ -9,12 +9,16 @@
  *   みんなの付箋（`/board`）・旅の道具（`/me/desk`）——ここが最後の4件。
  *
  * `/me/desk` は道具を1つだけ開く面なので、**どの道具を開くかを
- * `DESKTOOL` で渡す**（`photo` / `log` / `place`。既定は `photo`）。
+ * `DESKTOOL` で渡す**（`photo` / `place`。既定は `photo`）。
  * 端末が覚えている札（`ayato-desk-tool`）に置いて開く。
  *
  *   cd site && NEXT_DIST_DIR=.next-lie npx next build
  *   python3 -m http.server 4710 --directory site/.next-lie &
  *   SPORT=4710 OUT=/tmp/lie node tools/sprites/lieshot.mjs
+ *
+ * **その日の話は、もう落ちない。** 日誌は Firestore をやめて焼き込みに変えた
+ * （`site/content/nordic.ts` の `NORDIC_LOG`）ので、読めなくなる口が無い。
+ * 撮るのは残してある（落としても消えないことを見るため）。
  *
  * 落とし方は3通り（`readbase.mjs`）。**`abort` だけで判定しない。**
  * 本命は「45秒返さない」で、`fetch` は自分では諦めないのでそこが一番出る。
@@ -79,11 +83,6 @@ const EVENTS = [
   { id: "e1", title: "Food & Wine Fest @ ムタツミンダ公園", date: "2026-09-11" },
   { id: "e2", title: "夜の街歩き", date: "2026-09-11" },
 ];
-const LOG = [
-  { day: "day-1", date: "2026-09-12", body: "2台目で停まってくれた。", at: 1757000002000 },
-  { day: "day-4", date: "2026-09-15", body: "国境の手前で降ろされた。\n3時間立った。", at: 1757000003000 },
-];
-
 /**
  * `EMPTYCARDS=1` … カードの口が**読めた上で0枚**を返す（旅に出る前がこれ）。
  *
@@ -106,7 +105,6 @@ async function seed(ctx) {
       r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
     if (path === "/nordic/photos") return json({ days: PHOTO_DAYS });
     if (path === "/cards") return json({ cards: EMPTY_CARDS ? [] : CARDS });
-    if (path === "/nordic/log") return json({ log: LOG });
     if (path === "/nextplans") return json({ plans: [MY_PLAN], more: false, next: null });
     if (path === "/state") return json({ current: CURRENT, stats: {}, residents: [] });
     if (path.startsWith("/streamevents")) return json({ day: "", events: EVENTS });
@@ -155,7 +153,7 @@ const peek = (p) =>
       写真のマス: document.querySelectorAll(".akd-tile").length,
       // 旅の面
       写真の入口: one(".nph-go .tile-text i"),
-      旅程表の印: document.querySelectorAll(".nday[data-log]").length,
+      旅程表の印: document.querySelectorAll(".nday[data-log], .ndayc[data-log]").length,
       // 企画を書く道具
       書く欄: document.querySelectorAll(".dform textarea, .dform input").length,
       出す押しどころ: txt(".me-save"),
@@ -190,11 +188,10 @@ const peek = (p) =>
       写真を選ぶ: [...document.querySelectorAll(".nph-post-go")].map(
         (e) => `${e.textContent.trim()}${e.disabled ? "（押せない）" : ""}`,
       ),
-      // その日の話
+      // その日の話。**焼き込みなので、落ちても消えない**
       その日の話: document.querySelectorAll("#was").length,
-      まだ書いていません: txt("#was .muted"),
-      書き出しの札: document.querySelectorAll(".nlog-seed").length,
-      入れる: txt("#was .nph-post-go"),
+      日誌の書く欄: document.querySelectorAll("#was textarea, #was input").length,
+      旅程の街の札: document.querySelectorAll(".nlog-seed").length,
       高さ: Math.round(document.body.scrollHeight),
       横あふれ: document.body.scrollWidth > document.documentElement.clientWidth,
     };
@@ -203,7 +200,6 @@ const peek = (p) =>
 /** 机で開く道具ごとの、押す札の名前（`components/me/ReadAgain.tsx` の `what`） */
 const DESK_WORD = {
   photo: "この日の企画",
-  log: "その日の話",
   place: "島に出ている場所",
   sticky: "付箋",
   plan: "企画",
@@ -307,13 +303,6 @@ async function mkCtx(b, { admin = true, memo = true } = {}) {
       localStorage.setItem("ayato-island-myplans", JSON.stringify(["p-mine"]));
       // 机は道具を1つだけ開く面。前に開いていた札から始まる
       localStorage.setItem("ayato-desk-tool", tool);
-      /* **打ちかけの字を置いておく。** 空の欄だと「入れる」がそもそも
-         押せないので、**読めないまま上書きできてしまうか**が見えない
-         （#43「上書きになる口の前では、読めるまで書かせない」）。 */
-      localStorage.setItem(
-        "ayato-trip-log",
-        JSON.stringify({ day: "", date: "", body: "2台目で停まってくれた。", video: "" }),
-      );
     } catch {}
   }, process.env.DESKTOOL || "photo");
   await seed(ctx);
