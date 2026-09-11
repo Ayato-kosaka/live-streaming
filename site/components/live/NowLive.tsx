@@ -9,7 +9,7 @@ import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
-import { stayNow, travelNow, tripAsPlace, type StayNow, type TravelNow } from "@/lib/stay";
+import { stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
 import { readNight } from "@/lib/nightly";
 import Say from "@/components/ui/Say";
 import { nights } from "@/content/nights";
@@ -222,7 +222,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                 <img className="tile-icon" src="/sprites/signpost-flags.webp" alt="" />
                 <span className="tile-text">
                   <b>{trip.name}の島へ</b>
-                  <i>この旅のこと、これから歩く国、旅のしおり</i>
+                  <i>この旅のこと、旅の6カ国、旅のしおり</i>
                 </span>
                 <Icon name="right" size={15} className="tile-go" />
               </Link>
@@ -237,9 +237,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                   <b>
                     {next.phase === "during"
                       ? "いま、この企画のとちゅう"
-                      : next.days === null
-                        ? "次の企画"
-                        : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
+                      : /* **行ってきた企画を「次の企画」と呼ばない。**
+                           まだ来ていない企画が1つも無くなると、`nextPlan()` は
+                           終わった企画を返す（次の大物を先に告知するための受け）。
+                           日数で言うとマイナスになるので、旅から帰った 9/28 から
+                           「次の企画まで あと-19日」と出ていた。**新しい企画を
+                           足すまで消えない**ので、日数ではなく位置づけで言う。
+                           字は島の1画面目（`components/live/NextUp.tsx`）と揃える。 */
+                        next.phase === "after"
+                        ? "行ってきた"
+                        : next.days === null
+                          ? "次の企画"
+                          : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
                   </b>
                   <i>{next.title}</i>
                 </span>
@@ -260,11 +269,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               {stay.name}に来て {stay.days.toLocaleString()}日目
             </span>
           )}
-          {/* 国が引けない日も、旅が止まっていないことはここに出る */}
-          {trip && (
+          {/* 国が引けない日も、旅が止まっていないことはここに出る。
+              **字は `lib/stay.ts` の `tripDayWord` から。** 数え方も言い方も
+              旅程表（`/nordic` の「2日目」）と1つにしてある。 */}
+          {travel && (
             <span className="chip">
               <Icon name="clock" size={12} />
-              旅に出て {trip.days.toLocaleString()}日目
+              {tripDayWord(travel.days)}
             </span>
           )}
           {cur.theme && !SLUG.test(cur.theme) && (

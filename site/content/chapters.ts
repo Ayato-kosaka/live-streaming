@@ -219,12 +219,21 @@ function nextBegan(c: Chapter): number {
  * 見立ては1日ぶん長めに出る（9/11 の 23:30 から17日で 9/28 の夜）。
  * 短いより長いほうが安全。まだ道の上にいるのに「毎晩22時」に戻るより、
  * 帰ってから1日ぶん時刻を言わないほうが、嘘にならない。
+ *
+ * **次の章が始まっていれば、そこでも終わり**（`nextBegan`）。期間の字
+ * （`chapterSpan`）はもともとそう閉じているので、同じ見かたをここにも入れる。
+ * 入れていなかったので、`to` を書き入れる前は**コーカサスが終わらず**、
+ * 旅から帰った 9/30 に `/now` が「コーカサス周遊 / 旅に出て 459日目」と
+ * 数えつづけていた（出発の日に `to` を入れる自動処理が走らなかった晩も同じ）。
  */
 function ended(c: Chapter): number {
   if (c.to) return Date.parse(`${c.to}T23:59:59+09:00`);
   const from = began(c);
-  if (!Number.isFinite(from) || !c.plannedDays) return Number.POSITIVE_INFINITY;
-  return from + c.plannedDays * 86_400_000;
+  const plan =
+    Number.isFinite(from) && c.plannedDays
+      ? from + c.plannedDays * 86_400_000
+      : Number.POSITIVE_INFINITY;
+  return Math.min(plan, nextBegan(c));
 }
 
 /**
@@ -235,8 +244,22 @@ function ended(c: Chapter): number {
  * 出発の前日に焼いた「まだ旅ではない」が、旅のあいだ17日ぶん残る。
  */
 export function looseStartNow(now: Date = new Date()): boolean {
+  return CHAPTERS.some((c) => c.looseStart && chapterRunning(c, now));
+}
+
+/**
+ * その章が、いま続いているか。**始まっていて、まだ終わっていない。**
+ *
+ * **「終わったか」の判定は、ここ1つだけ。** 前は面ごとに枝が2つあった——
+ * `looseStartNow` は `ended()`（`to` が空なら見立ての日数で閉じる）を見て、
+ * `chapterNow` は `c.to` だけを見ていた。`to` は旅から帰ったあやとが手で入れる欄
+ * なので、**`c.to` だけを見る枝は、入れてもらえるまで永久に閉じない。**
+ * その食い違いで、旅の終わった 9/29 の島は「毎晩22時」（閉じた側）と
+ * 「北欧周遊のとちゅう」（閉じない側）を同時に言っていた。
+ */
+export function chapterRunning(c: Chapter, now: Date = new Date()): boolean {
   const t = now.getTime();
-  return CHAPTERS.some((c) => c.looseStart && began(c) <= t && t < ended(c));
+  return began(c) <= t && t < ended(c);
 }
 
 export function chapterNow(now: Date = new Date()): Chapter {
@@ -244,8 +267,10 @@ export function chapterNow(now: Date = new Date()): Chapter {
   const begun = CHAPTERS.filter((c) => !c.branchOf && began(c) <= t).sort(
     (a, b) => began(b) - began(a),
   );
-  // 終わった章は、いまいる島ではない
-  const open = begun.filter((c) => !c.to || Date.parse(`${c.to}T23:59:59+09:00`) >= t);
+  /* 終わった章は、いまいる島ではない。**終わりの見かたは `chapterRunning` に1つ。**
+     ここが `c.to` だけを見ていたので、旅から帰っても（`to` は手で入れる欄なので
+     入らない）北欧の章が閉じなかった。 */
+  const open = begun.filter((c) => chapterRunning(c, now));
   /* **どれも開いていない時間帯がありうる。**
      出発の日に `caucasus.to` を入れると、その日の 23:59:59（日本時間）から
      北欧が始まる 9/12 04:30 までの4時間半、開いている章が1つも無くなる。
@@ -353,11 +378,52 @@ export const NEXT_CHAPTER: Chapter =
   CHAPTERS.find((c) => !c.from) ?? MAIN_CHAIN[MAIN_CHAIN.length - 1];
 
 /**
+ * 旅をしている土地の暦で、その瞬間の日付(YYYY-MM-DD)。
+ *
+ * **日本時間で切らない。** 旅程の日付はどれも現地の日付で、日本時間の 00:00 は
+ * 現地の前日 17:00。日本の夜のあいだじゅう、画面が翌日の区間を出すことになる。
+ * 中央ヨーロッパ夏時間(UTC+2)で切る（理由は `components/nordic/where.ts`。
+ * あちらの `tripDate` はここを呼ぶ。**暦の決めかたを2か所に書かない**）。
+ */
+export function tripDate(at: Date): string {
+  return new Date(at.getTime() + 2 * 3600_000).toISOString().slice(0, 10);
+}
+
+/**
+ * 旅に出て何日目か。**出発した日の翌日が1日目。**
+ *
+ * 数え方を旅程表（`content/nordic.ts` の `DAYS` の `n`）に合わせてある。
+ * あちらは 9/11 が「出発」、9/12 が「1日目」…9/27 が「16日目」で、
+ * その番号が16枚の面の URL（`/nordic/day/1`〜`/16`）にも見出しにも分岐の問いにも
+ * 焼き込まれている。**画面1つのために、そちらを振り直すことはできない。**
+ * 出発は現地 23:30 の飛行機で、9/11 に旅の時間は30分しかない——という意味でも、
+ * 翌日を1日目と数えるほうが実際に合う。
+ *
+ * **`chapterDays` とは別のものを数えている。** あちらは「何日間の旅か」（期間。
+ * 島の大きさを決める）で、こちらは「旅に出て何日目か」（今日の番号）。
+ * 同じ数だと思って混ぜると、1日ずれる。
+ *
+ * 前はここが `chapterDays`——**暦日ではなく時刻の差を `Math.round`**——だったので、
+ * 数字が真夜中ではなく朝 07:30 UTC に増えていた。同じ 9/13 に
+ * 「2日目」と「3日目」の両方が出る（`docs/island-misses.md`）。
+ * 暦の日付どうしを引けば、その日のあいだは動かない。
+ */
+export function chapterDayNo(c: Chapter, now: Date = new Date()): number {
+  const from = began(c);
+  if (!Number.isFinite(from)) return 0;
+  const a = Date.parse(`${tripDate(new Date(from))}T00:00:00Z`);
+  const b = Date.parse(`${tripDate(now)}T00:00:00Z`);
+  return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+/**
  * 日数。いまも続いている章は「今日まで」で数える。画面が出てから数え直す。
  *
  * 始まっていない章は見立ての日数（`plannedDays`）。**出発の日を過ぎたら、
  * `from` がまだ空でも実際に数えはじめる。** そうしないと、旅に出た当日から
  * 誰かが `from` を書き入れるまで、島が「9日の予定」のまま止まる。
+ *
+ * **これは期間（何日間の旅か）で、「旅に出て何日目か」ではない**（`chapterDayNo`）。
  */
 export function chapterDays(c: Chapter, today = new Date()): number {
   const from = began(c);

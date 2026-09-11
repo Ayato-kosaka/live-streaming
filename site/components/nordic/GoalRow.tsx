@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { postNordicArrived, postNordicEnded } from "@/lib/api";
 import { useAuth, useOwner } from "@/lib/auth";
 import { loadState } from "@/lib/liveStats";
+import { planOver, tripDate } from "./where";
 
 /**
  * 旅程表のいちばん下の2行。**「着いた」と「旅がおわった」を分ける。**
@@ -68,6 +69,19 @@ function useNordicDates() {
 }
 
 /**
+ * 旅をしている土地の暦で、きょうの日付。**画面が出てから入る**（最初は `null`）。
+ *
+ * 静的書き出しなので、焼いた HTML に今日を入れるわけにいかない
+ * （焼いた日の答えが、旅が終わっても残る）。最初の描画はよていの字のまま、
+ * 画面が出てから暦で締める。
+ */
+function useTripDate(): string | null {
+  const [d, setD] = useState<string | null>(null);
+  useEffect(() => setD(tripDate(new Date())), []);
+  return d;
+}
+
+/**
  * 着いた日の行。**旅の折り返しではなく、会いたい人のいる街に降りた日。**
  *
  * 会えたかどうかは書かない。サイトの上のゴールはストックホルムに着くことで、
@@ -75,11 +89,25 @@ function useNordicDates() {
  * 相手の都合で会えないことは普通にあるし、そのとき相手が
  * 「約束を破った人」に見えるのがいちばんまずい。
  */
-export function ArrivedRow({ depart, arrive }: { depart: string; arrive: string }) {
-  const [{ arrived }, setV] = useNordicDates();
+export function ArrivedRow({
+  depart,
+  arrive,
+  until,
+}: {
+  depart: string;
+  arrive: string;
+  /** 旅が終わる日(YYYY-MM-DD)。**この日を過ぎたら、押されていなくても着いている** */
+  until: string;
+}) {
+  const [{ arrived: pressed }, setV] = useNordicDates();
   const owner = useOwner();
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
+  /* **押されなかったときは、暦で締める**（`where.ts` の `planOver`）。
+     着いた日ひとつでは倒さない——9月20日が来てもその日に着いているとは限らない。
+     倒すのは**旅そのものが終わってから**。そこまで来れば、着いたのは事実。 */
+  const today = useTripDate();
+  const arrived = pressed ?? (planOver(today, until) ? arrive : null);
 
   const took = arrived ? tookDays(depart, arrived) : null;
 
@@ -115,7 +143,7 @@ export function ArrivedRow({ depart, arrive }: { depart: string; arrive: string 
         </span>
         {owner && (
           <span className="nlog-acts">
-            {arrived ? (
+            {pressed ? (
               <button type="button" className="nlog-drop" disabled={busy} onClick={() => mark("")}>
                 着いたのを取り消す
               </button>
@@ -144,10 +172,15 @@ export function ArrivedRow({ depart, arrive }: { depart: string; arrive: string 
  * 同じ言い方を2つ並べると、どちらが旅の終わりなのか読めなくなる。
  */
 export function EndRow({ leave, fixed }: { leave: string; fixed: string }) {
-  const [{ arrived, ended }, setV] = useNordicDates();
+  const [{ arrived, ended: pressed }, setV] = useNordicDates();
   const owner = useOwner();
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
+  /* 発つ日を過ぎたら、押されていなくても旅は終わっている（`where.ts` の `planOver`）。
+     押されるのを待っていると、この行は旅の1ヶ月後も
+     「7泊したあと、ストックホルムを発ちます」と、これからのことのように言う。 */
+  const today = useTripDate();
+  const ended = pressed ?? (planOver(today, leave) ? leave : null);
 
   const mark = async (date: string) => {
     setBusy(true);
@@ -183,7 +216,7 @@ export function EndRow({ leave, fixed }: { leave: string; fixed: string }) {
             押せるのは、着いた日が入ってから。 */}
         {owner && arrived && (
           <span className="nlog-acts">
-            {ended ? (
+            {pressed ? (
               <button type="button" className="nlog-drop" disabled={busy} onClick={() => mark("")}>
                 おわったのを取り消す
               </button>

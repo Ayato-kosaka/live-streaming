@@ -261,7 +261,7 @@ export default function Days() {
           着いた瞬間に旅が終わったことになる。
           相手の名前も、どういう人かも書かない（`docs/nordic-fund.md` 1章）。 */}
       <li className="nday is-goal">
-        <ArrivedRow depart={DEPART.slice(0, 10)} arrive={ARRIVE} />
+        <ArrivedRow depart={DEPART.slice(0, 10)} arrive={ARRIVE} until={LEAVE.date} />
       </li>
       <li className="nday is-goal is-end">
         <EndRow leave={LEAVE.date} fixed={LEAVE.fixed} />

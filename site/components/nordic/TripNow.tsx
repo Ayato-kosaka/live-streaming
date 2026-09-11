@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
 import { placeOutdated, samePlace } from "@/lib/place";
-import { planStop, tripDate } from "./where";
+import { planOver, planStop, tripDate } from "./where";
 import { Mark } from "./Marks";
 
 /**
@@ -197,6 +197,22 @@ export default function TripNow({
   }, []);
 
   /**
+   * 暦で見て、旅がもう終わっている日か（`where.ts` の `planOver`）。
+   *
+   * **押されなかったときに、旅を閉じるのはここ。** 下の2つ（着いた日・終わった日）は
+   * あやとが旅の終わりに島で押す事実で、押されればそちらが勝つ。押されなかった日も
+   * 暦で同じ答えになるようにしてある——**押したときと1文字も変わらない。**
+   * 閉じていなかったので、旅の1ヶ月後も「ストックホルムまで 数えています」
+   * 「いま 移動中 → めざす ストックホルム」と出ていた
+   * （`lib/stay.ts` が滞在で決めたのと同じ原則。データではなくコードで閉じる）。
+   */
+  const over = planOver(today, until);
+  /** 着いた日。**事実が先、無ければ旅程。** 旅が終わっているなら、着いてはいる */
+  const arrivedDay = arrivedOn ?? (over ? arriveOn : null);
+  /** 旅が終わった日（ストックホルムを発った日）。事実が先、無ければ旅程 */
+  const endedDay = endedOn ?? (over ? until : null);
+
+  /**
    * 本人の字が指しているルートの街。無ければ -1。
    *
    * 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
@@ -214,7 +230,7 @@ export default function TripNow({
    * その日は進まないので、予定の街を「いま ここ」と言い切ってはいけない。
    * 地図の札・旅程表の印・残り距離の一行が、ここで言い方を変える。
    */
-  const sure = typedAt >= 0 || !!arrivedOn;
+  const sure = typedAt >= 0 || !!arrivedDay;
   const last = stops.length - 1;
   /**
    * 旅程表のどの行に「いま、ここ」を出すか。
@@ -283,7 +299,7 @@ export default function TripNow({
      友だちの家に約1週間いるので、そのあいだに街を離れることもある。
      そこで「ストックホルムまで、数えています」に戻ったら、旅が
      終わっていないことになってしまう。 */
-  const idx = arrivedOn ? last : (at ?? (departed ? null : 0));
+  const idx = arrivedDay ? last : (at ?? (departed ? null : 0));
   /**
    * 着いた。**島から届いた事実か、本人の字で終点にいるときだけ。**
    *
@@ -315,16 +331,16 @@ export default function TripNow({
    * 旅程から外れるのはヒッチハイクではふつうに起きる（足止め・寄り道）。
    * 打ってあるのに旅程の街で上書きしたら、また画面が嘘をつく。
    */
-  const off = !arrivedOn && !!place && !(now && samePlace(place, now.name));
+  const off = !arrivedDay && !!place && !(now && samePlace(place, now.name));
   /**
    * 出しているのが、**旅程から引いただけの街**か。
    *
    * そのときだけ「きょうは」。本人の字も島からの事実もあれば「いま」、
    * どちらも無く旅程からも引けなければ、今までどおり「いま 移動中」。
    */
-  const fromPlan = !place && !arrivedOn && at != null;
+  const fromPlan = !place && !arrivedDay && at != null;
   /** 「いま」に出す字 */
-  const nowName = arrivedOn
+  const nowName = arrivedDay
     ? (place ?? stops[last].name)
     : off
       ? place!
@@ -334,7 +350,7 @@ export default function TripNow({
      「いま アルバニア・ティラナ / スウェーデン」と書いてあった。
      ルートの外の街も同じで、打った字にはたいてい国が入っている。 */
   const nowCountry =
-    off || (arrivedOn && place && !samePlace(place, stops[last].name))
+    off || (arrivedDay && place && !samePlace(place, stops[last].name))
       ? ""
       : (now?.country ?? "");
 
@@ -400,7 +416,7 @@ export default function TripNow({
         ) : (
           <div className="tnow-count is-far">
             <span className="tnow-count-l">
-              {endedOn
+              {endedDay
                 ? "旅がおわった"
                 : arrived
                   ? "着いた"
@@ -420,15 +436,15 @@ export default function TripNow({
               )}
             </span>
             <span className="tnow-count-w">
-              {endedOn
+              {endedDay
                 ? /* 発った日。**ここでやっと旅が終わる。** */
-                  `${when(endedOn)}、ストックホルムを発ちました。ここまでが北欧旅`
+                  `${when(endedDay)}、ストックホルムを発ちました。ここまでが北欧旅`
                 : arrived
                   ? /* 着いた日が届いていれば、それも出す。「着いた」だけだと、
                        いつ着いたのかが旅のあとに読む人に分からない。
                        **旅はまだ終わっていない**ので、発つ日も添える。
                        会えたかどうかは書かない（`docs/nordic-fund.md` 1章）。 */
-                    `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、${when(until)}に発ちます`
+                    `${arrivedDay ? `${when(arrivedDay)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、${when(until)}に発ちます`
                   : goalByPlan
                     ? /* 旅程ではもう着いている日。**着いたとは言わない。**
                          着いたことは本人が島に押せば届く（`arrivedOn`）。 */
