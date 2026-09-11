@@ -26,6 +26,30 @@ name: 管理スクリプトを実行
 #   images_migrate      … nordicPhotos → islandStreamEventImage へ移す。
 #                         **書類IDは変えない**（カードのIDがそこから決まる）
 #
+# 豚の貯金箱（docs/nordic-fund.md 9章）。**どれも既定では1行も書かない。**
+# 額の話なので、先に何がいくら動くかを出す。
+#   fund_check    … 移行の下見。**Firestore を1行も触らない。**
+#                   411件を2回流して増えないこと、BigQuery を重ねても増えない
+#                   こと、本番の /island-api/fund と1円まで合うことを見る
+#   fund_migrate  … GAS の SuperChats → islandFundSuperChats（411件）と、
+#                   支出7件・目標1件。{"apply": true} で書く。
+#                   **移行前と1円でも違ったら書かずに 1 で落ちる**
+#   fund_sync     … 掃除を手で流す {"apply": true}。毎晩のぶんは
+#                   schedule_fetch_chat.yml から走る。
+#                   {"days":400,"apply":true,"sweep":true} は遡り。
+#                   **貯金箱の額が動く。** sweep が無いと31日より前は書かない
+#   fund_add      … 手で1件足す／消す（スパチャ・支出・目標）。
+#                   {"kind":"spend","day":"2026-09-11","title":"宿代","yen":4000}
+# キャラクターの絵をドライブから Firebase Storage へ移すぶん（#284 の C 群）。
+# **既定では1バイトも書かない。** 書くには {"apply": true} を付ける。
+#   characters_migrate … Viewers 表とドライブのフォルダ2つを突き合わせて、
+#                        絵を Storage に置き、islandCharacter に名前と
+#                        絵文字と呼び名を入れる。{"limit":3} で試せる
+#   characters_probe   … **絵を1枚置いて、読んで、消す**（入力なし）。
+#                        Actions は置き場に書けないまま（#283）でも、
+#                        Functions に頼めば置けることを本番で1回通す。
+#                        本番に何も残さない
+#
 # BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
 #   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）
 #   fix_stale_retry  … WAITING で止まった配信の next_retry_at を、いまの決まり
@@ -40,6 +64,9 @@ name: 管理スクリプトを実行
 #   functions_log    … 勝手に動く Functions のログを読む {"name":"collectLiveChat"}
 #                      「溜まっていない」の原因（鍵・トークン・配信なし）を
 #                      区別するのに要る。Firestore を数えるだけでは分からない
+#   live_probe       … その Cloud Logging が読めないとき（#236 の IAM 待ち）に、
+#                      collectLiveChat と同じ順で鍵→トークン→配信→コメントを
+#                      自分でなぞって、どこで止まるかを見る。**読むだけ**
 on:
   workflow_dispatch:
     inputs:
@@ -122,4 +149,8 @@ jobs:
         working-directory: python/admin
         env:
           ARGS: ${{ inputs.args }}
+          # キャラクターの移行（characters_migrate）が、名前と絵文字の
+          # 出どころであるスプレッドシートを**読む**のに要る。
+          # 読むだけで、1行も書かない。移行が終わったら、この2行ごと消す。
+          EXPO_PUBLIC_GAS_API_URL: ${{ secrets.EXPO_PUBLIC_GAS_API_URL }}
         run: python "${{ inputs.script }}.py"

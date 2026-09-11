@@ -21,6 +21,8 @@
  * ログインが要らない**ので、`apply` を呼ぶだけで撮れる。
  * `RLSPIN=1` を付けると、開いた 1.2 秒あとに回りだすところから撮れる。
  */
+import { execFileSync } from "node:child_process";
+
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
 const NAME = "ゆずたつ";
@@ -33,6 +35,27 @@ const YT_PHOTO =
   "https://yt3.ggpht.com/GUqKfpGZZ-RvK4x8whkP6V7GfFc4FLoPC7rBUJ5jaqOdgouJabHkcGM8et_logXB62byGalyPA=s800-c-k-c0x00ffffff-no-rj";
 /** 上の絵に割り当ててあるチャンネル（`site/content/residents.ts`） */
 const CHANNEL = "UCyct2GK_RiW5Ji3Y0gd9MMg";
+
+/** 本番の図鑑を curl で1回だけ取って、名前を作り物に差し替えて持つ。
+    絵と絵文字と人数は本物（`route.mjs` が /tmp/chars から絵を返す）。 */
+let CHARA_CACHE = null;
+function CHARACTERS() {
+  if (CHARA_CACHE) return CHARA_CACHE;
+  try {
+    const raw = execFileSync("curl", ["-sS", "--max-time", "40",
+      "https://live-streaming-d3cac.web.app/island-api/characters"], { maxBuffer: 1 << 26 });
+    CHARA_CACHE = (JSON.parse(raw).characters || []).map((c, i) => ({
+      ...c,
+      channelName: `@みほん${i + 1}`,
+      aliases: i % 4 === 0 ? [`みほん${i + 1}`] : [],
+      channelKeys: [`@みほん${i + 1}`], lookupKeys: [`みほん${i + 1}`],
+      channelId: null, editedAt: null,
+    }));
+  } catch {
+    CHARA_CACHE = [];
+  }
+  return CHARA_CACHE;
+}
 
 const now = Date.now();
 const ago = (d) => new Date(now - d * 86400000).toISOString();
@@ -350,7 +373,12 @@ export async function apply(ctx, opts = {}) {
      読むので、CORS のヘッダを付けないと絵が出ない。 */
   await ctx.route(/firebasestorage\.googleapis\.com/, (r) => {
     const m = /photos%2F([^.]+)\.jpe?g/.exec(r.request().url());
-    const key = m ? m[1] : "x";
+    /* **旅の写真だけを差し替える。** 置き場にはキャラクターの絵も入って
+       いるので（#284）、まとめて受けると**95人が全員おなじ緑の絵**で写る。
+       あやとの机の「キャラ」を撮ったとき、実際にそうなっていた
+       （2026-09-11）。写真でないものは通す（`viaCurl` が本物を取る）。 */
+    if (!m) return r.fallback();
+    const key = m[1];
     let h = 0;
     for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600">
@@ -369,6 +397,21 @@ export async function apply(ctx, opts = {}) {
   await ctx.route(/\/island-api\//, (r) => {
     const u = new URL(r.request().url());
     const path = u.pathname.replace("/island-api", "");
+    /* **キャラクターの絵は差し替えない。本物を通す。**
+       絵も `/island-api/...` から来るようになったので（#284）、ここの
+       受け皿（最後の `json(r, {})`）が絵まで JSON にしていた。
+       島の住人が1人も出なくなって、**本番が壊れているように見えた**
+       （2026-09-11。`route.mjs` の「1枚に潰さない」と同じ失敗）。 */
+    if (/^\/characters\/[^/]+\/(plain|scene)-\d+\.webp$/.test(path)) {
+      return r.fallback();
+    }
+    /* **キャラクターの名簿も、本物の数と絵で返す。**
+       ここで `{}` を返していたので、あやとの机の「キャラ」が
+       **95人いるのに「まだ1人もいません」**と写っていた（2026-09-11）。
+       画面のほうは正しい（読めた上での0人と、読めなかったを分けている）
+       のに、道具が0人を渡していただけ。**それでは机を見たことにならない。**
+       名前だけ作り物にする（本番の名前をこの箱に落とさない）。 */
+    if (path === "/characters") return json(r, { characters: CHARACTERS() });
     if (path === "/me") {
       return json(r, {
         /* `channelPhoto` は毎晩 islandChannels から入れ直る顔で、**じぶんのことに

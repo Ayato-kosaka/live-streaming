@@ -6,11 +6,20 @@
  * 端末の時計がどこの国に合っていても、基準はいつも日本時間にする。
  * 配信が日本時間の22時からと決まっていて、それが島でいちばん大事な時刻だから。
  *
- * `components/live/NowLive.tsx` にもほぼ同じ時計がある。あちらは別の担当が
- * 触っているので、いまは写した状態のままにしてある。片方を直したらもう片方も直す。
+ * **写しを作らない。** 前は `components/live/NowLive.tsx` と
+ * `components/island/villagers.ts` が同じ時計を持っていて、旅のあいだ
+ * （始まる時刻の決まらない期間）に板と札で違うことを言う形になっていた。
+ * いまはどちらも `readNight` を呼ぶだけ。数え方を足すときもここに足す。
  */
 
-/** 配信は日本時間の22時から、だいたい2〜3時間。 */
+import { looseStartNow } from "@/content/chapters";
+
+/**
+ * 配信は日本時間の22時から、だいたい2〜3時間。
+ *
+ * **ただし、旅の最中はここを見ない**（`readNight`）。ヒッチハイクなので
+ * 始まる時刻がその日の道で決まる。旅が終われば、また22時に戻る。
+ */
 export const START_H = 22;
 export const HOURS = 3;
 
@@ -45,20 +54,36 @@ export function jstShift(now: Date, days: number): string {
 }
 
 export type Night = {
-  /** いま配信の時間か（JST 22:00〜25:00） */
+  /** いま配信の時間か（JST 22:00〜25:00）。時刻が決まっていない期間は常に false */
   onAir: boolean;
-  /** 今夜の配信まであと何分。onAir のときは 0 */
+  /** 今夜の配信まであと何分。onAir のときと、時刻が決まっていない期間は 0 */
   mins: number;
+  /**
+   * 始まる時刻の決まっていない期間か（旅の最中）。
+   *
+   * **true のあいだ、島は時刻もカウントダウンも出さない。**
+   * 「あと3時間20分」は22時から逆算した数字なので、22時に始まらない日は
+   * ただの嘘になる。無い数字を出すくらいなら、その欄ごと出さない。
+   */
+  loose: boolean;
 };
 
-/** 今夜の配信まで、あと何分か。 */
+/**
+ * 今夜の配信まで、あと何分か。
+ *
+ * **旅のあいだかどうかで答えが変わるのは、この1つの関数だけ。**
+ * 面ごとに「旅なら」を書かない。板も札もカモメも、ここが返したものに従う
+ * （`docs/island-misses.md` の決めごと5）。
+ */
 export function readNight(now: Date = new Date()): Night {
+  // ヒッチハイクの旅は、その日の道で始まる時刻が変わる。数えられないので数えない
+  if (looseStartNow(now)) return { onAir: false, mins: 0, loose: true };
   const { h, min } = jstNow(now);
   const end = (START_H + HOURS) % 24; // 25時 = 1時
-  if (h >= START_H || h < end) return { onAir: true, mins: 0 };
+  if (h >= START_H || h < end) return { onAir: true, mins: 0, loose: false };
   let mins = (START_H - h) * 60 - min;
   if (mins <= 0) mins += 24 * 60;
-  return { onAir: false, mins };
+  return { onAir: false, mins, loose: false };
 }
 
 /** 「3時間20分」。1時間を切ったら分だけ、ちょうどなら「3時間」。 */
@@ -73,18 +98,12 @@ export function spanText(mins: number): string {
 /**
  * 書き出した時刻。**焼いた HTML の「今日」。**
  *
- * `output: "export"` なので、画面が出るまでは本物の今日が分からない。
- * そのあいだを `new Date()` で埋めると、**焼いた HTML とブラウザの最初の描画で
- * 答えが変わる**（焼いたのが「440日」、開いた日は「441日」）。字が食い違うので
- * React が水あわせに失敗して、面ごと描き直す（`Minified React error #418`）。
+ * 中身は `lib/builtAt.ts`。**ここから出したのは、輪ができたから**——
+ * `content/chapters.ts` がこの値を読み、この `lib/nightly.ts` が
+ * chapters の `looseStartNow` を読むので、置いたままだと chapters ⇄ nightly の
+ * 輪になって、読み込む順によっては落ちる（`lib/builtAt.ts` に経緯がある）。
  *
- * 分からないなりに、いちばん近い答えは**焼いた日**なので、最初の描画はこれで出す。
- * 本物の今日で描き直すのは、画面が出てから（`useEffect`）。
- *
- * 時刻の決めごとと同じ場所に置いてあるのは、**サーバもクライアントもここを見る**
- * ため。片方だけ別の「今日」を持つと、また食い違う。
- *
- * 値は `next.config.mjs` が埋める。埋まっていない（開発サーバ）ときは 1970年で、
- * これまでどおり「全部これから」に落ちる。
+ * 呼ぶ側は、いままでどおりここから読んでよい（`content/plans.ts` も同じく
+ * ここを通して配っている）。
  */
-export const BUILT_AT = new Date(process.env.NEXT_PUBLIC_BUILT_AT ?? 0);
+export { BUILT_AT } from "./builtAt";

@@ -1,13 +1,17 @@
 /** サイト全体の固定情報。日々変わるものは Firestore(/island-api) 側で上書きする。 */
 
+import { say } from "./nights";
 import { RECIPES } from "./recipes";
 
 export const SITE = {
   name: "あやと島",
   tagline: "あやとと愉快な仲間達",
   url: "https://live-streaming-d3cac.web.app",
+  /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、画面が出てから
+     差し替えられない。旅のあいだ（`content/nights.ts`）は始まる時刻が決まらないので、
+     ここは**いつ読んでも本当のこと**だけにする。 */
   description:
-    "毎晩22時、世界のどこかから生配信。旅とごはんとアプリ作りを、愉快な仲間達と一緒に進めている島です。",
+    "世界のどこかから、毎晩生配信。旅とごはんとアプリ作りを、愉快な仲間達と一緒に進めている島です。",
 };
 
 /**
@@ -43,7 +47,7 @@ export const PROFILE = {
   body: [
     "1998年12月6日生まれ。大学からITの学科で、アプリを作るのが好きだった。在学中に作ろうとした Meetup English は、開発中に断念している。",
     "「社会人経験がないと無理や」と、2021年4月から2024年8月まで会社に勤めた。",
-    "2024年9月11日に日本を出て、いまは毎晩22時、旅先から生配信している。",
+    say("profile"),
     "出たのは、会社に勤めていたころに作った旅行計画アプリを広めるため。3ヶ月で帰るつもりだった。",
     "いま作っているのはグルメアプリ「なに食べよ」。機能も文言も、配信のみんなと決めている。",
   ],
@@ -65,7 +69,7 @@ export const LINKS: LinkItem[] = [
     id: "youtube",
     icon: "tower-studio",
     label: "YouTube チャンネル",
-    note: "毎晩22時から生配信",
+    note: say("link"),
     href: "https://youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w",
     emoji: "▶️",
   },
@@ -98,14 +102,11 @@ export const LINKS: LinkItem[] = [
   },
 ];
 
-/** キャラクター置き場（視聴者さんが自由にダウンロードできる） */
-export const CHARACTER_DRIVE = "https://drive.google.com/drive/folders/1S-EFPuayr8p73_Yi6mRf4OkN91qHdzXn";
-
 /** 「いま」の初期値。/island-api/state の current で上書きされる。 */
 export const NOW_FALLBACK = {
   place: "ジョージア・トビリシ",
   theme: "georgia" as const,
-  word: "トビリシに戻ってきて、毎晩22時から配信してます。",
+  word: say("word"),
   updatedAt: "2026-09-04",
   // ここは /island-api/state が返るまでの数百ミリ秒しか出ないが、
   // 返らなかった日はこれが1日出しっぱなしになる。**日付を書かない。**

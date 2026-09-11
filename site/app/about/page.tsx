@@ -16,6 +16,8 @@ import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { placeWord } from "@/lib/stay";
 import NowPlace from "@/components/home/NowPlace";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
@@ -167,7 +169,7 @@ const STORY: Step[] = [
     date: on("georgia", 1),
     kind: "travel",
     what: "トビリシに戻ってきた",
-    note: "いまここ。毎晩22時から配信している",
+    note: say("hereNow"),
     href: "/now",
     go: "いまどこへ",
   },
@@ -266,7 +268,7 @@ export default function AboutPage() {
               {PROFILE.name}（<Age born={PROFILE.born} />歳）
             </p>
             {PROFILE.body.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><Say t={p} /></p>
             ))}
           </div>
         </div>
@@ -286,10 +288,11 @@ export default function AboutPage() {
                   出していたので、旅の2日目に撮ると常設のこの面だけ
                   「ジョージア・トビリシ」と言っていた。**打つ人は走っている車の中に
                   いて、17日間その欄を直せない。** 部品は表紙と同じものを使う
-                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。 */}
+                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。
+                  添え字のほうは、旅のあいだカウントダウンが消えるので `Say` で言い替える。 */}
               <i>
                 <NowPlace baked={placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt)} />
-                。今夜の配信まであと何時間か、今週やること
+                。<Say t={say("nowLink")} />
               </i>
             </span>
             <Icon name="right" size={16} className="tile-go" />
@@ -412,7 +415,7 @@ export default function AboutPage() {
                     {x.date.slice(0, 4)}年{fmtMd(x.date)}
                   </span>
                   <b className="aroad-what">{x.what}</b>
-                  <p className="aroad-note">{x.note}</p>
+                  <p className="aroad-note"><Say t={x.note} /></p>
                   {x.href && (
                     <span className="aroad-go">
                       {x.go}

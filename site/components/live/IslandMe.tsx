@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { loadMe, saveMe, type Me } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { saveMe } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 
 /**
  * 島での見え方の設定。
@@ -21,50 +22,70 @@ import { useAuth } from "@/lib/auth";
  * 「名前を出す・アイコンを出す」の両方に印が付いた状態で始まっていた。
  * 出さないと決めた人が開いて、何も触らずに保存すると、決めたことが
  * ひっくり返る。設定は、いまどうなっているかを見せるところから始める。
+ *
+ * ## 読めなかった日に、決めたことを消さない（#34 #36 #43）
+ *
+ * その #163 の直しには穴が残っていた。ここは自分で `loadMe` を叩いていて、
+ * **落ちても `finally` で `ready` を立てていた。** つまり電波が細い日は、
+ *
+ *   1. 「名前を出す」「アイコンを出す」が**両方オフの顔**で開き（本当は出す設定でも）
+ *   2. そのまま触れて、
+ *   3. 「これでいく」を押すと `POST /me` が3つとも上書きするので、
+ *      **本人が出すと決めた設定が消える**
+ *
+ * 嘘をつくだけでなく、**押すとデータが壊れる**ところだった。直しかたは2つ。
+ *
+ * - **答えは島でひとつ**（#34）。`POST /me` は `AuthProvider` が1回だけ引いて
+ *   配っているので、ここで別に叩かない。面ごとに叩くと、落ちたぶんだけ答えが割れる
+ * - **一度も読めていないうちは、欄も押しどころも出さない。** 読めなかったことを
+ *   言って、読み直す道だけ置く（`components/me/ReadAgain.tsx`）。
+ *   **読めていない相手に、書ける口を開かない**（#36）
+ *
+ * 一度でも読めたあとは、そのあとの読み直しが落ちても欄は出したままにする。
+ * 手元に出ている値は本物なので、そこで消すほうが害になる。
  */
-export default function IslandMe({ me }: { me?: Me | null }) {
-  const { user, token } = useAuth();
-  const [nickname, setNickname] = useState(me?.nickname ?? "");
-  const [showName, setShowName] = useState(!!me?.showName);
-  const [showPhoto, setShowPhoto] = useState(!!me?.showPhoto);
-  /** いま入っている値が届くまでは、いじらせない。上書き事故を起こさないため */
-  const [ready, setReady] = useState(!!me);
+export default function IslandMe() {
+  const { user, token, me, meRead, reloadMe } = useAuth();
+  const [nickname, setNickname] = useState("");
+  const [showName, setShowName] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
+  /** 島の答えが一度でも届いたか。**届くまでは、欄も押しどころも出さない。** */
+  const [got, setGot] = useState(false);
   const [state, setState] = useState<"idle" | "saving" | "done" | "error">("idle");
+  /* 打ちかけを塗り戻さない。入れるのは、はじめて届いた1回だけ
+     （保存したあとに `AuthProvider` が読み直しても、手元の字が勝つ）。 */
+  const filled = useRef(false);
 
-  /* 親から渡されなかったときは、自分で読む。掲示板の折りたたみから
-     切り離したので、単体で置かれることもある。 */
   useEffect(() => {
-    if (me) return;
-    let gone = false;
-    (async () => {
-      const t = await token();
-      if (!t || gone) return;
-      try {
-        const now = await loadMe(t);
-        if (gone) return;
-        setNickname(now.nickname ?? "");
-        setShowName(now.showName);
-        setShowPhoto(now.showPhoto);
-      } catch {
-        /* 読めなければ、出さない側から始める。勝手に出すよりは安全 */
-      } finally {
-        if (!gone) setReady(true);
-      }
-    })();
-    return () => {
-      gone = true;
-    };
-  }, [me, token]);
+    if (!me || filled.current) return;
+    filled.current = true;
+    setNickname(me.nickname ?? "");
+    setShowName(me.showName);
+    setShowPhoto(me.showPhoto);
+    setGot(true);
+  }, [me]);
 
   if (!user) return null;
 
+  /* まだ一度も読めていない。**「出していません」の顔で出さない。**
+     読めなかったことを言って、読み直す道を置く。 */
+  if (!got)
+    return meRead === "down" ?
+        <ReadAgain what="島での見え方" onRetry={reloadMe} /> :
+        <Waiting />;
+
   const save = async () => {
+    // 読めていないものは送らない（押しどころを出さないのと、同じことを押す側でも見る）
+    if (!filled.current) return;
     const t = await token();
     if (!t) return setState("error");
     setState("saving");
     try {
       await saveMe({ nickname: nickname.trim() || null, showName, showPhoto }, t);
       setState("done");
+      /* 配っているほうも入れ替える。畳みの見出し（「いまは出しています」）は
+         あちらの答えを見ているので、ここで言い直さないと古いまま残る。 */
+      reloadMe();
     } catch {
       setState("error");
     }
@@ -90,14 +111,12 @@ export default function IslandMe({ me }: { me?: Me | null }) {
           onChange={(e) => setNickname(e.target.value)}
           placeholder={user.name}
           maxLength={20}
-          disabled={!ready}
         />
       </label>
       <label className="me-check">
         <input
           type="checkbox"
           checked={showName}
-          disabled={!ready}
           onChange={(e) => setShowName(e.target.checked)}
         />
         <span>名前を出す</span>
@@ -106,7 +125,6 @@ export default function IslandMe({ me }: { me?: Me | null }) {
         <input
           type="checkbox"
           checked={showPhoto}
-          disabled={!ready}
           onChange={(e) => setShowPhoto(e.target.checked)}
         />
         <span>YouTubeのアイコンを出す</span>
@@ -130,7 +148,7 @@ export default function IslandMe({ me }: { me?: Me | null }) {
         </div>
       </div>
 
-      <button className="me-save" onClick={save} disabled={!ready || state === "saving"}>
+      <button className="me-save" onClick={save} disabled={state === "saving"}>
         {state === "saving" ? "保存しています…" : "これでいく"}
       </button>
       {state === "done" && <p className="me-ok">保存しました。島に反映されます。</p>}

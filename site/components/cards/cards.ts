@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
+import { charImg } from "@/lib/charImg";
 
 /**
  * あやと島カード（#173）の、画面まわりの共通のところ。
@@ -23,9 +24,8 @@ import { RESIDENTS } from "@/content/residents";
  *   4. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
  */
 
-/** キャラクターの絵は Google ドライブに置いてある。s の後ろが取り出す大きさ。 */
-export const cardIcon = (id: string, size: number) =>
-  `https://lh3.googleusercontent.com/d/${id}=s${size}`;
+/** カードに乗せるキャラクターの絵。焼いてある幅は 128 / 256 / 640 の3つ。 */
+export const cardIcon = (id: string, size: 128 | 256 | 640) => charImg(id, size);
 
 /** 面（server）から渡ってくる、その日の企画。`content/plans.ts` の表。 */
 export type PlanBrief = { title: string; href: string };
@@ -63,28 +63,101 @@ export function withIcons(list: IslandCard[]): ShownCard[] {
 }
 
 /** 取りにいっている最中は `cards` が null。0枚と区別する。 */
-export type CardsState = { cards: ShownCard[] | null; off: boolean };
+export type CardsState = {
+  /** 読めたカード。**`read !== "ok"` のあいだの空を「0枚」と読まないこと** */
+  cards: ShownCard[] | null;
+  /** カードの口（`GET /cards`）が読めたか */
+  read: Read;
+  /** 落ちたぶんを読み直す。「もう一度よみこむ」の札から呼ぶ */
+  reload: () => void;
+};
 
 /**
  * 配られたカードを取ってくる。**新しい順で返ってくるので、並べ直さない。**
  *
- * 読めなかったときは空にして `off` を立てる。読み込み中と、
- * 空っぽと、読めなかったを、同じ顔で出さないため
- * （`docs/island-design.md` 4章）。
+ * ## 空の配列を返さない（#34 #36 #43）
+ *
+ * ここは長いあいだ `catch(() => setCards([]))` だった。**空の配列は
+ * 「読めた上での0枚」のことば**で、届かなかった日に言ってよい嘘ではない。
+ * `/about` はそれを受けて「まだ1枚もありません」と言い切り、`/friends` は
+ * もらったカードの欄ごと消していた。しかも**読み直す道が無い**ので、
+ * 画面を開き直すまで直らなかった（同じ口を読む `useCardWall` は直っていて、
+ * こちらだけ残っていた）。
+ *
+ * 答えは3つ持つ（`lib/auth.tsx` の `Read`）。
+ *   - `wait` … まだ返っていない。骨を出してよい
+ *   - `ok`   … 読めた。**ここではじめて「まだ1枚もありません」と言ってよい**
+ *   - `down` … 読めなかった。0枚ではない
+ *
+ * 返事が来ないのも「読めなかった」（`withRead` が12秒で見切る）。
+ * 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）。電波が戻った合図
+ * （`online`・画面に戻ってきた）でも読み直す。**画面を開き直させない。**
  */
 export function useCards(): CardsState {
   const [cards, setCards] = useState<ShownCard[] | null>(null);
-  const [off, setOff] = useState(false);
-  useEffect(() => {
-    getCards()
+  const [read, setRead] = useState<Read>("wait");
+  /** 落ちた回数。読み直す間隔を倍にしていくのに使う */
+  const miss = useRef(0);
+  /* いまの読めぐあい。**電波が戻ったとき、落ちているときだけ読み直す**ために
+     持つ（状態そのものは描くのに使うので、効果の中からは見えない）。 */
+  const now = useRef<Read>("wait");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
+
+  /**
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない——灰色の骨と
+   * 「読みに行けなかった」が数秒おきに入れ替わる面になる（#277）。
+   */
+  const load = useCallback((showWait: boolean) => {
+    if (showWait) {
+      now.current = "wait";
+      setRead("wait");
+    }
+    withRead(getCards())
       // 形の違うものが返っても、面ごと落とさない
-      .then((r) => setCards(withIcons(r?.cards ?? [])))
+      .then((r) => {
+        if (!alive.current) return;
+        setCards(withIcons(r?.cards ?? []));
+        now.current = "ok";
+        setRead("ok");
+        miss.current = 0;
+      })
       .catch(() => {
-        setCards([]);
-        setOff(true);
+        if (!alive.current) return;
+        now.current = "down";
+        setRead("down");
+        miss.current += 1;
+        timers.current.push(
+          setTimeout(() => load(false), Math.min(2000 * 2 ** (miss.current - 1), 30000)),
+        );
       });
   }, []);
-  return { cards, off };
+
+  useEffect(() => {
+    alive.current = true;
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       読めているうちは何もしない（画面に戻るたびに往復を1本増やさない）。 */
+    const wake = () => {
+      if (now.current === "down") load(false);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [load]);
+
+  return { cards, read, reload: () => load(true) };
 }
 
 /* ---------------- 写真でまとめる ----------------
@@ -109,6 +182,18 @@ export type PhotoGroup = {
   day: string;
   /** 何人ぶんか。**絵に結びついた人だけ**が入る（`withIcons` を通ったもの） */
   cards: ShownCard[];
+  /**
+   * この写真からできたカードの、本当の枚数。**`cards.length` とは違う。**
+   *
+   * `cards` に入るのは絵に結びついた人だけで、絵の無い人のぶんは落ちている。
+   * 並べるぶんにはそれでよいが、**消す前に「◯枚あります」と言うときに
+   * 落ちたあとの数を言うと嘘になる。** サーバーは絵の有無に関わらず
+   * 全部消す（`functions/src/islandApi.ts` の `dropCardsOfImage`）。
+   *
+   * カードの口が読めていないときは入らない。
+   * **入っていないことを「0枚」と読まないこと**（#34）。
+   */
+  cardCount?: number;
 };
 
 /** 1日ぶんの棚。1日に写真は何枚でも貼られる。 */
@@ -213,10 +298,16 @@ const newest = (a: { day: string; at: number }, b: { day: string; at: number }) 
  * 写真とカードを1つにまとめて、日ごとの棚にする。
  *
  * 写真の口が落ちてもカードだけで並ぶし、逆も同じ。どちらも空なら空の棚。
+ *
+ * @param photos 写真の口から来たぶん
+ * @param cards 絵に結びついた人のカード（並べるのはこちら）
+ * @param counts 写真ごとの**本当の**カードの枚数（絵の無い人も数えたもの）。
+ *   渡さないと `cardCount` は入らない。**入らないことと0枚は別**
  */
 export function shelves(
   photos: NordicPhoto[],
   cards: ShownCard[],
+  counts?: Map<string, number>,
 ): DayShelf[] {
   const at = new Map<string, PhotoSheet>();
   const order: PhotoSheet[] = [];
@@ -234,6 +325,13 @@ export function shelves(
       order.push(g);
     }
     g.cards.push(c);
+  }
+  /* 本当の枚数は、絵で絞る前に数えたものしか知らない。**数えられた写真にだけ
+     入れる。** 全部に 0 を置くと、カードの口が落ちた日に「0枚」と言い切る */
+  if (counts) {
+    // 表に無い写真は「まだ誰も投げていない」＝0枚。**渡された表そのものが、
+    // カードの口を読めた証。** 読めていないときは counts ごと渡ってこない
+    for (const g of order) g.cardCount = counts.get(g.photoId) ?? 0;
   }
   order.sort(newest);
   const days = new Map<string, DayShelf>();
@@ -261,6 +359,14 @@ export type WallState = {
   cardsRead: Read;
   /** 貼れた1枚を、取り直さずにその場で並べる（あやとだけ） */
   add: (p: NordicPhoto) => void;
+  /**
+   * 消えた1枚を、取り直さずにその場で落とす（あやとだけ）。
+   *
+   * **読み直しに行かせない。** 消したのはこちらなので、消えたことは
+   * もう分かっている。細い電波で往復を増やすと、消えた絵がしばらく
+   * 残ったままになる。カードも一緒に落とす（サーバーもそうしている）。
+   */
+  drop: (photoId: string) => void;
   /** 落ちたぶんだけ読み直す。「もう一度よみこむ」の札から呼ぶ */
   reload: () => void;
 };
@@ -285,7 +391,10 @@ export type WallState = {
  */
 export function useCardWall(): WallState {
   const [photos, setPhotos] = useState<NordicPhoto[] | null>(null);
-  const [cards, setCards] = useState<ShownCard[] | null>(null);
+  /* **絵で絞る前のまま持つ。** 絞ってしまうと、絵の無い人のぶんが数えられず、
+     消す前の「カードが◯枚あります」が少なく出る（`PhotoGroup.cardCount`）。
+     並べるのに使うぶんは、出すときに `withIcons` を通す。 */
+  const [cards, setCards] = useState<IslandCard[] | null>(null);
   const [photosRead, setPhotosRead] = useState<Read>("wait");
   const [cardsRead, setCardsRead] = useState<Read>("wait");
   /** 落ちたぶんの読み直し。口ごとに間隔を持つ（片方だけ落ちるため） */
@@ -338,7 +447,7 @@ export function useCardWall(): WallState {
       withRead(getCards())
         .then((r) => {
           if (!alive.current) return;
-          setCards(withIcons(r?.cards ?? []));
+          setCards(r?.cards ?? []);
           now.current.cards = "ok";
           setCardsRead("ok");
           again.current.cards = 0;
@@ -385,13 +494,27 @@ export function useCardWall(): WallState {
     [],
   );
 
+  /* 消したぶんを、その場で落とす。**読み直しに行かない。**
+     カードも一緒に消える（サーバーの `dropCardsOfImage` と同じ）ので、
+     ここでも一緒に落とす。残すと、絵の無い写真を指したカードが並ぶ。 */
+  const drop = useCallback((photoId: string) => {
+    setPhotos((cur) => cur?.filter((p) => p.id !== photoId) ?? cur);
+    setCards((cur) => cur?.filter((c) => c.photoId !== photoId) ?? cur);
+  }, []);
+
   /* 片方でも読めたら、読めたぶんで並べる。**両方 `wait` のあいだだけ null。** */
-  const days = useMemo(
-    () =>
-      photos || cards ? shelves(photos ?? [], cards ?? []) : null,
-    [photos, cards],
-  );
-  return { days, photosRead, cardsRead, add, reload: () => load(true) };
+  const days = useMemo(() => {
+    if (!photos && !cards) return null;
+    /* 本当の枚数は、絵で絞る前にしか数えられない。**カードの口が読めた
+       ときだけ表を作る**（読めていないのに「0枚」と言わないため）。 */
+    let counts: Map<string, number> | undefined;
+    if (cards) {
+      counts = new Map<string, number>();
+      for (const c of cards) counts.set(c.photoId, (counts.get(c.photoId) ?? 0) + 1);
+    }
+    return shelves(photos ?? [], withIcons(cards ?? []), counts);
+  }, [photos, cards]);
+  return { days, photosRead, cardsRead, add, drop, reload: () => load(true) };
 }
 
 /* ---------------- 立ち位置 ----------------

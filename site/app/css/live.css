@@ -754,10 +754,15 @@
 }
 .rzk-pager > button:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 
-/* 一覧のマス。押すものなので厚みを付ける。ここが唯一の「押す」 */
-.rzk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin-top: var(--sp-3); }
-@media (min-width: 520px) { .rzk-grid { grid-template-columns: repeat(6, 1fr); } }
-@media (min-width: 860px) { .rzk-grid { grid-template-columns: repeat(8, 1fr); } }
+/* 一覧のマス。押すものなので厚みを付ける。ここが唯一の「押す」
+
+   **列を増やしたのは、人が22人から95人になったから。** 4列のままだと
+   24段・2,180px になって、図鑑の一覧だけで面が2.5画面ぶん伸びる。
+   6列にすると 16段。390px の画面でマス1つが 53px で、押しどころの
+   下限（48px）は割らない（`docs/island-standards.md`）。 */
+.rzk-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--sp-2); margin-top: var(--sp-3); }
+@media (min-width: 520px) { .rzk-grid { grid-template-columns: repeat(8, 1fr); } }
+@media (min-width: 860px) { .rzk-grid { grid-template-columns: repeat(10, 1fr); } }
 .rzk-cell {
   position: relative;
   display: grid;
@@ -780,12 +785,27 @@
    （実測）。押せない札なので厚みは付けず、紙の色を1枚だけ敷いて地を決める。 */
 .rzk-cell-no {
   position: absolute; top: 2px; left: 2px;
+  /* **絵より上に置く。** 絵は器いっぱい（86%）に広がるので、下に敷くと
+     幅を使い切っている人のところで数字が絵に隠れて読めなくなる
+     （95人ぶん並べて実測。1桁のところで半分欠けていた）。 */
+  z-index: 1;
   padding: 0 3px;
   border-radius: 3px;
   background: var(--paper);
   font-size: var(--fs-min); font-weight: 900;
   color: var(--pap-ink);
 }
+/* 取りに行っているあいだ。**マスの形だけ置く。**
+   空の面を出すと「まだ誰もいない」に見えるし、灰色の帯を1本置くと
+   何が来るのか分からない（`docs/island-standards.md` 10）。 */
+.rzk-grid.is-wait { pointer-events: none; }
+.rzk-cell.is-wait {
+  border-style: dashed;
+  background: rgba(255, 253, 240, 0.3);
+  box-shadow: none;
+  cursor: default;
+}
+
 /* 今日、島に出ている人のマスだけ角に印を出す。留守の札は並べない */
 .rzk-cell.is-here::after {
   content: "";
@@ -804,6 +824,28 @@
   .rzk-fields { grid-area: fields; align-self: center; }
   .rzk-pager { grid-area: pager; }
 }
+
+
+/* 絵を持ち帰る。図鑑の欄の中に置くが、**ここは押すもの**なので厚みを付ける
+   （欄の中で唯一の押しどころ。`docs/island-ux.md` 3章）。 */
+.rzk-gets { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.rzk-get {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  font-size: var(--fs-note); font-weight: 900;
+  color: var(--pap-ink);
+  cursor: pointer;
+}
+.rzk-get:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+.rzk-get .ic { flex: none; color: var(--pap-ink); }
+/* 押しどころの下に付く一言。欄の `dd > i` は行の右に寄る書き方なので、
+   ここだけ行を分ける */
+.rzk-take dd > i { display: block; margin: var(--sp-2) 0 0; }
 
 /* 図鑑と島をつなぐ1行。文の終わりに、そのまま島へ戻る道を置く。
    `.pap p`（0,1,1）に負けないよう、こちらも1段強く書く */

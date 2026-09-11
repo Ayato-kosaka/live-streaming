@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   dropDonor,
   getDonors,
@@ -10,7 +10,8 @@ import {
   type DonorState,
   type DonorVia,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
+import ReadAgain from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
@@ -95,25 +96,68 @@ export default function DonorLinks() {
   const { token } = useAuth();
   /** 取りにいっている最中は null。0件と区別する */
   const [rows, setRows] = useState<Slot[] | null>(null);
-  const [down, setDown] = useState(false);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
 
-  const load = useCallback(async () => {
-    const t = await token();
-    if (!t) return;
-    setRows(null);
-    setDown(false);
-    try {
-      const r = await getDonors(t);
-      setRows(r.donors.map((d) => ({ slot: d.state, donor: d })));
-    } catch {
-      setRows([]);
-      setDown(true);
-    }
-  }, [token]);
-
+  /* ## 読めなかったときの言い方をそろえる（#34 #36 #43）
+   *
+   * ここは `catch` で空にして、**「まだ1人も入っていません」**と言い切り、
+   * いちばん下に小さく「いま読めませんでした。**電波の届くところで開き直すと
+   * 出ます。**」と添えていた。嘘のほうが大きな字で出ていたし、
+   * **開き直させないために `online` の読み直しがある**ので、
+   * 添え書きの言っていることも島の決めごとと逆だった。
+   *
+   * 合言葉が取れないときも `return` していたので、**灰色の骨のまま**だった。
+   * あれも「読めなかった」。 */
   useEffect(() => {
-    load();
-  }, [load]);
+    let gone = false;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
+
+    const go = async () => {
+      try {
+        const t = await withRead(token());
+        if (!t) throw new Error("no-token");
+        const r = await withRead(getDonors(t));
+        if (gone) return;
+        ok = true;
+        miss = 0;
+        setRows(r.donors.map((d) => ({ slot: d.state, donor: d })));
+        setRead("ok");
+      } catch {
+        if (gone) return;
+        setRead("down");
+        miss += 1;
+        wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
+      }
+    };
+
+    setRows(null);
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [token, again]);
 
   const changed = (next: Donor) =>
     setRows((cur) => {
@@ -137,7 +181,11 @@ export default function DonorLinks() {
 
   return (
     <>
-      {rows === null ? (
+      {read === "down" ? (
+        /* 読みに行けなかった。**「まだ1人も入っていません」とは別の顔にする。**
+           札は島じゅうで1つ（`components/me/ReadAgain.tsx`）。 */
+        <ReadAgain what="投げ銭の一覧" onRetry={() => setAgain((n) => n + 1)} />
+      ) : rows === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
           <span />
@@ -208,13 +256,9 @@ export default function DonorLinks() {
         </>
       )}
 
-      <NewRow onChanged={changed} />
-
-      {down && (
-        <p className="muted mp-small">
-          いま読めませんでした。電波の届くところで開き直すと出ます。
-        </p>
-      )}
+      {/* 手で入れる口は、**一覧が読めているときだけ開く**（#36 #43）。
+          いま誰が入っているかを読めないまま入れると、同じ人をもう1行作る。 */}
+      {read === "ok" && <NewRow onChanged={changed} />}
     </>
   );
 }

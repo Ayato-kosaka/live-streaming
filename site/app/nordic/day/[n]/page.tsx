@@ -20,7 +20,6 @@ import {
   NORDIC_LOG,
   ROUTE,
   STOP_SEQ,
-  SUN,
   cityCountry,
   cityName,
   dayBySlug,
@@ -33,6 +32,7 @@ import {
   type Leg,
   type NordicSpot,
 } from "@/content/nordic";
+import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -80,10 +80,14 @@ export async function generateMetadata({
   const day = dayBySlug(n);
   if (!day) return {};
   const legs = day.legs ?? [];
+  /* 区間のある日は「◯から◯」、無い日は「◯で休む」。
+     **休んでいない日は `way` で上書きする**（9/27 は動く区間を持たないが
+     夜の便で発つので、自動だと「ストックホルムで休む」と名乗ってしまう）。 */
   const way =
-    legs.length > 0
+    day.way ??
+    (legs.length > 0
       ? `${cityName(legs[0].from)}から${cityName(legs[legs.length - 1].to)}`
-      : `${day.city}で休む`;
+      : `${day.city}で休む`);
   return {
     title: `${dayName(day)} ${way} — 北欧ヒッチハイク`,
     description: day.lead,
@@ -115,20 +119,31 @@ function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
-/** 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。 */
+/**
+ * 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。
+ *
+ * **分に0を詰めない。** 「12時間06分」は数字の表の書き方で、文の中では
+ * 読みがつまずく。ちょうどの時は「12時間」まで。
+ */
 function daylight(rise: string, set: string) {
   const m = (t: string) => Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
   const d = m(set) - m(rise);
-  return `${Math.floor(d / 60)}時間${String(d % 60).padStart(2, "0")}分`;
+  return `${Math.floor(d / 60)}時間${d % 60 ? `${d % 60}分` : ""}`;
 }
 
-/** その日いる街。日の出を出すのは、朝そこに立つ場所。分からなければ着く先。 */
+/**
+ * その日いる街。**朝そこに立つ場所だけ。着く先で代わりを出さない。**
+ *
+ * 前は、朝の街を持っていなければ「その日どこかで着く街」に落としていた。
+ * 出発の日（9/11）はそれで **カトヴィツェの日の出**が出ていた。あやとは
+ * その日ジョージアにいて、カトヴィツェに降りるのは**翌日の1時5分**。
+ * **その日一度も見ない空の明るさ**を「この日の、明るいうち」として
+ * 出していたことになる。落とすくらいなら、出さない。
+ */
 function sunCity(day: Day) {
-  const legs = day.legs ?? [];
-  if (legs.length === 0) return day.city && SUN[day.city] ? day.city : undefined;
-  const from = cityName(legs[0].from);
-  if (SUN[from]) return from;
-  return legs.map((l) => cityName(l.to)).find((c) => SUN[c]);
+  const has = (c?: string) => !!c && SUN_CITIES.includes(c);
+  const from = day.legs?.length ? cityName(day.legs[0].from) : day.city;
+  return has(from) ? from : undefined;
 }
 
 /**
@@ -273,8 +288,11 @@ function Hitch({ leg }: { leg: Leg }) {
  *
  * **この企画では、距離より先にここが1日の形を決めている。** 親指を上げて
  * 立てるのは日のあるあいだだけで、9月のバルトはそこが13時間しかない。
- * 値は9月中旬の1つだけ持っている（1週間で15分しか動かないので、
- * 日ごとに持つと同じ数字を11回書くことになる）。
+ *
+ * 値は**その日のもの**を出す（`content/nordicSun.ts`）。前は9月15日の値を
+ * 街ごとに1つ持って「9月中旬の◯◯」と断って出していた。旅が9日で
+ * 終わるあいだは足りていたが、ストックホルムの7泊を日ごとの面に割って
+ * 9月27日まで伸びたので、**最終日は1時間ちがう値を分まで出していた。**
  *
  * **「この日の道」と同じ紙に置く。** 別の紙に分けたら、見出しと紙のふちだけで
  * 90px 増えた（実測）。区間の無い休息日だけ、1枚の紙として立てる。
@@ -309,7 +327,8 @@ function Hours({
             </span>
           </p>
           <p className="ndsun-w">
-            9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}
+            {/* 日付はこの面の見出しにもう出ている。ここで繰り返さない */}
+            この日の{sc}。明るいのは {daylight(sun.rise, sun.set)}
             {hitch ? "。親指を上げられるのは、そのあいだだけ" : ""}
           </p>
         </div>
@@ -342,7 +361,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const hitchLegs = legs.filter((l) => l.hitch);
   const hitch = legs.some((l) => l.move === "hitch");
   const sc = sunCity(day);
-  const sun = sc ? SUN[sc] : undefined;
+  const sun = sunOn(sc, day.date);
   const art = legs[0]?.art ?? day.art;
 
   // 通る街と、寄るかもしれない街。**分けて出す。**

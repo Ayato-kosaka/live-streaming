@@ -125,6 +125,11 @@ GAS の `Goals` テーブル（id は `2025-10-24` で固定）から来る。
 
 **サイトは GAS の `Goals` をそのまま読む。** 自前で BigQuery から数え直さない。
 
+**「配信の演出上の都合」も間違いだった（2026-09-11 に訂正）。**
+半分にしているのは演出ではなく**仕様**で、あやとの言葉は
+「スパチャは投げ銭してくれたお金の半分を貯金箱に入れている」。
+→ [9.1](#91-スパチャは半分は仕様)
+
 **ただし「N人があわせて◯円出してくれました」には、この合計を使わない。**
 合計には起点（`startAmount`。負の数）が入っているので、出してくれた額を
 実際より少なく言うことになる。あちらには `given = superChatAmount + doneruAmount`
@@ -1011,3 +1016,293 @@ island/state
 15. **その日に起きたことを2〜3行書く**（`NORDIC_LOG`）。あやとが送ってきたものを、
     受け取った側が焼いて出す（`docs/nordic-depart.md` 2章）
 16. **OBS の1枚を出すか**（提案7）。出すなら、豚の貯金箱と並べるか、差し替えるか
+
+---
+
+## 9. 豚の貯金箱 ── スプレッドシートから Firestore へ
+
+**2026-09-11 に決めたこと。** 貯金箱の中身（スパチャの控え・支出・目標）を
+GAS のスプレッドシートから離して、Firestore とオーナー画面に移す。
+
+### 9.1 「スパチャは半分」は仕様
+
+**まずこれを書き残す。リポジトリのどこにも書かれていなかった。**
+
+あやとの言葉（2026-09-11）:
+
+> スパチャは投げ銭してくれたお金の**半分**を貯金箱に入れている。
+
+`app/alertbox/index.tsx` に `SUPERCHAT_CONVERSION_RATE = 0.5` があり、
+GAS の `superChatAmount` は `=SUM(SuperChats!$D$2:$D)/2` になっている。
+**数はあったが、なぜ半分なのかはどこにも無かった。** この文書までは
+「OBS が半額にしているのは配信の演出上の都合」と書いてあって（2.2 の消し跡）、
+**それが間違いだった。** 演出ではなく、決めごと。
+
+もう一つ、間違えると1円ずれるところ。
+
+> **合計してから半分にする。1件ずつ半分にしない。**
+
+GAS が `=SUM(...)/2` なので、奇数円のスパチャがあると
+「1件ずつ切り捨ててから足す」とずれる。実装は `python/fund_box.py` の
+`box()` 1か所だけ。
+
+### 9.2 式
+
+```
+貯金箱 = スパチャ合計 ÷ 2 ＋ Doneru － 支出合計
+```
+
+いままでの豚は `startAmount + superChatAmount + doneruAmount` で出していた。
+**`startAmount`（負の数）の中身が、支出の合計。** 表にすると、こう。
+
+| いままで（GAS） | これから（Firestore） |
+| --- | --- |
+| `superChatAmount`（`=SUM(D:D)/2` の1マス） | `islandFundSuperChats` 411件を足して ÷2 |
+| `startAmount`（`-249646` の1マス） | `islandFundSpends` 7件を足して符号を反転 |
+| `targetAmount` `label`（1マス） | `islandFundGoals` のいま走っている1件 |
+| `doneruGoalKey` → Doneru の API | **変えない。** 控えは持たない |
+
+**Doneru は Firestore に持たない。** 向こうの API が持っている累計なので、
+こちらが写しを持つと二重管理になるし、鍵が要る。読むときに足す。
+
+### 9.3 なぜ1マスではなく1件ずつにするのか
+
+あやとの言葉（2026-09-11）:
+
+> BigQuery 側が YouTube のバグで消える場合もある。また、アラートボックス
+> 起動し忘れで、取りこぼすこともあるから**手動登録導線は必要**
+
+つまり入り口が3つある。**3つが同じスパチャを持ってくることがある。**
+
+| 入り口 | 取りこぼすとき |
+| --- | --- |
+| OBS のアラートボックス | **起動し忘れた晩は1件も入らない** |
+| BigQuery（毎晩の取り込み） | YouTube 側の都合でチャットが消えることがある |
+| 手入力 | 上の2つが両方落ちた晩 |
+
+1マスの合計だと、「もう入っているか」を人が覚えているしかない。
+1件ずつ持てば、**同じものは同じ書類に上書きされて増えない。**
+
+### 9.4 重ならない鍵 ── 26文字の item id
+
+YouTube のスパチャには26文字の item id が付いている。
+**出どころが違っても、ほどけばここに行き着く。**
+
+| 出どころ | 記録しているID | ほどくと |
+| --- | --- | --- |
+| アラートボックス（YouTube Data API） | `LCC.` + 44文字 | `CKPjqsSD8JEDFczAwgQdOK04Iw` |
+| BigQuery `chat_messages.event_id` | `ChwKGk…` 40文字 | 同じ26文字 |
+
+**この2つは、そのまま比べると1件も一致しない。** 包み方が違うだけで、
+中身は同じ protobuf。ほどいて初めて突き合わせられる
+（`python/fund_box.py` の `item_id_from_lcc` / `item_id_from_event`）。
+
+実測（2026-09-11、直近30日）: BigQuery の35件のうち **32件が控えと同じ
+書類IDに着いた。** 残り3件は下の 9.5。
+
+### 9.5 手入力は「日付と額の札」で待つ
+
+残った3件を調べたら、**GAS の手入力3件（`manual-14`〜`manual-16`）と
+同じものだった。** アラートボックスが取りこぼした晩にあやとが手で入れて、
+そのあと BigQuery のほうにはちゃんと入っていた、という形。
+
+手入力の書類IDは `manual-…`、BigQuery のほうは26文字なので、
+**書類IDでは重ならない。そのまま毎晩の掃除を回すと貯金箱が増える。**
+
+そこで手入力には `claim: "2026-08-26|1000"`（日付と額）の札を付ける。
+BigQuery から同じ日・同じ額のものが出てきたら、**それはこの手入力のことだと
+見なして足さない。** 札は1件につき1回しか使えない（`claimedBy` を書き込む）
+ので、同じ日に同じ額のスパチャが2つあれば2つめはちゃんと足される。
+
+**日付の分からない手入力が13件ある**（GAS の `manual-1`〜`manual-13`、
+あわせて3,000円。`createdAt` が空）。ここには札を付けられない。
+毎晩の掃除は直近3日しか見ないので当たらないが、**全期間を遡ると二重に
+なりうる。** 遡るときは `--sweep`（`fund_sync` なら `{"sweep": true}`）を付けさせて、
+13件あることを警告に出す。付けずに31日より前を書こうとすると止まる。
+
+### 9.6 Firestore の形
+
+**複合索引を作れない**（GitHub #168）ので、絞り込みも並べ替えも
+単一フィールドで足りる形にしてある。
+
+```
+islandFundSuperChats/{26文字の item id  |  manual-…}
+  yen        number   円（GAS の SuperChats D 列 = jpy）。**半分にする前**
+  at         string   いつのスパチャか（ISO8601）。分からなければ null
+  day        string   JST の日（"2026-09-10"）。日ごとに引くのはこれ1本
+  who        string   出した人の名前。**画面には出さない**（二重登録を人が見分けるため）
+  currency   string   "円"。外貨は貯金箱に入れないので、控えにも入れない
+  src        string   alertbox | bigquery | manual
+  claim      string   手入力だけ。"日付|額"。BigQuery と重ねるときの札
+  claimedBy  string   その札を使った item id。使う前は null
+
+islandFundSpends/{日付-ハッシュ8桁}
+  day    string   "2026-05-21"
+  title  string   "ドネルこれまでの退避"
+  yen    number   156056
+
+islandFundGoals/{開始日}
+  from   string   "2026-07-27"
+  to     string   終了日。**進行中は null**
+  label  string   "北欧周りたい"
+  yen    number   50000
+```
+
+**書類IDは中身から決まる。** だから何度流しても増えない。
+
+- スパチャ … 26文字の item id（手入力は `manual-<日付>-<ハッシュ8桁>`）
+- 支出 … `<日付>-sha1(日付|題|額) の頭8桁`
+- 目標 … 開始日そのもの
+
+**目標は同時に1つだけ置く。** 2つ置くと「いま走っているのはどれか」を出すのに
+`to == null` と `from` の並べ替えの2フィールドが要って、索引が必要になる。
+`from` の降順に1件だけ引いて、それが閉じていたら「無し」とする。
+
+### 9.7 合計はどこに出るか
+
+411件を画面のたびに読ませない。毎晩の掃除が焼いて `island/state` に置く。
+
+```
+island/state
+  fund.box: {
+    superchat      119036   スパチャ合計 ÷ 2。**貯金箱に入るぶん**
+    superchatFull  238072   人が出した額（÷2 する前）
+    count          411
+    spend          249646
+    spendCount     7
+    start         -249646   豚の startAmount にあたる負の数（突き合わせ用）
+    goal          { from, to, label, yen }
+    updatedAt     "2026-09-11"
+  }
+```
+
+**`fund.superchat` `fund.people` `fund.days` は触らない。**
+あちらは `python/island_daily_stats.py` の持ちもので、
+`GET /island-api/fund` がいまも読んでいる。同じ欄を2人が書くと、
+額がワークフローのステップの順番で決まる。
+
+### 9.8 読む側を切り替えるのは、合ってから
+
+`functions/src/islandApi.ts` の `GET /fund` は、いまも GAS の `Goals` を
+読んでいる。**切り替えるのは、両方の額が1円まで一致しているのを
+本番で見てから。** それまで画面に出る額はいままでどおり動かない。
+
+切り替えるときに読むもの:
+
+```
+superchat = island/state.fund.box.superchat     （GAS の superChatAmount の代わり）
+start     = island/state.fund.box.start         （GAS の startAmount の代わり）
+goal      = island/state.fund.box.goal.yen      （GAS の targetAmount の代わり）
+label     = island/state.fund.box.goal.label
+```
+
+**Doneru の goal key だけは GAS から引いたままでよい。** 鍵は Firestore に
+置かない（`islandApi` は既にそうしている）。
+
+### 9.9 道具
+
+| 何を | どこ | 既定 |
+| --- | --- | --- |
+| 移行の下見（Firestore を触らない） | `python/admin/fund_check.py` | 読むだけ |
+| 移行 | `python/admin/fund_migrate.py` | **書かない**。`{"apply": true}` で書く |
+| 毎晩の掃除 | `python/fund_daily.py` | `schedule_fetch_chat.yml` から自動 |
+| 掃除を手で流す | `python/admin/fund_sync.py` | **書かない** |
+| 手で1件足す／消す | `python/admin/fund_add.py` | **書かない** |
+| 式と鍵の付け方 | `python/fund_box.py` | — |
+| 移行の種（支出7件・目標1件） | `python/fund_seed.py` | — |
+
+**移行前と移行後が1円でも違ったら、`fund_migrate` は書かずに落ちる。**
+見るのは3つで、どれも `GET /island-api/fund` まで遡って突き合わせる。
+
+```
+スパチャ  411件を足して ÷2   =  GAS の superChatAmount
+支出      7件を足して符号反転 =  GAS の startAmount
+貯金箱    式で出した額        =  本番の /island-api/fund の total
+```
+
+### 9.10 移行前に測った本番の値（2026-09-11）
+
+**移行前のスナップショットが無いと、狂っていないことを誰も言えない。**
+
+| 何を | 値 |
+| --- | --- |
+| `GET /island-api/fund` の `total` | **44,410円** |
+| 同 `given`（起点を含まない、人が出した額） | 294,056円 |
+| 同 `goal` | 50,000円 |
+| 同 `people` | 52人 |
+| GAS `Goals` の `startAmount` | **−249,646円** |
+| GAS `Goals` の `superChatAmount` | **119,036円** |
+| GAS `Goals` の `targetAmount` / `label` | 50,000円 ／ 北欧周りたい |
+| Doneru（`given − superChatAmount` で出る） | 175,020円 |
+| GAS `SuperChats` の行数 | 411件（うち手入力16件） |
+| 同 D列（`jpy`）の合計 | 238,072円（÷2 = 119,036円） |
+| 支出7件の合計 | 249,646円（= `−startAmount`） |
+
+`−249,646 + 119,036 + 175,020 = 44,410`。**本番と1円まで合っている。**
+
+### 9.10.5 落ちたときに、落ちたと分かること
+
+毎晩の掃除は**ひとりでに走るので、壊れても誰も気づかない。** 2つ置いた。
+
+1. **`schedule_fetch_chat.yml` の中で job を分けた**（`fund_box`）。
+   `island_stats` の途中に `continue-on-error` で置くと**落ちても緑のまま**で、
+   ステップを開くまで分からない（`island-misses.md` #55 と同じ形）。
+   かといって同じ job の中で赤くすると、後ろの台帳・カード・名簿が skip される。
+   **額が1日古いだけのことで、カードが配れなくなる。** job を分ければどちらも起きない
+2. **`islandFundHealth/last` に札を1枚置く**（`chatCapture.ts` の
+   `streamChatHealth` と同じ手）。旅のあいだ Actions を開けないときは、これを読む
+
+```
+管理スクリプトを実行  script: firestore_read
+args: {"collection":"islandFundHealth","limit":1}
+
+{ at, ok, error, added, claimed, count, superchat, spend, box, days }
+```
+
+`ok: false` なら `error` に理由が入っている。`at` が今日でなければ、
+**掃除そのものが走っていない**（札は置けているのに古い、なら Firestore は生きている）。
+
+### 9.10.7 移行したあとに測った値（2026-09-11 01:42 UTC）
+
+**apply 済み。** 移行前（9.10）と突き合わせる。
+
+| 何を | 移行前 | 移行後 |
+| --- | --- | --- |
+| `GET /island-api/fund` の `total` | 44,410円 | **44,410円（動いていない）** |
+| `islandFundSuperChats` | — | 411件 / 238,072円（÷2 = 119,036円） |
+| `islandFundSpends` | — | 7件 / 249,646円 |
+| `islandFundGoals` | — | 1件（北欧周りたい / 50,000円 / 2026-07-27〜） |
+| `island/state.fund.box.box` | — | −130,610円（Doneru を除いた側） |
+
+確かめたこと。
+
+- **`fund_migrate` を apply で2回流した。** 2回目も 411件 / 238,072円 / 249,646円 で、
+  1件も増えていない（書類IDが中身から決まるので上書きになる）
+- **毎晩の掃除（`fund_daily`）を本番で1回通した。** BigQuery の直近3日 3件は
+  ぜんぶ控えに既にあり、`控えに無かったぶん: 0件`。`island/state.fund.box` を書いた
+- **`GET /island-api/fund` は 44,410円のまま。** 読む側を切り替えていないので、
+  こちらが何をしても画面の額は動かない
+- **ブラウザからは3コレクションとも読めない。** 認証なしの Firestore REST で
+  `PERMISSION_DENIED`（`islandIdeas` と同じ。`islandHere` は 200 で返るので、
+  「全部 403 になる口」ではないことも確かめてある）。
+  `firestore.rules` の catch-all がすでに塞いでいるので、**明示の3行が配られる前から
+  読めない。** 明示の3行は次の Hosting デプロイで乗る
+
+### 9.11 残っていること
+
+読む側の切り替えと、古いぶんを遡るかどうかは GitHub #292。
+**状態が変わるものなので、ここには書かない。**
+
+### 9.12 台帳（`islandTips`）と混ぜない
+
+`islandTips`（#202）も投げ銭を1件ずつ持っているが、**別のもの。**
+
+| | `islandTips` | `islandFundSuperChats` |
+| --- | --- | --- |
+| 何のため | **誰にどのカードを渡すか** | **いくら入っているか** |
+| 元 | BigQuery だけ | アラートボックス・BigQuery・手入力 |
+| 書類ID | `sha1("yt:動画ID:event_id")` の頭32桁 | 26文字の item id |
+| Doneru | 入っている | 入っていない（API から読む） |
+
+書類IDの付け方が違うので、**そのままでは突き合わせられない。**
+寄せると、カードのIDが全部変わる。**寄せない。**

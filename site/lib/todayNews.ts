@@ -33,6 +33,7 @@ import { RECIPES } from "@/content/recipes";
 import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
+import { nights } from "@/content/nights";
 /* 「いまどこ」の言い方は1か所（`lib/stay.ts` の `placeWord`）。
    板がここだけ独自に場所を言うと、同じ表紙の中で名刺と食い違う。 */
 import { placeWord, stayNow } from "@/lib/stay";
@@ -267,7 +268,7 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
   // 1年前の記録は365日ぶん埋まっているので、放っておくと毎日7番が当たり、
   // 「今夜22時から。あと20分」が21時台にも出なくなる。
   // だが配信の直前だけは、思い出より「もうすぐ始まる」のほうが役に立つ。
-  if (night.mins > 0 && night.mins <= 120) {
+  if (!night.loose && night.mins > 0 && night.mins <= 120) {
     out.push({
       kind: "tonight",
       icon: "lantern",
@@ -311,7 +312,23 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
   }
 
   // 8. どれも無い日。ここに落ちる日があるから、1〜7の日が効く
-  if (!night.onAir) {
+  //
+  // **旅のあいだは、あと何分かを言わない。** 「あと3時間20分」は22時から逆算した
+  // 数字なので、22時に始まらない日に出すとただの嘘になる（`lib/nightly.ts`）。
+  // 数えられないときは、数えずに済む言い方に替える。板の場所と行き先は変えない。
+  if (night.loose) {
+    const w = nights(now);
+    out.push({
+      kind: "tonight",
+      icon: "lantern",
+      line: w.tonight,
+      title: w.tonight,
+      body: w.span,
+      href: YOUTUBE,
+      out: true,
+      go: "チャンネルへ",
+    });
+  } else if (!night.onAir) {
     out.push({
       kind: "tonight",
       icon: "lantern",

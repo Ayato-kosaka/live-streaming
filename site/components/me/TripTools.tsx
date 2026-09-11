@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getState, postCurrent } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { TRIP_PLACES, tripCity } from "@/content/tripPlaces";
+import ReadAgain from "./ReadAgain";
+
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
    1バイトも減らない。旅の道具はあやとの画面にしか降りてこない。 */
 import Icon from "@/components/ui/Icon";
+
+/* その日に起きたことを書く欄（`TripLog`）は、ここにあった。**外した**
+   （2026-09-10）。旅の最中は、あやとが秘書に一言送って、そこから整えて
+   焼く。書く口を2つ持つと、片方が古くなる。
+   入れる先は `site/content/nordic.ts` の `NORDIC_LOG`（焼き込み）。 */
+
 
 /** 島の景色。`docs/island-world.md` 1.3 の3つ。サーバー側の `ISLAND_THEMES` と同じ。 */
 const THEME_NAME: [string, string][] = [
@@ -65,24 +73,82 @@ export function TripPlace() {
   const [err, setErr] = useState<string | null>(null);
   /** 送ったあと、島がその場所をどう受け取ったか */
   const [got, setGot] = useState<string | null>(null);
+  /** 島に入っているものを読めたか。**「読んでいる最中」と混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 落ちた回数。読み直す間隔を倍にしていくのに使う */
+  const miss = useRef(0);
+  /* いまの読めぐあい。**電波が戻ったとき、落ちているときだけ読み直す**ために持つ */
+  const nowRead = useRef<Read>("wait");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
+
+  /**
+   * 島に入っているものを読む。
+   *
+   * `showWait` は、押されて読み直すときだけ `true`。骨に戻して「いま行った」と
+   * 分かるようにする。ひとりでに読み直すときは顔を入れ替えない（#277）。
+   */
+  const load = useCallback(
+    (showWait: boolean) => {
+      if (showWait) {
+        nowRead.current = "wait";
+        setRead("wait");
+      }
+      /* **返事が来ないのも「読めなかった」**（`withRead` が12秒で見切る）。
+         前はここが `catch(() => setNow({}))` で、今週やることが
+         「読んでいます…」のまま何分でも残っていた。 */
+      withRead(getState())
+        .then((s) => {
+          if (!alive.current) return;
+          setNow(s.current ?? {});
+          setWeek(s.current?.week ?? []);
+          nowRead.current = "ok";
+          setRead("ok");
+          miss.current = 0;
+          if (filled.current) return;
+          filled.current = true;
+          put({
+            place: d.place || s.current?.place || "",
+            word: d.word || s.current?.word || "",
+            theme: d.theme || s.current?.theme || "georgia",
+          });
+        })
+        .catch(() => {
+          if (!alive.current) return;
+          nowRead.current = "down";
+          setRead("down");
+          miss.current += 1;
+          timers.current.push(
+            setTimeout(() => load(false), Math.min(2000 * 2 ** (miss.current - 1), 30000)),
+          );
+        });
+    },
+    // 打ちかけを消さないための読み取りしかしていない（入れるのは1回だけ）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
-    getState()
-      .then((s) => {
-        setNow(s.current ?? {});
-        setWeek(s.current?.week ?? []);
-        if (filled.current) return;
-        filled.current = true;
-        put({
-          place: d.place || s.current?.place || "",
-          word: d.word || s.current?.word || "",
-          theme: d.theme || s.current?.theme || "georgia",
-        });
-      })
-      .catch(() => setNow({}));
-    // 開いたときに1回だけ
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    alive.current = true;
+    load(false);
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (nowRead.current === "down") load(false);
+    };
+    const back = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", back);
+    const running = timers.current;
+    return () => {
+      alive.current = false;
+      running.forEach(clearTimeout);
+      running.length = 0;
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [load]);
 
   const send = async () => {
     const place = d.place.trim();
@@ -132,9 +198,14 @@ export function TripPlace() {
           <Icon name="alert" size={13} /> いま電波が届いていません。打っておけば端末に残ります。
         </p>
       )}
-      <p className="mp-now">
-        いまは <b>{now?.place ?? "…"}</b>
-      </p>
+      {/* 読みに行けなかった。**「いまは …」のまま黙らない。**
+          いま島に何が出ているかを読めていないので、そう言って読み直す道を出す。 */}
+      {read === "down" && <ReadAgain what="島に出ている場所" onRetry={() => load(true)} />}
+      {read !== "down" && (
+        <p className="mp-now">
+          いまは <b>{now?.place ?? "…"}</b>
+        </p>
+      )}
       <label className="nph-post-row">
         <span>いる場所</span>
         <input
@@ -164,11 +235,14 @@ export function TripPlace() {
       </div>
       <label className="nph-post-row">
         <span>ひとこと</span>
+        {/* 見本に時刻を書かない。旅のあいだは始まる時刻が日で変わるので、
+            ここを真似して打つと、島の「いまどこ」に嘘の時刻が乗る
+            （`docs/island-misses.md` #53）。 */}
         <textarea
           value={d.word}
           rows={2}
           maxLength={140}
-          placeholder="ヴィリニュスまで来ました。今夜も22時から配信します。"
+          placeholder="ヴィリニュスまで来ました。今日はこのあたりから配信します。"
           onChange={(e) => put({ word: e.target.value })}
         />
       </label>
@@ -186,7 +260,11 @@ export function TripPlace() {
           全部打ち直すためのものではないので、消すのを先に置く。 */}
       <div className="trip-week">
         <span className="trip-week-h">今週やること</span>
-        {week === null ? (
+        {/* **読めなかったことを、「1行も出ていません」に倒さない。**
+            押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
+        {read === "down" ? (
+          <ReadAgain what="今週やること" quiet />
+        ) : week === null ? (
           <p className="trip-week-none">読んでいます…</p>
         ) : week.length === 0 ? (
           <p className="trip-week-none">いまは1行も出ていません。</p>

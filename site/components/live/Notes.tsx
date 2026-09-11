@@ -14,7 +14,8 @@ import {
   type Sticky,
 } from "@/lib/api";
 import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
-import { useAuth, useOwner } from "@/lib/auth";
+import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
+import ReadAgain from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { Pin } from "./art";
@@ -50,6 +51,24 @@ import { Pin } from "./art";
  * `byOwner` の付箋は、いちばん上に出す。おたずねの「選択肢」がこれになる
  * （`islandPolls` の統合先）。だから並び順は、押された数ではなく
  * 「こちらが立てたか」で先に割る。
+ *
+ * ## 読めなかったときは、読み直す道を出す（#34 #36 #43）
+ *
+ * 文言（「いま、付箋を読みに行けなかった」）はもう書いてあったが、
+ * **押しどころが無く、電波が戻っても直らなかった。** 画面を開き直すまで
+ * その1枚のままで、旅の途中の国のページでは開き直す道すら遠い。
+ *
+ * 直したのは3つ。
+ *   - `withRead`（12秒）を通す。**`fetch` は自分では諦めない**ので、
+ *     45秒返さない回では灰色の骨がいつまでも残っていた
+ *   - 落ちたら黙って読み直す（間隔を倍にしながら30秒まで）。
+ *     `online`・画面に戻ってきたでも読み直す。**画面を開き直させない**
+ *   - **読めていない相手に、書ける口を開かない**（#36）。区画は残して、
+ *     押しどころだけ出さない。読めないまま貼ると、貼った1枚が
+ *     「板ぜんぶ」の顔で出る
+ *
+ * 骨に戻すのは**押されたときだけ。** ひとりでに読み直すたびに戻すと、
+ * 灰色と文言が数秒おきに入れ替わる（#277）。
  */
 
 /** 画びょうの色。並べたときに同じ色が続かないよう、4色を順に回す */
@@ -106,8 +125,10 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
   );
   /** 取りに行っている最中は null。0枚と区別する */
   const [notes, setNotes] = useState<Sticky[] | null>(null);
-  /** 読めなかったか。空っぽと読めなかったを、同じ顔で出さない */
-  const [down, setDown] = useState(false);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
   const [hearted, setHearted] = useState<Set<string>>(new Set());
   const [text, setText] = useState("");
   const [name, setName] = useState("");
@@ -139,55 +160,74 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
 
   /* 掲示板は1回で全部読む。テーマごとの枚数も、選んだテーマの中身も、
      同じ1回から出せる（枚数を出すには、どのみち全部が要る）。
-     テーマが決まっている面は、そのテーマぶんだけを押された順に読む。 */
-  useEffect(() => {
-    // しまったものを見ているあいだは、下の効果が読む。ここでは触らない
-    if (bin) return;
-    let gone = false;
-    setNotes(null);
-    setDown(false);
-    getStickies(fixed ? { theme: fixed.id, byHearts: true } : { limit: 300 })
-      .then((r) => {
-        if (!gone) setNotes(r.notes);
-      })
-      .catch(() => {
-        if (gone) return;
-        setNotes([]);
-        setDown(true);
-      });
-    return () => {
-      gone = true;
-    };
-  }, [fixed, bin]);
+     テーマが決まっている面は、そのテーマぶんだけを押された順に読む。
 
-  /* しまったものを見にいく。あやとが押したときだけ。
-     一覧と混ぜて持たないのは、戻したときにどちらへ動いたかが
-     分からなくなるため。押すたびに読み直す。 */
+     しまったものを見にいくのも同じ効果でやる。一覧と混ぜて持たないのは、
+     戻したときにどちらへ動いたかが分からなくなるため。押すたびに読み直す。 */
+  const stowed = bin && owner;
   useEffect(() => {
-    if (!bin || !owner) return;
     let gone = false;
-    setNotes(null);
-    setDown(false);
-    (async () => {
-      const t = await token();
-      if (!t || gone) return;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
+
+    const go = async () => {
       try {
-        const r = await getArchivedStickies(t, fixed?.id);
-        if (!gone) setNotes(r.notes);
+        const r =
+          stowed ?
+            await withRead(getArchivedStickies((await withRead(token())) ?? "", fixed?.id)) :
+            await withRead(
+              getStickies(fixed ? { theme: fixed.id, byHearts: true } : { limit: 300 }),
+            );
+        if (gone) return;
+        ok = true;
+        miss = 0;
+        setNotes(r.notes);
+        setRead("ok");
       } catch {
-        if (!gone) setDown(true);
+        if (gone) return;
+        /* **空の配列にしない。** 空は「読めた上での0枚」のことばで、
+           届かなかった日に言ってよい嘘ではない。 */
+        setRead("down");
+        /* **押されるまで待たない。** 車が谷を抜ければ次は通る。
+           間隔を倍にしながら、30秒おきまで落として黙って読み直す。
+           `setRead("wait")` に戻さないのは、灰色の骨と「読めなかった」の顔が
+           数秒おきに入れ替わるのを避けるため（#277）。 */
+        miss += 1;
+        wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
       }
-    })();
+    };
+
+    setNotes(null);
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。
+       読めているうちは何もしない（画面に戻るたびに往復を1本増やさない）。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
     };
-  }, [bin, owner, token, fixed]);
+  }, [fixed, stowed, token, again]);
 
   /* 読めた枚数を親へ返す。**しまったものを見ているあいだは返さない**
      （札に出る数が、貼ってある枚数ではなくなる）。 */
   useEffect(() => {
-    if (notes && !bin) onCount?.(notes.length);
-  }, [notes, bin, onCount]);
+    if (notes && read === "ok" && !bin) onCount?.(notes.length);
+  }, [notes, read, bin, onCount]);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -203,7 +243,7 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
   /* 「まだ1枚も貼られていません」の空札が出ているか。
      空札そのものが押しどころ（「いちばんに貼る」）なので、そのときは
      書く欄を開く段をもう1つ出さない。同じ行き先の押しどころを2つ置かない。 */
-  const blank = notes !== null && !down && list.length === 0 && !bin;
+  const blank = read === "ok" && list.length === 0 && !bin;
 
   const submit = async () => {
     const t = text.trim();
@@ -277,7 +317,10 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
     try {
       await archiveSticky(n.id, on, t);
     } catch {
-      setDown(true);
+      /* しまえなかったぶんは戻す。**「読みに行けなかった」の顔にしない。**
+         読めてはいるので、そう言うと直せない1枚が板ぜんぶを覆う
+         （並びは出すときに `ordered` で作り直すので、末尾に戻せばよい）。 */
+      setNotes((cur) => (cur ? [...cur, n] : cur));
     }
   };
 
@@ -322,8 +365,11 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
           開いたままだと今度は付箋の山が画面の外へ出る。押す段を1つ挟む。
 
           宛先はもう決まっている。名前は本文の前に置く。あとに置いていたときは、
-          書き終えた人がそこまで目を戻さず、本文の末尾に「by まこも」と書いていた。 */}
-      {!bin && !open && !blank && (
+          書き終えた人がそこまで目を戻さず、本文の末尾に「by まこも」と書いていた。
+
+          **読めていないあいだは出さない**（#36）。貼れても、貼った1枚だけが
+          板ぜんぶの顔で並ぶ。区画は残して、押しどころだけ出さない。 */}
+      {!bin && !open && !blank && read === "ok" && (
         <button
           className="nt-open"
           onClick={() => {
@@ -401,7 +447,7 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
 
         {/* 取りに行っているあいだは、出てくる付箋と同じ形の灰色を置く
             （`docs/island-world.md` 4.1）。 */}
-        {notes === null && (
+        {read === "wait" && (
           <ul className="nx-notes is-wait" aria-hidden>
             <li />
             <li />
@@ -409,14 +455,13 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
           </ul>
         )}
 
-        {notes !== null && down && (
-          <div className="blank is-off">
-            <b>いま、付箋を読みに行けなかった</b>
-            <p>少し待ってから、もう一度。</p>
-          </div>
+        {/* 読みに行けなかった。**「まだ1枚も貼られていません」とは別の顔にする。**
+            札は島じゅうで1つ（`components/me/ReadAgain.tsx`）。 */}
+        {read === "down" && (
+          <ReadAgain what={bin ? "しまったもの" : "付箋"} onRetry={() => setAgain((n) => n + 1)} />
         )}
 
-        {notes !== null && !down && list.length === 0 && (
+        {read === "ok" && list.length === 0 && (
           <div className="blank">
             <b>{bin ? "しまったものはありません" : "まだ1枚も貼られていません"}</b>
             {/* **書く欄が開いているかで、言うことを変える。**

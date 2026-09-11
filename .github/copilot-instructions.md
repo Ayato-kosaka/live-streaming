@@ -12,14 +12,14 @@ Always reference these instructions first and fallback to search or bash command
   - ALWAYS run the bootstrapping steps first: `npm install` and `npx expo export --platform web`
   - Serve locally: `python3 -m http.server 8000 --directory dist`
   - Access at: http://localhost:8000
-  - Routes available: `/`, `/alertbox`, `/chat-display`, `/ve-postit`, `/ve-comment`
+  - Routes available: `/`, `/alertbox`, `/daily_user_stats`, `/ve-postit`, `/ve-comment`
 - Run development server (alternative to build approach):
   - `npx expo start --web` -- starts Metro bundler on port 8081
   - Note: May encounter compatibility warnings about react-native-view-shot version
 
 ## Validation
 - Always manually validate any new code by building and serving the web application after making changes.
-- ALWAYS test the key application routes: `/alertbox` and `/chat-display` after making changes.
+- ALWAYS test the key application routes: `/alertbox` and `/ve-comment` after making changes.
 - The application shows blank white pages by design - they are meant to be overlays for streaming software.
 - Console logs indicate the app is working (logging to external services).
 - You can build and run the web version of the application fully.
@@ -78,7 +78,6 @@ Always reference these instructions first and fallback to search or bash command
 ### Common File Locations
 - Main app entry: `/app/index.tsx` (currently blank by design)
 - AlertBox component: `/app/alertbox/index.tsx`
-- Chat display: `/app/chat-display/index.tsx`
 - Configuration: `/app/alertbox/config.ts`
 - Firebase functions: `/functions/src/index.ts`
 - Python scripts: `/python/fetch_chat_data.py`

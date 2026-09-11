@@ -10,6 +10,7 @@ import {
   toJpeg,
   type Place,
 } from "@/components/nordic/stamp";
+import DropPhoto from "./DropPhoto";
 import { cardIcon, cardWhen, type PhotoGroup, type PlanBrief } from "./cards";
 
 /**
@@ -50,12 +51,15 @@ export default function CardSheet({
   group,
   plans,
   onClose,
+  onDropped,
 }: {
   /** 開いた写真1枚ぶん。新しい順のまま渡ってくるので並べ直さない */
   group: PhotoGroup;
   /** その日の企画。**1日に何本でも立つ** */
   plans?: PlanBrief[];
   onClose: () => void;
+  /** 消えた1枚。**あやとだけ**（道具そのものが `DropPhoto` の中で消える） */
+  onDropped?: (photoId: string) => void;
 }) {
   /* 同じ絵の人を2度出さない。台帳は人ごとに1枚だが、Doneru から手で入った
      人と YouTube の人が同じ絵に当たることがある。 */
@@ -99,7 +103,7 @@ export default function CardSheet({
     (async () => {
       const [photo, chr] = await Promise.all([
         loadImage(shot),
-        icon ? loadImage(cardIcon(icon, 512)) : Promise.resolve(null),
+        icon ? loadImage(cardIcon(icon, 640)) : Promise.resolve(null),
       ]);
       if (gone) return;
       if (!photo) {
@@ -251,6 +255,18 @@ export default function CardSheet({
               </Link>
             ))}
           </div>
+        )}
+
+        {/* 消す道。**いちばん下、いちばん静か。** ここでやることは
+            「入れて、持って帰る」で、消すのはあやとが貼り間違えた日だけ。
+            上に置くと、持って帰りに来た人の目にいちばん先に入る。
+            あやと以外には1つも出ない（`DropPhoto` の中で消える）。 */}
+        {onDropped && (
+          <DropPhoto
+            photoId={group.photoId}
+            cardCount={group.cardCount}
+            onDropped={onDropped}
+          />
         )}
       </div>
     </div>

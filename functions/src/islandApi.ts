@@ -37,6 +37,11 @@ import {handleCards} from "./cards";
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
+/* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
+   **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
+   引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
+   どちらも単一フィールドで引く（`islandCharacter.ts` 冒頭）。 */
+import {handleCharacters} from "./islandCharacter";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -158,9 +163,10 @@ const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
    止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
    実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
    サイトも配信も同時に追随する。
-   **金額そのものは GAS から取らない。** あちらはスパチャを配信の演出上、
-   半額で数えている。サイトは満額で数える決まりなので(下の /fund の注)、
-   ここから借りるのは鍵だけにする。 */
+   **金額そのものは、いずれ GAS から取らなくなる。** 移し先は Firestore の
+   `island/state.fund.box`(`docs/nordic-fund.md` 9章)。切り替えるのは、
+   両方の額が1円まで合っているのを本番で見てから。それまではここから
+   額も借りる。 */
 const GAS_GOALS =
   "https://script.google.com/macros/s/" +
   "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
@@ -1679,7 +1685,24 @@ async function listPhotoDays(): Promise<Json[]> {
 }
 
 export const islandApi = onRequest(
-  {region: "us-central1", cors: true, maxInstances: 10},
+  /* **512MiB。既定の 256MiB では絵を1枚受け取れないことがある。**
+     2026-09-11、キャラクターの移行が 65人目で 500 を返して止まった。
+     ログは `Memory limit of 256 MiB exceeded with 256 MiB used`。
+
+     絵は base64 で本文に乗ってくる。4MB の元絵なら本文が 5.3MB になり、
+     受け取った生のバイト列・JSON にした文字列・`Buffer.from` で戻した
+     バイト列が同時に載る。そこへ幅ごとに焼いたものが4枚加わる。
+
+     旅の写真（`/nordic/photos`）が 256MiB で何か月も落ちていないのは、
+     ブラウザ側が長辺 1600px の webp に焼いてから送っていて、1枚
+     200〜400KB しか来ないから。**キャラクターの `full` は縮めない**
+     （持ち帰るものなので。`islandCharacter.ts` の `WIDTHS` の説明）ので、
+     元絵の大きさがそのまま効く。
+
+     **移行だけの話ではない。** あやとが旅先のスマホから絵を入れ替える道
+     （`site/components/me/Characters.tsx`）も同じ本文を送る。17日間、
+     落ちても原因を見に行けないので、受け取れる側を広げておく。 */
+  {region: "us-central1", cors: true, maxInstances: 10, memory: "512MiB"},
   async (req, res) => {
     // Hosting の rewrite 経由でも直叩きでも動くように、前置きのパスを落とす
     const path = (req.path || "/").replace(/^\/island-api/, "") || "/";
@@ -1729,6 +1752,26 @@ export const islandApi = onRequest(
           {method, path, auth: req.headers.authorization, body},
           res,
           {ownerUid},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- キャラクター(#284) ----------------
+         中身は `islandCharacter.ts`。ここは取り付けだけ。扱ったら true。
+         「誰か」を見るところと、OBS の合言葉を見るところを増やさない
+         よう、どちらも関数で渡す。 */
+      if (
+        await handleCharacters(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            query: (req.query ?? {}) as Json,
+            body,
+          },
+          res,
+          {ownerUid, alertboxKey},
         )
       ) {
         return;
@@ -2181,8 +2224,12 @@ export const islandApi = onRequest(
       /* ---------------- 北欧旅の足代 ----------------
          返すのは合計と人数だけ。**個人の金額も順位も返さない**
          (`docs/nordic-fund.md` の決めごと)。
-         スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
-         同じことをサイトでやると、出した人が自分の額を見つけられない。 */
+
+         **スパチャは半分だけ貯金箱に入る。これは仕様。** あやとの言葉
+         「スパチャは投げ銭してくれたお金の半分を貯金箱に入れている」
+         (2026-09-11)。ここに長いあいだ「OBS が半額にしているのは配信の
+         演出上の都合」と書いてあったが、**それが間違いだった**
+         (`docs/nordic-fund.md` 9.1)。 */
       if (method === "GET" && path === "/fund") {
         const [doneru, snap, goal] = await Promise.all([
           doneruNow(),

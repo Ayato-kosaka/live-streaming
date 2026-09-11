@@ -52,30 +52,52 @@ ALIASES = {
 def read_countries() -> list:
     """countries.ts から「国 → 滞在（期間と街）」を読み出す。
 
-    build_city_streams.py の正規表現は1行に書かれた stays しか拾えず、
-    イギリスとジョージア（複数行に折り返してある）を取りこぼす。
-    ここでは国の塊を切り出してから、その中の from/to/cities を拾う。
+    **正規表現ひと息で国の塊を取らない。** ここは前、こう書いてあった:
+
+        re.search(r"stays: \\[((?:.|\\n)*?)\\],\\n    summary", block)
+
+    `stays` と `summary` のあいだに注釈のある国では当たらず、`continue` で
+    **その国がまるごと落ちる**。2026-09-10 の時点でジョージアがそれで、
+    読めた国は18ではなく17だった。onThisDay.ts の 618件のうち **378件**が
+    ジョージアなので、次に焼いた瞬間その378件から場所が消える。
+
+    落ちても例外は出ない。件数が減るだけなので、緑のまま master に入る。
+    括弧を数えて切り出し、**滞在の数が合わなければ落とす**。
+    （同じ外し方を `build_city_streams.py` の `read_stays()` でもやっていた。
+      `docs/island-misses.md` #45）
     """
     src = COUNTRIES_TS.read_text(encoding="utf-8")
+    src = src[src.index("export const COUNTRIES") :]
     out = []
-    # 国の塊は slug から次の slug（または配列の終わり）まで
-    heads = [m for m in re.finditer(r'\n    slug: "([a-z-]+)",\n    name: "([^"]+)",', src)]
-    for i, m in enumerate(heads):
-        end = heads[i + 1].start() if i + 1 < len(heads) else len(src)
-        block = src[m.start():end]
-        stays_m = re.search(r"stays: \[((?:.|\n)*?)\],\n    summary", block)
-        if not stays_m:
+    for m in re.finditer(r'slug: "([a-z-]+)",\s*\n\s*name: "([^"]+)",', src):
+        tail = src[m.end() :]
+        head = tail.find("stays:")
+        if head < 0:
             continue
+        start = tail.index("[", head)
+        depth = 0
+        for i in range(start, len(tail)):
+            if tail[i] == "[":
+                depth += 1
+            elif tail[i] == "]":
+                depth -= 1
+                if depth == 0:
+                    break
+        arr = tail[start : i + 1]
         stays = []
         for sm in re.finditer(
-            r'from: "([\d-]*)",\s*\n?\s*to: "([\d-]*)",\s*\n?\s*cities: \[((?:.|\n)*?)\]',
-            stays_m.group(1),
+            r'from:\s*"([\d-]*)",\s*to:\s*"([\d-]*)",\s*cities:\s*\[([^\]]*)\]', arr, re.S
         ):
             cities = [c.strip().strip('"') for c in sm.group(3).split(",") if c.strip()]
             stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities})
         out.append({"slug": m.group(1), "name": m.group(2), "stays": stays})
-    return out
 
+    # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった。
+    want = len(re.findall(r"cities:\s*\[", src))
+    got = sum(len(c["stays"]) for c in out)
+    if want != got:
+        raise ValueError(f"countries.ts の滞在 {want} 件のうち {got} 件しか読めていない")
+    return out
 
 def fetch_videos() -> list:
     """その日の代表になる配信を、JSTの日付ごとに1本ずつ取る。"""

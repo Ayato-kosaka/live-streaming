@@ -38,9 +38,15 @@ on:
         default: ""
         type: string
       place:
-        description: "島の「いまどこ」。街の名前をそのまま（例: ポーランド・カトヴィツェ）"
+        # **既定を空にしてある。** 前は「ポーランド・カトヴィツェ」を既定に置いていたが、
+        # 空文字を渡しても GitHub がこの既定で埋めてしまう（2026-09-10 に空回しで実測。
+        # place="" で起動したのに、まとめの行が「いまどこ: ポーランド・カトヴィツェ」と出た）。
+        # このボタンを押すのは**飛び立った直後**で、そのときあやとはまだ空の上にいる。
+        # 既定で埋まると、着くまでの3時間35分ぶん島が嘘をつく。
+        # 場所を入れるのは着いてから、「あやと島の『いま』を更新」のほうでやる。
+        description: "島の「いまどこ」。**空のままでよい**（着いてから別のボタンで入れる）"
         required: false
-        default: "ポーランド・カトヴィツェ"
+        default: ""
         type: string
       word:
         description: "島のひとこと。空なら今のまま"
@@ -153,7 +159,11 @@ jobs:
           echo "### 北欧へ出発しました" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Hosting のデプロイが走っています。10分ほどで出ます" >> "$GITHUB_STEP_SUMMARY"
-          echo "- いまどこ: ${{ inputs.place }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ inputs.place }}" ]; then
+            echo "- いまどこ: ${{ inputs.place }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- いまどこ: **変えていません**（着いたら「あやと島の「いま」を更新」で入れる）" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "- 街が変わったら「あやと島の「いま」を更新」から place だけ入れ直す" >> "$GITHUB_STEP_SUMMARY"
-          echo "- その日に起きたことは /nordic の日ごとのページから書く" >> "$GITHUB_STEP_SUMMARY"
+          echo "- その日に起きたことは、秘書のセッションに送る（画面に書く欄はもう無い）" >> "$GITHUB_STEP_SUMMARY"
           echo "- 着いたら /nordic のいちばん下「着いた朝」の行から「着いた」を押す" >> "$GITHUB_STEP_SUMMARY"

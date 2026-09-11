@@ -1,8 +1,16 @@
 /**
- * 「読めなかった」を「無い」に倒していた4か所を、**通信を落として**撮る。
+ * 「読めなかった」を「無い」に倒していた場所を、**通信を落として**撮る。
  *
  *   カードの壁（`/cards`）・旅の写真の入口と旅程表の印（`/nordic`）・
  *   企画を書く道具（`/next/new?id=…`）・その日の話（`/nordic/day/4`）
+ *   ——ここまでが #43。
+ *
+ *   島の紹介のカード（`/about`）・図鑑のもらったカード（`/friends`）・
+ *   みんなの付箋（`/board`）・旅の道具（`/me/desk`）——ここが最後の4件。
+ *
+ * `/me/desk` は道具を1つだけ開く面なので、**どの道具を開くかを
+ * `DESKTOOL` で渡す**（`photo` / `place`。既定は `photo`）。
+ * 端末が覚えている札（`ayato-desk-tool`）に置いて開く。
  *
  *   cd site && NEXT_DIST_DIR=.next-lie npx next build
  *   python3 -m http.server 4710 --directory site/.next-lie &
@@ -10,7 +18,7 @@
  *
  * **その日の話は、もう落ちない。** 日誌は Firestore をやめて焼き込みに変えた
  * （`site/content/nordic.ts` の `NORDIC_LOG`）ので、読めなくなる口が無い。
- * 撮るのは残してあるが、ここで嘘が出ることはもう無い。
+ * 撮るのは残してある（落としても消えないことを見るため）。
  *
  * 落とし方は3通り（`readbase.mjs`）。**`abort` だけで判定しない。**
  * 本命は「45秒返さない」で、`fetch` は自分では諦めないのでそこが一番出る。
@@ -63,6 +71,18 @@ const MY_PLAN = {
   by: "あやと", byUid: UID, hearts: 3, status: "idea",
   createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z",
 };
+/** いま出ている場所と今週やること（`GET /state` の `current`） */
+const CURRENT = {
+  place: "ジョージア・トビリシ",
+  word: "今夜も22時から配信します。",
+  theme: "georgia",
+  week: ["ビザの残りを数える", "北欧の宿を1つ押さえる"],
+};
+/** その日に立っている企画（`GET /streamevents?day=…`） */
+const EVENTS = [
+  { id: "e1", title: "Food & Wine Fest @ ムタツミンダ公園", date: "2026-09-11" },
+  { id: "e2", title: "夜の街歩き", date: "2026-09-11" },
+];
 /**
  * `EMPTYCARDS=1` … カードの口が**読めた上で0枚**を返す（旅に出る前がこれ）。
  *
@@ -71,7 +91,12 @@ const MY_PLAN = {
  */
 const EMPTY_CARDS = process.env.EMPTYCARDS === "1";
 
-/** ふつうのときの中身。落としている口は素通しして、下の `drop` に任せる。 */
+/**
+ * ふつうのときの中身。落としている口は素通しして、下の `drop` に任せる。
+ *
+ * **板の付箋（`/stickies`）はここで持たない。** `asme.mjs` が20枚返す
+ * （`NOTES=` で増減できる）ので、そちらに任せる。
+ */
 async function seed(ctx) {
   await ctx.route(/\/island-api\//, async (r) => {
     const u = new URL(r.request().url());
@@ -81,6 +106,8 @@ async function seed(ctx) {
     if (path === "/nordic/photos") return json({ days: PHOTO_DAYS });
     if (path === "/cards") return json({ cards: EMPTY_CARDS ? [] : CARDS });
     if (path === "/nextplans") return json({ plans: [MY_PLAN], more: false, next: null });
+    if (path === "/state") return json({ current: CURRENT, stats: {}, residents: [] });
+    if (path.startsWith("/streamevents")) return json({ day: "", events: EVENTS });
     if (path.startsWith("/nextplans/")) return json({ plan: MY_PLAN });
     return r.fallback();
   });
@@ -126,21 +153,59 @@ const peek = (p) =>
       写真のマス: document.querySelectorAll(".akd-tile").length,
       // 旅の面
       写真の入口: one(".nph-go .tile-text i"),
-      旅程表の印: document.querySelectorAll(".nday[data-log]").length,
+      旅程表の印: document.querySelectorAll(".nday[data-log], .ndayc[data-log]").length,
       // 企画を書く道具
       書く欄: document.querySelectorAll(".dform textarea, .dform input").length,
       出す押しどころ: txt(".me-save"),
       じぶんの企画: txt(".chip.link"),
       できあがり: document.querySelectorAll(".nx-lead-head").length,
-      // その日の話
+      // 島の紹介のカード（`/about`）・図鑑（`/friends`）
+      紹介のカード: document.querySelectorAll(".akd-strip .akd-tile").length,
+      紹介の1行: txt(".akd-strip .akd-note"),
+      カードへの札: document.querySelectorAll(".akd-strip a[href='/cards']").length,
+      図鑑のカード欄: document.querySelectorAll(".rzk-cards").length,
+      // 章の島の板（`IsleBoard`）
+      島の板: document.querySelectorAll(".isle-board").length,
+      島の板の骨: document.querySelectorAll(".isle-sheet .nx-notes.is-wait, .isle-board .nx-notes.is-wait").length,
+      // みんなの付箋（`/board`）
+      付箋: document.querySelectorAll(".nx-notes:not(.is-wait) > li").length,
+      付箋を書く口: txt(".nt-open"),
+      // 島での見え方（`/me` の畳みの中）
+      見え方の欄: document.querySelectorAll(".me .me-check").length,
+      これでいく: [...document.querySelectorAll(".me-save")].map(
+        (e) => `${e.textContent.trim()}${e.disabled ? "（押せない）" : ""}`,
+      ),
+      名前を出す: [...document.querySelectorAll(".me-check input")].map((e) => e.checked),
+      // 机の道具（付箋・企画・投げ銭）。数は下の「いまは」と同じ `.mp-now`
+      ぜんぶ返した: txt(".mp-tool > .muted, .mp-tool .blank > b"),
+      手で入れる口: document.querySelectorAll(".mp-donor-add").length,
+      // 旅の道具（`/me/desk`）
+      いまは: txt(".mp-now"),
+      今週やること: txt(".trip-week-none"),
+      送る押しどころ: [...document.querySelectorAll(".mp-send")].map(
+        (e) => `${e.textContent.trim()}${e.disabled ? "（押せない）" : ""}`,
+      ),
+      写真を選ぶ: [...document.querySelectorAll(".nph-post-go")].map(
+        (e) => `${e.textContent.trim()}${e.disabled ? "（押せない）" : ""}`,
+      ),
+      // その日の話。**焼き込みなので、落ちても消えない**
       その日の話: document.querySelectorAll("#was").length,
-      まだ書いていません: txt("#was .muted"),
-      書き出しの札: document.querySelectorAll(".nlog-seed").length,
-      入れる: txt("#was .nph-post-go"),
+      日誌の書く欄: document.querySelectorAll("#was textarea, #was input").length,
+      旅程の街の札: document.querySelectorAll(".nlog-seed").length,
       高さ: Math.round(document.body.scrollHeight),
       横あふれ: document.body.scrollWidth > document.documentElement.clientWidth,
     };
   });
+
+/** 机で開く道具ごとの、押す札の名前（`components/me/ReadAgain.tsx` の `what`） */
+const DESK_WORD = {
+  photo: "この日の企画",
+  place: "島に出ている場所",
+  sticky: "付箋",
+  plan: "企画",
+  donor: "投げ銭の一覧",
+  video: "企画",
+};
 
 /**
  * 面と、**その面で自分が名乗っている名前**。
@@ -154,7 +219,67 @@ const PAGES = [
   ["/nordic.html", "nordic", "その日の話"],
   ["/next/new.html?id=p-mine", "next", "この企画"],
   ["/nordic/day/4.html", "day4", "その日の話"],
+  ["/about.html", "about", "カード"],
+  ["/friends.html", "friends", "カード"],
+  /* 板は札が2つ（企画・付箋）。**開いているほうの札を押す**
+     （`TAP=付箋をはる` で付箋に切り替えたときは、押すのも付箋の札）。 */
+  ["/board.html", "board", process.env.TAP === "付箋をはる" ? "付箋" : "板"],
+  /* じぶんのこと。**島での見え方**（`IslandMe`）は畳みの中に入っている */
+  ["/me.html", "me", "島での見え方"],
+  /* 章の島の板（`IsleBoard`）。建物を押すまで出ないので
+     `TAP=この旅の掲示板` で開いてから撮る */
+  ["/island/nordic.html", "isle", "付箋"],
+  /* 開く道具は `DESKTOOL` で決める。`log` と `place` は押しどころが
+     別々に落ちるので、1回で両方は見られない */
+  ["/me/desk.html", "desk", DESK_WORD[process.env.DESKTOOL || "photo"]],
 ];
+
+/**
+ * **顔が入れ替わっていないかを、しばらく見張る**（`WATCH=40`。秒）。
+ *
+ * ひとりでに読み直すたびに骨へ戻すと、**灰色と「読みに行けなかった」が
+ * 数秒おきに入れ替わる**（#277）。1枚撮っただけでは見つからないので、
+ * 変わった瞬間だけを並べて返す。**1つだけ返れば入れ替わっていない。**
+ */
+async function watch(p, sec) {
+  if (!sec) return null;
+  return p.evaluate(async (sec) => {
+    const face = () =>
+      `骨${document.querySelectorAll(".wait").length}` +
+      `/札${document.querySelectorAll(".blank.is-off").length}` +
+      `/空${document.querySelectorAll(".blank:not(.is-off)").length}`;
+    const seen = [];
+    const t0 = Date.now();
+    for (;;) {
+      const at = Math.round((Date.now() - t0) / 1000);
+      const f = face();
+      if (seen[seen.length - 1]?.f !== f) seen.push({ at, f });
+      if (at >= sec) return seen;
+      await new Promise((s) => setTimeout(s, 250));
+    }
+  }, sec);
+}
+
+/**
+ * 撮る前に、名前の入った札を1つ押しておく（`TAP=付箋をはる`）。
+ *
+ * 板のように**札で切り替える面**は、開いた1枚しか写らない。
+ * 数えるほうは隠れているものも見えるので、**数だけ見て「出ている」と
+ * 読まない**（`docs/island-standards.md` 13）。
+ */
+async function tap(p, word) {
+  if (!word) return;
+  const hit = await p.evaluate((w) => {
+    const go = [...document.querySelectorAll("button, a")].find((e) =>
+      (e.textContent ?? "").includes(w),
+    );
+    if (!go) return false;
+    go.click();
+    return true;
+  }, word);
+  if (!hit) console.log(`  「${word}」の札が見つからず、押せなかった`);
+  await p.waitForTimeout(1500);
+}
 
 /** 名前で選んで押す。押せなければ、押せなかったと言う（黙って通さない）。 */
 async function press(p, word) {
@@ -173,11 +298,13 @@ async function press(p, word) {
 /** 端末が「じぶんが出した企画」を覚えている（ログインしていない人の証） */
 async function mkCtx(b, { admin = true, memo = true } = {}) {
   const ctx = await newCtx(b, { admin, mode: "ok", memo });
-  await ctx.addInitScript(() => {
+  await ctx.addInitScript((tool) => {
     try {
       localStorage.setItem("ayato-island-myplans", JSON.stringify(["p-mine"]));
+      // 机は道具を1つだけ開く面。前に開いていた札から始まる
+      localStorage.setItem("ayato-desk-tool", tool);
     } catch {}
-  });
+  }, process.env.DESKTOOL || "photo");
   await seed(ctx);
   return ctx;
 }
@@ -212,8 +339,11 @@ for (const who of part === "revive" ? [] : [true, false]) {
       if (some && name !== "cards") continue;
       if (pages && !pages.includes(name)) continue;
       const p = await openPage(ctx, path, { wait: c.mode === "slow" ? 47000 : 15000 });
+      await tap(p, process.env.TAP);
       const label = `${who ? "あやと" : "視聴者"}-${c.tag}`;
       console.log(`${label.padEnd(26)} ${name.padEnd(7)} ${JSON.stringify(await peek(p))}`);
+      const moved = await watch(p, Number(process.env.WATCH || 0));
+      if (moved) console.log(`${" ".repeat(26)} ${name.padEnd(7)} 顔の移り: ${JSON.stringify(moved)}`);
       if (p.__errs.length)
         console.log(`${" ".repeat(26)} ${name.padEnd(7)} JSエラー: ${p.__errs.join(" / ")}`);
       await p.screenshot({ path: `${OUT}/${tag}${name}-${label}.png`, fullPage: true });
@@ -230,6 +360,7 @@ if (part !== "cases") {
     const ctx = await mkCtx(b, {});
     const box = await drop(ctx, ALL, "abort");
     const p = await openPage(ctx, path, { wait: 15000 });
+    await tap(p, process.env.TAP);
     console.log(`もどす前 ${name.padEnd(7)} ${JSON.stringify(await peek(p))}`);
     await p.screenshot({ path: `${OUT}/${tag}もどす-1-${name}-落ちている.png`, fullPage: true });
     box.mode = "ok";
@@ -248,6 +379,7 @@ if (part !== "cases") {
     const ctx = await mkCtx(b, {});
     const box = await drop(ctx, ALL, "abort");
     const p = await openPage(ctx, path, { wait: 15000 });
+    await tap(p, process.env.TAP);
     box.mode = "ok";
     revive(ctx);
     await p.evaluate(() => window.dispatchEvent(new Event("online")));

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
 import { themeById } from "@/content/themes";
 import { LINKS } from "@/content/site";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
 import { Stone } from "./art";
@@ -378,7 +380,7 @@ function Doing({ plan }: { plan: Plan }) {
           <Icon name="live" size={26} />
           <span>
             <b>その日の配信で見る</b>
-            <i>毎晩22時・YouTube</i>
+            <i><Say t={say("tile")} /></i>
           </span>
         </a>
         {plan.place?.map && (

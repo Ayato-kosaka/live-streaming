@@ -1246,3 +1246,112 @@ export const dropDonor = (pk: string, token: string) =>
     method: "DELETE",
     headers: auth(token),
   });
+
+
+/* ---------------- キャラクター(#284) ----------------
+   スパチャと Doneru のアラートに出る絵。原本はスプレッドシートと
+   Google ドライブに割れていたのを `islandCharacter` に寄せた。
+
+   **図鑑の口は名前を返さない。** 島は視聴者さんの名前を出さない方針
+   （`site/content/residents.ts`）なので、誰でも呼べる口が返すのは
+   絵と絵文字だけ。名前と呼び名はオーナーの札を付けたときだけ付く。 */
+
+/** 1つの役どころの絵。`sizes` は幅ごとの焼き上がり。 */
+export type CharacterPicture = {
+  /** 縮める前のまま。**落とすのはこれ**（縮めたものを渡さない） */
+  full: string | null;
+  sizes: Record<string, string>;
+  w: number | null;
+  h: number | null;
+};
+
+/** 図鑑に出る1人。**名前は入らない。** */
+export type CharacterPublic = {
+  id: string;
+  emoji: string;
+  plain: CharacterPicture | null;
+  scene: CharacterPicture | null;
+  /**
+   * 作った順（`python/admin/characters_order.py` が入れる）。
+   * **`createdAt` で並べないこと。** あれは Storage へ移した時刻で、
+   * 移行が65人目で落ちて再開しているため、そこで前後が入れ替わっている。
+   */
+  order: number | null;
+  /** 画面から足した時刻。番号の無い人（表より後に足した人）を末尾で並べるのに使う */
+  createdAt: string | null;
+};
+
+/** あやとの画面に出る1人。名前と、何で引けるかまで付く。 */
+export type Character = CharacterPublic & {
+  channelName: string;
+  aliases: string[];
+  /** スパチャが当たる鍵（チャンネル名から作る） */
+  channelKeys: string[];
+  /** Doneru が当たる鍵（チャンネル名 + 他の呼び名） */
+  lookupKeys: string[];
+  channelId: string | null;
+  editedAt: string | null;
+};
+
+/**
+ * 図鑑。**札を付けると名前まで返る。** あやとの画面（`/me`）から呼ぶ。
+ *
+ * 誰でも見られる図鑑（`/friends`）は `getPublicCharacters` のほう。
+ * 名前は本人が出すと決めた人のぶんだけ `/state` の residents に載るので、
+ * ここの `channelName` を図鑑に流さない。
+ */
+export const getCharacters = (token?: string | null) =>
+  req<{ characters: Character[] }>("/characters", { headers: auth(token) });
+
+/**
+ * 図鑑。**札を付けない。名前は返らない。**
+ *
+ * `/friends` はここから全員を取る。焼き込み（`content/residents.ts`）は
+ * 島に立つ22人ぶんしか無いので、あれを出すと図鑑が22人で止まる。
+ * 旅のあいだにあやとがスマホから足した人も、ここからなら出る。
+ */
+export const getPublicCharacters = () =>
+  req<{ characters: CharacterPublic[]; total: number }>("/characters");
+
+/** 送る絵。ブラウザで幅ごとに焼いてから渡す（`stamp.ts` の `shrink`）。 */
+export type CharacterUpload = {
+  /** 元の大きさのまま（長辺は上限まで縮めてある）。data URL */
+  full?: string;
+  /** 幅ごと。鍵は 128 / 256 / 640 */
+  sizes?: Record<string, string>;
+  w?: number;
+  h?: number;
+};
+
+/**
+ * 1人を足す／直す。**あやとだけ。**
+ *
+ * `id` を渡すと直す、渡さないと新しく足す。
+ * **絵は送ったぶんだけ差し替わる。** 呼び名だけ直したいときは
+ * `plain` も `scene` も渡さない。渡さなかった役どころには触らない
+ * （渡さないと消える、にすると、名前を直しただけで島から人が消える）。
+ */
+export const putCharacter = (
+  p: {
+    id?: string;
+    channelName: string;
+    emoji: string;
+    aliases: string[];
+    plain?: CharacterUpload;
+    scene?: CharacterUpload;
+  },
+  token: string,
+) => {
+  const { id, ...body } = p;
+  return req<{ character: Character }>(
+    id ? `/characters/${encodeURIComponent(id)}` : "/characters",
+    { method: "POST", headers: auth(token), body: JSON.stringify(body) },
+  );
+};
+
+/** 1人を消す。**あやとだけ。** 置き場の絵も一緒に落ちる。 */
+export const deleteCharacter = (id: string, token: string) =>
+  req<{ deleted: string }>(`/characters/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });

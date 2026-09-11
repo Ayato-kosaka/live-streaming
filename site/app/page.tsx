@@ -16,6 +16,7 @@ import Chapter from "@/components/home/Chapter";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
+import Say from "@/components/ui/Say";
 
 /**
  * トップページ。
@@ -113,7 +114,8 @@ export default function Home() {
                 fetchPriority="high"
               />
               {/* 見出しは絵なので、読み上げと検索のために字も置いておく。
-                  一言のほうは絵ではなく本文なので、ここには入れない */}
+                  一言のほうは絵ではなく本文なので、ここには入れない。
+                  焼かれたまま出る字なので、時刻も書かない（`content/nights.ts`） */}
               <span className="sr-only">あやと島</span>
             </h1>
             {/* 看板の言葉を、**絵ではなく字で**置く。
@@ -121,9 +123,13 @@ export default function Home() {
                 dpr2 でも読めなかった。島に降りた人が最初に読む1文がそこにあるのに
                 読めない、というのは `docs/island-play.md` 6章の 0:06 が
                 埋まっていないのと同じ。**絵は帯の手前で切って**（上の img）、
-                言葉はここが持つ。 */}
+                言葉はここが持つ。
+
+                **時刻はここに字で書かない。** `content/voice.ts` の `HERO.eyebrow`
+                1か所から取る。ここに書くと、旅に出た日から17日ぶん「毎晩22時」と
+                焼かれたまま出る（`docs/island-misses.md` #53）。 */}
             <p className="hero-say">
-              <b>毎晩22時、世界のどこかから生配信</b>
+              <b><Say t={HERO.eyebrow} /></b>
               <i>旅して、食べて、グルメアプリを作る、夜の居場所</i>
             </p>
           </div>
@@ -172,7 +178,12 @@ export default function Home() {
           <Shelf />
         </Chapter>
 
-        <Chapter id="watch" kicker="見にいく" title={HOME.tonight} note={HOME.tonightNote}>
+        <Chapter
+          id="watch"
+          kicker="見にいく"
+          title={<Say t={HOME.tonight} />}
+          note={<Say t={HOME.tonightNote} />}
+        >
           {/* **直近の2本。手で選んだ見本ではない。**
               ここは「クッキング配信の代表」として選んだ見本の先頭2本を出していて、
               旅に出る前日の本番で 3週間前と2ヶ月前の回が「今夜も22時から」の下に
@@ -189,7 +200,7 @@ export default function Home() {
                 )}
                 <span className="hout-text">
                   <b>{l.label}</b>
-                  <i>{l.note}</i>
+                  <i><Say t={l.note} /></i>
                 </span>
                 <Icon name="external" size={14} className="hout-go" />
               </a>

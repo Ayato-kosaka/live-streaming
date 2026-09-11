@@ -24,6 +24,24 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile
 await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
   r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
 await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+/* 時計を進めて回れるようにしてある。日付で中身の変わる面（島の連なり・表紙・
+   配信の時刻の言い方）は、**その日を過ぎた形で見ないと壊れているか分からない**
+   （`docs/island-misses.md` #21 #22）。ISO を渡さなければ、いまの時計のまま。 */
+const ISO = process.env.ISO;
+if (ISO) await ctx.addInitScript(`(() => {
+  const FAKE = ${Date.parse(process.env.ISO || 0)};
+  const RealDate = Date;
+  const start = RealDate.now();
+  function shift() { return FAKE + (RealDate.now() - start); }
+  class FakeDate extends RealDate {
+    constructor(...a) { if (a.length === 0) super(shift()); else super(...a); }
+    static now() { return shift(); }
+    static parse(...a) { return RealDate.parse(...a); }
+    static UTC(...a) { return RealDate.UTC(...a); }
+  }
+  Object.defineProperty(FakeDate, "name", { value: "Date" });
+  globalThis.Date = FakeDate;
+})();`);
 const p = await ctx.newPage();
 let bad = 0;
 for (const page of pages) {

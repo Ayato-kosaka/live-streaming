@@ -13,9 +13,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 月末配信の進行同期。合言葉つきのドキュメントIDを知っている人だけが使う想定。
+    /* 月末配信の進行同期。あやとの手元のコントローラー(`?role=ctrl`)を押すと、
+       OBS に映している授賞式のページ(`?role=view`)が進む。
+       実物は `public/*_monthly_review.html` の1枚。
+
+       ## 2026-09-11 まで、誰でも読めて誰でも書けた
+
+       前は `allow read, write: if true` で、「合言葉つきのドキュメントIDを
+       知っている人だけ」のつもりだった。**合言葉になっていなかった。**
+
+         - ID は公開ページの JS に平文で入っている（curl で読める）
+         - そもそも `list` が通るので、**ID を知らなくても collection ごと引ける**
+
+       つまり配信の最中に、誰でも書き込み1回で OBS の場面を飛ばせた。
+       巻き戻り防止は手元の `ts` を大きくすれば素通りする。
+       実際に外から書けることを確かめてから閉じた（捨て書類で1回だけ）。
+
+       ## 書くのはあやとだけ
+
+       **誰があやとかは `islandUsers/{uid}.admin` で見る。**
+       islandApi の `ownerUid()` が見ているのと同じ1か所を指す。
+       ここに uid を焼き込まない（焼き込むと、増えたときに2か所直すことになるし、
+       ルールはリポジトリごと公開されている）。
+
+       書くたびに読みが1回増えるが、ここは月に1度・1配信で数百回の口なので、
+       釣り合う。`islandHere` で `exists()` を避けたのは、あちらが
+       **全員が2秒ごとに書く**口だからで、理由がここには当たらない。
+
+       ## 読むのは誰でも。ただし1件ずつ
+
+       **OBS はログインできない。** 表示側が読めないと配信が動かないので、
+       `get` は開けたままにする。中身は `{scene, step, ts, confetti}` の
+       数字4つで、人の名前も金額も入っていない（本番の中身を実際に見た）。
+
+       **`list` は閉じる。** 開けたままだと月ごとの書類がまとめて引ける。
+       表示側が要るのは自分の1件だけなので、要らない。 */
     match /monthlyReview/{docId} {
-      allow read, write: if true;
+      /** あやとか。islandApi の `ownerUid()` と同じ `islandUsers/{uid}.admin` を見る。 */
+      function owner() {
+        return request.auth != null
+          && exists(/databases/$(database)/documents/islandUsers/$(request.auth.uid))
+          /* **`.get("admin", false)` で読む。** 島にログインした人は
+             `/me` で `islandUsers/{uid}` を作られるが、`admin` は入っていない。
+             `.data.admin` と書くと、その人の書き込みが「評価エラー」で落ちる。
+             結果は同じ deny だが、**理由の読めない落ち方**を残さない。 */
+          && get(/databases/$(database)/documents/islandUsers/$(request.auth.uid))
+              .data.get("admin", false) == true;
+      }
+      allow get: if true;
+      allow list: if false;
+      allow write: if owner();
     }
 
     /* いま島にいる人(docs/island-here.md)。
@@ -168,10 +215,33 @@ service cloud.firestore {
     match /nordicPhotos/{docId} { allow read, write: if false; }
     match /nordicDays/{docId} { allow read, write: if false; }
     /* 旅の「その日に起きたこと」(docs/nordic-depart.md)。
-       書けるのはあやとだけ、読むのは誰でもだが、**どちらも islandApi 経由**。
-       ここを開けると、書けるのは誰かの判定もここに書くことになる。
-       あやとかどうかを見るところを2つに増やさない。 */
+       **読み書きの口はもう無い。** 日記はリポジトリに焼く形に変えた
+       (`site/content/nordic.ts` の NORDIC_LOG)。書類は残してあるので、
+       閉じたままにする。**開けない。** */
     match /nordicLog/{docId} { allow read, write: if false; }
+
+    /* 豚の貯金箱(docs/nordic-fund.md 9章)。**1件ずつは絶対に開けない。**
+       スパチャの控えは他人の名前と額が1行ずつ並んでいるもので、開けると
+       「誰がいくら出したかを出さない」という決め(4章)が、画面を作らなくても
+       破れる。支出も、あやとが何に使ったかの並び。
+       画面が要るのは合計だけなので、islandApi 経由に絞る。 */
+    match /islandFundSuperChats/{docId} { allow read, write: if false; }
+    match /islandFundSpends/{docId} { allow read, write: if false; }
+    match /islandFundGoals/{docId} { allow read, write: if false; }
+    /* 毎晩の掃除が最後に置いていく札。**壊れても誰も気づかない**ところなので、
+       Actions のログを開かなくても firestore_read で理由まで読めるようにする
+       (chatCapture.ts の streamChatHealth と同じ手)。読む用事は画面には無い。 */
+    match /islandFundHealth/{docId} { allow read, write: if false; }
+    /* 配信中のコメント溜めが、最後にどこまで行ったかを置く札(#153)。
+       上の islandFundHealth と同じ理由でここに1行だけ書いてある。 */
+    match /streamChatHealth/{docId} { allow read, write: if false; }
+    /* キャラクターの絵と呼び名(#284)。**名前が入っているので開けない。**
+       島は視聴者さんの名前を出さない方針で(site/content/residents.ts)、
+       だから図鑑の口(GET /characters)も絵と絵文字しか返さない。
+       ここを開けると、その決めが画面を作らなくても破れる。
+       移す前のスプレッドシートは URL を知っていれば誰でも全件読めた
+       (#284 の (i))。**そこは閉じるほうへ変える、と決めた。** */
+    match /islandCharacter/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {

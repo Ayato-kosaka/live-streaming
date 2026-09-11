@@ -23,6 +23,8 @@ import { NOW_FALLBACK } from "@/content/site";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
 import { placeWord } from "@/lib/stay";
 import { MAX_LEAD, around, hits, lead } from "@/components/isle/plates";
+import Say from "@/components/ui/Say";
+import { nights } from "@/content/nights";
 import { opensByItself, todayNews, YOUTUBE, type TodayNews } from "@/lib/todayNews";
 import {
   callOut,
@@ -36,6 +38,7 @@ import {
   type Resident,
   type Villager,
 } from "./villagers";
+import { charImg } from "@/lib/charImg";
 
 export type { Resident };
 
@@ -62,7 +65,7 @@ const RESIDENT_H = 52;
  * 実測でいちばん大きく出るのがスマホ(dpr3)の 38px で、装置の画素にすると 114。
  * s160 だと 1枚あたり約 40KB を12人ぶん取って、その4割を捨てていた。
  */
-const residentIconUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=s128`;
+const residentIconUrl = (id: string) => charImg(id, 128);
 
 /* ---- 建物の見せ方 --------------------------------------------------------
    **島に建っているものは全部押せる**（`docs/island-design.md` 6章）。
@@ -252,14 +255,14 @@ const HINT_SPAN = 5200;
    同じことを二度言わないよう、言い方を変えてある。
    地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
    ------------------------------------------------------------------------ */
-/* **場所は、呼ぶときに決める。** ここは `NOW_FALLBACK.place` を直に埋めた定数
-   だったので、旅に出ても「いまはジョージア・トビリシだよ。」と言い続けていた
-   （あの欄は出発の1週間前で止まっていて、旅の17日間は打ち直せない）。
-   定数のまま `placeWord` を通すこともできない——**焼くときとブラウザで答えが
-   変わるので、水あわせが崩れる。** カモメが喋るのは画面が出たあとなので、
+/* **場所も時刻も、呼ぶときに決める。** ここは `NOW_FALLBACK.place` と「毎晩22時」を
+   直に埋めた定数だったので、旅に出ても「毎晩22時、いまはジョージア・トビリシだよ。」と
+   言い続けていた（あの欄は出発の1週間前で止まっていて、旅の17日間は打ち直せない）。
+   定数のまま `placeWord` や `nights` を通すこともできない——**焼くときとブラウザで
+   答えが変わるので、水あわせが崩れる。** カモメが喋るのは画面が出たあとなので、
    そのときの日付で作る。 */
 const greeting = (now: Date = new Date()) =>
-  `ようこそ、あやと島へ。あやとは毎晩22時、旅先から生配信してる。いまは${placeWord(
+  `ようこそ、あやと島へ。あやとは${nights(now).bare}、旅先から生配信してる。いまは${placeWord(
     NOW_FALLBACK.place,
     NOW_FALLBACK.updatedAt,
     now,
@@ -1869,7 +1872,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 )}
                 <span className="spot-text">
                   <b>{label}</b>
-                  <i>{blurb}</i>
+                  <i><Say t={blurb} /></i>
                 </span>
                 <span className="spot-go">
                   {go}
