@@ -39,11 +39,17 @@ name: 島の数字を焼き直す
 # 嘘の数字は出ない（BigQuery に入っているところまでしか数えない）ので、
 # 順番が入れ替わっても壊れはしない。**壊れないが、古いまま止まる。** それを避ける。
 #
+# **……という組み立てだったが、cron そのものが来なかった。** 2026-09-11 の
+# 01:00 指定に対し、03:45 UTC まで待っても発火していない。そこで
+# **取り込みの完了に繋いだ**（`workflow_run`）。理由は下の `on:` に書いてある。
+# 上の 01:00 は保険として残してある（取り込み自体が発火しなかった晩の受け皿）。
+#
 # ## 手で押すときの既定は「見るだけ」
 #
 # `dry_run` の既定を true にしてある。押し間違えても本番は変わらない。
 # 何がどれだけ変わるかを読んでから、`dry_run: false` でもう一度押す。
-# **cron のときだけは `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
+# **押す人のいないとき（cron と、取り込みに繋いで来たぶん）だけは
+# `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
 #
 # ## 焼いたものが縮んでいたら、commit しない
 #
@@ -122,6 +128,40 @@ on:
   schedule:
     # 取り込みの実測（21:49〜23:32 UTC）より後ろ。**日本時間の朝10時ごろ**
     - cron: "0 1 * * *"
+
+  # **cron を当てにしない。取り込みが終わったら、その後ろに繋いで走る。**
+  #
+  # このリポジトリで定時実行が実際に発火した実績があるのは、
+  # `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`（20:30 UTC）
+  # の2本だけで、どちらも**何週間も master に載っている**。こちらの cron は
+  # 2026-09-10 に載ったばかりで、**まだ一度も発火していない**
+  # （2026-09-11 03:45 UTC 時点。01:00 指定に対して2時間45分待っても来なかった。
+  #  上の2本の遅れは1時間49分〜3時間32分なので、範囲内ではあるが、
+  #  「範囲内だからそのうち来るはず」で17日間を賭ける理由が無い）。
+  #
+  # 繋ぎ先を `Fetch YouTube Chat Data` にしたのは、**焼く元がそこで揃うから**。
+  # あちらは discover → fetch → island_stats まで通してから終わるので、
+  # 完了した時点で BigQuery には今日ぶんが入っている。cron の 01:00 より
+  # 3時間ほど早くなるが、順番（取り込み → 焼き直し）は変わらない。
+  #
+  # **`conclusion` は見ない。** あちらの最後の step は「表に無い どねID が
+  # 投げ銭してきた」ときに `exit 1` で終わる（あやとへの呼び出しであって、
+  # 取り込みの失敗ではない）。成功のときだけ繋ぐと、その晩は焼かれない。
+  # `island_stats` も `if: always()` で走っているので、赤くても数字は入っている。
+  #
+  # **2本とも走っても壊れない。** cron と両方来た晩は2回走るが、
+  # 2回目は焼いた結果が1回目と同じなので commit されず
+  # （`steps.commit.outputs.changed` が 0）、Hosting も配らない。
+  # `concurrency: rebake` で1本ずつしか走らないので push も競らない。
+  # 繋ぎ先を2本にしてあるのは、**片方が消えても止まらないようにする**ため。
+  # ワークフローの名前で繋ぐので、あちらの `name:` を書き換えると黙って切れる
+  # （エラーにならない。**走らなくなるだけ**で、赤も出ない）。
+  # 2本のうち Doneru のほうは `probe: true` で1バイトも書かずに手で押せるので、
+  # **繋ぎが生きているかを、本番を汚さずに確かめられる**（そのために足した）。
+  workflow_run:
+    workflows: ["Fetch YouTube Chat Data", "Fetch Doneru Donations"]
+    types: [completed]
+
   workflow_dispatch:
     inputs:
       scripts:
@@ -179,12 +219,15 @@ jobs:
           IN_DEPLOY: ${{ inputs.deploy }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = "schedule" ]; then
+          # 取り込みの後ろに繋いで来たぶん（workflow_run）も、押す人はいない。
+          # cron と同じ扱いにする。**片方だけ手当てすると、繋ぎ替えたあと
+          # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
             # 毎晩ぶん。**機械だけで答えの決まる5本**を、配るところまで
             echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（cron）: 5本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 5本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
