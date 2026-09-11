@@ -26,13 +26,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-11-05"
       },
       {
-        "videoId": "2fdbFpZgWVs",
-        "title": "ひとり旅が再び始まりました。パリを少し歩きます。",
+        "videoId": "gcc3xTG6zNo",
+        "title": "パリ戻ってきてモーター",
         "date": "2025-03-13"
       },
       {
-        "videoId": "gcc3xTG6zNo",
-        "title": "パリ戻ってきてモーター",
+        "videoId": "2fdbFpZgWVs",
+        "title": "ひとり旅が再び始まりました。パリを少し歩きます。",
         "date": "2025-03-13"
       },
       {
@@ -92,13 +92,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-03-09"
       },
       {
-        "videoId": "hB1jT4Nl4II",
-        "title": "レ・ボー＝ド＝プロヴァンスのフレンチ三ツ星、別格でした",
+        "videoId": "sSpOtvWjbEY",
+        "title": "リル=シュル=ラ=ソルギュ(南フランス)が悪天候すぎて泣いた",
         "date": "2025-03-10"
       },
       {
-        "videoId": "sSpOtvWjbEY",
-        "title": "リル=シュル=ラ=ソルギュ(南フランス)が悪天候すぎて泣いた",
+        "videoId": "hB1jT4Nl4II",
+        "title": "レ・ボー＝ド＝プロヴァンスのフレンチ三ツ星、別格でした",
         "date": "2025-03-10"
       },
       {
@@ -125,13 +125,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-11-13"
       },
       {
-        "videoId": "0AnHLfWQUfc",
-        "title": "【ヨーロッパ週3ひとり旅】 やべ、今起きた。少しだけ配信する！",
+        "videoId": "aQ42ie5xAN4",
+        "title": "【ヨーロッパ週3ひとり旅】 ベルギー1日目、疲れたぁ。。少しだけ",
         "date": "2024-11-15"
       },
       {
-        "videoId": "aQ42ie5xAN4",
-        "title": "【ヨーロッパ週3ひとり旅】 ベルギー1日目、疲れたぁ。。少しだけ",
+        "videoId": "0AnHLfWQUfc",
+        "title": "【ヨーロッパ週3ひとり旅】 やべ、今起きた。少しだけ配信する！",
         "date": "2024-11-15"
       },
       {
@@ -196,13 +196,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-11-19"
       },
       {
-        "videoId": "p-3tglZzEiw",
-        "title": "【ヨーロッパ週3ひとり旅】 ハンガリー最高だぜ",
+        "videoId": "uJo3u6CRyMo",
+        "title": "【ヨーロッパ週3ひとり旅】 ハンガリーってクソ陽キャな国…",
         "date": "2024-11-21"
       },
       {
-        "videoId": "uJo3u6CRyMo",
-        "title": "【ヨーロッパ週3ひとり旅】 ハンガリーってクソ陽キャな国…",
+        "videoId": "p-3tglZzEiw",
+        "title": "【ヨーロッパ週3ひとり旅】 ハンガリー最高だぜ",
         "date": "2024-11-21"
       },
       {
@@ -230,13 +230,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-11-26"
       },
       {
-        "videoId": "6RFpzPt0mt0",
-        "title": "ウィーンでスリに遭ったので卵茹でます",
+        "videoId": "koEV5cYVgfA",
+        "title": "ウィーンが綺麗すぎたので、ライブします",
         "date": "2024-11-27"
       },
       {
-        "videoId": "koEV5cYVgfA",
-        "title": "ウィーンが綺麗すぎたので、ライブします",
+        "videoId": "6RFpzPt0mt0",
+        "title": "ウィーンでスリに遭ったので卵茹でます",
         "date": "2024-11-27"
       },
       {
@@ -278,23 +278,23 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-12-03"
       },
       {
-        "videoId": "OoEq3gKRcKM",
-        "title": "【祝アラサー🎈】日本時間でバースデーを跨ごう！",
-        "date": "2024-12-05"
-      },
-      {
         "videoId": "bvAnOtEPXls",
         "title": "チェコを少し見たので、カサ・アヤトの住人たち集合！！！",
         "date": "2024-12-05"
       },
       {
-        "videoId": "KON8im0U6Tk",
-        "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
-        "date": "2024-12-07"
+        "videoId": "OoEq3gKRcKM",
+        "title": "【祝アラサー🎈】日本時間でバースデーを跨ごう！",
+        "date": "2024-12-05"
       },
       {
         "videoId": "eSBp2SkzuKw",
         "title": "チェコの街並み見てきたので、コメント読みます",
+        "date": "2024-12-07"
+      },
+      {
+        "videoId": "KON8im0U6Tk",
+        "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
         "date": "2024-12-07"
       },
       {
@@ -317,13 +317,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-12-11"
       },
       {
-        "videoId": "DTljNSFHQvE",
-        "title": "ベルリンで変な髪型にされたので、チャンネル登録お願いします",
+        "videoId": "dv6acJbB49A",
+        "title": "ベルリンの壁を並走したので話しましょう",
         "date": "2024-12-12"
       },
       {
-        "videoId": "dv6acJbB49A",
-        "title": "ベルリンの壁を並走したので話しましょう",
+        "videoId": "DTljNSFHQvE",
+        "title": "ベルリンで変な髪型にされたので、チャンネル登録お願いします",
         "date": "2024-12-12"
       },
       {
@@ -337,13 +337,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2024-12-14"
       },
       {
-        "videoId": "e6D2cId1SSo",
-        "title": "あと7日😇",
+        "videoId": "hw5qLPIV3bM",
+        "title": "ベルリンのスイーツが美味すぎたのでお裾分けします。",
         "date": "2024-12-17"
       },
       {
-        "videoId": "hw5qLPIV3bM",
-        "title": "ベルリンのスイーツが美味すぎたのでお裾分けします。",
+        "videoId": "e6D2cId1SSo",
+        "title": "あと7日😇",
         "date": "2024-12-17"
       },
       {
@@ -364,13 +364,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-03-28"
       },
       {
-        "videoId": "W5Q-wKTzflY",
-        "title": "前編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃すぎた…",
+        "videoId": "Y88M0M-pL0U",
+        "title": "なにこのホステル🙃",
         "date": "2025-03-28"
       },
       {
-        "videoId": "Y88M0M-pL0U",
-        "title": "なにこのホステル🙃",
+        "videoId": "W5Q-wKTzflY",
+        "title": "前編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃すぎた…",
         "date": "2025-03-28"
       },
       {
@@ -384,13 +384,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-03-29"
       },
       {
-        "videoId": "6cRyzHIezD4",
-        "title": "イスタンブール🇹🇷サビハ・ギョクチェン空港着きましたー",
+        "videoId": "iv2max-f4QU",
+        "title": "ケルン・ボン空港着きました",
         "date": "2025-03-30"
       },
       {
-        "videoId": "iv2max-f4QU",
-        "title": "ケルン・ボン空港着きました",
+        "videoId": "6cRyzHIezD4",
+        "title": "イスタンブール🇹🇷サビハ・ギョクチェン空港着きましたー",
         "date": "2025-03-30"
       }
     ]
@@ -398,8 +398,8 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "uk": {
     "ロンドン": [
       {
-        "videoId": "1SyclE3VJ08",
-        "title": "【神回】ロンドンが奇跡的に晴れてるので、衛兵交代式見せます💂",
+        "videoId": "N7fpxgb1OMI",
+        "title": "ロンドンを見せたかったけど、SIMがぶっ壊れたので、カフェで回復するのを待ちます。",
         "date": "2025-01-03"
       },
       {
@@ -408,8 +408,8 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-01-03"
       },
       {
-        "videoId": "N7fpxgb1OMI",
-        "title": "ロンドンを見せたかったけど、SIMがぶっ壊れたので、カフェで回復するのを待ちます。",
+        "videoId": "1SyclE3VJ08",
+        "title": "【神回】ロンドンが奇跡的に晴れてるので、衛兵交代式見せます💂",
         "date": "2025-01-03"
       },
       {
@@ -487,13 +487,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-01-23"
       },
       {
-        "videoId": "bW2PJln-5mA",
-        "title": "イギリス・グラスゴー、一生に一度の嵐で大災害。。幽霊ホステルで少し🤏",
+        "videoId": "cqf1unuyPXI",
+        "title": "イギリス・グラスゴーの幽霊ホステルで少し🤏",
         "date": "2025-01-24"
       },
       {
-        "videoId": "cqf1unuyPXI",
-        "title": "イギリス・グラスゴーの幽霊ホステルで少し🤏",
+        "videoId": "bW2PJln-5mA",
+        "title": "イギリス・グラスゴー、一生に一度の嵐で大災害。。幽霊ホステルで少し🤏",
         "date": "2025-01-24"
       },
       {
@@ -580,13 +580,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-02-13"
       },
       {
-        "videoId": "2lSA1CP1NK8",
-        "title": "後編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
+        "videoId": "8Hhmi6vk0QY",
+        "title": "前編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
         "date": "2025-02-15"
       },
       {
-        "videoId": "8Hhmi6vk0QY",
-        "title": "前編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
+        "videoId": "2lSA1CP1NK8",
+        "title": "後編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
         "date": "2025-02-15"
       },
       {
@@ -646,6 +646,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "turkey": {
     "イスタンブール": [
       {
+        "videoId": "iv2max-f4QU",
+        "title": "ケルン・ボン空港着きました",
+        "date": "2025-03-30"
+      },
+      {
         "videoId": "6cRyzHIezD4",
         "title": "イスタンブール🇹🇷サビハ・ギョクチェン空港着きましたー",
         "date": "2025-03-30"
@@ -653,11 +658,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       {
         "videoId": "aUpMiuFhaMk",
         "title": "トルコ🇹🇷イスタンブール がウザすぎました",
-        "date": "2025-03-30"
-      },
-      {
-        "videoId": "iv2max-f4QU",
-        "title": "ケルン・ボン空港着きました",
         "date": "2025-03-30"
       },
       {
@@ -782,13 +782,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-04-22"
       },
       {
-        "videoId": "WKfpFfA1OI4",
-        "title": "キプロス🇨🇾ラルナカ空港着きました",
+        "videoId": "Yt9CxWsY0iE",
+        "title": "キプロス🇨🇾ラルナカバイバイ。空港へ向かいます。",
         "date": "2025-04-23"
       },
       {
-        "videoId": "Yt9CxWsY0iE",
-        "title": "キプロス🇨🇾ラルナカバイバイ。空港へ向かいます。",
+        "videoId": "WKfpFfA1OI4",
+        "title": "キプロス🇨🇾ラルナカ空港着きました",
         "date": "2025-04-23"
       },
       {
@@ -860,22 +860,22 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ],
     "ルクソール": [
       {
-        "videoId": "QPTKsGZ1oCM",
-        "title": "エジプト🇪🇬ルクソールでファラフェル食べに行きます",
-        "date": "2025-05-01"
-      },
-      {
         "videoId": "kNWqxeh732U",
         "title": "エジプト🇪🇬ルクソール 着いたら、想像以上にウザかった",
         "date": "2025-05-01"
       },
       {
-        "videoId": "2zzbFQe52cc",
+        "videoId": "QPTKsGZ1oCM",
+        "title": "エジプト🇪🇬ルクソールでファラフェル食べに行きます",
+        "date": "2025-05-01"
+      },
+      {
+        "videoId": "NgRP5qSJry0",
         "title": "GWエジプト祭り1日目-ルクソール西岸 王家の谷エリア",
         "date": "2025-05-03"
       },
       {
-        "videoId": "NgRP5qSJry0",
+        "videoId": "2zzbFQe52cc",
         "title": "GWエジプト祭り1日目-ルクソール西岸 王家の谷エリア",
         "date": "2025-05-03"
       },
@@ -916,12 +916,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-05-09"
       },
       {
-        "videoId": "8jKvOuhS-Wc",
-        "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
-        "date": "2025-05-10"
-      },
-      {
-        "videoId": "QmUl3HrOOC4",
+        "videoId": "h8mxqPKtVoo",
         "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
         "date": "2025-05-10"
       },
@@ -931,17 +926,22 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-05-10"
       },
       {
-        "videoId": "b0j3eqiK4jY",
-        "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
-        "date": "2025-05-10"
-      },
-      {
         "videoId": "dRodwhG8esg",
         "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
         "date": "2025-05-10"
       },
       {
-        "videoId": "h8mxqPKtVoo",
+        "videoId": "b0j3eqiK4jY",
+        "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
+        "date": "2025-05-10"
+      },
+      {
+        "videoId": "8jKvOuhS-Wc",
+        "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
+        "date": "2025-05-10"
+      },
+      {
+        "videoId": "QmUl3HrOOC4",
         "title": "【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた🌊",
         "date": "2025-05-10"
       },
@@ -1005,12 +1005,12 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-06-15"
       },
       {
-        "videoId": "JsGBdZGn9PE",
+        "videoId": "Zbq3spq4aNI",
         "title": "【神回】イスラエルの隣国ヨルダンに行ってみた！緊張感MAXの首都アンマンに潜入街歩きしてみた。",
         "date": "2025-06-21"
       },
       {
-        "videoId": "Zbq3spq4aNI",
+        "videoId": "JsGBdZGn9PE",
         "title": "【神回】イスラエルの隣国ヨルダンに行ってみた！緊張感MAXの首都アンマンに潜入街歩きしてみた。",
         "date": "2025-06-21"
       },
@@ -1032,12 +1032,12 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-05-30"
       },
       {
-        "videoId": "Jk8jWqh1iQU",
+        "videoId": "tQvjhxMivZQ",
         "title": "【神回】ペトラ遺跡で限界街歩き！ペトラでシークを抜け、秘境モナストリー、ペトラ飯、夕日まで全部盛り！！",
         "date": "2025-05-31"
       },
       {
-        "videoId": "tQvjhxMivZQ",
+        "videoId": "Jk8jWqh1iQU",
         "title": "【神回】ペトラ遺跡で限界街歩き！ペトラでシークを抜け、秘境モナストリー、ペトラ飯、夕日まで全部盛り！！",
         "date": "2025-05-31"
       },
@@ -1073,6 +1073,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "uae": {
     "アブダビ": [
       {
+        "videoId": "aNWaUilNWbU",
+        "title": "UAE🇦🇪付きました〜、携帯がぶっ壊れました〜😭",
+        "date": "2025-06-26"
+      },
+      {
         "videoId": "8uPcdx4I0x0",
         "title": "もくもくすこし",
         "date": "2025-06-26"
@@ -1083,18 +1088,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-06-26"
       },
       {
-        "videoId": "aNWaUilNWbU",
-        "title": "UAE🇦🇪付きました〜、携帯がぶっ壊れました〜😭",
-        "date": "2025-06-26"
+        "videoId": "r-EuQai-sMo",
+        "title": "【もくもくアプリ作り】第十一話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-06-27"
       },
       {
         "videoId": "UbbfjRJ6KTM",
         "title": "【神回】🇦🇪アブダビ街歩き！白モスク→ローカル飯→夕暮れビーチまで🌇",
-        "date": "2025-06-27"
-      },
-      {
-        "videoId": "r-EuQai-sMo",
-        "title": "【もくもくアプリ作り】第十一話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-06-27"
       }
     ]
@@ -1102,13 +1102,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "azerbaijan": {
     "バクー": [
       {
-        "videoId": "-BsqaHWdUpI",
-        "title": "【もくもくアプリ作り】第十二話 アプリ作ったり、ショート動画作ったり",
+        "videoId": "-arvqz0yAPM",
+        "title": "なんとか、、アゼルバイジャン🇦🇿に到着しました、、、天国です😇",
         "date": "2025-06-29"
       },
       {
-        "videoId": "-arvqz0yAPM",
-        "title": "なんとか、、アゼルバイジャン🇦🇿に到着しました、、、天国です😇",
+        "videoId": "-BsqaHWdUpI",
+        "title": "【もくもくアプリ作り】第十二話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-06-29"
       },
       {
@@ -1122,13 +1122,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-06-30"
       },
       {
-        "videoId": "J3n_LknJ1Bs",
-        "title": "アゼルバイジャン🇦🇿首都着きました〜",
+        "videoId": "scPjfmFsnrk",
+        "title": "【緊急】アゼルバイジャン🇦🇿が親日すぎます",
         "date": "2025-07-01"
       },
       {
-        "videoId": "scPjfmFsnrk",
-        "title": "【緊急】アゼルバイジャン🇦🇿が親日すぎます",
+        "videoId": "J3n_LknJ1Bs",
+        "title": "アゼルバイジャン🇦🇿首都着きました〜",
         "date": "2025-07-01"
       },
       {
@@ -1152,6 +1152,36 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-03"
       },
       {
+        "videoId": "uicj5rra3V8",
+        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-07-04"
+      },
+      {
+        "videoId": "YbPvEzaa9eY",
+        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-07-04"
+      },
+      {
+        "videoId": "WZndyh3P_nQ",
+        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-07-04"
+      },
+      {
+        "videoId": "M1P6m8TRjG0",
+        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-07-04"
+      },
+      {
+        "videoId": "U4pyOXYSLZo",
+        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
+        "date": "2025-07-04"
+      },
+      {
+        "videoId": "Oi6nkCEfDNw",
+        "title": "アゼルバイジャン🇦🇿のスーパー行きます",
+        "date": "2025-07-04"
+      },
+      {
         "videoId": "7YJHsTCrxko",
         "title": "あやとと 海外ぶらら がライブ配信中！",
         "date": "2025-07-04"
@@ -1162,42 +1192,12 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-04"
       },
       {
-        "videoId": "M1P6m8TRjG0",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "Oi6nkCEfDNw",
-        "title": "アゼルバイジャン🇦🇿のスーパー行きます",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "U4pyOXYSLZo",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "WZndyh3P_nQ",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "YbPvEzaa9eY",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "uicj5rra3V8",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "IFit2OMxHlA",
+        "videoId": "Tfl2I6Z6Gis",
         "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-07-05"
       },
       {
-        "videoId": "Tfl2I6Z6Gis",
+        "videoId": "IFit2OMxHlA",
         "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-07-05"
       },
@@ -1207,13 +1207,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-05"
       },
       {
-        "videoId": "9Q1ghbbZDqs",
-        "title": "アゼルバイジャン🇦🇿でニンニクましましましましましトマト作りました",
+        "videoId": "GUVxac75B94",
+        "title": "【もくもくアプリ作り】第十四話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-07-06"
       },
       {
-        "videoId": "GUVxac75B94",
-        "title": "【もくもくアプリ作り】第十四話 アプリ作ったり、ショート動画作ったり",
+        "videoId": "9Q1ghbbZDqs",
+        "title": "アゼルバイジャン🇦🇿でニンニクましましましましましトマト作りました",
         "date": "2025-07-06"
       },
       {
@@ -1272,13 +1272,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-17"
       },
       {
-        "videoId": "FpyyOkxRjtc",
-        "title": "アゼルバイジャン国境越え part2 平和な田舎車窓",
+        "videoId": "eTs5G-G_4VQ",
+        "title": "アゼルバイジャン国境越え part1 バス停までが辛すぎた",
         "date": "2025-07-18"
       },
       {
-        "videoId": "eTs5G-G_4VQ",
-        "title": "アゼルバイジャン国境越え part1 バス停までが辛すぎた",
+        "videoId": "FpyyOkxRjtc",
+        "title": "アゼルバイジャン国境越え part2 平和な田舎車窓",
         "date": "2025-07-18"
       },
       {
@@ -1316,12 +1316,12 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-04-18"
       },
       {
-        "videoId": "CivhSffnPXE",
+        "videoId": "XvM9McCVK48",
         "title": "トビリシ海まで歩きます",
         "date": "2026-06-07"
       },
       {
-        "videoId": "XvM9McCVK48",
+        "videoId": "CivhSffnPXE",
         "title": "トビリシ海まで歩きます",
         "date": "2026-06-07"
       },
@@ -1562,23 +1562,23 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "armenia": {
     "エレバン": [
       {
-        "videoId": "6ZezMEA3emg",
-        "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
-        "date": "2026-05-10"
-      },
-      {
         "videoId": "rHUoWeMPa1o",
         "title": "【帰路ヒッチハイク①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
         "date": "2026-05-10"
       },
       {
-        "videoId": "IjcyQPvmdeI",
-        "title": "エレバンカムバック！！色々体のガタがきた",
-        "date": "2026-05-11"
+        "videoId": "6ZezMEA3emg",
+        "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
+        "date": "2026-05-10"
       },
       {
         "videoId": "ey_pIoeVo_8",
         "title": "【帰路ヒッチハイク③】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
+        "date": "2026-05-11"
+      },
+      {
+        "videoId": "IjcyQPvmdeI",
+        "title": "エレバンカムバック！！色々体のガタがきた",
         "date": "2026-05-11"
       },
       {
@@ -1589,12 +1589,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ],
     "セヴァン湖": [
       {
-        "videoId": "2u4HfAvQdsI",
-        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
-        "date": "2026-05-19"
-      },
-      {
-        "videoId": "Aea0S3WIZLU",
+        "videoId": "p1-bliAqLJo",
         "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
         "date": "2026-05-19"
       },
@@ -1604,22 +1599,27 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-05-19"
       },
       {
+        "videoId": "Aea0S3WIZLU",
+        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
+        "date": "2026-05-19"
+      },
+      {
         "videoId": "gpecGbzVBHU",
         "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
         "date": "2026-05-19"
       },
       {
-        "videoId": "p1-bliAqLJo",
+        "videoId": "2u4HfAvQdsI",
         "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
         "date": "2026-05-19"
       },
       {
-        "videoId": "JJdPN0ozwZI",
+        "videoId": "haHAczqMooM",
         "title": "セヴァン湖までセヴァンマス食べに行きます",
         "date": "2026-05-20"
       },
       {
-        "videoId": "haHAczqMooM",
+        "videoId": "JJdPN0ozwZI",
         "title": "セヴァン湖までセヴァンマス食べに行きます",
         "date": "2026-05-20"
       }
@@ -1652,13 +1652,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ],
     "メグリ": [
       {
-        "videoId": "HfH1RooVuEQ",
-        "title": "【ゴール１時間前】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
+        "videoId": "TFiFG8lrcpA",
+        "title": "【最終日】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
         "date": "2026-05-08"
       },
       {
-        "videoId": "TFiFG8lrcpA",
-        "title": "【最終日】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
+        "videoId": "HfH1RooVuEQ",
+        "title": "【ゴール１時間前】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
         "date": "2026-05-08"
       }
     ]
@@ -1686,19 +1686,14 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-05-01"
       },
       {
-        "videoId": "__Puza5-4q0",
-        "title": "【4日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nvayk30キロ",
-        "date": "2026-05-02"
-      },
-      {
         "videoId": "m1NPo1F7L7M",
         "title": "【4日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nvayk30.キロ",
         "date": "2026-05-02"
       },
       {
-        "videoId": "WaKv25Z-r18",
-        "title": "【5日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n祭り見る",
-        "date": "2026-05-03"
+        "videoId": "__Puza5-4q0",
+        "title": "【4日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nvayk30キロ",
+        "date": "2026-05-02"
       },
       {
         "videoId": "gse7fek4Cpk",
@@ -1706,13 +1701,18 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-05-03"
       },
       {
-        "videoId": "4hSM_LCPTRs",
-        "title": "【6日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nTsghuk 46キロ",
-        "date": "2026-05-04"
+        "videoId": "WaKv25Z-r18",
+        "title": "【5日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n祭り見る",
+        "date": "2026-05-03"
       },
       {
         "videoId": "v9geddQY-24",
         "title": "【6日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nTsghuk 46キロ",
+        "date": "2026-05-04"
+      },
+      {
+        "videoId": "4hSM_LCPTRs",
+        "title": "【6日目②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nTsghuk 46キロ",
         "date": "2026-05-04"
       },
       {
@@ -1736,11 +1736,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-05-07"
       },
       {
-        "videoId": "HfH1RooVuEQ",
-        "title": "【ゴール１時間前】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
-        "date": "2026-05-08"
-      },
-      {
         "videoId": "KDOUIzcITsQ",
         "title": "おわた。明日は13時から",
         "date": "2026-05-08"
@@ -1748,6 +1743,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       {
         "videoId": "TFiFG8lrcpA",
         "title": "【最終日】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
+        "date": "2026-05-08"
+      },
+      {
+        "videoId": "HfH1RooVuEQ",
+        "title": "【ゴール１時間前】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\n10日目 メグリ　70キロ",
         "date": "2026-05-08"
       }
     ]
