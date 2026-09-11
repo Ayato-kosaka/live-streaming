@@ -27,8 +27,12 @@ def main() -> None:
     bad = 0
     rows = list(
         c.query(
-            f"SELECT at, ok, took_sec, error, detail_json FROM `{sink.RUNS_TABLE}`"
-            f" ORDER BY at DESC LIMIT {n}",
+            # **`at` は逆引用符で囲む。** GoogleSQL の `AT` は予約語
+            # （`AT TIME ZONE`）なので、裸で書くと構文エラーになる。
+            # 貯金箱の担当も同じところで踏んでいる（「BigQuery の SQL が
+            # 予約語で落ちていたのを直す」）
+            f"SELECT `at`, ok, took_sec, error, detail_json FROM `{sink.RUNS_TABLE}`"
+            f" ORDER BY `at` DESC LIMIT {n}",
             location=sink.LOCATION,
         ).result()
     )
