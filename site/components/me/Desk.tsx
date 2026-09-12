@@ -19,6 +19,9 @@ const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
 /* キャラクターも同じ理由で、開いた札のぶんだけ降ろす。**こちらは
    97人ぶんの絵を引く**ので、机を開いただけで降ろすと重い。 */
 const Characters = dynamic(() => import("./Characters"), { ssr: false });
+/* スパチャの控えも同じ。**415件を数えて1ページ引く**ので、机を開いた
+   だけで降ろさない（`islandFundSuperChats`。#292）。 */
+const FundHistory = dynamic(() => import("./FundHistory"), { ssr: false });
 
 /* 道具の並びは `./tools` が1か所で持つ。**ここで並べない。**
    `/me` の入口の添え書きが同じ並びを手で持っていて、道具を1つ外した日に
@@ -43,7 +46,7 @@ const LAST = "ayato-desk-tool";
  *
  * ## 机の上には、いま使う道具が1つだけ出ている
  *
- * 8つを縦に積まない。札を押した1つだけを開く。積むと、下の7つは
+ * 9つを縦に積まない。札を押した1つだけを開く。積むと、下の8つは
  * 畳みの向こうへ行くか、指で送る距離になる。**どれも1タップで出る**のが
  * この形の要点で、それは前の「旅の道具」の4つの札（#163）と同じ決め。
  *
@@ -109,7 +112,10 @@ export default function Desk() {
     <>
       <section className="panel paper">
         <h2>道具</h2>
-        <div className="mp-tabs is-4" role="tablist" aria-label="島の手入れの道具">
+        {/* **9つになったので3列にする。** 4列のままだと 4+4+1 で、
+            3段目に札が1枚だけ残る。3列なら 3×3 でちょうど埋まるし、
+            390px で1枚 114px あるので「スパチャ」の4文字も折れない。 */}
+        <div className="mp-tabs is-3" role="tablist" aria-label="島の手入れの道具">
           {TOOLS.map((t) => (
             <button
               key={t.id}
@@ -135,6 +141,7 @@ export default function Desk() {
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}
+          {tool === "fund" && <FundHistory />}
           {tool === "obs" && <AlertBoxBox />}
         </div>
       </section>
