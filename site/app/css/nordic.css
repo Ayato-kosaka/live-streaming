@@ -1193,9 +1193,15 @@ svg.nmap {
   --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
   --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
+  /* 海の名前の下に敷く、深い水の色。
+     **青のまま暗くしたいのに、島の色見本には暗い青が無い**
+     （いちばん深い海でも L46 で止めてある・`tokens.css` の注）。
+     墨（茶）と混ぜると灰色に転んで、水ではなく板に見える。
+     海そのものを黒へ寄せた1色を置く。いまの海の色から作るので、
+     朝・夕・夜の持ち替えにもついてくる（実測 5.0〜8.4 : 1）。 */
+  --nm-deep: color-mix(in srgb, var(--sea-deep) 60%, #0a1a2b);
   /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
   --nm-label: color-mix(in srgb, var(--ink) 90%, var(--grass-lo) 10%);
-  --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;
   width: 100%;
@@ -1260,13 +1266,17 @@ svg.nmap {
 /* --- 陸 --- */
 .nmap .nm-land-a { stop-color: var(--nm-other); }
 .nmap .nm-land-b { stop-color: var(--nm-other-lo); }
+/* 通る6カ国の草の色。**色は `--nm-cc` に置いて、塗りはそこから引く。**
+   名前の下に敷く地（`.nm-wash`）が同じ色を要る（森が開けている、という絵に
+   したいので）。2か所に書くと、国の色を変えた日に敷いた地だけ取り残される。 */
 .nmap .nm-c { stroke: none; }
-.nmap .nm-c-poland { fill: var(--grass-hi); }
-.nmap .nm-c-lithuania { fill: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
-.nmap .nm-c-latvia { fill: var(--grass2-hi); }
-.nmap .nm-c-estonia { fill: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
-.nmap .nm-c-finland { fill: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
-.nmap .nm-c-sweden { fill: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
+.nmap .nm-c-poland { --nm-cc: var(--grass-hi); }
+.nmap .nm-c-lithuania { --nm-cc: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
+.nmap .nm-c-latvia { --nm-cc: var(--grass2-hi); }
+.nmap .nm-c-estonia { --nm-cc: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
+.nmap .nm-c-finland { --nm-cc: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
+.nmap .nm-c-sweden { --nm-cc: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
+.nmap .nm-c { fill: var(--nm-cc); }
 /* 国の境。線ではなく、両側ににじむ影で分ける。 */
 .nmap .nm-seam {
   fill: none;
@@ -1306,26 +1316,49 @@ svg.nmap {
 }
 
 /* --- 名前 --- */
-/* 海の名前。海の色に近い明るい青緑で、うしろに深い青をうっすら敷く。
-   白フチを付けると街の名札と同じ強さになって、どれが街か分からなくなる。 */
+/* 名前の下に敷く地（`RouteMapSvg.tsx` の `nm-wash`）。
+   ---------------------------------------------------------
+   **フチ（stroke）を読みやすさの勘定に入れない。** フチは字といっしょに
+   消えるものなので、地との比を1つも上げない（`tools/sprites/inkpx.py`）。
+   海も陸も、名前の乗る地そのものが場所で大きく変わる。
+
+     海   上は浅瀬の色、下は沖の色。明るさが 2.4 倍ちがう
+     陸   素の草から、森のいちばん濃いところまで 4 倍ちがう
+
+   どんな色の字を選んでも、明るいほうで読めれば暗いほうで消える。
+   実測は 海 1.42〜2.68 / 国名 3.09〜3.81（いちばん暗い地とは 1.19〜1.62）。
+   だから**字の下に地を敷いてならす**（街の名札の `.nm-lab` と同じ考え方）。
+
+   **中心だけ濃い暗幕にしない**（`docs/island-misses.md`）。敷くのは**平らな1枚**で、
+   字のまわり 10 × 8 まで同じ濃さで届かせる。ぼけるのは、その外に置いた
+   もう1枚だけ（`RouteMapSvg.tsx` の `washBox` / `hazeBox`）。 */
+.nmap .nm-wash {
+  stroke: none;
+  /* 陸は**その国じしんの色**を、紙で少しだけ起こしたもの。
+     「森がそこだけ開けている」という絵になるので、地形の一部のまま置ける。
+     素の草のままだと、いちばん暗い国（エストニア・スウェーデン）の上で
+     4.33 までしか出ない。起こすと 5.2 まで上がって、絵は変わらない。 */
+  fill: color-mix(in srgb, var(--nm-cc, var(--paper)) 72%, var(--paper));
+}
+/* 海は「水が一段深くなっている」ことにする。紙の札を敷くと街の名札に見える。 */
+.nmap .nm-wash.is-sea {
+  fill: var(--nm-deep);
+}
+
+/* 海の名前。深いところの色を敷いたので、字は泡の白に寄せる。 */
 .nmap .nm-sea-name {
-  fill: var(--nm-seaname);
+  fill: color-mix(in srgb, var(--foam) 85%, var(--sea-deep));
   font-weight: 800;
   letter-spacing: 0.26em;
-  stroke: var(--sea-deep);
-  stroke-width: 5;
-  stroke-opacity: 0.34;
 }
 /* 国名も同じ考え方。地形の一部として置くので、札には見せない。
-   ただし森の上に出すので、薄いフチが無いと木に食われて読めない。 */
+   **薄めない。** `opacity: .82` は、字の色に地の色を 18% 混ぜることなので、
+   濃い字ほど損をする（森の上では地との比が 1.19 まで落ちていた）。
+   段は薄さではなく色の濃さで作る（`.nmap[data-here] .nm-city` と同じ直しかた）。 */
 .nmap .nm-country {
   fill: var(--nm-label);
   font-weight: 900;
   letter-spacing: 0.24em;
-  stroke: var(--paper);
-  stroke-width: 6;
-  stroke-opacity: 0.42;
-  opacity: 0.82;
 }
 /* 字の下に敷く紙の札。
    緑の陸と青い海では地の明るさが3倍ちがうので、字の色をどう選んでも 4.5 : 1 に
