@@ -10,6 +10,7 @@ import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import FarMark from "@/components/nordic/FarMark";
 import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
+import Strong from "@/components/nordic/Strong";
 import { Mark } from "@/components/nordic/Marks";
 import MAP from "@/content/nordic/map.json";
 import {
@@ -294,7 +295,11 @@ export default async function NordicCountryPage({
           {arrive && <Way kind="入る" leg={arrive} />}
           {leave && <Way kind="出る" leg={leave} />}
         </div>
-        {arrive?.note && <p className="ncway-note">{arrive.note}</p>}
+        {arrive?.note && (
+          <p className="ncway-note">
+            <Strong t={arrive.note} />
+          </p>
+        )}
       </section>
 
       {/* 行く街。**畳まない。この面でいちばん伝えたいのがここ。**

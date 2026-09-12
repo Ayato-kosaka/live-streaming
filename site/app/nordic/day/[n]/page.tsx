@@ -12,6 +12,7 @@ import WantList, { type WantItem } from "@/components/nordic/WantList";
 import RoadStops from "@/components/nordic/RoadStops";
 import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
+import Strong from "@/components/nordic/Strong";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
 import {
@@ -251,7 +252,7 @@ function Hitch({ leg }: { leg: Leg }) {
           親指を上げる むずかしさ {HARD[h.hard]}
           <em className="ndhh-guess">見立て</em>
         </b>
-        <i>{h.why}</i>
+        <i><Strong t={h.why} /></i>
       </p>
       <dl className="ndhh-l">
         <div>
@@ -532,7 +533,11 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                     )}
                   </p>
                   {l.fixed && <p className="nday-fixed">{l.fixed}</p>}
-                  {l.note && <p className="nday-note">{l.note}</p>}
+                  {l.note && (
+                    <p className="nday-note">
+                      <Strong t={l.note} />
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -568,7 +573,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           )}
           {day.start && (
             <p className="nday-lead">
-              <b>{day.start.from}</b> から。{day.start.how}
+              <b>{day.start.from}</b> から。<Strong t={day.start.how} />
             </p>
           )}
         </section>
@@ -581,7 +586,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           <h2>気をつけること</h2>
           <ul className="nday-worry">
             {day.worry!.map((w) => (
-              <li key={w}>{w.replace(/\*\*/g, "")}</li>
+              <li key={w}>
+                <Strong t={w} />
+              </li>
             ))}
           </ul>
         </section>
