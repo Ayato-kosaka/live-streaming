@@ -377,12 +377,31 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const maybe = [...new Set([...legs.flatMap((l) => l.maybe ?? []), ...(day.maybe ?? [])])];
   const cities = [...sure, ...maybe];
 
-  /* ふだんのごはんを出す国。**その日の終わりにいる国**で決める。
-     国が変わる日は、朝いた国ではなく着いた先の国を出す。晩ごはんを買うのは
-     着いたほうの国だし、その日のうちに口を開く相手も向こう側の人になる。
-     旅程に無い国（出発日のジョージア）は `foodsOf` が空を返すので、
-     区画そのものが出ない。**ここに国名を書かない**（旅程が変わると古くなる）。 */
-  const foodSlug = cityCountry(sure[sure.length - 1] ?? "")?.slug ?? "";
+  /* ふだんのごはんを出す国。**その日に足を置く国ぜんぶ。**
+     区間の出発地と到着地の両方から引いて、通った順に重複を落とす。
+
+     前は「その日の終わりにいる国」ひとつだけにしていた。**それだと
+     フィンランドが1日も出なかった。** 8日目はタリンを出てヘルシンキを
+     7時間歩いてからストックホルム行きの船に乗るので、終わりはスウェーデン。
+     ヘルシンキの7時間がこの日いちばん長く地面に足を置いているのに、
+     フィンランドのごはん7品がどの面にも出ない状態になっていた
+     （あやとが名指しした ruisleipä・kaurapuuro・kahvi がそれ）。
+
+     国が変わる日は2つ、8日目は3つ並ぶ。畳んであるので背は伸びない。
+     旅程に無い国（出発日のジョージア）は `foodsOf` が空を返すので出ない。
+     **ここに国名を書かない**（旅程が変わると古くなる）。 */
+  const foodSlugs = [
+    ...new Set(
+      (legs.length > 0
+        ? legs.flatMap((l) => [cityName(l.from), cityName(l.to)])
+        : day.city
+          ? [day.city]
+          : []
+      )
+        .map((c) => cityCountry(c)?.slug)
+        .filter(Boolean) as string[],
+    ),
+  ];
 
   // 見どころは国ごとの JSON にある。その日に関わる国のぶんだけ読む。
   const slugs = [...new Set(cities.map((c) => cityCountry(c)?.slug).filter(Boolean))] as string[];
@@ -666,7 +685,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           **見どころのあとに置く。** 上の「見たいもの」は着いた街の話で、
           こちらは国の話。街より粒が大きいので、街のあとに来ると順に読める。
           国の名前はここで書かない（`DailyFood` が slug から引く）。 */}
-      <DailyFood country={foodSlug} />
+      {foodSlugs.map((slug) => (
+        <DailyFood key={slug} country={slug} named={foodSlugs.length > 1} />
+      ))}
 
       {/* 寄るかどうかがまだ決まっていない街。**畳んでおく。**
           着く街と同じ高さで開いていると、寄ると決まって見える。

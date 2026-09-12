@@ -28,17 +28,29 @@ import { foodCountryName, foodsOf, type DailyFood as Food } from "@/content/nord
  *
  * 絵文字は1文字も置かない（`docs/island-design.md` 1）。
  */
-export default function DailyFood({ country }: { country: string }) {
+export default function DailyFood({
+  country,
+  named = false,
+}: {
+  country: string;
+  /** 同じ面に国が2つ以上並ぶ日は、題に国の名前を入れる。 */
+  named?: boolean;
+}) {
   const foods = foodsOf(country);
   if (foods.length === 0) return null;
   const name = foodCountryName(country);
 
   return (
-    <section className="panel paper nfood" id="food">
+    <section className="panel paper nfood" id={`food-${country}`}>
       {/* 国の名前は題に入れない。390px だと「スウェーデンの人は、ふ／だん…」で
           割れるし、この部品が乗る面は国の名前をもう言っている。
           **同じ面で同じことを2回言わない**（`docs/island-misses.md` 決めごと6）。 */}
-      <h2>ふだん、何を食べてるんだろう</h2>
+      {/* 国が1つの日は、題に国名を入れない（置く面がもう言っている）。
+          **2つ以上並ぶ日は入れる。** 入れないと同じ題が3つ続いて、
+          どれがどの国のものか題からは分からなくなる（8日目がそれ。
+          エストニア・フィンランド・スウェーデンの3つが並ぶ）。
+          長い題は 390px で名前の途中から割れるので、短いほうの言い方にする。 */}
+      <h2>{named && name ? `${name}の、ふだんのごはん` : "ふだん、何を食べてるんだろう"}</h2>
       {/* 観光の名物ではなく、棚と食卓にあるもの、と一行で言い切る。
           どういう条件で選んだかは中の話なので、画面には書かない。 */}
       <p className="nfood-lead">
