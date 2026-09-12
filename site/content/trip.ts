@@ -24,7 +24,7 @@
  * という食い違いが出る（`docs/island-misses.md` #21）。
  */
 
-import { chapterDays, chapterNow, chapterSpan } from "@/content/chapters";
+import { chapterDayNo, chapterDays, chapterNow, chapterSpan } from "@/content/chapters";
 
 /**
  * 章ごとの、その旅そのものの面。
@@ -56,8 +56,16 @@ export type TripDest = {
   slug: string;
   /** その旅の面 */
   href: string;
-  /** 旅に出て何日目か。出た日が1日目 */
+  /**
+   * その旅の**期間**（何日間か）。出た日から今日までを数えた数。
+   * **画面に「◯日目」と出すのはこちらではない。** `dayNo` を使うこと。
+   */
   day: number;
+  /**
+   * 旅に出て**何日目**か。出た日が 0（＝出発の日）で、翌日が 1日目。
+   * 旅程表の行の名前（`content/nordic.ts` の `DAYS`）と揃っている。
+   */
+  dayNo: number;
 };
 
 /**
@@ -79,9 +87,17 @@ export function tripNow(now: Date = new Date()): TripDest | null {
   const { from, to } = chapterSpan(c, now);
   // まだ出発していない章と、次の章が始まって閉じた章は、いま歩いている旅ではない
   if (from == null || to != null) return null;
+  /* **2つは別のもの。混ぜない。**
+     `chapterDays` は**期間**（何日間の旅か）、`chapterDayNo` は**何日目**。
+     9/11 に出て 9/12 に見ると、期間は「2日」で、何日目かは「1日目」。
+
+     ここで返す `day` は期間で、下の「見立ての日数を超えたら閉じる」に使う。
+     **画面に「◯日目」と出すのは `dayNo` のほう。** 前は `day` をそのまま
+     「◯日目」と書いていて、`/streams` だけが島じゅうと1日ずれていた
+     （`chapterDays` の説明にも「これは期間で、何日目ではない」と書いてある）。 */
   const day = chapterDays(c, now);
   // 事実（`from`）が入っている章は、日数ではなく `to` が閉じる。まだ入っていない
   // あいだだけ、見立ての日数（`plannedDays`）で切る
   if (!c.from && c.plannedDays && day > c.plannedDays) return null;
-  return { name: c.name, slug: c.slug, href, day };
+  return { name: c.name, slug: c.slug, href, day, dayNo: chapterDayNo(c, now) };
 }

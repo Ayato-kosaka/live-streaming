@@ -45,7 +45,7 @@ export default function Tonight({ week, free }: { week: WeekKind[]; free: FreeKi
         <Link className="wk-now-go" href={trip.href}>
           {trip.name}
         </Link>
-        のとちゅう。{trip.day}日目の夜も、どこかから配信します。
+        のとちゅう。{trip.dayNo}日目の夜も、どこかから配信します。
       </p>
     );
 

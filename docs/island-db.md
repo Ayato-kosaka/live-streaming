@@ -425,6 +425,10 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 `goal_migrate` を `{"apply": true}` で流すまで0件。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
+**`islandDoneruHealth` もこれから作る**（#294）。Doneru のぶんが最後に
+BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
+取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
+「Doneru のぶんは、◯月◯日まで入っています」と出る（`docs/nordic-fund.md` 9.13）。
 
 #### a. 人
 
@@ -1017,6 +1021,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | ある入れ物の欄の形 | 同 → `firestore_read` に `{"collection":"…","keys_only":true}`（**値も書類IDも出さない**） |
 | 配信中のコメント収集が止まった理由 | `streamChatHealth/collectLiveChat` の `step` と `detail` |
 | Doneru のセッションが何日持ったか | `doneru_ingest_runs`。`ok` が続いたあとの最初の `session_expired` がそのセッションの終わり |
+| Doneru のぶんが、いつまで島に入っているか | `islandDoneruHealth/last` の `okDay`（`python/doneru_health.py` が写す）。3日以上古いと `/nordic` の応援の区画に出る。`docs/nordic-fund.md` 9.13 |
 | 寄付の件数・合計・重なり | 同 → `doneru_audit`（**数字だけ出す**） |
 | 焼き込みが新しいか | 4.3 の「どこを見るか」の表 |
 

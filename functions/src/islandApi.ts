@@ -56,6 +56,7 @@ import {
   dropCardsOfImage,
   eventRef,
   imageRef,
+  jstDay,
   loadEvents,
   mintForImage,
   resyncCardsOfImage,
@@ -197,6 +198,34 @@ const GAS_GOALS =
    `POST /island-api/superchat` へ移したあと（#305 の3）。
    **額が増える側が正** ——それまではこの順が辻褄の合う唯一の順。 */
 const GOAL_DOC = db.collection("islandGoal").doc(GOAL_ID);
+/* Doneru の取り込みが最後に通った日（#294。`python/doneru_health.py` が写す）。
+   Doneru の寄付は cookie ひとつで取りに行っているので、**切れた日から
+   BigQuery に入らなくなる。** 豚の貯金箱はスパチャぶんだけ伸びて、
+   Doneru で出してくれた人のぶんが島に出てこない。
+
+   額が減るわけではないので誰も気づかない。**気づけるのは Actions を
+   見ている人だけで、旅先のあやとは見ない。** だからここを島まで持ってくる。
+
+   BigQuery の `doneru_ingest_runs` をこの Function から引けない
+   （Functions に BigQuery のクライアントを足していない）ので、
+   毎晩の取り込みのあとに python が Firestore へ1枚だけ写す。 */
+const DONERU_HEALTH = db.collection("islandDoneruHealth").doc("last");
+/* **何日ぶん入っていなかったら、島に出すか。**
+   取りこぼした晩が2つ以上あって初めて出す、という線。
+
+   1日では出さない。取り込みは 20:30 UTC の予定だが、**実測で1時間49分〜
+   3時間32分遅れて走る**（`CLAUDE.md`）。ある瞬間に見れば、最後に入ってから
+   28時間空いているのはふつうの姿で、そこで出すと遅れただけの晩に出る。
+
+   2日でも出さない。1晩の失敗は実際にある（2026-09-06 に `error` が2回出て、
+   どちらも数分後の実行で入っている）。GitHub Actions 側の都合で発火しない
+   晩もある（`rebake.yml` が翌朝まで発火しなかった）。
+
+   3日なら、遅れでも1回の失敗でも届かない。そして cookie が切れたときは
+   必ずここを超える（入り直すまで二度と `ok` にならない）ので、
+   **見つからずに終わることはない。** 出るまでの遅さより、
+   ふだんの島に余計な1行が出ることのほうが害が大きい。 */
+const DONERU_STALE_DAYS = 3;
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
@@ -1254,6 +1283,66 @@ async function doneruNow(): Promise<number | null> {
     return fundCache?.doneru ?? null;
   } finally {
     clearTimeout(t);
+  }
+}
+
+/**
+ * 札に書いてある日を見て、島に出す日付を決める(#294)。
+ *
+ * **止まっているときだけ日付を返す。ふだんは null。**
+ *
+ * **分からないときは、止まっていることにしない。** 欄が無い・空・形が違う・
+ * 日付が未来、のどれでも null を返して黙る。取り込みの記録が読めなかった
+ * だけの日に「止まっています」と出すと、**それ自体が嘘になる**
+ * (`docs/island-standards.md` 10章)。倒れる方向は黙る側へ。
+ *
+ * 日をまたぐ数え方は、島じゅうと同じ日本時間で切る
+ * (`site/lib/nightly.ts` の `jstNow`。`docs/island-misses.md` #29)。
+ *
+ * **外に出してあるのは、ここだけを外から通せるようにするため**
+ * (`functions/tools/fund/asofcheck.cjs`)。読めなかった・形が違う・未来、を
+ * 本物の関数で1回ずつ通さないと、「黙る」ほうを確かめたことにならない。
+ * @param {unknown} okDay 札の `okDay`。Doneru のぶんが最後に入った日(日本時間)
+ * @param {number} nowMs いまの時刻
+ * @return {string | null} 止まっていれば「2026-09-12」の形。ふだんは null
+ */
+export function doneruStaleDay(
+  okDay: unknown,
+  nowMs: number,
+): string | null {
+  if (!isDay(okDay)) return null;
+  const today = jstDay(nowMs);
+  const days = Math.round(
+    (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${okDay}T00:00:00Z`)) /
+      86400000,
+  );
+  // 未来の日付は札のほうが壊れている。数えずに黙る
+  if (!Number.isFinite(days) || days < 0) return null;
+  return days >= DONERU_STALE_DAYS ? okDay : null;
+}
+
+/**
+ * Doneru のぶんが、いつまで入っているか(#294)。
+ *
+ * 返した日付は `GET /fund` の `doneruAsOf` に乗って、島の応援の区画に
+ * 「Doneru のぶんは、いま◯月◯日まで入っています」の1行として出る。
+ *
+ * 札の `okDay` は「Doneru のぶんが最後に BigQuery へ入った日(日本時間)」で、
+ * **札を書いた日ではない。** だから写す側(`python/doneru_health.py`)が
+ * 止まっても、この日付が新しくなることはない。**古いほうへしか倒れない。**
+ *
+ * **投げない。** ここが落ちても `GET /fund` の今までの欄は1つも欠けない。
+ * @return {Promise<string | null>} 止まっていれば日付。ふだんは null
+ */
+async function doneruAsOf(): Promise<string | null> {
+  try {
+    const snap = await DONERU_HEALTH.get();
+    if (!snap.exists) return null;
+    return doneruStaleDay((snap.data() ?? {}).okDay, Date.now());
+  } catch (e) {
+    // 読めなかったことだけ残す。読めない=止まっている、ではない
+    logger.warn("doneru health read failed", String(e));
+    return null;
   }
 }
 
@@ -2341,10 +2430,13 @@ export const islandApi = onRequest(
          演出上の都合」と書いてあったが、**それが間違いだった**
          (`docs/nordic-fund.md` 9.1)。 */
       if (method === "GET" && path === "/fund") {
-        const [doneru, snap, goal] = await Promise.all([
+        const [doneru, snap, goal, asOf] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
           goalRecord(),
+          /* **足すだけ。** ここが落ちても `doneruAsOf` が null を返すので、
+             今までの4欄は1つも欠けない(`doneruAsOf` は投げない)。 */
+          doneruAsOf(),
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const num = (v: unknown) => {
@@ -2390,6 +2482,10 @@ export const islandApi = onRequest(
           goal: goal ? goal.goal : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
+          /* Doneru のぶんが止まっている日だけ、いつまで入っているかを足す。
+             **ふだんは欄ごと出さない**(#294)。元気な島に1行も足さないため。
+             古い画面はこの欄を知らないので、あっても今までどおりに出る。 */
+          ...(asOf ? {doneruAsOf: asOf} : {}),
         });
         return;
       }
