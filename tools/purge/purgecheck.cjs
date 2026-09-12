@@ -15,6 +15,13 @@
  *      **そのとき置き場を1回も掴んでいない**
  *   6. 取り付けが、ほかの `path` を横取りしていない
  *
+ * #296 で増えたぶん（**旅の写真の実体が退避に1本も入っていない**）。
+ *
+ *   1b. 下見が、**2つの置き場**の「できること」を返す。
+ *       既定バケットは**件数と合計バイト数だけ**で、名前は1つも出ない
+ *   1c. 既定バケットの `list` が立っていなければ、**数えるのも試さない**
+ *   4d. **既定バケットの名前を `apply` に渡しても、消す道に入らない**
+ *
  * 差し替えているのは3つだけ。**口そのものは本物を呼ぶ。**
  *
  * - 合言葉の検算（`admin.auth().verifyIdToken`）
@@ -99,16 +106,34 @@ function publicNow() {
 }
 
 /**
- * 偽の置き場。**呼ばれたメソッドを順番に控える。**
- * `fail` に "copy" / "delete" を入れると、そこで 403 を投げる。
+ * 偽の既定バケットの中身（#296）。**旅の写真の実体。**
+ * ここに名前を置くのは、**返りに名前が1つも混ざらないこと**を
+ * 見るため。混ざったら、それは公開のログに出るということ。
  */
-function fakeStorage(fail) {
+function photosNow() {
+  return new Map([
+    ["nordic/2026-09-01/IMG_0001.jpg", {size: 3145728, updated: "x"}],
+    ["nordic/2026-09-01/IMG_0002.jpg", {size: 2097152, updated: "x"}],
+    ["nordic/2026-09-02/IMG_0003.jpg", {size: 4194304, updated: "x"}],
+    ["islandCharacter/\u{1F41F}.png", {size: 65536, updated: "x"}],
+  ]);
+}
+
+/**
+ * 偽の置き場。**呼ばれたメソッドを順番に控える。**
+ *
+ * @param {string} [fail] "copy" / "delete" を入れると、そこで 403 を投げる
+ * @param {object} [opt] `photos`: 既定バケットに中身を置く。
+ *   `can`: 置き場ごとの「できること」の答え（既定は setIamPolicy 以外できる）
+ */
+function fakeStorage(fail, opt) {
+  const o = opt || {};
   const calls = [];
   const stores = {
     [PUBLIC_BUCKET]: publicNow(),
-    [PRIVATE_BUCKET]: new Map(),
+    [PRIVATE_BUCKET]: o.photos ? photosNow() : new Map(),
   };
-  const tag = (b) => (b === PUBLIC_BUCKET ? "公開" : "私用");
+  const tag = (b) => (b === PUBLIC_BUCKET ? "公開" : "既定");
 
   const makeBucket = (name) => {
     const store = stores[name];
@@ -116,12 +141,18 @@ function fakeStorage(fail) {
       name,
       iam: {
         testPermissions: async (perms) => {
-          calls.push({op: "iam.testPermissions", on: tag(name)});
+          calls.push({op: "iam.testPermissions", on: tag(name), perms});
           const out = {};
-          /* Functions のサービスアカウントがこの置き場で何をできるかは
-             **まだ誰も測っていない。** ここは偽物なので、口の返し方を
-             見るために「読めて書ける」を置いているだけ。 */
-          for (const p of perms) out[p] = p !== "storage.buckets.setIamPolicy";
+          /* Functions のサービスアカウントが**既定バケット**で何を
+             できるかは、まだ誰も測っていない（#296）。ここは偽物なので、
+             口の返し方を見るための答えを置いているだけ。
+             `can` を渡せば「できない」側も作れる。 */
+          const answer = (o.can || {})[name];
+          for (const p of perms) {
+            out[p] = answer ?
+              answer[p] === true :
+              p !== "storage.buckets.setIamPolicy";
+          }
           return [out];
         },
       },
@@ -301,7 +332,7 @@ function check(label, ok) {
   /* ===== 1. 下見 ===== */
   line("\n== 1. 下見（GET）。1バイトも書かない ==");
   {
-    const fake = fakeStorage();
+    const fake = fakeStorage(null, {photos: true});
     const r = await direct("GET", {}, fake, "Bearer ayato");
     line(`   HTTP ${r.status}  cache=${r.headers["cache-control"]}`);
     line(`   呼ばれた順: ${seq(fake.calls)}`);
@@ -318,6 +349,11 @@ function check(label, ok) {
           `${f.updatedAt} 消せる=${f.purgeable} 触らない=${f.keep}`,
       );
     }
+    const d = r.body.defaultBucket;
+    line(`   -- 既定バケット（#296。旅の写真の実体） --`);
+    line(`   置き場=${d.bucket} 数えられたか=${d.listed} why=${d.why}`);
+    line(`   件数=${d.count} 合計=${d.bytes}バイト`);
+    line(`   できること: ${JSON.stringify(d.can)}`);
     const writes = fake.calls.filter((c) => WRITES.has(c.op));
     check("HTTP 200", r.status === 200);
     check("Cache-Control: no-store", r.headers["cache-control"] === "no-store");
@@ -330,6 +366,67 @@ function check(label, ok) {
           "credits_notifications.json",
           "202601_donation_ceremony.json",
         ]),
+    );
+    /* ---- #296 で増えたぶん ---- */
+    check("既定バケットを測っている", d && d.bucket === PRIVATE_BUCKET);
+    check(
+      "2つの置き場ぶん testIamPermissions を投げた",
+      fake.calls.filter((c) => c.op === "iam.testPermissions").length === 2,
+    );
+    const asked = (fake.calls.find(
+      (c) => c.op === "iam.testPermissions" && c.on === "既定",
+    ) || {}).perms;
+    line(`   既定バケットに聞いた項目: ${JSON.stringify(asked)}`);
+    check(
+      "聞いた項目が list/get/create/delete/update/buckets.get",
+      JSON.stringify(asked) ===
+        JSON.stringify([
+          "storage.objects.list",
+          "storage.objects.get",
+          "storage.objects.create",
+          "storage.objects.delete",
+          "storage.objects.update",
+          "storage.buckets.get",
+        ]),
+    );
+    check("件数と合計バイト数まで出ている", d.listed === "ok" && d.count === 4);
+    check("合計バイト数が合っている", d.bytes === 3145728 + 2097152 + 4194304 + 65536);
+    /* **名前が1文字も混ざっていないこと。** 混ざれば公開のログに出る。 */
+    const dump = JSON.stringify(d);
+    check(
+      "既定バケットの中身の名前が1つも返っていない",
+      !dump.includes("IMG_0001") && !dump.includes("nordic/") &&
+        !dump.includes("islandCharacter/"),
+    );
+    check("既定バケットには1バイトも書いていない", fake.stores[PRIVATE_BUCKET].size === 4);
+  }
+
+  /* ===== 1c. 既定バケットの list が立っていない場合 ===== */
+  line("\n== 1c. 既定バケットに list が無い（いまの Actions と同じ形） ==");
+  {
+    const fake = fakeStorage(null, {
+      photos: true,
+      can: {
+        [PRIVATE_BUCKET]: {}, // 6項目ぜんぶ「できない」
+      },
+    });
+    const r = await direct("GET", {}, fake, "Bearer ayato");
+    const d = r.body.defaultBucket;
+    line(`   呼ばれた順: ${seq(fake.calls)}`);
+    line(
+      `   既定バケット: 数えられたか=${d.listed} 件数=${d.count} ` +
+        `合計=${d.bytes} できること=${JSON.stringify(d.can)}`,
+    );
+    check("HTTP 200（公開バケットの下見は返る）", r.status === 200);
+    check("skipped と言っている", d.listed === "skipped");
+    check("件数を出していない", d.count === null && d.bytes === null);
+    check(
+      "既定バケットで getFiles を呼んでいない",
+      !fake.calls.some((c) => c.op === "getFiles" && c.on === "既定"),
+    );
+    check(
+      "書き込み系を1回も呼んでいない",
+      !fake.calls.some((c) => WRITES.has(c.op)),
     );
   }
 
@@ -438,6 +535,78 @@ function check(label, ok) {
       "1件も消していない",
       fake.stores[PUBLIC_BUCKET].size === 6 &&
         !fake.calls.some((c) => WRITES.has(c.op)),
+    );
+  }
+
+  /* ===== 4d. 既定バケットの名前を apply に渡す（#296） ===== */
+  line("\n== 4d. 既定バケットの名前を apply に渡す ==");
+  {
+    for (const name of [
+      PRIVATE_BUCKET,
+      PUBLIC_BUCKET,
+      "nordic/2026-09-01/IMG_0001.jpg",
+    ]) {
+      const fake = fakeStorage(null, {photos: true});
+      const r = await direct(
+        "POST",
+        {names: [name], apply: true},
+        fake,
+        "Bearer ayato",
+      );
+      line(`   渡した名前: ${name}`);
+      line(`   HTTP ${r.status}  返り: ${JSON.stringify(r.body)}`);
+      line(`   呼ばれた順: ${seq(fake.calls)}`);
+      check(`${name}: HTTP 400 で断った`, r.status === 400);
+      check(
+        `${name}: 置き場を変えるメソッドを1回も呼んでいない`,
+        !fake.calls.some((c) => WRITES.has(c.op)),
+      );
+      check(
+        `${name}: 公開バケットは6件のまま`,
+        fake.stores[PUBLIC_BUCKET].size === 6,
+      );
+      check(
+        `${name}: 既定バケットは4件のまま`,
+        fake.stores[PRIVATE_BUCKET].size === 4,
+      );
+    }
+    /* **バケット名は「知らない名前」ではなく「置き場の名前」として断る。** */
+    const fake = fakeStorage(null, {photos: true});
+    const r = await direct(
+      "POST",
+      {names: [PRIVATE_BUCKET], apply: true},
+      fake,
+      "Bearer ayato",
+    );
+    check("置き場の名前だと名指しで断っている", (r.body.buckets || [])[0] === PRIVATE_BUCKET);
+  }
+
+  /* ===== 4e. bucket を入力で指せない（#296） ===== */
+  line("\n== 4e. body に bucket を入れても、行き先は変わらない ==");
+  {
+    const fake = fakeStorage(null, {photos: true});
+    const r = await direct(
+      "POST",
+      {
+        bucket: PRIVATE_BUCKET,
+        names: ["credits_notifications.json"],
+        apply: true,
+      },
+      fake,
+      "Bearer ayato",
+    );
+    line(`   HTTP ${r.status}  行き先=${r.body.bucket}`);
+    line(`   呼ばれた順: ${seq(fake.calls)}`);
+    const del = fake.calls.filter((c) => c.op === "delete");
+    line(`   delete を呼んだ置き場: ${JSON.stringify(del.map((c) => c.on))}`);
+    check("消したのは公開バケットだけ", del.every((c) => c.on === "公開"));
+    check("返りの置き場も公開バケット", r.body.bucket === PUBLIC_BUCKET);
+    check(
+      "既定バケットの写真は4件のまま（写しが1つ増えて5件）",
+      fake.stores[PRIVATE_BUCKET].size === 5 &&
+        [...fake.stores[PRIVATE_BUCKET].keys()].filter((k) =>
+          k.startsWith("purged/public-bucket/"),
+        ).length === 1,
     );
   }
 
