@@ -23,6 +23,17 @@ name: 退避（失ったら戻らないものを取る）
 # 退避が壊れていても、取っているあいだは緑のまま気づけない。
 # `drill` の job で、毎晩 Firestore エミュレータへ1コレクション戻して、
 # **件数と中身の指紋が合うか**まで確かめる。**本番には1バイトも書かない。**
+#
+# 旅の写真も同じで、**取れているだけでは退避ではない。** `drill` の最後で
+# 置き場から1枚取り出して、記録してある大きさと指紋に**バイト列が一致するか**を
+# 見る（`restore.py --photo`）。これも置き場を読むだけ。
+#
+# ## 写真は1回の実行に上限がある
+#
+# 実体は 340MB あって、1回に 128MB までで区切ってある（理由は
+# `python/backup/photos.py` の頭）。**上限に当たっても赤くしない。**
+# 残り枚数を `::notice::` に出して、次の回が続きから拾う。
+# 溜まったぶんを早く流し込みたいときは `photo_budget_mb` を押し上げる。
 
 on:
   schedule:
@@ -64,6 +75,11 @@ on:
         required: false
         default: islandNotes
         type: string
+      photo_budget_mb:
+        description: "旅の写真を1回で取る上限（MB）。空なら 128"
+        required: false
+        default: ""
+        type: string
 
 # 同時に走らせない。栞（置き場に入っている最新の ingested_at）を
 # 取り合うと、同じ行を二度積む
@@ -78,6 +94,8 @@ jobs:
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      # 空なら photos.py の既定（128MB）。手で押したときだけ押し上げられる
+      PHOTO_BUDGET_MB: ${{ inputs.photo_budget_mb }}
     steps:
       - uses: actions/checkout@v4
 
@@ -141,3 +159,11 @@ jobs:
         env:
           ARGS: '{"collection": "${{ inputs.drill_collection || ''islandNotes'' }}"}'
         run: python backup_restore_test.py
+
+      # **写真も「戻せるか」まで見る。** 置き場から1枚取り出して、記録して
+      # ある大きさと指紋にバイト列が一致するかを見るだけ（**読むだけ**）。
+      # ここも `continue-on-error` を付けない。**戻せない退避は退避ではない。**
+      # まだ1枚も入っていない晩は `::warning::` を出して緑のまま通す
+      # （取るほうがまだ回っていないだけで、壊れてはいない）
+      - name: 写真を1枚戻してバイト列を突き合わせる
+        run: python python/backup/restore.py --photo
