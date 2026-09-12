@@ -30,6 +30,35 @@
  * **GET は1バイトも書かない。** POST も `{"apply": true}` が無ければ
  * 空回しで、置き場を読むだけ。
  *
+ * ## 下見は、置き場を2つ測る（#296）
+ *
+ * 退避（#291）は Firestore も BigQuery も毎晩取れているのに、
+ * **旅の写真の実体（Storage）だけ1本も入っていない。**
+ * いちばん取り返しのつかないものが、いちばん守られていない。
+ *
+ * 止まっていた理由はここと同じで、**Actions のサービスアカウントに
+ * Storage の権限が1つも無い**（#296。あやたに役を付けてもらう依頼を
+ * 出したまま、旅に出てしまっている）。
+ *
+ * ところが #289 のこの口で、**Functions のサービスアカウントなら
+ * 公開バケットに対して全部できる**ことが本番で分かった。
+ * 写真が入っているのは**別のバケット**（`…firebasestorage.app`）で、
+ * **そちらで何ができるかは誰も測っていない。**
+ * 近い実績は `python/admin/characters_probe.py` の
+ * create / get / delete だけで、**退避に要る `list` は未測定。**
+ *
+ * だから下見は、公開バケットと**既定バケットの両方**に
+ * `testIamPermissions` を投げる。既定バケットのほうは
+ * **`list` が立ったときに件数と合計バイト数まで**しか見ない。
+ * **中身は開かないし、名前も1つも返さない。**
+ *
+ * ## 消せる道は、既定バケットには開けない
+ *
+ * 片づけ（`POST` の `apply`）が触る置き場は、**公開バケット決め打ち。**
+ * 呼び出しからバケットは選べない（`bucket` のような入力は読んでいない）。
+ * 既定バケットの名前を `names` に渡しても、**置き場の名前として弾く。**
+ * 測る口を広げても、消す口は1ミリも広げない。
+ *
  * ## 写してから消す。順番を逆にしない
  *
  * (a) 私用の置き場（`…firebasestorage.app`。`storage.rules` は
@@ -73,7 +102,14 @@ const PUBLIC_BUCKET = `${
   process.env.GCLOUD_PROJECT || "live-streaming-d3cac"
 }-public`;
 
-/** 写す先。旅の写真と同じ置き場（`islandApi.ts` の `BUCKET` と同じ式）。 */
+/**
+ * 既定バケット。用事が2つある。
+ *
+ * 1. #289 の**写す先**（`islandApi.ts` の `BUCKET` と同じ式）
+ * 2. #296 で**測る相手**。旅の写真の実体はここに入っている
+ *
+ * **消す道はここへ開けない。** 下見で読むのと、`purged/` へ写すだけ。
+ */
 const PRIVATE_BUCKET =
   process.env.NORDIC_BUCKET ||
   `${process.env.GCLOUD_PROJECT || "live-streaming-d3cac"}.firebasestorage.app`;
@@ -108,7 +144,7 @@ const PURGEABLE = new Set([
  */
 const KEEP_PREFIXES = ["viewer-video"];
 
-/** いま何ができるかを聞く項目。`bucket_purge.py` と同じ並び。 */
+/** 公開バケットに聞く項目。`bucket_purge.py` と同じ並び。 */
 const PERMISSIONS = [
   "storage.objects.list",
   "storage.objects.get",
@@ -117,6 +153,33 @@ const PERMISSIONS = [
   "storage.objects.update",
   "storage.buckets.setIamPolicy",
 ];
+
+/**
+ * 既定バケットに聞く項目（#296）。
+ *
+ * 最後の1つだけ公開バケットと違う。あちらで見たかったのは
+ * 「**公開を止められるか**」（`setIamPolicy`）で、こちらで見たいのは
+ * 「**退避の相手として掴めるか**」（`buckets.get`）。
+ * 退避に要るのは先頭の `list` で、そこが立たなければ数えることもできない。
+ */
+const DEFAULT_PERMISSIONS = [
+  "storage.objects.list",
+  "storage.objects.get",
+  "storage.objects.create",
+  "storage.objects.delete",
+  "storage.objects.update",
+  "storage.buckets.get",
+];
+
+/**
+ * **置き場そのものの名前。片づけには決して渡らない。**
+ *
+ * `names` は置き場の中の名前を受けるところで、バケット名を入れる場所では
+ * ない。表（`PURGEABLE`）に無いので既に弾かれるが、**二重に弾いて、
+ * 弾いたことを残す。** 測る口が2つの置き場を知った以上、片方の名前が
+ * 消す側へ流れる形になっていないことを、口の側で言い切れるようにする。
+ */
+const BUCKET_NAMES = new Set([PUBLIC_BUCKET, PRIVATE_BUCKET]);
 
 /** 一度に受ける名前の数。表には2つしか無いので、これで足りる。 */
 const MAX_NAMES = 10;
@@ -227,15 +290,17 @@ function liveStorage(): PurgeStorage {
 /**
  * いま何ができるかを聞く。**読むだけ。**
  * @param {PurgeBucket} b 聞く相手
+ * @param {string[]} perms 聞く項目
  * @return {Promise<Record<string, boolean> | null>} できることの表。聞けなければ null
  */
 async function canDo(
   b: PurgeBucket,
+  perms: string[],
 ): Promise<Record<string, boolean> | null> {
   try {
-    const [got] = await b.iam.testPermissions(PERMISSIONS);
+    const [got] = await b.iam.testPermissions(perms);
     const out: Record<string, boolean> = {};
-    for (const p of PERMISSIONS) out[p] = got?.[p] === true;
+    for (const p of perms) out[p] = got?.[p] === true;
     return out;
   } catch (e) {
     /* **聞けなくても一覧は返す。** 聞けないこと自体が答え（権限が
@@ -260,6 +325,66 @@ async function listing(b: PurgeBucket): Promise<Listed[]> {
     purgeable: PURGEABLE.has(f.name),
     keep: isKept(f.name),
   }));
+}
+
+/** 数えた結果。**ここに名前は入らない。** */
+type Tally = {count: number; bytes: number};
+
+/**
+ * 数えるだけ。**名前も中身も持ち帰らない。**
+ *
+ * 退避（#296）に要るのは「何件あって、ぜんぶで何バイトか」まで。
+ * 名前を配列で返すと、このリポジトリは公開なので Actions のログに
+ * そのまま出る。**足し算だけして捨てる。**
+ * @param {PurgeBucket} b 数える置き場
+ * @return {Promise<Tally>} 件数と合計バイト数
+ */
+async function tally(b: PurgeBucket): Promise<Tally> {
+  const [files] = await b.getFiles();
+  let bytes = 0;
+  for (const f of files) bytes += Number(f.metadata?.size ?? 0) || 0;
+  return {count: files.length, bytes};
+}
+
+/** 測った結果1つぶん。**ファイル名は1つも入らない。** */
+type Surveyed = {
+  bucket: string;
+  /** できることの表。聞けなければ null */
+  can: Record<string, boolean> | null;
+  /** `list` が立ったときだけ入る */
+  count: number | null;
+  bytes: number | null;
+  /** 数えられたか。`skipped` は `list` が無いので試してもいない */
+  listed: "ok" | "skipped" | "denied";
+  /** 数えられなかった理由。**種類だけ** */
+  why: string | null;
+};
+
+/**
+ * 置き場を1つ測る。**1バイトも書かない。**
+ *
+ * `list` が立っていないときは、数えることすら試さない。
+ * 落ちるのが分かっている呼び出しで本番のログを埋めない。
+ * @param {PurgeBucket} b 測る置き場
+ * @param {string[]} perms 聞く項目
+ * @return {Promise<Surveyed>} できることと、数えられたなら件数
+ */
+async function survey(b: PurgeBucket, perms: string[]): Promise<Surveyed> {
+  const can = await canDo(b, perms);
+  const base = {bucket: b.name, can};
+  /* 聞けなかった（null）ときは、数えるほうを1回試す。
+     **聞けないこと**と**できないこと**は別で、前者なら実測が要る。 */
+  if (can !== null && can["storage.objects.list"] !== true) {
+    return {...base, count: null, bytes: null, listed: "skipped", why: null};
+  }
+  try {
+    const t = await tally(b);
+    return {...base, ...t, listed: "ok", why: null};
+  } catch (e) {
+    logger.warn("public-purge: tally failed", b.name, String(e));
+    const why = kindOf(e);
+    return {...base, count: null, bytes: null, listed: "denied", why};
+  }
 }
 
 /**
@@ -391,7 +516,13 @@ export async function handlePublicPurge(
   /* ---- 下見。**1バイトも書かない。** ---- */
   if (q.method === "GET") {
     try {
-      const [can, files] = await Promise.all([canDo(pub), listing(pub)]);
+      /* 既定バケットは**測るだけ**なので、掴むのもここだけ。
+         `apply` の側には渡らない（あちらは `pub` 決め打ち）。 */
+      const [can, files, def] = await Promise.all([
+        canDo(pub, PERMISSIONS),
+        listing(pub),
+        survey(storage.bucket(PRIVATE_BUCKET), DEFAULT_PERMISSIONS),
+      ]);
       res.json({
         bucket: PUBLIC_BUCKET,
         archiveTo: `${PRIVATE_BUCKET}/${ARCHIVE_DIR}`,
@@ -402,6 +533,12 @@ export async function handlePublicPurge(
         /** この口が消せる名前。**表そのもの。** */
         allowed: [...PURGEABLE],
         keepPrefixes: KEEP_PREFIXES,
+        /**
+         * 旅の写真の入っている置き場（#296）。**測っただけ。**
+         * 件数と合計バイト数まで。名前も中身も入らないし、
+         * この口から消すことはできない。
+         */
+        defaultBucket: def,
       });
     } catch (e) {
       logger.warn("public-purge: list failed", String(e));
@@ -434,13 +571,22 @@ export async function handlePublicPurge(
       n,
     );
   }
-  const unknown = names.filter((n) => !isKept(n) && !PURGEABLE.has(n));
-  if (kept.length > 0 || unknown.length > 0) {
+  /* **置き場の名前を渡されても、片づけには入れない**（#296）。
+     表に無いので既に弾かれるが、ここで名指しして断る。 */
+  const buckets = names.filter((n) => BUCKET_NAMES.has(n));
+  for (const n of buckets) {
+    logger.warn("public-purge: 置き場の名前は受け取りません", n);
+  }
+  const unknown = names.filter(
+    (n) => !isKept(n) && !BUCKET_NAMES.has(n) && !PURGEABLE.has(n),
+  );
+  if (kept.length > 0 || buckets.length > 0 || unknown.length > 0) {
     /* **1つでも表に無ければ、1件も手を付けない。** 途中まで消して
        残りを断ると、何が消えたのかが渡した側から見えなくなる。 */
     res.status(400).json({
       error: "not allowed to purge",
-      refused: kept,
+      refused: [...kept, ...buckets],
+      buckets,
       unknown,
       allowed: [...PURGEABLE],
     });
@@ -471,6 +617,16 @@ export async function handlePublicPurge(
       plan,
       note: "1バイトも触っていません",
     });
+    return true;
+  }
+
+  /* **写す先と消す先が同じ置き場になっていたら、何もしない。**
+     `NORDIC_BUCKET` を取り違えて公開バケットを指した日には、
+     自分の上に写して自分を消すことになり、**その1件は戻らない。**
+     ふだんは起きないが、起きたら取り返しがつかないので手前で止める。 */
+  if (PUBLIC_BUCKET === PRIVATE_BUCKET) {
+    logger.error("public-purge: 写す先と消す先が同じ置き場です");
+    res.status(500).json({error: "archive target is the same bucket"});
     return true;
   }
 

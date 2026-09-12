@@ -1,7 +1,8 @@
 """公開バケットの片づけを、**Functions に頼んで**やる（#289）。
+**ついでに、旅の写真の入っている置き場で何ができるかを測る（#296）。**
 
 ARGS 例:
-  {}                                   … 下見。いま何ができるかと一覧（1バイトも書かない）
+  {}                                   … 下見。2つの置き場で何ができるか（1バイトも書かない）
   {"names": ["credits_notifications.json"]}            … 空回し（まだ消さない）
   {"names": ["credits_notifications.json"], "apply": true}  … 写してから消す
 
@@ -25,6 +26,35 @@ ARGS 例:
 
 だからこのスクリプトは、**まず測る**ところから始まる。下見（`{}`）は
 `testIamPermissions` の答えをそのまま出すだけで、1バイトも書かない。
+
+## もう1つの用事: 旅の写真が退避に1本も入っていない（#296）
+
+退避（#291）は Firestore も BigQuery も毎晩取れていて、エミュレータへ戻して
+突き合わせるところまでやっている。**写真の実体（Storage）だけゼロ。**
+いちばん取り返しのつかないものが、いちばん守られていない。
+
+止まっていた理由は #289 と同じで、**Actions のサービスアカウントに
+Storage の権限が1つも無い**（#296 で あやとに `roles/storage.objectViewer` を
+付けてもらう依頼を出したまま、旅に出てしまっている）。
+
+ところが #289 で、**Functions のサービスアカウントなら公開バケットに対して
+全部できる**ことが本番で分かった。写真が入っているのは**別のバケット**
+（`live-streaming-d3cac.firebasestorage.app`）で、**そちらは誰も測っていない。**
+近い実績は `characters_probe.py` の create / get / delete だけで、
+**退避に要る `list` は未測定。**
+
+だから下見は**2つの置き場**を測って出す。既定バケットのほうは
+`list` が立ったときに**件数と合計バイト数まで**しか見ない。
+**ファイル名は1つも出ない**（口がそもそも返さない）。
+
+`storage.objects.list` が「できる」と出たら、その道で退避が組める。
+「できない」と出たら、#296 の依頼（あやとの1分の操作）を待つしかない。
+
+## 消す道は、既定バケットには開いていない
+
+片づけ（`{"apply": true}`）が触るのは**公開バケット決め打ち**で、
+置き場は入力から選べない。既定バケットの名前を `names` に渡しても、
+口が**置き場の名前として弾く**。
 
 ## 叩き方
 
@@ -65,6 +95,55 @@ PERMISSIONS = [
     "storage.buckets.setIamPolicy",
 ]
 
+# 既定バケット（旅の写真）に聞く項目（#296）。最後の1つだけ公開バケットと違う。
+# あちらで見たいのは「公開を止められるか」、こちらは「退避の相手として掴めるか」
+DEFAULT_PERMISSIONS = [
+    "storage.objects.list",
+    "storage.objects.get",
+    "storage.objects.create",
+    "storage.objects.delete",
+    "storage.objects.update",
+    "storage.buckets.get",
+]
+
+# 数えられなかったときの言い分。**「聞いていない」と「断られた」を混ぜない**
+LISTED = {
+    "ok": "数えられました",
+    "skipped": "list が無いので、数えるのも試していません",
+    "denied": "list はあると出たのに、数えようとしたら断られました",
+}
+
+
+def photos(got: dict) -> None:
+    """旅の写真の置き場で、いま何ができるか（#296）。**読むだけ。**"""
+    d = got.get("defaultBucket")
+    if not d:
+        # 口が古い（デプロイ前）。**黙って通さない**
+        log.warning("旅の写真の置き場の結果が返っていません（口が古い可能性）")
+        return
+
+    log.info("")
+    log.info("旅の写真の置き場: %s", d.get("bucket"))
+    can = d.get("can")
+    if can is None:
+        # **聞けなかったことを、できないことと同じ絵にしない。**
+        log.warning("  何ができるかを聞けませんでした（権限そのものが無い可能性）")
+    else:
+        log.info("  Functions のサービスアカウントができること:")
+        for name in DEFAULT_PERMISSIONS:
+            log.info("    %-32s %s", name, "できる" if can.get(name) else "できない")
+
+    listed = d.get("listed")
+    log.info("  %s", LISTED.get(listed, listed))
+    if listed == "ok":
+        # **件数と合計バイト数だけ。** 名前は口が返さないし、出さない
+        log.info("  %d件（合計 %d バイト）", d.get("count") or 0, d.get("bytes") or 0)
+        log.info("  → この道で写真の退避が組めます（#296 の依頼は待たなくてよい）")
+    else:
+        if d.get("why"):
+            log.info("  止まった種類: %s", d.get("why"))
+        log.info("  → この道では数えられません。#296 の依頼（あやとの操作）待ちです")
+
 
 def look(token: str) -> dict:
     """下見。**1バイトも書かない。**"""
@@ -95,6 +174,7 @@ def look(token: str) -> dict:
             log.info("  %-32s %s", name, "できる" if can.get(name) else "できない")
     log.info("この口で消せる名前: %s", got.get("allowed"))
     log.info("写す先: %s", got.get("archiveTo"))
+    photos(got)
     return got
 
 
