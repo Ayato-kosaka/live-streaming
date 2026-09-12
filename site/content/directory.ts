@@ -106,7 +106,8 @@ export const SHELVES: Shelf[] = [
   {
     id: "map",
     title: "歩いた国",
-    note: `パリからトビリシまで、${COUNTRIES.length}カ国`,
+    // 終点の街を書かない（旅は毎日進む）。数は `COUNTRIES` から数える
+    note: `行った順に${COUNTRIES.length}カ国`,
     items: [...COUNTRIES]
       .sort((a, b) => a.order - b.order)
       .map((c) => ({

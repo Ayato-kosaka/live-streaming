@@ -31,6 +31,7 @@ import {
   WHY,
   nordicCountry,
 } from "@/content/nordic";
+import { GUIDE_CHAPTERS } from "./guide/chapters";
 import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
 import "./themes.css";
@@ -295,7 +296,9 @@ export default async function NordicPage() {
           <b>旅のしおり</b>
           <i>
             お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
-            {NORDIC_GUIDE.souvenir.length}品。10のコーナー
+            {/* **コーナーの数を手で書かない。** 「10のコーナー」と書いてあって、
+                しおりは11本あった。数える先はしおりの並びひとつ。 */}
+            {NORDIC_GUIDE.souvenir.length}品。{GUIDE_CHAPTERS.length}のコーナー
           </i>
         </span>
         <Icon name="right" size={16} className="tile-go" />

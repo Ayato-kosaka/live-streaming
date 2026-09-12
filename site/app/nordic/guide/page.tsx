@@ -3,11 +3,12 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { NORDIC_GUIDE as G } from "@/content/nordic";
+import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
 
 export const metadata: Metadata = {
   title: "旅のしおり — 北欧ヒッチハイク",
-  description:
-    "お金、通信、服装、サウナの入り方、食べもの20品、おみやげ20品、困ったとき。北欧とバルト三国を旅する前に読むもの。",
+  // 品数は手で書かない（おみやげは13品なのに「20品」と書いてあった）。しおりから数える
+  description: `お金、通信、服装、サウナの入り方、食べもの${G.food.length}品、おみやげ${G.souvenir.length}品、困ったとき。北欧とバルト三国を旅する前に読むもの。`,
 };
 
 /**
@@ -28,30 +29,6 @@ export const metadata: Metadata = {
  *   - 押せないもの（札）は平ら。厚みを付けるのは押せるものだけ
  * 板の型と紙の型を1つの面で混ぜない。だから `Panel` は使っていない。
  */
-
-/**
- * コーナーの並びと、それぞれの絵。
- *
- * 番号だけの目次は、11行が同じ形で積み上がる。どこに何が書いてあるかを
- * 探すのに、11回とも字を読まないといけない。**章ごとに違う絵を1つ置く。**
- * 絵は目次と章の見出しの両方に同じものを出して、目次で見た絵を
- * 本文でもう一度見つけられるようにする。
- *
- * **11章すべて別の絵にする。** 1つでも使い回すと、その2章が同じ話に見える。
- */
-const CHAPTERS: { id: string; title: string; note: string; icon: IconName }[] = [
-  { id: "basic", title: "まず知っておくこと", note: "ビザ、入国、物価", icon: "passport" },
-  { id: "money", title: "お金", note: "通貨4種類、カードと現金", icon: "currency" },
-  { id: "connect", title: "通信", note: "eSIM、フリーWi-Fi", icon: "sim" },
-  { id: "clothes", title: "服装", note: "季節ごとの重ね方と持ち物", icon: "jacket" },
-  { id: "move", title: "国から国への移動", note: "時間とお金", icon: "border" },
-  { id: "sauna", title: "サウナの入り方", note: "手順、やってはいけないこと", icon: "sauna" },
-  { id: "food", title: "食べもの", note: "何で、どこで食べるか", icon: "eat" },
-  { id: "souvenir", title: "おみやげ", note: "値段とどこで買うか", icon: "souvenir" },
-  { id: "light", title: "白夜と極夜とオーロラ", note: "明るい時期と暗い時期", icon: "aurora" },
-  { id: "phrases", title: "現地のことば", note: "挨拶と、通じる一言", icon: "phrase" },
-  { id: "trouble", title: "困ったとき", note: "緊急番号、盗難、病気", icon: "firstaid" },
-];
 
 /** 章の id から絵を引く。本文側で、目次と同じ絵を出すため。 */
 const CHAPTER_ICON = Object.fromEntries(CHAPTERS.map((c) => [c.id, c.icon])) as Record<string, IconName>;
