@@ -781,6 +781,14 @@
 
 .panel p { margin: 0 0 var(--sp-3); font-size: var(--fs-body); line-height: 1.95; font-weight: 600; }
 .panel p:last-child { margin-bottom: 0; }
+/* 文の中に埋まった長い文字列（スコープのURL・鍵・パス）。
+   **横に逃がさず、その場で折る。** 390px で
+   `https://www.googleapis.com/auth/youtube.readonly` が幅450pxのまま
+   画面外に出て、島で唯一の横あふれ（scrollWidth 509 / clientWidth 390）に
+   なっていた。`overflow-x: auto` の入れ物にすると読む人に横送りを1つ
+   増やすことになるので、島の他の面と同じ `overflow-wrap: anywhere` で折る。
+   プライバシーポリシーは読めることが最優先なので、隠す方向には倒さない。 */
+.panel code { overflow-wrap: anywhere; }
 .panel > h2 + p, .panel > h2 + .muted { margin-top: 0; }
 
 /* 配信カード。押せるので下に厚みを付ける */
