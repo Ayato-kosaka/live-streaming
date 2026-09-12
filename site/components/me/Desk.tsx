@@ -4,12 +4,13 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import Icon, { type IconName } from "@/components/ui/Icon";
+import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
 import { TripPlace } from "./TripTools";
 import { PlanCare, StickyCare } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
+import { TOOLS, type Tool } from "./tools";
 
 /* 投げ銭の紐付けとアラートボックスは、開いた札のぶんだけ降ろす。
    どちらも一覧を丸ごと引くので、机を開いただけで3本引かせない。 */
@@ -19,32 +20,9 @@ const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
    97人ぶんの絵を引く**ので、机を開いただけで降ろすと重い。 */
 const Characters = dynamic(() => import("./Characters"), { ssr: false });
 
-type Tool =
-  | "photo"
-  | "place"
-  | "video"
-  | "sticky"
-  | "plan"
-  | "donor"
-  | "chara"
-  | "obs";
-
-
-/** 机の上に出せる道具。**並び順は、旅のあいだに開く回数の多い順。**
-    その日に起きたことを書く欄はここにあったが、外した（2026-09-10）。
-    旅の最中は秘書に一言送って、そこから整えて焼く。 */
-const TOOLS: { id: Tool; label: string; icon: IconName }[] = [
-  { id: "photo", label: "写真", icon: "photo" },
-  { id: "place", label: "いまどこ", icon: "pin" },
-  { id: "video", label: "配信", icon: "live" },
-  { id: "sticky", label: "付箋", icon: "pinup" },
-  { id: "plan", label: "企画", icon: "checklist" },
-  { id: "donor", label: "投げ銭", icon: "coin" },
-  /* 投げ銭の下。**紐付けたあとに絵を足す**という順で使うことが多い
-     （知らない どねID が来た → つないだ → その人の絵をまだ持っていない）。 */
-  { id: "chara", label: "キャラ", icon: "friends" },
-  { id: "obs", label: "OBS", icon: "screen" },
-];
+/* 道具の並びは `./tools` が1か所で持つ。**ここで並べない。**
+   `/me` の入口の添え書きが同じ並びを手で持っていて、道具を1つ外した日に
+   札のほうだけ直った（「その日」が残り、「キャラ」が抜けていた）。 */
 
 /** 前に開いていた道具。次に開いたとき、そこから続けられるように控える。 */
 const LAST = "ayato-desk-tool";
@@ -65,7 +43,7 @@ const LAST = "ayato-desk-tool";
  *
  * ## 机の上には、いま使う道具が1つだけ出ている
  *
- * 7つを縦に積まない。札を押した1つだけを開く。積むと、下の6つは
+ * 8つを縦に積まない。札を押した1つだけを開く。積むと、下の7つは
  * 畳みの向こうへ行くか、指で送る距離になる。**どれも1タップで出る**のが
  * この形の要点で、それは前の「旅の道具」の4つの札（#163）と同じ決め。
  *

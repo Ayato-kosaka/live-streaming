@@ -60,6 +60,20 @@ export function ReadAgainPanel(p: { what: string; onRetry: () => void }) {
   );
 }
 
+/**
+ * 例外から、**画面に出してよい字だけ**を取り出す。
+ *
+ * 口が投げてくるのは `TypeError: Failed to fetch` か `500 {"error":…}` で、
+ * どちらも**読む人に何も足さない英語**。旅先でこれが出たところで、
+ * 打ち直すのか待つのかが分からない。日本語で言えるもの
+ * （`new Error("ログインしなおしてください")` のような、こちらが書いた字）
+ * だけ通して、あとは落とす。**言えないなら黙る。**
+ */
+export function sayable(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e);
+  return /[ぁ-んァ-ヶ一-龯]/.test(m) ? m.slice(0, 90) : "";
+}
+
 /** 取りに行っている最中の灰色。**読めなかったときには使わない。** */
 export function Waiting() {
   return (

@@ -17,6 +17,7 @@ import IslandMe from "@/components/live/IslandMe";
 import MeHero from "./MeHero";
 import MyStuff, { type Bag } from "./MyStuff";
 import ReadAgain, { WaitingPanel } from "./ReadAgain";
+import { TOOL_LINE } from "./tools";
 import { withIcons, type PlanDays, type ShownCard } from "@/components/cards/cards";
 import SignIn from "@/components/live/SignIn";
 
@@ -150,7 +151,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
           <Icon name="signpost" size={22} />
           <span className="mp-goto-t">
             <b>島の手入れ</b>
-            <i>写真・その日・いまどこ・配信・付箋・企画・投げ銭・OBS</i>
+            <i>{TOOL_LINE}</i>
           </span>
           <Icon name="right" size={14} />
         </Link>

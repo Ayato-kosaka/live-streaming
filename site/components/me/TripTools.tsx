@@ -5,7 +5,8 @@ import { getState, postCurrent } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { TRIP_PLACES, tripCity } from "@/content/tripPlaces";
-import ReadAgain from "./ReadAgain";
+import Fold from "@/components/ui/Fold";
+import ReadAgain, { sayable } from "./ReadAgain";
 
 /* ここは全部の印が引ける側（`ui/Icon`）を使う。**同じ束に `PhotoPost` が
    いて、あちらがもう読んでいる**ので、こちらだけ小さいほうに寄せても
@@ -54,7 +55,7 @@ const THEME_NAME: [string, string][] = [
 export function TripPlace() {
   const { token } = useAuth();
   const online = useOnline();
-  const [d, put, settle] = useDraft("ayato-trip-place", {
+  const [d, put, settle, seed] = useDraft("ayato-trip-place", {
     place: "",
     word: "",
     theme: "",
@@ -107,10 +108,17 @@ export function TripPlace() {
           miss.current = 0;
           if (filled.current) return;
           filled.current = true;
-          put({
-            place: d.place || s.current?.place || "",
-            word: d.word || s.current?.word || "",
-            theme: d.theme || s.current?.theme || "georgia",
+          /* **空いている欄にだけ置く。打ちかけには触らない**（`lib/draft.ts`）。
+             前はここが `put({ place: d.place || s.current?.place })` だった。
+             この `useCallback` の依存が空なので、`.then()` の中の `d` は
+             初回描画の空の値のまま固まる。つまり必ず島の値に倒れて、
+             **端末の控えまで島の値で上書き**していた。走っている車の中で
+             打った場所が、トンネルでタブを捨てられたあとに古い場所へ戻り、
+             気づかずに送ると島に古い場所が出る。 */
+          seed({
+            place: s.current?.place ?? "",
+            word: s.current?.word ?? "",
+            theme: s.current?.theme || "georgia",
           });
         })
         .catch(() => {
@@ -123,9 +131,9 @@ export function TripPlace() {
           );
         });
     },
-    // 打ちかけを消さないための読み取りしかしていない（入れるのは1回だけ）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    /* `seed` は作り直されない（`lib/draft.ts` の `useCallback(…, [])`）。
+       **打ちかけの値をここで掴まない。** 掴むと、掴んだ時点の値で固まる。 */
+    [seed],
   );
 
   useEffect(() => {
@@ -187,7 +195,11 @@ export function TripPlace() {
       if (r.current.theme) document.documentElement.dataset.theme = r.current.theme;
     } catch (e) {
       setState("error");
-      setErr(String(e).slice(0, 90));
+      /* **素の英語を尻尾に付けない。** 「送れませんでした。TypeError:
+         Failed to fetch」と出ていた。読む人に要るのは「送れなかった」と
+         「もう一度おくる」だけで、こちらが日本語で書いた理由があるときだけ
+         それも出す（`components/me/ReadAgain.tsx` の `sayable`）。 */
+      setErr(sayable(e));
     }
   };
 
@@ -257,84 +269,106 @@ export function TripPlace() {
         </select>
       </label>
       {/* 今週やること。**中身が古いまま日付だけ新しくなるのを止めるための欄。**
-          全部打ち直すためのものではないので、消すのを先に置く。 */}
-      <div className="trip-week">
-        <span className="trip-week-h">今週やること</span>
-        {/* **読めなかったことを、「1行も出ていません」に倒さない。**
-            押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
-        {read === "down" ? (
-          <ReadAgain what="今週やること" quiet />
-        ) : week === null ? (
-          <p className="trip-week-none">読んでいます…</p>
-        ) : week.length === 0 ? (
-          <p className="trip-week-none">いまは1行も出ていません。</p>
-        ) : (
-          <ul className="trip-week-rows">
-            {week.map((w, i) => (
-              <li key={`${w}-${i}`} className="trip-week-row">
-                <span>{w}</span>
-                <button
-                  type="button"
-                  className="trip-week-x"
-                  aria-label={`「${w}」を消す`}
-                  onClick={() => {
-                    setWeek(week.filter((_, j) => j !== i));
-                    setWeekDirty(true);
-                    setState("idle");
-                  }}
-                >
-                  消す
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="trip-week-add">
-          <input
-            type="text"
-            value={weekAdd}
-            maxLength={120}
-            placeholder="今週やることを1行"
-            onChange={(e) => setWeekAdd(e.target.value)}
-          />
-          <button
-            type="button"
-            className="trip-week-plus"
-            disabled={!weekAdd.trim() || week === null || week.length >= 8}
-            onClick={() => {
-              setWeek([...(week ?? []), weekAdd.trim()]);
-              setWeekAdd("");
-              setWeekDirty(true);
-              setState("idle");
-            }}
-          >
-            足す
-          </button>
-        </div>
-      </div>
-      <button
-        className="mp-send"
-        disabled={state === "sending" || !d.place.trim()}
-        onClick={send}
+          全部打ち直すためのものではないので、消すのを先に置く。
+
+          **畳んで、送りの手前に回した。** ここは週1の手入れなのに、
+          街の札（日に何度も押す）と送りのあいだに 400px 居座っていて、
+          「ここにいる、と出す」が 1,405px＝1.66画面目にあった。
+          畳んでも何行あるかは見出しの横に出るので、古くなれば気づく。 */}
+      <Fold
+        title="今週やること"
+        lead={
+          read === "down"
+            ? undefined
+            : week === null
+              ? "読んでいます…"
+              : `いま ${week.length} 行`
+        }
       >
-        {state === "sending" ? "送っています…" : "ここにいる、と出す"}
-      </button>
-      {state === "done" && (
-        <p className="nph-ok">
-          <Icon name="check" size={13} /> 島じゅうに出ました。{got}
-        </p>
-      )}
-      {state === "error" && (
-        <>
-          <p className="err">
-            <Icon name="alert" size={13} /> 送れませんでした。{err}
+        <div className="trip-week">
+          {/* **読めなかったことを、「1行も出ていません」に倒さない。**
+              押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
+          {read === "down" ? (
+            <ReadAgain what="今週やること" quiet />
+          ) : week === null ? (
+            <p className="trip-week-none">読んでいます…</p>
+          ) : week.length === 0 ? (
+            <p className="trip-week-none">いまは1行も出ていません。</p>
+          ) : (
+            <ul className="trip-week-rows">
+              {week.map((w, i) => (
+                <li key={`${w}-${i}`} className="trip-week-row">
+                  <span>{w}</span>
+                  <button
+                    type="button"
+                    className="trip-week-x"
+                    aria-label={`「${w}」を消す`}
+                    onClick={() => {
+                      setWeek(week.filter((_, j) => j !== i));
+                      setWeekDirty(true);
+                      setState("idle");
+                    }}
+                  >
+                    消す
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="trip-week-add">
+            <input
+              type="text"
+              value={weekAdd}
+              maxLength={120}
+              placeholder="今週やることを1行"
+              onChange={(e) => setWeekAdd(e.target.value)}
+            />
+            <button
+              type="button"
+              className="trip-week-plus"
+              disabled={!weekAdd.trim() || week === null || week.length >= 8}
+              onClick={() => {
+                setWeek([...(week ?? []), weekAdd.trim()]);
+                setWeekAdd("");
+                setWeekDirty(true);
+                setState("idle");
+              }}
+            >
+              足す
+            </button>
+          </div>
+        </div>
+      </Fold>
+      {/* 送りの帯。**画面の下に貼り付けてある**（`.trip-send`）。
+          街の札を押したあと、ひとこと・島の景色・今週やることを越えないと
+          ここへ届かなかった。街を押すのは日に何度もある動きなので、
+          押した指がそのまま届くところに置く。**送った結果もここに出す。**
+          出たかどうかを見るために、画面を送り直さなくていい。 */}
+      <div className="trip-send">
+        <button
+          className="mp-send"
+          disabled={state === "sending" || !d.place.trim()}
+          onClick={send}
+        >
+          {state === "sending" ? "送っています…" : "ここにいる、と出す"}
+        </button>
+        {state === "done" && (
+          <p className="nph-ok">
+            <Icon name="check" size={13} /> 島じゅうに出ました。{got}
           </p>
-          <button className="mp-send is-retry" onClick={send}>
-            <Icon name="refresh" size={16} />
-            もう一度おくる
-          </button>
-        </>
-      )}
+        )}
+        {state === "error" && (
+          <>
+            <p className="err">
+              <Icon name="alert" size={13} /> 送れませんでした。{err}
+            </p>
+            <button className="mp-send is-retry" onClick={send}>
+              <Icon name="refresh" size={16} />
+              もう一度おくる
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
