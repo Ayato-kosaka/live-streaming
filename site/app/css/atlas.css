@@ -656,8 +656,20 @@
   padding: 2px 8px;
 }
 /* 「いまここ」。桃の上の白い字は 2.60 : 1 で読めなかった。
-   同じ色相の濃いほう（--accent-deep）に置くと 5.0 : 1 になる。 */
+   同じ色相の濃いほう（--accent-deep）に置くと 5.0 : 1 になる。
+
+   **丸みは自分で持つ。** 前は街の列（`.atrip-tags span`）の中にいて、
+   そこから型をもらっていた。**国に付く印なのに街の隣に並んでいて、
+   列の最後の街にいると読めた**ので、日付の行へ移した。
+   移した先には型が無いので、ここで持つ。 */
 .atrip-here {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-min);
+  font-weight: 900;
   background: var(--accent-deep) !important;
   color: #fff !important;
 }

@@ -30,8 +30,16 @@
 | --- | --- | --- | --- |
 | `GET` | `/state` | 誰でも | 島を開いたときの一式（下） |
 | `GET` | `/fund` | 誰でも | 北欧旅の足代。**合計と人数だけ**。個人の額も順位も返さない |
+| `GET` | `/fund/history` | あやとだけ | スパチャの控え1ページぶん（`islandFundSuperChats`）。`?limit=`（既定30・最大60）・`?before=`。**キャッシュしない** |
 | `POST` | `/current` | あやとだけ | いまいる場所・ひとこと・今週やること・テーマ。**`week` は送られてきたときだけ書く** |
 | `POST` | `/nordic/arrived`<br>`/nordic/ended` | あやとだけ | 着いた日／旅が終わった日。空で送ると取り消し |
+
+**`/fund` と `/fund/history` は、開き方がまったく違う。**
+前者は合計だけなので誰でも読めて CDN にも焼く。後者は**投げ銭して
+くれた人の名前と額が1件ずつ**並ぶので、あやと以外には 403 を返し、
+`Cache-Control: no-store` を付けて誰の手元にも残さない。
+控え（`islandFundSuperChats`）は `firestore.rules` でも閉じてある。
+確かめかたは `node tools/fund/ownercheck.cjs`（本番も Firestore も触らない）。
 
 `GET /state` が返すもの（`site/lib/api.ts` の `IslandState`）:
 

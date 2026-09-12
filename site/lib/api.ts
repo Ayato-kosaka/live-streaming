@@ -1248,6 +1248,62 @@ export const dropDonor = (pk: string, token: string) =>
   });
 
 
+/* ---------------- スパチャの控え(#292) ----------------
+   **あやとだけが読める。** 名前と額が並ぶので、合計しか返さない
+   `GET /fund` とは別の口（`GET /fund/history`）になっている。
+   アラートボックスをスプレッドシートから外した日から、1件ずつを
+   見る道がどこにも無くなっていた（あやとの言葉 2026-09-11）。 */
+
+/** 控え1件。 */
+export type FundChat = {
+  /** 26文字の item id（手で入れたものは `manual-…`） */
+  id: string;
+  /** JST の日（`2026-09-10`）。**日付の分からない手入力は空文字** */
+  day: string;
+  /** いつのスパチャか。分からなければ null */
+  at: string | null;
+  /** 円。**半分にする前の、その人が出した額** */
+  yen: number;
+  /** 出した人の名前。分からなければ空文字 */
+  who: string;
+  /**
+   * どこから入ったか。**画面には出さない。**
+   * 手で入れたぶんは打った日しか分かっていない（`at` に `00:00` が入る）ので、
+   * 時計を出すかどうかを決めるためだけに使う。
+   */
+  src: "alertbox" | "bigquery" | "manual" | "";
+};
+
+/** 1ページぶん。 */
+export type FundHistory = {
+  chats: FundChat[];
+  more: boolean;
+  next: string | null;
+  /**
+   * ぜんぶで何件・いくら。**読めなかったら null。**
+   * 0 と混ぜると、数えられなかった日に「1件も無い」と言うことになる
+   * （`docs/island-standards.md` 10）。
+   */
+  count: number | null;
+  yen: number | null;
+};
+
+/** 新しい順に1ページぶん。`before` に前のページの `next` を渡すと続き。 */
+export const getFundHistory = (
+  token: string,
+  before?: string | null,
+  limit?: number,
+) => {
+  const q = new URLSearchParams();
+  if (before) q.set("before", before);
+  if (limit) q.set("limit", String(limit));
+  const s = q.toString();
+  return req<FundHistory>(`/fund/history${s ? `?${s}` : ""}`, {
+    headers: auth(token),
+  });
+};
+
+
 /* ---------------- キャラクター(#284) ----------------
    スパチャと Doneru のアラートに出る絵。原本はスプレッドシートと
    Google ドライブに割れていたのを `islandCharacter` に寄せた。

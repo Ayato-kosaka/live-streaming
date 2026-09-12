@@ -24,6 +24,7 @@ export type Tool =
   | "plan"
   | "donor"
   | "chara"
+  | "fund"
   | "obs";
 
 /** **並び順は、旅のあいだに開く回数の多い順。** */
@@ -37,6 +38,9 @@ export const TOOLS: { id: Tool; label: string; icon: IconName }[] = [
   /* 投げ銭の下。**紐付けたあとに絵を足す**という順で使うことが多い
      （知らない どねID が来た → つないだ → その人の絵をまだ持っていない）。 */
   { id: "chara", label: "キャラ", icon: "friends" },
+  /* スパチャの控え（#292）。**投げ銭のふたつの下。** あちらは手を動かす
+     道具で、こちらは読むだけ。用事は近いので離さない。 */
+  { id: "fund", label: "スパチャ", icon: "tip" },
   { id: "obs", label: "OBS", icon: "screen" },
 ];
 

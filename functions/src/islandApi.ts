@@ -97,6 +97,19 @@ const HEARTS = db.collection("islandHearts");
    1日1ドキュメントに数を足すだけ。誰が来たかは持たない。 */
 const VISITS = db.collection("islandVisits");
 
+/* 豚の貯金箱に入ったスパチャの控え(`docs/nordic-fund.md` 9章)。
+   入り口が3つ(OBS のアラートボックス・BigQuery・手入力)あるので、
+   26文字の item id を書類IDにして、同じものを2回入れても増えない形。
+
+   **ここを読めるのはあやただけ**(`GET /fund/history`)。名前と額が並ぶので、
+   合計しか返さない `GET /fund` とは扱いを分ける。 */
+const FUND_CHATS = db.collection("islandFundSuperChats");
+/* 1回に返す件数。1件が1行なので、390px の1画面におよそ10行。
+   3画面ぶんを1回で渡して、続きは押して出す。 */
+const FUND_PAGE = 30;
+/* 上限。**1回で415件を返さない。** 旅先の電波で受けきれない。 */
+const FUND_PAGE_MAX = 60;
+
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
    **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
    画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
@@ -2377,6 +2390,89 @@ export const islandApi = onRequest(
           goal: goal ? goal.goal : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
+        });
+        return;
+      }
+
+      /* ---------------- スパチャの控え(#292) ----------------
+         **あやとだけが読める。** 中身は投げ銭してくれた人の名前と額で、
+         あやとの持ちものではない。公開のバケットに113件置きっぱなしに
+         していた件(#289)と、まったく同じ性質のもの。
+
+         上の `GET /fund` は合計しか返さない。1件ずつを見る道が
+         スプレッドシートしか無く、それを外した日に**どこからも見られなく
+         なった**(あやとの言葉 2026-09-11「アラートボックスをスプシから
+         外した／スパチャ履歴はどこで見れる？」)。
+
+         **キャッシュさせない。** 誰の手元にも焼き付けない。
+
+         **ログに名前と額を出さない。** このリポジトリは公開で、
+         Actions のログも誰でも読める(`CLAUDE.md`)。ここで `logger` を
+         呼ぶのは合計が引けなかったときだけで、書くのは理由の文字だけ。
+
+         並びは `day` の降順。**`createdAt` を持っていない**ので `pageOf` は
+         使えない(あちらは付箋の形)。`day` はどの入り口からも必ず書かれる
+         (`python/fund_box.py`)ので、抜けて消える書類は無い。日付の
+         分からない手入力13件は空文字なので、降順のいちばん後ろに並ぶ。 */
+      if (method === "GET" && path === "/fund/history") {
+        if (!(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const want = Number(req.query.limit ?? FUND_PAGE);
+        const n = Number.isFinite(want) ?
+          Math.min(Math.max(Math.trunc(want), 1), FUND_PAGE_MAX) :
+          FUND_PAGE;
+        /* 続きの位置。`day` は同じ日に何件も並ぶので、書類 id を第2の
+           並び順に足す(単一フィールドの索引で足りる。うちは複合索引を
+           作れない。GitHub #168)。 */
+        let q = FUND_CHATS
+          .orderBy("day", "desc")
+          .orderBy(admin.firestore.FieldPath.documentId(), "desc");
+        const before = String(req.query.before ?? "");
+        const cur = /^([0-9-]{0,10})_(.+)$/.exec(before);
+        if (cur) q = q.startAfter(cur[1], cur[2]);
+        const snap = await q.limit(n + 1).get();
+        const docs = snap.docs.slice(0, n);
+        const more = snap.size > n;
+        const last = docs[docs.length - 1];
+        /* **合計は、いま数える。** 焼いてある `island/state.fund.box` を
+           使うと、毎晩の掃除が走る前に入ったぶんだけ一覧と食い違って、
+           「415件」と書いてある下に416行並ぶ。数え上げは1回の読みで済む。
+
+           引けなかったら `null`。**0 を返さない**(`island-standards.md` 10)。 */
+        let count: number | null = null;
+        let yen: number | null = null;
+        try {
+          const agg = await FUND_CHATS.aggregate({
+            count: admin.firestore.AggregateField.count(),
+            yen: admin.firestore.AggregateField.sum("yen"),
+          }).get();
+          count = agg.data().count;
+          yen = agg.data().yen;
+        } catch (e) {
+          // 額も名前も出さない。引けなかったことだけを残す
+          logger.warn("fund history total failed", String(e));
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({
+          chats: docs.map((d) => {
+            const v = d.data();
+            return {
+              id: d.id,
+              day: typeof v.day === "string" ? v.day : "",
+              at: typeof v.at === "string" ? v.at : null,
+              yen: Number(v.yen) || 0,
+              who: typeof v.who === "string" ? v.who : "",
+              /* 画面には出さない。手で入れたぶんは打った日しか分かって
+                 いない(`at` が `00:00`)ので、時計を出すかどうかだけに使う。 */
+              src: typeof v.src === "string" ? v.src : "",
+            };
+          }),
+          more,
+          next: more && last ? `${last.get("day") ?? ""}_${last.id}` : null,
+          count,
+          yen,
         });
         return;
       }

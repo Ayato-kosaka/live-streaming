@@ -9,6 +9,8 @@ import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
 import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
+import RoadStops from "@/components/nordic/RoadStops";
+import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
@@ -375,6 +377,13 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const maybe = [...new Set([...legs.flatMap((l) => l.maybe ?? []), ...(day.maybe ?? [])])];
   const cities = [...sure, ...maybe];
 
+  /* ふだんのごはんを出す国。**その日の終わりにいる国**で決める。
+     国が変わる日は、朝いた国ではなく着いた先の国を出す。晩ごはんを買うのは
+     着いたほうの国だし、その日のうちに口を開く相手も向こう側の人になる。
+     旅程に無い国（出発日のジョージア）は `foodsOf` が空を返すので、
+     区画そのものが出ない。**ここに国名を書かない**（旅程が変わると古くなる）。 */
+  const foodSlug = cityCountry(sure[sure.length - 1] ?? "")?.slug ?? "";
+
   // 見どころは国ごとの JSON にある。その日に関わる国のぶんだけ読む。
   const slugs = [...new Set(cities.map((c) => cityCountry(c)?.slug).filter(Boolean))] as string[];
   const spots = (await Promise.all(slugs.map((s) => loadSpots(s)))).flat();
@@ -578,6 +587,25 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
       ))}
 
+      {/* 道すじの上にある寄り道。**区間ごとに1枚。**
+          すぐ下の「順調だったら、寄る」はその日ぜんぶに掛かる話で、
+          こちらは「その道の、その地点」の話。幹線から何km外れるかを持っている。
+          `stops` があるのはヒッチハイクの区間だけなので、飛行機と船の日は出ない。 */}
+      {legs
+        .filter((l) => (l.stops?.length ?? 0) > 0)
+        .map((l) => (
+          <section key={l.id} className="panel paper" id={`stops-${l.id}`}>
+            {/* **見出しに街の名前を2つ入れない。** 390px だと
+                「ビャウィストクからヴィ／リニュスへ」で名前の途中で割れる。
+                どこからどこへは、すぐ下の一行が言う（そこは割れてよい）。 */}
+            <h2>道すじの上の、寄り道</h2>
+            <p className="nday-sub">
+              {cityName(l.from)} から {cityName(l.to)} まで
+            </p>
+            <RoadStops stops={l.stops!} />
+          </section>
+        ))}
+
       {/* 順調だったら、寄る。**寄ると決まっていない。**
           ヒッチハイクは着く時刻が読めないので、予定として書くと嘘になる。
           「順調だったら」を見出しに入れて、決まりごとに見えないようにする。 */}
@@ -627,6 +655,18 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           )}
         </section>
       ))}
+
+      {/* その日の終わりにいる国の、ふだんのごはん。
+          あやとの言葉（2026-09-12）:
+
+          > ○○日目に、食べるべきもの
+          > 今回は「観光名物」ではなく、現地人が子どもの頃から食べている／
+          > スーパーや家庭に普通にある／…ものを優先します
+
+          **見どころのあとに置く。** 上の「見たいもの」は着いた街の話で、
+          こちらは国の話。街より粒が大きいので、街のあとに来ると順に読める。
+          国の名前はここで書かない（`DailyFood` が slug から引く）。 */}
+      <DailyFood country={foodSlug} />
 
       {/* 寄るかどうかがまだ決まっていない街。**畳んでおく。**
           着く街と同じ高さで開いていると、寄ると決まって見える。
