@@ -208,3 +208,123 @@
   .hero-say b { font-size: 16px; }
   .hero-say i { font-size: 13px; }
 }
+
+/* ---- 旅のしるべ --------------------------------------------------------
+   看板のすぐ下に出る、いま何日目でどこにいるかの板（`components/home/TripToday.tsx`）。
+
+   **旅のあいだだけ出る。** 出るかどうかも中身も日付だけで決まるので、旅が
+   終われば要素ごと消える。ここに「旅が始まりました」を焼くと10月に嘘になる。
+
+   器は「今日の島」の板と同じ作り（`today.css`）。島の上に乗るものは全部この型で、
+   厚みのある板・ぼかさない下向きの影・大きな角丸・太い文字。
+   **こちらは押して入る先があるので、厚みを付ける**（`docs/island-design.md` 3-3）。
+   看板の一言（`.hero-say`）は押せないので平らなまま——同じ場所に並ぶ2枚で、
+   厚みのある無しが「押せる／押せない」をそのまま言っている。
+
+   置き場所を `.hero-copy` の中にしてあるのは、島が札を置くときに避ける箱が
+   そこだから（`IslandStage` の `readLogo` は `.hero-copy` を測る）。
+   外に出すと、建物の札がこの板の上に乗る。 */
+.htrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  /* PC で横に伸びきると、島の上に長い帯が渡る。読む幅で止める */
+  max-width: 380px;
+  margin: 8px auto 0;
+  padding: 8px 10px 9px 12px;
+  text-align: left;
+  text-decoration: none;
+  border: 3px solid var(--frame-dark);
+  border-radius: 16px;
+  background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
+  box-shadow:
+    0 4px 0 var(--frame-deep),
+    3px 8px 10px var(--cast),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  /* 島の上だが、ここは押しどころ。指を島に通さない */
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.htrip:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.htrip:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+
+.htrip-body { min-width: 0; flex: 1; display: block; }
+/* 板の名前。「今日の島」と同じ立ち位置なので、同じだけ静かにする。
+   薄めない（`--ink-2` で 6.07 : 1）。 */
+.htrip-body em {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+/* いま何日目か。この板の主役 */
+.htrip-body b {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* きょう動くところ */
+.htrip-body i {
+  display: block;
+  margin-top: 1px;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.htrip-go { flex: none; opacity: 0.66; }
+
+/* 看板の居場所に合わせて寄せる。スマホは右上、PC は左上（`.hero-ui` の
+   `justify-content`）。看板と板の左右がずれると、2枚が別々の物に見える。 */
+@media (max-width: 639px) {
+  .htrip { margin-right: 0; margin-left: auto; }
+}
+@media (min-width: 1024px) {
+  .htrip { margin-left: 0; margin-right: auto; }
+}
+.stage[data-view="close"] ~ .hero-ui .htrip,
+.isle[data-view="close"] ~ .hero-ui .htrip { margin-right: 0; margin-left: auto; }
+/* 320px 級。字は 11.5px を割らず、字間で収める（`.hero-say` と同じ決まり） */
+@media (max-width: 389px) {
+  .htrip { padding: 8px 8px 9px 10px; }
+  .htrip-body i { letter-spacing: -0.045em; }
+}
+
+/* 歩きかたの案内（`.isle-hint`）は、看板の下の左はしに5秒だけ出る。
+   旅のしるべが立つ日はそこが埋まるので、案内をその下から始める。
+   **重ねると、5秒のあいだ両方とも読めない**（実測で案内が板の下に隠れた）。
+   旅が終われば板ごと消えるので、この逃がしも一緒に消える。 */
+.hero:has(.htrip) .isle-hint {
+  top: calc(304px + env(safe-area-inset-top));
+}
+@media (max-width: 639px) {
+  .hero:has(.htrip) .isle-hint {
+    top: calc(238px + env(safe-area-inset-top));
+  }
+}
+/* 「島をながめる」で引きに移ると、看板が印から看板まるごとに替わって 40px 伸びる。
+   板もそのぶん下がるので、案内もさらに下から始める（実測で 28px 重なった）。 */
+@media (max-width: 639px) {
+  .hero:has(.htrip) .isle[data-view="wide"] .isle-hint,
+  .hero:has(.htrip) .stage[data-view="wide"] .isle-hint {
+    top: calc(286px + env(safe-area-inset-top));
+  }
+}

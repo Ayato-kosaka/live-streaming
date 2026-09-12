@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
@@ -85,6 +86,7 @@ export default function TripNow({
   legOrder,
   dayOf,
   dayByDate,
+  dayPage,
   depart,
   departWhen,
   hitchKm,
@@ -116,6 +118,19 @@ export default function TripNow({
    * 日付しか分かっていない日は、日付で引く。
    */
   dayByDate: Record<string, string>;
+  /**
+   * 旅程表の行 → その日1日ぶんのページ（`/nordic/day/1`）。
+   *
+   * **「今日のところへ」は、今日の面へ直に行く。**
+   * ここが無かったあいだ、あの札は同じページの中の錨（`#day-1`）を指していて、
+   * 押しても旅程表の行まで送られるだけだった。そこからもう一度その行を押して、
+   * やっと今日の面にたどり着く——**トップから数えて3タップ。**
+   * 旅の途中に来た人がまず見たいのは今日の面そのもの。
+   *
+   * 面の無い日は錨のまま。いまは17日ぜんぶに面があるが、旅程は一度まるごと
+   * 変わったことがあるので、面の有無は旅程（`DAY_PAGES`）に決めさせる。
+   */
+  dayPage: Record<string, string>;
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -245,6 +260,14 @@ export default function TripNow({
       ? (dayOf[mainLegs[at]] ?? null)
       : null
     : (today && dayByDate[today]) || null;
+
+  /**
+   * 「今日のところへ」の行き先。**面がある日は面へ、無い日は旅程表の行へ。**
+   *
+   * 旅に出ていない日（`nowRow` が無い日）は、今までどおり旅程表の頭。
+   * 出発前も、旅が終わったあとも、札は「旅のよていを見る」に変わる。
+   */
+  const todayHref = nowRow ? (dayPage[nowRow] ?? `#${nowRow}`) : "#plan";
 
   // 分かった現在地を、同じ画面の地図にも反映する。
   useEffect(() => {
@@ -517,12 +540,25 @@ export default function TripNow({
           まったく同じ「クタイシからストックホルムまでの10区間」を3回目に描いていた。
           どこまで来たかは地図の線がいちばんよく言える。 */}
       <div className="tnow-acts">
-        {/* 出る前は旅程表の頭へ。出たあとは**今日の行へ**。
+        {/* 出る前と、旅が終わったあとは旅程表の頭へ。旅の最中は**今日の面へ直に**。
             旅の途中に来た人がまず見たいのは「今日どこにいるか」で、
-            それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。 */}
-        <a className="tnow-act is-main" href={nowRow ? `#${nowRow}` : "#plan"}>
-          {nowRow ? "今日のところへ" : "旅のよていを見る"}
-        </a>
+            それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。
+
+            **錨（`#day-1`）ではなく、面（`/nordic/day/1`）へ送る。**
+            錨は同じページの行まで送るだけで、そこからもう一度その行を押さないと
+            今日の面に入れない。トップから数えて3タップかかっていた。
+            日ごとの面が無い日だけ、今までどおり行まで送る。 */}
+        {todayHref.startsWith("#") ? (
+          <a className="tnow-act is-main" href={todayHref}>
+            {nowRow ? "今日のところへ" : "旅のよていを見る"}
+          </a>
+        ) : (
+          /* 先読みしない。日ごとの面は地図と写真を抱えているので、
+             押す人だけが払えばいい（`components/today/Today.tsx` と同じ決まり）。 */
+          <Link className="tnow-act is-main" href={todayHref} prefetch={false}>
+            今日のところへ
+          </Link>
+        )}
         <a className="tnow-act" href="#map">
           通る道を見る
         </a>

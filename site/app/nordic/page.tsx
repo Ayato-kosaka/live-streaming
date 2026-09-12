@@ -15,6 +15,7 @@ import {
   ARRIVE,
   DAYS,
   DAY_OF,
+  DAY_PAGES,
   DEPART,
   FARES,
   FARES_TOTAL,
@@ -29,6 +30,7 @@ import {
   THEME_WORD,
   UNPLANNED,
   WHY,
+  dayHref,
   nordicCountry,
 } from "@/content/nordic";
 import { GUIDE_CHAPTERS } from "./guide/chapters";
@@ -142,6 +144,13 @@ export default async function NordicPage() {
   const dayByDate: Record<string, string> = {};
   for (const d of DAYS) if (d.date && !(d.date in dayByDate)) dayByDate[d.date] = d.id;
 
+  /* 旅程表の行 → その日1日ぶんのページ。上の司令塔の「今日のところへ」が使う。
+     **面のある日だけ入れる。** 入っていない行は、今までどおり同じページの錨へ送る
+     （`DAY_PAGES` は区間のある日と休息日。旅程が変われば中身も変わる）。 */
+  const dayPage: Record<string, string> = Object.fromEntries(
+    DAY_PAGES.map((d) => [d.id, dayHref(d)]),
+  );
+
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
       <TripNow
@@ -150,6 +159,7 @@ export default async function NordicPage() {
         legOrder={ROUTE.map((l) => l.id)}
         dayOf={dayOf}
         dayByDate={dayByDate}
+        dayPage={dayPage}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30。この日は配信2周年"
         hitchKm={HITCH_KM}
