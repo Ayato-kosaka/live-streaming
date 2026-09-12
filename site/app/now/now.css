@@ -163,3 +163,12 @@
      （`docs/island-design.md` 3章。旗と同じ扱い） */
   filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
 }
+
+/* ───────── 届いていない便りに、日付のスタンプを押さない ─────────
+   島だよりの日付は `current.updatedAt`。**焼き込みはもう日付を持っていない**
+   （`content/site.ts` の `NOW_FALLBACK`。焼いた日付を出すと、届いていない便りの
+   古さだけが出る）ので、口が返らない日はここが空になる。
+   空のまま枠だけ残ると、右上に押し忘れた判子が1つ浮く。 */
+.np-stamp:empty {
+  display: none;
+}

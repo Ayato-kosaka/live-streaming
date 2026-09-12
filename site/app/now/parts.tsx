@@ -60,7 +60,10 @@ function useCurrent(): {
         if (typeof s.current?.updatedAt === "string") setUpdatedAt(s.current.updatedAt);
       })
       .catch(() => {
-        /* 読めないときは焼き込みの場所のまま。国は月ごとにしか変わらないので害が小さい */
+        /* 読めないときは焼き込みの字のまま。**あれは地名ではない**
+           （`content/site.ts` の `NOW_FALLBACK`）ので、国は引けず、
+           旗も「いまいる国のこと」も出ない。**読めていない日に、
+           前の国の旗と見どころを「いま」として並べない。** */
       });
   }, []);
   const here = placeCountry(place);
