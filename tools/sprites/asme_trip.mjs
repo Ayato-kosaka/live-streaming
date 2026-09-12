@@ -55,6 +55,15 @@ export async function apply(ctx, opts = {}) {
     });
   }
 
+  /* 送りの口だけを落とす。**読めてはいるが、送れない日。**
+     `DOWN=1` は面ごと「読めなかった」に倒れるので、
+     「送れませんでした。」の1行を見るにはこちらが要る。 */
+  if (opts.postdown ?? process.env.POSTDOWN === "1") {
+    await ctx.route(/\/island-api\/current(\?|$)/, (r) =>
+      r.request().method() === "POST" ? r.abort("connectionfailed") : r.fallback(),
+    );
+  }
+
   if (down) {
     await ctx.route(/\/island-api\//, (r) => {
       const path = new URL(r.request().url()).pathname;

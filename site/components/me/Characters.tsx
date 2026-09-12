@@ -313,11 +313,16 @@ export default function Characters() {
           />
         </label>
 
+        {/* **絵文字を出してよいのは、ここだけ。** 図鑑の95枚に飾りで重ねて
+            いたぶんは外した（`docs/island-design.md` 1章）。ここは絵文字
+            そのものを編集する欄なので、出さないと何を打つ欄か分からない。
+            見本は字で言う。**見本まで絵文字にすると、1文字も打っていない
+            欄にまで絵文字が並ぶ。** */}
         <label className="nph-post-row">
           <span>絵文字</span>
           <input
             value={draft.emoji}
-            placeholder="🐧"
+            placeholder="ここに1文字"
             maxLength={8}
             onChange={(e) => setDraft({ ...draft, emoji: e.target.value })}
           />
@@ -464,7 +469,6 @@ export default function Characters() {
               ) : (
                 <span className="ch-cell-none">絵なし</span>
               )}
-              {c.emoji && <span className="ch-cell-emoji">{c.emoji}</span>}
               <span className="ch-cell-name">{c.channelName || "名前なし"}</span>
             </button>
           );

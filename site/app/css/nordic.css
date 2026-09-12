@@ -2539,3 +2539,38 @@ p.nday-lead {
 .trip-week-plus:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
 .trip-week-add { display: flex; gap: var(--sp-2); align-items: stretch; }
 .trip-week-add input { flex: 1; min-width: 0; min-height: 48px; }
+
+/* --- 送りの帯（`.trip-send`） ----------------------------------------
+   **「ここにいる、と出す」を、画面の下に貼り付ける。**
+
+   390×844 で測ると、街の札を押したあと送りに届くまで 1,405px あった
+   （1.66画面目）。あいだにあるのは ひとこと・島の景色・今週やること で、
+   今週やることは週1の手入れなのに約 400px 居座っていた。
+   **街を押すのは日に何度もある動き。** 押した指がそのまま届かないと、
+   走っている車の中では送らずに閉じる。
+
+   `sticky` は台（`.dform`）の中だけで効く。台の下まで送れば帯も流れて
+   いくので、ページの足元（ルーレット・遠隔操作・footer）は隠れない。
+   帯は台のいちばん最後に置いてあるので、**この下に隠れる欄は無い。** */
+.trip-send {
+  position: sticky;
+  bottom: var(--sp-2);
+  z-index: 2;
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-2);
+  /* 下の欄が透けると「浮いている板」に見えない。地は塗りきる */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--paper) 88%, var(--frame)) 0%,
+    var(--paper) 100%
+  );
+  box-shadow:
+    0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
+    0 8px 18px color-mix(in srgb, var(--frame-deep) 26%, transparent);
+}
+/* 帯の中では、送りが幅いっぱい。押しどころを探させない */
+.trip-send .mp-send { width: 100%; }
+.trip-send .nph-ok,
+.trip-send .err { margin: 0; }
