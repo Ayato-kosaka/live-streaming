@@ -96,3 +96,17 @@ jobs:
             echo "::error::Doneru のセッションが切れました。DONERU_COOKIE を入れ直してください（手順は docs/island-db.md）"
           fi
           exit $code
+
+      # 島に「Doneru のぶんが、いつまで入っているか」を1枚写す（#294）。
+      #
+      # **取り込みが落ちた回こそ要る**ので `always()`。上の step が exit 2 で
+      # 落ちた回でも走って、「最後に入ったのはいつか」を写し直す
+      # （写すのは BigQuery の記録なので、落ちた回は日付が古いまま残る）。
+      #
+      # **continue-on-error を付ける。** ここは本題ではない。写せなかったことで
+      # 取り込みの成否が変わってはいけないし、写せなかった晩は前の札がそのまま
+      # 残るので、島は古いほうへ倒れる（嘘にはならない）。
+      - name: Doneru のぶんが、いつまで入っているかを写す
+        if: ${{ always() }}
+        continue-on-error: true
+        run: python python/doneru_health.py

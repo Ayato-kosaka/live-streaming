@@ -682,6 +682,24 @@ p.nback-now {
   color: var(--ink-2);
 }
 p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* Doneru のぶんが、まだ入りきっていない日だけ出る一行（#294）。
+
+   **警告の見た目にしない。** 額が減ったのではなく、増えるのが止まっているだけ。
+   赤も、感嘆符も、囲みも使わない。罫1本で仕切るのは旅の日ページの `.nday-log`
+   と同じ形で、この面でもう使っている形に合わせる（裸の1行で置かない。
+   `docs/island-misses.md` #18）。罫の色は金にして、上の額と地続きに見せる。
+
+   **押せないので厚みは付けない**（`docs/island-design.md` 3-3）。 */
+p.nback-asof {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left: 3px solid color-mix(in srgb, var(--gold) 72%, var(--rule));
+  font-size: 12.5px;
+  line-height: 1.8;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* 何にお金が要るのか。金額の分からないものも、消さずに「調べています」と出す。 */
 .nback-what { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
 .nback-what li {
