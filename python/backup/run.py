@@ -11,15 +11,17 @@
 - **落ちたら終了コードが 0 でない。** `continue-on-error` を使わない
 - どこで落ちても `island_backup.runs` に `ok=false` と理由が1行残る。
   Actions を開けない旅の途中でも、`backup_status` で読める
-- **写真だけは、権限が無くても落とさずに進む。** 権限が無いのは分かっていて、
-  それはあやたの操作待ち（issue）。毎晩赤くしても直らないものを赤くすると、
-  赤が意味を失う。代わりに `::warning::` を出して、runs にも残す
+- **写真だけは、1枚落ちても止まらない。** 544枚のうち何枚かが 403 や 404 で
+  返ることはありえる（合言葉が作り直された・書類に `url` が無い）。
+  **落ちた枚数を数えて、残りは取り切る。** 毎晩赤くしても直らないものを
+  赤くすると、赤が意味を失う。代わりに `::warning::` を出して、runs にも残す
+- **写真は1回の実行に上限がある**（既定 128MB / 400枚）。上限に当たったら
+  そこで切り上げて、`::notice::` に残り枚数を出す。**次の回が続きから拾う**
 """
 
 import argparse
 import datetime as dt
 import decimal
-import hashlib
 import json
 import os
 import sys
@@ -28,7 +30,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backup import codec, plan, sink  # noqa: E402
+from backup import codec, photos, plan, sink  # noqa: E402
 from logging_util import setup_logger  # noqa: E402
 
 log = setup_logger("backup")
@@ -279,86 +281,10 @@ def verify_bigquery(c) -> dict:
 
 # ------------------------------------------------------------------ 写真
 
-
-def dump_photos(c, dry: bool) -> dict:
-    """旅の写真の実体。**増えたぶんだけ。**
-
-    いまはサービスアカウントに Storage の権限が1つも無いので、ここは
-    「権限が来た日から動く」形にしてある（実測は python/backup/sink.py の頭）。
-    **読む権限（storage.objects.list / get）が付いた時点で、何も直さずに動く。**
-    """
-    from google.cloud import bigquery, storage
-
-    bucket = f"{sink.PROJECT}{plan.PHOTO_BUCKET_SUFFIX}"
-
-    schema = [
-        bigquery.SchemaField("path", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("taken_at", "TIMESTAMP", mode="REQUIRED"),
-        bigquery.SchemaField("size", "INTEGER", mode="REQUIRED"),
-        bigquery.SchemaField("sha256", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("content_type", "STRING"),
-        bigquery.SchemaField("body", "BYTES", mode="REQUIRED"),
-    ]
-    try:
-        sc = storage.Client(project=sink.PROJECT)
-        blobs = list(sc.list_blobs(bucket, prefix=plan.PHOTO_PREFIX))
-    except Exception as e:  # noqa: BLE001
-        reason = f"{type(e).__name__}"
-        log.warning("写真は取れません（%s）。権限待ち", reason)
-        print("::warning::旅の写真の実体は退避できていません。"
-              "サービスアカウントに Storage の読み権限がありません（issue で待ち）")
-        return {"ok": False, "reason": reason, "n": 0, "bytes": 0}
-
-    if dry:
-        total = sum(b.size or 0 for b in blobs)
-        log.info("  置き場に %d 件 %d バイト", len(blobs), total)
-        return {"ok": True, "n_all": len(blobs), "n": len(blobs), "bytes": total, "written": 0}
-
-    tbl = sink.ensure_table(c, "photos", schema)
-    have = set()
-    try:
-        have = {r["path"] for r in c.query(
-            f"SELECT path FROM `{sink.PROJECT}.{sink.DATASET}.photos`", location=sink.LOCATION
-        ).result()}
-    except Exception:  # noqa: BLE001
-        pass
-
-    new = [b for b in blobs if b.name not in have]
-    total = sum(b.size or 0 for b in new)
-    log.info("  本番に %d 件 / まだ写していないのが %d 件 %d バイト", len(blobs), len(new), total)
-    if not new:
-        return {"ok": True, "n_all": len(blobs), "n": len(new), "bytes": total, "written": 0}
-
-    import base64
-
-    # **まとめて投げない。** 1枚 4MB まで許してあるので（islandApi.ts の
-    # MAX_PHOTO_BYTES）、10枚まとめると 40MB になって送れる大きさを超える
-    written = 0
-    chunk: list[dict] = []
-    chunk_bytes = 0
-    for b in new:
-        body = b.download_as_bytes()
-        chunk.append({
-            "path": b.name,
-            "taken_at": (b.updated or dt.datetime.now(dt.timezone.utc)).isoformat(),
-            "size": len(body),
-            "sha256": hashlib.sha256(body).hexdigest(),
-            "content_type": b.content_type,
-            "body": base64.b64encode(body).decode(),
-        })
-        chunk_bytes += len(body)
-        if chunk_bytes > 4 * 1024 * 1024:
-            errs = c.insert_rows_json(tbl, chunk)
-            if errs:
-                raise RuntimeError(f"写真を置き場に書けませんでした: {errs}")
-            written += len(chunk)
-            chunk, chunk_bytes = [], 0
-    if chunk:
-        errs = c.insert_rows_json(tbl, chunk)
-        if errs:
-            raise RuntimeError(f"写真を置き場に書けませんでした: {errs}")
-        written += len(chunk)
-    return {"ok": True, "n_all": len(blobs), "n": len(new), "bytes": total, "written": written}
+# 旅の写真の実体は `python/backup/photos.py`。**Storage の IAM を1つも通らず、
+# Firestore の url 欄に入っている合言葉つき URL から取る**（両方のサービス
+# アカウントで `storage.objects.get` が立たないことを本番で実測してある）。
+# 1回の実行に上限があり、**残りは次の回が続きから拾う。**
 
 
 # ------------------------------------------------------------------ 本体
@@ -401,7 +327,7 @@ def main() -> int:
             detail["bigquery"] = dump_bigquery(c, a.dry_run, tmp)
 
         log.info("--- 旅の写真 ---")
-        detail["photos"] = dump_photos(c, a.dry_run)
+        detail["photos"] = photos.dump(c, a.dry_run)
 
         if not a.dry_run:
             log.info("--- 突き合わせ ---")
@@ -433,10 +359,14 @@ def main() -> int:
 
     fs = detail.get("firestore", {})
     bq = detail.get("bigquery", {})
+    ph = detail.get("photos", {})
+    # **写真は「取れた枚数」だけでは足りない。** 上限で切り上げた回と、
+    # 全部取り切った回が同じ字に見えてしまう。残りと落ちた数も併記する
     line = (
         f"Firestore {fs.get('docs', 0)} 件 / {fs.get('bytes', 0)} バイト、"
         f"BigQuery {sum((v or {}).get('rows') or 0 for v in bq.values())} 行、"
-        f"写真 {detail.get('photos', {}).get('n', 0)} 件、{took:.0f} 秒"
+        f"写真 +{ph.get('n', 0)} 枚 / {ph.get('bytes', 0)} バイト"
+        f"（残り {ph.get('left')} ・落ちた {ph.get('failed', 0)}）、{took:.0f} 秒"
     )
     log.info("%s — %s", "取れました" if ok else "落ちました", line)
     summary = os.getenv("GITHUB_STEP_SUMMARY")

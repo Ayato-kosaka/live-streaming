@@ -41,6 +41,16 @@ def main() -> None:
         d = json.loads(r["detail_json"] or "{}")
         fs = d.get("firestore", {})
         ph = d.get("photos", {})
+        # **写真は「取れた枚数」だけでは足りない。** 1回の上限で切り上げた回と
+        # 取り切った回が同じ字に見える。残りと落ちた数まで並べる
+        if not ph.get("ok"):
+            photo = "索引が引けず"
+        else:
+            photo = "+%d枚" % ph.get("n", 0)
+            if ph.get("left"):
+                photo += "/残%d" % ph["left"]
+            if ph.get("failed"):
+                photo += "/落%d" % ph["failed"]
         log.info(
             "  %s  %s  %4.0f秒  Firestore %d件/%dバイト  写真 %s",
             r["at"].isoformat(timespec="minutes"),
@@ -48,7 +58,7 @@ def main() -> None:
             r["took_sec"] or 0,
             fs.get("docs", 0),
             fs.get("bytes", 0),
-            ("+%d件" % ph.get("n", 0)) if ph.get("ok") else "権限待ち",
+            photo,
         )
         if not r["ok"]:
             bad += 1
@@ -69,6 +79,16 @@ def main() -> None:
             log.info("  %-18s %d 行", t, v)
         except Exception:  # noqa: BLE001
             log.info("  %-18s まだ無い", t)
+    # 写真は**行数より「何バイト守れているか」**が見たい数字。
+    # `size` の列だけ読むので、実体（body）は1バイトも読まない
+    try:
+        v = list(c.query(
+            f"SELECT IFNULL(SUM(size), 0) AS b FROM `{sink.PROJECT}.{sink.DATASET}.photos`",
+            location=sink.LOCATION,
+        ).result())[0]["b"]
+        log.info("  %-18s %d バイト", "写真の実体", v)
+    except Exception:  # noqa: BLE001
+        pass
 
     # ---- 合否。**「直近10回に1回でも赤があれば赤」にしない。**
     # 旅の17日でひと晩こければ、そのあと何日通っても赤のままになる。
