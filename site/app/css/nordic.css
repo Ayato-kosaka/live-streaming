@@ -2729,15 +2729,26 @@ p.nday-lead {
    触るのは**この区画の中の `.fold-*` だけ**（`.ndrs` で囲ってある）。 */
 .ndrs { display: grid; gap: var(--sp-2); }
 /* 決まっていないことを、いちばん先に言う一行。
-   あとから小さく断っても、上の一覧はもう予定として読まれている。 */
-.ndrs-lead {
+   あとから小さく断っても、上の一覧はもう予定として読まれている。
+
+   **`p` の字の大きさは `.ndrs p.…` で書く。** この区画は紙（`.panel`）の中に
+   入るので、`pages.css` の `.panel p { font-size: var(--fs-body) }` と同じ強さでは
+   勝てない。実測で road / body / ride の3つとも 14.5px に揃っていて、
+   区画の中の強弱がぜんぶ消えていた。 */
+.ndrs p.ndrs-lead {
   margin: 0;
   font-size: var(--fs-note);
   line-height: 1.75;
   font-weight: 800;
   color: var(--ink-2);
 }
-.ndrs-l { margin-top: 0; }
+/* **列は1本。中身で広がらせない。**
+   `.folds` の列は `auto` なので、入れ物の幅ではなく**いちばん長い行の max-content**
+   で決まることがある。ここは閉じた行に一行の要約を出すので、その一行ぶん
+   （実測で 418〜491px）まで列が伸びて、`.folds` の `overflow: hidden` に
+   切られていた。**横には動かないので巡回には出ない。字だけが消える。**
+   `minmax(0, 1fr)` で列を入れ物に留めると、要約は折り返しに戻る。 */
+.ndrs-l { margin-top: 0; grid-template-columns: minmax(0, 1fr); }
 
 /* 距離の札。**行のいちばん左に回す。** 押せない札なのでオリーブのベタ
    （`docs/island-world.md` 3.2「数えたもの・押せない」）のまま、字だけ大きくする。
@@ -2748,7 +2759,8 @@ p.nday-lead {
   gap: 0;
   justify-items: center;
   align-content: center;
-  min-width: 86px;
+  /* 92px は「南へ1.5km」「海へ1.6km」の実測幅。ここを下げると列が揃わない */
+  min-width: 92px;
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-0);
 }
@@ -2769,6 +2781,11 @@ p.nday-lead {
 .ndrs .fold-t > b > i {
   display: block;
   margin-top: 1px;
+  /* `.fold-t i` の既定は1行で切る。読みは「アウクシュタイティヨス・シアウラシス・
+     ゲレジンケリス」で 314px あるので、**折り返さないと行ごと横へ伸びる**
+     （実測でここだけ 463px まで出ていた）。 */
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
@@ -2786,7 +2803,7 @@ p.nday-lead {
 /* 開いたら読みは残す（名前の一部なので）。消えるのは要約の一行だけ。 */
 .ndrs .fold[open] > summary > .fold-t > b > i { display: block; }
 
-.ndrs-road {
+.ndrs p.ndrs-road {
   display: flex;
   gap: var(--sp-1);
   align-items: flex-start;
@@ -2796,15 +2813,15 @@ p.nday-lead {
   font-weight: 800;
   color: var(--ink-2);
 }
-.ndrs-road > .ic { flex: none; }
-.ndrs-body {
+.ndrs p.ndrs-road > .ic { flex: none; }
+.ndrs p.ndrs-body {
   margin: var(--sp-2) 0 0;
   font-size: 13.5px;
   line-height: 1.85;
   font-weight: 700;
 }
 /* ヒッチハイクの見立て。罫で切って、事実（上）と見立て（下）を同じ地に置かない。 */
-.ndrs-ride {
+.ndrs p.ndrs-ride {
   display: flex;
   gap: var(--sp-2);
   align-items: flex-start;
@@ -2816,4 +2833,13 @@ p.nday-lead {
   font-weight: 800;
   color: var(--ink-2);
 }
-.ndrs-ride > .ic { flex: none; }
+.ndrs p.ndrs-ride > .ic { flex: none; }
+
+/* 旅の日ページ、区画の見出しのすぐ下に置く一行。
+   見出しに街の名前を2つ入れると 390px で名前の途中から割れるので、
+   「どこからどこへ」はここへ下ろしてある。ここなら割れてよい。 */
+.nday-sub {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
