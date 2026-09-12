@@ -57,6 +57,13 @@ def ratio(a, b):
 
 def parse(col):
     col = col.strip()
+    # `color-mix(in srgb, ...)` の計算値は `color(srgb 0.42 0.30 0.09)` で返ってくる。
+    # ここを読めないと **色を色-mix で作った字が丸ごと測れない**。
+    # 島の字はほとんど color-mix なので、`/kitchen` は 118 か所中 55 か所が
+    # 「色が読めない」で黙って落ちていて、`.dish-no`（実測 3.1）が 0件 と出ていた。
+    if col.startswith("color("):
+        n = [float(x) for x in col[col.index("(") + 1: col.rindex(")")].split()[1:4]]
+        return tuple(max(0, min(255, round(x * 255))) for x in n)
     if col.startswith("rgb"):
         n = [float(x) for x in col[col.index("(") + 1: col.index(")")].replace("/", ",").split(",")[:3]]
         return tuple(int(x) for x in n)

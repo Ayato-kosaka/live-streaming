@@ -914,12 +914,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .dish:hover::after,
 .dish:focus-visible::after { border-color: var(--zk-pick); }
 
-/* 何品目か。図鑑の番号 */
+/* 何品目か。図鑑の番号。
+   **薄めるのに opacity を使わない。** `--zk-ink-2` は「染まった紙の上でも
+   4.9 を切らない」ように決めた色なのに、その上から 0.72 を掛けていたので
+   実測 3.11〜3.24（島の下限は 4.5）まで落ちていた。しかも computed の
+   `color` には opacity が出ないので、宣言された値を見るかぎり合格に見える。
+   番号を主役にしないための「添えの字」は、色そのものが引き受ける。 */
 .dish-no {
   position: absolute; top: 9px; left: 10px;
   font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
   color: var(--zk-ink-2);
-  opacity: 0.72;
 }
 /* 何日がかりか。番号の反対側に、平らなチップで */
 .dish-days {
