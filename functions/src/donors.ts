@@ -67,7 +67,16 @@
  * サービスアカウントに複合索引を作る権限が無いので、`where` と `orderBy` を
  * 組み合わせると本番で 500 になる。対応表は30行ほどしか無いので、
  * **引いてから並べ替える。** 辞書を名前で引くところも
- * **単一フィールドの等価だけ**にしてある(索引が要らない範囲)。
+ * **同じ1つのフィールドだけ**にしてある(等価と、前方一致の範囲)。
+ * 単一フィールドの自動索引で通る範囲で、`orderBy` は使わない。
+ *
+ * ## 紐付け待ちの行には、近い名前の候補を出す
+ *
+ * 呼び名は「ゆずたつ」で届くが、繋ぐには `@ゆずたつ-q3n` と**正確に打つ**
+ * 必要がある。枝番は誰も思い出せないし、旅の途中はスマホしか無い。
+ * だから辞書を前方一致で引いて、**押すだけで繋がる候補**を添える
+ * (`hintsFor`)。**こちらから繋ぎはしない。** 名前で自動に突き合わせると
+ * 別の人にカードが渡るので、決めるのはあやと。
  */
 
 import {logger} from "firebase-functions";
@@ -106,6 +115,23 @@ type Json = Record<string, unknown>;
 /** 対応表の状態。 */
 type DonorState = "new" | "unlinked" | "linked";
 
+/**
+ * 近い名前の人。**押すだけで繋げるようにするためのもので、こちらは繋がない。**
+ *
+ * 名前で自動に突き合わせると、**別の人にカードが渡る**(この一本と
+ * `python/doneru_supporters.py` の冒頭に書いてあるとおり)。決めるのはあやと。
+ * ここがやるのは「押せる候補を並べる」ところまで。
+ */
+export type DonorHint = {
+  channelId: string;
+  /** そのチャンネルがいま名乗っている名前 */
+  name: string;
+  /** 一緒にいた日数。辞書に入っていなければ null */
+  days: number | null;
+  /** さいごに喋った時刻。辞書に入っていなければ null */
+  lastAt: string | null;
+};
+
 /** 画面に返す1行。 */
 type Donor = {
   viewerPk: string;
@@ -133,6 +159,13 @@ type Donor = {
    * 入る(`editedAt` と一緒に入るが、あちらは直した行にも入る)。
    */
   canDelete: boolean;
+  /**
+   * 近い名前の人。**`state: "new"` の行にだけ入る。**
+   *
+   * 呼び名(「ゆずたつ」)から YouTube の handle の枝番(`-q3n`)は
+   * 思い出せない。**打てないものは、押せるようにする。**
+   */
+  hints: DonorHint[];
 };
 
 /** 呼ぶ側から借りるもの。「誰か」を見るところを2か所に増やさないため。 */
@@ -242,9 +275,15 @@ async function findChannel(typed: string): Promise<Found> {
  * @param {string} id ドキュメントID(= どねID)
  * @param {Json} v Firestore に入っている値
  * @param {string | null} channelName 辞書から引いたチャンネルの名前
+ * @param {DonorHint[]} hints 近い名前の人(`new` の行にだけ入る)
  * @return {Donor} 画面に返す1行
  */
-function shape(id: string, v: Json, channelName?: string | null): Donor {
+function shape(
+  id: string,
+  v: Json,
+  channelName?: string | null,
+  hints: DonorHint[] = [],
+): Donor {
   const channelId = typeof v.channelId === "string" ? v.channelId : null;
   const state: DonorState = channelId ?
     "linked" :
@@ -263,6 +302,7 @@ function shape(id: string, v: Json, channelName?: string | null): Donor {
     firstSeenAt: typeof v.firstSeenAt === "string" ? v.firstSeenAt : null,
     editedAt: typeof v.editedAt === "string" ? v.editedAt : null,
     canDelete: typeof v.addedAt === "string",
+    hints,
   };
 }
 
@@ -319,6 +359,99 @@ async function nameOf(ids: string[]): Promise<Map<string, string>> {
 }
 
 /**
+ * 前方一致の上端に足す字。**これより後ろの字は、名前に出てこない。**
+ * Firestore で「〜で始まる」を引く決まったやり方。
+ */
+const HINT_HIGH = "\uf8ff";
+
+/** 1本の前方一致で見る件数。3件並べるために、少し多めに引く。 */
+const HINT_SCAN = 5;
+
+/** 画面に並べる候補の数。**指で選ぶものなので、迷う数にしない。** */
+const HINT_MAX = 3;
+
+/**
+ * 呼び名から、辞書を前方一致で引く文字列を作る。
+ *
+ * Doneru の呼び名は「ゆずたつ」のように、YouTube の handle から
+ * **枝番(`-q3n`)の落ちた形**で届く。辞書の `name` は「@ゆずたつ-q3n」の
+ * ことも「ゆずたつ」のこともあるので、**`@` あり・なしの2本**で引く。
+ * @param {string} label Doneru に出ていた呼び名
+ * @return {string[]} 前方一致で引く文字列(引かないときは空)
+ */
+export function hintPrefixes(label: string): string[] {
+  const base = label.trim().replace(/^@+/, "");
+  if (!base) return [];
+  return [`@${base}`, base];
+}
+
+/**
+ * 近い名前の人を、辞書から引く。
+ *
+ * **`where` は2つあるが、どちらも同じ `name` の範囲なので複合索引は
+ * 要らない**(単一フィールドの自動索引で通る)。サービスアカウントには
+ * 複合索引を作る権限が無く、`where` と `orderBy` を混ぜると本番で 500 に
+ * なる(#168)。ここは `orderBy` を使わず、**引いてから並べ替える。**
+ * @param {string} label Doneru に出ていた呼び名
+ * @return {Promise<DonorHint[]>} 押せる候補(多くて3件)
+ */
+async function hintsFor(label: string): Promise<DonorHint[]> {
+  const prefixes = hintPrefixes(label);
+  if (prefixes.length === 0) return [];
+  try {
+    const got = await Promise.all(
+      prefixes.map((p) =>
+        CHANNELS.where("name", ">=", p)
+          .where("name", "<", p + HINT_HIGH)
+          .limit(HINT_SCAN)
+          .get()),
+    );
+    // 2本の結果は重なる。チャンネルIDで畳む
+    const seen = new Map<string, DonorHint>();
+    for (const snap of got) {
+      snap.forEach((d) => {
+        const v = d.data() ?? {};
+        const name = typeof v.name === "string" ? v.name : "";
+        if (!name || seen.has(d.id)) return;
+        seen.set(d.id, {
+          channelId: d.id,
+          name,
+          days: typeof v.days === "number" ? v.days : null,
+          lastAt: typeof v.lastAt === "string" ? v.lastAt : null,
+        });
+      });
+    }
+    /* 一緒にいた日数の多い順。**その名前でよく来ている人ほど上。**
+       同じ名前を名乗る通りすがりを、常連より上に出さないため。 */
+    return [...seen.values()]
+      .sort((a, b) => (b.days ?? 0) - (a.days ?? 0))
+      .slice(0, HINT_MAX);
+  } catch (e) {
+    /* **候補が出ないだけ。行そのものは壊さない。**
+       候補は足しもので、無くても今までどおり打って繋げる。 */
+    logger.warn("donor hints failed", label, String(e));
+    return [];
+  }
+}
+
+/**
+ * `state: "new"` の行にだけ、候補を付ける。
+ *
+ * 繋ぐ先の決まっている行に候補を出しても、押しどころが増えるだけ。
+ * `new` はふだん0〜2行なので問い合わせは多くても4本だが、
+ * **行ごとに直列で回さない**(電波の悪いところで1行ずつ待つことになる)。
+ * @param {Donor[]} donors 画面に返す行(並べ替え済み)
+ * @return {Promise<Donor[]>} 候補を足した行。並びは変えない
+ */
+async function withHints(donors: Donor[]): Promise<Donor[]> {
+  const want = donors.filter((d) => d.state === "new" && d.label);
+  if (want.length === 0) return donors;
+  const got = await Promise.all(want.map((d) => hintsFor(d.label ?? "")));
+  const by = new Map(want.map((d, i) => [d.viewerPk, got[i]]));
+  return donors.map((d) => ({...d, hints: by.get(d.viewerPk) ?? []}));
+}
+
+/**
  * Doneru の対応表の口。**扱った URL なら true を返す。**
  *
  * 呼ぶ側(`islandApi.ts`)は true が返ったらそこで終わる。
@@ -356,7 +489,8 @@ export async function handleDonors(
         shape(r.id, r.v, names.get(String(r.v.channelId ?? "")) ?? null),
       );
       donors.sort(byState);
-      res.json({donors});
+      // 候補は最後に足す。**並びは変えない**(赤い行がいちばん上のまま)
+      res.json({donors: await withHints(donors)});
     } catch (e) {
       logger.warn("donors read failed", String(e));
       res.status(502).json({error: "unavailable"});

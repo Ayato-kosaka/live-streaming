@@ -436,6 +436,53 @@
   color: var(--ink-2);
 }
 
+/* 近い名前の人（#190）。**押すと、その人につながる。**
+   呼び名から handle の枝番（`-q3n`）は思い出せないので、打たずに選べるように
+   する。**押しどころなので厚みを付ける**（`island-design.md` 3-3）。すぐ上の
+   書く欄と、すぐ下の「つなぐ」にはさまれているので、平らだと欄の続きに見える。 */
+.mp-donor-hints {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.mp-donor-hint-h {
+  margin: 0;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+/* 1つが「名前 / 一緒に何日・さいご何日」の2段。**名前は長い**ので
+   （`@ながいながいなまえ-q3n`）、375px で折り返せるようにしておく。 */
+.mp-donor-hint {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 5px 0 var(--frame-dark);
+  text-align: left;
+  color: var(--ink);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.mp-donor-hint:active { transform: translateY(5px); box-shadow: none; }
+.mp-donor-hint:disabled { opacity: 0.62; box-shadow: none; }
+.mp-donor-hint b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+.mp-donor-hint i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
 /* 押した結果。**その場で、何に繋がったかまで出す。**
    出しっぱなしにして消さない（`docs/island-design.md` 3-6）。 */
 .mp-donor-said,
