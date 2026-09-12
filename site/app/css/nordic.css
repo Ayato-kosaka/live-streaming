@@ -2574,3 +2574,246 @@ p.nday-lead {
 .trip-send .mp-send { width: 100%; }
 .trip-send .nph-ok,
 .trip-send .err { margin: 0; }
+
+/* =========================================================
+   その国の、ふだんのごはん（`components/nordic/DailyFood.tsx`）
+   ---------------------------------------------------------
+   観光の名物ではなく、スーパーの棚と家の食卓にあるものを並べる面。
+   **390px で、片手で、走っている車の中で開く**ことを前提にしている。
+
+   だから:
+     - 1品は畳んでおく。閉じているあいだに見えるのは名前・読み・一行だけ
+       （7品でも1画面に収まる。`docs/island-standards.md` 7）
+     - 聞く一言は、いちばん大きい字にする。画面を相手に向けて見せるため
+     - 写す押しどころは幅いっぱい・56px。揺れる車内で狙わせない
+
+   器は `.panel.paper` を借りていて、段は `ui.css` の `.folds` をそのまま使う。
+   ここが持つのは、段の中身の作りだけ。
+
+   **字の規則は `.nfood` で始める。** 借りている器が `pages.css` に
+   `.panel p { font-size: var(--fs-body) }`(0,1,1) を持っていて、
+   `.nfd-say`(0,1,0) 1枚では負ける。実測で、いちばん大きくしたはずの
+   現地語の一文が 14.5px・太さ600 になっていた（書いたとおりに出ていない、
+   ということが撮っただけでは分からなかった。computed で測って気づいた）。
+   ========================================================= */
+.nfood .nfood-lead {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-note);
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 題の中の読み。名前（現地語）の次に小さく置く。
+   別の行にすると段が1行ぶん高くなって、7品が1画面から落ちる。 */
+.nfd-read {
+  margin-left: 7px;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* 一行の説明。`ui.css` の `.fold-t i` は1行で切っているが、
+   ここは「要するに何なのか」を読ませる行なので、2行まで折り返させる。
+   3行目からは切る（切らないと、段の高さが品ごとにばらける）。 */
+.nfood .fold-t i {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  line-height: 1.6;
+}
+
+.nfd { display: grid; gap: var(--sp-3); }
+
+/* どこで買えるか・季節・値段。**押せないので、完全に平ら**
+   （`docs/island-design.md` 3-3）。オリーブのベタが「数えたもの・押せない」の色。 */
+.nfd-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.nfd-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.6;
+}
+.nfd-tag svg { flex: none; }
+
+.nfood .nfd-body { margin: 0; font-size: 13px; line-height: 1.95; font-weight: 600; color: var(--ink); }
+
+/* 食べ方。ここがこの面でいちばん面白いところなので、本文から浮かせる。
+   押せないので厚みは付けず、左の罫1本と地の違いだけで分ける。 */
+.nfd-how {
+  border-left: 3px solid var(--frame);
+  border-radius: 0 var(--r-0) var(--r-0) 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: color-mix(in srgb, var(--paper) 62%, var(--paper-2));
+}
+.nfood .nfd-how b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.nfood .nfd-how p { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 700; color: var(--ink); }
+
+/* --- 聞いてみる一言 ---
+   この面の主役。相手に画面を向けて見せるものなので、現地語をいちばん大きく、
+   その下に読み（自分が言うため）と訳（相手に通じなかったとき用）を置く。 */
+.nfd-ask {
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+}
+.nfood .nfd-ask-h {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 現地語の一文。**この段でいちばん大きい字にする。**
+   相手に画面を向けて見せるのはこの行で、下の2行は自分のためのもの。
+   ラテン文字は同じ級数だと仮名より小さく見えるので、
+   17px だと下の読み（12px の片仮名）と並んで見えた。実測して 22px まで上げた。 */
+.nfood .nfd-say {
+  margin: 0;
+  font-size: clamp(19px, 5.6vw, 24px);
+  line-height: 1.45;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  /* 長い綴りの現地語でも、面を横に伸ばさない */
+  overflow-wrap: anywhere;
+}
+.nfood .nfd-yomi { margin: 7px 0 0; font-size: var(--fs-note); font-weight: 800; line-height: 1.7; color: var(--ink-2); }
+.nfood .nfd-jp { margin: 2px 0 0; font-size: var(--fs-note); font-weight: 700; line-height: 1.7; color: var(--ink-2); }
+
+/* 写す。走っている車の中で押すので、幅いっぱい・56px・厚み6px。 */
+.nfd-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--sp-3);
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 42%, var(--paper)) 0%, var(--gold) 100%);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  box-shadow: 0 6px 0 var(--frame-deep);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.nfd-copy:active { transform: translateY(6px); box-shadow: none; }
+
+/* --- 道すじの寄り道（`components/nordic/RoadStops.tsx`） ------------------
+   **いちばん大きく出すのは、名前ではなく「幹線から何km外れるか」。**
+
+   寄るか寄らないかは、面白いかどうかでは決まらない。車の中で片手で開く面なので、
+   その数字が先に目に入らないと使えない。だから札を行の**いちばん左**へ回して
+   （`order: -1`）、何件ぶんかの数字が縦に揃うようにした。名前より先に、
+   数字を上から下へ舐められる。
+
+   畳みは島の紙の段（`.folds` / `.fold`）をそのまま使う。ここで新しい畳みを作らない。
+   触るのは**この区画の中の `.fold-*` だけ**（`.ndrs` で囲ってある）。 */
+.ndrs { display: grid; gap: var(--sp-2); }
+/* 決まっていないことを、いちばん先に言う一行。
+   あとから小さく断っても、上の一覧はもう予定として読まれている。 */
+.ndrs-lead {
+  margin: 0;
+  font-size: var(--fs-note);
+  line-height: 1.75;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndrs-l { margin-top: 0; }
+
+/* 距離の札。**行のいちばん左に回す。** 押せない札なのでオリーブのベタ
+   （`docs/island-world.md` 3.2「数えたもの・押せない」）のまま、字だけ大きくする。
+   幅を決め打ちして、4件の数字が縦に揃うようにしてある。 */
+.ndrs .fold-n {
+  order: -1;
+  display: grid;
+  gap: 0;
+  justify-items: center;
+  align-content: center;
+  min-width: 86px;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-0);
+}
+.ndrs .fold-n > i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.35;
+  /* 札の中の小さい字。地がオリーブなので、墨は札の墨のまま薄くしない */
+  color: var(--chip-ink);
+}
+.ndrs .fold-n > b { font-size: 16px; font-weight: 900; line-height: 1.4; white-space: nowrap; }
+
+/* 現地語の名前は長い（Aukštaitijos siaurasis geležinkelis で34字）。
+   390px では必ず折り返すので、途中で切らずに送る。 */
+.ndrs .fold-t > b { overflow-wrap: anywhere; }
+/* カタカナの読みは、名前と同じ大きさでは並べない。名前の直後に小さく添える。 */
+.ndrs .fold-t > b > i {
+  display: block;
+  margin-top: 1px;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+/* 閉じているときの一行。**ここで「何があるか」が読めないと、押す気にならない。**
+   `.fold-t i` の既定は1行で切るので、この区画だけ2行以上へ送る。 */
+.ndrs .fold-t > i {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.6;
+}
+/* 開いたら読みは残す（名前の一部なので）。消えるのは要約の一行だけ。 */
+.ndrs .fold[open] > summary > .fold-t > b > i { display: block; }
+
+.ndrs-road {
+  display: flex;
+  gap: var(--sp-1);
+  align-items: flex-start;
+  margin: 0;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndrs-road > .ic { flex: none; }
+.ndrs-body {
+  margin: var(--sp-2) 0 0;
+  font-size: 13.5px;
+  line-height: 1.85;
+  font-weight: 700;
+}
+/* ヒッチハイクの見立て。罫で切って、事実（上）と見立て（下）を同じ地に置かない。 */
+.ndrs-ride {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid color-mix(in srgb, var(--rule) 66%, transparent);
+  font-size: 12.5px;
+  line-height: 1.75;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndrs-ride > .ic { flex: none; }
