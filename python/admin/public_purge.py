@@ -138,7 +138,17 @@ def photos(got: dict) -> None:
     if listed == "ok":
         # **件数と合計バイト数だけ。** 名前は口が返さないし、出さない
         log.info("  %d件（合計 %d バイト）", d.get("count") or 0, d.get("bytes") or 0)
+
+    # **判定は list だけで出さない。** 退避には中身を読む get が要る
+    can = can or {}
+    if can.get("storage.objects.list") and can.get("storage.objects.get"):
         log.info("  → この道で写真の退避が組めます（#296 の依頼は待たなくてよい）")
+    elif can.get("storage.objects.list"):
+        # **数えられるが、読めない。** 退避に要るのは中身のほう。
+        # ここを list だけで「組めます」と言って、1度まちがえている。
+        log.info("  → 数えられますが、**中身を読めません**（objects.get が無い）。")
+        log.info("     退避に要るのは中身のほうなので、この道だけでは組めません。")
+        log.info("     #296 の依頼（あやとの操作）は生きたままです。")
     else:
         if d.get("why"):
             log.info("  止まった種類: %s", d.get("why"))
