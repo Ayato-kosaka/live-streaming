@@ -42,6 +42,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {normKey} from "./islandCharacter";
 import {
   CARDS,
   IMAGES,
@@ -62,6 +63,18 @@ const USERS = db.collection("islandUsers");
 
 /** 一度に返す枚数。新しいほうから。 */
 const MAX_CARDS = 600;
+
+/** キャラクターの名簿(#284)。**絵とチャンネル名の対応はここにしか無い。** */
+const CHARACTERS = db.collection("islandCharacter");
+
+/** チャンネルIDから、いま名乗っている名前を引く先。毎晩入れ直る。 */
+const CHANNELS = db.collection("islandChannels");
+
+/** 名簿を一度に読む人数。`/characters` の口と同じ上限。いま98人。 */
+const MAX_CHARACTERS = 500;
+
+/** 名前の長さ。`islandCharacter.ts` の MAX_NAME と同じ。 */
+const MAX_NAME = 80;
 
 type Json = Record<string, unknown>;
 
@@ -108,7 +121,7 @@ type Card = {
   note: string;
   /** もらった人の YouTube チャンネル */
   channelId: string | null;
-  /** 旧・名簿が絵まで持っていたときの欄。いまは常に null */
+  /** キャラクターの書類ID。画面はこれで絵を引く(`lib/charImg.ts`) */
   icon: string | null;
   /** 島に名前を出してよいと言った人だけ */
   name: string | null;
@@ -124,6 +137,139 @@ type Card = {
   /** どの企画のものか(#202 で足した。画面はまだ使わなくてよい) */
   streamEventId: string | null;
 };
+
+/* ---------------- 誰のカードかを、絵に結び付ける ----------------
+
+   **チャンネルID → いま名乗っている名前 → キャラクターの `channelKeys`。**
+
+   #202 / #204 の作り替えで絵を引くところごと消えたまま、新しい名簿
+   (`islandCharacter`・#284)につなぎ直していなかった。画面は焼き込みの
+   22人(`site/content/residents.ts`)から引き直して埋めていたので、
+   **表に入っていない人のカードだけが黙って消えていた**（9月11日の4人中1人）。
+
+   ## なぜ名前を経由するか。`channelId` で直に引かないか
+
+   `islandCharacter` には `channelId` という欄が形だけ在るが、**それを書いて
+   いるところがどこにも無い。** 本番で数えて 98人中1人だった
+   (`python/admin/cards_icon_probe.py`)。**空の欄に向けて引いても0枚。**
+
+   名前で引くと本番のカード8枚が8枚とも当たる。しかも**配信中のアラートと
+   同じ引き方**(`islandCharacter.ts` の `findBy("channelKeys", …)`)なので、
+   引き方が2つに散らない。
+
+   ## `lookupKeys`(呼び名)は使わない
+
+   呼び名は98人ぜんぶに付いていて当たりはするが、**人が付けたもので重なりえる。**
+   当たりすぎるほうが危ない——別人の絵がカードに乗る。スパチャがチャンネル名
+   しか見ないのと同じ理由(`islandCharacter.ts` 冒頭)。当たらなければ `null` のまま。
+
+   ## カードが何枚でも2往復
+
+   本番の `/island-api/cards` は Hosting に `no-cache` へ書き換えられていて
+   （Functions は `s-maxage=60` を付けているが、届くのは `no-cache`）、
+   **開かれるたびに handler が丸ごと走る。** 枚数ぶん問い合わせる形にはできない。
+   名簿は1回まとめて読み、名前は重複を落として `getAll` で1往復。 */
+
+/** 引く鍵(`normKey` したチャンネル名) → キャラクターの書類ID。 */
+type Keys = Map<string, string>;
+
+/** 温かいインスタンスに持つ名簿。**名前は持たない**（下の理由）。 */
+let cached: {at: number; keys: Keys} | null = null;
+
+/**
+ * 名簿を覚えておく長さ。
+ *
+ * **持つのは「鍵 → 絵」だけで、チャンネル名は毎回引き直す。**
+ * `channelKeys` が変わるのはあやとが画面からキャラクターを直したときだけで、
+ * 年に数回。`islandChannels.name` のほうは毎晩入れ直る(`island_channels.py`)
+ * ので、そちらを抱えると「名前を変えた人の絵が出なくなる」が何時間も続く。
+ *
+ * 5分にしたのは、直した本人が画面を開き直したときに**待たされていると
+ * 気づかない**長さだから。口が CDN に乗らない以上、98件の読み込みを
+ * 毎回払う理由もない。
+ */
+const KEYS_TTL = 5 * 60 * 1000;
+
+/**
+ * 名簿から「鍵 → 絵」を作る。**2人に当たる鍵は捨てる。**
+ * @return {Promise<Keys>} 引く鍵から書類IDへの対応
+ */
+async function characterKeys(): Promise<Keys> {
+  const now = Date.now();
+  if (cached && now - cached.at < KEYS_TTL) return cached.keys;
+  const snap = await CHARACTERS.limit(MAX_CHARACTERS).get();
+  const keys: Keys = new Map();
+  /* **同じ鍵が2人に付いていたら、どちらも使わない。** 当てずっぽうに1人
+     選ぶと、別人の絵が配信の画面とカードに乗る
+     (`islandCharacter.ts` の `findBy` が `limit(2)` を取るのと同じ決め方)。 */
+  const twice = new Set<string>();
+  snap.forEach((d) => {
+    const v = d.data() ?? {};
+    const list = Array.isArray(v.channelKeys) ? v.channelKeys : [];
+    for (const k of list) {
+      if (typeof k !== "string" || !k) continue;
+      const had = keys.get(k);
+      if (had && had !== d.id) twice.add(k);
+      else keys.set(k, d.id);
+    }
+  });
+  twice.forEach((k) => keys.delete(k));
+  cached = {at: now, keys};
+  return keys;
+}
+
+/**
+ * チャンネルIDから、いま名乗っている名前を引く。**1往復。**
+ * @param {string[]} ids 重複を落としたチャンネルID
+ * @return {Promise<Map<string, string>>} チャンネルID → 名前
+ */
+async function channelNames(ids: string[]): Promise<Map<string, string>> {
+  const docs = await db.getAll(...ids.map((id) => CHANNELS.doc(id)));
+  const out = new Map<string, string>();
+  docs.forEach((d) => {
+    if (!d.exists) return;
+    const name = clean(d.data()?.name, MAX_NAME);
+    if (name) out.set(d.id, name);
+  });
+  return out;
+}
+
+/**
+ * チャンネルIDから、キャラクターの書類IDを引く。
+ *
+ * **落ちても投げない。** 絵が引けないことでカードそのものが返らなくなるのは、
+ * 直そうとしているものより悪い(#34 と同じ形)。引けなければ空の表を返して、
+ * 呼んだ側は `icon: null` のまま並べる。
+ * @param {string[]} channelIds カードの持ち主
+ * @return {Promise<Map<string, string>>} チャンネルID → キャラクターの書類ID
+ */
+export async function iconsOf(
+  channelIds: string[],
+): Promise<Map<string, string>> {
+  const ids = [...new Set(channelIds.filter((x) => x))].slice(0, MAX_CARDS);
+  const out = new Map<string, string>();
+  if (ids.length === 0) return out;
+  try {
+    const [keys, names] = await Promise.all([
+      characterKeys(),
+      channelNames(ids),
+    ]);
+    for (const id of ids) {
+      const name = names.get(id);
+      if (!name) continue;
+      /* `keysOf` が保存のときに「@ なし」も入れてあるので、引く側は
+         そろえるだけでよい。両方見るのは、名簿の側が `@` を持っていて
+         チャンネルの名前が持っていない(またはその逆)ときのため。 */
+      const icon =
+        keys.get(normKey(name)) ?? keys.get(normKey(name.replace(/^@+/, "")));
+      if (icon) out.set(id, icon);
+    }
+  } catch (e) {
+    logger.warn("card icons failed", String(e));
+    return new Map();
+  }
+  return out;
+}
 
 /**
  * 置き場に入っている置き方を読む。
@@ -157,11 +303,14 @@ async function listCards(deps: CardDeps): Promise<Card[]> {
     ),
   ].slice(0, MAX_IMAGES);
 
-  const [images, residents] = await Promise.all([
+  /* **絵の引き当ては、画像と名簿と一緒に投げる。** 順に待つと、
+     カードが何枚でも往復は2本しか増えないのに、返るのが1本ぶん遅くなる。 */
+  const [images, residents, icons] = await Promise.all([
     imageIds.length ?
       db.getAll(...imageIds.map((id) => IMAGES.doc(id))) :
       Promise.resolve([]),
     deps.listResidents(),
+    iconsOf(rows.map((r) => clean(r.v.channelId, 64))),
   ]);
 
   const imageOf = new Map<string, ImageRef>();
@@ -194,7 +343,10 @@ async function listCards(deps: CardDeps): Promise<Card[]> {
       h: im.h,
       note: im.note,
       channelId,
-      icon: null,
+      /* **絵は、名前を出してよいと言っていない人にも出す。** 島の絵は
+         `/friends` で98人ぶんもう公開されている。出さないのは名前だけ
+         (すぐ下)。この線は動かさない。 */
+      icon: (channelId && icons.get(channelId)) || null,
       name: (channelId && named.get(channelId)) || null,
       ...placeOf(r.v, r.id),
       moved: !!r.v.movedAt,

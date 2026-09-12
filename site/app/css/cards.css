@@ -227,23 +227,52 @@
   background: rgba(38, 31, 12, 0.62);
   cursor: pointer;
 }
+/* **紙は、頭・胴・足の3つ。** 送るのは胴だけ。
+   前は紙をまるごと送って、足（持って帰る帯）だけ底に貼り付けていた
+   （`position: sticky`）。貼り付けた帯は**上にある札にかぶさる**ので、
+   候補が4人以上になった日に2段目の札が潜った（2026-09-12・実測 4,675px²）。
+   送らない足にすれば、重なりようがない。 */
 .akd-sheet {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 560px;
   max-height: 92vh;
-  overflow: auto;
-  padding: var(--sp-5) var(--sp-4);
+  /* 送るのは胴。ここで送ると、頭と足まで一緒に動く */
+  overflow: hidden;
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: var(--pg-paper-bg);
   background-color: var(--pg-sheet);
   box-shadow: var(--shadow-2);
 }
+/* 頭。日付と閉じる。**送っても動かない**ので、写真が閉じるボタンの下を
+   くぐらない（前は絶対位置で紙の隅に置いてあり、送ると中身が下を通っていた）。 */
+.akd-sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--pg-rule);
+}
+/* 胴。ここだけ送る */
+.akd-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+/* 足。**紙の外へ出ない。** 候補が12人いても「ほぞんする」がここに居る */
+.akd-sheet-foot {
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--pg-rule);
+  background: var(--pg-sheet);
+}
 .akd-close {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-2);
   display: grid;
   place-items: center;
   width: 48px;
@@ -256,13 +285,13 @@
 }
 .akd-close:active { transform: translateY(4px); box-shadow: none; }
 
-/* 見出し。**閉じるボタンの下をくぐらせない**（48px + 余白ぶん空ける）。 */
+/* 頭の中の日付。**閉じるボタンをよける余白はもう要らない**（横に並んでいる） */
 .akd-sheet-h {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--sp-2);
-  margin: 0 56px 0 0;
+  margin: 0;
   font-size: var(--fs-note);
   color: var(--ink-2);
 }
@@ -427,25 +456,17 @@
 .npick:active { transform: translateY(2px); }
 
 /* 持って帰る。ここだけ板。
-   **紙の底に貼り付ける。** 立てる人が12人いると選ぶマスだけで3段になり、
-   いちばんやりたいこと（持って帰る）が紙の外へ出る。地は紙と同じ色で
-   敷いて、下をくぐる絵が透けないようにする。 */
-.nstudio-save {
-  position: sticky;
-  bottom: calc(var(--sp-5) * -1);
-  z-index: 1;
+   **足の中の1行。** 紙の底に貼り付ける（`sticky`）のはやめた——貼り付けた帯は
+   上にある札にかぶさるので、候補が増えた日に札が潜る。足そのものが動かない
+   ので、いちばんやりたいこと（持って帰る）は紙の外へ出ない。
+   **`.akd-sheet-foot` から指すのは、あとに読まれる `nordic.css` に同じ名前の
+   決めが残っているため**（あちらは `margin-top` を持っている）。 */
+.akd-sheet-foot .nstudio-save {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
-  margin-top: var(--sp-5);
-  padding: var(--sp-3) 0 var(--sp-5);
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--pg-sheet) var(--sp-3),
-    var(--pg-sheet)
-  );
+  margin: 0;
 }
 .nstudio-go {
   display: inline-flex;
