@@ -97,6 +97,25 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
  */
 const WIDTHS = [128, 256, 640];
 
+/**
+ * 置き場に入っている拡張子と、返すときの型。
+ *
+ * **焼いたものが webp とは限らない。** 画面から足すとき、ブラウザに
+ * canvas から webp を書き出す力が無いと、背景なしは **png**、背景ありは
+ * **jpeg** に落ちる（`site/components/me/Characters.tsx` の `bake`。
+ * 背景なしは透明を持っているので jpeg には落とせない）。
+ * 実際に1人ぶんが `plain-128.png` / `scene-128.jpg` で入っていた。
+ *
+ * **短い名前（`plain-128.webp`）は呼ぶ側の合言葉であって、置き場の
+ * ファイル名ではない。** 下の口は実物を探して、実物の型で返す。
+ */
+const IMAGE_TYPES: Record<string, string> = {
+  webp: "image/webp",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+};
+
 type Json = Record<string, unknown>;
 
 /** 絵の役どころ。`plain` が背景なし、`scene` が背景あり。 */
@@ -358,12 +377,14 @@ async function putImage(
  * @param {string} id 書類ID
  * @param {Role} role 役どころ
  * @param {Json} b 送られてきたもの（`full` と `sizes`）
+ * @param {Json} had 前に入っていた同じ役どころ。送られてこなかった欄はここから残す
  * @return {Promise<Json | {error: string}>} Firestore に入れる形
  */
 async function saveRole(
   id: string,
   role: Role,
   b: Json,
+  had: Json,
 ): Promise<Json | {error: string}> {
   const out: Json = {sizes: {} as Json};
   if (b.full) {
@@ -371,6 +392,14 @@ async function saveRole(
     if ("error" in r) return r;
     out.url = r.url;
     out.bytes = r.bytes;
+  } else if (typeof had.url === "string") {
+    /* **元の1枚は、送られてこなければ触らない。** 役どころごと差し替える
+       決まり（下の「送られてこなかった役どころには触らない」）と同じ考えで、
+       役どころの中も、送られてきたものだけを入れ替える。
+       焼き直し（`python/admin/characters_rebake.py`）は小さいほうだけを
+       送るので、ここで落とすと**持ち帰り用の元の絵が消える。** */
+    out.url = had.url;
+    if (typeof had.bytes === "number") out.bytes = had.bytes;
   }
   const s = (typeof b.sizes === "object" && b.sizes ? b.sizes : {}) as Json;
   for (const w of WIDTHS) {
@@ -381,8 +410,11 @@ async function saveRole(
   }
   const w = Math.max(0, Math.min(20000, Number(b.w) || 0));
   const h = Math.max(0, Math.min(20000, Number(b.h) || 0));
+  /* 大きさも同じ。送られてこなければ、前に入っていたものを残す。 */
   if (w) out.w = w;
+  else if (typeof had.w === "number") out.w = had.w;
   if (h) out.h = h;
+  else if (typeof had.h === "number") out.h = had.h;
   if (!out.url && Object.keys(out.sizes as Json).length === 0) {
     return {error: "no image"};
   }
@@ -440,6 +472,10 @@ export async function handleCharacters(
      ドライブの `lh3.googleusercontent.com/d/{id}=s128` の置き換えで、
      形をそろえてある。呼ぶ側は絵の id さえ知っていればよい。
 
+     **この名前は合言葉で、置き場のファイル名ではない。** 拡張子は
+     いつも `.webp` で呼んでよく、実物が png でも jpeg でも、こちらが
+     探して実物の型で返す（上の IMAGE_TYPES）。
+
      ## 送らずに、こちらから返す理由
 
      置き場へ 302 で送るほうが安いが、**カードの絵を canvas に描いている**
@@ -449,16 +485,18 @@ export async function handleCharacters(
 
      ## Firestore を読まない
 
-     置き場の名前は id と役どころと幅で決まるので、書類を引く必要がない。
-     島は22枚まとめて呼ぶ。**1枚ごとに書類を1回読んでいたら 22回**になる。
+     どこに置いてあるかは id だけで決まる（`island/characters/{id}/`）ので、
+     書類を引く必要がない。島は22枚まとめて呼ぶ。
+     **1枚ごとに書類を1回読んでいたら 22回**になる。
 
      ## 1年キャッシュしない
 
      あやとが画面から絵を入れ替えると、同じ名前のまま中身が変わる。
      長く焼き付けると、入れ替えたのに古い絵が出続ける。
      手前（CDN）は1時間、ブラウザは10分。 */
-  const img = /^\/characters\/([^/]+)\/(plain|scene)-(128|256|640)\.webp$/
-    .exec(q.path);
+  const img =
+    /^\/characters\/([^/]+)\/(plain|scene)-(128|256|640)\.(?:webp|png|jpe?g)$/
+      .exec(q.path);
   if (img && q.method === "GET") {
     const [, rawId, role, size] = img;
     const id = decodeURIComponent(rawId);
@@ -466,23 +504,53 @@ export async function handleCharacters(
       res.status(400).json({error: "bad id"});
       return true;
     }
-    /* 頼まれた幅が無ければ**大きいほうへ上げる。引き伸ばさない。**
-       元が 640px より小さい人は 640 を焼いていない
-       （`characters_migrate.py`「大きさは、こちらで焼く」）。
-       それも無ければ、焼いてあるいちばん大きいものへ落とす。 */
-    const want = Number(size);
-    const order = [
-      ...WIDTHS.filter((w) => w >= want),
-      ...WIDTHS.filter((w) => w < want).reverse(),
-    ];
     try {
       const bucket = admin.storage().bucket(BUCKET);
-      for (const w of order) {
-        const file = bucket.file(`island/characters/${id}/${role}-${w}.webp`);
-        const [ok] = await file.exists();
-        if (!ok) continue;
-        const [buf] = await file.download();
-        res.set("Content-Type", "image/webp");
+      /* **置き場の名前を決め打ちしない。一覧を1回引いて、そこから選ぶ。**
+
+         前は `${role}-${w}.webp` を直に開いていた。**焼いたものが webp
+         とは限らない**（上の IMAGE_TYPES）ので、png で入っていた1人だけ
+         図鑑が 404 になり、枠に代替テキストがはみ出していた。
+
+         1枚ずつ `exists()` を叩く形のまま拡張子を足すと、幅3×拡張子4で
+         12往復になる。1人ぶんの置き場は多くても8ファイルなので、
+         **一覧1回のほうが安い。** */
+      const [files] = await bucket.getFiles({
+        prefix: `island/characters/${id}/`,
+      });
+      type Stored = (typeof files)[number];
+      /* 幅（と、最後の逃げ場の "full"）→ 実物。同じ幅が2つあれば webp を
+         採る。焼き直しても**古い png は消さない**ので、両方残っている。 */
+      const have = new Map<string, Stored>();
+      for (const f of files) {
+        const m = /\/(plain|scene)-(\d+|full)\.([A-Za-z0-9]+)$/.exec(f.name);
+        if (!m || m[1] !== role || !IMAGE_TYPES[m[3].toLowerCase()]) continue;
+        const now = have.get(m[2]);
+        if (!now || (m[3] === "webp" && !now.name.endsWith(".webp"))) {
+          have.set(m[2], f);
+        }
+      }
+      /* 頼まれた幅が無ければ**大きいほうへ上げる。引き伸ばさない。**
+         元が 640px より小さい人は 640 を焼いていない
+         （`characters_migrate.py`「大きさは、こちらで焼く」）。
+         それも無ければ、焼いてあるいちばん大きいものへ落とす。
+
+         **焼いた幅が1つも無ければ、元の1枚（`-full`）へ落ちる。**
+         焼くのは元より小さい幅だけなので、幅が1枚も無い人は元そのものが
+         128px 以下。重い絵を掴まされる形にはならない。 */
+      const want = Number(size);
+      const order = [
+        ...WIDTHS.filter((w) => w >= want),
+        ...WIDTHS.filter((w) => w < want).reverse(),
+      ].map(String);
+      order.push("full");
+      const hit = order.map((k) => have.get(k)).find((f) => f);
+      if (hit) {
+        /* **返す型は、置いてある実物から決める。** 呼ばれた名前の拡張子
+           （いつも .webp）で名乗ると、png を webp として渡すことになる。 */
+        const ext = (/\.([A-Za-z0-9]+)$/.exec(hit.name) || ["", ""])[1];
+        const [buf] = await hit.download();
+        res.set("Content-Type", IMAGE_TYPES[ext.toLowerCase()] || "image/webp");
         res.set("Cache-Control", "public, max-age=600, s-maxage=3600");
         res.send(buf);
         return true;
@@ -635,7 +703,13 @@ export async function handleCharacters(
     for (const role of ROLES) {
       const sent = q.body[role];
       if (!sent || typeof sent !== "object") continue;
-      const saved = await saveRole(id, role, sent as Json);
+      const was = images[role];
+      const saved = await saveRole(
+        id,
+        role,
+        sent as Json,
+        (typeof was === "object" && was ? was : {}) as Json,
+      );
       if ("error" in saved) {
         res.status(400).json({error: saved.error, role});
         return true;
