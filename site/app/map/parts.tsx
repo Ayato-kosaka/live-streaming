@@ -137,9 +137,16 @@ export function HereStat({ slug, name }: { slug: string; name: string }) {
  *
  * 付ける行はビルド時に決まる（いちばん新しく歩いた国）。
  * その国を出たかどうかだけを、画面が出てから見る。
+ *
+ * **最初の描画も、焼いた時刻で引く**（`docs/island-misses.md` #30）。
+ * ここは `useState(true)` で始めていたので、**焼いた HTML には必ず
+ * 「いまここ」が入っていた。** 出発したあとは画面が出た瞬間に消えるが、
+ * 消えるまでのあいだ——回線の細いところでは数秒——年表のジョージアが
+ * 「いまここ」に見える。同じ面の `MapHead` も `HereStat` も `TripCountries` も
+ * 焼いた時刻で引いているので、ここだけが揃っていなかった。
  */
 export function HereTag({ slug }: { slug: string }) {
-  const [on, setOn] = useState(true);
+  const [on, setOn] = useState(() => stayNow(BUILT_AT)?.slug === slug);
   useEffect(() => setOn(stayNow(new Date())?.slug === slug), [slug]);
   return on ? <span className="atrip-here">いまここ</span> : null;
 }
@@ -192,7 +199,11 @@ export function StayLen({ slug, from, plus }: { slug: string; from: string; plus
  * これは日付で動かない。
  */
 export function HereRoute({ slug }: { slug: string }) {
-  const [ring, setRing] = useState(slug);
+  /* **最初の描画も、焼いた時刻で引く**（`docs/island-misses.md` #30）。
+     ここは渡された国をそのまま輪にして始めていたので、**焼いた HTML には
+     必ずコーカサスの桃色の輪が入っていた。** 開いた瞬間に消えるとはいえ、
+     消えるまでのあいだ、北欧を走っている晩の地図がジョージアで脈打つ。 */
+  const [ring, setRing] = useState(() => stayNow(BUILT_AT)?.slug ?? "");
   useEffect(() => setRing(stayNow(new Date())?.slug ?? ""), []);
   return <WorldRoute here={ring} focus={slug} />;
 }
