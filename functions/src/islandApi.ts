@@ -32,7 +32,7 @@ import {
 import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
-import {handleCards} from "./cards";
+import {handleCards, iconsOf} from "./cards";
 /* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
@@ -1856,6 +1856,11 @@ async function listPhotoDays(): Promise<Json[]> {
     Promise.all(days.map((d) => channelsOfDay(events, d))),
     listResidents(),
   ]);
+  /* **絵は、出す人ぶんだけを1回で引く**(`cards.ts` の `iconsOf`)。
+     日ごとに引くと旅の日数ぶん往復が増える。日が何日あっても2往復。
+     引く前に日ごとの上限(60人)で切る。出さない人の絵は要らない。 */
+  const shown = peopleByDay.map((x) => x.slice(0, 60));
+  const icons = await iconsOf(shown.flat());
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
@@ -1871,12 +1876,13 @@ async function listPhotoDays(): Promise<Json[]> {
   days.forEach((day, i) => {
     peopleOf.set(
       day,
-      peopleByDay[i].slice(0, 60).map((channelId) => ({
+      shown[i].map((channelId) => ({
         channelId,
-        /* 旧来は名簿が絵まで持つことがあった（手で足した Doneru の人）。
-           いまは絵の割り当てを `site/content/residents.ts` 1か所に寄せて
-           あるので、ここからは返さない。欄は画面の形を変えないために残す。 */
-        icon: null,
+        /* **絵は誰にでも出す。名前は出してよいと言った人だけ**（すぐ下）。
+           前はここも `null` と直に書いていて、画面が焼き込みの22人
+           (`site/content/residents.ts`)から引き直して埋めていた。表に
+           入っていない人は、そこで黙って消えていた（`cards.ts` と同じ根っこ）。 */
+        icon: icons.get(channelId) || null,
         name: named.get(channelId) || null,
       })),
     );
