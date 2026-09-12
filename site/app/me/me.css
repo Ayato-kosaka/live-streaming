@@ -796,3 +796,116 @@
   font-weight: 800;
   color: var(--ink-2);
 }
+
+/* --- スパチャの控え（`components/me/FundHistory.tsx`。#292） ------------
+   読むだけの道具。**押しどころは「もっと古いぶん」1つだけ**なので、
+   1行1行には厚みを付けない（`docs/island-design.md` 3-3）。
+
+   走っている車の中でスマホ片手に開く。日ごとにまとめて、その晩のぶんが
+   入ったかどうかを、数えずに読めるようにしてある。 */
+
+/* ぜんぶで何件・いくら。**数えられたときだけ出る**（0 に倒さない）。 */
+.mp-sc-sum {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mp-sc-sum b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 貯金箱に入るぶん（半分）。行を変えて、上の合計と混ざらないようにする。 */
+.mp-sc-sum i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.mp-sc-day { margin-top: var(--sp-4); }
+
+/* 日の見出し。**その晩いくら来たか**が、ここだけで読める。 */
+.mp-sc-dayh {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--bw-1) solid var(--frame);
+}
+.mp-sc-dayh b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+.mp-sc-dayh i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.mp-sc-list { list-style: none; margin: 0; padding: 0; }
+/* 1件。時刻・名前・額の3つ。**名前だけが伸び縮みする。**
+   48px は押しどころの寸法なので、押せないここには要らない。
+   ただし指でなぞる高さは要るので 34px 取る。 */
+.mp-sc-list > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: var(--sp-1) 0;
+}
+.mp-sc-list > li + li { border-top: var(--bw-1) solid var(--frame); }
+/* 時刻。**打った日しか分からないものには出ない**ので、空でも幅は取る
+   （出る行と出ない行で、名前の左端がずれると読みにくい）。 */
+.mp-sc-time {
+  flex: none;
+  width: 38px;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.mp-sc-who {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.mp-sc-yen {
+  flex: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* 続き。**押しどころなので厚みを付ける。** 幅いっぱい・48px。 */
+.mp-sc-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.mp-sc-more:active { transform: translateY(4px); box-shadow: none; }
+.mp-sc-more:disabled { opacity: 0.62; box-shadow: none; }
