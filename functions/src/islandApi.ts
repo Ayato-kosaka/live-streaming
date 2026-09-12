@@ -42,6 +42,12 @@ import {handleDonors} from "./donors";
    引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
    どちらも単一フィールドで引く（`islandCharacter.ts` 冒頭）。 */
 import {handleCharacters} from "./islandCharacter";
+/* 公開バケットの片づけ(#289)。**1回きりの道具。用が済んだら1本ごと外す。**
+   投げ銭してくれた113人の名前と金額が、ログイン無しで誰でも読める置き場に
+   残っている。Actions のサービスアカウントは `list` と `get` しか持って
+   いないので消せない。Functions からなら何ができるかを、まず測る
+   （`publicPurge.ts` 冒頭）。 */
+import {handlePublicPurge} from "./publicPurge";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -1971,6 +1977,21 @@ export const islandApi = onRequest(
           },
           res,
           {ownerUid, alertboxKey},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- 公開バケットの片づけ(#289) ----------------
+         中身は `publicPurge.ts`。ここは取り付けだけ。扱ったら true。
+         **既定では1バイトも書かない。** あやとだけが叩けて、消せるのは
+         あちらの決め打ちの表に載っている2つだけ。
+         **用が済んだら、この取り付けごと外す。** */
+      if (
+        await handlePublicPurge(
+          {method, path, auth: req.headers.authorization, body},
+          res,
+          {ownerUid},
         )
       ) {
         return;
