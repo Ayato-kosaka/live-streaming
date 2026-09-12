@@ -90,11 +90,23 @@ function hintMeta(h: DonorHint): string {
  *
  * 打った字と、繋がった先の名前が同じときは、片方だけ。
  * 「@ひめひめ-r9z → @ひめひめ-r9z につながりました」は、読んで何も増えない。
+ *
+ * **何で引けたか（`VIA_NAME`）を出すのは、打って繋いだときだけ。**
+ * 打った人は、その字が何に当たったのかを見て、繋がった先を信じてよいか
+ * どうかを決める。候補を押した人は、名前と一緒にいた日数を見てその人を
+ * 選んでいるので、もう確かめるものが残っていない。そこに引き方の名前を
+ * 出すと、中の話がそのまま画面に出る。**丸かっこごと出さない。**
  */
-function saidOk(typed: string, d: Donor, via: DonorVia | null): string {
+function saidOk(
+  typed: string,
+  d: Donor,
+  via: DonorVia | null,
+  showVia: boolean,
+): string {
   const name = d.channelName ?? d.channelId ?? typed;
   const to = name === typed ? typed : `${typed} → ${name}`;
-  return `${to} につながりました（${VIA_NAME[via ?? "dict"]}）`;
+  const said = `${to} につながりました`;
+  return showVia ? `${said}（${VIA_NAME[via ?? "dict"]}）` : said;
 }
 
 /**
@@ -347,12 +359,14 @@ function Row({
    * 入口を増やしてそこを踏み外さないようにする。
    *
    * `sent` はサーバーに渡す字（打った名前か、候補のチャンネルID）。
-   * `shown` は押した人に見せる字。**候補を押したときは、その人の名前。**
-   * UC から始まる24文字をそのまま出しても、誰に繋がったのか読めない。
+   * `picked` は**候補を押したときの、その人**。打って押したときは無い。
+   * 見せる字がその人の名前になる（UC から始まる24文字をそのまま出しても、
+   * 誰に繋がったのか読めない）のと、引き方を言わないのが、ここで分かれる。
    */
-  const send = async (sent: string, shown = sent) => {
+  const send = async (sent: string, picked?: DonorHint) => {
     const t = await token();
     if (!t) return;
+    const shown = picked ? picked.name : sent;
     setBusy(true);
     setSaid(null);
     const r = await linkDonor(donor.viewerPk, sent, t);
@@ -366,7 +380,7 @@ function Row({
       onChanged({ ...r.donor, hints: r.donor.hints?.length ? r.donor.hints : hints });
       // 欄も、いま繋がっている人にそろえる（空のまま残すと、次に押せない）
       setTyped(shown);
-      setSaid(saidOk(shown, r.donor, r.via));
+      setSaid(saidOk(shown, r.donor, r.via, !picked));
     } else if (r.why === "duplicate") {
       setSaid(`${shown} は2人に使われています。チャンネルID（UC…）を貼ってください。`);
     } else if (r.why === "notfound") {
@@ -464,7 +478,7 @@ function Row({
               key={h.channelId}
               className="mp-donor-hint"
               disabled={busy}
-              onClick={() => send(h.channelId, h.name)}
+              onClick={() => send(h.channelId, h)}
             >
               <b>{h.name}</b>
               {/* 選ぶときに見るのはこの2つ。**どちらも無い人は、名前だけ。**
@@ -539,7 +553,7 @@ function NewRow({ onChanged }: { onChanged: (d: Donor) => void }) {
       onChanged(r.donor);
       setPk("");
       setTyped("");
-      setSaid(saidOk(v, r.donor, r.via));
+      setSaid(saidOk(v, r.donor, r.via, true));
     } else if (r.why === "duplicate") {
       setSaid(`${v} は2人に使われています。チャンネルID（UC…）を貼ってください。`);
     } else if (r.why === "notfound") {
