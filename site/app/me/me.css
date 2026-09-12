@@ -102,6 +102,11 @@
    じぶんのことの中に置いたままだと、あちらから読めない。 */
 
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
+/* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
+   そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
+   （`.mp-tab.is-on` は 3px 沈むので、OBS の当たりが 78x46 になっていた）。
+   吊るしたぶんの場所を、紙で始まる道具にだけあける。 */
+.mp-tool-body > .panel { margin-top: var(--sp-4); }
 /* 書き込む欄は指で押すもの。48px を割らせない（`island-design.md` 3-2）。
    `.dform` の素の欄は 45〜46px しかない。ここだけ持ち上げる。 */
 .mp-tool .nph-post-row input,
@@ -674,13 +679,9 @@
   font-size: var(--fs-note);
   color: var(--ink-2);
 }
-/* 絵文字は絵の右上に重ねる。1行取ると、3列のマスが縦に伸びて棚が長くなる。 */
-.ch-cell-emoji {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: var(--fs-note);
-}
+/* 図鑑のマスに絵文字を重ねていたが、外した（`docs/island-design.md` 1章:
+   `content/*.ts` の `emoji` は残っているが画面に出さない）。95枚のマスに
+   飾りで乗っていて、実 DOM で93個出ていた。編集の欄だけが残る。 */
 .ch-cell-name {
   width: 100%;
   font-size: var(--fs-note);
