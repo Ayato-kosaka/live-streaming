@@ -35,7 +35,13 @@ def main() -> None:
     token = owner_token(db())
     got = call("GET", "/fund/history", token)
 
-    rows = got.get("items") or got.get("rows") or []
+    # **欄の名前を推測しない。** 口が返す名前は `chats`（`islandApi.ts`）。
+    # 最初は items / rows を当てにいって「0件」と出し、口が壊れていると
+    # 読み違えるところだった。**当たらなかったら、何が返ったかを出す。**
+    rows = got.get("chats")
+    if rows is None:
+        log.error("`chats` が無い。返ってきた欄: %s", sorted(got.keys()))
+        raise SystemExit("口の返す形が変わっている")
     log.info("返ってきました。%d件", len(rows))
     if rows:
         # **欄の名前だけ。** 値は1つも出さない
@@ -50,6 +56,8 @@ def main() -> None:
     log.info("置き場には %d件", n)
     if not rows:
         raise SystemExit("口は返ったが0件だった。置き場には %d件ある" % n)
+    if len(rows) > n:
+        raise SystemExit("口が置き場より多く返した（%d > %d）" % (len(rows), n))
     log.info("通りました（1バイトも書いていません）")
 
 
