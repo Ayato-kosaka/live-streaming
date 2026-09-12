@@ -1,0 +1,85 @@
+name: 1日目のショート素材を作る
+
+# ショート動画の素材を、配信4本から切り出して1本に繋ぐ。
+#
+# **なぜ Actions でやるか。** 作業箱から googlevideo に取りに行くと必ず 403 になる。
+# 署名付き URL は取りに来た IP に紐づくのに、箱の出口が接続ごとに別の IP に
+# 変わるため（実測 160.79.106.128 / .131 / .137 …）。ランナーは1つの IP で
+# 最後まで通るので、そこが塞がらない。
+# 置き場（Firebase Storage）に書けるのは Functions だけで、しかもあの口は
+# 小さな絵しか受け取らない。**大きい mp4 の渡し口は artifact しかない。**
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "probe=コメントだけ取って当たりを付ける / full=切って繋ぐ"
+        type: choice
+        options: [probe, full]
+        default: probe
+      height:
+        description: "縦の画素数（720 で足りなければ 480）"
+        default: "720"
+
+permissions:
+  contents: read
+
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: 道具を入れる
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
+          ffmpeg -version | head -1
+          # PO Token を作る側。**これが無いと YouTube は媒体を渡してくれない。**
+          git clone --depth 1 --branch 2.0.0 \
+            https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil
+          npm --prefix /tmp/bgutil/server install --silent
+          deno run -A /tmp/bgutil/server/src/generate_once.ts --version
+
+      - name: コメントの記録を取る
+        run: python3 tools/clip/day1_cut.py chat
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+
+      - name: 媒体が取れるか確かめる
+        if: inputs.mode == 'probe'
+        run: python3 tools/clip/day1_cut.py check
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+
+      - name: 場面の当たりを出す
+        if: inputs.mode == 'probe'
+        run: python3 tools/clip/day1_cut.py scan
+
+      - name: 落として切って繋ぐ
+        if: inputs.mode == 'full'
+        run: python3 tools/clip/day1_cut.py build
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+          CLIP_HEIGHT: ${{ inputs.height }}
+
+      - name: 出来たものを渡す
+        if: inputs.mode == 'full'
+        uses: actions/upload-artifact@v4
+        with:
+          name: day1-shorts
+          path: out/
+          retention-days: 30
+          compression-level: 0
+
+      - name: コメントの記録を渡す
+        if: inputs.mode == 'probe'
+        uses: actions/upload-artifact@v4
+        with:
+          name: day1-chat
+          path: chat/
+          retention-days: 7
