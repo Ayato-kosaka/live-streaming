@@ -78,3 +78,8 @@ tools/sprites/_*
 
 # OpenStreetMap の生データ（数十MB。tools/nordic/osmfetch.py が落とす）
 tools/nordic/.osmcache/
+
+# 切り抜きの mp4 を作るとき、yt-dlp が n challenge を解くのに deno を使う。
+# リポジトリ直下で走らせると置き土産が出るが、これは道具の作業ファイルで
+# 中身に意味は無い。毎回コミットを求められるので無視する。
+deno.lock
