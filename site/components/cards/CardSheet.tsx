@@ -157,117 +157,134 @@ export default function CardSheet({
       {/* 外を押しても閉じる。絵の裏なので、押せる合図は持たせない */}
       <button className="akd-back" aria-label="閉じる" onClick={onClose} />
       <div className="akd-sheet">
-        <button ref={closeRef} className="akd-close" onClick={onClose} aria-label="閉じる">
-          <Icon name="close" size={18} />
-        </button>
+        {/* **紙は、頭・胴・足の3つ。**
+            送るのは胴だけで、頭（日付と閉じる）と足（持って帰る）は動かない。
 
-        <p className="akd-sheet-h">
-          <b>{cardWhen(group.day)}</b>
-        </p>
-
-        <div className="nstudio-shot">
-          {out ? (
-            <img src={out.url} alt={group.note || "その日の写真"} />
-          ) : failed === "chr" ? (
-            /* 焼けていない1枚を出しておくと、長押しで持って帰れてしまう。
-               絵は出さずに、次にできることだけ言う。 */
-            <p className="nstudio-off">
-              このキャラクターの絵がいま読めません。
-              <br />
-              ほかの人にしてみてください。
-            </p>
-          ) : failed ? (
-            <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
-          ) : (
-            <div className="wait is-card" aria-hidden>
-              <span />
-            </div>
-          )}
+            前は1枚の紙をまるごと送って、足だけ底に貼り付けていた
+            （`position: sticky`）。**貼り付けた帯は、上にある札の上へ
+            かぶさる。** 候補が3人までは1段で収まるので誰も踏まなかったが、
+            絵を引き直して4人目が出た日に、2段目の札が帯の下へ潜った
+            （2026-09-12。実測で 4,675px² 重なっていた）。
+            **送らない足にすれば、重なりようがない。** */}
+        <div className="akd-sheet-head">
+          <p className="akd-sheet-h">
+            <b>{cardWhen(group.day)}</b>
+          </p>
+          <button ref={closeRef} className="akd-close" onClick={onClose} aria-label="閉じる">
+            <Icon name="close" size={18} />
+          </button>
         </div>
-        {group.note && <p className="nstudio-note">{group.note}</p>}
 
-        {picks.length > 0 && (
-          <>
-            <p className="nstudio-ask">だれを入れますか</p>
-            <div className="nstudio-pick">
-              {/* 全部のマスが押せるので、1枚ずつに厚みは付けない
-                  （`docs/island-world.md` 3.5）。押せないマスを混ぜない。 */}
-              <button
-                className={`npick${chosen === null ? " is-on" : ""}`}
-                aria-pressed={chosen === null}
-                onClick={() => setChosen(null)}
-              >
-                {/* 「入れない」は禁止ではなく、対等な選択肢の1つ。
-                    赤い禁止の印を置くと、選んではいけないものに見える。
-                    空けておく、を島の言葉（`.blank` の破線）で言う。 */}
-                <span className="npick-none" aria-hidden />
-                <i>入れない</i>
-              </button>
-              {picks.map((p) => (
+        <div className="akd-sheet-body">
+          <div className="nstudio-shot">
+            {out ? (
+              <img src={out.url} alt={group.note || "その日の写真"} />
+            ) : failed === "chr" ? (
+              /* 焼けていない1枚を出しておくと、長押しで持って帰れてしまう。
+                 絵は出さずに、次にできることだけ言う。 */
+              <p className="nstudio-off">
+                このキャラクターの絵がいま読めません。
+                <br />
+                ほかの人にしてみてください。
+              </p>
+            ) : failed ? (
+              <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
+            ) : (
+              <div className="wait is-card" aria-hidden>
+                <span />
+              </div>
+            )}
+          </div>
+          {group.note && <p className="nstudio-note">{group.note}</p>}
+
+          {picks.length > 0 && (
+            <>
+              <p className="nstudio-ask">だれを入れますか</p>
+              <div className="nstudio-pick">
+                {/* 全部のマスが押せるので、1枚ずつに厚みは付けない
+                    （`docs/island-world.md` 3.5）。押せないマスを混ぜない。 */}
                 <button
-                  key={p.key}
-                  className={`npick${chosen?.icon === p.icon ? " is-on" : ""}`}
-                  aria-pressed={chosen?.icon === p.icon}
-                  aria-label={p.name || "この人を入れる"}
-                  onClick={() => setChosen(p)}
+                  className={`npick${chosen === null ? " is-on" : ""}`}
+                  aria-pressed={chosen === null}
+                  onClick={() => setChosen(null)}
                 >
-                  {/* canvas に描くのと同じ URL なので、ここでも crossOrigin を
-                      付ける（付けずに先に読むと、CORS ヘッダの無い絵が
-                      キャッシュに残って焼けなくなる端末がある） */}
-                  <img src={cardIcon(p.icon, 128)} alt="" loading="lazy" crossOrigin="anonymous" />
-                  {p.name && <i>{p.name}</i>}
+                  {/* 「入れない」は禁止ではなく、対等な選択肢の1つ。
+                      赤い禁止の印を置くと、選んではいけないものに見える。
+                      空けておく、を島の言葉（`.blank` の破線）で言う。 */}
+                  <span className="npick-none" aria-hidden />
+                  <i>入れない</i>
                 </button>
+                {picks.map((p) => (
+                  <button
+                    key={p.key}
+                    className={`npick${chosen?.icon === p.icon ? " is-on" : ""}`}
+                    aria-pressed={chosen?.icon === p.icon}
+                    aria-label={p.name || "この人を入れる"}
+                    onClick={() => setChosen(p)}
+                  >
+                    {/* canvas に描くのと同じ URL なので、ここでも crossOrigin を
+                        付ける（付けずに先に読むと、CORS ヘッダの無い絵が
+                        キャッシュに残って焼けなくなる端末がある） */}
+                    <img src={cardIcon(p.icon, 128)} alt="" loading="lazy" crossOrigin="anonymous" />
+                    {p.name && <i>{p.name}</i>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* その日の企画への行き先。**いちばん下に置く。** 上に置くと、
+              9月11日のように4本立つ日は、写真より先に青い字が4行ならんで
+              そちらに目が行く（`docs/island-design.md` 3章の4）。
+              ここでやることは「入れて、持って帰る」で、企画は寄り道。
+              押せるのは字なので、厚みではなく下線で示す。 */}
+          {plans && plans.length > 0 && (
+            <div className="akd-sheet-plans">
+              {plans.map((p) => (
+                <Link key={p.href} className="akd-sheet-plan" href={p.href} prefetch={false}>
+                  {p.title}
+                </Link>
               ))}
             </div>
-          </>
-        )}
+          )}
 
-        <div className="nstudio-save">
-          <button className="nstudio-go" onClick={save} disabled={!out}>
-            <Icon name="download" size={16} />
-            ほぞんする
-          </button>
-          {out && (
-            <a
-              className="nstudio-tab"
-              href={out.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              べつのタブでひらく
-              <Icon name="external" size={13} />
-            </a>
+          {/* 消す道。**いちばん下、いちばん静か。** ここでやることは
+              「入れて、持って帰る」で、消すのはあやとが貼り間違えた日だけ。
+              上に置くと、持って帰りに来た人の目にいちばん先に入る。
+              あやと以外には1つも出ない（`DropPhoto` の中で消える）。 */}
+          {onDropped && (
+            <DropPhoto
+              photoId={group.photoId}
+              cardCount={group.cardCount}
+              onDropped={onDropped}
+            />
           )}
         </div>
-        {/* 焼けていないときは言わない。長押しする絵がそこに無い */}
-        {out && <p className="nstudio-tip">写真を長押ししても保存できます。</p>}
 
-        {/* その日の企画への行き先。**いちばん下に置く。** 上に置くと、
-            9月11日のように4本立つ日は、写真より先に青い字が4行ならんで
-            そちらに目が行く（`docs/island-design.md` 3章の4）。
-            ここでやることは「入れて、持って帰る」で、企画は寄り道。
-            押せるのは字なので、厚みではなく下線で示す。 */}
-        {plans && plans.length > 0 && (
-          <div className="akd-sheet-plans">
-            {plans.map((p) => (
-              <Link key={p.href} className="akd-sheet-plan" href={p.href} prefetch={false}>
-                {p.title}
-              </Link>
-            ))}
+        {/* 紙の足。**ここだけ送っても動かない。** 候補が12人いても
+            「ほぞんする」が紙の外へ出ない、というのが元の狙いで、
+            それを重ならない形でやる。 */}
+        <div className="akd-sheet-foot">
+          <div className="nstudio-save">
+            <button className="nstudio-go" onClick={save} disabled={!out}>
+              <Icon name="download" size={16} />
+              ほぞんする
+            </button>
+            {out && (
+              <a
+                className="nstudio-tab"
+                href={out.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                べつのタブでひらく
+                <Icon name="external" size={13} />
+              </a>
+            )}
           </div>
-        )}
-
-        {/* 消す道。**いちばん下、いちばん静か。** ここでやることは
-            「入れて、持って帰る」で、消すのはあやとが貼り間違えた日だけ。
-            上に置くと、持って帰りに来た人の目にいちばん先に入る。
-            あやと以外には1つも出ない（`DropPhoto` の中で消える）。 */}
-        {onDropped && (
-          <DropPhoto
-            photoId={group.photoId}
-            cardCount={group.cardCount}
-            onDropped={onDropped}
-          />
-        )}
+          {/* 焼けていないときは言わない。長押しする絵がそこに無い */}
+          {out && <p className="nstudio-tip">写真を長押ししても保存できます。</p>}
+        </div>
       </div>
     </div>
   );
