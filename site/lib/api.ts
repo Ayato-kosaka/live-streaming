@@ -1158,6 +1158,23 @@ export const sayRouletteResult = (id: string, token: string) =>
 /** 対応表の状態。**「あとで引く」は無い。** 打ったその場で決まる。 */
 export type DonorState = "new" | "unlinked" | "linked";
 
+/**
+ * 近い名前の人。**押すと、その人につながる。**
+ *
+ * 呼び名（「ゆずたつ」）から YouTube の handle の枝番（`-q3n`）は
+ * 思い出せない。**打てないものは、押せるようにする。**
+ * サーバーが繋ぐわけではない。決めるのはあやと。
+ */
+export type DonorHint = {
+  channelId: string;
+  /** そのチャンネルがいま名乗っている名前 */
+  name: string;
+  /** 一緒にいた日数。辞書に入っていなければ null */
+  days: number | null;
+  /** さいごに喋った時刻。辞書に入っていなければ null */
+  lastAt: string | null;
+};
+
 /** 対応表の1行。 */
 export type Donor = {
   /** Doneru の どねID。**書類の id なので、直せない** */
@@ -1177,6 +1194,12 @@ export type Donor = {
   editedAt: string | null;
   /** 画面から足した行か。**戻ってこない行だけ、消せる** */
   canDelete: boolean;
+  /**
+   * 近い名前の人。**紐付け待ちの行にだけ入る。**
+   *
+   * 古い口が返さないことがあるので、無いものとして扱える形にしておく。
+   */
+  hints?: DonorHint[];
 };
 
 /** 何で引けたか。押した人に「何に繋がったか」を見せるために返る。 */
