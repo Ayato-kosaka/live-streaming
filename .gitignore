@@ -78,3 +78,8 @@ tools/sprites/_*
 
 # OpenStreetMap の生データ（数十MB。tools/nordic/osmfetch.py が落とす）
 tools/nordic/.osmcache/
+
+# キャラクターの絵と名前の受け渡し場所（python/admin/characters_add.py）。
+# **誰の絵が誰のものかは公開リポジトリに残さない。** 流すときだけ枝に
+# `git add -f` で載せて、済んだら枝ごと落とす。
+python/admin/_incoming/
