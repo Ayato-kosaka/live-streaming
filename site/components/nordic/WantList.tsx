@@ -2,6 +2,7 @@
 
 import FarMark from "@/components/nordic/FarMark";
 import Longer from "@/components/ui/Longer";
+import Wrote from "@/components/ui/Wrote";
 
 /**
  * 「この街で見たいもの」の一覧。
@@ -117,11 +118,13 @@ export default function WantList({ items }: { items: WantItem[] }) {
                 これは {s.by ? `${s.by} さん` : "島の誰か"} が教えてくれたもの
               </em>
             )}
-            {s.say && <span className="ndsp-say">{s.say}</span>}
+            {/* **書いてくれたまま出す。** 箇条書きを1本の棒にすると、行の終わりと
+                次の行の頭がくっついて別の語に読める（#83） */}
+            <Wrote t={s.say} className="ndsp-say" />
             {s.reply && (
               <span className="ndsp-reply">
                 <b>あやと</b>
-                <q>{s.reply}</q>
+                <Wrote t={s.reply} as="q" />
               </span>
             )}
           </span>

@@ -1,3 +1,5 @@
+import Wrote from "@/components/ui/Wrote";
+
 /**
  * 引用の吹き出し。**視聴者さんが書いた文章を、書かれたまま出す**ための部品。
  *
@@ -57,7 +59,8 @@ export default function Voice({
           {name}
           {meta && <em>{meta}</em>}
         </span>
-        <p className="avoice-say">{text}</p>
+        {/* **書かれたまま出す。** 改行も書いた人が置いたもの（#83） */}
+        <Wrote t={text} as="p" className="avoice-say" />
       </div>
     </li>
   );
