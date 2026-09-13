@@ -160,8 +160,9 @@ def here(client, video: str) -> tuple[int, list[dict]]:
             paid.append({
                 "at": int(v.get("at") or 0),
                 "channelId": str(v.get("channelId") or ""),
-                # **本文そのものは持ち歩かない。** 空かどうかだけ
+                # **本文そのものは持ち歩かない。** 空かどうかと、長さだけ
                 "empty": not str(v.get("text") or ""),
+                "len": len(str(v.get("text") or "")),
             })
     return total, paid
 
@@ -267,6 +268,13 @@ def main() -> None:
         todo += lack
         # 突き合わせが効いているかを、時刻の差で見せる。**書かずに読める。**
         gaps = [g for r in rs for ok, g in [already(r, paid)] if ok]
+        # **本文の長さだけ**を両側から出す。中身は出さない。
+        # 「BigQuery は 0文字なのに Firestore は 12文字」のように割れていたら、
+        # 同じ1件を別の字で持っているということ（どちらが本当かを見に行く）
+        if rs:
+            log.info("    本文の長さ BigQuery=%s / Firestore(投げ銭)=%s",
+                     sorted(len(r["message_text"] or "") for r in rs),
+                     sorted(d["len"] for d in paid))
         log.info(
             "  %s  BigQuery: 投げ銭 %d件（本文なし %d件）"
             " / Firestore: %d件（うち投げ銭 %d件・本文が空 %d件）"
