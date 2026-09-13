@@ -268,12 +268,19 @@ const MEASURE = () => {
           flipped = deg > 95 && deg < 265;
         }
       }
-      /* **扇からはみ出していないか。**
-         札は半径 178 のところに、半径と直角な向きで置いてある
-         （`Wheel.tsx` の `polar(178, deg)` ＋ `rotate(deg+90)`）。
-         扇の境は中心から出る2本の半径なので、その直線が扇の中に
-         いられる長さは **2 × 178 × tan(180/n)**。
-         字がそれより長いと、隣の扇や外の輪まで乗る。 */
+      /* **この式はもう当たらない。数字を信じないこと**（2026-09-13）。
+
+         札は半径 178 に半径と直角で置いてあった。その頃は、扇の境が
+         中心から出る2本の半径なので、直線が扇の中にいられる長さは
+         **2 × 178 × tan(180/n)** だった。
+
+         **置きかたを変えたので、この式は別のものを測っている。**
+         直したあとの輪でも「27件はみ出し」と出るが、**嘘**。
+         `getComputedTextLength` も字の下駄（em 箱＝実寸の 1.38倍）を含む。
+
+         正しいのは `tools/sprites/rlspill.py`（+ `rlfit.mjs`）。
+         **描かれた画素**で測るので、置きかたを知らずに前後を比べられる。
+         ここは前の値との突き合わせのために残してあるだけ。 */
       let textW = null, fitW = null;
       if (svg && el.classList.contains("rl-label") && el.getComputedTextLength) {
         const n = el.ownerSVGElement.querySelectorAll(".rl-label").length;
@@ -412,7 +419,7 @@ for (const sc of SCENES) {
       console.log(`  SMIL(<animate>) ${r.smil}`);
       const flip = r.inch.filter((x) => x.flipped).length;
       const spill = r.inch.filter((x) => x.fitW && x.textW > x.fitW).length;
-      console.log(`  字の実寸（画面に何pxで描かれているか）／上下さかさま ${flip}件／扇からはみ出し ${spill}件`);
+      console.log(`  字の実寸（画面に何pxで描かれているか）／上下さかさま ${flip}件／扇からはみ出し ${spill}件 ← **この数は当てにならない。rlspill.py を見ること**`);
       for (const x of r.inch) {
         const over = x.fitW ? `  字幅 ${x.textW} / 扇に入る幅 ${x.fitW}${x.textW > x.fitW ? ` ← ${(x.textW / x.fitW).toFixed(2)}倍 はみ出し` : ""}` : "";
         console.log(`     ${String(x.painted).padStart(6)}px  ${x.what}「${x.t}」${x.flipped ? "  ← 上下さかさま" : ""}${over}`);
