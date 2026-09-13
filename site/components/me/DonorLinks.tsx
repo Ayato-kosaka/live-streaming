@@ -437,16 +437,19 @@ function Row({
   return (
     <li>
       <p className="mp-care-text">{donor.label || donor.handle || donor.viewerPk}</p>
+      {/* いまの状態・繋がっている先・初めて来た日。**札にしない**（`.mp-note-foot`）。
+          ここは多いと4つ並ぶ欄で、札にすると 360px で必ず2行になる。
+          「◯月◯日に来た」が 30人中28人に出るようになって、いよいよ効いた。 */}
       <p className="mp-note-foot">
-        <span className="chip">{STATE_NAME[donor.state]}</span>
+        <span>{STATE_NAME[donor.state]}</span>
         {/* いま繋がっている先。**辞書に載っていない人（YouTube から引いた人）は
             名前が引けない**ので、そのときは打った字をそのまま出す。
             「繋がっているのに、何にも繋がっていないように見える」を作らない。 */}
         {(donor.channelName || donor.handle) && (
-          <span className="chip">{donor.channelName || donor.handle}</span>
+          <span>{donor.channelName || donor.handle}</span>
         )}
-        {donor.isOwner && <span className="chip">あやと本人</span>}
-        {came && <span className="chip">{`${came}に来た`}</span>}
+        {donor.isOwner && <span>あやと本人</span>}
+        {came && <span>{`${came}に来た`}</span>}
       </p>
       {donor.note && <p className="mp-donor-note">{donor.note}</p>}
       <div className="dform mp-donor-form">

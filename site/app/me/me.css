@@ -195,10 +195,17 @@
   color: var(--ink);
   white-space: pre-wrap;
 }
-/* テーマ・日付・ハートの行。**札（`.chip`）をやめて字だけにした**（#225）。
+/* 一覧の行の**足元**。テーマ・日付・ハート、状態・繋がっている先、段・さんせい。
+   **札（`.chip`）をやめて字だけにした**（#225）。
    札は1つ 28px の高さと左右の余白を持つので、3つ並ぶだけで1枚が1行ぶん高くなる。
    ここは読んで場所が分かればいいだけで、押しどころではない。
-   区切りは中黒。並べても背が伸びない。 */
+   区切りは中黒。並べても背が伸びない。
+
+   **この入れ物を使う3つは、中に札を入れない。**
+   `MyStuff`（付箋・企画）・`OwnerCare`（付箋・企画）・`DonorLinks`（投げ銭）。
+   区切りの中黒は下の擬似要素が入れるので、中に `.chip` を混ぜると
+   **札の中に中黒が1つ入って**「札・札」ではなく「札」「・札」に見える。
+   実際そうなっていて、投げ銭の行は 360px で 30.4px → 60.8px（2行）だった。 */
 .mp-note-foot {
   margin: 0;
   display: flex;
@@ -210,10 +217,36 @@
   line-height: var(--lh-body);
   color: var(--ink-2);
 }
-.mp-note-foot > span + span::before {
+/* 区切りは**前の字の後ろ**に付ける（`::after`）。折り返さないうちは
+   `::before` でも同じ絵になるが、**折り返した瞬間に違う。**
+   後ろの字に付けると、2行目が「・」で始まって箇条書きに見える。
+   投げ銭の行は多いと4つ並ぶ（状態・繋がっている先・あやと本人・来た日）ので、
+   360px では折り返すほうがふつう。前に付ければ、2行目は字から始まる。 */
+.mp-note-foot > span:not(:last-child)::after {
   content: "・";
   padding: 0 var(--sp-1);
   color: var(--rule);
+}
+/* 決めごとを、書き手の覚えではなく**入れ物の側**に持たせる。
+   3つの部品が同じ入れ物を使っていて、そのうち2つが札を混ぜていた。
+   「混ぜない」と書いておくだけでは、次に足す人がまた混ぜる。
+   混ざっても、ここで字に落ちる。
+
+   **`span` に絞ってある。** 押せる札（`a.chip` / `button.chip`）は板で、
+   厚みが「押せる」の合図（`island-design.md` 3章3）。ここで平らにすると
+   合図を消すことになる。足元に押しどころは無いので、平らにするのは字だけ。 */
+.mp-note-foot > span.chip {
+  background: none;
+  min-height: 0;
+  padding: 0;
+  /* 札は中で inline-flex なので、字と区切りのあいだに隙間を持つ。
+     0 に戻さないと、混ぜた行だけ字間が広く見える */
+  gap: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 /* ハートの数。**数は行の字の色のまま。** 桃色にすると、紙の上で
    2.68 : 1 しか出ない（`tools/sprites/inkpx.mjs` で実測）。色を持つのは絵だけ。 */
@@ -260,7 +293,8 @@
   font-weight: 800;
   color: var(--ink-2);
 }
-.mp-plan-t i > span + span::before {
+/* 区切りの付け方は足元（`.mp-note-foot`）と同じ。前の字の後ろに付ける。 */
+.mp-plan-t i > span:not(:last-child)::after {
   content: "・";
   padding: 0 var(--sp-1);
   color: var(--rule);

@@ -304,14 +304,15 @@ function StickyRow({
   return (
     <li>
       <p className="mp-care-text">{note.text}</p>
+      {/* テーマ・日付・貼った人。**札にしない**（`.mp-note-foot`）。
+          札は1つ 28px と左右の余白を持つので、3つ並ぶと1件が1行ぶん高くなる。
+          区切りは入れ物が中黒で入れるので、ここでは字だけを並べる。 */}
       <p className="mp-note-foot">
-        <span className="chip">{th?.name ?? note.theme}</span>
+        <span>{th?.name ?? note.theme}</span>
         {/* 貼った時刻は UTC で入っている。**日本時間で切る**（`jstDay`）。
             字をそのまま切ると、日本の朝9時より前に貼った付箋が前日に出る */}
-        {jstDay(note.createdAt) && (
-          <span className="chip">{jstDay(note.createdAt)}</span>
-        )}
-        {note.by && <span className="chip">{note.by}</span>}
+        {jstDay(note.createdAt) && <span>{jstDay(note.createdAt)}</span>}
+        {note.by && <span>{note.by}</span>}
       </p>
       <textarea
         className="bin"
@@ -455,10 +456,11 @@ function PlanRow({
   return (
     <li>
       <p className="mp-care-text">{plan.title || "（題なし）"}</p>
+      {/* 段・出した人・さんせい。付箋の足元と同じ作り（札にしない）。 */}
       <p className="mp-note-foot">
-        <span className="chip">いま {PLAN_STATUS_NAME[plan.status]}</span>
-        {plan.by && <span className="chip">{plan.by}</span>}
-        {plan.hearts > 0 && <span className="chip">さんせい {plan.hearts}</span>}
+        <span>いま {PLAN_STATUS_NAME[plan.status]}</span>
+        {plan.by && <span>{plan.by}</span>}
+        {plan.hearts > 0 && <span>さんせい {plan.hearts}</span>}
       </p>
       <label className="nph-post-row">
         <span>どの段へ</span>
