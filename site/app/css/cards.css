@@ -75,11 +75,27 @@
   color: var(--ink);
 }
 /* その日の企画。**カードの中で唯一押せるもの。**
-   板ではなく字の行き先なので、厚みではなく下線で示す。 */
-/* **1行で切る。** 企画の名前は長い（「Food & Wine Fest @ ムタツミンダ公園」で
+   板ではなく字の行き先なので、厚みではなく下線で示す。
+
+   **1行で切る。** 企画の名前は長い（「Food & Wine Fest @ ムタツミンダ公園」で
    2行になった）。カードの主役は絵と日付なので、青い下線が2行あると
-   そちらへ目が行く（`docs/island-design.md` 3章の4）。 */
+   そちらへ目が行く（`docs/island-design.md` 3章の4）。
+
+   **高さは 48px。** もとは行の高さ（20px）のままで、当たり判定が 142x21 しか
+   なかった。3-2 の「指で押せる最小 48px」は、字の行き先にも同じだけ効く。
+   同じ企画へのリンクを出している `.akd-day-plan`（`/cards` の棚の見出し）と
+   `.akd-sheet-plan`（1枚ひらいたところ）は、**どちらも先にこの形にしてある。**
+   カードの中だけが取り残されていた（`docs/island-misses.md` #5）。
+
+   **1日に企画は何本でも立つ。** 9月11日は4本あって、その日のカードは
+   下の帯が4段になる。**それでも間引かない。** 間引くと、残りは黙って消える
+   ——カードから行ける先が、日によって出たり出なかったりするほうが困る。
+   背が伸びるのは、**その日にそれだけのことが起きた**という事実そのもの。 */
 .akd-plan {
+  /* 48px は高さで取る。字は1行のまま中央に置く（`.akd-day-plan` と同じ形） */
+  display: flex;
+  align-items: center;
+  min-height: 48px;
   font-size: var(--fs-min);
   font-weight: 700;
   color: var(--accent-2);
@@ -89,6 +105,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 4段になった帯は、罫で日付から切り離す。**行き先がいくつあるかが、
+   送らずに分かる。** 下線だけが縦に並ぶと、どこまでが1つか読めない */
+.akd-plan + .akd-plan { border-top: 1px solid var(--pg-rule); }
 .akd-who {
   font-style: normal;
   font-size: var(--fs-min);
@@ -531,7 +550,8 @@
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .nstudio-go:active { transform: translateY(6px); box-shadow: none; }
-.nstudio-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+/* 押せないときの姿（地・字・厚み）は `tokens.css` が1か所で持つ。
+   ここには書かない。`opacity: 0.6` で薄めていたときは 3.29 まで落ちていた（実測） */
 /* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
    板を2つ横に並べると、どちらが本筋か分からなくなる。
    本筋は「ほぞんする」で、こちらは効かなかった人のための逃げ道。 */
@@ -628,5 +648,5 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.akd-drop-no:disabled,
-.akd-drop-yes:disabled { opacity: 0.6; box-shadow: none; }
+/* 同上。姿は `tokens.css`。「消す」は字だけの押しどころなので、
+   あちらでも地を敷かず、色だけ落としてある（2.64 → 6.10） */

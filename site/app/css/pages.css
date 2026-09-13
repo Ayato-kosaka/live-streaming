@@ -1006,7 +1006,24 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* opacity を掛けると、掛けたぶんだけ地の色が字に混ざって比が落ちる。
    薄く見せたいときは色そのものを選ぶ。ここは板が濃いので --paper のまま。 */
 .ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: var(--paper); line-height: 1.8; }
-.ifoot-privacy { color: inherit; text-decoration: underline; }
+/* 島の全面の足元にある、ただ1つの字の行き先。**指で押す。**
+   前は `.ifoot-note` の文の中に置いてあって、文といっしょに折り返すので
+   当たり判定が 102x18 しかなかった（`docs/island-design.md` 3-2 は 48px）。
+   行から出して、`inline-flex` の1かたまりにする——こうすると中で折り返さないので、
+   幅の狭い端末でも札が2行に割れない。高さで 48px を取る
+   （`.akd-day-plan` `.akd-sheet-plan` と同じ形）。 */
+.ifoot-privacy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: var(--sp-1);
+  padding: 0 var(--sp-3);
+  color: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
