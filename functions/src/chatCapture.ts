@@ -79,7 +79,118 @@ type Msg = {
   name: string;
   /** `textMessageEvent` などの生の種類。スパチャを後から選り分けるため */
   kind: string;
+  /**
+   * 投げ銭の額（`¥500` のような、YouTube が出している字）。
+   *
+   * **本文の無い投げ銭では、これがその人の残したものの全部。**
+   * 額の無い種別（ふつうのコメント・メンバーシップ）には入れない。
+   */
+  amount?: string;
+  /** 同じ額を数として。通貨をまたいで足すためではなく、並べ替えのため */
+  amountMicros?: number;
+  /** `JPY` など */
+  currency?: string;
 };
+
+/**
+ * 残さないもの。**「本文が無い」ではなく「人が何もしていない」で切る。**
+ *
+ * ## なぜここを直したか（2026-09-13）
+ *
+ * 前は `if (!messageId || !text) continue;` で、**本文の無いイベントを
+ * 丸ごと捨てていた。** 投げ銭もメンバーシップも、言葉を添えずに送れる。
+ * BigQuery の `chat_messages` を数えると、投げ銭 394件のうち **107件
+ * （27%）が言葉なし**。**言葉を添えない人ほど、落ちやすい形だった。**
+ *
+ * スパチャだけは、たまたま落ちていなかった。**YouTube が
+ * `displayMessage` に金額入りの1文を組み立てて返すから**で、本人が何も
+ * 書かなくても空にならない（本番の3件で実測。BigQuery 側は0文字なのに
+ * Firestore には15文字入っていた）。**こちらの判定が正しかったからでは
+ * ない。** 相手の作りが変われば、その日から静かに落ちる。
+ * スーパーステッカー（絵だけ）とメンバーシップには、その1文も無い。
+ *
+ * 逆向きに、**ふつうのコメントで本文が空のものは残しても意味が無い**
+ * （表示するものが何も無い）ので、そこは今までどおり捨てる。
+ *
+ * 判断を「残す種別の一覧」にしないのは、**一覧に無い種別が増えたときに、
+ * また黙って落ちる**から（`docs/island-misses.md` #17）。捨てるほうを
+ * 数えるだけにして、知らない種別は残す側へ倒す。
+ */
+const NOISE = new Set([
+  /* 配信の終わり・モデレーション・消えた発言。人の応援ではない */
+  "chatEndedEvent",
+  "tombstone",
+  "messageDeletedEvent",
+  "userBannedEvent",
+  "sponsorOnlyModeStartedEvent",
+  "sponsorOnlyModeEndedEvent",
+]);
+
+/**
+ * この1件を溜めるか。
+ * @param {string} kind `snippet.type`
+ * @param {string} text `snippet.displayMessage`
+ * @return {boolean} 溜めるなら true
+ */
+export function keep(kind: string, text: string): boolean {
+  if (NOISE.has(kind)) return false;
+  /* **空かどうかは `!text` のまま見る。** `text.trim()` にすると、
+     空白だけのコメントが前は溜まっていたのに溜まらなくなる。
+     直すと決めたのは「本文の無い投げ銭」であって、**前から溜まって
+     いたものを減らす話ではない**（件数で突き合わせられなくなる）。 */
+  if (text) return true;
+  /* 本文が空。**種別を名乗らないものと、ふつうのコメントだけ捨てる。**
+     投げ銭もメンバーシップも、本文が無いのがふつうの姿。 */
+  return kind !== "" && kind !== "textMessageEvent";
+}
+
+/**
+ * 投げ銭の欄。**スパチャとスーパーステッカーで名前が違う。**
+ * @param {Record<string, unknown>} s `snippet`
+ * @return {Record<string, unknown> | null} 投げ銭でなければ null
+ */
+function paid(s: Record<string, unknown>): Record<string, unknown> | null {
+  const d = s.superChatDetails ?? s.superStickerDetails;
+  return d && typeof d === "object" ? d as Record<string, unknown> : null;
+}
+
+/**
+ * 溜める本文。**投げ銭のときは、その人が書いた言葉のほうを取る。**
+ *
+ * `displayMessage` は、投げ銭だと YouTube が組み立てた1文
+ * （`¥500` のような金額が入っている）になる。それを本文として溜めると、
+ * **本人が何も書かなかったのに「何か書いた」ように見える。**
+ * 実測では、言葉を添えなかった3件がどれも15文字の字を持っていた。
+ *
+ * 金額は `amount` に別に入れてあるので、本文は言葉だけでよい。
+ * 言葉が無ければ空のまま溜める（`keep` が種別で残す）。
+ * @param {Record<string, unknown>} s `snippet`
+ * @param {string} text `snippet.displayMessage`
+ * @return {string} 溜める本文
+ */
+export function body(s: Record<string, unknown>, text: string): string {
+  const d = paid(s);
+  return d ? String(d.userComment ?? "") : text;
+}
+
+/**
+ * 投げ銭の額を取り出す。
+ *
+ * ステッカーは絵を投げるものなので言葉が最初から無い。
+ * 額を拾わないと「誰かが何かした」しか残らない。
+ * @param {Record<string, unknown>} s `snippet`
+ * @return {Partial<Msg>} 額の欄（無ければ空。**undefined を書かない**）
+ */
+export function money(s: Record<string, unknown>): Partial<Msg> {
+  const d = paid(s) ?? {};
+  const amount = String(d.amountDisplayString ?? "");
+  if (!amount) return {};
+  return {
+    amount,
+    amountMicros: Number(d.amountMicros ?? 0) || 0,
+    currency: String(d.currency ?? ""),
+  };
+}
 
 /**
  * YouTube が断ってきたときの例外。**ステータスを持たせてある。**
@@ -275,9 +386,10 @@ async function drain(
     for (const m of items) {
       const s = (m.snippet ?? {}) as Record<string, unknown>;
       const a = (m.authorDetails ?? {}) as Record<string, unknown>;
-      const text = String(s.displayMessage ?? "");
+      const kind = String(s.type ?? "");
+      const text = body(s, String(s.displayMessage ?? ""));
       const messageId = String(m.id ?? "");
-      if (!messageId || !text) continue;
+      if (!messageId || !keep(kind, text)) continue;
       rows.push({
         videoId: live.videoId,
         messageId,
@@ -285,7 +397,10 @@ async function drain(
         text,
         channelId: String(a.channelId ?? ""),
         name: String(a.displayName ?? ""),
-        kind: String(s.type ?? ""),
+        kind,
+        /* 本文の無い投げ銭は、**額がその人の言ったことの全部**になる。
+           本文と一緒に落とすと、残しても何も分からない書類になる。 */
+        ...money(s),
       });
     }
 
