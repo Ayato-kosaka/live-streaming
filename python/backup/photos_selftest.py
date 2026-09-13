@@ -3,8 +3,8 @@
     python python/backup/photos_selftest.py
 
 **本番にも、置き場にも、網の外にも1バイトも出ない。** HTTP も BigQuery も
-Firestore も差し替えてある（`photos.dump()` の `list_refs` / `fetch` /
-`read_idx` / `write`）。確かめるのは6つ:
+Firestore も差し替えてある（`photos.dump()` の `list_refs` / `list_chars` /
+`fetch` / `read_idx` / `write`）。確かめるのは9つ:
 
   1. 初回に**上限まで取って、続きが残る**ことが分かる形で終わる
   2. 2回目が**続きから**始まり、1回目に取ったものを取り直さない
@@ -12,6 +12,22 @@ Firestore も差し替えてある（`photos.dump()` の `list_refs` / `fetch` /
   4. `url` を持っていない書類を飛ばして、**その数を報告する**
   5. **ログに URL も合言葉もファイル名も出ていない**（出力を grep して0件）
   6. 戻して、**バイト列が一致する**
+  7. 合言葉つき URL から**置き場の名前を取り出せる**（`%2F` をほどく）
+  8. **旅の写真が先、住人の絵が後**に取られ、2回目は続きから拾う
+  9. **片方の索引が引けなくても、もう片方は取れる**（赤くならず警告が出る）
+
+## 7 がなぜ要るか（ほどき忘れると、毎晩ぜんぶ取り直す）
+
+住人の絵には、写真の `storagePath` にあたる欄が無い。名前は URL から
+ほどくしかなく、URL の中では区切りが `%2F` に化けている。ほどき忘れると、
+置き場の表の名前（`island/characters/…`）と1文字も突き合わない。
+**落ちも赤くもならず、「まだ 533件」と言いながら毎晩 337MB を取り直す。**
+数字だけ見ていると気づけないので、名前の取り出しそのものを確かめる。
+
+## 8 がなぜ要るか（並びは、上限に当たる回だけ効く）
+
+2つの索引を混ぜて名前順にすると `island/…` が `nordic/…` より前に来る。
+上限に当たらない回は結果が同じなので、**上限に当たる回**で見る。
 
 ## なぜ「呼ばれた回数」を数えるのか
 
@@ -101,6 +117,15 @@ class Bucket:
         return sum(1 for c in self.calls if c == u)
 
 
+def no_chars():
+    """住人の絵の索引の代わり。**空を返す。**
+
+    写真だけを見る確かめに渡す。渡さないと `photos.dump()` が既定の
+    `refs_from_characters` を呼び、**本番の Firestore を触りにいく。**
+    """
+    return [], {}
+
+
 class Sink:
     """偽の BigQuery。置き場の表の代わり。"""
 
@@ -122,6 +147,34 @@ class Sink:
         return next(iter(self.rows.values())) if self.rows else None
 
 
+class FakeDoc:
+    """偽の書類。`to_dict()` しか使われない。"""
+
+    def __init__(self, d):
+        self._d = d
+
+    def to_dict(self):
+        return self._d
+
+
+class FakeCol:
+    def __init__(self, docs):
+        self._docs = docs
+
+    def stream(self):
+        return iter(self._docs)
+
+
+class FakeFs:
+    """偽の Firestore。**索引を引くところ（読む側）を通すために要る。**"""
+
+    def __init__(self, by_col):
+        self.by_col = by_col
+
+    def collection(self, name):
+        return FakeCol([FakeDoc(d) for d in self.by_col.get(name, [])])
+
+
 def photo(i: int) -> bytes:
     """1MB の偽の写真。**中身は1枚ずつ違う**（指紋が同じになると比較にならない）。"""
     return (f"FAKE-JPEG-{i:04d}-".encode() * 70000)[: 1024 * 1024]
@@ -138,6 +191,23 @@ def make(n: int, with_url=True, day="2026-09-12"):
         else:
             no_url += 1
     return refs, bodies, no_url
+
+
+def make_chars(n: int):
+    """偽の住人の絵 n 件。名前のかたちは本番と同じ
+    （`island/characters/<書類ID>/<役どころ>-<幅>.webp`）。
+
+    **2件で1人ぶん**（原寸と 128 の版）。1人が何件も持つところまで
+    同じにしないと、「同じ人がまとまって並ぶ」が試せない。
+    """
+    refs, bodies = [], {}
+    for i in range(n):
+        cid = f"fakeChar{i // 2:04d}"
+        path = f"island/characters/{cid}/plain-{'full' if i % 2 == 0 else '128'}.webp"
+        bodies[path] = photo(1000 + i)
+        refs.append(photos.Ref(path, fake_url(path), 1757100000000 + i))
+    refs.sort(key=lambda r: r.path)
+    return refs, bodies
 
 
 # ---------------------------------------------------------------- 確かめる
@@ -159,6 +229,7 @@ def case1_and_2():
 
     # 上限 4MB。1枚 1MB なので4枚で当たる
     r1 = photos.dump(None, False, list_refs=lambda: (refs, {"docs": 10}),
+                     list_chars=no_chars,
                      fetch=b.fetch, read_idx=s.read_idx, write=s.write,
                      budget_bytes=4 * 1024 * 1024, budget_count=1000)
     ck("1回目に取った枚数", r1["n"] == 4, r1["n"])
@@ -169,6 +240,7 @@ def case1_and_2():
     first4 = [r.path for r in refs[:4]]
     before = len(b.calls)
     r2 = photos.dump(None, False, list_refs=lambda: (refs, {"docs": 10}),
+                     list_chars=no_chars,
                      fetch=b.fetch, read_idx=s.read_idx, write=s.write,
                      budget_bytes=4 * 1024 * 1024, budget_count=1000)
     ck("2回目に取ってあると数えた枚数", r2["have"] == 4, r2["have"])
@@ -181,6 +253,7 @@ def case1_and_2():
     ck("2回目に1回目の4枚を取り直した本数", again == 0, again)
 
     r3 = photos.dump(None, False, list_refs=lambda: (refs, {"docs": 10}),
+                     list_chars=no_chars,
                      fetch=b.fetch, read_idx=s.read_idx, write=s.write,
                      budget_bytes=4 * 1024 * 1024, budget_count=1000)
     ck("3回目で取り切る", (r3["n"], r3["left"]) == (2, 0), (r3["n"], r3["left"]))
@@ -195,7 +268,7 @@ def case3():
     dead = {refs[2].path}
     b, s = Bucket(bodies, dead=dead), Sink()
     r = photos.dump(None, False, list_refs=lambda: (refs, {"docs": 5}),
-                    fetch=b.fetch, read_idx=s.read_idx, write=s.write,
+                    list_chars=no_chars, fetch=b.fetch, read_idx=s.read_idx, write=s.write,
                     budget_bytes=100 * 1024 * 1024, budget_count=1000)
     ck("取った枚数", r["n"] == 4, r["n"])
     ck("落ちた枚数", r["failed"] == 1, r["failed"])
@@ -212,34 +285,13 @@ def case4():
     b, s = Bucket(bodies), Sink()
     r = photos.dump(None, False,
                     list_refs=lambda: (ok_refs, {"docs": 5, "no_url": 2, "no_path": 0}),
-                    fetch=b.fetch, read_idx=s.read_idx, write=s.write,
+                    list_chars=no_chars, fetch=b.fetch, read_idx=s.read_idx, write=s.write,
                     budget_bytes=100 * 1024 * 1024, budget_count=1000)
     ck("url 無しとして報告した数", r["no_url"] == 2, r["no_url"])
     ck("実体を取りにいった枚数", r["n"] == 3, r["n"])
     ck("HTTP を叩いた本数（url 無しには叩かない）", len(b.calls) == 3, len(b.calls))
 
     # 索引を作るところ（Firestore を読む側）も、偽の書類で1回通す
-    class FakeDoc:
-        def __init__(self, d):
-            self._d = d
-
-        def to_dict(self):
-            return self._d
-
-    class FakeCol:
-        def __init__(self, docs):
-            self._docs = docs
-
-        def stream(self):
-            return iter(self._docs)
-
-    class FakeFs:
-        def __init__(self, by_col):
-            self.by_col = by_col
-
-        def collection(self, name):
-            return FakeCol([FakeDoc(d) for d in self.by_col.get(name, [])])
-
     p0 = "nordic/photos/2026-09-12/aaaa.jpg"
     p1 = "nordic/photos/2026-09-12/bbbb.jpg"
     p2 = "nordic/photos/2026-09-12/cccc.jpg"
@@ -265,6 +317,147 @@ def case4():
     ck("名前で1本にまとまった実体の数", len(refs2) == 2, len(refs2))
     # **名前そのものは出さない**（ここで出すと [5] の grep が引っかかる）
     ck("並びは名前順（古い日から）", [r.path for r in refs2] == sorted([p0, p2]), "順序どおり")
+
+
+def case7():
+    print("\n[7] 合言葉つき URL から置き場の名前を取り出せる（%2F をほどく）")
+    cid = "fakeChar9999"
+    path = f"island/characters/{cid}/plain-128.webp"
+    url = fake_url(path)
+    # **ほどき忘れが、ここで捕まる。** URL の中では区切りが %2F に化けている
+    ck("URL の中で区切りが化けている数（名前の `/` の数だけある）",
+       url.count("%2F") == path.count("/"), url.count("%2F"))
+    ck("ほどくと置き場の名前に戻る", photos.storage_path(url) == path, "戻った")
+    ck("ほどかないと突き合わない（毎晩取り直しになる形）",
+       url.split("/o/", 1)[1].split("?", 1)[0] != path, "食い違う")
+    ck("形の違う URL からは名前を取らない",
+       photos.storage_path("https://example.test/x.png") == "", "空")
+    ck("空でも落ちない", photos.storage_path(None) == "", "空")
+
+    # **時刻の形が入れ物ごとに違う。** 写真はミリ秒の数、住人の絵は ISO の字
+    ck("ミリ秒の数はそのまま", photos._at_ms(1757000000000) == 1757000000000, "そのまま")
+    ck("ISO の字も読める", photos._at_ms("2026-09-01T00:00:00.000Z") > 0, "読めた")
+    ck("読めない時刻は 0（`_iso` が現在時刻へ落とす）", photos._at_ms("きのう") == 0, 0)
+
+    # 索引を作るところ（Firestore を読む側）を、偽の書類で1回通す
+    a = f"island/characters/{cid}"
+    fs = FakeFs({
+        "islandCharacter": [
+            {
+                "createdAt": "2026-09-01T00:00:00.000Z",
+                "images": {
+                    # 原寸と、幅ごとの版2つ
+                    "plain": {
+                        "url": fake_url(f"{a}/plain-full.webp"),
+                        "sizes": {
+                            "128": fake_url(f"{a}/plain-128.webp"),
+                            "256": fake_url(f"{a}/plain-256.webp"),
+                        },
+                    },
+                    # 原寸だけの枠
+                    "scene": {"url": fake_url(f"{a}/scene-full.jpg")},
+                },
+            },
+            # **絵を1枚も入れていない人。** 98人中30枠がこれ。
+            # 「取れない1枚」と数えると、直しようのない警告が毎晩出る
+            {"createdAt": "2026-09-02T00:00:00.000Z", "images": {}},
+            # url は入っているのに、置き場の名前が取れない形
+            {"images": {"plain": {"url": "https://example.test/nope.png"}}},
+        ],
+    })
+    refs, st = photos.refs_from_characters(fs)
+    ck("読んだ書類の数", st["docs"] == 3, st["docs"])
+    ck("絵のある枠の数", st["roles"] == 2, st["roles"])
+    ck("原寸の数", st["full"] == 2, st["full"])
+    ck("幅ごとの版の数", st["sizes"] == 2, st["sizes"])
+    ck("実体の数（原寸2＋幅ごと2）", len(refs) == 4, len(refs))
+    ck("名前の取れない url を数えた", st["no_path"] == 1, st["no_path"])
+    # **絵の無い人を「取れない」に数えない。** 数えると毎晩警告が出る
+    ck("絵の無い人は取れない扱いにしない", st["no_url"] == 0, st["no_url"])
+    ck("並びは名前順（同じ人がまとまる）",
+       [r.path for r in refs] == sorted(r.path for r in refs), "順序どおり")
+    ck("書類の時刻が実体に付く",
+       photos._iso(refs[0].at_ms).startswith("2026-09-01"), "2026-09-01")
+
+
+def case8():
+    print("\n[8] 旅の写真が先、住人の絵が後　／　2回目は続きから")
+    ph_refs, ph_bodies, _ = make(3)
+    ch_refs, ch_bodies = make_chars(4)
+    b, s = Bucket({**ph_bodies, **ch_bodies}), Sink()
+    ph_urls = {r.url for r in ph_refs}
+
+    def run():
+        # 上限 4MB。1件 1MB なので4件で当たる＝**並びが効く回**
+        return photos.dump(
+            None, False,
+            list_refs=lambda: (ph_refs, {"docs": 3}),
+            list_chars=lambda: (ch_refs, {"docs": 2, "chars": 2, "roles": 2,
+                                          "full": 2, "sizes": 2}),
+            fetch=b.fetch, read_idx=s.read_idx, write=s.write,
+            budget_bytes=4 * 1024 * 1024, budget_count=1000)
+
+    r1 = run()
+    ck("索引が数えた実体（写真 / 絵）",
+       (r1["n_photo"], r1["n_char"]) == (3, 4), (r1["n_photo"], r1["n_char"]))
+    ck("あわせた実体の数", r1["n_all"] == 7, r1["n_all"])
+    ck("1回目に取った件数", r1["n"] == 4, r1["n"])
+    # **枚数では並びは言えない。** 叩いた順を見る
+    first3 = sum(1 for u in b.calls[:3] if u in ph_urls)
+    ck("はじめの3本は旅の写真", first3 == 3, f"{first3}/3")
+    ck("住人の絵に飛んだのは1本",
+       sum(1 for u in b.calls if u not in ph_urls) == 1,
+       sum(1 for u in b.calls if u not in ph_urls))
+    ck("1回目に残った件数", r1["left"] == 3, r1["left"])
+
+    took = set(b.calls)
+    before = len(b.calls)
+    r2 = run()
+    ck("2回目に取ってあると数えた件数", r2["have"] == 4, r2["have"])
+    ck("2回目に取った件数", r2["n"] == 3, r2["n"])
+    ck("2回目に残った件数", r2["left"] == 0, r2["left"])
+    # **「取り直していない」は枚数では言えない**（[1][2] と同じ理由）
+    again = sum(1 for u in b.calls[before:] if u in took)
+    ck("2回目に1回目の4件を取り直した本数", again == 0, again)
+    ck("全部で叩いた本数（7のはず）", len(b.calls) == 7, len(b.calls))
+    ck("置き場に入った件数", len(s.rows) == 7, len(s.rows))
+
+
+def case9():
+    print("\n[9] 片方の索引が引けなくても、もう片方は取れる")
+    ph_refs, ph_bodies, _ = make(3)
+    ch_refs, ch_bodies = make_chars(4)
+    bodies = {**ph_bodies, **ch_bodies}
+
+    def boom():
+        raise RuntimeError("索引が引けない")
+
+    def run(list_refs, list_chars):
+        b, s = Bucket(bodies), Sink()
+        r = photos.dump(None, False, list_refs=list_refs, list_chars=list_chars,
+                        fetch=b.fetch, read_idx=s.read_idx, write=s.write,
+                        budget_bytes=100 * 1024 * 1024, budget_count=1000)
+        return r, b, s
+
+    r, b, _ = run(lambda: (ph_refs, {"docs": 3}), boom)
+    ck("絵の索引が落ちても、写真は取れる", r["ok"] and r["n"] == 3, (r["ok"], r["n"]))
+    ck("落ちた索引を返り値で言う", r["broken"] == ["char"], r["broken"])
+    ck("落ちたほうは0件と数える", r["n_char"] == 0, r["n_char"])
+
+    r, b, _ = run(boom, lambda: (ch_refs, {"docs": 2}))
+    ck("写真の索引が落ちても、絵は取れる", r["ok"] and r["n"] == 4, (r["ok"], r["n"]))
+    ck("落ちた索引を返り値で言う", r["broken"] == ["photo"], r["broken"])
+
+    r, b, s = run(boom, boom)
+    ck("両方落ちたら ok は False", r["ok"] is False, r["ok"])
+    ck("両方落ちたら HTTP を1本も叩かない", len(b.calls) == 0, len(b.calls))
+    ck("両方落ちたら1行も書かない", len(s.rows) == 0, len(s.rows))
+
+    # **赤くしない**（写真以外は取れている）。warning は出る、が [5] で
+    # 名前も URL も出ていないことを見る
+    ck("警告は出ている（::warning:: の数）",
+       BUF.getvalue().count("索引（Firestore）が引けませんでした") == 4,
+       BUF.getvalue().count("索引（Firestore）が引けませんでした"))
 
 
 def case6(s: Sink, bodies: dict):
@@ -308,6 +501,11 @@ def case5():
         "置き場の名前の頭（nordic/photos/）": "nordic/photos/",
         "ファイル名（fakeDocId0000.jpg）": "fakeDocId0000.jpg",
         "拡張子（.jpg）": ".jpg",
+        # **住人の絵のぶん。** 写真だけ見ていると、こちらが漏れる
+        "住人の絵の置き場の名前の頭（island/characters/）": "island/characters/",
+        "住人の絵の書類ID（fakeChar…）": "fakeChar",
+        "住人の絵のファイル名（plain-128）": "plain-128",
+        "拡張子（.webp）": ".webp",
     }
     for label, needle in checks.items():
         n = text.count(needle)
@@ -320,6 +518,9 @@ def main() -> int:
     s, bodies = case1_and_2()
     case3()
     case4()
+    case7()
+    case8()
+    case9()
     case6(s, bodies)
     case5()
     sys.stdout = REAL
