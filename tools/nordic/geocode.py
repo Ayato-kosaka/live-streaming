@@ -85,6 +85,11 @@ def visit_cities():
     元が変われば、ここも一緒に変わる。
     """
     s = open(NORDIC_TS, encoding="utf-8").read()
+    # **旅程より下は見ない。** 視聴者さんの提案（`WANTS`）にも `city:` があるので、
+    # 字面で拾うと「行く街」に混ざる。実際、提案に付いた `city: "シャウレイ"` が
+    # 行く街として拾われていた。シャウレイは**寄るか決まっていない街**で、
+    # そこの地図を焼いたことを一度叱られている（`docs/island-misses.md` #4）。
+    s = s.split("export const WANTS")[0]
     go, maybe = set(), set()
     for m in re.finditer(r'\b(?:from|to|stay|city):\s*"([^"]+)"', s):
         go.add(m.group(1).split("（")[0].split("(")[0].strip())

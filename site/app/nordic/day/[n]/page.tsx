@@ -10,6 +10,7 @@ import DaySay, { type SayItem } from "@/components/nordic/DaySay";
 import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
 import RoadStops from "@/components/nordic/RoadStops";
+import Shops from "@/components/nordic/Shops";
 import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
 import Strong from "@/components/nordic/Strong";
@@ -36,6 +37,7 @@ import {
   type NordicSpot,
 } from "@/content/nordic";
 import { SUN_CITIES, sunOn } from "@/content/nordicSun";
+import { shopsOf } from "@/content/nordicShops";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -378,6 +380,16 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const maybe = [...new Set([...legs.flatMap((l) => l.maybe ?? []), ...(day.maybe ?? [])])];
   const cities = [...sure, ...maybe];
 
+  /* お店を出す街。**その日の終わりに足をつけている街だけ。**
+     通ってきた街のぶんまで並べると、1日の面に2つ3つと区画が積まれる。
+     朝に発つ街で買いたくなったら、その街の日の面が持っている。 */
+  const shopCities = sure;
+  /** 頭に置く近道の行き先。**お店が1軒でもある街だけ。** */
+  const shopJump = shopCities.find((c) => {
+    const s = shopsOf(c);
+    return s && s.shops.length > 0;
+  });
+
   /* ふだんのごはんを出す国。**その日に足を置く国ぜんぶ。**
      区間の出発地と到着地の両方から引いて、通った順に重複を落とす。
 
@@ -505,6 +517,19 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           </>
         }
       />
+
+      {/* 街に着いた人のための、近道。**この面は上から読むと長い。**
+          あやとはビャウィストクの路上でこれを開いて、お店にたどり着けなかった。
+          お店の区画は見どころの下（面のかなり後ろ）にあるので、
+          頭に1つだけ行き先を置く。**2つ以上は置かない**（近道が増えると目次になる）。 */}
+      {shopJump && (
+        <p className="chips nday-jump">
+          <a className="chip link" href={`#shop-${encodeURIComponent(shopJump)}`}>
+            <Icon name="souvenir" size={18} />
+            {shopJump}で、買う
+          </a>
+        </p>
+      )}
 
       {/* この日の道。区間ごとに、絵・距離・時間・決まっている時刻・その区間の話。
           動かない日（休息日）は区間が無いので、この区画そのものを出さない。 */}
@@ -680,6 +705,21 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             </Link>
           )}
         </section>
+      ))}
+
+      {/* その街の、おみやげと雑貨。**見どころのすぐ下。**
+          あやとの言葉（2026-09-13・ビャウィストクで）:
+
+          > お土産とか雑貨とか行きたかったけど、あやと島みても見つからず行けなかった
+
+          街の見どころと同じ「その街で何をするか」の話なので、地図のすぐ下に置く。
+          国のごはん（`DailyFood`）より手前なのは、あちらが国の話で、
+          こちらがその街の話だから。粒の細かいほうから読めるようにする。
+
+          **街の名前はここに書かない**（旅程から来る）。日付を渡すのは、
+          「いま開いてる」を今日の面でだけ言うため（`ShopRows`）。 */}
+      {shopCities.map((city) => (
+        <Shops key={city} city={city} date={day.date} />
       ))}
 
       {/* その日の終わりにいる国の、ふだんのごはん。
