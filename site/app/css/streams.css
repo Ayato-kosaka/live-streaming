@@ -145,8 +145,23 @@
 .zk-lead {
   margin: var(--sp-3) 0 0;
   /* PC では紙が 890px あって、本文が1行 60字を超えていた。
-     行を目で追い直すのが辛くなるので、読む字だけ幅を止める。 */
-  max-width: 46em;
+     行を目で追い直すのが辛くなるので、読む字だけ幅を止める。
+
+     **`em` で置かない。`em` の数は字の数と一致しない。**
+     ここは `46em`（552px）だったのに、実測は 11面で 45.3〜61.0ch だった
+     （`tools/sprites/navch.mjs`。描かれた行の箱で数える）。島の字は和文・かな・
+     欧文が混ざるので、1文字ぶんは `1em` ではなく 8.69〜12.01px と幅がある。
+
+     いちばん狭いのは伝説の1本
+     （`/legends/thousand-subs`「2025年4月に500人、8月に700人…」。
+     数字が半分を占めるので 1文字 8.69px で、552px に 61文字入っていた）。
+     45文字は 391px なので、切り下げて 390px。
+     **いちばん狭い行で決める。** 平均で決めると、その1本だけが超えたまま残る。
+
+     390px の折り返しは1文字も動かない。狭いところでこの段落が使えるのは
+     340px（`tools/sprites/navuse.mjs` を 390px で109面ぶん実測。
+     いちばん広い面でも 340px）で、390px のほうが広い。 */
+  max-width: 390px;
   font-size: var(--fs-note);
   font-weight: 800;
   line-height: 1.85;
@@ -489,14 +504,17 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .wk-days > span.is-end { color: var(--ink); }
 /* 今日。曜日の下に「今夜」を1つだけ出す。土日の目印は濃さで言っているので、
    こちらは色で言う（同じ言い方を2つ重ねると、どちらが今日か分からない） */
-.wk-days > span.is-today { color: var(--accent-deep); padding-bottom: 0; }
+/* 今日の列は、同じ赤で染めた帯（`.wk-col`）の上にいる。地と同じ赤の字なので
+   描いた画素で 3.44 : 1 しか出ていなかった。**帯は動かさず、字を `--accent-ink`
+   にする**（帯は「今日はここ」を指す飾りで、動かすと島の赤を塗り替えることになる）。 */
+.wk-days > span.is-today { color: var(--accent-ink); padding-bottom: 0; }
 .wk-days > span.is-today b {
   display: block;
   margin-top: 1px;
   font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  color: var(--accent-deep);
+  color: var(--accent-ink);
 }
 
 .wk-rows { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); position: relative; }
@@ -914,12 +932,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .dish:hover::after,
 .dish:focus-visible::after { border-color: var(--zk-pick); }
 
-/* 何品目か。図鑑の番号 */
+/* 何品目か。図鑑の番号。
+   **薄めるのに opacity を使わない。** `--zk-ink-2` は「染まった紙の上でも
+   4.9 を切らない」ように決めた色なのに、その上から 0.72 を掛けていたので
+   実測 3.11〜3.24（島の下限は 4.5）まで落ちていた。しかも computed の
+   `color` には opacity が出ないので、宣言された値を見るかぎり合格に見える。
+   番号を主役にしないための「添えの字」は、色そのものが引き受ける。 */
 .dish-no {
   position: absolute; top: 9px; left: 10px;
   font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.1em;
   color: var(--zk-ink-2);
-  opacity: 0.72;
 }
 /* 何日がかりか。番号の反対側に、平らなチップで */
 .dish-days {

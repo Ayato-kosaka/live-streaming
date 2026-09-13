@@ -15,7 +15,11 @@ import { execFileSync } from "node:child_process";
 import { apply } from "./asme.mjs";
 
 export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com/;
+/* 通す先。**置き場（firebasestorage）も通す。** 図鑑の「落とす」は名簿が
+   持っている置き場の URL を直に取りに行く。ここを止めたまま撮ると
+   「絵が落ちた」と出て、直っているものを直っていないと読む
+   （2026-09-10 に1回やった。同じ轍）。 */
+const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
@@ -52,22 +56,33 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   let bad = 0;
   for (const nochara of [false, true]) {
     const { ctx, p } = await open(b, { nochara, path: "/me" });
+    /* **選ぶところは、いまの class に合わせる。** `/me` を作り直したとき
+       （#53）に `.mp-face` は無くなっていて、ここだけ古い名前を探し続けて
+       いた。**要素が無いので毎回「中部=無し ← だめ」**と出て、本番が
+       壊れているように読める。2026-09-11 に直した。 */
     const r = await p.evaluate(() => {
       const src = (e) => ((e?.currentSrc || "").replace(/^https?:\/\/[^/]+/, "").slice(0, 46) || "(空)");
       const ok = (e) => (e ? (e.naturalWidth > 0 ? `出ている ${src(e)}` : `落ちた ${src(e)}`) : "無し");
-      const face = document.querySelector(".mp-face");
+      const face = document.querySelector(".mh-face");
       return {
         看板: ok(document.querySelector(".ih-me img")),
-        中部: face && face.tagName !== "IMG" ? `字「${face.textContent}」` : ok(face),
+        // YouTube の顔。絵の無い人は字（頭文字）の丸になる
+        顔: face && face.tagName !== "IMG" ? `字「${face.textContent.trim()}」` : ok(face),
+        // キャラクターの絵。**あやとは持っていない**ので、無くてよい
+        絵: ok(document.querySelector(".mh-chara")),
       };
     });
-    const ng = !/^出ている/.test(r.中部) || !/^出ている/.test(r.看板);
+    /* あやと（`nochara`）はキャラクターの絵を持たない。**そこを「だめ」に
+       しない。** 看板と顔はどちらの人でも出ていないとだめ。 */
+    const ng = !/^出ている/.test(r.看板) ||
+      !/^(出ている|字「)/.test(r.顔) ||
+      (!nochara && !/^出ている/.test(r.絵));
     if (ng) bad++;
-    console.log(`${nochara ? "絵の無い人(あやと)" : "絵のある人      "} 看板=${r.看板} / 中部=${r.中部}${ng ? "  ← だめ" : ""}`);
+    console.log(`${nochara ? "絵の無い人(あやと)" : "絵のある人      "} 看板=${r.看板} / 顔=${r.顔} / 絵=${r.絵}${ng ? "  ← だめ" : ""}`);
     await p.screenshot({ path: `/tmp/prod-me-${nochara ? "ayato" : "chara"}.png` });
     await ctx.close();
   }
   await b.close();
-  console.log(bad ? `だめ ${bad}件` : "本番：看板・中部とも顔が出ている");
+  console.log(bad ? `だめ ${bad}件` : "本番：看板・顔・キャラクターの絵、どれも出ている");
   process.exit(bad ? 1 : 0);
 }

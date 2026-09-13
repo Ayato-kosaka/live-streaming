@@ -75,11 +75,27 @@
   color: var(--ink);
 }
 /* その日の企画。**カードの中で唯一押せるもの。**
-   板ではなく字の行き先なので、厚みではなく下線で示す。 */
-/* **1行で切る。** 企画の名前は長い（「Food & Wine Fest @ ムタツミンダ公園」で
+   板ではなく字の行き先なので、厚みではなく下線で示す。
+
+   **1行で切る。** 企画の名前は長い（「Food & Wine Fest @ ムタツミンダ公園」で
    2行になった）。カードの主役は絵と日付なので、青い下線が2行あると
-   そちらへ目が行く（`docs/island-design.md` 3章の4）。 */
+   そちらへ目が行く（`docs/island-design.md` 3章の4）。
+
+   **高さは 48px。** もとは行の高さ（20px）のままで、当たり判定が 142x21 しか
+   なかった。3-2 の「指で押せる最小 48px」は、字の行き先にも同じだけ効く。
+   同じ企画へのリンクを出している `.akd-day-plan`（`/cards` の棚の見出し）と
+   `.akd-sheet-plan`（1枚ひらいたところ）は、**どちらも先にこの形にしてある。**
+   カードの中だけが取り残されていた（`docs/island-misses.md` #5）。
+
+   **1日に企画は何本でも立つ。** 9月11日は4本あって、その日のカードは
+   下の帯が4段になる。**それでも間引かない。** 間引くと、残りは黙って消える
+   ——カードから行ける先が、日によって出たり出なかったりするほうが困る。
+   背が伸びるのは、**その日にそれだけのことが起きた**という事実そのもの。 */
 .akd-plan {
+  /* 48px は高さで取る。字は1行のまま中央に置く（`.akd-day-plan` と同じ形） */
+  display: flex;
+  align-items: center;
+  min-height: 48px;
   font-size: var(--fs-min);
   font-weight: 700;
   color: var(--accent-2);
@@ -89,6 +105,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 4段になった帯は、罫で日付から切り離す。**行き先がいくつあるかが、
+   送らずに分かる。** 下線だけが縦に並ぶと、どこまでが1つか読めない */
+.akd-plan + .akd-plan { border-top: 1px solid var(--pg-rule); }
 .akd-who {
   font-style: normal;
   font-size: var(--fs-min);
@@ -130,6 +149,11 @@
    1列になって、1枚が欄の幅いっぱい（実測 480px の背）になる。
    出すのは2枚と決めてあるので、そのまま2列と書く。 */
 .rzk-cards .akd-grid { grid-template-columns: repeat(2, 1fr); }
+/* 読みに行けなかったときの1枚も、同じ 290px の欄に入る。`.blank` の
+   既定の余白（`--sp-5 --sp-4`）を重ねると、字の行が 200px を切って
+   「いま、カードを読 / みに行けなかった」と名前の途中で折り返す。
+   欄そのものが罫で囲ってあるので、ここでは余白を詰める。 */
+.rzk-cards .blank.is-off { margin: 0; padding: var(--sp-3) 0; }
 /* --- `/cards` の一覧。**押すのは写真のマス** --------------------------
    1日ぶんの棚。日付と企画はここが1回だけ言う（マスには持たせない）。 */
 /* 1日ぶんが1枚の紙。見出しは紙が持つ（`.panel.paper h2`）ので、
@@ -222,23 +246,52 @@
   background: rgba(38, 31, 12, 0.62);
   cursor: pointer;
 }
+/* **紙は、頭・胴・足の3つ。** 送るのは胴だけ。
+   前は紙をまるごと送って、足（持って帰る帯）だけ底に貼り付けていた
+   （`position: sticky`）。貼り付けた帯は**上にある札にかぶさる**ので、
+   候補が4人以上になった日に2段目の札が潜った（2026-09-12・実測 4,675px²）。
+   送らない足にすれば、重なりようがない。 */
 .akd-sheet {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 560px;
   max-height: 92vh;
-  overflow: auto;
-  padding: var(--sp-5) var(--sp-4);
+  /* 送るのは胴。ここで送ると、頭と足まで一緒に動く */
+  overflow: hidden;
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: var(--pg-paper-bg);
   background-color: var(--pg-sheet);
   box-shadow: var(--shadow-2);
 }
+/* 頭。日付と閉じる。**送っても動かない**ので、写真が閉じるボタンの下を
+   くぐらない（前は絶対位置で紙の隅に置いてあり、送ると中身が下を通っていた）。 */
+.akd-sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--pg-rule);
+}
+/* 胴。ここだけ送る */
+.akd-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+/* 足。**紙の外へ出ない。** 候補が12人いても「ほぞんする」がここに居る */
+.akd-sheet-foot {
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--pg-rule);
+  background: var(--pg-sheet);
+}
 .akd-close {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-2);
   display: grid;
   place-items: center;
   width: 48px;
@@ -251,13 +304,13 @@
 }
 .akd-close:active { transform: translateY(4px); box-shadow: none; }
 
-/* 見出し。**閉じるボタンの下をくぐらせない**（48px + 余白ぶん空ける）。 */
+/* 頭の中の日付。**閉じるボタンをよける余白はもう要らない**（横に並んでいる） */
 .akd-sheet-h {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--sp-2);
-  margin: 0 56px 0 0;
+  margin: 0;
   font-size: var(--fs-note);
   color: var(--ink-2);
 }
@@ -375,6 +428,53 @@
   color: var(--ink);
 }
 
+/* --- 札が折り目の下に落ちないように ------------------------------------
+   紙を頭・胴・足に分けて重なりは消えたが、**窓の下に落ちた札は「重なって
+   いない」と出るだけで、見えないことに変わりはない。** 9月11日の5人目——
+   絵を引き直してはじめて出るようになった人——がそこに落ちていた。
+
+   測ったら、写真が **439px** あった（`tools/sprites/pickfold.mjs`）。
+   ここは 42vh（354px）のつもりで書いてあるのに、**あとから読まれる
+   `app/css/nordic.css` に `.nstudio-shot img { max-height: 52vh }` が
+   丸ごと残っていて、そちらが勝っていた。** 旅の写真の面から札を
+   こちらへ移したとき（2026-09-10）、向こうの決めを消していない。
+   あちらは別の担当が触っているので、**強さで勝って**こちらの値にする。
+
+   直したのは3つ。どれも `.akd-sheet-body` から指して、あちらに勝たせる。
+
+   | | 前 | いま | なぜ |
+   | --- | --- | --- | --- |
+   | 写真 | 52vh(439px) | 42vh(354px) | 85px ぶんが札を押し出していた |
+   | 札の列 | 4列(76px) | **5列**(56px) | 5枚＝「入れない」＋4人が**1段に入る** |
+   | 「だれを入れますか」の上 | 24px | 16px | 2段目の下端を窓の中へ入れる |
+
+   **列を1つ増やすのがいちばん効く。** 段が減るので、9枚でも2段で済む。
+   4列のままだと9枚は3段になり、3段目を覗かせるには写真を 299px まで
+   下げることになる（主役が主役でなくなる）。 */
+.akd-sheet-body .nstudio-shot img {
+  max-height: 42vh;
+}
+/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
+   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても
+   窓に収まる。 */
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot img {
+  max-height: 34vh;
+}
+.akd-sheet-body .nstudio-ask {
+  margin-top: var(--sp-4);
+}
+/* 5列にする。390px で中身が 332px なので、56px なら5列ちょうど
+   （5×56＋gap 4×8＝312 ≦ 332、6列は 376 で入らない）。
+   1マスは 60×88px で、**押しどころの下限 48px は保っている。** */
+.akd-sheet-body .nstudio-pick {
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+}
+/* 横の余白を詰めて、**絵は 52px のまま**入れる（60 − 枠2 − 余白4 ＝ 54）。
+   絵を小さくすると誰だか分からなくなる。詰めるのは余白のほう。 */
+.akd-sheet-body .npick {
+  padding: var(--sp-2) 2px;
+}
+
 /* 誰を入れるか。**全部のマスが押せるので、1枚ずつに厚みは付けない。** */
 .nstudio-pick {
   display: grid;
@@ -422,25 +522,17 @@
 .npick:active { transform: translateY(2px); }
 
 /* 持って帰る。ここだけ板。
-   **紙の底に貼り付ける。** 立てる人が12人いると選ぶマスだけで3段になり、
-   いちばんやりたいこと（持って帰る）が紙の外へ出る。地は紙と同じ色で
-   敷いて、下をくぐる絵が透けないようにする。 */
-.nstudio-save {
-  position: sticky;
-  bottom: calc(var(--sp-5) * -1);
-  z-index: 1;
+   **足の中の1行。** 紙の底に貼り付ける（`sticky`）のはやめた——貼り付けた帯は
+   上にある札にかぶさるので、候補が増えた日に札が潜る。足そのものが動かない
+   ので、いちばんやりたいこと（持って帰る）は紙の外へ出ない。
+   **`.akd-sheet-foot` から指すのは、あとに読まれる `nordic.css` に同じ名前の
+   決めが残っているため**（あちらは `margin-top` を持っている）。 */
+.akd-sheet-foot .nstudio-save {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
-  margin-top: var(--sp-5);
-  padding: var(--sp-3) 0 var(--sp-5);
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--pg-sheet) var(--sp-3),
-    var(--pg-sheet)
-  );
+  margin: 0;
 }
 .nstudio-go {
   display: inline-flex;
@@ -458,7 +550,8 @@
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .nstudio-go:active { transform: translateY(6px); box-shadow: none; }
-.nstudio-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+/* 押せないときの姿（地・字・厚み）は `tokens.css` が1か所で持つ。
+   ここには書かない。`opacity: 0.6` で薄めていたときは 3.29 まで落ちていた（実測） */
 /* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
    板を2つ横に並べると、どちらが本筋か分からなくなる。
    本筋は「ほぞんする」で、こちらは効かなかった人のための逃げ道。 */
@@ -471,3 +564,90 @@
   font-weight: 900;
   color: var(--ink);
 }
+
+/* =========================================================
+   貼った写真を1枚消す（`components/cards/DropPhoto.tsx`）
+   **あやとにだけ出る。** ここでやることは「入れて、持って帰る」なので、
+   消す道はいちばん下でいちばん静かにしておく。板にしない——板にすると、
+   本筋（「ほぞんする」）と同じ強さで並んでしまう。
+   ========================================================= */
+.akd-drop {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--pg-rule);
+}
+/* 畳んでいるときは字1本。48px は高さで取る（`docs/island-design.md` 3の2） */
+.akd-drop-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  /* 赤くしない。畳んでいるあいだは、まだ何も起きない */
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* 開いたら、そこだけ地を変えて「いま別のことを聞かれている」と分かるように */
+.akd-drop.is-ask {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: var(--bw-2) solid var(--accent-deep);
+  border-radius: var(--r-3);
+  background: color-mix(in srgb, var(--accent-deep) 7%, var(--paper));
+}
+.akd-drop-say {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+}
+.akd-drop-say b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.akd-drop-say i {
+  font-size: var(--fs-note);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.akd-drop-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.akd-drop-no,
+.akd-drop-yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+/* やめるほうを本筋にする。**戻せない側を、いちばん押しやすい形にしない。** */
+.akd-drop-no {
+  border: var(--bw-2) solid var(--frame-dark);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  box-shadow: var(--pop);
+}
+.akd-drop-no:active { transform: translateY(6px); box-shadow: none; }
+/* 消すほうは字だけ。押せることは分かるが、指が先に行く形にはしない */
+.akd-drop-yes {
+  border: var(--bw-2) solid transparent;
+  background: none;
+  /* 地を敷かない字だけの押しどころ。紙の上で 4.28 : 1 だったので `--accent-ink` に。 */
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* 同上。姿は `tokens.css`。「消す」は字だけの押しどころなので、
+   あちらでも地を敷かず、色だけ落としてある（2.64 → 6.10） */

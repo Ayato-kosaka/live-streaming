@@ -1,8 +1,8 @@
 import type { KitchenTalk } from "@/content/kitchenTalk";
 import { charFit } from "@/content/characterBox";
+import { charImg } from "@/lib/charImg";
 
-/** キャラクターの絵は Google ドライブ。s の後ろが取り出す大きさ（`FriendsWall` と同じ道）。 */
-const drive = (id: string, size: number) => `https://lh3.googleusercontent.com/d/${id}=s${size}`;
+/* キャラクターの絵は `lib/charImg.ts`（口ごしに置き場から）。#284 で移した */
 
 /** 分を「2時間49分」に。1時間に満たない日は分だけ言う。 */
 function span(mins: number): string {
@@ -64,7 +64,7 @@ export default function KitchenDay({ t }: { t: KitchenTalk }) {
                 {/* 枠ではなく、**中に描かれた figure** の大きさでそろえる
                     （`content/characterBox.ts`。島と図鑑と同じそろえ方）。
                     枠で並べると、1列の中で人によって 1.45 倍の差がついていた。 */}
-                <img src={drive(icon, 256)} alt="" loading="lazy" referrerPolicy="no-referrer" style={charFit(icon, 0.86, true)} />
+                <img src={charImg(icon, 256)} alt="" loading="lazy" referrerPolicy="no-referrer" style={charFit(icon, 0.86, true)} />
               </li>
             ))}
           </ul>

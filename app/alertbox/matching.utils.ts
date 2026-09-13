@@ -1,5 +1,7 @@
 // 依存なし（RN/Expo標準で動きます）
 
+import type { AlertViewer, AlertboxCharacter } from "./types";
+
 /** ゼロ幅系や制御文字など、目に見えない文字を除去 */
 const INVISIBLE_CHARS_RE =
     /[\u200B-\u200D\uFEFF\u2060\u180E\u00AD\u034F\u061C]/g; // ZWSP, ZWJ, FEFF, WJ, 他
@@ -56,11 +58,20 @@ export function levenshtein(a: string, b: string): number {
 /** Collator は全角/半角や濁点の差を吸収して比較できる */
 const collator = new Intl.Collator("ja", { sensitivity: "base", usage: "search", ignorePunctuation: true });
 
-/** viewers から nickname に最も一致する Viewer を返す */
-export function matchViewerByNickname(
-    prepared: { name: string; norm: string; normNoEmoji: string; }[],
+/**
+ * viewers から nickname に最も一致する Viewer を返す。
+ *
+ * **渡したものの型のまま返す**（`<T extends …>`）。呼ぶ側は絵や絵文字まで
+ * 付いた行を渡してくるので、ここで `{name, norm, normNoEmoji}` に痩せると
+ * 受け取った側が `as` で太らせ直すことになる。そうすると、行の形を変えた
+ * 日に**型が何も言わずに通る**。
+ */
+export function matchViewerByNickname<
+    T extends { name: string; norm: string; normNoEmoji: string }
+>(
+    prepared: T[],
     rawNickname?: string | null
-) {
+): T | null {
     if (!rawNickname || prepared.length === 0) return null;
 
     const target = normalizeName(rawNickname);
@@ -102,4 +113,41 @@ export function matchViewerByNickname(
     // if (hit) return hit;
 
     return null;
+}
+
+/**
+ * 名簿を、**名前ごとの並び**に開く。
+ *
+ * 口が返すのは人ごと（1人がチャンネル名と呼び名を持つ）。当てるほうは
+ * 名前ごとに見るので、ここで開く。スプレッドシートが141行で97人だったのと
+ * 同じ形に戻している。
+ *
+ * **絵は縮める前のものを出す。** ドライブから取っていたときも原寸だった。
+ * 置き場に原寸が無い人（移行の途中でこけた人）は、焼いてあるいちばん
+ * 大きいものに落とす。
+ *
+ * @param {AlertboxCharacter[]} chars 口が返した人
+ * @return {AlertViewer[]} 名前ごとの並び
+ */
+export function toViewers(chars: AlertboxCharacter[]): AlertViewer[] {
+  const out: AlertViewer[] = [];
+  for (const c of chars) {
+    const p = c.plain;
+    const iconUrl = p?.full ?? p?.sizes?.["640"] ?? p?.sizes?.["256"] ?? null;
+    /* 名前の重複はここで落とさない。**同じ名前を2人が持っていたら、
+       どちらが当たるか決まらない。** それは口のほうで断る話なので、
+       ここは表と同じく「並んでいるものを順に見る」だけにする。 */
+    for (const name of [c.channelName, ...(c.aliases ?? [])]) {
+      if (!name) continue;
+      out.push({
+        name,
+        norm: normalizeName(name),
+        normNoEmoji: normalizeNameNoEmoji(name),
+        emoji: c.emoji ?? "",
+        iconUrl,
+        videoUrl: c.videoUrl ?? null,
+      });
+    }
+  }
+  return out;
 }

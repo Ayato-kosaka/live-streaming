@@ -9,13 +9,21 @@ name: 管理スクリプトを実行
 #                      どこに何があるか  {"list":true}
 #                      **値を出さずに形だけ** {"collection":"...","keys_only":true}
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
-#   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
+#   firestore_delete … 書類を1つ消す。**既定では1バイトも消さない**（#291 の 4-b）
+#                      {"collection":"islandRate","doc":"ID"}              … 下見
+#                      {"collection":"islandRate","doc":"ID","apply":true} … 消す
+#                      **消せるのは firestore_delete.py の DELETABLE に載って
+#                      いる4本だけ**（その日限り／その場限りのもの）。視聴者さんの
+#                      字も、お金の台帳も、apply を付けても消せない。表に無い名前は
+#                      **引きもせずに**弾く。引っ込めたいだけなら firestore_write で
+#                      hidden を立てる。**書類IDも中身もログに出さない**（ログは公開）
+#   firestore_delete_selftest
+#                    … 上の縛りを偽の Firestore で動かす。
+#                      **本番にも資格情報にも触らない**（手元でも走る）
 #
 # 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
 # ここはそれが使えないときの逃げ道。
 #   nordic_supporter … その日いた人を手で足す {"day":"2026-09-12","channel":"UC…"}
-#   nordic_log       … その日に起きたこと     {"day":"day-3","body":"…"}
-#                      旅のあと Git へ焼き戻す {"op":"export"}
 #   nordic_arrived   … 着いた／取り消す       {"date":"2026-09-19"}
 #
 # カードを北欧旅から切り離して企画に寄せるぶん（#202）。
@@ -27,6 +35,99 @@ name: 管理スクリプトを実行
 #                         結び付ける。二重になっている空の行はしまう
 #   images_migrate      … nordicPhotos → islandStreamEventImage へ移す。
 #                         **書類IDは変えない**（カードのIDがそこから決まる）
+#
+# 豚の貯金箱（docs/nordic-fund.md 9章）。**どれも既定では1行も書かない。**
+# 額の話なので、先に何がいくら動くかを出す。
+#   fund_check    … 移行の下見。**Firestore を1行も触らない。**
+#                   411件を2回流して増えないこと、BigQuery を重ねても増えない
+#                   こと、本番の /island-api/fund と1円まで合うことを見る
+#   fund_migrate  … GAS の SuperChats → islandFundSuperChats（411件）と、
+#                   支出7件・目標1件。{"apply": true} で書く。
+#                   **移行前と1円でも違ったら書かずに 1 で落ちる**
+#   fund_sync     … 掃除を手で流す {"apply": true}。毎晩のぶんは
+#                   schedule_fetch_chat.yml から走る。
+#                   {"days":400,"apply":true,"sweep":true} は遡り。
+#                   **貯金箱の額が動く。** sweep が無いと31日より前は書かない
+#   fund_add      … 手で1件足す／消す（スパチャ・支出・目標）。
+#                   {"kind":"spend","day":"2026-09-11","title":"宿代","yen":4000}
+# キャラクターの絵をドライブから Firebase Storage へ移すぶん（#284 の C 群）。
+# **既定では1バイトも書かない。** 書くには {"apply": true} を付ける。
+#   characters_migrate … Viewers 表とドライブのフォルダ2つを突き合わせて、
+#                        絵を Storage に置き、islandCharacter に名前と
+#                        絵文字と呼び名を入れる。{"limit":3} で試せる
+#   characters_probe   … **絵を1枚置いて、読んで、消す**（入力なし）。
+#                        Actions は置き場に書けないまま（#283）でも、
+#                        Functions に頼めば置けることを本番で1回通す。
+#                        本番に何も残さない
+#   characters_add     … 預かった絵から**新しい人を足す**。表にもドライブにも
+#                        いない人（今日はじめてコメントした人）はこちら。
+#                        絵と名前は `python/admin/_incoming/` に置くが、
+#                        **公開リポジトリに残さない。** 流すときだけ枝に載せて
+#                        この枝を指して起動し、済んだら枝ごと落とす。
+#                        {"apply": true} で書く（既定は下見）
+#
+# 公開バケットの片づけ（#289）。**投げ銭してくれた113人の名前と金額が、
+# ログイン無しで誰でも読める置き場に残っている。** 読む画面はもう無い。
+#   public_purge     … Functions に頼んで片づける。{} で下見（いま何が
+#                      できるかと一覧。**1バイトも書かない**）。
+#                      下見は**旅の写真の置き場（544件）も数える**（#296）。
+#                      フォルダごとの件数と合計バイト数まで。
+#                      **ファイル名は1つも出ない**（ログも公開なので）。
+#                      {"names":[...],"apply":true} で、私用の置き場へ
+#                      写してから消す（**写せていなければ消さない**）。
+#                      消せるのは口の側の決め打ちの表の2つだけで、
+#                      viewer-video/ の mp4（視聴者さんのもの）は弾かれる
+#
+# 旅の写真の実体だけ、退避に1本も入っていない（#296）。**測るところまで。**
+# Firestore も BigQuery も毎晩取れているのに、いちばん取り返しのつかない
+# ものが守られていない。止まっていた理由は「Actions のサービスアカウントに
+# Storage の権限が1つも無い」こと。**Functions なら届くかもしれない**ので、
+# まず測る。上の public_purge の下見（{}）が、そのまま2つ目の置き場
+# （live-streaming-d3cac.firebasestorage.app）の結果も出す。
+#   public_purge {} … 旅の写真の置き場で list / get / create / delete /
+#                     update / buckets.get のどれができるか。list が立てば
+#                     **件数と合計バイト数まで**。ファイル名は1つも出ない。
+#                     **消す道はこちらの置き場には開いていない**（片づけは
+#                     公開バケット決め打ち。置き場の名前を渡しても弾かれる）
+#
+# 測った結果（2026-09-12）: **list は立ったが get が立たない。** 544件・340MB を
+# 数えられるだけで、中身は1バイトも読めない。かわりに Firestore に入っている
+# 合言葉つきの URL なら、**Storage の IAM を1つも通らずに**実体が取れる
+# （本番で1枚 200・993,115バイト・正しい JPEG）。それで退避する。
+#   backup_photos … 旅の写真を退避へ。**既定では1バイトも書かない。**
+#     {}                                   … 下見（何枚あって、何枚取ってあるか）
+#     {"apply": true}                      … 取る（1回 128MB で区切る）
+#     {"apply": true, "budget_mb": 400}    … 溜まったぶんを一度に
+#     {"verify": true}                     … 1枚戻して**バイト列が一致するか**
+#     {"selftest": true}                   … 本番に触らず振る舞いだけ再現
+#     合言葉つきの URL は**ログに出さない**（このリポジトリは公開）
+#
+# あやと島カードに絵が乗らない件。**読むだけ。1バイトも書かない。**
+#   cards_icon_probe … カードの channelId から、キャラクターの書類IDを
+#                      引ける道が在るかを測る（入力なし）。出すのは
+#                      人数・枚数と当たったかどうかだけ
+#
+# 投げ銭の札の日付（#92）。**既定では1行も書かない。**
+#   donors_first_seen … islandDonors.firstSeenAt を「その人が初めて投げ銭した
+#                       時刻」に直す。前は now（ジョブが走った時刻）が入って
+#                       いて、毎晩 22:41 UTC＝翌朝 07:41 JST に走るぶん、
+#                       札がいつも1日ずれていた。{} で空回し（何件ずれて
+#                       いるか・ずれの日数の内訳だけ出す）、
+#                       {"apply": true} で直す。**doneru_donations に1行も
+#                       無い どねID は触らない**（引けない相手に「たぶん
+#                       この日」を入れない）。どねID も名前も出さない
+#
+# 視聴者さんの IP の片づけ（#293）。**既定では1バイトも書かない。**
+#   ip_purge          … 付箋（islandNotes）と企画（islandStreamEvent）に
+#                       溜まった `ip` の欄を落とす。**書類そのものは消さない。**
+#                       読む仕組みが1つも無いまま、消す期限も決めずに
+#                       溜めていた。取るのは Functions 側でやめてある。
+#                       {} で空回し（入れ物ごとに「全部で何件 / `ip` が
+#                       入っているのが何件」だけ出す）、{"apply": true} で
+#                       まとめ書きで落として、**同じ実行の中で数え直して
+#                       0 を確かめる**。IP の値も書類IDも1文字も出さない
+#   ip_purge_selftest … 上の振る舞いを偽の Firestore で動かす。
+#                       **本番にも資格情報にも触らない**（手元でも走る）
 #
 # BigQuery を見るもの。**ログは公開なので、出すのは数字だけにしてある。**
 #   doneru_audit     … 寄付の件数・合計・重なりを点検する（入力なし）
@@ -42,6 +143,9 @@ name: 管理スクリプトを実行
 #   functions_log    … 勝手に動く Functions のログを読む {"name":"collectLiveChat"}
 #                      「溜まっていない」の原因（鍵・トークン・配信なし）を
 #                      区別するのに要る。Firestore を数えるだけでは分からない
+#   live_probe       … その Cloud Logging が読めないとき（#236 の IAM 待ち）に、
+#                      collectLiveChat と同じ順で鍵→トークン→配信→コメントを
+#                      自分でなぞって、どこで止まるかを見る。**読むだけ**
 on:
   workflow_dispatch:
     inputs:
@@ -124,4 +228,8 @@ jobs:
         working-directory: python/admin
         env:
           ARGS: ${{ inputs.args }}
+          # キャラクターの移行（characters_migrate）が、名前と絵文字の
+          # 出どころであるスプレッドシートを**読む**のに要る。
+          # 読むだけで、1行も書かない。移行が終わったら、この2行ごと消す。
+          EXPO_PUBLIC_GAS_API_URL: ${{ secrets.EXPO_PUBLIC_GAS_API_URL }}
         run: python "${{ inputs.script }}.py"

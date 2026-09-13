@@ -34,7 +34,10 @@
 import {logger} from "firebase-functions";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
-import {doneruYoutubeToken} from "./doneruYoutube";
+import {
+  doneruYoutubeToken,
+  doneruYoutubeRefreshToken,
+} from "./doneruYoutube";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -45,6 +48,19 @@ const MSGS = db.collection("streamChatMessages");
 const RUNS = db.collection("streamChatRuns");
 /** 鍵の置き場。アラートボックスとルーレットが使っているのと同じ。 */
 const USERS = db.collection("islandUsers");
+/**
+ * 最後に起きたときの結果。**書類は1枚だけ。**
+ *
+ * 溜めたものではなく、**ここが生きているかどうかの札**。`RUNS` に混ぜると
+ * 切り抜き(`clip_cuts`)が配信1本として数えてしまうので、置き場を分ける。
+ *
+ * なぜ要るか。この関数は5分おきに勝手に動くので、**壊れても誰も気づかない。**
+ * 気づくには Cloud Logging が要るが、そこは権限が足りず 403 で読めない
+ * (#236 があやと待ち)。実際それで、2026-09-10 の配信を丸ごと取り逃した。
+ * Firestore を数えても「0件」しか分からず、そこから先があてずっぽうになる。
+ * 札を1枚置いておけば、ログが読めなくても `firestore_read` で理由まで分かる。
+ */
+const HEALTH = db.collection("streamChatHealth");
 
 /** 相手が黙ったときに、こちらが道連れにならないための打ち切り。 */
 const TIMEOUT_MS = 10000;
@@ -64,6 +80,24 @@ type Msg = {
   /** `textMessageEvent` などの生の種類。スパチャを後から選り分けるため */
   kind: string;
 };
+
+/**
+ * YouTube が断ってきたときの例外。**ステータスを持たせてある。**
+ *
+ * 前は `Error` に文字で埋めていたので、呼んだ側が 401（トークンが死んで
+ * いる。取り直せば直る）と、それ以外（取り直しても直らない）を区別できず、
+ * どちらも「配信を探せません」で黙って帰っていた。
+ */
+class YtError extends Error {
+  /**
+   * @param {number} status YouTube が返した HTTP ステータス
+   * @param {string} path 叩いた先
+   */
+  constructor(readonly status: number, readonly path: string) {
+    super(`${path} ${status}`);
+    this.name = "YtError";
+  }
+}
 
 /**
  * YouTube を叩く。**Doneru のトークンで。**
@@ -87,10 +121,77 @@ async function yt(
       signal: ctl.signal,
       headers: {Authorization: `Bearer ${at}`},
     });
-    if (!res.ok) throw new Error(`${path} ${res.status}`);
+    if (!res.ok) throw new YtError(res.status, path);
     return (await res.json()) as Record<string, unknown>;
   } finally {
     clearTimeout(stop);
+  }
+}
+
+/**
+ * トークンを1つ持って、**401 のときだけ取り直す**入れ物。
+ *
+ * ## ここが、コメントが1件も溜まらなかった理由
+ *
+ * **Doneru は、こちらから頼まない限り前に配ったものを配り続ける。**
+ * `widget/token` はいつでも 200 を返すが、中身は前に発行したままの
+ * アクセストークンで、配信していない時間が続くと期限を過ぎたまま残る。
+ * 実測では「316分前に切れている」ものが返ってきた。
+ *
+ * 取り直させる口（`widget/youtube/refresh`）は前からあって、OBS に出して
+ * いるアラートボックスは**ブラウザから**それを叩くので生き返る。
+ * ところが5分おきに勝手に動くこちらには、取り直させる人が誰もいなかった。
+ * 結果、`liveBroadcasts` が毎回 401 を返し、「配信を探せません」と書いて
+ * 帰る、を延々くり返していた（`streamChatRuns` が0件だったのはこれ）。
+ *
+ * だから **401 を見たら1度だけ取り直して、同じ問い合わせをやり直す。**
+ * 2度目も 401 なら、それは Doneru と YouTube の繋ぎ直しが要るという
+ * ことなので、こちらでは直せない。投げて、札に理由を残す。
+ */
+class Token {
+  private at = "";
+  private refreshed = false;
+
+  /** @param {string} key Doneru のアラートボックスの鍵 */
+  constructor(private readonly key: string) {}
+
+  /**
+   * 取り直しを済ませたか。**ログの字を変えるために要る。**
+   *
+   * 取り直す前の 401 と、取り直しても消えない 401 は、まったく別の話。
+   * 前者はここが勝手に直す。後者は Doneru と YouTube の繋ぎが切れていて、
+   * あやとがブラウザで繋ぎ直すまで直らない。
+   * **同じ字で出すと、次に詰まった人がまた5段階の切り分けから始める。**
+   */
+  get didRefresh(): boolean {
+    return this.refreshed;
+  }
+
+  /** いま持っているトークン。無ければもらってくる。 */
+  private async get(): Promise<string> {
+    if (!this.at) this.at = (await doneruYoutubeToken(this.key)).at;
+    return this.at;
+  }
+
+  /**
+   * YouTube を叩く。401 なら**1度だけ**取り直してやり直す。
+   * @param {Function} run トークンを受け取って叩く中身
+   * @return {Promise<T>} 叩いた結果
+   */
+  async call<T>(run: (at: string) => Promise<T>): Promise<T> {
+    try {
+      return await run(await this.get());
+    } catch (e) {
+      const dead = e instanceof YtError && e.status === 401;
+      if (!dead || this.refreshed) throw e;
+      /* 取り直しは1回だけ。ここを回数無制限にすると、繋ぎが切れている
+         あいだ5分おきに Doneru を叩き続けることになる。 */
+      this.refreshed = true;
+      logger.info("collectLiveChat: トークンが古いので取り直す");
+      await doneruYoutubeRefreshToken(this.key);
+      this.at = "";
+      return await run(await this.get());
+    }
   }
 }
 
@@ -103,26 +204,26 @@ type Live = {videoId: string; liveChatId: string};
  * アラートボックスと同じ順（`liveBroadcasts` → `videos`）で引く。
  * `liveBroadcasts` が `liveChatId` を持っていないことがあるので、
  * そのときだけ `videos` に聞き直す。
- * @param {string} at アクセストークン
+ * @param {Token} tok トークンの入れ物
  * @return {Promise<Live | null>} 配信中の1本
  */
-async function findLive(at: string): Promise<Live | null> {
-  const b = await yt(
+async function findLive(tok: Token): Promise<Live | null> {
+  const b = await tok.call((at) => yt(
     "liveBroadcasts",
     {part: "id,snippet,status", broadcastStatus: "active", maxResults: "1"},
     at,
-  );
+  ));
   const item = (b.items as Array<Record<string, never>> | undefined)?.[0];
   if (!item) return null;
   const videoId = String(item.id ?? "");
   const snip = (item.snippet ?? {}) as Record<string, unknown>;
   let liveChatId = String(snip.liveChatId ?? "");
   if (!liveChatId && videoId) {
-    const v = await yt(
+    const v = await tok.call((at) => yt(
       "videos",
       {part: "liveStreamingDetails", id: videoId},
       at,
-    );
+    ));
     const vi = (v.items as Array<Record<string, never>> | undefined)?.[0];
     const d = (vi?.liveStreamingDetails ?? {}) as Record<string, unknown>;
     liveChatId = String(d.activeLiveChatId ?? "");
@@ -141,13 +242,13 @@ type Drained = {added: number; next: string};
  * 1ページで打ち切ると次の回まで栞が進まない。ページが尽きるか
  * `MAX_PAGES` に当たるまで進める。
  * @param {Live} live 配信中の1本
- * @param {string} at アクセストークン
+ * @param {Token} tok トークンの入れ物
  * @param {string} from 前回の栞
  * @return {Promise<Drained>} 足した数と次の栞
  */
 async function drain(
   live: Live,
-  at: string,
+  tok: Token,
   from: string,
 ): Promise<Drained> {
   let token = from;
@@ -160,7 +261,14 @@ async function drain(
       maxResults: "200",
     };
     if (token) qs.pageToken = token;
-    const r = await yt("liveChatMessages", qs, at);
+    /* **口の名前は `liveChat/messages`。`liveChatMessages` ではない。**
+       `googleapis` の SDK では `youtube.liveChatMessages.list(…)` と書くので
+       （`functions/src/liveChat.ts` がそれ）、その名前をそのまま URL に
+       置いてしまっていた。REST の道は `/youtube/v3/liveChat/messages` で、
+       `liveChatMessages` は**そんな道が無いので 404**。
+       アラートボックス（`app/alertbox/connectors/YouTubeConnector.ts`）は
+       最初から `liveChat/messages` を叩いていて、あちらは動いている。 */
+    const r = await tok.call((at) => yt("liveChat/messages", qs, at));
 
     const items = (r.items as Array<Record<string, never>> | undefined) ?? [];
     const rows: Msg[] = [];
@@ -212,31 +320,65 @@ async function drain(
 export const collectLiveChat = onSchedule(
   {schedule: "every 5 minutes", timeZone: "Asia/Tokyo"},
   async () => {
+    /* 最後に起きたときの結果を1枚だけ残す。**ログが読めなくても分かるように。**
+       ここで投げない（札が書けないことで取り込みを止めない）。 */
+    const note = async (step: string, detail = "") => {
+      try {
+        await HEALTH.doc("collectLiveChat").set(
+          {step, detail, at: Date.now()},
+          {merge: true},
+        );
+      } catch (e) {
+        logger.warn("collectLiveChat: 札を書けません", String(e));
+      }
+    };
+
     /* 鍵はオーナーのところに1つ。無ければ何もしない（異常ではない）。 */
     const owner = await USERS.where("admin", "==", true).limit(1).get();
     const key = String(owner.docs[0]?.data()?.doneruKey ?? "");
     if (!key) {
       logger.info("collectLiveChat: Doneru の鍵がまだ入っていません");
+      await note("鍵がない");
       return;
     }
 
-    let at = "";
-    try {
-      at = (await doneruYoutubeToken(key)).at;
-    } catch (e) {
-      logger.warn("collectLiveChat: トークンが取れません", String(e));
-      return;
-    }
+    const tok = new Token(key);
 
     let live: Live | null = null;
     try {
-      live = await findLive(at);
+      /* トークンを取るのも配信を探すのも、`Token` の中で1度に起きる。
+         **401 はここで取り直されるので、もう素通りしない。** */
+      live = await findLive(tok);
     } catch (e) {
-      logger.warn("collectLiveChat: 配信を探せません", String(e));
+      /* YouTube が断ったのか、その手前（Doneru からトークンを
+         もらうところ）で転んだのかを分ける。**打ち手が違う。** */
+      if (!(e instanceof YtError)) {
+        logger.warn("collectLiveChat: トークンが取れません", String(e));
+        await note("トークンが取れない", String(e));
+        return;
+      }
+      /* 取り直しても 401 なら、Doneru と YouTube の繋ぎが切れている。
+         **それはあやとがブラウザで繋ぎ直すしかない。**
+         ログの字を変えておく。次に詰まったとき、`functions_log` の1行で
+         「こちらで直せるのか、繋ぎ直しが要るのか」が分かるように。 */
+      const stuck = tok.didRefresh && e.status === 401;
+      logger.warn(
+        stuck ?
+          "collectLiveChat: 取り直しても配信を探せません" +
+            "（Doneru の繋ぎ直しが要る）" :
+          "collectLiveChat: 配信を探せません",
+        String(e),
+      );
+      await note(
+        stuck ? "取り直しても 401（Doneru の繋ぎ直しが要る）" :
+          `配信を探せない（${e.status}）`,
+        String(e),
+      );
       return;
     }
     if (!live) {
       logger.info("collectLiveChat: いま配信していません");
+      await note("配信していない");
       return;
     }
 
@@ -246,7 +388,7 @@ export const collectLiveChat = onSchedule(
     const now = Date.now();
 
     try {
-      const {added, next} = await drain(live, at, from);
+      const {added, next} = await drain(live, tok, from);
       await runRef.set(
         {
           videoId: live.videoId,
@@ -259,13 +401,23 @@ export const collectLiveChat = onSchedule(
         },
         {merge: true},
       );
+      const total = (Number(run.data()?.count) || 0) + added;
       logger.info(
         `collectLiveChat: ${live.videoId} に ${added}件 足した` +
-          `（のべ ${(Number(run.data()?.count) || 0) + added}件）`,
+          `（のべ ${total}件）`,
       );
+      await note("溜めた", `${live.videoId} のべ${total}件`);
     } catch (e) {
       /* **栞を進めずに終わる。** 次の回が同じところから読み直す。 */
-      logger.warn("collectLiveChat: 読めませんでした", String(e));
+      const stuck = tok.didRefresh && e instanceof YtError && e.status === 401;
+      logger.warn(
+        stuck ?
+          "collectLiveChat: 取り直しても読めません（Doneru の繋ぎ直しが要る）" :
+          "collectLiveChat: 読めませんでした",
+        String(e),
+      );
+      await note(stuck ? "取り直しても 401（読むところ）" : "読めなかった",
+        String(e));
     }
   },
 );

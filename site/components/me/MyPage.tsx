@@ -17,6 +17,7 @@ import IslandMe from "@/components/live/IslandMe";
 import MeHero from "./MeHero";
 import MyStuff, { type Bag } from "./MyStuff";
 import ReadAgain, { WaitingPanel } from "./ReadAgain";
+import { TOOL_LINE } from "./tools";
 import { withIcons, type PlanDays, type ShownCard } from "@/components/cards/cards";
 import SignIn from "@/components/live/SignIn";
 
@@ -50,8 +51,8 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   /** 付箋と企画。**待っている・読めた・読めなかったの3つを別に持つ** */
   const [stickies, setStickies] = useState<Bag<Sticky>>({ st: "wait" });
   const [plans, setPlans] = useState<Bag<NextPlan>>({ st: "wait" });
-  /* カードは `useCards()` を使わない。**あちらは読み直せない**ので、
-     「もう一度よみこむ」を押しても灰色のままになる。ここで引いて持つ。 */
+  /* カードはここで引いて持つ。**この面は付箋・企画・カードを、札1つで
+     まとめて読み直す**ので、3つとも同じ `Bag` に揃えておく。 */
   const [cards, setCards] = useState<Bag<ShownCard>>({ st: "wait" });
 
   const load = useCallback(async () => {
@@ -150,7 +151,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
           <Icon name="signpost" size={22} />
           <span className="mp-goto-t">
             <b>島の手入れ</b>
-            <i>写真・その日・いまどこ・配信・付箋・企画・投げ銭・OBS</i>
+            <i>{TOOL_LINE}</i>
           </span>
           <Icon name="right" size={14} />
         </Link>
@@ -183,7 +184,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
             : undefined
         }
       >
-        <IslandMe me={me} />
+        <IslandMe />
       </Fold>
 
       {/* ログアウトは畳まない。**畳みの向こうに置いたせいで見つからなかった**

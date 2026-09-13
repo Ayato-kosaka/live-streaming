@@ -6,6 +6,7 @@ import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
 import HashJump from "./HashJump";
+import Say from "./Say";
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -147,7 +148,8 @@ export function PageHead({
   logo?: string;
   title: string;
   /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
-      （`app/map/parts.tsx`）。ほとんどの面は文字列のまま渡す。 */
+      （`app/map/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
+      ほとんどの面は文字列のまま渡す。 */
   lead?: ReactNode;
   /** 案内役のひとこと。 */
   say?: string;
@@ -190,8 +192,12 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
         <PlaceList current={current} atAll={atAll} />
       </nav>
       <p className="ifoot-note">
-        {FOOT.note} <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
+        <Say t={FOOT.note} />
       </p>
+      {/* **文の中に入れない。** 行内のリンクは文といっしょに折り返すので、
+          当たるのは1行ぶんだけになる（実測 102x18。島の全面で同じ）。
+          行き先は文ではないので、行から出して1つの押しどころにする。 */}
+      <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
     </footer>
   );
 }

@@ -50,6 +50,32 @@ mcp__github__get_job_logs  job_id=<island_stats の job id>  return_content=true
 | その日いた人の名簿 | `YYYY-MM-DD: N人` | 空の日が続いたら `nordicDays` が死んでいる |
 | Doneru を名簿に足す | `渡せる / 紐付け待ち / 新規` | **新規がいると終了コード1で赤くなる。異常ではなく呼び出し** |
 
+### Doneru のぶんの札（2026-09-12 から）
+
+`Fetch Doneru Donations` の**最後の step**（「Doneru のぶんが、いつまで
+入っているかを写す」）も見る。`islandDoneruHealth/last` を書いていて、
+島の「応援する」が**3日以上止まったときだけ**「Doneru のぶんは、◯月◯日まで
+入っています」と出す元になっている（#294）。
+
+**この step は `continue-on-error` 付き。** 転んでも**緑のまま**なので、
+**step の色を見ずにログの字を読む。** 通っていれば1行だけ出る。
+
+```
+INFO DONERU_HEALTH ok
+```
+
+出ていなければ写せていない。**そのときは島が黙る側に倒れる**（古い札が残るか、
+札が無ければ何も出ない）ので嘘にはならないが、**止まっても誰も気づかなくなる。**
+
+札そのものを見るなら:
+
+```
+run_admin_script  script=firestore_read  args={"collection":"islandDoneruHealth","doc":"last"}
+```
+
+`okDay` が**今日**なら健康。何日も前のままなら、Doneru の cookie が切れている
+（#294。**DevTools でしか入れ直せないので、旅のあいだは誰も直せない**）。
+
 台帳のステップは**0時をまたいだ配信を名指しで出す**。
 
 ```

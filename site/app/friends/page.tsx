@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import { CHARACTER_DRIVE, LINKS } from "@/content/site";
+import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
 import { PLAN_BY_DAY } from "@/content/planDays";
 import { FriendsMark } from "@/components/live/art";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 
 export const metadata: Metadata = {
   title: "愉快な仲間達",
-  description: "毎晩22時に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
+  /* `<meta>` は焼かれたまま出るので、時刻を書かない（`content/site.ts` と同じ理由） */
+  description: "配信に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
 };
 
 /**
@@ -18,6 +21,14 @@ export const metadata: Metadata = {
  * ここは「投げ銭で作ったキャラクターが並ぶ面」なので、一人ひとりが主役に見えないと意味がない。
  * 同じ形の板を積むのをやめて、紙に刷った図鑑の型にした（`docs/ac-reference.md` の 7章）。
  * 紙の上には影を落とさず、細い罫線で区切って、見出しには蛍光ペンの帯を敷く。
+ *
+ * 並ぶのは**絵のある人ぜんぶ**（あやと 2026-09-11「全員分を、キャラクター作成順に
+ * 出せば良い」）。島に立つ22人ではない。焼き込みではなく口から引いているので、
+ * 旅のあいだにあやとがスマホから足した人も、焼き直しを待たずに出る。
+ *
+ * **ドライブのフォルダへの行き先は畳んだ。** 絵は Firebase Storage に移してあり
+ * （#284）、図鑑の中で開いている人のぶんをそのまま落とせる。97枚のフォルダから
+ * 自分のを探させるより、その人の1枚の隣に置くほうが近い。
  *
  * 見出しの絵は、たき火（あやと島について）と別のものを描いてある。
  * 同じ絵を2か所で使うと、別の場所に来た気がしない。
@@ -35,7 +46,7 @@ export default function FriendsPage() {
       <PageHead
         mark={<FriendsMark />}
         title="住んでる人"
-        lead="毎晩22時に集まってくる、愉快な仲間達。"
+        lead={<Say t={say("friends")} />}
       />
 
       <div className="pap-mat">
@@ -55,12 +66,12 @@ export default function FriendsPage() {
               絵とマスが目の前にあれば読まなくても分かる。
               しゃべり方の出どころは図鑑の下にもう一度書いてあったので、そちらに任せる。 */}
           <section className="pap-sec">
-            <h2 className="pap-h">島を歩いているのは、誰なんだろう</h2>
+            <h2 className="pap-h">これまでに描いた人、ぜんぶ</h2>
             {/* 企画の表は面（server）で引いて値だけ渡す。図鑑は client なので、
                 ここで渡さないと `content/plans.ts`（20KB）を連れていく。 */}
             <FriendsWall plans={PLAN_BY_DAY} />
             <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
-              自分で作ったキャラクターが、そのまま島の中を歩いています。借り物の人形ではなくて、本人です。
+              借り物の人形ではなくて、本人です。
             </p>
           </section>
 
@@ -69,21 +80,12 @@ export default function FriendsPage() {
             <p>
               100円から投げ銭してくれた方に、1人ずつ描いています。描いた絵は投げ銭の演出に出てきて、そのままこの島を歩きます。
             </p>
-            <p>アイコンに使ってもらって大丈夫。</p>
             <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
               <a className="pap-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
                 <img src={doneru.logo} alt="" />
                 <span>
                   <b>投げ銭してキャラクターを作る</b>
                   <i>{doneru.note}</i>
-                </span>
-                <Icon name="external" size={14} />
-              </a>
-              <a className="pap-go" href={CHARACTER_DRIVE} target="_blank" rel="noopener noreferrer">
-                <img src="/sprites/stall.webp" alt="" />
-                <span>
-                  <b>キャラクター置き場</b>
-                  <i>Googleドライブ・自由にダウンロードOK</i>
                 </span>
                 <Icon name="external" size={14} />
               </a>

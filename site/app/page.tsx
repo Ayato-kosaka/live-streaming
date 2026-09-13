@@ -13,9 +13,12 @@ import { HERO, HOME } from "@/content/voice";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
+import TripToday, { type TripDay } from "@/components/home/TripToday";
+import { DAYS, DAY_PAGES, cityName, dayHref, dayName } from "@/content/nordic";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
+import Say from "@/components/ui/Say";
 
 /**
  * トップページ。
@@ -49,6 +52,31 @@ import Latest from "@/components/home/Latest";
    `ssr: false` にはしない。サーバ側で焼いておけば、島が HTML に入って
    すぐ出る（画面が出てから組むと、スマホで 1.6秒ぶん遅れる。実測）。 */
 const IsleStage = dynamic(() => import("@/components/isle/IsleStage"));
+
+/**
+ * 旅のしるべに渡す、旅程の17行。
+ *
+ * **旅程は `content/nordic.ts` が正。**ここでは日付・呼び名・行き先・その日に動く
+ * ところだけを抜く。あの表ごとブラウザへ渡すと、見どころ161件の JSON が付いてくる
+ * （`components/nordic/TripNow.tsx` と同じ理由）。
+ *
+ * 行き先は、**日ごとの面がある日はその面へ、無い日は旅程表のその行へ。**
+ * いまは17日ぜんぶに面があるが、旅程は一度まるごと変わったことがあるので、
+ * 面の有無は `DAY_PAGES` に決めさせる（`docs/island-misses.md` #3）。
+ */
+const TRIP_DAYS: TripDay[] = DAYS.filter((d) => !!d.date).map((d) => {
+  const legs = d.legs ?? [];
+  return {
+    date: d.date!,
+    name: dayName(d),
+    href: DAY_PAGES.includes(d) ? dayHref(d) : `/nordic#${d.id}`,
+    /* 動く日は「どこから どこへ」。動かない日は、その日を過ごす街ひとつ。
+       街の名前を手で並べない——旅程の区間と、その日の街から引く。 */
+    where: legs.length
+      ? `${cityName(legs[0].from)} → ${cityName(legs[legs.length - 1].to)}`
+      : cityName(d.city ?? d.stay ?? ""),
+  };
+});
 
 export default function Home() {
   const s = STATS_FALLBACK;
@@ -113,7 +141,8 @@ export default function Home() {
                 fetchPriority="high"
               />
               {/* 見出しは絵なので、読み上げと検索のために字も置いておく。
-                  一言のほうは絵ではなく本文なので、ここには入れない */}
+                  一言のほうは絵ではなく本文なので、ここには入れない。
+                  焼かれたまま出る字なので、時刻も書かない（`content/nights.ts`） */}
               <span className="sr-only">あやと島</span>
             </h1>
             {/* 看板の言葉を、**絵ではなく字で**置く。
@@ -121,11 +150,26 @@ export default function Home() {
                 dpr2 でも読めなかった。島に降りた人が最初に読む1文がそこにあるのに
                 読めない、というのは `docs/island-play.md` 6章の 0:06 が
                 埋まっていないのと同じ。**絵は帯の手前で切って**（上の img）、
-                言葉はここが持つ。 */}
+                言葉はここが持つ。
+
+                **時刻はここに字で書かない。** `content/voice.ts` の `HERO.eyebrow`
+                1か所から取る。ここに書くと、旅に出た日から17日ぶん「毎晩22時」と
+                焼かれたまま出る（`docs/island-misses.md` #53）。 */}
             <p className="hero-say">
-              <b>毎晩22時、世界のどこかから生配信</b>
+              <b><Say t={HERO.eyebrow} /></b>
               <i>旅して、食べて、グルメアプリを作る、夜の居場所</i>
             </p>
+            {/* 旅のとちゅうだけ出る、いまいる日の札。**看板のすぐ下。**
+                ここが無かったあいだ、島が公開された翌日の1画面目で日付を持つ字は
+                「1年前の今日はジョージアにいました」だけで、いま旅が始まって
+                いることも、今日どこにいるかも、2.8画面ぶん送らないと出てこなかった。
+
+                看板ひとかたまりの中（`.hero-copy`）に置くのは、島が札を置くときに
+                避ける箱がここだから（`IslandStage` の `readLogo`）。外に出すと、
+                島の建物の札がこの上に乗る。
+
+                **旅が終われば、この板ごと消える**（`TripToday`）。 */}
+            <TripToday slug="nordic" days={TRIP_DAYS} />
           </div>
         </div>
         <div className="scroll-cue" aria-hidden>
@@ -172,7 +216,12 @@ export default function Home() {
           <Shelf />
         </Chapter>
 
-        <Chapter id="watch" kicker="見にいく" title={HOME.tonight} note={HOME.tonightNote}>
+        <Chapter
+          id="watch"
+          kicker="見にいく"
+          title={<Say t={HOME.tonight} />}
+          note={<Say t={HOME.tonightNote} />}
+        >
           {/* **直近の2本。手で選んだ見本ではない。**
               ここは「クッキング配信の代表」として選んだ見本の先頭2本を出していて、
               旅に出る前日の本番で 3週間前と2ヶ月前の回が「今夜も22時から」の下に
@@ -189,7 +238,7 @@ export default function Home() {
                 )}
                 <span className="hout-text">
                   <b>{l.label}</b>
-                  <i>{l.note}</i>
+                  <i><Say t={l.note} /></i>
                 </span>
                 <Icon name="external" size={14} className="hout-go" />
               </a>

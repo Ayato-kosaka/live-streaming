@@ -8,7 +8,7 @@ import { placeCountry, type PlaceCountry } from "@/content/place";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
-import { stayDays, travelNow, tripAsPlace, type TravelNow } from "@/lib/stay";
+import { stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type TravelNow } from "@/lib/stay";
 
 /**
  * 「いまどこ」の中身のうち、「いる国」に関わるところ。
@@ -60,7 +60,10 @@ function useCurrent(): {
         if (typeof s.current?.updatedAt === "string") setUpdatedAt(s.current.updatedAt);
       })
       .catch(() => {
-        /* 読めないときは焼き込みの場所のまま。国は月ごとにしか変わらないので害が小さい */
+        /* 読めないときは焼き込みの字のまま。**あれは地名ではない**
+           （`content/site.ts` の `NOW_FALLBACK`）ので、国は引けず、
+           旗も「いまいる国のこと」も出ない。**読めていない日に、
+           前の国の旗と見どころを「いま」として並べない。** */
       });
   }, []);
   const here = placeCountry(place);
@@ -77,12 +80,29 @@ function useCurrent(): {
  *
  * 静的書き出しなので、画面が出てから数える。焼いた日数は出さない。
  */
-function StayDay({ from }: { from: string }) {
+function StayDay({ slug, from }: { slug: string; from: string }) {
   const [n, setN] = useState<number | null>(null);
-  useEffect(() => setN(stayDays(from, new Date())), [from]);
+  /* **出国した国の日数は、出さない。** 滞在の `to` は帰ってから手で入れる欄なので、
+     旅に出ても止まらない（`lib/stay.ts` の `stayClosedOn`）。上の帯の
+     「ジョージアに来て ◯日目」は出国した日に消えるのに、ここだけ
+     旅から帰ったあとも増えつづけていた。 */
+  useEffect(() => {
+    const now = new Date();
+    setN(stayClosedOn(slug, now) ? null : stayDays(from, now));
+  }, [slug, from]);
   if (n === null) return null;
   return <span className="nowc-day">この滞在で {n.toLocaleString()} 日目</span>;
 }
+
+/**
+ * いちばん最後にいた滞在。**配列の最後の要素ではなく、日付でいちばん新しいもの。**
+ *
+ * 国は何度も往復する（フランスは2回、ジョージアは離れてまた戻っている）ので、
+ * `stays` の並び順に寄りかからない。`to` は人が書き入れる欄で空きうるので、
+ * 空いていたら `from` で代わりに並べる（`docs/island-misses.md` #24）。
+ */
+const lastStay = (c: Country) =>
+  [...c.stays].sort((a, b) => (a.to || a.from).localeCompare(b.to || b.from)).at(-1);
 
 /** いまいる国のこと。旅に出ているあいだは、国ではなく旅のこと。 */
 export function NowCountry() {
@@ -101,8 +121,9 @@ export function NowCountry() {
   if (above) return null;
   if (trip) return <NowTrip trip={trip} here={here} />;
   if (!c) return here ? <NowTrip trip={null} here={here} /> : null;
-  // いまの滞在はいちばん新しいもの。同じ国に2回入っていることがある
-  const stay = c.stays[c.stays.length - 1];
+  // いまの滞在はいちばん新しいもの。同じ国に2回入っていることがある。
+  // **配列の最後ではなく日付で選ぶ**（並べ替えの根拠を、書いてある順に置かない）
+  const stay = lastStay(c);
   const spots = c.highlights.filter((h) => h.videoId).slice(0, 3);
 
   return (
@@ -111,7 +132,7 @@ export function NowCountry() {
       <p className="nowc-head">
         <Flag slug={c.slug} size={30} />
         <b>{c.name}</b>
-        {stay && <StayDay from={stay.from} />}
+        {stay && <StayDay slug={c.slug} from={stay.from} />}
       </p>
       <p>{c.summary}</p>
 
@@ -171,9 +192,10 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
       <p className="nowc-head">
         {here && <Flag slug={here.slug} size={30} />}
         <b>{title}</b>
-        {trip && (
-          <span className="nowc-day">旅に出て {trip.days.toLocaleString()} 日目</span>
-        )}
+        {/* 数え方も言い方も `lib/stay.ts` に1つ（`tripDayWord`）。**上の帯と
+            旅程表と、同じ日には同じ番号を出す。** 前はここだけ別に書いてあって、
+            9/13 に上の帯が「3日目」、`/nordic` の旅程表が「2日目」と出ていた。 */}
+        {trip && <span className="nowc-day">{tripDayWord(trip.days)}</span>}
       </p>
       {trip && <p>{trip.note}。</p>}
 
@@ -182,7 +204,7 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
           <img src="/sprites/tent.webp" alt="" />
           <span>
             <b>{trip.name}の島へ</b>
-            <i>この旅のこと、これから歩く国、旅のしおり</i>
+            <i>この旅のこと、旅の6カ国、旅のしおり</i>
           </span>
           <Icon name="right" size={14} />
         </Link>
@@ -197,6 +219,12 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
  * 「いま」だけを出しても、それが旅の途中なのかどうかが分からない。
  * 3つ手前まで見えていれば、この人がどっちへ動いているかが1目で出る。
  * 17カ国ぜんぶ並べるのは `/map` の仕事なので、ここは4つで止める。
+ *
+ * **並べるのは「出た日が新しい順」。`order`（初めて行った順）ではない。**
+ * `order` で並べて最後の滞在の月を出していたので、昨日まで居たジョージアが
+ * 3番目に来て、日付だけが 2026/04 → 2026/04 → 2026/05 → 2025/06 と前後していた。
+ * この区画の問いは「その前は、どこにいたんだろう」なので、答えるべきは
+ * **出ていった順**。初めて行った順を知りたい面は `/map` のほうにある。
  */
 export function NowTrail() {
   const { country: c } = useCurrent();
@@ -206,7 +234,13 @@ export function NowTrail() {
   useEffect(() => setTrip(travelNow(new Date())), []);
   const now = trip ? undefined : c?.slug;
   const before = [...COUNTRIES]
-    .sort((a, b) => b.order - a.order)
+    .sort((a, b) => {
+      const [x, y] = [lastStay(a), lastStay(b)];
+      /* 滞在が1つも無い国は並べようがないので後ろへ。`order` で決めない
+         （順番の根拠が2つに割れると、また同じずれ方をする） */
+      if (!x || !y) return x ? -1 : y ? 1 : 0;
+      return (y.to || y.from).localeCompare(x.to || x.from);
+    })
     .filter((x) => x.slug !== now)
     .slice(0, 4);
   if (!before.length) return null;
@@ -216,7 +250,7 @@ export function NowTrail() {
       <h2 className="pap-h">その前は、どこにいたんだろう</h2>
       <ul className="nowt">
         {before.map((x) => {
-          const stay = x.stays[x.stays.length - 1];
+          const stay = lastStay(x);
           return (
             <li key={x.slug}>
               <Link href={`/map/${x.slug}`} prefetch={false}>

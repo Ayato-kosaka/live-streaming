@@ -1,23 +1,155 @@
-"""Firestore のドキュメントを消す。消す前に中身をログに出す。
+"""Firestore の書類を1つ消す。**既定は数えるだけ。**
 
 ARGS 例:
-  {"collection": "islandIdeas", "doc": "abc123"}
+  {"collection": "islandRate", "doc": "visit_2026-09-13_…"}
+      … その書類があるかを見るだけ。**1バイトも消さない**
+  {"collection": "islandRate", "doc": "visit_2026-09-13_…", "apply": true}
+      … 実際に消す
+
+## 戻せないので、二重に縛ってある（#291 の 4-b）
+
+1. **既定は dry-run。** `apply` を明示で渡すまで1件も消さない
+2. **`DELETABLE` に名前が無い入れ物は消せない。** 引数でどの入れ物でも
+   指せる道具にすると、**打ち間違いが本番の生きたデータに当たる**
+   （`collection_drop.py` が同じ理由で `DEAD` を持っている。あの一文は、
+   入れ物ごと消す道具ではなく**この道具**のことを言っていた）
+
+## `collection_drop.py` の `DEAD` を借りてこない
+
+似て見えるが、**表の意味が違う。**
+
+- `DEAD` は「**入れ物ごと畳んでよいか**」の表。載る条件は「もう誰も書かない」
+- こちらは「**入れ物は生きているまま、その中の1書類を消してよいか**」の表。
+  載る条件は「**その書類が消えて、失われるものが1つも無いか**」
+
+`python/backup/plan.py` の `SKIP`（毎晩の退避に入れないもの）も借りない。
+あれは「**一晩で戻るものに毎晩の代金を払うか**」で決めた表で、消してよいかで
+決めた表ではない。実際 `SKIP` には `streamChatMessages`（配信中のコメント。
+翌日 BigQuery に入るまでは**ここにしか無い**）や `islandChannels`（毎晩
+作り直すが、その日いっぱいは名前が出なくなる）が入っている。
+**別の目的で決めた表を、そのまま持ってくると外す**（`docs/island-misses.md` #14）。
+
+## 退避があっても、「戻せるから」では縛りを緩めない
+
+Firestore の退避は毎晩取れている（`python/backup/`）ので、**消し間違いは
+「戻せる事故」にはなった。** それでも表を置くのは、**戻すには「消えた」と
+気づく必要がある**から。件数を毎日見ている人はいないし、書類が1つ減ったことを
+知らせる仕組みはどこにも無い。**気づかない事故は、退避があっても戻らない。**
+
+だから表に載せるのは「戻せるもの」ではなく、**気づかれなくても誰も困らないもの**
+だけにしてある。
+
+## ログに中身を出さない
+
+前はここで `消す前の中身: {...}` と、書類の中身をまるごとログに出していた。
+**このリポジトリは公開で、Actions のログも誰でも読める。**
+`islandRate` の書類IDは `{種別}_{日付}_{端末ID}`、`islandHearts` なら
+`<付箋のID>_<端末ID>` で、**書類IDそのものが端末IDを含む。**
+出すのは「表の理由」と「欄がいくつあったか」だけにした（#293 と同じ線）。
+何を消したかは、押した本人が渡した ARGS で分かる。
 """
 
-from _fs import args, db, log, need, show
+from _fs import args, db, log, need
+
+# ---------------------------------------------------------------------------
+# 消してよい入れ物。値は「なぜ1書類消してよいか」
+#
+# **載せる条件は3つ。全部を満たすものだけ。**
+#   1. 消えて失われる中身が、**その日限り／その場限り**。放っておいても
+#      いずれ消えるか、次に使うときに書き直される
+#   2. **人の書いた字が1文字も入っていない**（視聴者さんの字・あやとの字・
+#      お金の記録は、1書類でも消えたら戻らない）
+#   3. **消す以外に引っ込める手立てが無い**（`hidden` / `archived` を持つ
+#      入れ物は、消さずに隠せる。消す必要が無い）
+#
+# 4本しか無いのは**意図してそうしてある。** #291 の1章が本番の22本を数えて
+# 「消えても何も困らない」と言い切ったのが、ちょうどこの4本だった。
+DELETABLE = {
+    # 1日の上限の印（`takeQuota()`）。書類IDは `{種別}_{日付}_{端末ID}`、
+    # 中身は回数だけ。**日付が変わればどのみち使われなくなる。**
+    # 手で消す用事が実際にある: 取り違えで上限に当たってしまった人を、
+    # その日のうちに戻す。口にも画面にも「戻す」手立てが無い。
+    "islandRate": "その日限りの回数カウンタ。日付が変わればどのみち使われなくなる",
+    # 島の遠隔操作のつなぎ（#165）。配信1回ぶんの一時状態で、
+    # 次にコントローラーを開けば作り直される。
+    "islandRemote": "配信1回ぶんのつなぎ。次に開けば作り直される",
+    # 配信のルーレット（#164）。同上。当たりはサーバーが決めるので、
+    # 消しても「当たりの記録」のようなものは失われない。
+    "rouletteSessions": "配信1回ぶんのつなぎ。次に開けば作り直される",
+    # 月末配信の OBS 同期。中身は `{scene, step, ts, confetti}` の数字4つで、
+    # **コントローラーを1回押せば戻る**（本番の中身は firestore.rules の
+    # コメントで実際に見てある）。
+    "monthlyReview": "配信の場面送りの一時状態。数字だけで、押し直せば戻る",
+}
+# **台帳はどれも入れない。** 視聴者さんの字（`islandNotes` `islandIdeas`
+# `islandStreamEvent`）は #162 以降「消さない」で通していて、引っ込めるなら
+# `hidden` / `archived` がある。お金（`islandTips` `islandFundSuperChats`
+# `islandFundSpends` `islandFundGoals`）と、あやとが手で紐付けた対応表
+# （`islandDonors`）、本人の同意（`islandUsers`）は、1書類でも戻らない。
+#
+# **`islandVisits` も入れない。** 導出に見えるが、**BigQuery からは出せない**
+# （#291 の実測）。1日1書類なので、1つ消すと**その日の訪問者数が永久に消える。**
+#
+# **`islandHearts` / `islandPollVotes` も入れない。** 中身は押した印だけだが、
+# 消すと同じ人がもう一度押せて、**付箋のハートと票の数が壊れる。**
+#
+# **`islandHere` も入れない。** 条件は満たす（60秒で読む側が切る）が、
+# **手で消す用事が無い。** `island_daily_stats.py` の `sweep_here` が毎日
+# 片づけているし、本番は0件だった。**用事の無いものを表に載せない。**
+#
+# **旧の入れ物（`nordicDays` `islandNextPlans` `nordicPhotos`）も入れない。**
+# 畳むなら入れ物ごとで、それは `collection_drop.py` の仕事。1書類ずつ消すと
+# 「途中まで消えた入れ物」が残って、読む側がいちばん困る形になる。
+
+
+def run(client, col: str, doc: str, apply: bool) -> int:
+    """空回しと本番を1本にしたもの。**既定は1バイトも消さない。**
+
+    確かめ（`firestore_delete_selftest.py`）が偽の Firestore を渡せるように、
+    クライアントは引数で受け取る。`_fs.db()` を中で呼ばない。
+
+    @return 消した件数
+    """
+    if col not in DELETABLE:
+        # **入れ物の名前をログに出さない。** 何を打ったかは、押した本人が
+        # Actions の入力欄で見られる。公開のログに残す必要は無い
+        log.error(
+            "その入れ物は表にありません。**消してよいと判断が済んだものだけ**"
+            " python/admin/firestore_delete.py の DELETABLE に、理由と"
+            "一緒に足してください（載せる条件3つもそこに書いてあります）",
+        )
+        raise SystemExit(2)
+
+    log.info("表にあります — %s", DELETABLE[col])
+    ref = client.collection(col).document(doc)
+    snap = ref.get()
+    if not snap.exists:
+        log.info("その書類はありません。消すものはありません")
+        return 0
+
+    # **中身は出さない。** 空の書類を消そうとしていないかだけ分かればよい
+    log.info("その書類には欄が %d 個あります", len(snap.to_dict() or {}))
+    if not apply:
+        log.info('dry-run。実際に消すには {"apply": true} を渡す（1件）')
+        return 0
+
+    ref.delete()
+    # **「消したつもり」を作らない**（`ip_purge.py` と同じ）。同じ実行の中で
+    # もう一度引いて、本当に無くなったかを見る
+    if client.collection(col).document(doc).get().exists:
+        log.error("**消えていません。** 消したはずの書類がまだあります")
+        raise SystemExit(1)
+    log.info("1件 消しました")
+    return 1
 
 
 def main() -> None:
+    """エントリポイント。**既定は dry-run。**"""
     a = args()
     col, doc = need(a, "collection", "doc")
-    ref = db().collection(col).document(doc)
-    snap = ref.get()
-    if not snap.exists:
-        log.info("%s/%s は既にありません", col, doc)
-        return
-    log.info("消す前の中身: %s", show(snap.to_dict()))
-    ref.delete()
-    log.info("%s/%s を削除しました", col, doc)
+    apply = bool(a.get("apply", False))
+    run(db(), str(col), str(doc), apply)
 
 
-main()
+if __name__ == "__main__":
+    main()

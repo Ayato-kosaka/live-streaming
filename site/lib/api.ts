@@ -938,40 +938,6 @@ export const moveCard = (id: string, place: CardPlace, token: string) =>
   });
 
 
-/* ---------------- 北欧旅の、その日に起きたこと ----------------
-   `content/nordic.ts` の `NORDIC_LOG` は Git にあって、直すには commit して
-   Hosting を手で起動しないと出ない。**旅の最中のあやとには、それは回らない。**
-   だから旅のあいだは、ここから読む（`docs/nordic-depart.md`）。 */
-
-/** 1日ぶんの「起きたこと」。`day` は旅程表の行の id（`day-1` `day-depart`）。 */
-export type NordicLogEntry = {
-  day: string;
-  /** その日が実際に何日だったか(YYYY-MM-DD)。あとから入る事実 */
-  date?: string;
-  /** 何が起きたか。スマホから打つので短い */
-  body: string;
-  /** その日の配信。YouTube の videoId */
-  video?: string;
-  at?: number;
-};
-
-export const getNordicLog = () => req<{ log: NordicLogEntry[] }>("/nordic/log");
-
-/** その日に起きたことを書く。**あやとだけ。** 同じ日に書くと上書きになる。 */
-export const postNordicLog = (
-  e: { day: string; date?: string; body: string; video?: string },
-  token: string,
-) =>
-  req<{ log: NordicLogEntry }>("/nordic/log", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify(e),
-  });
-
-/** 書いたものを消す。**あやとだけ。** */
-export const deleteNordicLog = (day: string, token: string) =>
-  req<{ day: string }>(`/nordic/log/${day}`, { method: "DELETE", headers: auth(token) });
-
 /**
  * ストックホルムに着いた、を記録する。**あやとだけ。**
  *
@@ -1192,6 +1158,23 @@ export const sayRouletteResult = (id: string, token: string) =>
 /** 対応表の状態。**「あとで引く」は無い。** 打ったその場で決まる。 */
 export type DonorState = "new" | "unlinked" | "linked";
 
+/**
+ * 近い名前の人。**押すと、その人につながる。**
+ *
+ * 呼び名（「ゆずたつ」）から YouTube の handle の枝番（`-q3n`）は
+ * 思い出せない。**打てないものは、押せるようにする。**
+ * サーバーが繋ぐわけではない。決めるのはあやと。
+ */
+export type DonorHint = {
+  channelId: string;
+  /** そのチャンネルがいま名乗っている名前 */
+  name: string;
+  /** 一緒にいた日数。辞書に入っていなければ null */
+  days: number | null;
+  /** さいごに喋った時刻。辞書に入っていなければ null */
+  lastAt: string | null;
+};
+
 /** 対応表の1行。 */
 export type Donor = {
   /** Doneru の どねID。**書類の id なので、直せない** */
@@ -1211,6 +1194,12 @@ export type Donor = {
   editedAt: string | null;
   /** 画面から足した行か。**戻ってこない行だけ、消せる** */
   canDelete: boolean;
+  /**
+   * 近い名前の人。**紐付け待ちの行にだけ入る。**
+   *
+   * 古い口が返さないことがあるので、無いものとして扱える形にしておく。
+   */
+  hints?: DonorHint[];
 };
 
 /** 何で引けたか。押した人に「何に繋がったか」を見せるために返る。 */
@@ -1277,6 +1266,171 @@ export const unlinkDonor = (pk: string, token: string) =>
 /** 手で足した行を消す。**毎朝の取り込みが置いた行は消せない**（戻ってくる）。 */
 export const dropDonor = (pk: string, token: string) =>
   req<{ deleted: string }>(`/donors/${encodeURIComponent(pk)}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });
+
+
+/* ---------------- スパチャの控え(#292) ----------------
+   **あやとだけが読める。** 名前と額が並ぶので、合計しか返さない
+   `GET /fund` とは別の口（`GET /fund/history`）になっている。
+   アラートボックスをスプレッドシートから外した日から、1件ずつを
+   見る道がどこにも無くなっていた（あやとの言葉 2026-09-11）。 */
+
+/** 控え1件。 */
+export type FundChat = {
+  /** 26文字の item id（手で入れたものは `manual-…`） */
+  id: string;
+  /** JST の日（`2026-09-10`）。**日付の分からない手入力は空文字** */
+  day: string;
+  /** いつのスパチャか。分からなければ null */
+  at: string | null;
+  /** 円。**半分にする前の、その人が出した額** */
+  yen: number;
+  /** 出した人の名前。分からなければ空文字 */
+  who: string;
+  /**
+   * どこから入ったか。**画面には出さない。**
+   * 手で入れたぶんは打った日しか分かっていない（`at` に `00:00` が入る）ので、
+   * 時計を出すかどうかを決めるためだけに使う。
+   */
+  src: "alertbox" | "bigquery" | "manual" | "";
+};
+
+/** 1ページぶん。 */
+export type FundHistory = {
+  chats: FundChat[];
+  more: boolean;
+  next: string | null;
+  /**
+   * ぜんぶで何件・いくら。**読めなかったら null。**
+   * 0 と混ぜると、数えられなかった日に「1件も無い」と言うことになる
+   * （`docs/island-standards.md` 10）。
+   */
+  count: number | null;
+  yen: number | null;
+};
+
+/** 新しい順に1ページぶん。`before` に前のページの `next` を渡すと続き。 */
+export const getFundHistory = (
+  token: string,
+  before?: string | null,
+  limit?: number,
+) => {
+  const q = new URLSearchParams();
+  if (before) q.set("before", before);
+  if (limit) q.set("limit", String(limit));
+  const s = q.toString();
+  return req<FundHistory>(`/fund/history${s ? `?${s}` : ""}`, {
+    headers: auth(token),
+  });
+};
+
+
+/* ---------------- キャラクター(#284) ----------------
+   スパチャと Doneru のアラートに出る絵。原本はスプレッドシートと
+   Google ドライブに割れていたのを `islandCharacter` に寄せた。
+
+   **図鑑の口は名前を返さない。** 島は視聴者さんの名前を出さない方針
+   （`site/content/residents.ts`）なので、誰でも呼べる口が返すのは
+   絵と絵文字だけ。名前と呼び名はオーナーの札を付けたときだけ付く。 */
+
+/** 1つの役どころの絵。`sizes` は幅ごとの焼き上がり。 */
+export type CharacterPicture = {
+  /** 縮める前のまま。**落とすのはこれ**（縮めたものを渡さない） */
+  full: string | null;
+  sizes: Record<string, string>;
+  w: number | null;
+  h: number | null;
+};
+
+/** 図鑑に出る1人。**名前は入らない。** */
+export type CharacterPublic = {
+  id: string;
+  emoji: string;
+  plain: CharacterPicture | null;
+  scene: CharacterPicture | null;
+  /**
+   * 作った順（`python/admin/characters_order.py` が入れる）。
+   * **`createdAt` で並べないこと。** あれは Storage へ移した時刻で、
+   * 移行が65人目で落ちて再開しているため、そこで前後が入れ替わっている。
+   */
+  order: number | null;
+  /** 画面から足した時刻。番号の無い人（表より後に足した人）を末尾で並べるのに使う */
+  createdAt: string | null;
+};
+
+/** あやとの画面に出る1人。名前と、何で引けるかまで付く。 */
+export type Character = CharacterPublic & {
+  channelName: string;
+  aliases: string[];
+  /** スパチャが当たる鍵（チャンネル名から作る） */
+  channelKeys: string[];
+  /** Doneru が当たる鍵（チャンネル名 + 他の呼び名） */
+  lookupKeys: string[];
+  channelId: string | null;
+  editedAt: string | null;
+};
+
+/**
+ * 図鑑。**札を付けると名前まで返る。** あやとの画面（`/me`）から呼ぶ。
+ *
+ * 誰でも見られる図鑑（`/friends`）は `getPublicCharacters` のほう。
+ * 名前は本人が出すと決めた人のぶんだけ `/state` の residents に載るので、
+ * ここの `channelName` を図鑑に流さない。
+ */
+export const getCharacters = (token?: string | null) =>
+  req<{ characters: Character[] }>("/characters", { headers: auth(token) });
+
+/**
+ * 図鑑。**札を付けない。名前は返らない。**
+ *
+ * `/friends` はここから全員を取る。焼き込み（`content/residents.ts`）は
+ * 島に立つ22人ぶんしか無いので、あれを出すと図鑑が22人で止まる。
+ * 旅のあいだにあやとがスマホから足した人も、ここからなら出る。
+ */
+export const getPublicCharacters = () =>
+  req<{ characters: CharacterPublic[]; total: number }>("/characters");
+
+/** 送る絵。ブラウザで幅ごとに焼いてから渡す（`stamp.ts` の `shrink`）。 */
+export type CharacterUpload = {
+  /** 元の大きさのまま（長辺は上限まで縮めてある）。data URL */
+  full?: string;
+  /** 幅ごと。鍵は 128 / 256 / 640 */
+  sizes?: Record<string, string>;
+  w?: number;
+  h?: number;
+};
+
+/**
+ * 1人を足す／直す。**あやとだけ。**
+ *
+ * `id` を渡すと直す、渡さないと新しく足す。
+ * **絵は送ったぶんだけ差し替わる。** 呼び名だけ直したいときは
+ * `plain` も `scene` も渡さない。渡さなかった役どころには触らない
+ * （渡さないと消える、にすると、名前を直しただけで島から人が消える）。
+ */
+export const putCharacter = (
+  p: {
+    id?: string;
+    channelName: string;
+    emoji: string;
+    aliases: string[];
+    plain?: CharacterUpload;
+    scene?: CharacterUpload;
+  },
+  token: string,
+) => {
+  const { id, ...body } = p;
+  return req<{ character: Character }>(
+    id ? `/characters/${encodeURIComponent(id)}` : "/characters",
+    { method: "POST", headers: auth(token), body: JSON.stringify(body) },
+  );
+};
+
+/** 1人を消す。**あやとだけ。** 置き場の絵も一緒に落ちる。 */
+export const deleteCharacter = (id: string, token: string) =>
+  req<{ deleted: string }>(`/characters/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: auth(token),
   });

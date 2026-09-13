@@ -18,6 +18,7 @@
  */
 
 import { greetOf } from "@/content/chatter";
+import { readNight } from "@/lib/nightly";
 import { GRASS_INSET, ISLAND, PLACES, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 
@@ -309,11 +310,14 @@ function pairUp(vs: Villager[], r: () => number) {
   }
 }
 
-/** 配信の時間か（日本時間 22:00〜25:00）。`lib/nightly.ts` と同じ決まり。 */
-function onAirNow(now: Date): boolean {
-  const h = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 9 * 3600000).getHours();
-  return h >= 22 || h < 1;
-}
+/**
+ * 配信の時間か。**決まりは `lib/nightly.ts` に1つだけ置いてある。**
+ *
+ * ここに写しを持っていたころ、旅のあいだ（始まる時刻が決まらない期間）に
+ * 板とこの島で違うことを言う形になっていた。板が「時刻は決まっていない」と
+ * 書いている横で、住人だけが22時にやぐらへ寄る。
+ */
+const onAirNow = (now: Date): boolean => readNight(now).onAir;
 
 /**
  * 配信の時間だけ、みんなやぐらのほうへ寄る。

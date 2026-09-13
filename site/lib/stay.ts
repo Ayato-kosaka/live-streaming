@@ -24,7 +24,14 @@
  * という食い違いが出る（`docs/island-misses.md` #21）。
  */
 
-import { CHAPTERS, chapterDays, chapterNow, chapterSpan, type Chapter } from "@/content/chapters";
+import {
+  CHAPTERS,
+  chapterDayNo,
+  chapterNow,
+  chapterRunning,
+  chapterSpan,
+  type Chapter,
+} from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 /* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
    （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
@@ -61,9 +68,29 @@ export type TravelNow = {
   href: string;
   /** 章の一行（`content/chapters.ts` の note） */
   note: string;
-  /** 旅に出て何日目か。出た日が1日目 */
+  /**
+   * 旅に出て何日目か。**出発した日の翌日が1日目**（`chapterDayNo`）。
+   *
+   * 旅程表（`/nordic` の「2日目 9月13日(日)」）と同じ番号。出発の日は 0。
+   * 字にするのは `tripDayWord()`——**数の言い方も1か所に置く。**
+   */
   days: number;
 };
+
+/**
+ * 「旅に出て ◯日目」の字。**出発の日は「旅に出た日」。**
+ *
+ * 出発は現地 23:30 の飛行機なので、その日は旅程表でも「出発」で番号を持たない
+ * （`content/nordic.ts` の `DAYS`）。0日目という言い方をしないのは
+ * 滞在の日数（`stayDays`）と同じ。
+ *
+ * 面が2つ（`/now` の帯とその下の紙）あるので、字はここから配る。
+ * 前は面ごとに書いてあって、片方が「旅に出て 3日目」、もう片方が
+ * 「2日目」と出ていた。
+ */
+export function tripDayWord(days: number): string {
+  return days > 0 ? `旅に出て ${days.toLocaleString()}日目` : "旅に出た日";
+}
 
 /**
  * その国を歩いた章。**本線のうち、いちばん新しいもの。**
@@ -134,17 +161,24 @@ export function stayNow(now: Date = new Date()): StayNow | null {
  * いま歩いている旅。**いる国が引けるあいだは `null`**（そちらのほうが細かい）。
  *
  * 国が引けなくなるのは、次の島へ渡ったとき。そこから先は章が「いまどこ」になる。
+ *
+ * **終わった旅は「いま歩いている旅」ではない。** `chapterNow()` は章を必ず1つ返す
+ * （画面を落とさないため、終わっていてもいちばん新しい章で受ける）ので、
+ * 返ってきたものが**まだ続いているか**をここで見る。見ていなかったので、
+ * 旅から帰った 9/28 以降も表紙・`/now`・`/about` が「北欧周遊のとちゅう」、
+ * 札が「旅に出て 20日目」と、日ごとに増えつづけていた。
+ * 次の章（アルバニア）は日どりが決まっていないので、**待っていても始まらない。**
  */
 export function travelNow(now: Date = new Date()): TravelNow | null {
   if (stayNow(now)) return null;
   const c = chapterNow(now);
-  if (!c) return null;
+  if (!c || !chapterRunning(c, now)) return null;
   return {
     name: c.name,
     slug: c.slug,
     href: `/island/${c.slug}`,
     note: c.note,
-    days: chapterDays(c, now),
+    days: chapterDayNo(c, now),
   };
 }
 

@@ -15,7 +15,7 @@
  *   npx --yes firebase-tools@13 emulators:start --only firestore --project demo-rules &
  *   FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 node /home/user/live-streaming/tools/rules/here.test.mjs
  *
- * 2026-09-05 の時点で25本、ぜんぶ通る。
+ * 2026-09-11 の時点で36本、ぜんぶ通る。
  */
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
 import { doc, setDoc, updateDoc, deleteDoc, getDoc, getDocs, collection, serverTimestamp, Timestamp } from "firebase/firestore";
@@ -88,7 +88,39 @@ await t("nordicPhotos は読めない", "deny", () => getDocs(collection(anon, "
 await t("nordicDays は書けない", "deny", () => setDoc(doc(me, "nordicDays/2026-09-12"), { people: [] }));
 await t("islandUsers は読めない", "deny", () => getDoc(doc(me, "islandUsers/me")));
 await t("知らないコレクションは書けない", "deny", () => setDoc(doc(me, "nanika/x"), { a: 1 }));
-await t("monthlyReview は今までどおり書ける", "allow", () => setDoc(doc(anon, "monthlyReview/x"), { a: 1 }));
+/* --- 月末配信の進行同期(monthlyReview) ---
+   ここは 2026-09-11 まで `read, write: if true` で、**外から実際に書けた**。
+   書くのはあやとだけ、読むのは誰でもだが1件ずつ、に変えた。
+   9/30 の配信で使うので、**「あやとは今までどおり書ける」を先に確かめる。** */
+await env.clearFirestore();
+// あやとの印。islandUsers はルール上どこからも書けないので、ルールを外して置く
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), "islandUsers/me"), { admin: true });
+  await setDoc(doc(ctx.firestore(), "monthlyReview/202609-xxxx"), { scene: 0, step: 0, ts: 1, confetti: 0 });
+});
+const sync = (n) => ({ scene: n, step: 0, ts: Date.now(), confetti: 0 });
+await t("あやとは進行を送れる", "allow", () => setDoc(doc(me, "monthlyReview/202609-xxxx"), sync(1)));
+await t("あやとは何度でも送れる(巻き戻り防止は ts で見ている。ルールで縛らない)", "allow", () =>
+  setDoc(doc(me, "monthlyReview/202609-xxxx"), sync(2)));
+await t("あやとは新しい月の書類を作れる", "allow", () => setDoc(doc(me, "monthlyReview/202610-yyyy"), sync(0)));
+await t("ログインしていない人は書けない", "deny", () => setDoc(doc(anon, "monthlyReview/202609-xxxx"), sync(9)));
+await t("ログインしていない人は新しい書類も作れない", "deny", () =>
+  setDoc(doc(anon, "monthlyReview/_probe"), sync(0)));
+await t("ログインしていても、あやとでなければ書けない(印そのものが無い人)", "deny", () =>
+  setDoc(doc(you, "monthlyReview/202609-xxxx"), sync(9)));
+/* **島にログインした人は `islandUsers/{uid}` を持っている**(`/me` が作る)。
+   `admin` が入っていないだけ。いちばんありそうな「視聴者さん」はこの形。 */
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), "islandUsers/you"), { name: "みてるひと" });
+});
+await t("島にログインしただけの視聴者さんも書けない", "deny", () =>
+  setDoc(doc(you, "monthlyReview/202609-xxxx"), sync(9)));
+await t("あやとでない人は消せない", "deny", () => deleteDoc(doc(you, "monthlyReview/202609-xxxx")));
+await t("OBS(ログインなし)は1件を読める", "allow", () => getDoc(doc(anon, "monthlyReview/202609-xxxx")));
+await t("collection ごとは引けない(IDを知らずに月ごとの書類を集められない)", "deny", () =>
+  getDocs(collection(anon, "monthlyReview")));
+await t("ログインしていても collection ごとは引けない", "deny", () =>
+  getDocs(collection(you, "monthlyReview")));
 
 await env.cleanup();
 console.log(bad === 0 ? "\nぜんぶ通った" : `\n通らなかった: ${bad}`);

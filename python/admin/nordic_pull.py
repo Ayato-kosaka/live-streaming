@@ -20,6 +20,8 @@
     args:   {"days": 3, "apply": true}            … 直近3日ぶん
 
 **既定は書かない。** 本番の名簿なので、誰が入るかを先に出す。
+下見も名簿を読むので（読むだけつないで、書く口は塞いである）、
+**もう名簿にいる人と、新しく増える人が分かれて出る。**
 
 ## 手で足したぶんは消えない
 
@@ -31,11 +33,12 @@ Doneru で出してくれた人は BigQuery に乗らないので
 import sys
 from datetime import datetime, timedelta, timezone
 
-from _fs import args, db, log
+from _fs import args, db, log, readonly
 
 sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from nordic_supporters import fetch, merge  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 
 def main() -> None:
@@ -55,23 +58,30 @@ def main() -> None:
         log.info("%s〜%s にスパチャはありませんでした", d0, d1)
         return
 
-    client = db() if apply else None
+    # **下見でも読むだけつなぐ。** つながないと、もう名簿にいる人と
+    # 新しく増える人を分けられず、「その日 5人」が全員増えるように読める。
+    # 書く側は口ごと塞いである（`_fs.readonly`）
+    client = db()
+    store = client if apply else readonly(client)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
     for day, people in sorted(found.items()):
         log.info("%s: %d人", day, len(people))
-        for p in people:
-            log.info("    %s  %s", p["channelId"], p["name"])
-        if client is None:
-            continue
-        ref = client.collection("nordicDays").document(day)
-        cur = ref.get()
-        old = (cur.to_dict() or {}).get("people", []) if cur.exists else []
+        # **公開の場では1人ずつ出さない**（`python/logsafe.py`）。
+        # このリポジトリは公開で、Actions のログも誰でも読める
+        for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
+            log.info("%s", line)
+        ref = store.collection("nordicDays").document(day)
+        old = (ref.get().to_dict() or {}).get("people", [])
         after = merge(old, people)
-        ref.set({"day": day, "people": after, "updatedAt": now}, merge=True)
-        log.info("  → 名簿は %d人になりました（手で足したぶんを含む）", len(after))
+        if apply:
+            ref.set({"day": day, "people": after, "updatedAt": now}, merge=True)
+        log.info("  → 名簿は %d人（いま %d人 / %s %d人）",
+                 len(after), len(old),
+                 "増えた" if apply else "増える", len(after) - len(old))
 
-    if client is None:
-        log.info('書いていません。流すなら args に {"apply": true} を入れてください')
+    if not apply:
+        log.info("読んで数えただけで、1バイトも書いていません。"
+                 '流すなら args に {"apply": true} を入れてください')
 
 
 main()

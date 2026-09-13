@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
 import { RECIPES } from "@/content/recipes";
@@ -42,7 +44,7 @@ export default function StreamsPage() {
       <PageHead
         icon="tower-studio"
         title="配信"
-        lead="毎晩22時から、世界のどこかで生放送。やってることは大きく5つ。"
+        lead={<Say t={say("streams")} />}
       />
 
       {/* 番組表と数えたものは「やぐらに貼ってある紙」。押すものではないので、

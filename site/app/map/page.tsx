@@ -6,11 +6,13 @@ import Fold from "@/components/ui/Fold";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
-import WorldRoute from "@/components/atlas/WorldRoute";
 import Days from "@/components/atlas/Days";
-import { HereStat, HereTag, MapHead } from "./parts";
+import { HereRoute, HereStat, HereTag, MapHead, TripCountries, type TripStep } from "./parts";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
+import { CHAPTERS, tripDate } from "@/content/chapters";
+import { BUILT_AT } from "@/lib/builtAt";
+import { LEAVE, MAIN, NORDIC_COUNTRIES, cityName } from "@/content/nordic";
 import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
 
 /* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
@@ -60,6 +62,54 @@ const CHAPTER_OF: Record<string, string> = {
   "コーカサス": "caucasus",
 };
 
+/**
+ * いま歩いている旅の国。**`content/countries.ts` には足さない。**
+ *
+ * あちらは「歩いた国」の一覧で、`order`（何カ国目）も世界地図の焼き込みも
+ * そこから数えている。歩いている最中の国を混ぜると、歩く前から歩いたことになる
+ * （`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
+ *
+ * かわりに**旅程（`content/nordic.ts` の ROUTE）から引く。** 入った日は区間の
+ * 日付で、そこから先は旅が進めばひとりでに増える。**ここで日付を手で書かない。**
+ * 書くと、国境を越えた翌日にまた古くなる。
+ *
+ * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
+ * 画面が出てから（`./parts.tsx` の `TripCountries`）。
+ */
+const TRIP_STEPS: TripStep[] = (() => {
+  const out: TripStep[] = [];
+  let cur: TripStep | undefined;
+  for (const l of MAIN) {
+    if (l.enters) {
+      const c = NORDIC_COUNTRIES.find((x) => x.slug === l.enters);
+      if (!c) continue;
+      // 前の国は、次の国に入った日に出たことになる
+      if (cur) cur.to = l.date ?? "";
+      // `en` は旅程のほうが総大文字（"POLAND"）。年表の他の行と同じ書き方にそろえる
+      cur = {
+        slug: c.slug,
+        name: c.name,
+        en: c.en.charAt(0) + c.en.slice(1).toLowerCase(),
+        from: l.date ?? "",
+        to: "",
+        towns: [],
+      };
+      out.push(cur);
+    }
+    if (cur && l.date) cur.towns.push({ name: cityName(l.to), date: l.date });
+  }
+  // 最後の国は、旅が終わる日まで。**終わりを空けたままにしない**（ジョージアと同じ）
+  if (cur) cur.to = LEAVE.date;
+  // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
+  return out.filter((x) => x.from && !COUNTRIES.some((c) => c.slug === x.slug));
+})();
+
+/** 旅程を持っている章。名前は `content/chapters.ts` が正本なので、ここに書かない。 */
+const TRIP_CHAPTER = CHAPTERS.find((c) => c.slug === "nordic");
+
+/** 焼いたときに、もう旅に出ていたか。年表のどの章を開いておくかを決める。 */
+const TRIP_ON = TRIP_STEPS.some((x) => x.from <= tripDate(BUILT_AT));
+
 const ym = (d: string) => (d ? `${d.slice(0, 4)}/${d.slice(5, 7)}` : "いま");
 
 /** 滞在の期間を「2024/10 – 11」のように縮める。同じ年なら年を省く。 */
@@ -72,13 +122,20 @@ function span(s: { from: string; to: string }) {
 }
 
 export default function MapPage() {
-  /* **いちばん新しく歩いた国**（滞在の終わりが空いている国）。
+  /* **いちばん新しく歩いた国**（滞在の始まりがいちばん新しい国）。
      並びの最後にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
+
+     前はここが「滞在の終わりが空いている国」だった。終わりの欄は人が手で入れる
+     ものなので、**入っていない＝まだ居る**として読むと、出国しても居つづける
+     （`docs/island-misses.md` #24）。ジョージアの出国が入った日から、この探し方では
+     1件も見つからず**フランス**に落ちていた。日付で決める。
 
      ここは焼き込みなので「いまいる国」とは言い切れない。旅に出れば、まだこの表に
      無い国を歩いている。**「いま」を言うところだけ、画面が出てから引き直す**
      （`./parts.tsx`）。 */
-  const here = COUNTRIES.find((c) => c.stays.some((s) => !s.to)) ?? COUNTRIES[0];
+  const lastFrom = (c: (typeof COUNTRIES)[number]) =>
+    c.stays.map((s) => s.from).sort().at(-1) ?? "";
+  const here = [...COUNTRIES].sort((a, b) => lastFrom(b).localeCompare(lastFrom(a)))[0];
   // イランは国境まで歩いただけで中に入っていない。国の数には入れない。
   const visited = COUNTRIES.filter((c) => c.slug !== "iran-border");
   const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
@@ -118,7 +175,9 @@ export default function MapPage() {
         <p className="muted">
           ピンを押すと、その国のことが出てくる。「パリから、たどる」で、出発から今日までを順に回る。
         </p>
-        <WorldRoute here={here.slug} />
+        {/* **「いまここ」の輪は、いまいる国にしか出さない。** 旅に出ているあいだ
+            この地図に居場所は無いので、輪は消して名札だけ残す（`./parts.tsx`）。 */}
+        <HereRoute slug={here.slug} />
       </Panel>
 
       {/* **配信より前の6週間を、地図と年表のあいだに置く。**
@@ -209,7 +268,9 @@ export default function MapPage() {
                 title={ch.label}
                 lead={`${list[0].name}から${list[list.length - 1].name}まで`}
                 note={`${list.length}カ国`}
-                open={list.some((c) => c.slug === here.slug)}
+                /* 開いておくのは、いまどこまで来たかが読める章ひとつだけ。
+                   旅に出ているあいだは、いちばん下の「いま歩いている旅」がそれ */
+                open={!TRIP_ON && list.some((c) => c.slug === here.slug)}
               >
                 <ol className="atrip">
                   {list.map((c) => {
@@ -247,6 +308,13 @@ export default function MapPage() {
               </Fold>
             );
           })}
+          {/* いま歩いている旅の国。国境を越えた日にひとりでに1行増える。 */}
+          <TripCountries
+            steps={TRIP_STEPS}
+            start={COUNTRIES.length}
+            label={TRIP_CHAPTER?.name ?? ""}
+            open={TRIP_ON}
+          />
         </div>
       </Panel>
     </PageShell>

@@ -9,30 +9,29 @@ import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
-import { stayNow, travelNow, tripAsPlace, type StayNow, type TravelNow } from "@/lib/stay";
+import { stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
+import { readNight } from "@/lib/nightly";
+import Say from "@/components/ui/Say";
+import { nights } from "@/content/nights";
 
-/** 配信は日本時間の22時から、だいたい2〜3時間。 */
-const START_H = 22;
-const HOURS = 3;
-
-/** いまの日本時間。端末の時計がどこの国に合っていても、日本の22時を基準に数える。 */
+/** いまの日本時間。端末の時計がどこの国に合っていても、日本を基準に見せる。 */
 function jstParts(now: Date) {
   const t = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 9 * 3600000);
   return { h: t.getHours(), m: t.getMinutes() };
 }
 
-type Clock = { onAir: boolean; mins: number; jst: string };
+type Clock = { onAir: boolean; mins: number; loose: boolean; jst: string };
 
-/** 今夜の配信まであと何分か。22時から3時間のあいだは onAir。 */
+/**
+ * 今夜の配信まであと何分か。
+ *
+ * **数え方は `lib/nightly.ts` に1つだけ置いてある。** ここに写しを持っていたころ、
+ * 旅のあいだかどうかの判断が2つになって、板とこの札で違うことを言う形になっていた。
+ * ここが自前で持つのは、画面に出す日本時間の時計の字だけ。
+ */
 function readClock(now: Date): Clock {
   const { h, m } = jstParts(now);
-  const jst = `${h}:${String(m).padStart(2, "0")}`;
-  const end = (START_H + HOURS) % 24; // 25時 = 1時
-  const onAir = h >= START_H || h < end;
-  if (onAir) return { onAir, mins: 0, jst };
-  let mins = (START_H - h) * 60 - m;
-  if (mins <= 0) mins += 24 * 60;
-  return { onAir: false, mins, jst };
+  return { ...readNight(now), jst: `${h}:${String(m).padStart(2, "0")}` };
 }
 
 /** 「3時間20分」。1時間を切ったら分だけ。 */
@@ -170,12 +169,26 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           )}
           {trip ? `${trip.name}のとちゅう` : cur.place}
         </b>
-        <p className="np-word">{trip ? `${trip.note}。` : cur.word}</p>
+        {/* 旅を出している日は旅の一言が勝つ（master 側）。人の字を出す日は、
+            そこに「毎晩22時」が混ざりうるので `Say` を通す（旅のあいだだけ言い方が変わる）。 */}
+        <p className="np-word">{trip ? `${trip.note}。` : cur.word ? <Say t={cur.word} /> : null}</p>
 
         {/* 今夜あるのか、次はいつなのか。開いて1秒で分かるべき2つを、札にして並べる。 */}
         {clock && (
           <div className="tiles" style={{ marginTop: "var(--sp-4)", textAlign: "left" }}>
-            {clock.onAir ? (
+            {clock.loose ? (
+              /* 旅のあいだ。始まる時刻がその日の道で決まるので、時刻も残りも言わない。
+                 **無い数字を出すくらいなら、その欄ごと出さない。**
+                 置き場所と形は同じにして、中身だけ入れ替える。 */
+              <a className="tile" href={youtube.href} target="_blank" rel="noopener noreferrer">
+                <img className="tile-icon" src="/sprites/tower-studio.webp" alt="" />
+                <span className="tile-text">
+                  <b>{nights(new Date()).tonight}</b>
+                  <i>{nights(new Date()).span}</i>
+                </span>
+                <Icon name="external" size={15} className="tile-go" />
+              </a>
+            ) : clock.onAir ? (
               <a
                 className="tile"
                 href={youtube.href}
@@ -209,7 +222,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                 <img className="tile-icon" src="/sprites/signpost-flags.webp" alt="" />
                 <span className="tile-text">
                   <b>{trip.name}の島へ</b>
-                  <i>この旅のこと、これから歩く国、旅のしおり</i>
+                  <i>この旅のこと、旅の6カ国、旅のしおり</i>
                 </span>
                 <Icon name="right" size={15} className="tile-go" />
               </Link>
@@ -224,9 +237,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                   <b>
                     {next.phase === "during"
                       ? "いま、この企画のとちゅう"
-                      : next.days === null
-                        ? "次の企画"
-                        : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
+                      : /* **行ってきた企画を「次の企画」と呼ばない。**
+                           まだ来ていない企画が1つも無くなると、`nextPlan()` は
+                           終わった企画を返す（次の大物を先に告知するための受け）。
+                           日数で言うとマイナスになるので、旅から帰った 9/28 から
+                           「次の企画まで あと-19日」と出ていた。**新しい企画を
+                           足すまで消えない**ので、日数ではなく位置づけで言う。
+                           字は島の1画面目（`components/live/NextUp.tsx`）と揃える。 */
+                        next.phase === "after"
+                        ? "行ってきた"
+                        : next.days === null
+                          ? "次の企画"
+                          : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
                   </b>
                   <i>{next.title}</i>
                 </span>
@@ -247,11 +269,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               {stay.name}に来て {stay.days.toLocaleString()}日目
             </span>
           )}
-          {/* 国が引けない日も、旅が止まっていないことはここに出る */}
-          {trip && (
+          {/* 国が引けない日も、旅が止まっていないことはここに出る。
+              **字は `lib/stay.ts` の `tripDayWord` から。** 数え方も言い方も
+              旅程表（`/nordic` の「2日目」）と1つにしてある。 */}
+          {travel && (
             <span className="chip">
               <Icon name="clock" size={12} />
-              旅に出て {trip.days.toLocaleString()}日目
+              {tripDayWord(travel.days)}
             </span>
           )}
           {cur.theme && !SLUG.test(cur.theme) && (

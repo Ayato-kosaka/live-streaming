@@ -384,7 +384,7 @@ function nordicThemes(): Theme[] {
  * 「その章のときに何をしていたか」で建てるが、この島はまだ何も起きていない。
  * 建つのは、出発までの日数・企画の説明・旅のしおり・この旅の掲示板。
  *
- * 歩いた国のかわりに「これから歩く国」。行き先は `/nordic/<国>` で、
+ * 歩いた国のかわりに、その旅の国。行き先は `/nordic/<国>` で、
  * 中身はもう全部そろっている（見どころ・地図・値段）。
  * **島の中に同じものを作り直さない。**
  */
@@ -395,7 +395,17 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     {
       id: "depart",
       label: "この旅のこと",
-      blurb: "なぜ北欧まで行くのか",
+      /* **「この旅のこと」の副題は、表紙（`cover.ts`）と同じ字にする。**
+         前は表紙が `chapterDays()` の**経過**（1日、2日…）、こちらが焼いた
+         **見立て**（17日）を出していた。同じ名前・同じ絵の札が、面によって
+         違う数を言っていた（`content/chapters.ts` の「同じ数を2か所に書かない」）。
+         この札が答えるのは「どんな旅なのか」なので、見立てに寄せる。
+         何日目かは、表紙の「この島のこと」の札が持っている。
+         **式を1つにまとめて import し合うと、表紙の束に `spec.ts` の
+         材料（配信の一覧・伝説・ショート）が丸ごと付いてくる。**
+         だから同じ出どころ（`plannedDays` と `NORDIC_COUNTRIES`）を
+         両方が直に読む。手で書いた数はどちらにも無い。 */
+      blurb: `${NORDIC_COUNTRIES.length}カ国、${c.plannedDays ?? 0}日`,
       icon: "tent",
       size: 62,
       sign: true,
@@ -404,8 +414,14 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     },
     {
       id: "countries",
-      label: "これから歩く国",
-      blurb: `${NORDIC_COUNTRIES.length}カ国、${days}日`,
+      /* **「これから」と書かない。** 北欧の6カ国は歩いてから
+         `content/countries.ts` に足す決まりなので（`AHEAD_COUNTRIES`）、
+         誰かが手で足すまでこの札の字は変わらない。旅の最中も、帰ってきた
+         あとも「これから歩く国 6カ国」と言い続けていた。
+         かといって「歩いた国」にもできない——寄らない国が出るかもしれない。
+         **時点を言わずに、板を押したら何が読めるかだけを言う。** */
+      label: `旅の${NORDIC_COUNTRIES.length}カ国`,
+      blurb: "国ごとの見どころと地図",
       icon: "signpost-flags",
       size: 60,
       sign: true,

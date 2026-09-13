@@ -5,9 +5,12 @@ import { useEffect, useState } from "react";
 import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
 import { themeById } from "@/content/themes";
 import { LINKS } from "@/content/site";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
 import { Stone } from "./art";
+import Wrote from "@/components/ui/Wrote";
 
 /** 「9/6」。数え直す前に出しておく、日付だけの表示。 */
 function shortDate(date?: string) {
@@ -378,7 +381,7 @@ function Doing({ plan }: { plan: Plan }) {
           <Icon name="live" size={26} />
           <span>
             <b>その日の配信で見る</b>
-            <i>毎晩22時・YouTube</i>
+            <i><Say t={say("tile")} /></i>
           </span>
         </a>
         {plan.place?.map && (
@@ -436,8 +439,10 @@ function PlanBody({ plan, from = 0 }: { plan: Plan; from?: number }) {
   return (
     <>
       <Photos plan={plan} from={from} />
+      {/* **書いてくれたまま出す**（#83）。段落の中の改行は、書いた人が
+          そこで切りたかったところ */}
       {plan.about?.map((a, i) => (
-        <p key={i}>{a}</p>
+        <Wrote key={i} t={a} as="p" />
       ))}
       <Embeds plan={plan} />
       <Links plan={plan} />
@@ -508,7 +513,9 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
         <h2>{plan.title}</h2>
       </div>
 
-      <p style={{ fontSize: 16 }}>{plan.note}</p>
+      <p style={{ fontSize: 16 }}>
+        <Wrote t={plan.note} />
+      </p>
 
       <Reached plan={plan} />
 

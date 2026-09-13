@@ -102,6 +102,11 @@
    じぶんのことの中に置いたままだと、あちらから読めない。 */
 
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
+/* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
+   そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
+   （`.mp-tab.is-on` は 3px 沈むので、OBS の当たりが 78x46 になっていた）。
+   吊るしたぶんの場所を、紙で始まる道具にだけあける。 */
+.mp-tool-body > .panel { margin-top: var(--sp-4); }
 /* 書き込む欄は指で押すもの。48px を割らせない（`island-design.md` 3-2）。
    `.dform` の素の欄は 45〜46px しかない。ここだけ持ち上げる。 */
 .mp-tool .nph-post-row input,
@@ -190,10 +195,17 @@
   color: var(--ink);
   white-space: pre-wrap;
 }
-/* テーマ・日付・ハートの行。**札（`.chip`）をやめて字だけにした**（#225）。
+/* 一覧の行の**足元**。テーマ・日付・ハート、状態・繋がっている先、段・さんせい。
+   **札（`.chip`）をやめて字だけにした**（#225）。
    札は1つ 28px の高さと左右の余白を持つので、3つ並ぶだけで1枚が1行ぶん高くなる。
    ここは読んで場所が分かればいいだけで、押しどころではない。
-   区切りは中黒。並べても背が伸びない。 */
+   区切りは中黒。並べても背が伸びない。
+
+   **この入れ物を使う3つは、中に札を入れない。**
+   `MyStuff`（付箋・企画）・`OwnerCare`（付箋・企画）・`DonorLinks`（投げ銭）。
+   区切りの中黒は下の擬似要素が入れるので、中に `.chip` を混ぜると
+   **札の中に中黒が1つ入って**「札・札」ではなく「札」「・札」に見える。
+   実際そうなっていて、投げ銭の行は 360px で 30.4px → 60.8px（2行）だった。 */
 .mp-note-foot {
   margin: 0;
   display: flex;
@@ -205,10 +217,36 @@
   line-height: var(--lh-body);
   color: var(--ink-2);
 }
-.mp-note-foot > span + span::before {
+/* 区切りは**前の字の後ろ**に付ける（`::after`）。折り返さないうちは
+   `::before` でも同じ絵になるが、**折り返した瞬間に違う。**
+   後ろの字に付けると、2行目が「・」で始まって箇条書きに見える。
+   投げ銭の行は多いと4つ並ぶ（状態・繋がっている先・あやと本人・来た日）ので、
+   360px では折り返すほうがふつう。前に付ければ、2行目は字から始まる。 */
+.mp-note-foot > span:not(:last-child)::after {
   content: "・";
   padding: 0 var(--sp-1);
   color: var(--rule);
+}
+/* 決めごとを、書き手の覚えではなく**入れ物の側**に持たせる。
+   3つの部品が同じ入れ物を使っていて、そのうち2つが札を混ぜていた。
+   「混ぜない」と書いておくだけでは、次に足す人がまた混ぜる。
+   混ざっても、ここで字に落ちる。
+
+   **`span` に絞ってある。** 押せる札（`a.chip` / `button.chip`）は板で、
+   厚みが「押せる」の合図（`island-design.md` 3章3）。ここで平らにすると
+   合図を消すことになる。足元に押しどころは無いので、平らにするのは字だけ。 */
+.mp-note-foot > span.chip {
+  background: none;
+  min-height: 0;
+  padding: 0;
+  /* 札は中で inline-flex なので、字と区切りのあいだに隙間を持つ。
+     0 に戻さないと、混ぜた行だけ字間が広く見える */
+  gap: 0;
+  border-radius: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 /* ハートの数。**数は行の字の色のまま。** 桃色にすると、紙の上で
    2.68 : 1 しか出ない（`tools/sprites/inkpx.mjs` で実測）。色を持つのは絵だけ。 */
@@ -255,7 +293,8 @@
   font-weight: 800;
   color: var(--ink-2);
 }
-.mp-plan-t i > span + span::before {
+/* 区切りの付け方は足元（`.mp-note-foot`）と同じ。前の字の後ろに付ける。 */
+.mp-plan-t i > span:not(:last-child)::after {
   content: "・";
   padding: 0 var(--sp-1);
   color: var(--rule);
@@ -288,6 +327,15 @@
 .mp-care .nph-post-row input,
 .mp-care .nph-post-row select,
 .mp-care textarea { min-height: 48px; }
+/* 段を動かす道具の作業台。一覧の1件の中に入る板なので、`.dform` の素の
+   余白（`--sp-3`）では本文と押しどころのあいだが空きすぎる。
+   投げ銭の紐付け（`.mp-donor-form`）と同じだけ詰める。**同じ面に立つ
+   2つの作業台が、違う厚みの板に見えないようにする。** */
+.mp-care-form {
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
 .mp-care-text {
   margin: 0;
   font-size: var(--fs-body);
@@ -426,6 +474,53 @@
 
 .mp-donor-note {
   margin: var(--sp-1) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 近い名前の人（#190）。**押すと、その人につながる。**
+   呼び名から handle の枝番（`-q3n`）は思い出せないので、打たずに選べるように
+   する。**押しどころなので厚みを付ける**（`island-design.md` 3-3）。すぐ上の
+   書く欄と、すぐ下の「つなぐ」にはさまれているので、平らだと欄の続きに見える。 */
+.mp-donor-hints {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.mp-donor-hint-h {
+  margin: 0;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+/* 1つが「名前 / 一緒に何日・さいご何日」の2段。**名前は長い**ので
+   （`@ながいながいなまえ-q3n`）、375px で折り返せるようにしておく。 */
+.mp-donor-hint {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: 0 5px 0 var(--frame-dark);
+  text-align: left;
+  color: var(--ink);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.mp-donor-hint:active { transform: translateY(5px); box-shadow: none; }
+.mp-donor-hint:disabled { opacity: 0.62; box-shadow: none; }
+.mp-donor-hint b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+.mp-donor-hint i {
+  font-style: normal;
   font-size: var(--fs-min);
   font-weight: 700;
   color: var(--ink-2);
@@ -628,3 +723,317 @@
   color: var(--ink-2);
   box-shadow: 0 5px 0 var(--frame-dark);
 }
+
+/* ---------------- キャラクター(#284) ----------------
+   スパチャと Doneru のアラートに出る絵。原本がスプレッドシートと
+   ドライブから `islandCharacter` に来たので、あやとの机から直せるようにした。
+
+   **旅先のスマホ1台で使う面。** 押しどころは他の道具と同じ 48px 以上、
+   送りは 56px（このファイル冒頭の決め）。 */
+
+.ch-top { display: flex; gap: var(--sp-2); align-items: stretch; }
+.ch-find { flex: 1; min-width: 0; min-height: 48px; }
+
+/* 図鑑。**3列**。390px 幅で1マス 106px になり、絵が誰か分かる大きさに残る。
+   4列だと 76px で、顔が潰れて「押してみないと誰か分からない」棚になる。 */
+.ch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+@media (min-width: 560px) {
+  .ch-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* 取りに行っているあいだ。**棚の形のまま置く**（`docs/island-design.md` 4章）。
+   灰の帯を2本引くと、そこに何が出てくる場所なのか分からないし、
+   0人のときの `.blank` と見分けがつかなくなる。
+   骨の材料（色・明滅・角）は島じゅうで1つ（`app/css/ui.css` の `.wait`）で、
+   ここは並べ方だけを棚に合わせる。
+
+   **`is-card` を付けたまま使う。** 素の `.wait` は「字が並ぶ」前提で
+   最後の1枚を 62% に細める規則を持っていて、棚に当てると右下だけ小さい、
+   格子になっていない骨が出る（実測 59.5x79.3）。`is-card` はその規則の
+   外側にいる。 */
+.ch-wait {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width: 560px) {
+  .ch-wait { grid-template-columns: repeat(4, 1fr); }
+}
+/* マス（390px 幅で 96x124）に寄せる。角はマスと同じ --r-2 に戻す。 */
+.ch-wait.is-card { --wait-h: 120px; --wait-r: var(--r-2); }
+/* `.wait` は3枚ぶんしか遅れを持っていない。6枚置くので続きを足す。 */
+.ch-wait > span:nth-child(4) { animation-delay: 0.48s; }
+.ch-wait > span:nth-child(5) { animation-delay: 0.64s; }
+.ch-wait > span:nth-child(6) { animation-delay: 0.8s; }
+
+/* 0人のときの札。390px で「〜ここに並びま / す。」と最後の1文字だけが
+   落ちるので、行の長さを均す（`.blank.is-off > b` と同じ手）。 */
+.ch-list .blank > p { text-wrap: balance; }
+
+/* **一面ぜんぶが押せるマスなので、1枚ずつに厚みを付けない**
+   （`docs/island-design.md` 3-3 の唯一の例外。名指しで「図鑑の一覧」）。
+   並びそのものが「ここは全部押せる」の合図で、98枚に 4px の厚みを付けると
+   合図が飾りに変わる。押せることは、残る2つ——**紙の色**（棚の地より明るい
+   紙が四角く抜けている）と**形**（同じ大きさの枠が規則正しく並ぶ）——で立てる。
+   この並びに押せないマスを混ぜてはいけない（混ぜた瞬間この例外が嘘になる）。 */
+.ch-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+/* 沈む先の厚みが無いので、4px も落とすと「ずれた」に見える。
+   紙を1段沈めて、2px だけ。**反応は返す**（`island-design.md` 3-5）。 */
+.ch-cell:active {
+  transform: translateY(2px);
+  background: var(--paper-2);
+}
+.ch-cell img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.ch-cell-none {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  font-size: var(--fs-note);
+  color: var(--ink-2);
+}
+/* 図鑑のマスに絵文字を重ねていたが、外した（`docs/island-design.md` 1章:
+   `content/*.ts` の `emoji` は残っているが画面に出さない）。95枚のマスに
+   飾りで乗っていて、実 DOM で93個出ていた。編集の欄だけが残る。 */
+.ch-cell-name {
+  width: 100%;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+  /* **2行で切る。** 長い名前で1マスだけ背が伸びると、棚の行がガタつく。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.ch-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* 「ほかの呼び名」の札。**中が入力欄1つではないので label にできない**ので、
+   `.dform label span`（ui.css）と同じ見た目をここで作る。
+   `.dlabel` を借りると罫が1本伸びて、上の2つの札とそろわない。 */
+.ch-edit .ch-sub {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+}
+
+.ch-aliases { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.ch-alias {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.ch-alias-add { display: flex; gap: var(--sp-2); align-items: stretch; margin-top: var(--sp-2); }
+.ch-alias-add input { flex: 1; min-width: 0; min-height: 48px; }
+
+.ch-pic {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-2);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+}
+.ch-pic-h { font-size: var(--fs-note); font-weight: 900; color: var(--ink); }
+/* 市松にするのは、**背景なしの絵の透明が見えるようにする**ため。
+   白地に置くと、白い縁が付いたまま保存された絵に気づけない。 */
+.ch-pic-now {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  border-radius: var(--r-2);
+  background-color: var(--paper-2);
+  background-image:
+    linear-gradient(45deg, color-mix(in srgb, var(--frame) 40%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--frame) 40%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--frame) 40%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--frame) 40%, transparent) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.ch-pic-new { font-size: var(--fs-note); font-weight: 800; color: var(--ink); margin: 0; overflow-wrap: anywhere; }
+.ch-pic-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.ch-pick,
+.ch-get {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  min-width: 96px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+}
+.ch-pick input { display: none; }
+
+/* 消すのは、送りより弱く見せる。**押し間違えるのは走っている車の中。** */
+.ch-drop {
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-pill);
+  border: var(--bw-1) solid var(--frame);
+  background: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* --- スパチャの控え（`components/me/FundHistory.tsx`。#292） ------------
+   読むだけの道具。**押しどころは「もっと古いぶん」1つだけ**なので、
+   1行1行には厚みを付けない（`docs/island-design.md` 3-3）。
+
+   走っている車の中でスマホ片手に開く。日ごとにまとめて、その晩のぶんが
+   入ったかどうかを、数えずに読めるようにしてある。 */
+
+/* ぜんぶで何件・いくら。**数えられたときだけ出る**（0 に倒さない）。 */
+.mp-sc-sum {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mp-sc-sum b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+/* 貯金箱に入るぶん（半分）。行を変えて、上の合計と混ざらないようにする。 */
+.mp-sc-sum i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.mp-sc-day { margin-top: var(--sp-4); }
+
+/* 日の見出し。**その晩いくら来たか**が、ここだけで読める。 */
+.mp-sc-dayh {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--bw-1) solid var(--frame);
+}
+.mp-sc-dayh b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+}
+.mp-sc-dayh i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.mp-sc-list { list-style: none; margin: 0; padding: 0; }
+/* 1件。時刻・名前・額の3つ。**名前だけが伸び縮みする。**
+   48px は押しどころの寸法なので、押せないここには要らない。
+   ただし指でなぞる高さは要るので 34px 取る。 */
+.mp-sc-list > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-height: 34px;
+  padding: var(--sp-1) 0;
+}
+.mp-sc-list > li + li { border-top: var(--bw-1) solid var(--frame); }
+/* 時刻。**打った日しか分からないものには出ない**ので、空でも幅は取る
+   （出る行と出ない行で、名前の左端がずれると読みにくい）。 */
+.mp-sc-time {
+  flex: none;
+  width: 38px;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.mp-sc-who {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.mp-sc-yen {
+  flex: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* 続き。**押しどころなので厚みを付ける。** 幅いっぱい・48px。 */
+.mp-sc-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.mp-sc-more:active { transform: translateY(4px); box-shadow: none; }
+.mp-sc-more:disabled { opacity: 0.62; box-shadow: none; }

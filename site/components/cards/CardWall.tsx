@@ -6,7 +6,7 @@ import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import ReadAgain from "@/components/me/ReadAgain";
-import { useOwner } from "@/components/nordic/log";
+import { useOwner } from "@/lib/auth";
 import CardSheet from "./CardSheet";
 import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 
@@ -55,10 +55,10 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
  * 3章の3の例外）。押せないマスをこの並びに混ぜないこと。
  */
 export default function CardWall({ plans }: { plans: PlanDays }) {
-  const { days, photosRead, cardsRead, add, reload } = useCardWall();
+  const { days, photosRead, cardsRead, add, drop, reload } = useCardWall();
   const [open, setOpen] = useState<PhotoGroup | null>(null);
   /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
-     （`components/nordic/log.ts` の `useOwner`）。 */
+     （`lib/auth.tsx` の `useOwner`）。 */
   const owner = useOwner();
 
   /* まだ返事を待っている口がある。骨を出してよいのはここだけ */
@@ -151,7 +151,17 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       </Longer>
 
       {open && (
-        <CardSheet group={open} plans={plans[open.day]} onClose={() => setOpen(null)} />
+        <CardSheet
+          group={open}
+          plans={plans[open.day]}
+          onClose={() => setOpen(null)}
+          /* 消えたら、その場で棚から落として紙を閉じる。**読み直しに行かない。**
+             消したのはこちらなので、消えたことはもう分かっている。 */
+          onDropped={(id) => {
+            drop(id);
+            setOpen(null);
+          }}
+        />
       )}
     </>
   );

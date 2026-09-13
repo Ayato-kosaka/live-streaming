@@ -5,7 +5,8 @@
  * まとめて `ayato.png` に差し替えていた。そのせいで**島の上の12人が
  * 全員そっくり同じ**に写り、「住人が生きているか」を見ても何も分からなかった。
  *
- * ブラウザからは lh3.googleusercontent.com / ggpht.com に出られないが、curl では取れる。
+ * ブラウザからは lh3.googleusercontent.com / ggpht.com / firebasestorage.googleapis.com に
+ * 出られないが、curl では取れる。
  * `python3 tools/sprites/avatars.py` で先に落としておくと、ここが
  * **本番と同じ絵を1人ずつ**返す。落としていなければ ayato.png に落ちる。
  *
@@ -19,6 +20,7 @@ import { existsSync } from "fs";
 
 const ROOT = "/home/user/live-streaming";
 const AVATARS = "/tmp/avatars";
+const CHARS = "/tmp/chars";
 
 export async function offline(ctx, opts = {}) {
   const fallback = opts.avatar ?? `${ROOT}/site/public/characters/ayato.webp`;
@@ -55,6 +57,26 @@ export async function offline(ctx, opts = {}) {
     const m = /\/vi\/([^/]+)\//.exec(r.request().url());
     const local = m && `${AVATARS}/yt-thumb/${m[1]}.jpg`;
     r.fulfill({ path: local && existsSync(local) ? local : photo });
+  });
+
+  // キャラクターの絵。島も図鑑もカードも、口ごしに置き場から取る（#284）。
+  // 静的に配って撮るときは口が無いので、落としてあるものを返す。
+  //   /island-api/characters/{id}/plain-128.webp
+  await ctx.route(/\/island-api\/characters\/[^/]+\/(plain|scene)-\d+\.webp/, (r) => {
+    const m = /\/characters\/([^/]+)\/((?:plain|scene)-\d+\.webp)/.exec(r.request().url());
+    const local = m && `${CHARS}/island__characters__${decodeURIComponent(m[1])}__${m[2]}`;
+    r.fulfill({ path: local && existsSync(local) ? local : fallback });
+  });
+
+  // 置き場を直に指した URL（図鑑が名簿から受け取るもの）。
+  // **1枚に潰さない。** 図鑑は95人が並ぶ面なので、同じ絵で埋めると
+  // 「大きさが揃っているか」すら見られなくなる（上の住人と同じ失敗）。
+  // 先に落としておく: python3 tools/sprites/chars.py
+  await ctx.route(/firebasestorage\.googleapis\.com/, (r) => {
+    const m = /\/o\/([^?]+)/.exec(r.request().url());
+    const name = m ? decodeURIComponent(m[1]).replaceAll("/", "__") : "";
+    const local = `${CHARS}/${name}`;
+    r.fulfill({ path: name && existsSync(local) ? local : fallback });
   });
 
   // 書体は next/font で自分のドメインから配るが、古い書き出しが残っていると叩きにいく

@@ -221,3 +221,58 @@ jobs:
       # 直したら（donors_import を apply で流したら）翌日に緑へ戻る。
       - name: Doneru の投げ銭を名簿に足す（新規がいたら赤くする）
         run: python python/doneru_supporters.py --days 3
+
+  # 豚の貯金箱の掃除（docs/nordic-fund.md 9章）。
+  # **台帳（islandTips）とは別もの。** あちらは「誰にどのカードを渡すか」で、
+  # BigQuery だけを見ている。こちらは「いくら入っているか」で、
+  # アラートボックスが記録したぶんと手入力も入る。
+  #
+  # やることは2つ。**BigQuery の直近3日ぶんを控えに足す**（アラートボックスを
+  # 起動し忘れた晩は、あちらが1件も記録していない）のと、**合計を焼き直す**。
+  # 重複は書類ID（26文字の item id）で潰れるので、流し直しても増えない。
+  # **移行前は何もしない。** 控えが空のうちは黙って終わる。
+  #
+  # ## なぜ job を分けたか（**ここが大事**）
+  #
+  # 最初は island_stats の途中に continue-on-error で1ステップ置いていた。
+  # **それだと落ちても緑のまま**で、ステップを開くまで分からない。
+  # このリポジトリは「ワークフローが success だったので本番が変わったと読んだ」
+  # で一度やらかしている（docs/island-misses.md #55）。
+  #
+  # かといって island_stats の中で赤くすると、後ろのステップ（台帳・カード・
+  # 名簿）が skip される。**額が1日古いだけのことで、カードが配れなくなる。**
+  #
+  # job を分けると、**どちらも起きない。** 落ちれば赤い job が1つ立ち、
+  # island_stats のほうは最後まで走る。
+  #
+  # 落ちた理由は Firestore の `islandFundHealth/last` にも残る。
+  # Actions を開けないときは firestore_read で読む。
+  fund_box:
+    runs-on: ubuntu-latest
+    # 取り込みが失敗しても、既に入っているぶんの合計は焼き直したい
+    needs: island_stats
+    if: ${{ always() }}
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **continue-on-error を付けない。** 落ちたら赤くする
+      - name: 豚の貯金箱をそろえ直す
+        run: python python/fund_daily.py --days 3

@@ -9,7 +9,11 @@ import { Mark } from "@/components/nordic/Marks";
 import DaySay, { type SayItem } from "@/components/nordic/DaySay";
 import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import WantList, { type WantItem } from "@/components/nordic/WantList";
+import RoadStops from "@/components/nordic/RoadStops";
+import Shops from "@/components/nordic/Shops";
+import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
+import Strong from "@/components/nordic/Strong";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
 import {
@@ -20,7 +24,6 @@ import {
   NORDIC_LOG,
   ROUTE,
   STOP_SEQ,
-  SUN,
   cityCountry,
   cityName,
   dayBySlug,
@@ -33,6 +36,8 @@ import {
   type Leg,
   type NordicSpot,
 } from "@/content/nordic";
+import { SUN_CITIES, sunOn } from "@/content/nordicSun";
+import { shopsOf } from "@/content/nordicShops";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -80,10 +85,14 @@ export async function generateMetadata({
   const day = dayBySlug(n);
   if (!day) return {};
   const legs = day.legs ?? [];
+  /* 区間のある日は「◯から◯」、無い日は「◯で休む」。
+     **休んでいない日は `way` で上書きする**（9/27 は動く区間を持たないが
+     夜の便で発つので、自動だと「ストックホルムで休む」と名乗ってしまう）。 */
   const way =
-    legs.length > 0
+    day.way ??
+    (legs.length > 0
       ? `${cityName(legs[0].from)}から${cityName(legs[legs.length - 1].to)}`
-      : `${day.city}で休む`;
+      : `${day.city}で休む`);
   return {
     title: `${dayName(day)} ${way} — 北欧ヒッチハイク`,
     description: day.lead,
@@ -115,20 +124,31 @@ function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
-/** 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。 */
+/**
+ * 「6:20」と「19:00」から「12時間40分」。出す数字どうしが必ず合うように、表示から計算する。
+ *
+ * **分に0を詰めない。** 「12時間06分」は数字の表の書き方で、文の中では
+ * 読みがつまずく。ちょうどの時は「12時間」まで。
+ */
 function daylight(rise: string, set: string) {
   const m = (t: string) => Number(t.split(":")[0]) * 60 + Number(t.split(":")[1]);
   const d = m(set) - m(rise);
-  return `${Math.floor(d / 60)}時間${String(d % 60).padStart(2, "0")}分`;
+  return `${Math.floor(d / 60)}時間${d % 60 ? `${d % 60}分` : ""}`;
 }
 
-/** その日いる街。日の出を出すのは、朝そこに立つ場所。分からなければ着く先。 */
+/**
+ * その日いる街。**朝そこに立つ場所だけ。着く先で代わりを出さない。**
+ *
+ * 前は、朝の街を持っていなければ「その日どこかで着く街」に落としていた。
+ * 出発の日（9/11）はそれで **カトヴィツェの日の出**が出ていた。あやとは
+ * その日ジョージアにいて、カトヴィツェに降りるのは**翌日の1時5分**。
+ * **その日一度も見ない空の明るさ**を「この日の、明るいうち」として
+ * 出していたことになる。落とすくらいなら、出さない。
+ */
 function sunCity(day: Day) {
-  const legs = day.legs ?? [];
-  if (legs.length === 0) return day.city && SUN[day.city] ? day.city : undefined;
-  const from = cityName(legs[0].from);
-  if (SUN[from]) return from;
-  return legs.map((l) => cityName(l.to)).find((c) => SUN[c]);
+  const has = (c?: string) => !!c && SUN_CITIES.includes(c);
+  const from = day.legs?.length ? cityName(day.legs[0].from) : day.city;
+  return has(from) ? from : undefined;
 }
 
 /**
@@ -234,7 +254,7 @@ function Hitch({ leg }: { leg: Leg }) {
           親指を上げる むずかしさ {HARD[h.hard]}
           <em className="ndhh-guess">見立て</em>
         </b>
-        <i>{h.why}</i>
+        <i><Strong t={h.why} /></i>
       </p>
       <dl className="ndhh-l">
         <div>
@@ -273,8 +293,11 @@ function Hitch({ leg }: { leg: Leg }) {
  *
  * **この企画では、距離より先にここが1日の形を決めている。** 親指を上げて
  * 立てるのは日のあるあいだだけで、9月のバルトはそこが13時間しかない。
- * 値は9月中旬の1つだけ持っている（1週間で15分しか動かないので、
- * 日ごとに持つと同じ数字を11回書くことになる）。
+ *
+ * 値は**その日のもの**を出す（`content/nordicSun.ts`）。前は9月15日の値を
+ * 街ごとに1つ持って「9月中旬の◯◯」と断って出していた。旅が9日で
+ * 終わるあいだは足りていたが、ストックホルムの7泊を日ごとの面に割って
+ * 9月27日まで伸びたので、**最終日は1時間ちがう値を分まで出していた。**
  *
  * **「この日の道」と同じ紙に置く。** 別の紙に分けたら、見出しと紙のふちだけで
  * 90px 増えた（実測）。区間の無い休息日だけ、1枚の紙として立てる。
@@ -309,7 +332,8 @@ function Hours({
             </span>
           </p>
           <p className="ndsun-w">
-            9月中旬の{sc}。明るいのは {daylight(sun.rise, sun.set)}
+            {/* 日付はこの面の見出しにもう出ている。ここで繰り返さない */}
+            この日の{sc}。明るいのは {daylight(sun.rise, sun.set)}
             {hitch ? "。親指を上げられるのは、そのあいだだけ" : ""}
           </p>
         </div>
@@ -342,7 +366,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   const hitchLegs = legs.filter((l) => l.hitch);
   const hitch = legs.some((l) => l.move === "hitch");
   const sc = sunCity(day);
-  const sun = sc ? SUN[sc] : undefined;
+  const sun = sunOn(sc, day.date);
   const art = legs[0]?.art ?? day.art;
 
   // 通る街と、寄るかもしれない街。**分けて出す。**
@@ -355,6 +379,42 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         : [];
   const maybe = [...new Set([...legs.flatMap((l) => l.maybe ?? []), ...(day.maybe ?? [])])];
   const cities = [...sure, ...maybe];
+
+  /* お店を出す街。**その日の終わりに足をつけている街だけ。**
+     通ってきた街のぶんまで並べると、1日の面に2つ3つと区画が積まれる。
+     朝に発つ街で買いたくなったら、その街の日の面が持っている。 */
+  const shopCities = sure;
+  /** 頭に置く近道の行き先。**お店が1軒でもある街だけ。** */
+  const shopJump = shopCities.find((c) => {
+    const s = shopsOf(c);
+    return s && s.shops.length > 0;
+  });
+
+  /* ふだんのごはんを出す国。**その日に足を置く国ぜんぶ。**
+     区間の出発地と到着地の両方から引いて、通った順に重複を落とす。
+
+     前は「その日の終わりにいる国」ひとつだけにしていた。**それだと
+     フィンランドが1日も出なかった。** 8日目はタリンを出てヘルシンキを
+     7時間歩いてからストックホルム行きの船に乗るので、終わりはスウェーデン。
+     ヘルシンキの7時間がこの日いちばん長く地面に足を置いているのに、
+     フィンランドのごはん7品がどの面にも出ない状態になっていた
+     （あやとが名指しした ruisleipä・kaurapuuro・kahvi がそれ）。
+
+     国が変わる日は2つ、8日目は3つ並ぶ。畳んであるので背は伸びない。
+     旅程に無い国（出発日のジョージア）は `foodsOf` が空を返すので出ない。
+     **ここに国名を書かない**（旅程が変わると古くなる）。 */
+  const foodSlugs = [
+    ...new Set(
+      (legs.length > 0
+        ? legs.flatMap((l) => [cityName(l.from), cityName(l.to)])
+        : day.city
+          ? [day.city]
+          : []
+      )
+        .map((c) => cityCountry(c)?.slug)
+        .filter(Boolean) as string[],
+    ),
+  ];
 
   // 見どころは国ごとの JSON にある。その日に関わる国のぶんだけ読む。
   const slugs = [...new Set(cities.map((c) => cityCountry(c)?.slug).filter(Boolean))] as string[];
@@ -458,6 +518,19 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         }
       />
 
+      {/* 街に着いた人のための、近道。**この面は上から読むと長い。**
+          あやとはビャウィストクの路上でこれを開いて、お店にたどり着けなかった。
+          お店の区画は見どころの下（面のかなり後ろ）にあるので、
+          頭に1つだけ行き先を置く。**2つ以上は置かない**（近道が増えると目次になる）。 */}
+      {shopJump && (
+        <p className="chips nday-jump">
+          <a className="chip link" href={`#shop-${encodeURIComponent(shopJump)}`}>
+            <Icon name="souvenir" size={18} />
+            {shopJump}で、買う
+          </a>
+        </p>
+      )}
+
       {/* この日の道。区間ごとに、絵・距離・時間・決まっている時刻・その区間の話。
           動かない日（休息日）は区間が無いので、この区画そのものを出さない。 */}
       {legs.length > 0 && (
@@ -485,7 +558,11 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                     )}
                   </p>
                   {l.fixed && <p className="nday-fixed">{l.fixed}</p>}
-                  {l.note && <p className="nday-note">{l.note}</p>}
+                  {l.note && (
+                    <p className="nday-note">
+                      <Strong t={l.note} />
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -521,7 +598,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           )}
           {day.start && (
             <p className="nday-lead">
-              <b>{day.start.from}</b> から。{day.start.how}
+              <b>{day.start.from}</b> から。<Strong t={day.start.how} />
             </p>
           )}
         </section>
@@ -534,7 +611,9 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           <h2>気をつけること</h2>
           <ul className="nday-worry">
             {day.worry!.map((w) => (
-              <li key={w}>{w.replace(/\*\*/g, "")}</li>
+              <li key={w}>
+                <Strong t={w} />
+              </li>
             ))}
           </ul>
         </section>
@@ -558,6 +637,25 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       {legThemes.map((t) => (
         <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
       ))}
+
+      {/* 道すじの上にある寄り道。**区間ごとに1枚。**
+          すぐ下の「順調だったら、寄る」はその日ぜんぶに掛かる話で、
+          こちらは「その道の、その地点」の話。幹線から何km外れるかを持っている。
+          `stops` があるのはヒッチハイクの区間だけなので、飛行機と船の日は出ない。 */}
+      {legs
+        .filter((l) => (l.stops?.length ?? 0) > 0)
+        .map((l) => (
+          <section key={l.id} className="panel paper" id={`stops-${l.id}`}>
+            {/* **見出しに街の名前を2つ入れない。** 390px だと
+                「ビャウィストクからヴィ／リニュスへ」で名前の途中で割れる。
+                どこからどこへは、すぐ下の一行が言う（そこは割れてよい）。 */}
+            <h2>道すじの上の、寄り道</h2>
+            <p className="nday-sub">
+              {cityName(l.from)} から {cityName(l.to)} まで
+            </p>
+            <RoadStops stops={l.stops!} />
+          </section>
+        ))}
 
       {/* 順調だったら、寄る。**寄ると決まっていない。**
           ヒッチハイクは着く時刻が読めないので、予定として書くと嘘になる。
@@ -607,6 +705,35 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             </Link>
           )}
         </section>
+      ))}
+
+      {/* その街の、おみやげと雑貨。**見どころのすぐ下。**
+          あやとの言葉（2026-09-13・ビャウィストクで）:
+
+          > お土産とか雑貨とか行きたかったけど、あやと島みても見つからず行けなかった
+
+          街の見どころと同じ「その街で何をするか」の話なので、地図のすぐ下に置く。
+          国のごはん（`DailyFood`）より手前なのは、あちらが国の話で、
+          こちらがその街の話だから。粒の細かいほうから読めるようにする。
+
+          **街の名前はここに書かない**（旅程から来る）。日付を渡すのは、
+          「いま開いてる」を今日の面でだけ言うため（`ShopRows`）。 */}
+      {shopCities.map((city) => (
+        <Shops key={city} city={city} date={day.date} />
+      ))}
+
+      {/* その日の終わりにいる国の、ふだんのごはん。
+          あやとの言葉（2026-09-12）:
+
+          > ○○日目に、食べるべきもの
+          > 今回は「観光名物」ではなく、現地人が子どもの頃から食べている／
+          > スーパーや家庭に普通にある／…ものを優先します
+
+          **見どころのあとに置く。** 上の「見たいもの」は着いた街の話で、
+          こちらは国の話。街より粒が大きいので、街のあとに来ると順に読める。
+          国の名前はここで書かない（`DailyFood` が slug から引く）。 */}
+      {foodSlugs.map((slug) => (
+        <DailyFood key={slug} country={slug} named={foodSlugs.length > 1} />
       ))}
 
       {/* 寄るかどうかがまだ決まっていない街。**畳んでおく。**
@@ -675,11 +802,10 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       )}
 
       {/* 越えた日にだけ入る。よていだけの面は、出発前にしか読む理由がない。
-          **書くのは旅の最中で、そのときあやとは道の上にいる。** Git を編集して
-          commit して Hosting を手で起動する、は回らないので、ここは
-          画面が出てから読みにいく（`components/nordic/DayLog.tsx`）。
-          焼いてあるぶん（`NORDIC_LOG`）は、旅が終わってから写す正本。 */}
-      <DayLog day={day.id} dayName={dayName(day)} baked={NORDIC_LOG[day.id]} />
+          **焼いてあるものをそのまま出す**（`NORDIC_LOG`）。あやとが送ってきた
+          一言は、受け取った側が Git に焼いて出す運用になった
+          （`components/nordic/DayLog.tsx`）。 */}
+      <DayLog entry={NORDIC_LOG[day.id]} />
 
       {/* 前の日・次の日。旅は一本道なので、めくって読めるようにする。 */}
       <div className="nnav">

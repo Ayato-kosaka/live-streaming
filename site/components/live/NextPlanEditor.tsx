@@ -16,8 +16,7 @@ import {
   type NextPlan,
   type NextPlanInput,
 } from "@/lib/api";
-import { useAuth, withRead, type Read } from "@/lib/auth";
-import { useOwner } from "@/components/nordic/log";
+import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
 import ReadAgain, { Waiting } from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import PlanCard from "./PlanCard";

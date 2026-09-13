@@ -3,6 +3,8 @@
  * 絵・当たり判定・カメラ・歩行が全部この座標系(WORLD x WORLD)を共有する。
  */
 
+import { say } from "@/content/nights";
+
 export const WORLD = 1200;
 
 /** 島(砂浜)の中心と輪郭 */
@@ -133,7 +135,7 @@ export const PLACES: Place[] = [
     icon: "tower-studio",
     size: 128,
     href: "/streams",
-    blurb: "毎晩22時。5つの型でやってる",
+    blurb: say("types"),
     sign: true,
   },
   {
@@ -177,7 +179,9 @@ export const PLACES: Place[] = [
     icon: "signpost-flags",
     size: 64,
     href: "/map",
-    blurb: "パリからトビリシまでの道のり",
+    // **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる。
+    // 出発した日は動かないので、そこだけ言う（`app/map/page.tsx` の同じ注）。
+    blurb: "日本を出てから、歩いた国ぜんぶ",
     sign: true,
   },
   {

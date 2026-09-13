@@ -11,26 +11,29 @@ import {
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
-import { Viewer } from "./alertbox/types";
-import { getTable } from "./alertbox/api.utils";
+import { AlertboxCharacter } from "./alertbox/types";
+import { getAlertboxCharacters } from "./alertbox/api.utils";
 
+/**
+ * 他己紹介の画像を作る道具。
+ *
+ * 名簿は**スプレッドシートではなく島の口**から取る（#284）。
+ * OBS の URL に載せているのと同じ 32桁の合言葉（`?k=`）が要る。
+ * 開くときは `/ve-comment?k=…`。
+ */
 export default function App() {
-  const [viewers, setViewers] = useState<Viewer[]>([]);
+  const [viewers, setViewers] = useState<AlertboxCharacter[]>([]);
   const [content, setContent] = useState("");
   const [messageInfos, setMessageInfos] = useState<MessageInfo[]>([]);
 
   useEffect(() => {
-    // GAS API から viewrs を取得する
     const fetchViewers = async () => {
       try {
-        const viewersResponse = await getTable<Viewer[]>("Viewers");
-        if (!viewersResponse.ok) {
-          throw new Error("Failed to fetch Viewers");
-        }
-        const viewers = viewersResponse.data || [];
-        setViewers(viewers);
+        // 合言葉は URL の `?k=`。OBS のアラートボックスと同じもの
+        const k = new URLSearchParams(window.location.search).get("k") ?? "";
+        setViewers(await getAlertboxCharacters(k));
       } catch (error) {
-        console.error("Error fetching viewers:", error);
+        console.error("Error fetching characters:", error);
       }
     };
 
@@ -84,11 +87,16 @@ export default function App() {
     }
   };
 
+  /* 名前から絵を引く。1人が名前を何個も持つ（チャンネル名 + 他の呼び名）
+     ので、どちらでも当たるようにする。絵は置き場に移した（#284）ので、
+     口が返してくる URL をそのまま使う。 */
   const getIconUrl = useCallback(
-    (name: string) =>
-      viewers.find((v) => v.name === name)?.Icon &&
-      "https://lh3.googleusercontent.com/d/" +
-        viewers.find((v) => v.name === name)?.Icon,
+    (name: string) => {
+      const hit = viewers.find(
+        (v) => v.channelName === name || v.aliases?.includes(name)
+      );
+      return hit?.plain?.sizes?.["256"] ?? hit?.plain?.full ?? undefined;
+    },
     [viewers]
   );
   const getBackColorFromString = useCallback((s: string) => {

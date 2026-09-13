@@ -1532,11 +1532,15 @@
          - ?role=ctrl : スマホ用コントローラ(進行操作を配信画面へ送る)
          - ?auto=秒数 : 自動進行(同期なしのフォールバック)
 
-         ▼▼ セットアップ(1回だけ) ▼▼
-         1. Firebaseコンソール → Firestore Database を作成
-         2. ルールに monthlyReview コレクションの read/write 許可を追加
-         3. プロジェクト設定 → マイアプリ → Webアプリを追加し、
-            表示された firebaseConfig を下の FIREBASE_CONFIG に貼り付け
+         ▼▼ 書けるのはあやとだけ ▼▼
+         `firestore.rules` の monthlyReview は
+           読む   … 誰でも(OBS はログインできないので、ここは開けてある)
+           書く   … `islandUsers/{uid}.admin` が立っている人だけ
+         になっている。だから **ctrl はログインしてからでないと進行を送れない。**
+
+         同じ端末で島(`/`)にログインしてあれば、ここは何も押さずに繋がる
+         (下の SDK の版と apiKey を島に合わせてあるのはそのため)。
+         繋がらないときだけ、コントローラーに「Google でログイン」が出る。
          ========================================================= */
       const FIREBASE_CONFIG = {
         apiKey: "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM",
@@ -1553,36 +1557,120 @@
       const ROLE = params.get("role"); // "ctrl" | "view" | null
       const AUTO_SEC = Math.max(0, Number(params.get("auto")) || 0);
 
-      let publishFn = null; // ctrl時のみセット
+      /* Firebase の SDK。**版を島(`site/package.json` の firebase ^12)に揃えてある。**
+         ログインは localStorage に `firebase:authUser:<apiKey>:[DEFAULT]` の形で
+         残るので、同じ apiKey・同じ既定アプリ名・同じ大版なら、島でログイン済みの
+         端末はここでも押さずにログイン済みになる。配信の当日に押させない。 */
+      const SDK = "https://www.gstatic.com/firebasejs/12.18.0";
+
+      let publishFn = null; // ctrl時のみセット。**ログインするまで null**
+      let signInFn = null; // ctrl時のみセット。「Google でログイン」の中身
+
+      /* コントローラーの札。**「いま押せば OBS が動く」ときだけ緑にする。**
+         Firestore に繋がっただけでも、ログインしただけでも足りない。
+         別々の場所から `setCtrlStatus` を呼んでいると、あとから来たほうが
+         上書きして「同期中と出ているのに押しても動かない」が起きる
+         （実際に起きた。配信の最中にこれをやられると原因が分からない）。 */
+      let linkOk = false; // Firestore からスナップショットが来ている
+      let authOk = false; // ログインしている
+      let sendErr = ""; // 直前の送信が落ちた理由。空なら落ちていない
+      function refreshCtrlStatus() {
+        if (ROLE !== "ctrl") return;
+        if (!linkOk) setCtrlStatus(false, "つながっていません");
+        else if (!authOk) setCtrlStatus(false, "ログインが要ります");
+        else if (sendErr) setCtrlStatus(false, sendErr);
+        else setCtrlStatus(true, "同期中");
+      }
       let applyingRemote = false;
       let lastConfetti = 0;
       let lastSeenTs = 0; // これより古いスナップショットは無視(連打時の巻き戻り防止)
+      let seenFirstSnap = false; // 1枚目のスナップショットを受けたか(紙吹雪の空撃ち防止)
 
       function onStateChanged() {
         updateCtrlLabels();
         if (publishFn && !applyingRemote) {
           const ts = Date.now();
           lastSeenTs = Math.max(lastSeenTs, ts);
-          publishFn({ scene: sceneIdx, step: stepIdx, ts, confetti: lastConfetti }).catch(() => setCtrlStatus(false, "送信失敗"));
+          /* **落ちた理由を出す。** 「送信失敗」だけだと、配信の最中に
+             ログインの問題なのか電波なのかが分からない。 */
+          publishFn({ scene: sceneIdx, step: stepIdx, ts, confetti: lastConfetti })
+            .then(() => {
+              if (!sendErr) return;
+              sendErr = "";
+              cEls.banner.classList.remove("show");
+              refreshCtrlStatus();
+            })
+            .catch((e) => {
+              const denied = e && (e.code === "permission-denied" || /permission/i.test(String(e)));
+              sendErr = denied ? "このアカウントでは操作できません" : "送信失敗";
+              refreshCtrlStatus();
+              if (denied) showSignIn("進行を動かせるのは、島の管理者のアカウントだけです。入り直してください。");
+            });
         }
+      }
+
+      /** Firebase のアプリ。ログインと Firestore で**同じものを使う**(そうしないと別のログインになる)。 */
+      async function firebaseApp() {
+        const { initializeApp, getApps } = await import(`${SDK}/firebase-app.js`);
+        return getApps()[0] ?? initializeApp(FIREBASE_CONFIG);
       }
 
       async function initSync(onRemote) {
         if (!FIREBASE_CONFIG) throw new Error("FIREBASE_CONFIG未設定");
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js");
-        const fsm = await import("https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js");
-        const app = initializeApp(FIREBASE_CONFIG);
-        const db = fsm.getFirestore(app);
+        const fsm = await import(`${SDK}/firebase-firestore.js`);
+        const db = fsm.getFirestore(await firebaseApp());
         const ref = fsm.doc(db, SYNC_COLLECTION, SYNC_DOC);
         fsm.onSnapshot(
           ref,
           (snap) => {
             if (snap.exists()) onRemote(snap.data(), snap.metadata.hasPendingWrites);
-            setCtrlStatus(true);
+            /* ここは「繋がった」だけを伝える。**緑にするかは
+               `refreshCtrlStatus` が決める**（ログインと送信の成否も見る）。 */
+            linkOk = true;
+            refreshCtrlStatus();
           },
-          () => setCtrlStatus(false, "接続エラー")
+          () => {
+            linkOk = false;
+            refreshCtrlStatus();
+          }
         );
         return (data) => fsm.setDoc(ref, data);
+      }
+
+      /* ---------- ログイン(ctrl だけ) ----------
+         進行を書けるのはあやとだけ(`firestore.rules` の monthlyReview)。
+         OBS(view)は読むだけなので、**そちらでは firebase-auth を落とさない。**
+         配信に映っている側に、押せもしないログインの札を出さないため。 */
+      async function initAuth(onUser) {
+        const am = await import(`${SDK}/firebase-auth.js`);
+        const auth = am.getAuth(await firebaseApp());
+        /* 島でログイン済みの端末なら、ここが最初から user 付きで呼ばれる。
+           そのときは何も押さずに「同期中」まで行く。 */
+        am.onAuthStateChanged(auth, onUser);
+        return () => am.signInWithPopup(auth, new am.GoogleAuthProvider());
+      }
+
+      /** コントローラーに「Google でログイン」を出す。押せる札にする(文だけ出さない)。 */
+      function showSignIn(msg) {
+        if (ROLE !== "ctrl") return;
+        cEls.banner.textContent = "";
+        const p = document.createElement("div");
+        p.textContent = msg;
+        const b = document.createElement("button");
+        b.textContent = "Google でログイン";
+        b.style.cssText = "margin-top:8px;padding:10px 14px;font-size:15px;touch-action:manipulation";
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          try {
+            if (signInFn) await signInFn();
+          } catch (e) {
+            p.textContent = `ログインできませんでした(${(e && e.code) || e})。もう一度押してください。`;
+          } finally {
+            b.disabled = false;
+          }
+        });
+        cEls.banner.append(p, b);
+        cEls.banner.classList.add("show");
       }
 
       /* ---------- コントローラUI ---------- */
@@ -1652,11 +1740,29 @@
           updateCtrlLabels();
           applyingRemote = false;
         })
-          .then((pub) => { publishFn = pub; setCtrlStatus(true); onStateChanged(); })
-          .catch(() => {
-            setCtrlStatus(false, "設定が必要");
-            cEls.banner.textContent =
-              "Firestore が未設定です。Firebaseコンソールで ①Firestore作成 ②Webアプリ登録 → firebaseConfig をこのHTMLの FIREBASE_CONFIG に貼ってデプロイしてください。";
+          .then(async (pub) => {
+            setCtrlStatus(false, "ログインを確かめています…");
+            /* **ログインが確かめられるまで publishFn を入れない。**
+               入れてしまうと、押した瞬間に静かに 403 で落ちる。
+               配信の最中にそれが起きると、何が悪いのか分からない。 */
+            signInFn = await initAuth((user) => {
+              authOk = !!user;
+              sendErr = "";
+              publishFn = user ? pub : null;
+              if (user) {
+                cEls.banner.classList.remove("show");
+                refreshCtrlStatus();
+                onStateChanged();
+              } else {
+                refreshCtrlStatus();
+                showSignIn("進行を動かすにはログインが要ります。島と同じアカウントで入ってください。");
+              }
+            });
+          })
+          .catch((e) => {
+            linkOk = false;
+            setCtrlStatus(false, "つながりません");
+            cEls.banner.textContent = `Firestore につながりませんでした(${(e && e.code) || e})。電波を確かめて、開き直してください。`;
             cEls.banner.classList.add("show");
           });
       } else if (ROLE === "view") {
@@ -1667,10 +1773,17 @@
             if (data.ts <= lastSeenTs) return;
             lastSeenTs = data.ts;
           }
+          /* **1枚目のスナップショットでは飛ばさない。** OBS を開いた瞬間に
+             前の紙吹雪が飛ぶのを止めるため。
+             前は「lastConfetti が 0 でなければ」で見ていたが、月ごとの書類は
+             `confetti: 0` から始まるので、**その月の1回目がいつも飲まれていた**
+             （エミュレータに2枚のブラウザを繋いで確かめた）。
+             「開いた直後か」と「まだ一度も飛ばしていないか」は別のこと。 */
           if (typeof data.confetti === "number" && data.confetti > lastConfetti) {
-            if (lastConfetti !== 0) spawnConfetti(140);
+            if (seenFirstSnap) spawnConfetti(140);
             lastConfetti = data.confetti;
           }
+          seenFirstSnap = true;
           if (data.scene === sceneIdx && data.step === stepIdx) return;
           applyingRemote = true;
           if (data.scene !== sceneIdx) {

@@ -25,6 +25,9 @@
 
 .rl-page {
   --shell: #17812e;
+  /* 台の差し渡し。**控え（`.rl-legend`）が輪の左右をよけるのに要る**ので、
+     `.rl-stage` に直に書かずに変数で持つ。下の @media で3通りに変わる */
+  --stage: min(88vmin, 760px);
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -108,7 +111,7 @@
 /* --- 台 ------------------------------------------------------------- */
 .rl-stage {
   position: relative;
-  width: min(88vmin, 760px);
+  width: var(--stage);
   aspect-ratio: 1;
   outline: none;
   user-select: none;
@@ -199,15 +202,27 @@
   height: 100%;
   will-change: transform;
 }
+/* 札は白い字に黒いふち（`paint-order` で、ふちを先に描いて字を上に乗せる）。
+   **ふちは真っ黒。** 白と黒の両方で比を出すと、
+   白が 4.5 を割る明るい扇（`L > 0.183`）では黒が 4.5 を超え、
+   黒が割る暗い扇（`L < 0.175`）では白が超える。範囲が重なっているので、
+   **どんな扇の色でも、どちらかは必ず 4.5 に届く**。
+   写した元の `#252721` は 4.02 までしか出ず、11色中4色が割っていた。
+
+   太さは `px` ではなく `em`。10px のままだと、字が小さい輪
+   （36件では 21px だった）でふちが字をつぶして、輪ぜんぶが黒い帯になる。 */
 .rl-label {
   font-family: var(--font-game), "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", sans-serif;
   font-weight: 900;
   fill: #fff;
-  stroke: #252721;
-  stroke-width: 10px;
+  stroke: #000;
+  stroke-width: 0.17em;
   stroke-linejoin: round;
   paint-order: stroke fill;
-  text-anchor: middle;
+  /* **`text-anchor` はここで指定しない。** 規則は属性より強いので、
+     `middle` を置くと `Wheel.tsx` が札ごとに出している `start` / `end` を
+     黙って上書きしてしまう。輪の縁を起点に内側へ書くのが効かなくなり、
+     札の半分が輪の外へ出る（実測で 6件ぜんぶが r=249 まではみ出していた）。 */
   dominant-baseline: central;
   letter-spacing: -0.06em;
   filter: drop-shadow(0 4px #0000004d);
@@ -324,24 +339,45 @@
   padding: 4.5% 9%;
   border: clamp(5px, 0.8vmin, 9px) solid #fff8cf;
   border-radius: 999px;
-  background: linear-gradient(155deg, #0c3015ed, #106527f5);
+  /* **透かさない。** 写した元は 0.93〜0.96 の半透明で、後ろの光と輪が
+     字の下に出ていた。白い字の中央値が 4.24、地の明るいところでは 1.29 まで
+     落ちる（「けってい!」は 2.47、「のり」は 2.43）。読ませる札なので地を閉じる */
+  background: linear-gradient(155deg, #0b2d14, #106527);
   color: #fff;
   text-align: center;
   animation: rl-pop 0.72s cubic-bezier(0.17, 0.89, 0.28, 1.35) both;
   box-shadow: 0 0 0 clamp(6px, 1vmin, 11px) #ffc320e6, 0 16px 30px #0000006b;
 }
-.rl-card::before,
-.rl-card::after {
+/* 後ろの光。**札の中には置かない。**
+   写した元は `.rl-card::before/::after` に `z-index: -1` で敷いていたが、
+   札は `rl-pop` を `fill: both` で持っているので **transform が残り、
+   重なりの文脈ができる**。その中の `z-index: -1` は「札の地より上」で、
+   白い光と黄色い光が**字の下に敷かれていた**。実測で「けってい!」2.59、
+   当たりの字 4.03、地のいちばん明るいところでは 1.0〜1.3。
+   札の外（`.rl-result`）へ出して、札の地で隠す。
+
+   **ずっと回さない。** 写した元は `rl-rays` を 5秒で無限に回していて、
+   外接矩形が 1283x569 ＝画面の 35%（720p では 41%）あった。結果の札は
+   消えないので、出たあとずっと画面の3割を毎フレーム描き直すことになる。
+   実測で 1秒あたり CPU 30.0ms・15.2fps（止めると 21.7ms・60.2fps）。
+   `CLAUDE.md`:「形の大きさで決まる。**止めるか、小さくするかの2つだけ**」。
+   **両方やった。** 札が出る瞬間だけ 1.05秒で開いて、あとは止まったまま。 */
+.rl-stage.has-result .rl-result::before,
+.rl-stage.has-result .rl-result::after {
   content: "";
   position: absolute;
-  inset: -46%;
+  top: 50%;
+  left: 50%;
   z-index: -1;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 50%;
+  transform: translate(-50%, -50%);
   background: repeating-conic-gradient(from 0deg, #ffe653e6 0 5deg, transparent 5deg 19deg);
-  animation: rl-rays 5s linear infinite;
+  animation: rl-burst 1.05s cubic-bezier(0.12, 0.8, 0.3, 1) both;
 }
-.rl-card::after {
-  inset: -20%;
+.rl-stage.has-result .rl-result::after {
+  width: 64%;
   background: radial-gradient(circle, #ffffffa6, #0000 68%);
   animation: none;
 }
@@ -384,6 +420,9 @@
 /* --- これから回すもの --------------------------------------------------
    輪は選択肢の字しか載せられない。**誰が言ったか**は、この帯で出す。
    回り始めたら消える。回っているあいだに読ませるものではない。 */
+/* **出力の大きさで伸びる。** ここだけ `font-size: 15px` の直書きで、
+   1920 でも 1280 でも 15px（1080p の画面の高さの 1.4%）だった。
+   中の寸法も全部 em にして、字1つを変えれば帯ごと伸び縮みするようにする。 */
 .rl-list {
   position: absolute;
   left: 0;
@@ -391,10 +430,11 @@
   bottom: 0;
   z-index: 15;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(230px, 46vw), 1fr));
-  gap: 6px 10px;
+  font-size: clamp(12px, 1.8vmin, 26px);
+  grid-template-columns: repeat(auto-fill, minmax(min(15em, 46vw), 1fr));
+  gap: 0.4em 0.65em;
   max-height: 24vh;
-  padding: 10px clamp(10px, 3vw, 26px) clamp(10px, 2.5vh, 22px);
+  padding: 0.65em clamp(10px, 3vw, 26px) clamp(10px, 2.5vh, 22px);
   margin: 0;
   overflow: hidden;
   list-style: none;
@@ -402,9 +442,9 @@
 .rl-list li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.52em;
   min-width: 0;
-  padding: 5px 12px 5px 5px;
+  padding: 0.33em 0.8em 0.33em 0.33em;
   border-radius: 999px;
   background: #ffffffdb;
   box-shadow: 0 3px 8px #30362233;
@@ -412,8 +452,8 @@
 .rl-list img,
 .rl-list .rl-noface {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 2em;
+  height: 2em;
   border-radius: 50%;
   object-fit: cover;
   background: #e8e3cd;
@@ -426,7 +466,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 1em;
   font-weight: 900;
   color: #1d3324;
 }
@@ -437,17 +477,77 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-style: normal;
-  font-size: 12px;
+  font-size: 0.78em;
   font-weight: 700;
-  color: #5c6b5f;
+  color: #4a594d;
 }
 .rl-more {
   grid-column: 1 / -1;
   margin: 0;
-  text-align: center;
-  font-size: 13px;
+  justify-content: center;
+  font-size: 0.87em;
   font-weight: 900;
-  color: #1d3324a8;
+  color: #1d3324;
+}
+
+/* --- 番号の輪の、名前の控え ------------------------------------------
+   扇に読める大きさの字が入らないときは、輪に番号だけを載せて
+   （`wheel.ts` の `wheelPlan`）、名前をここに出す。
+   輪は画面のまん中の正方形なので、**左右がまるごと空いている**。
+   段の間を台の幅ぶん空けて、1列目を左の余白に、2列目を右の余白に落とす。 */
+.rl-legend {
+  position: absolute;
+  top: 50%;
+  left: 1.4vw;
+  right: 1.4vw;
+  z-index: 15;
+  /* 段と段のあいだ（＝輪のいる場所）にも箱は伸びている。押しどころを
+     取ってしまうと、URL だけで開いたときに輪を押しても回らなくなる
+     （実測で「OL.rl-legend が上にいる」で当たり判定が消えていた） */
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
+  column-count: 2;
+  column-gap: calc(var(--stage) + 3.4vw);
+  font-size: clamp(11px, 1.45vmin, 22px);
+  list-style: none;
+}
+.rl-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  /* 名前のぶんだけの幅にする。段いっぱいに伸ばすと、
+     短い名前の札が白い帯になって、字より地のほうが目立つ */
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 0.4em;
+  padding: 0.3em 0.75em 0.3em 0.3em;
+  border-radius: 999px;
+  background: #fffffff2;
+  box-shadow: 0 2px 6px #3036222e;
+  break-inside: avoid;
+}
+.rl-legend b {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.85em;
+  height: 1.85em;
+  border-radius: 50%;
+  background: #16552a;
+  color: #fff;
+  font-size: 0.92em;
+  font-weight: 900;
+}
+.rl-legend span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 900;
+  color: #1d3324;
 }
 
 /* --- 準備中と、値の無い URL ------------------------------------------- */
@@ -485,9 +585,12 @@
   bottom: clamp(1rem, 3.4vh, 2.5rem);
   margin: 0;
   transform: translate(-50%);
-  font: 900 clamp(0.65rem, 1.35vmin, 0.83rem) / 1 Arial, sans-serif;
+  font: 900 clamp(0.72rem, 1.5vmin, 1rem) / 1 Arial, sans-serif;
   letter-spacing: 0.28em;
-  color: #153f1eb3;
+  /* 写した元は `#153f1eb3`（0.7）に `opacity: .45` を重ねていて、
+     実効 0.315。パステルの地の上で 1.77 しか出ない。
+     色は不透明にして、息は 0.8〜1 の幅にする（いちばん薄いところで 6.1） */
+  color: #11341a;
   animation: rl-breathe 1.8s ease-in-out infinite;
   transition: opacity 0.25s, transform 0.25s;
 }
@@ -508,20 +611,51 @@
   78% { transform: scale(0.96) rotate(-1deg); }
   100% { transform: scale(1) rotate(0); }
 }
-@keyframes rl-rays { to { transform: rotate(360deg); } }
+@keyframes rl-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-24deg) scale(0.62); }
+  100% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+}
 @keyframes rl-breathe {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 0.9; }
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
 @media (aspect-ratio <= 3 / 4) {
-  .rl-stage { width: min(96vw, 78vh); }
+  .rl-page { --stage: min(96vw, 78vh); }
   .rl-hint { bottom: 2.5vh; }
+  /* 縦画面には左右の余白が無いので、控えは下に2列で積む。
+     そのぶん輪を上へ寄せて、重ならないところまで小さくする。
+     （`:has()` の効かない古い器では輪の大きさが変わらないだけで、
+     配信に出る 1920/1280 は上の枝なので影響しない） */
+  .rl-page:has(.rl-legend) {
+    --stage: min(86vw, 42vh);
+    align-items: start;
+    padding-top: 2.5vh;
+  }
+  .rl-legend {
+    top: auto;
+    bottom: 4vh;
+    transform: none;
+    column-gap: 3vw;
+    /* 36件を2列で積んでも輪に届かない大きさ。
+       実測で 390x844 のとき 台の下端 358px・控えの上端 392px */
+    font-size: clamp(9px, 2.6vmin, 15px);
+  }
+  /* 縦画面は36件が2列18段になる。段の背を詰めて、輪の下に収める */
+  .rl-legend li {
+    margin-bottom: 0.3em;
+    padding: 0.22em 0.6em 0.22em 0.22em;
+  }
+  .rl-legend b {
+    width: 1.7em;
+    height: 1.7em;
+  }
 }
 @media (aspect-ratio >= 16 / 10) {
-  .rl-stage { width: min(86vh, 760px); }
+  .rl-page { --stage: min(86vh, 760px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .rl-stage, .rl-hub, .rl-hint { transition-duration: 0.01ms; }
-  .is-spinning .rl-pointer, .rl-card::before, .rl-hint { animation: none; }
+  .is-spinning .rl-pointer, .rl-result::before, .rl-hint { animation: none; }
+  .rl-hint { opacity: 1; }
 }

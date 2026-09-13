@@ -14,8 +14,11 @@ import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { GAVE_UP, PROMISE, THAT_DAY, WORDS } from "@/content/aboutWords";
 import { placeWord } from "@/lib/stay";
 import NowPlace from "@/components/home/NowPlace";
+import Say from "@/components/ui/Say";
+import { say } from "@/content/nights";
 import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
@@ -52,7 +55,8 @@ export const metadata: Metadata = {
  * ## 積んである順と、その理由
  *
  *   はじめまして … 顔と4行。ここで「何をしている人か」に着地させる
- *   数字 … その4行の裏づけ
+ *   いつまで、やるんだろう … **本人の言葉**（`content/aboutWords.ts`）。なぜまだ続けているか
+ *   数字 … その裏づけ
  *   視聴者さんの声 … こちらの言葉ではなく、来ている人の言葉で言ってもらう
  *   島でやっていること … 3つ。押すとその中身の面へ
  *   ここまでの道のり … 横に倒して指で送る。章（`content/chapters.ts`）で区切る
@@ -64,6 +68,16 @@ export const metadata: Metadata = {
 
 /** 節目の日付は、国とアプリのデータから引く。ここで西暦を手打ちしない。 */
 const on = (slug: string, i = 0) => countryBySlug(slug)?.stays[i]?.from ?? "";
+/**
+ * 章が始まった日。**ここで西暦を手打ちしない。**
+ *
+ * `from` は事実の欄で、旅に出た日にあやとが手で入れる。旅の17日間は入らないので、
+ * 空なら予定の欄（`opensAt`）の日付を使う（`content/chapters.ts` の `began()` と同じ見かた）。
+ */
+const chapterFrom = (slug: string) => {
+  const c = CHAPTERS.find((x) => x.slug === slug);
+  return c ? c.from || c.opensAt?.slice(0, 10) || "" : "";
+};
 /** そのアプリで、その種類の節目がはじめて来た日。並び順の番号で指すと、間に1行入るとずれる。 */
 const appOn = (slug: string, kind: string) =>
   [...APPS, ...PAST_APPS].find((a) => a.slug === slug)?.milestones.find((m) => m.kind === kind)?.date ?? "";
@@ -167,9 +181,24 @@ const STORY: Step[] = [
     date: on("georgia", 1),
     kind: "travel",
     what: "トビリシに戻ってきた",
-    note: "いまここ。毎晩22時から配信している",
+    note: say("hereNow"),
     href: "/now",
     go: "いまどこへ",
+  },
+  {
+    /* **旅の始まりも節目。** ここは長いあいだ「トビリシに戻ってきた」で終わっていて、
+       「ここまでと、いま」を名乗る面に、北欧へ発った日が1行も無かった。
+
+       日付は章（`content/chapters.ts`）から引く。**ここで西暦を手打ちしない**——
+       出発が1日ずれたら、島の連なりとこの年表が別の日を言うことになる。
+       中身は**出る前・最中・帰ったあとのどれで読んでも合う字**にする
+       （`content/chapters.ts` のアルバニアの note と同じ決まり）。 */
+    date: chapterFrom("nordic"),
+    kind: "travel",
+    what: "ジョージアを出て、北欧へ発った",
+    note: "クタイシから飛行機で。そこから先は、ぜんぶ人の車でつなぐ",
+    href: "/nordic",
+    go: "北欧の旅へ",
   },
 ];
 
@@ -190,9 +219,17 @@ const MARK: Record<Step["kind"], { icon: IconName; label: string }> = {
  * その日がどの島（章）の話か。**章の切りかたは `content/chapters.ts` が唯一の出どころ**なので、
  * ここで期間を書かない。枝（イランまで歩く）は本線の中の出来事なので、背骨には出さない。
  */
-const eraOf = (date: string) =>
-  CHAPTERS.find((c) => !c.branchOf && c.from && c.from <= date && (!c.to || date <= c.to))?.name ??
-  "配信のまえ";
+const eraOf = (date: string) => {
+  /* **`from` の空いた章を落とさない。** `from` は旅に出た日に手で入れる欄なので、
+     旅の最中は空のまま。見ていなかったので、出発の日より後の節目が
+     どの島にも入らず「配信のまえ」に落ちていた（`docs/island-misses.md` #21）。 */
+  const from = (c: (typeof CHAPTERS)[number]) => c.from || c.opensAt?.slice(0, 10) || "";
+  const inIsle = CHAPTERS.filter(
+    (c) => !c.branchOf && from(c) && from(c) <= date && (!c.to || date <= c.to),
+  );
+  // 章の変わり目の日は両方にあたる。**新しいほう**（その日に渡った先）を取る
+  return inIsle.sort((a, b) => from(b).localeCompare(from(a)))[0]?.name ?? "配信のまえ";
+};
 
 /** 島でやっていること。3枚とも、その中身を持っている面へ行く。 */
 const DOING = [
@@ -266,7 +303,7 @@ export default function AboutPage() {
               {PROFILE.name}（<Age born={PROFILE.born} />歳）
             </p>
             {PROFILE.body.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><Say t={p} /></p>
             ))}
           </div>
         </div>
@@ -286,15 +323,77 @@ export default function AboutPage() {
                   出していたので、旅の2日目に撮ると常設のこの面だけ
                   「ジョージア・トビリシ」と言っていた。**打つ人は走っている車の中に
                   いて、17日間その欄を直せない。** 部品は表紙と同じものを使う
-                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。 */}
+                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。
+                  添え字のほうは、旅のあいだカウントダウンが消えるので `Say` で言い替える。 */}
               <i>
                 <NowPlace baked={placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt)} />
-                。今夜の配信まであと何時間か、今週やること
+                。<Say t={say("nowLink")} />
               </i>
             </span>
             <Icon name="right" size={16} className="tile-go" />
           </Link>
         </div>
+      </Panel>
+
+      {/* 本人の言葉。**この面でいちばん新しく、いちばん強い一節。**
+
+          上の「はじめまして」は、この人が何をしている人かまでしか言っていない
+          （日本を出た理由と、いま作っているアプリ）。**なぜまだ続けているのかが
+          1行も無かった。** 数字（620日／747本）はその裏づけであって、理由ではない。
+
+          2026年9月11日、海外に出て丸二年の日に本人が書いた文に、その筋がぜんぶあった。
+          期限を3ヶ月と決めて出て、届かず2年に決め直して、そして**期限そのものを捨てた**。
+          ここを読めば「いつまでやるんだろう」に答えが出る。
+
+          置き場所は「はじめまして」のすぐ下。**数字より上。**
+          上の紙は「3ヶ月で帰るつもりだった」で終わっていて、この段は
+          「でも、3ヶ月経っても」で始まる。あいだに数字の6枡（0.5画面）を挟むと、
+          その「でも」が何を受けているのか分からなくなる。
+          名乗り → **本人の言葉** → 数字（その裏づけ）→ みんなの言葉、の順にする。
+
+          **1字も直さない**（`content/aboutWords.ts`）。数字の入った段があるので、
+          いつ書かれたものかを必ず添える。日付が無いと「1万インストール」が
+          来月には嘘になる。 */}
+      <Panel>
+        <h2>いつまで、やるんだろう</h2>
+        <p className="muted">2026年9月11日、海外に出て丸二年の日に、本人が書いたもの。</p>
+        <div className="awords">
+          <p>{WORDS[0]}</p>
+        </div>
+        {/* 2つ目のアプリの話は、上の段と下の段のあいだに起きたこと。
+            順番を守りたいので、ここに畳んで置く。 */}
+        <div className="folds">
+          <Fold
+            title="そのあいだに、もう1つ作っていた"
+            lead="待っていたのは、収益化という壁"
+          >
+            <div className="awords">
+              {GAVE_UP.map((t, i) => (
+                <p key={i}>{t}</p>
+              ))}
+            </div>
+          </Fold>
+        </div>
+        <div className="awords">
+          {WORDS.slice(1).map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
+        </div>
+        <div className="folds">
+          <Fold
+            title="それでも、二周年は特別な日"
+            lead="あの日の自分に、言ってあげられること"
+          >
+            <div className="awords">
+              {THAT_DAY.map((t, i) => (
+                <p key={i}>{t}</p>
+              ))}
+            </div>
+          </Fold>
+        </div>
+        {/* 最後の1行だけ、囲って出す。この面で、いちばん読んでほしいところ。
+            押せないので厚みは付けない（`docs/island-design.md` 3-3）。 */}
+        <p className="awords-last">{PROMISE}</p>
       </Panel>
 
       {/* 数字は6つ。「毎日休まず配信している人」がいちばん言いたいことなので先頭に置く
@@ -316,7 +415,9 @@ export default function AboutPage() {
           label="旅した日数"
           sub={`${PROFILE.leftJapan.replace(/-/g, "/")} に日本を出てから`}
         />
-        <Stat value={s.countries} label="配信した国" sub="パリからトビリシまで" />
+        {/* 終点の街を書かない（旅は毎日進む）。この数が17で止まっている理由——
+            配信のあった国だけを数えている——を添える（`/map` の同じ札と同じ字）。 */}
+        <Stat value={s.countries} label="配信した国" sub="配信のあった国だけ" />
         <Stat
           value={<LiveNumber statKey="comments" fallback={s.comments} />}
           label="ついたコメント"
@@ -412,7 +513,7 @@ export default function AboutPage() {
                     {x.date.slice(0, 4)}年{fmtMd(x.date)}
                   </span>
                   <b className="aroad-what">{x.what}</b>
-                  <p className="aroad-note">{x.note}</p>
+                  <p className="aroad-note"><Say t={x.note} /></p>
                   {x.href && (
                     <span className="aroad-go">
                       {x.go}
@@ -455,8 +556,10 @@ export default function AboutPage() {
           いま動いているものは色のまま、終わったものは色を落として「サポート終了」の札を出す。
           押せるかどうか（厚み）とは別の軸なので、なにこれは灰色だが押せる。 */}
       <Panel>
-        <h2>作ってきたアプリは、3つ</h2>
-        <p className="muted">1つ目を広めるために日本を出て、いまは3つ目。</p>
+        {/* **数を手で書かない。** ここは「3つ」、表紙の棚は `APPS.length` の「2」で、
+            同じアプリの数が面によって違っていた。出どころは `content/apps.ts` ひとつ。 */}
+        <h2>作ってきたアプリは、{ALL_APPS.length}つ</h2>
+        <p className="muted">1つ目を広めるために日本を出て、いまは{ALL_APPS.length}つ目。</p>
         <div className="aappl">
           {ALL_APPS.map((a) => {
             const done = a.status === "サポート終了";

@@ -1,6 +1,6 @@
 // API utility functions for GAS and Cloud Functions
 
-import { GASApiResponse } from "./types";
+import { AlertboxCharacter, GASApiResponse } from "./types";
 
 /**
  * Get data from a GAS table
@@ -115,6 +115,34 @@ export async function getAlertboxWss(k: string): Promise<string> {
     throw new Error("Invalid alertbox wss response");
   }
   return wss;
+}
+
+/**
+ * キャラクターの名簿をもらう。**スプレッドシートの代わり。**
+ *
+ * 前は GAS 越しに Viewers 表を全件読んでいた（`getTable("Viewers")`）。
+ * 原本を Firestore に移したので（#284）、こちらから取る。
+ *
+ * **投げ銭が来るたびに引きに行かない。** アラートは1秒が惜しいので、
+ * 起動のときに全員ぶん受け取って、名前を当てるのは手元でやる
+ * （表を読んでいたときと同じ形。`matching.utils.ts` はそのまま使える）。
+ *
+ * **合言葉が要る。** 名前の入った名簿なので、誰でも読める口には置いていない。
+ * 移す前のスプレッドシートは URL を知っていれば誰でも全件読めたので、
+ * ここは閉じるほうに変わっている。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @return {Promise<AlertboxCharacter[]>} 絵のある人ぜんぶ
+ */
+export async function getAlertboxCharacters(
+  k: string
+): Promise<AlertboxCharacter[]> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/characters`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox characters: ${res.status}`);
+  }
+  const data = await res.json();
+  const list = Array.isArray(data?.characters) ? data.characters : [];
+  return list as AlertboxCharacter[];
 }
 
 /**

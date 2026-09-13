@@ -46,6 +46,18 @@ export type Fund = {
    * 額と並べると割り算されて「1人あたりいくら」が読めてしまう。
    */
   people: number;
+  /**
+   * Doneru のぶんが、いつまで入っているか（"2026-09-12"）。#294
+   *
+   * **ふだんは null。** 口（`GET /island-api/fund`）は、取り込みが何日か
+   * 止まっているときだけこの欄を足して返す。だから画面は「あったら出す」でよく、
+   * 何日で止まっていると見なすかを知らなくていい（決めているのは
+   * `functions/src/islandApi.ts` の `DONERU_STALE_DAYS` ひとつ）。
+   *
+   * **分からないときも null。** 取り込みの記録が読めなかった日に
+   * 「止まっています」と出すと、それ自体が嘘になる。倒れる方向は黙る側へ。
+   */
+  asOf: string | null;
 };
 
 let pending: Promise<Fund | null> | null = null;
@@ -61,12 +73,17 @@ function load(): Promise<Fund | null> {
           const n = Number(v);
           return Number.isFinite(n) && n > 0 ? n : 0;
         };
+        /* 日付の形になっているものだけ通す。**画面に出る字なので、
+           来たものをそのまま並べない。** 古い口はこの欄を返さないので、
+           そのときは null になって、今までどおりの見た目になる。 */
+        const asOf = String(j?.doneruAsOf ?? "");
         return {
           total,
           // given が来ないうちは total に落ちる（古い API を読んだとき）
           given: num(j?.given) || total,
           goal: num(j?.goal),
           people: num(j?.people),
+          asOf: /^\d{4}-\d{2}-\d{2}$/.test(asOf) ? asOf : null,
         };
       })
       .catch(() => null);

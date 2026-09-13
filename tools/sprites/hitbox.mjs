@@ -36,20 +36,73 @@ for (const path of PAGES) {
   await p.waitForTimeout(600);
   const rows = await p.evaluate((sel) => {
     const out = [];
+    const nm = (e) => (e ? e.tagName + (e.className && typeof e.className === "string" && e.className ? "." + e.className.split(/\s+/)[0] : "") : "なし");
     for (const el of document.querySelectorAll(sel)) {
       // 画面の外にあるものは elementFromPoint が届かない。砂浜の一覧のように
       // ページの終わりにあるものを測ると、全部 1x1 と出る。先に送っておく。
-      el.scrollIntoView({ block: "center" });
-      const r = el.getBoundingClientRect();
+      /* **指が押すものを先に決める。** 見た目を作り直したチェックボックスは、
+         `<input>` を脇へどけて `<label>` に絵を描く。入力の真ん中を突いても
+         当たらないが、指は label を押している。入力の箱で測ると、
+         押せるものが「押せない」と出る（`/me` の2つが実際にそうだった）。 */
+      let target = el;
+      if (el.tagName === "INPUT") {
+        const byFor = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
+        target = byFor || el.closest("label") || el;
+      }
+      /* **畳みの中は、押せなくて当たり前。** 閉じた `<details>`（`Fold`）の
+         中身は、畳まれていても箱を持っている。そこを突くと畳みの外の何かが
+         返るので、押せるものが「押せない」と挙がる。`/me` の名前の欄が
+         まさにそれだった。**押す前に開く面なので、数えない。** */
+      const det = el.closest("details");
+      if (det && !det.open && !det.querySelector("summary")?.contains(el)) continue;
+
+      target.scrollIntoView({ block: "center" });
+      const r = target.getBoundingClientRect();
       if (r.width < 1) continue;
-      const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
-      const hits = (x, y) => { const e = document.elementFromPoint(x, y); return e && (e === el || el.contains(e) || e.closest?.("a,button") === el); };
+
+      /* **始点は、外接矩形の中心にしない。**
+         折り返した行内リンク（`<p>` の中で2行になった `<a>`）の外接矩形は
+         2行を囲む1つの箱なので、その中心は**行と行のすきま**に落ちる。
+         そこを突くと親の `<p>` が返り、押せるリンクが「当たり 1x1」と出る。
+         実際に `/me` のプライバシーポリシーがそれで挙がった。
+         `getClientRects()` は行ごとの箱を返すので、いちばん大きい行の中心を使う。 */
+      const lines = [...target.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
+      const box = lines.length ? lines.reduce((a, q) => (q.width * q.height > a.width * a.height ? q : a)) : r;
+      const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+
+      /* **送っても画面に入らないことがある。** 中でスクロールする箱に
+         入っていたり、ページがそれ以上送れなかったりすると、始点が画面の
+         外に残る。`elementFromPoint` は画面の外に何も返さないので、
+         「何にも覆われていない」と「画面の外」が同じ 1x1 に見える。分ける。 */
+      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) {
+        out.push({ t: (el.textContent || "").trim().slice(0, 12), box: [Math.round(r.width), Math.round(r.height)], why: "画面の外（送っても入らない）" });
+        continue;
+      }
+
+      /* **字だけ隠してある入力は、押せないのではない。**
+         見た目を作り直したチェックボックスは、`<input>` を隠して `<label>` に
+         絵を描く。入力そのものを突けば当然当たらないが、指は label を押す。
+         label があるなら、そちらを測る。 */
+      const hits = (x, y) => {
+        const e = document.elementFromPoint(x, y);
+        return e && (e === target || target.contains(e) || e.closest?.("a,button,label") === target);
+      };
+      if (!hits(cx, cy)) {
+        // 覆われている。**誰に覆われているかまで出す。** そこまで出ないと、
+        // 直す側が探すところからやり直すことになる。
+        const top = document.elementFromPoint(cx, cy);
+        out.push({ t: (el.textContent || "").trim().slice(0, 12), box: [Math.round(r.width), Math.round(r.height)], why: `${nm(top)} が上にいる` });
+        continue;
+      }
       const grow = (dx, dy) => { let n = 0; while (n < 60 && hits(cx + dx * (n + 1), cy + dy * (n + 1))) n++; return n; };
       const l = grow(-1, 0), rr = grow(1, 0), u = grow(0, -1), dn = grow(0, 1);
       out.push({ t: (el.textContent || "").trim().slice(0, 12), box: [Math.round(r.width), Math.round(r.height)], hit: [l + rr + 1, u + dn + 1] });
     }
     return out;
   }, SEL);
-  for (const r of rows) console.log(`${path}  ${r.t}  見た目 ${r.box[0]}x${r.box[1]}  当たり ${r.hit[0]}x${r.hit[1]}`);
+  for (const r of rows) {
+    if (r.why) console.log(`${path}  ${r.t || "(字なし)"}  見た目 ${r.box[0]}x${r.box[1]}  当たり 測れず（${r.why}）`);
+    else console.log(`${path}  ${r.t}  見た目 ${r.box[0]}x${r.box[1]}  当たり ${r.hit[0]}x${r.hit[1]}`);
+  }
 }
 await b.close();

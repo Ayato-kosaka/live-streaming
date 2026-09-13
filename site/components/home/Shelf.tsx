@@ -7,7 +7,7 @@ import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
-import { APPS } from "@/content/apps";
+import { ALL_APPS } from "@/content/apps";
 import { STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
 
@@ -64,7 +64,9 @@ export default function Shelf() {
       href: "/map",
       mark: "flagpost",
       name: "歩いた国",
-      note: "パリからトビリシまで、どこをどう通ってきたか",
+      /* **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる
+         （`app/map/page.tsx` の同じ注）。出発した日はもう動かないので、そこだけ言う */
+      note: "日本を出てから、どこをどう通ってきたか",
       n: s.countries,
       unit: "カ国",
       sample: (
@@ -129,11 +131,14 @@ export default function Shelf() {
       mark: "workshop",
       name: "アプリ",
       note: "旅先で、配信しながら作っている",
-      n: APPS.length,
+      /* **手で数えない。** ここは配信で作った2本（`APPS`）だけを数えていて、
+         `/apps` も `/about` も3本（日本を出る理由になった1本目を含む）を出していた。
+         同じ数は1か所から（`content/apps.ts`）。 */
+      n: ALL_APPS.length,
       unit: "つのアプリ",
       sample: (
         <span className="shelf-apps">
-          {APPS.map((a) => (
+          {ALL_APPS.map((a) => (
             <em key={a.slug}>{a.name}</em>
           ))}
         </span>

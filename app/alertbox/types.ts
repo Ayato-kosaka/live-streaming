@@ -1,9 +1,58 @@
 
+/**
+ * スプレッドシートの Viewers 表の1行。
+ *
+ * **アラートボックスはもう読んでいない**（#284 で Firestore に移した）。
+ * 残っているのは `app/ve-comment.tsx` だけ。表を畳むときに、あちらも
+ * `AlertboxCharacter` に寄せる。
+ */
 export interface Viewer {
   Icon?: string;
   Emoji?: string;
   videoUrl?: string | null;
   name: string;
+}
+
+/** 置き場に入っている絵1枚。幅ごとに焼いてある。 */
+export interface CharacterPicture {
+  /** 縮める前のまま。アラートに出すのはこれ */
+  full: string | null;
+  /** 幅 → URL。鍵は "128" / "256" / "640" */
+  sizes: Record<string, string>;
+  w: number | null;
+  h: number | null;
+}
+
+/**
+ * `GET /island-api/alertbox/{k}/characters` が返す1人。
+ *
+ * 表の1行とは形が違う。**1人が名前を何個も持つ**（チャンネル名 +
+ * 他の呼び名）ので、当てるときは名前ごとに開いて並べ直す。
+ */
+export interface AlertboxCharacter {
+  id: string;
+  emoji: string;
+  /** YouTube のチャンネル名。スパチャはこれで当てる */
+  channelName: string;
+  /** 他の呼び名。Doneru はこちらでも当てる */
+  aliases: string[];
+  /** 背景なし。アラートに出すのはこちら */
+  plain: CharacterPicture | null;
+  /** 背景あり。いまアラートでは使っていない */
+  scene: CharacterPicture | null;
+  /** 投げ銭のときに流す動画。無ければ絵を出す */
+  videoUrl?: string | null;
+}
+
+/** 名前1つぶん。**当てるのはこの並びに対して。**（`matching.utils.ts`） */
+export interface AlertViewer {
+  name: string;
+  norm: string;
+  normNoEmoji: string;
+  emoji: string;
+  /** 出す絵。無ければ通知タイプごとの既定の絵になる */
+  iconUrl: string | null;
+  videoUrl: string | null;
 }
 
 // {"amount":500,"assetID":null,"message":"こんにちは。これは通知テストです。","messageType":1,"nickname":"Doneru","test":true,"type":"donation"} 

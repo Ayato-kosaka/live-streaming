@@ -14,7 +14,7 @@ import TripPhotos from "@/components/nordic/TripPhotos";
 import {
   ARRIVE,
   DAYS,
-  DAY_OF,
+  DAY_PAGES,
   DEPART,
   FARES,
   FARES_TOTAL,
@@ -24,11 +24,18 @@ import {
   NORDIC_COUNTRIES,
   NORDIC_GUIDE,
   ROUTE,
+  THANKS,
+  THEMES,
+  THEME_WORD,
+  UNPLANNED,
   WHY,
+  dayHref,
   nordicCountry,
 } from "@/content/nordic";
+import { GUIDE_CHAPTERS } from "./guide/chapters";
 import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
+import "./themes.css";
 
 export const metadata: Metadata = {
   title: "スウェーデンまでヒッチハイクで",
@@ -124,17 +131,22 @@ export default async function NordicPage() {
     if (s) s.hitch = (s.hitch ?? 0) + l.km;
   }
 
-  // 区間の id → 旅程表のどの行か。上の司令塔が「今日のところへ」で使う。
-  // 何日目か分かっていない行もあるので、数字ではなく行の名前で持つ。
-  const dayOf: Record<string, string> = Object.fromEntries(
-    Object.entries(DAY_OF).map(([id, d]) => [id, d.id]),
-  );
-  /* 日付 → 旅程表のどの行か。**動かない日には区間が無い**ので、上の表では引けない
-     （9/15 に休むヴィリニュスを発つ区間は 9/16 の行）。
+  /* 日付 → 旅程表のどの行か。**旅程表の行は、これだけで引く。**
+     行は1行=1日で日付を持っているので、今日の行を決めるのは暦の問い。
+     前は区間から引く表も渡していたが、**動かない日には区間が無い**ので
+     休息日が翌日の行を指していた（9/15 に休むヴィリニュスを発つのは 9/16）。
+     いる街を引くのは地図の仕事で、あちらは別に居どころから引いている。
      同じ日付の行が2つあるときは先に来るほうを採る（9/20 は「9日目」で、
      そのあとに続く「ストックホルムで7泊」ではない）。 */
   const dayByDate: Record<string, string> = {};
   for (const d of DAYS) if (d.date && !(d.date in dayByDate)) dayByDate[d.date] = d.id;
+
+  /* 旅程表の行 → その日1日ぶんのページ。上の司令塔の「今日のところへ」が使う。
+     **面のある日だけ入れる。** 入っていない行は、今までどおり同じページの錨へ送る
+     （`DAY_PAGES` は区間のある日と休息日。旅程が変われば中身も変わる）。 */
+  const dayPage: Record<string, string> = Object.fromEntries(
+    DAY_PAGES.map((d) => [d.id, dayHref(d)]),
+  );
 
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
@@ -142,14 +154,41 @@ export default async function NordicPage() {
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}
         legOrder={ROUTE.map((l) => l.id)}
-        dayOf={dayOf}
         dayByDate={dayByDate}
+        dayPage={dayPage}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30。この日は配信2周年"
         hitchKm={HITCH_KM}
         arriveOn={ARRIVE}
         until={LEAVE.date}
       />
+
+      {/* 何をしに行く旅なのか。**「なぜ行くのか」より先。**
+
+          この面は長いあいだ、いちばん上が「あと何日・いまどこ」で、その次が
+          「会いに行く理由」だった。**行き先と理由はあるのに、道中に何をするのかが
+          どこにも無かった。** 本人は投稿で3語に決めている（人との交流・綺麗な景色・
+          ご当地グルメ）ので、そのまま、いちばん上に置く。
+
+          押せない。3つとも行き先ではなく、この旅がどんな旅かを言っているだけなので、
+          厚みは付けない（`docs/island-design.md` 3-3）。
+          下の1段は本人の言葉そのまま（`content/nordic.ts` の `THEME_WORD`）。
+          **ここに2段目を置かない。** 地図はこの面の主役で、テーマの節ぶんだけ下がる。
+          ヒッチハイクで予定が崩れる話（`UNPLANNED`）は、それが要る旅程表の頭へ置いた。 */}
+      <section className="panel paper" id="themes">
+        <h2>旅のテーマは、3つ</h2>
+        <ul className="nthemes">
+          {THEMES.map((t) => (
+            <li key={t.name}>
+              <Icon name={t.icon} size={26} />
+              <b>{t.name}</b>
+            </li>
+          ))}
+        </ul>
+        <div className="nwords">
+          <p>{THEME_WORD}</p>
+        </div>
+      </section>
 
       {/* なぜこの旅が起きるのか。**地図より先。**
           ここが無いあいだ、面には「ヒッチハイクで行く」としか書いていなかった。
@@ -234,6 +273,12 @@ export default async function NordicPage() {
           というオーナーの言い方に合わせて、行は押す前に知りたいことで止める。 */}
       <section className="panel paper" id="plan">
         <h2>旅のよてい</h2>
+        {/* 9日ぶんの時刻と距離で組んであるが、ヒッチハイクなので**その通りには進まない。**
+            ずれることをどう思っているかを、本人の言葉で先に置く。
+            ここが無いと、旅程表が「守れなかった約束の表」に見える。 */}
+        <div className="nwords">
+          <p>{UNPLANNED}</p>
+        </div>
         {/* 「1日押すと、その日だけのページに入れます」を置いていた。
             行はぜんぶ板で、右に矢印まで付いている。押せることを字で言い足しても、
             分かることが増えない（`docs/island-design.md` 3章）。 */}
@@ -257,7 +302,9 @@ export default async function NordicPage() {
           <b>旅のしおり</b>
           <i>
             お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
-            {NORDIC_GUIDE.souvenir.length}品。10のコーナー
+            {/* **コーナーの数を手で書かない。** 「10のコーナー」と書いてあって、
+                しおりは11本あった。数える先はしおりの並びひとつ。 */}
+            {NORDIC_GUIDE.souvenir.length}品。{GUIDE_CHAPTERS.length}のコーナー
           </i>
         </span>
         <Icon name="right" size={16} className="tile-go" />
@@ -305,6 +352,14 @@ export default async function NordicPage() {
               ))}
             </ul>
           </Fold>
+        </div>
+        {/* 出す人がいちばん最後に読むところ。**本人の言葉で終える。**
+            すぐ上の「何に、お金が要るのか」は要るものの話で、ここは
+            この2年ぶんの礼。`content/nordic.ts` の `THANKS`。1字も直さない。 */}
+        <div className="nwords is-thanks">
+          {THANKS.map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
         </div>
         <a className="carry-go" href={doneru.href} target="_blank" rel="noopener noreferrer">
           投げ銭で応援する（Doneru）

@@ -15,7 +15,7 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/IconCore";
 
 /**
- * パリからジョージアまでの1枚の地図。
+ * 日本を出てから、これまでに歩いた国ぜんぶの1枚の地図。
  *
  * 形は本物。Natural Earth の海岸線をメルカトルで投影して焼いてある
  * （`python/build_world_route.py`）。塗りは島とそろえていて、
@@ -145,7 +145,16 @@ const FIT: Record<string, number[]> = (() => {
 
 const ymd = (d: string) => (d ? d.replace(/-/g, "/") : "");
 
-export default function WorldRoute({ here = "georgia" }: { here?: string }) {
+export default function WorldRoute({
+  here = "georgia",
+  focus = here,
+}: {
+  /** 「いまここ」の輪を出す国。**いまその国にいるときだけ渡す。**
+      旅に出て、この地図に無い国を歩いているあいだは空にする */
+  here?: string;
+  /** 名札を出す国。既定は `here`。輪を消しても、地図から名前が消えないようにする */
+  focus?: string;
+}) {
   const [chap, setChap] = useState(0);
   /**
    * いま開いている国。押したピンの国が入る。
@@ -383,7 +392,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
     // まとまりに入っている国の名前は出さない。まとまりの中の1つだけに
     // 名前が付くと、その札がどのピンの名前なのか分からなくなる。
     const named = wide
-      ? pins.filter((v) => v.slug === here && alone.has(v.slug))
+      ? pins.filter((v) => v.slug === focus && alone.has(v.slug))
       : pins.filter((v) => alone.has(v.slug) && inBox(v.a.x, v.a.y));
 
     const country: Record<string, { dx: number; dy: number; hide: boolean }> = {};
@@ -431,7 +440,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
       { w: SW, h: SH },
     );
     return { country, city };
-  }, [box, k, tx, ty, wide, here, alone]);
+  }, [box, k, tx, ty, wide, focus, alone]);
 
   // 縮尺。寄せると 1000km の棒が地図からはみ出すので、
   // 地図の幅の2割ぐらいに収まる「1・2・5 の切りのいい距離」を選び直す。
@@ -468,7 +477,7 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
 
       <div className="amap">
         <div className="amap-stage" ref={stageRef}>
-          <svg className="amap-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="パリからジョージアまで、これまでに歩いた17カ国の地図">
+          <svg className="amap-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="日本を出てから、これまでに歩いた国ぜんぶの地図">
             <defs>
               <linearGradient id="amSea" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#2f97d8" />
@@ -636,18 +645,20 @@ export default function WorldRoute({ here = "georgia" }: { here?: string }) {
               }
               // まとまり。何カ国ぶんかを書く。番号を書くと、ピンの通し番号と
               // 見分けが付かない（「9」が9カ国なのか9カ国目なのか分からない）。
-              const holds = g.members.some((m) => m.slug === here);
+              // 輪（いまここ）と名札（いちばん新しく歩いた国）は別々に決める
+              const ringed = g.members.some((m) => m.slug === here);
+              const named = g.members.some((m) => m.slug === focus);
               return (
                 <button
                   key={`g${g.members.map((m) => m.slug).join("-")}`}
                   type="button"
                   aria-label={`${g.members.map((m) => name[m.slug]).join("、")}に寄る`}
                   onClick={() => zoomTo(g.members)}
-                  className={`apin is-group${holds ? " is-here is-named" : ""}`}
+                  className={`apin is-group${ringed ? " is-here" : ""}${named ? " is-named" : ""}`}
                   style={{ left: `${(g.sx / stage.w) * 100}%`, top: `${(g.sy / stage.h) * 100}%` }}
                 >
                   <span className="apin-many">{g.members.length}カ国</span>
-                  {holds && <span className="apin-name">{name[here]}</span>}
+                  {named && <span className="apin-name">{name[focus]}</span>}
                 </button>
               );
             })}

@@ -7,8 +7,9 @@ import {
   videoIdOf,
   type NextPlan,
 } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useOnline } from "@/lib/draft";
+import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/Icon";
 
 /** 「2026-09-14」→「9/14」。札に出す短いほう（旅の道具と同じ言い方）。 */
@@ -41,13 +42,31 @@ const md = (iso: string) =>
  * 口（`POST /nextplans/{id}/videos`）は**足す・外すではなく、送った一覧で
  * まるごと置き換える。** だから、いま入っているものを先に出してから送る。
  * 打ち間違えた1本を外す道が要るし、一覧で持つほうが画面が単純になる。
+ *
+ * ## 読めなかったときの言い方をそろえる（#34 #36 #43）
+ *
+ * ここは「企画が読めませんでした。**電波の届くところで開き直してください。**」
+ * と言っていた。**開き直させないために `online` の読み直しがある**ので、
+ * 言っていることが島の決めごとと逆だった。島じゅうで同じ札を使う
+ * （`components/me/ReadAgain.tsx`）。
+ *
+ * `withRead`（12秒）も通していなかったので、45秒返さない回では灰色の骨が
+ * いつまでも残っていた。落ちたら黙って読み直し、`online`・画面に戻ってきたでも
+ * 読み直す。骨に戻すのは押されたときだけ。
+ *
+ * **送る口は、読めるまで開かない。** 上のとおり送ると置き換わるので、
+ * いま入っている本数を読めていない相手に送らせると、入っているものが消える。
+ * 一覧が読めないと選ぶ札そのものが出ないので、そこはもともと閉じている。
  */
 export default function PlanVideos() {
   const { token } = useAuth();
   const online = useOnline();
   /** 取りにいっている最中は null。0件と区別する */
   const [plans, setPlans] = useState<NextPlan[] | null>(null);
-  const [down, setDown] = useState(false);
+  /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
+  const [again, setAgain] = useState(0);
   const [pick, setPick] = useState("");
   /** 打っている途中の一覧。**送るまでサーバーには行かない** */
   const [ids, setIds] = useState<string[]>([]);
@@ -57,23 +76,54 @@ export default function PlanVideos() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    let alive = true;
+    let gone = false;
+    let ok = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    let miss = 0;
+
     /* **提案だけでなく運営側の企画も要る**（`events=1`）。結ぶ相手は
        たいてい「北欧◯日目」で、あれは掲示板の一覧には出てこない。 */
-    getStreamEventPlans(200)
-      .then((r) => {
-        if (!alive) return;
-        setPlans(r?.plans ?? []);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setPlans([]);
-        setDown(true);
-      });
-    return () => {
-      alive = false;
+    const go = () => {
+      withRead(getStreamEventPlans(200))
+        .then((r) => {
+          if (gone) return;
+          ok = true;
+          miss = 0;
+          setPlans(r?.plans ?? []);
+          setRead("ok");
+        })
+        .catch(() => {
+          if (gone) return;
+          /* **空の配列にしない。** 空は「読めた上での0件」のことば。 */
+          setRead("down");
+          miss += 1;
+          wait = setTimeout(go, Math.min(2000 * 2 ** (miss - 1), 30000));
+        });
     };
-  }, []);
+
+    setPlans(null);
+    setRead("wait");
+    go();
+
+    /* 電波が戻った合図。**画面を開き直させないため**に、ここでも読み直す。 */
+    const wake = () => {
+      if (ok || gone) return;
+      clearTimeout(wait);
+      miss = 0;
+      go();
+    };
+    const onShow = () => {
+      if (document.visibilityState === "visible") wake();
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      gone = true;
+      clearTimeout(wait);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [again]);
 
   /** 新しい日から。**旅の途中に足すのは、たいてい今日か昨日のぶん。** */
   const rows = useMemo(
@@ -160,14 +210,17 @@ export default function PlanVideos() {
     }
   };
 
-  if (plans === null) {
+  if (read === "wait")
     return (
       <div className="wait is-row" aria-hidden>
         <span />
         <span />
       </div>
     );
-  }
+
+  /* 読みに行けなかった。**「まだ企画が1つもありません。」とは別の顔にする。**
+     札は島じゅうで1つ（`components/me/ReadAgain.tsx`）。 */
+  if (read === "down") return <ReadAgain what="企画" onRetry={() => setAgain((n) => n + 1)} />;
 
   return (
     <div className="dform mp-tool">
@@ -179,11 +232,7 @@ export default function PlanVideos() {
       <p className="mp-vid-lead">0時をまたいで割れた夜の、後半を足す。</p>
 
       {rows.length === 0 ? (
-        <p className="muted">
-          {down
-            ? "企画が読めませんでした。電波の届くところで開き直してください。"
-            : "まだ企画が1つもありません。"}
-        </p>
+        <p className="muted">まだ企画が1つもありません。</p>
       ) : (
         <>
           <label className="nph-post-row">

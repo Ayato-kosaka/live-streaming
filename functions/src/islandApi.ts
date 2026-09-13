@@ -32,11 +32,22 @@ import {
 import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
-import {handleCards} from "./cards";
+import {handleCards, iconsOf} from "./cards";
 /* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
+/* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
+   **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
+   引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
+   どちらも単一フィールドで引く（`islandCharacter.ts` 冒頭）。 */
+import {handleCharacters} from "./islandCharacter";
+/* 公開バケットの片づけ(#289)。**1回きりの道具。用が済んだら1本ごと外す。**
+   投げ銭してくれた113人の名前と金額が、ログイン無しで誰でも読める置き場に
+   残っている。Actions のサービスアカウントは `list` と `get` しか持って
+   いないので消せない。Functions からなら何ができるかを、まず測る
+   （`publicPurge.ts` 冒頭）。 */
+import {handlePublicPurge} from "./publicPurge";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -51,6 +62,7 @@ import {
   dropCardsOfImage,
   eventRef,
   imageRef,
+  jstDay,
   loadEvents,
   mintForImage,
   resyncCardsOfImage,
@@ -92,6 +104,19 @@ const HEARTS = db.collection("islandHearts");
    1日1ドキュメントに数を足すだけ。誰が来たかは持たない。 */
 const VISITS = db.collection("islandVisits");
 
+/* 豚の貯金箱に入ったスパチャの控え(`docs/nordic-fund.md` 9章)。
+   入り口が3つ(OBS のアラートボックス・BigQuery・手入力)あるので、
+   26文字の item id を書類IDにして、同じものを2回入れても増えない形。
+
+   **ここを読めるのはあやただけ**(`GET /fund/history`)。名前と額が並ぶので、
+   合計しか返さない `GET /fund` とは扱いを分ける。 */
+const FUND_CHATS = db.collection("islandFundSuperChats");
+/* 1回に返す件数。1件が1行なので、390px の1画面におよそ10行。
+   3画面ぶんを1回で渡して、続きは押して出す。 */
+const FUND_PAGE = 30;
+/* 上限。**1回で415件を返さない。** 旅先の電波で受けきれない。 */
+const FUND_PAGE_MAX = 60;
+
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
    **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
    画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
@@ -101,13 +126,14 @@ const NPHOTOS = db.collection("nordicPhotos");
    (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
    旅で時差が変わるたびに1日が2つに割れていた(#201)。
    入れ物は消さない（全部動いてから消す）が、読む側はここには居ない。 */
-/* 北欧旅の「その日に起きたこと」(docs/nordic-depart.md)。
-   `site/content/nordic.ts` の NORDIC_LOG は Git にあって、直すには
-   commit して Hosting を手で起動しないと出ない。**ヒッチハイクの途中の
-   あやとには、それは回らない。** 旅のあいだはここに書いて、画面が
-   出てから読む。旅が終わったら、ここの中身を Git に焼き戻す。
-   ドキュメントの id は旅程表の行の id(`day-1` `day-depart`)。 */
-const NLOG = db.collection("nordicLog");
+/* 北欧旅の「その日に起きたこと」は、**ここには無い**(docs/nordic-depart.md)。
+   `nordicLog` は**あやと本人が旅先のスマホから自分で打つ**ために置いた。
+   commit と Hosting の手動起動が道の上では回らない、というのが理由。
+
+   **書く人が変わった。** いまはあやとが送ってきた一言を、受け取った側が
+   `site/content/nordic.ts` の NORDIC_LOG に焼いて本番へ出す。打つ本人が
+   ヒッチハイクをしていないので commit も deploy も回る。
+   Firestore を経由する理由のほうが無くなったので、読み書きの口を外した。 */
 
 /* 配信のルーレット(#164)。コントローラー(あやとの手元)と
    表示(スマホ版 OBS)を繋ぐ、1人1つの入れ物。
@@ -148,75 +174,195 @@ const ISLAND_THEMES = ["georgia", "nordic", "desert"];
 const MAX_WEEK_LINE = 120;
 const MAX_WEEK_LINES = 8;
 
-/** その日に起きたこと。**スマホの親指で打つものなので、長さで縛る。**
-   長い文章は配信で話すものであって、ここに置くものではない。 */
-const MAX_LOG_BODY = 400;
-/** 1日に書き直せる回数。書き直しは普通に起きるので、写真より緩くする。 */
-const LOGS_PER_DAY = 60;
-
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
    鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
 const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
-/* 鍵の出どころ。**GitHub の Secrets には置かない**（GitHub #110 はそれ待ちで
-   止まっていた）。配信の OBS（app/alertbox）が読んでいるのと同じ GAS の表から
-   実行時に引く。こうすると鍵を2か所で持たずに済み、あやとが表を書きかえれば
-   サイトも配信も同時に追随する。
-   **金額そのものは GAS から取らない。** あちらはスパチャを配信の演出上、
-   半額で数えている。サイトは満額で数える決まりなので(下の /fund の注)、
-   ここから借りるのは鍵だけにする。 */
+/* 豚の貯金箱の元（#305）。**いま額が正しいのは、こちらの GAS。**
+   配信の OBS（app/alertbox）がスパチャを1件ずつこの表に書き足していて、
+   `superChatAmount` が伸びるのはここだけ。だから読む順も GAS が先。
+
+   鍵を GitHub の Secrets に置かないのは前のまま（GitHub #110 はそれ待ちで
+   止まっていた）。OBS が読んでいるのと同じ表から実行時に引くので、
+   鍵を2か所で持たずに済む。 */
+const GOAL_ID = "2025-10-24";
 const GAS_GOALS =
   "https://script.google.com/macros/s/" +
   "AKfycbycK8SzzuTbs6z-DUmju7eFjb4qXQPACCeq3PCWPTmZwtUxwokDgqnVa3uPl0UhBNEj" +
-  "/exec?table=Goals&id=2025-10-24";
+  `/exec?table=Goals&id=${GOAL_ID}`;
+/* GAS が消えたときの控え（#305）。**表を消しても貯金箱が止まらないため**に
+   置いてある。`python/admin/goal_migrate.py` が GAS の4欄をここへ写す。
+
+   **順を逆にしない。** Firestore を先に読むと、配信で投げ銭が入っても
+   サイトの豚が伸びなくなる（伸びるのは GAS 側だけで、こちらは人が
+   写し直すまで止まったままになる）。あやとは旅のあいだ17日つながらないので、
+   「配信のたびに人が写し直す」は置いていけない。
+   **視聴者さんから見れば、自分が出したお金が島に出てこない。**
+
+   Firestore を正にしてよくなるのは、スパチャの書き込み先を
+   `POST /island-api/superchat` へ移したあと（#305 の3）。
+   **額が増える側が正** ——それまではこの順が辻褄の合う唯一の順。 */
+const GOAL_DOC = db.collection("islandGoal").doc(GOAL_ID);
+/* Doneru の取り込みが最後に通った日（#294。`python/doneru_health.py` が写す）。
+   Doneru の寄付は cookie ひとつで取りに行っているので、**切れた日から
+   BigQuery に入らなくなる。** 豚の貯金箱はスパチャぶんだけ伸びて、
+   Doneru で出してくれた人のぶんが島に出てこない。
+
+   額が減るわけではないので誰も気づかない。**気づけるのは Actions を
+   見ている人だけで、旅先のあやとは見ない。** だからここを島まで持ってくる。
+
+   BigQuery の `doneru_ingest_runs` をこの Function から引けない
+   （Functions に BigQuery のクライアントを足していない）ので、
+   毎晩の取り込みのあとに python が Firestore へ1枚だけ写す。 */
+const DONERU_HEALTH = db.collection("islandDoneruHealth").doc("last");
+/* **何日ぶん入っていなかったら、島に出すか。**
+   取りこぼした晩が2つ以上あって初めて出す、という線。
+
+   1日では出さない。取り込みは 20:30 UTC の予定だが、**実測で1時間49分〜
+   3時間32分遅れて走る**（`CLAUDE.md`）。ある瞬間に見れば、最後に入ってから
+   28時間空いているのはふつうの姿で、そこで出すと遅れただけの晩に出る。
+
+   2日でも出さない。1晩の失敗は実際にある（2026-09-06 に `error` が2回出て、
+   どちらも数分後の実行で入っている）。GitHub Actions 側の都合で発火しない
+   晩もある（`rebake.yml` が翌朝まで発火しなかった）。
+
+   3日なら、遅れでも1回の失敗でも届かない。そして cookie が切れたときは
+   必ずここを超える（入り直すまで二度と `ok` にならない）ので、
+   **見つからずに終わることはない。** 出るまでの遅さより、
+   ふだんの島に余計な1行が出ることのほうが害が大きい。 */
+const DONERU_STALE_DAYS = 3;
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
 /** 豚の貯金箱の1件ぶん。**サイトはここを配信とそっくり同じに読む。** */
 type GoalRec = {key: string; start: number; superchat: number; goal: number};
+/** 読んだままの4欄。**Firestore も GAS も、同じ名前で同じものを持つ。** */
+type GoalRaw = {
+  doneruGoalKey?: unknown;
+  startAmount?: unknown;
+  superChatAmount?: unknown;
+  targetAmount?: unknown;
+};
 /* 鍵は変わらないが、スパチャの額は増える。**Doneru と同じ間隔で読み直す。** */
 let goalCache: GoalRec | null = null;
 let goalAt = 0;
+/* 前回どちらから読めたか。**切り替わった回をログに立てるためだけに持つ。** */
+let goalFrom: string | null = null;
 
 /**
- * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
- * @return {Promise<string>} 鍵。取れなければ空文字
+ * 読んだ4欄を、使える形にする。**半端に読めたものは通さない。**
+ *
+ * 欠けた欄を 0 で埋めない。起点（`startAmount`。25万円ほどの負の数）が
+ * 欠けたまま 0 になると、貯金箱は実際より25万円多い額を出す。
+ * **黙って違う額を出すくらいなら、次の出どころへ落とすほうがいい。**
+ * @param {GoalRaw} d 読んだ4欄
+ * @param {string} from どこから読んだか（ログ用。額は出さない）
+ * @return {GoalRec | null} 使える値。1つでも欠けていれば null
  */
-async function goalRecord(): Promise<GoalRec | null> {
-  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
+function goalRec(d: GoalRaw, from: string): GoalRec | null {
+  const k = String(d.doneruGoalKey ?? "");
+  if (!/^[0-9a-f]{16,64}$/.test(k)) {
+    logger.warn("goal record: bad key", from);
+    return null;
+  }
+  const start = Number(d.startAmount);
+  const superchat = Number(d.superChatAmount);
+  if (!Number.isFinite(start) || !Number.isFinite(superchat)) {
+    logger.warn("goal record: bad amounts", from);
+    return null;
+  }
+  /* 目標額だけは「いま貯まっている額」ではなく、バーの高さ。
+     ここで落とすと貯まっている額まで消えるので、既定に落として通す。 */
+  const goal = Number(d.targetAmount);
+  return {key: k, start, superchat, goal: Number.isFinite(goal) ? goal : 50000};
+}
+
+/**
+ * 貯金箱の元を Firestore（`islandGoal/{id}`）から読む。
+ * **GAS の表が消えたときの控え。**
+ * @return {Promise<GoalRec | null>} 読めた値。書類が無い・欠けていれば null
+ */
+async function goalFromFirestore(): Promise<GoalRec | null> {
+  try {
+    const snap = await GOAL_DOC.get();
+    if (!snap.exists) return null;
+    return goalRec((snap.data() ?? {}) as GoalRaw, "firestore");
+  } catch (e) {
+    logger.warn("goal record read failed (firestore)", String(e));
+    return null;
+  }
+}
+
+/**
+ * 貯金箱の元を GAS の表から読む。**いまはこちらが正**（額が伸びる側）。
+ * @return {Promise<GoalRec | null>} 読めた値。読めなければ null
+ */
+async function goalFromGas(): Promise<GoalRec | null> {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 8000);
   try {
     const r = await fetch(GAS_GOALS, {signal: ctl.signal});
     if (!r.ok) throw new Error(`gas ${r.status}`);
     const j = (await r.json()) as {data?: Json};
-    const d = j.data ?? {};
-    const k = String(d.doneruGoalKey ?? "");
-    if (!/^[0-9a-f]{16,64}$/.test(k)) throw new Error("bad key");
-    const n = (v: unknown, def = 0) => {
-      const x = Number(v);
-      return Number.isFinite(x) ? x : def;
-    };
-    goalCache = {
-      key: k,
-      start: n(d.startAmount),
-      superchat: n(d.superChatAmount),
-      goal: n(d.targetAmount, 50000),
-    };
-    goalAt = Date.now();
-    return goalCache;
+    return goalRec((j.data ?? {}) as GoalRaw, "gas");
   } catch (e) {
-    logger.warn("goal record read failed", String(e));
-    // 前に読めた値があれば、そちらを使う。数字が消えるより古いほうがまし
-    return goalCache;
+    logger.warn("goal record read failed (gas)", String(e));
+    return null;
   } finally {
     clearTimeout(t);
   }
 }
 
 /**
- * Doneru の goal key を取る。環境変数があればそれ、無ければ GAS の表から。
+ * 豚の貯金箱の元（鍵・起点・スパチャ・目標）を1件返す。
+ *
+ * 読む順は **GAS → 無ければ Firestore**。
+ *
+ * **Firestore を先にしない。** スパチャを書き足しているのは配信の OBS で、
+ * 書き先はまだ GAS の表しかない。Firestore を先に読むと、配信で投げ銭が
+ * 入ってもサイトの豚が伸びず、人が写し直すまで止まったままになる。
+ * あやとは旅のあいだ17日つながらないので、その運用は置いていけない。
+ * Firestore が正になるのは `SuperChats` の書き込み先を移したあと（#305 の3）。
+ * **それまでは、額が増える側が正。**
+ *
+ * どちらも読めなかったときに **0 を作らない。** 前に読めた値（`goalCache`）が
+ * あればそれを返し、それも無ければ null を返す。null を受けた `GET /fund` は
+ * `island/state.fund` の集計値に落ち、そこも空なら 503 を返して、
+ * 画面は足代の数字を黙って消す。
+ * **貯金箱が「0円」と出るのは、止まるより悪い**
+ * （`docs/island-standards.md` 10章）。
+ * @return {Promise<GoalRec | null>} 元。1つも読めなければ null
+ */
+async function goalRecord(): Promise<GoalRec | null> {
+  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
+  let from = "gas";
+  let rec = await goalFromGas();
+  if (!rec) {
+    from = "firestore";
+    rec = await goalFromFirestore();
+  }
+  if (!rec) {
+    // 数字が消えるより古いほうがまし。無ければ「無い」と言う（0 にしない）
+    logger.warn("goal record: no source readable");
+    return goalCache;
+  }
+  /* **どちらから読んだかを毎回残す。** 旅のあいだに GAS が切れても
+     誰も見ていないので、「いつ控えに切り替わったか」がログにしか無い。
+     切り替わった回だけは warn にして、grep で1行に絞れるようにする。 */
+  if (goalFrom && goalFrom !== from) {
+    logger.warn(`goal record: source changed ${goalFrom} -> ${from}`);
+  }
+  logger.info(`goal record: from ${from}`);
+  goalFrom = from;
+  goalCache = rec;
+  goalAt = Date.now();
+  return rec;
+}
+
+/**
+ * Doneru の goal key を取る。環境変数があればそれ、無ければ貯金箱の元
+ * （Firestore → GAS）から。
  * @return {Promise<string>} 鍵。取れなければ空文字
  */
 async function doneruKeyOnly(): Promise<string> {
@@ -461,7 +607,8 @@ function shapeDraft(b: Json): Json {
     title: clean(b.title, MAX_PLAN_TITLE),
     when: clean(b.when, 40),
     date: shapeDay(b.date),
-    note: clean(b.note, 200),
+    /* ひとことで言うと。打つ欄は `<textarea>`（`NextPlanEditor`）なので改行が来る */
+    note: cleanText(b.note, 200),
     tags: Array.isArray(b.tags) ?
       b.tags.slice(0, 6).map((t) => clean(t, 16)) :
       [],
@@ -471,7 +618,7 @@ function shapeDraft(b: Json): Json {
       map: clean(place.map, 300),
     },
     about: Array.isArray(b.about) ?
-      b.about.slice(0, 8).map((p) => clean(p, 600)) :
+      b.about.slice(0, 8).map((p) => cleanText(p, 600)) :
       [],
     links: arr(b.links, 8, (x) => ({
       label: clean(x.label, 60),
@@ -508,20 +655,92 @@ function shapeDraft(b: Json): Json {
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
- * 制御文字を落として、長さを切る。
+ * C0 制御文字を落とす。**改行を通すかどうかだけが違う。**
+ *
+ * 落とす字を2か所に書くと、片方だけ直された日に
+ * 「1行ものの口には入らないのに、本文の口には入る字」ができる。
+ * 通す・通さないの判断は呼ぶ側（`clean` / `cleanText`）に置いて、
+ * 落とす仕事はここ1つにまとめる。
+ * @param {string} s 入力（`\r` はここへ来る前にそろえておく）
+ * @param {boolean} keepLf 改行(U+000A)を通すか
+ * @return {string} 落としたあとの字
+ */
+const dropCtrl = (s: string, keepLf: boolean): string => {
+  let out = "";
+  for (const ch of s) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (keepLf && c === 0x0a) {
+      out += ch;
+      continue;
+    }
+    if (c < 0x20 || c === 0x7f) continue;
+    out += ch;
+  }
+  return out;
+};
+
+/**
+ * 制御文字を**改行ごと**落として、長さを切る。**1行ものの欄はこちら。**
+ *
+ * 題・名乗り・ハンドル・ふだ・URL・id・合言葉のように、
+ * **1行で出ることを前提に置き場が組んであるもの**に使う。
+ * ここに改行が通ると、札からはみ出したり、`alt` や配信のチャットのように
+ * そもそも改行を持てない先で崩れたりする。
+ *
+ * **本文（付箋・返事・企画の説明・いまどこの一言）には `cleanText` を使う。**
+ * あちらは改行だけ通す（#83。書いてくれた区切りを、こちらで潰さない）。
  * @param {unknown} v 入力
  * @param {number} max 最大文字数
  * @return {string} 整えた文字列
  */
-const clean = (v: unknown, max: number): string => {
-  let out = "";
-  for (const ch of String(v ?? "")) {
-    const c = ch.codePointAt(0) ?? 0;
-    if (c < 0x20 || c === 0x7f) continue;
-    out += ch;
-  }
-  return out.trim().slice(0, max);
-};
+const clean = (v: unknown, max: number): string =>
+  dropCtrl(String(v ?? ""), false).trim().slice(0, max);
+
+/**
+ * 制御文字を落として、**改行だけ通して**、長さを切る。**本文の欄はこちら。**
+ *
+ * ## なぜ要るのか
+ *
+ * 打つ欄が `<textarea>` の字は、箇条書きで書かれてくる。`clean` は改行を
+ * **空白に変えずに消す**ので、行の終わりと次の行の頭がくっついて別の語に
+ * 読める。入れ物に入る前に消えるので、**あとから直しようがない**（#83）。
+ *
+ * ## どこまで整えるか（画面の `asWritten` と同じ規則）
+ *
+ * | すること | なぜ |
+ * | --- | --- |
+ * | `\r\n` `\r` を `\n` にそろえる | Windows から来たものが1行おきに空く |
+ * | `\n` 以外の C0 と DEL は落とす | タブやベルは字ではない。`clean` と同じ |
+ * | 各行の行末の空白を落とす | 見えないのに、そこだけ余分に折り返す |
+ * | 空行が2つ以上続いたら1つにする | 段落の切れ目は意味だが、5行の空きは意味ではない |
+ * | 前と後ろの空白・空行を落とす | 紙の頭とお尻が間延びするだけ |
+ *
+ * **行の中の空白は1つも触らない。** 字下げも語のあいだの全角空白も、
+ * 書いた人が置いたもの。
+ *
+ * 画面（`site/components/ui/Wrote.tsx` の `asWritten`）と**同じ規則を、
+ * わざと両方に置いている。** ここだけにすると、この口を通らずに入った
+ * 古い書類（改行の消えているぶん）や、GitHub Actions ／ 口から直に書く
+ * 道具の字が素通りする。あちらだけにすると、Firestore に入る字が
+ * 荒れたままになり、画面以外（焼き込み・配信のチャット・OBS）が困る。
+ * **どの規則も2回かけても結果が変わらない**ので、二重にかかっても害が無い。
+ *
+ * ## 長さの数えかた
+ *
+ * **改行も1字として数える。** `max` は打つ欄の `maxLength` と同じ数なので、
+ * ブラウザが受け付ける字数と、ここが受ける字数がずれない。
+ * 切ったお尻に空白や改行が残ることがあるので、切ったあとにもう一度落とす。
+ * @param {unknown} v 入力
+ * @param {number} max 最大文字数（改行も1字）
+ * @return {string} 整えた字。改行は残る
+ */
+const cleanText = (v: unknown, max: number): string =>
+  dropCtrl(String(v ?? "").replace(/\r\n?/g, "\n"), true)
+    .replace(/[^\S\n]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, max)
+    .trimEnd();
 
 /* ---- YouTube のハンドル(`@あやとグルメアプリ`) ----
    島に出す名前は、Google アカウントの表示名(`ayato_arigato`)ではなく
@@ -565,14 +784,6 @@ async function fetchHandle(channelId: string): Promise<string> {
     return "";
   }
 }
-
-/**
- * x-forwarded-for から最初のIPだけ取る。
- * @param {unknown} v ヘッダの値
- * @return {string | null} IP か null
- */
-const fwd = (v: unknown): string | null =>
-  String(v ?? "").split(",")[0]?.trim() || null;
 
 /**
  * 端末IDとして妥当か。
@@ -777,7 +988,9 @@ type StickyShape = {
  */
 function stickyShape(d: FirebaseFirestore.QueryDocumentSnapshot): StickyShape {
   const v = d.data();
-  const reply = clean(v.reply, MAX_REPLY_LEN);
+  /* 返事は**読むときにも通す。** 入れ物には口を通さずに入った古いぶんも
+     あるので、ここで形をそろえる。改行を落とすと、返事だけ1本の棒になる */
+  const reply = cleanText(v.reply, MAX_REPLY_LEN);
   return {
     id: d.id,
     theme: (v.theme as string) ?? "",
@@ -1143,6 +1356,66 @@ async function doneruNow(): Promise<number | null> {
     return fundCache?.doneru ?? null;
   } finally {
     clearTimeout(t);
+  }
+}
+
+/**
+ * 札に書いてある日を見て、島に出す日付を決める(#294)。
+ *
+ * **止まっているときだけ日付を返す。ふだんは null。**
+ *
+ * **分からないときは、止まっていることにしない。** 欄が無い・空・形が違う・
+ * 日付が未来、のどれでも null を返して黙る。取り込みの記録が読めなかった
+ * だけの日に「止まっています」と出すと、**それ自体が嘘になる**
+ * (`docs/island-standards.md` 10章)。倒れる方向は黙る側へ。
+ *
+ * 日をまたぐ数え方は、島じゅうと同じ日本時間で切る
+ * (`site/lib/nightly.ts` の `jstNow`。`docs/island-misses.md` #29)。
+ *
+ * **外に出してあるのは、ここだけを外から通せるようにするため**
+ * (`functions/tools/fund/asofcheck.cjs`)。読めなかった・形が違う・未来、を
+ * 本物の関数で1回ずつ通さないと、「黙る」ほうを確かめたことにならない。
+ * @param {unknown} okDay 札の `okDay`。Doneru のぶんが最後に入った日(日本時間)
+ * @param {number} nowMs いまの時刻
+ * @return {string | null} 止まっていれば「2026-09-12」の形。ふだんは null
+ */
+export function doneruStaleDay(
+  okDay: unknown,
+  nowMs: number,
+): string | null {
+  if (!isDay(okDay)) return null;
+  const today = jstDay(nowMs);
+  const days = Math.round(
+    (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${okDay}T00:00:00Z`)) /
+      86400000,
+  );
+  // 未来の日付は札のほうが壊れている。数えずに黙る
+  if (!Number.isFinite(days) || days < 0) return null;
+  return days >= DONERU_STALE_DAYS ? okDay : null;
+}
+
+/**
+ * Doneru のぶんが、いつまで入っているか(#294)。
+ *
+ * 返した日付は `GET /fund` の `doneruAsOf` に乗って、島の応援の区画に
+ * 「Doneru のぶんは、いま◯月◯日まで入っています」の1行として出る。
+ *
+ * 札の `okDay` は「Doneru のぶんが最後に BigQuery へ入った日(日本時間)」で、
+ * **札を書いた日ではない。** だから写す側(`python/doneru_health.py`)が
+ * 止まっても、この日付が新しくなることはない。**古いほうへしか倒れない。**
+ *
+ * **投げない。** ここが落ちても `GET /fund` の今までの欄は1つも欠けない。
+ * @return {Promise<string | null>} 止まっていれば日付。ふだんは null
+ */
+async function doneruAsOf(): Promise<string | null> {
+  try {
+    const snap = await DONERU_HEALTH.get();
+    if (!snap.exists) return null;
+    return doneruStaleDay((snap.data() ?? {}).okDay, Date.now());
+  } catch (e) {
+    // 読めなかったことだけ残す。読めない=止まっている、ではない
+    logger.warn("doneru health read failed", String(e));
+    return null;
   }
 }
 
@@ -1650,6 +1923,11 @@ async function listPhotoDays(): Promise<Json[]> {
     Promise.all(days.map((d) => channelsOfDay(events, d))),
     listResidents(),
   ]);
+  /* **絵は、出す人ぶんだけを1回で引く**(`cards.ts` の `iconsOf`)。
+     日ごとに引くと旅の日数ぶん往復が増える。日が何日あっても2往復。
+     引く前に日ごとの上限(60人)で切る。出さない人の絵は要らない。 */
+  const shown = peopleByDay.map((x) => x.slice(0, 60));
+  const icons = await iconsOf(shown.flat());
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
@@ -1665,12 +1943,13 @@ async function listPhotoDays(): Promise<Json[]> {
   days.forEach((day, i) => {
     peopleOf.set(
       day,
-      peopleByDay[i].slice(0, 60).map((channelId) => ({
+      shown[i].map((channelId) => ({
         channelId,
-        /* 旧来は名簿が絵まで持つことがあった（手で足した Doneru の人）。
-           いまは絵の割り当てを `site/content/residents.ts` 1か所に寄せて
-           あるので、ここからは返さない。欄は画面の形を変えないために残す。 */
-        icon: null,
+        /* **絵は誰にでも出す。名前は出してよいと言った人だけ**（すぐ下）。
+           前はここも `null` と直に書いていて、画面が焼き込みの22人
+           (`site/content/residents.ts`)から引き直して埋めていた。表に
+           入っていない人は、そこで黙って消えていた（`cards.ts` と同じ根っこ）。 */
+        icon: icons.get(channelId) || null,
         name: named.get(channelId) || null,
       })),
     );
@@ -1684,7 +1963,24 @@ async function listPhotoDays(): Promise<Json[]> {
 }
 
 export const islandApi = onRequest(
-  {region: "us-central1", cors: true, maxInstances: 10},
+  /* **512MiB。既定の 256MiB では絵を1枚受け取れないことがある。**
+     2026-09-11、キャラクターの移行が 65人目で 500 を返して止まった。
+     ログは `Memory limit of 256 MiB exceeded with 256 MiB used`。
+
+     絵は base64 で本文に乗ってくる。4MB の元絵なら本文が 5.3MB になり、
+     受け取った生のバイト列・JSON にした文字列・`Buffer.from` で戻した
+     バイト列が同時に載る。そこへ幅ごとに焼いたものが4枚加わる。
+
+     旅の写真（`/nordic/photos`）が 256MiB で何か月も落ちていないのは、
+     ブラウザ側が長辺 1600px の webp に焼いてから送っていて、1枚
+     200〜400KB しか来ないから。**キャラクターの `full` は縮めない**
+     （持ち帰るものなので。`islandCharacter.ts` の `WIDTHS` の説明）ので、
+     元絵の大きさがそのまま効く。
+
+     **移行だけの話ではない。** あやとが旅先のスマホから絵を入れ替える道
+     （`site/components/me/Characters.tsx`）も同じ本文を送る。17日間、
+     落ちても原因を見に行けないので、受け取れる側を広げておく。 */
+  {region: "us-central1", cors: true, maxInstances: 10, memory: "512MiB"},
   async (req, res) => {
     // Hosting の rewrite 経由でも直叩きでも動くように、前置きのパスを落とす
     const path = (req.path || "/").replace(/^\/island-api/, "") || "/";
@@ -1731,6 +2027,41 @@ export const islandApi = onRequest(
          「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
       if (
         await handleDonors(
+          {method, path, auth: req.headers.authorization, body},
+          res,
+          {ownerUid},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- キャラクター(#284) ----------------
+         中身は `islandCharacter.ts`。ここは取り付けだけ。扱ったら true。
+         「誰か」を見るところと、OBS の合言葉を見るところを増やさない
+         よう、どちらも関数で渡す。 */
+      if (
+        await handleCharacters(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            query: (req.query ?? {}) as Json,
+            body,
+          },
+          res,
+          {ownerUid, alertboxKey},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- 公開バケットの片づけ(#289) ----------------
+         中身は `publicPurge.ts`。ここは取り付けだけ。扱ったら true。
+         **既定では1バイトも書かない。** あやとだけが叩けて、消せるのは
+         あちらの決め打ちの表に載っている2つだけ。
+         **用が済んだら、この取り付けごと外す。** */
+      if (
+        await handlePublicPurge(
           {method, path, auth: req.headers.authorization, body},
           res,
           {ownerUid},
@@ -2065,98 +2396,6 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 北欧旅の、その日に起きたこと ----------------
-         書けるのはあやとだけ。読むのは誰でも(docs/nordic-depart.md)。
-
-         **なぜ Git ではなくここか。** `site/content/nordic.ts` の NORDIC_LOG は
-         直すのに commit と Hosting の手動起動が要る。旅の最中のあやとは
-         ヒッチハイクをしていて、それは回らない。ここなら、その日の宿から
-         スマホで1回書けば出る。旅が終わったら Git に焼き戻す。 */
-      if (method === "GET" && path === "/nordic/log") {
-        const snap = await NLOG.orderBy("at", "asc").limit(60).get();
-        res.set(
-          "Cache-Control",
-          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
-        );
-        res.json({
-          log: snap.docs.map((d) => {
-            const v = d.data() ?? {};
-            return {
-              day: d.id,
-              date: isDay(v.date) ? v.date : undefined,
-              body: String(v.body ?? ""),
-              video: (v.video as string) || undefined,
-              at: Number(v.at) || 0,
-            };
-          }),
-        });
-        return;
-      }
-
-      if (method === "POST" && path === "/nordic/log") {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        /* 旅程表の行の id。字の形だけを見る。ここに旅程表そのものを
-           持ってくると、Git を直すたびに Functions も出し直しになる。 */
-        const day = String(body.day ?? "");
-        if (!/^day-[a-z0-9-]{1,16}$/.test(day)) {
-          res.status(400).json({error: "bad day"});
-          return;
-        }
-        /* 改行だけは残す。2〜3行で書くものなので、全部つながると読めない。
-           空行が続くのは事故なので1つに畳む。 */
-        const text = String(body.body ?? "")
-          .replace(/[^\S\n]+/g, " ")
-          .replace(/\n{3,}/g, "\n\n")
-          .split("\n")
-          .map((ln) => clean(ln, MAX_LOG_BODY))
-          .join("\n")
-          .trim()
-          .slice(0, MAX_LOG_BODY);
-        if (!text) {
-          res.status(400).json({error: "no body"});
-          return;
-        }
-        const date = isDay(body.date) ? body.date : undefined;
-        /* YouTube の videoId。URL を貼られても id だけ拾う。
-           取れなければ**入れない**。壊れた見に行き先を出すより、出さないほうがいい。 */
-        const vid = /([A-Za-z0-9_-]{11})/.exec(String(body.video ?? ""));
-        if (!(await takeQuota(uid, "nlog", LOGS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const ref = NLOG.doc(day);
-        const rec: Json = {body: text, uid, updatedAt: Date.now()};
-        if (date) rec.date = date;
-        rec.video = vid ? vid[1] : null;
-        /* `at` は**書いた順**で、並び順に使っている(GET /nordic/log)。
-           書き直すたびに入れ替えると、直した日だけが日記のいちばん下に
-           落ちる。初めて書いたときだけ入れる。 */
-        if (!(await ref.get()).exists) rec.at = Date.now();
-        await ref.set(rec, {merge: true});
-        res.set("Cache-Control", "no-store");
-        res.json({
-          log: {day, date, body: text, video: vid ? vid[1] : undefined},
-        });
-        return;
-      }
-
-      const logMatch = path.match(/^\/nordic\/log\/(day-[a-z0-9-]{1,16})$/);
-      if (method === "DELETE" && logMatch) {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        await NLOG.doc(logMatch[1]).delete();
-        res.set("Cache-Control", "no-store");
-        res.json({day: logMatch[1]});
-        return;
-      }
-
       /* 北欧旅の、日付で言える2つの事実。**着いた日と、旅が終わった日は別。**
          あやとの言葉(2026-09-06)「ストックホルム出るまでが北欧旅です」。
          9/20 に着いて、そこから7泊して 9/27 に発つ。着いた日で企画を
@@ -2191,7 +2430,7 @@ export const islandApi = onRequest(
          ここは GitHub Actions の「あやと島の『いま』を更新」と
          `python/admin/firestore_write.py` からしか動かせなかった。
          ヒッチハイクの途中でワークフローを起動するのは回らないので、
-         その日のことを書く口(`/nordic/log`)と同じ場所に置く。
+         スマホから1回押せば出る口をここに置いた。
 
          **`week`(今週の予定)は、送られてきたときだけ書く。** 何行もある字なので
          親指で全部打ち直すものではないが、**消せないのはもっと悪い。**
@@ -2203,7 +2442,9 @@ export const islandApi = onRequest(
           return;
         }
         const place = clean(body.place, 60);
-        const word = clean(body.word, 140);
+        /* ひとこと。打つ欄は `<textarea>`（`TripTools`）で、
+           「着いた/今日はここから配信」を2行で書く人がいる */
+        const word = cleanText(body.word, 140);
         const theme = clean(body.theme, 16);
         if (!place) {
           res.status(400).json({error: "no place"});
@@ -2278,13 +2519,20 @@ export const islandApi = onRequest(
       /* ---------------- 北欧旅の足代 ----------------
          返すのは合計と人数だけ。**個人の金額も順位も返さない**
          (`docs/nordic-fund.md` の決めごと)。
-         スパチャは満額で数える。OBS が半額にしているのは配信の演出上の都合で、
-         同じことをサイトでやると、出した人が自分の額を見つけられない。 */
+
+         **スパチャは半分だけ貯金箱に入る。これは仕様。** あやとの言葉
+         「スパチャは投げ銭してくれたお金の半分を貯金箱に入れている」
+         (2026-09-11)。ここに長いあいだ「OBS が半額にしているのは配信の
+         演出上の都合」と書いてあったが、**それが間違いだった**
+         (`docs/nordic-fund.md` 9.1)。 */
       if (method === "GET" && path === "/fund") {
-        const [doneru, snap, goal] = await Promise.all([
+        const [doneru, snap, goal, asOf] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
           goalRecord(),
+          /* **足すだけ。** ここが落ちても `doneruAsOf` が null を返すので、
+             今までの4欄は1つも欠けない(`doneruAsOf` は投げない)。 */
+          doneruAsOf(),
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const num = (v: unknown) => {
@@ -2330,6 +2578,93 @@ export const islandApi = onRequest(
           goal: goal ? goal.goal : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
+          /* Doneru のぶんが止まっている日だけ、いつまで入っているかを足す。
+             **ふだんは欄ごと出さない**(#294)。元気な島に1行も足さないため。
+             古い画面はこの欄を知らないので、あっても今までどおりに出る。 */
+          ...(asOf ? {doneruAsOf: asOf} : {}),
+        });
+        return;
+      }
+
+      /* ---------------- スパチャの控え(#292) ----------------
+         **あやとだけが読める。** 中身は投げ銭してくれた人の名前と額で、
+         あやとの持ちものではない。公開のバケットに113件置きっぱなしに
+         していた件(#289)と、まったく同じ性質のもの。
+
+         上の `GET /fund` は合計しか返さない。1件ずつを見る道が
+         スプレッドシートしか無く、それを外した日に**どこからも見られなく
+         なった**(あやとの言葉 2026-09-11「アラートボックスをスプシから
+         外した／スパチャ履歴はどこで見れる？」)。
+
+         **キャッシュさせない。** 誰の手元にも焼き付けない。
+
+         **ログに名前と額を出さない。** このリポジトリは公開で、
+         Actions のログも誰でも読める(`CLAUDE.md`)。ここで `logger` を
+         呼ぶのは合計が引けなかったときだけで、書くのは理由の文字だけ。
+
+         並びは `day` の降順。**`createdAt` を持っていない**ので `pageOf` は
+         使えない(あちらは付箋の形)。`day` はどの入り口からも必ず書かれる
+         (`python/fund_box.py`)ので、抜けて消える書類は無い。日付の
+         分からない手入力13件は空文字なので、降順のいちばん後ろに並ぶ。 */
+      if (method === "GET" && path === "/fund/history") {
+        if (!(await ownerUid(req.headers.authorization))) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const want = Number(req.query.limit ?? FUND_PAGE);
+        const n = Number.isFinite(want) ?
+          Math.min(Math.max(Math.trunc(want), 1), FUND_PAGE_MAX) :
+          FUND_PAGE;
+        /* 続きの位置。`day` は同じ日に何件も並ぶので、書類 id を第2の
+           並び順に足す(単一フィールドの索引で足りる。うちは複合索引を
+           作れない。GitHub #168)。 */
+        let q = FUND_CHATS
+          .orderBy("day", "desc")
+          .orderBy(admin.firestore.FieldPath.documentId(), "desc");
+        const before = String(req.query.before ?? "");
+        const cur = /^([0-9-]{0,10})_(.+)$/.exec(before);
+        if (cur) q = q.startAfter(cur[1], cur[2]);
+        const snap = await q.limit(n + 1).get();
+        const docs = snap.docs.slice(0, n);
+        const more = snap.size > n;
+        const last = docs[docs.length - 1];
+        /* **合計は、いま数える。** 焼いてある `island/state.fund.box` を
+           使うと、毎晩の掃除が走る前に入ったぶんだけ一覧と食い違って、
+           「415件」と書いてある下に416行並ぶ。数え上げは1回の読みで済む。
+
+           引けなかったら `null`。**0 を返さない**(`island-standards.md` 10)。 */
+        let count: number | null = null;
+        let yen: number | null = null;
+        try {
+          const agg = await FUND_CHATS.aggregate({
+            count: admin.firestore.AggregateField.count(),
+            yen: admin.firestore.AggregateField.sum("yen"),
+          }).get();
+          count = agg.data().count;
+          yen = agg.data().yen;
+        } catch (e) {
+          // 額も名前も出さない。引けなかったことだけを残す
+          logger.warn("fund history total failed", String(e));
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({
+          chats: docs.map((d) => {
+            const v = d.data();
+            return {
+              id: d.id,
+              day: typeof v.day === "string" ? v.day : "",
+              at: typeof v.at === "string" ? v.at : null,
+              yen: Number(v.yen) || 0,
+              who: typeof v.who === "string" ? v.who : "",
+              /* 画面には出さない。手で入れたぶんは打った日しか分かって
+                 いない(`at` が `00:00`)ので、時計を出すかどうかだけに使う。 */
+              src: typeof v.src === "string" ? v.src : "",
+            };
+          }),
+          more,
+          next: more && last ? `${last.get("day") ?? ""}_${last.id}` : null,
+          count,
+          yen,
         });
         return;
       }
@@ -2585,7 +2920,7 @@ export const islandApi = onRequest(
       /* ---------------- 付箋 ---------------- */
       if (method === "POST" && path === "/notes") {
         const who = await whoIs(req.headers.authorization);
-        const text = clean(body.text, MAX_NOTE_LEN);
+        const text = cleanText(body.text, MAX_NOTE_LEN);
         const planId = clean(body.planId, 40);
         const cid = String(body.cid ?? "");
         if (text.length < 2 || !planId) {
@@ -2692,7 +3027,7 @@ export const islandApi = onRequest(
       if (method === "POST" && path === "/stickies") {
         const who = await whoIs(req.headers.authorization);
         const theme = clean(body.theme, 40);
-        const text = clean(body.text, MAX_NOTE_LEN);
+        const text = cleanText(body.text, MAX_NOTE_LEN);
         const cid = String(body.cid ?? "");
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
@@ -2739,7 +3074,8 @@ export const islandApi = onRequest(
           cid,
           uid: who?.uid ?? null,
           createdAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
+          /* **IP は取らない**(#293)。読む仕組みが1つも無いまま、消す期限も
+             決めずに溜めていた。付箋は消さない設計なので、持てば永久に残る。 */
         });
         res.json({
           note: {
@@ -2822,7 +3158,7 @@ export const islandApi = onRequest(
           res.status(403).json({error: "not allowed"});
           return;
         }
-        const text = clean(body.text, MAX_REPLY_LEN);
+        const text = cleanText(body.text, MAX_REPLY_LEN);
         const ref = NOTES.doc(replyMatch[1]);
         const cur = await ref.get();
         if (!cur.exists) {
@@ -2973,7 +3309,7 @@ export const islandApi = onRequest(
           uid: who?.uid ?? null,
           createdAt: now,
           updatedAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
+          /* **IP は取らない**(#293)。付箋と同じ理由。 */
         });
         res.set("Cache-Control", "no-store");
         res.json({plan: planShape(await ref.get())});

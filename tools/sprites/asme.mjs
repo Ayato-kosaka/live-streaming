@@ -21,6 +21,8 @@
  * ログインが要らない**ので、`apply` を呼ぶだけで撮れる。
  * `RLSPIN=1` を付けると、開いた 1.2 秒あとに回りだすところから撮れる。
  */
+import { execFileSync } from "node:child_process";
+
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
 const NAME = "ゆずたつ";
@@ -33,6 +35,27 @@ const YT_PHOTO =
   "https://yt3.ggpht.com/GUqKfpGZZ-RvK4x8whkP6V7GfFc4FLoPC7rBUJ5jaqOdgouJabHkcGM8et_logXB62byGalyPA=s800-c-k-c0x00ffffff-no-rj";
 /** 上の絵に割り当ててあるチャンネル（`site/content/residents.ts`） */
 const CHANNEL = "UCyct2GK_RiW5Ji3Y0gd9MMg";
+
+/** 本番の図鑑を curl で1回だけ取って、名前を作り物に差し替えて持つ。
+    絵と絵文字と人数は本物（`route.mjs` が /tmp/chars から絵を返す）。 */
+let CHARA_CACHE = null;
+function CHARACTERS() {
+  if (CHARA_CACHE) return CHARA_CACHE;
+  try {
+    const raw = execFileSync("curl", ["-sS", "--max-time", "40",
+      "https://live-streaming-d3cac.web.app/island-api/characters"], { maxBuffer: 1 << 26 });
+    CHARA_CACHE = (JSON.parse(raw).characters || []).map((c, i) => ({
+      ...c,
+      channelName: `@みほん${i + 1}`,
+      aliases: i % 4 === 0 ? [`みほん${i + 1}`] : [],
+      channelKeys: [`@みほん${i + 1}`], lookupKeys: [`みほん${i + 1}`],
+      channelId: null, editedAt: null,
+    }));
+  } catch {
+    CHARA_CACHE = [];
+  }
+  return CHARA_CACHE;
+}
 
 const now = Date.now();
 const ago = (d) => new Date(now - d * 86400000).toISOString();
@@ -219,6 +242,48 @@ let DONORS = [
   })),
 ];
 
+/* スパチャの控え（#292）。**本番と同じ件数で置く。**
+   本番は 415件（`islandFundSuperChats`）で、うち16件が手入力、
+   そのうち13件は日付が分かっていない（`day` が空）。少なくして撮ると
+   「日ごとにまとめても背が伸びない」を確かめたことにならない。
+   名前は作り物（本番の名前をこの箱に落とさない）。 */
+const SC_NAMES = [
+  "ひめひめ", "まーさん", "KURA ekisu", "信州檸檬", "夜中のひと", "みかん",
+  "こんぶ", "たぬき", "ひまわり", "しろくま", "やまびこ", "あさひ",
+  "", "ゆうやけ", "こもれび", "みなと",
+];
+const SC_YEN = [500, 1000, 200, 3000, 5000, 1500, 300, 10000, 2000, 700];
+const FUND_ALL = (() => {
+  const out = [];
+  let day = new Date("2026-09-10T00:00:00+09:00");
+  let i = 0;
+  /* 1日に1〜4件、2〜4日おき。1年半ぶんで 400件ほどになる。 */
+  while (out.length < 402) {
+    const n = 1 + (i % 4);
+    const d = day.toISOString().slice(0, 10);
+    for (let k = 0; k < n && out.length < 402; k++) {
+      const h = 20 + ((i + k) % 4);
+      const m = (i * 7 + k * 13) % 60;
+      out.push({
+        id: `sc${String(out.length).padStart(4, "0")}aaaaaaaaaaaaaaaaaaaaaa`.slice(0, 26),
+        day: d,
+        at: `${d}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:0${k}+09:00`,
+        yen: SC_YEN[(i + k) % SC_YEN.length],
+        who: SC_NAMES[(i * 3 + k) % SC_NAMES.length],
+        src: (i + k) % 9 === 0 ? "bigquery" : "alertbox",
+      });
+    }
+    day = new Date(day.getTime() - (2 + (i % 3)) * 86400000);
+    i++;
+  }
+  /* 手で入れたぶん。日付の分からない13件が、いちばん後ろに並ぶ。 */
+  for (let k = 0; k < 13; k++) {
+    out.push({ id: `manual-${k + 1}`, day: "", at: null, yen: 200 + k * 50, who: "", src: "manual" });
+  }
+  return out;
+})();
+const FUND_SUM = FUND_ALL.reduce((a, c) => a + c.yen, 0);
+
 /** ルーレットのセッション（#164）。id は本番と同じ 32 桁。 */
 const RL_ID = "0123456789abcdef0123456789abcdef";
 const rlItem = (id, label, name, byHand = false) => ({
@@ -350,7 +415,12 @@ export async function apply(ctx, opts = {}) {
      読むので、CORS のヘッダを付けないと絵が出ない。 */
   await ctx.route(/firebasestorage\.googleapis\.com/, (r) => {
     const m = /photos%2F([^.]+)\.jpe?g/.exec(r.request().url());
-    const key = m ? m[1] : "x";
+    /* **旅の写真だけを差し替える。** 置き場にはキャラクターの絵も入って
+       いるので（#284）、まとめて受けると**95人が全員おなじ緑の絵**で写る。
+       あやとの机の「キャラ」を撮ったとき、実際にそうなっていた
+       （2026-09-11）。写真でないものは通す（`viaCurl` が本物を取る）。 */
+    if (!m) return r.fallback();
+    const key = m[1];
     let h = 0;
     for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600">
@@ -369,6 +439,21 @@ export async function apply(ctx, opts = {}) {
   await ctx.route(/\/island-api\//, (r) => {
     const u = new URL(r.request().url());
     const path = u.pathname.replace("/island-api", "");
+    /* **キャラクターの絵は差し替えない。本物を通す。**
+       絵も `/island-api/...` から来るようになったので（#284）、ここの
+       受け皿（最後の `json(r, {})`）が絵まで JSON にしていた。
+       島の住人が1人も出なくなって、**本番が壊れているように見えた**
+       （2026-09-11。`route.mjs` の「1枚に潰さない」と同じ失敗）。 */
+    if (/^\/characters\/[^/]+\/(plain|scene)-\d+\.webp$/.test(path)) {
+      return r.fallback();
+    }
+    /* **キャラクターの名簿も、本物の数と絵で返す。**
+       ここで `{}` を返していたので、あやとの机の「キャラ」が
+       **95人いるのに「まだ1人もいません」**と写っていた（2026-09-11）。
+       画面のほうは正しい（読めた上での0人と、読めなかったを分けている）
+       のに、道具が0人を渡していただけ。**それでは机を見たことにならない。**
+       名前だけ作り物にする（本番の名前をこの箱に落とさない）。 */
+    if (path === "/characters") return json(r, { characters: CHARACTERS() });
     if (path === "/me") {
       return json(r, {
         /* `channelPhoto` は毎晩 islandChannels から入れ直る顔で、**じぶんのことに
@@ -413,8 +498,29 @@ export async function apply(ctx, opts = {}) {
       DONORS = had ? DONORS.map((d) => (d.viewerPk === pk ? donor : d)) : [donor, ...DONORS];
       return json(r, { donor, via });
     }
+    /* スパチャの控え（#292）。**ページ送りも本番と同じ形で返す。**
+       `before` を無視すると「もっと古いぶん」を押しても同じ12件が
+       もう一度積まれて、押しどころを確かめたことにならない。 */
+    if (path === "/fund/history") {
+      if (opts.fundempty ?? process.env.FUNDEMPTY === "1") {
+        return json(r, { chats: [], more: false, next: null, count: 0, yen: 0 });
+      }
+      const n = Math.min(Math.max(Number(u.searchParams.get("limit") || 30), 1), 60);
+      const before = u.searchParams.get("before");
+      const at = before ? FUND_ALL.findIndex((c) => `${c.day}_${c.id}` === before) + 1 : 0;
+      const chats = FUND_ALL.slice(at, at + n);
+      const more = at + n < FUND_ALL.length;
+      const last = chats[chats.length - 1];
+      return json(r, {
+        chats,
+        more,
+        next: more && last ? `${last.day}_${last.id}` : null,
+        /* **数えられなかった日**は `FUNDNOSUM=1` で撮れる（0 に倒さない）。 */
+        count: (opts.fundnosum ?? process.env.FUNDNOSUM === "1") ? null : FUND_ALL.length,
+        yen: (opts.fundnosum ?? process.env.FUNDNOSUM === "1") ? null : FUND_SUM,
+      });
+    }
     if (path === "/nordic/photos") return json(r, { days: PHOTO_DAYS });
-    if (path === "/nordic/log") return json(r, { log: [] });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**
        画面は `?k=` を貼る URL を組み立てて出すだけなので、形が違うと
        出てくる URL が本番と別物になり、押しどころも幅も測れない。 */

@@ -30,6 +30,8 @@
  * （`docs/island-misses.md` #3）。
  */
 
+import { tripDate as tripDay } from "@/content/chapters";
+
 /** 旅程から引くのに要る日付だけ。街の名前も id も、ここでは見ない。 */
 export type PlanStop = {
   /** ここを発つ日(YYYY-MM-DD)。終点は持たない */
@@ -47,9 +49,31 @@ export type PlanStop = {
  *
  * 中央ヨーロッパ夏時間(UTC+2)で切る。バルト三国とフィンランドは +3 だが、
  * ずれるのは現地の 00:00〜01:00 のあいだだけで、そこは走っていない。
+ *
+ * **中身は `content/chapters.ts` に移した。** 「旅に出て何日目か」を数えるのに
+ * 同じ暦が要る（`chapterDayNo`）。写しを作ると、片方だけ直したときに
+ * `/now` と `/nordic` が別の日を今日と呼ぶ。
  */
 export function tripDate(now: Date = new Date()): string {
-  return new Date(now.getTime() + 2 * 3600_000).toISOString().slice(0, 10);
+  return tripDay(now);
+}
+
+/**
+ * 暦で見て、旅がもう終わっているか。**押されなかったときに閉じるのは、ここ。**
+ *
+ * 旅の終わり（`nordic.endedOn`）は、ストックホルムを発つ日にあやとが島で1回押す。
+ * **押せなかったときのために、暦でも閉じる。** 押されるのを待っていると、
+ * `/nordic` は旅の1ヶ月後も「ストックホルムまで 数えています」「めざす
+ * ストックホルム」「7泊したあと、ストックホルムを発ちます」と言い続ける。
+ *
+ * `lib/stay.ts` が滞在で決めたのと同じ原則——**`to` は手で入れる欄だが、
+ * 旅の17日間あやとは画面を直せない。だからデータではなくコードで閉じる。**
+ *
+ * 閉じるのは旅の**終わりの日を過ぎてから**（`today > until`）。当日に閉じると、
+ * まだストックホルムにいる27日じゅう「旅がおわった」と出る。
+ */
+export function planOver(today: string | null, until: string): boolean {
+  return !!today && !!until && today > until;
 }
 
 /**

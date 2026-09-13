@@ -15,6 +15,7 @@ import { MarkList, ShortGrid } from "./IsleLists";
 import { isleSpanNote } from "./span";
 import { appsOf, legendsOf } from "./spec";
 import { stayClosedOn } from "@/lib/stay";
+import { charImg } from "@/lib/charImg";
 
 /**
  * 島の下の紙 — **その章を、その島の中で振り返る。**
@@ -197,7 +198,7 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
             {st.residents.map((r) => (
               <li key={r.icon}>
                 <img
-                  src={`https://lh3.googleusercontent.com/d/${r.icon}=s96`}
+                  src={charImg(r.icon, 128)}
                   alt=""
                   width={48}
                   height={48}

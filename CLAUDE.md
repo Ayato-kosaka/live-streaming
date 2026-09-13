@@ -136,7 +136,11 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
   **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）
 - [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
-- [`docs/island-db.md`](docs/island-db.md) — BigQuery / Firestore / Git の3層のデータ設計
+- [`docs/island-db.md`](docs/island-db.md) — **データ設計。ERD・用語・責務の表・列の一覧。**
+  「何が正で、誰が書いて、誰が読むか」は3章。列を1つ引きに来たら4章
+- [`docs/island-api.md`](docs/island-api.md) — 口（`/island-api/*`）の一覧。誰が叩けるか・1日の上限
+- [`docs/island-db-notes.md`](docs/island-db-notes.md) — データ設計の**検討メモ**。
+  なぜそう決めたか・何に躓いたか。**日付の付いた記録なので、あとから直さない**
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
 - [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
   焼き込み（`site/content/*.ts`）が古いと思ったらここ
@@ -226,6 +230,26 @@ await offline(ctx);
 ```
 
 ## つまずきやすいところ
+
+- **新しく載せた cron は、発火を1回見るまで当てにしない** — 定時実行は
+  「書いて master に載せれば走るもの」ではない。このリポジトリで実際に
+  発火した実績があるのは `schedule_fetch_chat.yml`（20:00 UTC）と
+  `fetch_doneru_donations.yml`（20:30 UTC）の**古参2本だけ**で、しかも
+  **1時間49分〜3時間32分遅れて**走る（直近12回の実測。中央値 22:10）。
+  2026-09-10 に載せた `rebake.yml`（01:00 UTC）は、翌朝 03:45 まで待っても
+  発火しなかった。**遅れの範囲内ではあるが、「範囲内だからそのうち来る」で
+  何日も賭けるものではない。**
+  毎晩ひとりでに走ってほしいものは、**実績のあるワークフローの完了に繋ぐ**
+  （`workflow_run`）。cron は保険として残す。
+  - **繋ぐときは `conclusion` を見ない。** `schedule_fetch_chat.yml` は
+    「表に無い どねID が投げ銭してきた」ときに最後の step が `exit 1` で
+    終わる。あれは失敗ではなく呼び出しで、BigQuery には入っている。
+    成功のときだけ繋ぐと、呼び出しの出た晩だけ焼かれない。
+  - **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると
+    黙って切れる。**赤くならない。走らなくなるだけ。**
+  - **繋ぎが生きているかは `Fetch Doneru Donations` を `probe: true` で
+    押して確かめる。** 1バイトも書かずに40秒で終わるので、本番を汚さずに
+    「繋いだ先が起きるか」だけを見られる。
 
 - **`EXPO_PUBLIC_` は「隠す」ではなく「公開してよい」の宣言** — Expo は
   この接頭辞の環境変数を**書き出しの中へ焼く。** GitHub Secret に入れて

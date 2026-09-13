@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
 import { placeOutdated, samePlace } from "@/lib/place";
-import { planStop, tripDate } from "./where";
+import { planOver, planStop, tripDate } from "./where";
 import { Mark } from "./Marks";
 
 /**
@@ -83,8 +84,8 @@ export default function TripNow({
   stops,
   mainLegs,
   legOrder,
-  dayOf,
   dayByDate,
+  dayPage,
   depart,
   departWhen,
   hitchKm,
@@ -104,18 +105,26 @@ export default function TripNow({
    */
   legOrder: string[];
   /**
-   * 区間の id → 旅程表のどの行か（`day-1` `day-after` など）。
-   * 何日目か分かっていない行もあるので、数字ではなく行の名前で受け取る。
-   */
-  dayOf: Record<string, string>;
-  /**
-   * 日付(YYYY-MM-DD) → 旅程表のどの行か。
+   * 日付(YYYY-MM-DD) → 旅程表のどの行か。**旅程表の行はこれで引く。**
    *
-   * **動かない日には区間が無い。** `dayOf` は区間から引く表なので、休息日
-   * （ヴィリニュス 9/15・リガ 9/17）を引くと**翌日の行**が返る。
-   * 日付しか分かっていない日は、日付で引く。
+   * **動かない日には区間が無い。** 区間から引くと、休息日
+   * （ヴィリニュス 9/15・リガ 9/17）は**翌日の行**が返ってしまう。
+   * だから行は日付だけで引く。いる街は地図が居どころから引く。
    */
   dayByDate: Record<string, string>;
+  /**
+   * 旅程表の行 → その日1日ぶんのページ（`/nordic/day/1`）。
+   *
+   * **「今日のところへ」は、今日の面へ直に行く。**
+   * ここが無かったあいだ、あの札は同じページの中の錨（`#day-1`）を指していて、
+   * 押しても旅程表の行まで送られるだけだった。そこからもう一度その行を押して、
+   * やっと今日の面にたどり着く——**トップから数えて3タップ。**
+   * 旅の途中に来た人がまず見たいのは今日の面そのもの。
+   *
+   * 面の無い日は錨のまま。いまは17日ぜんぶに面があるが、旅程は一度まるごと
+   * 変わったことがあるので、面の有無は旅程（`DAY_PAGES`）に決めさせる。
+   */
+  dayPage: Record<string, string>;
   /** 出発の日時（ISO） */
   depart: string;
   /** 画面に出す出発の日時 */
@@ -197,6 +206,22 @@ export default function TripNow({
   }, []);
 
   /**
+   * 暦で見て、旅がもう終わっている日か（`where.ts` の `planOver`）。
+   *
+   * **押されなかったときに、旅を閉じるのはここ。** 下の2つ（着いた日・終わった日）は
+   * あやとが旅の終わりに島で押す事実で、押されればそちらが勝つ。押されなかった日も
+   * 暦で同じ答えになるようにしてある——**押したときと1文字も変わらない。**
+   * 閉じていなかったので、旅の1ヶ月後も「ストックホルムまで 数えています」
+   * 「いま 移動中 → めざす ストックホルム」と出ていた
+   * （`lib/stay.ts` が滞在で決めたのと同じ原則。データではなくコードで閉じる）。
+   */
+  const over = planOver(today, until);
+  /** 着いた日。**事実が先、無ければ旅程。** 旅が終わっているなら、着いてはいる */
+  const arrivedDay = arrivedOn ?? (over ? arriveOn : null);
+  /** 旅が終わった日（ストックホルムを発った日）。事実が先、無ければ旅程 */
+  const endedDay = endedOn ?? (over ? until : null);
+
+  /**
    * 本人の字が指しているルートの街。無ければ -1。
    *
    * 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
@@ -214,21 +239,41 @@ export default function TripNow({
    * その日は進まないので、予定の街を「いま ここ」と言い切ってはいけない。
    * 地図の札・旅程表の印・残り距離の一行が、ここで言い方を変える。
    */
-  const sure = typedAt >= 0 || !!arrivedOn;
+  const sure = typedAt >= 0 || !!arrivedDay;
   const last = stops.length - 1;
   /**
-   * 旅程表のどの行に「いま、ここ」を出すか。
+   * 旅程表のどの行に「いま、ここ」を出すか。**日付で引く。居どころでは引かない。**
    *
-   * **分かっているものに合わせて、引く表を変える。**
-   * 居どころが分かっていれば、そこを発つ区間の行（＝いま走っている区間）。
-   * 日付しか分かっていなければ、その日付の行。区間から引くと、**動かない日が
-   * 翌日の行を指す**（9/15 に休むヴィリニュスを発つのは 9/16）。
+   * 旅程表の行は1行が1日で、日付を持っている（札の字も「きょう」）。
+   * **「どの行が今日か」は暦の問い。** 居どころで引くのはそれとは別の問いで、
+   * そちらは地図のピンが答える（すぐ下の `useEffect` が `at` から引いている）。
+   * 1つの式に2つの問いを兼ねさせていたのが #299 の原因。
+   *
+   * 兼ねていたあいだ、居どころが分かっている日は**そこを発つ区間の行**を
+   * 指していた。リガに 9/16 に着いて 9/18 に発つので、あいだの2日は
+   * 「6日目 9月17日」ではなく「7日目 9月18日」に「いま、ここ」が付く。
+   * 旅の1日目（2026-09-12）の本番でも、2日目 9月13日の行に出ていた。
+   *
+   * 元の注記にあった理由——**動かない日には区間が無いので、区間から引くと
+   * 翌日の行を指す**（9/15 に休むヴィリニュスを発つのは 9/16）——は、いまも正しい。
+   * 正しいどころか、**居どころが分かっている日にも同じだけ効く。**
+   * 片方の枝にだけ当てていたのが足りていなかった。両方とも日付で引く。
+   *
+   * ストックホルムの8日（9/20〜9/27）も、これで旅程表に出る。区間で引いていた
+   * ころは終点に発つ区間が無いので `null` になり、旅でいちばん長い滞在のあいだ、
+   * 旅程表のどこにも「きょう」が無かった。
+   *
+   * 札の字（「いま、ここ」か「きょう」か）は `sure` が決める。**行と字は別の話。**
    */
-  const nowRow = sure
-    ? at != null && at >= 1 && at < last
-      ? (dayOf[mainLegs[at]] ?? null)
-      : null
-    : (today && dayByDate[today]) || null;
+  const nowRow = (today && dayByDate[today]) || null;
+
+  /**
+   * 「今日のところへ」の行き先。**面がある日は面へ、無い日は旅程表の行へ。**
+   *
+   * 旅に出ていない日（`nowRow` が無い日）は、今までどおり旅程表の頭。
+   * 出発前も、旅が終わったあとも、札は「旅のよていを見る」に変わる。
+   */
+  const todayHref = nowRow ? (dayPage[nowRow] ?? `#${nowRow}`) : "#plan";
 
   // 分かった現在地を、同じ画面の地図にも反映する。
   useEffect(() => {
@@ -253,18 +298,24 @@ export default function TripNow({
 
   // 旅程表の「いま、ここ」を、今日の1日にだけ出す。
   //
-  // 静的書き出しなので、書き出した時点では誰も走っていない。
-  // 場所が分かってから、その日の行に印を付ける（`docs/island-design.md` 3章
+  // 静的書き出しなので、書き出した時点では今日が何日か分からない。
+  // 日付を数え直してから、その日の行に印を付ける（`docs/island-design.md` 3章
   // 「動きは React の外で」。ここで状態を持つと旅程表がまるごと作り直しになる）。
   useEffect(() => {
-    if (at == null || at < 1) return;
-    document.querySelectorAll<HTMLElement>(".nday").forEach((el) => {
+    /* **居どころ（`at`）で降りない。** 行は日付で決まるので、居どころが
+       読めない日（口が返らない・ルートの外の街）でも、暦さえ分かれば付く。
+       ここで `at < 1` を弾いていたころは、旅の外の日に前の印を消せてもいなかった。 */
+    /* `.nday` は旅程表の行、`.ndayc` はまとめた行の中の番号の札。
+       **ストックホルムの7泊は1行にまとまっていて、あの行に id が無い。**
+       札のほうにしか日ごとの id が無いので、両方に付ける。
+       付けないと、9/21〜9/26 の6日は旅程表のどこにも「きょう」が出ない。 */
+    document.querySelectorAll<HTMLElement>(".nday, .ndayc").forEach((el) => {
       const on = !!nowRow && el.id === nowRow;
       el.toggleAttribute("data-now", on);
       // 旅程から引いただけの日は「きょう」。本人の字があるときだけ「いま、ここ」
       el.toggleAttribute("data-plan", on && !sure);
     });
-  }, [at, nowRow, sure]);
+  }, [nowRow, sure]);
 
   // いま走っているのが何本目かを、下の面にも配る。
   // 越えた日の「まだ決めていないこと」は、そこで閉じる（`here.ts`）。
@@ -279,7 +330,7 @@ export default function TripNow({
      友だちの家に約1週間いるので、そのあいだに街を離れることもある。
      そこで「ストックホルムまで、数えています」に戻ったら、旅が
      終わっていないことになってしまう。 */
-  const idx = arrivedOn ? last : (at ?? (departed ? null : 0));
+  const idx = arrivedDay ? last : (at ?? (departed ? null : 0));
   /**
    * 着いた。**島から届いた事実か、本人の字で終点にいるときだけ。**
    *
@@ -311,16 +362,16 @@ export default function TripNow({
    * 旅程から外れるのはヒッチハイクではふつうに起きる（足止め・寄り道）。
    * 打ってあるのに旅程の街で上書きしたら、また画面が嘘をつく。
    */
-  const off = !arrivedOn && !!place && !(now && samePlace(place, now.name));
+  const off = !arrivedDay && !!place && !(now && samePlace(place, now.name));
   /**
    * 出しているのが、**旅程から引いただけの街**か。
    *
    * そのときだけ「きょうは」。本人の字も島からの事実もあれば「いま」、
    * どちらも無く旅程からも引けなければ、今までどおり「いま 移動中」。
    */
-  const fromPlan = !place && !arrivedOn && at != null;
+  const fromPlan = !place && !arrivedDay && at != null;
   /** 「いま」に出す字 */
-  const nowName = arrivedOn
+  const nowName = arrivedDay
     ? (place ?? stops[last].name)
     : off
       ? place!
@@ -330,7 +381,7 @@ export default function TripNow({
      「いま アルバニア・ティラナ / スウェーデン」と書いてあった。
      ルートの外の街も同じで、打った字にはたいてい国が入っている。 */
   const nowCountry =
-    off || (arrivedOn && place && !samePlace(place, stops[last].name))
+    off || (arrivedDay && place && !samePlace(place, stops[last].name))
       ? ""
       : (now?.country ?? "");
 
@@ -396,7 +447,7 @@ export default function TripNow({
         ) : (
           <div className="tnow-count is-far">
             <span className="tnow-count-l">
-              {endedOn
+              {endedDay
                 ? "旅がおわった"
                 : arrived
                   ? "着いた"
@@ -416,15 +467,15 @@ export default function TripNow({
               )}
             </span>
             <span className="tnow-count-w">
-              {endedOn
+              {endedDay
                 ? /* 発った日。**ここでやっと旅が終わる。** */
-                  `${when(endedOn)}、ストックホルムを発ちました。ここまでが北欧旅`
+                  `${when(endedDay)}、ストックホルムを発ちました。ここまでが北欧旅`
                 : arrived
                   ? /* 着いた日が届いていれば、それも出す。「着いた」だけだと、
                        いつ着いたのかが旅のあとに読む人に分からない。
                        **旅はまだ終わっていない**ので、発つ日も添える。
                        会えたかどうかは書かない（`docs/nordic-fund.md` 1章）。 */
-                    `${arrivedOn ? `${when(arrivedOn)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、${when(until)}に発ちます`
+                    `${arrivedDay ? `${when(arrivedDay)}、` : ""}飛行機のあとは、ぜんぶ人の車と船で来た。ここから7泊して、${when(until)}に発ちます`
                   : goalByPlan
                     ? /* 旅程ではもう着いている日。**着いたとは言わない。**
                          着いたことは本人が島に押せば届く（`arrivedOn`）。 */
@@ -497,12 +548,25 @@ export default function TripNow({
           まったく同じ「クタイシからストックホルムまでの10区間」を3回目に描いていた。
           どこまで来たかは地図の線がいちばんよく言える。 */}
       <div className="tnow-acts">
-        {/* 出る前は旅程表の頭へ。出たあとは**今日の行へ**。
+        {/* 出る前と、旅が終わったあとは旅程表の頭へ。旅の最中は**今日の面へ直に**。
             旅の途中に来た人がまず見たいのは「今日どこにいるか」で、
-            それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。 */}
-        <a className="tnow-act is-main" href={nowRow ? `#${nowRow}` : "#plan"}>
-          {nowRow ? "今日のところへ" : "旅のよていを見る"}
-        </a>
+            それは表の9行目かもしれない。頭に落とすと、そこから自分で探すことになる。
+
+            **錨（`#day-1`）ではなく、面（`/nordic/day/1`）へ送る。**
+            錨は同じページの行まで送るだけで、そこからもう一度その行を押さないと
+            今日の面に入れない。トップから数えて3タップかかっていた。
+            日ごとの面が無い日だけ、今までどおり行まで送る。 */}
+        {todayHref.startsWith("#") ? (
+          <a className="tnow-act is-main" href={todayHref}>
+            {nowRow ? "今日のところへ" : "旅のよていを見る"}
+          </a>
+        ) : (
+          /* 先読みしない。日ごとの面は地図と写真を抱えているので、
+             押す人だけが払えばいい（`components/today/Today.tsx` と同じ決まり）。 */
+          <Link className="tnow-act is-main" href={todayHref} prefetch={false}>
+            今日のところへ
+          </Link>
+        )}
         <a className="tnow-act" href="#map">
           通る道を見る
         </a>

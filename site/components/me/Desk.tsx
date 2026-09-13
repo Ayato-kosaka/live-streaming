@@ -4,31 +4,28 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import Icon, { type IconName } from "@/components/ui/Icon";
+import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
-import { TripLog, TripPlace } from "./TripTools";
+import { TripPlace } from "./TripTools";
 import { PlanCare, StickyCare } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
+import { TOOLS, type Tool } from "./tools";
 
 /* 投げ銭の紐付けとアラートボックスは、開いた札のぶんだけ降ろす。
    どちらも一覧を丸ごと引くので、机を開いただけで3本引かせない。 */
 const DonorLinks = dynamic(() => import("./DonorLinks"), { ssr: false });
 const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
+/* キャラクターも同じ理由で、開いた札のぶんだけ降ろす。**こちらは
+   97人ぶんの絵を引く**ので、机を開いただけで降ろすと重い。 */
+const Characters = dynamic(() => import("./Characters"), { ssr: false });
+/* スパチャの控えも同じ。**415件を数えて1ページ引く**ので、机を開いた
+   だけで降ろさない（`islandFundSuperChats`。#292）。 */
+const FundHistory = dynamic(() => import("./FundHistory"), { ssr: false });
 
-type Tool = "photo" | "log" | "place" | "video" | "sticky" | "plan" | "donor" | "obs";
-
-/** 机の上に出せる道具。**並び順は、旅のあいだに開く回数の多い順。** */
-const TOOLS: { id: Tool; label: string; icon: IconName }[] = [
-  { id: "photo", label: "写真", icon: "photo" },
-  { id: "log", label: "その日", icon: "log" },
-  { id: "place", label: "いまどこ", icon: "pin" },
-  { id: "video", label: "配信", icon: "live" },
-  { id: "sticky", label: "付箋", icon: "pinup" },
-  { id: "plan", label: "企画", icon: "checklist" },
-  { id: "donor", label: "投げ銭", icon: "coin" },
-  { id: "obs", label: "OBS", icon: "screen" },
-];
+/* 道具の並びは `./tools` が1か所で持つ。**ここで並べない。**
+   `/me` の入口の添え書きが同じ並びを手で持っていて、道具を1つ外した日に
+   札のほうだけ直った（「その日」が残り、「キャラ」が抜けていた）。 */
 
 /** 前に開いていた道具。次に開いたとき、そこから続けられるように控える。 */
 const LAST = "ayato-desk-tool";
@@ -49,14 +46,15 @@ const LAST = "ayato-desk-tool";
  *
  * ## 机の上には、いま使う道具が1つだけ出ている
  *
- * 8つを縦に積まない。札を押した1つだけを開く。積むと、下の7つは
+ * 9つを縦に積まない。札を押した1つだけを開く。積むと、下の8つは
  * 畳みの向こうへ行くか、指で送る距離になる。**どれも1タップで出る**のが
  * この形の要点で、それは前の「旅の道具」の4つの札（#163）と同じ決め。
  *
  * ## 開き直したら、続きから
  *
  * ヒッチハイクの途中に開くので、**前に使っていた道具から始める。**
- * 毎晩「その日のこと」を書くなら、次に開いたときも「その日のこと」が出ている。
+ * 毎晩そこで写真を貼るなら、次に開いたときも写真の欄が出ている。
+
  *
  * ## 残っている数は、道具の1行目にある
  *
@@ -114,7 +112,10 @@ export default function Desk() {
     <>
       <section className="panel paper">
         <h2>道具</h2>
-        <div className="mp-tabs is-4" role="tablist" aria-label="島の手入れの道具">
+        {/* **9つになったので3列にする。** 4列のままだと 4+4+1 で、
+            3段目に札が1枚だけ残る。3列なら 3×3 でちょうど埋まるし、
+            390px で1枚 114px あるので「スパチャ」の4文字も折れない。 */}
+        <div className="mp-tabs is-3" role="tablist" aria-label="島の手入れの道具">
           {TOOLS.map((t) => (
             <button
               key={t.id}
@@ -129,16 +130,18 @@ export default function Desk() {
           ))}
         </div>
 
-        {/* 開いていないものは、そもそも作らない。写真の欄と日誌の欄が
-            同時に生きていると、下書きの復元が2つ同時に走る。 */}
+        {/* 開いていないものは、そもそも作らない。欄が同時に生きていると、
+            下書きの復元が何本も同時に走る。 */}
+
         <div className="mp-tool-body">
           {tool === "photo" && <PhotoPost />}
-          {tool === "log" && <TripLog />}
           {tool === "place" && <TripPlace />}
           {tool === "video" && <PlanVideos />}
           {tool === "sticky" && <StickyCare />}
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
+          {tool === "chara" && <Characters />}
+          {tool === "fund" && <FundHistory />}
           {tool === "obs" && <AlertBoxBox />}
         </div>
       </section>
