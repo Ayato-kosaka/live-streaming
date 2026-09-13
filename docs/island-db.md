@@ -858,9 +858,10 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 置きっぱなしは `python/island_daily_stats.py` の `sweep_here` が毎日片づける
 （10分より古いものを最大500件）。
 
-**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` には
-名指しのルールが無い**（末尾の `match /{document=**}` の deny に落ちている）。
-**閉じてはいるが、意図して閉じたのか落ちただけなのかが読めない** — 7章。
+~~**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` には
+名指しのルールが無い**~~ → **4本とも名指しで deny になった**（2026-09-13）。
+振る舞いは変えていない（catch-all の deny に落ちていたものを、名指しの deny に
+しただけ）。**なぜ deny でよいかを、読む口のコードを見て1本ずつ書いてある。**
 
 ### 4.3 Git（`site/content/`）— 人が書くものと、機械が焼くもの
 
@@ -1133,10 +1134,10 @@ Google OAuth なので Actions の中では通せない）。切れると
    だけで、欄の名前にはどちらのものか書いていない。両方の口が
    「自分のでないほうを読み飛ばす」を各自で実装している。
 
-4. **`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` に、
-   名指しのルールが無い。** 末尾の catch-all で deny にはなっているが、
-   **意図して閉じたのか、書き忘れて落ちただけなのかが読めない。**
-   他の入れ物は全部「なぜ閉じるか」がコメントで書いてある。
+4. ~~**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` に、
+   名指しのルールが無い。**~~ → **片づいた**（2026-09-13）。4本とも名指しの
+   deny になり、なぜ閉じるかが1本ずつ書いてある。**塞がっているかどうかより、
+   意図して塞いだのかが読めないことが問題だった。**
 
 5. **`islandUsers.canDraft` が、どこからも読まれないまま残っている**（#171）。
    残す理由（記録）は書いてあるが、**残す期限が無い。**
