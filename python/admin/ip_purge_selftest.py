@@ -236,7 +236,19 @@ def make_store() -> dict:
         if i < 9:
             e["ip"] = IPV4[i % len(IPV4)] if i % 4 else IPV6[i % len(IPV6)]
         events[doc_id(1000 + i)] = e
-    return {"islandNotes": notes, "islandStreamEvent": events}
+    # 控えの入れ物。**本番と同じく少ない**（8件。うち5件が `ip` を持つ）。
+    # 数が少ない入れ物でも、まとめ書きが1回で終わって落ちないことを見る
+    ideas = {}
+    for i in range(8):
+        v = {
+            "text": f"むかしの案 {i}",
+            "createdAt": 1756000000000 + i,
+        }
+        if i < 5:
+            v["ip"] = IPV4[i % len(IPV4)]
+        ideas[doc_id(2000 + i)] = v
+    return {"islandNotes": notes, "islandStreamEvent": events,
+            "islandIdeas": ideas}
 
 
 def deep(store: dict) -> dict:
@@ -260,33 +272,56 @@ def has_ip(store: dict) -> int:
     return sum(1 for d in store.values() for v in d.values() if "ip" in v)
 
 
+def expect(store: dict) -> dict:
+    """**数えたい値を、仕込みから導く。** 手で書いた数を置かない。
+
+    仕込みを足したり減らしたりしたときに、期待値だけ古いまま残ると
+    「通らない確かめ」ではなく「間違ったことを確かめる確かめ」になる。
+    まとめ書きの回数は入れ物ごとに `BATCH` で割って切り上げる
+    （`ip_purge.run` が入れ物ごとに流すため）。
+    """
+    with_ip = {c: sum(1 for v in d.values() if "ip" in v) for c, d in store.items()}
+    total = sum(len(d) for d in store.values())
+    return {
+        "with_ip": sum(with_ip.values()),
+        "no_ip": total - sum(with_ip.values()),
+        "commits": sum(
+            -(-n // ip_purge.BATCH) for n in with_ip.values() if n
+        ),
+    }
+
+
 def case1_dry():
     print("\n[1] 既定は空回し。1バイトも書かない")
     store = make_store()
+    exp = expect(store)
     was = deep(store)
     c = Fake(store)
     gone = ip_purge.run(c, apply=False, mark=MARK, cap=100000)
     ck("落とした件数", gone == 0, gone)
     ck("まとめ書きの回数", c.commits == 0, c.commits)
     ck("中身が1文字も変わっていない", deep(store) == was, "変わっていない")
-    ck("ip を持つ書類の数（変わらない）", has_ip(store) == 459, has_ip(store))
+    ck("ip を持つ書類の数（変わらない）",
+       has_ip(store) == exp["with_ip"], has_ip(store))
 
 
 def case2_apply():
     print("\n[2〜6] {\"apply\": true} で落とす")
     store = make_store()
+    exp = expect(store)
     was = deep(store)
     no_ip = {k for d in was.values() for k, v in d.items() if "ip" not in v}
     c = Fake(store)
     gone = ip_purge.run(c, apply=True, mark=MARK, cap=100000)
 
-    ck("落とした件数", gone == 459, gone)
+    ck("落とした件数", gone == exp["with_ip"], gone)
 
     # 2. ip を持たない書類は触られない
-    ck("ip を持たない書類の数", len(no_ip) == 33, len(no_ip))
+    ck("ip を持たない書類の数", len(no_ip) == exp["no_ip"], len(no_ip))
     ck("そのうち触られたもの", not (no_ip & set(c.touched)),
        len(no_ip & set(c.touched)))
-    ck("触った書類の数＝落とした件数", len(c.touched) == 459, len(c.touched))
+    ck("触った書類の数＝落とした件数",
+       len(c.touched) == exp["with_ip"], len(c.touched))
 
     # 3. 消えるのは ip だけ
     diff = []
@@ -307,7 +342,8 @@ def case2_apply():
             if any("ip" in d.get(k, {}) for d in store.values())], 0)
 
     # 5. まとめ書き（450 + 9 → 2回 + 1回）
-    ck("まとめ書きの回数（1件ずつではない）", c.commits == 3, c.commits)
+    ck("まとめ書きの回数（1件ずつではない）",
+       c.commits == exp["commits"] and c.commits < exp["with_ip"], c.commits)
 
     # 6. 数え直しが 0 / 書類の数は減らない
     ck("ip が残っている数", has_ip(store) == 0, has_ip(store))

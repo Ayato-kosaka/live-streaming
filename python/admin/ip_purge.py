@@ -39,11 +39,15 @@ from _fs import args, db, log
 #   islandNotes       … テーマに貼られた付箋（#160）
 #   islandStreamEvent … 掲示板に出す企画（#161。旧 islandNextPlans）
 #
-# `islandIdeas` は入れていない。8件とも #162 で付箋へ移してあり、`ip` は
-# 移した先（islandNotes）にコピーされている。**移し元は「取り違えたときに
-# 戻す控え」として残してある**ので、ここで片方だけ落とすと控えにならない。
-# 落とすなら入れ物ごと畳む話になるので、別に判断する（報告に書いた）。
-COLLECTIONS = ("islandNotes", "islandStreamEvent")
+#   islandIdeas       … #162 で付箋へ移す前の元。**「取り違えたときに戻す
+#                       控え」として入れ物ごと残してある**
+#
+# 控えからも落とす。**控えの用事は付箋の中身を戻すことで、IP を戻すことでは
+# ない。** 落とした先（islandNotes）に `ip` はもう無いので、控えに残して
+# おいても戻す先が無い。**消すと決めたものの写しを「控えだから」で持ち続ける
+# のは、決めずに置いてあるのと同じ**（#293 の根っこ）。
+# 入れ物ごと畳むかどうかは別の話で、こちらを待たせる理由にならない。
+COLLECTIONS = ("islandNotes", "islandStreamEvent", "islandIdeas")
 
 FIELD = "ip"
 
