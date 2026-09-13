@@ -22,7 +22,12 @@ jobs:
     env:
       # BigQuery 設定
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
+      # **secrets を先に見る。** Actions は step の頭で env の一覧を echo するので、
+      # vars のままだとチャンネルIDが毎晩6回、そのまま公開のログに出る。
+      # secrets に入っていれば Actions が自動で伏せるので、env の echo も出力も
+      # まとめて消える。**まだ secrets が無いあいだは vars に落ちる**ので、
+      # 入れ替えの前後どちらでも毎晩の取り込みは止まらない（BQ_PROJECT_ID と同じ形）
+      YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID || vars.YOUTUBE_CHANNEL_ID }}
       # Discovery 設定
       DISCOVERY_LOOKBACK_DAYS: ${{ inputs.lookback_days || '10' }}
     steps:
