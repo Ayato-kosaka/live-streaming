@@ -163,6 +163,7 @@ def here(client, video: str) -> tuple[int, list[dict]]:
                 # **本文そのものは持ち歩かない。** 空かどうかと、長さだけ
                 "empty": not str(v.get("text") or ""),
                 "len": len(str(v.get("text") or "")),
+                "text": str(v.get("text") or ""),
             })
     return total, paid
 
@@ -275,6 +276,24 @@ def main() -> None:
             log.info("    本文の長さ BigQuery=%s / Firestore(投げ銭)=%s",
                      sorted(len(r["message_text"] or "") for r in rs),
                      sorted(d["len"] for d in paid))
+            # **Firestore のほうが長いのは、YouTube が組み立てた字だからか、
+            # それとも視聴者さんの言葉が BigQuery 側で落ちているからか。**
+            # 中身は出さない。「後ろが一致するか」「前に何文字ついているか」
+            # 「その前置きに金額が入っているか」だけ出せば、どちらか分かる
+            for r in rs:
+                hit, gap = already(r, paid)
+                if not hit:
+                    continue
+                at = int(r["published_at"].timestamp() * 1000)
+                d = min(paid, key=lambda x: abs(x["at"] - at))
+                bq = r["message_text"] or ""
+                amount = str(r.get("purchase_amount_text") or "")
+                head = d["text"][:len(d["text"]) - len(bq)] if bq else d["text"]
+                log.info(
+                    "      後ろが一致=%s / 前置き %d文字 / 前置きに金額=%s",
+                    d["text"].endswith(bq) if bq else "(本文なし)",
+                    len(head), bool(amount) and amount in head,
+                )
         log.info(
             "  %s  BigQuery: 投げ銭 %d件（本文なし %d件）"
             " / Firestore: %d件（うち投げ銭 %d件・本文が空 %d件）"
