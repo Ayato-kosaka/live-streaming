@@ -9,7 +9,17 @@ name: 管理スクリプトを実行
 #                      どこに何があるか  {"list":true}
 #                      **値を出さずに形だけ** {"collection":"...","keys_only":true}
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
-#   firestore_delete … 消す   {"collection":"islandIdeas","doc":"ID"}
+#   firestore_delete … 書類を1つ消す。**既定では1バイトも消さない**（#291 の 4-b）
+#                      {"collection":"islandRate","doc":"ID"}              … 下見
+#                      {"collection":"islandRate","doc":"ID","apply":true} … 消す
+#                      **消せるのは firestore_delete.py の DELETABLE に載って
+#                      いる4本だけ**（その日限り／その場限りのもの）。視聴者さんの
+#                      字も、お金の台帳も、apply を付けても消せない。表に無い名前は
+#                      **引きもせずに**弾く。引っ込めたいだけなら firestore_write で
+#                      hidden を立てる。**書類IDも中身もログに出さない**（ログは公開）
+#   firestore_delete_selftest
+#                    … 上の縛りを偽の Firestore で動かす。
+#                      **本番にも資格情報にも触らない**（手元でも走る）
 #
 # 北欧旅のぶん（docs/nordic-depart.md）。ふだんは画面から入れるもので、
 # ここはそれが使えないときの逃げ道。
