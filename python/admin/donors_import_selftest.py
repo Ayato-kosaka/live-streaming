@@ -3,7 +3,7 @@
     python3 python/admin/donors_import_selftest.py
 
 **本番には1バイトも出ない。** Firestore も BigQuery も資格情報も要らない
-（`donors_import.py` が触る口を偽物に差し替えてある）。確かめるのは6つ:
+（`donors_import.py` が触る口を偽物に差し替えてある）。確かめるのは8つ:
 
   1. **下見と apply が同じ数を出す。** 「画面のぶんを残した」まで一致する
      （ここが壊れていた。下見 0人 → apply 6人）
@@ -16,6 +16,22 @@
   6. **出力を grep して、どねID・呼び名・チャンネルIDが0件**
      （0件を信じる前に、**その探し方が仕込んだ字に当たること**と、
      **手元で回せば同じ道からそれが出ること**を先に見る）
+  7. **どの器を通っても、書く口に届かない。** 一覧・生成器・引いた中身の
+     中に入っている書類まで、器ごとに1本ずつ叩く
+  8. **塞いでも、読む側の数え方が変わらない。** 3本の道具が下見で使って
+     いる読みかたを、塞ぐ前と突き合わせる
+
+## なぜ器ごとに叩くのか（7）
+
+本物は、同じ「引く」でも**返す器が型ごとに違う。** `Query.get()` と
+`CollectionReference.get()` は list、`stream()` は生成器、`list_documents()`
+`collections()` `get_all()` も一覧。引いた中身（`to_dict()`）の中に書類が
+入っていることもある。**器を1つ素通りさせると、そこから `delete()` が通る。**
+実際、生成器だけ塞げていて list が全部素通りしていた。
+
+**「止まった」も、0件と同じに扱わない**（`docs/island-misses.md` #79）。
+止まったのが「塞いだから」なのか「そもそもその道を通っていない」のかは
+分けられないので、**まず塞がないで同じ道を通して、本当に書けることを見る。**
 
 ## なぜ「引いた回数」まで数えるのか（3）
 
@@ -353,6 +369,270 @@ def case5_apply():
     ck("初めて投げ銭した日が残っている", kept_first, "残っている")
 
 
+# ------------------------------------------------- 器を並べた偽の Firestore
+
+# **本物は、同じ「引く」でも器が型ごとに違う。**
+#   Query.get() / CollectionReference.get() … list
+#   stream() / collections() / list_documents() … 生成器
+#   引いた中身（to_dict()）の中には、書類そのものが入っていることがある
+# 塞ぎ方が器に依存していないかは、**器ごとに1本ずつ叩かないと言えない。**
+
+
+class Held:
+    """DocumentSnapshot のかわり。**`reference` から書ける。**"""
+
+    def __init__(self, ref, data):
+        self.reference = ref
+        self._data = data
+
+    @property
+    def exists(self) -> bool:
+        return True
+
+    def to_dict(self):
+        return dict(self._data)
+
+
+class RichRef:
+    """DocumentReference のかわり。入れ物も返せば、消すこともできる。"""
+
+    def __init__(self, client, col, key):
+        self.client, self.col, self.key = client, col, key
+
+    def collection(self, name):
+        return RichCol(self.client, f"{self.col}/{self.key}/{name}")
+
+    def get(self):
+        return Held(self, self.client.store.get(self.key, {}))
+
+    def set(self, data, merge=False):
+        self.client.writes.append(("set", self.key))
+        self.client.store.setdefault(self.key, {}).update(data)
+
+    def delete(self):
+        self.client.writes.append(("delete", self.key))
+        self.client.store.pop(self.key, None)
+
+
+class RichQuery:
+    """Query のかわり。**`get()` は list、`stream()` は生成器**（本物と同じ）。"""
+
+    def __init__(self, client, col):
+        self.client, self.col = client, col
+
+    def where(self, *a, **k):
+        return self
+
+    def select(self, *a, **k):
+        return self
+
+    def limit(self, n):
+        return self
+
+    def _held(self):
+        return [Held(RichRef(self.client, self.col, k), v)
+                for k, v in self.client.store.items()]
+
+    def get(self):
+        return self._held()
+
+    def stream(self):
+        return iter(self._held())
+
+
+class RichCol(RichQuery):
+    def document(self, key):
+        return RichRef(self.client, self.col, key)
+
+    def list_documents(self):
+        return [RichRef(self.client, self.col, k) for k in self.client.store]
+
+
+class Rich:
+    """偽の Firestore。**書いた先を1件ずつ覚える。**"""
+
+    def __init__(self):
+        # 引いた中身の中に書類が入っている形（本物にもある）。
+        # 辞書の値・一覧の中、どちらも入りうる
+        self.store = {
+            "a": {"n": 1},
+            "b": {"n": 2},
+        }
+        self.writes: list = []
+        self.store["a"]["ref"] = RichRef(self, "x", "a")
+        self.store["b"]["refs"] = [RichRef(self, "x", "b")]
+
+    def collection(self, name):
+        return RichCol(self, name)
+
+    def collections(self):
+        return [RichCol(self, "x")]
+
+    def get_all(self, keys):
+        return [Held(RichRef(self, "x", k), self.store.get(k, {}))
+                for k in keys]
+
+
+def ways() -> dict:
+    """**書く口へ行ける道**を、器ごとに1本ずつ。
+
+    返すのは「これから `delete()` を叩くもの」の一覧。
+    """
+    return {
+        "query.get()（list）":
+            lambda c: [s.reference
+                       for s in c.collection("x").where("n", "==", 1).get()],
+        "query.stream()（生成器）":
+            lambda c: [s.reference
+                       for s in c.collection("x").where("n", "==", 1).stream()],
+        "collection.get()（list）":
+            lambda c: [s.reference for s in c.collection("x").get()],
+        "collection.stream()（生成器）":
+            lambda c: [s.reference for s in c.collection("x").stream()],
+        "select().get()（list）":
+            lambda c: [s.reference
+                       for s in c.collection("x").select(["n"]).get()],
+        "list_documents()（list）":
+            lambda c: list(c.collection("x").list_documents()),
+        "client.collections()（list）":
+            lambda c: [col.document("a") for col in c.collections()],
+        "get_all()（list）":
+            lambda c: [s.reference for s in c.get_all(["a"])],
+        "引いた中身の中の書類（辞書の値）":
+            lambda c: [c.collection("x").document("a").get().to_dict()["ref"]],
+        "引いた中身の中の書類（一覧の中）":
+            lambda c: c.collection("x").document("b").get().to_dict()["refs"],
+        "書類 → 入れ物 → 書類":
+            lambda c: [c.collection("x").document("a")
+                        .collection("y").document("z")],
+    }
+
+
+def case7_ways():
+    print("\n[7] どの器を通っても、書く口に届かない")
+    for name, way in ways().items():
+        # **先に、塞がないで通す。** 「止まった」が「塞いだから」なのか
+        # 「そもそもその道を通っていない」のかは、これを見ないと言えない
+        # （`docs/island-misses.md` #79）
+        raw = Rich()
+        n = 0
+        for r in way(raw):
+            r.delete()
+            n += 1
+        ck(f"{name} — 塞がなければ書ける（道が通っている）",
+           n > 0 and len(raw.writes) == n, len(raw.writes))
+
+        # 同じ道を、塞いで通す
+        c = Rich()
+        stopped = False
+        try:
+            for r in way(_fs.readonly(c)):
+                r.delete()
+        except _fs.ReadOnly:
+            stopped = True
+        ck(f"{name} — 塞ぐと止まる", stopped, "止まった" if stopped else "通った")
+        ck(f"{name} — 書かれていない", not c.writes, len(c.writes))
+
+
+class PlainRef:
+    """引くだけの書類。**読む側の式をそのまま通すために使う。**"""
+
+    def __init__(self, data):
+        self._data = data
+
+    def get(self):
+        return Snap(self._data)
+
+    def set(self, data, merge=False):
+        raise AssertionError("ここは書かれてはいけない")
+
+
+class PlainCol:
+    def __init__(self, store, name):
+        self.store, self.name = store, name
+
+    def document(self, key):
+        return PlainRef(self.store.get(key))
+
+
+class Plain:
+    def __init__(self, store):
+        self.store = store
+
+    def collection(self, name):
+        return PlainCol(self.store, name)
+
+
+# 本番と同じ形（`islandCharacter` と `nordicDays`）。
+# **中身の形が違うと、器を広げて壊れたかどうかが分からない**
+BOOKS = {
+    "sunny": {
+        "emoji": "🐟",
+        "editedAt": "2026-09-12T13:20:00+00:00",
+        "migratedFrom": {"plain": {"driveId": "d1", "sha": "ab", "bytes": 10}},
+        "images": {"plain": {"sizes": {"128": 900, "256": 2400}}},
+    },
+    "rainy": {
+        "emoji": "🍑",
+        "migratedFrom": {"plain": {"driveId": "d2", "sha": "cd", "bytes": 20}},
+    },
+    "2026-09-12": {
+        "day": "2026-09-12",
+        "people": [
+            {"channelId": channel_id(11), "name": "てで足した人"},
+            {"channelId": channel_id(12), "name": "BigQuery から来た人"},
+        ],
+    },
+}
+
+
+def case8_readers():
+    print("\n[8] 塞いでも、読む側の数え方が変わらない")
+    raw = Plain(BOOKS)
+    ro = _fs.readonly(raw)
+
+    # characters_migrate:「もう済んでいるか」
+    def done_of(c):
+        was = (c.collection("islandCharacter").document("rainy")
+               .get().to_dict() or {}).get("migratedFrom") or {}
+        return (was.get("plain") or {}).get("driveId")
+    ck("済んでいるかの見かた（塞ぐ前と同じ）",
+       done_of(ro) == done_of(raw) and done_of(raw) is not None, "同じ")
+
+    # characters_migrate:「画面から直してある」
+    def touched_of(c):
+        had = (c.collection("islandCharacter").document("sunny")
+               .get().to_dict() or {})
+        return bool(had.get("editedAt") and had.get("migratedFrom")), had
+    a, had_ro = touched_of(ro)
+    b, had_raw = touched_of(raw)
+    ck("画面から直してあるかの見かた（塞ぐ前と同じ）", a == b is True, a)
+    ck("引いた中身は辞書のまま", isinstance(had_ro, dict), type(had_ro).__name__)
+    ck("引いた中身が1文字も変わっていない", had_ro == had_raw, "同じ")
+
+    # nordic_pull:「いま名簿に何人いるか」
+    def roster(c):
+        return (c.collection("nordicDays").document("2026-09-12")
+                .get().to_dict() or {}).get("people", [])
+    r_ro, r_raw = roster(ro), roster(raw)
+    ck("名簿は一覧のまま（len が取れる）", isinstance(r_ro, list), type(r_ro).__name__)
+    ck("名簿の人数（塞ぐ前と同じ）", len(r_ro) == len(r_raw) == 2, len(r_ro))
+    ck("名簿の中身が1文字も変わっていない", r_ro == r_raw, "同じ")
+
+    # donors_import:「画面から直してある」
+    def edited_of(c):
+        cur = c.collection("islandCharacter").document("sunny").get().to_dict()
+        return bool(cur and cur.get("editedAt"))
+    ck("画面から直した行の見かた（塞ぐ前と同じ）",
+       edited_of(ro) == edited_of(raw) is True, edited_of(ro))
+
+    # **深いところも塞がっている。** 辞書を下りた先から書かれては意味がない
+    deep_ok = isinstance(
+        (ro.collection("islandCharacter").document("sunny")
+         .get().to_dict() or {}).get("images"), dict)
+    ck("入れ子の辞書も辞書のまま", deep_ok, "辞書")
+
+
 def at_hand() -> str:
     """**手元で回したときの**出力を、袋を汚さずに取る。
 
@@ -422,6 +702,8 @@ def main() -> int:
     case3_read()
     case4_force()
     case5_apply()
+    case7_ways()
+    case8_readers()
     print("\n[6の結果]")
     case_grep()
     sys.stdout, sys.stderr = REAL_OUT, REAL_ERR

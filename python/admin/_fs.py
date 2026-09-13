@@ -69,19 +69,37 @@ _WRITE = frozenset({
     "bulk_writer", "transaction", "recursive_delete", "write",
 })
 
-_PLAIN = (str, bytes, bytearray, bool, int, float, complex,
-          dict, list, tuple, set, frozenset)
+# それ以上中を覗く必要のないもの
+_FLAT = (str, bytes, bytearray, bool, int, float, complex)
+
+# 書く口へ行ける道の入口になる属性
+_DOOR = ("collection", "document", "stream", "where", "reference",
+         "to_dict", "get", "set")
 
 
 def _veil(v):
-    """返ってきたものが Firestore の口なら、それも塞いだ写しにする。"""
-    if v is None or isinstance(v, _PLAIN):
+    """返ってきたものが Firestore の口なら、それも塞いだ写しにする。
+
+    **器ごと見る。** 本物は同じ「引く」でも返す器が型で違う
+    （`Query.get()` は list、`stream()` は生成器、`list_documents()` や
+    `collections()` も一覧）。器を素通りさせると、中の書類から
+    `delete()` が通る。引いた中身（`to_dict()`）の中に書類が入っている
+    ことも本物にはあるので、辞書と一覧は中まで下りる。
+    """
+    if v is None or isinstance(v, _FLAT):
         return v
+    if isinstance(v, dict):
+        return {k: _veil(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple, set, frozenset)):
+        out = [_veil(x) for x in v]
+        try:
+            return type(v)(out)
+        except TypeError:
+            # 名前つきの組など、作り方の違う器。**素通りさせるより落とす**
+            return type(v)(*out)
     # 入れ物・書類・問い合わせ・引いた中身。ここから先も書けてはいけない。
     # **「書く口を持っている」も見る**（`set` / `get` だけを持つ書類がある）
-    if any(hasattr(v, n) for n in
-           ("collection", "document", "stream", "where", "reference",
-            "to_dict", "get", "set")):
+    if any(hasattr(v, n) for n in _DOOR):
         return _ReadOnly(v)
     if hasattr(v, "__next__"):
         return (_veil(x) for x in v)
