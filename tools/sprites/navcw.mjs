@@ -7,7 +7,7 @@
  * 入っているのに実測 61.0ch だった。島の字は和文・かな・欧文が混ざるので、
  * **1文字あたりの幅は `1em` ではない。**
  *
- * そこで、部品ごとに「描かれた1文字あたりの px」を全109面ぶん集めて、
+ * そこで、部品ごとに「描かれた1文字あたりの px」を**書き出した面ぜんぶ**から集めて、
  * **いちばん狭いもの**から上限を出す。狭い字（欧文まじり）ほど同じ px に
  * 多く入るので、そこで 45ch に収まれば、他の行は必ず収まる。
  *
@@ -17,16 +17,20 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { readFileSync } from "fs";
+import { collect, banner, tally } from "./pages.mjs";
 
 const SPORT = process.env.SPORT || "4140";
-const PAGES = (process.env.PAGES ||
-  readFileSync("/home/user/live-streaming/tools/sprites/pcpages.txt", "utf8")
-    .split("\n").map((x) => x.trim()).filter(Boolean).join(",")).split(",");
+/* 面は**書き出しを歩いて**集める（`pages.mjs`）。手で書いた一覧は、面が増える
+   たびに誰かが足さないと古くなる。実際 109行で止まっていて、21面が一度も
+   測られないまま「0件」に数えられていた（`docs/island-misses.md` #79）。 */
+const C = collect();
+const PAGES = C.pages;
 const W = Number(process.env.W || 1440);
 const LIMIT = Number(process.env.LIMIT || 45);
 const GROUPS = (process.env.SEL || ".zk-lead|.panel p|.nwords p|.nwhy p|.phead-lead").split("|");
 const PROSE = "p,li,dd,blockquote,figcaption,.blurb,summary";
+
+console.log(banner(C) + "\n");
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -49,11 +53,22 @@ await ctx.addInitScript(() => {
 const p = await ctx.newPage();
 const hits = new Map(GROUPS.map((g) => [g, []]));
 const centred = [];
+/* **測れた面を数える。** 「0本」が「測って0本」なのか「その面を開けていない」
+   のか、数を出さないと読む側に区別がつかない（#79）。 */
+let measured = 0;
+const failed = [];
 for (const path of PAGES) {
-  await p.goto(`http://localhost:${SPORT}${path === "/" ? "/index" : path}.html`, {
-    waitUntil: "domcontentloaded",
-    timeout: 60000,
-  });
+  try {
+    await p.goto(`http://localhost:${SPORT}${path === "/" ? "/index" : path}.html`, {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
+  } catch (e) {
+    failed.push({ path, why: String(e.message || e).slice(0, 80) });
+    console.log(`開けず ${path}`);
+    continue;
+  }
+  measured++;
   await p.waitForTimeout(300);
   await p.evaluate(async () => {
     const h = document.body.scrollHeight;
@@ -104,7 +119,9 @@ for (const path of PAGES) {
 }
 await b.close();
 
-console.log(`@${W}px — 部品ごとの「描かれた1文字ぶん」と、そこから逆算した ${LIMIT}文字ぶんの幅\n`);
+console.log(`\n${tally(C, measured)}  @${W}px`);
+if (failed.length) for (const f of failed) console.log(`  開けず ${f.path} — ${f.why}`);
+console.log(`\n@${W}px — 部品ごとの「描かれた1文字ぶん」と、そこから逆算した ${LIMIT}文字ぶんの幅\n`);
 console.log("| 部品 | 本数 | 超えている行の 1文字ぶん いちばん狭い | その行 | いちばん長い行 | 45文字ぶん（切り下げ） | 参考 |");
 console.log("| --- | ---: | ---: | --- | ---: | ---: | --- |");
 for (const [g, rows] of hits) {

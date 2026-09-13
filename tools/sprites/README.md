@@ -158,11 +158,11 @@ SPORT=4600 node tools/sprites/mefaces.mjs                  # 書く欄の顔が�
 **比べる相手は「規則の当たらないところに置いた素の部品」にする。** 同じ親に置くと
 `.dform input` が子孫に当たって素の部品にも効き、**正しい欄27件が全部「否」**と出る。
 
-## 公開している109面を、**PC の幅で**見る
+## 公開している面ぜんぶを、**PC の幅で**見る
 
 全面を回る道具は `crawl.mjs` 1本しかなく、それが `390x844` の1本きりだった。
 PC 幅を使う道具は29本あるが、どれも手で選んだ面を数枚見るためのもので、
-**109面ぜんぶを PC の幅で見たことは一度も無かった**（`docs/island-misses.md` #77）。
+**公開している面ぜんぶを PC の幅で見たことは一度も無かった**（`docs/island-misses.md` #77）。
 
 見る幅は `1440x900`（ふつうのノート）/ `1920x1080`（大きい画面）/
 `820x1180`（タブレットの縦。**スマホと PC の境目**）。
@@ -180,7 +180,8 @@ curl -s https://live-streaming-d3cac.web.app/island-api/characters > /tmp/ch.jso
 python3 tools/sprites/pcchars.py
 
 cd tools/sprites
-SPORT=5400 node pcsweep.mjs      # 109面×3幅を撮る＋数える（約20分）
+node pagescheck.mjs              # まず「何面を測ることになるか」を見る
+SPORT=5400 node pcsweep.mjs      # 全面×3幅を撮る＋数える（約20分）
 SPORT=5400 node pchit.mjs        # 押しどころ 48px
 SPORT=5400 node pcink.mjs        # 字の濃さ（重い。1面20〜30秒）
 SPORT=5400 node pcnav.mjs        # 入口が出たり消えたりする境目
@@ -189,13 +190,24 @@ python3 pcsheet.py 1920          # 撮った絵を16面ずつ1枚に貼る
 
 | ファイル | 何をする |
 | --- | --- |
-| `pcsweep.mjs` | 109面×3幅を `/tmp/pcsweep/<幅>/` に撮って、横あふれ・本文1行の字数・字の柱の幅と左右の空き・絵の引き伸ばしを数える。`NOSHOT=1` で撮らずに数だけ、`CAP=` で1面の時計 |
+| `pcsweep.mjs` | 全面×3幅を `/tmp/pcsweep/<幅>/` に撮って、横あふれ・本文1行の字数・字の柱の幅と左右の空き・絵の引き伸ばしを数える。`NOSHOT=1` で撮らずに数だけ、`CAP=` で1面の時計 |
 | `pchit.mjs` | 押しどころを `elementFromPoint` で測る。**390 も回して「PC 幅でだけ割れたもの」を分けて出す** |
 | `pcink.mjs` + `pcink.py` | 字の濃さ。`inkpx` と同じ計算で、撮った2枚を**その場で読んですぐ消す**（dpr2 の全面の絵を残すと箱の空きが尽きる） |
 | `pcnav.mjs` | 幅を1pxずつ動かして、頭のバーに並ぶ入口の数が変わる境目を出す |
 | `pcchars.py` | キャラクターの絵の **256** を `/tmp/chars` に足す |
-| `pcsheet.py` | 109面を16面ずつ1枚に貼る。**数で絞ったあと、必ず元の絵を開くこと** |
-| `pcpages.txt` | 本番の sitemap から取った109面 |
+| `pcsheet.py` | 撮った面を16面ずつ1枚に貼る。**数で絞ったあと、必ず元の絵を開くこと** |
+| `pages.mjs` | **測る面を書き出しから集める。**`pcsweep` / `pchit` / `pcink` / `navcw` / `navuse` の5本がここを呼ぶ。除く面は**理由ごとここに書いて毎回出す** |
+| `pagescheck.mjs` | 集めた面と手書きの一覧を**両側とも**突き合わせる。`SPORT=` を渡すと配っているものに当たるかまで見る |
+| `pcpages.txt` | **凍らせた記録。いまの一覧ではない。** 本番の sitemap から取った109面で、`LIST=` で渡すと当時の数字を出し直せる |
+
+**面の一覧を手で書かない。** `pcpages.txt` は本番の sitemap から取った109面だったが、
+同じ書き出しを `crawl.mjs` が歩くと130面あった。`/about` `/atlas` `/design`
+`/island/*` `/nordic/photos` `/me*` `/404` `/apps/spelieve` `/roulette` の21面が
+**一度も測られないまま「0件」に数えられていた。**
+いまは `pages.mjs` が書き出しを歩くので、面を1つ作れば次の回から測られる。
+**除く面があるときは一覧から抜かず、`pages.mjs` の `EXCLUDE` に理由ごと書く**
+——5本とも、いちばん上と終わりに「何面測ったか・何面を何の理由で除いたか」を出す
+（`docs/island-misses.md` #79）。
 
 **4本とも `PROBE=1` で自己確認が回る。** 落ちるはずの仕込みと通るはずの仕込みを
 両方置いて、毎回どちらも出す。**挙がらない仕込みがあれば、その数え方は届いていない**

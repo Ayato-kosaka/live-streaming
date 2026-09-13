@@ -9,19 +9,23 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { readFileSync } from "fs";
+import { collect, banner, tally } from "./pages.mjs";
 
 const SPORT = process.env.SPORT || "4140";
 const WIDTHS = (process.env.W || "390,1440,1920").split(",").map(Number);
 const SELS = (process.env.SEL || ".zk-lead|.panel p|.nwords p|.nwhy p|.phead-lead").split("|");
-const PAGES = (process.env.PAGES ||
-  readFileSync("/home/user/live-streaming/tools/sprites/pcpages.txt", "utf8")
-    .split("\n").map((x) => x.trim()).filter(Boolean).join(",")).split(",");
+/* 面は**書き出しを歩いて**集める（`pages.mjs`）。手で書いた一覧だと、
+   面が増えても「数 0」としか出ず、見ていないことが数に出ない（#79）。 */
+const C = collect();
+const PAGES = C.pages;
+
+console.log(banner(C) + "\n");
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
 });
+const measured = new Map();
 console.log("| 幅 | 部品 | 数 | 使われている幅 いちばん広い | その面 | 入れた上限 | 上限に当たっている数 |");
 console.log("| --- | --- | ---: | ---: | --- | ---: | --- |");
 for (const W of WIDTHS) {
@@ -41,10 +45,17 @@ for (const W of WIDTHS) {
   });
   const p = await ctx.newPage();
   const acc = new Map(SELS.map((s) => [s, { n: 0, w: 0, path: "", cap: "", hit: 0 }]));
+  let seen = 0;
   for (const path of PAGES) {
-    await p.goto(`http://localhost:${SPORT}${path === "/" ? "/index" : path}.html`, {
-      waitUntil: "domcontentloaded", timeout: 60000,
-    });
+    try {
+      await p.goto(`http://localhost:${SPORT}${path === "/" ? "/index" : path}.html`, {
+        waitUntil: "domcontentloaded", timeout: 60000,
+      });
+    } catch (e) {
+      console.log(`開けず ${W} ${path} — ${String(e.message || e).slice(0, 60)}`);
+      continue;
+    }
+    seen++;
     await p.waitForTimeout(250);
     const got = await p.evaluate((SELS) => {
       const out = {};
@@ -74,6 +85,12 @@ for (const W of WIDTHS) {
   }
   for (const [sel, a] of acc)
     console.log(`| ${W} | \`${sel}\` | ${a.n} | ${Math.round(a.w)}px | ${a.path} | ${a.cap || "(なし)"} | ${a.hit ? `当たっている ${a.hit}件` : "**1件も当たっていない＝効いていない**"} |`);
+  measured.set(W, seen);
   await ctx.close();
 }
 await b.close();
+
+/* **幅ごとに、何面を見たのかを出す。** 「数 0」が「置いていない」なのか
+   「その面を開けていない」なのか、これが無いと読めない（#79）。 */
+console.log("");
+for (const [W, seen] of measured) console.log(`幅 ${W}: ${tally(C, seen)}`);
