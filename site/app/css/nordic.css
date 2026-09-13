@@ -88,7 +88,9 @@
 /* 数字の下の一行。読ませる字なので --ink-3 は使えない。
    紙のムラの沈んでいるほうで 3.30 : 1 しか出ない（docs/island-review-2.md 5.3）。 */
 .tnow-count-w { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
-.is-far .tnow-count-n b { color: var(--accent-deep); }
+/* 残りの距離。札の地が `--accent` 10% の紙なので、素の `--accent-deep` では
+   4.37 : 1。**この面でいちばん大きい数字**なので、字のほうを `--accent-ink` に下ろす。 */
+.is-far .tnow-count-n b { color: var(--accent-ink); }
 
 /* 進み具合。数字だけだと減っているのが分からない。 */
 .tnow-bar {
@@ -1164,13 +1166,14 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
 .gwords b { font-size: 13px; font-weight: 900; }
 /* 読みがな。桃の濃いほう（--accent-deep）を素で紙に置くと、縞の暗いほうの行で
    3.45 : 1 まで落ちる（描いた画素で40か所。11.5px なので細くて余計に効く）。
-   `--accent-deep` は「同じものの濃いほう。単独で使わない」（island-world 3.2）
-   なので、墨と混ぜて沈める。色相はそのまま、5.20 : 1 まで開く。 */
+   ここは墨と混ぜて逃がしていたが、**同じ逃がし方を3つの面が別々の割合で
+   持っていた**ので、`--accent-ink` に寄せた（島の赤を字にするときの1つの答え）。
+   実測 5.54 : 1 → 5.4 : 1。色相は #da1647 のまま。 */
 .gwords i {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
-  color: color-mix(in srgb, var(--accent-deep) 50%, var(--ink));
+  color: var(--accent-ink);
 }
 .gwords span { font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 

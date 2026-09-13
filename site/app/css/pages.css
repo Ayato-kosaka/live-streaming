@@ -1180,7 +1180,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 /* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
 .muted { color: var(--ink-2); font-size: var(--fs-body); font-weight: 600; line-height: 1.85; }
-.err { color: var(--accent-deep); font-size: var(--fs-body); font-weight: 900; margin: var(--sp-2) 0 0; }
+/* 書けなかったときの一行。**いちばん読まれないと困る字**なのに、紙の上で
+   4.32 : 1、板の中の紙のムラでは 3.82 : 1 だった。`--accent-ink` に下ろす。 */
+.err { color: var(--accent-ink); font-size: var(--fs-body); font-weight: 900; margin: var(--sp-2) 0 0; }
 .noteform { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
 .noteform input {
   flex: 1; min-width: 0;
@@ -1517,21 +1519,22 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .count b { font-size: var(--fs-h3); margin: 0 2px; }
 /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
-   金にすると「押せる板のふち」と同じ色になって、押せそうに見える。 */
+   金にすると「押せる板のふち」と同じ色になって、押せそうに見える。
+   **札の地が桃なので、字は `--accent-ink`。** 地と同じ赤のままだと 3.49 : 1。 */
 .count.is-today {
   /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
      枠は付けない。オリーブの札と同じ「平らな1種類」のままにする。 */
   background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
-.count.is-today b { color: var(--accent-deep); }
+.count.is-today b { color: var(--accent-ink); }
 /* いま行っている企画。桃は「いま／新しい」の色なので、今日ぶんと同じ札にする
    （`content/plans.ts` の `planPhase`）。 */
 .count.is-now {
   background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
-.count.is-now b { color: var(--accent-deep); }
+.count.is-now b { color: var(--accent-ink); }
 /* 過ぎた日。同じ理由で opacity をやめ、面だけ一段沈める。 */
 .count.is-past { background: color-mix(in srgb, var(--chip) 46%, var(--paper-out)); }
 
