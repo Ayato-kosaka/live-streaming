@@ -326,7 +326,8 @@ def main() -> int:
             log.info("--- BigQuery ---")
             detail["bigquery"] = dump_bigquery(c, a.dry_run, tmp)
 
-        log.info("--- 旅の写真 ---")
+        # 旅の写真だけでなく住人の絵も同じ口を通る（置き場の 94% はそちら）
+        log.info("--- 置き場の実体（旅の写真・住人の絵） ---")
         detail["photos"] = photos.dump(c, a.dry_run)
 
         if not a.dry_run:
