@@ -59,6 +59,28 @@ ffmpeg 経由でも、`yt-dlp` 自身の downloader でも、HLS でも DASH で
 **PO Token があっても、IP の評判が悪ければ `Sign in to confirm you're not a bot`
 は出る。** ランナーの IP は世界中の取得に使われているので、出るほうが多い。
 
+### 2026-09-13 に実測したこと
+
+**Cookie 無しでは、いま1本も取れない。** 別々のランナー3台で、9つの口を3周ずつ
+（27回×3台＝81回）当たって、**81回すべて `Sign in to confirm you're not a bot`。**
+PO Token は作れている（step 6 が通っている）。
+
+しかも**断られるのが速い。1.2〜2.0秒。** これが効く。
+遅れて断られるなら「評判の計算に乗って、たまたま落ちた」だが、
+1秒台で即答するのは**player に聞いた時点で門前払い**という意味になる。
+`tv_simply` も `android_vr` も `ios` も同じ秒数で同じ文句を返す。
+**口の選び方では抜けられない。粘る回数の問題でもない。**
+
+| 回 | 時刻(UTC) | ランナー | 結果 |
+| --- | --- | --- | --- |
+| [34783187066](https://github.com/Ayato-kosaka/live-streaming/actions/runs/34783187066) | 21:14 | 別々 | 27回すべてボット確認 |
+| [34783286496](https://github.com/Ayato-kosaka/live-streaming/actions/runs/34783286496) | 21:15 | 別々 | 27回すべてボット確認 |
+| [34783340160](https://github.com/Ayato-kosaka/live-streaming/actions/runs/34783340160) | 21:17 | 別々 | 27回すべてボット確認 |
+
+**一方、毎晩の取り込み（`schedule_fetch_chat.yml`）は同じランナーで通っている。**
+違いは Cookie を使っていることだけ。だから**Cookie が答え**だと言える。
+入れてもらう手順は issue #322。
+
 ## 落とし方の作り
 
 `tools/clip/fetch.py`。要点は2つ。

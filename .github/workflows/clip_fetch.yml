@@ -13,10 +13,6 @@ name: 切り抜きの mp4 を取る
 # 無ければ無いまま走る。
 
 on:
-  # **試すあいだだけの口。** workflow_dispatch は master に載るまで押せないので、
-  # 枝に押した回で3回ぶん確かめる。master に入れる前に落とす。
-  push:
-    branches: [clip-mp4]
   workflow_dispatch:
     inputs:
       video:
