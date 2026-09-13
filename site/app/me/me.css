@@ -327,6 +327,15 @@
 .mp-care .nph-post-row input,
 .mp-care .nph-post-row select,
 .mp-care textarea { min-height: 48px; }
+/* 段を動かす道具の作業台。一覧の1件の中に入る板なので、`.dform` の素の
+   余白（`--sp-3`）では本文と押しどころのあいだが空きすぎる。
+   投げ銭の紐付け（`.mp-donor-form`）と同じだけ詰める。**同じ面に立つ
+   2つの作業台が、違う厚みの板に見えないようにする。** */
+.mp-care-form {
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
 .mp-care-text {
   margin: 0;
   font-size: var(--fs-body);

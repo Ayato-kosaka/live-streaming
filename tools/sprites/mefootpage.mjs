@@ -16,6 +16,10 @@
  * （状態・チャンネル名・あやと本人・「◯月◯日に来た」）を必ず1件入れる。
  * 「◯月◯日に来た」は 2026-09-13 の直しで 30人中28人に出るようになった欄で、
  * ここが増えたぶんの折り返しを見ないと、この面を見たことにならない。
+ *
+ * 企画の行の `<select>` は、**いちばん長い段の名前（「これから」）を選んだ
+ * 状態**を必ず1件入れる。選ぶ欄の幅は中の字で決まるので、いちばん短い
+ * 「提案」だけで撮ると、横あふれの出る幅を撮らずに合格にしてしまう。
  */
 import { readFileSync, writeFileSync } from "fs";
 
@@ -114,11 +118,17 @@ ${foot}
 </div>
 </li>`;
 
-const carePlan = (title, foot) => `<li>
+const carePlan = (title, foot, pick) => `<li>
 <p class="mp-care-text">${title}</p>
 ${foot}
-<label class="nph-post-row"><span>どの段へ</span><select><option>提案</option><option>これから</option><option>やった</option></select></label>
+<div class="dform mp-care-form">
+<label class="nph-post-row"><span>どの段へ</span><select>${
+  ["提案", "これから", "やった"]
+    .map((o) => `<option${o === pick ? " selected" : ""}>${o}</option>`)
+    .join("")
+}</select></label>
 <label class="nph-post-row"><span>ページの id</span><input type="text" maxlength="40" placeholder="nordic / iran-walk。空で外す"/></label>
+</div>
 <div class="mp-care-acts">
 <button class="mp-send is-small">動かす</button>
 <button class="mp-send is-small is-quiet">しまう</button>
@@ -158,10 +168,17 @@ ${donorRow("たいpi", donorFoot("紐付け待ち", "@taipi-3kd", false, ""), ""
 ${careNote("北欧のごはん、現地のスーパーで買ったものが見たいです", careNoteFoot("リトアニア", "9月13日", "ひめひめ"))}
 ${careNote("バスの中の景色をもっと流してほしい", careNoteFoot("北欧旅ぜんぶ", "9月12日", "ゆずたつ"))}
 </ul>
+<div class="mp-care-acts" id="a-carenote">
+<button class="nt-obtn">ぜんぶ見る</button>
+<button class="nt-obtn">しまったものを見る</button>
+</div>
 <ul class="mp-care" id="u-careplan">
-${carePlan("フード＆ワイン祭りに行く", carePlanFoot("これから", "ひめひめ", 12))}
-${carePlan("ヘルシンキでサウナ配信", carePlanFoot("提案", "たいpi", 0))}
+${carePlan("フード＆ワイン祭りに行く", carePlanFoot("これから", "ひめひめ", 12), "これから")}
+${carePlan("ヘルシンキでサウナ配信", carePlanFoot("提案", "たいpi", 0), "提案")}
 </ul>
+<div class="mp-care-acts" id="a-careplan">
+<button class="nt-obtn">しまったものを見る</button>
+</div>
 </section>
 
 <section class="panel paper" id="s-mine">
