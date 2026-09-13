@@ -11,6 +11,7 @@ import logging
 
 from youtube_api.client import get_youtube_client, execute_api_request
 from models.types import DiscoveredVideo
+from logsafe import mask
 from config import (
     YOUTUBE_CHANNEL_ID,
     DISCOVERY_LOOKBACK_DAYS,
@@ -54,7 +55,10 @@ def discover_completed_videos(
         raise ValueError("環境変数 YOUTUBE_CHANNEL_ID が設定されていません")
     
     if logger:
-        logger.info(f"Discovery 開始: チャンネル {YOUTUBE_CHANNEL_ID}, lookback {lookback_days} 日")
+        # チャンネルIDはあやと本人のものだが、公開の場では同じように伏せる。
+        # 毎晩のログを「当たり0なら合格」で読めるようにするため。
+        # 0 でない理由を毎回思い出すのは、そのうち見落としになる（python/logsafe.py）
+        logger.info(f"Discovery 開始: チャンネル {mask(YOUTUBE_CHANNEL_ID)}, lookback {lookback_days} 日")
     
     # Step 1: uploads playlist ID を取得
     uploads_playlist_id = _get_uploads_playlist_id(logger)
@@ -134,7 +138,7 @@ def _get_uploads_playlist_id(
     items = response.get("items", [])
     if not items:
         if logger:
-            logger.error(f"チャンネル {YOUTUBE_CHANNEL_ID} が見つかりません")
+            logger.error(f"チャンネル {mask(YOUTUBE_CHANNEL_ID)} が見つかりません")
         return None
     
     uploads_id = (

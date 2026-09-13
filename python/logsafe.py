@@ -65,3 +65,35 @@ def detail_lines(rows, public: bool | None = None) -> list:
     if public:
         return []
     return ["    " + "  ".join("" if c is None else str(c) for c in r) for r in rows]
+
+
+def mask(value, public: bool | None = None) -> str:
+    """文の途中に出る**1つの識別子**を、出してよいときだけそのまま返す。
+
+    `detail_lines` は「1人ずつの行」をまるごと落とすためのもので、
+    「チャンネル %s が見つかりません」のように**行そのものは残したい**
+    ところには使えない。行を落とすと、何が起きたのかが消える。
+
+    公開の場では、値の代わりに**短い指紋**（`#a3f9`）を返す。
+    ただの伏せ字（`***`）にすると、10件並んだときに何件が同じ人の話なのかが
+    分からなくなって、Actions のログから直しようがなくなる。
+    指紋なら、同じ値は同じ字になるので**追える**が、元には戻せない。
+
+    Args:
+        value: チャンネルID・ハンドル・どねID など、個人を指す値
+        public: 公開の場かどうか（省略すると `public_log()` を見る）
+
+    Returns:
+        そのままの値（手元）か、指紋（公開の場）
+    """
+    if public is None:
+        public = public_log()
+    if not public:
+        return "" if value is None else str(value)
+    if value is None or value == "":
+        return "（無い）"
+    # sha256 の頭だけ。桁を増やしても読みにくくなるだけで、
+    # ここで要るのは「同じか違うか」が分かることだけ
+    import hashlib
+
+    return "#" + hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:4]

@@ -12,6 +12,8 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import logging
 
+from logsafe import mask
+
 # Doneru Cloud Functions エンドポイント
 DONERU_TOKEN_URL = "https://donerutoken-3phus6cpxa-uc.a.run.app/doneruToken"
 DONERU_REFRESH_URL = "https://doneruyoutuberefresh-3phus6cpxa-uc.a.run.app/doneruYoutubeRefresh"
@@ -246,7 +248,9 @@ class DoneruTokenManager:
                 if self._token_expires_at is None:
                     self.logger.info(
                         f"トークン取得成功 (期限: 不明, "
-                        f"チャンネル: {self._cached_channel})"
+                        # 取れたチャンネルは公開の場では指紋だけ。
+                        # 「どのチャンネルの鍵か」は指紋で足りる（python/logsafe.py）
+                        f"チャンネル: {mask(self._cached_channel)})"
                     )
                 else:
                     exp_time = datetime.fromtimestamp(
@@ -255,7 +259,7 @@ class DoneruTokenManager:
                     remaining = self._token_expires_at - int(time.time())
                     self.logger.info(
                         f"トークン取得成功 (期限: {exp_time.isoformat()}, "
-                        f"残り {remaining} 秒, チャンネル: {self._cached_channel})"
+                        f"残り {remaining} 秒, チャンネル: {mask(self._cached_channel)})"
                     )
             
             return self._cached_token

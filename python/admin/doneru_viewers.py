@@ -29,6 +29,38 @@ from _fs import args, log
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
+
+
+def log_viewers(rows, known) -> None:
+    """1人ずつの一覧を出す。**公開の場では1行も出さない。**
+
+    `run_admin_script.yml` から回せるので、この出力も誰でも読める。
+    どねID・呼び名・紐付いたハンドルが1人ずつ並ぶ＝
+    「誰が、いつ、何回出したか」そのものになる（`python/logsafe.py`）。
+
+    Args:
+        rows: BigQuery から引いた1人1行
+        known: どねID -> `islandDonors` の書類
+    """
+    log.info("%-10s %-16s %5s  %-10s %-10s  %s",
+             "どねID", "呼び名", "回数", "はじめ", "さいご", "いまの紐付け")
+    lines = detail_lines([
+        (f"{r['pk']:<10}",
+         f"{(r['name'] or ''):<16}",
+         f"{r['n']:>5}",
+         f"{r['d0']:<10}",
+         f"{r['d1']:<10}",
+         (known.get(str(r["pk"])) or {}).get("handle")
+         or (known.get(str(r["pk"])) or {}).get("state") or "—")
+        for r in rows
+    ])
+    for line in lines:
+        log.info("%s", line)
+    if not lines and rows:
+        # 明細を落としたことが分かるようにする。黙って空にすると
+        # 「0人だった」と読み違える
+        log.info("（公開の場なので1人ずつは出しません。手元で回すと出ます）")
 
 
 def main() -> None:
@@ -63,13 +95,11 @@ def main() -> None:
     known = {d.id: (d.to_dict() or {}) for d in db.collection("islandDonors").stream()}
 
     log.info("Doneru で出してくれた人: %d人", len(rows))
-    log.info("%-10s %-16s %5s  %-10s %-10s  %s",
-             "どねID", "呼び名", "回数", "はじめ", "さいご", "いまの紐付け")
-    for r in rows:
-        k = known.get(str(r["pk"]))
-        state = (k or {}).get("handle") or (k or {}).get("state") or "—"
-        log.info("%-10s %-16s %5d  %-10s %-10s  %s",
-                 r["pk"], r["name"] or "", r["n"], r["d0"], r["d1"], state)
+    log_viewers(rows, known)
 
 
-main()
+# 取り込んだだけでは走らせない。`python/logsafe_selftest.py` が
+# log_viewers() だけを偽データで呼べるようにするため。
+# `run_admin_script.yml` は `python doneru_viewers.py` で回すので動きは変わらない
+if __name__ == "__main__":
+    main()
