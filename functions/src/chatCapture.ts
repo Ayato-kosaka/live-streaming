@@ -79,7 +79,84 @@ type Msg = {
   name: string;
   /** `textMessageEvent` などの生の種類。スパチャを後から選り分けるため */
   kind: string;
+  /**
+   * 投げ銭の額（`¥500` のような、YouTube が出している字）。
+   *
+   * **本文の無い投げ銭では、これがその人の残したものの全部。**
+   * 額の無い種別（ふつうのコメント・メンバーシップ）には入れない。
+   */
+  amount?: string;
+  /** 同じ額を数として。通貨をまたいで足すためではなく、並べ替えのため */
+  amountMicros?: number;
+  /** `JPY` など */
+  currency?: string;
 };
+
+/**
+ * 残さないもの。**「本文が無い」ではなく「人が何もしていない」で切る。**
+ *
+ * ## なぜここを間違えたか（2026-09-13）
+ *
+ * 前は `if (!messageId || !text) continue;` で、**本文の無いイベントを
+ * 丸ごと捨てていた。** スパチャは言葉を添えなくても投げられるので、
+ * 金額だけ投げてくれた人が `streamChatMessages` に1件も残らない。
+ * BigQuery の `chat_messages` を数えると、投げ銭 394件のうち **107件
+ * （27%）が本文なし**。**言葉を添えない人ほど、記録から消えていた。**
+ *
+ * 逆向きに、**ふつうのコメントで本文が空のものは残しても意味が無い**
+ * （表示するものが何も無い）ので、そこは今までどおり捨てる。
+ *
+ * 判断を「残す種別の一覧」にしないのは、**一覧に無い種別が増えたときに、
+ * また黙って落ちる**から（`docs/island-misses.md` #17）。捨てるほうを
+ * 数えるだけにして、知らない種別は残す側へ倒す。
+ */
+const NOISE = new Set([
+  /* 配信の終わり・モデレーション・消えた発言。人の応援ではない */
+  "chatEndedEvent",
+  "tombstone",
+  "messageDeletedEvent",
+  "userBannedEvent",
+  "sponsorOnlyModeStartedEvent",
+  "sponsorOnlyModeEndedEvent",
+]);
+
+/**
+ * この1件を溜めるか。
+ * @param {string} kind `snippet.type`
+ * @param {string} text `snippet.displayMessage`
+ * @return {boolean} 溜めるなら true
+ */
+export function keep(kind: string, text: string): boolean {
+  if (NOISE.has(kind)) return false;
+  /* **空かどうかは `!text` のまま見る。** `text.trim()` にすると、
+     空白だけのコメントが前は溜まっていたのに溜まらなくなる。
+     直すと決めたのは「本文の無い投げ銭」であって、**前から溜まって
+     いたものを減らす話ではない**（件数で突き合わせられなくなる）。 */
+  if (text) return true;
+  /* 本文が空。**種別を名乗らないものと、ふつうのコメントだけ捨てる。**
+     投げ銭もメンバーシップも、本文が無いのがふつうの姿。 */
+  return kind !== "" && kind !== "textMessageEvent";
+}
+
+/**
+ * 投げ銭の額を取り出す。**スパチャとスーパーステッカーで欄の名前が違う。**
+ *
+ * ステッカーのほうは本文が最初から無い（絵を投げるもの）ので、
+ * 額を拾わないと「誰かが何かした」しか残らない。
+ * @param {Record<string, unknown>} s `snippet`
+ * @return {Partial<Msg>} 額の欄（無ければ空。**undefined を書かない**）
+ */
+export function money(s: Record<string, unknown>): Partial<Msg> {
+  const d = (s.superChatDetails ?? s.superStickerDetails ?? {}) as
+    Record<string, unknown>;
+  const amount = String(d.amountDisplayString ?? "");
+  if (!amount) return {};
+  return {
+    amount,
+    amountMicros: Number(d.amountMicros ?? 0) || 0,
+    currency: String(d.currency ?? ""),
+  };
+}
 
 /**
  * YouTube が断ってきたときの例外。**ステータスを持たせてある。**
@@ -276,8 +353,9 @@ async function drain(
       const s = (m.snippet ?? {}) as Record<string, unknown>;
       const a = (m.authorDetails ?? {}) as Record<string, unknown>;
       const text = String(s.displayMessage ?? "");
+      const kind = String(s.type ?? "");
       const messageId = String(m.id ?? "");
-      if (!messageId || !text) continue;
+      if (!messageId || !keep(kind, text)) continue;
       rows.push({
         videoId: live.videoId,
         messageId,
@@ -285,7 +363,10 @@ async function drain(
         text,
         channelId: String(a.channelId ?? ""),
         name: String(a.displayName ?? ""),
-        kind: String(s.type ?? ""),
+        kind,
+        /* 本文の無い投げ銭は、**額がその人の言ったことの全部**になる。
+           本文と一緒に落とすと、残しても何も分からない書類になる。 */
+        ...money(s),
       });
     }
 
