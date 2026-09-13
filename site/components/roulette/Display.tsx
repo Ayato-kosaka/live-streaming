@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Wheel from "./Wheel";
 import {
@@ -9,6 +9,7 @@ import {
   flag,
   num,
   parseCandidates,
+  wheelPlan,
 } from "./wheel";
 import { getRoulette, type RouletteSession } from "@/lib/api";
 import { RL_UI } from "@/content/roulette";
@@ -17,6 +18,30 @@ import { RL_UI } from "@/content/roulette";
 const POLL_MS = 1000;
 /** 一覧に出す上限。これを超えたぶんは「ほか◯件」にまとめる。 */
 const LIST_MAX = 8;
+
+/**
+ * 輪が番号になったときの、番号と名前の控え。
+ *
+ * 選択肢が多い（または字が長い）と、扇に読める大きさの字が入らない。
+ * そのときは輪に番号だけを載せて（`wheelPlan`）、名前をここに出す。
+ * **輪の左右は空いている**（輪は画面のまん中の正方形）ので、そこに2列で置く。
+ *
+ * 回り始めても消さない。**名前がここにしか無い**ので、消すと
+ * 何が回っているのか分からなくなる。
+ * @param labels 選択肢の字
+ */
+function Legend({ labels }: { labels: string[] }) {
+  return (
+    <ol className="rl-legend">
+      {labels.map((t, i) => (
+        <li key={i}>
+          <b>{i + 1}</b>
+          <span>{t}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 /**
  * ルーレットの表示側。**スマホ版 OBS が開く面**（#164）。
@@ -111,6 +136,14 @@ export default function Display() {
   }, [sid]);
 
   const items = ses?.items ?? [];
+  /** 輪に載っているのが番号だけか。そのときは名前を輪の外の控えに出す */
+  const shown = sid ? items.map((x) => x.label) : url.labels;
+  const byNumber = useMemo(
+    () => wheelPlan(shown).mode === "number",
+    // 中身が同じなら作り直さない。配列は毎回作り直されるので字で見る
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [shown.join("\u0000")],
+  );
   const spinAt = ses?.spunAt ? ses.spunAt - skew.current : null;
   const duration = ses?.duration ?? 15;
   /** 回り始めたら、これから回すものの一覧を引っこめる */
@@ -182,7 +215,8 @@ export default function Display() {
             }
           />
         )}
-        {!hidden && items.length > 0 && (
+        {byNumber && items.length > 0 && <Legend labels={items.map((x) => x.label)} />}
+        {!byNumber && !hidden && items.length > 0 && (
           <ul className="rl-list">
             {items.slice(0, LIST_MAX).map((it) => (
               <li key={it.id}>
@@ -233,6 +267,7 @@ export default function Display() {
         resultDuration={url.resultDuration}
         onTap={spin}
       />
+      {byNumber && <Legend labels={url.labels} />}
       <p className={`rl-hint${tapAt === null ? "" : " is-off"}`} aria-hidden>
         TAP TO SPIN
       </p>
