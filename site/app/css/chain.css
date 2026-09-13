@@ -373,7 +373,9 @@
   margin-right: 3px;
 }
 .atl-fund { margin: 6px 0 0; font-size: 12.5px; font-weight: 800; color: var(--ink-2); }
-.atl-fund b { font-size: 19px; color: var(--accent-deep); margin-right: 2px; }
+/* 集まった額。紙の上で 4.53 : 1 とぎりぎりだった。読ませる数字なので
+   `--accent-ink`（島の赤を字にするときの色）に寄せる。 */
+.atl-fund b { font-size: 19px; color: var(--accent-ink); margin-right: 2px; }
 
 /* 端の島の寄せ。**狭い画面ではとなりが見えていないので寄せない**
    （寄せると主役が理由なく片側へずれる） */

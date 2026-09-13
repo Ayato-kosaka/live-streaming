@@ -644,7 +644,8 @@
 .akd-drop-yes {
   border: var(--bw-2) solid transparent;
   background: none;
-  color: var(--accent-deep);
+  /* 地を敷かない字だけの押しどころ。紙の上で 4.28 : 1 だったので `--accent-ink` に。 */
+  color: var(--accent-ink);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
