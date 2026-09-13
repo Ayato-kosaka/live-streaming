@@ -1,4 +1,4 @@
-"""旅の写真の実体を退避する。**Storage の IAM を1つも通らない。**
+"""旅の写真と、住人の絵の実体を退避する。**Storage の IAM を1つも通らない。**
 
 ## なぜ Storage の口を使わないのか（本番の実測・2026-09-12）
 
@@ -27,17 +27,52 @@ Firestore の書類（`islandStreamEventImage` / 旧 `nordicPhotos`）の `url` 
 なので、**Storage の権限が1つも無くても 200 が返る。**
 本番で1枚試した実測（2026-09-12）: `HTTP 200 / 993,115 バイト / image/jpeg`。
 
-**その Firestore は毎晩の退避に入っている。** つまり名前の一覧も合言葉も
-こちらの手元にある。**退避が退避のための鍵束になっている**形。
+住人の絵も同じ形で置いてある。`islandCharacter/{id}.images.{plain|scene}` の
+`url`（原寸）と `sizes.{幅}`（幅ごとの版）に、同じ合言葉つき URL が入る
+（`functions/src/islandCharacter.ts` の `putImage()`）。
+**ただし、置き場の名前を持った欄が無い。** 写真は `storagePath` を持って
+いるが、こちらは URL しかないので、**名前は URL からほどく**
+（`storage_path()`）。
+
+**その Firestore は毎晩の退避に入っている**（`plan.KEEP`）。つまり名前の
+一覧も合言葉もこちらの手元にある。**退避が退避のための鍵束になっている**形。
 
 ## この道で守れないもの（測っていないことは書かない）
 
-- **索引に載っていない実体には届かない。** ここが辿るのは Firestore の
-  2つの入れ物に書かれた `url` だけ。置き場の他の中身
-  （キャラクターの絵・公開バケットの残り）は**1枚も入らない**
+- **索引に載っていない実体には届かない。** ここが辿るのは Firestore に
+  書かれた `url` だけ。索引の指していない実体（焼き直しで置き換わった
+  古い png、`purged/public-bucket/` の2件）は**入らない**。
+  置き場539件のうち、索引から辿れるのは533件（下の内訳）
 - **合言葉が作り直された1枚は、二度と取れない。** 貼り直しは新しい書類IDに
   なるので普段は起きないが、起きたら 403 か 404 で返る。**数えて報告する**
 - `url` 欄の無い書類は取れない。**数えて報告する**
+
+## 住人の絵を、選り分けずに533件ぜんぶ取る（本番の実測・2026-09-13）
+
+置き場 `live-streaming-d3cac.firebasestorage.app` をフォルダごとに数えると、
+**旅の写真は 2.4MB しかなく、残りは全部が住人の絵**だった。
+
+    island/characters/     539件   337,784,452 バイト
+    nordic/photos/           3件     2,422,958 バイト   ← もう全部入っている
+    purged/public-bucket/    2件        23,767 バイト
+
+索引（`islandCharacter`）から辿れるのは **533件**。
+98人 / 絵のある枠166（plain・scene）/ 原寸166 / 幅ごとの版367。
+
+**幅ごとの版は原寸から焼き直せる**（`python/admin/characters_rebake.py` の
+`bake()`）。それでも選り分けないのは、**原寸166件だけで 319,271,977 バイト
+＝ 337.8MB の 94%** だから。焼けるものを外しても、取る量が 6% しか減らない。
+**6% のために、戻すときに焼き直しの一手を足す**のは割に合わない。
+
+置き場の539件との差6件は、焼き直しで置き換わった古い png/jpg で、索引が
+もう指していない（`characters_rebake.py` は古い png を消さない）。**追わない。**
+
+## 旅の写真が先、住人の絵が後（並びの決め）
+
+2つの索引を混ぜて名前順にすると、`island/…` が `nordic/…` より前に来る。
+すると**明日貼られた写真1枚が 337MB のうしろに回って、何晩も取られない。**
+写真は1日20枚ほど増えるが、住人の絵は増え方がずっと遅い。
+**新しく増えるほうを先に取る。**
 
 ## 1回で取る量の上限（なぜ 128MB か）
 
@@ -52,9 +87,10 @@ Firestore の書類（`islandStreamEventImage` / 旧 `nordicPhotos`）の `url` 
 - 1GB の線からは8分の1。**上限に当たっても次の回が続きから拾う**ので、
   当たること自体は事故ではない
 
-枚数の上限（400枚）は**バイト数では止まらない場合の保険。** 写真は
-1枚 1KB 以上（`islandApi.ts` の `bad size`）なので、理屈のうえでは
-128MB に13万枚入る。HTTP を13万本叩く実行を作らない。
+件数の上限（400件）は**バイト数では止まらない場合の保険。** 写真は
+1枚 1KB 以上、住人の絵は 256バイト以上（`islandApi.ts` と
+`islandCharacter.ts` の `bad size`）なので、理屈のうえでは 128MB に
+50万件入る。HTTP を50万本叩く実行を作らない。
 
 ## 続きから拾うしくみ
 
@@ -64,15 +100,23 @@ Firestore の書類（`islandStreamEventImage` / 旧 `nordicPhotos`）の `url` 
 しないので、次の回がそこから取り直す。
 
 置き場の名前には書類IDが入っていて、中身は変わらない
-（`islandApi.ts` の `nordic/photos/<日>/<id>.<拡張子>`・`immutable`）。
+（`islandApi.ts` の `nordic/photos/<日>/<id>.<拡張子>`・`immutable`。
+住人の絵も `island/characters/<id>/<役どころ>-<幅>.<拡張子>`・`immutable`）。
 **同じ名前の実体が別物に化けることはない**ので、名前で突き合わせてよい。
+
+**だから `%2F` をほどき忘れると高くつく。** 置き場の表に入っている名前は
+`island/characters/…` で、URL の中では `island%2Fcharacters%2F…` になって
+いる。ほどかずに入れると1文字も突き合わず、**取ってあるのに「まだ」と数えて
+毎晩533件を取り直す。**
 """
 
 import base64
 import datetime as dt
 import hashlib
 import os
+import re
 from typing import NamedTuple
+from urllib.parse import unquote
 
 from backup import plan, sink
 from logging_util import setup_logger
@@ -113,7 +157,7 @@ def schema():
 
 
 class Ref(NamedTuple):
-    """写真1枚ぶんの手がかり。**ログには出さない。**"""
+    """実体1件ぶんの手がかり（旅の写真も、住人の絵も同じ形）。**ログには出さない。**"""
 
     path: str
     url: str
@@ -130,6 +174,52 @@ class Got(NamedTuple):
 
 
 # ---------------------------------------------------------------- 索引を引く
+
+# 合言葉つきのダウンロード URL のかたち。`/v0/b/<置き場>/o/<名前>?alt=media&token=…`
+# **`/o/` だけを目印にしない。** それだけだと、まるで別の口の URL が
+# 紛れ込んでも名前が取れたことになってしまう
+_DL_URL = re.compile(r"/v0/b/[^/]+/o/(.+)$")
+
+
+def storage_path(url: str) -> str:
+    """合言葉つきの URL から、置き場の名前を取り出す。取れなければ空。
+
+    **`%2F` をほどく。** URL の中では区切りの `/` が `%2F` に化けていて
+    （`encodeURIComponent`）、置き場の表に入っている名前は `island/characters/…`。
+    ほどき忘れると1文字も突き合わないので、**取ってあるものを毎晩取り直す。**
+    """
+    head = str(url or "").split("?", 1)[0]
+    m = _DL_URL.search(head)
+    return unquote(m.group(1)).strip() if m else ""
+
+
+def _at_ms(v) -> int:
+    """書類に入っている時刻を、ミリ秒にそろえる。読めなければ 0。
+
+    **入れ物ごとに形が違う。** 写真の `at` はミリ秒の数、住人の絵の
+    `createdAt` は ISO の字（`islandCharacter.ts` の `new Date().toISOString()`）。
+    ここで吸収しないと、形の違う1つで索引ごと落ちる。
+
+    読めないときに落とさず 0 を返すのは、**欲しいのが実体のほう**だから。
+    時刻は `_iso()` が現在時刻へ落とす。時刻が読めないことで絵を1枚諦めない。
+    """
+    if isinstance(v, bool):
+        return 0
+    if isinstance(v, (int, float)):
+        return int(v) if v > 0 else 0
+    ts = getattr(v, "timestamp", None)  # datetime / Firestore の時刻型
+    if callable(ts):
+        try:
+            return int(ts() * 1000)
+        except Exception:  # noqa: BLE001
+            return 0
+    txt = str(v or "").strip()
+    if not txt:
+        return 0
+    try:
+        return int(dt.datetime.fromisoformat(txt.replace("Z", "+00:00")).timestamp() * 1000)
+    except ValueError:
+        return 0
 
 
 def refs_from_firestore(fs=None) -> tuple[list[Ref], dict]:
@@ -172,6 +262,75 @@ def refs_from_firestore(fs=None) -> tuple[list[Ref], dict]:
         "docs": n_docs,
         "no_path": no_path,
         "no_url": len(url_less - set(seen)),
+    }
+
+
+def refs_from_characters(fs=None) -> tuple[list[Ref], dict]:
+    """Firestore から、住人の絵の名前と合言葉つき URL を集める。**読むだけ。**
+
+    `islandCharacter/{id}.images.{plain|scene}` の `url`（原寸）と
+    `sizes.{幅}`（幅ごとの版）。**幅は決め打ちで回さない。**
+    口が読み返すのは 128/256/640 だけだが、置き場にはそれ以外の幅が
+    残っていることがあり、退避で拾えないと二度と取れない。
+
+    **絵の無い枠を「取れない1枚」と数えない。** 98人のうち枠166だけに絵が
+    あって、残りは最初から絵を入れていない。あれを警告にすると、
+    直しようのない警告が毎晩出続ける（`refs_from_firestore` と同じ理由）。
+    """
+    if fs is None:
+        from google.cloud import firestore
+
+        fs = firestore.Client(project=sink.PROJECT)
+
+    seen: dict[str, Ref] = {}
+    n_docs = n_roles = n_full = n_sizes = bad_url = 0
+    for d in fs.collection(plan.CHARACTER_COL).stream():
+        data = d.to_dict() or {}
+        n_docs += 1
+        # 絵そのものに撮った時刻は無い。**書類ができた時刻を使う**
+        at_ms = _at_ms(data.get("createdAt"))
+        images = data.get("images")
+        if not isinstance(images, dict):
+            continue
+        for role in plan.CHARACTER_ROLES:
+            im = images.get(role)
+            if not isinstance(im, dict):
+                continue
+            # (URL, 原寸か) の並び。**原寸を先に**（枠ごとに、いちばん
+            # 取り返しのつかないものから積む）
+            urls = []
+            if isinstance(im.get("url"), str):
+                urls.append((im["url"], True))
+            sizes = im.get("sizes")
+            if isinstance(sizes, dict):
+                urls.extend((u, False) for u in sizes.values() if isinstance(u, str))
+            got = 0
+            for url, is_full in urls:
+                path = storage_path(url)
+                if not path:
+                    # URL は入っているのに置き場の名前が取れない。
+                    # **数えて報告する**（黙って落とすと1枚失う）
+                    bad_url += 1
+                    continue
+                got += 1
+                if is_full:
+                    n_full += 1
+                else:
+                    n_sizes += 1
+                if path not in seen:
+                    seen[path] = Ref(path, url.strip(), at_ms)
+            if got:
+                n_roles += 1
+    # 名前で並べる＝**同じ人の絵がひと続きになる。** 上限で切れたときに
+    # 「この人はここまで」で止まるので、続きから拾うのが人単位で読める
+    return sorted(seen.values(), key=lambda r: r.path), {
+        "docs": n_docs,
+        "no_path": bad_url,
+        "no_url": 0,
+        "chars": n_docs,
+        "roles": n_roles,
+        "full": n_full,
+        "sizes": n_sizes,
     }
 
 
@@ -256,34 +415,60 @@ def dump(
     dry: bool,
     *,
     list_refs=None,
+    list_chars=None,
     fetch=None,
     read_idx=None,
     write=None,
     budget_bytes: int | None = None,
     budget_count: int | None = None,
 ) -> dict:
-    """旅の写真を1回ぶん退避する。**上限まで取って、残りは次の回に渡す。**
+    """旅の写真と住人の絵を1回ぶん退避する。**上限まで取って、残りは次の回に渡す。**
 
-    `list_refs` / `fetch` / `read_idx` / `write` は差し替えられるようにして
-    ある。**本番を叩かずに振る舞いを実測する**ため
-    （`python/backup/photos_selftest.py`）。
+    `list_refs`（旅の写真）/ `list_chars`（住人の絵）/ `fetch` / `read_idx` /
+    `write` は差し替えられるようにしてある。**本番を叩かずに振る舞いを
+    実測する**ため（`python/backup/photos_selftest.py`）。
     """
     list_refs = list_refs or refs_from_firestore
+    list_chars = list_chars or refs_from_characters
     fetch = fetch or fetch_http
     read_idx = read_idx or (lambda: read_index(c))
     write = write or (lambda rows: write_rows(c, rows))
     bb = BUDGET_BYTES if budget_bytes is None else budget_bytes
     bc = BUDGET_COUNT if budget_count is None else budget_count
 
-    try:
-        refs, listing = list_refs()
-    except Exception as e:  # noqa: BLE001
-        # 索引そのものが引けない。**赤くはしない**（写真以外は取れている）が、黙らない
-        reason = type(e).__name__
-        log.warning("写真の索引が引けません（%s）", reason)
-        print("::warning::旅の写真の索引（Firestore の url 欄）が引けませんでした。"
-              "この回は写真を取っていません")
-        return {"ok": False, "reason": reason, "n": 0, "bytes": 0, "left": None}
+    # **旅の写真が先、住人の絵が後。** 混ぜて名前順にすると `island/…` が
+    # 前に来て、明日貼られた写真1枚が 337MB のうしろに回る（頭の docstring）。
+    # **片方の索引が引けなくても、もう片方は取る。** 別々の入れ物なので、
+    # 片方の事故でもう片方まで止める理由が無い
+    refs: list[Ref] = []
+    listing = {"docs": 0, "no_url": 0, "no_path": 0}
+    stats: dict[str, dict] = {}
+    found: dict[str, int] = {}
+    broken: dict[str, str] = {}
+    for key, label, fn in (
+        ("photo", "旅の写真", list_refs),
+        ("char", "住人の絵", list_chars),
+    ):
+        try:
+            got, st = fn()
+        except Exception as e:  # noqa: BLE001
+            # 索引が引けない。**赤くはしない**（他は取れている）が、黙らない
+            broken[key] = type(e).__name__
+            found[key] = 0
+            log.warning("%sの索引が引けません（%s）", label, broken[key])
+            print(f"::warning::{label}の索引（Firestore）が引けませんでした。"
+                  f"この回は{label}を取っていません")
+            continue
+        refs.extend(got)
+        found[key] = len(got)
+        stats[key] = st
+        for k in listing:
+            listing[k] += int(st.get(k) or 0)
+
+    if len(broken) == 2:
+        # 両方引けないなら、この回は1本も取りようがない
+        return {"ok": False, "reason": ",".join(sorted(broken.values())),
+                "n": 0, "bytes": 0, "left": None, "broken": sorted(broken)}
 
     idx = read_idx()
     todo = [r for r in refs if not have_already(idx, r.path)]
@@ -292,23 +477,34 @@ def dump(
     out = {
         "ok": True,
         "n_all": len(refs),
+        "n_photo": found.get("photo", 0),
+        "n_char": found.get("char", 0),
+        "broken": sorted(broken),
         "have": have,
         "docs": listing.get("docs", 0),
         "no_url": listing.get("no_url", 0),
         "no_path": listing.get("no_path", 0),
     }
     log.info(
-        "  索引 %d 書類 → 実体 %d 枚 / 取ってある %d 枚 / まだ %d 枚"
-        "（url 無し %d・置き場の名前無し %d）",
-        out["docs"], len(refs), have, len(todo), out["no_url"], out["no_path"],
+        "  索引 %d 書類 → 実体 %d 件（旅の写真 %d・住人の絵 %d）"
+        " / 取ってある %d 件 / まだ %d 件（url 無し %d・置き場の名前無し %d）",
+        out["docs"], len(refs), out["n_photo"], out["n_char"],
+        have, len(todo), out["no_url"], out["no_path"],
     )
+    # **1件も無い回は出さない。** 「0人 / 0枠 / 0 / 0」が毎晩並ぶと、
+    # 索引が引けなかった回（上の警告）と見分けが付きにくい
+    if found.get("char"):
+        cs = stats["char"]
+        log.info("  住人の絵の内訳: %d 人 / 絵のある枠 %d / 原寸 %d / 幅ごとの版 %d",
+                 cs.get("chars", 0), cs.get("roles", 0),
+                 cs.get("full", 0), cs.get("sizes", 0))
     if out["no_url"] or out["no_path"]:
         # **数だけ。** どの書類かは出さない
-        print(f"::warning::写真の書類のうち {out['no_url'] + out['no_path']} 件は"
+        print(f"::warning::索引のうち {out['no_url'] + out['no_path']} 件は"
               "実体に辿れません（url か置き場の名前が入っていない）")
 
     if dry:
-        log.info("  下見なので取りません（上限 %d バイト / %d 枚）", bb, bc)
+        log.info("  下見なので取りません（上限 %d バイト / %d 件）", bb, bc)
         out.update({"n": 0, "bytes": 0, "written": 0, "failed": 0, "left": len(todo)})
         return out
 
@@ -353,15 +549,15 @@ def dump(
         "n": got, "bytes": got_bytes, "written": written,
         "failed": failed, "fails": fails, "left": left,
     })
-    log.info("  取った %d 枚 %d バイト / 置き場へ %d 行 / 落ちた %d 枚 / 残り %d 枚",
+    log.info("  取った %d 件 %d バイト / 置き場へ %d 行 / 落ちた %d 件 / 残り %d 件",
              got, got_bytes, written, failed, left)
     if failed:
         # **数と理由の種類だけ。** 名前も URL も出さない
-        print(f"::warning::旅の写真 {failed} 枚が取れませんでした"
+        print(f"::warning::実体 {failed} 件が取れませんでした"
               f"（{', '.join(f'{k}×{v}' for k, v in sorted(fails.items()))}）。"
               "合言葉が作り直されている可能性があります")
     if left:
-        print(f"::notice::旅の写真はあと {left} 枚残っています。"
+        print(f"::notice::実体はあと {left} 件残っています。"
               "次の回が続きから取ります（1回の上限で区切っています）")
     return out
 
