@@ -20,10 +20,17 @@ ARGS 例:
 同じ配信のチャットは、翌日に yt-dlp で BigQuery
 （`youtube_chat.chat_messages`）へ入っている。あちらは
 `event_type='PAID'` として**本文が空でも残している**ので、そこから
-書類を起こせる。書類IDは `{videoId}_{messageId}` で、BigQuery の
-`event_id` は YouTube のライブチャットの messageId と同じもの。
-**だから二重にならないし、`collectLiveChat` が後から同じ回を読んでも
-同じ書類に重なる。**
+書類を起こせる。
+
+## 二重に書かないための突き合わせ
+
+**BigQuery の `event_id` と、Data API の messageId は別物。**
+前者は yt-dlp が拾う renderer の id（`ChwKGk…`）、後者は Data API の
+`LCC.…`。同じ1件でも字が違うので、**書類IDだけで見ると「無い」と出て、
+もう入っている投げ銭をもう1件書いてしまう。**
+
+だから書類IDと「同じ人が・ほぼ同じ時刻に」の**両方**で見て、片方でも
+当たれば書かない（`NEAR_MS`）。
 
 ## 埋め戻すのは、Firestore が捕まえた配信だけ
 
@@ -53,8 +60,9 @@ CHUNK = 300
 # 埋め戻す種別。**BigQuery の `PAID` は `liveChatPaidMessageRenderer` だけ**
 # （`python/youtube_chat/normalizer.py` の振り分け）なので、Data API の
 # `snippet.type` に直すと `superChatEvent` の1つに決まる。
-# スーパーステッカーは BigQuery では `UNKNOWN` に落ちていて種別が分からない
-# ので、ここでは扱わない（#-- 参照。あちらは正規化の側の話）。
+# スーパーステッカー（`liveChatPaidStickerRenderer`。15件）は BigQuery では
+# `UNKNOWN` に落ちていて、額も名前も正規化されていない。**あれは正規化の側の
+# 話**なので、ここでは扱わない。
 KIND = "superChatEvent"
 
 
@@ -136,30 +144,75 @@ def outside(videos: list[str], days: int) -> tuple[int, int]:
     return int(r["n"]), int(r["empty"])
 
 
-def here(client, video: str) -> tuple[int, int]:
-    """その配信で Firestore に溜まっている数（全部 / 投げ銭）。
+def here(client, video: str) -> tuple[int, list[dict]]:
+    """その配信で Firestore に溜まっているもの（全部の数 / 投げ銭の中身）。
 
-    `select(["kind"])` で引くのは、**本文も名前も手元へ持ってこない**ため。
+    引くのは `kind` `at` `channelId` の3つだけ。**本文も名前も手元へ
+    持ってこない**（このリポジトリは公開で、ログも誰でも読める）。
     """
     q = client.collection("streamChatMessages").where("videoId", "==", video)
     total = 0
-    paid = 0
-    for d in q.select(["kind"]).stream():
+    paid = []
+    for d in q.select(["kind", "at", "channelId"]).stream():
         total += 1
-        if (d.to_dict() or {}).get("kind") == KIND:
-            paid += 1
+        v = d.to_dict() or {}
+        if v.get("kind") == KIND:
+            paid.append({"at": int(v.get("at") or 0),
+                         "channelId": str(v.get("channelId") or "")})
     return total, paid
 
 
-def missing(client, rows: list[dict]) -> list[dict]:
-    """まだ Firestore に無い行だけ。**あるものには触らない。**"""
+# 同じ投げ銭かどうかを、時刻の近さで見るときの幅。
+#
+# **BigQuery の `event_id` と、YouTube Data API の messageId は別物。**
+# 前者は yt-dlp が拾う renderer の id（`ChwKGk…`）で、後者は Data API が
+# 返す `LCC.…` 形式。同じ1件でも字が違うので、**書類IDだけで突き合わせると
+# 「Firestore に無い」と出て、二重に書いてしまう。**
+# 実際、下見の1回目が `kyzCpe5Znyk` で「Firestore に投げ銭1件」「足りない4件」
+# と出した（4件のうち1件は、もう入っているものだった）。
+#
+# 代わりに「同じ人が・ほぼ同じ時刻に」で見る。投げ銭は1人が数秒のうちに
+# 2回投げるものではないので、これで足りる。
+NEAR_MS = 5000
+
+
+def already(row: dict, paid: list[dict]) -> tuple[bool, int]:
+    """その行が、もう Firestore に入っているか。
+
+    @return (入っているか, いちばん近かった時刻の差[ms]。無ければ -1)
+    """
+    at = int(row["published_at"].timestamp() * 1000)
+    chan = row["author_channel_id"] or ""
+    best = -1
+    for d in paid:
+        if chan and d["channelId"] and d["channelId"] != chan:
+            continue
+        gap = abs(d["at"] - at)
+        if best < 0 or gap < best:
+            best = gap
+    return (0 <= best <= NEAR_MS), best
+
+
+def missing(client, video: str, rows: list[dict],
+            paid: list[dict]) -> list[dict]:
+    """まだ Firestore に無い行だけ。**あるものには触らない。**
+
+    書類ID（`{videoId}_{event_id}`）と、人と時刻の**両方**で見る。
+    片方でも当たれば「もうある」に倒す。**二重に書くほうが、書き損ねる
+    より悪い**（誰がいくら応援したかを数える土台なので）。
+    """
     col = client.collection("streamChatMessages")
     out = []
     for i in range(0, len(rows), CHUNK):
         part = rows[i:i + CHUNK]
-        refs = [col.document(f"{r['video_id']}_{r['event_id']}") for r in part]
+        refs = [col.document(f"{video}_{r['event_id']}") for r in part]
         found = {s.id for s in client.get_all(refs) if s.exists}
-        out += [r for r, ref in zip(part, refs) if ref.id not in found]
+        for r, ref in zip(part, refs):
+            if ref.id in found:
+                continue
+            hit, _ = already(r, paid)
+            if not hit:
+                out.append(r)
     return out
 
 
@@ -206,12 +259,16 @@ def main() -> None:
         rs = rows.get(v) or []
         empty = sum(1 for r in rs if not (r["message_text"] or ""))
         total, paid = here(client, v)
-        lack = missing(client, rs) if rs else []
+        lack = missing(client, v, rs, paid) if rs else []
         todo += lack
+        # 突き合わせが効いているかを、時刻の差で見せる。**書かずに読める。**
+        gaps = [g for r in rs for ok, g in [already(r, paid)] if ok]
         log.info(
             "  %s  BigQuery: 投げ銭 %d件（本文なし %d件）"
-            " / Firestore: %d件（うち投げ銭 %d件）→ 足りない %d件",
-            v, len(rs), empty, total, paid, len(lack),
+            " / Firestore: %d件（うち投げ銭 %d件）"
+            "→ もう入っている %d件（時刻の差 %s）/ 足りない %d件",
+            v, len(rs), empty, total, len(paid), len(gaps),
+            f"{min(gaps)}〜{max(gaps)}ms" if gaps else "-", len(lack),
         )
 
     n, empty = outside(videos, days)
@@ -237,10 +294,15 @@ def main() -> None:
         batch.commit()
     log.info("── %d件 書いた", len(todo))
 
-    # **書いたあと数え直す。** 「書いた」と言うのと、入っているのは別の話
+    # **書いたあと数え直す。** 「書いた」と言うのと、入っているのは別の話。
+    # Firestore も引き直す（書いたものが本当に読めるか）
     left = 0
     for v in videos:
-        left += len(missing(client, rows.get(v) or []))
+        rs = rows.get(v) or []
+        if not rs:
+            continue
+        _, paid = here(client, v)
+        left += len(missing(client, v, rs, paid))
     log.info("── 数え直し: 足りない %d件", left)
 
 
