@@ -56,3 +56,72 @@ def show(v) -> str:
     """ログ用に短く整形する。"""
     s = json.dumps(v, ensure_ascii=False, default=str)
     return s if len(s) <= 600 else s[:600] + "…"
+
+
+class ReadOnly(Exception):
+    """下見のつもりで、書きに行った。"""
+
+
+# 書く側の名前。**塞ぐのは口であって、判断ではない。**
+# 呼ぶ側に `if apply:` を書き忘れても、ここで止まる
+_WRITE = frozenset({
+    "set", "update", "delete", "create", "add", "commit", "batch",
+    "bulk_writer", "transaction", "recursive_delete", "write",
+})
+
+_PLAIN = (str, bytes, bytearray, bool, int, float, complex,
+          dict, list, tuple, set, frozenset)
+
+
+def _veil(v):
+    """返ってきたものが Firestore の口なら、それも塞いだ写しにする。"""
+    if v is None or isinstance(v, _PLAIN):
+        return v
+    # 入れ物・書類・問い合わせ・引いた中身。ここから先も書けてはいけない。
+    # **「書く口を持っている」も見る**（`set` / `get` だけを持つ書類がある）
+    if any(hasattr(v, n) for n in
+           ("collection", "document", "stream", "where", "reference",
+            "to_dict", "get", "set")):
+        return _ReadOnly(v)
+    if hasattr(v, "__next__"):
+        return (_veil(x) for x in v)
+    return v
+
+
+class _ReadOnly:
+    """書く口を塞いだ写し。読むほうはそのまま通す。"""
+
+    def __init__(self, inner):
+        object.__setattr__(self, "_inner", inner)
+
+    def __getattr__(self, name):
+        if name in _WRITE:
+            raise ReadOnly(f"下見では Firestore に書けません（{name}）")
+        v = getattr(object.__getattribute__(self, "_inner"), name)
+        if callable(v):
+            def call(*a, **k):
+                return _veil(v(*a, **k))
+            return call
+        return _veil(v)
+
+    def __setattr__(self, name, value):
+        raise ReadOnly(f"下見では Firestore に書けません（{name}）")
+
+    def __iter__(self):
+        return (_veil(x) for x in iter(object.__getattribute__(self, "_inner")))
+
+
+def readonly(client):
+    """**読むだけ**の Firestore クライアント。
+
+    下見が Firestore につながっていないと、上書きや衝突の数は数える機会が
+    無いまま 0 になる。読む人には、その 0 が「無い」のか「見ていない」のか
+    見分けがつかない。つないだうえで、書く側だけを塞ぐ。
+
+    Args:
+        client: `db()` で作ったクライアント
+
+    Returns:
+        読むほうはそのまま通り、書く口を叩くと `ReadOnly` で止まる写し
+    """
+    return _ReadOnly(client)
