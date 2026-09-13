@@ -550,7 +550,7 @@ island/state
 | `by` | string \| null | 名乗った名前（なくてもいい・20字） |
 | `uid` | string \| null | ログインして出していれば、その人 |
 | `cid` | string | 端末ID。**「あとから直す鍵」でもある** |
-| `ip` | string \| null | `x-forwarded-for` の先頭。**荒れたときに辿るためだけのもの** |
+| ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。`x-forwarded-for` の先頭を入れていたが、読む仕組みが1つも無く、消す期限も決めていなかった。取るのをやめて、溜まっていたぶんも落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。仕組みは付箋と同じ（`islandHearts`） |
 | `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
 | `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
@@ -753,7 +753,7 @@ GAS → Firestore → 前に読めた値、の順に落ちる。どれも無け�
 | `text` | string | 中身（120字まで） |
 | `by` | string \| null | 名乗った名前（なくてもいい） |
 | `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
-| `ip` | string \| null | `x-forwarded-for` の先頭 |
+| ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。企画（上）と同じ理由で、欄ごと落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
 | `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
 | `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
@@ -1091,10 +1091,20 @@ Google OAuth なので Actions の中では通せない）。切れると
 **設計は直していない。** この文書を実物と突き合わせるあいだに見つけたものを並べる。
 直すかどうかは別の担当の判断。
 
-1. **`islandNotes` と `islandStreamEvent` に `ip` が入っている。** 中身は
-   `x-forwarded-for` の先頭で、**付箋と企画を書いた人ぶん全部残っている。**
-   `firestore.rules` で閉じてはいるが、この文書にも `docs/` のどこにも書かれて
-   いなかった。**消す期限も、使ってよい場面も決まっていない。**
+1. ~~**`islandNotes` と `islandStreamEvent` に `ip` が入っている。**~~
+   → **片づけた**（2026-09-13・#293）。中身は `x-forwarded-for` の先頭で、
+   **付箋と企画を書いた人ぶん全部残っていた。** `firestore.rules` で閉じては
+   いたが、この文書にも `docs/` のどこにも書かれておらず、消す期限も、使って
+   よい場面も決まっていなかった。付箋も企画も消さない設計なので、置いておけば
+   永久に残る。**使う仕組みの無いものを持ち続ける理由が無い**ので、取るのを
+   やめ（`functions/src/islandApi.ts`。助け関数 `fwd()` ごと消した）、
+   溜まっていたぶんも欄ごと落とした（`python/admin/ip_purge.py`）。
+   視聴者さんは「付箋を貼る」つもりで書いていて、IP が一緒に残るとは思っていない。
+
+   **`islandIdeas` にはまだ残っている。** #162 で付箋へ移した8件の控えで、
+   移すときに `ip` もそのまま写していた（`python/admin/notes_migrate.py`）。
+   「取り違えたときに戻す控え」として残してある入れ物なので、片方の欄だけ
+   落とすと控えにならない。**入れ物ごと畳むかどうかと一緒に決める。**
 
 2. **常連の数を3か所で数えていて、日の切り方が揃っていない。**
    `island_daily_stats.py`（直近90日・**日本時間**）、
@@ -1204,7 +1214,7 @@ grep -n 'ownerUid(req.headers.authorization)' functions/src/islandApi.ts
 | `islandVotes` | 「13件のまま残してある」 | **本番に無い** |
 | `firestore.rules` | 「島のコレクションを全部 deny」 | **`monthlyReview` と `islandHere` は開いている** |
 | `islandNotes` の索引 | `theme` + `createdAt` + **`__name__`** | **`firestore.indexes.json` は2欄だけ。`__name__` は書いていない** |
-| `islandNotes` / `islandStreamEvent` | — | **`ip` が入っている**（書かれていなかった） |
+| `islandNotes` / `islandStreamEvent` | — | `ip` が入っていた（書かれていなかった）。**2026-09-13 に取るのをやめ、溜まっていたぶんも落とした**（#293） |
 
 ---
 
