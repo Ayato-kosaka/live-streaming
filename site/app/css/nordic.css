@@ -498,7 +498,7 @@ p.nday-fixed {
   font-size: var(--fs-min);
   font-weight: 900;
 }
-p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 700; }
+p.nday-note { margin: 4px 0 0; max-width: var(--nd-col); font-size: 12px; line-height: 1.6; font-weight: 700; }
 
 /* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
 .nday-log {
@@ -2174,6 +2174,7 @@ a.ndsp-n:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-da
 .ndhh-l dt > .ic { flex: none; }
 .ndhh-l dd {
   margin: 0;
+  max-width: var(--nd-col);
   font-size: 13px;
   line-height: 1.7;
   font-weight: 700;
@@ -2249,8 +2250,33 @@ p.nday-wake {
   line-height: var(--lh-head);
 }
 p.nday-wake b { font-size: var(--fs-h3); font-weight: 900; }
+
+/* ============================================================
+   読む字の柱（旅の日ページ）
+
+   **1行を 45文字までにする。** 1440px で測ると、旅の日の面は
+   `.ndrs-lead` が 69.3ch（826px）、その下の予定・気をつけること・
+   寄り道が 45〜58ch で、どれも1本の長い棒になっていた
+   （`tools/sprites/navwho.mjs` の実測）。車の中で片手で開く面なので、
+   目が次の行の頭に戻るときに迷うのがいちばん困る。
+
+   **柱は1本の値で持つ。** 区画ごとに別々の幅を当てると、同じ紙の中で
+   段落の右はしが数十pxずつずれて、読む列が何本あるのか分からなくなる。
+   字の大きさは区画ごとに違う（12 / 13 / 14.5px）ので、`em` ではなく
+   px でそろえる。
+
+   450px の根拠は、この面でいちばん1文字の狭い行（`/nordic/day/2` の
+   `.nday-lead`。欧文の宿名と数字が多くて 481px ÷ 47.1ch = 10.21px/字）。
+   45文字で 459px なので、そこから切り下げて 450px。
+
+   **390px の折り返しは1文字も動かない。** いちばん狭いところで本文が
+   使えるのは 358px 前後（390 −『.page』と紙の左右）で、450px のほうが広い。
+   ============================================================ */
+:root { --nd-col: 450px; }
+
 p.nday-lead {
   margin: 0;
+  max-width: var(--nd-col);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 700;
@@ -2264,6 +2290,7 @@ p.nday-lead {
 }
 .nday-worry li,
 .nday-detour li {
+  max-width: var(--nd-col);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 700;
@@ -2796,6 +2823,7 @@ p.nday-lead {
    区画の中の強弱がぜんぶ消えていた。 */
 .ndrs p.ndrs-lead {
   margin: 0;
+  max-width: var(--nd-col);
   font-size: var(--fs-note);
   line-height: 1.75;
   font-weight: 800;
