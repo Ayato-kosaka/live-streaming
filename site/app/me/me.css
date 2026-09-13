@@ -746,6 +746,39 @@
   .ch-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
+/* 取りに行っているあいだ。**棚の形のまま置く**（`docs/island-design.md` 4章）。
+   灰の帯を2本引くと、そこに何が出てくる場所なのか分からないし、
+   0人のときの `.blank` と見分けがつかなくなる。
+   骨の材料（色・明滅・角）は島じゅうで1つ（`app/css/ui.css` の `.wait`）で、
+   ここは並べ方だけを棚に合わせる。
+
+   **`is-card` を付けたまま使う。** 素の `.wait` は「字が並ぶ」前提で
+   最後の1枚を 62% に細める規則を持っていて、棚に当てると右下だけ小さい、
+   格子になっていない骨が出る（実測 59.5x79.3）。`is-card` はその規則の
+   外側にいる。 */
+.ch-wait {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width: 560px) {
+  .ch-wait { grid-template-columns: repeat(4, 1fr); }
+}
+/* マス（390px 幅で 96x124）に寄せる。角はマスと同じ --r-2 に戻す。 */
+.ch-wait.is-card { --wait-h: 120px; --wait-r: var(--r-2); }
+/* `.wait` は3枚ぶんしか遅れを持っていない。6枚置くので続きを足す。 */
+.ch-wait > span:nth-child(4) { animation-delay: 0.48s; }
+.ch-wait > span:nth-child(5) { animation-delay: 0.64s; }
+.ch-wait > span:nth-child(6) { animation-delay: 0.8s; }
+
+/* 0人のときの札。390px で「〜ここに並びま / す。」と最後の1文字だけが
+   落ちるので、行の長さを均す（`.blank.is-off > b` と同じ手）。 */
+.ch-list .blank > p { text-wrap: balance; }
+
+/* **一面ぜんぶが押せるマスなので、1枚ずつに厚みを付けない**
+   （`docs/island-design.md` 3-3 の唯一の例外。名指しで「図鑑の一覧」）。
+   並びそのものが「ここは全部押せる」の合図で、98枚に 4px の厚みを付けると
+   合図が飾りに変わる。押せることは、残る2つ——**紙の色**（棚の地より明るい
+   紙が四角く抜けている）と**形**（同じ大きさの枠が規則正しく並ぶ）——で立てる。
+   この並びに押せないマスを混ぜてはいけない（混ぜた瞬間この例外が嘘になる）。 */
 .ch-cell {
   position: relative;
   display: flex;
@@ -756,10 +789,15 @@
   border-radius: var(--r-2);
   border: var(--bw-1) solid var(--frame);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
-  transition: transform 0.12s ease;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.12s ease, background-color 0.12s ease;
 }
-.ch-cell:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+/* 沈む先の厚みが無いので、4px も落とすと「ずれた」に見える。
+   紙を1段沈めて、2px だけ。**反応は返す**（`island-design.md` 3-5）。 */
+.ch-cell:active {
+  transform: translateY(2px);
+  background: var(--paper-2);
+}
 .ch-cell img { width: 100%; aspect-ratio: 1; object-fit: contain; }
 .ch-cell-none {
   display: grid;
