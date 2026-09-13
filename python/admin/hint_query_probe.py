@@ -2,7 +2,14 @@
 
 ARGS 例:
   {}                      … 辞書から実際に在る名前を3つ拾って、それで引く
+  {"trim": 4}             … 借りた名前の**後ろ4文字を落として**引く。
+                            Doneru の呼び名は枝番（`-q3n`）の落ちた形で届くので、
+                            **短い呼び名から長いハンドルを引けるか**がこれで分かる
   {"labels": ["ゆずたつ"]} … 呼び名を指して引く（`@` は付けても付けなくてもよい）
+
+**`labels` に本物の呼び名を渡さないこと。** ARGS はワークフローのログに
+出る（伏せ字は完全ではない）。本番で確かめたいだけなら `trim` を使う。
+辞書から借りた名前を切り詰めるので、こちらの手から識別子が1文字も出ない。
 
 ## なぜ `donor_hints_probe.py` では足りないか
 
@@ -74,9 +81,20 @@ def main() -> None:
     col = client.collection("islandChannels")
 
     labels = a.get("labels")
+    trim = int(a.get("trim") or 0)
     if not labels:
         labels = sample_labels(client, 3)
         log.info("辞書から %d件 借りて引きます", len(labels))
+        if trim:
+            # **後ろを落として、短い呼び名にする。** Doneru から届く呼び名は
+            # 枝番の落ちた形なので、丸ごとの名前で引けても本番の役に立たない。
+            # 落としすぎて2文字を切ると、当たりすぎて意味が無くなるので下限を置く
+            cut = []
+            for x in labels:
+                base = x.lstrip("@")
+                cut.append("@" + base[:-trim] if len(base) - trim >= 2 else x)
+            labels = cut
+            log.info("後ろ %d文字を落として引きます（短い呼び名のつもり）", trim)
     if not labels:
         log.error("辞書が空です。引く種がありません")
         raise SystemExit(1)
