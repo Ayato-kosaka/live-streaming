@@ -59,6 +59,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # 表示名からチャンネルIDを引くところは、毎朝の取り込み
 # （`python/doneru_supporters.py`）と共通。**引き方を2か所に書かない。**
 from donor_channels import channels  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 SEED = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -108,14 +109,22 @@ def main() -> None:
         # 逆にすると、あやとが `/me` で紐付けた翌朝の取り込みで元に戻る。
         # 種のほうを通したいときだけ force を付ける。
         if cur and cur.get("editedAt") and not force:
-            log.info("  %-22s %-8s %s（画面から直してあるので触りません）",
-                     d["viewerPk"], cur.get("state") or "?",
-                     cur.get("handle") or f"（{cur.get('label')}）")
+            # **公開の場では1人ずつ出さない**（`python/logsafe.py`）。
+            # このリポジトリは公開で、Actions のログも誰でも読める
+            for line in detail_lines([(
+                f'{d["viewerPk"]:<22}', f'{cur.get("state") or "?":<8}',
+                cur.get("handle") or f"（{cur.get('label')}）",
+                "（画面から直してあるので触りません）",
+            )]):
+                log.info("%s", line)
             kept += 1
             continue
 
-        log.info("  %-22s %-8s %s", d["viewerPk"], state,
-                 handle or f"（{d.get('label')}）")
+        for line in detail_lines([(
+            f'{d["viewerPk"]:<22}', f'{state:<8}',
+            handle or f"（{d.get('label')}）",
+        )]):
+            log.info("%s", line)
         if ref is None:
             continue
         # 新規で見つけた日は、種に無いので消さない
