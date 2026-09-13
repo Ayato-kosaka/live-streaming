@@ -22,6 +22,7 @@ import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { jstDay } from "@/lib/nightly";
+import Wrote from "@/components/ui/Wrote";
 
 
 /**
@@ -303,7 +304,9 @@ function StickyRow({
 
   return (
     <li>
-      <p className="mp-care-text">{note.text}</p>
+      {/* **書いてくれたまま出す**（#83）。返すときに、貼った人の改行が見えていないと
+          何に答えているのか分からなくなる */}
+      <Wrote t={note.text} as="p" className="mp-care-text" />
       {/* テーマ・日付・貼った人。**札にしない**（`.mp-note-foot`）。
           札は1つ 28px と左右の余白を持つので、3つ並ぶと1件が1行ぶん高くなる。
           区切りは入れ物が中黒で入れるので、ここでは字だけを並べる。 */}

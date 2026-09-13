@@ -17,6 +17,7 @@ import { Pin } from "@/components/live/art";
 import CardOne from "@/components/cards/CardOne";
 import type { PlanDays, ShownCard } from "@/components/cards/cards";
 import ReadAgain, { Waiting } from "./ReadAgain";
+import Wrote from "@/components/ui/Wrote";
 
 /**
  * 取りに行った結果。**3つを別のものとして持つ。**
@@ -151,7 +152,8 @@ function Notes({
         return (
           <li key={n.id}>
             <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />
-            <p className="mp-note-text">{n.text}</p>
+            {/* **自分が書いたまま出す**（#83） */}
+            <Wrote t={n.text} as="p" className="mp-note-text" />
             {/* テーマと日付は札にしない。**枠と余白のぶんだけ背が伸びる**し、
                 押せない札が押しどころの隣に並ぶと、合図が濁る。 */}
             <p className="mp-note-foot">
@@ -172,7 +174,7 @@ function Notes({
             {n.reply && (
               <p className="mp-reply">
                 <b>あやとから</b>
-                {n.reply}
+                <Wrote t={n.reply} />
               </p>
             )}
           </li>

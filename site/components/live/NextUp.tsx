@@ -7,6 +7,7 @@ import { HOME } from "@/content/voice";
 import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import { NoticeBell } from "./art";
+import Wrote from "@/components/ui/Wrote";
 
 /**
  * いま、いちばん近い企画。
@@ -167,7 +168,7 @@ function Card({
       <span className="nextup-body">
         <b className="nextup-title">{plan.title}</b>
         <i className="nextup-when">{plan.when}</i>
-        <span className="nextup-note">{plan.note}</span>
+        <Wrote t={plan.note} className="nextup-note" />
         <span className="nextup-tags">
           {plan.tags.map((t) => (
             <em key={t}>{t}</em>
