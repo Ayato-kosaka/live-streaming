@@ -59,6 +59,15 @@
   padding-left: var(--sp-3);
   border-left: var(--bw-2) solid var(--rule);
 }
+/* **読む字の柱（`max-width`）を、ここに書かない。**
+   `.nwords` は `section.panel.paper` の中にあるので、紙ぜんぶの柱
+   （`app/css/pages.css` の `.panel p { max-width: var(--read-col) }`。575px）が
+   そのまま効いている。実測で、ここは 1440px でも 43.1文字で止まる。
+
+   ここに2本目を書くと、**同じ紙の中に柱が2本できる。** すぐ下の
+   「会いに行く理由」（`.nwhy p`）は別のファイル（`app/css/nordic.css`）に
+   あるので、片方だけ直したときに右はしが数十pxずれる。
+   柱を変えるときは `--read-col` を1か所だけ動かす。 */
 .nwords p {
   margin: 0;
   font-size: 13.5px;

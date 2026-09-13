@@ -495,7 +495,13 @@
     0 1.5px 0 var(--paper-out), 0 -1.5px 0 var(--paper-out);
 }
 .phead-lead {
-  margin: 0; max-width: 40em;
+  /* 柱は紙の上の段落と同じ1本（上の `--read-col`）。ここは `40em`（640px）
+     だったが、`/nordic/day/7` の前置きが 47.6ch（625px。1文字 13.12px）で
+     45文字を超えていた。**`em` の数は字の数と一致しない。**
+
+     看板の前置きと紙の中の段落は別の面に乗っているが、柱の値まで2本に
+     分ける理由が無い。読む人から見れば、上から下へ続く1本の列。 */
+  margin: 0; max-width: var(--read-col);
   font-size: clamp(13.5px, 3.6vw, 16px);
   font-weight: 800; line-height: 1.85;
   letter-spacing: var(--ls-body);
@@ -816,7 +822,38 @@
   right: -12px; top: -7px; transform: rotate(29deg);
 }
 
-.panel p { margin: 0 0 var(--sp-3); font-size: var(--fs-body); line-height: 1.95; font-weight: 600; }
+/* =========================================================
+   読む字の柱（紙の面ぜんぶ）
+   ---------------------------------------------------------
+   **1行を 45文字までにする。** 1440px で測ると、紙の上の段落は
+   `/nordic` の「会いに行く理由」が 64.8ch、`/about` の本人の言葉が 59.4ch、
+   `/apps` `/next` `/map` `/apps/spelieve` も 51〜57ch あって、
+   どれも紙の左端から右端までの1本の棒だった
+   （`tools/sprites/navch.mjs` + `navwho.mjs` の実測。絵は
+   `/tmp/lenreport/about-before.png`）。長い行は、目が次の行の頭に戻るときに迷う。
+
+   **柱は1本の値で持ち、`em` では置かない。** `em` の数は字の数と一致しない
+   （島の字は和文・かな・欧文が混ざるので、1文字ぶんは 12.94〜16.0px と幅がある）。
+   区画ごとに別の幅を当てると、同じ紙の中で段落の右はしが数十pxずれて、
+   読む列が何本あるのか分からなくなる。
+
+   575px の根拠は、45文字を超えている段落のうち**いちばん1文字の狭い行**
+   （`/map` の「日本を出たのは2024/09/11、パリで配信を…」。日付が多くて
+   664px ÷ 51.3ch = 12.94px/字）。45文字で 582px なので、切り下げて 575px。
+   **いちばん狭い行で決める。** 平均で決めると、その1本だけが超えたまま残る。
+
+   **390px の折り返しは1文字も動かない。** 狭いところでこの段落が使えるのは
+   340px（`tools/sprites/navuse.mjs` を 390px で125面ぶん実測）で、575px のほうが広い。
+
+   `/nordic` の `.nwords p`（`app/nordic/themes.css`）と `.nwhy p`
+   （`app/css/nordic.css`）も、**この1本で足りている。** どちらも
+   `section.panel.paper` の中の `<p>` なので、ここの柱がそのまま効く。
+   あちらに2本目を書かない——同じ値を2か所に持つと、片方だけ直したときに
+   同じ紙の中で柱が2本になる。
+   ========================================================= */
+:root { --read-col: 575px; }
+
+.panel p { margin: 0 0 var(--sp-3); max-width: var(--read-col); font-size: var(--fs-body); line-height: 1.95; font-weight: 600; }
 .panel p:last-child { margin-bottom: 0; }
 /* 文の中に埋まった長い文字列（スコープのURL・鍵・パス）。
    **横に逃がさず、その場で折る。** 390px で
