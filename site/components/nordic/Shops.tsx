@@ -1,8 +1,13 @@
+import Link from "next/link";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import ShopRows, { type Row } from "./ShopRows";
 import { hoursJa } from "./hours";
 import { SHOP_KINDS, mapHref, shopsOf, OSM_LICENSE, type ShopKind } from "@/content/nordicShops";
+import { NORDIC_GUIDE } from "@/content/nordic";
+
+/** しおりに載っているおみやげの品数。**手で書かない**（`docs/island-standards.md` 8）。 */
+const SOUVENIRS = NORDIC_GUIDE.souvenir.length;
 
 /** 区画の印。**絵文字は使わない**（`docs/island-design.md` 1章）。 */
 const MARK: Record<ShopKind, IconName> = {
@@ -113,6 +118,21 @@ export default function Shops({
           <ShopRows items={g.rows} tz={data.tz} date={date} />
         </div>
       ))}
+
+      {/* **「どこで買うか」と「何を買うか」が、別の面に離れていた。**
+          ここは店の行き先だけを持っていて、値段・相場・本物の見分けかたは
+          しおりの「おみやげ」にある（琥珀の見分けかたも、シャコティスが
+          割れやすいことも、あちらにしか書いていない）。中身は重なって
+          いないのに、**どちらからもどちらへも行けなかった。**
+          店の前に立った人がその場で開けるように、道を1本だけ通す。 */}
+      {groups.length > 0 && (
+        <p className="chips nshop-book">
+          <Link className="chip link" href="/nordic/guide#souvenir">
+            <Icon name="book" size={18} />
+            しおりの、おみやげ{SOUVENIRS}品
+          </Link>
+        </p>
+      )}
 
       {/* 出どころ。**ODbL の表示義務なので消さない**（`docs/nordic-shops.md`）。
           この面の街地図も同じところから来ているので、1行で両方を受け持つ。 */}
