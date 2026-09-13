@@ -455,7 +455,7 @@ island/state
   }
   current: {                      あやとが手で（口／island_set_current.py）
     place: string                 いまいる場所
-    word: string                  ひとこと
+    word: string                  ひとこと（**改行が残る**。「改行」）
     week: string[]                今週やること
     theme: string                 georgia / nordic / desert / default
     updatedAt: "YYYY-MM-DD"
@@ -540,10 +540,10 @@ island/state
 | --- | --- | --- |
 | `title` | string | 題（4〜60字）。**これだけあれば出せる** |
 | `when` / `date` | string | 画面に出す言い方（40字）と、数えるための日（YYYY-MM-DD） |
-| `note` | string | ひとことで言うと（200字まで） |
+| `note` | string | ひとことで言うと（200字まで）。**改行が残る**（「改行」） |
 | `tags` | string[] | ふだ（6つまで・各16字） |
 | `place` | object | `{ name, area, map }` |
-| `about` | string[] | どんなものか。段落ごと（8つまで・各600字） |
+| `about` | string[] | どんなものか。段落ごと（8つまで・各600字）。**改行が残る**（「改行」） |
 | `links` | object[] | `{ label, href }`（8つまで） |
 | `photos` | object[] | `{ src, alt, credit, creditHref }`（8つまで） |
 | `embeds` | object[] | `{ kind, id, note }`（4つまで。`kind` は `youtube` か `instagram`） |
@@ -750,18 +750,35 @@ GAS → Firestore → 前に読めた値、の順に落ちる。どれも無け�
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
 | `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
-| `text` | string | 中身（120字まで） |
+| `text` | string | 中身（120字まで）。**改行が残る**（「改行」） |
 | `by` | string \| null | 名乗った名前（なくてもいい） |
 | `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
 | ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。企画（上）と同じ理由で、欄ごと落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
 | `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
-| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
+| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
 | `createdAt` | number | ミリ秒 |
 
 **企画に貼られた付箋**（旧。移行待ち）: `planId` `text` `cid` `hidden` `createdAt`。
+
+### 改行（2026-09-13〜）
+
+**本文の欄は、改行が入ったまま保存される。** 打つ欄が `<textarea>` の5系統
+——付箋の `text`、返事の `reply`、企画の `note` と `about[]`、`state/island` の
+`current.word`——が対象（口の側は `cleanText`）。
+
+`\r\n` と `\r` は `\n` にそろえ、**改行以外の C0 制御文字はいままでどおり落とす。**
+前後の空白・空行と行末の空白も落ちる（画面の `site/components/ui/Wrote.tsx` と
+同じ規則）。**長さの上限は、改行も1字として数える。**
+
+**題（`title`）・名乗り（`by`）・ふだ・URL・id・写真の一言（`note`）は1行のまま**
+（口の側は `clean`）。1行で出る前提の置き場に入るものと、`alt` や配信のチャットの
+ように改行を持てない先へ渡るものが混ざっているため。
+
+**2026-09-13 より前に書かれたものには、改行が1文字も残っていない。**
+口が空白に変えずに消していたので、あとから戻せない。
 
 **移ってきたぶんに残っている欄**: `movedFrom` `movedAt`（`islandIdeas` から
 #162 で移した印）、`name`（旧 `islandIdeas` の名乗り）、`heartsMovedTo`。
