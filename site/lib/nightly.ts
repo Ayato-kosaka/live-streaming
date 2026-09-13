@@ -46,6 +46,30 @@ export function jstNow(now: Date = new Date()): JstNow {
   return { y, m, d, h: t.getHours(), min: t.getMinutes(), md: `${p2(m)}-${p2(d)}`, date: `${y}-${p2(m)}-${p2(d)}` };
 }
 
+/**
+ * ISO の時刻（`2026-09-06T23:40:00Z`）→「9月7日」。**日本時間で切る。**
+ *
+ * 島に出る日付はどこも日本時間の0時が境目（台帳が #201・#202、島の「今日」が
+ * `jstNow`）。ところが `/me` の3つの画面は `iso.slice(5, 7)` で**字をそのまま
+ * 切っていた**ので、UTC の日付が出ていた。境目が日本時間の朝9時になるので、
+ * **日本の 00:00〜09:00 に来た人・貼った付箋・出した企画が、前の日の札**になる。
+ * 同じ切り方の写しが3つあって、3つとも同じだけずれていた。
+ *
+ * **写しを作らない**（このファイルの頭）。日付の言い方を足すときはここに足す。
+ *
+ * 読めない字なら `null`。**「NaN月NaN日」を出さない。**
+ *
+ * @param {string} iso ISO の時刻。`Date.parse` で読める形
+ * @return {string | null} 「9月7日」。読めなければ null
+ */
+export function jstDay(iso: string): string | null {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  // 日本は夏時間を持たないので、9時間足してから UTC の欄を読めばよい
+  const d = new Date(t + 9 * 3600000);
+  return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+}
+
 /** 日本時間で n 日ずらした日付（YYYY-MM-DD）。きのう作った料理を引くのに使う。 */
 export function jstShift(now: Date, days: number): string {
   const j = jstNow(now);

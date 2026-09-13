@@ -21,10 +21,8 @@ import { themeById } from "@/content/themes";
 import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
+import { jstDay } from "@/lib/nightly";
 
-/** 「2026-09-06T…」→「9月6日」 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
 
 /**
  * 机の道具が読む一覧を、1本だけ引く。**付箋と企画で同じものを使う。**
@@ -308,7 +306,11 @@ function StickyRow({
       <p className="mp-care-text">{note.text}</p>
       <p className="mp-note-foot">
         <span className="chip">{th?.name ?? note.theme}</span>
-        <span className="chip">{day(note.createdAt)}</span>
+        {/* 貼った時刻は UTC で入っている。**日本時間で切る**（`jstDay`）。
+            字をそのまま切ると、日本の朝9時より前に貼った付箋が前日に出る */}
+        {jstDay(note.createdAt) && (
+          <span className="chip">{jstDay(note.createdAt)}</span>
+        )}
         {note.by && <span className="chip">{note.by}</span>}
       </p>
       <textarea
