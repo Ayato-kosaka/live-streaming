@@ -827,13 +827,27 @@ GAS → Firestore → 前に読めた値、の順に落ちる。どれも無け�
 | `islandHere/{uid}` | いま島にいる人（`docs/island-here.md`） | `{ at, x, y, seenAt }` の4つだけ。**ここだけブラウザから直接読み書きする** |
 | `rouletteSessions/{32hex}` | 配信のルーレット | `owner` `status` `items` `wait` `duration` `turns` `theme` `sound` `result` `resultIndex` `spunAt` `postAt` |
 | `islandRemote/{32hex}` | 島の遠隔操作 | `owner` `at` `view` `scrollTo` `say` `showSay` `seq` `updatedAt` |
-| `streamChatMessages/{videoId_messageId}` | 配信中に溜めたコメント（#153） | `videoId` `messageId` `at` `text` `channelId` `name` `kind` |
+| `streamChatMessages/{videoId_messageId}` | 配信中に溜めたコメント（#153） | `videoId` `messageId` `at` `text` `channelId` `name` `kind` ＋投げ銭だけ `amount` `amountMicros` `currency`、埋め戻しだけ `source` |
 | `streamChatRuns/{videoId}` | 配信1本ぶんの栞と件数 | `videoId` `liveChatId` `next` `count` `startedAt` `lastPolledAt` `done` |
 | `streamChatHealth/collectLiveChat` | **どこまで進んだかの札** | `step` `detail` `at` |
 
 `streamChatHealth` があるのは、`collectLiveChat` が5分おきに勝手に動くので
 **壊れても誰も気づかない**から。Cloud Logging は権限が足りず 403 で読めない
 （#236）。札を1枚置いておけば、ログが読めなくても `firestore_read` で理由まで分かる。
+
+**`streamChatMessages` には、本文の無いものも入る。** 投げ銭は言葉を添えなくても
+投げられるので、`text` が空で `kind` が `superChatEvent` の書類がある。
+そのときは `amount`（`¥500` のような字）がその人の残したものの全部になる。
+
+**投げ銭の `text` は、その人が書いた言葉だけ**（`superChatDetails.userComment`）。
+YouTube の `displayMessage` は投げ銭だと**金額入りの1文を組み立てて**返すので、
+そのまま溜めると「何も書いていない人が15文字書いた」ことになる
+（2026-09-13 より前の書類はそうなっている。`docs/island-misses.md` #79）。
+
+**書類IDの `messageId` は Data API のもの**（`LCC.…`）で、BigQuery の
+`chat_messages.event_id`（yt-dlp が拾う renderer の id。`ChwKGk…`）とは
+**別の字。** 同じ1件でも突き合わない。両方を見るときは、人（`channelId`）と
+時刻で寄せる（`python/admin/chat_paid_backfill.py`）。
 
 #### g. セキュリティルール（`firestore.rules`）
 
