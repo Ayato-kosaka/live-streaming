@@ -69,9 +69,35 @@ from google.cloud import bigquery, firestore
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def log_changed(changed) -> None:
+    """変わった人の明細を出す。**公開の場では1行も出さない。**
+
+    チャンネルIDと表示名が1人ずつ並ぶ＝「その晩コメントした人の名簿」なので、
+    誰でも読める Actions のログに積むわけにいかない
+    （理由は `python/logsafe.py`）。上の「%d人」だけは残す。
+    数まで消すと、毎晩のログを読んでも何が起きたか分からなくなる。
+
+    Args:
+        changed: `(cid, いまの値, 前の値)` の一覧
+    """
+    for line in detail_lines([
+        (cid,
+         (was or {}).get("name") or "（新規）",
+         "->", v["name"],
+         "/ 日数", (was or {}).get("days", "－"), "->", v["days"])
+        for cid, v, was in changed[:50]
+    ]):
+        logger.info("%s", line)
+    if len(changed) > 50:
+        # 数だけなので、公開の場でもそのまま出してよい
+        logger.info("  …ほか %d人", len(changed) - 50)
+
 
 # Firestore の1回のまとめ書きに入る上限。超えると弾かれるので手前で切る。
 BATCH = 400
@@ -143,17 +169,7 @@ def main() -> int:
         changed.append((cid, v, was))
 
     logger.info("名前か日数が変わった / 新しく入る: %d人", len(changed))
-    for cid, v, was in changed[:50]:
-        logger.info(
-            "  %s  %s -> %s  / 日数 %s -> %d",
-            cid,
-            (was or {}).get("name") or "（新規）",
-            v["name"],
-            (was or {}).get("days", "－"),
-            v["days"],
-        )
-    if len(changed) > 50:
-        logger.info("  …ほか %d人", len(changed) - 50)
+    log_changed(changed)
 
     if a.dry_run:
         logger.info("--dry-run なので書いていません")

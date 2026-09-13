@@ -65,9 +65,26 @@ from google.cloud import bigquery, firestore
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def log_changed(rows) -> None:
+    """入れ替わるぶんの明細を出す。**公開の場では1行も出さない。**
+
+    チャンネルIDと金額が並ぶ＝「誰がいくら出したか」なので、
+    誰でも読める Actions のログには出せない（`python/logsafe.py`）。
+    `--dry-run` でも同じ。dry-run を Actions から回してもログは公開のまま残る。
+
+    Args:
+        rows: 入れ替わる行の一覧
+    """
+    for line in detail_lines([
+        (r["day"], r["source"], r["channelId"], r["amount"]) for r in rows
+    ]):
+        logger.info("%s", line)
 
 # 集計用の bot。本人の配信通知なので人ではない。
 BOT_NAME = "@あやとグルメアプリ"
@@ -447,8 +464,7 @@ def main() -> int:
         )
 
     if a.dry_run:
-        for r in changed[:30]:
-            logger.info("  %s %s %s %s", r["day"], r["source"], r["channelId"], r["amount"])
+        log_changed(changed[:30])
         logger.info("--dry-run なので書いていません")
         return 0
 

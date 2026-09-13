@@ -56,10 +56,31 @@ from google.cloud import firestore
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_PROJECT_ID  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 from youtube_api.client import execute_api_request, get_youtube_client  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def log_want(want, had) -> None:
+    """これから絵を引く人の明細を出す。**公開の場では1行も出さない。**
+
+    `--dry-run` でも消す。dry-run を Actions から回せば1バイトも書かなくても
+    **ログは公開のまま残る**（`python/logsafe.py`）。
+
+    Args:
+        want: 引く人のチャンネルIDの一覧
+        had: チャンネルID -> 辞書にいま入っている値
+    """
+    for line in detail_lines([
+        (cid,
+         (had.get(cid) or {}).get("name") or "（辞書に無い）",
+         "photo=" + ("あり" if (had.get(cid) or {}).get("photo") else "なし"))
+        for cid in want
+    ]):
+        logger.info("%s", line)
+
 
 # 1回の `channels.list` に渡せる id の数。YouTube 側の上限。
 PER_CALL = 50
@@ -168,14 +189,7 @@ def main() -> int:
         return 0
 
     if a.dry_run:
-        for cid in want[:20]:
-            v = had[cid]
-            logger.info(
-                "  %s  %s  photo=%s",
-                cid,
-                v.get("name") or "（辞書に無い）",
-                "あり" if v.get("photo") else "なし",
-            )
+        log_want(want[:20], had)
         logger.info("--dry-run なので引いても書いてもいません")
         return 0
 

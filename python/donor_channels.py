@@ -14,8 +14,26 @@
 import logging
 
 from config import BQ_DATASET, BQ_PROJECT_ID
+from logsafe import detail_lines
 
 logger = logging.getLogger(__name__)
+
+def log_ambiguous(ambiguous) -> None:
+    """引けなかった名前を出す。**表示名は公開の場では出さない。**
+
+    件数は残す。「引けなかったぶんがある」が消えると、
+    カードが渡らない理由を毎晩のログから追えなくなる（`python/logsafe.py`）。
+
+    Args:
+        ambiguous: `(表示名, 当たったチャンネルの数)` の一覧
+    """
+    if not ambiguous:
+        return
+    logger.warning("  %d件は、同じ名前が複数のチャンネルに当たったので引きません",
+                   len(ambiguous))
+    for line in detail_lines([(n, f"{k} 個") for n, k in ambiguous]):
+        logger.warning("%s", line)
+
 
 SQL = f"""
 SELECT author_name AS name,
@@ -46,13 +64,14 @@ def channels(names: list) -> dict:
         ]
     )
     out = {}
+    ambiguous = []
     for row in client.query(SQL, job_config=cfg).result():
         ids = list(row["ids"] or [])
         if len(ids) == 1:
             out[row["name"]] = ids[0]
         else:
             # 同じ名前が複数のチャンネルに付いている。誰か決められない
-            logger.warning("  %s は %d 個のチャンネルに当たったので引きません",
-                           row["name"], len(ids))
+            ambiguous.append((row["name"], len(ids)))
+    log_ambiguous(ambiguous)
     client.close()
     return out
