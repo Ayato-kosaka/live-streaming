@@ -36,6 +36,7 @@ from _fs import args, db, log
 sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from nordic_supporters import fetch, merge  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 
 def main() -> None:
@@ -59,8 +60,10 @@ def main() -> None:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
     for day, people in sorted(found.items()):
         log.info("%s: %d人", day, len(people))
-        for p in people:
-            log.info("    %s  %s", p["channelId"], p["name"])
+        # **公開の場では1人ずつ出さない**（`python/logsafe.py`）。
+        # このリポジトリは公開で、Actions のログも誰でも読める
+        for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
+            log.info("%s", line)
         if client is None:
             continue
         ref = client.collection("nordicDays").document(day)
