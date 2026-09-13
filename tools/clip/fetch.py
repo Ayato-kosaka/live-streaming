@@ -58,6 +58,9 @@ def secs(t):
 def base_args(client):
     home = os.environ.get("BGUTIL_HOME", "/tmp/bgutil/server")
     a = [sys.executable, "-m", "yt_dlp", "--no-progress", "--no-warnings",
+         # **黙って何分も待たせない。** 既定は20秒×10回で、断られているのか
+         # 詰まっているのか分からないまま1本が2分になる。
+         "--socket-timeout", "15", "-R", "2",
          "--extractor-args", f"youtube:player_client={client}",
          "--extractor-args", f"youtubepot-bgutilscript:server_home={home}"]
     # **使い捨てアカウントの Cookie があれば使う。無ければ使わない。**
@@ -68,23 +71,29 @@ def base_args(client):
     return a
 
 
-def probe_client(video, client, timeout=120):
-    """その口で「本物の映像形式」が見えるかを聞く。落としには行かない。"""
+def probe_client(video, client, timeout=75):
+    """その口で「本物の映像形式」が見えるかを聞く。落としには行かない。
+
+    **かかった秒数も返す。** 断られたのか詰まったのかは、文句だけでは分からない。
+    2秒で断られたのと75秒で戻らなかったのを同じ「×」にすると、次の手が選べない。
+    """
     cmd = base_args(client) + [
         "--skip-download", "--print", "%(format_id)s %(vcodec)s %(height)s",
         "-f", "bv*[height<=720]",
         f"https://www.youtube.com/watch?v={video}"]
+    t0 = time.time()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return 0, f"{timeout}秒で戻らず"
+        return 0, f"{timeout}秒で戻らず", timeout
+    dt = time.time() - t0
     out = (p.stdout or "").strip()
     err = (p.stderr or "").strip().splitlines()
     ok = bool(re.search(r"\s(avc1|vp0?9|av01)", out))
     if ok:
-        return 1, out.splitlines()[0][:60]
+        return 1, out.splitlines()[0][:60], dt
     why = next((l for l in reversed(err) if l.strip()), "")[:180]
-    return 0, ("ボット確認" if BOT in why else (why or "映像形式が無い"))
+    return 0, ("ボット確認" if BOT in why else (why or "映像形式が無い")), dt
 
 
 def grab(video, client, start, end, height, dst):
@@ -130,10 +139,10 @@ def main():
     rows, good = [], None
     for r in range(rounds):
         for c in CLIENTS:
-            n, why = probe_client(video, c)
-            rows.append((r + 1, c, n, why))
-            print(f"[{'見えた' if n else '駄目  '}] {r + 1}周目 client={c:<13} {why}",
-                  flush=True)
+            n, why, dt = probe_client(video, c)
+            rows.append((r + 1, c, n, why, dt))
+            print(f"[{'見えた' if n else '駄目  '}] {r + 1}周目 client={c:<13} "
+                  f"{dt:5.1f}秒 {why}", flush=True)
             if n:
                 good = c
                 break
@@ -147,9 +156,10 @@ def main():
              f"- 配信: `{video}`",
              f"- 時刻: {time.strftime('%Y-%m-%d %H:%M:%S')} UTC",
              f"- Cookie: {'あり' if os.environ.get('CLIP_COOKIES_FILE') else 'なし'}", "",
-             "| 周 | player_client | 映像形式 | 断り文句 / 見えた形式 |",
-             "| --- | --- | --- | --- |"]
-    lines += [f"| {r} | `{c}` | {'○' if n else '×'} | {w} |" for r, c, n, w in rows]
+             "| 周 | player_client | 映像形式 | かかった秒 | 断り文句 / 見えた形式 |",
+             "| --- | --- | --- | --- | --- |"]
+    lines += [f"| {r} | `{c}` | {'○' if n else '×'} | {dt:.1f} | {w} |"
+              for r, c, n, w, dt in rows]
 
     made = []
     if good:
