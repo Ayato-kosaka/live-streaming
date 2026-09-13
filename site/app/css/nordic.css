@@ -2953,6 +2953,20 @@ p.nday-lead {
    だからここは**読みものではなく、行き先の板。** 1行まるごとが
    地図アプリを開く押しどころで、指で狙う的は行の高さぜんぶ（72px 以上）。
    --------------------------------------------------------------- */
+/* 面の頭の近道（`.nday-jump`）から `#shop-…` で飛んでくる。
+   **紙の題は、紙の上辺より上にはみ出した札**になっている（`.panel.paper > h2`）。
+   そのまま `scrollIntoView` すると紙の上辺が画面の上辺に来るので、
+   **題の札が 11px ぶん画面の外に出て、頭が切れた状態で止まる**（本番で実測）。
+   900px 以上では 93px の看板が貼りついているので、そちらはもっと深く潜って
+   **題と最初の1軒まで隠れていた**（実測 106px）。押した人には
+   「押しても何も起きなかった」ようにしか見えない。
+   `.nday` が 12px 持っているのと同じ手当て。看板のぶんは広い幅でだけ足す。 */
+.nshop { scroll-margin-top: var(--sp-5); }
+@media (min-width: 900px) {
+  /* 看板の高さ 93px（`pages.css` の `.ih` 参照）＋ 息継ぎのぶん */
+  .nshop { scroll-margin-top: calc(93px + var(--sp-5)); }
+}
+
 /* `pages.css` の `.panel p { font-size: var(--fs-body) }` が (0,1,1) なので、
    class ひとつ（0,1,0）では負ける。**紙の中の段落は、必ず要素を添えて書く。** */
 .nshop p.nshop-lead {
@@ -2980,6 +2994,15 @@ p.nday-lead {
 .nshop-g > h3 > .ic { flex: none; }
 
 .nsps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+/* 紙の中は広い幅で 842px まで伸びる（900px 幅では 802px。1024px 以上は
+   紙に上限があるので 842px で止まる）。1列のままだと、**4段しかない札が
+   横 842px に伸びて、右半分が空のまま20枚続いた**（1280px で実測）。
+   1枚がスマホ（332px）と近い幅になるところで折り返す。
+   842 ÷ 2 = 417px。3列になるには 288×3 + すきま16 = 880px 要るので、
+   **紙の上限 842px では 3列にならない。** どの幅でも2列で止まる。 */
+@media (min-width: 900px) {
+  .nsps { grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); }
+}
 /* 1軒。**押せるので厚みを持たせる**（`island-design.md` 3章3）。
    厚みは真下・ぼかし無しで、地面の落ち影と取り違えられないようにする。 */
 .nsp-go {
@@ -3039,7 +3062,7 @@ p.nday-lead {
    11字しかないので、折らなくても横へあふれない。 */
 .nsp-hr { white-space: nowrap; }
 .nsp-side { display: grid; justify-items: center; gap: var(--sp-1); flex: none; }
-/* いま開いているか。**字にする色は `--marker-ink` / `--accent-ink`。**
+/* いま開いているか。**字にする色は `--marker-ink` / `--ink-2`。**
    飾りの緑（`--leaf-c`）を字にすると、クリームの紙の上で 2.87 しか出ない
    （`docs/island-misses.md` #80）。地はこの板の紙のまま、色は替えない。 */
 .nsp-live {
@@ -3049,9 +3072,24 @@ p.nday-lead {
   line-height: 1.3;
   text-align: center;
 }
-.nsp-live.is-open { color: var(--marker-ink); }
-.nsp-live.is-shut { color: var(--accent-ink); }
+/* **強いほうを、開いている店に付ける。**
+   前は逆だった。閉まっている店に面でいちばん強い赤（`--accent-ink`）が
+   付いていたので、夜にヴィリニュスの日を開くと「いまは閉まってる」が
+   **41枚並んで面が赤く埋まり**、いま入れる1軒がそこに埋もれていた（本番で実測）。
+   探しているのは入れる店なので、目立つのはそちらでなければいけない。
+   **色だけで分けない。** 開いているほうだけ、字ではなく**塗った札**にする。 */
+.nsp-live.is-open {
+  color: var(--marker-ink);
+  background: var(--marker);
+  border-radius: var(--r-1);
+  padding: 3px var(--sp-2);
+}
+/* 閉まっているのは、行かない理由であって読ませたい字ではない。字だけで置く。 */
+.nsp-live.is-shut { color: var(--ink-2); font-weight: 800; }
 .nsp-pin { flex: none; }
+/* 「何を買うか」へ渡す1本。しおりの「おみやげ」に、値段と見分けかたがある。 */
+.nshop p.nshop-book { margin: var(--sp-4) 0 0; }
+
 /* 出どころ。**ODbL の表示義務**（`docs/nordic-shops.md`）。消さない。 */
 .nshop p.nshop-osm {
   margin: var(--sp-3) 0 0;
