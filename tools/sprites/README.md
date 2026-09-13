@@ -41,6 +41,7 @@ pkill -f "next dev -p 3011"
 | `acref.py` | どうぶつの森の公式スクショを `/tmp/acref` に落とす |
 | `mefootpage.mjs <ポート>` | `/me` の一覧の**足元**だけの見本を組む（ログインが要る面を静的に見るため） |
 | `mefoot.mjs` | その見本を 360 / 390 で撮って、足元の高さ・中黒・横あふれ・押しどころを測る |
+| `mefield.mjs` | 同じ見本の**書く欄**を1つずつ。字・地・枠・押しどころの高さ・横あふれ |
 
 `crawl.mjs` と `noemoji.mjs` は開発サーバーではなく**書き出したもの**を見る。
 
@@ -64,6 +65,18 @@ node tools/sprites/mefootpage.mjs 3200
 (nohup python3 -m http.server 4200 --directory site/.next-3200 > /dev/null 2>&1 &)
 TAG=after node tools/sprites/mefoot.mjs        # /tmp/mefoot/after/
 ```
+
+欄（`<input>` `<select>` `<textarea>`）が島の見た目から外れていないかは `mefield.mjs`。
+**素の欄は白い箱とシステムの字で出る**ので、そこを機械で捕まえる。
+
+```bash
+SPORT=4200 TAG=after node tools/sprites/mefield.mjs   # /tmp/mefield/after/
+python3 tools/sprites/inkpx.py after _mefield          # 欄の中の字の濃さ
+```
+
+`inkpx.mjs` は文字ノードを辿るので、**閉じた `<select>` の中身と placeholder を
+測れない**（箱が 0x0、そもそも文字ノードでない）。`mefield.mjs` が欄そのものを
+1箱として撮って `inkpx.py` に渡す。
 
 `CHIP=1 node tools/sprites/mefootpage.mjs 3200` で足元に `.chip` を混ぜて組める。
 **足元は札を入れない場所**なので、混ぜても同じ絵になるのが正しい

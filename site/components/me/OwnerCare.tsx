@@ -462,26 +462,34 @@ function PlanRow({
         {plan.by && <span>{plan.by}</span>}
         {plan.hearts > 0 && <span>さんせい {plan.hearts}</span>}
       </p>
-      <label className="nph-post-row">
-        <span>どの段へ</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
-          {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
-            <option key={s} value={s}>
-              {PLAN_STATUS_NAME[s]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="nph-post-row">
-        <span>ページの id</span>
-        <input
-          type="text"
-          value={planId}
-          maxLength={40}
-          placeholder="nordic / iran-walk。空で外す"
-          onChange={(e) => setPlanId(e.target.value)}
-        />
-      </label>
+      {/* 欄は板（`.dform`）の上に置く。**`.nph-post-row` は `.dform` の中でしか
+          成り立たない。** 添えの字を欄の上に積むのも（`.dform label`）、欄を
+          彫るのも（`.dform input/select`）あちらが持っているので、板の外に
+          置くと、ブラウザ既定の白い箱とシステムの字が、すぐ上の付箋の返事
+          （`.bin`）の隣に並ぶ。投げ銭の紐付け（`.dform mp-donor-form`）が
+          同じ形の道具なので、作業台もそちらにそろえる。 */}
+      <div className="dform mp-care-form">
+        <label className="nph-post-row">
+          <span>どの段へ</span>
+          <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
+            {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
+              <option key={s} value={s}>
+                {PLAN_STATUS_NAME[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="nph-post-row">
+          <span>ページの id</span>
+          <input
+            type="text"
+            value={planId}
+            maxLength={40}
+            placeholder="nordic / iran-walk。空で外す"
+            onChange={(e) => setPlanId(e.target.value)}
+          />
+        </label>
+      </div>
       <div className="mp-care-acts">
         <button className="mp-send is-small" disabled={busy} onClick={move}>
           {busy ? "動かしています…" : "動かす"}
