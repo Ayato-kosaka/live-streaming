@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+  LINE,
+  solveSize,
+  wedgeWidth,
   SHELL_COLORS,
   WHEEL_COLORS,
   type WheelTheme,
   ease,
-  labelSize,
-  labelText,
   polar,
   resultSize,
   spinTo,
   wedgePath,
+  wheelPlan,
 } from "./wheel";
 
 type Props = {
@@ -68,6 +70,16 @@ export default function Wheel({
 }: Props) {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<number | null>(null);
+  /**
+   * 輪が止まる向き（度）。**札の上下を決めるのに要る。**
+   *
+   * 輪ぜんぶを `transform: rotate()` で回すので、止まったあとの札は
+   * 「作ったときの向き ＋ 回った角」のところにいる。作ったときの向きだけで
+   * 上下を決めると、**回り終わったとたんに下半分の札がさかさまになる**
+   * （実測で6件中4枚）。回し始めに終わりの角が分かっているので、
+   * そこで入れて、回っているあいだに向きを直しておく。
+   */
+  const [turn, setTurn] = useState(0);
   const wheelRef = useRef<SVGSVGElement | null>(null);
   const pointRef = useRef<HTMLDivElement | null>(null);
   const rot = useRef(0);
@@ -80,6 +92,64 @@ export default function Wheel({
   const n = labels.length;
   const step = n ? 360 / n : 360;
   const colors = WHEEL_COLORS[theme];
+
+  /** 輪に載せるもの。字が読める大きさに収まらなければ番号に落ちる */
+  const plan = useMemo(() => wheelPlan(labels), [labels]);
+  /** 扇の幅の係数。描いたあとの測り直しで使う */
+  const tw = wedgeWidth(n || 1);
+  const labelRef = useRef<SVGGElement | null>(null);
+
+  /**
+   * 描いたあと、**実際に描かれた長さ**で札の大きさを決め直す。
+   *
+   * `wheel.ts` の見込みは字1つ 0.94em の当たりで、書体が届く前や
+   * 見たことのない字（記号・見慣れない漢字）では外れる。外れたまま出すと、
+   * また扇からはみ出す。ここで `getComputedTextLength()` を読んで、
+   * 扇に入る大きさを解き直す（式は `sizeOf` と同じもの）。
+   *
+   * **`setState` を呼ばない。** DOM に直接書く（`docs/island-design.md` 3章）。
+   */
+  useLayoutEffect(() => {
+    const g = labelRef.current;
+    if (!g) return;
+    const place = g.dataset.place === "along" ? "along" : "across";
+    const fit = () => {
+      for (const grp of Array.from(g.children) as SVGGElement[]) {
+        const base = Number(grp.dataset.fit);
+        const tw = Number(grp.dataset.tw);
+        const flip = grp.dataset.flip === "1";
+        const texts = Array.from(grp.children) as SVGTextElement[];
+        const k = texts.length;
+        if (!base || !k) continue;
+        // いちばん長い行の、字の大きさ1あたりの長さ
+        let m = 0;
+        for (const t of texts) m = Math.max(m, t.getComputedTextLength() / base);
+        if (!(m > 0)) continue;
+        /* **縮めるだけ。伸ばさない。** 見込みが実測より小さかったぶんを
+           足し戻すと、番号の輪で桁ごとに大きさが変わる（`wheelPlan` が
+           わざわざ揃えているものを、ここで崩すことになる）。 */
+        const solved = solveSize(m, k, tw, place);
+        const size = Math.min(base, solved.size);
+        const rOut = size < base ? solved.rOut : Number(grp.dataset.rout);
+        if (Math.abs(size - base) < 0.05) continue;
+        texts.forEach((t, j) => {
+          t.setAttribute("font-size", String(size));
+          if (place === "along") {
+            t.setAttribute("x", String(flip ? 300 - rOut : 300 + rOut));
+            t.setAttribute("y", String(300 + (j - (k - 1) / 2) * LINE * size));
+          } else {
+            const r = rOut - ((flip ? k - 1 - j : j) + 0.5) * LINE * size;
+            t.setAttribute("y", String(flip ? 300 + r : 300 - r));
+          }
+        });
+      }
+    };
+    fit();
+    /* 書体は遅れて届く。届いた時点でもう一度合わせる
+       （`page.tsx` は `display: "swap"` なので、初回は控えの字幅で描かれる） */
+    document.fonts?.ready.then(fit).catch(() => {});
+    // `turn` が変わると札の上下が入れ替わる。y の並びも取り直す
+  }, [plan, turn]);
 
   /** 刻みの音。写した元と同じ矩形波。 */
   const beep = useCallback(
@@ -128,6 +198,8 @@ export default function Wheel({
 
     const base = rot.current;
     const end = spinTo(base, spinIndex, n, turns);
+    // 終わりの向きは、回り始めにもう決まっている。札の上下をここで合わせる
+    setTurn(((end % 360) + 360) % 360);
     const total = end - base;
     const slow = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ms = slow ? Math.min(1100, duration * 1000) : duration * 1000;
@@ -250,26 +322,76 @@ export default function Wheel({
                   stroke="#ffffff"
                   strokeOpacity=".38"
                   strokeWidth="3"
-                  className={result === i ? "rl-won" : undefined}
+                  className={`rl-wedge${result === i ? " rl-won" : ""}`}
                 />
               ))
             )}
-            {labels.map((label, i) => {
-              const deg = -90 + i * step;
-              const at = polar(178, deg);
-              return (
-                <text
-                  key={`t${i}`}
-                  className="rl-label"
-                  x={at.x}
-                  y={at.y}
-                  fontSize={labelSize(label, n)}
-                  transform={`rotate(${deg + 90} ${at.x} ${at.y})`}
-                >
-                  {labelText(label)}
-                </text>
-              );
-            })}
+            <g ref={labelRef} data-place={plan.place}>
+              {plan.labels.map((lab, i) => {
+                /* 扇のまん中の向き。3時が 0 度で、12時が -90 度 */
+                const a = -90 + i * step;
+                /* 字の走る向き。`across` は半径と直角なので a+90、
+                   `along` は半径に沿うので a。
+                   **見た目の向き（＝これに輪の回った角を足したもの）を
+                   ±90度の中に入れる。** 入れれば字が上下さかさまにならない。
+                   半周ぶん回した側は `flip` を立てて、行の並びを裏返す */
+                const g0 = plan.place === "across" ? a + 90 : a;
+                let seen = ((((g0 + turn + 180) % 360) + 360) % 360) - 180;
+                let flip = false;
+                if (seen > 90) {
+                  seen -= 180;
+                  flip = true;
+                } else if (seen <= -90) {
+                  seen += 180;
+                  flip = true;
+                }
+                // 輪ごと回る角を引いて、SVG の中での角に戻す
+                const rot = seen - turn;
+                const k = lab.lines.length;
+                return (
+                  <g
+                    key={`t${i}`}
+                    transform={`rotate(${rot} 300 300)`}
+                    data-fit={lab.size}
+                    data-rout={lab.rOut}
+                    data-tw={tw}
+                    data-flip={flip ? 1 : 0}
+                  >
+                    {lab.lines.map((line, j) => {
+                      if (plan.place === "along") {
+                        // 輪の縁を起点に、中心へ向けて書く
+                        return (
+                          <text
+                            key={j}
+                            className="rl-label"
+                            x={flip ? 300 - lab.rOut : 300 + lab.rOut}
+                            y={300 + (j - (k - 1) / 2) * LINE * lab.size}
+                            fontSize={lab.size}
+                            textAnchor={flip ? "start" : "end"}
+                          >
+                            {line}
+                          </text>
+                        );
+                      }
+                      // 半径と直角。行は外から内へ積む（裏返した側は内から外へ）
+                      const r = lab.rOut - ((flip ? k - 1 - j : j) + 0.5) * LINE * lab.size;
+                      return (
+                        <text
+                          key={j}
+                          className="rl-label"
+                          x={300}
+                          y={flip ? 300 + r : 300 - r}
+                          fontSize={lab.size}
+                          textAnchor="middle"
+                        >
+                          {line}
+                        </text>
+                      );
+                    })}
+                  </g>
+                );
+              })}
+            </g>
             <circle
               cx="300"
               cy="300"
