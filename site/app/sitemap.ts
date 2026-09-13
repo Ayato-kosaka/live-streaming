@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
-import { APPS } from "@/content/apps";
+import { APPS, PAST_APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
 import { DAY_PAGES, NORDIC_COUNTRIES, dayHref } from "@/content/nordic";
+import { ISLE_CHAPTERS } from "@/components/chain/route";
 
 export const dynamic = "force-static";
 
@@ -27,16 +28,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/nordic", "/nordic/guide",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
     "/privacy",
+    // **看板の6つは全部ここに並べる。** `/about` は頭のバーにも名刺にも
+    // 出ているのに、索引から落ちていた（2026-09-13。109面を数えて見つけた）
+    "/about",
+    // 過去の島を並べた面。ここから `/island/*` へ1本ずつ出ている
+    "/atlas",
   ];
   return [
     ...top.map((p) => ({ url: url(p), lastModified: now, priority: p === "" ? 1 : 0.8 })),
     ...STREAM_TYPES.map((t) => ({ url: url(`/streams/${t.slug}`), lastModified: now, priority: 0.7 })),
     ...COUNTRIES.map((c) => ({ url: url(`/map/${c.slug}`), lastModified: now, priority: 0.6 })),
     ...RECIPES.map((r) => ({ url: url(`/kitchen/${r.slug}`), lastModified: now, priority: 0.6 })),
-    ...APPS.map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
+    /* **`PAST_APPS` も並べる。** `appBySlug` は `APPS` だけを見ていて
+       `/apps/spelieve` が 404 だった、という直しが `content/apps.ts` に
+       書いてあるのに、**索引のほうは `APPS` だけのまま残っていた。**
+       1件直したら横を見に行く（`docs/island-misses.md` #73・#76）。 */
+    ...[...APPS, ...PAST_APPS].map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
     ...LEGENDS.map((l) => ({ url: url(`/legends/${l.slug}`), lastModified: now, priority: 0.6 })),
     ...NORDIC_COUNTRIES.map((c) => ({ url: url(`/nordic/${c.slug}`), lastModified: now, priority: 0.6 })),
     // 旅の1日ぶん。出発の日と1日目から7日目まで。
     ...DAY_PAGES.map((d) => ({ url: url(dayHref(d)), lastModified: now, priority: 0.6 })),
+    // 過去の島の1章ぶん。`/atlas` から辿れる面で、中身は残り続ける
+    ...ISLE_CHAPTERS.map((c) => ({ url: url(`/island/${c.slug}`), lastModified: now, priority: 0.5 })),
   ];
 }
