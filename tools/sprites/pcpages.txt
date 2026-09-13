@@ -1,3 +1,21 @@
+# **いまの面の一覧ではありません。凍らせた記録です。**
+#
+# 2026-09-13 までの PC 幅の測定（`pcsweep` / `pchit` / `pcink` / `navcw` / `navuse`）が
+# 見ていた109面を、そのまま残したもの。本番の sitemap から取った一覧で、
+# **手で足さないと増えない。** 実際いつのまにか古くなっていて、同じ書き出しを
+# `crawl.mjs` が歩くと130面あった。`/about` `/atlas` `/design` `/island/*`
+# `/nordic/photos` `/me*` `/404` `/apps/spelieve` `/roulette` の21面が、
+# **一度も測られないまま「0件」に数えられていた**（`docs/island-misses.md` #79）。
+#
+# ふだん測る面は、**書き出しを歩いて集める**（`pages.mjs`）。
+# ここに足しても測る面は増えません。面を1つ作れば、次の回から測られます。
+#
+# 残してあるのは1つの用事のためだけ——**当時の数字を出し直す**とき:
+#
+#   SPORT=4160 LIST=/home/user/live-streaming/tools/sprites/pcpages.txt node pchit.mjs
+#
+# いまの書き出しとの差は `node pagescheck.mjs` が両側とも出します。
+#
 /
 /all
 /apps

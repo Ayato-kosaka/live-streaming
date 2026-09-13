@@ -17,10 +17,14 @@
  * どれも**押せないのではない**ので、理由を出して数から分ける。
  *
  * 出るもの: /tmp/pchit/<幅>.json と、画面に「48px を割った押しどころ」の一覧。
+ *
+ * 回る面は `pages.mjs` が**書き出しを歩いて**集める。手で書いた一覧は、面が
+ * 増えても増えないので、**測られていないことが数に出ない**（#79）。
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { mkdirSync, writeFileSync, readFileSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
+import { collect, banner, tally } from "./pages.mjs";
 
 const SPORT = process.env.SPORT || "5400";
 const OUT = process.env.OUT || "/tmp/pchit";
@@ -28,10 +32,11 @@ const MIN = Number(process.env.MIN || 48);
 const WIDTHS = (process.env.WIDTHS || "390x844,1440x900,1920x1080,820x1180")
   .split(",")
   .map((s) => s.split("x").map(Number));
-const PAGES = readFileSync(
-  process.env.LIST || "/home/user/live-streaming/tools/sprites/pcpages.txt",
-  "utf8",
-).split("\n").map((s) => s.trim()).filter(Boolean);
+/* 面は**書き出しを歩いて**集める（`pages.mjs`）。手で書いた一覧（`pcpages.txt`）は
+   109行で止まっていて、書き出しは130面あった。21面が一度も測られないまま
+   「48px割れ 0」に数えられていた（`docs/island-misses.md` #79）。 */
+const C = collect();
+const PAGES = C.pages;
 
 const SEL = 'a[href],button,[role="button"],input,select,textarea,summary,label,[tabindex]:not([tabindex="-1"])';
 
@@ -48,6 +53,8 @@ const PROBE = `(() => {
   g.style.cssText = "position:static;display:block;width:60px;height:60px;font-size:9px;line-height:60px;overflow:hidden;background:#060;color:#fff";
   document.body.insertBefore(g, document.body.firstChild);
 })()`;
+
+console.log(banner(C) + "\n");
 
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({
@@ -158,13 +165,16 @@ for (const [W, H] of WIDTHS) {
 await b.close();
 
 console.log("\n===== まとめ =====");
+console.log(banner(C));
 for (const [W, rows] of byWidth) {
   const ok = rows.filter((r) => r.measured);
   const tot = ok.reduce((a, r) => a + r.n, 0);
   const sm = ok.reduce((a, r) => a + r.small.length, 0);
   const sk = ok.reduce((a, r) => a + r.skipped.length, 0);
   const pages = ok.filter((r) => r.small.length).length;
-  console.log(`幅 ${W}: 測れた ${ok.length}/${rows.length}面  押しどころ ${tot}個  ${MIN}px割れ ${sm}個（${pages}面）  測れず ${sk}個`);
+  /* **「48px割れ 0」の前に、何面を測ったのかを出す。** 面の数が無いと、
+     0 が「測って0」なのか「見ていない」のか読めない（#79）。 */
+  console.log(`幅 ${W}: ${tally(C, ok.length)}  押しどころ ${tot}個  ${MIN}px割れ ${sm}個（${pages}面）  測れず ${sk}個`);
 }
 /* **PC 幅でだけ小さいもの**を出す。390 で既に小さいものは「PC の問題」ではない。 */
 const base = byWidth.get(390);

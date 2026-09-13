@@ -10,8 +10,10 @@
  * 縁取りも影も字といっしょに消すので、比を水増ししない。
  *
  * `inkpx.mjs` との違いは3つ:
- *   - 面を手で渡すのではなく、109面を回る
- *   - 撮った2枚を**その場で読んで、すぐ消す**（dpr2 の全面の絵を109面ぶん
+ *   - 面を手で渡すのではなく、**書き出しを歩いて集めた面ぜんぶ**を回る
+ *     （`pages.mjs`。手で書いた一覧は面が増えても増えないので、
+ *     測られていないことが数に出ない——#79）
+ *   - 撮った2枚を**その場で読んで、すぐ消す**（dpr2 の全面の絵を面の数ぶん
  *     残すと箱の空きが尽きる）。読むのは `pcink.py`
  *   - **幅ごとに突き合わせて「PC 幅でだけ薄くなるもの」を出す**
  *
@@ -29,7 +31,7 @@
  * **幅を変えて数が増えたら、まず「その字の色と地が幅で変わっているか」を直に見る。**
  * 変わっていなければ、変わったのは測り方のほう（`docs/island-misses.md` #72）。
  *
- * **これは重い。1面 20〜30秒、109面×4幅で2時間半かかる。**
+ * **これは重い。1面 20〜30秒、130面×4幅で3時間かかる。**
  * dpr2 の全面の絵を2枚撮って、numpy で1億画素を読むため。
  * **他の重い仕事と同時に回さない。** `pcsweep` と `pchit` と3本並べたら
  * 1面1分半（4倍）まで落ちた。幅は**比べたい順に並べる**——
@@ -39,6 +41,7 @@ import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { execFileSync } from "child_process";
+import { collect, banner, tally } from "./pages.mjs";
 
 const SPORT = process.env.SPORT || "5400";
 const OUT = process.env.OUT || "/tmp/pcink";
@@ -46,10 +49,11 @@ const DPR = Number(process.env.DPR || 2);
 const LIM = Number(process.env.LIM || 4.5);
 const WIDTHS = (process.env.WIDTHS || "1440x900,390x844")
   .split(",").map((s) => s.split("x").map(Number));
-const PAGES = (process.env.PAGES ? process.env.PAGES.split(",") :
-  (await import("fs")).readFileSync(
-    process.env.LIST || "/home/user/live-streaming/tools/sprites/pcpages.txt", "utf8",
-  ).split("\n")).map((s) => s.trim()).filter(Boolean);
+/* 面は**書き出しを歩いて**集める（`pages.mjs`）。手で書いた一覧（`pcpages.txt`）は
+   109行で止まっていて、書き出しは130面あった。21面が一度も測られないまま
+   「4.5割れ 0」に数えられていた（`docs/island-misses.md` #79）。 */
+const C = collect();
+const PAGES = C.pages;
 
 /** 仕込み。**地に溶ける字を1つ置く。挙がらなければ数え方が届いていない。**
     合格するほうも1つ置いて、**正しい字を落とさない**ことまで見る。 */
@@ -61,6 +65,8 @@ const PROBE = `(() => {
     '<p class="pcinkprobe-ok" style="color:#111111;font-size:16px;text-shadow:none">こいじ</p>';
   document.body.insertBefore(d, document.body.firstChild);
 })()`;
+
+console.log(banner(C) + "\n");
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -191,7 +197,7 @@ for (const [W, H] of WIDTHS) {
       console.log(`読めず ${W} ${path}`);
       continue;
     } finally {
-      // dpr2 の全面の絵を109面ぶん残すと箱の空きが尽きる。読んだら消す
+      // dpr2 の全面の絵を面の数ぶん残すと箱の空きが尽きる。読んだら消す
       for (const f of [`${base}.shot.png`, `${base}.bg.png`]) if (existsSync(f)) unlinkSync(f);
     }
     rows.push({ path, measured: true, ...res });
@@ -204,11 +210,14 @@ for (const [W, H] of WIDTHS) {
 await b.close();
 
 console.log("\n===== まとめ =====");
+console.log(banner(C));
 for (const [W, rows] of byWidth) {
   const ok = rows.filter((r) => r.measured);
   const spots = ok.reduce((a, r) => a + r.n, 0);
   const bad = ok.reduce((a, r) => a + r.bad.length, 0);
-  console.log(`幅 ${W}: 測れた ${ok.length}/${rows.length}面  字 ${spots}か所  ${LIM}割れ ${bad}か所（${ok.filter((r) => r.bad.length).length}面）`);
+  /* **「4.5割れ 0」の前に、何面を測ったのかを出す。** 面の数が無いと、
+     0 が「測って0」なのか「見ていない」のか読めない（#79）。 */
+  console.log(`幅 ${W}: ${tally(C, ok.length)}  字 ${spots}か所  ${LIM}割れ ${bad}か所（${ok.filter((r) => r.bad.length).length}面）`);
 }
 const base = byWidth.get(390);
 if (base) {

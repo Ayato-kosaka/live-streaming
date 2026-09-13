@@ -2,7 +2,10 @@
  * 公開している全面を、**PC の幅で**撮って数える（1本目。横あふれ・伸びきり・絵の引き伸ばし）。
  *
  * これまで巡回の道具は 390px しか見ていなかった（`crawl.mjs` は viewport の宣言が
- * 1本きりで 390x844）。**公開109面は PC の幅で一度も見られていない。**
+ * 1本きりで 390x844）。**公開している面は PC の幅で一度も見られていない。**
+ *
+ * 測る面は `pages.mjs` が**書き出しを歩いて**集める。手で書いた一覧は
+ * 面が増えても増えないので、**測られていないことが数に出ない**（#79）。
  *
  *   SPORT=5400 node pcsweep.mjs                        # PC の3幅ぜんぶ（撮る＋数える）
  *   SPORT=5400 WIDTHS=1440x900 node pcsweep.mjs        # 1幅だけ
@@ -33,20 +36,20 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { mkdirSync, writeFileSync, readFileSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
+import { collect, banner, tally } from "./pages.mjs";
 
 const SPORT = process.env.SPORT || "5400";
 const OUT = process.env.OUT || "/tmp/pcsweep";
 const WIDTHS = (process.env.WIDTHS || "1440x900,1920x1080,820x1180")
   .split(",")
   .map((s) => s.split("x").map(Number));
-const PAGES = readFileSync(
-  process.env.LIST || "/home/user/live-streaming/tools/sprites/pcpages.txt",
-  "utf8",
-)
-  .split("\n")
-  .map((s) => s.trim())
-  .filter(Boolean);
+/* 面は**書き出しを歩いて**集める（`pages.mjs`）。手で書いた一覧（`pcpages.txt`）は
+   109行で止まっていて、同じ書き出しを `crawl.mjs` が歩くと130面あった。
+   21面が一度も測られないまま「横あふれ 0面」に数えられていた
+   （`docs/island-misses.md` #79）。 */
+const C = collect();
+const PAGES = C.pages;
 
 /* 本文の「読む字」だけを行の長さの対象にする。見出し・札・ボタン・数字は
    長くならないのが当たり前なので、混ぜると平均が薄まって伸びきりが埋もれる。 */
@@ -70,6 +73,8 @@ const PROBE_WAIT = `(async () => {
   if (im && !im.complete) await new Promise((r) => { im.onload = r; im.onerror = r; });
   return { nw: im ? im.naturalWidth : -1 };
 })()`;
+
+console.log(banner(C) + "\n");
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -360,10 +365,13 @@ for (const [W, H] of WIDTHS) {
 await b.close();
 
 console.log("\n===== まとめ =====");
+console.log(banner(C));
 for (const [W, rows] of summary) {
   const shot = rows.filter((r) => r.shot);
   const over = rows.filter((r) => r.over > 1);
-  console.log(`幅 ${W}: 撮れた ${shot.length}/${rows.length}  横あふれ ${over.length}面`);
+  /* **測れた面の数を必ず出す。** 「横あふれ 0面」が「測って0」なのか
+     「その面を開けていない」のかは、ここが無いと読めない（#79）。 */
+  console.log(`幅 ${W}: ${tally(C, rows.filter((r) => r.shot !== false).length)}  撮れた ${shot.length}/${rows.length}  横あふれ ${over.length}面`);
   for (const r of over) console.log(`   横あふれ ${r.path} +${r.over}px  ${r.spill.map((s) => `${s.t}(右${s.right})`).join(" ")}`);
 }
 if (process.env.PROBE) {
