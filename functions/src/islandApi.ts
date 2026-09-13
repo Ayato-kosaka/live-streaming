@@ -713,14 +713,6 @@ async function fetchHandle(channelId: string): Promise<string> {
 }
 
 /**
- * x-forwarded-for から最初のIPだけ取る。
- * @param {unknown} v ヘッダの値
- * @return {string | null} IP か null
- */
-const fwd = (v: unknown): string | null =>
-  String(v ?? "").split(",")[0]?.trim() || null;
-
-/**
  * 端末IDとして妥当か。
  * @param {unknown} v 入力
  * @return {boolean} 妥当なら true
@@ -3005,7 +2997,8 @@ export const islandApi = onRequest(
           cid,
           uid: who?.uid ?? null,
           createdAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
+          /* **IP は取らない**(#293)。読む仕組みが1つも無いまま、消す期限も
+             決めずに溜めていた。付箋は消さない設計なので、持てば永久に残る。 */
         });
         res.json({
           note: {
@@ -3239,7 +3232,7 @@ export const islandApi = onRequest(
           uid: who?.uid ?? null,
           createdAt: now,
           updatedAt: now,
-          ip: fwd(req.headers["x-forwarded-for"]),
+          /* **IP は取らない**(#293)。付箋と同じ理由。 */
         });
         res.set("Cache-Control", "no-store");
         res.json({plan: planShape(await ref.get())});
