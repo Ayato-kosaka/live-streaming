@@ -127,3 +127,33 @@ SPORT=4500 node tools/sprites/livecpu.mjs    # 結果の札の回る光を A/B�
 全ボタンから地・枠・字を落としている）。「ブラウザ既定のボタン」を探しても
 原理的に0件なので、代わりに**「reset のまま板になっていない」**（地も枠も厚みも
 無い）を数えること。
+
+## じぶんのことと机（`/me` `/me/desk`）を、道具9つ ×4つの状態で見る
+
+机は**札を押した道具しか作られない**ので、押さずに撮ると9つのうち1つしか見ていない。
+`mesweep.mjs` が札を1つずつ押して、0件・待ち・落ちたも含めて撮る。
+
+```bash
+tools/build.sh 3600
+(nohup python3 -m http.server 4600 --directory site/.next-3600 > /dev/null 2>&1 &)
+SPORT=4600 node tools/sprites/mesweep.mjs                  # うまくいった日
+for m in empty down wait; do SPORT=4600 MEMODE=$m node tools/sprites/mesweep.mjs; done
+OPENALL=1 SPORT=4600 node tools/sprites/mesweep.mjs        # 畳みを全部開けて、もう一度
+python3 tools/sprites/mestates.py                          # 4つを横に並べて1枚に
+SPORT=4600 node tools/sprites/meink.mjs                    # 字の濃さ（欄の中も）
+python3 tools/sprites/inkpx.py meink _desk-plan
+SPORT=4600 node tools/sprites/mefaces.mjs                  # 書く欄の顔が何種類あるか
+```
+
+| ファイル | 何をする |
+| --- | --- |
+| `meseed.mjs` | `asme.mjs` を包んで、一覧の口を **0件 / 返らない / 500** に差し替える。`/me` だけはどの状態でも返す（落とすと机ごと1枚に化けて、道具の中が撮れない）。`/alertbox/session` は POST だが「読みに行っている口」なので落とす側に入れる |
+| `mesweep.mjs` | 13場面 × 360/390 を撮って、素の欄・OS が描く印と矢印・48px・横あふれを数える。**測るたびに素の部品4つと `.dform` の外の `.nph-post-row` 1つを仕込んで、挙がったかを毎回出す**（`docs/island-misses.md` #19） |
+| `meink.mjs` | 字の濃さの2枚組。**欄の中（placeholder と閉じた `<select>`）も別に撮る** |
+| `mefaces.mjs` | 書く欄の顔（地・枠・角・彫り・字）を数え上げて、何種類に割れているかを出す |
+| `mestates.py` | `mesweep` の4状態を横に並べて1枚にする。**0件と落ちたは、並べないと見分けられない** |
+
+出るもの: `/tmp/mesweep/{ok,empty,down,wait,ok-open}/`・`/tmp/mesweep/states/`・`/tmp/ink/meink/`
+
+**比べる相手は「規則の当たらないところに置いた素の部品」にする。** 同じ親に置くと
+`.dform input` が子孫に当たって素の部品にも効き、**正しい欄27件が全部「否」**と出る。
