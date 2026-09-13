@@ -2942,3 +2942,123 @@ p.nday-lead {
   font-size: var(--fs-small);
   color: var(--ink-2);
 }
+
+/* ───────────────────────────────────────────────────────────────
+   おみやげと雑貨（`components/nordic/Shops.tsx`）
+
+   あやとの言葉（2026-09-13・ビャウィストクの路上で）:
+
+   > お土産とか雑貨とか行きたかったけど、あやと島みても見つからず行けなかった
+
+   だからここは**読みものではなく、行き先の板。** 1行まるごとが
+   地図アプリを開く押しどころで、指で狙う的は行の高さぜんぶ（72px 以上）。
+   --------------------------------------------------------------- */
+/* `pages.css` の `.panel p { font-size: var(--fs-body) }` が (0,1,1) なので、
+   class ひとつ（0,1,0）では負ける。**紙の中の段落は、必ず要素を添えて書く。** */
+.nshop p.nshop-lead {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+  font-size: var(--fs-note);
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+/* 読めなかったとき・1軒も無いとき。**同じ字にしない**（`island-misses.md` #79）。 */
+.nshop p.nshop-none {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.nshop-g + .nshop-g { margin-top: var(--sp-4); }
+.nshop-g > h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-head);
+}
+.nshop-g > h3 > .ic { flex: none; }
+
+.nsps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+/* 1軒。**押せるので厚みを持たせる**（`island-design.md` 3章3）。
+   厚みは真下・ぼかし無しで、地面の落ち影と取り違えられないようにする。 */
+.nsp-go {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-2);
+  align-items: center;
+  min-height: 64px;
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  text-decoration: none;
+}
+.nsp-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* `min-width: 0` が無いと、長い現地語の名前が列を押し広げて横にあふれる */
+.nsp-txt { display: grid; gap: 2px; min-width: 0; }
+.nsp-name {
+  font-size: 15.5px;
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  /* Šv. Ignoto g. / Podlaskie Centrum Rolno-Towarowe。**切らずに折る。**
+     名前が読めなければ、看板を探せない */
+  overflow-wrap: anywhere;
+}
+/* 何の店か と、中心からの距離。同じ行に置いて1段で済ませる */
+.nsp-what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.nsp-what em { font-style: normal; }
+.nsp-at {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* 営業時間。**書いていない店は、書いていないと言う。** */
+.nsp-open {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.nsp-open.is-none { font-weight: 700; color: var(--ink-2); }
+/* 時刻の帯。**途中で折らない**（「10:00-／15:00」になる）。
+   11字しかないので、折らなくても横へあふれない。 */
+.nsp-hr { white-space: nowrap; }
+.nsp-side { display: grid; justify-items: center; gap: var(--sp-1); flex: none; }
+/* いま開いているか。**字にする色は `--marker-ink` / `--accent-ink`。**
+   飾りの緑（`--leaf-c`）を字にすると、クリームの紙の上で 2.87 しか出ない
+   （`docs/island-misses.md` #80）。地はこの板の紙のまま、色は替えない。 */
+.nsp-live {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+}
+.nsp-live.is-open { color: var(--marker-ink); }
+.nsp-live.is-shut { color: var(--accent-ink); }
+.nsp-pin { flex: none; }
+/* 出どころ。**ODbL の表示義務**（`docs/nordic-shops.md`）。消さない。 */
+.nshop p.nshop-osm {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.nshop-osm a { color: var(--ink-2); }
+/* 面の頭に置く近道。お店の区画は面のかなり後ろにあるので、1つだけ道を作る */
+.nday-jump { margin: 0 0 var(--sp-4); }

@@ -11,6 +11,7 @@ import FarMark from "@/components/nordic/FarMark";
 import Notes from "@/components/live/Notes";
 import RouteMapSvg from "@/components/nordic/RouteMapSvg";
 import Strong from "@/components/nordic/Strong";
+import Shops from "@/components/nordic/Shops";
 import { Mark } from "@/components/nordic/Marks";
 import MAP from "@/content/nordic/map.json";
 import {
@@ -337,6 +338,19 @@ export default async function NordicCountryPage({
           )}
         </Panel>
       )}
+
+      {/* その国で降りる街の、おみやげと雑貨。**街ごとに1枚。**
+
+          日ごとの面（`/nordic/day/[n]`）にも同じものが出るが、あちらは
+          「その日に着く街」しか持たない。**国から入ってきた人**——これから
+          行く国を眺めている人や、配信で振り返る人——は日を知らないので、
+          ここに無いと一生たどり着けない。
+
+          街の名前は旅程から出す（`visitCitiesOf`）。見どころの有無では絞らない。
+          ガイドに1件も無い街（カトヴィツェ）にも、お店はある。 */}
+      {visitCitiesOf(c.slug).map((city) => (
+        <Shops key={city} city={city} fold />
+      ))}
 
       {/* 寄るかもしれない街。通り道にあって、まだ決まっていない
           （`content/nordic.ts` の `maybe`）。行く街と同じ高さで開いていると、
