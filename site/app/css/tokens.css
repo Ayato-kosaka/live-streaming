@@ -565,6 +565,67 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; }
 
+/* =========================================================
+   押せないときの姿（`:disabled`）は、ここ1か所で決める
+   ---------------------------------------------------------
+   **薄くしない。色で言う。**
+
+   `opacity` は字だけでなく**地ごと**薄める。比は地と字の差で決まるので、
+   両方が同じだけ地色へ寄って、差が潰れる。金の板（`.mp-send`）に 0.62 を
+   かけると 字 #98825d / 地 #fee39d ＝ **比 2.95**。390px・dpr3 の実測。
+   紙の板でも 3.0〜3.5 で、**4.5 に届いていたものは1つも無かった**。
+   打つ前にボタンの字が読めないのは、旅先でいちばん困る。
+
+   代わりに、**厚みを抜いて（押せる合図は厚みだけ。`island-design.md` 3-3）
+   紙に戻して、字を `--ink-2` にする。** `--ink-2` は `--paper-out` に対して
+   6.16、`--paper-2` に対して 6.35 出る。
+
+   ### なぜ面ごとの CSS ではなく、ここに書いてあるか
+
+   この答えは、もう**4か所で別々に書かれていた**
+   （`pages.css` の `.noteform button` / `.bbtn` / `.signin-go`、
+   `me.css` の `.mp-ab-key .mp-send`。どれも「opacity だと字が読めなくなる」と
+   同じ理由が添えてある）。にもかかわらず `opacity` で薄める書き方は
+   **13か所**残っていて、直すたびに残りが残る形になっていた。
+   だから**姿を決めるのはここだけ**にする。
+
+   `globals.css` の読み順では tokens.css が cards / nordic / me より**先**なので、
+   同じ詳細度では負ける。`button` の1つぶんを足して（`button:disabled.mp-send`
+   ＝ 0,2,1）勝たせてある。**面ごとに `opacity` を書き足しても、ここに勝てない。**
+   押せないときの姿を変えたいときは、面ではなくここを直す。
+
+   ここに並んでいないもの（`.rc-*` は配信の遠隔、`.atrace-step > button` は
+   字を持たない矢印）は、まだ `opacity` のまま。`docs/island-misses.md` #5。
+   ========================================================= */
+button:disabled.mp-send,
+button:disabled.mp-donor-hint,
+button:disabled.mp-sc-more,
+button:disabled.nph-post-go,
+button:disabled.trip-week-plus,
+button:disabled.nstudio-go,
+button:disabled.akd-drop-no {
+  opacity: 1;
+  background: var(--paper-out);
+  color: var(--ink-2);
+  /* **厚みを抜く。** 押せる合図は厚み1種類だけ（3-3）。薄めるのをやめた以上、
+     厚みが残っていると「押せる紙のボタン」に見える。 */
+  box-shadow: none;
+  text-shadow: none;
+  /* 枠はいちばん薄い琥珀へ。**枠まで押せるときのまま残すと、平らな地の上で
+     濃い輪郭だけが強く出て、押せないほうが押せるものより目立つ。**
+     もともと `--frame` 1px のもの（`.trip-week-plus` `.mp-sc-more`）は変わらない。
+     島の先例（`pages.css` の `.bbtn` `.signin-go` `.noteform button`）は
+     押せないとき枠を持たない。ここは枠を持つ板なので、消さずに薄くする。 */
+  border-color: var(--frame);
+}
+/* 字だけの押しどころ（板ではない）。地を敷くと、押せないほうが板に見える。
+   `.akd-drop-yes`（消す）は「指が先に行く形にしない」ために字だけにしてある
+   ので、その形は変えずに、色だけ落とす。 */
+button:disabled.akd-drop-yes {
+  opacity: 1;
+  color: var(--ink-2);
+}
+
 :focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; border-radius: 6px; }
 
 @media (prefers-reduced-motion: reduce) {

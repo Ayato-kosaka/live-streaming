@@ -607,7 +607,8 @@ function shapeDraft(b: Json): Json {
     title: clean(b.title, MAX_PLAN_TITLE),
     when: clean(b.when, 40),
     date: shapeDay(b.date),
-    note: clean(b.note, 200),
+    /* ひとことで言うと。打つ欄は `<textarea>`（`NextPlanEditor`）なので改行が来る */
+    note: cleanText(b.note, 200),
     tags: Array.isArray(b.tags) ?
       b.tags.slice(0, 6).map((t) => clean(t, 16)) :
       [],
@@ -617,7 +618,7 @@ function shapeDraft(b: Json): Json {
       map: clean(place.map, 300),
     },
     about: Array.isArray(b.about) ?
-      b.about.slice(0, 8).map((p) => clean(p, 600)) :
+      b.about.slice(0, 8).map((p) => cleanText(p, 600)) :
       [],
     links: arr(b.links, 8, (x) => ({
       label: clean(x.label, 60),
@@ -654,20 +655,92 @@ function shapeDraft(b: Json): Json {
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
- * 制御文字を落として、長さを切る。
+ * C0 制御文字を落とす。**改行を通すかどうかだけが違う。**
+ *
+ * 落とす字を2か所に書くと、片方だけ直された日に
+ * 「1行ものの口には入らないのに、本文の口には入る字」ができる。
+ * 通す・通さないの判断は呼ぶ側（`clean` / `cleanText`）に置いて、
+ * 落とす仕事はここ1つにまとめる。
+ * @param {string} s 入力（`\r` はここへ来る前にそろえておく）
+ * @param {boolean} keepLf 改行(U+000A)を通すか
+ * @return {string} 落としたあとの字
+ */
+const dropCtrl = (s: string, keepLf: boolean): string => {
+  let out = "";
+  for (const ch of s) {
+    const c = ch.codePointAt(0) ?? 0;
+    if (keepLf && c === 0x0a) {
+      out += ch;
+      continue;
+    }
+    if (c < 0x20 || c === 0x7f) continue;
+    out += ch;
+  }
+  return out;
+};
+
+/**
+ * 制御文字を**改行ごと**落として、長さを切る。**1行ものの欄はこちら。**
+ *
+ * 題・名乗り・ハンドル・ふだ・URL・id・合言葉のように、
+ * **1行で出ることを前提に置き場が組んであるもの**に使う。
+ * ここに改行が通ると、札からはみ出したり、`alt` や配信のチャットのように
+ * そもそも改行を持てない先で崩れたりする。
+ *
+ * **本文（付箋・返事・企画の説明・いまどこの一言）には `cleanText` を使う。**
+ * あちらは改行だけ通す（#83。書いてくれた区切りを、こちらで潰さない）。
  * @param {unknown} v 入力
  * @param {number} max 最大文字数
  * @return {string} 整えた文字列
  */
-const clean = (v: unknown, max: number): string => {
-  let out = "";
-  for (const ch of String(v ?? "")) {
-    const c = ch.codePointAt(0) ?? 0;
-    if (c < 0x20 || c === 0x7f) continue;
-    out += ch;
-  }
-  return out.trim().slice(0, max);
-};
+const clean = (v: unknown, max: number): string =>
+  dropCtrl(String(v ?? ""), false).trim().slice(0, max);
+
+/**
+ * 制御文字を落として、**改行だけ通して**、長さを切る。**本文の欄はこちら。**
+ *
+ * ## なぜ要るのか
+ *
+ * 打つ欄が `<textarea>` の字は、箇条書きで書かれてくる。`clean` は改行を
+ * **空白に変えずに消す**ので、行の終わりと次の行の頭がくっついて別の語に
+ * 読める。入れ物に入る前に消えるので、**あとから直しようがない**（#83）。
+ *
+ * ## どこまで整えるか（画面の `asWritten` と同じ規則）
+ *
+ * | すること | なぜ |
+ * | --- | --- |
+ * | `\r\n` `\r` を `\n` にそろえる | Windows から来たものが1行おきに空く |
+ * | `\n` 以外の C0 と DEL は落とす | タブやベルは字ではない。`clean` と同じ |
+ * | 各行の行末の空白を落とす | 見えないのに、そこだけ余分に折り返す |
+ * | 空行が2つ以上続いたら1つにする | 段落の切れ目は意味だが、5行の空きは意味ではない |
+ * | 前と後ろの空白・空行を落とす | 紙の頭とお尻が間延びするだけ |
+ *
+ * **行の中の空白は1つも触らない。** 字下げも語のあいだの全角空白も、
+ * 書いた人が置いたもの。
+ *
+ * 画面（`site/components/ui/Wrote.tsx` の `asWritten`）と**同じ規則を、
+ * わざと両方に置いている。** ここだけにすると、この口を通らずに入った
+ * 古い書類（改行の消えているぶん）や、GitHub Actions ／ 口から直に書く
+ * 道具の字が素通りする。あちらだけにすると、Firestore に入る字が
+ * 荒れたままになり、画面以外（焼き込み・配信のチャット・OBS）が困る。
+ * **どの規則も2回かけても結果が変わらない**ので、二重にかかっても害が無い。
+ *
+ * ## 長さの数えかた
+ *
+ * **改行も1字として数える。** `max` は打つ欄の `maxLength` と同じ数なので、
+ * ブラウザが受け付ける字数と、ここが受ける字数がずれない。
+ * 切ったお尻に空白や改行が残ることがあるので、切ったあとにもう一度落とす。
+ * @param {unknown} v 入力
+ * @param {number} max 最大文字数（改行も1字）
+ * @return {string} 整えた字。改行は残る
+ */
+const cleanText = (v: unknown, max: number): string =>
+  dropCtrl(String(v ?? "").replace(/\r\n?/g, "\n"), true)
+    .replace(/[^\S\n]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, max)
+    .trimEnd();
 
 /* ---- YouTube のハンドル(`@あやとグルメアプリ`) ----
    島に出す名前は、Google アカウントの表示名(`ayato_arigato`)ではなく
@@ -915,7 +988,9 @@ type StickyShape = {
  */
 function stickyShape(d: FirebaseFirestore.QueryDocumentSnapshot): StickyShape {
   const v = d.data();
-  const reply = clean(v.reply, MAX_REPLY_LEN);
+  /* 返事は**読むときにも通す。** 入れ物には口を通さずに入った古いぶんも
+     あるので、ここで形をそろえる。改行を落とすと、返事だけ1本の棒になる */
+  const reply = cleanText(v.reply, MAX_REPLY_LEN);
   return {
     id: d.id,
     theme: (v.theme as string) ?? "",
@@ -2367,7 +2442,9 @@ export const islandApi = onRequest(
           return;
         }
         const place = clean(body.place, 60);
-        const word = clean(body.word, 140);
+        /* ひとこと。打つ欄は `<textarea>`（`TripTools`）で、
+           「着いた/今日はここから配信」を2行で書く人がいる */
+        const word = cleanText(body.word, 140);
         const theme = clean(body.theme, 16);
         if (!place) {
           res.status(400).json({error: "no place"});
@@ -2843,7 +2920,7 @@ export const islandApi = onRequest(
       /* ---------------- 付箋 ---------------- */
       if (method === "POST" && path === "/notes") {
         const who = await whoIs(req.headers.authorization);
-        const text = clean(body.text, MAX_NOTE_LEN);
+        const text = cleanText(body.text, MAX_NOTE_LEN);
         const planId = clean(body.planId, 40);
         const cid = String(body.cid ?? "");
         if (text.length < 2 || !planId) {
@@ -2950,7 +3027,7 @@ export const islandApi = onRequest(
       if (method === "POST" && path === "/stickies") {
         const who = await whoIs(req.headers.authorization);
         const theme = clean(body.theme, 40);
-        const text = clean(body.text, MAX_NOTE_LEN);
+        const text = cleanText(body.text, MAX_NOTE_LEN);
         const cid = String(body.cid ?? "");
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
@@ -3081,7 +3158,7 @@ export const islandApi = onRequest(
           res.status(403).json({error: "not allowed"});
           return;
         }
-        const text = clean(body.text, MAX_REPLY_LEN);
+        const text = cleanText(body.text, MAX_REPLY_LEN);
         const ref = NOTES.doc(replyMatch[1]);
         const cur = await ref.get();
         if (!cur.exists) {
