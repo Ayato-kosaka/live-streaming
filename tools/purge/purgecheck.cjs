@@ -22,6 +22,19 @@
  *   1c. 既定バケットの `list` が立っていなければ、**数えるのも試さない**
  *   4d. **既定バケットの名前を `apply` に渡しても、消す道に入らない**
  *
+ * 内訳を出すようにしたぶん（2026-09-13。**544件のうち守れているのが3件**で、
+ * 残りが何なのか分からないと急ぎ具合が決められない）。
+ *
+ *   1b. 内訳が**フォルダの名前・件数・合計バイト数だけ**で返る。
+ *       **日付の段は月までまとまっている**（行が日数ぶんに増えない）
+ *   1d. **600件を超える中身でも、ぜんぶ数え切る。**
+ *       置き場が1ページぶんしか返さなくても、送りを最後まで回す。
+ *       深さ2が書類IDだったところは**1段目でまとめる**
+ *
+ * **どの回も、返りを丸ごと文字列にして中身の名前を探す。**
+ * フォルダの名前（深さ2まで）は出してよいが、その下——日付・人のID・
+ * 書類ID・ファイル名——は1つも出てはいけない。ログも公開なので。
+ *
  * 差し替えているのは3つだけ。**口そのものは本物を呼ぶ。**
  *
  * - 合言葉の検算（`admin.auth().verifyIdToken`）
@@ -120,10 +133,53 @@ function photosNow() {
 }
 
 /**
+ * 600件を超える偽の中身（2026-09-13）。**本番と同じ置き方で並べる。**
+ *
+ * 置き場に書いているのは3か所しかなく、名前の形はコードから分かる。
+ * - `nordic/photos/{日付}/{書類ID}.jpg`（`islandApi.ts`）
+ * - `island/characters/{人のID}/{役}-{幅}.webp`（`islandCharacter.ts`）
+ * - `purged/public-bucket/{日付}/{名前}`（この口の写し）
+ *
+ * これに、**まだ誰も知らない置き方**を2つ混ぜてある。
+ * 深さ2が書類IDになっているもの（`uploads/{UUID}/…`）と、
+ * 置き場の直下に裸で置いてあるもの。**373件が何なのか分かっていない**ので、
+ * 「知っている3つの形しか来ない」前提では数えない。
+ * @return {Map} 置き場の中身
+ */
+function manyPhotos() {
+  const m = new Map();
+  const put = (n, size) => m.set(n, {size, updated: "x"});
+  /* 旅の写真。15日ぶん × 30枚 = 450件。**日付の段が450行にならないこと** */
+  for (let d = 1; d <= 15; d++) {
+    const day = `2026-09-${String(d).padStart(2, "0")}`;
+    for (let i = 0; i < 30; i++) {
+      put(`nordic/photos/${day}/doc${d}_${i}.jpg`, 1000000 + i);
+    }
+  }
+  /* キャラクターの絵。98人 × 2枚 = 196件。**IDが196行にならないこと** */
+  for (let p = 0; p < 98; p++) {
+    put(`island/characters/chr${p}/portrait-256.webp`, 60000 + p);
+    put(`island/characters/chr${p}/portrait-512.webp`, 120000 + p);
+  }
+  /* 知らない置き方1: 深さ2が書類ID。**1段目でまとめること** */
+  for (let u = 0; u < 30; u++) {
+    put(`uploads/8f3c${u}-4b21-9ae0/blob.bin`, 4096 + u);
+  }
+  /* 知らない置き方2: 置き場の直下 */
+  put("legacy_export.json", 7777);
+  /* この口の写し */
+  put("purged/public-bucket/2026-09-12/credits_notifications.json", 21770);
+  put("purged/public-bucket/2026-09-12/202601_donation_ceremony.json", 1997);
+  return m;
+}
+
+/**
  * 偽の置き場。**呼ばれたメソッドを順番に控える。**
  *
  * @param {string} [fail] "copy" / "delete" を入れると、そこで 403 を投げる
  * @param {object} [opt] `photos`: 既定バケットに中身を置く。
+ *   `many`: 600件を超える中身にする。
+ *   `pageSize`: 1回に返す数（**頼まれた数より少なく返す**）。
  *   `can`: 置き場ごとの「できること」の答え（既定は setIamPolicy 以外できる）
  */
 function fakeStorage(fail, opt) {
@@ -131,7 +187,9 @@ function fakeStorage(fail, opt) {
   const calls = [];
   const stores = {
     [PUBLIC_BUCKET]: publicNow(),
-    [PRIVATE_BUCKET]: o.photos ? photosNow() : new Map(),
+    [PRIVATE_BUCKET]: o.many ?
+      manyPhotos() :
+      o.photos ? photosNow() : new Map(),
   };
   const tag = (b) => (b === PUBLIC_BUCKET ? "公開" : "既定");
 
@@ -156,10 +214,28 @@ function fakeStorage(fail, opt) {
           return [out];
         },
       },
-      getFiles: async () => {
-        calls.push({op: "getFiles", on: tag(name)});
+      /* **頼まれた数より少なく返せる置き場**にしてある。本物の GCS も
+         `maxResults` を下回る数に `nextPageToken` を付けて返してくる。
+         1ページ目だけ数えて終わる作りなら、ここで件数が合わなくなる。 */
+      getFiles: async (q) => {
+        const query = q || {};
+        const all = [...store.entries()];
+        const from = query.pageToken ? Number(query.pageToken) : 0;
+        const cap = o.pageSize || all.length || 1;
+        const want = query.maxResults || all.length || 1;
+        const page = all.slice(from, from + Math.min(want, cap));
+        const end = from + page.length;
+        calls.push({
+          op: "getFiles",
+          on: tag(name),
+          from,
+          n: page.length,
+          asked: query.maxResults || null,
+        });
         return [
-          [...store.entries()].map(([n, m]) => ({name: n, metadata: m})),
+          page.map(([n, m]) => ({name: n, metadata: m})),
+          end < all.length ? {...query, pageToken: String(end)} : null,
+          {},
         ];
       },
       file: (n) => ({
@@ -328,6 +404,45 @@ function check(label, ok) {
   line(`   ${ok ? "OK  " : "★NG "} ${label}`);
 }
 
+/**
+ * 返りに、置き場の中身の名前が混ざっていないか。
+ *
+ * **フォルダの名前（深さ2まで）は出してよい。** 出てはいけないのは
+ * その下——ファイル名と、3段目以降（人のID・書類ID）——と、日付の段。
+ * 混ざっていれば、そのまま Actions の公開ログに出るということ。
+ * @param {string} dump 返りを丸ごと文字列にしたもの
+ * @param {Map} store 置き場の中身
+ * @return {string[]} 混ざっていたもの
+ */
+function leaked(dump, store) {
+  const out = new Set();
+  for (const name of store.keys()) {
+    const parts = name.split("/");
+    const file = parts[parts.length - 1];
+    if (dump.includes(file)) out.add(file);
+    /* 3段目以降（＝「どれであるか」の段）。深さ2は種類なので出てよい */
+    for (const seg of parts.slice(2, -1)) {
+      if (seg && dump.includes(seg)) out.add(seg);
+    }
+  }
+  /* 日付の段は月までまとまっているはず。`2026-09-01` が残っていたら、
+     行が日数ぶんに増える＝溜まると背が伸びる（水準の7）。 */
+  const day = /\d{4}-\d{2}-\d{2}/.exec(dump);
+  if (day) out.add(day[0]);
+  return [...out];
+}
+
+/** 内訳を1行ずつ出す。**ここに出てよいのはフォルダの名前だけ。** */
+function showFolders(rows) {
+  for (const r of rows || []) {
+    line(
+      `     ${String(r.folder).padEnd(30)} ${String(r.count).padStart(5)}件 ` +
+        `${String(r.bytes).padStart(12)}バイト` +
+        `${r.rolledUp ? `  ← 下の段 ${r.rolledUp} 個ぶん` : ""}`,
+    );
+  }
+}
+
 (async () => {
   /* ===== 1. 下見 ===== */
   line("\n== 1. 下見（GET）。1バイトも書かない ==");
@@ -391,12 +506,24 @@ function check(label, ok) {
     );
     check("件数と合計バイト数まで出ている", d.listed === "ok" && d.count === 4);
     check("合計バイト数が合っている", d.bytes === 3145728 + 2097152 + 4194304 + 65536);
+    line(`   内訳（フォルダの深さ2まで。${d.pages}ページ引いた）:`);
+    showFolders(d.folders);
     /* **名前が1文字も混ざっていないこと。** 混ざれば公開のログに出る。 */
     const dump = JSON.stringify(d);
+    const out = leaked(dump, fake.stores[PRIVATE_BUCKET]);
+    line(`   返りに混ざっていた中身の名前: ${JSON.stringify(out)}`);
+    check("既定バケットの中身の名前が1つも返っていない", out.length === 0);
     check(
-      "既定バケットの中身の名前が1つも返っていない",
-      !dump.includes("IMG_0001") && !dump.includes("nordic/") &&
-        !dump.includes("islandCharacter/"),
+      "内訳がフォルダの名前・件数・バイト数だけ",
+      (d.folders || []).every(
+        (r) =>
+          Object.keys(r).sort().join(",") ===
+          "bytes,count,folder,rolledUp",
+      ),
+    );
+    check(
+      "内訳の合計が件数と合っている",
+      (d.folders || []).reduce((a, r) => a + r.count, 0) === d.count,
     );
     check("既定バケットには1バイトも書いていない", fake.stores[PRIVATE_BUCKET].size === 4);
   }
@@ -424,6 +551,78 @@ function check(label, ok) {
       "既定バケットで getFiles を呼んでいない",
       !fake.calls.some((c) => c.op === "getFiles" && c.on === "既定"),
     );
+    check(
+      "書き込み系を1回も呼んでいない",
+      !fake.calls.some((c) => WRITES.has(c.op)),
+    );
+  }
+
+  /* ===== 1d. 600件を超える中身（ページ送り） ===== */
+  line("\n== 1d. 679件・置き場は1回に200件しか返さない ==");
+  {
+    const fake = fakeStorage(null, {many: true, pageSize: 200});
+    const r = await direct("GET", {}, fake, "Bearer ayato");
+    const d = r.body.defaultBucket;
+    const store = fake.stores[PRIVATE_BUCKET];
+    const whole = [...store.values()].reduce((a, m) => a + m.size, 0);
+    const pages = fake.calls.filter(
+      (c) => c.op === "getFiles" && c.on === "既定",
+    );
+    line(
+      `   引いた回数=${pages.length} ` +
+        `（${pages.map((p) => `${p.from}から${p.n}件`).join(" / ")}）`,
+    );
+    line(`   頼んだ数: ${JSON.stringify([...new Set(pages.map((p) => p.asked))])}`);
+    line(`   置き場の中身=${store.size}件  返り=${d.count}件 ${d.bytes}バイト`);
+    line(`   内訳（${d.folders.length}行。${d.pages}ページ引いた）:`);
+    showFolders(d.folders);
+    check("HTTP 200", r.status === 200);
+    check("2回以上引いた（1ページ目で終わっていない）", pages.length > 1);
+    check("口が言うページ数と、引いた回数が合っている", d.pages === pages.length);
+    check(`ぜんぶ数え切った（${store.size}件）`, d.count === store.size);
+    check("合計バイト数も合っている", d.bytes === whole);
+    check("数え切れていないとは言っていない", d.truncated === false);
+    check(
+      "内訳の合計が件数と合っている",
+      d.folders.reduce((a, f) => a + f.count, 0) === store.size,
+    );
+    /* **溜まっても背が変わらないこと**（水準の7）。679件・15日ぶん・
+       98人ぶんあっても、行は種類の数まで。 */
+    check(`内訳が10行以内（いまは${d.folders.length}行）`, d.folders.length <= 10);
+    const by = (f) => (d.folders.find((x) => x.folder === f) || {}).count;
+    check("旅の写真が1行にまとまっている（450件）", by("nordic/photos/") === 450);
+    check("キャラクターの絵が1行（196件）", by("island/characters/") === 196);
+    check("写しが1行（2件）", by("purged/public-bucket/") === 2);
+    check("置き場の直下も1行（1件）", by("（置き場の直下）") === 1);
+    /* 深さ2が書類IDだったところ。**そのまま出すと30行になる** */
+    const up = d.folders.find((x) => x.folder === "uploads/");
+    check("知らない置き方は1段目でまとめた（uploads/ 30件）", up && up.count === 30);
+    check("まとめたことを言っている", up && up.rolledUp === 30);
+    const out = leaked(JSON.stringify(d), store);
+    line(`   返りに混ざっていた中身の名前: ${JSON.stringify(out)}`);
+    check("中身の名前が1つも返っていない", out.length === 0);
+    check(
+      "書き込み系を1回も呼んでいない",
+      !fake.calls.some((c) => WRITES.has(c.op)),
+    );
+    check("置き場の中身が1件も変わっていない", store.size === 679);
+  }
+
+  /* ===== 1e. 引き直しの上限に当たったとき ===== */
+  line("\n== 1e. 置き場が1回に1件しか返さない（送りが終わらない） ==");
+  {
+    const fake = fakeStorage(null, {many: true, pageSize: 1});
+    const r = await direct("GET", {}, fake, "Bearer ayato");
+    const d = r.body.defaultBucket;
+    const pages = fake.calls.filter(
+      (c) => c.op === "getFiles" && c.on === "既定",
+    ).length;
+    line(`   引いた回数=${pages} 返り=${d.count}件 数え切れた=${!d.truncated}`);
+    /* **数え切れていないことを、数え切ったのと同じ絵にしない**（水準の10）。
+       ここで黙って 100件と返すと、544件の置き場が「100件」に見える。 */
+    check("引き直しを上限で止めた", pages === 100);
+    check("数え切れていないと言っている", d.truncated === true);
+    check("止まるまでに数えたぶんは返している", d.count === 100);
     check(
       "書き込み系を1回も呼んでいない",
       !fake.calls.some((c) => WRITES.has(c.op)),
