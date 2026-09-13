@@ -59,6 +59,7 @@ from google.cloud import bigquery, firestore
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -164,8 +165,11 @@ def main() -> int:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
     for day, people in sorted(found.items()):
         logger.info("%s: %d人", day, len(people))
-        for p in people:
-            logger.info("    %s  %s", p["channelId"], p["name"])
+        # 1人ずつの明細は、公開の場では1行も出さない（`python/logsafe.py`）。
+        # このリポジトリは公開で Actions のログも誰でも読めるので、
+        # チャンネルIDとハンドルが並ぶと「その日スパチャした人の一覧」になる
+        for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
+            logger.info("%s", line)
         if db is None:
             continue
         ref = db.collection("nordicDays").document(day)

@@ -63,6 +63,7 @@ from config import BQ_PROJECT_ID  # noqa: E402
 # 日本時間の日付に切るところは台帳と同じものを使う。**2か所に書かない。**
 # ずれると、台帳とカードで「どの日の配信か」が食い違う
 from island_tips import jst_day  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -277,9 +278,12 @@ def main() -> int:
 
     logger.info("新しく作る %d枚 / 素性を足す %d枚 / そのまま %d枚",
                 len(make), len(fix), len(have) - len(fix))
-    for key, v in make[:20]:
-        logger.info("  %s  %s  %s", key, v["day"], v["channelId"])
+    # **カードの鍵にはチャンネルIDが入っている。** 公開の場では1枚も出さない
+    # （`python/logsafe.py`）。日付ごとの枚数だけなら誰も指さない
+    for line in detail_lines([(key, v["day"], v["channelId"]) for key, v in make[:20]]):
+        logger.info("%s", line)
     if len(make) > 20:
+        # 数だけなので、公開の場でもそのまま出してよい
         logger.info("  …ほか %d枚", len(make) - 20)
 
     if a.dry_run:

@@ -513,9 +513,21 @@ island/state
 | `state` | string | 結べたか・分からないか |
 | `isOwner` | boolean | あやと本人の寄付か（**カードを自分に配らないため**） |
 | `note` | string \| null | あやとのメモ |
-| `firstSeenAt` | string \| null | 初めて見た時刻 |
+| `firstSeenAt` | string \| null | **その人が初めて投げ銭した時刻**（ISO・UTC）。`doneru_donations` の全期間の `MIN(donated_at)` |
 | `addedAt` | string? | **画面から足した行だけに付く。** これがある行だけ消せる |
 | `editedAt` / `editedBy` / `updatedAt` | | 種に上書きさせないための印 |
+
+**`firstSeenAt` は「その人が来た日」で、「こちらが見つけた日」ではない。**
+前は毎晩の取り込みが `now`（ジョブが走った時刻）を入れていた。ジョブは
+翌朝 07:41 JST に走るので、前の晩に投げ銭してくれた人の札が必ず翌日に
+なっていた。いまは `python/doneru_supporters.py` が
+**全期間の `MIN(donated_at)`** を引いて入れる（引くのは新規の どねID が
+見つかった晩だけ）。`doneru_donations` に1行も無い どねID には**入れない。**
+種から入った人など、引きようが無い相手に「たぶんこの日」を置かないため。
+
+入れるのは**時刻そのもの**で、日付にするのは画面の仕事
+（`site/components/me/DonorLinks.tsx` が日本時間で切る。#201・#202）。
+すでに入っているぶんを直すのは `python/admin/donors_first_seen.py`。
 
 #### b. 企画・写真・カード・投げ銭
 

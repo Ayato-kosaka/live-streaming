@@ -16,6 +16,7 @@ import ReadAgain from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
+import { jstDay as day } from "@/lib/nightly";
 
 /**
  * 投げ銭を、YouTube につなぐ。**あやとだけ。**
@@ -66,9 +67,6 @@ const VIA_NAME: Record<DonorVia, string> = {
   youtube: "YouTube に聞いた",
 };
 
-/** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
 
 /**
  * 候補の下に出す1行。**選ぶときに見るのは、この2つだけ。**
@@ -77,9 +75,10 @@ const day = (iso: string) =>
  * 「どれだけ一緒にいたか」と「さいごに来た日」で見分ける。
  */
 function hintMeta(h: DonorHint): string {
+  const last = h.lastAt ? day(h.lastAt) : null;
   return [
     h.days !== null ? `一緒に${h.days}日` : null,
-    h.lastAt ? `さいご ${day(h.lastAt)}` : null,
+    last ? `さいご ${last}` : null,
   ]
     .filter(Boolean)
     .join("・");
@@ -432,6 +431,9 @@ function Row({
     }
   };
 
+  // その人が初めて投げ銭してくれた日（日本時間）。読めない字なら出さない
+  const came = donor.firstSeenAt ? day(donor.firstSeenAt) : null;
+
   return (
     <li>
       <p className="mp-care-text">{donor.label || donor.handle || donor.viewerPk}</p>
@@ -444,9 +446,7 @@ function Row({
           <span className="chip">{donor.channelName || donor.handle}</span>
         )}
         {donor.isOwner && <span className="chip">あやと本人</span>}
-        {donor.firstSeenAt && (
-          <span className="chip">{`${day(donor.firstSeenAt)}に来た`}</span>
-        )}
+        {came && <span className="chip">{`${came}に来た`}</span>}
       </p>
       {donor.note && <p className="mp-donor-note">{donor.note}</p>}
       <div className="dform mp-donor-form">

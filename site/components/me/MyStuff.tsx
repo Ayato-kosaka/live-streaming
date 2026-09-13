@@ -10,6 +10,7 @@ import {
   type Sticky,
 } from "@/lib/api";
 import { themeById } from "@/content/themes";
+import { jstDay } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { Pin } from "@/components/live/art";
@@ -27,9 +28,8 @@ import ReadAgain, { Waiting } from "./ReadAgain";
  */
 export type Bag<T> = { st: "wait" } | { st: "ok"; list: T[] } | { st: "down" };
 
-/** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+/* 日付は `lib/nightly.ts` の `jstDay` で切る。**写しを作らない。**
+   ここは前に字をそのまま切っていて、UTC の日付が出ていた */
 
 type Tab = "note" | "plan" | "card";
 
@@ -156,7 +156,7 @@ function Notes({
                 押せない札が押しどころの隣に並ぶと、合図が濁る。 */}
             <p className="mp-note-foot">
               <span>{th?.name ?? n.theme}</span>
-              <span>{day(n.createdAt)}</span>
+              {jstDay(n.createdAt) && <span>{jstDay(n.createdAt)}</span>}
               {n.hearts > 0 && (
                 <span className="mp-hearts">
                   <svg viewBox="0 0 24 22" aria-hidden>
@@ -216,7 +216,7 @@ function Plans({
               <b>{p.title || "（題なし）"}</b>
               <i>
                 <span>{PLAN_STATUS_NAME[p.status]}</span>
-                <span>{day(p.createdAt)}</span>
+                {jstDay(p.createdAt) && <span>{jstDay(p.createdAt)}</span>}
                 {p.hearts > 0 && <span>さんせい {p.hearts}</span>}
               </i>
             </span>
