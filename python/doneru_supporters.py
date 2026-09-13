@@ -21,20 +21,32 @@ BigQuery から取るが、**Doneru はチャンネルIDを持っていない**�
 `new` が1人でも残っているあいだは、毎日赤いままにする。1回のメールを
 見逃すと、そのまま忘れるので（#168 と同じ考え方）。
 
-## 直しかた
+## 「初めて来た日」は、**こちらが見つけた日ではない**
 
-`/me` の「投げ銭を、YouTube につなぐ」で、その人の YouTube の名前を打つ。
-翌日の取り込みで緑に戻る（#190）。**スマホから直せる**ようにしてあるのは、
-これが赤くなるのが旅の途中だから。
+`firstSeenAt` には、前は `now`（ジョブが走った時刻）を入れていた。
+毎晩 22:41 UTC ＝ **翌朝 07:41 JST** に走るので、9月10日に投げ銭して
+くれた人の札が、必ず「9月11日に来た」になっていた。
+**その人が来た日ではなく、こちらが見つけた日を出していた。**
 
-種（`python/donors_seed.json` → `donors_import`）からも入れられるが、
-あちらは最初の1回と、Firestore が飛んだときの戻し先。
+いまは `doneru_donations` から**全期間の `MIN(donated_at)`** を引いて入れる。
+窓（`--days 3`）の中の最小値では足りない。表が作り直されたあと（#186）に
+走ると、窓の中に「その人の2回目」しか無いことがあるため。
+
+**引くのは、表に無い どねID が見つかった晩だけ。** 新規はめったに出ないので、
+ふだんの晩は BigQuery が1本も増えない。
 
 ## 入金の段階では絞らない
 
 `status` は「振込完了」「振込待ち」で、**あやとへの入金がどこまで進んだか**
 であって、投げ銭が成立したかどうかではない。待ちのぶんを外すと、
 その日出してくれた人が数日あとから現れることになる。
+
+## ログに名前を出さない
+
+**このリポジトリは公開で、Actions のログも誰でも読める。**
+1人ずつの明細（チャンネルID・ハンドル・どねID・表示名）は
+`python/logsafe.py` を通して、公開の場では出さない。
+残すのは件数と日付と、あやとが次にどこを触ればよいかだけ。
 
 ## 終了コード
 
@@ -57,12 +69,16 @@ import logging
 import sys
 from datetime import datetime, timedelta, timezone
 
-from google.cloud import bigquery, firestore
-
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
-from nordic_supporters import merge  # noqa: E402
+from logsafe import detail_lines  # noqa: E402
+
+# **google-cloud を import 文で読まない。** 下の素の関数
+# （`earliest_by_pk` / `plan_first_seen` / `jst_date`）は BigQuery も
+# Firestore も要らないので、偽のデータで動かす確かめ
+# （`doneru_supporters_selftest.py`）が資格情報も依存も無しに回せるように
+# しておく。`python/admin/_fs.py` の `db()` と同じ考え方。
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -75,6 +91,10 @@ logger = logging.getLogger(__name__)
 # ここを合わせに行かないのは、nordicDays がもう読まれていないから
 # （nordic_supporters.py の頭に理由がある）。このファイルに残っている
 # 用事は「表に無い どねID を見つけて赤くする」ほうだけ。
+#
+# **`firstSeenAt` はこの切り方に合わせない。** あちらは時刻そのもの（ISO）を
+# 入れて、日付にするのは画面の仕事（`site/components/me/DonorLinks.tsx`）。
+# 18時を境目にした日付を入れると、夕方の投げ銭が翌日の札になる。
 SQL = f"""
 SELECT
   FORMAT_DATE(
@@ -91,6 +111,18 @@ GROUP BY day, pk
 ORDER BY day
 """
 
+# **日付で絞らない。** 窓の中の最小値ではなく、全期間のいちばん古い1回が
+# 要る。絞ると、表が作り直されたあと（#186）に走ったとき「その人の2回目」を
+# 初回として焼き付けてしまう。
+FIRST_SQL = f"""
+SELECT
+  viewer_pk       AS pk,
+  MIN(donated_at) AS first_at
+FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.doneru_donations`
+WHERE viewer_pk IN UNNEST(@pks)
+GROUP BY pk
+"""
+
 
 def fetch(d0: str, d1: str) -> dict:
     """その期間の、日ごとの「投げ銭してくれた どねID」。
@@ -102,6 +134,8 @@ def fetch(d0: str, d1: str) -> dict:
     Returns:
         日付 -> [{"pk": ..., "name": ...}, ...]
     """
+    from google.cloud import bigquery
+
     client = bigquery.Client(project=BQ_PROJECT_ID)
     cfg = bigquery.QueryJobConfig(
         query_parameters=[
@@ -118,8 +152,124 @@ def fetch(d0: str, d1: str) -> dict:
     return out
 
 
+def fetch_first(pks: list) -> list:
+    """その どねID たちの、**全期間でいちばん古い投げ銭**。
+
+    **新規の どねID が見つかった晩しか呼ばない。** 新規はめったに出ないので、
+    ふだんの晩は BigQuery を1本も増やさない。
+
+    Args:
+        pks: 引きたい どねID
+
+    Returns:
+        [{"pk": ..., "at": ISO文字列}, ...]。
+        `doneru_donations` に1行も無い どねID は**そもそも返ってこない**
+    """
+    from google.cloud import bigquery
+
+    client = bigquery.Client(project=BQ_PROJECT_ID)
+    cfg = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ArrayQueryParameter("pks", "STRING", list(pks)),
+        ]
+    )
+    out = []
+    for row in client.query(FIRST_SQL, job_config=cfg).result():
+        at = row["first_at"]
+        if at is None:
+            continue
+        out.append({"pk": str(row["pk"]), "at": at.isoformat()})
+    client.close()
+    return out
+
+
+def earliest_by_pk(donations: list) -> dict:
+    """どねID ごとの、いちばん古い投げ銭の時刻。
+
+    SQL の側でも `MIN` を取っているが、**「全期間のいちばん古い1回」という
+    決めをこの関数1つで言い切れるようにする**ためにここでも最小を取る。
+    引き方（SQL）を差し替えても、決めは動かない。
+
+    時刻は BigQuery の TIMESTAMP から起こした ISO 文字列で、どれも UTC。
+    桁がそろっているので、文字のまま比べて大小が合う。
+
+    Args:
+        donations: [{"pk": ..., "at": ISO文字列}, ...]
+
+    Returns:
+        どねID -> いちばん古い時刻（ISO 文字列）
+    """
+    out: dict = {}
+    for d in donations:
+        pk, at = d.get("pk"), d.get("at")
+        if not pk or not at:
+            continue
+        if pk not in out or at < out[pk]:
+            out[pk] = at
+    return out
+
+
+def plan_first_seen(pks: list, donations: list, table: dict) -> dict:
+    """**どの どねID に、どの時刻を `firstSeenAt` として入れるか**を決める。
+
+    ここが毎晩の決め。3つとも「入れない」側に倒してある。
+    **分からないものに、こちらが見つけた時刻を入れない**（それが元の不具合）。
+
+    - `doneru_donations` に1行も無い どねID は**触らない。**
+      種（`python/donors_seed.json`）から入った人や、表が作り直されて
+      消えた人がいる。直せないものを「直した」ことにしない
+    - すでに `firstSeenAt` を持っている行は**上書きしない。**
+      入っているのは画面や前の晩が置いた値で、こちらが新しいわけではない
+    - 引けなかった どねID は、その欄を**空けたまま**置く。
+      `now` に落とすと、消えた不具合がそのまま戻る
+
+    Args:
+        pks: 今回見つけた、表に無い どねID
+        donations: `fetch_first()` が返したもの（全期間ぶん）
+        table: いまの `islandDonors`（どねID -> 書類）
+
+    Returns:
+        どねID -> 入れる時刻（ISO 文字列）。**入れないものは入っていない**
+    """
+    firsts = earliest_by_pk(donations)
+    out: dict = {}
+    for pk in pks:
+        if (table.get(pk) or {}).get("firstSeenAt"):
+            continue
+        at = firsts.get(pk)
+        if not at:
+            continue
+        out[pk] = at
+    return out
+
+
+def jst_date(iso: str) -> str:
+    """ISO の時刻を、**日本時間の日付**に切る。
+
+    台帳（`islandTips`）と画面の札はどちらも日本時間の0時で切る
+    （#201・#202）。このファイルの上にある `SQL` の「9時間引く」は
+    `nordicDays` 用の古い決めなので、ここは合わせない。
+
+    日本は夏時間を持たないので、足し算でよい。
+
+    Args:
+        iso: 「2026-09-10T13:05:00+00:00」のような文字列
+
+    Returns:
+        YYYY-MM-DD（日本時間）
+    """
+    t = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return (t.astimezone(timezone.utc) + timedelta(hours=9)).strftime("%Y-%m-%d")
+
+
 def main() -> int:
     """エントリポイント。新規の人がいたら 1 を返す。"""
+    from google.cloud import firestore
+
+    from nordic_supporters import merge
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--day", help="この日だけ（YYYY-MM-DD）")
     ap.add_argument("--days", type=int, default=3, help="直近この日数ぶん")
@@ -154,6 +304,27 @@ def main() -> int:
         return 2
 
     now = datetime.now(timezone.utc).isoformat()
+
+    # **書く前に、新規の どねID をぜんぶ洗い出す。** 1人見つけるたびに
+    # BigQuery を叩くと、新規が5人出た晩に5本走る。まとめて1本にする。
+    unknown = []
+    for _day, rows in sorted(found.items()):
+        for r in rows:
+            if r["pk"] not in table and r["pk"] not in unknown:
+                unknown.append(r["pk"])
+
+    first_at: dict = {}
+    if unknown:
+        try:
+            first_at = plan_first_seen(unknown, fetch_first(unknown), table)
+        except Exception as e:
+            # 引けなくても取り込みは止めない。**欄を空けたまま置く。**
+            # `now` に落とすと「こちらが見つけた日」がまた焼き付く。
+            # あとから `python/admin/donors_first_seen.py` で埋められる。
+            logger.error("最初の投げ銭の時刻が引けませんでした: %s", str(e)[:200])
+        logger.info("新規 %d件のうち、最初の投げ銭が引けたのは %d件",
+                    len(unknown), len(first_at))
+
     fresh = []
 
     for day, rows in sorted(found.items()):
@@ -161,20 +332,22 @@ def main() -> int:
         for r in rows:
             known = table.get(r["pk"])
             if known is None:
-                logger.error("表に無い どねID: %s（%s、%s）", r["pk"], r["name"], day)
                 fresh.append(r)
                 if not a.dry_run:
+                    doc = {
+                        "viewerPk": r["pk"],
+                        "handle": None,
+                        "label": r["name"],
+                        "channelId": None,
+                        "state": "new",
+                        "updatedAt": now,
+                    }
+                    # **引けたときだけ入れる。** 空けておけば、あとから
+                    # 正しい時刻を入れられる。嘘の日付は上書きされない
+                    if r["pk"] in first_at:
+                        doc["firstSeenAt"] = first_at[r["pk"]]
                     db.collection("islandDonors").document(r["pk"]).set(
-                        {
-                            "viewerPk": r["pk"],
-                            "handle": None,
-                            "label": r["name"],
-                            "channelId": None,
-                            "state": "new",
-                            "firstSeenAt": now,
-                            "updatedAt": now,
-                        },
-                        merge=True,
+                        doc, merge=True
                     )
                 continue
             if known.get("isOwner"):
@@ -189,8 +362,9 @@ def main() -> int:
         新規 = len([x for x in rows if x["pk"] not in table])
         logger.info("%s: Doneru %d人（渡せる %d / 紐付け待ち %d / 新規 %d）",
                     day, len(rows), len(people), skipped, 新規)
-        for p in people:
-            logger.info("    %s  %s", p["channelId"], p["name"])
+        # 1人ずつの明細は、公開の場では1行も出さない（`python/logsafe.py`）
+        for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
+            logger.info("%s", line)
         if a.dry_run or not people:
             continue
         ref = db.collection("nordicDays").document(day)
@@ -211,13 +385,18 @@ def main() -> int:
         logger.info("--dry-run なので書いていません")
 
     if waiting:
+        # **誰なのかは出さない。** 出すのは件数と、次にどこを触るか。
+        # 誰かは `/me` の画面に出ているので、ログに要らない
         logger.error("")
         logger.error("紐付け待ちの どねID が %d件あります:", len(waiting))
+        pairs = []
         for pk in waiting:
             label = (table.get(pk) or {}).get("label")
             if label is None:
                 label = next((r["name"] for r in fresh if r["pk"] == pk), "")
-            logger.error("    %s  %s", pk, label)
+            pairs.append((pk, label))
+        for line in detail_lines(pairs):
+            logger.error("%s", line)
         logger.error("")
         logger.error("/me の「投げ銭を、YouTube につなぐ」から紐付けてください。")
         return 1

@@ -66,9 +66,23 @@ const VIA_NAME: Record<DonorVia, string> = {
   youtube: "YouTube に聞いた",
 };
 
-/** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+/**
+ * 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。
+ *
+ * **日本時間で切る。** 入ってくるのは UTC の時刻（`firstSeenAt` はその人が
+ * 初めて投げ銭した時刻、`lastAt` は最後に来た時刻）なので、文字をそのまま
+ * 切ると UTC の日付になり、**日本の朝9時より前に来た人が前の日の札**になる。
+ * 台帳も島の「今日」も日本時間の0時で切っている（#201・#202・#29）。
+ *
+ * 日本は夏時間を持たないので、9時間足してから UTC の欄を読めばよい。
+ * 読めない字が来たら `null`。**NaN月NaN日を出さない**（#24）。
+ */
+const day = (iso: string): string | null => {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const d = new Date(t + 9 * 3600_000);
+  return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+};
 
 /**
  * 候補の下に出す1行。**選ぶときに見るのは、この2つだけ。**
@@ -77,9 +91,10 @@ const day = (iso: string) =>
  * 「どれだけ一緒にいたか」と「さいごに来た日」で見分ける。
  */
 function hintMeta(h: DonorHint): string {
+  const last = h.lastAt ? day(h.lastAt) : null;
   return [
     h.days !== null ? `一緒に${h.days}日` : null,
-    h.lastAt ? `さいご ${day(h.lastAt)}` : null,
+    last ? `さいご ${last}` : null,
   ]
     .filter(Boolean)
     .join("・");
@@ -432,6 +447,9 @@ function Row({
     }
   };
 
+  // その人が初めて投げ銭してくれた日（日本時間）。読めない字なら出さない
+  const came = donor.firstSeenAt ? day(donor.firstSeenAt) : null;
+
   return (
     <li>
       <p className="mp-care-text">{donor.label || donor.handle || donor.viewerPk}</p>
@@ -444,9 +462,7 @@ function Row({
           <span className="chip">{donor.channelName || donor.handle}</span>
         )}
         {donor.isOwner && <span className="chip">あやと本人</span>}
-        {donor.firstSeenAt && (
-          <span className="chip">{`${day(donor.firstSeenAt)}に来た`}</span>
-        )}
+        {came && <span className="chip">{`${came}に来た`}</span>}
       </p>
       {donor.note && <p className="mp-donor-note">{donor.note}</p>}
       <div className="dform mp-donor-form">
