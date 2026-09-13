@@ -33,7 +33,10 @@ OUT = ROOT / "out"
 SCENES = pathlib.Path(__file__).with_name("day1_scenes.json")
 
 # 1日目の配信。順番が話の順番。
-VIDEOS = ["hrXYXcu9IDE", "HCI2IKaVEuQ", "sxIz_bKd7SQ", "Mzf_LgF6Cxc"]
+# 後ろ2本は1日目の**前**。「バイバイ一年住んだジョージア」はそこにしか無い。
+# コメントは6本ぶん見るが、**落とすのは場面表に出てくる配信だけ。**
+VIDEOS = ["hrXYXcu9IDE", "HCI2IKaVEuQ", "sxIz_bKd7SQ", "Mzf_LgF6Cxc",
+          "lzJshROVAl4", "tXlQDwZQRBE"]
 
 # 視聴者さんが場面を教えてくれる言葉。**筋書きの各行に対応させてある。**
 MARKERS = [
@@ -49,27 +52,49 @@ def sh(cmd, **kw):
     return subprocess.run(cmd, check=True, **kw)
 
 
-def ytdlp(args, tries=6):
-    """yt-dlp を叩く。**ボット確認は出たり出なかったりする**ので、
-    別の player_client に替えながら何度か試す。Cookie は使わない。"""
+def ytdlp(args, tries=24, gentle=True, limit=1800):
+    """yt-dlp を叩く。
+
+    **ボット確認（Sign in to confirm you're not a bot）は、出たり出なかったりする。**
+    ランナーの IP は世界中の取得に使われていて評判が悪いので、断られる方が多い。
+    効くのは「別の口で、間を空けて、何度も」だけ。Cookie は使わない（毎晩の
+    取り込みが使っている鍵を回してしまう）。
+
+    実測では、同じ配信でも数分あけると通ることがある。だから**諦めるのが早いと
+    落とせない。** 既定で24回、間を最大2分まで広げながら試す。
+
+    `gentle=False` はコメント取り用。あちらは細切れの取得を何百回も繰り返すので、
+    1回ごとに2秒待たせると10時間の配信で何十分も掛かる。
+    """
     home = os.environ.get("BGUTIL_HOME", "/tmp/bgutil/server")
-    clients = ["default", "web", "tv", "web_embedded", "visionos", "web_safari"]
+    clients = ["default", "tv", "web_safari", "visionos", "web", "web_embedded",
+               "tv_simply", "mweb", "android_vr"]
     last = ""
     for i in range(tries):
         c = clients[i % len(clients)]
-        cmd = [
-            sys.executable, "-m", "yt_dlp",
-            "--no-progress", "--sleep-requests", "2",
-            "--extractor-args", f"youtube:player_client={c}",
-            "--extractor-args", f"youtubepot-bgutilscript:server_home={home}",
-        ] + args
-        p = subprocess.run(cmd, capture_output=True, text=True)
+        extra = ["youtube:player_client=" + c]
+        # 何度か目からは webpage を取りに行かせない。**あそこで断られることが多い。**
+        if i >= len(clients):
+            extra[0] += ";player_skip=webpage,configs"
+        cmd = [sys.executable, "-m", "yt_dlp", "--no-progress"]
+        cmd += ["--sleep-requests", "2"] if gentle else []
+        for e in extra:
+            cmd += ["--extractor-args", e]
+        cmd += ["--extractor-args", f"youtubepot-bgutilscript:server_home={home}"]
+        cmd += args
+        try:
+            p = subprocess.run(cmd, capture_output=True, text=True, timeout=limit)
+        except subprocess.TimeoutExpired:
+            print(f"-- {i + 1}/{tries} client={c} {limit}秒で戻らず", flush=True)
+            continue
         if p.returncode == 0:
+            print(f"++ {i + 1}/{tries} client={c} で通った", flush=True)
             return True
-        last = (p.stdout + p.stderr)[-800:]
-        print(f"-- try {i + 1} (client={c}) 失敗:\n{last}", flush=True)
-        time.sleep(20 * (i + 1))  # ボット確認は待つと明ける
-    print(f"!! 諦めた: {' '.join(args)}\n{last}", flush=True)
+        last = (p.stdout + p.stderr).strip().splitlines()
+        why = last[-1][:160] if last else ""
+        print(f"-- {i + 1}/{tries} client={c} {why}", flush=True)
+        time.sleep(min(15 * (i + 1), 120))
+    print(f"!! 諦めた: {' '.join(args)}", flush=True)
     return False
 
 
@@ -111,7 +136,7 @@ def cmd_chat():
         if not raw.exists():
             ytdlp(["--skip-download", "--write-subs", "--sub-langs", "live_chat",
                    "-o", str(CHAT / "%(id)s.%(ext)s"),
-                   f"https://www.youtube.com/watch?v={v}"])
+                   f"https://www.youtube.com/watch?v={v}"], tries=8, gentle=False)
         if raw.exists():
             rows = parse_chat(raw)
             json.dump(rows, open(CHAT / f"{v}.chat.json", "w"), ensure_ascii=False)
@@ -137,7 +162,7 @@ def cmd_scan():
                     print("   ", hm(t), x[:56])
 
 
-def download(v, height):
+def download(v, height, tries=24):
     """h264 + m4a で揃えて落とす。**揃えておくと、繋ぐときに焼き直さずに済む。**"""
     dst = WORK / f"{v}.mp4"
     if dst.exists():
@@ -148,21 +173,54 @@ def download(v, height):
         "--merge-output-format", "mp4",
         "-o", str(WORK / "%(id)s.%(ext)s"),
         f"https://www.youtube.com/watch?v={v}",
-    ])
+    ], tries=tries)
     return dst if ok and dst.exists() else None
 
 
 def cmd_check():
-    """媒体が本当に取れるかを、いちばん短い配信の小さい形式1つで確かめる。
-    **長い方を回してから 403 だと分かるのが、いちばん高くつく。**"""
+    """媒体が本当に取れるかを、いちばん短い配信で確かめる。
+    **長い方を回してから 403 だと分かるのが、いちばん高くつく。**
+
+    どの player_client なら通るかは日によって変わるので、**全部試して表にする。**
+    1つ落ちるたびに止めると、往復のたびに1つしか分からない。"""
     WORK.mkdir(exist_ok=True)
-    v = VIDEOS[-1]  # 19分46秒。144p なら 9MB 弱
-    ok = ytdlp(["-f", "394/160/worst", "-o", str(WORK / "check.%(ext)s"),
-                f"https://www.youtube.com/watch?v={v}"], tries=8)
-    got = sorted(WORK.glob("check.*"))
-    print(f"媒体が取れたか: {ok} / {[(f.name, f.stat().st_size) for f in got]}", flush=True)
-    if not ok or not got:
+    home = os.environ.get("BGUTIL_HOME", "/tmp/bgutil/server")
+    v = "Mzf_LgF6Cxc"  # 19分46秒。144p なら 9MB 弱
+    url = f"https://www.youtube.com/watch?v={v}"
+    clients = ["default", "web", "web_safari", "tv", "web_embedded",
+               "visionos", "mweb", "android", "ios"]
+    good = []
+    for c in clients:
+        cmd = [sys.executable, "-m", "yt_dlp", "--no-progress", "--no-warnings",
+               "--extractor-args", f"youtube:player_client={c}",
+               "--extractor-args", f"youtubepot-bgutilscript:server_home={home}",
+               "-f", "394/160/worstvideo/worst",
+               "-o", str(WORK / f"chk_{c}.%(ext)s"), url]
+        try:
+            p = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+            rc, err = p.returncode, (p.stderr or p.stdout).strip().splitlines()
+        except subprocess.TimeoutExpired:
+            rc, err = -9, ["240秒で戻らず"]
+        got = sorted(WORK.glob(f"chk_{c}.*"))
+        size = sum(f.stat().st_size for f in got)
+        mark = "取れた" if rc == 0 and size else "駄目"
+        why = err[-1][:150] if err else ""
+        print(f"[{mark}] client={c:<13} rc={rc:<3} {size:>10} バイト  {why}", flush=True)
+        if rc == 0 and size:
+            good.append(c)
+    print(f"\n通った player_client: {good or 'なし'}", flush=True)
+    if not good:
         sys.exit(1)
+
+
+def probe_dur(path):
+    """出来たものの尺を測る。**見込みと違ったら、繋ぎ方が合っていない。**"""
+    p = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                        "-of", "csv=p=0", str(path)], capture_output=True, text=True)
+    try:
+        return float(p.stdout.strip())
+    except ValueError:
+        return 0.0
 
 
 def cmd_build():
@@ -170,13 +228,29 @@ def cmd_build():
     scenes = json.load(open(SCENES))
     OUT.mkdir(exist_ok=True)
 
+    # **1本を粘るより、順番に1回ずつ当たって何周もする方が通る。**
+    # ボット確認は IP の評判で出るので、同じ配信を続けざまに叩くと余計に固くなる。
+    # 実際、probe で4本ぶんのコメントが取れた直後に full を重ねたら、
+    # そこから43分ぶん24回、一度も通らなくなった。
     need = sorted({s["video"] for s in scenes})
     have = {}
+    rounds = int(os.environ.get("CLIP_ROUNDS", "22"))
+    pause = int(os.environ.get("CLIP_PAUSE", "600"))
+    for r in range(rounds):
+        left = [v for v in need if v not in have]
+        if not left:
+            break
+        print(f"=== {r + 1}周目 残り {left}", flush=True)
+        for v in left:
+            p = download(v, height, tries=1)
+            if p:
+                have[v] = p
+                print(f"++ {v} 取れた", flush=True)
+        if [v for v in need if v not in have] and r < rounds - 1:
+            print(f"--- 一息入れる（{pause}秒）", flush=True)
+            time.sleep(pause)
     for v in need:
-        p = download(v, height)
-        if p:
-            have[v] = p
-        else:
+        if v not in have:
             print(f"!! {v} が落とせなかった。この配信の場面は飛ばす", flush=True)
 
     made, missing = [], []
@@ -194,12 +268,23 @@ def cmd_build():
             "-c", "copy", "-avoid_negative_ts", "make_zero", str(dst)])
         made.append((name, s))
 
-    # 繋ぐ。元が同じ配信なので、そのまま繋げる（焼き直さない）。
+    # 繋ぐ。まずは焼き直さずに繋いでみる。
+    # **配信が違うと画の作りも違うことがある**ので、繋いだ尺が合わなければ焼き直す。
     if made:
+        want = sum(s["end"] - s["start"] for _, s in made)
         lst = WORK / "concat.txt"
         lst.write_text("".join(f"file '{(OUT / n).as_posix()}'\n" for n, _ in made))
-        sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "concat",
-            "-safe", "0", "-i", str(lst), "-c", "copy", str(OUT / "day1_joined.mp4")])
+        joined = OUT / "day1_joined.mp4"
+        base = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                "-f", "concat", "-safe", "0", "-i", str(lst)]
+        subprocess.run(base + ["-c", "copy", str(joined)], check=False)
+        got = probe_dur(joined)
+        print(f"繋いだ尺 {got:.0f}秒 / 見込み {want}秒", flush=True)
+        if got < want * 0.97:
+            print("尺が合わないので焼き直す", flush=True)
+            sh(base + ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                       "-c:a", "aac", "-b:a", "128k", str(joined)])
+            print(f"焼き直し後 {probe_dur(joined):.0f}秒", flush=True)
 
     # どの場面がどの配信の何分何秒か。**これが無いと差し替えられない。**
     lines = ["# 1日目 ショート素材 場面表", ""]

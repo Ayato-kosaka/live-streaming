@@ -20,6 +20,12 @@ on:
       height:
         description: "縦の画素数（720 で足りなければ 480）"
         default: "720"
+      rounds:
+        description: "何周まわすか（ボット確認が明けるのを待つ回数）"
+        default: "22"
+      pause:
+        description: "1周ごとに空ける秒数"
+        default: "600"
 
 permissions:
   contents: read
@@ -45,14 +51,20 @@ jobs:
           npm --prefix /tmp/bgutil/server install --silent
           deno run -A /tmp/bgutil/server/src/generate_once.ts --version
 
-      - name: コメントの記録を取る
-        run: python3 tools/clip/day1_cut.py chat
+      - name: 媒体が取れるか確かめる
+        if: inputs.mode == 'probe'
+        # ここが駄目でも止めない。**コメントの記録は別の口なので、
+        # 媒体が取れない日でも当たりだけは進められる。**
+        continue-on-error: true
+        run: python3 tools/clip/day1_cut.py check
         env:
           BGUTIL_HOME: /tmp/bgutil/server
 
-      - name: 媒体が取れるか確かめる
+      - name: コメントの記録を取る
+        # **切るときには要らない。** 場面の位置はもう表に書いてある。
+        # ここは6本ぶんで15分近く掛かるので、probe のときだけ通す。
         if: inputs.mode == 'probe'
-        run: python3 tools/clip/day1_cut.py check
+        run: python3 tools/clip/day1_cut.py chat
         env:
           BGUTIL_HOME: /tmp/bgutil/server
 
@@ -66,6 +78,8 @@ jobs:
         env:
           BGUTIL_HOME: /tmp/bgutil/server
           CLIP_HEIGHT: ${{ inputs.height }}
+          CLIP_ROUNDS: ${{ inputs.rounds }}
+          CLIP_PAUSE: ${{ inputs.pause }}
 
       - name: 出来たものを渡す
         if: inputs.mode == 'full'
