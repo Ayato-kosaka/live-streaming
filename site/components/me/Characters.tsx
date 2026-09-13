@@ -11,6 +11,7 @@ import {
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import { saveFile, saveName } from "@/lib/saveFile";
 import ReadAgain from "./ReadAgain";
+import Longer from "@/components/ui/Longer";
 import Icon from "@/components/ui/Icon";
 
 /* キャラクターの絵と呼び名（#284 の C 群）。
@@ -449,31 +450,83 @@ export default function Characters() {
       </div>
 
       {done && <p className="nph-ok">{done}</p>}
-      {read === "down" && (
-        <ReadAgain what="キャラクター" onRetry={() => load(true)} />
-      )}
-      {read === "wait" && <p className="trip-week-none">読んでいます…</p>}
-      {read === "ok" && shown.length === 0 && (
-        <p className="trip-week-none">
-          {q ? "その名前の人はいません。" : "まだ1人もいません。"}
-        </p>
-      )}
 
-      <div className="ch-grid">
-        {shown.map((c) => {
-          const src = thumb(c, "plain") ?? thumb(c, "scene");
-          return (
-            <button key={c.id} className="ch-cell" onClick={() => open(c)}>
-              {src ? (
-                <img src={src} alt="" loading="lazy" />
-              ) : (
-                <span className="ch-cell-none">絵なし</span>
-              )}
-              <span className="ch-cell-name">{c.channelName || "名前なし"}</span>
+      {/* 読めなかった / 取りに行っている最中 / 読めた上での0人 を、
+          **並べなくても見分けがつく別々の顔**にする
+          （`docs/island-standards.md` 10章）。
+
+          もとは待ちも0人も同じ小さい灰の字（「読んでいます…」「まだ1人も
+          いません。」）で、同じ場所に出ていた。**電波の細い日に「この島には
+          住人が1人もいない」と言い切る絵**になっていたので、島のほかの道具と
+          同じ3つ（骨 / `.blank` / `ReadAgain` の札）にそろえた。 */}
+      {read === "down" ? (
+        <ReadAgain what="キャラクター" onRetry={() => load(true)} />
+      ) : read === "wait" ? (
+        /* 骨。**棚の形のまま置く**（`docs/island-design.md` 4章）。
+           帯を2本引くと、何が出てくる場所なのか分からない。 */
+        <div className="wait is-card ch-wait" aria-hidden>
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      ) : shown.length === 0 ? (
+        q ? (
+          <div className="blank">
+            <b>その名前の人はいません</b>
+            <p>打った名前を消すと、ぜんぶ出ます。</p>
+            <button type="button" className="blank-go" onClick={() => setQ("")}>
+              ぜんぶ出す
             </button>
-          );
-        })}
-      </div>
+          </div>
+        ) : (
+          <div className="blank">
+            <b>まだ1人も入っていません</b>
+            <p>チャンネル名と絵を入れると、ここに並びます。</p>
+            <button
+              type="button"
+              className="blank-go"
+              onClick={() => setDraft({ ...EMPTY })}
+            >
+              1人めを作る
+              <Icon name="plus" size={14} />
+            </button>
+          </div>
+        )
+      ) : (
+        /* **溜まっても背が変わらない形にする**（`docs/island-standards.md` 7章）。
+           住人は増える一方で、98人ぜんぶ並べると 390px で 5,732px＝6.8画面
+           あった。はじめは4段だけ出して、押せば最後まで出る。
+
+           `key={q}` は、**さがし直したら頭から出すため。** 付けないと
+           「あと62人だす」を押したあとに名前を打っても、出す数だけが
+           前の並びのまま残る。 */
+        <Longer
+          key={q}
+          items={shown}
+          first={12}
+          step={24}
+          unit="人"
+          as="div"
+          className="ch-grid"
+        >
+          {(c) => {
+            const src = thumb(c, "plain") ?? thumb(c, "scene");
+            return (
+              <button key={c.id} className="ch-cell" onClick={() => open(c)}>
+                {src ? (
+                  <img src={src} alt="" loading="lazy" />
+                ) : (
+                  <span className="ch-cell-none">絵なし</span>
+                )}
+                <span className="ch-cell-name">{c.channelName || "名前なし"}</span>
+              </button>
+            );
+          }}
+        </Longer>
+      )}
     </div>
   );
 }
