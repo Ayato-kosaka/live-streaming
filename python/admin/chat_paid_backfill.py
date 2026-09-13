@@ -1,4 +1,4 @@
-"""取り逃した**本文の無い投げ銭**を、BigQuery から Firestore へ埋め戻す。
+"""配信中に取り逃した**投げ銭**を、BigQuery から Firestore へ埋め戻す。
 
 **既定では1行も書かない。** 書くには `{"apply": true}`。
 
@@ -10,12 +10,13 @@ ARGS 例:
   {"days": 60}                さかのぼる日数（既定 30。BigQuery の分割列を
                               切るのに要る）
 
-## なぜ埋め戻せるのか
+## 何が足りなくなるのか
 
-`collectLiveChat` が `streamChatMessages` に溜めるとき、**本文の無い
-イベントを捨てていた**（`functions/src/chatCapture.ts` の
-`if (!messageId || !text) continue;`）。投げ銭は言葉を添えなくても
-投げられるので、**金額だけ投げてくれた人が1件も残らなかった。**
+`collectLiveChat` は5分おきに起きるので、**鍵やトークンで数回転んだ晩は、
+その間の投げ銭がまるごと入らない**（`kyzCpe5Znyk` が実際にそうで、
+BigQuery の投げ銭4件のうち Firestore にあるのは1件だった）。
+配信中の取りこぼしは、翌日の取り込みで BigQuery には入るが、
+**Firestore のほうは誰も埋めない。**
 
 同じ配信のチャットは、翌日に yt-dlp で BigQuery
 （`youtube_chat.chat_messages`）へ入っている。あちらは
@@ -228,6 +229,10 @@ def row_of(r: dict) -> dict:
     `amountMicros` と `currency` は入れない。BigQuery が持っているのは
     `¥500` のような**字だけ**で、数と通貨は分からない。
     **分からないものを、それらしく作らない**（`docs/island-misses.md` #15）。
+
+    `text` に入るのは**その人が書いた言葉**（BigQuery の `message_text`）。
+    配信中に溜めたぶんも 2026-09-13 から同じ扱いにしてある
+    （それより前の書類には、YouTube が組み立てた金額入りの1文が入っている）。
     """
     v = {
         "videoId": r["video_id"],

@@ -95,13 +95,19 @@ type Msg = {
 /**
  * 残さないもの。**「本文が無い」ではなく「人が何もしていない」で切る。**
  *
- * ## なぜここを間違えたか（2026-09-13）
+ * ## なぜここを直したか（2026-09-13）
  *
  * 前は `if (!messageId || !text) continue;` で、**本文の無いイベントを
- * 丸ごと捨てていた。** スパチャは言葉を添えなくても投げられるので、
- * 金額だけ投げてくれた人が `streamChatMessages` に1件も残らない。
+ * 丸ごと捨てていた。** 投げ銭もメンバーシップも、言葉を添えずに送れる。
  * BigQuery の `chat_messages` を数えると、投げ銭 394件のうち **107件
- * （27%）が本文なし**。**言葉を添えない人ほど、記録から消えていた。**
+ * （27%）が言葉なし**。**言葉を添えない人ほど、落ちやすい形だった。**
+ *
+ * スパチャだけは、たまたま落ちていなかった。**YouTube が
+ * `displayMessage` に金額入りの1文を組み立てて返すから**で、本人が何も
+ * 書かなくても空にならない（本番の3件で実測。BigQuery 側は0文字なのに
+ * Firestore には15文字入っていた）。**こちらの判定が正しかったからでは
+ * ない。** 相手の作りが変われば、その日から静かに落ちる。
+ * スーパーステッカー（絵だけ）とメンバーシップには、その1文も無い。
  *
  * 逆向きに、**ふつうのコメントで本文が空のものは残しても意味が無い**
  * （表示するものが何も無い）ので、そこは今までどおり捨てる。
@@ -139,16 +145,44 @@ export function keep(kind: string, text: string): boolean {
 }
 
 /**
- * 投げ銭の額を取り出す。**スパチャとスーパーステッカーで欄の名前が違う。**
+ * 投げ銭の欄。**スパチャとスーパーステッカーで名前が違う。**
+ * @param {Record<string, unknown>} s `snippet`
+ * @return {Record<string, unknown> | null} 投げ銭でなければ null
+ */
+function paid(s: Record<string, unknown>): Record<string, unknown> | null {
+  const d = s.superChatDetails ?? s.superStickerDetails;
+  return d && typeof d === "object" ? d as Record<string, unknown> : null;
+}
+
+/**
+ * 溜める本文。**投げ銭のときは、その人が書いた言葉のほうを取る。**
  *
- * ステッカーのほうは本文が最初から無い（絵を投げるもの）ので、
+ * `displayMessage` は、投げ銭だと YouTube が組み立てた1文
+ * （`¥500` のような金額が入っている）になる。それを本文として溜めると、
+ * **本人が何も書かなかったのに「何か書いた」ように見える。**
+ * 実測では、言葉を添えなかった3件がどれも15文字の字を持っていた。
+ *
+ * 金額は `amount` に別に入れてあるので、本文は言葉だけでよい。
+ * 言葉が無ければ空のまま溜める（`keep` が種別で残す）。
+ * @param {Record<string, unknown>} s `snippet`
+ * @param {string} text `snippet.displayMessage`
+ * @return {string} 溜める本文
+ */
+export function body(s: Record<string, unknown>, text: string): string {
+  const d = paid(s);
+  return d ? String(d.userComment ?? "") : text;
+}
+
+/**
+ * 投げ銭の額を取り出す。
+ *
+ * ステッカーは絵を投げるものなので言葉が最初から無い。
  * 額を拾わないと「誰かが何かした」しか残らない。
  * @param {Record<string, unknown>} s `snippet`
  * @return {Partial<Msg>} 額の欄（無ければ空。**undefined を書かない**）
  */
 export function money(s: Record<string, unknown>): Partial<Msg> {
-  const d = (s.superChatDetails ?? s.superStickerDetails ?? {}) as
-    Record<string, unknown>;
+  const d = paid(s) ?? {};
   const amount = String(d.amountDisplayString ?? "");
   if (!amount) return {};
   return {
@@ -352,8 +386,8 @@ async function drain(
     for (const m of items) {
       const s = (m.snippet ?? {}) as Record<string, unknown>;
       const a = (m.authorDetails ?? {}) as Record<string, unknown>;
-      const text = String(s.displayMessage ?? "");
       const kind = String(s.type ?? "");
+      const text = body(s, String(s.displayMessage ?? ""));
       const messageId = String(m.id ?? "");
       if (!messageId || !keep(kind, text)) continue;
       rows.push({

@@ -11,7 +11,7 @@
  * しかも誰かが無言で投げてくれたときだけ。**待っていると、直したかどうかが
  * 分からないまま次の配信を迎える。**
  *
- * だから判定だけを取り出して（`keep` / `money`）、ここで回す。
+ * だから判定だけを取り出して（`keep` / `body` / `money`）、ここで回す。
  *
  * ## 中身は作り話ではない
  *
@@ -21,12 +21,14 @@
  * 額も、本文の有無も、実際に起きたとおり。
  */
 
-import {keep, money} from "../lib/chatCapture.js";
+import {body, keep, money} from "../lib/chatCapture.js";
 
 /** [名前, snippet.type, 本文, 溜めるか] */
 const CASES = [
   // 2026-09-11 lzJshROVAl4 / 2026-09-12 hrXYXcu9IDE・Mzf_LgF6Cxc の3件。
-  // **これが消えていた。** ¥500 だけで、本文は空
+  // どれも ¥500 だけで、本人は何も書いていない。
+  // **いまは YouTube が金額入りの1文を組み立てて返すので落ちていない。**
+  // その1文を取らなくなった以上（`body`）、ここが残す側でないと消える
   ["無言のスパチャ", "superChatEvent", "", true],
   // 2026-09-11 kyzCpe5Znyk の4件はどれも本文つき
   ["本文つきのスパチャ", "superChatEvent", "ありがとう", true],
@@ -88,8 +90,35 @@ for (const [name, snippet, want] of MONEY) {
   console.log(`${ok ? "  " : "NG"} ${JSON.stringify(got)}  ${name}`);
 }
 
+/* 溜める本文。**投げ銭は、YouTube が組み立てた1文ではなく本人の言葉。**
+   本番の3件は、BigQuery 側 0文字・Firestore 側 15文字（金額入り）だった。 */
+const BODY = [
+  [
+    "無言のスパチャ（組み立てた1文が来る）",
+    {displayMessage: "¥500 のスーパーチャット", superChatDetails: {
+      amountDisplayString: "¥500", userComment: "",
+    }},
+    "",
+  ],
+  [
+    "本文つきのスパチャ",
+    {displayMessage: "¥320 のスーパーチャット: ありがとう", superChatDetails: {
+      amountDisplayString: "¥320", userComment: "ありがとう",
+    }},
+    "ありがとう",
+  ],
+  ["ふつうのコメント", {displayMessage: "こんばんは"}, "こんばんは"],
+];
+
+for (const [name, snippet, want] of BODY) {
+  const got = body(snippet, String(snippet.displayMessage ?? ""));
+  const ok = got === want;
+  if (!ok) bad++;
+  console.log(`${ok ? "  " : "NG"} ${got.length}文字  ${name}`);
+}
+
 if (bad) {
   console.error(`\n${bad}件 合っていない`);
   process.exit(1);
 }
-console.log(`\n${CASES.length + MONEY.length}件とも合っている`);
+console.log(`\n${CASES.length + MONEY.length + BODY.length}件とも合っている`);
