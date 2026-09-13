@@ -78,7 +78,11 @@ jobs:
           CK: ${{ secrets.YOUTUBE_COOKIES_CLIP }}
         run: |
           if [ -n "$CK" ]; then
-            printf '%s' "$CK" > /tmp/clip_cookies.txt
+            # #322 では base64 で貼ってもらう手順にしたが、生で貼られることもある。
+            # **どちらでも受ける。** 中身は絶対に出さない。
+            printf '%s' "$CK" | base64 -d > /tmp/clip_cookies.txt 2>/dev/null \
+              || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            grep -q "youtube" /tmp/clip_cookies.txt || printf '%s' "$CK" > /tmp/clip_cookies.txt
             echo "CLIP_COOKIES_FILE=/tmp/clip_cookies.txt" >> "$GITHUB_ENV"
             echo "Cookie あり（$(wc -l < /tmp/clip_cookies.txt) 行）"
           else
