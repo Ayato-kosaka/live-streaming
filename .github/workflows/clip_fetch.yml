@@ -1,0 +1,106 @@
+name: 切り抜きの mp4 を取る
+
+# 配信の「この区間だけ」を mp4 にして artifact で渡す。旅は17日あって毎日出てくるので、
+# **1本ずつ手で回せる形**にしてある。clip_day1.yml は1日目専用で場面表が埋め込みだった。
+#
+# **なぜ Actions か。** 作業箱から googlevideo に取りに行くと必ず 403 になる。
+# 署名付き URL は取りに来た IP に紐づくのに、箱の出口は接続ごとに別の IP へ移る
+# （実測 160.79.106.128〜137）。ランナーは1つの IP で最後まで通る。
+# 詳しくは docs/clip-download.md。
+#
+# **YOUTUBE_COOKIES には触らない。** あれは毎晩の取り込みが握っている。
+# 使い捨てアカウントの Cookie を入れるなら YOUTUBE_COOKIES_CLIP（別物）。
+# 無ければ無いまま走る。
+
+on:
+  # **試すあいだだけの口。** workflow_dispatch は master に載るまで押せないので、
+  # 枝に押した回で3回ぶん確かめる。master に入れる前に落とす。
+  push:
+    branches: [clip-mp4]
+  workflow_dispatch:
+    inputs:
+      video:
+        description: "配信ID（例 f3W2JxAHsQs）"
+        required: true
+        default: "f3W2JxAHsQs"
+      sections:
+        description: "区間。コンマ区切り。0:54:10-0:55:30,0:57:40-0:59:20"
+        required: true
+        default: "0:54:10-0:55:30,0:57:40-0:59:20,1:46:00-1:47:40"
+      height:
+        description: "縦の画素数"
+        default: "720"
+      rounds:
+        description: "口を全部当たるのを何周するか"
+        default: "3"
+      pause:
+        description: "1周ごとに空ける秒数"
+        default: "120"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 道具を入れる
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
+          python3 -m yt_dlp --version
+          ffmpeg -version | head -1
+          # PO Token を作る側。**無いと媒体の URL を渡してもらえない。**
+          # deno で走らせるので node_modules だけ用意する（build は要らない）。
+          git clone --depth 1 --branch 2.0.0 \
+            https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil
+          npm --prefix /tmp/bgutil/server install --silent
+
+      - name: PO Token が本当に作れるか見る
+        # **ここを黙って素通りさせない。** 作れていないのに「ボット確認が出た」と
+        # 読むと、口の当たり直しを何時間も続けることになる（実際そうなった）。
+        run: |
+          deno run --allow-all /tmp/bgutil/server/src/generate_once.ts --version
+
+      - name: Cookie があれば置く
+        # 秘密情報が無ければ何もしない。**中身はログに出さない。**
+        env:
+          CK: ${{ secrets.YOUTUBE_COOKIES_CLIP }}
+        run: |
+          if [ -n "$CK" ]; then
+            printf '%s' "$CK" > /tmp/clip_cookies.txt
+            echo "CLIP_COOKIES_FILE=/tmp/clip_cookies.txt" >> "$GITHUB_ENV"
+            echo "Cookie あり（$(wc -l < /tmp/clip_cookies.txt) 行）"
+          else
+            echo "Cookie なし。無いまま走る"
+          fi
+
+      - name: 落として切る
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+          CLIP_HEIGHT: ${{ inputs.height || '720' }}
+          CLIP_ROUNDS: ${{ inputs.rounds || '3' }}
+          CLIP_PAUSE: ${{ inputs.pause || '120' }}
+          VIDEO: ${{ inputs.video || 'f3W2JxAHsQs' }}
+          SPANS: ${{ inputs.sections || '0:54:10-0:55:30,0:57:40-0:59:20,1:46:00-1:47:40' }}
+        run: python3 tools/clip/fetch.py "$VIDEO" "$SPANS"
+
+      - name: 渡す
+        # 落とせなかった回も report.md だけは渡す。**通らなかった記録が要る。**
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clip-${{ inputs.video || 'f3W2JxAHsQs' }}-${{ github.run_id }}
+          path: out/
+          retention-days: 30
+          compression-level: 0
