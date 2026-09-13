@@ -153,12 +153,16 @@ def here(client, video: str) -> tuple[int, list[dict]]:
     q = client.collection("streamChatMessages").where("videoId", "==", video)
     total = 0
     paid = []
-    for d in q.select(["kind", "at", "channelId"]).stream():
+    for d in q.select(["kind", "at", "channelId", "text"]).stream():
         total += 1
         v = d.to_dict() or {}
         if v.get("kind") == KIND:
-            paid.append({"at": int(v.get("at") or 0),
-                         "channelId": str(v.get("channelId") or "")})
+            paid.append({
+                "at": int(v.get("at") or 0),
+                "channelId": str(v.get("channelId") or ""),
+                # **本文そのものは持ち歩かない。** 空かどうかだけ
+                "empty": not str(v.get("text") or ""),
+            })
     return total, paid
 
 
@@ -265,9 +269,10 @@ def main() -> None:
         gaps = [g for r in rs for ok, g in [already(r, paid)] if ok]
         log.info(
             "  %s  BigQuery: 投げ銭 %d件（本文なし %d件）"
-            " / Firestore: %d件（うち投げ銭 %d件）"
+            " / Firestore: %d件（うち投げ銭 %d件・本文が空 %d件）"
             "→ もう入っている %d件（時刻の差 %s）/ 足りない %d件",
-            v, len(rs), empty, total, len(paid), len(gaps),
+            v, len(rs), empty, total, len(paid),
+            sum(1 for d in paid if d["empty"]), len(gaps),
             f"{min(gaps)}〜{max(gaps)}ms" if gaps else "-", len(lack),
         )
 
