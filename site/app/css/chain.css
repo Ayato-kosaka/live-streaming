@@ -509,7 +509,28 @@
   line-height: 1.7;
   color: var(--ink-2);
 }
-.chain-foot a { margin-left: 6px; font-weight: 800; color: var(--ink); }
+/* 面の終わりの帰り道。**板にしない。**
+
+   すぐ下に砂浜の一覧（`.ifoot-doors`。木の板が10枚＋紙が2枚）が来る。
+   ここを板にすると、面の終わりに押しごたえのある塊が2つ続いて、
+   どちらが戻り道なのか分からなくなる（`app/css/way.css` 2章、
+   `docs/island-world.md` 3.4「厚みは『押せる』の合図1種類だけに使う」）。
+
+   だから `pages.css` の `.phead-go`（前置きの中の行き先）と同じ手にする。
+   **字の大きさも行の高さも変えず、上下の余白だけで当たりを 48px にする。**
+   インラインの padding は行の箱を押し広げないので、面の高さは動かない。
+
+   **`.phead-go` の「隣に取られるものは無い（どちらもただの文字）」は、
+   ここでは成り立たない。** 章の島では真上が渡し板（`.chap-sail-go`）で、
+   間は実測 15px しかない。だから `--tap-inline` は 15px——**隣の押しどころに
+   1px も重ならないまま 48px に届く、いちばん大きい値**にしてある
+   （tokens.css に理由を書いた）。 */
+.chain-foot a {
+  margin-left: 6px;
+  font-weight: 800;
+  color: var(--ink);
+  padding-block: var(--tap-inline);
+}
 
 
 /* =========================================================
@@ -536,7 +557,16 @@
 .chap-sec { margin-bottom: 16px; }
 .chap-sec h2 { margin: 0 0 10px; font-size: 17px; font-weight: 900; color: var(--ink); }
 .chap-note { margin: -4px 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
-.chap-note a { margin: 0 2px; font-weight: 800; color: var(--ink); }
+/* こちらは文の途中にある行き先（「ぜんぶ見るなら 配信の面 へ。」）なので、
+   `.phead-go` の決めごとがそのまま当てはまる——板にしないし、上下は
+   前置きの字と見出しの字で、取られるものは無い。上の `.chain-foot a` と
+   同じ値を使う。同じ形に2つの値を持たない。 */
+.chap-note a {
+  margin: 0 2px;
+  font-weight: 800;
+  color: var(--ink);
+  padding-block: var(--tap-inline);
+}
 
 /* 国。並んだ全部が押せるので、1枚ずつには厚みを付けない（外の紙が枠を持つ） */
 .chap-flags { display: flex; flex-wrap: wrap; gap: 8px; }
