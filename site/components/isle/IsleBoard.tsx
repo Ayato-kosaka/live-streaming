@@ -9,6 +9,7 @@ import ReadAgain from "@/components/me/ReadAgain";
 import { getStickies, type Sticky } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
 import type { Theme } from "@/content/themes";
+import Wrote from "@/components/ui/Wrote";
 
 /**
  * 島の板の中に出す掲示板。
@@ -198,7 +199,8 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
               <span className="nx-pin">
                 <Pin tone={PINS[i % PINS.length]} size={19} />
               </span>
-              {n.text}
+              {/* **書いてくれたまま出す**（#83） */}
+              <Wrote t={n.text} />
               {n.by && <em className="nb-by">{n.by} さん</em>}
             </li>
           ))}

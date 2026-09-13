@@ -192,8 +192,12 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
         <PlaceList current={current} atAll={atAll} />
       </nav>
       <p className="ifoot-note">
-        <Say t={FOOT.note} /> <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
+        <Say t={FOOT.note} />
       </p>
+      {/* **文の中に入れない。** 行内のリンクは文といっしょに折り返すので、
+          当たるのは1行ぶんだけになる（実測 102x18。島の全面で同じ）。
+          行き先は文ではないので、行から出して1つの押しどころにする。 */}
+      <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
     </footer>
   );
 }

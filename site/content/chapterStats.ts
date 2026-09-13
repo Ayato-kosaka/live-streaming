@@ -13,7 +13,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-09-12
+ * 数えた日: 2026-09-13
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -79,8 +79,8 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 25 },
       { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", days: 24 },
       { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", days: 22 },
-      { icon: "1qh1cX0_JBfrJ5DcoLY2ZmRVdRRSOGLRh", days: 18 },
       { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", days: 18 },
+      { icon: "1qh1cX0_JBfrJ5DcoLY2ZmRVdRRSOGLRh", days: 18 },
       { icon: "1E8Qm7sgAKmznob7FNDzBEB78zvPfJi86", days: 13 },
       { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", days: 12 },
     ],
@@ -93,14 +93,14 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 7 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 6 },
       { icon: "1rJ2HWtuTb6yME_OSJ4mK6jipz08cJlXq", days: 4 },
-      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 3 },
       { icon: "1Exzjd1XGvm_kzdNpjY2z8GxSanZ4u_Bp", days: 3 },
       { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", days: 3 },
+      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 3 },
+      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 2 },
+      { icon: "1qh1cX0_JBfrJ5DcoLY2ZmRVdRRSOGLRh", days: 2 },
+      { icon: "1kxRf8LuchvjgHBbWJ0Kjm0N2Ho3FOOfm", days: 2 },
       { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 2 },
       { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 2 },
-      { icon: "1kxRf8LuchvjgHBbWJ0Kjm0N2Ho3FOOfm", days: 2 },
-      { icon: "1qh1cX0_JBfrJ5DcoLY2ZmRVdRRSOGLRh", days: 2 },
-      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 2 },
       { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", days: 1 },
     ],
   },

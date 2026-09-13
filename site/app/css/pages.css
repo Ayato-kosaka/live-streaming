@@ -164,8 +164,15 @@
   letter-spacing: var(--ls-body);
   /* 板の上の字は濃いほう。生成りの字（--paper）で置いていたら、
      琥珀の地に対して 1.93 : 1 しか出なかった（tools/sprites/inkpx.mjs で実測）。
-     看板の上の物は「明るい板に濃い字」で揃っているので、ここもそれに寄せる。 */
-  color: color-mix(in srgb, var(--ink) 88%, var(--frame-deep));
+     看板の上の物は「明るい板に濃い字」で揃っているので、ここもそれに寄せる。
+
+     **`--ink` を薄めない。** `88%, var(--frame-deep)` で置いていたら、
+     帯の地のいちばん暗いところで 4.41 だった（`inkpx.mjs` を 820px・dpr2 で
+     実測。中央値 4.49／明るい地 4.82／暗い地 4.41）。この地では `--ink` を
+     そのまま置いても 4.79〜5.24 しか出ないので、**薄める余地が無い。**
+     「いま」を名前より引かせるのは、色ではなく大きさでやる
+     （ここは `--fs-min`、名前は `--fs-note`）。 */
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -176,9 +183,30 @@
   font-size: var(--fs-note);
   color: var(--ink);
 }
-/* 720px から上はパンくずの行が見えていて（`.crumbs` の clip が外れる）、
-   その最後が同じ名前を言っている。2回言わない。 */
-@media (min-width: 720px) { .ih-here { display: none; } }
+/* **引っ込めるのは、札の列（`.ih-nav`）が出てくる 900px から。**
+
+   ここは 720px だった。札が出るのは 900px からなので、**720〜899px の帯は
+   「あやと島」の板1枚だけ**になっていた。帯の中で札と字が占めるのは
+   820px で 15.6%、898px で 14.3%（`tools/sprites/navband.mjs` の実測。
+   同じ帯が 390px では 27.9%、900px では 88.9%）。
+   タブレットの縦・小さめのノート・窓を半分にした人が、全員そこに落ちる。
+
+   看板の役目は、札が出ていないあいだは「いま、どこ」だけ（`PageShell.tsx`）。
+   **その役目がどこにも無い幅を作らない。** 境目は札の出る 900px ひとつにそろえる。
+
+   「2回言わない」は、引っ込める側ではなくパンくず側で守る
+   （`way.css`。1段しかないパンくずを 899.98px まで畳む）。
+
+   札を 900px より手前から出す道も測った。**名前を切らずに1段に収まるのは
+   866px から**（`tools/sprites/navfit.mjs` を1px刻みで実測）。
+   800〜865px では「あやとのこと」が 2〜6px はみ出して黙って切れる。
+   `nowrap` + `overflow: hidden` なので**横あふれにも出ない。字が消えるだけ。**
+   しかも切れる／切れないが幅1pxで行ったり来たりする（860〜863 は収まるのに
+   864〜865 でまた切れる。`auto-fit` の列幅が整数に丸まるため）ので、
+   **「ここから安全」と言えるのは 866px。** 799px より下は2段に折り返して
+   帯が 141px になる。
+   34px のために境目を2つ持つ意味は無いので、札の出どころは 900px のまま。 */
+@media (min-width: 900px) { .ih-here { display: none; } }
 
 /* 看板の右はしの、自分のアイコン。**じぶんのこと（`/me`）への入口。**
    ログインしている人にだけ出る（`components/ui/MeButton.tsx`）。
@@ -236,7 +264,11 @@
 }
 
 .ih-nav {
-  /* 900px から下では畳んだ一覧（`.ihx`）に譲る。
+  /* **900px から下では出さない。** 行き先の一覧は紙の終わり（砂浜
+     `.ifoot-doors`）が開いたまま持っていて、島の入口7つはどの幅でも
+     そこに 48px で並んでいる（`tools/sprites/navband.mjs` の実測。
+     390 / 820 / 1440 / 1920 のどれでも足元に7つ）。**消えるのではなく、
+     頭の帯が持たないだけ。**
      6つを3列×2段に置くと看板が 129px あり、その下の現在地の行と合わせて
      106面ぜんぶが 177〜218px を同じ絵で使っていた（`docs/island-ux.md` 5.2）。
      **`display: none` で消す。** 目に見えないだけで残すと、読み上げが
@@ -277,8 +309,8 @@
   }
 }
 /* 看板ごと1行に収まる広さになったら、そこから上に貼り付ける。
-   このとき高さは 78px 前後なので、貼り付いていても画面をふさがない。
-   ここから札の列に戻す。畳んだ一覧（`.ihx`）はここで引っ込む。 */
+   このとき高さは 93px なので、貼り付いていても画面をふさがない。
+   ここから札の列に戻し、「いま、どこ」の字（`.ih-here`）が引っ込む。 */
 @media (min-width: 900px) {
   .ih { position: sticky; top: 0; }
   .ih-in { flex-wrap: nowrap; }
@@ -380,11 +412,16 @@
    となりにぶつかって 48px を取れない（`.crumbs a::after`）。 */
 .crumbs i { font-style: normal; color: var(--ink-2); margin: 0 var(--sp-1); }
 /* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
-   朱の枠で言っているのと同じことしか言っていない。
-   狭い画面で、同じ場所の名前を2回出すために 45px は使わない。
+   朱の枠（900px から）か「いま：○○」（900px 未満）で言っているのと
+   同じことしか言っていない。同じ場所の名前を2回出すために 45px は使わない。
    ただし消さない。目に見えないだけで、読み上げには残す
-   （2段以上あるパンくずは、親への行き先を持っているので出したまま）。 */
-@media (max-width: 719.98px) {
+   （2段以上あるパンくずは、親への行き先を持っているので出したまま）。
+
+   **境目は 900px。** ここは 719.98px だった。看板の「いま：○○」が 720px で
+   引っ込んでいたころは、そこから上はパンくずだけが現在地を言っていたので
+   出す必要があった。「いま：○○」を 900px まで出すようにしたので、
+   720〜899px では同じ名前が上下に2回並ぶ。 */
+@media (max-width: 899.98px) {
   .crumbs:not(:has(> span + span)) {
     position: absolute;
     width: 1px; height: 1px;
@@ -458,7 +495,13 @@
     0 1.5px 0 var(--paper-out), 0 -1.5px 0 var(--paper-out);
 }
 .phead-lead {
-  margin: 0; max-width: 40em;
+  /* 柱は紙の上の段落と同じ1本（上の `--read-col`）。ここは `40em`（640px）
+     だったが、`/nordic/day/7` の前置きが 47.6ch（625px。1文字 13.12px）で
+     45文字を超えていた。**`em` の数は字の数と一致しない。**
+
+     看板の前置きと紙の中の段落は別の面に乗っているが、柱の値まで2本に
+     分ける理由が無い。読む人から見れば、上から下へ続く1本の列。 */
+  margin: 0; max-width: var(--read-col);
   font-size: clamp(13.5px, 3.6vw, 16px);
   font-weight: 800; line-height: 1.85;
   letter-spacing: var(--ls-body);
@@ -779,8 +822,68 @@
   right: -12px; top: -7px; transform: rotate(29deg);
 }
 
-.panel p { margin: 0 0 var(--sp-3); font-size: var(--fs-body); line-height: 1.95; font-weight: 600; }
+/* =========================================================
+   読む字の柱（紙の面ぜんぶ）
+   ---------------------------------------------------------
+   **1行を 45文字までにする。** 1440px で測ると、紙の上の段落は
+   `/nordic` の「会いに行く理由」が 64.8ch、`/about` の本人の言葉が 59.4ch、
+   `/apps` `/next` `/map` `/apps/spelieve` も 51〜57ch あって、
+   どれも紙の左端から右端までの1本の棒だった
+   （`tools/sprites/navch.mjs` + `navwho.mjs` の実測。絵は
+   `/tmp/lenreport/about-before.png`）。長い行は、目が次の行の頭に戻るときに迷う。
+
+   **柱は1本の値で持ち、`em` では置かない。** `em` の数は字の数と一致しない
+   （島の字は和文・かな・欧文が混ざるので、1文字ぶんは 12.94〜16.0px と幅がある）。
+   区画ごとに別の幅を当てると、同じ紙の中で段落の右はしが数十pxずれて、
+   読む列が何本あるのか分からなくなる。
+
+   575px の根拠は、45文字を超えている段落のうち**いちばん1文字の狭い行**
+   （`/map` の「日本を出たのは2024/09/11、パリで配信を…」。日付が多くて
+   664px ÷ 51.3ch = 12.94px/字）。45文字で 582px なので、切り下げて 575px。
+   **いちばん狭い行で決める。** 平均で決めると、その1本だけが超えたまま残る。
+
+   **390px の折り返しは1文字も動かない。** 狭いところでこの段落が使えるのは
+   340px（`tools/sprites/navuse.mjs` を 390px で125面ぶん実測）で、575px のほうが広い。
+
+   `/nordic` の `.nwords p`（`app/nordic/themes.css`）と `.nwhy p`
+   （`app/css/nordic.css`）も、**この1本で足りている。** どちらも
+   `section.panel.paper` の中の `<p>` なので、ここの柱がそのまま効く。
+   あちらに2本目を書かない——同じ値を2か所に持つと、片方だけ直したときに
+   同じ紙の中で柱が2本になる。
+   ========================================================= */
+:root { --read-col: 575px; }
+
+.panel p { margin: 0 0 var(--sp-3); max-width: var(--read-col); font-size: var(--fs-body); line-height: 1.95; font-weight: 600; }
 .panel p:last-child { margin-bottom: 0; }
+/* 文の中に埋まった長い文字列（スコープのURL・鍵・パス）。
+   **横に逃がさず、その場で折る。** 390px で
+   `https://www.googleapis.com/auth/youtube.readonly` が幅450pxのまま
+   画面外に出て、島で唯一の横あふれ（scrollWidth 509 / clientWidth 390）に
+   なっていた。`overflow-x: auto` の入れ物にすると読む人に横送りを1つ
+   増やすことになるので、島の他の面と同じ `overflow-wrap: anywhere` で折る。
+   プライバシーポリシーは読めることが最優先なので、隠す方向には倒さない。 */
+.panel code { overflow-wrap: anywhere; }
+/* 段落の中を流れている、宛先への行き先（`/privacy` の「お問い合わせ」）。
+   **文の中なので板にしない。** 上下の余白だけで指の当たりを 48px にする
+   （`app/css/chain.css` の帰り道と同じ手。値は `--tap-inline` ひとつ）。
+   インラインの上下 padding は行の箱を押し広げないので、
+   行送りも段落の高さも1px も動かない。上下に重なるのは同じ段落の字だけで、
+   取られる押しどころは無い。
+
+   **選択子は、当たる先を数えてから決めた**（`tools/sprites/selcount.mjs` で
+   129面を開いて実測）。
+
+     a[href^="mailto:"]        1面 / 1か所
+     p > a[href^="mailto:"]    1面 / 1か所  ← これにした
+     .panel p a                1面 / 1か所（いまは同じだが、**紙の段落に
+                               これから入る行き先を全部拾ってしまう。**
+                               板を段落に置いた日に、板の寸法が変わる）
+     .panel p                  **56面 / 1,803か所**
+
+   `p > a` にしてあるのは「**段落の中を流れている裸の字**」だけを指すため。
+   板（`display:flex` のもの）に上下 padding を足すと、あちらは行の箱ではなく
+   自分の箱が伸びるので、面の高さが動く。 */
+p > a[href^="mailto:"] { padding-block: var(--tap-inline); }
 .panel > h2 + p, .panel > h2 + .muted { margin-top: 0; }
 
 /* 配信カード。押せるので下に厚みを付ける */
@@ -997,8 +1100,42 @@ a.chip:active, button.chip:active, .chip.link:active {
 .ifoot-back:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75); }
 /* opacity を掛けると、掛けたぶんだけ地の色が字に混ざって比が落ちる。
    薄く見せたいときは色そのものを選ぶ。ここは板が濃いので --paper のまま。 */
-.ifoot-note { margin: var(--sp-4) 0 0; font-size: var(--fs-note); font-weight: 700; color: var(--paper); line-height: 1.8; }
-.ifoot-privacy { color: inherit; text-decoration: underline; }
+/* **1行を 45文字までにする。** この1行は島の109面ぜんぶの足元にあって、
+   1440px では 607px の1本棒（53.2ch）だった。しかも**109面が109面とも、
+   その面のいちばん長い行がここ**だった（`tools/sprites/navch.mjs` と
+   `/tmp/pcsweep/1440.json` の実測）。長い行は、目が次の行の頭に戻るときに迷う。
+
+   幅は `em` で置く。**`ch` は "0"（半角）の幅なので、全角の日本語には短すぎる。**
+   実測の1文字ぶんは 11.41px（`607px ÷ 53.2ch`）なので、45文字は 513px。
+   40em = 480px で 42.1ch。旅のあいだの言い方（`nights.ts` の `foot`。47文字で
+   いまはこちら）でも、ふだんの言い方（40文字）でも、どちらも 45ch に収まる。
+
+   **390px の折り返しは1文字も動かない。** いちばん狭いところでこの行が
+   使えるのは 358px（390 − `.ifoot` の左右 16px）で、480px のほうが広い。
+   中の字が真ん中寄せなので、箱そのものも `auto` で真ん中に置く。 */
+.ifoot-note {
+  margin: var(--sp-4) auto 0;
+  max-width: 40em;
+  font-size: var(--fs-note); font-weight: 700; color: var(--paper); line-height: 1.8;
+}
+/* 島の全面の足元にある、ただ1つの字の行き先。**指で押す。**
+   前は `.ifoot-note` の文の中に置いてあって、文といっしょに折り返すので
+   当たり判定が 102x18 しかなかった（`docs/island-design.md` 3-2 は 48px）。
+   行から出して、`inline-flex` の1かたまりにする——こうすると中で折り返さないので、
+   幅の狭い端末でも札が2行に割れない。高さで 48px を取る
+   （`.akd-day-plan` `.akd-sheet-plan` と同じ形）。 */
+.ifoot-privacy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: var(--sp-1);
+  padding: 0 var(--sp-3);
+  color: var(--paper);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
@@ -1064,7 +1201,9 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 /* --ink-3 は紙の上で 2.6:1 しか無い。添え書きでも本文なので --ink-2 まで戻す */
 .muted { color: var(--ink-2); font-size: var(--fs-body); font-weight: 600; line-height: 1.85; }
-.err { color: var(--accent-deep); font-size: var(--fs-body); font-weight: 900; margin: var(--sp-2) 0 0; }
+/* 書けなかったときの一行。**いちばん読まれないと困る字**なのに、紙の上で
+   4.32 : 1、板の中の紙のムラでは 3.82 : 1 だった。`--accent-ink` に下ろす。 */
+.err { color: var(--accent-ink); font-size: var(--fs-body); font-weight: 900; margin: var(--sp-2) 0 0; }
 .noteform { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
 .noteform input {
   flex: 1; min-width: 0;
@@ -1401,21 +1540,22 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .count b { font-size: var(--fs-h3); margin: 0 2px; }
 /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
-   金にすると「押せる板のふち」と同じ色になって、押せそうに見える。 */
+   金にすると「押せる板のふち」と同じ色になって、押せそうに見える。
+   **札の地が桃なので、字は `--accent-ink`。** 地と同じ赤のままだと 3.49 : 1。 */
 .count.is-today {
   /* 今日ぶんだけ桃。桃は「いま／新しい」の色（island-world 3.2）。
      枠は付けない。オリーブの札と同じ「平らな1種類」のままにする。 */
   background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
-.count.is-today b { color: var(--accent-deep); }
+.count.is-today b { color: var(--accent-ink); }
 /* いま行っている企画。桃は「いま／新しい」の色なので、今日ぶんと同じ札にする
    （`content/plans.ts` の `planPhase`）。 */
 .count.is-now {
   background: color-mix(in srgb, var(--accent) 34%, var(--paper));
   color: var(--ink);
 }
-.count.is-now b { color: var(--accent-deep); }
+.count.is-now b { color: var(--accent-ink); }
 /* 過ぎた日。同じ理由で opacity をやめ、面だけ一段沈める。 */
 .count.is-past { background: color-mix(in srgb, var(--chip) 46%, var(--paper-out)); }
 

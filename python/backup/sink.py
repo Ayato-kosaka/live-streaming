@@ -36,8 +36,12 @@
 ## ここで足りていないところ（正直に書く）
 
 **プロジェクトごと消える事故には効かない。** 本番も退避も同じ
-`live-streaming-d3cac` の中にある。**旅の写真の実体（Storage）も取れていない。**
-どちらも Storage の権限が要る話なので、issue にしてある。
+`live-streaming-d3cac` の中にある。外へ出すには GCS のバケットが要って、
+それには上と同じ権限の話が出てくるので、issue にしてある（#296）。
+
+**旅の写真の実体は、Storage の口ではなく Firestore の `url` 欄から取っている**
+（`python/backup/photos.py`）。IAM を1つも通らない代わりに、**索引に載って
+いない実体には届かない。** そこも photos.py の頭に書いてある。
 """
 
 import datetime as dt
@@ -198,6 +202,11 @@ def record_health(ok: bool, took: float, err: str, detail: dict) -> None:
             "bqRows": sum((v or {}).get("rows") or 0 for v in bq.values()),
             "photosOk": bool(ph.get("ok")),
             "photosAdded": ph.get("n", 0),
+            # **「取れた枚数」だけでは、上限で切り上げた回と取り切った回が
+            # 同じに見える。** 旅の途中はこの札1枚しか読めないので、
+            # 「あと何枚残っているか」と「何枚落ちたか」をここに出す
+            "photosLeft": ph.get("left"),
+            "photosFailed": ph.get("failed", 0),
             "runUrl": run_url(),
         }
     )

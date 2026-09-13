@@ -88,7 +88,9 @@
 /* 数字の下の一行。読ませる字なので --ink-3 は使えない。
    紙のムラの沈んでいるほうで 3.30 : 1 しか出ない（docs/island-review-2.md 5.3）。 */
 .tnow-count-w { font-size: var(--fs-min); font-weight: 800; line-height: 1.6; color: var(--ink-2); }
-.is-far .tnow-count-n b { color: var(--accent-deep); }
+/* 残りの距離。札の地が `--accent` 10% の紙なので、素の `--accent-deep` では
+   4.37 : 1。**この面でいちばん大きい数字**なので、字のほうを `--accent-ink` に下ろす。 */
+.is-far .tnow-count-n b { color: var(--accent-ink); }
 
 /* 進み具合。数字だけだと減っているのが分からない。 */
 .tnow-bar {
@@ -255,6 +257,15 @@
    `.muted` にしない。ここは前置きではなく本文で、いちばん読んでほしい字。
    ========================================================= */
 .nwhy { margin-top: var(--sp-3); }
+/* **読む字の柱（`max-width`）を、ここに書かない。**
+   `.nwhy` は `section.panel.paper` の中にあるので、紙ぜんぶの柱
+   （`app/css/pages.css` の `.panel p { max-width: var(--read-col) }`。575px）が
+   そのまま効いている。ここは 1440px で 64.8文字の1本棒だったが、44.3文字で止まる。
+
+   ここに2本目を書くと、**同じ紙の中に柱が2本できる。** すぐ上の
+   「旅のテーマ」（`.nwords p`）は別のファイル（`app/nordic/themes.css`）に
+   あるので、片方だけ直したときに右はしが数十pxずれる。
+   柱を変えるときは `--read-col` を1か所だけ動かす。 */
 .nwhy p {
   margin: 0;
   font-size: 13.5px;
@@ -498,7 +509,7 @@ p.nday-fixed {
   font-size: var(--fs-min);
   font-weight: 900;
 }
-p.nday-note { margin: 4px 0 0; font-size: 12px; line-height: 1.6; font-weight: 700; }
+p.nday-note { margin: 4px 0 0; max-width: var(--nd-col); font-size: 12px; line-height: 1.6; font-weight: 700; }
 
 /* 越えた日に入る、その日に起きたこと。よていと見分けがつくよう、罫線1本で仕切る。 */
 .nday-log {
@@ -682,6 +693,24 @@ p.nback-now {
   color: var(--ink-2);
 }
 p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* Doneru のぶんが、まだ入りきっていない日だけ出る一行（#294）。
+
+   **警告の見た目にしない。** 額が減ったのではなく、増えるのが止まっているだけ。
+   赤も、感嘆符も、囲みも使わない。罫1本で仕切るのは旅の日ページの `.nday-log`
+   と同じ形で、この面でもう使っている形に合わせる（裸の1行で置かない。
+   `docs/island-misses.md` #18）。罫の色は金にして、上の額と地続きに見せる。
+
+   **押せないので厚みは付けない**（`docs/island-design.md` 3-3）。 */
+p.nback-asof {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  border-left: 3px solid color-mix(in srgb, var(--gold) 72%, var(--rule));
+  font-size: 12.5px;
+  line-height: 1.8;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 /* 何にお金が要るのか。金額の分からないものも、消さずに「調べています」と出す。 */
 .nback-what { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
 .nback-what li {
@@ -1137,13 +1166,14 @@ p.nback-now b { font-weight: 900; color: var(--ink); font-variant-numeric: tabul
 .gwords b { font-size: 13px; font-weight: 900; }
 /* 読みがな。桃の濃いほう（--accent-deep）を素で紙に置くと、縞の暗いほうの行で
    3.45 : 1 まで落ちる（描いた画素で40か所。11.5px なので細くて余計に効く）。
-   `--accent-deep` は「同じものの濃いほう。単独で使わない」（island-world 3.2）
-   なので、墨と混ぜて沈める。色相はそのまま、5.20 : 1 まで開く。 */
+   ここは墨と混ぜて逃がしていたが、**同じ逃がし方を3つの面が別々の割合で
+   持っていた**ので、`--accent-ink` に寄せた（島の赤を字にするときの1つの答え）。
+   実測 5.54 : 1 → 5.4 : 1。色相は #da1647 のまま。 */
 .gwords i {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
-  color: color-mix(in srgb, var(--accent-deep) 50%, var(--ink));
+  color: var(--accent-ink);
 }
 .gwords span { font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
@@ -1175,9 +1205,15 @@ svg.nmap {
   --nm-other: color-mix(in srgb, var(--grass-lo) 34%, var(--ink-3) 66%);
   --nm-other-lo: color-mix(in srgb, var(--grass-lo) 26%, var(--ink-3) 74%);
   --nm-case: color-mix(in srgb, var(--sea-deep) 58%, var(--ink) 42%);
+  /* 海の名前の下に敷く、深い水の色。
+     **青のまま暗くしたいのに、島の色見本には暗い青が無い**
+     （いちばん深い海でも L46 で止めてある・`tokens.css` の注）。
+     墨（茶）と混ぜると灰色に転んで、水ではなく板に見える。
+     海そのものを黒へ寄せた1色を置く。いまの海の色から作るので、
+     朝・夕・夜の持ち替えにもついてくる（実測 5.0〜8.4 : 1）。 */
+  --nm-deep: color-mix(in srgb, var(--sea-deep) 60%, #0a1a2b);
   /* 国名。草の上に置くので、墨まで沈めないと読めない（実測 2.64 : 1 だった）。 */
   --nm-label: color-mix(in srgb, var(--ink) 90%, var(--grass-lo) 10%);
-  --nm-seaname: color-mix(in srgb, var(--foam) 74%, var(--sea-deep) 26%);
 
   display: block;
   width: 100%;
@@ -1242,13 +1278,17 @@ svg.nmap {
 /* --- 陸 --- */
 .nmap .nm-land-a { stop-color: var(--nm-other); }
 .nmap .nm-land-b { stop-color: var(--nm-other-lo); }
+/* 通る6カ国の草の色。**色は `--nm-cc` に置いて、塗りはそこから引く。**
+   名前の下に敷く地（`.nm-wash`）が同じ色を要る（森が開けている、という絵に
+   したいので）。2か所に書くと、国の色を変えた日に敷いた地だけ取り残される。 */
 .nmap .nm-c { stroke: none; }
-.nmap .nm-c-poland { fill: var(--grass-hi); }
-.nmap .nm-c-lithuania { fill: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
-.nmap .nm-c-latvia { fill: var(--grass2-hi); }
-.nmap .nm-c-estonia { fill: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
-.nmap .nm-c-finland { fill: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
-.nmap .nm-c-sweden { fill: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
+.nmap .nm-c-poland { --nm-cc: var(--grass-hi); }
+.nmap .nm-c-lithuania { --nm-cc: color-mix(in srgb, var(--grass) 90%, var(--sun) 10%); }
+.nmap .nm-c-latvia { --nm-cc: var(--grass2-hi); }
+.nmap .nm-c-estonia { --nm-cc: color-mix(in srgb, var(--grass) 84%, var(--sea-shallow) 16%); }
+.nmap .nm-c-finland { --nm-cc: color-mix(in srgb, var(--grass2-hi) 82%, var(--sea-shallow) 18%); }
+.nmap .nm-c-sweden { --nm-cc: color-mix(in srgb, var(--grass) 78%, var(--sea-shallow) 22%); }
+.nmap .nm-c { fill: var(--nm-cc); }
 /* 国の境。線ではなく、両側ににじむ影で分ける。 */
 .nmap .nm-seam {
   fill: none;
@@ -1288,26 +1328,49 @@ svg.nmap {
 }
 
 /* --- 名前 --- */
-/* 海の名前。海の色に近い明るい青緑で、うしろに深い青をうっすら敷く。
-   白フチを付けると街の名札と同じ強さになって、どれが街か分からなくなる。 */
+/* 名前の下に敷く地（`RouteMapSvg.tsx` の `nm-wash`）。
+   ---------------------------------------------------------
+   **フチ（stroke）を読みやすさの勘定に入れない。** フチは字といっしょに
+   消えるものなので、地との比を1つも上げない（`tools/sprites/inkpx.py`）。
+   海も陸も、名前の乗る地そのものが場所で大きく変わる。
+
+     海   上は浅瀬の色、下は沖の色。明るさが 2.4 倍ちがう
+     陸   素の草から、森のいちばん濃いところまで 4 倍ちがう
+
+   どんな色の字を選んでも、明るいほうで読めれば暗いほうで消える。
+   実測は 海 1.42〜2.68 / 国名 3.09〜3.81（いちばん暗い地とは 1.19〜1.62）。
+   だから**字の下に地を敷いてならす**（街の名札の `.nm-lab` と同じ考え方）。
+
+   **中心だけ濃い暗幕にしない**（`docs/island-misses.md`）。敷くのは**平らな1枚**で、
+   字のまわり 10 × 8 まで同じ濃さで届かせる。ぼけるのは、その外に置いた
+   もう1枚だけ（`RouteMapSvg.tsx` の `washBox` / `hazeBox`）。 */
+.nmap .nm-wash {
+  stroke: none;
+  /* 陸は**その国じしんの色**を、紙で少しだけ起こしたもの。
+     「森がそこだけ開けている」という絵になるので、地形の一部のまま置ける。
+     素の草のままだと、いちばん暗い国（エストニア・スウェーデン）の上で
+     4.33 までしか出ない。起こすと 5.2 まで上がって、絵は変わらない。 */
+  fill: color-mix(in srgb, var(--nm-cc, var(--paper)) 72%, var(--paper));
+}
+/* 海は「水が一段深くなっている」ことにする。紙の札を敷くと街の名札に見える。 */
+.nmap .nm-wash.is-sea {
+  fill: var(--nm-deep);
+}
+
+/* 海の名前。深いところの色を敷いたので、字は泡の白に寄せる。 */
 .nmap .nm-sea-name {
-  fill: var(--nm-seaname);
+  fill: color-mix(in srgb, var(--foam) 85%, var(--sea-deep));
   font-weight: 800;
   letter-spacing: 0.26em;
-  stroke: var(--sea-deep);
-  stroke-width: 5;
-  stroke-opacity: 0.34;
 }
 /* 国名も同じ考え方。地形の一部として置くので、札には見せない。
-   ただし森の上に出すので、薄いフチが無いと木に食われて読めない。 */
+   **薄めない。** `opacity: .82` は、字の色に地の色を 18% 混ぜることなので、
+   濃い字ほど損をする（森の上では地との比が 1.19 まで落ちていた）。
+   段は薄さではなく色の濃さで作る（`.nmap[data-here] .nm-city` と同じ直しかた）。 */
 .nmap .nm-country {
   fill: var(--nm-label);
   font-weight: 900;
   letter-spacing: 0.24em;
-  stroke: var(--paper);
-  stroke-width: 6;
-  stroke-opacity: 0.42;
-  opacity: 0.82;
 }
 /* 字の下に敷く紙の札。
    緑の陸と青い海では地の明るさが3倍ちがうので、字の色をどう選んでも 4.5 : 1 に
@@ -2123,6 +2186,7 @@ a.ndsp-n:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-da
 .ndhh-l dt > .ic { flex: none; }
 .ndhh-l dd {
   margin: 0;
+  max-width: var(--nd-col);
   font-size: 13px;
   line-height: 1.7;
   font-weight: 700;
@@ -2198,8 +2262,33 @@ p.nday-wake {
   line-height: var(--lh-head);
 }
 p.nday-wake b { font-size: var(--fs-h3); font-weight: 900; }
+
+/* ============================================================
+   読む字の柱（旅の日ページ）
+
+   **1行を 45文字までにする。** 1440px で測ると、旅の日の面は
+   `.ndrs-lead` が 69.3ch（826px）、その下の予定・気をつけること・
+   寄り道が 45〜58ch で、どれも1本の長い棒になっていた
+   （`tools/sprites/navwho.mjs` の実測）。車の中で片手で開く面なので、
+   目が次の行の頭に戻るときに迷うのがいちばん困る。
+
+   **柱は1本の値で持つ。** 区画ごとに別々の幅を当てると、同じ紙の中で
+   段落の右はしが数十pxずつずれて、読む列が何本あるのか分からなくなる。
+   字の大きさは区画ごとに違う（12 / 13 / 14.5px）ので、`em` ではなく
+   px でそろえる。
+
+   450px の根拠は、この面でいちばん1文字の狭い行（`/nordic/day/2` の
+   `.nday-lead`。欧文の宿名と数字が多くて 481px ÷ 47.1ch = 10.21px/字）。
+   45文字で 459px なので、そこから切り下げて 450px。
+
+   **390px の折り返しは1文字も動かない。** いちばん狭いところで本文が
+   使えるのは 358px 前後（390 −『.page』と紙の左右）で、450px のほうが広い。
+   ============================================================ */
+:root { --nd-col: 450px; }
+
 p.nday-lead {
   margin: 0;
+  max-width: var(--nd-col);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 700;
@@ -2213,12 +2302,21 @@ p.nday-lead {
 }
 .nday-worry li,
 .nday-detour li {
+  max-width: var(--nd-col);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   font-weight: 700;
 }
 /* 気をつけることだけ、行の頭を少し重くする。寄り道の一覧と見分けるため。 */
 .nday-worry li::marker { font-weight: 900; }
+
+/* 旅程表の文の中で、書いた人が囲んだところ（`components/nordic/Strong.tsx`）。
+
+   この面の地の文は 700 で組んである。`<b>` の既定も 700 なので、そのまま置くと
+   囲んだことが1ピクセルも出ない。**900 まで上げて、色もいちばん濃いところへ戻す。**
+   出る先は「親指を上げる むずかしさ」の理由・区間の一言・朝の立ち上がり・
+   気をつけること・国の面の「入る区間の一言」の5か所。 */
+.nstrong { font-weight: 900; color: var(--ink); }
 
 /* =========================================================
    街のまわりの地図（`components/nordic/CityMapSvg.tsx`）
@@ -2539,3 +2637,428 @@ p.nday-lead {
 .trip-week-plus:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
 .trip-week-add { display: flex; gap: var(--sp-2); align-items: stretch; }
 .trip-week-add input { flex: 1; min-width: 0; min-height: 48px; }
+
+/* --- 送りの帯（`.trip-send`） ----------------------------------------
+   **「ここにいる、と出す」を、画面の下に貼り付ける。**
+
+   390×844 で測ると、街の札を押したあと送りに届くまで 1,405px あった
+   （1.66画面目）。あいだにあるのは ひとこと・島の景色・今週やること で、
+   今週やることは週1の手入れなのに約 400px 居座っていた。
+   **街を押すのは日に何度もある動き。** 押した指がそのまま届かないと、
+   走っている車の中では送らずに閉じる。
+
+   `sticky` は台（`.dform`）の中だけで効く。台の下まで送れば帯も流れて
+   いくので、ページの足元（ルーレット・遠隔操作・footer）は隠れない。
+   帯は台のいちばん最後に置いてあるので、**この下に隠れる欄は無い。** */
+.trip-send {
+  position: sticky;
+  bottom: var(--sp-2);
+  z-index: 2;
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-2);
+  /* 下の欄が透けると「浮いている板」に見えない。地は塗りきる */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--paper) 88%, var(--frame)) 0%,
+    var(--paper) 100%
+  );
+  box-shadow:
+    0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
+    0 8px 18px color-mix(in srgb, var(--frame-deep) 26%, transparent);
+}
+/* 帯の中では、送りが幅いっぱい。押しどころを探させない */
+.trip-send .mp-send { width: 100%; }
+.trip-send .nph-ok,
+.trip-send .err { margin: 0; }
+
+/* =========================================================
+   その国の、ふだんのごはん（`components/nordic/DailyFood.tsx`）
+   ---------------------------------------------------------
+   観光の名物ではなく、スーパーの棚と家の食卓にあるものを並べる面。
+   **390px で、片手で、走っている車の中で開く**ことを前提にしている。
+
+   だから:
+     - 1品は畳んでおく。閉じているあいだに見えるのは名前・読み・一行だけ
+       （7品でも1画面に収まる。`docs/island-standards.md` 7）
+     - 聞く一言は、いちばん大きい字にする。画面を相手に向けて見せるため
+     - 写す押しどころは幅いっぱい・56px。揺れる車内で狙わせない
+
+   器は `.panel.paper` を借りていて、段は `ui.css` の `.folds` をそのまま使う。
+   ここが持つのは、段の中身の作りだけ。
+
+   **字の規則は `.nfood` で始める。** 借りている器が `pages.css` に
+   `.panel p { font-size: var(--fs-body) }`(0,1,1) を持っていて、
+   `.nfd-say`(0,1,0) 1枚では負ける。実測で、いちばん大きくしたはずの
+   現地語の一文が 14.5px・太さ600 になっていた（書いたとおりに出ていない、
+   ということが撮っただけでは分からなかった。computed で測って気づいた）。
+   ========================================================= */
+.nfood .nfood-lead {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-note);
+  line-height: 1.9;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* 題の中の読み。名前（現地語）の次に小さく置く。
+   別の行にすると段が1行ぶん高くなって、7品が1画面から落ちる。 */
+.nfd-read {
+  margin-left: 7px;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* 一行の説明。`ui.css` の `.fold-t i` は1行で切っているが、
+   ここは「要するに何なのか」を読ませる行なので、2行まで折り返させる。
+   3行目からは切る（切らないと、段の高さが品ごとにばらける）。 */
+.nfood .fold-t i {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  line-height: 1.6;
+}
+
+.nfd { display: grid; gap: var(--sp-3); }
+
+/* どこで買えるか・季節・値段。**押せないので、完全に平ら**
+   （`docs/island-design.md` 3-3）。オリーブのベタが「数えたもの・押せない」の色。 */
+.nfd-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.nfd-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px var(--sp-2);
+  border-radius: var(--r-0);
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.6;
+}
+.nfd-tag svg { flex: none; }
+
+.nfood .nfd-body { margin: 0; font-size: 13px; line-height: 1.95; font-weight: 600; color: var(--ink); }
+
+/* 食べ方。ここがこの面でいちばん面白いところなので、本文から浮かせる。
+   押せないので厚みは付けず、左の罫1本と地の違いだけで分ける。 */
+.nfd-how {
+  border-left: 3px solid var(--frame);
+  border-radius: 0 var(--r-0) var(--r-0) 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: color-mix(in srgb, var(--paper) 62%, var(--paper-2));
+}
+.nfood .nfd-how b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.nfood .nfd-how p { margin: 0; font-size: 13px; line-height: 1.9; font-weight: 700; color: var(--ink); }
+
+/* --- 聞いてみる一言 ---
+   この面の主役。相手に画面を向けて見せるものなので、現地語をいちばん大きく、
+   その下に読み（自分が言うため）と訳（相手に通じなかったとき用）を置く。 */
+.nfd-ask {
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+}
+.nfood .nfd-ask-h {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 現地語の一文。**この段でいちばん大きい字にする。**
+   相手に画面を向けて見せるのはこの行で、下の2行は自分のためのもの。
+   ラテン文字は同じ級数だと仮名より小さく見えるので、
+   17px だと下の読み（12px の片仮名）と並んで見えた。実測して 22px まで上げた。 */
+.nfood .nfd-say {
+  margin: 0;
+  font-size: clamp(19px, 5.6vw, 24px);
+  line-height: 1.45;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  /* 長い綴りの現地語でも、面を横に伸ばさない */
+  overflow-wrap: anywhere;
+}
+.nfood .nfd-yomi { margin: 7px 0 0; font-size: var(--fs-note); font-weight: 800; line-height: 1.7; color: var(--ink-2); }
+.nfood .nfd-jp { margin: 2px 0 0; font-size: var(--fs-note); font-weight: 700; line-height: 1.7; color: var(--ink-2); }
+
+/* 写す。走っている車の中で押すので、幅いっぱい・56px・厚み6px。 */
+.nfd-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--sp-3);
+  padding: 0 var(--sp-4);
+  border: var(--bw-2) solid var(--frame-deep);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 42%, var(--paper)) 0%, var(--gold) 100%);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  box-shadow: 0 6px 0 var(--frame-deep);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.nfd-copy:active { transform: translateY(6px); box-shadow: none; }
+
+/* --- 道すじの寄り道（`components/nordic/RoadStops.tsx`） ------------------
+   **いちばん大きく出すのは、名前ではなく「幹線から何km外れるか」。**
+
+   寄るか寄らないかは、面白いかどうかでは決まらない。車の中で片手で開く面なので、
+   その数字が先に目に入らないと使えない。だから札を行の**いちばん左**へ回して
+   （`order: -1`）、何件ぶんかの数字が縦に揃うようにした。名前より先に、
+   数字を上から下へ舐められる。
+
+   畳みは島の紙の段（`.folds` / `.fold`）をそのまま使う。ここで新しい畳みを作らない。
+   触るのは**この区画の中の `.fold-*` だけ**（`.ndrs` で囲ってある）。 */
+.ndrs { display: grid; gap: var(--sp-2); }
+/* 決まっていないことを、いちばん先に言う一行。
+   あとから小さく断っても、上の一覧はもう予定として読まれている。
+
+   **`p` の字の大きさは `.ndrs p.…` で書く。** この区画は紙（`.panel`）の中に
+   入るので、`pages.css` の `.panel p { font-size: var(--fs-body) }` と同じ強さでは
+   勝てない。実測で road / body / ride の3つとも 14.5px に揃っていて、
+   区画の中の強弱がぜんぶ消えていた。 */
+.ndrs p.ndrs-lead {
+  margin: 0;
+  max-width: var(--nd-col);
+  font-size: var(--fs-note);
+  line-height: 1.75;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+/* **列は1本。中身で広がらせない。**
+   `.folds` の列は `auto` なので、入れ物の幅ではなく**いちばん長い行の max-content**
+   で決まることがある。ここは閉じた行に一行の要約を出すので、その一行ぶん
+   （実測で 418〜491px）まで列が伸びて、`.folds` の `overflow: hidden` に
+   切られていた。**横には動かないので巡回には出ない。字だけが消える。**
+   `minmax(0, 1fr)` で列を入れ物に留めると、要約は折り返しに戻る。 */
+.ndrs-l { margin-top: 0; grid-template-columns: minmax(0, 1fr); }
+
+/* 距離の札。**行のいちばん左に回す。** 押せない札なのでオリーブのベタ
+   （`docs/island-world.md` 3.2「数えたもの・押せない」）のまま、字だけ大きくする。
+   幅を決め打ちして、4件の数字が縦に揃うようにしてある。 */
+.ndrs .fold-n {
+  order: -1;
+  display: grid;
+  gap: 0;
+  justify-items: center;
+  align-content: center;
+  /* 92px は「南へ1.5km」「海へ1.6km」の実測幅。ここを下げると列が揃わない */
+  min-width: 92px;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-0);
+}
+.ndrs .fold-n > i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.35;
+  /* 札の中の小さい字。地がオリーブなので、墨は札の墨のまま薄くしない */
+  color: var(--chip-ink);
+}
+.ndrs .fold-n > b { font-size: 16px; font-weight: 900; line-height: 1.4; white-space: nowrap; }
+
+/* 現地語の名前は長い（Aukštaitijos siaurasis geležinkelis で34字）。
+   390px では必ず折り返すので、途中で切らずに送る。 */
+.ndrs .fold-t > b { overflow-wrap: anywhere; }
+/* カタカナの読みは、名前と同じ大きさでは並べない。名前の直後に小さく添える。 */
+.ndrs .fold-t > b > i {
+  display: block;
+  margin-top: 1px;
+  /* `.fold-t i` の既定は1行で切る。読みは「アウクシュタイティヨス・シアウラシス・
+     ゲレジンケリス」で 314px あるので、**折り返さないと行ごと横へ伸びる**
+     （実測でここだけ 463px まで出ていた）。 */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+/* 閉じているときの一行。**ここで「何があるか」が読めないと、押す気にならない。**
+   `.fold-t i` の既定は1行で切るので、この区画だけ2行以上へ送る。 */
+.ndrs .fold-t > i {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.6;
+}
+/* 開いたら読みは残す（名前の一部なので）。消えるのは要約の一行だけ。 */
+.ndrs .fold[open] > summary > .fold-t > b > i { display: block; }
+
+.ndrs p.ndrs-road {
+  display: flex;
+  gap: var(--sp-1);
+  align-items: flex-start;
+  margin: 0;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndrs p.ndrs-road > .ic { flex: none; }
+.ndrs p.ndrs-body {
+  margin: var(--sp-2) 0 0;
+  font-size: 13.5px;
+  line-height: 1.85;
+  font-weight: 700;
+}
+/* ヒッチハイクの見立て。罫で切って、事実（上）と見立て（下）を同じ地に置かない。 */
+.ndrs p.ndrs-ride {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-3);
+  border-top: 1px solid color-mix(in srgb, var(--rule) 66%, transparent);
+  font-size: 12.5px;
+  line-height: 1.75;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.ndrs p.ndrs-ride > .ic { flex: none; }
+
+/* 旅の日ページ、区画の見出しのすぐ下に置く一行。
+   見出しに街の名前を2つ入れると 390px で名前の途中から割れるので、
+   「どこからどこへ」はここへ下ろしてある。ここなら割れてよい。 */
+.nday-sub {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+
+/* ───────────────────────────────────────────────────────────────
+   おみやげと雑貨（`components/nordic/Shops.tsx`）
+
+   あやとの言葉（2026-09-13・ビャウィストクの路上で）:
+
+   > お土産とか雑貨とか行きたかったけど、あやと島みても見つからず行けなかった
+
+   だからここは**読みものではなく、行き先の板。** 1行まるごとが
+   地図アプリを開く押しどころで、指で狙う的は行の高さぜんぶ（72px 以上）。
+   --------------------------------------------------------------- */
+/* `pages.css` の `.panel p { font-size: var(--fs-body) }` が (0,1,1) なので、
+   class ひとつ（0,1,0）では負ける。**紙の中の段落は、必ず要素を添えて書く。** */
+.nshop p.nshop-lead {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+  font-size: var(--fs-note);
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+/* 読めなかったとき・1軒も無いとき。**同じ字にしない**（`island-misses.md` #79）。 */
+.nshop p.nshop-none {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.nshop-g + .nshop-g { margin-top: var(--sp-4); }
+.nshop-g > h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-head);
+}
+.nshop-g > h3 > .ic { flex: none; }
+
+.nsps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+/* 1軒。**押せるので厚みを持たせる**（`island-design.md` 3章3）。
+   厚みは真下・ぼかし無しで、地面の落ち影と取り違えられないようにする。 */
+.nsp-go {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-2);
+  align-items: center;
+  min-height: 64px;
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  text-decoration: none;
+}
+.nsp-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+/* `min-width: 0` が無いと、長い現地語の名前が列を押し広げて横にあふれる */
+.nsp-txt { display: grid; gap: 2px; min-width: 0; }
+.nsp-name {
+  font-size: 15.5px;
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: var(--ls-body);
+  /* Šv. Ignoto g. / Podlaskie Centrum Rolno-Towarowe。**切らずに折る。**
+     名前が読めなければ、看板を探せない */
+  overflow-wrap: anywhere;
+}
+/* 何の店か と、中心からの距離。同じ行に置いて1段で済ませる */
+.nsp-what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.nsp-what em { font-style: normal; }
+.nsp-at {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+/* 営業時間。**書いていない店は、書いていないと言う。** */
+.nsp-open {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.nsp-open.is-none { font-weight: 700; color: var(--ink-2); }
+/* 時刻の帯。**途中で折らない**（「10:00-／15:00」になる）。
+   11字しかないので、折らなくても横へあふれない。 */
+.nsp-hr { white-space: nowrap; }
+.nsp-side { display: grid; justify-items: center; gap: var(--sp-1); flex: none; }
+/* いま開いているか。**字にする色は `--marker-ink` / `--accent-ink`。**
+   飾りの緑（`--leaf-c`）を字にすると、クリームの紙の上で 2.87 しか出ない
+   （`docs/island-misses.md` #80）。地はこの板の紙のまま、色は替えない。 */
+.nsp-live {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+}
+.nsp-live.is-open { color: var(--marker-ink); }
+.nsp-live.is-shut { color: var(--accent-ink); }
+.nsp-pin { flex: none; }
+/* 出どころ。**ODbL の表示義務**（`docs/nordic-shops.md`）。消さない。 */
+.nshop p.nshop-osm {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.nshop-osm a { color: var(--ink-2); }
+/* 面の頭に置く近道。お店の区画は面のかなり後ろにあるので、1つだけ道を作る */
+.nday-jump { margin: 0 0 var(--sp-4); }

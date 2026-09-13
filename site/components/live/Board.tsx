@@ -33,6 +33,7 @@ import Longer from "@/components/ui/Longer";
 import SignIn from "./SignIn";
 import Notes from "./Notes";
 import { EmptyBoard, Pin } from "./art";
+import Wrote from "@/components/ui/Wrote";
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
 const PROOF = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia"];
@@ -696,7 +697,7 @@ export default function Board() {
                   <div className="idea-body">
                     <p>{p.title}</p>
                     {/* 育ったぶん。ひとことがあれば、題のすぐ下に出す */}
-                    {p.note && <p className="bd-note">{p.note}</p>}
+                    <Wrote t={p.note} as="p" className="bd-note" />
                     <div className="idea-meta">
                       {top && <em>いま、いちばんハートが集まってる</em>}
                       {stage !== "proposed" && <em>{PLAN_STATUS_NAME[stage]}</em>}

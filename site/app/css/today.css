@@ -425,11 +425,13 @@
   font-weight: 700;
   color: var(--frame-dark);
 }
+/* 入れられなかったときの一行。11.5px の細い字なので、板のクリームの上でも
+   4.72 : 1 と余裕が無い。`--accent-ink` にそろえる（`.err` と同じ用事）。 */
 .poll-failed {
   margin: 8px 0 0;
   font-size: 11.5px;
   font-weight: 700;
-  color: var(--accent-deep);
+  color: var(--accent-ink);
 }
 
 /* 次の段への橋。押した直後に出す。

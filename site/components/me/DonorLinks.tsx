@@ -7,6 +7,7 @@ import {
   linkDonor,
   unlinkDonor,
   type Donor,
+  type DonorHint,
   type DonorState,
   type DonorVia,
 } from "@/lib/api";
@@ -15,6 +16,7 @@ import ReadAgain from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
+import { jstDay as day } from "@/lib/nightly";
 
 /**
  * 投げ銭を、YouTube につなぐ。**あやとだけ。**
@@ -65,20 +67,45 @@ const VIA_NAME: Record<DonorVia, string> = {
   youtube: "YouTube に聞いた",
 };
 
-/** 「2026-09-06T…」→「9月6日」。島の中の日付はいつもこの形。 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
+
+/**
+ * 候補の下に出す1行。**選ぶときに見るのは、この2つだけ。**
+ *
+ * 同じ呼び名の人が2人出てくることがある。どちらが本人かは
+ * 「どれだけ一緒にいたか」と「さいごに来た日」で見分ける。
+ */
+function hintMeta(h: DonorHint): string {
+  const last = h.lastAt ? day(h.lastAt) : null;
+  return [
+    h.days !== null ? `一緒に${h.days}日` : null,
+    last ? `さいご ${last}` : null,
+  ]
+    .filter(Boolean)
+    .join("・");
+}
 
 /**
  * つながったときの1行。**何に繋がったかまで言う。**
  *
  * 打った字と、繋がった先の名前が同じときは、片方だけ。
  * 「@ひめひめ-r9z → @ひめひめ-r9z につながりました」は、読んで何も増えない。
+ *
+ * **何で引けたか（`VIA_NAME`）を出すのは、打って繋いだときだけ。**
+ * 打った人は、その字が何に当たったのかを見て、繋がった先を信じてよいか
+ * どうかを決める。候補を押した人は、名前と一緒にいた日数を見てその人を
+ * 選んでいるので、もう確かめるものが残っていない。そこに引き方の名前を
+ * 出すと、中の話がそのまま画面に出る。**丸かっこごと出さない。**
  */
-function saidOk(typed: string, d: Donor, via: DonorVia | null): string {
+function saidOk(
+  typed: string,
+  d: Donor,
+  via: DonorVia | null,
+  showVia: boolean,
+): string {
   const name = d.channelName ?? d.channelId ?? typed;
   const to = name === typed ? typed : `${typed} → ${name}`;
-  return `${to} につながりました（${VIA_NAME[via ?? "dict"]}）`;
+  const said = `${to} につながりました`;
+  return showVia ? `${said}（${VIA_NAME[via ?? "dict"]}）` : said;
 }
 
 /**
@@ -320,31 +347,56 @@ function Row({
   /** 押した結果。**その場で見えないと、入ったのかどうか分からない** */
   const [said, setSaid] = useState<string | null>(null);
   const [bad, setBad] = useState(false);
+  /** 近い名前の人。**紐付け待ちの行にしか来ない**（口がそう返す） */
+  const hints = donor.hints ?? [];
 
-  const link = async () => {
+  /**
+   * つなぐ。**打って押したときも、候補を押したときも、ここを通る。**
+   *
+   * 道を分けると、押したあとの1行の出し方と `slot` の扱いが2通りになる。
+   * `slot` が押しても変わらないのは上の `Slot` に書いた理由なので、
+   * 入口を増やしてそこを踏み外さないようにする。
+   *
+   * `sent` はサーバーに渡す字（打った名前か、候補のチャンネルID）。
+   * `picked` は**候補を押したときの、その人**。打って押したときは無い。
+   * 見せる字がその人の名前になる（UC から始まる24文字をそのまま出しても、
+   * 誰に繋がったのか読めない）のと、引き方を言わないのが、ここで分かれる。
+   */
+  const send = async (sent: string, picked?: DonorHint) => {
     const t = await token();
     if (!t) return;
+    const shown = picked ? picked.name : sent;
+    setBusy(true);
+    setSaid(null);
+    const r = await linkDonor(donor.viewerPk, sent, t);
+    setBusy(false);
+    setBad(!r.ok);
+    if (r.ok) {
+      /* **候補は、繋いだあとも残す。** 書く口（POST）は候補を返さないので、
+         返ってきた行をそのまま入れると、押した瞬間に候補が消える。
+         確認を挟まない画面なので（上の docstring）、押し間違いをその場で
+         直せる手が要る。隣の候補をもう一度押せば上書きされる。 */
+      onChanged({ ...r.donor, hints: r.donor.hints?.length ? r.donor.hints : hints });
+      // 欄も、いま繋がっている人にそろえる（空のまま残すと、次に押せない）
+      setTyped(shown);
+      setSaid(saidOk(shown, r.donor, r.via, !picked));
+    } else if (r.why === "duplicate") {
+      setSaid(`${shown} は2人に使われています。チャンネルID（UC…）を貼ってください。`);
+    } else if (r.why === "notfound") {
+      setSaid(`${shown} は見つかりませんでした。打ち直すか、分からないにしてください。`);
+    } else {
+      setSaid("いま送れませんでした。もう一度押してください。");
+    }
+  };
+
+  const link = async () => {
     const v = typed.trim();
     if (!v) {
       setBad(true);
       setSaid("名前を打ってから押してください。");
       return;
     }
-    setBusy(true);
-    setSaid(null);
-    const r = await linkDonor(donor.viewerPk, v, t);
-    setBusy(false);
-    setBad(!r.ok);
-    if (r.ok) {
-      onChanged(r.donor);
-      setSaid(saidOk(v, r.donor, r.via));
-    } else if (r.why === "duplicate") {
-      setSaid(`${v} は2人に使われています。チャンネルID（UC…）を貼ってください。`);
-    } else if (r.why === "notfound") {
-      setSaid(`${v} は見つかりませんでした。打ち直すか、分からないにしてください。`);
-    } else {
-      setSaid("いま送れませんでした。もう一度押してください。");
-    }
+    await send(v);
   };
 
   const unknown = async () => {
@@ -379,21 +431,25 @@ function Row({
     }
   };
 
+  // その人が初めて投げ銭してくれた日（日本時間）。読めない字なら出さない
+  const came = donor.firstSeenAt ? day(donor.firstSeenAt) : null;
+
   return (
     <li>
       <p className="mp-care-text">{donor.label || donor.handle || donor.viewerPk}</p>
+      {/* いまの状態・繋がっている先・初めて来た日。**札にしない**（`.mp-note-foot`）。
+          ここは多いと4つ並ぶ欄で、札にすると 360px で必ず2行になる。
+          「◯月◯日に来た」が 30人中28人に出るようになって、いよいよ効いた。 */}
       <p className="mp-note-foot">
-        <span className="chip">{STATE_NAME[donor.state]}</span>
+        <span>{STATE_NAME[donor.state]}</span>
         {/* いま繋がっている先。**辞書に載っていない人（YouTube から引いた人）は
             名前が引けない**ので、そのときは打った字をそのまま出す。
             「繋がっているのに、何にも繋がっていないように見える」を作らない。 */}
         {(donor.channelName || donor.handle) && (
-          <span className="chip">{donor.channelName || donor.handle}</span>
+          <span>{donor.channelName || donor.handle}</span>
         )}
-        {donor.isOwner && <span className="chip">あやと本人</span>}
-        {donor.firstSeenAt && (
-          <span className="chip">{`${day(donor.firstSeenAt)}に来た`}</span>
-        )}
+        {donor.isOwner && <span>あやと本人</span>}
+        {came && <span>{`${came}に来た`}</span>}
       </p>
       {donor.note && <p className="mp-donor-note">{donor.note}</p>}
       <div className="dform mp-donor-form">
@@ -413,6 +469,28 @@ function Row({
           />
         </label>
       </div>
+      {/* 近い名前の人。**打たずに選べるようにする。**
+          呼び名は「ゆずたつ」で届くが、繋ぐには `@ゆずたつ-q3n` と
+          正確に打たないと当たらない。枝番は誰も思い出せない。
+          0件のときは、見出しごと出さない。 */}
+      {hints.length > 0 && (
+        <div className="mp-donor-hints">
+          <p className="mp-donor-hint-h">近い名前の人</p>
+          {hints.map((h) => (
+            <button
+              key={h.channelId}
+              className="mp-donor-hint"
+              disabled={busy}
+              onClick={() => send(h.channelId, h)}
+            >
+              <b>{h.name}</b>
+              {/* 選ぶときに見るのはこの2つ。**どちらも無い人は、名前だけ。**
+                  「一緒にいた日数」が多いほど、その名前で来ている人 */}
+              <i>{hintMeta(h)}</i>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="mp-care-acts">
         <button className="mp-send is-small" disabled={busy} onClick={link}>
           {busy ? "つないでいます…" : "つなぐ"}
@@ -478,7 +556,7 @@ function NewRow({ onChanged }: { onChanged: (d: Donor) => void }) {
       onChanged(r.donor);
       setPk("");
       setTyped("");
-      setSaid(saidOk(v, r.donor, r.via));
+      setSaid(saidOk(v, r.donor, r.via, true));
     } else if (r.why === "duplicate") {
       setSaid(`${v} は2人に使われています。チャンネルID（UC…）を貼ってください。`);
     } else if (r.why === "notfound") {

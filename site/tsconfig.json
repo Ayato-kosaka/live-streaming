@@ -93,7 +93,8 @@
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-dev3220/types/**/*.ts"
+    ".next-dev3220/types/**/*.ts",
+    ".next-3220/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

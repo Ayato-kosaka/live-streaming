@@ -425,6 +425,10 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 `goal_migrate` を `{"apply": true}` で流すまで0件。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
+**`islandDoneruHealth` もこれから作る**（#294）。Doneru のぶんが最後に
+BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
+取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
+「Doneru のぶんは、◯月◯日まで入っています」と出る（`docs/nordic-fund.md` 9.13）。
 
 #### a. 人
 
@@ -451,7 +455,7 @@ island/state
   }
   current: {                      あやとが手で（口／island_set_current.py）
     place: string                 いまいる場所
-    word: string                  ひとこと
+    word: string                  ひとこと（**改行が残る**。「改行」）
     week: string[]                今週やること
     theme: string                 georgia / nordic / desert / default
     updatedAt: "YYYY-MM-DD"
@@ -509,9 +513,21 @@ island/state
 | `state` | string | 結べたか・分からないか |
 | `isOwner` | boolean | あやと本人の寄付か（**カードを自分に配らないため**） |
 | `note` | string \| null | あやとのメモ |
-| `firstSeenAt` | string \| null | 初めて見た時刻 |
+| `firstSeenAt` | string \| null | **その人が初めて投げ銭した時刻**（ISO・UTC）。`doneru_donations` の全期間の `MIN(donated_at)` |
 | `addedAt` | string? | **画面から足した行だけに付く。** これがある行だけ消せる |
 | `editedAt` / `editedBy` / `updatedAt` | | 種に上書きさせないための印 |
+
+**`firstSeenAt` は「その人が来た日」で、「こちらが見つけた日」ではない。**
+前は毎晩の取り込みが `now`（ジョブが走った時刻）を入れていた。ジョブは
+翌朝 07:41 JST に走るので、前の晩に投げ銭してくれた人の札が必ず翌日に
+なっていた。いまは `python/doneru_supporters.py` が
+**全期間の `MIN(donated_at)`** を引いて入れる（引くのは新規の どねID が
+見つかった晩だけ）。`doneru_donations` に1行も無い どねID には**入れない。**
+種から入った人など、引きようが無い相手に「たぶんこの日」を置かないため。
+
+入れるのは**時刻そのもの**で、日付にするのは画面の仕事
+（`site/components/me/DonorLinks.tsx` が日本時間で切る。#201・#202）。
+すでに入っているぶんを直すのは `python/admin/donors_first_seen.py`。
 
 #### b. 企画・写真・カード・投げ銭
 
@@ -524,17 +540,17 @@ island/state
 | --- | --- | --- |
 | `title` | string | 題（4〜60字）。**これだけあれば出せる** |
 | `when` / `date` | string | 画面に出す言い方（40字）と、数えるための日（YYYY-MM-DD） |
-| `note` | string | ひとことで言うと（200字まで） |
+| `note` | string | ひとことで言うと（200字まで）。**改行が残る**（「改行」） |
 | `tags` | string[] | ふだ（6つまで・各16字） |
 | `place` | object | `{ name, area, map }` |
-| `about` | string[] | どんなものか。段落ごと（8つまで・各600字） |
+| `about` | string[] | どんなものか。段落ごと（8つまで・各600字）。**改行が残る**（「改行」） |
 | `links` | object[] | `{ label, href }`（8つまで） |
 | `photos` | object[] | `{ src, alt, credit, creditHref }`（8つまで） |
 | `embeds` | object[] | `{ kind, id, note }`（4つまで。`kind` は `youtube` か `instagram`） |
 | `by` | string \| null | 名乗った名前（なくてもいい・20字） |
 | `uid` | string \| null | ログインして出していれば、その人 |
 | `cid` | string | 端末ID。**「あとから直す鍵」でもある** |
-| `ip` | string \| null | `x-forwarded-for` の先頭。**荒れたときに辿るためだけのもの** |
+| ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。`x-forwarded-for` の先頭を入れていたが、読む仕組みが1つも無く、消す期限も決めていなかった。取るのをやめて、溜まっていたぶんも落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。仕組みは付箋と同じ（`islandHearts`） |
 | `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
 | `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
@@ -734,18 +750,35 @@ GAS → Firestore → 前に読めた値、の順に落ちる。どれも無け�
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
 | `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
-| `text` | string | 中身（120字まで） |
+| `text` | string | 中身（120字まで）。**改行が残る**（「改行」） |
 | `by` | string \| null | 名乗った名前（なくてもいい） |
 | `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
-| `ip` | string \| null | `x-forwarded-for` の先頭 |
+| ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。企画（上）と同じ理由で、欄ごと落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
 | `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
-| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる |
+| `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
 | `createdAt` | number | ミリ秒 |
 
 **企画に貼られた付箋**（旧。移行待ち）: `planId` `text` `cid` `hidden` `createdAt`。
+
+### 改行（2026-09-13〜）
+
+**本文の欄は、改行が入ったまま保存される。** 打つ欄が `<textarea>` の5系統
+——付箋の `text`、返事の `reply`、企画の `note` と `about[]`、`state/island` の
+`current.word`——が対象（口の側は `cleanText`）。
+
+`\r\n` と `\r` は `\n` にそろえ、**改行以外の C0 制御文字はいままでどおり落とす。**
+前後の空白・空行と行末の空白も落ちる（画面の `site/components/ui/Wrote.tsx` と
+同じ規則）。**長さの上限は、改行も1字として数える。**
+
+**題（`title`）・名乗り（`by`）・ふだ・URL・id・写真の一言（`note`）は1行のまま**
+（口の側は `clean`）。1行で出る前提の置き場に入るものと、`alt` や配信のチャットの
+ように改行を持てない先へ渡るものが混ざっているため。
+
+**2026-09-13 より前に書かれたものには、改行が1文字も残っていない。**
+口が空白に変えずに消していたので、あとから戻せない。
 
 **移ってきたぶんに残っている欄**: `movedFrom` `movedAt`（`islandIdeas` から
 #162 で移した印）、`name`（旧 `islandIdeas` の名乗り）、`heartsMovedTo`。
@@ -825,9 +858,10 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 置きっぱなしは `python/island_daily_stats.py` の `sweep_here` が毎日片づける
 （10分より古いものを最大500件）。
 
-**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` には
-名指しのルールが無い**（末尾の `match /{document=**}` の deny に落ちている）。
-**閉じてはいるが、意図して閉じたのか落ちただけなのかが読めない** — 7章。
+~~**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` には
+名指しのルールが無い**~~ → **4本とも名指しで deny になった**（2026-09-13）。
+振る舞いは変えていない（catch-all の deny に落ちていたものを、名指しの deny に
+しただけ）。**なぜ deny でよいかを、読む口のコードを見て1本ずつ書いてある。**
 
 ### 4.3 Git（`site/content/`）— 人が書くものと、機械が焼くもの
 
@@ -1017,6 +1051,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | ある入れ物の欄の形 | 同 → `firestore_read` に `{"collection":"…","keys_only":true}`（**値も書類IDも出さない**） |
 | 配信中のコメント収集が止まった理由 | `streamChatHealth/collectLiveChat` の `step` と `detail` |
 | Doneru のセッションが何日持ったか | `doneru_ingest_runs`。`ok` が続いたあとの最初の `session_expired` がそのセッションの終わり |
+| Doneru のぶんが、いつまで島に入っているか | `islandDoneruHealth/last` の `okDay`（`python/doneru_health.py` が写す）。3日以上古いと `/nordic` の応援の区画に出る。`docs/nordic-fund.md` 9.13 |
 | 寄付の件数・合計・重なり | 同 → `doneru_audit`（**数字だけ出す**） |
 | 焼き込みが新しいか | 4.3 の「どこを見るか」の表 |
 
@@ -1074,10 +1109,20 @@ Google OAuth なので Actions の中では通せない）。切れると
 **設計は直していない。** この文書を実物と突き合わせるあいだに見つけたものを並べる。
 直すかどうかは別の担当の判断。
 
-1. **`islandNotes` と `islandStreamEvent` に `ip` が入っている。** 中身は
-   `x-forwarded-for` の先頭で、**付箋と企画を書いた人ぶん全部残っている。**
-   `firestore.rules` で閉じてはいるが、この文書にも `docs/` のどこにも書かれて
-   いなかった。**消す期限も、使ってよい場面も決まっていない。**
+1. ~~**`islandNotes` と `islandStreamEvent` に `ip` が入っている。**~~
+   → **片づけた**（2026-09-13・#293）。中身は `x-forwarded-for` の先頭で、
+   **付箋と企画を書いた人ぶん全部残っていた。** `firestore.rules` で閉じては
+   いたが、この文書にも `docs/` のどこにも書かれておらず、消す期限も、使って
+   よい場面も決まっていなかった。付箋も企画も消さない設計なので、置いておけば
+   永久に残る。**使う仕組みの無いものを持ち続ける理由が無い**ので、取るのを
+   やめ（`functions/src/islandApi.ts`。助け関数 `fwd()` ごと消した）、
+   溜まっていたぶんも欄ごと落とした（`python/admin/ip_purge.py`）。
+   視聴者さんは「付箋を貼る」つもりで書いていて、IP が一緒に残るとは思っていない。
+
+   **`islandIdeas` にはまだ残っている。** #162 で付箋へ移した8件の控えで、
+   移すときに `ip` もそのまま写していた（`python/admin/notes_migrate.py`）。
+   「取り違えたときに戻す控え」として残してある入れ物なので、片方の欄だけ
+   落とすと控えにならない。**入れ物ごと畳むかどうかと一緒に決める。**
 
 2. **常連の数を3か所で数えていて、日の切り方が揃っていない。**
    `island_daily_stats.py`（直近90日・**日本時間**）、
@@ -1089,10 +1134,10 @@ Google OAuth なので Actions の中では通せない）。切れると
    だけで、欄の名前にはどちらのものか書いていない。両方の口が
    「自分のでないほうを読み飛ばす」を各自で実装している。
 
-4. **`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` に、
-   名指しのルールが無い。** 末尾の catch-all で deny にはなっているが、
-   **意図して閉じたのか、書き忘れて落ちただけなのかが読めない。**
-   他の入れ物は全部「なぜ閉じるか」がコメントで書いてある。
+4. ~~**`islandVisits` `islandPolls` `islandPollVotes` `streamChatHealth` に、
+   名指しのルールが無い。**~~ → **片づいた**（2026-09-13）。4本とも名指しの
+   deny になり、なぜ閉じるかが1本ずつ書いてある。**塞がっているかどうかより、
+   意図して塞いだのかが読めないことが問題だった。**
 
 5. **`islandUsers.canDraft` が、どこからも読まれないまま残っている**（#171）。
    残す理由（記録）は書いてあるが、**残す期限が無い。**
@@ -1187,7 +1232,7 @@ grep -n 'ownerUid(req.headers.authorization)' functions/src/islandApi.ts
 | `islandVotes` | 「13件のまま残してある」 | **本番に無い** |
 | `firestore.rules` | 「島のコレクションを全部 deny」 | **`monthlyReview` と `islandHere` は開いている** |
 | `islandNotes` の索引 | `theme` + `createdAt` + **`__name__`** | **`firestore.indexes.json` は2欄だけ。`__name__` は書いていない** |
-| `islandNotes` / `islandStreamEvent` | — | **`ip` が入っている**（書かれていなかった） |
+| `islandNotes` / `islandStreamEvent` | — | `ip` が入っていた（書かれていなかった）。**2026-09-13 に取るのをやめ、溜まっていたぶんも落とした**（#293） |
 
 ---
 

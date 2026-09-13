@@ -126,6 +126,35 @@ service cloud.firestore {
        押した数は islandNotes 側に持っているので、読む用事もここには無い。 */
     match /islandHearts/{docId} { allow read, write: if false; }
     match /islandVotes/{docId} { allow read, write: if false; }
+    /* 今夜のおたずねと、わかれ道(docs/island-api.md 5章)。**1つの入れ物に
+       2つ相乗りしている**(`at` を持つのがわかれ道)。問いの字・選択肢・票数が入っている。
+
+       読むのは islandApi の `GET /poll`(`openPoll()`。締め切り前で
+       `hidden` でない**新しい1つだけ**)と `GET /fork`(**聞かれた id の
+       ぶんだけ**)。どちらも「出してよいものだけを選んで返す」作りなので、
+       ここを開けると collection ごと引けて、**引っ込めた問いも、まだ出して
+       いない問いも読める。**
+       `GET /fork` が一覧で返さないのは「端末IDを作り直しながら投げれば
+       知らない id の札を並べられる」からで、**ここを開けるとその用心が
+       まるごと無駄になる**(rouletteSessions・islandRemote と同じ形)。
+
+       書くのは投票の中(`POST /poll/:id/vote` `POST /fork/:id/vote`)だけ。
+       票数はトランザクションで1ずつ増やしていて、**1日の上限と1人1票が
+       Functions の中にしかない。** 直に書ける口を開けると数が作り放題になる。
+       問いを立てるのはあやとで、それも管理スクリプト(Admin SDK)から。 */
+    match /islandPolls/{docId} { allow read, write: if false; }
+    /* 上の票の重複よけ。ドキュメントIDが `<問いのID>_<uid か端末ID>` で、
+       中身は選んだ選択肢。**上の islandHearts と同じ形で、同じ理由で開けない**
+       (誰がどれに入れたかが、端末IDごと全部読める)。
+       票の数は islandPolls 側に持っているので、読む用事もここには無い。 */
+    match /islandPollVotes/{docId} { allow read, write: if false; }
+    /* その日の訪問者数(`islandVisits/{YYYY-MM-DD}`。`{n, day, updatedAt}`)。
+       **人の名前も端末IDも入っていないが、書くほうを開けられない。**
+       数えるのは islandApi の `POST /visit` で、1人1日1回は
+       `takeQuota(…, "visit", 1)` が守っている。**その縛りは Functions の
+       中にしかない**ので、直に書ける口を開けると数が作り放題になる。
+       読むほうも要らない。その口が数えた結果をそのまま返している。 */
+    match /islandVisits/{docId} { allow read, write: if false; }
     match /islandRate/{docId} { allow read, write: if false; }
     match /islandUsers/{docId} { allow read, write: if false; }
     match /islandDrafts/{docId} { allow read, write: if false; }

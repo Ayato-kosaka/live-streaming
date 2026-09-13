@@ -68,6 +68,16 @@ export const metadata: Metadata = {
 
 /** 節目の日付は、国とアプリのデータから引く。ここで西暦を手打ちしない。 */
 const on = (slug: string, i = 0) => countryBySlug(slug)?.stays[i]?.from ?? "";
+/**
+ * 章が始まった日。**ここで西暦を手打ちしない。**
+ *
+ * `from` は事実の欄で、旅に出た日にあやとが手で入れる。旅の17日間は入らないので、
+ * 空なら予定の欄（`opensAt`）の日付を使う（`content/chapters.ts` の `began()` と同じ見かた）。
+ */
+const chapterFrom = (slug: string) => {
+  const c = CHAPTERS.find((x) => x.slug === slug);
+  return c ? c.from || c.opensAt?.slice(0, 10) || "" : "";
+};
 /** そのアプリで、その種類の節目がはじめて来た日。並び順の番号で指すと、間に1行入るとずれる。 */
 const appOn = (slug: string, kind: string) =>
   [...APPS, ...PAST_APPS].find((a) => a.slug === slug)?.milestones.find((m) => m.kind === kind)?.date ?? "";
@@ -175,6 +185,21 @@ const STORY: Step[] = [
     href: "/now",
     go: "いまどこへ",
   },
+  {
+    /* **旅の始まりも節目。** ここは長いあいだ「トビリシに戻ってきた」で終わっていて、
+       「ここまでと、いま」を名乗る面に、北欧へ発った日が1行も無かった。
+
+       日付は章（`content/chapters.ts`）から引く。**ここで西暦を手打ちしない**——
+       出発が1日ずれたら、島の連なりとこの年表が別の日を言うことになる。
+       中身は**出る前・最中・帰ったあとのどれで読んでも合う字**にする
+       （`content/chapters.ts` のアルバニアの note と同じ決まり）。 */
+    date: chapterFrom("nordic"),
+    kind: "travel",
+    what: "ジョージアを出て、北欧へ発った",
+    note: "クタイシから飛行機で。そこから先は、ぜんぶ人の車でつなぐ",
+    href: "/nordic",
+    go: "北欧の旅へ",
+  },
 ];
 
 /**
@@ -194,9 +219,17 @@ const MARK: Record<Step["kind"], { icon: IconName; label: string }> = {
  * その日がどの島（章）の話か。**章の切りかたは `content/chapters.ts` が唯一の出どころ**なので、
  * ここで期間を書かない。枝（イランまで歩く）は本線の中の出来事なので、背骨には出さない。
  */
-const eraOf = (date: string) =>
-  CHAPTERS.find((c) => !c.branchOf && c.from && c.from <= date && (!c.to || date <= c.to))?.name ??
-  "配信のまえ";
+const eraOf = (date: string) => {
+  /* **`from` の空いた章を落とさない。** `from` は旅に出た日に手で入れる欄なので、
+     旅の最中は空のまま。見ていなかったので、出発の日より後の節目が
+     どの島にも入らず「配信のまえ」に落ちていた（`docs/island-misses.md` #21）。 */
+  const from = (c: (typeof CHAPTERS)[number]) => c.from || c.opensAt?.slice(0, 10) || "";
+  const inIsle = CHAPTERS.filter(
+    (c) => !c.branchOf && from(c) && from(c) <= date && (!c.to || date <= c.to),
+  );
+  // 章の変わり目の日は両方にあたる。**新しいほう**（その日に渡った先）を取る
+  return inIsle.sort((a, b) => from(b).localeCompare(from(a)))[0]?.name ?? "配信のまえ";
+};
 
 /** 島でやっていること。3枚とも、その中身を持っている面へ行く。 */
 const DOING = [
@@ -382,7 +415,9 @@ export default function AboutPage() {
           label="旅した日数"
           sub={`${PROFILE.leftJapan.replace(/-/g, "/")} に日本を出てから`}
         />
-        <Stat value={s.countries} label="配信した国" sub="パリからトビリシまで" />
+        {/* 終点の街を書かない（旅は毎日進む）。この数が17で止まっている理由——
+            配信のあった国だけを数えている——を添える（`/map` の同じ札と同じ字）。 */}
+        <Stat value={s.countries} label="配信した国" sub="配信のあった国だけ" />
         <Stat
           value={<LiveNumber statKey="comments" fallback={s.comments} />}
           label="ついたコメント"
@@ -521,8 +556,10 @@ export default function AboutPage() {
           いま動いているものは色のまま、終わったものは色を落として「サポート終了」の札を出す。
           押せるかどうか（厚み）とは別の軸なので、なにこれは灰色だが押せる。 */}
       <Panel>
-        <h2>作ってきたアプリは、3つ</h2>
-        <p className="muted">1つ目を広めるために日本を出て、いまは3つ目。</p>
+        {/* **数を手で書かない。** ここは「3つ」、表紙の棚は `APPS.length` の「2」で、
+            同じアプリの数が面によって違っていた。出どころは `content/apps.ts` ひとつ。 */}
+        <h2>作ってきたアプリは、{ALL_APPS.length}つ</h2>
+        <p className="muted">1つ目を広めるために日本を出て、いまは{ALL_APPS.length}つ目。</p>
         <div className="aappl">
           {ALL_APPS.map((a) => {
             const done = a.status === "サポート終了";

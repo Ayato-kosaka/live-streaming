@@ -4,6 +4,10 @@
 **既定では1バイトも書かない。** 何人ぶん・何枚・合計何バイトかを出すだけ。
 書くときは `{"apply": true}`。
 
+**下見も Firestore を読む**（読むだけつないで、書く口は塞いである）。
+つながずに数えていたころは、済んでいる人も画面から直してある人も
+下見からは見えず、いつでも「97人ぶん書きます」と出ていた。
+
 ## いまの原本は3つに割れている
 
 | 何を持っているか | どこ | 実測 |
@@ -89,7 +93,7 @@ import unicodedata
 import urllib.error
 import urllib.request
 
-from _fs import args, db, log
+from _fs import args, db, log, readonly
 from _owner import call, owner_token
 
 # ---- 出どころ ----------------------------------------------------------
@@ -409,7 +413,11 @@ def main() -> None:
     if limit:
         chars = chars[:limit]
 
-    client = db() if apply else None
+    # **下見でも読むだけつなぐ。** つながないと「画面から直してあるので
+    # 飛ばす人」と「もう済んでいる人」を数える機会が無く、下見はいつでも
+    # 「97人ぶん書きます」と言う。書く側は口ごと塞いである（`_fs.readonly`）
+    client = db()
+    store = client if apply else readonly(client)
     token = None
     if apply:
         # **置き場には、ここから書かない。** 口に頼む（`put_roles` の説明）。
@@ -425,6 +433,7 @@ def main() -> None:
     n_baked_bytes = 0
     done = 0
     skipped = 0
+    edited = 0
     for c in chars:
         # **済んだ人は、絵を落とす前に飛ばす。** 落ちたところから続けられる
         # ようにするため。97人ぶんで25分かかり、時間のほとんどはドライブから
@@ -434,8 +443,8 @@ def main() -> None:
         # **元が同じかどうかで見る。** ドライブの画像IDが両方とも前と同じ
         # なら、もう一度落として置き直しても同じものになる。
         # `redo` を付けると、済んでいても全部やり直す。
-        if apply and not redo:
-            was = (client.collection(COLLECTION).document(c["id"]).get().to_dict()
+        if not redo:
+            was = (store.collection(COLLECTION).document(c["id"]).get().to_dict()
                    or {}).get("migratedFrom") or {}
             same = (
                 (was.get("plain") or {}).get("driveId") == (c["drivePlain"] or None)
@@ -502,75 +511,82 @@ def main() -> None:
             "lookupKeys": c["lookupKeys"],
             "images": images,
         }
-        if apply:
-            from google.cloud import firestore
+        ref = store.collection(COLLECTION).document(c["id"])
+        # **1回だけ引く。** 前は同じ書類を2回引いていた（97人ぶんで194回）
+        had = ref.get().to_dict() or {}
 
-            ref = client.collection(COLLECTION).document(c["id"])
-            # **1回だけ引く。** 前は同じ書類を2回引いていた（97人ぶんで194回）
-            had = ref.get().to_dict() or {}
-
-            # **画面から直した行を、移行で戻さない。** あやとが旅先で
-            # 絵を入れ替えたあとにこれを流し直しても、そこは元に戻らない。
-            #
-            # **ただし `migratedFrom` が無い行は、人が直したのではない。**
-            # 口は書くたびに `editedAt` を押す。役どころを1つずつ送るので、
-            # 背景なしが通って背景ありで落ちると、押された印だけが残って
-            # 出どころは書かれない。それを人の手だと読むと、**次に流しても
-            # 永久に飛ばされる。**
-            #
-            # 2026-09-11 に実際に起きた。🍑 が背景ありの POST で 500 を受け、
-            # 印だけ残って、続きを流したときに「画面から直されている」と
-            # 判定されて飛ばされた。97人のうち1人だけ背景ありが欠けていた
-            # （表では32人が持っていないはずが、本番では33人だった）。
-            if had.get("editedAt") and had.get("migratedFrom"):
-                log.info("%s は画面から直されているので飛ばします", c["emoji"])
-                continue
-
-            put_roles(
-                token,
-                c["id"],
-                {
-                    "channelName": c["channelName"],
-                    "emoji": c["emoji"],
-                    "aliases": c["aliases"],
-                },
-                send,
-            )
-
-            # 出どころだけ、こちらで足す。**口が持っていない欄**なので、
-            # 口に足させるより、移行の側で持つほうが後始末しやすい
-            # （突き合わせが終わったら、この3欄ごと消せばいい）。
-            #
-            # `editedAt` / `editedBy` は口が押していく。あれは**人が画面から
-            # 直した印**で、機械が移しただけの行に付いていてはいけない。
-            # 付いたままにすると、上の「飛ばす」判定が次から全員に当たって、
-            # **流し直しても1人も直らない**状態になる。
-            ref.set(
-                {
-                    "migratedFrom": {
-                        r: {
-                            "driveId": v["driveId"],
-                            "sha": v["sha"],
-                            "bytes": v["bytes"],
-                        }
-                        for r, v in images.items()
-                    },
-                    "drivePlainId": c["drivePlain"],
-                    "driveSceneId": c["driveScene"],
-                    "source": "viewers-sheet",
-                    "editedAt": firestore.DELETE_FIELD,
-                    "editedBy": firestore.DELETE_FIELD,
-                },
-                merge=True,
-            )
+        # **画面から直した行を、移行で戻さない。** あやとが旅先で
+        # 絵を入れ替えたあとにこれを流し直しても、そこは元に戻らない。
+        #
+        # **ただし `migratedFrom` が無い行は、人が直したのではない。**
+        # 口は書くたびに `editedAt` を押す。役どころを1つずつ送るので、
+        # 背景なしが通って背景ありで落ちると、押された印だけが残って
+        # 出どころは書かれない。それを人の手だと読むと、**次に流しても
+        # 永久に飛ばされる。**
+        #
+        # 2026-09-11 に実際に起きた。🍑 が背景ありの POST で 500 を受け、
+        # 印だけ残って、続きを流したときに「画面から直されている」と
+        # 判定されて飛ばされた。97人のうち1人だけ背景ありが欠けていた
+        # （表では32人が持っていないはずが、本番では33人だった）。
+        if had.get("editedAt") and had.get("migratedFrom"):
+            log.info("%s は画面から直されているので飛ばします", c["emoji"])
+            edited += 1
+            continue
+        # **下見でも、書くつもりの人数はここで数える。**
+        # 書いてから数えると、下見の人数が apply と揃わない
         done += 1
 
+        if not apply:
+            continue
+
+        from google.cloud import firestore
+
+        put_roles(
+            token,
+            c["id"],
+            {
+                "channelName": c["channelName"],
+                "emoji": c["emoji"],
+                "aliases": c["aliases"],
+            },
+            send,
+        )
+
+        # 出どころだけ、こちらで足す。**口が持っていない欄**なので、
+        # 口に足させるより、移行の側で持つほうが後始末しやすい
+        # （突き合わせが終わったら、この3欄ごと消せばいい）。
+        #
+        # `editedAt` / `editedBy` は口が押していく。あれは**人が画面から
+        # 直した印**で、機械が移しただけの行に付いていてはいけない。
+        # 付いたままにすると、上の「飛ばす」判定が次から全員に当たって、
+        # **流し直しても1人も直らない**状態になる。
+        ref.set(
+            {
+                "migratedFrom": {
+                    r: {
+                        "driveId": v["driveId"],
+                        "sha": v["sha"],
+                        "bytes": v["bytes"],
+                    }
+                    for r, v in images.items()
+                },
+                "drivePlainId": c["drivePlain"],
+                "driveSceneId": c["driveScene"],
+                "source": "viewers-sheet",
+                "editedAt": firestore.DELETE_FIELD,
+                "editedBy": firestore.DELETE_FIELD,
+            },
+            merge=True,
+        )
+
     log.info(
-        "%s %d人ぶん（済んでいて飛ばした %d人）/ "
+        "%s %d人ぶん（済んでいて飛ばした %d人 / 画面から直してあるので"
+        "触らない %d人）/ "
         "元の絵 %d枚 %.1fMB / 焼いた webp %d枚 %.1fMB / 画像でなかった %d枚",
         "書きました" if apply else "空回しです（1バイトも書いていません）",
         done,
         skipped,
+        edited,
         n_img,
         n_bytes / 1048576,
         n_baked,

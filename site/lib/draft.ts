@@ -20,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function useDraft<T extends object>(
   key: string,
   empty: T,
-): [T, (patch: Partial<T>) => void, () => void] {
+): [T, (patch: Partial<T>) => void, () => void, (patch: Partial<T>) => void] {
   const [v, setV] = useState<T>(empty);
   /* 最初の読み出しが終わるまで書き戻さない。書き出しの前に
      空の値で上書きすると、開いた瞬間に下書きが消える。 */
@@ -56,6 +56,43 @@ export function useDraft<T extends object>(
   );
 
   /**
+   * 島に入っている値を、**まだ1文字も打っていない欄にだけ**置く。
+   *
+   * ## `put` で置いてはいけない
+   *
+   * 島から読んだ値を `put` で入れていたころ、旅の道具（`TripPlace`）は
+   * こう壊れていた。打ちかけの「ビャウィストク郊外の道の駅」が、開き直すと
+   * 島の「ポーランド・カトヴィツェ」に戻り、**端末の控えまで島の値で
+   * 上書きされていた。** 走っている車の中で打って、トンネルでタブが捨てられ、
+   * 気づかずに送ると、島には古い場所が出る。
+   *
+   * 直した向きは2つ。
+   *
+   * 1. **そのときの値で決める。** `put` は渡された固まりをそのまま書くので、
+   *    呼ぶ側が古い `v` を掴んでいても気づけない（`useCallback(…, [])` の
+   *    中から呼ぶと、初回描画の空の値のまま固まる）。ここは `setV` の
+   *    関数形で**そのときの値**を見るので、掴み方に左右されない。
+   * 2. **端末には写さない。** 開いただけで控えが取られると、
+   *    「控えが残っている＝まだ送れていない」の印が嘘になる。
+   *    そのあと1文字でも打てば `put` が走って、そこから控えが取られる。
+   */
+  const seed = useCallback((patch: Partial<T>) => {
+    setV((cur) => {
+      let next: T | null = null;
+      for (const k of Object.keys(patch) as (keyof T)[]) {
+        const val = patch[k];
+        if (val === undefined || (val as unknown) === "") continue;
+        /* 打ちかけのある欄には触らない。**ここが「上書きしない」の全部。** */
+        const has = cur[k] as unknown;
+        if (has !== undefined && has !== null && has !== "") continue;
+        next = next ?? { ...cur };
+        next[k] = val as T[keyof T];
+      }
+      return next ?? cur;
+    });
+  }, []);
+
+  /**
    * 送れたので、控えを片づける。**欄に出ている字はそのまま残す。**
    *
    * 消してしまうと、入れた直後に書き直したい人が打ち直しになる。
@@ -70,7 +107,7 @@ export function useDraft<T extends object>(
     }
   }, [key]);
 
-  return [v, put, settle];
+  return [v, put, settle, seed];
 }
 
 /**

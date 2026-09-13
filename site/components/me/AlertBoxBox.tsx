@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { putDoneruKey, startAlertbox, type DoneruHint } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
+import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 
 /**
  * アラートボックスの、OBS に貼る URL（#180）。**あやとだけ。**
@@ -39,6 +40,9 @@ export default function AlertBoxBox() {
   const { token } = useAuth();
   const [id, setId] = useState<string | null>(null);
   const [doneru, setDoneru] = useState<DoneruHint | null>(null);
+  /** URL を読めたか。**「読んでいる最中」と「読めなかった」を混ぜない** */
+  const [read, setRead] = useState<Read>("wait");
+  /** 鍵をしまう・合言葉を作り直すが失敗したとき。**面は下ろさない** */
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   /** 作り直しは取り返しがつかない（いまの OBS が黙って止まる）ので、二度おす */
@@ -62,8 +66,10 @@ export default function AlertBoxBox() {
         const r = await putDoneruKey(v, t);
         setDoneru(r.doneru);
         setKeyed("");
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : "しまえませんでした");
+      } catch {
+        /* 口が投げてくるのは `TypeError: Failed to fetch` か `500 …` で、
+           読む人には何も足さない。**ここで日本語にしてから出す。** */
+        setErr("鍵をしまえませんでした。少し待ってから、もう一度。");
       } finally {
         setSaving(false);
       }
@@ -71,18 +77,36 @@ export default function AlertBoxBox() {
     [token],
   );
 
+  /**
+   * URL を取りに行く。
+   *
+   * ## 落ちたときは、ほかの7つの道具と同じ1枚にする
+   *
+   * ここだけが `Failed to fetch` の英語1行だった（`{err}` を素通ししていた）。
+   * しかもその1枚で面ごと差し替わるので、**押しどころが全部消えた** ——
+   * URL をうつすことも、鍵を入れることもできない。電波の細い日に
+   * 読み直す道が1本も無いのが、旅先ではいちばん困る
+   * （`docs/island-standards.md` 10 の唯一の穴だった）。
+   *
+   * `fresh` は合言葉の作り直し。**こちらが落ちても面は残す。**
+   * いま貼ってある URL はまだ生きているので、面ごと下ろす理由がない。
+   */
   const open = useCallback(
     async (fresh: boolean) => {
-      const t = await token();
-      if (!t) return;
       setErr(null);
+      if (fresh) setSure(false);
       try {
-        const r = await startAlertbox(t, fresh);
+        /* 返事が来ないのも「読めなかった」。`withRead` が12秒で見切る */
+        const t = await withRead(token());
+        if (!t) throw new Error("ログインしなおしてください");
+        const r = await withRead(startAlertbox(t, fresh));
         setId(r.id);
         setDoneru(r.doneru);
+        setRead("ok");
         setSure(false);
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : "うまくいきませんでした");
+      } catch {
+        if (fresh) setErr("合言葉を作り直せませんでした。少し待ってから、もう一度。");
+        else setRead("down");
       }
     },
     [token],
@@ -92,24 +116,18 @@ export default function AlertBoxBox() {
     open(false);
   }, [open]);
 
-  if (err) {
+  /* ほかの7つの道具と同じ札。**言い回しは島じゅうで1つ** */
+  if (read === "down")
     return (
-      <section className="panel paper">
-        <h2>アラートボックス</h2>
-        <p className="mp-now">{err}</p>
-      </section>
+      <ReadAgainPanel
+        what="アラートボックス"
+        onRetry={() => {
+          setRead("wait");
+          open(false);
+        }}
+      />
     );
-  }
-  if (!id) {
-    return (
-      <section className="panel paper">
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      </section>
-    );
-  }
+  if (!id) return <WaitingPanel />;
 
   /* 生い立ちは書き出しに焼かない。**ここは静的書き出しの面**なので、
      ビルドした箱の名前が焼き付く（`CLAUDE.md`）。出てから読む。 */
@@ -119,13 +137,21 @@ export default function AlertBoxBox() {
   return (
     <section className="panel paper">
       <h2>アラートボックス（OBS）</h2>
+      {/* **同じことを2回言わない。** 以前は上と下に「ブラウザソースに貼る」が
+          並んでいた。貼る先は上で言い切って、下は「ほかには貼らない」だけにする。
+          鍵の焼き込みをやめた経緯は中の話なので、画面には出さない。 */}
       <p className="mp-ab-lead">
-        この URL を、OBS のブラウザソースに貼ってください。
         <b>前の URL はもう動きません。</b>
-        鍵を書き出しに焼くのをやめたので、
-        <code>?k=</code> の付いていない URL は投げ銭の通知を受け取れません。
+        この URL を、OBS のブラウザソースに貼り直してください。
       </p>
       <p className="mp-ab-url">{url}</p>
+      {/* しまう・作り直すが失敗したとき。**面は下ろさない。**
+          いま貼ってある URL はまだ生きているので、消す理由がない。 */}
+      {err && (
+        <p className="err">
+          <Icon name="alert" size={13} /> {err}
+        </p>
+      )}
       <div className="mp-ab-acts">
         <button
           className="mp-send is-small is-quiet"
@@ -139,7 +165,6 @@ export default function AlertBoxBox() {
         </button>
       </div>
       <p className="mp-ab-lead">
-        <b>この URL を、OBS のブラウザソースに貼る。</b>
         知っている人は誰でも投げ銭の通知を受け取れるので、ほかには貼らない。
         {doneru?.set && `（Doneru の鍵は入っています。末尾 ${doneru.tail}）`}
       </p>

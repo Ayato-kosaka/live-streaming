@@ -13,6 +13,8 @@ import { HERO, HOME } from "@/content/voice";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
+import TripToday, { type TripDay } from "@/components/home/TripToday";
+import { DAYS, DAY_PAGES, cityName, dayHref, dayName } from "@/content/nordic";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
@@ -50,6 +52,31 @@ import Say from "@/components/ui/Say";
    `ssr: false` にはしない。サーバ側で焼いておけば、島が HTML に入って
    すぐ出る（画面が出てから組むと、スマホで 1.6秒ぶん遅れる。実測）。 */
 const IsleStage = dynamic(() => import("@/components/isle/IsleStage"));
+
+/**
+ * 旅のしるべに渡す、旅程の17行。
+ *
+ * **旅程は `content/nordic.ts` が正。**ここでは日付・呼び名・行き先・その日に動く
+ * ところだけを抜く。あの表ごとブラウザへ渡すと、見どころ161件の JSON が付いてくる
+ * （`components/nordic/TripNow.tsx` と同じ理由）。
+ *
+ * 行き先は、**日ごとの面がある日はその面へ、無い日は旅程表のその行へ。**
+ * いまは17日ぜんぶに面があるが、旅程は一度まるごと変わったことがあるので、
+ * 面の有無は `DAY_PAGES` に決めさせる（`docs/island-misses.md` #3）。
+ */
+const TRIP_DAYS: TripDay[] = DAYS.filter((d) => !!d.date).map((d) => {
+  const legs = d.legs ?? [];
+  return {
+    date: d.date!,
+    name: dayName(d),
+    href: DAY_PAGES.includes(d) ? dayHref(d) : `/nordic#${d.id}`,
+    /* 動く日は「どこから どこへ」。動かない日は、その日を過ごす街ひとつ。
+       街の名前を手で並べない——旅程の区間と、その日の街から引く。 */
+    where: legs.length
+      ? `${cityName(legs[0].from)} → ${cityName(legs[legs.length - 1].to)}`
+      : cityName(d.city ?? d.stay ?? ""),
+  };
+});
 
 export default function Home() {
   const s = STATS_FALLBACK;
@@ -132,6 +159,17 @@ export default function Home() {
               <b><Say t={HERO.eyebrow} /></b>
               <i>旅して、食べて、グルメアプリを作る、夜の居場所</i>
             </p>
+            {/* 旅のとちゅうだけ出る、いまいる日の札。**看板のすぐ下。**
+                ここが無かったあいだ、島が公開された翌日の1画面目で日付を持つ字は
+                「1年前の今日はジョージアにいました」だけで、いま旅が始まって
+                いることも、今日どこにいるかも、2.8画面ぶん送らないと出てこなかった。
+
+                看板ひとかたまりの中（`.hero-copy`）に置くのは、島が札を置くときに
+                避ける箱がここだから（`IslandStage` の `readLogo`）。外に出すと、
+                島の建物の札がこの上に乗る。
+
+                **旅が終われば、この板ごと消える**（`TripToday`）。 */}
+            <TripToday slug="nordic" days={TRIP_DAYS} />
           </div>
         </div>
         <div className="scroll-cue" aria-hidden>

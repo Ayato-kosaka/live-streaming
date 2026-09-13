@@ -11,7 +11,18 @@
     RESTORE_TO_PRODUCTION=yes-i-mean-it \
       python python/backup/restore.py --collection islandNotes --apply
 
+    # 旅の写真を1枚戻して、**バイト列が一致するか**を見る（本番は触らない）
+    python python/backup/restore.py --photo
+    python python/backup/restore.py --photo --photo-out /tmp/one.jpg
+
 手順は docs/island-backup.md。
+
+## 写真は「戻せるか」まで見ないと退避ではない
+
+置き場に入っているのは base64 ではなく BYTES の列。戻すというのは
+**取り出して、記録してある大きさと指紋（sha256）にバイト列が一致すること**を
+見ること。取れているだけで戻せないものは退避ではない
+（`backup.yml` の `drill` が毎晩1枚やる）。
 
 ## 二重の縛り
 
@@ -34,7 +45,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backup import codec, sink  # noqa: E402
+from backup import codec, photos, sink  # noqa: E402
 from logging_util import setup_logger  # noqa: E402
 
 log = setup_logger("restore")
@@ -105,15 +116,47 @@ def read_snapshot(c, collection: str, at: str | None):
     return rows
 
 
+def restore_photo(read_row, path: str | None, out_path: str | None) -> int:
+    """写真を1枚戻して突き合わせる。**出すのは 〇✕ と数だけ。**
+
+    置き場の名前（`path`）は日付と書類IDでできていて、貼った人を指しうるので
+    **ログに出さない。** 同じ理由で、戻した実体の中身も出さない。
+    """
+    r = photos.restore_one(read_row, path, out_path)
+    if not r["found"]:
+        # まだ1枚も入っていない＝取るほうがまだ回っていない。
+        # **ここで赤くしない。** 毎晩の drill が、写真が0枚の晩に落ちてしまう
+        log.warning("置き場に写真がまだ1枚も入っていません")
+        print("::warning::置き場に写真がまだ入っていないので、戻す試しができませんでした")
+        return 0
+    log.info("1枚戻しました: %d バイト / 大きさ %s / 指紋 %s",
+             r["bytes"], "一致" if r["size_ok"] else "**不一致**",
+             "一致" if r["sha_ok"] else "**不一致**")
+    if not r["ok"]:
+        log.error("**戻した実体が、記録してあるバイト列と一致しません。**")
+        return 1
+    log.info("**バイト列が一致しました。**")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--collection", help="戻すコレクション名")
     ap.add_argument("--at", help="いつの世代か（省くといちばん新しいもの）")
     ap.add_argument("--apply", action="store_true", help="実際に書く（既定は下見）")
     ap.add_argument("--list", action="store_true", help="どの世代があるか出す")
+    ap.add_argument("--photo", action="store_true",
+                    help="旅の写真を1枚戻して、バイト列が一致するか見る")
+    ap.add_argument("--photo-path", help="どの1枚か（省くと置き場のいちばん新しいもの）")
+    ap.add_argument("--photo-out", help="戻した実体の書き出し先")
     a = ap.parse_args()
 
     bq = sink.client()
+
+    if a.photo:
+        # **Firestore を1ミリも触らない。** 置き場から読んで、置き場に
+        # 記録してある大きさと指紋に合うかを見るだけ
+        return restore_photo(photos.read_row_bq(bq), a.photo_path, a.photo_out)
 
     if a.list:
         for r in snapshots(bq, a.collection):

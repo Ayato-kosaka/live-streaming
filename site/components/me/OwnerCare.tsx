@@ -21,10 +21,9 @@ import { themeById } from "@/content/themes";
 import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
+import { jstDay } from "@/lib/nightly";
+import Wrote from "@/components/ui/Wrote";
 
-/** 「2026-09-06T…」→「9月6日」 */
-const day = (iso: string) =>
-  `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
 
 /**
  * 机の道具が読む一覧を、1本だけ引く。**付箋と企画で同じものを使う。**
@@ -305,11 +304,18 @@ function StickyRow({
 
   return (
     <li>
-      <p className="mp-care-text">{note.text}</p>
+      {/* **書いてくれたまま出す**（#83）。返すときに、貼った人の改行が見えていないと
+          何に答えているのか分からなくなる */}
+      <Wrote t={note.text} as="p" className="mp-care-text" />
+      {/* テーマ・日付・貼った人。**札にしない**（`.mp-note-foot`）。
+          札は1つ 28px と左右の余白を持つので、3つ並ぶと1件が1行ぶん高くなる。
+          区切りは入れ物が中黒で入れるので、ここでは字だけを並べる。 */}
       <p className="mp-note-foot">
-        <span className="chip">{th?.name ?? note.theme}</span>
-        <span className="chip">{day(note.createdAt)}</span>
-        {note.by && <span className="chip">{note.by}</span>}
+        <span>{th?.name ?? note.theme}</span>
+        {/* 貼った時刻は UTC で入っている。**日本時間で切る**（`jstDay`）。
+            字をそのまま切ると、日本の朝9時より前に貼った付箋が前日に出る */}
+        {jstDay(note.createdAt) && <span>{jstDay(note.createdAt)}</span>}
+        {note.by && <span>{note.by}</span>}
       </p>
       <textarea
         className="bin"
@@ -453,31 +459,40 @@ function PlanRow({
   return (
     <li>
       <p className="mp-care-text">{plan.title || "（題なし）"}</p>
+      {/* 段・出した人・さんせい。付箋の足元と同じ作り（札にしない）。 */}
       <p className="mp-note-foot">
-        <span className="chip">いま {PLAN_STATUS_NAME[plan.status]}</span>
-        {plan.by && <span className="chip">{plan.by}</span>}
-        {plan.hearts > 0 && <span className="chip">さんせい {plan.hearts}</span>}
+        <span>いま {PLAN_STATUS_NAME[plan.status]}</span>
+        {plan.by && <span>{plan.by}</span>}
+        {plan.hearts > 0 && <span>さんせい {plan.hearts}</span>}
       </p>
-      <label className="nph-post-row">
-        <span>どの段へ</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
-          {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
-            <option key={s} value={s}>
-              {PLAN_STATUS_NAME[s]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="nph-post-row">
-        <span>ページの id</span>
-        <input
-          type="text"
-          value={planId}
-          maxLength={40}
-          placeholder="nordic / iran-walk。空で外す"
-          onChange={(e) => setPlanId(e.target.value)}
-        />
-      </label>
+      {/* 欄は板（`.dform`）の上に置く。**`.nph-post-row` は `.dform` の中でしか
+          成り立たない。** 添えの字を欄の上に積むのも（`.dform label`）、欄を
+          彫るのも（`.dform input/select`）あちらが持っているので、板の外に
+          置くと、ブラウザ既定の白い箱とシステムの字が、すぐ上の付箋の返事
+          （`.bin`）の隣に並ぶ。投げ銭の紐付け（`.dform mp-donor-form`）が
+          同じ形の道具なので、作業台もそちらにそろえる。 */}
+      <div className="dform mp-care-form">
+        <label className="nph-post-row">
+          <span>どの段へ</span>
+          <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
+            {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
+              <option key={s} value={s}>
+                {PLAN_STATUS_NAME[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="nph-post-row">
+          <span>ページの id</span>
+          <input
+            type="text"
+            value={planId}
+            maxLength={40}
+            placeholder="nordic / iran-walk。空で外す"
+            onChange={(e) => setPlanId(e.target.value)}
+          />
+        </label>
+      </div>
       <div className="mp-care-acts">
         <button className="mp-send is-small" disabled={busy} onClick={move}>
           {busy ? "動かしています…" : "動かす"}

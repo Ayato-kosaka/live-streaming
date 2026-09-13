@@ -179,7 +179,9 @@ export const PLACES: Place[] = [
     icon: "signpost-flags",
     size: 64,
     href: "/map",
-    blurb: "パリからトビリシまでの道のり",
+    // **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる。
+    // 出発した日は動かないので、そこだけ言う（`app/map/page.tsx` の同じ注）。
+    blurb: "日本を出てから、歩いた国ぜんぶ",
     sign: true,
   },
   {

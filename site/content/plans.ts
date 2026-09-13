@@ -151,9 +151,13 @@ export const PLANS: Plan[] = [
       { label: "Mtatsminda Park 公式", href: "https://mtatsminda.ge/en/" },
       { label: "イベント情報（YOLO）", href: "https://yolo.ge/en/poster/food-wine-fest-tbilisi5858" },
     ],
-    embeds: [
-      { kind: "instagram", id: "Dcku99gDfv9", note: "去年の様子。こんな感じのお祭りです。" },
-    ],
+    /* 去年の様子を写した Instagram の投稿を1本置いていたが、
+       **向こうで投稿が消えた。** 消えても埋め込みの枠は 200 で返ってきて、
+       中に英語で "The link to this photo or video may be broken, or the post
+       may have been removed." と出る。読む人には意味が分からないし、
+       添えていた「去年の様子。こんな感じのお祭りです。」が指す先も無い。
+       枠と添え書きは同じ1件なので、まとめて落とす。
+       お祭りの様子は、下の写真2枚と about の3行が引き受ける。 */
     photos: [
       {
         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg",

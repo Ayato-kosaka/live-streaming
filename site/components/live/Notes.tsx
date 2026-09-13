@@ -18,6 +18,7 @@ import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
 import ReadAgain from "@/components/me/ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
+import Wrote from "@/components/ui/Wrote";
 import { Pin } from "./art";
 
 /**
@@ -502,14 +503,16 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
               {/* 運営者が立てた付箋。おたずねの選択肢がこれになる。
                   誰が立てたのかを言わないと、押された数の意味が変わる */}
               {n.byOwner && <em className="nt-owner">あやとから</em>}
-              {n.text}
+              {/* **書いてくれたまま出す。** 改行を潰すと、行末と次の行頭が
+                  くっついて別の語に読める（#83） */}
+              <Wrote t={n.text} />
               {n.by && <em className="nb-by">{n.by} さん</em>}
 
               {/* あやとからの返信。紙の上の紙なので、厚みは付けない */}
               {n.reply && (
                 <span className="nt-reply">
                   <i>あやと</i>
-                  {n.reply}
+                  <Wrote t={n.reply} />
                 </span>
               )}
 

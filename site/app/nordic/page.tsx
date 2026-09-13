@@ -14,7 +14,7 @@ import TripPhotos from "@/components/nordic/TripPhotos";
 import {
   ARRIVE,
   DAYS,
-  DAY_OF,
+  DAY_PAGES,
   DEPART,
   FARES,
   FARES_TOTAL,
@@ -29,8 +29,10 @@ import {
   THEME_WORD,
   UNPLANNED,
   WHY,
+  dayHref,
   nordicCountry,
 } from "@/content/nordic";
+import { GUIDE_CHAPTERS } from "./guide/chapters";
 import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
 import "./themes.css";
@@ -129,17 +131,22 @@ export default async function NordicPage() {
     if (s) s.hitch = (s.hitch ?? 0) + l.km;
   }
 
-  // 区間の id → 旅程表のどの行か。上の司令塔が「今日のところへ」で使う。
-  // 何日目か分かっていない行もあるので、数字ではなく行の名前で持つ。
-  const dayOf: Record<string, string> = Object.fromEntries(
-    Object.entries(DAY_OF).map(([id, d]) => [id, d.id]),
-  );
-  /* 日付 → 旅程表のどの行か。**動かない日には区間が無い**ので、上の表では引けない
-     （9/15 に休むヴィリニュスを発つ区間は 9/16 の行）。
+  /* 日付 → 旅程表のどの行か。**旅程表の行は、これだけで引く。**
+     行は1行=1日で日付を持っているので、今日の行を決めるのは暦の問い。
+     前は区間から引く表も渡していたが、**動かない日には区間が無い**ので
+     休息日が翌日の行を指していた（9/15 に休むヴィリニュスを発つのは 9/16）。
+     いる街を引くのは地図の仕事で、あちらは別に居どころから引いている。
      同じ日付の行が2つあるときは先に来るほうを採る（9/20 は「9日目」で、
      そのあとに続く「ストックホルムで7泊」ではない）。 */
   const dayByDate: Record<string, string> = {};
   for (const d of DAYS) if (d.date && !(d.date in dayByDate)) dayByDate[d.date] = d.id;
+
+  /* 旅程表の行 → その日1日ぶんのページ。上の司令塔の「今日のところへ」が使う。
+     **面のある日だけ入れる。** 入っていない行は、今までどおり同じページの錨へ送る
+     （`DAY_PAGES` は区間のある日と休息日。旅程が変われば中身も変わる）。 */
+  const dayPage: Record<string, string> = Object.fromEntries(
+    DAY_PAGES.map((d) => [d.id, dayHref(d)]),
+  );
 
   return (
     <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
@@ -147,8 +154,8 @@ export default async function NordicPage() {
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}
         legOrder={ROUTE.map((l) => l.id)}
-        dayOf={dayOf}
         dayByDate={dayByDate}
+        dayPage={dayPage}
         depart={DEPART}
         departWhen="2026年9月11日(金) 23:30 ジョージア時間 / 日本時間 9月12日 04:30。この日は配信2周年"
         hitchKm={HITCH_KM}
@@ -295,7 +302,9 @@ export default async function NordicPage() {
           <b>旅のしおり</b>
           <i>
             お金・通信・服・サウナ・食べもの{NORDIC_GUIDE.food.length}品・おみやげ
-            {NORDIC_GUIDE.souvenir.length}品。10のコーナー
+            {/* **コーナーの数を手で書かない。** 「10のコーナー」と書いてあって、
+                しおりは11本あった。数える先はしおりの並びひとつ。 */}
+            {NORDIC_GUIDE.souvenir.length}品。{GUIDE_CHAPTERS.length}のコーナー
           </i>
         </span>
         <Icon name="right" size={16} className="tile-go" />

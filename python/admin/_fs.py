@@ -56,3 +56,90 @@ def show(v) -> str:
     """ログ用に短く整形する。"""
     s = json.dumps(v, ensure_ascii=False, default=str)
     return s if len(s) <= 600 else s[:600] + "…"
+
+
+class ReadOnly(Exception):
+    """下見のつもりで、書きに行った。"""
+
+
+# 書く側の名前。**塞ぐのは口であって、判断ではない。**
+# 呼ぶ側に `if apply:` を書き忘れても、ここで止まる
+_WRITE = frozenset({
+    "set", "update", "delete", "create", "add", "commit", "batch",
+    "bulk_writer", "transaction", "recursive_delete", "write",
+})
+
+# それ以上中を覗く必要のないもの
+_FLAT = (str, bytes, bytearray, bool, int, float, complex)
+
+# 書く口へ行ける道の入口になる属性
+_DOOR = ("collection", "document", "stream", "where", "reference",
+         "to_dict", "get", "set")
+
+
+def _veil(v):
+    """返ってきたものが Firestore の口なら、それも塞いだ写しにする。
+
+    **器ごと見る。** 本物は同じ「引く」でも返す器が型で違う
+    （`Query.get()` は list、`stream()` は生成器、`list_documents()` や
+    `collections()` も一覧）。器を素通りさせると、中の書類から
+    `delete()` が通る。引いた中身（`to_dict()`）の中に書類が入っている
+    ことも本物にはあるので、辞書と一覧は中まで下りる。
+    """
+    if v is None or isinstance(v, _FLAT):
+        return v
+    if isinstance(v, dict):
+        return {k: _veil(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple, set, frozenset)):
+        out = [_veil(x) for x in v]
+        try:
+            return type(v)(out)
+        except TypeError:
+            # 名前つきの組など、作り方の違う器。**素通りさせるより落とす**
+            return type(v)(*out)
+    # 入れ物・書類・問い合わせ・引いた中身。ここから先も書けてはいけない。
+    # **「書く口を持っている」も見る**（`set` / `get` だけを持つ書類がある）
+    if any(hasattr(v, n) for n in _DOOR):
+        return _ReadOnly(v)
+    if hasattr(v, "__next__"):
+        return (_veil(x) for x in v)
+    return v
+
+
+class _ReadOnly:
+    """書く口を塞いだ写し。読むほうはそのまま通す。"""
+
+    def __init__(self, inner):
+        object.__setattr__(self, "_inner", inner)
+
+    def __getattr__(self, name):
+        if name in _WRITE:
+            raise ReadOnly(f"下見では Firestore に書けません（{name}）")
+        v = getattr(object.__getattribute__(self, "_inner"), name)
+        if callable(v):
+            def call(*a, **k):
+                return _veil(v(*a, **k))
+            return call
+        return _veil(v)
+
+    def __setattr__(self, name, value):
+        raise ReadOnly(f"下見では Firestore に書けません（{name}）")
+
+    def __iter__(self):
+        return (_veil(x) for x in iter(object.__getattribute__(self, "_inner")))
+
+
+def readonly(client):
+    """**読むだけ**の Firestore クライアント。
+
+    下見が Firestore につながっていないと、上書きや衝突の数は数える機会が
+    無いまま 0 になる。読む人には、その 0 が「無い」のか「見ていない」のか
+    見分けがつかない。つないだうえで、書く側だけを塞ぐ。
+
+    Args:
+        client: `db()` で作ったクライアント
+
+    Returns:
+        読むほうはそのまま通り、書く口を叩くと `ReadOnly` で止まる写し
+    """
+    return _ReadOnly(client)
