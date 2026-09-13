@@ -45,6 +45,13 @@ name: 管理スクリプトを実行
 #   characters_migrate … Viewers 表とドライブのフォルダ2つを突き合わせて、
 #                        絵を Storage に置き、islandCharacter に名前と
 #                        絵文字と呼び名を入れる。{"limit":3} で試せる
+#   characters_gap     … **投げ銭してくれたのに、まだキャラクターが無い人**を
+#                        数える。**読むだけ。1バイトも書かない。**
+#                        BigQuery のスパチャ／Doneru に、BigQuery がまだ
+#                        持っていない当日ぶん（Firestore streamChatMessages）を
+#                        足して、1人ずつ /characters/lookup に当てる。
+#                        {} で直近30日、{"days":60} で日数を変える。
+#                        **ログに出るのは人数だけ**（名前は logsafe が落とす）
 #   characters_probe   … **絵を1枚置いて、読んで、消す**（入力なし）。
 #                        Actions は置き場に書けないまま（#283）でも、
 #                        Functions に頼めば置けることを本番で1回通す。
