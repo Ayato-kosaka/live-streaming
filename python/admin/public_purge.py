@@ -44,11 +44,22 @@ Storage の権限が1つも無い**（#296 で あやとに `roles/storage.objec
 **退避に要る `list` は未測定。**
 
 だから下見は**2つの置き場**を測って出す。既定バケットのほうは
-`list` が立ったときに**件数と合計バイト数まで**しか見ない。
+`list` が立ったときに**件数と合計バイト数と、フォルダごとの内訳まで**しか見ない。
 **ファイル名は1つも出ない**（口がそもそも返さない）。
 
 `storage.objects.list` が「できる」と出たら、その道で退避が組める。
 「できない」と出たら、#296 の依頼（あやとの1分の操作）を待つしかない。
+
+## 内訳が要る（2026-09-13）
+
+測ったら **544件・340,231,177バイト**あって、**退避で守れているのは3件だけ**
+だった。こちらで名前が分かっているのは171件ぶん（キャラクターの絵の URL 166本
+＋ 写真3件 ＋ 片づけた JSON 2件）で、**残り373件が何なのか分かっていない。**
+
+**作り直せるものなのか、失ったら終わりなのかで、#296 の急ぎ具合が変わる。**
+だから内訳を出す。**フォルダの名前・件数・合計バイト数だけ**で、
+切る深さは2（`island/characters/` `nordic/photos/` の段）。
+理由は `functions/src/publicPurge.ts` の冒頭にある。
 
 ## 消す道は、既定バケットには開いていない
 
@@ -75,11 +86,17 @@ Storage の権限が1つも無い**（#296 で あやとに `roles/storage.objec
 ## 出さないもの
 
 **このリポジトリは公開で、Actions のログも誰でも読める。**
-出すのは件数・バイト数・ファイル名・できることまで。
-中の名前と金額は1文字も出さない（口もそれらを返さない）。
+
+公開バケット（消す相手。中身は表の2つと視聴者さんの mp4 だけ）は
+件数・バイト数・ファイル名・できることまで。
+**旅の写真の置き場（544件）は、ファイル名を1つも出さない。**
+出すのはフォルダの名前・件数・バイト数・できることまで
+（口がそもそもファイル名を返さない）。
+中の名前と金額は1文字も出さない。
 """
 
 import sys
+import unicodedata
 
 from _fs import args, db, log
 from _owner import call, owner_token
@@ -114,6 +131,62 @@ LISTED = {
 }
 
 
+def _yen(n) -> str:
+    """桁を区切る。340231177 は目で読めない。"""
+    return f"{int(n or 0):,}"
+
+
+def _pad(s: str, width: int) -> str:
+    """桁を揃える。**全角は2つぶんとして数える。**
+
+    `%-30s` は文字の数で詰めるので、`（置き場の直下）` の行だけ
+    右の数字がずれる。表として読めないと、内訳を出した意味が薄い。
+    """
+    s = str(s)
+    wide = sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in s)
+    return s + " " * max(0, width - wide)
+
+
+def folders(d: dict) -> None:
+    """置き場の内訳（#296）。**フォルダの名前・件数・合計バイト数だけ。**
+
+    **ファイル名は出さない。** 口がそもそも返していないが、
+    返ってきたものをそのまま流すのではなく、出す欄をここでも名指しする。
+    """
+    rows = d.get("folders")
+    if rows is None:
+        # 口が古い（デプロイ前）。**黙って通さない**
+        log.warning("  内訳が返っていません（口が古い可能性）")
+        return
+
+    log.info("  内訳（フォルダの深さ2まで）:")
+    for r in rows:
+        # 下の段をまとめた行は、まとめたと分かるようにする。
+        # 「その中に何段あるか」まで出さないと、1行の重さが読めない
+        rolled = r.get("rolledUp")
+        log.info(
+            "    %s %5d件 %15s バイト%s",
+            _pad(r.get("folder"), 30),
+            r.get("count") or 0,
+            _yen(r.get("bytes")),
+            f"  ← 下の段 {rolled} 個ぶん" if rolled else "",
+        )
+
+    # **足して合わないなら、内訳のほうを信じない。**
+    # 数え落としが1行の欠けとして出るので、黙って通さない
+    total = sum(int(r.get("count") or 0) for r in rows)
+    whole = d.get("count") or 0
+    if total != whole:
+        log.warning("  内訳の合計 %d件 が、置き場の %d件 と合いません", total, whole)
+
+    pages = d.get("pages")
+    if pages is not None:
+        # ページ送りが回ったか。1回で終わっていても、それが分かるように出す
+        log.info("  一覧を %d回引きました", pages)
+    if d.get("truncated"):
+        log.warning("  引き直しの上限に当たりました。**数え切れていません**")
+
+
 def photos(got: dict) -> None:
     """旅の写真の置き場で、いま何ができるか（#296）。**読むだけ。**"""
     d = got.get("defaultBucket")
@@ -136,8 +209,9 @@ def photos(got: dict) -> None:
     listed = d.get("listed")
     log.info("  %s", LISTED.get(listed, listed))
     if listed == "ok":
-        # **件数と合計バイト数だけ。** 名前は口が返さないし、出さない
-        log.info("  %d件（合計 %d バイト）", d.get("count") or 0, d.get("bytes") or 0)
+        # **件数と合計バイト数と内訳だけ。** 名前は口が返さないし、出さない
+        log.info("  %d件（合計 %s バイト）", d.get("count") or 0, _yen(d.get("bytes")))
+        folders(d)
 
     # **判定は list だけで出さない。** 退避には中身を読む get が要る
     can = can or {}

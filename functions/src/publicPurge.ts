@@ -52,6 +52,56 @@
  * **`list` が立ったときに件数と合計バイト数まで**しか見ない。
  * **中身は開かないし、名前も1つも返さない。**
  *
+ * ## 内訳が要る（#296 の2026-09-13）
+ *
+ * 測ったら **544件・340,231,177バイト**あって、**退避で守れているのは
+ * 3件だけ**だった（Firestore の書類に入っている合言葉つき URL 経由。
+ * IAM を通らない道）。残りが「作り直せるもの」なのか「失ったら終わり」
+ * なのかで、#296 の急ぎ具合が変わる。**そこを決めつけずに数える。**
+ *
+ * 分かっているのは171件ぶんだけ（キャラクターの絵の URL 166本 ＋
+ * 写真3件 ＋ 片づけた JSON 2件）。**残り373件は誰も知らない。**
+ *
+ * ## 内訳をどこで切るか — **フォルダの深さ2**
+ *
+ * このリポジトリから置き場に書いているのは3か所で、どれも
+ * **「何であるか」が頭2段に、「どれであるか」が3段目以降**に入る。
+ *
+ * | 書いているところ | 置き場の名前 |
+ * | --- | --- |
+ * | `islandApi.ts` の写真 | `nordic/photos/{日付}/{書類ID}.jpg` |
+ * | `islandCharacter.ts` の絵 | `island/characters/{人のID}/{役}-{幅}.webp` |
+ * | この口の写し | `purged/public-bucket/{日付}/{名前}` |
+ *
+ * だから深さ2で切ると **`nordic/photos/` `island/characters/`
+ * `purged/public-bucket/`** の3行になって、日付も人のIDも書類IDも出ない。
+ * 深さ3まで行くと98人ぶんのIDが並ぶし、深さ1だと `island/` が
+ * 何の絵なのか分からないままになる。**深さ2が「種類」の段。**
+ *
+ * 知らない置き方に当たったときのために、逃げを2つ入れてある。
+ *
+ * - **日付の段は月までにまとめる**（`2026-09-01/` → `2026-09/`）。
+ *   浅いところに日付を置いている中身があっても、行が日数ぶんに増えない
+ * - **1段目の下に子が {@link MAX_CHILDREN} を超えて並んだら、1段目で
+ *   まとめる。** 深さ2が書類IDだった置き場では、行が中身の数だけ
+ *   増える＝**名前を出しているのとほとんど同じ**になる
+ *
+ * 返すのは**フォルダの名前・件数・合計バイト数だけ。**
+ * **ファイル名は1つも返さないし、ログにも出さない**（このリポジトリは
+ * 公開で、Actions のログも誰でも読める）。
+ *
+ * ## 544件を1回で数える — ページ送りは自分で回す
+ *
+ * `getFiles()` は既定（`autoPaginate` 省略）でも中で最後まで送るが、
+ * **`maxResults` を足した瞬間に送りが止まる**（`@google-cloud/paginator`
+ * の `parseArguments_`。`maxResults !== -1` だと `autoPaginate` が false）。
+ * 1ページぶんだけ数えて「全部です」と言う形が、いつでも作れてしまう。
+ *
+ * だから**送りはこちらで回す。** `maxResults` で1ページの数を決めて、
+ * 返ってきた `nextQuery`（2つめの返り）が無くなるまで引き直す。
+ * **`autoPaginate` は渡さない。** `bucket.getFiles` は受け取った入力を
+ * そのまま `qs` に載せる作りなので、API に知らない項目が飛ぶ。
+ *
  * ## 消せる道は、既定バケットには開けない
  *
  * 片づけ（`POST` の `apply`）が触る置き場は、**公開バケット決め打ち。**
@@ -184,6 +234,41 @@ const BUCKET_NAMES = new Set([PUBLIC_BUCKET, PRIVATE_BUCKET]);
 /** 一度に受ける名前の数。表には2つしか無いので、これで足りる。 */
 const MAX_NAMES = 10;
 
+/**
+ * 一覧を1回に引く数（#296）。
+ *
+ * **544件あるから1,000で足りる、という書き方をしない。**
+ * 写真はこれから毎日増える。足りなくなった日に黙って数え落とすより、
+ * いつでも送りを回しているほうがいい。
+ */
+const PAGE_SIZE = 1000;
+
+/** 引き直しの上限。ここに当たったら、数え切れていないと言う。 */
+const MAX_PAGES = 100;
+
+/** まとめるフォルダの深さ。理由は冒頭の「内訳をどこで切るか」。 */
+const FOLDER_DEPTH = 2;
+
+/**
+ * 1段目の下に並べてよい子の数。
+ *
+ * 超えたら**1段目でまとめる。** 深さ2が書類IDや日付だった置き場で、
+ * 行が中身の数だけ増えるのを止めるため。
+ */
+const MAX_CHILDREN = 24;
+
+/** 返すフォルダの行数。あふれたぶんは1行にまとめる。 */
+const MAX_FOLDERS = 40;
+
+/** フォルダの名前の長さ。長いものは切る。 */
+const MAX_FOLDER_NAME = 64;
+
+/** 置き場の直下に置いてあるもの。**名前は出さない。** */
+const ROOT_FOLDER = "（置き場の直下）";
+
+/** 行数からあふれたぶん。 */
+const REST_FOLDER = "（そのほか）";
+
 /** 名前の長さ。置き場の名前の上限（1024）より手前で切る。 */
 const MAX_NAME = 400;
 
@@ -198,11 +283,31 @@ export type PurgeFile = {
   delete(): Promise<unknown>;
 };
 
+/**
+ * 一覧を引くときの入力。**ページ送りに要るものだけ。**
+ *
+ * `autoPaginate` は**わざと持っていない。** 渡すと
+ * `bucket.getFiles` がそのまま API の `qs` に載せる。
+ * 送りを止めたいだけなら `maxResults` を入れれば足りる。
+ */
+export type PurgeListQuery = {
+  maxResults?: number;
+  pageToken?: string;
+};
+
+/**
+ * 一覧の返り。
+ *
+ * 2つめは**次のページの引きかた**で、最後のページでは `null` になる
+ * （`@google-cloud/storage` の `getFiles`）。そのまま次の入力に使える。
+ */
+export type PurgeListed = [PurgeFile[], (PurgeListQuery | null)?, unknown?];
+
 /** バケット。同上。 */
 export type PurgeBucket = {
   name: string;
   file(path: string): PurgeFile;
-  getFiles(): Promise<[PurgeFile[]]>;
+  getFiles(q?: PurgeListQuery): Promise<PurgeListed>;
   iam: {testPermissions(p: string[]): Promise<[Record<string, boolean>]>};
 };
 
@@ -327,23 +432,159 @@ async function listing(b: PurgeBucket): Promise<Listed[]> {
   }));
 }
 
+/** フォルダ1つぶん。**中身の名前は入らない。** */
+type Folder = {
+  /** フォルダの名前。うしろに `/` を付ける */
+  folder: string;
+  count: number;
+  bytes: number;
+  /** 下の段をいくつまとめたか。まとめていなければ null */
+  rolledUp: number | null;
+};
+
 /** 数えた結果。**ここに名前は入らない。** */
-type Tally = {count: number; bytes: number};
+type Tally = {
+  count: number;
+  bytes: number;
+  /** 内訳。**フォルダの名前・件数・合計バイト数だけ** */
+  folders: Folder[];
+  /** 何回引いたか。ページ送りが効いているかは、これで見る */
+  pages: number;
+  /** 引き直しの上限に当たって、数え切れていないか */
+  truncated: boolean;
+};
+
+/**
+ * 長い名前を切る。**切ったことが分かるようにする。**
+ * @param {string} s フォルダの1段
+ * @return {string} 切ったもの
+ */
+function cut(s: string): string {
+  return s.length > MAX_FOLDER_NAME ? s.slice(0, MAX_FOLDER_NAME) + "…" : s;
+}
+
+/**
+ * 日付の段を、月までにまとめる。
+ *
+ * `nordic/photos/2026-09-12/` のような段をそのまま出すと、
+ * 行が日数ぶんに増える。**溜まっても背が変わらない形にする。**
+ * @param {string} seg フォルダの1段
+ * @return {string} 日付なら `2026-09`、そうでなければそのまま
+ */
+function byMonth(seg: string): string {
+  const dashed = /^(\d{4})-(\d{2})-\d{2}/.exec(seg);
+  if (dashed) return `${dashed[1]}-${dashed[2]}`;
+  const flat = /^(\d{4})(\d{2})\d{2}$/.exec(seg);
+  if (flat) return `${flat[1]}-${flat[2]}`;
+  return seg;
+}
+
+/**
+ * 置き場の名前から、数える先のフォルダを決める。
+ *
+ * **名前そのものは持ち帰らない。** 返すのは1段目と、深さ2までの段。
+ * @param {string} name 置き場の名前
+ * @return {{parent: string, key: string}} 1段目と、まとめる先
+ */
+function folderOf(name: string): {parent: string; key: string} {
+  const dirs = name
+    .split("/")
+    .slice(0, -1)
+    .filter((s) => s !== "")
+    .map((s) => cut(byMonth(s)));
+  if (dirs.length === 0) return {parent: ROOT_FOLDER, key: ROOT_FOLDER};
+  return {
+    parent: `${dirs[0]}/`,
+    key: `${dirs.slice(0, FOLDER_DEPTH).join("/")}/`,
+  };
+}
 
 /**
  * 数えるだけ。**名前も中身も持ち帰らない。**
  *
- * 退避（#296）に要るのは「何件あって、ぜんぶで何バイトか」まで。
+ * 退避（#296）に要るのは「どのフォルダに何件あって、何バイトか」まで。
  * 名前を配列で返すと、このリポジトリは公開なので Actions のログに
  * そのまま出る。**足し算だけして捨てる。**
+ *
+ * **ページ送りは自分で回す**（冒頭の「544件を1回で数える」）。
  * @param {PurgeBucket} b 数える置き場
- * @return {Promise<Tally>} 件数と合計バイト数
+ * @return {Promise<Tally>} 件数・合計バイト数・フォルダごとの内訳
  */
 async function tally(b: PurgeBucket): Promise<Tally> {
-  const [files] = await b.getFiles();
+  let count = 0;
   let bytes = 0;
-  for (const f of files) bytes += Number(f.metadata?.size ?? 0) || 0;
-  return {count: files.length, bytes};
+  let pages = 0;
+  let truncated = false;
+  /* 深さ2のフォルダごとの合計と、1段目の下に並んだ段の顔ぶれ。
+     **どちらも持つのは数だけで、ファイル名は1つも残らない。** */
+  type Sum = {parent: string; count: number; bytes: number};
+  const sums = new Map<string, Sum>();
+  const kids = new Map<string, Set<string>>();
+
+  let page: PurgeListQuery | null = {maxResults: PAGE_SIZE};
+  while (page) {
+    /* 型を書き下すのは、`page` に入れ直す値がこの行から来るため。
+       分割代入のままだと、型が自分を指して決まらない（TS7022）。 */
+    const got: PurgeListed = await b.getFiles(page);
+    const files = got[0];
+    const next = got[1];
+    pages += 1;
+    for (const f of files) {
+      const size = Number(f.metadata?.size ?? 0) || 0;
+      count += 1;
+      bytes += size;
+      const {parent, key} = folderOf(f.name);
+      const cur = sums.get(key) || {parent, count: 0, bytes: 0};
+      cur.count += 1;
+      cur.bytes += size;
+      sums.set(key, cur);
+      const seen = kids.get(parent) || new Set<string>();
+      seen.add(key);
+      kids.set(parent, seen);
+    }
+    /* **次が無ければ `null` が返る。** 返ってきたものをそのまま
+       次の入力に使う（`pageToken` が入っている）。 */
+    if (!next || !next.pageToken) break;
+    if (pages >= MAX_PAGES) {
+      /* **数え切れていないことを、数え切ったのと同じ絵にしない。** */
+      truncated = true;
+      break;
+    }
+    page = next;
+  }
+
+  /* **子が多すぎる1段目は、1段目でまとめる。** 深さ2が書類IDだった
+     置き場では、行が中身の数だけ増える＝名前を出すのとほぼ同じ。 */
+  const rows = new Map<string, Folder>();
+  for (const [key, v] of sums) {
+    const many = (kids.get(v.parent)?.size ?? 0) > MAX_CHILDREN;
+    const at = many ? v.parent : key;
+    const cur = rows.get(at) ||
+      {folder: at, count: 0, bytes: 0, rolledUp: many ? 0 : null};
+    cur.count += v.count;
+    cur.bytes += v.bytes;
+    if (many) cur.rolledUp = (cur.rolledUp ?? 0) + 1;
+    rows.set(at, cur);
+  }
+
+  const all = [...rows.values()].sort(
+    (a, z) =>
+      z.bytes - a.bytes || z.count - a.count || (a.folder < z.folder ? -1 : 1),
+  );
+  /* **行数でも背が変わらないようにする。** あふれたぶんは1行。 */
+  let folders = all;
+  if (all.length > MAX_FOLDERS) {
+    const head = all.slice(0, MAX_FOLDERS - 1);
+    const rest = all.slice(MAX_FOLDERS - 1);
+    head.push({
+      folder: REST_FOLDER,
+      count: rest.reduce((a, r) => a + r.count, 0),
+      bytes: rest.reduce((a, r) => a + r.bytes, 0),
+      rolledUp: rest.length,
+    });
+    folders = head;
+  }
+  return {count, bytes, folders, pages, truncated};
 }
 
 /** 測った結果1つぶん。**ファイル名は1つも入らない。** */
@@ -354,6 +595,15 @@ type Surveyed = {
   /** `list` が立ったときだけ入る */
   count: number | null;
   bytes: number | null;
+  /**
+   * 内訳（#296）。**フォルダの名前・件数・合計バイト数だけ。**
+   * ファイル名は1つも入らない。数えられなければ null
+   */
+  folders: Folder[] | null;
+  /** 一覧を何回引いたか。ページ送りが効いているかは、これで見る */
+  pages: number | null;
+  /** 引き直しの上限に当たって、数え切れていないか */
+  truncated: boolean | null;
   /** 数えられたか。`skipped` は `list` が無いので試してもいない */
   listed: "ok" | "skipped" | "denied";
   /** 数えられなかった理由。**種類だけ** */
@@ -371,19 +621,30 @@ type Surveyed = {
  */
 async function survey(b: PurgeBucket, perms: string[]): Promise<Surveyed> {
   const can = await canDo(b, perms);
-  const base = {bucket: b.name, can};
+  /** 数えられなかったときの返り。**数の欄は全部 null。** */
+  const none = {
+    bucket: b.name,
+    can,
+    count: null,
+    bytes: null,
+    folders: null,
+    pages: null,
+    truncated: null,
+  };
   /* 聞けなかった（null）ときは、数えるほうを1回試す。
      **聞けないこと**と**できないこと**は別で、前者なら実測が要る。 */
   if (can !== null && can["storage.objects.list"] !== true) {
-    return {...base, count: null, bytes: null, listed: "skipped", why: null};
+    return {...none, listed: "skipped", why: null};
   }
   try {
     const t = await tally(b);
-    return {...base, ...t, listed: "ok", why: null};
+    return {bucket: b.name, can, ...t, listed: "ok", why: null};
   } catch (e) {
-    logger.warn("public-purge: tally failed", b.name, String(e));
+    /* **中身の名前が混じりうるので、例外の本文は出さない**（種類だけ）。
+       このリポジトリは公開で、Actions のログも誰でも読める。 */
     const why = kindOf(e);
-    return {...base, count: null, bytes: null, listed: "denied", why};
+    logger.warn("public-purge: tally failed", b.name, why);
+    return {...none, listed: "denied", why};
   }
 }
 
@@ -535,8 +796,8 @@ export async function handlePublicPurge(
         keepPrefixes: KEEP_PREFIXES,
         /**
          * 旅の写真の入っている置き場（#296）。**測っただけ。**
-         * 件数と合計バイト数まで。名前も中身も入らないし、
-         * この口から消すことはできない。
+         * 件数と合計バイト数と、**フォルダごとの内訳**まで。
+         * ファイル名は1つも入らないし、この口から消すこともできない。
          */
         defaultBucket: def,
       });
