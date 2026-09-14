@@ -28,10 +28,16 @@
  */
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
-const PAGES = (process.env.PAGES ||
-  "/,/nordic,/now,/cards,/board,/friends,/me").split(",");
+/* **どの面も口を叩く。** 本番の 118面を1面ずつ開いて数えたら、
+   `/privacy` まで含めて **118/118 が island-api を叩いていた**（2026-09-14）。
+   「口に依っているのは島まわりの数面だけ」は思い込みだったので、既定を
+   一覧ファイルにした。`PAGELIST` に1行1面で渡す。 */
+const PAGES = process.env.PAGELIST
+  ? readFileSync(process.env.PAGELIST, "utf8").trim().split("\n").filter(Boolean)
+  : (process.env.PAGES || "/,/nordic,/now,/cards,/board,/friends,/me").split(",");
 const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
@@ -46,6 +52,10 @@ const 中の話 = [
 /* 言い切ってはいけない字。**分からないのに「無い」と言うのは嘘。** */
 const 言い切り = ["まだ", "ありません", "ありませんでした", "0件", "0 件", "いません", "無い", "なし"];
 
+/* **静的なものは1回だけ取る。** 118面×2回ぶん毎回 curl すると終わらない。
+   口（island-api）は面ごとに答えが変わるので、**絶対に使い回さない。** */
+const 蔵 = new Map();
+
 async function 撮る(b, path, 口を落とす) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   let 落とした = 0;
@@ -53,10 +63,14 @@ async function 撮る(b, path, 口を落とす) {
     const u = r.request().url();
     if (口を落とす && /island-api/.test(u)) { 落とした++; return r.abort(); }
     if (!PASS.test(u)) return r.abort();
+    if (蔵.has(u)) return r.fulfill(蔵.get(u));
     try {
       const body = execFileSync("curl", ["-sS", "--retry", "2", "--max-time", "40", u], { maxBuffer: 1 << 28 });
       const ext = (u.split("?")[0].match(/\.([a-z0-9]+)$/i)?.[1] || "html").toLowerCase();
-      r.fulfill({ status: 200, contentType: TYPE[ext] || "text/html", body });
+      const res = { status: 200, contentType: TYPE[ext] || "text/html", body };
+      // 面ごとに中身の変わるもの（HTML と口）は蔵に入れない
+      if (/\.(js|css|woff2|png|jpg|jpeg|svg|webp|ico)$/i.test(u.split("?")[0])) 蔵.set(u, res);
+      r.fulfill(res);
     } catch { r.abort(); }
   });
   const p = await ctx.newPage();
