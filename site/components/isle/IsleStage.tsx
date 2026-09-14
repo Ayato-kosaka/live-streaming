@@ -31,7 +31,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { MAX_LEAD, around, hits, lead, type Box } from "./plates";
+import { MAX_LEAD, TAP_FIT, around, fitHit, hits, lead, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -105,6 +105,11 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const farAt = useRef<boolean[]>([]);
   const platesDirty = useRef(true);
   const uiBoxes = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
+  /** **指の当たりを実際に取る**島の上の道具だけ（`uiBoxes` とは別物。下の測りで作る） */
+  const tapBoxes = useRef<Box[]>([]);
+  /** 住人の当たりが避ける相手（指を取る道具＋出ている札＋建物の当たり）。
+      カメラが動いたときに `placePlates` がそろえ直す */
+  const blockers = useRef<Box[] | null>(null);
 
   const [box, setBox] = useState({ w: 1440, h: 820 });
   const [wide, setWide] = useState(false);
@@ -290,19 +295,49 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       const hb = host?.getBoundingClientRect();
       if (!host || !hb) return;
       const boxes: { x: number; y: number; w: number; h: number }[] = [];
+      /** 指を実際に取るものだけ。`boxes`（札を逃がすための「読めなくなる場所」）とは別 */
+      const taps: { x: number; y: number; w: number; h: number }[] = [];
       const add = (el: Element | null | undefined) => {
         if (!el) return;
         const r = el.getBoundingClientRect();
         if (r.width < 4) return;
         boxes.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
       };
+      /* **見えなくする箱と、指を取る箱は別物。**
+         看板の板（`.hero-copy`）は `pointer-events: none` で、押すと指が島へ抜ける
+         （`app/css/hero.css`「島の上なので、指の当たりは島に通す」）。
+         札はその下に置くと読めないので `boxes` には入れるが、**当たりの取り合いに
+         入れてはいけない。** 入れて測ったら、板の下の建物が1軒押せなくなった
+         （1280px の表紙「歩いた国」。前は押せていた）。 */
+      const addTap = (el: Element | null | undefined) => {
+        if (!el) return;
+        if (getComputedStyle(el).pointerEvents === "none") return;
+        const r = el.getBoundingClientRect();
+        if (r.width < 4) return;
+        taps.push({ x: r.left - hb.left, y: r.top - hb.top, w: r.width, h: r.height });
+      };
       /* 歩きかたの案内も入れる。**数秒で消えるが、出ているあいだは札を隠す。**
          測って見つけた（札の字が案内の暗い帯に半分かかって 1.81 : 1 だった）。
          消えたらまた測り直すので、その場で戻る */
-      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint")) add(el);
+      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint")) {
+        add(el);
+        addTap(el);
+      }
       /* 看板は絵と一言で1かたまり。**絵だけを避けると、札が一言の上に乗る** */
       if (cover) add(host.parentElement?.querySelector(".hero-copy"));
+      /* 旅の板（`.htrip`）も島の上に載っている。**入れていなかった。**
+         実測（390px・表紙）で、板の下にいた建物の当たりが 86x37 と 49x47 まで
+         削られていた。こちらは押せる板（`pointer-events: auto`）なので、
+         見た目の逃げ場としても、当たりの取り合いとしても場所を取る。 */
+      if (cover) {
+        const hero = host.parentElement;
+        add(hero?.querySelector(".htrip"));
+        addTap(hero?.querySelector(".htrip"));
+        // 看板ロゴは絵なので指を取る。板（`.hero-say`）は取らない
+        addTap(hero?.querySelector(".hero-logo"));
+      }
       uiBoxes.current = boxes;
+      tapBoxes.current = taps;
       platesDirty.current = true;
     };
     measure();
@@ -612,7 +647,14 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           }
         }
       }
-      if (camMoved || platesDirty.current) {
+      /* 札と建物の当たりを置き直したフレーム。**住人の取り合いもここで見直す。**
+         `castWrite`（住人が動いたか・カメラが動いたか）だけで見ていると、
+         **動きを控えめにする設定の人**（`prefers-reduced-motion`）では住人が
+         1歩も動かないので `stepCast` がいつも false になり、カメラが止まった
+         あとに札が出ても、住人の当たりが札に食われたまま直らない。
+         測る道具もこの設定で開くので、実測でそれが出た。 */
+      const platesRan = camMoved || platesDirty.current;
+      if (platesRan) {
         platesDirty.current = false;
         const kk = b.w / vbW;
         if (kk !== lastK) {
@@ -621,7 +663,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           // 固定にすると寄ったときに絵の下半分が押せない
           hostRef.current?.style.setProperty("--ws", `${Math.max(TAP_MIN, FOLK_H * kk).toFixed(1)}px`);
         }
-        placePlates(world.places, {
+        const hitsNow = placePlates(world.places, {
           b,
           kk,
           sx,
@@ -633,9 +675,101 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           fars: farAt.current,
           wide: wideRef.current,
           taken: uiBoxes.current,
+          tapTaken: tapBoxes.current,
           open: lastOpen,
         });
+        /* **出ている札の箱は、見積もりではなく実測で持つ。**
+           `placePlates` は札の置き場所を決めるために箱を組み立てているが、
+           それは「置きたい箱」で、実際に立っている箱とは限らない
+           （札が出ているかの判定が1フレーム遅れることがある）。
+           住人の当たりは札に食われるので、**ここだけは DOM を読む。**
+           読むのはカメラが動いたフレームだけ——止まっているあいだ札は動かない。 */
+        const won0: Box[] = tapBoxes.current.concat(hitsNow);
+        const hb = hostRef.current?.getBoundingClientRect();
+        if (hb) {
+          for (let i = 0; i < world.places.length; i++) {
+            const spot = markRefs.current[i];
+            const mk = spot?.querySelector<HTMLElement>(".isle-mark");
+            if (!spot || !mk) continue;
+            // 出ていない札は押せない（`chain.css` が pointer-events を切っている）ので、
+            // 場所も取らない。出ている条件はあちらの選択子と同じものを見る
+            const on =
+              spot.classList.contains("is-on") ||
+              (wideRef.current && spot.classList.contains("is-sign") && !spot.hasAttribute("data-far"));
+            if (!on) continue;
+            const r = mk.getBoundingClientRect();
+            if (r.width < 4) continue;
+            /* 札の当たりは `::before` で 48px まで広げてある（`chain.css`）。
+               見た目の箱で足すと、広げたぶんが漏れる */
+            const w = Math.max(r.width, TAP_MIN);
+            const h = Math.max(r.height, TAP_MIN);
+            won0.push({
+              x: r.left - hb.left + (r.width - w) / 2,
+              y: r.top - hb.top + (r.height - h) / 2,
+              w,
+              h,
+            });
+          }
+        }
+        blockers.current = won0;
       }
+      /* --- 住人の押しどころの取り合い ---
+         ---------------------------------------------------------------
+         実測（390px・`foldsweep.mjs`）で「話しかける」が 12x60 まで削られて
+         いた。相手は建物の当たり。**削った側は盗んだ覚えが無いので気づけない。**
+
+         順番は変えない。**建物が先、住人はそのあと**（会話はおまけで、
+         行き先を塞がない。`docs/island-design.md` 3-7）。住人どうしは、
+         絵と同じく手前（足元の y が大きいほう）から取る。
+
+         負けたほうは痩せずに引っ込む（`plates.ts` の `fitHit`）。
+         引っ込んでいるあいだも、島の地面を押せばいちばん近い住人を拾うので
+         （下の `onStageClick` の `folkAt`）、話しかけられなくなるわけではない。 */
+      if ((castWrite || platesRan) && blockers.current) {
+        const ws = Math.max(TAP_MIN, FOLK_H * (b.w / vbW));
+        const won = blockers.current.slice();
+        const seat = folk
+          .map((v, i) => ({ i, y: v.y }))
+          .sort((a, c) => c.y - a.y);
+        for (const { i } of seat) {
+          const wEl = whoRefs.current[i];
+          if (!wEl || wEl.style.display === "none") continue;
+          const v = folk[i];
+          const ax = sx(v.x);
+          const ay = sy(v.y);
+          const fit = fitHit({ x: ax - ws / 2, y: ay - ws, w: ws, h: ws }, won, TAP_FIT, {
+            x: 0,
+            y: 0,
+            w: b.w,
+            h: b.h,
+          });
+          const off2 = !fit;
+          if (fit) {
+            won.push(fit);
+            const l = (fit.x - ax).toFixed(1);
+            const t2 = (fit.y - ay).toFixed(1);
+            const w2 = fit.w.toFixed(1);
+            const h2 = fit.h.toFixed(1);
+            /* 4つまとめて見て、同じなら書かない。毎フレーム書くと、当たりの箱の
+               寸法を書き替えるぶんだけ layout が起きる（絵は transform だけで
+               動かしている）。**1つだけ見て済ませない**——場所は同じで大きさ
+               だけ変わる回があり、そこを書き落とすと箱が前の大きさのまま残る。 */
+            const sig = `${l}/${t2}/${w2}/${h2}`;
+            if (wEl.dataset.fit !== sig) {
+              wEl.dataset.fit = sig;
+              wEl.style.setProperty("--wl", `${l}px`);
+              wEl.style.setProperty("--wt", `${t2}px`);
+              wEl.style.setProperty("--ww", `${w2}px`);
+              wEl.style.setProperty("--wh", `${h2}px`);
+            }
+          }
+          if ((wEl.getAttribute("data-hit") === "off") !== off2) {
+            if (off2) wEl.setAttribute("data-hit", "off");
+            else wEl.removeAttribute("data-hit");
+          }
+        }
+      }
+
       if (best !== lastOpen) {
         lastOpen = best;
         setOpenSpot(best);
@@ -1174,10 +1308,13 @@ function placePlates(
     fars: boolean[];
     /** 引き（島ぜんぶ）か。**離れすぎた札を落とすのは引きだけ**（下の `far`） */
     wide: boolean;
+    /** 札を逃がすときに避ける「読めなくなる場所」。押せるかどうかとは別 */
     taken: { x: number; y: number; w: number; h: number }[];
+    /** **指を実際に取る**ものだけ。当たりの取り合いはこちらで見る */
+    tapTaken: { x: number; y: number; w: number; h: number }[];
     open: string | null;
   },
-) {
+): Box[] {
   const pad = 8;
   const padTop = 30;
   const padBottom = 52;
@@ -1267,6 +1404,47 @@ function placePlates(
     const hh = Math.max(TAP_MIN, artH);
     hitBoxes[i] = { x: px - hw / 2, y: py - hh, w: hw, h: hh };
     art[i] = { px, py, artW, mh };
+  }
+
+  /* --- 1巡目の続き。建物どうしの取り合いを解く ---
+     ---------------------------------------------------------------------
+     当たりを 48px まで広げた者どうしが重なると、あとから描かれたほうが勝ち、
+     先に描かれたほうが痩せる。実測（390px・表紙）で「いまどこ」が 49x34、
+     「この旅のこと」が 86x37 まで削られていた。**削られた側は、自分が
+     削られていることを知らない。**
+
+     **手前にいる建物から先に取る。** 絵は足元の y で並べて描いてあるので
+     （`layers`）、手前の建物は後ろの建物を隠している。隠れている側の当たりを
+     手前が持っていくのは、絵と同じ順番。残った側は、**見えている上半分**が
+     押しどころになる（`fitHit`）。48px を取れなかった建物は引っ込む——
+     その建物は絵でもほとんど見えていないし、札からは入れる。 */
+  const order = places
+    .map((sp, i) => ({ i, y: sp.y }))
+    .sort((a, b) => b.y - a.y);
+  const won: Box[] = o.tapTaken.slice();
+  for (const { i } of order) {
+    const el = o.marks[i];
+    const a = art[i];
+    const want = hitBoxes[i];
+    if (!el || !a || !want) continue;
+    const fit = fitHit(want, won, TAP_FIT, { x: 0, y: 0, w: o.b.w, h: o.b.h });
+    const off = !fit;
+    if (fit) {
+      won.push(fit);
+      hitBoxes[i] = fit;
+      el.style.setProperty("--hl", `${(fit.x - a.px).toFixed(1)}px`);
+      el.style.setProperty("--ht", `${(fit.y - a.py).toFixed(1)}px`);
+      el.style.setProperty("--hiw", `${fit.w.toFixed(1)}px`);
+      el.style.setProperty("--hih", `${fit.h.toFixed(1)}px`);
+    } else {
+      /* 押しどころを出さない建物は、**場所も取らない。**
+         取らせると、そのぶん住人まで押せなくなる */
+      hitBoxes[i] = { x: -9999, y: -9999, w: 0, h: 0 };
+    }
+    if ((el.getAttribute("data-hit") === "off") !== off) {
+      if (off) el.setAttribute("data-hit", "off");
+      else el.removeAttribute("data-hit");
+    }
   }
 
   /* --- 2巡目。札を置く --- */
@@ -1473,4 +1651,9 @@ function placePlates(
     }
     pin.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
   }
+
+  /* 建物の当たり（取り合いを解いたあと）を返す。住人はこれを避ける。
+     **札は返さない。** 札は「置きたい箱」なので、住人が避ける相手としては
+     `IsleStage` 側が DOM の実測で足す。 */
+  return hitBoxes.filter((q) => q && q.w > 0);
 }

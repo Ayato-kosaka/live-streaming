@@ -36,7 +36,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "fs";
 import { offline } from "./route.mjs";
 import { collect, banner, tally } from "./pages.mjs";
-import { openFolds, measure, fmtHit, SEL_ALL } from "./hitbox.mjs";
+import { openFolds, measure, fmtHit, SEL_ALL, addProbe, isProbe, probeVerdict } from "./hitbox.mjs";
 
 const SPORT = process.env.SPORT || "4240";
 const OUT = process.env.OUT || "/tmp/foldsweep";
@@ -47,43 +47,10 @@ const WIDTHS = (process.env.WIDTHS || "390x844,1280x800").split(",").map((s) => 
 const C = collect();
 const PAGES = C.pages;
 
-/**
- * **自己確認の仕込み。**
- *
- * 閉じた畳みの中に 40x40 の押しどころを1つ入れる。**これが挙がらなければ、
- * この道具の 0 件は証拠にならない**（#83「素性を数える道具は、既知の値を
- * 仕込んだ自己確認を通してから使う」）。
- * 同じ畳みの中に 60x60 の合格するほうも入れる。**合格側が落ちない**ことまで
- * 見ないと、「なんでも割れと言う道具」になっていても気づけない。
- * 畳みの外にも 40x40 を1つ置く。開く前の数え方でも挙がるのはこちらだけ。
- */
-const PROBE = `(() => {
-  const mk = (id, px, label) => {
-    const a = document.createElement("a");
-    a.id = id; a.href = "/"; a.textContent = label;
-    a.style.cssText = "position:static;display:block;width:" + px + "px;height:" + px +
-      "px;font-size:9px;line-height:" + px + "px;overflow:hidden;background:#c00;color:#fff";
-    return a;
-  };
-  const d = document.createElement("details");
-  d.id = "foldprobe";
-  const s = document.createElement("summary");
-  s.textContent = "仕込みの畳み";
-  s.style.cssText = "min-height:56px";
-  d.appendChild(s);
-  // 入れ子の畳み。外側を開けただけでは中が開かないことを確かめる
-  const inner = document.createElement("details");
-  const is = document.createElement("summary");
-  is.textContent = "仕込みの畳み（入れ子）";
-  is.style.cssText = "min-height:56px";
-  inner.appendChild(is);
-  inner.appendChild(mk("foldprobe-deep", 40, "奥"));
-  d.appendChild(mk("foldprobe-small", 40, "小"));
-  d.appendChild(mk("foldprobe-ok", 60, "大"));
-  d.appendChild(inner);
-  document.body.insertBefore(d, document.body.firstChild);
-  document.body.insertBefore(mk("foldprobe-out", 40, "外"), document.body.firstChild);
-})()`;
+/* **自己確認の仕込みは `hitbox.mjs` にある**（`PROBE_JS` / `addProbe`）。
+   ここにも同じものが書いてあったが、仕込みを道具ごとに書くと、道具ごとに
+   別のものを確かめたことになる。6本が**同じ仕込み**を通す
+   （`docs/island-misses.md` #83）。 */
 
 console.log(banner(C) + "\n");
 mkdirSync(OUT, { recursive: true });
@@ -128,7 +95,7 @@ for (const [W, H] of WIDTHS) {
       window.scrollTo(0, 0);
     });
     await p.waitForTimeout(300);
-    if (process.env.PROBE) await p.evaluate(PROBE);
+    if (process.env.PROBE) await addProbe(p);
 
     /* 1回目 = これまでの数え方（畳みを開かない） */
     const before = await measure(p, { sel: SEL, min: MIN, fold: "skip" });
@@ -136,7 +103,15 @@ for (const [W, H] of WIDTHS) {
     const folds = await openFolds(p);
     const after = await measure(p, { sel: SEL, min: MIN, fold: "open" });
 
-    rows.push({ path, measured: true, folds, before, after });
+    /* 仕込みの行は、本番の数に混ぜない */
+    const drop = (m) => ({ ...m, rows: m.rows.filter((x) => !isProbe(x)), skipped: m.skipped.filter((x) => !isProbe(x)) });
+    rows.push({
+      path, measured: true, folds,
+      before: process.env.PROBE ? drop(before) : before,
+      after: process.env.PROBE ? drop(after) : after,
+      probeBefore: process.env.PROBE ? before.rows : undefined,
+      probeAfter: process.env.PROBE ? after.rows : undefined,
+    });
     const s0 = before.rows.filter((r) => r.small).length;
     const s1 = after.rows.filter((r) => r.small).length;
     const inFold = after.rows.filter((r) => r.fold).length;
@@ -235,26 +210,14 @@ for (const [W, rows] of byWidth) {
 /* ============ 自己確認 ============ */
 if (process.env.PROBE) {
   console.log("\n===== 仕込みの確認 =====");
-  let bad = 0;
-  for (const [W, rows] of byWidth) {
+  let bad = 0, seen = 0;
+  for (const [W, rows] of byWidth)
     for (const r of rows) {
       if (!r.measured) continue;
-      const has = (set, t) => set.some((x) => x.t === t);
-      const small1 = r.after.rows.filter((x) => x.small);
-      const all1 = r.after.rows;
-      const small0 = r.before.rows.filter((x) => x.small);
-      const line = [
-        `${W} ${r.path}`,
-        `畳みの中の40px「小」: 開いたあと ${has(small1, "小") ? "挙がった" : "!! 挙がらない"}` +
-          ` / 開く前 ${has(small0, "小") ? "!! 挙がった（開く前に見えるはずがない）" : "挙がらない（これまで見落としていた）"}`,
-        `入れ子の中の40px「奥」: ${has(small1, "奥") ? "挙がった" : "!! 挙がらない"}`,
-        `畳みの中の60px「大」: ${has(small1, "大") ? "!! 割れと誤判定" : "割れにしていない"}`,
-        `畳みの外の40px「外」: 開く前 ${has(small0, "外") ? "挙がった" : "!! 挙がらない"}`,
-        `畳みの印: 小=${all1.find((x) => x.t === "小")?.fold} 外=${all1.find((x) => x.t === "外")?.fold}`,
-      ].join("\n    ");
-      console.log("  " + line);
-      if (!has(small1, "小") || !has(small1, "奥") || has(small1, "大") || !has(small0, "外") || has(small0, "小")) bad++;
+      seen++;
+      const v = probeVerdict({ after: r.probeAfter || r.after.rows, before: r.probeBefore || r.before.rows });
+      if (!v.ok) { bad++; console.log(`  !! ${W} ${r.path}`); }
+      if (!v.ok || seen === 1) for (const l of v.lines) console.log("  " + l);
     }
-  }
-  console.log(bad ? `\n  !! ${bad}件だめ。この道具の 0 件は証拠にならない` : "\n  仕込みは全部そのとおりに出た");
+  console.log(bad ? `\n  !! ${bad}/${seen} 面でだめ。この道具の 0 件は証拠にならない` : `\n  ${seen}面ぜんぶ、仕込みはそのとおりに出た`);
 }

@@ -22,6 +22,10 @@ const PAGES = (process.env.PAGES || "/").split(",").map((s) => s.trim()).filter(
 const WIDTHS = (process.env.WIDTHS || "390x844,1280x800").split(",").map((s) => s.split("x").map(Number));
 const MIN = Number(process.env.MIN || 48);
 const SEL = process.env.SEL || SEL_ALL;
+/* curl 経由は1本ずつ順に取るので、面によっては素材が間に合わない。
+   **足りないと押しどころが少なく出て、「本番には無い」と読めてしまう。**
+   数が合わないときは、まずここを伸ばして数が動くかを見る（島の面がそうだった） */
+const WAIT = Number(process.env.WAIT || 6000);
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -37,6 +41,18 @@ for (const [W, H] of WIDTHS) {
     reducedMotion: "reduce",
   });
   await viaCurl(ctx);
+  /* **外から借りている写真は、1枚の絵で埋める。**
+     `prod.mjs` の `viaCurl` は本番と顔の置き場しか通さないので、北欧の面の
+     写真（`upload.wikimedia.org`）が止まる。止まると写真の欄が潰れて、
+     **写真に添えた出どころのリンクが 16px の字だけになり、「押しどころが
+     48px 未満」と挙がる。** 実際に `/nordic/estonia` で 19件そう出た。
+     止めた通信が原因の「割れ」は毎回起きる（`docs/island-standards.md` 13）。
+     1枚ずつ curl で取ると19枚で40分たっても終わらないので、**中身は問わず
+     箱だけ返す**（測っているのは押しどころの大きさで、写真の中身ではない）。
+     **あとに登録した route が先に効く**ので、ここは viaCurl の後に書く。 */
+  await ctx.route(/upload\.wikimedia\.org/, (r) =>
+    r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+  );
   await ctx.addInitScript(() => {
     try {
       localStorage.setItem("ayato-island-arrived", "2026-09-04");
@@ -52,7 +68,7 @@ for (const [W, H] of WIDTHS) {
       continue;
     }
     // curl 経由は1本ずつ順に取るので、待ちを短くすると絵が間に合わない
-    await p.waitForTimeout(6000);
+    await p.waitForTimeout(WAIT);
     await p.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 600) {
         window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 25));
