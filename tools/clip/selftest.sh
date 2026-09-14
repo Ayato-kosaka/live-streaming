@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# tools/clip/make.sh を、YouTube に繋がらない箱で確かめる。
+# tools/clip/fetch.py を、YouTube に繋がらない箱で確かめる。
 #
 # **この箱から YouTube は引けない。** どの player_client を試しても
 # 「Sign in to confirm you're not a bot」で弾かれる（2026-09-11 に実測）。
-# なので Cookie が要る部分だけは Actions でしか通せないが、**それ以外**
-# ——区間の読み取り・切り出す位置・ファイル名・出来たものの判定——は
-# 手元の mp4 を配れば本番と同じ道を通る。
+# なので口の当たり直しと Cookie の部分だけは Actions でしか通せないが、
+# **それ以外**——区間の読み取り・切り出す位置・出来たものの判定——は
+# 手元の mp4 を Range に答える口で配れば、本番と同じ道を通る。
 #
 #   bash tools/clip/selftest.sh
 #
@@ -14,6 +14,11 @@
 #   1. 頼んだ区間の長さのものが出来る
 #   2. **切り出した頭が、元の動画のその秒と同じ絵**（ずれていない）
 #   3. 配信の終わりを越えた区間は NG になって、終了コードが 1 になる
+#
+# **ここで確かめられないもの**（Actions でしか見られない）:
+#   - どの player_client が通るか・PO Token・Cookie の受け渡し
+#   - YouTube の形式の選び方（CLIP_HEIGHT で縦を絞るところ）。
+#     差し込み先は mp4 が1本あるだけなので、絞る道は通らない
 #
 set -euo pipefail
 
@@ -23,9 +28,10 @@ PORT="${PORT:-4779}"
 mkdir -p "$WORK"
 trap 'kill "${SRV_PID:-0}" 2>/dev/null || true; rm -rf "$WORK"' EXIT
 
-for cmd in yt-dlp ffmpeg ffprobe python3; do
+for cmd in ffmpeg ffprobe python3; do
   command -v "$cmd" >/dev/null || { echo "$cmd がありません"; exit 1; }
 done
+python3 -m yt_dlp --version >/dev/null || { echo "yt_dlp がありません"; exit 1; }
 
 echo "1) 5分の試験用の動画を作る"
 ffmpeg -v error -y \
@@ -101,12 +107,12 @@ export CLIP_SOURCE_URL="http://127.0.0.1:${PORT}/src.mp4"
 
 echo ""
 echo "3) 2本を切り出す（0:00:30-0:01:00 と 2:10-2:40）"
-VIDEO=kyzCpe5Znyk RANGES="0:00:30-0:01:00,2:10-2:40" HEIGHT=360 OUT="$WORK/out" \
-  bash "$HERE/make.sh" 2>&1 | sed -n '/出来たもの/,$p'
+CLIP_OUT="$WORK/out" python3 "$HERE/fetch.py" kyzCpe5Znyk "0:00:30-0:01:00,2:10-2:40" \
+  2>&1 | sed -n '/出来たもの/,$p'
 
 echo ""
 echo "4) 切り出した頭が、元の 2:10 の絵と同じかを見る"
-ffmpeg -v error -y -i "$WORK/out/kyzCpe5Znyk_0-02-10_0-02-40.mp4" \
+ffmpeg -v error -y -i "$WORK/out/kyzCpe5Znyk_02_130-160.mp4" \
   -frames:v 1 -f image2 "$WORK/cut.png"
 ffmpeg -v error -y -ss 130 -i "$WORK/src.mp4" -frames:v 1 -f image2 "$WORK/want.png"
 ffmpeg -v error -y -ss 60 -i "$WORK/src.mp4" -frames:v 1 -f image2 "$WORK/other.png"
@@ -127,8 +133,8 @@ echo "   OK  2:10 の絵と一致し、1:00 の絵とは違いました"
 echo ""
 echo "5) 配信の終わりを越えた区間は NG になるか"
 set +e
-VIDEO=kyzCpe5Znyk RANGES="6:00-6:30" HEIGHT=360 OUT="$WORK/out2" \
-  bash "$HERE/make.sh" >"$WORK/over.log" 2>&1
+CLIP_OUT="$WORK/out2" python3 "$HERE/fetch.py" kyzCpe5Znyk "6:00-6:30" \
+  >"$WORK/over.log" 2>&1
 code=$?
 set -e
 sed -n '/出来たもの/,$p' "$WORK/over.log" | sed 's/^/   /'
