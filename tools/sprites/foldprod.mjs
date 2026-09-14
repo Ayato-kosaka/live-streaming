@@ -41,6 +41,18 @@ for (const [W, H] of WIDTHS) {
     reducedMotion: "reduce",
   });
   await viaCurl(ctx);
+  /* **外から借りている写真は、1枚の絵で埋める。**
+     `prod.mjs` の `viaCurl` は本番と顔の置き場しか通さないので、北欧の面の
+     写真（`upload.wikimedia.org`）が止まる。止まると写真の欄が潰れて、
+     **写真に添えた出どころのリンクが 16px の字だけになり、「押しどころが
+     48px 未満」と挙がる。** 実際に `/nordic/estonia` で 19件そう出た。
+     止めた通信が原因の「割れ」は毎回起きる（`docs/island-standards.md` 13）。
+     1枚ずつ curl で取ると19枚で40分たっても終わらないので、**中身は問わず
+     箱だけ返す**（測っているのは押しどころの大きさで、写真の中身ではない）。
+     **あとに登録した route が先に効く**ので、ここは viaCurl の後に書く。 */
+  await ctx.route(/upload\.wikimedia\.org/, (r) =>
+    r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+  );
   await ctx.addInitScript(() => {
     try {
       localStorage.setItem("ayato-island-arrived", "2026-09-04");
