@@ -17,14 +17,18 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
+  const [loaded, fontError] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     "Kosugi Maru": require("../assets/fonts/KosugiMaru-Regular.ttf"),
     HuiFont29: require("../assets/fonts/HuiFont29.ttf"),
   });
 
   useEffect(() => {
-    if (loaded) {
+    if (fontError) {
+      // 理由は console にだけ。画面には出さない（OBS に映る面の親なので）
+      console.error("字体を読めなかったので、既定の字体のまま出す —", fontError);
+    }
+    if (loaded || fontError) {
       SplashScreen.hideAsync();
 
       // #62 bug fix: Androi 版 PRISMで黒背景が表示される。原因不明。
@@ -40,9 +44,16 @@ export default function RootLayout() {
       //   }
       // }, 100);
     }
-  }, [loaded]);
+  }, [loaded, fontError]);
 
-  if (!loaded) {
+  /* 字体が読めなかったときに、**面ごと止めない。**
+
+     ここは `/alertbox` `/daily_user_stats` `/ve-comment` `/ve-postit` の
+     共通の親で、`return null` を返すと**その4面が全部まっさらになる。**
+     投げ銭のお礼も、死んでいることを知らせる印も、まとめて消える。
+     読めなかったのは字体で、中身は出せる。**出るものは既定の字体で出す。**
+     字体は書き出しに同梱してあるので、ここに来るのはまれ。 */
+  if (!loaded && !fontError) {
     return null;
   }
 

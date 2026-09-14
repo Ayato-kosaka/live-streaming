@@ -6,9 +6,12 @@ import ViewShot from "react-native-view-shot";
 export default function App() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  // 絵にできなかったときの一行。**押した人がこれから何をするか**だけを書く
+  const [failed, setFailed] = useState(false);
   let viewShotRef = React.createRef<ViewShot>();
 
   const captureAndSave = async () => {
+    setFailed(false);
     if (viewShotRef) {
         viewShotRef.current?.capture?.().then(async (uri) => {
           if (Platform.OS === "web") {
@@ -30,6 +33,13 @@ export default function App() {
             }
           }
         })
+        /* 前は落ちても何も起きなかった。押した本人には**壊れたのか、
+           自分の押し方が悪いのか分からない。**ここは配信に映らない
+           こちらの道具なので、一行出してよい。中の話は console に。 */
+        .catch((e) => {
+          console.error("付箋を絵にできなかった —", e);
+          setFailed(true);
+        });
     }
   };
 
@@ -55,6 +65,11 @@ export default function App() {
         </View>
       </ViewShot>
       <Button title="Generate & Save" onPress={captureAndSave} />
+      {failed ? (
+        <Text style={styles.failed}>
+          絵にできませんでした。もう一度押してみてください。
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -107,6 +122,11 @@ postitContent: {
     fontFamily: "HuiFont29",
     color: "#908a60",
     marginVertical: 16,
+  },
+  failed: {
+    marginTop: 10,
+    fontSize: 13,
+    color: "#96242a",
   },
   underline: {
     borderBottomWidth: 1,

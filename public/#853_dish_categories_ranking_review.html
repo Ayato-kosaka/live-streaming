@@ -604,6 +604,33 @@
         display: block;
       }
 
+      .config-lead {
+        margin: 0 0 8px;
+      }
+
+      .config-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .config-input {
+        flex: 1 1 180px;
+        min-width: 0;
+        /* 指で押せる高さ。--tap は 44px */
+        min-height: var(--tap);
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 16px; /* iOS で勝手に拡大されない大きさ */
+      }
+
+      .config-row .secondary-button {
+        min-height: var(--tap);
+      }
+
       @media (min-width: 640px) {
         .modal-backdrop {
           align-items: center;
@@ -641,10 +668,12 @@
 
       <section class="ranking-header" aria-label="ランキングの操作">
         <div class="ranking-title">
-          <h2 id="ranking-title">朝食の料理ランキング</h2>
-          <p class="ranking-subtitle" id="ranking-subtitle">
-            final_score の降順 / 同値同位
-          </p>
+          <!-- ここは読み込む前と、落ちたときに**そのまま残る**札。
+               前は `final_score の降順 / 同値同位` と、中の列の名前が
+               出たままになっていた。読めているときの札は renderRanking が
+               上書きするので、初期値は空でよい。 -->
+          <h2 id="ranking-title">料理ランキング</h2>
+          <p class="ranking-subtitle" id="ranking-subtitle"></p>
         </div>
         <button
           class="secondary-button"
@@ -828,10 +857,34 @@
         "https://script.google.com/macros/s/AKfycbzBYglz4WfS5vtc7zQ8_Oc-E_AFUdQHWRgN3NwfvINnlXlGyvzTSwesRHdrM3ZK0Ycv/exec";
 
       /**
-       * GAS側のスクリプトプロパティ RANKING_REVIEW_API_SECRET と同じ値を入れる。
-       * このHTMLを限定利用する前提で、ブラウザへ埋め込む方式にしている。
+       * 送るときの合言葉を覚えておく場所。
+       *
+       * **このファイルには合言葉を書かない。**
+       * ここは公開の置き場から誰にでも配られるので、定数に入れると
+       * 開いた人全員が読める（実際にそうなっていた）。値を焼き直しても
+       * 同じことの繰り返しになるので、**入れる場所を変えた。**
+       *
+       * 使う人が自分のブラウザに1度だけ覚えさせる。覚えていない端末では
+       * 送るところだけが止まり、**見るのは今までどおりできる。**
        */
-      const API_SECRET = "018c21b1-6a31-48a4-a583-3a7277e6a2a4";
+      const SECRET_STORE_KEY = "dish-ranking-review:secret";
+
+      /** 覚えさせてある合言葉。無ければ空。**値はどこにも出さない。** */
+      function getApiSecret() {
+        try {
+          return (localStorage.getItem(SECRET_STORE_KEY) || "").trim();
+        } catch {
+          return "";
+        }
+      }
+
+      function rememberApiSecret(value) {
+        try {
+          localStorage.setItem(SECRET_STORE_KEY, value.trim());
+        } catch (error) {
+          console.warn("料理カテゴリランキング: 合言葉を覚えられなかった。", error);
+        }
+      }
 
       /**
        * レビュアーを区別したい場合だけ変更する。
@@ -994,8 +1047,7 @@
           renderFeatureKeyControls();
           renderRanking();
         } catch (error) {
-          console.error(error);
-          renderFeatureLoadError();
+          renderFeatureLoadError(error);
         }
       }
 
@@ -1024,13 +1076,26 @@
         els.rankingList.append(loading);
       }
 
-      function renderFeatureLoadError() {
+      /**
+       * ランキングが読めなかったときの姿。
+       *
+       * ここは配信に映る面ではなく、**押す人がいる道具**なので字を出してよい。
+       * ただし書いてよいのは「この人がこれから何をするか」だけ。
+       * 前は「ランキングデータを取得できませんでした。時間をおいて再読み込み
+       * してください。」と出していた。**なぜ出ないか**は読む人には要らないし、
+       * 「取得」「データ」は中の言葉。落ちた理由は console にだけ残す。
+       */
+      function renderFeatureLoadError(error) {
+        console.error("料理カテゴリランキング: ランキングを読めなかった —", error);
+        /* 読めていないのに「朝食の料理ランキング」と出したままにしない。
+           条件を選んだ札も出ていないので、名乗るものが無い。 */
+        els.rankingTitle.textContent = "料理ランキング";
+        els.rankingSubtitle.textContent = "";
         els.rankingList.replaceChildren();
-        const error = document.createElement("div");
-        error.className = "empty-state";
-        error.textContent =
-          "ランキングデータを取得できませんでした。時間をおいて再読み込みしてください。";
-        els.rankingList.append(error);
+        const message = document.createElement("div");
+        message.className = "empty-state";
+        message.textContent = "いまはランキングを出せません。少し待ってから開き直してください。";
+        els.rankingList.append(message);
       }
 
       /**
@@ -1204,8 +1269,9 @@
         if (candidates.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.textContent =
-            "この条件で final_score が0より大きい料理がありません。";
+          /* 前は「この条件で final_score が0より大きい料理がありません。」。
+             `final_score` は中の列の名前で、読む人には要らない。 */
+          empty.textContent = "この条件に合う料理は見つかりませんでした。";
           els.rankingList.append(empty);
           renderReviewCount();
           return;
@@ -1552,17 +1618,20 @@
        * text/plain + no-cors の「単純リクエスト」として送る。
        * この場合、ブラウザ側ではレスポンス本文を読めないが、GAS側では
        * e.postData.contents からJSON本文を受け取れる。
+       *
+       * **この送り方は、断られても `catch` に落ちない。** 相手が 403 を
+       * 返しても、こちらには中身の読めない返事が「成功」として返る。
+       * `catch` に来るのは回線ごと切れたときだけ。
+       * だから**「追記されました」とは言えない。言えるのは「送った」まで。**
+       * 送ったものが入ったかを読み直す口はこの画面に無い
+       * （読んでいるのはランキングの元データで、レビューの控えではない）。
        */
       async function submitFeedback({ payload, button, statusEl, onSuccess }) {
-        if (
-          API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
-          !API_SECRET.trim()
-        ) {
-          setStatus(
-            statusEl,
-            "HTML上部の API_SECRET を、GASのスクリプトプロパティ値へ置き換えてください。",
-            "error"
-          );
+        const apiSecret = getApiSecret();
+        if (!apiSecret) {
+          /* 合言葉を覚えていない端末。押した人がこれからすることは1つ
+             （いちばん上で合言葉を入れる）なので、それだけ書く。 */
+          setStatus(statusEl, "送るには、画面のいちばん上で合言葉を入れてください。", "error");
           return;
         }
 
@@ -1580,22 +1649,25 @@
               "Content-Type": "text/plain;charset=utf-8",
             },
             body: JSON.stringify({
-              apiSecret: API_SECRET,
+              apiSecret,
               ...payload,
             }),
           });
 
           onSuccess();
-          setStatus(
-            statusEl,
-            "送信しました。スプレッドシートへ追記されます。",
-            "success"
-          );
+          /* 前は「送信しました。スプレッドシートへ追記されます。」。
+             **知らないことを、知っているように言っていた。**
+             合言葉を作り直した日は全部断られるのに、この字が出続ける。
+             こちらが確かに知っているのは、送ったことだけ。 */
+          setStatus(statusEl, "送りました。", "success");
         } catch (error) {
-          console.error(error);
+          /* 前は「送信に失敗しました。通信状態と GAS のデプロイ設定を確認して
+             ください。」と出していた。**押した人にできることは「もう一度押す」
+             だけ**で、置き場の設定はこちらの仕事。中の名前は console に残す。 */
+          console.error("料理カテゴリランキング: レビューを送れなかった —", error);
           setStatus(
             statusEl,
-            "送信に失敗しました。通信状態とGASのデプロイ設定を確認してください。",
+            "送れませんでした。もう一度、保存を押してください。",
             "error"
           );
         } finally {
@@ -1745,17 +1817,63 @@
       }
 
       /**
-       * API秘密鍵が未設定の場合だけ、画面上へ設定箇所を案内する。
+       * 合言葉を覚えていない端末に出す、貼り付け口。
+       *
+       * 前はここに、**このファイルのどこを書き換えるか**と、**送り先の側で
+       * 何という名前で持っているか**を、そのまま出していた。読むのは
+       * レビューしに来た人で、その人にファイルは直せない。
+       *
+       * いまは**その人が自分でできること**だけを置いてある。
+       * 覚えさせれば送れるようになり、覚えさせなくても**見るのは今までどおり。**
        */
       function renderConfigWarning() {
-        if (
-          API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
-          !API_SECRET.trim()
-        ) {
-          els.configWarning.classList.add("is-visible");
-          els.configWarning.textContent =
-            "送信を有効にするには、HTML上部の API_SECRET をGASの RANKING_REVIEW_API_SECRET と同じ値に置き換えてください。";
+        els.configWarning.replaceChildren();
+
+        if (getApiSecret()) {
+          els.configWarning.classList.remove("is-visible");
+          return;
         }
+
+        els.configWarning.classList.add("is-visible");
+
+        const lead = document.createElement("p");
+        lead.className = "config-lead";
+        lead.textContent =
+          "レビューを送るには、合言葉が要ります。見るだけなら、このまま使えます。";
+
+        const row = document.createElement("div");
+        row.className = "config-row";
+
+        const input = document.createElement("input");
+        // 肩ごしに覗かれても読めないように伏せる。覚えるのはこの端末だけ
+        input.type = "password";
+        input.className = "config-input";
+        input.autocomplete = "off";
+        input.setAttribute("aria-label", "合言葉");
+        input.placeholder = "合言葉";
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary-button";
+        button.textContent = "覚える";
+        button.addEventListener("click", () => {
+          const value = input.value.trim();
+          if (!value) {
+            input.focus();
+            return;
+          }
+          rememberApiSecret(value);
+          // 入れた値を DOM に残さない
+          input.value = "";
+          renderConfigWarning();
+        });
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") button.click();
+        });
+
+        row.append(input, button);
+        els.configWarning.append(lead, row);
       }
 
       function labelForFeatureKey(featureType, featureKey) {
