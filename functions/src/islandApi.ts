@@ -1923,11 +1923,21 @@ async function listPhotoDays(): Promise<Json[]> {
     Promise.all(days.map((d) => channelsOfDay(events, d))),
     listResidents(),
   ]);
-  /* **絵は、出す人ぶんだけを1回で引く**(`cards.ts` の `iconsOf`)。
-     日ごとに引くと旅の日数ぶん往復が増える。日が何日あっても2往復。
-     引く前に日ごとの上限(60人)で切る。出さない人の絵は要らない。 */
-  const shown = peopleByDay.map((x) => x.slice(0, 60));
-  const icons = await iconsOf(shown.flat());
+  /* **絵は1回で引く**(`cards.ts` の `iconsOf`)。日ごとに引くと旅の日数ぶん
+     往復が増える。日が何日あっても2往復のまま（重複を落として1回だけ渡す）。
+
+     **絵で絞ってから60人で切る。切ってから絞らない。** 候補は「その日
+     投げてくれた人」から「その日いた人」に広がったので、絵の無い人が
+     大量に混じる（9月13日は39人のうち26人）。順番を逆にすると、**絵の
+     ある人が60人の外へ押し出されて消える。**
+
+     絵の無い人はそもそも返さない。読む側は絵でしか人を見分けられない
+     （`CardSheet` は `icon` で重複を落とす）ので、`icon: null` の人は
+     何人いても1マスに潰れたうえ、そのマスには何も描けない。 */
+  const icons = await iconsOf([...new Set(peopleByDay.flat())]);
+  const shown = peopleByDay.map((x) =>
+    x.filter((c) => icons.has(c)).slice(0, 60),
+  );
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
@@ -1945,11 +1955,11 @@ async function listPhotoDays(): Promise<Json[]> {
       day,
       shown[i].map((channelId) => ({
         channelId,
-        /* **絵は誰にでも出す。名前は出してよいと言った人だけ**（すぐ下）。
-           前はここも `null` と直に書いていて、画面が焼き込みの22人
+        /* **ここに来る人は必ず絵を持っている**（すぐ上で絞ってある）。
+           前はここを `null` と直に書いていて、画面が焼き込みの22人
            (`site/content/residents.ts`)から引き直して埋めていた。表に
            入っていない人は、そこで黙って消えていた（`cards.ts` と同じ根っこ）。 */
-        icon: icons.get(channelId) || null,
+        icon: icons.get(channelId) ?? null,
         name: named.get(channelId) || null,
       })),
     );
