@@ -31,7 +31,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { MAX_LEAD, TAP_FIT, around, fitHit, hits, lead, type Box } from "./plates";
+import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -344,8 +344,36 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     /* 看板の入りの動き（logo-in）が終わるまでは、小さく傾いた箱が返る。
        終わったころにもう一度測る（毎フレーム測ると layout を起こす） */
     const t = window.setTimeout(measure, 900);
-    return () => window.clearTimeout(t);
-  }, [openSpot, box.w, box.h, left, cover, hint]);
+    /* **測った箱が変わったら、測り直す。**
+       ここで測っているものは、どれもカメラで姿が変わる。
+       `.isle-view` / `.isle-atlas` は寄りでは絵だけの 48px、引きでは名前が
+       戻って 105px（`chain.css` の `.isle[data-cam="wide"] .tool-label`）。
+       看板は寄りと引きで絵そのものが差し替わるので（`hero.css` の
+       `.hero-logo-full` / `-mark`）、その下にぶら下がっている旅の板も動く。
+       **測り直す合図に `wide` が入っていなかった。** 引きへ切り替えると
+       寄りのときの箱を持ったまま置き直すので、実測（390px・表紙）で
+       旅の板を y=152 にいるものとして避けていた（本当は 192）。
+       **40px ずれた場所を避けた結果、「この旅のこと」と「これから」の当たりが
+       板の下に置かれて、2軒とも押せなくなっていた。**
+       下の `wide` は、切り替えたその場で測り直すため。`ResizeObserver` は、
+       これから先ここに何が足されても取りこぼさないため（#86。直したのが
+       仕掛けなら、その仕掛けを使っている場所ごと掃き出す）。 */
+    const ro = new ResizeObserver(() => measure());
+    const host = hostRef.current;
+    for (const el of host?.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint") ?? [])
+      ro.observe(el);
+    if (cover) {
+      const hero = host?.parentElement;
+      for (const sel of [".hero-copy", ".htrip", ".hero-logo"]) {
+        const el = hero?.querySelector(sel);
+        if (el) ro.observe(el);
+      }
+    }
+    return () => {
+      window.clearTimeout(t);
+      ro.disconnect();
+    };
+  }, [openSpot, box.w, box.h, left, cover, hint, wide]);
 
   /* --- 出発までの日数。1分ごとに数え直す ---
      静的書き出しなので、ビルド時の「今日」を焼き込まない（`CLAUDE.md`） */
@@ -699,10 +727,11 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             if (!on) continue;
             const r = mk.getBoundingClientRect();
             if (r.width < 4) continue;
-            /* 札の当たりは `::before` で 48px まで広げてある（`chain.css`）。
-               見た目の箱で足すと、広げたぶんが漏れる */
-            const w = Math.max(r.width, TAP_MIN);
-            const h = Math.max(r.height, TAP_MIN);
+            /* 札の当たりは `::before` で 49px まで広げてある（`chain.css`。
+               ちょうど 48px だと中心から 24px が縁そのものになって落ちる）。
+               見た目の箱で足すと、広げたぶんが漏れる。**あちらと同じ数を使う** */
+            const w = Math.max(r.width, TAP_FIT);
+            const h = Math.max(r.height, TAP_FIT);
             won0.push({
               x: r.left - hb.left + (r.width - w) / 2,
               y: r.top - hb.top + (r.height - h) / 2,
@@ -1416,21 +1445,71 @@ function placePlates(
      **手前にいる建物から先に取る。** 絵は足元の y で並べて描いてあるので
      （`layers`）、手前の建物は後ろの建物を隠している。隠れている側の当たりを
      手前が持っていくのは、絵と同じ順番。残った側は、**見えている上半分**が
-     押しどころになる（`fitHit`）。48px を取れなかった建物は引っ込む——
-     その建物は絵でもほとんど見えていないし、札からは入れる。 */
-  const order = places
+     押しどころになる（`fitHit`）。48px を取れなかった建物は引っ込む。
+
+     **引っ込めた建物に、代わりの入口があるとは限らない**（`plates.ts` に書いた）。
+     引きで札が出るのは看板の6つだけ、寄りでは近づいた1軒だけなので、
+     引っ込めたぶんがそのまま「入口の無い建物」になることがある。
+     だから引っ込める数は**取り合いの解き方で減らす**——下の `takesTap` と、
+     負けた者に先に選ばせるやり直しがそれ。 */
+  const depth = places
     .map((sp, i) => ({ i, y: sp.y }))
-    .sort((a, b) => b.y - a.y);
-  const won: Box[] = o.tapTaken.slice();
-  for (const { i } of order) {
-    const el = o.marks[i];
-    const a = art[i];
-    const want = hitBoxes[i];
-    if (!el || !a || !want) continue;
-    const fit = fitHit(want, won, TAP_FIT, { x: 0, y: 0, w: o.b.w, h: o.b.h });
+    .sort((a, b) => b.y - a.y)
+    .map((q) => q.i)
+    .filter((i) => o.marks[i] && art[i] && hitBoxes[i]);
+  /**
+   * その建物の当たりが、**いま指を実際に取るか。**
+   *
+   * 引きでは、札の出ている看板の建物は当たりを止めてある
+   * （`chain.css` の `.isle[data-cam="wide"] .isle-spot.is-sign .isle-hit`。
+   * 入口は札1枚に寄せる決まり）。**止めてあるものを取り合いに入れていた。**
+   * 実測（390px・表紙の引き）で、指を1本も取らない「歩いた国」の 49x49 が
+   * 「企画をだす」の当たりを 48x33.5 まで削り、削られたほうは 48px を
+   * 取れずに引っ込んで、**札も当たりも無い建物**になっていた。
+   *
+   * `uiBoxes`（読めなくなる場所）と `tapBoxes`（指を取る場所）を分けたのと
+   * 同じ理由。**見えない箱と、指を取る箱は別物。**
+   */
+  const takesTap = (i: number) => !o.wide || !places[i].sign || o.fars[i];
+  /** 欲しい箱（絵の大きさを 48px まで広げたもの）。取り合いを何度やり直しても、
+      出発点はいつもここ */
+  const want = hitBoxes.slice();
+  /** `seq` の順に 49px を取っていく。取れなかったところは `null` */
+  const claim = (seq: number[]) => {
+    const got: (Box | null)[] = new Array(places.length).fill(null);
+    const won: Box[] = o.tapTaken.slice();
+    for (const i of seq) {
+      const fit = fitHit(want[i], won, TAP_FIT, { x: 0, y: 0, w: o.b.w, h: o.b.h });
+      if (!fit) continue;
+      got[i] = fit;
+      if (takesTap(i)) won.push(fit);
+    }
+    return got;
+  };
+  const lost = (got: (Box | null)[]) => depth.filter((i) => !got[i]);
+  /* **先に取った者勝ちを、1回で終わらせない。**
+     順番は手前の建物から（絵は足元の y で並べて描いてあるので、手前は後ろを
+     隠している。隠れている側の当たりを手前が持っていくのは、絵と同じ順番）。
+     ただしこの順番は**取り合いに負けた者が出たときの答えにはなっていない。**
+     実測（390px・表紙の引き）で、先に選んだ「いまどこ」が 17px 上へ伸びただけで
+     「これから」の逃げ場が消え、入口の無い建物が1軒増えた。**もぐら叩きになる。**
+
+     なので**負けた者に先に選ばせて、もう一度解く。** 負けが減ったほうを採る。
+     減らなければそこで打ち切る（形は変わらないので、行ったり来たりしない）。 */
+  let got = claim(depth);
+  for (let pass = 0; pass < 3; pass++) {
+    const l = lost(got);
+    if (!l.length) break;
+    const retry = claim(l.concat(depth.filter((i) => !l.includes(i))));
+    if (lost(retry).length >= l.length) break;
+    got = retry;
+  }
+  for (const i of depth) {
+    const el = o.marks[i]!;
+    const a = art[i]!;
+    const fit = got[i];
     const off = !fit;
     if (fit) {
-      won.push(fit);
       hitBoxes[i] = fit;
       el.style.setProperty("--hl", `${(fit.x - a.px).toFixed(1)}px`);
       el.style.setProperty("--ht", `${(fit.y - a.py).toFixed(1)}px`);
@@ -1440,6 +1519,15 @@ function placePlates(
       /* 押しどころを出さない建物は、**場所も取らない。**
          取らせると、そのぶん住人まで押せなくなる */
       hitBoxes[i] = { x: -9999, y: -9999, w: 0, h: 0 };
+      /* **前のフレームの箱を、そのまま残さない。**
+         `--hl/--ht/--hiw/--hih` は当たりが取れたときにしか書かない。
+         引っ込めるときに消していなかったので、当たりの箱は**前に取れた
+         ときの場所**に居座っていた。カメラが寄りから引きへ動くと建物の
+         大きさが何倍も変わるので、居座った箱は建物からまるごと離れる——
+         実測（390px・表紙の引き）で「伝説の企画」の当たりが建物の
+         **108px 上**、看板ロゴの板の上に載っていた。
+         消せば `chain.css` の既定（絵の大きさそのまま）に戻る。 */
+      for (const k of ["--hl", "--ht", "--hiw", "--hih"]) el.style.removeProperty(k);
     }
     if ((el.getAttribute("data-hit") === "off") !== off) {
       if (off) el.setAttribute("data-hit", "off");
@@ -1458,10 +1546,13 @@ function placePlates(
     if (sz && sz.w) {
       const gy = sp.countdown ? 26 : 6;
       /* 詰めるのは**見た目の箱ではなく、指の当たり**。札は 30px しかないが、
-         `::before` が 48px まで広げてある（`island-design.md` 3-2）。
-         見た目で詰めると、隣の札の見えない当たりが食い込んで両方 48px を割る。 */
-      const hw = Math.max(sz.w, 48);
-      const hh = Math.max(sz.h, 48);
+         `::before` が指で押せる最小まで広げてある（`island-design.md` 3-2）。
+         見た目で詰めると、隣の札の見えない当たりが食い込んで両方 48px を割る。
+         **ここは `TAP`（48）。`TAP_FIT`（49）ではない。** 49 は「測るときの
+         丸めで落ちないように1px 多く取る」ぶんで、離す決まりそのものは 48。
+         ここに 49 を使うと、決まりが要求していない 0.5px ぶん札が動く（実測）。 */
+      const hw = Math.max(sz.w, TAP);
+      const hh = Math.max(sz.h, TAP);
       /* 札が実際に立っている高さ。**CSS と同じ式で出す。**
          `chain.css` の `.isle-mark` は `bottom: calc(max(var(--mh), 46px) + 12px)`
          で、絵の低い建物では 46px のほうが効く。ここが `mh` のままだったので、

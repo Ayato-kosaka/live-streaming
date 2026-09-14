@@ -101,12 +101,26 @@ export function around(rect: Box, fx: number, fy: number, artW: number, mh: numb
 
    **決めたのは、負けたほうの畳み方。** 痩せたまま残さない。
 
-   1. 上にいるものに食われたら、**空いているほうへ寄る**（`cut`）。
+   1. 上にいるものに食われたら、**空いているほうへ寄る**（`cuts`）。
       建物は前の建物に下半分を隠されるが、見えている上半分は押せる
    2. 寄せても 48px に足りなければ、**空いているほうへ伸ばして取り戻す**（`widen`）
    3. それでも取れなければ、**引っ込む**（`fitHit` が null）。
-      12px の帯を残すより、無いほうがいい。建物は札から入れるし、
-      住人は地面を押せば拾える（`IsleStage` の `folkAt`）
+      12px の帯を残すより、無いほうがいい
+
+   **引っ込めた建物に、代わりの入口があるとは限らない。**
+   ここには「引っ込んでも札から入れる」と書いてあったが、それが正しいのは
+   **引き（島をながめる）で、その建物が看板の6つのとき**だけ。
+
+   - 寄り（降り立った画面）では `.isle-spot:not(.is-on) .isle-mark` が
+     `opacity: 0` なので、**近づいている1軒以外の札は出ていない。**
+     引っ込んだ建物の逃げ道は「歩いて近づく」「島をながめるを押す」
+     「下の紙まで送る」の3つで、札ではない
+   - 引きでも、看板でない建物（表紙なら6軒）には札が出ない。
+     そこを引っ込めると**入口がまるごと無くなる**
+
+   なので `fitHit` が null を返したとき、**呼ぶ側は代わりの入口があるかを
+   自分で見る。** 無いなら、それは取り合いの解き方のほうを直す合図
+   （`IsleStage` の `takesTap`。指を取らない当たりを取り合いに入れない）。
 
    札の逃がし方（上の `around`）と同じ考えで、**ずらす → 駄目なら出さない**。
    ========================================================= */
@@ -125,22 +139,30 @@ export const TAP = 48;
 export const TAP_FIT = 49;
 
 /**
- * `a` から `b` に取られているぶんを切り落とす。
- * 4方向のうち、**いちばん多く残るほう**で切る。
- * 前の建物に下を隠された建物なら、上半分が残る。
+ * `a` から `b` に取られているぶんを切り落とした残りを、**広いほうから順に**返す。
+ * 前の建物に下を隠された建物なら、上半分がいちばん広い。
+ *
+ * **1つに決めない。** 前は「いちばん多く残るほう」の1つだけを返していたが、
+ * 残りが広いことと、そこから 48px に戻せることは別。実測（390px・表紙の引き）で
+ * 「これから」は上に 15.2px・左に 13px 残っていて、広い上を選んだが**上は板が
+ * ふさいでいて伸ばせず**、狭い左なら 49px に戻せていた。1px 広いほうを選んだ
+ * だけで、入口が1つ消えた（`fitHit` が順に試す）。
  */
-export function cut(a: Box, b: Box): Box {
-  if (!hits(a, b)) return a;
+export function cuts(a: Box, b: Box): Box[] {
+  if (!hits(a, b)) return [a];
   const keepL = b.x - a.x;
   const keepR = a.x + a.w - (b.x + b.w);
   const keepU = b.y - a.y;
   const keepD = a.y + a.h - (b.y + b.h);
-  const best = Math.max(keepL, keepR, keepU, keepD);
-  if (best <= 0) return { ...a, w: 0, h: 0 };
-  if (best === keepL) return { ...a, w: keepL };
-  if (best === keepR) return { x: b.x + b.w, y: a.y, w: keepR, h: a.h };
-  if (best === keepU) return { ...a, h: keepU };
-  return { x: a.x, y: b.y + b.h, w: a.w, h: keepD };
+  return [
+    { keep: keepL, box: { ...a, w: keepL } },
+    { keep: keepR, box: { x: b.x + b.w, y: a.y, w: keepR, h: a.h } },
+    { keep: keepU, box: { ...a, h: keepU } },
+    { keep: keepD, box: { x: a.x, y: b.y + b.h, w: a.w, h: keepD } },
+  ]
+    .filter((c) => c.keep > 0)
+    .sort((x, y) => y.keep - x.keep)
+    .map((c) => c.box);
 }
 
 /**
@@ -193,17 +215,27 @@ export function fitHit(want: Box, blockers: Box[], min = TAP, bounds?: Box): Box
     if (w <= 0 || h <= 0) return null;
     r = { x, y, w, h };
   }
-  /* 切るのは最大3回。1回切ると別の相手と重なることがあるので繰り返すが、
-     何度も回すほど残りが細くなるだけなので、そこで打ち切って引っ込める。 */
-  for (let i = 0; i < 3; i++) {
-    const b = blockers.find((q) => hits(r, q));
-    if (!b) break;
-    r = cut(r, b);
-    if (r.w <= 0 || r.h <= 0) return null;
-  }
-  if (blockers.some((q) => hits(r, q))) return null;
-  r = widen(r, blockers, min);
-  if (bounds && (r.x < bounds.x || r.y < bounds.y || r.x + r.w > bounds.x + bounds.w || r.y + r.h > bounds.y + bounds.h))
+  /* 切るのは最大3回。1回切ると別の相手と重なることがあるので繰り返す。
+     **切る向きは、残りの広さでは決めない。** 広い残りが伸ばせず、狭い残りなら
+     伸ばせる、ということが起きる（`cuts` に実測）。広いほうから順に試して、
+     **49px に戻せた最初の1つ**を採る。戻せる向きが1つも無ければ引っ込める。
+     4方向 × 3回で最大 64 通りだが、たいてい1つめで決まるので、
+     ふだんの重さは前と変わらない。 */
+  const solve = (a: Box, left: number): Box | null => {
+    const b = blockers.find((q) => hits(a, q));
+    if (!b) {
+      const w = widen(a, blockers, min);
+      if (w.w < min || w.h < min) return null;
+      if (bounds && (w.x < bounds.x || w.y < bounds.y || w.x + w.w > bounds.x + bounds.w || w.y + w.h > bounds.y + bounds.h))
+        return null;
+      return w;
+    }
+    if (left <= 0) return null;
+    for (const c of cuts(a, b)) {
+      const got = solve(c, left - 1);
+      if (got) return got;
+    }
     return null;
-  return r.w >= min && r.h >= min ? r : null;
+  };
+  return solve(r, 3);
 }

@@ -9,7 +9,7 @@
  * **数字だけで「届かない」と言わないための絵**（`docs/island-standards.md` 1・4）。
  */
 import { chromium } from "playwright-core";
-import { viaCurl, ORIGIN } from "./prod.mjs";
+import { at, net, ORIGIN } from "./islereachsite.mjs";
 import { offline } from "./route.mjs";
 
 const W = Number(process.env.W || 390);
@@ -41,11 +41,12 @@ const DRAW = `() => {
     document.body.appendChild(d);
   };
   /* **突く先は中心から 23px。24px ではない。**
-     札の見えない当たり（chain.css の .isle-mark::before）は max(100%, 48px) で
-     **ちょうど 48px**。中心から 24px はその境目そのものなので、丸めしだいで
-     下の地面が返る。実測で /island/middle-east の引きは、札4枚のうち2枚が
-     (0,+24) だけで落ちて「入口が無い」と出ていた（23px にすると4枚とも通る）。
-     plates.ts が TAP_FIT = 49（48ではなく49）を取っているのと同じ理由。 */
+     札の見えない当たり（chain.css の .isle-mark::before）が **ちょうど 48px**
+     だったころ、中心から 24px はその境目そのもので、丸めしだいで下の地面が
+     返っていた（/island/middle-east の引きは札4枚のうち2枚が (0,+24) だけで
+     落ちて「入口が無い」と出た）。**あちらを 49px にしたので 24px でも通る**が、
+     ここは 23px のままにしておく。縁ちょうどを突きたいときは D=24 を渡す
+     （islereach.mjs）。plates.ts の TAP_FIT = 49 と同じ考え。 */
   const D = 23;
   const reach = (el) => {
     const b = el.getBoundingClientRect();
@@ -59,12 +60,13 @@ const DRAW = `() => {
     }
     return "ok";
   };
-  const st = (el, host) => {
+  /* **属性ではなく、ブラウザに聞く**（islereach.mjs と同じ理由）。
+     data-hit="off" でも CSS が指を戻していることがあった。 */
+  const st = (el) => {
     if (!el) return "none";
     const b = el.getBoundingClientRect();
     const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
     if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return "out";
-    if (host && host.getAttribute("data-hit") === "off") return "off";
     const cs = getComputedStyle(el);
     if (cs.pointerEvents === "none" || Number(cs.opacity) === 0) return "off";
     return reach(el);
@@ -72,10 +74,10 @@ const DRAW = `() => {
   const COL = { ok: "#1f9d55", taken: "#d0021b", off: "#d0021b", out: "#e08000" };
   const JA = { ok: "届く", taken: "取られている", off: "引っ込んでいる", out: "画面の外" };
   const tally = { ok: 0, taken: 0, off: 0, out: 0, none: 0 };
-  document.querySelectorAll(".isle-spot").forEach((host, i) => {
+  document.querySelectorAll(".isle-spot").forEach((host) => {
     const hit = host.querySelector(".isle-hit");
     const mark = host.querySelector(".isle-mark");
-    const sh = st(hit, host), sm = st(mark, null);
+    const sh = st(hit), sm = st(mark);
     const name = (hit?.getAttribute("aria-label") || "").replace(/^この島(で|の)?/, "").replace(/をみる$/, "");
     const s = sh === "ok" || sm === "ok" ? "ok" : sh;
     tally[s] = (tally[s] || 0) + 1;
@@ -91,7 +93,7 @@ const DRAW = `() => {
   const wt = { ok: 0, taken: 0, off: 0, out: 0, none: 0 };
   document.querySelectorAll(".isle-who").forEach((host) => {
     const el = host.querySelector(".isle-who-hit");
-    const s = st(el, host);
+    const s = st(el);
     wt[s] = (wt[s] || 0) + 1;
     if (s === "none") return;
     if (s === "out") {
@@ -114,10 +116,10 @@ const DRAW = `() => {
 
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: W, height: 844 }, deviceScaleFactor: 2 });
-await viaCurl(ctx);
+await net(ctx);
 await offline(ctx);
 const pg = await ctx.newPage();
-await pg.goto(ORIGIN + P, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
+await pg.goto(at(P), { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
 await pg.waitForTimeout(2500);
 const shut = async () => {
   for (let i = 0; i < 20; i++) {

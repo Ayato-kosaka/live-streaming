@@ -59,11 +59,15 @@
  * 「取られている」と出る。実測では0件だったが、0件だったことを今日はじめて確かめた）。
  */
 import { chromium } from "playwright-core";
-import { viaCurl, ORIGIN } from "./prod.mjs";
+import { at, net, ORIGIN } from "./islereachsite.mjs";
 import { offline } from "./route.mjs";
 
 const W = Number(process.env.W || 390);
 const SEC = Number(process.env.SEC || 12);
+/** 突く先の、中心からの距離。既定 23。**24 を渡すと縁ちょうどを突く** —
+ *  札の見えない当たりを 49px にしたので、24px でも自分が返るはず。
+ *  そこを確かめるための逃がし口（`D=24 node islereach.mjs`）。 */
+const DIST = Number(process.env.D || 23);
 const PAGES = (process.env.PAGES || "/,/island/caucasus,/island/europe,/island/iran-walk,/island/middle-east").split(",");
 
 /* 1回ぶんの見立て。返すのは要素ごとの状態:
@@ -74,12 +78,13 @@ const PAGES = (process.env.PAGES || "/,/island/caucasus,/island/europe,/island/i
      none  … そもそも押しどころが描かれていない（引きの住人など。測れない） */
 const SNAP = `() => {
   /* **突く先は中心から 23px。24px ではない。**
-     札の見えない当たり（chain.css の .isle-mark::before）は max(100%, 48px) で
-     **ちょうど 48px**。中心から 24px はその境目そのものなので、丸めしだいで
-     下の地面が返る。実測で /island/middle-east の引きは、札4枚のうち2枚が
-     (0,+24) だけで落ちて「入口が無い」と出ていた（23px にすると4枚とも通る）。
-     plates.ts が TAP_FIT = 49（48ではなく49）を取っているのと同じ理由。 */
-  const D = 23;
+     札の見えない当たり（chain.css の .isle-mark::before）が **ちょうど 48px**
+     だったころ、中心から 24px はその境目そのもので、丸めしだいで下の地面が
+     返っていた（/island/middle-east の引きは札4枚のうち2枚が (0,+24) だけで
+     落ちて「入口が無い」と出た）。**あちらを 49px にしたので 24px でも通る**が、
+     ここは 23px のままにしておく。縁ちょうどを突きたいときは D=24 を渡す
+     （islereach.mjs）。plates.ts の TAP_FIT = 49 と同じ考え。 */
+  const D = DIST;
   const reach = (el) => {
     const b = el.getBoundingClientRect();
     const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
@@ -93,15 +98,21 @@ const SNAP = `() => {
     }
     return "ok";
   };
-  const state = (el, host) => {
+  /* **札の属性を信じない。ブラウザに聞く。**
+     前は data-hit="off" が付いていたら、そこで「引っ込んでいる」と決めていた。
+     ところが CSS には引っ込めたものを戻す規則があって（is-sign[data-far]）、
+     属性は off なのに指は取る、という状態が実際にあった。**属性は書いた側の
+     つもりで、いま押せるかどうかではない。** computed の pointer-events と
+     opacity を見る（docs/island-misses.md #13「まずその判定を疑う」）。 */
+  const state = (el) => {
     if (!el) return "none";
-    if (host && host.getAttribute("data-hit") === "off") {
-      // 引っ込んでいる。画面の外かどうかだけ先に分ける
+    const cs = getComputedStyle(el);
+    if (cs.pointerEvents === "none" || Number(cs.opacity) === 0) {
+      // 指を受けない。画面の外かどうかだけ先に分ける（外は「測れない」）
       const b = el.getBoundingClientRect();
       const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
       return (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) ? "out" : "off";
     }
-    if (getComputedStyle(el).pointerEvents === "none" || Number(getComputedStyle(el).opacity) === 0) return "off";
     return reach(el);
   };
   const isle = document.querySelector(".isle");
@@ -115,11 +126,11 @@ const SNAP = `() => {
   // 1人欠けた瞬間に以降の全員の番号がずれる（aria-label は全員おなじなので
   // 名前では見分けられない。#87 で「のべ 1人」と出たのがこれ）。
   document.querySelectorAll(".isle-who").forEach((host) => {
-    out.who.push(state(host.querySelector(".isle-who-hit"), host));
+    out.who.push(state(host.querySelector(".isle-who-hit")));
   });
   document.querySelectorAll(".isle-spot").forEach((host) => {
-    out.hit.push(state(host.querySelector(".isle-hit"), host));
-    out.mark.push(state(host.querySelector(".isle-mark"), null));
+    out.hit.push(state(host.querySelector(".isle-hit")));
+    out.mark.push(state(host.querySelector(".isle-mark")));
   });
   return out;
 }`;
@@ -177,19 +188,19 @@ const b = await chromium.launch({
 console.log(`${ORIGIN}  幅${W}px  ${SEC}秒ぶん`);
 for (const path of PAGES) {
   const ctx = await b.newContext({ viewport: { width: W, height: 844 }, deviceScaleFactor: 2 });
-  await viaCurl(ctx);
+  await net(ctx);
   await offline(ctx);
   const pg = await ctx.newPage();
   const errs = [];
   pg.on("pageerror", (e) => errs.push(String(e).slice(0, 80)));
-  await pg.goto(ORIGIN + path, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
+  await pg.goto(at(path), { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await pg.waitForTimeout(2000);
 
   const rounds = { who: [], hit: [], mark: [] };
   let talkRounds = 0, rounds総 = 0;
   const end = Date.now() + SEC * 1000;
   while (Date.now() < end) {
-    const r = await pg.evaluate((src) => eval(src)(), SNAP);
+    const r = await pg.evaluate(([src, d]) => eval(src.replace("const D = DIST;", "const D = " + d + ";"))(), [SNAP, DIST]);
     rounds総++;
     if (r.talking) {
       /* **喋りは途中から始まる。** 出ていたら閉じて、その回は数えない。
@@ -232,7 +243,7 @@ for (const path of PAGES) {
     const wend = Date.now() + Math.min(SEC, 6) * 1000;
     let wtalk = 0;
     while (Date.now() < wend) {
-      const r = await pg.evaluate((src) => eval(src)(), SNAP);
+      const r = await pg.evaluate(([src, d]) => eval(src.replace("const D = DIST;", "const D = " + d + ";"))(), [SNAP, DIST]);
       if (r.talking) { wtalk++; await pg.mouse.click(4, 4).catch(() => {}); await pg.waitForTimeout(300); continue; }
       if (r.cam !== "wide") break;
       wr.hit.push(r.hit); wr.mark.push(r.mark);
