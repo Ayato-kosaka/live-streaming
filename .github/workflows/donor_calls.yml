@@ -1,0 +1,131 @@
+name: 紐付け待ちを issue に映す
+
+# 投げ銭してくれたのに どねID が YouTube と紐付いていない人を数えて、
+# **issue を1本、開けたり閉じたりする**（`python/donor_calls.py`）。
+#
+# ## なぜ要るか
+#
+# いままでは `python/doneru_supporters.py` が終了コード 1 で落ちて、
+# 毎晩の取り込みが赤くなることで知らせていた。**その赤が3回見逃された。**
+# 赤は Actions の一覧の中にしか出ないうえ、**「起きたこと」であって
+# 「いま残っていること」ではない。** 次の晩に緑が積まれれば下へ流れていく。
+#
+# 赤を強くするのではなく、**いまの状態そのものを、人が毎日見る場所に置く。**
+# 用事が残っているあいだは issue が開いたまま、終わればこちらで閉じる。
+#
+# ## 繋ぎ先（`workflow_run`）
+#
+# 数える元は Firestore の `islandDonors`。そこへ「表に無い どねID」を
+# 書き込むのは**毎晩の取り込み**（`schedule_fetch_chat.yml` の中の
+# `doneru_supporters.py`）なので、**その後ろに繋ぐ。**
+#
+# **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
+# あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
+# （20:30 UTC）の古参2本だけで、しかも1時間49分〜3時間32分遅れて走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
+# 待っても発火しなかった。下の cron は**保険**として置いてある
+# （取り込み自体が発火しなかった晩の受け皿）。
+#
+# **`conclusion` は見ない。** 繋ぎ先の最後の step は「表に無い どねID が
+# 投げ銭してきた」ときに `exit 1` で終わる。**あれは失敗ではなく呼び出し**で、
+# Firestore にはもう `state: "new"` が入っている。成功のときだけ繋ぐと、
+# **呼び出しの出た晩だけ issue が立たない**——いちばん要る晩に立たない。
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると
+# 黙って切れる。**赤くならない。走らなくなるだけ。**
+# 生きているかは `Fetch Doneru Donations` を `probe: true` で押して確かめる
+# （1バイトも書かずに40秒で終わる）。
+#
+# 繋ぎ先を2本にしてあるのは、片方が消えても止まらないようにするため。
+# 2本とも走った晩は2回回るが、**2回目は同じ本文なので何も書かない**
+# （`donor_calls.py` の `decide()`）。
+#
+# ## 手で押すときの既定は「見るだけ」
+#
+# `apply` の既定は false。押し間違えても issue は動かない
+# （`--apply` を付けないと GitHub API を1回も叩かない）。
+# **押す人のいないとき（cron と、取り込みに繋いで来たぶん）だけ apply で走る。**
+
+on:
+  workflow_run:
+    workflows: ["Fetch YouTube Chat Data", "Fetch Doneru Donations"]
+    types: [completed]
+
+  schedule:
+    # 保険。取り込みの実測（21:49〜23:32 UTC）より後ろ
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "issue を実際に開く／書き換える／閉じる（off なら数えるだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 取り込みと Doneru が続けて終わった晩に2本同時に走ると、
+# 同じ issue を2本立てにいく。1本ずつ通す
+concurrency:
+  group: donor-calls
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # issue を開く・書き換える・閉じる
+  issues: write
+
+jobs:
+  donor_calls:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # **`requirements.txt` を丸ごと入れない。** ここが読むのは Firestore だけで、
+      # BigQuery も YouTube API も Pillow も1行も通らない。
+      # 毎晩ひとりでに走って「用事が残っていること」を知らせる係なので、
+      # **関係のない依存が1つ壊れただけで止まる**形にしたくない。
+      # GitHub を叩くほうは標準ライブラリ（urllib）だけで足りている
+      - name: Firestore のクライアントだけ入れる
+        run: |
+          python -m pip install --upgrade pip
+          pip install "google-cloud-firestore>=2.16.0"
+
+      - name: 紐付け待ちを数えて、issue を合わせる
+        env:
+          # 手で押したときだけ既定が「見るだけ」。
+          # cron と、取り込みに繋いで来たぶんは**読む人がいない**ので apply
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then
+            python python/donor_calls.py --apply
+          else
+            python python/donor_calls.py
+          fi
+
+      # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに
+      # 誰も気づかない。せめてどこで落ちたかを要約に残す
+      # （要約は run の1枚目に出るので、ログを開かずに読める）
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 呼び出しを映せませんでした"
+            echo ""
+            echo 'issue が**いまの状態と食い違ったまま**になっています。'
+            echo '手で押し直すか、`python python/donor_calls.py` を手元で回してください。'
+          } >> "$GITHUB_STEP_SUMMARY"
