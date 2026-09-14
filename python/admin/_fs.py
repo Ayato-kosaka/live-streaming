@@ -8,6 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BQ_PROJECT_ID  # noqa: E402
+from logsafe import sketch  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("admin")
@@ -53,9 +54,17 @@ def need(a: dict, *keys: str) -> list:
 
 
 def show(v) -> str:
-    """ログ用に短く整形する。"""
-    s = json.dumps(v, ensure_ascii=False, default=str)
-    return s if len(s) <= 600 else s[:600] + "…"
+    """ログ用に短く整形する。**公開の場では値を1文字も通さない。**
+
+    ここは `firestore_read` / `firestore_write` / `notes_theme` /
+    `nordic_supporter` / `streamevents_import` ほか、Firestore の書類を
+    ログに出すところ全部が通る1か所。**塞ぐならここ。**
+    呼ぶ側それぞれに「この入れ物は人に結びつくか」を判断させると、
+    判断し忘れた1か所から漏れる（実際に `streamChatMessages` で漏れた）。
+
+    公開の場かどうかの見分けと、出してよい形は `logsafe.sketch()` が持つ。
+    """
+    return sketch(v)
 
 
 class ReadOnly(Exception):

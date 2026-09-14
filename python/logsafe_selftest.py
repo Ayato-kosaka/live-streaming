@@ -102,6 +102,21 @@ HANDLE_B = "@fake_person2"
 PK = "1000000001"
 NAME = "ふしぎな視聴者さん"
 
+# Firestore の書類まるごと。**本番の `streamChatMessages` と同じ形**にする
+# （実際に公開のログへ 120 件並んだのがこの形）。書類IDも本番と同じ
+# `<videoId>_<messageId>` の組み立てにしておかないと、IDを出す枝が
+# 「ここは人を指さない」の顔で通ってしまう
+DOC = {
+    "at": 1789131531316,
+    "messageId": "LCC.EhwKGkNKNkho",
+    "kind": "textMessageEvent",
+    "text": "ライ麦パンスープに付けながら食べるのおいしそう",
+    "videoId": "kyzCpe5Znyk",
+    "channelId": CID_A,
+    "name": HANDLE_A,
+}
+DOC_ID = "kyzCpe5Znyk_LCC.EhwKGkNKNkho"
+
 FAILED: list = []
 
 
@@ -240,6 +255,51 @@ def case_logsafe():
         FAILED.append("logsafe.mask")
 
 
+def case_sketch():
+    """書類まるごとを出す道（`logsafe.sketch` → `admin/_fs.show`）。
+
+    **`show()` を通る側ではなく、`show()` そのものを見る。**
+    Firestore の書類をログに出すスクリプトは十数本あって、
+    1本ずつ検査を書いても書き忘れた1本から漏れる。
+    通る1か所を見ておけば、あとから増えた呼び出しも同じ守りに入る。
+    """
+    import logsafe
+
+    check("logsafe.sketch（書類まるごと）", logging.getLogger("t_sketch"),
+          lambda: logging.getLogger("t_sketch").info("%s", logsafe.sketch(DOC)))
+
+    # 呼ぶ側が実際に通る口。ここが素通しなら上が直っていても漏れる
+    import _fs
+
+    check("admin/_fs.show（書類まるごと）", logging.getLogger("t_show"),
+          lambda: logging.getLogger("t_show").info("%s", _fs.show(DOC)))
+
+    # 書類ID。値を伏せてもIDが人を指していたら同じこと
+    check("admin/firestore_read（書類ID）", logging.getLogger("t_id"),
+          lambda: logging.getLogger("t_id").info(
+              "  %s  %s", logsafe.mask(DOC_ID), _fs.show(DOC)))
+
+    # 手元では**中身がそのまま読めること**まで見る。件数だけだと、
+    # 「型と長さの写し」を手元にも返してしまう直し方が通ってしまう
+    os.environ.pop("GITHUB_ACTIONS", None)
+    hand = _fs.show(DOC)
+    ok = DOC["text"] in hand and HANDLE_A in hand and CID_A in hand
+    print(f"  {'○' if ok else '✕'} admin/_fs.show（手元では中身が読める）")
+    if not ok:
+        FAILED.append("admin/_fs.show（手元で中身が読めない）")
+
+    # 公開の場では**欄の名前と型と長さは残ること。** 全部消してしまうと、
+    # 「読めたが空だった」と「そもそも欄が無い」が見分けられなくなる
+    os.environ["GITHUB_ACTIONS"] = "true"
+    pub = _fs.show(DOC)
+    os.environ.pop("GITHUB_ACTIONS", None)
+    ok = ("channelId" in pub and f"str({len(CID_A)})" in pub
+          and DOC["text"] not in pub)
+    print(f"  {'○' if ok else '✕'} admin/_fs.show（公開でも欄の名前と型と長さは残る）")
+    if not ok:
+        FAILED.append("admin/_fs.show（形まで消えている）")
+
+
 def case_island_channels():
     import island_channels as m
 
@@ -301,6 +361,7 @@ def main() -> int:
     print("=== 公開のログに個人が出ないかを、偽のデータで動かして確かめる ===")
     print("（BigQuery にも Firestore にも1バイトも出ません）")
     case_logsafe()
+    case_sketch()
     print("\n[2] 毎晩の取り込み（schedule_fetch_chat.yml）")
     case_island_channels()
     case_island_channel_photos()

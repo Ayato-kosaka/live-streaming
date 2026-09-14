@@ -97,3 +97,84 @@ def mask(value, public: bool | None = None) -> str:
     import hashlib
 
     return "#" + hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:4]
+
+
+def sketch(value, public: bool | None = None) -> str:
+    """Firestore の書類など、**中身の分からない塊**をログに出す形にする。
+
+    `mask()` は「チャンネルIDが1つ」と分かっているところに使うもので、
+    書類まるごとには使えない。書類は何の欄が入っているか呼ぶ側にも
+    分からないので、**中身を見て出す／出さないを決める余地を残すと、
+    そこが判断の穴になる。**
+
+    実際に穴になった: `firestore_read.py` の docstring には
+    「人に結びつくものが入っているコレクションは `keys_only` で」と
+    書いてあったのに、`streamChatMessages` をそのまま読んで、
+    視聴者さん120人ぶんの本文とチャンネルIDと表示名が公開のログに並んだ。
+    **守りを「回す人が正しい入力を選ぶ」に預けていたから**で、
+    それは `detail_lines` の docstring が禁じている
+    「呼ぶ側に `if` を書く」と同じ形をしている。
+
+    だから、ここでは**入力で選べる逃げ道を作らない。**
+    公開の場では、どんな塊が来ても値は1文字も出さない。出すのは
+    **欄の名前と、型と、長さ**だけ。それだけあれば
+    「どの欄が入っているか」「空か」「長さが変か」は読めるので、
+    Actions のログから形の話は続けられる。
+    値そのものが要るなら手元で回すか、出すものを自分で決めた
+    専用のスクリプトを書く（`admin/doneru_audit.py` が手本。数字しか出さない）。
+
+    Args:
+        value: 書類の中身など、ログに出したい塊
+        public: 公開の場かどうか（省略すると `public_log()` を見る）
+
+    Returns:
+        `{at: int, channelId: str(24), text: str(18)}` のような形の写し（公開の場）か、
+        そのままの JSON（手元）
+    """
+    if public is None:
+        public = public_log()
+    if not public:
+        import json
+
+        s = json.dumps(value, ensure_ascii=False, default=str)
+    else:
+        s = _shape(value)
+    return s if len(s) <= 600 else s[:600] + "…"
+
+
+def _shape(v, depth: int = 0) -> str:
+    """値を「型と長さ」だけの字にする。中身は1文字も通さない。
+
+    入れ子も同じ考えで畳む。深く潜りすぎると、形の話に要らない字が
+    増えるだけなので打ち切る（欄の名前が延々と並ぶより、`{…}` のほうが読める）。
+    """
+    if depth > 3:
+        return "…"
+    # bool は int の一種なので先に見る。順番を変えると True が int になる
+    if v is None:
+        return "null"
+    if isinstance(v, bool):
+        return "bool"
+    if isinstance(v, (int, float)):
+        return type(v).__name__
+    if isinstance(v, (str, bytes, bytearray)):
+        return f"{type(v).__name__}({len(v)})"
+    if isinstance(v, dict):
+        # 欄の名前は出す。何が入っているかが分からないと、
+        # 「読めたが空だった」と「そもそも欄が無い」を見分けられない
+        inner = ", ".join(f"{k}: {_shape(x, depth + 1)}" for k, x in v.items())
+        return "{" + inner + "}"
+    if isinstance(v, (list, tuple, set, frozenset)):
+        # 一覧は、件数と**中の形の種類**だけ。1件ずつ並べると
+        # 「長さ」のつもりで結局 n 件ぶんの形が出てしまう
+        kinds = []
+        for x in v:
+            k = _shape(x, depth + 1)
+            if k not in kinds:
+                kinds.append(k)
+        if not kinds:
+            return "[0]"
+        return f"[{len(v)}× " + " | ".join(kinds[:3]) + "]"
+    # 日時など、上のどれでもない型。型の名前だけ出す。
+    # `str(v)` を混ぜない（中身が出る）
+    return type(v).__name__
