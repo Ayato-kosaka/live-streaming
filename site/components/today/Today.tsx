@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { opensByItself, todayNewsList, type TodayNews } from "@/lib/todayNews";
 import { jstNow } from "@/lib/nightly";
 import { countVisit } from "@/lib/api";
@@ -44,6 +45,10 @@ const TICK = 60_000;
  * 届いていない日は黙る。数を小さく見せないための嘘はつかないが、言わない自由はある。
  */
 const VISITS_FLOOR = 12;
+
+/** 札と、開いた中身を結ぶ名前。中身は島の下へ出すので、隣に無い
+ *  （`aria-controls` が無いと、読み上げでは畳みに見えない） */
+const FOLD_ID = "today-open-panel";
 
 /**
  * この読み込みで、板を自分から開いたかどうか。
@@ -92,6 +97,29 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
   /* 問いは島が落ち着いてから読みに行くので、返事が来たときには
      もう板を開いているかもしれない。開いたあとに丸を足さないための見張り。 */
   const seen = useRef(false);
+
+  /**
+   * 開いた中身を、**どこへ出すか。**
+   *
+   * スマホ（`bar`）は島の下ふちに札があり、開くと中身が島の上へ伸びる作りだった。
+   * 実測（390px・表紙）で、**開いたとたんに島の入口が寄りで7軒・引きで8軒**
+   * 板の下に入って押せなくなっていた。島の絵もほぼ全部隠れる。
+   * 板の置き場所をずらしても直らない——開いた板は島より背が高いので、
+   * どこへ置いても島のどこかを覆う。
+   *
+   * **なので、中身は島の外（すぐ下）へ出す。** 札は島の下ふちに残るので、
+   * 押した札のすぐ下に開く形は変わらない（島の下ふちと `#today-drawer` は
+   * 10px しか離れていない）。島の上には何も伸びないので、避ける工夫も要らない。
+   *
+   * 出し先が無い面（`/island/<章>` など）では、これまでどおりその場で開く。
+   */
+  const [drawer, setDrawer] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setDrawer(place === "bar" ? document.getElementById("today-drawer") : null);
+  }, [place]);
+  const foldRef = useRef<HTMLDivElement>(null);
+  /** 自分から開いた日と、押して開いた日を分ける。**送るのは押したときだけ** */
+  const tapped = useRef(false);
 
   useEffect(() => {
     const who = { lastVisit: readLastVisit() };
@@ -166,8 +194,18 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     // 押していなくても、一度見た問いは「新しいもの」ではない。
     // 押すまで丸を出し続けると、赤い丸が催促になる。
     setAsking(false);
+    tapped.current = true;
     setOpen((v) => !v);
   }, []);
+
+  /* 島の下へ出しているときは、開いた中身が画面の下にはみ出す。
+     **押した人には見せる。** 自分から開いた日は送らない（読み込んだ直後に
+     画面が動くのは、押していない人にとっては何が起きたか分からない）。 */
+  useEffect(() => {
+    if (!open || !drawer || !tapped.current) return;
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    foldRef.current?.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" });
+  }, [open, drawer]);
 
   /** 問いが出ているか、押し終わったかの伝言。まだ板を開いていないときだけ丸にする。 */
   const onPoll = useCallback((unanswered: boolean) => {
@@ -183,9 +221,49 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
   /** 今日の2枚目。おたずねが無い日にだけ出す */
   const more = news[1];
 
+  /* 開いた中身。**畳んでいるあいだも消さずに置いておく。**
+     問いを読みに行くのは中の Poll なので、消してしまうと板を開くまで
+     赤い丸が出ない。display が戻るときに開く動きもやり直される
+     （`app/css/today.css`）。 */
+  const fold = (
+    <div className="today-fold" id={FOLD_ID} hidden={!open} ref={foldRef} data-place={place}>
+      <div className="today-open">
+        <Face news={top} />
+        {/* 今日ここに来た人。島の絵の上ではなく、板の中の最後に小さく置く。
+            **同時接続ではなく日単位**（`docs/island-play.md` 仕掛け16・18）。 */}
+        {visits !== null && visits >= VISITS_FLOOR && (
+          <p className="today-visits">今日、{visits.toLocaleString()}人がこの島に来た</p>
+        )}
+      </div>
+
+      {/* 配信中は問いを出さない。島に留めずに外へ出すのが正解なので、
+          「見にいく」の隣に押すものを増やさない（`docs/island-play.md` 5章）。 */}
+      {top.kind !== "live" && <Poll onCount={onPoll} onEmpty={onEmpty} />}
+
+      {/* 今夜のおたずねが無い日。**板をもう1段深くする。**
+          「まだ出ていない」の1行で終わらせると、押すものが1つも増えない。
+          ここに出るのは今日の2枚目で、その下に掲示板への橋を1本だけ残す。 */}
+      {top.kind !== "live" && noPoll && more && (
+        <div className="today-open today-more">
+          <b className="poll-ask">もうひとつ</b>
+          <Face news={more} />
+          <p className="today-nopoll">
+            今夜のおたずねは、まだ出ていない。
+            <Link className="poll-why" href="/board">
+              掲示板に企画を貼る
+              <Arrow size={11} />
+            </Link>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className={`today${open ? " is-open" : ""}`} data-place={place} data-kind={top.kind} data-ui>
-      <button className="today-tab" onClick={toggle} aria-expanded={open}>
+      {/* 中身は島の下（別の場所）に開くので、**どれを開いた札なのかを結び直す。**
+          隣に無いものは、読み上げでは畳みに見えない */}
+      <button className="today-tab" onClick={toggle} aria-expanded={open} aria-controls={FOLD_ID}>
         <img className="today-art" src={`/sprites/${top.icon}.webp`} alt="" width={30} height={30} />
         <span className="today-line">
           <em>今日の島</em>
@@ -195,40 +273,8 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
         <Wedge />
       </button>
 
-      {/* 畳んでいるあいだも消さずに置いておく。問いを読みに行くのは中の Poll なので、
-          消してしまうと板を開くまで赤い丸が出ない。display が戻るときに
-          開く動きもやり直される（`app/css/today.css`）。 */}
-      <div className="today-fold" hidden={!open}>
-        <div className="today-open">
-          <Face news={top} />
-          {/* 今日ここに来た人。島の絵の上ではなく、板の中の最後に小さく置く。
-              **同時接続ではなく日単位**（`docs/island-play.md` 仕掛け16・18）。 */}
-          {visits !== null && visits >= VISITS_FLOOR && (
-            <p className="today-visits">今日、{visits.toLocaleString()}人がこの島に来た</p>
-          )}
-        </div>
-
-        {/* 配信中は問いを出さない。島に留めずに外へ出すのが正解なので、
-            「見にいく」の隣に押すものを増やさない（`docs/island-play.md` 5章）。 */}
-        {top.kind !== "live" && <Poll onCount={onPoll} onEmpty={onEmpty} />}
-
-        {/* 今夜のおたずねが無い日。**板をもう1段深くする。**
-            「まだ出ていない」の1行で終わらせると、押すものが1つも増えない。
-            ここに出るのは今日の2枚目で、その下に掲示板への橋を1本だけ残す。 */}
-        {top.kind !== "live" && noPoll && more && (
-          <div className="today-open today-more">
-            <b className="poll-ask">もうひとつ</b>
-            <Face news={more} />
-            <p className="today-nopoll">
-              今夜のおたずねは、まだ出ていない。
-              <Link className="poll-why" href="/board">
-                掲示板に企画を貼る
-                <Arrow size={11} />
-              </Link>
-            </p>
-          </div>
-        )}
-      </div>
+      {/* 出し先があるときは島の下へ、無ければその場で開く（上の `drawer`） */}
+      {drawer ? createPortal(fold, drawer) : fold}
     </div>
   );
 }

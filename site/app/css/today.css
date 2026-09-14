@@ -157,10 +157,15 @@
   color: var(--frame-dark);
 }
 
+/* 行き先。**指で押せる最小は 48px**（`docs/island-design.md` 3-2）。
+   前は字と余白まかせで 38px（117x38 / 130x38）だった。畳みの中なので
+   全面の一斉点検にも出ていなかった（`docs/island-misses.md` #85）。 */
 .today-go {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-height: 48px;
   margin-top: 10px;
   padding: 7px 14px;
   border: 3px solid var(--frame-dark);
@@ -250,9 +255,10 @@
     grid-column: 1 / -1;
     min-width: 0;
   }
-  /* 開いた面はバーの上（島の上）へ浮かせる。
-     バーの中で伸ばすと背が変わって、島と walk-hint が毎回ずれる。
-     問いが付くと2枚になるので、浮かせるのは器のほうにする。 */
+  /* 開いた面の出し先が無い面（`#today-drawer` を置いていない面）だけ、
+     これまでどおりバーの上へ浮かせる。**表紙はここを通らない。**
+     表紙では中身を島の下へ出すので（下の `.isle-under`）、この規則は
+     `.today-fold` が板の中に残っているときにしか当たらない。 */
   .today[data-place="bar"] .today-fold {
     position: absolute;
     left: 0;
@@ -279,11 +285,48 @@
     left: 10px;
     right: 10px;
     /* 島の道具（`.isle-view` / `.isle-atlas`）はスマホでは上の隅にいる。
-       下ふちは空いているので、板はそこに寝かせる */
+       下ふちは空いているので、板はそこに寝かせる。
+       **島の上に残ってよいのは、この札1枚だけ。** ここは建物の立っていない
+       帯（実測で、寄り・引きのどちらも当たりはここまで下りてこない）。 */
     bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 4;
   }
 }
+
+/* =========================================================
+   島のすぐ下（`app/page.tsx` の `.isle-under`）
+   ---------------------------------------------------------
+   **背の伸びるものは、島の上で伸ばさない。**
+
+   「今日の島」を島の下ふちの札から上へ開いていたころ、実測（390px・表紙）で
+   開いたとたんに島の入口が**寄りで7軒・引きで8軒**板の下に入り、島の絵も
+   ほとんど見えなくなっていた。板を細くしても直らない——開いた中身は島より
+   背が高いので、島の上に置くかぎりどこかを覆う。
+
+   なので開いた中身は島の外（すぐ下）に出す。札は島の下ふちに残るので、
+   札とここは 10px しか離れていない。**押した札のすぐ下に開く**形は同じ。
+   旅のしるべ（`.htrip`）も、同じ理由でここへ降ろしてある。
+   ========================================================= */
+/* 器は左右の余白だけ持つ。**間（`margin-top`）は中の板が自分で持つ。**
+   器のほうに `gap` や `padding-top` を置くと、中身の無い日（旅が終わって、
+   板も開いていない日）にも帯が残る。
+   `display` も書かない——`[hidden]` の `display: none` と同じ強さになって、
+   畳んだままの中身が出てしまう。 */
+.isle-under { padding: 0 10px; }
+
+.isle-under .today-fold {
+  margin-top: 8px;
+  /* 板の側面と落ち影が切れないぶんの余白 */
+  padding: 0 2px 6px;
+  /* **板の中から出したので、板から受け継いでいた字が来なくなる。**
+     `.today` が持っていた3つをここでも持つ（`.today-title` のように
+     自分で色を書いていない字が、面の地の色を拾ってしまう） */
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+/* 1枚目は器のいちばん上。2枚目と問いは、それぞれ自分の上に間を持っている */
+.isle-under .today-open:not(.today-more) { margin-top: 0; }
 
 /* **話しているあいだも、この板は消さない。**
    ---------------------------------------------------------
@@ -361,8 +404,10 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-  /* 指で押せる高さ。島のバーの入口と同じ 44px を下限にする */
-  min-height: 40px;
+  /* 指で押せる最小 48px（`docs/island-design.md` 3-2）。
+     ここには「44px を下限にする」と書いてあって値は 40px だった。
+     選択肢は畳みの中なので、一斉点検にも出ていなかった（#85） */
+  min-height: 48px;
   padding: 8px 11px;
   text-align: left;
   cursor: pointer;
@@ -438,6 +483,7 @@
    ここだけは板の型にしない。押させたいのは選択肢のほうで、
    これは「書いてもいいよ」の誘いなので、線1本ぶん軽くする。 */
 .poll-why {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -447,6 +493,20 @@
   font-size: 11.5px;
   font-weight: 900;
   border-bottom: 2px solid var(--frame-dark);
+}
+/* **指の当たりだけ 48px に広げる**（`docs/island-design.md` 3-2）。
+   見た目は線1本のまま。線ごと 48px にすると、字から離れた線が1本浮いて
+   「何に掛かった線か」が分からなくなるので、当たりだけ外へ出す。
+   実測 130x28 だった。ここは掲示板への唯一の橋なので、いちばん細い当たりが
+   いちばん先の行き先になっていた。 */
+.poll-why::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: 50%;
+  height: 48px;
+  transform: translateY(-50%);
 }
 .poll-why:active { transform: translateY(1px); }
 
