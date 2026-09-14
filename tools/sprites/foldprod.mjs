@@ -22,6 +22,10 @@ const PAGES = (process.env.PAGES || "/").split(",").map((s) => s.trim()).filter(
 const WIDTHS = (process.env.WIDTHS || "390x844,1280x800").split(",").map((s) => s.split("x").map(Number));
 const MIN = Number(process.env.MIN || 48);
 const SEL = process.env.SEL || SEL_ALL;
+/* curl 経由は1本ずつ順に取るので、面によっては素材が間に合わない。
+   **足りないと押しどころが少なく出て、「本番には無い」と読めてしまう。**
+   数が合わないときは、まずここを伸ばして数が動くかを見る（島の面がそうだった） */
+const WAIT = Number(process.env.WAIT || 6000);
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -52,7 +56,7 @@ for (const [W, H] of WIDTHS) {
       continue;
     }
     // curl 経由は1本ずつ順に取るので、待ちを短くすると絵が間に合わない
-    await p.waitForTimeout(6000);
+    await p.waitForTimeout(WAIT);
     await p.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 600) {
         window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 25));
