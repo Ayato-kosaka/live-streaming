@@ -271,6 +271,13 @@ service cloud.firestore {
        移す前のスプレッドシートは URL を知っていれば誰でも全件読めた
        (#284 の (i))。**そこは閉じるほうへ変える、と決めた。** */
     match /islandCharacter/{docId} { allow read, write: if false; }
+    /* その日いた人の名簿(#402)。**チャンネルIDが日ごとに並んでいるので開けない。**
+       末尾の「それ以外は禁止」でも閉じるが、**名指ししていない入れ物は
+       「なぜ閉じているか」が読めない。** 個人を指すものが入る入れ物は、
+       上の islandCharacter と同じように理由ごと書いておく。
+       画面が要るのは「その日の写真に誰を入れられるか」だけで、それは
+       islandApi が絵のある人に絞ってから返す(GET /nordic/photos)。 */
+    match /islandDayPeople/{docId} { allow read, write: if false; }
 
     // それ以外は禁止
     match /{document=**} {
