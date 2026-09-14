@@ -25,6 +25,7 @@ import {
   GoalRecord,
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
+import { DeadMark } from "./components/DeadMark";
 import { sendLog } from "@/lib/log";
 import { matchViewerByNickname, toViewers } from "./matching.utils";
 import { speak } from "./tts.utils";
@@ -106,8 +107,12 @@ export default function AlertBox() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // エラーメッセージ
-  const [error, setError] = useState<string | null>(null);
+  /* **ここが死んだ、という印だけを持つ。**
+     入るのは理由の符丁（"init" / "no-k" / "wss"）で、画面には出さない。
+     出すのは隅の小さな点1つ（`DeadMark`）。なぜ字をやめたかは
+     `components/DeadMark.tsx` に書いてある。
+     **理由はログにだけ残す**（`sendLog`）。 */
+  const [dead, setDead] = useState<"init" | "no-k" | "wss" | null>(null);
 
   /**
    * Parse source parameter to determine which connectors to use
@@ -203,11 +208,11 @@ export default function AlertBox() {
           goal: goalRecord,
         });
       } catch (error) {
-        // 失敗ログ
+        /* **貯金箱が出せないだけ。** 通知そのものは別の口から来るので、
+           ここで画面を差し替えない（前は差し替えていたので、この口が
+           落ちた晩は投げ銭が来てもお礼が1つも出なかった）。 */
         sendLog("AlertBox", sessionId, "initError", { error });
-        setError(
-          "初期化に失敗しました。Goals / doneruAmount の取得を確認してください。"
-        );
+        setDead("init");
       }
     };
     fetchCharacters();
@@ -299,14 +304,12 @@ export default function AlertBox() {
 
     /* 合言葉が無ければ、どちらのつなぎ先も持てない。**黙って止まらない。**
        前の形（環境変数に焼き込む）から替わったので、OBS の URL を
-       貼り替えていないと必ずここに来る。配信の画面に出てしまうが、
-       何も起きないまま気づかないほうが悪い（#180）。 */
+       貼り替えていないと必ずここに来る（#180）。
+       **ただし配信の画面に手順を書かない。** 印だけ出して、
+       何をすればよいかはログに残す。 */
     if (!/^[0-9a-f]{32}$/.test(alertboxId)) {
       sendLog("AlertBox", sessionId, "noAlertboxId");
-      setError(
-        "OBS の URL に ?k=… が付いていません。" +
-          "あやと島の /me を開いて、アラートボックスの URL を貼り替えてください。"
-      );
+      setDead("no-k");
       return () => {
         sendLog("AlertBox", sessionId, "unmount");
       };
@@ -331,14 +334,10 @@ export default function AlertBox() {
           });
           /* **原因は2つあるが、口はどちらも 404 を返す。** 合言葉が
              当たったことだけを外から確かめられないようにするため。
-             だからここで両方を挙げて、先に多いほう（鍵が無い）から書く。
-             実際 2026-09-09 に止まったのは鍵のほうだった。 */
-          setError(
-            "投げ銭のつなぎ先を取れませんでした。" +
-              "あやと島の /me を開いて、（1）Doneru の鍵が入っているか、" +
-              "（2）この URL の ?k= が /me に出ているものと同じか、" +
-              "の順に確かめてください。"
-          );
+             どちらなのかは画面では分けられないし、分けたところで
+             配信に映してよい話ではない。印だけ出して、詳しくはログに残す
+             （実際 2026-09-09 に止まったのは鍵のほうだった）。 */
+          setDead("wss");
         });
       cleanupFunctions.push(() => {
         stopped = true;
@@ -661,20 +660,17 @@ export default function AlertBox() {
     [notification]
   );
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text>{error}</Text>
-      </View>
-    );
-  }
-
   return (
     <>
       {/* 画面ヘッダーを非表示 */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
+        {/* 死んでいるときの印。**アラートの上に重ねるだけで、
+            アラートを止めない**（口が1つ落ちても、生きている口から
+            来た通知はそのまま出す） */}
+        {dead && <DeadMark />}
+
         {notification && (
           <Animated.View style={[styles.alertBox, { opacity }]}>
             {/* 寄付（donation）とスーパーチャット（superchat）の統合表示 */}
