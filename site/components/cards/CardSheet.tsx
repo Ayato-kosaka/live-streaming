@@ -226,7 +226,11 @@ export default function CardSheet({
                         付ける（付けずに先に読むと、CORS ヘッダの無い絵が
                         キャッシュに残って焼けなくなる端末がある） */}
                     <img src={cardIcon(p.icon, 128)} alt="" loading="lazy" crossOrigin="anonymous" />
-                    {p.name && <i>{p.name}</i>}
+                    {/* 名前が無い人も枠だけ置く。**置かないと、その札だけ背が縮んで
+                        段ごとに高さが変わる**（名前を出してよいと言った人は
+                        半分もいないので、どの段にも混ざる）。場所の取り方は
+                        `app/css/cards.css` の `.akd-sheet-body .npick i`。 */}
+                    <i>{p.name}</i>
                   </button>
                 ))}
               </div>
