@@ -5,15 +5,28 @@ ARGS 例:
   {"collection": "islandIdeas", "limit": 20}
   {"collection": "island", "doc": "state"}
   {"collection": "islandIdeas", "order_by": "createdAt", "desc": true, "limit": 5}
-  {"collection": "doneruViewers", "keys_only": true} 件数とフィールド名だけ（値を出さない）
+  {"collection": "doneruViewers", "keys_only": true} 件数とフィールド名だけ
 
 **このリポジトリは public で、Actions のログは誰でも読める。**
-人に結びつくものが入っているコレクション（どねID とチャンネル名の対応表など）を
-そのまま読むと、公開の場に出てしまう。中身を見ずに形だけ確かめたいときは
-`keys_only` を使う。ドキュメントIDも出さない（IDが人を指していることがある）。
+だから Actions から回したときは、**どの入れ物でも、値と書類IDは1文字も出ない。**
+出るのは入れ物の名前・件数・欄の名前・欄の型と長さ・`mask()` の指紋だけ
+（落としているのは `logsafe.sketch()` と `logsafe.mask()`）。
+書類IDまで落とすのは、IDが人を指していることがあるから
+（`<videoId>_<messageId>`、どねID をIDにしている入れ物もある）。
+
+**`keys_only` は「安全のための入力」ではない。** 入力で安全を選ぶ形にすると、
+選び間違えた1回で漏れる（`streamChatMessages` を order_by で読んで、
+視聴者さん120人ぶんの本文と表示名が公開のログに並んだ）。
+いまは `keys_only` かどうかに関わらず値は出ないので、これは
+「1件ずつ並べずに、入れ物ぜんぶの欄をまとめて見たい」ときの入り口でしかない。
+
+**値そのものが要るときは、ここでは取れない。** 手元で回すか、
+出すものを自分で決めた専用のスクリプトを書く
+（`doneru_audit.py` が手本。数字しか出さない）。
 """
 
 from _fs import args, db, log, need, show
+from logsafe import mask
 
 
 def main() -> None:
@@ -30,13 +43,14 @@ def main() -> None:
 
     if a.get("doc"):
         snap = client.collection(col).document(a["doc"]).get()
-        log.info("%s/%s exists=%s", col, a["doc"], snap.exists)
+        # 書類IDも指紋にする。どの書類の話かは指紋で追える（同じIDは同じ字）
+        log.info("%s/%s exists=%s", col, mask(a["doc"]), snap.exists)
         if snap.exists:
             log.info("%s", show(snap.to_dict()))
         return
 
     if a.get("keys_only"):
-        # 値もドキュメントIDも出さない。件数とフィールド名だけ
+        # 入れ物ぜんぶの欄を、1件ずつ並べずにまとめて見る
         docs = list(client.collection(col).stream())
         keys = sorted({k for d in docs for k in (d.to_dict() or {})})
         log.info("%s: %d 件 / フィールド: %s", col, len(docs), keys)
@@ -50,7 +64,7 @@ def main() -> None:
     docs = list(q.stream())
     log.info("%s: %d 件", col, len(docs))
     for d in docs:
-        log.info("  %s  %s", d.id, show(d.to_dict()))
+        log.info("  %s  %s", mask(d.id), show(d.to_dict()))
 
 
 main()

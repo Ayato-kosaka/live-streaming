@@ -7,7 +7,11 @@ name: 管理スクリプトを実行
 # 使えるスクリプトは python/admin/ の中にある。
 #   firestore_read   … 読む   {"collection":"islandIdeas","limit":20}
 #                      どこに何があるか  {"list":true}
-#                      **値を出さずに形だけ** {"collection":"...","keys_only":true}
+#                      入れ物ぜんぶの欄をまとめて {"collection":"...","keys_only":true}
+#                      **ここから回すかぎり、どの入れ物でも値も書類IDも出ない。**
+#                      出るのは件数・欄の名前・欄の型と長さ・指紋だけ（ログは公開）。
+#                      値そのものが要るなら手元で回すか、出すものを自分で
+#                      決めた専用スクリプトを書く（doneru_audit が手本）
 #   firestore_write  … 書く   {"collection":"islandIdeas","doc":"ID","data":{"hidden":true}}
 #   firestore_delete … 書類を1つ消す。**既定では1バイトも消さない**（#291 の 4-b）
 #                      {"collection":"islandRate","doc":"ID"}              … 下見
@@ -195,6 +199,30 @@ jobs:
             ls python/admin/*.py | sed 's|python/admin/||;s|\.py$||'
             exit 1
           fi
+
+      # ARGS は「実行」ステップの env としてログに出る。入力にチャンネルIDや
+      # 表示名を混ぜて回すと、スクリプトが何も出さなくてもそこで平文になる
+      # （実際に ARGS: {"collection":"streamChatMessages",…} が出ていた）。
+      # **入力は env: に置かず、出来事の中身から読む。** env: に置くと
+      # ランナーがこのステップの env を伏せる前に印字してしまう。
+      - name: 入力の中の、個人を指しそうな値を伏せる
+        shell: bash
+        run: |
+          set -uo pipefail
+          raw="$(jq -r '.inputs.args // ""' "$GITHUB_EVENT_PATH" 2>/dev/null || true)"
+          # チャンネルID（UC + 20文字以上）と表示名（@…）。
+          # JSON の区切り（" , } 空白）で止める
+          vals="$(printf '%s' "$raw" \
+            | grep -oE 'UC[A-Za-z0-9_-]{20,}|@[^"[:space:],}]+' \
+            | sort -u || true)"
+          n=0
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            echo "::add-mask::$v"
+            n=$((n + 1))
+          done <<< "$vals"
+          # 伏せた値そのものは出さない。件数だけ
+          echo "入力の中の、個人を指しそうな値を $n 件伏せました"
 
       - name: Python 環境のセットアップ
         uses: actions/setup-python@v4
