@@ -43,8 +43,17 @@
  * 止めた相手が押しどころでなければ（`div` や地の紙）、
  * それは自分の当たりが自然に終わっただけで、かぶりではない。
  *
- * 他の道具から使うときは測る所だけ借りる:
- *   import { openFolds, measure, SEL_ALL } from "./hitbox.mjs";
+ * ## 押しどころを数える道具は、**全部ここを呼ぶ**
+ *
+ * 2026-09-14 に畳みの穴をここで塞いだが、**同じ「閉じた畳みは飛ばす」が
+ * 5本にコピーされたまま残っていた**（`pchit` `mesweep` `livecheck`
+ * `hitab` `_abhit16`）。道具を1つ直しても、写しは直らない
+ * （`docs/island-misses.md` #83「作ったのに、当てたのは3本だけだった」）。
+ * なので測る所は**この1か所だけ**にして、5本はここを呼ぶ。
+ * 6か所に同じことを書けば、7か所目でまた漏れる。
+ *
+ *   import { openFolds, measure, fmtHit, SEL_ALL } from "./hitbox.mjs";
+ *   import { addProbe, delProbe, isProbe, probeVerdict } from "./hitbox.mjs";
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
@@ -68,8 +77,13 @@ export const SEL_ALL =
  * **`stillClosed` は必ず見る。** JS が閉じ直す畳みがあると、開いたつもりで
  * 測っていないものが出る（それは 0 件ではなく、見ていない件）。
  */
-export async function openFolds(p, { waitMs = 250, rounds = 8 } = {}) {
+export async function openFolds(p, { waitMs = 250, rounds = 8, scroll = "auto" } = {}) {
   let opened = 0, used = 0;
+  /* **畳みが1つも無い面では、開いても新しく出てくるものが無い。**
+     送る（scroll）のは畳みの中を組ませるためなので、そこも省く。
+     `/roulette` の「回っている最中」のように**時刻で絵が変わる面**があり、
+     何もしないのに 300ms 余分にかかると、測った瞬間がずれる。 */
+  const anyFold = await p.evaluate(() => document.querySelectorAll("details").length);
   for (let i = 0; i < rounds; i++) {
     const n = await p.evaluate(() => {
       let k = 0;
@@ -87,6 +101,8 @@ export async function openFolds(p, { waitMs = 250, rounds = 8 } = {}) {
     if (!n) break;
     await p.waitForTimeout(waitMs);
   }
+  if (scroll === false || (scroll === "auto" && !anyFold))
+    return { opened, rounds: used, stillClosed: 0, folds: anyFold };
   // 開いたあと、いちばん下まで送る。畳みの中は `content-visibility: auto` で
   // 画面の外にいるあいだ組まれない。送らずに測ると高さが 68px のまま出る
   await p.evaluate(async () => {
@@ -98,7 +114,7 @@ export async function openFolds(p, { waitMs = 250, rounds = 8 } = {}) {
   });
   await p.waitForTimeout(waitMs);
   const stillClosed = await p.evaluate(() => document.querySelectorAll("details:not([open])").length);
-  return { opened, rounds: used, stillClosed };
+  return { opened, rounds: used, stillClosed, folds: anyFold };
 }
 
 /**
@@ -123,6 +139,30 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
           : "なし";
       const txt = (e) => ((e?.textContent || e?.getAttribute?.("aria-label") || "").trim().slice(0, 14));
       const TAP = 'a[href],button,summary,label,[role="button"],input,select,textarea';
+      /* **同じ押しどころを、2回の測定で突き合わせるための鍵。**
+         字でも class でも足りない（同じ字のリンクが並ぶ面がある）。
+         body からの道すじ（何番目の子か）で決める。`hitab.mjs` が使う。 */
+      const keyOf = (el) => {
+        const q = [];
+        for (let e = el; e && e !== document.body; e = e.parentElement)
+          q.push(e.tagName + ":" + [...(e.parentElement?.children || [])].indexOf(e));
+        return q.join("/");
+      };
+
+      /* **目に見えていないものを、押せないものとして数えない。**
+         パンくずは狭い画面で `clip-path: inset(50%)` の 1x1 に畳んである
+         （`app/css/pages.css`）。中の `<a>` は自分の箱（13x21）を持ったままなので、
+         そのまま測ると「押しどころ 13x21 で否」と出る。実際には画面に出ていない。
+         `mesweep.mjs` がこれを自前で持っていたが、**同じことは全面で起きる。** */
+      const clipped = (el) => {
+        for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+          const ac = getComputedStyle(a);
+          const ar = a.getBoundingClientRect();
+          if ((ar.width <= 1 || ar.height <= 1) && (ac.overflow === "hidden" || ac.clipPath !== "none"))
+            return true;
+        }
+        return false;
+      };
 
       const rows = [], skipped = [];
       /* **数えなかったものは、理由ごとに数える。** 内訳の出ない除外は、
@@ -148,15 +188,26 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
           if (pair) { drop("label（入力側で数える）"); continue; }
         }
 
-        // 押す先を先に決める。見た目を作り直したチェックボックスは <input> を
-        // 脇へどけて <label> に絵を描く。入力の真ん中は当たらないが、指は label を押す
+        /* 押す先を先に決める。**`<label>` が付いている入力は、指が押すのは
+           `<label>` のほう。** HTML の決まりで、label を押せば中の入力が動く。
+           見た目を作り直したチェックボックス（`<input>` を脇へどけて label に
+           絵を描くもの）だけの話ではない。`.me-check` の 24x24 のチェックは
+           見えているが、指が触るのは「名前を出す」の行ぜんぶ（302x49）。
+           **入力の箱だけで測ると、押せるものを「押せない」と数える。**
+           label のほうは上で「入力側で数える」として落としてあるので、
+           ここで label を測っても二重にはならない。 */
         let target = el;
         if (el.tagName === "INPUT" || el.tagName === "SELECT") {
           const byFor = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
           const lb = byFor || el.closest("label");
-          if (lb && (cs.opacity === "0" || cs.position === "absolute" || el.getBoundingClientRect().width < 4))
-            target = lb;
+          if (lb) target = lb;
         }
+
+        /* 落とす判定は**押す先が決まってから。** 先にやると、脇へどけた
+           `<input>`（`opacity:0`）を落として、指が実際に押す `<label>` まで
+           一緒に数から消える。 */
+        if (getComputedStyle(target).opacity === "0") { drop("透明(opacity:0)"); continue; }
+        if (clipped(target)) { drop("1px に畳まれた中（読み上げにだけ残してある）"); continue; }
 
         /* 畳みの中か外か。開いてから測っているので `open` では分からない。
            `openFolds()` が残した印で見る。
@@ -180,6 +231,7 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
         if (r.width < 1 || r.height < 1) { drop("見た目が 1px 未満"); continue; }
 
         const base = {
+          k: keyOf(el),
           t: txt(el), c: nm(el), href: el.getAttribute?.("href") || "",
           box: [Math.round(r.width * 10) / 10, Math.round(r.height * 10) / 10],
           fold: inFold,
@@ -249,6 +301,101 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
     },
     { sel, min, maxGrow, fold },
   );
+}
+
+/* ================= 自己確認の仕込み =================================
+   **当たらない道具の「0件」は証拠にならない**（`docs/island-misses.md`
+   #79 #83）。だから、押しどころを数える道具は回す前にこれを通す。
+
+   仕込むもの（`docs/island-misses.md` #83「既知の値を仕込んだ自己確認」）:
+     外 … 畳みの外の 40x40。**開く前の数え方でも挙がる**のはこれだけ
+     小 … 閉じた畳みの中の 40x40。開いてはじめて挙がる
+     奥 … 入れ子の畳みの中の 40x40。外側を開けただけでは中が開かないことを見る
+     大 … 畳みの中の 60x60。**合格側が落ちない**ことまで見ないと、
+          「なんでも割れと言う道具」になっていても気づけない
+
+   6本（`hitbox` `pchit` `foldsweep` `mesweep` `livecheck` `hitab`）が
+   **同じ仕込みを使う。** 仕込みを道具ごとに書くと、道具ごとに別のものを
+   確かめたことになる。 */
+/* **仕込みは、いちばん手前に固定して置く。**
+   はじめは body の頭に素のまま置いていた。ところが /roulette は画面ぜんぶを
+   覆う層（.rl-page）を敷くので、仕込みがその下に隠れて**1つも挙がらず**、
+   18場面のうち14場面で「仕込みが出ない」と出た。隠れているだけなのに
+   「道具が届いていない」と読める。position:fixed と最大の重なり順にして、
+   どの面でも指が届くところに置く。
+   （仕込みを入れるのは自己確認の回だけ。ふだんの数には入らない） */
+export const PROBE_JS = `(() => {
+  if (document.getElementById("hbprobe")) return;
+  const mk = (id, px, label) => {
+    const a = document.createElement("a");
+    a.id = id; a.href = "/"; a.textContent = label;
+    a.style.cssText = "position:static;display:block;width:" + px + "px;height:" + px +
+      "px;font-size:9px;line-height:" + px + "px;overflow:hidden;background:#c00;color:#fff";
+    return a;
+  };
+  const d = document.createElement("details");
+  d.id = "hbprobe";
+  d.style.cssText = "position:fixed;left:0;top:0;z-index:2147483647;background:#fff";
+  const s = document.createElement("summary");
+  s.textContent = "仕込みの畳み";
+  s.style.cssText = "min-height:56px";
+  d.appendChild(s);
+  const inner = document.createElement("details");
+  const is = document.createElement("summary");
+  is.textContent = "仕込みの畳み（入れ子）";
+  is.style.cssText = "min-height:56px";
+  inner.appendChild(is);
+  inner.appendChild(mk("hbprobe-deep", 40, "奥"));
+  d.appendChild(mk("hbprobe-small", 40, "小"));
+  d.appendChild(mk("hbprobe-ok", 60, "大"));
+  d.appendChild(inner);
+  document.body.insertBefore(d, document.body.firstChild);
+  const out = mk("hbprobe-out", 40, "外");
+  /* 畳みのほうは左上に置いてあるので、こちらは左下。
+     隣どうしに置くと、畳みの見出し（字の幅ぶん広がる）がこちらに
+     かぶって「外が挙がらない」と出る（実際に出た） */
+  out.style.cssText += ";position:fixed;left:0;bottom:0;z-index:2147483647";
+  document.body.insertBefore(out, document.body.firstChild);
+})()`;
+
+/** 仕込みを入れる。**`openFolds()` より前**に呼ぶ（閉じた畳みごと入れるため） */
+export async function addProbe(p) {
+  await p.evaluate(PROBE_JS);
+  await p.waitForTimeout(120);
+}
+/** 仕込みを取り除く。撮る前・本番の数を出す前に必ず呼ぶ */
+export async function delProbe(p) {
+  await p.evaluate(() => document.getElementById("hbprobe")?.remove() ?? document.getElementById("hbprobe-out")?.remove());
+  await p.evaluate(() => document.getElementById("hbprobe-out")?.remove());
+}
+/** 仕込みの行かどうか（本番の数に混ぜない） */
+export const isProbe = (r) => r.t === "外" || r.t === "小" || r.t === "大" || r.t === "奥";
+
+/**
+ * 仕込みがそのとおりに出たかを見る。
+ *
+ *   after  … 畳みを開いてから測った rows（必須）
+ *   before … 開く前（`fold: "skip"`）で測った rows。渡せば前の数え方も見る
+ *
+ * 戻り: { ok, lines }。**`ok` が false なら、その回の「0件」は読まない。**
+ */
+export function probeVerdict({ after, before = null, min = 48 } = {}) {
+  const small = (rows, t) => rows.some((r) => r.t === t && r.small);
+  const here = (rows, t) => rows.some((r) => r.t === t);
+  const lines = [];
+  let ok = true;
+  const say = (good, msg) => { lines.push((good ? "  ○ " : "  !! ") + msg); if (!good) ok = false; };
+  say(small(after, "小"), `畳みの中の 40px「小」を ${min}px 割れに挙げた`);
+  say(small(after, "奥"), "入れ子の畳みの中の 40px「奥」を割れに挙げた");
+  say(!small(after, "大"), "畳みの中の 60px「大」を割れにしていない");
+  say(here(after, "大"), "畳みの中の 60px「大」を数には入れている");
+  say(small(after, "外"), "畳みの外の 40px「外」を割れに挙げた");
+  if (before) {
+    say(small(before, "外"), "前の数え方でも、畳みの外の「外」は挙がる");
+    say(!here(before, "小"), "前の数え方では「小」が挙がらない（これまで見落としていたぶん）");
+    say(!here(before, "奥"), "前の数え方では「奥」が挙がらない");
+  }
+  return { ok, lines };
 }
 
 /** 実寸として読んでよいかの印。上限や画面端で止まった値は「≧」を付ける */

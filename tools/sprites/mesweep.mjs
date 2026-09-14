@@ -27,9 +27,14 @@
  *    **この素の部品は、そのまま「道具が効いているか」の校正にもなる**
  *    （`docs/island-misses.md` #19。捕まえられない道具は、いつでも0件と出る）。
  * 2. **押しどころ 48px**（`docs/island-design.md` 3-2）。見た目の箱では測らない。
- *    中心から1pxずつ外へ伸ばして `elementFromPoint` が自分を返すかで測る。
- *    `hitbox.mjs` と同じ逃げ（隠した入力は label で測る・閉じた畳みの中は
- *    数えない・折り返した行は行ごとの箱の中心から・画面の外は分ける）を持つ。
+ *    **測るところは自分で書かない。`hitbox.mjs` の `measure()` を呼ぶ。**
+ *    ここには長いあいだ `hitbox.mjs` の写しが置いてあって、「閉じた畳みの
+ *    中は飛ばす」まで一緒に写っていた。2026-09-14 に `hitbox.mjs` を
+ *    直しても、**写しのほうは直らなかった**（`docs/island-misses.md` #83）。
+ *    **同じ面を2回測って、前の数え方と並べて出す。**
+ *      1回目 … 畳みを開く前（＝これまでの数え方）
+ *      2回目 … 全部の畳みを開いてから。/me の「島に出す名前」の欄は
+ *              `Fold`（畳み）の中にあるので、ここではじめて数に入る
  * 3. **横あふれ**。`documentElement.scrollWidth > clientWidth`（#72）。360 と 390。
  * 4. 字の濃さは別の道具（`inkpx.mjs` → `inkpx.py`）。ここでは撮るだけ。
  */
@@ -37,12 +42,15 @@ import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "fs";
 import { seed } from "./meseed.mjs";
 import { offline } from "./route.mjs";
+import { openFolds, measure as hitMeasure, SEL_ALL, addProbe, delProbe, isProbe, probeVerdict } from "./hitbox.mjs";
 
 const PORT = process.env.SPORT || "4600";
 const MODE = process.env.MEMODE || "ok";
 const DPR = Number(process.env.DPR || 2);
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
-const OUT = `/tmp/mesweep/${MODE}${process.env.OPENALL ? "-open" : ""}`;
+/* `OPENALL=1` は要らなくなった。畳みは**毎回開いて測る**（開く前の数も
+   同じ回に出る）ので、置き場を分ける理由が無い。 */
+const OUT = `/tmp/mesweep/${MODE}`;
 mkdirSync(OUT, { recursive: true });
 
 /** 撮る場面。机の道具は `tools.ts` の並びそのまま（9つ）。 */
@@ -67,7 +75,7 @@ const SCENES = [
 /* 画面の中で回すもの。**ブラウザの中で完結させる**（外に持ち出すのは数だけ） */
 /* ------------------------------------------------------------------ */
 
-const measure = (probe) => {
+const faceMeasure = (probe) => {
   const px = (n) => Math.round(n * 100) / 100;
 
   /* ---- 1. 島の外の顔 ----------------------------------------------
@@ -112,47 +120,6 @@ const measure = (probe) => {
     box.remove();
     uaCache.set(key, f);
     return f;
-  };
-
-  /* ---- 2. 押しどころ ----------------------------------------------
-     `hitbox.mjs` と同じ測りかた。中心から1pxずつ外へ。 */
-  const hit = (el) => {
-    /* 隠してある入力は、指が押しているのは label のほう（`hitbox.mjs`）。 */
-    let target = el;
-    if (el.tagName === "INPUT") {
-      const byFor = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
-      target = byFor || el.closest("label") || el;
-    }
-    target.scrollIntoView({ block: "center" });
-    const r = target.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1) return { why: "箱が無い" };
-    // 折り返した行内リンクの外接矩形の中心は行間に落ちる。行ごとの箱で測る
-    const lines = [...target.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
-    const box = lines.length
-      ? lines.reduce((a, q) => (q.width * q.height > a.width * a.height ? q : a))
-      : r;
-    const cx = Math.round(box.x + box.width / 2);
-    const cy = Math.round(box.y + box.height / 2);
-    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight)
-      return { why: "画面の外（送っても入らない）" };
-    /* **親を「自分」に数えない。** 最初ここに `e.contains(target)` を足して
-       いて、点が親の `<p>` に落ちたときも当たりに数えていた。当たり幅が
-       いつも画面いっぱい（360 / 390）と出て、**狭い押しどころが広く見えて
-       いた。** `hitbox.mjs` は自分と子、それと自分を指す a/button/label だけ。 */
-    const mine = (x, y) => {
-      const e = document.elementFromPoint(x, y);
-      return !!e && (e === target || target.contains(e) || e.closest?.("a,button,label,summary") === target);
-    };
-    if (!mine(cx, cy)) {
-      const e = document.elementFromPoint(cx, cy);
-      return { why: `上に ${e ? e.tagName + "." + (typeof e.className === "string" ? e.className.split(/\s+/)[0] : "") : "なし"}` };
-    }
-    let l = 0, rr = 0, up = 0, dn = 0;
-    while (l < 300 && cx - l - 1 >= 0 && mine(cx - l - 1, cy)) l++;
-    while (rr < 300 && cx + rr + 1 < innerWidth && mine(cx + rr + 1, cy)) rr++;
-    while (up < 300 && cy - up - 1 >= 0 && mine(cx, cy - up - 1)) up++;
-    while (dn < 300 && cy + dn + 1 < innerHeight && mine(cx, cy + dn + 1)) dn++;
-    return { w: l + rr + 1, h: up + dn + 1 };
   };
 
   const name = (el) =>
@@ -205,30 +172,26 @@ const measure = (probe) => {
   };
 
   const faces = [];
-  const taps = [];
-  /* `summary` も押しどころ。**`button` でも `a` でもないので、選び方に
-     書かないと1つも数えない。** 畳み（`components/ui/Fold.tsx`）は
-     `<details><summary>` でできていて、`/me` にも机にも出てくる。 */
-  for (const el of document.querySelectorAll("input, select, textarea, button, a[href], summary")) {
+  /* 顔を見るのは欄だけ（`a` と `summary` に「ブラウザ既定の顔」は無い）。
+     **畳みの中も見る。** ここは `openFolds()` のあとに回すので、
+     畳みを開いた先の欄も同じ目で見られる。前は閉じた畳みの中を飛ばしていて、
+     `/me` の「島に出す名前」の欄が**顔の検品にも入っていなかった。** */
+  for (const el of document.querySelectorAll("input, select, textarea, button")) {
     const cs = getComputedStyle(el);
     if (cs.display === "none" || cs.visibility === "hidden") continue;
     if (el.offsetParent === null && cs.position !== "fixed") continue;
     if (hiddenForEyes(el)) continue;
     /* **指が触れないものは、押しどころではない。** 写真の file の欄
        （`.nph-post-file`）は `opacity: 0` と `pointer-events: none` で
-       脇へどけてあり、指が押すのは「写真を選ぶ」のほう。ここを数えると
-       「当たり 上に SECTION.panel」が毎回1件出る（実際に出た）。
+       脇へどけてあり、指が押すのは「写真を選ぶ」のほう。
        **隠してあるものを、押せないものとして数えない**（#72）。 */
     if (cs.opacity === "0" || cs.pointerEvents === "none") continue;
-    // 閉じた畳みの中は、押せなくて当たり前（`hitbox.mjs`）
-    const det = el.closest("details");
-    if (det && !det.open && !det.querySelector("summary")?.contains(el)) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
 
     const tag = el.tagName.toLowerCase();
     const type = el.getAttribute("type");
-    if (tag !== "a" && tag !== "summary") {
+    {
       const my = faceOf(el);
       const why = [];
       if (my === uaFace(tag, type)) why.push("ブラウザ既定の顔そのまま");
@@ -262,16 +225,6 @@ const measure = (probe) => {
         });
       }
     }
-    const h = hit(el);
-    const row = {
-      what: name(el),
-      text: (el.textContent || el.value || el.placeholder || "").trim().slice(0, 20),
-      box: [px(r.width), px(r.height)],
-      hit: h.w ? [h.w, h.h] : null,
-      why: h.why,
-      probe: el.closest("#me-probe") || el.closest("#me-probe2") ? true : undefined,
-    };
-    taps.push(row);
   }
 
   document.getElementById("me-probe")?.remove();
@@ -285,9 +238,14 @@ const measure = (probe) => {
     over: de.scrollWidth - de.clientWidth,
     height: de.scrollHeight,
     faces,
-    taps,
   };
 };
+
+/** `hitbox.mjs` が返す行を、この道具の読み上げの形にそろえる */
+const asTap = (r) => ({
+  what: r.c, text: r.t, box: r.box,
+  hit: r.hit || null, why: r.why, fold: !!r.fold,
+});
 
 /* ------------------------------------------------------------------ */
 
@@ -333,38 +291,56 @@ for (const sc of SCENES) {
         .catch(() => {});
       await p.waitForTimeout(MODE === "wait" ? 2000 : 1600);
     }
-    /* 畳みの中。**閉じたままだと1つも数えない**（`hitbox.mjs` と同じ理由で
-       閉じた `<details>` の中は飛ばしている）。畳みの中にも欄と押しどころが
-       ある——OBS の鍵、今週やること、つないである人——ので、
-       `OPENALL=1` でぜんぶ開けてもう一度回す。**開けた回と開けない回は
-       別の数として出す。** 混ぜると、どちらを見た数なのか分からなくなる。 */
-    if (sc.open || process.env.OPENALL) {
-      await p.evaluate(() => {
-        for (const d of document.querySelectorAll("details")) d.open = true;
-      });
+    /* 絵は**畳みをさわる前に**撮る。撮る目的は「その場面がどう見えるか」で、
+       測る都合で開いた姿ではない。`open` の付いた場面だけ、開いた姿を撮る。 */
+    if (sc.open) {
+      await p.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
       await p.waitForTimeout(700);
     }
 
     /* 下まで送ってから測る。`content-visibility: auto` の畳みは、画面の外に
        いるあいだ `contain-intrinsic-size` の値で高さを答える（`CLAUDE.md`）。 */
-    for (let i = 0; i < 40; i++) {
-      const before = await p.evaluate(() => {
-        window.scrollBy(0, 2000);
-        return document.documentElement.scrollHeight;
-      });
-      await p.waitForTimeout(60);
-      const after = await p.evaluate(() => document.documentElement.scrollHeight);
-      if (before === after && i > 2) break;
-    }
-    await p.evaluate(() => window.scrollTo(0, 0));
-    await p.waitForTimeout(400);
+    const toBottom = async () => {
+      for (let i = 0; i < 40; i++) {
+        const before = await p.evaluate(() => {
+          window.scrollBy(0, 2000);
+          return document.documentElement.scrollHeight;
+        });
+        await p.waitForTimeout(60);
+        const after = await p.evaluate(() => document.documentElement.scrollHeight);
+        if (before === after && i > 2) break;
+      }
+      await p.evaluate(() => window.scrollTo(0, 0));
+      await p.waitForTimeout(400);
+    };
+    await toBottom();
 
-    const r = await p.evaluate(measure, true);
-    r.errs = errs;
-    report[sc.id][W] = r;
-    if (W === 390) {
-      await p.screenshot({ path: `${OUT}/${sc.id}-390.png`, fullPage: true });
+    if (W === 390) await p.screenshot({ path: `${OUT}/${sc.id}-390.png`, fullPage: true });
+
+    /* 仕込みは**畳みを開く前**に入れる。閉じた畳みごと入れないと、
+       「開いてはじめて挙がる」ほうを確かめられない（#83） */
+    if (process.env.PROBE) await addProbe(p);
+
+    /* **1回目 … これまでの数え方。** 閉じた畳みの中を飛ばす。
+       前後で数が変わることが、当てた証拠になる（`docs/island-misses.md` #83）。 */
+    const before = await hitMeasure(p, { sel: SEL_ALL, min: 48, fold: "skip" });
+    /* **2回目 … 畳みを全部開いてから。** `/me` の「島に出す名前」の欄は
+       `Fold` の中にあるので、ここではじめて数に入る。 */
+    const folds = await openFolds(p);
+    await toBottom();
+    const after = await hitMeasure(p, { sel: SEL_ALL, min: 48, fold: "open" });
+
+    const r = await p.evaluate(faceMeasure, true);
+    if (process.env.PROBE) {
+      r.probe = probeVerdict({ after: after.rows, before: before.rows, min: 48 });
+      await delProbe(p);
     }
+    r.errs = errs;
+    r.folds = folds;
+    r.taps = after.rows.concat(after.skipped).filter((x) => !isProbe(x)).map(asTap);
+    r.tapsBefore = before.rows.concat(before.skipped).filter((x) => !isProbe(x)).map(asTap);
+    r.excluded = after.excluded;
+    report[sc.id][W] = r;
     await ctx.close();
   }
 }
@@ -383,24 +359,53 @@ for (const [id, byW] of Object.entries(report)) {
     if (!r) continue;
     const probe = r.faces.filter((f) => f.probe).length;
     const real = r.faces.filter((f) => !f.probe);
-    const realTaps = r.taps.filter((t) => !t.probe);
-    const small = realTaps.filter((t) => !t.hit || t.hit[0] < 48 || t.hit[1] < 48);
+    const isSmall = (t) => !t.hit || t.hit[0] < 48 || t.hit[1] < 48;
+    const small = r.taps.filter(isSmall);
+    const small0 = r.tapsBefore.filter(isSmall);
+    const inFold = r.taps.filter((t) => t.fold).length;
     if (r.over > 0) ngOver++;
     if (W === 390) {
       ngFace += real.length;
       ngTap += small.length;
     }
+    /* **前の数え方と並べて出す。** 片方だけ出すと、畳みの中を見るように
+       なったことを示せない（`docs/island-misses.md` #83）。 */
     console.log(
       `  ${W}px  高さ ${r.height}px  横あふれ ${r.over}px  ` +
-        `島の外の顔 ${real.length}（校正 ${probe}/5）  押しどころ否 ${small.length}/${realTaps.length}` +
+        `島の外の顔 ${real.length}（校正 ${probe}/5）\n` +
+        `        押しどころ  畳みを開く前 ${r.tapsBefore.length}個 → 開いたあと ${r.taps.length}個` +
+        `（うち畳みの中 ${inFold}個。畳み ${r.folds.opened}個を開いた` +
+        `${r.folds.stillClosed ? `／**開かなかった ${r.folds.stillClosed}個**` : ""}）\n` +
+        `        48px割れ    開く前 ${small0.length}個 → 開いたあと ${small.length}個` +
         (r.errs.length ? `  JSエラー ${r.errs.length}` : ""),
     );
     if (probe < 5) console.log(`    ※ 校正が ${probe}/5。**この面の「島の外の顔」は信じない**`);
     for (const f of real)
       console.log(`    外の顔 ${f.what}「${f.label || f.text}」 台の上=${f.onForm} ${f.why.join(" / ")}`);
     for (const t of small)
-      console.log(`    小さい ${t.what}「${t.text}」 箱 ${t.box.join("x")} 当たり ${t.hit ? t.hit.join("x") : t.why}`);
+      console.log(`    小さい ${t.what}「${t.text}」 箱 ${t.box.join("x")} 当たり ${t.hit ? t.hit.join("x") : t.why}${t.fold ? "  [畳みの中]" : ""}`);
+    if (r.excluded)
+      console.log(`    数えなかったもの: ${Object.entries(r.excluded).map(([k, v]) => `${k} ${v}`).join(" / ") || "なし"}`);
+    if (r.probe) {
+      console.log(`    仕込み: ${r.probe.ok ? "そのとおりに出た" : "!! だめ。この面の 0 件は証拠にならない"}`);
+      for (const l of r.probe.lines) console.log("    " + l);
+    }
     for (const e of r.errs) console.log(`    JS ${e}`);
   }
 }
-console.log(`\n[${MODE}] 島の外の顔 ${ngFace} / 押しどころ否 ${ngTap} / 横あふれの出た幅 ${ngOver}`);
+/* 場面ぜんぶを足した数。**旧と新を並べる。** */
+let t0 = 0, t1 = 0, s0 = 0, s1 = 0, fd = 0;
+for (const byW of Object.values(report)) {
+  const r = byW[390];
+  if (!r) continue;
+  const isSmall = (t) => !t.hit || t.hit[0] < 48 || t.hit[1] < 48;
+  t0 += r.tapsBefore.length; t1 += r.taps.length;
+  s0 += r.tapsBefore.filter(isSmall).length; s1 += r.taps.filter(isSmall).length;
+  fd += r.taps.filter((t) => t.fold).length;
+}
+console.log(
+  `\n[${MODE}] 390px・${Object.keys(report).length}場面ぶん\n` +
+    `  押しどころ  畳みを開く前 ${t0}個 → 開いたあと ${t1}個（差 +${t1 - t0}。うち畳みの中 ${fd}個）\n` +
+    `  48px割れ    開く前 ${s0}個 → 開いたあと ${s1}個（差 +${s1 - s0}）\n` +
+    `  島の外の顔 ${ngFace} / 横あふれの出た幅 ${ngOver}`,
+);

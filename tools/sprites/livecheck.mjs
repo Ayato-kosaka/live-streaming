@@ -16,9 +16,14 @@
  * 1. **島の外の顔** — ブラウザ既定のまま出ている `<input>` `<select>`
  *    `<textarea>` `<button>`。`.dform` の外に置かれた `.nph-post-row` が
  *    `/me` で実際に1件あった（`docs/island-misses.md` #77）。同じ形を探す
- * 2. **押しどころ 48px**（`docs/island-design.md` 3-2）。**見た目の箱では
- *    測らない。** 中心から1pxずつ外へ伸ばして `elementFromPoint` が
- *    まだ自分を返すかで測る（`hitbox.mjs` と同じ）
+ * 2. **押しどころ 48px**（`docs/island-design.md` 3-2）。**測るところは
+ *    自分で書かない。`hitbox.mjs` の `measure()` を呼ぶ。**
+ *    ここには `hitbox.mjs` の写しが置いてあって、「閉じた畳みの中は飛ばす」まで
+ *    一緒に写っていた。2026-09-14 に `hitbox.mjs` を直しても、
+ *    **写しのほうは直らなかった**（`docs/island-misses.md` #83）。
+ *    畳みは**測る前に全部開く**。`/me/remote` `/me/roulette` は配信中に
+ *    あやとが片手で押す面で、**畳みの中の押しどころも指で押される。**
+ *    畳みのある面では、開く前の数も同じ回に出して並べる
  * 3. **横あふれ** — `documentElement.scrollWidth > clientWidth`
  *    （`getBoundingClientRect` では見ない。`docs/island-misses.md` #72）
  * 4. 字の濃さは `inkpx.mjs` / `inkpx.py` と `livefield.mjs` が別に測る
@@ -39,6 +44,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "fs";
 import { offline } from "./route.mjs";
 import { apply as liveseed } from "./liveseed.mjs";
+import { openFolds, measure as hitMeasure, SEL_ALL, addProbe, delProbe, isProbe, probeVerdict } from "./hitbox.mjs";
 
 const PORT = process.env.SPORT || "4500";
 const OUT = "/tmp/live";
@@ -63,8 +69,11 @@ const SCENES = [
   /* 回っている**最中**。針の刻み（`rl-tick`）はここでしか動いていない */
   { id: "rl-mid", url: "/roulette.html?s=0123456789abcdef0123456789abcdef", seed: { spin: true }, wait: 7000, widths: [[1920, 1080]] },
   { id: "rl-spin", url: "/roulette.html?s=0123456789abcdef0123456789abcdef", seed: { spin: true }, wait: 19000, widths: [[1920, 1080], [1280, 720]] },
-  { id: "me-remote", url: "/me/remote.html", seed: { admin: true }, open: true, widths: [[360, 844], [390, 844]] },
-  { id: "me-roulette", url: "/me/roulette.html", seed: { admin: true }, open: true, widths: [[360, 844], [390, 844]] },
+  /* `open: true`（畳みを手で開く）は要らなくなった。**どの場面でも
+     `openFolds()` が開いてから測る。** 手で書いた場面にだけ付ける形だと、
+     付け忘れた場面が黙って漏れる（実際に `mesweep.mjs` がそうなっていた）。 */
+  { id: "me-remote", url: "/me/remote.html", seed: { admin: true }, widths: [[360, 844], [390, 844]] },
+  { id: "me-roulette", url: "/me/roulette.html", seed: { admin: true }, widths: [[360, 844], [390, 844]] },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -107,51 +116,14 @@ const MEASURE = () => {
   const px = (n) => Math.round(n * 100) / 100;
   const de = document.documentElement;
 
-  /* --- 押しどころ。中心から1pxずつ外へ伸ばす（`hitbox.mjs` と同じ） --- */
-  const hit = (el) => {
-    let target = el;
-    if (el.tagName === "INPUT") {
-      const byFor = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
-      target = byFor || el.closest("label") || el;
-    }
-    target.scrollIntoView({ block: "center" });
-    const r = target.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1) return { why: "箱が 0" };
-    /* 折り返した行内リンクの外接矩形の中心は、行と行のすきまに落ちる。
-       いちばん大きい行の箱の中心を使う（`hitbox.mjs` の注）。 */
-    const lines = [...target.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
-    const box = lines.length ? lines.reduce((a, q) => (q.width * q.height > a.width * a.height ? q : a)) : r;
-    const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
-    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return { why: "画面の外（送っても入らない）" };
-    const mine = (x, y) => {
-      const e = document.elementFromPoint(x, y);
-      return !!e && (e === target || target.contains(e) || e.closest?.("a,button,label") === target);
-    };
-    if (!mine(cx, cy)) {
-      const top = document.elementFromPoint(cx, cy);
-      const nm = top ? top.tagName + (typeof top.className === "string" && top.className ? "." + top.className.split(/\s+/)[0] : "") : "なし";
-      return { why: `${nm} が上にいる` };
-    }
-    /* 伸ばす上限。48px を見るだけなら 60 で足りるが、`/roulette` の台は
-       760px あるので、低い上限のままだと「当たり 161x161」と出て
-       **打ち切った数を実寸として読む**ことになる。打ち切ったら印を付ける。 */
-    const CAP = 200;
-    const grow = (dx, dy) => { let n = 0; while (n < CAP && mine(cx + dx * (n + 1), cy + dy * (n + 1))) n++; return n; };
-    const l = grow(-1, 0), rr = grow(1, 0), u = grow(0, -1), dn = grow(0, 1);
-    return { w: l + rr + 1, h: u + dn + 1, capped: l === CAP || rr === CAP || u === CAP || dn === CAP };
-  };
-
   const sel = (el) => {
     const c = typeof el.className === "string" && el.className ? "." + el.className.trim().split(/\s+/).join(".") : "";
     return el.tagName.toLowerCase() + c;
   };
   const seen = (el) => el.offsetParent !== null || getComputedStyle(el).position === "fixed";
-  /* 閉じた畳みの中身は、畳まれていても箱を持っている。押す前に開く面なので
-     数えない（`hitbox.mjs` の注と同じ）。 */
-  const folded = (el) => {
-    const d = el.closest("details");
-    return !!d && !d.open && !d.querySelector("summary")?.contains(el);
-  };
+  /* **畳みは、ここへ来る前に `openFolds()` が開いてある。**
+     だから「閉じた畳みの中は飛ばす」は要らない。飛ばしていたころは、
+     畳みの中の欄が**顔の検品にも入っていなかった**（#83）。 */
 
   /* --- 1. 島の外の顔 ------------------------------------------------- */
   /* 島の字は `"Maru Island", system-ui, …` と控えを後ろに置く並びなので、
@@ -159,12 +131,11 @@ const MEASURE = () => {
      「システムの字」と出る）。 */
   const SYS = /^(system-ui|-apple-system|BlinkMac|Segoe|Arial|Helvetica|sans-serif|serif|monospace|ui-|Times|Courier)/i;
   const controls = [...document.querySelectorAll("input, select, textarea, button")]
-    .filter((el) => seen(el) && !folded(el))
+    .filter((el) => seen(el))
     .map((el) => {
       const cs = getComputedStyle(el);
       const fam = cs.fontFamily.split(",")[0].replace(/["']/g, "").trim();
       const r = el.getBoundingClientRect();
-      const h = hit(el);
       const isBtn = el.tagName === "BUTTON";
       /* ブラウザ既定の顔。Chromium の素の `<button>` は
          地 rgb(239,239,239)・枠 outset 2px・字 system-ui。
@@ -204,17 +175,8 @@ const MEASURE = () => {
         radius: cs.borderTopLeftRadius,
         appearance: cs.appearance,
         box: [px(r.width), px(r.height)],
-        hit: h,
         marks,
       };
-    });
-
-  /* --- 2. 押しどころ（欄以外も。リンク・畳みの頭・役が button のもの） -- */
-  const taps = [...document.querySelectorAll('a[href], button, summary, [role="button"], input, select, textarea')]
-    .filter((el) => seen(el) && !folded(el))
-    .map((el) => {
-      const r = el.getBoundingClientRect();
-      return { canary: !!el.closest("#live-canary"), what: sel(el), text: (el.textContent || el.value || el.placeholder || "").trim().slice(0, 20), box: [px(r.width), px(r.height)], hit: hit(el) };
     });
 
   /* --- 5. 動くもの。**外接矩形の大きさで決まる**（`CLAUDE.md`） ------- */
@@ -304,7 +266,7 @@ const MEASURE = () => {
     scrollW: de.scrollWidth, clientW: de.clientWidth,
     over: de.scrollWidth - de.clientWidth,
     docH: px(de.scrollHeight),
-    controls, taps, anims, smil, stack, inch,
+    controls, anims, smil, stack, inch,
     text: (document.body.innerText || "").replace(/\s+/g, " ").trim().slice(0, 160),
   };
 };
@@ -339,10 +301,22 @@ for (const sc of SCENES) {
     p.on("response", (r) => r.status() >= 400 && fails.push(`${r.status()} ${r.url().slice(-70)}`));
     await p.goto(`http://localhost:${PORT}${sc.url}`, { waitUntil: "networkidle", timeout: 60000 });
     await p.waitForTimeout(sc.wait ?? 2200);
-    if (sc.open) {
-      await p.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
-      await p.waitForTimeout(700);
-    }
+
+    /* ---- 押しどころ。**`hitbox.mjs` に測らせる。**
+       伸ばす上限は 200。`/roulette` の台は 760px あるので、80 のままだと
+       「上限で止まった」だらけになって細い順が読めない。
+       畳みのある面だけ、**開く前**もいちど測って並べる（`#83` の証拠）。 */
+    if (process.env.PROBE) await addProbe(p);
+    const nDet = await p.evaluate(() => document.querySelectorAll("details").length);
+    let before = null;
+    if (nDet) before = await hitMeasure(p, { sel: SEL_ALL, min: 48, maxGrow: 200, fold: "skip" });
+    const folds = await openFolds(p);
+    const after = await hitMeasure(p, { sel: SEL_ALL, min: 48, maxGrow: 200, fold: "open" });
+    // 畳みが1つも無い面は、開く前と開いたあとが同じもの。測り直さない
+    if (!before) before = after;
+    const probeV = process.env.PROBE ? probeVerdict({ after: after.rows, before: before.rows, min: 48 }) : null;
+    if (process.env.PROBE) await delProbe(p);
+
     const dir = `${OUT}/${sc.id}`;
     mkdirSync(dir, { recursive: true });
     await p.screenshot({ path: `${dir}/w${W}.png`, fullPage: W < 700 });
@@ -354,12 +328,16 @@ for (const sc of SCENES) {
     await p.waitForTimeout(150);
     const r = await p.evaluate(MEASURE);
     /* 仕込みの結果。**4つの素の欄**と、**台の外の `.nph-post-row`**と、
-       **20x20 の押しどころ**が、それぞれ検出に引っかかったか。 */
+       **仕込んだ 40px の押しどころ**が、それぞれ検出に引っかかったか。 */
     const cc = withCanary.controls.filter((c) => c.canary);
     r.canary = cc.slice(0, 4).map((c) => ({ what: c.what, marks: c.marks }));
     r.canaryForm = cc.some((c) => c.needsForm && !c.onForm);
-    const ctaps = withCanary.taps.filter((t) => t.what === "button" && t.box[0] <= 24);
-    r.canaryTap = ctaps.some((t) => !t.hit.w || t.hit.w < 48 || t.hit.h < 48);
+    const asTap = (x) => ({ what: x.c, text: x.t, box: x.box, hit: x.hit ? { w: x.hit[0], h: x.hit[1], capped: x.sat?.[0] || x.sat?.[1] } : { why: x.why }, fold: !!x.fold });
+    r.taps = after.rows.concat(after.skipped).filter((x) => !isProbe(x)).map(asTap);
+    r.tapsBefore = before.rows.concat(before.skipped).filter((x) => !isProbe(x)).map(asTap);
+    r.folds = folds;
+    r.excluded = after.excluded;
+    r.probe = probeV;
     r.errs = errs;
     r.fails = [...new Set(fails)];
     report[sc.id][W] = r;
@@ -382,14 +360,25 @@ for (const sc of SCENES) {
        「reset のまま」の枝で拾えているのが正しい。 */
     const c1 = r.canary.filter((c) => c.marks.length).length;
     const c2 = r.canaryForm ? "○" : "✗";
-    const c3 = r.canaryTap ? "○" : "✗";
     console.log(
       `  仕込み … 素の欄 ${c1}/4 拾えた（${r.canary.map((c) => c.what + (c.marks.length ? "○" : "✗")).join(" ")}）\n` +
-        `           台の外の .nph-post-row ${c2} / 20x20 の押しどころ ${c3}`,
+        `           台の外の .nph-post-row ${c2}` +
+        (r.probe ? `\n           押しどころの仕込み … ${r.probe.ok ? "そのとおりに出た" : "!! だめ。この場面の 0 件は証拠にならない"}` : ""),
     );
+    if (r.probe) for (const l of r.probe.lines) console.log("  " + l);
     console.log(`  横あふれ ${r.over}px (scrollW ${r.scrollW} / clientW ${r.clientW})  面の高さ ${r.docH}px`);
     if (r.over > 0) n3++;
-    console.log(`  欄と押しどころ ${r.controls.length}個 / 押しどころぜんぶ ${r.taps.length}個  JSエラー ${r.errs.length}`);
+    /* **畳みを開く前と、開いたあとを並べる。** 片方だけ出すと、
+       畳みの中を見るようになったことを示せない（#83）。 */
+    const inFold = r.taps.filter((t) => t.fold).length;
+    const small0 = r.tapsBefore.filter((t) => !t.hit.w || t.hit.w < LIM || t.hit.h < LIM).length;
+    console.log(
+      `  欄 ${r.controls.length}個 / 押しどころ 開く前 ${r.tapsBefore.length}個 → 開いたあと ${r.taps.length}個` +
+        `（うち畳みの中 ${inFold}個。畳み ${r.folds.opened}個を開いた${r.folds.stillClosed ? `／**開かなかった ${r.folds.stillClosed}個**` : ""}）` +
+        `  ${LIM}px割れ ${small0}→${r.taps.filter((t) => !t.hit.w || t.hit.w < LIM || t.hit.h < LIM).length}` +
+        `  JSエラー ${r.errs.length}`,
+    );
+    console.log(`  数えなかったもの: ${Object.entries(r.excluded || {}).map(([k, v]) => `${k} ${v}`).join(" / ") || "なし"}`);
 
     const bare = r.controls.filter((c) => c.marks.length || (c.needsForm && !c.onForm));
     for (const c of bare) {
@@ -398,15 +387,15 @@ for (const sc of SCENES) {
     }
     if (!bare.length) console.log("  ○1 素の顔 0件");
 
-    const small = r.taps.filter((t) => !t.canary && (!t.hit.w || t.hit.w < LIM || t.hit.h < LIM));
+    const small = r.taps.filter((t) => !t.hit.w || t.hit.w < LIM || t.hit.h < LIM);
     for (const t of small) {
       n2++;
-      console.log(`  ✗2 押しどころ ${t.what} 「${t.text}」 見た目 ${t.box[0]}x${t.box[1]}  当たり ${t.hit.why ? "測れず（" + t.hit.why + "）" : t.hit.w + "x" + t.hit.h}`);
+      console.log(`  ✗2 押しどころ ${t.what} 「${t.text}」 見た目 ${t.box[0]}x${t.box[1]}  当たり ${t.hit.why ? "測れず（" + t.hit.why + "）" : t.hit.w + "x" + t.hit.h}${t.fold ? "  [畳みの中]" : ""}`);
     }
     if (!small.length) console.log(`  ○2 ${LIM}px 割れ 0件（${r.taps.length}個ぜんぶ）`);
     /* **通ったものの中で、いちばん細いものを出す。** 全部○だけを見て
        終わると、48.5px で通っているものが1つも見えない。 */
-    const thin = r.taps.filter((t) => !t.canary && t.hit.w).sort((a, b) => Math.min(a.hit.w, a.hit.h) - Math.min(b.hit.w, b.hit.h)).slice(0, 3);
+    const thin = r.taps.filter((t) => t.hit.w).sort((a, b) => Math.min(a.hit.w, a.hit.h) - Math.min(b.hit.w, b.hit.h)).slice(0, 3);
     for (const t of thin) console.log(`     細い順 ${t.what}「${t.text}」 当たり ${t.hit.w}x${t.hit.h}${t.hit.capped ? "（打ち切り。これ以上）" : ""}`);
 
     if (sc.id.startsWith("rl-")) {

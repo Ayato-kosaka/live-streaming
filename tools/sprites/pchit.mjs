@@ -1,34 +1,34 @@
 /**
- * 公開している全面の**押しどころ**を、PC の幅で測る（2本目）。
+ * 公開している全面の**押しどころ**を、PC の幅で測る。
  *
  *   SPORT=5400 node pchit.mjs                  # 390(比べる用) + PC3幅
  *   SPORT=5400 WIDTHS=1440x900 node pchit.mjs
  *   SPORT=5400 PROBE=1 node pchit.mjs          # 仕込みが挙がるかの自己確認
+ *   SPORT=5400 FOLD=skip node pchit.mjs        # 前の数え方（畳みの中を飛ばす）
  *
- * **見た目の箱（`getBoundingClientRect`）では測らない。**
- * `::after` で広げた当たり判定はそこに出ないし、隣に取られている場所も出ない。
- * 中心から1pxずつ外へ伸ばして `elementFromPoint` がまだ自分を返すかで測る
- * （`hitbox.mjs` と同じやり方。あちらは面を手で渡す道具で、こちらは全面を回る）。
- *
- * `hitbox.mjs` が踏んだ穴を全部持ってくる（`docs/island-misses.md` #72 の2件目）。
- * 「当たり 1x1」は4種類が潰れたものだった:
- *   折り返した行内リンクの中心が行間に落ちる／隠した入力を label ではなく
- *   入力の箱で測る／送っても画面に入らない／閉じた畳みの中身。
- * どれも**押せないのではない**ので、理由を出して数から分ける。
- *
- * 出るもの: /tmp/pchit/<幅>.json と、画面に「48px を割った押しどころ」の一覧。
+ * **測るところは自分で書かない。`hitbox.mjs` を呼ぶ。**
+ * ここには長いあいだ、`hitbox.mjs` と同じ測り方が**写して**置いてあった。
+ * 2026-09-14 に `hitbox.mjs` の「閉じた畳みの中を飛ばす」を直したとき、
+ * **写しのほうは直らなかった。** 写しがあるかぎり、直した数だけ漏れが残る
+ * （`docs/island-misses.md` #83）。この道具の仕事は
+ * 「**どの面を・どの幅で**回るか」と「読ませ方」だけ。
  *
  * 回る面は `pages.mjs` が**書き出しを歩いて**集める。手で書いた一覧は、面が
  * 増えても増えないので、**測られていないことが数に出ない**（#79）。
+ *
+ * 出るもの: /tmp/pchit/<幅>.json と、画面に「48px を割った押しどころ」の一覧。
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { mkdirSync, writeFileSync } from "fs";
 import { collect, banner, tally } from "./pages.mjs";
+import { openFolds, measure, fmtHit, SEL_ALL, addProbe, delProbe, isProbe, probeVerdict } from "./hitbox.mjs";
 
 const SPORT = process.env.SPORT || "5400";
 const OUT = process.env.OUT || "/tmp/pchit";
 const MIN = Number(process.env.MIN || 48);
+const FOLD = process.env.FOLD || "open";
+const SEL = process.env.SEL || SEL_ALL;
 const WIDTHS = (process.env.WIDTHS || "390x844,1440x900,1920x1080,820x1180")
   .split(",")
   .map((s) => s.split("x").map(Number));
@@ -38,23 +38,8 @@ const WIDTHS = (process.env.WIDTHS || "390x844,1440x900,1920x1080,820x1180")
 const C = collect();
 const PAGES = C.pages;
 
-const SEL = 'a[href],button,[role="button"],input,select,textarea,summary,label,[tabindex]:not([tabindex="-1"])';
-
-/** 仕込み。24x24 の押しどころを1つ置く。**挙がらなければ数え方が届いていない。** */
-const PROBE = `(() => {
-  const a = document.createElement("a");
-  a.id = "pchitprobe"; a.href = "/"; a.textContent = "小";
-  a.style.cssText = "position:static;display:block;width:24px;height:24px;font-size:9px;line-height:24px;overflow:hidden;background:#c00;color:#fff";
-  document.body.insertBefore(a, document.body.firstChild);
-  // 48x48 の合格するほうも1つ。**合格側が落ちない**ことまで見ないと、
-  // 「全部小さい」と言う道具になっていても気づけない
-  const g = document.createElement("a");
-  g.id = "pchitprobe-ok"; g.href = "/"; g.textContent = "大";
-  g.style.cssText = "position:static;display:block;width:60px;height:60px;font-size:9px;line-height:60px;overflow:hidden;background:#060;color:#fff";
-  document.body.insertBefore(g, document.body.firstChild);
-})()`;
-
-console.log(banner(C) + "\n");
+console.log(banner(C));
+console.log(`畳み ${FOLD === "skip" ? "開かない（前の数え方）" : "先に開く"}\n`);
 
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({
@@ -89,6 +74,7 @@ for (const [W, H] of WIDTHS) {
       continue;
     }
     await p.waitForTimeout(700);
+    // 遅れて入る中身を先に入れておく。畳みを開く前に1回下まで送る
     await p.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 600) {
         window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 30));
@@ -96,67 +82,29 @@ for (const [W, H] of WIDTHS) {
       window.scrollTo(0, 0);
     });
     await p.waitForTimeout(700);
-    if (process.env.PROBE) await p.evaluate(PROBE);
+    /* 仕込みは**畳みを開く前**に入れる。閉じた畳みごと入れないと、
+       「開いてはじめて挙がる」ほうを確かめられない */
+    if (process.env.PROBE) await addProbe(p);
 
-    const got = await p.evaluate(({ SEL, MIN }) => {
-      const nm = (e) => (e ? e.tagName + (e.className && typeof e.className === "string" ? "." + e.className.split(/\s+/)[0] : "") : "なし");
-      const small = [], skipped = [];
-      let n = 0;
-      for (const el of document.querySelectorAll(SEL)) {
-        const cs = getComputedStyle(el);
-        if (cs.display === "none" || cs.visibility === "hidden") continue;
-        if (el.disabled) continue;
-        // label は「その入力の押しどころ」なので、入力側と二重に数えない。
-        // 入力のほうを代表にして、label は入力から引く
-        if (el.tagName === "LABEL") continue;
+    let folds = { opened: 0, stillClosed: 0, folds: 0 };
+    if (FOLD !== "skip") folds = await openFolds(p);
+    const got = await measure(p, { sel: SEL, min: MIN, fold: FOLD });
 
-        // 押す先を先に決める。見た目を作り直したチェックボックスは <input> を
-        // 脇へどけて <label> に絵を描く。入力の真ん中は当たらないが、指は label を押す
-        let target = el;
-        if (el.tagName === "INPUT" || el.tagName === "SELECT") {
-          const byFor = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
-          const lb = byFor || el.closest("label");
-          if (lb && (cs.opacity === "0" || cs.position === "absolute" || el.getBoundingClientRect().width < 4)) target = lb;
-        }
-        // 閉じた畳みの中は、押せなくて当たり前。**押す前に開く面なので数えない**
-        const det = el.closest("details");
-        if (det && !det.open && !det.querySelector("summary")?.contains(el)) continue;
-
-        target.scrollIntoView({ block: "center" });
-        const r = target.getBoundingClientRect();
-        if (r.width < 1 || r.height < 1) continue;
-        n++;
-
-        // 始点は外接矩形の中心にしない。折り返した行内リンクの外接矩形の中心は
-        // 行と行のすきまに落ちる。行ごとの箱のうち、いちばん大きい行の中心を使う
-        const lines = [...target.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
-        const box = lines.length ? lines.reduce((a, q) => (q.width * q.height > a.width * a.height ? q : a)) : r;
-        const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
-        const t = (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 14);
-
-        if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) {
-          skipped.push({ t, why: "画面の外（送っても入らない）", box: [Math.round(r.width), Math.round(r.height)] });
-          continue;
-        }
-        const hits = (x, y) => {
-          const e = document.elementFromPoint(x, y);
-          return e && (e === target || target.contains(e) || e.closest?.("a,button,label,summary") === target);
-        };
-        if (!hits(cx, cy)) {
-          skipped.push({ t, why: `${nm(document.elementFromPoint(cx, cy))} が上にいる`, box: [Math.round(r.width), Math.round(r.height)] });
-          continue;
-        }
-        const grow = (dx, dy) => { let k = 0; while (k < 80 && hits(cx + dx * (k + 1), cy + dy * (k + 1))) k++; return k; };
-        const w = grow(-1, 0) + grow(1, 0) + 1, h = grow(0, -1) + grow(0, 1) + 1;
-        if (w < MIN || h < MIN)
-          small.push({ t, hit: [w, h], box: [Math.round(r.width), Math.round(r.height)], c: nm(el), href: el.getAttribute?.("href") || "" });
-      }
-      return { n, small, skipped };
-    }, { SEL, MIN });
-
-    rows.push({ path, measured: true, ...got });
-    if (got.small.length || got.skipped.length)
-      console.log(`${W} ${path}  押しどころ${got.n}  ${MIN}px割れ ${got.small.length}  測れず ${got.skipped.length}`);
+    const all = got.rows.filter((r) => !isProbe(r));
+    const small = all.filter((r) => r.small);
+    rows.push({
+      path, measured: true, folds,
+      n: all.length,
+      inFold: all.filter((r) => r.fold).length,
+      small: small.map((r) => ({ k: r.k, t: r.t, c: r.c, href: r.href, box: r.box, hit: r.hit, sat: r.sat, edge: r.edge, fold: r.fold, rivals: r.rivals })),
+      skipped: got.skipped.filter((r) => !isProbe(r)).map((r) => ({ t: r.t, why: r.why, box: r.box, fold: r.fold })),
+      excluded: got.excluded,
+      probe: process.env.PROBE ? probeVerdict({ after: got.rows, min: MIN }) : null,
+    });
+    const r0 = rows[rows.length - 1];
+    if (r0.small.length || r0.skipped.length)
+      console.log(`${W} ${path}  押しどころ${r0.n}（畳みの中 ${r0.inFold}）  ${MIN}px割れ ${r0.small.length}  測れず ${r0.skipped.length}`);
+    if (process.env.PROBE) await delProbe(p);
   }
   writeFileSync(`${OUT}/${W}.json`, JSON.stringify(rows, null, 1));
   byWidth.set(W, rows);
@@ -168,18 +116,30 @@ console.log("\n===== まとめ =====");
 console.log(banner(C));
 for (const [W, rows] of byWidth) {
   const ok = rows.filter((r) => r.measured);
-  const tot = ok.reduce((a, r) => a + r.n, 0);
-  const sm = ok.reduce((a, r) => a + r.small.length, 0);
-  const sk = ok.reduce((a, r) => a + r.skipped.length, 0);
+  const sum = (f) => ok.reduce((a, r) => a + f(r), 0);
+  const tot = sum((r) => r.n);
+  const sm = sum((r) => r.small.length);
+  const sk = sum((r) => r.skipped.length);
+  const inFold = sum((r) => r.inFold);
+  const smFold = sum((r) => r.small.filter((s) => s.fold).length);
+  const op = sum((r) => r.folds.opened), st = sum((r) => r.folds.stillClosed);
   const pages = ok.filter((r) => r.small.length).length;
   /* **「48px割れ 0」の前に、何面を測ったのかを出す。** 面の数が無いと、
      0 が「測って0」なのか「見ていない」のか読めない（#79）。 */
-  console.log(`幅 ${W}: ${tally(C, ok.length)}  押しどころ ${tot}個  ${MIN}px割れ ${sm}個（${pages}面）  測れず ${sk}個`);
+  console.log(
+    `幅 ${W}: ${tally(C, ok.length)}  押しどころ ${tot}個（畳みの中 ${inFold}）` +
+      `  ${MIN}px割れ ${sm}個（${pages}面。うち畳みの中 ${smFold}）  測れず ${sk}個` +
+      (FOLD === "skip" ? "  ※前の数え方" : `  畳み ${op}個を開いた${st ? `（**開かなかった ${st}個**）` : ""}`),
+  );
+  // 数えなかったものの内訳。0 を「測って 0」と読ませないため
+  const ex = {};
+  for (const r of ok) for (const [k, v] of Object.entries(r.excluded || {})) ex[k] = (ex[k] || 0) + v;
+  console.log(`   数えなかったもの: ${Object.entries(ex).map(([k, v]) => `${k} ${v}`).join(" / ") || "なし"}`);
 }
 /* **PC 幅でだけ小さいもの**を出す。390 で既に小さいものは「PC の問題」ではない。 */
 const base = byWidth.get(390);
 if (base) {
-  const key = (r, s) => `${r.path} ${s.c} ${s.t} ${s.href}`;
+  const key = (r, s) => `${r.path} ${s.k}`;
   const b390 = new Set();
   for (const r of base) if (r.measured) for (const s of r.small) b390.add(key(r, s));
   for (const [W, rows] of byWidth) {
@@ -188,18 +148,29 @@ if (base) {
     for (const r of rows) if (r.measured) for (const s of r.small) if (!b390.has(key(r, s))) only.push([r.path, s]);
     console.log(`\n幅 ${W} で**新しく** ${MIN}px を割ったもの: ${only.length}個`);
     for (const [path, s] of only.slice(0, 40))
-      console.log(`   ${path}  ${s.c}  「${s.t || "(字なし)"}」  見た目 ${s.box[0]}x${s.box[1]}  当たり ${s.hit[0]}x${s.hit[1]}`);
+      console.log(`   ${path}  ${s.c}  「${s.t || "(字なし)"}」  見た目 ${s.box[0]}x${s.box[1]}  当たり ${fmtHit(s)}${s.fold ? "  畳みの中" : ""}`);
     if (only.length > 40) console.log(`   … ほか ${only.length - 40}個（json に全部）`);
   }
+  console.log(`\n幅 390 の ${MIN}px 未満:`);
+  let n = 0;
+  for (const r of base)
+    if (r.measured)
+      for (const s of r.small) {
+        n++;
+        console.log(`   ${r.path}  ${s.c}「${s.t || "(字なし)"}」${s.href ? ` → ${s.href}` : ""}  見た目 ${s.box[0]}x${s.box[1]}  当たり ${fmtHit(s)}  ${s.fold ? "畳みの中" : "畳みの外"}`);
+      }
+  if (!n) console.log("   （なし）");
 }
 if (process.env.PROBE) {
-  let bad = 0, good = 0, miss = 0;
-  for (const [, rows] of byWidth)
+  console.log("\n===== 仕込みの確認 =====");
+  let bad = 0, seen = 0;
+  for (const [W, rows] of byWidth)
     for (const r of rows) {
-      if (!r.measured) continue;
-      if (r.small.some((s) => s.t === "小")) bad++; else miss++;
-      if (r.small.some((s) => s.t === "大")) good++;
+      if (!r.measured || !r.probe) continue;
+      seen++;
+      if (!r.probe.ok) { bad++; console.log(`  !! ${W} ${r.path}`); for (const l of r.probe.lines) console.log("  " + l); }
     }
-  console.log(`\n仕込みの確認: 24x24 を「割れ」と挙げた ${bad} / 挙げそこねた ${miss}、60x60 を誤って挙げた ${good}`);
-  console.log(`  ${miss === 0 && good === 0 ? "小さいほうだけ挙がった。数え方は届いている" : "!! 数え方が届いていない"}`);
+  const one = [...byWidth.values()][0]?.find((r) => r.probe);
+  if (one) for (const l of one.probe.lines) console.log(l);
+  console.log(bad ? `\n  !! ${bad}/${seen} 面でだめ。この回の 0 件は証拠にならない` : `\n  ${seen}面ぜんぶ、仕込みはそのとおりに出た`);
 }
