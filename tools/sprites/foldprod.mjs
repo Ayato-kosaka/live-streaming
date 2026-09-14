@@ -1,0 +1,83 @@
+/**
+ * **本番そのもの**で、畳みを開いてから押しどころを測る。
+ *
+ *   PAGES=/,/nordic/day/3 node foldprod.mjs
+ *   WIDTHS=390x844,1280x800 PAGES=… node foldprod.mjs
+ *
+ * ローカルの書き出しで挙がったものが、**出したバイト列でも同じ数になるか**を見る。
+ * 違えば、そちらのほうが大事な発見（`docs/island-standards.md` 13
+ * 「当座の判定は、まずその判定を疑う」）。
+ *
+ * この箱のブラウザは本番に届かないので `prod.mjs` の `viaCurl` を通す。
+ * ログインの差し込み（`asme.mjs`）は**当てない**。ローカル側も入っていない人の
+ * 姿で測っているので、当てると比べられなくなる。
+ *
+ * curl 1本ずつなので遅い。**当たりの出た面だけ**渡して使う。
+ */
+import { chromium } from "playwright-core";
+import { viaCurl, ORIGIN } from "./prod.mjs";
+import { openFolds, measure, fmtHit, SEL_ALL } from "./hitbox.mjs";
+
+const PAGES = (process.env.PAGES || "/").split(",").map((s) => s.trim()).filter(Boolean);
+const WIDTHS = (process.env.WIDTHS || "390x844,1280x800").split(",").map((s) => s.split("x").map(Number));
+const MIN = Number(process.env.MIN || 48);
+const SEL = process.env.SEL || SEL_ALL;
+
+const b = await chromium.launch({
+  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  args: ["--no-sandbox"],
+});
+console.log(`本番 ${ORIGIN} / ${PAGES.length}面 / 幅 ${WIDTHS.map((w) => w[0]).join(",")}`);
+const out = {};
+for (const [W, H] of WIDTHS) {
+  const ctx = await b.newContext({
+    viewport: { width: W, height: H },
+    deviceScaleFactor: 1,
+    isMobile: W < 900, hasTouch: W < 900,
+    reducedMotion: "reduce",
+  });
+  await viaCurl(ctx);
+  await ctx.addInitScript(() => {
+    try {
+      localStorage.setItem("ayato-island-arrived", "2026-09-04");
+      localStorage.setItem("ayato-island-walked", "1");
+    } catch {}
+  });
+  const p = await ctx.newPage();
+  for (const path of PAGES) {
+    try {
+      await p.goto(`${ORIGIN}${path}`, { waitUntil: "domcontentloaded", timeout: 90000 });
+    } catch (e) {
+      console.log(`${W} ${path}  取れず ${String(e).slice(0, 60)}`);
+      continue;
+    }
+    // curl 経由は1本ずつ順に取るので、待ちを短くすると絵が間に合わない
+    await p.waitForTimeout(6000);
+    await p.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 600) {
+        window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 25));
+      }
+      window.scrollTo(0, 0);
+    });
+    await p.waitForTimeout(400);
+    const before = await measure(p, { sel: SEL, min: MIN, fold: "skip" });
+    const folds = await openFolds(p);
+    const after = await measure(p, { sel: SEL, min: MIN, fold: "open" });
+    const small = after.rows.filter((r) => r.small);
+    out[`${W} ${path}`] = { n0: before.rows.length, n1: after.rows.length, s1: small.length };
+    console.log(
+      `${W} ${path}  畳み ${folds.opened}開いた${folds.stillClosed ? `（開かず ${folds.stillClosed}）` : ""}` +
+        `  押しどころ ${before.rows.length}→${after.rows.length}（畳みの中 ${after.rows.filter((r) => r.fold).length}）` +
+        `  ${MIN}px割れ ${before.rows.filter((r) => r.small).length}→${small.length}  測れず ${after.skipped.length}`,
+    );
+    for (const x of small)
+      console.log(
+        `    ${x.c}「${x.t || "(字なし)"}」${x.href ? ` → ${x.href}` : ""}` +
+          `  見た目 ${x.box[0]}x${x.box[1]}  当たり ${fmtHit(x)}  ${x.fold ? "畳みの中" : "畳みの外"}` +
+          (x.rivals.length ? `  かぶり:${x.rivals.map((v) => `${v.dir}=${v.who}${v.inBox ? "(見た目の中まで)" : ""}`).join(",")}` : ""),
+      );
+  }
+  await ctx.close();
+}
+await b.close();
+console.log("\n" + JSON.stringify(out, null, 1));
