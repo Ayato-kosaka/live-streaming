@@ -1277,9 +1277,6 @@ export type NordicCountry = (typeof INDEX)["countries"][number];
 export const NORDIC_COUNTRIES = INDEX.countries as NordicCountry[];
 export const nordicCountry = (slug: string) => NORDIC_COUNTRIES.find((c) => c.slug === slug);
 
-/** 旅のしおり。お金・通信・服装・サウナ・食べもの・おみやげ・困ったとき。 */
-export const NORDIC_GUIDE = INDEX.guide;
-
 /** 見どころの種類。印は components/ui/Icon.tsx の同名アイコンを使う。 */
 export const CATS: Record<string, { label: string }> = {
   see: { label: "見る" },
@@ -1358,6 +1355,44 @@ export const VISIT_CITIES: string[] = [
 export const MAYBE_CITIES: string[] = [
   ...new Set([...ROUTE.flatMap((l) => l.maybe ?? []), ...DAYS.flatMap((d) => d.maybe ?? [])]),
 ].filter((c) => !VISIT_CITIES.includes(c));
+
+/**
+ * 旅のしおり。お金・通信・服装・サウナ・食べもの・おみやげ・困ったとき。
+ *
+ * **元の並びが、旅の順と逆だった。** 焼いてある JSON（`python/build_nordic.py`）は
+ * ことばも おみやげ も「フィンランド → スウェーデン → エストニア → ラトビア →
+ * リトアニア」の北からの順。あやとが実際に出会うのは
+ * 「リトアニア → ラトビア → エストニア → フィンランド → スウェーデン」で、**真逆**。
+ * 旅の3日目にリトアニアへ入った人が「ありがとう」を探すと、いちばん下まで
+ * 送らないと着かない。しおりは旅の道具なので、**出会う順に並べ替える。**
+ *
+ * 並べる順は手で書かない。`NORDIC_COUNTRIES` の `leg`（旅程から焼いた区間の番号）
+ * から引く（`docs/island-standards.md` 8）。旅程が変われば並びも一緒に動く。
+ *
+ * **国から国への移動は、行かない国のぶんを落とす。** 元の表11区間のうち5つが
+ * コペンハーゲン・オスロ・ベルゲンで、あやとはそのどれにも行かない
+ * （`docs/island-misses.md` #4「行かない街の地図を作った」）。
+ * 落とす先も手で書かない。`VISIT_CITIES`（旅程から導いた、降りる街）に
+ * 両端とも載っている区間だけ残す。
+ */
+export const NORDIC_GUIDE = (() => {
+  const g = INDEX.guide;
+  /** その国に着くのが何区間目か。表に無い国はいちばん後ろへ。 */
+  const legOf = (country: string) => NORDIC_COUNTRIES.find((c) => c.name === country)?.leg ?? 99;
+  /** 区間の字（「リガ ⇄ ヴィリニュス」）から、旅のどのあたりの話かを出す。 */
+  const earliest = (s: string) => {
+    const idx = VISIT_CITIES.map((c, i) => (s.includes(c) ? i : -1)).filter((i) => i >= 0);
+    return idx.length ? Math.min(...idx) : 99;
+  };
+  const onRoute = (s: string) =>
+    s.split(/[⇄⇔↔—–-]/).every((part) => VISIT_CITIES.some((c) => part.includes(c)));
+  return {
+    ...g,
+    phrases: [...g.phrases].sort((a, b) => legOf(a.country) - legOf(b.country)),
+    souvenir: [...g.souvenir].sort((a, b) => legOf(a.country) - legOf(b.country)),
+    move: g.move.filter((m) => onRoute(m.from)).sort((a, b) => earliest(a.from) - earliest(b.from)),
+  };
+})();
 
 /** その国で降りる街。国の面の見出しと、そこに出す説明はこれを読む。 */
 export const visitCitiesOf = (slug: string) =>

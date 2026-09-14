@@ -1047,6 +1047,29 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
    ========================================================= */
 .gbook { margin-top: 4px; }
 
+/* 目次と近道から `#money` `#ph-lithuania` で飛んでくる。**飛んだ先に息継ぎを置く。**
+   置かないと、章の帯が画面のいちばん上の1pxに貼りついて止まる（390px で実測 top=1px）。
+   900px 以上では 93px の看板が画面の上に貼りついているので、そちらは**帯ごと
+   看板の下に潜って、押した人には「02 お金」を押したのに「03 通信」が
+   頭に出る**（本番の 1280px で実測。押しても何も起きていないようにしか見えない）。
+   `.nshop` と同じ手当て。看板のぶんは広い幅でだけ足す。 */
+.gchap,
+.gsub[id] {
+  scroll-margin-top: var(--sp-4);
+}
+@media (min-width: 900px) {
+  /* 看板の高さ 93px（`pages.css` の `.ih` 参照）＋ 息継ぎのぶん */
+  .gchap,
+  .gsub[id] {
+    scroll-margin-top: calc(93px + var(--sp-4));
+  }
+}
+
+/* 旅の最中に開いた人のための近道。目次のすぐ上に1本だけ。
+   **分かる前と分かったあとで、札の大きさを変えない**（`GuideNow.tsx`）。
+   下がるのは目次なので、厚みが動くと押そうとした行がずれる。 */
+.gnow { margin: 0 0 var(--sp-3); }
+
 /* 目次。まず全体で何章あるかを見せてから、章を並べる。 */
 .gtoc {
   display: grid;
@@ -1123,6 +1146,9 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   color: var(--marker-ink);
 }
 .gsub i { font-style: normal; font-size: var(--fs-min); font-weight: 800; margin-left: 8px; }
+/* ことばの札。旗と国語名を1行に。**旗は字ではないので、国名と重ならない。** */
+.gphrase > .gsub { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.gphrase > .gsub svg { border-radius: 2px; }
 .gpnote { margin: 6px 0 0; font-size: var(--fs-note); line-height: 1.8; font-weight: 700; color: var(--ink-2); }
 
 .glist { margin: 8px 0 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.95; font-weight: 700; }

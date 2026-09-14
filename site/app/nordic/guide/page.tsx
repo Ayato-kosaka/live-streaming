@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
-import { NORDIC_GUIDE as G } from "@/content/nordic";
+import { NORDIC_GUIDE as G, NORDIC_COUNTRIES, DAYS, cityCountry, cityName } from "@/content/nordic";
+import Flag from "@/components/ui/Flag";
+import GuideNow from "@/components/nordic/GuideNow";
 import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
 
 export const metadata: Metadata = {
@@ -29,6 +31,25 @@ export const metadata: Metadata = {
  *   - 押せないもの（札）は平ら。厚みを付けるのは押せるものだけ
  * 板の型と紙の型を1つの面で混ぜない。だから `Panel` は使っていない。
  */
+
+/** 国の名前（「リトアニア」）から slug を引く。旗と、ことばの札の id に使う。 */
+const countrySlug = (name: string) => NORDIC_COUNTRIES.find((c) => c.name === name)?.slug;
+/** ことばの札の id。頭の近道（`GuideNow`）がここへ飛んでくる。 */
+const phraseId = (country: string) => `ph-${countrySlug(country) ?? country}`;
+
+/**
+ * 日付 → その日の終わりにいる国。**ことばの載っている国のぶんだけ。**
+ *
+ * ポーランドのことばはしおりに無いので、渡すと近道が空振りする。
+ * 一覧は手で書かない。旅程（`DAYS`）としおり（`G.phrases`）の重なりから作る
+ * （`docs/island-standards.md` 8）。
+ */
+const PHRASE_DAYS = DAYS.flatMap((d) => {
+  const city = cityName(d.stay ?? d.city ?? "");
+  const c = city ? cityCountry(city) : undefined;
+  if (!d.date || !c || !G.phrases.some((p) => p.country === c.name)) return [];
+  return [{ date: d.date, slug: c.slug, name: c.name }];
+});
 
 /** 章の id から絵を引く。本文側で、目次と同じ絵を出すため。 */
 const CHAPTER_ICON = Object.fromEntries(CHAPTERS.map((c) => [c.id, c.icon])) as Record<string, IconName>;
@@ -94,10 +115,15 @@ export default function NordicGuidePage() {
       <PageHead
         mark={<Icon name="book" size={44} />}
         title="旅のしおり"
-        lead="お金、通信、服、サウナ、食べもの、おみやげ、困ったとき。北欧とバルト三国のぶんを全部調べました。"
+        lead="北欧とバルト三国。行く前に読むところと、歩きながら引くところ。"
       />
 
       <div className="gbook">
+        {/* 旅の最中に開いた人のための、近道。**1本だけ。**
+            ことばの章は10章目で、その中でさらに5言語が縦に並ぶ。
+            すぐ下に目次があるので、2本目は置かない。 */}
+        <GuideNow days={PHRASE_DAYS} />
+
         {/* 目次。紙の図鑑と同じで、まず全体で何章あるかが見えるようにする。 */}
         <nav className="gtoc" aria-label="もくじ">
           {CHAPTERS.map((c, i) => (
@@ -208,9 +234,13 @@ export default function NordicGuidePage() {
         <Chapter id="phrases" n={10} title="現地のことば" note={`${G.phrases.length}言語。挨拶と、通じる一言`}>
           {G.phrases.map((p) => (
             <div key={p.lang} className="gphrase">
-              <h3 className="gsub">
+              <h3 className="gsub" id={phraseId(p.country)}>
+                {/* 国の名前は出さない。**5言語とも「◯◯語」なので、
+                    札に国名を足すと「フィンランド語 フィンランド」になる**
+                    （本番で実測）。旗は字ではないので重ならず、
+                    走っている車の中でも探す手がかりになる。 */}
+                {countrySlug(p.country) && <Flag slug={countrySlug(p.country)!} size={22} />}
                 {p.lang}
-                <i>{p.country}</i>
               </h3>
               <p className="gpnote">{p.note}</p>
               <div className="gwords">

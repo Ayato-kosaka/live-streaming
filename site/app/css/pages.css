@@ -373,9 +373,12 @@
 /* パンくず。いま居る場所を言うだけで押すものではないので、厚みは付けない。
    紙の地の上に置く小さな札。落ちる影は右下の暖かい灰緑（tokens の決まり）。 */
 .crumbs {
-  /* 隣り合う押しどころ（48px）がぶつからないだけの間を取る。
-     字の大きさは変えていない。 */
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2);
+  /* 札と札のあいだは、区切りの「›」の左右の余白だけで作る（`.crumbs i`）。
+     flex の column-gap と「›」の margin の両方で空けると、
+     区切りの左が 12px・右が 4px になって「›」が右の札に寄る。
+     行が折り返したときの段の間だけ row-gap で取る。 */
+  display: flex; flex-wrap: wrap; align-items: center;
+  row-gap: var(--sp-2); column-gap: 0;
   width: fit-content; max-width: 100%;
   font-size: var(--fs-note); font-weight: 900;
   color: var(--ink-2);
@@ -390,13 +393,15 @@
 }
 /* 字が 12px なので、そのままだと指の当たりが 13×21px しかない
    （docs/island-review-2.md 14章）。札を大きくすると前置きが伸びるので、
-   当たりだけを字の外へ広げる。左右は区切りの「›」の幅ぶんまで。 */
+   当たりだけを字の外へ広げる。広げるぶんの余白は `.crumbs i` で取る。 */
 .crumbs a { position: relative; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 /* 押しどころ。「島」は字が 13x21px しかなく、指では押せない
    （`docs/island-design.md` 3-2 の 48px を割る）。字の大きさは変えずに、
    ここで当たり判定だけ広げる。縦は 48px、横は字の中心から最低 48px。
-   隣とぶつかるぶんは、あとから描かれる隣のほうが勝つので、
-   広げたせいで隣の押しどころを盗むことはない。 */
+
+   **ぶつかったら、あとから描かれる隣が勝つ。** 盗まれるのは先に描かれた
+   ほうで、つまり「島」。重なっているかぎり「島」は 48px を取れないので、
+   **重ならないだけの余白を `.crumbs i` で先に取っておく。** */
 .crumbs a::after {
   content: "";
   position: absolute;
@@ -408,9 +413,22 @@
 .crumbs b { color: var(--ink); }
 /* --ink-3 は紙の上で 4.4 : 1 までしか出ない。読ませる字には使わない
    （docs/island-review-2.md 5.3）。区切りの「›」も読む字なので --ink-2。 */
-/* 区切りの左右。1px だと段から外れているうえ、「島」の押しどころが
-   となりにぶつかって 48px を取れない（`.crumbs a::after`）。 */
-.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 var(--sp-1); }
+/* 区切りの左右。ここが札と札のあいだの余白そのもの（`.crumbs` は column-gap 0）。 */
+.crumbs i { font-style: normal; color: var(--ink-2); margin: 0 var(--sp-2); }
+/* 「島」のとなりだけ、余白を広く取る。
+   押しどころは字の中心から左右 24px ずつ（`.crumbs a::after` の 48px）。
+   となり合う2つが食い合わないためには、**字の中心どうしが 48px 以上**
+   離れている必要がある。「島」は 13px、いちばん狭いとなり（「配信」）は 25px
+   なので、字の外どうしで 48 - 13/2 - 25/2 = 29px 空ける。
+   区切りの「›」は約 4.5px あるので、左右に 16px（--sp-4）ずつで 36.5px。
+   8px（--sp-2）のままだと 20.5px しかなく、「島」の当たりが右から
+   食われて 40px まで痩せていた（`/streams/*`）。
+
+   字が広い札どうし（「これから」51px と「北欧ヒッチハイク」101px など）は
+   8px のままで 48px を割らない。**全部を広げると折り返して段が増える**ので、
+   狭い札＝「島」のとなりだけにする。札を1つ足すときは
+   `tools/sprites/crumbhit.mjs` で測り直す。 */
+.crumbs > span:first-of-type:has(> a) > i { margin: 0 var(--sp-4); }
 /* 島のすぐ下の面（島 › ○○）では、パンくずは真上の看板が
    朱の枠（900px から）か「いま：○○」（900px 未満）で言っているのと
    同じことしか言っていない。同じ場所の名前を2回出すために 45px は使わない。
