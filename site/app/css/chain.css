@@ -868,12 +868,17 @@
 
 /* 建物の絵にぴったり重なる、透明な押しどころ。
    絵が小さくても、指で押せる大きさ（48px）まで広げてある */
+/* 置き場所と大きさは、取り合いを解いた `IsleStage` が `--hl/--ht/--hiw/--hih` で
+   書き替える（`components/isle/plates.ts` の `fitHit`）。**書かれていないときは
+   絵の大きさそのまま。** 前の建物に下半分を隠された建物は、見えている上半分だけが
+   押しどころになる。48px を取れなかった建物は `data-hit="off"` で引っ込む
+   （そのぶんは札から入る）。読み上げと keyboard には残すので `display` は触らない。 */
 .isle-hit {
   position: absolute;
-  left: calc(var(--hw, 48px) / -2);
-  top: calc(var(--hh, 48px) * -1);
-  width: var(--hw, 48px);
-  height: var(--hh, 48px);
+  left: var(--hl, calc(var(--hw, 48px) / -2));
+  top: var(--ht, calc(var(--hh, 48px) * -1));
+  width: var(--hiw, var(--hw, 48px));
+  height: var(--hih, var(--hh, 48px));
   padding: 0;
   border: 0;
   background: none;
@@ -1051,12 +1056,16 @@
 
 /* --- 住人 --- */
 .isle-who { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+/* 住人の押しどころも建物と同じ決まりで置く（`plates.ts` の `fitHit`）。
+   住人は歩くので、建物のそばを通るあいだは 48px を取れないことがある。
+   **細く残さずに引っ込める。** 引っ込んでいるあいだも、島の地面を押せば
+   いちばん近い住人を拾う（`IsleStage` の `folkAt`）ので、行き止まりにはならない。 */
 .isle-who-hit {
   position: absolute;
-  left: calc(var(--ws, 48px) / -2);
-  top: calc(var(--ws, 48px) * -1);
-  width: var(--ws, 48px);
-  height: var(--ws, 48px);
+  left: var(--wl, calc(var(--ws, 48px) / -2));
+  top: var(--wt, calc(var(--ws, 48px) * -1));
+  width: var(--ww, var(--ws, 48px));
+  height: var(--wh, var(--ws, 48px));
   padding: 0;
   border: 0;
   background: none;
@@ -1065,6 +1074,11 @@
   border-radius: 50%;
 }
 .isle-who-hit:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
+/* 48px を取れなかった押しどころ。**指では受けない。**
+   細い帯を残すと「押せそうなのに押せない」になるので、そこは上にいるほうへ
+   まるごと渡す。keyboard と読み上げからは今までどおり届く。 */
+.isle-spot[data-hit="off"] .isle-hit,
+.isle-who[data-hit="off"] .isle-who-hit { pointer-events: none; }
 
 /* --- 吹き出し --- */
 /* いまの島の `.talkbox`（`island.css`）と同じ置き場・同じ形にする。

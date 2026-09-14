@@ -518,11 +518,19 @@ p.nday-note { margin: 4px 0 0; max-width: var(--nd-col); font-size: 12px; line-h
   border-left: 3px solid var(--marker);
 }
 .nday-log p { margin: 0; font-size: 12.5px; line-height: 1.8; font-weight: 700; }
+/* その日の配信へ出る1本道。字は 13px しかないので、そのままだと
+   当たりが 132x22px（実測 `tools/sprites/foldsweep.mjs`）で 48px を割る。
+
+   **`::after` で当たりだけ広げる手は取らない。** ここは区画のいちばん下で、
+   広げたぶんが上の本文や下の区画へはみ出す＝**隣から取る**ことになる。
+   下に空きがある場所なので、**箱そのものを 48px にして自分のぶんを持つ。**
+   厚み（影・枠）は付けないので、見た目は字1行のまま。 */
 .nday-vid {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  margin-top: var(--sp-2);
+  min-height: 48px;
+  margin-top: var(--sp-1);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -538,13 +546,8 @@ p.nday-log-when {
   color: var(--ink-2);
 }
 
-/* 書き込む欄も指で押すもの。48px を割らせない（`docs/island-design.md` 3-2）。
-
-   `.dform` の素の欄は 45〜46px しかなく、測って落ちた
-   （`tools/sprites/hitbox.mjs`。日付の欄 47px・配信の欄 45px）。
-   `.dform` そのものを太らせると、島じゅうの入力欄が動く。ここだけ持ち上げる
-   （`.nph-post-file` は隠してある file の欄なので、当てない）。 */
-.nph-post-row input:not(.nph-post-file) { min-height: 48px; }
+/* 48px は `ui.css` の `.dform input` が素のところで取っている。
+   ここで足していたぶんは、そちらへ寄せた。 */
 
 /* 旅程表の行に「着いた」「旅がおわった」を入れる並び（`nordic/GoalRow.tsx`）。 */
 .nlog-acts {
@@ -3123,6 +3126,19 @@ p.nday-lead {
   line-height: 1.6;
   color: var(--ink-2);
 }
-.nshop-osm a { color: var(--ink-2); }
+/* 出どころのリンク。**ODbL の表示義務なので消せない**（`docs/nordic-shops.md`）。
+   消せないなら押せなければならない。字は 11px で、当たりは 90x16px しか
+   無かった（実測。旅の日など畳みの外に27か所、国の面の畳みの中に8か所、
+   あわせて35か所。**ぜんぶ同じ1つの要素**）。
+
+   ここも `::after` では広げない。すぐ上に「しおりの、おみやげ」の板
+   （48px）があって、広げたぶんがその板を食う。行の高さを 48px にして、
+   自分のぶんを自分で持つ。 */
+.nshop-osm a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--ink-2);
+}
 /* 面の頭に置く近道。お店の区画は面のかなり後ろにあるので、1つだけ道を作る */
 .nday-jump { margin: 0 0 var(--sp-4); }

@@ -47,12 +47,20 @@ export default function DirFilter({ total }: { total: number }) {
 
   return (
     <div className="dxq">
-      <label className="dxq-lab" htmlFor="dxq">
+      {/* 見出しは**札ではなく、ただの字**にする。
+          `<label for>` にしておくと、平らに見える 338x20px の字が押しどころに
+          なる。島は「押せるものは板、押せないものは平ら」で分けている
+          （`docs/island-world.md` 3.4）ので、平らな字が押せるのは嘘になるし、
+          20px は指では狙えない（`docs/island-design.md` 3-2 の 48px 割れ）。
+          読み上げには `aria-labelledby` で同じ名前が渡る。書く欄そのものは
+          48px あるので、指はそちらを押す。 */}
+      <span className="dxq-lab" id="dxq-lab">
         名前でしぼる
-      </label>
+      </span>
       <div className="dxq-box">
         <input
           id="dxq"
+          aria-labelledby="dxq-lab"
           ref={box}
           type="search"
           className="dxq-in"
