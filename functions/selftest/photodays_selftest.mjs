@@ -434,6 +434,190 @@ console.log("\n# 7. 名前は、出してよいと言った人だけ（変えて
   check("絵はどちらにも出る", people.every((p) => p.icon));
 }
 
+/* ---------------- 8〜11. 日数が増えても、どの日も候補を出せる ----------------
+
+   `iconsOf` は渡された候補を**前から**上限で切る。前は日ごとの候補を全部
+   つないで渡していたので、**前の日が上限を使い切ると後ろの日が0人**になった。
+   絵の無い人は返さない作りなので、出方は「絵が出ない」ではなく「日が消える」。
+
+   ここの確かめは、**切るところを写さずに本物から借りる。** 写しを置くと、
+   `cards.ts` を直しても確かめが古いまま通る（#19）。 */
+
+/** 本物の `iconsOf` の、候補を切るところだけを借りる。 */
+const capSrc = cut(
+  "cards.js",
+  "async function iconsOf(",
+  "    const out = new Map();",
+  ["new Set(channelIds"],
+);
+const cardsJs = readFileSync(join(FUNCTIONS, "lib/cards.js"), "utf8");
+const MAX_CARDS = Number((/const MAX_CARDS = (\d+)/.exec(cardsJs) ?? [])[1]);
+/** `(channelIds, limit) => 実際に引きに行く ID` 。本物と同じ切り方。 */
+const iconIds = new Function(
+  "MAX_CARDS",
+  `${capSrc}\n  return ids;\n}\nreturn iconsOf;`,
+)(MAX_CARDS);
+
+/**
+ * 本物と同じ切り方をする `iconsOf` の代わり。
+ * @param {Set<string>} have 絵を持っている人
+ * @param {object} spy 呼ばれた回数と、渡された候補を控える先
+ * @return {Function} `iconsOf` の代わり
+ */
+function fakeIconsOf(have, spy) {
+  return async (channelIds, limit) => {
+    const ids = await iconIds(channelIds, limit);
+    spy.calls += 1;
+    spy.asked = ids;
+    return new Map(
+      ids.filter((c) => have.has(c)).map((c) => [c, `chr-${c.slice(-6)}`]),
+    );
+  };
+}
+
+/** 2026-08-01 から数えた日。30日まで使う。 */
+const dayOf = (i) => `2026-08-${String(i + 1).padStart(2, "0")}`;
+
+/**
+ * 「n日 × m人（全員ちがう人・全員に絵がある）」を仕込んで回す。
+ * @param {number[]} sizes 日ごとの人数（先頭が新しい日）
+ * @param {object} spy 控える先
+ * @return {Promise<object[]>} 返ってきた日ごとの中身
+ */
+async function runDays(sizes, spy) {
+  const byDay = new Map();
+  let n = 0;
+  sizes.forEach((size, i) => {
+    const list = [];
+    for (let k = 0; k < size; k++) list.push(ch(1000 + n++));
+    byDay.set(dayOf(sizes.length - 1 - i), list);
+  });
+  const have = new Set([...byDay.values()].flat());
+  const f = makeListPhotoDays({
+    photos: sizes.map((_, i) => ({
+      id: `p${i}`,
+      day: dayOf(sizes.length - 1 - i),
+      url: `https://x/${i}.webp`,
+      w: 1,
+      h: 1,
+      at: sizes.length - i,
+    })),
+    channelsOfDay: async (_events, day) => byDay.get(day) ?? [],
+    iconsOf: fakeIconsOf(have, spy),
+  });
+  return f();
+}
+
+console.log("\n# 8. 本物の iconsOf が、呼ぶ側の上限を受け取る");
+{
+  const many = [];
+  for (let i = 0; i < MAX_CARDS + 100; i++) many.push(ch(i));
+  check(`lib の MAX_CARDS が読めた`, MAX_CARDS > 0, `${MAX_CARDS}`);
+  check(
+    "上限を渡さなければ MAX_CARDS で切る（/cards はそのまま）",
+    (await iconIds(many)).length === MAX_CARDS,
+    `${(await iconIds(many)).length}人`,
+  );
+  check(
+    "渡した上限で切る（受け取れないと、後ろの日が押し出される）",
+    (await iconIds(many, MAX_CARDS + 100)).length === MAX_CARDS + 100,
+    `${(await iconIds(many, MAX_CARDS + 100)).length}人`,
+  );
+}
+
+console.log("\n# 9. 20日 × 40人（のべ800人）— **0人になる日が無い**");
+{
+  const spy = {calls: 0, asked: null};
+  const days = await runDays(Array(20).fill(40), spy);
+  check("日は20日", days.length === 20, `${days.length}日`);
+  const empty = days.filter((d) => d.people.length === 0).map((d) => d.day);
+  check(
+    "0人の日が1日も無い",
+    empty.length === 0,
+    `空の日 ${empty.length}日: ${JSON.stringify(empty)}`,
+  );
+  check(
+    "どの日も40人そろっている",
+    days.every((d) => d.people.length === 40),
+    JSON.stringify(days.map((d) => d.people.length)),
+  );
+  check(
+    "いちばん古い日も、いちばん新しい日と同じ人数",
+    days[0].people.length === days[19].people.length,
+    `${days[0].people.length} / ${days[19].people.length}`,
+  );
+}
+
+console.log("\n# 10. 混んでいる日が、ほかの日の枠を食わない");
+{
+  /* **上限が効く大きさで比べる。** 30日 × 60人（のべ1800人）は
+     `ICON_LOOKUP` を超えるので、ここで日ごとの配り方の違いが出る。 */
+  const flat = await runDays(Array(30).fill(60), {calls: 0});
+  const busy = await runDays([100, ...Array(29).fill(60)], {calls: 0});
+  const rest = (x) => x.slice(1).map((d) => d.people.length);
+  const at = rest(flat).findIndex((n, i) => n !== rest(busy)[i]);
+  check(
+    "1日目が100人でも、2日目以降の人数が1人も変わらない",
+    at < 0,
+    `${at + 2}日目で ${rest(flat)[at]}人 → ${rest(busy)[at]}人 に変わった`,
+  );
+  check(
+    "どちらも0人の日が無い",
+    flat.every((d) => d.people.length > 0) &&
+      busy.every((d) => d.people.length > 0),
+    `${flat.filter((d) => !d.people.length).length} / ` +
+      `${busy.filter((d) => !d.people.length).length}日が空`,
+  );
+}
+
+console.log("\n# 11. 引きに行く回数は、日数に比例しない");
+{
+  const four = {calls: 0, asked: null};
+  await runDays(Array(4).fill(40), four);
+  const twenty = {calls: 0, asked: null};
+  await runDays(Array(20).fill(40), twenty);
+  check(
+    "4日でも20日でも、iconsOf は1回だけ",
+    four.calls === 1 && twenty.calls === 1,
+    `4日 ${four.calls}回 / 20日 ${twenty.calls}回`,
+  );
+  check(
+    "渡す候補に重複が無い",
+    new Set(twenty.asked).size === twenty.asked.length,
+    `${twenty.asked.length}人 / 重複を落として ${new Set(twenty.asked).size}人`,
+  );
+}
+
+console.log("\n# 12. 日が増えても、既存の決めは変わっていない");
+{
+  /* 1日だけ。**絵のある人を60人より後ろに置く**（#5 と同じ形だが、
+     こちらは本物の切り方を通す）。 */
+  const all = [];
+  for (let i = 0; i < 300; i++) all.push(ch(5000 + i));
+  const have = new Set(all.slice(100, 200)); // 100人。どれも60番より後ろ
+  const spy = {calls: 0, asked: null};
+  const f = makeListPhotoDays({
+    photos: [
+      {id: "p1", day: "2026-09-13", url: "https://x/p.webp", w: 1, h: 1, at: 1},
+    ],
+    channelsOfDay: async () => all,
+    iconsOf: fakeIconsOf(have, spy),
+  });
+  const people = (await f())[0].people;
+  check("絵で絞ってから60人で切っている", people.length === 60, `${people.length}人`);
+  check(
+    "出ているのは絵のある人だけ（絵の無い人は1人も返らない）",
+    people.every((p) => have.has(p.channelId) && p.icon),
+    JSON.stringify(people.slice(0, 2)),
+  );
+  check(
+    "並びは元の順のまま",
+    JSON.stringify(people.map((p) => p.channelId)) ===
+      JSON.stringify(all.slice(100, 160)),
+    JSON.stringify(people.slice(0, 2).map((p) => p.channelId)),
+  );
+}
+
 console.log("");
 if (bad > 0) {
   console.log(`NG が ${bad} 件。`);
