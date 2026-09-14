@@ -267,23 +267,42 @@
           console.error(error);
           items = [];
         }
+
+        if (!items.length) {
+          // 出す行が1つも無いことを、ここに残す（画面には出さない）
+          console.error("料理ランキング: 出せる行が0件");
+        }
       }
 
       function render() {
         const root = document.getElementById("page");
+        const stage = document.querySelector(".stage");
 
+        /* 取れなかった日は、**何も出さない。**
+
+           ここは飾りのテロップなので、出ないことで視聴者さんが失うものは
+           無い。反対に「データがありません」「公開設定を確認して」の類を
+           出すと、中の話がそのまま配信に映る。読んだ人には何もできないし、
+           何かが壊れている画に見える。
+
+           あやとは**テロップが出てこないこと**で気づく。理由は console に
+           残してある。5秒ごとに読み直しているので、戻れば黙って出る。 */
         if (!items.length) {
-          root.innerHTML = `
-          <article class="card">
-            <div class="shade"></div>
-            <div class="content">
-              <div class="title">表示できるデータがありません</div>
-              <div class="meta">スプレッドシートの公開設定を確認してください</div>
-            </div>
-          </article>
-        `;
+          root.innerHTML = "";
+          stage.style.display = "none";
+          /* 地の色も消す。OBS のブラウザソースは、地が塗ってあると
+             **中身が空でもその色の四角が配信に残る。**
+             畳んだのに肌色の板が出ていたら、それは「何も出さない」ではない。
+             **`html` にも同じ地が敷いてあるので、両方消す**（`body` だけだと
+             下から `html` の色が出てきて、消したつもりで残る） */
+          document.documentElement.style.background = "transparent";
+          document.body.style.background = "transparent";
           return;
         }
+
+        stage.style.display = "";
+        document.documentElement.style.background = "";
+        document.body.style.background = "";
 
         const start = pageIndex * CONFIG.pageSize;
         const pageItems = items.slice(start, start + CONFIG.pageSize);

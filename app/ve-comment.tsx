@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   Platform,
+  Pressable,
   ScrollView,
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
@@ -26,19 +27,42 @@ export default function App() {
   const [content, setContent] = useState("");
   const [messageInfos, setMessageInfos] = useState<MessageInfo[]>([]);
 
-  useEffect(() => {
-    const fetchViewers = async () => {
-      try {
-        // 合言葉は URL の `?k=`。OBS のアラートボックスと同じもの
-        const k = new URLSearchParams(window.location.search).get("k") ?? "";
-        setViewers(await getAlertboxCharacters(k));
-      } catch (error) {
-        console.error("Error fetching characters:", error);
-      }
-    };
+  /* 名簿の読みぐあい。**「まだ読んでいない」と「読めなかった」と
+     「読めて0人だった」を、同じ絵にしない。**
+     前は「0人なら画面ごと出さない」だったので、読めなかった日は
+     入力欄ごと真っ白になって、**字が1つも出ないので理由が分からなかった。** */
+  const [roster, setRoster] = useState<"wait" | "ok" | "down">("wait");
 
-    fetchViewers();
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const waitRef = useRef(5000);
+
+  const loadViewers = useCallback(async () => {
+    if (retryRef.current) {
+      clearTimeout(retryRef.current);
+      retryRef.current = null;
+    }
+    try {
+      // 合言葉は URL の `?k=`。OBS のアラートボックスと同じもの
+      const k = new URLSearchParams(window.location.search).get("k") ?? "";
+      setViewers(await getAlertboxCharacters(k));
+      setRoster("ok");
+      waitRef.current = 5000;
+    } catch (error) {
+      console.error("Error fetching characters:", error);
+      setRoster("down");
+      /* **押されるまで待たない。** 車の中から開いていることがあるので、
+         電波が戻ったら黙って絵が出てくるようにする。間隔は倍にしていく */
+      retryRef.current = setTimeout(loadViewers, waitRef.current);
+      waitRef.current = Math.min(waitRef.current * 2, 60000);
+    }
   }, []);
+
+  useEffect(() => {
+    loadViewers();
+    return () => {
+      if (retryRef.current) clearTimeout(retryRef.current);
+    };
+  }, [loadViewers]);
 
   useEffect(() => {
     setMessageInfos(
@@ -127,8 +151,10 @@ export default function App() {
     return colors[hash % colors.length];
   }, []);
 
-  if (!viewers.length) return <View />;
-
+  /* **名簿が読めなくても、打てる。** 絵は名前から引いているだけで、
+     コメントを組み立てるのに要るのは打った字だけ。
+     ここで画面を返さない（前は `if (!viewers.length) return <View />`
+     で真っ白になっていた）。 */
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TextInput
@@ -138,6 +164,20 @@ export default function App() {
         onChangeText={setContent}
         multiline
       />
+
+      {/* 読めなかったときだけ出す。**これから何が起きるか**だけを書く
+          （なぜ読めなかったかは中の話なので書かない）。
+          読み直しは黙って走っているので、待つだけでも戻る */}
+      {roster === "down" && (
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            いま、キャラクターの絵を読みに行けませんでした。字だけで作れます。
+          </Text>
+          <Pressable style={styles.noticeButton} onPress={loadViewers}>
+            <Text style={styles.noticeButtonText}>もう一度よみこむ</Text>
+          </Pressable>
+        </View>
+      )}
       {messageInfos.map((messageInfo, i) => (
         <ViewShot
           key={i}
@@ -186,6 +226,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
     backgroundColor: "#efefef",
+  },
+  notice: {
+    width: "90%",
+    marginVertical: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#fff7e6",
+    borderWidth: 1,
+    borderColor: "#e0c99a",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  noticeText: {
+    fontSize: 14,
+    color: "#5a4630",
+    flexShrink: 1,
+  },
+  noticeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    backgroundColor: "#5a4630",
+    // 指で押せる高さ（48px）を割らない
+    minHeight: 48,
+    justifyContent: "center",
+  },
+  noticeButtonText: {
+    color: "#fff",
+    fontSize: 14,
   },
   textArea: {
     width: "90%",
