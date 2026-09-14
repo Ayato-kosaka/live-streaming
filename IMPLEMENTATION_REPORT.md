@@ -195,7 +195,8 @@ concurrency:
 - `.gitignore`: Python関連パターン追加
 
 ### バックアップ
-- `python/fetch_chat_data_old.py`: 旧実装を保持（参考用）
+- `python/fetch_chat_data_old.py`: **消した**（2026-09-14）。GAS の口を叩いていた旧実装で、
+  どのワークフローからも呼ばれていなかった。要るときは git の履歴から出せる
 
 ---
 

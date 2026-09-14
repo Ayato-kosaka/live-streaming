@@ -921,14 +921,18 @@
   white-space: nowrap;
 }
 /* 閉じている札は 30px しかない。絵は小さいままでよいが、押せるものである以上
-   指の当たりは 48px 要る（`docs/island-design.md` 3-2）。見えない当たりを外へ広げる */
+   指の当たりは 48px 要る（`docs/island-design.md` 3-2）。見えない当たりを外へ広げる。
+   **48 ではなく 49。** ちょうど 48px だと中心から 24px が縁そのものになり、
+   丸めしだいで下の地面が返る。実測で `/island/middle-east` の引きは、札4枚のうち
+   2枚が (0,+24) だけで落ちて「入口が無い」と出ていた。建物の当たりが
+   `plates.ts` の `TAP_FIT = 49` を取っているのと同じ理由で、札もそろえる。 */
 .isle-mark::before {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: max(100%, 48px);
-  height: max(100%, 48px);
+  width: max(100%, 49px);
+  height: max(100%, 49px);
   transform: translate(-50%, -50%);
   border-radius: inherit;
 }
@@ -992,8 +996,14 @@
    `none` にすると、看板の無い6軒が引きから押せなくなる。 */
 .isle[data-cam="wide"] .isle-spot.is-sign .isle-hit { pointer-events: none; }
 /* 札を出さなかった建物は、押しどころを建物に戻す。
-   札しか押せない決まりのままだと、触りようが無くなる */
+   札しか押せない決まりのままだと、触りようが無くなる。
+   **ただし引っ込めた当たりは戻さない**（`:not([data-hit="off"])`）。
+   引っ込んでいるのは「48px を取れなかった＝隣の入口とぶつかっている」ときで、
+   そこを戻すと**取り合いに負けたはずの箱が、隣の建物の入口の上に居座る。**
+   実測（390px・表紙の引き）で「企画をだす」の戻された当たりが
+   「この旅のこと」の当たりを覆い、この旅のことが押せなくなっていた。 */
 .isle[data-cam="wide"] .isle-spot.is-sign[data-far] .isle-hit { pointer-events: auto; }
+.isle[data-cam="wide"] .isle-spot.is-sign[data-far][data-hit="off"] .isle-hit { pointer-events: none; }
 .isle-spot.is-on .isle-mark { padding: 9px 12px; max-width: min(80vw, 340px); }
 /* 開いた札の一言は折り返してよいが、**折り返す幅を先に決める。**
    決めないと札の幅が名前で決まるので、「アプリ」（3文字）の札では

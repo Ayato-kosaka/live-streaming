@@ -72,9 +72,6 @@ jobs:
     env:
       # BigQuery 設定
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      # 旧環境変数（後方互換性のため保持、将来削除予定）
-      PYTHON_GAS_API_URL: ${{ secrets.PYTHON_GAS_API_URL }}
-      PYTHON_GAS_API_PW: ${{ secrets.PYTHON_GAS_API_PW }}
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v4
