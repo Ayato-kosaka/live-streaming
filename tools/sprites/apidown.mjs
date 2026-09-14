@@ -35,7 +35,18 @@ const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
    `/privacy` まで含めて **118/118 が island-api を叩いていた**（2026-09-14）。
    「口に依っているのは島まわりの数面だけ」は思い込みだったので、既定を
    一覧ファイルにした。`PAGELIST` に1行1面で渡す。 */
-const PAGES = process.env.PAGELIST
+/* **入った人の面（`/me`）は、ログインしないと9割が写らない。**
+   この箱では本物のログインができないので、`asme.mjs` が前に入った人の控えを
+   置いてくれる。`ME=1` を付けると、その差し込みを使って `/me` まわりを見る。
+
+   **順番が肝。** `asme` は島の口を差し替える route を張るので、そのあとに
+   「口を落とす」route を張る。Playwright は**あとから張ったほうが先に効く**ので、
+   こちらが勝つ。逆にすると、落としたつもりで差し替えが返ってきて、
+   **どの面も「差 0・中の話 0」という、落ちようのない結果**になる。 */
+const ME = process.env.ME === "1";
+const MEPAGES = ["/me", "/me/desk", "/me/remote", "/me/roulette"];
+
+const PAGES = ME ? MEPAGES : process.env.PAGELIST
   ? readFileSync(process.env.PAGELIST, "utf8").trim().split("\n").filter(Boolean)
   : (process.env.PAGES || "/,/nordic,/now,/cards,/board,/friends,/me").split(",");
 const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
@@ -73,6 +84,12 @@ async function 撮る(b, path, 口を落とす) {
       r.fulfill(res);
     } catch { r.abort(); }
   });
+  if (ME) {
+    const { apply } = await import("./asme.mjs");
+    await apply(ctx, { admin: false });
+    // **apply のあとに張る。** 先に張ると差し替えのほうが勝って、落ちない
+    if (口を落とす) await ctx.route(/\/island-api\//, (r) => { 落とした++; r.abort(); });
+  }
   const p = await ctx.newPage();
   const errs = [];
   p.on("pageerror", (e) => errs.push(String(e).slice(0, 120)));
