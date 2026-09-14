@@ -1,0 +1,152 @@
+name: 取り込みが落ちているを issue に映す
+
+# Doneru の取り込みが落ちているあいだ、**issue を1本だけ開き続ける**
+# （`python/ingest_down.py`）。入り直して通ったら、自分で閉じる。
+#
+# ## なぜ要るか
+#
+# Doneru の取り込みは cookie ひとつで動いていて、**切れたらあやとが
+# 入れ直すまで二度と通らない。** 2026-09-13 と 09-14 に3回続けて
+# `session_expired` で落ちていたのに、**見つかったのは偶然だった。**
+#
+# 毎晩の確認は取り込み本体（`Fetch YouTube Chat Data`）の緑だけを見ていて、
+# Doneru のほうは手順から漏れていた。#294 に「手順から漏れていたので直す」と
+# 書いてあるのに、**手順書に足しただけでは次の晩に忘れる。**
+# 赤は Actions の一覧の中にしか出ないうえ、**「起きたこと」であって
+# 「いま残っていること」ではない。** 次の晩に緑が積まれれば下へ流れていく。
+#
+# だから赤を強くするのではなく、**いまの状態そのものを、人が毎日見る場所
+# （issue の一覧）に置く。** `donor_calls.yml` と同じ形。
+#
+# ## 繋ぎ先（`workflow_run`）
+#
+# 読む元は Firestore の `islandDoneruHealth/last`。そこへ写すのは
+# `Fetch Doneru Donations` の最後の step（`python/doneru_health.py`）なので、
+# **その後ろに繋ぐ。** 札が新しくなった直後に見ることになる。
+#
+# **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
+# あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
+# （20:30 UTC）の古参2本だけで、しかも1時間49分〜3時間32分遅れて走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
+# 待っても発火しなかった。下の cron は**保険**として置いてある。
+#
+# **`conclusion` は見ない。ここがこのファイルの肝。**
+# `Fetch Doneru Donations` は**セッションが切れた晩に終了コード 2 で落ちる。**
+# つまり**この仕組みがいちばん要る晩に、あちらは赤い。**
+# 成功したときだけ繋ぐと、**切れた晩だけ issue が立たない。**
+#
+# 繋ぎ先を2本にしてあるのは、片方が消えても止まらないようにするため。
+# 2本とも走った晩は2回回るが、**2回目は札も日数も同じなので何も書かない**
+# （`ingest_down.py` の `decide()`）。
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると
+# 黙って切れる。**赤くならない。走らなくなるだけ。**
+# 生きているかは `Fetch Doneru Donations` を `probe: true` で押して確かめる
+# （1バイトも書かずに40秒で終わる）。
+#
+# ## 手で押すときの既定は「見るだけ」
+#
+# `apply` の既定は false。押し間違えても issue は動かない。
+# **押す人のいないとき（cron と、取り込みに繋いで来たぶん）だけ apply で走る。**
+#
+# ## 落ちていても赤くしない
+#
+# 取り込みが落ちている晩でも、この job は緑で終わる。
+# **赤で知らせるのをやめるために作ったもの**が自分で赤を積んだら元に戻る。
+# 赤くなるのは「判断のところが壊れている」「札が読めない」「GitHub に届かない」
+# ＝**この仕組みそのものが動いていない**ときだけ。
+
+on:
+  workflow_run:
+    # 札を書くのは前者の最後の step。後者は片方が消えたときの受け皿
+    workflows: ["Fetch Doneru Donations", "Fetch YouTube Chat Data"]
+    types: [completed]
+
+  schedule:
+    # 保険。取り込みの実測（21:49〜23:32 UTC）より後ろ
+    - cron: "30 2 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "issue を実際に開く／書き換える／閉じる（off なら見るだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 取り込みと Doneru が続けて終わった晩に2本同時に走ると、
+# 同じ issue を2本立てにいく。1本ずつ通す
+concurrency:
+  group: ingest-down
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # issue を開く・書き換える・閉じる
+  issues: write
+
+jobs:
+  ingest_down:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # **`requirements.txt` を丸ごと入れない。** ここが読むのは Firestore の
+      # 札1枚だけで、BigQuery も YouTube API も Pillow も1行も通らない。
+      # 「落ちていること」を知らせる係が、**関係のない依存が1つ壊れただけで
+      # 止まる**形にしたくない。GitHub を叩くほうは標準ライブラリだけで足りる
+      - name: Firestore のクライアントだけ入れる
+        run: |
+          python -m pip install --upgrade pip
+          pip install "google-cloud-firestore>=2.16.0"
+
+      # 偽の Firestore と偽の GitHub で回すだけ。外へは1バイトも出ない。
+      # **本番を触る前に、判断のところ（`assess`）が生きているかを見る。**
+      # ここが壊れたまま apply で走ると、空振りの issue が毎晩開くか、
+      # 本当に落ちた朝に黙るかのどちらかになる
+      - name: 判断のところを、偽物で先に回す
+        run: python python/ingest_down_selftest.py
+
+      - name: いまの取り込みを見て、issue を合わせる
+        env:
+          # 手で押したときだけ既定が「見るだけ」。
+          # cron と、取り込みに繋いで来たぶんは**読む人がいない**ので apply
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then
+            python python/ingest_down.py --apply
+          else
+            python python/ingest_down.py
+          fi
+
+      # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに
+      # 誰も気づかない。せめてどこで落ちたかを要約に残す
+      # （要約は run の1枚目に出るので、ログを開かずに読める）
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 取り込みの様子を映せませんでした"
+            echo ""
+            echo '**取り込みが落ちているという意味ではありません。**'
+            echo 'この仕組みのほう（判断・札・GitHub のどれか）が動いていません。'
+            echo 'issue が**いまの状態と食い違ったまま**になっています。'
+            echo ""
+            echo '`python python/ingest_down_selftest.py` と'
+            echo '`python python/ingest_down.py` を手元で回すと、どちらかが分かります。'
+          } >> "$GITHUB_STEP_SUMMARY"
