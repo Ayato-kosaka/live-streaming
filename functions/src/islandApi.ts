@@ -1924,7 +1924,12 @@ async function listPhotoDays(): Promise<Json[]> {
     listResidents(),
   ]);
   /* **絵は1回で引く**(`cards.ts` の `iconsOf`)。日ごとに引くと旅の日数ぶん
-     往復が増える。日が何日あっても2往復のまま（重複を落として1回だけ渡す）。
+     往復が増える。日が何日あっても2往復のまま（`iconLookupTargets` が
+     重複を落として1本にまとめる）。
+
+     **渡す順は日ごとの持ち回り。** 全部つないで前から切ると、前の日が
+     上限を使い切って**後ろの日が丸ごと0人になる**（下の
+     `iconLookupTargets` に理由）。
 
      **絵で絞ってから60人で切る。切ってから絞らない。** 候補は「その日
      投げてくれた人」から「その日いた人」に広がったので、絵の無い人が
@@ -1934,7 +1939,7 @@ async function listPhotoDays(): Promise<Json[]> {
      絵の無い人はそもそも返さない。読む側は絵でしか人を見分けられない
      （`CardSheet` は `icon` で重複を落とす）ので、`icon: null` の人は
      何人いても1マスに潰れたうえ、そのマスには何も描けない。 */
-  const icons = await iconsOf([...new Set(peopleByDay.flat())]);
+  const icons = await iconsOf(iconLookupTargets(peopleByDay), ICON_LOOKUP);
   const shown = peopleByDay.map((x) =>
     x.filter((c) => icons.has(c)).slice(0, 60),
   );
@@ -1970,6 +1975,51 @@ async function listPhotoDays(): Promise<Json[]> {
     photos: (byDay.get(day) ?? []).sort((a, b) => a.at - b.at),
     people: peopleOf.get(day) ?? [],
   }));
+}
+
+/**
+ * 1回の `iconsOf` で引きに行く人数の上限。
+ *
+ * 表に出るのは1日60人までなので、**60人 × 20日ぶん。** 写真は400枚までしか
+ * 見ないので日数は最大でも400日で、そこまで増えても1日あたり3人は残る
+ * （持ち回りで配るので、0人になる日は出ない）。
+ */
+const ICON_LOOKUP = 1200;
+
+/**
+ * 絵を引きに行く候補を、**日ごとの持ち回りで**選ぶ。
+ *
+ * ## なぜ「上限の数字を大きくする」で済ませないか
+ *
+ * 前はその日いた人を全部つないで、`iconsOf` の中で前から600人で切っていた。
+ * **旅が続くかぎり日数は増え続ける**ので、600 を 6000 にしても、いつかは
+ * 同じところに当たる。しかも当たり方が悪い——絵の引けなかった人は返さない
+ * 作りなので、上限の外へ落ちた日は**丸ごと0人**になって、その日の顔ぶれが
+ * 画面から消える。「絵が出ない」ではなく「日が空になる」。
+ *
+ * だから数字ではなく形を変えた。**1日目の1人目・2日目の1人目・…と1周ずつ
+ * 配る。** こうすると、ある日に何人いても、その日が使うのは1周につき1人
+ * ぶんだけ。**混んでいる日が、ほかの日の枠を食わない。**
+ *
+ * 往復は増えない。ここで作るのは渡す並びだけで、引くのは今までどおり1回。
+ * @param {Array<string[]>} peopleByDay 日ごとの候補（新しい日が先）
+ * @return {string[]} 重複を落とした、持ち回りの並び
+ */
+function iconLookupTargets(peopleByDay: string[][]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const longest = peopleByDay.reduce((n, x) => Math.max(n, x.length), 0);
+  for (let i = 0; i < longest && out.length < ICON_LOOKUP; i++) {
+    for (const day of peopleByDay) {
+      if (out.length >= ICON_LOOKUP) break;
+      const channelId = day[i];
+      // 同じ人が何日も来ている。引くのは1回でいい（3日とも同じ絵が付く）
+      if (!channelId || seen.has(channelId)) continue;
+      seen.add(channelId);
+      out.push(channelId);
+    }
+  }
+  return out;
 }
 
 export const islandApi = onRequest(
