@@ -240,13 +240,23 @@ async function channelNames(ids: string[]): Promise<Map<string, string>> {
  * **落ちても投げない。** 絵が引けないことでカードそのものが返らなくなるのは、
  * 直そうとしているものより悪い(#34 と同じ形)。引けなければ空の表を返して、
  * 呼んだ側は `icon: null` のまま並べる。
- * @param {string[]} channelIds カードの持ち主
+ *
+ * ## なぜ上限を呼ぶ側から渡せるようにしたか
+ *
+ * ここの既定(`MAX_CARDS`)は `/cards` の「新しい順に600枚」に合わせた数で、
+ * **「1回の往復で何人ぶん引くか」ではなく「何枚のカードを返すか」の数。**
+ * `listPhotoDays` は日ごとに候補を集めて渡すので、意味の違う上限を
+ * 共有すると**日数が増えたぶんだけ後ろの日が押し出される**。
+ * 呼ぶ側が自分の意味で上限を決められるようにして、切り離した。
+ * @param {string[]} channelIds カードの持ち主。**渡した順に見る**
+ * @param {number} [limit] 引きに行く人数の上限。既定は `/cards` の枚数
  * @return {Promise<Map<string, string>>} チャンネルID → キャラクターの書類ID
  */
 export async function iconsOf(
   channelIds: string[],
+  limit: number = MAX_CARDS,
 ): Promise<Map<string, string>> {
-  const ids = [...new Set(channelIds.filter((x) => x))].slice(0, MAX_CARDS);
+  const ids = [...new Set(channelIds.filter((x) => x))].slice(0, limit);
   const out = new Map<string, string>();
   if (ids.length === 0) return out;
   try {
