@@ -459,6 +459,30 @@
         }
       }
 
+      /* 出す名前が1人もいないときの姿。**何も出さない。**
+
+         この面は OBS のブラウザソースに載る表彰の飾り。名前が読めていない
+         のに「合計 0 名 0 円 ありがとうございました」を出すと、**読めなかった
+         だけの晩に「0円でした」と言い切る**ことになる。投げてくれた人がいる
+         のに、いなかったことにする絵がいちばん悪い。
+
+         **地の色まで消す。** OBS は中身が空でも、地が塗ってあればその色の
+         四角を配信に乗せる。この面は `body` の地に加えて `::before`（背景の
+         写真）と `::after`（白いベール）が全面に敷いてあるので、3枚とも消す。 */
+      html.is-dead,
+      html.is-dead body {
+        background: transparent !important;
+      }
+
+      html.is-dead body::before,
+      html.is-dead body::after {
+        display: none !important;
+      }
+
+      html.is-dead .app {
+        display: none !important;
+      }
+
       /* Assistive-only */
       .sr-only {
         position: absolute !important;
@@ -564,6 +588,18 @@
       }
 
       function render() {
+        /* 名前が1人も無いなら、**何も出さない。**
+
+           あやとは**表彰の板が出てこないこと**で気づく。理由は console に
+           残す。ここに `ranking` を差し込み忘れたまま OBS に載せると、
+           前は「合計 0 名 0 円 ありがとうございました🙏」がそのまま配信に
+           出ていた。 */
+        if (!Array.isArray(ranking) || ranking.length === 0) {
+          console.error("応援ありがとうランキング: 出せる名前が0件なので何も出さない");
+          document.documentElement.classList.add("is-dead");
+          return;
+        }
+
         const top3 = document.getElementById("top3");
         const list = document.getElementById("list");
         const foot = document.getElementById("footnote");

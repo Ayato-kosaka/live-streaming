@@ -641,10 +641,12 @@
 
       <section class="ranking-header" aria-label="ランキングの操作">
         <div class="ranking-title">
-          <h2 id="ranking-title">朝食の料理ランキング</h2>
-          <p class="ranking-subtitle" id="ranking-subtitle">
-            final_score の降順 / 同値同位
-          </p>
+          <!-- ここは読み込む前と、落ちたときに**そのまま残る**札。
+               前は `final_score の降順 / 同値同位` と、中の列の名前が
+               出たままになっていた。読めているときの札は renderRanking が
+               上書きするので、初期値は空でよい。 -->
+          <h2 id="ranking-title">料理ランキング</h2>
+          <p class="ranking-subtitle" id="ranking-subtitle"></p>
         </div>
         <button
           class="secondary-button"
@@ -994,8 +996,7 @@
           renderFeatureKeyControls();
           renderRanking();
         } catch (error) {
-          console.error(error);
-          renderFeatureLoadError();
+          renderFeatureLoadError(error);
         }
       }
 
@@ -1024,13 +1025,26 @@
         els.rankingList.append(loading);
       }
 
-      function renderFeatureLoadError() {
+      /**
+       * ランキングが読めなかったときの姿。
+       *
+       * ここは配信に映る面ではなく、**押す人がいる道具**なので字を出してよい。
+       * ただし書いてよいのは「この人がこれから何をするか」だけ。
+       * 前は「ランキングデータを取得できませんでした。時間をおいて再読み込み
+       * してください。」と出していた。**なぜ出ないか**は読む人には要らないし、
+       * 「取得」「データ」は中の言葉。落ちた理由は console にだけ残す。
+       */
+      function renderFeatureLoadError(error) {
+        console.error("料理カテゴリランキング: ランキングを読めなかった —", error);
+        /* 読めていないのに「朝食の料理ランキング」と出したままにしない。
+           条件を選んだ札も出ていないので、名乗るものが無い。 */
+        els.rankingTitle.textContent = "料理ランキング";
+        els.rankingSubtitle.textContent = "";
         els.rankingList.replaceChildren();
-        const error = document.createElement("div");
-        error.className = "empty-state";
-        error.textContent =
-          "ランキングデータを取得できませんでした。時間をおいて再読み込みしてください。";
-        els.rankingList.append(error);
+        const message = document.createElement("div");
+        message.className = "empty-state";
+        message.textContent = "いまはランキングを出せません。少し待ってから開き直してください。";
+        els.rankingList.append(message);
       }
 
       /**
@@ -1204,8 +1218,9 @@
         if (candidates.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.textContent =
-            "この条件で final_score が0より大きい料理がありません。";
+          /* 前は「この条件で final_score が0より大きい料理がありません。」。
+             `final_score` は中の列の名前で、読む人には要らない。 */
+          empty.textContent = "この条件に合う料理は見つかりませんでした。";
           els.rankingList.append(empty);
           renderReviewCount();
           return;
@@ -1558,11 +1573,11 @@
           API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
           !API_SECRET.trim()
         ) {
-          setStatus(
-            statusEl,
-            "HTML上部の API_SECRET を、GASのスクリプトプロパティ値へ置き換えてください。",
-            "error"
-          );
+          /* 合言葉が置かれていない。**これは押した人の手落ちではない**ので、
+             直し方（どのファイルの何を書き換えるか）を画面に書かない。
+             置き場の名前を画面に出すと、そこに何があるかを教えることにもなる。 */
+          console.error("料理カテゴリランキング: 送り先の合言葉が置かれていない");
+          setStatus(statusEl, "いまは送れません。", "error");
           return;
         }
 
@@ -1592,10 +1607,13 @@
             "success"
           );
         } catch (error) {
-          console.error(error);
+          /* 前は「送信に失敗しました。通信状態と GAS のデプロイ設定を確認して
+             ください。」と出していた。**押した人にできることは「もう一度押す」
+             だけ**で、置き場の設定はこちらの仕事。中の名前は console に残す。 */
+          console.error("料理カテゴリランキング: レビューを送れなかった —", error);
           setStatus(
             statusEl,
-            "送信に失敗しました。通信状態とGASのデプロイ設定を確認してください。",
+            "送れませんでした。もう一度、保存を押してください。",
             "error"
           );
         } finally {
@@ -1745,16 +1763,23 @@
       }
 
       /**
-       * API秘密鍵が未設定の場合だけ、画面上へ設定箇所を案内する。
+       * 合言葉が置かれていないときの札。
+       *
+       * 前はここに「HTML上部の API_SECRET を GAS の RANKING_REVIEW_API_SECRET と
+       * 同じ値に置き換えてください」と、**直す場所と鍵の名前をそのまま**
+       * 出していた。この面は公開の置き場にあるので、読むのはレビューしに来た
+       * 人で、その人にできることは1つも無い。**どこに何があるかを言わない。**
+       * 直すのはこちらの仕事なので、詳しいことは console にだけ残す。
        */
       function renderConfigWarning() {
         if (
           API_SECRET === "REPLACE_WITH_YOUR_API_SECRET" ||
           !API_SECRET.trim()
         ) {
+          console.error("料理カテゴリランキング: 送り先の合言葉が置かれていない");
           els.configWarning.classList.add("is-visible");
           els.configWarning.textContent =
-            "送信を有効にするには、HTML上部の API_SECRET をGASの RANKING_REVIEW_API_SECRET と同じ値に置き換えてください。";
+            "いまは、レビューを送れません。見るだけならこのまま使えます。";
         }
       }
 
