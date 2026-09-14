@@ -8,8 +8,8 @@
 同じ人は同じ字になるので「この行とこの行は同じ人」までは追える。
 残りは件数と yes / no しかない。
 
-    #a3f9  tips=1  card=yes  chat_paid=2  chat_all=17  char=yes
-    #7b21  tips=1  card=NO   chat_paid=1  chat_all=4   char=no
+    #a3f9  tips=1  card=yes  cards=3  chat_paid=2  chat_all=17  char=yes
+    #7b21  tips=0  card=NO   cards=0  chat_paid=1  chat_all=4   char=no
 
 ## 何を出さないか
 
@@ -38,10 +38,34 @@ dry-run を Actions から回してもログは公開のまま残るから（`lo
 だから **`chat_paid` が立っているのに `tips=0`** なら、それは紐付けの話ではなく
 「まだ台帳に来ていない」ほう。
 
+## 「あやと島カード」は2つある
+
+| どちら | 置き場 | 列 |
+| --- | --- | --- |
+| 写真に入れる候補 | 置き場は無い（`channelsOfDay()` がその場で集める） | `card` |
+| 本人がもらうカード | `islandCards` | `cards` |
+
+**`card=yes` は「候補に入る」だけで、配られたことではない。**
+配るのは `python/island_cards.py` と `mintForImage`（`functions/src/streamEvents.ts`）の
+2か所で、企画のカード画像（`role: "card"`）とその企画に当たる投げ銭を掛け合わせて
+`islandCards/{画像ID}__{チャンネルID}` を置く。
+
+だから **`tips` が立っているのに `cards=0`** が、この道具でいちばん見たいもの——
+「投げ銭してくれたのに、1枚も配られていない」。まとめでそこだけ名指しで数える。
+そうなるのはたいてい次のどれか。
+
+- その日の企画に**カード画像が1枚も貼られていない**（掛ける相手がいない）
+- 投げ銭が**どの企画にも当たらなかった**（企画の日付とも `videoIds` とも合わない）
+- **日付がずれている。** `islandCards.day` は**企画の日**で、`islandTips.day` は
+  投げてくれた瞬間の日本時間。0時をまたいだ配信の後半に投げた人は台帳が翌日・
+  カードが配信日に載るので、**翌日を引くと `tips=1` `cards=0`** に見える。
+  前の日も引いて見比べる（同じ人なら指紋は同じ字になる）
+
 | 列 | 何 |
 | --- | --- |
 | `tips` | その日の `islandTips` に、その人の行が何件あるか |
 | `card` | カードの候補に入るか（＝`tips` が1件以上。`channelsOfDay` と同じ条件） |
+| `cards` | その日の `islandCards` に、その人に渡った書類が何枚あるか |
 | `chat_paid` | その日の `streamChatMessages` のうち、有料の行（スパチャ・ステッカー・メンバー） |
 | `chat_all` | その日の `streamChatMessages` のうち、その人の行の総数 |
 | `char` | `islandCharacter` にその人がいるか |
@@ -194,7 +218,8 @@ def blank() -> dict:
     `names` は**数えるためだけに持つ。**（キャラクターを名前で当てるのに要る）
     表にも、まとめにも、1文字も出さない。
     """
-    return {"tips": 0, "chat_paid": 0, "chat_all": 0, "names": set()}
+    return {"tips": 0, "cards": 0, "chat_paid": 0, "chat_all": 0,
+            "names": set()}
 
 
 def collect(client, day: str) -> dict:
@@ -254,6 +279,34 @@ def collect(client, day: str) -> dict:
         if n:
             row["names"].add(n)
 
+    # --- 配られたカード（`islandCards`。本人がもらうほう） ----------------
+    # **`card` とは別のもの。** あちらは写真に入れる候補で、こちらは
+    # 実際に置かれた書類。`where("day","==",…)` の1本だけで引いて、
+    # 誰のぶんかは手元で数える。**複合索引が要る引き方にしない**（#168）。
+    #
+    # `day` は**企画の日**（`island_cards.py` と `mintCards` がどちらも
+    # `企画の日付 || 台帳の day` で入れる）。台帳の `day`（投げてくれた
+    # 瞬間の日本時間）とは、0時をまたいだ配信でずれる
+    cards_total = 0
+    cards_people = set()
+    # 要るのは「誰に」だけなので、画像のIDも置き方も持ち帰らない
+    q = client.collection("islandCards").where("day", "==", day).select(
+        ["channelId"]
+    )
+    for d in q.stream():
+        v = d.to_dict() or {}
+        cards_total += 1
+        c = clean(v.get("channelId"))
+        if not c:
+            continue
+        cards_people.add(c)
+        row = per.get(c)
+        # **ここでは行を増やさない。** 表に並ぶのは「その日に投げた／書いた人」で、
+        # 日付のずれたカードだけを持つ人を足すと tips も chat も 0 の行が増えて、
+        # 「この人は何をした人か」が読めなくなる。その人数はまとめのほうに出る
+        if row is not None:
+            row["cards"] += 1
+
     # --- キャラクターが居るか --------------------------------------------
     ids, keys = characters(client)
     norm = name_norm()
@@ -272,7 +325,15 @@ def collect(client, day: str) -> dict:
         "tips_blank": tips_blank,
         "chat_total": chat_total,
         "chat_blank": chat_blank,
+        # **`cards` は候補の人数（`card=yes` の数）で、`cards_total` は
+        # 配られた枚数。** 名前が紛らわしいが、`cards` は先に居た側なので
+        # 動かさない（読む側の目印が変わる）
         "cards": sum(1 for r in per.values() if r["card"]),
+        "cards_total": cards_total,
+        "cards_people": len(cards_people),
+        # **この道具の本命。** 候補には入っているのに、書類が1枚も無い人
+        "tips_no_card": sum(1 for r in per.values()
+                            if r["tips"] > 0 and r["cards"] == 0),
         "by_name": norm is not None,
     }
 
@@ -300,6 +361,7 @@ def lines(res: dict) -> list:
             f"{key}  "
             + f"tips={r['tips']}".ljust(8)
             + ("card=yes" if r["card"] else "card=NO").ljust(10)
+            + f"cards={r['cards']}".ljust(9)
             + f"chat_paid={r['chat_paid']}".ljust(13)
             + f"chat_all={r['chat_all']}".ljust(14)
             + ("char=yes" if r["char"] else "char=no")
@@ -316,6 +378,18 @@ def lines(res: dict) -> list:
         f"（うち channelId が空 {res['chat_blank']}件）"
     )
     out.append(f"  カードの候補       {res['cards']:>6}人")
+    out.append(
+        f"  islandCards        {res['cards_total']:>6}枚"
+        f" / {res['cards_people']:>4}人（実際に配られたぶん）"
+    )
+    # **0 でなければ目立たせる。** 揃った数字の中に埋めると読み飛ばす
+    miss = res["tips_no_card"]
+    if miss:
+        out.append(
+            f"  ★★ 投げ銭したのにカードが1枚も無い人 {miss:>4}人 ★★"
+        )
+    else:
+        out.append(f"  投げ銭したのにカードが1枚も無い人 {miss:>4}人")
     out.append(f"  表に並んだ人       {len(res['per']):>6}人")
     if not res["by_name"]:
         out.append("  ※ char はチャンネルIDだけで当てています（実際より少なく出ます）")

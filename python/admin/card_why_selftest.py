@@ -11,7 +11,8 @@
   2. **対照。** `GITHUB_ACTIONS` を外して同じものを回すと、チャンネルIDが
      素で出る。ここが出ないなら、1 の 0件は「消えた」ではなく
      **「そもそも何も出ていない」**
-  3. 数が合う（台帳の空欄・日本時間の日の境目・カードの候補の人数）
+  3. 数が合う（台帳の空欄・日本時間の日の境目・カードの候補の人数・
+     **配られたカードの枚数と、投げ銭したのに1枚も無い人の数**）
   4. **1バイトも書かない。** 書く口は `_fs.readonly()` が塞ぐ
   5. 日付が無い／形が違う入力は、はっきり落ちる
 
@@ -123,11 +124,15 @@ def doc_id(n: int) -> str:
 def make_store() -> dict:
     """本番に似せた中身。**外し方を1つずつ仕込んである。**
 
-    - a … 台帳に1件・チャット17件（うち有料2件）・キャラクターはチャンネルIDで当たる
+    - a … 台帳に1件・チャット17件（うち有料2件）・キャラクターはチャンネルIDで当たる。
+          **カードはその日3枚（企画のカード画像3枚ぶん）と、前の日に1枚**
     - b … **台帳に居ない。** チャットだけ4件（うち有料1件）。カードが渡らない側
     - c … 台帳に2件。チャットは1件も無い（本文を書かずに投げた人）。
-          キャラクターは**名前でしか当たらない**（`channelId` を持っていない人）
-    - d … 前の日の 23:59 と 次の日の 00:00 にだけ居る。**1行も出てはいけない**
+          キャラクターは**名前でしか当たらない**（`channelId` を持っていない人）。
+          **カードは1枚も無い。＝ 投げ銭したのに配られていない人**（この道具の本命）
+    - d … 前の日の 23:59 と 次の日の 00:00 にだけ居る。**1行も出てはいけない**。
+          ただし**その日のカードは1枚持つ**（0時をまたいだ配信で、台帳が翌日・
+          カードが配信日に載った形）。枚数には数えるが、**行は増やさない**
     - Doneru の紐付け待ち … `channelId` が空の台帳の行を3件
     - チャンネルIDの無いチャット … 1件
     """
@@ -217,8 +222,39 @@ def make_store() -> dict:
             "images": {"plain": {"url": "https://example.invalid/c.webp"}},
         },
     }
+    # 配られたカード。鍵は本番と同じ `<画像のID>__<チャンネルID>`
+    # （`functions/src/streamEvents.ts` の `cardId`）。
+    # **`day` は企画の日**（`island_cards.py` が `企画の日付 || 台帳の day`
+    # で入れる）なので、台帳の日とずれることがある。d がその形
+    cards = {}
+    for i, img in enumerate((doc_id(200), doc_id(201), doc_id(202))):
+        cards[f"{img}__{CH['a']}"] = {
+            "channelId": CH["a"], "day": DAY,
+            "streamEventId": doc_id(300), "streamEventImageId": img,
+            "earnedAt": ms(DAY, 21, 3), "x": 0.7, "y": 0.9,
+        }
+    # **前の日のカード。** a の `cards` に数えてはいけない
+    cards[f"{doc_id(210)}__{CH['a']}"] = {
+        "channelId": CH["a"], "day": "2026-09-11",
+        "streamEventId": doc_id(301), "streamEventImageId": doc_id(210),
+        "earnedAt": ms("2026-09-11", 22, 0), "x": 0.7, "y": 0.9,
+    }
+    # 0時をまたいだ配信の後半に投げた人。台帳は前の日、カードはこの日。
+    # **枚数と人数には入るが、表の行は増えない**
+    cards[f"{doc_id(200)}__{CH['d']}"] = {
+        "channelId": CH["d"], "day": DAY,
+        "streamEventId": doc_id(300), "streamEventImageId": doc_id(200),
+        "earnedAt": ms("2026-09-11", 23, 59), "x": 0.7, "y": 0.9,
+    }
+    # 次の日のカード。どこにも数えてはいけない
+    cards[f"{doc_id(220)}__{CH['b']}"] = {
+        "channelId": CH["b"], "day": "2026-09-13",
+        "streamEventId": doc_id(302), "streamEventImageId": doc_id(220),
+        "earnedAt": ms("2026-09-13", 21, 0), "x": 0.7, "y": 0.9,
+    }
+
     return {"islandTips": tips, "streamChatMessages": msgs,
-            "islandCharacter": chars}
+            "islandCharacter": chars, "islandCards": cards}
 
 
 # 仕込みから導く期待値。**手で書いた数を置かない**（仕込みを足した日に、
@@ -229,6 +265,9 @@ def expect(store: dict) -> dict:
     t0, t1 = card_why.jst_range(DAY)
     day_tips = [v for v in tips.values() if v["day"] == DAY]
     day_msgs = [v for v in msgs.values() if t0 <= v["at"] < t1]
+    day_cards = [v for v in store["islandCards"].values() if v["day"] == DAY]
+    tipped = {v["channelId"] for v in day_tips if v["channelId"]}
+    carded = {v["channelId"] for v in day_cards if v["channelId"]}
     return {
         "tips_total": len(day_tips),
         "tips_blank": sum(1 for v in day_tips if not v["channelId"]),
@@ -236,7 +275,14 @@ def expect(store: dict) -> dict:
         "chat_blank": sum(1 for v in day_msgs if not v["channelId"]),
         "people": len({v["channelId"] for v in day_tips + day_msgs
                        if v["channelId"]}),
-        "cards": len({v["channelId"] for v in day_tips if v["channelId"]}),
+        "cards": len(tipped),
+        "cards_total": len(day_cards),
+        "cards_people": len(carded),
+        # 投げ銭したのに1枚も配られていない人
+        "tips_no_card": len(tipped - carded),
+        # 1人ぶんの枚数。**その日のぶんだけ**
+        "cards_by": {c: sum(1 for v in day_cards if v["channelId"] == c)
+                     for c in CH.values()},
     }
 
 
@@ -392,6 +438,48 @@ def case_counts():
     ck("名前で当てるぶんが使えている", res["by_name"], res["by_name"])
     ck("前後の日の人は1行も出ない", CH["d"] not in res["per"],
        "出ていない" if CH["d"] not in res["per"] else "出ている")
+
+    # --- 配られたカード（`islandCards`）--------------------------------
+    # **欄が無いときも ✕ で報せる**（`res["cards_total"]` と書くと
+    # 足す前のコードで KeyError になり、そこから先の確かめが1つも走らない）
+    ck("その日の islandCards の枚数",
+       res.get("cards_total") == exp["cards_total"], res.get("cards_total"))
+    ck("カードが渡っている人数",
+       res.get("cards_people") == exp["cards_people"], res.get("cards_people"))
+    ck("a … その日のカードは3枚（前の日の1枚は数えない）",
+       bool(a and a.get("cards") == exp["cards_by"][CH["a"]] == 3),
+       a and a.get("cards"))
+    ck("b … 次の日のカードは数えない",
+       bool(b and b.get("cards") == exp["cards_by"][CH["b"]] == 0),
+       b and b.get("cards"))
+    ck("c … 投げ銭2件あるのにカードは0枚（＝本命の形）",
+       bool(cc and cc["tips"] == 2 and cc.get("cards") == 0),
+       cc and cc.get("cards"))
+    ck("d … その日のカードは枚数に入るが、行は増えない",
+       exp["cards_by"][CH["d"]] == 1 and CH["d"] not in res["per"],
+       f"{exp['cards_by'][CH['d']]}枚 / 行なし")
+    ck("投げ銭したのにカードが無い人数",
+       res.get("tips_no_card") == exp["tips_no_card"] == 1,
+       res.get("tips_no_card"))
+
+    # 表とまとめに、実際にその字が出ること。数えられていても出なければ意味がない
+    try:
+        text = card_why.lines(res)
+    except KeyError as e:  # 欄が足りないまま行を組もうとした
+        text = []
+        ck("表とまとめが組める", False, f"KeyError {e}")
+    ck("行に cards= が並ぶ（人数ぶん）",
+       sum(1 for x in text if "cards=" in x) == len(res["per"]),
+       sum(1 for x in text if "cards=" in x))
+    hit = [x for x in text if "カードが1枚も無い人" in x]
+    ck("まとめに「投げ銭したのにカードが無い人」が目立つ形で出る",
+       len(hit) == 1 and "★" in hit[0] and f"{exp['tips_no_card']}人" in hit[0],
+       hit[0].strip() if hit else "出ていない")
+    hit = [x for x in text if "islandCards" in x]
+    ck("まとめに islandCards の枚数と人数が出る",
+       len(hit) == 1 and f"{exp['cards_total']}枚" in hit[0]
+       and f"{exp['cards_people']}人" in hit[0],
+       hit[0].strip() if hit else "出ていない")
 
 
 def case_readonly():
