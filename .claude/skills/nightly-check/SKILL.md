@@ -26,6 +26,28 @@ cron は `0 20 * * *`（20:00 UTC）だが、**GitHub のスケジュールは�
 
 ## 2. 何を見るか
 
+### まず、**2本とも**の結果を並べる（ここを飛ばさない）
+
+毎晩走るのは**2本**ある。**1本目が緑だと、そこで終われてしまう。**
+
+```
+mcp__github__actions_list  method=list_workflow_runs  resource_id=schedule_fetch_chat.yml       perPage=1
+mcp__github__actions_list  method=list_workflow_runs  resource_id=fetch_doneru_donations.yml    perPage=1
+```
+
+| ワークフロー | 何が入る | 落ちると |
+| --- | --- | --- |
+| `schedule_fetch_chat.yml` | YouTube のコメント・スパチャ・名簿・カード | 島の数字が止まる |
+| `fetch_doneru_donations.yml` | **Doneru の投げ銭** | **貯金箱が増えなくなる。減らないので気づけない** |
+
+**2本の結論（success / failure）を先に書き出してから、中身に入る。**
+
+> 2026-09-14 に実際にやった。`schedule_fetch_chat` だけ見て緑を確認して終わり、
+> **`fetch_doneru_donations` が前の晩から落ちていたのに気づかなかった**
+> （Doneru のセッション切れ。#294）。見つけたのは別件で issue を棚卸ししていたときで、
+> 偶然だった。**「本体」を見たら終わり、にしない。**
+
+
 ```
 mcp__github__actions_list  method=list_workflow_runs  resource_id=schedule_fetch_chat.yml  perPage=1  minimal_output=true
 mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  minimal_output=true
