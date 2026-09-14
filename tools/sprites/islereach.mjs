@@ -17,6 +17,30 @@
  *   いつも  … **測れた回すべてで**届いた数（歩いても隠れない場所にいるもの）
  *   1回ぶん … 1回の測定あたりの数（最小〜最大）
  *
+ * ## 届かないものは、**名前で**出す
+ *
+ * 「入口のべ 11/12」までしか出していなかったので、どの1軒かは受け取った側が
+ * 推定することになっていた。2026-09-14 に実際にそうなって、**寄りと引きで
+ * 落ちている建物が別だった**（寄りは船着き場・引きは伝説の企画）のに、
+ * 同じ1軒だと読んで進みかけた。いまは名前を3つに分けて出す。
+ *
+ *   一度も届かない … 測れた回はあるのに ok が1回も無い（**直す対象**）
+ *   ときどき届かない … 歩く住人に隠されるなど、回によって変わる
+ *   測れず … 島の箱の外にいて突きようが無い（**届かないではない**）
+ *
+ * ## 島の箱の外は「測れない」。画面の外ではない
+ *
+ * 島（`.isle`）は `overflow: hidden` の箱で、寄りではカメラがあやとを追うので
+ * 島の一部が箱の外へ出る。前はここを画面の広さで見ていたため、
+ * **島の下ふちより下・画面よりは上**に落ちた船着き場（当たりの箱 y=812〜860、
+ * 島の箱 0〜726）が「届かない」として数に出ていた。切り取られて見えていない
+ * ものは突きようが無い（#85）。
+ *
+ * ## 「今日の島」を開いた状態も測る（`FOLD=open`）
+ *
+ * 開いた板は島より背が高いので、島の上で開くと入口がまとめて隠れる。
+ * **開いた状態は別の面**として測る。既定は閉じたまま。
+ *
  * ## 測れなかった回・測れなかったものを、0 と混ぜない
  *
  * 2026-09-14 に、この道具が3つの面で説明のつかない数を出した。
@@ -69,6 +93,9 @@ const SEC = Number(process.env.SEC || 12);
  *  そこを確かめるための逃がし口（`D=24 node islereach.mjs`）。 */
 const DIST = Number(process.env.D || 23);
 const PAGES = (process.env.PAGES || "/,/island/caucasus,/island/europe,/island/iran-walk,/island/middle-east").split(",");
+/** 「今日の島」の板を、測る前に開くか（`FOLD=open`）。既定は閉じたまま。
+ *  **開くと隠れる入口がある**、を数えるための逃がし口。板が無い面では何もしない */
+const FOLD = process.env.FOLD || "closed";
 
 /* 1回ぶんの見立て。返すのは要素ごとの状態:
      ok    … 届く
@@ -85,14 +112,32 @@ const SNAP = `() => {
      ここは 23px のままにしておく。縁ちょうどを突きたいときは D=24 を渡す
      （islereach.mjs）。plates.ts の TAP_FIT = 49 と同じ考え。 */
   const D = DIST;
+  /* **島は画面ではない。** 島（.isle）は overflow: hidden の箱で、
+     カメラがあやとを追うぶん、島の一部は箱の外へ出る。箱の外に出た建物は
+     切り取られて**見えていない**ので、突きようが無い。
+     前はここを画面（innerWidth/Height）で見ていたので、島の下ふちより下・
+     画面よりは上に落ちた船着き場が「届かない」として数に出ていた
+     （幅390 の寄りで、当たりの箱が y=812〜860・島の箱は 0〜726）。
+     **測れないものを、届かないものと混ぜない**（docs/island-misses.md #85）。 */
+  const isleBox = (() => {
+    const el = document.querySelector(".isle");
+    const b = el ? el.getBoundingClientRect() : null;
+    return {
+      x0: Math.max(0, b ? b.left : 0),
+      y0: Math.max(0, b ? b.top : 0),
+      x1: Math.min(innerWidth, b ? b.right : innerWidth),
+      y1: Math.min(innerHeight, b ? b.bottom : innerHeight),
+    };
+  })();
+  const inside = (x, y) => x >= isleBox.x0 && y >= isleBox.y0 && x <= isleBox.x1 && y <= isleBox.y1;
   const reach = (el) => {
     const b = el.getBoundingClientRect();
     const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
-    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return "out";
+    if (!inside(cx, cy)) return "out";
     for (const [dx, dy] of [[0,0],[-D,0],[D,0],[0,-D],[0,D]]) {
       const px = cx + dx, py = cy + dy;
-      // 突き先が画面の外なら見送る。外れとして数えると、縁のものが落ちる
-      if (px < 0 || py < 0 || px > innerWidth || py > innerHeight) continue;
+      // 突き先が島の外なら見送る。外れとして数えると、縁のものが落ちる
+      if (!inside(px, py)) continue;
       const h = document.elementFromPoint(px, py);
       if (!h || (!el.contains(h) && h !== el)) return "taken";
     }
@@ -108,10 +153,10 @@ const SNAP = `() => {
     if (!el) return "none";
     const cs = getComputedStyle(el);
     if (cs.pointerEvents === "none" || Number(cs.opacity) === 0) {
-      // 指を受けない。画面の外かどうかだけ先に分ける（外は「測れない」）
+      // 指を受けない。島の外かどうかだけ先に分ける（外は「測れない」）
       const b = el.getBoundingClientRect();
       const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
-      return (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) ? "out" : "off";
+      return inside(cx, cy) ? "off" : "out";
     }
     return reach(el);
   };
@@ -128,8 +173,15 @@ const SNAP = `() => {
   document.querySelectorAll(".isle-who").forEach((host) => {
     out.who.push(state(host.querySelector(".isle-who-hit")));
   });
+  /* **名前も持って帰る。** 「12軒のうち1軒が届かない」まで出しても、
+     どの1軒かが出ないと、直す側は推定で当たりを付けることになる。
+     建物の aria-label は「◯◯をみる」で1軒ずつ違う（住人は全員おなじなので、
+     あちらは並び順で見分ける。#87）。 */
+  out.name = [];
   document.querySelectorAll(".isle-spot").forEach((host) => {
-    out.hit.push(state(host.querySelector(".isle-hit")));
+    const hit = host.querySelector(".isle-hit");
+    out.name.push((hit?.getAttribute("aria-label") || "?").replace(/をみる$/, ""));
+    out.hit.push(state(hit));
     out.mark.push(state(host.querySelector(".isle-mark")));
   });
   return out;
@@ -151,13 +203,31 @@ function tally(rounds, n) {
   for (let i = 0; i < n; i++) if (seenRounds[i] > 0) measured.push(i);
   // 「いつも」＝測れた回すべてで ok だったもの
   let always = 0;
+  /** 「いつも」に入れなかったもの。**番号で持つ**（名前は呼ぶ側が付ける） */
+  const notAlways = [];
+  /** 一度も届かなかったもの（測れた回はあるのに ok が1回も無い） */
+  const never = [];
   for (const i of measured) {
     let all = true;
     for (const r of rounds) if (r[i] !== "out" && r[i] !== "none" && r[i] !== "ok") { all = false; break; }
     if (all) always++;
+    else notAlways.push(i);
+    if (!ever.has(i)) never.push(i);
   }
-  return { ever: ever.size, always, per, measured: measured.length, unmeasured: n - measured.length };
+  /** 測れなかったもの（島の箱の外にいて、突きようが無かった） */
+  const unseen = [];
+  for (let i = 0; i < n; i++) if (seenRounds[i] === 0) unseen.push(i);
+  return {
+    ever: ever.size, always, per,
+    measured: measured.length, unmeasured: n - measured.length,
+    notAlways, never, unseen,
+  };
 }
+
+/** 名前を並べる。**数だけ出して名前を出さないと、直す側が推定で当たりを付ける**
+ *  （2026-09-14。「11/12」から「どれか」を当てにいって、寄りと引きで
+ *  落ちている建物が別だったことに、名前を出すまで気づかなかった）。 */
+const らん = (idx, names) => (idx.length ? idx.map((i) => names[i] ?? `#${i}`).join("・") : "");
 
 /** 建物は「当たり または 札」で数える。
  *  **札は救うだけ。落とさない。** 建物が画面の外にいるとき（＝測れない）、
@@ -185,7 +255,7 @@ const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
 });
-console.log(`${ORIGIN}  幅${W}px  ${SEC}秒ぶん`);
+console.log(`${ORIGIN}  幅${W}px  ${SEC}秒ぶん  今日の板=${FOLD === "open" ? "開" : "閉"}`);
 for (const path of PAGES) {
   const ctx = await b.newContext({ viewport: { width: W, height: 844 }, deviceScaleFactor: 2 });
   await net(ctx);
@@ -196,12 +266,36 @@ for (const path of PAGES) {
   await pg.goto(at(path), { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await pg.waitForTimeout(2000);
 
+  /* 「今日の島」を開いてから測る（`FOLD=open`）。
+     **開いた状態は、閉じた状態と別の面**なので、両方測らないと
+     「開くと入口が隠れる」が数に出ない。板の無い面では何もしない。 */
+  let foldNote = "";
+  if (FOLD === "open") {
+    const tab = await pg.$(".today-tab");
+    if (!tab) foldNote = "（今日の板は無い）";
+    else {
+      await tab.click().catch(() => {});
+      await pg.waitForTimeout(900);
+      /* **開いたあと、いちばん上へ戻す。** 中身は島の下に開くので、押すと
+         そこまで送られる（`components/today/Today.tsx`）。送られたままだと
+         島の上半分が画面の外に出て、**覆われたのではなく画面の外**の建物が
+         「測れず」に回る。開く前と後を同じ位置で比べる（#87）。 */
+      await pg.evaluate(() => window.scrollTo(0, 0));
+      await pg.waitForTimeout(400);
+      const open = await pg.evaluate(() => !!document.querySelector(".today.is-open"));
+      // 開かなかったのに測ると、閉じたままの数を「開いたときの数」として読む
+      if (!open) foldNote = "（！ 開かなかった）";
+    }
+  }
+
   const rounds = { who: [], hit: [], mark: [] };
   let talkRounds = 0, rounds総 = 0;
+  let lastNames = [];
   const end = Date.now() + SEC * 1000;
   while (Date.now() < end) {
     const r = await pg.evaluate(([src, d]) => eval(src.replace("const D = DIST;", "const D = " + d + ";"))(), [SNAP, DIST]);
     rounds総++;
+    lastNames = r.name ?? lastNames;
     if (r.talking) {
       /* **喋りは途中から始まる。** 出ていたら閉じて、その回は数えない。
          喋っている最中はどこを押しても閉じるだけなので（`IsleStage` の
@@ -216,6 +310,8 @@ for (const path of PAGES) {
   }
   const nWho = rounds.who[0]?.length ?? 0;
   const nHit = rounds.hit[0]?.length ?? 0;
+  /** 建物の名前。**測るあいだ変わらない**（島は建て替わらない） */
+  const names = lastNames;
   const who = tally(rounds.who, nWho);
   const door = tally(rounds.hit.map((h, i) => merge(h, rounds.mark[i])), nHit);
   const hitOnly = tally(rounds.hit, nHit);
@@ -230,8 +326,18 @@ for (const path of PAGES) {
     (door.unmeasured ? ` 測れず${door.unmeasured}` : "") +
     `（当たり${hitOnly.ever}・札${markOnly.ever}）` +
     `  ${rounds.hit.length}回` + (talkRounds ? ` ＋喋り${talkRounds}回は除外` : "") +
-    `  JSエラー${errs.length}`,
+    `  JSエラー${errs.length}${foldNote}`,
   );
+  /** 届いていない建物を、**名前で**出す。数だけでは直せない */
+  const 名残り = (t) =>
+    [
+      t.never.length ? `一度も届かない: ${らん(t.never, names)}` : "",
+      t.notAlways.filter((i) => !t.never.includes(i)).length
+        ? `ときどき届かない: ${らん(t.notAlways.filter((i) => !t.never.includes(i)), names)}`
+        : "",
+      t.unseen.length ? `測れず（島の箱の外）: ${らん(t.unseen, names)}` : "",
+    ].filter(Boolean);
+  for (const s of 名残り(door)) console.log(`  ${"".padEnd(20)} 寄り ${s}`);
 
   /* 引き（島をながめる）。**入口の置き方が寄りと違う**ので、別に測る。
      引きの住人には押しどころが無い（設計どおり）ので、建物だけ見る。 */
@@ -258,6 +364,7 @@ for (const path of PAGES) {
         ` いつも${String(wd.always).padStart(2)}` + (wd.unmeasured ? ` 測れず${wd.unmeasured}` : "") +
         `（当たり${wh.ever}・札${wm.ever}）  ${wr.hit.length}回`,
       );
+      for (const s of 名残り(wd)) console.log(`  ${"".padEnd(20)} 引き ${s}`);
     }
   }
   await ctx.close();
