@@ -44,6 +44,9 @@ const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
    こちらが勝つ。逆にすると、落としたつもりで差し替えが返ってきて、
    **どの面も「差 0・中の話 0」という、落ちようのない結果**になる。 */
 const ME = process.env.ME === "1";
+/* `ADMIN=1` であやととして見る。**旅の道具はここにしか出ない。**
+   道にいるのはあやとなので、口が落ちて困るのはむしろこちら側 */
+const ADMIN = process.env.ADMIN === "1";
 const MEPAGES = ["/me", "/me/desk", "/me/remote", "/me/roulette"];
 
 const PAGES = ME ? MEPAGES : process.env.PAGELIST
@@ -86,7 +89,7 @@ async function 撮る(b, path, 口を落とす) {
   });
   if (ME) {
     const { apply } = await import("./asme.mjs");
-    await apply(ctx, { admin: false });
+    await apply(ctx, { admin: ADMIN });
     // **apply のあとに張る。** 先に張ると差し替えのほうが勝って、落ちない
     if (口を落とす) await ctx.route(/\/island-api\//, (r) => { 落とした++; r.abort(); });
   }
