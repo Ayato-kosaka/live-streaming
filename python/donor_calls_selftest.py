@@ -6,7 +6,7 @@
 資格情報もネットワークも要らない（`donor_calls.py` が外に出る口は
 `load_table(db)` と `Gh` の3つだけなので、そこを偽物に差し替える）。
 
-確かめるのは8つ:
+確かめるのは10:
 
   1. 待ち **0人 → 1人** で issue が **1本**開く
   2. **2晩続けて 1人**でも issue は**増えない**（同じ1本のまま）。
@@ -16,9 +16,19 @@
   5. 人が手で**タイトルを変えた**issue でも、見えない印で見つけて同じ1本を使う
   6. **本文にもログにも、名前・どねID・チャンネルIDが1文字も出ない**
      （0 を信じる前に、**仕込んだ字で探し方が当たること**を先に見る）
-  7. `--apply` を付けないと **GitHub API を1回も叩かない**（呼ばれた回数 0）
+  7. `--apply` を付けなくても **GET は1回通り、POST と PATCH は 0回**
   8. **歯止めを1つ外すと落ちる**（見つけ方をタイトル一致に戻すと、
      5 が 2本になる）
+  9. **読めなかったら（403）赤くして止まる**（終了コード 1 と、1行のログ）
+ 10. **0件が返っても落ちない**（ラベルがまだ無い晩＝いまの本番の状態）
+
+## 7 と 9 がなぜ「読みに行く」ほうを見ているか
+
+待ちが0人の晩が続くあいだ、**書く道は一度も通らない。** 本番で1回走らせた
+ときも、GitHub を1バイトも叩かずに終わっていた。資格が切れていても、
+権限が外れていても、ラベルの引き方が間違っていても、**はじめて本当に要る夜
+（誰かが投げ銭してくれた深夜）まで分からない。**
+だから読みは毎回通す。通ったことがログに1行残る。届かなければ赤くする。
 
 ## 6 の測りかた
 
@@ -54,6 +64,7 @@ import importlib.util
 import io
 import os
 import sys
+import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -185,26 +196,29 @@ class FakeDb:
 
 
 class FakeGh:
-    """偽の GitHub。**呼ばれた回数と、issue の本数を数える。**
+    """偽の GitHub。**動詞ごとに叩いた回数と、issue の本数を数える。**
 
     「増えていないか」は結果（開いている issue の数）だけでは言えない。
     1本消してもう1本立てても、開いている数は同じ 1 に見える。
     **立てた回数そのもの**を数える。
+
+    読みと書きを別々に数えるのは、`--apply` なしの晩に見たいのが
+    「1バイトも触っていない」ではなく**「読んだが書いていない」**だから。
+    総数1つだと、その2つが見分けられない。
     """
 
     def __init__(self):
         self.issues: list = []
-        self.calls = 0      # API を叩いた回数（`--apply` なしで 0 を見る）
-        self.created = 0    # 立てた回数
-        self.patched = 0    # 書き換えた回数
+        self.gets = 0       # GET（`--apply` なしでも 1以上 を見る）
+        self.created = 0    # POST（立てた回数）
+        self.patched = 0    # PATCH（書き換えた回数）
         self._next = 1
 
     def list_issues(self, label: str) -> list:
-        self.calls += 1
+        self.gets += 1
         return [dict(i) for i in self.issues if label in i["labels"]]
 
     def create(self, title: str, text: str, label: str) -> dict:
-        self.calls += 1
         self.created += 1
         i = {"number": self._next, "title": title, "body": text,
              "state": "open", "labels": [label]}
@@ -213,7 +227,6 @@ class FakeGh:
         return dict(i)
 
     def patch(self, number: int, payload: dict) -> dict:
-        self.calls += 1
         self.patched += 1
         for i in self.issues:
             if i["number"] == number:
@@ -233,6 +246,70 @@ class FakeGh:
         """この仕組みが立てた issue（見えない印を持つもの）。"""
         return [i for i in self.issues
                 if donor_calls.MARK in (i.get("body") or "")]
+
+
+class Gh403:
+    """**読みにいくと 403 を返す**偽の GitHub。
+
+    資格が切れた・`issues` の権限が外れた・リポジトリの指定が違う、の形。
+    書く側は呼ばれたら例外にする。**読めていないのに書きにいったら異常。**
+    """
+
+    def __init__(self):
+        self.gets = 0
+        self.created = 0
+        self.patched = 0
+
+    def list_issues(self, label: str) -> list:
+        self.gets += 1
+        raise urllib.error.HTTPError(
+            "https://api.github.com/repos/…/issues", 403, "Forbidden", {}, None)
+
+    def create(self, *a, **k):
+        raise AssertionError("読めていないのに書きにいった")
+
+    def patch(self, *a, **k):
+        raise AssertionError("読めていないのに書きにいった")
+
+
+# 偽の資格。**ログに出ない形のものを置く**（出たら 6 で拾われる）
+FAKE_REPO = "example-owner/example-repo"
+FAKE_TOKEN = "fake-token-for-selftest"
+
+
+def act(gh, donors: dict, apply: bool = False):
+    """`donor_calls.act()` を、偽の GitHub と偽の資格で回して終了コードを取る。
+
+    `act` は資格を環境変数から読んで `Gh` を作るので、**その `Gh` ごと
+    差し替える。** 本番の形（資格を見る → 読む → 必要なら書く）をそのまま通す。
+
+    直す前のコードには `act` が無い。**呼ばずに None を返す**のは、
+    歯止めを外して落とす確かめ（git stash で戻して回す）のときに
+    AttributeError で止まると、ほかの ✕ が読めなくなるため。
+    """
+    if not hasattr(donor_calls, "act"):
+        return None
+    w = donor_calls.count_waiting(donor_calls.load_table(FakeDb(donors)))
+    real = donor_calls.Gh
+    donor_calls.Gh = lambda repo, token: gh
+    os.environ["GITHUB_REPOSITORY"] = FAKE_REPO
+    os.environ["GITHUB_TOKEN"] = FAKE_TOKEN
+    try:
+        return donor_calls.act(w, apply=apply)
+    finally:
+        donor_calls.Gh = real
+        os.environ.pop("GITHUB_REPOSITORY", None)
+        os.environ.pop("GITHUB_TOKEN", None)
+
+
+def said_while(fn):
+    """`fn()` を回しているあいだに出た字だけを切り出す。
+
+    袋（`BUF`）は最初から溜まり続けているので、**前後の長さの差**を取る。
+    """
+    mark = len(BUF.getvalue())
+    got = fn()
+    return got, BUF.getvalue()[mark:]
 
 
 def night(gh, donors: dict, apply: bool = True) -> dict:
@@ -366,14 +443,36 @@ def case_pr_and_bad():
        "から待っています" not in gh2.issues[0]["body"], "無い")
 
 
-def case7_no_apply():
-    print("\n[7] --apply を付けないと、GitHub API を1回も叩かない")
+def case7_read_not_write():
+    print("\n[7] --apply なしでも GitHub を読む（が、1バイトも書かない）")
+
+    # (a) 待ちがいるのに issue が無い晩。**立てるつもりだが、立てない**
     gh = FakeGh()
-    r = night(gh, T2, apply=False)
-    ck("API を叩いた回数", gh.calls == 0, gh.calls)
-    ck("立てた回数", gh.created == 0, gh.created)
-    ck("書き換えた回数", gh.patched == 0, gh.patched)
+    r, said = said_while(lambda: night(gh, T2, apply=False))
+    ck("読んだ回数（GET）", gh.gets == 1, gh.gets)
+    ck("立てた回数（POST）", gh.created == 0, gh.created)
+    ck("書き換えた回数（PATCH）", gh.patched == 0, gh.patched)
+    ck("issue は1本も増えていない", len(gh.issues) == 0, len(gh.issues))
     ck("したこと", r["action"] == "dry", r["action"])
+    ck("するつもりだったこと", r.get("planned") == "create", r.get("planned"))
+    ck("「読めた」がログに残る", "読めました" in said, "残る")
+    ck("これから何をするかがログに出る",
+       "issue を1本 開きます" in said, "出る")
+
+    # (b) 開いている issue があって、待ちが0人になった晩。
+    #     **閉じるつもりだが、閉じない**（読みだけで planned が変わる）
+    gh2 = FakeGh()
+    night(gh2, T1)                       # 1本立てておく（ここは apply）
+    before = (gh2.created, gh2.patched)
+    r, said = said_while(lambda: night(gh2, T0, apply=False))
+    ck("するつもりだったこと", r.get("planned") == "close", r.get("planned"))
+    ck("使う issue の番号まで分かる", r["number"] == 1, r["number"])
+    ck("書いた回数は増えていない",
+       (gh2.created, gh2.patched) == before, (gh2.created, gh2.patched))
+    ck("issue は開いたまま（閉じていない）",
+       len(gh2.opened()) == 1, len(gh2.opened()))
+    ck("いまの issue の状態がログに出る",
+       "開いています" in said, "出る")
 
     # 数えるほうは動いている（黙って 0 を返しているのではない）
     w = donor_calls.count_waiting(donor_calls.load_table(FakeDb(T2)))
@@ -416,6 +515,55 @@ def case8_broken():
     gh2.issues[0]["title"] = "🔗 投げ銭の紐付け（あとでやる）"
     night(gh2, T1)
     ck("戻したら1本のまま", len(gh2.mine()) == 1, len(gh2.mine()))
+
+
+def case9_forbidden():
+    """**読めなかったら赤くして止まる。**
+
+    `--apply` が無くても GitHub を読むようにしたので、届かないことが
+    毎晩分かる。分かったら 1 で落とす。*用事*は赤くしないが、
+    *届かない*は赤くする（`donor_calls.py` の「赤くしない」）。
+    """
+    print("\n[9] 読めなかったら（403）、終了コード 1 で落ちる")
+
+    # 握りつぶさずに投げ返すこと。ここで飲み込むと、届かないことが
+    # 「何もしなくてよかった」と見分けが付かなくなる
+    gh = Gh403()
+    code = None
+    try:
+        donor_calls.run(gh, {"n": 0, "since": None}, apply=False)
+    except urllib.error.HTTPError as e:
+        code = e.code
+    ck("--apply なしでも読みにいく", gh.gets == 1, gh.gets)
+    ck("握りつぶさずに投げ返す", code == 403, code)
+
+    # 終了コードと、1行のログ
+    got, said = said_while(lambda: act(Gh403(), T0, apply=False))
+    ck("終了コード", got == 1, got)
+    ck("HTTP の番号がログに出る", "403" in said, "出る")
+    ck("どこを見ればいいかがログに出る", "権限" in said, "出る")
+
+    # 待ちがいる晩でも同じ（人数に関係なく、届かないのは異常）
+    got, _ = said_while(lambda: act(Gh403(), T2, apply=True))
+    ck("待ちが2人でも終了コードは 1", got == 1, got)
+
+
+def case10_empty():
+    """**0件が返ってくる晩**（ラベルがまだ無い＝いまの本番の状態）。
+
+    本番で1回走らせたときがこれ。落ちずに、読めたことと
+    「これから何もしない」が出ることを見る。
+    """
+    print("\n[10] 0件が返ってきても落ちない（ラベルがまだ無い晩）")
+    gh = FakeGh()
+    got, said = said_while(lambda: act(gh, T0, apply=False))
+    ck("終了コード", got == 0, got)
+    ck("読んだ回数（GET）", gh.gets == 1, gh.gets)
+    ck("書いた回数（POST + PATCH）",
+       gh.created + gh.patched == 0, gh.created + gh.patched)
+    ck("「読めた」がログに残る", "0件" in said and "読めました" in said, "残る")
+    ck("issue がまだ無いことが出る", "まだ1本もありません" in said, "出る")
+    ck("これから何もしないと出る", "何もしません" in said, "出る")
 
 
 def case6_grep():
@@ -498,8 +646,10 @@ def main() -> int:
     gh = case4_stay_closed(gh)
     gh = case5_renamed(gh)
     case_pr_and_bad()
-    case7_no_apply()
+    case7_read_not_write()
     case8_broken()
+    case9_forbidden()
+    case10_empty()
     print("\n[6の結果]")
     case6_grep()
     case6b_mask()

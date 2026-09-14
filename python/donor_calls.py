@@ -60,12 +60,23 @@
 誰なのかは `/me` の画面に出ているので、ここには要らない
 （考え方は `python/logsafe.py` の docstring にそのまま書いてある）。
 
-## 既定は書かない
+## 既定は書かない。**でも、読みには毎回行く**
 
-`--apply` を付けたときだけ GitHub を触る。付けなければ**API を1回も叩かない**
+`--apply` を付けたときだけ GitHub に**書く**。付けなければ1バイトも書かない
 （何人待っていて、どうするつもりかを出すだけ）。
 毎晩ひとりでに走るものなので、押し間違いで issue が開いたり閉じたりするのを
 手元から確かめられるようにしておく。
+
+**読むほうは、`--apply` が無くても毎回1回通す。**
+待ちが0人の晩が続くと、書く道は何か月も一度も通らない。そのあいだに
+資格が切れても、権限が外れても、ラベルの引き方が間違っていても、
+**はじめて本当に要る夜（誰かが投げ銭してくれた深夜）まで気づけない。**
+気づかないことを直すために作った道具が、自分の壊れ方に気づけないのでは
+元も子もない。
+
+毎回 `list_issues` を1回叩けば、**資格・権限・リポジトリの指定・ラベルでの
+引き方がその晩に生きていたこと**がログに残る。待ちが0人でも残る。
+GET 1回は API 制限（5,000/時）から見て無いに等しい。
 
 `python/*.py` は `--dry-run`（既定で書く）の流儀が多いが、ここは
 **`python/admin/` 側の `apply`（既定で書かない）に合わせる。**
@@ -74,9 +85,14 @@
 
 ## 赤くしない
 
-うまくいってもいかなくても 0 で終わる（GitHub に届かなかったときだけ 1）。
+**用事が何人残っていても 0 で終わる。**
 **赤で知らせるのをやめるために作ったもの**が、自分で赤を積んだら元に戻る。
 残っている用事は issue のほうに出ている。
+
+**ただし「届かない」は別の話で、そこは 1 で落ちる。**
+401 / 403 / 404 / つながらない、は**この仕組みそのものが動いていない**
+ということなので、黙って 0 で終わると issue が古いまま誰も気づかない。
+*用事*は赤くしない。*届かない*は赤くする。
 """
 
 import argparse
@@ -116,6 +132,16 @@ LABEL_COLOR = "d93f0b"
 LABEL_DESC = "手を動かさないと進まない用事"
 
 API = "https://api.github.com"
+
+# `decide()` の返り値を、そのまま人の言葉にする。
+# 見るだけで走らせた晩に「これから何をするつもりか」をログへ出すため
+PLAN = {
+    "create": "issue を1本 開きます",
+    "reopen": "閉じている issue を開け直します",
+    "update": "開いている issue の本文を書き換えます",
+    "close": "開いている issue を閉じます",
+    "noop": "何もしません",
+}
 
 
 def load_table(db) -> dict:
@@ -320,37 +346,54 @@ class Gh:
 def run(gh, w: dict, apply: bool = False) -> dict:
     """数えた結果に、issue を合わせる。
 
-    **`apply` でないときは GitHub を1回も叩かない。** 引くだけでも
-    叩けば、押し間違えたときに「見るだけのつもりが API 制限を使った」になる。
-    見るだけのときに出せるのは人数と、どうするつもりか。
+    **読むのは毎回。書くのは `apply` のときだけ。**
+    `apply` でなくても `list_issues` は1回通す。ここを通しておかないと、
+    待ちが0人の晩が続くあいだ GitHub への道が一度も試されず、
+    **本当に要る夜に落ちる**（docstring の「既定は書かない」）。
+
+    読めなかったときは**投げ返す。** ここで握りつぶすと、届かないことが
+    「何もしなくてよかった」と見分けが付かなくなる。赤くするのは呼ぶ側。
 
     Args:
         gh: `Gh` か、同じ3つを持つ偽物
         w: `count_waiting()` の返り値
-        apply: 本当に触るか
+        apply: 本当に書くか
 
     Returns:
-        {"action": ..., "number": issue 番号か None}
+        {"action": ..., "planned": ..., "number": issue 番号か None}
+        `action` は実際にしたこと（書かなかったときは `"dry"`）、
+        `planned` は `decide()` が決めたこと
     """
     n = w["n"]
-    if not apply:
-        logger.info("--apply を付けていないので GitHub は触りません")
-        if n > 0:
-            logger.info("付けると、紐付け待ち %d人 の issue を1本 開きます"
-                        "（もう開いていれば本文を書き換えます）", n)
-        else:
-            logger.info("付けると、開いている issue があれば閉じます")
-        return {"action": "dry", "number": None}
 
-    issue = find_issue(gh.list_issues(LABEL))
+    # **ここは `apply` の有無にかかわらず通る。** 毎晩のログに
+    # 「読めた」が1行残ることが、この仕組みが生きている唯一の証拠
+    issues = gh.list_issues(LABEL)
+    logger.info("GitHub の issue を読めました（ラベル %s で %d件）",
+                LABEL, len(issues))
+
+    issue = find_issue(issues)
+    if issue is None:
+        logger.info("この仕組みの issue はまだ1本もありません")
+    else:
+        logger.info("この仕組みの issue は #%s（いま%s）", issue["number"],
+                    "開いています" if issue.get("state") == "open"
+                    else "閉じています")
+
     want = body(n, w["since"])
     what = decide(issue, want, n)
+
+    if not apply:
+        logger.info("--apply を付けていないので GitHub には書きません")
+        logger.info("付けると: %s（紐付け待ち %d人）", PLAN[what], n)
+        return {"action": "dry", "planned": what,
+                "number": issue["number"] if issue else None}
 
     if what == "create":
         made = gh.create(TITLE, want, LABEL)
         logger.info("issue #%s を開きました（紐付け待ち %d人）",
                     made.get("number"), n)
-        return {"action": what, "number": made.get("number")}
+        return {"action": what, "planned": what, "number": made.get("number")}
 
     if what in ("reopen", "update"):
         # **タイトルは送らない。** 人が書き換えたものを毎晩戻さない
@@ -360,21 +403,60 @@ def run(gh, w: dict, apply: bool = False) -> dict:
         gh.patch(issue["number"], payload)
         logger.info("issue #%s を%sました（紐付け待ち %d人）", issue["number"],
                     "開き直し" if what == "reopen" else "書き換え", n)
-        return {"action": what, "number": issue["number"]}
+        return {"action": what, "planned": what, "number": issue["number"]}
 
     if what == "close":
         gh.patch(issue["number"], {"state": "closed",
                                    "state_reason": "completed"})
         logger.info("紐付け待ちが無くなったので issue #%s を閉じました",
                     issue["number"])
-        return {"action": what, "number": issue["number"]}
+        return {"action": what, "planned": what, "number": issue["number"]}
 
     logger.info("変わっていないので触りません（紐付け待ち %d人）", n)
-    return {"action": "noop", "number": issue["number"] if issue else None}
+    return {"action": "noop", "planned": "noop",
+            "number": issue["number"] if issue else None}
+
+
+def act(w: dict, apply: bool) -> int:
+    """GitHub に当たって、**終了コードを返す。**
+
+    `--apply` の有無で分かれるのは「書くか」だけ。**資格を確かめて読みに行く
+    ところは両方通る**ので、資格が要るのも両方。
+
+    届かなかったら 1。ここは「用事が残っているかどうか」とは別の話で、
+    読めない＝**この仕組みが動いていない**ということ。黙って 0 で終わると、
+    issue がいまの状態と食い違ったまま誰も気づかない。
+
+    Args:
+        w: `count_waiting()` の返り値
+        apply: 本当に書くか
+
+    Returns:
+        終了コード（0 か 1）
+    """
+    repo = os.getenv("GITHUB_REPOSITORY", "")
+    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or ""
+    if not repo or not token:
+        logger.error("GITHUB_REPOSITORY と GITHUB_TOKEN が要ります")
+        return 1
+
+    try:
+        run(Gh(repo, token), w, apply=apply)
+    except urllib.error.HTTPError as e:
+        # 401/403 は資格か権限、404 はリポジトリの指定。**どれも本物の異常。**
+        # 返ってきた本文は出さない（URL や名前が混じる。ログは公開）
+        logger.error("GitHub の issue を読み書きできませんでした（HTTP %s %s）"
+                     "。資格・権限（issues）・リポジトリの指定を見てください",
+                     e.code, e.reason)
+        return 1
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        logger.error("GitHub に届きませんでした: %s", str(e)[:200])
+        return 1
+    return 0
 
 
 def main() -> int:
-    """エントリポイント。**用事が残っていても赤くしない。**"""
+    """エントリポイント。**用事が残っていても赤くしない**（届かないときだけ赤い）。"""
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true",
                     help="issue を実際に開く／書き換える／閉じる")
@@ -391,24 +473,8 @@ def main() -> int:
     if w["since"]:
         logger.info("いちばん古い人は %s から待っています", w["since"])
 
-    if not a.apply:
-        run(None, w, apply=False)
-        return 0
-
-    repo = os.getenv("GITHUB_REPOSITORY", "")
-    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or ""
-    if not repo or not token:
-        # ここは「用事がある／ない」とは別の話。**届かなかったことは赤くする。**
-        # 黙って 0 で終わると、issue が古いまま誰も気づかない
-        logger.error("GITHUB_REPOSITORY と GITHUB_TOKEN が要ります")
-        return 1
-
-    try:
-        run(Gh(repo, token), w, apply=True)
-    except (urllib.error.URLError, OSError, ValueError) as e:
-        logger.error("GitHub に届きませんでした: %s", str(e)[:200])
-        return 1
-    return 0
+    # **`--apply` で分かれるのは「書くか」だけ。** 読みには毎回行く
+    return act(w, a.apply)
 
 
 if __name__ == "__main__":
