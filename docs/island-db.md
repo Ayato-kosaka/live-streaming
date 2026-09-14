@@ -27,6 +27,7 @@ erDiagram
     islandChannels         ||--o{ islandTips             : "channelId"
     islandChannels         ||--o{ islandCards            : "channelId"
     islandChannels         |o--o| islandUsers            : "channelId"
+    islandDayPeople        ||--o{ islandChannels         : "その日いた人（名簿）"
     islandDonors           ||--o{ doneru_donations       : "viewer_pk"
     islandDonors           |o--o| islandChannels         : "どねIDをチャンネルに結ぶ"
 
@@ -51,6 +52,10 @@ erDiagram
 
 **カードは、写真と投げ銭の掛け算でできる。** 1枚の写真に対して、その企画の日に
 投げ銭した人ぶんカードができる。だから `islandCards` に矢印が2本入っている。
+
+**「その日いた人」は、台帳だけでは出ない。** 投げていない人は `islandTips` に
+1行も残らない。だから**その日コメントした人を1日1枚に数えた名簿**（`islandDayPeople`）を
+別に持っていて、読む側が台帳と足す（4.2 b）。
 
 ### 1.2 配信とコメント（BigQuery）
 
@@ -175,7 +180,7 @@ erDiagram
 
 | 切り方 | 境目 | どこで |
 | --- | --- | --- |
-| **日本時間の0時** | JST 00:00 | 投げ銭の「配信日」（`islandTips.day` / カード / `islandChannels.days` / `island/state.stats`） |
+| **日本時間の0時** | JST 00:00 | 投げ銭の「配信日」（`islandTips.day` / カード / `islandChannels.days` / `island/state.stats` / `islandDayPeople.day`） |
 | **UTC**（＝JST 朝9時） | JST 09:00 | 出席の数え方（`python/build_residents.py`）と、口の1日の上限（`islandRate`・`today()`） |
 | **配信の一晩** | 人が決める | 0時をまたいだぶんは `islandStreamEvent.videoIds` に後半の動画IDを足す |
 
@@ -223,6 +228,7 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 島の数字 | Firestore `island/state.stats` `island/state.fund` | BigQuery | `python/island_daily_stats.py` |
 | 投げ銭台帳 | Firestore `islandTips` | BigQuery（スパチャ＋Doneru） | `python/island_tips.py` |
 | カード | Firestore `islandCards` | 写真 × 台帳 | `python/island_cards.py` / `functions/src/streamEvents.ts` |
+| その日いた人の名簿 | Firestore `islandDayPeople` | BigQuery `chat_messages` ＋ Firestore `streamChatMessages` | `python/island_day_people.py`（**足すだけで、消さない**） |
 | チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
 | チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
 | 焼き込み | Git `site/content/*`（自動生成ぶん） | BigQuery ほか | `.github/workflows/rebake.yml`（5.2） |
@@ -236,7 +242,7 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
 | 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
-| 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
+| 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない。**ただし台帳には投げてくれた人しか居ない**ので、`islandDayPeople`（名簿）を足して読む（4.2 b） |
 | キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
 | 豚の貯金箱の元（鍵・起点・スパチャ・目標） | GAS の `Goals` 表 | Firestore `islandGoal/2025-10-24` | **GAS が正**（#305）。スパチャを書き足す OBS の書き先がそこしかなく、**額が伸びるのは表の側だけ**だから。サイトは GAS → 無ければ Firestore の順に読む。控えは `goal_migrate` で作る。**表を消した瞬間から控えが正になる。** 順を入れ替えてよくなるのは、`SuperChats` の書き込み先を移したあと |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
@@ -429,6 +435,8 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
 取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
 「Doneru のぶんは、◯月◯日まで入っています」と出る（`docs/nordic-fund.md` 9.13）。
+**`islandDayPeople` は、数えたあとに足した**（2026-09-14・#402）。1日1枚の
+「その日いた人」の名簿で、書くのは毎晩のジョブ、読むのは Functions だけ（下の b）。
 
 #### a. 人
 
@@ -647,6 +655,73 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 **同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
+
+**`islandDayPeople/{YYYY-MM-DD}`** — その日いた人の名簿（#402）
+
+**台帳（`islandTips`）は「投げてくれた人」しか持たない。** その日コメントして
+くれた人は、投げていなければ1行も残らない。写真に入れる候補を台帳だけで組むと、
+**お金を出した人だけが、その日の写真に入れる**形になる（2026-09-13 は、68回
+コメントしてくれてキャラクターの絵もある人が、その日投げていないという一点だけで
+候補から外れていた）。
+
+**候補を引くたびに1日1,400件のコメントを数え直すと、口が重くなる。**
+だから**数え終わったものを、1日1枚の書類に持つ。**
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `day` | string | その日（YYYY-MM-DD）。**書類IDと同じ。** 引きやすさのため欄にも持つ |
+| `channels` | string[] | その日いた人のチャンネルID。重複なし。**並びは「先に見た順」**（早く来てくれた人が先） |
+| `updatedAt` | number | ミリ秒 |
+
+**名前も本文も金額も入れない。チャンネルIDだけ。**
+**クライアントからは読めない**（`firestore.rules` に名指しの deny。下の g）。
+読むのは Functions（管理者の資格で動く）だけ。
+
+**日の境目は日本時間の0時**（2.3）。台帳と揃えないと、**名簿と台帳で別の日を
+見比べることになる。**
+
+**足す方向にしか動かない。既にある人を消さない。** 当日ぶんは Firestore にしか
+無く、`streamChatMessages` は溜めっぱなしではないので、**BigQuery で引き直した
+結果で上書きすると、その晩しか居なかった人が名簿から消える。** 書くのは
+「いま入っているもの ＋ 新しく見えた人」だけ。新しい人は**その日いちばん早かった
+時刻の順**でうしろに足す（時刻が同じなら書類IDの順）。**2回流しても同じ答えに
+なる**ようにしてある。読む側はこの順のまま出すので、回すたびに入れ替わってはいけない。
+
+元は2つで、**両方を足す。**
+
+| 出どころ | 何が入っているか | いつのぶんか |
+| --- | --- | --- |
+| BigQuery `chat_messages` | コメントもスパチャも全部（**`event_type` で絞らない**） | 前の晩まで |
+| Firestore `streamChatMessages` | `collectLiveChat` が5分おきに溜めるぶん | **当日ぶん**（窓の新しい端3日だけ） |
+
+2つ目が要るのは、**BigQuery が前の晩までしか無い**から。取り込みは1〜3時間半
+遅れて走るので、その日はじめて来てくれた人は翌朝までどこにも出てこない。
+Firestore を3日しか見ないのは、あそこが1日1,400件あって、**窓と同じ7日を毎晩
+なぞると、それだけで1万件の読みになる**から。BigQuery に入ったあとの日をもう一度
+読んでも、同じ人がもう一度出てくるだけで名簿は1人も増えない。3日なのは、当日ぶんが
+Firestore にしか無いのが「今日」＋「取り込みが来るまでの昨日」の2日で、
+**毎晩のジョブが一晩こけても間に合う**ように1日ぶん余らせたもの。
+
+**1枚に入れるのは1,000件まで。** ふだんは40人前後で届くことは想定していないが、
+**上限を持たない配列を Firestore の1書類に置かない。** 超えたぶんは足さずに
+件数だけ知らせる（既にあるぶんは消さない）。
+
+**ログにチャンネルIDも名前も本文も出さない**（出すのは日ごとの人数と、増えた件数だけ。
+読めなかった値だけ指紋で知らせる）。BigQuery のジョブには 1GiB の上限を付けてあり、
+**絞りを書き間違えたら走ってから気づくのではなく、走る前に落ちる。**
+
+| いつ書くか | 何が |
+| --- | --- |
+| 毎晩（取り込みの完了に繋いで） | `.github/workflows/rebake.yml` の `day_people` ジョブ（5.2） |
+| 手で埋め直す | `run_admin_script.yml` → `day_people_backfill`（**既定は書かない**） |
+
+**読むのは `channelsOfDay`**（`functions/src/streamEvents.ts`）。台帳と名簿を
+**両方足して**返し、**投げてくれた人が先、そのあと名簿の順**に並べる。
+**書類の無い日は、足すものが無いだけ**——過去のほとんどの日にまだ無く、その日は
+いままでどおり台帳だけで動く。出す手前で `listPhotoDays`
+（`functions/src/islandApi.ts`）が**絵のある人に絞ってから60人で切る。**
+順番を逆にすると、絵の無い人（9月13日は39人のうち26人）が枠を埋めて、
+**絵のある人が60人の外へ押し出される。**
 
 **`islandGoal/{id}`** — 豚の貯金箱の元の、**控え**（#305）
 
@@ -877,6 +952,11 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 振る舞いは変えていない（catch-all の deny に落ちていたものを、名指しの deny に
 しただけ）。**なぜ deny でよいかを、読む口のコードを見て1本ずつ書いてある。**
 
+`islandDayPeople` も名指しの deny（2026-09-14・#402）。末尾の「それ以外は禁止」でも
+閉じるが、**チャンネルIDが日ごとに並ぶ入れ物**なので、同じように理由ごと書いてある。
+画面が要るのは「その日の写真に誰を入れられるか」だけで、それは `islandApi` が
+**絵のある人に絞ってから**返す（`GET /nordic/photos`）。
+
 ### 4.3 Git（`site/content/`）— 人が書くものと、機械が焼くもの
 
 レビューして育てたいものは、DB ではなくコードに置く。
@@ -1004,14 +1084,32 @@ expo export → public コピー → next build で、python を1行も通らな
 
 `.github/workflows/rebake.yml` が
 
-- **`schedule` `0 1 * * *`（01:00 UTC ＝ 日本時間の朝10時ごろ）** に、
-  4.3 (a) の**5本**を焼いて、変わっていれば master に入れ、Hosting も配る
+- **毎晩の取り込みの完了に繋いで**（`workflow_run`。`Fetch YouTube Chat Data` /
+  `Fetch Doneru Donations`）、4.3 (a) の**5本**を焼いて、変わっていれば master に
+  入れ、Hosting も配る。**こちらが本線。**
+- **`schedule` `0 1 * * *`（01:00 UTC ＝ 日本時間の朝10時ごろ）は保険。**
+  この cron は 2026-09-10 に載せてから**一度も発火していない**（翌朝 03:45 まで
+  待って来なかった）。定時実行は「書いて master に載せれば走るもの」ではないので、
+  毎晩ひとりでに走ってほしいものは**実績のあるワークフローの完了に繋ぐ**
+  （`CLAUDE.md`「つまずきやすいところ」）
 - **`workflow_dispatch`** で手からも押せる。既定は `dry_run: true`（**見るだけ**）。
   `scripts` に名前を書けば選べる。**allowlist（7本）に無い名前は走らずに落ちる**
 
 commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` が1.5倍の幅を
 超えて動いたら落とす**（実際に 61 → 174 になったことがある）のと、
 **焼いた TS で `next build` が通らなければ落とす**。
+
+**このワークフローには、焼き直しではない仕事がもう1つ載っている。** `day_people`
+ジョブが「その日いた人」の名簿（`islandDayPeople`・4.2 b）を作る。焼き込みとは
+何の関係も無いが、**毎晩ひとりでに走ってほしいものの繋ぎ先が、ここと同じ**なので
+同居させている。発火は上の cron だけではなく、**毎晩の取り込み**
+（`Fetch YouTube Chat Data` / `Fetch Doneru Donations`）**の完了に `workflow_run` で
+繋いである**（cron は、取り込み自体が発火しなかった晩の保険）。
+**2つのジョブは互いを待たない。** 焼き直しは `npm ci` と `next build` で10分かかり、
+焼いた結果が縮んでいれば途中で落ちる。名簿は焼き込みと1文字も関係が無いので、
+**あちらが落ちた晩に名簿まで止まる理由がない。**
+取り込みのワークフローに足さなかったのは、**あちらが最後のステップで
+`YOUTUBE_COOKIES` の秘密を書き換える作り**で、1行足すたびにそこを踏むから。
 
 ### 5.3 画面が読む道
 
@@ -1038,7 +1136,10 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | --- | --- | --- |
 | `0 20 * * *` | `schedule_fetch_chat.yml`（Fetch YouTube Chat Data） | 配信を探す → チャットを取る → 島の数字・チャンネル・写真・台帳・カード |
 | `30 20 * * *` | `fetch_doneru_donations.yml` | Doneru の寄付（去年の元日から明日まで、毎回全件） |
-| `0 1 * * *` | `rebake.yml` | 焼き込み5本 → 変わっていれば commit → Hosting |
+| 取り込みの完了に繋いで（`0 1 * * *` は保険） | `rebake.yml` | 焼き込み5本 → 変わっていれば commit → Hosting ／ 名簿 |
+
+`rebake.yml` は、同じ発火で**名簿（`islandDayPeople`）のジョブも回す**（焼き直しとは
+別のジョブで、互いを待たない。5.2）。
 
 **手で押すもの:** `island_update.yml`（いまどこを直す）、`nordic_depart.yml`（出発）、
 `run_admin_script.yml`（`python/admin/` の何でも）。
@@ -1055,6 +1156,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | 焼き直し | 画面の数字だけが古くなる（本番の島の状態そのものは動いている） | 手で押せば追いつく |
 | `collectLiveChat` | 配信中のコメントが溜まらない。**切り抜きの材料が無くなる** | BigQuery 側は翌日の取り込みで入るので、切り抜き以外は影響しない |
 | Doneru のセッション（`_dt`） | `fetch_doneru_donations` が終了コード2で落ちる | 6.4 |
+| 名簿（`islandDayPeople`）の更新 | その日の写真に入れられる候補が、**投げてくれた人だけ**に戻る（名簿の無い日と同じ動き。候補が減るだけで、画面は壊れない） | **足す方向にしか動かないので、流し直せば止まっていた期間ごと埋まる**（`day_people_backfill`） |
 
 ### 6.3 どこを見るか
 
@@ -1067,6 +1169,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | Doneru のセッションが何日持ったか | `doneru_ingest_runs`。`ok` が続いたあとの最初の `session_expired` がそのセッションの終わり |
 | Doneru のぶんが、いつまで島に入っているか | `islandDoneruHealth/last` の `okDay`（`python/doneru_health.py` が写す）。3日以上古いと `/nordic` の応援の区画に出る。`docs/nordic-fund.md` 9.13 |
 | 寄付の件数・合計・重なり | 同 → `doneru_audit`（**数字だけ出す**） |
+| 名簿（`islandDayPeople`）に何日ぶん・何人入っているか | 同 → `day_people_backfill`（**既定は書かない。**日ごとの人数だけ出る。チャンネルIDは1つも出ない） |
 | 焼き込みが新しいか | 4.3 の「どこを見るか」の表 |
 
 **このリポジトリは公開で、Actions のログも誰でも読める。**
