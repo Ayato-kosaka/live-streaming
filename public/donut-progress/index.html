@@ -138,15 +138,24 @@
         line-height: 1.45;
       }
 
-      .center-text-status {
-        font-size: clamp(12px, 3vw, 14px);
-        color: var(--text-muted);
-        margin-top: 10px;
+      /* 読めなかった日の姿。**何も出さない。**
+
+         この面は OBS のブラウザソースで、配信に映る「進捗の飾り」。
+         読めなかったときに残してよいものは1つも無い。字を出しても
+         視聴者さんにできることは無いし、板だけ残ると「何かが壊れている絵」が
+         配信に出たままになる。
+
+         **地の色まで消すのが「何も出さない」。** OBS は中身が空でも、
+         地が塗ってあればその色の四角をそのまま乗せる。`body` だけ消すと
+         下から `html` の色が出てくるので、`html` `body` `.page` の3枚とも消す。 */
+      html.is-dead,
+      html.is-dead body,
+      html.is-dead .page {
+        background: transparent !important;
       }
 
-      .center-text-error {
-        color: #ef4444;
-        font-weight: 600;
+      html.is-dead .page > * {
+        display: none !important;
       }
 
       /* 補足：下部のヘルプ */
@@ -189,15 +198,20 @@
 
           <div class="center-text">
             <div class="center-text-main">達成数</div>
-            <div class="center-text-value" id="achievedCount">0</div>
+            <div class="center-text-value" id="achievedCount"></div>
 
             <div class="center-text-sub">
-              目標数: <span id="targetCount">0</span><br />
-              達成率: <span id="percentLabel">0</span>%
+              目標数: <span id="targetCount"></span><br />
+              達成率: <span id="percentLabel"></span>%
             </div>
 
-            <!-- 背景画像ロードなどの状態表示 -->
-            <div class="center-text-status" id="statusText">読み込み中…</div>
+            <!-- 状態の札は置かない。
+                 前はここに「読み込み中…」「背景画像読み込み中…」
+                 「背景画像の読み込みに失敗しました（背景色で表示中）」が出ていた。
+                 どれも中の話で、読んだ視聴者さんにできることが無い。
+                 script が途中で転ぶと、その字が配信に残ったままになる。
+                 数字の初期値も同じ理由で空にした。0 を先に置くと、
+                 読めていない一瞬が「0件でした」に見える。 -->
           </div>
         </div>
       </section>
@@ -217,10 +231,29 @@
         const achieved = parseNonNegativeInt(params.get("achieved"));
         const target = parseNonNegativeInt(params.get("target"));
 
+        /* **「読めなかった」と「0だった」を分ける。**
+           前はどちらも 0 に潰していたので、OBS の URL から `?target=` が
+           抜けた晩に「達成数 0 ／ 目標数 0 ／ 達成率 0%」が、事実の0として
+           配信に出ていた。目標が読めていないなら、この面には出せる絵が無い。 */
+        const readable = isNumber(params.get("achieved")) && isNumber(params.get("target")) && target > 0;
+
         // 背景画像URL（空文字なら未指定扱い）
         const bg = (params.get("bg") || "").trim();
 
-        return { achieved, target, bg };
+        return { achieved, target, bg, readable };
+      }
+
+      /** 数として読めたか。無い・空・数でない、のどれかなら読めていない。 */
+      function isNumber(value) {
+        if (value === null) return false;
+        if (String(value).trim() === "") return false;
+        return Number.isFinite(Number(value));
+      }
+
+      /** 何も出さない。地の色まで消して、理由は console にだけ残す。 */
+      function goDead(why) {
+        console.error("達成状況ドーナツ: 出せないので何も出さない —", why);
+        document.documentElement.classList.add("is-dead");
       }
 
       function parseNonNegativeInt(value) {
@@ -284,7 +317,6 @@
       const achievedEl = document.getElementById("achievedCount");
       const targetEl = document.getElementById("targetCount");
       const percentLabelEl = document.getElementById("percentLabel");
-      const statusTextEl = document.getElementById("statusText");
       const progressCircle = document.querySelector(".donut-progress");
 
       const radius = 80;
@@ -360,16 +392,14 @@
          3) 数字 & ドーナツを描画
       ========================================================== */
       async function init() {
-        const { achieved, target, bg } = getQueryParams();
+        const { achieved, target, bg, readable } = getQueryParams();
 
-        // まず数値描画の前に、ステータス文言を適切に
-        // bg があれば「背景画像読み込み中…」、なければ「表示中」
-        if (bg) {
-          statusTextEl.textContent = "背景画像読み込み中…";
-        } else {
-          statusTextEl.textContent = "表示中";
-          // 背景画像がない場合はすぐ消してOK（お好みで）
-          statusTextEl.style.display = "none";
+        /* 目標が読めていないなら、この面に出せる絵は無い。**何も出さない。**
+           あやとは**ドーナツが出てこないこと**で気づく（OBS の板が真っさらに
+           なる）。理由は console に残してある。 */
+        if (!readable) {
+          goDead("achieved / target が読めていない");
+          return;
         }
 
         // 背景画像が指定されている場合のみロード
@@ -380,16 +410,15 @@
 
             // 読み込み成功したら cover 背景として適用
             applyBackgroundImage(pageRootEl, bg);
-
-            // 状態表示を消す
-            statusTextEl.style.display = "none";
           } catch (err) {
-            // 失敗しても UI は継続：ベース背景色のまま
-            console.warn("背景画像の読み込みに失敗:", err);
-            statusTextEl.textContent =
-              "背景画像の読み込みに失敗しました（背景色で表示中）";
-            statusTextEl.classList.add("center-text-error");
-            // 数秒後に消しても良い（今回は表示のまま）
+            /* 背景の絵が落ちただけ。**ドーナツの数字は読めている**ので、
+               ここで面ごと消すのは行き過ぎ。地の色のまま黙って続ける。
+
+               前は「背景画像の読み込みに失敗しました（背景色で表示中）」を
+               画面に出していた。落ちたのは飾りの飾りで、読んだ視聴者さんには
+               どうしようもない。**背景が思っていた絵と違うこと**で、あやとは
+               見た瞬間に気づく。 */
+            console.warn("達成状況ドーナツ: 背景の絵が読めなかった —", err);
           }
         }
 
@@ -397,11 +426,21 @@
         animateNumbersAndDonut(achieved, target);
       }
 
+      /* init そのものが転んでも、**書きかけの絵を配信に残さない。**
+         markup 側の数字を空にしてあるので、ここで止まれば板ごと消える。 */
+      function boot() {
+        try {
+          init().catch((err) => goDead(err));
+        } catch (err) {
+          goDead(err);
+        }
+      }
+
       // DOM 準備ができてから起動（安定）
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
+        document.addEventListener("DOMContentLoaded", boot);
       } else {
-        init();
+        boot();
       }
     </script>
   </body>

@@ -708,22 +708,26 @@
         };
 
         try {
-          const res = await fetch(POST_ENDPOINT, {
+          await fetch(POST_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(payload),
           });
-
-          // if (!res.ok) {
-          //   const text = await res.text().catch(() => "");
-          //   throw new Error(`HTTP ${res.status} ${text}`.slice(0, 200));
-          // }
         } catch (err) {
-          console.error(err);
-          // submitBtn.disabled = false;
-          // msg.className = "msg ng";
-          // msg.textContent =
-          //   "送信に失敗しました。POST_ENDPOINTやサーバー設定を確認してね。";
+          /* **届かなかったのに「ありがとうございます」を出さない。**
+
+             前は落ちても必ずお礼の画面に差し替えていたので、答えが1件も
+             届いていない日でも、書いてくれた人には「送れた」と見えていた。
+             書いた中身はそのまま残してあるので、もう一度押せば送れる。
+
+             落ちた理由（送り先や置き場の設定）は書かない。押した人は
+             視聴者さんで、その人にできることは「もう一度押す」だけ。 */
+          console.error("改善テーマのアンケート: 送れなかった —", err);
+          submitBtn.disabled = false;
+          msg.className = "msg ng";
+          msg.textContent =
+            "送れませんでした。電波のいいところで、もう一度「これで送る！」を押してね。";
+          return;
         }
         card.innerHTML = `
                 <div class="done">

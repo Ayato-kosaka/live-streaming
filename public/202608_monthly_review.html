@@ -1664,7 +1664,11 @@
           try {
             if (signInFn) await signInFn();
           } catch (e) {
-            p.textContent = `ログインできませんでした(${(e && e.code) || e})。もう一度押してください。`;
+            /* 落ちた符丁（`auth/popup-blocked` など）は画面に出さない。
+               読むのはあやとで、できることは「もう一度押す」だけ。
+               符丁は console にだけ残す。 */
+            console.error("ふりかえり授賞式: ログインできなかった —", e);
+            p.textContent = "ログインできませんでした。もう一度押してください。";
           } finally {
             b.disabled = false;
           }
@@ -1762,7 +1766,14 @@
           .catch((e) => {
             linkOk = false;
             setCtrlStatus(false, "つながりません");
-            cEls.banner.textContent = `Firestore につながりませんでした(${(e && e.code) || e})。電波を確かめて、開き直してください。`;
+            /* ここはコントローラ（あやとの手元）なので字を出してよいが、
+               書いてよいのは**これから何をするか**だけ。
+               前は `Firestore につながりませんでした(<符丁>)` と、置き場の
+               名前と落ちた符丁をそのまま出していた。手元でそれを読んでも
+               打つ手は変わらないし、コントローラを画面共有した日には
+               置き場の名前ごと映る。詳しいことは console にだけ残す。 */
+            console.error("ふりかえり授賞式: 進行のつなぎに入れなかった —", e);
+            cEls.banner.textContent = "進行がつながりません。電波を確かめて、開き直してください。";
             cEls.banner.classList.add("show");
           });
       } else if (ROLE === "view") {
