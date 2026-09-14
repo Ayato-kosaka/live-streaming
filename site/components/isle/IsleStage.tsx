@@ -290,6 +290,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
      「この旅のこと」の札が「あやと島」の看板にまるごと重なって、
      どちらも読めなかった。**札のほうを下へ逃がす**（矢が建物の方向を指す）。 */
   useEffect(() => {
+    /** 島の上に載っていて、避ける相手になるもの */
+    const UI = ".isle-view, .isle-atlas, .isle-sign, .isle-hint, .today";
+    let ro: ResizeObserver | null = null;
     const measure = () => {
       const host = hostRef.current;
       const hb = host?.getBoundingClientRect();
@@ -319,59 +322,70 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       /* 歩きかたの案内も入れる。**数秒で消えるが、出ているあいだは札を隠す。**
          測って見つけた（札の字が案内の暗い帯に半分かかって 1.81 : 1 だった）。
          消えたらまた測り直すので、その場で戻る */
-      for (const el of host.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint")) {
+      /* 「今日の島」の板も入れる（`.today`）。**入れていなかった。**
+         実測（1280px・表紙の寄り）で、開いた板の下に「いまどこ」の当たりが
+         入って、指が板に取られていた。押せる板なので、当たりの取り合いにも入る。
+         開け閉めで背が変わるが、下の `ResizeObserver` が測り直す。
+         スマホでは開いた中身を島の外へ出してあるので（`app/css/today.css` の
+         `.isle-under`）、ここで避けるのは畳んだ札1枚ぶんだけになる。 */
+      for (const el of host.querySelectorAll(UI)) {
         add(el);
         addTap(el);
+        /* **見張るのも、測るのと同じ場で。**「今日の島」の板は今日の1行を
+           読んでから出るので、この効果が動いた時点ではまだ島に無い。
+           見張る相手をここで足しておくと、あとから出てきたものも次から拾える
+           （同じ要素をもう一度渡しても増えない）。 */
+        ro?.observe(el);
       }
       /* 看板は絵と一言で1かたまり。**絵だけを避けると、札が一言の上に乗る** */
-      if (cover) add(host.parentElement?.querySelector(".hero-copy"));
-      /* 旅の板（`.htrip`）も島の上に載っている。**入れていなかった。**
-         実測（390px・表紙）で、板の下にいた建物の当たりが 86x37 と 49x47 まで
-         削られていた。こちらは押せる板（`pointer-events: auto`）なので、
-         見た目の逃げ場としても、当たりの取り合いとしても場所を取る。 */
       if (cover) {
         const hero = host.parentElement;
-        add(hero?.querySelector(".htrip"));
-        addTap(hero?.querySelector(".htrip"));
+        add(hero?.querySelector(".hero-copy"));
         // 看板ロゴは絵なので指を取る。板（`.hero-say`）は取らない
         addTap(hero?.querySelector(".hero-logo"));
       }
+      /* 旅の板（`.htrip`）はここには無い。**島の外（すぐ下）へ降ろした。**
+         島の上に置いていたときは、幅390 の引きで「伝説の企画」の当たりが
+         まるごと板の下に入り、48px を取れずに引っ込んでいた（入口が消えた）。
+         避ける工夫では解けない——島は絵で、建物の位置は動かせないので、
+         板を島の上に置くかぎり、いつかどれかの入口の上に来る。
+         （`app/css/hero.css` の「旅のしるべ」・`app/page.tsx` の `.isle-under`） */
       uiBoxes.current = boxes;
       tapBoxes.current = taps;
       platesDirty.current = true;
     };
+    ro = new ResizeObserver(() => measure());
     measure();
     /* 看板の入りの動き（logo-in）が終わるまでは、小さく傾いた箱が返る。
-       終わったころにもう一度測る（毎フレーム測ると layout を起こす） */
+       終わったころにもう一度測る（毎フレーム測ると layout を起こす）。
+       **「今日の島」の板が出てくるのもこのころ**（今日の1行を読んでから出る）。 */
     const t = window.setTimeout(measure, 900);
     /* **測った箱が変わったら、測り直す。**
        ここで測っているものは、どれもカメラで姿が変わる。
        `.isle-view` / `.isle-atlas` は寄りでは絵だけの 48px、引きでは名前が
        戻って 105px（`chain.css` の `.isle[data-cam="wide"] .tool-label`）。
-       看板は寄りと引きで絵そのものが差し替わるので（`hero.css` の
-       `.hero-logo-full` / `-mark`）、その下にぶら下がっている旅の板も動く。
+       看板は寄りと引きで絵そのものが差し替わる（`hero.css` の
+       `.hero-logo-full` / `-mark`）。「今日の島」の板は、押して開くたびに背が変わる。
        **測り直す合図に `wide` が入っていなかった。** 引きへ切り替えると
        寄りのときの箱を持ったまま置き直すので、実測（390px・表紙）で
-       旅の板を y=152 にいるものとして避けていた（本当は 192）。
-       **40px ずれた場所を避けた結果、「この旅のこと」と「これから」の当たりが
+       看板ひとかたまりの下端を 40px ずれた場所として避けていた。
+       **ずれた場所を避けた結果、「この旅のこと」と「これから」の当たりが
        板の下に置かれて、2軒とも押せなくなっていた。**
        下の `wide` は、切り替えたその場で測り直すため。`ResizeObserver` は、
        これから先ここに何が足されても取りこぼさないため（#86。直したのが
        仕掛けなら、その仕掛けを使っている場所ごと掃き出す）。 */
-    const ro = new ResizeObserver(() => measure());
     const host = hostRef.current;
-    for (const el of host?.querySelectorAll(".isle-view, .isle-atlas, .isle-sign, .isle-hint") ?? [])
-      ro.observe(el);
     if (cover) {
       const hero = host?.parentElement;
-      for (const sel of [".hero-copy", ".htrip", ".hero-logo"]) {
+      for (const sel of [".hero-copy", ".hero-logo"]) {
         const el = hero?.querySelector(sel);
         if (el) ro.observe(el);
       }
     }
     return () => {
       window.clearTimeout(t);
-      ro.disconnect();
+      ro?.disconnect();
+      ro = null;
     };
   }, [openSpot, box.w, box.h, left, cover, hint, wide]);
 
