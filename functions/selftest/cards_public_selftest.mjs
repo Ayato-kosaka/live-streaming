@@ -180,7 +180,8 @@ function query(name, q) {
     select: (...f) => query(name, {...q, select: f}),
     limit: (n) => query(name, {...q, limit: n}),
     get: async () => {
-      let rows = Object.entries(STORE[name] ?? {}).map(([id, v]) => snapOf(id, v));
+      let rows = Object.entries(STORE[name] ?? {})
+        .map(([id, v]) => snapOf(id, v));
       for (const [f, v] of q.where ?? []) {
         rows = rows.filter((d) => d.data()[f] === v);
       }
@@ -293,7 +294,10 @@ function load(name) {
 }
 
 const {handleCards, peopleForEveryone} = load("cards");
-for (const [name, f] of [["handleCards", handleCards], ["peopleForEveryone", peopleForEveryone]]) {
+for (const [name, f] of [
+  ["handleCards", handleCards],
+  ["peopleForEveryone", peopleForEveryone],
+]) {
   if (typeof f !== "function") {
     console.error(`lib/cards.js から ${name} を取り出せなかった`);
     process.exit(1);
@@ -334,7 +338,12 @@ async function call(method, path, auth) {
   return out;
 }
 
-/** 画面と同じ手（`CardSheet.tsx` の `picks`）。写真ごとに、絵で重複を落とす */
+/**
+ * 画面と同じ手（`CardSheet.tsx` の `picks`）。写真ごとに、絵で重複を落とす
+ *
+ * @param {object[]} cards 公開の `/cards` が返したカード
+ * @return {Map<string, string[]>} 写真IDごとの、重複を落とした絵の名前
+ */
 function picksByPhoto(cards) {
   const out = new Map();
   for (const c of cards) {
@@ -358,7 +367,11 @@ const pubCards = pub.body?.cards ?? [];
 
 check("公開の /cards は扱われる", pub.handled === true);
 check("公開の /cards は 200", pub.status === 200, String(pub.status));
-check("公開の /cards が5枚返している（空振りでない）", pubCards.length === 5, `${pubCards.length} 枚`);
+check(
+  "公開の /cards が5枚返している（空振りでない）",
+  pubCards.length === 5,
+  `${pubCards.length} 枚`,
+);
 check(
   "仕込んだ入れ物には `UC…` が入っている（探す字が実在する）",
   JSON.stringify(STORE).includes("UC_me_0000001"),
@@ -458,7 +471,9 @@ console.log("\n# 3. 写真に入れられる人が、1人も変わらない（�
   const fromStore = new Set(
     Object.values(STORE.islandCards)
       .map((v) => STORE.islandChannels[v.channelId]?.name)
-      .map((n) => (n === "さくら" || n === "さくら2" ? "char_sakura" : n === "abc" ? "char_abc" : null))
+      .map((n) => (n === "さくら" || n === "さくら2" ?
+        "char_sakura" :
+        n === "abc" ? "char_abc" : null))
       .filter(Boolean),
   );
   const fromApi = new Set(pubCards.map((c) => c.icon).filter(Boolean));

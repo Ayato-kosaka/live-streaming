@@ -121,7 +121,7 @@ function scenario(store, opts = {}) {
       let rows = Object.entries(store[name] ?? {})
         .map(([id, v]) => snapOf(id, v));
       for (const [f, op, v] of q.where ?? []) {
-        if (op !== "==") throw new Error(`偽の Firestore は == しか持たない`);
+        if (op !== "==") throw new Error("偽の Firestore は == しか持たない");
         rows = rows.filter((d) => d.data()[f] === v);
       }
       if (q.limit !== undefined) rows = rows.slice(0, q.limit);
@@ -189,9 +189,9 @@ function scenario(store, opts = {}) {
       if (id.startsWith("./")) return load(id.slice(2));
       return nodeRequire(id);
     };
-    new Function("require", "exports", "module", "__filename", "__dirname", src)(
-      req, mod.exports, mod, file, dirname(file),
-    );
+    new Function(
+      "require", "exports", "module", "__filename", "__dirname", src,
+    )(req, mod.exports, mod, file, dirname(file));
     loaded.set(name, mod.exports);
     return mod.exports;
   };
