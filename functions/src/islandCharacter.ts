@@ -88,6 +88,43 @@ const MAX_NAME = 80;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 /**
+ * 投げ銭のアラートで、絵のかわりに流す短い動画の役どころ。
+ *
+ * **いまは1本（`alert`）だけ。** あやとの決め（2026-09-15）:
+ *
+ * > 今は一人一本で良いです。（略）将来的には一人2本とかになるかも
+ * > しれないので、拡張性は持てるようにしてほしいです。
+ *
+ * 2本目は**ここに役どころを足すだけ**で済むように、絵（`ROLES`）と
+ * 同じく役どころで鍵を切ってある。欄を `videoUrl2` のように増やす形に
+ * すると、増えるたびに口も道具も画面も直すことになる。
+ */
+type VideoRole = "alert";
+const VIDEO_ROLES: VideoRole[] = ["alert"];
+
+/**
+ * 動画1本の上限。
+ *
+ * 本番でいま使っている1本が **1,053,735 バイト**（実測。960px 高・約8秒）。
+ * その4倍を上限にしてある。
+ *
+ * **4MB にした理由。** OBS は名簿が来た時点（配信の頭）で温めるので
+ * （`app/alertbox/index.tsx` の `preloadVideo`）、投げ銭のたびに落とす
+ * わけではない。旅先の 1.5Mbps でも4MBは20秒ほどで届き、配信の頭から
+ * 最初の投げ銭までにはふつう何分もある。
+ * **ただし温まる前に来た1件は、3秒で届かなければ絵に落ちる**
+ * （`VIDEO_START_TIMEOUT_MS`）。そこまで確実にしたいなら 500KB 以下で
+ * 作る。作り方の目安は `python/admin/character_video.py` に書いてある。
+ */
+const MAX_VIDEO_BYTES = 4 * 1024 * 1024;
+
+/** 目次（`moov`）と映像の頭が入る最小限。これを下回るものは mp4 ではない。 */
+const MIN_VIDEO_BYTES = 1024;
+
+/** 箱を辿る本数の上限。壊れた中身で回り続けないための止まり木。 */
+const MAX_BOXES = 64;
+
+/**
  * 表示用に持つ幅。
  *
  * **ドライブは `=s96` `=s128` `=s256` `=s512` `=s640` を勝手に作って
@@ -237,6 +274,60 @@ function picture(raw: unknown): Picture | null {
   };
 }
 
+/** 投げ銭のアラートで流す動画1本ぶん。 */
+type Clip = {
+  /** 置き場（か、島と同じ出どころ）の URL。**これが本体** */
+  url: string;
+  /** 大きさ。温めが間に合うかを画面から見られるように持っておく */
+  bytes: number | null;
+  /** 長さ（秒）。**中身の `mvhd` から読んだ値**で、名乗りではない */
+  seconds: number | null;
+  w: number | null;
+  h: number | null;
+  /** 入れた時刻（ISO）。どの版が出ているかを言えるように */
+  at: string | null;
+};
+
+/**
+ * Firestore に入っている動画1本を、返す形にそろえる。
+ * @param {unknown} raw 入っている値
+ * @return {Clip | null} 動画。URL が無ければ null
+ */
+function clip(raw: unknown): Clip | null {
+  const v = (typeof raw === "object" && raw ? raw : null) as Json | null;
+  if (!v) return null;
+  /* **URL の無いものは、無いものとして扱う。** 長さや大きさだけが
+     残っている書類（置くのに失敗した跡）を「動画がある」と返すと、
+     OBS が空の `<video>` を開いて、絵が出ないまま30秒が過ぎる。 */
+  if (typeof v.url !== "string" || !v.url) return null;
+  const num = (x: unknown) => (typeof x === "number" ? x : null);
+  return {
+    url: v.url,
+    bytes: num(v.bytes),
+    seconds: num(v.seconds),
+    w: num(v.w),
+    h: num(v.h),
+    at: typeof v.at === "string" ? v.at : null,
+  };
+}
+
+/**
+ * 入っている動画を役どころごとにそろえる。**知らない役どころは落とす。**
+ * @param {Json} v 書類の中身
+ * @return {Record<string, Clip>} 役どころ → 動画
+ */
+function videosOf(v: Json): Record<string, Clip> {
+  const src = (typeof v.videos === "object" && v.videos ?
+    v.videos :
+    {}) as Json;
+  const out: Record<string, Clip> = {};
+  for (const role of VIDEO_ROLES) {
+    const c = clip(src[role]);
+    if (c) out[role] = c;
+  }
+  return out;
+}
+
 /**
  * 図鑑に出す1人。**名前は入らない。**
  * @param {string} id 書類ID
@@ -267,6 +358,7 @@ function shapePublic(id: string, v: Json): Json {
  * @return {Json} 名前まで入った形
  */
 function shapeFull(id: string, v: Json): Json {
+  const videos = videosOf(v);
   return {
     ...shapePublic(id, v),
     channelName: typeof v.channelName === "string" ? v.channelName : "",
@@ -285,11 +377,22 @@ function shapeFull(id: string, v: Json): Json {
 
        **画面からは書けない。** ここを誰でも打てるようにすると、
        配信に映るものを外から差し替える口になる。入れるのは
-       `python/admin/character_video.py`（あやとだけが回せる）。
+       あやとか、こちら（`python/admin/character_video.py` →
+       `POST /characters/{id}` の `videos`）。
 
        前はここが返っていなかったので、OBS 側に動画を出す道はあるのに
        **どの人にも一度も届いていなかった**（2026-09-15 に気づいた）。 */
-    videoUrl: typeof v.videoUrl === "string" && v.videoUrl ? v.videoUrl : null,
+    videos,
+    /* **旧い欄。`videos.alert` と同じ値を入れて、両方返す。**
+
+       OBS（`app/alertbox/`）はいま `videoUrl` しか見ていない。配信中に
+       実際に使われているので、`videos` に移した日にここを止めると
+       **その晩の配信でアラートが絵に戻る。** 画面が `videos` を見るように
+       なってから、こちらを畳む。
+
+       `videos.alert` を先に見るので、両方入っている人は新しいほうが出る。 */
+    videoUrl: videos.alert?.url ??
+      (typeof v.videoUrl === "string" && v.videoUrl ? v.videoUrl : null),
   };
 }
 
@@ -430,6 +533,164 @@ async function saveRole(
     return {error: "no image"};
   }
   return out;
+}
+
+/** mp4 の「箱」1つ。中身は読まずに、見出しだけで並べる。 */
+type Box = {type: string; at: number; body: number; end: number};
+
+/**
+ * mp4 の箱を頭から並べる。**入れ子の中でも同じものを使う。**
+ *
+ * mp4 は `[大きさ4バイト][名前4バイト][中身]` の箱が並んだだけの形なので、
+ * **見出しだけ辿れば、1MB の動画でも読むのは数十バイトで済む。**
+ * 目次（`moov`）が前にあるか後ろにあるかも、これで分かる。
+ * @param {Buffer} buf 動画そのもの
+ * @param {number} from どこから
+ * @param {number} to どこまで
+ * @return {Box[]} 並んでいた箱。形が壊れていたらそこで打ち切る
+ */
+function boxesOf(buf: Buffer, from: number, to: number): Box[] {
+  const out: Box[] = [];
+  let at = from;
+  while (at + 8 <= to && out.length < MAX_BOXES) {
+    const type = buf.subarray(at + 4, at + 8).toString("latin1");
+    // 箱の名前は印字できる4字。そうでなければ mp4 の並びではない
+    if (!/^[\x20-\x7e]{4}$/.test(type)) break;
+    let size = buf.readUInt32BE(at);
+    let body = at + 8;
+    if (size === 1) {
+      // 4GB を超える箱。大きさは次の8バイトに入っている
+      if (at + 16 > to) break;
+      const big = buf.readBigUInt64BE(at + 8);
+      if (big > BigInt(Number.MAX_SAFE_INTEGER)) break;
+      size = Number(big);
+      body = at + 16;
+    } else if (size === 0) {
+      // 「ここから終わりまで」。最後の箱だけが名乗れる
+      size = to - at;
+    }
+    if (size < body - at) break;
+    out.push({type, at, body, end: Math.min(to, at + size)});
+    at += size;
+  }
+  return out;
+}
+
+/** 動画を見た結果。断ったときは理由だけを返す。 */
+type Probe = {seconds: number | null; w: number | null; h: number | null};
+
+/**
+ * 送られてきたものが**投げ銭の直後に出せる mp4 か**を見る。
+ *
+ * 見るのは3つ。
+ *
+ * 1. **頭が `ftyp` か**（`islandApi.ts` の `saveEventImage` と同じ考えで、
+ *    拡張子や Content-Type の名乗りでは決めない。置き場に何でも置ける
+ *    ようにしない）
+ * 2. **目次（`moov`）が映像（`mdat`）より前にあるか。** 後ろにあると
+ *    **最後まで落とし終わるまで再生が始まらない**ので、投げ銭の直後に
+ *    出るものとして使えない（`ffmpeg -movflags +faststart` が要る）
+ * 3. ついでに長さと大きさを `mvhd` / `tkhd` から読む。**送り手の名乗りを
+ *    そのまま書かない**（名乗りで決めないのは 1 と同じ理由）
+ * @param {Buffer} buf 動画そのもの
+ * @return {Probe | {error: string}} 読めた値、または断る理由
+ */
+function probeMp4(buf: Buffer): Probe | {error: string} {
+  const top = boxesOf(buf, 0, buf.length);
+  if (top.length === 0 || top[0].type !== "ftyp") return {error: "not a video"};
+  const moovAt = top.findIndex((b) => b.type === "moov");
+  const mdatAt = top.findIndex((b) => b.type === "mdat");
+  if (moovAt < 0) return {error: "no moov"};
+  /* **目次が後ろ。** 断る理由が「壊れている」ではないので、名前を分けて
+     返す（道具の側で ffmpeg の直し方を出せるように）。 */
+  if (mdatAt >= 0 && mdatAt < moovAt) return {error: "moov last"};
+
+  const moov = top[moovAt];
+  let seconds: number | null = null;
+  let w = 0;
+  let h = 0;
+  for (const b of boxesOf(buf, moov.body, moov.end)) {
+    if (b.type === "mvhd" && b.body + 4 <= b.end) {
+      /* 版で欄の幅が変わる。0 は4バイト、1 は8バイト（作った時刻・
+         直した時刻・長さの3つぶん）。時計の刻みは常に4バイト。 */
+      const v = buf[b.body];
+      const at = b.body + 4 + (v === 1 ? 16 : 8);
+      if (at + (v === 1 ? 12 : 8) > b.end) continue;
+      const scale = buf.readUInt32BE(at);
+      const ticks = v === 1 ?
+        Number(buf.readBigUInt64BE(at + 4)) :
+        buf.readUInt32BE(at + 4);
+      if (scale > 0) seconds = Math.round((ticks / scale) * 100) / 100;
+    }
+    if (b.type !== "trak") continue;
+    for (const t of boxesOf(buf, b.body, b.end)) {
+      /* 画の大きさは `tkhd` の**いちばん後ろの8バイト**（16.16 の固定小数）。
+         版で前が伸び縮みするので、頭から数えずに後ろから取る。
+         音だけの筋は 0 で入っているので、いちばん大きいものを採る。 */
+      if (t.type !== "tkhd" || t.end - t.body < 8) continue;
+      w = Math.max(w, Math.round(buf.readUInt32BE(t.end - 8) / 65536));
+      h = Math.max(h, Math.round(buf.readUInt32BE(t.end - 4) / 65536));
+    }
+  }
+  return {seconds, w: w || null, h: h || null};
+}
+
+/** 1本置いた結果。断ったときは理由だけを返す。 */
+type PutVideo = (Clip & {url: string}) | {error: string};
+
+/**
+ * 送られてきた動画を Storage に置く。
+ *
+ * **置けるのはあやとだけ**（呼ぶ前に `ownerUid` を見ている）。ここに入れた
+ * URL は**そのまま配信に映る**ので、誰でも打てる口にはしない。
+ * @param {string} id 書類ID
+ * @param {VideoRole} role 役どころ（いまは `alert` だけ）
+ * @param {unknown} raw data URL か、base64 の中身
+ * @return {Promise<PutVideo>} 置けた1本、または断った理由
+ */
+async function putVideo(
+  id: string,
+  role: VideoRole,
+  raw: unknown,
+): Promise<PutVideo> {
+  const b64 = String(raw ?? "").replace(/^data:[^,]*,/, "");
+  let buf: Buffer;
+  try {
+    buf = Buffer.from(b64, "base64");
+  } catch {
+    return {error: "bad video"};
+  }
+  if (buf.length < MIN_VIDEO_BYTES || buf.length > MAX_VIDEO_BYTES) {
+    return {error: "bad size"};
+  }
+  const probe = probeMp4(buf);
+  if ("error" in probe) return probe;
+
+  const stored = `island/characters/${id}/video-${role}.mp4`;
+  const token = randomUUID();
+  await admin
+    .storage()
+    .bucket(BUCKET)
+    .file(stored)
+    .save(buf, {
+      contentType: "video/mp4",
+      /* 入れ替えるたびに合言葉（token）が変わって URL も変わるので、
+         長く覚えさせてよい。絵と同じ決まり。 */
+      metadata: {
+        cacheControl: "public, max-age=31536000, immutable",
+        metadata: {firebaseStorageDownloadTokens: token},
+      },
+    });
+  return {
+    url:
+      "https://firebasestorage.googleapis.com/v0/b/" +
+      `${BUCKET}/o/${encodeURIComponent(stored)}?alt=media&token=${token}`,
+    bytes: buf.length,
+    seconds: probe.seconds,
+    w: probe.w,
+    h: probe.h,
+    at: new Date().toISOString(),
+  };
 }
 
 /**
@@ -689,13 +950,6 @@ export async function handleCharacters(
 
     const now = new Date().toISOString();
     const patch: Json = {
-      channelName,
-      emoji,
-      aliases,
-      /* **鍵はここで作る。** 画面から作らせない。作り方が2か所に
-         あると、片方だけ直したときに引けない行が静かに増える。 */
-      channelKeys: keysOf(channelName ? [channelName] : []),
-      lookupKeys: keysOf([channelName, ...aliases].filter((s) => s)),
       /* 移行の道具（`python/admin/characters_migrate.py`）は、これが
          入っている行を**触らない。** 画面から直したことが、次の
          移行で元に戻ってはいけない（`donors.ts` と同じ決まり）。 */
@@ -703,6 +957,25 @@ export async function handleCharacters(
       editedBy: uid,
       updatedAt: now,
     };
+    /* **名前は、送られてきたときだけ書く。**
+
+       動画だけを差し替える呼び方（`python/admin/character_video.py`）が
+       できたので、名前を1つも送らない POST が来る。いつも書く形のままだと、
+       そこで `channelName` も呼び名も鍵も空で上書きされて、**絵は残るのに
+       投げ銭で誰にも当たらない人**ができる。
+
+       画面（`/me` の図鑑）は前と同じく3つとも送るので、「呼び名を全部
+       外す」はいままでどおり通る（空の配列は送られてきている）。 */
+    if (!cur.exists || "channelName" in q.body || "emoji" in q.body ||
+      "aliases" in q.body) {
+      patch.channelName = channelName;
+      patch.emoji = emoji;
+      patch.aliases = aliases;
+      /* **鍵はここで作る。** 画面から作らせない。作り方が2か所に
+         あると、片方だけ直したときに引けない行が静かに増える。 */
+      patch.channelKeys = keysOf(channelName ? [channelName] : []);
+      patch.lookupKeys = keysOf([channelName, ...aliases].filter((s) => s));
+    }
     if (!cur.exists) patch.createdAt = now;
 
     /* 絵は送られてきたぶんだけ差し替える。**送られてこなかった
@@ -728,6 +1001,33 @@ export async function handleCharacters(
       images[role] = saved;
     }
     patch.images = images;
+
+    /* 動画も絵と同じで、**送られてきた役どころだけ差し替える。**
+       いまの役どころは `alert` ひとつ。2本目は `VIDEO_ROLES` に足すだけ。 */
+    const sentVideos = (typeof q.body.videos === "object" && q.body.videos ?
+      q.body.videos :
+      null) as Json | null;
+    if (sentVideos) {
+      const videos = (typeof had.videos === "object" && had.videos ?
+        {...(had.videos as Json)} :
+        {}) as Json;
+      for (const role of VIDEO_ROLES) {
+        const sent = sentVideos[role];
+        if (!sent || typeof sent !== "object") continue;
+        const saved = await putVideo(id, role, (sent as Json).data);
+        if ("error" in saved) {
+          res.status(400).json({error: saved.error, role});
+          return true;
+        }
+        videos[role] = saved as unknown as Json;
+      }
+      patch.videos = videos;
+      /* **旧い欄にも、同じ値を書く。** OBS はいま `videoUrl` しか見て
+         いない（`app/alertbox/`）。画面が `videos` を見るようになるまで、
+         書くほうも読むほうも両方を通す。戻すときもここを見れば足りる。 */
+      const alert = clip(videos.alert);
+      if (alert) patch.videoUrl = alert.url;
+    }
 
     await ref.set(patch, {merge: true});
     res.json({character: shapeFull(id, {...had, ...patch})});

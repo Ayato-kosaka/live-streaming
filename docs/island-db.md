@@ -429,6 +429,10 @@ SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
 BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
 取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
 「Doneru のぶんは、◯月◯日まで入っています」と出る（`docs/nordic-fund.md` 9.13）。
+**`islandCharacter` は、数えた日より後に増えた**（#284。本番97人）。
+あやとのスプレッドシートとドライブに散っていたキャラクターの絵を、
+Firestore と Storage に引き取った入れ物。書くのはあやたと日次の道具、
+読むのは図鑑（`/friends`）・カード・**配信中のアラート**。下の a を見る。
 
 #### a. 人
 
@@ -540,6 +544,76 @@ island/state
 入れるのは**時刻そのもの**で、日付にするのは画面の仕事
 （`site/components/me/DonorLinks.tsx` が日本時間で切る。#201・#202）。
 すでに入っているぶんを直すのは `python/admin/donors_first_seen.py`。
+
+**`islandCharacter/{絵のID}`** — キャラクター（#284。本番97人）
+
+書類IDは**ドライブの画像ID**（`[A-Za-z0-9_-]{10,64}`）。
+`site/content/residents.ts` の `icon:` や `python/residents_map.json` の鍵が
+もうこれで引いてあるので、**新しいIDを振り直さない**（振ると島から人が消える）。
+画面から足す人には、同じ形の乱数を振る。
+
+| 項目 | 型 | 中身 | 誰が書くか |
+| --- | --- | --- | --- |
+| `channelName` | string | YouTube のチャンネル名。**スパチャはこれだけで引く** | あやと（`/me` の図鑑）・移行の道具 |
+| `aliases` | string[] | 他の呼び名（Doneru の表示名など。最大20） | 同上 |
+| `channelKeys` | string[] | チャンネル名をそろえた鍵（`@` なしも入る） | **口が作る**（画面からは書けない） |
+| `lookupKeys` | string[] | チャンネル名＋呼び名をそろえた鍵 | 同上 |
+| `emoji` | string | 図鑑に出す絵文字 | あやと |
+| `channelId` | string? | 名寄せの手がかり | `characters_add.py` |
+| `images.{plain,scene}` | map | 絵。`{url, sizes:{128,256,640}, w, h}` | あやと（口が Storage に置く） |
+| `videos.{役どころ}` | map | **投げ銭のアラートで流す動画。** 下の表 | あやと／こちら（口が Storage に置く） |
+| `videoUrl` | string? | **旧い欄。`videos.alert.url` と同じ値が入る**（下） | 同上 |
+| `order` | number? | 図鑑の並び（表から作った番号） | `characters_order.py` |
+| `createdAt` / `editedAt` / `editedBy` / `updatedAt` | | 画面から直した印。**移行の道具はこれがある行を触らない** | 口 |
+
+**名前は、誰にでも見せるものではない。** 図鑑の口（`GET /characters`）は
+絵と絵文字と並び順しか返さない。名前と呼び名まで返るのは、あやとの札を
+持っている口と、OBS の合言葉（32桁）を持っている口だけ。
+
+**動画（`videos`）** — 投げ銭のアラートで、絵のかわりに流す短いもの
+
+```
+islandCharacter/{絵のID}
+  videos:
+    alert: {                      ← **役どころ。いまはこれ1つ**
+      url: string                 置き場の URL（島と同じ出どころの道でもよい）
+      bytes: number|null          大きさ。**温めが間に合うかを見るため**
+      seconds: number|null        長さ。**中身の `mvhd` から読んだ値**
+      w: number|null              **中身の `tkhd` から読んだ値**
+      h: number|null
+      at: string|null             入れた時刻（ISO）
+    }
+  videoUrl: string|null           ← 旧い欄。**`videos.alert.url` と同じ値**
+```
+
+| | 誰が | どこから |
+| --- | --- | --- |
+| 書く | あやと／こちら | `python/admin/character_video.py` → `POST /characters/{id}` の `videos` |
+| 読む | 配信中の OBS | `GET /alertbox/{32桁}/characters` の `videoUrl`（`app/alertbox/`） |
+
+**役どころで鍵を切ってある。** あやとの決め（2026-09-15）は「今は一人一本。
+将来的には一人2本とかになるかもしれないので、拡張性は持てるように」。
+2本目は `functions/src/islandCharacter.ts` の `VIDEO_ROLES` に1語足すだけで通る。
+**`videoUrl2` のように欄を増やす形にしない**（増えるたびに口も道具も画面も直すことになる）。
+
+**`videoUrl` は、当分いっしょに書く。** OBS はいまそちらしか見ていないので、
+片方だけにすると**その晩の配信でアラートが絵に戻る。** 口（`shapeFull`）は
+`videos.alert?.url ?? 旧 videoUrl` で埋めて**両方返す**ので、
+旧い欄しか持っていない人も、新しい欄に移した人も、同じように動く。
+画面が `videos` を見るようになったら、旧いほうを畳む。
+
+**置けるのはあやとだけ**（`ownerUid`）。ここに入れた URL は**そのまま配信に
+映る**ので、画面（`/me` の図鑑）からは打てない。口は置く前に中身を見て、
+次のものを断る。
+
+- 頭が `ftyp` でないもの（**名乗りでは決めない。** 絵と同じ決まり）
+- **目次（`moov`）が映像（`mdat`）より後ろにあるもの** — 最後まで落とし
+  終わるまで再生が始まらないので、投げ銭の直後に出るものとして使えない
+  （`ffmpeg -movflags +faststart` が要る）
+- 4MB を超えるもの／1KB に満たないもの（本番の1本は 1,053,735 バイト・8.6秒）
+
+確かめは `functions/selftest/character_video_selftest.mjs`（偽の Firestore と
+偽の置き場で59件）。
 
 #### b. 企画・写真・カード・投げ銭
 
