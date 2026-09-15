@@ -459,8 +459,20 @@ island/state
     superchat: number             スパチャの合計
     people: number                出した人の数（のべではない）
     days: number                  何日ぶんで数えたか
-    updatedAt: "YYYY-MM-DD"
+    updatedAt: "YYYY-MM-DD"       **UTC 切り**（`fund_daily.py` が
+                                  `datetime.now(timezone.utc)`。ほかは JST 切り）
   }
+
+> **`GET /island-api/fund` の `updatedAt` は、いつ引いても `null` で返る。**
+> 書く側は上のとおり日付の文字列だが、読む側（`islandApi.ts` の
+> `num(f.updatedAt) || null`）が数に変換するので必ず落ちる。
+> **いまは誰も困っていない。** `site/` はこの欄を1か所も読んでいないし、
+> 画面に「いつの数字か」を出してもいない（2026-09-15 に本番で確認）。
+>
+> **次に「いつの数字か」を出したくなった人へ。** 読む側だけ直すと、
+> こんどは **UTC 切りの日付を JST の画面に出す**ことになる。島のほかの
+> 日付は全部 JST の0時で切ってある（2.3）。直すなら書く側から揃える。
+
   current: {                      あやとが手で（口／island_set_current.py）
     place: string                 いまいる場所
     word: string                  ひとこと（**改行が残る**。「改行」）
