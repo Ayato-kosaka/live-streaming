@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import CardWall from "@/components/cards/CardWall";
+import HowToGet from "@/components/cards/HowToGet";
 import { PLAN_BY_DAY } from "@/content/planDays";
 
 export const metadata: Metadata = {
@@ -49,6 +50,15 @@ export const metadata: Metadata = {
  * あやとの言葉:「この画面すごくUXが悪い」「説明が最上部と被ってて要らない」。
  * **書くのは、その人がこれから何をするかだけ**（`docs/island-misses.md` 7）。
  *
+ * ## そのうえで「もらいかた」だけを、壁の下に置く（2026-09-15）
+ *
+ * あやとの「あやと島カードの説明が欲しい」。リードが答えているのは
+ * **何が持って帰れるか**までで、**どうやったらもらえるか**は面のどこにも
+ * 書いていなかった。剥がされた紙が言い直していたぶん（誰が立つか・何枚あるか・
+ * 名前が出る条件）は足さない。足すのは手順3つと、短い2つだけ
+ * （`components/cards/HowToGet.tsx`）。**壁より下に置く。**
+ * 知りたくなるのは写真を見たあとで、上に置くとリードと二段重ねになる。
+ *
  * ## 企画を渡してから開く
  *
  * カードにはその日の企画が出る。表（`PLAN_BY_DAY`）はここで引いて、
@@ -64,6 +74,8 @@ export default function CardsPage() {
         lead="その日の写真に、キャラクターを1人だけ入れて持って帰れます。"
       />
       <CardWall plans={PLAN_BY_DAY} />
+      {/* もらいかたは**壁の下**。写真を見たあとに出る位置に置く */}
+      <HowToGet />
     </PageShell>
   );
 }

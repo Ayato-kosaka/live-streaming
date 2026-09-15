@@ -271,7 +271,12 @@ function Cards({
     return (
       <div className="blank">
         <b>{hasChannel ? "まだ1枚もありません" : "ここに、もらったカードが並びます"}</b>
-        <p>配信で投げ銭すると、翌朝1枚とどきます。</p>
+        {/* **枚数を言わない。** 1つの企画にカード画像は何枚でも貼れるので
+            （`functions/src/streamEvents.ts` の `mintCards`。画像 × 投げ銭）、
+            「1枚とどきます」は貼られた枚数だけ嘘になる。「翌朝」も古い——
+            投げ銭は投げられたその日に台帳へ入るので、貼られた時点で配られる
+            （`functions/src/cards.ts` 冒頭）。 */}
+        <p>配信で投げ銭すると、その日の写真がカードになって増えていきます。</p>
         <Link className="blank-go" href="/cards">
           配られたカードを見る
           <Icon name="right" size={14} />
