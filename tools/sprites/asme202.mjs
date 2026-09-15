@@ -9,6 +9,9 @@
  *
  * **本番の Firestore には触らせない。** ここで全部返す。
  */
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { apply as base } from "./asme.mjs";
 
 const UID = "fakeuid0001";
@@ -55,17 +58,58 @@ let EVENTS = [
   plan({ id: "V1ec66X2kj3p2ZqlX0Gt", title: "海外出発二周年記念日", date: "2026-09-11", status: "proposed", by: "のり" }),
 ];
 
-/** 本番の3枚（ひめひめ / aoi / たぃ）と同じ形。9/11 の4本を見るために1枚足す。 */
-const IMG = "https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/x.jpeg";
-const card = (id, chan, day, ev) => ({
-  id, day, photoId: id.split("__")[0], url: IMG, w: 1200, h: 1600,
-  note: "ジョージア最後の街歩きの夜景", channelId: chan, icon: null, name: null,
+/** チャンネル → キャラクターの書類ID。**焼き込みから読む**（写しを置かない）。
+    `asme.mjs` と同じ読み方だが、あちらは外に出していないのでここにも置く。 */
+const ICON_OF = (() => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, "../../site/content/residents.ts"), "utf8");
+  const out = new Map();
+  for (const m of src.matchAll(/\{[^{}]*\}/g)) {
+    const icon = /icon:\s*"([^"]+)"/.exec(m[0])?.[1];
+    const ch = /channel:\s*"([^"]+)"/.exec(m[0])?.[1];
+    if (icon && ch) out.set(ch, icon);
+  }
+  return out;
+})();
+
+/** 写真の置き場。`asme.mjs` の `/nordic/photos` が返すのと同じ形。 */
+const SHOT = (id) =>
+  `https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F${id}.jpeg?alt=media`;
+
+/**
+ * 誰でも読める `GET /cards` の1枚（#414）。
+ *
+ * **`channelId` は返らない。** 返るのは絵（`icon`）と、名前を出してよいと
+ * 言った人の名前だけで、`id` は `<写真のID>__<絵>__<通し番号>`
+ * （`functions/src/cards.ts` の `forEveryone`）。
+ *
+ * ここを本番と同じにしておかないと、**撮ったときだけ絵が出る。**
+ * 前は `icon: null` + `channelId` で置いていて、画面が焼き込みの22人
+ * （`content/residents.ts`）から引いてしまうので出ているように見えるが、
+ * 本番は `channelId` を返さないので**同じ画面が0人になる**（`cards.ts` の
+ * `withIcons`）。本番で消えているものを、撮って確かめられない形だった。
+ *
+ * **写真は `/nordic/photos` にあるものから採る。** 一覧に並ぶのは写真で、
+ * カードはそこに人を立てるだけなので（`CardWall`）、写真の無い `photoId` を
+ * 置くと、その日のマスに誰も立たない。
+ */
+const card = (photoId, chan, day, ev, n, o = {}) => ({
+  id: `${photoId}__${ICON_OF.get(chan) ?? "x"}__${n}`,
+  day, photoId, url: SHOT(photoId),
+  w: o.w ?? 1200, h: o.h ?? 1600,
+  note: o.note ?? "",
+  icon: ICON_OF.get(chan) ?? null,
+  /** 名前が返るのは、出してよいと言った人だけ */
+  name: o.name ?? null,
   x: 0.82, y: 0.92, rot: 2.4, scale: 1.0, moved: false, at: 1788724247800,
   streamEventId: ev,
 });
 const CARDS = [
-  card("depart01__UCyct2GK_RiW5Ji3Y0gd9MMg", CHANNEL, "2026-09-11", "nordic-day-depart"),
-  card("oMXREHFFNMbr37TtIwlE__UCyct2GK_RiW5Ji3Y0gd9MMg", CHANNEL, "2026-09-06", "food-wine-fest"),
+  /* 9/11（企画4本の日）と 9/06（1本の日）。どちらも `asme.mjs` の写真に乗せる */
+  card("kQ2rTn5wY8bLxA1cVdEf", CHANNEL, "2026-09-11", "nordic-day-depart", 1,
+    { w: 1600, h: 1200, note: "クタイシ空港へ向かう朝", name: NAME }),
+  card("oMXREHFFNMbr37TtIwlE", CHANNEL, "2026-09-06", "food-wine-fest", 1,
+    { note: "ジョージア最後の街歩きの夜景", name: NAME }),
 ];
 
 export async function apply(ctx, opts = {}) {
