@@ -1,41 +1,51 @@
 /**
- * `iconsOf()` の確かめ。**偽のチャンネルと偽の字だけで回す。**
+ * `iconsOf()` の確かめ。**偽の名簿と偽の字だけで回す。**
  *
  * ## 何を見ているか
  *
- * カードに乗るキャラクターの絵は、**チャンネルID → いま名乗っている名前 →
- * 名簿** の順に引いている。あやとの決めごとは
+ * カードに乗る絵は、**投げてくれたときに名乗っていた名前**
+ * (`islandTips.displayNameSnapshot` を書類に焼いた `nameSnapshot`)から引く。
+ * 配信中のアラートボックスと同じ引き方（名簿の `lookupKeys`）。
  *
- * > キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
- * > 変わらないのが正しい。本人にキャラクターを選ばせる口は無い**
+ * 前は「どねID → `islandDonors` → チャンネルID → いま名乗っている名前」で
+ * 引いていたので、**Doneru に別名で投げた人の絵が公開の `/cards` に出ていた。**
+ * 名前も `channelId` も null にしてあったが、絵は図鑑(`/friends`)に同じものが
+ * 並んでいるので、照らせば誰か分かる。あやとの決め(2026-09-15):
  *
- * なのに、表示名は誰でも同じにできる。**他人と同じ名前を名乗れば、その人の絵が
- * 自分のカードに乗る**——「選ばせる口は無い」と決めた、その口が開いていた。
- * ここは、その口が閉じていることを見る。
+ * > 内部ロジックとして、かこさんが投げてくれた紐付けはしてもいいけど、
+ * > みんなが見える場所では匿名性を守りたい
+ *
+ * ここで見るのは6つ。
+ *
+ * 1. 名乗りが `lookupKeys` に当たれば、絵が出る（**先に、当たることを見る**）
+ * 2. **当たらない名乗り（＝匿名の別名）では、絵が出ない**（これが本命）
+ * 3. **呼び名(aliases)でも当たる**——`lookupKeys` を引いている証拠。
+ *    `channelKeys` しか持たない人には当たらないことも、対にして見る
+ * 4. 同じ鍵が2人に付いていたら、**どちらの絵も出さない**（どちらか選べない）
+ * 5. **`islandChannels` を1回も読まない**（読みに行ったら偽の Firestore が落ちる）
+ * 6. 名簿が読めなかったら `null`（0人と同じ顔で返さない）
  *
  * ## なぜ本番のデータを引かないか
  *
  * このリポジトリは公開で、Actions のログも誰でも読める。**視聴者さんの
- * チャンネルIDも表示名も出さない。** 出てくるのは仕込んだ `UC_a_000000001`
- * `さくら` `にせもの` だけ。
+ * 名乗りもチャンネルIDも出さない。** 出てくるのは仕込んだ `さくら`
+ * `ななしのごんべえ` だけ。
  *
  * ## なぜ写しを置かないか
  *
  * `tsc` が書き出した `lib/cards.js` を、**偽の firebase-admin を渡して**
  * そのまま動かす。写しを持つと、本体を直したのに確かめが古いまま通る。
  * `lib/islandCharacter.js`（`normKey` / `keysOf`）と `lib/streamEvents.js` は
- * **本物をそのまま**通す。上限（`MAX_CHANNELS`）も本体の字から読む。
+ * **本物をそのまま**通す。
  *
- * ## 探し方が当たることを、先に見る（`docs/island-misses.md` #19）
+ * ## 壊した写しで落ちることまで見る（`docs/island-misses.md` #99 #100）
  *
- * 「絵が当たらない」は、**名簿の引き方ごと壊れていても当たらない。**
- * だから先に、かぶっていない人に**絵がちゃんと当たること**を確かめてから、
- * かぶった人で消えることを見る。
- *
- * 回しかた:
+ * `CARDS_LIB_DIR` に壊した `lib` を渡すと、そちらで回る（`tsc` は通らない）。
  *
  * ```bash
  * node functions/selftest/cards_icons_selftest.mjs
+ * cp -r functions/lib /tmp/brokenlib && vi /tmp/brokenlib/cards.js
+ * CARDS_LIB_DIR=/tmp/brokenlib node functions/selftest/cards_icons_selftest.mjs
  * ```
  */
 
@@ -47,6 +57,10 @@ import {fileURLToPath} from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FUNCTIONS = join(HERE, "..");
+/** `lib` の置き場。**落ちることを確かめる写しだけ、ここを差し替えて回す。** */
+const LIB = process.env.CARDS_LIB_DIR || join(FUNCTIONS, "lib");
+/** 写しで回すときは `tsc` を通さない（差し替えた `lib` を焼き直してしまう） */
+const BUILD = !process.env.CARDS_LIB_DIR;
 
 /** 合否。1つでも落ちたら終了コード1で出る */
 let bad = 0;
@@ -71,20 +85,16 @@ function check(name, good, why = "") {
 
 /* ---------------- 本体を読み込む土台 ---------------- */
 
-console.log("# tsc を回して、いまの src から読み込む");
-execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), {cwd: FUNCTIONS});
-
-const cardsSrc = readFileSync(join(FUNCTIONS, "lib", "cards.js"), "utf8");
-const nodeRequire = createRequire(import.meta.url);
-
-/** 上限は**本体の字から読む**。ここに書き写すと、変えた日に古いものを測る */
-const capMatch = cardsSrc.match(/MAX_CHANNELS\s*=\s*(\d+)/);
-if (!capMatch) {
-  console.error("lib/cards.js から MAX_CHANNELS を読めなかった");
-  process.exit(1);
+if (BUILD) {
+  console.log("# tsc を回して、いまの src から読み込む");
+  execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), {cwd: FUNCTIONS});
+} else {
+  console.log(`# 差し替えた lib で回す: ${LIB}`);
 }
-const MAX_CHANNELS = Number(capMatch[1]);
-console.log(`  読み込んだ長さ: ${cardsSrc.length} 字 / 上限 ${MAX_CHANNELS} 件\n`);
+
+const cardsSrc = readFileSync(join(LIB, "cards.js"), "utf8");
+const nodeRequire = createRequire(import.meta.url);
+console.log(`  読み込んだ長さ: ${cardsSrc.length} 字\n`);
 
 /**
  * 1つの筋書き。**入れ物も控えも、筋書きごとに作り直す**
@@ -135,17 +145,27 @@ function scenario(store, opts = {}) {
   });
 
   const db = {
-    collection: (name) => ({
-      ...query(name, {}),
-      doc: (id) => ({
-        id,
-        _c: name,
-        get: async () => {
-          bump(`${name}:get`);
-          return snapOf(id, store[name]?.[id]);
-        },
-      }),
-    }),
+    collection: (name) => {
+      /* **`islandChannels` は、触った瞬間に落とす。** 「読まない」を
+         件数で数えると、`db.collection(…)` を持っているだけで読まない形
+         （控えが温まっている回など）と見分けがつかない。**掴んだら落ちる**
+         にしておけば、読み直した日に必ず赤くなる。 */
+      if ((opts.banned ?? []).includes(name)) {
+        bump(`${name}:touch`);
+        throw new Error(`偽の Firestore: ${name} には触れない`);
+      }
+      return {
+        ...query(name, {}),
+        doc: (id) => ({
+          id,
+          _c: name,
+          get: async () => {
+            bump(`${name}:get`);
+            return snapOf(id, store[name]?.[id]);
+          },
+        }),
+      };
+    },
     getAll: async (...refs) => {
       bump(`${refs[0]?._c}:getAll`);
       return refs.map((r) => snapOf(r.id, store[r._c]?.[r.id]));
@@ -179,7 +199,7 @@ function scenario(store, opts = {}) {
   const loaded = new Map();
   const load = (name) => {
     if (loaded.has(name)) return loaded.get(name);
-    const file = join(FUNCTIONS, "lib", `${name}.js`);
+    const file = join(LIB, `${name}.js`);
     const src = readFileSync(file, "utf8");
     const mod = {exports: {}};
     loaded.set(name, mod.exports);
@@ -204,290 +224,193 @@ function scenario(store, opts = {}) {
   return {iconsOf, hits, logs};
 }
 
-/* ---------------- 仕込む名簿とチャンネル ----------------
+/* ---------------- 仕込む名簿 ----------------
 
-   `channelKeys` は保存のときに `keysOf` が作る形（`normKey` 済み・`@` なしも
-   一緒に入る）で置く。本物の保存と同じものを置かないと、当たる当たらないが
-   本番と食い違う。 */
+   `lookupKeys` は保存のときに `keysOf` が作る形（`normKey` 済み・`@` なしも
+   一緒に入る）で置く（`islandCharacter.ts` の `saveCharacter`）。本物の保存と
+   同じものを置かないと、当たる当たらないが本番と食い違う。 */
 
-/** キャラクターの名簿。3人 */
 const CHARACTERS = {
-  char_sakura: {channelKeys: ["さくら"]},
-  char_abc: {channelKeys: ["@abc", "abc"]},
-  char_futatsu: {channelKeys: ["ふたつ"]},
-  // 同じ鍵が2人に付いている（`characterKeys` の側の守り。壊していないか見る）
-  char_futatsu2: {channelKeys: ["ふたつ"]},
+  /** チャンネル名「さくら」と、呼び名「さくらんぼ」を持つ人 */
+  char_sakura: {
+    channelKeys: ["さくら"],
+    lookupKeys: ["さくら", "さくらんぼ"],
+    aliases: ["さくらんぼ"],
+  },
+  /** `@` 付きで登録した人。`keysOf` が `@` なしも入れてある */
+  char_abc: {channelKeys: ["@abc", "abc"], lookupKeys: ["@abc", "abc"]},
+  // 同じ鍵が2人に付いている（どちらか選べない。どちらにも当てない）
+  char_futatsu: {lookupKeys: ["ふたつ"]},
+  char_futatsu2: {lookupKeys: ["ふたつ"]},
+  /* **`channelKeys` しか持たない人。** 引いているのが `lookupKeys` だと
+     いう証拠になる。ここに当たったら、引く欄を取り違えている */
+  char_ch_only: {channelKeys: ["ちゃんねるだけ"]},
 };
 
-console.log("# 0. 探し方が当たるか（先に見る）");
+console.log("# 0. 名乗りで絵が当たるか（先に見る・#19）");
 {
-  const s = scenario({
-    islandCharacter: CHARACTERS,
-    islandChannels: {
-      UC_a_000000001: {name: "さくら"},
-      UC_b_000000002: {name: "にせもの"},
-      // 全角・大文字ちがい。`normKey` を通れば当たる
-      UC_c_000000003: {name: "ＡＢＣ"},
-    },
-  });
-  const got = await s.iconsOf([
-    "UC_a_000000001", "UC_b_000000002", "UC_c_000000003",
+  const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
+  const raw = await s.iconsOf([
+    "さくら", "ＡＢＣ", "さくらんぼ", "ななしのごんべえ", "ちゃんねるだけ",
   ]);
+  /* **`null` は「読めなかった」。** ここは読める筋書きなので、`null` が
+     返ったら引き方のどこかが落ちている。先に言ってから中身を見る
+     （黙って落ちると、下の「当たらない」が全部その道連れになる）。 */
+  check("読めている（`null` で返っていない）", raw !== null, String(raw));
+  const got = raw ?? new Map();
   check(
-    "かぶっていない人には、いままでどおり絵が当たる",
-    got.get("UC_a_000000001") === "char_sakura",
-    String(got.get("UC_a_000000001")),
+    "名乗りが `lookupKeys` に当たれば、絵が出る",
+    got.get("さくら") === "char_sakura",
+    String(got.get("さくら")),
   );
   check(
     "全角・大文字ちがいも `normKey` で当たる（引き方が生きている）",
-    got.get("UC_c_000000003") === "char_abc",
-    String(got.get("UC_c_000000003")),
+    got.get("ＡＢＣ") === "char_abc",
+    String(got.get("ＡＢＣ")),
   );
   check(
-    "名簿に無い人は当たらない（当たりすぎていない）",
-    !got.has("UC_b_000000002"),
-    String(got.get("UC_b_000000002")),
+    "**呼び名(aliases)でも当たる**（`lookupKeys` を引いている証拠）",
+    got.get("さくらんぼ") === "char_sakura",
+    String(got.get("さくらんぼ")),
   );
-  check("当たったのは2人", got.size === 2, `${got.size} 人`);
   check(
-    "同じ鍵が2人のキャラクターに付いていたら、どちらも使わない（既存の守り）",
-    !got.has("UC_x_000000009"),
+    "**当たらない名乗り（＝匿名の別名）には、絵を出さない**",
+    !got.has("ななしのごんべえ"),
+    String(got.get("ななしのごんべえ")),
+  );
+  check(
+    "`channelKeys` しか持たない人には当たらない（引く欄を取り違えていない）",
+    !got.has("ちゃんねるだけ"),
+    String(got.get("ちゃんねるだけ")),
+  );
+  check("当たったのは3つ", got.size === 3, `${got.size} つ`);
+}
+
+console.log("\n# 1. 匿名（別名）で投げた人は、絵に結び付かない");
+{
+  /* **本命。** かこさんが「かこ」の名で投げれば当たり、別名で投げれば
+     当たらない。**同じ名簿・同じ呼び方で、名乗りだけを変えて見る**ので、
+     「当たらない」が守りのせいだと言える（`island-standards.md` 13）。 */
+  const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
+  const named = (await s.iconsOf(["さくら"])) ?? new Map();
+  const anon = (await s.iconsOf(["匿名のだれか"])) ?? new Map();
+  check(
+    "自分の名で投げたら、絵が出る（対照）",
+    named.get("さくら") === "char_sakura",
+    String(named.get("さくら")),
+  );
+  check("別名で投げたら、絵が出ない", anon.size === 0, `${anon.size} つ`);
+  check(
+    "空の名乗り（写しを持たない書類）でも落ちず、0つで返る",
+    ((await s.iconsOf(["", ""])) ?? new Map()).size === 0,
   );
 }
 
-console.log("\n# 1. 同じ名前を2つのチャンネルが名乗ったら、どちらにも当てない");
+console.log("\n# 2. 同じ鍵が2人に付いていたら、どちらの絵も出さない");
 {
-  const store = {
-    islandCharacter: CHARACTERS,
-    islandChannels: {
-      // 本来の持ち主
-      UC_a_000000001: {name: "さくら"},
-      // 名前をまねた人
-      UC_z_000000026: {name: "さくら"},
-      // 巻き込まれていないことを見るための、関係ない人
-      UC_c_000000003: {name: "abc"},
-    },
-  };
-  {
-    const s = scenario(store);
-    const got = await s.iconsOf([
-      "UC_a_000000001", "UC_z_000000026", "UC_c_000000003",
-    ]);
-    check(
-      "まねた人に当たらない",
-      !got.has("UC_z_000000026"),
-      String(got.get("UC_z_000000026")),
-    );
-    check(
-      "本来の持ち主にも当てない（どちらか分からないので止める）",
-      !got.has("UC_a_000000001"),
-      String(got.get("UC_a_000000001")),
-    );
-    check(
-      "関係ない人の絵は消えない（全部落としていない）",
-      got.get("UC_c_000000003") === "char_abc",
-      String(got.get("UC_c_000000003")),
-    );
-    check("当たったのは1人", got.size === 1, `${got.size} 人`);
-  }
-  {
-    /* **ここが肝。** なりすます側は自分のカードを1枚開けばいいので、
-       相手が同じ並びに入ってくるとは限らない。渡された並びの中だけを
-       見ていると、この呼び方で素通りする。 */
-    const s = scenario(store);
-    const got = await s.iconsOf(["UC_z_000000026"]);
-    check(
-      "まねた人ひとりだけを渡しても当たらない（入れ物ぜんぶを見ている）",
-      !got.has("UC_z_000000026"),
-      String(got.get("UC_z_000000026")),
-    );
-    check("1人も当たらない", got?.size === 0, `${got?.size} 人`);
-  }
-  {
-    const s = scenario(store);
-    const got = await s.iconsOf(["UC_a_000000001"]);
-    check(
-      "本来の持ち主ひとりだけを渡しても当たらない",
-      !got.has("UC_a_000000001"),
-      String(got.get("UC_a_000000001")),
-    );
-  }
-  {
-    /* **落ちているのが守りのせいか、を確かめる**（`docs/island-standards.md` 13）。
-       いまの「当たらない」は、引き方ごと壊れていても同じ顔になる。
-       **まねた人だけを抜いた同じ入れ物**に同じ呼び方をして、そこでは
-       当たることを見る。差はかぶり1件だけなので、これで守りのせいと言える。 */
-    const s = scenario({
-      islandCharacter: CHARACTERS,
-      islandChannels: {
-        UC_a_000000001: {name: "さくら"},
-        UC_c_000000003: {name: "abc"},
-      },
-    });
-    const got = await s.iconsOf(["UC_a_000000001"]);
-    check(
-      "まねた人を抜くと、同じ呼び方で当たる（守りが落としている証拠）",
-      got.get("UC_a_000000001") === "char_sakura",
-      String(got.get("UC_a_000000001")),
-    );
-  }
+  const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
+  const got = (await s.iconsOf(["ふたつ", "さくら"])) ?? new Map();
+  check("どちらの絵も出ない", !got.has("ふたつ"), String(got.get("ふたつ")));
+  check(
+    "巻き込まれていない人の絵は消えない（全部落としていない）",
+    got.get("さくら") === "char_sakura",
+    String(got.get("さくら")),
+  );
+  // 対照。かぶっている片方を抜けば、同じ呼び方で当たる
+  const alone = {...CHARACTERS};
+  delete alone.char_futatsu2;
+  const one = scenario({islandCharacter: alone}, {banned: ["islandChannels"]});
+  check(
+    "かぶりを抜くと、同じ呼び方で当たる（守りが落としている証拠）",
+    ((await one.iconsOf(["ふたつ"])) ?? new Map()).get("ふたつ") ===
+      "char_futatsu",
+  );
 }
 
-console.log("\n# 2. `@` のあるなし・全角半角の違いだけの名前も、かぶりに数える");
+console.log("\n# 3. `islandChannels` を1回も読まない");
 {
+  /* チャンネルの辞書（本番で 2,272件）を、まったく通らなくなった。
+     **掴んだだけで落ちる偽の Firestore**で回して、それでも絵が出ることを見る。
+     ここが赤くなったら、名前を引き直す道が戻っている。 */
   const s = scenario({
     islandCharacter: CHARACTERS,
-    islandChannels: {
-      UC_c_000000003: {name: "@abc"},
-      UC_d_000000004: {name: "abc"},
-      UC_e_000000005: {name: "さくら"},
-    },
-  });
-  const got = await s.iconsOf([
-    "UC_c_000000003", "UC_d_000000004", "UC_e_000000005",
-  ]);
-  check(
-    "`@abc` に当たらない",
-    !got.has("UC_c_000000003"),
-    String(got.get("UC_c_000000003")),
-  );
-  check(
-    "`abc` にも当たらない",
-    !got.has("UC_d_000000004"),
-    String(got.get("UC_d_000000004")),
-  );
-  check(
-    "巻き込まれていない人には当たる",
-    got.get("UC_e_000000005") === "char_sakura",
-    String(got.get("UC_e_000000005")),
-  );
-}
-{
-  /* 全角のなりすまし。`normKey`(NFKC) を通すので、見た目が違っても同じ鍵 */
-  const s = scenario({
-    islandCharacter: CHARACTERS,
-    islandChannels: {
-      UC_c_000000003: {name: "abc"},
-      UC_f_000000006: {name: "ＡＢＣ"},
-    },
-  });
-  const got = await s.iconsOf(["UC_c_000000003", "UC_f_000000006"]);
-  check("全角でまねた人に当たらない", !got.has("UC_f_000000006"));
-  check("半角の本人にも当てない", !got.has("UC_c_000000003"));
-  check("1人も当たらない", got?.size === 0, `${got?.size} 人`);
-}
-
-console.log("\n# 3. 入れ物が読めなかったら、投げずに・当てない");
-for (const [name, fail] of [
-  ["辞書（islandChannels）が読めない", ["islandChannels"]],
-  ["名簿（islandCharacter）が読めない", ["islandCharacter"]],
-]) {
-  const s = scenario({
-    islandCharacter: CHARACTERS,
+    // 読みに行けば当たってしまう中身を、わざと置いておく
     islandChannels: {UC_a_000000001: {name: "さくら"}},
-  }, {fail});
+  }, {banned: ["islandChannels"]});
   let threw = "";
   let got = null;
   try {
-    got = await s.iconsOf(["UC_a_000000001"]);
+    got = await s.iconsOf(["さくら", "ななしのごんべえ"]);
   } catch (e) {
     threw = String(e);
   }
-  check(`${name} → 投げない`, threw === "", threw);
-  /* **「1人も当たらなかった」と「読めなかった」を同じ顔で返さない。**
-     前は空の表だったので、呼んだ側から見分けがつかず、公開の面が
-     「その日は誰も投げ銭していない」と言い切っていた
-     （`docs/island-standards.md` 10）。読めなかったら `null`。 */
-  check(`${name} → \`null\`（0人と見分けがつく）`, got === null, String(got));
+  check("投げない（辞書に触っていない）", threw === "", threw);
+  check("読めている（`null` で返っていない）", got !== null, String(got));
   check(
-    `${name} → ログに素性が出ていない`,
-    !s.logs.join("\n").includes("UC_") && !s.logs.join("\n").includes("さくら"),
+    "それでも絵は出る（空振りでない）",
+    got?.get("さくら") === "char_sakura",
+    String(got?.get("さくら")),
+  );
+  check(
+    "`islandChannels` を1度も掴んでいない",
+    (s.hits["islandChannels:touch"] ?? 0) === 0,
+    `${s.hits["islandChannels:touch"] ?? 0} 回`,
+  );
+  check(
+    "読んだのは名簿だけ",
+    Object.keys(s.hits).join(",") === "islandCharacter:scan",
+    Object.keys(s.hits).join(","),
   );
 }
 
-console.log("\n# 4. 上限で切れたときも、当てない");
+console.log("\n# 4. 名簿が読めなかったら、投げずに・当てない");
 {
-  /* 上限ちょうどまで埋める。**半端に読んだ名簿ではかぶりを見落とす**ので、
-     「読み切れなかった」を「かぶっていない」と読み替えないことを見る。 */
-  const many = {UC_a_000000001: {name: "さくら"}};
-  for (let i = 0; i < MAX_CHANNELS; i += 1) {
-    many[`UC_pad_${String(i).padStart(9, "0")}`] = {name: `にせもの${i}`};
-  }
-  const s = scenario({islandCharacter: CHARACTERS, islandChannels: many});
+  const s = scenario(
+    {islandCharacter: CHARACTERS},
+    {fail: ["islandCharacter"], banned: ["islandChannels"]},
+  );
   let threw = "";
   let got = null;
   try {
-    got = await s.iconsOf(["UC_a_000000001"]);
+    got = await s.iconsOf(["さくら"]);
   } catch (e) {
     threw = String(e);
   }
   check("投げない", threw === "", threw);
-  // 読み切れていないので、こちらも「0人」ではなく「読めなかった」
-  check("`null`（0人と見分けがつく）", got === null, String(got));
-  check("切れたことがログに出る", s.logs.some((l) => l.includes("truncated")));
+  /* **「1人も当たらなかった」と「読めなかった」を同じ顔で返さない。**
+     空の表を返すと、呼んだ側から見分けがつかず、公開の面が
+     「その日は誰も投げ銭していない」と言い切る
+     （`docs/island-standards.md` 10）。読めなかったら `null`。 */
+  check("`null`（0つと見分けがつく）", got === null, String(got));
   check(
     "ログに素性が出ていない",
-    !s.logs.join("\n").includes("UC_") &&
-      !s.logs.join("\n").includes("さくら") &&
-      !s.logs.join("\n").includes("にせもの"),
+    !s.logs.join("\n").includes("さくら"),
     s.logs.join(" / ").slice(0, 120),
   );
 }
 
-console.log("\n# 5. 控えが効いている（呼び出しごとに辞書を読み直さない）");
+console.log("\n# 5. 控えが効いている（呼び出しごとに名簿を読み直さない）");
 {
-  const s = scenario({
-    islandCharacter: CHARACTERS,
-    islandChannels: {
-      UC_a_000000001: {name: "さくら"},
-      UC_c_000000003: {name: "abc"},
-    },
-  });
-  await s.iconsOf(["UC_a_000000001"]);
-  const after1 = {...s.hits};
-  await s.iconsOf(["UC_c_000000003"]);
-  await s.iconsOf(["UC_a_000000001", "UC_c_000000003"]);
-  const scans = s.hits["islandChannels:scan"];
-  const chars = s.hits["islandCharacter:scan"];
+  const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
+  await s.iconsOf(["さくら"]);
+  const after1 = s.hits["islandCharacter:scan"];
+
+  await s.iconsOf(["さくらんぼ"]);
+  await s.iconsOf(["さくら", "ＡＢＣ"]);
   check(
-    "辞書ぜんぶの読み直しは、3回呼んでも1回だけ",
-    scans === 1,
-    `${scans} 回`,
+    "1回目で名簿を読んでいる（0回のまま素通りしていない）",
+    after1 === 1,
+    `${after1} 回`,
   );
-  check("名簿の読み直しも1回だけ", chars === 1, `${chars} 回`);
   check(
-    "1回目で辞書を読んでいる（0回のまま素通りしていない）",
-    after1["islandChannels:scan"] === 1,
-    `${after1["islandChannels:scan"]} 回`,
-  );
-  /* 名前そのものは控えない（毎晩入れ直るので）。**1回の呼び出しにつき
-     `getAll` 1往復**のまま増えていないことを見る */
-  check(
-    "名前引きは呼び出しごとに1往復のまま（3回で3往復）",
-    s.hits["islandChannels:getAll"] === 3,
-    `${s.hits["islandChannels:getAll"]} 往復`,
+    "名簿の読み直しは、3回呼んでも1回だけ",
+    s.hits["islandCharacter:scan"] === 1,
+    `${s.hits["islandCharacter:scan"]} 回`,
   );
   check(
     "書類を1件ずつ引きに行っていない",
-    (s.hits["islandChannels:get"] ?? 0) === 0,
-    `${s.hits["islandChannels:get"] ?? 0} 件`,
-  );
-}
-
-console.log("\n# 6. 絵が当たる道は、名前だけ（`islandCharacter.channelId` はまだ空）");
-{
-  /* いまは名前で引いている。**あやとの表の `channelId` で引くのが本来**
-     なので、その欄が埋まっても名前だけで壊れないことをここに残しておく。
-     欄が埋まっていない今は、当たらないのが正しい。 */
-  const s = scenario({
-    islandCharacter: {char_only_id: {channelId: "UC_g_000000007"}},
-    islandChannels: {UC_g_000000007: {name: "にせもの"}},
-  });
-  const got = await s.iconsOf(["UC_g_000000007"]);
-  check(
-    "`channelId` だけのキャラクターには、いまは当たらない（宿題が残っている）",
-    got.size === 0,
-    `${got.size} 人`,
+    (s.hits["islandCharacter:get"] ?? 0) === 0,
+    `${s.hits["islandCharacter:get"] ?? 0} 件`,
   );
 }
 

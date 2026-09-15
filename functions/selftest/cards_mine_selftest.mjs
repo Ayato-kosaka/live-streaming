@@ -78,6 +78,10 @@ const STORE = {
       day: "2026-09-11",
       streamEventImageId: "img_0000001",
       earnedAt: 300,
+      /* **絵はこの名乗りだけから決まる**（`cards.ts` の `iconsOf`）。
+         ここは名簿（`islandCharacter`）を空にしてあるので絵は付かない
+         ——絵が付くかは `cards_icons_selftest.mjs` が見ている。 */
+      nameSnapshot: "さくら",
     },
     "img_0000002__UC_me_0000001": {
       channelId: "UC_me_0000001",
@@ -152,10 +156,9 @@ function query(name, q) {
       return query(name, {...q, where: [...(q.where ?? []), [f, v]]});
     },
     orderBy: (f, dir) => query(name, {...q, order: [f, dir ?? "asc"]}),
-    /* **`select` を持たせる。** `iconsOf` の `sharedNames()` が
-       `select("name")` で名簿ぜんぶを読む。ここに口が無いと例外になり、
-       `iconsOf` はそれを握りつぶして「絵なし」を返す——**この診断は絵を
-       見ていないので、そのまま緑で通ってしまう。** 落ちない診断を置かない。 */
+    /* **`select` を持たせる。** 引く側が `select` を足した日に、ここに口が
+       無いと例外になる。`iconsOf` はそれを握りつぶして「絵なし」を返すので、
+       **絵を見ていないこの診断は、そのまま緑で通ってしまう**（#99）。 */
     select: (...f) => query(name, {...q, select: f}),
     limit: (n) => query(name, {...q, limit: n}),
     get: async () => {
