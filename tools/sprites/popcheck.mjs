@@ -26,6 +26,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { openChecked, reportMissing } from "./served.mjs";
 import { writeFileSync } from "node:fs";
 
 const PORT = process.env.PORT || "3130";
@@ -57,13 +58,17 @@ const p = await ctx.newPage();
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
 
 const all = [];
+/** 開けなかった面。**空でなければ 2 で落ちる**（`served.mjs`）。 */
+const miss = [];
 for (const path of PAGES) {
-  let ok = false;
-  for (let i = 0; i < 4 && !ok; i++) {
-    try { await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "networkidle", timeout: 60000 }); ok = true; }
-    catch { await p.waitForTimeout(2000); }
-  }
-  if (!ok) { console.log(`${path} 取れず`); continue; }
+  /* **素のパスで開かない。** 書き出したものを静的に配ると `/about` は 404、
+     `/map` は 301 してディレクトリ一覧を返す。どちらも `goto` は成功するので、
+     そのまま数えると26面ぜんぶで0件になり、**「押せないのに厚み: 0」と
+     合格が出ていた**（`.html` を付けると 54/42/15/47/18 件出る）。 */
+  const got = await openChecked(p, `http://localhost:${PORT}`, path, {
+    miss, waitUntil: "networkidle", timeout: 60000, tries: 4,
+  });
+  if (!got.ok) { console.log(`${path} 取れず（${got.why}）`); continue; }
   await p.waitForTimeout(700);
   await p.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
   await p.waitForTimeout(500);
@@ -124,4 +129,13 @@ writeFileSync("/tmp/pop.json", JSON.stringify(all, null, 1));
 const bad = all.filter((r) => !r.click);
 const byTag = {};
 for (const r of bad) byTag[r.tag] = (byTag[r.tag] || 0) + 1;
+console.log(`見た面 ${PAGES.length - miss.length}/${PAGES.length}  厚みのある要素 ${all.length} 件`);
 console.log("押せないのに厚み:", bad.length, JSON.stringify(byTag));
+/* **厚みが1件も無いのは「合格」ではなく「見ていない」。**
+   `--pop` は `tokens.css` に在って CSS 8ファイルから41回使われているので、
+   面を開けていれば必ず出る。0 件で緑を返さない（`island-standards.md` 10）。 */
+if (!miss.length && all.length === 0) {
+  console.error("\n厚みのある要素が1件も見つかりませんでした。数え方か開いた先を疑ってください。");
+  process.exitCode = 2;
+}
+reportMissing(miss);

@@ -2,6 +2,7 @@
 // ばらばらに見ても不統一は見つからないので、必ず並べて見る前提の連番で出す。
 //   PORT=3032 node wsheet.mjs [出力フォルダ] [幅]
 import { chromium } from "playwright-core";
+import { openChecked, reportMissing } from "./served.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 
 const PORT = process.env.PORT || "3032";
@@ -9,11 +10,14 @@ const OUT = process.argv[2] || "/tmp/wsheet";
 const W = +(process.argv[3] || 390);
 const H = +(process.argv[4] || 1400);
 /* 並列で14人が動いていると開発サーバーが詰まって1枚も撮れないことがある。
-   書き出し済みの静的ページ（NEXT_DIST_DIR のフォルダを http.server で出したもの）を
-   撮りたいときは BASE と STATIC=1 を渡す。パスの末尾に .html が付く。 */
+   書き出し済みの静的ページ（NEXT_DIST_DIR のフォルダを http.server で出したもの）も
+   開発サーバーも、BASE だけで撮れる。
+
+   **`STATIC=1` という旗はやめた。** 渡し忘れると静的配信では20面ぜんぶ 404 になり、
+   それでも「20枚撮れた」と出る。旗を立てるかどうかを回す人に預けると、
+   立て忘れた1回で破れる（`docs/island-misses.md` #96 の形）。
+   `served.mjs` が両方の綴りを試して、どちらでも開けなければ**言って落ちる。** */
 const BASE = process.env.BASE || `http://localhost:${PORT}`;
-const STATIC = process.env.STATIC === "1";
-const toUrl = (path) => BASE + (STATIC ? (path === "/" ? "/index.html" : path + ".html") : path);
 mkdirSync(OUT, { recursive: true });
 
 // 並べて見たときに「島 → 島の外」の順に効くよう、島から遠い順ではなく導線の順に並べる
@@ -51,6 +55,8 @@ await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
 
 // 他の担当が next.config を触ると開発サーバーが勝手に再起動する。
 // 1枚失敗しただけで残り全部を落とさないよう、ページごとに数回待って撮り直す。
+/** 開けなかった面。**空でなければ 2 で落ちる**（`served.mjs`）。 */
+const miss = [];
 for (const [name, path] of PAGES) {
   const errs = [];
   const onErr = e => errs.push(String(e).slice(0, 160));
@@ -58,7 +64,19 @@ for (const [name, path] of PAGES) {
   let done = false;
   for (let tryN = 0; tryN < 6 && !done; tryN++) {
     try {
-      await p.goto(toUrl(path), { waitUntil: "domcontentloaded", timeout: 180000 });
+      /* 404 と一覧は**待っても変わらない**ので、そこで諦める。
+         再試行が効くのは開発サーバーが再起動中のとき（例外）だけ */
+      const last = tryN === 5;
+      const got = await openChecked(p, BASE, path, { timeout: 180000, tries: 1 });
+      if (!got.ok) {
+        if (got.definitive || last) {
+          miss.push(`${path}（${got.why}）`);
+          console.log(`${name}\t${path}\t開けず ${got.why}`);
+          break;
+        }
+        await p.waitForTimeout(8000);
+        continue;
+      }
       await p.waitForTimeout(3500);
       await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
       const info = await p.evaluate(() => ({
@@ -76,6 +94,7 @@ for (const [name, path] of PAGES) {
   p.off("pageerror", onErr);
 }
 await b.close();
+reportMissing(miss);
 
 /* 撮ったものを1枚に並べる。**ばらばらに見ても不統一は見つからない。**
    縮めて隣に置くと、地の色・見出しの重さ・余白の刻みの違いだけが残って浮き上がる。
