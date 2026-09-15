@@ -34,6 +34,13 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "admin"))
 
+# `doneru_supporters` は `config.py` を通るので、`BQ_PROJECT_ID` が無いと
+# **読み込む前に** ValueError で落ちる。上の docstring は「資格情報も要らない」と
+# 言っているのに、実際には鍵の要る箱でしか回らない検査になっていた
+# （素の箱で終了コード 1。中身を1つも見ないまま落ちるので、何が壊れても同じ顔）。
+# BigQuery は1度も触らないので値は何でもよい。`logsafe_selftest.py` と同じ置き方
+os.environ.setdefault("BQ_PROJECT_ID", "fake-project-for-selftest")
+
 # 実際の出力を溜める袋。**logsafe を読み込む前に**二股にしておく
 BUF = io.StringIO()
 REAL = sys.stdout
