@@ -279,6 +279,17 @@ function shapeFull(id: string, v: Json): Json {
     lookupKeys: Array.isArray(v.lookupKeys) ? v.lookupKeys : [],
     channelId: typeof v.channelId === "string" ? v.channelId : null,
     editedAt: typeof v.editedAt === "string" ? v.editedAt : null,
+    /* 投げ銭のアラートで、絵のかわりに流す短い動画。
+       **入っていないのがふつう。** 入っている人だけ、OBS が動画にする
+       (`app/alertbox/index.tsx` の `calculateAdjustedSource`)。
+
+       **画面からは書けない。** ここを誰でも打てるようにすると、
+       配信に映るものを外から差し替える口になる。入れるのは
+       `python/admin/character_video.py`（あやとだけが回せる）。
+
+       前はここが返っていなかったので、OBS 側に動画を出す道はあるのに
+       **どの人にも一度も届いていなかった**（2026-09-15 に気づいた）。 */
+    videoUrl: typeof v.videoUrl === "string" && v.videoUrl ? v.videoUrl : null,
   };
 }
 
