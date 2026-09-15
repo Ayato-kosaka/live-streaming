@@ -77,6 +77,21 @@ def pick(keys: dict, names) -> str | None:
     return None
 
 
+def near(day: str) -> list:
+    """その日と、前後1日。**0時をまたいだ配信**のため。
+
+    カードの `day` は企画の日、台帳の `day` は投げた日。深夜に投げた人は
+    台帳が翌日になる（`mintCards` の注）。その日で当たらなければ前後を見る。
+    """
+    from datetime import date, timedelta
+
+    try:
+        d0 = date.fromisoformat(day)
+    except ValueError:
+        return [day]
+    return [day, str(d0 - timedelta(days=1)), str(d0 + timedelta(days=1))]
+
+
 def build(snap, field: str) -> dict:
     """鍵 → キャラクターの書類ID。**2人に付いている鍵は捨てる。**
 
@@ -130,23 +145,32 @@ def main() -> None:
                 owner[k] = d.id
     log.info("チャンネルの辞書 %d 件（かぶった鍵 %d）", ch_total, len(shared))
 
-    # 投げ銭したときの名乗り。**同じ人・同じ日はいちばん早い1回**
-    #（`mintCards` の `first` と同じ採り方）
-    snapshot: dict = {}
+    # 投げ銭したときの名乗り。**その人・その日の、いちばん早い1回**
+    # （`mintCards` の `first` と同じ採り方）。
+    #
+    # **1回目はここを間違えた。** 人ごとに「いちばん古い投げ銭」を採って
+    # いたので、以前に本名で投げていた人は、あとから別名で投げても
+    # 本名のほうが当たって「消えない」と出た。**日で分けないと、
+    # 匿名で投げた回を見ていないことになる。**
+    snapshot: dict = {}      # (チャンネルID, 日) → 名乗り
     seen_at: dict = {}
     tip_total = 0
     for d in c.collection(TIPS).limit(MAX_TIPS).get():
         tip_total += 1
         v = d.to_dict() or {}
         ch = v.get("channelId")
+        day = v.get("day")
         if not isinstance(ch, str) or not ch:
             continue
-        at = v.get("donatedAt") or 0
-        if ch in seen_at and seen_at[ch] <= at:
+        if not isinstance(day, str) or not day:
             continue
-        seen_at[ch] = at
-        snapshot[ch] = clean(v.get("displayNameSnapshot"), MAX_NAME)
-    log.info("台帳 %d 件 / 名乗りを持つ人 %d 人", tip_total, len(snapshot))
+        key = (ch, day)
+        at = v.get("donatedAt") or 0
+        if key in seen_at and seen_at[key] <= at:
+            continue
+        seen_at[key] = at
+        snapshot[key] = clean(v.get("displayNameSnapshot"), MAX_NAME)
+    log.info("台帳 %d 件 / 名乗りのある（人 × 日）%d 組", tip_total, len(snapshot))
 
     same = 0        # どちらでも同じ絵
     lost = 0        # いまは乗っているが、新しい引き方では消える
@@ -156,6 +180,7 @@ def main() -> None:
     old_on = 0
     new_on = 0
     total = 0
+    slid = 0        # 前後の日から拾ったぶん（0時またぎ）
     lost_ids = []
     changed_ids = []
 
@@ -171,8 +196,19 @@ def main() -> None:
         mine = keys_of([nm]) if nm else []
         old = None if any(k in shared for k in mine) else pick(old_keys, [nm])
 
-        # 新しい引き方（投げたときの名乗り → lookupKeys）
-        snap_name = snapshot.get(ch, "")
+        # 新しい引き方（投げたときの名乗り → lookupKeys）。
+        # カードの `day` は**企画の日**で、台帳の `day` は**投げた日**。
+        # 0時をまたいだ配信ではずれるので、その日 → 前後1日 の順に見る
+        # （`mintCards` は企画に当たる投げ銭を見るので、ここは近似）
+        cday = v.get("day") if isinstance(v.get("day"), str) else ""
+        snap_name = ""
+        for dd in near(cday):
+            got = snapshot.get((ch, dd))
+            if got:
+                snap_name = got
+                if dd != cday:
+                    slid += 1
+                break
         new = pick(new_keys, [snap_name]) if snap_name else None
 
         if old:
@@ -210,6 +246,7 @@ def main() -> None:
     log.info("  新しく乗る                : %d枚", gained)
     log.info("  **別の絵に変わる          : %d枚**（0でないと出せない）", changed)
     log.info("  どちらでも乗らない        : %d枚", none_both)
+    log.info("  （うち前後の日から名乗りを拾った: %d枚。0時またぎ）", slid)
     for w in lost_ids[:20]:
         log.info("    消えるカード: %s", mask(w))
     for w in changed_ids[:20]:
