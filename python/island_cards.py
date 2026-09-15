@@ -37,6 +37,19 @@
 だと、貼った夜のぶんが翌朝まで出ない。**両側から埋めて、どちらが先でも
 同じ結果になるようにする。**
 
+## 絵は「投げたときに名乗っていた名前」で決まる
+
+カードの書類に `nameSnapshot`（台帳の `displayNameSnapshot`）を焼き込む。
+`functions/src/cards.ts` の `iconsOf` はこれだけを見て絵を引く。
+
+前はチャンネルIDから**いま名乗っている名前**を引き直していたので、
+**Doneru に別名で投げた人の本体が、公開の `/cards` に絵で出ていた**
+（名前と channelId は落としてあったが、絵は図鑑と照らせば誰か分かる）。
+
+焼き込みなので、あとから YouTube の名前を変えても Doneru の名前を
+変えても**カードの絵は動かない**（`docs/island-db.md` 2章の決めごと）。
+**写しを持たない古い書類には、ここで足す。** 足さないと絵の元が無くなる。
+
 ## 置き方は上書きしない
 
 `x/y/rot/scale` に触らない。触ると**本人が動かしたカードが元に戻る。**
@@ -211,6 +224,13 @@ def load(db: firestore.Client) -> tuple:
                 # 翌日に落ちていた。ホワイトリストで救われていただけ）
                 "videoStartedAt": v.get("videoStartedAt"),
                 "donatedAt": int(v.get("donatedAt") or 0),
+                # **投げてくれたときに名乗っていた名前。**
+                # カードに乗る絵はこれで決まる（`functions/src/cards.ts` の
+                # `iconsOf`）。チャンネルIDからいまの名前を引き直していた
+                # ころは、Doneru に別名で投げた人の本体が公開の `/cards` に
+                # 出ていた。80字で切るのは `islandCharacter` の鍵と同じ長さ
+                "nameSnapshot": (v.get("displayNameSnapshot") or "").strip()[:80]
+                or None,
             }
         )
     logger.info("企画 %d件 / カード画像 %d枚 / 台帳 %d件", len(events), n_img, len(tips))
@@ -264,6 +284,10 @@ def main() -> int:
             "streamEventImageId": w["image"]["id"],
             "day": day,
             "earnedAt": w["tip"]["donatedAt"] or w["image"]["at"] or now_ms,
+            # **名乗りを焼き込む。** ここに入れておくと、あとから YouTube の
+            # 名前を変えても Doneru の名前を変えても、カードの絵は動かない
+            # （`docs/island-db.md` 2章の決めごと）
+            "nameSnapshot": w["tip"]["nameSnapshot"],
         }
         cur = have.get(key)
         if cur is None:
@@ -272,9 +296,18 @@ def main() -> int:
         elif not cur.get("streamEventImageId"):
             # 旧来の「動かしたぶんだけ」の書類。**置き方には触らない**
             fix.append((key, {**who, "updatedAt": now_ms}))
-        elif day and cur.get("day") != day:
-            # 素性はそろっているが日付が企画とずれている。日付だけ直す
-            fix.append((key, {"day": day, "updatedAt": now_ms}))
+        else:
+            # 素性はそろっているが、欄が台帳と食い違っている書類。
+            # **名乗りの写しを持たない既存のカードは、ここで埋まる。**
+            # 埋めないと `iconsOf` が引く元が無く、いま絵が出ている人が
+            # 全員消える。**置き方には触らない**ので、動かしたカードは動かない
+            patch = {}
+            if day and cur.get("day") != day:
+                patch["day"] = day
+            if cur.get("nameSnapshot") != who["nameSnapshot"]:
+                patch["nameSnapshot"] = who["nameSnapshot"]
+            if patch:
+                fix.append((key, {**patch, "updatedAt": now_ms}))
 
     logger.info("新しく作る %d枚 / 素性を足す %d枚 / そのまま %d枚",
                 len(make), len(fix), len(have) - len(fix))

@@ -14,8 +14,14 @@ import json
 import os
 import re
 
-SRC = "/tmp/nordic.json"
-POLAND = "/tmp/poland_spots.json"
+# **リポジトリの中に置いてある。** 前は `/tmp` にしか無く、箱が消えたら
+# 二度と焼き直せなかった（`docs/island-misses.md` #102 で拾った）。
+# ほかの `/tmp` 依存（地図）は curl で取り直せるが、**この2本は取り直せない**
+from pathlib import Path
+
+_SRC_DIR = Path(__file__).resolve().parent / "data" / "nordic-src"
+SRC = str(_SRC_DIR / "nordic.json")
+POLAND = str(_SRC_DIR / "poland_spots.json")
 OUT = "site/content/nordic"
 
 # 通る順。ポーランドから北上して、ストックホルムで終わる。
