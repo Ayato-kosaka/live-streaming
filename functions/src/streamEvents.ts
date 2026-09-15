@@ -66,6 +66,14 @@ export const MAX_IMAGES = 600;
 /** 1回の問い合わせに入れる `in` の値の数。Firestore の上限は30。 */
 const IN_CHUNK = 30;
 
+/**
+ * 名前の写しの長さ。**`islandCharacter.ts` の `MAX_NAME` と同じ 80字。**
+ *
+ * ここから `cards.ts` も引く。2か所に書くと、片方だけ切れた名前で鍵を
+ * 作る日が来て、**焼いたときは当たっていた絵が、引くときだけ外れる。**
+ */
+export const MAX_NAME = 80;
+
 type Json = Record<string, unknown>;
 
 /** 画像の役目。カードになるのは `card` だけ。 */
@@ -81,10 +89,30 @@ export type EventRef = {
   videoIds: string[];
 };
 
+/**
+ * その日投げてくれた人ひとり（`channelsOfDay`）。
+ *
+ * **公開の面へそのまま出さない。** `channelId` は
+ * `youtube.com/channel/UC…` を開けば本人の顔と名前に直結するし、
+ * `nameSnapshot` は別名で投げた人の名乗りそのもの。外へ出るのは
+ * `cards.ts` の `peopleForEveryone` を通したあと（絵と、名前を出してよいと
+ * 言った人の名前だけ）。
+ */
+export type Tipper = {channelId: string; nameSnapshot: string};
+
 /** 台帳の1行のうち、カードを組むために要るところだけ。 */
 export type TipRef = {
   id: string;
   channelId: string | null;
+  /**
+   * **投げてくれたときに名乗っていた名前**（`islandTips.displayNameSnapshot`）。
+   *
+   * スパチャならそのときのチャンネル名、Doneru なら打った名前
+   * （`python/island_tips.py` の `:301` と `:356`）。**カードに乗る絵は
+   * これで決まる**（`cards.ts` の `iconsOf`）。チャンネルIDからいまの
+   * 名前を引き直すと、別名で投げた人の本体が公開の面に出てしまう。
+   */
+  nameSnapshot: string | null;
   /** 日本時間で切った配信日（YYYY-MM-DD） */
   day: string;
   videoId: string | null;
@@ -276,6 +304,7 @@ export function tipRef(id: string, v: Json): TipRef {
   return {
     id,
     channelId: clean(v.channelId, 64) || null,
+    nameSnapshot: clean(v.displayNameSnapshot, MAX_NAME) || null,
     day: isDay(v.day) ? v.day : ms ? jstDay(ms) : "",
     videoId: clean(v.videoId, 16) || null,
     donatedAt: ms,
@@ -390,14 +419,36 @@ export async function mintCards(
            日付の無い企画（提案）だけ、投げ銭の日に落ちる。 */
         day: eventDay || w.tip.day,
         earnedAt: w.tip.donatedAt || w.image.at || now,
+        /* **投げてくれたときに名乗っていた名前を、ここで焼き込む。**
+
+           カードに乗る絵は、この写しだけから決まる（`cards.ts` の
+           `iconsOf`）。チャンネルIDからいまの名前を引き直していたころは、
+           **別名で投げた人の本体が公開の面に出ていた**（Doneru の別名 →
+           `islandDonors` の紐付け → いま名乗っている名前 → 絵）。
+
+           焼き込むのが肝で、あとから YouTube の名前を変えても、Doneru の
+           名前を変えても、**カードの絵は動かない**（あやとの決めごと・
+           `docs/island-db.md` 2章「キャラクターの割り当ては YouTube を
+           更新しても変わらないのが正しい」）。 */
+        nameSnapshot: w.tip.nameSnapshot,
       };
       if (had[k].exists) {
         if (had[k].get("streamEventImageId")) {
-          /* 素性はそろっているが、**日付が企画とずれている**書類。
-             0時をまたいだぶんが投げ銭の日で焼かれている。ここで直す。
+          /* 素性はそろっているが、欄が**台帳と食い違っている**書類。
+             - 日付：0時をまたいだぶんが投げ銭の日で焼かれている
+             - 名前の写し：写しを持たせる前に作られた51枚が、これ。
+               **足さないと、いま絵が出ている人が全員消える。**
              置き方には触らないので、動かしたカードは動かない。 */
-          if (who.day && had[k].get("day") !== who.day) {
-            batch.set(CARDS.doc(w.id), {day: who.day, updatedAt: now},
+          const patch: Record<string, unknown> = {};
+          if (who.day && had[k].get("day") !== who.day) patch.day = who.day;
+          /* `??` で `undefined` を `null` に寄せてから比べる。寄せないと
+             「写しを持たない書類」と「写しが空の書類」が毎回ちがう扱いに
+             なって、**何も変わっていない晩でも全枚数を書き直す。** */
+          if ((had[k].get("nameSnapshot") ?? null) !== who.nameSnapshot) {
+            patch.nameSnapshot = who.nameSnapshot;
+          }
+          if (Object.keys(patch).length > 0) {
+            batch.set(CARDS.doc(w.id), {...patch, updatedAt: now},
               {merge: true});
             fixed += 1;
             n += 1;
@@ -564,14 +615,18 @@ export function shapePlace(b: Json, now: Place): Place {
  * （`docs/island-incident-2026-09-14-cards.md`）。正しいのは中身のほうで、
  * カードは投げ銭の特典（`docs/island-cards.md` 1章）。広げない。
  *
+ * **返すのはチャンネルIDだけではない。** 絵は「投げてくれたときに名乗って
+ * いた名前」で引くので（`cards.ts` の `iconsOf`）、その写しも一緒に返す。
+ * 名前は `islandTips` の中にしか無く、チャンネルIDから引き直すと
+ * **別名で投げた人の本体が公開の面に出る。**
  * @param {EventRef[]} events 企画ぜんぶ
  * @param {string} day その日（YYYY-MM-DD）
- * @return {Promise<string[]>} その日**投げてくれた**人のチャンネルID
+ * @return {Promise<Tipper[]>} その日**投げてくれた**人。**外へは出ない**
  */
 export async function channelsOfDay(
   events: EventRef[],
   day: string,
-): Promise<string[]> {
+): Promise<Tipper[]> {
   if (!isDay(day)) return [];
   /* その日の企画が `videoIds` で拾っている配信ぶんも入れる。
      0時をまたいで割れた後半は、日付だけでは当たらない。 */
@@ -585,14 +640,21 @@ export async function channelsOfDay(
     jobs.push(TIPS.where("videoId", "in", list.slice(i, i + IN_CHUNK)).get());
   }
   const snaps = await Promise.all(jobs);
-  const out = new Set<string>();
+  /* **同じ人は1回だけ。** 1日に何度も投げてくれた人が人数ぶん並ばない
+     ように、チャンネルIDで畳む。名前の写しは**いちばん最初に見たもの**を
+     採る（同じ日に別名を混ぜた人は、1枚ぶんしか場所が無い）。 */
+  const out = new Map<string, Tipper>();
   for (const s of snaps) {
     s.forEach((d) => {
       const c = clean(d.get("channelId"), 64);
-      if (c) out.add(c);
+      if (!c || out.has(c)) return;
+      out.set(c, {
+        channelId: c,
+        nameSnapshot: clean(d.get("displayNameSnapshot"), MAX_NAME),
+      });
     });
   }
-  return [...out];
+  return [...out.values()];
 }
 
 /**

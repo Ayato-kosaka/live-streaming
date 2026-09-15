@@ -47,12 +47,14 @@ import {
   CARDS,
   IMAGES,
   MAX_IMAGES,
+  MAX_NAME,
   clean,
   defaultPlace,
   imageRef,
   shapePlace,
   type ImageRef,
   type Place,
+  type Tipper,
 } from "./streamEvents";
 
 if (admin.apps.length === 0) admin.initializeApp();
@@ -64,25 +66,11 @@ const USERS = db.collection("islandUsers");
 /** 一度に返す枚数。新しいほうから。 */
 const MAX_CARDS = 600;
 
-/** キャラクターの名簿(#284)。**絵とチャンネル名の対応はここにしか無い。** */
+/** キャラクターの名簿(#284)。**絵と呼び名の対応はここにしか無い。** */
 const CHARACTERS = db.collection("islandCharacter");
-
-/** チャンネルIDから、いま名乗っている名前を引く先。毎晩入れ直る。 */
-const CHANNELS = db.collection("islandChannels");
 
 /** 名簿を一度に読む人数。`/characters` の口と同じ上限。いま98人。 */
 const MAX_CHARACTERS = 500;
-
-/**
- * 名前のかぶりを見るために、辞書を一度に読む件数。本番でいま 2,272人。
- *
- * `select("name")` で名前の欄しか降ろさないので、件数のわりに軽い。
- * **ここで切れたら絵は1枚も当てない**(`sharedNames`)ので、4倍の余裕を取る。
- */
-const MAX_CHANNELS = 10000;
-
-/** 名前の長さ。`islandCharacter.ts` の MAX_NAME と同じ。 */
-const MAX_NAME = 80;
 
 type Json = Record<string, unknown>;
 
