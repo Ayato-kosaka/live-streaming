@@ -107,8 +107,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       )}
 
       {/* 1日ぶんが1枚の紙。**旅の日数ぶんだけ増える**ので、はじめは3日ぶん
-          （#225）。写真は1日に何枚でも貼るので、10日目には送っても送っても
-          下に着かない面になる。 */}
+          （#225）。 */}
       <Longer items={days ?? []} first={3} step={6} unit="日ぶん" as="div">
         {(d) => (
           <section className="panel paper akd-day" key={d.day}>
@@ -125,8 +124,18 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
                 ))}
               </div>
             )}
-            <div className="akd-shelf">
-              {d.photos.map((g) => (
+            {/* その日の写真も畳む。**日を畳むだけでは足りない**
+                （`docs/island-standards.md` 7「増えるものを縦に積まない」）。
+                1つの企画にカード画像は何枚でも貼れるので（`PHOTOS_PER_DAY`
+                は1日120枚）、日の側だけ畳んでも**1枚の紙が伸びきる。**
+                390px では2列なので、30枚貼ると紙1枚が 2,676px（スマホ3画面）
+                になり、次の日へ行くまでに送りつづけることになる。
+
+                はじめの6枚は「1件の背」で決めてある。390px で2列 × 3段、
+                1200px で6列 × 1段。**本番でいちばん多い日（5枚）は畳まれない**
+                ので、いまの見た目は変わらない。 */}
+            <Longer items={d.photos} first={6} step={12} unit="枚" as="div" className="akd-shelf">
+              {(g) => (
                 <button
                   key={g.photoId}
                   type="button"
@@ -144,8 +153,8 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
                       1,639px の背になっていた。形はマスの側が決める */}
                   <img src={g.url} alt="" loading="lazy" crossOrigin="anonymous" />
                 </button>
-              ))}
-            </div>
+              )}
+            </Longer>
           </section>
         )}
       </Longer>
