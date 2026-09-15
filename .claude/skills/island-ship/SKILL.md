@@ -79,6 +79,16 @@ master は squash マージで進むので、ブランチとは履歴が割れ�
 `git log origin/master..HEAD` が何十件あっても、`git diff origin/master --stat` が
 空なら中身は同じ。**差分の行数で見る。**
 
+**`git push origin <ブランチ名>` は、HEAD ではなくそのブランチの指す先を押す。**
+`master` の上でコミットしてからブランチ名を押すと、**新しいコミットが1つも
+載らないまま PR ができる**（緑になり、マージも通る）。2026-09-15 に実際に
+やった（`island-misses.md` #100）。押す前に、いまどこに居るかを見る:
+
+```bash
+git branch --show-current     # master だったら、そこでコミットしていないか疑う
+git log --oneline origin/master..HEAD
+```
+
 マージのあとはブランチに master を取り込んでおく:
 
 ```bash
@@ -109,6 +119,17 @@ mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  mini
 緑になっていることまで見る。`continue-on-error` は外してある。
 
 ## 5. 出たものを本番で見る
+
+**まず、マージしたコミットに変更ファイルが在るかを見る。**
+
+```bash
+git fetch -q origin master && git show --stat --format='%s' origin/master | head -3
+```
+
+**ファイルが1件も出てこないマージは、何もしていない。**
+PR が緑でも、マージが通っても、中身が空なら出ていない（#100）。
+ここを飛ばすと、あやとに「出しました」と嘘を言うことになる。
+
 
 **必ずキャッシュバスタを付ける。** `/island-api/*` は CDN に乗るので、
 付けないと `x-cache: HIT` で古い返事を読む（それで「本番0件」と誤報したことがある）。
