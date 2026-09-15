@@ -651,3 +651,172 @@
 }
 /* 同上。姿は `tokens.css`。「消す」は字だけの押しどころなので、
    あちらでも地を敷かず、色だけ落としてある（2.64 → 6.10） */
+
+/* =========================================================
+   もらいかた（`components/cards/HowToGet.tsx`）
+   ---------------------------------------------------------
+   カードの壁のいちばん下。**3つの手順を、島の道のように並べる。**
+
+   手順を上から下へ点線でつなぐ。行き先の分からない箇条書きではなく、
+   1つずつ進む道に見せたい（`docs/island-design.md` 4章
+   「ポンポンポンと押して進める」）。点線は `.akg-mark` が引く。
+
+   **どれも押せない。だから厚みを1つも付けない**（同 3章の3）。
+   丸も紙も完全に平らで、下へ出る影は押しどころ（`.akg-go`）にも無い
+   ——あちらは字の行き先なので、下線と 48px の高さで言う
+   （`.akd-day-plan` と同じ形。同じ面に2種類の押しどころを作らない）。
+
+   広い画面では3つを横に並べて、点線も横に引く。縦に積んだままだと
+   1,200px で道が画面の端から端まで間延びする。
+   ========================================================= */
+.akg-steps {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.akg-step {
+  display: grid;
+  /* 丸・言葉の2列。丸は 44px なので、指の当たりとは関係なく絵として置く */
+  grid-template-columns: 44px 1fr;
+  column-gap: var(--sp-3);
+  align-items: start;
+}
+/* 丸の列。**点線の道はここが引く。**
+   自分の丸の下から、次の手順の丸の上まで（＝行の余白ぶん）伸ばす。 */
+.akg-mark {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+}
+.akg-step:not(:last-child) .akg-mark::after {
+  content: "";
+  position: absolute;
+  top: 46px;
+  bottom: calc(-1 * var(--sp-3));
+  border-left: 2px dashed color-mix(in srgb, var(--rule) 55%, transparent);
+}
+/* 手順の丸。木の札と同じクリームで、**枠1本だけ。**
+   紙の上に置くものなので、影を落とさず明度差だけで浮かせる（紙の型）。 */
+.akg-disc {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-pill);
+  background: radial-gradient(circle at 50% 32%, var(--paper) 0%, var(--paper-2) 100%);
+}
+.akg-say {
+  display: block;
+  padding-top: 2px;
+}
+.akg-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--ink);
+  letter-spacing: var(--ls-body);
+}
+/* 何番目か。**丸の中には入れない**（中には絵がいる）。
+   字だけだと箇条書きの点に見えるので、細い輪で囲う。 */
+.akg-n {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-min);
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+}
+.akg-line {
+  display: block;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+/* 行き先。字の押しどころで、高さで 48px を取る（`docs/island-design.md` 3の2）。
+   この面の企画の札（`.akd-day-plan`）と同じ言い方にそろえる。 */
+.akg-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* 手順のあとの2つ。どちらも短いので、広い画面では横に2つ並べる。
+   **手順との境目は罫1本。** 紙の型は区切りに影を使わない（`pages.css`）ので、
+   紙のはしまで届く罫を、負のマージンで引く（見出しの罫と同じ引き方）。 */
+.akg-notes {
+  display: grid;
+  gap: 0;
+  margin: var(--sp-5) calc(-1 * var(--pp-x)) 0;
+  padding: var(--sp-5) var(--pp-x) 0;
+  border-top: 1px solid var(--pg-rule);
+}
+.akg-note > p {
+  margin: 0;
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}
+/* 紙の中の入れ子の見出しなので、罫は引かず帯だけ（`pages.css` の紙の型）。 */
+.akg-note > h3 { margin: 0 0 var(--sp-2); }
+/* 縦に積まれたときだけ、2つ目を離す */
+.akg-note + .akg-note { margin-top: var(--sp-5); }
+
+@media (min-width: 720px) {
+  .akg-steps {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-4);
+    margin-top: var(--sp-4);
+  }
+  /* 横に並べたら、丸は言葉の上。道も横に引く */
+  .akg-step {
+    grid-template-columns: 1fr;
+    row-gap: var(--sp-2);
+    justify-items: center;
+    text-align: center;
+    /* **段を伸ばさない。** 3つは同じ高さに揃えられるので、余りを段で分けると
+       字の少ない手順だけ下がる（1行の手順が 18px 下にずれていた）。 */
+    align-content: start;
+  }
+  /* 丸の列は**列の幅いっぱい**にする。中身の幅（44px）のままだと、
+     道の長さを `100%` から出せない（実測で 8px しか引けていなかった）。 */
+  .akg-mark { align-self: auto; justify-self: stretch; width: 100%; }
+  .akg-step:not(:last-child) .akg-mark::after {
+    /* 列の中心から次の列の中心まで（＝列の幅＋すきま）。
+       丸の半径ぶん（22px）を両端から引く */
+    top: 22px;
+    bottom: auto;
+    left: calc(50% + 26px);
+    width: calc(100% + var(--sp-4) - 52px);
+    border-left: 0;
+    border-top: 2px dashed color-mix(in srgb, var(--rule) 55%, transparent);
+  }
+  .akg-head { justify-content: center; }
+  /* 行き先は、真ん中に寄せた3つの下に置く。左端に置くと1つ目の下だけに付いて見える。
+     `inline-flex` のままでは寄せられないので、幅を中身ぶんに決めてから中央へ。 */
+  .akg > .akg-go { display: flex; width: fit-content; margin-inline: auto; }
+  .akg-notes { grid-template-columns: 1fr 1fr; column-gap: var(--sp-5); }
+  .akg-note + .akg-note { margin-top: 0; }
+}
