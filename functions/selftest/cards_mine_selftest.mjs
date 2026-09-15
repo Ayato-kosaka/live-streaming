@@ -335,13 +335,26 @@ async function call(method, path, auth) {
  *
  * **公開の `/cards` には使えない。** あちらは `channelId` を返さなくなった
  * （`cards_public_selftest.mjs`）。使えるのは `/cards/mine` だけ。
+ *
+ * @param {object} r `call()` が返した応答
+ * @return {string[]} 持ち主のチャンネルIDを並べ替えたもの
  */
 const owners = (r) => (r.body?.cards ?? []).map((c) => c.channelId).sort();
 
-/** カードのIDを並べたもの。並び順を見るため */
+/**
+ * カードのIDを並べたもの。並び順を見るため
+ *
+ * @param {object} r `call()` が返した応答
+ * @return {string} カードIDを返ってきた順に `,` で繋いだもの
+ */
 const ids = (r) => (r.body?.cards ?? []).map((c) => c.id).join(",");
 
-/** 公開の口で、誰のカードかの代わりに見るもの。写真と絵 */
+/**
+ * 公開の口で、誰のカードかの代わりに見るもの。写真と絵
+ *
+ * @param {object} r `call()` が返した応答
+ * @return {string[]} 写真のIDを並べ替えたもの
+ */
 const shots = (r) => (r.body?.cards ?? []).map((c) => c.photoId).sort();
 
 /* ---------------- 0. 探し方が当たるか（先に見る・#19） ---------------- */
