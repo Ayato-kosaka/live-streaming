@@ -151,3 +151,54 @@ export function toViewers(chars: AlertboxCharacter[]): AlertViewer[] {
   }
   return out;
 }
+
+/** 当たらなかった名前の「形」。**字そのものは入っていない。** */
+export interface NicknameShape {
+  /** 生の名前の長さ。符号位置で数える（絵文字を2と数えない） */
+  len: number;
+  /** 正規化したあとの長さ。`len` と違えば、何かが落ちている */
+  normLen: number;
+  /** ゼロ幅スペースなどの見えない字が入っていたか */
+  invisible: boolean;
+  /** 異体字セレクタが入っていたか */
+  variation: boolean;
+  /** 前後に空白が付いていたか */
+  padded: boolean;
+  /** 全角英数など、NFKC で形の変わる字が入っていたか */
+  widened: boolean;
+  /** 絵文字が入っていたか */
+  emoji: boolean;
+}
+
+/**
+ * 当たらなかったときに、**名前の形だけ**を残す。
+ *
+ * 名簿に当たらなくても画面には何も出ない（配信に映るので）。あやとから
+ * 見えるのは「キャラクターが出ない」だけで、**名簿が0人（取り直しが
+ * こけた）なのか、名簿は居るのに字が違うのか**が分からない。その差を、
+ * 次に起きたときログだけで分けられるようにする。
+ *
+ * **字そのものは返さない。** ログは誰でも読める（`island-misses.md` #96）。
+ * 返すのは長さと「何が混ざっていたか」の真偽だけ。
+ *
+ * **当て方には使わない。** 当てるのは `matchViewerByNickname` だけで、
+ * ここは見るだけの道具。
+ *
+ * @param {string|null} raw 投げ銭に載っていた生の名前
+ * @return {NicknameShape} 長さと、混ざっていたものの有無
+ */
+export function describeNickname(raw?: string | null): NicknameShape {
+  const s = String(raw ?? "");
+  /* `test()` は `g` 付きの正規表現だと前に当たった位置を覚えていて、
+     同じものを2回見ると false になる。`replace` は毎回先頭から見て
+     位置を戻すので、「置き換えたら変わったか」で見る。 */
+  return {
+    len: [...s].length,
+    normLen: [...normalizeName(s)].length,
+    invisible: s.replace(INVISIBLE_CHARS_RE, "") !== s,
+    variation: s.replace(VARIATION_SELECTOR_RE, "") !== s,
+    padded: s.trim() !== s,
+    widened: s.normalize("NFKC") !== s,
+    emoji: s.replace(EMOJI_RE, "") !== s,
+  };
+}
