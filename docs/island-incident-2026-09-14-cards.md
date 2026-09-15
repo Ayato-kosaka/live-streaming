@@ -164,9 +164,23 @@
 - 配られている CSS（`2e27719672e6702a.css`）に、広げたときに足した決め
   （`.akd-sheet-body .npick i` の畳み、`.is-on` の内側の影）が**1つも無い**
 
-名簿（`islandDayPeople`）そのものは残してある。**誰も読んでいない。**
-読む口を消したので、これは「溜まっているだけのもの」になった。
-使い道が決まるまで置くか畳むかは別に決める。
+### 名簿（`islandDayPeople`）は畳む（2026-09-15）
+
+読む口を消した時点で、これは**誰にも読まれないまま毎晩ふくらむだけ**のものに
+なった。中身は視聴者さんのチャンネルIDで、**使わない預かりものは持たない**
+（視聴者さんの IP をやめた #293 と同じ理屈）。畳むと決めた。
+
+- **毎晩書く仕事を止めた** — `.github/workflows/rebake.yml` の `day_people` ジョブを消した
+- **作る道具を消した** — `python/island_day_people.py` / 同 `_selftest.py` /
+  `python/admin/day_people_backfill.py`（`run_admin_script.yml` の候補一覧からも外した）
+- **ルールの名指しの拒否を外した** — `firestore.rules`。末尾の
+  `match /{document=**} { allow read, write: if false; }` で閉じたままなので、
+  外しても誰にも開かない
+- **本番の書類を落とす** — `collection_drop.py` の `DEAD` に足してある
+  （`{"collection":"islandDayPeople","apply":true}`）
+
+また要るとなっても作り直せる。元は BigQuery の `chat_messages` と
+Firestore の `streamChatMessages` で、名簿そのものには**人の書いた字が1文字も無い。**
 
 ---
 
