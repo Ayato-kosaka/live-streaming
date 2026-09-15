@@ -57,6 +57,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { openChecked, reportMissing } from "./served.mjs";
 
 /** 全面を回るとき用の「押しどころ」の集め方（`pchit.mjs` と同じ） */
 export const SEL_ALL =
@@ -421,12 +422,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   console.log(`幅 ${W} / 畳み ${FOLD === "skip" ? "開かない（前の数え方）" : "先に開く"} / ${SEL}`);
+  /** 開けなかった面。**空でなければ 2 で落ちる**（`served.mjs`）。 */
+  const miss = [];
   for (const path of PAGES) {
-    let ok = false;
-    for (let i = 0; i < 4 && !ok; i++) {
-      try { await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "networkidle", timeout: 60000 }); ok = true; } catch { await p.waitForTimeout(2000); }
-    }
-    if (!ok) { console.log(path, "取れず"); continue; }
+    /* **素のパスで開かない。** 静的に配ると `/nordic/finland` は 404 を返す。
+       `goto` は成功するので、そのまま数えると**「押しどころ 0個・48px割れ 0」**
+       という文句なしの合格が出ていた（`.html` を付けると押しどころ3個・
+       開いた畳み54）。 */
+    const got = await openChecked(p, `http://localhost:${PORT}`, path, {
+      miss, waitUntil: "networkidle", timeout: 60000, tries: 4,
+    });
+    if (!got.ok) { console.log(path, `取れず（${got.why}）`); continue; }
     await p.waitForTimeout(600);
     let folds = { opened: 0, stillClosed: 0 };
     if (FOLD !== "skip") folds = await openFolds(p);
@@ -445,6 +451,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     for (const r of skipped) console.log(`${path}  ${r.t || "(字なし)"}  見た目 ${r.box[0]}x${r.box[1]}  当たり 測れず（${r.why}）${r.fold ? " [畳みの中]" : ""}`);
     const ex = Object.entries(excluded);
     if (ex.length) console.log(`${path}  数えなかったもの: ${ex.map(([k, v]) => `${k} ${v}`).join(" / ")}`);
+    /* **押しどころ0は「全部48px以上」ではなく「その札が無い」。**
+       札（`SEL`）を変えた面で 0 が出たら、割れ0 は合格の意味を持たない
+       （`docs/island-standards.md` 10）。 */
+    if (!rows.length && !skipped.length) {
+      miss.push(`${path}（「${SEL}」に当たるものが1つも無かった）`);
+    }
   }
   await b.close();
+  reportMissing(miss);
 }

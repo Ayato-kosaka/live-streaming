@@ -18,6 +18,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { openChecked, reportMissing } from "./served.mjs";
 import { mkdirSync, writeFileSync } from "fs";
 
 const PORT = process.env.PORT || "3180";
@@ -58,8 +59,17 @@ await ctx.addInitScript(() => {
 });
 const p = await ctx.newPage();
 
+/** 開けなかった面。**空でなければ 2 で落ちる**（`served.mjs`）。 */
+const miss = [];
 for (const path of PATHS) {
-  await p.goto(`http://localhost:${PORT}${path}`, { waitUntil: "networkidle", timeout: 60000 });
+  /* **素のパスで開かない。** 静的に配ると `/map` は 301 して
+     `python3 -m http.server` の**ディレクトリ一覧**を返す。黒字に白地なので
+     濃さは楽に 4.5 を越え、**一覧の字を測って「読める」と報告していた**
+     （`/map` 37か所 → `/map.html` 108か所）。 */
+  const got = await openChecked(p, `http://localhost:${PORT}`, path, {
+    miss, waitUntil: "networkidle", timeout: 60000,
+  });
+  if (!got.ok) { console.log(`${path}  開けず（${got.why}）`); continue; }
   await p.waitForTimeout(1500);
   if (process.env.OPEN) {
     // 畳んであるものを全部開く。開いた中身も測らないと、
@@ -153,5 +163,10 @@ for (const path of PATHS) {
   await p.screenshot({ path: `${OUT}/${name}.bg.png`, fullPage: true });
   writeFileSync(`${OUT}/${name}.json`, JSON.stringify({ dpr: DPR, boxes }, null, 1));
   console.log(`${path}  ${boxes.length}か所`);
+  /* **字が1つも無い面は「読める」ではなく「見ていない」。**
+     島の面で字の無いものは1枚も無いので、0 は数え方か開いた先の間違い
+     （`docs/island-standards.md` 10）。 */
+  if (boxes.length === 0) miss.push(`${path}（字を1つも拾えなかった）`);
 }
 await b.close();
+reportMissing(miss);

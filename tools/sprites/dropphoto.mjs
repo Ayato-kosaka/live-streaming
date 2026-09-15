@@ -23,6 +23,7 @@
  */
 import { chromium } from "playwright-core";
 import { apply } from "./asme.mjs";
+import { offline } from "./route.mjs";
 
 const PORT = process.env.PORT || "4610";
 const AT = `http://localhost:${PORT}/cards.html`;
@@ -51,11 +52,14 @@ async function open(admin, how = "ok", cards = null) {
     isMobile: true,
     hasTouch: true,
   });
-  // 外の絵。この箱からは出られないので差し替える（写真も顔も）
-  await ctx.route(
-    /googleusercontent\.com|firebasestorage\.googleapis\.com|ytimg\.com|yt3\.ggpht\.com/,
-    (r) => r.fulfill({ path: "/home/user/pdel-wt/site/public/og.png" }),
-  );
+  /* 外の絵。この箱からは出られないので差し替える（写真も顔も）。
+     **自分で書かない。** ここは `/home/user/pdel-wt/site/public/og.png` という
+     消えた worktree を指していて、`fulfill({path})` が ENOENT で落ちていた
+     （2026-09-15。この道具は1行も測れないまま終了コード1で死んでいた）。
+     しかも1枚に潰す書き方だったので、通っていたころも**12人が全員おなじ顔**で
+     写っていた——`route.mjs` が作られた当のきっかけ。`offline()` に任せる。
+     `apply` はあとに登録して、島の口をこちらが先に受ける（`cardshot.mjs` と同じ順）。 */
+  await offline(ctx);
   await apply(ctx, { admin });
 
   /* **消す口だけは、あとから登録して横取りする。**
@@ -147,8 +151,12 @@ const dropOpen = (p) => p.locator(".akd-drop-open");
   say(sent.length === 1, `飛んだ要求は1本（${sent.length}）`);
   const q = sent[0] || {};
   say(q.method === "DELETE", `method=${q.method}`);
+  /* 見るのは**口の形**（`DELETE /island-api/nordic/photos/{id}`）だけ。
+     id の長さは種（`asme.mjs`）の都合で、この道具の契約ではない。
+     `{6,}` と書いてあったので、種が `ph1` になった日に
+     「URL が違う」と言い出した——**測る側が種を縛っていた。** */
   say(
-    /\/island-api\/nordic\/photos\/[A-Za-z0-9_-]{6,}$/.test(q.url || ""),
+    /\/island-api\/nordic\/photos\/[A-Za-z0-9_-]+$/.test(q.url || ""),
     `URL=${(q.url || "").replace(/^https?:\/\/[^/]+/, "")}`,
   );
   say(/^Bearer .+/.test(q.auth || ""), `Authorization=${(q.auth || "").slice(0, 12)}…`);
