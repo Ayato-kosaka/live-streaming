@@ -8,8 +8,11 @@
 **人と配信は BigQuery にしか無い**（`docs/island-atlas.md` 3章）。
 ブラウザから BigQuery は叩けないので、ここで焼いておく。
 
-住人は、`python/residents_map.json`（alertbox の Viewers 表から作った
-「キャラクターの絵 → YouTube のチャンネル」の表）で絵に結び直す。
+住人は、**キャラクターの名簿（Firestore の `islandCharacter`）**で絵に結び直す。
+結び方は `build_residents.link()` と同じ1か所を呼ぶ——**2か所で結ぶと、島と
+連なりで別の絵が出る。** 前はここが `python/residents_map.json`（手書きの22行）
+だったので、名簿が102人に増えたあとも連なりには22人しか出ていなかった。
+
 **同じ人が複数の島に出てよい**ので、島ごとの重複は消さない。
 
 章の期間は site/content/chapters.ts が唯一の出どころなので、そこから読む。
@@ -30,6 +33,7 @@ from google.cloud import bigquery
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_residents import BOT_NAME, fetch_characters, link  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -37,7 +41,6 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
-RESIDENTS_MAP = ROOT / "python" / "residents_map.json"
 OUT_TS = ROOT / "site" / "content" / "chapterStats.ts"
 OUT_STREAMS_TS = ROOT / "site" / "content" / "chapterStreams.ts"
 
@@ -71,6 +74,47 @@ def union_all(chapters: list[dict]) -> str:
     return " UNION ALL ".join(rows)
 
 
+def link_icons(client: bigquery.Client, ch: str) -> dict[str, str]:
+    """YouTube のチャンネル → キャラクターの絵。**名簿が決める。**
+
+    名簿（`islandCharacter`）が持っているのは「どの名前の人か」なので、
+    チャンネルに直すには**そのチャンネルが最後に名乗った名前**が要る。
+    章の期間に1度でも書いた人の名乗りを1つずつ取って、
+    `build_residents.link()` に渡す。**結び方はあちらの1か所だけが持つ。**
+
+    Args:
+        client: BigQuery のクライアント
+        ch: 章の表（`union_all()` が作る SQL の断片）
+
+    Returns:
+        結べたぶんだけの `{チャンネルID: 絵のID}`
+    """
+    sql = f"""
+    WITH ch AS ({ch})
+    SELECT m.author_channel_id AS cid,
+           ARRAY_AGG(m.author_name ORDER BY m.published_at DESC LIMIT 1)[OFFSET(0)] AS name
+    FROM ch JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` m
+      ON DATE(m.published_at, 'Asia/Tokyo') BETWEEN ch.f AND ch.t
+    WHERE m.author_name != '{BOT_NAME}'
+    GROUP BY 1
+    """
+    people = [dict(r) for r in client.query(sql).result()]
+    chars = fetch_characters()
+    # **名簿が読めなかったら落ちる。** 黙って 0 人で焼くと、連なりの面から
+    # 住人が消えたまま「その章には誰もいなかった」という絵になる
+    if not chars:
+        raise SystemExit("キャラクターの名簿が1人も返らなかった。焼かずに止める")
+    rows, how = link(chars, people)
+    icon_of = {r["channel"]: r["icon"] for r in rows if r["channel"]}
+    if not icon_of:
+        raise SystemExit("名簿の誰ひとりチャンネルに結べなかった。焼かずに止める")
+    logger.info(
+        "名簿 %d 人 / 候補 %d 人 / チャンネルと結べた %d 人（名乗り %d 件から）",
+        how["characters"], len(rows), len(icon_of), len(people),
+    )
+    return icon_of
+
+
 def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
     ch = union_all(chapters)
 
@@ -96,8 +140,8 @@ def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
     """
 
     # その章にいた住人。**絵の分かっている人だけ**を BigQuery 側で絞る。
-    # 22人ぶんの IN 句で済むので、全員ぶんを持ってきて Python で捨てるより軽い。
-    icon_of = {ch: icon for icon, ch in json.loads(RESIDENTS_MAP.read_text("utf-8")).items()}
+    # 100人ぶんの IN 句で済むので、全員ぶんを持ってきて Python で捨てるより軽い。
+    icon_of = link_icons(client, ch)
     channels = ", ".join(f"'{c}'" for c in sorted(icon_of))
     residents_sql = f"""
     WITH ch AS ({ch})
@@ -169,7 +213,8 @@ def render(chapters: list[dict], stats: dict[str, dict]) -> str:
         " * `streams` はその章のあいだに配信して取り込めたものの数。",
         " *",
         " * `residents` は、そのうち**キャラクターの絵が分かっている人**だけ。",
-        " * 絵とチャンネルの対応は `python/residents_map.json`（alertbox の Viewers 表）。",
+        " * 絵とチャンネルの対応は、キャラクターの名簿（Firestore の `islandCharacter`）に",
+        " * チャットの名乗りを当てて作る（`python/build_residents.py` の `link()`）。",
         " * だから `residents.length` は `people` よりずっと少ない。"
         "**この2つは別のものを数えている。**",
         " *",
