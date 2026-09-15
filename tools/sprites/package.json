@@ -1,0 +1,10 @@
+{
+  "name": "island-sprites-tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "あやと島の確認用の道具（巡回・当たり判定・描画CPU・文字の濃さ）が使う依存。site/ や直下の Expo とは別立てにしてある",
+  "dependencies": {
+    "playwright-core": "1.56.0"
+  }
+}

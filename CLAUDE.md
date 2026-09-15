@@ -207,6 +207,21 @@ cd ../tools/sprites && node crawl.mjs    # 全ページの h1・JSエラー・�
 Playwright は `tools/sprites/node_modules` にある（リポジトリ直下には無い）。
 スクリーンショット系のスクリプトは `tools/sprites/` から実行する。
 
+**無ければ入れ直す。箱を作り直したあとと、clone / worktree を切った直後は、これが要る。**
+
+```bash
+cd tools/sprites && npm ci
+```
+
+直下ではなく `tools/sprites/` に置いてあるのは、**直下は Expo の側**で、確認用の
+道具とは別物だから。ここに `package.json` が無いと、npm が上に登って直下の
+`package.json` を書き換える（実際に踏んだ）。
+
+入れるのは `playwright` ではなく **`playwright-core`**。ブラウザは箱の
+`/opt/pw-browsers` に入っているので、落とさせない（`playwright install` は
+この箱では走らせない）。版は `1.56.0` で止めてある。`chromium-1194`（Chromium 141）に
+合わせた版なので、**上げると各スクリプトの `executablePath` が外れる。**
+
 **`tools/sprites/_` で始まるものは使い捨てで、git に入っていない**
 （`.gitignore` の `tools/sprites/_*`）。その場で測って捨てる用なので、
 **`docs/` から名指しで呼ばない。** 461本のうち git に在るのは242本で、

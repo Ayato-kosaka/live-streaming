@@ -1,0 +1,2 @@
+# npm ci で入れ直すもの。手置きに戻さない
+node_modules/
