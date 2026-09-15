@@ -50,17 +50,33 @@ SKILL.md 3章にはまだ「コメント消失日は当時すでに来ていた�
 7日を過ぎた WAITING が SKIPPED にも FAILED にも落ちないので、取り込めない
 配信が WAITING のまま永久に残り、そのぶん「読めない日」が増え続ける。
 
-## キャラクターと人を結ぶ表
+## 島を歩く候補は、**名簿（Firestore の `islandCharacter`）が決める**
 
 `site/content/residents.ts` が持っているのは**キャラクターの絵**（視聴者さんが
-作ってくれたもの、Google ドライブの id）で、YouTube のチャンネルではない。
-両者を結ぶ表が要る。置き場は `python/residents_map.json`:
+作ってくれたもの。書類ID＝もとのドライブの画像 id）で、YouTube のチャンネル
+ではない。だから「誰がどの絵か」を結ぶ道が要る。
 
-    { "<Google ドライブの画像 id>": "<YouTube の channel_id>", ... }
+**前はここが `python/residents_map.json`（手書きの22行）だった。**
+#284 でキャラクターを Firestore に移したとき、**島だけが取り残されていた。**
+名簿は102人まで増えていたのに、島を歩けるのは古い写しに載っている22人だけで、
+**あやとが絵を描いた80人が一度も島に立てなかった**（2026-09-15）。
 
-**この表が無いと日数は焼けない。** 無いまま動かすと、数えた結果だけを
-`--report` に書き出して、`residents.ts` には触らずに終わる。
-推測で結ぶと、実在する人の並び順を間違えて出すことになる（一度やっている）。
+いまは名簿がそのまま候補になる。結び方は**カードの絵を引くのと同じ道**
+（`functions/src/cards.ts` の `iconsOf` → `characterKeys`）:
+
+1. 名簿の `lookupKeys` / `channelKeys`（保存のときに `keysOf` が焼いた鍵）で
+   「鍵 → 書類ID」を作る。**同じ鍵が2人に付いていたら、その2人は候補にしない**
+   （どちらの絵か決められないまま立たせると、別人の絵が島を歩く）
+2. チャットの名乗り（`author_name`）を同じ規則で鍵にして引く
+3. `islandCharacter.channelId` が入っている人は、そちらが正。
+   **ただし本番で埋まっているのは102人中2人だけ**なので、これだけでは引けない
+
+**`channelId` を持たない人も候補に入る。** 名乗りが当たらなければ `days` が 0 に
+なるだけで、絵は島に立つ。結べないことと、絵が無いことは別のもの。
+
+**名簿が読めなかったら、焼かずに終わる。** 空の `residents.ts` を焼くと、
+島から人が消える——それは「今日は誰も来ていない」と同じ絵になる
+（`docs/island-standards.md` 10）。
 
 **ログインで本人にキャラクターを選ばせない。** 他人の絵を自分のものにできてしまう。
 ログインは「認可されたことをする」のと「書いたものに名前を刻む」ためのもので、
@@ -75,19 +91,28 @@ import argparse
 import json
 import logging
 import os
-import re
 import sys
+import unicodedata
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from logsafe import mask  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT_TS = ROOT / "site" / "content" / "residents.ts"
-MAP_JSON = Path(__file__).resolve().parent / "residents_map.json"
 
 PROJECT = os.environ.get("BQ_PROJECT_ID", "live-streaming-d3cac")
 DATASET = "youtube_chat"
+
+# キャラクターの名簿。**ここが島を歩く候補の唯一の出どころ。**
+CHARACTERS = "islandCharacter"
+
+# 1回に読む人数。`functions/src/islandCharacter.ts` の MAX_CHARACTERS と同じ
+MAX_CHARACTERS = 500
 
 # 何日ぶんを「直近」とするか。residents.ts の文言（直近90日）と揃える。
 WINDOW_DAYS = 90
@@ -170,29 +195,171 @@ def fetch() -> list:
     return [dict(r) for r in client.query(SQL).result()]
 
 
-def read_map() -> dict:
-    """キャラクターの絵 → YouTube チャンネルの表。無ければ空。"""
-    if not MAP_JSON.exists():
-        return {}
-    return json.loads(MAP_JSON.read_text(encoding="utf-8"))
+# 目に見えない字。`functions/src/islandCharacter.ts` の INVISIBLE と同じ中身
+INVISIBLE = dict.fromkeys(
+    [0x200B, 0x200C, 0x200D, 0xFEFF, 0x2060, 0x180E, 0x00AD, 0x034F, 0x061C]
+)
+# 異体字セレクタ
+VARIATION = dict.fromkeys([0xFE0E, 0xFE0F])
 
 
-def read_icons() -> list:
-    """いまの residents.ts に並んでいるキャラクター（絵の id と絵文字）。
+def norm_key(v) -> str:
+    """`functions/src/islandCharacter.ts` の `normKey` と同じ落とし方。
 
-    **人と絵の対応はここが唯一の出どころ**なので、焼き直すときも
-    並んでいる顔ぶれは変えない。変えるのは日数だけ。
+    **片方だけ変えると、島とカードで別の人の絵が出る。**
+    向こうは NFKC → 異体字 → 見えない字 → trim → 空白を1つに → 小文字。
     """
-    src = OUT_TS.read_text(encoding="utf-8")
+    if not isinstance(v, str):
+        return ""
+    s = unicodedata.normalize("NFKC", v)
+    s = s.translate(VARIATION).translate(INVISIBLE)
+    return " ".join(s.split()).lower()
+
+
+def keys_of(names) -> list:
+    """`keysOf` と同じ。**`@` を落とした形も足す。**"""
     out = []
-    for m in re.finditer(r'\{\s*icon:\s*"([^"]+)",\s*emoji:\s*"([^"]+)",\s*days:\s*(\d+)', src):
-        out.append({"icon": m.group(1), "emoji": m.group(2), "days": int(m.group(3))})
+    for n in names:
+        if not isinstance(n, str):
+            continue
+        for v in (norm_key(n), norm_key(n.lstrip("@"))):
+            if v and v not in out:
+                out.append(v)
     return out
+
+
+def char_keys(c: dict) -> list:
+    """その人を引ける鍵。
+
+    **焼いてある `lookupKeys` / `channelKeys` を使う。** 引く道を口
+    （`cards.ts` の `characterKeys`）と揃えておかないと、島では当たるのに
+    カードでは当たらない人ができる。
+
+    両方とも空の書類だけ、名前から作り直す。移行のときに鍵を焼き損ねた人が
+    居ても、名前が入っていれば引けるようにしておくため
+    （`python/admin/alertbox_names.py` が数えている食い違い）。
+    """
+    out = []
+    for k in list(c.get("lookupKeys") or []) + list(c.get("channelKeys") or []):
+        if isinstance(k, str) and k and k not in out:
+            out.append(k)
+    if out:
+        return out
+    names = [c.get("channelName") or ""] + list(c.get("aliases") or [])
+    return keys_of([n for n in names if n])
+
+
+def fetch_characters() -> list:
+    """キャラクターの名簿（`islandCharacter`）を読む。**読むだけ。**
+
+    Returns:
+        1人1辞書。書類ID・絵文字・名前・焼いてある鍵・（あれば）チャンネルID
+    """
+    from google.cloud import firestore  # Firestore を使うときだけ要る
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "admin"))
+    from _fs import readonly  # noqa: PLC0415
+
+    # **下見の口を通す。** ここは焼くだけの道具なので、1バイトも書かない
+    client = readonly(firestore.Client(project=PROJECT))
+    out = []
+    for d in client.collection(CHARACTERS).limit(MAX_CHARACTERS).get():
+        v = d.to_dict() or {}
+        out.append(
+            {
+                "id": d.id,
+                "emoji": v.get("emoji") or "",
+                "channelName": v.get("channelName") or "",
+                "aliases": list(v.get("aliases") or []),
+                "lookupKeys": list(v.get("lookupKeys") or []),
+                "channelKeys": list(v.get("channelKeys") or []),
+                "channelId": v.get("channelId") or "",
+            }
+        )
+    return out
+
+
+def link(chars: list, people: list) -> tuple:
+    """名簿と、チャットの名乗りを突き合わせる。
+
+    **当てずっぽうで結ばない。** 決められないものは結ばないほうに倒す。
+    別人の絵が島に立つほうが、日数が0に見えるよりずっと悪い。
+
+    Args:
+        chars: `fetch_characters()` が返す名簿
+        people: `{"cid": ..., "name": ...}` の一覧（BigQuery の行でよい）
+
+    Returns:
+        (候補の一覧, 数えたもの)。候補は `{"icon", "emoji", "channel"}`。
+        `channel` は結べなかったとき None
+    """
+    # 鍵 → その鍵を持つ人。**同じ鍵が2人に付いていたら、その2人ごと外す。**
+    owners: dict = {}
+    for c in chars:
+        for k in char_keys(c):
+            owners.setdefault(k, set()).add(c["id"])
+    twice = {k for k, ids in owners.items() if len(ids) > 1}
+    blurred = {i for k in twice for i in owners[k]}
+    key_to_id = {k: next(iter(ids)) for k, ids in owners.items() if k not in twice}
+
+    # 1. `channelId` が入っているなら、それが正（名乗りより強い）。
+    #    **本番で埋まっているのは102人中2人だけ**なので、これだけでは足りない
+    #    **同じチャンネルIDが2人に入っていたら、その2人も外す**（鍵と同じ扱い）
+    same = {}
+    for c in chars:
+        if c.get("channelId"):
+            same.setdefault(c["channelId"], []).append(c["id"])
+    blurred |= {i for ids in same.values() if len(ids) > 1 for i in ids}
+
+    channel_of: dict = {}
+    claimed: dict = {}
+    for c in chars:
+        cid = c.get("channelId")
+        if c["id"] in blurred or not cid:
+            continue
+        channel_of[c["id"]] = cid
+        claimed[cid] = c["id"]
+
+    # 2. 名乗りで引く（カードの絵と同じ道）
+    hits: dict = {}
+    for p in people:
+        cid, name = p.get("cid"), p.get("name")
+        if not cid or not name or cid in claimed:
+            continue
+        for k in keys_of([name]):
+            who = key_to_id.get(k)
+            if who:
+                hits.setdefault(who, set()).add(cid)
+                break
+
+    # 3. **1つの絵に2つのチャンネルが当たったら、どちらにも決めない。**
+    #    同じ名前で別のチャンネルから来ている2人の、どちらの日数かが読めない
+    for who, cids in hits.items():
+        if who in channel_of:
+            continue
+        if len(cids) == 1:
+            channel_of[who] = next(iter(cids))
+        else:
+            blurred.add(who)
+
+    out = [
+        {"icon": c["id"], "emoji": c.get("emoji") or "", "channel": channel_of.get(c["id"])}
+        for c in chars
+        if c["id"] not in blurred
+    ]
+    return out, {
+        "characters": len(chars),
+        "blurred": sorted(blurred),
+        "twice": len(twice),
+        "linked": sum(1 for r in out if r["channel"]),
+    }
 
 
 def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
     body = "\n".join(
-        f'  {{ icon: "{r["icon"]}", emoji: "{r["emoji"]}", days: {r["days"]}'
+        f'  {{ icon: "{r["icon"]}"'
+        + (f', emoji: "{r["emoji"]}"' if r.get("emoji") else "")
+        + f', days: {r["days"]}'
         + (f', channel: "{r["channel"]}"' if r.get("channel") else "")
         + " },"
         for r in rows
@@ -215,8 +382,14 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
  *  ときの受け皿**と、上の抽選の重み（書き出し時に1回決まる）。
  *  数え方が2つあるのは承知のうえ。ここは直近{WINDOW_DAYS}日、あちらは全期間。
  *
- *  `channel` は YouTube のチャンネル id。**どの絵が誰のものかは、あやとが表で
- *  持っている割り当てだけが決める**（`python/residents_map.json`）。
+ *  **並んでいるのは、キャラクターの名簿（Firestore の `islandCharacter`）
+ *  そのもの。** 島を歩く候補はここが決める。前は python 側の手書きの表（22行）が
+ *  決めていて、名簿に絵があるのに一度も島に立てない人がそのぶん居た。
+ *
+ *  `channel` は YouTube のチャンネル id。名簿の `lookupKeys` に、チャットの
+ *  名乗りを当てて結んである（カードの絵と同じ引き方）。**決められないもの
+ *  （同じ鍵が2人に付いている・1つの絵に2つのチャンネルが当たる）は結ばない。**
+ *  結べなかった人は `channel` が無く、`days` は 0。絵は島に立つ。
  *  本人にログイン画面で選ばせない。他人の絵を自分のものにできてしまうため。
  */
 export type Resident = {{ icon?: string; emoji?: string; days: number; channel?: string }};
@@ -268,33 +441,44 @@ def main() -> int:
         logger.info("書き出した: %s", args.report)
         return 0
 
-    mapping = read_map()
-    if not mapping:
+    # **名簿が読めなかったら、焼かない。** 空の residents.ts を焼くと島から
+    # 人が消える。それは「今日は誰も来ていない」と同じ絵になる
+    try:
+        chars = fetch_characters()
+    except Exception as e:  # noqa: BLE001
+        logger.error("名簿（%s）を読めなかった: %s。焼かずに終わる", CHARACTERS, e)
+        return 1
+    if not chars:
         logger.error(
-            "%s が無い。キャラクターと YouTube のチャンネルを結ぶ表が要る。"
-            "推測で結ぶと実在する人の順番を間違えて出すことになるので、焼かずに終わる",
-            MAP_JSON,
+            "名簿（%s）が1人も返らなかった。島から人が消えるので、焼かずに終わる",
+            CHARACTERS,
         )
         return 1
 
-    by_cid = {r["cid"]: int(r["attend"]) for r in rows}
-    out = []
-    for cur in read_icons():
-        cid = mapping.get(cur["icon"])
-        if not cid:
-            logger.warning("表に無いキャラクター: %s（前の値のまま残す）", cur["icon"])
-            out.append(cur)
-            continue
-        out.append(
-            {
-                "icon": cur["icon"],
-                "emoji": cur["emoji"],
-                "days": by_cid.get(cid, 0),
-                "channel": cid,
-            }
-        )
+    out, how = link(chars, rows)
+    if not out:
+        logger.error("候補が1人も残らなかった。焼かずに終わる")
+        return 1
 
-    out.sort(key=lambda r: -r["days"])
+    logger.info("名簿 %d 人", how["characters"])
+    if how["twice"]:
+        logger.warning(
+            "同じ鍵が2人に付いている: 鍵 %d 個 / %d 人。"
+            "どちらの絵か決められないので、候補に入れていない",
+            how["twice"], len(how["blurred"]),
+        )
+    # **誰が外れたかは指紋で出す。** 名前もチャンネルIDも1文字も出さない
+    for who in how["blurred"]:
+        logger.warning("  候補に入れなかった: %s", mask(who))
+    logger.info("チャンネルと結べた人 %d / 候補 %d 人", how["linked"], len(out))
+
+    by_cid = {r["cid"]: int(r["attend"]) for r in rows}
+    for r in out:
+        r["days"] = by_cid.get(r["channel"], 0) if r["channel"] else 0
+
+    # 日数の同じ人（結べなかった人は全員 0）が並ぶので、**絵の id で並びを固定する。**
+    # 順番が晩ごとに揺れると、中身が変わっていないのに毎晩 commit が立つ
+    out.sort(key=lambda r: (-r["days"], r["icon"]))
     write_ts(out, active, denom, lost_days)
     logger.info("焼いた: %s（%d人）", OUT_TS, len(out))
     return 0
