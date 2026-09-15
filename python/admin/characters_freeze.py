@@ -26,15 +26,21 @@ ARGS: なし（`{}`）。**読むだけ。1バイトも書かない。**
 
 ## 対照を、道具の中に入れてある
 
-**1回目は「機械で固められる 0人」と答えて、外していた。**
-`iconsOf` は保存済みの `channelKeys` で引いているのに、こちらは
-`channelName` と `aliases` から**その場で組み直して**いたため。
-組み直したものが保存済みと違えば、当然どこにも当たらない。
+**本番で2回続けて外した。** 1回目は「機械で固められる 0人」と答え、
+2回目は対照が 13/15 落ちて止まった。
+
+どちらも原因は同じで、`select("name")` と**一覧ではなく字を渡していた**こと。
+Python の SDK は渡されたものをそのまま回すので、これは `n` `a` `m` `e` の
+4つの欄を頼んだことになる。**名前が1件も返ってこないのに、問い合わせは通る。**
+辞書が空のまま全員を「どこにも当たらない」と数えていた。
 
 数えるものが1つも見つからないのが「本当に0」なのか「見ていない」のかは、
 **当たるはずのものに当ててみないと分からない**（`island-standards.md` 15）。
 `CONTROL` に、本番の `/nordic/photos` が実際に絵を返している書類IDを
 置いてある。**この15人が当たらなければ、数字を出さずに落ちる。**
+
+引き当て方そのものは `characters_freeze_selftest.py` が手元で固定している。
+**本番で3回目を試さない。**
 
 ## 出さないもの
 
@@ -50,6 +56,9 @@ sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from logsafe import mask  # noqa: E402
 
+sys.path.insert(0, __file__.rsplit("/", 1)[0])
+from alertbox_names import keys_of, norm_key  # noqa: E402
+
 CHARACTERS = "islandCharacter"
 CHANNELS = "islandChannels"
 
@@ -57,9 +66,20 @@ CHANNELS = "islandChannels"
 MAX_CHARACTERS = 500
 # `iconsOf` の `sharedNames` と同じ上限
 MAX_CHANNELS = 10000
+# `cards.ts` の MAX_NAME と同じ。**正規化より先に切るのも向こうと同じ**
+MAX_NAME = 80
 
-sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from alertbox_names import norm_key  # noqa: E402
+
+def clean(v, max_len: int) -> str:
+    """`streamEvents.ts` の `clean`。**trim してから字数で切る。**
+
+    正規化（`norm_key`）より**先に**切るのが向こうの順番。あとから切ると
+    NFKC で字数が変わった名前でひと文字ずれる。
+    """
+    if not isinstance(v, str):
+        return ""
+    return v.strip()[:max_len]
+
 
 # **対照。** 本番の `GET /nordic/photos` が実際に絵を返している書類ID
 # （2026-09-15 実測。絵が引けている＝`iconsOf` が当てられている人）。
@@ -83,12 +103,19 @@ def main() -> None:
     # 鍵 → そう名乗っているチャンネルの数（`sharedNames` と同じ数え方）
     owners: dict = {}
     ch_total = 0
-    for d in client.collection(CHANNELS).select("name").limit(MAX_CHANNELS).get():
+    # **`select` には一覧を渡す。** Python の SDK は渡されたものを
+    # そのまま回すので、`select("name")` と書くと `n` `a` `m` `e` の
+    # 4つの欄を頼んだことになり、`name` が1件も返らない。
+    # **本番で2回続けて「0人」と答えたのは、これが理由だった。**
+    # 中身が空でも問い合わせは通るので、赤くならずに黙って何も見ない
+    for d in client.collection(CHANNELS).select(["name"]).limit(MAX_CHANNELS).get():
         ch_total += 1
-        name = norm_key((d.to_dict() or {}).get("name"))
-        if not name:
-            continue
-        owners.setdefault(name, set()).add(d.id)
+        # **チャンネルの名前にも `keys_of` を当てる。** `iconsOf` は
+        # `keysOf([name])` で `@` を落とした形まで作ってから当てている。
+        # `norm_key` だけにすると、名簿が `@さくら`・キャラクターの鍵が
+        # `さくら` の組を見落とす
+        for k in keys_of([clean((d.to_dict() or {}).get("name"), MAX_NAME)]):
+            owners.setdefault(k, set()).add(d.id)
 
     have = 0          # 既に channelId を持っている
     freezable = []    # 名前がちょうど1つのチャンネルに当たる
