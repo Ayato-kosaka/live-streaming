@@ -27,7 +27,11 @@ import {
 import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
 import { sendLog } from "@/lib/log";
-import { matchViewerByNickname, toViewers } from "./matching.utils";
+import {
+  describeNickname,
+  matchViewerByNickname,
+  toViewers,
+} from "./matching.utils";
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
@@ -54,6 +58,13 @@ const GOAL_ID = "2025-10-24";
 // 仕様: JPY 金額の 1/2 を目標金額に加算
 const SUPERCHAT_CONVERSION_RATE = 0.5;
 
+/* 名簿を取り直す間隔（10分）。
+   OBS のブラウザソースは配信のあいだ開きっぱなしなので、これが無いと
+   **名簿を直してもブラウザソースを開き直すまで効かない。** 配信中の
+   あやとに「開き直して」と言わせないための下限がここ。
+   配信4時間でも24回しか叩かないので、口の負担にはならない。 */
+const CHARACTERS_REFRESH_MS = 10 * 60 * 1000;
+
 export default function AlertBox() {
   // Parse URL parameters for source selection
   /* `k` は OBS の URL に載せる 32 桁の合言葉（#180）。
@@ -64,6 +75,12 @@ export default function AlertBox() {
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
   const [normViewers, setNormViewers] = useState<AlertViewer[]>([]);
+
+  /* 同じ名簿を ref にも持つ。**通知を受け取る関数は初期化のときに1度しか
+     作られない**ので、そこから state をそのまま読むと、取り直したあとも
+     最初の空の名簿を見続ける。当てるのは画面側（`matchedViewer`）の仕事で、
+     こちらは「当たったかどうか」をログに残すためだけに読む。 */
+  const normViewersRef = useRef<AlertViewer[]>([]);
 
   // Goals 情報（起動時に取得し currentAmount を算出して保持）
   const [goal, setGoal] = useState<GoalState | null>(null);
@@ -164,6 +181,11 @@ export default function AlertBox() {
       try {
         const characters = await getAlertboxCharacters(alertboxId);
         const normViewers = toViewers(characters);
+        /* **差し替えるのは取れたときだけ。** 下の catch で空にしない。
+           取り直しがこけた回に名簿を捨てると、それまで出ていた人まで
+           既定の絵に落ちる。いちばん悪い壊れ方なので、こけた回は
+           「前の名簿のまま」で通す。 */
+        normViewersRef.current = normViewers;
         setNormViewers(normViewers);
         sendLog("AlertBox", sessionId, "fetchCharactersSuccess", {
           characters: characters.length,
@@ -174,8 +196,14 @@ export default function AlertBox() {
           withVideo: normViewers.filter((v) => v.videoUrl).length,
         });
       } catch (error) {
-        // **絵が出ないだけ。** 画面には出さない（配信に映るので）
-        sendLog("AlertBox", sessionId, "fetchCharactersError", { error: String(error) });
+        /* **絵が出ないだけ。** 画面には出さない（配信に映るので）。
+           **ここで名簿を空にしない。** 取り直しがこけただけで、
+           前に取れていたものは今も正しい。 */
+        sendLog("AlertBox", sessionId, "fetchCharactersError", {
+          error: String(error),
+          // 何人ぶん抱えたまま続けるのか。0 なら一度も取れていない
+          kept: normViewersRef.current.length,
+        });
       }
     };
 
@@ -293,6 +321,27 @@ export default function AlertBox() {
 
       // Add to queue
       sendLog("AlertBox", sessionId, "notificationReceived", notification);
+
+      /* **当たらなかったことを1行残す。**
+         当たらなくても画面には何も出ない（配信に映るので既定の絵に
+         落ちるだけ）。なので、あやとから見えるのは「あの人のキャラクターが
+         出なくなった」だけで、原因の見当がつかない。次に起きたとき、
+         ここ1行で **名簿が0人（取り直しがこけた）** なのか
+         **名簿は居るのに字が違う** のかが分かれる。
+         **生の名前は足さない。** すぐ上の `notificationReceived` が通知
+         まるごとを出しているので、増やす理由がない（`island-misses.md` #96）。 */
+      const roster = normViewersRef.current;
+      if (!matchViewerByNickname(roster, notification.nickname)) {
+        sendLog("AlertBox", sessionId, "viewerNotMatched", {
+          // 何人の名簿に当てにいって当たらなかったのか（分母。`island-standards.md` §15）
+          roster: roster.length,
+          /* 0人なら、当たらないのは名前のせいではない。
+             取り直しが一度も通っていない、ということ */
+          rosterEmpty: roster.length === 0,
+          ...describeNickname(notification.nickname),
+        });
+      }
+
       setNotificationQueue((prevQueue) => [...prevQueue, notification]);
     };
 
@@ -314,6 +363,13 @@ export default function AlertBox() {
         sendLog("AlertBox", sessionId, "unmount");
       };
     }
+
+    /* 名簿を、ときどき取り直す（合言葉があるときだけ。無ければ口が
+       404 を返すので、叩いても意味がない）。
+       **こけても今の名簿は捨てない** — `fetchCharacters` は取れたときしか
+       差し替えない作りにしてある。 */
+    const charactersTimer = setInterval(fetchCharacters, CHARACTERS_REFRESH_MS);
+    cleanupFunctions.push(() => clearInterval(charactersTimer));
 
     // Initialize Doneru connector if enabled
     if (enabledSources.includes("doneru")) {
