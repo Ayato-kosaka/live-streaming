@@ -921,6 +921,19 @@ export type IslandCard = {
 /** 配られたカードぜんぶ。**新しい順で返る。** */
 export const getCards = () => req<{ cards: IslandCard[] }>("/cards");
 
+/**
+ * じぶんのカードだけ。**ログインした人の口。**
+ *
+ * 上の `getCards` は1枚ごとに `channelId` と `day` を返す。カードは投げ銭の
+ * 台帳からしか作られないので、それは**「どのチャンネルが、どの日に投げ銭
+ * したか」の一覧**と同じもの。`/me` は自分の数枚を出すだけの面なのに、
+ * 全員ぶんを降ろしてから手元で絞っていた。絞るのはサーバー側にした。
+ *
+ * **返る形は上と同じ。** だから画面（`withIcons` から先）は何も変わらない。
+ */
+export const getMyCards = (token: string) =>
+  req<{ cards: IslandCard[] }>("/cards/mine", { headers: auth(token) });
+
 /** カードの置き方。0〜1 の割合と、傾きと、大きさ。 */
 export type CardPlace = { x: number; y: number; rot: number; scale: number };
 

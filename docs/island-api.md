@@ -97,10 +97,34 @@ BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているた�
 | `POST` | `/nordic/photos` | あやとだけ | 旧・日付から貼る。**中で新旧どちらの入れ物にも書く** |
 | `DELETE` | `/nordic/photos/:id` | あやとだけ | 旧・消す |
 | `GET` | `/cards` | 誰でも | 配られたカード。**名前を出してよいと言った人ぶんだけ** |
+| `GET` | `/cards/mine` | ログイン済み | **自分のカードだけ。** 未ログインは 401。`Cache-Control: no-store` |
 | `POST` | `/cards/:cardId` | 本人 | 自分のカードを動かす（`cardId` は `<画像のID>__<チャンネルID>`） |
 
 **書く口を当分2つ動かしているのは、旅で毎日使っているものを出発直前に
 作り替えないため**（#202 の順番）。`POST /nordic/photos` は中で新旧の両方に書く。
+
+**カードを読む口が2つあるのは、`/cards` が「誰が、いつ投げ銭したか」に
+なってしまうから。** カードは投げ銭の台帳からしか作られないので、
+1枚ごとに `channelId` と `day` を返すことは「そのチャンネルがその日に
+投げ銭した」と言うのと同じ。`/me`（`site/components/me/MyPage.tsx`）が
+自分の1枚を出すためだけに、それを全ブラウザへ配っていた。
+
+| | `GET /cards` | `GET /cards/mine` |
+| --- | --- | --- |
+| 誰が | 誰でも | ログイン済み（未ログインは 401） |
+| 何を | 島じゅうのカード（最大600枚） | **その人のカードだけ** |
+| 誰のぶんかの決め方 | — | `islandUsers/{uid}.channelId`。**送られてきた値は見ない** |
+| チャンネルが結ばれていない人 | — | `{cards: []}` を 200 で返す（500 にしない） |
+| 1日の上限 | 無い（読むだけ） | 無い（読むだけ） |
+| 掛け値 | `public, max-age=30, s-maxage=60` | **`no-store`**（CDN にも中間にも置かせない） |
+
+**返す形は1欄も違わない**（`site/lib/api.ts` の `IslandCard`）。画面は寄せ先を
+差し替えるだけでよい。`/cards/mine` はログインした人ごとに中身が違うので、
+`s-maxage` に載せてはいけない。載せると他人のカードが誰かの手元に届く。
+
+`/cards/mine` が `POST /cards/:cardId` の照合式に食われないことは、
+本体から正規表現を切り出して確かめてある
+（`node functions/selftest/cards_mine_selftest.mjs`）。
 
 ## 4. 付箋
 
@@ -206,6 +230,9 @@ OBS に映すものと、あやとの手元のコントローラーを繋ぐ口�
 grep -nE 'method === "(GET|POST|DELETE|PUT)"' functions/src/islandApi.ts
 grep -nE 'const (photoMatch|eventImages|imageOne|logMatch|factMatch|pollMatch|forkMatch|heartMatch|replyMatch|archiveMatch|planOne|planHeart|planStatus|planVideos|planArchive|abWss|abTok|rlOne|rlChat|rlItems|rlSet|rlSpin|rlPost) = path.match' functions/src/islandApi.ts
 grep -nE 'q.method === "(GET|POST|DELETE)"' functions/src/cards.ts functions/src/donors.ts functions/src/remote.ts
+
+# ログインが要る口（`whoIs` を通っているところ）
+grep -n 'deps.whoIs(q.auth)' functions/src/cards.ts
 
 # 「あやとだけ」の印
 grep -n 'ownerUid(req.headers.authorization)' functions/src/islandApi.ts

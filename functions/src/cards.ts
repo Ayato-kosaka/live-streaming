@@ -282,16 +282,24 @@ const placeOf = (v: Json, id: string): Place => shapePlace(v, defaultPlace(id));
 /**
  * 配られたカードを、新しい順に返す。
  *
- * **`where` を付けない。** 並べ替えと混ぜると複合索引が要る(#168)。
+ * **`where` と `orderBy` を混ぜない。** 混ぜると複合索引が要る(#168)。
+ * だから引くのはどちらか片方だけで、並べ替えは最後の `sortCards` が手元でやる。
  * 画像は `getAll` で1往復。カードの枚数ぶん引きにいかない。
  * @param {CardDeps} deps 呼ぶ側から借りるもの
+ * @param {string} [channelId] 渡すと、そのチャンネルのぶんだけ引く
  * @return {Promise<Card[]>} 新しい順のカード
  */
-async function listCards(deps: CardDeps): Promise<Card[]> {
+async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
   /* **`earnedAt` で並べる。** 単一フィールドの並べ替えなので索引は要らない。
      欄の無い書類はここに載らないが、素性の欠けたカードは日次ジョブと
-     `mintCards` が足していく(`streamEvents.ts`)。 */
-  const snap = await CARDS.orderBy("earnedAt", "desc").limit(MAX_CARDS).get();
+     `mintCards` が足していく(`streamEvents.ts`)。
+
+     その人のぶんだけ引くときは `where` 1本にする。**`orderBy` を足さない**
+     （複合索引が要る）。並び順は下の `sortCards` が同じ規則で付け直すので、
+     返るものの順番は公開の口と変わらない。 */
+  const snap = channelId ?
+    await CARDS.where("channelId", "==", channelId).limit(MAX_CARDS).get() :
+    await CARDS.orderBy("earnedAt", "desc").limit(MAX_CARDS).get();
   if (snap.empty) return [];
 
   const rows = snap.docs.map((d) => ({id: d.id, v: d.data() ?? {}}));
@@ -396,6 +404,50 @@ export async function handleCards(
       res.json({cards: await listCards(deps)});
     } catch (e) {
       logger.warn("cards list failed", String(e));
+      res.status(502).json({error: "unavailable"});
+    }
+    return true;
+  }
+
+  /* ---- 自分のカードだけ。**ログインが要る。** ----
+
+     公開の `/cards` は1枚ごとに `channelId` と `day` を返す。カードは
+     投げ銭の台帳からしか作られないので、**それは「どのチャンネルが、どの日に
+     投げ銭したか」の一覧**と同じもの。自分の1枚を出すためだけに、それを
+     全ブラウザへ配っていた（`/me` が手元で絞っていた）。
+     絞るのはここ。画面には自分のぶんしか降ろさない。
+
+     **返す形は公開の口と1欄も変えない。** 画面（`MyStuff`・`CardSheet`）を
+     作り替えずに寄せ先だけ差し替えられるようにするため。 */
+  if (q.method === "GET" && q.path === "/cards/mine") {
+    /* **CDN にも中間にも置かせない。** 人によって中身が違うものを
+       `s-maxage` に載せると、他人のカードが誰かの手元に届く。
+       返す前ではなく先に付けるのは、下のどの道を通っても付けるため。 */
+    res.set("Cache-Control", "no-store");
+    const me = await deps.whoIs(q.auth);
+    if (!me) {
+      res.status(401).json({error: "sign in"});
+      return true;
+    }
+    try {
+      /* **チャンネルは `islandUsers` から取り直す。** 送られてきた値も、
+         合言葉に載っていた値も信じない。`POST /cards/<id>` が持ち主を
+         決めるのと同じ引き方にそろえる（判定が2つに散らない）。 */
+      const saved = await USERS.doc(me.uid).get();
+      const myChannel = clean(saved.data()?.channelId, 64);
+      /* **チャンネルが結ばれていない人は、空で返す。** カードは
+         チャンネルに配られるので、無い人は0枚が正しい答え。
+         ここで 500 を返すと、画面が「読めなかった」の顔になる
+         （`island-standards.md` 10。0枚と読めなかったは別のもの）。 */
+      if (!myChannel) {
+        res.json({cards: []});
+        return true;
+      }
+      res.json({cards: await listCards(deps, myChannel)});
+    } catch (e) {
+      /* **視聴者さんの素性をログに出さない。** チャンネルID・名前・本文は
+         1文字も書かない。ここは公開のリポジトリで、ログも誰でも読める。 */
+      logger.warn("my cards failed", String(e));
       res.status(502).json({error: "unavailable"});
     }
     return true;
