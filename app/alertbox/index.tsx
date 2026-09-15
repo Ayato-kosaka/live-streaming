@@ -65,12 +65,24 @@ const SUPERCHAT_CONVERSION_RATE = 0.5;
    配信4時間でも24回しか叩かないので、口の負担にはならない。 */
 const CHARACTERS_REFRESH_MS = 10 * 60 * 1000;
 
+/* 動画が**動き出すのを待つ上限**。ここを過ぎたら絵のままにする。
+   - 投げ銭のアラートは 30 秒出ている（`config.ts` の `alertDuration`）ので、
+     3秒待っても残り 27 秒は絵が出る。
+   - 温め（`preloadVideo`）が諦めるのと同じ長さにしてある。温めが3秒で
+     届かないものは、本物の `<video>` でも3秒では届かない。
+   **待っているあいだ、画面はその人の絵。** 何も出ない時間は作らない。 */
+const VIDEO_START_TIMEOUT_MS = 3000;
+
 export default function AlertBox() {
   // Parse URL parameters for source selection
   /* `k` は OBS の URL に載せる 32 桁の合言葉（#180）。
      **鍵ではない。** これを見せた相手にサーバーが鍵を使ってくれる、
      という引換券。漏れたら /me から作り直せる（Doneru の鍵は作り直せない）。 */
-  const params = useLocalSearchParams<{ source?: string; k?: string }>();
+  const params = useLocalSearchParams<{
+    source?: string;
+    k?: string;
+    still?: string;
+  }>();
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -98,6 +110,23 @@ export default function AlertBox() {
     type: "image",
     url: null,
   });
+
+  /* 動画が**実際に動き出したか。** 動き出すまで `<video>` は見せない。
+     置かないのではなく、置いたまま透明にしておく（`display:none` にすると
+     自動再生そのものが始まらないブラウザがある）。
+     見えているあいだは、その人の絵が上に乗っている。 */
+  const [videoStarted, setVideoStarted] = useState(false);
+
+  /* 出すものを差し替える。**必ずここを通す。**
+     `setDisplaySource` を直に呼ぶと、前の動画の「もう動き出している」が
+     残ったまま次の動画が透明でなくなって、また ▶ の板が出る。 */
+  const showSource = useCallback(
+    (next: { type: "image" | "video"; url: string | null }) => {
+      setVideoStarted(false);
+      setDisplaySource(next);
+    },
+    []
+  );
 
   // 未処理の通知キュー（受信順に積まれて処理される）
   const [notificationQueue, setNotificationQueue] = useState<
@@ -161,6 +190,17 @@ export default function AlertBox() {
 
   /** OBS の URL の `?k=`。無ければ空。 */
   const alertboxId = String(params.k ?? "");
+
+  /* OBS の URL の `?still=1`。**動画を1回も出さない。**
+     iPhone の WebView は動画を別のレイヤに描くので、**画面キャプチャに
+     動画が写らない**（黒く抜ける）。iPhone から配信する日は、動画を
+     持っている人も絵にする。
+     既定は今までどおり（付けなければ動画が出る）。 */
+  const stillOnly = useMemo(() => {
+    const raw = Array.isArray(params.still) ? params.still[0] : params.still;
+    const v = String(raw ?? "").trim().toLowerCase();
+    return v === "1" || v === "true";
+  }, [params.still]);
 
   useEffect(() => {
     // 画面起動ログ
@@ -471,8 +511,16 @@ export default function AlertBox() {
     [matchedViewer]
   );
 
+  /* 一度温めた動画の URL。**名簿は10分ごとに取り直す**ので、これが無いと
+     同じ動画を配信4時間で24回落とすことになる。
+     しくじった（`error`）ぶんだけ外して、次の取り直しでもう一度試す。 */
+  const warmedVideosRef = useRef<Set<string>>(new Set());
+
   const preloadVideo = useCallback((url: string) => {
     if (Platform.OS !== "web") return;
+    // 同じ URL は二度落とさない（取り直しのたびに温め直さない）
+    if (warmedVideosRef.current.has(url)) return;
+    warmedVideosRef.current.add(url);
 
     const video = document.createElement("video");
     let settled = false;
@@ -486,6 +534,11 @@ export default function AlertBox() {
       video.oncanplay = null;
       video.onerror = null;
 
+      /* 取れなかったものだけ、次の取り直しでもう一度試せるようにする。
+         `timeout` は「こちらが見るのをやめた」だけで、落とすのは
+         ブラウザが続けているので、外さない。 */
+      if (reason === "error") warmedVideosRef.current.delete(url);
+
       sendLog("AlertBox", sessionId, "videoPreloadFinished", {
         url,
         ok,
@@ -497,7 +550,7 @@ export default function AlertBox() {
 
     const timer = window.setTimeout(() => {
       finish(false, "timeout");
-    }, 3000);
+    }, VIDEO_START_TIMEOUT_MS);
 
     video.preload = "auto";
     video.muted = true;
@@ -512,6 +565,21 @@ export default function AlertBox() {
 
     video.load();
   }, []);
+
+  /* **名簿が来た時点で温める。** アラートが出る瞬間に温め始めても間に合わない
+     （届くまで `<video>` が ▶ の板を出す。Android で実際にそう見えていた）。
+     名簿は起動直後に来るので、最初の投げ銭までに何分もある。
+     動画を持っているのは 101 人中1人なので、落とすのは1本。
+     取り直しのたびに温め直さないのは `warmedVideosRef` が見ている。 */
+  useEffect(() => {
+    // `still=1` の日は動画を出さないので、**1バイトも落とさない**
+    if (stillOnly) return;
+    for (const url of new Set(
+      normViewers.map((v) => v.videoUrl).filter((u): u is string => !!u)
+    )) {
+      preloadVideo(url);
+    }
+  }, [normViewers, preloadVideo, stillOnly]);
 
   useEffect(() => {
     // 表示中の通知がない場合のみ、次の通知を処理開始
@@ -548,7 +616,7 @@ export default function AlertBox() {
     } catch (error) {
       sendLog("AlertBox", sessionId, "sourceError", { error: String(error) });
     }
-    setDisplaySource(source);
+    showSource(source);
 
     // 表示開始（フェードイン）
     setNotification(currentNotification);
@@ -584,7 +652,7 @@ export default function AlertBox() {
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
-  }, [notificationQueue, opacity]);
+  }, [notificationQueue, opacity, showSource]);
 
   // テンプレート本文（通知タイプに紐づくテンプレートを取得）
   const mainTextTemplate = useMemo(
@@ -636,7 +704,9 @@ export default function AlertBox() {
       (n.type === "donation" || n.type === "superchat") &&
       n.amount >= 0 &&
       viewer?.videoUrl &&
-      Platform.OS === "web"
+      Platform.OS === "web" &&
+      // `still=1` の日は、動画を持っている人でも絵にする
+      !stillOnly
     ) {
       // preload は事前ウォームアップだけにする
       preloadVideo(viewer.videoUrl);
@@ -664,14 +734,14 @@ export default function AlertBox() {
 
     const fallbackIconUrl = iconUrl(notification);
     if (await warm(fallbackIconUrl)) {
-      setDisplaySource({ type: "image", url: fallbackIconUrl });
+      showSource({ type: "image", url: fallbackIconUrl });
       return;
     }
 
     const fallbackImageUrl = imageUrl(notification.type);
     await warm(fallbackImageUrl);
-    setDisplaySource({ type: "image", url: fallbackImageUrl });
-  }, [iconUrl, imageUrl, notification, warm]);
+    showSource({ type: "image", url: fallbackImageUrl });
+  }, [iconUrl, imageUrl, notification, warm, showSource]);
 
   // play() の失敗を拾う useEffect
   useEffect(() => {
@@ -703,6 +773,28 @@ export default function AlertBox() {
       });
     }
   }, [displaySource, fallbackToImageSource]);
+
+  /* 動き出さないまま待たせない。
+     `videoPlayRejected` も `videoError` も来ないのに、中身だけ届かない
+     ことがある（電波が細い・置き場が遅い）。そのときは `<video>` が
+     透明のまま黙って居座るので、**絵のまま止める。**
+     ここで絵に落としても、アラートそのものは出たままで、次の通知も流れる
+     （`processNotificationQueue` の外なので、キューには触らない）。 */
+  useEffect(() => {
+    if (displaySource.type !== "video" || !displaySource.url) return;
+    if (videoStarted) return;
+
+    const url = displaySource.url;
+    const timer = setTimeout(() => {
+      sendLog("AlertBox", sessionId, "videoStartTimeout", {
+        url,
+        waitedMs: VIDEO_START_TIMEOUT_MS,
+      });
+      fallbackToImageSource();
+    }, VIDEO_START_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [displaySource, videoStarted, fallbackToImageSource]);
 
   // 金額に比例したエフェクト回数（花火/雨）を算出
   const effectCounts = useMemo(
@@ -738,12 +830,20 @@ export default function AlertBox() {
                     ref={videoRef}
                     autoPlay
                     controls={false}
-                    loop={false}
+                    /* **ループする。** アラートは 30 秒出ているのに動画は
+                       数秒しかない。止めると、残りは最後のコマの静止画。 */
+                    loop
+                    /* **音は付けない。** 音付きの自動再生はブラウザが
+                       止めるので、外すと再生そのものが始まらない。 */
                     muted
                     playsInline
                     preload="auto"
                     src={displaySource.url}
-                    style={{ ...styles.image }}
+                    /* **動き出すまで透明。** 中身が届く前の `<video>` は、
+                       Android の WebView が ▶ の板を画面いっぱいに描く。
+                       あやとが撮った絵がそれ。透明にしておけば、下に置いた
+                       その人の絵がそのまま見えている。 */
+                    style={{ ...styles.image, opacity: videoStarted ? 1 : 0 }}
                     onLoadStart={() =>
                       sendLog("AlertBox", sessionId, "videoLoadStart", {
                         url: displaySource.url,
@@ -764,22 +864,16 @@ export default function AlertBox() {
                         networkState: e.currentTarget.networkState,
                       })
                     }
-                    onPlaying={() =>
+                    /* **ここで初めて見せる。** `canplay` ではない。
+                       `canplay` は「そろそろ出せる」でまだ止まっており、
+                       自動再生が許されるかの返事も来ていない。`playing` は
+                       再生が始まった合図で、コマが1枚できている。
+                       `videoCanPlay` と `videoPlaying` の両方をログに
+                       残してあるので、差は本番のログで測れる。 */
+                    onPlaying={() => {
+                      setVideoStarted(true);
                       sendLog("AlertBox", sessionId, "videoPlaying", {
                         url: displaySource.url,
-                      })
-                    }
-                    onEnded={(e) => {
-                      const v = e.currentTarget;
-                      v.pause();
-
-                      if (Number.isFinite(v.duration) && v.duration > 0) {
-                        v.currentTime = Math.max(v.duration - 0.05, 0);
-                      }
-
-                      sendLog("AlertBox", sessionId, "videoEnded", {
-                        url: displaySource.url,
-                        duration: v.duration,
                       });
                     }}
                     onError={(e) => {
@@ -803,6 +897,24 @@ export default function AlertBox() {
                     }}
                   />
                 )}
+
+                {/* 動画が動き出すまでの地。**その人の絵**を、透明な
+                    `<video>` の上に重ねて出す（既定のアラート画像では
+                    ない）。動き出したら消す。その人の絵まで無ければ、
+                    通知タイプごとの既定の絵に落ちる。
+                    **絵だけの人はここを通らない。** */}
+                {displaySource.type === "video" &&
+                  !!displaySource.url &&
+                  !videoStarted && (
+                    <Image
+                      resizeMode="contain"
+                      style={{ ...styles.image }}
+                      source={{
+                        uri:
+                          iconUrl(notification) || imageUrl(notification.type),
+                      }}
+                    />
+                  )}
 
                 {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
                 {emoji && (
