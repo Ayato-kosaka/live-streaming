@@ -97,18 +97,22 @@ const STORE = {
       day: "2026-09-11",
       streamEventImageId: "img_0000001",
       earnedAt: 400,
+      // **絵はこの名乗りだけから決まる**（`cards.ts` の `iconsOf`）
+      nameSnapshot: "さくら",
     },
     "img_0000001__UC_dupe_000001": {
       channelId: "UC_dupe_000001",
       day: "2026-09-11",
       streamEventImageId: "img_0000001",
       earnedAt: 390,
+      nameSnapshot: "さくら2",
     },
     "img_0000001__UC_other_00001": {
       channelId: "UC_other_00001",
       day: "2026-09-11",
       streamEventImageId: "img_0000001",
       earnedAt: 380,
+      nameSnapshot: "abc",
     },
     // 絵の当たらない人。**公開の id が `x` に落ちるところ**
     "img_0000001__UC_other_00002": {
@@ -116,12 +120,14 @@ const STORE = {
       day: "2026-09-11",
       streamEventImageId: "img_0000001",
       earnedAt: 370,
+      nameSnapshot: "しらないひと",
     },
     "img_0000002__UC_me_0000001": {
       channelId: "UC_me_0000001",
       day: "2026-09-12",
       streamEventImageId: "img_0000002",
       earnedAt: 200,
+      nameSnapshot: "さくら",
     },
   },
   islandStreamEventImage: {
@@ -141,14 +147,14 @@ const STORE = {
      （Doneru から手で入った人と YouTube の人が同じ絵、の再現）。
      名前をかぶらせて作ると `sharedNames` に落とされて、絵が消えてしまう。 */
   islandCharacter: {
-    char_sakura: {channelKeys: ["さくら", "さくら2"]},
-    char_abc: {channelKeys: ["abc"]},
+    char_sakura: {lookupKeys: ["さくら", "さくら2"]},
+    char_abc: {lookupKeys: ["abc"]},
   },
+  /* **もう読まない入れ物。** 残してあるのは、読みに戻ったときにこの診断が
+     素通りしないため——中身は絵の当たる名前なので、読み直す実装なら
+     「しらないひと」にも絵が付いてしまい、下の枚数が合わなくなる。 */
   islandChannels: {
-    UC_me_0000001: {name: "さくら"},
-    UC_dupe_000001: {name: "さくら2"},
-    UC_other_00001: {name: "abc"},
-    UC_other_00002: {name: "しらないひと"},
+    UC_other_00002: {name: "さくら"},
   },
 };
 
@@ -174,12 +180,13 @@ function query(name, q) {
       return query(name, {...q, where: [...(q.where ?? []), [f, v]]});
     },
     orderBy: (f, dir) => query(name, {...q, order: [f, dir ?? "asc"]}),
-    /* `iconsOf` の `sharedNames()` が `select("name")` で辞書ぜんぶを読む。
-       ここに口が無いと例外になり、`iconsOf` が握りつぶして絵なしを返す
-       ——**絵を見ている診断なので、それでは空振りになる。** */
+    /* `select` の口は残しておく。**無いと、引く側が `select` を足した日に
+       例外になり、`iconsOf` がそれを握りつぶして「絵なし」を返す**
+       ——絵を見ている診断なので、それでは空振りになる（#99 で実際に踏んだ）。 */
     select: (...f) => query(name, {...q, select: f}),
     limit: (n) => query(name, {...q, limit: n}),
     get: async () => {
+      if (breakScan.has(name)) throw new Error(`偽の Firestore：${name} は読めない`);
       let rows = Object.entries(STORE[name] ?? {})
         .map(([id, v]) => snapOf(id, v));
       for (const [f, v] of q.where ?? []) {
@@ -208,8 +215,13 @@ function query(name, q) {
 
 /* **わざと読めなくする切り替え。** 絵が引けなかった回に、公開の口が
    「0人」ではなく「読めなかった」を返すことを見るために要る。
-   `characterKeys` と `sharedNames` は5分の控えに載るので、先に成功した
-   あとでは効かない。**控えに載らない `getAll`（名前引き）で落とす。** */
+
+   引く先は名簿（`islandCharacter`）だけになり、しかも5分の控えに載るので、
+   先に成功したあとでは落とせない。**落とすときは `lib` ごと読み込み直す**
+   （`reloadCards()`）。控えは温かいインスタンスに持つものなので、
+   読み込み直せば冷えた1回目に戻る。 */
+const breakScan = new Set();
+/** 画像の引き当て（`getAll`）を落とす切り替え。こちらは控えに載らない */
 let breakGetAll = false;
 
 const DB = {
@@ -293,9 +305,18 @@ function load(name) {
   return mod.exports;
 }
 
-const {handleCards, peopleForEveryone} = load("cards");
+/** いま使っている `lib/cards.js`。**控えごと入れ替えられるように持つ** */
+let cards = load("cards");
+
+/** 控え（`characterKeys` の5分）を捨てて、冷えた1回目に戻す */
+function reloadCards() {
+  loaded.clear();
+  cards = load("cards");
+}
+
+const {peopleForEveryone} = cards;
 for (const [name, f] of [
-  ["handleCards", handleCards],
+  ["handleCards", cards.handleCards],
   ["peopleForEveryone", peopleForEveryone],
 ]) {
   if (typeof f !== "function") {
@@ -334,7 +355,9 @@ async function call(method, path, auth) {
       out.body = b;
     },
   };
-  out.handled = await handleCards({method, path, auth, body: {}}, res, deps);
+  out.handled = await cards.handleCards(
+    {method, path, auth, body: {}}, res, deps,
+  );
   return out;
 }
 
@@ -470,7 +493,7 @@ console.log("\n# 3. 写真に入れられる人が、1人も変わらない（�
      入れ物から数えた「絵の当たる人」と、公開の応答の絵が同じであること。 */
   const fromStore = new Set(
     Object.values(STORE.islandCards)
-      .map((v) => STORE.islandChannels[v.channelId]?.name)
+      .map((v) => v.nameSnapshot)
       .map((n) => (n === "さくら" || n === "さくら2" ?
         "char_sakura" :
         n === "abc" ? "char_abc" : null))
@@ -517,14 +540,25 @@ console.log("\n# 4. /cards/mine には、channelId も本当のカードIDも残
 
 console.log("\n# 5. /nordic/photos の people[] に channelId が無い");
 {
-  const ids = ["UC_me_0000001", "UC_other_00002", "UC_other_00001"];
+  /* **渡すのは「投げたときの名乗り」つき。** 絵はそこから引く
+     （`channelsOfDay` が台帳から拾ってくる）。3人目は名前を出してよいと
+     言っているのに、**その1回を別名で投げた人**（絵も名前も出ない）。 */
+  const ids = [
+    {channelId: "UC_me_0000001", nameSnapshot: "さくら"},
+    {channelId: "UC_other_00002", nameSnapshot: "しらないひと"},
+    {channelId: "UC_other_00001", nameSnapshot: "abc"},
+    {channelId: "UC_anon_000001", nameSnapshot: "ななしのごんべえ"},
+  ];
   const icons = new Map([
-    ["UC_me_0000001", "char_sakura"],
-    ["UC_other_00001", "char_abc"],
+    ["さくら", "char_sakura"],
+    ["abc", "char_abc"],
   ]);
-  const named = new Map([["UC_me_0000001", "さくら"]]);
+  const named = new Map([
+    ["UC_me_0000001", "さくら"],
+    ["UC_anon_000001", "かこ"],
+  ]);
   const got = peopleForEveryone(ids, icons, named);
-  check("人数が変わらない", got.length === 3, `${got.length} 人`);
+  check("人数が変わらない", got.length === 4, `${got.length} 人`);
   check(
     "`channelId` の欄が無い",
     got.every((p) => !("channelId" in p)),
@@ -551,6 +585,11 @@ console.log("\n# 5. /nordic/photos の people[] に channelId が無い");
     JSON.stringify(got.map((p) => p.name)),
   );
   check(
+    "**別名で投げた人は、絵も名前も出ない**（名前を出してよいと言っていても）",
+    got[3].icon === null && got[3].name === null,
+    JSON.stringify(got[3]),
+  );
+  check(
     "並びが変わらない（渡した順のまま）",
     got.length === ids.length,
     `${got.length}`,
@@ -572,25 +611,47 @@ console.log("\n# 7. 絵が引けなかった回は、0人ではなく「読め�
   /* `channelId` を返すのをやめたので、**画面が焼き込みから絵を引き直す
      逃げ道が無くなった。** 絵の無いカードをそのまま並べて返すと、
      公開の面は候補0人＝「その日は誰も投げ銭していない」と同じ絵になる。
-     読めなかったことは、読めなかったと言う（`island-standards.md` 10）。 */
-  breakGetAll = true;
-  const down = await call("GET", "/cards");
-  breakGetAll = false;
-  check("扱う", down.handled === true);
-  check("502 を返す", down.status === 502, String(down.status));
-  check("カードを1枚も返さない", down.body?.cards === undefined);
-  check(
-    "0枚の顔をしない（`{cards: []}` で返さない）",
-    !Array.isArray(down.body?.cards),
-    JSON.stringify(down.body).slice(0, 80),
-  );
-  // **対照**：切り替えを戻せば、さっきと同じだけ返る
-  const back = await call("GET", "/cards");
-  check(
-    "切り替えを戻せば元どおり返る（この診断が空振りでない）",
-    (back.body?.cards ?? []).length === pubCards.length,
-    `${(back.body?.cards ?? []).length} / ${pubCards.length}`,
-  );
+     読めなかったことは、読めなかったと言う（`island-standards.md` 10）。
+
+     名簿は5分の控えに載るので、**読み込み直してから**落とす。 */
+  for (const [what, before, after] of [
+    ["名簿（islandCharacter）", () => breakScan.add("islandCharacter"),
+      () => breakScan.delete("islandCharacter")],
+    ["画像（getAll）", () => {
+      breakGetAll = true;
+    }, () => {
+      breakGetAll = false;
+    }],
+  ]) {
+    reloadCards();
+    before();
+    const down = await call("GET", "/cards");
+    after();
+    check(`${what}が読めない → 扱う`, down.handled === true);
+    check(`${what}が読めない → 502`, down.status === 502, String(down.status));
+    check(
+      `${what}が読めない → カードを1枚も返さない`,
+      down.body?.cards === undefined,
+    );
+    check(
+      `${what}が読めない → 0枚の顔をしない（\`{cards: []}\` で返さない）`,
+      !Array.isArray(down.body?.cards),
+      JSON.stringify(down.body).slice(0, 80),
+    );
+    // **対照**：切り替えを戻せば、さっきと同じだけ返る
+    reloadCards();
+    const back = await call("GET", "/cards");
+    check(
+      `${what} — 戻せば元どおり返る（この診断が空振りでない）`,
+      (back.body?.cards ?? []).length === pubCards.length,
+      `${(back.body?.cards ?? []).length} / ${pubCards.length}`,
+    );
+    check(
+      `${what} — 戻せば絵も元どおり（絵を見ずに通っていない）`,
+      (back.body?.cards ?? []).filter((c) => c.icon).length === 4,
+      `${(back.body?.cards ?? []).filter((c) => c.icon).length} 枚`,
+    );
+  }
 }
 
 console.log("");
