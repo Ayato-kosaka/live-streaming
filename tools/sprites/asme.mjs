@@ -469,6 +469,10 @@ export async function apply(ctx, opts = {}) {
     }
     if (path === "/nextplans") return json(r, PLANS);
     if (path === "/cards") return json(r, { cards: [...CARDS, ...MY_CARDS] });
+    /* `/me` は公開の `/cards` ではなく、**本人だけの口**から引く。
+       ここを差し替えないと、撮ったときだけ「カードが読めなかった」の顔に
+       なって、直っていないものが壊れて見える。 */
+    if (path === "/cards/mine") return json(r, { cards: MY_CARDS });
     if (path.startsWith("/donors")) {
       if (r.request().method() === "GET") return json(r, { donors: DONORS });
       const pk = decodeURIComponent(path.slice("/donors/".length));

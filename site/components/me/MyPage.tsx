@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
-  getCards,
+  getMyCards,
   getMyStickies,
   getNextPlans,
   myPlans,
@@ -85,7 +85,10 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       setPlans({ st: "down" });
     }
     try {
-      const r = await withRead(getCards());
+      /* **絞るのはサーバー。** 自分のぶんだけが降りてくるので、
+         ここで `channelId` を突き合わせ直さない（突き合わせるために
+         全員ぶんを配らせていたのが、そもそもの間違いだった）。 */
+      const r = await withRead(getMyCards(t));
       setCards({ st: "ok", list: withIcons(r?.cards ?? []) });
     } catch {
       setCards({ st: "down" });
@@ -128,13 +131,14 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   const meDown = meRead === "down" && !me;
 
   /* カードは「自分のもの」なので、**自分のチャンネルが読めるまで数えない。**
-     読めていないのに数えると、持っている人の画面が 0枚と言い切る。 */
+     読めていないのに数えると、持っている人の画面が 0枚と言い切る。
+     **枚数そのものはサーバーが決める**（`GET /cards/mine`）。ここが見るのは
+     「まだ自分が誰か読めていない」のか「読めた」のかだけ。 */
   const myCards: Bag<ShownCard> =
     meRead === "down" && !me ? { st: "down" }
     : !me ? { st: "wait" }
     : !me.channelId ? { st: "ok", list: [] }
-    : cards.st !== "ok" ? cards
-    : { st: "ok", list: cards.list.filter((c) => c.channelId === me.channelId) };
+    : cards;
 
   return (
     <>
