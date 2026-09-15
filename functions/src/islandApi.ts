@@ -1937,8 +1937,14 @@ async function listPhotoDays(): Promise<Json[]> {
   const shown = peopleByDay.map((x) => x.slice(0, 60));
   /* 読めなかったときは `null`。ここは写真の一覧が本体で、絵はその飾りなので
      日ごと丸ごと落とさず、**絵の無いまま**返す（`people` は空になる）。
-     カードの口のように 502 にしないのは、写真が出なくなるほうが重いから。 */
-  const icons = (await iconsOf(shown.flat())) ?? new Map<string, string>();
+     カードの口のように 502 にしないのは、写真が出なくなるほうが重いから。
+
+     **渡すのは「投げたときに名乗っていた名前」。** チャンネルIDから
+     いまの名前を引き直すと、別名で投げた人の本体がここにも出る
+     （`cards.ts` の `iconsOf` の長い注）。 */
+  const icons =
+    (await iconsOf(shown.flat().map((p) => p.nameSnapshot))) ??
+    new Map<string, string>();
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
