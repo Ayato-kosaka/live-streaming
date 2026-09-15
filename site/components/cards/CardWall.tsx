@@ -8,13 +8,7 @@ import PhotoPost from "@/components/nordic/PhotoPost";
 import ReadAgain from "@/components/me/ReadAgain";
 import { useOwner } from "@/lib/auth";
 import CardSheet from "./CardSheet";
-import {
-  cardWhen,
-  useCardWall,
-  type DayPerson,
-  type PhotoGroup,
-  type PlanDays,
-} from "./cards";
+import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 
 /**
  * あやと島カード。**1日ぶんが1枚の紙で、並ぶのは写真。**
@@ -62,9 +56,7 @@ import {
  */
 export default function CardWall({ plans }: { plans: PlanDays }) {
   const { days, photosRead, cardsRead, add, drop, reload } = useCardWall();
-  /* 開いている1枚と、**その日いた人**。人は写真ではなく日に付くので、
-     押した棚のぶんを一緒に持っておく（写真1枚ずつに写して増やさない）。 */
-  const [open, setOpen] = useState<{ group: PhotoGroup; people: DayPerson[] } | null>(null);
+  const [open, setOpen] = useState<PhotoGroup | null>(null);
   /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
      （`lib/auth.tsx` の `useOwner`）。 */
   const owner = useOwner();
@@ -139,7 +131,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
                   key={g.photoId}
                   type="button"
                   className="akd-tile"
-                  onClick={() => setOpen({ group: g, people: d.people })}
+                  onClick={() => setOpen(g)}
                   aria-label={g.note || "その日の写真をひらく"}
                 >
                   {/* **crossOrigin を付ける。** 開いた先の canvas が同じ URL を
@@ -160,9 +152,8 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
 
       {open && (
         <CardSheet
-          group={open.group}
-          people={open.people}
-          plans={plans[open.group.day]}
+          group={open}
+          plans={plans[open.day]}
           onClose={() => setOpen(null)}
           /* 消えたら、その場で棚から落として紙を閉じる。**読み直しに行かない。**
              消したのはこちらなので、消えたことはもう分かっている。 */

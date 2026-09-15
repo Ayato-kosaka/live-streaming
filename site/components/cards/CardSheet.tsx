@@ -11,13 +11,7 @@ import {
   type Place,
 } from "@/components/nordic/stamp";
 import DropPhoto from "./DropPhoto";
-import {
-  cardIcon,
-  cardWhen,
-  type DayPerson,
-  type PhotoGroup,
-  type PlanBrief,
-} from "./cards";
+import { cardIcon, cardWhen, type PhotoGroup, type PlanBrief } from "./cards";
 
 /**
  * 写真を1枚ひらいて、キャラクターを入れて、持って帰るところ。
@@ -50,79 +44,34 @@ import {
  *   3. どちらも駄目でも、出ている絵が焼き上がりなので長押しで保存できる
  */
 
-/**
- * 選ぶところに出す1人。
- *
- * `channelId` は**同じ人を2度出さないため**だけに持つ（画面には出ない）。
- * カードの側と、その日いた人の側の両方から同じ人が来る。
- */
-type Pick = {
-  key: string;
-  icon: string;
-  channelId: string | null;
-  name: string;
-  place: Place | null;
-};
+/** 選ぶところに出す1人。 */
+type Pick = { key: string; icon: string; name: string; place: Place | null };
 
 export default function CardSheet({
   group,
-  people,
   plans,
   onClose,
   onDropped,
 }: {
   /** 開いた写真1枚ぶん。新しい順のまま渡ってくるので並べ直さない */
   group: PhotoGroup;
-  /**
-   * その写真の日にいた人。**カードを持っていなくても入れられる。**
-   *
-   * 口が並べた順（投げてくれた人が先、そのあと早く来てくれた順）のまま
-   * 渡ってくるので並べ直さない。渡ってこない日はカードだけになる。
-   */
-  people?: DayPerson[];
   /** その日の企画。**1日に何本でも立つ** */
   plans?: PlanBrief[];
   onClose: () => void;
   /** 消えた1枚。**あやとだけ**（道具そのものが `DropPhoto` の中で消える） */
   onDropped?: (photoId: string) => void;
 }) {
-  /* **入れられるのは「その日いた人」で、投げてくれた人だけではない。**
-     カードを持っている人（`group.cards`）が先で、そのあとがその日いた人
-     （`people`）。どちらの並びも口が決めたものなので、ここで並べ直さない。
-
-     同じ人を2度出さない。落とし方は**2つとも要る。**
-       - `channelId` … カードと名簿の両方に載っている人（大多数がこれ）
-       - `icon` … Doneru から手で入った人と YouTube の人が、同じ絵に
-         当たることがある。チャンネルが片方に無いので絵でしか突き合わない */
+  /* 同じ絵の人を2度出さない。台帳は人ごとに1枚だが、Doneru から手で入った
+     人と YouTube の人が同じ絵に当たることがある。 */
   const picks: Pick[] = [];
-  const addPick = (p: Pick) => {
-    if (picks.some((q) => q.icon === p.icon)) return;
-    if (p.channelId && picks.some((q) => q.channelId === p.channelId)) return;
-    picks.push(p);
-  };
   for (const c of group.cards) {
-    addPick({
+    if (picks.some((p) => p.icon === c.icon)) continue;
+    picks.push({
       key: c.id,
       icon: c.icon,
-      channelId: c.channelId,
       name: c.name || "",
       // 本人が動かしたぶんだけ、その値で置く（既定は右下ひとところ）
       place: c.moved ? { x: c.x, y: c.y, rot: c.rot, scale: c.scale } : null,
-    });
-  }
-  for (const f of people ?? []) {
-    /* 絵の無い人は出さない。カードのときと同じで、立つ人がいなければ
-       絵にならない（`cards.ts` の `withIcons`）。 */
-    if (!f.icon) continue;
-    addPick({
-      key: `folk__${f.channelId || f.icon}`,
-      icon: f.icon,
-      channelId: f.channelId ?? null,
-      /* 名前が来るのは、島に出してよいと言った人だけ。カードの側と同じ扱い */
-      name: f.name || "",
-      /* 置き場所を持っているのはカードだけ（動かせるのは自分のカード）。
-         こちらは既定の右下に立つ。 */
-      place: null,
     });
   }
 
@@ -277,11 +226,7 @@ export default function CardSheet({
                         付ける（付けずに先に読むと、CORS ヘッダの無い絵が
                         キャッシュに残って焼けなくなる端末がある） */}
                     <img src={cardIcon(p.icon, 128)} alt="" loading="lazy" crossOrigin="anonymous" />
-                    {/* 名前が無い人も枠だけ置く。**置かないと、その札だけ背が縮んで
-                        段ごとに高さが変わる**（名前を出してよいと言った人は
-                        半分もいないので、どの段にも混ざる）。場所の取り方は
-                        `app/css/cards.css` の `.akd-sheet-body .npick i`。 */}
-                    <i>{p.name}</i>
+                    {p.name && <i>{p.name}</i>}
                   </button>
                 ))}
               </div>

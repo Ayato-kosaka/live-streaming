@@ -6,8 +6,6 @@ import {
   getNordicPhotos,
   type IslandCard,
   type NordicPhoto,
-  type NordicPhotoDay,
-  type NordicSupporter,
 } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
@@ -198,27 +196,8 @@ export type PhotoGroup = {
   cardCount?: number;
 };
 
-/**
- * その日いた人。**カードを持っている人とは別のもの。**
- *
- * カードは「その日**投げてくれた**人」に配られる（`islandCards`）。
- * こちらは「その日**いた**人」で、口が
- * `GET /nordic/photos` の `days[].people` で返してくる。
- * **投げてくれた人が先、そのあと早く来てくれた順**に並んでいるので、
- * 画面では並べ直さない。絵の無い人は口の側で落ちている。
- *
- * **これを足しても、カードは1枚も増えない。** 写真に入れて持って帰るのと、
- * カードをもらうのは別のこと（`functions/src/cards.ts`）。
- */
-export type DayPerson = NordicSupporter;
-
 /** 1日ぶんの棚。1日に写真は何枚でも貼られる。 */
-export type DayShelf = {
-  day: string;
-  photos: PhotoGroup[];
-  /** その日いた人。**写真ではなく日に付く。** 口が古いと空 */
-  people: DayPerson[];
-};
+export type DayShelf = { day: string; photos: PhotoGroup[] };
 
 /**
  * 写真でまとめる。**並べ替えない。**
@@ -267,9 +246,7 @@ export function byDay(groups: PhotoGroup[]): DayShelf[] {
       had.photos.push(g);
       continue;
     }
-    /* ここはカードだけから棚を作る道（`/about` の帯など）。
-       その日いた人は写真の口からしか来ないので、ここでは空のまま。 */
-    const d: DayShelf = { day: g.day, photos: [g], people: [] };
+    const d: DayShelf = { day: g.day, photos: [g] };
     at.set(g.day, d);
     out.push(d);
   }
@@ -322,32 +299,22 @@ const newest = (a: { day: string; at: number }, b: { day: string; at: number }) 
  *
  * 写真の口が落ちてもカードだけで並ぶし、逆も同じ。どちらも空なら空の棚。
  *
- * **その日いた人（`people`）は、日ごと持ったまま棚に載せる。**
- * 写真1枚ずつではなく日に付くものなので、写真の数だけ写して増やさない。
- * 口が `people` を返さない日（古い書き出し・落ちた日）は空になり、
- * そのとき画面はカードだけのころと1人も変わらない。
- *
- * @param photoDays 写真の口から来たぶん（日ごと。中に写真とその日いた人）
+ * @param photos 写真の口から来たぶん
  * @param cards 絵に結びついた人のカード（並べるのはこちら）
  * @param counts 写真ごとの**本当の**カードの枚数（絵の無い人も数えたもの）。
  *   渡さないと `cardCount` は入らない。**入らないことと0枚は別**
  */
 export function shelves(
-  photoDays: NordicPhotoDay[],
+  photos: NordicPhoto[],
   cards: ShownCard[],
   counts?: Map<string, number>,
 ): DayShelf[] {
   const at = new Map<string, PhotoSheet>();
   const order: PhotoSheet[] = [];
-  /** その日いた人。棚を作るときに、日で引いて配る */
-  const folks = new Map<string, DayPerson[]>();
-  for (const d of photoDays) {
-    if (d.people?.length) folks.set(d.day, d.people);
-    for (const p of d.photos ?? []) {
-      const g = sheetOf(p);
-      at.set(p.id, g);
-      order.push(g);
-    }
+  for (const p of photos) {
+    const g = sheetOf(p);
+    at.set(p.id, g);
+    order.push(g);
   }
   for (const c of cards) {
     let g = at.get(c.photoId);
@@ -375,9 +342,7 @@ export function shelves(
       had.photos.push(g);
       continue;
     }
-    /* 人がいても写真が1枚も無い日は、ここへ来ない。**棚は写真で立つ。**
-       誰もいない日に見出しだけ並べても、押すものが1つも無い */
-    const d: DayShelf = { day: g.day, photos: [g], people: folks.get(g.day) ?? [] };
+    const d: DayShelf = { day: g.day, photos: [g] };
     days.set(g.day, d);
     out.push(d);
   }
@@ -425,11 +390,7 @@ export type WallState = {
  * （`online`・画面に戻ってきた）でも読み直す。**画面を開き直させない。**
  */
 export function useCardWall(): WallState {
-  /* **日ごとのまま持つ。** 前はここで `days[].photos` だけを平らにしていて、
-     同じ返事に乗っている「その日いた人」（`days[].people`）を捨てていた。
-     捨てると、写真に入れる人がその日投げてくれた人だけになる（68回
-     コメントしてくれた人が、投げ銭していないというだけで候補に入らない）。 */
-  const [photoDays, setPhotoDays] = useState<NordicPhotoDay[] | null>(null);
+  const [photos, setPhotos] = useState<NordicPhoto[] | null>(null);
   /* **絵で絞る前のまま持つ。** 絞ってしまうと、絵の無い人のぶんが数えられず、
      消す前の「カードが◯枚あります」が少なく出る（`PhotoGroup.cardCount`）。
      並べるのに使うぶんは、出すときに `withIcons` を通す。 */
@@ -465,7 +426,7 @@ export function useCardWall(): WallState {
         // 形の違うものが返っても、面ごと落とさない
         .then((r) => {
           if (!alive.current) return;
-          setPhotoDays(r?.days ?? []);
+          setPhotos((r?.days ?? []).flatMap((d) => d.photos ?? []));
           now.current.photos = "ok";
           setPhotosRead("ok");
           again.current.photos = 0;
@@ -528,32 +489,22 @@ export function useCardWall(): WallState {
     };
   }, [load]);
 
-  /* 貼れた1枚を、その日の棚の先頭に置く。**日が無ければ日ごと作る**
-     （その日いた人はまだ分からないので空。次に読み直したときに入る）。 */
-  const add = useCallback((p: NordicPhoto) => {
-    setPhotoDays((cur) => {
-      const days = cur ?? [];
-      const i = days.findIndex((d) => d.day === p.day);
-      if (i < 0) return [{ day: p.day, photos: [p], people: [] }, ...days];
-      const next = [...days];
-      // 形の違うものが返っていても落とさない（`shelves` と同じ構え）
-      next[i] = { ...days[i], photos: [p, ...(days[i].photos ?? [])] };
-      return next;
-    });
-  }, []);
+  const add = useCallback(
+    (p: NordicPhoto) => setPhotos((cur) => [p, ...(cur ?? [])]),
+    [],
+  );
 
   /* 消したぶんを、その場で落とす。**読み直しに行かない。**
      カードも一緒に消える（サーバーの `dropCardsOfImage` と同じ）ので、
      ここでも一緒に落とす。残すと、絵の無い写真を指したカードが並ぶ。 */
   const drop = useCallback((photoId: string) => {
-    setPhotoDays((cur) =>
-      cur?.map((d) => ({ ...d, photos: (d.photos ?? []).filter((p) => p.id !== photoId) })) ?? cur);
+    setPhotos((cur) => cur?.filter((p) => p.id !== photoId) ?? cur);
     setCards((cur) => cur?.filter((c) => c.photoId !== photoId) ?? cur);
   }, []);
 
   /* 片方でも読めたら、読めたぶんで並べる。**両方 `wait` のあいだだけ null。** */
   const days = useMemo(() => {
-    if (!photoDays && !cards) return null;
+    if (!photos && !cards) return null;
     /* 本当の枚数は、絵で絞る前にしか数えられない。**カードの口が読めた
        ときだけ表を作る**（読めていないのに「0枚」と言わないため）。 */
     let counts: Map<string, number> | undefined;
@@ -561,8 +512,8 @@ export function useCardWall(): WallState {
       counts = new Map<string, number>();
       for (const c of cards) counts.set(c.photoId, (counts.get(c.photoId) ?? 0) + 1);
     }
-    return shelves(photoDays ?? [], withIcons(cards ?? []), counts);
-  }, [photoDays, cards]);
+    return shelves(photos ?? [], withIcons(cards ?? []), counts);
+  }, [photos, cards]);
   return { days, photosRead, cardsRead, add, drop, reload: () => load(true) };
 }
 

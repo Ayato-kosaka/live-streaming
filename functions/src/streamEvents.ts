@@ -58,18 +58,6 @@ export const IMAGES = db.collection("islandStreamEventImage");
 export const TIPS = db.collection("islandTips");
 /** 配られたカード。**平置き**(#202)。 */
 export const CARDS = db.collection("islandCards");
-/**
- * その日いた人の名簿。`islandDayPeople/{YYYY-MM-DD}.channels`。
- *
- * **台帳（`islandTips`）は「投げてくれた人」しか持たない。** その日
- * コメントしてくれた人は、投げていなければ1行も残らない。写真に入れる
- * 候補を台帳だけで組むと、**お金を出した人だけがその日の写真に入れる**
- * 形になる（2026-09-13 は、68回コメントしてくれた人が候補から外れた）。
- *
- * 日の境目は台帳と同じ**日本時間の0時**。書く側は `python/` 側の日次。
- * **過去のほとんどの日にまだ書類が無い。** 無い日は台帳だけで動く。
- */
-export const DAY_PEOPLE = db.collection("islandDayPeople");
 
 /** 一度に読む企画の数。提案も含めて数百件の見立て。 */
 export const MAX_EVENTS = 500;
@@ -564,31 +552,14 @@ export function shapePlace(b: Json, now: Place): Place {
 }
 
 /**
- * その日いた人（画面に出す用）。**金額は出さない。**
+ * その日に投げてくれた人（画面に出す用）。**金額は出さない。**
  *
- * 集めるのは2つ。**どちらも足す。**
- *
- * 1. **台帳（`islandTips`）** — その日か、その日の企画が名乗っている配信で
- *    投げてくれた人。0時をまたいで割れた後半は日付では当たらないので、
- *    企画の `videoIds` からも引く
- * 2. **名簿（`islandDayPeople/{day}.channels`）** — その日コメントして
- *    くれた人。**書類が無い日は、足すものが無いだけ**（過去のほとんどの
- *    日にまだ無い。無い日はいままで通り台帳だけで動く）
- *
- * 台帳だけを見ていたころは、**お金を出した人だけがその日の写真に入れる**
- * 形になっていた。2026-09-13 は、68回コメントしてくれてキャラクターの絵も
- * ある人が、投げていないという理由だけで候補から外れていた。
- *
- * **並びは「投げてくれた人が先、そのあと名簿の順」。** 読む側がこの順の
- * まま出すので、回すたびに入れ替わらないようにする（台帳は書類IDの順、
- * 名簿は先に見た順＝早く来てくれた順で入っている）。
- *
- * 金額は持ち出さない。台帳には入っているが、**島の画面では金額で並べない・
- * 出さない**（#202 の決め。`docs/nordic-fund.md` からの継続）。ここが台帳と
- * 画面のあいだの唯一の口なので、そもそも持ち出さない形にする。
+ * 台帳には金額が入っているが、**島の画面では金額で並べない・出さない**
+ * （#202 の決め。`docs/nordic-fund.md` からの継続）。ここが台帳と
+ * 画面のあいだの唯一の口なので、そもそも金額を持ち出さない形にする。
  * @param {EventRef[]} events 企画ぜんぶ
  * @param {string} day その日（YYYY-MM-DD）
- * @return {Promise<string[]>} その日いた人のチャンネルID。重複なし
+ * @return {Promise<string[]>} その日いた人のチャンネルID
  */
 export async function channelsOfDay(
   events: EventRef[],
@@ -606,27 +577,13 @@ export async function channelsOfDay(
   for (let i = 0; i < list.length; i += IN_CHUNK) {
     jobs.push(TIPS.where("videoId", "in", list.slice(i, i + IN_CHUNK)).get());
   }
-  /* 名簿は台帳と**同じ待ちの中**で引く。日ごとに順番待ちさせると、
-     写真のある日数ぶん往復が伸びる（`listPhotoDays` は日数ぶん並べて呼ぶ）。 */
-  const [snaps, roster] = await Promise.all([
-    Promise.all(jobs),
-    DAY_PEOPLE.doc(day).get(),
-  ]);
+  const snaps = await Promise.all(jobs);
   const out = new Set<string>();
   for (const s of snaps) {
     s.forEach((d) => {
       const c = clean(d.get("channelId"), 64);
       if (c) out.add(c);
     });
-  }
-  /* **書類が無い日は、ここで何も足さない。** 台帳のぶんはもう入っている
-     ので、名簿が無いことで1人も減らない。 */
-  const channels = roster.get("channels");
-  if (Array.isArray(channels)) {
-    for (const v of channels) {
-      const c = clean(v, 64);
-      if (c) out.add(c);
-    }
   }
   return [...out];
 }
