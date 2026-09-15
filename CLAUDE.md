@@ -207,6 +207,20 @@ cd ../tools/sprites && node crawl.mjs    # 全ページの h1・JSエラー・�
 Playwright は `tools/sprites/node_modules` にある（リポジトリ直下には無い）。
 スクリーンショット系のスクリプトは `tools/sprites/` から実行する。
 
+**`tools/sprites/_` で始まるものは使い捨てで、git に入っていない**
+（`.gitignore` の `tools/sprites/_*`）。その場で測って捨てる用なので、
+**`docs/` から名指しで呼ばない。** 461本のうち git に在るのは242本で、
+`_` 付きは全部こちら側。手元には残っていても、**clone にも worktree にも無い。**
+
+`docs/` に `_` 付きの名前が出てくるのは「そのとき、こう測った」という
+**記録**であって、手順ではない（`island-atlas.md` の `_abport.mjs`、
+`nordic-fund.md` の `_nftie.mjs` `_nlen.mjs`、`island-misses.md` の
+`_errraw.mjs`、`island-review-3.md` の `_rev3walk.mjs` の5か所）。
+**探しに行かない。** 同じことをもう一度測りたいなら、書き直すほうが早い。
+
+**繰り返し使う道具は、`_` を付けずに git に入れる。** 手引きから名指しで
+呼ぶものは、次にこのリポジトリを clone した人の手元にも無いといけない。
+
 ### このサンドボックスから出られない先
 
 **ブラウザからは** `lh3.googleusercontent.com`（住人のキャラクター画像）と
