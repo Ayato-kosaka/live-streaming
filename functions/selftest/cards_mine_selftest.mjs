@@ -148,6 +148,11 @@ function query(name, q) {
       return query(name, {...q, where: [...(q.where ?? []), [f, v]]});
     },
     orderBy: (f, dir) => query(name, {...q, order: [f, dir ?? "asc"]}),
+    /* **`select` を持たせる。** `iconsOf` の `sharedNames()` が
+       `select("name")` で名簿ぜんぶを読む。ここに口が無いと例外になり、
+       `iconsOf` はそれを握りつぶして「絵なし」を返す——**この診断は絵を
+       見ていないので、そのまま緑で通ってしまう。** 落ちない診断を置かない。 */
+    select: (...f) => query(name, {...q, select: f}),
     limit: (n) => query(name, {...q, limit: n}),
     get: async () => {
       hits.query += 1;
