@@ -63,9 +63,16 @@ name: 管理スクリプトを実行
 #                        数える。**読むだけ。1バイトも書かない。**
 #                        BigQuery のスパチャ／Doneru に、BigQuery がまだ
 #                        持っていない当日ぶん（Firestore streamChatMessages）を
-#                        足して、1人ずつ /characters/lookup に当てる。
+#                        足して、islandCharacter の名簿と突き合わせる。
+#                        **名簿は Firestore から1回だけ全件読む**（前は1人ずつ
+#                        /characters/lookup を叩いていた）。突き合わせは
+#                        **channelId が先、名前は後**。名前でしか当たらなかった
+#                        人数を分けて出すのは、**そこが相手の改名で外れる側**
+#                        だから。図鑑そのものの健康状態（channelId が空・
+#                        絵文字が空・plain / scene が無い）も一緒に数える。
 #                        {} で直近30日、{"days":60} で日数を変える。
-#                        **ログに出るのは人数だけ**（名前は logsafe が落とす）
+#                        **ログに出るのは人数と、測った時刻だけ**（名前も
+#                        書類IDもチャンネルIDも1つも出ない）
 #   characters_probe   … **絵を1枚置いて、読んで、消す**（入力なし）。
 #                        Actions は置き場に書けないまま（#283）でも、
 #                        Functions に頼めば置けることを本番で1回通す。
