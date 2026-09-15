@@ -557,9 +557,16 @@ export function shapePlace(b: Json, now: Place): Place {
  * 台帳には金額が入っているが、**島の画面では金額で並べない・出さない**
  * （#202 の決め。`docs/nordic-fund.md` からの継続）。ここが台帳と
  * 画面のあいだの唯一の口なので、そもそも金額を持ち出さない形にする。
+ * **「その日いた人」ではない。「その日投げてくれた人」だけ。**
+ * 前はここに「その日いた人のチャンネルID」と書いてあり、中身は台帳しか
+ * 見ていなかった。**その食い違いを「説明が正、中身がバグ」と読んで、
+ * コメントのほうへ寄せて広げたのが 2026-09-14 の障害**
+ * （`docs/island-incident-2026-09-14-cards.md`）。正しいのは中身のほうで、
+ * カードは投げ銭の特典（`docs/island-cards.md` 1章）。広げない。
+ *
  * @param {EventRef[]} events 企画ぜんぶ
  * @param {string} day その日（YYYY-MM-DD）
- * @return {Promise<string[]>} その日いた人のチャンネルID
+ * @return {Promise<string[]>} その日**投げてくれた**人のチャンネルID
  */
 export async function channelsOfDay(
   events: EventRef[],
