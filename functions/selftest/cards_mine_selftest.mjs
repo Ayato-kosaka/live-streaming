@@ -3,11 +3,15 @@
  *
  * ## 何を見ているか
  *
- * 誰でも読める `GET /cards` は、1枚ごとに `channelId` と `day` を返す。
+ * 誰でも読める `GET /cards` は、1枚ごとに `channelId` と `day` を返していた。
  * カードは投げ銭の台帳からしか作られないので、**それは「どのチャンネルが、
  * どの日に投げ銭したか」の一覧**と同じもの。`/me` が自分の1枚を出すために
  * 全員ぶんを受け取って手元で絞っていた。絞る場所をサーバーへ寄せたのが
  * `GET /cards/mine` で、ここはその口が本当に絞れているかを見る。
+ *
+ * 寄せ終わったので、公開の `/cards` からは `channelId` も本当のカードIDも
+ * 落とした。**落ちているかを見るのは `cards_public_selftest.mjs`。**
+ * ここは「自分のぶんだけが返るか」に絞る。
  *
  * ## なぜ本番のデータを引かないか
  *
@@ -326,41 +330,59 @@ async function call(method, path, auth) {
   return out;
 }
 
-/** 返ってきたカードの持ち主を並べる（**仕込んだIDしか出ない**） */
+/**
+ * 返ってきたカードの持ち主を並べる（**仕込んだIDしか出ない**）。
+ *
+ * **公開の `/cards` には使えない。** あちらは `channelId` を返さなくなった
+ * （`cards_public_selftest.mjs`）。使えるのは `/cards/mine` だけ。
+ */
 const owners = (r) => (r.body?.cards ?? []).map((c) => c.channelId).sort();
 
 /** カードのIDを並べたもの。並び順を見るため */
 const ids = (r) => (r.body?.cards ?? []).map((c) => c.id).join(",");
+
+/** 公開の口で、誰のカードかの代わりに見るもの。写真と絵 */
+const shots = (r) => (r.body?.cards ?? []).map((c) => c.photoId).sort();
 
 /* ---------------- 0. 探し方が当たるか（先に見る・#19） ---------------- */
 
 console.log("# 0. 探し方が当たるか（先に見る）");
 {
   const r = await call("GET", "/cards");
-  const who = owners(r);
   check("公開の /cards は扱われる", r.handled === true);
   check("公開の /cards は 200", r.status === 200, String(r.status));
+  /* **公開の口は持ち主を返さない**ので、ここでは写真の数で「他人のぶんも
+     載っている」を見る。仕込んだ4枚のうち2枚は他人のもので、そのうち1枚は
+     自分がもらっていない写真(`img_0000003`)から出ている。 */
   check(
     "偽データに他人のカードが入っている（0件が空振りでない）",
-    who.filter((c) => c !== "UC_me_0000001").length === 2,
-    who.join(","),
+    shots(r).filter((p) => p === "img_0000003").length === 1,
+    shots(r).join(","),
   );
-  check("公開の /cards は4枚とも返す", who.length === 4, `${who.length} 枚`);
+  check("公開の /cards は4枚とも返す", shots(r).length === 4, `${shots(r).length} 枚`);
   check(
     "公開の /cards の掛け値（Cache-Control）は今までどおり",
     r.head["Cache-Control"] ===
       "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
     r.head["Cache-Control"],
   );
+  /* 並び(day → at → id)は変えていない。**id だけ、人を指さないものに
+     差し替えてある**(`forEveryone`)。この入れ物は名簿が空なので絵は付かず、
+     `<写真のID>__x__<通し番号>` になる。 */
   check(
     "公開の /cards の並び（day → at → id）が変わっていない",
     ids(r) === [
-      "img_0000002__UC_me_0000001",
-      "img_0000001__UC_me_0000001",
-      "img_0000001__UC_other_00001",
-      "img_0000003__UC_other_00002",
+      "img_0000002__x__1",
+      "img_0000001__x__1",
+      "img_0000001__x__2",
+      "img_0000003__x__1",
     ].join(","),
     ids(r),
+  );
+  check(
+    "公開の /cards に `UC` が1文字も出ない（欄でも id の中でも）",
+    !JSON.stringify(r.body).includes("UC"),
+    JSON.stringify(r.body).slice(0, 160),
   );
 }
 
@@ -419,8 +441,9 @@ console.log("\n# 2. ログイン済みは、自分のカードだけ");
     !String(r.head["Cache-Control"]).includes("s-maxage"),
     r.head["Cache-Control"],
   );
-  /* **形は公開の口と同じ。** 画面（`MyStuff` / `CardSheet`）を作り替えずに
-     寄せ先だけ差し替えられること。欄が1つでも欠けたらここで落ちる */
+  /* **欄が1つでも欠けたらここで落ちる。** 公開の口とは `channelId` と `id` の
+     2つだけ違う（あちらは人を指す値を落としてある）。ここは本人の口なので、
+     `channelId` も本当のカードIDも残る。 */
   const keys = Object.keys(r.body.cards[0] ?? {}).sort().join(",");
   const want = [
     "at", "channelId", "day", "h", "icon", "id", "moved", "name",

@@ -301,7 +301,7 @@ console.log("\n# 1. 同じ名前を2つのチャンネルが名乗ったら、�
       !got.has("UC_z_000000026"),
       String(got.get("UC_z_000000026")),
     );
-    check("1人も当たらない", got.size === 0, `${got.size} 人`);
+    check("1人も当たらない", got?.size === 0, `${got?.size} 人`);
   }
   {
     const s = scenario(store);
@@ -374,7 +374,7 @@ console.log("\n# 2. `@` のあるなし・全角半角の違いだけの名前�
   const got = await s.iconsOf(["UC_c_000000003", "UC_f_000000006"]);
   check("全角でまねた人に当たらない", !got.has("UC_f_000000006"));
   check("半角の本人にも当てない", !got.has("UC_c_000000003"));
-  check("1人も当たらない", got.size === 0, `${got.size} 人`);
+  check("1人も当たらない", got?.size === 0, `${got?.size} 人`);
 }
 
 console.log("\n# 3. 入れ物が読めなかったら、投げずに・当てない");
@@ -394,12 +394,11 @@ for (const [name, fail] of [
     threw = String(e);
   }
   check(`${name} → 投げない`, threw === "", threw);
-  check(`${name} → 表は返る（呼ぶ側が落ちない）`, got instanceof Map);
-  check(
-    `${name} → **当てない側に倒す**（読めなかったから当てる、にしない）`,
-    got?.size === 0,
-    `${got?.size} 人`,
-  );
+  /* **「1人も当たらなかった」と「読めなかった」を同じ顔で返さない。**
+     前は空の表だったので、呼んだ側から見分けがつかず、公開の面が
+     「その日は誰も投げ銭していない」と言い切っていた
+     （`docs/island-standards.md` 10）。読めなかったら `null`。 */
+  check(`${name} → \`null\`（0人と見分けがつく）`, got === null, String(got));
   check(
     `${name} → ログに素性が出ていない`,
     !s.logs.join("\n").includes("UC_") && !s.logs.join("\n").includes("さくら"),
@@ -423,7 +422,8 @@ console.log("\n# 4. 上限で切れたときも、当てない");
     threw = String(e);
   }
   check("投げない", threw === "", threw);
-  check("1人も当たらない", got?.size === 0, `${got?.size} 人`);
+  // 読み切れていないので、こちらも「0人」ではなく「読めなかった」
+  check("`null`（0人と見分けがつく）", got === null, String(got));
   check("切れたことがログに出る", s.logs.some((l) => l.includes("truncated")));
   check(
     "ログに素性が出ていない",

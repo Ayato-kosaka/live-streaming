@@ -729,13 +729,12 @@ export type NordicPhoto = {
 /**
  * その日の配信でスパチャしてくれた人。
  *
- * **どの絵の人かは、ここでは決まらない。** 返るのは YouTube のチャンネルで、
- * 絵との対応は `content/residents.ts` にある（`ResidentShow` と同じ考え方）。
- * Doneru の人はチャンネルが分からないことがあるので、
- * そのときだけ手入れで `icon` が直に入る（`python/admin/nordic_supporter.py`）。
+ * **誰かを指す値は返ってこない。** ここに並ぶのは「その日、その配信に投げ銭して
+ * くれた人」なので、チャンネルIDを添えると**誰がどの日に投げ銭したかの一覧**に
+ * なる（`docs/island-incident-2026-09-14-cards.md` 8-2）。サーバーが落として
+ * いる。出るのは絵と、名前を出してよいと言った人の名前だけ。
  */
 export type NordicSupporter = {
-  channelId?: string | null;
   icon?: string | null;
   name?: string | null;
 };
@@ -883,8 +882,23 @@ export const deleteNordicPhoto = (id: string, token: string) =>
    BigQuery から翌朝に入るので、「貼った瞬間に配る」だと、その日ぶんが
    永久に0枚になる。 */
 
-/** カード1枚。**置き場にこの形では入っていない。組み立てたもの。** */
+/**
+ * カード1枚。**置き場にこの形では入っていない。組み立てたもの。**
+ *
+ * **`channelId` が入るのは `getMyCards`（`/cards/mine`）だけ。**
+ * 誰でも読める `getCards`（`/cards`）は返さない。カードは投げ銭の台帳からしか
+ * 作られないので、`channelId` を全ブラウザへ配ると「どのチャンネルが、
+ * どの日に投げ銭したか」の一覧を鍵なしで配ることになる
+ * （`docs/island-incident-2026-09-14-cards.md` 8-2）。
+ */
 export type IslandCard = {
+  /**
+   * 1枚を見分ける字。**公開の口とじぶんの口で、別のものが入る。**
+   *
+   * - `/cards`（誰でも）… `<写真のID>__<絵>__<通し番号>`。人を指さない。
+   *   使い道は React の key だけ
+   * - `/cards/mine`（本人）… 本当のカードID。`moveCard` に渡せるのはこちら
+   */
   id: string;
   /** その日(YYYY-MM-DD)。企画はこの日付で引く */
   day: string;
@@ -893,8 +907,13 @@ export type IslandCard = {
   w: number;
   h: number;
   note: string;
-  /** もらった人の YouTube チャンネル。Doneru の人は null で、持ち主が分からない */
-  channelId: string | null;
+  /**
+   * もらった人の YouTube チャンネル。**`/cards/mine` にしか入らない。**
+   *
+   * 公開の `/cards` は欄ごと返さない（上の説明）。Doneru の人は
+   * `/cards/mine` でも null で、持ち主が分からない。
+   */
+  channelId?: string | null;
   /** 名簿が絵まで持っていたときだけ。ふつうは `content/residents.ts` で引く */
   icon: string | null;
   /** 島に名前を出してよいと言った人だけ */
@@ -924,12 +943,11 @@ export const getCards = () => req<{ cards: IslandCard[] }>("/cards");
 /**
  * じぶんのカードだけ。**ログインした人の口。**
  *
- * 上の `getCards` は1枚ごとに `channelId` と `day` を返す。カードは投げ銭の
- * 台帳からしか作られないので、それは**「どのチャンネルが、どの日に投げ銭
- * したか」の一覧**と同じもの。`/me` は自分の数枚を出すだけの面なのに、
- * 全員ぶんを降ろしてから手元で絞っていた。絞るのはサーバー側にした。
+ * `/me` は自分の数枚を出すだけの面なのに、全員ぶんを降ろしてから手元で
+ * 絞っていた。絞るのはサーバー側にした。
  *
- * **返る形は上と同じ。** だから画面（`withIcons` から先）は何も変わらない。
+ * **こちらだけが `channelId` と本当のカードIDを返す。** 自分のものを自分が
+ * 見るだけなので。公開の `getCards` はどちらも落としている（`IslandCard`）。
  */
 export const getMyCards = (token: string) =>
   req<{ cards: IslandCard[] }>("/cards/mine", { headers: auth(token) });
