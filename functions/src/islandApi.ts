@@ -32,7 +32,7 @@ import {
 import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
-import {handleCards, iconsOf} from "./cards";
+import {handleCards, iconsOf, peopleForEveryone} from "./cards";
 /* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
@@ -1887,6 +1887,7 @@ type PhotoShape = {
  * **写真のある日しか返さない。** 旅は10日あるが、まだ何も起きていない日に
  * 「まだありません」を並べても読む人には何も無い(docs/nordic-photos.md 7章)。
  * @return {Promise<Json[]>} 新しい日が先の、日ごとの写真と、その日いた人
+ *   （その日いた人は**絵と名前だけ**。誰かを指す値は返さない）
  */
 async function listPhotoDays(): Promise<Json[]> {
   const snap = await NPHOTOS.orderBy("at", "desc").limit(400).get();
@@ -1916,8 +1917,15 @@ async function listPhotoDays(): Promise<Json[]> {
      （全部動いてから消す）が、読むのはやめる。
 
      **金額はここから出さない。** 台帳は持っているが、島の画面では
-     金額で並べない・出さない(#202)。ここが台帳と画面のあいだの口なので、
-     そもそもチャンネルIDしか持ち出さない形にしてある。 */
+     金額で並べない・出さない(#202)。
+
+     ここには長いあいだ「そもそもチャンネルIDしか持ち出さない形にしてある」と
+     書いてあった。**それは持ち出していない理由にならない。** チャンネルIDは
+     `youtube.com/channel/UC…` を開けば本人の顔と名前に直結するので、
+     金額が無くても「誰がどの日に投げ銭したか」は丸ごと出ている。
+     内部の欄の話を、受け取る人にとっての意味の代わりに使っていた
+     (`docs/island-incident-2026-09-14-cards.md` 8-2)。いまは下の
+     `peopleForEveryone` で落としている。**ここから外へは出ない。** */
   const events = await loadEvents();
   const [peopleByDay, residents] = await Promise.all([
     Promise.all(days.map((d) => channelsOfDay(events, d))),
@@ -1927,7 +1935,10 @@ async function listPhotoDays(): Promise<Json[]> {
      日ごとに引くと旅の日数ぶん往復が増える。日が何日あっても2往復。
      引く前に日ごとの上限(60人)で切る。出さない人の絵は要らない。 */
   const shown = peopleByDay.map((x) => x.slice(0, 60));
-  const icons = await iconsOf(shown.flat());
+  /* 読めなかったときは `null`。ここは写真の一覧が本体で、絵はその飾りなので
+     日ごと丸ごと落とさず、**絵の無いまま**返す（`people` は空になる）。
+     カードの口のように 502 にしないのは、写真が出なくなるほうが重いから。 */
+  const icons = (await iconsOf(shown.flat())) ?? new Map<string, string>();
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の
@@ -1939,20 +1950,18 @@ async function listPhotoDays(): Promise<Json[]> {
     const id = r.channelId as string;
     if (id && r.name) named.set(id, r.name as string);
   });
+  /* **出すのは絵と、出してよいと言った人の名前だけ**(`peopleForEveryone`)。
+     `channelId` は返さない。ここに並ぶのは「その日、その配信に投げ銭して
+     くれた人」なので、チャンネルIDを添えると**誰がどの日に投げ銭したかの
+     一覧を、鍵なしで配る**ことになる(`docs/island-incident-2026-09-14-cards.md`
+     8-2)。`GET /cards` と同じ台帳から出てくるものなので、線も同じにする。
+
+     絵は誰にでも出す。前はここも `null` と直に書いていて、画面が焼き込みの
+     22人(`site/content/residents.ts`)から引き直して埋めていた。表に
+     入っていない人は、そこで黙って消えていた（`cards.ts` と同じ根っこ）。 */
   const peopleOf = new Map<string, Json[]>();
   days.forEach((day, i) => {
-    peopleOf.set(
-      day,
-      shown[i].map((channelId) => ({
-        channelId,
-        /* **絵は誰にでも出す。名前は出してよいと言った人だけ**（すぐ下）。
-           前はここも `null` と直に書いていて、画面が焼き込みの22人
-           (`site/content/residents.ts`)から引き直して埋めていた。表に
-           入っていない人は、そこで黙って消えていた（`cards.ts` と同じ根っこ）。 */
-        icon: icons.get(channelId) || null,
-        name: named.get(channelId) || null,
-      })),
-    );
+    peopleOf.set(day, peopleForEveryone(shown[i], icons, named));
   });
   return days.map((day) => ({
     day,

@@ -157,6 +157,36 @@ BigQuery から翌朝にしか入らなかった**ので、「写真を貼った
 絵に結びつかない人のカードは、画面に出ない。
 「あなたのキャラクターがありません」とは言わない。
 
+### 誰でも読める応答は、誰かを指す値を持たない（2026-09-15 から）
+
+カードは投げ銭の台帳からしか作られない。だから `GET /cards` が1枚ごとに
+`channelId` と `day` を返すのは、**「どのチャンネルが、どの日に投げ銭したか」
+の一覧を、鍵なしで配っている**のと同じことだった
+（`docs/island-incident-2026-09-14-cards.md` 8-2。実測で別々の人が15人ぶん）。
+書類IDも `<画像のID>__<チャンネルID>` なので、**欄を消しても ID から読める。**
+
+| | `GET /cards`（誰でも） | `GET /cards/mine`（本人） |
+| --- | --- | --- |
+| `channelId` | **返さない**（欄ごと無い） | 返す |
+| `id` | `<画像のID>__<絵>__<通し番号>` | 本当のカードID（`<画像のID>__<チャンネルID>`） |
+| それ以外の欄 | 同じ | 同じ |
+
+`GET /nordic/photos` の `days[].people[]` も同じで、**`channelId` を返さない。**
+出るのは `icon` と、名前を出してよいと言った人の `name` だけ。
+
+公開の `id` に入れてよいのは「その応答の中で一意」「同じ中身なら毎回同じ」
+「人を指さない」の3つだけ。使い道が **React の key しかない**から
+（`POST /cards/{cardId}` は画面のどこからも呼んでいない。本人とあやとが使う口で、
+IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュにはしない**——
+「同じ人だと分かる印」を新しく作ってしまう。絵（`icon`）は同じ応答で
+すでに公開しているので、そこに新しい情報は足さない。
+
+**これで写真に入れられる人は1人も変わらない。** 候補を作るのは `icon` で
+（`CardSheet.tsx` の `picks`）、`channelId` は使っていない。本番の22枚・
+写真4枚で before / after を突き合わせて、写真ごとの絵の集合が完全に一致する
+ことを確かめてある（2026-09-15）。確かめは
+`functions/selftest/cards_public_selftest.mjs`。
+
 ### アイコンは2つある。混ぜない
 
 | | 何 | どこが正 | どこに出る |
@@ -328,6 +358,7 @@ BigQuery から翌朝にしか入らなかった**ので、「写真を貼った
 | --- | --- |
 | 返す口 | `functions/src/cards.ts`（`islandApi.ts` には取り付けだけ） |
 | 絵をチャンネルに当てる（かぶった名前を止めるのもここ） | `functions/src/cards.ts` の `iconsOf`。確かめは `functions/selftest/cards_icons_selftest.mjs` |
+| 公開の応答から人を指す値を落とす | `functions/src/cards.ts` の `forEveryone` / `peopleForEveryone`。確かめは `functions/selftest/cards_public_selftest.mjs` |
 | 組み立て（貼ったとき） | `functions/src/streamEvents.ts` の `mintForImage` |
 | 組み立て（毎日） | `python/island_cards.py` |
 | 台帳を作る | `python/island_tips.py` |

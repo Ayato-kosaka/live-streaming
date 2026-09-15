@@ -18,7 +18,7 @@ import { charImg } from "@/lib/charImg";
  * 相手が決まるので、`islandCards/{cardId}` に1枚ずつ作られている
  * （`functions/src/cards.ts` 冒頭）。こちら側でやるのは4つだけ。
  *
- *   1. どの絵の人かを突き合わせる（絵の割り当ては residents.ts だけが持つ）
+ *   1. 絵の付いたカードだけを残す（絵を当てるのはサーバー。`withIcons`）
  *   2. その日の企画を日付で引く（表は面が渡してくる。`content/plans.ts`）
  *   3. 同じ写真から出たカードを、写真1枚にまとめる（`byPhoto`）
  *   4. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
@@ -37,12 +37,13 @@ export type ShownCard = IslandCard & { icon: string };
 /**
  * カードに、キャラクターの絵を結び付ける。
  *
- * **どの絵が誰のものかは、あやとの表だけが決める**（`content/residents.ts` の
- * `channel`）。サーバーは名簿の持っているチャンネルをそのまま返してくるので、
- * 絵はここで引く。ここで引く形にしておくと、絵の割り当てが2か所に散らない。
+ * **絵はサーバーが当てる**（`functions/src/cards.ts` の `iconsOf`）。
+ * ここは返ってきた `icon` を通すだけで、当てているわけではない。
  *
- * Doneru の人（`python/admin/nordic_supporter.py` から手で入る人）は
- * チャンネルを持たないかわりに絵を直に持っているので、そちらを使う。
+ * 焼き込みの22人（`content/residents.ts`）から引く道が下に残っているが、
+ * **効くのは `channelId` の入る `/cards/mine` だけ。** 誰でも読める
+ * `/cards` は `channelId` を返さなくなったので、公開の面ではサーバーの
+ * `icon` がそのまま答えになる（`lib/api.ts` の `IslandCard`）。
  *
  * **絵に結びつかない人のカードは出さない。** カードは「写真の上に
  * その人が立っている1枚」なので、立つ人がいなければ絵にならない。
@@ -55,6 +56,7 @@ export function withIcons(list: IslandCard[]): ShownCard[] {
   });
   const out: ShownCard[] = [];
   for (const c of list) {
+    // `channelId` が入るのは `/cards/mine` だけ。公開の口では `c.icon` のみ
     const icon = c.icon ?? (c.channelId ? byChannel.get(c.channelId) : null);
     if (!icon) continue;
     out.push({ ...c, icon });

@@ -117,7 +117,13 @@ export type CardsRes = {
   json(b: unknown): unknown;
 };
 
-/** 画面に出す1枚。**欄の名前も意味も、#202 の前と同じ。** */
+/**
+ * 画面に出す1枚。**これは中の形で、そのまま外へは出さない。**
+ *
+ * `id` と `channelId` は人を指す。外へ出せるのは `/cards/mine`（本人が
+ * 自分のものを見るだけ）まで。誰でも読める `/cards` には `forEveryone` を
+ * 通してから返す。
+ */
 type Card = {
   id: string;
   day: string;
@@ -327,15 +333,23 @@ async function channelNames(ids: string[]): Promise<Map<string, string>> {
  * どねID の紐付けで止めているのと、同じ危険・同じ止め方。
  *
  * **落ちても投げない。** 絵が引けないことでカードそのものが返らなくなるのは、
- * 直そうとしているものより悪い(#34 と同じ形)。引けなければ空の表を返して、
- * 呼んだ側は `icon: null` のまま並べる。**ただし「読めなかったから当てる」
- * には倒さない。** 読めなければ、当てない。
+ * 直そうとしているものより悪い(#34 と同じ形)。**ただし「読めなかったから
+ * 当てる」には倒さない。** 読めなければ、当てない。
+ *
+ * **「1人も当たらなかった」と「読めなかった」を、同じ顔で返さない。**
+ * 読めなかったときは `null`。前は空の表を返していて、呼んだ側からは
+ * 見分けがつかなかった。公開の `/cards` が `channelId` を返していたあいだは
+ * 画面が焼き込み(`site/content/residents.ts`)から引き直せたので、読めない回でも
+ * 候補は出ていた。**その拾い直しを取り上げたので、ここで区別する。**
+ * 区別せずに空を返すと、読めなかった回の画面が「その日は誰も投げ銭して
+ * いない」と言い切る(`docs/island-standards.md` 10)。
  * @param {string[]} channelIds カードの持ち主
- * @return {Promise<Map<string, string>>} チャンネルID → キャラクターの書類ID
+ * @return {Promise<Map<string, string> | null>} チャンネルID → キャラクターの
+ *   書類ID。読めなかったときは `null`
  */
 export async function iconsOf(
   channelIds: string[],
-): Promise<Map<string, string>> {
+): Promise<Map<string, string> | null> {
   const ids = [...new Set(channelIds.filter((x) => x))].slice(0, MAX_CARDS);
   const out = new Map<string, string>();
   if (ids.length === 0) return out;
@@ -345,8 +359,9 @@ export async function iconsOf(
       sharedNames(),
       channelNames(ids),
     ]);
-    // 辞書を読み切れていない。かぶりが分からないので1枚も当てない
-    if (!shared) return out;
+    // 辞書を読み切れていない。かぶりが分からないので1枚も当てない。
+    // **これも「読めなかった」側。** 当てないまま返すと 0人 と区別できない
+    if (!shared) return null;
     for (const id of ids) {
       const name = names.get(id);
       if (!name) continue;
@@ -364,10 +379,13 @@ export async function iconsOf(
     }
   } catch (e) {
     logger.warn("card icons failed", String(e));
-    return new Map();
+    return null;
   }
   return out;
 }
+
+/** 絵を引けなかった。**0人と同じ顔で返さないため**、ここで止める。 */
+export class IconsUnavailable extends Error {}
 
 /**
  * 置き場に入っている置き方を読む。
@@ -418,6 +436,11 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
     deps.listResidents(),
     iconsOf(rows.map((r) => clean(r.v.channelId, 64))),
   ]);
+  /* **読めなかったら、そこで止める。** 絵の無いカードを並べて返すと、
+     公開の面では候補が1人も出ない——それは「誰も投げ銭していない」と
+     同じ絵になる。呼んだ側(`handleCards`)が 502 を返し、画面は
+     「読めなかった。もう一度よみこむ」を出す。 */
+  if (!icons) throw new IconsUnavailable("card icons unavailable");
 
   const imageOf = new Map<string, ImageRef>();
   images.forEach((d) => {
@@ -476,6 +499,106 @@ function sortCards(list: Card[]): Card[] {
   });
 }
 
+/* ---------------- 誰でも読める応答から、人を指す値を落とす ----------------
+
+   カードは投げ銭の台帳(`islandTips`)からしか作られない。だから1枚ごとに
+   `channelId` と `day` を返すのは、**「どのチャンネルが、どの日に投げ銭
+   したか」の一覧を、鍵なしで配っている**のと同じことだった。
+   `channelId` は `youtube.com/channel/UC…` を開けば本人の顔と名前に直結する。
+
+   **「金額を出していないから投げ銭の情報は出していない」とは言わない。**
+   これは内部の欄の話を、受け取る人にとっての意味の代わりに使う言い換えで、
+   9月14日の障害の根っこと同じもの
+   (`docs/island-incident-2026-09-14-cards.md` 8-2)。
+
+   ## `id` も落とす
+
+   カードの書類IDは `<画像のID>__<チャンネルID>` なので、**欄を消しても
+   ID から読める。** ここで作り直す。
+
+   代わりに置くのは `<画像のID>__<絵>__<通し番号>`。
+
+   - **絵(`icon`)は、同じ応答の `icon` 欄でもう公開している**(図鑑 `/friends`
+     でも98人ぶん公開されている)。**新しい情報を足さない**
+   - 通し番号は、同じ写真に同じ絵が2枚あるとき(Doneru から手で入った人と
+     YouTube の人が同じ絵に当たる)に分けるためだけのもの
+   - **チャンネルIDのハッシュにしない。** 「同じ人だと分かる印」を新しく
+     作ってしまう。落としたものを別の形で配り直すことになる
+
+   ## これで足りる理由
+
+   公開の `id` を使っているのは **React の key だけ**
+   (`site/components/cards/CardSheet.tsx` の `picks`)。
+   `POST /cards/<id>` は画面のどこからも呼ばれていない(本人とあやとが使う口で、
+   IDは `GET /cards/mine` から取れる)。だから公開の `id` に要るのは
+   「その応答の中で一意」「同じ中身なら毎回同じ」「人を指さない」の3つだけ。 */
+
+/** 誰でも読める応答の1枚。**`channelId` を持たない。** */
+export type PublicCard = Omit<Card, "channelId">;
+
+/**
+ * 公開の応答に直す。**残す欄を1つずつ書き出す。**
+ *
+ * `...c` と書いて `channelId` だけ削らないのは、ここが持ち出しの境目だから。
+ * 書き出しておけば、`Card` に欄が増えた日に**黙って外へ出ることがない**
+ * （型が合わなくなるので、出すかどうかをそのとき決めることになる）。
+ * @param {Card[]} list 中の形のカード。並べ替え済み
+ * @return {PublicCard[]} 人を指す値の入っていない1枚ずつ
+ */
+export function forEveryone(list: Card[]): PublicCard[] {
+  /** `<画像のID>__<絵>` ごとの通し番号。同じ写真に同じ絵が2枚あるとき用 */
+  const seq = new Map<string, number>();
+  return list.map((c) => {
+    const base = `${c.photoId}__${c.icon || "x"}`;
+    const n = (seq.get(base) ?? 0) + 1;
+    seq.set(base, n);
+    return {
+      id: `${base}__${n}`,
+      day: c.day,
+      photoId: c.photoId,
+      url: c.url,
+      w: c.w,
+      h: c.h,
+      note: c.note,
+      icon: c.icon,
+      name: c.name,
+      x: c.x,
+      y: c.y,
+      rot: c.rot,
+      scale: c.scale,
+      moved: c.moved,
+      at: c.at,
+      streamEventId: c.streamEventId,
+    };
+  });
+}
+
+/** 写真の日ごとに出す1人。**こちらも `channelId` を持たない。** */
+export type PublicPerson = {icon: string | null; name: string | null};
+
+/**
+ * 「その日いた人」を、公開の応答の形にする(`islandApi.ts` の `listPhotoDays`)。
+ *
+ * **カードと同じ台帳から出てくるので、同じ線を引く。** あちらだけ塞いで
+ * こちらを開けておくと、`GET /nordic/photos` のほうから同じ名簿が読める。
+ * 見分けるための値は返さない——出すのは絵と、名前を出してよいと言った人の
+ * 名前だけ。**上の `forEveryone` と2か所に散らさないため、ここに置く。**
+ * @param {string[]} channelIds その日いた人。**外へは出ない**
+ * @param {Map<string, string>} icons チャンネルID → キャラクターの書類ID
+ * @param {Map<string, string>} named チャンネルID → 出してよいと言った名前
+ * @return {PublicPerson[]} 渡された順のまま、絵と名前だけ
+ */
+export function peopleForEveryone(
+  channelIds: string[],
+  icons: Map<string, string>,
+  named: Map<string, string>,
+): PublicPerson[] {
+  return channelIds.map((channelId) => ({
+    icon: icons.get(channelId) || null,
+    name: named.get(channelId) || null,
+  }));
+}
+
 /**
  * あやと島カードの口。**扱った URL なら true を返す。**
  *
@@ -499,7 +622,9 @@ export async function handleCards(
         "Cache-Control",
         "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
       );
-      res.json({cards: await listCards(deps)});
+      /* **人を指す値を落としてから返す**（すぐ上の長い注）。
+         `/cards/mine` は落とさない。自分のものを自分が見るだけなので。 */
+      res.json({cards: forEveryone(await listCards(deps))});
     } catch (e) {
       logger.warn("cards list failed", String(e));
       res.status(502).json({error: "unavailable"});

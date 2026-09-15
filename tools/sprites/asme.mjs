@@ -22,6 +22,9 @@
  * `RLSPIN=1` を付けると、開いた 1.2 秒あとに回りだすところから撮れる。
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
@@ -35,6 +38,40 @@ const YT_PHOTO =
   "https://yt3.ggpht.com/GUqKfpGZZ-RvK4x8whkP6V7GfFc4FLoPC7rBUJ5jaqOdgouJabHkcGM8et_logXB62byGalyPA=s800-c-k-c0x00ffffff-no-rj";
 /** 上の絵に割り当ててあるチャンネル（`site/content/residents.ts`） */
 const CHANNEL = "UCyct2GK_RiW5Ji3Y0gd9MMg";
+
+/** チャンネル → キャラクターの書類ID。**焼き込みから読む**（写しを置かない） */
+const ICON_OF = (() => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, "../../site/content/residents.ts"), "utf8");
+  const out = new Map();
+  for (const m of src.matchAll(/\{[^{}]*\}/g)) {
+    const icon = /icon:\s*"([^"]+)"/.exec(m[0])?.[1];
+    const ch = /channel:\s*"([^"]+)"/.exec(m[0])?.[1];
+    if (icon && ch) out.set(ch, icon);
+  }
+  return out;
+})();
+
+/**
+ * 誰でも読める応答の形にする（`functions/src/cards.ts` の `forEveryone`）。
+ *
+ * **本番の `GET /cards` は `channelId` も本当のカードIDも返さない。**
+ * ここを本番と同じにしておかないと、撮ったときだけ絵が出て（`withIcons` が
+ * `channelId` から引けてしまう）、本番で消えているものが見えない。
+ * @param {object[]} list 中の形のカード
+ * @return {object[]} 人を指す値の入っていない1枚ずつ
+ */
+const publicCards = (list) => {
+  const seq = new Map();
+  return list.map((c) => {
+    const base = `${c.photoId}__${c.icon || "x"}`;
+    const n = (seq.get(base) ?? 0) + 1;
+    seq.set(base, n);
+    const out = { ...c, id: `${base}__${n}` };
+    delete out.channelId;
+    return out;
+  });
+};
 
 /** 本番の図鑑を curl で1回だけ取って、名前を作り物に差し替えて持つ。
     絵と絵文字と人数は本物（`route.mjs` が /tmp/chars から絵を返す）。 */
@@ -195,14 +232,17 @@ const PLANS = {
    外の写真には出られないので、URL は `route.mjs` の `offline` が
    差し替える先（wikimedia）にしておく。 */
 const MY_CARDS = Array.from({ length: 9 }, (_, i) => ({
-  id: `k${i + 1}`,
+  /* **本人の口（`/cards/mine`）は本当のカードIDを返す**（`<画像のID>__<チャンネルID>`）。
+     公開の口に出るときは `publicCards` が別のものに差し替える。 */
+  id: `ph${i + 1}__${CHANNEL}`,
   day: ago(i + 1).slice(0, 10),
   photoId: `ph${i + 1}`,
   url: `https://upload.wikimedia.org/seed-${i + 1}.jpg`,
   w: 1600, h: 1067,
   note: "その日の1枚",
   channelId: CHANNEL,
-  icon: null,
+  /** **本番はサーバーが絵を当てて返す**（`iconsOf`）。null で置かない */
+  icon: ICON_OF.get(CHANNEL) ?? null,
   name: NAME,
   x: 0.5, y: 0.82, rot: 0, scale: 1,
   moved: false,
@@ -342,7 +382,10 @@ const CARDS = CARD_SHOTS.flatMap((s) =>
     const id = `${s.id}__${chan}`;
     return {
       id, day: s.day, photoId: s.id, url: SHOT(s.id), w: s.w, h: s.h, note: s.note,
-      channelId: chan, icon: null, name: CARD_NAMES[chan] ?? null,
+      /* **絵はサーバーが当てて返す**（`functions/src/cards.ts` の `iconsOf`）。
+         `null` にして画面の焼き込みから引かせると、`channelId` を返さなく
+         なった公開の口を撮っているつもりで、1枚も写らない。 */
+      channelId: chan, icon: ICON_OF.get(chan) ?? null, name: CARD_NAMES[chan] ?? null,
       x: 0.62 + spread(id, 0) * 0.26,
       y: 0.88 + spread(id, 1) * 0.08,
       rot: -4 + spread(id, 2) * 8,
@@ -368,8 +411,10 @@ const PHOTO_DAYS = (() => {
     at.set(s.day, d);
   }
   for (const d of at.values()) {
+    /* **本番は `channelId` を返さない**（`functions/src/cards.ts` の
+       `peopleForEveryone`）。出るのは絵と、名前を出してよいと言った人の名前だけ。 */
     d.people = CARD_CHANNELS.map((chan) => ({
-      channelId: chan, icon: null, name: CARD_NAMES[chan] ?? null,
+      icon: ICON_OF.get(chan) ?? null, name: CARD_NAMES[chan] ?? null,
     }));
   }
   return [...at.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
@@ -468,7 +513,11 @@ export async function apply(ctx, opts = {}) {
       return json(r, u.searchParams.get("mine") === "1" ? MINE : ALL);
     }
     if (path === "/nextplans") return json(r, PLANS);
-    if (path === "/cards") return json(r, { cards: [...CARDS, ...MY_CARDS] });
+    /* **公開の口は、人を指す値を落としてから返す**（本番と同じ）。
+       ここを落とさずに撮ると、直したものが直っていない姿で写る。 */
+    if (path === "/cards") {
+      return json(r, { cards: publicCards([...CARDS, ...MY_CARDS]) });
+    }
     /* `/me` は公開の `/cards` ではなく、**本人だけの口**から引く。
        ここを差し替えないと、撮ったときだけ「カードが読めなかった」の顔に
        なって、直っていないものが壊れて見える。 */
