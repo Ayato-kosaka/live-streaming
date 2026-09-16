@@ -51,8 +51,12 @@
 
 import json
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+# 日付はぜんぶ JST で数える。配信の日付（`videos.actual_start_time`）が JST なので、
+# ここだけ UTC にすると、朝10時（01:00 UTC）に焼く晩に1日ずれる
+JST = timezone(timedelta(hours=9))
 
 ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
@@ -132,7 +136,9 @@ def read_countries() -> list:
             r'from:\s*"([\d-]*)",\s*to:\s*"([\d-]*)",\s*cities:\s*\[([^\]]*)\]', arr, re.S
         ):
             cities = [c.strip().strip('"') for c in sm.group(3).split(",") if c.strip()]
-            stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities})
+            # `exact` は「日どりが日単位で確かか」。人が帰ってから書いた滞在は
+            # 9ヶ月の塊になっていることがあるので、日単位では確かでない
+            stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities, "exact": False})
         out.append({"slug": m.group(1), "name": m.group(2), "stays": stays})
 
     # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった。
@@ -211,7 +217,14 @@ def read_nordic(after: str = "") -> list:
         if spans:
             spans[-1]["to"] = _prev_day(start)
         spans.append({"slug": slug, "from": start, "to": last})
-    # 開始が終わりを追い越した国（同じ日に入って同じ日に出た国）は落とす
+    # **まだ来ていない日は滞在ではない。** 旅程は予定なので、そのまま使うと
+    # 「9日後にストックホルムにいる」ことになる。街の欄が先に立って
+    # 「配信はのこっていない」と言い出すし、表紙の国の数も歩く前に増える
+    # （`content/countries.ts` の `AHEAD_COUNTRIES` の注と同じ理由）。
+    today = datetime.now(JST).date().isoformat()
+    for sp in spans:
+        sp["to"] = min(sp["to"], today)
+    # 開始が終わりを追い越した国（同じ日に入って同じ日に出た国、まだ来ていない国）は落とす
     spans = [s for s in spans if s["from"] <= s["to"]]
 
     out = []
@@ -233,9 +246,23 @@ def read_nordic(after: str = "") -> list:
         out.append({
             "slug": s["slug"],
             "name": names.get(s["slug"], s["slug"]),
-            "stays": [{"from": s["from"], "to": s["to"], "cities": cities}],
+            # **旅程から出した滞在は日単位で確か。** どの日にどの国へ入るかが
+            # 区間ごとに書いてあるので、題名を見なくても日付だけで国が決まる
+            # （`build_city_streams.py` の `pick()` がこの印を見る）
+            "stays": [{"from": s["from"], "to": s["to"], "cities": cities, "exact": True}],
         })
     return out
+
+
+def is_country(slug: str) -> bool:
+    """「歩いた国」に数えてよい slug か。
+
+    **`iran-border` は国ではない。** 「イラン（国境まで）」という区間で、
+    国境までは歩いたが入国はしていない。表紙の「◯カ国を歩いた」に混ぜると、
+    行っていない国を1つ足すことになる。
+    `countries.ts` は区間も国と同じ形で持っているので、ここで分ける。
+    """
+    return not slug.endswith("-border")
 
 
 def read_all() -> list:

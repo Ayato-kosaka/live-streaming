@@ -1,8 +1,12 @@
 """街ごとの配信を BigQuery から拾って、site/content/cityStreams.ts を作る。
 
 「歩いた国」で「国 → 街 → その街の配信」とたどれるようにするための下ごしらえ。
-街の滞在期間は site/content/countries.ts が持っているので、それを読んで
-その期間の配信を集める。
+街の滞在期間は `python/stays.py` が持っているので、それを読んでその期間の配信を集める。
+
+**滞在は countries.ts だけでは足りない。** あれは旅から帰った本人が書く表なので、
+旅のあいだは1行も増えない。北欧へ発ったあと、ワルシャワもヴィリニュスも
+街の欄そのものが立たなかった。いま歩いている旅のぶんは `content/nordic.ts` の
+旅程から出す（まとめているのが `python/stays.py`）。
 
 実行:
   BQ_PROJECT_ID=... python python/build_city_streams.py
@@ -28,23 +32,21 @@
 名乗ることになる（`docs/island-standards.md` 10「読めていないことを、値0と同じ絵にしない」）。
 """
 
+import argparse
 import json
 import logging
 import re
 import sys
 from pathlib import Path
 
-from google.cloud import bigquery
-
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from stays import read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
 OUT_TS = ROOT / "site" / "content" / "cityStreams.ts"
 
 # タイトルの書き方がぶれる街の言い換え。
@@ -62,81 +64,43 @@ ALIASES = {
     "ゴリス": ["Goris"],
     "グラスゴー": ["Glasgow"],
     "カイロ": ["ピラミッド"],
+    # 旅の題名が「リトアニアヴィリュニュス観光日」と綴っている（本人の書き方）。
+    # 題名は引用なので直さない。こちら側で当てる
+    "ヴィリニュス": ["ヴィリュニュス"],
 }
 
 
-def _bracket(src: str, start: int) -> str:
-    """`src[start]` の `[` から対応する `]` までを返す。"""
-    depth = 0
-    for i in range(start, len(src)):
-        if src[i] == "[":
-            depth += 1
-        elif src[i] == "]":
-            depth -= 1
-            if depth == 0:
-                return src[start : i + 1]
-    raise ValueError("閉じていない [")
-
-
 def read_stays() -> dict:
-    """countries.ts から「国 → 滞在（期間と街）」を読み出す。
+    """「国 → 滞在（期間と街）」。中身は `python/stays.py` が持っている。
 
-    **正規表現ひと息で国のかたまりを取らない。** 前はこう書いてあった:
-
-        r'slug: "([a-z-]+)",\\n\\s*name: "([^"]+)",(?:.|\\n)*?stays: \\[(...)\\],\\n\\s*summary'
-
-    これが2ヶ所で黙って落ちていた。
-
-    1. 滞在が**複数行**で書いてある国（イギリスとジョージア）は、
-       `{ from: "...", to: "...", cities: [...] }` を1行で探す内側の式に当たらない。
-       イギリスの2ヶ月とジョージアの9ヶ月が**まるごと消えて**、
-       イギリスは8街ぜんぶ、ジョージアは7街のうち5街が「配信はのこっていない」になった
-    2. `stays` と `summary` の間に注釈のある国では `\\],\\n\\s*summary` が当たらず、
-       **次の国の stays まで飲み込む**（ジョージアがアルメニアの滞在を持っていた）
-
-    どちらも例外を出さずに件数だけ減るので、焼き直しても気づけない。
-    括弧を数えて切り出す。
+    **ここで countries.ts を読まない。** 前はこのファイルと
+    `build_on_this_day.py` が同じ正規表現をそれぞれ持っていて、片方だけ直した
+    ことが2回ある（`docs/island-misses.md` #45）。読み落としの止め金も
+    向こうに置いてある。
     """
-    src = COUNTRIES_TS.read_text(encoding="utf-8")
-    src = src[src.index("export const COUNTRIES") :]
-    out = {}
-    for m in re.finditer(r'slug: "([a-z-]+)",\s*\n\s*name: "([^"]+)",', src):
-        tail = src[m.end() :]
-        head = tail.find("stays:")
-        if head < 0:
-            continue
-        arr = _bracket(tail, tail.index("[", head))
-        stays = []
-        for sm in re.finditer(
-            r'from:\s*"([\d-]*)",\s*to:\s*"([\d-]*)",\s*cities:\s*\[([^\]]*)\]', arr, re.S
-        ):
-            cities = [c.strip().strip('"') for c in sm.group(3).split(",") if c.strip()]
-            stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities})
-        out[m.group(1)] = {"name": m.group(2), "stays": stays}
-
-    # **止め金。** 上の読み落としは例外を出さず、街が黙って減るだけだった。
-    # countries.ts に書いてある `cities:` の数と、読めた滞在の数が合わなければ落とす。
-    # 合わないまま焼くと、拾えなかった街が画面で「配信はのこっていない」を名乗る。
-    want = len(re.findall(r"cities:\s*\[", src))
-    got = sum(len(c["stays"]) for c in out.values())
-    if want != got:
-        raise ValueError(f"countries.ts の滞在 {want} 件のうち {got} 件しか読めていない")
-    return out
+    return {c["slug"]: {"name": c["name"], "stays": c["stays"]} for c in read_all()}
 
 
-def fetch_videos() -> list:
-    """配信の一覧（日付・ID・タイトル）を古い順に取る。"""
-    sql = f"""
+def sql_of(project: str = "live-streaming-d3cac", dataset: str = "youtube_chat") -> str:
+    """配信の一覧（日付・ID・タイトル）を古い順に取る SQL。"""
+    return f"""
     SELECT
       FORMAT_TIMESTAMP('%Y-%m-%d', actual_start_time, 'Asia/Tokyo') AS d,
       video_id,
       title
-    FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos`
+    FROM `{project}.{dataset}.videos`
     WHERE actual_start_time IS NOT NULL
     ORDER BY actual_start_time
     """
+
+
+def fetch_videos() -> list:
+    from google.cloud import bigquery  # BQ を使うときだけ要る
+
+    from config import BQ_DATASET, BQ_PROJECT_ID
+
     client = bigquery.Client(project=BQ_PROJECT_ID)
-    return [dict(r) for r in client.query(sql).result()]
+    return [dict(r) for r in client.query(sql_of(BQ_PROJECT_ID, BQ_DATASET)).result()]
 
 
 def names_of(city: str) -> list:
@@ -161,6 +125,13 @@ def pick(videos: list, stay: dict, city: str, country: str, others: set) -> list
         return named
     # 街が1つの滞在。名前で当たったものは無条件で残し、残りは
     # 「他の国の名前が出ていない」ものだけ足す（移動日を隣の国から借りない）。
+    #
+    # **旅程から出した滞在（`exact`）は、その絞りをかけない。** 日どりが日単位で
+    # 確かなので、題名を見る必要がない。かけると逆に落ちる——旅の題名は毎回
+    # 「親友に会いにスウェーデンまで」と**行き先**を名乗るので、
+    # ヴィリニュスの2本がスウェーデンの名前に取られて0本になった。
+    if stay.get("exact"):
+        return window
     hit = {v["video_id"] for v in named}
     return [
         v
@@ -170,8 +141,18 @@ def pick(videos: list, stay: dict, city: str, country: str, others: set) -> list
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sql", action="store_true", help="流す SQL を出すだけ")
+    ap.add_argument("--rows", help="BigQuery の代わりに読む JSON（--sql の結果の行）")
+    a = ap.parse_args()
+    if a.sql:
+        print(sql_of())
+        return 0
+
     countries = read_stays()
-    videos = fetch_videos()
+    videos = (
+        json.loads(Path(a.rows).read_text(encoding="utf-8")) if a.rows else fetch_videos()
+    )
     logger.info("配信 %d 本、国 %d カ国", len(videos), len(countries))
 
     names = {c["name"] for c in countries.values()}

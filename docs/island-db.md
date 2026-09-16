@@ -965,7 +965,6 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 
 | 焼かれるもの | 元 | 回すもの | 待っているもの | `rebake` から |
 | --- | --- | --- | --- | --- |
-| `countryStats.ts` | `python/data/country_stats.json` | `build_country_stats.py --build` | `countries.ts`＋取り置きの取り直し | 手で押せば回る |
 | `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` | 手で押せば回る |
 | `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `build_legend_days.py` | `legends.ts` | **回せない** |
 | `voices.ts` | `python/voices_picks.json` | `build_voices.py --build` | `voices_picks.json` | **回せない** |
@@ -978,8 +977,11 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 **(b) は「取り置きの JSON を焼き直す」だけ。** 先にその JSON を取り直さないと、
 **回しても同じものが出る。** 取り直す SQL は各スクリプトの `--sql` が出す。
 
-`build_country_stats` `build_kitchen_talk` `build_legend_days` `build_shorts` は
-**`bigquery` を import すらしていない。** `build_voices` だけは BigQuery を引く道を
+`build_kitchen_talk` `build_legend_days` `build_shorts` は
+**`bigquery` を import すらしていない。**
+（`build_country_stats` は 2026-09-16 に (a) へ移した。BigQuery を引くようになり、
+毎晩ひとりでに焼ける。`python/data/country_stats.json` はもう入力ではなく、
+**引いた結果の写し**として置き直しているだけ。） `build_voices` だけは BigQuery を引く道を
 持っているが、それは**候補を集めるとき**で、`--build`（焼く側）は
 `voices_picks.json` しか読まない。
 

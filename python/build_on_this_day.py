@@ -8,9 +8,14 @@
 その日のうちコメントがいちばん多かった1本を、その日の代表とする。
 「よく見られた配信」を選ぶことになるので、思い出として出すのにも都合がいい。
 
-居た場所は countries.ts の滞在期間から引く。タイトルに街の名前が入っていれば街、
+居た場所は滞在期間（`python/stays.py`）から引く。タイトルに街の名前が入っていれば街、
 入っていなければ国の名前にする。ここを推測で埋めると嘘の場所を出すことになるので、
 根拠のあるものだけを使う。
+
+**滞在は countries.ts だけでは足りない。** あれは旅から帰った本人が書く表なので、
+旅のあいだは1行も増えない。2026-09-11 に北欧へ発ったあと、09-12〜09-14 の3日が
+場所も国も空で焼かれていた（板が3日ぶん無言になる）。いま歩いている旅のぶんは
+`content/nordic.ts` の旅程から出す。まとめているのが `python/stays.py`。
 
 実行:
   BQ_PROJECT_ID=... python python/build_on_this_day.py
@@ -30,11 +35,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from stays import read_all  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
 PEAKS_TS = ROOT / "site" / "content" / "streamPeaks.ts"
 OUT_TS = ROOT / "site" / "content" / "onThisDay.ts"
 
@@ -46,58 +52,11 @@ ALIASES = {
     "セヴァン湖": ["セヴァン"],
     "カズベキ": ["カズヘキ", "ゲルゲティ"],
     "バクー": ["アゼバイ"],
+    # 旅の題名が「リトアニアヴィリュニュス観光日」と綴っている（本人の書き方）。
+    # 題名は引用なので直さない。こちら側で当てる
+    "ヴィリニュス": ["ヴィリュニュス"],
 }
 
-
-def read_countries() -> list:
-    """countries.ts から「国 → 滞在（期間と街）」を読み出す。
-
-    **正規表現ひと息で国の塊を取らない。** ここは前、こう書いてあった:
-
-        re.search(r"stays: \\[((?:.|\\n)*?)\\],\\n    summary", block)
-
-    `stays` と `summary` のあいだに注釈のある国では当たらず、`continue` で
-    **その国がまるごと落ちる**。2026-09-10 の時点でジョージアがそれで、
-    読めた国は18ではなく17だった。onThisDay.ts の 618件のうち **378件**が
-    ジョージアなので、次に焼いた瞬間その378件から場所が消える。
-
-    落ちても例外は出ない。件数が減るだけなので、緑のまま master に入る。
-    括弧を数えて切り出し、**滞在の数が合わなければ落とす**。
-    （同じ外し方を `build_city_streams.py` の `read_stays()` でもやっていた。
-      `docs/island-misses.md` #45）
-    """
-    src = COUNTRIES_TS.read_text(encoding="utf-8")
-    src = src[src.index("export const COUNTRIES") :]
-    out = []
-    for m in re.finditer(r'slug: "([a-z-]+)",\s*\n\s*name: "([^"]+)",', src):
-        tail = src[m.end() :]
-        head = tail.find("stays:")
-        if head < 0:
-            continue
-        start = tail.index("[", head)
-        depth = 0
-        for i in range(start, len(tail)):
-            if tail[i] == "[":
-                depth += 1
-            elif tail[i] == "]":
-                depth -= 1
-                if depth == 0:
-                    break
-        arr = tail[start : i + 1]
-        stays = []
-        for sm in re.finditer(
-            r'from:\s*"([\d-]*)",\s*to:\s*"([\d-]*)",\s*cities:\s*\[([^\]]*)\]', arr, re.S
-        ):
-            cities = [c.strip().strip('"') for c in sm.group(3).split(",") if c.strip()]
-            stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities})
-        out.append({"slug": m.group(1), "name": m.group(2), "stays": stays})
-
-    # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった。
-    want = len(re.findall(r"cities:\s*\[", src))
-    got = sum(len(c["stays"]) for c in out)
-    if want != got:
-        raise ValueError(f"countries.ts の滞在 {want} 件のうち {got} 件しか読めていない")
-    return out
 
 def fetch_videos() -> list:
     """その日の代表になる配信を、JSTの日付ごとに1本ずつ取る。"""
@@ -193,9 +152,9 @@ def main() -> int:
     ap.add_argument("--rows", help="BigQuery の代わりに読む JSON")
     args = ap.parse_args()
 
-    countries = read_countries()
+    countries = read_all()
     if not countries:
-        logger.error("countries.ts から国を読めなかった")
+        logger.error("滞在を1件も読めなかった（countries.ts / nordic.ts）")
         return 1
     rows = (
         json.loads(Path(args.rows).read_text(encoding="utf-8"))

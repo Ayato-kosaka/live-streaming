@@ -1,5 +1,6 @@
 /** サイト全体の固定情報。日々変わるものは Firestore(/island-api) 側で上書きする。 */
 
+import { COUNTRIES_WALKED } from "./countryStats";
 import { say } from "./nights";
 import { RECIPES } from "./recipes";
 
@@ -182,7 +183,12 @@ export const STATS_FALLBACK = {
   streamDays: 610,
   comments: 125262,
   people: 2215,
-  countries: 17,
+  /* **手で書かない。焼き込みから数える**（`docs/island-standards.md` 8章）。
+     ここは `17` と書いてあって、2026-05-06 から4ヶ月動かなかった。
+     そのあいだにポーランドもリトアニアも歩いていて、表紙も名刺も棚も
+     「17カ国を歩いた」と言い続けた（`docs/island-misses.md` #102）。
+     `countryStats.ts` は毎晩焼き直るので、増えた翌朝には増えている。 */
+  countries: COUNTRIES_WALKED,
   /* **手で書かない。スタンプ帳から数える**（`docs/island-standards.md` 8章）。
      32 と書いてあって、同じ表紙の棚（`components/home/Shelf.tsx`）は
      `RECIPES.length` の 37 を出していた。**1つの面の中で数が2つあった。**

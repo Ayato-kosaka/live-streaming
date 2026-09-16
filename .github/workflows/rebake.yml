@@ -51,6 +51,14 @@ name: 島の数字を焼き直す
 # **押す人のいないとき（cron と、取り込みに繋いで来たぶん）だけは
 # `dry_run: false` / `deploy: true` で走る**（読む人がいないので）。
 #
+# ## 焼き直しても中身が動かなかったら、赤くする
+#
+# **緑は「回した」としか言っていない。** 落ちなかったことと、新しくなったことは別。
+# `countryStats.ts` はそれで4ヶ月止まった。commit の前の止め金は「焼く前と焼いた後」を
+# 見るので、凍っているものはその2つが同じで何も起きない。**時間の軸で見る**ものを
+# 別に置いた（step「凍っていないか」）。**あれは commit を止めない。** 入れるものが
+# 無いのだから止めようがなく、同じ晩に動いた他の焼き込みまで道連れになる。
+#
 # ## 焼いたものが縮んでいたら、commit しない
 #
 # 毎晩ひとりでに走るので、**焼き損なっても誰も見ていない。**
@@ -65,34 +73,43 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この5本だけ**）
+# ## 毎晩ひとりでに回すもの（**この6本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
 #   build_stream_peaks    streamPeaks.ts
 #   build_on_this_day     onThisDay.ts
 #   build_city_streams    cityStreams.ts
+#   build_country_stats   countryStats.ts
 #
 # 前の4本は**入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
 #
-# `build_city_streams` だけは上流に人の書く `countries.ts` がある。それでも
-# 毎晩に入れたのは、**街の一覧が止まっても、街ごとの本数は機械だけで動くから**。
-# ジョージアの滞在は `to: ""` で開いていて、配信が増えればトビリシもカズベキも増える。
-# 「上流が止まっているのに緑が付いて、止まっていることが隠れる」（`docs/island-fresh.md` 1章）は、
-# ここには当たらない。**変わらないから緑になるのではなく、実際に変わる。**
+# 後ろの2本は上流に人の書く `countries.ts` がある。それでも毎晩に入れたのは、
+# **街や国の一覧が止まっても、街ごと国ごとの数は機械だけで動くから**。
+# 「上流が止まっているのに緑が付いて、止まっていることが隠れる」
+# （`docs/island-fresh.md` 1章）は、ここには当たらない。
+# **変わらないから緑になるのではなく、実際に変わる。**
 #
-# ## 手で押したときだけ回せるもの（+2本）
+# そのうえ、**旅のあいだは上流そのものが別にある**（2026-09-16）。`countries.ts` は
+# 旅から帰った本人が書く表で、旅に出ているあいだは1行も増えない。いま歩いている旅の
+# 滞在は `content/nordic.ts` の旅程から出す。2つを足すのが `python/stays.py`。
 #
-#   build_country_stats   countryStats.ts    ※
+# `build_country_stats` を毎晩に入れたのは 2026-09-16。それまでは
+# 「BigQuery から焼く」と書いてあるのに取り置きの JSON を焼き直すだけで、
+# **2026-05-06 から4ヶ月、1バイトも動かないまま緑だった。**
+# いまは滞在から SQL を組んで BigQuery を引く。
+#
+# ## 手で押したときだけ回せるもの（+1本）
+#
 #   build_kitchen_talk    kitchenTalk.ts     ※
 #
-# **※ この2本は BigQuery を引かない。** 元は `python/data/*.json` に置いてある
-# 取り置きなので、回しても**同じものが焼き直るだけで数字は動かない**
-# （`country_stats.json` / `kitchen_video_stats.json` / `kitchen_residents.json` /
-# `kitchen_icons.json`）。数字を新しくするには、先にその JSON を取り直す必要がある。
+# **※ BigQuery を引かない。** 元は `python/data/kitchen_*.json` に置いてある
+# 取り置きなので、回しても**同じものが焼き直るだけで数字は動かない**。
+# 数字を新しくするには、先にその JSON を取り直す必要がある。
 # **毎晩に入れないのはそのため。** 変わらないものを毎晩走らせても、「今日も回った」
 # という緑が増えるだけで、上流が止まっていることが隠れる。
-# 人が上流（`countries.ts` / `recipes.ts` と取り置きの JSON）を新しくしたあとに手で押す。
+# 回したときは「BigQuery を引いていない」とログに出す（焼く step）。
+# 人が上流（`recipes.ts` と取り置きの JSON）を新しくしたあとに手で押す。
 # 手順は `/island-fresh` にある。
 #
 # 順番は入力の並びではなく**下の ALL の並びで回す**。依存があるため。
@@ -224,10 +241,10 @@ jobs:
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
             # 毎晩ぶん。**機械だけで答えの決まる5本**を、配るところまで
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams" >> "$GITHUB_ENV"
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 5本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 6本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -337,14 +354,21 @@ jobs:
           done
           ls -l /tmp/rebake-before
 
+      # **BigQuery を引かない本は、引いていないとログに書かせる。**
+      # `build_country_stats` は「BigQuery から焼く」と頭に書いてあるのに
+      # 取り置きの JSON を焼き直すだけで、**4ヶ月ぶん凍ったまま毎晩緑だった**。
+      # 書いてあることとやっていることが違うと、緑は「今日も回した」しか意味しない。
+      # いまは BigQuery を引く（`python/stays.py` の滞在で切る）ので、毎晩ぶんに入れた。
+      # 残った `build_kitchen_talk` は引かないので、回すたびにそう言う。
       - name: 焼く
         run: |
           set -euo pipefail
           for s in $REBAKE_SCRIPTS; do
             echo "::group::$s"
             case "$s" in
-              # この2本は取り置きの JSON から焼き直すだけ。--build は本人の docstring に合わせた形
-              build_country_stats|build_kitchen_talk) python "python/$s.py" --build ;;
+              build_kitchen_talk)
+                echo "::warning::$s は BigQuery を引きません。python/data/kitchen_*.json の焼き直しなので、先にその JSON を取り直さないと数字は動きません"
+                python "python/$s.py" --build ;;
               *) python "python/$s.py" ;;
             esac
             echo "::endgroup::"
@@ -690,6 +714,200 @@ jobs:
               raise SystemExit(main())
           PY
 
+      # **緑は「回した」としか言っていない。** 落ちなかったことと、新しくなったことは別。
+      #
+      # `countryStats.ts` は 2026-05-06 から4ヶ月、1バイトも動かないまま毎晩緑だった。
+      # 焼くスクリプトはきちんと走っていて、**BigQuery を引かずに取り置きの JSON を
+      # 焼き直していた**ので、答えがいつも同じだった。そのあいだ表紙は
+      # 「17カ国を歩いた」と言い続けた。ポーランドもリトアニアも歩いたあとに。
+      #
+      # 上の「中の数が縮んでいないか」では捕まらない。あちらが見るのは
+      # **焼く前と焼いた後**で、凍っているものはその2つが同じなので何も起きない。
+      # 見るべきは時間の軸——**前に中身が変わってから何日たったか**。
+      #
+      # **ここでは止めない。** 凍っているときに入れるものは1バイトも無いので
+      # 止めようがないし、同じ晩に動いた他の焼き込みまで道連れになる。
+      # 判定だけ置いて、run のいちばん最後で赤くする（下の「凍っていたら赤くする」）。
+      - name: 凍っていないか
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          """焼き直したのに**中身が動いていない**ものを見つけて、run を赤くする。
+
+          ## なぜ要るか
+
+          `countryStats.ts` は **2026-05-06 から4ヶ月**、1バイトも動かなかった。
+          焼くスクリプトは毎回きちんと走って、緑が毎晩並んでいた。走ってはいたが、
+          **BigQuery を引かず取り置きの JSON を焼き直していた**ので、答えがいつも同じだった。
+          そのあいだ表紙は「17カ国を歩いた」と言い続けた。ポーランドもリトアニアも歩いたあとに。
+
+          **「落ちなかった」は「新しくなった」ではない。** 緑は「回した」としか言っていない。
+
+          ## 「中の数が縮んでいないか」との分担（二重ではない。軸が違う）
+
+          | | 何を見るか | 見つけたらどうするか |
+          | --- | --- | --- |
+          | 縮み（あちら） | 焼いた結果が前より**やせた** | **commit を止める**（悪いものを master に入れない） |
+          | 凍り（ここ） | 焼いた結果が**何日も同じ** | **止めない。赤くするだけ** |
+
+          **凍りで commit を止めない。** 止めても入るものは1バイトも変わらないし、
+          同じ晩に動いた他の5本まで道連れになる。1本凍っただけで残りが毎晩止まるほうが悪い。
+          だからここは判定だけ置いて、run の最後で赤くする。
+
+          ## 「焼いた日」は中身ではない
+
+          `chapterStats.ts` と `chapterStreams.ts` は冒頭に「数えた日: YYYY-MM-DD」を書く。
+          **ここは焼くたびに動く**ので、そのまま比べると数字が1つも動いていない晩まで
+          「変わった」と読める。比べる前に落とす。
+
+          ## 動かなくて正常なものを赤くしない
+
+          狼少年にしたら、次からは誰も読まない。仕分けは `docs/island-fresh.md` にある。
+          **0 を書いたものは見ない。** 見ない理由まで表に出す（黙って抜くと、
+          次に読む人が「なぜここだけ無いのか」を調べ直すことになる）。
+
+          ## 手元で確かめる
+
+          **この step もワークフローの中に埋めてある**（理由は上の止め金と同じ。
+          チェックアウトが `ref: master` なので、別ファイルにすると枝で試せない）。
+          取り出し方も同じで、`--before` が要らないだけ:
+
+            python3 -c "import yaml;print([s for s in yaml.safe_load(
+              open('.github/workflows/rebake.yml'))['jobs']['rebake']['steps']
+              if s['name']=='凍っていないか'][0]['run'])" > /tmp/g.sh
+            # <<'PY' から PY までを /tmp/frozen.py に切り出して
+            REBAKE_PATHS="site/content/countryStats.ts" python3 /tmp/frozen.py
+
+          **赤くなるほうも自分で見ておく。** 古い commit を並べた使い捨ての
+          リポジトリを作り、「焼いた日だけ動かした晩」を何回か積んでから回すと、
+          凍っているものが赤く、動かなくて正常なものが赤くならないことを両方見られる。
+          """
+
+          import os
+          import re
+          import subprocess
+          import sys
+          import time
+
+          # 何日動かなかったら赤くするか。**0 は「見ない」。**
+          # 「毎日変わるはず／変わらなくて正常」の仕分けは `docs/island-fresh.md` の1〜3章。
+          # 日数は「1晩落としても鳴らない」ところに置く。取り込みは 21:49〜23:32 UTC で
+          # 揺れるうえ、こちらの繋ぎ（workflow_run）も相手が赤い晩は来る保証がない。
+          WATCH = {
+              "chapterStats.ts": (4, "いまの章の配信と人が毎晩増える"),
+              "chapterStreams.ts": (0, "閉じた章のぶんだけ。章が閉じるまで動かないのが正常"),
+              "residents.ts": (3, "直近90日の窓が毎日ずれるので、毎晩動く"),
+              "streamPeaks.ts": (10, "山が雑音と区別できた配信だけ。出せない晩がある"),
+              "onThisDay.ts": (4, "その日の代表が1本ずつ増える"),
+              "cityStreams.ts": (7, "いまいる街の配信が増える。題名に街の名が出ない時期は止まる"),
+              "countryStats.ts": (5, "いまいる国のコメントが毎晩増える"),
+              "kitchenTalk.ts": (0, "上流が人（recipes.ts と手で選ぶ引用）。BigQuery を引かない"),
+          }
+
+          # 焼いた日そのもの。中身ではないので、比べる前に落とす
+          STAMP = re.compile(r"^ \* 数えた日: .*$", re.M)
+
+          # さかのぼる上限。焼いた日しか動いていない commit を抜けるぶんだけあればよい
+          DEPTH = 60
+
+
+          def git(*args) -> str:
+              return subprocess.run(["git", *args], capture_output=True, text=True).stdout
+
+
+          def body(text: str) -> str:
+              return STAMP.sub("", text)
+
+
+          def stale_days(path: str) -> float:
+              """いまの中身になってから何日たったか。この回で焼き変わっていれば 0。"""
+              if git("diff", "--name-only", "--", path).strip():
+                  return 0.0
+              with open(path, encoding="utf-8") as f:
+                  cur = body(f.read())
+              intro = None
+              for line in git("log", "-n", str(DEPTH), "--format=%H %ct", "--", path).splitlines():
+                  if not line.strip():
+                      continue
+                  sha, ts = line.split()
+                  if body(git("show", f"{sha}:{path}")) != cur:
+                      break
+                  intro = int(ts)
+              if intro is None:
+                  # 履歴のいちばん新しい commit と中身が違う = さっき変わったばかり
+                  return 0.0
+              return (time.time() - intro) / 86400
+
+
+          def main() -> int:
+              paths = (sys.argv[1:] or os.environ.get("REBAKE_PATHS", "").split())
+              rows, bad = [], []
+              for path in paths:
+                  name = os.path.basename(path)
+                  if name not in WATCH:
+                      rows.append((name, "—", "—", "見ていない（表に無い）"))
+                      continue
+                  limit, why = WATCH[name]
+                  if limit == 0:
+                      rows.append((name, "—", "見ない", why))
+                      continue
+                  d = stale_days(path)
+                  ok = d < limit
+                  rows.append((name, f"{d:.1f}日", f"{limit}日まで", why if ok else f"**{why}**"))
+                  if not ok:
+                      bad.append((name, d, limit, why))
+
+              md = [
+                  "",
+                  "#### 凍っていないか（中身が最後に変わってから何日たったか）",
+                  "",
+                  "| ファイル | 最後に変わってから | 見のがす範囲 | 毎晩どう動くはずか |",
+                  "| --- | ---: | ---: | --- |",
+              ]
+              md += ["| " + " | ".join(str(x) for x in r) + " |" for r in rows]
+              md.append("")
+              if bad:
+                  md += [
+                      "**凍っています。** 焼きはしたのに、中身が何日も同じままです。",
+                      "",
+                      "**commit は止めていません。** 入れるものが1バイトも無いので止めようがなく、",
+                      "同じ晩に動いた他の焼き込みまで巻き添えにしないためです。",
+                      "この run は最後に赤くなります。",
+                      "",
+                      "見るところは3つです。",
+                      "",
+                      "1. **そのスクリプトは本当に本番を引いているか** — `python/data/*.json` の",
+                      "   取り置きを焼き直しているだけなら、何度回しても答えは同じです",
+                      "2. **上流の表が止まっていないか** — `countries.ts` のような人が書く表を",
+                      "   待っているものは、そこが増えるまで下流も動きません",
+                      "3. **取り込みが止まっていないか** — `Fetch YouTube Chat Data` が何晩も",
+                      "   落ちていれば、BigQuery を引いても昨日と同じ答えが返ります",
+                      "",
+                  ]
+              else:
+                  md += ["凍っているものはありませんでした。", ""]
+
+              summary = os.environ.get("GITHUB_STEP_SUMMARY")
+              if summary:
+                  with open(summary, "a", encoding="utf-8") as f:
+                      f.write("\n".join(md) + "\n")
+              print("\n".join(md))
+
+              for name, d, limit, why in bad:
+                  print(f"::error::{name} の中身が {d:.1f} 日変わっていません"
+                        f"（{limit}日まで見のがします）。{why}")
+
+              out = os.environ.get("GITHUB_ENV")
+              if out and bad:
+                  with open(out, "a", encoding="utf-8") as f:
+                      f.write("REBAKE_FROZEN=1\n")
+              return 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          PY
+
       # **焼いた TS がビルドを通ることを、commit の前に確かめる。**
       # 自動生成なので構文が壊れることは滅多にないが、壊れたときに起きるのは
       # 「master が赤くなる」ではなく「**Hosting のデプロイが落ちて、次に誰かが
@@ -787,6 +1005,22 @@ jobs:
             echo "**まだ画面には出ていません。** 焼き込みは配り直して初めて入れ替わります。"
             echo "Actions の「Firebase Hosting Deploy」を手で起動するか、deploy を on にしてもう一度押してください。"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # 上の「凍っていないか」で見つけたぶんを、ここで赤にする。
+      # **commit と deploy のあと。** 凍っているのは「入れるものが無い」だけで、
+      # 焼けたものは入れてよい。順番を逆にすると、1本凍った晩に残りが配られない。
+      - name: 凍っていたら赤くする
+        if: env.REBAKE_FROZEN == '1'
+        run: |
+          {
+            echo ""
+            echo "### 凍っています"
+            echo ""
+            echo "焼き直しても中身が動かない焼き込みがあります。上の表に何日止まっているかが出ています。"
+            echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::焼き直しても中身の動かない焼き込みがあります。上の「凍っていないか」を見てください"
+          exit 1
 
       # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに誰も
       # 気づかない。せめてどこで落ちたかを要約に残す

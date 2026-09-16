@@ -56,7 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from stays import read_all  # noqa: E402
+from stays import is_country, read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -100,11 +100,15 @@ agg AS (
   FROM b GROUP BY g
 ),
 -- その国でいちばん人が集まった配信。**コメント数ではなく人の数で選ぶ**
--- （1人が300回書いた配信を「いちばん集まった日」と呼ばないため）
+-- （1人が300回書いた配信を「いちばん集まった日」と呼ばないため）。
+-- **同点のときの決め方まで書く。** 人の数だけで並べると、6人の配信が7本ある国で
+-- 焼くたびに代表が入れ替わり、毎晩「変わった」ことになって差分が読めなくなる。
+-- 同点はコメントの多いほう、それも同じなら古いほう（あとから並ばない）
 pv AS (
   SELECT g, video_id, MIN(d) AS d, COUNT(DISTINCT author_channel_id) AS people,
          ROW_NUMBER() OVER (
-           PARTITION BY g ORDER BY COUNT(DISTINCT author_channel_id) DESC, MIN(d)
+           PARTITION BY g
+           ORDER BY COUNT(DISTINCT author_channel_id) DESC, COUNT(*) DESC, MIN(d), video_id
          ) AS rk
   FROM b GROUP BY g, video_id
 )
@@ -144,6 +148,29 @@ def ts(x) -> str:
     return json.dumps(x, ensure_ascii=False)
 
 
+def walked() -> list:
+    """いま「歩いた」と言ってよい国。**表紙の「◯カ国を歩いた」の出どころ。**
+
+    滞在のある国ぜんぶ（`python/stays.py`）から、国境までしか行っていない区間を
+    外したもの（`stays.is_country`）。
+
+    **「配信が出た国だけ」にしない。** オランダの6日はチャットが1件も残って
+    いないが、アムステルダムは歩いた。数が無いことと、行っていないことは別。
+
+    **「旅程にあるが、まだ配信の出ていない国」も数える。** ここは迷ったところで、
+    数のある国だけに絞ると**1日ぶん遅れる**。着いた日の配信が取り込まれるのは
+    その晩なので、リガに着いた日いっぱい、表紙だけが「まだラトビアに居ない」と
+    言うことになる。`/map` の「いまの旅」は旅程から出していて**その日のうちに**
+    ラトビアを出すので、**同じ面の上と下で数が食い違う**（上に19、下に20枚）。
+    面の中で数が2つあるほうが悪い（`docs/island-standards.md` 8章）。
+
+    **だから旅程は今日までしか使わない。** `stays.read_nordic` が今日で切って
+    あるので、9日後のストックホルムはここに入らない。入れると歩く前から
+    歩いたことになる（`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
+    """
+    return sorted(c["slug"] for c in read_all() if is_country(c["slug"]))
+
+
 def build(src: dict) -> None:
     body = []
     for slug in sorted(src):
@@ -155,8 +182,9 @@ def build(src: dict) -> None:
             "  %s: { lives: %d, people: %d, msgs: %d, days: %d, top: [%s, %s, %s, %d] },"
             % (ts(slug), x["lives"], x["people"], x["msgs"], x["days"], ts(d), ts(v), ts(title), people)
         )
-    OUT_TS.write_text(HEADER + "\n".join(body) + FOOTER, encoding="utf-8")
-    logger.info("%s … %dカ国", OUT_TS, len(body))
+    n = len(walked())
+    OUT_TS.write_text(HEADER + "\n".join(body) + FOOTER % n, encoding="utf-8")
+    logger.info("%s … 数のある国 %d / 歩いた国 %dカ国", OUT_TS, len(body), n)
 
 
 HEADER = '''/**
@@ -197,13 +225,21 @@ FOOTER = """};
 export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_STATS[slug];
 
 /**
- * 数のある国の数＝**歩いた国の数**。
+ * これまでに歩いた国の数。表紙の「◯カ国を歩いた」も住人のセリフもここを読む。
  *
- * **手で書かない。** 表紙の「17カ国を歩いた」は `content/site.ts` に手で
- * 書いてあって、2026-05-06 から4ヶ月動かなかった。ここは毎晩焼き直るので、
- * 歩いた国が増えた翌朝には増えている（`docs/island-standards.md` 8章）。
+ * **手で書かない。** 前は `content/site.ts` に `countries: 17` と手で書いてあって、
+ * 2026-05-06 から4ヶ月動かなかった。ポーランドもリトアニアも歩いたあとに、
+ * 表紙も住人も「17カ国」と言い続けた（`docs/island-misses.md` #102）。
+ *
+ * **`Object.keys(COUNTRY_STATS).length` ではない。** ここは数の付いた国の表で、
+ * オランダの6日はチャットが1件も残っていないので載っていないし、リガに着いた日の
+ * 配信はその晩まで取り込まれない。**数が無いことと、行っていないことは別。**
+ * 数え方は `python/build_country_stats.py` の `walked()` にある。
+ *
+ * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
+ * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = Object.keys(COUNTRY_STATS).length;
+export const COUNTRIES_WALKED = %d;
 """
 
 
