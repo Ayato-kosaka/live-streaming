@@ -32,7 +32,7 @@ import {
 import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
-import {handleCards, iconsOf, peopleForEveryone} from "./cards";
+import {handleCards, iconsOf, noIcons, peopleForEveryone} from "./cards";
 /* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
@@ -1939,12 +1939,12 @@ async function listPhotoDays(): Promise<Json[]> {
      日ごと丸ごと落とさず、**絵の無いまま**返す（`people` は空になる）。
      カードの口のように 502 にしないのは、写真が出なくなるほうが重いから。
 
-     **渡すのは「投げたときに名乗っていた名前」。** チャンネルIDから
-     いまの名前を引き直すと、別名で投げた人の本体がここにも出る
-     （`cards.ts` の `iconsOf` の長い注）。 */
+     **絵は `channelId` が先、名乗りは受け皿**（`cards.ts` の `pickIcon`）。
+     カードと同じ引き方にしておかないと、こちらだけ「名前を変えた人の絵が
+     消える」面が残る。渡すのは受け皿ぶんの名乗りだけで、チャンネルIDの
+     表は名簿ぜんぶが返ってくる。 */
   const icons =
-    (await iconsOf(shown.flat().map((p) => p.nameSnapshot))) ??
-    new Map<string, string>();
+    (await iconsOf(shown.flat().map((p) => p.nameSnapshot))) ?? noIcons();
   /* **名前は、出してよいと言った人のぶんだけ返す。**
      BigQuery から来る author_name は、本人が島に名前を出すと決めたかどうかと
      関係なく取れてしまう。ここでそのまま返すと、「その日スパチャした人」の

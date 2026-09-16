@@ -26,7 +26,7 @@ ARGS 例:
 呼び名は短い字（「あお」）が入るので、編集距離1の別人は普通にいる。
 島は「2人に当たったら、どちらも使わない」で通してある
 （`islandCharacter.ts` の `findBy` が `limit(2)`、`cards.ts` の
-`characterKeys` が `twice`、`donors.ts` の `findChannel`）。
+`characterBook` が `twice`、`donors.ts` の `findChannel`）。
 **当てずっぽうに1人選ぶ道を、ここだけ開けない。**
 
 当てるのは **`islandTips.channelId`** だけ。あれは
@@ -129,7 +129,7 @@ def clean(v, max_len: int) -> str:
 def roster(src) -> tuple:
     """図鑑を1回だけ全件読む。
 
-    **`cards.ts` の `characterKeys` と同じ数え方**にする。あちらは
+    **`cards.ts` の `characterBook` と同じ数え方**にする。あちらは
     同じ鍵が2人に付いていたらどちらも使わないが、ここでは
     「誰かが持っている鍵かどうか」も要る（持っている鍵にもう1人ぶん
     足すと、**ますます誰にも引けなくなる**）ので、**持ち主を集合で持つ。**
@@ -257,7 +257,7 @@ def plan(src, day: str, owners: dict, by_channel: dict, info: dict) -> tuple:
     want: dict = {}
     decided: dict = {}
     # 鍵 -> その名乗りを足すことになった人。**2人に増えたら、どちらにも
-    # 足さない**（同じ鍵を2人が持つと `cards.ts` の `characterKeys` が
+    # 足さない**（同じ鍵を2人が持つと `cards.ts` の `characterBook` が
     # どちらも使わなくなる。足したせいで引けなくなる）
     by_name: dict = {}
     for d in src.collection(TIPS).where("day", "==", day).stream():

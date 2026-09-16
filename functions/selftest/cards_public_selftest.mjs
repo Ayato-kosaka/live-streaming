@@ -308,7 +308,7 @@ function load(name) {
 /** いま使っている `lib/cards.js`。**控えごと入れ替えられるように持つ** */
 let cards = load("cards");
 
-/** 控え（`characterKeys` の5分）を捨てて、冷えた1回目に戻す */
+/** 控え（`characterBook` の5分）を捨てて、冷えた1回目に戻す */
 function reloadCards() {
   loaded.clear();
   cards = load("cards");
@@ -318,6 +318,10 @@ const {peopleForEveryone} = cards;
 for (const [name, f] of [
   ["handleCards", cards.handleCards],
   ["peopleForEveryone", peopleForEveryone],
+  /* **空の引き当て表は、本体から借りる。** ここで `{byChannel, byName}` と
+     手書きすると、`cards.ts` が欄を増やした日に**この確かめだけが古い形の
+     まま通る**（実際に `dupChannel` を足した日に踏んだ）。 */
+  ["noIcons", cards.noIcons],
 ]) {
   if (typeof f !== "function") {
     console.error(`lib/cards.js から ${name} を取り出せなかった`);
@@ -549,10 +553,17 @@ console.log("\n# 5. /nordic/photos の people[] に channelId が無い");
     {channelId: "UC_other_00001", nameSnapshot: "abc"},
     {channelId: "UC_anon_000001", nameSnapshot: "ななしのごんべえ"},
   ];
-  const icons = new Map([
-    ["さくら", "char_sakura"],
-    ["abc", "char_abc"],
-  ]);
+  /* **`byChannel` は空で回す。** ここは「公開の応答から人を指す値が
+     落ちているか」を見る面なので、引き当てが名乗りだけだったころと
+     同じ条件で通ることを見る。`channelId` で引く道は
+     `cards_byid_selftest.mjs` が見る。 */
+  const icons = {
+    ...cards.noIcons(),
+    byName: new Map([
+      ["さくら", "char_sakura"],
+      ["abc", "char_abc"],
+    ]),
+  };
   const named = new Map([
     ["UC_me_0000001", "さくら"],
     ["UC_anon_000001", "かこ"],
