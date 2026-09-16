@@ -1796,6 +1796,20 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-09-15"
       }
     ]
+  },
+  "latvia": {
+    "リガ": [
+      {
+        "videoId": "7puIEFev1a4",
+        "title": "【五日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガまで",
+        "date": "2026-09-16"
+      },
+      {
+        "videoId": "Xvdk_P4gKoU",
+        "title": "【五日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガまで part 2",
+        "date": "2026-09-17"
+      }
+    ]
   }
 };
 
