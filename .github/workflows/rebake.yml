@@ -344,6 +344,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
 
+      # **焼く前に、またいだ呼び出しの数が合っているかを見る。**
+      # 2026-09-16、`build_residents.fetch_characters()` に引数を足したとき
+      # 呼び手（`build_chapter_stats.py`）を直し忘れて、その晩の焼き直しが
+      # TypeError で落ちた（`docs/island-misses.md` #105）。
+      # **落ちたのは BigQuery を引いたあと**なので、認証も権限もクエリも
+      # 無駄に1回動いている。読むだけで分かることは、動かす前に出す。
+      - name: またいだ呼び出しが合っているか
+        run: python3 python/crosscall_selftest.py
+
       # 焼く前の姿を取っておく。あとで「前 → 後」を並べて出すため
       - name: 焼く前を取っておく
         run: |

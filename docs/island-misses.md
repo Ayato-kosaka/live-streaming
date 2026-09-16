@@ -4537,3 +4537,51 @@ git fetch -q origin master && git show --stat --format='%s' origin/master | head
    `countries.ts` は帰ってから書く表だが、旅程（`content/nordic.ts`）は
    出発前に確定している。「人が書くまで動かない」で片付けると、
    **旅のあいだ——いちばん見られている15日間——だけ島が黙る**
+
+## #105 共有の関数の引数を増やして、呼び手を直し忘れた（2026-09-16。毎晩の焼き直しが止まった）
+
+島を歩く人の重みを作り直したとき（#447）、`build_residents.fetch_characters()` に
+`client` を足した。**呼んでいる `build_chapter_stats.py` を直していなかった。**
+
+その晩（というより当日の 05:34）の焼き直しが、こう落ちた:
+
+```
+File "python/build_chapter_stats.py", line 102, in link_icons
+    chars = fetch_characters()
+TypeError: fetch_characters() missing 1 required positional argument: 'client'
+```
+
+焼き直しは**1本目で止まる**ので、`build_residents` も `build_stream_peaks` も
+`build_on_this_day` も `build_city_streams` も回らない。**島の数字が丸ごと1日止まった。**
+
+### 出す前に回した確かめが、全部素通りした
+
+| 回したもの | 結果 | なぜ見つけられないか |
+| --- | --- | --- |
+| `python3 -m py_compile` | **通る** | 実行時の TypeError なので、構文としては正しい |
+| `build_residents_selftest.py`（72件） | **通る** | **あちらを単体でしか見ていない。** 呼び手を1つも読まない |
+| `npx tsc --noEmit` / `next lint` | 通る | TypeScript の話ではない |
+| `tools/build.sh` / `crawl.mjs` / `islenav.mjs` | 通る | 焼いた**結果**を見ているだけ。焼く**過程**は走らせていない |
+
+**確かめを7つ回して、1つも触っていない場所だった。** 数を並べたので
+「よく確かめた」と思っていたが、**確かめた面がどれも同じ側**だった。
+
+### なぜ手元で走らせて確かめられなかったか
+
+焼くスクリプトは本番の BigQuery と Firestore を引く。この箱に資格情報が無いので、
+**走らせられるのは Actions の中だけ**＝出したあとにしか分からない。
+「出す前に本番の値で確かめる」（#1）が、ここだけ構造的にできない。
+
+### 決めごと
+
+- **走らせずに分かることは、走らせる前に出す。** `python/crosscall_selftest.py` を足した。
+  `python/*.py` を AST で読んで、モジュールをまたいだ呼び出しの引数の数が
+  合っているかだけを見る。**import しない**（焼くスクリプトには `__main__` の番を
+  していないものがあり、import した時点で走る）。
+  毎晩の焼き直しの、**BigQuery を引く前**に置いた。落ちるのが認証のあとだと、
+  権限もクエリも1回無駄に動く。
+- **共有の関数の署名を変えたら、呼び手を `grep` する。** Python には型の番人がいない。
+  変えた側の確かめが何件通っても、**呼び手を1行も読んでいないなら通って当たり前。**
+- **確かめの数ではなく、確かめた面の種類を数える。** 7つ回しても、7つとも
+  TypeScript と焼き上がりの側だった。**焼く過程を見たものが0件**だったことに、
+  出す前に気づけるようにする。
