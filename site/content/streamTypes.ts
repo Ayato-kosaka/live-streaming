@@ -81,7 +81,7 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-07-11", videoId: "Pnbi01M0t0I", title: "土曜やしトビリシ海まで歩こか！" },
     ],
     /* **数を手で書かない。** `17` と書いてあって、歩いた国が増えても動かなかった
-       （`docs/island-misses.md` #102）。焼き込みから出す */
+       （`docs/island-misses.md` #104）。焼き込みから出す */
     deeper: { label: `歩いてきた${COUNTRIES_WALKED}カ国を見る`, href: "/map" },
   },
   {

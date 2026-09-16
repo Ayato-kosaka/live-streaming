@@ -56,7 +56,7 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  *
  * **手で書かない。** 前は `content/site.ts` に `countries: 17` と手で書いてあって、
  * 2026-05-06 から4ヶ月動かなかった。ポーランドもリトアニアも歩いたあとに、
- * 表紙も住人も「17カ国」と言い続けた（`docs/island-misses.md` #102）。
+ * 表紙も住人も「17カ国」と言い続けた（`docs/island-misses.md` #104）。
  *
  * **`Object.keys(COUNTRY_STATS).length` ではない。** ここは数の付いた国の表で、
  * オランダの6日はチャットが1件も残っていないので載っていないし、リガに着いた日の

@@ -165,7 +165,7 @@ export default function MapPage() {
             数えていて、**表紙が19と言っている日に17と出していた。**
             `countries.ts` は旅から帰った本人が書く表なので、旅のあいだは増えない。
             下の「いまの旅」の畳みには、その国がもう並んでいる
-            （`docs/island-misses.md` #102）。 */}
+            （`docs/island-misses.md` #104）。 */}
         <Stat value={COUNTRIES_WALKED} label="歩いた国" sub="いま歩いている旅もふくむ" />
         <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
         <Stat value={<Days from={PROFILE.leftJapan} />} label="旅した日数" sub="日本を出た日から" />

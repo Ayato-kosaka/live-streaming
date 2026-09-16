@@ -15,7 +15,7 @@ import os
 import re
 
 # **リポジトリの中に置いてある。** 前は `/tmp` にしか無く、箱が消えたら
-# 二度と焼き直せなかった（`docs/island-misses.md` #102 で拾った）。
+# 二度と焼き直せなかった（`docs/island-misses.md` #104 で拾った）。
 # ほかの `/tmp` 依存（地図）は curl で取り直せるが、**この2本は取り直せない**
 from pathlib import Path
 

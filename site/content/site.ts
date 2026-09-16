@@ -186,7 +186,7 @@ export const STATS_FALLBACK = {
   /* **手で書かない。焼き込みから数える**（`docs/island-standards.md` 8章）。
      ここは `17` と書いてあって、2026-05-06 から4ヶ月動かなかった。
      そのあいだにポーランドもリトアニアも歩いていて、表紙も名刺も棚も
-     「17カ国を歩いた」と言い続けた（`docs/island-misses.md` #102）。
+     「17カ国を歩いた」と言い続けた（`docs/island-misses.md` #104）。
      `countryStats.ts` は毎晩焼き直るので、増えた翌朝には増えている。 */
   countries: COUNTRIES_WALKED,
   /* **手で書かない。スタンプ帳から数える**（`docs/island-standards.md` 8章）。

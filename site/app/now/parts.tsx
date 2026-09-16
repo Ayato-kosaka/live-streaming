@@ -265,7 +265,7 @@ export function NowTrail() {
         <li>
           <Link href="/map" prefetch={false} className="is-all">
             {/* **数を手で書かない。** ここは `17カ国ぜんぶ` と書いてあって、
-                歩いた国が19になっても17のままだった（`docs/island-misses.md` #102）。 */}
+                歩いた国が19になっても17のままだった（`docs/island-misses.md` #104）。 */}
             <b>{COUNTRIES_WALKED}カ国ぜんぶ</b>
             <Icon name="right" size={13} />
           </Link>
