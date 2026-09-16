@@ -137,7 +137,13 @@ def build() -> None:
         st = stats.get(day, {})
         # 島に絵のある人だけ。順番は residents.ts の並び（よく来ている人が先）
         chans = [c for c in (res_by_video.get(day) or "").split(",") if c]
-        there = [char_of[c] for c in char_of if c in chans]
+        # **並びは id 順にする。** 前は `residents.ts` の並び（よく来ている人が先）を
+        # 借りていたが、あちらは直近90日の日数で毎晩並び替わる。借りると、
+        # **この面の中身が1文字も変わっていない晩まで差分が出る**
+        # （2026-09-16 の焼き直しで 12行。文字の集合は同着だった）。
+        # ここの並びは画面に出るだけで、意味を持たない——`KitchenDay` は
+        # `there` を**全部**丸に並べる。上位いくつかを切って見せてはいない。
+        there = sorted({char_of[c] for c in chans if c in char_of})
         talk = [
             {
                 "v": q["v"],
