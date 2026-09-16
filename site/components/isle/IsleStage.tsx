@@ -76,6 +76,18 @@ const SCENE_PAD = 140;
 const ZOOM_Q = 1.12;
 /** ここまで来たら札が開く距離(ワールド単位) */
 const HERE = 150;
+/**
+ * あやとの足元が、島の枠の縦のどこまで来てよいか（0 が上ふち、1 が下ふち）。
+ *
+ * **押して歩く島なので、あやとの下に地面が残っていないと南へ進めない。**
+ * カメラは建物のまん中へ引き戻すが（`camWant`）、建物が北に寄っている島では
+ * 引き戻しが上限まで効いて、あやとが枠の下ふちに貼りつく。
+ * 実測（390px・表紙の寄り）で足元が枠の 94%、下に残った 61px は
+ * 「今日の島」の札がまるごと占めていた。
+ */
+const FOOT_LOW = 0.6;
+/** 同じく、上限。上へ寄せすぎると、こんどは北の建物が枠から出る */
+const FOOT_HIGH = 0.3;
 /** 指で押せる最小の大きさ(画面px) */
 const TAP_MIN = 48;
 /** 話しかけられる距離。これより遠いと、まず歩いて近づく */
@@ -473,7 +485,26 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     /* **引き戻す量は、いまの島（0.22 / 0.18）より大きく取る。**
        あちらは島のまん中に主人公が降りるが、こちらは浜の船着き場に着く。
        同じ量だと、降り立った1画面に建物が1つも入らない（撮って分かった）。 */
-    return { x: ex + pull(mid.x - ex, s * 0.32), y: ey + pull(mid.y - ey, vh * 0.3) };
+    const y = ey + pull(mid.y - ey, vh * 0.3);
+    /* --- あやとの足元より下に、歩く場所を必ず残す -----------------------
+       上の引き戻しは「建物が1画面に入るか」だけを見て決めた値で、
+       **あやとが枠のどこに立つことになるかを見ていなかった。**
+       建物が島の北に寄っていると引き戻しが上限まで効いて、あやとは枠の
+       いちばん下へ押し出される。実測（390px・表紙の寄り）で、あやとの足元は
+       島の枠の **94%**（726px のうち 665px）にいて、その下に残る 61px は
+       「今日の島」の札がまるごと占めていた。**南を押そうにも、押す地面が無い。**
+       あやとの言葉（2026-09-15）:「画像①下部押してもマップが下にいかないので
+       下に進めない」。
+
+       引き戻しは残したまま、**あやとが立ってよい帯**を枠に対して決めて、
+       カメラをそこへ収める。足元が枠の 60% より下には行かない＝下に 40% ぶん
+       （390px なら 290px。札の 62px を引いても 228px）が歩く場所として残る。
+       30% より上にも行かない——上に寄りすぎると、こんどは北が見えなくなる。 */
+    const foot = (f: number) => avatar.current.y - (f - 0.5) * vh;
+    return {
+      x: ex + pull(mid.x - ex, s * 0.32),
+      y: Math.min(Math.max(y, foot(FOOT_LOW)), foot(FOOT_HIGH)),
+    };
   }, [mid, spanOf, world]);
 
   /* ---- 動きは React の外で ------------------------------------------------
@@ -1000,6 +1031,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
          スマホの寄りだけが小さい印で、あとは看板まるごと。 */
       data-view={modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
       data-mode={modeOf(box.w)}
+      /* 表紙か。**看板ロゴが右上にいる面かどうか**が、隅の道具の置き方を変える
+         （`chain.css` の `.isle-tools`）。章の島には看板が無いので、
+         引きで道具の名前を戻せる。表紙は同じ隅に看板がいて戻せない。 */
+      data-cover={cover ? "" : undefined}
       ref={hostRef}
       onClick={onStageClick}
     >
@@ -1235,33 +1270,42 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
         </h1>
       )}
 
-      {/* 引きと寄りの切り替え。**いまの島（`.stage-view`）と同じ言葉・同じ板。**
-          前はここだけ「島ぜんぶ」と書いてあって、紙の足元にある
-          「島のなか ぜんぶ」（行き先の索引）と1字違いだった。
-          カメラの操作と行き先の索引が同じ名前で並ぶと、押すまで区別がつかない。
-          あやとの言葉:「「島ぜんぶ」は不要」。 */}
-      <button
-        className="isle-view"
-        data-ui
-        onClick={() => {
-          // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
-          closeTalk();
-          setWide((v) => !v);
-        }}
-        aria-label={wide ? UI.comeDown : UI.lookAround}
-      >
-        <Icon name={wide ? "walk" : "island"} size={15} />
-        <span className="tool-label">{wide ? UI.comeDown : UI.lookAround}</span>
-      </button>
+      {/* 島の隅の道具。**2つを入れ物に入れて横並びにする。**
+          前は `.isle-atlas` に `left: 68px` と書いてあり、「道具は 48px の丸が
+          2つぶんしか要らない」を前提にしていた。引きでは名前が戻って
+          `.isle-view` が 105px に太るので、太ったあとの幅を見ていない
+          その数字が、そのまま重なりになる（実測 390px の引きで 49px 重なって、
+          「島にもどる」の字が地図の札の下にいた）。
+          **隣の幅を数字で書き写さない。並べ方に決めさせる。** */}
+      <div className="isle-tools">
+        {/* 引きと寄りの切り替え。**いまの島（`.stage-view`）と同じ言葉・同じ板。**
+            前はここだけ「島ぜんぶ」と書いてあって、紙の足元にある
+            「島のなか ぜんぶ」（行き先の索引）と1字違いだった。
+            カメラの操作と行き先の索引が同じ名前で並ぶと、押すまで区別がつかない。
+            あやとの言葉:「「島ぜんぶ」は不要」。 */}
+        <button
+          className="isle-view"
+          data-ui
+          onClick={() => {
+            // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
+            closeTalk();
+            setWide((v) => !v);
+          }}
+          aria-label={wide ? UI.comeDown : UI.lookAround}
+        >
+          <Icon name={wide ? "walk" : "island"} size={15} />
+          <span className="tool-label">{wide ? UI.comeDown : UI.lookAround}</span>
+        </button>
 
-      {/* 島の連なりへ。ここは寄りでも出す。**いまの島とここだけ違う。**
-          あちらは下のバーを開けば連なりへ行けるが（`.bar-atlas`）、
-          章の島にバーは無い。消すと、寄りから連なりへ行く道が
-          船着き場の札1枚だけになる。 */}
-      <Link className="isle-atlas" data-ui href="/atlas" prefetch={false}>
-        <Icon name="map" size={15} />
-        <span className="tool-label">{UI.atlas}</span>
-      </Link>
+        {/* 島の連なりへ。ここは寄りでも出す。**いまの島とここだけ違う。**
+            あちらは下のバーを開けば連なりへ行けるが（`.bar-atlas`）、
+            章の島にバーは無い。消すと、寄りから連なりへ行く道が
+            船着き場の札1枚だけになる。 */}
+        <Link className="isle-atlas" data-ui href="/atlas" prefetch={false}>
+          <Icon name="map" size={15} />
+          <span className="tool-label">{UI.atlas}</span>
+        </Link>
+      </div>
 
       {hint && <p className="isle-hint">押したところまで歩いていくよ。建物に近づくと、中が見られる</p>}
     </div>
@@ -1386,8 +1430,22 @@ function placePlates(
      `docs/island-design.md` 3-1「押す場所は物そのもの」が、そこだけ嘘になる。
      北欧固有ではなく島の共通の穴なので、**順番に依らない形**にする。 */
   const hitBoxes: Box[] = [];
-  /** 自分の建物だけ外した、ほかの建物の当たり */
-  const other = (i: number) => hitBoxes.filter((_, j) => j !== i);
+  /**
+   * 札が避ける、ほかの建物の当たり。**指を実際に取るものだけ。**
+   *
+   * 引きでは、看板の6つの建物の当たりは止めてある（`chain.css` の
+   * `.isle[data-cam="wide"] .isle-spot.is-sign .isle-hit`。入口は札1枚に
+   * 寄せる決まり）。**止まっている当たりを、札が避けていた。**
+   * 誰も押せない場所のために札が逃げる、ということ。
+   *
+   * 当たりどうしの取り合いには、同じ直しが `takesTap` として入っている
+   * （「指を1本も取らない『歩いた国』が『企画をだす』の当たりを削っていた」）。
+   * **札の側を直していなかった。** 実測（390px・表紙の引き）で
+   * 「あやとのこと」は、指を取らない「これから」「配信」「アプリ」の当たりに
+   * 8方向とも塞がれて島の下 112px まで運ばれ、離れすぎ（`MAX_LEAD` 108）で
+   * 落ちていた。**代表6件が5枚になっていたのはこれ。**
+   */
+  const other = (i: number) => hitBoxes.filter((_, j) => j !== i && takesTap(j));
   /**
    * その札が**いま画面に出ているか**。`chain.css` の `.isle-mark` の
    * opacity と同じ条件（寄りは近づいた1軒だけ、引きは看板の6つだけ）。
