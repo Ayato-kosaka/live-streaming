@@ -15,11 +15,13 @@ description: 島の焼き込み（site/content/*.ts）のうち、人の判断�
 
 **この箱に BigQuery の ADC は無い。** `bigquery.Client` を作るスクリプト
 （`build_residents` `build_stream_peaks` `build_on_this_day` `build_chapter_stats`
-`build_city_streams`）は**ここでは走らない。Actions で回す。**
+`build_city_streams` `build_country_stats`）は**ここでは走らない。Actions で回す。**
 SQL は MCP から流す（`mcp__Google_Cloud_BigQuery__execute_sql_readonly`、
 project `live-streaming-d3cac`、dataset `youtube_chat`）。
+**`--sql` で SQL を出して MCP で流し、返った行を `--rows <file>` に渡せば、
+この箱でも焼ける**（`build_country_stats` `build_on_this_day` `build_city_streams`）。
 取り置きの JSON から焼くもの（`build_kitchen_talk` `build_voices` `build_shorts`
-`build_legend_days` `build_country_stats`）は**ここで走る。**
+`build_legend_days`）は**ここで走る。**
 
 ---
 
@@ -274,20 +276,21 @@ python python/build_shorts.py --build
 
 | 焼き直すもの | 走らせ方 | ここで走るか |
 | --- | --- | --- |
-| `cityStreams.ts` | `python python/build_city_streams.py` | **走らない**（BigQuery を引く。Actions で回す） |
-| `countryStats.ts` | `python python/build_country_stats.py --build` | 走る（取り置きの JSON から） |
+| `cityStreams.ts` | `python python/build_city_streams.py` | **走らない**（BigQuery を引く。Actions か `--rows`） |
+| `countryStats.ts` | `python python/build_country_stats.py` | **走らない**（同上） |
+| `onThisDay.ts` | `python python/build_on_this_day.py` | **走らない**（同上） |
 
-`countryStats.ts` の元 `python/data/country_stats.json` も取り置きなので、
-**新しい国を足したなら先にそれを取り直す**（`--sql` で SQL が出る）。
-取り直さずに焼くと、足した国が**0本・0人**で出る。
+**この3本はもう `countries.ts` を自分で読まない。** 滞在は `python/stays.py` が
+1か所で持っていて、**歩き終わった国（`countries.ts`）と、いま歩いている旅
+（`nordic.ts` の旅程）を足して**答える。だから旅のあいだも止まらない。
 
-`cityStreams.ts` には落とし穴がある。**いまの中身は古い版のスクリプトで焼かれていて、
-焼き直すと選び方の決まりごと総取り替えになる**（トビリシは滞在窓に配信が119本あるので、
-並びごと変わる）。「新しくなる」ではなく**「別物になる」**。
-そのため `rebake.yml` の allowlist に入っていない。回す前に、
-**焼いたものと今のものを並べて、並びの変化を見る。**
+どれも `--sql` で SQL を出し、MCP で流した行を `--rows <file>` に渡せば
+この箱でも焼ける。`python/data/country_stats.json` は**引いた結果の写し**なので、
+手で取り直す必要はもう無い（焼くと一緒に置き直される）。
 
-`onThisDay.ts` も `countries.ts` を読むが、こちらは毎晩ひとりでに焼ける。何もしなくてよい。
+**3本とも毎晩ひとりでに焼ける**（`rebake.yml`）。`countries.ts` を触ったあと
+自分で押さなくても、翌朝には入っている。急ぐなら Actions から
+`dry_run: false` で押す。
 
 ---
 

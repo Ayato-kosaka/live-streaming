@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { placeCountry, type PlaceCountry } from "@/content/place";
+import { COUNTRIES_WALKED } from "@/content/countryStats";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
@@ -218,7 +219,7 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
  *
  * 「いま」だけを出しても、それが旅の途中なのかどうかが分からない。
  * 3つ手前まで見えていれば、この人がどっちへ動いているかが1目で出る。
- * 17カ国ぜんぶ並べるのは `/map` の仕事なので、ここは4つで止める。
+ * 歩いた国ぜんぶ並べるのは `/map` の仕事なので、ここは4つで止める。
  *
  * **並べるのは「出た日が新しい順」。`order`（初めて行った順）ではない。**
  * `order` で並べて最後の滞在の月を出していたので、昨日まで居たジョージアが
@@ -263,7 +264,9 @@ export function NowTrail() {
         })}
         <li>
           <Link href="/map" prefetch={false} className="is-all">
-            <b>17カ国ぜんぶ</b>
+            {/* **数を手で書かない。** ここは `17カ国ぜんぶ` と書いてあって、
+                歩いた国が19になっても17のままだった（`docs/island-misses.md` #104）。 */}
+            <b>{COUNTRIES_WALKED}カ国ぜんぶ</b>
             <Icon name="right" size={13} />
           </Link>
         </li>

@@ -1,3 +1,5 @@
+import { COUNTRIES_WALKED } from "./countryStats";
+
 /** 配信の5つの型。押すとそれぞれの深掘りページに行く。 */
 export type StreamType = {
   slug: string;
@@ -78,7 +80,9 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-08-09", videoId: "53OdLlM6VIU", title: "世界で一番天国に近い教会行こ" },
       { date: "2026-07-11", videoId: "Pnbi01M0t0I", title: "土曜やしトビリシ海まで歩こか！" },
     ],
-    deeper: { label: "歩いてきた17カ国を見る", href: "/map" },
+    /* **数を手で書かない。** `17` と書いてあって、歩いた国が増えても動かなかった
+       （`docs/island-misses.md` #104）。焼き込みから出す */
+    deeper: { label: `歩いてきた${COUNTRIES_WALKED}カ国を見る`, href: "/map" },
   },
   {
     slug: "making",
