@@ -32,17 +32,17 @@
  *  1. **分母**（名簿が何人・セリフ帳が何件・共通に落ちるのが何人）
  *  2. よく歩く順（`score` 降順）に上位10・20・30・50 のカバー
  *  3. `score` がいくつ以上で未収録が何人か
- *  4. 落ちる条件（下）
+ *  4. 落ちる条件（下）。セリフの中に手で書いた数が無いかも、ここで見る
  *
  * **名前は出さない。** 出すのは `icon` と数字だけ（`chatter.ts` の決まり5、
  * `docs/island-concept.md` 6章）。このリポジトリは公開で、Actions のログも
  * 誰でも読める。`residents.ts` の `channel`（YouTube のチャンネルid）には
  * **触らない。**
  *
- * ## 落ちる条件は1つだけにしてある
+ * ## 落ちる条件は、しきい値を持つものが1つだけ
  *
- * ここで落とすのは **「よく歩く順の上位10人に、共通のセリフの人がいる」** だけ。
- * ほかは数を出すだけで、しきい値を持たせていない。**いまの実測値を写して
+ * しきい値を持って落とすのは **「よく歩く順の上位10人に、共通のセリフの人が
+ * いる」** だけ。ほかは数を出すだけ。**いまの実測値を写して
  * しきい値にすると、それは #102 そのもの**になる——「上位20がいまは15人だから
  * 15で止める」は、15 という数に理由が無い。理由の無いしきい値は、
  * 人が1人セリフを書き足した翌日から**だだ甘い**か、名簿が1人動いた翌日から
@@ -57,6 +57,29 @@
  * そのほかに、**測っているものが本当にそれか**を見る構造の確かめを置いてある
  * （重複した `icon`、共通への落ち方）。どれも「0でなければ間違い」が
  * 定義から決まるもので、実測値を写したものではない。
+ *
+ * ## セリフの中の数も見る（`docs/island-misses.md` #104 #109）
+ *
+ * あと2つ、**書いたままの字**を読んで落とす。上の確かめが `linesOf()` の
+ * 返り値を見るのに対して、こちらは `chatter.ts` の書きぶりを見る。
+ * 組み立てたあとでは `${COUNTRIES_WALKED}` も手で書いた `20` も同じ字になり、
+ * **返り値からは永遠に見分けられない**から。
+ *
+ *  - **まだ動く数が手で書かれていないか。** 毎晩焼き直る数
+ *    （歩いた国・名簿の人数）が裸で書いてあったら落とす。値が合っていても
+ *    落とす——合っているのは今日だけなので。加えて「国を数える単位に数が
+ *    付いている」形も落とす。#104 で4ヶ月出ていたのは `17カ国`、つまり
+ *    **もう合っていない数**のほうで、値くらべだけでは拾えない。
+ *    動かない数（22時・1日12時間・イランの12日380km・100万再生・年越し24時間・
+ *    年月日）は落とさない。線引きの根拠は `MOVING` のところに書いた。
+ *  - **「伝説の企画が8つ」が `legends.ts` の件数と合っているか。**
+ *    いま5本のセリフが字で「8つ」と言っている。9件目を足した日、5本とも
+ *    黙って嘘になる。件数は毎晩は動かない（人が企画を足したときだけ動く）ので
+ *    手で書いてよいが、食い違ったら落とす。
+ *
+ * どちらも**いまの数を写したしきい値ではない。** 比べる相手は毎回
+ * `countryStats.ts` / `residents.ts` / `legends.ts` から読み直している。
+ * `legends.ts` の写しは `LEGENDS_TS` で差し替えられる（落ちることの確かめ用）。
  *
  * **「名簿から消えた人のセリフ」では落とさない。** 名簿は直近90日なので、
  * しばらく来られなかった人は名簿から外れる。そのとき落とすと、
@@ -84,6 +107,18 @@
  * node site/selftest/chatter_selftest.mjs                                    # 0 で通る
  * ```
  *
+ * 数の2つも、同じように写しで落ちることを見る。
+ *
+ * ```bash
+ * # (1) 差し込みを手書きの数に戻した写し
+ * sed 's/`\(.*\)${COUNTRIES_WALKED} countries\(.*\)`/"\1'"17"' countries\2"/' \
+ *   site/content/chatter.ts > /tmp/chatter-17.ts
+ * CHATTER_TS=/tmp/chatter-17.ts node site/selftest/chatter_selftest.mjs   # 1 で落ちる
+ *
+ * # (2) legends.ts を9件に見せかけた写し（`];` の手前に1件足すだけ）
+ * LEGENDS_TS=/tmp/legends-9.ts node site/selftest/chatter_selftest.mjs    # 1 で落ちる
+ * ```
+ *
  * **手を入れていない写しで先に回す**（`docs/island-standards.md` §15 の最後）。
  * 写しを作る途中で壊しても終了コードは同じなので、そこを見ないと対照にならない。
  * 実際いちど、入れ子の `},` で切って構文を壊したまま「落ちた」と読みかけた。
@@ -108,6 +143,7 @@ const CONTENT = join(SITE, "content");
 /** 組み立てるもの。**落ちることを確かめる写しだけ、ここを差し替える。** */
 const CHATTER = process.env.CHATTER_TS || join(CONTENT, "chatter.ts");
 const RESIDENTS_SRC = process.env.RESIDENTS_TS || join(CONTENT, "residents.ts");
+const LEGENDS_SRC = process.env.LEGENDS_TS || join(CONTENT, "legends.ts");
 
 // ------------------------------------------------------- 本物を持ち込む
 
@@ -128,6 +164,7 @@ const bring = (src, as) =>
 
 bring(CHATTER, "chatter.ts");
 bring(RESIDENTS_SRC, "residents.ts");
+bring(LEGENDS_SRC, "legends.ts");
 // chatter.ts が連れてくるぶん
 bring(join(CONTENT, "countryStats.ts"), "countryStats.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
@@ -137,6 +174,7 @@ try {
   execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
     join(WORK, "chatter.ts"),
     join(WORK, "residents.ts"),
+    join(WORK, "legends.ts"),
     "--outDir", OUT,
     "--module", "commonjs",
     "--target", "es2022",
@@ -163,6 +201,10 @@ try {
 const req = createRequire(import.meta.url);
 const {VOICES, hasVoice, linesOf, greetOf, COMMON_LINES, COMMON_GREET} = req(join(OUT, "chatter.js"));
 const {RESIDENTS} = req(join(OUT, "residents.js"));
+const {LEGENDS} = req(join(OUT, "legends.js"));
+/* 「まだ動く数」の側の値。**セリフの字と突き合わせる相手**なので、
+   焼き込みから直に読む（下の MOVING）。 */
+const {COUNTRIES_WALKED} = req(join(OUT, "countryStats.js"));
 
 console.log("# 島のセリフが、よく歩く人に届いているか");
 console.log(`  セリフ帳: ${CHATTER}`);
@@ -176,6 +218,7 @@ const empty = [];
 if (!Array.isArray(RESIDENTS) || RESIDENTS.length === 0) empty.push("名簿（RESIDENTS）が0人");
 if (!Array.isArray(VOICES) || VOICES.length === 0) empty.push("セリフ帳（VOICES）が0件");
 if (!Array.isArray(COMMON_LINES) || COMMON_LINES.length === 0) empty.push("共通のセリフ（COMMON_LINES）が0件");
+if (!Array.isArray(LEGENDS) || LEGENDS.length === 0) empty.push("伝説の企画（LEGENDS）が0件");
 if (empty.length) {
   console.log("");
   console.log("数えるものが見つかりませんでした。合否は出していません:");
@@ -325,6 +368,173 @@ check(`共通に落ちる ${MUTE.length} 人が、本当に共通のセリフを
 const ownReally = VOICED.filter((r) => linesOf(r.icon, now).join(SEP) !== common).length;
 check(`セリフ持ち ${VOICED.length} 人が、共通とは違うセリフを返す（${ownReally}/${VOICED.length}）`,
   ownReally === VOICED.length, `共通と同じだったのが ${VOICED.length - ownReally} 人`);
+
+/* ---------------------------------------------------------------------------
+   ここから下の2つだけは、**組み立てたあとの値ではなく、書いたままの字**を見る。
+
+   理由は1つ。`${COUNTRIES_WALKED}` は組み立てた時点で `20` になるので、
+   **差し込みで書いた 20 と、手で書いた 20 が、返り値では一字も違わない。**
+   `linesOf()` を呼んでいるかぎり、この2つは永遠に見分けられない。
+   `#108` の「数えるだけの写しを作らない」は、**落とし方（誰が共通に落ちるか）を
+   写すな**という話で、ここは落とし方ではなく `chatter.ts` の書きぶりそのものが
+   見るものなので、字を読むのが本物。上の 1〜4 は今までどおり `linesOf` /
+   `hasVoice` を呼んでいる。 */
+
+/**
+ * `chatter.ts` の中で**セリフとして書いてある文字列**を、書いたままの字で拾う。
+ *
+ * コメントの中の字は拾わない（このファイルの頭にも `17カ国` の話が書いてあり、
+ * 拾うと注意書きを書いた日に赤くなる）。`icon:` と `note:` も拾わない——
+ * `icon` は Drive の ID なので数字の並びが必ず入るし、`note` は視聴者さんに
+ * 見えない覚え書きで、島の案内ではない。
+ *
+ * 差し込み（`${…}`）は**中身ごと1文字に潰す。** 潰さないと、差し込んだ数と
+ * 手で書いた数が同じ見た目になって、見分けるためにここを書いた意味が消える。
+ *
+ * 受けるのは `chatter.ts` の中身。返すのは1本ずつの
+ * `{line: 行番号, raw: 書いたままの字, masked: 差し込みを潰した字}`。
+ */
+function spokenLiterals(text) {
+  const out = [];
+  const lineOf = (at) => text.slice(0, at).split("\n").length;
+  /** その文字列が `icon:` `note:` `from` の右隣か（＝セリフではないか） */
+  const notSpoken = (at) => {
+    const head = text.slice(text.lastIndexOf("\n", at) + 1, at);
+    return /(?:\bicon|\bnote)\s*:\s*$/.test(head) || /\bfrom\s*$/.test(head);
+  };
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    if (c === "/" && text[i + 1] === "/") {
+      i = text.indexOf("\n", i);
+      if (i < 0) break;
+      continue;
+    }
+    if (c === "/" && text[i + 1] === "*") {
+      const end = text.indexOf("*/", i + 2);
+      i = end < 0 ? text.length : end + 2;
+      continue;
+    }
+    if (c !== '"' && c !== "'" && c !== "`") { i++; continue; }
+    const at = i;
+    let j = i + 1;
+    let raw = "";
+    while (j < text.length) {
+      const d = text[j];
+      if (d === "\\") { raw += d + (text[j + 1] ?? ""); j += 2; continue; }
+      if (d === c) break;
+      /* テンプレートの差し込みは、入れ子の `{}` ぶんだけ数えて飛ばす。
+         `${…}` の中に文字列を書いている行はこのファイルに無い。 */
+      if (c === "`" && d === "$" && text[j + 1] === "{") {
+        let depth = 1;
+        j += 2;
+        while (j < text.length && depth > 0) {
+          if (text[j] === "{") depth++;
+          else if (text[j] === "}") depth--;
+          j++;
+        }
+        raw += "${}";
+        continue;
+      }
+      raw += d;
+      j++;
+    }
+    if (!notSpoken(at)) out.push({line: lineOf(at), raw, masked: raw.replace(/\$\{\}/g, "")});
+    i = j + 1;
+  }
+  return out;
+}
+
+const SPOKEN = spokenLiterals(readFileSync(CHATTER, "utf8"));
+
+/* §15。**拾えなかったのは「違反0」ではない。** 字を読む側が空振りしていたら、
+   下の2つは何を見ても通ってしまう。 */
+if (SPOKEN.length === 0) {
+  console.log("");
+  console.log("セリフの文字列を1つも拾えませんでした。合否は出していません。");
+  console.log(`  セリフ帳: ${CHATTER}`);
+  process.exit(2);
+}
+
+/**
+ * **まだ動く数**——毎晩ひとりでに焼き直る数。
+ *
+ * 動く／動かないの線は「いつ変わるか」で引いている。ここに入れたのは
+ * `python/…` が**毎晩焼く**もので、こちらが書いた翌日には違う値になりうる。
+ *
+ *   歩いた国   `content/countryStats.ts` ← `build_country_stats.py`（毎晩）
+ *   名簿の人数 `content/residents.ts`    ← `build_residents.py`（毎晩）
+ *
+ * **入れていないもの**（手で書いてよい。赤くしない）:
+ *
+ *   配信の22時 / 旅のあいだの1日12時間 … 決めごと。人が決め直すまで動かない
+ *   イランまで12日・380km            … 済んだ旅。二度と動かない（`chatter.ts` 決まり7）
+ *   ショート100万再生・年越し24時間    … 起きた出来事。動かない
+ *   伝説の企画の年月日                … 起きた日
+ *   親指1本・1品ずつ・3日がかり        … 数え上げではなく言い回し
+ *
+ * 伝説の企画の**件数**はここに入れない。あれは機械が焼くものではなく、
+ * 人が企画を1つ書き足したときだけ動く。だから「手で書くな」ではなく
+ * 「件数と食い違ったら落とす」で見る（下の2つめ）。
+ */
+const MOVING = [
+  {what: "歩いた国の数（COUNTRIES_WALKED）", value: COUNTRIES_WALKED},
+  {what: "名簿の人数（RESIDENTS.length）", value: RESIDENTS.length},
+];
+
+/**
+ * 数え上げの単位。**単位が付いていれば、その数が何を数えたものか一意に決まる。**
+ *
+ * 値くらべ（`MOVING`）だけでは足りない。歩いた国が 20 の日に `17カ国` と
+ * 書いてあっても、17 は 20 と違うので値くらべには引っかからない——
+ * **#104 で4ヶ月出ていたのは、まさにその「もう合っていない数」のほう**だった。
+ * だから「国を数える単位に、差し込みでない数が付いている」だけで落とす。
+ *
+ * 「人」は入れない。「1人で」のように数え上げでない使い方があるので、
+ * 単位では判定できない（名簿の人数のほうは値くらべで見る）。
+ */
+const COUNT_UNITS = /([0-9][0-9,]*)\s*(カ国|か国|ヶ国|ケ国|countries|country)/g;
+
+const handWritten = [];
+for (const lit of SPOKEN) {
+  for (const m of lit.masked.matchAll(/[0-9][0-9,]*(?:\.[0-9]+)?/g)) {
+    const n = Number(m[0].replace(/,/g, ""));
+    for (const mv of MOVING) {
+      if (n === mv.value) handWritten.push(`${lit.line}行目 「${m[0]}」= ${mv.what}`);
+    }
+  }
+  for (const m of lit.masked.matchAll(COUNT_UNITS)) {
+    handWritten.push(`${lit.line}行目 「${m[0]}」= 歩いた国の数を手で数えている`);
+  }
+}
+check(`セリフの中に、まだ動く数が手で書かれていない`
+  + `（文字列 ${SPOKEN.length} 本を見た）`,
+  handWritten.length === 0,
+  `手で書いてある数が ${handWritten.length} 件: ${handWritten.join(" / ")}`
+    + "。差し込み（${COUNTRIES_WALKED}）で書く");
+
+/* 伝説の企画の件数。**5本のセリフが「8つ」と字で言っている。**
+   `legends.ts` に9件目を足した日、5本とも黙って嘘になる。赤くならない。
+   件数は毎晩は動かないので手で書いてよいが、食い違ったらここで落とす。 */
+const LEGEND_COUNT = /([0-9]+)\s*(つ|件|本|projects|stories)/g;
+const legendClaims = [];
+for (const lit of SPOKEN) {
+  if (!lit.masked.includes("伝説の企画")) continue;
+  for (const m of lit.masked.matchAll(LEGEND_COUNT)) {
+    legendClaims.push({line: lit.line, said: Number(m[1]), text: m[0]});
+  }
+}
+const legendWrong = legendClaims.filter((c) => c.said !== LEGENDS.length);
+check(`「伝説の企画」の件数を言うセリフが、legends.ts の ${LEGENDS.length} 件と合っている`
+  + `（${legendClaims.length} 本を見た）`,
+  legendWrong.length === 0,
+  `食い違いが ${legendWrong.length} 件: `
+    + legendWrong.map((c) => `${c.line}行目 「${c.text}」`).join(" / ")
+    + `。legends.ts はいま ${LEGENDS.length} 件`);
+if (legendClaims.length === 0) {
+  console.log("       ※ 件数を言うセリフが1本も無かったので、上の ok は"
+    + "「合っていた」ではなく「言っていない」。");
+}
 
 // ------------------------------------------------------- 5. 数えるだけ
 

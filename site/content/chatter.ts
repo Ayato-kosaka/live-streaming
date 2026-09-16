@@ -435,9 +435,15 @@ export const VOICES: Voice[] = [
   {
     icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", // U+1F1E8 U+1F1E6
     note: "カナダから。ローマ字の日本語で挨拶してくる。「Konbanwa」「Sonkei」",
+    /* 島の札の名前は、日本語のまま鉤括弧で出す。ほかの30人と**同じ字**を出して
+       おかないと、英語で読んだ人が島を見回したときに突き合わせる相手がいない。
+       前は Takibi Hiroba / Tabi-no-Sanbashi のようにローマ字へ音写していたが、
+       たき火広場も旅の桟橋もやめた名前で（このファイルの頭）、いまの島の
+       どの札とも一致しない＝押しに行けない案内になっていた。
+       英語の説明は札の外に添える。 */
     greet: {
-      first: "Konbanwa! First time here? Start at Takibi Hiroba.",
-      back: "Konbanwa! Long time. Ima-no-Post shows where he is right now.",
+      first: "Konbanwa! First time here? The 「あやとのこと」 sign tells you who he is.",
+      back: "Konbanwa! Long time. 「いまどこ」 shows where he is right now.",
     },
     hours: [
       "Live every night at 22:00 JST, from somewhere in the world.",
@@ -449,10 +455,10 @@ export const VOICES: Voice[] = [
       "He hitchhiked all the way to the Nordics. Every ride, a stranger.",
     ],
     lines: [
-      "Sonkei. He walked to Iran. 12 days, 380 km. See Densetsu-no-Oka.",
-      "Tabi-no-Sanbashi has all 17 countries he has walked.",
-      "Kitchen Goya keeps every dish he cooked on the road.",
-      "Kikaku Keijiban. Anyone can post an idea, and he really does it.",
+      "Sonkei. He walked to Iran, 12 days and 380 km. 「伝説の企画」 has the story.",
+      `「歩いた国」 is the map of the ${COUNTRIES_WALKED} countries he has walked.`,
+      "「作った料理」 keeps every dish he cooked on the road.",
+      "「企画をだす」 takes an idea from anyone, and he really does it.",
     ],
   },
   {
