@@ -141,11 +141,23 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
     places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
-       いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。** */
+       いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**
+
+       名簿からは `score`（島に出るえらばれやすさ）も一緒に渡す。
+       ここで落とすと、表紙だけが出席日数しか見ない島になる——
+       投げ銭の額を足した意味が、いちばん人の目に触れる面から消える。
+
+       受け取りを広く書いてあるのは、**`residents.ts` にまだ `score` の列が
+       無いから**（毎晩の焼き直しが次に回ったときに入る。
+       `python/build_residents.py`）。入るまでのあいだは undefined が渡り、
+       選ぶほうは出席の順位だけで点を付ける。 */
     folk:
       st?.residents.length
         ? st.residents
-        : RESIDENTS.filter((r) => r.icon).map((r) => ({ icon: r.icon!, days: r.days })),
+        : RESIDENTS.filter((r) => r.icon).map(
+            (r: { icon?: string; days: number; score?: number }) =>
+              ({ icon: r.icon!, days: r.days, score: r.score }),
+          ),
     art,
   };
 }

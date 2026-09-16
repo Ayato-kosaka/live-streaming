@@ -74,6 +74,31 @@ SKILL.md 3章にはまだ「コメント消失日は当時すでに来ていた�
 **`channelId` を持たない人も候補に入る。** 名乗りが当たらなければ `days` が 0 に
 なるだけで、絵は島に立つ。結べないことと、絵が無いことは別のもの。
 
+## 島に出るえらばれやすさ（`score`）も、ここで焼く
+
+あやとの決め（2026-09-15）:
+
+> やっぱり、投げ銭よくしてくれる人が優先されるべき。けど、出席も大事。
+> 額と出席まで欲しい。**投げ銭の頻度はどうでも良い。**
+> 少額でも出席し続けてたら良い。**少額頻度高めで出席悪ければ意味ない。**
+> **相対評価が良いかも。ランクづけを過去3ヶ月でして、スコアリングできそう。
+> 額1位は皆勤と同じくらい重要**
+
+見るのは2つだけ。**直近90日の投げ銭の総額**（`islandTips`）と、
+**直近90日の出席日数**（上の BigQuery）。どちらも**候補の中での順位**を
+0〜1 の点に直して、**足して2で割る**。掛けない——掛けると額0の人の点が
+0になって、二度と島を歩けなくなる。足せば「出席だけでも出られる」と
+「額1位 ≒ 皆勤」が同時に立つ。
+
+**何回に分けて投げたかは見ない。** 点は総額の順位からしか決まらないので、
+同じ額を10回に分けても1回で投げても同じ点になる。
+
+**生の金額は焼かない。** このリポジトリは公開なので、`residents.ts` に入るのは
+0〜1 に直した点だけ。「誰がいくら投げたか」はここから読めない。
+
+台帳は `islandTips`（BigQuery の `doneru_donations` ではない）。
+**スパチャと Doneru の両方が1本に入っている**のは台帳のほうなので。
+
 **名簿が読めなかったら、焼かずに終わる。** 空の `residents.ts` を焼くと、
 島から人が消える——それは「今日は誰も来ていない」と同じ絵になる
 （`docs/island-standards.md` 10）。
@@ -93,6 +118,8 @@ import logging
 import os
 import sys
 import unicodedata
+from bisect import bisect_left
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -110,6 +137,15 @@ DATASET = "youtube_chat"
 
 # キャラクターの名簿。**ここが島を歩く候補の唯一の出どころ。**
 CHARACTERS = "islandCharacter"
+
+# 投げ銭の台帳。**スパチャと Doneru の両方が1本に入っているのはこちら**
+# （BigQuery の `doneru_donations` には Doneru しか無い）。#202
+TIPS = "islandTips"
+
+# 額として足す通貨。**混ざっていても円に直さない。**
+# 為替をいつの日付で掛けるかを決めていないので、直すと
+# 「いくらだったか」が分からなくなる（`python/island_tips.py` の CURRENCY_MARKS）。
+MAIN_CURRENCY = "JPY"
 
 # 1回に読む人数。`functions/src/islandCharacter.ts` の MAX_CHARACTERS と同じ
 MAX_CHARACTERS = 500
@@ -249,19 +285,133 @@ def char_keys(c: dict) -> list:
     return keys_of([n for n in names if n])
 
 
-def fetch_characters() -> list:
-    """キャラクターの名簿（`islandCharacter`）を読む。**読むだけ。**
+def look() -> object:
+    """Firestore を**読むだけ**の口。
+
+    ここは焼くだけの道具なので、1バイトも書かない。書く口を叩いたら
+    `_fs.ReadOnly` で止まる写しを通す。
 
     Returns:
-        1人1辞書。書類ID・絵文字・名前・焼いてある鍵・（あれば）チャンネルID
+        読み専用の Firestore クライアント
     """
     from google.cloud import firestore  # Firestore を使うときだけ要る
 
     sys.path.insert(0, str(Path(__file__).resolve().parent / "admin"))
     from _fs import readonly  # noqa: PLC0415
 
-    # **下見の口を通す。** ここは焼くだけの道具なので、1バイトも書かない
-    client = readonly(firestore.Client(project=PROJECT))
+    return readonly(firestore.Client(project=PROJECT))
+
+
+def window() -> tuple:
+    """直近90日（`WINDOW_DAYS`）の日付の範囲（日本時間）。
+
+    **BigQuery 側の `win` とまったく同じ切り方にする。** 出席は
+    `CURRENT_DATE('Asia/Tokyo')` の 90日前から昨日まで。額だけ別の窓で
+    数えると、「同じ3ヶ月での順位」が2つの別の3ヶ月になる。
+
+    Returns:
+        (始まりの日, 終わりの日)。どちらも YYYY-MM-DD で、両端を含む
+    """
+    today = (datetime.now(timezone.utc) + timedelta(hours=9)).date()
+    return (
+        (today - timedelta(days=WINDOW_DAYS)).isoformat(),
+        (today - timedelta(days=1)).isoformat(),
+    )
+
+
+def fetch_tips(client) -> tuple:
+    """直近90日（`WINDOW_DAYS`）の投げ銭を、チャンネルごとに足す。**読むだけ。**
+
+    **足すのは総額だけ。件数は数えても重みには使わない**（あやとの決め:
+    「投げ銭の頻度はどうでも良い」）。
+
+    **通貨が混ざっていても円に直さない。** 直すと為替の日付をどこに
+    置いたかが分からなくなる。円以外は足さずに、混ざっていることを
+    ログに出す。本番がどうなっているかを見てから決める。
+
+    Args:
+        client: `look()` が返す読み専用のクライアント
+
+    Returns:
+        (チャンネルID -> 総額, 数えたもの)
+    """
+    d0, d1 = window()
+    total: dict = {}
+    per_currency: dict = {}
+    rows = other = no_channel = no_amount = 0
+    # **範囲の下だけ Firestore に投げる**（`day` 1本の並べ替えなので、
+    # 自動でできる索引だけで引ける）。上は手元で切る
+    for d in client.collection(TIPS).where("day", ">=", d0).stream():
+        v = d.to_dict() or {}
+        day = str(v.get("day") or "")
+        if not (d0 <= day <= d1):
+            continue
+        rows += 1
+        # 空や None は円として数える（Doneru は本番で全件 NULL＝円。
+        # `python/island_tips.py` の fetch_doneru と同じ読み方）
+        cur = str(v.get("currency") or MAIN_CURRENCY).upper()
+        per_currency[cur] = per_currency.get(cur, 0) + 1
+        amount = v.get("amount")
+        cid = v.get("channelId")
+        if amount is None:
+            no_amount += 1
+            continue
+        if cur != MAIN_CURRENCY:
+            other += 1
+            continue
+        if not cid:
+            # Doneru で、どねID がまだ表に載っていない人。**台帳には残る**が
+            # 誰のものか読めないので、額の順位には入れようがない
+            no_channel += 1
+            continue
+        total[cid] = total.get(cid, 0) + float(amount)
+    return total, {
+        "rows": rows,
+        "people": len(total),
+        "currencies": per_currency,
+        "other_currency": other,
+        "no_channel": no_channel,
+        "no_amount": no_amount,
+    }
+
+
+def points(values: list) -> list:
+    """値の一覧 → 0〜1 の点。**相対評価（順位）で決める。**
+
+    点 ＝ 自分より小さい値の人数 ÷ (人数 - 1)。
+    いちばん上（ただ1人なら）が 1、いちばん下が 0。
+
+    **同着は全員おなじ点で、そのかたまりの「いちばん下」に付ける。**
+    かたまりの上や平均で付けると、投げ銭0円の人が数十人並んでいるだけで
+    その全員が真ん中あたりの点をもらう（102人中80人が0円なら平均で 0.39）。
+    それは「投げ銭よくしてくれる人が優先される」の逆になる。
+    **0円の人は額の点が0**で、出席の点だけで島に出る。
+
+    `site/components/island/roster.ts` の `rankPoints` と同じ式。
+    片方だけ変えると、焼いた点と受け皿の点が違う意味になる。
+
+    Args:
+        values: 値の一覧
+
+    Returns:
+        同じ並びの点（0〜1）
+    """
+    n = len(values)
+    if n <= 1:
+        return [0.0] * n
+    srt = sorted(values)
+    return [bisect_left(srt, v) / (n - 1) for v in values]
+
+
+def fetch_characters(client) -> list:
+    """キャラクターの名簿（`islandCharacter`）を読む。**読むだけ。**
+
+    Args:
+        client: `look()` が返す読み専用のクライアント
+
+    Returns:
+        1人1辞書。書類ID・絵文字・名前・焼いてある鍵・（あれば）チャンネルID
+    """
     out = []
     for d in client.collection(CHARACTERS).limit(MAX_CHARACTERS).get():
         v = d.to_dict() or {}
@@ -360,21 +510,30 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
         f'  {{ icon: "{r["icon"]}"'
         + (f', emoji: "{r["emoji"]}"' if r.get("emoji") else "")
         + f', days: {r["days"]}'
+        + f', score: {r["score"]:.3f}'
         + (f', channel: "{r["channel"]}"' if r.get("channel") else "")
         + " },"
         for r in rows
     )
     OUT_TS.write_text(
         f'''/** 直近{WINDOW_DAYS}日で島に来てくれている仲間のうち、キャラクター登録済みの人。
- *  名前は出さない方針なので、アイコン/絵文字と「一緒にいた日数」だけを持つ。
+ *  名前は出さない方針なので、アイコン/絵文字と「一緒にいた日数」、
+ *  島に出るえらばれやすさだけを持つ。
  *
  *  **手で直さない。** `python/build_residents.py` が BigQuery から焼く。
  *  日ごとに数える。**チャットが取り込めていない日は、出席にも分母にも入れない**
  *  （読めていない日を「居た」ことにすると、1回来ただけの人が常連になる）。
  *
- *  **`days` は、島に出ている人を日替わりで選ぶ重みにもなっている**
- *  （`components/island/villagers.ts` の rosterOf）。よく来てくれている人ほど
- *  島にいる日が多い、という形にするため。
+ *  **`score`（0〜1）が、島に出ている人を日替わりで選ぶ重み**
+ *  （`components/island/roster.ts` の rosterOf）。中身は2つだけ:
+ *  **直近{WINDOW_DAYS}日の投げ銭の総額の順位**と、**同じ期間の出席日数の順位**を
+ *  それぞれ 0〜1 に直して足して2で割ったもの。**足す**ので、額0の人も
+ *  出席だけで島に出られるし、額1位は皆勤とおなじだけ強い（あやとの決め）。
+ *  **何回に分けて投げたかは見ていない**（総額の順位しか見ない）。
+ *  同着は全員そのかたまりの「いちばん下」の点。投げ銭0円の人は額の点が 0。
+ *
+ *  **生の金額はここに無い。** このリポジトリは公開なので、焼いてあるのは
+ *  0〜1 に直した点だけ。「誰がいくら投げたか」はここからは読めない。
  *
  *  **画面に出る日数は、ここの値ではない（#91）。** `/friends` の図鑑は
  *  `/state` の `residentDays` を出す。あちらは毎晩 `islandChannels` に
@@ -392,7 +551,14 @@ def write_ts(rows: list, active: int, denom: int, lost_days: int) -> None:
  *  結べなかった人は `channel` が無く、`days` は 0。絵は島に立つ。
  *  本人にログイン画面で選ばせない。他人の絵を自分のものにできてしまうため。
  */
-export type Resident = {{ icon?: string; emoji?: string; days: number; channel?: string }};
+export type Resident = {{
+  icon?: string;
+  emoji?: string;
+  days: number;
+  /** 島に出るえらばれやすさ（0〜1）。額の順位＋出席の順位 */
+  score: number;
+  channel?: string;
+}};
 
 export const RESIDENTS: Resident[] = [
 {body}
@@ -444,7 +610,8 @@ def main() -> int:
     # **名簿が読めなかったら、焼かない。** 空の residents.ts を焼くと島から
     # 人が消える。それは「今日は誰も来ていない」と同じ絵になる
     try:
-        chars = fetch_characters()
+        db = look()
+        chars = fetch_characters(db)
     except Exception as e:  # noqa: BLE001
         logger.error("名簿（%s）を読めなかった: %s。焼かずに終わる", CHARACTERS, e)
         return 1
@@ -476,9 +643,53 @@ def main() -> int:
     for r in out:
         r["days"] = by_cid.get(r["channel"], 0) if r["channel"] else 0
 
+    # **投げ銭の台帳。読めなくても焼く。** 額が読めないことと、
+    # 島から人が消えることは別の重さ。読めなかった晩は出席だけで点を付ける
+    # （0 で埋めるので、全員の額の点が 0 ＝ 出席の順位がそのまま出る）。
+    try:
+        yen, tipped = fetch_tips(db)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("台帳（%s）を読めなかった: %s。額は 0 として焼く", TIPS, e)
+        yen, tipped = {}, {}
+    if tipped:
+        logger.info(
+            "台帳 %d件 / 額の付いた人 %d人（直近%d日）",
+            tipped["rows"], tipped["people"], WINDOW_DAYS,
+        )
+        # **通貨が混ざっていたら、黙って足さない。** 為替をどの日で掛けるかを
+        # 決めていないので円に直せない。混ざっていることだけは必ず出す
+        if len(tipped["currencies"]) > 1:
+            logger.warning(
+                "投げ銭に通貨が混ざっている: %s。**円に直していない。**"
+                "%s 以外の %d件は額に足していないので、その人の順位はそのぶん下がる",
+                ", ".join(f"{k}×{n}" for k, n in sorted(tipped["currencies"].items())),
+                MAIN_CURRENCY, tipped["other_currency"],
+            )
+        if tipped["no_channel"]:
+            logger.info(
+                "チャンネルに結ばれていない投げ銭 %d件（どねID が表に無い人）。"
+                "誰のものか読めないので額には足していない",
+                tipped["no_channel"],
+            )
+        if tipped["no_amount"]:
+            logger.info("金額の読めなかった投げ銭 %d件", tipped["no_amount"])
+
+    # **点は「候補の中での順位」で決める。** 額も出席も、値そのものではなく
+    # この3ヶ月の並び順を 0〜1 に直して足す（`points` の説明）。
+    tip_pt = points([yen.get(r["channel"], 0.0) if r["channel"] else 0.0 for r in out])
+    day_pt = points([r["days"] for r in out])
+    for r, t, d in zip(out, tip_pt, day_pt):
+        r["score"] = (t + d) / 2
+
     # 日数の同じ人（結べなかった人は全員 0）が並ぶので、**絵の id で並びを固定する。**
     # 順番が晩ごとに揺れると、中身が変わっていないのに毎晩 commit が立つ
     out.sort(key=lambda r: (-r["days"], r["icon"]))
+    top = max(out, key=lambda r: r["score"])
+    logger.info(
+        "えらばれやすさ: いちばん高い点 %.3f / 平均 %.3f / 点0の人 %d人",
+        top["score"], sum(r["score"] for r in out) / len(out),
+        sum(1 for r in out if r["score"] <= 0),
+    )
     write_ts(out, active, denom, lost_days)
     logger.info("焼いた: %s（%d人）", OUT_TS, len(out))
     return 0

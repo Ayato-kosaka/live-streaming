@@ -21,6 +21,7 @@ import { greetOf } from "@/content/chatter";
 import { readNight } from "@/lib/nightly";
 import { GRASS_INSET, ISLAND, PLACES, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
+import { rosterOf } from "./roster";
 
 const HOME_R = inset(ISLAND.radii, GRASS_INSET + 12);
 
@@ -149,6 +150,10 @@ export type Resident = {
   icon?: string;
   emoji?: string;
   days: number;
+  /** 島に出るえらばれやすさ（0〜1）。**直近90日の投げ銭の総額の順位**と
+      **出席日数の順位**を足して作ってある（`python/build_residents.py`）。
+      無い人は出席日数の順位だけで点が付く（`./roster` の `pointsOf`）。 */
+  score?: number;
   /** 本人が「出す」と決めたときだけ入る表示名（ニックネーム可） */
   name?: string;
   /** 本人が「出す」と決めたときだけ入る YouTube のアイコン */
@@ -158,30 +163,6 @@ export type Resident = {
 /** 日本時間で数えた通算日数。日替わりの種にする。 */
 function jstDay(now: Date): number {
   return Math.floor((now.getTime() + 9 * 3600000) / 86400000);
-}
-
-/**
- * 今日、島に出ている人。
- *
- * 22人を毎日ぜんぶ歩かせると島が人で埋まるし、上位12人で固定すると
- * **昨日と今日で島がまったく同じ**になる（`docs/island-play.md` 2章）。
- * なので日替わりにする。**よく来てくれている人ほど、島にいる日が多い。**
- * 配信に来る頻度がそのまま島に出るので、嘘をついていない。
- * そして「今日は誰がいるかな」が、そのまま毎日もう一度開く理由になる（同 G）。
- *
- * @param {Resident[]} residents キャラクターを作ってくれた人
- * @param {number} max 一度に島を歩く人数
- * @param {number} day 日本時間の通算日数
- */
-function rosterOf(residents: Resident[], max: number, day: number): Resident[] {
-  if (residents.length <= max) return residents;
-  const r = rng((day * 2654435761) >>> 0);
-  // 重み付きの抽選。days が大きい人ほど 1 に近い値が出て、前に並ぶ
-  return residents
-    .map((who) => ({ who, key: Math.pow(Math.max(r(), 1e-9), 1 / Math.max(1, who.days)) }))
-    .sort((a, b) => b.key - a.key)
-    .slice(0, max)
-    .map((x) => x.who);
 }
 
 /** 名前から決まる、その人だけの番号。並べ替えの鍵にする。 */

@@ -921,14 +921,45 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | 焼かれるもの | 元 | 回すもの |
 | --- | --- | --- |
 | `chapterStats.ts` `chapterStreams.ts` | BigQuery + `chapters.ts` | `python/build_chapter_stats.py` |
-| `residents.ts` | BigQuery + `python/residents_map.json` | `python/build_residents.py` |
+| `residents.ts` | BigQuery + `islandCharacter` + `islandTips` | `python/build_residents.py` |
 | `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
 | `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
 | `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
 
-前の4本は**入力が BigQuery だけ**。`build_city_streams` だけは上流に人の書く
-`countries.ts` があるが、**街の一覧が止まっても街ごとの本数は機械だけで動く**ので
-毎晩に入れてある。
+`build_city_streams` だけは上流に人の書く `countries.ts` があるが、
+**街の一覧が止まっても街ごとの本数は機械だけで動く**ので毎晩に入れてある。
+`build_residents` は BigQuery（出席）のほかに Firestore を2つ読む——
+候補になる名簿（`islandCharacter`）と、投げ銭の台帳（`islandTips`）。
+**どちらも読むだけ**（`python/admin/_fs.py` の `readonly` を通す）。
+
+##### `residents.ts` が持っている列
+
+| 列 | 何 | どこから |
+| --- | --- | --- |
+| `icon` | キャラクターの絵（書類ID＝もとのドライブの画像 id） | `islandCharacter` の書類ID |
+| `emoji` | その人の絵文字 | `islandCharacter.emoji` |
+| `days` | 直近90日で一緒にいた日数 | BigQuery（`chat_messages`）。読めなかった日は出席にも分母にも入れない |
+| `channel` | YouTube のチャンネル id | 名簿の鍵 × チャットの名乗り。**決められないものは結ばない** |
+| `score` | **島に出るえらばれやすさ（0〜1）** | 下 |
+
+**`score` は、島を歩く人を日替わりで選ぶ重み**（`site/components/island/roster.ts`）。
+あやとの決め（2026-09-15）で、見るのは**2つだけ**:
+
+- **直近90日の投げ銭の総額**（`islandTips`。スパチャと Doneru の両方が入っている）
+- **直近90日の出席日数**（＝`days`）
+
+どちらも**その3ヶ月での順位**を 0〜1 に直して、**足して2で割る。**
+掛けない——掛けると額0の人の点が0になって、二度と島を歩けない。
+足すので「出席だけでも出られる」と「**額1位 ≒ 皆勤**」が同時に立つ。
+**何回に分けて投げたかは見ない**（総額の順位しか見ない）。
+同着は全員そのかたまりの「いちばん下」の点なので、**投げ銭0円の人は額の点が0**。
+
+**生の金額は焼かない。** このリポジトリは公開なので、入るのは 0〜1 に直した点だけ。
+通貨が混ざっていても**円に直さない**（為替の日付を決めていない）。
+円以外は額に足さずに、混ざっていることをログに出す。
+
+点を何倍の重みに化かすかは `roster.ts` の `TOP_WEIGHT`（いま 3倍）。
+**ここを1つ動かすだけで効く。** 測りかたは `site/selftest/roster_selftest.mjs`。
 
 **(b) 人が上流を書いたあとに焼く** — 上流が止まっていれば、下流も止まる
 
