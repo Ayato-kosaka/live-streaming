@@ -763,9 +763,9 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-/* 手順のあとの2つ。どちらも短いので、広い画面では横に2つ並べる。
-   **手順との境目は罫1本。** 紙の型は区切りに影を使わない（`pages.css`）ので、
-   紙のはしまで届く罫を、負のマージンで引く（見出しの罫と同じ引き方）。 */
+/* 手順のあとの短い注。**手順との境目は罫1本。** 紙の型は区切りに影を
+   使わない（`pages.css`）ので、紙のはしまで届く罫を、負のマージンで引く
+   （見出しの罫と同じ引き方）。 */
 .akg-notes {
   display: grid;
   gap: 0;
@@ -817,6 +817,12 @@
   /* 行き先は、真ん中に寄せた3つの下に置く。左端に置くと1つ目の下だけに付いて見える。
      `inline-flex` のままでは寄せられないので、幅を中身ぶんに決めてから中央へ。 */
   .akg > .akg-go { display: flex; width: fit-content; margin-inline: auto; }
-  .akg-notes { grid-template-columns: 1fr 1fr; column-gap: var(--sp-5); }
+  /* **`1fr 1fr` で固定しない。** 注が1つのとき、左半分だけに短い段落が
+     残って右が空く。`auto-fit` は空の列を畳むので、1つなら幅いっぱい、
+     2つなら横並びになる。 */
+  .akg-notes {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    column-gap: var(--sp-5);
+  }
   .akg-note + .akg-note { margin-top: 0; }
 }
