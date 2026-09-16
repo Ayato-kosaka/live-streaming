@@ -353,6 +353,19 @@ jobs:
       - name: またいだ呼び出しが合っているか
         run: python3 python/crosscall_selftest.py
 
+      # 焼いた結果の**並び**が、回すたびに変わらないこと。
+      #
+      # 並びが毎晩入れ替わると、下の「凍っていないか」が字面の差を見て
+      # 「新しくなった」と読む。`cityStreams.ts` はそれで**構造上いちども
+      # 鳴れなかった**（`docs/island-misses.md` #106）。焼くほうを決定的に
+      # したので、戻っていないことをここで見る。
+      #
+      # ここも BigQuery を引かない（本番の `site/content/` を種に、
+      # 差し込んだ行で回る）。**引く前**に置くのは上と同じ理由で、
+      # 落ちるのがクエリのあとだと、権限もクエリも1回無駄に動く。
+      - name: 焼いた並びが毎回同じか
+        run: python3 python/bake_order_selftest.py
+
       # 焼く前の姿を取っておく。あとで「前 → 後」を並べて出すため
       - name: 焼く前を取っておく
         run: |
@@ -790,6 +803,10 @@ jobs:
           **赤くなるほうも自分で見ておく。** 古い commit を並べた使い捨ての
           リポジトリを作り、「焼いた日だけ動かした晩」を何回か積んでから回すと、
           凍っているものが赤く、動かなくて正常なものが赤くならないことを両方見られる。
+
+          それを毎回やらずに済むようにしたのが `python/bake_order_selftest.py`。
+          **並び替えただけの写しで赤くなり、数字を1つ動かした写しで赤くならない**
+          ところまで、本番の `site/content/` を種にして回る。
           """
 
           import os
@@ -824,16 +841,133 @@ jobs:
               return subprocess.run(["git", *args], capture_output=True, text=True).stdout
 
 
+          def _close(s: str, i: int) -> int:
+              """`s[i]` の括弧に対応する閉じ括弧の位置。見つからなければ -1。"""
+              depth, q, j = 0, "", i
+              while j < len(s):
+                  ch = s[j]
+                  if q:
+                      if ch == "\\":
+                          j += 2
+                          continue
+                      if ch == q:
+                          q = ""
+                  elif ch == '"':
+                      q = ch
+                  elif ch in "[{":
+                      depth += 1
+                  elif ch in "]}":
+                      depth -= 1
+                      if depth == 0:
+                          return j
+                  j += 1
+              return -1
+
+
+          def _items(s: str) -> list:
+              """括弧の中身を、いちばん外側のカンマで切る（文字列と入れ子は跨がない）。"""
+              out, cur, depth, q, i = [], "", 0, "", 0
+              while i < len(s):
+                  ch = s[i]
+                  if q:
+                      cur += ch
+                      if ch == "\\" and i + 1 < len(s):
+                          cur += s[i + 1]
+                          i += 2
+                          continue
+                      if ch == q:
+                          q = ""
+                  elif ch == '"':
+                      q = ch
+                      cur += ch
+                  elif ch in "[{":
+                      depth += 1
+                      cur += ch
+                  elif ch in "]}":
+                      depth -= 1
+                      cur += ch
+                  elif ch == "," and depth == 0:
+                      out.append(cur)
+                      cur = ""
+                  else:
+                      cur += ch
+                  i += 1
+              out.append(cur)
+              return out
+
+
+          def _sorted(s: str) -> str:
+              """括弧の中の**兄弟の並び**だけを揃える。入れ子と鍵はそのまま残す。
+
+              `{ "ロンドン": [ {…A…}, {…B…} ] }` の A と B を並べ替えても
+              同じ字面になるが、A の中の `"date"` が変われば A 自身が変わるので
+              字面も変わる。**「どこに何が入っているか」は潰さない。**
+              """
+              out, i, q = [], 0, ""
+              while i < len(s):
+                  ch = s[i]
+                  if q:
+                      out.append(ch)
+                      if ch == "\\" and i + 1 < len(s):
+                          out.append(s[i + 1])
+                          i += 2
+                          continue
+                      if ch == q:
+                          q = ""
+                      i += 1
+                      continue
+                  if ch == '"':
+                      q = ch
+                      out.append(ch)
+                      i += 1
+                      continue
+                  if ch in "[{":
+                      j = _close(s, i)
+                      if j < 0:  # 閉じていない（注釈の中の括弧など）。手を付けない
+                          out.append(ch)
+                          i += 1
+                          continue
+                      inner = _sorted(s[i + 1 : j])
+                      parts = [x.strip() for x in _items(inner)]
+                      parts = [x for x in parts if x]
+                      out.append(ch + ",".join(sorted(parts)) + s[j])
+                      i = j + 1
+                      continue
+                  if ch.isspace():
+                      if out and out[-1] != " ":
+                          out.append(" ")
+                      i += 1
+                      continue
+                  out.append(ch)
+                  i += 1
+              return "".join(out)
+
+
           def body(text: str) -> str:
-              return STAMP.sub("", text)
+              """比べるための姿。**並び替えただけの差は消し、値の差は残す。**
+
+              そのまま字面を比べていたので、**並びが毎晩入れ替わるファイルは
+              中身が何ヶ月凍っていても永遠に「0.0日」だった。** 2026-09-16 の
+              焼き直しで `cityStreams.ts` が 107 行動いたが、空白を除いた文字は
+              1つも増減しておらず、57 か所すべてが**同じ日どうしの入れ替わり**
+              だった。見張り（`(7, "いまいる街の配信が増える…")`）は構造上
+              一度も鳴れない（`docs/island-misses.md` #106）。
+
+              **やりすぎない。** 潰すのは兄弟の並びと空白だけで、
+              **数字が1つ動けば必ず字面が変わる。**
+              """
+              return _sorted(STAMP.sub("", text)).strip()
 
 
           def stale_days(path: str) -> float:
               """いまの中身になってから何日たったか。この回で焼き変わっていれば 0。"""
-              if git("diff", "--name-only", "--", path).strip():
-                  return 0.0
               with open(path, encoding="utf-8") as f:
                   cur = body(f.read())
+              # **`git diff` で「変わった」と読まない。** 並び替えただけでも差分は出る。
+              # いま焼いたものを HEAD と**正規化して**比べて、同じなら凍っている側へ回す
+              head = git("show", f"HEAD:{path}")
+              if not head or body(head) != cur:
+                  return 0.0
               intro = None
               for line in git("log", "-n", str(DEPTH), "--format=%H %ct", "--", path).splitlines():
                   if not line.strip():

@@ -82,16 +82,50 @@ def read_stays() -> dict:
 
 
 def sql_of(project: str = "live-streaming-d3cac", dataset: str = "youtube_chat") -> str:
-    """配信の一覧（日付・ID・タイトル）を古い順に取る SQL。"""
+    """配信の一覧（開始時刻・日付・ID・タイトル）を古い順に取る SQL。
+
+    **開始時刻そのもの（`st`）を持って帰る。** 前はここで `ORDER BY` にだけ使って
+    捨てていた。捨てると、書き出しに残るのは日付（`d`）だけになり、
+    **同じ日の中の並びは「行が返ってきた順」でしか決まらない。**
+    その順は毎晩ちがう（下の `order_key` の注を見る）。
+
+    `ORDER BY` にも `video_id` を足して、**同着の無い並び**にする。
+    """
     return f"""
     SELECT
+      actual_start_time AS st,
       FORMAT_TIMESTAMP('%Y-%m-%d', actual_start_time, 'Asia/Tokyo') AS d,
       video_id,
       title
     FROM `{project}.{dataset}.videos`
     WHERE actual_start_time IS NOT NULL
-    ORDER BY actual_start_time
+    ORDER BY actual_start_time, video_id
     """
+
+
+def order_key(v: dict) -> tuple:
+    """書き出しの並び。**行が返ってきた順に頼らない。**
+
+    2026-09-16 の焼き直しで、`cityStreams.ts` が 107 行入れ替わったのに
+    **中身は1文字も変わっていなかった**（空白を除いた文字の集合が同じ）。
+    動いた 57 か所は**すべて同じ日どうし**の入れ替わりで、直近5回の焼き直しでも
+    「同じ街・同じ日に2本以上ある」56 かたまりのうち **44 かたまり**が
+    2通り以上の並びで焼かれていた。
+
+    日をまたぐ並びは毎回同じなのに、日の中だけが毎回ちがう。つまり
+    **`ORDER BY actual_start_time` が同着を残していて**、同着の行が
+    どの順で返るかは回ごとに決まっていない。書き出しには日付しか
+    残っていないので、**どちらが正しいのかを後から決められない**のが根っこ。
+
+    だから並べ替えをこちらに持つ。日（`d`）→ 開始時刻（`st`）→ `video_id` の順。
+    **日付順・古い順は画面の並びそのものなので保つ**（`/map/<国>` の街の札は
+    この順にカードを出す）。決まっていないのは同じ時刻どうしだけなので、
+    そこだけ `video_id` で決める。
+
+    `d` を先に見るのは、`st` が無い行（`--rows` に古い書き出しを渡したとき）でも
+    画面に出る並びが崩れないようにするため。
+    """
+    return (v["d"], str(v.get("st") or ""), v["video_id"])
 
 
 def fetch_videos() -> list:
@@ -153,6 +187,9 @@ def main() -> int:
     videos = (
         json.loads(Path(a.rows).read_text(encoding="utf-8")) if a.rows else fetch_videos()
     )
+    # **ここで並べ直す。** SQL の ORDER BY は同着を残すので、そのまま使うと
+    # 同じ日の配信が毎晩入れ替わって焼ける（`order_key` の注）
+    videos = sorted(videos, key=order_key)
     logger.info("配信 %d 本、国 %d カ国", len(videos), len(countries))
 
     names = {c["name"] for c in countries.values()}
