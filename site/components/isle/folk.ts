@@ -12,6 +12,17 @@
  * `docs/island-atlas.md` 3章。**同じ人が複数の島に出てよい。**
  * ずっと来てくれている人は、どの島にもいる。
  *
+ * ## 今日その中の誰が出るかは、`components/island/roster.ts` が決める
+ *
+ * ここに写しを持っていたころ、出席日数だけを指数にして選んでいた。
+ * **表紙（`/`）はこの経路なので、あちらの式を直しても画面は何も変わらなかった。**
+ * 選びかたは1か所にしか置かない——投げ銭の額を足したのも、
+ * 倍率を測って決めたのも、あちらが持っている。
+ *
+ * 点（`score`）を持たない名簿でも落ちない。焼き直しが回る前や、
+ * 章ごとの名簿（`content/chapterStats.ts`）のように日数しか無いものは、
+ * **出席日数の順位だけで点が付く**（`roster.ts` の `pointsOf`）。
+ *
  * ## 何をしゃべるか
  *
  * その人のセリフ帳（`content/chatter.ts`）をそのまま使う。
@@ -21,6 +32,7 @@
  */
 
 import { rng } from "@/components/island/geometry";
+import { rosterOf } from "@/components/island/roster";
 import { clampTo, type Placed } from "./world";
 
 export type Mood = "walk" | "stand" | "think" | "wave" | "gaze" | "chat";
@@ -82,24 +94,6 @@ function jstDay(now: Date): number {
 }
 
 /**
- * 今日、島に出ている人。
- *
- * 全員をいつも歩かせると島が人で埋まるし、上位から固定で選ぶと
- * **昨日と今日で島がまったく同じ**になる（`docs/island-play.md` 2章）。
- * 日替わりにして、**よく来てくれている人ほど島にいる日が多い**ようにする。
- * 配信に来ている頻度がそのまま島に出るので、嘘をついていない。
- */
-function rosterOf<T extends { days: number }>(all: T[], max: number, day: number): T[] {
-  if (all.length <= max) return all;
-  const r = rng((day * 2654435761) >>> 0);
-  return all
-    .map((who) => ({ who, key: Math.pow(Math.max(r(), 1e-9), 1 / Math.max(1, who.days)) }))
-    .sort((a, b) => b.key - a.key)
-    .slice(0, max)
-    .map((x) => x.who);
-}
-
-/**
  * 島に人を置く。
  *
  * **持ち場は建物のまわり。** 持ち場が空くと、その建物のまわりに誰もいない
@@ -107,7 +101,7 @@ function rosterOf<T extends { days: number }>(all: T[], max: number, day: number
  * 2周目からは同じ建物の外側の輪に立つ。
  */
 export function createFolk(
-  people: { icon: string; days: number }[],
+  people: { icon: string; days: number; score?: number }[],
   g: Ground,
   r: number,
   /** 降り立つところ。**ここには必ず1人いる**（下） */
