@@ -125,12 +125,16 @@ type Card = {
   channelId: string | null;
   /**
    * キャラクターの書類ID。画面はこれで絵を引く(`lib/charImg.ts`)。
-   * **投げたときの名乗り(`nameSnapshot`)からしか決まらない**（下の長い注）
+   * **`channelId` で引く。名簿がそれを持っていない人だけ、投げたときの
+   * 名乗り(`nameSnapshot`)に落ちる**（下の長い注）
    */
   icon: string | null;
   /**
    * 島に名前を出してよいと言った人だけ。**しかも、投げたときの名乗りで
-   * 身元が分かったカードだけ**（別名で投げた1回には出さない）
+   * 身元が分かったカードだけ**（別名で投げた1回には出さない）。
+   *
+   * **絵が `channelId` で当たっても、ここは開かない。** 名前を出す条件は
+   * 名乗りのままにしてある（`pickIcon` の `known`）。
    */
   name: string | null;
   /** 画像の中のどこに立つか。0〜1 の割合。`y` は足元の高さ */
@@ -148,42 +152,58 @@ type Card = {
 
 /* ---------------- 誰のカードかを、絵に結び付ける ----------------
 
-   **投げてくれたときに名乗っていた名前（`nameSnapshot`）→ 名簿の
-   `lookupKeys` → 絵。** 配信中のアラートボックスと同じ引き方
-   (`islandCharacter.ts` の `findBy("lookupKeys", …)`・
-   `app/alertbox/matching.utils.ts`)。
+   **カードの `channelId` → 名簿(`islandCharacter`)の `channelId` → 絵。**
+   名簿がその欄を持っていない人だけ、**投げてくれたときに名乗っていた名前
+   (`nameSnapshot`)→ `lookupKeys` → 絵**に落ちる。受け皿のほうは配信中の
+   アラートボックスと同じ引き方(`islandCharacter.ts` の
+   `findBy("lookupKeys", …)`・`app/alertbox/matching.utils.ts`)。
 
-   ## なぜチャンネルIDを通らないか
+   ## なぜ `channelId` を先に見るか
 
-   前はこう引いていた。
+   **カードの書類は最初から `channelId` を持っている。** 持っているのに
+   名乗りを経由すると、**絵が「本人が打った字」で決まる。** 視聴者さんが
+   YouTube の名前を変えた日も、Doneru の表示名にタイポがあった日も、
+   カードから絵が消える（実際に消えた人がいる）。あやとの決めごと
+   (`docs/island-db.md` 2章):
 
-     どねID → `islandDonors`（あやとが手で紐付けたもの）
-       → チャンネルID → `islandChannels.name`（**いま名乗っている名前**）
-       → 絵
+   > キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
+   > 変わらないのが正しい。本人にキャラクターを選ばせる口は無い**
 
-   **Doneru に何と名乗って投げたかが、1文字も使われていない。**
-   だから**別名で投げた人の絵が、公開の `/cards` に出ていた。**
-   欄としての `name` も `channelId` も null にしてあったのに、絵だけが
-   残っていて、図鑑(`/friends`)に同じ絵が並んでいるので照らせば誰か分かる。
+   **「選ばせる口は無い」と書いてある、その口が名乗り側に開いていた。**
+   本番の名簿は102人中78人が `channelId` を持っている(#429 の A)。
+   持っている人はそれで引き、名乗りは**持っていない24人のための受け皿**に下げる。
 
-   あやとの決め(2026-09-15):
+   ## 名乗りで引いていた経緯は、消さずに残す
+
+   さらに前は「どねID → `islandDonors`（あやとが手で紐付けたもの）→
+   チャンネルID → `islandChannels.name`（**いま名乗っている名前**）→ 絵」
+   だった。**Doneru に何と名乗って投げたかが1文字も使われていない**ので、
+   別名で投げた人の絵が公開の `/cards` に出ていた。あやとの決め(2026-09-15):
 
    > 内部ロジックとして、かこさんが投げてくれた紐付けはしてもいいけど、
    > みんなが見える場所では匿名性を守りたい
 
-   紐付け（どねID → チャンネルID）は残す。**それを公開の面の絵に使うのを
-   やめる。** 名乗りは `islandTips.displayNameSnapshot` に入っていて、
-   カードの書類に焼き込んである(`streamEvents.ts` の `mintCards`)。
+   これを受けて、絵を名乗りだけで決めるようにしたのが前の版。
 
-   ## 焼き込みなので、あとから動かない
+   **`channelId` を先に見ると、どねID が結ばれている人は別名で投げても
+   絵が乗る。** 「名乗りを変えても絵が動かない」と「名乗りを変えれば絵を
+   消せる」は同じ欄の裏表で、両方は立たない。#429 の A を採ったので
+   **動かないほうを採った**——ただし**名前を出す条件は1ミリも動かして
+   いない**（下の `name`。名乗りで身元が分かった人にしか出さない）。
+   ここは「誰が何を見られるか」に触る線なので、戻すときもここを読む
+   (`docs/island-incident-2026-09-14-cards.md` 7-(1))。
 
-   名簿を引くのは「その名乗りが誰の呼び名か」だけ。**投げた時点の名乗りは
-   カードの書類の中にあるので、YouTube の名前を変えても Doneru の名前を
-   変えても、カードの絵は動かない。** あやとの決めごと
-   (`docs/island-db.md` 2章)に、これで初めて沿う。
+   ## `islandChannels` は、やはり1回も読まない
 
-   > キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
-   > 変わらないのが正しい。本人にキャラクターを選ばせる口は無い**
+   引く先は名簿(`islandCharacter`)1つだけ。**いま名乗っている名前の辞書
+   (2,272件)には戻らない。** 戻ると絵がまた「いまの表示名」で動き出す——
+   直そうとしているものそのもの。
+
+   ## 焼き込みなので、受け皿もあとから動かない
+
+   名乗りのほうを引くのは「その名乗りが誰の呼び名か」だけ。**投げた時点の
+   名乗りはカードの書類の中にある**ので、あとから名前を変えても受け皿側の
+   絵は動かない。
 
    ## なりすましは見ない
 
@@ -203,6 +223,13 @@ type Card = {
    1人選ぶと**別人の絵**が乗る。アラートボックスの `findBy` が
    `limit(2)` を取って `size !== 1` なら諦めるのと、同じ決め方。
 
+   **`channelId` も同じ。** 同じ `channelId` が2人のキャラクターに付いて
+   いたら、どちらにも当てない（`characters_link.py` が埋めるときに
+   飛ばしているのと同じ形だが、**埋める側が飛ばしたことを引く側が当てに
+   しない**。手で入れた1件で破れる）。名乗りのほうへ落ちもしない——
+   どちらか選べないのは `channelId` の段で確定しているので、名前で
+   当て直すと結局どちらかの絵が乗る。
+
    ## `lookupKeys` で引く（`channelKeys` ではない）
 
    アラートボックスが Doneru の名乗りに当てているのがこちら
@@ -214,57 +241,107 @@ type Card = {
    本番の `/island-api/cards` は Hosting に `no-cache` へ書き換えられていて
    （Functions は `s-maxage=60` を付けているが、届くのは `no-cache`）、
    **開かれるたびに handler が丸ごと走る。** 引く先は名簿1つだけで、
-   しかも5分の控えに載るので、温まっていれば**1往復も増えない。** */
+   しかも5分の控えに載るので、温まっていれば**1往復も増えない。**
 
-/** 引く鍵(`normKey` した名乗り) → キャラクターの書類ID。 */
+   **2つの対応を、その1回の読みから両方作る。** `channelId` の表を別に
+   引きに行くと、名簿を2回読むことになる(`characterBook`)。 */
+
+/** 引く値 → キャラクターの書類ID。鍵にも `channelId` にも使う。 */
 type Keys = Map<string, string>;
 
+/**
+ * 名簿1回ぶんの読みから作る、2つの対応。
+ *
+ * **`byChannel` が先、`byKey` は受け皿。** 分けて持つのは、引く順を
+ * `pickIcon` の1か所だけで決めるため。
+ */
+type Book = {
+  /** `islandCharacter.channelId` → 書類ID。**2人に付いた値は入っていない** */
+  byChannel: Keys;
+  /**
+   * **2人に付いていた `channelId`。** 表から抜くだけでは足りない
+   * （抜くと名乗りの受け皿へ落ちて、結局どちらか片方の絵が乗る）。
+   * 「決められなかった」ことを覚えておいて、そこで止める。
+   */
+  dupChannel: Set<string>;
+  /** `lookupKeys` の鍵 → 書類ID。**2人に付いた鍵は入っていない** */
+  byKey: Keys;
+};
+
 /** 温かいインスタンスに持つ名簿。 */
-let cached: {at: number; keys: Keys} | null = null;
+let cached: {at: number; book: Book} | null = null;
 
 /**
  * 名簿を覚えておく長さ。
  *
- * `lookupKeys` が変わるのはあやとが画面からキャラクターを直したときだけで、
- * 年に数回。5分にしたのは、直した本人が画面を開き直したときに**待たされて
- * いると気づかない**長さだから。口が CDN に乗らない以上、98件の読み込みを
- * 毎回払う理由もない。
+ * `channelId` と `lookupKeys` が変わるのはあやとが画面からキャラクターを
+ * 直したときだけで、年に数回。5分にしたのは、直した本人が画面を開き直した
+ * ときに**待たされていると気づかない**長さだから。口が CDN に乗らない以上、
+ * 102件の読み込みを毎回払う理由もない。
  */
 const KEYS_TTL = 5 * 60 * 1000;
 
 /**
- * 名簿から「鍵 → 絵」を作る。**2人に当たる鍵は捨てる。**
- * @return {Promise<Keys>} 引く鍵から書類IDへの対応
+ * 名簿から「`channelId` → 絵」と「鍵 → 絵」を作る。
+ *
+ * **名簿は1回しか読まない。** `channelId` の表を別に引きに行くと、
+ * 同じ102件を2回読むことになる。**2人に当たるものは、どちらの表からも捨てる。**
+ * @return {Promise<Book>} 2つの対応
  */
-async function characterKeys(): Promise<Keys> {
+async function characterBook(): Promise<Book> {
   const now = Date.now();
-  if (cached && now - cached.at < KEYS_TTL) return cached.keys;
+  if (cached && now - cached.at < KEYS_TTL) return cached.book;
   const snap = await CHARACTERS.limit(MAX_CHARACTERS).get();
-  const keys: Keys = new Map();
-  /* **同じ鍵が2人に付いていたら、どちらも使わない。** 当てずっぽうに1人
+  const byChannel: Keys = new Map();
+  const byKey: Keys = new Map();
+  /* **同じ値が2人に付いていたら、どちらも使わない。** 当てずっぽうに1人
      選ぶと、別人の絵が配信の画面とカードに乗る
-     (`islandCharacter.ts` の `findBy` が `limit(2)` を取るのと同じ決め方)。 */
-  const twice = new Set<string>();
+     (`islandCharacter.ts` の `findBy` が `limit(2)` を取るのと同じ決め方)。
+     `channelId` と鍵で別々に数えるのは、片方がかぶっていても
+     もう片方は使えるから。 */
+  const twiceChannel = new Set<string>();
+  const twiceKey = new Set<string>();
   snap.forEach((d) => {
     const v = d.data() ?? {};
+    /* **`channelId` が先。** 変わらない値で引ければ、名前は見なくてよい。 */
+    const cid = typeof v.channelId === "string" ? v.channelId.trim() : "";
+    if (cid) {
+      const had = byChannel.get(cid);
+      if (had && had !== d.id) twiceChannel.add(cid);
+      else byChannel.set(cid, d.id);
+    }
     /* **`lookupKeys` で引く。** アラートボックスが Doneru の名乗りに
        当てているのと同じ欄。`channelKeys` にするとチャンネル名しか
        入っていないので、呼び名(aliases)で投げた人が当たらない。 */
     const list = Array.isArray(v.lookupKeys) ? v.lookupKeys : [];
     for (const k of list) {
       if (typeof k !== "string" || !k) continue;
-      const had = keys.get(k);
-      if (had && had !== d.id) twice.add(k);
-      else keys.set(k, d.id);
+      const had = byKey.get(k);
+      if (had && had !== d.id) twiceKey.add(k);
+      else byKey.set(k, d.id);
     }
   });
-  twice.forEach((k) => keys.delete(k));
-  cached = {at: now, keys};
-  return keys;
+  twiceChannel.forEach((k) => byChannel.delete(k));
+  twiceKey.forEach((k) => byKey.delete(k));
+  const book = {byChannel, dupChannel: twiceChannel, byKey};
+  cached = {at: now, book};
+  return book;
 }
 
 /**
- * **投げたときに名乗っていた名前**から、キャラクターの書類IDを引く。
+ * 1回の応答ぶんの引き当て表。**`iconsOf` が返し、`pickIcon` が引く。**
+ */
+export type Icons = {
+  /** チャンネルID → 書類ID。名簿ぜんぶ（多くても `MAX_CHARACTERS` 件） */
+  byChannel: Map<string, string>;
+  /** **2人のキャラクターに付いていたチャンネルID。** ここで止める */
+  dupChannel: Set<string>;
+  /** 投げたときの名乗り（そのままの字）→ 書類ID。**渡されたぶんだけ** */
+  byName: Map<string, string>;
+};
+
+/**
+ * 名簿を引いて、絵の引き当て表を作る。
  *
  * **落ちても投げない。** 絵が引けないことでカードそのものが返らなくなるのは、
  * 直そうとしているものより悪い(#34 と同じ形)。**ただし「読めなかったから
@@ -273,30 +350,78 @@ async function characterKeys(): Promise<Keys> {
  * **「1人も当たらなかった」と「読めなかった」を、同じ顔で返さない。**
  * 読めなかったときは `null`。区別せずに空を返すと、読めなかった回の画面が
  * 「その日は誰も投げ銭していない」と言い切る(`docs/island-standards.md` 10)。
- * @param {string[]} names 投げたときの名乗り(`islandTips.displayNameSnapshot`)
- * @return {Promise<Map<string, string> | null>} 名乗り → キャラクターの
- *   書類ID。読めなかったときは `null`
+ * @param {string[]} names 投げたときの名乗り(`islandTips.displayNameSnapshot`)。
+ *   **`channelId` で当たらなかった人のための受け皿**
+ * @return {Promise<Icons | null>} 引き当て表。読めなかったときは `null`
  */
-export async function iconsOf(
-  names: string[],
-): Promise<Map<string, string> | null> {
+export async function iconsOf(names: string[]): Promise<Icons | null> {
   const list = [...new Set(names.filter((x) => x))].slice(0, MAX_CARDS);
-  const out = new Map<string, string>();
-  if (list.length === 0) return out;
+  const byName = new Map<string, string>();
   try {
-    const keys = await characterKeys();
+    const book = await characterBook();
     for (const name of list) {
       /* `keysOf` が保存のときに「@ なし」も入れてあるので、引く側は
          そろえるだけでよい。両方見るのは、名簿の側が `@` を持っていて
          名乗りのほうが持っていない(またはその逆)ときのため。 */
-      const icon = keysOf([name]).map((k) => keys.get(k)).find((v) => v);
-      if (icon) out.set(name, icon);
+      const icon = keysOf([name]).map((k) => book.byKey.get(k)).find((v) => v);
+      if (icon) byName.set(name, icon);
     }
+    /* **`byChannel` は名簿ぜんぶを渡す。** 絞る意味が無い（102件しかない）
+       うえに、絞るには呼ぶ側がチャンネルIDを先に集めることになる。 */
+    return {byChannel: book.byChannel, dupChannel: book.dupChannel, byName};
   } catch (e) {
     logger.warn("card icons failed", String(e));
     return null;
   }
-  return out;
+}
+
+/**
+ * 何も当たらない引き当て表。**「読めなかった」とは別物。**
+ * @return {Icons} 空の引き当て表
+ */
+export function noIcons(): Icons {
+  return {byChannel: new Map(), dupChannel: new Set(), byName: new Map()};
+}
+
+/** 1人ぶんの引き当ての答え。 */
+export type Pick = {
+  /** カードに乗せる絵。`channelId` で当たればそれ、無ければ名乗り */
+  icon: string | null;
+  /**
+   * **名前を出してよいか**（出してよいと言ったかは、呼ぶ側が別に見る）。
+   *
+   * 条件は前と同じ2つ——**絵が乗っていて、かつ投げたときの名乗りで身元が
+   * 分かったこと。** `channelId` で絵が当たっただけでは立たないので、
+   * **絵の乗る人は増えても、名前の出る人は1人も増えない。**
+   */
+  known: boolean;
+};
+
+/**
+ * 1枚ぶんの絵を決める。**引く順を、ここ1か所だけで持つ。**
+ *
+ * `/cards` と `/nordic/photos` の2か所から呼ぶ。**散らすと、片方だけ
+ * 順番が変わった日に「同じ人なのに面によって絵が違う」が起きる。**
+ * @param {Icons} icons `iconsOf` が返した引き当て表
+ * @param {string | null} channelId カードの `channelId`
+ * @param {string} nameSnapshot 投げたときの名乗り
+ * @return {Pick} 乗せる絵と、名乗りで身元が分かったか
+ */
+export function pickIcon(
+  icons: Icons,
+  channelId: string | null,
+  nameSnapshot: string,
+): Pick {
+  /* **決められなかった `channelId` は、そこで止める。** 表から抜くだけで
+     名乗りへ落とすと、2人のうち片方の絵が乗る——「どちらも使わない」に
+     ならない。**絵が乗らないので、名前も出ない**（すぐ下の `known`）。 */
+  if (channelId && icons.dupChannel.has(channelId)) {
+    return {icon: null, known: false};
+  }
+  const byName = (nameSnapshot && icons.byName.get(nameSnapshot)) || null;
+  const byChannel = (channelId && icons.byChannel.get(channelId)) || null;
+  const icon = byChannel || byName;
+  return {icon, known: !!icon && !!byName};
 }
 
 /** 絵を引けなかった。**0人と同じ顔で返さないため**、ここで止める。 */
@@ -345,8 +470,10 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
   /* **絵の引き当ては、画像と名簿と一緒に投げる。** 順に待つと、
      カードが何枚でも往復は2本しか増えないのに、返るのが1本ぶん遅くなる。
 
-     **渡すのはチャンネルIDではなく、投げたときの名乗り。** 書類に焼き込んで
-     ある(`streamEvents.ts` の `mintCards`)ので、ここで辞書を引き直さない。 */
+     **渡すのは名乗りだけ。** 絵の本筋は `channelId` だが、そちらの表は
+     名簿ぜんぶが返ってくる（`iconsOf` の `byChannel`）ので、ここで
+     チャンネルIDを集めて渡す必要はない。名乗りは書類に焼き込んで
+     ある(`streamEvents.ts` の `mintCards`)ので、辞書は引き直さない。 */
   const [images, residents, icons] = await Promise.all([
     imageIds.length ?
       db.getAll(...imageIds.map((id) => IMAGES.doc(id))) :
@@ -381,9 +508,10 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
     // 画像が消えたカードは出さない。実体の無い URL を返し続けない
     if (!im || !im.url) continue;
     const channelId = clean(r.v.channelId, 64) || null;
-    /* **公開の面での身元は、投げたときの名乗りだけで決まる。**
-       当たらなければ、絵も名前も出さない（下の `name` も参照）。 */
-    const icon = icons.get(clean(r.v.nameSnapshot, MAX_NAME)) || null;
+    /* **絵は `channelId` が先、名乗りは受け皿**（`pickIcon`）。
+       名前を出してよいかは `known`（＝絵が乗っていて、かつ名乗りでも
+       当たった）だけで決める。**判定はここでは書かない。** */
+    const got = pickIcon(icons, channelId, clean(r.v.nameSnapshot, MAX_NAME));
     out.push({
       id: r.id,
       day: clean(r.v.day, 10),
@@ -394,14 +522,14 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
       note: im.note,
       channelId,
       /* **絵は、名前を出してよいと言っていない人にも出す。** 島の絵は
-         `/friends` で98人ぶんもう公開されている。出さないのは名前だけ
+         `/friends` で102人ぶんもう公開されている。出さないのは名前だけ
          (すぐ下)。この線は動かさない。 */
-      icon,
-      /* **名前も、名乗りで身元が分かったときだけ。** 名前を出してよいと
+      icon: got.icon,
+      /* **名前は、名乗りで身元が分かったときだけ。** 名前を出してよいと
          言った人でも、その1回を別名で投げたなら、そのカードには出さない。
-         絵だけ閉じて名前を開けておくと、**絵より濃いもの**が残る
-         （`CLAUDE.md`「1件直したら、同じ理由で壊れているところを探しに行く」）。 */
-      name: (icon && channelId && named.get(channelId)) || null,
+         **`channelId` で絵が当たるようになっても、ここは `got.known` の
+         まま。** 絵の乗る人は増えるが、名前の出る人は1人も増えない。 */
+      name: (got.known && channelId && named.get(channelId)) || null,
       ...placeOf(r.v, r.id),
       moved: !!r.v.movedAt,
       at: im.at,
@@ -509,24 +637,24 @@ export type PublicPerson = {icon: string | null; name: string | null};
  * 見分けるための値は返さない——出すのは絵と、名前を出してよいと言った人の
  * 名前だけ。**上の `forEveryone` と2か所に散らさないため、ここに置く。**
  *
- * **絵は名乗り（`nameSnapshot`）で引く。** カードと同じ引き方でないと、
- * こちらだけ「別名で投げた人の本体が出る」面が残る。名前も同じで、
- * 名乗りで身元が分かった人にしか出さない。
+ * **絵は `channelId` が先、名乗りは受け皿**（`pickIcon`）。カードと同じ
+ * 引き方でないと、こちらだけ「名前を変えた人の絵が消える」面が残る。
+ * **名前は名乗りで身元が分かった人にしか出さない**（カードと同じ）。
  * @param {Tipper[]} people その日投げてくれた人。**外へは出ない**
- * @param {Map<string, string>} icons 名乗り → キャラクターの書類ID
+ * @param {Icons} icons `iconsOf` が返した引き当て表
  * @param {Map<string, string>} named チャンネルID → 出してよいと言った名前
  * @return {PublicPerson[]} 渡された順のまま、絵と名前だけ
  */
 export function peopleForEveryone(
   people: Tipper[],
-  icons: Map<string, string>,
+  icons: Icons,
   named: Map<string, string>,
 ): PublicPerson[] {
   return people.map((p) => {
-    const icon = icons.get(p.nameSnapshot) || null;
+    const got = pickIcon(icons, p.channelId, p.nameSnapshot);
     return {
-      icon,
-      name: (icon && named.get(p.channelId)) || null,
+      icon: got.icon,
+      name: (got.known && named.get(p.channelId)) || null,
     };
   });
 }

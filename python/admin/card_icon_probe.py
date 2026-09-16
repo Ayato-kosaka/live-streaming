@@ -96,7 +96,7 @@ def build(snap, field: str) -> dict:
     """鍵 → キャラクターの書類ID。**2人に付いている鍵は捨てる。**
 
     当てずっぽうに1人選ぶと、別人の絵が配信とカードに乗る
-    （`characterKeys` の `twice` と同じ決め方）。
+    （`characterBook` の `twice` と同じ決め方）。
     """
     out: dict = {}
     twice = set()

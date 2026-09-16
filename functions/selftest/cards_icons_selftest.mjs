@@ -1,11 +1,16 @@
 /**
- * `iconsOf()` の確かめ。**偽の名簿と偽の字だけで回す。**
+ * `iconsOf()` の**受け皿側（名乗りで引く道）**の確かめ。
+ * **偽の名簿と偽の字だけで回す。**
  *
  * ## 何を見ているか
  *
- * カードに乗る絵は、**投げてくれたときに名乗っていた名前**
- * (`islandTips.displayNameSnapshot` を書類に焼いた `nameSnapshot`)から引く。
- * 配信中のアラートボックスと同じ引き方（名簿の `lookupKeys`）。
+ * カードに乗る絵は、まず `channelId` で引く。**名簿がその欄を持っていない
+ * 人だけ、投げてくれたときに名乗っていた名前**
+ * (`islandTips.displayNameSnapshot` を書類に焼いた `nameSnapshot`)に落ちる。
+ * 受け皿のほうは配信中のアラートボックスと同じ引き方（名簿の `lookupKeys`）。
+ *
+ * **ここは受け皿だけを見る。** `channelId` で引く道と、そちらが名乗りより
+ * 強いことは `cards_byid_selftest.mjs` が見る。
  *
  * 前は「どねID → `islandDonors` → チャンネルID → いま名乗っている名前」で
  * 引いていたので、**Doneru に別名で投げた人の絵が公開の `/cards` に出ていた。**
@@ -253,11 +258,15 @@ console.log("# 0. 名乗りで絵が当たるか（先に見る・#19）");
   const raw = await s.iconsOf([
     "さくら", "ＡＢＣ", "さくらんぼ", "ななしのごんべえ", "ちゃんねるだけ",
   ]);
+  /* `iconsOf` は2つの対応を返す（`byChannel` と `byName`）。ここで見るのは
+     受け皿の `byName` だけ。**空の表に落とす前に、すぐ下で「読めている」を
+     先に見る**——読めなかった回を空の表で受けると、下の「当たらない」が
+     全部その道連れで通ってしまう。 */
   /* **`null` は「読めなかった」。** ここは読める筋書きなので、`null` が
      返ったら引き方のどこかが落ちている。先に言ってから中身を見る
      （黙って落ちると、下の「当たらない」が全部その道連れになる）。 */
   check("読めている（`null` で返っていない）", raw !== null, String(raw));
-  const got = raw ?? new Map();
+  const got = raw?.byName ?? new Map();
   check(
     "名乗りが `lookupKeys` に当たれば、絵が出る",
     got.get("さくら") === "char_sakura",
@@ -292,8 +301,8 @@ console.log("\n# 1. 匿名（別名）で投げた人は、絵に結び付かな
      当たらない。**同じ名簿・同じ呼び方で、名乗りだけを変えて見る**ので、
      「当たらない」が守りのせいだと言える（`island-standards.md` 13）。 */
   const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
-  const named = (await s.iconsOf(["さくら"])) ?? new Map();
-  const anon = (await s.iconsOf(["匿名のだれか"])) ?? new Map();
+  const named = (await s.iconsOf(["さくら"]))?.byName ?? new Map();
+  const anon = (await s.iconsOf(["匿名のだれか"]))?.byName ?? new Map();
   check(
     "自分の名で投げたら、絵が出る（対照）",
     named.get("さくら") === "char_sakura",
@@ -302,14 +311,14 @@ console.log("\n# 1. 匿名（別名）で投げた人は、絵に結び付かな
   check("別名で投げたら、絵が出ない", anon.size === 0, `${anon.size} つ`);
   check(
     "空の名乗り（写しを持たない書類）でも落ちず、0つで返る",
-    ((await s.iconsOf(["", ""])) ?? new Map()).size === 0,
+    ((await s.iconsOf(["", ""]))?.byName ?? new Map()).size === 0,
   );
 }
 
 console.log("\n# 2. 同じ鍵が2人に付いていたら、どちらの絵も出さない");
 {
   const s = scenario({islandCharacter: CHARACTERS}, {banned: ["islandChannels"]});
-  const got = (await s.iconsOf(["ふたつ", "さくら"])) ?? new Map();
+  const got = (await s.iconsOf(["ふたつ", "さくら"]))?.byName ?? new Map();
   check("どちらの絵も出ない", !got.has("ふたつ"), String(got.get("ふたつ")));
   check(
     "巻き込まれていない人の絵は消えない（全部落としていない）",
@@ -322,7 +331,7 @@ console.log("\n# 2. 同じ鍵が2人に付いていたら、どちらの絵も�
   const one = scenario({islandCharacter: alone}, {banned: ["islandChannels"]});
   check(
     "かぶりを抜くと、同じ呼び方で当たる（守りが落としている証拠）",
-    ((await one.iconsOf(["ふたつ"])) ?? new Map()).get("ふたつ") ===
+    ((await one.iconsOf(["ふたつ"]))?.byName ?? new Map()).get("ふたつ") ===
       "char_futatsu",
   );
 }
@@ -348,8 +357,8 @@ console.log("\n# 3. `islandChannels` を1回も読まない");
   check("読めている（`null` で返っていない）", got !== null, String(got));
   check(
     "それでも絵は出る（空振りでない）",
-    got?.get("さくら") === "char_sakura",
-    String(got?.get("さくら")),
+    got?.byName.get("さくら") === "char_sakura",
+    String(got?.byName.get("さくら")),
   );
   check(
     "`islandChannels` を1度も掴んでいない",

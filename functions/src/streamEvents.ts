@@ -108,9 +108,13 @@ export type TipRef = {
    * **投げてくれたときに名乗っていた名前**（`islandTips.displayNameSnapshot`）。
    *
    * スパチャならそのときのチャンネル名、Doneru なら打った名前
-   * （`python/island_tips.py` の `:301` と `:356`）。**カードに乗る絵は
-   * これで決まる**（`cards.ts` の `iconsOf`）。チャンネルIDからいまの
-   * 名前を引き直すと、別名で投げた人の本体が公開の面に出てしまう。
+   * （`python/island_tips.py` の `:301` と `:356`）。
+   *
+   * **カードに乗る絵は、まず `channelId` で決まる**（`cards.ts` の
+   * `pickIcon`・#429 の A）。ここはその**受け皿**で、名簿が `channelId` を
+   * 持っていない人の絵と、**名前を出してよいかの判定**に効く。
+   * いまの表示名を引き直さないのは変わらない——引き直すと、あとから
+   * 名前を変えた日に判定が動く。
    */
   nameSnapshot: string | null;
   /** 日本時間で切った配信日（YYYY-MM-DD） */
@@ -421,15 +425,14 @@ export async function mintCards(
         earnedAt: w.tip.donatedAt || w.image.at || now,
         /* **投げてくれたときに名乗っていた名前を、ここで焼き込む。**
 
-           カードに乗る絵は、この写しだけから決まる（`cards.ts` の
-           `iconsOf`）。チャンネルIDからいまの名前を引き直していたころは、
-           **別名で投げた人の本体が公開の面に出ていた**（Doneru の別名 →
-           `islandDonors` の紐付け → いま名乗っている名前 → 絵）。
+           絵の本筋は `channelId`（`cards.ts` の `pickIcon`）で、ここは
+           名簿が `channelId` を持っていない人の**受け皿**。それと、
+           **名前を出してよいか**はいまもこの写しだけで決まる。
 
-           焼き込むのが肝で、あとから YouTube の名前を変えても、Doneru の
-           名前を変えても、**カードの絵は動かない**（あやとの決めごと・
-           `docs/island-db.md` 2章「キャラクターの割り当ては YouTube を
-           更新しても変わらないのが正しい」）。 */
+           焼き込むのが肝で、あとから YouTube の名前を変えても Doneru の
+           名前を変えても、**受け皿の側も動かない。** いまの表示名を引き
+           直していたころは、別名で投げた人の本体が公開の面に出ていた
+           （Doneru の別名 → `islandDonors` → いま名乗っている名前 → 絵）。 */
         nameSnapshot: w.tip.nameSnapshot,
       };
       if (had[k].exists) {
@@ -615,10 +618,11 @@ export function shapePlace(b: Json, now: Place): Place {
  * （`docs/island-incident-2026-09-14-cards.md`）。正しいのは中身のほうで、
  * カードは投げ銭の特典（`docs/island-cards.md` 1章）。広げない。
  *
- * **返すのはチャンネルIDだけではない。** 絵は「投げてくれたときに名乗って
- * いた名前」で引くので（`cards.ts` の `iconsOf`）、その写しも一緒に返す。
- * 名前は `islandTips` の中にしか無く、チャンネルIDから引き直すと
- * **別名で投げた人の本体が公開の面に出る。**
+ * **返すのはチャンネルIDだけではない。** 絵は `channelId` が先だが、
+ * 名簿がそれを持っていない人は「投げてくれたときに名乗っていた名前」に
+ * 落ちる（`cards.ts` の `pickIcon`）ので、その写しも一緒に返す。
+ * 名前を出してよいかの判定も、いまもこの写しだけで決まる。
+ * `islandTips` の中にしか無い値なので、チャンネルIDから引き直さない。
  * @param {EventRef[]} events 企画ぜんぶ
  * @param {string} day その日（YYYY-MM-DD）
  * @return {Promise<Tipper[]>} その日**投げてくれた**人。**外へは出ない**

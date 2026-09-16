@@ -188,12 +188,43 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 
 | | 何 | どこが正 |
 | --- | --- | --- |
-| キャラクター | カードや島に乗る絵（ひめひめさんのハリネズミ） | **あやとのスプレッドシート**（`site/content/residents.ts` に焼いてある） |
+| キャラクター | カードや島に乗る絵（ひめひめさんのハリネズミ） | **Firestore の `islandCharacter`**（元はあやとのスプレッドシート。`site/content/residents.ts` に焼いてある） |
 | プロフィール写真 | YouTube のアイコン | `islandChannels.photo` / `islandUsers.photo` |
 
 キャラクターの割り当てはあやとが決めたもので、**YouTube を更新しても
 変わらないのが正しい。** `photo` はマイページのアイコンが古くならないようにするもの。
 **本人にキャラクターを選ばせる口は無い**（他人の絵を自分のものにできてしまう）。
+
+#### 誰の絵かは、`channelId` で引く（#429 の A・2026-09-16）
+
+**引く順は1つに決まっている。** 引くところは `functions/src/cards.ts` の
+`pickIcon`（カードと `/nordic/photos`）と `python/build_residents.py` の
+`link`（島を歩く人）で、**どちらも同じ順**。
+
+| 順 | 何で引くか | 誰に効くか |
+| --- | --- | --- |
+| 1 | `islandCharacter.channelId` ＝ カードの `channelId` | 102人中 **78人**（2026-09-16） |
+| 2 | `islandCards.nameSnapshot`（投げたときの名乗り）→ `islandCharacter.lookupKeys` | 1で当たらなかった人の**受け皿** |
+
+**名乗りを先に見ない。** 名前は変わるが `channelId` は変わらないので、
+名乗りを先に見ると**本人が YouTube や Doneru で打った字で絵が決まる**——
+「選ばせる口は無い」と書いてあるその口が、そこに開く。実際、名前を変えた日と
+Doneru の表示名にタイポがあった日に、カードから絵が消えていた。
+
+**同じ `channelId` が2人のキャラクターに付いていたら、どちらも当てない。**
+名乗りへも落とさない（落とすと、結局2人のうち片方の絵が乗る）。
+`lookupKeys` の鍵が2人に付いているときと同じ決め方。
+
+**名前を出す条件は、これとは別。** 絵が乗っても名前は出ない。
+名前が出るのは「**投げたときの名乗りで身元が分かって**、かつ本人が島に名前を
+出してよいと言った」ときだけで、そこは `channelId` で引くようになっても
+1人も増えていない。
+
+> **`channelId` で引くと、Doneru に別名で投げた人の絵も公開の面に出る。**
+> どねID がチャンネルに結んである人は、別名で投げても `channelId` が入るため。
+> 2026-09-15 の「みんなが見える場所では匿名性を守りたい」を受けて絵を名乗り
+> だけで決めていたのが前の版で、#429 の A はそれを「絵は動かないほうがよい」で
+> 上書きしている。**同じ1つの欄の裏表で、両方は立たない。**
 
 ---
 
@@ -237,7 +268,8 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
 | 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
 | 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
-| キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
+| キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **名簿が正。** 焼き直しで反映する（元はあやとのスプレッドシートで、#284 で移した） |
+| 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
 | 豚の貯金箱の元（鍵・起点・スパチャ・目標） | GAS の `Goals` 表 | Firestore `islandGoal/2025-10-24` | **GAS が正**（#305）。スパチャを書き足す OBS の書き先がそこしかなく、**額が伸びるのは表の側だけ**だから。サイトは GAS → 無ければ Firestore の順に読む。控えは `goal_migrate` で作る。**表を消した瞬間から控えが正になる。** 順を入れ替えてよくなるのは、`SuperChats` の書き込み先を移したあと |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
@@ -615,11 +647,12 @@ island/state
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
-| `channelId` | string | もらった人 |
+| `channelId` | string | もらった人。**誰の絵が乗るかも、まずこれで決まる**（2.4） |
 | `streamEventId` | string | どの企画のカードか |
 | `streamEventImageId` | string | どの画像か |
 | `day` | string | その日（YYYY-MM-DD）。画面が企画の札を引く |
 | `earnedAt` | number | もらった時刻（＝投げ銭の時刻） |
+| `nameSnapshot` | string \| null | **投げたときに名乗っていた名前**（台帳の `displayNameSnapshot` の写し）。名簿が `channelId` を持っていない人の**絵の受け皿**と、**名前を出してよいかの判定**に使う |
 | `x` / `y` / `rot` / `scale` | number | 置き方。`x` `y` は 0〜1、`y` は**足元**の高さ。`rot` は ±180、`scale` は 0.2〜3 |
 | `movedBy` / `movedAt` | | 本人が動かしたときだけ |
 | `createdAt` / `updatedAt` | number | ミリ秒 |
@@ -939,7 +972,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `icon` | キャラクターの絵（書類ID＝もとのドライブの画像 id） | `islandCharacter` の書類ID |
 | `emoji` | その人の絵文字 | `islandCharacter.emoji` |
 | `days` | 直近90日で一緒にいた日数 | BigQuery（`chat_messages`）。読めなかった日は出席にも分母にも入れない |
-| `channel` | YouTube のチャンネル id | 名簿の鍵 × チャットの名乗り。**決められないものは結ばない** |
+| `channel` | YouTube のチャンネル id | **`islandCharacter.channelId` が先。** 持っていない人だけ、名簿の鍵 × チャットの名乗り（2.4）。**決められないものは結ばない** |
 | `score` | **島に出るえらばれやすさ（0〜1）** | 下 |
 
 **`score` は、島を歩く人を日替わりで選ぶ重み**（`site/components/island/roster.ts`）。
