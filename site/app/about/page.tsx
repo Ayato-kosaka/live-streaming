@@ -546,7 +546,7 @@ export default function AboutPage() {
           </span>
           <span className="tile-text">
             <b>歩いた国へ</b>
-            <i>配信した{s.countries}カ国を、1枚の地図で</i>
+            <i>歩いた{s.countries}カ国を、1枚の地図で</i>
           </span>
           <Icon name="right" size={16} className="tile-go" />
         </Link>
