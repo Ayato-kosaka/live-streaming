@@ -99,8 +99,11 @@ export type IsleSpec = {
   /** 島の色（`app/css/tokens.css` の [data-theme]） */
   theme?: "desert" | "nordic";
   places: IslePlaceSpec[];
-  /** その章のあいだに来てくれていた人（絵のある人だけ） */
-  folk: { icon: string; days: number }[];
+  /** その章のあいだに来てくれていた人（絵のある人だけ）。
+      `score` は島に出るえらばれやすさ（0〜1。額の順位＋出席の順位）。
+      **無くてよい**——章ごとの名簿は日数しか数えていないので、
+      そこでは出席の順位だけで点が付く（`components/island/roster.ts`）。 */
+  folk: { icon: string; days: number; score?: number }[];
   /** となりの島。行き先はビルド時に決める（`components/chain/route.ts`） */
   prev?: Neighbour;
   next?: Neighbour;
