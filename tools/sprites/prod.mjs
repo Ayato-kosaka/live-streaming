@@ -40,17 +40,37 @@ export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.ap
 
    **足すときは curl で届くことを先に見る。** 届かない先を通しても
    abort が fulfill に変わるだけで、絵は空のまま。 */
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com/;
+const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net|upload\.wikimedia\.org/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
 
 /** curl 経由で本番に届くようにする。**apply より先に呼ぶ**
     （Playwright はあとから登録した route が先に効くので、差し込みが勝つ） */
+/** **止めた先を数える。** `viaCurl` を掛けた ctx ごとに溜める。
+ *
+ * 通していない先があると、面は**壊れているのではなく飢えている。**
+ * 見分けがつかないまま「本番の不具合」と読んだことが3回ある
+ * （2026-09-10 の顔、2026-09-16 の `storage.googleapis.com` と
+ *  `docs.google.com` / `i.ibb.co`）。宛先を1つずつ足して追いかけても、
+ * **次に増えた先でまた同じことになる。** so 数えて表に出す。 */
+const BLOCKED = new WeakMap();
+
+/** その ctx で止めた先（ホスト名 → 回数）。撮ったあとに必ず見る。 */
+export function blocked(ctx) {
+  return BLOCKED.get(ctx) || new Map();
+}
+
 export async function viaCurl(ctx) {
+  BLOCKED.set(ctx, new Map());
   await ctx.route("**/*", async (r) => {
     const u = r.request().url();
-    if (!PASS.test(u)) return r.abort();
+    if (!PASS.test(u)) {
+      const m = BLOCKED.get(ctx);
+      const h = (() => { try { return new URL(u).host; } catch { return u.slice(0, 40); } })();
+      m.set(h, (m.get(h) || 0) + 1);
+      return r.abort();
+    }
     try {
       /* **同期で curl を回さない。** 前は `execFileSync` だったので、
          要求が1本ずつ順番に並んだ。非同期にして並ばせる。
