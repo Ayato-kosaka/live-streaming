@@ -258,3 +258,7 @@ node tools/sprites/prod.mjs        # 出したものを開いて、顔が出て�
       （知らせが来ないのは「働いている」と「落ちた」の両方。一覧に居なければ落ちている。`island-misses.md` #101）
 - [ ] **マージしたコミットに、変更ファイルが在ることを見た**
       （`git show --stat origin/master`。0件のマージは何もしていない。`island-misses.md` #100）
+
+- **島を触ったら `tools/sprites/islenav.mjs` を回した**（3幅 × 寄り／引きで、
+  隅の道具の重なり・引きの代表6枚・下半分を押して南へ歩けるか）。
+  目で1つの幅を見るだけでは、隣の幅が壊れたことは出ない（`island-misses.md` #102）
