@@ -1,0 +1,192 @@
+name: 投げ銭の台帳を入れ直す
+
+# Doneru の取り込みが終わったあとに、**投げ銭の台帳（`islandTips`）と
+# カード（`islandCards`）をもう一度作る。**
+#
+# ## なぜ要るか — 順番を、両方とも定時実行の運に任せていた
+#
+# 台帳を作っているのは `schedule_fetch_chat.yml`（Fetch YouTube Chat Data）の
+# `island_stats` ジョブで、**このリポジトリで1か所しかない**。
+# ところがその台帳が読む BigQuery の `doneru_donations` を埋めるのは
+# **別のワークフロー**（`fetch_doneru_donations.yml`）。
+#
+# どちらも定時実行で、指定した時刻からの遅れが **1時間49分〜3時間32分**
+# ばらつく（直近12回の実測。`CLAUDE.md`）。指定は 20:00 と 20:30 で30分しか
+# 離れていないので、**どちらが先に走るかは毎晩の運。**
+#
+# 2026-09-16 は負けた晩だった（UTC）:
+#
+#     22:32  Fetch YouTube Chat Data    ← この中で台帳を作っている
+#     23:11  Fetch Doneru Donations     ← 台帳の材料を入れている
+#
+# 台帳を作るほうが、材料を入れるほうより **39分早く走った。**
+# 台帳は毎晩7日ぶんを引き直すので失われはしないが、**投げてくれた晩に
+# カードが出ず、翌朝になる。** `/cards` は「その日の写真が、そのまま
+# 置いてあります」と言っているので、それは嘘になる。
+#
+# **赤くならない。** 両方とも緑で終わる。違うのは、投げてくれた人の手元に
+# その晩カードが在るかどうかだけ。
+#
+# ## 直しかた — 材料が入ったあとに、読むほうをもう一度回す
+#
+# 取り込みのワークフローに1行足すのではなく、**別のワークフローにして
+# `workflow_run` で繋ぐ。** `schedule_fetch_chat.yml` は最後の step が
+# `YOUTUBE_COOKIES` の Secret を書き換えるので、あれを触ると毎晩の取り込みが
+# 死ぬ（`rebake.yml` を別立てにしてあるのと同じ理由）。
+#
+# **`conclusion` は見ない。** `Fetch Doneru Donations` は落ちた回にも
+# `doneru_health.py` まで走るし、`Fetch YouTube Chat Data` のほうは
+# 「表に無い どねID が投げ銭してきた」ときに最後の step が `exit 1` で終わる
+# （あれは失敗ではなく**あやとへの呼び出し**で、BigQuery には入っている）。
+# 成功のときだけ繋ぐと、**呼び出しの出た晩だけ台帳が古いまま**になる。
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの名前を書き換えると
+# 黙って切れる（エラーにならない。**走らなくなるだけ**で、赤も出ない）。
+# 下の cron はそのときの保険。
+#
+# 繋ぎが生きているかは、`Fetch Doneru Donations` を **`probe: true`** で
+# 押せば確かめられる。あちらは1バイトも書かずに終わるので、**本番を
+# 汚さずに「繋いだ先が起きるか」だけを見られる。**
+#
+# ## 同じ晩に2回走っても、台帳は動かない
+#
+# 毎晩 `schedule_fetch_chat.yml` の中で1回、ここでもう1回走ることになるが、
+# **2回目で行は増えない・消えない・上書きされない。**
+#
+#   - 書類IDは `sourceEventId` の SHA-1（`island_tips.py` の `doc_id`）。
+#     同じ寄付は毎回同じ書類に当たる
+#   - `same()` が11欄を見て、**同じなら書かない**（`changed` から外れる）
+#   - 書くときも `batch.set(..., merge=True)` だけで、消す道が1本も無い
+#   - カードのほうも鍵が `{画像ID}__{チャンネルID}` で決まり、既にある書類の
+#     `x/y/rot/scale` には触らない（**本人が動かしたカードが元に戻らない**）
+#
+# ## 誰にカードが配られるかは、1ミリも変えていない
+#
+# 変えるのは**いつ台帳に入るか**だけ。`island_tips.py` も `island_cards.py` も
+# `functions/src/streamEvents.ts` も1バイト触っていない。
+# カードが渡るのは、いままでどおり**その日に投げ銭してくれた人**
+# （`docs/island-cards.md`、`docs/island-incident-2026-09-14-cards.md`）。
+#
+# ## ログ
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# 1人ずつの明細は `python/logsafe.py` が公開の場では1行も出さない
+# （`GITHUB_ACTIONS` を見ている）。ここで出るのは件数だけ。
+
+on:
+  # **cron は保険。** 繋ぎが本体（`workflow_run`）。
+  # 取り込みの実測（21:49〜23:32 UTC）より後ろに置く。ここが2時間遅れても
+  # 03:30 UTC なので、どちらに転んでも取り込みの後ろに入る。
+  # `rebake.yml` と同じ分に重ねる理由が無いので30分ずらしてある。
+  schedule:
+    - cron: "30 1 * * *"
+
+  # 繋ぎ先は**材料を入れるほう**（`Fetch Doneru Donations`）。
+  # `Fetch YouTube Chat Data` は自分の中で台帳を作ってから終わるので、
+  # あちらが後になった晩は、その時点でもう新しい。繋ぐ必要が無い。
+  workflow_run:
+    workflows: ["Fetch Doneru Donations"]
+    types: [completed]
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "見るだけ（Firestore に1バイトも書かない）。まずこのまま押す"
+        required: false
+        default: true
+        type: boolean
+
+# 台帳とカードを2本が同時に書かないように1本ずつ
+concurrency:
+  group: island-tips
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tips:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # cron と繋ぎで来たぶんは、押す人がいない。入力も空で来る
+      # （`inputs.*` が空文字になる）。**ここで決めて env に置き、以降は
+      # env だけを見る。** `!inputs.dry_run` を直接書くと、空文字が false と
+      # 読まれて**たまたま**動く形になる（`rebake.yml` と同じ手当て）。
+      - name: 今回の押しかたを決める
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
+            echo "TIPS_DRY=0" >> "$GITHUB_ENV"
+            echo "毎晩ぶん（$EVENT）: 台帳とカードを入れ直します"
+          else
+            if [ "$IN_DRY" = "false" ]; then
+              echo "TIPS_DRY=0" >> "$GITHUB_ENV"
+            else
+              echo "TIPS_DRY=1" >> "$GITHUB_ENV"
+            fi
+            echo "手で押したぶん: dry_run=$IN_DRY"
+          fi
+
+      # 呼び方は `schedule_fetch_chat.yml` の `island_stats` と同じ
+      # （引数なし＝直近7日ぶん）。**2か所で違う窓を引かない。**
+      - name: 投げ銭の台帳を更新
+        run: |
+          set -euo pipefail
+          if [ "$TIPS_DRY" = "1" ]; then
+            python python/island_tips.py --dry-run
+          else
+            python python/island_tips.py
+          fi
+
+      # **台帳のあとに置く。** 台帳に入っただけではカードは1枚もできない。
+      # 作るのはここ（`islandTips` × `islandStreamEventImage` の `role: "card"`）と、
+      # 画像を貼ったときの `functions/src/streamEvents.ts` の `mintForImage` の2か所で、
+      # 台帳が新しくなった晩にこちらを回さないと、カードは翌朝まで出ない。
+      - name: カードを作る
+        run: |
+          set -euo pipefail
+          if [ "$TIPS_DRY" = "1" ]; then
+            python python/island_cards.py --dry-run
+          else
+            python python/island_cards.py
+          fi
+
+      # **黙って赤くならない。** 繋ぎと cron で走るぶんは誰も見ていないので、
+      # せめてどこで落ちたかを要約に残す（run の1枚目に出る。ログを開かずに読める）。
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 台帳を入れ直せませんでした"
+            echo ""
+            echo '**投げ銭が消えたという意味ではありません。** 元は BigQuery に在ります。'
+            echo 'この晩は台帳（`islandTips`）とカード（`islandCards`）が古いままで、'
+            echo '投げてくれた人の `/cards` に、その日のカードが出ていない可能性があります。'
+            echo ""
+            echo '毎晩の取り込み（Fetch YouTube Chat Data）の中でも同じ2本が走るので、'
+            echo '**翌朝には追いつきます。** 今すぐ直すなら、このワークフローを'
+            echo '`dry_run: false` で手で押してください。'
+          } >> "$GITHUB_STEP_SUMMARY"
