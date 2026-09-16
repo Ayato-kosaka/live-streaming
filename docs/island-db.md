@@ -237,9 +237,59 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
 | 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
 | 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
-| キャラクターの割り当て | あやとのスプレッドシート | `site/content/residents.ts` | **表が正。** 焼き直しで反映する |
+| キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 豚の貯金箱の元（鍵・起点・スパチャ・目標） | GAS の `Goals` 表 | Firestore `islandGoal/2025-10-24` | **GAS が正**（#305）。スパチャを書き足す OBS の書き先がそこしかなく、**額が伸びるのは表の側だけ**だから。サイトは GAS → 無ければ Firestore の順に読む。控えは `goal_migrate` で作る。**表を消した瞬間から控えが正になる。** 順を入れ替えてよくなるのは、`SuperChats` の書き込み先を移したあと |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
+
+### 3.4 キャラクターは誰のものか — **結ぶ材料がどこにあるか**
+
+**正は `islandCharacter.channelId`。** 人の同一性はチャンネルID（2.1）なので、
+ここが入っていない人は**名前でしか引けず、相手が改名した翌日に消える。**
+2026-09-16 の実測で、102人中 **24人が空**。
+
+**作った時点の対応は、どこにも残っていなかった。** 図鑑の元になった
+Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
+**チャンネルIDの列が無い**（`docs/island-character.md` 1章）。
+移行（`characters_migrate`）が落としたのではなく、運ぶものが無かった。
+残っているのは表の `name` のうち `@` で始まるもの——**ハンドル**で、
+いま `channelName` と `channelKeys` に入っている。
+
+結ぶ材料は6か所にある。**上の3つが人の手、下の3つが機械**
+（`python/admin/characters_link.py` がこの順で当てる）。
+
+| どこ | 何で結ぶか | 人の手か | 2026-09-16 の実測 |
+| --- | --- | --- | --- |
+| `python/residents_map.json` | **書類ID**（＝絵のID） | あやとが手で写した | 22行。**24人には1人も当たらない**（22人ぶんはもう `channelId` が入っている） |
+| `islandDonors` | `handle` `channelName` `label` | あやとが手で結んだ | 30行中24行が結んである。鍵36通り。空いている24人には0人 |
+| `islandUsers` | `handle` `name` | **本人**がログインした | 2行。鍵4通り。0人 |
+| YouTube `channels.list(forHandle)` | **ハンドル** | 機械（YouTube が1人1つを保証） | ハンドルを持つ9人に訊いて**6人**。**いま効くのはここだけ** |
+| `islandChannels` | いま名乗っている表示名 | 機械 | 2,282行・鍵4,564通り。2人に当たるが決め手にならず |
+| BigQuery `chat_messages` | 過去ぜんぶの表示名 | 機械 | 表示名2,335通り・鍵4,670通り。3人に当たるが決め手にならず |
+
+**`residents_map.json` はもう誰も読んでいないが、消さない。**
+`build_residents.py` が図鑑の `channelId` を見るようになって外れただけで、
+中身は**人が結んだ正**。図鑑が飛んだときに名前を通さずに戻せる唯一の写し。
+
+**見に行って、材料の無かったところ**（「無かった」も結果なので残す）:
+
+| どこ | 何が入っていたか |
+| --- | --- |
+| `islandCharacter` の書類そのもの | 欄は17個。人を指すのは `channelId` と名前の系統だけ。移行の跡（`migratedFrom` `drivePlainId` `driveSceneId` `source`）はドライブの画像IDとハッシュとバイト数で、**チャンネルIDは1つも無い** |
+| `islandTips` | `channelId` は持つが、出どころが `islandDonors` か BigQuery。**新しい材料にならない** |
+| Viewers 表（GAS） | 上のとおり列が無い。**もう誰も読んでいない**（`docs/island-character.md`） |
+
+24人の内訳は **6人が決まる / 16人はどこにも当たらない / 2人は同じ相手を指した**。
+
+**決まらない18人は、機械では埋まらない。** ハンドルを持っているのは
+24人中9人だけで、残り15人は Viewers 表の時点で `@` 付きの名前が無かった人
+（`docs/island-character.md` 4章「@ 付きの名前が無い20人」）。
+ハンドルを持つ9人のうち3人は、**そのハンドルを YouTube が知らない**
+（手放したか、打ち間違い）。
+
+**あやとが `/me` の図鑑から結ぶしかない。** 手がかりとして、道具は
+決まらなかった人を**書類IDの指紋と絵文字**で1人ずつ並べる（名前は出さない）。
+同じ相手を指した2人は**キャラクターが2つある人かもしれない**ので、
+どちらが本物かは道具では決めずに、指紋で並べるだけにしてある。
 
 ---
 
