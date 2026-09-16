@@ -208,13 +208,23 @@ def frozen_py() -> str:
     """rebake.yml に埋めてある step「凍っていないか」を切り出す。
 
     **step はワークフローの中に埋めてある**（チェックアウトが `ref: master` なので、
-    別ファイルにすると枝で試せない）。切り出しかたは step 自身の docstring と同じ。
-    """
-    import yaml
+    別ファイルにすると枝で試せない）。
 
-    steps = yaml.safe_load(YML.read_text(encoding="utf-8"))["jobs"]["rebake"]["steps"]
-    run = [s for s in steps if s["name"] == "凍っていないか"][0]["run"]
-    return run[run.index("<<'PY'\n") + 7 : run.rindex("\nPY")]
+    **PyYAML を使わない。** 手元には入っているが、毎晩の焼き直しの箱には入って
+    いない（`必要なパッケージのインストール` は BigQuery と Firestore のぶんだけ）。
+    ここで `import yaml` していたせいで、手元では通るのに本番で
+    `ModuleNotFoundError` を出して落ちた。**この確かめ1つのために、焼き直しへ
+    依存を1つ増やさない。** 焼くのを止める係が、関係のない依存で動かなくなる形は
+    `bake_down.yml` でも避けている。
+
+    切り出しは字面でやる。`run:` の中のヒアドキュメント（`<<'PY'` 〜 `PY`）を
+    そのまま取って、YAML の字下げ（10桁）を落とす。
+    """
+    text = YML.read_text(encoding="utf-8")
+    head = text.index("- name: 凍っていないか")
+    lo = text.index("<<'PY'\n", head) + 7
+    hi = text.index("\n          PY\n", lo)
+    return "\n".join(line[10:] for line in text[lo:hi].split("\n"))
 
 
 # 直す前の見張り（2026-09-16 まで本番で回っていたもの）。
