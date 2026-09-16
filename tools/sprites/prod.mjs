@@ -39,8 +39,14 @@ export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.ap
    撮るときに要るので、先に通してある。
 
    **足すときは curl で届くことを先に見る。** 届かない先を通しても
-   abort が fulfill に変わるだけで、絵は空のまま。 */
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net|upload\.wikimedia\.org/;
+   abort が fulfill に変わるだけで、絵は空のまま。
+
+   **`upload.wikimedia.org` は、いちど入れて外した。** curl では 200 で
+   取れるが、こちらが回数を出すと **429 を返してくる**。通しておくと
+   「1枚だけ落ちた」が混み具合で出たり消えたりして、**確かめが揺れる。**
+   揺れる確かめは、無いほうがまし（#106 と同じ理由）。外してあるので
+   あの絵は「飢え」に数えられ、`??`（見ていない）と出る。**それが本当。** */
+const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
@@ -80,11 +86,23 @@ export async function viaCurl(ctx) {
          で、ブラウザが最初から要求していなかった（route に1本も来ない）。
          本番も道具も無事だった。変えたこと自体は損にならないので残すが、
          **何かを直した証拠として引かない。** */
-      const { stdout } = await run("curl", ["-sS", "--retry", "3", "--max-time", "40", u],
+      /* **`-f` を付ける。** 付けないと 4xx / 5xx でも curl は 0 で終わり、
+         **エラーの HTML を `image/jpeg` として流し込む。** 絵は当然デコードに
+         失敗するので、画面には「絵が落ちた」と出る。**本番は無事なのに。**
+         実際 `upload.wikimedia.org` がこの箱の curl を絞って 429 を返し、
+         それを絵として配って1枚を不具合に見せていた。 */
+      const { stdout } = await run("curl", ["-fsS", "--retry", "3", "--max-time", "40", u],
         { maxBuffer: 1 << 28, encoding: "buffer" });
       const ext = (u.split("?")[0].match(/\.([a-z0-9]+)$/i)?.[1] || "html").toLowerCase();
       await r.fulfill({ status: 200, contentType: TYPE[ext] || "text/html", body: stdout });
-    } catch { await r.abort().catch(() => {}); }
+    } catch {
+      /* **取れなかったぶんも「止めた」に数える。** 通してあっても向こうが
+         断れば、面は同じように飢える。壊れと混ぜない。 */
+      const m = BLOCKED.get(ctx);
+      const h = (() => { try { return new URL(u).host + "(取れず)"; } catch { return "取れず"; } })();
+      m.set(h, (m.get(h) || 0) + 1);
+      await r.abort().catch(() => {});
+    }
   });
 }
 
