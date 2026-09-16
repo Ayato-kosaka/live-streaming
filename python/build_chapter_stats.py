@@ -33,7 +33,7 @@ from google.cloud import bigquery
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from build_residents import BOT_NAME, fetch_characters, link  # noqa: E402
+from build_residents import BOT_NAME, fetch_characters, link, look  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -99,7 +99,9 @@ def link_icons(client: bigquery.Client, ch: str) -> dict[str, str]:
     GROUP BY 1
     """
     people = [dict(r) for r in client.query(sql).result()]
-    chars = fetch_characters()
+    # **名簿は Firestore から読む。** ここの `client` は BigQuery なので渡せない。
+    # 口はあちらの `look()` が1つだけ持つ（読み専用。1バイトも書かない）。
+    chars = fetch_characters(look())
     # **名簿が読めなかったら落ちる。** 黙って 0 人で焼くと、連なりの面から
     # 住人が消えたまま「その章には誰もいなかった」という絵になる
     if not chars:

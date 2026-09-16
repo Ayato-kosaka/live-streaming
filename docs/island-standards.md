@@ -262,3 +262,7 @@ node tools/sprites/prod.mjs        # 出したものを開いて、顔が出て�
 - **島を触ったら `tools/sprites/islenav.mjs` を回した**（3幅 × 寄り／引きで、
   隅の道具の重なり・引きの代表6枚・下半分を押して南へ歩けるか）。
   目で1つの幅を見るだけでは、隣の幅が壊れたことは出ない（`island-misses.md` #102）
+
+- **Python を触ったら `python3 python/crosscall_selftest.py` を回した**
+  （モジュールをまたいだ呼び出しの引数の数。`py_compile` も単体の確かめも
+  素通りする。`island-misses.md` #105）
