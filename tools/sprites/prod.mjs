@@ -41,12 +41,20 @@ export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.ap
    **足すときは curl で届くことを先に見る。** 届かない先を通しても
    abort が fulfill に変わるだけで、絵は空のまま。
 
+   **2026-09-16 に3回目をやった。** 顔の置き場を `yt3\.ggpht\.com` と
+   ホスト名で書いていたので、`yt4.ggpht.com` が止まっていた。他己紹介の面
+   （`/about`）はそこから視聴者さんの顔を取るので、撮ると「絵が落ちた 3枚」と
+   出る。**本番は無事**（3本とも curl で 200 / jpeg、本番の `/about` に
+   22件焼かれている）。番号は YouTube の側の都合で振られるもので、こちらは
+   選べない。**ホスト名ではなく置き場で書く**——`ggpht\.com` にした。
+   `yt3` も `yt4` もこれで通る。
+
    **`upload.wikimedia.org` は、いちど入れて外した。** curl では 200 で
    取れるが、こちらが回数を出すと **429 を返してくる**。通しておくと
    「1枚だけ落ちた」が混み具合で出たり消えたりして、**確かめが揺れる。**
    揺れる確かめは、無いほうがまし（#106 と同じ理由）。外してあるので
    あの絵は「飢え」に数えられ、`??`（見ていない）と出る。**それが本当。** */
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net/;
+const PASS = /live-streaming-d3cac\.web\.app|ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };

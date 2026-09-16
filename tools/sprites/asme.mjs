@@ -224,20 +224,45 @@ const PLANS = {
   next: null,
 };
 
+/** 旅の写真の置き場。**本番とおなじ形の URL**（`functions/src/cards.ts`）。
+    この道具が差し込む写真は、**ぜんぶこの形にする。** すぐ下の注を読むこと。 */
+const SHOT = (id) =>
+  `https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F${id}.jpeg?alt=media`;
+
 /* じぶんのこと（`/me`）が縦に伸びるのを測るための、**自分ぶんだけ**の9枚。
    下の `CARDS`（写真3枚 × 12人）にも自分は入っているが、そちらは1枚の
    写真につき1枚なので自分ぶんは3枚しかなく、「4枚出して、押すと+8」が
    動かない。**別の写真として9枚**要る。
 
-   外の写真には出られないので、URL は `route.mjs` の `offline` が
-   差し替える先（wikimedia）にしておく。 */
+   ## 宛先を `SHOT()`（＝置き場）にしてある理由
+
+   前はここだけ `https://upload.wikimedia.org/seed-N.jpg` を差していた。
+   「`route.mjs` の `offline` が wikimedia を1枚に差し替えるから」という
+   つもりだったが、**`prod.mjs` の `open()` は `offline` を呼ばない。**
+   通すのは `viaCurl`（＝`PASS`）と、この `apply` の2つだけ。
+   そして `upload.wikimedia.org` は **`PASS` からわざと外してある**
+   （こちらが回数を出すと 429 が返って、確かめが揺れるため）。
+   つまり `/cards` `/me` を本番で撮ると、**誰が測っても必ず
+   「絵が落ちた 3枚」**（畳みを開けば9枚）と出ていた。本番は無事なのに。
+
+   だから宛先は **`apply` が自分で握りつぶす先**に置く。`SHOT()` なら
+
+   - 外へ1バイトも出ない（下の `firebasestorage.googleapis.com` の route が
+     その場で絵を作って返す）。混み具合や 429 で揺れない
+   - **本番と同じ形の URL** なので、URL の形を見ている画面側の道と、
+     `CARDS`（旅の写真）の通る道が、どちらも本番のままになる
+   - 写真IDごとに違う絵が返るので、9枚を見分けられる
+
+   `data:` の URI でも外へは出ないが、本番にありえない形の URL を
+   画面に渡すことになる。**差し込みは本番と同じ形にする**（この上の
+   `YT_PHOTO` の注と同じ決めごと）ので、そちらは採らない。 */
 const MY_CARDS = Array.from({ length: 9 }, (_, i) => ({
   /* **本人の口（`/cards/mine`）は本当のカードIDを返す**（`<画像のID>__<チャンネルID>`）。
      公開の口に出るときは `publicCards` が別のものに差し替える。 */
   id: `ph${i + 1}__${CHANNEL}`,
   day: ago(i + 1).slice(0, 10),
   photoId: `ph${i + 1}`,
-  url: `https://upload.wikimedia.org/seed-${i + 1}.jpg`,
+  url: SHOT(`ph${i + 1}`),
   w: 1600, h: 1067,
   note: "その日の1枚",
   channelId: CHANNEL,
@@ -360,8 +385,6 @@ const CARD_CHANNELS = [
 ];
 /** 名前を出してよいと言った人だけ名前が返る。全員ぶん返すと本番と違う */
 const CARD_NAMES = { [CHANNEL]: NAME, "UCTXgxriwnTlJ0y1tff0yU5A": "まこも" };
-const SHOT = (id) =>
-  `https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F${id}.jpeg?alt=media`;
 /** 本番の3枚ぶん。縦と横を混ぜる（カードの絵の載せ方が向きで変わるため） */
 const CARD_SHOTS = [
   { id: "oMXREHFFNMbr37TtIwlE", day: "2026-09-06", ev: "food-wine-fest", w: 1200, h: 1600, note: "ジョージア最後の街歩きの夜景" },
@@ -394,6 +417,14 @@ const CARDS = CARD_SHOTS.flatMap((s) =>
     };
   }),
 );
+
+/** 写真ID → その写真の縦横。**差し込んだ `w`/`h` から作る**（写しを置かない）。
+    `apply` の中の置き場の差し替えが、この大きさで絵を返す。ここと差し込みが
+    ずれると、カードの中で写真が伸びたり潰れたりする。 */
+const PHOTO_SIZE = new Map([
+  ...CARD_SHOTS.map((s) => [s.id, [s.w, s.h]]),
+  ...MY_CARDS.map((c) => [c.photoId, [c.w, c.h]]),
+]);
 
 /* 旅の写真（`GET /nordic/photos`）。**本番と同じ形で返す。**
    本番はいま 2026-09-06 の1枚に4人だが、旅に出れば1日に何枚も貼られる。
@@ -466,12 +497,29 @@ export async function apply(ctx, opts = {}) {
        （2026-09-11）。写真でないものは通す（`viaCurl` が本物を取る）。 */
     if (!m) return r.fallback();
     const key = m[1];
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600">
-      <rect width="1200" height="1600" fill="hsl(${h},42%,38%)"/>
-      <rect y="1100" width="1200" height="500" fill="hsl(${(h + 24) % 360},38%,26%)"/>
-      <circle cx="900" cy="320" r="150" fill="hsl(${(h + 40) % 360},60%,72%)"/>
+    /* **写真ごとに違う絵にする。** 前の混ぜ方（`h*31+c`）は末尾の1字しか
+       違わない ID を散らせず、`ph1`〜`ph9` の色相が 25〜33 に固まって
+       **9枚が同じ色**で写った。FNV-1a で散らしたうえ、**ID を字で描く。**
+       色が寄っても、どの写真かは読めば分かる（`route.mjs` の
+       「1枚に潰さない」と同じ理由）。 */
+    let v = 0x811c9dc5;
+    for (let i = 0; i < key.length; i++) v = Math.imul(v ^ key.charCodeAt(i), 0x01000193) >>> 0;
+    /* **混ぜ終わりに、上の桁を下へ落とす。** FNV だけで 360 の剰余を取ると、
+       末尾1字が 1 違う ID は必ず 179 ずれるので、`ph1`〜`ph9` が
+       **2色の交互**にしかならなかった（実測。緑と赤紫だけ）。 */
+    v ^= v >>> 15; v = Math.imul(v, 0x2545f491) >>> 0; v ^= v >>> 13;
+    const h = v % 360;
+    /* **縦横は、差し込んだ `w`/`h` と合わせる。** どの写真も 1200×1600 で
+       返していたので、横の写真（1600×1200）や `MY_CARDS`（1600×1067）が
+       カードの中で縦に伸びていた。表に無い ID は本番の縦写真の形で返す。 */
+    const [W, H] = PHOTO_SIZE.get(key) ?? [1200, 1600];
+    const r2 = (n) => Math.round(n);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect width="${W}" height="${H}" fill="hsl(${h},42%,38%)"/>
+      <rect y="${r2(H * 0.69)}" width="${W}" height="${r2(H * 0.31)}" fill="hsl(${(h + 24) % 360},38%,26%)"/>
+      <circle cx="${r2(W * 0.75)}" cy="${r2(H * 0.2)}" r="${r2(Math.min(W, H) * 0.12)}" fill="hsl(${(h + 40) % 360},60%,72%)"/>
+      <text x="${r2(W / 2)}" y="${r2(H * 0.56)}" text-anchor="middle" fill="#fff"
+            font-family="sans-serif" font-size="${r2(Math.min(W, H) * 0.13)}">${key.replace(/[<>&]/g, "")}</text>
     </svg>`;
     r.fulfill({
       status: 200,
