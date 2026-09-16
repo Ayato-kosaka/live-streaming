@@ -266,3 +266,13 @@ node tools/sprites/prod.mjs        # 出したものを開いて、顔が出て�
 - **Python を触ったら `python3 python/crosscall_selftest.py` を回した**
   （モジュールをまたいだ呼び出しの引数の数。`py_compile` も単体の確かめも
   素通りする。`island-misses.md` #105）
+
+- **焼くスクリプトを触ったら `python3 python/bake_order_selftest.py` も回した**
+  （同じ入力を別の順で食わせて、書き出しが1通りに決まること。並びが揺れると
+  凍りの見張りが字面の差を見て「新しくなった」と読む。`island-misses.md` #106）
+
+- **焼き込み（`site/content/*.ts`）が要る変更は、焼き直しを `dry_run: false` で
+  回して、master に入った値を見るまでが出荷。**「次の焼き直しで入る」は出荷ではない。
+  手で押した `rebake.yml` は**既定が `dry_run: true`** なので、緑でも master には
+  1バイトも入らない（step 一覧の「master に入れる」が `skipped` かどうかで見分ける）。
+  そのうえで、**配った先の JS に値が在ることまで見る**（`island-misses.md` #107）
