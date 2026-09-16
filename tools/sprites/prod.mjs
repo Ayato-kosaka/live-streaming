@@ -11,15 +11,36 @@
  * 直っているものを直っていないと読む**（2026-09-10 に1回やった）。
  */
 import { chromium } from "playwright-core";
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const run = promisify(execFile);
 import { apply } from "./asme.mjs";
 
 export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
-/* 通す先。**置き場（firebasestorage）も通す。** 図鑑の「落とす」は名簿が
+/* 通す先。**置き場も配信のサムネも通す。** 図鑑の「落とす」は名簿が
    持っている置き場の URL を直に取りに行く。ここを止めたまま撮ると
    「絵が落ちた」と出て、直っているものを直っていないと読む
-   （2026-09-10 に1回やった。同じ轍）。 */
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
+   （2026-09-10 に1回やった。同じ轍）。
+
+   **2026-09-16 に2回目をやった。** `firebasestorage.googleapis.com` しか
+   通していなかったので、素の `storage.googleapis.com` が止まっていた。
+   料理ランキングの面（`#853_…`）はそこから 18,140 行を取るので、撮ると
+   「いまはランキングを出せません」の空っぽな絵になる。**本番は無事だった**
+   （curl では 200 / 5.1MB 返る）。あやうく直っているものを不具合として
+   報告するところだった。
+   `storage\.googleapis\.com` は `firebasestorage\.googleapis\.com` にも
+   当たるので、短いほうだけ書けば両方通る。
+
+   `i.ytimg.com` も足した。配信のサムネはここから来る。**ただしこちらは
+   「止まっていたせいで壊れて写っていた」わけではない。** `/streams` の
+   サムネ15枚は閉じた `<details>` の中の `loading="lazy"` で、そもそも
+   ブラウザが要求しない（route に1本も来ないことを数えた）。畳みを開いて
+   撮るときに要るので、先に通してある。
+
+   **足すときは curl で届くことを先に見る。** 届かない先を通しても
+   abort が fulfill に変わるだけで、絵は空のまま。 */
+const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
@@ -27,14 +48,23 @@ const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
 /** curl 経由で本番に届くようにする。**apply より先に呼ぶ**
     （Playwright はあとから登録した route が先に効くので、差し込みが勝つ） */
 export async function viaCurl(ctx) {
-  await ctx.route("**/*", (r) => {
+  await ctx.route("**/*", async (r) => {
     const u = r.request().url();
     if (!PASS.test(u)) return r.abort();
     try {
-      const body = execFileSync("curl", ["-sS", "--retry", "3", "--max-time", "40", u], { maxBuffer: 1 << 28 });
+      /* **同期で curl を回さない。** 前は `execFileSync` だったので、
+         要求が1本ずつ順番に並んだ。非同期にして並ばせる。
+
+         **これで直った数字は無い。** `/streams` の「絵 26/41」を詰まりだと
+         疑って変えたが、実際は**閉じた `<details>` の中の `loading="lazy"`**
+         で、ブラウザが最初から要求していなかった（route に1本も来ない）。
+         本番も道具も無事だった。変えたこと自体は損にならないので残すが、
+         **何かを直した証拠として引かない。** */
+      const { stdout } = await run("curl", ["-sS", "--retry", "3", "--max-time", "40", u],
+        { maxBuffer: 1 << 28, encoding: "buffer" });
       const ext = (u.split("?")[0].match(/\.([a-z0-9]+)$/i)?.[1] || "html").toLowerCase();
-      r.fulfill({ status: 200, contentType: TYPE[ext] || "text/html", body });
-    } catch { r.abort(); }
+      await r.fulfill({ status: 200, contentType: TYPE[ext] || "text/html", body: stdout });
+    } catch { await r.abort().catch(() => {}); }
   });
 }
 
