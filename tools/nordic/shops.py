@@ -74,6 +74,7 @@ Overpass は混むと**中身の空いた答え**を返す（`docs/island-misses
 出典の表示は ODbL の義務。`docs/nordic-shops.md` と画面の両方にある。
 """
 
+import datetime
 import json
 import os
 import re
@@ -86,6 +87,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SRC = os.path.join(ROOT, "site", "content", "nordic")
 OUT = os.path.join(SRC, "shops.json")
+# 取った日を書き戻す先。**データ（json）ではなく器（ts）の側に置く。**
+# json には店の営業時間が大量に入っていて、「2026-01-01 off」のような字を
+# 日付として数えてしまう（`site/content/nordicShops.ts` の SHOPS_FETCHED）
+TSOUT = os.path.join(ROOT, "site", "content", "nordicShops.ts")
+FETCHED_RE = re.compile(r'^(export const SHOPS_FETCHED = ")\d{4}-\d{2}-\d{2}(";)$', re.M)
 CACHE = os.path.join(HERE, ".osmcache")
 
 sys.path.insert(0, HERE)
@@ -446,6 +452,10 @@ def main():
             "ok": True,
             "tz": TZ.get(city, "Europe/Warsaw"),
             "center": [round(clat, 6), round(clon, 6)],
+            # **街ごとに、取った日を持つ。** 読めなかった街は前の表をそのまま
+            # 残す作りなので、1つの日付でまとめると「読めた街の日」が
+            # 何ヶ月前の街まで新しく見せてしまう
+            "at": datetime.date.today().isoformat(),
             "shops": shops,
         }
         n = {}
@@ -462,6 +472,34 @@ def main():
     }
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=False)
     print(f"\n書いた {OUT}  {os.path.getsize(OUT)//1024}KB")
+    return write_fetched(cities_out)
+
+
+def write_fetched(cities_out: dict) -> int:
+    """**いちばん古い街を取った日を、`nordicShops.ts` に書き戻す。**
+
+    見張り（`python/stale_content_watch.py`）はファイルの中しか読まない。
+    取った日がどこにも書かれていなかったので、この本だけ
+    「測れない」として判定から外れていた（`docs/island-misses.md` #132）。
+
+    **書くのは最新ではなく、いちばん古い街の日。** 読めなかった街は前の表を
+    そのまま残すので、最新を書くと「今日 1つの街が取れた」だけで
+    表ぜんぶが新しく見える。
+
+    行が見つからなければ**黙って通さない。** 書き戻しが外れたことは、
+    見張りが何ヶ月も緑を出し続けるという形でしか現れない。
+    """
+    ats = sorted(v["at"] for v in cities_out.values() if v.get("ok") and v.get("at"))
+    if not ats:
+        print("取った日を持つ街が1つもないので、日付を書き戻しません", file=sys.stderr)
+        return 1
+    src = open(TSOUT, encoding="utf-8").read()
+    new, n = FETCHED_RE.subn(lambda m: f"{m.group(1)}{ats[0]}{m.group(2)}", src)
+    if n != 1:
+        print(f"{TSOUT} に SHOPS_FETCHED の行が {n}個。書き戻せません", file=sys.stderr)
+        return 1
+    open(TSOUT, "w", encoding="utf-8").write(new)
+    print(f"いちばん古い街を取った日 {ats[0]}（{len(ats)}街）→ {TSOUT}")
     return 0
 
 

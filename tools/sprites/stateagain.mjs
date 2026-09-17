@@ -60,8 +60,7 @@
  */
 import { chromium } from "playwright-core";
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fromRoot } from "./repo.mjs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { offline } from "./route.mjs";
@@ -72,9 +71,11 @@ const PROD = "https://live-streaming-d3cac.web.app";
 const SPORT = process.env.SPORT || "4370";
 const ORIGIN = `http://127.0.0.1:${SPORT}`;
 /* 既定の書き出し先は、**この道具が置かれているリポジトリの中**から引く。
-   worktree を切って並列で回すので、家のパスを焼き込むと隣の人の書き出しを読む。 */
-const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-const DIST = process.env.DIST || join(ROOT, "site", `.next-${SPORT}`);
+   worktree を切って並列で回すので、家のパスを焼き込むと隣の人の書き出しを読む。
+   根の探しかたは `repo.mjs` に1本化した。`dirname` 3重は「この道具が
+   `tools/sprites/` の直下に在る」を前提にしていて、写すと黙って外れる（#131）。
+   `DIST` は絶対で渡されたらそのまま通る。 */
+const DIST = fromRoot(process.env.DIST || `site/.next-${SPORT}`);
 const WIDTHS = (process.env.WIDTHS || "390,1280").split(",").map((s) => parseInt(s, 10));
 /** 幅ごとに何回ぶん開いて押すか。1回だけだと「たまたま」を見分けられない */
 const ROUNDS = parseInt(process.env.ROUNDS || "2", 10);

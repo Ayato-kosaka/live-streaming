@@ -19,6 +19,8 @@
 export type CharBox = readonly [x: number, y: number, w: number, h: number, ar: number];
 
 const BOX: Record<string, CharBox> = {
+  "02e7cc3109ef45e2bc56aaf7f520ef7c0": [0.0, 0.0, 0.9266, 1.0, 1.0],
+  "0c8468a6411842cdb144f70eefee5b7b0": [0.05, 0.0, 0.9172, 1.0, 1.0],
   "1_G_v2sdY7ByT2Cp5C5E8wZKiAv3FzBZT": [0.1172, 0.0016, 0.8828, 0.9969, 1.0],
   "10hbypXDmWLEcat6gTZz3TuotslN8EiSb": [0.0, 0.0922, 1.0, 0.8156, 1.0],
   "11ygwplCCuzh5OItBynAVyglM1eZyVUO-": [0.0, 0.0875, 0.9984, 0.8234, 1.0],
@@ -114,6 +116,11 @@ const BOX: Record<string, CharBox> = {
   "1Y8b2L9Y6uZSNFcv9PVLR6aDqKuAdnZE7": [0.0141, 0.0203, 0.9734, 0.9094, 1.0],
   "1Ypw31n_0wRri-oEhRpqAB3p6jZFtN7BN": [0.0656, 0.0234, 0.8047, 0.9484, 1.0],
   "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO": [0.0266, 0.0141, 0.9703, 0.975, 1.0],
+  "5cc99a90acad4e7997d92b27c5207c6c0": [0.0484, 0.0, 0.9219, 0.975, 1.0],
+  "c3cca678865a4021a048e617fab35db30": [0.0766, 0.0, 0.8984, 0.9859, 1.0],
+  "d2ff6294640d4a5aa19bce30dfcbc8840": [0.0, 0.0, 0.9891, 0.9668, 0.9235],
+  "f003927aa7df4f5599a6bd58e2d324450": [0.0312, 0.0, 0.9219, 1.0, 0.9892],
+  "f203e9529b7941c89940a568e03b83b00": [0.0078, 0.0, 0.9922, 1.0, 0.9726],
 };
 
 /**
@@ -186,3 +193,24 @@ export function charFit(icon: string, want: number, bottom = false): { transform
   const ty = (bottom ? 0.5 : 0) - k * cy;
   return { transform: `translate(${(tx * 100).toFixed(1)}%, ${(ty * 100).toFixed(1)}%) scale(${k.toFixed(3)})` };
 }
+
+
+/**
+ * この表を焼いたときのこと。**見張り（`python/stale_content_watch.py`）が読む。**
+ * 手で直さない（`tools/sprites/charbox.py` が書く）。
+ */
+export const CHARACTER_BOX_BAKED = {
+  /** 焼いた日 */
+  at: "2026-09-17",
+  /** そのとき口（`/island-api/characters`）が返した人数 */
+  people: 102,
+  /** そのうち、実際に測れた人数 */
+  boxes: 102,
+  /**
+   * 測れなかった人。**焼き忘れではない**——背景なしの絵が無い・絵が開けない・
+   * 中身が空。名簿に居て、箱にもここにも居ない人が出たら、それが焼き忘れ。
+   */
+  noArt: [
+
+  ],
+} as const;
