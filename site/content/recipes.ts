@@ -493,6 +493,17 @@ export const RECIPES: Recipe[] = [
     note: "衣づけに卵ではなくマヨネーズを使った回。前の日に漬けたおしんこを添えて食べた。",
     streams: [{ label: "調理", date: "2026-09-04", videoId: "TGO_a-3ZwHM", title: "チキンカツトジ丼作ります！重大発表もあるよん" }],
   },
+  {
+    slug: "karaage",
+    name: "唐揚げ",
+    emoji: "🍗",
+    icon: "food-whole-ham",
+    country: "georgia",
+    kind: "meat",
+    date: "2026-09-10",
+    note: "片栗粉も小麦粉も無いまま揚げたので、チャットでは「唐揚げもとい揚げ鳥」と呼ばれた。ジョージア最後のクッキングで、きゅうりのキューちゃんも一緒に漬けた。",
+    streams: [{ label: "調理", date: "2026-09-10", videoId: "MLFOSFG_Y80", title: "北欧旅まであと1日！最後のクッキング！！" }],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);
