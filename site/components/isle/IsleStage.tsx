@@ -1370,8 +1370,21 @@ function Buildsite({ world, opensAt }: { world: IsleWorld; opensAt: string }) {
     setGone(Date.now() >= Date.parse(opensAt));
   }, [opensAt]);
   if (gone) return null;
-  const pct = fund ? Math.min(100, (fund.total / FUND_GOAL_YEN) * 100) : 0;
-  const stage = pct >= 100 ? "done" : pct >= 50 ? "walls" : pct >= 10 ? "frame" : "bare";
+  /* **足代が読めていないことを、0円と同じ絵にしない**（`docs/island-standards.md` 10）。
+     `useFund()` は「まだ読んでいない」も「読めなかった」も null で返すので、それを
+     0% として描くと、電波の届かない日に**更地（杭4本だけ）**が出て、
+     「まだ1円も入っていない」と言うことになる。出してくれた人に対する嘘。
+
+     額のほうは「読めなかったら出さない」に倒してある（`components/nordic/Support.tsx`）
+     ので、**絵もそろえる。** 連なりの模型は先に同じ倒しかたをしていた
+     （`components/chain/Isles.tsx` の `!fund ? "unknown"`）。歩ける島だけが
+     取り残されていた。 */
+  const stage = !fund
+    ? "unknown"
+    : (() => {
+        const pct = Math.min(100, (fund.total / FUND_GOAL_YEN) * 100);
+        return pct >= 100 ? "done" : pct >= 50 ? "walls" : pct >= 10 ? "frame" : "bare";
+      })();
   return <Building x={world.cx} y={world.cy + world.r * 0.06} r={world.r} stage={stage} />;
 }
 
