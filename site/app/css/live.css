@@ -703,7 +703,11 @@
 /* 欄。細い罫で割る。見出しには蛍光ペンの帯（ac-reference 7章 3） */
 .rzk-fields { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: 1px solid var(--pap-line); }
 .rzk-fields > div { padding: var(--sp-3) var(--sp-2); border-bottom: 1px solid var(--pap-line); min-width: 0; }
-.rzk-fields > div:nth-child(2n) { border-left: 1px solid var(--pap-line); }
+/* 2列に並ぶのは「はじめての人に／久しぶりの人に」の対だけ。**`nth-child` で
+   数え打ちしない。** 上に並ぶ欄は人によって出たり消えたりするので、1つ増減した
+   だけで偶数奇数が入れ替わって、**罫が2列のあいだではなく紙の左端に落ちる**
+   （本番で45枚がそうなっていた）。対の**2枚目**に付ける、と書けば数に依らない。 */
+.rzk-fields > div:not(.rzk-wide) + div:not(.rzk-wide) { border-left: 1px solid var(--pap-line); }
 .rzk-fields > .rzk-wide { grid-column: 1 / -1; border-left: 0; }
 .rzk-fields dt {
   display: inline-block;
@@ -718,7 +722,6 @@
 .rzk-fields dd { margin: 0; font-size: var(--fs-note); font-weight: 700; line-height: 1.8; color: var(--pap-ink); }
 .rzk-fields dd > b { font-size: 26px; font-weight: 900; color: var(--pap-ink); }
 .rzk-fields dd > i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-left: var(--sp-2); }
-.rzk-quiet { color: var(--pap-ink-2); }
 /* 日数を取りに行っているあいだ（#115）。**数の形をした薄い板を置く。**
    ここに 0 を置くと「0日いっしょにいた」と読める。
 
