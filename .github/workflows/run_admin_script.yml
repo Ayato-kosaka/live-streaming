@@ -305,6 +305,27 @@ jobs:
           echo "::add-mask::$key"
           echo "DONERU_ALERTBOX_KEY=$key" >> "$GITHUB_ENV"
 
+      # **明細を出すスクリプトを回す前に、伏せる側が効いているかを見る。**
+      #
+      # ここから回るのは `python/admin/` の中で、`doneru_viewers` /
+      # `donors_import` / `characters_link` / `characters_gap` / `firestore_read` は
+      # どれも**1人ずつ並べる**口を持っている。伏せているのは
+      # `python/logsafe.py` ひとつだけで、そこが素通しになっても
+      # **run は緑のまま終わる**（出るものが増えるだけだから）。
+      # しかも押した回のログは、そのまま誰でも読める場所に残る。
+      #
+      # 過去に3回出ている——#180 / #217 / #379（公開の Actions ログの名簿を
+      # 過去 1,065 実行ぶん消した）。**消すのは出たあと。出る前に止める。**
+      #
+      # 毎晩ぶんの同じ step は `tips_after_doneru.yml` に置いてある。
+      # あちらは繋ぎで毎晩発火する側、こちらは**人が押した目の前で止まる側**。
+      # 出る口が2つあるので、見張りも2つ要る（`docs/island-misses.md` #125 の
+      # 「兄弟が3本あったら、3本とも見る」）。
+      #
+      # 認証もクエリも要らず 0.5 秒で終わる。落ちたら、スクリプトは1行も走らない。
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
       - name: 実行
         working-directory: python/admin
         env:
