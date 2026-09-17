@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { Arrow, NewDot, Wedge } from "./art";
 import { VISITED } from "./visit";
 import { whenIdle } from "./idle";
-import Poll from "./Poll";
+import Poll, { type NoPoll } from "./Poll";
 
 /**
  * 今日の島。
@@ -89,8 +89,14 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
   const [fresh, setFresh] = useState(false);
   /** 今夜のおたずねが出ていて、まだ押していない。これも赤い丸の理由になる */
   const [asking, setAsking] = useState(false);
-  /** 今夜は問いが無い日。空いた場所に今日の2枚目を出す */
-  const [noPoll, setNoPoll] = useState(false);
+  /**
+   * 今夜のおたずねを出せない日。空いた場所に今日の2枚目を出す。
+   *
+   * **`"ok"`（読めた上で無い）と `"down"`（読めなかった）を分けて持つ。**
+   * 混ぜると、口が落ちただけの晩に「まだ出ていない」と言い切ることになる
+   * （`docs/island-standards.md` 10）。`null` はまだ返事が来ていない。
+   */
+  const [noPoll, setNoPoll] = useState<NoPoll | null>(null);
   /** 今日ここに来た人の数。分からない日は null のまま */
   const [visits, setVisits] = useState<number | null>(null);
   const { token } = useAuth();
@@ -212,7 +218,7 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
     setAsking(unanswered && !seen.current);
   }, []);
 
-  const onEmpty = useCallback(() => setNoPoll(true), []);
+  const onEmpty = useCallback((why: NoPoll) => setNoPoll(why), []);
 
   // 画面が出るまでは何も置かない。中身が今日のものだと確かめられるまで出さない
   if (!news) return null;
@@ -240,15 +246,23 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
           「見にいく」の隣に押すものを増やさない（`docs/island-play.md` 5章）。 */}
       {top.kind !== "live" && <Poll onCount={onPoll} onEmpty={onEmpty} />}
 
-      {/* 今夜のおたずねが無い日。**板をもう1段深くする。**
+      {/* 今夜のおたずねを出せない日。**板をもう1段深くする。**
           「まだ出ていない」の1行で終わらせると、押すものが1つも増えない。
-          ここに出るのは今日の2枚目で、その下に掲示板への橋を1本だけ残す。 */}
+          ここに出るのは今日の2枚目で、その下に掲示板への橋を1本だけ残す。
+
+          **塊は、口が落ちた晩にも出す。** 2枚目も橋も「こっちも見て」という誘いで、
+          今夜について何かを言い切ってはいない。落とすと、読めなかった晩だけ
+          押すものが1つに減る。 */}
       {top.kind !== "live" && noPoll && more && (
         <div className="today-open today-more">
           <b className="poll-ask">もうひとつ</b>
           <Face news={more} />
           <p className="today-nopoll">
-            今夜のおたずねは、まだ出ていない。
+            {/* **言い切るのは、読めた上で無い晩だけ。** 口が落ちた晩は在るのか
+                無いのかを知らないので、この1行を出さない（橋だけ残す）。
+                代わりの字も置かない。「読みに行けなかった」は中の話なので
+                （`docs/island-design.md` 4章）。 */}
+            {noPoll === "ok" && "今夜のおたずねは、まだ出ていない。"}
             <Link className="poll-why" href="/board">
               掲示板に企画を貼る
               <Arrow size={11} />

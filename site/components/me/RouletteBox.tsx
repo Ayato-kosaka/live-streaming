@@ -129,9 +129,8 @@ export default function RouletteBox() {
            `live` は「配信していない」ではない。** 口はそれを `chatDown`
            で分けて返す（`functions/src/islandApi.ts`）。
            `site/lib/api.ts` は他の担当も触るので、欄はここで読む。 */
-        const started = r as { chatDown?: boolean };
-        setLive(started.chatDown ? null : r.live);
-        if (started.chatDown) setChatRead("down");
+        setLive(r.chatDown ? null : r.live);
+        if (r.chatDown) setChatRead("down");
         setDoneru(r.doneru ?? { set: false, tail: "" });
         if (clear) setLines([]);
       } catch (e) {
