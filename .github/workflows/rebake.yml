@@ -1299,8 +1299,13 @@ jobs:
         id: og
         continue-on-error: true
         env:
-          # `next build` の書き出し先（この job は `NEXT_DIST_DIR` を付けない）
-          DIST: site/.next
+          # **`site/.next` ではない。** `output: "export"` の書き出し先は、
+          # distDir が既定（`.next`）のときだけ `out` になる。手元の手引きは
+          # どこも `NEXT_DIST_DIR` を付けて回すので（並列で `.next` を
+          # 奪い合わないため）書き出しが distDir の中に入り、**ここだけ素の
+          # `next build` なので `out` に入る。** 取り違えると、絵を撮る前に
+          # 0秒で「配るものがありません」で落ちる（実際に2晩そうなった）
+          DIST: site/out
           PORT: "4519"
         run: |
           set -uo pipefail
