@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
 import { charFit } from "@/content/characterBox";
-import { useResidentDays } from "@/lib/residentDays";
+import { useResidentDaysState } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import { useResidentShow } from "@/lib/liveStats";
 import { useCharacters } from "@/lib/characters";
@@ -107,8 +107,8 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
      スマホから足した人も、焼き直しを待たずに出る（`lib/characters.ts`）。 */
   const { chars, read: charsRead, reload: reloadChars } = useCharacters();
   const here = useOnIslandToday();
-  /* 一緒にいた日数（#91）。読めるまでは焼き込みの値を出す */
-  const liveDays = useResidentDays();
+  /* 一緒にいた日数（#91）。**読めているかも一緒に持つ**（#115） */
+  const { days: liveDays, read: daysRead } = useResidentDaysState();
   const list = chars ?? [];
   const [at, setAt] = useState(0);
   // 送りで見開きが差し替わったとき、目が迷子にならないよう見出しへ焦点を戻す。
@@ -129,6 +129,35 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const v = r ? say[r.id] : undefined;
   const name = r ? show.get(r.id)?.name : undefined;
   const spot = r ? here.get(r.id) : undefined;
+  /* いっしょにいた日数。**数が無いことを「0日」と言わない**（#115）。
+     数の出どころは2つあって、どちらも**全員ぶんは持っていない**。
+
+     - `/state` の `residentDays` は**上位60人ぶんだけ**
+       （`functions/src/islandApi.ts`）。ここに載らない人は「少ない」のではなく
+       **この口からは分からない**
+     - 焼き込みの `days` は**直近90日**の出席日数で、しかも
+       **`channelId` が結べなかった人は数えようがないので 0 が入る**
+       （`content/residents.ts` の頭に書いてある）
+
+     つまり手元の `0` は、ほとんどが「0日だった」ではなく「**数えられていない**」。
+     本番の102人で数えると50人がこれに当たる。**投げ銭をして絵を描いてもらった人が、
+     自分の札を開いて最初に見るのがこの欄**なので、そこに「0日」と出すのは
+     こちらの都合を相手のせいにしている。
+
+     **0 と「無い」を分けられないなら、数を出さない。**
+     欄ごと出さないのは `/me` と同じ倒しかた（`components/me/MeHero.tsx` の
+     `days > 0 &&`）。`docs/island-standards.md` 10 が言う「読めていないことを
+     値0と同じ絵にしない」を、いちばん静かに守れる形。
+     **代わりの字も置かない**——「紐付けできていません」は中の話
+     （`CLAUDE.md`「画面で、システムの仕様を説明しない」）。 */
+  const liveN = res?.channel ? liveDays[res.channel] : undefined;
+  const bakedN = res && res.days > 0 ? res.days : undefined;
+  const days = liveN ?? bakedN;
+  /* これから数が来るかもしれないのは、チャンネルが結べていて、まだ
+     `/state` を読んでいる最中の人だけ。そこは骨を置いて場所を取る
+     （`docs/island-design.md` 4章）。結べていない人には永久に来ないので、
+     骨を置くと「待てば出る」という嘘になる。 */
+  const daysWait = days === undefined && daysRead === "wait" && !!res?.channel;
   /* 開いている1人のカード。新しい順のまま渡ってくるので並べ直さない */
   const mine = (cards ?? []).filter((c) => c.icon === r?.id);
   /* **画面に出す絵は `charImg`（口ごしの短い名前）。名簿が持っている
@@ -236,18 +265,20 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               </dd>
             </div>
 
-            {/* いっしょにいた日数（#91）と、今日いるところ。
-                **島に立つ人だけが持っている。** 持っていない人には欄を出さない
-                （「0日」「今日は出ていません」と書くと、来ていないことに
-                なってしまう。実際は島に立てる22人に入っていないだけ）。 */}
-            {res && (
+            {/* いっしょにいた日数（#91 #115）。**数が分かっている人にだけ出す。**
+                分からない人に「0日」と出すと、こちらが数えられていないことを
+                「来ていない」と言い切ることになる（上の `days` に理由）。 */}
+            {(days !== undefined || daysWait) && (
               <div className="rzk-wide">
                 <dt>いっしょにいた日数</dt>
                 <dd>
-                  <b className="rzk-days">
-                    {(res.channel && liveDays[res.channel]) || res.days}
-                  </b>
-                  日
+                  {days === undefined ? (
+                    <span className="rzk-days-wait" aria-hidden />
+                  ) : (
+                    <>
+                      <b className="rzk-days">{days}</b>日
+                    </>
+                  )}
                 </dd>
               </div>
             )}

@@ -719,6 +719,21 @@
 .rzk-fields dd > b { font-size: 26px; font-weight: 900; color: var(--pap-ink); }
 .rzk-fields dd > i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-left: var(--sp-2); }
 .rzk-quiet { color: var(--pap-ink-2); }
+/* 日数を取りに行っているあいだ（#115）。**数の形をした薄い板を置く。**
+   ここに 0 を置くと「0日いっしょにいた」と読める。
+
+   **付箋や掲示板の骨と違って、点滅させない。** あちらは必ず中身が来る場所だが、
+   ここは**来ないこともある**（上位60人の外だと分かった時点で欄ごと消える）。
+   点滅は「もうすぐ出る」と強く言ってしまうので、来ない側に嘘をつく。
+   静かな板1枚で、場所だけ取っておく（`docs/island-design.md` 4章）。 */
+.rzk-days-wait {
+  display: inline-block;
+  width: 3.2em;
+  height: 26px;
+  vertical-align: -4px;
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pap-ink-2) 18%, transparent);
+}
 /* 今日どこにいるか。数えた事実の札はオリーブの平ら1種類（`docs/island-world.md` 4章） */
 .rzk-spot {
   display: inline-flex; align-items: center; gap: 3px;
