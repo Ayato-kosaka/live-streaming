@@ -3667,6 +3667,9 @@ export const islandApi = onRequest(
         }
         let chatToken = "";
         let live = false;
+        // 配信の有無を「見に行けたか」。false のときの live だけが
+        // 「配信していない」で、読めなかったときの false は何も言っていない
+        let chatDown = false;
         try {
           const page = await readLiveChat();
           chatToken = page.next;
@@ -3674,6 +3677,7 @@ export const islandApi = onRequest(
         } catch (e) {
           // 配信を読めなくても、コントローラーは開けなければならない。
           // 手で足すぶんだけでルーレットは回る
+          chatDown = true;
           logger.warn("roulette chat anchor failed", String(e));
         }
         const ref = ROULETTE.doc(id);
@@ -3705,6 +3709,10 @@ export const islandApi = onRequest(
         res.json({
           session: rouletteShape(id, rec),
           live,
+          // 読めなかったことを画面まで届ける。ここを落とすと、届かなかった
+          // だけの回が「いま配信していません」に化ける
+          // (docs/island-standards.md 10)
+          chatDown,
           doneru: doneruHint(user.data()?.doneruKey),
         });
         return;
@@ -3890,7 +3898,12 @@ export const islandApi = onRequest(
           res.json({lines: page.lines, wait: page.wait, live: page.live});
         } catch (e) {
           /* 配信が終わった・割り当てが尽きた。**コントローラーを止めない。**
-             手で足すほうは生きているので、次の周期でまた聞く。 */
+             手で足すほうは生きているので、次の周期でまた聞く。
+
+             **`down` を落とさない。** これが空の `lines` と一緒に 200 で
+             返るので、画面はこれを見て「0件」と「読めていない」を分ける
+             (`site/components/me/RouletteBox.tsx`)。ここの `live: false` は
+             読めていないときの値なので、画面は `down` のとき見ない。 */
           logger.warn("roulette chat read failed", String(e));
           res.set("Cache-Control", "no-store");
           res.json({lines: [], wait: 15000, live: false, down: true});
