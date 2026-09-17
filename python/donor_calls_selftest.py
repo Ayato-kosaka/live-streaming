@@ -6,7 +6,7 @@
 資格情報もネットワークも要らない（`donor_calls.py` が外に出る口は
 `load_table(db)` と `Gh` の3つだけなので、そこを偽物に差し替える）。
 
-確かめるのは10:
+確かめるのは12:
 
   1. 待ち **0人 → 1人** で issue が **1本**開く
   2. **2晩続けて 1人**でも issue は**増えない**（同じ1本のまま）。
@@ -21,6 +21,9 @@
      5 が 2本になる）
   9. **読めなかったら（403）赤くして止まる**（終了コード 1 と、1行のログ）
  10. **0件が返っても落ちない**（ラベルがまだ無い晩＝いまの本番の状態）
+ 11. **`state` ごとの内訳**を件数だけ数える（ログに出すぶん）
+ 12. **YouTube が分からない人の数が本文に1行出る。0人なら出ない。**
+     **その人数が何人でも、開く／閉じるの判断は1つも変わらない**
 
 ## 7 と 9 がなぜ「読みに行く」ほうを見ているか
 
@@ -157,6 +160,25 @@ T2 = dict(T1, **{
            "firstSeenAt": "2026-06-02T11:20:00+00:00"},
 })
 
+# **YouTube のアカウントが分からない人が6人いる晩。**
+# 2026-09-17 の本番がこれ（new 1 / unlinked 6 / linked 24）。
+# あの6人は紐付ける相手が分からないので、待っていても減らない
+U6 = dict(T0, **{
+    f"10000001{i:02d}": {"viewerPk": f"10000001{i:02d}", "handle": None,
+                         "channelId": None, "state": "unlinked",
+                         "firstSeenAt": "2026-02-0%dT10:00:00+00:00" % (i + 1)}
+    for i in range(5)
+})              # T0 にもう1人いるので、合わせて6人
+
+# 待ちが1人 + YouTube が分からない人が6人
+T1_U6 = dict(U6, **{PK_A: dict(T1[PK_A])})
+
+# 待ちが1人で、YouTube が分からない人は**ひとりもいない**晩
+T1_U0 = {PK_LINKED: dict(T0[PK_LINKED]), PK_A: dict(T1[PK_A])}
+
+# 待ちも0人、YouTube が分からない人も0人の晩
+T0_U0 = {PK_LINKED: dict(T0[PK_LINKED])}
+
 # `firstSeenAt` も `updatedAt` も読めない書類。人数には入るが日付には入らない
 T_BAD = dict(T0, **{
     PK_A: {"viewerPk": PK_A, "state": "new", "firstSeenAt": "きのう"},
@@ -263,7 +285,8 @@ class Gh403:
     def list_issues(self, label: str) -> list:
         self.gets += 1
         raise urllib.error.HTTPError(
-            "https://api.github.com/repos/…/issues", 403, "Forbidden", {}, None)
+            "https://api.github.com/repos/…/issues",
+            403, "Forbidden", {}, None)
 
     def create(self, *a, **k):
         raise AssertionError("読めていないのに書きにいった")
@@ -289,7 +312,7 @@ def act(gh, donors: dict, apply: bool = False):
     """
     if not hasattr(donor_calls, "act"):
         return None
-    w = donor_calls.count_waiting(donor_calls.load_table(FakeDb(donors)))
+    w = donor_calls.survey(donor_calls.load_table(FakeDb(donors)))
     real = donor_calls.Gh
     donor_calls.Gh = lambda repo, token: gh
     os.environ["GITHUB_REPOSITORY"] = FAKE_REPO
@@ -314,7 +337,7 @@ def said_while(fn):
 
 def night(gh, donors: dict, apply: bool = True) -> dict:
     """1晩ぶん回す。**本番と同じ道**（読む → 数える → 合わせる）を通す。"""
-    w = donor_calls.count_waiting(donor_calls.load_table(FakeDb(donors)))
+    w = donor_calls.survey(donor_calls.load_table(FakeDb(donors)))
     return donor_calls.run(gh, w, apply=apply)
 
 
@@ -603,7 +626,8 @@ def case11_breakdown():
        donor_calls.count_waiting(table)["n"])
     empty = donor_calls.state_counts({})
     ck("0件の対応表でも鍵が5つとも出る（数えていないと見分ける）",
-       empty == {"new": 0, "unlinked": 0, "linked": 0, "other": 0, "none": 0}, empty)
+       empty == {"new": 0, "unlinked": 0, "linked": 0,
+                 "other": 0, "none": 0}, empty)
 
 
 def case6_grep():
@@ -674,6 +698,73 @@ def case6b_mask():
     os.environ["GITHUB_ACTIONS"] = "true"
 
 
+def case12_unlinked():
+    """**YouTube が分からない人の数を、本文に1行だけ出す。**
+
+    出すだけで、**数には入れない。** 入れると、あやとが相手の YouTube を
+    知らないかぎり減らない人たちで issue が永久に開いたままになる。
+    だからここでは3つ見る:
+
+      (a) 1人以上いる晩は、本文にその人数が出る
+      (b) 0人の晩は、**その行が出ない**（「0人います」は何も渡さない）
+      (c) 何人いても、**開く／閉じるの判断が1つも変わらない**
+
+    (c) が本体。ここが落ちるようにしておけば、うっかり数に混ぜたときに
+    **閉じない issue が1本増える**前に気づける。
+    """
+    print("\n[12] YouTube が分からない人の数を本文に出す（数には入れない）")
+
+    # (a) 6人いる晩。**本番と同じ内訳**（new 1 / unlinked 6 / linked 24 の形）
+    gh = FakeGh()
+    r = night(gh, T1_U6)
+    text = gh.issues[0]["body"]
+    ck("したこと", r["action"] == "create", r["action"])
+    ck("待っている人数はそのまま", "**1人**" in text, "1人")
+    ck("YouTube が分からない人の数が本文に出る", "**6人**" in text, "6人")
+    ck("何の話かが1行で分かる",
+       "ほかに **6人** は、YouTube のアカウントが分からないままです。" in text,
+       "出ている")
+
+    # (b) 0人の晩は、その行ごと出ない
+    gh0 = FakeGh()
+    night(gh0, T1_U0)
+    text0 = gh0.issues[0]["body"]
+    ck("0人の晩は行が出ない", "ほかに" not in text0, "出ない")
+    ck("0人と書かれてもいない", "**0人**" not in text0, "書かれていない")
+    ck("待っている人の行は出ている", "**1人**" in text0, "出ている")
+    ck("素で呼んでも既定は書かない",
+       "ほかに" not in donor_calls.body(1, None), "書かない")
+
+    # (c) **何人いても、開く／閉じるの判断は変わらない。**
+    #     待ちが0人なら、YouTube が分からない人が6人いても閉じる
+    for name, donors in (("0人", T0_U0), ("1人", T0), ("6人", U6)):
+        w = donor_calls.survey(donor_calls.load_table(FakeDb(donors)))
+        ck(f"待ちの人数は 0 のまま（分からない人 {name}）", w["n"] == 0, w["n"])
+        want = donor_calls.body(w["n"], w["since"], w.get("unlinked", 0))
+        opened = {"number": 1, "state": "open", "body": "なにか"}
+        ck(f"開いている issue は閉じる（分からない人 {name}）",
+           donor_calls.decide(opened, want, w["n"]) == "close",
+           donor_calls.decide(opened, want, w["n"]))
+        ck(f"閉じた issue は開け直さない（分からない人 {name}）",
+           donor_calls.decide({"number": 1, "state": "closed", "body": want},
+                              want, w["n"]) == "noop",
+           donor_calls.decide({"number": 1, "state": "closed", "body": want},
+                              want, w["n"]))
+        ck(f"issue が無ければ立てない（分からない人 {name}）",
+           donor_calls.decide(None, want, w["n"]) == "noop",
+           donor_calls.decide(None, want, w["n"]))
+
+    # 通してもう一度。**6人いる晩でも、待ちが0になったら閉じる**
+    gh2 = FakeGh()
+    night(gh2, T1_U6)
+    r = night(gh2, U6)
+    ck("6人いても、待ちが0になったら閉じる", r["action"] == "close", r["action"])
+    ck("開いている issue の本数", len(gh2.opened()) == 0, len(gh2.opened()))
+    r = night(gh2, U6)
+    ck("6人いても、閉じたままにする", r["action"] == "noop", r["action"])
+    ck("立てた回数（増えていない）", gh2.created == 1, gh2.created)
+
+
 def main() -> int:
     # **毎晩これが走るのは Actions の中。** 公開のログに積まれるのはそのときの
     # 字なので、同じ条件で回して、その出力を 6 で数える
@@ -691,6 +782,7 @@ def main() -> int:
     case9_forbidden()
     case10_empty()
     case11_breakdown()
+    case12_unlinked()
     print("\n[6の結果]")
     case6_grep()
     case6b_mask()
