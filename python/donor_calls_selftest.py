@@ -566,6 +566,46 @@ def case10_empty():
     ck("これから何もしないと出る", "何もしません" in said, "出る")
 
 
+def case11_breakdown():
+    """**`state` ごとの内訳**（ログに出す件数だけ）。
+
+    数えているのは内訳のほうで、**issue を開く条件は `count_waiting()` の
+    まま**。ここでは「内訳を足しても、待ちの人数が動いていない」ことも見る。
+
+    見たことのない `state` は、**値を出さずに「その他」へ入る**
+    （このリポジトリは公開なので、知らない字をログへ流さない）。
+    """
+    print("\n[11] state ごとの内訳を数える（件数だけ）")
+    table = {
+        "a": {"state": "new"},
+        "b": {"state": "new"},
+        "c": {"state": "unlinked"},
+        "d": {"state": "linked"},
+        "e": {"state": "linked"},
+        "f": {"state": "linked"},
+        "g": {"state": "なにか知らない値"},
+        "h": {},
+        "i": {"state": ""},
+    }
+    c = donor_calls.state_counts(table)
+    ck("new", c["new"] == 2, c["new"])
+    ck("unlinked", c["unlinked"] == 1, c["unlinked"])
+    ck("linked", c["linked"] == 3, c["linked"])
+    ck("その他（知らない値）", c["other"] == 1, c["other"])
+    ck("空（state が無い・空文字）", c["none"] == 2, c["none"])
+    ck("合計が対応表の件数と合う",
+       sum(c.values()) == len(table), f"{sum(c.values())} / {len(table)}")
+    ck("0でも鍵が消えない", set(c) == {"new", "unlinked", "linked", "other", "none"},
+       sorted(c))
+    # **内訳を足しても、issue の開く条件は動いていない**
+    ck("待ちの人数は count_waiting のまま",
+       donor_calls.count_waiting(table)["n"] == 2,
+       donor_calls.count_waiting(table)["n"])
+    empty = donor_calls.state_counts({})
+    ck("0件の対応表でも鍵が5つとも出る（数えていないと見分ける）",
+       empty == {"new": 0, "unlinked": 0, "linked": 0, "other": 0, "none": 0}, empty)
+
+
 def case6_grep():
     """**出た字を探す。** 袋を読むので、ほかの確かめのあとに回す。
 
@@ -650,6 +690,7 @@ def main() -> int:
     case8_broken()
     case9_forbidden()
     case10_empty()
+    case11_breakdown()
     print("\n[6の結果]")
     case6_grep()
     case6b_mask()

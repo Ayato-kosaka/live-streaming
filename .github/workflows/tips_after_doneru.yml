@@ -1,11 +1,19 @@
 name: 投げ銭の台帳を入れ直す
 
-# Doneru の取り込みが終わったあとに、**投げ銭の台帳（`islandTips`）と
-# カード（`islandCards`）をもう一度作る。**
+# Doneru の取り込みが終わったあとに、**Doneru の投げ銭に依存する3本を、
+# 取り込みと同じ順でもう一度回す。**
+#
+#     1. doneru_supporters.py  対応表（`islandDonors`）と名簿（`nordicDays`）
+#     2. island_tips.py        投げ銭の台帳（`islandTips`）
+#     3. island_cards.py       カード（`islandCards`）
+#
+# **順番は `schedule_fetch_chat.yml` の `island_stats` に合わせてある**
+# （あちらは 1 を最後に置いているが、それは「落ちたら後ろが止まる」のを
+# 避けるための置き場所で、依存の向きは 1 → 2。理由は下の各ステップに書いた）。
 #
 # ## なぜ要るか — 順番を、両方とも定時実行の運に任せていた
 #
-# 台帳を作っているのは `schedule_fetch_chat.yml`（Fetch YouTube Chat Data）の
+# この3本を回しているのは `schedule_fetch_chat.yml`（Fetch YouTube Chat Data）の
 # `island_stats` ジョブで、**このリポジトリで1か所しかない**。
 # ところがその台帳が読む BigQuery の `doneru_donations` を埋めるのは
 # **別のワークフロー**（`fetch_doneru_donations.yml`）。
@@ -48,10 +56,15 @@ name: 投げ銭の台帳を入れ直す
 # 押せば確かめられる。あちらは1バイトも書かずに終わるので、**本番を
 # 汚さずに「繋いだ先が起きるか」だけを見られる。**
 #
-# ## 同じ晩に2回走っても、台帳は動かない
+# ## 同じ晩に2回走っても、台帳も対応表も動かない
 #
 # 毎晩 `schedule_fetch_chat.yml` の中で1回、ここでもう1回走ることになるが、
 # **2回目で行は増えない・消えない・上書きされない。**
+#
+#   - 対応表（`islandDonors`）に書くのは**表に無い どねID だけ**
+#     （`doneru_supporters.py` の `known is None` の枝）。2回目はもう表に
+#     在るので、`state` も `firstSeenAt` も触らない
+#   - 名簿（`nordicDays`）は `merge()` が channelId で重複を潰す
 #
 #   - 書類IDは `sourceEventId` の SHA-1（`island_tips.py` の `doc_id`）。
 #     同じ寄付は毎回同じ書類に当たる
@@ -62,8 +75,8 @@ name: 投げ銭の台帳を入れ直す
 #
 # ## 誰にカードが配られるかは、1ミリも変えていない
 #
-# 変えるのは**いつ台帳に入るか**だけ。`island_tips.py` も `island_cards.py` も
-# `functions/src/streamEvents.ts` も1バイト触っていない。
+# 変えるのは**いつ台帳に入るか**だけ。`doneru_supporters.py` も `island_tips.py` も
+# `island_cards.py` も `functions/src/streamEvents.ts` も1バイト触っていない。
 # カードが渡るのは、いままでどおり**その日に投げ銭してくれた人**
 # （`docs/island-cards.md`、`docs/island-incident-2026-09-14-cards.md`）。
 #
@@ -150,6 +163,56 @@ jobs:
             echo "手で押したぶん: dry_run=$IN_DRY"
           fi
 
+      # **いちばん先に置く。** 台帳（`island_tips.py`）は Doneru のぶんを
+      # `islandDonors` を通してチャンネルIDに直す。対応表が古いまま台帳を
+      # 作ると、**その晩に初めて投げてくれた人のぶんが誰にも紐付かない。**
+      # `schedule_fetch_chat.yml` の中でも「辞書 → 台帳」の順になっている
+      # （あちらの `island_channels.py` のコメント）。ここも同じ向きに揃える。
+      #
+      # ## `state: "new"` を書くのはここだけ
+      #
+      # 紐付け待ちを issue に映す係（`donor_calls.py`）が数えているのは
+      # `islandDonors` の `state: "new"` で、それを置くのはこのスクリプト。
+      # 昨夜これを繋がなかったので、**2026-09-17 は「紐付け待ち 0人」と
+      # 出たまま、台帳のほうは「紐付いていないぶん 1件」と言っていた。**
+      # カードが渡らなかった人がいるのに、見張りが 0人 と言っていた。
+      #
+      # ## 同じ晩に2回走っても、名簿は動かない
+      #
+      #   - `islandDonors` に書くのは **対応表に無い どねID だけ**
+      #     （`known is None` の枝）。2回目はもう表に在るので、
+      #     `state` も `firstSeenAt` も**上書きしない**。
+      #     あやとが紐付けたあと（`linked`）に走っても `new` に戻らない
+      #   - `nordicDays` は `merge(old, people)` が channelId で重複を潰す。
+      #     同じ人は2回並ばない。`set(..., merge=True)` だけで消す道が無い
+      #   - 新規がいない晩は BigQuery が1本増えるだけ（`fetch_first` は
+      #     新規が出た晩しか呼ばれない）
+      #
+      # ## 落ちても、後ろを止めない（**ここだけ取り込みと変える**）
+      #
+      # `schedule_fetch_chat.yml` はこれを**いちばん最後**に置いて、
+      # 落ちたらそこで終わる形にしてある。**あちらは後ろに何も無いから
+      # それでよい。** ここは先頭なので、同じ扱いにすると
+      # **「紐付け待ちが1人いる晩は、台帳もカードも走らない」**——
+      # このワークフローを作った目的そのものが消える。
+      #
+      # 終了コードは向こうの docstring どおり 0 / 1 / 2 の3つ。
+      # **1（紐付けてほしい）では赤くしない。** それを赤で知らせるのを
+      # やめるために `donor_calls.py` を作ってあり、issue のほうに出る。
+      # **2（元データが読めない）は赤くする。** あれは仕組みが壊れている
+      # ほうなので、下の「元データが読めなかったか」で最後に落とす。
+      - name: Doneru の投げ銭を名簿に足す
+        run: |
+          set -uo pipefail
+          rc=0
+          if [ "$TIPS_DRY" = "1" ]; then
+            python python/doneru_supporters.py --days 3 --dry-run || rc=$?
+          else
+            python python/doneru_supporters.py --days 3 || rc=$?
+          fi
+          echo "DONERU_RC=$rc" >> "$GITHUB_ENV"
+          echo "終了コード: $rc（0=ぜんぶ紐付いている / 1=紐付けてほしい / 2=元データが読めない）"
+
       # 呼び方は `schedule_fetch_chat.yml` の `island_stats` と同じ
       # （引数なし＝直近7日ぶん）。**2か所で違う窓を引かない。**
       - name: 投げ銭の台帳を更新
@@ -174,6 +237,35 @@ jobs:
             python python/island_cards.py
           fi
 
+      # `nordic_supporters.py`（その日いた人の名簿）は**ここに足さない。**
+      # あれが引くのは BigQuery の `chat_messages`（YouTube のスパチャ）で、
+      # **`doneru_donations` を1行も読まない。** 材料を入れるのは
+      # `fetch_chat_data.py`＝同じ `schedule_fetch_chat.yml` の中なので、
+      # あちらでは既に「入れてから読む」順が守られている。
+      # Doneru の完了に繋いでも新しくなるものが1つも無く、
+      # `nordicDays.updatedAt` だけが毎晩もう1回動く。
+      # （Doneru のぶんの名簿は、真上の `doneru_supporters.py` が
+      # `merge()` で同じ `nordicDays` に足している。そちらは繋いである）
+
+      # **紐付け待ち（終了コード 1）では赤くしない。** それは
+      # `donor_calls.py` が issue に映す。ここで落とすのは
+      # **元データが読めなかったとき（2）だけ。**
+      - name: 元データが読めなかったら赤くする
+        run: |
+          set -euo pipefail
+          if [ "${DONERU_RC:-0}" = "2" ]; then
+            {
+              echo "### Doneru の寄付の表が読めませんでした"
+              echo ""
+              echo '`doneru_donations` が作り直しの途中か、権限が変わったかです。'
+              echo '**対応表（islandDonors）の問題ではないので、そちらは触らないこと。**'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if [ "${DONERU_RC:-0}" = "1" ]; then
+            echo "紐付け待ちが残っています（issue のほうに出ます）"
+          fi
+
       # **黙って赤くならない。** 繋ぎと cron で走るぶんは誰も見ていないので、
       # せめてどこで落ちたかを要約に残す（run の1枚目に出る。ログを開かずに読める）。
       - name: 落ちたときに、どこで落ちたかを残す
@@ -186,7 +278,7 @@ jobs:
             echo 'この晩は台帳（`islandTips`）とカード（`islandCards`）が古いままで、'
             echo '投げてくれた人の `/cards` に、その日のカードが出ていない可能性があります。'
             echo ""
-            echo '毎晩の取り込み（Fetch YouTube Chat Data）の中でも同じ2本が走るので、'
+            echo '毎晩の取り込み（Fetch YouTube Chat Data）の中でも同じ3本が走るので、'
             echo '**翌朝には追いつきます。** 今すぐ直すなら、このワークフローを'
             echo '`dry_run: false` で手で押してください。'
           } >> "$GITHUB_STEP_SUMMARY"

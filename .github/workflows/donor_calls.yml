@@ -16,8 +16,27 @@ name: 紐付け待ちを issue に映す
 # ## 繋ぎ先（`workflow_run`）
 #
 # 数える元は Firestore の `islandDonors`。そこへ「表に無い どねID」を
-# 書き込むのは**毎晩の取り込み**（`schedule_fetch_chat.yml` の中の
-# `doneru_supporters.py`）なので、**その後ろに繋ぐ。**
+# `state: "new"` で書き込むのは `doneru_supporters.py` で、**それを回す口は
+# 2つしかない。** その2つの後ろに繋ぐ。
+#
+# | 回す口 | ワークフロー名 |
+# | --- | --- |
+# | 毎晩の取り込みの中（最後のステップ） | `Fetch YouTube Chat Data` |
+# | Doneru の取り込みが終わったあと | `投げ銭の台帳を入れ直す` |
+#
+# **`Fetch Doneru Donations` には繋がない（2026-09-17 に外した）。**
+# あれは BigQuery に材料を入れるだけで、`islandDonors` を1行も書かない。
+# そして `投げ銭の台帳を入れ直す` が**同じ引き金で動く**ので、繋いだままだと
+# 2本が同時に出て**競争になる。** 負けた晩は、対応表がまだ新しくなる前に
+# ここが数えることになる。
+#
+# 実際に 2026-09-17 の晩がそれだった。ここは「対応表 30件 / 紐付け待ち 0人」と
+# 言い、同じ晩の台帳は「Doneru で紐付いていないぶん 1件」と言っていた。
+# **カードが渡らなかった人がいるのに、見張りが 0人 と言った。**
+#
+# `concurrency` で1本ずつにしても直らない。**あれは順番を作る道具ではない**
+# （待つのは1本だけで、同じ group に3本目が来ると待っているほうが捨てられる）。
+# 直すのは**引き金の張り替え**で、順番そのものを作る。
 #
 # **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
 # あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
@@ -40,6 +59,12 @@ name: 紐付け待ちを issue に映す
 # 2本とも走った晩は2回回るが、**2回目は同じ本文なので何も書かない**
 # （`donor_calls.py` の `decide()`）。
 #
+# **`投げ銭の台帳を入れ直す` 自身も `workflow_run` で起きる。** 繋ぎの繋ぎに
+# なるので、生きているかは**押して1回見るまで当てにしない**
+# （`CLAUDE.md`「新しく載せた cron は、発火を1回見るまで当てにしない」と同じ）。
+# 2026-09-17 に `Fetch Doneru Donations` を `probe: true` で押して、
+# Doneru → 台帳 → ここ、の3段が繋がることを見てある。
+#
 # ## 手で押すときの既定は「見るだけ」
 #
 # `apply` の既定は false。押し間違えても issue は動かない
@@ -48,7 +73,10 @@ name: 紐付け待ちを issue に映す
 
 on:
   workflow_run:
-    workflows: ["Fetch YouTube Chat Data", "Fetch Doneru Donations"]
+    # **`doneru_supporters.py` を回したワークフローだけ。**
+    # `Fetch Doneru Donations` は `islandDonors` を1行も書かないうえ、
+    # `投げ銭の台帳を入れ直す` と同じ引き金なので競争になる（上の表）
+    workflows: ["Fetch YouTube Chat Data", "投げ銭の台帳を入れ直す"]
     types: [completed]
 
   schedule:

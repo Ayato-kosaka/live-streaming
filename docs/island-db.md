@@ -1125,21 +1125,49 @@ YouTube                    Doneru
 `streamChatMessages` / `streamChatRuns` に溜めて、`streamChatHealth` に札を置く。
 **BigQuery に入るのは翌日の取り込みで、この2つとは別物。**
 
-#### 台帳（`islandTips`）とカード（`islandCards`）は、いつ入るか
+#### Doneru の投げ銭に依存するものは、いつ入るか
 
-**投げ銭したその晩に入る。** 走る口は2つあって、**どちらも同じ2本を同じ順で回す。**
+**投げ銭したその晩に入る。** 走る口は2つあって、**どちらも同じ3本を回す。**
 
-| いつ | どこから | 何を |
+| いつ | どこから | 何を（走る順） |
 | --- | --- | --- |
-| 取り込みの中（毎晩） | `schedule_fetch_chat.yml` の `island_stats` | `island_tips.py` → `island_cards.py` |
-| Doneru の取り込みが終わったあと | `tips_after_doneru.yml`（`workflow_run`。cron `30 1 * * *` は保険） | 同じ2本 |
+| 取り込みの中（毎晩） | `schedule_fetch_chat.yml` の `island_stats` | `island_tips.py` → `island_cards.py` →（`nordic_supporters.py`）→ `doneru_supporters.py` |
+| Doneru の取り込みが終わったあと | `tips_after_doneru.yml`（`workflow_run`。cron `30 1 * * *` は保険） | `doneru_supporters.py` → `island_tips.py` → `island_cards.py` |
 | 画像を貼ったとき（カードだけ） | `functions/src/streamEvents.ts` の `mintForImage` | その画像ぶんのカード |
 
-**2つ目が要る理由は、順番が毎晩の運だから。** 台帳を作るのは1つ目だけなのに、
-台帳が読む `doneru_donations` を埋めるのは**別のワークフロー**
+3本が何を書くかは、
+
+| スクリプト | 書く先 | 読む元 |
+| --- | --- | --- |
+| `doneru_supporters.py` | `islandDonors`（表に無い どねID を `state: "new"` で）・`nordicDays.people` | `doneru_donations` |
+| `island_tips.py` | `islandTips` | `doneru_donations` ＋ `chat_messages` ＋ **`islandDonors`** |
+| `island_cards.py` | `islandCards` | `islandTips` × `islandStreamEventImage` |
+
+**`islandDonors` が先。** 台帳は Doneru のぶんを対応表でチャンネルIDに直すので、
+対応表が古いまま台帳を作ると、その晩に初めて紐付いた人のぶんが誰にも渡らない。
+
+**2つ目の口が要る理由は、順番が毎晩の運だから。** この3本を回すのは1つ目だけなのに、
+3本が読む `doneru_donations` を埋めるのは**別のワークフロー**
 （`fetch_doneru_donations.yml`）。どちらも定時実行で遅れが1時間49分〜3時間32分
-ばらつくので、**作るほうが材料より先に走る晩がある。** 2026-09-16 が実際にそれで、
+ばらつくので、**読むほうが材料より先に走る晩がある。** 2026-09-16 が実際にそれで、
 22:32 に台帳を作り、23:11 に材料が入った（UTC。39分の負け）。
+
+**`nordic_supporters.py` は2つ目の口に入っていない。** あれが引くのは
+`chat_messages`（YouTube のスパチャ）だけで、`doneru_donations` を1行も読まない。
+材料を入れるのは同じ `schedule_fetch_chat.yml` の中なので、そちらで既に
+「入れてから読む」順になっている。
+
+#### 紐付け待ちを数える口（`donor_calls.py`）も、その後ろ
+
+`state: "new"` を書くのは `doneru_supporters.py` だけなので、
+**`donor_calls.yml` は「それを回した2本」の後ろに繋ぐ**
+（`Fetch YouTube Chat Data` と `投げ銭の台帳を入れ直す`）。
+
+**`Fetch Doneru Donations` には繋がない。** あれは BigQuery に材料を入れるだけで
+`islandDonors` を1行も書かず、しかも `投げ銭の台帳を入れ直す` と**同じ引き金**
+なので、繋いだままだと2本が競争になる。2026-09-17 の晩が実際にそれで、
+見張りは「紐付け待ち 0人」、同じ晩の台帳は「Doneru で紐付いていないぶん 1件」
+と言っていた（`island-misses.md` #114）。
 
 台帳は毎晩7日ぶんを引き直すので**失われはしない**が、**投げてくれた晩にカードが
 出ず、翌朝になる。** `/cards` は「その日の写真が、そのまま置いてあります」と
