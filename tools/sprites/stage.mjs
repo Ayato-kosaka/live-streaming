@@ -22,6 +22,9 @@ export const STAGES = [
     mark: ".isle-mark",
     badge: ".isle-badge",
     zoom: ".isle-view",
+    /** 島の陸そのもの（浜まで）。**共有画像の枠を島に合わせるために測る。**
+        上から順に探して、最初に見つかったものを使う */
+    land: [".ig-sand", ".ig-grass"],
     /** 共有画像には要らないもの（隅の道具・案内・吹き出し・今日の板） */
     chrome: ".isle-tools,.isle-hint,.isle-talk,.isle-today,.today,.scroll-cue",
   },
@@ -30,6 +33,7 @@ export const STAGES = [
     root: ".stage",
     mark: ".spot-mark",
     badge: ".spot-badge",
+    land: [".ground"],
     zoom: ".stage-view",
     chrome: ".island-bar,.walk-hint,.scroll-cue,.chatter,.who-call,.stage-tools,.today",
   },
