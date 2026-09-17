@@ -41,6 +41,13 @@
 「直しようのないもので毎日赤くなる」と書いてある）。
 直せない用事を毎日並べると、並んでいること自体が読み飛ばされる。
 
+**ただし、ログには `state` ごとの件数を全部出す**（`state_counts()`）。
+issue に出すかどうかと、**何人いるのかを見られるかどうかは別の話。**
+2026-09-17 の晩は「対応表 30件 / 紐付け待ち 0人」しかログに無く、
+同じ晩の台帳が「紐付いていないぶん 1件」と言っていたのに、
+**その1件がどこにも出ていなかった。** 出すのは件数だけで、
+issue を開く条件は1バイトも変えていない。
+
 ## 同じ1本を、どうやって見つけるか
 
 **タイトルでは探さない。** タイトルは人が変える（読みやすくしたり、
@@ -192,6 +199,51 @@ def count_waiting(table: dict) -> dict:
         if since is None or day < since:
             since = day
     return {"n": n, "since": since}
+
+
+# `islandDonors.state` に入りうる値。**表に載っていない値は「その他」に
+# まとめて数える。** 値そのものをログへ流さないため（このリポジトリは公開）。
+# 書いているのは `python/doneru_supporters.py` と
+# `python/admin/donors_import.py` の2本（上の表と同じ並び）。
+STATES = ("new", "unlinked", "linked")
+
+
+def state_counts(table: dict) -> dict:
+    """`islandDonors` を `state` ごとに**数えるだけ。**
+
+    **issue の中身も、開く条件も、ここは1バイトも動かさない**
+    （数えているのは `count_waiting()` のほうで、あちらは触っていない）。
+    足したのは**ログに出す内訳だけ。**
+
+    なぜ要るか: 2026-09-17 の晩、ログには「対応表 30件 / 紐付け待ち 0人」
+    しか出ていなかった。同じ晩の台帳は「Doneru で紐付いていないぶん 1件」と
+    言っていたのに、**その1件がログのどこにも出ない。**
+    `unlinked` が何人いるのかを、誰も見られる場所で言っていなかった。
+
+    **出すのは件数だけ。** どねID も名前もチャンネルIDも持ち回らない
+    （`count_waiting()` と同じ考え方。手元に無ければ出しようがない）。
+    見たことのない `state` は値を出さずに「その他」へ入れる。
+
+    Args:
+        table: いまの `islandDonors`（どねID -> 書類）
+
+    Returns:
+        {"new": n, "unlinked": n, "linked": n, "other": n, "none": n}。
+        **どの鍵も必ず在る**（0でも出す。「0人」と「数えていない」を
+        同じ顔にしない）
+    """
+    out = {k: 0 for k in STATES}
+    out["other"] = 0
+    out["none"] = 0
+    for _pk, doc in (table or {}).items():
+        st = (doc or {}).get("state")
+        if st is None or st == "":
+            out["none"] += 1
+        elif st in out:
+            out[st] += 1
+        else:
+            out["other"] += 1
+    return out
 
 
 def body(n: int, since) -> str:
@@ -470,6 +522,13 @@ def main() -> int:
     table = load_table(db)
     w = count_waiting(table)
     logger.info("対応表 %d件 / 紐付け待ち %d人", len(table), w["n"])
+    # **内訳は件数だけ。** issue に出すかどうかはここでは決めない
+    # （`count_waiting()` が数える条件も、`decide()` が開く条件も変えていない）
+    c = state_counts(table)
+    logger.info(
+        "  state の内訳: new %d / unlinked %d / linked %d / その他 %d / 空 %d",
+        c["new"], c["unlinked"], c["linked"], c["other"], c["none"],
+    )
     if w["since"]:
         logger.info("いちばん古い人は %s から待っています", w["since"])
 
