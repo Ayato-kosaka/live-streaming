@@ -50,9 +50,14 @@ def main() -> None:
 
     if a.get("verify"):
         # 置き場から読むだけ。**Firestore も Storage も触らない**
-        raise SystemExit(
-            restore.restore_photo(photos.read_row_bq(c), a.get("path"), None)
-        )
+        #
+        # **毎晩の演習と同じ `drill_photos` を通す。** ここを別の関数
+        # （`restore_photo`）に残していたあいだ、手で押した回だけ
+        # 「空っぽ」と「絵ではない」を見ていなかった。大きさも指紋も
+        # 取ったときの実体から計算して一緒に書いてあるので、取り違えた
+        # 中身は**行の中で辻褄が合ったまま**通る（#127）。
+        # 見張りが2つあるなら、2つとも同じものを見る
+        raise SystemExit(restore.drill_photos(c, 1, a.get("path"), None))
 
     kw = {}
     if a.get("budget_mb"):

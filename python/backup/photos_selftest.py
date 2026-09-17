@@ -473,19 +473,11 @@ def case6(s: Sink, bodies: dict):
        open(out, "rb").read() == bodies[path], os.path.getsize(out))
     os.remove(out)
 
-    # **毎晩の drill が呼ぶ口（`restore.py --photo`）そのものを通す。**
-    # ここを通さないと、道具は動くのに毎晩の口が動かない、が起こる
-    from backup import restore  # noqa: PLC0415
-
-    ck("restore.py --photo と同じ口が 0 で返る",
-       restore.restore_photo(s.read_row, path, None) == 0, "終了コード 0")
-    # 中身を1バイト書き換えた行を戻すと、**落ちる**こと（判定の向きの確認）
-    broken = dict(s.rows[path])
-    broken["sha256"] = "0" * 64
-    ck("指紋が違う行は 1 で返る",
-       restore.restore_photo(lambda _p: broken, path, None) == 1, "終了コード 1")
-    ck("1枚も入っていないときは 0 で返る（警告だけ）",
-       restore.restore_photo(lambda _p: None, None, None) == 0, "終了コード 0")
+    # 毎晩の口（`restore.py --photo` → `drill_photos`）の合否そのものは
+    # **`python/backup_drill_selftest.py` が見ている**（壊した写し4通り・
+    # 0枚・分母まで）。ここは取るほう（`photos.py`）の道具が動くかだけ。
+    # **両方で同じことを見ない。** 片方だけ直したときに、もう片方が
+    # 「通っている」と言い続ける形になる
 
 
 def case5():

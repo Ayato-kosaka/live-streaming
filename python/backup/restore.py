@@ -11,9 +11,10 @@
     RESTORE_TO_PRODUCTION=yes-i-mean-it \
       python python/backup/restore.py --collection islandNotes --apply
 
-    # 旅の写真を1枚戻して、**バイト列が一致するか**を見る（本番は触らない）
+    # 旅の写真を何枚か戻して、**バイト列が一致するか**を見る（本番は触らない）
     python python/backup/restore.py --photo
-    python python/backup/restore.py --photo --photo-out /tmp/one.jpg
+    python python/backup/restore.py --photo --photo-n 20
+    python python/backup/restore.py --photo --photo-path <置き場の名前> --photo-out /tmp/one.jpg
 
 手順は docs/island-backup.md。
 
@@ -22,7 +23,26 @@
 置き場に入っているのは base64 ではなく BYTES の列。戻すというのは
 **取り出して、記録してある大きさと指紋（sha256）にバイト列が一致すること**を
 見ること。取れているだけで戻せないものは退避ではない
-（`backup.yml` の `drill` が毎晩1枚やる）。
+（`backup.yml` の `drill` が毎晩やる）。
+
+見るのは4つ。**大きさ・指紋・空でないこと・絵であること。**
+はじめの2つだけでは足りない——`size` も `sha256` も**取ったときの実体から
+計算して一緒に書いている**ので、合言葉の切れた URL から返った HTML や
+0 バイトの実体は、**行の中で辻褄が合ったまま**入る。突き合わせは一致と出て、
+戻した先に絵は無い。
+
+## 何枚のうち何枚戻したかを、必ず出す
+
+1枚だけ戻して〇を出すのは、584 枚のうち 0.2% を見たということでしかない。
+しかも `ORDER BY taken_at DESC LIMIT 1` はいつも同じ側を引くので、
+**古いところが腐っても永久に当たらない。** 晩ごとに違う組み合わせで
+`--photo-n` 枚（既定5枚）引いて、**分母（置き場の枚数）と一緒に**出す
+（`docs/island-standards.md` §15）。
+
+**0枚は緑にしない。** 置き場に1枚も無い晩は「戻せた」ではなく
+「**何も戻していない**」ので、終了コード 2 で落ちる。取るほうが回って
+いないなら、それは退避が止まっているということ。2026-09-17 まで、ここは
+`::warning::` を出して 0 で通していた。
 
 ## 二重の縛り
 
@@ -40,6 +60,9 @@
 """
 
 import argparse
+import base64
+import datetime as dt
+import hashlib
 import os
 import sys
 
@@ -116,26 +139,118 @@ def read_snapshot(c, collection: str, at: str | None):
     return rows
 
 
-def restore_photo(read_row, path: str | None, out_path: str | None) -> int:
-    """写真を1枚戻して突き合わせる。**出すのは 〇✕ と数だけ。**
+# 毎晩、置き場の写真を何枚引いて戻すか。**1枚では分母にならない。**
+# 584 枚のうち同じ1枚を毎晩なぞっても、古いところが腐ったことは永久に出ない。
+# 5枚 × 晩ごとに違う組み合わせで、置き場をゆっくり一周する
+PHOTO_N = int(os.getenv("PHOTO_DRILL_N") or 5)
 
-    置き場の名前（`path`）は日付と書類IDでできていて、貼った人を指しうるので
-    **ログに出さない。** 同じ理由で、戻した実体の中身も出さない。
+
+def judge_photo(row) -> dict:
+    """写真1枚ぶんの合否。**大きさ・指紋・空でないこと・絵であること**の4つ。
+
+    大きさと指紋だけでは足りない。`size` も `sha256` も**取ったときの実体から
+    計算して一緒に書いている**ので、取り違えた中身（合言葉の切れた URL から
+    返った HTML、0 バイトの実体）は**行の中で辻褄が合ったまま**入る。
+    突き合わせは一致と出て、戻した先に絵は無い。**それを退避と呼ばない。**
+
+    返すのは 〇✕ と数だけ。置き場の名前は貼った人を指しうるので**入れない。**
     """
-    r = photos.restore_one(read_row, path, out_path)
-    if not r["found"]:
-        # まだ1枚も入っていない＝取るほうがまだ回っていない。
-        # **ここで赤くしない。** 毎晩の drill が、写真が0枚の晩に落ちてしまう
-        log.warning("置き場に写真がまだ1枚も入っていません")
-        print("::warning::置き場に写真がまだ入っていないので、戻す試しができませんでした")
-        return 0
-    log.info("1枚戻しました: %d バイト / 大きさ %s / 指紋 %s",
-             r["bytes"], "一致" if r["size_ok"] else "**不一致**",
-             "一致" if r["sha_ok"] else "**不一致**")
-    if not r["ok"]:
-        log.error("**戻した実体が、記録してあるバイト列と一致しません。**")
+    body = row["body"]
+    if isinstance(body, str):
+        # クライアントの版によっては base64 の字で返る
+        body = base64.b64decode(body)
+    body = bytes(body)
+    kind = photos.image_kind(body)
+    size_ok = len(body) == int(row["size"])
+    sha_ok = hashlib.sha256(body).hexdigest() == str(row["sha256"])
+    return {
+        "bytes": len(body),
+        "size_ok": size_ok,
+        "sha_ok": sha_ok,
+        "empty": len(body) == 0,
+        "kind": kind,
+        "ok": size_ok and sha_ok and len(body) > 0 and kind is not None,
+    }
+
+
+def drill_photos(bq, n: int, path: str | None = None, out_path: str | None = None) -> int:
+    """置き場から n 枚戻して、**何枚のうち何枚が戻せたか**を出す。
+
+    終了コード 0=戻せた / 1=戻せない写真があった / **2=数えるものが無い**
+    （`docs/island-standards.md` §15）。
+
+    **0枚を緑にしない。** ここは 2026-09-17 まで、置き場に1枚も無い晩を
+    `::warning::` のまま 0 で通していた。「戻せた」ではなく「**何も戻して
+    いない**」なので、いちばん見張ってほしい晩に黙る形だった。
+    取るほうが回っていないなら、それは退避が止まっているということ。
+    """
+    if path:
+        # 名指しの1枚（人が手で調べるとき）。分母は1
+        row = photos.read_row_bq(bq)(path)
+        if row is None:
+            # **名指ししたものが無いのも「戻せた」ではない。**
+            # 置き場の名前は貼った人を指しうるので、名前は出さない
+            log.error("名指しされた1枚が置き場に見つかりません")
+            print("::error::名指しされた写真が置き場にありません。戻す試しができていません")
+            return 2
+        rows = [row]
+        st = {"n": 1, "paths": 1, "bytes": int(row["size"])}
+    else:
+        st = photos.stats_bq(bq)
+        if st["n"] == 0:
+            log.error("置き場に写真が1枚も入っていません")
+            print("::error::置き場に写真が0枚です。戻す試しができていません"
+                  "（取るほうが回っていないか、置き場が消えています）")
+            return 2
+        salt = dt.date.today().isoformat()
+        rows = photos.read_sample_bq(bq, n, salt)
+
+    log.info("置き場の写真: %d 枚（別々の置き場所 %d / 合わせて %d バイト）",
+             st["n"], st["paths"], st["bytes"])
+    if not rows:
+        # 置き場には在るのに引けない。**「無い」と「見ていない」は別物**
+        log.error("置き場には %d 枚あるのに、1枚も引けませんでした", st["n"])
+        print("::error::置き場には %d 枚あるのに、戻す試しに1枚も引けませんでした" % st["n"])
+        return 2
+
+    ok = sizes = shas = kinds = 0
+    empty = 0
+    bad: list[str] = []
+    for i, row in enumerate(rows, 1):
+        r = judge_photo(row)
+        sizes += r["size_ok"]
+        shas += r["sha_ok"]
+        kinds += r["kind"] is not None
+        empty += r["empty"]
+        ok += r["ok"]
+        if out_path and i == 1:
+            body = row["body"]
+            if isinstance(body, str):
+                body = base64.b64decode(body)
+            with open(out_path, "wb") as f:
+                f.write(bytes(body))
+        if not r["ok"]:
+            # **何枚目か、だけ。** 置き場の名前も中身も出さない
+            why = []
+            if not r["size_ok"]:
+                why.append("大きさが違う")
+            if not r["sha_ok"]:
+                why.append("指紋が違う")
+            if r["empty"]:
+                why.append("**空っぽ**")
+            elif r["kind"] is None:
+                why.append("**絵ではない**")
+            bad.append(f"{i} 枚目（{r['bytes']} バイト / " + "・".join(why) + "）")
+
+    log.info("戻した %d 枚 / %d 枚中 — 大きさ一致 %d ・指紋一致 %d ・中身が絵 %d ・空 %d",
+             len(rows), st["n"], sizes, shas, kinds, empty)
+    if bad:
+        log.error("**戻せなかったのが %d / %d 枚**", len(bad), len(rows))
+        for line in bad:
+            print("::error::戻せない写真: " + line)
         return 1
-    log.info("**バイト列が一致しました。**")
+    log.info("**%d 枚とも、バイト列が記録どおりに戻りました**（置き場 %d 枚のうち %d 枚を見た）",
+             ok, st["n"], len(rows))
     return 0
 
 
@@ -147,7 +262,9 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="どの世代があるか出す")
     ap.add_argument("--photo", action="store_true",
                     help="旅の写真を1枚戻して、バイト列が一致するか見る")
-    ap.add_argument("--photo-path", help="どの1枚か（省くと置き場のいちばん新しいもの）")
+    ap.add_argument("--photo-path", help="どの1枚か（省くと晩ごとの組み合わせから引く）")
+    ap.add_argument("--photo-n", type=int, default=PHOTO_N,
+                    help=f"何枚戻して見るか（既定 {PHOTO_N}）")
     ap.add_argument("--photo-out", help="戻した実体の書き出し先")
     a = ap.parse_args()
 
@@ -156,7 +273,7 @@ def main() -> int:
     if a.photo:
         # **Firestore を1ミリも触らない。** 置き場から読んで、置き場に
         # 記録してある大きさと指紋に合うかを見るだけ
-        return restore_photo(photos.read_row_bq(bq), a.photo_path, a.photo_out)
+        return drill_photos(bq, a.photo_n, a.photo_path, a.photo_out)
 
     if a.list:
         for r in snapshots(bq, a.collection):

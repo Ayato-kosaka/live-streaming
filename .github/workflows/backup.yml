@@ -91,6 +91,10 @@ jobs:
   take:
     name: 取る
     runs-on: ubuntu-latest
+    outputs:
+      # **押しかたは、ここで1回だけ決める。** 下の `drill` もこれを見る
+      dry: ${{ steps.mode.outputs.dry }}
+      drill: ${{ steps.mode.outputs.drill }}
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -113,9 +117,52 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
 
+      # cron と workflow_run のときは押す人がいない。入力も空で来る
+      # （`inputs.*` が空文字になる）。**ここで決めて env と outputs に置き、
+      # 以降は env と outputs だけを見る。**
+      #
+      # `${{ inputs.dry_run && … }}` や `if: ${{ !inputs.dry_run }}` を直に
+      # 書くと、cron の空文字が false と読まれて**たまたま動く**形になる。
+      # `rebake.yml` の step「今回の押しかたを決める」に、同じことが書いてある。
+      # 実際 `drill` は 29 run 中28回、その偶然の上で走っていた。
+      - name: 今回の押しかたを決める
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # 押す人のいない回（定時・取り込みの後ろ）は、必ず取る。
+          # **片方だけ手当てすると、繋ぎ替えたあと毎晩「見るだけ」で走って、
+          # 緑なのに1バイトも退避されない状態になる。**
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
+            dry=0
+          elif [ "$IN_DRY" = "true" ]; then
+            dry=1
+          else
+            dry=0
+          fi
+          # 戻せるか試すのは、実際に取った回だけ。**下見の回に「戻せた」を
+          # 出すと、その晩の退避を見ていないのに緑になる**
+          drill=$((1 - dry))
+          echo "dry=$dry" >> "$GITHUB_OUTPUT"
+          echo "drill=$drill" >> "$GITHUB_OUTPUT"
+          echo "BACKUP_DRY=$dry" >> "$GITHUB_ENV"
+          if [ "$dry" = "1" ]; then
+            echo "$EVENT: 下見です（1バイトも書きません。戻す試しもしません）"
+          else
+            echo "$EVENT: 取ります。取ったあと、戻せるかを試します"
+          fi
+
       # ここに continue-on-error を付けない。**落ちたら赤くする。**
       - name: 退避する
-        run: python python/backup/run.py ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          set -euo pipefail
+          if [ "$BACKUP_DRY" = "1" ]; then
+            python python/backup/run.py --dry-run
+          else
+            python python/backup/run.py
+          fi
 
   drill:
     name: 戻せるか試す
@@ -123,7 +170,8 @@ jobs:
     # 取ったものを戻すので、取るのが先。**取るのが落ちたらここも走らせない**
     # （古い世代で緑を出すと「戻せる」が嘘になる）
     needs: take
-    if: ${{ !inputs.dry_run }}
+    # **`!inputs.dry_run` を直に書かない。** 上の step で決めたものだけを見る
+    if: ${{ needs.take.outputs.drill == '1' }}
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:
@@ -153,6 +201,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
 
+      # **対照が先。本番の置き場を1行も引く前に、演習が落ちられるかを見る。**
+      #
+      # 19 run 走って一度も捕まえていないのが「退避が健全」なのか
+      # 「演習が何も見ていない」のかは、走った回数からは決められない。
+      # 偽の置き場に**壊した写し**（1バイト違う・欠けた・空っぽ・絵ではない・
+      # 0枚）と、**戻したのに中身が違うコレクション**を仕込んで、そこで
+      # 落ちることをその場で見せる。**壊していない写しが先に通ること**も
+      # 一緒に見る（片側だけだと、何にでも赤を出す演習も通る。
+      # `docs/island-misses.md` #125）。
+      #
+      # 置き場にも本番にも1行も問い合わせない（BigQuery も Firestore も
+      # 偽物）。ここが落ちたら、**本番の数字を1つも出さずに**赤くなる
+      - name: 演習が落ちられるかを、偽物で先に見る
+        run: python3 python/backup_drill_selftest.py
+
+      # 写真を取るほうの振る舞い（続きから・落ちた枚数・ログに名前を出さない）。
+      # こちらも偽の置き場だけで回る。**書いてあったのに、どこからも走って
+      # いなかった**（2026-09-17 の棚卸し。`docs/island-misses.md` #125）
+      - name: 写真を取るほうも、偽物で回す
+        run: python3 python/backup/photos_selftest.py
+
       # **本番には書かない。** エミュレータを立てて、そこへ戻して突き合わせる
       - name: エミュレータへ戻して突き合わせる
         working-directory: python/admin
@@ -160,10 +229,15 @@ jobs:
           ARGS: '{"collection": "${{ inputs.drill_collection || ''islandNotes'' }}"}'
         run: python backup_restore_test.py
 
-      # **写真も「戻せるか」まで見る。** 置き場から1枚取り出して、記録して
+      # **写真も「戻せるか」まで見る。** 置き場から何枚か取り出して、記録して
       # ある大きさと指紋にバイト列が一致するかを見るだけ（**読むだけ**）。
       # ここも `continue-on-error` を付けない。**戻せない退避は退避ではない。**
-      # まだ1枚も入っていない晩は `::warning::` を出して緑のまま通す
-      # （取るほうがまだ回っていないだけで、壊れてはいない）
-      - name: 写真を1枚戻してバイト列を突き合わせる
+      #
+      # **0枚の晩は赤くする**（終了コード 2）。2026-09-17 まで、ここは
+      # 1枚も無い晩を `::warning::` で緑のまま通していた。「戻せた」ではなく
+      # 「何も戻していない」ので、いちばん見張ってほしい晩に黙る形だった。
+      #
+      # 引くのは**晩ごとに違う組み合わせ**。いちばん新しい1枚だけを見ていると、
+      # 584 枚のうち同じ側を毎晩なぞって、古いところが腐っても当たらない
+      - name: 写真を戻してバイト列を突き合わせる
         run: python python/backup/restore.py --photo

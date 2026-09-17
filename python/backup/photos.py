@@ -564,6 +564,100 @@ def dump(
 
 # ---------------------------------------------------------------- 戻す
 
+# 置き場に入っていてよい実体の頭。**「取れているのに絵ではない」を落とすため。**
+#
+# 大きさと指紋だけ見ていると、**ここを素通りする壊れかたがある**——
+# 合言葉の切れた URL から返った HTML のエラーページや、0 バイトの実体を
+# そのまま積むと、`size` も `sha256` も**その中身どおりに**記録される。
+# 行の中では辻褄が合っているので、突き合わせは一致と出る。
+# 戻した先に絵が無いのに緑になる、が実際に起こりうる形。
+MAGIC = (
+    (b"\xff\xd8\xff", "jpeg"),
+    (b"\x89PNG\r\n\x1a\n", "png"),
+    (b"GIF87a", "gif"),
+    (b"GIF89a", "gif"),
+    (b"BM", "bmp"),
+    (b"<svg", "svg"),
+    (b"<?xml", "svg"),
+)
+
+# `ftyp` の後ろに来る札。AVIF / HEIC はここで見分ける
+FTYP = (b"avif", b"avis", b"heic", b"heix", b"heim", b"heis", b"mif1", b"msf1")
+
+
+def image_kind(body: bytes) -> str | None:
+    """実体の頭を見て、**絵かどうか**を返す。絵でなければ None。
+
+    拡張子も `content_type` も見ない。**どちらも取るときに付けた札**で、
+    中身が化けても一緒には化けないので、壊れを見つける役に立たない。
+    """
+    if not body:
+        return None
+    head = bytes(body[:32])
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "webp"
+    if head[4:8] == b"ftyp" and head[8:12] in FTYP:
+        return head[8:12].decode("ascii", "replace")
+    for sig, name in MAGIC:
+        if head.startswith(sig):
+            return name
+    return None
+
+
+def stats_bq(c) -> dict:
+    """置き場に写真が何枚あるか。**`body` を読まない**ので、ここは安い。
+
+    分母を出すためだけの1本（`docs/island-standards.md` §15）。
+    「何枚のうち何枚を戻したか」が言えないと、1枚の〇に意味がない。
+    """
+    tbl = f"{sink.PROJECT}.{sink.DATASET}.photos"
+    q = (f"SELECT COUNT(*) AS n, COUNT(DISTINCT path) AS paths, "
+         f"IFNULL(SUM(size), 0) AS total FROM `{tbl}`")
+    r = list(c.query(q, location=sink.LOCATION).result())[0]
+    return {"n": int(r["n"]), "paths": int(r["paths"]), "bytes": int(r["total"])}
+
+
+def read_sample_bq(c, n: int, salt: str):
+    """置き場から n 枚を、**晩ごとに違う組み合わせ**で引く口。
+
+    いちばん新しい1枚だけを見ていると、584 枚のうち同じ1枚を毎晩なぞる。
+    古いところが腐っても、永久に当たらない。`salt`（日付）で並べ替えるので、
+    **その晩は決まった組み合わせ・晩が変われば別の組み合わせ**になる。
+
+    **並べ替えと実体の取り出しを分けてある。** 1本にすると `body`（表ぜんぶで
+    340MB）を積んだまま並べ替えることになって、置き場が育つと
+    「ORDER BY が入りきらない」で落ちる。並べ替えは `path` の列だけで済ませ、
+    実体は名前を指して**並べ替え無しで**取る。読む量は変わらない
+    （`body` の列は WHERE を書いても表ぜんぶ読むので、どちらにせよ1回ぶん）。
+    """
+    from google.cloud import bigquery
+
+    tbl = f"{sink.PROJECT}.{sink.DATASET}.photos"
+    pick = f"""
+      SELECT path FROM `{tbl}`
+      ORDER BY FARM_FINGERPRINT(CONCAT(path, @salt))
+      LIMIT @n
+    """
+    cfg = bigquery.QueryJobConfig(query_parameters=[
+        bigquery.ScalarQueryParameter("salt", "STRING", salt),
+        bigquery.ScalarQueryParameter("n", "INT64", n),
+    ])
+    paths = [r["path"] for r in c.query(pick, job_config=cfg, location=sink.LOCATION).result()]
+    if not paths:
+        return []
+
+    take = f"""
+      SELECT path, taken_at, size, sha256, content_type, body
+      FROM `{tbl}` WHERE path IN UNNEST(@paths)
+    """
+    cfg2 = bigquery.QueryJobConfig(query_parameters=[
+        bigquery.ArrayQueryParameter("paths", "STRING", paths)
+    ])
+    got = {r["path"]: dict(r) for r in
+           c.query(take, job_config=cfg2, location=sink.LOCATION).result()}
+    # **引いた順のまま返す。** 何枚目が落ちたかを、晩をまたいで読めるように
+    return [got[p] for p in paths if p in got]
+
 
 def read_row_bq(c):
     """置き場から写真を1行読む口。`path` を省くといちばん新しい1枚。"""
