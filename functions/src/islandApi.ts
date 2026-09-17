@@ -32,7 +32,13 @@ import {
 import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
-import {handleCards, iconsOf, noIcons, peopleForEveryone} from "./cards";
+import {
+  handleCards,
+  iconsOf,
+  noIcons,
+  peopleForEveryone,
+  charactersByChannel,
+} from "./cards";
 /* Doneru の どねID を YouTube のアカウントにつなぐ(#190)。同じ理由で外。
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
@@ -503,27 +509,90 @@ async function whoIs(header?: string): Promise<Who> {
   }
 }
 
+/** 日数の控え。**名簿の控え(`cards.ts` の `KEYS_TTL`)と同じ長さ。** */
+const DAYS_TTL = 5 * 60 * 1000;
+
+/** 温かいインスタンスに持つ日数。 */
+let daysCached: {at: number; map: Json} | null = null;
+
 /**
- * 「一緒にいた日数」の上位（#91）。**チャンネルID -> 日数。**
+ * Firestore の `getAll` に一度に渡す数。まとめて引くほうが往復が減るが、
+ * 一度に渡しすぎると要求そのものが大きくなる。
+ */
+const DAYS_CHUNK = 300;
+
+/**
+ * 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
  *
  * `islandChannels` は毎晩 BigQuery から作り直していて（`python/island_channels.py`）、
- * そこに日数が入っている。ここはそれを画面へ渡すだけ。
+ * そこに日数が入っている。ここはそれを図鑑の並びに移し替えて渡すだけ。
  *
- * **上位だけ返す。** 辞書には 2,251人いるが、島に出るのは
- * キャラクターを作ってくれた 22人で、その人たちは日数の上位に固まっている。
- * 全員ぶん返すと `/state` が数十KB 太る。
+ * ## なぜチャンネルIDを鍵にしないのか
  *
- * `days` を持っていない書類は返さない。日数を入れ始めたのが今日なので、
- * 入るまでは画面が焼き込みの値をそのまま使う（`content/residents.ts`）。
- * @return {Promise<Json>} チャンネルID -> 日数
+ * 前はここが **チャンネルID -> 日数** だった。チャンネルIDは
+ * `youtube.com/channel/UC…` を開けば本人の顔と名前に直結するので、
+ * 「このチャンネルの人は N 日来ている」が**ログインなしで誰にでも読めた。**
+ * しかも上位60人には**キャラクターを作っていない人**——島に何も出していない
+ * 人——が混ざっていた。公開のカードから同じものを落としたばかり
+ * （`docs/island-incident-2026-09-14-cards.md` 8-2）なのに、ここが残っていた。
+ *
+ * 書類IDを鍵にすると、返るのは**図鑑がもともとそう見せているもの**
+ * 「この絵の人は N 日」だけになる。新しいことは1つも言わない。
+ *
+ * ## なぜ上位N人をやめたのか
+ *
+ * 「島に出るのはキャラクターを作ってくれた 22人で、その人たちは日数の
+ * 上位に固まっている」という前提で `limit(60)` にしてあった。
+ * **図鑑が102人を出すようになった日に、その前提は消えていた。**
+ * 載らなかった 32人の札に「0日」と出ていたのが #115。
+ * 上位N人ではなく**図鑑に並ぶ人ぶんちょうど**を返す。辞書の 2,251人は返さない。
+ *
+ * ## 読みの回数
+ *
+ * 名簿（`characterBook`）はカードと共用で、5分の控えに載る。
+ * 日数のほうもここで同じ5分だけ控える。**温まっているあいだは0件**、
+ * 冷えたときだけ名簿102件＋チャンネル80件ほど。
+ * 前は `orderBy("days").limit(60)` を**毎回**引いていた。
+ *
+ * **読めなかったら `null`。** 空の表と同じ顔で返さない（#115 の決めごと3）。
+ * @return {Promise<Json | null>} キャラクターの書類ID -> 日数
  */
-async function residentDays(): Promise<Json> {
-  const snap = await CHANNELS.orderBy("days", "desc").limit(60).get();
+async function residentDays(): Promise<Json | null> {
+  const now = Date.now();
+  if (daysCached && now - daysCached.at < DAYS_TTL) return daysCached.map;
+  const byChannel = await charactersByChannel();
+  if (!byChannel) return null;
+  const ids = [...byChannel.keys()];
+  /* **0件を「読めた上で0人」と読まない**（`docs/island-standards.md` 15）。
+     名簿の 102人中 84人が `channelId` を持っている（2026-09-17 実測）ので、
+     ここが空になるのは読めていないときだけ。空の表を返すと、画面は
+     「この島には数のある人が1人もいない」と読む。 */
+  if (!ids.length) {
+    logger.warn("resident days: no channelId in the character book");
+    return null;
+  }
   const out: Json = {};
-  snap.forEach((d) => {
-    const n = Number(d.data()?.days);
-    if (Number.isFinite(n) && n > 0) out[d.id] = n;
-  });
+  try {
+    for (let i = 0; i < ids.length; i += DAYS_CHUNK) {
+      const refs = ids.slice(i, i + DAYS_CHUNK).map((c) => CHANNELS.doc(c));
+      /* **`days` だけ貰う。** 名前も写真も要らないし、この口へ持ち込むと
+         うっかり返してしまう道ができる。 */
+      const snaps = await db.getAll(...refs, {fieldMask: ["days"]});
+      snaps.forEach((d) => {
+        const n = Number(d.data()?.days);
+        /* **0 は出さない。** 辞書に 0 が入ることは無い（1日でも来た人しか
+           載らない）が、載っていない人と同じ「数が無い」に倒しておく。
+           画面は数が無い人の欄を出さない（#115）。 */
+        if (!Number.isFinite(n) || n <= 0) return;
+        const icon = byChannel.get(d.id);
+        if (icon) out[icon] = n;
+      });
+    }
+  } catch (e) {
+    logger.warn("resident days failed", String(e));
+    return null;
+  }
+  daysCached = {at: now, map: out};
   return out;
 }
 
@@ -2515,10 +2584,12 @@ export const islandApi = onRequest(
           stats: state.stats ?? null,
           notes: notes.items,
           residents,
-          /* 「一緒にいた日数」（#91）。チャンネルID -> 日数。
+          /* 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
              画面はこれを次に開いたときのために控える。**その場では
              差し替えない。** 島に出ている人はこの数を重みに選んでいるので、
-             読み込みの途中で入れ替えると、住人が目の前で入れ替わる。 */
+             読み込みの途中で入れ替えると、住人が目の前で入れ替わる。
+             **読めなかったときは `null`。** 空の表と同じ顔にすると、
+             画面が「この人とは一緒にいなかった」と言い切る（#115）。 */
           residentDays: days,
           /* 北欧旅の、日付で言える事実。いまは「着いた日」だけ。
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる

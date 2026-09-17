@@ -376,6 +376,32 @@ export async function iconsOf(names: string[]): Promise<Icons | null> {
 }
 
 /**
+ * **チャンネルID → キャラクターの書類ID。** 名簿1回ぶんの読みをそのまま渡す。
+ *
+ * カードのほかに「一緒にいた日数」(`islandApi.ts` の `residentDays`)が使う。
+ * **同じ表を使い回すのが肝。** 日数のために名簿をもう一度引くと、
+ * 島を開くたびに 102件の読みが2回になる。`characterBook` は5分の控えを
+ * 持っているので、温まっていれば**1件も読まない。**
+ *
+ * **2人に付いた `channelId` は入っていない**（`characterBook` が外す）。
+ * どちらの絵の人の日数か決められないものを、当てずっぽうで片方に出さない。
+ *
+ * **読めなかったら `null`。** 空の表と同じ顔で返すと、読めなかった回の
+ * 図鑑が「この人とは一緒にいなかった」と言い切る
+ * (`docs/island-standards.md` 10)。
+ * @return {Promise<Map<string, string> | null>} チャンネルID → 書類ID
+ */
+export async function charactersByChannel():
+  Promise<Map<string, string> | null> {
+  try {
+    return (await characterBook()).byChannel;
+  } catch (e) {
+    logger.warn("character book failed", String(e));
+    return null;
+  }
+}
+
+/**
  * 何も当たらない引き当て表。**「読めなかった」とは別物。**
  * @return {Icons} 空の引き当て表
  */

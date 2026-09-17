@@ -142,9 +142,10 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
   /* いっしょにいた日数。**数が無いことを「0日」と言わない**（#115）。
      数の出どころは2つあって、どちらも**全員ぶんは持っていない**。
 
-     - `/state` の `residentDays` は**上位60人ぶんだけ**
-       （`functions/src/islandApi.ts`）。ここに載らない人は「少ない」のではなく
-       **この口からは分からない**
+     - `/state` の `residentDays` は**キャラクターの書類ID -> 日数**。
+       図鑑に並ぶ人ぶんを返すが、**`channelId` が結べていない人は入らない**
+       （`functions/src/islandApi.ts` の `residentDays`）。
+       入っていないのは「少ない」のではなく**この口からは分からない**
      - 焼き込みの `days` は**直近90日**の出席日数で、しかも
        **`channelId` が結べなかった人は数えようがないので 0 が入る**
        （`content/residents.ts` の頭に書いてある）
@@ -160,7 +161,11 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
      値0と同じ絵にしない」を、いちばん静かに守れる形。
      **代わりの字も置かない**——「紐付けできていません」は中の話
      （`CLAUDE.md`「画面で、システムの仕様を説明しない」）。 */
-  const liveN = res?.channel ? liveDays[res.channel] : undefined;
+  /* 鍵はキャラクターの書類ID。**チャンネルIDでは引かない。**
+     口がチャンネルIDを返すのをやめた（公開の口が「このチャンネルの人は
+     N 日来ている」と言っていたため。`docs/island-incident-2026-09-14-cards.md`
+     8-2 と同じ性質のものが、ここに残っていた）。 */
+  const liveN = r ? liveDays[r.id] : undefined;
   const bakedN = res && res.days > 0 ? res.days : undefined;
   const days = liveN ?? bakedN;
   /* これから数が来るかもしれないのは、チャンネルが結べていて、まだ

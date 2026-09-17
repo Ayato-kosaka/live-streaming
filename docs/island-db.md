@@ -203,7 +203,7 @@ JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分
 
 | 順 | 何で引くか | 誰に効くか |
 | --- | --- | --- |
-| 1 | `islandCharacter.channelId` ＝ カードの `channelId` | 102人中 **78人**（2026-09-16） |
+| 1 | `islandCharacter.channelId` ＝ カードの `channelId` | 102人中 **84人**（2026-09-17。`character_days_probe`。かぶり0件） |
 | 2 | `islandCards.nameSnapshot`（投げたときの名乗り）→ `islandCharacter.lookupKeys` | 1で当たらなかった人の**受け皿** |
 
 **名乗りを先に見ない。** 名前は変わるが `channelId` は変わらないので、
@@ -277,7 +277,10 @@ Doneru の表示名にタイポがあった日に、カードから絵が消え�
 
 **正は `islandCharacter.channelId`。** 人の同一性はチャンネルID（2.1）なので、
 ここが入っていない人は**名前でしか引けず、相手が改名した翌日に消える。**
-2026-09-16 の実測で、102人中 **24人が空**。
+2026-09-16 の実測で、102人中 **24人が空**。そのうち機械で決まる6人は
+`characters_link` が埋めたので、**2026-09-17 の実測では 18人**
+（`python/admin/character_days_probe.py`。かぶりは0件で、
+焼き込みの `residents.ts` が結んでいる84人と1件の食い違いもない）。
 
 **作った時点の対応は、どこにも残っていなかった。** 図鑑の元になった
 Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
@@ -567,7 +570,7 @@ island/state
 | --- | --- | --- | --- |
 | `name` | string | いま名乗っている名前 | `python/island_channels.py` |
 | `lastAt` | string | 最後に喋った時刻 | 同上 |
-| `days` | number | **一緒にいた日数**（全期間・日本時間で数えた日数）。島の状態の `residentDays` の元 | 同上 |
+| `days` | number | **一緒にいた日数**（全期間・日本時間で数えた日数）。島の状態の `residentDays` の元。**口はチャンネルIDのままでは返さない**——`islandCharacter.channelId` でキャラクターの書類IDに移し替えてから返す（`docs/island-api.md`） | 同上 |
 | `photo` | string \| null | YouTube のプロフィール写真 | `python/island_channel_photos.py` |
 | `photoAt` | string | 写真を入れた時刻 | 同上 |
 | `updatedAt` | string | | 両方 |

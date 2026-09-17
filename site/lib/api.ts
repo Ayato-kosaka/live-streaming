@@ -83,13 +83,19 @@ export type IslandState = {
   notes?: NextNote[];
   residents?: ResidentShow[];
   /**
-   * 「一緒にいた日数」（#91）。チャンネルID -> 日数。
+   * 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
    *
-   * 毎晩 BigQuery から数え直して `islandChannels` に入っているもの。
+   * 毎晩 BigQuery から数え直して `islandChannels` に入っているものを、
+   * 図鑑の並び（`islandCharacter` の書類ID）へ移し替えて返す。
+   * **鍵はチャンネルIDではない。** 図鑑がもともと見せている「この絵の人」
+   * より細かいものを、公開の口から出さないため。
+   *
+   * **読めなかったときは `null`。** 欄が無いのと `{}` は「読めた上で
+   * 1人も数が無い」なので、落ちた回と見分けがつかない（#115）。
    * **画面はこれを次に開いたときのために控える。その場では差し替えない**
    * （`lib/residentDays.ts` に理由）。
    */
-  residentDays?: Record<string, number>;
+  residentDays?: Record<string, number> | null;
   nordic?: NordicFacts;
 };
 
