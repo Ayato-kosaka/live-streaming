@@ -131,6 +131,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install "google-cloud-firestore>=2.16.0"
 
+      # 偽の Firestore と偽の GitHub で回すだけ。外へは1バイトも出ない。
+      # **本番を触る前に、判断のところ（`decide`）が生きているかを見る。**
+      # ここが壊れたまま apply で走ると、空振りの issue が毎晩開くか、
+      # 本当にカードの渡らなかった朝に黙るかのどちらかになる。
+      #
+      # **兄弟2本（`bake_down.yml` / `ingest_down.yml`）には最初から在って、
+      # ここにだけ無かった。** `donor_calls_selftest.py` は 800行あって対照まで
+      # 付いているのに、**どこからも走っていなかった**（20 run すべて）。
+      # 書いてあるだけの見張りは、無いのと同じ（`docs/island-misses.md` #123）。
+      - name: 判断のところを、偽物で先に回す
+        run: python python/donor_calls_selftest.py
+
       - name: 紐付け待ちを数えて、issue を合わせる
         env:
           # 手で押したときだけ既定が「見るだけ」。
