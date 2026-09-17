@@ -1808,6 +1808,20 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "Xvdk_P4gKoU",
         "title": "【五日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガまで part 2",
         "date": "2026-09-17"
+      },
+      {
+        "videoId": "k4DxGQlkD6U",
+        "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
+        "date": "2026-09-17"
+      }
+    ]
+  },
+  "estonia": {
+    "タリン": [
+      {
+        "videoId": "oBN2tNEj3wA",
+        "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日 part2 夜景だよ！",
+        "date": "2026-09-18"
       }
     ]
   }
