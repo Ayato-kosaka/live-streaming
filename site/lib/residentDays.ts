@@ -30,7 +30,11 @@ import type { Read } from "@/lib/auth";
  * 事故に見える。**見えている数だけを最新にする。**
  */
 export type ResidentDaysState = {
-  /** チャンネルID -> 日数。**入っていないチャンネルは「0日」ではなく「数が無い」** */
+  /**
+   * **キャラクターの書類ID -> 日数**（`content/residents.ts` の `icon`、
+   * `GET /characters` の `id` と同じもの）。
+   * **入っていない人は「0日」ではなく「数が無い」**。
+   */
   days: Record<string, number>;
   read: Read;
 };
@@ -42,9 +46,17 @@ export type ResidentDaysState = {
  * 「来たけれど、この人の数は入っていなかった」を区別できなかった。
  * 区別できないので、どちらも焼き込みの `0` に落ちて「0日」と出ていた。
  *
- * **`/state` の `residentDays` は上位60人ぶんしか返らない**
- * （`functions/src/islandApi.ts` の `residentDays`）。図鑑に並ぶ102人のうち
- * ここに載るのは一部で、**載っていないことは「一緒にいなかった」ではない。**
+ * **`/state` の `residentDays` は、図鑑に並ぶ人ぶんを返す**
+ * （`functions/src/islandApi.ts` の `residentDays`）。前は日数の上位60人
+ * ぶんだけで、図鑑の102人のうち32人が「載っていないから数が無い」に
+ * なっていた（#115）。いまは `islandCharacter.channelId` で結べている人
+ * 全員ぶん来る。**それでも結べていない人は載らない。
+ * 載っていないことは「一緒にいなかった」ではない。**
+ *
+ * **口が落ちたら `read: "down"`。** 口そのものが読めた回でも
+ * `residentDays` が `null`（名簿かチャンネルの読みに失敗）なら同じく
+ * "down"。空の `{}` と同じ顔にすると、落ちた日に図鑑ぜんぶの欄が
+ * 「数が無い人」に見える。
  */
 export function useResidentDaysState(): ResidentDaysState {
   const [state, setState] = useState<ResidentDaysState>({ days: {}, read: "wait" });
@@ -52,8 +64,12 @@ export function useResidentDaysState(): ResidentDaysState {
     let alive = true;
     loadState().then((s) => {
       if (!alive) return;
-      // `loadState` は落ちたぶんを null にして返す（`lib/liveStats.tsx`）
-      setState(s ? { days: s.residentDays ?? {}, read: "ok" } : { days: {}, read: "down" });
+      // `loadState` は落ちたぶんを null にして返す（`lib/liveStats.tsx`）。
+      // `residentDays` が null なのは「口は生きていたが日数だけ読めなかった」。
+      // **どちらも "down"。** 数が無いことにして欄を消すと、落ちた日と
+      // 「まだ一度も来ていない」が同じ絵になる（#115）。
+      const d = s?.residentDays;
+      setState(d ? { days: d, read: "ok" } : { days: {}, read: "down" });
     });
     return () => {
       alive = false;

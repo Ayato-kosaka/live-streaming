@@ -54,8 +54,15 @@ export default function MeHero({
   const live = useResidentDays();
   const chara = channelId ? RESIDENTS.find((r) => r.channel === channelId) : undefined;
   /* 焼き込みの `days` は Git を出さないと変わらない。毎晩数え直したほうが
-     読めていれば、そちらを出す（`lib/residentDays.ts`）。 */
-  const days = (channelId ? live[channelId] : 0) || chara?.days || 0;
+     読めていれば、そちらを出す（`lib/residentDays.ts`）。
+
+     **引くのはキャラクターの書類ID（`chara.icon`）。** 口の鍵が
+     チャンネルIDから書類IDに変わった（`functions/src/islandApi.ts` の
+     `residentDays`）。`chara` はその書類IDとチャンネルIDの対応そのものなので、
+     ここで引き直せる。
+     **`||` で畳まない。** 0 と「数が無い」は別もので、`0 || chara.days` は
+     いちばん言ってはいけない値（古い焼き込み）を通す（#115 の決めごと1）。 */
+  const days = (chara ? live[chara.icon ?? ""] : undefined) ?? chara?.days ?? 0;
 
   return (
     <div className="mh">
