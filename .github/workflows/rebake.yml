@@ -1364,8 +1364,17 @@ jobs:
       # **見るだけ（dry_run）のときは走らせない。** あそこの約束は
       # 「押し間違えても何も起きない」なので、赤も出さない。
       # 手で見たいときは `BQ_PROJECT_ID=… python3 python/ingest_watch.py` で足りる。
+      # **見るだけの回でも走らせる。** `ingest_watch.py` は BigQuery を読むだけで
+      # 1バイトも書かない。にもかかわらず `REBAKE_DRY == '0'` で縛っていたので、
+      # **「見るだけ」で押した人にいちばん見せたいものが見えず、しかも
+      # 見張り自身が一度も走らないまま本番の晩を迎えることになっていた**
+      # （`CLAUDE.md`「新しく載せたものは、発火を1回見るまで当てにしない」）。
+      #
+      # ただし**見るだけの回は赤くしない。** ここで赤くすると、詰まりが
+      # 片づくまでのあいだ、別の焼き込みを見に来た人の dry run まで全部赤くなり、
+      # その回で本当に見たかった失敗が埋もれる。見るだけの回は警告にとどめる。
       - name: 取り込みが詰まっていないか
-        if: success() && env.REBAKE_DRY == '0'
+        if: success()
         run: |
           set -uo pipefail
           python3 python/ingest_watch.py > /tmp/ingest_watch.txt 2>&1 && code=0 || code=$?
@@ -1377,6 +1386,10 @@ jobs:
               echo "拾い直す枠は \`python/bq/queries.py\` の \`QUERY_SELECT_TARGET_VIDEOS\`、"
               echo "1晩に拾う本数は \`python/config.py\` の \`LATE_LANE_MAX_VIDEOS\` です。"
             } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$REBAKE_DRY" = "1" ]; then
+            [ "$code" != "0" ] && echo "::warning::取り込みが詰まっています（見るだけの回なので赤くしません）"
+            exit 0
           fi
           exit "$code"
 
