@@ -65,6 +65,21 @@ function stock(dir) {
 }
 
 /**
+ * 拡張子ちがいも含めて、落としてあるものを探す。
+ *
+ * 置き場のファイルは png / jpg / webp が混ざっているのに、口はどれも
+ * `.webp` で呼ばせる。名前をそのまま引くと、混ざっている人だけが
+ * 既定の絵に落ちる。**絵は出るので、写真を見ても分からない。**
+ */
+function sameName(base) {
+  for (const ext of ["webp", "png", "jpg", "jpeg"]) {
+    const p = `${base}.${ext}`;
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
+
+/**
  * 種類ごとの「何回きて、何回を本物で返したか」。
  * **プロセスを通して足す**（1つのスクリプトが context を何度も作るため）。
  */
@@ -167,12 +182,18 @@ export async function offline(ctx, opts = {}) {
   // キャラクターの絵。島も図鑑もカードも、口ごしに置き場から取る（#284）。
   // 静的に配って撮るときは口が無いので、落としてあるものを返す。
   //   /island-api/characters/{id}/plain-128.webp
+  //
+  // **口の名前（.webp）と、置き場に在るファイルの拡張子は一致しない。**
+  // 口はどの絵も `.webp` で呼ばせるが、置き場には png のまま上がっている人が
+  // いる（実測で1人。島の12人のうち1人が `ayato.webp` に落ちていた）。
+  // 名前をそのまま引くと、その人だけ顔が差し替わって写る——**絵は出るので、
+  // 撮った人には「落ちた」ではなく「そういう顔」に見える。**
+  // だから拡張子を替えて探し直す。
   await ctx.route(/\/island-api\/characters\/[^/]+\/(plain|scene)-\d+\.webp/, (r) => {
-    const m = /\/characters\/([^/]+)\/((?:plain|scene)-\d+\.webp)/.exec(r.request().url());
-    const local = m && `${CHARS}/island__characters__${decodeURIComponent(m[1])}__${m[2]}`;
-    const hit = Boolean(local && existsSync(local));
-    tick("キャラ", hit);
-    r.fulfill({ path: hit ? local : fallback });
+    const m = /\/characters\/([^/]+)\/((?:plain|scene)-\d+)\.webp/.exec(r.request().url());
+    const local = m && sameName(`${CHARS}/island__characters__${decodeURIComponent(m[1])}__${m[2]}`);
+    tick("キャラ", Boolean(local));
+    r.fulfill({ path: local ?? fallback });
   });
 
   // 置き場を直に指した URL（図鑑が名簿から受け取るもの）。
