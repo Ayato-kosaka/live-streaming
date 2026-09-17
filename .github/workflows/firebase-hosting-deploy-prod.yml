@@ -25,7 +25,18 @@ jobs:
           echo "EXPO_PUBLIC_GAS_API_URL=${{ secrets.EXPO_PUBLIC_GAS_API_URL }}" >> .env
           echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
           echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
-          echo "EXPO_PUBLIC_YOUTUBE_API_KEY=${{ secrets.EXPO_PUBLIC_YOUTUBE_API_KEY }}" >> .env
+          # EXPO_PUBLIC_YOUTUBE_API_KEY は渡さない。**参照がもう1つも無い。**
+          # 書き出しを対照つきで調べた（2026-09-17）。わざと鍵の形を仕込んだ
+          # 写しでは 1件ずつ拾えて、本番の entry-….js は 0件。ブラウザから
+          # YouTube を叩いているところ（liveBroadcasts / liveChat / videos）は
+          # どれも本人の OAuth トークンで、鍵は要らない。
+          # `DEPLOYMENT_GUIDE.md` にも「no longer needed」と書いてある。
+          # **渡し続けるのが罠になる。** `.env` に載っているかぎり、次に
+          # `process.env.EXPO_PUBLIC_YOUTUBE_API_KEY` と書いた人のぶんから、
+          # 誰にも気づかれずに公開の JS へ焼かれる。下の鍵（#217）は同じ形で
+          # 止めてコメントを残したのに、こちらだけ残っていた。
+          # GitHub Secret のほうは消していない（消すのはあやとの操作。
+          # 他で使っているかもしれない）。
           # EXPO_PUBLIC_CLAUDE_API_KEY はもう要らない（#217）。
           # 本番の entry-….js に sk-ant-… がそのまま入っていた。
           # あれは読まれるだけでなく、**そのまま課金される鍵**。
