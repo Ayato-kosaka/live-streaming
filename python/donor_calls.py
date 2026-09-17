@@ -48,6 +48,12 @@ issue に出すかどうかと、**何人いるのかを見られるかどうか
 **その1件がどこにも出ていなかった。** 出すのは件数だけで、
 issue を開く条件は1バイトも変えていない。
 
+**開いているあいだの本文にも、`unlinked` の人数を1行出す**
+（`survey()` が数え、`body()` が書く）。数に入れないのは上のとおりだが、
+**何人いるのかを黙っているのは別の話。** ログは見に行かないと出てこない。
+紐付け作業をしているその場で目に入らなければ、あの人たちがいること自体が
+誰にも見えない。ここも**開く条件は1バイトも変えていない。**
+
 ## 同じ1本を、どうやって見つけるか
 
 **タイトルでは探さない。** タイトルは人が変える（読みやすくしたり、
@@ -246,7 +252,32 @@ def state_counts(table: dict) -> dict:
     return out
 
 
-def body(n: int, since) -> str:
+def survey(table: dict) -> dict:
+    """`count_waiting()` に、**本文へ1行出すためだけの件数**を1つ足す。
+
+    足すのは `unlinked`（表にはあるが YouTube が分からない人）の人数。
+    **`count_waiting()` は触っていないし、`decide()` はここを見ない**ので、
+    issue を開く／閉じる条件は1バイトも動いていない。
+
+    数に混ぜないのは、あの人たちが**あやとが相手の YouTube を知らないかぎり
+    減らない**から。混ぜると、永久に閉じない issue が1本増える
+    （`CLAUDE.md`「issue を開けっぱなしにしない」）。
+    それでも人数を出すのは、**いままでどこにも出ていなかった**から。
+    2026-09-17 の本番は new 1 / unlinked 6 / linked 24 で、あの6人は
+    このままだとカードが渡らないのに、誰も見られる場所に出ていなかった。
+
+    Args:
+        table: いまの `islandDonors`（どねID -> 書類）
+
+    Returns:
+        `count_waiting()` の返り値に `"unlinked"`（人数）を足したもの
+    """
+    w = count_waiting(table)
+    w["unlinked"] = state_counts(table)["unlinked"]
+    return w
+
+
+def body(n: int, since, unlinked: int = 0) -> str:
     """issue の本文。**あやとがこれから何をすればいいかだけ。**
 
     仕組みの説明（どこを見て数えているか・どの条件で開くか）は書かない。
@@ -255,6 +286,7 @@ def body(n: int, since) -> str:
     Args:
         n: 待っている人数
         since: いちばん古い人の日付（YYYY-MM-DD）か None
+        unlinked: YouTube のアカウントが分からない人数（0 なら書かない）
 
     Returns:
         本文。頭に見えない印が入る
@@ -269,6 +301,10 @@ def body(n: int, since) -> str:
     ]
     if since:
         lines += ["", f"いちばん古い人は **{since}** から待っています。"]
+    if unlinked:
+        # **0人のときは書かない。** 「0人います」は読む人に何も渡さない
+        lines += ["", f"ほかに **{unlinked}人** は、YouTube のアカウントが"
+                      "分からないままです。この人たちにもカードが渡りません。"]
     return "\n".join(lines) + "\n"
 
 
@@ -432,7 +468,7 @@ def run(gh, w: dict, apply: bool = False) -> dict:
                     "開いています" if issue.get("state") == "open"
                     else "閉じています")
 
-    want = body(n, w["since"])
+    want = body(n, w["since"], w.get("unlinked", 0))
     what = decide(issue, want, n)
 
     if not apply:
@@ -520,7 +556,7 @@ def main() -> int:
 
     db = firestore.Client(project=BQ_PROJECT_ID)
     table = load_table(db)
-    w = count_waiting(table)
+    w = survey(table)
     logger.info("対応表 %d件 / 紐付け待ち %d人", len(table), w["n"])
     # **内訳は件数だけ。** issue に出すかどうかはここでは決めない
     # （`count_waiting()` が数える条件も、`decide()` が開く条件も変えていない）
