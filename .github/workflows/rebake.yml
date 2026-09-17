@@ -1232,7 +1232,7 @@ jobs:
       # **非公開・削除だと分かったら `python/data/shorts.json` の `_gone` に
       # 理由を添えて足す。** 書いてあるものは一覧に無くても止まらない。
       - name: ショートの棚を取り直せたか
-        if: env.SHORTS_BAD == '1'
+        if: ${{ !cancelled() && env.SHORTS_BAD == '1' }}
         run: |
           {
             echo ""
@@ -1249,7 +1249,7 @@ jobs:
       # 届かなかった晩は、赤にしないかわりに**必ず一言残す。**
       # 緑のまま黙って終わると、「今日はショートが出なかった」と見分けがつかない。
       - name: ショートの一覧に届いたか
-        if: env.SHORTS_UNREACHABLE == '1'
+        if: ${{ !cancelled() && env.SHORTS_UNREACHABLE == '1' }}
         run: |
           {
             echo ""
@@ -1266,7 +1266,7 @@ jobs:
       # **commit と deploy のあと。** 凍っているのは「入れるものが無い」だけで、
       # 焼けたものは入れてよい。順番を逆にすると、1本凍った晩に残りが配られない。
       - name: 凍っていたら赤くする
-        if: env.REBAKE_FROZEN == '1'
+        if: ${{ !cancelled() && env.REBAKE_FROZEN == '1' }}
         run: |
           {
             echo ""
@@ -1314,6 +1314,7 @@ jobs:
       # 何を見ればいいかは分かる**が、焼き直しが止まったわけではない。
       # 仕分けを増やすなら `bake_down.py` の `why_red()` に足す。
       - name: セリフの届いていない人がいないか
+        if: ${{ !cancelled() }}
         working-directory: site
         run: |
           set -uo pipefail
@@ -1373,8 +1374,16 @@ jobs:
       # ただし**見るだけの回は赤くしない。** ここで赤くすると、詰まりが
       # 片づくまでのあいだ、別の焼き込みを見に来た人の dry run まで全部赤くなり、
       # その回で本当に見たかった失敗が埋もれる。見るだけの回は警告にとどめる。
+      # **`if:` に状態関数を書かないと、GitHub が `success()` を黙って足す。**
+      # そのせいで見張りが一直線に繋がり、**手前のどれかが赤い晩は、その先の
+      # 見張りが全部 skip** されていた。実測（2026-09-16 の赤い run 3回）で、
+      # 「凍っていたら赤くする」も「取り込みが詰まっていないか」も skip している。
+      #
+      # **詰まっている晩ほど、詰まりの見張りが黙る。** いちばん見たい晩に見えない。
+      # `!cancelled()` にして、手前が赤くても見張りは最後まで通す。
+      # （止めたときだけは走らせない。人が止めた回に鳴らしても意味がない）
       - name: 取り込みが詰まっていないか
-        if: success()
+        if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
           python3 python/ingest_watch.py > /tmp/ingest_watch.txt 2>&1 && code=0 || code=$?
