@@ -1,7 +1,7 @@
 /**
  * 「Doneru のぶんが止まっている」ほうの島を、測る道具に見せるための差し込み口（#294）。
  *
- *   SEED=/home/user/live-streaming/tools/sprites/asof_seed.mjs \
+ *   SEED=$PWD/tools/sprites/asof_seed.mjs \
  *   PORT=4150 PAGES=/nordic TAG=asof node tools/sprites/inkpx.mjs
  *   SEED=.../asof_seed.mjs PORT=4150 URLS=/nordic.html node tools/sprites/popcheck.mjs
  *

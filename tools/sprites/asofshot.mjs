@@ -21,6 +21,7 @@
  */
 import { mkdirSync, readFileSync, existsSync } from "node:fs";
 import { chromium } from "playwright-core";
+import { repoPath } from "./repo.mjs";
 
 const ORIGIN = `http://127.0.0.1:${process.env.SPORT || 4150}`;
 const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
@@ -57,7 +58,7 @@ async function shot(tag, body) {
   // この箱から出られない先は、島の絵に差し替える（本番では出る）
   await ctx.route(
     /googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-    (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+    (r) => r.fulfill({ path: repoPath("site/public/og.png") }),
   );
   await ctx.route(/fonts\.googleapis\.com/, (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }),

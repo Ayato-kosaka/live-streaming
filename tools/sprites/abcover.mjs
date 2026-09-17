@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 /** 比べる2つ。**時計は片方ずつ変えられる**（いまの表紙と、入れ替わったあとの表紙を並べる） */
 const PORTS = [
@@ -49,7 +50,7 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
 const ctx = await b.newContext(WIDE
   ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
   : { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 const m = async (cdp) => Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((x) => [x.name, x.value]));
 
 /** 読み込み（絞りあり）。 */

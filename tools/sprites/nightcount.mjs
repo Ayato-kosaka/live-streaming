@@ -6,7 +6,7 @@
  * だから両方を数えて、当たった文の前後も出す。**grep でふるい落とさない。**
  *
  *   cd tools/sprites
- *   SPORT=4140 DIST=../../site/.next-3140 DATES=2026-09-10T03:00:00Z node nightcount.mjs
+ *   SPORT=4140 DIST=site/.next-3140 DATES=2026-09-10T03:00:00Z node nightcount.mjs
  *
  *   DATES  進める日（ISO、カンマ区切り）
  *   SPORT  書き出したものを配っている静的サーバのポート
@@ -15,9 +15,10 @@
 import { chromium } from "playwright-core";
 import { readdirSync, statSync, readFileSync } from "fs";
 import { join } from "path";
+import { repoPath, fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4140";
-const root = process.env.DIST || "/home/user/night-wt/site/.next-3140";
+const root = fromRoot(process.env.DIST || "site/.next-3140");
 const DATES = (process.env.DATES || "2026-09-10T03:00:00Z").split(",");
 const ONLY = (process.env.ONLY || "").split(",").filter(Boolean);
 const NEEDLE = "22時";
@@ -84,7 +85,7 @@ const b = await chromium.launch({
 for (const iso of DATES) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-    (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+    (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
   await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.addInitScript(clockScript(iso));
   const p = await ctx.newPage();

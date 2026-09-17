@@ -10,10 +10,11 @@
  */
 import { chromium } from "playwright-core";
 import { readFileSync } from "fs";
+import { repoPath } from "./repo.mjs";
 const SPORT = process.env.SPORT || "4170";
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, r => r.fulfill({ path: repoPath("site/public/og.png") }));
 await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 const p = await ctx.newPage();
 

@@ -14,8 +14,9 @@ import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
 import { offline } from "./route.mjs";
+import { fromRoot } from "./repo.mjs";
 const BASE = process.env.BASE || "http://127.0.0.1:4220";
-const ROOT = process.env.DIST || "/home/user/live-streaming/site/.next-3220";
+const ROOT = fromRoot(process.env.DIST || "site/.next-3220");
 const W = Number(process.env.W || 1280);
 function walk(d, base = "") {
   let out = [];

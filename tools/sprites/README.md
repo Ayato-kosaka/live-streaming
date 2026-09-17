@@ -11,7 +11,7 @@ Playwright はこのフォルダの `node_modules` にある（リポジトリ�
 
 ```bash
 # 開発サーバー（担当ごとに違う番号にする）
-cd /home/user/live-streaming/site
+cd "$(git rev-parse --show-toplevel)/site"
 PORT=3011 npx next dev -p 3011
 
 # 撮る側にも同じ番号を渡す
@@ -46,7 +46,7 @@ pkill -f "next dev -p 3011"
 `crawl.mjs` と `noemoji.mjs` は開発サーバーではなく**書き出したもの**を見る。
 
 ```bash
-cd /home/user/live-streaming/site
+cd "$(git rev-parse --show-toplevel)/site"
 NEXT_DIST_DIR=.next-verify npx next build
 (nohup python3 -m http.server 4331 --directory .next-verify > /dev/null 2>&1 &)
 cd ../tools/sprites && SPORT=4331 node crawl.mjs

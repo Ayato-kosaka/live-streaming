@@ -317,6 +317,13 @@ node tools/sprites/prod.mjs        # 出したものを開いて、顔が出て�
   押しっぱなしで測ると自分の押しが前の吹き出しを閉じて、**閉じている画面が
   「はみ出し0件」に混ざる**（`island-misses.md` #111）
 
+- **`tools/` の道具を触ったら `node tools/sprites/rootcheck.mjs` を回した**
+  （リポジトリの場所が直に書かれていないか。0=無い / 1=残っている / 2=数えるものが無い）。
+  直書きが1本あると、**worktree で回した確かめが全部「master を測った結果」になる。**
+  しかも赤くならない（`island-misses.md` #129 #131）。
+  置き場は `tools/sprites/repo.mjs` の `repoPath()` / `fromRoot()`、Python は
+  `repo.py` の `repo_path()`。**根が見つからなければ、黙って落ちずに投げる**
+
 - **Python を触ったら `python3 python/crosscall_selftest.py` を回した**
   （モジュールをまたいだ呼び出しの引数の数。`py_compile` も単体の確かめも
   素通りする。`island-misses.md` #105）

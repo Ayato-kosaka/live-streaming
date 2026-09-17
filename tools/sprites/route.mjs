@@ -17,13 +17,15 @@
  *
  * ## リポジトリの場所を決め打ちしない（2026-09-17）
  *
- * ここには `/home/user/live-streaming` が直に書いてあった。**worktree から
+ * ここには `/home/user/live-streaming`（直書き点検: 記録）が直に書いてあった。**worktree から
  * 呼ぶと、本体のファイルを読む。** 枝で絵を差し替えても撮れるのは master の絵で、
  * しかも**赤くならずに通る**。測っているものが違うのに、結果だけが出てくる。
  *
- * いまは**このファイルの居場所から上へ登って**、`site/public` と `tools/sprites` を
- * 両方持っている段を根と決める（`repoRoot()`）。見つからなければ**その場で投げる。**
- * 黙って既定の絵に落ちると、外したことが「12人が全員おなじ顔」という形でしか出ない。
+ * 根の求めかたは `repo.mjs` に置いた。同じ直書きが60本あったので、
+ * **60通りの間違え方ができないように1か所へ寄せた**（`island-misses.md` #131）。
+ * `repoRoot` はここからも出している（前からここを import している本があるため）。
+ * 見つからなければ**その場で投げる。** 黙って既定の絵に落ちると、外したことが
+ * 「12人が全員おなじ顔」という形でしか出ない。
  *
  * ## 何枚を本物で返したかを、終わりに必ず言う
  *
@@ -41,46 +43,17 @@
  * route.mjs が**自分の側の絵を返す**ことをブラウザに届いたバイトで見る。
  * 根の無いところに置いた写しが投げることも、同じところで見ている。
  */
-import { execFileSync } from "child_process";
 import { createHash } from "crypto";
 import { existsSync, readdirSync, statSync } from "fs";
-import { dirname, join, resolve } from "path";
+import { join, resolve } from "path";
 import { fileURLToPath } from "url";
+import { repoRoot } from "./repo.mjs";
+
+// 前からここを import している本があるので、顔ぶれは変えずに出し直す
+export { repoRoot };
 
 const AVATARS = "/tmp/avatars";
 const CHARS = "/tmp/chars";
-
-/**
- * このファイルが入っているリポジトリの根。**決め打ちしない。**
- *
- * 上へ登って `site/public` と `tools/sprites` を両方持っている段を探す。
- * worktree も clone も、この2つは必ず持っている。
- * 見つからなければ `git rev-parse --show-toplevel` にもう一度きく（`tools/` ごと
- * 別の場所へ写した場合の受け皿）。**どちらも駄目なら投げる。**
- */
-export function repoRoot(from = fileURLToPath(import.meta.url)) {
-  let d = dirname(resolve(from));
-  for (;;) {
-    if (existsSync(join(d, "site", "public")) && existsSync(join(d, "tools", "sprites"))) return d;
-    const up = dirname(d);
-    if (up === d) break;
-    d = up;
-  }
-  try {
-    const top = execFileSync("git", ["rev-parse", "--show-toplevel"], {
-      cwd: dirname(resolve(from)),
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    if (top && existsSync(join(top, "site", "public"))) return top;
-  } catch {
-    /* git が無い・リポジトリの外。下で投げる */
-  }
-  throw new Error(
-    `route.mjs: リポジトリの根が見つかりません（${from} から上に site/public がない）。` +
-      `差し替え用の絵の出どころが決まらないので、ここで止めます`,
-  );
-}
 
 /** そこに何枚落ちているか。0 なら「本物を1枚も返せない」ということ。 */
 function stock(dir) {
@@ -237,6 +210,7 @@ export async function offline(ctx, opts = {}) {
 async function selftest() {
   const { mkdtempSync, mkdirSync, writeFileSync, copyFileSync, rmSync } = await import("fs");
   const { tmpdir } = await import("os");
+  const { dirname } = await import("path");
   const { chromium } = await import("playwright-core");
 
   const me = fileURLToPath(import.meta.url);
@@ -260,6 +234,8 @@ async function selftest() {
     writeFileSync(join(root, "site", "public", "characters", "ayato.webp"), mark);
     writeFileSync(join(root, "site", "public", "og.png"), `og-${mark}`);
     copyFileSync(me, join(root, "tools", "sprites", "route.mjs"));
+    // route.mjs は根の求めかたを repo.mjs から借りているので、写しには両方要る
+    copyFileSync(join(dirname(me), "repo.mjs"), join(root, "tools", "sprites", "repo.mjs"));
     return root;
   };
 
@@ -277,6 +253,7 @@ async function selftest() {
   const lost = join(base, "lost");
   mkdirSync(lost, { recursive: true });
   copyFileSync(me, join(lost, "route.mjs"));
+  copyFileSync(join(dirname(me), "repo.mjs"), join(lost, "repo.mjs"));
   const modL = await import(`file://${join(lost, "route.mjs")}`);
   let threw = "投げなかった";
   try {

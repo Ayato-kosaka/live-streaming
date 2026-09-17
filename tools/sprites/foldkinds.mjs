@@ -1,7 +1,7 @@
 /**
  * **`<details>` ではない畳みが、島にいくつあるか**を数える。
  *
- *   SPORT=4270 DIST=/home/user/live-streaming/site/.next-3270 node tools/sprites/foldkinds.mjs
+ *   SPORT=4270 DIST=site/.next-3270 node tools/sprites/foldkinds.mjs
  *   SPORT=4270 PAGES=/,/board node tools/sprites/foldkinds.mjs
  *
  * ## なぜ要るか

@@ -40,6 +40,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4321";
 const URLPATH = process.env.URL || "/index.html";
@@ -66,7 +67,7 @@ const ctx = await b.newContext({
   isMobile: !PC,
   hasTouch: !PC,
 });
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 
 const page = await ctx.newPage();
 await page.addInitScript(() => {

@@ -8,6 +8,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 const SPORT = process.env.SPORT || "4502";
 const WIDE = process.env.WIDE === "1";
 const N = Number(process.env.N || 3);
@@ -19,7 +20,7 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
 const ctx = await b.newContext(WIDE
   ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
   : { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 
 async function once(css) {
   const p = await ctx.newPage();

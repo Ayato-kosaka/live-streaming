@@ -21,9 +21,10 @@
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { repoPath, fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4321";
-const root = process.env.DIST || "/home/user/live-streaming/site/.next-verify";
+const root = fromRoot(process.env.DIST || "site/.next-verify");
 
 function walk(d, base = "") {
   let out = [];
@@ -71,7 +72,7 @@ const b = await chromium.launch({
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 // このサンドボックスからは外の画像に出られないので差し替える（crawl.mjs と同じ）
 await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-  (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+  (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
 await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 const p = await ctx.newPage();
 

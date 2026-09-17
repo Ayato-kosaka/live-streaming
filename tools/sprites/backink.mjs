@@ -22,6 +22,7 @@ import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { mkdirSync, writeFileSync, unlinkSync } from "fs";
 import { execFileSync } from "child_process";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4210";
 const W = Number(process.env.W || 390);
@@ -109,7 +110,7 @@ for (const path of PAGES) {
     });
 
     const res = JSON.parse(
-      execFileSync("python3", ["/home/user/live-streaming/tools/sprites/backink.py", base], {
+      execFileSync("python3", [repoPath("tools/sprites/backink.py"), base], {
         encoding: "utf8",
         maxBuffer: 1 << 26,
       }),

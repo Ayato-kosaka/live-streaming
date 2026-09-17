@@ -1,7 +1,7 @@
 /**
  * ログインした人として撮るための差し込み口（`SEED=` に渡す）。
  *
- *   SEED=/home/user/live-streaming/tools/sprites/asme.mjs \
+ *   SEED=$PWD/tools/sprites/asme.mjs \
  *   PORT=4510 PAGES=/me.html TAG=me node tools/sprites/inkpx.mjs
  *   ADMIN=1 SEED=.../asme.mjs PORT=4510 URLS=/me.html node tools/sprites/popcheck.mjs
  *
