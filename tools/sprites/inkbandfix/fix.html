@@ -1,0 +1,61 @@
+<!doctype html><html lang="ja"><meta charset="utf-8">
+<title>対照: 字の濃さ（帯送り）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  `inkband.mjs` の対照。`inkpxfix/fix.html` と**同じ4つの字**を置いたうえで、
+  この道具にしか無い足を2本足してある。
+
+  1. **背が高い。** 画面（844px）の3枚ぶんより長いので、帯を送らないと
+     下まで届かない。送るたびに同じ字を数え直していないか（`ik-ok-black` が
+     2回出てこないか）を、ここで見る
+  2. **`content-visibility: auto` の段がある。** これが
+     `inkband.mjs` を足した理由そのもの（`docs/island-misses.md` #130）。
+     面ぜんぶを1枚に撮る側（`inkpx.mjs`）は、ここを**描かないまま**通る。
+     `ik-cv-bad` が割れに挙がらなければ、この道具は存在する意味が無い
+
+  class の名前で突き合わせるので、**名前を変えるなら inkband.mjs の表も変える。**
+
+  計算値（白地 #fff のうえ、sRGB の相対輝度で）:
+    ik-bad-gray     #999999        2.85 : 1   ← 割れ
+    ik-bad-opacity  #000 を 0.25   1.84 : 1   ← 割れ。**宣言された色は #000（21:1）**
+    ik-ok-gray      #5a5a5a        6.93 : 1
+    ik-ok-black     #000000       21.00 : 1
+    ik-cv-bad       #999999        2.85 : 1   ← 割れ。**畳まれた段の中**
+    ik-cv-ok        #000000       21.00 : 1   ← 同じ段の中。挙げてはいけない
+-->
+<style>
+  body { margin: 0; background: #fff; color: #222; font: 20px/1.6 sans-serif; }
+  p { margin: 10px; background: #fff; }
+  .gap { height: 900px; }
+  /* 送るまで描かれない段。中身の背だけ先に取っておく（島の `.hchap-mat` と同じ形） */
+  .late { content-visibility: auto; contain-intrinsic-size: auto 600px; }
+</style>
+<body><main>
+<h1 style="color:#000;background:#fff">字の濃さ（帯送りの対照）</h1>
+
+<!-- 割れてほしい2つ -->
+<p class="ik-bad-gray" style="color:#999999">うすい灰色の字。ここは読めない</p>
+<p class="ik-bad-opacity" style="color:#000000; opacity:.25">薄めた黒の字。ここも読めない</p>
+
+<!-- 割れてはいけない2つ -->
+<p class="ik-ok-gray" style="color:#5a5a5a">濃い灰色の字。ここは読める</p>
+<p class="ik-ok-black" style="color:#000000">まっ黒の字。ここも読める</p>
+
+<div class="gap"></div>
+
+<!-- 送らないと描かれない段。**1枚に撮る側はここを見ていない** -->
+<div class="late">
+  <p class="ik-cv-bad" style="color:#999999">畳まれた段の、うすい灰色の字</p>
+  <p class="ik-cv-ok" style="color:#000000">畳まれた段の、まっ黒の字</p>
+</div>
+
+<div class="gap"></div>
+
+<!-- 数に入れてはいけない2つ -->
+<div style="height:24px; overflow:hidden">
+  <div style="height:400px; padding-top:200px">
+    <p class="ik-hidden-clip" style="color:#999999">切られて見えない字</p>
+  </div>
+</div>
+<p class="ik-hidden-none" style="display:none; color:#999999">出ていない字</p>
+</main></body></html>

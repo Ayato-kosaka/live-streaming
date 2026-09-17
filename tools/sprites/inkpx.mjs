@@ -152,7 +152,17 @@ async function shoot(p, base, path, miss) {
       const el = n.parentElement;
       if (!el || seen.has(el)) continue;
       seen.add(el);
-      const r = el.getBoundingClientRect();
+      /* **その字そのものの箱を測る。入れ物の箱ではない。**
+         `inkband.mjs` と同じ理由（#130）。入れ物に子が入っていると、
+         子の地まで「この字の地」として数える。`/map` の `.atrip-when` は
+         中に赤い「いまここ」の札（白字）を抱えていて、茶色い日付の墨を
+         その赤と比べて 1.42 が出ていた——**画面には無い組み合わせ**。
+         **2つの撮りかたで同じ直しが要る。** 片方だけ直すと、
+         同じ面で 0 と 1 に割れて、どちらが本当か分からなくなる */
+      const rng = document.createRange();
+      rng.selectNodeContents(n);
+      const rr = rng.getBoundingClientRect();
+      const r = rr.width >= 2 && rr.height >= 2 ? rr : el.getBoundingClientRect();
       if (r.width < 2 || r.height < 2) continue;
       const cs = getComputedStyle(el);
       if (cs.visibility === "hidden" || cs.display === "none" || cs.opacity === "0") continue;
