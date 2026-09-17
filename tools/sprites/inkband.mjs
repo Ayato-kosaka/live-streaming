@@ -83,7 +83,16 @@ const COLLECT = () => {
     const el = n.parentElement;
     if (!el || seen.has(el)) continue;
     seen.add(el);
-    const r = el.getBoundingClientRect();
+    /* **その字そのものの箱を測る。入れ物の箱ではない。**
+       入れ物には子が入っていることがあり、子の地まで「この字の地」として
+       数えてしまう。`/map` の `.atrip-when` がそれで、中に「いまここ」の
+       赤い札（白字）が入っている。入れ物の箱で測ると、茶色い日付の墨を
+       赤い札の地と比べることになって 1.42 が出た——**画面のどこにも
+       起きていない組み合わせ**（#130）。Range なら字の行だけを囲む。 */
+    const rng = document.createRange();
+    rng.selectNodeContents(n);
+    const rr = rng.getBoundingClientRect();
+    const r = rr.width >= 2 && rr.height >= 2 ? rr : el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === "hidden" || cs.display === "none" || cs.opacity === "0") continue;

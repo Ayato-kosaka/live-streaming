@@ -92,7 +92,12 @@ function Head({ title, count, note }: { title: string; count: number; note: stri
           borderBottom: `1px solid ${P.rule}`,
           fontSize: 12.5,
           lineHeight: 1.75,
-          opacity: 0.8,
+          /* ここも `opacity` で薄めていた（0.8）。墨が (107,98,77) になって、
+             紙のいちばん暗いところに対して **4.43** ——ちょうど 4.5 の線の上に
+             乗っていた。`opacity` は地のムラと掛け算になるので、明るいところで
+             合格しても暗いところで落ちる。色を直に置いて余裕を持たせる（5.55）。
+             上の `label` と同じ色にして、この面の薄い字を1つに揃える */
+          color: "#5c5344",
         }}
       >
         {note}
@@ -128,7 +133,13 @@ const label: React.CSSProperties = {
   fontWeight: 800,
   wordBreak: "break-all",
   textAlign: "center",
-  opacity: 0.6,
+  /* **`opacity` で薄めない。** 0.6 を掛けていたので墨が紙に対して 2.76〜2.90 で、
+     9.5px の名前が紙に溶けて読むのに目を寄せることになっていた（#130 で 287か所）。
+     ここは絵の良し悪しを見るための台なので、名前が読めないと台のほうが仕事を
+     しない。薄く見せたいなら色を直に置く（`#5c5344` は紙に対して 5.3）。
+     `CLAUDE.md`「字の色は、宣言された値ではなく描かれた画素から取る」の
+     `opacity` で薄めてある字、がまさにこれだった */
+  color: "#5c5344",
 };
 
 /**
