@@ -19,8 +19,9 @@
 import { chromium } from "playwright-core";
 import { viaCurl, blocked, ORIGIN } from "./prod.mjs";
 import { readdirSync } from "node:fs";
+import { repoPath } from "./repo.mjs";
 
-const dir = "/home/user/live-streaming/public";
+const dir = repoPath("public");
 const names = readdirSync(dir).filter((f) => f.endsWith(".html")).sort();
 
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });

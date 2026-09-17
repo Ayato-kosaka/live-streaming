@@ -56,10 +56,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { repoRoot } from "./repo.mjs";
 
 const PORT = process.env.PORT || "3000";
 const OUT = process.argv[2] ?? "/tmp/villagers";
-const ROOT = "/home/user/live-streaming";
+const ROOT = repoRoot();
 const META = JSON.parse(fs.readFileSync(`${ROOT}/site/content/sprites.json`, "utf8"));
 
 fs.mkdirSync(OUT, { recursive: true });

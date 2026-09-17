@@ -35,15 +35,21 @@
 調べ直すことになるし、**35本ぶん並んでいないと分母にならない**
 （`docs/island-standards.md` §15）。
 
-## 3つの見かた
+## 4つの見かた
 
 | 見かた | 何が起きたら赤いか | どの本に付けるか |
 | --- | --- | --- |
 | `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（料理・声・ショート） |
 | `COVERS` | 中の**いちばん先の日付**が、もう今日に届いていない | 先ぶんの表（旅程・日の出） |
-| `KEYS` | **上流の鍵が、下流に無い** | 人が上流を書いたら続けて焼くもの（①b） |
+| `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 人が上流を書いたら続けて焼くもの（①b） |
+| `SHARE` | 上流の鍵のうち**下流に無いものの割合**が `share`% を超えた | 全部そろわないのが普通のもの（セリフ） |
 
-`KEYS` だけは日付を見ない。`kitchenTalk.ts` は**日付を1つも持っていない**ので、
+`KEYS` と `SHARE` を分けてあるのは、**「1件も欠けてはいけない」と「欠けていて
+当たり前」を同じ判定にすると、後者が永遠に赤いまま誰にも読まれなくなる**から。
+料理の引用は品ごとに1件ずつ要る（`KEYS`）が、住人のセリフは持たない人が
+共通のセリフに落ちる作りで、全員ぶん書き切ることを求めていない（`SHARE`）。
+
+`KEYS` と `SHARE` は日付を見ない。`kitchenTalk.ts` は**日付を1つも持っていない**ので、
 日で測ろうとすると一生鳴れない。見るべきは「`recipes.ts` に在る品が焼かれているか」で、
 これは人が上流を書いた翌日から赤くなってほしい。だから猶予を置いていない。
 
@@ -70,7 +76,10 @@
 ## 印字に入れないもの
 
 このリポジトリは公開。出すのは**ファイル名・日付・件数・slug（料理や伝説の合言葉）**
-だけで、視聴者さんのチャンネルID・名前・どねID・コメント本文は1文字も出さない
+だけで、視聴者さんのチャンネルID・名前・どねID・コメント本文は1文字も出さない。
+**住人の icon も出さない**（`characterBox.ts` / `chatter.ts` は `names=False`。
+出しても新しく漏れるものは無いが、「この人のセリフが無い」という名指しの一覧に
+なるのは別の話）
 （`voices.ts` と `kitchenTalk.ts` には本文とアイコンが入っているが、ここは読まない）。
 """
 
@@ -92,6 +101,7 @@ DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 LATEST = "LATEST"  # いちばん新しい過去の日付が、今日から離れていないか
 COVERS = "COVERS"  # いちばん先の日付が、まだ今日に届いているか
 KEYS = "KEYS"  # 上流の鍵が、下流に全部あるか
+SHARE = "SHARE"  # 上流の鍵のうち、下流に無いものの**割合**が share% を超えたか
 SKIP = "SKIP"  # 見ない（理由を必ず書く）
 
 # だれが新しくするか（`docs/island-fresh.md` 1章の仕分け）
@@ -112,6 +122,13 @@ class Book:
     days: int
     why: str
     upstream: str = ""
+    # `SHARE` のしきい値（%）。**全部そろっていることを求めない本**に使う。
+    # セリフは持たない人がいて当たり前で（持たない人は共通のセリフに落ちる）、
+    # `KEYS` のように1人でも欠けたら赤にすると、永遠に赤いまま誰も読まなくなる
+    share: int = 0
+    # 欠けたものを**名指しで印字してよいか。** 料理や伝説の slug は出してよいが、
+    # 住人の icon は出さない（この頭の「印字に入れないもの」）。数は出す
+    names: bool = True
     # **赤い行に、次にやることを1行そえる。** 「古い」と言われても、
     # 何をすれば緑になるかが本ごとに違う（料理は配信を見る、旅程は章を
     # 閉じる）。書かないと、読んだ人がまた調べ直すことになる
@@ -126,6 +143,14 @@ KEY_RE = {
     "kitchenTalk.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{', re.M),
     "legends.ts": re.compile(r'^\s+slug: "([^"]+)"', re.M),
     "legendDays.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{', re.M),
+    # **名簿。** Firestore の `islandCharacter` そのものが毎晩ここに焼かれる
+    # （`residents.ts` の頭に「並んでいるのは、キャラクターの名簿そのもの」と
+    # 書いてある）。**名簿は本番にしかない、ではなかった**（#132）
+    "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"', re.M),
+    # 箱の行（`  "icon": [`）と、測れなかった人（`    "icon",`）の**両方**を鍵にする。
+    # 測れない人を鍵に含めないと、絵の無い人がいる限り永久に赤くなる
+    "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)', re.M),
+    "chatter.ts": re.compile(r'^\s+icon: "([^"]+)"', re.M),
 }
 
 # `rebake.yml` の step「凍っていないか」が日数を持っている本。
@@ -174,6 +199,32 @@ BOOKS: dict[str, Book] = {
         "なので、**新しい伝説が足されたのに焼いていない**ほうが先に出る鍵で見る",
         upstream="legends.ts",
     ),
+    "characterBox.ts": Book(
+        MACHINE, KEYS, 0,
+        "キャラクターの絵の中で実際に描かれている範囲（`tools/sprites/charbox.py`）。"
+        "**名簿（Firestore `islandCharacter`）は `residents.ts` に毎晩そのまま焼かれている**"
+        "ので、名簿に居て箱の無い人はファイルだけで数えられる（#132。"
+        "前はここを「名簿は本番にしかない」として測っていなかった）。"
+        "**絵が無くて測れない人は、焼くほうが `noArt` に名指しで置く**ので赤にならない。"
+        "日では測らない——名簿は誰も入らない月があり、入った翌日に鳴ってほしい",
+        upstream="residents.ts",
+        names=False,
+        todo="`python3 tools/sprites/charbox.py` を回す（絵が無い人は noArt に入って緑になる）",
+    ),
+    # --- 人が書く。**全員ぶんは求めない。割合で見る** ---
+    "chatter.ts": Book(
+        HUMAN, SHARE, 0,
+        "島の住人が話すこと。**手で書く**ので、持っていない人は共通のセリフに落ちる。"
+        "1人でも欠けたら赤（`KEYS`）にすると永遠に赤いままなので、"
+        "**名簿のうちセリフの無い人の割合**で見る。しきい値の 50% は、"
+        "**しきい値から作っていない実測2つ**のあいだに置いた: "
+        "あやとに「台詞が普通すぎる」と言われた 2026-09-16 の朝が **80/102人＝78%**、"
+        "その日に書き切ったあとが **27/102人＝26%**（どちらも git の実測）。"
+        "26% 側で鳴らず、78% 側で鳴る",
+        upstream="residents.ts",
+        share=50,
+        todo="`python/admin/chatter_voices.py` で口調を拾って `chatter.ts` に書き足す",
+    ),
     # --- 人しか決められない。日で見る ---
     "recipes.ts": Book(
         HUMAN, LATEST, 60,
@@ -206,6 +257,17 @@ BOOKS: dict[str, Book] = {
         HUMAN, LATEST, 60,
         "企画の選定。**中に過去の日付が2つしか無い**（ほかは `until` `when` の先ぶん）ので、"
         "測れているのは「いちばん新しい企画がいつのものか」だけ。60日は `streamTypes` に揃えた",
+    ),
+    "nordicShops.ts": Book(
+        OUTSIDE, LATEST, 30,
+        "街の店（OpenStreetMap、`tools/nordic/shops.py`）。焼くほうが"
+        "**いちばん古い街を取った日**を `SHOPS_FETCHED` に書き戻す（#132。"
+        "前は取った日がどこにも無くて測れなかった）。"
+        "**30日は「旅をまたいだか」を見る値で、店の入れ替わりの速さではない**"
+        "——OSM の店がどれくらいの速さで変わるかは、こちらからは測れない。"
+        "この表は旅ごとに取り直すもので、いまの旅は17日（`chapters.ts` の `plannedDays`）。"
+        "旅の前日に取って最終日まで使うと最大18日古くなるので、その上に置いた",
+        todo="`python3 tools/nordic/shops.py` を回して街の表を取り直す",
     ),
     "apps.ts": Book(
         HUMAN, LATEST, 120,
@@ -241,25 +303,7 @@ BOOKS: dict[str, Book] = {
         "2026-09-11 に本人が書いた文そのもの。**1字も直さない**ので、古くならない"
         "（`docs/island-fresh.md` 4章「本人の言葉には、書かれた日をいっしょに置く」）",
     ),
-    "characterBox.ts": Book(
-        MACHINE, SKIP, 0,
-        "キャラクターの絵の中で実際に描かれている範囲（`tools/sprites/charbox.py`）。"
-        "**名簿（Firestore `islandCharacter`）に人が増えると古くなるが、名簿は本番に"
-        "しかないので、ファイルだけでは何人ぶん足りないか分からない。**"
-        "ここは「分からない」のまま置いてある",
-    ),
-    "chatter.ts": Book(
-        HUMAN, SKIP, 0,
-        "島の住人が話すこと。日付を1つも持たない。増えるのは名簿に人が増えたときで、"
-        "**何人ぶん足りないかはファイルだけでは分からない**（`characterBox.ts` と同じ）",
-    ),
     "nordicFood.ts": Book(HUMAN, SKIP, 0, "旅先のふだんのごはんの読みもの。日付を1つも持たない"),
-    "nordicShops.ts": Book(
-        OUTSIDE, SKIP, 0,
-        "街の店（OpenStreetMap、`tools/nordic/shops.py`）。**いつ取ったかがどこにも"
-        "書かれていない**（`nordic/shops.json` にも無い）ので、古いかどうかを測れない。"
-        "測れるようにするなら、焼くほうに取った日を入れるのが先",
-    ),
     "themes.ts": Book(HUMAN, SKIP, 0, "掲示板のテーマ。画面に出る言葉で、日付を持たない"),
     "voice.ts": Book(HUMAN, SKIP, 0, "島のことばづかい。画面に出る言葉"),
     "nights.ts": Book(HUMAN, SKIP, 0, "配信の時間の言い方。画面に出る言葉"),
@@ -415,6 +459,30 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
             v.results.append(Result(name, b.who, SKIP, 0, "見ない", b.why))
             continue
 
+        if b.rule == SHARE:
+            up = seen.get(b.upstream)
+            if up is None or not up.found or not up.keys:
+                v.blind.append(f"{name} の上流 {b.upstream} から鍵が取れません")
+                v.results.append(Result(name, b.who, SHARE, b.share, "数えられない", f"上流 {b.upstream} の鍵が0件"))
+                continue
+            mine = set(f.keys)
+            missing = [k for k in up.keys if k not in mine]
+            pct = round(100 * len(missing) / len(up.keys))
+            detail = f"上流 {b.upstream} の {len(up.keys)}人 / ここ {len(f.keys)}人 / 無い {len(missing)}人（{pct}%）"
+            if pct > b.share:
+                # **誰が欠けているかは出さない。** icon は公開だが、ここに
+                # 並べると「この人のセリフが無い」という名指しの一覧になる。
+                # 拾うのは `python/admin/chatter_voices.py` の仕事
+                v.red.append(
+                    f"{name} が上流 {b.upstream} の {pct}% をまだ持っていません"
+                    f"（しきい値 {b.share}% / {len(missing)}/{len(up.keys)}人）"
+                    + (f" → {b.todo}" if b.todo else "")
+                )
+                v.results.append(Result(name, b.who, SHARE, b.share, "赤", detail))
+            else:
+                v.results.append(Result(name, b.who, SHARE, b.share, "通った", detail))
+            continue
+
         if b.rule == KEYS:
             up = seen.get(b.upstream)
             if up is None or not up.found:
@@ -429,8 +497,9 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
             detail = f"上流 {b.upstream} の {len(up.keys)}件 / ここ {len(f.keys)}件"
             if missing:
                 v.red.append(
-                    f"{name} に {b.upstream} の {len(missing)}件が焼かれていません: "
-                    + ", ".join(missing[:10])
+                    f"{name} に {b.upstream} の {len(missing)}件が焼かれていません"
+                    + ("：" + ", ".join(missing[:10]) if b.names else "")
+                    + (f" → {b.todo}" if b.todo else "")
                 )
                 v.results.append(Result(name, b.who, KEYS, 0, "赤", detail + f" / 欠け {len(missing)}"))
             else:
@@ -489,7 +558,7 @@ def report(v: Verdict, today: date) -> None:
     print()
     print(f"  {'本':22} {'だれが':14} {'見かた':7} {'しきい値':>6}  {'判定':10} 中身")
     for r in sorted(v.results, key=lambda r: (r.rule == SKIP, r.name)):
-        days = f"{r.days}日" if r.rule in (LATEST, COVERS) else "-"
+        days = f"{r.days}日" if r.rule in (LATEST, COVERS) else f"{r.days}%" if r.rule == SHARE else "-"
         print(f"  {r.name:22} {r.who:14} {r.rule:7} {days:>6}  {r.status:10} {r.detail}")
 
     for line in v.blind:

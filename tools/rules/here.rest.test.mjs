@@ -11,11 +11,12 @@
  * ルールそのものの確かめは `here.test.mjs`（SDK 経由）。こちらは
  * **REST の形**の確かめで、両方あって初めて「置ける」と言える。
  *
+ *   REPO=$(git rev-parse --show-toplevel)   # この道具はリポジトリの外で回すので、根を先に控える
  *   mkdir -p /tmp/rt && cd /tmp/rt
- *   cp /home/user/live-streaming/firestore.rules .
+ *   cp "$REPO/firestore.rules" .
  *   printf '{"firestore":{"rules":"firestore.rules"},"emulators":{"firestore":{"port":8181},"ui":{"enabled":false},"singleProjectMode":true}}' > firebase.json
  *   npx --yes firebase-tools@13 emulators:start --only firestore --project demo-rules &
- *   node /home/user/live-streaming/tools/rules/here.rest.test.mjs
+ *   node "$REPO/tools/rules/here.rest.test.mjs"
  *
  * 2026-09-05 の時点で13本、ぜんぶ通る。
  */

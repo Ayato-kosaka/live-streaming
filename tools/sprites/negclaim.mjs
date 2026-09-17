@@ -69,8 +69,8 @@
  */
 import { chromium } from "playwright-core";
 import { existsSync, readdirSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { fromRoot } from "./repo.mjs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { offline } from "./route.mjs";
@@ -81,9 +81,11 @@ const PROD = "https://live-streaming-d3cac.web.app";
 const SPORT = process.env.SPORT || "4340";
 const ORIGIN = `http://127.0.0.1:${SPORT}`;
 /* 既定の書き出し先は、**この道具が置かれているリポジトリの中**から引く。
-   worktree を切って並列で回すので、家のパスを焼き込むと隣の人の書き出しを読む。 */
-const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
-const DIST = process.env.DIST || join(ROOT, "site", `.next-${SPORT}`);
+   worktree を切って並列で回すので、家のパスを焼き込むと隣の人の書き出しを読む。
+   根の探しかたは `repo.mjs` に1本化した。`dirname` 3重は「この道具が
+   `tools/sprites/` の直下に在る」を前提にしていて、写すと黙って外れる（#131）。
+   `DIST` は絶対で渡されたらそのまま通る。 */
+const DIST = fromRoot(process.env.DIST || `site/.next-${SPORT}`);
 const WIDTH = parseInt(process.env.WIDTH || "390", 10);
 /** わざと壊す。`noopen` / `leaf` / `plain` */
 const BREAK = process.env.BREAK || "";

@@ -5,6 +5,7 @@
  * 押さなかった場合で、面の字がどう変わるかを並べて出す。
  */
 import { chromium } from "playwright-core";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4220";
 const ISO = process.env.ISO || "2026-09-30T10:00:00Z";
@@ -54,7 +55,7 @@ console.log(`ISO=${ISO}`);
 for (const c of CASES) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-    r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+    r => r.fulfill({ path: repoPath("site/public/og.png") }));
   await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   /* Playwright は**あとに足した route が先に当たる**ので、広いほうを先に足す */
   await ctx.route(/\/island-api\//, r =>

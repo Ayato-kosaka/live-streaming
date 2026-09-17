@@ -33,6 +33,7 @@
 島の大きさだけが不揃いになるので気づけない。いま入っている人数より
 減る焼き直しは断る。
 """
+import datetime
 import io
 import json
 import os
@@ -61,6 +62,11 @@ def main() -> None:
     print(f"口が返した {len(chars)}人")
 
     rows = []
+    # **測れなかった人を、名指しで持っておく。**
+    # 焼き忘れ（まだ回していない）と、測れない人（背景なしの絵が無い・絵が開けない・
+    # 中身が空）は別のもの。数だけ持っていても見張りがそこを分けられず、
+    # 「名簿に居るのに箱が無い」が永遠に赤いままになる（`docs/island-misses.md` #132）
+    no_art = []
     for c in chars:
         cid = c.get("id") or ""
         # 測るのは**背景なし**。背景ありは四隅まで塗ってあるので外接矩形が
@@ -73,15 +79,19 @@ def main() -> None:
         src = next((sizes[k] for k in ("640", "256", "128") if sizes.get(k)), "")
         if not cid or not src:
             print(f"  背景なしの絵が無い: {cid}", file=sys.stderr)
+            if cid:
+                no_art.append(cid)
             continue
         try:
             im = Image.open(io.BytesIO(fetch(src))).convert("RGBA")
         except Exception as e:  # noqa: BLE001 — 1人こけても残りは焼く
             print(f"  絵が開けない: {cid} {e}", file=sys.stderr)
+            no_art.append(cid)
             continue
         bb = im.split()[3].getbbox()
         if not bb:
             print(f"  中身が空: {cid}", file=sys.stderr)
+            no_art.append(cid)
             continue
         x0, y0, x1, y1 = bb
         w, h = im.size
@@ -101,8 +111,47 @@ def main() -> None:
     body = "\n".join(
         f'  "{i}": [{x}, {y}, {ww}, {hh}, {ar}],' for i, x, y, ww, hh, ar in rows
     )
-    open(OUT, "w", encoding="utf-8").write(HEAD + body + TAIL)
-    print(f"{len(rows)}人ぶん焼いた（前は {had}人）→ {OUT}")
+    open(OUT, "w", encoding="utf-8").write(HEAD + body + TAIL + stamp(len(chars), len(rows), no_art))
+    print(f"{len(rows)}人ぶん焼いた（前は {had}人 / 測れなかった {len(no_art)}人）→ {OUT}")
+
+
+def stamp(people: int, boxes: int, no_art: list) -> str:
+    """**焼いたときのことを、焼いた先に置く。**
+
+    ここが無かったころ、見張り（`python/stale_content_watch.py`）はこの本を
+    「分からない」として判定していなかった。理由は「名簿（Firestore の
+    `islandCharacter`）は本番にしかないので、ファイルからは何人ぶん足りないかが
+    出ない」。**出せなかったのは、焼いた側が知っていることを書いていなかったから**で、
+    名簿そのものは `site/content/residents.ts` に毎晩焼かれている
+    （`docs/island-misses.md` #132）。
+
+    **コメントではなく、動く行に書く。** 見張りが拾うのは `"..."` の中の日付だけで、
+    コメントの日付は拾わない（拾うと、データが半年止まっていても
+    「きのう誰かがコメントを直した」だけで新しく見える）。
+    """
+    lines = "\n".join('    "%s",' % i for i in sorted(no_art))
+    return (
+        "\n\n"
+        "/**\n"
+        " * この表を焼いたときのこと。**見張り（`python/stale_content_watch.py`）が読む。**\n"
+        " * 手で直さない（`tools/sprites/charbox.py` が書く）。\n"
+        " */\n"
+        "export const CHARACTER_BOX_BAKED = {\n"
+        "  /** 焼いた日 */\n"
+        '  at: "%s",\n'
+        "  /** そのとき口（`/island-api/characters`）が返した人数 */\n"
+        "  people: %d,\n"
+        "  /** そのうち、実際に測れた人数 */\n"
+        "  boxes: %d,\n"
+        "  /**\n"
+        "   * 測れなかった人。**焼き忘れではない**——背景なしの絵が無い・絵が開けない・\n"
+        "   * 中身が空。名簿に居て、箱にもここにも居ない人が出たら、それが焼き忘れ。\n"
+        "   */\n"
+        "  noArt: [\n"
+        "%s\n"
+        "  ],\n"
+        "} as const;\n"
+    ) % (datetime.date.today().isoformat(), people, boxes, lines)
 
 
 HEAD = """/**
@@ -203,4 +252,9 @@ export function charFit(icon: string, want: number, bottom = false): { transform
 }
 """
 
-main()
+
+# **import しただけで焼かない。** ここが裸の `main()` だったので、
+# 別の道具からこのファイルを読み込むと、口を叩いて `characterBox.ts` を
+# その場で書き替えていた（実際に1回やった。焼くつもりが無いときに焼ける）
+if __name__ == "__main__":
+    main()

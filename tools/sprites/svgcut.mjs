@@ -3,6 +3,11 @@
  *
  *   DIST=/tmp/wt/site/.next-3350 SPORT=4350 node tools/sprites/svgcut.mjs
  *
+ * **131面で 3分40秒（220秒）かかる**（2026-09-17 実測。1面あたり 1.7秒）。
+ * 面ごとに `networkidle` を待ち、畳みを開いてもう一度待つので、面の数ぶん素直に伸びる。
+ * **止まっているのではない。** 200秒で打ち切られたことがあるので、途中経過を出す
+ * （`PROGRESS=0` で黙らせられる）。急ぐときは `ONLY=nordic,map` で面を絞る。
+ *
  * viewBox のある `<svg>` は、はみ出したものを既定で切る（UA の `overflow: hidden`）。
  * 切られた字は「薄い字」ではなく**無い字**なのに、`getBoundingClientRect` は
  * 切られる前の箱を返す。だから濃さを測る道具（`inkpx`）から見ると、
@@ -17,13 +22,18 @@
  * 画面の中だけで戻して数え直す。届いていれば「のこり 36%」と出る。
  * 0 と出たときに「無い」のか「数えていないだけ」なのかを分けられないと、
  * この道具そのものが嘘になる（`docs/island-misses.md` #19）。
+ *
+ * **終了コード**: 0＝切られた字なし / 1＝あった / 2＝数えるものが無い
+ * （面が1枚も無い・1枚も開けなかった）。**印字された合否は合否ではない**
+ * （`docs/island-misses.md` #128 の決めごと4）。`| tail` を挟むと消える。
  */
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { repoPath, fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4321";
-const root = process.env.DIST || "/home/user/live-streaming/site/.next-verify";
+const root = fromRoot(process.env.DIST || "site/.next-verify");
 
 function walk(d, base = "") {
   let out = [];
@@ -71,7 +81,7 @@ const b = await chromium.launch({
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 // このサンドボックスからは外の画像に出られないので差し替える（crawl.mjs と同じ）
 await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-  (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+  (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
 await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 const p = await ctx.newPage();
 
@@ -93,10 +103,29 @@ if (process.env.SELFTEST) {
   process.exit(0);
 }
 
-const pages = walk(root).sort();
+let pages = walk(root).sort();
+// 面を絞る（急ぎの確かめ用）。**絞ったことは分母に出す**
+const ONLY = (process.env.ONLY || "").split(",").map((s) => s.trim()).filter(Boolean);
+if (ONLY.length) pages = pages.filter((x) => ONLY.some((o) => x.includes(o)));
+if (!pages.length) {
+  console.error(`面が1枚もありません（${root}${ONLY.length ? ` / ONLY=${ONLY.join(",")}` : ""}）`);
+  await b.close();
+  process.exit(2);
+}
+const PROGRESS = process.env.PROGRESS !== "0";
+const t0 = Date.now();
 let bad = 0;
-for (const page of pages) {
-  await p.goto(`http://localhost:${SPORT}${page}`, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
+let opened = 0; // **開けた面の数。0件を読むときの分母**（`island-standards.md` §15）
+for (const [i, page] of pages.entries()) {
+  const ok = await p
+    .goto(`http://localhost:${SPORT}${page}`, { waitUntil: "networkidle", timeout: 60000 })
+    .then(() => true)
+    .catch(() => false);
+  if (ok) opened++;
+  // 3分40秒かかる道具なので、生きていることを見せる。黙っていると打ち切られる
+  if (PROGRESS && (i + 1) % 20 === 0) {
+    console.log(`  … ${i + 1}/${pages.length} 面（${Math.round((Date.now() - t0) / 1000)}秒）`);
+  }
   await p.waitForTimeout(250);
   // 畳んである中の地図も見る。開かないと、面の半分を見ないまま 0 件になる
   await p.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
@@ -108,5 +137,10 @@ for (const page of pages) {
     for (const c of cuts) console.log(`   のこり ${(c.keep * 100).toFixed(0)}%  ${c.c} «${c.t}»`);
   }
 }
-console.log(`\npages: ${pages.length}  紙の外で切られている字: ${bad}`);
+console.log(
+  `\npages: ${pages.length}  開けた面: ${opened}  紙の外で切られている字: ${bad}` +
+    `  （${Math.round((Date.now() - t0) / 1000)}秒）`
+);
 await b.close();
+// **1枚も開けなかったら 0 にしない。**「切られた字 0」と「見ていないから 0」は別
+process.exit(opened === 0 ? 2 : bad ? 1 : 0);

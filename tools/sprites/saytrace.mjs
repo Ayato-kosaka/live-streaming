@@ -1,7 +1,7 @@
 /**
  * 書き出したものを機械で見て、**「改行が潰れた跡」**を数える。
  *
- *   DIST=/home/user/live-streaming/site/.next-4000 node tools/sprites/saytrace.mjs
+ *   DIST=site/.next-4000 node tools/sprites/saytrace.mjs
  *
  * 探すのは2つ。どちらも「箇条書きで書かれたものが1行に伸ばされた跡」。
  *
@@ -20,8 +20,9 @@
  */
 import { readdirSync, statSync, readFileSync } from "fs";
 import { join } from "path";
+import { fromRoot } from "./repo.mjs";
 
-const root = process.env.DIST || "/home/user/live-streaming/site/.next-4000";
+const root = fromRoot(process.env.DIST || "site/.next-4000");
 
 function walk(d, base = "") {
   let out = [];

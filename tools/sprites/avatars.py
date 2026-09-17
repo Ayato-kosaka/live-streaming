@@ -18,15 +18,23 @@
 
 import hashlib
 import os
+import pathlib
 import re
+import sys
 import urllib.request
 
-SRC = "/home/user/live-streaming/site/content/residents.ts"
-VOICES = "/home/user/live-streaming/site/content/voices.ts"
+# 名簿の出どころは**いま自分が居るリポジトリ**から組む。直に書くと、worktree から
+# 回したときに本体（master）の名簿を読んで、**枝で足した住人が落ちる**
+# （`docs/island-misses.md` #129 / #131）
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from repo import repo_path  # noqa: E402
+
+SRC = repo_path("site/content/residents.ts")
+VOICES = repo_path("site/content/voices.ts")
 # 引用の吹き出しは2面ある。片方だけ落とすと、料理の面が全員おなじ顔で写る
-KITCHEN_TALK = "/home/user/live-streaming/site/content/kitchenTalk.ts"
+KITCHEN_TALK = repo_path("site/content/kitchenTalk.ts")
 # ショート動画のサムネイル。i.ytimg.com もブラウザからは出られない
-SHORTS = "/home/user/live-streaming/site/content/shorts.ts"
+SHORTS = repo_path("site/content/shorts.ts")
 OUT = "/tmp/avatars"
 UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
 
@@ -100,6 +108,9 @@ def big_enough(dst: str) -> bool:
 
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
+    # **どの枝の名簿を読んだか**を先に言う。落としてきた枚数だけ出しても、
+    # それが本体の名簿なのか自分の枝の名簿なのかは出力から分からない（#131）
+    print(f"名簿の出どころ: {SRC}")
     ids = re.findall(r'icon:\s*"([^"]+)"', open(SRC, encoding="utf-8").read())
     got = 0
     for i in ids:

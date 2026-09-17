@@ -29,6 +29,7 @@
  */
 
 import { FIREBASE } from "./firebase";
+import { hereKey } from "./hereKey";
 
 const DOCS =
   `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +
@@ -40,7 +41,14 @@ const KEY = `key=${FIREBASE.apiKey}`;
 const docPath = (uid: string) =>
   `projects/${FIREBASE.projectId}/databases/(default)/documents/islandHere/${uid}`;
 
-/** 届いた1人ぶん。名前とアイコンはここには入らない（`docs/island-here.md` 3章）。 */
+/**
+ * 届いた1人ぶん。名前とアイコンはここには入らない（`docs/island-here.md` 3章）。
+ *
+ * **`uid` に入るのは uid そのものではなく、潰した鍵**（`lib/here.ts` の
+ * `hereKey`）。`/state` が uid を返さなくなった（#133）ので、名前と顔に
+ * 結ぶ鍵をこちらも同じものに揃える。**書く側（`putHere`）は今までどおり
+ * 本物の uid**——書類IDは uid で、ルールもそれを見ている。
+ */
 export type HereRow = { uid: string; at: string; x: number; y: number; seenAt: number };
 
 type Val = { stringValue?: string; integerValue?: string; doubleValue?: number; timestampValue?: string };
@@ -95,7 +103,12 @@ export async function readHere(staleMs: number, signal?: AbortSignal): Promise<H
       const y = num(f.y);
       const seenAt = Date.parse(f.seenAt?.timestampValue ?? "");
       if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(seenAt)) continue;
-      out.push({ uid: d.name.split("/").pop() ?? "", at: f.at?.stringValue ?? "/", x, y, seenAt });
+      /* 書類ID（uid）は、ここから先へ渡さない。潰した鍵にして返す。
+         潰せない箱（安全な文脈でない）では、その人を出さない——
+         空文字を入れると、潰せなかった人どうしが全員同じ人になる。 */
+      const key = await hereKey(d.name.split("/").pop() ?? "");
+      if (!key) continue;
+      out.push({ uid: key, at: f.at?.stringValue ?? "/", x, y, seenAt });
     }
     return out;
   } catch {

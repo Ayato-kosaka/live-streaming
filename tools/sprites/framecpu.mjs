@@ -39,6 +39,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4120";
 const BASE = `http://localhost:${SPORT}`;
@@ -69,7 +70,7 @@ const ctx = await b.newContext(
 );
 // 住人の絵は本番と同じものを1人ずつ返す（`python3 avatars.py` で落としたもの）。
 // 全員を同じ絵にすると、画像の解読とラスタが1枚ぶんで済んでしまって数字が嘘になる
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 
 /** 1回ぶん。落ち着かせてから、歩かせて6秒ぶんの CPU を取る。 */
 async function once() {

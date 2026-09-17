@@ -2,7 +2,7 @@
  * 面が縦にどこまで伸びているかを測る（#225）。
  *
  *   SPORT=4140 PAGES=/me,/board,/next ADMIN=0 \
- *   SEED=/home/user/live-streaming/tools/sprites/asme.mjs node tools/sprites/tallpage.mjs
+ *   SEED=$PWD/tools/sprites/asme.mjs node tools/sprites/tallpage.mjs
  *
  * **いちばん下まで送ってから測る。** `content-visibility: auto` を持つ畳みは
  * 画面の外にいるあいだ `contain-intrinsic-size` の値で報告されるので、

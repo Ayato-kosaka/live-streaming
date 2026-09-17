@@ -1,7 +1,7 @@
 /**
  * **日付で変わる面を、時計を進めて撮る。**
  *
- *   PORT=4620 DIST=/home/user/day-wt/site/.next-3210 OUT=/tmp/jstday node jstday.mjs
+ *   PORT=4620 DIST=site/.next-3210 OUT=/tmp/jstday node jstday.mjs
  *
  * 島の日付は日本時間で切る（`site/lib/nightly.ts` の `jstNow`）。
  * ところが「今日」を UTC で切っている場所が残っていて、**毎日 00:00〜09:00 JST の

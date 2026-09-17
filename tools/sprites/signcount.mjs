@@ -19,6 +19,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4321";
 const PC = !!process.env.PC;
@@ -39,7 +40,7 @@ const ctx = await b.newContext({
   isMobile: !PC,
   hasTouch: !PC,
 });
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 const p = await ctx.newPage();
 await p.addInitScript(() => {
   // 到着演出を飛ばす。カモメの吹き出しが出ていると、引きへの切り替えが1回食われる

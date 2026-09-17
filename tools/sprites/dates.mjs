@@ -17,9 +17,10 @@
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { repoPath, fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4330";
-const root = process.env.DIST || "/tmp/wt-date/site/.next-3330";
+const root = fromRoot(process.env.DIST || "site/.next-3330");
 const ISO = process.env.ISO || "2026-09-30T10:00:00Z";
 const NEG = process.argv.includes("--neg");
 
@@ -50,7 +51,7 @@ const b = await chromium.launch({
 });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, (r) =>
-  r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+  r.fulfill({ path: repoPath("site/public/og.png") }),
 );
 await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 /* 島の口は落とす。暦だけで閉じるかを見る。

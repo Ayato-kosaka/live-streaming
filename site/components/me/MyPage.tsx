@@ -6,6 +6,7 @@ import {
   getMyCards,
   getMyStickies,
   getNextPlans,
+  loadMyPlans,
   myPlans,
   type NextPlan,
   type Sticky,
@@ -72,15 +73,27 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       setStickies({ st: "down" });
     }
     try {
-      /* 企画は誰でも読める口から引いて、自分のぶんだけ手元で残す。
-         「自分のぶんだけ」をサーバーに頼むと `where` と `orderBy` が
-         組み合わさって複合索引が要る（#168）。 */
-      const r = await withRead(getNextPlans(200));
-      const mine = myPlans();
-      setPlans({
-        st: "ok",
-        list: r.plans.filter((p) => (p.byUid ? p.byUid === user?.uid : mine.has(p.id))),
-      });
+      /* 企画は2つに分かれる（#133）。**ログインして出したぶんはサーバーが絞る。**
+         誰でも読める一覧は持ち主を返さなくなったので、こちらで
+         「これは誰の」を組み立てる道はもう無い。
+
+         **ログインする前に、この端末から出したぶんも自分のもの。**
+         そちらは端末の控え（`myPlans`）でしか分からないので、
+         誰でも読める一覧から拾って足す。持ち主のいるもの（`byLogin`）は、
+         端末の印では直せないので混ぜない。 */
+      const [mineList, all] = await Promise.all([
+        withRead(loadMyPlans(t)),
+        withRead(getNextPlans(200)),
+      ]);
+      const ids = myPlans();
+      const had = new Set(mineList.map((p) => p.id));
+      const list = [
+        ...mineList,
+        ...all.plans.filter((p) => !p.byLogin && ids.has(p.id) && !had.has(p.id)),
+      ];
+      // 2つの口から来たものを1つの並びにする。新しいものが上
+      list.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      setPlans({ st: "ok", list });
     } catch {
       setPlans({ st: "down" });
     }

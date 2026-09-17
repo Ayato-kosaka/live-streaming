@@ -46,8 +46,9 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
+import { fromRoot, repoRoot } from "./repo.mjs";
 
-const ROOT = "/home/user/live-streaming";
+const ROOT = repoRoot();
 const SITE = `${ROOT}/site`;
 
 /** `crawl.mjs` が飛ばしているのと同じ置き場。書き出した面ではない */
@@ -123,7 +124,9 @@ function toRoute(file) {
 
 /** 書き出しの置き場を決める。**どれを使ったかは必ず外へ出す** */
 export function distRoot() {
-  if (process.env.DIST) return process.env.DIST;
+  // 相対で渡されたら**根から**。cwd から解くと、tools/sprites の中から回したときに
+  // 見つからない（渡した人は根から書いたつもりでいる）
+  if (process.env.DIST) return fromRoot(process.env.DIST);
   const verify = `${SITE}/.next-verify`;
   if (existsSync(`${verify}/index.html`)) return verify;
   const cands = readdirSync(SITE)
@@ -141,7 +144,7 @@ export function distRoot() {
 
 /** 一覧ファイルを読む。`#` で始まる行と空行は飛ばす */
 function readList(file) {
-  return readFileSync(file, "utf8")
+  return readFileSync(fromRoot(file), "utf8")
     .split("\n")
     .map((s) => s.trim())
     .filter((s) => s && !s.startsWith("#"));

@@ -52,6 +52,24 @@ const CITIES = SHOPS.cities as unknown as Record<string, CityShops>;
 export const OSM_CREDIT = SHOPS.credit as string;
 export const OSM_LICENSE = SHOPS.license as string;
 
+/**
+ * **この表で、いちばん古い街をいつ取ったか。**
+ *
+ * 街ごとに取り直すので、取った日は街で違う。ここに置くのは**いちばん古い街の日**
+ * ——表全体が「どこまで古くなりうるか」はそこで決まる。
+ *
+ * ここが無かったころ、見張り（`python/stale_content_watch.py`）はこの本を
+ * 「いつ取ったかがどこにも書かれていないので測れない」として置いていた
+ * （`docs/island-misses.md` #132）。**測れなかったのは、焼いた側が知っていることを
+ * 書いていなかったから。**
+ *
+ * **`tools/nordic/shops.py` がこの行を書き換える。手で直さない。**
+ * データの側（`shops.json`）ではなくここに置いてあるのは、あちらが店の
+ * 営業時間を大量に持っていて、日付を探しに行くと「2026-01-01 off」のような
+ * 営業時間の字まで日付として数えてしまうため。
+ */
+export const SHOPS_FETCHED = "2026-09-13";
+
 export const shopsOf = (city: string): CityShops | undefined => CITIES[city];
 
 /** 区画の名前。**この順に出す。** 可愛い雑貨とお土産が、先に目に入るように。 */

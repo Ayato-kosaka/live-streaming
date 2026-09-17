@@ -69,10 +69,11 @@ import { chromium } from "playwright-core";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { brotliCompressSync, constants } from "zlib";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4321";
 const BASE = `http://localhost:${SPORT}`;
-const STORE = "/home/user/live-streaming/tools/sprites/.perf";
+const STORE = repoPath("tools/sprites/.perf");
 
 const argv = process.argv.slice(2);
 const saveAs = pick("--save");
@@ -103,7 +104,7 @@ const ctx = await b.newContext({
 // 外に出られない先の差し替えは route.mjs に任せる。住人は1人ずつ本番と同じ絵
 // （`python3 avatars.py` で落としたもの）が返るので、12人ぶんの重さが本物になる。
 // 写真は本番の横500前後の JPEG に寄せる。og.png(470KB)を返すと数字が読めない。
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 
 /** URL を見て、何の種類のファイルかを決める。直す担当を分けるための粒度。 */
 function kindOf(url, type) {

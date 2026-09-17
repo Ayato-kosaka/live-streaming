@@ -17,6 +17,7 @@
 import { chromium } from "playwright-core";
 import { viaCurl, ORIGIN } from "./prod.mjs";
 import { openFolds, measure, fmtHit, SEL_ALL } from "./hitbox.mjs";
+import { repoPath } from "./repo.mjs";
 
 const PAGES = (process.env.PAGES || "/").split(",").map((s) => s.trim()).filter(Boolean);
 const WIDTHS = (process.env.WIDTHS || "390x844,1280x800").split(",").map((s) => s.split("x").map(Number));
@@ -51,7 +52,7 @@ for (const [W, H] of WIDTHS) {
      箱だけ返す**（測っているのは押しどころの大きさで、写真の中身ではない）。
      **あとに登録した route が先に効く**ので、ここは viaCurl の後に書く。 */
   await ctx.route(/upload\.wikimedia\.org/, (r) =>
-    r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }),
+    r.fulfill({ path: repoPath("site/public/og.png") }),
   );
   await ctx.addInitScript(() => {
     try {

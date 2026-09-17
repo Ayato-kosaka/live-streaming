@@ -1,7 +1,7 @@
 /**
  * **畳みを開いてから**、全面の押しどころを測り直す。
  *
- *   SPORT=4240 DIST=/home/user/live-streaming/site/.next-3240 node foldsweep.mjs
+ *   SPORT=4240 DIST=site/.next-3240 node foldsweep.mjs
  *   SPORT=4240 PROBE=1 PAGES=/ node foldsweep.mjs      # 道具の自己確認だけ
  *   SPORT=4240 WIDTHS=390x844,1280x800 node foldsweep.mjs
  *
