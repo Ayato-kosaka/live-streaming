@@ -337,3 +337,69 @@
     top: calc(192px + env(safe-area-inset-top));
   }
 }
+
+/* ---- 分かち合う絵（`site/public/og.png`）---------------------------------
+   人が島のリンクを貼ったときに出る 1200×630 の1枚を、**島そのものから撮る**
+   ための決めごと。効くのは `<html data-og>` が立っているあいだだけで、
+   立てるのは `tools/sprites/og.mjs` しかない。本番のブラウザでこの印が立つ
+   ことはないので、**画面の見た目は1pxも変わらない。**
+
+   なぜ CSS が要るのか。島の引き（島ぜんぶ）は、**島の縦幅を画面の高さに
+   合わせる**（`IsleStage` の `wideSpan`）。いまの島は縦が横の 1.6倍あるので、
+   630px の枠に島まるごとを入れると横は 400px にしかならず、**残り 800px が
+   海だけ**になる。実際、直す前の下絵は右4割が空の海だった。
+
+   なので、**島は枠より大きく置いて、上下を枠で切る。** 島の東西の浜は
+   両方入るので「島である」ことは見て分かるし、建物・住人・札はそのぶん
+   大きく写る。共有カードは相手の画面では 500px 前後に縮むので、
+   **大きく写っていることが読めることに直結する。** */
+html[data-og] .hero {
+  height: var(--og-h, 630px);
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+/* 島は枠より背を高くして、**枠の中央に来るように**ずらす。
+   高さから島の大きさが決まるので、ここが唯一の倍率の調整点。
+   寄せの量（`--og-shift` / `--og-shift-x`）は `og.mjs` が**島の陸を測って**入れる。
+   島の形は章で変わるので、ここに座標を書かない。 */
+/* **ずらすのは transform で。margin では動かさない。**
+   負の `margin-top` で上へ出すと、同じ `.hero` の中にいる看板（`.hero-ui`）まで
+   同じだけ連れていかれて、**屋根が 75px 切れた。** transform は場所を取らないので、
+   島だけが動く。 */
+html[data-og] .isle {
+  height: var(--og-isle, 780px);
+  min-height: 0;
+  max-height: none;
+  transform: translate(
+    var(--og-shift-x, 0px),
+    calc((var(--og-h, 630px) - var(--og-isle, 780px)) / 2 + var(--og-shift, 0px))
+  );
+}
+/* 看板は、相手の画面で縮んでも島の名前が読める大きさにする。
+   画面では島を隠さないよう 268px に抑えてあるが、ここは1枚の絵なので
+   隠すものが無い（島は枠の中央にいる） */
+html[data-og] .hero-logo-full { width: 348px; }
+/* 帯は看板より少し広くてよい。**文の長さは `content/voice.ts` 側で変わる**ので、
+   幅を「いまの文字数にちょうど合う値」で決めない（`.hero-say` の text-wrap: balance） */
+html[data-og] .hero-say { max-width: 420px; }
+html[data-og] .hero-say b { font-size: 17px; }
+html[data-og] .hero-say i { font-size: 13.5px; }
+/* 旅のしるべ（いま何日目・どこにいるか）は、画面では島の外（すぐ下）にいる。
+   **絵にはそこが写らない**ので、右下の海の上へ移す。
+   字は旅程から出ているので、旅が終われば要素ごと消える＝絵からも消える。 */
+html[data-og] .htrip {
+  position: fixed;
+  right: 30px;
+  bottom: 28px;
+  z-index: 5;
+  width: 322px;
+  max-width: none;
+  margin: 0;
+  padding: 11px 14px 12px 16px;
+}
+html[data-og] .htrip-body em { font-size: 13px; }
+html[data-og] .htrip-body b { font-size: 19px; }
+html[data-og] .htrip-body i { font-size: 14px; }
+/* 押しどころの「>」は、押せない絵の中では何も指していない */
+html[data-og] .htrip-go { display: none; }
