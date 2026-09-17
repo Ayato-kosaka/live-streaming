@@ -1055,9 +1055,19 @@ export type ChatLine = {
  * id は作り直さない（OBS に貼った URL が変わってしまう）。
  * `clear` を付けたときだけ、選んであるものを空にして「はじめから」にする。
  * チャットの栞は開くたびに引き直すので、流れてくるのは**ここから先**のぶん。
+ *
+ * **`chatDown` が立っていたら `live` を読まない。** 席を開くついでに配信を1回
+ * 見にいくが、そこで落ちたときも以前は `live: false` を返していたので、
+ * 画面が「いま配信していません」と言い切っていた（#118）。
+ * 落ちたのなら、配信の有無も分からない。
  */
 export const startRoulette = (token: string, clear = false) =>
-  req<{ session: RouletteSession; live: boolean; doneru?: DoneruHint }>(
+  req<{
+    session: RouletteSession;
+    live: boolean;
+    chatDown?: boolean;
+    doneru?: DoneruHint;
+  }>(
     "/roulette/start",
     {
       method: "POST",
