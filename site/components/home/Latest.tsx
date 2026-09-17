@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { StreamCard } from "@/components/ui/Bits";
 import ReadAgain from "@/components/me/ReadAgain";
 import { withRead } from "@/lib/auth";
-import { loadState } from "@/lib/liveStats";
+import { loadState, reloadState } from "@/lib/liveStats";
 import { STREAM_TYPES } from "@/content/streamTypes";
 
 /**
@@ -33,12 +33,16 @@ export default function Latest() {
   const [vids, setVids] = useState<typeof baked | null>(null);
   const [off, setOff] = useState(false);
 
-  const read = useCallback(() => {
+  /* 最初の1回は控えをそのまま使い（`loadState`）、**押されたときだけ読み直す**
+     （`reloadState`）。ここを `loadState` のままにしていたので、最初の `/state` が
+     落ちた面では「もう一度よみこむ」を押しても**同じ `null` が返り、押すと必ず
+     元に戻っていた**。読めた結果は捨てないので、押しても住人は入れ替わらない。 */
+  const read = useCallback((again = false) => {
     let alive = true;
     setOff(false);
     /* **返事が来ないのも「読めなかった」。** `getState` は自分では諦めないので、
        ここで切らないと、古い2本が「いま読んでいる最中」の顔のまま残る。 */
-    withRead(loadState())
+    withRead(again ? reloadState() : loadState())
       .then((s) => {
         if (!alive) return;
         /* **鍵は `video_id`。** 本番の値を curl で見て決めた
@@ -58,11 +62,11 @@ export default function Latest() {
     };
   }, []);
 
-  useEffect(read, [read]);
+  useEffect(() => read(), [read]);
 
   return (
     <>
-      {off && <ReadAgain what="今夜までの配信" onRetry={read} />}
+      {off && <ReadAgain what="今夜までの配信" onRetry={() => read(true)} />}
       <div className="scards">
         {(vids ?? baked).map((v) => (
           <StreamCard key={v.videoId} {...v} />

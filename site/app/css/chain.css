@@ -857,6 +857,15 @@
 .ig-rebar { stroke: #b0763a; stroke-width: 3; stroke-linecap: round; }
 .ig-wall { fill: #e6c98d; stroke: #a8763a; stroke-width: 2; }
 .ig-roof { fill: #d0553f; stroke: #9c3628; stroke-width: 2; stroke-linejoin: round; }
+/* 足代がまだ読めていない日の姿。**0% の更地ではない**（`docs/island-standards.md` 10）。
+   場所だけ先に取って、建つものの形を薄い板で置く（`docs/island-design.md` 4章）。
+   杭は更地より低くして、土も剥がさない。**回すもの・光るものは置かない**
+   （島に回るものは無いし、島の SVG の中で動かすと外接矩形ぶんを毎フレーム塗り直す） */
+.ig-ghost-wall { fill: rgba(233, 208, 155, 0.62); stroke: rgba(138, 100, 50, 0.85); stroke-width: 2.5;
+                 stroke-dasharray: 9 7; }
+.ig-ghost-roof { fill: rgba(208, 85, 63, 0.55); stroke: rgba(156, 54, 40, 0.8); stroke-width: 2.5;
+                 stroke-dasharray: 9 7; stroke-linejoin: round; }
+.ig-stake.is-wait { stroke: rgba(138, 100, 50, 0.5); stroke-width: 2; }
 
 /* --- 建物の札 ---
    合図は厚み1種類だけ（`docs/island-world.md` 3.4）。

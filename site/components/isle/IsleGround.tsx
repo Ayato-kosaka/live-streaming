@@ -152,23 +152,55 @@ function GrassTile({ id, seed }: { id: string; seed: number }) {
  * **進捗バーではない。** 棒を伸ばすのではなく、行った先の景色そのものが育つ。
  * 0% 更地（杭だけ）→ 10% 鉄筋 → 50% 壁と屋根 → 100% 家。
  * 出発したらこの絵は消えて、ふつうの島になる（もう「これから建つ島」ではない）。
+ *
+ * **`unknown` は 0% ではない**（`components/chain/Diorama.tsx` と同じ決まり）。
+ * 足代がまだ読めていない日の姿で、更地と同じ絵にすると「まだ1円も集まって
+ * いない」と言ってしまう（`docs/island-standards.md` 10）。
  */
 export function Building({ x, y, r, stage }: { x: number; y: number; r: number; stage: string }) {
   const w = r * 0.34;
   const h = r * 0.2;
   const x0 = x - w / 2;
   const y0 = y - h;
+  /** 区画の四隅。更地の杭も、読めていない日の縄張りも、ここに立つ */
+  const corners: [number, number][] = [
+    [x0, y0],
+    [x0 + w, y0],
+    [x0, y0 + h],
+    [x0 + w, y0 + h],
+  ];
+  /** 建ったときの姿（下の 100% と同じ寸法）。薄い板にも、この形を使う */
+  const roofTop = y0 - r * 0.18;
+  const wallPath = `M${x0},${y0 + h} L${x0 + w},${y0 + h} L${x0 + w},${roofTop} L${x0},${roofTop} Z`;
+  const roofPath = `M${x0 - r * 0.04},${roofTop} L${x},${roofTop - r * 0.12} L${x0 + w + r * 0.04},${roofTop} Z`;
+
+  if (stage === "unknown")
+    /* **足代がまだ読めていない**（読み込み中・電波が届かない・口が落ちた）。
+       更地（0%）と同じ絵にすると、届かなかっただけの日に
+       「まだ1円も集まっていない島」が出て、出してくれた人に嘘をつく。
+       額のほうは「読めなかったら出さない」なので、**絵もそろえる。**
+
+       描くのは島の決まりどおりの読み込み中の姿——「場所だけ先に取る。
+       中身の形をした薄い板を置く」（`docs/island-design.md` 4章）。
+       **土は剥がさない**（どこまで進んだか分からないので、地面のことも
+       言い切らない）。だから更地の破線の区画とも、鉄筋とも、家とも見分けがつく。
+       **動かさない。** 島の SVG の中で動かすと、その外接矩形ぶんが毎フレーム
+       塗り直される（`CLAUDE.md`）。 */
+    return (
+      <g className="ig-build">
+        {corners.map(([px, py], i) => (
+          <line key={i} className="ig-stake is-wait" x1={px} y1={py} x2={px} y2={py - r * 0.05} />
+        ))}
+        <path className="ig-ghost-wall" d={wallPath} />
+        <path className="ig-ghost-roof" d={roofPath} />
+      </g>
+    );
 
   if (stage === "bare")
     return (
       <g className="ig-build">
         <path className="ig-plot" d={`M${x0},${y0} L${x0 + w},${y0} L${x0 + w},${y0 + h} L${x0},${y0 + h} Z`} />
-        {[
-          [x0, y0],
-          [x0 + w, y0],
-          [x0, y0 + h],
-          [x0 + w, y0 + h],
-        ].map(([px, py], i) => (
+        {corners.map(([px, py], i) => (
           <line key={i} className="ig-stake" x1={px} y1={py} x2={px} y2={py - r * 0.07} />
         ))}
       </g>
@@ -184,12 +216,11 @@ export function Building({ x, y, r, stage }: { x: number; y: number; r: number; 
         <line className="ig-rebar" x1={x0} y1={y0 - r * 0.04} x2={x0 + w} y2={y0 - r * 0.04} />
       </g>
     );
-  const top = y0 - r * 0.18;
   return (
     <g className="ig-build">
-      <path className="ig-wall" d={`M${x0},${y0 + h} L${x0 + w},${y0 + h} L${x0 + w},${top} L${x0},${top} Z`} />
-      <path className="ig-roof" d={`M${x0 - r * 0.04},${top} L${x},${top - r * 0.12} L${x0 + w + r * 0.04},${top} Z`} />
-      <line className="ig-rebar" x1={x} y1={y0 + h} x2={x} y2={top} />
+      <path className="ig-wall" d={wallPath} />
+      <path className="ig-roof" d={roofPath} />
+      <line className="ig-rebar" x1={x} y1={y0 + h} x2={x} y2={roofTop} />
     </g>
   );
 }
