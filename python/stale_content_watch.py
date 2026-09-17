@@ -112,6 +112,10 @@ class Book:
     days: int
     why: str
     upstream: str = ""
+    # **赤い行に、次にやることを1行そえる。** 「古い」と言われても、
+    # 何をすれば緑になるかが本ごとに違う（料理は配信を見る、旅程は章を
+    # 閉じる）。書かないと、読んだ人がまた調べ直すことになる
+    todo: str = ""
 
 
 # 鍵の集め方。`KEYS` の本と、その上流にだけ要る。
@@ -223,11 +227,13 @@ BOOKS: dict[str, Book] = {
         "いま歩いている旅の旅程。出発前に確定しているので古くはならないが、"
         "**旅の終わり（2026-09-27）を過ぎると、旅程が今日に届かなくなる。**"
         "そのときは面を次の章に替える時期",
+        todo="旅が終わったので、北欧の章を閉じて6カ国を countries.ts に足す（issue #282）",
     ),
     "nordicSun.ts": Book(
         MACHINE, COVERS, 0,
         "旅の日ごとの日の出・日の入り（`tools/nordic_sun.py`）。旅程と同じ日数ぶんしか無い。"
         "尽きると、旅の面から明るさの欄が消える",
+        todo="`nordic.ts` を新しくしてから `tools/nordic_sun.py` を回し直す（issue #282）",
     ),
     # --- 見ない。理由つき ---
     "aboutWords.ts": Book(
@@ -459,6 +465,7 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
                 v.red.append(
                     f"{name} の表が今日に届いていません（いちばん先が {last} / "
                     f"あと{b.days}日ぶんは要る）"
+                    + (f" → {b.todo}" if b.todo else "")
                 )
                 v.results.append(Result(name, b.who, COVERS, b.days, "赤", detail))
             else:
