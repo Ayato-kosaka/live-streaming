@@ -55,6 +55,7 @@ from utils.filesystem import (
 from utils.time import (
     should_skip_after_7days,
     calculate_next_retry_at,
+    is_late_lane,
 )
 
 
@@ -94,6 +95,19 @@ def main() -> int:
         logger.info("取得対象動画を BigQuery から取得中...")
         videos = get_target_videos()
         logger.info(f"処理対象動画数: {len(videos)}")
+
+        # **窓の外から拾ったぶんを分けて出す。**
+        # ここが毎晩0でないなら、7日以内に決着が付いていないということ。
+        # 数が出ていないと「今夜が重いのは何のせいか」が後から読めない。
+        late = [v for v in videos if is_late_lane(v.first_seen_at)]
+        if late:
+            logger.info(
+                f"うち {len(late)} 本は7日の窓からこぼれていたぶん"
+                f"（もう一度だけ試して、駄目なら SKIPPED に落とす）"
+            )
+            for v in late:
+                seen = v.first_seen_at.isoformat() if v.first_seen_at else "（無し）"
+                logger.info(f"  [{v.video_id}] {v.status.value} 初回確認 {seen} 試行 {v.attempt_count}")
         
         if not videos:
             logger.info("処理対象の動画がありません。終了します。")

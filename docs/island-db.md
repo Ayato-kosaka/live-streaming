@@ -358,21 +358,48 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 | `title` | STRING | 可 | タイトル（YouTube API から） |
 | `actual_start_time` | TIMESTAMP | 可 | 実際に始まった時刻（`liveStreamingDetails.actualStartTime`） |
 
-状態の落ち方: `PENDING` → 取れれば `SUCCEEDED`。取れなければ、見つけてから
-24時間以内は `WAITING`、24時間を過ぎたら `FAILED`、7日を過ぎたら `SKIPPED`
-（`python/fetch_chat_data.py` の `handle_no_chat_file`）。
+状態の落ち方: `PENDING` → 取れれば `SUCCEEDED`。取れなければ
 
-⚠ **`WAITING` は自分では落ちない。** 拾い直すクエリが `first_seen_at` の
-7日より古いものを対象から外すので、一度も拾われなかった `WAITING` は
-そのまま残る。
+- **チャットがまだ出ていないだけ**（ファイルが無い／0件）→ 7日のあいだ `WAITING`。
+  7日を過ぎたら `SKIPPED`（`python/fetch_chat_data.py` の `handle_no_chat_file`）
+- **本物のエラー**（yt-dlp・パース・BigQuery）→ `FAILED`。
+  7日を過ぎたら `SKIPPED`（同 `handle_failure`）
 
-⚠ **`SKIPPED` は開店以来1本も無い**（2026-09-10 に数えて
-SUCCEEDED 671 / FAILED 63 / WAITING 28 / SKIPPED 0）。
-拾うクエリの窓（7日以内）と `SKIPPED` にする条件（7日以上）が**ちょうど裏表**なので、
-クエリが返した行が `SKIPPED` になれる余地が、拾ってから yt-dlp を回すあいだの
-数分しかない。**表にはある状態だが、実際には通らない。**
+「24時間を過ぎたら `FAILED`」は 2026-09-10 にやめた。日に1回しか走らない
+ジョブでは、その窓が1回しか通らないため（`python/utils/time.py` の冒頭）。
 
-どちらも詳しくは [`island-db-notes.md` の1](./island-db-notes.md)。
+##### 拾い直す枠は2つある（2026-09-17）
+
+`python/bq/queries.py` の `QUERY_SELECT_TARGET_VIDEOS` は、
+**窓（7日）の内側と、窓からこぼれたぶんを別々に拾う。**
+
+| 枠 | status | `first_seen_at` | 1回の上限 |
+| --- | --- | --- | --- |
+| 窓の内側 | `PENDING` / `WAITING` / `FAILED` | 7日以内 | `MAX_VIDEOS_PER_RUN`（500） |
+| 窓の外側 | `PENDING` / `WAITING` | 7日より古い、または NULL | `LATE_LANE_MAX_VIDEOS`（20） |
+
+窓の外側から拾った行は `first_seen_at` が必ず7日より古いので、
+**その1回で `SUCCEEDED` か `SKIPPED` のどちらかになる。`WAITING` には戻らない。**
+だから平常時この枠は空で、毎晩の取り込みは1本も重くならない。
+
+⚠ **もとは窓が1つしか無く、こぼれた `WAITING` は永久に残っていた。**
+2026-09-17 に数えて `WAITING` 28本のうち26本が `attempt_count = 1`（＝1回試した
+きり）で、いちばん古いのは 2026-02-06。**「7日を過ぎたら `SKIPPED`」の判定は
+選ばれた動画にしか走らない**ので、窓から出た行は拾われも落ちもしなかった。
+元を辿ると、2026-09-04 より前は取り込みが**ひと月おきの追いつき処理**で、
+次に走るのが10〜31日後＝必ず窓の外、というのが効いている。
+詳しくは [`island-misses.md` #123](./island-misses.md)。
+
+⚠ **`WAITING` に移るとき `last_error_code` / `last_error_detail` は消える**
+（`mark_video_waiting`）。「待っている」は状態であってエラーではない、という
+筋は通っているが、**あとから「なぜ取れなかったのか」を読む手がかりは残らない。**
+26本の原因を切り分けられなかったのはこれが理由。
+
+⚠ **`SKIPPED` は 2026-09-17 時点でまだ1本も無い**
+（SUCCEEDED 684 / FAILED 63 / WAITING 28 / SKIPPED 0）。
+上の窓の外側の枠を通った行が、最初の `SKIPPED` になる。
+
+詳しくは [`island-db-notes.md` の1](./island-db-notes.md)。
 
 #### `chat_messages` — コメント1件＝1行（本番 135,427行）
 
@@ -1252,7 +1279,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 
 | 止まったもの | すぐ起きること | 直したら |
 | --- | --- | --- |
-| チャットの取り込み | 島の数字が止まる。**その日が「誰も来なかった日」ではなく「読めていない日」になる** | 7日以内なら翌晩に拾う。7日を過ぎると `WAITING` のまま残る |
+| チャットの取り込み | 島の数字が止まる。**その日が「誰も来なかった日」ではなく「読めていない日」になる** | 7日以内なら翌晩に拾う。7日を過ぎたぶんも、窓の外の枠から1晩20本まで拾い直して `SUCCEEDED` か `SKIPPED` に落とす |
 | Doneru の取り込み | 台帳とカードが止まる。**後ろに繋いである `tips_after_doneru.yml` も起きない**（起きても材料が無いので同じ） | **1回流せば止まっていた期間ごと埋まる**（毎回全件取り直しているため）。台帳は次の晩に7日ぶんを引き直して追いつく |
 | 焼き直し | 画面の数字だけが古くなる（本番の島の状態そのものは動いている） | 手で押せば追いつく |
 | `collectLiveChat` | 配信中のコメントが溜まらない。**切り抜きの材料が無くなる** | BigQuery 側は翌日の取り込みで入るので、切り抜き以外は影響しない |

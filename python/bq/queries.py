@@ -5,7 +5,12 @@ BigQuery SQL クエリ定義モジュール
 すべてのクエリはここで定義・管理する。
 """
 
-from config import BQ_DATASET, BQ_TABLE_VIDEOS, BQ_TABLE_CHAT_MESSAGES
+from config import (
+    BQ_DATASET,
+    BQ_TABLE_VIDEOS,
+    BQ_TABLE_CHAT_MESSAGES,
+    MAX_RETRY_PERIOD_SECONDS,
+)
 
 # ============================================================================
 # videos テーブル - Discovery 関連
@@ -78,38 +83,109 @@ WHEN NOT MATCHED THEN
 # ============================================================================
 
 # 処理対象の動画を抽出するクエリ
-# 
-# 抽出条件:
-# - status が PENDING, WAITING, FAILED のいずれか
-# - next_retry_at が NULL、または現在時刻以前（リトライ可能）
-# - first_seen_at が7日以内（7日超は対象外）
-# 
+#
+# **枠は2つある。窓（7日）の内側と、窓からこぼれたぶん。**
+#
+# ## なぜ2つに分かれているか（2026-09-17）
+#
+# もとは「`first_seen_at` が7日以内」の1本だけだった。7日を過ぎたものは
+# SKIPPED に落とす決まりだが、**その判定は選ばれた動画にしか走らない**
+# （`fetch_chat_data.handle_no_chat_file` → `utils.time.should_skip_after_7days`）。
+# つまり窓の外に出た WAITING は、**拾われもせず、落ちもしない。**
+#
+# 本番でそれが26本あった。全部 `attempt_count = 1`（＝1回試したきり）で、
+# いちばん古いのは 2026-02-06。原因は窓そのものではなく、**取り込みが
+# 毎晩は走っていなかったこと**にある。実際に走った日は 02-06 / 02-27 / 03-03 /
+# 03-13 / 03-27 / 04-24 / 05-20 / 05-30 / 06-24 / 06-27 / 07-25 / 07-28 /
+# 08-28 と、ひと月おきの追いつき処理だった（毎晩になったのは 2026-09-04 から）。
+# **次に走るのが10〜31日後なら、どの行も必ず窓の外にいる。**
+# だから2回目の試行が一度も起きなかった。詳しくは `docs/island-misses.md` #123。
+#
+# ## 窓を外さないのはなぜか
+#
+# 外すと毎晩、取り込めなかった全部（本番で91本）を yt-dlp にかけ直すことになる。
+# 欲しいのは「もう一度だけ拾って、決着をつける」ことなので、
+# **窓の外には本数を絞った別枠を置く**（`LATE_LANE_MAX_VIDEOS`）。
+#
+# この枠から入った動画は、`first_seen_at` が必ず7日より古いので、
+# チャットが出なければその場で SKIPPED、本物のエラーでも SKIPPED になる。
+# **1本につき1回で終わり、WAITING には戻らない。** だから溜まらない。
+#
+# ## 抽出条件
+#
+# 共通: `next_retry_at` が NULL、または現在時刻以前（リトライ可能）
+#
+# | 枠 | status | first_seen_at | 上限 |
+# | --- | --- | --- | --- |
+# | 窓の内側 | PENDING / WAITING / FAILED | 7日以内 | `@max_videos` |
+# | 窓の外側 | PENDING / WAITING | 7日より古い、または NULL | `@max_late_videos` |
+#
+# **窓の外側に FAILED を入れていない。** FAILED は「試して駄目だった」という
+# 判定が既に出ている状態で、`build_residents` の数え方でも SKIPPED と同じ
+# 「読めなかった日」に入る（状態を移しても島の数字は1日も動かない）。
+# いっぽう WAITING は「次の晩にもう一度試す」と言ったまま試していない状態で、
+# **言っていることが嘘になっている。** 直す相手はそちら。
+# 本番の FAILED 63本を拾い直すかどうかは、別に決めればよい。
+#
+# 窓の日数は `MAX_RETRY_PERIOD_SECONDS` から作る。**数字を書き写さない。**
+# ここと `should_skip_after_7days()` がずれると、拾ったのに落とせない
+# （あるいは落とすのに拾えない）行がまた出る。
+#
 # ソート順:
 # - next_retry_at または first_seen_at の早い順（古いものから処理）
 QUERY_SELECT_TARGET_VIDEOS = f"""
-SELECT
-  video_id,
-  status,
-  first_seen_at,
-  next_retry_at,
-  attempt_count,
-  last_attempt_at,
-  last_error_code,
-  last_error_detail,
-  succeeded_at,
-  yt_dlp_version,
-  title,
-  actual_start_time
-FROM
-  `{BQ_DATASET}.{BQ_TABLE_VIDEOS}`
-WHERE
-  status IN ('PENDING', 'WAITING', 'FAILED')
-  AND (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP())
-  AND first_seen_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+WITH due AS (
+  SELECT
+    video_id,
+    status,
+    first_seen_at,
+    next_retry_at,
+    attempt_count,
+    last_attempt_at,
+    last_error_code,
+    last_error_detail,
+    succeeded_at,
+    yt_dlp_version,
+    title,
+    actual_start_time
+  FROM
+    `{BQ_DATASET}.{BQ_TABLE_VIDEOS}`
+  WHERE
+    next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP()
+),
+fresh AS (
+  SELECT * FROM due
+  WHERE
+    status IN ('PENDING', 'WAITING', 'FAILED')
+    AND first_seen_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL {MAX_RETRY_PERIOD_SECONDS} SECOND)
+  ORDER BY
+    COALESCE(next_retry_at, first_seen_at) ASC,
+    first_seen_at ASC
+  LIMIT @max_videos
+),
+late AS (
+  SELECT * FROM due
+  WHERE
+    status IN ('PENDING', 'WAITING')
+    AND (
+      first_seen_at IS NULL
+      OR first_seen_at < TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL {MAX_RETRY_PERIOD_SECONDS} SECOND)
+    )
+  ORDER BY
+    first_seen_at ASC
+  LIMIT @max_late_videos
+),
+-- 2つの枠を足してから並べ直す。**足したものを一度くくる**のは、
+-- UNION の外の ORDER BY に式（COALESCE）を書くため。
+picked AS (
+  SELECT * FROM fresh
+  UNION ALL
+  SELECT * FROM late
+)
+SELECT * FROM picked
 ORDER BY
   COALESCE(next_retry_at, first_seen_at) ASC,
   first_seen_at ASC
-LIMIT @max_videos
 """
 
 # ============================================================================

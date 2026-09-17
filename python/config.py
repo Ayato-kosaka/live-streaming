@@ -55,6 +55,24 @@ MAX_MERGE_BATCH_SIZE: Final[int] = 5000
 # 大量の動画がある場合でも実行時間を制限するため
 MAX_VIDEOS_PER_RUN: Final[int] = 500
 
+# **窓（7日）を過ぎた取りこぼしを、1晩に何本まで拾い直すか。**
+#
+# 拾い直すクエリは `first_seen_at` が7日以内のものしか選ばない。ところが
+# 「7日を過ぎたら SKIPPED に落とす」判定は**選ばれた動画にしか走らない**ので、
+# 窓の外に出た WAITING は拾われも落ちもせず、永久に残っていた
+# （2026-09-17 の本番で26本。`docs/island-misses.md` #123）。
+#
+# 窓そのものを外すと、毎晩その91本を全部 yt-dlp にかけ直すことになる。
+# そうではなく**窓の外にも細い枠を1本あけて**、そこから入ったものは
+# `handle_no_chat_file` / `handle_failure` が必ず7日超と判定するので、
+# **1本につき1回だけ試して SUCCEEDED か SKIPPED で終わる。** 溜まらない。
+#
+# 20本にしたのは実測から。2026-05-30 の取りこぼし一括処理は37本を約10分で
+# 回している（10:05〜10:15）＝1本およそ16秒なので、20本で5分半。
+# 詰まっているぶんを吐き出すのは最初の数晩だけで、**平常時この枠は空になる**
+# （窓の中で毎晩拾われ、7日目に SKIPPED まで行くため）。
+LATE_LANE_MAX_VIDEOS: Final[int] = 20
+
 # Discovery の lookback 日数（デフォルト）
 # 環境変数 DISCOVERY_LOOKBACK_DAYS で上書き可能
 DEFAULT_DISCOVERY_LOOKBACK_DAYS: Final[int] = 10
