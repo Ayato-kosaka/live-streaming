@@ -1,0 +1,38 @@
+<!doctype html><html lang="ja"><meta charset="utf-8">
+<title>対照: 押せないのに厚み</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  `popcheck.mjs` の対照。**1つの箱に、確かめたいことを1つだけ**植えてある。
+
+  「押せないのに厚み 0件」は、**見ていないから0件**かもしれない
+  （`docs/island-standards.md` §15）。ここを1周して、
+  **挙げてほしい2つを挙げ、挙げてはいけない8つを挙げない**ことを見てから、
+  本物の面の数字を出す。
+
+  class の名前で突き合わせるので、**名前を変えるなら popcheck.mjs の表も変える。**
+-->
+<style>
+  body { margin: 0; font: 12px/1.2 sans-serif; background: #fff; color: #222; }
+  .box { width: 40px; height: 40px; margin: 12px; background: #eee; }
+</style>
+<body><main>
+<h1>押せないのに厚み（対照）</h1>
+
+<!-- ここから2つ: 押せないのに厚みがある。**挙げてほしい** -->
+<div class="box pf-bad-shadow" style="box-shadow: 0 4px 0 #b00"></div>
+<div class="box pf-bad-filter" style="filter: drop-shadow(0 4px 0 #b00)"></div>
+
+<!-- ここから4つ: 厚みはあるが押せる。**挙げてはいけない** -->
+<a class="box pf-ok-link" href="/fix.html" style="display:block; box-shadow: 0 4px 0 #080"></a>
+<div class="box pf-ok-cursor" style="box-shadow: 0 4px 0 #080; cursor: pointer"></div>
+<a href="/fix.html"><span class="box pf-ok-child" style="display:block; box-shadow: 0 4px 0 #080"></span></a>
+<!-- 見出し（summary）が子なので、祖先をたどるやり方では「押せない」に出る。
+     ここが挙がると、島じゅうの畳みが毎回 違反 として数えられる -->
+<details class="pf-ok-details" style="box-shadow: 0 4px 0 #080"><summary>畳み</summary>中身</details>
+
+<!-- ここから4つ: そもそも厚みではない。**厚みの一覧にも載ってはいけない** -->
+<div class="box pf-no-blur" style="box-shadow: 1px 3px 3px rgba(0,0,0,.35)"></div>
+<div class="box pf-no-inset" style="box-shadow: inset 0 4px 0 #b00"></div>
+<div class="box pf-no-up" style="box-shadow: 0 -4px 0 #b00"></div>
+<div class="box pf-no-plain"></div>
+</main></body></html>

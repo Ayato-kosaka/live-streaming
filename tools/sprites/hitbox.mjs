@@ -406,13 +406,36 @@ export function fmtHit(r) {
 }
 
 /* ---- 面を手で渡して測る、いままでの使い方 ---- */
+/**
+ * 終了コード: 0＝通った / 1＝見つかった（48px割れ） / 2＝数えるものが無い
+ * （対照が落ちた・開けなかった面がある・その札が1つも無い）。
+ *
+ *   BREAK=nofold node tools/sprites/hitbox.mjs   # わざと盲点を作る（対照が落ちる）
+ *
+ * **数える前に対照を通す。** 仕込み（`PROBE_JS`）を `hitboxfix/fix.html` に
+ * 差し込んで、`probeVerdict()` の8つが揃うまで**本物の面の数字を出さない**。
+ * 仕込みは片側だけではない——40px の3つを割れに挙げること**と**、
+ * 60px の「大」を割れにしないこと**の両方**を見る。片側だけだと、
+ * しきい値をゆるめた道具も、なんでも割れと言う道具も通る
+ * （`docs/island-misses.md` #125）。
+ *
+ * `BREAK=` で、その守りが効いているかを確かめられる:
+ *
+ *   nofold    畳みを開かずに測る（#79 当時の姿。「小」「奥」が挙がらない）
+ *   nomin     下限を 0 にする（何も割れにならない＝ゆるめる向き）
+ *   allsmall  下限を 999 にする（60px の「大」まで割れになる＝きつくする向き）
+ *   preopen   前の数え方（`fold: "skip"`）の前に畳みを開く
+ *             （これまで見落としていたぶんが「前から見えていた」ことになる）
+ */
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const { serveFixtures } = await import("./fixserve.mjs");
   const PORT = process.env.PORT || "3130";
   const SEL = process.env.SEL || ".crumbs a";
   const PAGES = (process.env.PAGES || "/nordic/finland").split(",");
   const W = Number(process.env.W || 390);
   const FOLD = process.env.FOLD || "open";
   const MIN = Number(process.env.MIN || 48);
+  const BREAK = process.env.BREAK || "";
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
   const ctx = await b.newContext({ viewport: { width: W, height: 900 }, deviceScaleFactor: 1, isMobile: W < 700, hasTouch: W < 700, reducedMotion: "reduce" });
   await offline(ctx);
@@ -421,9 +444,45 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (process.env.SEED) await (await import(process.env.SEED)).apply(ctx);
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
-  console.log(`幅 ${W} / 畳み ${FOLD === "skip" ? "開かない（前の数え方）" : "先に開く"} / ${SEL}`);
+
+  /** 数字を1つも出さずに落ちる。**対照が外れた回に本番の数を読ませない** */
+  const bail = async (msg) => { console.log(msg); await b.close(); process.exit(2); };
+
+  /* ── 対照が先。落ちたら本物の面の数字は出さない ────────────────── */
+  {
+    const fx = await serveFixtures("hitboxfix");
+    const miss0 = [];
+    const got = await openChecked(p, fx.base, "/fix.html", { miss: miss0, waitUntil: "networkidle", timeout: 20000 });
+    if (!got.ok) { fx.close(); await bail(`対照の台が開けませんでした（${got.why}）。`); }
+    await addProbe(p);
+    // `preopen` は「前の数え方」の前に畳みを開いてしまう壊し方
+    if (BREAK === "preopen") await openFolds(p);
+    const cMin = BREAK === "nomin" ? 0 : BREAK === "allsmall" ? 999 : MIN;
+    const before = (await measure(p, { sel: SEL_ALL, min: cMin, fold: "skip" })).rows;
+    if (BREAK !== "nofold") await openFolds(p);
+    const after = (await measure(p, { sel: SEL_ALL, min: cMin, fold: "open" })).rows;
+    await delProbe(p);
+    const v = probeVerdict({ after, before, min: cMin });
+    console.log("── 対照（既知の大きさを仕込んで、挙げられるか／挙げずにいられるか）");
+    for (const l of v.lines) console.log(l);
+    const n = v.lines.length;
+    const ng = v.lines.filter((l) => l.startsWith("  !!")).length;
+    console.log(`  対照 ${n}件中 ${n - ng}件 一致${BREAK ? `（BREAK=${BREAK}）` : ""}`);
+    /* 仕込みを外したあと、台のリンクがまだ数えられるか。
+       ここが 0 だと「仕込みしか測れない道具」なので、本番の 0件 も読めない */
+    const rest = await measure(p, { sel: SEL_ALL, min: MIN, fold: "open" });
+    const left = rest.rows.filter((r) => !isProbe(r)).length;
+    console.log(`  ${left ? "○" : "×"} 仕込みを外しても、台の押しどころが ${left} 個 残っている`);
+    fx.close();
+    if (ng || !left) await bail(`\n対照が ${ng + (left ? 0 : 1)}件 外れた。**本物の面の数字は出さない。**（docs/island-standards.md §15）`);
+  }
+
+  /* ── 本物の面 ──────────────────────────────────────────────── */
+  console.log(`\n幅 ${W} / 畳み ${FOLD === "skip" ? "開かない（前の数え方）" : "先に開く"} / ${SEL}`);
   /** 開けなかった面。**空でなければ 2 で落ちる**（`served.mjs`）。 */
   const miss = [];
+  let seenPages = 0, nRows = 0, nSmall = 0, nSkip = 0, nFold = 0;
+  const nEx = {};
   for (const path of PAGES) {
     /* **素のパスで開かない。** 静的に配ると `/nordic/finland` は 404 を返す。
        `goto` は成功するので、そのまま数えると**「押しどころ 0個・48px割れ 0」**
@@ -433,10 +492,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       miss, waitUntil: "networkidle", timeout: 60000, tries: 4,
     });
     if (!got.ok) { console.log(path, `取れず（${got.why}）`); continue; }
+    seenPages++;
     await p.waitForTimeout(600);
     let folds = { opened: 0, stillClosed: 0 };
     if (FOLD !== "skip") folds = await openFolds(p);
     const { rows, skipped, excluded } = await measure(p, { sel: SEL, min: MIN, fold: FOLD });
+    nRows += rows.length;
+    nSmall += rows.filter((r) => r.small).length;
+    nSkip += skipped.length;
+    nFold += rows.filter((r) => r.fold).length;
+    for (const [k, v] of Object.entries(excluded)) nEx[k] = (nEx[k] || 0) + v;
     console.log(
       `${path}  押しどころ ${rows.length}個（うち畳みの中 ${rows.filter((r) => r.fold).length}）` +
         `  ${MIN}px割れ ${rows.filter((r) => r.small).length}` +
@@ -459,5 +524,25 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
   await b.close();
-  reportMissing(miss);
+
+  // **分母から読む。** 「割れ 0」は、見ていないから 0 かもしれない（§15）
+  console.log(`\n── 数えたもの（幅 ${W}px / 札「${SEL}」）`);
+  console.log(`  見た面           ${seenPages} / ${PAGES.length}`);
+  console.log(`  押しどころ       ${nRows} 個（うち畳みの中 ${nFold}）`);
+  console.log(`  ${MIN}px 割れ      ${nSmall} 個`);
+  console.log(`  当たりが測れず   ${nSkip} 個（上に何かがいる・画面の外。**小さいものではない**）`);
+  console.log(`  数えなかったもの ${Object.entries(nEx).map(([k, v]) => `${k} ${v}`).join(" / ") || "なし"}`);
+  console.log(`  見ていないもの: 押しどころに当たらない札（`+ `SEL を変えると数は変わる）`);
+
+  if (miss.length) { reportMissing(miss); process.exit(2); }
+  if (!nRows && !nSkip) {
+    console.log("\n押しどころを1つも測れませんでした。数えるものがありません。");
+    process.exit(2);
+  }
+  if (nSmall) {
+    console.log(`\nだめ: ${MIN}px を割る押しどころが ${nSmall} 個。`);
+    process.exit(1);
+  }
+  console.log(`\n${seenPages}面、${MIN}px 割れは見つかりませんでした。`);
+  process.exit(0);
 }

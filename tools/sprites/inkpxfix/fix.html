@@ -1,0 +1,46 @@
+<!doctype html><html lang="ja"><meta charset="utf-8">
+<title>対照: 字の濃さ</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  `inkpx.mjs` の対照。**濃さの分かっている字**を並べてある。
+
+  「4.5 割れ 0か所」は、**測っていないから0か所**かもしれない
+  （`docs/island-standards.md` §15）。ここを1周して、
+  **割れてほしい2つを割れに挙げ、割れてはいけない2つを挙げない**ことと、
+  **画面に出ていない2つを数に入れない**ことを見てから、本物の面を測る。
+
+  class の名前で突き合わせるので、**名前を変えるなら inkpx.mjs の表も変える。**
+
+  計算値（白地 #fff のうえ、sRGB の相対輝度で）:
+    ik-bad-gray     #999999        2.85 : 1   ← 割れ
+    ik-bad-opacity  #000 を 0.25   1.84 : 1   ← 割れ。**宣言された色は #000（21:1）**
+    ik-ok-gray      #5a5a5a        6.93 : 1
+    ik-ok-black     #000000       21.00 : 1
+-->
+<style>
+  body { margin: 0; background: #fff; color: #222; font: 20px/1.6 sans-serif; }
+  p { margin: 10px; background: #fff; }
+</style>
+<body><main>
+<h1 style="color:#000;background:#fff">字の濃さ（対照）</h1>
+
+<!-- 割れてほしい2つ -->
+<p class="ik-bad-gray" style="color:#999999">うすい灰色の字。ここは読めない</p>
+<!-- **`opacity` は宣言された色に入らない。** 描かれた画素から取らないと、
+     21:1 の黒として数えて合格に見える（`docs/island-review-4.md` 2章） -->
+<p class="ik-bad-opacity" style="color:#000000; opacity:.25">薄めた黒の字。ここも読めない</p>
+
+<!-- 割れてはいけない2つ -->
+<p class="ik-ok-gray" style="color:#5a5a5a">濃い灰色の字。ここは読める</p>
+<p class="ik-ok-black" style="color:#000000">まっ黒の字。ここも読める</p>
+
+<!-- 数に入れてはいけない2つ。画面に出ていない字を測ると、
+     地が白いので勝手に合格が増える（`docs/island-standards.md` §15 の
+     「ディレクトリ一覧の字を測っていた」と同じ形） -->
+<div style="height:24px; overflow:hidden">
+  <div style="height:400px; padding-top:200px">
+    <p class="ik-hidden-clip" style="color:#999999">切られて見えない字</p>
+  </div>
+</div>
+<p class="ik-hidden-none" style="display:none; color:#999999">出ていない字</p>
+</main></body></html>
