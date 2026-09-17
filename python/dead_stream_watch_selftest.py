@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -72,10 +73,24 @@ WATCH = REPO / "python" / "dead_stream_watch.py"
 # YouTube の id の11字目に立てる字。**ここを外すと oembed は 400 を返す**
 TAIL_OK = set("AEIMQUYcgkosw048")
 
-# 本番の焼き込みから拾えるはずの数。**分母そのもの。**
-# 数が動いたらここも動かす（動かすときは、なぜ動いたかを1行そえる）
-WANT_TOTAL = 719
+# 配信を名指ししている焼き込みの本数。**中身ではなく形**なので、
+# 毎晩の焼き直しでは動かない（動くのは面を1つ足したときだけ）
 WANT_FILES = 9
+
+# **本数そのものは、ここに写さない。**
+# 焼き直しは毎晩 videos を足すので、今日の数（2026-09-17 は 719）を書くと
+# **翌朝には赤くなり、誰かが数字を書き換えるだけの作業になる。**
+# そうやって手で合わせる見張りは、いずれ黙らされる
+# （`docs/island-standards.md` 15章・`docs/island-misses.md` #102）。
+#
+# 見たいのは「拾う側が黙って縮んでいないか」なので、**別の拾いかたと
+# 突き合わせる。** 下の2通りはどちらも本物の規則より狭いので、
+# ここで拾えたものは本物でも必ず拾えていないとおかしい。
+# 分母が増えても減っても、この関係は変わらない
+SUBSET_RE = [
+    re.compile(r'"v"\s*:\s*"([A-Za-z0-9_-]{11})"'),
+    re.compile(r'videoId\s*:\s*"([A-Za-z0-9_-]{11})"'),
+]
 
 
 def _is_day(x: str) -> bool:
@@ -94,8 +109,21 @@ def main() -> int:
         print(f"::error::種がありません（{CONTENT}）", file=sys.stderr)
         return 2
     real, real_files = scan_dir(CONTENT)
-    check("本番の焼き込みから拾えた配信の本数", len(real), WANT_TOTAL)
     check("配信を名指ししている焼き込みの本数", len(real_files), WANT_FILES)
+
+    # **狭い拾いかたで拾えたものが、本物からこぼれていないか。**
+    # 数を写さずに「縮んでいない」を見るのはこれ（上の SUBSET_RE の注）
+    subset: set[str] = set()
+    for f in sorted(CONTENT.rglob("*.ts")):
+        t = f.read_text(encoding="utf8", errors="replace")
+        for rx in SUBSET_RE:
+            subset.update(rx.findall(t))
+    # **落ちたときに270本ぶん並べない。** 公開のログに流れるので、
+    # 件数と頭の5本で足りる（どれか1本を追えば原因は同じ）
+    missed = sorted(subset - set(real))
+    shown = f"{len(missed)}本 こぼれた（例 {missed[:5]}）" if missed else "0本"
+    check("狭い拾いかたで拾えた配信が、本物からこぼれていない", shown, "0本")
+    print(f"    （狭い拾いかた {len(subset)} 本 / 本物 {len(real)} 本 を突き合わせた）")
 
     # 3通りの書き方が、3本とも当たっているか。**どれか1つ欠けても本数は近い値になる**
     for name, shape in (
