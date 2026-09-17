@@ -217,7 +217,7 @@ git --no-pager diff --stat site/content/recipes.ts site/content/kitchenTalk.ts
 ```bash
 cd /home/user/live-streaming/site && NEXT_DIST_DIR=.next-verify npx next build
 python3 -m http.server 4321 --directory .next-verify &
-cd ../tools/sprites && node crawl.mjs        # 全ページの h1・JSエラー・横あふれ・リンク切れ
+cd ../tools/sprites && node crawl.mjs        # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
 ```
 
 見るのは3つ。**足した絵が他と重なっていないか。番号が飛んでいないか。
