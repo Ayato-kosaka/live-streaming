@@ -18,15 +18,34 @@
 
 `build_voices.py` と同じで、application default credentials が無い。
 SQL は別の口（MCP など）から流して、返ってきた行を `python/data/*.json` に
-置いてある。**焼き直すときは、その3つを取り直してから `--build` する。**
+置いてある。**焼き直すときは、その4つを取り直してから `--build` する。**
 
     python/data/kitchen_video_stats.json   動画ごとの msgs / people / paid / mins
     python/data/kitchen_residents.json     動画ごとの、住人のチャンネルID（カンマ区切り）
     python/data/kitchen_icons.json         引用した人の YouTube アイコン
+    python/data/kitchen_no_chat.json       チャットが**もう来ない**配信
 
-取り直す SQL は `SQL_STATS` `SQL_RESIDENTS` `SQL_ICONS` に置いてある。
+取り直す SQL は `SQL_STATS` `SQL_RESIDENTS` `SQL_ICONS` `SQL_NOCHAT` に置いてある。
 
     python python/build_kitchen_talk.py --build
+
+## 「まだ来ていない」と「もう来ない」を分ける
+
+数字に使うのは**作った日**の配信で、買い出しの日とは混ぜない（画面は
+「この晩の台所にいた」と言う。別の晩の人数をそこに置いたら嘘になる）。
+だから作った日のチャットが1行も無いと、数字も住人も空になる。
+そこで引用まで無いと、前は品ごと落としていた。
+
+落とすと**焼き込みにその品の行が無くなる。** 行が無いことは
+「まだ焼いていない」の印で、見張り（`stale_content_watch.py` の `KEYS`）は
+それを見ている。つまり焼いても永久に赤いままになる——`french-toast` が
+実際に115日そうだった（作った日の `_Azl32caALw` が `NO_CHAT_FILE`。
+YouTube 側にチャットの記録そのものが無い。買い出しの日は取れている）。
+
+なので、**もう来ないと分かっている品だけ、空のまま行を残す。**
+取り込み待ちの品はこれまでどおり落とす。空の行を置いてしまうと、
+あとから数字が来たことに誰も気づけなくなる。
+その区別は `kitchen_no_chat.json` が持っていて、**こちらでは判定しない。**
 """
 
 import argparse
@@ -82,6 +101,18 @@ FROM (
 GROUP BY author_name
 """
 
+SQL_NOCHAT = """
+-- チャットが**もう来ない**配信。{vids} は recipes.ts の videoId を並べたもの。
+-- `NO_CHAT_FILE` は YouTube 側にチャットの記録そのものが無いということなので、
+-- 待っても増えない。**取り込み待ち（PENDING / WAITING）はここに入れない。**
+SELECT video_id, status, last_error_code AS err,
+  FORMAT_TIMESTAMP('%Y-%m-%d', actual_start_time, 'Asia/Tokyo') AS d
+FROM `live-streaming-d3cac.youtube_chat.videos`
+WHERE video_id IN ({vids})
+  AND status IN ('SKIPPED', 'FAILED') AND last_error_code = 'NO_CHAT_FILE'
+ORDER BY d
+"""
+
 
 def load(name: str):
     return json.loads((DATA / name).read_text(encoding="utf-8"))
@@ -126,6 +157,8 @@ def build() -> None:
     res_by_video = load("kitchen_residents.json")
     icons = load("kitchen_icons.json")
     picks = json.loads(PICKS.read_text(encoding="utf-8"))["picks"]
+    # チャットが**もう来ない**と分かっている配信（頭の「まだ来ていないと、もう来ない」）
+    gone = {r["v"] for r in load("kitchen_no_chat.json")}
     char_of = resident_icons()
 
     rows = []
@@ -153,7 +186,11 @@ def build() -> None:
             }
             for q in picks.get(slug, [])
         ]
-        if not (st or there or talk):
+        # 出すものが1つも無くても、**その日のチャットがもう来ないと分かって
+        # いる品は、空のまま行を残す。** 行が無いのは「まだ焼いていない」の印で、
+        # 見張りはそれを見ている（頭の「まだ来ていないと、もう来ない」）。
+        # 取り込み待ちの品は落としたままにする
+        if not (st or there or talk or day in gone):
             continue
         rows.append(
             {
@@ -182,7 +219,10 @@ def build() -> None:
     OUT_TS.write_text(HEADER + "\n".join(body) + FOOTER, encoding="utf-8")
     print(
         f"{OUT_TS} … {len(rows)}品 / 引用 {sum(len(x['talk']) for x in rows)}件 / "
-        f"住人の出た品 {sum(1 for x in rows if x['there'])}"
+        f"住人の出た品 {sum(1 for x in rows if x['there'])} / "
+        # 作った日のチャットがもう来ない品。**数を出しておく**——黙って増えると、
+        # 「焼けている」と「中身がある」の区別がまた付かなくなる
+        f"数字の取れない品 {sum(1 for x in rows if not x['people'])}"
     )
 
 
@@ -234,6 +274,6 @@ if __name__ == "__main__":
     ap.add_argument("--sql", action="store_true", help="取り直す SQL を出す")
     a = ap.parse_args()
     if a.sql:
-        print(SQL_STATS, SQL_RESIDENTS, SQL_ICONS)
+        print(SQL_STATS, SQL_RESIDENTS, SQL_ICONS, SQL_NOCHAT)
     else:
         build()

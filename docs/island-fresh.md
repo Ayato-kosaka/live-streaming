@@ -256,7 +256,7 @@ step が落ちたかどうか**だけ。しきい値を2か所に置くと、片
 
 | | BigQuery を引くか | 引かないなら、元は何か |
 | --- | --- | --- |
-| `build_kitchen_talk` | **引かない** | `python/data/kitchen_*.json`（3つ） |
+| `build_kitchen_talk` | **引かない** | `python/data/kitchen_*.json`（4つ） |
 | `build_legend_days` | **引かない**（`bigquery` を import すらしていない） | `python/data/legend_*.json`（2つ） |
 
 **`build_country_stats` はここから①へ移した**（2026-09-16）。頭に
@@ -363,7 +363,7 @@ Overpass は混むと空を返すので、失敗を 0 として焼くと、画�
 | --- | --- |
 | `shorts.ts` | **127日**（`island-misses.md` #119） |
 | `countryStats.ts` | **4ヶ月**（#104） |
-| `kitchenTalk.ts` | `recipes.ts` の `french-toast`（2026-05-25）が**いまも入っていない**。**115日** |
+| `kitchenTalk.ts` | `recipes.ts` の `french-toast`（2026-05-25）が入っていなかった。**115日**（2026-09-17 に焼いた） |
 
 3つ目は 2026-09-17 に、この見張りを作って**初めて見つかった**。
 誰も見ていなかったので、何日前から欠けていたのかも分からない。
@@ -441,7 +441,7 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `nordic.ts` | 人（旅程） | COVERS | 今日まで | あと10日 |
 | `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 今日まで | あと10日 |
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
-| `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | **🔴 1件欠け** |
+| `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
 | `characterBox.ts` | 機械（`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** |
 | `chatter.ts` | 人（上流 `residents.ts`） | SHARE | 50% | 26%（27/102人） |
