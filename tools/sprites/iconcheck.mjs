@@ -45,6 +45,8 @@ import { reportControl } from "./fixserve.mjs";
 
 const PORT = process.env.SPORT || 4150;
 const BREAK = process.env.BREAK || "";
+/** 配り先に届かなかったときの言い分。**数えるものが無い（2）に回す** */
+let serveErr = "";
 const skip = {
   head: BREAK === "nohead", face: BREAK === "noface",
   chara: BREAK === "nochara", dead: BREAK === "nodead",
@@ -96,7 +98,11 @@ async function openMe(nochara) {
   const p = await ctx.newPage();
   const yt = [];
   p.on("request", (r) => { if (/yt3\.ggpht\.com|googleusercontent\.com\/ytc/.test(r.url())) yt.push(r.url()); });
-  const res = await p.goto(`http://localhost:${PORT}/me.html`, { waitUntil: "networkidle" });
+  // **配っていないときに、生の例外で落ちない。** それだと「見に行って0件」と
+  // 「そもそも見ていない」が、読む人には同じ赤い文字に見える。
+  // `SPORT` を渡し忘れた回がこれで、popcheck は先に 2 で止まっていた
+  const res = await p.goto(`http://localhost:${PORT}/me.html`, { waitUntil: "networkidle" })
+    .catch((e) => { serveErr = String(e).split("\n")[0]; return null; });
   if (!res || res.status() !== 200) { await ctx.close(); return null; }
   await p.waitForTimeout(1500);
   return { ctx, p, yt };
@@ -187,7 +193,15 @@ console.log(`  見た絵         ${imgs} 枚（看板・顔・島のじぶん）
 console.log(`  だめ           ${bad} / ${seen}`);
 console.log(`  見ていないもの: 出ている絵が**誰の**絵か（それは facecheck.mjs）・図鑑や島の側の絵`);
 
-if (seen < 2) { console.log("\n見るものが足りません。"); process.exit(2); }
+if (seen < 2) {
+  console.log("\n見るものが足りません。");
+  // 届かなかったのなら、そう言う。「0件」と見分けが付かない赤にしない
+  if (serveErr) {
+    console.log(`配り先に届きませんでした: ${serveErr}`);
+    console.log(`静的に配ってから \`SPORT=<ポート>\` を渡してください（いまは ${PORT}）。`);
+  }
+  process.exit(2);
+}
 if (bad) { console.log(`\nだめ ${bad}件`); process.exit(1); }
 console.log("\n看板・中部とも顔が出ている");
 process.exit(0);

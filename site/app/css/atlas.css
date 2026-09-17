@@ -527,7 +527,7 @@
   top: 10px;
   pointer-events: none;
   opacity: 0.92;
-  filter: drop-shadow(0 2px 0 rgba(20, 60, 90, 0.2));
+
 }
 
 /* 地図の上に浮かせる小さな札（縮尺・方位） */

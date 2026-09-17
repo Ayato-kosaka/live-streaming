@@ -335,7 +335,7 @@
   max-height: 100%; max-width: 80%;
   width: auto; height: auto;
   object-fit: contain;
-  filter: drop-shadow(6px 7px 0 rgba(120, 140, 112, 0.22));
+  /* 影を落とさない。この島では「厚み」は押せることの印で、押せない絵に付けると嘘になる（#128） */
 }
 .zk-hero .zk-tape { margin-top: var(--sp-3); }
 /* 題名の札を h1 として置く。見出しの既定の余白を落として、札の位置だけで決める */
