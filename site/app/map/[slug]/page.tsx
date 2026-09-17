@@ -129,12 +129,16 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           <i>{c.region}</i>
         </p>
 
+        {/* **国でない面では「入国／出国」と書かない。** 「イラン（国境まで）」は
+            国境まで歩いた区間で、入国していない。数からも外し、カ国目の印も
+            押さないと決めた面が、ここだけ「入国 2026/04/29」と言っていた。
+            **1か所を直したら、同じことを別の言い方で言っている場所を探す。** */}
         <dl className="apass-log">
           {c.stays.map((st, i) => (
             <div key={i}>
-              <dt>入国</dt>
+              <dt>{isWalkedCountry(c.slug) ? "入国" : "はじまり"}</dt>
               <dd>{fmt(st.from)}</dd>
-              <dt>出国</dt>
+              <dt>{isWalkedCountry(c.slug) ? "出国" : "おわり"}</dt>
               {/* 出国の欄が空いているのは「まだいる」とは限らない。
                   次の島へ渡った日で閉じる（`../parts.tsx`） */}
               <dd>{st.to ? fmt(st.to) : <StayOut slug={c.slug} />}</dd>
