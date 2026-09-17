@@ -73,7 +73,7 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この6本だけ**）
+# ## 毎晩ひとりでに回すもの（**この7本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
@@ -81,6 +81,7 @@ name: 島の数字を焼き直す
 #   build_on_this_day     onThisDay.ts
 #   build_city_streams    cityStreams.ts
 #   build_country_stats   countryStats.ts
+#   build_shorts          shorts.ts          ※ BigQuery ではなく YouTube を読む
 #
 # 前の4本は**入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
 #
@@ -93,6 +94,21 @@ name: 島の数字を焼き直す
 # そのうえ、**旅のあいだは上流そのものが別にある**（2026-09-16）。`countries.ts` は
 # 旅から帰った本人が書く表で、旅に出ているあいだは1行も増えない。いま歩いている旅の
 # 滞在は `content/nordic.ts` の旅程から出す。2つを足すのが `python/stays.py`。
+#
+# `build_shorts` だけは **BigQuery ではなく YouTube を読む**（チャンネルのショートの
+# タブ。鍵は要らない）。毎晩に入れたのは 2026-09-17 で、それまでは
+# 「BigQuery に無いから機械では取れない」として外してあった。**外していたあいだ、
+# 棚は 2026-05-12 で127日止まっていた。** 軸は「BigQuery か」ではなく
+# 「**本番を読めば答えが出るか**」で（`docs/island-fresh.md` 1章）、公開の
+# チャンネルは本番の値。あやとが出せば増え、こちらが何も書かなくても正しい答えが出る。
+#
+# **走者から届くことは、足す前に確かめた**（2026-09-17。使い捨ての push トリガの
+# ワークフローで、一覧83本と公開日が1本取れるところまで見た）。この箱の proxy とは
+# 出口が違うので、**手元で届くことは走者で届くことの証明にならない。**
+#
+# YouTube 側は連打すると reCAPTCHA を返す（この箱で実際に踏んだ）ので、
+# スクリプトは1本につき5秒あける。**開くのは手元にまだ無いものだけ**なので、
+# ふだんの晩は一覧の2〜3回のやりとりで終わる。
 #
 # `build_country_stats` を毎晩に入れたのは 2026-09-16。それまでは
 # 「BigQuery から焼く」と書いてあるのに取り置きの JSON を焼き直すだけで、
@@ -127,8 +143,6 @@ name: 島の数字を焼き直す
 #   先に `--sql` の SQL を流して JSON を取り直す必要がある。**機械の仕事ではない。**
 # - **`build_nordic.py`** — 元にする JSON が `/tmp/` にあってリポジトリに残っていない。
 #   **そもそも回せない**（走らせても落ちる）。
-# - **`build_shorts.py`** — 元が手書きの表（`python/data/shorts.json`）。
-#   **BigQuery にショートは1本も入っていない。** 回しても手で書いたものを焼き直すだけ。
 # - **`build_voices.py`** — どの声を載せるかを**人が選ぶ**もの（`voices_picks.json`）。
 #   機械が選び直してよいものではない。
 # - **`build_nordic_map.py` / `build_world_route.py`** — 地形データから地図を焼くもの。
@@ -182,7 +196,7 @@ on:
   workflow_dispatch:
     inputs:
       scripts:
-        description: "回すもの（カンマ区切り。空なら7本ぜんぶ）例: build_residents,build_stream_peaks"
+        description: "回すもの（カンマ区切り。空なら8本ぜんぶ）例: build_residents,build_stream_peaks"
         required: false
         default: ""
         type: string
@@ -241,10 +255,10 @@ jobs:
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
             # 毎晩ぶん。**機械だけで答えの決まる5本**を、配るところまで
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats" >> "$GITHUB_ENV"
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 6本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 7本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -268,7 +282,7 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_kitchen_talk"
+          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_kitchen_talk"
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
           # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
@@ -278,7 +292,7 @@ jobs:
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので7本ぜんぶ回します"
+            echo "入力が空なので8本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -291,7 +305,7 @@ jobs:
                 *)
                   echo "::error::$n は回してよいものに入っていません。何も走らせずに止めます"
                   echo "::error::回せるのは: $ALL"
-                  echo "::error::legendDays / nordic / shorts / voices は、入れていない理由がこのファイルの先頭に書いてあります"
+                  echo "::error::legendDays / nordic / voices は、入れていない理由がこのファイルの先頭に書いてあります"
                   exit 1
                   ;;
               esac
@@ -317,6 +331,7 @@ jobs:
               build_on_this_day)   p="site/content/onThisDay.ts" ;;
               build_city_streams)  p="site/content/cityStreams.ts" ;;
               build_country_stats) p="site/content/countryStats.ts" ;;
+              build_shorts)        p="site/content/shorts.ts" ;;
               build_kitchen_talk)  p="site/content/kitchenTalk.ts" ;;
               *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
             esac
@@ -391,6 +406,12 @@ jobs:
               build_kitchen_talk)
                 echo "::warning::$s は BigQuery を引きません。python/data/kitchen_*.json の焼き直しなので、先にその JSON を取り直さないと数字は動きません"
                 python "python/$s.py" --build ;;
+              build_shorts)
+                # **ここだけ BigQuery ではなく YouTube を読む**（チャンネルのショートのタブ）。
+                # 引数なしで「取り直して焼く」。手元にある id が一覧から消えていたら
+                # スクリプトが 1 で終わり、焼き込みは1バイトも書き換わらない
+                echo "$s は BigQuery ではなく YouTube（チャンネルのショートのタブ）を読みます"
+                python "python/$s.py" ;;
               *) python "python/$s.py" ;;
             esac
             echo "::endgroup::"
@@ -598,6 +619,18 @@ jobs:
                   rule("国", KEEP, 0, r"lives: (\d+)"),
                   rule("配信", FLOOR, 0.95, r"lives: (\d+)", mode="sum"),
                   rule("コメント", FLOOR, 0.95, r"msgs: (\d+)", mode="sum"),
+              ],
+              # ショートは**消えない限り増えるだけ**。棚から減るのは、あやとが非公開に
+              # したときか、こちらの取りかたが壊れたとき。後者は `--fetch` が先に
+              # 1 で止めるので、ここは出口でもう一度、数で見るだけ
+              "shorts.ts": [
+                  # 置き場（3）。章の期間から決まるので、読み落とし以外では減らない
+                  rule("置き場", KEEP, 0, r'^\s{2}"[a-z-]+": \['),
+                  # ショート（83）。1本非公開になっても 1.2% なので 0.95
+                  rule("ショート", FLOOR, 0.95, r"^\s{4}\{ id: "),
+                  # 題名（83/83）。一覧の読み方が変わると、本数はそのままで字だけ空になる
+                  rule("題名の入っているショート", SHARE, 5.0,
+                       num=r'title: "[^"]', den=r"^\s{4}\{ id: "),
               ],
               "kitchenTalk.ts": [
                   rule("料理", FLOOR, 0.95, r"people: (\d+)"),
@@ -828,6 +861,7 @@ jobs:
               "cityStreams.ts": (7, "いまいる街の配信が増える。題名に街の名が出ない時期は止まる"),
               "countryStats.ts": (5, "いまいる国のコメントが毎晩増える"),
               "kitchenTalk.ts": (0, "上流が人（recipes.ts と手で選ぶ引用）。BigQuery を引かない"),
+              "shorts.ts": (0, "あやとがショートを出した晩だけ動く。4ヶ月出ない期間が実際にある"),
           }
 
           # 焼いた日そのもの。中身ではないので、比べる前に落とす
