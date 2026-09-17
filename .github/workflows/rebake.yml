@@ -1302,7 +1302,16 @@ jobs:
           # `next build` の書き出し先（この job は `NEXT_DIST_DIR` を付けない）
           DIST: site/.next
           PORT: "4519"
-        run: tools/sprites/ognight.sh
+        run: |
+          set -uo pipefail
+          # **落ちた理由を、あとから読める場所に残す。** ここは
+          # `continue-on-error` なので、赤くなるのは deploy のうしろの step。
+          # そこまで100本ぶんログが流れたあとでは、**この step の中身に
+          # たどり着けない**（実際に、初回の失敗で理由が読めなかった）。
+          # 取っておいて、赤くする step がもう一度出す
+          tools/sprites/ognight.sh > /tmp/og.log 2>&1 && code=0 || code=$?
+          cat /tmp/og.log
+          exit "$code"
 
       # **落ちたことを、deploy のうしろまで持っていく。**
       # `continue-on-error` の step は job を赤くしないので、ここで印だけ立てる
@@ -1451,7 +1460,13 @@ jobs:
             echo "旅が進んでいれば、リンクを貼ったときに出る「◯日目 / どこ」は嘘になっています。"
             echo "島の数字のほうは焼いて配ってあります（絵と数字は別の話なので、道連れにしていません）。"
             echo ""
-            echo "どこで落ちたかは、上の「分かち合う絵を撮り直す」の log に出ています。"
+            echo "落ちた理由:"
+            echo ""
+            echo '```'
+            tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+            echo '```'
+            echo ""
+            echo "全部は、上の「分かち合う絵を撮り直す」の log に出ています。"
             echo "手元で同じものを回すには:"
             echo ""
             echo '```'
@@ -1459,6 +1474,9 @@ jobs:
             echo "DIST=site/.next-og PORT=4519 tools/sprites/ognight.sh"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "---- 撮り直しが落ちた理由（最後の30行）----"
+          tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+          echo "---------------------------------------------"
           echo "::error::分かち合う絵（og.png）を撮り直せませんでした。絵は据え置きです"
           exit 1
 
