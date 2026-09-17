@@ -5,6 +5,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug } from "@/content/countries";
+import { isWalkedCountry } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity } from "@/content/cityStreams";
 import { countryStat } from "@/content/countryStats";
@@ -105,11 +106,19 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
       <Panel className="apass">
         <div className="apass-top">
           <CountryMap slug={c.slug} name={c.name} />
-          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける */}
-          <span className="apass-stamp" aria-hidden>
-            <b>{c.order}</b>
-            <i>カ国目</i>
-          </span>
+          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける。
+
+              **国でない面には押さない。** 「イラン（国境まで）」は国境まで
+              歩いた区間で、入国していない（`content/walked.ts` の
+              `isWalkedCountry`）。数のほうはそう数えているのに、ここだけ
+              「18カ国目」と押していた。**数えないと決めたものに順番を振ると、
+              押した印だけが別の数を言う。** */}
+          {isWalkedCountry(c.slug) && (
+            <span className="apass-stamp" aria-hidden>
+              <b>{c.order}</b>
+              <i>カ国目</i>
+            </span>
+          )}
         </div>
 
         <p className="apass-who">

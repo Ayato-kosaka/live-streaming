@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
+import Walked from "@/components/atlas/Walked";
 import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import { LiveNumber } from "@/lib/liveStats";
@@ -75,7 +76,10 @@ export default function Meishi() {
           <span>本の配信</span>
         </Link>
         <Link className="mei-num" href="/map">
-          <em>{s.countries}</em>
+          {/* **焼いた数を出さない。** 国境を越えた日の朝から、その晩の焼き直しが
+              配られるまで1つ少ない数が出る。押した先（`/map`）が並べている数と
+              食い違うので、ここも画面が出てから数え直す（`content/walked.ts`）。 */}
+          <em><Walked /></em>
           <span>カ国を歩いた</span>
         </Link>
         <Link className="mei-num" href="/kitchen">

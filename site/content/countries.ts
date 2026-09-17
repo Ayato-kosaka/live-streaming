@@ -399,11 +399,22 @@ export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === 
  * 国の名前と slug は歩き終わるまで変わらないので、ここに置く。
  * 万一ずれても、出るのは「旗が出ない」までで、別の国の旗は出ない。
  */
-export const AHEAD_COUNTRIES: { slug: string; name: string }[] = [
-  { slug: "poland", name: "ポーランド" },
-  { slug: "lithuania", name: "リトアニア" },
-  { slug: "latvia", name: "ラトビア" },
-  { slug: "estonia", name: "エストニア" },
-  { slug: "finland", name: "フィンランド" },
-  { slug: "sweden", name: "スウェーデン" },
+export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = [
+  { slug: "poland", name: "ポーランド", entered: "2026-09-11" },
+  { slug: "lithuania", name: "リトアニア", entered: "2026-09-14" },
+  { slug: "latvia", name: "ラトビア", entered: "2026-09-16" },
+  { slug: "estonia", name: "エストニア", entered: "2026-09-18" },
+  { slug: "finland", name: "フィンランド", entered: "2026-09-19" },
+  { slug: "sweden", name: "スウェーデン", entered: "2026-09-19" },
 ];
+
+/**
+ * 「歩いた国」に数えてよい slug か。**`iran-border` は国ではない。**
+ *
+ * 「イラン（国境まで）」は国境まで歩いた区間で、入国はしていない。
+ * `python/stays.py` の `is_country` と**同じ決めかた**にしてある——
+ * あちらが焼き込みの数（`COUNTRIES_WALKED`）を決め、こちらが画面の数を決めるので、
+ * 片方だけ違う読み方をすると**同じ面の上と下で数が1つずれる。**
+ * 実際にそうなっていた（表紙と `/now` が 20、`/map` の章の合計が 21）。
+ */
+export const isWalkedCountry = (slug: string) => !slug.endsWith("-border");

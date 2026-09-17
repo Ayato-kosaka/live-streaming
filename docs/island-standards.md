@@ -359,6 +359,16 @@ PORT=4150 node tools/sprites/tapink.mjs     # 0＝通った / 1＝見つかっ�
   押しっぱなしで測ると自分の押しが前の吹き出しを閉じて、**閉じている画面が
   「はみ出し0件」に混ざる**（`island-misses.md` #111）
 
+- **画面の字を触ったら `python3 python/text_expires_watch.py` を回した**
+  （**その日が来ると嘘になる字**。0=通った / 1=見つかった / 2=数えるものが無い。
+  対照は `python/text_expires_watch_selftest.py`）。焼いた字は次のビルドまで
+  直らないので、`<meta>` と企画の札がとくに残る（`island-misses.md` #135）
+
+- **「歩いた国」の数を触ったら `node tools/sprites/walkedcount.mjs` を回した**
+  （表紙・`/now`・`/map` の札・`/map` の章の合計の4か所を、**日をずらして5日ぶん**
+  読んで、毎回そろうことを見る）。**1日だけ見て合格にしない**——
+  焼いた数は、国境を越えた日の朝だけ食い違う（`island-misses.md` #137）
+
 - **`tools/` の道具を触ったら `node tools/sprites/rootcheck.mjs` を回した**
   （リポジトリの場所が直に書かれていないか。0=無い / 1=残っている / 2=数えるものが無い）。
   直書きが1本あると、**worktree で回した確かめが全部「master を測った結果」になる。**

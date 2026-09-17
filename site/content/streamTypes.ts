@@ -1,4 +1,3 @@
-import { COUNTRIES_WALKED } from "./countryStats";
 
 /** 配信の5つの型。押すとそれぞれの深掘りページに行く。 */
 export type StreamType = {
@@ -82,7 +81,11 @@ export const STREAM_TYPES: StreamType[] = [
     ],
     /* **数を手で書かない。** `17` と書いてあって、歩いた国が増えても動かなかった
        （`docs/island-misses.md` #104）。焼き込みから出す */
-    deeper: { label: `歩いてきた${COUNTRIES_WALKED}カ国を見る`, href: "/map" },
+    /* **数を書かない。** ここは焼き込みの `COUNTRIES_WALKED` を差し込んでいたが、
+       この字はデータなので画面が出てから数え直せない。国境を越えた日の朝、
+       表紙と `/map` だけが増えて、この札だけ前の日の数を出す。
+       行き先の面が数を出しているので、札は行き先だけ言う。 */
+    deeper: { label: "歩いてきた国を見る", href: "/map" },
   },
   {
     slug: "making",
