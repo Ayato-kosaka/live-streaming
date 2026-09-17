@@ -117,6 +117,26 @@ name: 管理スクリプトを実行
 #                        出るのは件数と書類IDの指紋と絵文字だけ
 #   tip_alias_selftest … 上の決め方を偽の Firestore と偽の口で動かす。
 #                        **本番にも資格情報にも触らない**（手元でも走る）
+#   tail_alias         … **ハンドルに付いた YouTube のしっぽ**（`-r9z`
+#                        `1234`）を落とした形を、その人の呼び名として足す。
+#                        図鑑の引き当ては**完全一致**なので、人が打つ
+#                        「名前の人の部分」では当たらない（#135）。
+#                        落とす形は当てずっぽうではなく、BigQuery の
+#                        ハンドル 2,335通りを数えて決めてある
+#                        （規則は `python/name_tail.py`）。
+#                        **足すのは aliases だけで、channelKeys には
+#                        触らない。** 鍵（lookupKeys）は Python で作らず、
+#                        口（POST /characters/{id}）に作らせる。
+#                        **その字を他の人がもう持っていたら足さない。
+#                        2人が同じ字になってもどちらにも足さない。**
+#                        {} で下見（**1バイトも書かない**）、
+#                        {"apply": true} で足す。{"limit": 5} で先に少しだけ。
+#                        出るのは件数と書類IDの指紋と絵文字だけ
+#   tail_alias_selftest … 上の決め方を偽の Firestore と偽の口で動かす。
+#                        **本番にも資格情報にも触らない**（手元でも走る）。
+#                        しっぽを落とした字で**本当に当たるようになるか**は
+#                        `python3 python/name_tail_selftest.py` が本物の OBS
+#                        （app/alertbox/matching.utils.ts）まで動かして見る
 #   character_days_probe … 図鑑の何人に「いっしょにいた日数」が出せるかを
 #                        数える。**読むだけ。1バイトも書かない。** `{}` で走る。
 #                        焼き込み（`residents.ts`）と同じチャンネルを指すかを
@@ -251,22 +271,75 @@ jobs:
       # （実際に ARGS: {"collection":"streamChatMessages",…} が出ていた）。
       # **入力は env: に置かず、出来事の中身から読む。** env: に置くと
       # ランナーがこのステップの env を伏せる前に印字してしまう。
+      #
+      # 拾い方は2つ要る。**形で分かるものと、形では分からないもの。**
+      #
+      #   (1) `UC…` と `@…` は、どの欄に入っていても形で分かる
+      #   (2) **`@` を付けずに打った名前は、形では `islandIdeas` と
+      #       見分けが付かない。** あやとが名前を打つときは `@` を
+      #       付けないので（`{"name": "でこぼこ v"}`）、いちばん使う形が
+      #       ここを素通りしていた。だから**欄の名前**で拾う
+      #
+      # 値の形で全部伏せに行くと `{"day": "2026-09-16"}` や
+      # `{"collection": "islandRate"}` まで消えて、**ログが読めなくなる。**
+      # 消えてよいのは「人を指す欄に入っていた字」だけ。
       - name: 入力の中の、個人を指しそうな値を伏せる
         shell: bash
         run: |
           set -uo pipefail
-          raw="$(jq -r '.inputs.args // ""' "$GITHUB_EVENT_PATH" 2>/dev/null || true)"
-          # チャンネルID（UC + 20文字以上）と表示名（@…）。
-          # JSON の区切り（" , } 空白）で止める
-          vals="$(printf '%s' "$raw" \
+          # **読めなかったときに、素通ししない。** ここは名前が公開ログへ
+          # 出る前の最後の関所なので、`|| true` で空にして先へ進むと
+          # 「伏せるものが無かった」と同じ顔で名前が通る。読めないなら止める
+          if ! raw="$(jq -r '.inputs.args // ""' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
+            echo "::error::入力が読めませんでした（jq が落ちた）。何も走らせません"
+            exit 1
+          fi
+          # (1) 形で分かるもの。チャンネルID（UC + 20文字以上）と `@…`。
+          #     JSON の区切り（" , } 空白）で止める
+          shape="$(printf '%s' "$raw" \
             | grep -oE 'UC[A-Za-z0-9_-]{20,}|@[^"[:space:],}]+' \
             | sort -u || true)"
+          # (2) **人を指す欄に入っていた字。** 入れ子と配列の中まで見て、
+          #     いちばん近い欄の名前で決める。
+          #     日付・数字・1文字は伏せない（伏せると、そこら中の数字が
+          #     `***` になってログが読めなくなる。GitHub も短い伏せ字を嫌う）
+          #     **抜き出す側が壊れたら、黙って 0件 にせず job ごと止める。**
+          #     ここは「出る前に止める」ための step なので、素通しと
+          #     「何も無かった」が同じ顔をしてはいけない
+          if printf '%s' "$raw" | jq -e . >/dev/null 2>&1; then
+            named="$(printf '%s' "$raw" | jq -r '
+              paths(scalars) as $p
+              | ($p | map(select(type == "string")) | last) as $k
+              | getpath($p) as $v
+              | select($k != null and ($v | type) == "string")
+              | select($k | ascii_downcase | test("^(name|names|nickname|nick|alias|aliases|channel|channelname|channelid|handle|donor|donorid|doneru|doneruid|uid|user|username|viewer|author|who|by|doc|docs)$"))
+              | $v
+              | select(length >= 2)
+              | select(test("^[0-9]+$") | not)
+              | select(test("^[0-9]{4}-[0-9]{2}-[0-9]{2}$") | not)
+            ' | sort -u)" || {
+              echo "::error::伏せ字の抜き出しが落ちました。何も走らせません"
+              exit 1
+            }
+          elif [ -z "$raw" ]; then
+            # 入力そのものを渡していない。伏せるものは無い（既定は "{}"）
+            named=""
+          else
+            # **JSON として読めないなら、ここで止める。**
+            # 形で分かるぶんだけ伏せて先へ進んでいたが、`@` を付けない
+            # 名前（`{"name": "…",}` のように打ち間違えたとき）は形では
+            # 拾えないので、そのまま公開ログへ出ていた。**打ち間違えた
+            # ときこそ名前が出る。** どのみち `_fs.args()` が先で止めるので、
+            # 止める場所を「何かが印字される前」へ動かすだけ
+            echo "::error::入力が JSON として読めません。何も走らせません"
+            exit 1
+          fi
           n=0
           while IFS= read -r v; do
             [ -z "$v" ] && continue
             echo "::add-mask::$v"
             n=$((n + 1))
-          done <<< "$vals"
+          done <<< "$(printf '%s\n%s\n' "$shape" "$named" | sort -u)"
           # 伏せた値そのものは出さない。件数だけ
           echo "入力の中の、個人を指しそうな値を $n 件伏せました"
 

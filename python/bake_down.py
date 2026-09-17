@@ -155,6 +155,26 @@ FROZEN_STEP = "凍っていたら赤くする"
 # issue が立つ形だった
 STALE_STEP = "焼き込みが古くなっていないか"
 
+# **出したあとに鳴る見張り。** ここが赤いのは「焼き直しが落ちた」ではない。
+# 焼き直しは通り、master にも入り、本番にも配り終わったあとで、別のことを
+# 見に行った見張りが1本鳴っている。
+#
+# 分けないと、issue の見出しが「島の数字が焼き直せていません。島に出ている数は
+# きのうのままです」になる。**数はちゃんと新しくなっているのに。**
+# あやとは run を開いて、落ちていない焼き直しを探すことになる。
+#
+# **名前が変わったら気づけるように、`bake_down_selftest.py` が
+# 「この名前の step が `rebake.yml` に実在するか」を毎回見ている。**
+# 実在しなくなった名前は、ここに書いてあっても一生当たらない（＝黙って
+# 「焼くのが落ちた」に戻る）ので、赤くして気づく
+WATCH_STEPS = (
+    "ショートの棚を取り直せたか",
+    "ショートの一覧に届いたか",
+    "分かち合う絵を撮り直せたか",
+    "セリフの届いていない人がいないか",
+    "取り込みが詰まっていないか",
+)
+
 # 無人で走った run だけを数える（docstring「見るのは『いまの状態』だけ」）。
 # `workflow_dispatch` は手で押したぶん。既定が `dry_run: true` なので、
 # 通っても master には1バイトも入らない
@@ -256,7 +276,8 @@ def why_red(steps: list) -> dict:
         steps: その run の step（`{"name": ..., "conclusion": ...}` の並び）
 
     Returns:
-        {"why": "frozen" / "stale" / "broken", "step": 落ちた step の名前か None}
+        {"why": "frozen" / "stale" / "watch" / "broken",
+         "step": 落ちた step の名前か None}
     """
     failed = [s for s in (steps or []) if s.get("conclusion") in RED]
     # **1本の run で両方落ちることがある。** そのときは「焼くのが落ちた」に
@@ -268,9 +289,21 @@ def why_red(steps: list) -> dict:
     for s in failed:
         if s.get("name") == STALE_STEP:
             return {"why": "stale", "step": STALE_STEP}
+    # **焼き直しそのものが落ちているなら、そちらが先。** 見張りも一緒に
+    # 鳴っている晩に「見張りが鳴っています」とだけ言うと、**落ちた焼き直しが
+    # 見出しから消える。** 出したあとの見張り以外に落ちたものがあるかを先に見る
+    hard = [s for s in failed
+            if s.get("name") not in WATCH_STEPS
+            and s.get("name") not in (FROZEN_STEP, STALE_STEP)]
+    if not hard:
+        for s in failed:
+            if s.get("name") in WATCH_STEPS:
+                return {"why": "watch", "step": s.get("name")}
     # 落ちた step が読めなくても、**赤いことは分かっている。**
     # 名前が無いぶん本文は薄くなるが、黙るよりずっといい
-    return {"why": "broken", "step": failed[0]["name"] if failed else None}
+    return {"why": "broken",
+            "step": (hard[0]["name"] if hard
+                     else failed[0]["name"] if failed else None)}
 
 
 def assess(run, steps, by_hand: bool = False) -> dict:
@@ -293,7 +326,7 @@ def assess(run, steps, by_hand: bool = False) -> dict:
         by_hand: `fixed_by_hand()` の返り値
 
     Returns:
-        {"down": True/False/None, "why": "frozen"/"stale"/"broken"/"byhand"/None,
+        {"down": True/False/None, "why": "frozen"/"stale"/"watch"/"broken"/"byhand"/None,
          "step": 落ちた step か None, "at": run の始まった時刻か None}
     """
     if not run:
@@ -362,6 +395,16 @@ def body(a: dict) -> str:
             "",
             "新しくするのは `/island-fresh`。料理・他己紹介・歩いた国は"
             "**配信を見ないと決まらない**ので、機械では埋まりません。",
+        ]
+    elif a["why"] == "watch":
+        head = [
+            "焼き直しは通っていて、**島に出ている数は新しくなっています。"
+            "本番にも配り終わっています。**",
+            "",
+            f"鳴っているのは、そのあとの見張り **{a['step']}** です。",
+            "",
+            "`島の数字を焼き直す` のいちばん新しい run を開いて、その step の"
+            "出している数を見てください。**焼き直しを押し直す必要はありません。**",
         ]
     elif a["why"] == "frozen":
         head = [
@@ -676,6 +719,7 @@ def say(a: dict) -> None:
                 {True: "止まっています", False: "通っています"}
                 .get(a["down"], "どうなっているか分かりません"),
                 {"frozen": "凍っている", "stale": "焼き込みが古い",
+                 "watch": "出したあとの見張りが鳴っている",
                  "broken": "焼くのが落ちた",
                  "byhand": "赤いが、そのあと手で押して通っているので保留"}
                 .get(a["why"], "-"))

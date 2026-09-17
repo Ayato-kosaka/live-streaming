@@ -367,7 +367,7 @@ PORT=4150 node tools/sprites/tapink.mjs     # 0＝通った / 1＝見つかっ�
 - **「歩いた国」の数を触ったら `node tools/sprites/walkedcount.mjs` を回した**
   （表紙・`/now`・`/map` の札・`/map` の章の合計の4か所を、**日をずらして5日ぶん**
   読んで、毎回そろうことを見る）。**1日だけ見て合格にしない**——
-  焼いた数は、国境を越えた日の朝だけ食い違う（`island-misses.md` #136）
+  焼いた数は、国境を越えた日の朝だけ食い違う（`island-misses.md` #137）
 
 - **`tools/` の道具を触ったら `node tools/sprites/rootcheck.mjs` を回した**
   （リポジトリの場所が直に書かれていないか。0=無い / 1=残っている / 2=数えるものが無い）。
