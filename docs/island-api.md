@@ -281,6 +281,21 @@ OBS に映すものと、あやとの手元のコントローラーを繋ぐ口�
 | `POST` | `/remote` | 席の持ち主だけ | 島を動かす（見ている場所・ひとこと） |
 | `GET` | `/remote?sessionId=…` | 席を知っている人 | いまの指示（表示側が読む） |
 
+### OBS の名簿は、名前の**完全一致**で当てている
+
+`GET /alertbox/:id/characters` が図鑑を全員ぶん返して、**当てるのは OBS の
+手元**（`app/alertbox/matching.utils.ts`）。口の側（`GET /characters/lookup`）は
+`?channel=` を `channelKeys`、`?alias=` を `lookupKeys` に当てる。
+**どちらも完全一致で、2人に当たったら決めない。**
+
+完全一致なので、**YouTube がハンドルに付けたしっぽ**（`@なまえ-r9z`
+`@なまえ1234` の後ろ）を打たないかぎり当たらない。人はそこまで打たない。
+落とした形を呼び名として足しておく道具が `python/admin/tail_alias.py` で、
+しっぽの見分けかたと数えた結果は `docs/island-db.md` 2.4。
+
+**口と OBS は見ている欄が違う**（口は保存された鍵、OBS は生の字）ので、
+片方だけ直すと静かに食い違う。数えるのは `python/admin/alertbox_names.py`。
+
 ### コメントの口は、**落ちても 200 で返る**
 
 `/roulette/:id/comments` と `/roulette/start` は、YouTube まで届かなかった
