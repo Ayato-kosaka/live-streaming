@@ -42,4 +42,5 @@ export const VOICES: Voice[] = [
   { date: "2026-09-10", videoId: "MLFOSFG_Y80", eventId: "ChwKGkNQeXI0ZlNQNUpZREZmTGs1d01kek5rRTB3", name: "@シメサバ44", icon: "https://yt4.ggpht.com/IjrGS7kMhJmV7rrH-zzBBAgOA5CTo_3vHXHffKoeKsLmRLSSoQJUcy-spKi9ASwAW_Jxr7TNwA=s64-c-k-c0x00ffffff-no-rj", text: "あやと氏は凄いよ　わいなら共有フライパンとか使えない潔癖症だから" },
   { date: "2026-09-07", videoId: "_kxbsXWzddQ", eventId: "ChwKGkNOcmgwcHJLM0pZREZhVkFUQWdkb1NnczVn", name: "@たぃpi", icon: "https://yt4.ggpht.com/kuSo9ngchjmhQIVQvNkmlrU2_Mw9LRTw5y2kR9uAGvMWfmW6HvXaJn_zb9eyjgokDaniepDk=s64-c-k-c0x00ffffff-no-rj", text: "首ながいと顔小さく見えるからワイは羨ましい" },
   { date: "2026-09-11", videoId: "kyzCpe5Znyk", eventId: "ChwKGkNNLXN4WXUwNXBZREZRUVBkZ1lkT1VveWNB", name: "@シメサバ44", icon: "https://yt4.ggpht.com/IjrGS7kMhJmV7rrH-zzBBAgOA5CTo_3vHXHffKoeKsLmRLSSoQJUcy-spKi9ASwAW_Jxr7TNwA=s64-c-k-c0x00ffffff-no-rj", text: "クッキングパパあやとだからね" },
+  { date: "2026-09-10", videoId: "MLFOSFG_Y80", eventId: "ChwKGkNJR1g0Y0tqNUpZREZhRThyUVlkcjFNbFNB", name: "@aoi1685", icon: "https://yt4.ggpht.com/7kIqlftaj8J6wMIiqSVp8-0QP72rbfrbnEkZYFZ58LI0o6SKSYID1enifwQrpf6JSs_-7xZCk9U=s64-c-k-c0x00ffffff-no-rj", text: "ちょっと旅行してくるーから2年ってすごい" },
 ];
