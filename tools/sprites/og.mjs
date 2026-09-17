@@ -5,9 +5,10 @@
  *   PORT=4200 node tools/sprites/og.mjs
  *   PORT=4200 OUT=/tmp/og-new.png node tools/sprites/og.mjs
  *
- * **ここは下絵を撮るだけで、`site/public/og.png` は置き換えない。**
- * 差し替えるかどうかは、撮ったものを見てから人が決める（表紙の島は章で
- * 入れ替わるので、撮れた絵が「いまの島」でも「配りたい絵」とは限らない）。
+ * **ここは撮るだけで、`site/public/og.png` は置き換えない。**
+ * 差し替えるのは `tools/sprites/ognight.sh` で、毎晩
+ * `.github/workflows/rebake.yml` から回る。撮る／見る／差し替えるを分けてあるのは、
+ * 手元で「いまどう写るか」だけ見たいときに、リポジトリを汚さずに済ませるため。
  *
  * ## 字を、この道具から渡さない
  *
@@ -34,10 +35,36 @@
  * 実際にそうなっていた）。1枚でも落ちていたら撮らずに止まる——絵は出るので、
  * 見ただけでは気づけない。
  *
+ * ## 絵に写るべき字を、絵と一緒に書き出す（`STAMP=`）
+ *
+ * 毎晩ひとりでに撮り直すために要る。**同じ入力で2回撮っても、絵のバイト列は
+ * 毎回ちがう**（住人が歩き、波が動く。実測で 756,000画素のうち 4.1〜4.6% が
+ * 入れ替わる）ので、「バイトが変わったら差し替える」だと**毎晩1枚ずつ
+ * 意味のないコミットが積まる。** 見たいのは絵の揺れではなく、
+ * **絵に写っている字が変わったかどうか**（何日目・どこ・帯・島の札）。
+ *
+ * `STAMP=<path>` を渡すと、その字だけを JSON で書き出す。**時刻は入れない**
+ * ——入れると毎晩ちがう字になって、結局毎晩コミットすることになる。
+ * いま配ってある `site/public/og.png` のぶんが `tools/sprites/og-stamp.json`
+ * に入れてあり、`.github/workflows/rebake.yml` が毎晩それと突き合わせる。
+ *
+ * ## ブラウザの置き場
+ *
+ * この箱は `/opt/pw-browsers` に入っているが、**GitHub のランナーには無い。**
+ * `CHROME=` で渡せるようにして、渡されなければ箱の置き場 →
+ * `playwright-core` が入れた先（`chromium.executablePath()`）の順に探す。
+ *
+ * ## 日付をずらして撮る（`OG_NOW=`、対照のときだけ）
+ *
+ * 旅のしるべ（何日目・どこ）は**開いた日**で決まるので、日替わりで効くかは
+ * 日をずらしてみないと分からない。`OG_NOW=2026-09-20` を渡すとブラウザの
+ * 時計だけがその日になる。**本番では1度も渡さない。**
+ *
  * **終了コード**: 0＝撮れて、対照も通った / 1＝撮れたが絵が島に見えない /
  * 2＝撮れなかった（島が出ない・顔が揃わない・対照が落ちた）。
  */
 import { spawnSync } from "child_process";
+import { existsSync, writeFileSync } from "fs";
 import { chromium } from "playwright-core";
 import { offline, offlineTally } from "./route.mjs";
 import { fromRoot } from "./repo.mjs";
@@ -46,6 +73,10 @@ import { findStage } from "./stage.mjs";
 /** 並列で作業するとき、エージェントごとに別のポートを使う。既定は 3000。 */
 const PORT = process.env.PORT || "3000";
 const OUT = process.env.OUT || "/tmp/og-new.png";
+/** 絵に写るべき字の書き出し先。渡さなければ書かない */
+const STAMP = process.env.STAMP || "";
+/** 対照のときだけ渡す、ブラウザの中の「いま」。本番では渡さない */
+const NOW = process.env.OG_NOW || "";
 const W = 1200, H = 630;
 /**
  * 島の陸を、枠の何割の幅にするか。**高さではなく幅で決める。**
@@ -77,9 +108,37 @@ const bye = async (browser, code, msg) => {
   process.exit(code);
 };
 
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args:["--no-sandbox"]});
+/**
+ * ブラウザの実体。**箱の置き場を決め打ちにしない。**
+ * この道具は毎晩 GitHub のランナーからも回るので、そちらには `/opt/pw-browsers` が無い。
+ * 見つからなければ `playwright-core` が入れた先を聞く（`PLAYWRIGHT_BROWSERS_PATH` も
+ * そこで効く）。**どこにも無ければ、黙って落ちずに 2 で止める。**
+ */
+const BOX = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+let CHROME = process.env.CHROME || (existsSync(BOX) ? BOX : "");
+if (!CHROME) {
+  try {
+    CHROME = chromium.executablePath();
+  } catch (e) {
+    console.error(`ブラウザが見つかりません（${BOX} も無い）: ${String(e.message || e)}`);
+    process.exit(2);
+  }
+}
+if (!existsSync(CHROME)) {
+  console.error(`ブラウザが ${CHROME} にありません。CHROME= で渡すか、playwright-core で入れる`);
+  process.exit(2);
+}
+
+const b = await chromium.launch({ executablePath: CHROME, args:["--no-sandbox"]});
 const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 await offline(ctx);
+/* **対照のときだけ、ブラウザの時計をずらす。** 旅のしるべは開いた日で
+   決まるので、日替わりで効いているかはこれでしか見られない。
+   `setFixedTime` は Date だけを止める（タイマーは走るので島は動いたまま）。 */
+if (NOW) {
+  await ctx.clock.setFixedTime(new Date(NOW));
+  console.log(`対照: ブラウザの中の「いま」を ${NOW} にしています`);
+}
 const p = await ctx.newPage();
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
 await p.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -211,12 +270,72 @@ if (cut.length) await bye(b, 2, cut.join(" / "));
    落ちても絵は出るので、撮った写真を見ても「そういう顔」にしか見えない。
    本番の og.png は、これで12人が全員おなじ顔のまま配られていた。 */
 const tally = offlineTally();
-const face = tally["キャラ"] ?? { asked: 0, real: 0 };
-console.log(`顔 本物 ${face.real}/${face.asked} 枚`);
-if (face.asked === 0 || face.real < face.asked) {
+/* **種類を1つに絞らない。** キャラだけ数えていると、島が住人のアイコン
+   （lh3）を出すようになった日に、そちらが全部 `ayato.webp` に落ちても
+   気づけない。**きかれた種類はぜんぶ、本物で返せていること。** */
+const short = Object.entries(tally).filter(([, t]) => t.real < t.asked);
+console.log(
+  `顔 ${Object.entries(tally).map(([k, t]) => `${k} 本物 ${t.real}/${t.asked}`).join(" / ") || "きかれていません"}`,
+);
+if ((tally["キャラ"]?.asked ?? 0) === 0) {
+  await bye(b, 2, "島がキャラクターの絵を1枚もきいてきません（島が出ていないか、差し替えが効いていない）");
+}
+if (short.length) {
   await bye(b, 2,
-    `住人の顔が ${face.asked - face.real}枚 足りません（既定の絵に落ちています）。` +
-      `python3 tools/sprites/chars.py と avatars.py を先に回す`);
+    `顔が ${short.map(([k, t]) => `${k} ${t.asked - t.real}枚`).join(" / ")} 足りません` +
+      `（既定の絵に落ちています）。python3 tools/sprites/chars.py と avatars.py を先に回す`);
+}
+
+/* **絵に写るべき字を、絵と一緒に取っておく。**
+   毎晩ひとりでに撮り直すときの「変わったか」の判定に使う。絵そのものは
+   撮るたびに 4% の画素が入れ替わるので（住人が歩き、波が動く）、
+   バイト列では「変わった」が毎晩立つ。見たいのはそこではない。
+
+   拾うのは**場所を名指しした4つだけ**で、「枠に写っている字ぜんぶ」にはしない。
+   島の札は枠のふちに半分だけ写っているものがあり、測りが1px動くと出たり
+   入ったりする＝**意味のない撮り直しが毎晩立つ。** 札は枠に入っているかを
+   問わず、島が持っているぶんを DOM の順で全部書く。 */
+const stamp = await p.evaluate(([root, markSel]) => {
+  const flat = (v) => (v || "").replace(/\s+/g, " ").trim();
+  /* 行ごとに割って読めるようにする。**`innerText` は使わない**——あれは
+     折り返しの位置で改行が入るので、枠の幅を 1px 変えただけで字が変わる。 */
+  const lines = (sel) => {
+    const n = document.querySelector(sel);
+    if (!n) return null;
+    const kids = [...n.querySelectorAll("b, i, em")].map((k) => flat(k.textContent)).filter(Boolean);
+    return kids.length ? kids.join(" / ") : flat(n.textContent);
+  };
+  const isle = document.querySelector(root);
+  return {
+    島: isle?.getAttribute("data-theme") || "",
+    看板: lines(".hero-logo"),
+    帯: lines(".hero-say"),
+    // 旅が終われば要素ごと消える。**消えたことも「変わった」**なので null で残す
+    旅: lines(".htrip"),
+    // 札は見えている名前だけ。中の説明まで入れると、絵に写らない字の書き換えで
+    // 撮り直しが立つ（1枚 540KB のコミットが、絵は同じまま積まる）
+    札: [...document.querySelectorAll(markSel)].map((n) =>
+      flat(n.querySelector("b")?.textContent ?? n.textContent),
+    ),
+  };
+}, [S.root, S.mark]);
+console.log(`字 ${JSON.stringify(stamp, null, 0)}`);
+if (STAMP) {
+  /* **時刻を入れない。** 入れた瞬間、毎晩ちがう字になって毎晩コミットが積まる。
+     人が読んで何のファイルか分かるように、先頭に1行だけ説明を置く。 */
+  writeFileSync(
+    STAMP,
+    JSON.stringify(
+      {
+        これは: "いま配ってある site/public/og.png に写っている字。毎晩 rebake.yml が撮り直した字と突き合わせて、変わっていたら絵を差し替える。手で書き換えない（tools/sprites/og.mjs が書く）",
+        ...stamp,
+      },
+      null,
+      2,
+    ) + "\n",
+    "utf-8",
+  );
+  console.log(`書いた ${STAMP}`);
 }
 
 await p.screenshot({ path: OUT, clip: { x: 0, y: 0, width: W, height: H } });

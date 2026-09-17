@@ -67,6 +67,20 @@
 
 **上から4本目までは入力が本番だけ。** 人がリポジトリに何も書かなくても正しい答えが出る。
 
+**焼き込みでないものが1つだけ、同じ晩に入っている。** 分かち合う1枚
+（`site/public/og.png`）で、リンクを貼ったときに出るあの絵。中の言葉は全部
+「画面が出しているもの」を撮っただけなので、**撮り直せば正しくなる**——のだが、
+撮り直す人がいなかった（`island-misses.md` #134）。いまは `tools/sprites/ognight.sh`
+が毎晩、書き出したものを静的に配って撮り直す。
+
+**絵のバイト列では見ない。** 住人が歩き波が動くので、同じ入力でも撮るたび
+3.8〜4.6% の画素が入れ替わる。見るのは**絵に写るべき字**（島・看板・帯・
+旅のしるべ・島の札）で、いま配ってあるぶんが `tools/sprites/og-stamp.json`。
+字が変わった晩だけ絵を差し替えて、その晩の commit に一緒に乗せる。
+
+撮れなかった晩は**絵を据え置いて、数字は配る**（絵が古いのと数字が古いのは
+別の話）。黙りはしないので、deploy のうしろで run が赤くなる。
+
 いちばん上の2本は **BigQuery と Firestore の両方**を読む。
 
 | 何を | どこから |
@@ -242,7 +256,7 @@ step が落ちたかどうか**だけ。しきい値を2か所に置くと、片
 
 | | BigQuery を引くか | 引かないなら、元は何か |
 | --- | --- | --- |
-| `build_kitchen_talk` | **引かない** | `python/data/kitchen_*.json`（3つ） |
+| `build_kitchen_talk` | **引かない** | `python/data/kitchen_*.json`（4つ） |
 | `build_legend_days` | **引かない**（`bigquery` を import すらしていない） | `python/data/legend_*.json`（2つ） |
 
 **`build_country_stats` はここから①へ移した**（2026-09-16）。頭に
@@ -349,7 +363,7 @@ Overpass は混むと空を返すので、失敗を 0 として焼くと、画�
 | --- | --- |
 | `shorts.ts` | **127日**（`island-misses.md` #119） |
 | `countryStats.ts` | **4ヶ月**（#104） |
-| `kitchenTalk.ts` | `recipes.ts` の `french-toast`（2026-05-25）が**いまも入っていない**。**115日** |
+| `kitchenTalk.ts` | `recipes.ts` の `french-toast`（2026-05-25）が入っていなかった。**115日**（2026-09-17 に焼いた） |
 
 3つ目は 2026-09-17 に、この見張りを作って**初めて見つかった**。
 誰も見ていなかったので、何日前から欠けていたのかも分からない。
@@ -427,7 +441,7 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `nordic.ts` | 人（旅程） | COVERS | 今日まで | あと10日 |
 | `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 今日まで | あと10日 |
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
-| `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | **🔴 1件欠け** |
+| `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
 | `characterBox.ts` | 機械（`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** |
 | `chatter.ts` | 人（上流 `residents.ts`） | SHARE | 50% | 26%（27/102人） |
@@ -473,6 +487,48 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 `nordic.ts` と `nordicSun.ts` は旅の終わり（2026-09-27）までしか日付を持たない。
 **28日からは「表が今日に届いていない」で赤くなる。** それは不具合ではなく、
 **旅の面を次の章に替える時期**という知らせ。繋ぐ前にここを承知しておくこと。
+
+---
+
+## 4. 画面の字が、いつ嘘になるか（`python/text_expires_watch.py`）
+
+**軸が3本目。** 上の2つは「焼き込みが古いか」を見るが、こちらは
+**画面に出る文が、ある日に嘘になるか**を見る。
+
+```bash
+python3 python/text_expires_watch.py              # 0=通った / 1=見つかった / 2=数えるものが無い
+python3 python/text_expires_watch.py --dir 写し --today 2026-09-17
+python3 python/text_expires_watch_selftest.py     # 対照（29件）。0=通った / 1=外した / 2=対照0件
+```
+
+**`rebake.yml` にはまだ繋いでいない**（2026-09-17。あの回は別の担当が触っていた）。
+繋ぐときは、上の対照を `run:` に1行足して、そのあとに本体を回す。
+
+| | 何を見るか | どこを読むか |
+| --- | --- | --- |
+| 凍り（`rebake.yml`） | 焼き直したのに字面が動かない | git の履歴 |
+| `stale_content_watch.py` | 焼き込みの中の日付が今日から離れた | `site/content/*.ts` |
+| ここ | **画面の文が、ある日に嘘になる** | `site/app` `site/content` `site/components` |
+
+### 拾うものの決めかた
+
+**1件ごとに「いつ嘘になるか」を言えること。** 言えないものは拾わない。
+これが唯一の歯止めで、これが無いと「なんとなく古そう」が何十件も並んで、
+誰も読まなくなる（`island-standards.md` §15）。
+
+日付は3通りで読む——文の中の日付／同じ文の中で**月を持ち回った日**／
+企画のように**すぐ上の欄（`date:` `until:`）にしか日が無い**もの。
+そのうえで「これから起きる言い方」（`FORWARD`）が同じ文にあるものだけを拾う。
+**丁寧形（〜ます）は入れない**——「城があります」はいつ読んでも本当。
+
+**過去の事実は拾わない。**「2023年8月1日に出会った」は日付があっても通る。
+判定しない本（視聴者さんの書き込みと配信の題名）は `QUOTES` に並べて、
+**中身は出さずに数だけ**表に出す。
+
+### 2026-09-17 の実測
+
+250本 / 画面に出る字 7,473件（うち日付を持つ 115件。50件は上の欄から日を取った）を見て、
+直したのが **10件**、嘘にならないと決めたのが **2件**（`ALLOW` に理由つき）。
 
 ---
 

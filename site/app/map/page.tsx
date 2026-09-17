@@ -3,7 +3,9 @@ import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
-import { COUNTRIES_WALKED } from "@/content/countryStats";
+import Walked from "@/components/atlas/Walked";
+import { WALKED_DONE } from "@/content/walked";
+import { isWalkedCountry } from "@/content/countries";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
@@ -122,6 +124,13 @@ function span(s: { from: string; to: string }) {
   return a.slice(0, 4) === b.slice(0, 4) ? `${a} – ${b.slice(5)}` : `${a} – ${b}`;
 }
 
+/** 章の1行。**国の名前で言う**（国境までの区間は名前に出さない）。 */
+function leadOf(list: { slug: string; name: string }[]) {
+  const only = list.filter((c) => isWalkedCountry(c.slug));
+  const use = only.length ? only : list;
+  return use.length > 1 ? `${use[0].name}から${use[use.length - 1].name}まで` : `${use[0].name}`;
+}
+
 export default function MapPage() {
   /* **いちばん新しく歩いた国**（滞在の始まりがいちばん新しい国）。
      並びの最後にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
@@ -139,6 +148,11 @@ export default function MapPage() {
   const here = [...COUNTRIES].sort((a, b) => lastFrom(b).localeCompare(lastFrom(a)))[0];
   const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
   const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
+  /* **番号は「国に入った順」で、`order` ではない。**
+     `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
+     1つ振ってある。それをそのまま出すと、旅の1国目（`WALKED_DONE` の次）と
+     **同じ番号が2つ出る。** 国だけに振り直して、区間には番号を出さない。 */
+  const noOf = new Map(ordered.filter((c) => isWalkedCountry(c.slug)).map((c, i) => [c.slug, i + 1]));
   // 章は route.json（＝地図を寄せるボタン）から。「ぜんぶ」は年表の区切りにならないので外す。
   const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
@@ -160,13 +174,13 @@ export default function MapPage() {
         {/* **「パリからトビリシまで」と書かない。** すぐ下に「その前に6週間ある」と
             書いてある面で、いちばん上の数字が「パリから」だと面が自分と喧嘩する。
 
-            **数は `COUNTRIES_WALKED`（焼き込み）から出す。** ここは
-            `visited.length`（＝`countries.ts` の国から国境の区間を引いたもの）で
-            数えていて、**表紙が19と言っている日に17と出していた。**
-            `countries.ts` は旅から帰った本人が書く表なので、旅のあいだは増えない。
-            下の「いまの旅」の畳みには、その国がもう並んでいる
-            （`docs/island-misses.md` #104）。 */}
-        <Stat value={COUNTRIES_WALKED} label="歩いた国" sub="いま歩いている旅もふくむ" />
+            **数は画面が出てから数え直す**（`components/atlas/Walked.tsx`）。
+            ここは `visited.length`（＝`countries.ts` の国から国境の区間を引いたもの）で
+            数えていて、**表紙が19と言っている日に17と出していた**
+            （`docs/island-misses.md` #104）。そのあと焼き込みの `COUNTRIES_WALKED` に
+            変えたが、あれは**日付で答えの変わる数を、晩に1度だけ焼いたもの**で、
+            国境を越えた日の朝は1つ少ない。数えかたは `content/walked.ts`。 */}
+        <Stat value={<Walked />} label="歩いた国" sub="いま歩いている旅もふくむ" />
         <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
         <Stat value={<Days from={PROFILE.leftJapan} />} label="旅した日数" sub="日本を出た日から" />
         {/* いまいる国の名前は数ヶ月変わらないので、この欄だけが止まって見えていた。
@@ -271,8 +285,14 @@ export default function MapPage() {
               <Fold
                 key={ch.id}
                 title={ch.label}
-                lead={`${list[0].name}から${list[list.length - 1].name}まで`}
-                note={`${list.length}カ国`}
+                /* **国の名前で言う。** 章の最後が国境までの区間だと
+                   「アゼルバイジャンからイラン（国境まで）まで」になって、
+                   すぐ隣の「3カ国」と数が合わないように読める */
+                lead={leadOf(list)}
+                /* **国だけ数える。** `list.length` で数えていたので、国ではない
+                   「イラン（国境まで）」がコーカサスを1つ水増ししていた。
+                   章の合計 21 が、表紙と `/now` の 20 と食い違う元。 */
+                note={`${list.filter((c) => isWalkedCountry(c.slug)).length}カ国`}
                 /* 開いておくのは、いまどこまで来たかが読める章ひとつだけ。
                    旅に出ているあいだは、いちばん下の「いま歩いている旅」がそれ */
                 open={!TRIP_ON && list.some((c) => c.slug === here.slug)}
@@ -283,8 +303,10 @@ export default function MapPage() {
                     return (
                       <li key={c.slug}>
                         <span className="atrip-rail" aria-hidden />
+                        {/* 国境までの区間には番号を出さない。**数えていないものに
+                            番号を振らない**——振ると、隣の「3カ国」と合わなくなる */}
                         <span className="atrip-no" aria-hidden>
-                          {c.order}
+                          {noOf.get(c.slug) ?? "—"}
                         </span>
                         <Link className="atrip-card" href={`/map/${c.slug}`} prefetch={false}>
                           <span className="atrip-flag">
@@ -316,7 +338,9 @@ export default function MapPage() {
           {/* いま歩いている旅の国。国境を越えた日にひとりでに1行増える。 */}
           <TripCountries
             steps={TRIP_STEPS}
-            start={COUNTRIES.length}
+            /* 通し番号の続きは**国の数**から。`COUNTRIES.length` だと
+               「イラン（国境まで）」が1つ番号を食って、旅の1国目が19番になる */
+            start={WALKED_DONE}
             label={TRIP_CHAPTER?.name ?? ""}
             open={TRIP_ON}
           />

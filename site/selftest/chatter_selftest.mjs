@@ -198,6 +198,9 @@ bring(LEGENDS_SRC, "legends.ts");
 // chatter.ts が連れてくるぶん
 bring(join(CONTENT, "countryStats.ts"), "countryStats.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
+// 歩いた国の数（`${WALKED}` の印を替えるところ）と、その元になる国の表
+bring(join(CONTENT, "walked.ts"), "walked.ts");
+bring(join(CONTENT, "countries.ts"), "countries.ts");
 copyFileSync(join(SITE, "lib", "builtAt.ts"), join(WORK, "builtAt.ts"));
 
 try {
@@ -205,6 +208,10 @@ try {
     join(WORK, "chatter.ts"),
     join(WORK, "residents.ts"),
     join(WORK, "legends.ts"),
+    /* **名指しで渡す。** `chatter.ts` はもう `countryStats.ts` を直に読まない
+       （歩いた国の数は `walked.ts` が数える）ので、渡さないと書き出されず、
+       下の `COUNTRIES_WALKED` を読むところで落ちる */
+    join(WORK, "countryStats.ts"),
     "--outDir", OUT,
     "--module", "commonjs",
     "--target", "es2022",
@@ -508,7 +515,7 @@ if (SPOKEN.length === 0) {
  * 「件数と食い違ったら落とす」で見る（下の2つめ）。
  */
 const MOVING = [
-  {what: "歩いた国の数（COUNTRIES_WALKED）", value: COUNTRIES_WALKED},
+  {what: "歩いた国の数（焼き込みの COUNTRIES_WALKED）", value: COUNTRIES_WALKED},
   {what: "名簿の人数（RESIDENTS.length）", value: RESIDENTS.length},
 ];
 
@@ -541,7 +548,7 @@ check(`セリフの中に、まだ動く数が手で書かれていない`
   + `（文字列 ${SPOKEN.length} 本を見た）`,
   handWritten.length === 0,
   `手で書いてある数が ${handWritten.length} 件: ${handWritten.join(" / ")}`
-    + "。差し込み（${COUNTRIES_WALKED}）で書く");
+    + "。差し込み（${WALKED}）で書く。数は `content/walked.ts` が画面の出たあとに数える");
 
 /* 伝説の企画の件数。**5本のセリフが「8つ」と字で言っている。**
    `legends.ts` に9件目を足した日、5本とも黙って嘘になる。赤くならない。

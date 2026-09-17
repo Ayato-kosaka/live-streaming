@@ -157,10 +157,10 @@ PY
 
 ### 2-4. その日の台所（`kitchenTalk.ts`）を焼く
 
-`build_kitchen_talk.py` は BigQuery を引かない。**先に取り置きの3つを足す。**
+`build_kitchen_talk.py` は BigQuery を引かない。**先に取り置きの4つを足す。**
 
 ```bash
-python /home/user/live-streaming/python/build_kitchen_talk.py --sql   # 3本の SQL が出る
+python /home/user/live-streaming/python/build_kitchen_talk.py --sql   # 4本の SQL が出る
 ```
 
 `{vids}` に足した `videoId` を `'…'` で並べて MCP から流し、返った行を足す。
@@ -171,6 +171,7 @@ python /home/user/live-streaming/python/build_kitchen_talk.py --sql   # 3本の 
 | `python/data/kitchen_video_stats.json` | 配列 | SQL の `video_id` を **`v`** に直して足す |
 | `python/data/kitchen_residents.json` | `{videoId: "chan,chan,…"}` | `{chans}` には `residents.ts` の `channel` を並べる |
 | `python/data/kitchen_icons.json` | `{アカウント名: URL}` | 引用した人のぶんだけ。`{names}` に名前を並べる |
+| `python/data/kitchen_no_chat.json` | 配列 | **チャットがもう来ないと分かっている配信**（取り込みが `SKIPPED`/`FAILED` かつ `NO_CHAT_FILE`）。ここに在る品は、数字も引用も空のまま行を残す。**行ごと落とすと、見張りが「まだ焼いていない」と読んで永久に赤い**（`docs/island-misses.md` #138） |
 
 引用は `python/kitchen_talk_picks.json` の `picks` に、**slug をキーにして**足す:
 
