@@ -180,6 +180,23 @@ STEPS_FROZEN_AND_STALE = [
     {"name": bake_down.STALE_STEP, "conclusion": "failure"},
 ]
 
+# **出したあとの見張りが鳴った朝。** 焼き直しは通り、master にも入り、
+# 本番にも配り終わっている。そのあとの見張りが1本鳴っているだけ
+STEPS_WATCH = [
+    {"name": "焼く", "conclusion": "success"},
+    {"name": "master に入れる", "conclusion": "success"},
+    {"name": "Hosting を配る", "conclusion": "success"},
+    {"name": "分かち合う絵を撮り直せたか", "conclusion": "failure"},
+    {"name": bake_down.FROZEN_STEP, "conclusion": "success"},
+]
+
+# **焼き直しも落ちて、見張りも鳴った朝。** 見張りに寄せると、
+# **落ちた焼き直しが見出しから消える**
+STEPS_BROKEN_AND_WATCH = [
+    {"name": "焼く", "conclusion": "failure"},
+    {"name": "分かち合う絵を撮り直せたか", "conclusion": "failure"},
+]
+
 STEPS_FROZEN = [
     {"name": "リポジトリのチェックアウト", "conclusion": "success"},
     {"name": "焼く", "conclusion": "success"},
@@ -458,6 +475,38 @@ def case2b_stale():
     ck("そのときは凍りを採る", both["why"] == "frozen", both["why"])
     print(f"    （落ちた {len(broken_body)}文字 / 凍った {len(frozen_body)}文字"
           f" / 古い {len(stale_body)}文字）")
+    return gh
+
+
+def case2c_watch():
+    """**出したあとの見張りと、焼き直しの失敗を取り違えないか。**
+
+    分けなかったあいだ、見張りが1本鳴るだけで
+    「島の数字が焼き直せていません。島に出ている数はきのうのままです」の
+    issue が立つ形だった。**数はちゃんと新しくなっているのに。**
+    読んだ人は、落ちていない焼き直しを探しに行くことになる。
+    """
+    print("\n[2c] 出したあとの見張りが鳴った朝 → 「焼くのが落ちた」に寄せない")
+    gh = FakeGh()
+
+    r, a = morning(gh, FROZEN, STEPS_WATCH)
+    ck("見立て", (a["down"], a["why"]) == (True, "watch"), (a["down"], a["why"]))
+    ck("乗った step", a["step"] == "分かち合う絵を撮り直せたか", a["step"])
+
+    watch_body = gh.issues[0]["body"]
+    ck("**数は新しくなっている、と書いてある**",
+       "新しくなっています" in watch_body, "書いてある")
+    ck("**押し直さなくてよい、と書いてある**",
+       "押し直す必要はありません" in watch_body, "書いてある")
+    ck("鳴っている見張りの名前が出る",
+       "分かち合う絵を撮り直せたか" in watch_body, "出る")
+    ck("「きのうのまま」とは言わない", "きのうのまま" not in watch_body, "言わない")
+
+    # **両方落ちた朝は、焼き直しのほうを採る。** ここを逆にすると、
+    # 落ちた焼き直しが見出しから消える
+    both = bake_down.why_red(STEPS_BROKEN_AND_WATCH)
+    ck("焼き直しも落ちていたら「落ちた」を採る", both["why"] == "broken", both["why"])
+    ck("乗るのは落ちた焼き直しのほう", both["step"] == "焼く", both["step"])
     return gh
 
 
@@ -862,6 +911,13 @@ def case13_yaml():
     ck(f"乗っている step が実在する（{len(steps)}個 見た）",
        bake_down.FROZEN_STEP in steps, bake_down.FROZEN_STEP)
 
+    # **見張りの名前も、全部実在するか。** 実在しない名前はここに書いてあっても
+    # 一生当たらず、黙って「焼くのが落ちた」に戻る。**赤くならずに戻る**ので、
+    # 名前を1つずつ見る
+    missing = [n for n in bake_down.WATCH_STEPS if n not in steps]
+    ck(f"出したあとの見張りが全部実在する（{len(bake_down.WATCH_STEPS)}本）",
+       not missing, missing or "ぜんぶ在る")
+
     # 3. この係の繋ぎ先が、実在するワークフローの name: か。
     #    **PyYAML は `on:` を真偽値の True として読む**（YAML 1.1）ので、両方引く
     me = docs.get(SELF_YML) or {}
@@ -938,6 +994,7 @@ def main() -> int:
     gh = case1_broken()
     gh2 = case2_frozen()
     case2b_stale()
+    case2c_watch()
     gh2 = case3_close(gh2)
     case4_same(gh2)
     case5_switch()
