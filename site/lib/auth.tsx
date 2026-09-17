@@ -203,6 +203,22 @@ async function fetchChannel(accessToken: string) {
   };
 }
 
+/**
+ * いま入っている人の uid。**フックの外から引くための控え。**
+ *
+ * `/state` が uid を返さなくなった（#133）ので、「この行は自分か」を
+ * 突き合わせるのは手元の uid だけになった。突き合わせる場所
+ * （`lib/liveStats.tsx` の `loadState`）はフックではないので、
+ * ここに置いて読ませる。**書くのはこのファイルだけ。**
+ *
+ * `null` は「入っていない」。まだ引き継ぎの途中も `null` で、
+ * そのあいだは自分の行が他人と同じ顔になる（絵は出る。名前が出ないだけ）。
+ */
+let currentUid: string | null = null;
+
+/** いま入っている人の uid。入っていなければ `null`。 */
+export const uidNow = (): string | null => currentUid;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [fbUser, setFbUser] = useState<User | null | undefined>(undefined);
   const [profile, setProfile] = useState<IslandUser | null>(null);
@@ -229,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (gone) return;
         off = onAuthStateChanged(auth, (u) => {
           clearTimeout(giveUp);
+          currentUid = u?.uid ?? null;
           setFbUser(u);
         });
       } catch {
@@ -245,6 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!fbUser) {
+      currentUid = null;
       setProfile(fbUser === null ? null : null);
       return;
     }

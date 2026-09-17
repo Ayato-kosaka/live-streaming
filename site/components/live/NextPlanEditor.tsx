@@ -8,9 +8,11 @@ import {
   canEditPlan,
   getNextPlan,
   getNextPlans,
+  loadMyPlans,
   myPlans,
   planEditHoursLeft,
   postNextPlan,
+  rememberLoginPlan,
   rememberMyPlan,
   saveNextPlan,
   type NextPlan,
@@ -231,9 +233,19 @@ export default function NextPlanEditor() {
     const run = (showWait = false) => {
       if (showWait) setCurRead("wait");
       /* **返事が来ないのも「読めなかった」**（`withRead` が12秒で見切る）。
-         細い電波では、断られるより固まるほうが多い。 */
-      withRead(getNextPlan(id))
-        .then((r) => {
+         細い電波では、断られるより固まるほうが多い。
+
+         **じぶんの企画の一覧も、ここで待つ。** 待たずに開くと、
+         ログインして出した企画を持ち主が開いた瞬間に
+         「これは、ほかの人が出した企画です」と言い切る——口は持ち主を
+         返さなくなった（#133）ので、一覧が届くまで誰のものか言えない。
+         **知らないあいだは、知らないと言わない。** 口は1本ぶんしか
+         増えない（`loadMyPlans` が同じ瞬間の呼び出しをまとめる）。 */
+      Promise.all([
+        withRead(getNextPlan(id)),
+        token().then((t) => withRead(loadMyPlans(t))),
+      ])
+        .then(([r]) => {
           if (!alive) return;
           open(r.plan, ids);
           setCurRead("ok");
@@ -272,10 +284,12 @@ export default function NextPlanEditor() {
       window.removeEventListener("online", on);
       document.removeEventListener("visibilitychange", back);
     };
-  }, [open]);
+  }, [open, token]);
 
   /* じぶんが出したもの。端末の控えとログインの両方から拾う。
-     一覧を1回引いて手元で絞る（1件ずつ聞くと、出した数だけ往復する）。 */
+     **ログインぶんはサーバーが絞る**（#133。誰でも読める一覧は
+     持ち主を返さなくなったので、こちらでは組み立てられない）。
+     端末の控えぶんは、今までどおり一覧を1回引いて手元で絞る。 */
   useEffect(() => {
     let alive = true;
     let miss = 0;
@@ -283,13 +297,23 @@ export default function NextPlanEditor() {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const run = (showWait = false) => {
       if (showWait) setMineRead("wait");
-      withRead(getNextPlans())
-        .then((r) => {
+      /* **どちらかが落ちたら「読めなかった」。** 片方だけで出すと、
+         ログインして出した企画を持っている人に「端末の控えぶんだけ」を
+         見せて、それを「あなたの出したもの、ぜんぶ」と言うことになる。 */
+      Promise.all([
+        withRead(getNextPlans()),
+        token().then((t) => withRead(loadMyPlans(t))),
+      ])
+        .then(([r, mineList]) => {
           if (!alive) return;
           const ids = myPlans();
-          setMineList(
-            r.plans.filter((p) => ids.has(p.id) || (!!user && p.byUid === user.uid)),
-          );
+          const had = new Set(mineList.map((p) => p.id));
+          setMineList([
+            ...mineList,
+            ...r.plans.filter(
+              (p) => !p.byLogin && ids.has(p.id) && !had.has(p.id),
+            ),
+          ]);
           setMineRead("ok");
           down = false;
           miss = 0;
@@ -358,6 +382,9 @@ export default function NextPlanEditor() {
         await saveNextPlan(d.id, body, t) :
         await postNextPlan(body, t);
       rememberMyPlan(r.plan.id);
+      /* ログインして出したものは、端末の印では直せない（#133）。
+         引き直しに行かずに、その場で「じぶんのもの」に足す。 */
+      if (r.plan.byLogin) rememberLoginPlan(r.plan.id);
       const ids = new Set([...mine, r.plan.id]);
       setMine(ids);
       setCur(r.plan);
@@ -376,7 +403,9 @@ export default function NextPlanEditor() {
     }
   };
 
-  const hours = cur && !cur.byUid ? planEditHoursLeft(cur) : 0;
+  /* 直せる窓が閉じるのは、ログインせずに出したものだけ（#133）。
+     持ち主がログインした人かどうかは `byLogin` で分かる（誰かは分からない）。 */
+  const hours = cur && !cur.byLogin ? planEditHoursLeft(cur) : 0;
 
   return (
     <>
@@ -416,7 +445,7 @@ export default function NextPlanEditor() {
             </p>
           </div>
         )}
-        {!locked && cur && !cur.byUid && hours > 0 && (
+        {!locked && cur && !cur.byLogin && hours > 0 && (
           <p className="muted">
             この企画を直せるのは、あと{hours}時間です。ログインして出すと、あとからでも直せます。
           </p>

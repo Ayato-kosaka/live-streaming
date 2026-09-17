@@ -48,10 +48,33 @@
 | `current` | いまどこ・ひとこと・今週・テーマ |
 | `stats` | 配信本数・日数・コメント数・のべ人数・常連の数・直近5本 |
 | `notes` | テーマ付箋の新着（最大200件） |
-| `residents` | 名前かアイコンを出してよいと言った人だけ |
+| `residents` | 名前かアイコンを出してよいと言った人だけ。**チャンネルIDも uid も返さない**（下） |
 | `residentDays` | **キャラクターの書類ID** → 一緒にいた日数。読めなかったときは `null` |
 | `nordic` | `arrivedOn` / `endedOn` |
 | `more.notes` | まだ古い付箋が残っていれば、その続きの位置 |
+
+**`residents[]` は、チャンネルIDも uid も返さない**（#133）。返す欄は4つ。
+
+| 欄 | 中身 | なぜこの形か |
+| --- | --- | --- |
+| `here` | uid を潰した16字（sha256 の頭） | 「いま島にいる人」を結ぶ鍵。**逆は引けない** |
+| `icon` | キャラクターの書類ID | 絵を引くのはサーバー（`islandCharacter.channelId`）。図鑑に結ばれていない人は無い |
+| `name` | 出してよいと言った名前 | 言っていなければ `null` |
+| `photo` | 出してよいと言ったアイコン | 同じ |
+
+**この一覧に載る条件は「名前か顔を出してよい」で、「チャンネルを教えてよい」ではない。**
+`channelId` は `youtube.com/channel/UC…` を開けば本人の顔と名前に直結する字なので、
+公開のカードからも（`docs/island-incident-2026-09-14-cards.md` 8-2）、日数の鍵からも
+（#115）落としてある。**ここだけ残っていた。**
+向こう側が使っていたのは絵を引くためだけなので、引いた答え（`icon`）を返す。
+
+**uid を返していたのは、突き合わせの鍵になるから外した。** 2026-09-17 の実測で、
+`GET /nextplans` が返していた `byUid` をここの `uid` で引くと、**企画の画面には
+名前を出していないのに、出した人の名前と顔が分かった**（1人ぶん・2件）。
+口を2つ叩けば済む形だった。かわりに `here`（uid を潰した字）を返す。
+居場所（`islandHere/{uid}`）の書類IDを読む側が同じように潰して突き合わせる
+（`site/lib/hereRest.ts`）。**この字から `islandHere/{uid}` は書けないし、
+uid を鍵にしている他のどこにも当たらない。**
 
 **`residentDays` の鍵はチャンネルIDではない。** 前はそうだったが、
 チャンネルIDは `youtube.com/channel/UC…` を開けば本人の顔と名前に直結するので、
@@ -80,6 +103,7 @@ BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているた�
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
 | `GET` | `/nextplans` | 誰でも | 一覧。`?archived=1` は**あやとだけ**。`?events=1` で運営側の企画（`board: false`）も混ぜる |
+| `GET` | `/nextplans?mine=1` | ログイン済み | **自分が出した企画だけ。** 未ログインは 401。`Cache-Control: no-store` |
 | `GET` | `/nextplans/:id` | 誰でも | 1件（育てる画面が続きを書くために引く） |
 | `POST` | `/nextplans` | 誰でも | 出す。**題だけでいい**（4字以上・60字まで／1日12件） |
 | `POST` | `/nextplans/:id` | 出した人 | 育てる。**送った中身でまるごと置き換わる**。あやとは時間制限を越えて書ける |
@@ -89,6 +113,28 @@ BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているた�
 | `POST` | `/nextplans/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
 
 1件 12,000 バイトまで（`JSON.stringify(body).length`）。
+
+**一覧は、出した人を返さない**（#133）。返すのは `byLogin`（ログインして出した
+ものかの1ビット）だけで、**誰が出したかは分からない。** 前は `byUid` に uid が
+そのまま入っていて、`/state` の `residents[].uid` と突き合わせると出した人の
+名前と顔が分かった。
+
+| | `GET /nextplans` | `GET /nextplans?mine=1` |
+| --- | --- | --- |
+| 誰が | 誰でも | ログイン済み（未ログインは 401） |
+| 何を | 掲示板に出るぜんぶ | **その人が出したものだけ** |
+| 誰のぶんかの決め方 | — | `uid`。**送られてきた値は見ない** |
+| 持ち主 | `byLogin: true` だけ（**誰かは返らない**） | 同じ（自分のものしか入らない） |
+| 掛け値 | `public, max-age=15, s-maxage=30` | **`no-store`** |
+
+**呼んだ人ごとに中身の変わる答えを、同じ URL で返さない。** `/nextplans` は
+CDN に載る口なので、載せると混ざって他人の答えが配られる。だから URL を分けて
+（`?mine=1`）、`no-store` を付ける。付箋の `?mine=1`（4章）とカードの
+`/cards/mine`（3章）と同じ形。
+
+**「じぶんが出したもの」は、これと端末の控えの合わせ技。** ログインせずに
+出したぶんは `cid` でしか分からないので、そちらは今までどおり画面側の
+localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 
 **あとから直せるのは誰か:**
 
@@ -270,6 +316,9 @@ OBS に映すものと、あやとの手元のコントローラーを繋ぐ口�
 この文書の口の一覧は、**コードの照合式そのもの**から起こしてある（2026-09-11）。
 
 ```bash
+# 誰でも読める口に、素性が乗っていないか（**GET だけ。対照つき**）
+python python/public_ids_selftest.py
+
 # 口の一覧（path === と、正規表現の照合）
 grep -nE 'method === "(GET|POST|DELETE|PUT)"' functions/src/islandApi.ts
 grep -nE 'const (photoMatch|eventImages|imageOne|logMatch|factMatch|pollMatch|forkMatch|heartMatch|replyMatch|archiveMatch|planOne|planHeart|planStatus|planVideos|planArchive|abWss|abTok|rlOne|rlChat|rlItems|rlSet|rlSpin|rlPost) = path.match' functions/src/islandApi.ts
