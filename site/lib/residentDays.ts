@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
+import type { Read } from "@/lib/auth";
 
 /**
  * 住人の「一緒にいた日数」を、最新のものにする（#91）。
@@ -28,16 +29,39 @@ import { loadState } from "@/lib/liveStats";
  * 数字を出すところは入れ替わっても「増えた」と読めるが、住人が消えるのは
  * 事故に見える。**見えている数だけを最新にする。**
  */
-export function useResidentDays(): Record<string, number> {
-  const [days, setDays] = useState<Record<string, number>>({});
+export type ResidentDaysState = {
+  /** チャンネルID -> 日数。**入っていないチャンネルは「0日」ではなく「数が無い」** */
+  days: Record<string, number>;
+  read: Read;
+};
+
+/**
+ * 日数と、**それが読めたかどうか**（#115）。
+ *
+ * `days` だけを返していたころは、読む側が「まだ来ていない」と
+ * 「来たけれど、この人の数は入っていなかった」を区別できなかった。
+ * 区別できないので、どちらも焼き込みの `0` に落ちて「0日」と出ていた。
+ *
+ * **`/state` の `residentDays` は上位60人ぶんしか返らない**
+ * （`functions/src/islandApi.ts` の `residentDays`）。図鑑に並ぶ102人のうち
+ * ここに載るのは一部で、**載っていないことは「一緒にいなかった」ではない。**
+ */
+export function useResidentDaysState(): ResidentDaysState {
+  const [state, setState] = useState<ResidentDaysState>({ days: {}, read: "wait" });
   useEffect(() => {
     let alive = true;
     loadState().then((s) => {
-      if (alive && s?.residentDays) setDays(s.residentDays);
+      if (!alive) return;
+      // `loadState` は落ちたぶんを null にして返す（`lib/liveStats.tsx`）
+      setState(s ? { days: s.residentDays ?? {}, read: "ok" } : { days: {}, read: "down" });
     });
     return () => {
       alive = false;
     };
   }, []);
-  return days;
+  return state;
+}
+
+export function useResidentDays(): Record<string, number> {
+  return useResidentDaysState().days;
 }
