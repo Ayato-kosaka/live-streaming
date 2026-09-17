@@ -42,12 +42,13 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { offline } from "./route.mjs";
 import { openChecked, reportMissing } from "./served.mjs";
+import { fromRoot } from "./repo.mjs";
 
 const run = promisify(execFile);
 const PROD = "https://live-streaming-d3cac.web.app";
 const SPORT = process.env.SPORT || "4230";
 const ORIGIN = `http://127.0.0.1:${SPORT}`;
-const DIST = process.env.DIST || "/home/user/live-streaming/site/.next-3230";
+const DIST = fromRoot(process.env.DIST || "site/.next-3230");
 const WIDTH = parseInt(process.env.WIDTH || "390", 10);
 /** わざと壊す。`plain`＝字の並びだけ見て、隠れているものを外さない */
 const BREAK = process.env.BREAK || "";

@@ -12,6 +12,7 @@
  */
 import { chromium } from "playwright-core";
 import { mkdirSync } from "fs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4230";
 const OUT = process.env.OUT || "/tmp/crumbs";
@@ -37,7 +38,7 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
 for (const when of ["before", "after"]) {
   const ctx = await b.newContext({ viewport: { width: W, height: 900 }, deviceScaleFactor: 2, isMobile: W < 700, hasTouch: W < 700, reducedMotion: "reduce" });
   await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-    (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+    (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
   await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));

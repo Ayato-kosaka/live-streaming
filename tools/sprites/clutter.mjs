@@ -22,6 +22,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4140";
 const WIDE = process.env.WIDE === "1";
@@ -42,12 +43,12 @@ const ctx = await b.newContext(
     ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }
     : { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
 );
-await offline(ctx, { photo: "/home/user/live-streaming/tools/sprites/photo-480.jpg" });
+await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 // 本番では live の /state が返ってきて、住人の名札が出る。
 // 出ている状態を見ないと「1画面に何個」を数えたことにならない
 if (STATE) {
   const { readFileSync } = await import("fs");
-  const src = readFileSync("/home/user/live-streaming/site/content/residents.ts", "utf8");
+  const src = readFileSync(repoPath("site/content/residents.ts"), "utf8");
   const chans = [...src.matchAll(/channel:\s*"([^"]+)"/g)].map((m) => m[1]);
   const names = ["ゆき", "たかし", "みどり", "こうへい", "さくら", "けんた", "あおい", "りょう", "なな", "だいち", "ひなた", "しょう", "まゆ", "とおる", "えみ", "かい", "つばさ", "のぞみ", "はると", "りん", "そら", "みなと"];
   await ctx.route(/island-api\/state/, (r) =>

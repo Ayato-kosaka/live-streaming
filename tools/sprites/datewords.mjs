@@ -5,6 +5,7 @@
  *   DIST=... SPORT=4220 node datewords.mjs
  */
 import { chromium } from "playwright-core";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4220";
 const ISOS = (process.env.ISOS || [
@@ -88,7 +89,7 @@ function tidy(s) {
 for (const ISO of ISOS) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-    r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+    r => r.fulfill({ path: repoPath("site/public/og.png") }));
   await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.addInitScript(`(() => {
     const FAKE = ${Date.parse(ISO)};

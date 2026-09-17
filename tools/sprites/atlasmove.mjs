@@ -13,7 +13,10 @@ for (const [tag, opt] of [
   ["reduce", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3, reducedMotion: "reduce" }],
 ]) {
   const ctx = await b.newContext(opt);
-  await offline(ctx, { photo: "/home/user/atlas-wt/tools/sprites/photo-480.jpg" });
+  // 外の絵は route.mjs の既定（`site/public/og.png`）に任せる。ここには
+  // `/home/user/atlas-wt/…` という**消えた worktree**（直書き点検: 記録）が書いてあって、
+  // 差し替える写真が1枚も読めていなかった（atlasfund / atlashouse と同じ穴）
+  await offline(ctx);
   const p = await ctx.newPage();
   await p.goto(`http://localhost:${SPORT}/atlas.html`, { waitUntil: "load" });
   await p.waitForTimeout(1600);

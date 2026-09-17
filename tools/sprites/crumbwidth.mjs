@@ -14,6 +14,7 @@
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { repoPath } from "./repo.mjs";
 const SPORT = process.env.SPORT || "4230";
 const root = process.env.DIST;
 function walk(d, base = "") { let out = []; for (const f of readdirSync(d)) { if (["_next","cache","server","static"].includes(f)) continue; const p = join(d, f); if (statSync(p).isDirectory()) out = out.concat(walk(p, base + "/" + f)); else if (f.endsWith(".html")) out.push(base + "/" + f); } return out; }
@@ -21,7 +22,7 @@ const pages = walk(root).sort();
 const W = Number(process.env.W || 390);
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args:["--no-sandbox"]});
 const ctx = await b.newContext({ viewport: { width: W, height: 900 }, isMobile: W<700, hasTouch: W<700 });
-await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/, r => r.fulfill({ path: repoPath("site/public/og.png") }));
 await ctx.route(/fonts\.googleapis\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 const p = await ctx.newPage();
 const out = {};

@@ -1,10 +1,11 @@
 import { chromium } from "playwright-core";
+import { repoPath } from "./repo.mjs";
 
 /** 並列で作業するとき、エージェントごとに別のポートを使う。既定は 3000。 */
 const PORT = process.env.PORT || "3000";
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args:["--no-sandbox"]});
 const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-await ctx.route(/upload\.wikimedia\.org/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+await ctx.route(/upload\.wikimedia\.org/, r => r.fulfill({ path: repoPath("site/public/og.png") }));
 const p = await ctx.newPage();
 p.on("pageerror", e => console.log("[pageerror]", String(e).slice(0,300)));
 for (const [url, name, scroll] of [["/nordic","n-top",0],["/nordic","n-route",1300],["/nordic","n-countries",2900],["/nordic/poland","n-poland",900],["/nordic/guide","n-guide",600]]) {

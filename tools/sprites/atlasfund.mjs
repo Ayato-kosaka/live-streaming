@@ -10,7 +10,7 @@
  *
  * 2026-09-15 に回したら、建ちぐあいが1枚も写っていないのに `ok` と出た。
  *
- * - 差し替える写真が `/home/user/atlas-wt/…`（**消えた worktree**）だった。
+ * - 差し替える写真が `/home/user/atlas-wt/…`（**消えた worktree**。直書き点検: 記録）だった。
  *   `offline()` は `fulfill({path})` に直で渡すので外の絵が全部落ちる。既定に戻した
  * - 建設中の模型が出るのは**次の島**だけ（`Isles.tsx`: `c === nextCh && planned`）。
  *   北欧はもう次の島ではなく、次のアルバニアには `opensAt` も `plannedDays` も

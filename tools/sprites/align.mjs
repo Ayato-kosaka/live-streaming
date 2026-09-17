@@ -2,6 +2,7 @@ import { chromium } from "playwright-core";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { repoPath } from "./repo.mjs";
 
 /** 並列で作業するとき、エージェントごとに別のポートを使う。既定は 3000。 */
 const PORT = process.env.PORT || "3000";
@@ -26,7 +27,7 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
 let bad = 0;
 for (const [label, wide] of [["寄り", false], ["引き", true]]) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  await ctx.route(/googleusercontent\.com/, r => r.fulfill({ path: "/home/user/live-streaming/site/public/characters/ayato.webp" }));
+  await ctx.route(/googleusercontent\.com/, r => r.fulfill({ path: repoPath("site/public/characters/ayato.webp") }));
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   await p.goto(`http://localhost:${PORT}/`, { waitUntil: "domcontentloaded", timeout: 60000 });

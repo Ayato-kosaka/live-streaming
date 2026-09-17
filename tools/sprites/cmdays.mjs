@@ -1,14 +1,15 @@
 /**
  * どの街の地図が、どの面に出るかを書き出す（`cmshot.mjs` が読む）。
  *
- *   DIST=/home/user/live-streaming/site/.next-3170 node tools/sprites/cmdays.mjs
+ *   DIST=site/.next-3170 node tools/sprites/cmdays.mjs
  *
  * **面の名簿を手で書かない。** 書き出した HTML から拾う。
  * 日ページに出ない街（出発の街カトヴィツェ）は、国の面のほうに出ている。
  */
 import { readFileSync, readdirSync, writeFileSync } from "fs";
+import { fromRoot } from "./repo.mjs";
 
-const DIST = process.env.DIST || "/home/user/live-streaming/site/.next-3170";
+const DIST = fromRoot(process.env.DIST || "site/.next-3170");
 // **地図の元は、書き出しと同じ木から読む。** ここだけ絶対パスで別の木を
 // 見ていたので、worktree で焼き直した地図を確かめようとすると、
 // 書き出しは新しいのに名簿だけ古い、という食い違いが出た（`DIST` は

@@ -42,6 +42,7 @@ import { offline } from "./route.mjs";
 import { mkdirSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { execFileSync } from "child_process";
 import { collect, banner, tally } from "./pages.mjs";
+import { repoPath } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "5400";
 const OUT = process.env.OUT || "/tmp/pcink";
@@ -190,7 +191,7 @@ for (const [W, H] of WIDTHS) {
     let res;
     try {
       res = JSON.parse(execFileSync("python3",
-        ["/home/user/live-streaming/tools/sprites/pcink.py", base, String(LIM)],
+        [repoPath("tools/sprites/pcink.py"), base, String(LIM)],
         { encoding: "utf8", maxBuffer: 1 << 26 }));
     } catch (e) {
       rows.push({ path, measured: false, why: "読めず: " + String(e).slice(0, 90) });

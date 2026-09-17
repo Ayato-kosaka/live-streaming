@@ -1,7 +1,7 @@
 /**
  * パンくず（`.crumbs`）の押しどころを、全面ぶん測る。
  *
- *   SPORT=4230 DIST=/home/user/live-streaming/site/.next-3230 node tools/sprites/crumbhit.mjs
+ *   SPORT=4230 DIST=site/.next-3230 node tools/sprites/crumbhit.mjs
  *   W=1000 SPORT=4230 ... node tools/sprites/crumbhit.mjs        # 広い画面で
  *
  * **見た目の箱では測らない。** `::after` で広げた当たりは
@@ -19,9 +19,10 @@
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "fs";
 import { join } from "path";
+import { repoPath, fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4230";
-const root = process.env.DIST || "/home/user/live-streaming/site/.next-3230";
+const root = fromRoot(process.env.DIST || "site/.next-3230");
 const W = Number(process.env.W || 390);
 const MIN = Number(process.env.MIN || 48);
 
@@ -41,7 +42,7 @@ const pages = (only || walk(root)).sort();
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: W, height: 900 }, deviceScaleFactor: 1, isMobile: W < 700, hasTouch: W < 700, reducedMotion: "reduce" });
 await ctx.route(/googleusercontent\.com|upload\.wikimedia\.org|instagram\.com|ytimg\.com|youtube\.com/,
-  (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+  (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
 await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
 const p = await ctx.newPage();
 await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));

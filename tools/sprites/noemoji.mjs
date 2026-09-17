@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
+import { fromRoot } from "./repo.mjs";
 
 /**
  * 書き出した HTML に絵文字が残っていないか調べる。
@@ -9,7 +10,7 @@ import { join } from "path";
  * ここではその2つを除いて数える。
  */
 /** 見にいく書き出し先。並列で作業するとき、担当ごとに別の dist を持つので env で受ける。 */
-const ROOT = process.env.DIST || "/home/user/live-streaming/site/.next-verify";
+const ROOT = fromRoot(process.env.DIST || "site/.next-verify");
 // 絵文字・地域表示記号（国旗）・異体字セレクタ
 const RE = /[\u{1F000}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{2600}-\u{27BF}]/gu;
 /** 引用としてそのまま出しているもの。ここに当たる行は数えない。 */

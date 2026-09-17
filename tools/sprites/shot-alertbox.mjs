@@ -26,6 +26,7 @@ import { WebSocketServer } from "ws";
 import { existsSync, readFileSync } from "fs";
 import { createServer } from "http";
 import { createServer as createTls } from "https";
+import { repoPath } from "./repo.mjs";
 
 const K = "0123456789abcdef0123456789abcdef";
 const PORT = Number(process.env.PORT || 4142);
@@ -121,7 +122,7 @@ await ctx.route(/doneruamount/i, (r) =>
 await ctx.route(/script\.google\.com|macros|undefined\?table=/, (r) =>
   r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, table: "Goals",
     data: { id: "x", startAmount: 0, superChatAmount: 0, doneruGoalKey: "k", targetAmount: 100000, label: "テスト" } }) }));
-await ctx.route(/cloudfront\.net/, (r) => r.fulfill({ path: "/home/user/live-streaming/site/public/og.png" }));
+await ctx.route(/cloudfront\.net/, (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
 
 const p = await ctx.newPage();
 const errs = [];

@@ -13,8 +13,9 @@
  */
 import { collect, banner } from "./pages.mjs";
 import { readFileSync } from "fs";
+import { fromRoot } from "./repo.mjs";
 
-const LISTB = process.env.LISTB || "/home/user/live-streaming/tools/sprites/pcpages.txt";
+const LISTB = fromRoot(process.env.LISTB || "tools/sprites/pcpages.txt");
 const SPORT = process.env.SPORT;
 
 const c = collect({ pages: null, list: null });
