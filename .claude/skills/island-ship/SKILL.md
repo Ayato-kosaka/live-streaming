@@ -43,7 +43,7 @@ python3 -m py_compile python/*.py         ; echo "py=$?"
 ```bash
 cd site && NEXT_DIST_DIR=.next-verify npx next build
 python3 -m http.server 4321 --directory .next-verify &
-cd ../tools/sprites && node crawl.mjs     # 全ページの h1・JSエラー・横あふれ・リンク切れ
+cd ../tools/sprites && node crawl.mjs     # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
 ```
 
 `bad 0` / リンク切れ 0 が条件。終わったら開発サーバーは落とす（3.7GB まで膨らむ）。
