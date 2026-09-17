@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPoll, pollAnswer, rememberPollAnswer, votePoll, type Poll as PollData } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { Arrow, Tick } from "./art";
 import { whenIdle } from "./idle";
 
@@ -27,25 +27,39 @@ import { whenIdle } from "./idle";
 type Sent = "none" | "sending" | "done";
 
 /**
- * 問いが手元に来るまでの3つの姿（`docs/island-design.md` 4章）。
+ * 問いが手元に来るまでの4つの姿（`docs/island-design.md` 4章）。
  *   reading … まだ読んでいる。中身の形をした薄い板だけ置く
  *   open    … 問いが出ている
- *   none    … 今夜は問いが無い。読めなかった日もここに静かに落ちる
+ *   none    … **読めた上で**、今夜は問いが無い
+ *   down    … 口が落ちて、在るのか無いのかが分からない
+ *
+ * `none` と `down` は、ここでは同じ姿（何も描かない）。**島の中で
+ * サーバーの失敗を見せない**のは変えていない。分けているのは**親に伝える中身**で、
+ * 「今夜のおたずねは、まだ出ていない」と言い切ってよいのは `none` の晩だけ
+ * （`docs/island-standards.md` 10）。
  */
-type Phase = "reading" | "open" | "none";
+type Phase = "reading" | "open" | "none" | "down";
+
+/**
+ * 問いを出せない晩の、その理由。**読めた上で無い（`ok`）と、読めなかった（`down`）。**
+ * 読みものを1つ持つなら `Read` の3つを一緒に持つ（`docs/island-misses.md` #115）。
+ * 「読んでいる最中」はまだ `onEmpty` を呼ばないので、ここには `wait` が要らない。
+ */
+export type NoPoll = Exclude<Read, "wait">;
 
 /**
  * @param onCount まだ押していない問いが出ているか。板の赤い丸の理由になる
- * @param onEmpty 今夜は問いが無い（読めなかった日も含む）。
- *   **無い日はここでは何も描かない。** 代わりに板が今日の2枚目を出す
- *   （`./Today.tsx`。`docs/island-review-2.md` 12.1）。
+ * @param onEmpty 問いを出せない晩。**無い日はここでは何も描かない。**
+ *   代わりに板が今日の2枚目を出す（`./Today.tsx`。`docs/island-review-2.md` 12.1）。
+ *   読めた上で無いのか（`"ok"`）、読めなかったのか（`"down"`）を渡す。
+ *   板はこれを見て、言い切ってよい晩かどうかを決める。
  */
 export default function Poll({
   onCount,
   onEmpty,
 }: {
   onCount?: (unanswered: boolean) => void;
-  onEmpty?: () => void;
+  onEmpty?: (why: NoPoll) => void;
 }) {
   const [poll, setPoll] = useState<PollData | null>(null);
   const [phase, setPhase] = useState<Phase>("reading");
@@ -65,12 +79,15 @@ export default function Poll({
   useEffect(() => {
     let alive = true;
     const read = () => {
-      getPoll()
+      /* **返事が来ないのも「読めなかった」。** 包まないと、電波の細い日に
+         薄い板（骨）が何分でも出たままになる（`lib/auth.tsx` の `READ_MS`）。
+         骨は「もうすぐ出る」の意味なので、出ないものの上に置かない。 */
+      withRead(getPoll())
         .then(({ poll: p }) => {
           if (!alive) return;
           if (!p || p.options.length < 2) {
             setPhase("none");
-            tellEmpty.current?.();
+            tellEmpty.current?.("ok");
             return;
           }
           const had = pollAnswer(p.id);
@@ -83,11 +100,13 @@ export default function Poll({
           tell.current?.(!had);
         })
         .catch(() => {
-          // 読めなかった日は、問いが無い日と同じ顔にする。
-          // 島の中でサーバーの失敗を見せない（`docs/island-design.md` 4章）
+          // 読めなかった日も、姿は問いが無い日と同じ（何も描かない）。
+          // 島の中でサーバーの失敗を見せない（`docs/island-design.md` 4章）。
+          // **ただし「無い」とは言わない。** 在るのか無いのかを知らないので、
+          // 板に "down" を渡して、言い切りの1行のほうを落としてもらう。
           if (!alive) return;
-          setPhase("none");
-          tellEmpty.current?.();
+          setPhase("down");
+          tellEmpty.current?.("down");
         });
     };
     const stop = whenIdle(read);
@@ -154,11 +173,11 @@ export default function Poll({
     );
   }
 
-  // 今夜は問いが無い日。読めなかった日もここに来る（島の中でエラーを出さない）。
-  // ここでは何も描かない。**空いた場所には、板が今日の2枚目を出す。**
+  // 今夜は問いが無い日と、読めなかった日。どちらもここでは何も描かない
+  // （島の中でエラーを出さない）。**空いた場所には、板が今日の2枚目を出す。**
   // 「まだ出ていない」の1行だけで終わらせると、
   // 問いが無い日は島に降りて押すものが1つしか無くなる（`docs/island-review-2.md` 12.1）。
-  if (phase === "none" || !poll) return null;
+  if (phase === "none" || phase === "down" || !poll) return null;
 
   const open = grown.current && !!mine;
   // 押す前は人数を出さない。先に数字を見せると、多いほうに引っぱられる
