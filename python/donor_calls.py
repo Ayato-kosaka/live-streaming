@@ -122,7 +122,8 @@ from config import BQ_PROJECT_ID  # noqa: E402
 from doneru_supporters import jst_date  # noqa: E402
 from logsafe import mask  # noqa: E402
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 # 本文に埋める見えない印。GitHub は HTML コメントを描かないので、
@@ -166,7 +167,8 @@ def load_table(db) -> dict:
     Returns:
         どねID -> 書類
     """
-    return {d.id: (d.to_dict() or {}) for d in db.collection("islandDonors").stream()}
+    return {d.id: (d.to_dict() or {})
+            for d in db.collection("islandDonors").stream()}
 
 
 def count_waiting(table: dict) -> dict:
@@ -393,7 +395,8 @@ class Gh:
         self.token = token
 
     def _call(self, method: str, path: str, payload=None):
-        data = json.dumps(payload).encode("utf-8") if payload is not None else None
+        data = (json.dumps(payload).encode("utf-8")
+                if payload is not None else None)
         req = urllib.request.Request(API + path, data=data, method=method)
         req.add_header("Accept", "application/vnd.github+json")
         req.add_header("X-GitHub-Api-Version", "2022-11-28")
@@ -411,7 +414,9 @@ class Gh:
         100件で足りる（このラベルが付くのは1本だけ）。
         """
         return self._call(
-            "GET", f"/repos/{self.repo}/issues?labels={label}&state=all&per_page=100"
+            "GET",
+            f"/repos/{self.repo}/issues"
+            f"?labels={label}&state=all&per_page=100",
         )
 
     def create(self, title: str, text: str, label: str) -> dict:
@@ -428,7 +433,8 @@ class Gh:
                           {"title": title, "body": text, "labels": [label]})
 
     def patch(self, number: int, payload: dict) -> dict:
-        return self._call("PATCH", f"/repos/{self.repo}/issues/{number}", payload)
+        return self._call("PATCH",
+                          f"/repos/{self.repo}/issues/{number}", payload)
 
 
 def run(gh, w: dict, apply: bool = False) -> dict:

@@ -285,7 +285,8 @@ class Gh403:
     def list_issues(self, label: str) -> list:
         self.gets += 1
         raise urllib.error.HTTPError(
-            "https://api.github.com/repos/…/issues", 403, "Forbidden", {}, None)
+            "https://api.github.com/repos/…/issues",
+            403, "Forbidden", {}, None)
 
     def create(self, *a, **k):
         raise AssertionError("読めていないのに書きにいった")
@@ -625,7 +626,8 @@ def case11_breakdown():
        donor_calls.count_waiting(table)["n"])
     empty = donor_calls.state_counts({})
     ck("0件の対応表でも鍵が5つとも出る（数えていないと見分ける）",
-       empty == {"new": 0, "unlinked": 0, "linked": 0, "other": 0, "none": 0}, empty)
+       empty == {"new": 0, "unlinked": 0, "linked": 0,
+                 "other": 0, "none": 0}, empty)
 
 
 def case6_grep():
