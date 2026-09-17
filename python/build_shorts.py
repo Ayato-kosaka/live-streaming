@@ -52,13 +52,13 @@
 
 決め方は3つだけ。
 
-  1. 章の期間に**前後7日の幅**を付けて、入る章を集める。
+  1. 章の期間に**前後7日の幅**を付けて、近い章を集める。
      幅が要るのは、旅の**予告**が始まる前に、**まとめ**が終わったあとに出るから
      （イランまで歩くの予告は 04-28、章は 04-29 から。まとめは 05-12、章は 05-08 まで）
-  2. 入る章が2つ以上あるときは、**期間の短いほう**を採る。
-     枝の章（`branchOf`）は親の期間の中にすっぽり入っているので、これで枝が勝つ
-     （イランまで歩く 10日 < コーカサス周遊 440日）
-  3. どの章にも入らず、かつ**いちばん古い章より前**なら `before-stream`。
+  2. その中に**枝の章**（`branchOf`）があれば、枝。枝は親の期間の中にすっぽり
+     入っているので、そうしないと親（コーカサス周遊）が必ず勝つ
+  3. 枝が無ければ、**期間の中に入っている**章。入っていなければいちばん近い章
+  4. どの章にも近くなく、かつ**いちばん古い章より前**なら `before-stream`。
      章ではなく「配信を始める前の6週間」で、`/map` の段に出る
 
 **このどれにも当たらないものは、島に建てない。** 推測で章に入れると島が嘘をつく。
@@ -329,7 +329,7 @@ def read_chapters() -> list[dict]:
     return out
 
 
-def spans(chs: list[dict]) -> dict[str, tuple[date, date]]:
+def spans(chs: list[dict]) -> dict[str, tuple[date, date, bool]]:
     """章ごとの (始まり, 終わり)。`chapters.ts` の `began` / `ended` と同じ決めかた。
 
     まだ始まっていない章は `opensAt`、終わりの無い章は
@@ -352,22 +352,41 @@ def spans(chs: list[dict]) -> dict[str, tuple[date, date]]:
         else:
             nxt = [began(x) for x in chs
                    if not x["branchOf"] and x is not c and began(x) > b]
-            e = min([b + c["plannedDays"] * DAY] if c["plannedDays"] else [] , default=FAR)
+            e = min([b + c["plannedDays"] * DAY] if c["plannedDays"] else [], default=FAR)
             e = min(e, min(nxt, default=FAR))
-        out[c["slug"]] = (b, e)
+        out[c["slug"]] = (b, e, bool(c["branchOf"]))
     return out
 
 
-def chapter_of(d: str, sp: dict[str, tuple[date, date]]) -> str | None:
-    """公開日から置き場を決める。**題名は見ない。**"""
+def chapter_of(d: str, sp: dict[str, tuple[date, date, bool]]) -> str | None:
+    """公開日から置き場を決める。**題名は見ない。**
+
+    決め方は、上から順に。
+
+      1. **枝の章が前後7日以内にあれば、枝。** 枝（イランまで歩く）は親
+         （コーカサス周遊）の期間の中にすっぽり入っているので、「入っている章」で
+         決めると必ず親が勝ってしまう。予告（04-28）もまとめ（05-12）も枝の外にある
+      2. **期間の中に入っている章。** 2025-03-29 はヨーロッパ周遊の最終日で、
+         翌日から中東周遊。この日のショートは**終わった旅のまとめ**なので、
+         入っているほうを採る
+      3. **どの章にも入らなければ、前後7日以内でいちばん近い章。**
+         ヨーロッパ周遊の1つ目の街パリの2本（10-25・10-26）が、章の始まる
+         10-28 より前に出ている
+      4. それも無くて、いちばん古い章より前なら `before-stream`
+    """
     day = date.fromisoformat(d)
-    hit = [(e - b, slug) for slug, (b, e) in sp.items()
-           if b - EDGE_DAYS * DAY <= day <= e + EDGE_DAYS * DAY]
-    if hit:
-        # 期間の短いほう＝より細かい章（枝は親の中に入っているので、枝が勝つ）
-        hit.sort(key=lambda x: (x[0], x[1]))
-        return hit[0][1]
-    if sp and day < min(b for b, _ in sp.values()):
+    near = [(slug, b, e, br) for slug, (b, e, br) in sp.items()
+            if b - EDGE_DAYS * DAY <= day <= e + EDGE_DAYS * DAY]
+    if near:
+        def gap(b: date, e: date) -> int:
+            return max((b - day).days, (day - e).days, 0)
+
+        branch = [x for x in near if x[3]]
+        pick = branch or [x for x in near if gap(x[1], x[2]) == 0] or near
+        # 近い順 → 期間の短い順 → 名前順（同着でも毎回同じ答えにする）
+        pick.sort(key=lambda x: (gap(x[1], x[2]), (x[2] - x[1]).days, x[0]))
+        return pick[0][0]
+    if sp and day < min(b for b, _, _ in sp.values()):
         return BEFORE
     return None
 

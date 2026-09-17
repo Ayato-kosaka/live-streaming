@@ -39,6 +39,24 @@ jobs:
             sleep 90
           done
           echo "おわり: $(left)本"
+      - name: 抜き取りで、公開日が合っているか
+        if: always()
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          import json, re, sys, time
+          sys.path.insert(0, "python")
+          from build_shorts import curl
+          baked = {v["id"]: v for v in json.load(open("python/data/shorts.json"))["shorts"]}
+          for vid in ["3LFOVakss68", "k6cMHwqAfdQ", "W4grVjo_65k"]:
+              code, html = curl([f"https://www.youtube.com/watch?v={vid}"])
+              d = re.search(r'"publishDate":\{"simpleText":"([^"]+)"', html)
+              t = re.search(r'<meta name="title" content="([^"]*)"', html)
+              print(f"{vid} HTTP{code} 視聴ページ: {d.group(1) if d else '取れず'} / {t.group(1)[:40] if t else '-'}")
+              print(f"{' ' * len(vid)} 焼いた値  : {baked[vid]['date']} / {baked[vid]['title'][:40]}")
+              time.sleep(6)
+          PY
+
       - name: 取れたぶんを押し戻す
         if: always()
         run: |
