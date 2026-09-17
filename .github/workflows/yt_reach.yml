@@ -1,0 +1,35 @@
+name: YouTube に届くか（使い捨ての下見）
+
+# **使い捨て。** GitHub の走者から YouTube のショートのタブが読めるかだけを見る。
+# 確かめたら消す。1バイトも書かないし、秘密の値も使わない。
+# 出すのは本数と id だけ（あやと本人の動画なので、視聴者さんの素性は出ない）。
+
+on:
+  push:
+    branches: [claude/shorts-refresh]
+
+jobs:
+  reach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: ショートの一覧が取れるか
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "python")
+          from build_shorts import fetch_list, fetch_date
+          got = fetch_list()
+          print(f"取れた本数: {len(got)}")
+          print("先頭5件:", [i for i, _ in got[:5]])
+          if not got:
+              raise SystemExit("::error::1本も取れませんでした")
+          d = fetch_date(got[0][0])
+          print(f"公開日が取れるか: {got[0][0]} -> {d}")
+          if not d:
+              raise SystemExit("::error::視聴ページから公開日を取れませんでした")
+          PY

@@ -1,12 +1,14 @@
 /**
  * ショート動画。**手で直さない。**
- * `python/build_shorts.py --build` が `python/data/shorts.json` から焼く。
+ * `python/build_shorts.py` が、チャンネルのショートのタブから取り直して焼く
+ * （控えは `python/data/shorts.json`）。
  *
- * BigQuery の `videos` 表には配信しか入っていないので、出どころはあの JSON だけ。
- * 増えたら JSON に足して焼き直す。
+ * BigQuery の `videos` 表には配信しか入っていないが、**出どころは BigQuery だけではない。**
+ * 公開のチャンネルそのものが本番の値で、鍵なしで読める。
  *
- * 鍵は `content/chapters.ts` の章の slug。ただし `before-stream` だけは章ではなく、
- * **配信を始める前の6週間**（2024-09-17〜10-19）。島に建てず、`/map` の
+ * 鍵は `content/chapters.ts` の章の slug。**公開日だけで決めている**（題名の街名は見ない。
+ * ロンドンは2回あるので題名では決まらない）。ただし `before-stream` だけは章ではなく、
+ * **配信を始める前の6週間**。島に建てず、`/map` の
  * 「その前に、配信していない6週間がある」の段に出る。
  *
  * `date` は撮った日ではなく**出した日**。時差で1日ずれることがある。
@@ -16,7 +18,7 @@ export type Short = {
   id: string;
   /** 公開日（YYYY-MM-DD） */
   date: string;
-  /** YouTube の題名。**引用なので書き換えない** */
+  /** YouTube の題名。末尾のハッシュタグだけ落としてある */
   title: string;
   /** 撮った街。全部に付いているわけではない（振り返りや告知には無い） */
   city?: string;
@@ -25,19 +27,22 @@ export type Short = {
 };
 
 export const SHORTS: Record<string, Short[]> = {
-  "iran-walk": [
-    { id: "dXfSTlKss2Y", date: "2026-04-28", title: "イランは怖い人だらけなのか確かめたいので、イランまで歩きます。ゴールデンウイーク期間、10日ほどかけて配信します。結末を一緒に見届けてください。" },
-    { id: "oSxl_dpn4_8", date: "2026-04-29", title: "1日目。波瀾万丈、喜怒哀楽すぎた" },
-    { id: "7TzWm9UaBaY", date: "2026-04-30", title: "2日目。絶景続き！" },
-    { id: "WlnK0aOJoWs", date: "2026-05-01", title: "3日目。山登り！" },
-    { id: "RNQWXqm2imU", date: "2026-05-02", title: "4日目。ポチと絶景巡り！" },
-    { id: "szr2ApO1NJo", date: "2026-05-03", title: "5日目。トラブルで中断してガキンチョ達と戯れる！" },
-    { id: "5cBqvyKGaJo", date: "2026-05-04", title: "6日目。登山、牛、湖、ホテルが閉店のトラブル！" },
-    { id: "AUpm-Vf02SM", date: "2026-05-05", title: "7日目。体力の限界、、悔しかった。けど、最後まで楽しむ！" },
-    { id: "pKTGPPeX-Jg", date: "2026-05-06", title: "8日目。滑落の危機！？" },
-    { id: "gPVDAJ_-E8c", date: "2026-05-07", title: "9日目。負債が貯まってきたけど、地元の人に助けられてなんとか旅できてる。" },
-    { id: "579xLzy054E", date: "2026-05-08", title: "10日目。最後の街へ。絶景の雪山と根性でゴールへ！" },
-    { id: "nSnGAvVh1rk", date: "2026-05-12", title: "イランまで歩きました。自分の中の偏見を壊すために11日間歩きました。大袈裟なことをしたとは思っていません。ただ、平和が訪れて欲しいなと思います。" },
+  "before-stream": [
+    { id: "WtDMYhb0C98", date: "2024-09-17", title: "英国王室のエレガンスを体験する一日（バッキンガム宮殿・衛兵交代式・ケンジントン宮殿）", city: "ロンドン", country: "イギリス" },
+    { id: "1kGSgVGCh_I", date: "2024-09-19", title: "大英帝国の発展とその多様性を感じるロンドン一日（ロンドン塔・カムデンマーケット）", city: "ロンドン", country: "イギリス" },
+    { id: "IfAs0GypC-4", date: "2024-09-21", title: "名作ゆかりの地を辿るロンドン一日（ハリーポッター・シャーロックホームズ・ノッティングヒル）", city: "ロンドン", country: "イギリス" },
+    { id: "OCgdPJq0EzQ", date: "2024-09-23", title: "ロンドンの魅力を建築で巡る一日（ロンドンウォール・セントポール大聖堂）", city: "ロンドン", country: "イギリス" },
+    { id: "CttG6RvRuwU", date: "2024-09-25", title: "ロンドンの物価まじ高すぎ！", city: "ロンドン", country: "イギリス" },
+    { id: "BpR7EuCtR3M", date: "2024-09-29", title: "ロンドンでの美術館と王道観光地巡りの1日（大英博物館・ビッグベン）", city: "ロンドン", country: "イギリス" },
+    { id: "m0OioIJ1Pt0", date: "2024-10-02", title: "バルセロナでガウディやそのライバル建築家たちの戦跡を巡る一日", city: "バルセロナ", country: "スペイン" },
+    { id: "j7xZ9RaOrzs", date: "2024-10-04", title: "バルセロナ散策とフラメンコ鑑賞が最高の一日すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "kHR232rOhtw", date: "2024-10-05", title: "地中海感じるバルセロナが感動の一日すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "w0X5ZM57khU", date: "2024-10-07", title: "バルセロナの絶景とアートを味わう一日が圧巻すぎた", city: "バルセロナ", country: "スペイン" },
+    { id: "PWk43q7JM64", date: "2024-10-10", title: "バルセロナ郊外モンセラット巡りと、バルはしごが最高の一日だった", city: "バルセロナ", country: "スペイン" },
+    { id: "EP8a8ffxH7E", date: "2024-10-12", title: "古代ローマを感じるひとり旅が最高の一日だった", city: "ローマ", country: "イタリア" },
+    { id: "JdF3a-7qWEk", date: "2024-10-14", title: "ローマでの定番の一日が最高だった（トレビの泉・カチョエペペ）", city: "ローマ", country: "イタリア" },
+    { id: "AwjRdhUfl84", date: "2024-10-18", title: "バチカン市国でキリスト教文化を感じる一日が圧巻すぎた", city: "ローマ", country: "イタリア" },
+    { id: "0F6K9uAfuAM", date: "2024-10-19", title: "イタリア・ナポリひとり旅 食い倒れの旅", city: "ナポリ", country: "イタリア" },
   ],
   "europe": [
     { id: "r6cyO9mRRGo", date: "2024-10-25", title: "フランス、パリ ひとり旅 憧れ崩壊なんてなかった...", city: "パリ" },
@@ -72,22 +77,19 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "nWPQJ8Ws28o", date: "2024-12-24", title: "【ドイツ】ベルリンの魅力を満喫する一日プラン", city: "ベルリン" },
     { id: "e-LBZz7aZOE", date: "2024-12-27", title: "ヨーロッパ周遊三ヶ月、旅が終了しました。" },
   ],
-  "before-stream": [
-    { id: "WtDMYhb0C98", date: "2024-09-17", title: "英国王室のエレガンスを体験する一日（バッキンガム宮殿・衛兵交代式・ケンジントン宮殿）", city: "ロンドン", country: "イギリス" },
-    { id: "1kGSgVGCh_I", date: "2024-09-19", title: "大英帝国の発展とその多様性を感じるロンドン一日（ロンドン塔・カムデンマーケット）", city: "ロンドン", country: "イギリス" },
-    { id: "IfAs0GypC-4", date: "2024-09-21", title: "名作ゆかりの地を辿るロンドン一日（ハリーポッター・シャーロックホームズ・ノッティングヒル）", city: "ロンドン", country: "イギリス" },
-    { id: "OCgdPJq0EzQ", date: "2024-09-23", title: "ロンドンの魅力を建築で巡る一日（ロンドンウォール・セントポール大聖堂）", city: "ロンドン", country: "イギリス" },
-    { id: "CttG6RvRuwU", date: "2024-09-25", title: "ロンドンの物価まじ高すぎ！", city: "ロンドン", country: "イギリス" },
-    { id: "BpR7EuCtR3M", date: "2024-09-29", title: "ロンドンでの美術館と王道観光地巡りの1日（大英博物館・ビッグベン）", city: "ロンドン", country: "イギリス" },
-    { id: "m0OioIJ1Pt0", date: "2024-10-02", title: "バルセロナでガウディやそのライバル建築家たちの戦跡を巡る一日", city: "バルセロナ", country: "スペイン" },
-    { id: "j7xZ9RaOrzs", date: "2024-10-04", title: "バルセロナ散策とフラメンコ鑑賞が最高の一日すぎた", city: "バルセロナ", country: "スペイン" },
-    { id: "kHR232rOhtw", date: "2024-10-05", title: "地中海感じるバルセロナが感動の一日すぎた", city: "バルセロナ", country: "スペイン" },
-    { id: "w0X5ZM57khU", date: "2024-10-07", title: "バルセロナの絶景とアートを味わう一日が圧巻すぎた", city: "バルセロナ", country: "スペイン" },
-    { id: "PWk43q7JM64", date: "2024-10-10", title: "バルセロナ郊外モンセラット巡りと、バルはしごが最高の一日だった", city: "バルセロナ", country: "スペイン" },
-    { id: "EP8a8ffxH7E", date: "2024-10-12", title: "古代ローマを感じるひとり旅が最高の一日だった", city: "ローマ", country: "イタリア" },
-    { id: "JdF3a-7qWEk", date: "2024-10-14", title: "ローマでの定番の一日が最高だった（トレビの泉・カチョエペペ）", city: "ローマ", country: "イタリア" },
-    { id: "AwjRdhUfl84", date: "2024-10-18", title: "バチカン市国でキリスト教文化を感じる一日が圧巻すぎた", city: "ローマ", country: "イタリア" },
-    { id: "0F6K9uAfuAM", date: "2024-10-19", title: "イタリア・ナポリひとり旅 食い倒れの旅", city: "ナポリ", country: "イタリア" },
+  "iran-walk": [
+    { id: "dXfSTlKss2Y", date: "2026-04-28", title: "イランは怖い人だらけなのか確かめたいので、イランまで歩きます。ゴールデンウイーク期間、10日ほどかけて配信します。結末を一緒に見届けてください。" },
+    { id: "oSxl_dpn4_8", date: "2026-04-29", title: "1日目。波瀾万丈、喜怒哀楽すぎた" },
+    { id: "7TzWm9UaBaY", date: "2026-04-30", title: "2日目。絶景続き！" },
+    { id: "WlnK0aOJoWs", date: "2026-05-01", title: "3日目。山登り！" },
+    { id: "RNQWXqm2imU", date: "2026-05-02", title: "4日目。ポチと絶景巡り！" },
+    { id: "szr2ApO1NJo", date: "2026-05-03", title: "5日目。トラブルで中断してガキンチョ達と戯れる！" },
+    { id: "5cBqvyKGaJo", date: "2026-05-04", title: "6日目。登山、牛、湖、ホテルが閉店のトラブル！" },
+    { id: "AUpm-Vf02SM", date: "2026-05-05", title: "7日目。体力の限界、、悔しかった。けど、最後まで楽しむ！" },
+    { id: "pKTGPPeX-Jg", date: "2026-05-06", title: "8日目。滑落の危機！？" },
+    { id: "gPVDAJ_-E8c", date: "2026-05-07", title: "9日目。負債が貯まってきたけど、地元の人に助けられてなんとか旅できてる。" },
+    { id: "579xLzy054E", date: "2026-05-08", title: "10日目。最後の街へ。絶景の雪山と根性でゴールへ！" },
+    { id: "nSnGAvVh1rk", date: "2026-05-12", title: "イランまで歩きました。自分の中の偏見を壊すために11日間歩きました。大袈裟なことをしたとは思っていません。ただ、平和が訪れて欲しいなと思います。" },
   ],
 };
 
