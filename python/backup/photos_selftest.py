@@ -484,8 +484,10 @@ def case6(s: Sink, bodies: dict):
     broken["sha256"] = "0" * 64
     ck("指紋が違う行は 1 で返る",
        restore.restore_photo(lambda _p: broken, path, None) == 1, "終了コード 1")
-    ck("1枚も入っていないときは 0 で返る（警告だけ）",
-       restore.restore_photo(lambda _p: None, None, None) == 0, "終了コード 0")
+    # **0枚は緑にしない。** 「戻せた」ではなく「何も戻していない」ので 2
+    # （`docs/island-standards.md` §15。2026-09-17 まで 0 で通していた）
+    ck("1枚も入っていないときは 2 で返る（数えるものが無い）",
+       restore.restore_photo(lambda _p: None, None, None) == 2, "終了コード 2")
 
 
 def case5():
