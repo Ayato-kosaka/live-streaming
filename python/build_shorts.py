@@ -1,46 +1,82 @@
-"""ショート動画の一覧を `site/content/shorts.ts` に焼く。
+"""ショート動画の棚を、YouTube から取り直して `site/content/shorts.ts` に焼く。
 
-## なぜ手書きの表から焼くのか
+    python python/build_shorts.py            # 取り直して焼く（毎晩ぶんはこれ）
+    python python/build_shorts.py --fetch    # 取り直すだけ（python/data/shorts.json を更新）
+    python python/build_shorts.py --build    # 焼くだけ
+    python python/build_shorts.py --dates    # 日付の取れなかったものを、もう一度だけ取りにいく
 
-**BigQuery には無い。** `youtube_chat.videos` に入っているのは配信だけで、
-ショートは1本も入っていない。だから出どころは `python/data/shorts.json` ひとつ。
-あやとが本人のチャンネルから書き出したものを、そのまま置いてある。
+## どこから取るか
 
-`site/content/*.ts` を手で直さないのが決まり（`CLAUDE.md`）なので、
-足すときは JSON のほうに足して、ここから焼き直す。
+**チャンネルのショートのタブそのもの。** 鍵は要らない。
 
-    python python/build_shorts.py --dates    # 足したぶんの公開日を YouTube から埋める
-    python python/build_shorts.py --build    # site/content/shorts.ts を焼く
+  1. `https://www.youtube.com/channel/<id>/shorts` の HTML に
+     `var ytInitialData = {...}` が埋まっている。ここに1ページ目の48本が入る
+  2. 続きは遅延で読まれるので、**1ページ目だけでは全部にならない**。
+     格子のいちばん下にある `continuationItemRenderer` の token を
+     `POST /youtubei/v1/browse` に投げると次のぶんが返る。
+     返るのは `onResponseReceivedActions` の下で、そこにまた token が付いている
+  3. 題名は一覧の `accessibilityText`（「〜, 1,234回視聴 - ショート動画を再生」）から取る。
+     **1本ずつ開かなくていい**ので、ここでは YouTube を叩かない
+  4. **公開日だけは一覧に入っていない。** 視聴ページの HTML を1本ずつ開く。
+     叩くのは**手元にまだ無いものだけ**なので、毎晩の追加ぶんは0〜数本
 
-## 公開日を、なぜ自分で取りにいくのか
+**加減する。** 視聴ページは連打すると reCAPTCHA の頁が返る（実際に踏んだ）。
+既定で1本につき5秒あける。急いでも何も得しない。
 
-もらった一覧には**日付が無かった**。日付が無いと、どの章のショートなのかを
-題名の街名から推測することになる。**推測で島に建てると、島が嘘をつく。**
+## 前はなぜ手書きの表だったか（2026-09-17 に変えた）
 
-ロンドンがいい例で、イギリスには2回行っている（2024年9月と、2025年1月〜3月）。
-題名だけでは、どちらのロンドンなのか決められない。
+「BigQuery に無いから機械では取れない」と書いてあった。前半は正しく、後半が違った。
+`youtube_chat.videos` に入っているのは配信だけでショートは1本も無いが、
+**出どころは BigQuery だけではない。** 公開のチャンネルそのものが本番の値で、
+鍵なしで読める。手書きのままにしていたので、**棚は 2026-05-12 で127日止まっていた**。
 
-視聴ページの HTML に公開日が入っているので、そこから拾う（`--dates`）。
-API キーが要らず、この箱からも届く。**撮った日ではなく出した日**で、
-時差で1日ずれることがある。章の切れ目から1〜2日のところにあるものは、
-これだけでは決められない（下の「章の切りかた」）。
+`docs/island-fresh.md` の仕分けで言うと、軸は「BigQuery か」ではなく
+**「本番を読めば答えが出るか」**。チャンネルは本番なので、これは①に入る。
 
-## 章の切りかた
+## 題名は、いちど人が短くしたものを上書きしない
 
-| 置き場 | 何 | 公開日（実測） |
-| --- | --- | --- |
-| `iran-walk` | イランまで歩く | 2026-04-28 〜 05-12 |
-| `europe` | ヨーロッパ周遊 | 2024-10-25 〜 12-27 |
-| `before-stream` | 配信を始める前の6週間 | 2024-09-17 〜 10-19 |
+`python/data/shorts.json` に既にある `title` は**そのまま残す**。
+最初の58本は、あやとが YouTube の題名から**ハッシュタグと飾りを落として**
+書いたもので、島の札に出るのはこちらのほうが読みやすい
+（例: 「🇮🇷イランは怖い人だらけなのか…1日目YouTubeで配信切り抜き。 波瀾万丈、
+喜怒哀楽すぎた #配信 #イラン …」→「1日目。波瀾万丈、喜怒哀楽すぎた」）。
 
-`before-stream` は章ではない。配信が始まったのは 2024-10-28（`content/chapters.ts`）で、
-ロンドン・バルセロナ・ローマ・ナポリの15本は**全部それより前**に出ている。
-島に建てると章の外のものを建てることになるので、`/map` の
-「その前に、配信していない6週間がある」の段に出す。
+新しく入るものは YouTube の題名をそのまま置く。ただし**末尾に続くハッシュタグの列**
+だけは落とす（札は2行で切れるので、そこがハッシュタグで埋まると何の動画か読めない）。
+手で短くしたくなったら JSON の `title` を書き換える。**次に取り直しても戻らない。**
 
-パリの2本（10-25・10-26）だけは配信開始より前だが、**パリは章の1つ目の街**で、
-6週間のほうの3都市には入っていない。ヨーロッパ周遊に置いてある。
+## 章の割り当ては、日付だけで決める
+
+**題名の街名から推測しない。** ロンドンは2回ある（2024年9月と2025年1月〜3月）ので、
+題名では決められない。`site/content/chapters.ts` の章の期間と公開日を突き合わせる。
+
+決め方は3つだけ。
+
+  1. 章の期間に**前後7日の幅**を付けて、近い章を集める。
+     幅が要るのは、旅の**予告**が始まる前に、**まとめ**が終わったあとに出るから
+     （イランまで歩くの予告は 04-28、章は 04-29 から。まとめは 05-12、章は 05-08 まで）
+  2. その中に**枝の章**（`branchOf`）があれば、枝。枝は親の期間の中にすっぽり
+     入っているので、そうしないと親（コーカサス周遊）が必ず勝つ
+  3. 枝が無ければ、**期間の中に入っている**章。入っていなければいちばん近い章
+  4. どの章にも近くなく、かつ**いちばん古い章より前**なら `before-stream`。
+     章ではなく「配信を始める前の6週間」で、`/map` の段に出る
+
+**このどれにも当たらないものは、島に建てない。** 推測で章に入れると島が嘘をつく。
+焼かずに `::warning::` で本数と id を出すので、人が見て決める。
+
+この決め方は、**手で振ってあった58本の割り当てを1本も動かさない**ことを確かめてある
+（2026-09-17 の実測。iran-walk 12 / europe 31 / before-stream 15 がそのまま出る）。
+
+## 取れなかったときは、焼かない
+
+手元にある id が一覧から1本でも消えていたら、**そこで止まる**（`--fetch` が 1 で終わる）。
+YouTube 側で非公開・削除になったのか、こちらの取りかたが壊れたのかは
+機械には区別できない。**黙って棚から減らすほうがずっと悪い。**
+本当に消えたと分かったら、その id を JSON の `_gone` に理由を添えて書く。
+書いてあるものは、一覧に無くても止まらない（棚にも出ない）。
 """
+
+from __future__ import annotations
 
 import argparse
 import json
@@ -48,73 +84,398 @@ import re
 import subprocess
 import sys
 import time
+from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
 SRC = DATA / "shorts.json"
 OUT_TS = ROOT / "site" / "content" / "shorts.ts"
+CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
+
+CHANNEL = "UCCwutAH6ieHNvdyJAfSld7w"
+SHORTS_URL = f"https://www.youtube.com/channel/{CHANNEL}/shorts"
 
 UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120 Safari/537.36"
 )
 
+# 視聴ページを開ける間隔（秒）。連打すると reCAPTCHA が返る
+WATCH_GAP = 5.0
 
-def groups(src: dict) -> list[str]:
-    """置き場の名前。`_` で始まる鍵は覚え書きなので飛ばす"""
-    return [k for k in src if not k.startswith("_")]
+# 章の期間に付ける幅（日）。予告とまとめのぶん
+EDGE_DAYS = 7
+
+# 「配信を始める前」の置き場。章ではない
+BEFORE = "before-stream"
 
 
-def ts(x) -> str:
-    return json.dumps(x, ensure_ascii=False)
+# ---------------------------------------------------------------- 取りに行く
+
+
+def curl(args: list[str], data: str | None = None) -> tuple[int, str]:
+    """(HTTP の番号, 中身)。**番号も返す。** 429 の頁は中身が 3.8KB の
+    reCAPTCHA なので、中身だけ見ていると「形が変わった」と読み違える"""
+    r = subprocess.run(
+        ["curl", "-sSL", "--max-time", "60", "-A", UA, "-H", "Accept-Language: ja",
+         "-w", "\n%{http_code}", *args],
+        input=data, capture_output=True, text=True, timeout=120,
+    )
+    body, _, code = r.stdout.rpartition("\n")
+    return (int(code) if code.strip().isdigit() else 0), body
+
+
+def walk(o, key: str, out: list | None = None) -> list:
+    """入れ子の中から、その鍵の値を全部拾う。YouTube の返しは形が変わるので、
+    道を決め打ちせずに鍵で拾う（決め打ちは版が上がるたび黙って0件になる）"""
+    out = [] if out is None else out
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == key:
+                out.append(v)
+            walk(v, key, out)
+    elif isinstance(o, list):
+        for v in o:
+            walk(v, key, out)
+    return out
+
+
+def lockups(node) -> list[tuple[str, str]]:
+    """一覧の1枚から (id, 題名) を取る"""
+    got = []
+    for lk in walk(node, "shortsLockupViewModel"):
+        m = re.match(r"shorts-shelf-item-(.+)$", lk.get("entityId", "") or "")
+        vid = m.group(1) if m else None
+        if not vid:
+            ep = (lk.get("onTap", {}).get("innertubeCommand", {}) or {}).get("reelWatchEndpoint", {})
+            vid = (ep or {}).get("videoId")
+        if not vid:
+            continue
+        a = lk.get("accessibilityText", "") or ""
+        # 「〜, 1,234回視聴 - ショート動画を再生」の後ろを落とす
+        title = re.sub(r",\s*[\d,.]+万?回視聴\s*-\s*ショート動画を再生$", "", a).strip()
+        got.append((vid, title))
+    return got
+
+
+def next_token(node) -> str | None:
+    for it in walk(node, "continuationItemRenderer"):
+        t = ((it.get("continuationEndpoint", {}) or {}).get("continuationCommand", {}) or {}).get("token")
+        if t:
+            return t
+    return None
+
+
+def open_tab(tries: int = 4) -> tuple[dict, str, str, str | None] | None:
+    """ショートのタブを開く。読めなければ None。
+
+    **読めなかったことと、0本だったことを分ける。** YouTube は混むと
+    429（reCAPTCHA の3.8KB）を返す。GitHub の走者でも返る回がある
+    （2026-09-17、3分あいだを空けた2回で、1回目が 200・2回目が空だった）。
+    何回か置いて試して、それでも駄目なら**何も書き換えずに引き下がる。**
+    """
+    for i in range(tries):
+        if i:
+            time.sleep(10 * i)
+        code, html = curl([SHORTS_URL])
+        m = re.search(r"var ytInitialData = (\{.*?\});</script>", html, re.S)
+        key = re.search(r'"INNERTUBE_API_KEY":"([^"]+)"', html)
+        ver = re.search(r'"INNERTUBE_CLIENT_VERSION":"([^"]+)"', html)
+        if m and key and ver:
+            vis = re.search(r'"visitorData":"([^"]+)"', html)
+            if i:
+                print(f"{i + 1}回目で開けました")
+            return json.loads(m.group(1)), key.group(1), ver.group(1), vis and vis.group(1)
+        print(f"  {i + 1}回目: HTTP {code} / {len(html)}バイト / ytInitialData なし", flush=True)
+    return None
+
+
+def fetch_list() -> list[tuple[str, str]] | None:
+    """チャンネルのショートのタブを、続きまで追って全部取る。読めなければ None"""
+    opened = open_tab()
+    if not opened:
+        return None
+    data, key, ver, vis = opened
+
+    tabs = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
+    sel = [t for t in tabs if (t.get("tabRenderer") or {}).get("selected")]
+    if not sel:
+        print("::warning::ショートのタブが選ばれていません")
+        return None
+    grid = sel[0]["tabRenderer"]["content"]["richGridRenderer"]["contents"]
+
+    out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    def add(node) -> int:
+        n = 0
+        for vid, title in lockups(node):
+            if vid in seen:
+                continue
+            seen.add(vid)
+            out.append((vid, title))
+            n += 1
+        return n
+
+    add(grid)
+    tok = next_token(grid)
+    print(f"1ページ目 {len(out)}本", flush=True)
+
+    client = {"clientName": "WEB", "clientVersion": ver, "hl": "ja", "gl": "JP"}
+    if vis:
+        client["visitorData"] = vis
+
+    page = 1
+    # 20ページで打ち止め（1ページ35〜48本なので700本ぶん。輪になったときの保険）
+    while tok and page < 20:
+        page += 1
+        time.sleep(1.5)
+        body = json.dumps({"context": {"client": client}, "continuation": tok})
+        _, txt = curl(
+            ["-H", "Content-Type: application/json",
+             "-H", "X-Youtube-Client-Name: 1", "-H", f"X-Youtube-Client-Version: {ver}",
+             "-H", "Origin: https://www.youtube.com", "-H", f"Referer: {SHORTS_URL}",
+             "-X", "POST", "--data-binary", "@-",
+             f"https://www.youtube.com/youtubei/v1/browse?key={key}&prettyPrint=false"],
+            data=body,
+        )
+        try:
+            j = json.loads(txt)
+        except Exception:
+            print(f"::warning::{page}ページ目が JSON で返りませんでした。ここまでで止めます", flush=True)
+            break
+        acts = j.get("onResponseReceivedActions") or []
+        n = add(acts)
+        tok = next_token(acts)
+        print(f"{page}ページ目 +{n}本 → {len(out)}本", flush=True)
+        if n == 0:
+            break
+    return out
 
 
 def fetch_date(vid: str) -> str | None:
-    """視聴ページから公開日（YYYY-MM-DD）を拾う。取れなければ None"""
-    try:
-        html = subprocess.run(
-            ["curl", "-sSL", "--max-time", "60", "-A", UA, "-H", "Accept-Language: ja",
-             f"https://www.youtube.com/watch?v={vid}"],
-            capture_output=True, text=True, timeout=90,
-        ).stdout
-    except Exception:
-        return None
+    """視聴ページから公開日（YYYY-MM-DD）を拾う。取れなければ None。
+
+    **取れない回がある。** 連打すると reCAPTCHA の頁（3.8KB）が返るし、
+    同じ URL でも日付の入っていない HTML が返る回がある。
+    """
+    _, html = curl([f"https://www.youtube.com/watch?v={vid}"])
     m = re.search(r'"publishDate":\{"simpleText":"(\d{4})/(\d{2})/(\d{2})"', html)
+    if m:
+        return "-".join(m.groups())
+    m = re.search(r'"publishDate":"(\d{4})-(\d{2})-(\d{2})', html)
     return "-".join(m.groups()) if m else None
 
 
-def dates() -> int:
-    """`date` の無いものだけ、公開日を埋める。
+# ---------------------------------------------------------------- 手元の表
 
-    同じ動画を二度取りにいかない。**返ってこないことがある**（同じ URL でも
-    日付の入っていない HTML が返る回がある）ので、何度か回すつもりで書いてある。
+
+def load() -> dict:
+    return json.loads(SRC.read_text(encoding="utf-8"))
+
+
+def save(src: dict) -> None:
+    src["shorts"] = sorted(src["shorts"], key=lambda v: (v.get("date") or "9999", v["id"]))
+    SRC.write_text(json.dumps(src, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def trim_tags(title: str) -> str:
+    """末尾に続くハッシュタグの列を落とす。**途中のものは残す**（文の一部なので）"""
+    t = re.sub(r"(\s*#[^\s#]+)+\s*$", "", title).strip()
+    return re.sub(r"\s{2,}", " ", t) or title.strip()
+
+
+# ---------------------------------------------------------------- 章の割り当て
+
+DAY = timedelta(days=1)
+FAR = date(9999, 12, 31)
+
+
+def read_chapters() -> list[dict]:
+    """`site/content/chapters.ts` から章を読む。
+
+    **読み落としたら落とす。** 正規表現で TS を読むので、書き方が変わると
+    黙って章が減る。減ったぶんのショートは「どの章にも入らない」に落ちて
+    棚から消えるので、**例外にして気づけるようにする**
+    （`python/stays.py` の `read_countries()` と同じ考え）。
     """
-    src = json.loads(SRC.read_text(encoding="utf-8"))
-    left = 0
-    for g in groups(src):
-        for v in src[g]:
-            if v.get("date"):
-                continue
-            v["date"] = fetch_date(v["id"])
-            print(f"{g} {v['id']} {v['date']}", flush=True)
-            if not v["date"]:
-                v.pop("date")
-                left += 1
-            SRC.write_text(json.dumps(src, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-            time.sleep(0.6)
-    print(f"日付の取れていないもの: {left}本（もう一度回すと取れることがある）")
+    text = CHAPTERS_TS.read_text(encoding="utf-8")
+    body = text.split("export const CHAPTERS", 1)
+    if len(body) != 2:
+        raise SystemExit("::error::chapters.ts に CHAPTERS がありません")
+    body = body[1].split("\n];", 1)[0]
+
+    want = len(re.findall(r"^\s*slug: \"", body, re.M))
+    out = []
+    for blk in re.split(r"^\s*\{\s*$", body, flags=re.M):
+        m = re.search(r'slug: "([a-z-]+)"', blk)
+        if not m:
+            continue
+        def pick(k: str) -> str:
+            mm = re.search(rf'{k}: "([^"]*)"', blk)
+            return mm.group(1) if mm else ""
+        days = re.search(r"plannedDays: (\d+)", blk)
+        out.append({
+            "slug": m.group(1),
+            "from": pick("from"),
+            "to": pick("to"),
+            "opensAt": pick("opensAt"),
+            "branchOf": pick("branchOf"),
+            "plannedDays": int(days.group(1)) if days else 0,
+        })
+    if len(out) != want or not out:
+        raise SystemExit(f"::error::chapters.ts の章を読み落としました（{len(out)}/{want}）")
+    return out
+
+
+def spans(chs: list[dict]) -> dict[str, tuple[date, date, bool]]:
+    """章ごとの (始まり, 終わり)。`chapters.ts` の `began` / `ended` と同じ決めかた。
+
+    まだ始まっていない章は `opensAt`、終わりの無い章は
+    **見立ての日数**か**次の本線の章が始まる日**の早いほう。
+    """
+    def began(c: dict) -> date:
+        if c["from"]:
+            return date.fromisoformat(c["from"])
+        if c["opensAt"]:
+            return date.fromisoformat(c["opensAt"][:10])
+        return FAR
+
+    out = {}
+    for c in chs:
+        b = began(c)
+        if b == FAR:
+            continue  # 日どりの決まっていない章（アルバニア）。まだ何も入らない
+        if c["to"]:
+            e = date.fromisoformat(c["to"])
+        else:
+            nxt = [began(x) for x in chs
+                   if not x["branchOf"] and x is not c and began(x) > b]
+            e = min([b + c["plannedDays"] * DAY] if c["plannedDays"] else [], default=FAR)
+            e = min(e, min(nxt, default=FAR))
+        out[c["slug"]] = (b, e, bool(c["branchOf"]))
+    return out
+
+
+def chapter_of(d: str, sp: dict[str, tuple[date, date, bool]]) -> str | None:
+    """公開日から置き場を決める。**題名は見ない。**
+
+    決め方は、上から順に。
+
+      1. **枝の章が前後7日以内にあれば、枝。** 枝（イランまで歩く）は親
+         （コーカサス周遊）の期間の中にすっぽり入っているので、「入っている章」で
+         決めると必ず親が勝ってしまう。予告（04-28）もまとめ（05-12）も枝の外にある
+      2. **期間の中に入っている章。** 2025-03-29 はヨーロッパ周遊の最終日で、
+         翌日から中東周遊。この日のショートは**終わった旅のまとめ**なので、
+         入っているほうを採る
+      3. **どの章にも入らなければ、前後7日以内でいちばん近い章。**
+         ヨーロッパ周遊の1つ目の街パリの2本（10-25・10-26）が、章の始まる
+         10-28 より前に出ている
+      4. それも無くて、いちばん古い章より前なら `before-stream`
+    """
+    day = date.fromisoformat(d)
+    near = [(slug, b, e, br) for slug, (b, e, br) in sp.items()
+            if b - EDGE_DAYS * DAY <= day <= e + EDGE_DAYS * DAY]
+    if near:
+        def gap(b: date, e: date) -> int:
+            return max((b - day).days, (day - e).days, 0)
+
+        branch = [x for x in near if x[3]]
+        pick = branch or [x for x in near if gap(x[1], x[2]) == 0] or near
+        # 近い順 → 期間の短い順 → 名前順（同着でも毎回同じ答えにする）
+        pick.sort(key=lambda x: (gap(x[1], x[2]), (x[2] - x[1]).days, x[0]))
+        return pick[0][0]
+    if sp and day < min(b for b, _, _ in sp.values()):
+        return BEFORE
+    return None
+
+
+# ---------------------------------------------------------------- それぞれの仕事
+
+
+def fetch(gap: float = WATCH_GAP) -> int:
+    """0=取れた / 1=手元のものが消えていた（焼かない）/ 2=YouTube に届かなかった（焼かない）"""
+    src = load()
+    known = {v["id"]: v for v in src["shorts"]}
+    gone = {g["id"] for g in src.get("_gone", [])}
+
+    got = fetch_list()
+    if got is None:
+        print("::warning::YouTube のショートのタブを読めませんでした。棚は前のまま置いておきます")
+        return 2
+    ids = [i for i, _ in got]
+    print(f"YouTube から {len(ids)}本 / 手元に {len(known)}本", flush=True)
+
+    # **対照。** 手元にあるものが一覧に全部入っているか
+    missing = [i for i in known if i not in ids and i not in gone]
+    if missing:
+        print("::error::手元にあるショートが、YouTube の一覧に見当たりません。焼き込みは書き換えません")
+        for i in missing:
+            print(f"::error::  {i} {known[i].get('date')} {known[i].get('title','')[:40]}")
+        print("::error::非公開・削除だと分かったら、python/data/shorts.json の _gone に理由を添えて足してください")
+        return 1
+
+    add = [(i, t) for i, t in got if i not in known]
+    for i, t in add:
+        src["shorts"].append({"id": i, "title": trim_tags(t)})
+        print(f"足した {i} {trim_tags(t)[:50]}", flush=True)
+    if not add:
+        print("増えたショートはありません")
+
+    save(src)
+    left = dates(gap)
+    print(f"棚 {len(src['shorts'])}本（増えたぶん {len(add)}本 / 日付の取れていないもの {left}本）")
     return 0
 
 
+def dates(gap: float = WATCH_GAP) -> int:
+    """`date` の無いものだけ、公開日を埋める。**1本ずつ、間を空けて開く。**"""
+    src = load()
+    todo = [v for v in src["shorts"] if not v.get("date")]
+    if not todo:
+        return 0
+    print(f"公開日を取りにいきます: {len(todo)}本（1本 {gap:.0f}秒あけます）", flush=True)
+    left = 0
+    for v in todo:
+        got = fetch_date(v["id"])
+        if got:
+            v["date"] = got
+        else:
+            left += 1
+        print(f"  {v['id']} {got or '取れず'}", flush=True)
+        save(src)
+        time.sleep(gap)
+    if left:
+        print(f"::warning::公開日の取れなかったもの: {left}本（次に回すと取れることがあります。それまで棚には出ません）")
+    return left
+
+
 def build() -> int:
-    src = json.loads(SRC.read_text(encoding="utf-8"))
+    src = load()
+    sp = spans(read_chapters())
+    rows = sorted(
+        [v for v in src["shorts"] if v.get("date")],
+        key=lambda v: (v["date"], v["id"]),
+    )
+    undated = [v["id"] for v in src["shorts"] if not v.get("date")]
+
+    groups: dict[str, list[dict]] = {}
+    orphan: list[dict] = []
+    for v in rows:
+        slug = chapter_of(v["date"], sp)
+        if not slug:
+            orphan.append(v)
+            continue
+        groups.setdefault(slug, []).append(v)
+
+    # 置き場の並びは、いちばん古いショートの日付順。**辞書の順に頼らない**
+    order = sorted(groups, key=lambda g: (groups[g][0]["date"], g))
+
     body, n = [], 0
-    for g in groups(src):
-        # 古い順。1日目・2日目…と並ぶし、街の移り変わりが旅の順になる
-        rows = sorted(src[g], key=lambda v: (v.get("date") or "9999", v["id"]))
+    for g in order:
         body.append(f"  {ts(g)}: [")
-        for v in rows:
+        for v in groups[g]:
             fields = [f"id: {ts(v['id'])}", f"date: {ts(v['date'])}", f"title: {ts(v['title'])}"]
             for k in ("city", "country"):
                 if v.get(k):
@@ -123,19 +484,35 @@ def build() -> int:
             n += 1
         body.append("  ],")
     OUT_TS.write_text(HEADER + "\n".join(body) + "\n" + FOOTER, encoding="utf-8")
-    print(f"{OUT_TS} … {n}本 / {len(groups(src))}か所")
+
+    print(f"{OUT_TS} … {n}本 / {len(order)}か所")
+    for g in order:
+        d = [v["date"] for v in groups[g]]
+        print(f"  {g:<14} {len(groups[g]):>3}本  {d[0]} 〜 {d[-1]}")
+    if undated:
+        print(f"::warning::公開日が取れていないので棚に出していないもの: {len(undated)}本 {' '.join(undated)}")
+    if orphan:
+        print(f"::warning::どの章にも入らないので棚に出していないもの: {len(orphan)}本")
+        for v in orphan:
+            print(f"::warning::  {v['id']} {v['date']} {v['title'][:40]}")
     return 0
+
+
+def ts(x) -> str:
+    return json.dumps(x, ensure_ascii=False)
 
 
 HEADER = '''/**
  * ショート動画。**手で直さない。**
- * `python/build_shorts.py --build` が `python/data/shorts.json` から焼く。
+ * `python/build_shorts.py` が、チャンネルのショートのタブから取り直して焼く
+ * （控えは `python/data/shorts.json`）。
  *
- * BigQuery の `videos` 表には配信しか入っていないので、出どころはあの JSON だけ。
- * 増えたら JSON に足して焼き直す。
+ * BigQuery の `videos` 表には配信しか入っていないが、**出どころは BigQuery だけではない。**
+ * 公開のチャンネルそのものが本番の値で、鍵なしで読める。
  *
- * 鍵は `content/chapters.ts` の章の slug。ただし `before-stream` だけは章ではなく、
- * **配信を始める前の6週間**（2024-09-17〜10-19）。島に建てず、`/map` の
+ * 鍵は `content/chapters.ts` の章の slug。**公開日だけで決めている**（題名の街名は見ない。
+ * ロンドンは2回あるので題名では決まらない）。ただし `before-stream` だけは章ではなく、
+ * **配信を始める前の6週間**。島に建てず、`/map` の
  * 「その前に、配信していない6週間がある」の段に出る。
  *
  * `date` は撮った日ではなく**出した日**。時差で1日ずれることがある。
@@ -145,7 +522,7 @@ export type Short = {
   id: string;
   /** 公開日（YYYY-MM-DD） */
   date: string;
-  /** YouTube の題名。**引用なので書き換えない** */
+  /** YouTube の題名。末尾のハッシュタグだけ落としてある */
   title: string;
   /** 撮った街。全部に付いているわけではない（振り返りや告知には無い） */
   city?: string;
@@ -170,15 +547,29 @@ export const shortHref = (id: string) => `https://www.youtube.com/shorts/${id}`;
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--fetch", action="store_true", help="YouTube から取り直して JSON を更新する")
     ap.add_argument("--build", action="store_true", help="site/content/shorts.ts を焼く")
-    ap.add_argument("--dates", action="store_true", help="公開日の無いものを YouTube から埋める")
+    ap.add_argument("--dates", action="store_true", help="公開日の取れていないものを、もう一度取りにいく")
+    ap.add_argument("--gap", type=float, default=WATCH_GAP, help="視聴ページを開ける間隔（秒）")
     a = ap.parse_args()
-    if a.dates:
-        dates()
+
+    # 引数なしは「取り直して焼く」。毎晩ぶん（rebake.yml）はこの形で呼ぶ
+    if not (a.fetch or a.build or a.dates):
+        a.fetch = a.build = True
+
+    if a.fetch:
+        # **読めなかった晩は、焼かずに前のものを置いておく**（0本と見分けがつくように）。
+        # 落とさないのは、毎晩ぶんの残り6本まで道連れにしないため
+        # （`docs/island-fresh.md` の止め金4と同じ考え）
+        r = fetch(a.gap)
+        if r == 2:
+            return 0
+        if r:
+            return 1
+    if a.dates and not a.fetch:
+        dates(a.gap)
     if a.build:
         return build()
-    if not a.dates:
-        ap.print_help()
     return 0
 
 
