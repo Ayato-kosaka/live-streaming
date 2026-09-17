@@ -399,6 +399,17 @@ PORT=4150 node tools/sprites/tapink.mjs     # 0＝通った / 1＝見つかっ�
   置き場は `tools/sprites/repo.mjs` の `repoPath()` / `fromRoot()`、Python は
   `repo.py` の `repo_path()`。**根が見つからなければ、黙って落ちずに投げる**
 
+- **配信を名指しする焼き込み（`videoId` / `"v"` を持つもの）を触ったら
+  `python3 python/dead_stream_watch.py` を回した**（島が名指ししている配信を
+  1本ずつ当てて、**押しても見られない本数**を出す。
+  0=ぜんぶ見られる / 1=見られないものがあった / 2=数えるものが無い。
+  **サムネイルが出ているかとは別のこと**——YouTube は 404 でも灰色の板を返すし、
+  oembed が 200 を返すのに録画そのものが無い配信がある。
+  対照を毎回自分で回す——死んだ id・生きた id・**oembed は 200 なのに押すと
+  見られない id** の3つ。**届かない箱では 2 で止まる。**
+  ネットに出ない側の対照は `python3 python/dead_stream_watch_selftest.py`。
+  **毎晩ひとりでに回す繋ぎは、まだ入れていない**）
+
 - **Python を触ったら `python3 python/crosscall_selftest.py` を回した**
   （モジュールをまたいだ呼び出しの引数の数。`py_compile` も単体の確かめも
   素通りする。`island-misses.md` #105）
