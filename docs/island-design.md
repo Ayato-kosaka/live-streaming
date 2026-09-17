@@ -340,7 +340,7 @@ h1・パンくず・OG・住人のセリフ・ヘッダーの札は、全部こ�
 cd site && NEXT_DIST_DIR=.next-verify npx next build
 node ../tools/sprites/noemoji.mjs       # 書き出したHTMLに絵文字が残っていないか
 python3 -m http.server 4321 --directory .next-verify &
-cd ../tools/sprites && node crawl.mjs     # 全ページの h1・JSエラー・横あふれ・リンク切れ
+cd ../tools/sprites && node crawl.mjs     # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
 node align.mjs                            # 建物の絵と当たり判定・合図のズレ
 cd .. && python3 tools/sprites/audit.py   # スプライト1枚ずつ、上の5原則を数で
 SPORT=4321 STATE=1 node tools/sprites/clutter.mjs   # 1画面に何個・何文字・UI が何%
