@@ -563,11 +563,18 @@ async function residentDays(): Promise<Json | null> {
   const byChannel = await charactersByChannel();
   if (!byChannel) return null;
   const ids = [...byChannel.keys()];
+  /* **0件を「読めた上で0人」と読まない**（`docs/island-standards.md` 15）。
+     名簿の 102人中 84人が `channelId` を持っている（2026-09-17 実測）ので、
+     ここが空になるのは読めていないときだけ。空の表を返すと、画面は
+     「この島には数のある人が1人もいない」と読む。 */
+  if (!ids.length) {
+    logger.warn("resident days: no channelId in the character book");
+    return null;
+  }
   const out: Json = {};
   try {
     for (let i = 0; i < ids.length; i += DAYS_CHUNK) {
       const refs = ids.slice(i, i + DAYS_CHUNK).map((c) => CHANNELS.doc(c));
-      if (!refs.length) continue;
       /* **`days` だけ貰う。** 名前も写真も要らないし、この口へ持ち込むと
          うっかり返してしまう道ができる。 */
       const snaps = await db.getAll(...refs, {fieldMask: ["days"]});
