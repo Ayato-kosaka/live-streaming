@@ -66,4 +66,4 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
  * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = 20;
+export const COUNTRIES_WALKED = 21;
