@@ -17,12 +17,13 @@ import {
   type RouletteSession,
 } from "@/lib/api";
 import { readLiveChatDirect } from "@/lib/youtubeChat";
-import { useAuth, withRead } from "@/lib/auth";
-import { MAX_ITEMS, RESULT_SAY, RL_UI, WAIT_SECONDS } from "@/content/roulette";
+import { useAuth, withRead, type Read } from "@/lib/auth";
+import { MAX_ITEMS, RESULT_SAY, WAIT_SECONDS } from "@/content/roulette";
 import { THEMES, THEME_NAME, type WheelTheme } from "@/components/roulette/wheel";
 import Icon from "@/components/ui/IconCore";
 import Fold from "@/components/ui/Fold";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
+import RouletteComments from "./RouletteComments";
 
 /** 手元に残しておくコメントの数。これより古いものは落とす。 */
 const KEEP = 200;
@@ -84,6 +85,16 @@ export default function RouletteBox() {
   /** 一度も開けていない。**灰色の骨のまま止めないための印** */
   const [dead, setDead] = useState(false);
   const [lines, setLines] = useState<ChatLine[]>([]);
+  /**
+   * コメントを読めているか。**`lines` だけでは2値にしかならない。**
+   *
+   * 落ちても黙って次の周期を張り直していたころ、読めていない時間が
+   * 「まだ来ていません」——**0件と同じ絵**——で出ていた。配信の最中に
+   * それが出ると「今夜は誰も注文していない」と読める
+   * （`docs/island-standards.md` 10、`island-misses.md` #117）。
+   */
+  const [chatRead, setChatRead] = useState<Read>("wait");
+  /** いま配信しているか。**`null` は「分からない」。`false` に倒さない** */
   const [live, setLive] = useState<boolean | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -114,7 +125,13 @@ export default function RouletteBox() {
       try {
         const r = await withRead(startRoulette(t, clear));
         setSes(r.session);
-        setLive(r.live);
+        /* 席を開くついでに配信を1回見ているが、**そこで落ちたときの
+           `live` は「配信していない」ではない。** 口はそれを `chatDown`
+           で分けて返す（`functions/src/islandApi.ts`）。
+           `site/lib/api.ts` は他の担当も触るので、欄はここで読む。 */
+        const started = r as { chatDown?: boolean };
+        setLive(started.chatDown ? null : r.live);
+        if (started.chatDown) setChatRead("down");
         setDoneru(r.doneru ?? { set: false, tail: "" });
         if (clear) setLines([]);
       } catch (e) {
@@ -153,10 +170,15 @@ export default function RouletteBox() {
   /* ---- コメントを流す（直に読む）。**YouTube の割り当てを食わない** ---- */
   useEffect(() => {
     if (!sid || reading !== "direct") return;
+    setChatRead("wait");
     const r = readLiveChatDirect({
       token,
       onLines: push,
       onLive: setLive,
+      /* 届いたか届かなかったかを、1周ごとに画面へ渡す。
+         **`onGiveUp` とは別。** あちらはこの読み方をやめる合図で、
+         こちらは「いまは読めていない」だけ（次の周期でまた読む）。 */
+      onDown: (down) => setChatRead(down ? "down" : "ok"),
       /* 鍵がまだ無い・ログインが切れた。**コントローラーを止めない。**
          今までどおり Functions ごしの読み方に落ちる。 */
       onGiveUp: () => setFellBack(true),
@@ -170,6 +192,7 @@ export default function RouletteBox() {
     if (!sid || reading !== "api") return;
     let gone = false;
     let t: ReturnType<typeof setTimeout>;
+    setChatRead("wait");
     const tick = async () => {
       const tk = await token();
       let wait = 6000;
@@ -177,13 +200,28 @@ export default function RouletteBox() {
         try {
           const r = await readRouletteChat(sid, tk);
           if (gone) return;
-          setLive(r.live);
           wait = r.wait;
-          push(r.lines);
+          /* **口は落ちても 200 で返す。** 中の `down` を見ないと、
+             YouTube まで届かなかった回が「0件」に化ける。
+             そのときの `live` も見ない（読めていないので言えない）。 */
+          if (r.down) {
+            setChatRead("down");
+          } else {
+            setChatRead("ok");
+            setLive(r.live);
+            push(r.lines);
+          }
         } catch {
-          /* 配信が終わっただけかもしれない。次の周期でまた聞く */
+          /* 配信が終わっただけかもしれない。次の周期でまた聞く。
+             **黙って張り直さない。** 読めていないことは画面に出す。 */
+          if (gone) return;
+          setChatRead("down");
           wait = 15000;
         }
+      } else {
+        /* 合言葉が取れないのも「読めなかった」（`open` と同じ扱い） */
+        if (gone) return;
+        setChatRead("down");
       }
       if (gone) return;
       t = setTimeout(tick, wait);
@@ -487,46 +525,16 @@ export default function RouletteBox() {
         </div>
       </section>
 
-      {/* コメント */}
-      <section className="panel paper">
-        <h2>流れてきたコメント</h2>
-        {live === false && <p className="rc-note">{RL_UI.noLive}</p>}
-        {lines.length === 0 ? (
-          <div className="blank">
-            <b>まだ来ていません</b>
-            <p>{RL_UI.noComments}</p>
-          </div>
-        ) : (
-          <ul className="rc-lines">
-            {lines.map((l) => {
-              const on = picked.has(l.id);
-              return (
-                <li key={l.id}>
-                  <button
-                    className={`rc-line${on ? " is-on" : ""}`}
-                    onClick={() => toggle(l)}
-                    disabled={!on && full}
-                    aria-pressed={on}
-                  >
-                    <span className="rc-tick" aria-hidden>
-                      {on && <Icon name="check" size={16} />}
-                    </span>
-                    {l.icon ? (
-                      <img className="rc-face" src={l.icon} alt="" />
-                    ) : (
-                      <span className="rc-face" aria-hidden />
-                    )}
-                    <span className="rc-line-t">
-                      <b>{l.text}</b>
-                      <i>{l.name}</i>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+      {/* コメント。**出し分けは別の部品**（ログインの壁の向こうを
+          開かずに、4通りを1枚に並べて確かめられるようにしてある） */}
+      <RouletteComments
+        lines={lines}
+        live={live}
+        read={chatRead}
+        picked={picked}
+        full={full}
+        onPick={toggle}
+      />
 
       {/* 出し先と、細かいところ。**決めたら滅多に触らないので畳む。** */}
       <Fold title="表示（OBS）に出す URL" lead="いちど貼れば、変わらない">

@@ -75,6 +75,16 @@ export type LiveChatHooks = {
   /** いま配信しているか。配信していなければ false */
   onLive: (live: boolean) => void;
   /**
+   * いまコメントを読めているか。**1周ごとに来る。**
+   *
+   * `true` は「YouTube まで届かなかった」。**諦めたのではない**ので、
+   * こちらは次の周期でまた読みに行く。呼んだ側にこれを渡すのは、
+   * 届いていない時間を「コメントが0件」と同じ絵にしないため
+   * （`docs/island-standards.md` 10）。`onGiveUp` とは別物で、
+   * あちらは**この読み方をやめる**の合図。
+   */
+  onDown: (down: boolean) => void;
+  /**
    * この読み方が使えない、と分かったとき。
    *
    * 鍵がまだ入っていない（404）ときにも来る。**これは異常ではない。**
@@ -102,8 +112,10 @@ const MIN_POLL_MS = 3_000;
 const TOKEN_LEEWAY_MS = 60_000;
 
 class ApiError extends Error {
-  constructor(readonly status: number, text: string) {
-    super(`youtube ${status} ${text}`);
+  /* 本文を捨てない。403 が「チャットが閉じた」なのか
+     「割り当てが尽きた」なのかは、ここにしか書いていない。 */
+  constructor(readonly status: number, readonly body: string) {
+    super(`youtube ${status} ${body}`);
   }
 }
 
@@ -193,12 +205,26 @@ export function readLiveChatDirect(hooks: LiveChatHooks): LiveChatReader {
     return vid.items?.[0]?.liveStreamingDetails?.activeLiveChatId ?? null;
   }
 
+  /** 配信が終わった・チャットが閉じた。**探し直しからやる。**
+      栞も控えも捨てる（次の配信のものが混ざる）。 */
+  function ended() {
+    liveChatId = null;
+    pageToken = undefined;
+    synced = false;
+    seen.clear();
+    hooks.onDown(false);
+    hooks.onLive(false);
+    later(tick, LOOK_AGAIN_MS);
+  }
+
   async function tick() {
     if (stopped) return;
     try {
       if (!liveChatId) {
         liveChatId = await findLiveChatId();
         if (!liveChatId) {
+          /* 探せた上で「やっていない」。**読めているので down ではない** */
+          hooks.onDown(false);
           hooks.onLive(false);
           later(tick, LOOK_AGAIN_MS);
           return;
@@ -214,6 +240,7 @@ export function readLiveChatDirect(hooks: LiveChatHooks): LiveChatReader {
       if (pageToken) u.searchParams.set("pageToken", pageToken);
 
       const data = await call<MessagesResponse>(u);
+      hooks.onDown(false);
       hooks.onLive(true);
 
       /* **YouTube が言ってきた間隔に従う。** 決め打ちで速く叩かない。 */
@@ -266,18 +293,27 @@ export function readLiveChatDirect(hooks: LiveChatHooks): LiveChatReader {
           return;
         }
       }
-      if (e instanceof ApiError && (e.status === 404 || e.status === 403)) {
-        /* 配信が終わった・チャットが閉じた。**探し直しからやる。**
-           栞も控えも捨てる（次の配信のものが混ざる）。 */
-        liveChatId = null;
-        pageToken = undefined;
-        synced = false;
-        seen.clear();
-        hooks.onLive(false);
+      /* 404 と、チャットが閉じたと言っている 403 は「配信が終わった」。
+         **同じ 403 でも割り当て切れ・権限違いは「読めていない」。**
+         ひとまとめにすると、こちらが読めない晩を「配信していません」と
+         言い換えることになる（`docs/island-standards.md` 10）。 */
+      if (e instanceof ApiError && e.status === 404) {
+        ended();
+        return;
+      }
+      if (e instanceof ApiError && e.status === 403) {
+        if (/liveChat(Ended|Disabled|NotFound)/.test(e.body)) {
+          ended();
+          return;
+        }
+        /* 割り当て切れ。**速く叩き直しても直らない**ので、長いほうで待つ */
+        hooks.onDown(true);
         later(tick, LOOK_AGAIN_MS);
         return;
       }
-      /* それ以外（電波が切れた等）は、少し待ってまた聞く。 */
+      /* それ以外（電波が切れた等）は、少し待ってまた聞く。
+         **黙って張り直さない。** 届いていないことを画面に出す。 */
+      hooks.onDown(true);
       later(tick, Math.max(pollMs, DEFAULT_POLL_MS));
     }
   }
