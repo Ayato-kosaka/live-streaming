@@ -67,8 +67,14 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
   const shorts = shortsOf(c.slug);
 
   /* まだ何も起きていない島（出発前の次の島）。**紙を出さない。**
-     数字も国も配信も無いので、段が全部消えて罫線だけが残る */
-  if (!st && !countries.length && !streams.length) return null;
+     数字も国も配信も無いので、段が全部消えて罫線だけが残る。
+
+     **ショートも数える。** 旅に出た島は、配信の集計（`chapterStats.ts` /
+     `chapterStreams.ts`）が章の閉じたあとにしか入らないので、歩いている最中は
+     この3つがぜんぶ空になる。そのあいだショートだけは増えていくので、
+     ここで数えないと**いま出したばかりのショートが、その島の紙から丸ごと消える**
+     （北欧の3本が実際にそうなっていた）。 */
+  if (!st && !countries.length && !streams.length && !shorts.length) return null;
 
   return (
     <Sheet>

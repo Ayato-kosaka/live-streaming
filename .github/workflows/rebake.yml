@@ -408,10 +408,21 @@ jobs:
                 python "python/$s.py" --build ;;
               build_shorts)
                 # **ここだけ BigQuery ではなく YouTube を読む**（チャンネルのショートのタブ）。
-                # 引数なしで「取り直して焼く」。手元にある id が一覧から消えていたら
-                # スクリプトが 1 で終わり、焼き込みは1バイトも書き換わらない
+                # 引数なしで「取り直して焼く」。
+                #
+                # **落ちても、ここでは止めない。** 止めると同じ晩に焼けた他の6本まで
+                # master に入らなくなる（`docs/island-fresh.md` の止め金4と同じ考え）。
+                # 棚を前のまま戻しておいて、**run のいちばん最後で赤くする。**
+                #
+                # なお「YouTube に届かなかった」ときはスクリプト自身が 0 で終わる
+                # （焼かずに引き下がる）ので、ここに来るのは
+                # **手元にある id が一覧から消えていた**ときだけ。
                 echo "$s は BigQuery ではなく YouTube（チャンネルのショートのタブ）を読みます"
-                python "python/$s.py" ;;
+                if ! python "python/$s.py"; then
+                  git checkout -- site/content/shorts.ts || true
+                  echo "SHORTS_BAD=1" >> "$GITHUB_ENV"
+                  echo "::warning::$s が落ちました。棚は前のまま戻しました。run の最後で赤くします"
+                fi ;;
               *) python "python/$s.py" ;;
             esac
             echo "::endgroup::"
@@ -1182,6 +1193,28 @@ jobs:
             echo "**まだ画面には出ていません。** 焼き込みは配り直して初めて入れ替わります。"
             echo "Actions の「Firebase Hosting Deploy」を手で起動するか、deploy を on にしてもう一度押してください。"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # **ショートの棚を取り直せなかったぶんを、ここで赤にする。**
+      # commit と deploy のあとに置くのは「凍っていたら赤くする」と同じ理由で、
+      # 止めても入るものが増えるわけではなく、同じ晩の他の6本を道連れにするだけだから。
+      #
+      # ここが赤くなるのは「手元にある id が YouTube の一覧から消えていた」ときだけ。
+      # **非公開・削除だと分かったら `python/data/shorts.json` の `_gone` に
+      # 理由を添えて足す。** 書いてあるものは一覧に無くても止まらない。
+      - name: ショートの棚を取り直せたか
+        if: env.SHORTS_BAD == '1'
+        run: |
+          {
+            echo ""
+            echo "### ショートの棚を取り直せませんでした"
+            echo ""
+            echo "手元にあるショートが、YouTube の一覧に見当たりません。**棚は前のまま**で、"
+            echo "焼き込みは1バイトも書き換わっていません。上の「焼く」に消えた id が出ています。"
+            echo "非公開・削除だと分かったら \`python/data/shorts.json\` の \`_gone\` に理由を添えて足してください。"
+            echo "**この赤は「落ちた」ではありません。** 他の焼き込みは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::ショートの棚を取り直せませんでした。上の「焼く」を見てください"
+          exit 1
 
       # 上の「凍っていないか」で見つけたぶんを、ここで赤にする。
       # **commit と deploy のあと。** 凍っているのは「入れるものが無い」だけで、
