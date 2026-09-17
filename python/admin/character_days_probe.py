@@ -135,6 +135,8 @@ def main() -> None:
 
     log.info("見たもの: 名簿 %d人 / 辞書 %d人 / 焼き込み %d人",
              chars, channels, len(bake))
+    log.info("名簿に `channelId` が入っているの: %d人（引けるの %d人）",
+             sum(len(i) for i in owners.values()), len(by_channel))
     if clash or agree < CONTROL_MIN:
         log.error(
             "対照が合いません（一致 %d件・食い違い %d件・最低 %d件）。"
