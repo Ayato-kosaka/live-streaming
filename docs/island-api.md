@@ -49,9 +49,23 @@
 | `stats` | 配信本数・日数・コメント数・のべ人数・常連の数・直近5本 |
 | `notes` | テーマ付箋の新着（最大200件） |
 | `residents` | 名前かアイコンを出してよいと言った人だけ |
-| `residentDays` | チャンネルID → 一緒にいた日数 |
+| `residentDays` | **キャラクターの書類ID** → 一緒にいた日数。読めなかったときは `null` |
 | `nordic` | `arrivedOn` / `endedOn` |
 | `more.notes` | まだ古い付箋が残っていれば、その続きの位置 |
+
+**`residentDays` の鍵はチャンネルIDではない。** 前はそうだったが、
+チャンネルIDは `youtube.com/channel/UC…` を開けば本人の顔と名前に直結するので、
+ログインなしで「このチャンネルの人は N 日来ている」が誰にでも読めていた。
+しかも `orderBy("days").limit(60)` で上位を返していたので、**キャラクターを
+作っていない人**——島に何も出していない人——まで混ざっていた。
+いまはキャラクターの書類ID（`GET /characters` の `id`・図鑑の絵の id）を鍵に、
+**`islandCharacter.channelId` で結べている人ぶん**だけを返す。
+図鑑がもともと見せている「この絵の人は N 日」より細かいことは言わない。
+
+**載っていないことは「0日」ではない。** `channelId` で結べていない人は
+ここに出ない。画面は数の無い人の欄を出さない（`docs/island-misses.md` #115）。
+**読めなかったときは `null`。** `{}` と同じ顔で返すと、落ちた日に
+図鑑ぜんぶが「数の無い人」に見える。
 
 **`stats.latest[]` の鍵は `videoId` ではなく `video_id`。**
 BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているため
