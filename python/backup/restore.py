@@ -254,27 +254,6 @@ def drill_photos(bq, n: int, path: str | None = None, out_path: str | None = Non
     return 0
 
 
-def restore_photo(read_row, path: str | None, out_path: str | None) -> int:
-    """写真を1枚戻して突き合わせる（名指しで1枚だけ見たいとき）。
-
-    **0枚は緑にしない。** 見つからないなら「戻せた」ではなく
-    「**数えるものが無い**」ので 2（`docs/island-standards.md` §15）。
-    """
-    r = photos.restore_one(read_row, path, out_path)
-    if not r["found"]:
-        log.error("置き場に写真が見つかりません")
-        print("::error::置き場に写真が見つからないので、戻す試しができていません")
-        return 2
-    log.info("1枚戻しました: %d バイト / 大きさ %s / 指紋 %s",
-             r["bytes"], "一致" if r["size_ok"] else "**不一致**",
-             "一致" if r["sha_ok"] else "**不一致**")
-    if not r["ok"]:
-        log.error("**戻した実体が、記録してあるバイト列と一致しません。**")
-        return 1
-    log.info("**バイト列が一致しました。**")
-    return 0
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--collection", help="戻すコレクション名")

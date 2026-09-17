@@ -204,7 +204,8 @@ run_admin_script.yml → backup_photos
   {}                                … 下見。**1バイトも書かない**
   {"apply": true}                   … 上限（128MB）ぶん取る
   {"apply": true, "budget_mb": 400} … 上限を押し上げて取る
-  {"verify": true}                  … 何枚か戻してバイト列を突き合わせる
+  {"verify": true}                  … 1枚戻して突き合わせる（毎晩の演習と同じ
+                                      `drill_photos`。大きさ・指紋・空でない・絵である）
   {"selftest": true}                … 偽の置き場で振る舞いを動かす（外に出ない）
 ```
 

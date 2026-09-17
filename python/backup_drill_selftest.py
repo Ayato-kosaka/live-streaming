@@ -136,6 +136,21 @@ WIRED = [
 ]
 
 
+def check_admin_verify() -> None:
+    """手で押す側（`{"verify": true}`）も、毎晩と同じ見かたを通るか。
+
+    出る口が2つあるなら見張りも2つ要る、と同じ話で、**見かたが2つあると
+    片方だけ古いまま残る。** 実際に `restore_photo`（大きさと指紋だけ）が
+    こちらに残っていた。
+    """
+    src = (ROOT / "admin/backup_photos.py").read_text(encoding="utf-8")
+    body = "\n".join(ln for ln in src.split("\n") if not ln.strip().startswith("#"))
+    say("restore.drill_photos(" in body,
+        "手で押す `verify` が、毎晩と同じ `drill_photos` を通る")
+    say("restore.restore_photo(" not in body,
+        "大きさと指紋だけを見る古い口（`restore_photo`）が残っていない")
+
+
 def check_wiring() -> None:
     print("\n1. 演習の step が、ワークフローの `run:` に在るか（分母）")
     text = run_lines()
@@ -508,6 +523,7 @@ def main() -> int:
     os.environ.setdefault("BQ_PROJECT_ID", "demo-drill-selftest")
 
     check_wiring()
+    check_admin_verify()
     check_mode()
 
     n = 5
