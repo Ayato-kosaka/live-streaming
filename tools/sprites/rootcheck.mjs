@@ -53,7 +53,11 @@ const BINARY = new Set([
 
 /** 今回ぜんぶ外した範囲＝見る側 */
 function watched(rel) {
-  return rel.startsWith("tools/sprites/") || rel.endsWith(".py");
+  // **`tools/` の下は、字で書いてあるものを全部見る。**
+  // 「ここは持ち場の外」で1つ逃がすと、そこが次の直書きの置き場になる。
+  // `tools/rules/` の4件は、逃がしたまま毎回「4件あるが落とさない」と
+  // 印字していた——読む人がいなければ、それは無いのと同じ
+  return true;
 }
 
 /**
@@ -141,8 +145,8 @@ function main() {
   console.log(
     `直書き点検 根=${root}\n` +
       `  tools/ の git に在る ${r.files}本 ＝ 見た ${r.seen}本` +
-      ` ＋ 見ていない ${r.blindFiles}本（tools/sprites と *.py の外。直書き ${r.blindHits}件あるが、` +
-      `今回の持ち場ではないので落とさない）` +
+      ` ＋ 見ていない ${r.blindFiles}本（0 のはず。増えていたら、` +
+      `逃がす場所ができたということ。直書き ${r.blindHits}件）` +
       ` ＋ 開かなかった ${r.skipped}本（絵・書体など字でないもの）\n` +
       `  記録として逃がした行: ${r.kept}行`,
   );
@@ -209,10 +213,15 @@ async function selftest() {
   check("他の担当の worktree も見つける", scan(wt).hits.length, 1);
   check("記録の印がある行は数えない", scan(kept).hits.length, 0);
   check("記録として逃がした行数を出す", scan(kept).kept, 1);
-  // 持ち場の外は落とさないが、**黙らせない**（見ていない側として数に出す）
-  check("持ち場の外は落とさない", scan(outside).hits.length, 0);
-  check("持ち場の外の直書きも数える", scan(outside).blindHits, 1);
-  check("見ていない本数を出す", scan(outside).blindFiles, 1);
+  // **`tools/` の下なら、どこに書いても落とす。**
+  //
+  // ここは最初「`tools/sprites` と `*.py` の外は落とさない。ただし数には出す」
+  // だった。数に出していれば黙っていないつもりだったが、**`tools/rules/` の
+  // 4件は、毎回そう印字されたまま誰にも直されずに残っていた。**
+  // 読む人がいない印字は、無いのと同じ。逃がす場所を無くした
+  check("持ち場という言い訳を作らない（tools/ の下は全部落とす）", scan(outside).hits.length, 1);
+  check("逃がした先に数が溜まらない", scan(outside).blindHits, 0);
+  check("見ていない本数は 0", scan(outside).blindFiles, 0);
   // 分母が合わないと、どこかが黙って落ちている
   const o = scan(outside);
   check("見た＋見ていない＋開かなかった＝git に在る数", o.seen + o.blindFiles + o.skipped, o.files);

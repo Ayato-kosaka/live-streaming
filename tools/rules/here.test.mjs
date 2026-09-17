@@ -8,12 +8,13 @@
  * 道具はリポジトリに入れていない（普段のビルドには要らないので）。
  * 使うときだけ、どこか別の場所に入れて回す。
  *
+ *   REPO=$(git rev-parse --show-toplevel)   # この道具はリポジトリの外で回すので、根を先に控える
  *   mkdir -p /tmp/rulestest && cd /tmp/rulestest
- *   cp /home/user/live-streaming/firestore.rules .
+ *   cp "$REPO/firestore.rules" .
  *   printf '{"firestore":{"rules":"firestore.rules"},"emulators":{"firestore":{"port":8181},"ui":{"enabled":false},"singleProjectMode":true}}' > firebase.json
  *   npm i @firebase/rules-unit-testing firebase
  *   npx --yes firebase-tools@13 emulators:start --only firestore --project demo-rules &
- *   FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 node /home/user/live-streaming/tools/rules/here.test.mjs
+ *   FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 node "$REPO/tools/rules/here.test.mjs"
  *
  * 2026-09-11 の時点で36本、ぜんぶ通る。
  */
