@@ -1014,7 +1014,13 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
 .nspot-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; }
 .nspot-tags span {
   font-size: var(--fs-min); font-weight: 900;
-  color: var(--ink-2);
+  /* **`--ink-2` では届かない。** この札は畳みの紙（`ui.css` の `.folds`）の上に
+     乗っていて、その紙は右下ほど暗い（`--rule` 26% のムラ）。そこへ札の地
+     （`--rule` 20%）が重なると地が (206,187,119) まで落ちるので、`--ink-2` は
+     **4.10〜4.50 : 1**（実測4か所。`docs/island-misses.md` #130）。
+     地を薄くしても 4.24 までしか戻らないので、字のほうを `--ink` にする。
+     小さく見せるのは字の大きさと地の色で足りている。 */
+  color: var(--ink);
   background: color-mix(in srgb, var(--rule) 20%, transparent);
   border-radius: var(--r-0);
   padding: var(--sp-1) var(--sp-2);
