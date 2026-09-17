@@ -55,6 +55,7 @@ from stale_content_watch import (  # noqa: E402
     KEY_RE,
     KEYS,
     LATEST,
+    SHARE,
     SKIP,
     Facts,
     iter_string_dates,
@@ -82,9 +83,27 @@ TWO_SIDES: dict[str, tuple[int, int]] = {
     "legends.ts": (222, 400),  # 2025-05-07 → 12-15 の222日
     "shorts.ts": (45, 130),  # 130 は #119 の127日のすぐ上
     "chapterStreams.ts": (130, 400),  # 章が閉じる間隔は3〜6ヶ月
+    # 街の店。**日数の出どころが他と違う**ので、ここに書いておく。
+    #   green 18 … いまの旅は17日（`chapters.ts` の `plannedDays`）。
+    #              旅の前日に取って最終日まで使うと18日古くなる。これは正常
+    #   red  126 … **旅と旅のあいだの実測。** ひとつ前の章（イランまで歩く）が
+    #              終わった 2026-05-08 から、北欧が始まる 2026-09-11 まで126日。
+    #              前の旅の表を持ち越すと、それだけ古い表を配ることになる
+    # どちらも「OSM の店がどれくらいの速さで入れ替わるか」ではない。
+    # それはこちらからは測れない（`BOOKS` の why に書いた）
+    "nordicShops.ts": (18, 126),
     # COVERS の2本は「あと何日ぶん残っているか」。負が古い側
     "nordic.ts": (5, -1),
     "nordicSun.ts": (5, -1),
+}
+
+# `SHARE` で見る本の、**しきい値から作らない2つの割合**（%）。
+#   green … 実際に「書き切った」あとの値。鳴ったら狼少年
+#   red   … 実際に**あやとに言われた朝**の値。黙ったら寝ている
+# どちらも git から実測した（2026-09-16 の `chatter.ts` の commit を前後で数えた）。
+TWO_SHARES: dict[str, tuple[int, int]] = {
+    # 80/102人＝78% の朝に「台詞が普通すぎる」と言われ、その日に 27/102人＝26% まで書いた
+    "chatter.ts": (26, 78),
 }
 
 
@@ -109,6 +128,19 @@ def _drop_key(src: str, name: str, key: str) -> str:
     rx = KEY_RE[name]
     lines = [ln for ln in src.splitlines(keepends=True) if not (m := rx.match(ln)) or m.group(1) != key]
     return "".join(lines)
+
+
+def _voiceless(src: str, name: str, roster: list[str], want: int) -> str:
+    """名簿のうち**セリフの無い人が `want` 人**になるまで、`icon` の行を落とす。
+
+    割合を数字で渡さず、**本物の `chatter.ts` から人を抜いて作る。**
+    数字で渡すと、読むほうの正規表現が本物に当たっていなくても通ってしまう。
+    """
+    voiced = [k for k in KEY_RE[name].findall(src) if k in set(roster)]
+    have = len(roster) - len(voiced)
+    for k in sorted(voiced)[: max(0, want - have)]:
+        src = _drop_key(src, name, k)
+    return src
 
 
 def _facts(name: str, src: str) -> Facts:
@@ -234,6 +266,62 @@ def main() -> int:
         # 上流が空なら「数えられない」（0件を通ったと読ませない。§15）
         seen = dict(base)
         seen[up] = Facts(name=up, found=True, dates=base[up].dates, keys=[])
+        check(f"{name} の上流の鍵が0件のとき", _status(seen, name), "数えられない")
+
+    # --- 4c. 「測れない人」の逃がしが、効いているか ---------------------------
+    # `characterBox.ts` は**絵の無い人を焼けない。** 焼くほうがその人を
+    # `noArt` に名指しで置くので、そこは赤にしない。**逃がす側だけを対照にすると、
+    # 逃がしが効きすぎて何も鳴らなくなっても気づけない**ので、
+    # 「箱を落とすと赤」と「その人を noArt に置くと通る」を並べて当てる。
+    if BOOKS.get("characterBox.ts") and BOOKS["characterBox.ts"].rule == KEYS:
+        name = "characterBox.ts"
+        up = BOOKS[name].upstream
+        clean = src_of[up]
+        for k in [k for k in base[up].keys if k not in set(base[name].keys)]:
+            clean = _drop_key(clean, up, k)
+        gone = base[name].keys[0]
+        dropped = _drop_key(src_of[name], name, gone)
+        seen = dict(base)
+        seen[up] = _facts(up, clean)
+        seen[name] = _facts(name, dropped)
+        check("箱を1人ぶん落としたとき", _status(seen, name), "赤")
+        stamp = (
+            '\n\nexport const CHARACTER_BOX_BAKED = {\n'
+            f'  at: "{TODAY.isoformat()}",\n  people: 1,\n  boxes: 0,\n  noArt: [\n'
+            f'    "{gone}",\n  ],\n}} as const;\n'
+        )
+        seen[name] = _facts(name, dropped + stamp)
+        check("落とした人を noArt に置いたとき", _status(seen, name), "通った")
+        # 逃がしは**名指しのときだけ。** 数だけ書いても通してはいけない
+        seen[name] = _facts(name, dropped + stamp.replace(f'    "{gone}",\n', ""))
+        check("noArt を空にしたとき", _status(seen, name), "赤")
+
+    # --- 4b. 割合で見る本（セリフ）も両側から ---------------------------------
+    # **`KEYS` と同じ形にしない。** あちらは1件でも欠けたら赤だが、こちらは
+    # 欠けていて当たり前の本。両側の値は実測から取ってある（`TWO_SHARES`）
+    for name, (green, red) in TWO_SHARES.items():
+        b = BOOKS[name]
+        check(f"{name} が SHARE で見られている", b.rule, SHARE)
+        check(f"{name} のしきい値が書き切った値({green}%)より上", b.share >= green, True)
+        check(f"{name} のしきい値が言われた朝の値({red}%)より下", b.share < red, True)
+
+        roster = base[b.upstream].keys
+        for label, pct, want in (("書き切った側", green, "通った"), ("言われた朝の側", red, "赤")):
+            n = round(len(roster) * pct / 100)
+            seen = dict(base)
+            seen[name] = _facts(name, _voiceless(src_of[name], name, roster, n))
+            check(f"{name} を{label}({pct}%＝{n}人)にしたとき", _status(seen, name), want)
+
+        # ちょうどしきい値のときは鳴らさない（境界で1人ずれていないか）
+        seen = dict(base)
+        seen[name] = _facts(
+            name, _voiceless(src_of[name], name, roster, round(len(roster) * b.share / 100))
+        )
+        check(f"{name} がちょうど{b.share}%のとき", _status(seen, name), "通った")
+
+        # 上流（名簿）が空なら「数えられない」。0件を通ったと読ませない（§15）
+        seen = dict(base)
+        seen[b.upstream] = Facts(name=b.upstream, found=True, dates=base[b.upstream].dates, keys=[])
         check(f"{name} の上流の鍵が0件のとき", _status(seen, name), "数えられない")
 
     # --- 5. 数えられない側 ---------------------------------------------------

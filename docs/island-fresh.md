@@ -389,13 +389,17 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 だから拾うのは **`"…"` の中に在る日付だけ。** 注釈を先に落とすのは
 `island-misses.md` #125 の決めごと2と同じ形。
 
-### 3つの見かた
+### 4つの見かた
 
 | 見かた | 何が起きたら赤いか | 付けた本 |
 | --- | --- | --- |
-| `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（11本） |
+| `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（12本） |
 | `COVERS` | 中の**いちばん先の日付**が、もう今日に届いていない | 先ぶんの表（2本） |
-| `KEYS` | **上流の鍵が、下流に無い** | ①b の2本 |
+| `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 上流が人・名簿の3本 |
+| `SHARE` | 上流の鍵のうち**下流に無いものの割合**が超えた | セリフ（1本） |
+
+`KEYS` と `SHARE` を分けてあるのは、**「1件も欠けてはいけない」と「欠けていて
+当たり前」を同じ判定にすると、後者が永遠に赤いまま誰にも読まれなくなる**から。
 
 `KEYS` を足したのは `kitchenTalk.ts` のため。あれは**日付を1つも持っていない**ので、
 日で測ろうとすると一生鳴れない。見るべきは「`recipes.ts` に在る品が焼かれているか」で、
@@ -422,8 +426,11 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `chapterStreams.ts` | 機械（章が閉じたとき） | LATEST | 300日 | 6日前 |
 | `nordic.ts` | 人（旅程） | COVERS | 今日まで | あと10日 |
 | `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 今日まで | あと10日 |
+| `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
 | `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | **🔴 1件欠け** |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
+| `characterBox.ts` | 機械（`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** |
+| `chatter.ts` | 人（上流 `residents.ts`） | SHARE | 50% | 26%（27/102人） |
 | `chapterStats.ts` | 機械（毎晩） | — | rebake 4日 | 判定しない |
 | `residents.ts` | 機械（毎晩） | — | rebake 3日 | 判定しない |
 | `streamPeaks.ts` | 機械（毎晩） | — | rebake 10日 | 判定しない |
@@ -431,25 +438,35 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `cityStreams.ts` | 機械（毎晩） | — | rebake 7日 | 判定しない |
 | `countryStats.ts` | 機械（毎晩） | — | rebake 5日 | 判定しない |
 | `aboutWords.ts` | 人（日付つきの引用） | — | 見ない | 古くならない設計（4章） |
-| `characterBox.ts` | 機械（`charbox.py`） | — | 見ない | **分からない**（下） |
-| `chatter.ts` | 人 | — | 見ない | **分からない**（下） |
-| `nordicShops.ts` | 外の地図（OSM） | — | 見ない | **分からない**（下） |
 | `nordicFood.ts` | 人（読みもの） | — | 見ない | 日付を持たない |
 | `themes.ts` `voice.ts` `nights.ts` `roulette.ts` | 人（画面に出る言葉） | — | 見ない | 日付を持たない |
 | `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
 
-### 分からないものは「分からない」と書く
+### 「分からない」だった3本を、測れるようにした（2026-09-17）
 
-**推測で埋めない。** 次の3本は、古くなる条件は分かっているのに
-**ファイルだけでは測れない。**
+はじめ、この3本は「古くなる条件は分かっているが、ファイルだけでは測れない」
+として判定から外してあった。**外していた理由のほうが間違っていた**
+（`island-misses.md` #132）。
 
-- `characterBox.ts` と `chatter.ts` — 古くなるのは**名簿（Firestore の
-  `islandCharacter`）に人が増えたとき**。名簿は本番にしかないので、
-  ファイルを読んでも「何人ぶん足りないか」が出ない。
-  測れるようにするなら、焼くほうに**何人ぶん焼いたかを書き込む**のが先
-- `nordicShops.ts` — **いつ取ったかがどこにも書かれていない**
-  （`nordic/shops.json` にも無い）。`tools/nordic/shops.py` が
-  取った日を JSON に入れれば、そこから測れる
+- `characterBox.ts` — 「名簿（Firestore の `islandCharacter`）は本番にしかない」
+  としていたが、**名簿は `site/content/residents.ts` に毎晩そのまま焼かれている**
+  （あの本の頭に「並んでいるのは、キャラクターの名簿そのもの」と書いてある）。
+  だから `residents.ts` を上流にした `KEYS` で数えられる。
+  **絵が無くて測れない人**は、焼くほう（`charbox.py`）が `CHARACTER_BOX_BAKED.noArt`
+  に名指しで置くので赤にならない。**足したその場で 7人ぶん出た**
+- `chatter.ts` — 同じ `residents.ts` が上流。ただしセリフは**持たない人がいて
+  当たり前**（持たない人は共通のセリフに落ちる）なので、1人でも欠けたら赤にすると
+  永遠に赤い。**セリフの無い人の割合**で見る（`SHARE`）。しきい値 50% は、
+  あやとに「台詞が普通すぎる」と言われた 2026-09-16 の朝（**78%**）と、
+  その日に書き切ったあと（**26%**）の実測2つのあいだ
+- `nordicShops.ts` — 取った日を、焼くほうが `nordicShops.ts` の `SHOPS_FETCHED` に
+  書き戻す。**書くのはいちばん古い街の日**（読めなかった街は前の表を残す作りなので、
+  最新を書くと1つの街が取れただけで表ぜんぶが新しく見える）。
+  しきい値 30日は「旅をまたいだか」を見る値で、**店の入れ替わりの速さではない**
+  （OSM の店がどれくらいで変わるかは、こちらからは測れない）
+
+**焼くほうに書けば測れるものを、「測れない」と書いて置かない。**
+測れなかったのは、焼いた側が知っていることを書き出していなかったからだった。
 
 ### 2026-09-28 から赤くなるもの
 

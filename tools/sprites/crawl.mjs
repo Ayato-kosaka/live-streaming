@@ -68,13 +68,16 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fromRoot, repoPath } from "./repo.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO = join(HERE, "..", "..");
 /** 書き出したものを配る静的サーバのポート。並列作業では別々にする。 */
 const SPORT = process.env.SPORT || "4321";
 const BASE = `http://localhost:${SPORT}`;
-const DIST = process.env.DIST || join(REPO, "site/.next-verify");
+/* 根は `repo.mjs` が1か所で決める。ここで `join(HERE,"..","..")` と
+   書いていたころは、道具を `tools/` の外へ写すと黙って別の段を根にした（#131）。
+   `DIST` は絶対で渡されたらそのまま通る（`fromRoot`）。 */
+const DIST = fromRoot(process.env.DIST || "site/.next-verify");
 const WIDTH = parseInt(process.env.WIDTH || "390", 10);
 /** わざと壊す。何が効いているかを見るためのもの（上の一覧） */
 const BREAK = process.env.BREAK || "";
@@ -375,7 +378,7 @@ async function makeCtx() {
   const ctx = await b.newContext({ viewport: { width: WIDTH, height: 844 }, isMobile: true, hasTouch: true });
   // このサンドボックスからは外の絵に出られないので差し替える。**差し替えたものは
   // 常に 200 で返るので、生死を判定しない**（同じ `STUB` で仕分ける）
-  await ctx.route(STUB, (r) => r.fulfill({ path: join(REPO, "site/public/og.png") }));
+  await ctx.route(STUB, (r) => r.fulfill({ path: repoPath("site/public/og.png") }));
   await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   /* 時計を進めて回れるようにしてある。日付で中身の変わる面（島の連なり・表紙・
      配信の時刻の言い方）は、**その日を過ぎた形で見ないと壊れているか分からない**
