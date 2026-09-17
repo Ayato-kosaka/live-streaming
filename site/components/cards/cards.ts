@@ -40,7 +40,7 @@ export type ShownCard = IslandCard & { icon: string };
  * **絵はサーバーが当てる**（`functions/src/cards.ts` の `iconsOf`）。
  * ここは返ってきた `icon` を通すだけで、当てているわけではない。
  *
- * 焼き込みの22人（`content/residents.ts`）から引く道が下に残っているが、
+ * 焼き込みの名簿（`content/residents.ts`）から引く道が下に残っているが、
  * **効くのは `channelId` の入る `/cards/mine` だけ。** 誰でも読める
  * `/cards` は `channelId` を返さなくなったので、公開の面ではサーバーの
  * `icon` がそのまま答えになる（`lib/api.ts` の `IslandCard`）。
