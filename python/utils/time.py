@@ -19,7 +19,7 @@ docstring が言う「7日間は拾い直す」に**構造上ぜったい到達�
 BigQuery の失敗）は `handle_failure` が引き続き FAILED に倒す。
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from config import RETRY_DELAY_SECONDS, MAX_RETRY_PERIOD_SECONDS, CRON_JITTER_SECONDS
@@ -45,6 +45,25 @@ def should_skip_after_7days(first_seen_at: datetime, now: Optional[datetime] = N
     
     elapsed = now - first_seen_at
     return elapsed >= timedelta(seconds=MAX_RETRY_PERIOD_SECONDS)
+
+
+def is_late_lane(first_seen_at: Optional[datetime], now: Optional[datetime] = None) -> bool:
+    """その動画が「7日の窓からこぼれたぶん」かどうか。
+
+    拾い直すクエリ（`bq/queries.py`）の `late` の枠と**同じ判定**。
+    ログに「今夜は取りこぼしを何本拾ったか」を出すために要る。
+    判定を書き写しているのではなく、どちらも `MAX_RETRY_PERIOD_SECONDS`
+    から作っている（数字は1か所にしかない）。
+
+    `first_seen_at` が無い行も窓の外として扱う。クエリ側も同じ。
+    """
+    if first_seen_at is None:
+        return True
+    if now is None:
+        now = datetime.now(timezone.utc)
+    # **同じ判定を2度書かない。** ここと SKIPPED の判定がずれると、
+    # 「拾ったのに落とせない」行が出て、また窓の外に溜まる。
+    return should_skip_after_7days(first_seen_at, now)
 
 
 def calculate_next_retry_at(

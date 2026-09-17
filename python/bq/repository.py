@@ -22,7 +22,7 @@ from bq.queries import (
     QUERY_GET_EXISTING_VIDEO_IDS_IN_RANGE,
 )
 from models.types import Video, ChatMessage, VideoStatus, DiscoveredVideo
-from config import MAX_VIDEOS_PER_RUN
+from config import MAX_VIDEOS_PER_RUN, LATE_LANE_MAX_VIDEOS
 from utils.batching import batch_items
 from utils.timestamp import to_rfc3339
 from logging_util import setup_logger
@@ -175,15 +175,24 @@ def upsert_discovered_videos(
 # videos テーブル操作
 # ============================================================================
 
-def get_target_videos(max_videos: int = MAX_VIDEOS_PER_RUN) -> List[Video]:
+def get_target_videos(
+    max_videos: int = MAX_VIDEOS_PER_RUN,
+    max_late_videos: int = LATE_LANE_MAX_VIDEOS,
+) -> List[Video]:
     """
     処理対象の動画を取得
-    
+
     PENDING, WAITING, FAILED の中から、リトライ可能な動画を抽出する。
-    
+
+    **枠は2つある**（`QUERY_SELECT_TARGET_VIDEOS` に理由を書いた）。
+    7日の窓の内側から `max_videos` 本、窓からこぼれたぶんから `max_late_videos` 本。
+    後者は「もう一度だけ試して SKIPPED まで持っていく」ための枠なので、
+    ここを 0 にすると取りこぼしがまた永久に残る。
+
     Args:
-        max_videos: 取得する最大動画数
-        
+        max_videos: 窓の内側から取る最大動画数
+        max_late_videos: 窓の外側（取りこぼし）から取る最大動画数
+
     Returns:
         処理対象の Video オブジェクトのリスト
     """
@@ -192,6 +201,7 @@ def get_target_videos(max_videos: int = MAX_VIDEOS_PER_RUN) -> List[Video]:
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("max_videos", "INT64", max_videos),
+            bigquery.ScalarQueryParameter("max_late_videos", "INT64", max_late_videos),
         ]
     )
     

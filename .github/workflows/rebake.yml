@@ -59,6 +59,19 @@ name: 島の数字を焼き直す
 # 別に置いた（step「凍っていないか」）。**あれは commit を止めない。** 入れるものが
 # 無いのだから止めようがなく、同じ晩に動いた他の焼き込みまで道連れになる。
 #
+# ## 取り込みが詰まっていたら、赤くする
+#
+# 焼き直しは「BigQuery に入っているところまで」しか数えない。**入っていない
+# ぶんは、静かに欠けたまま緑になる。** 2026-09-17 に本番を数えたら、
+# 取り込めていない配信が91本あり、うち26本は**1回試したきりで半年止まっていた。**
+# 半年ぶん、誰も見ていなかった。
+#
+# ここは取り込みの後ろに繋がっている唯一の run なので、**焼いたあとに
+# 取り込みの詰まりも見る**（step「取り込みが詰まっていないか」）。
+# 取り込みの側（`schedule_fetch_chat.yml`）には足さない。
+# あちらは最後の step が `YOUTUBE_COOKIES` を書き換えるので、
+# 見張りを足すためだけに触る相手ではない。
+#
 # ## 焼いたものが縮んでいたら、commit しない
 #
 # 毎晩ひとりでに走るので、**焼き損なっても誰も見ていない。**
@@ -1321,6 +1334,49 @@ jobs:
               echo "セリフを書き足すのは \`site/content/chatter.ts\`。上に出ている icon で引きます。"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::島でよく歩く人に、その人のセリフが届いていません。上の表を見てください"
+          fi
+          exit "$code"
+
+      # **取り込みが詰まっていないかを、焼いたあとに見る。**
+      #
+      # 2026-09-17 に本番を数えたら、`youtube_chat.videos` の `WAITING` 28本のうち
+      # 26本が**1回試したきりで半年止まっていた**（いちばん古いのは 2026-02-06。
+      # 91本ぶんのチャットが1行も入っていない）。**そのあいだ、取り込みの
+      # ワークフローはずっと緑で終わっている。** 緑が言っているのは
+      # 「落ちなかった」だけで、「入るべきものが入った」ではない。
+      #
+      # ここに置いたのは、**この run が取り込みの後ろに繋がっているから**
+      # （`workflow_run` で `Fetch YouTube Chat Data` の完了を受けている）。
+      # 取り込みの側に足すには `schedule_fetch_chat.yml` を触ることになるが、
+      # あちらは最後の step が `YOUTUBE_COOKIES` を書き換えるので、
+      # **見張りを足すためだけに触りたくない。**
+      #
+      # 見ているものと、しきい値の根拠は `python/ingest_watch.py` にある。
+      # 判定は BigQuery ではなく Python 側（`judge()`）に置いてあるので、
+      # **仕込みの行で赤くなることを手元で確かめられる**
+      # （`python3 python/stuck_waiting_selftest.py`）。
+      #
+      # 終了コード 2（数えるものが無かった）も赤にする。**「数えられなかった」を
+      # 「詰まっていない」と同じ顔にしない**（`docs/island-standards.md` §15）。
+      #
+      # **この赤は焼き直しを止めない。** commit も deploy も済んだあとに見ている。
+      #
+      # **見るだけ（dry_run）のときは走らせない。** あそこの約束は
+      # 「押し間違えても何も起きない」なので、赤も出さない。
+      # 手で見たいときは `BQ_PROJECT_ID=… python3 python/ingest_watch.py` で足りる。
+      - name: 取り込みが詰まっていないか
+        if: success() && env.REBAKE_DRY == '0'
+        run: |
+          set -uo pipefail
+          python3 python/ingest_watch.py > /tmp/ingest_watch.txt 2>&1 && code=0 || code=$?
+          cat /tmp/ingest_watch.txt
+          if [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+              echo "拾い直す枠は \`python/bq/queries.py\` の \`QUERY_SELECT_TARGET_VIDEOS\`、"
+              echo "1晩に拾う本数は \`python/config.py\` の \`LATE_LANE_MAX_VIDEOS\` です。"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$code"
 
