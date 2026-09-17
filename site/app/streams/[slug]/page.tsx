@@ -9,6 +9,7 @@ import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { STATS_FALLBACK } from "@/content/site";
+import Walked from "@/components/atlas/Walked";
 import { Vid } from "@/components/streams/Vid";
 import { H, Rec, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import {
@@ -70,7 +71,8 @@ function figures(slug: string) {
       ];
     case "walk":
       return [
-        { n: STATS_FALLBACK.countries, unit: "カ国", label: "歩いた国", note: "桟橋から地図が見られる" },
+        /* **焼いた数を書かない**（`content/walked.ts`）。 */
+        { n: <Walked />, unit: "カ国", label: "歩いた国", note: "桟橋から地図が見られる" },
         { n: "380", unit: "km", label: "いちばん長く歩いた", note: "エレバンからイラン国境まで" },
       ];
     case "making":

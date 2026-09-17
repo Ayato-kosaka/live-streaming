@@ -5,6 +5,7 @@ import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
+import Walked from "@/components/atlas/Walked";
 import { RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { LiveNumber } from "@/lib/liveStats";
@@ -28,9 +29,11 @@ export const metadata: Metadata = {
  * その型をやり続けた結果として島に残っているものを数える。
  * 数えられないもの（企画会議・月末配信）には数字を付けない。
  */
-const NUM: Record<string, { n: string; cap: string }> = {
+const NUM: Record<string, { n: React.ReactNode; cap: string }> = {
   cooking: { n: `${RECIPES.length}品`, cap: "「作った料理」にたまった品数" },
-  walk: { n: `${STATS_FALLBACK.countries}カ国`, cap: "歩いた国" },
+  /* **焼いた数を書かない。** 国境を越えた日の朝、行き先の `/map` だけが
+     増えて、この札が前の日の数を出す（`content/walked.ts`）。 */
+  walk: { n: (<><Walked />カ国</>), cap: "歩いた国" },
   making: { n: "1本", cap: "公開までいったアプリ" },
   meeting: { n: `${LEGENDS.length}個`, cap: "ここから生まれた伝説" },
 };

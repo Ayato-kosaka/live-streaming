@@ -313,6 +313,11 @@ BOOKS: dict[str, Book] = {
     "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
     "planDays.ts": Book(DERIVED, SKIP, 0, "日付→企画の表。`plans.ts` と `nordic.ts` から組む"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
+    "walked.ts": Book(
+        DERIVED, SKIP, 0,
+        "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"
+        "（数が面ごとにそろっているかは `tools/sprites/walkedcount.mjs` が見る）",
+    ),
 }
 
 

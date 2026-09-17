@@ -14,6 +14,7 @@ import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import Walked from "@/components/atlas/Walked";
 import { GAVE_UP, PROMISE, THAT_DAY, WORDS } from "@/content/aboutWords";
 import { placeWord } from "@/lib/stay";
 import NowPlace from "@/components/home/NowPlace";
@@ -237,7 +238,9 @@ const DOING = [
     href: "/map",
     art: <PackArt size={46} />,
     title: "歩く",
-    note: `${STATS_FALLBACK.countries}カ国`,
+    /* **焼いた数を書かない。** 国境を越えた日の朝、行き先の `/map` だけが
+       増えて、この札が前の日の数を出す（`content/walked.ts`）。 */
+    note: (<><Walked />カ国</>),
     go: "歩いた国",
   },
   {
@@ -415,9 +418,10 @@ export default function AboutPage() {
           label="旅した日数"
           sub={`${PROFILE.leftJapan.replace(/-/g, "/")} に日本を出てから`}
         />
-        {/* 終点の街を書かない（旅は毎日進む）。この数が17で止まっている理由——
-            配信のあった国だけを数えている——を添える（`/map` の同じ札と同じ字）。 */}
-        <Stat value={s.countries} label="配信した国" sub="配信のあった国だけ" />
+        {/* 終点の街を書かない（旅は毎日進む）。**札の名前と、出している数を合わせる。**
+            ここは「配信した国」と書きながら、出していたのは歩いた国の数だった。
+            `/map` の同じ札と、同じ数・同じ添え字にする。 */}
+        <Stat value={<Walked />} label="歩いた国" sub="いま歩いている旅もふくむ" />
         <Stat
           value={<LiveNumber statKey="comments" fallback={s.comments} />}
           label="ついたコメント"
@@ -546,7 +550,7 @@ export default function AboutPage() {
           </span>
           <span className="tile-text">
             <b>歩いた国へ</b>
-            <i>歩いた{s.countries}カ国を、1枚の地図で</i>
+            <i>歩いた<Walked />カ国を、1枚の地図で</i>
           </span>
           <Icon name="right" size={16} className="tile-go" />
         </Link>

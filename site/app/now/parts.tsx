@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { placeCountry, type PlaceCountry } from "@/content/place";
-import { COUNTRIES_WALKED } from "@/content/countryStats";
+import Walked from "@/components/atlas/Walked";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
@@ -266,7 +266,7 @@ export function NowTrail() {
           <Link href="/map" prefetch={false} className="is-all">
             {/* **数を手で書かない。** ここは `17カ国ぜんぶ` と書いてあって、
                 歩いた国が19になっても17のままだった（`docs/island-misses.md` #104）。 */}
-            <b>{COUNTRIES_WALKED}カ国ぜんぶ</b>
+            <b><Walked />カ国ぜんぶ</b>
             <Icon name="right" size={13} />
           </Link>
         </li>

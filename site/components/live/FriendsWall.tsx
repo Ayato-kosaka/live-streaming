@@ -6,6 +6,7 @@ import { RESIDENTS } from "@/content/residents";
 import { charFit } from "@/content/characterBox";
 import { useResidentDaysState } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
+import Walk from "@/components/ui/Walk";
 import { useResidentShow } from "@/lib/liveStats";
 import { useCharacters } from "@/lib/characters";
 import { saveFile, saveName } from "@/lib/saveFile";
@@ -364,8 +365,11 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                   <dt>島で言うこと</dt>
                   <dd>
                     <ul className="rzk-lines">
+                      {/* セリフの中の「歩いた国の数」は印で入っている。
+                          焼いたまま出すと、この面だけ前の日の数になる
+                          （`components/ui/Walk.tsx`）。 */}
                       {v.lines.slice(0, 2).map((l) => (
-                        <li key={l}>{l}</li>
+                        <li key={l}><Walk t={l} /></li>
                       ))}
                     </ul>
                   </dd>
