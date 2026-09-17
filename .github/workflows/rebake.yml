@@ -1264,6 +1264,62 @@ jobs:
         working-directory: site
         run: node selftest/chatdown_selftest.mjs
 
+      # ------------------------------------------------------------------
+      # **分かち合う1枚（`site/public/og.png`）を撮り直す。**
+      #
+      # リンクを貼ったときに出るあの絵は、**焼いた日のまま止まる。**
+      # 中の言葉はもう全部「画面が出しているもの」を撮っただけなので
+      # （`docs/island-misses.md` #134）、**撮り直せば正しくなる**——のだが、
+      # 撮り直す人がいなかった。旅のしるべ（何日目・どこ）は開いた日で決まるので、
+      # 置いておくと**翌日には嘘になる。** #134 は、ここに繋ぐまで半分しか
+      # 直っていない（「直せる形にした」は「直る」ではない）。
+      #
+      # ## なぜここに置くか
+      #
+      # 焼いたあと（新しい数字が入った島を撮るため）で、`npm ci` と
+      # `next build` のあと（撮るのは**書き出したもの**）で、commit の前
+      # （絵が変わった晩は、その晩の commit に一緒に乗せる）。
+      #
+      # ## なぜ絵のバイト列を見ないか
+      #
+      # 同じ入力で2回撮っても、島は住人が歩き波が動くので**756,000画素の
+      # 3.8〜4.6% が入れ替わる**（実測。md5 は3回とも別物）。バイトで繋ぐと
+      # **中身が同じ 540KB のコミットが毎晩積まる。** 見るのは絵ではなく
+      # **絵に写るべき字**で、いま配ってあるぶんが `tools/sprites/og-stamp.json`。
+      #
+      # ## 落ちても、その晩の焼き直しは止めない
+      #
+      # `continue-on-error` なのは諦めるためではない。**絵が古いままなのと、
+      # 島の数字が古いままなのは別の話**で、撮れなかったからといって数字まで
+      # 止めると直せるものまで止まる。黙らないための赤は、deploy のうしろに
+      # 別の step で置いてある（`OG_BAD`）。ここを直に赤くすると、
+      # その晩ぶんの数字が丸ごと配られなくなる。
+      # ------------------------------------------------------------------
+      - name: 分かち合う絵を撮り直す
+        id: og
+        continue-on-error: true
+        env:
+          # `next build` の書き出し先（この job は `NEXT_DIST_DIR` を付けない）
+          DIST: site/.next
+          PORT: "4519"
+        run: tools/sprites/ognight.sh
+
+      # **落ちたことを、deploy のうしろまで持っていく。**
+      # `continue-on-error` の step は job を赤くしないので、ここで印だけ立てる
+      - name: 撮れなかったことを覚えておく
+        if: ${{ !cancelled() && steps.og.outcome == 'failure' }}
+        run: echo "OG_BAD=1" >> "$GITHUB_ENV"
+
+      # 差し替えた晩だけ、commit するファイルに足す。
+      # **`git add -A` を使わない**という決まりはここでも同じで、
+      # 名指ししたものしか master に入らない
+      - name: 撮り直した絵を、commit するものに足す
+        if: ${{ !cancelled() && env.OG_CHANGED == '1' }}
+        run: |
+          set -euo pipefail
+          echo "REBAKE_PATHS=$REBAKE_PATHS site/public/og.png tools/sprites/og-stamp.json" >> "$GITHUB_ENV"
+          echo "分かち合う絵が変わったので、commit するものに足しました"
+
       - name: 見るだけで終わる
         if: env.REBAKE_DRY == '1'
         run: |
@@ -1294,9 +1350,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- $REBAKE_PATHS
-          git commit \
-            -m "島に焼き込んである数字を取り直す（$REBAKE_SCRIPTS）" \
-            -m "焼き込みは配り直しても動かない。取り込みが毎晩進むぶん、置いたままだと画面の数字だけが止まる。"
+          # 絵まで撮り直した晩は、題にも出す。**「数字を取り直す」だけだと、
+          # あとから履歴を見た人が og.png の入れ替わりを数字の巻き添えだと読む**
+          title="島に焼き込んである数字を取り直す（$REBAKE_SCRIPTS）"
+          why="焼き込みは配り直しても動かない。取り込みが毎晩進むぶん、置いたままだと画面の数字だけが止まる。"
+          if [ "${OG_CHANGED:-0}" = "1" ]; then
+            title="$title／分かち合う絵も撮り直す"
+            why="$why"$'\n\n'"分かち合う1枚（og.png）は、写っている字が変わったので撮り直した。あの絵は焼いた日で止まるので、旅が進むと翌日から嘘になる。"
+          fi
+          git commit -m "$title" -m "$why"
           # 毎晩ひとりでに走るので、焼いているあいだに誰かが master へ入れていることが
           # ある。**そのまま push すると落ちて、その晩ぶんが黙って消える。**
           # 取り込んでから押す（rebase なので、載せ直すのは自分の1コミットだけ）
@@ -1373,6 +1435,33 @@ jobs:
       # 上の「凍っていないか」で見つけたぶんを、ここで赤にする。
       # **commit と deploy のあと。** 凍っているのは「入れるものが無い」だけで、
       # 焼けたものは入れてよい。順番を逆にすると、1本凍った晩に残りが配られない。
+      # **撮り直せなかった晩を、ここで赤にする。**
+      # commit と deploy のうしろに置くのは「凍っていたら赤くする」と同じ理由で、
+      # 止めても入るものが増えるわけではなく、同じ晩の数字を道連れにするだけだから。
+      # **黙って緑にはしない。** #134 が起きたのは、絵が古いことを
+      # 誰も見に行かなかったからで、静かに諦めるのは同じ穴をもう一度掘ること。
+      - name: 分かち合う絵を撮り直せたか
+        if: ${{ !cancelled() && env.OG_BAD == '1' }}
+        run: |
+          {
+            echo ""
+            echo "### 分かち合う絵（og.png）を撮り直せませんでした"
+            echo ""
+            echo "**絵は据え置いてあります。** 古い絵が配られたままなので、"
+            echo "旅が進んでいれば、リンクを貼ったときに出る「◯日目 / どこ」は嘘になっています。"
+            echo "島の数字のほうは焼いて配ってあります（絵と数字は別の話なので、道連れにしていません）。"
+            echo ""
+            echo "どこで落ちたかは、上の「分かち合う絵を撮り直す」の log に出ています。"
+            echo "手元で同じものを回すには:"
+            echo ""
+            echo '```'
+            echo "cd site && NEXT_DIST_DIR=.next-og npx next build"
+            echo "DIST=site/.next-og PORT=4519 tools/sprites/ognight.sh"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::分かち合う絵（og.png）を撮り直せませんでした。絵は据え置きです"
+          exit 1
+
       - name: 凍っていたら赤くする
         if: ${{ !cancelled() && env.REBAKE_FROZEN == '1' }}
         run: |
