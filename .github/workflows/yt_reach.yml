@@ -6,7 +6,8 @@ name: YouTube に届くか（使い捨ての下見）
 #  2. 読めるなら、公開日の取れていないものを埋めて python/data/shorts.json を押し戻す
 #
 # この箱（開発用のサンドボックス）は出口の IP を他と共有していて、視聴ページを
-# 数十回開くと 429（reCAPTCHA の頁）が返る。走者は別の出口なので、そちらで埋める。
+# 数十回開くと 429（reCAPTCHA の頁）が返る。走者は別の出口だが、**そちらでも
+# 返る回がある**（1回目 200 / 3分後の2回目が空）。何回か間を置いて回す。
 # 秘密の値は使わない。出すのは本数と id と日付だけ。
 
 on:
@@ -25,9 +26,21 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-      - name: ショートの一覧と公開日が取れるか
-        run: python3 python/build_shorts.py --fetch --gap 5
+      - name: 公開日を埋める（間を置いて何回か）
+        run: |
+          set -uo pipefail
+          left() { python3 -c "import json;print(sum(1 for v in json.load(open('python/data/shorts.json'))['shorts'] if not v.get('date')))"; }
+          echo "はじめ: $(left)本"
+          for i in 1 2 3 4 5 6; do
+            python3 python/build_shorts.py --dates --gap 6 || true
+            n="$(left)"
+            echo "== $i 回目のあと: 残り $n 本"
+            [ "$n" = "0" ] && break
+            sleep 90
+          done
+          echo "おわり: $(left)本"
       - name: 取れたぶんを押し戻す
+        if: always()
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"

@@ -114,12 +114,16 @@ BEFORE = "before-stream"
 # ---------------------------------------------------------------- 取りに行く
 
 
-def curl(args: list[str], data: str | None = None) -> str:
+def curl(args: list[str], data: str | None = None) -> tuple[int, str]:
+    """(HTTP の番号, 中身)。**番号も返す。** 429 の頁は中身が 3.8KB の
+    reCAPTCHA なので、中身だけ見ていると「形が変わった」と読み違える"""
     r = subprocess.run(
-        ["curl", "-sSL", "--max-time", "60", "-A", UA, "-H", "Accept-Language: ja", *args],
+        ["curl", "-sSL", "--max-time", "60", "-A", UA, "-H", "Accept-Language: ja",
+         "-w", "\n%{http_code}", *args],
         input=data, capture_output=True, text=True, timeout=120,
     )
-    return r.stdout
+    body, _, code = r.stdout.rpartition("\n")
+    return (int(code) if code.strip().isdigit() else 0), body
 
 
 def walk(o, key: str, out: list | None = None) -> list:
@@ -163,24 +167,42 @@ def next_token(node) -> str | None:
     return None
 
 
-def fetch_list() -> list[tuple[str, str]]:
-    """チャンネルのショートのタブを、続きまで追って全部取る"""
-    html = curl([SHORTS_URL])
-    m = re.search(r"var ytInitialData = (\{.*?\});</script>", html, re.S)
-    if not m:
-        raise SystemExit("::error::ショートのタブから ytInitialData を取れませんでした")
-    data = json.loads(m.group(1))
-    key = re.search(r'"INNERTUBE_API_KEY":"([^"]+)"', html)
-    ver = re.search(r'"INNERTUBE_CLIENT_VERSION":"([^"]+)"', html)
-    vis = re.search(r'"visitorData":"([^"]+)"', html)
-    if not (key and ver):
-        raise SystemExit("::error::ショートのタブから鍵と版を取れませんでした")
-    key, ver = key.group(1), ver.group(1)
+def open_tab(tries: int = 4) -> tuple[dict, str, str, str | None] | None:
+    """ショートのタブを開く。読めなければ None。
+
+    **読めなかったことと、0本だったことを分ける。** YouTube は混むと
+    429（reCAPTCHA の3.8KB）を返す。GitHub の走者でも返る回がある
+    （2026-09-17、3分あいだを空けた2回で、1回目が 200・2回目が空だった）。
+    何回か置いて試して、それでも駄目なら**何も書き換えずに引き下がる。**
+    """
+    for i in range(tries):
+        if i:
+            time.sleep(10 * i)
+        code, html = curl([SHORTS_URL])
+        m = re.search(r"var ytInitialData = (\{.*?\});</script>", html, re.S)
+        key = re.search(r'"INNERTUBE_API_KEY":"([^"]+)"', html)
+        ver = re.search(r'"INNERTUBE_CLIENT_VERSION":"([^"]+)"', html)
+        if m and key and ver:
+            vis = re.search(r'"visitorData":"([^"]+)"', html)
+            if i:
+                print(f"{i + 1}回目で開けました")
+            return json.loads(m.group(1)), key.group(1), ver.group(1), vis and vis.group(1)
+        print(f"  {i + 1}回目: HTTP {code} / {len(html)}バイト / ytInitialData なし", flush=True)
+    return None
+
+
+def fetch_list() -> list[tuple[str, str]] | None:
+    """チャンネルのショートのタブを、続きまで追って全部取る。読めなければ None"""
+    opened = open_tab()
+    if not opened:
+        return None
+    data, key, ver, vis = opened
 
     tabs = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
     sel = [t for t in tabs if (t.get("tabRenderer") or {}).get("selected")]
     if not sel:
-        raise SystemExit("::error::ショートのタブが選ばれていません")
+        print("::warning::ショートのタブが選ばれていません")
+        return None
     grid = sel[0]["tabRenderer"]["content"]["richGridRenderer"]["contents"]
 
     out: list[tuple[str, str]] = []
@@ -202,7 +224,7 @@ def fetch_list() -> list[tuple[str, str]]:
 
     client = {"clientName": "WEB", "clientVersion": ver, "hl": "ja", "gl": "JP"}
     if vis:
-        client["visitorData"] = vis.group(1)
+        client["visitorData"] = vis
 
     page = 1
     # 20ページで打ち止め（1ページ35〜48本なので700本ぶん。輪になったときの保険）
@@ -210,7 +232,7 @@ def fetch_list() -> list[tuple[str, str]]:
         page += 1
         time.sleep(1.5)
         body = json.dumps({"context": {"client": client}, "continuation": tok})
-        txt = curl(
+        _, txt = curl(
             ["-H", "Content-Type: application/json",
              "-H", "X-Youtube-Client-Name: 1", "-H", f"X-Youtube-Client-Version: {ver}",
              "-H", "Origin: https://www.youtube.com", "-H", f"Referer: {SHORTS_URL}",
@@ -238,7 +260,7 @@ def fetch_date(vid: str) -> str | None:
     **取れない回がある。** 連打すると reCAPTCHA の頁（3.8KB）が返るし、
     同じ URL でも日付の入っていない HTML が返る回がある。
     """
-    html = curl([f"https://www.youtube.com/watch?v={vid}"])
+    _, html = curl([f"https://www.youtube.com/watch?v={vid}"])
     m = re.search(r'"publishDate":\{"simpleText":"(\d{4})/(\d{2})/(\d{2})"', html)
     if m:
         return "-".join(m.groups())
@@ -354,11 +376,15 @@ def chapter_of(d: str, sp: dict[str, tuple[date, date]]) -> str | None:
 
 
 def fetch(gap: float = WATCH_GAP) -> int:
+    """0=取れた / 1=手元のものが消えていた（焼かない）/ 2=YouTube に届かなかった（焼かない）"""
     src = load()
     known = {v["id"]: v for v in src["shorts"]}
     gone = {g["id"] for g in src.get("_gone", [])}
 
     got = fetch_list()
+    if got is None:
+        print("::warning::YouTube のショートのタブを読めませんでした。棚は前のまま置いておきます")
+        return 2
     ids = [i for i, _ in got]
     print(f"YouTube から {len(ids)}本 / 手元に {len(known)}本", flush=True)
 
@@ -512,8 +538,15 @@ def main() -> int:
     if not (a.fetch or a.build or a.dates):
         a.fetch = a.build = True
 
-    if a.fetch and fetch(a.gap):
-        return 1
+    if a.fetch:
+        # **読めなかった晩は、焼かずに前のものを置いておく**（0本と見分けがつくように）。
+        # 落とさないのは、毎晩ぶんの残り6本まで道連れにしないため
+        # （`docs/island-fresh.md` の止め金4と同じ考え）
+        r = fetch(a.gap)
+        if r == 2:
+            return 0
+        if r:
+            return 1
     if a.dates and not a.fetch:
         dates(a.gap)
     if a.build:
