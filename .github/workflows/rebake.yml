@@ -448,6 +448,14 @@ jobs:
       - name: 島を歩く人の選びかたが変わっていないか
         run: python3 python/build_residents_selftest.py
 
+      # 下の「焼き込みが古くなっていないか」の判定そのものを、こしらえた
+      # 置き場で両側から当てる。**しきい値をゆるめても落ちること**（本当に
+      # 止まっていた長さで鳴る）と、**きつくしても落ちること**（実測した
+      # 正常な空きでは鳴らない）の両方を見る。#125 の「片側からしか
+      # 当てていない対照は対照になっていない」がここの理由
+      - name: 焼き込みが古くなっていないかの見張りが効くか
+        run: python3 python/stale_content_watch_selftest.py
+
       # 焼く前の姿を取っておく。あとで「前 → 後」を並べて出すため
       - name: 焼く前を取っておく
         run: |
@@ -1435,6 +1443,43 @@ jobs:
               echo "セリフを書き足すのは \`site/content/chatter.ts\`。上に出ている icon で引きます。"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::島でよく歩く人に、その人のセリフが届いていません。上の表を見てください"
+          fi
+          exit "$code"
+
+      # **人しか新しくできない焼き込みが、置いていかれていないか。**
+      #
+      # 機械で焼ける6本は上の「凍っていないか」が見ている。こちらが見るのは
+      # **人が手を入れないと新しくならない側**で、そこは何ヶ月古くなっても
+      # 誰も鳴らさなかった（35本のうち29本が見られていなかった。#129）。
+      # 実際にショートが127日・料理が12日・他己紹介が13日止まった（#449）。
+      #
+      # ## なぜ deploy の後ろか
+      #
+      # **これで commit も deploy も止めない。** 1本が古いだけで、同じ晩に
+      # 焼けた他の数字まで master に入らないのは悪い。「セリフの届いて
+      # いない人がいないか」と同じ性質で、赤いが「落ちた」ではない。
+      # `python/bake_down.py` の仕分けにも `stale` を足してあるので、
+      # ここが赤い朝に「焼くのが落ちた」の issue は立たない
+      - name: 焼き込みが古くなっていないか
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          python3 python/stale_content_watch.py > /tmp/stale.txt 2>&1 && code=0 || code=$?
+          cat /tmp/stale.txt
+          {
+            echo ""
+            echo "### 人しか新しくできない焼き込みが、古くなっていないか"
+            echo ""
+            echo '```'
+            cat /tmp/stale.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+              echo "新しくするのは \`/island-fresh\`。料理・他己紹介・歩いた国は配信を見ないと決まりません。"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$code"
 

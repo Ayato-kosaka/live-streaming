@@ -336,6 +336,127 @@ Overpass は混むと空を返すので、失敗を 0 として焼くと、画�
 突き合わせる相手は BigQuery の `videos` の最新日。
 引き方は `/island-fresh` の1章にある。
 
+## 6. 焼き込み35本ぜんぶの仕分けと、古くなったら鳴る見張り
+
+`site/content/*.ts` は **35本**ある（2026-09-17 の実測。それまでここには数を
+書いていなかった）。そのうち **`rebake.yml` の step「凍っていないか」が日数を
+持っているのは6本だけ。** あの `WATCH` には9本並んでいるが、
+`chapterStreams.ts` / `kitchenTalk.ts` / `shorts.ts` の3本は **0＝見ない**。
+
+つまり **29本は、何ヶ月古くなっても赤くならなかった。** 実際に:
+
+| 何 | どれだけ止まっていたか |
+| --- | --- |
+| `shorts.ts` | **127日**（`island-misses.md` #119） |
+| `countryStats.ts` | **4ヶ月**（#104） |
+| `kitchenTalk.ts` | `recipes.ts` の `french-toast`（2026-05-25）が**いまも入っていない**。**115日** |
+
+3つ目は 2026-09-17 に、この見張りを作って**初めて見つかった**。
+誰も見ていなかったので、何日前から欠けていたのかも分からない。
+
+### 見張りは `python/stale_content_watch.py`
+
+```bash
+python3 python/stale_content_watch.py              # 0=通った / 1=古い / 2=数えるものが無い
+python3 python/stale_content_watch.py --dir 写し --today 2026-09-17
+python3 python/stale_content_watch_selftest.py     # 対照（122件）
+```
+
+**BigQuery も git も引かない。** 読むのは `site/content/*.ts` の中だけで、
+判定（`judge()`）はファイルすら開かない。赤い側も緑の側も手元で作れる
+（`python/ingest_watch.py` と同じ組み立て）。
+
+### `rebake.yml` の「凍っていないか」とは、軸が違う
+
+**日数を2か所に置かない。** あちらが日数を持っている6本は、こちらでは判定しない。
+
+| | 何を見るか | どこから読むか | 何本 |
+| --- | --- | --- | --- |
+| 凍り（`rebake.yml`） | 焼き直したのに**ファイルの字面が動かない** | git の履歴 | 6本 |
+| ここ | 焼き込みの**中に書いてある日付**が今日から離れた | ファイルの中だけ | 残り29本 |
+
+判定しない6本も**表には出す。** 黙って抜くと「なぜここだけ無いのか」を
+次に読む人が調べ直すし、35本ぶん並んでいないと分母にならない
+（`island-standards.md` §15）。
+
+### 日付は、コメントから拾わない
+
+`site/content/*.ts` にはコメントにも日付が書いてある（`characterBox.ts` の
+「あやと『大きさも不揃い』2026-09-10」など）。**あれは中身ではない。**
+とくに `chapterStats.ts` / `chapterStreams.ts` の冒頭の「数えた日:」は
+**焼くたびに今日になる**ので、拾うと中の数字が半年止まっていても新しく見える。
+
+だから拾うのは **`"…"` の中に在る日付だけ。** 注釈を先に落とすのは
+`island-misses.md` #125 の決めごと2と同じ形。
+
+### 3つの見かた
+
+| 見かた | 何が起きたら赤いか | 付けた本 |
+| --- | --- | --- |
+| `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（11本） |
+| `COVERS` | 中の**いちばん先の日付**が、もう今日に届いていない | 先ぶんの表（2本） |
+| `KEYS` | **上流の鍵が、下流に無い** | ①b の2本 |
+
+`KEYS` を足したのは `kitchenTalk.ts` のため。あれは**日付を1つも持っていない**ので、
+日で測ろうとすると一生鳴れない。見るべきは「`recipes.ts` に在る品が焼かれているか」で、
+これは人が上流を書いた翌日から赤くなってほしい（猶予を置いていない）。
+
+### 35本の仕分け（2026-09-17）
+
+しきい値は**本ごとに変える。** 毎晩焼けるものと、あやとしか足せないものを
+同じ日数で測ると、どちらかが必ず狼少年か寝た子になる。
+根拠は `python/stale_content_watch.py` の `BOOKS` に1本ずつ書いてある。
+
+| 本 | だれが新しくするか | 見かた | しきい値 | 2026-09-17 |
+| --- | --- | --- | --- | --- |
+| `recipes.ts` | 人 | LATEST | 60日 | 7日前 |
+| `voices.ts` | 人 | LATEST | 60日 | 6日前 |
+| `site.ts`（`updatedAt`） | 人 | LATEST | 30日 | 13日前 |
+| `streamTypes.ts` | 人 | LATEST | 60日 | 24日前 |
+| `plans.ts` | 人 | LATEST | 60日 | 6日前 |
+| `apps.ts` | 人 | LATEST | 120日 | 26日前 |
+| `countries.ts` | 人 | LATEST | 150日 | 6日前 |
+| `chapters.ts` | 人 | LATEST | 240日 | 6日前 |
+| `legends.ts` | 人 | LATEST | 300日 | 25日前 |
+| `shorts.ts` | 機械（YouTube） | LATEST | 90日 | 2日前 |
+| `chapterStreams.ts` | 機械（章が閉じたとき） | LATEST | 300日 | 6日前 |
+| `nordic.ts` | 人（旅程） | COVERS | 今日まで | あと10日 |
+| `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 今日まで | あと10日 |
+| `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | **🔴 1件欠け** |
+| `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
+| `chapterStats.ts` | 機械（毎晩） | — | rebake 4日 | 判定しない |
+| `residents.ts` | 機械（毎晩） | — | rebake 3日 | 判定しない |
+| `streamPeaks.ts` | 機械（毎晩） | — | rebake 10日 | 判定しない |
+| `onThisDay.ts` | 機械（毎晩） | — | rebake 4日 | 判定しない |
+| `cityStreams.ts` | 機械（毎晩） | — | rebake 7日 | 判定しない |
+| `countryStats.ts` | 機械（毎晩） | — | rebake 5日 | 判定しない |
+| `aboutWords.ts` | 人（日付つきの引用） | — | 見ない | 古くならない設計（4章） |
+| `characterBox.ts` | 機械（`charbox.py`） | — | 見ない | **分からない**（下） |
+| `chatter.ts` | 人 | — | 見ない | **分からない**（下） |
+| `nordicShops.ts` | 外の地図（OSM） | — | 見ない | **分からない**（下） |
+| `nordicFood.ts` | 人（読みもの） | — | 見ない | 日付を持たない |
+| `themes.ts` `voice.ts` `nights.ts` `roulette.ts` | 人（画面に出る言葉） | — | 見ない | 日付を持たない |
+| `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
+
+### 分からないものは「分からない」と書く
+
+**推測で埋めない。** 次の3本は、古くなる条件は分かっているのに
+**ファイルだけでは測れない。**
+
+- `characterBox.ts` と `chatter.ts` — 古くなるのは**名簿（Firestore の
+  `islandCharacter`）に人が増えたとき**。名簿は本番にしかないので、
+  ファイルを読んでも「何人ぶん足りないか」が出ない。
+  測れるようにするなら、焼くほうに**何人ぶん焼いたかを書き込む**のが先
+- `nordicShops.ts` — **いつ取ったかがどこにも書かれていない**
+  （`nordic/shops.json` にも無い）。`tools/nordic/shops.py` が
+  取った日を JSON に入れれば、そこから測れる
+
+### 2026-09-28 から赤くなるもの
+
+`nordic.ts` と `nordicSun.ts` は旅の終わり（2026-09-27）までしか日付を持たない。
+**28日からは「表が今日に届いていない」で赤くなる。** それは不具合ではなく、
+**旅の面を次の章に替える時期**という知らせ。繋ぐ前にここを承知しておくこと。
+
 ---
 
 **関連**: [`island-db.md`](island-db.md) 4.3（どのファイルを誰が書くか）、

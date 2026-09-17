@@ -148,6 +148,13 @@ WORKFLOW_FILE = "rebake.yml"
 # 「この名前の step が `rebake.yml` に実在するか」を毎回見ている
 FROZEN_STEP = "凍っていたら赤くする"
 
+# **「古い」は「落ちた」ではない。** 焼き直しはちゃんと通っていて、
+# 人しか新しくできない焼き込みが置いていかれているだけ。直す先が
+# まるで違う（ワークフローを見に行っても何も落ちていない）ので、
+# 仕分けを分ける。ここを足さなかった数時間は「焼くのが落ちた」の
+# issue が立つ形だった
+STALE_STEP = "焼き込みが古くなっていないか"
+
 # 無人で走った run だけを数える（docstring「見るのは『いまの状態』だけ」）。
 # `workflow_dispatch` は手で押したぶん。既定が `dry_run: true` なので、
 # 通っても master には1バイトも入らない
@@ -249,12 +256,18 @@ def why_red(steps: list) -> dict:
         steps: その run の step（`{"name": ..., "conclusion": ...}` の並び）
 
     Returns:
-        {"why": "frozen" か "broken", "step": 落ちた step の名前か None}
+        {"why": "frozen" / "stale" / "broken", "step": 落ちた step の名前か None}
     """
     failed = [s for s in (steps or []) if s.get("conclusion") in RED]
+    # **1本の run で両方落ちることがある。** そのときは「焼くのが落ちた」に
+    # 寄せない——どちらも「焼き直しそのものは動いている」側なので、
+    # 先に書いてあるほう（凍り）を採る
     for s in failed:
         if s.get("name") == FROZEN_STEP:
             return {"why": "frozen", "step": FROZEN_STEP}
+    for s in failed:
+        if s.get("name") == STALE_STEP:
+            return {"why": "stale", "step": STALE_STEP}
     # 落ちた step が読めなくても、**赤いことは分かっている。**
     # 名前が無いぶん本文は薄くなるが、黙るよりずっといい
     return {"why": "broken", "step": failed[0]["name"] if failed else None}
@@ -280,7 +293,7 @@ def assess(run, steps, by_hand: bool = False) -> dict:
         by_hand: `fixed_by_hand()` の返り値
 
     Returns:
-        {"down": True/False/None, "why": "frozen"/"broken"/"byhand"/None,
+        {"down": True/False/None, "why": "frozen"/"stale"/"broken"/"byhand"/None,
          "step": 落ちた step か None, "at": run の始まった時刻か None}
     """
     if not run:
@@ -338,7 +351,19 @@ def body(a: dict) -> str:
     Returns:
         本文。頭に見えない印が入る
     """
-    if a["why"] == "frozen":
+    if a["why"] == "stale":
+        head = [
+            "焼き直しは通っていますが、**人しか新しくできない焼き込みが"
+            "置いていかれています。**",
+            "",
+            "**ワークフローは壊れていません。** どれがどれだけ古いかは、"
+            "`島の数字を焼き直す` のいちばん新しい run の"
+            "「焼き込みが古くなっていないか」の表に出ています。",
+            "",
+            "新しくするのは `/island-fresh`。料理・他己紹介・歩いた国は"
+            "**配信を見ないと決まらない**ので、機械では埋まりません。",
+        ]
+    elif a["why"] == "frozen":
         head = [
             "焼き直しは通っていますが、**中身が動かなくなっている焼き込みがあります。**"
             "島に出ている数が、実際より古いままです。",
@@ -650,7 +675,8 @@ def say(a: dict) -> None:
     logger.info("いま焼き直しは%s（%s）",
                 {True: "止まっています", False: "通っています"}
                 .get(a["down"], "どうなっているか分かりません"),
-                {"frozen": "凍っている", "broken": "焼くのが落ちた",
+                {"frozen": "凍っている", "stale": "焼き込みが古い",
+                 "broken": "焼くのが落ちた",
                  "byhand": "赤いが、そのあと手で押して通っているので保留"}
                 .get(a["why"], "-"))
 

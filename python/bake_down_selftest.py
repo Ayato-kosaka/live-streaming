@@ -162,6 +162,24 @@ STEPS_BROKEN = [
 ]
 
 # **凍っていた朝。** 最後まで通って、いちばん後ろだけが落ちる
+# **古い朝。** 焼き直しは通っていて、人しか新しくできない本が置いていかれている
+STEPS_STALE = [
+    {"name": "リポジトリのチェックアウト", "conclusion": "success"},
+    {"name": "焼く", "conclusion": "success"},
+    {"name": "凍っていないか", "conclusion": "success"},
+    {"name": "master に入れる", "conclusion": "success"},
+    {"name": bake_down.FROZEN_STEP, "conclusion": "success"},
+    {"name": bake_down.STALE_STEP, "conclusion": "failure"},
+]
+
+# **両方落ちた朝。** どちらも「焼き直しそのものは動いている」側なので、
+# 「焼くのが落ちた」に寄せてはいけない
+STEPS_FROZEN_AND_STALE = [
+    {"name": "焼く", "conclusion": "success"},
+    {"name": bake_down.FROZEN_STEP, "conclusion": "failure"},
+    {"name": bake_down.STALE_STEP, "conclusion": "failure"},
+]
+
 STEPS_FROZEN = [
     {"name": "リポジトリのチェックアウト", "conclusion": "success"},
     {"name": "焼く", "conclusion": "success"},
@@ -403,6 +421,43 @@ def case2_frozen():
     ck("凍りの本文には「赤い step を開け」と書かない",
        "赤い step" not in frozen_body, "書いていない")
     print(f"    （落ちた {len(broken_body)}文字 / 凍った {len(frozen_body)}文字）")
+    return gh
+
+
+def case2b_stale():
+    """**古いのと落ちたのを、取り違えないか。**
+
+    ここを分けなかったあいだ、焼き込みが1本古いだけで
+    「焼くのが落ちた」の issue が立つ形だった。読んだ人は
+    ワークフローを開きに行くが、そこには何も落ちていない。
+    """
+    print("\n[2b] 焼き込みが古い朝 → 「焼くのが落ちた」に寄せない")
+    gh = FakeGh()
+
+    r, a = morning(gh, FROZEN, STEPS_STALE)
+    ck("見立て", (a["down"], a["why"]) == (True, "stale"), (a["down"], a["why"]))
+    ck("乗った step", a["step"] == bake_down.STALE_STEP, a["step"])
+
+    stale_body = gh.issues[0]["body"]
+    broken_body = bake_down.body(
+        {"down": True, "why": "broken", "step": "焼く", "at": STARTED})
+    frozen_body = bake_down.body(
+        {"down": True, "why": "frozen", "step": bake_down.FROZEN_STEP, "at": STARTED})
+    ck("本文が「落ちた」と違う", stale_body != broken_body, "違う")
+    ck("本文が「凍り」とも違う", stale_body != frozen_body, "違う")
+    ck("**ワークフローは壊れていない、と書いてある**",
+       "壊れていません" in stale_body, "書いてある")
+    ck("新しくしかたの入口が出る", "/island-fresh" in stale_body, "出る")
+    ck("古いほうの本文には「赤い step を開け」と書かない",
+       "赤い step" not in stale_body, "書いていない")
+
+    # **両方落ちた朝を、「焼くのが落ちた」に寄せない**（片側だけの対照にしない）
+    both = bake_down.why_red(STEPS_FROZEN_AND_STALE)
+    ck("凍りと古いが同じ朝に落ちても「落ちた」にしない",
+       both["why"] != "broken", both["why"])
+    ck("そのときは凍りを採る", both["why"] == "frozen", both["why"])
+    print(f"    （落ちた {len(broken_body)}文字 / 凍った {len(frozen_body)}文字"
+          f" / 古い {len(stale_body)}文字）")
     return gh
 
 
@@ -882,6 +937,7 @@ def main() -> int:
     print("（GitHub には1バイトも出ません）")
     gh = case1_broken()
     gh2 = case2_frozen()
+    case2b_stale()
     gh2 = case3_close(gh2)
     case4_same(gh2)
     case5_switch()
