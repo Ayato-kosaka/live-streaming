@@ -12,10 +12,12 @@ import {
   getPoll,
   heartNextPlan,
   heartedLocally,
+  loadMyPlans,
   myPlans,
   pollAnswer,
   postNextPlan,
   rememberHeart,
+  rememberLoginPlan,
   rememberMyPlan,
   setPlanStatus,
   type NextPlan,
@@ -182,6 +184,27 @@ export default function Board() {
   const { user, token } = useAuth();
   const owner = useOwner();
 
+  /* ログインして出した企画の id を引いてくる（#133）。
+     **引けなかったら、端末の控えのぶんだけで出す。** そこは黙って
+     狭くなる——「じぶんの」で絞ると、ログインして出したものが
+     出てこない。企画そのものは板に出ているので、消えはしない。 */
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const t = await token();
+      try {
+        const got = await withRead(loadMyPlans(t));
+        if (!alive) return;
+        setMine((m) => new Set([...m, ...got.map((p) => p.id)]));
+      } catch {
+        /* 端末の控えはもう入っている。ここでは何も消さない */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user?.uid, token]);
+
   useEffect(() => {
     setHearted(heartedLocally());
     setMine(myPlans());
@@ -292,6 +315,9 @@ export default function Board() {
       );
       setPlans((cur) => [plan, ...(cur ?? [])]);
       rememberMyPlan(plan.id);
+      /* ログインして出したものは、端末の印では直せない（#133）。
+         サーバーに引き直しに行かずに、その場で「じぶんのもの」に足す。 */
+      if (plan.byLogin) rememberLoginPlan(plan.id);
       setMine((m) => new Set([...m, plan.id]));
       setTitle("");
       // 出したものはハートが0なので、人気順のままだといちばん下に沈む。
@@ -353,7 +379,9 @@ export default function Board() {
     }
   };
 
-  const isMine = (p: NextPlan) => mine.has(p.id) || (!!user && p.byUid === user.uid);
+  /* 誰でも読める一覧は、持ち主を返さなくなった（#133）。「じぶんの」は
+     端末の控えと、**ログインした人が自分のぶんだけ引く口**の合わせ技。 */
+  const isMine = (p: NextPlan) => mine.has(p.id);
 
   /* 並べ替えの前に、**段でひとまとまりにする。**
      まぜて数の順に並べると、行ってきた企画がハートを持っているぶんだけ上に来て、

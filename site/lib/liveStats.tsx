@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { RESIDENTS } from "@/content/residents";
 import { getState, type IslandState, type IslandStats, type ResidentShow } from "@/lib/api";
+import { uidNow } from "@/lib/auth";
+import { hereKey } from "@/lib/hereKey";
 import { STATS_FALLBACK } from "@/content/site";
 
 /**
@@ -63,8 +64,32 @@ const load = () => {
  *
  * 「いま島にいる人」（`lib/here.ts`）も、誰なのかを引くのにこれが要る。
  * 島の数字と同じものなので、別に取りにいかせない。
+ *
+ * ## 自分の行にだけ、本物の uid を入れ直す（#133）
+ *
+ * `/state` は uid を返さなくなった。他人の行に入っているのは潰した鍵
+ * （`here`）で、それは**居場所を名前に結ぶためだけ**のもの。
+ * ただし「自分が名簿に載っているか」を見る側（`components/live/Here.tsx`）は
+ * 手元の uid と比べるので、**自分の行だけ**は本物に戻す。
+ * 手元の uid は手元にあるものなので、これで新しく分かることは何も無い。
+ *
+ * **控えた中身は書き換えず、返すときに毎回作る。** 書き換えると、
+ * ログインする前に読んだ控えが「自分の行の無い名簿」のまま固まって、
+ * その人は島に立てなくなる（居場所を置く側が名簿を見て決めている）。
  */
-export const loadState = load;
+export async function loadState(): Promise<IslandState | null> {
+  const s = await load();
+  if (!s?.residents?.length) return s;
+  const me = uidNow();
+  const mine = me ? await hereKey(me) : null;
+  return {
+    ...s,
+    residents: s.residents.map((r) => ({
+      ...r,
+      uid: mine && r.here === mine ? (me as string) : r.here,
+    })),
+  };
+}
 
 /** 読み直しが届いた回数。面の側はこれが変わったら読み直す */
 let gen = 0;
@@ -167,10 +192,15 @@ export function LiveNumber({
  * 名前を出すと決めた住人の一覧。**鍵はキャラクターの絵**。
  * 出すか出さないかは本人が決めるので、ここに載る人は少ない。
  *
- * サーバーは YouTube のチャンネルで返してくる。どの絵が誰のものかを決めるのは
- * あやとの表（`content/residents.ts` に焼いてある `channel`）だけで、
- * ログインした人が自分で絵を選ぶことはできない。他人の絵を自分のものに
- * できてしまうため。表に無いチャンネルの人は、名前が出ないまま島にいる。
+ * **絵を引くのはサーバー**（#133）。前はチャンネルIDが返ってきて、
+ * ここで `content/residents.ts` の `channel` と突き合わせていた。
+ * チャンネルIDは `youtube.com/channel/UC…` を開けば本人の顔と名前に
+ * 直結する字で、**名前を出してよいと言った人が、チャンネルまで
+ * 教えてよいと言ったわけではない。** 引き当ての正は本番の図鑑
+ * （`docs/island-db.md` 3.3）なので、引いた答え（`icon`）だけをもらう。
+ *
+ * 図鑑に結ばれていない人は `icon` が無く、名前が出ないまま島にいる。
+ * これは前（表に無いチャンネルの人）と同じ振る舞い。
  */
 export function useResidentShow(): Map<string, ResidentShow> {
   const [m, setM] = useState<Map<string, ResidentShow>>(() => new Map());
@@ -179,14 +209,8 @@ export function useResidentShow(): Map<string, ResidentShow> {
     let alive = true;
     load().then((s) => {
       if (!alive || !s?.residents?.length) return;
-      const iconOf = new Map(
-        RESIDENTS.filter((r) => r.icon && r.channel).map((r) => [r.channel!, r.icon!]),
-      );
       const next = new Map<string, ResidentShow>();
-      for (const r of s.residents) {
-        const icon = r.channelId && iconOf.get(r.channelId);
-        if (icon) next.set(icon, r);
-      }
+      for (const r of s.residents) if (r.icon) next.set(r.icon, r);
       setM(next);
     });
     return () => {

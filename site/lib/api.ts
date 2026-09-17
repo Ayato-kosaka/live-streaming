@@ -42,19 +42,30 @@ export type NextNote = { id: string; planId: string; text: string; createdAt: st
 /**
  * 島に名前を出すと決めた住人。何もしていない人はここに出てこない。
  *
- * **キャラクターの絵ではなく YouTube のチャンネルで返る。** どの絵が誰のものかは
- * あやとが表で持っていて `content/residents.ts` に焼いてあるので、突き合わせは
- * こちら側でやる。本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
+ * **チャンネルIDも uid も返らない**（#133）。この一覧に載る条件は
+ * 「名前か顔を出してよい」であって、「チャンネルを教えてよい」でも
+ * 「島のどこで何をしたかを突き合わせてよい」でもない。
  *
- * `uid` も返る。「いま島にいる人」（`lib/here.ts`）は `islandHere/{uid}` に居場所しか
- * 書かないので、誰なのかはここと突き合わせて決める。ここに載っているのは
- * 「名前かアイコンを出してよい」と本人が言った人だけ。
+ * - `icon` … キャラクターの絵。**サーバーが図鑑で引いた答え**。
+ *   前はチャンネルIDが返ってきて、こちら側で `content/residents.ts` の
+ *   `channel` と突き合わせていた（`lib/liveStats.tsx`）。引き当ての正は
+ *   本番の図鑑（`docs/island-db.md` 3.3）なので、引くのは向こうにした
+ * - `here` … 「いま島にいる人」（`lib/here.ts`）を突き合わせる鍵。
+ *   uid を潰した字で、**逆は引けない**。居場所（`islandHere/{uid}`）の
+ *   書類IDを同じように潰して突き合わせる（`lib/hereRest.ts`）
+ * - `uid` … **サーバーからは来ない。** `lib/liveStats.tsx` が、
+ *   **見ている本人の行にだけ**手元の uid を入れ直す。他人の行には
+ *   `here` の字が入る（突き合わせの鍵として使うだけ）
  */
 export type ResidentShow = {
-  uid?: string;
-  channelId: string;
+  /** 「いま島にいる人」の突き合わせ鍵（uid を潰した16字） */
+  here: string;
+  /** キャラクターの絵の id。図鑑に結ばれていない人は無い */
+  icon?: string | null;
   name?: string | null;
   photo?: string | null;
+  /** **サーバーは返さない。** `lib/liveStats.tsx` が入れる（上の説明） */
+  uid?: string;
 };
 
 /**
@@ -180,8 +191,14 @@ export type NextPlan = {
   embeds: { kind: "instagram" | "youtube"; id: string; note: string }[];
   /** 名乗った名前 */
   by?: string;
-  /** ログインして出した人。じぶんのかどうかを見分けるのに使う */
-  byUid?: string;
+  /**
+   * ログインして出したものか。**誰が出したかは返ってこない**（#133）。
+   *
+   * 見分けに使うのは「直せる窓」だけ——ログインして出したものは端末の印では
+   * 直せず、24時間の締め切りも無い。**じぶんのものかどうかは
+   * `loadMyPlans()`**（ログインした人が自分のぶんだけ引く口）で決める。
+   */
+  byLogin?: true;
   hearts: number;
   status: PlanStatus;
   /** ページとして立ったときの、Git 側の企画の id（`content/plans.ts`・`content/legends.ts`） */
@@ -205,7 +222,7 @@ export type NextPlanInput = Omit<
   | "id"
   | "hearts"
   | "status"
-  | "byUid"
+  | "byLogin"
   | "createdAt"
   | "updatedAt"
   | "archived"
@@ -234,6 +251,20 @@ export const getNextPlans = (limit = 200) =>
   req<{ plans: NextPlan[]; more: boolean; next: string | null }>(
     `/nextplans?limit=${limit}`,
   );
+
+/**
+ * じぶんが出した企画。**ログインした人だけ。**
+ *
+ * 誰でも読める一覧（`getNextPlans`）は、持ち主を返さなくなった（#133）。
+ * 返していたころは `/state` の `residents[].uid` と突き合わせるだけで
+ * 「この企画を出したのは、この名前とこの顔の人」が分かった。
+ *
+ * **この口は呼んだ人ごとに中身が違うので、キャッシュに載せない**
+ * （サーバーが `no-store` を付けている）。載せると、ログインAの答えが
+ * ログインBに配られる。付箋の `getMyStickies` と同じ形。
+ */
+export const getMyNextPlans = (token: string) =>
+  req<{ plans: NextPlan[] }>("/nextplans?mine=1", { headers: auth(token) });
 
 /** しまってある企画を読む。**あやとだけ。** 戻すときにしか使わない。 */
 export const getArchivedPlans = (token: string) =>
@@ -350,6 +381,67 @@ export function myPlans(): Set<string> {
   }
 }
 
+/**
+ * ログインして出した企画の id。**端末には残さない。**
+ *
+ * localStorage に混ぜないのは、印が端末に残ると
+ * **同じ端末で別の人がログインしたときに、その人のものに見える**から。
+ * サーバーが持ち主を返さなくなった（#133）ぶん、ここが「自分のもの」の
+ * 唯一の手がかりになるので、**ログインの続いているあいだだけ**持つ。
+ *
+ * `null` は「まだ引いていない・引けなかった」で、**空の集合とは別**。
+ * 0件と読むと、出した人の企画から「そだてる」が消える（#115）。
+ */
+let loginPlans: Set<string> | null = null;
+
+/**
+ * いま引いている最中のもの。**同じ瞬間に2か所から呼ばれても1本にする。**
+ *
+ * 育てる画面は「開いた企画」と「じぶんの一覧」を同時に引く。控えずに
+ * 出しっぱなしにすると、開くたびに同じ口を2回叩く。
+ * **返事が来たら捨てる**ので、次に呼ばれたら必ず引き直す（出したばかりの
+ * 1件が入っていない古い答えを配らないため）。
+ */
+let loading: { token: string; p: Promise<NextPlan[]> } | null = null;
+
+/**
+ * じぶんの企画を引き直して控える。ログアウトしたら捨てる。
+ * @param token 合言葉。無い（ログインしていない）なら控えを捨てるだけ
+ * @returns 引けた企画。ログインしていなければ空の配列
+ */
+export function loadMyPlans(token?: string | null): Promise<NextPlan[]> {
+  if (!token) {
+    loginPlans = null;
+    loading = null;
+    return Promise.resolve([]);
+  }
+  if (loading?.token === token) return loading.p;
+  const p = getMyNextPlans(token)
+    .then((r) => {
+      loginPlans = new Set(r.plans.map((x) => x.id));
+      return r.plans;
+    })
+    .finally(() => {
+      if (loading?.p === p) loading = null;
+    });
+  loading = { token, p };
+  return p;
+}
+
+/**
+ * いま出したばかりの1件を、引き直さずに「じぶんのもの」に足す。
+ *
+ * 出した直後にそのまま育てる画面へ行くので、**ここで足しておかないと
+ * 出した本人に「そだてる」が出ない**（引き直すまで自分のものに見えない）。
+ * ログインしていない人の控え（`rememberMyPlan`）と同じ役目。
+ */
+export function rememberLoginPlan(id: string) {
+  loginPlans = new Set([...(loginPlans ?? []), id]);
+}
+
+/** 控えてある「ログインして出した企画」。引けていなければ空（`null` と同じ扱い） */
+export const myLoginPlans = (): Set<string> => new Set(loginPlans ?? []);
+
 export function rememberMyPlan(id: string) {
   try {
     const s = myPlans();
@@ -384,8 +476,12 @@ export function canEditPlan(
   mine: Set<string>,
   now = Date.now(),
 ): "ok" | "expired" | "no" {
-  // ログインして出したものは、端末の印では直せない。印のほうが弱い証なので
-  if (p.byUid) return p.byUid === uid ? "ok" : "no";
+  /* ログインして出したものは、端末の印では直せない。印のほうが弱い証なので。
+     **端末の控え（`mine`）では決めない。** サーバーから引いた
+     「自分のもの」（`loadMyPlans`）だけを見る。localStorage の印は
+     ログアウトしても残るので、同じ端末で別の人が入ったときに、
+     その人のものに見えてしまう（#133）。 */
+  if (p.byLogin) return uid && loginPlans?.has(p.id) ? "ok" : "no";
   if (!mine.has(p.id)) return "no";
   return Date.parse(p.createdAt) + PLAN_EDIT_MS > now ? "ok" : "expired";
 }

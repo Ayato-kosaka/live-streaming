@@ -20,7 +20,7 @@
 import {onRequest} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {randomInt, randomUUID} from "crypto";
+import {createHash, randomInt, randomUUID} from "crypto";
 import {readLiveChat, sayOnLive} from "./liveChat";
 import {youtube} from "./youtubeClient";
 import {
@@ -597,36 +597,82 @@ async function residentDays(): Promise<Json | null> {
 }
 
 /**
+ * 「いま島にいる人」を突き合わせるための鍵。**uid そのものは返さない。**
+ *
+ * 居場所は `islandHere/{uid}` に置く（`docs/island-here.md`）。書類IDが uid
+ * なので、読む側は「この居場所は誰のものか」を uid でしか言えない。
+ * かといって `/state` が uid を返すと、**他の口が uid を1つでも返した日に、
+ * そこと突き合わせて「この人が出したもの」が分かる**——2026-09-17 に
+ * `/nextplans` の `byUid` で実際にそうなっていた（#133）。
+ *
+ * だから返すのは **uid の sha256 の先頭16字**にする。読む側は手元の
+ * 書類ID（uid）を同じように潰して突き合わせるので、絵は今までどおり出る。
+ * 逆は引けないので、**この字から `islandHere/{uid}` は書けないし、
+ * uid を鍵にしている他のどこにも当たらない。**
+ *
+ * **新しい印を作ったことにはならない。** この字が乗っている行は、
+ * 本人が「出してよい」と言った名前か顔を既に持っている
+ * （持っていない人はこの一覧に出ない）。同じ人だと分かる印は、
+ * その名前と顔のほうが先にある。カードの id をチャンネルIDの
+ * ハッシュにしなかったのは、あちらの行が**名前も顔も持たない**
+ * ところに新しい印を足すことになったから
+ * （`docs/island-incident-2026-09-14-cards.md`）。ここは逆で、
+ * **uid という別の鍵を外すために潰している。**
+ * @param {string} uid ログインした人の uid
+ * @return {string} 突き合わせの鍵（16字の16進）
+ */
+function hereKey(uid: string): string {
+  return createHash("sha256").update(uid).digest("hex").slice(0, 16);
+}
+
+/**
  * 島に名前を出してよいと決めた人だけを返す。
  *
  * 名前も YouTube のアイコンも、出すか出さないかは本人が決める。
  * 何もしていない人は、キャラクターだけが島にいて名前は出ない。
  *
- * **キャラクターが誰のものかは、ここでは決めない。** 割り当てはあやとが
- * 表で持っていて、`site/content/residents.ts` に焼いてある。ログインで
- * 分かるのは「この YouTube チャンネルの人が、名前を出してよいと言った」
- * までで、それがどの絵の人かは向こう側で突き合わせる。
+ * **キャラクターが誰のものかは、ここでは決めない。** 割り当ては図鑑
+ * （`islandCharacter.channelId`）が持っていて、ここはそれを引くだけ。
  * 本人に絵を選ばせると、他人の絵を自分のものにできてしまう。
  *
- * **uid も返す。** 「いま島にいる人」(docs/island-here.md)は islandHere/{uid} に
- * 居場所だけを書く。名前とアイコンをそちらに書かせると他人を名乗れるので、
- * 誰なのかはここで返したものと uid で突き合わせて、読む側が決める。
- * カスタムクレームにチャンネルIDを入れる手もあるが、そちらは
- * setCustomUserClaims と再ログインが要る。ここに1つ足すほうが軽い。
- * 出るのは「名前かアイコンを出してよい」と本人が言った人だけなので、
- * 何もしていない人の uid はここに出ない。
- * @return {Promise<Json[]>} uid・チャンネルと、出してよい名前・アイコン
+ * ## チャンネルIDも uid も返さない（#133）
+ *
+ * **前はどちらも返していた。** `channelId` は `youtube.com/channel/UC…` を
+ * 開けば本人の顔と名前に直結する字で、**この一覧に載る条件は
+ * 「名前か顔を出してよい」であって「チャンネルを教えてよい」ではない。**
+ * 公開のカードから落とし（`docs/island-incident-2026-09-14-cards.md` 8-2）、
+ * 日数の鍵からも落とした（#115）のに、ここだけ残っていた。
+ *
+ * 向こう側（`site/lib/liveStats.tsx`）が `channelId` を使っていたのは
+ * **絵を引くためだけ**で、その引き当ては `residentDays` がもう
+ * サーバー側でやっている。だから**引いた答え（`icon`）を返す。**
+ * 図鑑がもともと見せている「この絵の人」より細かいことは言わない。
+ *
+ * uid のかわりは `hereKey`（上）。
+ * @return {Promise<Json[]>} 突き合わせの鍵・絵と、出してよい名前・アイコン
  */
 async function listResidents(): Promise<Json[]> {
-  const snap = await USERS.where("channelId", "!=", null).limit(500).get();
+  /* 図鑑は日数（`residentDays`）と同じ5分の控えに載る。**温まっていれば
+     ここで1件も読まない**ので、絵を引くために往復が増えることはない。 */
+  const [snap, byChannel] = await Promise.all([
+    USERS.where("channelId", "!=", null).limit(500).get(),
+    charactersByChannel(),
+  ]);
   const out: Json[] = [];
   snap.forEach((d) => {
     const u = d.data() ?? {};
     if (!u.channelId) return;
     if (!u.showName && !u.showPhoto) return;
     out.push({
-      uid: d.id,
-      channelId: u.channelId,
+      here: hereKey(d.id),
+      /* 図鑑に結ばれていない人は `null`。**その人が消えるわけではない**
+         （名前と顔は返る）。絵で引く側（島の名札）に出ないだけ。
+
+         **図鑑ごと読めなかったときも `null` になる。** 日数（`residentDays`）は
+         そこを分けているが、あちらは「この絵の人は N 日」と**言い切る字**に
+         なるから（#115）。こちらは名札が出ないだけで、読めなかった回に
+         何かを言い切ることはない。分ける値を足すより、黙って静かなほうを取る。 */
+      icon: byChannel?.get(u.channelId as string) ?? null,
       name: u.showName ?
         (u.nickname as string) || (u.name as string) || null :
         null,
@@ -1169,10 +1215,19 @@ type PlanShape = {
   /** 名乗った名前。名乗っていなければ無い */
   by?: string;
   /**
-   * ログインして出した人。**これがあると、端末の印では直せない。**
-   * 画面が「じぶんが出したもの」を見分けるのにも使う(付箋と違って直せるので要る)。
+   * ログインして出したものか。**誰が出したかは返さない**(#133)。
+   *
+   * 前はここが `byUid`（uid そのもの）だった。**企画の画面には名前を
+   * 出していないのに、`/state` の `residents[].uid` と突き合わせると
+   * 出した人の名前と顔が分かった。** 口を2つ叩けば済む形で、
+   * 実測で1人ぶん当たっていた。
+   *
+   * 画面がこの欄で決めるのは**直せる窓のほう**だけ——ログインして出した
+   * ものは端末の印では直せず、24時間の締め切りも無い。
+   * 「じぶんが出したものか」は `GET /nextplans?mine=1`（ログインした人が
+   * 自分のぶんだけ引く口）で決める。**この欄からは誰も分からない。**
    */
-  byUid?: string;
+  byLogin?: true;
   hearts: number;
   /** 提案 → これから → やった */
   status: string;
@@ -1231,7 +1286,10 @@ function planShape(
     ),
     embeds: arr<{kind: string; id: string; note: string}>(v.embeds),
     by: (v.by as string) || undefined,
-    byUid: (v.uid as string) || undefined,
+    /* **持ち主そのものは出さない。** 出すのは「持ち主がログインした人か」
+       の1ビットだけ（型の説明に理由）。直せるかどうかを画面が押す前に
+       言えるのは、これで足りる。 */
+    byLogin: v.uid ? true : undefined,
     hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
     status: PLAN_STATUS.includes(v.status as typeof PLAN_STATUS[number]) ?
       (v.status as string) :
@@ -3317,6 +3375,45 @@ export const islandApi = onRequest(
          Hosting は別々に手で起動するので、画面が先に出た日も古い日も、
          どちらかが 404 で止まらないようにする。 */
       if (method === "GET" && path === "/nextplans") {
+        /* じぶんが出した企画だけ(#133)。**付箋の `?mine=1` と同じ形**
+           （この上の `GET /stickies`）。
+
+           一覧の口(`planShape`)は `uid` も `cid` も返さないので、
+           「どれが自分のか」は画面の側では作れない。ここで絞る。
+
+           **キャッシュに載せない。** `/nextplans` は誰でも読める口なので
+           `s-maxage` が効いている。呼んだ人ごとに中身の変わる答えを
+           同じ URL で返すと、混ざって他人の答えが配られる。だから
+           **URL を分けて**（`?mine=1`）、**`no-store` を付ける**。
+           カードで同じことをしている（`/cards/mine`・`docs/island-api.md` 3章）。
+
+           **`where` に `orderBy` を足さない。** 複合索引が要るが、その索引は
+           サービスアカウントに作る権限が無くて配れない(#168)。引いてから
+           手元で並べる。1人ぶんは多くても数十件。
+
+           しまったものは出さない。掲示板から下ろしたものが、出した人の
+           手元にだけ残っていると、まだ立っているように読める。 */
+        if (req.query.mine === "1") {
+          const who = await whoIs(req.headers.authorization);
+          if (!who) {
+            res.status(401).json({error: "no token"});
+            return;
+          }
+          const snap = await STREAM_EVENTS.where("uid", "==", who.uid)
+            .limit(300)
+            .get();
+          const rows = snap.docs
+            .filter((d) => d.get("hidden") !== true)
+            .filter((d) => d.get("archived") !== true)
+            .sort(
+              (a, b) =>
+                (Number(b.get("createdAt")) || 0) -
+                (Number(a.get("createdAt")) || 0),
+            );
+          res.set("Cache-Control", "no-store");
+          res.json({plans: rows.map(planShape), more: false, next: null});
+          return;
+        }
         /* しまったぶんは、戻す人にしか見せない(付箋と同じ)。 */
         const archived = req.query.archived === "1";
         if (archived && !(await ownerUid(req.headers.authorization))) {
