@@ -109,12 +109,20 @@
  * **1つでも外れたら、本物の面の数字を1つも出さずに 2 で落ちる。**
  * `BREAK=` は判定の足を1本ずつ抜く（#128 の決めごと1）。
  *
- * ## CI には繋いでいない
+ * ## CI に繋いであるのは、判定だけ
  *
- * 書き出したもの（`site/.next-*`）とブラウザが要る。毎 PR で `next build` を
- * 回す値段に見合わないので、`python/selftest_runner.py` には入れていない。
- * 対照は**この道具が回るたびに毎回**通る（別のところに置くと、置いた先が
- * 回らない日に黙る。`island-standards.md` の「繋ぐ先」）。
+ * この道具そのものは**書き出し（`site/.next-*`）とブラウザが要る。**
+ * 131面でひと回り **6分47秒**（2026-09-18 実測。この箱）で、毎 PR で
+ * `next build` から回す値段に見合わないので繋いでいない。
+ *
+ * だが腐るのは**判定の側**で、正規表現は1文字直せば黙って穴が開き、
+ * 出るのは「0件」——**いちばん合格に見える形**になる（`island-standards.md` §15）。
+ * だから `judge` / `subtract` / `verdict` / `servedDiff` を import できる形にして、
+ * `tools/sprites/preclaim_selftest.mjs` が毎 PR で確かめる
+ * （`python/selftest_runner.py` が `tools/sprites/*_selftest.mjs` を拾う。1.6秒）。
+ *
+ * **上の対照5つは、この道具が回るたびに毎回通る。** 別のところに置くと、
+ * 置いた先が回らない日に黙る（`island-standards.md` の「繋ぐ先」）。
  */
 /* **`playwright-core` は、回すときに初めて読む。** 判定だけを使う見張り
    （`preclaim_selftest.mjs`）は毎 PR で走るので、`tools/sprites/node_modules` が
