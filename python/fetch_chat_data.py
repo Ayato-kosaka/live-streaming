@@ -308,7 +308,11 @@ def handle_no_chat_file(video, result: ProcessingResult, logger: VideoLogger) ->
         # 「次に試してよくなる時刻」であって「次に試す時刻」ではないので、
         # 過ぎたままで正しい。
         next_retry_at = calculate_next_retry_at(video.first_seen_at, now)
-        video = mark_video_waiting(video, next_retry_at)
+        # **なぜ待っているかを一緒に残す。** 残さないと、次に数えた人が
+        # 理由を測り直すところから始めることになる（`island-misses.md` #123）
+        video = mark_video_waiting(
+            video, next_retry_at, result.error_code, result.error_detail
+        )
         result.status = VideoStatus.WAITING
         elapsed_h = (now - video.first_seen_at).total_seconds() / 3600
         logger.info(
