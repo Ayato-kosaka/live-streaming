@@ -139,6 +139,10 @@ ARGS 例:
 | 取れる | 取れない | **Functions の出口が塞がれている** |
 | 取れない | 取れない | その名乗りがもう引けない |
 
+**かかった秒数も一緒に出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
+こちらが 8秒を超えるなら、口の「時間切れ」は**遅さ**の話であって
+塞がれている話ではない。数字が無いと、その2つが分けられない。
+
 **見立てで書かない。** 2か所から引いて、突き合わせてから言う。
 
 ## 出さないもの
@@ -416,30 +420,38 @@ def probe_one(name: str, timeout: float = 20.0) -> tuple:
         timeout: 1回あたりの待ち（秒）
 
     Returns:
-        (取れたか, 理由の1行)。**取れた名前そのものは返さない**
+        (取れたか, 理由の1行, かかった秒数)。**取れた名前そのものは返さない**
     """
     if CHANNEL_ID.match(name):
         url, pick = ca.FEED.format(name), ca.title_from_feed
     else:
         url, pick = HANDLE_PAGE.format(name.lstrip("@")), ca.title_from_page
+    t0 = time.monotonic()
+
+    def out(ok: bool, why: str) -> tuple:
+        # **かかった秒数まで出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
+        # ここが 8秒を超えるなら「時間切れ」は遅さの話で、塞がれている
+        # 話ではない。数字が無いと、その2つが分けられない
+        return (ok, why, time.monotonic() - t0)
+
     try:
         st, body = ca._get(url, timeout)
     except Exception as e:  # noqa: BLE001
         # **どう駄目だったかだけ。** 宛先も名乗りも出さない
         code = getattr(e, "code", None)
-        return (False, f"HTTP {code}" if code else f"届かない: "
-                f"{type(e).__name__}")
+        return out(False, f"HTTP {code}" if code else
+                   f"届かない: {type(e).__name__}")
     if st != 200:
-        return (False, f"HTTP {st}")
+        return out(False, f"HTTP {st}")
     title = pick(body)
     if title is None:
-        return (False, "題の欄が無い（読めなかった）")
+        return out(False, "題の欄が無い（読めなかった）")
     if not title:
-        return (False, "題が空")
+        return out(False, "題が空")
     if title.lower() in ca.BAD_TITLE:
         # **締め出されている。** 名前が無いのではない
-        return (False, "題が YouTube のまま（締め出し）")
-    return (True, "")
+        return out(False, "題が YouTube のまま（締め出し）")
+    return out(True, "")
 
 
 def agrees(was: dict, row: dict) -> bool:
@@ -806,12 +818,12 @@ def main() -> None:
                  "（1バイトも書きません） ----")
         got = 0
         for doc_id in todo:
-            ok, why = probe_one(clean(book[doc_id].get("channelName"),
-                                      MAX_NAME))
+            ok, why, sec = probe_one(clean(book[doc_id].get("channelName"),
+                                           MAX_NAME))
             got += 1 if ok else 0
-            log.info("  %s %s ← %s", mask(doc_id),
+            log.info("  %s %s ← %s / %.1f秒（口の待ちは8秒）", mask(doc_id),
                      clean(book[doc_id].get("emoji"), 16) or "（絵文字なし）",
-                     "取れた" if ok else f"取れない（{why}）")
+                     "取れた" if ok else f"取れない（{why}）", sec)
             time.sleep(ca.GAP)
         log.info("Actions から取れた: %d人 / %d人", got, len(todo))
         if got:

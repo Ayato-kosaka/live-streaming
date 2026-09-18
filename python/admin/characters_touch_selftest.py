@@ -711,7 +711,8 @@ def main() -> None:  # noqa: C901
     try:
         ct.ca.GAP = 0.0
         ct.probe_one = lambda name, timeout=20.0: (
-            (True, "") if name in YT else (False, "届かない: URLError"))
+            (True, "", 0.4) if name in YT
+            else (False, "届かない: URLError", 12.3))
         out16, code16, client16, api16 = run(make_store(), apply=True,
                                              limit=None, probe=True)
     finally:
@@ -726,6 +727,9 @@ def main() -> None:  # noqa: C901
        out16.count("← 取れた"))
     ck("引けなかった人は理由まで出る",
        "← 取れない（届かない: URLError）" in out16, True)
+    # **口の待ちは8秒。** 秒数が無いと「時間切れ」が遅さの話か
+    # 塞がれている話かを分けられない
+    ck("かかった秒数も出る", "/ 12.3秒（口の待ちは8秒）" in out16, True)
     ck("何人取れたかを出している",
        f"Actions から取れた: {len(GETS_ID)}人 / {len(CAN_TOUCH)}人" in out16,
        True)
