@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       # `python/name_tail_selftest.py` だけは、**本物の OBS の突き合わせ**
       # （`app/alertbox/matching.utils.ts`）を node で動かして見る。
