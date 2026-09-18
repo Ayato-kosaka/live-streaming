@@ -201,6 +201,47 @@ STAMP = frozenset({"editedAt", "editedBy", "updatedAt", "channelTitleFor"})
 # 通したときに増えてよい欄。**減ってよい欄は1つも無い**
 GAIN = frozenset({"aliases", "channelId", "lookupKeys", "images"})
 
+# 口が自分で付け外しする、**状態の印**（#159）。
+#
+# その名乗りを引いたら 404 だった（＝もう無い）ことを、口が書類に残す。
+# 付くのも消えるのも口の中だけで、こちらは1文字も送らない。
+#
+# **`STAMP` にも `GAIN` にも入れない。** あれは「毎回変わってよい」
+# 「増えてよい」で、こちらは**どう動いてよいかに条件がある**——
+# 入ってよいのは**いまの `channelName` と同じ字だけ**で、それ以外の字が
+# 入るのは口が壊れた印。素通しにすると、その日に気づけない。
+#
+# ここを名指ししていないと、印が付いた回は「欄が変わった」で、
+# 消えた回は「欄が消えた」で、**1人目でこの道具が止まる**——
+# つまり**印を付けるための唯一の道が、印のせいで塞がる。**
+GONE = "channelGoneFor"
+
+
+def gone_moved(was: dict, now: dict) -> str:
+    """`channelGoneFor` の動きが、口の作りどおりか（#159）。
+
+    通してよいのは2つだけ。
+
+    - 無い → **いまの `channelName` と同じ字**が入った
+    - 入っていた → 消えた、または**いまの `channelName` と同じ字**になった
+
+    どちらも「いま在る字が、空か `channelName` か」で言い切れる。
+
+    Args:
+        was: 通す前の書類まるごと
+        now: 通したあとの書類まるごと
+
+    Returns:
+        文句の1行。通ってよければ空。**値（ハンドル）は入れない**——
+        素性なので、出すのは欄の名前だけ
+    """
+    del was      # いま在る字だけで決まる（前に何が入っていたかは要らない）
+    name = clean(now.get("channelName"), MAX_NAME)
+    g_now = clean(now.get(GONE), MAX_NAME)
+    if not g_now or g_now == name:
+        return ""
+    return f"印が名乗りと違う字になった: {GONE}"
+
 # 口が返す `named.state`（`islandCharacter.ts` の `NamedState`）。
 #   added   … 引けて、呼び名に足した
 #   already … 引けたが、もう入っていた
@@ -573,9 +614,16 @@ def verdict(was: dict, now: dict) -> Diff:
         if not _break("diff"):
             d.bad.append(why)
 
-    lost = sorted(set(was) - set(now))
+    # **印は消えてよい**（口が落とす。#159）。ここで数えると、
+    # 印が消えた回——つまり名乗りが直った回——で止まることになる
+    lost = sorted(set(was) - set(now) - {GONE})
     if lost:
         ng("欄が消えた: " + ",".join(lost))
+
+    # 印は、**素通しではなく、入ってよい字を1つずつ見る**（#159）
+    gone_why = gone_moved(was, now)
+    if gone_why:
+        ng(gone_why)
 
     # 呼び名。**頭からそのまま残って、増えるのは末尾だけ**
     a_was, a_now = aliases_of(was), aliases_of(now)
@@ -614,8 +662,12 @@ def verdict(was: dict, now: dict) -> Diff:
             ng(f"絵（{role}）が変わった")
 
     # 残り全部。**1つでも動いたらおかしい**（`emoji` と `channelName` はここ）
+    #
+    # **印を外すのは、上で1つずつ見たぶんだけ。** ここで一緒くたに
+    # 飛ばすと「印が動いた回は何でも通る」になって、絵文字が消えた回まで
+    # 素通りする（#159 の見張りに、そうなっていないことの対照がある）
     for f in sorted(set(was) | set(now)):
-        if f in GAIN or f in STAMP:
+        if f in GAIN or f in STAMP or f == GONE:
             continue
         if was.get(f) != now.get(f):
             ng(f"欄が変わった: {f}")

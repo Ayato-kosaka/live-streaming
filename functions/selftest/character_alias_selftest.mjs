@@ -10,13 +10,16 @@
  * その人は引けないまま。** だから口（`POST /characters/{id}`）が、
  * 書く前に引いて呼び名へ入れる。
  *
- * ここで確かめるのは5つ。
+ * ここで確かめるのは6つ。
  *
  * 1. **ハンドルを渡したら**、表示名が `aliases` と `lookupKeys` に入る
  * 2. **表示名を渡したら**、引きに行かない・余計なものが入らない
  * 3. **引けなかったら**、作成は通って、返事に理由が入る
  * 4. **手で入れた呼び名が消えない**（足すだけ）
  * 5. `channelKeys` は広がらない（取り違えを減らすためのわざと狭い欄・#539）
+ * 6. **その名乗りがもう無い（404）ときに、書類へ印が残る**（#159）。
+ *    押した回のログに1行出るだけでは、図鑑を開いた人に見えない。
+ *    印は**次に開いたとき**（`GET /characters`）にも出ていないといけない
  *
  * ## 引き先は偽物を当てる
  *
@@ -89,6 +92,24 @@ const PAD = "<!-- " + "x".repeat(200_000) + " -->";
 const hits = [];
 
 /**
+ * **あとから取れるようになる**ハンドル（#159）。
+ *
+ * 印が「付く」だけ見ても足りない。**取れるようになった日に消える**ところまで
+ * 見ないと、一度 404 を返した人に永久に札が貼られる。
+ * 名乗りを変えずに向こうだけ変わる形にしてあるのは、**名前の書き換えと
+ * 混ざらないようにする**ため（あちらは別の足で測る）。
+ */
+const REVIVED = new Set();
+
+/**
+ * **急に届かなくなる**ハンドル（#159）。
+ *
+ * 404 の印が付いている人に、次は**出口**の事故（切断）が起きたとき。
+ * ここで印を落とすと、次に開いた人には直っているように見える。
+ */
+const BLIND = new Set();
+
+/**
  * 偽の引き先。ハンドルごとに返すものを変える。
  * @param {string} title `og:title` に入れる字
  * @return {string} 頁の中身
@@ -125,6 +146,26 @@ const YT = createServer((req, res) => {
     return;
   }
   const h = decodeURIComponent(url.pathname.slice(1));
+  if (BLIND.has(h)) {
+    // 出口の事故。**名乗りの話ではない**
+    res.writeHead(200, {"Content-Type": "text/html"});
+    res.write("<!doctype html><head>");
+    res.socket.destroy();
+    return;
+  }
+  if (h === "@fukkatsu-0000") {
+    if (!REVIVED.has(h)) {
+      res.writeHead(404).end("no");
+      return;
+    }
+    res.writeHead(200, {"Content-Type": "text/html"})
+      .end(page("ふっかつ", "UCfukkatsu00000000000000"));
+    return;
+  }
+  if (h === "@nakunatta-000") {
+    res.writeHead(404).end("no");
+    return;
+  }
   if (h === "@kesareta-0000") {
     res.writeHead(404).end("no");
     return;
@@ -180,6 +221,14 @@ process.env.YT_BASE = `http://127.0.0.1:${PORT}`;
 const STORE = {};
 
 /**
+ * `admin.firestore.FieldValue.delete()` の代わり。
+ *
+ * **本物と同じく「欄を落とす」印**として扱う。ここを素の値にすると、
+ * 印を消したはずの欄が `{}` のまま残って、**消えていないのに緑**になる。
+ */
+const DELETE = Symbol("delete");
+
+/**
  * 書類1件の姿。
  * @param {string} id 書類ID
  * @param {object|undefined} v 中身
@@ -221,7 +270,14 @@ function fakeDb() {
         id,
         get: async () => snapOf(id, STORE[id]),
         set: async (v) => {
-          STORE[id] = {...(STORE[id] ?? {}), ...v};
+          /* **`FieldValue.delete()` を、本当に消す。** 単に上書きすると
+             「印を消した」を測れない（欄が残ったまま緑になる） */
+          const now = {...(STORE[id] ?? {})};
+          for (const [k, val] of Object.entries(v)) {
+            if (val === DELETE) delete now[k];
+            else now[k] = val;
+          }
+          STORE[id] = now;
         },
         delete: async () => {
           delete STORE[id];
@@ -246,7 +302,7 @@ const admin = {
   },
   firestore: Object.assign(() => DB, {
     Timestamp: {now: () => ({toMillis: () => 0})},
-    FieldValue: {serverTimestamp: () => 0},
+    FieldValue: {serverTimestamp: () => 0, delete: () => DELETE},
   }),
   storage: () => {
     throw new Error("偽の admin は置き場を持たない（絵は送らない）");
@@ -691,7 +747,176 @@ console.log("\n# 引けなかった人は、次の保存で引き直す");
     JSON.stringify(r.body?.named));
 }
 
-/* ---------------- 7. 素性を出していないか ---------------- */
+/* ---------------- 8. もう無い名乗りの印（#159） ----------------
+
+   本番で3人が 404 だった。押した回のログに1行出るだけで、**Firestore にも
+   画面にも何も残らなかった。** `channelId` が空なので毎晩の繋ぎ
+   （IDから引く）の対象にも入らず、**誰も拾わない・赤くもならない。**
+
+   ここで見るのは4つ。**1つずつ、別の足で測る。**
+
+   | 何が起きたか | 印 |
+   | --- | --- |
+   | 404 を返す引き先 | **付く** |
+   | そのあと取れるようになった | **消える** |
+   | 引けない（切断・時間切れ） | **付けない・消しもしない** |
+   | 名乗りを別のハンドルに書き換えた | **古い印が残らない** */
+
+/**
+ * 図鑑をもう一度開く（`GET /characters`、あやとの札つき）。
+ *
+ * **保存した直後の返事だけ見ても足りない。** 次に開いたときに出ているか
+ * ——書類に残っているか——が肝なので、読む側の口を通して測る。
+ * @param {string} id 見たい人
+ * @return {Promise<object|undefined>} その1人（居なければ undefined）
+ */
+async function list(id) {
+  const out = {body: undefined};
+  const res = {
+    set: () => {},
+    status: () => res,
+    json: (b) => {
+      out.body = b;
+    },
+    send: () => {},
+  };
+  await handleCharacters(
+    {method: "GET", path: "/characters", auth: "Bearer owner",
+      query: {}, body: {}},
+    res,
+    deps,
+  );
+  return (out.body?.characters ?? []).find((c) => c.id === id);
+}
+
+console.log("\n# 404 を返す引き先 → 印が付く");
+{
+  const id = "aaaaaaaaaa0000000020";
+  const r = await put(id, {
+    channelName: "@fukkatsu-0000", emoji: "🍰", aliases: ["手で"],
+  });
+  check("作成は通る", r.status === 200 && !!r.body?.character,
+    `status=${r.status}`);
+  check("返事が「引けなかった（404）」",
+    r.body?.named?.why === "見つからない（404）",
+    JSON.stringify(r.body?.named));
+  check("書類に印が残る（打たれた名乗りごと）",
+    STORE[id]?.channelGoneFor === "@fukkatsu-0000",
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  check("保存の返事にも出る", r.body?.character?.channelGone === true,
+    JSON.stringify(r.body?.character?.channelGone));
+  check("**次に図鑑を開いても出ている**", (await list(id))?.channelGone === true,
+    JSON.stringify((await list(id))?.channelGone));
+  check("印の付いていない人には出ない",
+    (await list("aaaaaaaaaa0000000001"))?.channelGone === false,
+    JSON.stringify((await list("aaaaaaaaaa0000000001"))?.channelGone));
+  check("手で入れた呼び名は残る",
+    JSON.stringify(r.body?.character?.aliases ?? []) === JSON.stringify(["手で"]),
+    JSON.stringify(r.body?.character?.aliases));
+}
+
+console.log("\n# 印が付いた人が、次は届かなかった → 印は消えない（出口の話）");
+{
+  const id = "aaaaaaaaaa0000000020";
+  BLIND.add("@fukkatsu-0000");
+  const r = await put(id, {
+    channelName: "@fukkatsu-0000", emoji: "🍰", aliases: ["手で"],
+  });
+  BLIND.delete("@fukkatsu-0000");
+  check("返事は「届かなかった」（404 とは別の字）",
+    r.body?.named?.why === "届かなかった", JSON.stringify(r.body?.named));
+  check("印はそのまま", STORE[id]?.channelGoneFor === "@fukkatsu-0000",
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  check("図鑑にもそのまま出る", (await list(id))?.channelGone === true,
+    JSON.stringify((await list(id))?.channelGone));
+}
+
+console.log("\n# そのあと取れる引き先に変わった → 印が消える");
+{
+  const id = "aaaaaaaaaa0000000020";
+  REVIVED.add("@fukkatsu-0000");
+  const r = await put(id, {
+    channelName: "@fukkatsu-0000", emoji: "🍰", aliases: ["手で"],
+  });
+  check("引けた", r.body?.named?.state === "added",
+    JSON.stringify(r.body?.named));
+  check("**書類から印が落ちる**（欄ごと消える）",
+    !("channelGoneFor" in (STORE[id] ?? {})),
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  check("保存の返事にも出ない", r.body?.character?.channelGone === false,
+    JSON.stringify(r.body?.character?.channelGone));
+  check("次に図鑑を開いても出ない", (await list(id))?.channelGone === false,
+    JSON.stringify((await list(id))?.channelGone));
+}
+
+console.log("\n# 引けない（切断）だけでは、印を付けない");
+{
+  const id = "aaaaaaaaaa0000000021";
+  const r = await put(id, {
+    channelName: "@kireru-000000", emoji: "✂️", aliases: [],
+  });
+  check("返事は「届かなかった」", r.body?.named?.why === "届かなかった",
+    JSON.stringify(r.body?.named));
+  /* **ここを混ぜると、Functions が塞がれた日に全員の名乗りが死ぬ**
+     （#157 の決めごと1。「測れなかった」を相手の答えにしない） */
+  check("印を付けない", !("channelGoneFor" in (STORE[id] ?? {})),
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  check("図鑑にも出ない", (await list(id))?.channelGone === false,
+    JSON.stringify((await list(id))?.channelGone));
+}
+
+console.log("\n# 名乗りを別のハンドルに書き換えた → 古い印が残らない");
+{
+  const id = "aaaaaaaaaa0000000022";
+  const first = await put(id, {
+    channelName: "@nakunatta-000", emoji: "🐶", aliases: [],
+  });
+  check("まず印が付く（仕込みが効いているか）",
+    first.body?.character?.channelGone === true &&
+      STORE[id]?.channelGoneFor === "@nakunatta-000",
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  /* **書き換えた先が引けないときが、いちばん危ない。** 引けた回だけ
+     消していると、こちら側で落ちた回に古い名乗りの印が残り続ける */
+  const r = await put(id, {
+    channelName: "@kireru-000000", emoji: "🐶", aliases: [],
+  });
+  check("書き換えた先が引けなくても、古い印は落ちる",
+    !("channelGoneFor" in (STORE[id] ?? {})),
+    JSON.stringify(STORE[id]?.channelGoneFor));
+  check("保存の返事に古い印が出ない",
+    r.body?.character?.channelGone === false,
+    JSON.stringify(r.body?.character?.channelGone));
+  check("図鑑にも出ない", (await list(id))?.channelGone === false,
+    JSON.stringify((await list(id))?.channelGone));
+}
+
+console.log("\n# 書類に古い印が居座っていても、画面には出さない");
+{
+  /* **書類の掃除が1回遅れたとき**の保険。口が印を落とし損ねても、
+     いまの名乗りと食い違う印は画面に出さない */
+  const id = "aaaaaaaaaa0000000023";
+  STORE[id] = {
+    channelName: "@いまの-なまえ",
+    channelGoneFor: "@むかしの-なまえ",
+    aliases: [],
+  };
+  check("食い違う印は出ない", (await list(id))?.channelGone === false,
+    JSON.stringify((await list(id))?.channelGone));
+  STORE[id].channelGoneFor = "@いまの-なまえ";
+  check("そろっている印は出る", (await list(id))?.channelGone === true,
+    JSON.stringify((await list(id))?.channelGone));
+}
+
+console.log("\n# 印は、どの名乗りだったかを画面へ返さない（素性）");
+{
+  const one = await list("aaaaaaaaaa0000000023");
+  check("返るのは真偽だけ", typeof one?.channelGone === "boolean",
+    typeof one?.channelGone);
+  check("名乗りそのものは返らない", !("channelGoneFor" in (one ?? {})),
+    JSON.stringify(Object.keys(one ?? {})));
+}
+
+/* ---------------- 9. 素性を出していないか ---------------- */
 
 console.log("\n# ログ");
 check(
@@ -723,7 +948,7 @@ const BREAKS = [
     "channelKeys: keysOf([channelName, ...aliases].filter((s) => s)),"],
   ["引けなかったら作成ごと落とす",
     "return Object.assign(Object.assign({}, no(\"failed\", why)), " +
-    "{ channelId: cid ? v : \"\" });",
+    "{ channelId: cid ? v : \"\", gone });",
     "throw e;"],
   ["黙って通す（理由を返さない）",
     "patch)), named });",
@@ -737,6 +962,25 @@ const BREAKS = [
   ["他の人が持っているIDでも入れる",
     "return q.docs.some((d) => d.id !== self);",
     "return false;"],
+  /* ---- もう無い名乗りの印（#159）。**4つの足を1本ずつ抜く** ---- */
+  ["404 でも印を付けない",
+    "patch.channelGoneFor = channelName;",
+    "void channelName;"],
+  ["引けても印を消さない",
+    "patch.channelGoneFor = admin.firestore.FieldValue.delete();",
+    "void 0;"],
+  ["届かなかったのも「名乗りが無い」にする",
+    "const gone = e instanceof HttpStatus && e.status === 404;",
+    "const gone = true;"],
+  ["出口の事故でも印を落とす",
+    "!(goneFor === channelName && got.named.state === \"failed\")",
+    "true"],
+  ["印を画面に返さない",
+    "!!v.channelGoneFor && v.channelGoneFor === v.channelName",
+    "false"],
+  ["いまの名乗りと食い違う印まで画面に出す",
+    "v.channelGoneFor === v.channelName",
+    "true"],
 ];
 
 if (CONTROL) {

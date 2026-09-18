@@ -98,6 +98,11 @@ UC2 = "UC" + "bbbbbbbbbbbbbbbbbbbbbb"
 UC3 = "UC" + "cccccccccccccccccccccc"
 UC4 = "UC" + "dddddddddddddddddddddd"
 
+# **404 を返す引き先**（#159）。その名乗りがもう無い＝人が直す話で、
+# 「届かない」（出口の話。こちらが直す）とは別のもの。
+# 口が印（`channelGoneFor`）を付けるのは、**こちらのときだけ**
+GONE_YT = frozenset({"@kieta00000001"})
+
 # ハンドル（または `UC…`）-> YouTube が返す表示名。**引けない人は入れない**
 YT = {
     "@tsuresasare1234": ("つれ ささ れ", UC1),
@@ -277,20 +282,25 @@ def _lookup(channel_name: str) -> tuple:
     """`islandCharacter.ts` の `lookupChannel`。**引き先だけが偽物。**
 
     Returns:
-        (state, 表示名, channelId, why)
+        (state, 表示名, channelId, why, **gone**)。`gone` は
+        「その名乗りがもう無い（404）」（#159）。**届かないのとは別**
     """
     v = channel_name.strip()
     handle = v.startswith("@") and len(v) > 1
     cid = v.startswith("UC") and len(v) == 24
     if not handle and not cid:
         # ふつうの表示名。**引きに行かない**
-        return ("skipped", "", "", "")
+        return ("skipped", "", "", "", False)
+    if v in GONE_YT:
+        # **その名乗りがもう無い。** 機械では直せない（#159）
+        return ("failed", "", v if cid else "", "見つからない（404）", True)
     hit = YT.get(v)
     if not hit:
         # 届かなかった。**channelId だけは、打たれた字が `UC…` なら分かる**
         # ——本番でこれが出た（run 35386977128）ので、理由まで真似る
-        return ("failed", "", v if cid else "", "届かなかった")
-    return ("added", hit[0], hit[1], "")
+        # **ここで印を付けてはいけない**（出口の話）
+        return ("failed", "", v if cid else "", "届かなかった", False)
+    return ("added", hit[0], hit[1], "", False)
 
 
 def _with_title(channel_name: str, aliases: list, state: str,
@@ -346,10 +356,10 @@ class FakeApi:
         done = (had.get("channelTitleFor") == channel_name
                 and bool(had.get("channelId")))
         if done:
-            state, name, got_id, why = ("already", "", "", "")
+            raw, name, got_id, why, gone = ("already", "", "", "", False)
         else:
-            state, name, got_id, why = _lookup(channel_name)
-        aliases, state = _with_title(channel_name, typed, state, name)
+            raw, name, got_id, why, gone = _lookup(channel_name)
+        aliases, state = _with_title(channel_name, typed, raw, name)
         self.named = {"state": state, "name": name, "why": why}
 
         patch = {
@@ -365,10 +375,24 @@ class FakeApi:
             patch["channelTitleFor"] = channel_name
         if not had.get("channelId") and got_id:
             patch["channelId"] = got_id
+        # **もう無い名乗りの印（#159）。** 付け外しは口の中だけ。
+        # 判定は `raw`（引いた結果そのもの）で見る——`state` は
+        # `withChannelTitle` が「呼び名がいっぱい」で failed に
+        # 書き換えることがあるので、引けたかどうかと一致しない
+        gone_for = ct.clean(had.get("channelGoneFor"), ct.MAX_NAME)
+        drop_gone = False
+        if gone:
+            patch["channelGoneFor"] = channel_name
+        elif gone_for and not (gone_for == channel_name
+                               and raw == "failed"):
+            drop_gone = True
         # **送られてこなかった役どころには触らない**
         images = dict(had.get("images") or {})
         patch["images"] = images
         v.update(patch)     # `ref.set(patch, {merge: true})`
+        if drop_gone:
+            # `FieldValue.delete()`。**欄ごと落ちる**
+            v.pop("channelGoneFor", None)
         return doc
 
     def posts(self):
@@ -693,6 +717,7 @@ def main() -> None:  # noqa: C901
     names = [v["channelName"] for v in PEOPLE.values() if v["channelName"]]
     names += [x for v in PEOPLE.values() for x in v["aliases"]]
     names += [n for n, _c in YT.values()]
+    names += sorted(GONE_YT)
     leaked = sorted({v for v in names if v and v in both})
     ck("出力に名前が無い", not leaked, leaked or "無し")
     bare = sorted({v.lstrip("@") for v in names
@@ -821,6 +846,148 @@ def main() -> None:  # noqa: C901
        "もれる" not in ct.reason(
            {"state": "failed", "why": "断られた（HTTP もれる）"}),
        ct.reason({"state": "failed", "why": "断られた（HTTP もれる）"}))
+
+    print("\n[13e] **もう無い名乗りの印を、この道具が通せるか**（#159）")
+    # 口が 404 を見たとき、書類に `channelGoneFor` を残すようになった。
+    # **その欄はこの道具の突き合わせが知らない欄**なので、名指ししないと
+    # 印が付いた回は「欄が変わった」、消えた回は「欄が消えた」で
+    # **1人目で止まる。** つまり**印を付けるための唯一の道が、印のせいで
+    # 塞がる。** 守りを弱めるのではなく、この欄が何者かを教えて通す。
+    #
+    # 足は4本。**1つずつ、別の仕込みで測る。**
+
+    def gone_store(rows: dict) -> dict:
+        """印まわりだけの、小さな図鑑。**既存の仕込みに触らない**"""
+        out = {}
+        for doc, r in rows.items():
+            row = dict(r)
+            name = row.get("channelName") or ""
+            row.setdefault("emoji", "🔖")
+            row.setdefault("aliases", [])
+            row.setdefault("channelId", "")
+            row.setdefault("images", {})
+            row["channelKeys"] = keys_of([name] if name else [])
+            row["lookupKeys"] = keys_of([name] + row["aliases"])
+            out[doc] = row
+        return {"islandCharacter": out}
+
+    # 書類IDは、既存の仕込みと1つもぶつからない形にする
+    G_PUT = "g0" + "0123456789abcdef" * 2     # 404 を返す引き先
+    G_OFF = "g1" + "0123456789abcdef" * 2     # 印が付いていて、いまは引ける
+    GONE_H = sorted(GONE_YT)[0]
+
+    store13 = gone_store({
+        G_PUT: {"channelName": GONE_H, "emoji": "🍰"},
+        # **すでに印が付いている人。** 通すと引けるので、印は落ちるはず
+        G_OFF: {"channelName": "@tsuresasare1234", "emoji": "🦐",
+                "aliases": ["つれ"], "channelGoneFor": "@tsuresasare1234"},
+    })
+    was13 = {k: dict(v) for k, v in store13["islandCharacter"].items()}
+    out13, code13, _c13, api13 = run(store13, apply=True)
+    now13 = store13["islandCharacter"]
+
+    # ---- 足1. 404 を返す引き先 → 印が付いて、**それでも通る**
+    ck("印が付いた（名乗りと同じ字）",
+       now13[G_PUT].get("channelGoneFor") == GONE_H,
+       "付いた" if now13[G_PUT].get("channelGoneFor") == GONE_H else "付かない")
+    ck("**印が付いても、突き合わせは通る**",
+       not ct.verdict(was13[G_PUT], now13[G_PUT]).bad,
+       ct.verdict(was13[G_PUT], now13[G_PUT]).bad or "通った")
+
+    # ---- 足2. 印が付いていた人が引けた → 印が**消えて**、それでも通る
+    ck("印が消えた（欄ごと落ちる）",
+       "channelGoneFor" not in now13[G_OFF],
+       "消えた" if "channelGoneFor" not in now13[G_OFF] else "残っている")
+    ck("**印が消えても、突き合わせは通る**",
+       not ct.verdict(was13[G_OFF], now13[G_OFF]).bad,
+       ct.verdict(was13[G_OFF], now13[G_OFF]).bad or "通った")
+
+    # ---- そして、**1人目で止まっていない**（これが直したかったこと）
+    ck("2人とも口に通している（1人目で止まらない）",
+       len(api13.posts()) == 2, len(api13.posts()))
+    ck("「ここで止めました」と言っていない",
+       "ここで止めました" not in out13, "止まっていない")
+    ck("「別の欄が動きました」と言っていない",
+       "通したら別の欄が動きました" not in out13, "言っていない")
+    ck("印が動いた欄として名前は出る（値は出ない）",
+       "channelGoneFor" in out13 and GONE_H not in out13,
+       "名前だけ出ている")
+    ck("**404 の理由が出る**",
+       "口の返事: failed（見つからない（404））" in out13, True)
+
+    # ---- 足3. 印が**名乗りと違う字**で入った → **止まる**
+    # 口の作りからしてありえない。ここを緩めると、口が壊れた日に
+    # 気づけない（印が別人の名乗りを指したまま画面に出る）
+    w3 = {"channelName": "@tsuresasare1234", "emoji": "🐚", "aliases": []}
+    n3 = {**w3, "channelGoneFor": "@chigaujimei01",
+          "editedAt": NOW, "updatedAt": NOW}
+    d3 = ct.verdict(w3, n3)
+    ck("**違う字の印は止める**", bool(d3.bad), d3.bad or "通してしまった")
+    ck("欄の名前で言う", any("channelGoneFor" in b for b in d3.bad), d3.bad)
+    ck("**文句に値（ハンドル）を出さない**",
+       not any("@chigaujimei01" in b for b in d3.bad), d3.bad)
+
+    # ---- 足4. 印が付いたうえで、**ほかの欄も動いた** → 今までどおり止まる
+    # 「印が動いた回は何でも通る」に書いていないことの確認（通し過ぎ）
+    w4 = {"channelName": GONE_H, "emoji": "🍰", "aliases": []}
+    n4 = {**w4, "emoji": "", "channelGoneFor": GONE_H,
+          "editedAt": NOW, "updatedAt": NOW}
+    d4 = ct.verdict(w4, n4)
+    ck("**印と一緒に絵文字が消えたら、やはり止める**",
+       any("emoji" in b for b in d4.bad), d4.bad or "通してしまった")
+
+    print("\n[13f] **その4つは、守りを外すと落ちる**（対照）")
+    # 足を1本ずつ抜いて、**そのたび別の足が落ちる**ところまで見る。
+    # 同じ足を4通りに折っているだけなら、それは1通り
+    was_gone_name, was_gone_fn = ct.GONE, ct.gone_moved
+    was_stamp = ct.STAMP
+    controls = []
+
+    # (a) 印を「知らない欄」に戻す → 足1・足2 が落ちる
+    try:
+        ct.GONE = "__shiranai_ran__"
+        a1 = bool(ct.verdict(was13[G_PUT], now13[G_PUT]).bad)
+        a2 = bool(ct.verdict(was13[G_OFF], now13[G_OFF]).bad)
+    finally:
+        ct.GONE = was_gone_name
+    controls.append(("印を知らない欄のままにする", a1 and a2,
+                     f"足1={a1} / 足2={a2}"))
+
+    # (b) 印を素通しにする → 足3 が落ちる
+    try:
+        ct.gone_moved = lambda was, now: ""
+        b3 = not ct.verdict(w3, n3).bad
+    finally:
+        ct.gone_moved = was_gone_fn
+    controls.append(("印を素通しにする", b3, f"足3={b3}"))
+
+    # (c) 免除を広げすぎる（絵文字まで「変わってよい」に入れる）→ 足4
+    try:
+        ct.STAMP = frozenset(set(was_stamp) | {"emoji"})
+        c4 = not any("emoji" in x for x in ct.verdict(w4, n4).bad)
+    finally:
+        ct.STAMP = was_stamp
+    controls.append(("免除を広げすぎる", c4, f"足4={c4}"))
+
+    # (d) 突き合わせの文句をぜんぶ黙らせる（既存の `BREAK=diff`）→ 足3・足4
+    os.environ["BREAK"] = "diff"
+    try:
+        d3b = not ct.verdict(w3, n3).bad
+        d4b = not ct.verdict(w4, n4).bad
+    finally:
+        os.environ.pop("BREAK", None)
+    controls.append(("BREAK=diff で文句を黙らせる", d3b and d4b,
+                     f"足3={d3b} / 足4={d4b}"))
+
+    for label, fell, got in controls:
+        ck(f"{label} → 落ちる", fell, got)
+    # **壊していないときは通る**（片側だけは対照ではない）
+    ck("守りを戻したら、足1と足2はまた通る",
+       not ct.verdict(was13[G_PUT], now13[G_PUT]).bad
+       and not ct.verdict(was13[G_OFF], now13[G_OFF]).bad, "通る")
+    ck("守りを戻したら、足3と足4はまた止まる",
+       bool(ct.verdict(w3, n3).bad) and bool(ct.verdict(w4, n4).bad),
+       "止まる")
 
     print("\n[14] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。
