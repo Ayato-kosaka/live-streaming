@@ -88,9 +88,8 @@ from alertbox_names import keys_of, norm_key  # noqa: E402
 
 CHARACTERS = "islandCharacter"
 
-# Functions 側の MAX_CHARACTERS / MAX_NAME と同じ
+# Functions 側の MAX_CHARACTERS と同じ
 MAX_CHARACTERS = 500
-MAX_NAME = 80
 
 # 1件ずつ出す組の数の既定。ログが長くなるだけなので頭を打つ
 SHOW = 40
@@ -448,12 +447,15 @@ def roster(src) -> dict:
     )
     for d in q.get():
         v = d.to_dict() or {}
-        aliases = [clean(a, MAX_NAME) for a in (v.get("aliases") or [])
-                   if isinstance(a, str)]
+        # **字はしまってあるまま渡す。** 口（`shapeFull`）は trim も
+        # 長さ切りもせずに OBS へ返すので、こちらで整えると
+        # **前後に空白の付いた呼び名**の話が消える（当てる1段目は生の字）
+        ch = v.get("channelName")
         out[d.id] = {
             "emoji": clean(v.get("emoji"), 16),
-            "channel": clean(v.get("channelName"), MAX_NAME),
-            "aliases": [a for a in aliases if a],
+            "channel": ch if isinstance(ch, str) else "",
+            "aliases": [a for a in (v.get("aliases") or [])
+                        if isinstance(a, str) and a],
             "lookup": [k for k in (v.get("lookupKeys") or [])
                        if isinstance(k, str) and k],
             "chkeys": [k for k in (v.get("channelKeys") or [])
@@ -747,7 +749,7 @@ def fetch_today(src, book: dict, budget: float) -> tuple:
     q = (src.collection(CHARACTERS).select(["channelId"])
          .limit(MAX_CHARACTERS))
     cid = {d.id: clean((d.to_dict() or {}).get("channelId"), 64)
-           for d in q.get()}
+           for d in q.get()}  # ここは鍵ではなく引き先なので整えてよい
     small = {doc: {"channelId": cid.get(doc, "")} for doc in book}
     got = ca.fetch_all(small, budget=budget)
     drop: dict = {}
