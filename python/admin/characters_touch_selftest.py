@@ -98,7 +98,7 @@ UC2 = "UC" + "bbbbbbbbbbbbbbbbbbbbbb"
 UC3 = "UC" + "cccccccccccccccccccccc"
 UC4 = "UC" + "dddddddddddddddddddddd"
 
-# **404 を返す引き先**（#158）。その名乗りがもう無い＝人が直す話で、
+# **404 を返す引き先**（#159）。その名乗りがもう無い＝人が直す話で、
 # 「届かない」（出口の話。こちらが直す）とは別のもの。
 # 口が印（`channelGoneFor`）を付けるのは、**こちらのときだけ**
 GONE_YT = frozenset({"@kieta00000001"})
@@ -283,7 +283,7 @@ def _lookup(channel_name: str) -> tuple:
 
     Returns:
         (state, 表示名, channelId, why, **gone**)。`gone` は
-        「その名乗りがもう無い（404）」（#158）。**届かないのとは別**
+        「その名乗りがもう無い（404）」（#159）。**届かないのとは別**
     """
     v = channel_name.strip()
     handle = v.startswith("@") and len(v) > 1
@@ -292,7 +292,7 @@ def _lookup(channel_name: str) -> tuple:
         # ふつうの表示名。**引きに行かない**
         return ("skipped", "", "", "", False)
     if v in GONE_YT:
-        # **その名乗りがもう無い。** 機械では直せない（#158）
+        # **その名乗りがもう無い。** 機械では直せない（#159）
         return ("failed", "", v if cid else "", "見つからない（404）", True)
     hit = YT.get(v)
     if not hit:
@@ -375,7 +375,7 @@ class FakeApi:
             patch["channelTitleFor"] = channel_name
         if not had.get("channelId") and got_id:
             patch["channelId"] = got_id
-        # **もう無い名乗りの印（#158）。** 付け外しは口の中だけ。
+        # **もう無い名乗りの印（#159）。** 付け外しは口の中だけ。
         # 判定は `raw`（引いた結果そのもの）で見る——`state` は
         # `withChannelTitle` が「呼び名がいっぱい」で failed に
         # 書き換えることがあるので、引けたかどうかと一致しない
@@ -847,7 +847,7 @@ def main() -> None:  # noqa: C901
            {"state": "failed", "why": "断られた（HTTP もれる）"}),
        ct.reason({"state": "failed", "why": "断られた（HTTP もれる）"}))
 
-    print("\n[13e] **もう無い名乗りの印を、この道具が通せるか**（#158）")
+    print("\n[13e] **もう無い名乗りの印を、この道具が通せるか**（#159）")
     # 口が 404 を見たとき、書類に `channelGoneFor` を残すようになった。
     # **その欄はこの道具の突き合わせが知らない欄**なので、名指ししないと
     # 印が付いた回は「欄が変わった」、消えた回は「欄が消えた」で

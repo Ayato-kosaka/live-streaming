@@ -201,7 +201,7 @@ STAMP = frozenset({"editedAt", "editedBy", "updatedAt", "channelTitleFor"})
 # 通したときに増えてよい欄。**減ってよい欄は1つも無い**
 GAIN = frozenset({"aliases", "channelId", "lookupKeys", "images"})
 
-# 口が自分で付け外しする、**状態の印**（#158）。
+# 口が自分で付け外しする、**状態の印**（#159）。
 #
 # その名乗りを引いたら 404 だった（＝もう無い）ことを、口が書類に残す。
 # 付くのも消えるのも口の中だけで、こちらは1文字も送らない。
@@ -218,7 +218,7 @@ GONE = "channelGoneFor"
 
 
 def gone_moved(was: dict, now: dict) -> str:
-    """`channelGoneFor` の動きが、口の作りどおりか（#158）。
+    """`channelGoneFor` の動きが、口の作りどおりか（#159）。
 
     通してよいのは2つだけ。
 
@@ -614,13 +614,13 @@ def verdict(was: dict, now: dict) -> Diff:
         if not _break("diff"):
             d.bad.append(why)
 
-    # **印は消えてよい**（口が落とす。#158）。ここで数えると、
+    # **印は消えてよい**（口が落とす。#159）。ここで数えると、
     # 印が消えた回——つまり名乗りが直った回——で止まることになる
     lost = sorted(set(was) - set(now) - {GONE})
     if lost:
         ng("欄が消えた: " + ",".join(lost))
 
-    # 印は、**素通しではなく、入ってよい字を1つずつ見る**（#158）
+    # 印は、**素通しではなく、入ってよい字を1つずつ見る**（#159）
     gone_why = gone_moved(was, now)
     if gone_why:
         ng(gone_why)
@@ -665,7 +665,7 @@ def verdict(was: dict, now: dict) -> Diff:
     #
     # **印を外すのは、上で1つずつ見たぶんだけ。** ここで一緒くたに
     # 飛ばすと「印が動いた回は何でも通る」になって、絵文字が消えた回まで
-    # 素通りする（#158 の見張りに、そうなっていないことの対照がある）
+    # 素通りする（#159 の見張りに、そうなっていないことの対照がある）
     for f in sorted(set(was) | set(now)):
         if f in GAIN or f in STAMP or f == GONE:
             continue

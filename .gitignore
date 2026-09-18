@@ -56,6 +56,17 @@ pip-delete-this-directory.txt
 site/out/
 site/.next/
 
+# `.next` は site/ 以外にも出る。直下で `next` を回すと turbopack の cache が
+# リポジトリ直下に落ち、`tools/sprites/` でも trace が落ちる。site/ ぶんしか
+# 書いていなかったので、直下の22本と tools/sprites の2本が**追跡されたまま**
+# 残っていた（worktree を切ってビルドを回すたび差分に出ていた）。
+# どこに出ても拾えるよう、場所を固定せず名前だけで無視する。
+#
+# **`.next-*` は書かない。** `tools/build.sh` が `NEXT_DIST_DIR=.next-<ポート>` で
+# 担当ごとに書き出し先を分けており（`site/.next-3130` など）、末尾に付く名前まで
+# 巻き込むと、焼いたものが git から見えなくなる。ここが拾うのは `.next` ちょうどだけ
+.next/
+
 # 島のスプライトの元素材とライブラリ（tools/sprites/README.md の手順で取得する）
 tools/sprites/models/
 tools/sprites/vendor/

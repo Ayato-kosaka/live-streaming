@@ -420,7 +420,7 @@ export type Got = {
    * 時間切れ・切断・締め出しとは**別のもの。** あちらは出口の話で、
    * こちらが直す。404 は名乗りそのものが変わったか消えたので、
    * **人がハンドルを入れ直すしかない。** 機械には直せないことが
-   * 分かったのだから、直せる人に見える場所へ置く（#158）。
+   * 分かったのだから、直せる人に見える場所へ置く（#159）。
    */
   gone: boolean;
 };
@@ -635,7 +635,7 @@ function shapeFull(id: string, v: Json): Json {
     channelKeys: Array.isArray(v.channelKeys) ? v.channelKeys : [],
     lookupKeys: Array.isArray(v.lookupKeys) ? v.lookupKeys : [],
     channelId: typeof v.channelId === "string" ? v.channelId : null,
-    /* **その名乗りで引いたら、もう無かった**（#158）。
+    /* **その名乗りで引いたら、もう無かった**（#159）。
        返すのは**いまの `channelName` に付いている印だけ。** 別の
        ハンドルに書き換えられていれば、古い印は画面に出さない
        ——書類の掃除が1回遅れても、消えた人の札が残らないようにする。
@@ -1093,7 +1093,7 @@ export async function handleCharacters(
       patch.channelTitleFor = channelName;
     }
 
-    /* **もう無い名乗りだったことを、書類に残す（#158）。**
+    /* **もう無い名乗りだったことを、書類に残す（#159）。**
 
        押した回のログに1行出るだけでは、**図鑑を開いた人に見えない。**
        `channelId` が空のままなので毎晩の繋ぎ（`channel_alias.py` は

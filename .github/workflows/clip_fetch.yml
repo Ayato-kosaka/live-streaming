@@ -41,13 +41,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
 
@@ -98,7 +98,7 @@ jobs:
       - name: 渡す
         # 落とせなかった回も report.md だけは渡す。**通らなかった記録が要る。**
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: clip-${{ inputs.video || 'f3W2JxAHsQs' }}-${{ github.run_id }}
           path: out/

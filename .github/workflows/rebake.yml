@@ -241,7 +241,7 @@ jobs:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:
       - name: リポジトリのチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: master
           # **浅いままだと rebase できない。** 既定の `fetch-depth: 1` では
@@ -358,12 +358,12 @@ jobs:
           echo "REBAKE_PATHS=$paths" >> "$GITHUB_ENV"
 
       - name: Python 環境のセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Google Cloud 認証
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -1272,7 +1272,7 @@ jobs:
       # （`npm --prefix site ci && npm --prefix site run build`）と同じ。
       # **同じものを先にここで通す**から、通れば Hosting も通る。
       - name: Node の用意
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: npm
