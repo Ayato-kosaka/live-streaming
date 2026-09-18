@@ -70,10 +70,6 @@
       {
         "source": "/_expo/static/**",
         "destination": "/__gone__"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
       }
     ],
     "headers": [
