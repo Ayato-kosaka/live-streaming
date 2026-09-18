@@ -6,7 +6,7 @@ import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
 import HashJump from "./HashJump";
-import Say from "./Say";
+import { SayRoom } from "./Say";
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -191,9 +191,12 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
       <nav aria-label="島に建っているもの">
         <PlaceList current={current} atAll={atAll} />
       </nav>
-      <p className="ifoot-note">
-        <Say t={FOOT.note} />
-      </p>
+      {/* **背を先に取る**（`components/ui/Say.tsx` の `SayRoom`）。
+          ここは `<Say>` を素で置いてあって、焼いた HTML には空白1文字しか
+          入っていなかった。画面が出て文が差し込まれると 1行→2行（幅320では3行）に
+          折れて、**131面ぜんぶ**の足もとが 21.60〜43.19px 伸びていた
+          （`docs/island-misses.md` #151）。 */}
+      <SayRoom className="ifoot-note" t={FOOT.note} />
       {/* **文の中に入れない。** 行内のリンクは文といっしょに折り返すので、
           当たるのは1行ぶんだけになる（実測 102x18。島の全面で同じ）。
           行き先は文ではないので、行から出して1つの押しどころにする。 */}
