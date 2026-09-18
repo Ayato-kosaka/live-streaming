@@ -1792,6 +1792,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "oBN2tNEj3wA",
         "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日 part2 夜景だよ！",
         "date": "2026-09-18"
+      },
+      {
+        "videoId": "kunXt2sXnFQ",
+        "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
+        "date": "2026-09-18"
       }
     ]
   }
