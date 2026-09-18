@@ -708,11 +708,18 @@ def main() -> None:  # noqa: C901
     # **Functions の出口が塞がれている**のかが、口の返事だけでは分からない。
     # 別の場所から同じ名乗りを引いて突き合わせる
     was_probe, was_gap = ct.probe_one, ct.ca.GAP
+    fake_probe = {
+        DOC["todo1"]: (ct.P_GOT, "", 0.4),
+        DOC["todo2"]: (ct.P_GONE, "見つからない（404）", 0.1),
+        DOC["ucname"]: (ct.P_BLIND, "届かない: URLError", 12.3),
+        DOC["blind"]: (ct.P_BROKEN, "こちらが落ちた: UnicodeEncodeError",
+                       0.0),
+    }
+    by_name = {PEOPLE[k]["channelName"]: v
+               for k, v in zip(CAN_TOUCH, fake_probe.values())}
     try:
         ct.ca.GAP = 0.0
-        ct.probe_one = lambda name, timeout=20.0: (
-            (True, "", 0.4) if name in YT
-            else (False, "届かない: URLError", 12.3))
+        ct.probe_one = lambda name, timeout=20.0: by_name[name]
         out16, code16, client16, api16 = run(make_store(), apply=True,
                                              limit=None, probe=True)
     finally:
@@ -723,20 +730,97 @@ def main() -> None:  # noqa: C901
     ck("下見だと言っている", "1バイトも書いていません" in out16, True)
     ck("**apply を効かせていないことを言う**（押した人に嘘をつかない）",
        "一緒に渡された apply は効かせていません" in out16, True)
-    ck("人数ぶん引いている", out16.count("← 取れた") == len(GETS_ID),
-       out16.count("← 取れた"))
-    ck("引けなかった人は理由まで出る",
-       "← 取れない（届かない: URLError）" in out16, True)
+    ck("取れた人はそう出る", "← 取れた / 0.4秒" in out16, True)
+    ck("**404 は「もう無い」と出る**（届かないと混ぜない）",
+       "← もう無い（見つからない（404））" in out16, True)
+    ck("届かない人は理由まで出る",
+       "← 届かない（届かない: URLError）" in out16, True)
+    ck("**こちらが落ちた人は「測れていない」と出る**",
+       "← **測れていない**（こちらが落ちた: UnicodeEncodeError）" in out16,
+       True)
     # **口の待ちは8秒。** 秒数が無いと「時間切れ」が遅さの話か
     # 塞がれている話かを分けられない
     ck("かかった秒数も出る", "/ 12.3秒（口の待ちは8秒）" in out16, True)
-    ck("何人取れたかを出している",
-       f"Actions から取れた: {len(GETS_ID)}人 / {len(CAN_TOUCH)}人" in out16,
-       True)
+    ck("**5つに割って数えている**",
+       "取れた 1人 / もう無い（404） 1人 / 断られた 0人 / "
+       "届かない 1人 / **測れていない** 1人" in out16, True)
+    ck("**測れていないものがあると、そう言って赤くする**",
+       "1人ぶんは、こちらのコードが落ちて測れていません" in out16, True)
     ck("**出口の話だと言える形になっている**",
        "Functions の出口の話です" in out16, True)
+    ck("404 は出口の話ではないと言う",
+       "もう無い（404）の人は、出口の話ではありません" in out16, True)
     ck("図鑑の姿は変わっていない", "← はじめと同じ" in out16, True)
     ck("終了コード 1（通す先が残ったまま）", code16 == 1, code16)
+
+    print("\n[13c] **日本語のハンドルで落ちない**（今日そこで3人測れなかった）")
+    # run 35388297836 で `UnicodeEncodeError`。符号化せずに URL へ載せていた。
+    # **`channel_alias.py` には写す先が無い**——あちらが URL に入れるのは
+    # `channelId`（ぜんぶ ascii）だけで、ハンドルを1度も載せていない
+    for raw in ("@えびっち-m7r", "@ふつう1234", "@a-b_c.d", "@100%おいしい"):
+        url = ct.handle_url(raw)
+        ok = True
+        try:
+            url.encode("ascii")
+        except UnicodeEncodeError:
+            ok = False
+        ck(f"URL が ascii だけでできている（{len(raw)}字のハンドル）", ok, url)
+        ck("`@` を落としている", "/@@" not in url, url)
+    ck("符号化されている（生の日本語が URL に出ない）",
+       "えびっち" not in ct.handle_url("@えびっち-m7r"),
+       ct.handle_url("@えびっち-m7r"))
+    ck("口と同じ広さで符号化する（`/` も通さない）",
+       ct.handle_url("@a/b").endswith("%2Fb"), ct.handle_url("@a/b"))
+    ck("`UC…` は feed のまま",
+       ct.handle_url(UC1) == ct.ca.FEED.format(UC1), ct.handle_url(UC1))
+    # **落ちたら「届かない」ではなく「測れていない」に積む**
+    was_get = ct.ca._get
+
+    def boom(url, timeout):
+        raise UnicodeEncodeError("ascii", "x", 0, 1, "だめ")
+
+    try:
+        ct.ca._get = boom
+        kind, why, _sec = ct.probe_one("@えびっち-m7r")
+    finally:
+        ct.ca._get = was_get
+    ck("**こちらが落ちたら BROKEN**（BLIND に混ぜない）",
+       kind == ct.P_BROKEN, f"{kind}（{why}）")
+    ck("落ちた種類が出る", "UnicodeEncodeError" in why, why)
+
+    print("\n[13d] 向こうの返事は、種類ごとに別の字にする")
+    import urllib.error as ue
+    cases = [
+        ("404", ue.HTTPError("u", 404, "no", None, None), ct.P_GONE,
+         "見つからない（404）"),
+        ("429", ue.HTTPError("u", 429, "no", None, None), ct.P_DENIED,
+         "断られた（HTTP 429）"),
+        ("届かない", ue.URLError("boom"), ct.P_BLIND, None),
+        ("時間切れ", TimeoutError("late"), ct.P_BLIND, None),
+        ("こちらのバグ", ValueError("bug"), ct.P_BROKEN, None),
+    ]
+    for label, err, want, want_why in cases:
+        def raiser(url, timeout, _e=err):
+            raise _e
+        try:
+            ct.ca._get = raiser
+            kind, why, _sec = ct.probe_one("@futsuu1234")
+        finally:
+            ct.ca._get = was_get
+        ck(f"{label} → {want}", kind == want, f"{kind}（{why}）")
+        if want_why:
+            ck(f"{label} の字", why == want_why, why)
+    # 口が返す理由も、種類ごとに通す／伏せる
+    ck("口の「見つからない（404）」はそのまま出す",
+       ct.reason({"state": "failed", "why": "見つからない（404）"})
+       == "failed（見つからない（404））", True)
+    ck("口の「断られた（HTTP 429）」もそのまま出す",
+       ct.reason({"state": "failed", "why": "断られた（HTTP 429）"})
+       == "failed（断られた（HTTP 429））", True)
+    ck("**数字以外を混ぜた「断られた」は通さない**",
+       "もれる" not in ct.reason(
+           {"state": "failed", "why": "断られた（HTTP もれる）"}),
+       ct.reason({"state": "failed", "why": "断られた（HTTP もれる）"}))
 
     print("\n[14] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。

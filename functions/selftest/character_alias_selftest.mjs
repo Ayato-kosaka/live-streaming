@@ -529,6 +529,19 @@ for (const [id, name, what] of [
     r.body?.named?.state === "failed", JSON.stringify(r.body?.named));
   check(`${what}: 理由が1行ある`, !!(r.body?.named?.why ?? "").trim(),
     JSON.stringify(r.body?.named));
+  /* **404 と「届かなかった」を、同じ字にしない。**
+     404 はその名乗りがもう無い＝人が直す話、届かないのは出口の話で
+     こちらが直す話。畳むと、押した人がどちらを直すか決められない
+     （2026-09-18 に実際に決められなかった）。 */
+  if (what.includes("404")) {
+    check(`${what}: **404 とそう言う**`,
+      r.body?.named?.why === "見つからない（404）",
+      JSON.stringify(r.body?.named?.why));
+  } else if (what.includes("切れた")) {
+    check(`${what}: 届かなかったとそう言う`,
+      r.body?.named?.why === "届かなかった",
+      JSON.stringify(r.body?.named?.why));
+  }
   check(`${what}: 手で入れた呼び名は残る`,
     JSON.stringify(c.aliases ?? []) === JSON.stringify(["手で"]),
     JSON.stringify(c.aliases));

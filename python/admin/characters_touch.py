@@ -137,7 +137,13 @@ ARGS 例:
 | Actions | Functions | 読み |
 | --- | --- | --- |
 | 取れる | 取れない | **Functions の出口が塞がれている** |
-| 取れない | 取れない | その名乗りがもう引けない |
+| **404** | 取れない | その名乗りがもう無い（人が直す話） |
+| **測れていない** | — | **何も言えない**（こちらのコードが落ちた） |
+
+**3つめを1つめ2つめに混ぜない。** 混ぜた（2026-09-18、run 35388297836）。
+日本語のハンドルを符号化せずに URL へ載せて `UnicodeEncodeError` で落ち、
+それを「届かない」と書いたので、**こちらのバグが「Actions からも取れない」
+という向こうの答えに化けた。** 3人ぶん測れていないのに、測れた顔をしていた。
 
 **かかった秒数も一緒に出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
 こちらが 8秒を超えるなら、口の「時間切れ」は**遅さ**の話であって
@@ -160,6 +166,8 @@ import os
 import re
 import sys
 import time
+import urllib.error
+import urllib.parse
 from dataclasses import dataclass, field
 
 from _fs import ReadOnly, args, db, log, readonly
@@ -206,7 +214,14 @@ STATE_OK = frozenset({"added", "already", "skipped", "failed"})
 WHY_OK = frozenset({
     "", "題が読めなかった", "YouTube に断られた", "時間切れ", "届かなかった",
     "呼び名がいっぱい",
+    # **404 を「届かなかった」と混ぜない。** 404 はその名乗りがもう無い
+    # ——人が直せる話。届かないのは出口の話で、こちらが直す話
+    "見つからない（404）",
 })
+
+# `断られた（HTTP 429）` のような、数字だけが変わる理由。
+# **数字しか通さない**ので、ここから素性は出ない
+WHY_HTTP = re.compile(r"^断られた（HTTP [0-9]{3}）$")
 
 
 def reason(named) -> str:
@@ -228,7 +243,7 @@ def reason(named) -> str:
     why = clean(named.get("why"), 40)
     if state not in STATE_OK:
         state = f"（知らない state {fingerprint(state)}）"
-    if why not in WHY_OK:
+    if why not in WHY_OK and not WHY_HTTP.match(why):
         # **決まり文句でないものは、字を出さない。** 向こうが作りを変えて
         # 素性を混ぜはじめた日に、ここから漏れる
         why = f"（表に無い理由 {fingerprint(why)} / {len(why)}字）"
@@ -394,24 +409,61 @@ def carry(row: dict) -> dict:
 # ハンドルの頁。**口（`islandCharacter.ts` の `lookupChannel`）と同じ道。**
 HANDLE_PAGE = "https://www.youtube.com/@{}"
 
+# probe の結果。**「向こうが断った」と「こちらが落ちた」を混ぜない。**
+P_GOT = "GOT"          # 取れた
+P_GONE = "GONE"        # 404。**その名乗りがもう無い**（人が直せる話）
+P_DENIED = "DENIED"    # 404 以外で断られた（429 など）
+P_BLIND = "BLIND"      # 届かない。**出口の話の候補**
+P_BROKEN = "BROKEN"    # **こちらのコードが落ちた。＝測れていない**
+
+
+def handle_url(name: str) -> str:
+    """ハンドル（または `UC…`）から、引き先の URL を作る。
+
+    **日本語のハンドルは、符号化しないと URL に載らない。**
+    `urllib` は URL を ascii にして送るので、`@えびっち-m7r` をそのまま
+    渡すと `UnicodeEncodeError` で**こちらのコードが落ちる**
+    （2026-09-18 の run 35388297836 で、3人ぶん測れなかった）。
+
+    **`channel_alias.py` には写す先が無い。** あちらが URL に入れるのは
+    `channelId`（`UC…`、ぜんぶ ascii）だけで、**ハンドルを1度も
+    載せていない。** 100人ぶん通っていたのは、載せていないから。
+    符号化しているのは口（`islandCharacter.ts` の
+    `encodeURIComponent(v.slice(1))`）なので、**そちらに合わせる。**
+
+    Args:
+        name: 図鑑に入っている `channelName`
+
+    Returns:
+        引き先の URL。**ascii だけでできている**
+    """
+    if CHANNEL_ID.match(name):
+        return ca.FEED.format(name)
+    # `quote` の既定は `/` を通してしまう。ハンドルは1つの区切りなので、
+    # `safe=""` で丸ごと符号化する（`encodeURIComponent` と同じ広さ）
+    return HANDLE_PAGE.format(urllib.parse.quote(name.lstrip("@"), safe=""))
+
 
 def probe_one(name: str, timeout: float = 20.0) -> tuple:
     """**Actions の側から、同じ名乗りを引いてみる。** 1バイトも書かない。
 
-    口が「入らなかった」と言うとき、理由は2つに割れる。
+    口が「入らなかった」と言うとき、理由は3つに割れる。
 
-      - **その名乗りがもう無い**（チャンネルが消えた・ハンドルが変わった）
-      - **Functions から YouTube に出られていない**（データセンターの
-        宛先は弾かれることがある）
+      - **その名乗りがもう無い**（404。人が直せる話）
+      - **Functions から YouTube に出られていない**（出口の話）
+      - **こちらのコードが落ちた**（＝測れていない。どちらでもない）
 
-    **口の返事だけでは、この2つが分けられない。** どちらも「届かなかった」
-    に見える。だから同じ名乗りを、**別の場所（Actions のランナー）から**
-    引いてみて、突き合わせる。
+    3つめを1つめ2つめに混ぜると、**測れていないものが「測れた」に化ける。**
+    実際に化けた（run 35388297836 の「Actions から取れた: 0人 / 4人」は、
+    3人ぶんがこちらのバグで、向こうの返事ではなかった）。だから
+    **例外の種類で分ける。** 向こうの返事（HTTP・届かない）と、
+    こちらが落ちたのは、別の字にする。
 
       | Actions | Functions | 読み |
       | --- | --- | --- |
       | 取れる | 取れない | **Functions の出口が塞がれている** |
-      | 取れない | 取れない | その名乗りがもう引けない |
+      | 404 | 取れない | その名乗りがもう無い |
+      | 測れていない | — | **何も言えない** |
 
     題の読み方は `channel_alias` のものをそのまま使う（写しを作らない）。
 
@@ -420,38 +472,53 @@ def probe_one(name: str, timeout: float = 20.0) -> tuple:
         timeout: 1回あたりの待ち（秒）
 
     Returns:
-        (取れたか, 理由の1行, かかった秒数)。**取れた名前そのものは返さない**
+        (結果, 理由の1行, かかった秒数)。**取れた名前そのものは返さない**
     """
-    if CHANNEL_ID.match(name):
-        url, pick = ca.FEED.format(name), ca.title_from_feed
-    else:
-        url, pick = HANDLE_PAGE.format(name.lstrip("@")), ca.title_from_page
     t0 = time.monotonic()
 
-    def out(ok: bool, why: str) -> tuple:
+    def out(kind: str, why: str) -> tuple:
         # **かかった秒数まで出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
         # ここが 8秒を超えるなら「時間切れ」は遅さの話で、塞がれている
         # 話ではない。数字が無いと、その2つが分けられない
-        return (ok, why, time.monotonic() - t0)
+        return (kind, why, time.monotonic() - t0)
+
+    try:
+        url = handle_url(name)
+        pick = (ca.title_from_feed if CHANNEL_ID.match(name)
+                else ca.title_from_page)
+    except Exception as e:  # noqa: BLE001
+        # **URL を作るところで落ちた。** 測れていない
+        return out(P_BROKEN, f"引き先を作れなかった: {type(e).__name__}")
 
     try:
         st, body = ca._get(url, timeout)
+    except urllib.error.HTTPError as e:
+        # **向こうが断った。** 404 は「もう無い」で、他とは別の話
+        if e.code == 404:
+            return out(P_GONE, "見つからない（404）")
+        return out(P_DENIED, f"断られた（HTTP {e.code}）")
+    except (urllib.error.URLError, OSError, TimeoutError) as e:
+        # **届かない。** ここだけが「出口の話」の候補
+        return out(P_BLIND, f"届かない: {type(e).__name__}")
     except Exception as e:  # noqa: BLE001
-        # **どう駄目だったかだけ。** 宛先も名乗りも出さない
-        code = getattr(e, "code", None)
-        return out(False, f"HTTP {code}" if code else
-                   f"届かない: {type(e).__name__}")
-    if st != 200:
-        return out(False, f"HTTP {st}")
-    title = pick(body)
+        # **こちらのコードが落ちた。** 向こうの返事ではない。
+        # ここを上の2つに混ぜると、測れていないものが測れたことになる
+        return out(P_BROKEN, f"こちらが落ちた: {type(e).__name__}")
+
+    try:
+        if st != 200:
+            return out(P_DENIED, f"断られた（HTTP {st}）")
+        title = pick(body)
+    except Exception as e:  # noqa: BLE001
+        return out(P_BROKEN, f"題を読むところで落ちた: {type(e).__name__}")
     if title is None:
-        return out(False, "題の欄が無い（読めなかった）")
+        return out(P_BLIND, "題の欄が無い（読めなかった）")
     if not title:
-        return out(False, "題が空")
+        return out(P_BLIND, "題が空")
     if title.lower() in ca.BAD_TITLE:
         # **締め出されている。** 名前が無いのではない
-        return out(False, "題が YouTube のまま（締め出し）")
-    return out(True, "")
+        return out(P_BLIND, "題が YouTube のまま（締め出し）")
+    return out(P_GOT, "")
 
 
 def agrees(was: dict, row: dict) -> bool:
@@ -816,19 +883,34 @@ def main() -> None:
         # ここで取れて向こうで取れないなら、名乗りではなく**出口**の話
         log.info("---- Actions の側から、同じ名乗りを引いてみます"
                  "（1バイトも書きません） ----")
-        got = 0
+        tally = {P_GOT: 0, P_GONE: 0, P_DENIED: 0, P_BLIND: 0, P_BROKEN: 0}
+        word = {P_GOT: "取れた", P_GONE: "もう無い", P_DENIED: "断られた",
+                P_BLIND: "届かない", P_BROKEN: "**測れていない**"}
         for doc_id in todo:
-            ok, why, sec = probe_one(clean(book[doc_id].get("channelName"),
-                                           MAX_NAME))
-            got += 1 if ok else 0
-            log.info("  %s %s ← %s / %.1f秒（口の待ちは8秒）", mask(doc_id),
+            kind, why, sec = probe_one(clean(book[doc_id].get("channelName"),
+                                             MAX_NAME))
+            tally[kind] += 1
+            log.info("  %s %s ← %s%s / %.1f秒（口の待ちは8秒）",
+                     mask(doc_id),
                      clean(book[doc_id].get("emoji"), 16) or "（絵文字なし）",
-                     "取れた" if ok else f"取れない（{why}）", sec)
+                     word[kind], f"（{why}）" if why else "", sec)
             time.sleep(ca.GAP)
-        log.info("Actions から取れた: %d人 / %d人", got, len(todo))
-        if got:
+        log.info("Actions から: 取れた %d人 / もう無い（404） %d人 / "
+                 "断られた %d人 / 届かない %d人 / **測れていない** %d人",
+                 tally[P_GOT], tally[P_GONE], tally[P_DENIED],
+                 tally[P_BLIND], tally[P_BROKEN])
+        if tally[P_BROKEN]:
+            # **測れていないものを、測れたことにしない。**
+            # ここを黙って 0 に畳むと、こちらのバグが向こうの答えに化ける
+            log.error("**%d人ぶんは、こちらのコードが落ちて測れていません。**"
+                      "その人について、ここから先は何も言えません",
+                      tally[P_BROKEN])
+        if tally[P_GOT]:
             log.info("**ここで取れて口で取れないなら、名乗りではなく "
                      "Functions の出口の話です**")
+        if tally[P_GONE]:
+            log.info("**もう無い（404）の人は、出口の話ではありません。**"
+                     "ハンドルが変わったか消えています（人が直す話）")
 
     stopped = ""
     if apply and todo:
