@@ -110,7 +110,7 @@ def link_icons(client: bigquery.Client, ch: str) -> dict[str, str]:
     people = [dict(r) for r in client.query(sql).result()]
     # **名簿は Firestore から読む。** ここの `client` は BigQuery なので渡せない。
     # 口はあちらの `look()` が1つだけ持つ（読み専用。1バイトも書かない）。
-    chars = fetch_characters(look())
+    chars = fetch_characters()
     # **名簿が読めなかったら落ちる。** 黙って 0 人で焼くと、連なりの面から
     # 住人が消えたまま「その章には誰もいなかった」という絵になる
     if not chars:
