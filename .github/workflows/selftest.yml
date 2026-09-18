@@ -129,6 +129,23 @@ jobs:
         working-directory: site
         run: npm ci --no-audit --no-fund
 
+      # **`functions/selftest/` の6本は、どこからも走っていなかった。**
+      #
+      # 2026-09-18 に `python/watch_census_selftest.py`（どの見張りがどこから
+      # 走るかを数える道具）を書いて、はじめて名指しで出た。`rebake.yml` にも
+      # `backup.yml` にも無く、回し役の拾う先（`python/` と `site/selftest/`）
+      # の外に居たので、**2つある数え方のどちらからも見えていなかった。**
+      #
+      # 守っているのは公開の口から素性を落とすところ——`GET /cards` の応答に
+      # チャンネルIDが残らないこと（`docs/island-incident-2026-09-14-cards.md`）。
+      # #126 の決めごと1「素性・鍵・お金が動くものは、繋ぐ理由を探すほうに倒す」。
+      #
+      # 値段（2026-09-18 実測）: ここが **10秒 / 663 パッケージ**、6本を回すのに
+      # **90秒**（1本 15秒。**中身ではなく、1本ずつ自分で `tsc` を通すぶん**）
+      - name: functions の依存を入れる（cards の見張り6本が tsc と firebase-admin を使う）
+        working-directory: functions
+        run: npm ci --no-audit --no-fund
+
       # 回し役は `--only-drill` を渡さなくても対照を先に回す。
       # ここで**別の step として**もう一度回しておくのは、対照が外れた回に
       # 「どこで落ちたか」がログの先頭で分かるようにするため
