@@ -507,8 +507,59 @@ def main() -> None:
     page = '<meta property="og:title" content="なまえ  のひと">'
     ck("`og:title` を読む", ca.title_from_page(page) == "なまえ  のひと",
        ca.title_from_page(page))
-    ck("題が無ければ空", ca.title_from_page("<html></html>") == "", "空")
+    # **「欄が無い」と「欄は在るが空」を分ける。** ここを畳むと、読めなかった
+    # 頁が「名前が無い人」に化ける（対照 3 が本番で外れる形）
+    ck("題の欄が無ければ None（＝読めなかった）",
+       ca.title_from_page("<html></html>") is None, "None")
+    ck("題の欄が在って空なら空",
+       ca.title_from_page('<meta property="og:title" content="">') == "", "空")
+    ck("feed も、題の欄が無ければ None",
+       ca.title_from_feed("<feed></feed>") is None, "None")
     ck("締め出しの題は名前にしない", "youtube" in ca.BAD_TITLE, True)
+
+    print("\n[10b] **取れなかった**と**名前が無い**を、引く側でも分ける")
+    was_get, was_gap = ca._get, ca.GAP
+    ca.GAP = 0.0
+
+    def roads(feed_body, page_body, status=200):
+        """道ごとに別のものを返す。**同じ本文を両方に返すと対照にならない**
+        （feed の題を頁の `og:title` として読ませることになる）。"""
+        def go(url, timeout):
+            return (status, feed_body if "feeds/videos.xml" in url
+                    else page_body)
+        return go
+
+    try:
+        cases = [
+            ("題が読めた",
+             roads("<feed><title>な まえ</title></feed>", "<html></html>"),
+             ca.GOT),
+            # **どちらの道にも題の欄が無い。** 読めなかったのであって、
+            # 「名前が無い」ではない
+            ("題の欄が無い",
+             roads("<html>同意してください</html>", "<html>同意…</html>"),
+             ca.BLIND),
+            # 欄は在って、中が空。**ここだけが「名前が無い」**
+            ("題の欄が在って空",
+             roads("<feed><title></title></feed>",
+                   '<meta property="og:title" content="">'), ca.NONE),
+            # 片方だけ空で、もう片方が読めない → 言い切らない
+            ("片方が空・片方が読めない",
+             roads("<feed><title></title></feed>", "<html></html>"),
+             ca.BLIND),
+            # 締め出し。**名前として受け取らない**
+            ("締め出しの題",
+             roads('<meta property="og:title" content="YouTube">',
+                   '<meta property="og:title" content="YouTube">'),
+             ca.BLIND),
+        ]
+        for label, fake, want in cases:
+            ca._get = fake
+            got = ca.fetch_one("UCdummy", timeout=1.0, tries=1)
+            ck(f"{label} → {want}", got.kind == want,
+               f"{got.kind}（{got.why}）")
+    finally:
+        ca._get, ca.GAP = was_get, was_gap
 
     print("\n[11] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。

@@ -297,21 +297,28 @@ def _get(url: str, timeout: float) -> tuple:
         return r.status, r.read().decode("utf8", "replace")
 
 
-def title_from_feed(body: str) -> str:
+def title_from_feed(body: str):
     """Atom の、**`<entry>` より前の** `<title>`。
 
     動画の題も `<title>` なので、切ってから拾わないと1本目の動画名を
     その人の名前として足すことになる。
+
+    Returns:
+        題（空の題なら `""`）。**題の欄そのものが無ければ `None`**
     """
     head = body.split("<entry>", 1)[0]
     m = re.search(r"<title>(.*?)</title>", head, re.S)
-    return html.unescape(m.group(1)).strip() if m else ""
+    return html.unescape(m.group(1)).strip() if m else None
 
 
-def title_from_page(body: str) -> str:
-    """チャンネル頁の `og:title`。"""
+def title_from_page(body: str):
+    """チャンネル頁の `og:title`。
+
+    Returns:
+        題（空の題なら `""`）。**題の欄そのものが無ければ `None`**
+    """
     m = re.search(r'<meta\s+property="og:title"\s+content="([^"]*)"', body)
-    return html.unescape(m.group(1)).strip() if m else ""
+    return html.unescape(m.group(1)).strip() if m else None
 
 
 def fetch_one(cid: str, timeout: float = 20.0, tries: int = TRIES) -> Got:
@@ -354,6 +361,12 @@ def fetch_one(cid: str, timeout: float = 20.0, tries: int = TRIES) -> Got:
                 last = f"HTTP {st}"
                 continue
             name = pick(body)
+            if name is None:
+                # **題の欄そのものが無い。** 読めなかったのであって、
+                # 「名前が無い」ではない。同意の頁や作りの変わった頁がここ
+                n_fail += 1
+                last = "題の欄が無い（読めなかった）"
+                continue
             if name and name.lower() not in BAD_TITLE:
                 return Got(GOT, clean(name, MAX_NAME))
             if name:
@@ -364,7 +377,9 @@ def fetch_one(cid: str, timeout: float = 20.0, tries: int = TRIES) -> Got:
             n_empty += 1
             last = "題が空"
     # **「取れなかった」と「名前が無い」を分ける。**
-    # 何か1つでも失敗していたら、言い切らない
+    # 何か1つでも失敗していたら、言い切らない。
+    # 「名前が空」と言えるのは、**題の欄を読めたうえで空だった**ときだけ
+    # （欄が無いのは上で `n_fail` に積んである）
     if n_fail == 0 and n_404 and not n_empty:
         return Got(GONE, why="404")
     if n_fail == 0 and n_empty:
