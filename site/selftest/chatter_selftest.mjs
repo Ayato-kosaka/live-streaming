@@ -66,12 +66,14 @@
  * **返り値からは永遠に見分けられない**から。
  *
  *  - **まだ動く数が手で書かれていないか。** 毎晩焼き直る数
- *    （歩いた国・名簿の人数）が裸で書いてあったら落とす。値が合っていても
- *    落とす——合っているのは今日だけなので。加えて「国を数える単位に数が
- *    付いている」形も落とす。#104 で4ヶ月出ていたのは `17カ国`、つまり
- *    **もう合っていない数**のほうで、値くらべだけでは拾えない。
+ *    （歩いた国・名簿の人数）を、**その数の単位が付いている形**で拾う。
+ *    `22カ国` は落とす。`22時` は落とさない——同じ「22」でも、
+ *    うしろの単位が「これは国の数ではない」と言っている。
+ *    国の単位は**値を見ずに**落とす。#104 で4ヶ月出ていたのは `17カ国`、
+ *    つまり**もう合っていない数**のほうで、値くらべだけでは拾えない。
  *    動かない数（22時・1日12時間・イランの12日380km・100万再生・年越し24時間・
- *    年月日）は落とさない。線引きの根拠は `MOVING` のところに書いた。
+ *    年月日）は落とさない。線引きの根拠と、**単位で当てるようにした経緯**
+ *    （`docs/island-misses.md` #162）は `MOVING` のところに書いた。
  *  - **「伝説の企画が8つ」が `legends.ts` の件数と合っているか。**
  *    いま5本のセリフが字で「8つ」と言っている。9件目を足した日、5本とも
  *    黙って嘘になる。件数は毎晩は動かない（人が企画を足したときだけ動く）ので
@@ -79,7 +81,10 @@
  *
  * どちらも**いまの数を写したしきい値ではない。** 比べる相手は毎回
  * `countryStats.ts` / `residents.ts` / `legends.ts` から読み直している。
- * `legends.ts` の写しは `LEGENDS_TS` で差し替えられる（落ちることの確かめ用）。
+ * 写しは `COUNTRY_STATS_TS` / `RESIDENTS_TS` / `LEGENDS_TS` で差し替えられる。
+ * **上流の値だけをずらした写しで回せる**ようにしてあるのは、
+ * 「いまの値と一致したから拾った」のか「その数を指しているから拾ったのか」を
+ * 分けて見るため（下の「壊した写しで落ちることまで見る」）。
  *
  * **「名簿から消えた人のセリフ」では落とさない。** 名簿は直近90日なので、
  * しばらく来られなかった人は名簿から外れる。そのとき落とすと、
@@ -137,17 +142,31 @@
  * node site/selftest/chatter_selftest.mjs                                    # 0 で通る
  * ```
  *
- * 数の2つも、同じように写しで落ちることを見る。
+ * 数の2つも、同じように写しで落ちることを見る。**拾うほうと、拾わないほうの
+ * 両方**を見る。片方だけ見ても「緩めただけ」と見分けが付かない。
  *
  * ```bash
- * # (1) 差し込みを手書きの数に戻した写し
- * sed 's/`\(.*\)${COUNTRIES_WALKED} countries\(.*\)`/"\1'"17"' countries\2"/' \
- *   site/content/chatter.ts > /tmp/chatter-17.ts
- * CHATTER_TS=/tmp/chatter-17.ts node site/selftest/chatter_selftest.mjs   # 1 で落ちる
+ * # セリフを1本だけ書き替えた写しを作って回す（どれか1本の字を置き換えるだけ）
+ * CHATTER_TS=/tmp/c-22koku.ts node site/selftest/chatter_selftest.mjs   # 「22カ国」→ 1 で落ちる
+ * CHATTER_TS=/tmp/c-22nin.ts  node site/selftest/chatter_selftest.mjs   # 「22人」  → 0 で通る
+ * CHATTER_TS=/tmp/c-103hi.ts  node site/selftest/chatter_selftest.mjs   # 「103日」 → 0 で通る
  *
- * # (2) legends.ts を9件に見せかけた写し（`];` の手前に1件足すだけ）
- * LEGENDS_TS=/tmp/legends-9.ts node site/selftest/chatter_selftest.mjs    # 1 で落ちる
+ * # 上流の値だけずらす。**それでも「22カ国」が落ちるか**——落ちれば、
+ * # 見ているのは「いまの値との一致」ではなく「その数を指しているか」
+ * sed 's/COUNTRIES_WALKED = 22;/COUNTRIES_WALKED = 21;/' \
+ *   site/content/countryStats.ts > /tmp/cs-21.ts
+ * CHATTER_TS=/tmp/c-22koku.ts COUNTRY_STATS_TS=/tmp/cs-21.ts \
+ *   node site/selftest/chatter_selftest.mjs                            # 1 で落ちる
+ *
+ * # legends.ts を9件に見せかけた写し（`];` の手前に1件足すだけ）
+ * LEGENDS_TS=/tmp/legends-9.ts node site/selftest/chatter_selftest.mjs  # 1 で落ちる
  * ```
+ *
+ * **守りを外したら対照が落ちるところまで見る。** この見張り自身の写しを作って、
+ * (1) 単位を見ない当て方（`mv.unit` を外す）に戻すと、**手を入れていない
+ * `chatter.ts` が 289件で赤くなる**（そのうち77本が `22時`）。
+ * (2) 国の `by` を `"named"` にすると、上を 21 でずらした日の `22カ国` が
+ * **素通りする**（#104 が再発する形）。外して落ちないなら、その守りは無い。
  *
  * **手を入れていない写しで先に回す**（`docs/island-standards.md` §15 の最後）。
  * 写しを作る途中で壊しても終了コードは同じなので、そこを見ないと対照にならない。
@@ -174,6 +193,11 @@ const CONTENT = join(SITE, "content");
 const CHATTER = process.env.CHATTER_TS || join(CONTENT, "chatter.ts");
 const RESIDENTS_SRC = process.env.RESIDENTS_TS || join(CONTENT, "residents.ts");
 const LEGENDS_SRC = process.env.LEGENDS_TS || join(CONTENT, "legends.ts");
+/* 歩いた国の数。**ここも差し替えられるようにしてある。**
+   「いまの値と一致したから拾った」のか「その数を指しているから拾ったのか」は、
+   本物の値のままでは区別が付かない。値だけずらした写しで回して、
+   それでも同じ字が拾えることを見るための口（`docs/island-misses.md` #162）。 */
+const COUNTRY_STATS_SRC = process.env.COUNTRY_STATS_TS || join(CONTENT, "countryStats.ts");
 
 // ------------------------------------------------------- 本物を持ち込む
 
@@ -196,7 +220,7 @@ bring(CHATTER, "chatter.ts");
 bring(RESIDENTS_SRC, "residents.ts");
 bring(LEGENDS_SRC, "legends.ts");
 // chatter.ts が連れてくるぶん
-bring(join(CONTENT, "countryStats.ts"), "countryStats.ts");
+bring(COUNTRY_STATS_SRC, "countryStats.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 // 歩いた国の数（`${WALKED}` の印を替えるところ）と、その元になる国の表
 bring(join(CONTENT, "walked.ts"), "walked.ts");
@@ -494,7 +518,7 @@ if (SPOKEN.length === 0) {
 }
 
 /**
- * **まだ動く数**——毎晩ひとりでに焼き直る数。
+ * **まだ動く数**——毎晩ひとりでに焼き直る数と、**その数を名指す単位**。
  *
  * 動く／動かないの線は「いつ変わるか」で引いている。ここに入れたのは
  * `python/…` が**毎晩焼く**もので、こちらが書いた翌日には違う値になりうる。
@@ -513,39 +537,90 @@ if (SPOKEN.length === 0) {
  * 伝説の企画の**件数**はここに入れない。あれは機械が焼くものではなく、
  * 人が企画を1つ書き足したときだけ動く。だから「手で書くな」ではなく
  * 「件数と食い違ったら落とす」で見る（下の2つめ）。
+ *
+ * ## `unit` が要る理由（`docs/island-misses.md` #162）
+ *
+ * **前は値だけを見ていた。** セリフの中の裸の数を全部拾って、`value` と
+ * 一致したら手書きとみなしていた。これは**「値が一致した」を「それを
+ * 指している」と読んでいた**だけで、2026-09-18 に歩いた国が 21 → 22 に
+ * 焼き直った晩、「毎晩22時からやってるよ」という**配信の始まる時刻**77本が
+ * 「歩いた国の数を手で書いている」として赤くなった。
+ *
+ * 悪いのは赤くなったことより、**国が23になった翌晩にひとりでに緑へ戻る**
+ * ことのほう。セリフを1文字も直していないのに色が行き来する見張りは、
+ * 落ちていないのと同じくらい読めない。
+ *
+ * だから**単位で当てる。** 数だけでは何の数か決まらないが、うしろの単位は
+ * 何を数えたかを言っている。`22カ国` は国の数で、`22時` は時刻。
+ * 単位の付いていない数と、別の単位が付いている数は**拾わない。**
+ *
+ * `by` が当て方:
+ *
+ *   `"unit"`  単位だけで何の数か決まる（`カ国`）。**値は見ない。**
+ *             #104 で4ヶ月出ていたのは `17カ国`＝**もう合っていない数**の
+ *             ほうで、値くらべでは永遠に拾えない
+ *   `"named"` 単位だけでは決まらない（`人` は「1人で」のように数え上げでない
+ *             使い方がある）。**いまの値と一致した**か、**数えているものを
+ *             同じセリフで名指している**ときだけ拾う。後者は下の
+ *             「伝説の企画が8つ」と同じ当て方——単位（`つ`）に加えて
+ *             `伝説の企画` という言葉が同じ文にあることを見ている
+ *
+ * ## 拾わなくなったもの（守りを緩めた自覚）
+ *
+ * **単位の無い裸の数は、値が一致していても素通りする。**
+ * 「歩いたのは22」「住人は103」のように単位を書かない書きぶりは、
+ * ここでは止まらない。前は（理由まで合っているかはともかく）止まっていた。
+ *
+ * 承知のうえで外した。単位の無い数は**何の数かが字から決まらない**ので、
+ * 拾えば必ず 22時 を巻き込む。巻き込む見張りは、そのうち誰も読まなくなる
+ * （`docs/island-standards.md` §13）。代わりに `chatter.ts` の決まり7が
+ * 「どうしても数で言いたいときは焼き込みを差し込む」と書いてあり、
+ * 差し込みで書けば単位も自然に付く（`${WALKED}カ国`）。
+ * **単位を書かずに数だけ言うセリフは、そもそも島の言い方ではない。**
  */
 const MOVING = [
-  {what: "歩いた国の数（焼き込みの COUNTRIES_WALKED）", value: COUNTRIES_WALKED},
-  {what: "名簿の人数（RESIDENTS.length）", value: RESIDENTS.length},
+  {
+    what: "歩いた国の数（焼き込みの COUNTRIES_WALKED）",
+    value: COUNTRIES_WALKED,
+    /* 国を数える単位。`国` 単体も入れてある（「22国」）。長いものを先に並べて、
+       `カ国` が `国` に先取りされないようにしてある。 */
+    unit: /カ国|ヵ国|か国|ヶ国|ケ国|箇国|国|countries|country/,
+    by: "unit",
+    names: null,
+  },
+  {
+    what: "名簿の人数（RESIDENTS.length）",
+    value: RESIDENTS.length,
+    unit: /人|people|residents/,
+    by: "named",
+    /** 名簿そのものを名指している言葉。`島` は何にでも付くので入れない。 */
+    names: /住人|名簿|島のみんな|島のメンバー|residents/,
+  },
 ];
 
-/**
- * 数え上げの単位。**単位が付いていれば、その数が何を数えたものか一意に決まる。**
- *
- * 値くらべ（`MOVING`）だけでは足りない。歩いた国が 20 の日に `17カ国` と
- * 書いてあっても、17 は 20 と違うので値くらべには引っかからない——
- * **#104 で4ヶ月出ていたのは、まさにその「もう合っていない数」のほう**だった。
- * だから「国を数える単位に、差し込みでない数が付いている」だけで落とす。
- *
- * 「人」は入れない。「1人で」のように数え上げでない使い方があるので、
- * 単位では判定できない（名簿の人数のほうは値くらべで見る）。
- */
-const COUNT_UNITS = /([0-9][0-9,]*)\s*(カ国|か国|ヶ国|ケ国|countries|country)/g;
+/** 差し込みの跡。数にも単位にもならない字に替えて、両者がまたがらないようにする。 */
+const HOLE = "〓";
 
 const handWritten = [];
 for (const lit of SPOKEN) {
-  for (const m of lit.masked.matchAll(/[0-9][0-9,]*(?:\.[0-9]+)?/g)) {
-    const n = Number(m[0].replace(/,/g, ""));
-    for (const mv of MOVING) {
-      if (n === mv.value) handWritten.push(`${lit.line}行目 「${m[0]}」= ${mv.what}`);
+  /* 差し込みは `raw` では `${}` のまま残っている（`masked` では消えている）。
+     消すと前後がくっついて、書かれていない「数＋単位」ができてしまう
+     （`1${N}カ国` → `1カ国`）。だから消さずに印へ替える。 */
+  const text = lit.raw.split("${}").join(HOLE);
+  for (const mv of MOVING) {
+    const re = new RegExp(`([0-9][0-9,]*)\\s*(?:${mv.unit.source})`, "g");
+    for (const m of text.matchAll(re)) {
+      const n = Number(m[1].replace(/,/g, ""));
+      const why = mv.by === "unit" ? "単位がその数だと言っている"
+        : n === mv.value ? "いまの値と一致している"
+          : mv.names && mv.names.test(text) ? "数えているものを同じセリフで名指している"
+            : null;
+      if (why) handWritten.push(`${lit.line}行目 「${m[0]}」= ${mv.what}（${why}）`);
     }
-  }
-  for (const m of lit.masked.matchAll(COUNT_UNITS)) {
-    handWritten.push(`${lit.line}行目 「${m[0]}」= 歩いた国の数を手で数えている`);
   }
 }
 check(`セリフの中に、まだ動く数が手で書かれていない`
-  + `（文字列 ${SPOKEN.length} 本を見た）`,
+  + `（文字列 ${SPOKEN.length} 本 × 数 ${MOVING.length} 通りを見た）`,
   handWritten.length === 0,
   `手で書いてある数が ${handWritten.length} 件: ${handWritten.join(" / ")}`
     + "。差し込み（${WALKED}）で書く。数は `content/walked.ts` が画面の出たあとに数える");
