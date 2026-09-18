@@ -3210,6 +3210,20 @@ p.nday-lead {
 }
 /* 閉まっているのは、行かない理由であって読ませたい字ではない。字だけで置く。 */
 .nsp-live.is-shut { color: var(--ink-2); font-weight: 800; }
+/* 札の出る枡。**札と、字を出さない写し2枚を、同じ枡に重ねる。**
+   幅は3つのいちばん広いものになるので、札が出ても列の幅が変わらない。
+
+   ## 背ではなく、幅を取っている
+
+   `#537` は「1行ぶん背を取る」と読んでいたが、実測すると**背は1pxも効いて
+   いない**。行の背を決めているのは字の列（4段で 67.7px）で、札を入れた側の列は
+   46.94px。伸びていたのは**横**で、22px の列が 97px に広がったぶん字の列が
+   274 → 199px に狭まり、**営業時間の行が2行に折れて** 1行 20.63px 増えていた
+   （幅390で実測。`/nordic/day/7` で6行ぶん、面で 123.75px）。 */
+.nsp-slot { display: grid; justify-items: center; align-items: center; }
+.nsp-slot > * { grid-area: 1 / 1; }
+/* 写し。読み上げにも innerText にも出さない（`aria-hidden` と `visibility`） */
+.nsp-hold { visibility: hidden; }
 .nsp-pin { flex: none; }
 /* 「何を買うか」へ渡す1本。しおりの「おみやげ」に、値段と見分けかたがある。 */
 .nshop p.nshop-book { margin: var(--sp-4) 0 0; }
