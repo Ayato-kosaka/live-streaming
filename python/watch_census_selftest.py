@@ -93,8 +93,10 @@ REPO = HERE.parent
 
 # 見張りの見分けは**名前**で決める。中身では決めない
 WATCH_SUFFIX = ("_selftest.py", "_selftest.mjs")
-# 降りていかない場所
-SKIP_DIRS = {".git", "node_modules", "__pycache__", "lib", ".next", "dist", "out"}
+# 降りていかない場所。**書き出したものは `.js` になるので、ここは短くてよい**
+# （`lib` や `dist` を足すと、`python/lib/…_selftest.py` を黙って飛ばす側に倒れる。
+#   見のがすより、要らないものが1本出るほうがいい）
+SKIP_DIRS = {"node_modules", "__pycache__"}
 
 # 輪止め。**回し役 → この道具 → 回し役** の2周目を止める印
 GUARD = "ISLAND_WATCH_CENSUS"
