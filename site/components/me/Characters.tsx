@@ -7,6 +7,7 @@ import {
   deleteCharacter,
   type Character,
   type CharacterUpload,
+  type Named,
 } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import { saveFile, saveName } from "@/lib/saveFile";
@@ -140,6 +141,24 @@ const hit = (c: Character, q: string) => {
   );
 };
 
+/**
+ * 保存したあとに出す1行。
+ *
+ * ハンドル（`@…`）で作ると、YouTube の表示名が呼び名に足される
+ * （足さないと、その人は投げ銭から引けない）。**何が入ったかを出す。**
+ * 入らなかったときは、次に何をすればいいかまで書く。
+ */
+const saidName = (n?: Named) => {
+  if (n?.state === "added" && n.name) {
+    return `入れました。呼び名に「${n.name}」を足しました`;
+  }
+  if (n?.state === "failed") {
+    return `入れました。表示名は入れられませんでした（${n.why}）。` +
+      "呼び名に手で足してください";
+  }
+  return "入れました";
+};
+
 /** 編集中の1人。**新しく作るときは `id` が空。** */
 type Draft = {
   id: string;
@@ -172,6 +191,8 @@ export default function Characters() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState("");
+  /** 保存はできたが、表示名が入らなかった。**その1行だけ色を変える** */
+  const [missed, setMissed] = useState(false);
   const [err, setErr] = useState("");
   const [alias, setAlias] = useState("");
   const alive = useRef(true);
@@ -226,6 +247,7 @@ export default function Characters() {
     setBusy(true);
     setErr("");
     setDone("");
+    setMissed(false);
     try {
       const t = await token();
       if (!t) throw new Error("入り直してください");
@@ -248,13 +270,19 @@ export default function Characters() {
         },
         t,
       );
+      /* **表示名のことは、1本目の返事で決まる。** 2本目から先は
+         同じ人をもう一度保存しているだけで、そこでは引き直さない */
+      const named = out.named;
       for (const r of roles) {
         out = await putCharacter(
           {
             id: out.character.id,
             channelName: draft.channelName.trim(),
             emoji: draft.emoji.trim(),
-            aliases: draft.aliases,
+            /* **打った呼び名ではなく、返ってきた呼び名を送り直す。**
+               1本目で足された表示名は手元の下書きに入っていないので、
+               打ったほうを送ると、絵を付けた保存で消える */
+            aliases: out.character.aliases,
             [r]: (await bake(draft.files[r]!, r)) ?? undefined,
           },
           t,
@@ -266,7 +294,8 @@ export default function Characters() {
         return [out.character, ...next];
       });
       setDraft(null);
-      setDone("入れました");
+      setDone(saidName(named));
+      setMissed(named?.state === "failed");
     } catch (e) {
       if (alive.current) setErr(String(e instanceof Error ? e.message : e));
     } finally {
@@ -289,6 +318,7 @@ export default function Characters() {
       setRows((was) => was.filter((c) => c.id !== draft.id));
       setDraft(null);
       setDone("消しました");
+      setMissed(false);
     } catch (e) {
       if (alive.current) setErr(String(e instanceof Error ? e.message : e));
     } finally {
@@ -449,7 +479,9 @@ export default function Characters() {
         </button>
       </div>
 
-      {done && <p className="nph-ok">{done}</p>}
+      {done && (
+        <p className={missed ? "nph-ok ch-said-off" : "nph-ok"}>{done}</p>
+      )}
 
       {/* 読めなかった / 取りに行っている最中 / 読めた上での0人 を、
           **並べなくても見分けがつく別々の顔**にする

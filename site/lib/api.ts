@@ -1535,6 +1535,25 @@ export const getCharacters = (token?: string | null) =>
 export const getPublicCharacters = () =>
   req<{ characters: CharacterPublic[]; total: number }>("/characters");
 
+/**
+ * 足したときに、YouTube の表示名をどうしたか（#155）。
+ *
+ * ハンドル（`@…`）やチャンネルID（`UC…`）で作ると、Functions が
+ * **書く前に YouTube の表示名を引いて呼び名に足す。** ドネルは名乗りの
+ * 初期値に表示名を入れてくるので、これが無いと**作った日のあいだ、
+ * その人は投げ銭から引けない。**
+ *
+ * - `added` … 引けて、呼び名に足した（`name` に入っている）
+ * - `already` … もう入っていた
+ * - `skipped` … 打たれたのが表示名そのものなので、引いていない
+ * - `failed` … 引きに行って取れなかった（`why` に理由が1行）
+ */
+export type Named = {
+  state: "added" | "already" | "skipped" | "failed";
+  name: string;
+  why: string;
+};
+
 /** 送る絵。ブラウザで幅ごとに焼いてから渡す（`stamp.ts` の `shrink`）。 */
 export type CharacterUpload = {
   /** 元の大きさのまま（長辺は上限まで縮めてある）。data URL */
@@ -1565,7 +1584,7 @@ export const putCharacter = (
   token: string,
 ) => {
   const { id, ...body } = p;
-  return req<{ character: Character }>(
+  return req<{ character: Character; named?: Named }>(
     id ? `/characters/${encodeURIComponent(id)}` : "/characters",
     { method: "POST", headers: auth(token), body: JSON.stringify(body) },
   );
