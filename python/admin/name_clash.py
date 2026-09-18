@@ -870,9 +870,11 @@ def main() -> None:
     if not attribute:
         log.info("今日ぶんの切り分けはしていません"
                  '（{"attribute": true} で引き直します）')
-    elif not cross:
-        log.info("違う人どうしのぶつかりが 0組 なので、切り分けは要りません")
     else:
+        # **ぶつかりが 0組 でも引き直す。** 「今日ぶんの呼び名が図鑑に
+        # 何件入っているか」は、0組を読むときの分母になる。
+        # 引かずに「0組だから切り分けは要らない」と書くと、
+        # **何も測っていないことが合格に見える**（`island-standards.md` §15）
         log.info("今日ぶん（チャンネル名そのものの呼び名）を"
                  "抜いて数え直します")
         drop, ok, none, blind = fetch_today(src, book, budget)
