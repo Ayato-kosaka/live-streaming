@@ -118,10 +118,30 @@ export default function ShopRows({
                 </i>
               </span>
               <span className="nsp-side">
-                {state && (
-                  <em className={`nsp-live is-${state}`}>
-                    {state === "open" ? "いま開いてる" : "いまは閉まってる"}
-                  </em>
+                {/* 開いているかの札。**出る前に、出たあとと同じ幅を取っておく。**
+                    取るのは幅だけで、背は取らない——札の出る行は必ず4段
+                    （名前／何の店か／通り／時間）あって、札を入れた側の列より高い。
+                    **場所を取るのは、札の出る店だけ。** 時間を書いていない店に
+                    札が出る日は来ない（`openNow` は読めない字に `null` を返す）ので、
+                    そこで取ると、出ないものの場所が永久に空く。 */}
+                {(s.hours || state) && (
+                  <span className="nsp-slot">
+                    {state && (
+                      <em className={`nsp-live is-${state}`}>
+                        {state === "open" ? "いま開いてる" : "いまは閉まってる"}
+                      </em>
+                    )}
+                    {/* 幅は px で書かない。**字を出さない写し**を重ねて、
+                        字の大きさが変わってもついてくるようにする
+                        （`docs/island-misses.md` #146 の `.tnow-ghost`）。
+                        両方置くのは、長いほうが日によって入れ替わるため。 */}
+                    <em className="nsp-live is-open nsp-hold" aria-hidden>
+                      いま開いてる
+                    </em>
+                    <em className="nsp-live is-shut nsp-hold" aria-hidden>
+                      いまは閉まってる
+                    </em>
+                  </span>
                 )}
                 <Icon name="pin" size={22} className="nsp-pin" />
               </span>

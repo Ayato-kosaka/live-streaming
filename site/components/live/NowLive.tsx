@@ -83,6 +83,10 @@ const SLUG = /^[a-z0-9-]+$/;
 export default function NowLive({ letter, children }: { letter?: boolean; children?: ReactNode }) {
   const [cur, setCur] = useState<IslandCurrent>({ ...NOW_FALLBACK });
   const [fresh, setFresh] = useState(false);
+  /* 便りの返事が来たか（中身が在ったかではない）。**読めていないあいだと、
+     読めた結果ここには何も無かったのとを、同じ絵にしない**（`docs/island-standards.md` 10）。
+     出るまでのあいだは板で場所を取り、返事が来て何も無ければ板ごと畳む。 */
+  const [ready, setReady] = useState(false);
   const [clock, setClock] = useState<Clock | null>(null);
   /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [ago, setAgo] = useState<string | null>(null);
@@ -101,12 +105,16 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
     let alive = true;
     getState()
       .then((s) => {
-        if (!alive || !s.current) return;
-        setCur((prev) => ({ ...prev, ...s.current } as IslandCurrent));
-        setFresh(true);
+        if (!alive) return;
+        if (s.current) {
+          setCur((prev) => ({ ...prev, ...s.current } as IslandCurrent));
+          setFresh(true);
+        }
+        setReady(true);
       })
       .catch(() => {
         /* API がまだ無い/落ちている時は焼き込みの値のまま出す */
+        if (alive) setReady(true);
       });
 
     // 静的書き出しなので、残り時間をビルド時に数えるわけにいかない。
@@ -138,8 +146,15 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   useEffect(() => setAgo(wroteAgo(cur.updatedAt, new Date())), [cur.updatedAt]);
 
   /* 「いまどこ」を、人の字で言うか旅で言うか。**便りの日付で決まる**ので、
-     便りが届いたあとにもう一度見る。 */
-  useEffect(() => setTrip(tripAsPlace(cur.updatedAt, new Date())), [cur.updatedAt]);
+     便りが届いたあとにもう一度見る。
+
+     **返事が来るまでは、どちらにも倒さない。** 焼き込みの `updatedAt` は空で、
+     空は「古い」と読まれる（`lib/place.ts` の `placeOutdated`）。だから返事を
+     待たずに決めると、旅の日は必ず一度テントと旅の札が出て、そのあと便りが
+     届いて旗に入れ替わる。**画面が2回作り替わって、そのたびに下がずれる。** */
+  useEffect(() => {
+    if (ready) setTrip(tripAsPlace(cur.updatedAt, new Date()));
+  }, [cur.updatedAt, ready]);
 
   /* 国旗は、**人が書いた場所の字**から引く（`content/place.ts`）。
      島の景色（`theme`）から引いていたころ、景色に入れてよい3つのうち
@@ -162,19 +177,45 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             誰も書けていない日は、旅そのものを出す（`lib/stay.ts` の `tripAsPlace`）。
             あやとが旅先で書き替えたら、そちらのほうが細かいので人の字が勝つ。 */}
         <b className="now-place">
+          {/* 絵の枠は1つ（`--now-art`）。**旗もテントも、同じ背の枠に収める。**
+              前は旗が幅 clamp(210,60vw,280)＝背156px、テントが幅 clamp(148,42vw,188)＝
+              背134pxで、どちらが出るかは便りが届くまで分からないのに背が22px違った。
+              枠を1つにすれば、出るまでのあいだに置く板も1種類で済む。 */}
           {trip ? (
             <img className="now-trip-art" src="/sprites/tent.webp" alt="" width={304} height={249} />
-          ) : (
-            flag && <Flag slug={flag} size={30} className="now-flag" />
+          ) : flag ? (
+            <Flag slug={flag} size={30} className="now-flag" />
+          ) : ready ? null : (
+            <span className="now-art-skel" aria-hidden />
           )}
           {trip ? `${trip.name}のとちゅう` : cur.place}
         </b>
         {/* 旅を出している日は旅の一言が勝つ（master 側）。人の字を出す日は、
-            そこに「毎晩22時」が混ざりうるので `Say` を通す（旅のあいだだけ言い方が変わる）。 */}
-        <p className="np-word">{trip ? `${trip.note}。` : cur.word ? <Say t={cur.word} /> : null}</p>
+            そこに「毎晩22時」が混ざりうるので `Say` を通す（旅のあいだだけ言い方が変わる）。
+
+            出るまでのあいだは、2行ぶんの板。**字で埋めない**——ここに入るのは
+            あやとがその日書いた一言で、何が来るかはこちらに分からない（#143）。 */}
+        <p className="np-word">
+          {trip ? (
+            `${trip.note}。`
+          ) : cur.word ? (
+            <Say t={cur.word} />
+          ) : ready ? null : (
+            <>
+              <span className="nw-sk" aria-hidden>
+                <span className="nw-sk-bar" style={{ ["--nw-sk-w" as string]: "84%" }} />
+                あ
+              </span>
+              <span className="nw-sk" aria-hidden>
+                <span className="nw-sk-bar" style={{ ["--nw-sk-w" as string]: "52%" }} />
+                あ
+              </span>
+            </>
+          )}
+        </p>
 
         {/* 今夜あるのか、次はいつなのか。開いて1秒で分かるべき2つを、札にして並べる。 */}
-        {clock && (
+        {clock ? (
           <div className="tiles" style={{ marginTop: "var(--sp-4)", textAlign: "left" }}>
             {clock.loose ? (
               /* 旅のあいだ。始まる時刻がその日の道で決まるので、時刻も残りも言わない。
@@ -256,6 +297,31 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               </Link>
             )}
           </div>
+        ) : (
+          /* 時計を読むまでの板。**2枚取る。** 今夜の札は時計の答えがどれでも必ず出るし、
+             次の企画の札も `nextPlan()` が必ず1つ返す（先の予定が無くなったら
+             大物か先頭に落ちる）ので、この2枚は日によって消えない。
+             旅の札（3枚目）は便りの日付で決まるぶん、先に数えられない。
+
+             背は px で書かず、**字を出さない写し**で取る（`docs/island-misses.md` #146）。
+             1枚目の添えの行は幅390で2行、2枚目は企画の名前で1行。 */
+          <div className="tiles" style={{ marginTop: "var(--sp-4)", textAlign: "left" }} aria-hidden>
+            {[2, 1].map((lines, i) => (
+              <span className="tile is-skel" key={i}>
+                <span className="tile-icon nw-sk-box" />
+                <span className="tile-text">
+                  <b className="nw-sk">
+                    <span className="nw-sk-bar" style={{ ["--nw-sk-w" as string]: "58%" }} />
+                    あ
+                  </b>
+                  <i className="nw-sk">
+                    <span className="nw-sk-bar" style={{ ["--nw-sk-w" as string]: "86%" }} />
+                    {lines === 2 ? "あ\nあ" : "あ"}
+                  </i>
+                </span>
+              </span>
+            ))}
+          </div>
         )}
 
         <div className="chips" style={{ justifyContent: "center", marginTop: "var(--sp-3)" }}>
@@ -290,6 +356,14 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             <span className="chip">
               <Icon name={fresh ? "live" : "clock"} size={12} />
               {ago}
+            </span>
+          )}
+          {/* ここに出るものは全部、画面が出てから数えるもの（日数・便りの古さ）。
+              時計を読むまでは1つぶんの場所を板で取る。**背は写しから**取るので、
+              チップの字の大きさを触ってもついてくる。 */}
+          {!clock && (
+            <span className="chip is-skel" aria-hidden>
+              <span className="nw-sk-txt">あああああああ</span>
             </span>
           )}
         </div>

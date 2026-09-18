@@ -151,17 +151,115 @@
   }
 }
 
-/* ───────── 旅に出ているあいだの「いまどこ」 ─────────
-   人が書いた場所（`current.place`）が旅より前のままの日は、旗ではなく旅を出す
-   （`lib/stay.ts` の `tripAsPlace`）。旗の 210〜280px をそのまま当てると、
-   スプライトは 304px しか無いのでにじむ。**絵の持っている大きさで止める。** */
+/* ───────── 1画面目を、出るまえに組み立てておく ─────────
+
+   焼いた HTML の1画面目は「世界のどこか」の一行だけで 108px、画面が出ると
+   574px になっていた（**+466.22px**。本番・幅390・dpr2で実測）。
+   街の名前・ひとこと・札2枚・日数のチップが、読み始めたところで一斉に生えて、
+   下にあるものが 466px 下がる。
+
+   直しかたは `docs/island-design.md` 4章。**場所だけ先に取って、中身の形をした
+   薄い板を置く。** 取る大きさは字数ではなく**字の大きさ**から決める（#146）。
+
+   ここで取るのは4つ。
+
+     絵      … 旗とテントを同じ枠（`--now-art`）に収めて、枠ぶんの板を置く
+     ひとこと … 2行ぶん（幅390の実測。行の背は `em` で取る）
+     札      … 今夜の札と次の企画の札の2枚。写しで背を取る
+     チップ  … 1つぶん（`.chip` の min-height 28px と同じ背になる写し）
+
+   旅の札（3枚目）だけは取らない。出るかどうかが便りの日付で決まるので、
+   **先に数えられない。** 取ると、出ない日にその場所が空く。 */
+
+/* 絵の枠。旗（3:2）を今までと同じ 234x156（幅390）にしたまま、背を主にする。
+   テントは 304x249 の絵なので、この背だと幅190pxまで。**絵の持っている
+   大きさを超えないので、にじまない。** */
+/* 板の色も、この面のものはここに1つ置く（下の「出るまでのあいだの板」で使う） */
+.now-hero {
+  --now-art: clamp(140px, 40vw, 187px);
+  --nw-sk: rgba(158, 151, 109, 0.18);
+}
+.now-hero .now-flag {
+  width: auto;
+  height: var(--now-art);
+}
+/* 人が書いた場所（`current.place`）が旅より前のままの日は、旗ではなく旅を出す
+   （`lib/stay.ts` の `tripAsPlace`）。 */
 .now-hero .now-trip-art {
   flex: none;
-  width: clamp(148px, 42vw, 188px);
-  height: auto;
+  width: auto;
+  height: var(--now-art);
   /* 押せない絵なので、厚み（ぼかし0で真下の影）ではなく地面に落ちる影
      （`docs/island-design.md` 3章。旗と同じ扱い） */
   filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
+}
+/* 便りが届くまでの、絵の板。幅は旗と同じところに置く。 */
+.now-art-skel {
+  flex: none;
+  width: clamp(210px, 60vw, 280px);
+  height: var(--now-art);
+  border-radius: var(--r-2);
+  background: var(--nw-sk);
+}
+
+/* ───────── 出るまでのあいだの板 ─────────
+   **背は写しから取る。** 字を `visibility: hidden` で置いて行の背だけ作り、
+   その上に板を1枚だけ見せる。px で書くと、字の大きさを触った日に黙ってずれる
+   （`docs/island-misses.md` #146 の `.tnow-ghost` と同じ考え方）。
+   隠した字は読み上げにも `innerText` にも出ない（`preclaim.mjs` に拾われない）。 */
+.nw-sk {
+  position: relative;
+  display: block;
+  visibility: hidden;
+  /* 「あ\nあ」で2行ぶん取る */
+  white-space: pre-line;
+}
+.nw-sk-bar {
+  visibility: visible;
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  bottom: 12%;
+  width: var(--nw-sk-w, 70%);
+  transform: translateX(-50%);
+  border-radius: 9px;
+  background: var(--nw-sk);
+}
+/* 絵の板（札の丸い絵のところ）。`.tile-icon` と同じ 44x44 */
+.nw-sk-box {
+  border-radius: var(--r-1);
+  background: var(--nw-sk);
+}
+/* 字を出さずに背と幅だけ作る写し（チップの中） */
+.nw-sk-txt {
+  visibility: hidden;
+}
+
+/* 板の札。**押せないので厚みを付けない**（`tools/sprites/popcheck.mjs`）。
+   背と余白は `.tile` のまま借りるので、出たあとの札と1pxも違わない。 */
+.now-hero .tile.is-skel {
+  background: var(--paper);
+  border-color: color-mix(in srgb, var(--frame) 45%, transparent);
+  box-shadow: none;
+}
+.now-hero .tile.is-skel:hover,
+.now-hero .tile.is-skel:active {
+  transform: none;
+  box-shadow: none;
+}
+/* チップの板。`.chip` の背（min-height 28px）と余白をそのまま使う。 */
+.now-hero .chip.is-skel {
+  background: var(--nw-sk);
+}
+
+/* ひとこと。**2行ぶん先に取る。** 行の背は `line-height: 1.9`（`app/css/live.css`）
+   なので、`em` で 2 行。届かなかった日は空になるので、そこは畳む
+   （`.np-stamp:empty` と同じ）。 */
+.now-hero .np-word {
+  min-height: calc(1.9em * 2);
+}
+.now-hero .np-word:empty {
+  min-height: 0;
 }
 
 /* ───────── 届いていない便りに、日付のスタンプを押さない ─────────
