@@ -87,9 +87,26 @@
 /* 時分まで刻まないものは1枚の札。開いた瞬間に読ませたい数字はこれ1つなので、
    時分の3枚組と同じ大きさまで数字を上げる */
 .nx-clock.is-one { grid-template-columns: auto; }
-.nx-clock.is-one em { min-width: 96px; padding: var(--sp-2) var(--sp-3) var(--sp-2); font-size: var(--fs-min); }
+/* 広さは**中身の字数ではなく、字の大きさ**から取る（`.nextup-count` と同じ考え方）。
+   96px だったころ、幅390で `<b>いま</b>`（42px × 2文字 = 84px）が中に入りきらず、
+   **「い」「ま」の2行に割れていた**（撮って見た）。割れると札が 42px 高くなるので、
+   日付1行で焼いた HTML から画面が出た瞬間に、下にあるものが全部ずれる。
+
+   **`white-space: nowrap` では直らない。** この札の列は隣の一行（`.nx-when-m`）に
+   幅を取られていて、折らないようにすると「おわった」が札の外へ 41px はみ出す（実測）。
+   2文字ぶん入る広さを先に取って、それより長い字は今までどおり折る。 */
+.nx-clock.is-one em {
+  min-width: calc(42px * 2 + var(--sp-3) * 2 + 6px);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-min);
+}
 .nx-clock.is-one em b { font-size: 42px; }
 .nx-clock.is-one em span { font-size: var(--fs-min); }
+/* 数の下の一行ぶんの場所。**字は出さない**（`components/live/PlanCard.tsx`）。
+   出たあとの札はここに必ず一行あるので、先に取っておかないと画面が飛ぶ。
+   `.nx-clock em span` の下余白は、ここでは打ち消す——写しなので、
+   出たあとの素の字（余白を持たない）と同じ背でなければならない。 */
+.nx-clock.is-one em .nx-ghost { visibility: hidden; margin-bottom: 0; }
 
 @media (min-width: 640px) {
   .nx-clock em { min-width: 66px; }
