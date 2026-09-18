@@ -93,7 +93,9 @@ function Counting() {
       <em className="tnow-ghost" aria-hidden>
         <b>0</b>
       </em>
-      数えています
+      {/* **字のほうを包む。** 行の高さをここで下げる。写しの側に掛けると、
+          写しの背まで縮んで、取ったつもりの場所が足りなくなる（実測 2.3px 足りず）。 */}
+      <span className="tnow-counting">数えています</span>
     </span>
   );
 }

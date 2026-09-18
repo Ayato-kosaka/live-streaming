@@ -82,7 +82,10 @@ async function shot(b, path, js) {
       r.fulfill({ status: 200, contentType: "application/json", body }));
   }
   const p = await ctx.newPage();
-  await p.goto(`${ORIGIN}${path}`, { waitUntil: "domcontentloaded" });
+  /* 手元の書き出しは `python3 -m http.server` で配るので、`/nordic` のままだと
+     ディレクトリの一覧に落ちる。`.html` を足す（`crawl.mjs` と同じ綴り直し）。 */
+  const href = LOCAL && !/\.html$|\/$/.test(path) ? `${path}.html` : path;
+  await p.goto(`${ORIGIN}${href}`, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(WAIT);
   const r = await p.evaluate(PROBE);
   if (process.env.SHOT) {
