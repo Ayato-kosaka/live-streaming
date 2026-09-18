@@ -116,6 +116,13 @@ export default function NextUp() {
   );
 }
 
+/** 「9/11」。数え直す前に出しておく、日付だけの表示（`components/live/PlanCard.tsx` と同じ形）。 */
+function shortDate(date?: string) {
+  if (!date) return "";
+  const [, m, d] = date.split("-");
+  return `${Number(m)}/${Number(d)}`;
+}
+
 /**
  * 企画1つぶんの札。small はふたつ目以降に使う、ひとまわり小さいもの。
  *
@@ -150,7 +157,14 @@ function Card({
     >
       <span className="nextup-count">
         {days === null || phase === null ? (
-          <b>まもなく</b>
+          /* 画面が出るまでは**日付だけ**（`components/live/PlanCard.tsx` の `LeadClock` と同じ）。
+             ここは「今日」を知らない状態で、知らないまま言い切れることは1つも無い。
+             前は「まもなく」と書いてあった。出発の日を過ぎた 9/12 からは、
+             **今日焼いた HTML でも「まもなく」**で、旅の7日目に「まもなく出発」と
+             読める字が島の1画面目に出ていた。旅から帰ったあとも同じ。
+             日付は焼き込みではなく企画そのものが持っている値なので、
+             **いつ読んでも本当**（`docs/island-misses.md` #143）。 */
+          <b>{shortDate(plan.date) || "未定"}</b>
         ) : phase === "after" ? (
           <b>行ってきた</b>
         ) : /* その日1日で終わるものは、当日も「今日」のまま
