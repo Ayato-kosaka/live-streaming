@@ -1,0 +1,94 @@
+# **見張り（selftest）を、マージする前に回す。**
+#
+# 2026-09-18 まで、このリポジトリには `pull_request` で走るワークフローが
+# 1本も無かった。見張りは全部、毎晩の焼き直し（`rebake.yml`）や退避
+# （`backup.yml`）の**中でしか**走っていない——つまり
+# **master にマージして、本番に配ったあと。**
+#
+# その日に実害が2つ出た。
+#
+#   1. `python/dead_stream_watch_selftest.py` が **master で赤いまま2日**
+#      残った（#520 が対照の前提を壊した）。どこからも走っていないので誰も
+#      気づかない
+#   2. **その赤い見張りを抱えたまま #520 をマージして、本番に配った**
+#
+# そのうえ棚卸ししたら、**どこからも走っていない見張りが12本**あった。
+# うち3本（`python/admin/` の `donors_import` / `firestore_delete` /
+# `ip_purge`）は**消す道具を守っている見張り**で、いちばん走っていて
+# ほしいものが走っていなかった。
+#
+# ## ここは「落ちるときに落ちる」ことが本体
+#
+# いつも緑の CI は、何も守っていないのに守っている気にさせる。
+# だから回し役（`python/selftest_runner.py`）は、**本物の見張りを1本も
+# 回す前に、自分が落ちられることを毎回実測する**——偽の見張りを3本
+# こしらえて 0 / 1 / 2 が出るのを見てから先へ進む。外れたら、本物の
+# 数字を1つも出さずに 2 で落ちる（`docs/island-standards.md` §15）。
+#
+# ## `rebake.yml` からは外していない
+#
+# あちらは**焼いたあとの `site/content/*.ts`** を見る見張りを含んでいて、
+# PR の時点とは見ているものが違う。**両方で走ってよい**（どれも数秒）。
+name: Selftests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# 同じ枝に続けて push したら、前の run は止めてよい。
+# master は止めない——「master が緑だったか」は1回ずつ残したい
+concurrency:
+  group: selftest-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: python/requirements.txt
+
+      # 見張りは口を全部偽物に差し替えて回るが、**読み込むだけで本物の
+      # パッケージが要る**ものがある（`google.cloud` / `yaml` / `requests`）。
+      # 入れないと「No module named …」で赤くなり、**中身を1つも見ないまま
+      # 落ちた run** が「見張りが落ちた」に見える
+      - name: Python のパッケージを入れる
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+          pip install PyYAML
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # `python/name_tail_selftest.py` だけは、**本物の OBS の突き合わせ**
+      # （`app/alertbox/matching.utils.ts`）を node で動かして見る。
+      # `typescript` が引けないと、あの見張りは「当たらなかった」ではなく
+      # **2（確かめられなかった）**で落ちる。`npm ci` は Expo の丸ごとで
+      # 重いので、要る1本だけを置く
+      - name: typescript だけ置く（name_tail が本物の OBS を動かすため）
+        run: npm install --no-save --no-audit --no-fund typescript
+
+      # 回し役は `--only-drill` を渡さなくても対照を先に回す。
+      # ここで**別の step として**もう一度回しておくのは、対照が外れた回に
+      # 「どこで落ちたか」がログの先頭で分かるようにするため
+      - name: 回し役が落ちられるかを、先に見る
+        run: python3 python/selftest_runner.py --only-drill
+
+      # 落ちた1本で止めない。**全部回してから、まとめて落ちる。**
+      # 最初の1本で止まると、2本目以降が見えない
+      - name: 見張りを全部回す
+        run: python3 python/selftest_runner.py
