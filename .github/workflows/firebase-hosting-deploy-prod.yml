@@ -45,6 +45,29 @@ jobs:
           # GitHub Secret のほうは消していない（消すのはあやとの操作）。
           echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
       - run: "npm ci && npm run build:web"
+
+      # **配る前に、配るものを数える。**
+      #
+      # `firebase.json` の受け皿（`"**" → /index.html`）を外したので、
+      # **書き出しに無い面は、そのまま 404 になる。** 受け皿が在ったころは
+      # 書き出しに失敗した面も表紙が出ていて、**落ちていることが見えなかった。**
+      # 静かに拾ってくれる手が無くなったぶん、ここで数える。
+      #
+      # ネットに出ない（`dist/` を見るだけ）。sitemap に載っている面と、
+      # 載せていない面（`/me` `/roulette` ほか）の両方を、Firebase の
+      # 配りかた（`cleanUrls`）に合わせて探す。
+      #
+      # **2（数えられなかった）では止めない。** 測れないことと、
+      # 面が落ちていることは別（`docs/island-standards.md` §15）。
+      - name: 配るものが、ぜんぶ書き出せているか
+        run: |
+          set -uo pipefail
+          node tools/sprites/notfound.mjs --dist && code=0 || code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning::書き出しを数えられませんでした（配るのは止めません）"
+            exit 0
+          fi
+          exit "$code"
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -103,3 +126,28 @@ jobs:
           npx --yes firebase-tools@13 deploy --only firestore:indexes \
             --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
+
+      # **いちばん最後。配れるものを全部配ってから確かめる**（上の #168 の
+      # 順番の決めごとと同じ理由）。
+      #
+      # 見るのは「無い道が、本当に 404 で返っているか」。2026-09-18 まで
+      # `firebase.json` の受け皿が**存在しない URL を全部 表紙に落として
+      # 200 で返していて**、島が作ってある 404 の面に誰も辿り着けなかった。
+      # 重いのは副作用のほうで、**本番では死んだ内部リンクも 200 で返る**ので、
+      # リンク切れの見張りが本番では鳴らなかった（`docs/island-misses.md` #140）。
+      #
+      # ここを繋ぐのは、**受け皿は「戻したほうが楽」に見える形で戻るから**。
+      # 戻した瞬間に、この step が赤くなる。
+      #
+      # 道具は自分で対照を持っていて、測れなければ数字を1つも出さずに 2 で
+      # 止まる。**2 では落とさない**——配れてはいるので。
+      - name: 無い道が、ちゃんと 404 で返っているか
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          node tools/sprites/notfound.mjs && code=0 || code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning::本番を測れませんでした（配るのは済んでいます）"
+            exit 0
+          fi
+          exit "$code"
