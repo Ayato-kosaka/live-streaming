@@ -37,7 +37,7 @@ name: 図鑑の呼び名を追いつかせる
 #
 # **繋ぎはワークフローの `name:` で解決される。** あちらの `name:` を書き換えると
 # **黙って切れる。赤くならない。走らなくなるだけ。** それを見張るために
-# `python/admin/channel_alias_nightly_selftest.py` が、ここに書いた名前と
+# `python/channel_alias_nightly_selftest.py` が、ここに書いた名前と
 # 実在するファイルの `name:` を**字で突き合わせる**（食い違ったら PR で赤くなる）。
 #
 # ## 繋ぎ先を `Fetch Doneru Donations` の1本だけにした理由
