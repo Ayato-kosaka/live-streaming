@@ -142,7 +142,16 @@
   display: grid;
   place-items: center;
   align-content: center;
-  min-width: 88px;
+  /* **幅を字で決めない。** ここは `auto` の列なので、中の字が1文字増えるたびに
+     隣の本文の折り返しが変わり、札の背が動く。実測（幅390）で
+     「今日」349.5px →「進行中」374.9px →「行ってきた」452.9px。
+     画面が出るまでは日付、出たら「進行中」なので、**島に降りた瞬間に
+     札が 25px 跳ねていた。**
+     だから幅は中身ではなく**字の大きさ**から決める。1文字ぶんが 0.98em
+     （字間 0.09em こみの実測）なので、3文字＋余白。3文字までは1行に収まり、
+     「行ってきた」は2行に折れる——**折れても札の背は動かない。**
+     `--fs-h1` は clamp なので、幅に応じて箱も一緒に伸びる。 */
+  width: calc(var(--fs-h1) * 2.94 + 22px);
   padding: var(--sp-3) var(--sp-2);
   /* 日数の札は高さ 80〜100px。その段の角丸。 */
   border-radius: var(--r-3);
@@ -283,7 +292,8 @@
 }
 .nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-3), var(--np-lip); }
 .nextup-card.is-small:active { box-shadow: var(--pop-push-lg), var(--shadow-1), var(--np-lip); }
-.nextup-card.is-small .nextup-count { min-width: 74px; padding: var(--sp-2) var(--sp-2); font-size: var(--fs-min); border-radius: var(--r-2); }
+/* 小さいほうの札も同じ決め方。こちらの数字は `--fs-h2`（24px 固定）。 */
+.nextup-card.is-small .nextup-count { width: calc(var(--fs-h2) * 2.94 + 22px); padding: var(--sp-2) var(--sp-2); font-size: var(--fs-min); border-radius: var(--r-2); }
 .nextup-card.is-small .nextup-count b { font-size: var(--fs-h2); }
 .nextup-card.is-small .nextup-title { font-size: clamp(16px, 4.4vw, 21px); }
 /* ふたつ目の札の行き先は金色にしない。強い合図はページに1つだけ。 */
@@ -302,6 +312,7 @@
     padding: var(--sp-5) var(--sp-5);
     gap: var(--sp-4);
   }
-  .nextup-count { min-width: 110px; padding: var(--sp-3) var(--sp-3); }
+  /* 余白が左右 12px に増えるぶんだけ足す（3文字＋余白は同じ決め方）。 */
+  .nextup-count { width: calc(var(--fs-h1) * 2.94 + 30px); padding: var(--sp-3) var(--sp-3); }
   .nextup-go { justify-self: end; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-body); }
 }

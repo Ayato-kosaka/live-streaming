@@ -6,6 +6,7 @@ import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
 import { placeOutdated, samePlace } from "@/lib/place";
 import { planOver, planStop, tripDate } from "./where";
+import { BUILT_AT } from "@/lib/builtAt";
 import { Mark } from "./Marks";
 
 /**
@@ -325,7 +326,19 @@ export default function TripNow({
     setHereSeq(i >= 0 ? i : null);
   }, [at, mainLegs, legOrder]);
 
-  const departed = left != null && left <= 0;
+  /**
+   * もうクタイシを発ったか。
+   *
+   * **画面が出るまでは「焼いた日」で決める**（`lib/builtAt.ts` の `BUILT_AT`）。
+   * ここは `left != null && left <= 0` だけだった。残り秒（`left`）は画面が
+   * 出てから入るので、**焼いた HTML はいつでも「まだ発っていない」側**に落ちて、
+   * この面でいちばん大きい札が「クタイシ発まで／数えています」で焼かれていた。
+   * 出発は9月11日なので、**旅の7日目に焼いた HTML もそう言っていた。**
+   *
+   * 秒数は今までどおり出さない（焼き込みの残り時間を一瞬でも見せない）。
+   * ここで決めるのは**どちらの札を出すか**だけで、数は `left` が入ってから。
+   */
+  const departed = left != null ? left <= 0 : new Date(depart).getTime() <= BUILT_AT.getTime();
   /* 着いたあとは、いる場所がどこであっても終点にいるものとして数える。
      友だちの家に約1週間いるので、そのあいだに街を離れることもある。
      そこで「ストックホルムまで、数えています」に戻ったら、旅が
