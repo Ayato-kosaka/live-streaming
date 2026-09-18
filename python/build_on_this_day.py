@@ -23,6 +23,18 @@
 BigQuery に繋げない環境では、あらかじめ吸い出した行を渡せる:
   python python/build_on_this_day.py --rows /tmp/otd_rows.json
   （[{"d","v","t","n"}, ...] の JSON。SQL は fetch_videos() のものと同じ）
+
+## 押しても見られない配信は、代表にしない（2026-09-18）
+
+消えた配信（404）と、録画そのものが残らなかった配信へは**送らない**
+（`docs/island-misses.md` #139）。外す相手は `python/data/dead_streams.json`。
+
+**外すのは SQL の中。** ここは日ごとに1本しか焼かないので、Python 側で落とすと
+**その日が年表から丸ごと消える。** 配信が1本見られないことと、その日に何かが
+あったことは別のこと。SQL で外せば、同じ日の2番目が代表になって日は残る。
+
+`--rows` に古い書き出しを渡したときのために、Python 側にも同じ落としを置いてある。
+そちらは日ごと消えてしまうので、**落ちた日を警告に出す。**
 """
 
 import argparse
@@ -35,6 +47,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_dead_streams import blocked, check_written, sql_not_in  # noqa: E402
 from stays import read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -71,6 +84,9 @@ def fetch_videos() -> list:
              actual_start_time AS st
       FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos`
       WHERE actual_start_time IS NOT NULL
+      -- 押しても見られない配信は、代表に選ばれる前に外す。
+      -- そうすると同じ日の2番目が代表になり、**その日は年表に残る**
+      {sql_not_in("video_id")}
     ),
     c AS (
       SELECT video_id, COUNT(*) AS n
@@ -161,6 +177,18 @@ def main() -> int:
         if args.rows
         else fetch_videos()
     )
+    # **古い書き出しを `--rows` に渡されたとき用の止め金。** ふだんは SQL の側で
+    # 外し終わっているので1本も落ちない。ここで落ちたぶんは代表が居なくなる
+    # ＝**その日が年表から消える**ので、黙って落とさずに警告に出す
+    gone = blocked()
+    left = [r for r in rows if r["v"] not in gone]
+    if len(left) != len(rows):
+        lost = sorted(r["d"] for r in rows if r["v"] in gone)
+        logger.warning(
+            "押しても見られない配信 %d 本を外した。**その日は年表から消える**: %s",
+            len(rows) - len(left), ", ".join(lost),
+        )
+    rows = left
     logger.info("配信 %d 本、国 %d カ国", len(rows), len(countries))
 
     table = build(rows, countries, read_peaks())
@@ -169,6 +197,8 @@ def main() -> int:
         logger.warning("居た場所が引けなかった日: %d (%s ...)", len(unknown), unknown[:5])
 
     body = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
+    # 出口でもう一度見る。SQL の落としが効かなくなっても、ここで止まる
+    check_written(body, OUT_TS.name)
     # 焼き込みの終わりの日。ここから先は「配信が無かった」ではなく「まだ焼いていない」
     latest = max(e["d"] for v in table.values() for e in v)
     OUT_TS.write_text(

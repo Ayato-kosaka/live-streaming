@@ -409,6 +409,13 @@ PORT=4150 node tools/sprites/tapink.mjs     # 0＝通った / 1＝見つかっ�
   見られない id** の3つ。**届かない箱では 2 で止まる。**
   ネットに出ない側の対照は `python3 python/dead_stream_watch_selftest.py`。
   **毎晩ひとりでに回す繋ぎは、まだ入れていない**）
+  - **見つかったら、取り置きを測り直す**（`python3 python/build_dead_streams.py`）。
+    焼くスクリプトはそこを読んで、**戻らない配信を焼き込みに入れない**。
+    入るのは 404 と録画なしだけで、**403（非公開）は入れない**——
+    あやとが公開に戻した日に、島が知らないまま隠し続けることになる（#139）
+  - **人が書く焼き込み（`legends.ts` `countries.ts` `recipes.ts` `apps.ts`
+    `voices.ts`）は、取り置きを読まない。** そこは1件ずつ人が決める——
+    隣に生きた配信があるなら差し替え、無いならリンクを外して字だけ残す
 
 - **Python を触ったら `python3 python/crosscall_selftest.py` を回した**
   （モジュールをまたいだ呼び出しの引数の数。`py_compile` も単体の確かめも

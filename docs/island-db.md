@@ -1129,6 +1129,20 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 持っているが、それは**候補を集めるとき**で、`--build`（焼く側）は
 `voices_picks.json` しか読まない。
 
+**(c) 外に当てて分かるもの** — BigQuery にも人の頭にも無い
+
+| 取り置き | 元 | 回すもの | 何を持っているか |
+| --- | --- | --- | --- |
+| `python/data/dead_streams.json` | YouTube（oembed ＋ `youtubei/v1/player`） | `build_dead_streams.py` | **押しても戻らない配信の id**（404 と、録画そのものが無い回） |
+
+焼くスクリプト（`build_city_streams` `build_on_this_day` `build_chapter_stats`
+`build_country_stats` `build_legend_days`）は、これを読んで**その配信を焼き込みに
+入れない**（`docs/island-misses.md` #139）。
+
+**戻るもの（403 の非公開）は入っていない。** あやとが公開に戻せば、
+次の焼き直しでひとりでに島へ戻る。だから取り置きが古くても隠しすぎることはない。
+仕分けの理由は [`island-fresh.md`](./island-fresh.md) 4c 章。
+
 **焼き直したかどうかは、commit 日では分からない。** 別の理由で触られた日が
 付くだけで、中身は古いままのことがある。**中身の最新を見る。**
 

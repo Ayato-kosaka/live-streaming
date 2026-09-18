@@ -774,6 +774,22 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-size: var(--fs-min); font-weight: 900;
   color: var(--ink-2);
 }
+/* 録画の残っていない回。**押せない札**なので、押せるものと同じ厚み・同じ
+   持ち上がりを付けない（押せないのに厚みのあるものは `tools/sprites/popcheck.mjs` が拾う）。
+   サムネイルは持たないぶん、中身だけで1行ぶん低くなる */
+.vid.is-gone {
+  box-shadow: none;
+  border-style: dashed;
+  background: color-mix(in srgb, var(--paper-2) 82%, var(--frame));
+  cursor: default;
+}
+.vid.is-gone .vid-b b { color: var(--ink-2); }
+.vid-gone-note {
+  font-style: normal;
+  font-size: var(--fs-min); font-weight: 900;
+  color: var(--ink-2);
+}
+
 /* 何本目か。長い企画で「順番」を見せるときだけ付ける */
 .vid-no {
   position: absolute; top: -8px; left: -8px;
