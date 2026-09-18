@@ -117,6 +117,7 @@ const BOX: Record<string, CharBox> = {
   "1Ypw31n_0wRri-oEhRpqAB3p6jZFtN7BN": [0.0656, 0.0234, 0.8047, 0.9484, 1.0],
   "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO": [0.0266, 0.0141, 0.9703, 0.975, 1.0],
   "5cc99a90acad4e7997d92b27c5207c6c0": [0.0484, 0.0, 0.9219, 0.975, 1.0],
+  "a43e965774df4900b7c8724c66f5deba0": [0.0, 0.0, 0.9844, 1.0, 0.9624],
   "c3cca678865a4021a048e617fab35db30": [0.0766, 0.0, 0.8984, 0.9859, 1.0],
   "d2ff6294640d4a5aa19bce30dfcbc8840": [0.0, 0.0, 0.9891, 0.9668, 0.9235],
   "f003927aa7df4f5599a6bd58e2d324450": [0.0312, 0.0, 0.9219, 1.0, 0.9892],
@@ -201,11 +202,11 @@ export function charFit(icon: string, want: number, bottom = false): { transform
  */
 export const CHARACTER_BOX_BAKED = {
   /** 焼いた日 */
-  at: "2026-09-17",
+  at: "2026-09-18",
   /** そのとき口（`/island-api/characters`）が返した人数 */
-  people: 102,
+  people: 103,
   /** そのうち、実際に測れた人数 */
-  boxes: 102,
+  boxes: 103,
   /**
    * 測れなかった人。**焼き忘れではない**——背景なしの絵が無い・絵が開けない・
    * 中身が空。名簿に居て、箱にもここにも居ない人が出たら、それが焼き忘れ。
