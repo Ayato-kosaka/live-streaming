@@ -64,8 +64,15 @@
 | `cityStreams.ts` | `build_city_streams.py` | 配信が増える（街の一覧が増えるのは人待ち） |
 | `countryStats.ts` | `build_country_stats.py` | 配信が増える（国の一覧が増えるのは人待ち） |
 | `shorts.ts` | `build_shorts.py` | **あやとがショートを出す**（YouTube を読む。BigQuery ではない） |
+| `characterBox.ts` | `tools/sprites/charbox.py` | **名簿に人が増える**（`build_residents` と同じ回で焼く。BigQuery ではなく**公開の口** `/island-api/characters` を読む） |
 
 **上から4本目までは入力が本番だけ。** 人がリポジトリに何も書かなくても正しい答えが出る。
+
+**いちばん下の1本だけは、焼き込みの下流。** `characterBox.ts` は名簿（`residents.ts`）に
+人が増えたら、その人ぶんの箱も要る。だから `rebake.yml` の「回すもの」の表には並べず、
+**`build_residents` を回す回にだけぶら下げてある**（単独で選べる形にすると、名簿と別の回に
+焼ける形を自分で作ることになる）。毎晩に入れたのは 2026-09-18 で、それまでは人が手で
+回すものだった——**上流を毎晩にしたのに下流を入れ忘れていた**（`island-misses.md` #161）。
 
 **焼き込みでないものが1つだけ、同じ晩に入っている。** 分かち合う1枚
 （`site/public/og.png`）で、リンクを貼ったときに出るあの絵。中の言葉は全部
@@ -517,7 +524,7 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
 | `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
-| `characterBox.ts` | 機械（`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** |
+| `characterBox.ts` | 機械（**毎晩**。`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** → 2026-09-18 に毎晩へ繋いで **103/103** |
 | `chatter.ts` | 人（上流 `residents.ts`） | SHARE | 50% | 26%（27/102人） |
 | `chapterStats.ts` | 機械（毎晩） | — | rebake 4日 | 判定しない |
 | `residents.ts` | 機械（毎晩） | — | rebake 3日 | 判定しない |

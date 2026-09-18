@@ -96,6 +96,14 @@ name: 島の数字を焼き直す
 #   build_country_stats   countryStats.ts
 #   build_shorts          shorts.ts          ※ BigQuery ではなく YouTube を読む
 #
+# **そのうしろに、下流がもう1本ぶら下がる**（下の「回すもの」の表には並べない）。
+#
+#   tools/sprites/charbox.py   characterBox.ts   ※ `build_residents` を回す回だけ
+#
+# 名簿に人が増えたら、その人ぶんの絵の大きさも要る。表に並べると**単独で選べる**
+# ものになり、名簿と別の回に焼ける形を自分で作ることになるので、名簿にぶら下げた。
+# 引き先は BigQuery ではなく**公開の口**（`/island-api/characters`）で、鍵は要らない。
+#
 # 前の4本は**入力が BigQuery だけ**なので、人が何も決めなくても正しい答えが出る。
 #
 # 後ろの2本は上流に人の書く `countries.ts` がある。それでも毎晩に入れたのは、
