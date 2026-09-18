@@ -2,6 +2,7 @@
 
 ARGS 例:
   {}                      … 下見。**1バイトも書かない**
+                            （口は `GET /characters` で1回読む）
   {"probe": true}         … 下見に加えて、**Actions の側から同じ名乗りを
                             引いてみる**（やはり1バイトも書かない）
   {"apply": true}         … 口に通す
@@ -82,11 +83,45 @@ ARGS 例:
 作りになっている（`islandCharacter.ts` の `ROLES` のところ）。
 **作りを読んだだけでは足りない**ので、突き合わせでも役どころごとに見る。
 
+## 配った口が、印を返しているか（#159 の1ホップ）
+
+**下見でも apply でも、口から図鑑を1回読む**（`GET /characters`。書かない）。
+見るのは1つ——**口が `channelGone: true` で返した人数。**
+
+`channelGoneFor` が Firestore に入ったことは、`verdict` が
+**Firestore を直に読んで**確かめている（2026-09-18、run 35396736705 で
+3人に付いた）。**だが「配った口がそれを返す」ところは、本番で1度も
+測っていない。** 口が返すのは `channelGone`（真偽）で、書類に入っている
+`channelGoneFor`（字）とは**別の欄**。見張りは通っているが、あれは
+手元の作りで、**本番の配り物とは別物。**
+
+だから**両側を出して、突き合わせる。**
+
+| | |
+| --- | --- |
+| 口が `channelGone: true` で返した人数 | 配り物の側 |
+| Firestore に `channelGoneFor` が在る人数 | 書類の側 |
+
+**食い違ったら赤くする。** 食い違いは「配った口が古い」か
+「`shapeFull` の条件が変わった」を意味する。**ここは直さない**——
+口の話なので、報告して口の担当に回す。
+
+**ただし、ずれてよい場合が1つある。** `shapeFull` は
+`channelGoneFor === channelName` のときだけ true にする（別のハンドルに
+入れ直された人に、古い札を出さないため）。だから
+**「書類には在るが口は false」は、名乗りが書き換わった人なら正しい。**
+その人数は別に数えて、食い違いには積まない（`gone_want()`）。
+
+apply のときは**通したあとにもう一度読む。** 印を書いたのは口だが、
+**書いた口と配る口が同じとは限らない。**
+
 ## 終了コード
 
   0 … 通す先が無い（やることなし）
-  1 … 通す先が残っている（下見はここ。**止めたときもここ**）
-  2 … **数えられていない**（対照が落ちた・図鑑が1件も返らない）
+  1 … 通す先が残っている（下見はここ。**止めたときもここ**）。
+      **印が食い違ったときもここ**——数えられてはいるので 2 ではない
+  2 … **数えられていない**（対照が落ちた・図鑑が1件も返らない・
+      **口から1人も返ってこなかった**）
 
 止めたときに 2 にしないのは、**そのとき数えられてはいる**から。
 数えた結果「まだ残っている」ので 1（`docs/island-standards.md` §15）。
@@ -241,6 +276,207 @@ def gone_moved(was: dict, now: dict) -> str:
     if not g_now or g_now == name:
         return ""
     return f"印が名乗りと違う字になった: {GONE}"
+
+
+# 口が**画面へ返す**ほうの欄（`islandCharacter.ts` の `shapeFull`）。
+#
+# **`GONE` とは別の欄。** Firestore に入っているのは
+# `channelGoneFor: <打たれた名乗り>`（字）で、口が返すのは
+# `channelGone`（真偽）。**名前が似ているだけで、別のもの。**
+#
+# 2026-09-18 に本番で3人ぶん印が付いたことは確かめたが、あれは
+# `ref.document(doc_id).get()` で **Firestore を直に読んだ**ものだった。
+# **「配った口が、その印を `channelGone` にして返している」ところは
+# 1度も測っていない。** 見張り（`character_alias_selftest.mjs`）は通って
+# いるが、あれは手元の作り。**本番の配り物は別物**（#157 の決めごと）。
+GONE_API = "channelGone"
+
+
+def gone_want(v: dict) -> bool:
+    """**口が `channelGone` を立てるはずか。** `shapeFull` と同じ条件。
+
+    口は `channelGoneFor` が**いまの `channelName` と同じ字のときだけ**
+    立てる（別のハンドルに入れ直された人に、古い札を出さないため）。
+    だから「Firestore に印が在るのに口は false」は、**名乗りが
+    書き換わっていれば正しい。** ここを混ぜると、正しい動きを
+    食い違いとして数えることになる。
+
+    Args:
+        v: Firestore の書類まるごと
+
+    Returns:
+        立つはずなら True。**`clean` を通さない**——口は trim せずに
+        そのまま比べるので、こちらも同じに合わせる
+    """
+    stamp = v.get(GONE)
+    name = v.get("channelName")
+    return (isinstance(stamp, str) and bool(stamp)
+            and isinstance(name, str) and stamp == name)
+
+
+def gone_blind(cur, why: str) -> str:
+    """**口から測れていないとき、その理由。** 0人と混ぜない（#157）。
+
+    口が1人も返さなかった回の「0人」は、**向こうの答えではない。**
+    ここを黙って 0 に畳むと、測れていない回が「揃っている」に化ける。
+
+    Args:
+        cur: 口が返した図鑑（読めなかったときは None）
+        why: 読めなかった理由
+
+    Returns:
+        測れていない理由の1行。測れていれば空
+    """
+    if cur is None:
+        return f"口から読めませんでした（{why}）"
+    if not cur:
+        return "口から1人も返ってきていません"
+    return ""
+
+
+@dataclass
+class Gone:
+    """`channelGone` の、**口側と Firestore 側の両方の数**。"""
+
+    seen: int = 0          #: 口が返した人数
+    field_seen: int = 0    #: そのうち `channelGone` という欄を持っていた人数
+    api_on: int = 0        #: 口が `channelGone: true` で返した人数
+    stamped: int = 0       #: Firestore に `channelGoneFor` が在る人数
+    want: int = 0          #: そのうち、**口も立てるはず**の人数
+    renamed: int = 0       #: 名乗りが書き換わった人数（**食い違いではない**）
+    unseen: int = 0        #: Firestore に在るのに、口が返さなかった人数
+    #: 立つはずなのに立っていない／立たないはずなのに立っている（指紋だけ）
+    missing: list = field(default_factory=list)
+    extra: list = field(default_factory=list)
+
+
+def gone_tally(book: dict, cur: dict) -> Gone:
+    """**Firestore 側と口側を、1人ずつ突き合わせる。**
+
+    数を2つ並べるだけでは足りない。**同じ人について**両側を見ないと、
+    「片方で1人増えて片方で1人減った」回が合計では揃って見える。
+
+    Args:
+        book: Firestore から読んだ図鑑（書類ID -> 書類）
+        cur: 口が返した図鑑（書類ID -> 口の返した1人）
+
+    Returns:
+        両側の数と、食い違った人の**指紋だけ**
+    """
+    g = Gone(missing=[], extra=[])
+    g.seen = len(cur)
+    for row in cur.values():
+        if GONE_API in row:
+            g.field_seen += 1
+        if row.get(GONE_API) is True:
+            g.api_on += 1
+    for doc_id, v in sorted(book.items()):
+        stamp = v.get(GONE)
+        want = gone_want(v)
+        if isinstance(stamp, str) and stamp:
+            g.stamped += 1
+            g.want += 1 if want else 0
+            g.renamed += 0 if want else 1
+        row = cur.get(doc_id)
+        if row is None:
+            # 口が返さなかった人。**この人ぶんは測れていない**
+            g.unseen += 1
+            continue
+        got = row.get(GONE_API) is True
+        if want and not got:
+            g.missing.append(doc_id)
+        elif got and not want:
+            g.extra.append(doc_id)
+    return g
+
+
+def gone_report(when: str, book: dict, cur, why: str) -> str:
+    """**口が立てて返した人数を出して、Firestore と突き合わせる**（#159）。
+
+    Args:
+        when: いつの姿か（ログの見出しに出す）
+        book: Firestore から読んだ図鑑
+        cur: 口が返した図鑑（読めなかったときは None）
+        why: 読めなかった理由
+
+    Returns:
+        `""`（揃っている）/ `"差"`（食い違った）/ `"盲"`（測れていない）
+    """
+    log.info("---- %s、口が返す「もう無い名乗り」の印（#159） ----", when)
+    stop = gone_blind(cur, why)
+    if stop:
+        # **0 と「測れていない」を同じ顔で出さない**（#157）
+        log.error("**%s。ここは測れていません**（0人ではありません）", stop)
+        return "盲"
+
+    g = gone_tally(book, cur)
+    log.info("  口から %d人 ← **%s を立てて返した … %d人**",
+             g.seen, GONE_API, g.api_on)
+    log.info("  Firestore に印（%s）がある … %d人", GONE, g.stamped)
+    log.info("    うち いまの名乗りと同じ字（**口も立てるはず**） … %d人",
+             g.want)
+    log.info("    うち 名乗りが書き換わった（**口は立てない。"
+             "食い違いではない**） … %d人", g.renamed)
+
+    if not g.field_seen:
+        # 口が欄そのものを返していない。**配った口が古い。**
+        # ここを見ないと、印が0人の日に「揃っている」と言ってしまう
+        log.error("**口は %s という欄を1人ぶんも返していません。**"
+                  "配った口が古いか、`shapeFull` が変わっています", GONE_API)
+        return "差"
+    if g.unseen:
+        log.error("**Firestore に在るのに、口が返さなかった人が %d人 います。**"
+                  "その人ぶんは測れていません", g.unseen)
+    if not g.missing and not g.extra:
+        if g.unseen:
+            return "盲"
+        log.info("  **揃っています**（口 %d人 ＝ 立つはず %d人）",
+                 g.api_on, g.want)
+        return ""
+
+    # ここが、この測りの本体。**配った口と書類が違うことを言っている**
+    log.error("**食い違っています。配った口と書類が違うことを言っています**")
+    for doc_id in g.missing:
+        log.error("  %s 立つはずなのに、口は立てていません"
+                  "（配った口が古い／%s の条件が違う）", mask(doc_id), "shapeFull")
+    for doc_id in g.extra:
+        log.error("  %s 立たないはずなのに、口が立てています", mask(doc_id))
+    log.error("**口の側の話なので、この道具では直せません。"
+              "`functions/src/islandCharacter.ts` を見てください**")
+    return "差"
+
+
+def mouth_token(src):
+    """口に付ける札。**取れなかったら、止めずに理由を返す。**
+
+    下見でも口を読みに行くようになったので（#159 の1ホップ）、札が
+    取れない箱でも**仕分けまでは出せる**ようにする。取れなかったことは
+    **測れていない**と赤く出すが、他の数字まで道連れにしない。
+    """
+    try:
+        return owner_token(src), ""
+    except SystemExit as e:
+        return None, str(e) or "札を取れませんでした"
+
+
+def mouth_book(token) -> tuple:
+    """口から図鑑を読む。**GET だけ。1バイトも書かない。**
+
+    Args:
+        token: `mouth_token()` が返した札（None なら読みに行かない）
+
+    Returns:
+        (書類ID -> 口の返した1人, 読めなかった理由)
+    """
+    if token is None:
+        return None, "札がありません"
+    try:
+        rows = call("GET", "/characters", token).get("characters") or []
+    except SystemExit as e:
+        return None, str(e) or "口を叩けませんでした"
+    return ({c.get("id"): c for c in rows
+             if isinstance(c, dict) and c.get("id")}, "")
+
 
 # 口が返す `named.state`（`islandCharacter.ts` の `NamedState`）。
 #   added   … 引けて、呼び名に足した
@@ -816,23 +1052,20 @@ def run_control() -> list:
 # ---------------------------------------------------------------- 通す
 
 
-def touch(src, todo: list, token: str) -> tuple:
+def touch(src, todo: list, token: str, cur: dict) -> tuple:
     """口に通す。**1人ずつ、通すたびに突き合わせる。**
 
     Args:
         src: Firestore クライアント（読み直しに使う）
         todo: 通す書類IDの一覧
         token: オーナーの札
+        cur: 口から読んだいまの図鑑（`mouth_book()`）。**口は送られた
+            ぶんで欄を置き換える**ので、手元の古い写しから送ると、
+            その間に直された呼び名が消える
 
     Returns:
         (通した人数, 増えた呼び名, `channelId` が入った人数, 止めた理由)
     """
-    # **いまの値を口から取り直す。** 口は送られたぶんで置き換えるので、
-    # 手元の古い写しから送ると、その間に直された呼び名が消える
-    cur_list = call("GET", "/characters", token).get("characters") or []
-    cur = {c.get("id"): c for c in cur_list if isinstance(c, dict)}
-    log.info("図鑑が口から %d人ぶん返りました", len(cur))
-
     ref = src.collection(CHARACTERS)
     people = aliases = ids = 0
     for doc_id in todo:
@@ -964,11 +1197,28 @@ def main() -> None:
             log.info("**もう無い（404）の人は、出口の話ではありません。**"
                      "ハンドルが変わったか消えています（人が直す話）")
 
-    stopped = ""
-    if apply and todo:
-        token = owner_token(src)
+    # **配った口を、ここで1回読む。** 下見でも読む（GET だけ・#159）。
+    #
+    # `channelGoneFor` が Firestore に入ったことは、`verdict` が
+    # **Firestore を直に読んで**確かめている。**配った口がそれを
+    # `channelGone` にして返しているかは、別の話。** 測っていないものを
+    # 測ったことにしないために、ここで両側を数える（#157）
+    token, tok_why = mouth_token(src)
+    if token is not None:
         log.info("口に頼む札を取りました")
-        people, aliases, ids, stopped = touch(src, todo, token)
+    cur, cur_why = mouth_book(token)
+    if cur is not None:
+        log.info("図鑑が口から %d人ぶん返りました", len(cur))
+    gone_bad = gone_report("いま", book, cur, cur_why or tok_why)
+
+    stopped = ""
+    if apply and todo and cur is None:
+        # 口から読めていないのに送ると、**手元の古い写しで上書きする**
+        # ことになる。呼び名と絵文字が消える道なので、1人も通さない
+        log.error("**口から図鑑を読めていないので、1人も通しません**")
+        stopped = "口から読めなかった"
+    elif apply and todo:
+        people, aliases, ids, stopped = touch(src, todo, token, cur)
         log.info("通しました: %d人 / 呼び名 +%d件 / channelId +%d人",
                  people, aliases, ids)
         if stopped:
@@ -993,11 +1243,28 @@ def main() -> None:
         log.error("下見なのに図鑑が変わりました")
         raise SystemExit(1)
 
+    if apply and todo and cur is not None:
+        # **通したあとに、もう一度口から読む。** ここが測りたかった1ホップ。
+        # 印を書いたのは口だが、**書いた口と配る口は同じとは限らない**
+        # （配り物が古ければ、書けているのに返ってこない）。
+        # 通す前の突き合わせは「前からの持ち越し」しか見ていない
+        cur2, why2 = mouth_book(token)
+        if cur2 is not None:
+            log.info("図鑑が口から %d人ぶん返りました", len(cur2))
+        after_bad = gone_report("通したあと", after_book, cur2, why2)
+        # **通したあとのほうが強い。** 直後の姿が本物
+        gone_bad = after_bad or gone_bad
+
     left, _ = pick(after_book)
     if left or stopped:
         log.info("通す先は、まだ %d人 残っています", len(left))
+    elif not gone_bad:
+        log.info("通す先はありません")
+    if gone_bad == "盲":
+        # **測れていないものを、緑で返さない**（#157）
+        raise SystemExit(2)
+    if left or stopped or gone_bad:
         raise SystemExit(1)
-    log.info("通す先はありません")
 
 
 if __name__ == "__main__":
