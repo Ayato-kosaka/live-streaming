@@ -106,12 +106,24 @@ export function LeadClock({ plan }: { plan: Plan }) {
   const phase = usePhase(plan);
   if (!plan.date) return null;
 
-  // 画面が出るまでは日付だけ。焼き込みの日数を一瞬でも見せない
+  /* 画面が出るまでは日付だけ。焼き込みの日数を一瞬でも見せない。
+     **日付のうしろに字を足さない**（`docs/island-misses.md` #145）。ここには
+     「その日まで」と書いてあった。日付はいつ読んでも本当でも、**そのうしろの
+     4文字が段を言い切る**——出発の日を過ぎたら、焼いた HTML は嘘を言い続ける。
+     `#143` がこの場所を「正しい形」として引き合いに出したとき、
+     その行を最後まで読んでいなかった。
+
+     字を落とすと札が1行ぶん縮むので、**出たあとと同じ形の写しで場所を取る**
+     （`.nx-ghost`）。出たあとの札は、大きい字の下にかならず一行ある
+     （「行っている」「9/11〜9/27」「9/11」）。 */
   if (phase === null || days === null || (plan.at && left === null)) {
     return (
       <p className="nx-clock is-one">
         <em>
-          <b>{shortDate(plan.date)}</b>その日まで
+          <b>{shortDate(plan.date)}</b>
+          <span className="nx-ghost" aria-hidden>
+            あ
+          </span>
         </em>
       </p>
     );
