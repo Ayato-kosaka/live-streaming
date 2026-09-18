@@ -553,6 +553,27 @@ export async function handleDonors(
       patch.viewerPk = pk;
       patch.label = null;
       patch.addedAt = now;
+      /* **`firstSeenAt` は、ここでは1文字も書かない。** 決めた理由(#158):
+
+         1. `addedAt`(登録した日)と `firstSeenAt`(初めて投げてくれた日)は
+            別のもの。この口は**まだ来ていない人を先に入れておく**ための
+            口なので、`now` を入れたら「今日はじめて投げてくれた」という
+            嘘になる
+         2. しかも毎晩のほう(`python/doneru_supporters.py`)は、
+            **入っている値を絶対に上書きしない**(あとの日付で塗ると
+            「来た日」が繰り上がる)。つまりここで置いた嘘は
+            **誰にも直されずに永久に残る。** 空のほうが直せる
+         3. 本当の値は `doneru_donations` の `MIN(donated_at)` にしかない。
+            ここ(Functions)から BigQuery を引くのは、**まだ1度も投げて
+            いない人が大半なので、引いても返ってこない**ほうが普通。
+            入口を外の呼び出しで重くする理由にならない(#155 の決めごと4)
+
+         代わりに、その人が実際に投げ銭した晩に毎晩のほうが埋める。
+         2026-09-18 まで毎晩のほうは「書類がまだ無い人」しか見ていなかった
+         ので、この口から生まれた人は**永久に空のまま**だった。
+         いまは「書類は在るのに空」も毎晩ぜんぶ並べて引く。
+         見張りは `functions/selftest/donor_firstseen_selftest.mjs` と
+         `python/doneru_firstseen_selftest.py`。 */
     }
     if (clear || !found?.ok) {
       // この人は分からない。手がかりも残さない
@@ -565,6 +586,9 @@ export async function handleDonors(
       patch.handle = typed;
       patch.state = "linked";
     }
+    /* **`merge: true`。** `patch` に `firstSeenAt` が無いので、
+       毎晩のほうが入れた「初めて投げてくれた日」は、ここを何度押しても
+       消えない。欄を並べ替えるときに `set()` を裸にしないこと(#158)。 */
     await ref.set(patch, {merge: true});
     const name = found?.ok ? found.name : null;
     res.json({

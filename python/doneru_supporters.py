@@ -32,8 +32,35 @@ BigQuery から取るが、**Doneru はチャンネルIDを持っていない**�
 窓（`--days 3`）の中の最小値では足りない。表が作り直されたあと（#186）に
 走ると、窓の中に「その人の2回目」しか無いことがあるため。
 
-**引くのは、表に無い どねID が見つかった晩だけ。** 新規はめったに出ないので、
-ふだんの晩は BigQuery が1本も増えない。
+## 「空のまま残らない」ところまでが、この見張りの仕事
+
+**入れるのは、表に無い どねID を見つけた晩だけ**——ではない。
+それだと、**画面から先に登録された人に永久に入らない。**
+`POST /island-api/donors/{どねID}`（`functions/src/donors.ts`）は
+「まだ来ていない人を先に入れておく」ための口なので、その人が実際に
+投げ銭した晩には**書類がもう在る。** 表に在る人を素通りしていると、
+`firstSeenAt` は空のまま誰にも拾われない（#158）。
+
+だから毎晩、**書類は在るのに `firstSeenAt` が空の人**もぜんぶ並べて、
+まとめて1本の BigQuery で引く。
+
+**引く回数は増える。** 前は「表に無い どねID が出た晩だけ」だったので
+ふだんの晩は0本だったが、いまは**空の人が1人でも残っていれば毎晩1本**走る。
+しかも `doneru_donations` に1行も無い人（種＝`python/donors_seed.json` から
+入った人や、表が作り直されて消えた人）は**永久に埋まらない**ので、
+その晩ぶんは毎晩むだになる。それでも毎晩引くほうを選んだ理由は2つ:
+
+- 問い合わせは `viewer_pk IN UNNEST(@pks)` の1本で、対応表は30行ほど。
+  **毎晩1本で足りる**（人数ぶん走るわけではない）
+- 「もう聞いた」を覚えさせると、**覚えたほうが古くなった日に黙る。**
+  表が作り直されて（#186）古い1回が戻った晩に、拾えなくなる
+
+引いたあとの決めは2つ。
+
+- **すでに入っている値は絶対に上書きしない。** あとの日付で塗ると
+  「来た日」が繰り上がって嘘になる。ずれている値を直すのは
+  `python/admin/donors_first_seen.py`（人が押す）の仕事
+- **引けなかったら入れない。** 空けておけば、あとから正しい時刻を入れられる
 
 ## 入金の段階では絞らない
 
@@ -155,8 +182,9 @@ def fetch(d0: str, d1: str) -> dict:
 def fetch_first(pks: list) -> list:
     """その どねID たちの、**全期間でいちばん古い投げ銭**。
 
-    **新規の どねID が見つかった晩しか呼ばない。** 新規はめったに出ないので、
-    ふだんの晩は BigQuery を1本も増やさない。
+    **`firstSeenAt` を入れる相手がいる晩だけ呼ぶ。** 相手は2種類で、
+    新規の どねID と、**書類は在るのに欄が空の人**（`pks_to_ask()`）。
+    どちらも0人の晩は、BigQuery を1本も増やさない。
 
     Args:
         pks: 引きたい どねID
@@ -223,8 +251,12 @@ def plan_first_seen(pks: list, donations: list, table: dict) -> dict:
     - 引けなかった どねID は、その欄を**空けたまま**置く。
       `now` に落とすと、消えた不具合がそのまま戻る
 
+    **表に在る人にも当てる。** 前は「表に無い どねID」しか渡していなかったので、
+    画面から先に登録された人（書類が在って `firstSeenAt` が空）は永久に
+    素通りだった（#158）。渡す顔ぶれを決めるのは `pks_to_ask()`。
+
     Args:
-        pks: 今回見つけた、表に無い どねID
+        pks: 引きに行った どねID（表に無い人＋表に在って欄が空の人）
         donations: `fetch_first()` が返したもの（全期間ぶん）
         table: いまの `islandDonors`（どねID -> 書類）
 
@@ -241,6 +273,60 @@ def plan_first_seen(pks: list, donations: list, table: dict) -> dict:
             continue
         out[pk] = at
     return out
+
+
+def pks_to_ask(found: dict, table: dict) -> dict:
+    """その晩、**BigQuery に「最初の1回」を聞く どねID** を並べる。
+
+    2つに分ける。入れ先が違うから——新しい人は書類ごと作り、
+    在る人は `firstSeenAt` の欄だけ足す。
+
+    - `new`: 表に無い どねID（これまでどおり）
+    - `blank`: **書類は在るのに `firstSeenAt` が空**。
+      画面から先に登録された人がここに落ちる。窓（`--days`）の中で
+      投げ銭していなくても並べる——**窓の外にいる人こそ、
+      いつまでも拾われないほうだから**
+
+    Args:
+        found: `fetch()` が返したもの（日付 -> [{"pk", "name"}, ...]）
+        table: いまの `islandDonors`（どねID -> 書類）
+
+    Returns:
+        {"new": [どねID, ...], "blank": [どねID, ...]}。**重なりは無い**
+    """
+    new: list = []
+    for _day, rows in sorted(found.items()):
+        for r in rows:
+            if r["pk"] not in table and r["pk"] not in new:
+                new.append(r["pk"])
+    blank = [
+        pk for pk, row in sorted(table.items())
+        if not (row or {}).get("firstSeenAt")
+    ]
+    return {"new": new, "blank": blank}
+
+
+def plan_nightly(ask: dict, donations: list, table: dict) -> dict:
+    """その晩に書く `firstSeenAt` を、**1か所で決める。**
+
+    `main()` が2か所で条件を書くと、見張りが片方しか見られない。
+    決めはここだけに置いて、`main()` は返ってきたものを書くだけにする。
+
+    Args:
+        ask: `pks_to_ask()` が返したもの
+        donations: `fetch_first()` が返したもの（全期間ぶん）
+        table: いまの `islandDonors`（どねID -> 書類）
+
+    Returns:
+        {
+          "new":      {どねID: 時刻},  書類ごと作る人に焼く ぶん
+          "backfill": {どねID: 時刻},  書類は在って、欄だけ足す ぶん
+        }
+    """
+    return {
+        "new": plan_first_seen(ask.get("new") or [], donations, table),
+        "backfill": plan_first_seen(ask.get("blank") or [], donations, table),
+    }
 
 
 def jst_date(iso: str) -> str:
@@ -305,25 +391,56 @@ def main() -> int:
 
     now = datetime.now(timezone.utc).isoformat()
 
-    # **書く前に、新規の どねID をぜんぶ洗い出す。** 1人見つけるたびに
-    # BigQuery を叩くと、新規が5人出た晩に5本走る。まとめて1本にする。
-    unknown = []
-    for _day, rows in sorted(found.items()):
-        for r in rows:
-            if r["pk"] not in table and r["pk"] not in unknown:
-                unknown.append(r["pk"])
+    # **書く前に、聞く相手をぜんぶ洗い出す。** 1人見つけるたびに BigQuery を
+    # 叩くと、新規が5人出た晩に5本走る。まとめて1本にする。
+    #
+    # 聞くのは2種類。新規（表に無い どねID）と、**書類は在るのに
+    # `firstSeenAt` が空の人**。後者を入れていなかったので、画面から先に
+    # 登録された人には永久に入らなかった（#158）。
+    ask = pks_to_ask(found, table)
+    unknown, blank = ask["new"], ask["blank"]
+    pks = unknown + [pk for pk in blank if pk not in unknown]
 
-    first_at: dict = {}
-    if unknown:
+    plan = {"new": {}, "backfill": {}}
+    if pks:
         try:
-            first_at = plan_first_seen(unknown, fetch_first(unknown), table)
+            plan = plan_nightly(ask, fetch_first(pks), table)
         except Exception as e:
             # 引けなくても取り込みは止めない。**欄を空けたまま置く。**
             # `now` に落とすと「こちらが見つけた日」がまた焼き付く。
-            # あとから `python/admin/donors_first_seen.py` で埋められる。
             logger.error("最初の投げ銭の時刻が引けませんでした: %s", str(e)[:200])
         logger.info("新規 %d件のうち、最初の投げ銭が引けたのは %d件",
-                    len(unknown), len(first_at))
+                    len(unknown), len(plan["new"]))
+        logger.info("firstSeenAt が空のまま %d件のうち、引けたのは %d件",
+                    len(blank), len(plan["backfill"]))
+    first_at = plan["new"]
+
+    # ---- 書類は在るのに `firstSeenAt` が空だった人を埋める ----
+    #
+    # **日ごとの繰り返しの外でやる。** あの繰り返しは窓（`--days`）の中で
+    # 投げ銭した人しか歩かないので、そこに混ぜると「窓の外にいる、
+    # いちばん長く空いたままの人」が拾われない。
+    #
+    # 書くのは `firstSeenAt` だけ。紐付け（`channelId` / `handle`）にも
+    # `editedAt` にも触らない——画面から直したぶんを踏まない。
+    filled = 0
+    for pk in blank:
+        at = plan["backfill"].get(pk)
+        if not at:
+            # 引けなかった。**空けたまま置く。** `now` を入れると
+            # 「こちらが見つけた日」が焼き付いて、もう直せなくなる
+            continue
+        filled += 1
+        if not a.dry_run:
+            db.collection("islandDonors").document(pk).set(
+                {"firstSeenAt": at, "updatedAt": now}, merge=True
+            )
+    # **0件でも黙らない。** 分母（何人見て、そのうち何人か）が出ていないと、
+    # 「空の人はいません」と「見ていません」の区別がつかない
+    # （`docs/island-standards.md` §15）
+    logger.info("firstSeenAt が空 %d件 → %s %d件 / 引けず据え置き %d件",
+                len(blank), "入る（--dry-run なので書いていない）" if a.dry_run
+                else "入れた", filled, len(blank) - filled)
 
     fresh = []
 
