@@ -318,10 +318,13 @@ def _with_title(channel_name: str, aliases: list, state: str,
 class FakeApi:
     """偽の口。**叩かれたものをそのまま覚えて、本物と同じ書き方をする。**"""
 
-    def __init__(self, store):
+    def __init__(self, store, shows_gone: bool = True):
         self.store = store
         self.calls: list = []
         self.named: dict = {}
+        #: **配った口が古い日**を真似る。False だと `channelGone` を
+        #: 1人ぶんも返さない（欄そのものが無い）
+        self.shows_gone = shows_gone
 
     def __call__(self, method, path, token, body=None):
         self.calls.append((method, path, body))
@@ -329,13 +332,21 @@ class FakeApi:
             chars = []
             for key, v in self.store["islandCharacter"].items():
                 # `shapeFull`。**オーナーには名乗りと呼び名まで返る**
-                chars.append({
+                row = {
                     "id": key,
                     "channelName": v.get("channelName") or "",
                     "emoji": v.get("emoji") or "",
                     "aliases": list(v.get("aliases") or []),
                     "channelId": v.get("channelId") or None,
-                })
+                }
+                if self.shows_gone:
+                    # **`shapeFull` と同じ条件。**（#159）
+                    # `channelGoneFor` が**いまの名乗りと同じ字のときだけ**
+                    # 立てる。書き換えられた人に古い札を出さないため
+                    gf = v.get("channelGoneFor")
+                    row["channelGone"] = (isinstance(gf, str) and bool(gf)
+                                          and gf == v.get("channelName"))
+                chars.append(row)
             return {"characters": chars, "total": len(chars)}
         if method == "POST" and path.startswith("/characters/"):
             doc = self._post(path, body or {})
@@ -411,10 +422,11 @@ def ck(name: str, cond: bool, got) -> None:
         FAILED.append(name)
 
 
-def run(store: dict, apply: bool = False, limit=None, probe: bool = False):
+def run(store: dict, apply: bool = False, limit=None, probe: bool = False,
+        api=None):
     """`characters_touch.main()` を1回通す。**ネットには出ない。**"""
     client = Fake(store)
-    api = FakeApi(store)
+    api = api or FakeApi(store)
     was = (ct.db, ct.readonly, ct.call, ct.owner_token)
     ct.db = lambda: client
     ct.readonly = readonly
@@ -471,7 +483,11 @@ def main() -> None:  # noqa: C901
 
     print("\n[2] **下見では、1回も書いていない**（前後で数える）")
     ck("Firestore に書かれた回数 0", client.writes == 0, client.writes)
-    ck("口を1回も叩いていない", not api.calls, len(api.calls))
+    # **下見でも口は1回読む**（#159 の1ホップを測るため）。読むだけ
+    ck("口に投げた POST は0本", not api.posts(), len(api.posts()))
+    ck("口から読んだのは GET だけ",
+       [m for m, _p, _b in api.calls] == ["GET"],
+       [m for m, _p, _b in api.calls])
     ck("下見だと言っている", "1バイトも書いていません" in out, True)
     shapes = [x.split("姿 ")[1].split()[0]
               for x in out.splitlines() if "姿 " in x]
@@ -701,7 +717,7 @@ def main() -> None:  # noqa: C901
     ck("終了コード 0", code11 == 0, code11)
     ck("「通す先はありません」と言っている",
        "通す先はありません" in out11, True)
-    ck("口を1回も叩いていない", not api11.calls, len(api11.calls))
+    ck("口に投げた POST は0本", not api11.posts(), len(api11.posts()))
 
     print("\n[12] 図鑑が1件も返らないとき（読めていないのに 0 と言わない）")
     out12, code12, client12, api12 = run({"islandCharacter": {}})
@@ -750,8 +766,11 @@ def main() -> None:  # noqa: C901
     finally:
         ct.probe_one, ct.ca.GAP = was_probe, was_gap
     ck("**1バイトも書いていない**", client16.writes == 0, client16.writes)
-    ck("**口を1回も叩いていない**（probe は apply より強い）",
-       not api16.calls, len(api16.calls))
+    ck("**口に1本も投げていない**（probe は apply より強い）",
+       not api16.posts(), len(api16.posts()))
+    ck("口から読んだのは GET だけ",
+       [m for m, _p, _b in api16.calls] == ["GET"],
+       [m for m, _p, _b in api16.calls])
     ck("下見だと言っている", "1バイトも書いていません" in out16, True)
     ck("**apply を効かせていないことを言う**（押した人に嘘をつかない）",
        "一緒に渡された apply は効かせていません" in out16, True)
@@ -988,6 +1007,245 @@ def main() -> None:  # noqa: C901
     ck("守りを戻したら、足3と足4はまた止まる",
        bool(ct.verdict(w3, n3).bad) and bool(ct.verdict(w4, n4).bad),
        "止まる")
+
+    print("\n[13g] **配った口が、その印を返しているか**（#159 の1ホップ）")
+    # `channelGoneFor` が Firestore に入ったことは、`verdict` が
+    # **Firestore を直に読んで**確かめている（本番 run 35396736705 で3人）。
+    # **だが「配った口が `channelGone` にして返す」ところは、本番で1度も
+    # 測っていない。** 書類に入るのは `channelGoneFor`（字）、口が返すのは
+    # `channelGone`（真偽）で、**別の欄。** 見張り
+    # （`character_alias_selftest.mjs`）が通っていることは、
+    # **本番の配り物の証拠にはならない**（#157）。
+    #
+    # 足は4本。**1つずつ、別の仕込みで測る。**
+
+    G_D1 = "h0" + "0123456789abcdef" * 2
+    G_D2 = "h1" + "0123456789abcdef" * 2
+    G_NEW = "@iremaoshita1"      # 入れ直されたあとの名乗り
+
+    def gbook(name, stamp=None) -> dict:
+        v = {"channelName": name}
+        if stamp is not None:
+            v["channelGoneFor"] = stamp
+        return v
+
+    def gcur(doc, gone=None) -> dict:
+        """口の返した1人。`gone` が None だと**欄そのものが無い**（古い口）"""
+        row = {"id": doc}
+        if gone is not None:
+            row["channelGone"] = gone
+        return row
+
+    def say(book, cur, why=""):
+        """`gone_report` を1回回して、(見立て, 出した字) を取る。"""
+        here = BUF.tell()
+        st = ct.gone_report("いま", book, cur, why)
+        return st, BUF.getvalue()[here:]
+
+    # ---- 足1. 口も Firestore も立っている → **揃っている**
+    b_on = {G_D1: gbook(GONE_H, GONE_H)}
+    st1, lg1 = say(b_on, {G_D1: gcur(G_D1, True)})
+    ck("足1 **揃っていると出る**", st1 == "" and "**揃っています**" in lg1,
+       st1 or "揃っている")
+    ck("足1 **口が立てて返した人数を出している**",
+       "channelGone を立てて返した … 1人" in lg1, True)
+    ck("足1 Firestore 側の人数も並べている",
+       "Firestore に印（channelGoneFor）がある … 1人" in lg1, True)
+
+    # ---- 足2. 口が返さないのに Firestore には在る（名乗りは同じ）
+    #      → **食い違いとして言う。** ここがこの直しの本体
+    st2, lg2 = say(b_on, {G_D1: gcur(G_D1, False)})
+    ck("足2 **食い違いとして赤くする**",
+       st2 == "差" and "食い違っています" in lg2, st2)
+    ck("足2 どちらの向きかまで言う",
+       "立つはずなのに、口は立てていません" in lg2, True)
+    ck("足2 **口の側の話だと言う**（この道具では直さない）",
+       "islandCharacter.ts" in lg2, True)
+
+    # ---- 足3. 名乗りが書き換わっている（古い印・口は false）
+    #      → **食い違いにしない。** `shapeFull` はそう作ってある
+    b_moved = {G_D1: gbook(G_NEW, GONE_H)}
+    st3, lg3 = say(b_moved, {G_D1: gcur(G_D1, False)})
+    ck("足3 **食い違いにしない**",
+       st3 == "" and "食い違っています" not in lg3, st3 or "言っていない")
+    ck("足3 書き換わった人として、別に数える",
+       "名乗りが書き換わった（**口は立てない。食い違いではない**） … 1人"
+       in lg3, True)
+
+    # ---- 足4. どちらも0 → **静かに0**。ただし「口から0人」は 0 ではない
+    b_none = {G_D1: gbook("@futsuu1234")}
+    st4, lg4 = say(b_none, {G_D1: gcur(G_D1, False)})
+    ck("足4 どちらも0なら、静かに0と出る",
+       st4 == "" and "を立てて返した … 0人" in lg4, st4 or "0人")
+    ck("足4 0人のときに赤くしていない",
+       "食い違っています" not in lg4, True)
+    st4b, lg4b = say(b_none, {})
+    ck("足4 **口から1人も返らない回は、0ではなく「測れていない」**",
+       st4b == "盲" and "測れていません" in lg4b, st4b)
+    ck("足4 「0人ではありません」と言っている",
+       "0人ではありません" in lg4b, True)
+    st4c, lg4c = say(b_none, None, "口を叩けませんでした")
+    ck("足4 口を叩けなかった回も「測れていない」", st4c == "盲", st4c)
+
+    # ---- 足5. 立たないはずなのに、口が立てている（逆向き）
+    st5, lg5 = say(b_moved, {G_D1: gcur(G_D1, True)})
+    ck("足5 逆向きの食い違いも言う",
+       st5 == "差" and "立たないはずなのに、口が立てています" in lg5, st5)
+
+    # ---- 足6. 口が `channelGone` という欄を1つも返していない（古い配り物）
+    #
+    # **印が0人の日で測る。** 印が在る日は「立つはずなのに立っていない」の
+    # ほうが先に捕まえるので、この足の守りを測ったことにならない。
+    # 0人の日は誰も食い違わないので、**欄が無いことを見ないと
+    # 「揃っています 0人」と嘘をつく**
+    st6, lg6 = say(b_none, {G_D1: gcur(G_D1)})
+    ck("足6 **配った口が古いと言う**（印が0人の日でも）",
+       st6 == "差" and "1人ぶんも返していません" in lg6, st6)
+
+    # ---- 足7. Firestore に在るのに、口が返さなかった人がいる
+    st7, lg7 = say({**b_on, G_D2: gbook("@futsuu1234")},
+                   {G_D1: gcur(G_D1, True)})
+    ck("足7 **返ってこなかった人ぶんは「測れていない」**",
+       st7 == "盲" and "口が返さなかった人が 1人" in lg7, st7)
+
+    print("\n[13h] **その足は、守りを外すと落ちる**（対照）")
+    # 足を1本ずつ抜いて、**そのたび別の足が落ちる**ところまで見る
+    was_want, was_api_name = ct.gone_want, ct.GONE_API
+    was_blind, was_gtally = ct.gone_blind, ct.gone_tally
+    gcontrols = []
+
+    # (a) 「印が在れば立つはず」に緩める → **足3**（書き換わった人）が落ちる
+    try:
+        ct.gone_want = lambda v: bool(v.get(ct.GONE))
+        a3 = say(b_moved, {G_D1: gcur(G_D1, False)})[0] != ""
+        a1 = say(b_on, {G_D1: gcur(G_D1, True)})[0] == ""
+    finally:
+        ct.gone_want = was_want
+    gcontrols.append(("印が在れば立つはず、に緩める", a3 and a1,
+                      f"足3={a3} / 足1は無事={a1}"))
+
+    # (b) 口の返す欄の名前を読み違える → **足1** が落ちる
+    try:
+        ct.GONE_API = "__betsu_no_ran__"
+        b1 = say(b_on, {G_D1: gcur(G_D1, True)})[0] != ""
+    finally:
+        ct.GONE_API = was_api_name
+    gcontrols.append(("口の返す欄を読み違える", b1, f"足1={b1}"))
+
+    # (c) 「口から0人」を 0 として通す → **足4** が落ちる
+    try:
+        ct.gone_blind = lambda cur, why: ""
+        c4 = say(b_none, {})[0] != "盲"
+    finally:
+        ct.gone_blind = was_blind
+    gcontrols.append(("口から0人を 0 として通す", c4, f"足4={c4}"))
+
+    # (d) 欄が返っていなくても返ったことにする → **足6** が落ちる
+    def _blind_field(book, cur):
+        g = was_gtally(book, cur)
+        g.field_seen = g.seen
+        return g
+
+    try:
+        ct.gone_tally = _blind_field
+        d6 = say(b_none, {G_D1: gcur(G_D1)})[0] == ""
+    finally:
+        ct.gone_tally = was_gtally
+    gcontrols.append(("欄が無くても返ったことにする", d6, f"足6={d6}"))
+
+    # (e) 「立つはずなのに立っていない」を数えない → **足2** が落ちる
+    def _no_missing(book, cur):
+        g = was_gtally(book, cur)
+        g.missing = []
+        return g
+
+    try:
+        ct.gone_tally = _no_missing
+        e2 = say(b_on, {G_D1: gcur(G_D1, False)})[0] == ""
+        e5 = say(b_moved, {G_D1: gcur(G_D1, True)})[0] == "差"
+    finally:
+        ct.gone_tally = was_gtally
+    gcontrols.append(("立っていないほうを数えない", e2 and e5,
+                      f"足2={e2} / 足5は無事={e5}"))
+
+    for label, fell, got in gcontrols:
+        ck(f"{label} → 落ちる", fell, got)
+    ck("守りを戻したら、足1と足3はまた通る",
+       say(b_on, {G_D1: gcur(G_D1, True)})[0] == ""
+       and say(b_moved, {G_D1: gcur(G_D1, False)})[0] == "", "通る")
+    ck("守りを戻したら、足2と足6はまた止まる",
+       say(b_on, {G_D1: gcur(G_D1, False)})[0] == "差"
+       and say(b_none, {G_D1: gcur(G_D1)})[0] == "差", "止まる")
+
+    print("\n[13i] **本物の `main()` でも、通す前と通したあとに数える**")
+    # 印を書いたのは口だが、**書いた口と配る口が同じとは限らない。**
+    # 通す前だけ見ていると、いま書いたぶんが返るかを1度も測らない
+    store13i = gone_store({
+        G_PUT: {"channelName": GONE_H, "emoji": "🍰"},
+        G_OFF: {"channelName": "@tsuresasare1234", "emoji": "🦐",
+                "aliases": ["つれ"], "channelGoneFor": "@tsuresasare1234"},
+    })
+    out13i, code13i, _c13i, _a13i = run(store13i, apply=True)
+    ck("通す前に数えている", "いま、口が返す「もう無い名乗り」の印" in out13i,
+       True)
+    ck("**通したあとにも数えている**",
+       "通したあと、口が返す「もう無い名乗り」の印" in out13i, True)
+    ck("どちらも揃っている", out13i.count("**揃っています**") == 2,
+       out13i.count("**揃っています**"))
+    ck("通したあとも、口は1人ぶん立てて返している",
+       out13i.count("channelGone を立てて返した … 1人") == 2,
+       out13i.count("channelGone を立てて返した … 1人"))
+    ck("終了コード 1（404 の人が通す先に残る）", code13i == 1, code13i)
+
+    print("\n[13j] **配った口が古い日を、本物の `main()` が赤くする**")
+    # 欄そのものを返さない口（配り物が印より古い）
+    store13j = gone_store({
+        G_OFF: {"channelName": "@tsuresasare1234", "emoji": "🦐",
+                "aliases": ["つれ"], "channelGoneFor": "@tsuresasare1234"},
+    })
+    out13j, code13j, c13j, a13j = run(
+        store13j, api=FakeApi(store13j, shows_gone=False))
+    ck("**古い口だと言う**", "1人ぶんも返していません" in out13j, True)
+    ck("1バイトも書いていない", c13j.writes == 0 and not a13j.posts(),
+       c13j.writes)
+    ck("終了コード 1", code13j == 1, code13j)
+
+    # 欄は返すが、**印だけ出てこない**口（`shapeFull` の条件が違う日）
+    class StaleApi(FakeApi):
+        """欄は返すのに、印だけ立たない口。**いちばん静かな壊れ方**"""
+
+        def __call__(self, method, path, token, body=None):
+            r = FakeApi.__call__(self, method, path, token, body)
+            if method == "GET":
+                for row in r["characters"]:
+                    row["channelGone"] = False
+            return r
+
+    store13k = gone_store({
+        G_OFF: {"channelName": "@tsuresasare1234", "emoji": "🦐",
+                "aliases": ["つれ"], "channelGoneFor": "@tsuresasare1234"},
+    })
+    out13k, code13k, c13k, _a13k = run(store13k, api=StaleApi(store13k))
+    ck("**書類には在るのに口が返さない、を捕まえる**",
+       "立つはずなのに、口は立てていません" in out13k, True)
+    ck("食い違いだと言っている", "食い違っています" in out13k, True)
+    ck("1バイトも書いていない", c13k.writes == 0, c13k.writes)
+    ck("終了コード 1", code13k == 1, code13k)
+
+    print("\n[13l] 印が1人もいない日は、静かに0と出る（下見）")
+    out13l, _c, _cl, _a = run(make_store())
+    ck("節は出ている", "口が返す「もう無い名乗り」の印" in out13l, True)
+    ck("0人と出る", "channelGone を立てて返した … 0人" in out13l, True)
+    ck("赤くしていない", "食い違っています" not in out13l
+       and "測れていません" not in out13l, True)
+
+    print("\n[13m] この節でも、名乗りは1文字も出ていない")
+    gout = (lg1 + lg2 + lg3 + lg4 + lg4b + lg4c + lg5 + lg6 + lg7
+            + out13i + out13j + out13k + out13l)
+    ck("もう無い名乗りが出ていない", GONE_H not in gout, "無し")
+    ck("入れ直しの名乗りも出ていない", G_NEW not in gout, "無し")
+    ck("書類IDも生では出ていない",
+       G_D1 not in gout and G_D2 not in gout and G_PUT not in gout, "無し")
 
     print("\n[14] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。
