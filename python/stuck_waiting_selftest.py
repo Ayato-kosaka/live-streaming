@@ -75,6 +75,7 @@ from config import (  # noqa: E402
     ERROR_CODE_YTDLP_FAILED,
     LATE_LANE_MAX_VIDEOS,
     MAX_RETRY_PERIOD_SECONDS,
+    MAX_VIDEOS_PER_RUN,
 )
 from bq.queries import QUERY_SELECT_TARGET_VIDEOS  # noqa: E402
 from models.types import ProcessingResult, Video, VideoStatus  # noqa: E402
@@ -125,6 +126,40 @@ ORDER BY
 LIMIT @max_videos
 """
 
+# 同値の割り振りを決めていなかったころの、窓の外の枠だけを抜き出したもの。
+# **対照のためにそのまま置いてある。**（`QUERY_BEFORE` と同じ扱い）
+#
+# `first_seen_at` ひとつで並べると、同じ値が並んだところで順番が決まらない。
+# sqlite は入れた順に落ち着くので、**入れる順を変えると選ばれる顔ぶれが変わる**
+# ——それがそのまま「BigQuery が約束していない」ことの実演になる。
+QUERY_LATE_BEFORE_TIEBREAK = """
+SELECT
+  video_id,
+  status,
+  first_seen_at,
+  next_retry_at,
+  attempt_count,
+  last_attempt_at,
+  last_error_code,
+  last_error_detail,
+  succeeded_at,
+  yt_dlp_version,
+  title,
+  actual_start_time
+FROM
+  `youtube_chat.videos`
+WHERE
+  (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP())
+  AND status IN ('PENDING', 'WAITING')
+  AND (
+    first_seen_at IS NULL
+    OR first_seen_at < TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 604800 SECOND)
+  )
+ORDER BY
+  first_seen_at ASC
+LIMIT @max_late_videos
+"""
+
 COLUMNS = [
     "video_id", "status", "first_seen_at", "next_retry_at", "attempt_count",
     "last_attempt_at", "last_error_code", "last_error_detail", "succeeded_at",
@@ -170,15 +205,26 @@ def t(days_ago: float) -> str:
     return (NOW - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def row(video_id, status, seen_days_ago, attempt=1, retry_days_ago=None):
-    """本番と同じ形の1行。`retry_days_ago` が負なら「次回はまだ先」。"""
+def row(video_id, status, seen_days_ago, attempt=1, retry_days_ago=None,
+        attempt_days_ago="same"):
+    """本番と同じ形の1行。`retry_days_ago` が負なら「次回はまだ先」。
+
+    `attempt_days_ago` は最後に試した日。既定は `first_seen_at` と同じで、
+    `None` を渡すと**一度も試していない行**になる（同値の割り振りを見るのに要る）。
+    """
+    if attempt_days_ago == "same":
+        last_attempt = t(seen_days_ago)
+    elif attempt_days_ago is None:
+        last_attempt = None
+    else:
+        last_attempt = t(attempt_days_ago)
     return {
         "video_id": video_id,
         "status": status,
         "first_seen_at": t(seen_days_ago),
         "next_retry_at": None if retry_days_ago is None else t(retry_days_ago),
         "attempt_count": attempt,
-        "last_attempt_at": t(seen_days_ago),
+        "last_attempt_at": last_attempt,
         "last_error_code": None,
         "last_error_detail": None,
         "succeeded_at": None,
@@ -685,10 +731,125 @@ def check_watch_legs() -> None:
         os.environ.pop("BREAK", None)
 
 
+# ============================================================================
+# 同値の `first_seen_at` が、枠より多いとき
+# ============================================================================
+
+# 窓の外。**この日に見つかったことにする行を、枠より多く並べる。**
+TIE_DAY = 110
+
+
+def tie_rows(n: int = 26) -> list[dict]:
+    """`first_seen_at` が**全部同じ**行を n 本。違うのは最後に試した日だけ。
+
+    本番がこの形をしている。Discovery の MERGE は `CURRENT_TIMESTAMP()` を
+    1回しか評価しないので、その回に見つけた全部へ同じ値が焼かれる
+    （2026-09-18 の本番で 777行中 261行が同値の組。最大の組は37行）。
+
+    `tie000` がいちばん長く試されていない。`tie999` は一度も試していない。
+    """
+    rows = [
+        row(f"tie{i:03d}", "WAITING", TIE_DAY,
+            retry_days_ago=TIE_DAY - 1, attempt_days_ago=TIE_DAY - i)
+        for i in range(n)
+    ]
+    rows.append(row("tie999", "WAITING", TIE_DAY,
+                    retry_days_ago=TIE_DAY - 1, attempt_days_ago=None))
+    return rows
+
+
+def check_tiebreak() -> None:
+    """**同じ日に見つかった行が枠より多いとき、誰が入るかが決まっているか。**
+
+    2026-09-17 の晩に本番で起きた形。窓の外の候補26本のうち12本が
+    `2026-05-30 10:05:41.218578` でぴったり同値で、枠の残りは11本。
+    **1本（`__Puza5-4q0`）があぶれた。** 順番待ちとしては正しいが、
+    誰があぶれるかは `ORDER BY` が決めていなかった。
+    """
+    print("\n■ 同じ日に見つかった行が、枠より多いとき")
+
+    rows = tie_rows()
+    cap = 5
+
+    got = set(select(QUERY_SELECT_TARGET_VIDEOS, rows, max_late=cap))
+    flipped = set(select(QUERY_SELECT_TARGET_VIDEOS, list(reversed(rows)), max_late=cap))
+
+    say(len(got) == cap, f"同値ばかりでも、枠のぶんだけ選ぶ（{len(got)}／{cap}）")
+    say(got == flipped, "入れる順を逆にしても、選ばれる顔ぶれが変わらない")
+    say("tie999" in got, "一度も試していない行が、まっさきに入る")
+    want = {"tie999", "tie000", "tie001", "tie002", "tie003"}
+    say(got == want,
+        f"同値のときは、長く試されていないものから入る（選ばれたのは {sorted(got)}）")
+
+    print("\n■ 対照：同値の割り振りを決めていなかったころ")
+    before = set(select(QUERY_LATE_BEFORE_TIEBREAK, rows, max_late=cap))
+    before_flipped = set(
+        select(QUERY_LATE_BEFORE_TIEBREAK, list(reversed(rows)), max_late=cap))
+    say(before != before_flipped,
+        "直す前は、入れる順を変えると顔ぶれが変わる（＝並びが決まっていなかった）")
+    say(before != want or before_flipped != want,
+        "直す前は、長く試されていないものから入るとは限らない")
+
+
+# ============================================================================
+# 枠の上限そのものが、黙って 0 になったら
+# ============================================================================
+
+def check_cap_guard() -> None:
+    """**枠の上限が 0 や None でも、SQL は成功して 0 行を返す。**
+
+    `LIMIT 0` は正しい SQL で、エラーにならない。つまり枠が閉じたまま
+    取り込みは緑で終わり、窓の外の取りこぼしは誰にも触られない
+    ——`docs/island-misses.md` #123 が半年かけて起きたのと同じ形が、
+    **設定値ひとつで再現できる。** 口を叩く前に断るのが
+    `bq.repository._check_lane_caps`。
+
+    ここでは2つとも見る。**断りが効くこと**と、
+    **断りを外すと本当に黙って空になること**（＝断りが効いている証拠）。
+    """
+    print("\n■ 枠の上限が黙って 0 になったら")
+    from bq.repository import _check_lane_caps
+
+    for bad, why in (
+        (0, "0（枠を閉じる）"),
+        (None, "None（渡し忘れ）"),
+        (-1, "-1"),
+        (True, "True（bool は本数ではない）"),
+        ("20", '"20"（文字列）'),
+    ):
+        try:
+            _check_lane_caps(MAX_VIDEOS_PER_RUN, bad)
+            say(False, f"窓の外の上限が {why} なら落ちる")
+        except ValueError:
+            say(True, f"窓の外の上限が {why} なら落ちる")
+
+    try:
+        _check_lane_caps(0, LATE_LANE_MAX_VIDEOS)
+        say(False, "窓の内側の上限が 0 でも落ちる")
+    except ValueError:
+        say(True, "窓の内側の上限が 0 でも落ちる")
+
+    try:
+        _check_lane_caps(MAX_VIDEOS_PER_RUN, LATE_LANE_MAX_VIDEOS)
+        say(True, f"いま配ってある値（{MAX_VIDEOS_PER_RUN} / {LATE_LANE_MAX_VIDEOS}）は通る")
+    except ValueError as e:
+        say(False, f"いま配ってある値が通らない: {e}")
+
+    print("\n■ 対照：断りを外すと、枠は黙って空になる")
+    # 断りを外したことにして、SQL だけを 0 で回す。**落ちない。0行が返る。**
+    empty = select(QUERY_SELECT_TARGET_VIDEOS, SAMPLE, max_late=0)
+    say(not (STUCK & set(empty)),
+        f"上限 0 で流すと、窓の外の{len(STUCK)}本は1本も返らない（しかもエラーにならない）")
+    say(set(empty) == {"7puIEFev1a4"},
+        "窓の内側だけが返るので、ログの本数を見ても異常に見えない")
+
+
 def main() -> int:
     print(f"窓は {MAX_RETRY_PERIOD_SECONDS // 86400} 日 / 窓の外の枠は1晩 {LATE_LANE_MAX_VIDEOS} 本")
     check_query()
     check_cap()
+    check_tiebreak()
+    check_cap_guard()
     check_terminates()
     check_waiting_keeps_reason()
     check_watch()
