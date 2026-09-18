@@ -43,11 +43,81 @@
 
 **日ごと消すわけではない。** 街の欄には隣に生きた配信が並んでいるので、
 1枚抜けても街も日付も残る。
+
+## 非公開に戻された配信も、並べない（2026-09-18）
+
+`dead_streams.json` が隠すのは**戻らないもの**（404・録画なし）だけで、
+**403（非公開）はわざと入っていない**——あやとが公開に戻した日に、島が知らない
+まま隠し続けることになるため（`docs/island-misses.md` #139 の決めごと2）。
+**あの考え方は正しい。穴はこちら側の抽出条件だった。**
+
+ここは長いこと `WHERE actual_start_time IS NOT NULL` しか書いていなかったので、
+非公開に戻された配信がそのまま街の欄に並んでいた。2026-09-18 の実測で、
+`/map/azerbaijan` のバクーは37本中13本、`/map/uae` のアブダビは5本中2本が
+**オリーブ色の空箱＋絵の壊れた印**で、押しても開かない。バクーは3分の1が穴。
+
+同じ表から焼いている `chapterStreams.ts` にこれが1本も出ていないのは、
+あちらが `WHERE v.status = 'SUCCEEDED'` で引いているから。
+**同じ守りが2か所に要るのに、片方にしか入れていなかった。**
+
+### `status = 'SUCCEEDED'` は写さない
+
+写すと、**いま公開されている配信まで消える**（2026-09-18 の本番）。
+
+    SUCCEEDED 691本
+    SKIPPED    42本  ← チャットを取らないと決めたぶん。**動画は公開されている**
+    FAILED     37本  ← 37本とも 403（非公開）
+    WAITING     7本  ← これから取り込むぶん。**公開されている**
+
+`status` が言っているのは「**チャットを取り込めたか**」であって
+「**いま見られるか**」ではない。数えているものが違う。
+
+### 見るのは「最後に当てたとき、YouTube が何と言ったか」
+
+yt-dlp の返した字が `last_error_detail` にそのまま残っている
+（37本とも `Video unavailable. This video is private`）。`status` と違って、
+これは**動画そのものに当てた結果**。字は `python/admin/failed_terminate.py` の
+`PRIVATE` から写した——**判定器を2つ持たない**ため、ずれたら見張りが赤くなる
+（`python/viewable_streams_selftest.py`）。
+
+隠すのは、その字が在って、**しかも、もう一度当てる予定が無い**行だけ。
+
+    COALESCE(last_error_detail, '') LIKE '%This video is private%'
+      AND status NOT IN ('PENDING', 'WAITING')
+
+`PENDING` / `WAITING` を外してあるのが、**戻り道との折り合い**。
+
+### 戻ってきたら、ひとりでに戻る
+
+| 起きたこと | 表 | 島 |
+| --- | --- | --- |
+| あやとが公開に戻す | `FAILED` ＋ 非公開の字 | まだ出ない |
+| `failed_reentry` が**押せることを測って** `WAITING` に返す | `WAITING` ＋ 非公開の字 | **次の焼き直しで出る** |
+| 翌晩の取り込みが通る | `SUCCEEDED`（`mark_video_succeeded` が字を消す） | 出たまま |
+| 取り込んだら、まだ非公開だった | `FAILED` / `SKIPPED` ＋ 非公開の字 | また引っ込む |
+
+**島は一覧を1つも持たない。** 隠す相手を書いた表はどこにも無く、毎晩 BigQuery に
+聞き直す。表の言うことが変われば、その晩の焼き直しで島の言うことも変わる
+（#139 の決めごと3「隠す相手を、人が書いた一覧で持たない。毎晩測り直して、
+そのときの答えだけを持つ」）。ここが `dead_streams` の「403 は隠さない」と
+折り合うところ——**あちらが持たないのと同じ理由で、こちらも持たない。**
+
+**ただし `failed_reentry` は人が押す。** 7日を過ぎた `FAILED` は取り込みの
+どちらの枠にも入らない（`python/admin/failed_reentry.py` の1章）ので、
+あやとが公開に戻しただけでは表は動かない。**そこだけは繋がっていない。**
+
+### 数は減る。減るほうが正しい
+
+街の札の「N本の配信」は**その街で見られる配信の本数**。押せないものを数に入れると、
+畳みを開いた人が、数の合わない一覧を見ることになる。
+「その街で何本配信したか」を数えているのは `countryStats.ts` の `lives` のほうで、
+あちらは**外さない**（配信が1本見られないことと、そこで配信したことは別）。
 """
 
 import argparse
 import json
 import logging
+import os
 import re
 import sys
 from pathlib import Path
@@ -62,6 +132,69 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_TS = ROOT / "site" / "content" / "cityStreams.ts"
+
+# ============================================================================
+# いま見られるか（**取り込めたかではない**。頭の docstring を読む）
+# ============================================================================
+
+# yt-dlp が動画そのものに当たって書き残す字。**本番から写した**（2026-09-18 実測）:
+#   ERROR: [youtube] <id>: Video unavailable. This video is private
+# `python/admin/failed_terminate.py` の `PRIVATE` と同じ字でないといけない。
+# ずれたら `python/viewable_streams_selftest.py` が赤くなる（判定器を2つ持たない）
+PRIVATE_MARK = "This video is private"
+
+# **もう一度当てる予定のある行**。ここに居るあいだは隠さない。
+# `failed_reentry` は「押せば見られる」ことを測ってから `WAITING` に返すので、
+# **`WAITING` に非公開の字が残っていることが「戻ってきた」の印**になる
+# （あちらは字を消さない。消すのは取り込みが通ったときの `mark_video_succeeded`）
+RETRYING = ("PENDING", "WAITING")
+
+# 足の名前。**知らない名前を渡したら落とす**（書き間違いで対照が黙らないように）
+LEGS = ("private", "retry")
+
+
+def leg() -> str:
+    """いま抜いている足。`BREAK=` で渡す。ふだんは空。
+
+    対照は足の数だけ要る（`docs/island-standards.md` §15）。
+    `private` を抜くと非公開が素通りし、`retry` を抜くと戻ってきた回が出てこない。
+    """
+    b = (os.getenv("BREAK") or "").strip()
+    if b and b not in LEGS:
+        raise SystemExit(f"BREAK に使えるのは {', '.join(LEGS)} だけです: {b}")
+    return b
+
+
+def sql_public(
+    col: str,
+    project: str = "live-streaming-d3cac",
+    dataset: str = "youtube_chat",
+) -> str:
+    """SQL に差す `AND <col> NOT IN (...)`。**いま見られない回を外す1行。**
+
+    `col` は配信IDの列（別名つきでよい）。`build_dead_streams.sql_not_in()` と
+    同じ形にしてあるのは、**差す側が2つの守りを同じ顔で並べられる**ようにするため。
+
+    **SQL の側で外す。** 「1年前の今日」も「国の代表」も1本しか焼かないので、
+    引いてきてから落とすとその日・その国が丸ごと消える。SQL で外せば次点が繰り上がる
+    （`build_dead_streams.sql_not_in` の注と同じ理由）。
+
+    `COALESCE` を噛ませてあるのは、`NULL LIKE ...` が `NULL` になり、
+    `NOT IN` の中で**行が消えずに判定だけ消える**ため。取り込めた691本は
+    `last_error_detail` が空なので、ここを外すと全部が「分からない」に倒れる。
+    """
+    if leg() == "private":
+        # 守りを丸ごと抜いた写し。**本番が 2026-09-18 までこれだった**
+        return ""
+    where = f"COALESCE(last_error_detail, '') LIKE '%{PRIVATE_MARK}%'"
+    if leg() != "retry":
+        # 抜くと、戻ってきた回（`WAITING` に返ったぶん）まで隠れたままになる
+        where += " AND status NOT IN (" + ", ".join(f"'{s}'" for s in RETRYING) + ")"
+    return (
+        f"AND {col} NOT IN (SELECT video_id "
+        f"FROM `{project}.{dataset}.videos` WHERE {where})"
+    )
+
 
 # タイトルの書き方がぶれる街の言い換え。
 # ローマ字（Tatev / Goris / Glasgow）は、歩く企画の題名がそう書いていたもの。
@@ -113,6 +246,8 @@ def sql_of(project: str = "live-streaming-d3cac", dataset: str = "youtube_chat")
       title
     FROM `{project}.{dataset}.videos`
     WHERE actual_start_time IS NOT NULL
+      -- いま見られない回は、街の欄に並べる前に外す（頭の docstring）
+      {sql_public("video_id", project, dataset)}
     ORDER BY actual_start_time, video_id
     """
 

@@ -56,6 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_city_streams import sql_public  # noqa: E402
 from build_dead_streams import check_written, sql_not_in  # noqa: E402
 from stays import is_country, read_all  # noqa: E402
 
@@ -114,7 +115,11 @@ pv AS (
   -- 押しても見られない配信は、代表に選ばれる前に外す（`docs/island-misses.md` #139）。
   -- **外すのはここだけ。** 上の `agg`（本数・人・コメント）はそのまま数える——
   -- 配信が1本見られないことと、その国でそれだけ配信したことは別のこと
-  FROM b WHERE TRUE {sql_not_in("b.video_id")} GROUP BY g, video_id
+  -- 守りは2枚。上（`dead_streams.json`）は戻らないぶん、下は**いま非公開**のぶん。
+  -- 403 は上にわざと入っていないので、下が無いと非公開の回が国の代表になる
+  -- （`python/build_city_streams.py` の頭）
+  FROM b WHERE TRUE {sql_not_in("b.video_id")}
+    {sql_public("b.video_id", project, dataset)} GROUP BY g, video_id
 )
 SELECT a.g, a.lives, a.people, a.msgs, a.days,
        p.d AS top_d, p.video_id AS top_v, v.title AS top_t, p.people AS top_people
