@@ -34,12 +34,20 @@ BigQuery も資格情報も要らない。**この箱で回る。**
 | 3 | 窓の内側・次回待ち・SUCCEEDED の行 | 拾いかたが変わっている |
 | 4 | 枠の上限 | 1晩に上限を超えて拾う |
 | 5 | 窓の外から拾った行の行き先 | WAITING に戻る（＝また溜まる） |
-| 6 | 見張り（`ingest_watch.judge`）が赤くなる／ならない | 鳴らない、または鳴りっぱなし |
+| 6 | `WAITING` に移っても、なぜ待っているかが残る | 理由が消える（#123 の追記 その2） |
+| 7 | 見張り（`ingest_watch.judge`）が、**2026-09-17 の本番の行**で赤くならない | 直っている最中に赤くなる |
+| 8 | それでも赤くなるべき4つが、1つずつ赤くなる | 鳴らない |
+| 9 | `BREAK=` で足を1本ずつ抜くと、**その足の守っていた形だけ**を見逃す | 4つが同じ足を折っているだけ |
 
 **2 は対照。** 1 だけだと「何でも選ぶクエリ」でも通ってしまう。
 直す前が落ち、直したあとが通るところまで出す。
 
-**6 も対になっている。** 片方だけだと、何にでも赤を出す見張りで通る。
+**7 と 8 は対になっている。** 片方だけだと、何にでも赤を出す見張りで通る。
+7 の仕込みは本番の行をそのまま写したもの（20本＋6本＋1本。題名は写していない）。
+
+**9 は「4つ当てた」を「4つの足を見た」と読まないため**
+（`docs/island-standards.md` §15、`docs/island-misses.md` #128 の決めごと1）。
+足は `stale` / `unfinished` / `lane` / `capacity` / `window` の5本。
 
 ## クエリをどうやって手元で回すか
 
@@ -317,6 +325,60 @@ def check_terminates() -> None:
     say(is_late_lane(None, now), "初回確認の無い行も、窓の外として拾う")
 
 
+def check_waiting_keeps_reason() -> None:
+    """**WAITING に移るとき、なぜ待っているかが残ること**（`island-misses.md` #123）。
+
+    2026-09-17 まで `mark_video_waiting` は `last_error_code` に None を
+    入れていた。本番の `WAITING` 26本が理由を1行も持っていなかったのはそのため。
+    """
+    print("\n■ WAITING に移っても、なぜ待っているかが残るか")
+    from bq.repository import mark_video_waiting
+
+    later = datetime.now(timezone.utc) + timedelta(days=1)
+
+    # 窓の内側でチャットが出なかった晩。**この晩の理由が残る**
+    video = Video(
+        video_id="7puIEFev1a4",
+        status=VideoStatus.PENDING,
+        first_seen_at=datetime.now(timezone.utc) - timedelta(hours=46),
+        attempt_count=2,
+    )
+    mark_video_waiting(video, later, ERROR_CODE_NO_CHAT_FILE, "チャットがまだ出ていない")
+    say(video.status is VideoStatus.WAITING, "WAITING になる")
+    say(video.last_error_code == ERROR_CODE_NO_CHAT_FILE,
+        f"待っている理由が残る（{video.last_error_code}）")
+    say(video.last_error_detail == "チャットがまだ出ていない", "理由の詳細も残る")
+    say(video.next_retry_at == later, "次回の時刻はこれまで通り入る")
+
+    # 理由を渡さなかったとき。**前に分かっていたぶんを消さない**
+    video = Video(
+        video_id="7puIEFev1a4",
+        status=VideoStatus.PENDING,
+        first_seen_at=datetime.now(timezone.utc) - timedelta(hours=46),
+        attempt_count=3,
+    )
+    video.last_error_code = ERROR_CODE_YTDLP_FAILED
+    video.last_error_detail = "前の晩に分かっていたこと"
+    mark_video_waiting(video, later)
+    say(video.last_error_code == ERROR_CODE_YTDLP_FAILED,
+        "理由を渡さなくても、前に分かっていたぶんを消さない")
+    say(video.last_error_detail == "前の晩に分かっていたこと", "詳細も消さない")
+
+    # 対照：直す前の書き方（None で潰す）なら、ここが落ちる
+    print("\n■ 対照：直す前の書き方（None で潰す）なら、ここが落ちる")
+    video.last_error_code = None
+    video.last_error_detail = None
+    say(video.last_error_code is None and video.last_error_detail is None,
+        "潰したあとは理由が残らない（＝直す前はこれを毎晩やっていた）")
+
+    # 呼ぶ側が本当に渡しているか。**残せるようにしただけでは残らない**
+    src = (Path(__file__).resolve().parent / "fetch_chat_data.py").read_text(encoding="utf-8")
+    call = src[src.index("mark_video_waiting("):]
+    call = call[:call.index(")") + 1]
+    say("result.error_code" in call,
+        "呼ぶ側（`fetch_chat_data`）が、その晩の理由を渡している")
+
+
 # ============================================================================
 # 見張り
 # ============================================================================
@@ -332,17 +394,30 @@ def _wrow(vid, status, seen_days_ago, attempt=1, attempt_days_ago=0.4):
     }
 
 
+def _emit(vid, seen_days_ago, attempt_days_ago=0.6, status="SKIPPED", attempt=2):
+    """**窓の外の枠が吐き出した跡**を持つ1行。
+
+    `last_attempt_at - first_seen_at >= 窓` の形。本番の 2026-09-17 は、
+    この形の行が20本できて、それが枠の唯一の足跡だった。
+    """
+    return _wrow(vid, status, seen_days_ago, attempt=attempt,
+                 attempt_days_ago=attempt_days_ago)
+
+
 def check_watch() -> None:
     print("\n■ 見張りが、鳴るべきときに鳴るか")
 
-    # 本番で実際に起きていた形（窓の外に26本）
+    # 本番で実際に起きていた形（窓の外に26本。枠がまだ無く、足跡が1つも無い）
     stuck = [_wrow(f"old{i:02d}", "WAITING", 110) for i in range(26)]
     v = ingest_watch.judge(stuck, now=NOW)
-    say(not v.ok, "窓の外に何ヶ月も残っていたら赤くなる")
+    say(not v.ok, "窓の外に何ヶ月も残っていて、枠が吐き出していないなら赤くなる")
     say(len(v.stuck) == 26, f"止まっている本数を数える（{len(v.stuck)}）")
 
-    # 直した直後。**吐き出している最中は赤くしない**（毎晩狼少年になる）
-    draining = [_wrow(f"old{i:02d}", "WAITING", 8) for i in range(6)]
+    # 直した直後。**吐き出している最中は赤くしない**（毎晩狼少年になる）。
+    # 順番待ちの6本は、初回の試行が窓の内側（見つけた直後）で止まったまま。
+    # 枠の足跡は、今夜片づいた20本のほうに残る
+    draining = [_wrow(f"old{i:02d}", "WAITING", 8, attempt_days_ago=7.9) for i in range(6)]
+    draining += [_emit(f"deta{i:02d}", 110) for i in range(20)]
     v = ingest_watch.judge(draining, now=NOW)
     say(v.ok, "吐き出している最中（窓を出て数日）は赤くしない")
     say(bool(v.notes), "ただし黙ってもいない（何本残っているかを一言出す）")
@@ -367,12 +442,259 @@ def check_watch() -> None:
     say(not ingest_watch.judge(edge, now=NOW).ok, "37時間なら鳴る")
 
 
+# ============================================================================
+# 猶予を `last_attempt_at`（枠の足跡）から測る（2026-09-18。#123 の追記 3）
+# ============================================================================
+
+# 2026-09-17 22:35〜22:38 UTC に、窓の外の枠が初めて回ったときの本番そのもの。
+# **値は `youtube_chat.videos` から写した**（題名は写していない。列も引いていない）。
+# 枠は1晩 20本が上限なので、26本のうち20本が片づいて **6本が次の晩に回った。**
+# その6本で、見張りは 22:52 の `rebake` を failure にしていた。
+PROD_NOW = datetime(2026, 9, 17, 22, 52, 0, tzinfo=timezone.utc)
+
+
+def _prow(vid, status, first_seen, last_attempt, attempt):
+    """本番の行をそのまま写す（時刻は本番の値）。"""
+    return {
+        "video_id": vid,
+        "status": status,
+        "first_seen_at": first_seen,
+        "last_attempt_at": last_attempt,
+        "attempt_count": attempt,
+    }
+
+
+# 枠が吐き出した20本（全部その場で SUCCEEDED か SKIPPED になっている）
+PROD_EMITTED = [
+    _prow("ov0mr-2GCpA", "SUCCEEDED", "2026-02-06 17:44:34", "2026-09-17 22:35:49", 2),
+    _prow("RItASEhIuic", "SUCCEEDED", "2026-03-03 20:07:25", "2026-09-17 22:36:03", 2),
+    _prow("WvBt6Smzezw", "SKIPPED", "2026-03-03 20:07:25", "2026-09-17 22:36:16", 2),
+    _prow("WlqTeMt4_80", "SUCCEEDED", "2026-03-13 20:07:24", "2026-09-17 22:36:24", 2),
+    _prow("H9NWRe8ZSPU", "SUCCEEDED", "2026-03-27 19:42:53", "2026-09-17 22:36:37", 2),
+    _prow("1blvBceH_SE", "SKIPPED", "2026-05-20 20:42:23", "2026-09-17 22:36:50", 2),
+    _prow("JXEHbJX9Szw", "SKIPPED", "2026-05-20 20:42:23", "2026-09-17 22:36:57", 2),
+    _prow("Aea0S3WIZLU", "SKIPPED", "2026-05-20 20:42:23", "2026-09-17 22:37:04", 2),
+    _prow("gpecGbzVBHU", "SKIPPED", "2026-05-20 20:42:23", "2026-09-17 22:37:09", 2),
+    _prow("YFxoJhKOasQ", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:14", 2),
+    _prow("oGgDJrz4vqU", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:22", 2),
+    _prow("m1NPo1F7L7M", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:30", 2),
+    _prow("WaKv25Z-r18", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:37", 2),
+    _prow("4hSM_LCPTRs", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:45", 2),
+    _prow("6ZezMEA3emg", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:37:54", 2),
+    _prow("TFiFG8lrcpA", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:38:01", 2),
+    _prow("5cWmE-KqHLA", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:38:09", 2),
+    _prow("_Azl32caALw", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:38:17", 2),
+    _prow("gse7fek4Cpk", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:38:24", 2),
+    _prow("h2d-assfrh0", "SKIPPED", "2026-05-30 10:05:41", "2026-09-17 22:38:41", 2),
+]
+
+# 枠に入りきらず、次の晩に回った6本。**`last_attempt_at` は初回のまま。**
+# 「行ごとに最後に試してから何日か」で測ると、この6本は 80〜110日になる
+PROD_LEFTOVER = [
+    _prow("__Puza5-4q0", "WAITING", "2026-05-30 10:05:41", "2026-05-30 10:12:40", 1),
+    _prow("zLIQ9yySAas", "WAITING", "2026-06-27 09:26:26", "2026-06-27 09:30:17", 1),
+    _prow("CivhSffnPXE", "WAITING", "2026-06-27 09:26:26", "2026-06-27 09:28:58", 1),
+    _prow("wxaQlQHchYQ", "WAITING", "2026-06-27 09:26:26", "2026-06-27 09:29:52", 1),
+    _prow("UTjTmiiyq00", "WAITING", "2026-07-28 21:02:20", "2026-07-28 21:04:35", 1),
+    _prow("d8UwWnFhjwY", "WAITING", "2026-07-28 21:02:20", "2026-07-28 21:04:10", 1),
+]
+
+# その晩の配信。窓の内側なので、この見張りの対象ではない
+PROD_TONIGHT = [
+    _prow("oBN2tNEj3wA", "WAITING", "2026-09-17 22:35:24", "2026-09-17 22:39:27", 1),
+]
+
+PROD = PROD_EMITTED + PROD_LEFTOVER + PROD_TONIGHT
+
+
+def check_watch_prod() -> None:
+    """**本番の値で、直っている最中に赤くならないこと。**"""
+    print("\n■ 2026-09-17 の本番そのもの（枠が初めて回った晩）")
+
+    v = ingest_watch.judge(PROD, now=PROD_NOW)
+    say(v.ok, f"直っている最中の6本で赤くならない（赤 {len(v.red)} 件）")
+    for line in v.red:
+        print(f"       赤: {line}")
+    say(len(v.draining) == 6, f"6本を「吐き出している最中」と読む（{len(v.draining)}）")
+    say(not v.stuck, f"「止まっている」に1本も入れない（{len(v.stuck)}）")
+    say(bool(v.notes), "黙りもしない（あと何晩で空になるかを出す)")
+    for line in v.notes:
+        print(f"       一言: {line}")
+    say("oBN2tNEj3wA" not in [d["video_id"] for d in v.draining],
+        "その晩の配信（窓の内側）は数に入れない")
+    say(v.lane_last_emit is not None
+        and v.lane_last_emit.strftime("%Y-%m-%d %H:%M") == "2026-09-17 22:38",
+        f"枠の足跡を 22:38 と読む（{v.lane_last_emit}）")
+
+    print("\n■ 対照：直す前の測りかた（`first_seen_at` からの猶予）なら、ここが落ちる")
+    before = _judge_by_first_seen(PROD, PROD_NOW)
+    say(len(before) == 6,
+        f"直す前は同じ6本を「止まっている」と読んで赤にしていた（{len(before)}）"
+        "（ここが0なら、この対照は何も見ていない）")
+
+
+def _judge_by_first_seen(rows, now):
+    """**直す前の判定**（2026-09-17 以前）。対照のためにそのまま置いてある。
+
+    ここを「いまの判定」に書き換えてはいけない。直す前が落ちることを
+    見せるためのもので、これが通ってしまったら対照が死んでいる。
+    """
+    window = timedelta(seconds=MAX_RETRY_PERIOD_SECONDS)
+    grace = window + timedelta(days=ingest_watch.DRAIN_DAYS)
+    out = []
+    for r in rows:
+        if r.get("status") not in ("PENDING", "WAITING"):
+            continue
+        seen = ingest_watch._ts(r.get("first_seen_at"))
+        age = None if seen is None else (now - seen)
+        if age is not None and age < window:
+            continue
+        if age is None or age >= grace:
+            out.append(r["video_id"])
+    return out
+
+
+def check_watch_reds() -> None:
+    """**それでも赤くなるべき3つが、1つずつ赤くなること。**"""
+    print("\n■ それでも赤くなるべきとき（1つずつ）")
+
+    # (1) 取り込みそのものが何晩も走っていない
+    dead = [_prow("a", "SUCCEEDED", "2026-08-01 20:00:00", "2026-09-14 20:00:00", 1)]
+    v = ingest_watch.judge(dead, now=PROD_NOW)
+    say(not v.ok, "(1) 取り込みが何晩も走っていなければ赤")
+    say(any("走っていません" in r for r in v.red), "(1) 理由に「走っていない」と書く")
+
+    # (2) 拾い直しは来ているのに、終わらない（`attempt_count` が伸びていく）
+    #     枠は毎晩当てている（足跡は今夜）。それでも WAITING から動かない行
+    loop = list(PROD_EMITTED)
+    loop.append(_prow("mawaru0001", "WAITING", "2026-03-01 20:00:00",
+                      "2026-09-17 22:38:50", 9))
+    v = ingest_watch.judge(loop, now=PROD_NOW)
+    say(not v.ok, "(2) 枠が当てているのに終わらない行があれば赤")
+    say(any("終わっていない" in r for r in v.red), "(2) 理由に「終わっていない」と書く")
+    say(any("9 回" in r for r in v.red), "(2) 何回試したかを出す（伸びているのが本体）")
+    say(len(v.draining) == 0, "(2) 枠は動いているが、この行は順番待ちではない")
+
+    # (3) `last_attempt_at` が NULL のまま置き去り
+    #     **取り込みそのものは毎晩走っている**（窓の内側は進んでいる）。
+    #     走っていないのは窓の外の枠だけ、という形にして (1) と分ける
+    orphan = [
+        _prow("kesa000001", "SUCCEEDED", "2026-09-17 22:30:00", "2026-09-17 22:31:00", 1),
+        _prow("okizari001", "PENDING", "2026-02-10 20:00:00", None, 0),
+    ]
+    v = ingest_watch.judge(orphan, now=PROD_NOW)
+    say(not v.ok, "(3) 一度も試されていない古い行が置き去りなら赤")
+    say(not any("走っていません" in r for r in v.red),
+        "(3) それを「取り込みが走っていない」と言わない（取り込みは走っている）")
+    say(any("吐き出していない" in r for r in v.red), "(3) 理由は「枠が吐き出していない」")
+    say([s["video_id"] for s in v.stuck] == ["okizari001"], "(3) 置き去りの1本を名指しする")
+
+    # (4) 枠は動いているのに、その行を選んでいない
+    #     #123 が半年止まったのはこの形（枠ではなく、選ぶ条件が落としていた）
+    thin = PROD_EMITTED[:3] + PROD_LEFTOVER          # その晩に3本しか出していない
+    v = ingest_watch.judge(thin, now=PROD_NOW)
+    say(not v.ok, "(4) 枠に空きがあるのに残っていたら赤")
+    say(any("選ぶ条件" in r for r in v.red), "(4) 直す相手が枠ではなく選ぶ条件だと書く")
+    say(len(v.stuck) == 6 and not v.draining, "(4) 6本を「順番待ち」に逃がさない")
+
+    # **上限ちょうど出ていれば、同じ6本でも赤にしない**（本番がこれ）
+    say(ingest_watch.judge(PROD, now=PROD_NOW).ok,
+        "(4) 上限ちょうど出ているなら、残っていても順番待ち")
+
+    # 窓を出たのが枠の**あと**だった行を巻き込まない。枠は 22:38 に回り、
+    # この行が7日になるのは 22:45。見張りが見るのは 22:52 なので、
+    # 「窓の外にいるのに拾われていない」の形にはなるが、素通りではない
+    edge = PROD_EMITTED[:3] + [
+        _prow("kyoudeta1", "WAITING", "2026-09-10 22:45:00", "2026-09-16 20:00:00", 2),
+    ]
+    v = ingest_watch.judge(edge, now=PROD_NOW)
+    say(v.ok, "(4) 窓を出たのが枠のあとだった行を「素通りされた」と数えない")
+    say(len(v.draining) == 1, "(4) その行は順番待ちとして数える（黙って落とさない）")
+
+    # 逆に、枠が回った時点でもう窓の外にいたなら、素通り
+    over = PROD_EMITTED[:3] + [
+        _prow("sudeni0001", "WAITING", "2026-09-10 20:00:00", "2026-09-16 20:00:00", 2),
+    ]
+    say(not ingest_watch.judge(over, now=PROD_NOW).ok,
+        "(4) 枠が回った時点で窓の外だったなら、素通りとして赤")
+
+
+def check_watch_legs() -> None:
+    """**判定の足を1本ずつ抜いて、そのたびに見逃すようになること**
+    （`docs/island-standards.md` §15、`docs/island-misses.md` #128 の決めごと1）。
+
+    「赤くなる形を3つ当てた」は、3つが同じ足を折っているなら1つ。
+    `BREAK=` で足を1本だけ抜き、**その足が守っていた形だけが素通りする**ことを見る。
+    抜いていないときに赤くなることも、同じ行で毎回いっしょに見る。
+    """
+    print("\n■ 対照：判定の足を1本ずつ抜くと、その足の守っていた形だけ見逃す")
+
+    # 足ごとに（抜く足, その足が守っている形, 見出し）
+    cases = [
+        ("stale",
+         [_prow("a", "SUCCEEDED", "2026-08-01 20:00:00", "2026-09-14 20:00:00", 1)],
+         "取り込みが何晩も走っていない"),
+        ("unfinished",
+         PROD_EMITTED + [_prow("mawaru0001", "WAITING", "2026-03-01 20:00:00",
+                               "2026-09-17 22:38:50", 9)],
+         "枠は当てているのに終わらない"),
+        ("lane",
+         [_prow("kesa000001", "SUCCEEDED", "2026-09-17 22:30:00", "2026-09-17 22:31:00", 1),
+          _prow("okizari001", "PENDING", "2026-02-10 20:00:00", None, 0)],
+         "枠が吐き出さないまま置き去り"),
+        ("capacity",
+         PROD_EMITTED[:3] + PROD_LEFTOVER,
+         "枠に空きがあるのに選ばれていない"),
+        ("window",
+         PROD_TONIGHT,
+         "その晩の配信を、窓の外と数えない"),
+    ]
+
+    for leg, rows, what in cases:
+        # 抜く前：赤くなる（`window` だけは向きが逆で、抜く前は「赤くしない」が正しい）
+        was = os.environ.pop("BREAK", None)
+        try:
+            base = ingest_watch.judge(rows, now=PROD_NOW)
+            if leg == "window":
+                say(base.ok, f"[{leg}] 抜く前は「{what}」で赤くしない")
+            else:
+                say(not base.ok, f"[{leg}] 抜く前は「{what}」で赤くなる")
+            os.environ["BREAK"] = leg
+            broke = ingest_watch.judge(rows, now=PROD_NOW)
+            if leg == "window":
+                say(not broke.ok, f"[{leg}] 足を抜くと、窓の内側まで拾って赤になる")
+            else:
+                say(broke.ok, f"[{leg}] 足を抜くと、その形を見逃す（＝この足が効いている）")
+        finally:
+            os.environ.pop("BREAK", None)
+            if was is not None:
+                os.environ["BREAK"] = was
+
+    # 足を全部そろえたときに、本番の6本が通ることも同じところで見る
+    say(ingest_watch.judge(PROD, now=PROD_NOW).ok,
+        "足がそろっていれば、本番の6本は通る（片側だけは対照ではない）")
+
+    # 知らない足を渡したら黙って通さない（旗の書き間違いで対照が消えないように）
+    os.environ["BREAK"] = "shiranai"
+    try:
+        ingest_watch.judge(PROD, now=PROD_NOW)
+        say(False, "知らない足を渡したら落ちる")
+    except SystemExit:
+        say(True, "知らない足を渡したら落ちる（旗の書き間違いで対照が黙らない）")
+    finally:
+        os.environ.pop("BREAK", None)
+
+
 def main() -> int:
     print(f"窓は {MAX_RETRY_PERIOD_SECONDS // 86400} 日 / 窓の外の枠は1晩 {LATE_LANE_MAX_VIDEOS} 本")
     check_query()
     check_cap()
     check_terminates()
+    check_waiting_keeps_reason()
     check_watch()
+    check_watch_prod()
+    check_watch_reds()
+    check_watch_legs()
 
     if checks == 0:
         print("\n数えるものがありませんでした", file=sys.stderr)

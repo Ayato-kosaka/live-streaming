@@ -515,23 +515,39 @@ def mark_video_failed(
 
 def mark_video_waiting(
     video: Video,
-    next_retry_at: datetime
+    next_retry_at: datetime,
+    error_code: Optional[str] = None,
+    error_detail: Optional[str] = None
 ) -> Video:
     """
     動画をリトライ待機状態にマーク
-    
+
+    **「なぜ待っているか」を消さない（2026-09-18）。**
+    ここは 2026-09-17 まで `last_error_code` / `last_error_detail` に None を
+    入れていた。そのせいで本番の `WAITING` 26本は**待っている理由を1行も
+    持っておらず**、半年後に数えた人が理由を測り直すところから始めることに
+    なった（`docs/island-misses.md` #123）。`WAITING` は「次の晩にもう一度
+    試す」という状態であって、「何も起きなかった」ではない。
+
+    `error_code` を渡さなかったときは、**前に分かっていた理由をそのまま残す**
+    （上書きはするが、空では潰さない）。
+
     Args:
         video: 対象の Video オブジェクト
         next_retry_at: 次回リトライ時刻
-        
+        error_code: 今回待つことになった理由（省略時は前の値を残す）
+        error_detail: その詳細（省略時は前の値を残す）
+
     Returns:
         更新された Video オブジェクト
     """
     video.status = VideoStatus.WAITING
     video.next_retry_at = next_retry_at
-    video.last_error_code = None
-    video.last_error_detail = None
-    
+    if error_code is not None:
+        video.last_error_code = error_code
+    if error_detail is not None:
+        video.last_error_detail = error_detail
+
     return video
 
 
