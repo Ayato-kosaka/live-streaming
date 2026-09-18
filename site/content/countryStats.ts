@@ -36,13 +36,14 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "cyprus": { lives: 17, people: 61, msgs: 4547, days: 15, top: ["2025-05-24", "GEthwfE5_vU", "【神回】キプロス・パフォス街歩き！古代遺跡から地中海サンセットまで🌅パフォスの名所ぜんぶ詰め込んで歩いてみた", 17] },
   "czech": { lives: 6, people: 20, msgs: 204, days: 6, top: ["2024-12-09", "QzkTER4Tml4", "チェコ最終日なので、質問コーナーします", 7] },
   "egypt": { lives: 37, people: 69, msgs: 9366, days: 27, top: ["2025-05-04", "cK0tttTZ3as", "GWエジプト祭り2日目 - ルクソール東側 神殿巡りとラクダ飯", 15] },
+  "estonia": { lives: 1, people: 32, msgs: 1104, days: 1, top: ["2026-09-18", "kunXt2sXnFQ", "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン まで", 32] },
   "france": { lives: 19, people: 68, msgs: 2128, days: 17, top: ["2025-03-13", "2fdbFpZgWVs", "ひとり旅が再び始まりました。パリを少し歩きます。", 12] },
-  "georgia": { lives: 393, people: 1278, msgs: 67345, days: 372, top: ["2025-12-23", "xud2lfBsF48", "電波良し、気分良し、活気よし", 63] },
+  "georgia": { lives: 394, people: 1278, msgs: 67487, days: 373, top: ["2025-12-23", "xud2lfBsF48", "電波良し、気分良し、活気よし", 63] },
   "germany": { lives: 14, people: 51, msgs: 1758, days: 11, top: ["2025-03-28", "W5Q-wKTzflY", "前編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃すぎた…", 17] },
   "hungary": { lives: 5, people: 9, msgs: 52, days: 5, top: ["2024-11-24", "aencgvAwwn4", "ハンガリー最終日、別れはいつも突然に😢", 4] },
   "iran-border": { lives: 9, people: 513, msgs: 4779, days: 7, top: ["2026-05-06", "8A-2mqkoAYs", "【8日目】怖いイメージを変えたいので 一緒にご飯食べにイランまで歩く。 8日目 Tatev 29キロ", 211] },
   "jordan": { lives: 37, people: 49, msgs: 5987, days: 29, top: ["2025-05-31", "Jk8jWqh1iQU", "【神回】ペトラ遺跡で限界街歩き！ペトラでシークを抜け、秘境モナストリー、ペトラ飯、夕日まで全部盛り！！", 14] },
-  "latvia": { lives: 3, people: 52, msgs: 2143, days: 2, top: ["2026-09-17", "k4DxGQlkD6U", "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日", 37] },
+  "latvia": { lives: 4, people: 54, msgs: 2202, days: 2, top: ["2026-09-17", "k4DxGQlkD6U", "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日", 37] },
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
   "poland": { lives: 6, people: 57, msgs: 2624, days: 2, top: ["2026-09-12", "hrXYXcu9IDE", "【一日目】親友に会いにスウェーデンまで、ワルシャワまで", 44] },
   "slovakia": { lives: 2, people: 7, msgs: 52, days: 2, top: ["2024-12-03", "uylUHvF_1WM", "チェコに着いたので、魅力を探りませう", 5] },
@@ -67,4 +68,4 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
  * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = 21;
+export const COUNTRIES_WALKED = 22;
