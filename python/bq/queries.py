@@ -131,6 +131,35 @@ WHEN NOT MATCHED THEN
 # ここと `should_skip_after_7days()` がずれると、拾ったのに落とせない
 # （あるいは落とすのに拾えない）行がまた出る。
 #
+# ## 窓の外の並びは、`first_seen_at` だけでは決まらない（2026-09-18）
+#
+# **`first_seen_at` は同じ値がずらりと並ぶ。** Discovery の MERGE が
+# `CURRENT_TIMESTAMP()` を1回だけ評価して、その回に見つけた全部へ同じ値を
+# 焼くため。本番の `videos` 777行のうち **261行が同値の組**（20組）で、
+# いちばん大きい組は **37行が 2026-05-30 10:05:41.218578 でぴったり同じ**。
+#
+# 枠は1晩 `@max_late_videos` 本しか通さないので、**同値の組が枠より大きいと、
+# 誰が入って誰が余るかは `ORDER BY` が決めていない**（BigQuery は同値の
+# 並びを約束しない）。2026-09-17 の晩に実際にそうなった。窓の外の候補26本の
+# うち、
+#
+#   - 9本 … `first_seen_at` が本当に古い（02-06 〜 05-20）
+#   - 12本 … 2026-05-30 10:05:41 で**全部同じ値**。枠の残りは11。**1本あぶれた**
+#
+# あぶれた `__Puza5-4q0` は、残り5本（06-27 の3本・07-28 の2本）と一緒に
+# 翌晩へ回った。**順番待ちとしては正しい。** ただし誰があぶれたかは
+# たまたまで、次の晩も同じ組で争えば**また同じ行が負けうる。**
+#
+# だから並びを**必ず一意に決まるところまで**書く。
+#
+#   1. `first_seen_at` — 古い取りこぼしから
+#   2. `last_attempt_at` — 同着なら**いちばん長く試されていないもの**から。
+#      NULL（一度も試していない）は BigQuery でも sqlite でも ASC の先頭に来る
+#   3. `video_id` — それでも同着なら、**何度流しても同じ答え**になるように
+#
+# 2 を 3 より先に置いているのは、同着の組の中では「放っておかれた順」が
+# 拾う順として正しいから。3 は最後の保険で、**意味ではなく再現性のため**に要る。
+#
 # ソート順:
 # - next_retry_at または first_seen_at の早い順（古いものから処理）
 QUERY_SELECT_TARGET_VIDEOS = f"""
@@ -172,7 +201,9 @@ late AS (
       OR first_seen_at < TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL {MAX_RETRY_PERIOD_SECONDS} SECOND)
     )
   ORDER BY
-    first_seen_at ASC
+    first_seen_at ASC,
+    last_attempt_at ASC,
+    video_id ASC
   LIMIT @max_late_videos
 ),
 -- 2つの枠を足してから並べ直す。**足したものを一度くくる**のは、

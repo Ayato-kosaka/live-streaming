@@ -175,6 +175,34 @@ def upsert_discovered_videos(
 # videos テーブル操作
 # ============================================================================
 
+def _check_lane_caps(max_videos, max_late_videos) -> None:
+    """**枠の上限が 0 や None になっていたら、そこで落とす。**
+
+    `LIMIT 0` は BigQuery にとって正しい SQL で、**0行を返して成功する。**
+    つまり枠が閉じても取り込みは緑で終わり、窓の外の取りこぼしは
+    誰にも触られないまま残る——`docs/island-misses.md` #123 が半年かけて
+    起きたのと同じ形が、**設定値ひとつで再現できる。**
+
+    `None` も同じで、BigQuery のパラメータとしては NULL として通り、
+    `LIMIT NULL` はエラーではなく「上限なし」と読まれる版がある。
+    どちらも**黙って挙動が変わる**ので、口を叩く前に断る。
+
+    ここで落とせば `fetch_chat_data.main()` の `except` が拾って
+    終了コード 1 になり、**その晩の run が赤くなる。**
+    """
+    for name, value in (("max_videos", max_videos), ("max_late_videos", max_late_videos)):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(
+                f"{name} は本数（int）でなければいけません（受け取ったのは {value!r}）。"
+                f"枠が閉じても BigQuery は 0 行を返して成功するので、ここで落とします"
+            )
+        if value < 1:
+            raise ValueError(
+                f"{name} が {value} です。1 以上でなければ、その枠は黙って空になります"
+                f"（窓の外の取りこぼしが二度と拾われません。`python/config.py` を見てください）"
+            )
+
+
 def get_target_videos(
     max_videos: int = MAX_VIDEOS_PER_RUN,
     max_late_videos: int = LATE_LANE_MAX_VIDEOS,
@@ -195,7 +223,12 @@ def get_target_videos(
 
     Returns:
         処理対象の Video オブジェクトのリスト
+
+    Raises:
+        ValueError: どちらかの上限が 1 本未満か、数でないとき
     """
+    _check_lane_caps(max_videos, max_late_videos)
+
     client = get_bigquery_client()
     
     job_config = bigquery.QueryJobConfig(
