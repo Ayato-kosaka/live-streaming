@@ -130,6 +130,19 @@ const thumb = (c: Character, role: Role) => {
   return p.sizes?.["128"] ?? p.sizes?.["256"] ?? p.full ?? null;
 };
 
+/**
+ * **その名前では、もう誰も見つからない**（#158）。
+ *
+ * 口が、書く前に YouTube を引いた結果を書類に残している。ここは
+ * その真偽を読むだけで、**判定はしない**（#551 と同じ。鍵も判定も
+ * 口の中だけに置く。画面で決めると、2か所が別々に古くなる）。
+ *
+ * `Character` の型には無い欄なので、ここで受ける。**足りなければ
+ * 出さない側に倒す**——出ない印より、出たままの印のほうが困る。
+ */
+const gone = (c: Character) =>
+  (c as { channelGone?: boolean }).channelGone === true;
+
 /** 打ったものと当たるか。名前と呼び名の**どちらでも**探せるようにする。 */
 const hit = (c: Character, q: string) => {
   if (!q) return true;
@@ -148,11 +161,18 @@ const hit = (c: Character, q: string) => {
  * （足さないと、その人は投げ銭から引けない）。**何が入ったかを出す。**
  * 入らなかったときは、次に何をすればいいかまで書く。
  */
-const saidName = (n?: Named) => {
+const saidName = (n?: Named, lost = false) => {
   if (n?.state === "added" && n.name) {
     return `入れました。呼び名に「${n.name}」を足しました`;
   }
   if (n?.state === "failed") {
+    /* **名乗りがもう無いときは、中の字を出さない**
+       （`docs/island-standards.md` 6章。「404」は読む人には要らない）。
+       どちらだったかは口が決めていて、ここは受け取るだけ（#158）。 */
+    if (lost) {
+      return "入れました。この名前の人が見つかりません。" +
+        "新しい名前に打ち直してください";
+    }
     return `入れました。表示名は入れられませんでした（${n.why}）。` +
       "呼び名に手で足してください";
   }
@@ -273,6 +293,9 @@ export default function Characters() {
       /* **表示名のことは、1本目の返事で決まる。** 2本目から先は
          同じ人をもう一度保存しているだけで、そこでは引き直さない */
       const named = out.named;
+      /* **印が付いたかも、1本目の返事で決まる。** 2本目から先は
+         同じ人をもう一度保存しているだけで、そこでは引き直さない */
+      const lost = gone(out.character);
       for (const r of roles) {
         out = await putCharacter(
           {
@@ -294,7 +317,7 @@ export default function Characters() {
         return [out.character, ...next];
       });
       setDraft(null);
-      setDone(saidName(named));
+      setDone(saidName(named, lost));
       setMissed(named?.state === "failed");
     } catch (e) {
       if (alive.current) setErr(String(e instanceof Error ? e.message : e));
@@ -343,6 +366,20 @@ export default function Characters() {
             }
           />
         </label>
+
+        {/* **直す場所のすぐ上に出す。** 一覧の札を押して来た人が、
+            どこを直せばいいか探さなくてよいようにする。打ち直したあとは
+            消えるので、`cur`（保存されている姿）ではなく打っている字と
+            見比べて出す。 */}
+        {/* **字は1つの文字列として渡す。** JSX の中で行を折り返すと、
+            改行が空白1つになって「打ち直して、 下の」と間が空く
+            （撮って見つけた）。 */}
+        {cur && gone(cur) && draft.channelName.trim() === cur.channelName && (
+          <p className="ch-gone-why">
+            {"この名前の人が見つかりません。新しい名前に打ち直して、" +
+              "下の「直す」を押してください。"}
+          </p>
+        )}
 
         {/* **絵文字を出してよいのは、ここだけ。** 図鑑の95枚に飾りで重ねて
             いたぶんは外した（`docs/island-design.md` 1章）。ここは絵文字
@@ -554,6 +591,12 @@ export default function Characters() {
                   <span className="ch-cell-none">絵なし</span>
                 )}
                 <span className="ch-cell-name">{c.channelName || "名前なし"}</span>
+                {/* **押す人がこれから何をするかだけ書く**
+                    （`docs/island-standards.md` 6章）。なぜ出ているかは
+                    書かない——押せば、直す欄の上に続きが出る。 */}
+                {gone(c) && (
+                  <span className="ch-gone">名前を入れ直す</span>
+                )}
               </button>
             );
           }}

@@ -414,6 +414,15 @@ export type Got = {
   named: Named;
   /** 引けたチャンネルID。**書類が空のときだけ使う**（#441） */
   channelId: string;
+  /**
+   * **その名乗りが、もう向こうに無い**（404）。
+   *
+   * 時間切れ・切断・締め出しとは**別のもの。** あちらは出口の話で、
+   * こちらが直す。404 は名乗りそのものが変わったか消えたので、
+   * **人がハンドルを入れ直すしかない。** 機械には直せないことが
+   * 分かったのだから、直せる人に見える場所へ置く（#158）。
+   */
+  gone: boolean;
 };
 
 /**
@@ -453,6 +462,7 @@ export async function lookupChannel(channelName: string): Promise<Got> {
   const no = (state: NamedState, why = "") => ({
     named: {state, name: "", why},
     channelId: "",
+    gone: false,
   });
   if (!handle && !cid) return no("skipped");
 
@@ -470,7 +480,8 @@ export async function lookupChannel(channelName: string): Promise<Got> {
       // **締め出されている。** 名前が無いのではない（`channel_alias.py`）
       return {...no("failed", "YouTube に断られた"), channelId};
     }
-    return {named: {state: "added", name: title, why: ""}, channelId};
+    return {named: {state: "added", name: title, why: ""},
+      channelId, gone: false};
   } catch (e) {
     /* **素性を出さない。** このリポジトリは公開で、ログも誰でも読める。
        出すのは「どう駄目だったか」だけで、誰のことかは出さない。
@@ -481,7 +492,10 @@ export async function lookupChannel(channelName: string): Promise<Got> {
        どちらを直すか決められなかった。 */
     const why = whyOf(e);
     logger.warn("channel title lookup failed", why);
-    return {...no("failed", why), channelId: cid ? v : ""};
+    /* **404 だけ、印を付ける側に回す。** 落ちかたを1つの袋に入れると、
+       Functions が塞がれた晩に全員の名乗りが死んだことになる（#157）。 */
+    const gone = e instanceof HttpStatus && e.status === 404;
+    return {...no("failed", why), channelId: cid ? v : "", gone};
   }
 }
 
@@ -621,6 +635,13 @@ function shapeFull(id: string, v: Json): Json {
     channelKeys: Array.isArray(v.channelKeys) ? v.channelKeys : [],
     lookupKeys: Array.isArray(v.lookupKeys) ? v.lookupKeys : [],
     channelId: typeof v.channelId === "string" ? v.channelId : null,
+    /* **その名乗りで引いたら、もう無かった**（#158）。
+       返すのは**いまの `channelName` に付いている印だけ。** 別の
+       ハンドルに書き換えられていれば、古い印は画面に出さない
+       ——書類の掃除が1回遅れても、消えた人の札が残らないようにする。
+       出すのは真偽だけで、**どの名乗りだったかは返さない**（素性）。 */
+    channelGone: typeof v.channelGoneFor === "string" &&
+      !!v.channelGoneFor && v.channelGoneFor === v.channelName,
     editedAt: typeof v.editedAt === "string" ? v.editedAt : null,
     /* 投げ銭のアラートで、絵のかわりに流す短い動画。
        **入っていないのがふつう。** 入っている人だけ、OBS が動画にする
@@ -1043,9 +1064,9 @@ export async function handleCharacters(
        あやとが手で呼び名を消したときも、印がある限り足し直さない
        ——消したのは、消したかったからである。 */
     const done = had.channelTitleFor === channelName && !!had.channelId;
-    const got = done ?
+    const got: Got = done ?
       {named: {state: "already" as NamedState, name: "", why: ""},
-        channelId: ""} :
+        channelId: "", gone: false} :
       await lookupChannel(channelName);
     const {aliases, named} = withChannelTitle(channelName, typed, got.named);
 
@@ -1070,6 +1091,37 @@ export async function handleCharacters(
        付けない——付けると、その人は二度と引き直されない */
     if (named.state === "added" || named.state === "already") {
       patch.channelTitleFor = channelName;
+    }
+
+    /* **もう無い名乗りだったことを、書類に残す（#158）。**
+
+       押した回のログに1行出るだけでは、**図鑑を開いた人に見えない。**
+       `channelId` が空のままなので毎晩の繋ぎ（`channel_alias.py` は
+       IDから引く）の対象にも入らず、**誰も拾わない・赤くもならない・
+       ただ出ないだけ**になる。機械では直せないと分かった時点で、
+       直せる人の目に入る場所へ置く。
+
+       印は**そのとき打たれていた名乗りを持つ。** 真偽の旗にすると、
+       別のハンドルへ入れ直されたあとも古い印が残り続ける。
+
+       落とすのは次の2つのとき。
+       - 引けた／引く必要が無かった（`added` `already` `skipped`）
+       - 印が**いまと違う名乗り**に付いている（書き換えられた）
+
+       **出口の話（時間切れ・切断・断られた）では落とさないし、
+       付けもしない。** 届かなかっただけの晩に印を消すと、次に開いた
+       人には直っているように見える。付けたら、Functions が塞がれた
+       日に全員の名乗りが死んだことになる（#157 の決めごと1）。 */
+    const goneFor = typeof had.channelGoneFor === "string" ?
+      had.channelGoneFor :
+      "";
+    if (got.gone) {
+      patch.channelGoneFor = channelName;
+    } else if (
+      goneFor &&
+      !(goneFor === channelName && got.named.state === "failed")
+    ) {
+      patch.channelGoneFor = admin.firestore.FieldValue.delete();
     }
 
     /* **チャンネルIDは、空のときだけ入れる（#441）。**

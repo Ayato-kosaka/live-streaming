@@ -824,6 +824,39 @@
   overflow-wrap: anywhere;
 }
 
+/* **その名前では、もう誰も見つからない**（#158）。
+
+   本番で3人、名乗りが変わったか消えたかで引けなくなっていた。機械には
+   直せない（ハンドルを当てに行くことになる）ので、**直せる人の目に入る
+   場所に置く**のがここ。押した回のログに1行出るだけだった。
+
+   **付くのは103人のうち数人。** 全部のマスに並ぶ注意書きにしない。
+   マスそのものが押せる（＝直しに行ける）ので、札は**合図だけ**で、
+   赤い枠や影で騒がない。色は `--accent-ink`（字にするときの赤。
+   `tokens.css` に、紙の上で 4.5 を越える値として置いてある）。 */
+.ch-gone {
+  width: 100%;
+  /* マスは 320px で 92px しかない。**7文字が2行に折れても収まる**ように、
+     箱ではなく字で出す（背景の丸を付けると、折れたときに角が欠ける）。 */
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.25;
+  color: var(--accent-ink);
+  overflow-wrap: anywhere;
+}
+
+/* 直す欄のすぐ上に出す続き。**一覧の札を押して来た人が、どこを直せば
+   いいか探さなくていい**ようにここへ置く。1人ぶんしか出ないので、
+   マスの札と違って行を詰めない。 */
+.ch-gone-why {
+  margin: calc(-1 * var(--sp-1)) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--accent-ink);
+  text-wrap: pretty;
+}
+
 .ch-back {
   align-self: flex-start;
   display: inline-flex;
