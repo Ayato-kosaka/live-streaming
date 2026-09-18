@@ -2,6 +2,7 @@
 
     python3 python/selftest_runner.py              # 拾えるもの全部
     python3 python/selftest_runner.py --list       # 何を回すかだけ出す
+    python3 python/selftest_runner.py --list --json  # 同じものを機械で読む形で
     python3 python/selftest_runner.py --only-drill # 対照だけ回して帰る
     python3 python/selftest_runner.py path/to/a_selftest.py …  # 指定のものだけ
 
@@ -35,9 +36,13 @@
 外してよいのは「外に出る・鍵が要る・遅い」ものだけ。毎 PR で落ちる見張りを
 混ぜると**赤が意味を失う**ので、そこは `SKIP` に理由ごと書く。
 
-**拾うのは Python の `*_selftest.py` と、`site/selftest/*_selftest.mjs`。**
-mjs の4本（`chatdown` / `chatter` / `folk` / `roster`）は 2026-09-18 まで
-`rebake.yml` の中でしか走っていなかった——つまり**マージして配ったあと。**
+**拾うのは Python の `*_selftest.py` と、`site/selftest/` と
+`functions/selftest/` の `*_selftest.mjs`。**
+`site` の mjs 4本（`chatdown` / `chatter` / `folk` / `roster`）は
+2026-09-18 まで `rebake.yml` の中でしか走っていなかった——つまり
+**マージして配ったあと。** `functions` の6本（`cards_*` / `clean`）は
+**どこからも走っていなかった**（同じ日に `python/watch_census_selftest.py`
+で数えて出た。値段は `MJS_ROOTS` のところに測って書いてある）。
 
 繋がなかった理由は「`site/node_modules` の `tsc` が要る。`npm ci`（site）は
 Expo 丸ごとで重い」だったが、**その前提が2つとも違っていた。**
@@ -99,6 +104,7 @@ mjs が要るもの（実測で切り分け）:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -109,9 +115,21 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent          # python/
 REPO = HERE.parent
 
-# **mjs の見張りは、ここにしか無い。** 場所が変わったら黙って4本減るので、
-# 下の「表が腐っていないか」で、無ければ数字を1つも出さずに 2 で落とす
-MJS_ROOT = REPO / "site" / "selftest"
+# **mjs の見張りは、ここにしか無い。** 場所が変わったら黙って減るので、
+# 下の「表が腐っていないか」で、無ければ数字を1つも出さずに 2 で落とす。
+#
+# `functions/selftest/` の6本は 2026-09-18 まで**どこからも走っていなかった**
+# （`python/watch_census_selftest.py` を書いて、はじめて名指しで出た）。
+# 守っているのは**公開の口から素性を落とすところ**——`GET /cards` の応答に
+# チャンネルIDが残らないこと（`docs/island-incident-2026-09-14-cards.md`）。
+# #126 の決めごと1「素性・鍵・お金が動くものは、繋ぐ理由を探すほうに倒す」。
+#
+# 値段は測った（2026-09-18）: `functions` の `npm ci` が **CI で 8秒**
+# （この箱では 10秒 / 663 パッケージ）、6本で **CI で 65秒**
+# （1本 10.8秒。この箱では 15秒。**中身ではなく、1本ずつ自分で `tsc` を
+# 通すぶん**）。`CARDS_LIB_DIR` を渡せばその 10秒は消えるが、あれは
+# 「壊した写しで回す」ための口なので、本物の `lib` を指させない
+MJS_ROOTS = (REPO / "site" / "selftest", REPO / "functions" / "selftest")
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300
@@ -277,6 +295,8 @@ def main() -> int:
     ap.add_argument("paths", nargs="*", help="回すものを名指しする（対照を作るとき）")
     ap.add_argument("--root", default=None, help="拾いに行く場所（既定: python/）")
     ap.add_argument("--list", action="store_true", help="回さずに、回すものを並べる")
+    ap.add_argument("--json", action="store_true",
+                    help="`--list` の中身を機械で読む形で出す（`watch_census_selftest.py` が読む）")
     ap.add_argument("--only-drill", action="store_true", help="対照だけ回して帰る")
     ap.add_argument("--no-drill", action="store_true", help="対照を飛ばす（対照の中から呼ぶ用）")
     a = ap.parse_args()
@@ -312,15 +332,17 @@ def main() -> int:
         # そこに本物の `SKIP` を当てても意味がないので、素の拾いだけを見る
         if a.root is None:
             # `python/` の外にある mjs は、rglob では届かない。名指しで足す
-            found += discover(MJS_ROOT)
+            for r in MJS_ROOTS:
+                found += discover(r)
             # **`SKIP` が腐っていないか。** 名前が変わったのに表に残っていると、
             # 「外してある」つもりのものが黙って居なくなる（#125 と同じ形）。
             # mjs の置き場そのものが消えた（名前が変わった）ときも同じ形で
             # **黙って4本減る**ので、ここで一緒に見る
             rot = [n for n in list(SKIP) + list(ARGS)
                    if not (cwd / n).is_file()]
-            if not MJS_ROOT.is_dir():
-                rot.append(f"{label(MJS_ROOT, cwd)}/（mjs の置き場が無い）")
+            for r in MJS_ROOTS:
+                if not r.is_dir():
+                    rot.append(f"{label(r, cwd)}/（mjs の置き場が無い）")
             if rot:
                 for n in rot:
                     print(f"✕ 表に在るのに、そのファイルが無い: {n}")
@@ -336,6 +358,16 @@ def main() -> int:
         return 2
 
     if a.list:
+        if a.json:
+            # **繋がっているかを数える道具（`python/watch_census_selftest.py`）は、
+            # ここから取る。** あちらに glob を書き写させると、こちらの拾いかたを
+            # 変えた日に黙ってずれる（2026-09-18 に実際にずれた）。
+            # 出すのは JSON だけ。ほかの字を混ぜない
+            print(json.dumps({
+                "picked": [label(p, cwd) for p in found],
+                "skipped": dict(skipped),
+            }, ensure_ascii=False, sort_keys=True))
+            return 0
         print(f"[見張り] {len(found)}本"
               + (f"（外したもの {len(skipped)}本）" if skipped else ""))
         for p in found:
