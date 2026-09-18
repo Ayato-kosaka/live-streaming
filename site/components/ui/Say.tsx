@@ -70,9 +70,28 @@ function ways(t: string): string[] {
  *
  * 写しは `visibility: hidden` なので、読み上げにも選択にも出ない。
  */
-export function SayRoom({ t, className }: { t: string; className?: string }) {
+export function SayRoom({
+  t,
+  className,
+  as: As = "p",
+}: {
+  t: string;
+  className?: string;
+  /**
+   * 器の名前。**既に器のある中へ入れるときは `span`。**
+   *
+   * 前置き（`PageHead` の `<p class="phead-lead">`）や章の見出し（`Chapter` の
+   * `<h2>`）は、**器のほうを直せない**——`components/ui/PageShell.tsx` と
+   * `components/home/Chapter.tsx` が持っていて、呼ぶ側からは中身しか渡せない。
+   * そこへ `<p>` を置くと、`<p>` の中に `<p>` が来てブラウザが器を割る。
+   *
+   * `span` でも場所の取り方は変わらない。`.sayroom` は `display: grid` なので、
+   * `span` でも外の器いっぱいの1マスになり、背はいちばん高い写しが決める。
+   */
+  as?: "p" | "span";
+}) {
   return (
-    <p className={className ? `sayroom ${className}` : "sayroom"}>
+    <As className={className ? `sayroom ${className}` : "sayroom"}>
       <span>
         <Say t={t} />
       </span>
@@ -81,6 +100,6 @@ export function SayRoom({ t, className }: { t: string; className?: string }) {
           {w}
         </span>
       ))}
-    </p>
+    </As>
   );
 }

@@ -6,7 +6,7 @@ import Icon from "@/components/ui/Icon";
 import { DEST_COUNT, SHELVES } from "@/content/directory";
 import AllIsleRow from "@/components/chain/AllIsleRow";
 import { ISLE_ROW } from "@/components/chain/route";
-import Say from "@/components/ui/Say";
+import Say, { SayRoom } from "@/components/ui/Say";
 
 export const metadata: Metadata = {
   title: "島のなか ぜんぶ",
@@ -50,7 +50,12 @@ export default function AllPage() {
       {SHELVES.map((s) => (
         <section className="panel paper dxs" key={s.id} id={s.id}>
           <h2>{s.title}</h2>
-          <p className="muted"><Say t={s.note} /></p>
+          {/* 棚の見出しの下の1行。「配信の型」の棚だけ旅かどうかで言い方が変わり
+              （`content/directory.ts` の `say("typesLong")`）、素の `Say` だと
+              焼いた HTML は空白1文字ぶんしか取らないので、画面が出た瞬間に
+              1→2行へ折れて棚が 28.26px 伸びていた（`docs/island-misses.md` #152）。
+              印の付いていない棚は写しが本文と同じ1つになるだけで、背は動かない。 */}
+          <SayRoom className="muted" t={s.note} />
           <ul className="dxl">
             {s.items.map((d) => (
               <li key={d.href} data-q={d.q}>

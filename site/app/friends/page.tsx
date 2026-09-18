@@ -6,7 +6,7 @@ import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
 import { PLAN_BY_DAY } from "@/content/planDays";
 import { FriendsMark } from "@/components/live/art";
-import Say from "@/components/ui/Say";
+import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
 
 export const metadata: Metadata = {
@@ -46,7 +46,9 @@ export default function FriendsPage() {
       <PageHead
         mark={<FriendsMark />}
         title="住んでる人"
-        lead={<Say t={say("friends")} />}
+        /* `/streams` と同じ形。出うる言い方を1マスに重ねて先に場所を取る
+           （`docs/island-misses.md` #152）。 */
+        lead={<SayRoom as="span" t={say("friends")} />}
       />
 
       <div className="pap-mat">
