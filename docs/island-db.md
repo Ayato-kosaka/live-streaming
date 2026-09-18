@@ -492,8 +492,29 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 `last_error_detail` はそのまま残るので、「なぜ終わったか」は読める。
 
 ⚠ **非公開の37本は落とさない。** あやとが公開に戻せるので、終端にすると
-戻した日に島が知らないまま隠し続けることになる。**戻ったときに拾い直す道は、
-まだ無い**（`FAILED` は窓の外の枠に入らない）。
+戻した日に島が知らないまま隠し続けることになる。
+
+##### 公開に戻ったものを受ける道（2026-09-18。#532）
+
+その37本の受け口が `python/admin/failed_reentry.py`
+（`run_admin_script.yml` から `script = failed_reentry`。**既定は下見**）。
+**枠（`QUERY_SELECT_TARGET_VIDEOS`）は1行も変えていない。**
+状態を `WAITING` に戻すだけで、拾い直しは既存の窓の外の枠に任せる。
+
+| | どうやっているか |
+| --- | --- |
+| 公開に戻ったと気づく | `python/dead_stream_watch.py` の `probe_all` を**そのまま呼ぶ**（oembed →`youtubei/v1/player`）。判定器は増やさない。ただし毎晩の `build_dead_streams.py` が見ているのは**島が名指ししている714本**で、37本のうち島に出ているのは15本しかないので、**候補はここで自分で列挙して自分で測る** |
+| 戻す相手 | 非公開の印を持つ **`FAILED` と `SKIPPED`**。`SKIPPED` も見るのは、一度戻して翌晩の取り込みがこけると `handle_failure` が終端へ落とすため（`FAILED` だけ見ていると二度と出てこない） |
+| 何本まで戻すか | **今夜の枠の空きぶん、かつ1回5本まで。** 空きは本物の `QUERY_SELECT_TARGET_VIDEOS` を流して数える（条件を書き写さない）。戻した古い配信は `first_seen_at ASC` で**枠の先頭に並ぶ**ので、37本を一度に戻すと本物の取りこぼしが2晩ぶん後ろへ回る（[`island-misses.md` #149](./island-misses.md)） |
+| 戻したあと | 窓の外の枠が翌晩に拾い、**1本につき1回試して `SUCCEEDED` か `SKIPPED` で終わる。** `WAITING` には戻らない |
+| 毎晩たたかない | **人が押したときだけ走る。** 37本を毎晩ぶら下げると「毎晩赤い見張りは誰も読まない」に戻る（#521） |
+
+書き換えるのは `status` と `next_retry_at` の2つだけ。`attempt_count` /
+`last_attempt_at` は動かさない（**試していないから**）し、
+`last_error_code` / `last_error_detail` も残す。
+終了コードは下見なら 0＝戻せるものは無い / 1＝見つかった / **2＝測れていない**
+——「0本」と「測れなかった」を混ぜない
+（[`island-standards.md` §10](./island-standards.md)）。
 
 内訳の移りかた（777本）:
 
