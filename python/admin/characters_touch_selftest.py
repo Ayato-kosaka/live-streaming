@@ -29,6 +29,8 @@ run は緑で終わって、次に配信で誰かが投げ銭したときに初�
     **空のときだけ**入れる（#155）
   - 絵は**送られてこなかった役どころに触らない**
   - `editedAt` / `editedBy` / `updatedAt` / `channelTitleFor` を毎回書く
+  - 返事に `named`（`state` / `name` / `why`）を乗せる。**引けなかった
+    ときの理由がここにしか無い**ので、そこまで真似る
 
 **引き先だけが偽物。** 置き換えの順も、鍵の焼き直しも、`merge` も本物に合わせる。
 ここを親切に作ると（送られなかった欄を残すなど）、**本物では消えるものが
@@ -275,19 +277,20 @@ def _lookup(channel_name: str) -> tuple:
     """`islandCharacter.ts` の `lookupChannel`。**引き先だけが偽物。**
 
     Returns:
-        (state, 表示名, channelId)
+        (state, 表示名, channelId, why)
     """
     v = channel_name.strip()
     handle = v.startswith("@") and len(v) > 1
     cid = v.startswith("UC") and len(v) == 24
     if not handle and not cid:
         # ふつうの表示名。**引きに行かない**
-        return ("skipped", "", "")
+        return ("skipped", "", "", "")
     hit = YT.get(v)
     if not hit:
         # 届かなかった。**channelId だけは、打たれた字が `UC…` なら分かる**
-        return ("failed", "", v if cid else "")
-    return ("added", hit[0], hit[1])
+        # ——本番でこれが出た（run 35386977128）ので、理由まで真似る
+        return ("failed", "", v if cid else "", "届かなかった")
+    return ("added", hit[0], hit[1], "")
 
 
 def _with_title(channel_name: str, aliases: list, state: str,
@@ -308,6 +311,7 @@ class FakeApi:
     def __init__(self, store):
         self.store = store
         self.calls: list = []
+        self.named: dict = {}
 
     def __call__(self, method, path, token, body=None):
         self.calls.append((method, path, body))
@@ -324,7 +328,9 @@ class FakeApi:
                 })
             return {"characters": chars, "total": len(chars)}
         if method == "POST" and path.startswith("/characters/"):
-            return {"character": {"id": self._post(path, body or {})}}
+            doc = self._post(path, body or {})
+            # 本物は `{character, named}` を返す。**理由はここに乗ってくる**
+            return {"character": {"id": doc}, "named": self.named}
         raise AssertionError(f"偽の口が知らない道: {method} {path}")
 
     def _post(self, path, body):
@@ -340,10 +346,11 @@ class FakeApi:
         done = (had.get("channelTitleFor") == channel_name
                 and bool(had.get("channelId")))
         if done:
-            state, name, got_id = ("already", "", "")
+            state, name, got_id, why = ("already", "", "", "")
         else:
-            state, name, got_id = _lookup(channel_name)
+            state, name, got_id, why = _lookup(channel_name)
         aliases, state = _with_title(channel_name, typed, state, name)
+        self.named = {"state": state, "name": name, "why": why}
 
         patch = {
             "channelName": channel_name,
@@ -380,7 +387,7 @@ def ck(name: str, cond: bool, got) -> None:
         FAILED.append(name)
 
 
-def run(store: dict, apply: bool = False, limit=None):
+def run(store: dict, apply: bool = False, limit=None, probe: bool = False):
     """`characters_touch.main()` を1回通す。**ネットには出ない。**"""
     client = Fake(store)
     api = FakeApi(store)
@@ -394,6 +401,8 @@ def run(store: dict, apply: bool = False, limit=None):
         a["apply"] = True
     if limit is not None:
         a["limit"] = limit
+    if probe:
+        a["probe"] = True
     os.environ["ARGS"] = json.dumps(a, ensure_ascii=False)
     here = BUF.tell()
     code = 0
@@ -520,6 +529,43 @@ def main() -> None:  # noqa: C901
     ck("todo1 の順番・作った日・動画は触られていない",
        all(now[DOC["todo1"]][f] == PEOPLE["todo1"][f]
            for f in ("order", "createdAt", "videoUrl")), "そのまま")
+
+    print("\n[6b] **入らなかった理由が出る**（「入らなかった」で終わらせない）")
+    # 本番で口が 200 を返したのに何も入らず、ログには「入らなかった」しか
+    # 出ていなかった（run 35386977128）。**次に何を直すかが決められない。**
+    ck("引けた人は added と出る", "口の返事: added" in out2, True)
+    ck("**引けなかった人は理由まで出る**",
+       "口の返事: failed（届かなかった）" in out2, True)
+    ck("全員ぶん、口の返事を出している",
+       out2.count("← 口の返事: ") == len(CAN_TOUCH),
+       out2.count("← 口の返事: "))
+    ck("動いた欄を全員ぶん出している",
+       out2.count("      動いた欄: ") == len(CAN_TOUCH),
+       out2.count("      動いた欄: "))
+    moved_blind = ct.verdict(before[DOC["blind"]], now[DOC["blind"]]).moved
+    ck("引けなかった人は**時刻の印しか動いていない**",
+       moved_blind == ["editedAt", "editedBy", "updatedAt"], moved_blind)
+    ck("そう出ている",
+       "動いた欄: editedAt,editedBy,updatedAt" in out2, True)
+    moved_ok = ct.verdict(before[DOC["todo1"]], now[DOC["todo1"]]).moved
+    ck("引けた人は呼び名と channelId と鍵が動く",
+       {"aliases", "channelId", "lookupKeys"} <= set(moved_ok), moved_ok)
+    # **理由の字は、決まり文句だけを通す。** 向こうが作りを変えて素性を
+    # 混ぜはじめた日に、ここから漏れる
+    ck("決まり文句はそのまま出す",
+       ct.reason({"state": "failed", "why": "届かなかった"})
+       == "failed（届かなかった）",
+       ct.reason({"state": "failed", "why": "届かなかった"}))
+    leak = ct.reason({"state": "failed", "name": "もれる なまえ",
+                      "why": "もれる なまえ です"})
+    ck("**表に無い理由は、字を出さずに指紋にする**",
+       "もれる" not in leak, leak)
+    ck("引けた表示名（named.name）も出さない", "もれる" not in leak, leak)
+    ck("知らない state も字を出さない",
+       "@abunai" not in ct.reason({"state": "@abunai", "why": ""}),
+       ct.reason({"state": "@abunai", "why": ""}))
+    ck("返事に named が無くても落ちない",
+       ct.reason(None) == "（返事に named が無い）", ct.reason(None))
 
     # ------------------------------------------------------------------
     # **欄が消えないことを、偽の口に実際に消させて確かめる。**
@@ -656,6 +702,41 @@ def main() -> None:  # noqa: C901
        not any(v in both for v in (UC1, UC2, UC3, UC4)), "無し")
     ck("書類IDも生では出ていない",
        not any(len(v) > 8 and v in both for v in DOC.values()), "無し")
+
+    print("\n[13b] probe —— **Actions の側から引き直す**（1バイトも書かない）")
+    # 口が「届かなかった」と言ったとき、名乗りが死んでいるのか
+    # **Functions の出口が塞がれている**のかが、口の返事だけでは分からない。
+    # 別の場所から同じ名乗りを引いて突き合わせる
+    was_probe, was_gap = ct.probe_one, ct.ca.GAP
+    try:
+        ct.ca.GAP = 0.0
+        ct.probe_one = lambda name, timeout=20.0: (
+            (True, "", 0.4) if name in YT
+            else (False, "届かない: URLError", 12.3))
+        out16, code16, client16, api16 = run(make_store(), apply=True,
+                                             limit=None, probe=True)
+    finally:
+        ct.probe_one, ct.ca.GAP = was_probe, was_gap
+    ck("**1バイトも書いていない**", client16.writes == 0, client16.writes)
+    ck("**口を1回も叩いていない**（probe は apply より強い）",
+       not api16.calls, len(api16.calls))
+    ck("下見だと言っている", "1バイトも書いていません" in out16, True)
+    ck("**apply を効かせていないことを言う**（押した人に嘘をつかない）",
+       "一緒に渡された apply は効かせていません" in out16, True)
+    ck("人数ぶん引いている", out16.count("← 取れた") == len(GETS_ID),
+       out16.count("← 取れた"))
+    ck("引けなかった人は理由まで出る",
+       "← 取れない（届かない: URLError）" in out16, True)
+    # **口の待ちは8秒。** 秒数が無いと「時間切れ」が遅さの話か
+    # 塞がれている話かを分けられない
+    ck("かかった秒数も出る", "/ 12.3秒（口の待ちは8秒）" in out16, True)
+    ck("何人取れたかを出している",
+       f"Actions から取れた: {len(GETS_ID)}人 / {len(CAN_TOUCH)}人" in out16,
+       True)
+    ck("**出口の話だと言える形になっている**",
+       "Functions の出口の話です" in out16, True)
+    ck("図鑑の姿は変わっていない", "← はじめと同じ" in out16, True)
+    ck("終了コード 1（通す先が残ったまま）", code16 == 1, code16)
 
     print("\n[14] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。

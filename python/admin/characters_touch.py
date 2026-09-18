@@ -2,6 +2,8 @@
 
 ARGS 例:
   {}                      … 下見。**1バイトも書かない**
+  {"probe": true}         … 下見に加えて、**Actions の側から同じ名乗りを
+                            引いてみる**（やはり1バイトも書かない）
   {"apply": true}         … 口に通す
   {"apply": true, "limit": 1} … 先に1人だけ
 
@@ -101,18 +103,63 @@ ARGS 例:
 `BREAK=pick|carry|diff|write` で足を1本ずつ抜ける。
 抜いたぶんの対照が落ちることまで見るのが `characters_touch_selftest.py`。
 
+## 「入らなかった」で終わらせない
+
+本番で1人通したら、口は 200 を返したのに表示名も `channelId` も入らなかった
+（2026-09-18、run 35386977128）。ログには「入らなかった」としか出ておらず、
+**なぜ入らなかったかが分からなかった。** 次に何を直すかを決められない。
+
+口は理由を返している（`named.state` と `named.why`）。どちらも
+`islandCharacter.ts` が書く**決まり文句で、素性を含まない**——
+`skipped` / `届かなかった` / `時間切れ` / `題が読めなかった` /
+`YouTube に断られた` / `呼び名がいっぱい`。**それをそのまま出す。**
+
+**ただし素通しはしない。** 表（`WHY_OK`）に無い字が来たら、字ではなく
+指紋と字数を出す。向こうが作りを変えて理由に素性を混ぜはじめた日に、
+ここから漏れるのを防ぐ。
+
+**「姿が変わりました」だけにもしない。** 通したあと、`verdict` が
+**実際に動いた欄の名前**を並べる。時刻の印が付いただけなのか、中身が
+動いたのかは、そこを見ないと読む人に分からない（実際に分からなかった）。
+
+## 理由が「届かなかった」でも、そこで終わらない
+
+口の返事だけでは、**2つが分けられない。**
+
+  - その名乗りがもう無い（チャンネルが消えた・ハンドルが変わった）
+  - **Functions から YouTube に出られていない**（データセンターの宛先は
+    弾かれることがある。`tools/sprites/prod.mjs` の「この箱から出られない
+    先」と同じ構図）
+
+どちらも「届かなかった」に見える。だから `{"probe": true}` で、
+**同じ名乗りを Actions のランナーから引いてみる**（1バイトも書かない）。
+
+| Actions | Functions | 読み |
+| --- | --- | --- |
+| 取れる | 取れない | **Functions の出口が塞がれている** |
+| 取れない | 取れない | その名乗りがもう引けない |
+
+**かかった秒数も一緒に出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
+こちらが 8秒を超えるなら、口の「時間切れ」は**遅さ**の話であって
+塞がれている話ではない。数字が無いと、その2つが分けられない。
+
+**見立てで書かない。** 2か所から引いて、突き合わせてから言う。
+
 ## 出さないもの
 
 **このリポジトリは公開で、Actions のログも誰でも読める。**
 出すのは件数と、`logsafe.mask()` の**指紋**（書類ID・チャンネルID）と、
-絵文字（図鑑が誰にでも返している値）だけ。
-**名前も呼び名も1文字も出さない。**
+絵文字（図鑑が誰にでも返している値）と、**口の返事の理由**（上の表に在る
+決まり文句だけ）と、**動いた欄の名前**だけ。
+**名前も呼び名も1文字も出さない。** 口が返す `named.name`（引けた表示名）も
+**出さない**——あれは素性そのもの。
 """
 
 import hashlib
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass, field
 
 from _fs import ReadOnly, args, db, log, readonly
@@ -121,6 +168,12 @@ from _owner import call, owner_token
 sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from logsafe import mask  # noqa: E402
+
+sys.path.insert(0, __file__.rsplit("/", 1)[0])
+
+# **題の読み方を、2つめの写しにしない。** 同じ規則が2か所にあると、
+# 片方だけ直した日に静かに食い違う（#147 と同じ形）
+import channel_alias as ca  # noqa: E402
 
 CHARACTERS = "islandCharacter"
 
@@ -139,6 +192,47 @@ STAMP = frozenset({"editedAt", "editedBy", "updatedAt", "channelTitleFor"})
 
 # 通したときに増えてよい欄。**減ってよい欄は1つも無い**
 GAIN = frozenset({"aliases", "channelId", "lookupKeys", "images"})
+
+# 口が返す `named.state`（`islandCharacter.ts` の `NamedState`）。
+#   added   … 引けて、呼び名に足した
+#   already … 引けたが、もう入っていた
+#   skipped … 引きに行っていない（打たれた字がハンドルでも UC… でもない）
+#   failed  … 引きに行って、取れなかった
+STATE_OK = frozenset({"added", "already", "skipped", "failed"})
+
+# 口が返す `named.why`。**`islandCharacter.ts` が書く決まり文句だけ。**
+# 素性は入らないと向こうにも書いてあるが、**公開のログに素通しはしない。**
+# 表に無い字が来たら、字そのものではなく指紋と字数を出す
+WHY_OK = frozenset({
+    "", "題が読めなかった", "YouTube に断られた", "時間切れ", "届かなかった",
+    "呼び名がいっぱい",
+})
+
+
+def reason(named) -> str:
+    """口の返事の**理由だけ**を、公開のログに出してよい形にする。
+
+    ここが空だと「入らなかった」としか言えず、**次に何を直すかが
+    決められない。** `state` と `why` は素性を含まない決まり文句なので、
+    表に在るものはそのまま出す。表に無いものは指紋にする。
+
+    Args:
+        named: 口の返事の `named`（`{state, name, why}`）
+
+    Returns:
+        `failed（届かなかった）` のような1行。**`name` は出さない**
+    """
+    if not isinstance(named, dict):
+        return "（返事に named が無い）"
+    state = clean(named.get("state"), 16)
+    why = clean(named.get("why"), 40)
+    if state not in STATE_OK:
+        state = f"（知らない state {fingerprint(state)}）"
+    if why not in WHY_OK:
+        # **決まり文句でないものは、字を出さない。** 向こうが作りを変えて
+        # 素性を混ぜはじめた日に、ここから漏れる
+        why = f"（表に無い理由 {fingerprint(why)} / {len(why)}字）"
+    return f"{state}（{why}）" if why else state
 
 
 def _break(name: str) -> bool:
@@ -297,6 +391,69 @@ def carry(row: dict) -> dict:
     return body
 
 
+# ハンドルの頁。**口（`islandCharacter.ts` の `lookupChannel`）と同じ道。**
+HANDLE_PAGE = "https://www.youtube.com/@{}"
+
+
+def probe_one(name: str, timeout: float = 20.0) -> tuple:
+    """**Actions の側から、同じ名乗りを引いてみる。** 1バイトも書かない。
+
+    口が「入らなかった」と言うとき、理由は2つに割れる。
+
+      - **その名乗りがもう無い**（チャンネルが消えた・ハンドルが変わった）
+      - **Functions から YouTube に出られていない**（データセンターの
+        宛先は弾かれることがある）
+
+    **口の返事だけでは、この2つが分けられない。** どちらも「届かなかった」
+    に見える。だから同じ名乗りを、**別の場所（Actions のランナー）から**
+    引いてみて、突き合わせる。
+
+      | Actions | Functions | 読み |
+      | --- | --- | --- |
+      | 取れる | 取れない | **Functions の出口が塞がれている** |
+      | 取れない | 取れない | その名乗りがもう引けない |
+
+    題の読み方は `channel_alias` のものをそのまま使う（写しを作らない）。
+
+    Args:
+        name: 図鑑に入っている `channelName`（ハンドルか `UC…`）
+        timeout: 1回あたりの待ち（秒）
+
+    Returns:
+        (取れたか, 理由の1行, かかった秒数)。**取れた名前そのものは返さない**
+    """
+    if CHANNEL_ID.match(name):
+        url, pick = ca.FEED.format(name), ca.title_from_feed
+    else:
+        url, pick = HANDLE_PAGE.format(name.lstrip("@")), ca.title_from_page
+    t0 = time.monotonic()
+
+    def out(ok: bool, why: str) -> tuple:
+        # **かかった秒数まで出す。** 口の待ちは 8秒（`YT_TIMEOUT_MS`）で、
+        # ここが 8秒を超えるなら「時間切れ」は遅さの話で、塞がれている
+        # 話ではない。数字が無いと、その2つが分けられない
+        return (ok, why, time.monotonic() - t0)
+
+    try:
+        st, body = ca._get(url, timeout)
+    except Exception as e:  # noqa: BLE001
+        # **どう駄目だったかだけ。** 宛先も名乗りも出さない
+        code = getattr(e, "code", None)
+        return out(False, f"HTTP {code}" if code else
+                   f"届かない: {type(e).__name__}")
+    if st != 200:
+        return out(False, f"HTTP {st}")
+    title = pick(body)
+    if title is None:
+        return out(False, "題の欄が無い（読めなかった）")
+    if not title:
+        return out(False, "題が空")
+    if title.lower() in ca.BAD_TITLE:
+        # **締め出されている。** 名前が無いのではない
+        return out(False, "題が YouTube のまま（締め出し）")
+    return out(True, "")
+
+
 def agrees(was: dict, row: dict) -> bool:
     """口が返した値と、Firestore に入っている値が同じか。
 
@@ -319,6 +476,9 @@ class Diff:
     alias_added: int = 0
     id_added: bool = False
     bad: list = field(default_factory=list)
+    #: **実際に動いた欄の名前。** 「姿が変わった」と言うだけだと、
+    #: 時刻の印が付いただけなのか中身が動いたのかが読む人に分からない
+    moved: list = field(default_factory=list)
 
 
 def verdict(was: dict, now: dict) -> Diff:
@@ -331,9 +491,16 @@ def verdict(was: dict, now: dict) -> Diff:
         now: 通したあとの書類まるごと
 
     Returns:
-        増えた数と、**おかしいところの一覧**（欄の名前だけ。値は入れない）
+        増えた数と、**動いた欄の名前**と、**おかしいところの一覧**
+        （どちらも欄の名前だけ。値は入れない）
     """
-    d = Diff(bad=[])
+    d = Diff(bad=[], moved=[])
+    # **何が動いたかを先に数える。** 文句が出なくても出す——
+    # 「姿が変わりました」だけだと、印が付いただけなのか中身が動いたのかが
+    # 分からない（本番で実際に分からなかった）
+    for f in sorted(set(was) | set(now)):
+        if was.get(f) != now.get(f):
+            d.moved.append(f)
 
     def ng(why: str) -> None:
         if not _break("diff"):
@@ -561,7 +728,7 @@ def touch(src, todo: list, token: str) -> tuple:
                         mask(doc_id))
             continue
         try:
-            call("POST", f"/characters/{doc_id}", token, carry(row))
+            res = call("POST", f"/characters/{doc_id}", token, carry(row))
         except SystemExit as e:
             # `_owner.call` は断られた文に**道（＝書類ID）をそのまま**載せる。
             # 公開のログに出るので、指紋に置き換えて投げ直す
@@ -570,6 +737,12 @@ def touch(src, todo: list, token: str) -> tuple:
             ) from e
         now = ref.document(doc_id).get().to_dict() or {}
         d = verdict(was, now)
+        # **口が何をしたと言っているか。** 入らなかったときに、ここが
+        # 「なぜ入らなかったか」の唯一の出どころになる
+        log.info("  %s %s ← 口の返事: %s",
+                 mask(doc_id), row.get("emoji") or "（絵文字なし）",
+                 reason((res or {}).get("named")))
+        log.info("      動いた欄: %s", ",".join(d.moved) or "（1つも無い）")
         if d.bad:
             log.error("  %s %s **通したら別の欄が動きました**",
                       mask(doc_id), row.get("emoji") or "（絵文字なし）")
@@ -579,8 +752,7 @@ def touch(src, todo: list, token: str) -> tuple:
         people += 1
         aliases += d.alias_added
         ids += 1 if d.id_added else 0
-        log.info("  %s %s ← 呼び名 +%d件 / channelId %s",
-                 mask(doc_id), row.get("emoji") or "（絵文字なし）",
+        log.info("      呼び名 +%d件 / channelId %s",
                  d.alias_added, "入った" if d.id_added else "入らなかった")
     return people, aliases, ids, ""
 
@@ -590,7 +762,9 @@ def touch(src, todo: list, token: str) -> tuple:
 
 def main() -> None:
     a = args()
-    apply = a.get("apply") is True
+    # **`probe` は読むだけ。** `apply` と一緒に渡されても、書く側に倒さない
+    probe = a.get("probe") is True
+    apply = a.get("apply") is True and not probe
     limit = a.get("limit")
     limit = int(limit) if isinstance(limit, (int, float)) else None
 
@@ -637,6 +811,25 @@ def main() -> None:
         log.info("  通す: %s %s", mask(doc_id),
                  clean(book[doc_id].get("emoji"), 16) or "（絵文字なし）")
 
+    if probe and todo:
+        # **口が「入らなかった」と言った理由を、別の場所から測り直す。**
+        # ここで取れて向こうで取れないなら、名乗りではなく**出口**の話
+        log.info("---- Actions の側から、同じ名乗りを引いてみます"
+                 "（1バイトも書きません） ----")
+        got = 0
+        for doc_id in todo:
+            ok, why, sec = probe_one(clean(book[doc_id].get("channelName"),
+                                           MAX_NAME))
+            got += 1 if ok else 0
+            log.info("  %s %s ← %s / %.1f秒（口の待ちは8秒）", mask(doc_id),
+                     clean(book[doc_id].get("emoji"), 16) or "（絵文字なし）",
+                     "取れた" if ok else f"取れない（{why}）", sec)
+            time.sleep(ca.GAP)
+        log.info("Actions から取れた: %d人 / %d人", got, len(todo))
+        if got:
+            log.info("**ここで取れて口で取れないなら、名乗りではなく "
+                     "Functions の出口の話です**")
+
     stopped = ""
     if apply and todo:
         token = owner_token(src)
@@ -649,7 +842,13 @@ def main() -> None:
                       "残りは1人も触っていません", stopped)
     elif not apply:
         log.info("---- 下見です。1バイトも書いていません ----")
-        log.info('通すには {"apply": true} を付けてください')
+        if probe and a.get("apply") is True:
+            # **押した人に嘘をつかない。** probe は読むだけなので、
+            # 一緒に渡された apply は効かせていない
+            log.info("probe は読むだけです。**一緒に渡された apply は"
+                     "効かせていません**（通すなら probe を外してください）")
+        else:
+            log.info('通すには {"apply": true} を付けてください')
 
     # **前後で図鑑を読み直す。** 下見なら1件も変わっていないはず
     after_book = roster(src)
