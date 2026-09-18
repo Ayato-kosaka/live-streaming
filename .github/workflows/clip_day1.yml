@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 330
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: denoland/setup-deno@v2
         with:
@@ -83,7 +83,7 @@ jobs:
 
       - name: 出来たものを渡す
         if: inputs.mode == 'full'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: day1-shorts
           path: out/
@@ -92,7 +92,7 @@ jobs:
 
       - name: コメントの記録を渡す
         if: inputs.mode == 'probe'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: day1-chat
           path: chat/
