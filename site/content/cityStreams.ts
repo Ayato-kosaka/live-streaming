@@ -1068,19 +1068,9 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-06-26"
       },
       {
-        "videoId": "8uPcdx4I0x0",
-        "title": "もくもくすこし",
-        "date": "2025-06-26"
-      },
-      {
         "videoId": "Y0CV6Idu-hU",
         "title": "携帯治ったぁぁ🙌アブダビ🇦🇪がサウナすぎました🧖",
         "date": "2025-06-26"
-      },
-      {
-        "videoId": "r-EuQai-sMo",
-        "title": "【もくもくアプリ作り】第十一話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-06-27"
       },
       {
         "videoId": "UbbfjRJ6KTM",
@@ -1094,11 +1084,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       {
         "videoId": "-arvqz0yAPM",
         "title": "なんとか、、アゼルバイジャン🇦🇿に到着しました、、、天国です😇",
-        "date": "2025-06-29"
-      },
-      {
-        "videoId": "-BsqaHWdUpI",
-        "title": "【もくもくアプリ作り】第十二話 アプリ作ったり、ショート動画作ったり",
         "date": "2025-06-29"
       },
       {
@@ -1122,19 +1107,9 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-01"
       },
       {
-        "videoId": "uOJikeLFTfU",
-        "title": "【もくもくアプリ作り】第十二話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-02"
-      },
-      {
         "videoId": "znswyyM9yMQ",
         "title": "アゼルバイジャン🇦🇿首都を歩いてみました",
         "date": "2025-07-02"
-      },
-      {
-        "videoId": "-LJHF7G97A0",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-03"
       },
       {
         "videoId": "5NocPi8ceUE",
@@ -1142,64 +1117,14 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-07-03"
       },
       {
-        "videoId": "uicj5rra3V8",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "YbPvEzaa9eY",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "WZndyh3P_nQ",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "M1P6m8TRjG0",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "U4pyOXYSLZo",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "Oi6nkCEfDNw",
-        "title": "アゼルバイジャン🇦🇿のスーパー行きます",
-        "date": "2025-07-04"
-      },
-      {
-        "videoId": "7YJHsTCrxko",
-        "title": "あやとと 海外ぶらら がライブ配信中！",
-        "date": "2025-07-04"
-      },
-      {
         "videoId": "I-9ORIGJG-w",
         "title": "なにこれの新バージョンの紹介します。スーパー行きました。",
         "date": "2025-07-04"
       },
       {
-        "videoId": "Tfl2I6Z6Gis",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-05"
-      },
-      {
-        "videoId": "IFit2OMxHlA",
-        "title": "【もくもくアプリ作り】第十三話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-05"
-      },
-      {
         "videoId": "YvdLoprqbqE",
         "title": "アゼルバイジャン🇦🇿で詐欺に遭いました。最後の長時間配信は断念します。",
         "date": "2025-07-05"
-      },
-      {
-        "videoId": "GUVxac75B94",
-        "title": "【もくもくアプリ作り】第十四話 アプリ作ったり、ショート動画作ったり",
-        "date": "2025-07-06"
       },
       {
         "videoId": "9Q1ghbbZDqs",

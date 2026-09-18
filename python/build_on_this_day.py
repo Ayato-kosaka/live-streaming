@@ -47,6 +47,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_city_streams import sql_public  # noqa: E402
 from build_dead_streams import blocked, check_written, sql_not_in  # noqa: E402
 from stays import read_all  # noqa: E402
 
@@ -87,6 +88,12 @@ def fetch_videos() -> list:
       -- 押しても見られない配信は、代表に選ばれる前に外す。
       -- そうすると同じ日の2番目が代表になり、**その日は年表に残る**
       {sql_not_in("video_id")}
+      -- 戻らないぶん（上）と、いま非公開のぶん（下）で守りが2枚。**役目が違う。**
+      -- 上は毎晩測った答え（`dead_streams.json`）、下は取り込みが当てたときの
+      -- YouTube の返事（`videos.last_error_detail`）。403 は上にわざと入っていない
+      -- ので、下が無いと非公開の回がその日の代表になる
+      -- （`python/build_city_streams.py` の頭）
+      {sql_public("video_id", BQ_PROJECT_ID, BQ_DATASET)}
     ),
     c AS (
       SELECT video_id, COUNT(*) AS n
