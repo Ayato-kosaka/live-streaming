@@ -561,6 +561,38 @@ def main() -> None:
     finally:
         ca._get, ca.GAP = was_get, was_gap
 
+    print("\n[10c] 時間切れで打ち切ったぶんは「取れなかった」に積む")
+    small = {DOC[k]: {"emoji": "", "channel": "", "channelId": CID[k],
+                      "aliases": [], "keys": set()}
+             for k in ("plain", "jp")}
+    small[DOC["noid"]] = {"emoji": "", "channel": "", "channelId": "",
+                          "aliases": [], "keys": set()}
+    cut = ca.fetch_all(small, fetch=lambda cid: ca.Got(ca.GOT, "な まえ"),
+                       budget=-1.0)
+    ck("時間切れのぶんは BLIND",
+       all(cut[DOC[k]].kind == ca.BLIND for k in ("plain", "jp")),
+       sorted({v.kind for v in cut.values()}))
+    ck("**GOT に畳んでいない**",
+       not any(v.kind == ca.GOT for v in cut.values()), "畳んでいない")
+    ck("channelId が無い人は NOID のまま（時間切れと混ぜない）",
+       cut[DOC["noid"]].kind == ca.NOID, cut[DOC["noid"]].kind)
+    full = ca.fetch_all(small, fetch=lambda cid: ca.Got(ca.GOT, "な まえ"),
+                        budget=60.0)
+    ck("時間があれば取れる",
+       all(full[DOC[k]].kind == ca.GOT for k in ("plain", "jp")),
+       sorted({v.kind for v in full.values()}))
+
+    print("\n[10d] 締め出しが解けたら、休みの長さを戻す")
+    ca._cool_span = ca.COOL_FIRST
+    ca._cool_down()
+    ca._cool_down()
+    grew = ca._cool_span
+    ca._cool_ok()
+    ck("断られるたび休みが延びる", grew > ca.COOL_FIRST, f"{grew:.0f}秒")
+    ck("通ったら、いちばん短いところへ戻る",
+       ca._cool_span == ca.COOL_FIRST, f"{ca._cool_span:.0f}秒")
+    ca._cool_until = 0.0
+
     print("\n[11] **対照の足を1本ずつ抜く。抜いたら 2 で止まる**")
     # 本物の書き方（`python ＜名前＞.py`）で、別のプロセスとして回す。
     # 同じプロセスで環境変数を立てると、前の回の状態が残る

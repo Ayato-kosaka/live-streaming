@@ -4,6 +4,7 @@ ARGS 例:
   {}                  … 下見。**1バイトも書かない**
   {"apply": true}     … 呼び名として足す
   {"apply": true, "limit": 5} … 先に少しだけ
+  {"budget_min": 10}  … 名前を引くのに使う時間の上限（既定 25分）
 
 ## 何が起きているか
 
@@ -167,6 +168,12 @@ TRIES = 3
 COOL_FIRST = 120.0
 COOL_MAX = 600.0
 
+# **引きに使ってよい時間ぜんたい（秒）。** 締め出しが続くと、休みは
+# 2分→4分→8分→10分と延びる。102人ぶん当てるあいだ延び続けると、
+# 1回の実行が何時間にもなる。ここで打ち切って、**残りは「取れなかった」**
+# に積む。0人だけ取れて終わるより、何人ぶん見られなかったかが出るほうがよい
+BUDGET = 25 * 60.0
+
 _cool_until = 0.0
 _cool_span = COOL_FIRST
 
@@ -185,6 +192,16 @@ def _cool_down() -> None:
     global _cool_until, _cool_span
     _cool_until = max(_cool_until, time.monotonic() + _cool_span)
     _cool_span = min(COOL_MAX, _cool_span * 2)
+
+
+def _cool_ok() -> None:
+    """通った。**次に断られたときの休みを、いちばん短いところへ戻す。**
+
+    戻さないと、1度 10分まで延びた休みがそのまま最後まで付いて回る。
+    締め出しは解けるものなので、解けたことを忘れない。
+    """
+    global _cool_span
+    _cool_span = COOL_FIRST
 
 
 def _wait_cool() -> None:
@@ -368,6 +385,7 @@ def fetch_one(cid: str, timeout: float = 20.0, tries: int = TRIES) -> Got:
                 last = "題の欄が無い（読めなかった）"
                 continue
             if name and name.lower() not in BAD_TITLE:
+                _cool_ok()
                 return Got(GOT, clean(name, MAX_NAME))
             if name:
                 # **締め出されている。** 名前が無いのではない
@@ -387,20 +405,28 @@ def fetch_one(cid: str, timeout: float = 20.0, tries: int = TRIES) -> Got:
     return Got(BLIND, why=last or "届かない")
 
 
-def fetch_all(book: dict, fetch=None) -> dict:
+def fetch_all(book: dict, fetch=None, budget: float = BUDGET) -> dict:
     """図鑑の全員ぶん。**1人ずつ順に当てる。**
 
     同時に当てると、そのぶん締め出される。feed は 668バイトなので
     順に当てても 100人で2分かからない（`dead_stream_watch.py` の
     「速くしようとすると、速くなるのではなく測れなくなる」）。
+
+    **時間で打ち切る。** 締め出しが続くと休みが延びて、1回が何時間にもなる。
+    打ち切ったぶんは `BLIND`＝**取れなかった**に積む。`GOT` に畳まない。
     """
     fetch = fetch or fetch_one
     out: dict = {}
     total = len(book)
+    end = time.monotonic() + budget
     for i, (doc_id, v) in enumerate(sorted(book.items()), 1):
         cid = v["channelId"]
         if not cid:
             out[doc_id] = Got(NOID, why="channelId が無い")
+            continue
+        if time.monotonic() >= end:
+            # **時間切れ。** 見ていないのであって、名前が無いのではない
+            out[doc_id] = Got(BLIND, why="時間切れ（締め出しで休みが延びた）")
             continue
         out[doc_id] = fetch(cid)
         if i % 20 == 0:
@@ -681,6 +707,8 @@ def main() -> None:
     apply = a.get("apply") is True
     limit = a.get("limit")
     limit = int(limit) if isinstance(limit, (int, float)) else None
+    budget = a.get("budget_min")
+    budget = float(budget) * 60 if isinstance(budget, (int, float)) else BUDGET
 
     # **対照が先。** 外れたら、本物の数字を1つも出さずに 2 で止まる
     bad = run_control()
@@ -702,7 +730,7 @@ def main() -> None:
     before = shape(book)
     log.info("図鑑（はじめ）: %d人 / 姿 %s", len(book), before)
 
-    got = fetch_all(book)
+    got = fetch_all(book, budget=budget)
     todo, n, blocked = plan(book, got)
 
     log.info("名前を取りに行った結果")
