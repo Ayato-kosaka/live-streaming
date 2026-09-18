@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import Say from "@/components/ui/Say";
+import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { STATS_FALLBACK } from "@/content/site";
@@ -47,7 +47,12 @@ export default function StreamsPage() {
       <PageHead
         icon="tower-studio"
         title="配信"
-        lead={<Say t={say("streams")} />}
+        /* 前置きは旅かどうかで長さが変わる（ふだん28文字／旅のあいだ34文字）。
+           `Say` を素で置くと焼いた HTML は空白1文字ぶんしか場所を取らず、
+           画面が出た瞬間に幅390で 1→2行、幅320で 1→3行に折れて下が逃げた
+           （`docs/island-misses.md` #151 #152）。器（`p.phead-lead`）は
+           `PageHead` が持っていて触れないので、中を `span` の `SayRoom` にする。 */
+        lead={<SayRoom as="span" t={say("streams")} />}
       />
 
       {/* 番組表と数えたものは「やぐらに貼ってある紙」。押すものではないので、

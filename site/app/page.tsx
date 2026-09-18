@@ -18,7 +18,7 @@ import { DAYS, DAY_PAGES, cityName, dayHref, dayName } from "@/content/nordic";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
-import Say from "@/components/ui/Say";
+import Say, { SayRoom } from "@/components/ui/Say";
 
 /**
  * トップページ。
@@ -273,8 +273,13 @@ export default function Home() {
         <Chapter
           id="watch"
           kicker="見にいく"
-          title={<Say t={HOME.tonight} />}
-          note={<Say t={HOME.tonightNote} />}
+          /* 章の見出しと、その下の1行。**旅かどうかで長さが変わる。**
+             見出しは「今夜も22時から」（7文字）と「旅のあいだも配信してます」（12文字）で、
+             24px の字だと幅320で 1行→2行に折れ、章の頭が 31.67px 下がっていた
+             （`docs/island-misses.md` #152）。器（`<h2>` と `<p>`）は `Chapter` が
+             持っていて触れないので、中を `span` の `SayRoom` にして1マスに重ねる。 */
+          title={<SayRoom as="span" t={HOME.tonight} />}
+          note={<SayRoom as="span" t={HOME.tonightNote} />}
         >
           {/* **直近の2本。手で選んだ見本ではない。**
               ここは「クッキング配信の代表」として選んだ見本の先頭2本を出していて、
