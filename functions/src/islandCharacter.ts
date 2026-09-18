@@ -345,6 +345,28 @@ function unescapeXml(s: string): string {
 }
 
 /**
+ * 向こうが断った、という落ち方。**「届かなかった」と混ぜない。**
+ *
+ * 404 は**その名乗りがもう無い**——ハンドルが変わったか消えたので、
+ * 人が直せる話。届かないのは**出口**の話で、直すのはこちら側。
+ * 同じ字で返すと、押した人がどちらを直せばいいか決められない
+ * （2026-09-18 に実際に決められなかった）。
+ */
+class HttpStatus extends Error {
+  /** 返ってきた番号。 */
+  status: number;
+
+  /**
+   * @param {number} status HTTP の番号
+   */
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.name = "HttpStatus";
+    this.status = status;
+  }
+}
+
+/**
  * 1本取ってきて、表示名とチャンネルIDを読む。**そろった時点でやめる。**
  *
  * ハンドルの頁は 1.69MB あるが、2つとも 757KB 目までに居る。最後まで
@@ -366,7 +388,7 @@ async function readYt(
       signal: ctl.signal,
       headers: {"User-Agent": YT_UA, "Accept-Language": "ja,en;q=0.8"},
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    if (!r.ok) throw new HttpStatus(r.status);
     if (!r.body) return pick(await r.text());
     const dec = new TextDecoder("utf-8");
     let buf = "";
@@ -393,6 +415,24 @@ export type Got = {
   /** 引けたチャンネルID。**書類が空のときだけ使う**（#441） */
   channelId: string;
 };
+
+/**
+ * 落ちかたを、**押した人が次に何をするかで分けた1行**にする。
+ *
+ * ここに素性は入らない（入れてはいけない）。出すのは種類だけ。
+ * @param {unknown} e 落ちたもの
+ * @return {string} 人が読む1行
+ */
+function whyOf(e: unknown): string {
+  if (e instanceof Error && e.name === "AbortError") return "時間切れ";
+  if (e instanceof HttpStatus) {
+    /* **404 だけは別の字。** その名乗りがもう無い＝人が直せる話 */
+    return e.status === 404 ?
+      "見つからない（404）" :
+      `断られた（HTTP ${e.status}）`;
+  }
+  return "届かなかった";
+}
 
 /**
  * 打たれた字から、YouTube の表示名とチャンネルIDを引く。
@@ -433,10 +473,13 @@ export async function lookupChannel(channelName: string): Promise<Got> {
     return {named: {state: "added", name: title, why: ""}, channelId};
   } catch (e) {
     /* **素性を出さない。** このリポジトリは公開で、ログも誰でも読める。
-       出すのは「どう駄目だったか」だけで、誰のことかは出さない */
-    const why = e instanceof Error && e.name === "AbortError" ?
-      "時間切れ" :
-      "届かなかった";
+       出すのは「どう駄目だったか」だけで、誰のことかは出さない。
+
+       **404 を「届かなかった」に畳まない。** 畳むと、押した人には
+       「その名乗りがもう無い（人が直す）」と「出口が塞がれている
+       （こちらが直す）」が同じ字に見える。2026-09-18 に、それで
+       どちらを直すか決められなかった。 */
+    const why = whyOf(e);
     logger.warn("channel title lookup failed", why);
     return {...no("failed", why), channelId: cid ? v : ""};
   }
