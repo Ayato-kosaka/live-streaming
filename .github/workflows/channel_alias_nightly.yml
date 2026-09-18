@@ -1,0 +1,214 @@
+name: 図鑑の呼び名を追いつかせる
+
+# 図鑑（`islandCharacter`）に載っている人の **YouTube の表示名（チャンネル名）**を
+# 引いて、その字をそのまま `aliases` に足す。中身は `python/admin/channel_alias.py`
+# ——判定は1バイトも変えていない。ここがやるのは**毎晩ひとりでに回すこと**だけ。
+#
+# ## なぜ要るか — 1回押して終わりにすると、明日また同じ穴が開く
+#
+# ドネルは投げ銭の名乗りに**チャンネル名を初期値として入れてくる。**
+# ところが図鑑の引き当ては完全一致（`lookupKeys` の array-contains、
+# `normKey` は空白を残す）なので、**チャンネル名そのもの**が入っていないと
+# 当たらない（`docs/island-misses.md` #147）。
+#
+# 2026-09-18 に `#539` で 38人 / 38件 足して、「もう同じ字で引ける」が
+# 30 → 68人になった。**それは、その日いた人のぶんだけ。**
+#
+#   - 図鑑に**新しく入る人**の `channelName` はハンドル（`@…`）。
+#     入った翌日から、その人はドネルから引けない
+#   - 本人が**チャンネル名を変えた**人も、その日から引けなくなる
+#   - あの回で**取れなかった2人**（締め出し）は、誰かが手で押さないと入らない
+#
+# どれも**赤くならない。** 配信の画面に絵が出ないだけで、run は緑で終わる。
+# だから「押した人がいる日だけ直る」形をやめて、毎晩の後ろに繋ぐ。
+#
+# ## 繋ぎかた — cron は保険。本体は `workflow_run`
+#
+# このリポジトリで定時実行が実際に発火した実績があるのは
+# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`（20:30 UTC）
+# の古参2本だけで、しかも**1時間49分〜3時間32分遅れて**走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は翌朝まで発火しなかった。
+# **cron を当てにしない**（`CLAUDE.md`、`docs/island-misses.md` #125）。
+#
+# **`conclusion` は見ない。** `Fetch Doneru Donations` は落ちた回にも後段まで
+# 走るし、`Fetch YouTube Chat Data` のほうは「表に無い どねID が投げ銭してきた」
+# 晩に最後の step が `exit 1` で終わる——あれは失敗ではなく**呼び出し**。
+# 成功のときだけ繋ぐと、**呼び出しの出た晩だけ呼び名が追いつかない。**
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの `name:` を書き換えると
+# **黙って切れる。赤くならない。走らなくなるだけ。** それを見張るために
+# `python/channel_alias_nightly_selftest.py` が、ここに書いた名前と
+# 実在するファイルの `name:` を**字で突き合わせる**（食い違ったら PR で赤くなる）。
+#
+# ## 繋ぎ先を `Fetch Doneru Donations` の1本だけにした理由
+#
+# `rebake.yml` は2本に繋いである（片方が消えても止まらないように）。
+# ここは1本にしてある。**外（YouTube）を100人ぶん叩くから。**
+#
+# 1人1秒の間合いで図鑑ぜんぶを引くので、1回で100回ほど当たる。2本に繋ぐと
+# 晩に2回になり、**締め出し（`BLIND`）が増える。** #539 の回に取れなかった
+# 2人が、まさにそれ。回数を増やして得るものより、失うほうが大きい。
+#
+# Doneru のほうを選んだのは、**`probe: true` で1バイトも書かずに手で押せる**から。
+# 繋ぎが生きているかを、本番を汚さずに確かめられる（`tips_after_doneru.yml` と同じ）。
+#
+# ## 毎晩走っても、ふつうは何も起きない
+#
+# `channel_alias.py` が足すのは「**まだ引けない字**」だけ。
+#
+#   - もう同じ字で引ける人 … 足さない（`already`）
+#   - ハンドルと同じ字     … 足さない（引ける字が増えない）
+#   - **他の人の鍵とぶつかる / 2人が同じ字になる** … **どちらにも足さない**
+#
+# だから全員ぶん入っている晩は「足すものはありません」「図鑑（おわり）…
+# はじめと同じ」で終わる。**書く道は `todo` が空でない回にしか開かない。**
+#
+# ## ログ
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# 出るのは件数と `logsafe.mask()` の指紋だけで、**名前も呼び名も
+# チャンネルIDも書類IDも1文字も出ない。** 伏せる側が効いているかは、
+# スクリプトを起こす前に `logsafe_selftest.py` で毎回見る。
+
+on:
+  # **保険。** 本体は下の `workflow_run`。
+  # `rebake.yml`（01:00）・`tips_after_doneru.yml`（01:30）と重ねない。
+  # ここが2時間遅れても 03:45 UTC で、取り込みの実測（21:49〜23:32）の後ろに入る
+  schedule:
+    - cron: "45 1 * * *"
+
+  # **繋ぎが本体。** 名前を書き換えると黙って切れる（上の「繋ぎかた」）。
+  # 見張りが、この字と実在するファイルの `name:` を突き合わせている
+  workflow_run:
+    workflows: ["Fetch Doneru Donations"]
+    types: [completed]
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "見るだけ（図鑑に1バイトも書かない）。手で押すときはまずこのまま"
+        required: false
+        default: true
+        type: boolean
+
+# 同じ図鑑を2本が同時に書き換えないように1本ずつ。
+# 手で押す側（`run_admin_script.yml` から `channel_alias`）は別の群れなので、
+# **そちらと同時に押さない**（押しても口が同じ字を2度足すことは無いが、
+# 「はじめ／おわり」の突き合わせが噛み合わなくなる）
+concurrency:
+  group: channel-alias
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  alias:
+    runs-on: ubuntu-latest
+    # 締め出されると休みが 2分→4分→8分→10分 と延びる。スクリプト側の
+    # 打ち切り（`BUDGET` 25分）より少し外に置いて、そこで止まれるようにする
+    timeout-minutes: 40
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      # 資格情報は `run_admin_script.yml` と同じ1本だけ。図鑑を読むのも、
+      # 口に頼む札（`_owner.owner_token`）を作るのも、これで足りる。
+      # **Doneru の鍵も YouTube の鍵も要らない**——名前は名乗らない側から引く
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **明細を出すスクリプトより先に、伏せる側が効いているかを見る。**
+      # `channel_alias.py` は1人ずつ「足す／ぶつかって足さない」を並べる。
+      # 伏せているのは `python/logsafe.py` ひとつで、**そこが黙って素通しに
+      # なっても run は緑のまま終わる**（出るものが増えるだけだから）。
+      # 実際に3回出ている——#180 / #217 / #379。**消すのは出たあと。
+      # 出る前に止めるほうが要る。** 認証もクエリも要らず 0.5 秒で終わる
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # **すぐ下で回すものの決めを、回す前に見る。** 偽の Firestore・偽の口・
+      # 偽の YouTube で `channel_alias` を動かして、
+      # 「足すべき人に足せる」「ぶつかる人に足さない」「取れなかった人を
+      # 『名前が無い』に混ぜない」「下見が1バイトも書かない」を実測する。
+      # ネットにも本番にも出ない。**ここが落ちたら、図鑑に触らずに止まる**
+      - name: 呼び名の足しかたが変わっていないか
+        run: python3 python/admin/channel_alias_selftest.py
+
+      # 繋ぎと cron で来たぶんは、押す人がいない。入力も空で来る
+      # （`inputs.*` が空文字になる）。**ここで決めて env に置き、以降は
+      # env だけを見る。** `!inputs.dry_run` を直接書くと、空文字が false と
+      # 読まれて**たまたま**動く形になる（`rebake.yml` / `tips_after_doneru.yml`
+      # と同じ手当て）。
+      #
+      # **毎晩ぶんは下見にしない。** 下見のまま毎晩回すと、
+      # 「足すものが1件ある」と言い続けながら何も直らず、run はずっと緑になる
+      # （`docs/island-misses.md` #144 の「空回しの緑」がまさにこれ）。
+      # 手で押したときだけ、既定を下見にして様子を見られるようにする
+      - name: 今回の押しかたを決める
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
+            echo "CHALIAS_DRY=0" >> "$GITHUB_ENV"
+            echo "毎晩ぶん（$EVENT）: 足りない呼び名を足します"
+          else
+            if [ "$IN_DRY" = "false" ]; then
+              echo "CHALIAS_DRY=0" >> "$GITHUB_ENV"
+            else
+              echo "CHALIAS_DRY=1" >> "$GITHUB_ENV"
+            fi
+            echo "手で押したぶん: dry_run=$IN_DRY"
+          fi
+
+      # ARGS は env としてログに出るが、ここに入るのは `{"apply": true}` だけ。
+      # **名前もチャンネルIDも渡さない**（`channel_alias.py` は ARGS に名前を
+      # 取らない作りになっている。理由はあちらの docstring の「出さないもの」）
+      - name: チャンネル名を呼び名に足す
+        working-directory: python/admin
+        run: |
+          set -euo pipefail
+          if [ "$CHALIAS_DRY" = "1" ]; then
+            ARGS='{}' python channel_alias.py
+          else
+            ARGS='{"apply": true}' python channel_alias.py
+          fi
+
+      # **黙って赤くならない。** 繋ぎと cron で走るぶんは誰も見ていないので、
+      # せめてどこで落ちたかを要約に残す（run の1枚目に出る。ログを開かずに読める）
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 呼び名を追いつかせられませんでした"
+            echo ""
+            echo '**図鑑が壊れたという意味ではありません。** 足す道は `todo` が'
+            echo '空でない回にしか開かないので、落ちた回はたいてい1バイトも書いていません。'
+            echo ""
+            echo 'この晩ぶん、新しく入った人・チャンネル名を変えた人が'
+            echo '**ドネルの名乗りから引けないまま**になっている可能性があります。'
+            echo '（配信の画面にその人の絵が出ない。赤くはならない側の症状です）'
+            echo ""
+            echo '終了コード 2 は「**確かめられなかった**」の意味です'
+            echo '（対照が落ちた／図鑑が1件も返らない／1人も名前を取れなかった）。'
+            echo '締め出しが続いた晩は 2 で止まります——**翌晩に追いつきます。**'
+            echo ""
+            echo '今すぐ見るなら、このワークフローを `dry_run: true` で手で押してください'
+            echo '（1バイトも書かずに、いま何人ぶん足りないかだけ出ます）。'
+          } >> "$GITHUB_STEP_SUMMARY"
