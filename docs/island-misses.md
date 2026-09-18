@@ -7807,3 +7807,33 @@ sed -e 's/^[[:space:]]*#.*//' -e 's/[[:space:]]#.*//' .github/workflows/*.yml
    一般化: **「重い」「要る」「使えない」を、測らずに書かない。**
    それは判断ではなく見込みで、次に読む人は判断として読む。
    書くなら数字と、いつ測ったかを一緒に置く
+
+7. **`pull_request` は、PR に追い足した push でも走る**（2026-09-18。実測）
+
+   最初にこの CI を出したとき、こう報告していた。
+
+   > 枝への push 3回はいずれも run を作らなかった。
+   > PR を開いた回（opened）と開き直した回（reopened）だけ走った。
+
+   **違った。追い足しでも走る。**
+
+   | | run | 何で起きたか | head | 作られた |
+   | --- | --- | --- | --- | --- |
+   | PR を開いた | `35303451897` | opened | `aac0abf` | 03:30:21 |
+   | 枝に push（1回目） | `35304147950` | **synchronize** | `cfa83a3` | 03:41:29（push の8秒後） |
+   | 枝に push（2回目） | （この行を足した push。run は下） | | | |
+
+   最初の報告が外れたのは、**`cancelled` を「走らなかった」に数えていた**から。
+   `selftest.yml` は `pull_request` のとき `cancel-in-progress` なので、
+   追い足しの run は**次の run に止められる**ことがある。実際、同じ SHA
+   （`96bff5f`）に run が2つ並んでいて、片方（`35301699521`）が `cancelled`、
+   もう片方（`35301710272`）が `success` だった。**止められただけで、走っている。**
+
+   決めごと: **`cancelled` は「走った」に数える。** 「走らなかった」と言う前に、
+   run の**一覧**を `event` と `head_sha` と `created_at` で見る。
+   `conclusion` だけを見ると、止められた run は消える。
+
+   run からは `opened` と `synchronize` の見分けがつかない（`event` はどちらも
+   `pull_request`）ので、`selftest.yml` の先頭に **`github.event.action` を
+   要約欄へ書き出す step** を置いた。次に疑った人が、もう一度この調べを
+   やり直さずに済む
