@@ -29,6 +29,8 @@
 #
 # あちらは**焼いたあとの `site/content/*.ts`** を見る見張りを含んでいて、
 # PR の時点とは見ているものが違う。**両方で走ってよい**（どれも数秒）。
+# `site/selftest/*.mjs` の4本もあちらに残してある——**出る口が2つあるなら
+# 見張りも2つ**（`docs/island-misses.md` #126 の決めごと2）。
 name: Selftests
 
 on:
@@ -52,6 +54,23 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      # **何がこの run を起こしたかを、run そのものに残す。**
+      #
+      # run の一覧からは見分けがつかない——PR を開いた回も、枝に追い足した
+      # push も、開き直した回も、`event` は全部 `pull_request` で出る。
+      # 「PR に追い足したコミットは見張りを通るのか」を、あとから誰かが
+      # もう一度調べ直さずに済むように、`action` をここに書き出す
+      # （追い足しなら `synchronize`）。
+      - name: 何がこの run を起こしたか
+        env:
+          EV: ${{ github.event_name }}
+          ACT: ${{ github.event.action }}
+          SHA: ${{ github.sha }}
+        run: |
+          line="起こしたもの: ${EV} / ${ACT:-（action なし）} / ${SHA}"
+          echo "$line"
+          echo "$line" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
@@ -77,10 +96,38 @@ jobs:
       # `python/name_tail_selftest.py` だけは、**本物の OBS の突き合わせ**
       # （`app/alertbox/matching.utils.ts`）を node で動かして見る。
       # `typescript` が引けないと、あの見張りは「当たらなかった」ではなく
-      # **2（確かめられなかった）**で落ちる。`npm ci` は Expo の丸ごとで
-      # 重いので、要る1本だけを置く
-      - name: typescript だけ置く（name_tail が本物の OBS を動かすため）
+      # **2（確かめられなかった）**で落ちる。
+      #
+      # **これは「1本だけ」ではない。** 直下の `package.json` は Expo の側なので、
+      # この1行で **1,452 パッケージ**入る（CI で20秒。2026-09-18 実測）。
+      #
+      # それでも**そのままにしてある。** name_tail が求めているのは typescript
+      # **5系**で、それを決めているのが直下の `package.json`（`^5.3.3`）だから。
+      # 空の置き場に `npm install typescript` をすると2秒で済むが、入るのは
+      # **7系**（別物の API。`ts.transpileModule` が無い）で、name_tail が
+      # 2 で落ちる——**当てて確かめた。** 版を手で書いて逃がすと、
+      # `package.json` と2か所に版が散って、上げた日に黙ってずれる
+      - name: typescript を置く（name_tail が本物の OBS を動かすため）
         run: npm install --no-save --no-audit --no-fund typescript
+
+      # **`site/selftest/*.mjs` の4本を回すのに要る。**
+      #
+      # この4本は 2026-09-18 まで `rebake.yml` の中でしか走っていなかった
+      # ——つまりマージして配ったあと。外していた理由は「`npm ci`（site）は
+      # Expo の丸ごとで重い」だったが、**そこが違っていた。**
+      #
+      #   site の `npm ci`      … **14秒 / 114 パッケージ**（Expo は1つも入らない。
+      #                            `site/package.json` は next・react・firebase と型だけ）
+      #   直下の `npm install`  … 19〜34秒 / 1,452 パッケージ（**こちらが Expo の丸ごと**）
+      #
+      # **軽いほうを外して、重いほうを毎回入れていた。**
+      #
+      # `typescript` と `@types/node` だけを置く道もある（実測で、その2つで
+      # 4本とも通る）。取らないのは、置いたものが `site/package.json` と
+      # ずれる形だから。`npm ci` なら lock のとおりに入る
+      - name: site の依存を入れる（mjs の見張り4本が tsc を使う）
+        working-directory: site
+        run: npm ci --no-audit --no-fund
 
       # 回し役は `--only-drill` を渡さなくても対照を先に回す。
       # ここで**別の step として**もう一度回しておくのは、対照が外れた回に

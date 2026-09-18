@@ -35,21 +35,55 @@
 外してよいのは「外に出る・鍵が要る・遅い」ものだけ。毎 PR で落ちる見張りを
 混ぜると**赤が意味を失う**ので、そこは `SKIP` に理由ごと書く。
 
-**拾うのは Python の `*_selftest.py` だけ。** `site/selftest/*.mjs` の4本
-（`chatdown` / `chatter` / `folk` / `roster`）は `site/node_modules` の
-`tsc` が要るので、ここでは拾わない（`rebake.yml` では回っている）。
-繋ぐなら `npm ci` を足す回で、この行も一緒に消すこと。
+**拾うのは Python の `*_selftest.py` と、`site/selftest/*_selftest.mjs`。**
+mjs の4本（`chatdown` / `chatter` / `folk` / `roster`）は 2026-09-18 まで
+`rebake.yml` の中でしか走っていなかった——つまり**マージして配ったあと。**
+
+繋がなかった理由は「`site/node_modules` の `tsc` が要る。`npm ci`（site）は
+Expo 丸ごとで重い」だったが、**その前提が2つとも違っていた。**
+
+| 測ったこと | 実測（2026-09-18。この箱） |
+| --- | --- |
+| `site` の `npm ci` | **14秒 / 114 パッケージ**。`site/package.json` は next・react・firebase と型だけの別パッケージで、Expo は1つも入らない |
+| リポジトリ直下の `npm install --no-save typescript` | **19〜34秒 / 1,452 パッケージ**。直下の `package.json` が Expo の側なので、**こちらが Expo 丸ごと**（CI では20秒） |
+| mjs 4本を回す | 9秒（folk 2.2 / roster 3.3 / chatdown 1.9 / chatter 1.5） |
+
+つまり **`site` のほうが軽い。** 重いと思っていたほうを既に毎回入れていた。
+
+直下の `npm install` は**そのままにしてある。** `name_tail_selftest.py` が
+求めているのは typescript **5系**で、それを決めているのが直下の
+`package.json`（`^5.3.3`）だから。空の置き場に `npm install typescript` を
+すると2秒で済むが、入るのは **7系**（別物の API）で、`ts.transpileModule` が
+無く name_tail が 2 で落ちる。**実際に当てて確かめた。**
+版を手で書いて逃がすと、`package.json` と2か所に版が散る。
+
+mjs が要るもの（実測で切り分け）:
+
+| | typescript だけ（直下） | + `site/node_modules/typescript` | + `@types/node` |
+| --- | --- | --- | --- |
+| `chatdown` | ○ | ○ | ○ |
+| `folk` / `roster` | ✕（`site/node_modules/.bin/tsc` を名指し） | ○ | ○ |
+| `chatter` | ✕ | ✕（`Cannot find type definition file for 'node'`） | ○ |
+
+**`npm ci`（site）で3つとも入る。** 上2つだけを手で置く道もあるが、
+置いたものと `site/package.json` がずれる形なので取らない。
 
 ## 対照（`docs/island-standards.md` §15）
 
 **回し役そのものが落ちられるか**を、本物の見張りを1本も回す前に見る。
-偽の見張りを3本こしらえて、
+偽の見張りをこしらえて、
 
-  - 通るものだけ → **0**
-  - 1本落ちるものを混ぜる → **1**（しかも落ちた名前が出る）
+  - 通るものだけ（py と mjs を1本ずつ） → **0**
+  - **py が1本落ちる** → **1**（しかも落ちた名前が出る）
+  - **mjs が1本落ちる** → **1**（同上）
   - 1本も拾えない → **2**
 
 を実測する。1つでも外れたら、本物の数字を1つも出さずに 2 で落ちる。
+
+**py と mjs を別々に落とす**のは、回しかたが違うから（`python3` と `node`）。
+片方だけ当てると、**mjs を起こす側が丸ごと壊れていても 0 が出る**——
+「壊し方を4通り当てた」が同じ足を折っているだけ、と同じ形
+（`docs/island-standards.md` §15 の決めごと「対照は、足の数だけ用意する」）。
 「いつも緑の CI」は、何も守っていないのに守っている気にさせる——
 それがいちばん高くつく。
 
@@ -74,6 +108,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent          # python/
 REPO = HERE.parent
+
+# **mjs の見張りは、ここにしか無い。** 場所が変わったら黙って4本減るので、
+# 下の「表が腐っていないか」で、無ければ数字を1つも出さずに 2 で落とす
+MJS_ROOT = REPO / "site" / "selftest"
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300
@@ -110,11 +148,17 @@ ARGS: dict[str, list[str]] = {
 
 
 def discover(root: Path) -> list[Path]:
-    """`*_selftest.py` を拾う。この回し役自身は `_selftest.py` で終わらない。"""
-    return sorted(
-        p for p in root.rglob("*_selftest.py")
-        if "__pycache__" not in p.parts
-    )
+    """`*_selftest.py` と `*_selftest.mjs` を拾う。
+
+    この回し役自身は `_selftest.py` で終わらないので、自分を拾うことはない。
+    """
+    out: list[Path] = []
+    for suffix in ("py", "mjs"):
+        out += sorted(
+            p for p in root.rglob(f"*_selftest.{suffix}")
+            if "__pycache__" not in p.parts and "node_modules" not in p.parts
+        )
+    return out
 
 
 def label(path: Path, cwd: Path) -> str:
@@ -128,8 +172,11 @@ def label(path: Path, cwd: Path) -> str:
 def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
     """1本回して（終了コード, かかった秒, 最後の1行）を返す。"""
     rel = label(path, cwd)
-    cmd = [sys.executable, rel if not rel.startswith("/") else str(path),
-           *ARGS.get(rel, [])]
+    who = rel if not rel.startswith("/") else str(path)
+    # mjs は node で回す。中の `SITE` は自分のファイルの場所から出しているので、
+    # どこを cwd にしても同じところを見る（`rebake.yml` は site を cwd にしている）
+    head = ["node"] if path.suffix == ".mjs" else [sys.executable]
+    cmd = [*head, who, *ARGS.get(rel, [])]
     t0 = time.monotonic()
     try:
         r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True,
@@ -138,6 +185,9 @@ def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
     except subprocess.TimeoutExpired:
         # **黙って飛ばさない。** 止まったものは落ちたものとして数える
         rc, out = 1, f"{TIMEOUT_SEC} 秒で返ってこなかった"
+    except OSError as e:
+        # `node` が無い箱。**「回せなかった」を「通った」と同じ顔にしない**
+        rc, out = 1, f"{head[0]} を動かせない: {e}"
     dt = time.monotonic() - t0
     tail = ""
     for line in reversed(out.splitlines()):
@@ -148,9 +198,11 @@ def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
 
 
 def drill() -> bool:
-    """**回し役が落ちられるか**を、偽の見張り3本で先に見る。
+    """**回し役が落ちられるか**を、偽の見張りで先に見る。
 
     本物を1本も回す前に、0 と 1 と 2 が実測で出ることを確かめる。
+    **py と mjs を別々に落とす**——回しかたが違う（`python3` と `node`）ので、
+    片方だけ当てると mjs を起こす側が丸ごと壊れていても 0 が出る。
     1つでも外れたら False。
     """
     ok = True
@@ -162,6 +214,12 @@ def drill() -> bool:
             "import sys\nprint('わざと落とす')\nsys.exit(1)\n", encoding="utf-8")
         empty = box / "empty"
         empty.mkdir()
+        # mjs だけが落ちる部屋。py は置かない——py が落ちて 1 になったのを
+        # 「mjs で落ちた」と読まないため
+        onlymjs = box / "onlymjs"
+        onlymjs.mkdir()
+        (onlymjs / "redjs_selftest.mjs").write_text(
+            "console.log('わざと落とす');\nprocess.exit(1);\n", encoding="utf-8")
 
         # 上で `SUMMARY_PATH` を環境から取り上げてあるので、対照の子
         # （偽の見張り）も要約欄には1行も書けない
@@ -183,14 +241,19 @@ def drill() -> bool:
             print(f"  {mark} {root.name} → 終了コード {got}（欲しいのは {want}）{extra}")
 
         print("[対照] 回し役そのものが、落ちるときに落ちるか")
-        # 2本とも通る → 0
+        # py も mjs も通る → 0。**mjs が拾われていない**と、下の
+        # 「mjs が1本落ちる」も静かに 2 になるので、先にここで拾えることを見る
         only_green = box / "onlygreen"
         only_green.mkdir()
         (only_green / "a_selftest.py").write_text("print('ok')\n", encoding="utf-8")
         (only_green / "b_selftest.py").write_text("print('ok')\n", encoding="utf-8")
+        (only_green / "c_selftest.mjs").write_text(
+            "console.log('ok');\n", encoding="utf-8")
         sub(only_green, 0, None)
-        # 1本落ちる → 1。**落ちた名前が出るところまで見る**
+        # py が1本落ちる → 1。**落ちた名前が出るところまで見る**
         sub(box, 1, "red_selftest.py")
+        # mjs が1本落ちる → 1。node で起こす側が死んでいたらここで出る
+        sub(onlymjs, 1, "redjs_selftest.mjs")
         # 1本も拾えない → 2。ここが 0 だと「ぜんぶ通りました」の嘘になる
         sub(empty, 2, None)
     print("  " + ("○ 回し役は落ちられる" if ok else "✕ 回し役の対照が外れた"))
@@ -248,10 +311,16 @@ def main() -> int:
         # `--root` を渡されているのは対照の中から呼ばれたときだけ。
         # そこに本物の `SKIP` を当てても意味がないので、素の拾いだけを見る
         if a.root is None:
+            # `python/` の外にある mjs は、rglob では届かない。名指しで足す
+            found += discover(MJS_ROOT)
             # **`SKIP` が腐っていないか。** 名前が変わったのに表に残っていると、
-            # 「外してある」つもりのものが黙って居なくなる（#125 と同じ形）
+            # 「外してある」つもりのものが黙って居なくなる（#125 と同じ形）。
+            # mjs の置き場そのものが消えた（名前が変わった）ときも同じ形で
+            # **黙って4本減る**ので、ここで一緒に見る
             rot = [n for n in list(SKIP) + list(ARGS)
                    if not (cwd / n).is_file()]
+            if not MJS_ROOT.is_dir():
+                rot.append(f"{label(MJS_ROOT, cwd)}/（mjs の置き場が無い）")
             if rot:
                 for n in rot:
                     print(f"✕ 表に在るのに、そのファイルが無い: {n}")
