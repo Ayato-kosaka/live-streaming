@@ -140,8 +140,17 @@ const SHOWDIFF = !!process.env.SHOWDIFF;
 /** わざと壊す。`nopat` / `greedy` / `nojsguard` / `zerook` / `nodist` */
 const BREAK = process.env.BREAK || "";
 
-/** 差し込む印。これが付いたかどうかで「JS が動いたか」を見る */
-const MARK = "data-preclaim-ran";
+/**
+ * 差し込む印。これが立ったかどうかで「面の script が動いたか」を見る。
+ *
+ * **`<html>` の属性ではなく `window` の上に置く。** はじめ属性にしていて、
+ * わざと嘘を仕込んだ面で「JS を入れた読みで印が付かなかった」と止まった。
+ * App Router は `<html>` ごと React の木の中にあるので、**水あわせが食い違うと
+ * React が根から描き直して、こちらが立てた属性を消す。** つまり
+ * **いちばん見たい面（焼いた字と出たあとの字が違う面）でだけ、印が消える。**
+ * `window` の上なら React は触らない。
+ */
+const MARK = "__preclaimRan";
 /** 対照の作り物を配る、本物のどことも当たらない宛先 */
 const FIXTURE = "http://preclaim.fixture";
 
@@ -309,7 +318,7 @@ export function subtract(off, onDom) {
  * 引き算の結果は変わらない。
  */
 function inject(body) {
-  const tag = `<script>document.documentElement.setAttribute(${JSON.stringify(MARK)},"1")</script>`;
+  const tag = `<script>window[${JSON.stringify(MARK)}]=1</script>`;
   if (/<\/head>/i.test(body)) return body.replace(/<\/head>/i, tag + "</head>");
   if (/<body[^>]*>/i.test(body)) return body.replace(/<body[^>]*>/i, (m) => m + tag);
   return tag + body;
@@ -406,7 +415,7 @@ async function grab(p, js) {
       const el = document.body ? document.body.cloneNode(true) : null;
       if (el) for (const x of el.querySelectorAll("script,style,template,noscript")) x.remove();
       return {
-        ran: document.documentElement.hasAttribute(mark),
+        ran: !!window[mark],
         at: location.pathname,
         lines: t.split("\n").map((s) => s.replace(/[\t ]+/g, " ").trim()).filter(Boolean),
         dom: el ? el.textContent || "" : "",
