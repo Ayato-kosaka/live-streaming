@@ -849,6 +849,11 @@
   color: var(--ink-2);
 }
 
+/* 保存したあとの1行。**入らなかったときだけ色を変える。**
+   「入れました」と同じ灰で出すと、呼び名が入っていないことに気づかない
+   （そのまま配信に出て、投げ銭からその人が引けない）。 */
+.ch-said-off { color: var(--pick); }
+
 .ch-aliases { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 .ch-alias {
   display: inline-flex;
