@@ -20,10 +20,11 @@
 | 繋ぎ先の `name:` があちらで変わった | **黙って切れる。赤くならない。走らなくなるだけ** |
 | 毎晩ぶんの既定が下見になった | 毎晩みどりで終わる。**でも1件も直らない**（#144 の「空回しの緑」） |
 | `workflow_dispatch` の `dry_run` が効かない | 手で「見るだけ」のつもりで押した回が、本番に書く |
+| 足したあとのぶつかり検査が消えた・隠れた | **毎晩みどり。でも配信には別人の絵が出る**（#147） |
 
-**3つとも赤くならない。** だから字で突き合わせる。
+**4つとも赤くならない。** だから字で突き合わせる。
 
-## 見るもの（足は8本）
+## 見るもの（足は12本）
 
   1. `つなぎ` … `workflow_run` の繋ぎ先が1本以上ある
   2. `名前`   … 繋ぎ先の字が、**実在するファイルの `name:` と一字一句同じ**
@@ -34,6 +35,17 @@
   7. `env`    … `inputs.dry_run` を読むのは**決めかたの step の1か所だけ**
                 （実行 step が入力を直に見ていると、繋ぎで来た回の空文字に賭けることになる）
   8. `実行`   … 下見の枝は `{}`、そうでない枝は `{"apply": true}` を渡している
+  9. `検査`   … `name_clash.py` を回す step が在る（**足したあと、誰かが見ている**）
+ 10. `順番`   … その step が `channel_alias` を回す step の**後ろ**にある
+                （前に置くと「足したせいでぶつかったか」が見えない）
+ 11. `隠し`   … `continue-on-error` が無く、**偽の `python` に 1 と 2 を
+                返させても step が落ちる**（ぶつかっても緑で終わる形。
+                #132 は step に、#144 は回しかたに付いていた）
+ 12. `下見`   … **下見の回でも回る**（`if:` が無く、`CHALIAS_DRY` を中で見ていない）
+
+9〜12 が見ているのは「足したあとに誰も見ていない」穴（#542 を繋いだ理由）。
+ぶつかりの**数え方**そのものは `python/admin/name_clash_selftest.py` の受け持ちで、
+ここは**回るか / 隠れていないか / 順番 / 下見でも回るか**の4つだけ見る。
 
 4 と 5 は**字を眺めるのではなく、その step の `run:` をそのまま bash で回して**
 `$GITHUB_ENV` に何が書かれるかを読む。条件の書き間違い（`=` と `!=` の取り違え、
@@ -50,6 +62,13 @@
   - こちらの繋ぎ先の字を1文字変える
   - **あちらのファイルの `name:` を書き換えた写しの置き場**で見る
     ← 本番で起きるのはこちら。「あちらの名前が変わったら赤くなる」を実測する
+
+`下見` の対照も2通り当てる。**隠れる場所が2つある**から（#144）。
+
+  - step に `if:` を付けて、下見の回だけ飛ばす
+  - step の中で `$CHALIAS_DRY` を見て `exit 0` する
+    ← `rebake.yml` の `REBAKE_DRY` が実際にこの形で、**赤くならずに**
+      「見張りは鳴っていたのに緑」を作った
 
 対照が1つでも外れたら、本物の判定を1つも出さずに **2** で落ちる。
 """
@@ -74,6 +93,17 @@ YML = WFDIR / "channel_alias_nightly.yml"
 DECIDE_STEP = "今回の押しかたを決める"
 RUN_STEP = "チャンネル名を呼び名に足す"
 FLAG = "CHALIAS_DRY"
+
+# 足したあとのぶつかり検査。**step の名前ではなく、回している中身で探す。**
+# 名前は読みやすさのために変わりうるが、`name_clash.py` を回しているかは変わらない
+CLASH_PY = "name_clash.py"
+
+# 対照で足を抜くときの差し込み口（`id:` の行そのもの）
+CLASH_ID = "        id: clash\n"
+
+# 足の名前。本物の判定と対照で同じ並びを使う（片方に足し忘れない）
+LEGS = ("つなぎ", "名前", "保険", "既定", "手押し", "入力", "実行",
+        "env", "検査", "順番", "隠し", "下見")
 
 FAILS: list[str] = []
 
@@ -116,6 +146,18 @@ def steps_of(doc: dict) -> list[dict]:
     return out
 
 
+def step_at(doc: dict, pred) -> int | None:
+    """`pred` が当たる step の**並び順**を返す。無ければ None。
+
+    順番を見るので、名前ではなく位置が要る。job が複数あっても
+    `steps_of` が並べた順のままで数える（このワークフローは job 1本）。
+    """
+    for i, st in enumerate(steps_of(doc)):
+        if pred(st):
+            return i
+    return None
+
+
 def step_run(doc: dict, name: str) -> str | None:
     for st in steps_of(doc):
         if st.get("name") == name:
@@ -149,6 +191,27 @@ def bash(script: str, event: str, in_dry: str) -> tuple[str | None, str]:
             if line.startswith(f"{FLAG}="):
                 got = line.split("=", 1)[1].strip()
         return got, (r.stdout + r.stderr).strip()
+
+
+def bash_code(script: str, py_exit: int) -> int:
+    """step の `run:` を、**偽の `python`** を掴ませて回し、終了コードを返す。
+
+    ぶつかり検査が赤くなるかは、字を眺めても出ない。`|| true` でも
+    `; exit 0` でも `set +e` でも同じように**隠れる**ので、
+    **実際にその終了コードを返させて、step が落ちるか**を見る。
+    """
+    with tempfile.TemporaryDirectory() as box:
+        stub = Path(box) / "python"
+        stub.write_text(f"#!/bin/sh\nexit {py_exit}\n", encoding="utf-8")
+        stub.chmod(0o755)
+        sh = Path(box) / "step.sh"
+        sh.write_text(script, encoding="utf-8")
+        r = subprocess.run(
+            ["bash", str(sh)],
+            capture_output=True, text=True, timeout=30,
+            env={"PATH": f"{box}:/usr/bin:/bin", FLAG: "1"},
+        )
+        return r.returncode
 
 
 def names_in(wfdir: Path) -> dict[str, str]:
@@ -276,6 +339,54 @@ def check(text: str, wfdir: Path) -> list[str]:
         if FLAG not in runsh:
             ng("実行", f"{FLAG} を見ていません（決めかたの step が効きません）")
 
+    # 9〜12. 足したあとのぶつかり検査
+    sts = steps_of(doc)
+    i_run = step_at(doc, lambda s: s.get("name") == RUN_STEP)
+    i_clash = step_at(doc, lambda s: CLASH_PY in (s.get("run") or ""))
+    if i_clash is None:
+        ng("検査",
+           f"{CLASH_PY} を回す step がありません"
+           "（呼び名は足すのに、**足したあとを誰も見ていません**）")
+    else:
+        st = sts[i_clash]
+        body = st.get("run") or ""
+
+        # 10. 順番。**足す前に回しても、足したせいでぶつかったかは見えない**
+        if i_run is None:
+            ng("順番",
+               f"step「{RUN_STEP}」が見つからないので、前後を数えられません")
+        elif i_clash < i_run:
+            ng("順番",
+               f"ぶつかり検査が「{RUN_STEP}」より前（{i_clash} < {i_run}）に"
+               "あります。**足したせいでぶつかったか**が見えません")
+
+        # 11. 隠し。#132 は step に、#144 は回しかたに付いていた
+        if st.get("continue-on-error"):
+            ng("隠し",
+               "continue-on-error が付いています"
+               "（ぶつかっても run は緑で終わります。誰も見ていません）")
+        # **字を眺めない。偽の `python` を掴ませて、実際に落ちるか回す。**
+        # 1（見つかった）も 2（数えられていない）も赤でないといけない
+        for code, why in ((1, "ぶつかりが見つかった"),
+                          (2, "数えられていない")):
+            got = bash_code(body, code)
+            if got == 0:
+                ng("隠し",
+                   f"`python` が {code}（{why}）を返しても step が緑で"
+                   "終わります。誰も見ていない時間なので、気づく道がありません")
+
+        # 12. 下見。**上が1バイトも書かない回でも、いま図鑑がぶつかって
+        #     いるかは知りたい。** 隠れる場所は2つある
+        cond = st.get("if")
+        if cond is not None:
+            ng("下見",
+               f"ぶつかり検査に `if:` が付いています（{str(cond)[:60]!r}）。"
+               "下見の回で飛ぶと、押した人にも見えません")
+        if FLAG in body:
+            ng("下見",
+               f"ぶつかり検査の中で {FLAG} を見ています"
+               "（回しかたに `exit 0` を仕込む形。#144 の空回しの緑）")
+
     return bad
 
 
@@ -305,6 +416,33 @@ def mutate(text: str, kind: str) -> str:
         return text.replace("$CHALIAS_DRY", "${{ inputs.dry_run }}", 1)
     if kind == "実行":
         return text.replace("""ARGS='{"apply": true}'""", "ARGS='{}'", 1)
+    if kind == "検査":
+        # 検査そのものを取り上げる（step の殻は残す。**回るものだけ消える**）
+        return re.sub(r"ARGS='\{\"attribute\".*?' python name_clash\.py",
+                      'echo "ぶつかり検査は省きました"', text, count=1)
+    if kind == "順番":
+        # 足す step の**前**へ動かす（足したせいでぶつかったかが見えなくなる）
+        m = re.search(r"\n      - name: 配信に映る側で.*?name_clash\.py\n",
+                      text, re.S)
+        if not m:
+            die("ぶつかり検査の step が見つからないので、順番を入れ替えられません")
+        blk = m.group(0)
+        moved = text.replace(blk, "\n", 1)
+        head = "\n      - name: チャンネル名を呼び名に足す\n"
+        return moved.replace(head, blk + head[1:], 1)
+    if kind == "隠し":
+        return text.replace(
+            CLASH_ID, CLASH_ID + "        continue-on-error: true\n", 1)
+    if kind == "下見":
+        return text.replace(
+            CLASH_ID, CLASH_ID + "        if: env.CHALIAS_DRY != '1'\n", 1)
+    if kind == "下見(中で exit)":
+        # #144 の形。**回しかたに `exit 0` を仕込む**（step は在るし、緑で終わる）
+        return text.replace(
+            "          set -euo pipefail\n          ARGS='{\"attribute\"",
+            "          set -euo pipefail\n"
+            '          if [ "$CHALIAS_DRY" = "1" ]; then exit 0; fi\n'
+            "          ARGS='{\"attribute\"", 1)
     raise ValueError(kind)
 
 
@@ -344,14 +482,23 @@ def drill(text: str) -> bool:
             print(f"         {b}")
         ok = False
 
-    legs = ("つなぎ", "名前", "保険", "既定", "手押し", "入力", "env", "実行")
-    for leg in legs:
+    for leg in LEGS:
         bad = check(mutate(text, leg), WFDIR)
         hit = any(b.startswith(leg + ":") for b in bad)
         print(f"  {'OK  ' if hit else 'NG  '} [対照] 足「{leg}」を抜くと、"
               f"その足が落ちる（落ちた足 {len(bad)}: {[b.split(':')[0] for b in bad]}）")
         if not hit:
             ok = False
+
+    # **下見の対照も2通り。** `if:` で飛ばす形と、**中で `exit 0` する形**。
+    # 後者は step が在るし、ログも出るし、run も緑で終わる（#144 そのもの）
+    bad = check(mutate(text, "下見(中で exit)"), WFDIR)
+    hit = any(b.startswith("下見:") for b in bad)
+    print(f"  {'OK  ' if hit else 'NG  '} [対照] ぶつかり検査の**中で** "
+          f"{FLAG} を見て `exit 0` すると、足「下見」が落ちる"
+          f"（落ちた足 {len(bad)}）")
+    if not hit:
+        ok = False
 
     # **名前の対照は2通り。** こちらの字ではなく、あちらの `name:` を変える
     with tempfile.TemporaryDirectory() as box:
@@ -383,22 +530,21 @@ def main() -> None:
         print("\n✕ 対照が外れました。**本物の判定を1つも出していません**")
         raise SystemExit(2)
 
-    print("\n本物（足 8本）")
+    print(f"\n本物（足 {len(LEGS)}本）")
     bad = check(text, WFDIR)
-    for leg in ("つなぎ", "名前", "保険", "既定", "手押し", "入力", "env", "実行"):
+    for leg in LEGS:
         hits = [b for b in bad if b.startswith(leg + ":")]
         why = hits[0].split(": ", 1)[1] if hits else "通った"
         say(not hits, f"{leg}: {why}")
     for b in bad:
-        if not any(b.startswith(leg + ":") for leg in
-                   ("つなぎ", "名前", "保険", "既定", "手押し", "入力", "env", "実行")):
+        if not any(b.startswith(leg + ":") for leg in LEGS):
             say(False, b)
 
     print()
     if FAILS:
         print(f"✕ {len(FAILS)} 本落ちた")
         raise SystemExit(1)
-    print("○ 足 8本、ぜんぶ通った")
+    print(f"○ 足 {len(LEGS)}本、ぜんぶ通った")
 
 
 if __name__ == "__main__":
