@@ -78,6 +78,19 @@ REPO = HERE.parent
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300
 
+# **要約欄の行き先は、起動した時点で環境から取り上げる。**
+#
+# 見張りの中には、守っている本物の道具を子として起こすものがある
+# （`stale_content_watch_selftest.py` / `text_expires_watch_selftest.py`）。
+# あれが仕込みで作った偽の赤——「recipes.ts が 200日前で止まっています」——を
+# そのまま GitHub の要約欄に書くので、**26本ぜんぶ通った回の要約が、
+# 落ちた回とそっくりになる。** 見る人には見分けがつかない。
+#
+# 取り上げておけば、子は環境変数が無いので何も書かない
+# （どの見張りも「欄が無ければ黙る」作りになっている）。
+# **要約欄に書いてよいのは、ここだけ。**
+SUMMARY_PATH = os.environ.pop("GITHUB_STEP_SUMMARY", None)
+
 # **回さないもの。名前と、回さない理由。**
 #
 # ここに書いてよいのは「外に出る・鍵が要る・遅い」の3つだけ。
@@ -150,6 +163,8 @@ def drill() -> bool:
         empty = box / "empty"
         empty.mkdir()
 
+        # 上で `SUMMARY_PATH` を環境から取り上げてあるので、対照の子
+        # （偽の見張り）も要約欄には1行も書けない
         env = dict(os.environ)
 
         def sub(root: Path, want: int, need: str | None) -> None:
@@ -184,7 +199,7 @@ def drill() -> bool:
 
 def summary(lines: list[str]) -> None:
     """GitHub の要約欄に書く。欄が無ければ何もしない（手元で回したとき）。"""
-    p = os.environ.get("GITHUB_STEP_SUMMARY")
+    p = SUMMARY_PATH
     if not p:
         return
     try:
