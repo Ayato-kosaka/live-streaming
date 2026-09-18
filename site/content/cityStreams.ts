@@ -465,11 +465,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2025-01-20"
       },
       {
-        "videoId": "BL93jNWDgk0",
-        "title": "イギリス・エディンバラのホステルで少し🤏",
-        "date": "2025-01-21"
-      },
-      {
         "videoId": "DaNVPKIz7Ys",
         "title": "スコットランド名物「ショートブレッド」「ハギス」紹介。イギリス・エディンバラのホステルで少し🤏",
         "date": "2025-01-21"
@@ -485,11 +480,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "soIuHx1--BI",
         "title": "グラスゴー到着！不気味なホステル体験とジンジャーショットの衝撃。",
         "date": "2025-01-23"
-      },
-      {
-        "videoId": "cqf1unuyPXI",
-        "title": "イギリス・グラスゴーの幽霊ホステルで少し🤏",
-        "date": "2025-01-24"
       },
       {
         "videoId": "bW2PJln-5mA",
@@ -1588,26 +1578,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       }
     ],
     "セヴァン湖": [
-      {
-        "videoId": "p1-bliAqLJo",
-        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
-        "date": "2026-05-19"
-      },
-      {
-        "videoId": "JXEHbJX9Szw",
-        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
-        "date": "2026-05-19"
-      },
-      {
-        "videoId": "Aea0S3WIZLU",
-        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
-        "date": "2026-05-19"
-      },
-      {
-        "videoId": "gpecGbzVBHU",
-        "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",
-        "date": "2026-05-19"
-      },
       {
         "videoId": "2u4HfAvQdsI",
         "title": "友達ともめるショート動画が100万再生越えたよーん！明日は１３時からセヴァン湖",

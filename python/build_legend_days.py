@@ -35,8 +35,13 @@
 import argparse
 import json
 import re
+import sys
 from collections import Counter
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from build_dead_streams import blocked, check_written  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
@@ -144,6 +149,16 @@ def build() -> None:
     rows = json.loads((DATA / "legend_streams.json").read_text(encoding="utf-8"))
     totals = json.loads((DATA / "legend_totals.json").read_text(encoding="utf-8"))
 
+    # **押しても見られない配信は、並びに出さない**（`docs/island-misses.md` #139）。
+    # ここは「この期間にあった配信ぜんぶ」を一行ずつ押せるようにしている面なので、
+    # 行き止まりを1行でも混ぜると、その企画そのものが読めないものに見える。
+    # `top`（いちばん人が集まった日）もここから選ぶので、外すのは選ぶ前
+    gone = blocked()
+    left = [r for r in rows if r["v"] not in gone]
+    if len(left) != len(rows):
+        print(f"押しても見られない配信 {len(rows) - len(left)}本を外した")
+    rows = left
+
     body = []
     for lg in legends():
         if not lg["range"]:
@@ -166,7 +181,10 @@ def build() -> None:
             % (ts_str(lg["slug"]), tot.get("people", 0), tot.get("msgs", 0), days, ts_str(top["v"]), items)
         )
 
-    OUT_TS.write_text(HEADER + "\n".join(body) + FOOTER, encoding="utf-8")
+    out = HEADER + "\n".join(body) + FOOTER
+    # 出口でもう一度見る。落としが効かなくなっても、ここで止まる
+    check_written(out, OUT_TS.name)
+    OUT_TS.write_text(out, encoding="utf-8")
     print(f"{OUT_TS} … {len(body)}企画")
 
 

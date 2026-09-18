@@ -56,6 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_dead_streams import check_written, sql_not_in  # noqa: E402
 from stays import is_country, read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -110,7 +111,10 @@ pv AS (
            PARTITION BY g
            ORDER BY COUNT(DISTINCT author_channel_id) DESC, COUNT(*) DESC, MIN(d), video_id
          ) AS rk
-  FROM b GROUP BY g, video_id
+  -- 押しても見られない配信は、代表に選ばれる前に外す（`docs/island-misses.md` #139）。
+  -- **外すのはここだけ。** 上の `agg`（本数・人・コメント）はそのまま数える——
+  -- 配信が1本見られないことと、その国でそれだけ配信したことは別のこと
+  FROM b WHERE TRUE {sql_not_in("b.video_id")} GROUP BY g, video_id
 )
 SELECT a.g, a.lives, a.people, a.msgs, a.days,
        p.d AS top_d, p.video_id AS top_v, v.title AS top_t, p.people AS top_people
@@ -183,7 +187,10 @@ def build(src: dict) -> None:
             % (ts(slug), x["lives"], x["people"], x["msgs"], x["days"], ts(d), ts(v), ts(title), people)
         )
     n = len(walked())
-    OUT_TS.write_text(HEADER + "\n".join(body) + FOOTER % n, encoding="utf-8")
+    out = HEADER + "\n".join(body) + FOOTER % n
+    # 出口でもう一度見る。SQL の落としが効かなくなっても、ここで止まる
+    check_written(out, OUT_TS.name)
+    OUT_TS.write_text(out, encoding="utf-8")
     logger.info("%s … 数のある国 %d / 歩いた国 %dカ国", OUT_TS, len(body), n)
 
 

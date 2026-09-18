@@ -18,8 +18,13 @@ export default function LegendsPage() {
   const [top, ...rest] = LEGENDS;
   /** 新しい順に並べ直す。何が最近の話なのかが先に分かるように。 */
   const wall = [...rest].sort((a, b) => (a.date < b.date ? 1 : -1));
-  /** 残っている配信の本数。伝説がどれだけの日数でできているかの目安。 */
-  const videos = LEGENDS.reduce((n, l) => n + l.streams.length, 0);
+  /**
+   * 残っている配信の本数。伝説がどれだけの日数でできているかの目安。
+   *
+   * **押して見られるものだけ数える。** 録画の残っていない回まで足すと、
+   * 「残っている」と言いながら残っていないものを数えることになる
+   */
+  const videos = LEGENDS.reduce((n, l) => n + l.streams.filter((s) => s.videoId).length, 0);
   const oldest = [...LEGENDS].sort((a, b) => (a.date < b.date ? -1 : 1))[0];
   /** 「この12日間を読む」の12日。字で埋め込むと、いちばんの1つが入れ替わったとき嘘になる。 */
   const topDays = top.facts?.find((f) => f.unit?.includes("日"));
@@ -83,7 +88,7 @@ export default function LegendsPage() {
                 ))}
                 <div>
                   <span className="fig">
-                    <b>{top.streams.length}</b>
+                    <b>{top.streams.filter((s) => s.videoId).length}</b>
                     <i>本</i>
                   </span>
                   <span className="fig-cap">残っている配信</span>

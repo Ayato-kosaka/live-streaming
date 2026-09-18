@@ -312,7 +312,9 @@ export const COUNTRIES: Country[] = [
       { title: "アルメニアでございます", note: "ジョージアからバスで入国", date: "2026-04-19", videoId: "jTpvux9mM44" },
       { title: "セヴァン湖までセヴァンマスを食べに", note: "13時から6時間", date: "2026-05-20", videoId: "haHAczqMooM" },
       { title: "ジェノサイドミュージアムまで歩く", note: "歩いて向かった日", date: "2026-05-17", videoId: "2y4IbYu-ZeI" },
-      { title: "友達ともめるショートが100万再生", note: "エレバンで報告", date: "2026-05-19", videoId: "p1-bliAqLJo" },
+      // 元は p1-bliAqLJo。消えて戻らないので、**同じ晩の同じ配信の別の枠**に差し替えた
+      // （5本に切れていて、うち4本が消えている。2u4HfAvQdsI だけ残っている）
+      { title: "友達ともめるショートが100万再生", note: "エレバンで報告", date: "2026-05-19", videoId: "2u4HfAvQdsI" },
     ],
   },
   {

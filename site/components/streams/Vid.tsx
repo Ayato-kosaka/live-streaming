@@ -68,6 +68,32 @@ export function Vid({
 }
 
 /**
+ * 録画の残っていない回の札。**押せない。**
+ *
+ * 消えた配信・録画の残らなかった配信へは送らない（`docs/island-misses.md` #139）。
+ * それでも**その日があったことは消さない**ので、日付と題名は同じ並びに残す。
+ *
+ * サムネイルは出さない。YouTube は消えた動画にも**灰色の板**を返すので、
+ * 出すと「絵はあるのに押せない」といういちばん分かりにくい姿になる。
+ */
+export function VidGone({ title, date, tag }: { title: string; date?: string; tag?: string }) {
+  return (
+    <span className="vid is-gone">
+      <span className="vid-b">
+        {(tag || date) && (
+          <span className="vid-m">
+            {tag && <em>{tag}</em>}
+            {date && <time>{date.replace(/-/g, "/")}</time>}
+          </span>
+        )}
+        <b>{title}</b>
+        <i className="vid-gone-note">録画は残っていない</i>
+      </span>
+    </span>
+  );
+}
+
+/**
  * 一撃で伝わる数字。
  * 言葉のとき（「運まかせ」）は、数字と同じ大きさで出すと間が抜けるので一段落とす。
  */

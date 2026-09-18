@@ -6,7 +6,7 @@ import PageShell from "@/components/ui/PageShell";
 import Fold from "@/components/ui/Fold";
 import { LEGENDS, legendBySlug } from "@/content/legends";
 import Icon from "@/components/ui/Icon";
-import { Fig, Vid } from "@/components/streams/Vid";
+import { Fig, Vid, VidGone } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtBook, ArtCam, ArtMonument } from "@/components/streams/Art";
 import { legendDays } from "@/content/legendDays";
@@ -41,7 +41,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   /** 何日にまたがっているか。数えたほうがあれば、そちらが正しい。 */
   const days = all?.days ?? new Set(streams.map((s) => s.date)).size;
   /** 見どころに選んである配信。全部の並びの中で印を付けるのに使う。 */
-  const picked = new Set(streams.map((s) => s.videoId));
+  const picked = new Set(streams.map((s) => s.videoId).filter(Boolean));
 
   return (
     <PageShell
@@ -144,12 +144,18 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
           <p className="zk-lead">古い順。上から下へ読むと、その日にどこまで進んだかが分かる。</p>
           <ul className="days" style={{ marginTop: "var(--sp-3)" }}>
             {streams.map((s, k) => (
-              <li key={s.videoId}>
+              /* 録画の残っていない回は、押せない札にする。並びからは抜かない
+                 （`content/legends.ts` の `streams` の注） */
+              <li key={s.videoId ?? s.date + s.title}>
                 <span className="days-n">
                   {s.date.slice(5, 7).replace(/^0/, "")}/{s.date.slice(8, 10).replace(/^0/, "")}
                 </span>
                 <span className="vids is-one" style={{ flex: 1, minWidth: 0 }}>
-                  <Vid videoId={s.videoId} title={s.title} tag={`${k + 1}本目`} />
+                  {s.videoId ? (
+                    <Vid videoId={s.videoId} title={s.title} tag={`${k + 1}本目`} />
+                  ) : (
+                    <VidGone title={s.title} tag={`${k + 1}本目`} />
+                  )}
                 </span>
               </li>
             ))}

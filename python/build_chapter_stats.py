@@ -18,6 +18,14 @@
 章の期間は site/content/chapters.ts が唯一の出どころなので、そこから読む。
 期間をここに書き写すと、章を足したときに二重に直すことになる。
 
+**押しても見られない配信は、明細に並べない**（2026-09-18）。消えた配信（404）と
+録画そのものが残らなかった配信へは送らない（`docs/island-misses.md` #139）。
+外す相手は `python/data/dead_streams.json`。
+
+**外すのは明細（`chapterStreams.ts`）だけで、本数（`chapterStats.ts` の `streams`）は
+そのまま。** 配信が1本見られないことと、その章にそれだけの配信があったことは別のこと。
+数えるのをやめたら、章の大きさまで書き換わってしまう。
+
 実行:
   BQ_PROJECT_ID=live-streaming-d3cac python python/build_chapter_stats.py
 """
@@ -33,6 +41,7 @@ from google.cloud import bigquery
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_dead_streams import blocked, check_written  # noqa: E402
 from build_residents import BOT_NAME, fetch_characters, link, look  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 
@@ -196,11 +205,21 @@ def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, li
     LEFT JOIN n USING (video_id)
     ORDER BY ch.slug, v.d DESC, v.video_id
     """
+    # **押しても見られない配信は、明細に載せない。** 一面ぜんぶ押せる並びなので、
+    # 1行でも行き止まりを混ぜると、押した人が「この島の配信は見られない」と読む。
+    # 落ちるのは隣に生きた行のある1行なので、章も日付も残る
+    gone = blocked()
     out: dict[str, list] = {c["slug"]: [] for c in past}
+    dropped = 0
     for row in client.query(sql).result():
+        if row["video_id"] in gone:
+            dropped += 1
+            continue
         out[row["slug"]].append(
             [row["d"].isoformat(), row["video_id"], row["title"], int(row["people"])]
         )
+    if dropped:
+        logger.info("押しても見られない配信 %d 本を明細から外した（本数は変えない）", dropped)
     return out
 
 
@@ -302,7 +321,10 @@ def main() -> None:
     OUT_TS.write_text(render(chapters, stats), encoding="utf-8")
     logger.info("書き出した: %s", OUT_TS)
     streams = fetch_streams(client, chapters)
-    OUT_STREAMS_TS.write_text(render_streams(streams, chapters), encoding="utf-8")
+    out = render_streams(streams, chapters)
+    # 出口でもう一度見る。落としが効かなくなっても、ここで止まる
+    check_written(out, OUT_STREAMS_TS.name)
+    OUT_STREAMS_TS.write_text(out, encoding="utf-8")
     logger.info("書き出した: %s（%d本）", OUT_STREAMS_TS, sum(len(v) for v in streams.values()))
 
 

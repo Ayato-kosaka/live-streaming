@@ -37,7 +37,15 @@ export type Legend = {
   /** 数字をもう2つまで。図鑑の「記録」の欄にあたる。 */
   facts?: Figure[];
   body: string[];
-  streams: { date: string; videoId: string; title: string }[];
+  /**
+   * その企画の見どころの配信。
+   *
+   * **`videoId` は無いことがある。** 録画そのものが残らなかった回や、
+   * 消えてしまった回（`docs/island-misses.md` #139）。そこへ送ると行き止まりに
+   * なるので、リンクだけ外して日付と題名を残す。**その日があったことは消さない。**
+   * 画面は押せない札として出す（`components/streams/Vid.tsx` の `VidGone`）。
+   */
+  streams: { date: string; videoId?: string; title: string }[];
 };
 
 export const LEGENDS: Legend[] = [
@@ -111,7 +119,10 @@ export const LEGENDS: Legend[] = [
       "翌年はジョージアのバトゥミから7時間の「W年越し配信」をやっている。",
     ],
     streams: [
-      { date: "2024-12-31", videoId: "LfUJ25h2f44", title: "【年越し】24時間配信するので、全ての応援してくださった方に感謝を言わせてください🥳" },
+      // **この回は録画が残っていない**（YouTube の頁は在るが、押すと見られない）。
+      // 同じ日に他の配信は無く、そもそもこの企画はこの1本のことなので、
+      // 消さずに `videoId` だけ外した。日付と題名は残る
+      { date: "2024-12-31", title: "【年越し】24時間配信するので、全ての応援してくださった方に感謝を言わせてください🥳" },
       { date: "2025-12-31", videoId: "ri120z7_4Ic", title: "今年のW年越し配信は、ジョージア🇬🇪バトゥミで7時間" },
     ],
   },
@@ -134,7 +145,9 @@ export const LEGENDS: Legend[] = [
     streams: [
       { date: "2026-03-11", videoId: "aWFNSGUPGjg", title: "㊗️10万再生行ってた笑 時代は鬼嫁かぁ" },
       { date: "2026-03-23", videoId: "47-oT3RFBd0", title: "100万再生いったぞ〜〜〜" },
-      { date: "2026-05-19", videoId: "p1-bliAqLJo", title: "友達ともめるショート動画が100万再生越えたよーん！" },
+      // 元は p1-bliAqLJo。消えて戻らないので、**同じ晩の同じ配信の別の枠**に差し替えた
+      // （5本に切れていて、うち4本が消えている。2u4HfAvQdsI だけ残っている）
+      { date: "2026-05-19", videoId: "2u4HfAvQdsI", title: "友達ともめるショート動画が100万再生越えたよーん！" },
     ],
   },
   {

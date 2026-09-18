@@ -30,6 +30,19 @@
 本数の上限は置かない。画面は `<details>` で畳んであって、閉じている間の背は
 本数で変わらない。上限で切ると、畳んだ札に出る「N本の配信」が実物より少ない数を
 名乗ることになる（`docs/island-standards.md` 10「読めていないことを、値0と同じ絵にしない」）。
+
+## 押しても見られない配信は、並べない（2026-09-18）
+
+消えた配信（404）と、録画そのものが残らなかった配信へは**送らない。**
+カードは絵が出るので生きて見えるが、押すと行き止まりになる——YouTube は
+サムネイルが 404 でも灰色の板を返す（`docs/island-misses.md` #139）。
+
+外す相手は `python/data/dead_streams.json`。**人が書く一覧ではなく、
+`python/build_dead_streams.py` が測って写したもの**で、**戻らないものしか
+入っていない**（403 の非公開は、あやとが公開に戻せばひとりでに島へ戻るので隠さない）。
+
+**日ごと消すわけではない。** 街の欄には隣に生きた配信が並んでいるので、
+1枚抜けても街も日付も残る。
 """
 
 import argparse
@@ -41,6 +54,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from build_dead_streams import blocked, check_written  # noqa: E402
 from stays import read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -187,6 +201,15 @@ def main() -> int:
     videos = (
         json.loads(Path(a.rows).read_text(encoding="utf-8")) if a.rows else fetch_videos()
     )
+    # **押しても見られない配信を、ここで落とす。** 選ぶ前に落とすので、
+    # 「その街の配信」の数え方は変わらない（1枚少なくなるだけ）。
+    # 落とすのは戻らないものだけ（`python/build_dead_streams.py`）
+    gone = blocked()
+    left = [v for v in videos if v["video_id"] not in gone]
+    if len(left) != len(videos):
+        logger.info("押しても見られない配信 %d 本を外した（取り置き %d 本）",
+                    len(videos) - len(left), len(gone))
+    videos = left
     # **ここで並べ直す。** SQL の ORDER BY は同着を残すので、そのまま使うと
     # 同じ日の配信が毎晩入れ替わって焼ける（`order_key` の注）
     videos = sorted(videos, key=order_key)
@@ -218,6 +241,8 @@ def main() -> int:
             result[slug] = cities
 
     body = json.dumps(result, ensure_ascii=False, indent=2)
+    # 出口でもう一度見る。入力の形が変わって落としが効かなくなっても、ここで止まる
+    check_written(body, OUT_TS.name)
     OUT_TS.write_text(
         "/**\n"
         " * 街ごとの配信。python/build_city_streams.py が BigQuery から作る。\n"
