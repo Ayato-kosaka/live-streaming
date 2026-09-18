@@ -76,6 +76,30 @@ function fmt(n: number) {
   return String(n).padStart(2, "0");
 }
 
+/**
+ * 数が届くまでの1行。**字は変えず、場所だけ先に取る**
+ * （`docs/island-design.md` 4章「読み込み中 — 場所だけ先に取る」）。
+ *
+ * 数の行（`<em><b>308</b>km</em>`）と**同じ形の写し**を、字を出さずに1つ置く。
+ * 高さを数字で書いて合わせると、`clamp(26px, 8.4vw, 42px)` の側を触ったときに
+ * 黙ってずれる。**写しなら、字の大きさが変わっても勝手についてくる。**
+ *
+ * これが無かったころ、数が届いた瞬間に札が 84px 伸びて、下にあるものが
+ * 全部ずれていた。読み始めたところで画面が飛ぶ。
+ */
+function Counting() {
+  return (
+    <span className="tnow-count-n is-wait">
+      <em className="tnow-ghost" aria-hidden>
+        <b>0</b>
+      </em>
+      {/* **字のほうを包む。** 行の高さをここで下げる。写しの側に掛けると、
+          写しの背まで縮んで、取ったつもりの場所が足りなくなる（実測 2.3px 足りず）。 */}
+      <span className="tnow-counting">数えています</span>
+    </span>
+  );
+}
+
 /** 「2026-09-19」→「9月19日」。書き出しは UTC で走るので、月日は文字列から取る。 */
 function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日`;
@@ -425,7 +449,7 @@ export default function TripNow({
           <div className="tnow-count">
             <span className="tnow-count-l">クタイシ発まで</span>
             {left == null ? (
-              <span className="tnow-count-n is-wait">数えています</span>
+              <Counting />
             ) : (
               <span className="tnow-count-n">
                 <em>
@@ -452,7 +476,7 @@ export default function TripNow({
              （`components/nordic/fund.ts`）。 */
           <div className="tnow-count is-far">
             <span className="tnow-count-l">ストックホルムまで</span>
-            <span className="tnow-count-n is-wait">数えています</span>
+            <Counting />
             <span className="tnow-count-w">
               ぜんぶで {hitchKm.toLocaleString()}km
             </span>
@@ -513,7 +537,10 @@ export default function TripNow({
       </div>
 
       {/* いま どこにいて、つぎ どこへ向かうのか */}
-      <div className="tnow-pair">
+      {/* いる場所がまだ読めていないあいだ（`idx == null`）は、区間の絵が出ない。
+          絵1枚ぶんの場所は先に取っておく（`app/css/nordic.css` の `.tnow-pair.is-wait`）。
+          読めた瞬間に絵が挿さって、この札が 48px 伸びていた。 */}
+      <div className={`tnow-pair${idx == null ? " is-wait" : ""}`}>
         <div className={`tnow-at${fromPlan ? " is-plan" : ""}`}>
           {/* **「いま」と「きょうは」を、同じ強さで言わない。**
               本人が打った字か、島から届いた事実（着いた日）で押さえられている
