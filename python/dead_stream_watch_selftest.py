@@ -1,24 +1,32 @@
-"""**`python/dead_stream_watch.py` が、本当に拾うか・本当に黙るかを両側から見る。**
+"""**`python/dead_stream_watch.py` と `python/build_dead_streams.py` が、
+本当に拾うか・本当に黙るかを両側から見る。**
 
     python3 python/dead_stream_watch_selftest.py
 
 終了コード 0=ぜんぶ通った / 1=外したものがある / 2=対照が1件も回っていない。
 
 **ここはネットに出ない。** 出る側の対照（生きた id で 0件・死んだ id で 1件・
-録画の無い id で `NO_REC`・届かない箱で 2）は見張り本体が毎回自分で回すもので、ここで見るのは
-**口を持たない部分**——どこから配信IDを拾うか、yt-dlp の言い分をどう読むか、
-終了コードをどう決めるか——の3つ。
+録画の無い id で `NO_REC`・届かない箱で 2）は見張り本体が毎回自分で回すもので、
+ここで見るのは**口を持たない部分**だけ。
+
+毎晩の焼き直し（`rebake.yml` の「押しても見られない配信の見張りが効くか」）から
+回る。**繋ぐ前は、どこからも走っていなかった**——#520 で焼き込みから7本外した
+日から、この対照は master で赤いまま2日残っていた（`island-misses.md` #125 #139）。
 
 ## なぜ「落ちるまで壊す」だけでは対照にならないか
 
 `island-misses.md` #128 の決めごと1。判定の足を1本ずつ抜く。
-ここでいう足は3本ある。
+ここでいう足は7本ある（`BREAK` は要らない。下の表のとおりに1行ずつ当てれば落ちる）。
 
 | 足 | 抜くと何が起きるか |
 | --- | --- |
 | 拾う鍵（`videoId` / `"v"`） | 拾い漏らすと、見ていない配信が「見られる」に混ざる |
 | 2段目の読み（`classify_player`） | `OK` に畳むと死にリンクが消える。逆に「消えている」と読むと、**締め出された返りが死にリンクに化ける**（実際に148本やった） |
 | 終了コード（`decide`） | 見つかったのに 2 を返すと、本物の件数が「数えられなかった」に化ける |
+| 隠すほうの種類（`FOREVER`） | 403 を入れると、**あやとが公開に戻した日に島が知らないまま隠し続ける** |
+| 覚えるほうの種類（`WATCHED`） | 403 を落とすと、**毎晩17本ぶら下がって毎晩赤くなる。**「いつもの赤」に化けて、本当に1本死んだ晩に見分けがつかない |
+| 今夜深く見るぶん（`pick_deep`） | 「もう見られないと知っているぶん」を外すと、**録画の無い id が1段目の 200 だけで「もどりました」に化けて**取り置きから外れ、翌晩また焼き込みに入る |
+| 深く見た日（`merge_deep`） | 見られないものまで覚えると、次の晩に飛ばされて上と同じことが起きる |
 
 **両側から当てる。** 「拾えること」だけでなく「拾ってはいけないものを
 拾わないこと」も見る。焼き込みには 11字の別物（料理の合言葉 `french-toast`
@@ -45,6 +53,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import shutil
 import subprocess
 import re
@@ -58,17 +68,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # `__pycache__` の pyc は「元の秒数と大きさが同じ」なら作り直されない。
 # 見張りを1行だけ直して1秒以内に回すと、**直っていない中身で対照が通る**
 # （実際に踏んだ。壊した対照を戻したのに、壊れたままの値で落ち続けた）
-for _pyc in (Path(__file__).resolve().parent / "__pycache__").glob("dead_stream_watch.*.pyc"):
-    _pyc.unlink(missing_ok=True)
+for _name in ("dead_stream_watch", "build_dead_streams"):
+    for _pyc in (Path(__file__).resolve().parent / "__pycache__").glob(f"{_name}.*.pyc"):
+        _pyc.unlink(missing_ok=True)
 
 from dead_stream_watch import (  # noqa: E402
-    BLIND, CONTENT, DEAD_CONTROL, FRONT, GONE, LIVE_CONTROL, NO_REC, OK, OTHER,
-    PAGES, PLAY_CONTROL, PRIVATE, Probe, SIDE, Sighting, Verdict, classify_player,
-    decide, is_throttled, scan_dir,
+    BLIND, CONTENT, DEAD_CONTROL, FRONT, GONE, ID_RE, LIVE_CONTROL, LOGIN, NO_REC, OK,
+    OTHER, PAGES, PLAY_CONTROL, PRIVATE, Probe, SIDE, Sighting, Verdict, classify_player,
+    decide, is_throttled, probe_all, scan_dir,
 )
+
+import build_dead_streams as build  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 WATCH = REPO / "python" / "dead_stream_watch.py"
+BUILD = REPO / "python" / "build_dead_streams.py"
 
 # YouTube の id の11字目に立てる字。**ここを外すと oembed は 400 を返す**
 TAIL_OK = set("AEIMQUYcgkosw048")
@@ -283,10 +297,19 @@ def main() -> int:
         check(f"生きた側の対照 {v} は、島が実際に名指ししている配信", v in real, True)
     check("生きた側の対照は2本以上（1本が非公開になった晩に見張りごと止まらない）",
           len(LIVE_CONTROL) >= 2, True)
-    # 2段目の対照は、**島が実際に名指ししている「押すと見られない」配信**。
-    # 架空の id では、oembed が 200 を返す道そのものを通らない
+    # 2段目の対照は、**島が本物として持っている「押すと見られない」配信**。
+    # 架空の id では、oembed が 200 を返す道そのものを通らない。
+    #
+    # **焼き込みに在ることを条件にしない。** #520 で戻らない7本を焼き込みから
+    # 外したので、`LfUJ25h2f44` は `real` から消えた。そのとたんにここが落ちて、
+    # **この対照は master で赤いまま残っていた**（どこからも走っていなかったので
+    # 誰も気づかなかった。`docs/island-misses.md` #125）。
+    # いま在るべき場所は取り置きのほう——**外した理由がまさに「押すと見られない」**なので、
+    # そちらに在れば本物であることの証明になる
+    known = set(real) | set(build.load(build.OUT)["ids"])
     for v in PLAY_CONTROL:
-        check(f"2段目の対照 {v} は、島が実際に名指ししている配信", v in real, True)
+        check(f"2段目の対照 {v} は、島が本物として持っている配信"
+              "（焼き込みか、押しても見られない取り置きのどちらか）", v in known, True)
         check(f"2段目の対照 {v} は、生きた側と重なっていない", v in LIVE_CONTROL, False)
 
     # --- 8b. 視聴者さんのものを持ち歩いていないか ----------------------------
@@ -312,6 +335,202 @@ def main() -> int:
     check("押し出す面と一覧の面で、面の表をちょうど覆っている",
           sorted(set(FRONT) | set(SIDE)), sorted(PAGES))
     check("押し出す面と一覧の面が重なっていない", sorted(set(FRONT) & set(SIDE)), [])
+
+    # --- 10. 隠すほうと、覚えるほうを混ぜない --------------------------------
+    # **ここが混ざると、この仕組みが在る意味が消える。**
+    # 隠すほう（`dead_streams.json`）に 403 が入ると、あやとが公開に戻した日に
+    # 島が知らないまま隠し続ける。覚えるほう（`dead_watch_seen.json`）に 403 が
+    # 入らないと、**あやとが戻すまで毎晩17本ぶら下がって毎晩赤くなる。**
+    # 毎晩赤いものは「いつもの赤」に化けて、本当に1本死んだ晩に見分けがつかない
+    check("隠すほうに入れてよいのは、戻らない2種類だけ",
+          sorted(build.FOREVER), sorted([GONE, NO_REC]))
+    check("覚えるほうには、戻るほう（403 / 401）も入る",
+          sorted(build.WATCHED), sorted([GONE, LOGIN, NO_REC, OTHER, PRIVATE]))
+    for kind in (PRIVATE, LOGIN):
+        check(f"隠すほうに {kind} を入れない", kind in build.FOREVER, False)
+    for kind in (GONE, NO_REC, PRIVATE, LOGIN):
+        check(f"覚えるほうは {kind} を覚える", kind in build.WATCHED, True)
+    check("押せば見られるものは、どちらにも入れない",
+          OK in build.FOREVER or OK in build.WATCHED, False)
+    check("測れなかったものは、どちらにも入れない",
+          BLIND in build.FOREVER or BLIND in build.WATCHED, False)
+
+    # 隠すほうの入れ替えも、ここで両側から当てる（これまで対照が無かった）
+    def probes_of(pairs) -> dict:
+        return {v: Probe(v, k) for v, k in pairs}
+
+    keep, added, dropped, _ = build.merge(
+        {"aaaaaaaaaaa": {"kind": GONE, "since": "2026-01-01"}},
+        probes_of([("aaaaaaaaaaa", GONE), ("bbbbbbbbbbb", PRIVATE),
+                   ("ccccccccccc", NO_REC)]), "2026-09-18")
+    check("隠すほう: 403 は足さない", sorted(keep), ["aaaaaaaaaaa", "ccccccccccc"])
+    check("隠すほう: 最初に見つけた日は書き換えない",
+          keep["aaaaaaaaaaa"]["since"], "2026-01-01")
+    check("隠すほう: 新しく戻らなくなったものは足す", added, ["ccccccccccc"])
+    _, _, dropped, _ = build.merge(
+        {"aaaaaaaaaaa": {"kind": GONE, "since": "2026-01-01"}},
+        probes_of([("aaaaaaaaaaa", PRIVATE)]), "2026-09-18")
+    check("隠すほう: 403 に変わったら外す（戻せる相手を隠し続けない）",
+          dropped, ["aaaaaaaaaaa（PRIVATE）"])
+    keep, _, _, _ = build.merge(
+        {"aaaaaaaaaaa": {"kind": GONE, "since": "2026-01-01"}},
+        probes_of([("aaaaaaaaaaa", BLIND)]), "2026-09-18")
+    check("隠すほう: 測れなかった晩に外さない", sorted(keep), ["aaaaaaaaaaa"])
+
+    # --- 11. 今夜2段目に当てるぶんの選びかた（`pick_deep`）。**両側から** -----
+    # 足は3本ある。**1本ずつ抜いて、そのたびに落ちること**を見る
+    # （`docs/island-misses.md` #128 の決めごと1）
+    live11 = [f"a{i:010d}" for i in range(5)]
+    deep11 = {live11[0]: "2026-09-17",     # きのう見た
+              live11[1]: "2026-01-01",     # うんと昔に見た
+              live11[3]: "こわれた日付"}    # 読めない
+    got = build.pick_deep(live11, deep11, known_bad=set(), today="2026-09-18")
+    check("きのう深く見た id は、今夜は当てない", live11[0] in got, False)
+    check("一度も深く見ていない id は、今夜当てる", live11[2] in got, True)
+    check("30日たった id は、今夜当てる", live11[1] in got, True)
+    check("日付が読めない id は、見直す側に倒す", live11[3] in got, True)
+    got = build.pick_deep(live11, deep11, known_bad={live11[0]}, today="2026-09-18")
+    check("もう「見られない」と知っている id は、きのう見ていても毎晩当てる",
+          live11[0] in got, True)
+    # **上限が効くこと**（毎晩の時間が読めなくなるのを止める）
+    many = [f"b{i:010d}" for i in range(200)]
+    check("初めて深く見るぶんに上限が効く",
+          len(build.pick_deep(many, {}, set(), "2026-09-18", new_max=7)), 7)
+    old = {v: "2026-01-01" for v in many}
+    check("30日たったぶんに上限が効く",
+          len(build.pick_deep(many, old, set(), "2026-09-18", recheck_max=9)), 9)
+    check("30日たったぶんは、古い順に取る",
+          build.pick_deep(["c0000000001", "c0000000002"],
+                          {"c0000000001": "2026-02-02", "c0000000002": "2026-01-01"},
+                          set(), "2026-09-18", recheck_max=1), ["c0000000002"])
+    check("上限で溢れても、もう知っている見られないぶんは落とさない",
+          "b0000000199" in build.pick_deep(many, {}, {"b0000000199"}, "2026-09-18",
+                                           new_max=1), True)
+    check("1段目が 200 と言っていない id は、選ばない",
+          sorted(set(build.pick_deep(live11, deep11, {"zzzzzzzzzzz"}, "2026-09-18"))
+                 - set(live11)), [])
+    # 選んだ結果は `probe_all` に渡る。**渡していない id を混ぜたら止まる**
+    # （#139 の決めごと7「分母は黙って縮む／膨らむ」）
+    try:
+        probe_all(["ddddddddddd"], deep=True, deep_pick=lambda _: ["eeeeeeeeeee"])
+        check("2段目に、1段目を通っていない id を混ぜたら止まる", "通ってしまった", "止まる")
+    except ValueError:
+        check("2段目に、1段目を通っていない id を混ぜたら止まる", "止まる", "止まる")
+
+    # --- 12. 深く見た日の覚えかた -------------------------------------------
+    # **「押せば見られる」と分かったものだけ覚える。** 見られないもの・
+    # 測れなかったものを覚えると、**次の晩に飛ばされて**、1段目の 200 だけで
+    # 「もどりました」に化ける
+    deep_now = build.merge_deep(
+        {"aaaaaaaaaaa": "2026-01-01", "zzzzzzzzzzz": "2026-01-01"},
+        ["aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc"],
+        probes_of([("aaaaaaaaaaa", OK), ("bbbbbbbbbbb", NO_REC), ("ccccccccccc", BLIND)]),
+        tracked={"aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc"}, today="2026-09-18")
+    check("押せば見られると分かったら、その日を覚える",
+          deep_now.get("aaaaaaaaaaa"), "2026-09-18")
+    check("録画が無いと分かった id は、覚えに載せない（毎晩見直す）",
+          "bbbbbbbbbbb" in deep_now, False)
+    check("測れなかった id は、覚えに載せない（翌晩もう一度）",
+          "ccccccccccc" in deep_now, False)
+    check("島からも取り置きからも消えた id は、覚えから落とす",
+          "zzzzzzzzzzz" in deep_now, False)
+
+    # --- 13. 毎晩なんと言うか（`merge_seen`）。**両側から** ------------------
+    was13 = {"aaaaaaaaaaa": {"kind": PRIVATE, "since": "2026-09-01"},
+             "bbbbbbbbbbb": {"kind": NO_REC, "since": "2026-09-01"},
+             "ccccccccccc": {"kind": GONE, "since": "2026-09-01"},
+             "zzzzzzzzzzz": {"kind": PRIVATE, "since": "2026-09-01"}}
+    tracked13 = {"aaaaaaaaaaa", "bbbbbbbbbbb", "ccccccccccc", "ddddddddddd"}
+    after13, new13, back13, moved13, off13, blind13 = build.merge_seen(
+        was13,
+        probes_of([("aaaaaaaaaaa", PRIVATE),   # まだ見られない → 静か
+                   ("bbbbbbbbbbb", OK),        # もどった
+                   ("ccccccccccc", BLIND),     # 測れなかった
+                   ("ddddddddddd", GONE)]),    # **新しく死んだ**
+        tracked13, "2026-09-18")
+    check("知っている id が、まだ見られない → 何も言わない",
+          "aaaaaaaaaaa" in (new13 + back13 + moved13), False)
+    check("知っている id が、まだ見られない → 覚えに残す",
+          after13.get("aaaaaaaaaaa", {}).get("since"), "2026-09-01")
+    check("知っている id が見られるようになった → もどった",
+          back13, ["bbbbbbbbbbb（NO_REC→押せば見られる）"])
+    check("もどった id は、覚えから外す", "bbbbbbbbbbb" in after13, False)
+    check("測れなかった id は、覚えから外さない", "ccccccccccc" in after13, True)
+    check("測れなかった id を、もどったと言わない", "ccccccccccc" in str(back13), False)
+    check("知らなかった id が見られなくなった → 新しい", new13, ["ddddddddddd（GONE）"])
+    check("新しく見られなくなった id の since は今日",
+          after13.get("ddddddddddd", {}).get("since"), "2026-09-18")
+    check("島からも取り置きからも消えた id は、覚えから外す", off13, ["zzzzzzzzzzz"])
+    check("島から外れただけの id を、もどったと言わない",
+          "zzzzzzzzzzz" in str(back13), False)
+    check("測れなかったぶんを数えている", blind13, ["ccccccccccc"])
+
+    # 種類が変わった（403 → 404 など）。**新しいとは言わないが、黙りもしない**
+    _, new14, back14, moved14, _, _ = build.merge_seen(
+        {"aaaaaaaaaaa": {"kind": PRIVATE, "since": "2026-09-01"}},
+        probes_of([("aaaaaaaaaaa", GONE)]), {"aaaaaaaaaaa"}, "2026-09-18")
+    check("知っている id の種類が変わった → 新しいとは言わない", new14, [])
+    check("知っている id の種類が変わった → 黙りもしない",
+          moved14, ["aaaaaaaaaaa（PRIVATE→GONE）"])
+    check("種類が変わっただけで「もどった」と言わない", back14, [])
+
+    # **覚えが空の朝は、17本ぜんぶが新顔になる＝赤い。** 安全な側に倒れること
+    _, new15, _, _, _, _ = build.merge_seen(
+        {}, probes_of([("aaaaaaaaaaa", PRIVATE)]), {"aaaaaaaaaaa"}, "2026-09-18")
+    check("覚えが空なら、いま見られないものは新顔になる（黙らない側に倒れる）",
+          new15, ["aaaaaaaaaaa（PRIVATE）"])
+
+    # --- 14. 覚えの JSON に、素性が1文字も入らない --------------------------
+    # 焼き込みには**表示名とアイコン**が配信IDの隣に並んでいる。このリポジトリは
+    # 公開で Actions のログも誰でも読めるので、**書いた字そのもの**を見る
+    with tempfile.TemporaryDirectory(prefix="deadseen-") as tmp:
+        seen_path = Path(tmp) / "dead_watch_seen.json"
+        build.save_seen(
+            {"aaaaaaaaaaa": {"kind": PRIVATE, "since": "2026-09-18",
+                             "files": ["cityStreams.ts"]}},
+            {"bbbbbbbbbbb": "2026-09-18"}, seen_path)
+        got = json.loads(seen_path.read_text(encoding="utf-8"))
+        rows = list(got["ids"].values())
+        keys = sorted({k for r in rows for k in r})
+        check("覚えの1行が持つのは、種類・いつから・焼き込みのファイル名だけ",
+              keys, ["files", "kind", "since"])
+        check("覚えのファイル名は、焼き込みの `.ts` だけ",
+              [f for r in rows for f in r.get("files", []) if not f.endswith(".ts")], [])
+        check("覚えの配信IDは11字", [v for v in got["ids"] if not ID_RE.fullmatch(v)], [])
+        check("深く見た日の一覧も、配信IDと日付だけ",
+              [f"{v}={d}" for v, d in got["deep"].items()
+               if not ID_RE.fullmatch(v) or not _is_day(d)], [])
+        # 読み直して同じものになる（**次の晩がこれを引く**）
+        again = build.load_seen(seen_path)
+        check("書いたものを読み直せる", sorted(again["ids"]), ["aaaaaaaaaaa"])
+        check("深く見た日も読み直せる", again["deep"], {"bbbbbbbbbbb": "2026-09-18"})
+        check("覚えが無ければ空（投げない。空だと赤くなる側に倒れる）",
+              build.load_seen(Path(tmp) / "ない.json"), {"ids": {}, "deep": {}})
+
+        # --- 15. 測れなかった晩の終わりかた（ネットに出ない道だけ）----------
+        # **数えるものが無い晩は、赤くしない・書かない・黙らない。**
+        # ここは scan が先に落ちるので、口を1回も叩かない
+        empty = Path(tmp) / "からっぽ"
+        empty.mkdir()
+        summary = Path(tmp) / "summary.md"
+        env = dict(os.environ, GITHUB_STEP_SUMMARY=str(summary))
+        r = subprocess.run([sys.executable, str(BUILD), "--data-dir", tmp,
+                            "--dir", str(empty)], capture_output=True, text=True, env=env)
+        check("数えるものが無い晩の終了コード（赤くしない）", r.returncode, 2)
+        check("数えるものが無い晩は、run の1枚目に「測れませんでした」と残す",
+              "測れませんでした" in summary.read_text(encoding="utf-8"), True)
+        check("数えるものが無い晩に、増えた／増えていないを言い切らない",
+              "1バイトも書き換えていません" in summary.read_text(encoding="utf-8"), True)
+        check("数えるものが無い晩は、覚えを書き換えない",
+              json.loads(seen_path.read_text(encoding="utf-8")) == got, True)
+
+        r = subprocess.run([sys.executable, str(BUILD), "--data-dir", tmp,
+                            "--dir", str(Path(tmp) / "ないところ")],
+                           capture_output=True, text=True, env=env)
+        check("置き場が無い晩の終了コード", r.returncode, 2)
+        r = subprocess.run([sys.executable, str(BUILD), "--data-dir"],
+                           capture_output=True, text=True, env=env)
+        check("--data-dir のあとが空のときの終了コード", r.returncode, 2)
 
     print(f"対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")
     for line in ng:

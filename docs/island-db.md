@@ -1134,6 +1134,14 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | 取り置き | 元 | 回すもの | 何を持っているか |
 | --- | --- | --- | --- |
 | `python/data/dead_streams.json` | YouTube（oembed ＋ `youtubei/v1/player`） | `build_dead_streams.py` | **押しても戻らない配信の id**（404 と、録画そのものが無い回） |
+| `python/data/dead_watch_seen.json` | 同上（同じ1回の測りから書く） | 同上 | **もう知っている「押しても見られない」id ぜんぶ**（403 / 401 も入る）と、2段目で見た日 |
+
+**2つは役目が違う。** 前者は焼くスクリプトが読む**隠す相手**で、戻らないものしか
+入らない。後者は毎晩の見張りが読む**覚え**で、「知らなかった id が見られなく
+なった晩だけ赤くする」ためのもの。後者に 403 を入れないと、あやとが戻すまで
+**毎晩17本ぶら下がって毎晩赤くなる**（毎晩赤いものは「いつもの赤」に化けて、
+本当に1本死んだ晩に見分けがつかない）。前者に 403 を入れると、戻した日に
+島が知らないまま隠し続ける。**測るのは1回で、書き分けるだけ。**
 
 焼くスクリプト（`build_city_streams` `build_on_this_day` `build_chapter_stats`
 `build_country_stats` `build_legend_days`）は、これを読んで**その配信を焼き込みに

@@ -536,8 +536,20 @@ def _tick(label: str, done: int, total: int, quiet: bool) -> None:
 
 
 def probe_all(vids: list[str], deep: bool, workers: int = 8,
-              quiet: bool = True) -> dict[str, Probe]:
-    """1本ずつ当てる。oembed が 200 のものだけ、2段目へ送る。"""
+              quiet: bool = True, deep_pick=None) -> dict[str, Probe]:
+    """1本ずつ当てる。oembed が 200 のものだけ、2段目へ送る。
+
+    `deep_pick` は「1段目が 200 と言った一覧から、**今夜2段目に当てるぶん**を
+    選ぶ」呼び出し先。毎晩回すときは 719本ぜんぶに2段目を当てると 18〜25分
+    かかって YouTube に締め出されるので、増えたぶんだけに絞る
+    （選びかたは `python/build_dead_streams.py` が持つ。**ここは選ばない**）。
+
+    渡さなければ今までどおり 200 のものぜんぶに当てる。
+
+    **選んだ結果が、渡した一覧の中に収まっていることを確かめる。**
+    選ぶ側が別の id を混ぜたら、1段目を通していないものに2段目を当てることに
+    なる（#139 の決めごと7「渡したものと測ったものの数を、道具に言わせる」）。
+    """
     got: dict[str, Probe] = {}
     with ThreadPoolExecutor(max_workers=workers) as ex:
         for p in ex.map(probe_oembed, vids):
@@ -546,6 +558,13 @@ def probe_all(vids: list[str], deep: bool, workers: int = 8,
     if not deep:
         return got
     live = [v for v, p in got.items() if p.kind == OK]
+    if deep_pick is not None:
+        picked = list(deep_pick(list(live)))
+        odd = sorted(set(picked) - set(live))
+        if odd:
+            raise ValueError(
+                f"2段目に、1段目を通っていない配信が混ざっています: {' '.join(odd[:5])}")
+        live = [v for v in live if v in set(picked)]
     if live:
         done = 0
         with ThreadPoolExecutor(max_workers=PLAY_WORKERS) as ex:
