@@ -209,7 +209,12 @@ BOOKS: dict[str, Book] = {
         "日では測らない——名簿は誰も入らない月があり、入った翌日に鳴ってほしい",
         upstream="residents.ts",
         names=False,
-        todo="`python3 tools/sprites/charbox.py` を回す（絵が無い人は noArt に入って緑になる）",
+        todo="**待てば入る。** `rebake.yml` が `build_residents` と同じ回で焼くので、"
+             "次の焼き直しは取り込みの後ろ（実測 21:49〜23:32 UTC）。"
+             "**それより早く要るなら**、Actions の「島の数字を焼き直す」を "
+             "`scripts: build_residents` / `dry_run: false` / `deploy: true` で押す"
+             "（手で焼くだけなら `python3 tools/sprites/charbox.py`。"
+             "絵が無い人は noArt に入って緑になる）",
     ),
     # --- 人が書く。**全員ぶんは求めない。割合で見る** ---
     "chatter.ts": Book(
