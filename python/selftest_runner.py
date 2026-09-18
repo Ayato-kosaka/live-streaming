@@ -37,7 +37,7 @@
 混ぜると**赤が意味を失う**ので、そこは `SKIP` に理由ごと書く。
 
 **拾うのは Python の `*_selftest.py` と、`site/selftest/` と
-`functions/selftest/` の `*_selftest.mjs`。**
+`functions/selftest/` と `tools/sprites/` の `*_selftest.mjs`。**
 `site` の mjs 4本（`chatdown` / `chatter` / `folk` / `roster`）は
 2026-09-18 まで `rebake.yml` の中でしか走っていなかった——つまり
 **マージして配ったあと。** `functions` の6本（`cards_*` / `clean`）は
@@ -129,7 +129,19 @@ REPO = HERE.parent
 # （1本 10.8秒。この箱では 15秒。**中身ではなく、1本ずつ自分で `tsc` を
 # 通すぶん**）。`CARDS_LIB_DIR` を渡せばその 10秒は消えるが、あれは
 # 「壊した写しで回す」ための口なので、本物の `lib` を指させない
-MJS_ROOTS = (REPO / "site" / "selftest", REPO / "functions" / "selftest")
+# `tools/sprites/` の `*_selftest.mjs` も拾う（2026-09-18 から。38本 → 39本）。
+# いま在るのは `preclaim_selftest.mjs` 1本で、**焼いた HTML を読む道具
+# （`preclaim.mjs`）の判定だけ**を見る。道具そのものは書き出しとブラウザが
+# 要るので毎 PR では回せないが、腐るのは判定の側（正規表現は1文字直せば
+# 黙って穴が開き、出るのは「0件」）。だから判定だけ切り出して繋ぐ。
+# `tools/sprites/node_modules` は CI に入らないので、**`playwright-core` を
+# import しないこと**が、ここに置ける条件（`preclaim.mjs` は回すときに初めて読む）。
+# 値段は測った（2026-09-18。この箱）: **0.9秒**（子を8つ起こすぶんがほとんど）。
+MJS_ROOTS = (
+    REPO / "site" / "selftest",
+    REPO / "functions" / "selftest",
+    REPO / "tools" / "sprites",
+)
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300

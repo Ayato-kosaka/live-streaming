@@ -116,9 +116,12 @@
  * 対照は**この道具が回るたびに毎回**通る（別のところに置くと、置いた先が
  * 回らない日に黙る。`island-standards.md` の「繋ぐ先」）。
  */
-import { chromium } from "playwright-core";
+/* **`playwright-core` は、回すときに初めて読む。** 判定だけを使う見張り
+   （`preclaim_selftest.mjs`）は毎 PR で走るので、`tools/sprites/node_modules` が
+   入っていない箱でも import できないといけない。 */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { fromRoot } from "./repo.mjs";
 import { openChecked, reportMissing } from "./served.mjs";
 
@@ -168,8 +171,12 @@ const PHASE = [
   "[ぁ-んァ-ン一-龥]中(?![学国心心身間央略略途東西南北核級間立])(?:です|だ|。|$|\\s)",
   // 済み・完了・終了・開始。**名詞のかたちで段を言い切っている**
   "(?:済み?|完了|終了|開始|到着|出発済)(?:です|だ|。|$|\\s|！)",
-  // 過去のかたち。こちらも**文の切れ目で終わるものだけ**（連体は拾わない）
-  "(?:し|着い|行っ|来|帰っ|発っ|終わっ|始まっ|過ぎ|なっ|だっ)(?:た|ました)(?=[。、．，！？!?）」』]|$)",
+  /* 過去のかたち。こちらも**文の切れ目で終わるものだけ**（連体は拾わない）。
+     **繋ぎの「だった」は入れない。** あれは「◯◯は△△だった」という語りで、
+     ものごとがどの段に在るかを言っていない。入れると「3ヶ月の**予定だった**」まで
+     拾って、いつ読んでも本当な字が候補に混じる（#136 の決めごと3。狼少年1件目が
+     まさにこれだった）。「行ってきた」「着きました」は段を言っているので残す。 */
+  "(?:し|着い|行っ|来|帰っ|発っ|終わっ|始まっ|過ぎ|なっ)(?:た|ました)(?=[。、．，！？!?）」』]|$)",
   // 近さ・経過を言う副詞。**どこに居るかを断定している**
   "(?:まもなく|間もなく|もうすぐ|そろそろ|いよいよ|ついに|すでに|既に|もはや|直前|目前|真っ最中|さいちゅう)",
   // `まだ` `もう`。**知らない側ではなく、知っている側として置かれている**
@@ -685,124 +692,139 @@ function walk(d, base = "") {
   return out;
 }
 
-if (!existsSync(DIST)) {
-  console.log(`${DIST} が無い。先に \`tools/build.sh ${SPORT}\` で書き出してください。`);
-  process.exit(2);
-}
-const pages = walk(DIST).sort().filter((x) => !ONLY.length || ONLY.includes(x));
-if (!pages.length) {
-  console.log(`${DIST} に面が無い。先に書き出してください。`);
-  process.exit(2);
-}
-
-const b = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-  args: ["--no-sandbox"],
-});
-
-/* 対照が先。落ちたら本物の面の数字は1つも出さない */
-{
-  const { ok, rows } = await controls(b);
-  console.log(`── 対照（${rows.length}つ）${BREAK ? `  BREAK=${BREAK}` : ""}`);
-  for (const r of rows) {
-    console.log(`  ${r.ok ? "○" : "×"} ${r.name}`);
-    console.log(`      ほしい: ${r.want}`);
-    console.log(`      出た  : ${r.got}`);
-  }
-  if (!ok) {
-    console.log(`\n対照が ${rows.filter((r) => !r.ok).length}件 外れた。**面の数字は出さない。**`);
-    await b.close();
+/**
+ * **回すのは、この道具を直に叩いたときだけ。**
+ *
+ * 判定（`judge` / `subtract` / `verdict` / `servedDiff`）は
+ * `preclaim_selftest.mjs` が import して毎 PR で確かめる。import しただけで
+ * ブラウザが起きると、書き出しもブラウザも無い CI でそこが落ちる。
+ */
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  if (!existsSync(DIST)) {
+    console.log(`${DIST} が無い。先に \`tools/build.sh ${SPORT}\` で書き出してください。`);
     process.exit(2);
   }
-  console.log(`  対照 ${rows.length}件とも一致\n`);
-}
-
-/* 配っている先が、いま数えようとしている書き出しかを見る。**対照のすぐあと、
-   面を1枚も開く前に。** ここがずれていると、測った結果は別の書き出しのもの */
-{
-  const bad = await servedDiff(pages, DIST, ORIGIN);
-  if (bad.length) {
-    console.log(`── 配っている先（${ORIGIN}）が ${DIST} と食い違う: ${bad.length} / ${pages.length}面`);
-    for (const x of bad.slice(0, 10)) console.log("    " + x);
-    if (bad.length > 10) console.log(`    …ほか ${bad.length - 10}件`);
-    console.log("\n**別の書き出しを測るところだった。数字は出さない。**");
-    await b.close();
+  const pages = walk(DIST).sort().filter((x) => !ONLY.length || ONLY.includes(x));
+  if (!pages.length) {
+    console.log(`${DIST} に面が無い。先に書き出してください。`);
     process.exit(2);
   }
-  console.log(`  配っている先と ${DIST} は ${pages.length}面とも同じ中身\n`);
-}
 
-const miss = [];
-/** 道具のほうが壊れている面。**1件でもあれば数字を出さない** */
-const broken = [];
-/** JS が入ると別の面へ送られる面。引き算では測れないので、名前を出して外す */
-const moved = [];
-let seen = 0;
-let offLines = 0;
-let diffLines = 0;
-const found = [];
+  const { chromium } = await import("playwright-core");
+  const b = await chromium.launch({
+    executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    args: ["--no-sandbox"],
+  });
 
-const ctxOff = await makeCtx(b, false);
-const ctxOn = await makeCtx(b, true);
-const pOff = await ctxOff.newPage();
-const pOn = await ctxOn.newPage();
-
-for (const page of pages) {
-  const a = await readPage(pOff, page, miss);
-  if (!a) continue;
-  const o = await openChecked(pOn, ORIGIN, page, { miss, waitUntil: "load" });
-  if (!o.ok) continue;
-  const z = await grab(pOn, true);
-  let g = jsGuard(page, a, z);
-  /* **落ち着かないまま測らない。** 途中の姿と引き算すると、割れ方の差が
-     そのまま候補に化ける。0件に化けるのと同じくらい危ない（§15） */
-  if (!g && !z.settled)
-    g = { kind: "broken", why: `${page}: JS を入れた側の字が ${WAIT_MS}ms では落ち着かなかった` };
-  if (g) {
-    (g.kind === "broken" ? broken : moved).push(g.why);
-    continue;
+  /* 対照が先。落ちたら本物の面の数字は1つも出さない */
+  {
+    const { ok, rows } = await controls(b);
+    console.log(`── 対照（${rows.length}つ）${BREAK ? `  BREAK=${BREAK}` : ""}`);
+    for (const r of rows) {
+      console.log(`  ${r.ok ? "○" : "×"} ${r.name}`);
+      console.log(`      ほしい: ${r.want}`);
+      console.log(`      出た  : ${r.got}`);
+    }
+    if (!ok) {
+      console.log(`\n対照が ${rows.filter((r) => !r.ok).length}件 外れた。**面の数字は出さない。**`);
+      await b.close();
+      process.exit(2);
+    }
+    console.log(`  対照 ${rows.length}件とも一致\n`);
   }
-  seen++;
-  offLines += a.lines.length;
-  const d = subtract(a.lines, z.dom);
-  diffLines += d.length;
-  if (SHOWDIFF) for (const x of d) console.log(`  差  ${page}  「${x.line}」  ${x.hit ? "［" + x.why + "］" : "—"}`);
-  for (const x of d) if (x.hit) found.push({ page, ...x });
+
+  /* 配っている先が、いま数えようとしている書き出しかを見る。**対照のすぐあと、
+     面を1枚も開く前に。** ここがずれていると、測った結果は別の書き出しのもの */
+  {
+    const bad = await servedDiff(pages, DIST, ORIGIN);
+    if (bad.length) {
+      console.log(`── 配っている先（${ORIGIN}）が ${DIST} と食い違う: ${bad.length} / ${pages.length}面`);
+      for (const x of bad.slice(0, 10)) console.log("    " + x);
+      if (bad.length > 10) console.log(`    …ほか ${bad.length - 10}件`);
+      console.log("\n**別の書き出しを測るところだった。数字は出さない。**");
+      await b.close();
+      process.exit(2);
+    }
+    console.log(`  配っている先と ${DIST} は ${pages.length}面とも同じ中身\n`);
+  }
+
+  const miss = [];
+  /** 道具のほうが壊れている面。**1件でもあれば数字を出さない** */
+  const broken = [];
+  /** JS が入ると別の面へ送られる面。引き算では測れないので、名前を出して外す */
+  const moved = [];
+  let seen = 0;
+  let offLines = 0;
+  let diffLines = 0;
+  const found = [];
+
+  const ctxOff = await makeCtx(b, false);
+  const ctxOn = await makeCtx(b, true);
+  const pOff = await ctxOff.newPage();
+  const pOn = await ctxOn.newPage();
+
+  let n = 0;
+  for (const page of pages) {
+    /* **進み具合は stderr へ。** 131面で15〜20分かかるので、何も出ないと
+       止まったのか回っているのか分からない。終了コードの邪魔をしない側へ出す */
+    process.stderr.write(`\r  ${++n}/${pages.length} ${page}${" ".repeat(24)}`);
+    const a = await readPage(pOff, page, miss);
+    if (!a) continue;
+    const o = await openChecked(pOn, ORIGIN, page, { miss, waitUntil: "load" });
+    if (!o.ok) continue;
+    const z = await grab(pOn, true);
+    let g = jsGuard(page, a, z);
+    /* **落ち着かないまま測らない。** 途中の姿と引き算すると、割れ方の差が
+       そのまま候補に化ける。0件に化けるのと同じくらい危ない（§15） */
+    if (!g && !z.settled)
+      g = { kind: "broken", why: `${page}: JS を入れた側の字が ${WAIT_MS}ms では落ち着かなかった` };
+    if (g) {
+      (g.kind === "broken" ? broken : moved).push(g.why);
+      continue;
+    }
+    seen++;
+    offLines += a.lines.length;
+    const d = subtract(a.lines, z.dom);
+    diffLines += d.length;
+    if (SHOWDIFF) for (const x of d) console.log(`  差  ${page}  「${x.line}」  ${x.hit ? "［" + x.why + "］" : "—"}`);
+    for (const x of d) if (x.hit) found.push({ page, ...x });
+  }
+
+  process.stderr.write("\r" + " ".repeat(72) + "\r");
+  await ctxOff.close();
+  await ctxOn.close();
+  await b.close();
+
+  reportMissing(miss);
+
+  console.log(`── JS が動く前の字（${pages.length}面・幅 ${WIDTH}px）`);
+  console.log(`  読めた面                ${seen} / ${pages.length}`);
+  console.log(`  開けなかった面          ${miss.length}`);
+  console.log(`  送られて測れない面      ${moved.length}`);
+  console.log(`  見張りで止めた面        ${broken.length}`);
+  console.log(`  JS前に出ていた行        ${offLines}`);
+  console.log(`  うち JS前にしか無い行   ${diffLines}`);
+  console.log(`  そのうち言い切り        ${found.length}`);
+
+  if (moved.length) {
+    console.log(`\n── 送られて測れない面（${moved.length}件）**引き算の外。ここは数えていない**`);
+    for (const g of moved) console.log("    " + g);
+  }
+  if (broken.length) {
+    console.log(`\n── 見張りで止めた面（${broken.length}件）**ここが1件でもあると、差は当てにならない**`);
+    for (const g of broken) console.log("    " + g);
+  }
+
+  console.log(`\n── 言い切り（${found.length}件）**どれが嘘かは人が読んで決める**`);
+  for (const f of found) console.log(`    ${f.page}  「${f.line}」  ［${f.why}］`);
+  if (!found.length) console.log("    なし");
+
+  const code = verdict({ seen, miss: miss.length + broken.length, hits: found.length });
+  if (code === 2) {
+    console.log(
+      `\n**数えられなかった。** 読めた面 ${seen} / 開けなかった ${miss.length} / 見張りで止めた ${broken.length}。` +
+        `出した数は当てになりません`,
+    );
+  }
+  process.exit(code);
 }
-
-await ctxOff.close();
-await ctxOn.close();
-await b.close();
-
-reportMissing(miss);
-
-console.log(`── JS が動く前の字（${pages.length}面・幅 ${WIDTH}px）`);
-console.log(`  読めた面                ${seen} / ${pages.length}`);
-console.log(`  開けなかった面          ${miss.length}`);
-console.log(`  送られて測れない面      ${moved.length}`);
-console.log(`  見張りで止めた面        ${broken.length}`);
-console.log(`  JS前に出ていた行        ${offLines}`);
-console.log(`  うち JS前にしか無い行   ${diffLines}`);
-console.log(`  そのうち言い切り        ${found.length}`);
-
-if (moved.length) {
-  console.log(`\n── 送られて測れない面（${moved.length}件）**引き算の外。ここは数えていない**`);
-  for (const g of moved) console.log("    " + g);
-}
-if (broken.length) {
-  console.log(`\n── 見張りで止めた面（${broken.length}件）**ここが1件でもあると、差は当てにならない**`);
-  for (const g of broken) console.log("    " + g);
-}
-
-console.log(`\n── 言い切り（${found.length}件）**どれが嘘かは人が読んで決める**`);
-for (const f of found) console.log(`    ${f.page}  「${f.line}」  ［${f.why}］`);
-if (!found.length) console.log("    なし");
-
-const code = verdict({ seen, miss: miss.length + broken.length, hits: found.length });
-if (code === 2) {
-  console.log(
-    `\n**数えられなかった。** 読めた面 ${seen} / 開けなかった ${miss.length} / 見張りで止めた ${broken.length}。` +
-      `出した数は当てになりません`,
-  );
-}
-process.exit(code);
