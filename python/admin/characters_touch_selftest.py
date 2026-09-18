@@ -140,7 +140,7 @@ PEOPLE = {
         "channelName": "なまえ のひと", "emoji": "🪞",
         "aliases": [], "channelId": "", "images": {},
     },
-    # 名乗りが空
+    # channelName が空（呼び名だけ持っている人）
     "noname": {
         "channelName": "", "emoji": "🧺", "aliases": [], "channelId": "",
         "images": {},
@@ -425,7 +425,8 @@ def main() -> None:  # noqa: C901
     ck("対照が通ったと言っている", "対照 4つ、通りました" in out, True)
     ck("すでに channelId を持っている", num(out, "すでに channelId") == "1",
        num(out, "すでに channelId"))
-    ck("名乗りが空", num(out, "名乗りが空") == "1", num(out, "名乗りが空"))
+    ck("channelName が空", num(out, "channelName が空") == "1",
+       num(out, "channelName が空"))
     ck("ふつうの表示名", num(out, "ふつうの表示名") == "1",
        num(out, "ふつうの表示名"))
     ck("書類IDの形が違う", num(out, "書類IDの形が違う") == "1",
