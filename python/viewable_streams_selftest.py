@@ -85,6 +85,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import sys
 import tempfile
@@ -256,22 +257,94 @@ def check_wired() -> None:
     say('{sql_public("video_id"' in src, "build_on_this_day の SQL に在る（1年前の今日）")
 
 
-def check_count_side() -> None:
-    """**数のほうは、一覧と同じ条件に寄せない。**
+def chapter_counts(stats_text: str, streams_text: str) -> tuple[dict, dict]:
+    """焼いた2つの `.ts` から、章ごとの「数」と「一覧の件数」を読む。
 
-    `chapterStats.ts` の `streams` は「その章のあいだの配信の本数」で、
-    一覧（`chapterStreams.ts`）とは数えているものが違う。
-    うっかり片方を写すと、**数が静かに動く**——赤くならない。
+    **字から読む。** import して数えると、焼き込みではなくスクリプトを試すことになる
+    （見たいのは「master に入る字が食い違っていないか」）。
     """
-    print("\n4. 数（chapterStats.ts）は、一覧と別の条件で数えている")
+    num: dict[str, int] = {}
+    slug = None
+    for line in stats_text.splitlines():
+        m = re.match(r'^  "([a-z0-9-]+)": \{$', line)
+        if m:
+            slug = m.group(1)
+        elif slug and line.startswith("    streams: "):
+            num[slug] = int(line.strip()[len("streams: "):].rstrip(","))
+            slug = None
+    listed: dict[str, int] = {}
+    slug = None
+    for line in streams_text.splitlines():
+        m = re.match(r'^  "([a-z0-9-]+)": \[$', line)
+        if m:
+            slug = m.group(1)
+            listed[slug] = 0
+        elif slug and re.match(r'^    \[', line):
+            listed[slug] += 1
+    return num, listed
+
+
+def gaps(num: dict, listed: dict) -> list[str]:
+    """食い違っている章を並べる。**一覧を持っている章だけ**を見る。
+
+    いまの島（まだ閉じていない章）は一覧を焼かない（`/island/<章>/streams` が
+    無いので誰も読まない）。**そこは比べようがないので比べない。**
+    かわりに「一覧に在るのに数に居ない章」は必ず落とす。
+    """
+    out = []
+    for slug, n in sorted(listed.items()):
+        if slug not in num:
+            out.append(f"{slug}: 一覧に在るのに chapterStats.ts に居ない")
+        elif num[slug] != n:
+            out.append(f"{slug}: 数 {num[slug]} / 一覧 {n}")
+    return out
+
+
+def check_count_side() -> None:
+    """**焼いた「数」と「一覧」が、章ごとに1件残らず一致するか。**
+
+    `chapterStats.ts` の `streams`（島の表紙・ふりかえりの「配信した N本」）と、
+    `chapterStreams.ts` の行数（`/island/<章>/streams` の「この島にいたあいだの N本」）は、
+    **1クリックで隣り合う面に出る同じ数**。食い違ったら、どちらかが嘘になる。
+
+    2026-09-18 まで、この2つは別々の SQL で数えていた。条件がそろっていた3章は
+    たまたま合っていて、**コーカサスだけ 449 / 448 と1本ずれていた**
+    （一覧だけが `dead_streams.json` を引いていたため）。**赤くなるものが無かった。**
+    いまは `fetch()` が一覧の長さを数えるので、**構造上ずれない**
+    （`docs/island-misses.md` #160 の決めごと1 / #164）。ここはその裏を取る。
+    """
+    print("\n4. 焼いた「数」と「一覧」が、章ごとに一致するか")
+    stats_text = (ROOT / "site" / "content" / "chapterStats.ts").read_text(encoding="utf-8")
+    streams_text = (ROOT / "site" / "content" / "chapterStreams.ts").read_text(encoding="utf-8")
+    num, listed = chapter_counts(stats_text, streams_text)
+    if not num or not listed:
+        stop(f"焼き込みから章を読めない（数 {len(num)} / 一覧 {len(listed)}）")
+
+    # **対照が先**（#99 の追記）。壊していない写しが通ることと、
+    # 1本ずらした写しが落ちることの両方を見る
+    if gaps(num, listed):
+        pass  # 本物が食い違っているときは、下の say が落とす。対照はそれでも回す
+    broken = dict(num)
+    victim = sorted(listed)[0]
+    broken[victim] = listed[victim] + 1
+    if not gaps(broken, listed):
+        stop("数を1本ずらしても気づかない（この見張りは何も見ていない）")
+    lost = {k: v for k, v in num.items() if k != victim}
+    if not gaps(lost, listed):
+        stop("章が1つ数から消えても気づかない")
+    print(f"  対照: {victim} を +1本 → 拾った / 数から外す → 拾った")
+
+    for slug in sorted(listed):
+        say(num.get(slug) == listed[slug],
+            f"{slug}: 数 {num.get(slug)} / 一覧 {listed[slug]}")
+    print(f"  見た章 {len(listed)}（一覧を持つ章）／ chapterStats.ts の章 {len(num)}")
+
+    # **数える口を2つ持たない。** 本数の SQL を書き戻したら落とす
     src = (ROOT / "python" / "build_chapter_stats.py").read_text(encoding="utf-8")
-    # 本数を数える SQL は `fetch()` の中。字で見る（BigQuery のクライアントが要る）
-    i = src.find("SELECT ch.slug, COUNT(DISTINCT v.video_id) AS streams")
-    if i < 0:
-        stop("chapterStats の本数を数える SQL が見つからない（書き方が変わった）")
-    tail = src[i:i + 400]
-    say("WHERE v.status = 'SUCCEEDED'" in tail, "本数は status = 'SUCCEEDED' のまま")
-    say("COALESCE(last_error_detail" not in tail, "本数のほうに一覧の守りを写していない")
+    say("AS streams" not in src,
+        "build_chapter_stats に本数を数える SQL が戻っていない（一覧を数える）")
+    say("per_chapter" in src and "len(per_chapter" in src,
+        "本数は一覧（per_chapter）の長さから出ている")
 
 
 # ------------------------------------- 5. これまでの守り（dead_streams）

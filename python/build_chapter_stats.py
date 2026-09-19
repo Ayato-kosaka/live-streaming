@@ -129,7 +129,15 @@ def link_icons(client: bigquery.Client, ch: str) -> dict[str, str]:
     return icon_of
 
 
-def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
+def fetch(
+    client: bigquery.Client, chapters: list[dict], per_chapter: dict[str, list]
+) -> dict[str, dict]:
+    """章ごとの人数・配信の本数・住人。
+
+    **本数（`streams`）は、一覧（`per_chapter`）をそのまま数える。**
+    自分で SQL を書かない——書くと条件が2つになり、**同じ表から焼いた数と一覧が
+    食い違う**（`docs/island-misses.md` #160 の決めごと1 / #164）。
+    """
     ch = union_all(chapters)
 
     # 人数。**日ごとではなく期間まるごとで数える**。連なりの画面に出すのは
@@ -139,17 +147,6 @@ def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
     SELECT ch.slug, COUNT(DISTINCT m.author_channel_id) AS people
     FROM ch JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` m
       ON DATE(m.published_at, 'Asia/Tokyo') BETWEEN ch.f AND ch.t
-    GROUP BY ch.slug
-    """
-
-    # 配信の本数。videos は配信の進捗表なので、取り込めたものだけを数える。
-    # 日付は実際の配信開始時刻。取れていないものは初めて見つけた時刻で代える。
-    streams_sql = f"""
-    WITH ch AS ({ch})
-    SELECT ch.slug, COUNT(DISTINCT v.video_id) AS streams
-    FROM ch JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.videos` v
-      ON DATE(COALESCE(v.actual_start_time, v.first_seen_at), 'Asia/Tokyo') BETWEEN ch.f AND ch.t
-    WHERE v.status = 'SUCCEEDED'
     GROUP BY ch.slug
     """
 
@@ -167,11 +164,14 @@ def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
     GROUP BY 1, 2 ORDER BY 1, days DESC
     """
 
-    stats = {c["slug"]: {"people": 0, "streams": 0, "residents": []} for c in chapters}
+    stats = {
+        # **本数は一覧の長さ。数える口を2つ持たない**（この関数の docstring）
+        c["slug"]: {"people": 0, "streams": len(per_chapter.get(c["slug"], [])),
+                    "residents": []}
+        for c in chapters
+    }
     for row in client.query(people_sql).result():
         stats[row["slug"]]["people"] = int(row["people"])
-    for row in client.query(streams_sql).result():
-        stats[row["slug"]]["streams"] = int(row["streams"])
     for row in client.query(residents_sql).result():
         stats[row["slug"]]["residents"].append(
             {"icon": icon_of[row["channel"]], "days": int(row["days"])}
@@ -231,19 +231,21 @@ def streams_sql(ch: str, project: str = BQ_PROJECT_ID, dataset: str = BQ_DATASET
 
 
 def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, list]:
-    """過去の島に出す配信の明細。**いまも続いている章は焼かない。**
+    """**章ごとの配信。数と一覧の、たった1つの出どころ。**
 
-    あそこから入るのは `/streams`（全部）で、章に絞った面を持たない
-    （`docs/island-atlas.md` 7章）。焼いても誰も読まないぶん、束が太るだけ。
+    **閉じた章だけではなく、章ぜんぶを引く。** 面に出すのは閉じた章だけ
+    （`/island/<章>/streams`。`docs/island-atlas.md` 7章）だが、**本数は
+    いまの島にも要る**ので、ここで全部そろえて `fetch()` に渡す。
+    前は本数だけ別の SQL で数えていて、条件が2つに分かれていた（#164）。
+
+    **押しても見られない配信は載せない。** 一面ぜんぶ押せる並びなので、
+    1行でも行き止まりを混ぜると、押した人が「この島の配信は見られない」と読む。
+    落ちるのは隣に生きた行のある1行なので、章も日付も残る。
+    落とす仕事は `rows_to_streams` の1か所（`--rows` から来た行も同じ道を通る）。
     """
-    past = past_of(chapters)
-    if not past:
+    if not chapters:
         return {}
-    # **押しても見られない配信は、明細に載せない。** 一面ぜんぶ押せる並びなので、
-    # 1行でも行き止まりを混ぜると、押した人が「この島の配信は見られない」と読む。
-    # 落ちるのは隣に生きた行のある1行なので、章も日付も残る。
-    # 落とす仕事は `rows_to_streams` の1か所（`--rows` から来た行も同じ道を通る）
-    rows = [dict(r) for r in client.query(streams_sql(union_all(past))).result()]
+    rows = [dict(r) for r in client.query(streams_sql(union_all(chapters))).result()]
     return rows_to_streams(rows, chapters)
 
 
@@ -343,7 +345,14 @@ def past_of(chapters: list[dict]) -> list[dict]:
 
 
 def bake_streams(streams: dict[str, list], chapters: list[dict]) -> None:
-    """明細を書く。**出口でもう一度、取り置きの id が残っていないかを見る。**"""
+    """明細を書く。**面に出すのは閉じた章だけ**なので、ここで絞る。
+
+    絞るのを `fetch_streams` ではなくここでやるのは、**本数（`chapterStats.ts`）が
+    いまの島のぶんも要る**から。数と一覧は同じ行から出す（#164）。
+    出口でもう一度、取り置きの id が残っていないかを見る。
+    """
+    past = {c["slug"] for c in past_of(chapters)}
+    streams = {k: v for k, v in streams.items() if k in past}
     out = render_streams(streams, chapters)
     check_written(out, OUT_STREAMS_TS.name)
     OUT_STREAMS_TS.write_text(out, encoding="utf-8")
@@ -357,7 +366,7 @@ def rows_to_streams(rows: list[dict], chapters: list[dict]) -> dict[str, list]:
     `fetch_streams` からも呼ぶ。**BigQuery から来ても JSON から来ても同じ道を通る。**
     """
     gone = blocked()
-    out: dict[str, list] = {c["slug"]: [] for c in past_of(chapters)}
+    out: dict[str, list] = {c["slug"]: [] for c in chapters}
     dropped = 0
     for row in rows:
         if row["video_id"] in gone:
@@ -373,6 +382,52 @@ def rows_to_streams(rows: list[dict], chapters: list[dict]) -> dict[str, list]:
     return out
 
 
+def restat_from_streams(per_chapter: dict[str, list], chapters: list[dict]) -> list[str]:
+    """**口のそろっていない箱で、本数だけを焼き直す。** 変えた行を返す。
+
+    `chapterStats.ts` は人数（BigQuery）と住人（Firestore の名簿）も持っている。
+    `--rows` で回す箱にはどちらの口も無いので、**そこは前の焼き込みから持ち越して、
+    本数（`streams`）だけを一覧の長さに入れ替える。**
+
+    **毎晩の焼き直しはこの道を通らない**（`main()` は口がそろっているので
+    `render()` でまるごと書き直す）。ここは「本数の条件を変えた回に、
+    数と一覧を同じコミットで合わせる」ためだけにある——**片方だけ入った
+    master は、1クリックで隣り合う面に違う数が出る状態**（#164）。
+
+    持ち越しが効いているかは、書く前に**行ごとに突き合わせて**確かめる。
+    `streams:` 以外の行が1行でも動いたら、**書かずに落ちる。**
+    人数も住人も見出しの「数えた日」も、ここでは1文字も動かない。
+    """
+    if not OUT_TS.exists():
+        raise SystemExit(f"{OUT_TS} がありません。本数だけを直す道は使えません")
+    before = OUT_TS.read_text(encoding="utf-8").splitlines(keepends=True)
+    want = {c["slug"]: len(per_chapter.get(c["slug"], [])) for c in chapters}
+    after: list[str] = []
+    slug = None
+    seen: set[str] = set()
+    for line in before:
+        m = re.match(r'^  "([a-z0-9-]+)": \{$', line.rstrip("\n"))
+        if m:
+            slug = m.group(1)
+        elif slug is not None and line.startswith("    streams: "):
+            after.append(f"    streams: {want[slug]},\n")
+            seen.add(slug)
+            continue
+        after.append(line)
+    missing = sorted(set(want) - seen)
+    if missing:
+        raise SystemExit(f"{OUT_TS.name} に本数の行が見つからない章があります: {missing}")
+
+    moved = [b for b, a in zip(before, after) if b != a]
+    bad = [ln for ln in moved if not ln.startswith("    streams: ")]
+    if bad or len(before) != len(after):
+        raise SystemExit(
+            f"{OUT_TS.name} の本数以外が動きました（この道では動かしてはいけない）: {bad[:3]}"
+        )
+    OUT_TS.write_text("".join(after), encoding="utf-8")
+    return [f"{k}: {want[k]}本" for k in sorted(want)]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     # **明細だけは BigQuery の無い箱でも焼き直せるようにしてある**
@@ -383,18 +438,23 @@ def main() -> None:
     a = ap.parse_args()
     chapters = read_chapters()
     if a.sql:
-        print(streams_sql(union_all(past_of(chapters))))
+        print(streams_sql(union_all(chapters)))
         return
     if a.rows:
         rows = json.loads(Path(a.rows).read_text(encoding="utf-8"))
-        bake_streams(rows_to_streams(rows, chapters), chapters)
+        per_chapter = rows_to_streams(rows, chapters)
+        bake_streams(per_chapter, chapters)
+        # **数と一覧は同じコミットで動かす。** 片方だけ入れない（`restat_from_streams`）
+        logger.info("本数を一覧にそろえた: %s", " / ".join(restat_from_streams(per_chapter, chapters)))
         return
     logger.info("章 %d 個: %s", len(chapters), ", ".join(c["slug"] for c in chapters))
     client = bigquery.Client(project=BQ_PROJECT_ID)
-    stats = fetch(client, chapters)
+    # **先に一覧を作る。** 本数はこれを数えるので、順番が逆だと数えるものが無い
+    per_chapter = fetch_streams(client, chapters)
+    stats = fetch(client, chapters, per_chapter)
     OUT_TS.write_text(render(chapters, stats), encoding="utf-8")
     logger.info("書き出した: %s", OUT_TS)
-    bake_streams(fetch_streams(client, chapters), chapters)
+    bake_streams(per_chapter, chapters)
 
 
 if __name__ == "__main__":
