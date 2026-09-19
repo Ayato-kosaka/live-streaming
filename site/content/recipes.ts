@@ -381,7 +381,7 @@ export const RECIPES: Recipe[] = [
     slug: "acqua-pazza",
     name: "アクアパッツァ",
     emoji: "🐠",
-    icon: "food-sushi-salmon",
+    icon: "food-lemon",
     country: "georgia",
     kind: "fish",
     date: "2026-08-07",
