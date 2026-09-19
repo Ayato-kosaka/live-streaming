@@ -6,7 +6,7 @@ import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
 import { DAY_PAGES, NORDIC_COUNTRIES, dayHref } from "@/content/nordic";
-import { ISLE_CHAPTERS } from "@/components/chain/route";
+import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 
 export const dynamic = "force-static";
 
@@ -50,5 +50,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...DAY_PAGES.map((d) => ({ url: url(dayHref(d)), lastModified: now, priority: 0.6 })),
     // 過去の島の1章ぶん。`/atlas` から辿れる面で、中身は残り続ける
     ...ISLE_CHAPTERS.map((c) => ({ url: url(`/island/${c.slug}`), lastModified: now, priority: 0.5 })),
+    /* その章のあいだにやった配信の一覧。**索引から丸ごと落ちていた**
+       （2026-09-19。`/all` からも章の島からも1回で行ける本物の面が4枚、
+       検索からだけ見つからない状態が続いていた。いちばん大きいのは
+       `/island/caucasus/streams` の 949,893B）。
+       **手で4つ並べない。** 配信を持つ章が増えれば、ここも一緒に増える
+       （`docs/island-standards.md` §8）。 */
+    ...ISLE_STREAM_CHAPTERS.map((c) => ({
+      url: url(`/island/${c.slug}/streams`), lastModified: now, priority: 0.5,
+    })),
   ];
 }

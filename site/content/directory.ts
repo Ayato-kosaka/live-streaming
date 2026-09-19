@@ -233,5 +233,24 @@ export const SHELVES: Shelf[] = [
   },
 ];
 
-/** 行き先の数。`/all` の見出しに出す。 */
-export const DEST_COUNT = SHELVES.reduce((n, s) => n + s.items.length, 0);
+/**
+ * 行き先の数。`/all` が「島にある紙、◯枚」と名乗る数。
+ *
+ * **行の数ではなく、行き先の数を数える。** 名乗っているのは「紙」なので、
+ * 同じ紙へ行く行が2つあれば1枚。
+ *
+ * 章の島の行は、**いまいる島のぶんだけ `/` に化ける**——いまいる島は
+ * `/island/<章>` ではなくトップそのもので（`components/chain/route.ts` の
+ * `chapterHref`）、`/all` はその1行だけ画面が出てから行き先を引き直す
+ * （`components/chain/AllIsleRow.tsx`）。`/` は「島」の行としてもう並んでいるから、
+ * その1行は**すでに数えた紙**を指すことになる。
+ *
+ * **どれが化けるかは日付で変わるが、化けるのは必ず1つ**なので、この数は
+ * 日付によらない。だから焼いてよい（焼いた数が翌日ずれる、が起きない）。
+ * 2026-09-19 まではここが行の数（122）で、本番の `/all` に並んでいる行き先は
+ * 121 だった。**画面が「122枚」と名乗って、121枚しか無かった。**
+ */
+const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
+/** いまいる島の行が `/` に化けるぶん。**必ず1つ**（`chapterHref`） */
+const ISLE_NOW_ROWS = 1;
+export const DEST_COUNT = DEST_HREFS.size - ISLE_NOW_ROWS;
