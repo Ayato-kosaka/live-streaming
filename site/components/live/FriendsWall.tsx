@@ -16,6 +16,7 @@ import { placeById } from "@/components/island/layout";
 import Icon from "@/components/ui/IconCore";
 import CardOne from "@/components/cards/CardOne";
 import ReadAgain from "@/components/me/ReadAgain";
+import Longer from "@/components/ui/Longer";
 import { useCards, type PlanDays } from "@/components/cards/cards";
 import { Pedestal } from "./art";
 
@@ -468,17 +469,34 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               <div className="rzk-wide rzk-cards">
                 <dt>もらったカード</dt>
                 <dd>
-                  <div className="akd-grid">
-                    {/* 2枚まで。ここは図鑑の欄の1つで、カード置き場ではない。
-                        残りは下の行き先から見る */}
-                    {mine.slice(0, 2).map((c) => (
+                  {/* はじめに出るのは2枚。ここは図鑑の欄の1つで、カード置き場では
+                      ないため。**残りは押せば最後まで出る**（`Longer`）。
+
+                      前はここに「あやと島カードを、ぜんぶ見る」という字があって、
+                      **行き先は島ぜんぶの一覧（`/cards`）だった。** 欄は「この人が
+                      もらったカード」なのに、押すと他の人のカードが並ぶ。
+                      本番の387枚を数えると、3枚以上持っている人が22人中17人いて、
+                      **その17人には3枚目から先へ行く道が1本も無かった。**
+
+                      畳み方は島じゅうで1つ（`components/ui/Longer.tsx`）。
+                      じぶんのこと（`/me`）のカードも同じ形で畳んである。
+
+                      **人が変わったら畳み直す**（`key`）。送りで隣の人へ行くと、
+                      前の人で開いた枚数がそのまま残って、2枚のはずの欄が
+                      いきなり全部開いて見える。 */}
+                  <Longer
+                    key={r.id}
+                    items={mine}
+                    first={2}
+                    step={8}
+                    unit="枚"
+                    as="div"
+                    className="akd-grid"
+                  >
+                    {(c) => (
                       <CardOne key={c.id} card={c} plans={plans[c.day]} showName={false} />
-                    ))}
-                  </div>
-                  <Link className="rz-cards-go" href="/cards">
-                    あやと島カードを、ぜんぶ見る
-                    <Icon name="right" size={13} />
-                  </Link>
+                    )}
+                  </Longer>
                 </dd>
               </div>
             )}
