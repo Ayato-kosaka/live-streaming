@@ -389,10 +389,12 @@ class Gh(run_watch.Gh):
     差し替えている**（`ship_down_selftest.py` の `act()`）。
     """
 
-    # `donor-calls`（d93f0b）`ingest-down`（b60205）`bake-down`（5319e7）が
+    # `donor-calls`（d93f0b）`ingest-down`（b60205）`bake-down`（5319e7）と、
+    # 待ちの札（`待ち-あやと` fbca04 / `待ち-こちら` 0e8a16 / `旅のあと` 1d76db）が
     # 既に居るので、そのどれとも違う色にする。一覧を眺めたときに
-    # 「これは配りのほう」と色で分かるように
-    LABEL_COLOR = "fbca04"
+    # 「これは配りのほう」と色で分かるように。
+    # **fbca04 は使わない。** あれは `待ち-あやと` の色で、並ぶと見分けが付かない
+    LABEL_COLOR = "006b75"
     LABEL_DESC = "本番への配りが赤いまま"
 
 
