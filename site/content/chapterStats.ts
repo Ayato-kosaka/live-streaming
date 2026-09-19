@@ -36,7 +36,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // ヨーロッパ周遊
   "europe": {
     people: 258,
-    streams: 121,
+    streams: 128,
     residents: [
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 68 },
       { icon: "18F1UehNd5efpQztgrRqHOGnibXJQYuda", days: 59 },
@@ -60,7 +60,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // 中東周遊
   "middle-east": {
     people: 177,
-    streams: 110,
+    streams: 113,
     residents: [
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 78 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 77 },
@@ -85,7 +85,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // コーカサス周遊
   "caucasus": {
     people: 1925,
-    streams: 449,
+    streams: 476,
     residents: [
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 281 },
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 242 },
@@ -170,7 +170,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // イランまで歩く
   "iran-walk": {
     people: 502,
-    streams: 9,
+    streams: 17,
     residents: [
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 7 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 6 },

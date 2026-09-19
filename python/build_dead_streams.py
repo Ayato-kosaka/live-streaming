@@ -225,6 +225,71 @@ def sql_not_in(col: str, path: Path = OUT) -> str:
     return f"AND {col} NOT IN (" + ", ".join(f"'{v}'" for v in ids) + ")"
 
 
+# ============================================================================
+# いま見られるか（**取り込めたかではない**。頭の docstring を読む）
+# ============================================================================
+
+# yt-dlp が動画そのものに当たって書き残す字。**本番から写した**（2026-09-18 実測）:
+#   ERROR: [youtube] <id>: Video unavailable. This video is private
+# `python/admin/failed_terminate.py` の `PRIVATE` と同じ字でないといけない。
+# ずれたら `python/viewable_streams_selftest.py` が赤くなる（判定器を2つ持たない）
+PRIVATE_MARK = "This video is private"
+
+# **もう一度当てる予定のある行**。ここに居るあいだは隠さない。
+# `failed_reentry` は「押せば見られる」ことを測ってから `WAITING` に返すので、
+# **`WAITING` に非公開の字が残っていることが「戻ってきた」の印**になる
+# （あちらは字を消さない。消すのは取り込みが通ったときの `mark_video_succeeded`）
+RETRYING = ("PENDING", "WAITING")
+
+# 足の名前。**知らない名前を渡したら落とす**（書き間違いで対照が黙らないように）
+LEGS = ("private", "retry")
+
+
+def leg() -> str:
+    """いま抜いている足。`BREAK=` で渡す。ふだんは空。
+
+    対照は足の数だけ要る（`docs/island-standards.md` §15）。
+    `private` を抜くと非公開が素通りし、`retry` を抜くと戻ってきた回が出てこない。
+    """
+    b = (os.getenv("BREAK") or "").strip()
+    if b and b not in LEGS:
+        raise SystemExit(f"BREAK に使えるのは {', '.join(LEGS)} だけです: {b}")
+    return b
+
+
+def sql_public(
+    col: str,
+    project: str = "live-streaming-d3cac",
+    dataset: str = "youtube_chat",
+) -> str:
+    """SQL に差す `AND <col> NOT IN (...)`。**いま見られない回を外す1行。**
+
+    `col` は配信IDの列（別名つきでよい）。`build_dead_streams.sql_not_in()` と
+    同じ形にしてあるのは、**差す側が2つの守りを同じ顔で並べられる**ようにするため。
+
+    **SQL の側で外す。** 「1年前の今日」も「国の代表」も1本しか焼かないので、
+    引いてきてから落とすとその日・その国が丸ごと消える。SQL で外せば次点が繰り上がる
+    （`build_dead_streams.sql_not_in` の注と同じ理由）。
+
+    `COALESCE` を噛ませてあるのは、**三値論理を読ませないため。**
+    取り込めた691本は `last_error_detail` が `NULL` で、`NULL LIKE '%…%'` は
+    `TRUE` でも `FALSE` でもなく `NULL` になる。ここ（隠す側を選ぶ内側の `WHERE`）
+    では結果的に正しく落ちるが、**同じ字を「見られるほうを選ぶ」向きに書き写した
+    日に、691本が黙って全部消える。** 向きを変えても意味が変わらない字にしておく。
+    """
+    if leg() == "private":
+        # 守りを丸ごと抜いた写し。**本番が 2026-09-18 までこれだった**
+        return ""
+    where = f"COALESCE(last_error_detail, '') LIKE '%{PRIVATE_MARK}%'"
+    if leg() != "retry":
+        # 抜くと、戻ってきた回（`WAITING` に返ったぶん）まで隠れたままになる
+        where += " AND status NOT IN (" + ", ".join(f"'{s}'" for s in RETRYING) + ")"
+    return (
+        f"AND {col} NOT IN (SELECT video_id "
+        f"FROM `{project}.{dataset}.videos` WHERE {where})"
+    )
+
+
 def check_written(text: str, where: str, path: Path = OUT) -> None:
     """**焼いたものに、外したはずの配信が残っていないか。** 残っていたら落とす。
 

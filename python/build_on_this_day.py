@@ -47,8 +47,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from build_city_streams import sql_public  # noqa: E402
-from build_dead_streams import blocked, check_written, sql_not_in  # noqa: E402
+from build_dead_streams import (  # noqa: E402
+    blocked,
+    check_written,
+    sql_not_in,
+    sql_public,
+)
 from stays import read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

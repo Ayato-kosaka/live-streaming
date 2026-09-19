@@ -56,8 +56,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from build_city_streams import sql_public  # noqa: E402
-from build_dead_streams import check_written, sql_not_in  # noqa: E402
+from build_dead_streams import check_written, sql_not_in, sql_public  # noqa: E402
 from stays import is_country, read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
