@@ -38,6 +38,16 @@ CHANNEL_ID = re.compile(r"(?<![A-Za-z0-9_-])UC[A-Za-z0-9_-]{22}(?![A-Za-z0-9_-])
 # メールアドレスの `@` をハンドルとして二重に数えないため。
 HANDLE = re.compile(r"(?<![\w.\-])@([\w.\-]+)")
 
+# **オーナー（あやと）の GitHub の名乗りは、視聴者さんの素性ではない。**
+#
+# 機械が立てる issue は本文に `@Ayato-kosaka` を書く。書かないと通知が
+# 1通も飛ばず、「気づいてほしいから機械に立てさせた issue」が当の本人に
+# 届かない（2026-09-19 の #478 がそれだった）。
+# ここで数えてしまうと、**届けるために書いた1行が毎回「漏れ」として赤くなる。**
+#
+# 落とすのはこの名乗り1つだけ。ほかのハンドルはこれまでどおり数える。
+OWNER_HANDLES = ("Ayato-kosaka",)
+
 # ハンドルの最低の長さ。YouTube のハンドルは 3 文字以上と決まっている。
 # ここが効くのは、ワークフローのログに必ず出る `actions/checkout@v4` のような
 # 版の指定を弾くため。**2 文字で切ると、あれが全部ハンドルとして数えられる。**
@@ -81,7 +91,8 @@ def count(text: str) -> dict:
     handles = [m for m in HANDLE.findall(masked)
                # 末尾のピリオドは文の切れ目であってハンドルの一部ではない。
                # 落としてから長さを見ないと `@v4.` が 3 文字に化ける。
-               if len(m.rstrip(".")) >= HANDLE_MIN]
+               if len(m.rstrip(".")) >= HANDLE_MIN
+               and m.rstrip(".") not in OWNER_HANDLES]
 
     return {
         "channel_id": len(channel_ids),
@@ -130,6 +141,7 @@ def selftest() -> int:
         "12345678901",                  # 11 桁
         "20260913223045",               # 日時の並び
         "Worker ID: df4f388c-e7ef-4ecd-8892-0123456789ab",  # UUID の断片
+        "@Ayato-kosaka",                # オーナーの名乗り。視聴者さんではない
     ]
     text = "\n".join(hits + misses)
 

@@ -1,0 +1,159 @@
+# **開いたままの issue を、週に1回ひとりでに表へ出す。**
+#
+# あやとの言葉（2026-09-19）:
+#
+# > 何度も言ってるが、チケットは終わったらクローズしろよ。
+# > **そろそろ永続化するとか対策打てよ。**
+#
+# 手順書には**もう**「出したら、その場で閉じる」と書いてある。それでも
+# 閉じ忘れが続いている。**手順に書くのは対策ではない**
+# （`docs/island-standards.md`）。人が居なくても回るものだけが答え。
+#
+# 中身は `python/ticket_stock.py`。開いている issue を数えて、
+# **同じ1本のまとめ**（ラベル `ticket-stock`）の本文を書き換える。
+# 毎週 issue を立てる形にはしない——それこそ溜まる。
+#
+# ## cron を当てにしない
+#
+# このリポジトリで定時実行が実際に発火した実績があるのは
+# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`
+# （20:30 UTC）の**古参2本だけ**で、しかも**1時間49分〜3時間32分遅れる**。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
+# 待っても発火しなかった。
+#
+# だから**実績のあるものの完了に繋ぐ**（`workflow_run`）。cron は保険。
+# 繋ぎかたと落とし穴は `rebake.yml` の 190〜210行に全部書いてある。
+#
+#   - **`conclusion` は見ない。** `schedule_fetch_chat.yml` は「表に無い
+#     どねID が投げ銭してきた」晩に最後の step が `exit 1` で終わる。
+#     あれは失敗ではなく呼び出しで、成功のときだけ繋ぐとその晩は走らない
+#   - **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると
+#     黙って切れる。**赤くならない。走らなくなるだけ**
+#   - 繋ぎが生きているかは `Fetch Doneru Donations` を `probe: true` で
+#     押して確かめられる（1バイトも書かずに40秒で終わる）
+#
+# ## 毎晩は多すぎるので、週1に間引く
+#
+# 繋ぎ先は毎晩終わるので、そのままだと毎晩まとめを書き換えることになる。
+# **曜日で落とす**（下の「今週の回か」）。cron はもともと週1なので、
+# 遅れて火曜に来ても通す——落とすと、その週が丸ごと抜ける。
+#
+# 同じ週に2回走ることはある（繋ぎ先が2本あるので）。本文は同じものを
+# 書くだけなので害は無いし、あやとを呼ぶコメントは
+# `python/ticket_stock.py` の `PING_COOLDOWN_DAYS` が止める。
+#
+# ## PR でも1回走る（書かずに）
+#
+# 「書いたから走るはず」で終わらせないため。この仕組みに触る PR では、
+# **本物の GitHub を読んで本文を組み立てるところまで**走って、
+# 出来上がりを run の要約に出す。**`--apply` は付けないので1バイトも書かない。**
+name: Ticket Stock
+
+on:
+  # 保険。**月曜の朝（日本時間で正午ごろ）。** 実績が無いので当てにしない
+  schedule:
+    - cron: "0 3 * * 1"
+
+  # **本命はこちら。** 実績のある2本の完了に繋ぐ。
+  # 2本あるのは、片方が消えても止まらないようにするため
+  workflow_run:
+    workflows: ["Fetch YouTube Chat Data", "Fetch Doneru Donations"]
+    types: [completed]
+
+  # この仕組みそのものを触ったときだけ、PR でも1回通す（書かない）
+  pull_request:
+    paths:
+      - ".github/workflows/ticket_stock.yml"
+      - "python/ticket_stock.py"
+      - "python/ticket_labels.py"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "まとめの issue に書く（外すと数えるだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 1本ずつ。同じ週に2本走って、同じ issue を取り合わないように
+concurrency:
+  group: ticket-stock
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  stock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # **何がこの run を起こしたかを、run そのものに残す。**
+      # 一覧からは見分けが付かない（繋ぎも cron も手押しも同じ顔で並ぶ）
+      - name: 何がこの run を起こしたか
+        env:
+          EV: ${{ github.event_name }}
+          UP: ${{ github.event.workflow_run.name }}
+          CONC: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          line="起こしたもの: ${EV} / ${UP:-（繋ぎではない）} / ${CONC:-—}"
+          echo "$line"
+          echo "$line" >> "$GITHUB_STEP_SUMMARY"
+
+      # **毎晩は多すぎる。曜日で落とす。**
+      #
+      # 繋ぎ（`workflow_run`）は毎晩来るので、月曜だけ通す。
+      # cron はもともと週1なので、遅れて火曜に着いても通す——落とすと、
+      # 遅れた週が丸ごと抜ける（このリポジトリの定時は3時間半遅れる）。
+      # 手押しと PR は、押した人が見たいときなので always
+      - name: 今週の回か
+        id: gate
+        env:
+          EV: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          dow="$(date -u +%u)"   # 1=月曜
+          go=0
+          case "$EV" in
+            workflow_dispatch|pull_request|schedule) go=1 ;;
+            workflow_run) [ "$dow" = "1" ] && go=1 ;;
+          esac
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          echo "きょうは UTC の曜日 ${dow}／回すか: ${go}"
+
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.go == '1'
+
+      - uses: actions/setup-python@v6
+        if: steps.gate.outputs.go == '1'
+        with:
+          python-version: '3.11'
+
+      # **PR の回は `--apply` を付けない。** 1バイトも書かずに、
+      # 本物の GitHub を読んで本文を組み立てるところまで通す。
+      # 書けているかどうかは、下で run の要約に出したものを見る
+      - name: 開いている issue を棚卸しして、まとめに書く
+        if: steps.gate.outputs.go == '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          APPLY: ${{ (github.event_name == 'pull_request' || github.event.inputs.apply == 'false') && '0' || '1' }}
+        run: |
+          set -euo pipefail
+          args=(--out /tmp/stock.md)
+          if [ "$APPLY" = "1" ]; then args+=(--apply); fi
+          python3 python/ticket_stock.py "${args[@]}"
+
+      # **出来上がりを run に残す。** 「走った」だけでは、中身が空でも同じ顔
+      - name: 書き上がったまとめを、この run にも出す
+        if: steps.gate.outputs.go == '1'
+        run: |
+          set -euo pipefail
+          {
+            echo ""
+            echo "### 書き上がったまとめ"
+            echo ""
+            cat /tmp/stock.md
+          } >> "$GITHUB_STEP_SUMMARY"

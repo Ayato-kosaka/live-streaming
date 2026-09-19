@@ -106,6 +106,7 @@ sys.stderr = Tee(REAL_ERR, BUF)
 os.environ.setdefault("BQ_PROJECT_ID", "donor-calls-selftest")
 
 import donor_calls  # noqa: E402
+import ticket_labels  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -234,6 +235,8 @@ class FakeGh:
         self.gets = 0       # GET（`--apply` なしでも 1以上 を見る）
         self.created = 0    # POST（立てた回数）
         self.patched = 0    # PATCH（書き換えた回数）
+        self.commented = 0  # コメント（**あやとを呼んだ回数**）
+        self.pings: list = []
         self._next = 1
 
     def list_issues(self, label: str) -> list:
@@ -247,6 +250,11 @@ class FakeGh:
         self._next += 1
         self.issues.append(i)
         return dict(i)
+
+    def comment(self, number: int, text: str) -> dict:
+        self.commented += 1
+        self.pings.append(text)
+        return {"id": self.commented}
 
     def patch(self, number: int, payload: dict) -> dict:
         self.patched += 1
@@ -293,6 +301,9 @@ class Gh403:
 
     def patch(self, *a, **k):
         raise AssertionError("読めていないのに書きにいった")
+
+    def comment(self, *a, **k):
+        raise AssertionError("読めていないのに呼びにいった")
 
 
 # 偽の資格。**ログに出ない形のものを置く**（出たら 6 で拾われる）
@@ -765,6 +776,55 @@ def case12_unlinked():
     ck("立てた回数（増えていない）", gh2.created == 1, gh2.created)
 
 
+def case13_mention():
+    """**あやとに本当に届くか。** 題名の【】では1通も飛ばない（#478）。
+
+    見るのは2つ:
+
+    1. 本文の `@Ayato-kosaka` が、囲いにも引用にも入っていないこと
+       （字として在るのに飛ばない、がいちばん起きやすい外し方）
+    2. **毎晩は鳴らさないこと。** 書き換えのたびにコメントすると雑音になる。
+       鳴るのは「開き直した」ときと「前の本文にメンションが無かった」ときだけ
+    """
+    print("\n[13] あやとを呼ぶところ")
+
+    # (a) 本文が飛ぶ形になっているか
+    text = donor_calls.body(3, "2026-09-01", 0)
+    ck("本文に名乗りが在る", ticket_labels.HANDLE in text, "在る")
+    ck("囲いにも引用にも入っていない（飛ぶ形）",
+       ticket_labels.mention_live(text), "飛ぶ")
+
+    # (b) 開く回は鳴らさない（本文のメンションで飛ぶ）
+    gh = FakeGh()
+    night(gh, T1)
+    ck("開いた回はコメントを足さない", gh.commented == 0, gh.commented)
+    ck("開いた本文が飛ぶ形",
+       ticket_labels.mention_live(gh.issues[0]["body"]), "飛ぶ")
+
+    # (c) メンションの無い本文が載っていたら、1回だけ鳴らす
+    gh.issues[0]["body"] = donor_calls.MARK + "\n\nむかしの本文"
+    night(gh, T1)
+    ck("メンションの無い本文を書き換えたときは、1回鳴らす",
+       gh.commented == 1, gh.commented)
+    ck("鳴らしたコメントも飛ぶ形",
+       ticket_labels.mention_live(gh.pings[0]), "飛ぶ")
+
+    # (d) もう入っている本文の書き換えでは鳴らさない
+    night(gh, T1_U6)
+    ck("2回目は鳴らさない（毎晩の雑音にしない）", gh.commented == 1, gh.commented)
+
+    # (e) **対照。** 鳴らす分岐を外したら、(c) が落ちる
+    blind = lambda *a, **k: False  # noqa: E731
+    ck("鳴らす分岐を外すと、メンションの無い本文でも鳴らなくなる",
+       not blind("update", "むかしの本文", True)
+       and ticket_labels.should_ping("update", "むかしの本文", True),
+       "対照が効いている")
+    # **対照その2。** 飛ばない形にしたら、(a) が落ちる
+    ck("囲いに入れたら「飛ぶ」と言わない",
+       not ticket_labels.mention_live(f"`{ticket_labels.HANDLE}`"),
+       "落ちる")
+
+
 def main() -> int:
     # **毎晩これが走るのは Actions の中。** 公開のログに積まれるのはそのときの
     # 字なので、同じ条件で回して、その出力を 6 で数える
@@ -783,6 +843,7 @@ def main() -> int:
     case10_empty()
     case11_breakdown()
     case12_unlinked()
+    case13_mention()
     print("\n[6の結果]")
     case6_grep()
     case6b_mask()

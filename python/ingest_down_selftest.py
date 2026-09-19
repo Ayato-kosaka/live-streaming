@@ -101,6 +101,7 @@ sys.stderr = Tee(REAL_ERR, BUF)
 os.environ.setdefault("BQ_PROJECT_ID", "ingest-down-selftest")
 
 import ingest_down  # noqa: E402
+import ticket_labels  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -213,19 +214,26 @@ class FakeGh:
         self.gets = 0       # GET（`--apply` なしでも 1以上 を見る）
         self.created = 0    # POST（立てた回数）
         self.patched = 0    # PATCH（書き換えた回数）
+        self.commented = 0  # コメント（**あやとを呼んだ回数**）
+        self.pings: list = []
         self._next = 1
 
     def list_issues(self, label: str) -> list:
         self.gets += 1
         return [dict(i) for i in self.issues if label in i["labels"]]
 
-    def create(self, title: str, text: str, label: str) -> dict:
+    def create(self, title: str, text: str, label: str, wait: str = "") -> dict:
         self.created += 1
         i = {"number": self._next, "title": title, "body": text,
-             "state": "open", "labels": [label]}
+             "state": "open", "labels": [label] + ([wait] if wait else [])}
         self._next += 1
         self.issues.append(i)
         return dict(i)
+
+    def comment(self, number: int, text: str) -> dict:
+        self.commented += 1
+        self.pings.append(text)
+        return {"id": self.commented}
 
     def patch(self, number: int, payload: dict) -> dict:
         self.patched += 1
@@ -271,6 +279,9 @@ class Gh403:
 
     def patch(self, *a, **k):
         raise AssertionError("読めていないのに書きにいった")
+
+    def comment(self, *a, **k):
+        raise AssertionError("読めていないのに呼びにいった")
 
 
 # 偽の資格。**ログに出ない形のものを置く**（出たら 6 で拾われる）
@@ -683,6 +694,60 @@ def case6_grep():
        sum(logident.count(str(N_EXP2)).values()))
 
 
+def case13_mention():
+    """**あやとを呼ぶのは「セッション切れ」のときだけ。**
+
+    cookie を入れ直せるのはあやとだけで、待っても直らない。
+    一方「何日も入っていない」ほうは、こちらが流し直せば入ることがある。
+    **そこに毎晩メンションを付けると、そのうち誰も読まなくなる。**
+    """
+    print("\n[13] あやとを呼ぶところ")
+
+    exp = ingest_down.body(ingest_down.assess(N_EXP2, TODAY))
+    stale = ingest_down.body(ingest_down.assess(N_3DAY, TODAY))
+
+    ck("セッション切れの本文には名乗りが在る",
+       ticket_labels.HANDLE in exp, "在る")
+    ck("しかも飛ぶ形（囲いにも引用にも入っていない）",
+       ticket_labels.mention_live(exp), "飛ぶ")
+    ck("何日も入っていないほうには入れない",
+       ticket_labels.HANDLE not in stale, "入っていない")
+
+    # 開く回は鳴らさない。本文のメンションで飛ぶ
+    gh = FakeGh()
+    night(gh, N_EXP2)
+    ck("開いた回はコメントを足さない", gh.commented == 0, gh.commented)
+    ck("開いた回の札は「待ち-あやと」",
+       ticket_labels.WAIT_AYATO in gh.issues[0]["labels"],
+       gh.issues[0]["labels"])
+
+    # 「何日も入っていない」で開いた回の札は、こちら待ち
+    gh2 = FakeGh()
+    night(gh2, N_3DAY)
+    ck("何日も入っていないほうの札は「待ち-こちら」",
+       ticket_labels.WAIT_US in gh2.issues[0]["labels"],
+       gh2.issues[0]["labels"])
+    ck("そちらではコメントも足さない", gh2.commented == 0, gh2.commented)
+
+    # **「何日も入っていない」→「セッション切れ」に変わった晩に、1回だけ鳴る**
+    night(gh2, N_EXP2)
+    ck("こちら待ちからあやと待ちに変わったら、1回鳴らす",
+       gh2.commented == 1, gh2.commented)
+    ck("鳴らしたコメントも飛ぶ形",
+       gh2.pings and ticket_labels.mention_live(gh2.pings[0]), "飛ぶ")
+
+    # 翌晩も切れたままなら、もう鳴らさない
+    night(gh2, note("2026-09-11", "session_expired"))
+    ck("切れたままの翌晩は鳴らさない", gh2.commented == 1, gh2.commented)
+
+    # **対照。** 分岐を外したら、いまの3つが全部ひっくり返る
+    ck("メンションを入れる分岐が効いている"
+       "（切れたときだけ True）",
+       ingest_down.assess(N_EXP2, TODAY)["why"] == "expired"
+       and ingest_down.assess(N_3DAY, TODAY)["why"] == "stale",
+       "効いている")
+
+
 def main() -> int:
     # **毎晩これが走るのは Actions の中。** 公開のログに積まれるのはそのときの
     # 字なので、同じ条件で回して、その出力を 6 で数える
@@ -701,6 +766,7 @@ def main() -> int:
     case8_broken()
     case9_forbidden()
     case10_empty()
+    case13_mention()
     print("\n[6の結果]")
     case6_grep()
 

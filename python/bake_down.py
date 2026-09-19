@@ -134,6 +134,11 @@ os.environ.setdefault("BQ_PROJECT_ID", "bake-down-reads-no-bigquery")
 
 from donor_calls import PLAN, find_issue  # noqa: E402
 
+# **待ちの相手の札。** 焼き直しの赤は**こちらで直せる**ので、
+# あやとへのメンションは入れない（毎晩鳴るものに毎晩メンションすると、
+# そのうち誰も読まなくなる。`python/ticket_labels.py` の表）
+from ticket_labels import WAIT_STYLE, WAIT_US  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -558,15 +563,21 @@ class Gh:
     def create(self, title: str, text: str, label: str) -> dict:
         # ラベルは issue に付けるときも作られるが、色も説明も付かない。
         # 一覧で見分けが付くように、先に作っておく（あれば 422 で、それでよい）
-        try:
-            self._call("POST", f"/repos/{self.repo}/labels",
-                       {"name": label, "color": LABEL_COLOR,
-                        "description": LABEL_DESC})
-        except urllib.error.HTTPError as e:
-            if e.code != 422:
-                raise
+        #
+        # **待ちの札（`待ち-こちら`）も一緒に付ける。** 付いていないと
+        # 毎週の棚卸し（`python/ticket_stock.py`）が「札が無い」に数える。
+        # ここはあやと待ちではない——焼き直しの赤はこちらで直せる
+        for name, color, desc in ((label, LABEL_COLOR, LABEL_DESC),
+                                  (WAIT_US, *WAIT_STYLE[WAIT_US])):
+            try:
+                self._call("POST", f"/repos/{self.repo}/labels",
+                           {"name": name, "color": color, "description": desc})
+            except urllib.error.HTTPError as e:
+                if e.code != 422:
+                    raise
         return self._call("POST", f"/repos/{self.repo}/issues",
-                          {"title": title, "body": text, "labels": [label]})
+                          {"title": title, "body": text,
+                           "labels": [label, WAIT_US]})
 
     def patch(self, number: int, payload: dict) -> dict:
         return self._call("PATCH", f"/repos/{self.repo}/issues/{number}", payload)
