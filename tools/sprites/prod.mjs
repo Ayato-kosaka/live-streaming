@@ -18,8 +18,8 @@
  * 数えて表に出し、その場でも1行ずつ標準エラーに出す。
  * 判定だけを切り出した見張りが `prodcurl_selftest.mjs`（毎 PR で走る）。
  */
-/* **`playwright-core` は、回すときになってから読む。** 下の `main` の中で
-   `await import` している。理由は、この道具の**判定だけ**を毎 PR で回したいから
+/* **`playwright-core` は、回すときになってから読む。** このファイルを
+   直に起こしたときだけ、下のほうで `await import` している。理由は、この道具の**判定だけ**を毎 PR で回したいから
    （`prodcurl_selftest.mjs`）。CI には `tools/sprites/node_modules` が無いので、
    ここで静的に読むと見張りが import の行で死ぬ。`preclaim.mjs` と同じ形。 */
 import { execFile } from "node:child_process";
