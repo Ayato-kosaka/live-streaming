@@ -112,23 +112,58 @@ done
 スタンプ帳は押した数だけ違う絵が並ぶから図鑑に見える。
 同じ皿が2つ並んだ瞬間、絵ではなく飾りになる。
 
+**`sprites.json` の引き算だけで「空き」を数えない。** あの表は素の置き場
+（`site/public/sprites/`）の名簿で、料理の面が読む `hero/` の名簿ではない。
+`/kitchen/<品>` は `HeroArt` 経由で `/sprites/hero/<名前>.webp` を読み、
+そこに焼いてあるのは**いま主役に指定されている絵だけ**。つまり
+**「まだ使っていない絵」は、どれも hero が無い。hero の空きは常に 0 枚。**
+引き算の数字（「73枚空いている」）だけで選ぶと、選んだ瞬間に 404 が確定する
+（2026-09-19 に `food-mortar-pestle` でそうなった。`sprites.json` に在る／
+素の置き場にも在る／**hero だけ無い**）。
+
+**選ぶのは素の置き場から。ただし、選んだら焼くまでが1組。**
+
 ```bash
 cd /home/user/live-streaming
-python3 - <<'PY'
+python3 - <<'PYEOF'
 import json, re, pathlib
 d = json.load(open("site/content/sprites.json"))
 food = sorted(k for k in d if k.startswith("food-"))
 used = set(re.findall(r'icon: "(food-[a-z0-9-]+)"', pathlib.Path("site/content/recipes.ts").read_text(encoding="utf-8")))
+hero = pathlib.Path("site/public/sprites/hero")
 free = [f for f in food if f not in used]
-print(f"{len(food)}枚中 {len(used)}枚 使用ずみ / {len(free)}枚 空いている")
+ready = [f for f in free if (hero / (f + ".webp")).exists()]
+print(f"{len(food)}枚中 {len(used)}枚 使用ずみ / 素の置き場に {len(free)}枚 空き")
+print(f"そのうち hero の実体が在るもの {len(ready)}枚 … **ふつう 0。焼くところまでが仕事**")
 print("\n".join("  " + f for f in free))
-PY
+PYEOF
 ```
-
-2026-09-10 の実測は **105枚中 32枚 使用ずみ / 73枚 空き**。足りなくなる心配は当分ない。
 
 絵は `site/public/sprites/<名前>.webp`。**選ぶ前に見る。**
 名前だけで決めると、料理と関係ない皿が並ぶ。
+
+#### 選んだら hero を焼く。**やらないと面が 404 になる**
+
+何を焼くかは `manifest.mjs` の `heroNames()` が決めている——`recipes.ts` /
+`legends.ts` / `streamTypes.ts` の `icon:` を読んで `hero/<名前>` を焼く。
+だから **先に `recipes.ts` へ書いてから**回す。
+
+```bash
+cd /home/user/live-streaming/tools/sprites
+python3 -m http.server 8904 &                        # render.html を配る
+node bake.mjs ../../site/public/sprites <選んだ名前>   # 素のぶんと hero/ の2枚
+python3 meta.py                                       # 余白を切って webp・sprites.json を書き直す
+```
+
+`models/` と `vendor/` は git に入っていない（`.gitignore`）。**worktree を
+切った先には無い**ので、元の clone から借りる（`ln -s`）。借りた印は
+commit しない。
+
+そろったかどうかは、巡回（`crawl.mjs`）を待たずにここで分かる:
+
+```bash
+node tools/sprites/heroicon_selftest.mjs   # 0=実体がそろっている / 1=足りない
+```
 
 ### 2-3. `recipes.ts` に足す
 
