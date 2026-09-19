@@ -92,6 +92,15 @@ event で見ると毎晩の配りが全部「手押し」に見えて、**一生
 - **もう出ているのに赤い**ときだけ呼ぶ。視聴者さんが見ている面が壊れている
   かもしれず、**下ろす／配り直すの判断が要る。** 1晩待てない
 
+待ちの札（`待ち-あやと` / `待ち-こちら`）も同じ分け方で、**走るたびに
+入れ替える。** 同じ1本が行き来するので、置いたままだと毎週の棚卸し
+（`python/ticket_stock.py`）が**逆の数**を出す。
+
+**本文を書き換えても、通知は1通も飛ばない**（飛ぶのは開いたときとコメントだけ）。
+出ていない赤で開いた issue が「もう出ている」へ変わったときは、
+**コメントを1本置いて鳴らす。** 鳴らす／鳴らさないの決めは
+`python/ticket_labels.py` の `should_ping` 1か所。
+
 ## 分からない回は、開きも閉じもしない
 
 run が1本も無い・`cancelled` で終わっている——これは**「読めていない」で
@@ -135,6 +144,12 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 # は全部あちら。ここが持つのは配りに固有のところだけ
 import run_watch  # noqa: E402
 from run_watch import PLAN, RED, decide, find_issue, quiet_days  # noqa: E402,F401
+
+# **待ちの相手の札と、鳴らしかた。** 表は `python/ticket_labels.py` 1か所。
+# ここで札の名前を書き写すと、向こうを直した日に毎週の棚卸しと食い違う
+from ticket_labels import (  # noqa: E402
+    WAIT_AYATO, WAIT_STYLE, WAIT_US, ping_text, should_ping,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -197,7 +212,9 @@ LABEL = "ship-down"
 # 書き換えた人と綱引きになる）
 TITLE = "島を本番に配るところが、赤くなっています"
 
-# 呼ぶ相手。**「もう出ている」赤のときだけ**本文に入れる（docstring）
+# 呼ぶ相手。**「もう出ている」赤のときだけ**本文に入れる（docstring）。
+# `ticket_labels.HANDLE` と同じ字。**あちらは「飛ぶ形か」を見る側**で、
+# こちらは書く側（字を変えると、あちらの `mention_live` が拾えなくなる）
 OWNER = "@Ayato-kosaka"
 
 
@@ -397,6 +414,13 @@ class Gh(run_watch.Gh):
     LABEL_COLOR = "006b75"
     LABEL_DESC = "本番への配りが赤いまま"
 
+    # **待ちの相手は、走るたびに入れ替わる。** 同じ1本の issue が
+    # 「出ていない（こちらで直せる）」と「もう出ている（あやとの判断が要る）」の
+    # あいだを行き来するので、`run()` が毎回ここを置き換える。
+    # 既定が `待ち-こちら` なのは、**分からないときに人を呼ばない**ため
+    WAIT = WAIT_US
+    STYLE = WAIT_STYLE
+
 
 def check_wiring(flow_dir: str) -> list:
     """**繋ぎ先の `name:` が、まだ実在するか。**
@@ -491,13 +515,30 @@ def run(gh, a: dict, apply: bool = False) -> dict:
     want = body(a)
     what = decide(issue, want, a["down"])
 
+    # **待ちの相手は、出ているかどうかで変わる。**
+    # 出る前に止まった赤はこちらで直せる（島はひとつ前のまま無事）。
+    # もう出ている赤だけ、下ろす／配り直すの判断があやとに要る
+    needs_ayato = a["down"] is True and a.get("out") is True
+    gh.WAIT = WAIT_AYATO if needs_ayato else WAIT_US
+
     if not apply:
         logger.info("--apply を付けていないので GitHub には書きません")
-        logger.info("付けると: %s", PLAN[what])
+        logger.info("付けると: %s（札は %s）", PLAN[what], gh.WAIT)
         return {"action": "dry", "planned": what,
                 "number": issue["number"] if issue else None}
 
-    return run_watch.apply_plan(gh, what, issue, TITLE, want, LABEL, log=logger)
+    was = (issue.get("body") or "") if issue else ""
+    r = run_watch.apply_plan(gh, what, issue, TITLE, want, LABEL, log=logger)
+
+    # **本文を書き換えても、通知は1通も飛ばない。** 飛ぶのは開いたときと
+    # コメントだけ。出ていない赤で開いた issue が次の回に「もう出ている」へ
+    # 変わったとき、本文にメンションを足しただけでは**あやとには何も届かない。**
+    # 鳴らす／鳴らさないの決めは `ticket_labels.should_ping` 1か所
+    if should_ping(r["action"], was, needs_ayato):
+        gh.comment(r["number"], ping_text("配ったものが本番で赤くなっています"))
+        logger.info("issue #%s に、あやと待ちになったことを1本置きました",
+                    r["number"])
+    return r
 
 
 def say(a: dict) -> None:

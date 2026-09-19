@@ -21,6 +21,8 @@
  10. **歯止めを6つ、1つずつ外すと落ちる**
  11. **読めなかったら（403）赤くして止まる**／**繋ぎ先の名前が消えても止まる**
  12. **ワークフローの YAML と突き合わせる**（繋ぎ先の名前・配る step・見る step）
+ 13. **本番の run（#114）をそのまま食わせて**、同じ見立てになる
+ 14. **待ちの札が入れ替わり、変わり目でだけコメントで鳴る**
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
 
@@ -108,6 +110,10 @@ def _load_logident():
 
 
 logident = _load_logident()
+
+# 待ちの札と、鳴らす決め。**この係が使っているのと同じものを見る**
+# （名前を書き写すと、向こうを直した日に食い違う）
+import ticket_labels  # noqa: E402
 
 # ---------------------------------------------------------------- 偽の run
 
@@ -249,6 +255,10 @@ class FakeGh:
     **立てた回数そのもの**を数える。
     """
 
+    # 本物の `Gh` と同じ既定。`ship_down.run()` が走るたびに置き換える
+    WAIT = ship_down.WAIT_US
+    STYLE = ship_down.WAIT_STYLE
+
     def __init__(self):
         self.issues: list = []
         self.run_gets = 0
@@ -256,6 +266,7 @@ class FakeGh:
         self.gets = 0
         self.created = 0
         self.patched = 0
+        self.comments: list = []   # 鳴らした回数（本文を書き換えても通知は飛ばない）
         self._next = 1
         self._runs: list = []
         self._steps: list = []
@@ -283,8 +294,10 @@ class FakeGh:
 
     def create(self, title: str, text: str, label: str) -> dict:
         self.created += 1
+        # **本物と同じで、待ちの札も一緒に付く**（`run_watch.Gh.create`）
+        labels = [label] + ([self.WAIT] if getattr(self, "WAIT", "") else [])
         i = {"number": self._next, "title": title, "body": text,
-             "state": "open", "labels": [label]}
+             "state": "open", "labels": labels}
         self._next += 1
         self.issues.append(i)
         return dict(i)
@@ -297,8 +310,14 @@ class FakeGh:
                     i["body"] = payload["body"]
                 if "state" in payload:
                     i["state"] = payload["state"]
+                if "labels" in payload:
+                    i["labels"] = list(payload["labels"])
                 return dict(i)
         raise KeyError(number)
+
+    def comment(self, number: int, text: str) -> dict:
+        self.comments.append((number, text))
+        return {"id": len(self.comments)}
 
     # ---- 数えるための覗き口
 
@@ -815,6 +834,77 @@ def case13_real():
        "そう出る")
 
 
+def case14_wait_and_ping():
+    """**待ちの札と、鳴らしかた**（`python/ticket_labels.py`）。
+
+    この係の issue は、同じ1本が**「出ていない（こちらで直せる）」と
+    「もう出ている（あやとの判断が要る）」のあいだを行き来する。**
+    札を置いたままにすると、毎週の棚卸し（`ticket_stock.py`）が**逆の数**を出す。
+
+    そして**本文を書き換えても通知は1通も飛ばない。** 出ていない赤で開いた
+    issue が「もう出ている」へ変わったとき、本文にメンションを足しただけでは
+    **あやとには何も届かない。** そこはコメントで鳴らす。
+    """
+    print("\n[14] 待ちの札が入れ替わり、変わり目でだけ鳴る")
+
+    # 出る前に止まった赤で開く → こちらで直せるので、呼ばない
+    gh = FakeGh()
+    once(gh, BEFORE, STEPS_BEFORE)
+    ck("出ていない赤の札", gh.issues[0]["labels"] == [ship_down.LABEL,
+                                                 ship_down.WAIT_US],
+       gh.issues[0]["labels"])
+    ck("そこでは鳴らさない", gh.comments == [], gh.comments)
+
+    # 人が別の札を貼った、という形（残るか）
+    gh.issues[0]["labels"].append("お手すきで")
+
+    # 次の回に「もう出ている」へ変わった → 札が入れ替わり、コメントで鳴る
+    r, _ = once(gh, AFTER, STEPS_AFTER)
+    ck("したこと", r["action"] == "update", r["action"])
+    ck("札が入れ替わった", ship_down.WAIT_AYATO in gh.issues[0]["labels"]
+       and ship_down.WAIT_US not in gh.issues[0]["labels"],
+       gh.issues[0]["labels"])
+    ck("人が貼った札は残る", "お手すきで" in gh.issues[0]["labels"],
+       gh.issues[0]["labels"])
+    ck("変わり目で1本だけ鳴る", len(gh.comments) == 1, len(gh.comments))
+    ck("鳴らした字が、飛ぶ形になっている",
+       ticket_labels.mention_live(gh.comments[0][1]), "飛ぶ")
+
+    # 同じ「出ている」が続くあいだは、もう鳴らさない（狼少年にしない）
+    once(gh, AFTER, STEPS_AFTER)
+    ck("続いているあいだは鳴らさない", len(gh.comments) == 1, len(gh.comments))
+
+    # 出ている赤で**開いた**ときは鳴らさない（本文のメンションで飛ぶから）
+    gh2 = FakeGh()
+    once(gh2, AFTER, STEPS_AFTER)
+    ck("開いたときは鳴らさない（本文で飛ぶ）", gh2.comments == [], gh2.comments)
+    ck("開いたときの札", gh2.issues[0]["labels"] == [ship_down.LABEL,
+                                                ship_down.WAIT_AYATO],
+       gh2.issues[0]["labels"])
+    ck("本文のメンションが、飛ぶ形になっている",
+       ticket_labels.mention_live(gh2.issues[0]["body"]), "飛ぶ")
+
+    # 出ている → 出ていない へ戻ったら、札も戻る（呼びっぱなしにしない）
+    r, _ = once(gh2, BEFORE, STEPS_BEFORE)
+    ck("戻ったら札も戻る", ship_down.WAIT_US in gh2.issues[0]["labels"]
+       and ship_down.WAIT_AYATO not in gh2.issues[0]["labels"],
+       gh2.issues[0]["labels"])
+    ck("戻るときは鳴らさない", gh2.comments == [], gh2.comments)
+
+    # **歯止め: 鳴らす決めを「いつでも鳴らす」に倒すと、毎回鳴る**
+    gh3 = FakeGh()
+    once(gh3, AFTER, STEPS_AFTER)
+    real = ship_down.should_ping
+    ship_down.should_ping = lambda action, prev, needs: needs
+    try:
+        once(gh3, AFTER, STEPS_AFTER)
+        once(gh3, AFTER, STEPS_AFTER)
+    finally:
+        ship_down.should_ping = real
+    ck("(歯止め) いつでも鳴らすに倒すと、変わっていないのに鳴る",
+       len(gh3.comments) > 0, len(gh3.comments))
+
+
 def case_grep():
     """**出た字を探す。** 袋を読むので、ほかの確かめのあとに回す。"""
     print("\n[素性] 本文にもログにも、名前・どねID・チャンネルID・メールが出ない")
@@ -835,17 +925,21 @@ def case_grep():
     once(gh2, BEFORE, STEPS_BEFORE)
     text = "\n".join(i["body"] for i in gh.issues + gh2.issues)
 
-    # **本文に出てよい `@` は、オーナーの1つだけ。** ほかは1文字も出さない
-    # （出ているのに出ていないと言わないため、ここは外してから数える）
-    n = logident.count(text.replace(ship_down.OWNER, "（オーナー）"))
+    n = logident.count(text)
     for k in logident.KINDS:
         ck(f"本文に出た数 — {k}", n[k] == 0, n[k])
-    only = logident.count(text)["handle"]
-    ck("本文の @ は、オーナーのぶんだけ（呼ぶほうを数えている）", only == 1, only)
     print(f"    （見た本文は {len(text)} 文字）")
 
+    # **0 が「オーナーだけは数えない」に寄りかかっていないこと**も見る（#585 で
+    # `tools/logident.py` がそう変わった）。呼ぶほうの本文にはオーナーの名乗りが
+    # 確かに1つ在って、そこを視聴者さんのハンドルに置き換えたら**拾われる**
+    ck("呼ぶほうの本文に、オーナーの名乗りが在る", ship_down.OWNER in text, "在る")
+    ck("同じ場所が視聴者さんのハンドルなら拾う",
+       logident.count(text.replace(ship_down.OWNER, HANDLE))["handle"] > 0,
+       logident.count(text.replace(ship_down.OWNER, HANDLE))["handle"])
+
     log = BUF.getvalue().split("[素性の結果]")[0]
-    n = logident.count(log.replace(ship_down.OWNER, "（オーナー）"))
+    n = logident.count(log)
     for k in logident.KINDS:
         ck(f"ログに出た数 — {k}", n[k] == 0, n[k])
     print(f"    （見たログは {len(log)} 文字）")
@@ -876,6 +970,7 @@ def main() -> int:
     case11_forbidden()
     case12_yaml()
     case13_real()
+    case14_wait_and_ping()
     print("\n[素性の結果]")
     case_grep()
 

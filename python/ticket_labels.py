@@ -69,7 +69,8 @@ AFTER_TRIP = "旅のあと"
 WAITS = (WAIT_AYATO, WAIT_US, AFTER_TRIP)
 
 # 札の見た目（色・説明）。無ければ作る。既に居る札とは別の色にする
-# （`donor-calls` d93f0b / `ingest-down` b60205 / `bake-down` 5319e7）
+# （`donor-calls` d93f0b / `ingest-down` b60205 / `bake-down` 5319e7 /
+#  `ship-down` 006b75）
 WAIT_STYLE = {
     WAIT_AYATO: ("fbca04", "あやとにしかできないことを待っている"),
     WAIT_US: ("0e8a16", "こちらで直せる。まだ手が回っていない"),
