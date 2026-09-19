@@ -1376,7 +1376,16 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   filter: drop-shadow(1px 3px 3px rgba(52, 66, 32, 0.34));
 }
 @media (min-width: 720px) {
-  .kd-folks img { width: 66px; height: 76px; }
+  /* **ここも正方形。** 上と同じ理由で、66×76 にしていたのを 66×66 に戻した。
+     器が縦長だと `object-fit: contain` の効く辺が絵ごとに入れ替わって、
+     `charFit` が「器の短いほうに合わせて置かれている」と思っている位置と
+     実際がずれる（`docs/island-misses.md` #169。図鑑の #167 と同じ形）。
+     **辺は 76 ではなく 66。** 横 66px は「1行に何人並ぶか」を決めている辺で、
+     11人の台所（天ぷら・アゼルバイジャンのピラフ）が 900px 以上で1行に収まる
+     ぎりぎり。72 や 76 に広げると、そこが2行に割れる（実測）。
+     縦の 76 は絵の頭の上の余白でしかない（足元は `object-position: center bottom`
+     で床に付いている）ので、削っても人は小さくならない。 */
+  .kd-folks img { width: 66px; height: 66px; }
 }
 /* 引用の吹き出しは紙の区画いっぱいに使う（`.avoices` は `ui.css`） */
 .kd-talk { margin-top: 0; }
