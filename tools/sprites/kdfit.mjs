@@ -6,15 +6,49 @@
  *   python3 -m http.server 4300 --directory site/.next-3200 &
  *   SPORT=4300 node tools/sprites/kdfit.mjs      # 0=通った / 1=見つかった / 2=数えるものが無い
  *
+ *   ORIGIN=https://live-streaming-d3cac.web.app node tools/sprites/kdfit.mjs
+ *
  * **4190 を配り先に使わない。** Chrome も node の fetch も「危ない口」として
  * 塞いでいて（ManageSieve）、絵が全部「配られていない」に化ける（#167）。
+ *
+ * ## 出したあとは、本番の画素で数える（`ORIGIN=`）
+ *
+ * 手元の書き出しで 0件になっても、それは**出す前のもの**でしか言えていない。
+ * 「直したと言う前に、本番の値で確かめる」（`island-misses.md` #1）ので、
+ * `ORIGIN` を渡したら localhost ではなく**出したバイト列**を開く。
+ * `dexfit.mjs` と同じ形にしてある（**本番に向けられない見張りは、出したあとの
+ * 確認に使えない**。台所だけ手元しか見られない、という差を残さない）。
+ *
+ * **この箱のブラウザは本番に直接届かない**（proxy が ERR_CONNECTION_RESET）。
+ * なので `prod.mjs` の `viaCurl(ctx)` に要求を横取りさせて curl から取る。
+ * 止めた先・たどった先・小さすぎた本文は**表に出して、止めた先が1つでもあれば
+ * 数字を出さずに落ちる。** 通っていない先があると、面は壊れているのではなく
+ * **飢える**。ここは絵を数える道具なので、飢えはそのまま「はみ出し 0件」という
+ * 嘘の合格になる（#157）。
+ *
+ * 差し替え（`route.mjs` の `offline`）は本番モードでは**掛けない。**
+ * 手元の絵を返してしまうと、見ているのは本番の画素ではなくなる。
+ *
+ * **面の名前は拡張子で分かれる。** 静的に配ったものは `.html` を付けないと
+ * 引けないが、本番の Hosting は拡張子なしで配る。間違えると 404 を掴んで
+ * 「絵が0枚」になり、直っているものが壊れて見える。
+ *
+ * **分母は本番モードでも手元の焼き込み**（`site/content/kitchenTalk.ts`）から取る。
+ * 台所の人数を返す口は無いので、ここだけは持ってこられない。ということは
+ * **出した中身とこの枝の焼き込みがずれていたら、枚数が合わずに 2 で落ちる。**
+ * それでよい——ずれているのに数字を出すほうが悪い。
+ *
+ * **時間がかかる。** 1面あたり79本を curl 越しに取るので、本番で4幅を回すと
+ * 35面 × 4 = 140回の読み込みになる（実測 1面 4秒・全体で10分前後）。
+ * 急ぐときは `WIDTHS=1000` だけにする——**壊れるのは 720px 以上だけ**なので、
+ * 器の形を見るぶんにはそれで足りる（4幅ぜんぶは「他の幅を壊していないか」）。
  *
  * ## なぜ要るか
  *
  * `.kd-folks img`（`site/app/css/streams.css`）は 720px 以上で **66×76px** だった。
  * すぐ上のコメントに「器は正方形にする。`charFit` の寄せは器に対する割合で
  * 書いてあるので、縦横が違うとずれる」と**自分で書いてあるのに、守れていなかった**。
- * 図鑑で同じ形を直した回（#167）の、もう一方。
+ * 図鑑で同じ形を直した回（#167）の、もう一方（`docs/island-misses.md` #170）。
  *
  * 縦長の器に `object-fit: contain` で絵を入れると、**どちらの辺で頭打ちに
  * なるかが絵ごとに入れ替わる。** `charFit` は「器は正方形」として置き場所を
@@ -56,7 +90,25 @@
  *   BREAK=cell   器の矩形ではなく画面ぜんぶと比べる
  *   BREAK=square 器の形を見ない
  *
- * どれを1本抜いても対照が落ちる（3通りとも確かめた）。
+ * どれを1本抜いても対照が落ちる（3通りとも確かめた。手元でも本番でも）。
+ *
+ * 本番モードには足がもう1本ある。**通していない先があると面は飢える**ので、
+ * そこに気づけるかを `STARVE=` で確かめる。
+ *
+ *   STARVE='plain-256' ORIGIN=… node tools/sprites/kdfit.mjs
+ *
+ * **台所の絵がどこから来ているかは、測って決めた。** 本番の
+ * `/kitchen/karaage-teishoku` を開いて、`.kd-folks img` の `currentSrc` を
+ * 読んだ実測がこれ:
+ *
+ *   https://live-streaming-d3cac.web.app/island-api/characters/<id>/plain-256.webp
+ *
+ * **置き場を直に指していない。** 同じ生まれでも、面が読んでいるのは島の口の
+ * ほう（リダイレクトも無く 200 が返る。curl のヘッダで確かめた）。だから
+ * `STARVE='storage.googleapis'` も `STARVE='firebasestorage'` も**何も止めない。**
+ * 止めた気になって「落ちなかった＝大丈夫」と読まないこと（`dexfit.mjs` が
+ * 図鑑で1度踏んでいる）。**幅も違う。** 図鑑は `plain-128`、台所は `plain-256` を
+ * 読んでいるので、`STARVE='plain-128'` でも台所は1枚も止まらない。
  *
  * ## 出す順番
  *
@@ -68,9 +120,21 @@ import { chromium } from "playwright-core";
 import { readFileSync } from "fs";
 import { offline } from "./route.mjs";
 import { repoPath } from "./repo.mjs";
+import { blocked, redirects, thin, viaCurl } from "./prod.mjs";
 import { INK, MEASURE, bakedSame, judge } from "./fitmeasure.mjs";
 
 const SPORT = process.env.SPORT || "4300";
+/** 渡されたら本番モード。空なら今までどおり localhost の書き出しを見る */
+const ORIGIN = (process.env.ORIGIN || "").replace(/\/$/, "");
+/* 静的に配ったものは `.html` が要るが、本番の Hosting は拡張子なしで配る。
+   **ここを間違えると 404 を掴んで「絵が0枚」になり、直っているものが壊れて見える** */
+const href = (slug) => (ORIGIN ? `${ORIGIN}/kitchen/${slug}` : `http://localhost:${SPORT}/kitchen/${slug}.html`);
+const AT = ORIGIN ? `本番 ${ORIGIN}/kitchen/*` : `手元 http://localhost:${SPORT}/kitchen/*.html`;
+/** 対照。本番モードでこの先を止めて、**飢えに気づくか**を見る
+ *  （`STARVE='plain-256' ORIGIN=… node …` で落ちなければ、その足は何も見ていない） */
+const STARVE = process.env.STARVE || "";
+/** curl 経由は本数ぶん時間がかかるので、本番は待ちを長く取る */
+const TMO = ORIGIN ? 180000 : 30000;
 const WIDTHS = (process.env.WIDTHS || "320,390,640,1000").split(",").map(Number);
 const BREAK = process.env.BREAK || "";
 /** 何も見つからなかった面も1行ずつ出す */
@@ -122,19 +186,62 @@ const b = await chromium.launch({
   args: ["--no-sandbox"],
 });
 
+/**
+ * 取りに行って**返ってこなかった要求**（ctx ごと）。
+ *
+ * `prod.mjs` の `blocked()` は**ホスト名しか持たない。** 本番は要求の 98% が
+ * 同じホスト（`live-streaming-d3cac.web.app`）なので、1本こけたときに
+ * 「`live-streaming-d3cac.web.app(取れず) ×1`」としか出ず、**絵なのか
+ * 束ねた JS なのか書体なのかが分からない。** 直すにも、もう一度回すかを
+ * 決めるにも、どれが落ちたかが要る。ここで URL ごと控えておく。
+ *
+ * **`net::ERR_ABORTED` は数えない。** ここは1つの page で35面を続けて開くので、
+ * 次の面へ行った時点で、まだ来ていない要求はブラウザが自分で取り消す。
+ * それを数えると**1幅あたり数百本の「落ちた」**が出る（実際に出した。
+ * 束ねた JS も書体も並ぶので、読むと本番が壊れているように見える）。
+ * 止めたぶん（`r.abort()`）と取れなかったぶんは `net::ERR_FAILED` で来るので、
+ * そちらだけ残す。
+ */
+const MISSED = new WeakMap();
+
 async function open(width) {
   const ctx = await b.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: 2 });
-  await offline(ctx);
+  MISSED.set(ctx, []);
+  if (ORIGIN) {
+    ctx.on("requestfailed", (r) => {
+      const why = r.failure()?.errorText || "?";
+      if (why.includes("ABORTED")) return; // 面を次へ送ったときの取り消し。落ちてはいない
+      MISSED.get(ctx).push(`${why}  ${r.resourceType()}  ${r.url()}`);
+    });
+    /* **差し替えは掛けない。** 手元の絵を返したら、見ているのは本番の画素で
+       なくなる。島の口も置き場も `prod.mjs` の `PASS` に入っているので、
+       curl 経由で本物が来る */
+    await viaCurl(ctx);
+    if (STARVE) {
+      /* 対照の足。**`viaCurl` が使っているのと同じ数えもの**に足す（`blocked()` は
+         写しではなく本体を返す）。別の数えものを立てると、通してあるのに
+         気づかない穴をそのまま残すことになる。あとから登録した route が先に効く */
+      await ctx.route(new RegExp(STARVE), (r) => {
+        const m = blocked(ctx);
+        const h = (() => { try { return new URL(r.request().url()).host; } catch { return STARVE; } })();
+        m.set(h, (m.get(h) || 0) + 1);
+        return r.abort();
+      });
+    }
+  } else {
+    await offline(ctx);
+  }
   const p = await ctx.newPage();
   return { ctx, p };
 }
 
 /** その面を開いて、`.kd-folks` の絵が全部届くまで待つ */
 async function visit(p, slug) {
-  const res = await p.goto(`http://localhost:${SPORT}/kitchen/${slug}.html`, {
-    waitUntil: "load",
-    timeout: 60000,
-  });
+  /* 本番は絵を curl で取るので `load` まで待つと届かないことがある。
+     面そのものが来たかだけを見て、絵は下の待ちで数える */
+  const res = await p
+    .goto(href(slug), { waitUntil: ORIGIN ? "domcontentloaded" : "load", timeout: TMO })
+    .catch(() => null);
   if (!res || res.status() >= 400) return false;
   // 畳んだ中・画面の外の絵は要求されない。全部剥がしてから測る
   await p.evaluate(() => {
@@ -143,11 +250,35 @@ async function visit(p, slug) {
   await p
     .waitForFunction(
       () => [...document.querySelectorAll(".kd-folks img")].every((im) => im.complete),
-      { timeout: 30000 },
+      { timeout: TMO },
     )
     .catch(() => {});
   await p.waitForTimeout(80);
   return true;
+}
+
+/**
+ * 止めた先・たどった先・小さすぎた本文を表に出す。**止めた先が1つでもあれば false。**
+ *
+ * 通していない先があると、面は壊れているのではなく**飢えている。**
+ * 取れなかった絵はそもそも描かれないので、はみ出しようがない——
+ * **そのまま「はみ出し 0件」という合格に化ける**（#157）。
+ */
+function fed(ctx, label) {
+  if (!ORIGIN) return true;
+  let ok = true;
+  for (const [from, to] of redirects(ctx)) console.log(`   ⇢ ${label} たどった ${from} → ${to}`);
+  for (const [u, n] of thin(ctx)) {
+    ok = false;
+    console.log(`::error::${label} 本文が ${n}B しかない: ${u}`);
+  }
+  for (const [host, n] of blocked(ctx)) {
+    ok = false;
+    console.log(`::error::${label} 外に出られなかった先: ${host} ×${n}（prod.mjs の PASS を見る）`);
+  }
+  // ホスト名だけでは、絵が落ちたのか束ねた JS が落ちたのかが分からない
+  for (const u of MISSED.get(ctx) || []) console.log(`::error::${label}   ↳ ${u}`);
+  return ok;
 }
 
 const die = async (msg) => {
@@ -159,6 +290,24 @@ const die = async (msg) => {
 /** 絵は幅を変えても同じ。1度読んだら使い回す */
 const INKS = new Map();
 
+/* ───────── 飢えていないか（本番モードだけ。絵を1枚読む前に） ───────── */
+
+/* **順番が要る。** 取れなかった絵は描かれないので、はみ出しようがない。
+   先に画素を読みに行くと「画素が読めません」で落ちて、飢えが
+   「絵が壊れている」に化ける。だから1面だけ開いて、通っているかを先に見る。
+   （幅ごとの終わりにも見る。面によって要求する先が増えることがあるので） */
+if (ORIGIN) {
+  const { ctx, p } = await open(WIDTHS[0]);
+  const first = PAGES[0].slug;
+  if (!(await visit(p, first))) {
+    await ctx.close();
+    await die(`${ORIGIN}/kitchen/${first} が開けません`);
+  }
+  const ok = fed(ctx, "下見");
+  await ctx.close();
+  if (!ok) await die("外に出られなかった先があります。飢えた面では数えません");
+}
+
 /* ───────── 本物の面（まだ出さない。対照が通ってから出す） ───────── */
 
 let over = 0;
@@ -167,6 +316,7 @@ let seen = 0;
 let worstPx = 0;
 let paper = [];
 let spreadWorst = null;
+let starved = false;
 
 for (const W of WIDTHS) {
   const { ctx, p } = await open(W);
@@ -179,13 +329,17 @@ for (const W of WIDTHS) {
   for (const pg of PAGES) {
     if (!(await visit(p, pg.slug))) {
       await ctx.close();
-      await die(`幅 ${W}: /kitchen/${pg.slug}.html が開けません（SPORT=${SPORT}）`);
+      await die(`幅 ${W}: ${href(pg.slug)} が開けません`);
     }
     const rows = await p.evaluate(MEASURE, ".kd-folks > li");
     if (rows.length !== pg.there.length) {
       await ctx.close();
       await die(
-        `幅 ${W}: ${pg.slug} に絵が ${rows.length}枚（kitchenTalk.ts は ${pg.there.length}枚）`,
+        `幅 ${W}: ${pg.slug} に絵が ${rows.length}枚（kitchenTalk.ts は ${pg.there.length}枚）` +
+          (ORIGIN
+            ? "。**出したものとこの枝の焼き込みがずれています。**"
+              + "先に焼き直しを出すか、出したときの枝で回すこと"
+            : ""),
       );
     }
     for (const r of rows) {
@@ -238,6 +392,7 @@ for (const W of WIDTHS) {
     `   器が正方形でない ${wFlat}枚 / はみ出し ${wOver}枚 / ±${TOL * 100}% を外れる ${off.length}枚`,
   );
   say.push(...lines);
+  if (!fed(ctx, `幅 ${W}`)) starved = true;
   await ctx.close();
 }
 
@@ -284,11 +439,8 @@ if (!PROBES.length) await die("対照に使う平たい絵が、どの面にも�
   const { ctx, p } = await open(1000);
   const bal = [];
   const seenPairs = [];
-  for (const pb of PROBES) {
-    if (!(await visit(p, pb.slug))) {
-      await ctx.close();
-      await die(`対照の面 /kitchen/${pb.slug}.html が開けません`);
-    }
+  /** 写しを2枚足して測る。**足せなかった・届かなかったら空**を返す */
+  const probe = async (id0) => {
     const made = await p.evaluate(
       ([id]) => {
         const ul = document.querySelector(".kd-folks");
@@ -310,23 +462,36 @@ if (!PROBES.length) await die("対照に使う平たい絵が、どの面にも�
         }
         return 1;
       },
-      [pb.id],
+      [id0],
     );
-    if (!made) {
-      await ctx.close();
-      await die(`対照の li を足せませんでした（/kitchen/${pb.slug}.html）`);
-    }
+    if (!made) return [];
     await p
       .waitForFunction(
         () => [...document.querySelectorAll(".kd-folks img")].every((im) => im.complete),
-        { timeout: 30000 },
+        { timeout: TMO },
       )
       .catch(() => {});
     await p.waitForTimeout(150);
-    const rows = (await p.evaluate(MEASURE, ".kd-folks > li")).filter((r) => r.probe);
-    if (rows.length !== 2) {
-      await ctx.close();
-      await die(`対照の li が ${rows.length}枚しか測れませんでした（2枚要る）`);
+    return (await p.evaluate(MEASURE, ".kd-folks > li")).filter((r) => r.probe);
+  };
+
+  for (const pb of PROBES) {
+    /* **面が来ないことが、本番では 150回に1回ある。** curl 越しに79本
+       取ってくるので、どれか1本の取りこぼしで `.kd-folks` の無い形が残る。
+       そのまま進むと「対照の li が 0枚」という、**守りとは関係のない理由**で
+       落ちる（実際に1度出した。読んだ人は判定のほうが壊れたと思う）。
+       開き直しは**届いたかどうか**だけを変えるもので、判定は1文字も変えない。
+       だからここだけ2回まで開く。2回とも来なければ、そのまま落とす。 */
+    let rows = [];
+    for (let n = 1; n <= 2; n++) {
+      if (await visit(p, pb.slug)) rows = await probe(pb.id);
+      if (rows.length === 2) break;
+      if (n === 2) {
+        await ctx.close();
+        await die(
+          `対照の li が ${rows.length}枚しか測れませんでした（2枚要る。${href(pb.slug)}）`,
+        );
+      }
     }
     const bad = rows.find((r) => r.probe === "bad");
     const good = rows.find((r) => r.probe === "good");
@@ -361,6 +526,7 @@ if (!PROBES.length) await die("対照に使う平たい絵が、どの面にも�
   if (worstBad <= EDGE) {
     bal.push(`守りを外した ${seenPairs.length}枚が1枚も器から出ない（最大 ${worstBad.toFixed(2)}px）`);
   }
+  if (!fed(ctx, "対照")) bal.push("対照の面が飢えている（外に出られなかった先がある）");
   await ctx.close();
   if (bal.length) {
     console.log("::error::対照が外れました。本物の面の数字は出しません");
@@ -382,6 +548,7 @@ if (!PROBES.length) await die("対照に使う平たい絵が、どの面にも�
 
 for (const line of say) console.log(line);
 console.log("");
+console.log(`   見たもの: ${AT}`);
 for (const line of note) console.log(`   ${line}`);
 console.log(
   `合計  幅 ${WIDTHS.length}とおり / ${PAGES.length}面 ${WANT}枚 / 数えた ${seen}枚 / ` +
@@ -401,6 +568,9 @@ if (paper.length) {
 
 if (over) fail.push(`器からはみ出している絵が ${over}件`);
 if (notSquare) fail.push(`器が正方形でない絵が ${notSquare}件`);
+/* **飢えたまま出た 0件は、合格ではない。** 取れなかった絵はそもそも
+   描かれないので、はみ出しようがない（#157 の「測れていないものを 0 で出す」） */
+if (starved) fail.push("外に出られなかった先がある。この数字は当てにならない");
 
 await b.close();
 if (fail.length) {
