@@ -32,6 +32,21 @@
  *
  * **`follow` と `tell` は同じ台を落とすが、落とす項目が違う。**
  * 台の名前だけで見比べると2本が同じ足に見えるので、**項目まで突き合わせる。**
+ *
+ * ## 3つの一覧の突き合わせ（2026-09-19 から）
+ *
+ * `prodsweep.mjs` は面を集めるために3つの一覧を持っている（sitemap・`/all`・
+ * `site/app` の静的な道）。**3つが食い違っていること自体が不具合**なので、
+ * そこも判定にした。足は6本で、こちらも**1本抜くたびに別々の台が落ちる。**
+ *
+ * | 抜く足 | 落ちる台［落ちる項目］ |
+ * | --- | --- |
+ * | `smiss` | `added`［—］（sitemap に無い面が通る＝検索から見つからない面ができる） |
+ * | `amiss` | `dropped` `alias-wrongname`［—］ |
+ * | `alias` | `alias`［amiss］（別名で行けるものまで落ちる） |
+ * | `excuse` | `excuse-empty` `excuse-nodate`［—］ |
+ * | `unused` | `unused`［—］（効かなくなった宣言が残る） |
+ * | `claim` | `claim` `claim-none`［—］ |
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -39,7 +54,9 @@ import { join } from "node:path";
 import { createServer } from "node:http";
 
 import {
-  CONTROLS, countH1, fetchOne, judgePage, runControls, sitemapPaths, staticAppPaths, titleOf,
+  ABSENCES, CONTROLS, LIST_CONTROLS, countH1, excuseOk, fetchOne, h1Name, judgePage, normPath,
+  parseAll, reconcile, runControls, runListControls, runWireControls, sitemapPaths,
+  staticAppPaths, titleOf,
 } from "./prodsweep.mjs";
 import { THIN_BYTES } from "./prod.mjs";
 
@@ -244,6 +261,136 @@ console.log("5. sitemap から引いて、足りないぶんを足す");
     r404.err === null && r404.status === 404, JSON.stringify({ err: r404.err, status: r404.status }));
 
   await new Promise((r) => srv.close(r));
+}
+
+/* ------------------------------------ 6. 3つの一覧の突き合わせ（対照）-- */
+
+console.log("6. 突き合わせの対照が、素で揃う／足を1本ずつ抜くと落ちる");
+{
+  const rows = runListControls();
+  check(`台は ${LIST_CONTROLS.length}本 立つ`, rows.length === LIST_CONTROLS.length, `${rows.length}本`);
+  check("外れた台は無い", sig(rows) === "", sig(rows));
+  for (const [name, want, wantKeys] of LIST_CONTROLS) {
+    if (want) continue;
+    const row = rows.find((r) => r.name === name);
+    check(`${name} は「${wantKeys.join(" ")}」だけで落ちる`,
+      row.keys.join(" ") === [...wantKeys].sort().join(" "), row.keys.join(" ") || "落ちなかった");
+  }
+  /* **守りそのものが生きているか。** わざと足を書き違えた表を渡して、
+     `runListControls` が「狙いと違う足で落ちた」と言うところまで見る */
+  const wrong = runListControls({
+    controls: [["claim", false, ["smiss"], (b) => ({ ...b, claimed: 99 })]],
+  });
+  check("狙いと違う足で落ちた台は、外れたものとして返る",
+    wrong.length === 1 && !wrong[0].ok && wrong[0].keys.join(" ") === "claim",
+    JSON.stringify(wrong[0]));
+
+  /** 抜く足 → 外れてほしい台［外れてほしい項目］ */
+  const WANT = {
+    smiss: "added[]",
+    amiss: "alias-wrongname[] dropped[]",
+    alias: "alias[amiss]",
+    excuse: "excuse-empty[] excuse-nodate[]",
+    unused: "unused[]",
+    claim: "claim-none[] claim[]",
+  };
+  const got = {};
+  for (const leg of Object.keys(WANT)) {
+    got[leg] = sig(runListControls({ legs: new Set([leg]) }));
+    check(`BREAK=${leg} で外れる台`, got[leg] === WANT[leg], got[leg] || "1本も外れなかった");
+  }
+  check("6本の抜きかたが、6とおり別々に落ちる",
+    new Set(Object.values(got)).size === 6, `${new Set(Object.values(got)).size}とおり`);
+
+  /* **面を1つわざと落とす／わざと増やす／理由を消すが、別々に落ちる**
+     （同じ足を3回折っているだけ、になっていないか） */
+  const one = (n) => runListControls().length && sig(runListControls({ legs: new Set([n]) }));
+  check("「落とす」「増やす」「理由を消す」は別々の足",
+    new Set([one("amiss"), one("smiss"), one("excuse")]).size === 3,
+    [one("amiss"), one("smiss"), one("excuse")].join(" / "));
+
+  /* **線を通した対照。** 偽のサーバに sitemap.xml と `/all` を置いて、
+     読みかたから突き合わせまでを本番と同じ道で回す。
+     判定だけを直に叩く上の台は、**`/all` の刷り方が変わった日に何も言わない** */
+  const wire = await runWireControls();
+  check("線ごしの台が3本とも期待どおり", wire.every((r) => r.ok),
+    wire.filter((r) => !r.ok).map((r) => `${r.name}[${r.keys.join(" ")}] ${r.why}`).join(" / "));
+  check("線ごしでも、sitemap に無い1面は smiss で落ちる",
+    wire.find((r) => r.name === "all-stray").keys.join(" ") === "smiss",
+    JSON.stringify(wire.find((r) => r.name === "all-stray")));
+  /* **落ちる側だけでは対照にならない。** 揃っている板で違反 0 になることまで見る */
+  check("線ごしで、揃っている板は違反 0",
+    wire.find((r) => r.name === "all-tidy").got === true,
+    JSON.stringify(wire.find((r) => r.name === "all-tidy")));
+}
+
+/* --------------------------------- 7. 突き合わせの中身と、本物の宣言の表 -- */
+
+console.log("7. `/all` の読みかたと、載せないと決めた理由の表");
+{
+  const HTML = `<html><head><title>島のなか ぜんぶ</title></head><body>`
+    + `<h1>島のなか ぜんぶ</h1><p>島にある紙、3枚。ここからどこへでも1回で行ける。</p>`
+    + `<ul class="dxl">`
+    + `<li data-q="しま"><a class="dx" href="/"><span class="dx-body"><b>島</b><i>ここ</i></span></a></li>`
+    + `<li data-q="えっくす"><a class="dx" href="/x/"><span class="dx-body"><b>エックス</b><i>あれ</i></span></a></li>`
+    + `<li data-q="やま"><a class="dx" href="/y?q=1#top"><span class="dx-body"><b>ワイ</b><i>それ</i></span></a></li>`
+    + `<li data-q="そと"><a class="dx" href="https://example.test/z"><b>ゼット</b></a></li>`
+    + `</ul>`
+    /* 一覧の外のリンク（頭の帯・足）。**`data-q` の無い `li` は行き先ではない** */
+    + `<li><a href="/about">あやとのこと</a></li></body></html>`;
+  const got = parseAll(HTML);
+  check("`/all` の行から行き先と名前が出る",
+    got.rows.map((r) => `${r.href}=${r.name}`).join(" ") === "/=島 /x=エックス /y=ワイ",
+    JSON.stringify(got.rows));
+  check("末尾の / と ? # は落とす", got.rows[1].href === "/x" && got.rows[2].href === "/y",
+    JSON.stringify(got.rows.map((r) => r.href)));
+  check("外の宛先は行き先に数えない", !got.rows.some((r) => r.href.includes("example")),
+    JSON.stringify(got.rows));
+  check("`data-q` の無い行は数えない", !got.rows.some((r) => r.href === "/about"),
+    JSON.stringify(got.rows));
+  check("名乗っている枚数を読む", got.claimed === 3, String(got.claimed));
+  /* **読めなかったら null。0 に畳まない**（文言が変わった日に静かに通らないように） */
+  check("名乗りが無ければ null", parseAll("<html><body></body></html>").claimed === null,
+    String(parseAll("<html><body></body></html>").claimed));
+  check("行が1つも無ければ理由つきで返る",
+    parseAll("<html></html>").rows.length === 0 && parseAll("<html></html>").why !== "",
+    JSON.stringify(parseAll("<html></html>")));
+  check("外の宛先と # は道にしない",
+    normPath("https://x.test/a") === null && normPath("#top") === null && normPath("mailto:a@b") === null,
+    JSON.stringify([normPath("https://x.test/a"), normPath("#top"), normPath("mailto:a@b")]));
+
+  /* 島の看板は `<h1><b>名前</b><i>添え書き</i></h1>`。**`<b>` を取る** */
+  check("h1 の名前は `<b>` から取る（添え書きを混ぜない）",
+    h1Name(`<h1 class="isle-sign"><b>北欧周遊</b><i>会いたい人に</i></h1>`) === "北欧周遊",
+    h1Name(`<h1 class="isle-sign"><b>北欧周遊</b><i>会いたい人に</i></h1>`));
+  check("`<b>` が無ければ h1 ぜんぶ", h1Name("<h1>島のなか ぜんぶ</h1>") === "島のなか ぜんぶ",
+    h1Name("<h1>島のなか ぜんぶ</h1>"));
+
+  /* 理由の形 */
+  check("空の理由は通らない", !excuseOk(""), "通った");
+  check("短い理由は通らない", !excuseOk("要らない"), "通った");
+  check("日付の無い理由は通らない", !excuseOk("ログインした本人にしか中身が無い面だから"), "通った");
+  check("日付つきの長い理由は通る", excuseOk("ログインした本人にしか中身が無い（2026-09-19）"), "落ちた");
+
+  /* **本物の宣言の表。** ここが緩むと、食い違いを黙って畳める */
+  check(`ABSENCES は ${ABSENCES.length}行`, ABSENCES.length >= 5, `${ABSENCES.length}行`);
+  for (const a of ABSENCES) {
+    check(`${a.path} の理由が形になっている`, excuseOk(a.why), JSON.stringify(a.why));
+    check(`${a.path} の宛先が sitemap / all のどちらか`,
+      a.lists.length > 0 && a.lists.every((l) => l === "sitemap" || l === "all"), a.lists.join(" "));
+  }
+  check("宣言に同じ（面, 一覧）が2度出てこない",
+    new Set(ABSENCES.flatMap((a) => a.lists.map((l) => `${a.path}\t${l}`))).size
+      === ABSENCES.reduce((n, a) => n + a.lists.length, 0),
+    "重なっている");
+
+  /* **3つとも揃っていれば、違反は 0**（素で落ちる作りになっていないか） */
+  const clean = reconcile({
+    sitemap: ["/", "/a"], all: [{ href: "/", name: "島" }, { href: "/a", name: "あ" }],
+    app: ["/", "/a"], claimed: 2, absences: [],
+  });
+  check("3つ揃っていれば違反 0", clean.bad.length === 0, JSON.stringify(clean.bad));
+  check("見た面の数が出る（分母）", clean.union.length === 2, String(clean.union.length));
 }
 
 /* ------------------------------------------------------------ まとめ -- */

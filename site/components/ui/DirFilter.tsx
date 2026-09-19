@@ -31,12 +31,18 @@ export default function DirFilter({ total }: { total: number }) {
   // 入力のたびに DOM を舐める。94行なので、絞り込みに要る時間は1ミリ秒に満たない。
   useEffect(() => {
     const w = word.trim().toLowerCase();
-    let n = 0;
+    /* **行ではなく行き先を数える。** 上の見出しが「島にある紙、◯枚」と
+       名乗っているのは紙の数（`content/directory.ts` の `DEST_COUNT`）で、
+       いまいる島の行は「島」の行と同じ `/` を指す（`chain/AllIsleRow.tsx`）。
+       行を数えると、ぜんぶ当たる字を打ったときだけ「122 / 121」と出る。
+       `href` は画面が出てから引き直されるので、**DOM から読む。** */
+    const seen = new Set<string>();
     document.querySelectorAll<HTMLElement>("[data-q]").forEach((el) => {
       const on = !w || (el.dataset.q ?? "").includes(w);
       el.hidden = !on;
-      if (on) n++;
+      if (on) seen.add(el.querySelector("a")?.getAttribute("href") ?? el.dataset.q ?? "");
     });
+    const n = seen.size;
     // 1行も残らなかった棚は、見出しごと引っ込める。
     // 名前だけの棚が並んでいると「あるのに出てこない」と読まれる。
     document.querySelectorAll<HTMLElement>(".dxs").forEach((sec) => {
