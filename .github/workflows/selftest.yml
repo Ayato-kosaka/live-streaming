@@ -158,3 +158,121 @@ jobs:
       # 最初の1本で止まると、2本目以降が見えない
       - name: 見張りを全部回す
         run: python3 python/selftest_runner.py
+
+      # **名前が `_selftest` でない判定器**は、回し役が拾わない。
+      # 拾わないものを名指しで数えるのが `python/watch_census_selftest.py` で、
+      # あれ自身は上の回し役が拾って走る。ここに並べてあるのは、
+      # **棚卸しが「断っていない」と言い切っている側**——つまり
+      # 中身で判定器と分かって、CI で回すと決めたもの。
+      #
+      # 値段は測った（2026-09-19。手元の箱）。どちらも書き出しもブラウザも要らない。
+      - name: 道具にリポジトリの場所が直書きされていないか（0.18秒）
+        run: node tools/sprites/rootcheck.mjs
+
+      - name: 共有画像が、ちゃんと島に見えるか（6.0秒）
+        run: python3 tools/sprites/ogcheck.py
+
+  # **書き出しとブラウザが要る判定器を、ここで回す。**
+  #
+  # 2026-09-19 まで、`tools/sprites/*.mjs` は1本も CI に乗っていなかった。
+  # 名前が `_selftest` でないので棚卸しからも見えず、**「どこからも走らない
+  # 見張り 0本」が33本を隠していた**（`docs/island-misses.md` #171）。
+  #
+  # ここに載せたのは2本だけ。どちらも「面ごとに数がそろっているか」
+  # 「絵が器から落ちていないか」を数える道具で、**人が目で見つけた穴を
+  # 機械で止めるために作ったもの**。回っていないなら作った意味がない。
+  #
+  #   walkedcount … 表紙・`/now`・`/map` の「◯カ国」が食い違わないか。
+  #                 2026-09-19 の本番で 23 と 22 が同じ面に出ていた（#165）
+  #   dexfit      … 図鑑の絵が自分のマスからはみ出していないか（#167）
+  #
+  # 残りは `python/watch_excuses.py` に**理由つきで**断ってある。
+  # 土台（書き出し＋ブラウザ＋住人の絵）はここに在るので、次に載せるならここへ足す。
+  #
+  # 別の job にしてあるのは、上の見張り（144秒）を待たせないため。並んで走る。
+  browserwatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      # 手元の箱で1分10秒（2026-09-19 実測）。**開発サーバーでは測らない**
+      # ——先読みも束ね方も本番と違う（`CLAUDE.md`）
+      - name: 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: npx next build
+
+      - name: 確認用の道具の依存を入れる（playwright-core）
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      # **置き場をこの箱と同じにする。** 道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている。
+      # 版を上げると番号が変わって外れるので、`playwright-core` は 1.56.0 で
+      # 止めてある（`CLAUDE.md`）。入った先が違ったら、数字を出す前に落とす
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            ls -la /opt/pw-browsers || true
+            exit 2
+          fi
+
+      # **絵を落とさないと、dexfit は103人ぜんぶを同じ1枚で測る。**
+      # それでも最後まで走って「はみ出し 0件」と言う——いちばん悪い嘘。
+      # だから枚数を数えて、落ちていなければここで止める
+      - name: 住人の絵を落とす（落ちていなければ止める）
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 60 \
+            https://live-streaming-d3cac.web.app/island-api/characters > /tmp/ch.json
+          python3 tools/sprites/chars.py
+          n="$(ls /tmp/chars | wc -l)"
+          echo "落ちた絵 ${n} 枚"
+          if [ "$n" -lt 50 ]; then
+            echo "::error::絵が落ちていない。dexfit は全員おなじ顔で「はみ出し 0件」と言う"
+            exit 2
+          fi
+
+      # 落ちた1本で止めない。**2本とも回してから、まとめて落ちる。**
+      # 配るのは書き出したもの（開発サーバーは使わない）。4190 は使わない
+      # ——Chrome も node も「危ない口」として塞いでいる（`dexfit.mjs`）
+      - name: 歩いた国の数と、図鑑の絵を数える
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4211 --directory site/.next-ci >/tmp/serve.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4211/index.html" && break
+            sleep 1
+          done
+          rc1=0
+          SPORT=4211 DIST=site/.next-ci node tools/sprites/walkedcount.mjs || rc1=$?
+          echo "── walkedcount 終了コード ${rc1}"
+          rc2=0
+          SPORT=4211 node tools/sprites/dexfit.mjs || rc2=$?
+          echo "── dexfit 終了コード ${rc2}"
+          [ "$rc1" = 0 ] && [ "$rc2" = 0 ]
