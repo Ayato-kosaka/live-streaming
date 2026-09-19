@@ -32,15 +32,15 @@ jobs:
       DISCOVERY_LOOKBACK_DAYS: ${{ inputs.lookback_days || '10' }}
     steps:
       - name: リポジトリのチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python 環境のセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Google Cloud 認証
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -48,6 +48,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
+
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている
+      # （#180 Doneru の鍵 / #217 Anthropic の鍵 / #379 名簿 1,065 実行ぶん）。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      #
+      # **同じ job に置くことが要る。** job が違えばランナーが別なので、
+      # 隣の job で通っていてもこちらの出力は1文字も守られていない。
+      # 認証もクエリも要らず 0.5 秒で終わる。落ちたら下は1行も走らない。
+      # 置き忘れは `python/logsafe_wiring_selftest.py` が見ている
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
 
       - name: Doneru key を抽出
         shell: bash
@@ -74,15 +86,15 @@ jobs:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:
       - name: リポジトリのチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python 環境のセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Google Cloud 認証
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -118,15 +130,15 @@ jobs:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:
       - name: リポジトリのチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python 環境のセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Google Cloud 認証
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -134,6 +146,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
+
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている
+      # （#180 Doneru の鍵 / #217 Anthropic の鍵 / #379 名簿 1,065 実行ぶん）。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      #
+      # **同じ job に置くことが要る。** job が違えばランナーが別なので、
+      # 隣の job で通っていてもこちらの出力は1文字も守られていない。
+      # 認証もクエリも要らず 0.5 秒で終わる。落ちたら下は1行も走らない。
+      # 置き忘れは `python/logsafe_wiring_selftest.py` が見ている
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
 
       - name: あやと島の数字を更新
         run: python python/island_daily_stats.py
@@ -258,15 +282,15 @@ jobs:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
     steps:
       - name: リポジトリのチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python 環境のセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Google Cloud 認証
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
