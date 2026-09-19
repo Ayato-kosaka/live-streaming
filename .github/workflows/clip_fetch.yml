@@ -47,9 +47,11 @@ jobs:
         with:
           deno-version: v2.x
 
+      # **24 に揃えてある。** ここの node が要るのは PO Token を作る
+      # bgutil の依存を入れるところだけで、走らせるのは deno のほう
       - uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: 道具を入れる
         run: |

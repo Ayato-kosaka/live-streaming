@@ -181,9 +181,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      # **24。** Node 20 は 2026-04 に寿命が切れていて、いま緑なのは
+      # ランナーが node20 の action を勝手に 24 へ載せ替えているからでしかない。
+      # ここの node が動かすのは `npx firebase-tools@13`（演習のエミュレータ）
+      # だけ。あの版の `engines` は 22 までしか書いていないので、**24 で本当に
+      # 立ち上がるかは押して見るしかない。** そして `dry_run` では見られない
+      # ——下見の回はこの job ごと飛ぶ（`if: needs.take.outputs.drill == '1'`）。
+      # run 35426831380（dry_run を外した回）で、エミュレータが立って
+      # islandNotes の突き合わせまで通るのを見ている。
+      # リポジトリの他の node もぜんぶ 24（`functions/` だけ別。あそこの
+      # `engines` は Cloud Functions のランタイムそのもので、こちらでは決められない）
       - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
 
       # エミュレータは Java で動く
       - uses: actions/setup-java@v5
@@ -213,6 +223,18 @@ jobs:
       #
       # 置き場にも本番にも1行も問い合わせない（BigQuery も Firestore も
       # 偽物）。ここが落ちたら、**本番の数字を1つも出さずに**赤くなる
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている
+      # （#180 Doneru の鍵 / #217 Anthropic の鍵 / #379 名簿 1,065 実行ぶん）。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      #
+      # **同じ job に置くことが要る。** job が違えばランナーが別なので、
+      # 隣の job で通っていてもこちらの出力は1文字も守られていない。
+      # 認証もクエリも要らず 0.5 秒で終わる。落ちたら下は1行も走らない。
+      # 置き忘れは `python/logsafe_wiring_selftest.py` が見ている
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
       - name: 演習が落ちられるかを、偽物で先に見る
         run: python3 python/backup_drill_selftest.py
 

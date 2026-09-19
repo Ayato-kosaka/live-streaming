@@ -5,12 +5,22 @@
  *
  * ## 何を見ているか
  *
- * 島を歩く人のえらばれかたは、あやとの決め（2026-09-15）でこうなっている。
+ * 島を歩く人のえらばれかたは、あやとの決めでこうなっている。
+ *
+ * 2026-09-15:
  *
  * > やっぱり、投げ銭よくしてくれる人が優先されるべき。けど、出席も大事。
  * > 額と出席まで欲しい。**投げ銭の頻度はどうでも良い。**
  * > **相対評価が良いかも。ランクづけを過去3ヶ月でして、スコアリングできそう。
  * > 額1位は皆勤と同じくらい重要**
+ *
+ * 2026-09-19（issue #568）:
+ *
+ * > Q1 A（直近90日で出席0日・投げ銭0 の人は、島に出さない）
+ * > Q3 上位は固定気味で、下のほうだけ入れ替わる
+ *
+ * この見張りは 2026-09-19 まで「重みが 1〜`TOP_WEIGHT` の一本の坂であること」を
+ * 確かめていた。**その坂そのものが仕様を殺していた**（`docs/island-misses.md` #175）。
  *
  * 点（`score`）を作るのは焼くほう（`python/build_residents.py`、確かめは
  * `python/build_residents_selftest.py`）。**ここが見るのはその先**——
@@ -18,13 +28,13 @@
  *
  *  1. 順位 → 点（`rankPoints`）。**同着はかたまりのいちばん下**
  *  2. 点の無い人は、出席日数の順位で点が付く（焼き直しの前の受け皿）
- *  3. 重みは 1 〜 `TOP_WEIGHT`
- *  4. 90日回して——**一度も出ない人が 0人**
- *  5. **前の日と顔ぶれが完全に同じ日が 0日**（日替わりになっている）
- *  6. 上位と下位の差が **3〜5倍**
- *  7. **点が同じなら、出る日数もだいたい同じ**
- *     （＝額1位と皆勤が同じくらい強い、が日数で見えている）
- *  8. **点を見ていない実装は落ちる**（対照。点を平らにすると日数も平らになる）
+ *  3. 重みは 1 〜 `TOP_WEIGHT`／`FIXED_SEATS` は島の半分を超えない
+ *  4. **点0の人（3ヶ月なにもしていない人）が島に出ない**（Q1=A）
+ *  5. **点の上から `FIXED_SEATS` 人が、毎日そのまま出る**（Q3 の「上位は固定気味」）
+ *  6. **残りの席は毎日入れ替わる**（Q3 の「下のほうだけ入れ替わる」）
+ *  7. **額だけの人も島に出る**（足し算が効いている。掛け算なら消える）
+ *  8. **名簿が痩せた日でも、島が空にならない**
+ *  9. **点を平らにすると差が消える**（対照。点を見ていることが数で見える）
  *
  * 人の数と日数の分布は、**本番の102人と同じ形**にしてある（`DAYS`）。
  * 中身は日数だけで、誰のものかは持っていない。
@@ -37,10 +47,18 @@
  * ## 壊した写しで落ちることまで見る（`docs/island-misses.md` #99 #100）
  *
  * `ROSTER_TS` に壊した写しの道を渡すと、そちらを組み立てて回す。
+ * **守りは2つあって、別々に落ちる。**
  *
  * ```bash
- * cp site/components/island/roster.ts /tmp/broken.ts   # 守りを1つ外す
- * ROSTER_TS=/tmp/broken.ts node site/selftest/roster_selftest.mjs
+ * # (a) 点0を外す守りを抜く → 4 が落ちる（5 は通ったまま）
+ * sed 's/order.filter((i) => points\[i\] > 0)/order/' \
+ *   site/components/island/roster.ts > /tmp/no-cut.ts
+ * ROSTER_TS=/tmp/no-cut.ts node site/selftest/roster_selftest.mjs
+ *
+ * # (b) 固定席の守りを抜く → 5 が落ちる（4 は通ったまま）
+ * sed 's/live.slice(0, Math.min(FIXED_SEATS, max))/live.slice(0, 0)/' \
+ *   site/components/island/roster.ts > /tmp/no-fix.ts
+ * ROSTER_TS=/tmp/no-fix.ts node site/selftest/roster_selftest.mjs
  * ```
  */
 
@@ -73,7 +91,7 @@ execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
   "--skipLibCheck",
 ], {stdio: "inherit"});
 
-const {TOP_WEIGHT, rankPoints, pointsOf, weightsOf, rosterOf} =
+const {TOP_WEIGHT, FIXED_SEATS, rankPoints, pointsOf, weightsOf, liveOf, rosterOf} =
   createRequire(import.meta.url)(join(OUT, "roster.js"));
 console.log(`# 組み立てた本体: ${SRC}`);
 
@@ -118,12 +136,16 @@ check("無い人は出席の順位から", pointsOf(mixed)[0] === 1 && pointsOf(
 check("壊れた点は 0〜1 に収める",
   pointsOf([{days: 1, score: 9}, {days: 1, score: -9}]).join() === "1,0");
 
-console.log("\n# 3. 重みは 1 〜 TOP_WEIGHT");
+console.log("\n# 3. 重みと席の数");
 const w = weightsOf([{days: 0, score: 0}, {days: 0, score: 1}, {days: 0, score: 0.5}]);
 check(`点0 は 1`, w[0] === 1, String(w[0]));
 check(`点1 は ${TOP_WEIGHT}`, w[1] === TOP_WEIGHT, String(w[1]));
 check("そのあいだはまっすぐ", near(w[2], (1 + TOP_WEIGHT) / 2, 1e-9), String(w[2]));
 check("倍率は 3〜5 のあいだ", TOP_WEIGHT >= 3 && TOP_WEIGHT <= 5, String(TOP_WEIGHT));
+check(`固定席は1席以上（0席だと「上位は固定気味」が無い）`, FIXED_SEATS >= 1,
+  String(FIXED_SEATS));
+check("固定席は島（12人）の半分を超えない（超えると下が入れ替わらない）",
+  FIXED_SEATS <= 6, String(FIXED_SEATS));
 
 // --------------------------------------------------------------- 90日まわす
 
@@ -133,6 +155,9 @@ const DAYS = [
   8, 7, 6, 6, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
   ...Array(60).fill(0),
 ];
+
+/** 島を歩く人数。本番の `/` は11人、`/island` は12人。 */
+const SEATS = 12;
 
 /**
  * 偽の投げ銭。**本番の額は1つも置かない。**
@@ -159,125 +184,151 @@ function bake() {
 }
 
 /**
- * 90日まわして、1人ずつ何日出たかを数える。
+ * 日をまわして、1人ずつ何日出たかを数える。
  * @param {object[]} people 候補
+ * @param {number} days まわす日数
  * @param {number} start 何日目から
- * @return {object} 出た日数・前の日と同じだった日数・0日の人の数
+ * @return {object} 出た日数・前の日と同じだった日数・入れ替わった人数
  */
-function walk(people, start) {
+function walk(people, days = 2000, start = 19000) {
   const count = Array(people.length).fill(0);
+  let same = 0;
+  let churn = 0;
+  let short = 0;
   let prev = null;
-  let same = 0;
-  for (let d = 0; d < 90; d++) {
-    const out = rosterOf(people, 12, start + d);
+  for (let d = 0; d < days; d++) {
+    const out = rosterOf(people, SEATS, start + d);
+    if (out.length !== SEATS) short++;
     for (const p of out) count[p.i]++;
-    const ids = out.map((p) => p.i).sort((a, b) => a - b).join(",");
-    if (prev !== null && ids === prev) same++;
-    prev = ids;
-  }
-  const sorted = [...count].sort((a, b) => b - a);
-  const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
-  return {
-    count, same, sorted,
-    zero: count.filter((n) => n === 0).length,
-    top12: avg(sorted.slice(0, 12)),
-    bottom12: avg(sorted.slice(-12)),
-  };
-}
-
-/**
- * 90日の窓を何本もまわして、ならす。
- *
- * **1本だけ見て「0人だった」と言わない。** いちばん出ない人が何日出るかは
- * 運で動くので、たまたま0人の窓を引いただけかもしれない（#99）。
- * @param {object[]} people 候補
- * @param {number} windows 何本まわすか
- * @return {object} ならしたもの
- */
-function many(people, windows = 200) {
-  let zeroWindows = 0;
-  let zeroPeople = 0;
-  let hi = 0;
-  let top12 = 0;
-  let bottom12 = 0;
-  let same = 0;
-  for (let t = 0; t < windows; t++) {
-    const r = walk(people, 19000 + t * 3);
-    if (r.zero) zeroWindows++;
-    zeroPeople += r.zero;
-    hi += r.sorted[0];
-    top12 += r.top12;
-    bottom12 += r.bottom12;
-    same += r.same;
+    const now = new Set(out.map((p) => p.i));
+    if (prev) {
+      churn += [...now].filter((i) => !prev.has(i)).length;
+      if ([...now].sort((a, b) => a - b).join() === [...prev].sort((a, b) => a - b).join()) same++;
+    }
+    prev = now;
   }
   return {
-    zeroWindows: zeroWindows / windows,
-    zeroPeople: zeroPeople / windows,
-    hi: hi / windows,
-    ratio: top12 / bottom12,
-    same,
+    count, same, days, short,
+    churn: churn / (days - 1),
+    everyday: count.filter((n) => n === days).length,
   };
 }
 
 const people = bake();
-const one = walk(people, 20400);
+const {live, rest} = liveOf(people);
+const run = walk(people);
 
-console.log("\n# 4〜6. 候補102人・一度に12人・90日（公平なら1人あたり10.6日）");
-console.log(`  ある90日: 上位12 ${one.sorted.slice(0, 12).join(" ")}`);
-console.log(`            下位12 ${one.sorted.slice(-12).join(" ")}`);
-const now = many(people);
-console.log(`  200窓ならし: 最多 ${now.hi.toFixed(1)}日 / 上位12÷下位12 ${now.ratio.toFixed(2)}倍`
-  + ` / 0日の人が出た窓 ${(100 * now.zeroWindows).toFixed(1)}% / 1窓あたり ${now.zeroPeople.toFixed(2)}人`);
+console.log(`\n# 4. 点0の人（3ヶ月なにもしていない人）が島に出ない`);
+console.log(`  候補 ${people.length}人 → 点>0 ${live.length}人 / 点0 ${rest.length}人`
+  + ` / ${SEATS}人の島を ${run.days}日`);
+const zeroSeen = rest.reduce((n, i) => n + run.count[i], 0);
+console.log(`  点0の人が島にいた延べ人数: ${zeroSeen}人`
+  + `（1日あたり ${(zeroSeen / run.days).toFixed(2)}人）`);
+check("点0の人は 1日も島に出ない", zeroSeen === 0, `延べ ${zeroSeen}人`);
+check("それでも島は毎日ちょうど埋まる", run.short === 0, `${run.short}日 足りなかった`);
 
-check("90日で一度も出ない人は、ほとんどの窓で 0人（95%以上）",
-  now.zeroWindows <= 0.05, `${(100 * now.zeroWindows).toFixed(1)}% の窓で出た`);
-check("出たとしても1窓あたり 0.1人未満", now.zeroPeople < 0.1, `${now.zeroPeople.toFixed(2)}人`);
-check("90日ぜんぶ出る人は 0人", one.count.filter((n) => n === 90).length === 0,
-  `${one.count.filter((n) => n === 90).length}人`);
-check("前の日と顔ぶれが完全に同じだった日が 0日（200窓ぜんぶで）", now.same === 0, `${now.same}日`);
-check(`上位12平均と下位12平均の差が 3〜5倍（${now.ratio.toFixed(2)}倍）`,
-  now.ratio >= 3 && now.ratio <= 5.2, now.ratio.toFixed(2));
-check("いつも12人ちょうど出る", rosterOf(people, 12, 1).length === 12);
-check("同じ人を2回出さない", new Set(rosterOf(people, 12, 1).map((p) => p.i)).size === 12);
-check("候補が12人以下なら、そのまま全員", rosterOf(people.slice(0, 9), 12, 1).length === 9);
+console.log(`\n# 5. 点の上から ${FIXED_SEATS}人が、毎日そのまま出る（上位は固定気味）`);
+const fixed = live.slice(0, FIXED_SEATS);
+const nextUp = live[FIXED_SEATS];
+console.log(`  固定席: ${fixed.map((i) => `点${people[i].score.toFixed(3)}`).join(" ")}`);
+console.log(`  そのすぐ下（点${people[nextUp].score.toFixed(3)}）: `
+  + `${(100 * run.count[nextUp] / run.days).toFixed(0)}% の日`);
+check(`点の上から ${FIXED_SEATS}人が、${run.days}日ぜんぶ出る`,
+  fixed.every((i) => run.count[i] === run.days),
+  fixed.map((i) => run.count[i]).join());
+check(`毎日出るのは、その ${FIXED_SEATS}人だけ`, run.everyday === FIXED_SEATS,
+  `${run.everyday}人`);
+check("固定席のすぐ下は、毎日ではない（固定が広がっていない）",
+  run.count[nextUp] < run.days, String(run.count[nextUp]));
+
+console.log("\n# 6. 残りの席は毎日入れ替わる（下のほうだけ入れ替わる）");
+const pool = live.slice(FIXED_SEATS);
+const seen = pool.filter((i) => run.count[i] > 0).length;
+console.log(`  抽選席 ${SEATS - FIXED_SEATS}席に出入りした人: ${seen}人 / ${pool.length}人`);
+console.log(`  前の日から入れ替わる人数: 1日あたり ${run.churn.toFixed(2)}人`
+  + ` / 前の日と顔ぶれが完全に同じ日: ${run.same}日`);
+check("抽選席の候補は、全員が一度は島に出る", seen === pool.length,
+  `${seen} / ${pool.length}`);
+check("前の日と顔ぶれが完全に同じ日は 0日", run.same === 0, `${run.same}日`);
+check("毎日3人以上が入れ替わる", run.churn >= 3, run.churn.toFixed(2));
+check("いつも定員ちょうど出る", rosterOf(people, SEATS, 1).length === SEATS);
+check("同じ人を2回出さない",
+  new Set(rosterOf(people, SEATS, 1).map((p) => p.i)).size === SEATS);
+check("候補が定員以下なら、そのまま全員",
+  rosterOf(people.slice(0, 9), SEATS, 1).length === 9);
 check("同じ日なら何度呼んでも同じ顔ぶれ",
-  rosterOf(people, 12, 7).map((p) => p.i).join()
-    === rosterOf(people, 12, 7).map((p) => p.i).join());
+  rosterOf(people, SEATS, 7).map((p) => p.i).join()
+    === rosterOf(people, SEATS, 7).map((p) => p.i).join());
 
-console.log("\n# 7. **点が同じなら、出る日数もだいたい同じ**（額1位 ≒ 皆勤）");
-// 額1位（投げ銭のいちばん重い人）と、出席1位（days=80 の人）。
-// 点はどちらも片方が満点・もう片方が最下位に近いので、ほぼ同じ値になる
+console.log("\n# 7. 額だけの人も島に出る（点は足し算。掛け算なら消える）");
 const yen = fakeYen();
+// 額1位。出席は1日しかない——**額を見ていなければ、点0で島から消える人**
 const topYen = yen.indexOf(Math.max(...yen));
+// 同じ出席1日で、投げ銭0円の人。**額のぶんだけ差が出るはず**
+const sameDays = DAYS.map((d, i) => i)
+  .filter((i) => DAYS[i] === DAYS[topYen] && yen[i] === 0)[0];
+console.log(`  額1位（出席${DAYS[topYen]}日・点${people[topYen].score.toFixed(3)}）:`
+  + ` ${(100 * run.count[topYen] / run.days).toFixed(0)}% の日`);
+console.log(`  同じ出席${DAYS[sameDays]}日で投げ銭0円（点${people[sameDays].score.toFixed(3)}）:`
+  + ` ${(100 * run.count[sameDays] / run.days).toFixed(0)}% の日`);
+check("額1位が島に出ている（掛け算なら 0日）", run.count[topYen] > 0,
+  String(run.count[topYen]));
+check("同じ出席日数でも、額のあるほうが多く出る（1.3倍以上）",
+  run.count[topYen] >= run.count[sameDays] * 1.3,
+  `${run.count[topYen]} / ${run.count[sameDays]}`);
+// 出席1位。**額を見ていない日でも、出席だけで上位に居られる**
 const topDay = DAYS.indexOf(Math.max(...DAYS));
-let yenDays = 0;
-let dayDays = 0;
-for (let t = 0; t < 60; t++) {
-  const r = walk(people, 19000 + t * 3);
-  yenDays += r.count[topYen];
-  dayDays += r.count[topDay];
-}
-yenDays /= 60;
-dayDays /= 60;
-console.log(`  額1位 点${people[topYen].score.toFixed(3)} → ${yenDays.toFixed(1)}日`
-  + ` / 出席1位 点${people[topDay].score.toFixed(3)} → ${dayDays.toFixed(1)}日`);
-check("点が近い", Math.abs(people[topYen].score - people[topDay].score) < 0.2,
-  `${people[topYen].score} / ${people[topDay].score}`);
-check("出る日数も近い（1.3倍の内側）",
-  Math.max(yenDays, dayDays) / Math.min(yenDays, dayDays) < 1.3,
-  `${yenDays.toFixed(1)} / ${dayDays.toFixed(1)}`);
-check("どちらも公平な10.6日よりはっきり多い", yenDays > 14 && dayDays > 14,
-  `${yenDays.toFixed(1)} / ${dayDays.toFixed(1)}`);
+check("出席1位も島に出ている", run.count[topDay] > 0, String(run.count[topDay]));
 
-console.log("\n# 8. 点を見ている（対照。点を平らにすると日数も平らになる）");
-const flat = many(people.map((p) => ({days: p.days, score: 0.5, i: p.i})));
-console.log(`  点を平らにすると: 最多 ${flat.hi.toFixed(1)}日 / 上位12÷下位12 ${flat.ratio.toFixed(2)}倍`);
-check("平らにすると差が縮む（2.71倍あたり）", flat.ratio < 3.2, flat.ratio.toFixed(2));
-check("点を付けたほうは、はっきり広い（1.6倍以上の開き）",
-  now.ratio / flat.ratio >= 1.6, `${now.ratio.toFixed(2)} / ${flat.ratio.toFixed(2)}`);
-check("平らにすると0日の人も出なくなる（＝差は点から来ている）",
-  flat.zeroWindows < now.zeroWindows || flat.zeroWindows === 0,
-  `${flat.zeroWindows} / ${now.zeroWindows}`);
+console.log("\n# 8. 名簿が痩せた日でも、島が空にならない");
+// 新しい章の頭・取り込みが落ちた日。点>0 が定員に届かない
+for (const n of [0, 1, 5, SEATS - 1]) {
+  const thin = people.map((p, i) => ({days: p.days, score: i < n ? (n - i) / n : 0, i}));
+  const sizes = Array.from({length: 120}, (_, d) => rosterOf(thin, SEATS, 19000 + d).length);
+  const lo = Math.min(...sizes);
+  const hi = Math.max(...sizes);
+  console.log(`  点>0 が ${String(n).padStart(2)}人 → 島は ${lo}〜${hi}人`);
+  check(`点>0 が ${n}人でも、島は定員ちょうど`, lo === SEATS && hi === SEATS, `${lo}〜${hi}`);
+}
+check("候補が0人なら 0人（出しようがない）", rosterOf([], SEATS, 1).length === 0);
+
+console.log("\n# 9. 点を見ている（対照）");
+/* **抽選席の重みだけを平らにする。** 名簿ぜんぶを同じ点にすると、点0の人が
+   居なくなって固定席の顔ぶれまで変わり、何が効いたのか分からなくなる。
+   固定席の4人と、点0で切られた人は**そのまま**にして、抽選席だけを平らにする */
+const flatPool = people.map((p, i) => ({
+  days: p.days,
+  score: fixed.includes(i) || p.score === 0 ? p.score : 0.5,
+  i,
+}));
+const flat = walk(flatPool);
+const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+/* 比べる相手は**点で選んだ12人**に固定する。出た日数の多い順に12人取ると、
+   点が平らでも運のいい12人が上に来て、対照のほうが広く出る（ただの揺らぎ） */
+const hi12 = pool.slice(0, 12);
+const lo12 = pool.slice(-12);
+const ratioIn = (r) => avg(hi12.map((i) => r.count[i])) / avg(lo12.map((i) => r.count[i]));
+const nowRatio = ratioIn(run);
+const flatRatio = ratioIn(flat);
+console.log(`  抽選席の 点の上12人 ÷ 点の下12人: 点あり ${nowRatio.toFixed(2)}倍`
+  + ` / 抽選席の重みを平らにすると ${flatRatio.toFixed(2)}倍`);
+check("平らにすると抽選席の差がほぼ消える（1.1倍の内側）", flatRatio < 1.1,
+  flatRatio.toFixed(2));
+check("点を見ているほうは、はっきり広い（1.3倍以上の開き）",
+  nowRatio / flatRatio >= 1.3, `${nowRatio.toFixed(2)} / ${flatRatio.toFixed(2)}`);
+check("平らにしても固定席は動かない（＝上の差は席、下の差は点）",
+  flat.everyday === FIXED_SEATS && fixed.every((i) => flat.count[i] === flat.days),
+  `${flat.everyday}人`);
+
+/* 切っているのが「点0」であって、その人たち自身ではないことを見る。
+   点0の53人に点を付けると、同じ実装のまま島に出てくる */
+const revived = walk(people.map((p) => ({
+  days: p.days, score: p.score === 0 ? 0.4 : p.score, i: p.i,
+})));
+const back = rest.filter((i) => revived.count[i] > 0).length;
+console.log(`  点0の ${rest.length}人に点0.4を付けると: ${back}人が島に出た`);
+check("点を付ければ島に出る（＝切っているのは点0という値）", back === rest.length,
+  `${back} / ${rest.length}`);
 
 console.log("");
 if (BAD) {
