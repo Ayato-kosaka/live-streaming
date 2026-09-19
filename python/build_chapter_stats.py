@@ -129,6 +129,65 @@ def link_icons(client: bigquery.Client, ch: str) -> dict[str, str]:
     return icon_of
 
 
+def residents_sql(ch: str, channels: list[str],
+                  project: str = BQ_PROJECT_ID, dataset: str = BQ_DATASET) -> str:
+    """章ごとの住人（チャットを書いた日の数）を取る SQL。**`fetch` の外に出してある。**
+
+    `streams_sql` と同じ理由——見張り（`python/bake_order_selftest.py`）が
+    **本物の字**を読めるようにするため。中に隠すと、同着の順番が決まって
+    いるかを目でしか確かめられない。
+
+    ## 同着の順番を決める（2026-09-19）
+
+    ここは長いこと `GROUP BY 1, 2 ORDER BY 1, days DESC` だった。
+    **`days` が同じ人どうしの順番を1つも決めていない。** 隣の `streams_sql` は
+    `ORDER BY ch.slug, v.d DESC, v.video_id` と第2キーを持っているのに、
+    こちらだけ残っていた（#106 で直したのは `cityStreams.ts` 側）。
+
+    実測（2026-09-19 の `chapterStats.ts`）: 住人 149 人のうち **102 人が同着**、
+    同じ日数のかたまりが 26 組。**並びの決まっていない席が 76。**
+    直近19版のうち **5版が「語の集合は同じで並びだけ違う」**
+    （09-11 / 09-12 / 09-13 / 09-15 / 09-16）。
+
+    **本当の順番は Python 側（`order_residents`）が決める。**
+    ここに書く第2キー（`channel`）は書き出しに残らないので、
+    **残っていない順序は無い順序と同じ**（#106 の決めごと3）。
+    それでも書いておくのは、BigQuery の返す順そのものを1通りにして、
+    `--rows` で持ち帰った行が回ごとに入れ替わらないようにするため。
+    """
+    names = ", ".join(f"'{c}'" for c in sorted(channels))
+    return f"""
+    WITH ch AS ({ch})
+    SELECT ch.slug, m.author_channel_id AS channel,
+           COUNT(DISTINCT DATE(m.published_at, 'Asia/Tokyo')) AS days
+    FROM ch JOIN `{project}.{dataset}.chat_messages` m
+      ON DATE(m.published_at, 'Asia/Tokyo') BETWEEN ch.f AND ch.t
+    WHERE m.author_channel_id IN ({names})
+    GROUP BY 1, 2 ORDER BY 1, days DESC, channel
+    """
+
+
+def order_residents(rs: list[dict]) -> list[dict]:
+    """住人を並べる。**多く来た順、同じ日数なら `icon` 順。**
+
+    第2キーに `icon` を選んでいるのは、**それが書き出しに残る唯一の列**だから
+    （#106 の決めごと3）。チャンネルIDで並べると、焼き込みを見ても
+    その順が正しいかを誰も確かめられない。`build_residents.py` の
+    `out.sort(key=lambda r: (-r["days"], r["icon"]))` と同じ鍵にそろえてある。
+    """
+    return sorted(rs, key=lambda r: (-r["days"], r["icon"]))
+
+
+def rows_to_residents(rows: list[dict], icon_of: dict[str, str]) -> dict[str, list]:
+    """BigQuery の行を、章ごとの住人に直す。**並べる仕事はここ1か所。**"""
+    out: dict[str, list] = {}
+    for row in rows:
+        out.setdefault(row["slug"], []).append(
+            {"icon": icon_of[row["channel"]], "days": int(row["days"])}
+        )
+    return {slug: order_residents(rs) for slug, rs in out.items()}
+
+
 def fetch(
     client: bigquery.Client, chapters: list[dict], per_chapter: dict[str, list]
 ) -> dict[str, dict]:
@@ -153,16 +212,6 @@ def fetch(
     # その章にいた住人。**絵の分かっている人だけ**を BigQuery 側で絞る。
     # 100人ぶんの IN 句で済むので、全員ぶんを持ってきて Python で捨てるより軽い。
     icon_of = link_icons(client, ch)
-    channels = ", ".join(f"'{c}'" for c in sorted(icon_of))
-    residents_sql = f"""
-    WITH ch AS ({ch})
-    SELECT ch.slug, m.author_channel_id AS channel,
-           COUNT(DISTINCT DATE(m.published_at, 'Asia/Tokyo')) AS days
-    FROM ch JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` m
-      ON DATE(m.published_at, 'Asia/Tokyo') BETWEEN ch.f AND ch.t
-    WHERE m.author_channel_id IN ({channels})
-    GROUP BY 1, 2 ORDER BY 1, days DESC
-    """
 
     stats = {
         # **本数は一覧の長さ。数える口を2つ持たない**（この関数の docstring）
@@ -172,10 +221,10 @@ def fetch(
     }
     for row in client.query(people_sql).result():
         stats[row["slug"]]["people"] = int(row["people"])
-    for row in client.query(residents_sql).result():
-        stats[row["slug"]]["residents"].append(
-            {"icon": icon_of[row["channel"]], "days": int(row["days"])}
-        )
+    rows = [dict(r) for r in client.query(residents_sql(ch, sorted(icon_of))).result()]
+    for slug, rs in rows_to_residents(rows, icon_of).items():
+        if slug in stats:
+            stats[slug]["residents"] = rs
     return stats
 
 
@@ -379,6 +428,14 @@ def rows_to_streams(rows: list[dict], chapters: list[dict]) -> dict[str, list]:
         )
     if dropped:
         logger.info("押しても見られない配信 %d 本を明細から外した（本数は変えない）", dropped)
+    # **ここでも並べ直す。** SQL の `ORDER BY` は BigQuery を通ったときにしか
+    # 効かない——`--rows` で渡した JSON は渡した順のまま入る。並べる鍵は
+    # **どちらも書き出しに残っている列**（日付と videoId）なので、焼き込みを
+    # 見ればこの順が正しいか誰でも確かめられる（#106 の決めごと3）。
+    # 日付は新しい順、同じ日は videoId 順。安定ソートなので2回に分けて掛ける
+    for rows_of in out.values():
+        rows_of.sort(key=lambda r: r[1])
+        rows_of.sort(key=lambda r: r[0], reverse=True)
     return out
 
 
@@ -428,6 +485,61 @@ def restat_from_streams(per_chapter: dict[str, list], chapters: list[dict]) -> l
     return [f"{k}: {want[k]}本" for k in sorted(want)]
 
 
+def resort_residents() -> list[str]:
+    """**焼き直さずに、いま在る `chapterStats.ts` の住人の並びだけを揃える。**
+
+    住人は Firestore の名簿（`link_icons`）が要るので、口のそろっていない箱では
+    焼き直せない。だが `chapterStats.ts` には `icon` と `days` の両方が
+    残っているので、**同じ鍵（`order_residents`）で並べ直すことはできる。**
+    `restat_from_streams` と同じ考えで、**動かしてよい行を1種類に決めて、
+    他が1行でも動いたら書かずに落ちる。**
+
+    ここを1度通すのは、`order_residents` を足した回の1回だけ。
+    そのあとは毎晩の焼き直し（`main()`）が最初から揃った順で書く。
+    """
+    if not OUT_TS.exists():
+        raise SystemExit(f"{OUT_TS} がありません。並べ直す道は使えません")
+    before = OUT_TS.read_text(encoding="utf-8")
+    lines = before.splitlines(keepends=True)
+    row = re.compile(r'^      \{ icon: "([^"]+)", days: (\d+) \},\n$')
+    after: list[str] = []
+    run: list[tuple[str, str]] = []
+    moved = 0
+
+    def flush() -> None:
+        nonlocal moved
+        if not run:
+            return
+        rs = [{"icon": i, "days": int(d)} for i, d in run]
+        put = order_residents(rs)
+        for (old_i, _), r in zip(run, put):
+            if old_i != r["icon"]:
+                moved += 1
+        after.extend(f'      {{ icon: "{r["icon"]}", days: {r["days"]} }},\n' for r in put)
+        run.clear()
+
+    for line in lines:
+        m = row.match(line)
+        if m:
+            run.append((m.group(1), m.group(2)))
+            continue
+        flush()
+        after.append(line)
+    flush()
+
+    # **語の集合が変わっていないことを、書く前に見る。**
+    # 並べ直しでしかないのだから、空白を除いた字は1つも増減しないはず
+    if sorted("".join(after).split()) != sorted(before.split()):
+        raise SystemExit("並べ直しで語の集合が変わりました（書かずに止めます）")
+    if len(after) != len(lines):
+        raise SystemExit(f"行数が変わりました（{len(lines)} → {len(after)}）")
+    bad = [b for b, a in zip(lines, after) if b != a and not row.match(b)]
+    if bad:
+        raise SystemExit(f"住人の行以外が動きました: {bad[:3]}")
+    OUT_TS.write_text("".join(after), encoding="utf-8")
+    return [f"住人の行 {sum(1 for ln in lines if row.match(ln))} 行のうち {moved} 行が動いた"]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     # **明細だけは BigQuery の無い箱でも焼き直せるようにしてある**
@@ -435,7 +547,13 @@ def main() -> None:
     # 数のほう（chapterStats.ts）は Firestore の名簿も要るので、こちらでは焼かない
     ap.add_argument("--sql", action="store_true", help="明細の SQL を出すだけ")
     ap.add_argument("--rows", help="BigQuery の代わりに読む JSON（--sql の結果の行）")
+    # 住人の並びだけを揃える。**数は1つも動かさない**（`resort_residents`）
+    ap.add_argument("--resort", action="store_true",
+                    help="chapterStats.ts の住人の並びだけを揃える（数は動かさない）")
     a = ap.parse_args()
+    if a.resort:
+        logger.info("並べ直した: %s", " / ".join(resort_residents()))
+        return
     chapters = read_chapters()
     if a.sql:
         print(streams_sql(union_all(chapters)))

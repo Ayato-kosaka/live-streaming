@@ -22,6 +22,20 @@ step「凍っていないか」が**字面をそのまま比べている**ので
 | 2 | `build_kitchen_talk` に `residents.ts` の並びを**逆で**食わせる | 同上 |
 | 3 | 並び替えただけの写しを見張りに食わせる | 見張りが「凍っていない」と言う |
 | 4 | 数字を1つ動かした写しを見張りに食わせる | 見張りが「凍っている」と言う |
+| 5 | `build_chapter_stats` に住人と明細を**別の順で**食わせる | 書き出しが1バイトでも違う |
+
+## 5 の足（`BREAK=<足>` で1本ずつ抜く）
+
+`docs/island-standards.md` §15 の「対照は、足の数だけ用意する」。
+**どれを抜いても同じ1件で落ちるなら、それは1本の足しかない。**
+
+| `BREAK` | 抜くもの | 落ちる項目 |
+| --- | --- | --- |
+| `nosort` | 住人を並べ直さない（2026-09-19 まで本番がこれ） | 決定的・多い順・同着の順 |
+| `notie` | 同着の第2キー（`icon`）だけ外す | 決定的・同着の順 |
+| `asc` | 多い順を少ない順にする | 多い順 |
+| `nosql` | SQL の `ORDER BY` から第2キーを外す | SQL の字 |
+| `nostream` | 明細（`chapterStreams`）の並べ直しを外す | 明細が決定的 |
 
 3 と 4 は**対**で見る。片方だけだと、何でも「凍っている」と言う見張りでも通る。
 3 には**直す前の実装**も並べて回す。直す前が `0.0日` と言い、
@@ -46,10 +60,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# `build_chapter_stats` は `config.py` を通るので、`BQ_PROJECT_ID` が無いと
+# **import すらできない。** ここは BigQuery を1度も引かない（並びだけを見る）ので、
+# 偽の値を置く。他の見張り（`donor_calls_selftest` ほか）と同じ手
+os.environ.setdefault("BQ_PROJECT_ID", "bake-order-selftest")
+
 ROOT = Path(__file__).resolve().parent.parent
 CITY_TS = ROOT / "site" / "content" / "cityStreams.ts"
 RESIDENTS_TS = ROOT / "site" / "content" / "residents.ts"
 YML = ROOT / ".github" / "workflows" / "rebake.yml"
+
+# 足を1本ずつ抜くための旗。**当てると対照が落ちる**のを見るためにある
+BREAK = os.environ.get("BREAK", "")
+LEGS = ("nosort", "notie", "asc", "nosql", "nostream")
 
 fails: list[str] = []
 
@@ -386,10 +409,187 @@ def check_watchdog() -> None:
         say(all(v == "0.0日" for v in got.values()), "0.0日（この回で変わった）と読めている")
 
 
+# ------------------------------------------------- 5. 章の住人と、章の配信明細
+
+
+def fake_resident_rows(chapters: list[dict]) -> tuple[list[dict], dict[str, str]]:
+    """差し込む住人の行と、チャンネル → 絵の対応。
+
+    **同着をわざと作る。** 決まっていない同着が残っていることが 2026-09-19 まで
+    本番で起きていたことなので、そこを差し込みでも再現する。
+    本番の `chapterStats.ts` は住人 149 人のうち 102 人が同着（26 かたまり）で、
+    **並びの決まっていない席が 76 あった。**
+
+    絵の名前は、チャンネルIDと**逆の順**になるように付ける。
+    同じ並びにすると「チャンネル順でも通ってしまう」ので、
+    `icon` を鍵にしていることを確かめられない。
+    """
+    days_plan = [40, 40, 40, 30, 30, 20, 20, 20, 20, 10, 10, 5]
+    n = len(days_plan)
+    icon_of = {f"UC{i:09d}": f"icon-{n - 1 - i:02d}" for i in range(n)}
+    rows = []
+    for c in chapters:
+        for i, d in enumerate(days_plan):
+            rows.append({"slug": c["slug"], "channel": f"UC{i:09d}", "days": d})
+    return rows, icon_of
+
+
+def fake_stream_rows(chapters: list[dict]) -> list[dict]:
+    """差し込む配信明細の行。**同じ日に3本**置いて、同着を残す。"""
+    rows = []
+    for c in chapters:
+        for k in range(3):
+            rows.append({
+                "slug": c["slug"], "d": c["from"],
+                "video_id": f"{c['slug'][:4]}{k}{'x' * (6 - len(str(k)))}"[:11].ljust(11, "z"),
+                "title": f"{c['name']}の配信（{k}）", "people": k,
+            })
+    return rows
+
+
+def _order_leg():
+    """`BREAK` で抜いた住人の並べかた。抜いていなければ `None`（本物を使う）。"""
+    if BREAK == "nosort":
+        return lambda rs: list(rs)
+    if BREAK == "notie":
+        return lambda rs: sorted(rs, key=lambda r: -r["days"])
+    if BREAK == "asc":
+        return lambda rs: sorted(rs, key=lambda r: (r["days"], r["icon"]))
+    return None
+
+
+def bake_stats(rows: list[dict], chapters: list[dict], icon_of: dict[str, str],
+               order=None) -> str:
+    """`build_chapter_stats` の住人まわりだけを回して、書き出した字面を返す。
+
+    人数と本数は差し込みの定数。**ここで見るのは住人の並びだけ**なので、
+    BigQuery も Firestore も引かない。
+    """
+    import build_chapter_stats as m
+
+    keep = m.order_residents
+    if order is not None:
+        m.order_residents = order
+    try:
+        stats = {c["slug"]: {"people": 1, "streams": 2, "residents": []} for c in chapters}
+        for slug, rs in m.rows_to_residents(rows, icon_of).items():
+            stats[slug]["residents"] = rs
+        return m.render(chapters, stats)
+    finally:
+        m.order_residents = keep
+
+
+def bake_chapter_streams(rows: list[dict], chapters: list[dict], plain: bool) -> str:
+    """明細（`chapterStreams.ts`）を焼いた字面。`plain` で並べ直しを抜く。"""
+    import build_chapter_stats as m
+
+    if plain:
+        gone = __import__("build_dead_streams").blocked()
+        out: dict[str, list] = {c["slug"]: [] for c in chapters}
+        for row in rows:
+            if row["video_id"] in gone:
+                continue
+            out[row["slug"]].append([row["d"], row["video_id"], row["title"], int(row["people"])])
+        per = out
+    else:
+        per = m.rows_to_streams(rows, chapters)
+    return m.render_streams(per, chapters)
+
+
+def check_chapter_stats() -> None:
+    print("\n5. build_chapter_stats —— 住人と明細を、別の順で食わせる")
+    if BREAK:
+        print(f"  ** BREAK={BREAK} —— 足を1本抜いてある。ここは落ちるのが正しい **")
+    from build_chapter_stats import read_chapters, residents_sql
+
+    chapters = read_chapters()
+    rows, icon_of = fake_resident_rows(chapters)
+    if not chapters or not rows:
+        print("  数えるものが無い（chapters.ts から章を読めていない）")
+        raise SystemExit(2)
+
+    # **分母を出す。** 同着が1組も無ければ、何を並べ替えても差が出ない＝
+    # この対照は「何を測っても通る」ものになる（§15）
+    tie_seats = 0
+    for c in chapters:
+        by = {}
+        for r in rows:
+            if r["slug"] == c["slug"]:
+                by.setdefault(r["days"], []).append(r)
+        tie_seats += sum(len(v) for v in by.values() if len(v) > 1) - sum(
+            1 for v in by.values() if len(v) > 1)
+    print(f"  章 {len(chapters)} / 差し込んだ住人 {len(rows)} 人 / "
+          f"並びの決まらない席 {tie_seats}")
+    if tie_seats == 0:
+        print("  数えるものが無い（同着を1組も作れていない）")
+        raise SystemExit(2)
+
+    shuffles = []
+    for seed in (0, 1, 2):
+        r = list(rows)
+        random.Random(seed).shuffle(r)
+        shuffles.append(r)
+    shuffles.append(sorted(rows, key=lambda r: (r["slug"], r["days"], r["channel"]),
+                           reverse=True))
+
+    # **壊し戻し。** 直す前（並べ直さない）は、食わせる順で字面が変わる。
+    # ここが1通りになるようなら、差し込みのほうが同着を作れていない
+    olds = [bake_stats(r, chapters, icon_of, order=lambda rs: list(rs)) for r in shuffles]
+    say(len(set(olds)) > 1,
+        f"直す前（並べ直さない）は、食わせる順で書き出しが変わる（{len(set(olds))} 通り）")
+
+    outs = [bake_stats(r, chapters, icon_of, order=_order_leg()) for r in shuffles]
+    say(len(set(outs)) == 1, f"4通りの順 → 書き出しの種類 {len(set(outs))}（1 なら決定的）")
+
+    # 並びそのものを読む。**「揃っている」だけでなく、意味のある並び**かを見る
+    got = re.findall(r'"([a-z-]+)": \{\n    people:.*?residents: \[\n(.*?)\n    \],',
+                     outs[0], re.S)
+    say(len(got) == len(chapters), f"書き出しに章が {len(got)} 個出ている（{len(chapters)} 個）")
+    desc_bad = tie_bad = seen = 0
+    for _slug, block in got:
+        rs = [(int(d), i) for i, d in
+              re.findall(r'icon: "([^"]+)", days: (\d+)', block)]
+        seen += len(rs)
+        for a, b in zip(rs, rs[1:]):
+            if a[0] < b[0]:
+                desc_bad += 1
+            elif a[0] == b[0] and a[1] > b[1]:
+                tie_bad += 1
+    print(f"  書き出した住人 {seen} 人 / 隣り合わせ {seen - len(got)} 組を読んだ")
+    say(desc_bad == 0, f"多く来た順のまま（乱れ {desc_bad} 組）")
+    say(tie_bad == 0, f"同じ日数どうしは icon 順（乱れ {tie_bad} 組）")
+
+    # SQL の字も読む。**Python が並べ直していても、BigQuery の返す順が
+    # 回ごとに違えば `--sql` / `--rows` で持ち帰った行が揺れる**
+    sql = residents_sql("SELECT 1", ["UCxxxxxxxxxxxxxxxxxxxxxx"])
+    if BREAK == "nosql":
+        sql = sql.replace("ORDER BY 1, days DESC, channel", "ORDER BY 1, days DESC")
+    tail = sql[sql.rindex("ORDER BY"):].strip().split("\n")[0]
+    keys = [k.strip() for k in tail[len("ORDER BY"):].split(",")]
+    say(len(keys) >= 3, f"SQL の ORDER BY が同着まで決めている（鍵 {len(keys)} 本: {tail}）")
+
+    # 明細のほう（`chapterStreams.ts`）。**`--rows` は渡した順のまま入る**ので、
+    # SQL の ORDER BY だけでは足りない
+    srows = fake_stream_rows(chapters)
+    souts = []
+    for seed in (0, 1, 2):
+        r = list(srows)
+        random.Random(seed).shuffle(r)
+        souts.append(bake_chapter_streams(r, chapters, plain=(BREAK == "nostream")))
+    ids = len(re.findall(r'^\s*\["', souts[0], re.M))
+    print(f"  明細に差し込んだ行 {len(srows)} 本 / 書き出しに出た {ids} 本")
+    say(ids > 0, f"明細の書き出しが空でない（{ids} 本）")
+    say(len(set(souts)) == 1, f"明細も 3通りの順 → 書き出しの種類 {len(set(souts))}")
+
+
 def main() -> int:
+    if BREAK and BREAK not in LEGS:
+        print(f"BREAK={BREAK} は足の名前ではありません。使えるのは {', '.join(LEGS)}")
+        return 2
     check_city()
     check_kitchen()
     check_watchdog()
+    check_chapter_stats()
     print()
     if fails:
         print(f"落ちた: {len(fails)} 件")
