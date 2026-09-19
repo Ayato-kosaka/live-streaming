@@ -494,6 +494,17 @@ export const RECIPES: Recipe[] = [
     streams: [{ label: "調理", date: "2026-09-04", videoId: "TGO_a-3ZwHM", title: "チキンカツトジ丼作ります！重大発表もあるよん" }],
   },
   {
+    slug: "pepper-pot-au-feu",
+    name: "胡椒のポトフ",
+    emoji: "🍲",
+    icon: "food-onion",
+    country: "georgia",
+    kind: "soup",
+    date: "2026-09-09",
+    note: "スリランカと日本のコラボでつくった鍋。レンズ豆・鶏・にんじん・じゃがいもを胡椒でまとめて、チャットでは「洋風サムゲタン」と呼ばれた。",
+    streams: [{ label: "調理", date: "2026-09-09", videoId: "l5ODV6hfCLQ", title: "北欧旅まであと２日！トトロクッキング！" }],
+  },
+  {
     slug: "karaage",
     name: "唐揚げ",
     emoji: "🍗",
