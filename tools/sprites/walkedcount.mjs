@@ -22,7 +22,7 @@
  * 2 は「今日たまたま揃った」で通ってしまうので、**日をずらして測る。**
  * 国境を越える日（旅程の `entered`）をまたいで見ると、焼いた数と画面の数が割れる。
  *
- * ## 2026-09-19 に、この道具がすり抜けたもの（`docs/island-misses.md` #164）
+ * ## 2026-09-19 に、この道具がすり抜けたもの（`docs/island-misses.md` #165）
  *
  * 本番の表紙が、名刺の帯で「23カ国」、すぐ下の棚の札で「22カ国」と出していた。
  * **同じ面・同じもの・同じ `/map` 行き**で数が2つ。この道具は緑だった。
@@ -113,7 +113,7 @@ const want = (iso) => DONE.length + AHEAD.filter((a) => a.entered <= tripDate(is
 
 /**
  * 見る面は**書き出したものから拾う。手で並べない**（`docs/island-standards.md` 8章）。
- * 名簿を手で持つと、新しく置いた札がそこに載るまで見えない（#164）。
+ * 名簿を手で持つと、新しく置いた札がそこに載るまで見えない（#165）。
  */
 function everyPage(dir = DIST, base = "") {
   const out = [];
@@ -134,7 +134,7 @@ function everyPage(dir = DIST, base = "") {
  *   others   … それ以外の「◯カ国」（**並べるだけ**。別の集合を数えている）
  *
  * `read` は `textContent` か `innerText`。**既定は `textContent`。**
- * `innerText` は `content-visibility: auto` の外にいる棚で空文字を返す（#164）。
+ * `innerText` は `content-visibility: auto` の外にいる棚で空文字を返す（#165）。
  */
 function harvest({ read, only }) {
   const text = (el) => ((read === "innerText" ? el.innerText : el.textContent) || "").replace(/\s+/g, "");
@@ -203,7 +203,7 @@ async function selftest(browser) {
   const joined = r.others.join("／");
   check("それでも見たものとしては並べる", ["6カ国", "3カ国", "5カ国"].every((x) => joined.includes(x)), true);
 
-  // 4. **畳まれた棚**。`content-visibility: auto` の外にいても拾えること（#164 の本体）
+  // 4. **畳まれた棚**。`content-visibility: auto` の外にいても拾えること（#165 の本体）
   r = await run(
     `<style>.mat{content-visibility:auto;contain-intrinsic-size:600px}</style>` +
       `<div style="height:1200px"></div>` +

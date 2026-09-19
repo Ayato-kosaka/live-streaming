@@ -129,7 +129,7 @@ function milestone(today: string, now: Date): TodayNews | null {
       /* **焼いた数を出さない。** ここは `STATS_FALLBACK.countries`（焼き込み）を
          読んでいたが、この板は表紙に出る。すぐ上の名刺の帯は `<Walked />` で
          数え直しているので、国境を越えた日の朝は**同じ面で数が2つ**になる
-         （`docs/island-misses.md` #164）。この行は `now` を持っているので、
+         （`docs/island-misses.md` #165）。この行は `now` を持っているので、
          そのまま数え直せる（`content/walked.ts`）。 */
       body: `${since.replace(/-/g, "/")} にパリで1回目。そこから${countriesWalked(now)}カ国。`,
       href: "/streams",

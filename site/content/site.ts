@@ -190,7 +190,7 @@ export const STATS_FALLBACK = {
      置いておくと、**読む側は「焼いた数でよい」と思って使ってしまう。**
      実際、表紙の名刺の帯だけ `<Walked />` に替えて、棚（`components/home/Shelf.tsx`）
      と今日の板（`lib/todayNews.ts`）がここを読み続け、**同じ表紙で 23 と 22 が
-     並んだ**（`docs/island-misses.md` #164）。だから欄ごと消す。
+     並んだ**（`docs/island-misses.md` #165）。だから欄ごと消す。
 
      出どころは `content/walked.ts` の `countriesWalked(now)` ひとつ。
      画面に出すなら `components/atlas/Walked.tsx`（焼いた時刻で1度描いてから

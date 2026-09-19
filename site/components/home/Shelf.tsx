@@ -71,7 +71,7 @@ export default function Shelf() {
       /* **焼いた数を出さない。** ここは `STATS_FALLBACK.countries`（＝毎晩焼く
          `COUNTRIES_WALKED`）を出していて、**同じ表紙の名刺の帯が 23、この札が 22**
          だった。どちらも押した先は `/map` で、あちらの章の合計は 23。
-         **1つの面の中で、同じものを指す数が2つあった**（`docs/island-misses.md` #164）。
+         **1つの面の中で、同じものを指す数が2つあった**（`docs/island-misses.md` #165）。
 
          焼き込みでは足りないのは、この数が**日付で変わる**から。
          静的書き出し（`output: "export"`）なので焼いた日の数が固まるのに対して、
