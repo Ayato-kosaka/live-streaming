@@ -1,0 +1,271 @@
+name: 公開に戻った配信を取り込みに返す
+
+# 非公開（403）でチャットを引けなかった配信が**公開に戻っていないか**を毎晩測って、
+# 戻っていたら `WAITING` に返す。中身は `python/admin/failed_reentry.py`
+# ——判定は1バイトも変えていない。ここがやるのは**毎晩ひとりでに回すこと**だけ。
+#
+# ## なぜ要るか — 人の操作を前提にした戻り道は、戻り道ではない
+#
+# `youtube_chat.videos` の `FAILED` 37本は「非公開で引けなかった」ぶん。
+# あやとが公開に戻せば引けるのに、**拾い直す枠がそれを見ない。**
+#
+# | 枠 | 拾う状態 | 窓 |
+# | --- | --- | --- |
+# | `fresh` | `PENDING` / `WAITING` / `FAILED` | 7日以内だけ |
+# | `late` | `PENDING` / `WAITING` | 7日より古いぶん（1晩 20本） |
+#
+# 37本は 2025年〜2026年7月の配信なので、**7日を過ぎた `FAILED` はどちらの枠にも
+# 入らない。** 戻す道はあっても、受ける道がない。その受け口が `failed_reentry` で、
+# #546 で入ったが、**`run_admin_script.yml` から人が押したときしか走らなかった。**
+#
+# つまり、あやとが公開に戻しても**誰かが押すまで永久に戻ってこない。**
+# 赤くならない。画面に配信が1本出ないだけで、run はどこも緑で終わる。
+# 「鳴る仕組みが構造的に鳴りえない」形なので、毎晩の後ろに繋ぐ。
+#
+# ## 繋ぎかた — `workflow_run` が本体。cron は保険
+#
+# このリポジトリで定時実行が実際に発火した実績があるのは
+# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`（20:30 UTC）
+# の古参2本だけで、しかも**1時間49分〜3時間32分遅れて**走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は翌朝まで発火しなかった。
+# **cron を当てにしない**（`CLAUDE.md`、`docs/island-misses.md` #125）。
+#
+# **`conclusion` は見ない。** `Fetch Doneru Donations` は落ちた回にも後段まで走るし、
+# `Fetch YouTube Chat Data` のほうは「表に無い どねID が投げ銭してきた」晩に
+# 最後の step が `exit 1` で終わる——あれは失敗ではなく**呼び出し**。
+# 成功のときだけ繋ぐと、呼び出しの出た晩だけ戻り道が閉じる。
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの `name:` を書き換えると
+# **黙って切れる。赤くならない。走らなくなるだけ。** それを見張るために
+# `python/failed_reentry_nightly_selftest.py` が、ここに書いた名前と
+# 実在するファイルの `name:` を**字で突き合わせる**（食い違ったら PR で赤くなる）。
+#
+# ## 繋ぎ先を `Fetch Doneru Donations` の1本だけにした理由
+#
+# `rebake.yml` は2本に繋いである（片方が消えても止まらないように）。
+# ここは1本。理由は2つあって、どちらも**2回走ると悪くなる**側。
+#
+#   1. **外（YouTube）に当てる。** 1段目（oembed）を候補ぜんぶに、2段目
+#      （`youtubei/v1/player`）を 200 が返ったものに。晩に2回回すと締め出し
+#      （`BLIND`）が増える。`channel_alias_nightly.yml` を1本にしてあるのと同じ
+#   2. **枠を食う。** 戻すのは「今夜の枠の空き、かつ1回5本まで」だが、1晩に2回
+#      走れば**1晩10本**になる。枠（`late` は1晩20本）に余白を残しておくという
+#      `failed_reentry.py` 3章の決めが、繋ぎかたのほうで静かに崩れる
+#
+# Doneru のほうを選んだのは、**`probe: true` で1バイトも書かずに手で押せる**から。
+# 繋ぎが生きているかを、本番を汚さずに確かめられる
+# （`tips_after_doneru.yml` / `channel_alias_nightly.yml` と同じ）。
+#
+# ## `rebake.yml` の中の step にしなかった理由
+#
+# あちらは既に毎晩繋がっていて実績もあるが、**落ちる理由が混ざる。**
+#
+#   - rebake は `site/content/` を焼いて **master に push し、Hosting まで配る。**
+#     BigQuery の `videos.status` を書き換える処理は、そのどれとも関係がない
+#   - 直近11回の rebake は **7回が赤**（og.png・charbox・死にリンク）。
+#     そこへ相乗りすると、こちらが落ちた晩に**赤が1つ増えたことに誰も気づけない**
+#     （`docs/island-standards.md`「1つのものは1つの理由で落ちる」）
+#   - rebake は `contents: write` と `actions: write` で走る。こちらに要るのは
+#     読みと GCP の資格情報だけで、**master を書ける権限を借りる理由がない**
+#   - 2〜3分の外当てを足すと、Hosting を配るまでが YouTube の機嫌に乗る
+#
+# **時刻は変わらない。** A（独立して繋ぐ）でも B（rebake の step）でも、走るのは
+# 取り込みのうしろ——戻した配信が拾われるのは**どちらでも翌晩**。
+# 遅れが同じなら、切り分けが立つほうを採る。
+#
+# ## 取り込みと同時に走っても壊れない
+#
+# `Fetch Doneru Donations`（20:30 UTC）と `Fetch YouTube Chat Data`（20:00 UTC）は
+# どちらも2時間ほど遅れるので、**取り込みの最中にこちらが走る晩がありうる。**
+# それでも触る行が重ならない——こちらが書くのは
+# **「7日を過ぎた `FAILED` / `SKIPPED` で、非公開の印を持つ行」**だけで、
+# あれは `fresh`（7日以内）にも `late`（`PENDING` / `WAITING` だけ）にも入らない。
+# 取り込みが今夜つかんでいる行と、1行も交わらない。
+# 返した行が拾われるのは、どのみち次の晩。
+#
+# ## 毎晩走っても、ふつうは何も起きない
+#
+# 37本は全部まだ非公開なので、繋いだ直後の晩は「戻せる 0本」で終わって
+# **1バイトも書かない**（`{"apply": true}` で押しても、書く道は `todo` が
+# 空でない回にしか開かない）。書くのは**あやとが公開に戻した晩**だけ。
+#
+# ## 落ちたときに、中途半端に書き換えて終わらないこと
+#
+#   - 測る側の対照（`dead_stream_watch.run_control`）が落ちたら、
+#     **表を1行も引かずに 2**
+#   - 今夜の枠が数えられなかったら、空きを **0 と読む**（「空いていた」と読まない）
+#   - 戻すのは **1回の `UPDATE`**。書いたあとに数え直して、合わなければ 1 で落ちる
+#   - 測れなかったぶん（`blind`）は **0 に畳まない**。別の欄に出して 2 で返す
+#
+# ## ログ
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。出るのは**件数・状態・
+# 日付・`video_id`** だけ。`video_id` は島の画面に出ている公開の値で、
+# **題名も `last_error_detail` も1列も引いていない**（`failed_reentry.py` 4章）。
+# ARGS にも名前を取らない——ここが渡すのは `{}` か `{"apply": true}` だけ。
+
+on:
+  # **保険。** 本体は下の `workflow_run`。
+  # `rebake.yml`（01:00）・`tips_after_doneru.yml`（01:30）・
+  # `channel_alias_nightly.yml`（01:45）・`donor_calls.yml`（02:00）と重ねない。
+  # ここが2時間遅れても 04:15 UTC で、取り込みの実測（21:49〜23:32）の後ろに入る
+  schedule:
+    - cron: "15 2 * * *"
+
+  # **繋ぎが本体。** 名前を書き換えると黙って切れる（上の「繋ぎかた」）。
+  # 見張りが、この字と実在するファイルの `name:` を突き合わせている。
+  # **1本だけにしてある**（上の「繋ぎ先を…1本だけにした理由」）
+  workflow_run:
+    workflows: ["Fetch Doneru Donations"]
+    types: [completed]
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "見るだけ（表に1バイトも書かない）。手で押すときはまずこのまま"
+        required: false
+        default: true
+        type: boolean
+
+# 同じ表を2本が同時に書き換えないように1本ずつ。
+# 手で押す側（`run_admin_script.yml` から `failed_reentry`）は別の群れなので、
+# **そちらと同時に押さない**（両方が同じ晩の枠の空きを見て、それぞれ5本返すと
+# 枠が10本ぶん埋まる）
+concurrency:
+  group: failed-reentry
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reentry:
+    runs-on: ubuntu-latest
+    # 候補ぜんぶに1段目、200 のものに2段目。37本で2〜3分。
+    # 締め出されると休みが延びるので、そこそこ外に置いて止まれるようにする
+    timeout-minutes: 30
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # `run_admin_script.yml` と同じ1本。BigQuery を読み書きするのに要る。
+      # **Doneru の鍵も YouTube の鍵も要らない**——外に当てるのは公開の口だけ
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # `PyYAML` は `python/requirements.txt` に入っていない（あちらは本番の
+      # スクリプトが要るものだけ）。下の「繋ぎが切れていないか」がワークフローを
+      # YAML として読むのに要るので、ここで別に入れる（`selftest.yml` と同じ形）。
+      # **入れ忘れると `No module named yaml` で毎晩赤くなり、中身を1つも見ないまま
+      # 落ちた run が「繋ぎが切れた」に見える**
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+          pip install PyYAML
+
+      # **すぐ下で回すものの決めを、回す前に見る。** 偽の BigQuery と偽の測りで
+      # `failed_reentry` を最後まで動かして、「拾う相手」「下見が1バイトも書かない」
+      # 「枠の空きぶんしか戻さない」「1回5本まで」「測れなかったを0本と言わない」を
+      # 実測する。ネットにも本番にも出ない。**ここが落ちたら、表に触らずに止まる。**
+      #
+      # `pull_request` でも走る（`selftest.yml` の回し役が拾う）が、**両方で
+      # 走ってよい。** あちらはマージの前、ここは**今夜この表に触る直前**で、
+      # 見ている瞬間が違う（`docs/island-standards.md` 15「PR で回るからといって
+      # 外さない」）
+      - name: 戻しかたが変わっていないか
+        run: python3 python/admin/failed_reentry_selftest.py
+
+      # **繋ぎそのものが生きているかを、繋ぎで来た回にも見る。**
+      # 上の `workflow_run` の字と、実在するワークフローの `name:` を突き合わせ、
+      # 毎晩ぶんの既定が下見に化けていないか（#144 の「空回しの緑」）を、
+      # この step の `run:` を実際に bash で回して確かめる。
+      # 字も本番も読まないので 1秒で終わる
+      - name: 繋ぎが切れていないか
+        run: python3 python/failed_reentry_nightly_selftest.py
+
+      # 繋ぎと cron で来たぶんは、押す人がいない。入力も空で来る
+      # （`inputs.*` が空文字になる）。**ここで決めて env に置き、以降は env だけを
+      # 見る。** `!inputs.dry_run` を直接書くと、空文字が false と読まれて
+      # **たまたま**動く形になる（`rebake.yml` / `channel_alias_nightly.yml` と同じ手当て）。
+      #
+      # **毎晩ぶんは下見にしない。** 下見のまま毎晩回すと、「戻せるものが1本ある」と
+      # 言いながら何も戻らず、しかも下見の 1 は**赤**なので、
+      # **毎晩赤いのに何も直らない**という最悪の形になる（#144 の裏返し）。
+      # 手で押したときだけ、既定を下見にして様子を見られるようにする
+      - name: 今回の押しかたを決める
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
+            echo "REENTRY_DRY=0" >> "$GITHUB_ENV"
+            echo "毎晩ぶん（$EVENT）: 公開に戻っていたら WAITING に返します"
+          else
+            if [ "$IN_DRY" = "false" ]; then
+              echo "REENTRY_DRY=0" >> "$GITHUB_ENV"
+            else
+              echo "REENTRY_DRY=1" >> "$GITHUB_ENV"
+            fi
+            echo "手で押したぶん: dry_run=$IN_DRY"
+          fi
+
+      # ARGS は env としてログに出るが、ここに入るのは `{}` か `{"apply": true}` だけ。
+      # **名前も配信IDも渡さない**（`failed_reentry.py` は ARGS に素性を取らない）。
+      #
+      # **`limit` は渡さない。** 何本まで戻すかは
+      # 「今夜の枠の空き（本物の `QUERY_SELECT_TARGET_VIDEOS` で数える）」と
+      # 「1回 `MAX_PER_RUN` 本」の2つだけで決める。ここに数を書くと、
+      # **枠の決めが2か所に散って**、片方を直した日に静かにずれる。
+      #
+      # **`continue-on-error` を付けない。`|| true` も書かない。**
+      # 誰も見ていない時間に走るので、**赤以外に気づく道が無い**（#132 / #144）。
+      # 1（戻せるのに枠が無い／書いたあとの数え直しが合わない）も
+      # 2（**測れていない**）も、どちらも赤。「測れていない」を緑にしない
+      - name: 公開に戻った配信を WAITING に返す
+        id: reentry
+        working-directory: python/admin
+        run: |
+          set -euo pipefail
+          if [ "$REENTRY_DRY" = "1" ]; then
+            ARGS='{}' python failed_reentry.py
+          else
+            ARGS='{"apply": true}' python failed_reentry.py
+          fi
+
+      # **黙って赤くならない。** 繋ぎと cron で走るぶんは誰も見ていないので、
+      # せめて何が起きたのかを要約に残す（run の1枚目に出る。ログを開かずに読める）
+      - name: 落ちたときに、何が起きたのかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 公開に戻った配信を返せませんでした"
+            echo ""
+            echo '**表が壊れたという意味ではありません。** 書く道は「戻せるものが'
+            echo '在る」回にしか開かないので、落ちた回はたいてい1行も書いていません。'
+            echo '書いたあとで落ちる唯一の道は「数え直しが合わなかった」ときで、'
+            echo 'そのときはログに **何本頼んで何行書いたか**が出ています。'
+            echo ""
+            echo '終了コードの意味（`{"apply": true}` の回）:'
+            echo ""
+            echo '- **1** … 戻せるものが在るのに**今夜の枠に空きが無い**、または'
+            echo '  書いたあとの数え直しが合わない。枠は翌晩には空くので、'
+            echo '  1晩だけなら次の晩に追いつきます'
+            echo '- **2** … **確かめられなかった**（測る側の対照が落ちた／'
+            echo '  YouTube に届かなかった／渡した本数ぶんの答えが返らなかった）。'
+            echo '  **「戻せるものは0本でした」とは違います。** 表は1行も動いていません'
+            echo ""
+            echo 'いま何本戻せるかだけ見るなら、このワークフローを `dry_run: true` で'
+            echo '手で押してください（1バイトも書かずに、内訳だけ出ます）。'
+            echo '**下見の 1 は「見つかった」の意味**なので、赤でも壊れてはいません。'
+          } >> "$GITHUB_STEP_SUMMARY"

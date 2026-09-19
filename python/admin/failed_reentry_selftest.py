@@ -27,6 +27,9 @@
 | 11 | 枠の混み具合を、**本物の `QUERY_SELECT_TARGET_VIDEOS` に聞いている** | 1 |
 | 12 | 対照（`drill()`）が通る。`BREAK=` で足を抜くと、**その足の対照が落ちる** | 1 |
 | 13 | 知らない足の名前は落とす | 1 |
+| 14 | **毎晩ぶんの口**（`failed_reentry_nightly.yml` が渡す ARGS）で回すと、実際に書く | 1 |
+| 15 | その口で回しても、**1回 `MAX_PER_RUN` 本まで**（上限を外すと12本入る＝対照） | 1 |
+| 16 | その口で回しても、**枠が埋まっている晩は1行も書かない** | 1 |
 
 **6 と 7 がこの道具のいちばん危ないところ。** 戻した古い配信は
 `late` の枠（1晩 20本）の**先頭に並ぶ**ので、一度に戻すと本物の取りこぼしが
@@ -35,16 +38,46 @@
 **12 は「6つ当てた」を「6つの足を見た」と読まないため**（#128 の決めごと1）。
 見るのは**抜いた足に対応する対照が落ちること**で、「それだけが落ちること」では
 ない（足を抜くと巻き添えで落ちる対照もある）。
+
+## 14〜16 — **繋ぎかたの側**（2026-09-19。毎晩ひとりでに走る形にした回）
+
+1〜13 は「この道具を `{"apply": true}` で呼んだら正しく動くか」。
+**呼ぶ側が正しく呼んでいるかは、そこには出ない。** 毎晩の
+`.github/workflows/failed_reentry_nightly.yml` が下見のまま回っていても、
+`{"limit": 1}` を足していても、1〜13 はぜんぶ通る。
+
+だから 14〜16 は**ワークフローの `run:` から ARGS の字をそのまま取り出して**、
+その字で本物の `main()` を回す。繋ぎが `{}` に戻った日も、上限が外れた日も、
+ここで落ちる。
+
+**両側から当てる**（`docs/island-standards.md` §15）。
+
+| | 守りを外したら落ちること | 出してよいもので落ちないこと |
+| --- | --- | --- |
+| 14 | 下見の枝の `{}` では**1行も書かない** | 毎晩ぶんの口では `MAX_PER_RUN` 本書く |
+| 15 | `MAX_PER_RUN` を外すと **12本**入る | 外さなければ `MAX_PER_RUN` 本で止まる |
+| 16 | — | 枠が埋まっていれば**0本**（`{"apply": true}` でも書かない） |
+
+繋ぎそのもの（`workflow_run` の相手・既定・cron の保険）は
+`python/failed_reentry_nightly_selftest.py` の受け持ち。
+ここが見るのは**渡している ARGS が本物に何をさせるか**だけ。
 """
 
+import json
 import os
+import re
 import sqlite3
 import subprocess
 import sys
 import types
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+
+# 毎晩ひとりでに回す側。**ここから ARGS の字をそのまま取り出す**（写経しない）
+NIGHTLY = (Path(HERE).parent.parent / ".github" / "workflows"
+           / "failed_reentry_nightly.yml")
 
 # `config.py` は、この環境変数が無いと読み込みの時点で落ちる。
 # 下で作るクライアントは偽物なので**本物の名前は要らない**が、
@@ -183,6 +216,39 @@ def by_id(dump: list[tuple]) -> dict[str, tuple]:
     return {r[0]: r for r in dump}
 
 
+def nightly_args() -> dict:
+    """毎晩ひとりでに回す側が渡す ARGS を、**ワークフローの字から取り出す。**
+
+    写経すると、あちらを直した日にここが古いまま通る。
+    **取り出せなかったら 2 で落とす**（「渡していない」と同じ顔にしない）。
+    """
+    if not NIGHTLY.exists():
+        die(f"{NIGHTLY} がありません。毎晩ぶんの口を確かめられません")
+    text = NIGHTLY.read_text(encoding="utf-8")
+    # 実行の step の、`else`（＝下見でない枝）に在る ARGS。
+    # コメント行は落としてから探す（説明の中の同じ字を拾わない）
+    body = "\n".join(ln for ln in text.splitlines()
+                      if not ln.lstrip().startswith("#"))
+    found = re.findall(r"ARGS='(\{[^']*\})'\s+python failed_reentry\.py", body)
+    if len(found) != 2:
+        die(f"実行の枝が2本見つかりません（{len(found)} 本）。"
+            "下見の枝と書く枝の ARGS を取り出せません")
+    dry_raw, wet_raw = found
+    try:
+        dry, wet = json.loads(dry_raw), json.loads(wet_raw)
+    except ValueError as e:
+        die(f"ARGS が JSON として読めません（{e}）: {dry_raw} / {wet_raw}")
+    if not isinstance(dry, dict) or not isinstance(wet, dict):
+        die(f"ARGS が辞書ではありません: {dry_raw} / {wet_raw}")
+    return {"dry": dry, "wet": wet}
+
+
+def die(why: str) -> None:
+    """**数えるものが無い。** 判定を1つも出さずに 2。"""
+    print(f"✕ 数えるものがありません: {why}")
+    raise SystemExit(2)
+
+
 # ============================================================================
 
 def main() -> int:
@@ -294,6 +360,51 @@ def main() -> int:
     ck("13 知らない足の名前は落とす",
        out.returncode != 0 and "BREAK に使えるのは" in (out.stdout + out.stderr),
        f"終了コード {out.returncode}")
+
+    # 14 / 15 / 16: **毎晩ひとりでに回す側の口**で、本物を動かす。
+    # 1〜13 は「正しく呼べば正しく動くか」で、**呼ぶ側が正しいか**はそこに出ない
+    lanes = nightly_args()
+    print(f"  --   毎晩ぶんの口: 下見の枝 {lanes['dry']} / 書く枝 {lanes['wet']}"
+          f"（{NIGHTLY.name} から取り出した字）")
+
+    _, fake = run(many, allok, args=lanes["dry"], late_n=0)
+    ck("14 下見の枝の ARGS では1行も書かない（対照）",
+       fake.writes() == [], f"書きに行った回数 {len(fake.writes())}")
+
+    code, fake = run(many, allok, args=lanes["wet"], late_n=0)
+    got = sorted(v for v, r in by_id(fake.dump()).items() if r[1] == "WAITING")
+    ck("14 毎晩ぶんの ARGS で回すと、実際に WAITING へ返す",
+       len(got) > 0 and code == 0, f"{len(got)} 本 / 終了コード {code}")
+    ck("15 毎晩ぶんの ARGS でも、1回 %d 本まで" % fr.MAX_PER_RUN,
+       len(got) == fr.MAX_PER_RUN, f"{len(got)} 本 / 候補 {len(many)} 本")
+
+    # 15 の対照。**上限を外したら、同じ口で候補ぜんぶが選ばれる。**
+    # 外して何も変わらないなら、上の「5本だった」は上限が効いた証拠にならない。
+    #
+    # ここだけ `main()` ではなく `plan()` に当てる。`MAX_PER_RUN` を差し替えると
+    # **`drill()` の対照 C がそれ自体で落ちて**、本物の表を1行も引かずに 2 で
+    # 帰ってしまう（つまり「書かれなかった」の理由が2つになって、
+    # 上限が効いたのかどうかが読めなくなる）。選ぶところだけを見る
+    lim = lanes["wet"].get("limit")
+    rows12 = fr.run_sqlite(many)
+    probes12 = fr._probes({r["video_id"]: watch.OK for r in rows12})
+    tight, _, _ = fr.plan(rows12, probes12, lane_busy=0, limit=lim)
+    keep = fr.MAX_PER_RUN
+    try:
+        fr.MAX_PER_RUN = 99
+        loose, _, _ = fr.plan(rows12, probes12, lane_busy=0, limit=lim)
+    finally:
+        fr.MAX_PER_RUN = keep
+    ck("15 同じ口で選ばれるのは %d 本" % fr.MAX_PER_RUN,
+       len(tight) == fr.MAX_PER_RUN, f"{len(tight)} 本")
+    ck("15 上限を外すと、同じ口で候補ぜんぶ（%d 本）が選ばれる（対照）" % len(many),
+       len(loose) == len(many), f"{len(loose)} 本")
+
+    code, fake = run(many, allok, args=lanes["wet"],
+                     late_n=fr.LATE_LANE_MAX_VIDEOS)
+    ck("16 毎晩ぶんの ARGS でも、枠が埋まっている晩は1行も書かない",
+       fake.writes() == [] and code == 1,
+       f"書いた回数 {len(fake.writes())} / 終了コード {code}")
 
     print("─" * 68)
     if not CHECKS:
