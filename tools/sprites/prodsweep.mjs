@@ -49,7 +49,7 @@
  * （`docs/island-standards.md` §8）。2か所から出して足し合わせる。
  *
  * 1. **本番の `sitemap.xml`** — 119面（2026-09-19 の実測）
- * 2. **リポジトリの `site/app/**‍/page.tsx`** — `[` を含む道（動く段）を除いた
+ * 2. **リポジトリの `site/app` の下の `page.tsx` ぜんぶ** — `[` を含む道（動く段）を除いた
  *    静的な道。sitemap に載っていない7面がここで出る:
  *    `/design` `/me` `/me/desk` `/me/remote` `/me/roulette` `/nordic/photos` `/roulette`
  *
@@ -124,7 +124,7 @@ export async function sitemapPaths(origin = ORIGIN) {
 }
 
 /**
- * リポジトリの `site/app/**‍/page.tsx` から**静的な道**を出す。
+ * リポジトリの `site/app` の下の `page.tsx` ぜんぶから**静的な道**を出す。
  *
  * - `[slug]` `[...rest]` のような**動く段を含む道は落とす**（面の数が中身で
  *   決まるので、ここからは出せない。そちらは sitemap が持っている）
