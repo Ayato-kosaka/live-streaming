@@ -38,6 +38,22 @@
 そこへ飛ばしても見る人の役に立たない（外す前は 306本中29本が終わりぎわだった）。
 最初の1分と最後の3分を、山を探す範囲から外してある。
 
+## 押しても見られない配信は、山も焼かない（2026-09-18）
+
+ここは長いこと `WHERE actual_start_time IS NOT NULL` しか書いていなかった。
+**守りが1枚も無い。** 消えた配信（404）・録画の残らなかった配信
+（`python/data/dead_streams.json`）も、非公開に戻された配信も素通りする。
+
+**この日の時点では実害が無かった**——非公開37本も取り置きの7本も、
+`streamPeaks.ts` の267本には1本も入っていない。山を出すには
+コメント80件以上・45分以上が要るので、たまたま全部こぼれていた。
+だから塞ぐのは**次に1本でも当たった晩のため。** 当たった晩に何が起きるかというと、
+`peakOf()` を読む面（「1年前の今日」など）が、**押しても見られない配信の
+「ここが盛り上がりました」を出す。**
+
+守りは他の焼くスクリプトと同じ2つを、同じ形で差す
+（`build_dead_streams` の `sql_not_in` と `sql_public`）。
+
 実行:
   BQ_PROJECT_ID=... python python/build_stream_peaks.py
 
@@ -54,6 +70,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+# 守りは2つとも `build_dead_streams` が持つ（`sql_not_in` が取り置き、
+# `sql_public` が非公開）。**差す側が同じ顔で並べられる**ように置き場所をそろえてある
+from build_dead_streams import (  # noqa: E402
+    blocked,
+    check_written,
+    sql_not_in,
+    sql_public,
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -68,17 +93,28 @@ MIN_PEAK = 15
 MIN_RATIO = 20
 
 
-def fetch_peaks() -> list:
-    """配信ごとに、コメントがいちばん重なった3分を1つだけ取る。"""
-    from google.cloud import bigquery  # BQ を使うときだけ要る
+def sql_of(project: str = "live-streaming-d3cac", dataset: str = "youtube_chat") -> str:
+    """配信ごとに、コメントがいちばん重なった3分を1つだけ取る SQL。
 
-    from config import BQ_DATASET, BQ_PROJECT_ID
+    **`fetch_peaks()` の外に出してある。** 見張り
+    （`python/viewable_streams_selftest.py`）が、守りの差さっている**本物の字**を
+    読めるようにするため。中に隠すと、目でしか確かめられない。
 
-    ds = f"{BQ_PROJECT_ID}.{BQ_DATASET}"
-    sql = f"""
+    いちばん内側の `v` に、他の焼くスクリプトと同じ2つの守りを差す。
+
+      * `sql_not_in()` … 押しても戻らない回（404・録画なし）
+      * `sql_public()` … 非公開に戻された回
+
+    **SQL の側で外す。** 山は配信1本につき1つなので、引いてきてから落としても
+    同じ結果にはなるが、`msg` が外した配信のコメントまで数えることになる。
+    """
+    ds = f"{project}.{dataset}"
+    return f"""
     WITH v AS (
       SELECT video_id, actual_start_time FROM `{ds}.videos`
       WHERE actual_start_time IS NOT NULL
+        {sql_not_in("video_id")}
+        {sql_public("video_id", project, dataset)}
     ), msg AS (
       -- 配信開始からの経過分。timestamp_usec はエポック時刻なので使わず、
       -- published_at と actual_start_time の差を取る（docs/island-play.md 仕掛け2の注意）
@@ -114,8 +150,16 @@ def fetch_peaks() -> list:
            CAST(ROUND(10 * p.w / (3.0 * total / mins)) AS INT64) AS r
     FROM pk ORDER BY vid
     """
+
+
+def fetch_peaks() -> list:
+    """上の SQL を BigQuery に流す。"""
+    from google.cloud import bigquery  # BQ を使うときだけ要る
+
+    from config import BQ_DATASET, BQ_PROJECT_ID
+
     client = bigquery.Client(project=BQ_PROJECT_ID)
-    return [dict(r) for r in client.query(sql).result()]
+    return [dict(r) for r in client.query(sql_of(BQ_PROJECT_ID, BQ_DATASET)).result()]
 
 
 def main() -> int:
@@ -128,15 +172,23 @@ def main() -> int:
         if args.rows
         else fetch_peaks()
     )
+    # **押しても戻らない回は、ここでも落とす。** SQL に同じ守りが差さっているが、
+    # `--rows` で渡した行はそこを通っていない（取り置きの新しいぶんは、
+    # 吸い出したあとに増えることもある）
+    gone = blocked()
+    left = [r for r in rows if r["v"] not in gone]
+    if len(left) != len(rows):
+        logger.info("押しても見られない配信 %d 本を外した（取り置き %d 本）",
+                    len(rows) - len(left), len(gone))
     keep = {
         r["v"]: {"k": int(r["k"]), "n": int(r["n"])}
-        for r in sorted(rows, key=lambda x: x["v"])
+        for r in sorted(left, key=lambda x: x["v"])
         if int(r["n"]) >= MIN_PEAK and int(r["r"]) >= MIN_RATIO
     }
     logger.info("候補 %d 本のうち %d 本を焼く", len(rows), len(keep))
 
     body = json.dumps(keep, ensure_ascii=False, separators=(",", ":"))
-    OUT_TS.write_text(
+    out = (
         "/**\n"
         " * 配信のうち、コメントがいちばん重なったところ。\n"
         " * python/build_stream_peaks.py が BigQuery から作る。**手で編集しない。**\n"
@@ -161,9 +213,11 @@ def main() -> int:
         "};\n\n"
         f"const PEAKS: Record<string, Peak> = {body};\n\n"
         "/** その配信の山。無ければ null。 */\n"
-        "export const peakOf = (videoId: string): Peak | null => PEAKS[videoId] ?? null;\n",
-        encoding="utf-8",
+        "export const peakOf = (videoId: string): Peak | null => PEAKS[videoId] ?? null;\n"
     )
+    # 出口でもう一度見る。入力の形が変わって落としが効かなくなっても、ここで止まる
+    check_written(out, OUT_TS.name)
+    OUT_TS.write_text(out, encoding="utf-8")
     logger.info("%s に %d 本を書き出した", OUT_TS, len(keep))
     return 0
 

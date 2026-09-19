@@ -30,6 +30,7 @@
   BQ_PROJECT_ID=live-streaming-d3cac python python/build_chapter_stats.py
 """
 
+import argparse
 import json
 import logging
 import re
@@ -41,7 +42,9 @@ from google.cloud import bigquery
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from build_dead_streams import blocked, check_written  # noqa: E402
+# 守りは2つとも `build_dead_streams` が持つ（`sql_not_in` が取り置き、
+# `sql_public` が非公開）。**差す側が同じ顔で並べられる**ように置き場所をそろえてある
+from build_dead_streams import blocked, check_written, sql_public  # noqa: E402
 from build_residents import BOT_NAME, fetch_characters, link, look  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 
@@ -176,26 +179,46 @@ def fetch(client: bigquery.Client, chapters: list[dict]) -> dict[str, dict]:
     return stats
 
 
-def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, list]:
-    """過去の島に出す配信の明細。**いまも続いている章は焼かない。**
+def streams_sql(ch: str, project: str = BQ_PROJECT_ID, dataset: str = BQ_DATASET) -> str:
+    """章ごとの配信の明細を取る SQL。**`fetch_streams` の外に出してある。**
 
-    あそこから入るのは `/streams`（全部）で、章に絞った面を持たない
-    （`docs/island-atlas.md` 7章）。焼いても誰も読まないぶん、束が太るだけ。
+    見張り（`python/viewable_streams_selftest.py`）が、**本物の字**を読めるように
+    するため。中に隠すと、守りが差さっているかを目でしか確かめられない。
+
+    ## 「取り込めたか」で「見られるか」を代わりに数えない（2026-09-18）
+
+    ここは長いこと `WHERE status = 'SUCCEEDED'` だった。`status` が言っているのは
+    **チャットを取り込めたか**であって、**いま見られるか**ではない。
+    2026-09-18 の本番で、取り込めていない44本は**動画のほうは公開されていて**、
+    そのうち34本は同じ表から焼いている `cityStreams.ts`（街の地図）に並んでいた。
+    **地図から辿れる配信が、章の一覧には無い。**（`docs/island-misses.md` #160 #164）
+
+    だから条件は `build_city_streams.sql_of()` と**同じ2つ**にそろえる。
+
+      * `actual_start_time IS NOT NULL` … 実際に始まった回だけ
+      * `sql_public()` … 非公開に戻された回を外す
+
+    `actual_start_time` を要るものにしてあるのは、**始まっていない行が混ざる**ため。
+    本番の3本（`LsJbN8n28l0` ほか）は題名が「あやとアプリ×海外旅 がライブ配信中！」の
+    ままで、押しても見られない（404 / 録画なし。2026-09-18 に1本ずつ当てた）。
+    **街の地図と同じ条件にすれば、2つの焼き込みを id で突き合わせられる**——
+    食い違いがそのまま不具合の印になる（#160 の決めごと1）。
+
+    **数（`chapterStats.ts` の `streams`）はここを通さない。** あちらは
+    `fetch()` の `streams_sql` が `status = 'SUCCEEDED'` のまま数えている。
     """
-    past = [c for c in chapters if c["to"] != OPEN_END]
-    if not past:
-        return {}
-    ch = union_all(past)
-    sql = f"""
+    return f"""
     WITH ch AS ({ch}),
     v AS (
       SELECT video_id, title,
-             DATE(COALESCE(actual_start_time, first_seen_at), 'Asia/Tokyo') AS d
-      FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.videos` WHERE status = 'SUCCEEDED'
+             DATE(actual_start_time, 'Asia/Tokyo') AS d
+      FROM `{project}.{dataset}.videos`
+      WHERE actual_start_time IS NOT NULL
+        {sql_public("video_id", project, dataset)}
     ),
     n AS (
       SELECT video_id, COUNT(DISTINCT author_channel_id) AS people
-      FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` GROUP BY 1
+      FROM `{project}.{dataset}.chat_messages` GROUP BY 1
     )
     SELECT ch.slug, v.d, v.video_id,
            -- タイトルに改行が入っている配信がある（イラン歩きの回）。1行に畳む
@@ -205,22 +228,23 @@ def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, li
     LEFT JOIN n USING (video_id)
     ORDER BY ch.slug, v.d DESC, v.video_id
     """
+
+
+def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, list]:
+    """過去の島に出す配信の明細。**いまも続いている章は焼かない。**
+
+    あそこから入るのは `/streams`（全部）で、章に絞った面を持たない
+    （`docs/island-atlas.md` 7章）。焼いても誰も読まないぶん、束が太るだけ。
+    """
+    past = past_of(chapters)
+    if not past:
+        return {}
     # **押しても見られない配信は、明細に載せない。** 一面ぜんぶ押せる並びなので、
     # 1行でも行き止まりを混ぜると、押した人が「この島の配信は見られない」と読む。
-    # 落ちるのは隣に生きた行のある1行なので、章も日付も残る
-    gone = blocked()
-    out: dict[str, list] = {c["slug"]: [] for c in past}
-    dropped = 0
-    for row in client.query(sql).result():
-        if row["video_id"] in gone:
-            dropped += 1
-            continue
-        out[row["slug"]].append(
-            [row["d"].isoformat(), row["video_id"], row["title"], int(row["people"])]
-        )
-    if dropped:
-        logger.info("押しても見られない配信 %d 本を明細から外した（本数は変えない）", dropped)
-    return out
+    # 落ちるのは隣に生きた行のある1行なので、章も日付も残る。
+    # 落とす仕事は `rows_to_streams` の1か所（`--rows` から来た行も同じ道を通る）
+    rows = [dict(r) for r in client.query(streams_sql(union_all(past))).result()]
+    return rows_to_streams(rows, chapters)
 
 
 def render(chapters: list[dict], stats: dict[str, dict]) -> str:
@@ -313,19 +337,64 @@ def render_streams(streams: dict[str, list], chapters: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def past_of(chapters: list[dict]) -> list[dict]:
+    """明細を焼く章（＝もう閉じた章）だけ。`fetch_streams` と同じ選び方。"""
+    return [c for c in chapters if c["to"] != OPEN_END]
+
+
+def bake_streams(streams: dict[str, list], chapters: list[dict]) -> None:
+    """明細を書く。**出口でもう一度、取り置きの id が残っていないかを見る。**"""
+    out = render_streams(streams, chapters)
+    check_written(out, OUT_STREAMS_TS.name)
+    OUT_STREAMS_TS.write_text(out, encoding="utf-8")
+    logger.info("書き出した: %s（%d本）", OUT_STREAMS_TS, sum(len(v) for v in streams.values()))
+
+
+def rows_to_streams(rows: list[dict], chapters: list[dict]) -> dict[str, list]:
+    """`--rows` で渡した行を、`fetch_streams` と**同じ落とし方**で明細に直す。
+
+    落とすところを2つ持たないために、行を並べる仕事はここに置いて、
+    `fetch_streams` からも呼ぶ。**BigQuery から来ても JSON から来ても同じ道を通る。**
+    """
+    gone = blocked()
+    out: dict[str, list] = {c["slug"]: [] for c in past_of(chapters)}
+    dropped = 0
+    for row in rows:
+        if row["video_id"] in gone:
+            dropped += 1
+            continue
+        d = row["d"]
+        out[row["slug"]].append(
+            [d if isinstance(d, str) else d.isoformat(),
+             row["video_id"], row["title"], int(row["people"])]
+        )
+    if dropped:
+        logger.info("押しても見られない配信 %d 本を明細から外した（本数は変えない）", dropped)
+    return out
+
+
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    # **明細だけは BigQuery の無い箱でも焼き直せるようにしてある**
+    # （`build_stream_peaks.py` の `--rows` と同じ形。`.claude/skills/island-fresh` 4章）。
+    # 数のほう（chapterStats.ts）は Firestore の名簿も要るので、こちらでは焼かない
+    ap.add_argument("--sql", action="store_true", help="明細の SQL を出すだけ")
+    ap.add_argument("--rows", help="BigQuery の代わりに読む JSON（--sql の結果の行）")
+    a = ap.parse_args()
     chapters = read_chapters()
+    if a.sql:
+        print(streams_sql(union_all(past_of(chapters))))
+        return
+    if a.rows:
+        rows = json.loads(Path(a.rows).read_text(encoding="utf-8"))
+        bake_streams(rows_to_streams(rows, chapters), chapters)
+        return
     logger.info("章 %d 個: %s", len(chapters), ", ".join(c["slug"] for c in chapters))
     client = bigquery.Client(project=BQ_PROJECT_ID)
     stats = fetch(client, chapters)
     OUT_TS.write_text(render(chapters, stats), encoding="utf-8")
     logger.info("書き出した: %s", OUT_TS)
-    streams = fetch_streams(client, chapters)
-    out = render_streams(streams, chapters)
-    # 出口でもう一度見る。落としが効かなくなっても、ここで止まる
-    check_written(out, OUT_STREAMS_TS.name)
-    OUT_STREAMS_TS.write_text(out, encoding="utf-8")
-    logger.info("書き出した: %s（%d本）", OUT_STREAMS_TS, sum(len(v) for v in streams.values()))
+    bake_streams(fetch_streams(client, chapters), chapters)
 
 
 if __name__ == "__main__":
