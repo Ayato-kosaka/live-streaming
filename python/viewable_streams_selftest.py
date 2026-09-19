@@ -15,7 +15,7 @@ BigQuery も YouTube も引かない。**この箱で回る。**
 `WHERE v.status = 'SUCCEEDED'` で引いていて1本も出ていない。
 **同じ守りが2か所に要るのに、片方にしか入れていなかった。**
 
-## 続き（`docs/island-misses.md` #164）
+## 続き（`docs/island-misses.md` #165）
 
 `chapterStreams.ts` の `status = 'SUCCEEDED'` は、**落としすぎているほうの
 食い違い**だった。`status` は「チャットを取り込めたか」なので、
@@ -241,7 +241,7 @@ def check_wired() -> None:
     import build_stream_peaks as bsp
     peaks = bsp.sql_of()
     say(sub in peaks, "build_stream_peaks の SQL に在る（山）")
-    # 山のほうは取り置きの守りも要る。**こちらは2枚とも無かった**（#164）
+    # 山のほうは取り置きの守りも要る。**こちらは2枚とも無かった**（#165）
     say("video_id NOT IN ('" in peaks or not bds.blocked(),
         "build_stream_peaks の SQL に取り置きの守りも在る")
 
@@ -311,7 +311,7 @@ def check_count_side() -> None:
     たまたま合っていて、**コーカサスだけ 449 / 448 と1本ずれていた**
     （一覧だけが `dead_streams.json` を引いていたため）。**赤くなるものが無かった。**
     いまは `fetch()` が一覧の長さを数えるので、**構造上ずれない**
-    （`docs/island-misses.md` #160 の決めごと1 / #164）。ここはその裏を取る。
+    （`docs/island-misses.md` #160 の決めごと1 / #165）。ここはその裏を取る。
     """
     print("\n4. 焼いた「数」と「一覧」が、章ごとに一致するか")
     stats_text = (ROOT / "site" / "content" / "chapterStats.ts").read_text(encoding="utf-8")

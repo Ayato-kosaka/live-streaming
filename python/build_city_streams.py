@@ -60,7 +60,7 @@
 あちらが `WHERE v.status = 'SUCCEEDED'` で引いていたから。
 **同じ守りが2か所に要るのに、片方にしか入れていなかった。**
 
-**あちらも同じ2つにそろえた**（`docs/island-misses.md` #164）。落としすぎている
+**あちらも同じ2つにそろえた**（`docs/island-misses.md` #165）。落としすぎている
 ほうの食い違いで、公開されている44本が章の一覧から消えていた（うち34本は
 ここには並んでいた）。**いま2つの焼き込みは同じ条件で引いている**ので、
 出てくる id を突き合わせれば食い違いがそのまま不具合の印になる。
@@ -82,7 +82,7 @@
 （判定そのものは `build_dead_streams.sql_public()` に置いてある。
 **守りは守りの持ち主に置く**——`blocked()` / `sql_not_in()` と同じ場所で、
 差す側が1行で並べられる。焼くスクリプトの中に置くと、借りた側から見て
-どちらが本物か読めない。`docs/island-misses.md` #164 の決めごと5）
+どちらが本物か読めない。`docs/island-misses.md` #165 の決めごと5）
 
 yt-dlp の返した字が `last_error_detail` にそのまま残っている
 （37本とも `Video unavailable. This video is private`）。`status` と違って、

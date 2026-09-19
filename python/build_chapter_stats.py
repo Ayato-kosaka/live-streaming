@@ -136,7 +136,7 @@ def fetch(
 
     **本数（`streams`）は、一覧（`per_chapter`）をそのまま数える。**
     自分で SQL を書かない——書くと条件が2つになり、**同じ表から焼いた数と一覧が
-    食い違う**（`docs/island-misses.md` #160 の決めごと1 / #164）。
+    食い違う**（`docs/island-misses.md` #160 の決めごと1 / #165）。
     """
     ch = union_all(chapters)
 
@@ -191,7 +191,7 @@ def streams_sql(ch: str, project: str = BQ_PROJECT_ID, dataset: str = BQ_DATASET
     **チャットを取り込めたか**であって、**いま見られるか**ではない。
     2026-09-18 の本番で、取り込めていない44本は**動画のほうは公開されていて**、
     そのうち34本は同じ表から焼いている `cityStreams.ts`（街の地図）に並んでいた。
-    **地図から辿れる配信が、章の一覧には無い。**（`docs/island-misses.md` #160 #164）
+    **地図から辿れる配信が、章の一覧には無い。**（`docs/island-misses.md` #160 #165）
 
     だから条件は `build_city_streams.sql_of()` と**同じ2つ**にそろえる。
 
@@ -236,7 +236,7 @@ def fetch_streams(client: bigquery.Client, chapters: list[dict]) -> dict[str, li
     **閉じた章だけではなく、章ぜんぶを引く。** 面に出すのは閉じた章だけ
     （`/island/<章>/streams`。`docs/island-atlas.md` 7章）だが、**本数は
     いまの島にも要る**ので、ここで全部そろえて `fetch()` に渡す。
-    前は本数だけ別の SQL で数えていて、条件が2つに分かれていた（#164）。
+    前は本数だけ別の SQL で数えていて、条件が2つに分かれていた（#165）。
 
     **押しても見られない配信は載せない。** 一面ぜんぶ押せる並びなので、
     1行でも行き止まりを混ぜると、押した人が「この島の配信は見られない」と読む。
@@ -348,7 +348,7 @@ def bake_streams(streams: dict[str, list], chapters: list[dict]) -> None:
     """明細を書く。**面に出すのは閉じた章だけ**なので、ここで絞る。
 
     絞るのを `fetch_streams` ではなくここでやるのは、**本数（`chapterStats.ts`）が
-    いまの島のぶんも要る**から。数と一覧は同じ行から出す（#164）。
+    いまの島のぶんも要る**から。数と一覧は同じ行から出す（#165）。
     出口でもう一度、取り置きの id が残っていないかを見る。
     """
     past = {c["slug"] for c in past_of(chapters)}
@@ -392,7 +392,7 @@ def restat_from_streams(per_chapter: dict[str, list], chapters: list[dict]) -> l
     **毎晩の焼き直しはこの道を通らない**（`main()` は口がそろっているので
     `render()` でまるごと書き直す）。ここは「本数の条件を変えた回に、
     数と一覧を同じコミットで合わせる」ためだけにある——**片方だけ入った
-    master は、1クリックで隣り合う面に違う数が出る状態**（#164）。
+    master は、1クリックで隣り合う面に違う数が出る状態**（#165）。
 
     持ち越しが効いているかは、書く前に**行ごとに突き合わせて**確かめる。
     `streams:` 以外の行が1行でも動いたら、**書かずに落ちる。**
