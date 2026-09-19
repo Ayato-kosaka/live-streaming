@@ -99,12 +99,19 @@
  * `charFit` は `tools/sprites/charbox.py` が `characterBox.ts` ごと焼き直す。
  * 雛形が古いままだと、**次に焼いた晩に黙って元へ戻る。赤くならない。**
  * だからブラウザを立てる前に、2つの `charFit` が1文字まで同じかを見る。
+ *
+ * ## 測りかたは `fitmeasure.mjs` に置いてある
+ *
+ * 同じ前提を台所（`/kitchen/*`）でも外していた（#169）ので、器の箱・
+ * 描かれた画素・はみ出しの測りかたは**1か所**に寄せた。ここに残るのは
+ * 「図鑑ではどれが器で、何枚あるはずで、対照をどう作るか」と、本番モードだけ。
+ * 台所の側は `tools/sprites/kdfit.mjs`。
  */
 import { chromium } from "playwright-core";
 import { readFileSync } from "fs";
 import { offline } from "./route.mjs";
-import { repoPath } from "./repo.mjs";
 import { blocked, fetchProd, redirects, thin, viaCurl } from "./prod.mjs";
+import { INK, MEASURE, bakedSame, judge } from "./fitmeasure.mjs";
 
 const SPORT = process.env.SPORT || "4290";
 /** 渡されたら本番モード。空なら今までどおり localhost の書き出しを見る */
@@ -131,138 +138,16 @@ const note = [];
 
 /* ───────── 焼き直しで消えないか（ブラウザの前に、字で） ───────── */
 
-/** 2つのファイルから `charFit` の本文だけを切り出す */
-function cutFit(src) {
-  const i = src.indexOf("export function charFit(");
-  if (i < 0) return null;
-  const j = src.indexOf("\n}", i);
-  return j < 0 ? null : src.slice(i, j + 2);
-}
-
-const tsFit = cutFit(readFileSync(repoPath("site/content/characterBox.ts"), "utf8"));
-const pyFit = cutFit(readFileSync(repoPath("tools/sprites/charbox.py"), "utf8"));
-if (!tsFit || !pyFit) {
-  console.log("::error::charFit が見つかりません（characterBox.ts / charbox.py）");
+const baked = bakedSame();
+if (!baked.ok) {
+  console.log(`::error::${baked.why}`);
   process.exit(2);
 }
-if (tsFit !== pyFit) {
-  console.log(
-    "::error::charbox.py の雛形が characterBox.ts と違います。" +
-      "次に焼き直した晩に、直したものが黙って元へ戻ります",
-  );
-  process.exit(2);
-}
-note.push("charFit は characterBox.ts と charbox.py で同じ");
+note.push(baked.note);
 
-/* ───────── 測りかた（ページの中で動く） ───────── */
-
-/**
- * マス1枚ぶんの寸法を DOM から取る。
- *
- * `getComputedStyle` の width / height は**変形をかける前**の使われた値なので、
- * これが `charFit` の言う「器」。`getBoundingClientRect` は変形の後。
- * 2つの比が、そのマスに掛かっている倍率。
- */
-const MEASURE = (sel) => {
-  const out = [];
-  for (const [i, c] of [...document.querySelectorAll(sel)].entries()) {
-    const im = c.querySelector("img");
-    if (!im) continue;
-    const cs = getComputedStyle(im);
-    const rc = c.getBoundingClientRect();
-    const ri = im.getBoundingClientRect();
-    const W = parseFloat(cs.width);
-    const H = parseFloat(cs.height);
-    const pos = cs.objectPosition.split(" ").map((v) => parseFloat(v) / 100);
-    out.push({
-      n: i + 1,
-      src: im.currentSrc || im.src,
-      probe: c.dataset.probe || "",
-      cell: { x: rc.x, y: rc.y, w: rc.width, h: rc.height },
-      img: { x: ri.x, y: ri.y, w: ri.width, h: ri.height },
-      boxW: W, boxH: H,
-      fit: cs.objectFit,
-      px: Number.isFinite(pos[0]) ? pos[0] : 0.5,
-      py: Number.isFinite(pos[1]) ? pos[1] : 0.5,
-      nat: [im.naturalWidth, im.naturalHeight],
-      blend: cs.mixBlendMode,
-      done: im.complete && im.naturalWidth > 0,
-    });
-  }
-  return out;
-};
-
-/**
- * 絵の中で、**描かれている画素**の外接矩形（元の絵に対する割合）。
- * 透過があれば alpha、無ければ四隅の色との差で見る。
- */
-const INK = (url) => new Promise((res) => {
-  const im = new Image();
-  im.crossOrigin = "anonymous";
-  im.onerror = () => res(null);
-  im.onload = () => {
-    const w = im.naturalWidth, h = im.naturalHeight;
-    if (!w || !h) return res(null);
-    const cv = document.createElement("canvas");
-    cv.width = w; cv.height = h;
-    const g = cv.getContext("2d", { willReadFrequently: true });
-    g.drawImage(im, 0, 0);
-    let d;
-    try { d = g.getImageData(0, 0, w, h).data; } catch { return res(null); }
-    let clear = false;
-    for (let i = 3; i < d.length; i += 4) if (d[i] < 255) { clear = true; break; }
-    const at = (x, y) => (y * w + x) * 4;
-    const c0 = at(0, 0);
-    const bg = [d[c0], d[c0 + 1], d[c0 + 2]];
-    const ink = (i) => clear
-      ? d[i + 3] > 8
-      : Math.max(Math.abs(d[i] - bg[0]), Math.abs(d[i + 1] - bg[1]), Math.abs(d[i + 2] - bg[2])) > 12;
-    let x0 = w, y0 = h, x1 = -1, y1 = -1;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (!ink(at(x, y))) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x;
-      if (y < y0) y0 = y; if (y > y1) y1 = y;
-    }
-    if (x1 < x0) return res(null);
-    res({ clear, ar: w / h, box: [x0 / w, y0 / h, (x1 + 1 - x0) / w, (y1 + 1 - y0) / h] });
-  };
-  im.src = url;
-});
-
-/** 描かれた画素が、画面のどこに来るか。`m` は MEASURE の1行、`ink` は INK の答え */
-function drawn(m, ink) {
-  const s = m.boxW > 0 ? m.img.w / m.boxW : 1;
-  const ar = ink && !BREAK.includes("ink") ? ink.ar : m.nat[0] / m.nat[1];
-  // object-fit: contain は器の短いほうに合わせる
-  const cw = m.fit === "contain" ? Math.min(m.boxW, m.boxH * ar) : m.boxW;
-  const ch = m.fit === "contain" ? cw / ar : m.boxH;
-  const cx = m.img.x + s * (m.boxW - cw) * m.px;
-  const cy = m.img.y + s * (m.boxH - ch) * m.py;
-  const [bx, by, bw, bh] = BREAK.includes("ink") ? [0, 0, 1, 1] : ink.box;
-  return {
-    L: cx + bx * s * cw,
-    T: cy + by * s * ch,
-    w: bw * s * cw,
-    h: bh * s * ch,
-  };
-}
-
-/** その器が正方形からどれだけ離れているか（px）。`charFit` の前提そのもの */
-function flat(m) {
-  return BREAK.includes("square") ? 0 : Math.abs(m.boxW - m.boxH);
-}
-
-/** そのマスが、自分の枠からどれだけ外へ出ているか（px） */
-function out(m, ink) {
-  const d = drawn(m, ink);
-  const c = BREAK.includes("cell") ? { x: -1e6, y: -1e6, w: 2e6, h: 2e6 } : m.cell;
-  return (
-    Math.max(0, c.x - d.L) +
-    Math.max(0, d.L + d.w - (c.x + c.w)) +
-    Math.max(0, c.y - d.T) +
-    Math.max(0, d.T + d.h - (c.y + c.h))
-  );
-}
+/* 測りかたは `fitmeasure.mjs`（台所の `kdfit.mjs` と同じものを使う）。
+   面ごとに書き写すと、片方だけ直った測りかたができる（#160） */
+const { drawn, flat, out } = judge(BREAK);
 
 /* ───────── ブラウザ ───────── */
 
