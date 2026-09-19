@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Icon, { type IconName } from "@/components/ui/Icon";
+import Walked from "@/components/atlas/Walked";
 import Flag from "@/components/ui/Flag";
 import { LiveNumber } from "@/lib/liveStats";
 import { COUNTRIES } from "@/content/countries";
@@ -67,7 +68,20 @@ export default function Shelf() {
       /* **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる
          （`app/map/page.tsx` の同じ注）。出発した日はもう動かないので、そこだけ言う */
       note: "日本を出てから、どこをどう通ってきたか",
-      n: s.countries,
+      /* **焼いた数を出さない。** ここは `STATS_FALLBACK.countries`（＝毎晩焼く
+         `COUNTRIES_WALKED`）を出していて、**同じ表紙の名刺の帯が 23、この札が 22**
+         だった。どちらも押した先は `/map` で、あちらの章の合計は 23。
+         **1つの面の中で、同じものを指す数が2つあった**（`docs/island-misses.md` #164）。
+
+         焼き込みでは足りないのは、この数が**日付で変わる**から。
+         静的書き出し（`output: "export"`）なので焼いた日の数が固まるのに対して、
+         中身は旅程を今日で切って数える（`content/walked.ts` の「なぜ焼き込みでは
+         だめか」）。国境を越えた日の 00:00 から、その晩の焼き直しが配られるまで、
+         焼いた数は1つ少ないままになる。**画面が出てから数え直すしかない。**
+
+         帯（`components/home/Meishi.tsx`）と**同じ `<Walked />`** を使う。
+         出どころを同じにしないと、片方だけ直したときに今回と同じことが起きる。 */
+      n: <Walked />,
       unit: "カ国",
       sample: (
         <span className="shelf-flags">
