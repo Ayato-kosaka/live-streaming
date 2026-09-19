@@ -133,22 +133,14 @@
 .akd-strip .tile { margin-top: var(--sp-3); }
 
 
-/* 図鑑の欄から、カードの並びぜんぶへ。字の行き先なので厚みは付けない。 */
-.rz-cards-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: var(--sp-2);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--accent-2);
-}
-
 /* --- 図鑑の1枚（`/friends`）の中に入るぶん -------------------------------
    罫で割った欄の中なので、器が 290px しかない。`auto-fill` に任せると
    1列になって、1枚が欄の幅いっぱい（実測 480px の背）になる。
-   出すのは2枚と決めてあるので、そのまま2列と書く。 */
+   はじめに出すのは2枚（押せば最後まで出る）なので、そのまま2列と書く。 */
 .rzk-cards .akd-grid { grid-template-columns: repeat(2, 1fr); }
+/* 「あと◯枚だす」。欄の中なので、`.longer` の既定より余白を詰める。
+   **欄の幅いっぱいに敷かない**——罫で囲った欄の中に、もう1つ枠が見える。 */
+.rzk-cards .longer { margin-top: var(--sp-2); }
 /* 読みに行けなかったときの1枚も、同じ 290px の欄に入る。`.blank` の
    既定の余白（`--sp-5 --sp-4`）を重ねると、字の行が 200px を切って
    「いま、カードを読 / みに行けなかった」と名前の途中で折り返す。
