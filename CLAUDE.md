@@ -171,6 +171,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-tickets.md`](docs/island-tickets.md) — **issue の片づけが、人の記憶を
   使わずにどう回っているか。** 待ちの相手の札・毎週の棚卸し・`Closes #NNN`・
   機械が立てる issue であやとを呼ぶところ
+- [`docs/island-handover.md`](docs/island-handover.md) — **セッションが動いていない日のための紙。**
+  毎晩ひとりでに何が起きるか（繋ぎの図）・壊れたらどの札の issue に出るか・
+  人しかできないこと・触ってはいけないもの・止まったときのいちばん短い直しかた
 - [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
   焼き込み（`site/content/*.ts`）が古いと思ったらここ
 
