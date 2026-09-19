@@ -112,6 +112,19 @@ done
 スタンプ帳は押した数だけ違う絵が並ぶから図鑑に見える。
 同じ皿が2つ並んだ瞬間、絵ではなく飾りになる。
 
+**料理が写っているものを選ぶ。器だけ・容器だけの絵を選ばない。**
+`food-*` には**中身の無い食器**が混じっている——`food-plate-deep`（空の白い皿）・
+`food-pan`（空の鍋）・`food-frying-pan`（空のフライパン）・`food-bowl`・
+`food-tajine`・`food-glass-wine`・`food-mug`・`food-pizza-box`・
+`food-cutting-board-japanese`。名前は料理に見えるので、**名前だけで選ぶと必ず踏む。**
+図鑑にそれが並ぶと、その品だけ「まだ何も作っていない」に読める。
+**閉じた容器**（`food-dim-sum` のせいろ、`food-steamer` の蒸籠）も、
+中身が1つも出ていないので同じ。**中身が見える絵だけを選ぶ。**
+色が1つしかない絵（`food-cheese` の黄色い塊、`food-mincemeat-pie` の
+のっぺりしたオレンジの六角形、`food-onion` のテラコッタ色の多角形）も、
+輪郭しか情報が無いので落ちる。**2色以上あるかを見る。**
+（2026-09-19。`docs/island-misses.md` #178）
+
 **`sprites.json` の引き算だけで「空き」を数えない。** あの表は素の置き場
 （`site/public/sprites/`）の名簿で、料理の面が読む `hero/` の名簿ではない。
 `/kitchen/<品>` は `HeroArt` 経由で `/sprites/hero/<名前>.webp` を読み、
