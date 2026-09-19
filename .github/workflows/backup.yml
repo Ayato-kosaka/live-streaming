@@ -181,9 +181,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # **24。** Node 20 は 2026-04 に寿命が切れていて、いま緑なのは
+      # ランナーが node20 の action を勝手に 24 へ載せ替えているからでしかない。
+      # ここの node が動かすのは `npx firebase-tools@13`（演習のエミュレータ）
+      # だけで、あの版の `engines` は 22 までしか書いていないが、
+      # **24 でも立ち上がって突き合わせまで通ることを dry_run の回で見ている。**
+      # リポジトリの他の node もぜんぶ 24（`functions/` だけ別。理由は下記）
       - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
 
       # エミュレータは Java で動く
       - uses: actions/setup-java@v5

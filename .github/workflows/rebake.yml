@@ -1386,9 +1386,13 @@ jobs:
       # （`npm --prefix site ci && npm --prefix site run build`）と同じ。
       # **同じものを先にここで通す**から、通れば Hosting も通る。
       - name: Node の用意
+      # **24 に揃えてある。** `selftest.yml` の browserwatch が
+      # まったく同じ `npm ci` → `next build` を 24 で通しているので、
+      # ここだけ古い版に据え置く理由が無い。版が散ると、次に踏む人が
+      # 「どれが正か」を探すところから始めることになる
         uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
           cache-dependency-path: site/package-lock.json
 
