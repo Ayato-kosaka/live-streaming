@@ -110,29 +110,29 @@ run が読めない・GitHub に届かない・権限が無いは、**この仕�
 """
 
 import argparse
-import json
 import logging
-import os
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
-# **同じ1本の見つけ方は借りる。** ここが `donor_calls.py` `ingest_down.py` と
-# 違っていると、片方だけ直したときに黙って二重に issue が立つ。
-# pull request を除くところも、開いているほうを先に取るところも同じでよい。
+# **作法は `python/run_watch.py` と共有する。** あちらに「どの run を見るか」
+# 「分からない朝は開きも閉じもしない」「立て直さずに書き換える」が置いてある。
+# 同じものを写して持つと、**片方だけ直した日に黙って食い違う**
+# （`python/ship_down.py` が同じ土台に乗っている）。
+# ここが持つのは**焼き直しに固有のところ**——どの step が何を意味するか、と本文。
 #
-# ただし `donor_calls` は `config.py` ごしに `BQ_PROJECT_ID` を要求する。
-# **ここは BigQuery も Firestore も1行も触らない**（読むのは GitHub だけ）ので、
-# その値は要らない。止まっていることを知らせる係が、**関係のない設定が1つ
-# 欠けただけで動かない**形にしたくないので、借りるための置き場だけ埋める。
-# 本物が環境にあればそちらがそのまま使われる（`setdefault`）。
-os.environ.setdefault("BQ_PROJECT_ID", "bake-down-reads-no-bigquery")
-
-from donor_calls import PLAN, find_issue  # noqa: E402
+# `find_issue` は `donor_calls.py` のものが `run_watch` ごしに来る。
+# ここが `donor_calls` と違う探し方をすると、黙って二重に issue が立つ。
+import run_watch  # noqa: E402
+from run_watch import (  # noqa: E402,F401
+    GREEN,
+    PLAN,
+    RED,
+    decide,
+    find_issue,
+    quiet_days,
+)
 
 # **待ちの相手の札。** 焼き直しの赤は**こちらで直せる**ので、
 # あやとへのメンションは入れない（毎晩鳴るものに毎晩メンションすると、
@@ -186,23 +186,18 @@ WATCH_STEPS = (
     "押しても見られない配信が増えたか",
 )
 
-# 無人で走った run だけを数える（docstring「見るのは『いまの状態』だけ」）。
-# `workflow_dispatch` は手で押したぶん。既定が `dry_run: true` なので、
-# 通っても master には1バイトも入らない
+# **この係にとっての「無人」。** `workflow_dispatch` は手で押したぶんで、
+# 既定が `dry_run: true` なので、通っても master には1バイトも入らない。
+#
+# **ここは係ごとに違う。** 配りの見張り（`ship_down.py`）が起こされるのは
+# 焼き直しの最後の `gh workflow run` なので、あちらは毎晩の1回も
+# `workflow_dispatch` で走る。だから `run_watch` は判定を持たずに受け取る
 UNATTENDED = ("schedule", "workflow_run")
 
-# **止まっていると言ってよい終わりかた。**
-# `startup_failure` を入れてあるのは、あれが「ワークフロー自体が起動できなかった」
-# ＝**焼けていない**から。run は残るが step は1つも動いていない
-RED = ("failure", "timed_out", "startup_failure")
 
-# **通ったと言ってよい終わりかた。** ここに無いもの（`cancelled` など）は
-# どちらとも言わない（docstring「分からない晩は、開きも閉じもしない」）
-GREEN = ("success",)
-
-# 何本さかのぼって無人の run を探すか。1日に無人で走るのは多くて2〜3本
-# （cron 1本と workflow_run 2本）なので、手で何度も押した日でも足りる
-PER_PAGE = 50
+def unattended(r: dict) -> bool:
+    """その run に、押した人がいなかったか。"""
+    return r.get("event") in UNATTENDED
 
 # 焼き直しが何日走っていなかったら、**ログに1行**書くか。
 # **issue にはしない。** 走っていないのは「落ちた」とも「凍った」とも違うし、
@@ -224,56 +219,21 @@ LABEL = "bake-down"
 # 書き換えた人と綱引きになる）
 TITLE = "島の数字が、新しくなっていません"
 
-# ラベルの見た目。`donor-calls`（d93f0b）と `ingest-down`（b60205）が既に居るので、
-# **赤系を避ける。** 一覧を眺めたときに「これは焼き直しのほう」と色で分かるように
-LABEL_COLOR = "5319e7"
-LABEL_DESC = "島の焼き込みが新しくなっていない"
-
-API = "https://api.github.com"
 
 
 def pick_run(runs: list):
-    """**無人で走った、いちばん新しい完了した run** を1本選ぶ。
-
-    GitHub は新しい順に返してくるが、**並びを当てにしない。** `id` は同じ
-    ワークフローの中では増える一方なので、そこで並べ直す。
-
-    Args:
-        runs: `/actions/workflows/…/runs` の `workflow_runs`
-
-    Returns:
-        run（辞書）か、1本も無ければ None
-    """
-    mine = [r for r in (runs or [])
-            if r.get("event") in UNATTENDED and r.get("status") == "completed"]
-    if not mine:
-        return None
-    return sorted(mine, key=lambda r: r.get("id") or 0)[-1]
+    """**無人で走った、いちばん新しい完了した run** を1本選ぶ（`run_watch`）。"""
+    return run_watch.pick_run(runs, unattended)
 
 
 def fixed_by_hand(runs: list, run) -> bool:
-    """**その run のあとに、人が手で押して通しているか。**
+    """**その run のあとに、人が手で押して通しているか**（`run_watch`）。
 
     手押しでも `焼く` も `凍っていないか` も同じように通るので、**そこが緑なら
     焼くのはもう直っている。** 無視して issue を立てると、直した直後に
     「止まっています」と言うことになる。
-
-    `id` で比べるのは `pick_run()` と同じ理由（並びを当てにしない）。
-
-    Args:
-        runs: 引いてきた run ぜんぶ
-        run: `pick_run()` が選んだ1本か None
-
-    Returns:
-        あとから手で押して通っていれば True
     """
-    if not run:
-        return False
-    return any(r.get("event") == "workflow_dispatch"
-               and r.get("status") == "completed"
-               and r.get("conclusion") in GREEN
-               and (r.get("id") or 0) > (run.get("id") or 0)
-               for r in (runs or []))
+    return run_watch.fixed_by_hand(runs, run, unattended)
 
 
 def why_red(steps: list) -> dict:
@@ -359,29 +319,6 @@ def assess(run, steps, by_hand: bool = False) -> dict:
     return {"down": None, "why": None, "step": None, "at": at}
 
 
-def quiet_days(at, now: datetime):
-    """いちばん新しい無人の run から、いま何日たったか。
-
-    **issue には使わない。** ログに1行出すためだけの数（`QUIET_DAYS`）。
-
-    Args:
-        at: run の始まった時刻（ISO の文字列）か None
-        now: いま（timezone 付き）
-
-    Returns:
-        日数（float）。読めなければ None
-    """
-    if not isinstance(at, str):
-        return None
-    try:
-        t = datetime.fromisoformat(at.replace("Z", "+00:00"))
-    except (ValueError, TypeError):
-        return None
-    if t.tzinfo is None:
-        t = t.replace(tzinfo=timezone.utc)
-    return (now - t).total_seconds() / 86400
-
-
 def body(a: dict) -> str:
     """issue の本文。**あやとがこれから何をすればいいかだけ。**
 
@@ -449,138 +386,28 @@ def body(a: dict) -> str:
     ]) + "\n"
 
 
-def decide(issue, want: str, down) -> str:
-    """**何をするか**を決める。GitHub を触らない素の関数。
+class Gh(run_watch.Gh):
+    """GitHub を触る口。**中身は `run_watch.Gh`。ここが持つのはラベルの色だけ。**
 
-    | いま | issue | すること |
-    | --- | --- | --- |
-    | 止まっている | 無い | `create` — 1本開く |
-    | 止まっている | 閉じている | `reopen` — **同じ1本**を開け直す |
-    | 止まっている | 開いていて本文が違う | `update` — 本文だけ書き換える |
-    | 止まっている | 開いていて本文が同じ | `noop` — **触らない** |
-    | 新しくなった | 開いている | `close` — 自分で閉じる |
-    | 新しくなった | 閉じている／無い | `noop` — **開け直さない** |
-    | **分からない** | どれでも | `noop` — **開きも閉じもしない** |
+    `donor_calls.Gh` を借りないのは、あちらの `create()` があちらのラベルの色と
+    説明を書き込むから。借りると**こちらのラベルが別の見た目で作られて、
+    一覧で見分けが付かなくなる。** 色だけを上書きすれば、叩く口は共有できる。
 
-    本文が同じなら触らないのは、毎朝「編集しました」を積まないため。
-    **1日に2回走ることが実際にある**（焼き直しと取り込みの両方に繋いである）。
-    2回目は同じ run を読むので本文も同じになって、何も書かない。
-
-    `down` が None のときに `close` へ落ちないことが、この関数の肝。
-    **落ちているかどうかを読めなかった朝に、開いている issue を「直った」と
-    言って閉じるのが、いちばん悪い。**
-
-    Args:
-        issue: `find_issue()` が選んだ1本か None
-        want: いま入れたい本文
-        down: True（止まっている）/ False（通っている）/ None（分からない）
-
-    Returns:
-        "create" / "reopen" / "update" / "close" / "noop"
-    """
-    if down is None:
-        return "noop"
-    if down:
-        if issue is None:
-            return "create"
-        if issue.get("state") != "open":
-            return "reopen"
-        if (issue.get("body") or "").strip() != want.strip():
-            return "update"
-        return "noop"
-    if issue is not None and issue.get("state") == "open":
-        return "close"
-    return "noop"
-
-
-class Gh:
-    """GitHub を触る口。**ここだけが外に出る。**
-
-    `donor_calls.Gh` `ingest_down.Gh` と形は同じだが、**借りずに持つ。**
-    あちらの `create()` はあちらのラベルの色と説明を書き込むので、借りると
-    こちらのラベルが別の見た目で作られて、一覧で見分けが付かなくなる。
-
-    こちらだけ `runs` と `steps_of` を持つ。読む元が Firestore の札ではなく
-    **Actions の run そのもの**だから。
-
-    偽物と差し替えられるように、呼ぶ側（`read_state` と `run`）は
-    この5つしか使わない。
+    `Gh(repo, token)` の形を変えないこと。**確かめが `Gh` ごと偽物に
+    差し替えている**（`bake_down_selftest.py` の `act()`）。
     """
 
-    def __init__(self, repo: str, token: str):
-        self.repo = repo
-        self.token = token
+    # `donor-calls`（d93f0b）と `ingest-down`（b60205）が既に居るので、
+    # **赤系を避ける。** 一覧を眺めたときに「これは焼き直しのほう」と色で分かるように
+    LABEL_COLOR = "5319e7"
+    LABEL_DESC = "島の焼き込みが新しくなっていない"
 
-    def _call(self, method: str, path: str, payload=None):
-        data = json.dumps(payload).encode("utf-8") if payload is not None else None
-        req = urllib.request.Request(API + path, data=data, method=method)
-        req.add_header("Accept", "application/vnd.github+json")
-        req.add_header("X-GitHub-Api-Version", "2022-11-28")
-        req.add_header("Authorization", f"Bearer {self.token}")
-        if data is not None:
-            req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=30) as r:
-            raw = r.read()
-        return json.loads(raw) if raw else {}
-
-    def runs(self, workflow_file: str) -> list:
-        """そのワークフローの、**終わった** run を新しい順に引く。
-
-        **ファイル名で引く**（表示名は人が変える）。手で押したぶんも混ざって
-        返るので、選り分けるのは `pick_run()`。
-        """
-        f = urllib.parse.quote(workflow_file)
-        got = self._call(
-            "GET",
-            f"/repos/{self.repo}/actions/workflows/{f}/runs"
-            f"?status=completed&per_page={PER_PAGE}",
-        )
-        return got.get("workflow_runs", []) if isinstance(got, dict) else []
-
-    def steps_of(self, run_id: int) -> list:
-        """その run の step を、job をまたいで平らに並べて返す。
-
-        `rebake.yml` の job は1つだが、増えても読めるように全部つなぐ。
-        """
-        got = self._call(
-            "GET", f"/repos/{self.repo}/actions/runs/{run_id}/jobs?per_page={PER_PAGE}"
-        )
-        out = []
-        for j in (got.get("jobs", []) if isinstance(got, dict) else []):
-            out += j.get("steps") or []
-        return out
-
-    def list_issues(self, label: str) -> list:
-        """そのラベルの issue を、**閉じたものも含めて**引く。
-
-        閉じたものが要るのは、次に止まったときに同じ1本を開け直すため。
-        100件で足りる（このラベルが付くのは1本だけ）。
-        """
-        return self._call(
-            "GET", f"/repos/{self.repo}/issues?labels={label}&state=all&per_page=100"
-        )
-
-    def create(self, title: str, text: str, label: str) -> dict:
-        # ラベルは issue に付けるときも作られるが、色も説明も付かない。
-        # 一覧で見分けが付くように、先に作っておく（あれば 422 で、それでよい）
-        #
-        # **待ちの札（`待ち-こちら`）も一緒に付ける。** 付いていないと
-        # 毎週の棚卸し（`python/ticket_stock.py`）が「札が無い」に数える。
-        # ここはあやと待ちではない——焼き直しの赤はこちらで直せる
-        for name, color, desc in ((label, LABEL_COLOR, LABEL_DESC),
-                                  (WAIT_US, *WAIT_STYLE[WAIT_US])):
-            try:
-                self._call("POST", f"/repos/{self.repo}/labels",
-                           {"name": name, "color": color, "description": desc})
-            except urllib.error.HTTPError as e:
-                if e.code != 422:
-                    raise
-        return self._call("POST", f"/repos/{self.repo}/issues",
-                          {"title": title, "body": text,
-                           "labels": [label, WAIT_US]})
-
-    def patch(self, number: int, payload: dict) -> dict:
-        return self._call("PATCH", f"/repos/{self.repo}/issues/{number}", payload)
+    # **待ちの札も一緒に付ける。** 付いていないと毎週の棚卸し
+    # （`python/ticket_stock.py`）が「札が無い」に数える。
+    # **ここはあやと待ちではない**——焼き直しの赤はこちらで直せる。
+    # 札を作って付けるところは `run_watch.Gh` が持っている（配りの見張りと同じ形）
+    WAIT = WAIT_US
+    STYLE = WAIT_STYLE
 
 
 def read_state(gh) -> dict:
@@ -662,31 +489,9 @@ def run(gh, a: dict, apply: bool = False) -> dict:
         return {"action": "dry", "planned": what,
                 "number": issue["number"] if issue else None}
 
-    if what == "create":
-        made = gh.create(TITLE, want, LABEL)
-        logger.info("issue #%s を開きました", made.get("number"))
-        return {"action": what, "planned": what, "number": made.get("number")}
-
-    if what in ("reopen", "update"):
-        # **タイトルは送らない。** 人が書き換えたものを毎朝戻さない
-        payload = {"body": want}
-        if what == "reopen":
-            payload["state"] = "open"
-        gh.patch(issue["number"], payload)
-        logger.info("issue #%s を%sました", issue["number"],
-                    "開き直し" if what == "reopen" else "書き換え")
-        return {"action": what, "planned": what, "number": issue["number"]}
-
-    if what == "close":
-        gh.patch(issue["number"], {"state": "closed",
-                                   "state_reason": "completed"})
-        logger.info("また焼けるようになったので issue #%s を閉じました",
-                    issue["number"])
-        return {"action": what, "planned": what, "number": issue["number"]}
-
-    logger.info("変わっていないので触りません")
-    return {"action": "noop", "planned": "noop",
-            "number": issue["number"] if issue else None}
+    # **書くところは `run_watch` と共有する。** 立て直さない・タイトルは作るときだけ、
+    # という作法をここで持ち直すと、配りの見張りと食い違う
+    return run_watch.apply_plan(gh, what, issue, TITLE, want, LABEL, log=logger)
 
 
 def act(apply: bool) -> int:
@@ -705,29 +510,14 @@ def act(apply: bool) -> int:
     Returns:
         終了コード（0 か 1）
     """
-    repo = os.getenv("GITHUB_REPOSITORY", "")
-    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or ""
-    if not repo or not token:
-        logger.error("GITHUB_REPOSITORY と GITHUB_TOKEN が要ります")
-        return 1
-
-    try:
-        gh = Gh(repo, token)
+    def once(gh):
         a = read_state(gh)
         say(a)
         run(gh, a, apply=apply)
-    except urllib.error.HTTPError as e:
-        # 401/403 は資格か権限（`actions: read` と `issues: write` の両方が要る）、
-        # 404 はリポジトリかワークフローのファイル名。**どれも本物の異常。**
-        # 返ってきた本文は出さない（URL や名前が混じる。ログは公開）
-        logger.error("GitHub を読み書きできませんでした（HTTP %s %s）。資格・"
-                     "権限（actions / issues）・%s の在りかを見てください",
-                     e.code, e.reason, WORKFLOW_FILE)
-        return 1
-    except (urllib.error.URLError, OSError, ValueError) as e:
-        logger.error("GitHub に届きませんでした: %s", str(e)[:200])
-        return 1
-    return 0
+
+    # `Gh` を名前で解決するのは、**確かめがここを偽物に差し替えるから**
+    return run_watch.act(once, WORKFLOW_FILE,
+                         lambda repo, token: Gh(repo, token), log=logger)
 
 
 def say(a: dict) -> None:

@@ -1,0 +1,202 @@
+name: 配りが赤いを issue に映す
+
+# 本番への配り（`Firebase Hosting Deploy`）が赤いあいだ、**issue を1本だけ
+# 開き続ける**（`python/ship_down.py`）。また配れたら、自分で閉じる。
+#
+# ## なぜ要るか
+#
+# 毎晩の焼き直し（`島の数字を焼き直す`）が赤いときは `bake_down.yml` が issue を
+# 立てる。ところが**配りが赤いときに、立てるものが1つも無かった。**
+#
+# そして配りを起こしているのは、**焼き直しの最後の step**
+# （`rebake.yml` の `gh workflow run firebase-hosting-deploy-prod.yml`）だけ。
+# つまり**配りが赤くなっても、誰も気づかない。**
+#
+# 配りの中には「配った面が、面として配られているか」（本番の面のひと回り）も
+# 「無い道が、ちゃんと 404 で返っているか」も入っている。
+# **本番が壊れても黙ったまま**になる、というのがこの穴の意味。
+#
+# 赤は Actions の一覧の中にしか出ないうえ、**「起きたこと」であって「いま
+# 残っていること」ではない**（`ingest_down.yml` の頭）。次の配りが緑になれば
+# 下へ流れていく。だから赤を強くするのではなく、**いまの状態そのものを、
+# 人が毎日見る場所（issue の一覧）に置く。**
+#
+# ## 「もう出ているのか、出る前に止まったのか」を、本文の1行目で言う
+#
+# 配りは step が11本あって、**落ちる場所で意味が全然違う。**
+# 書き出しが落ちた（出ていない）／配れなかった（出ていない）／配ったあとの
+# 見張りが落ちた（**もう本番に出ている**）。
+#
+# 分け目は `action-hosting-deploy` の step **より前か後か**で見る。名前の表では
+# 決めない——本番の run #63 と #114 が、同じルール系の step で落ちていて
+# **意味が逆**だった（当時はルールのデプロイが配る step の前にあった）。
+# 詳しくは `python/ship_down.py` の頭。
+#
+# ## 繋ぎ先（`workflow_run`）
+#
+# **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
+# あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
+# （20:30 UTC）の古参2本だけで、しかも1時間49分〜3時間32分遅れて走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
+# 待っても発火しなかった。下の cron は**保険**として置いてある。
+#
+# 繋ぎ先を3本にしてあるのは、**1本が消えても止まらないようにする**ため。
+# `Fetch YouTube Chat Data` と `Fetch Doneru Donations` は**発火の実績がある**ので、
+# `Firebase Hosting Deploy` 側の繋ぎが切れた日でも、こちらは起きる。
+# そのとき読むのは前の日の run なので、その1回は状態が1日古い。次で追いつく。
+#
+# **`conclusion` は見ない。** 繋ぎ先が赤い日こそ、こちらが動かないといけない。
+# そもそも配りが赤いことを映すのがこの仕事なので、成功したときだけ繋ぐと
+# **いちばん要る日だけ黙る。**
+#
+# **繋ぎはワークフローの `name:` で解決される。**「Firebase Hosting Deploy」を
+# 書き換えると黙って切れる。**赤くならない。走らなくなるだけ。**
+# だから2つの側から見ている:
+#
+# - 走った回ごとに `python/ship_down.py` が `.github/workflows/` を読んで、
+#   **繋ぎ先の名前がまだ実在するか**を見る。無ければ **1 で落ちる**
+# - `python/ship_down_selftest.py` が、YAML に書いた繋ぎ先と Python が持って
+#   いる名前が**揃っているか**まで突き合わせる（片方だけ直しても落ちる）
+#
+# 読む側は `name:` を使わない。**ファイル名で引く**ので、そちらは黙って切れない。
+#
+# ## 手で押した配りと、毎晩の配りを分ける
+#
+# 配りには `workflow_dispatch` しか無く、**毎晩のぶんもそこを通る**
+# （焼き直しが `gh workflow run` で押す）。だから event では分けられない。
+# 分かれ目は**押した主**で、毎晩のぶんは `github-actions[bot]`。
+# 検品で人が押した回が赤くても、それは**毎晩ひとりでに出る島**の話ではない。
+#
+# ## 手で押すときの既定は「見るだけ」
+#
+# `apply` の既定は false。押し間違えても issue は動かない。
+# **押す人のいないとき（cron と、配りに繋いで来たぶん）だけ apply で走る。**
+#
+# ## 赤くしない
+#
+# 配りが赤い日でも、この job は緑で終わる。**赤で知らせるのをやめるために
+# 作ったもの**が自分で赤を積んだら元に戻る。赤くなるのは「判断のところが
+# 壊れている」「GitHub に届かない」「繋ぎ先の名前が消えた」
+# ＝**この仕組みそのものが動いていない**ときだけ。
+
+on:
+  workflow_run:
+    # 読む元は1本目の run。あとの2本は、1本目の繋ぎが切れたときの受け皿
+    # （どちらも発火の実績あり）。3本目を入れてあるのは、**繋ぎが生きているかを
+    # 本番を汚さずに確かめられる**から——`Fetch Doneru Donations` は
+    # `probe: true` で押すと1バイトも書かずに40秒で終わる（`CLAUDE.md`）。
+    # 配りを押して確かめると、本番へ配ってしまう
+    workflows: ["Firebase Hosting Deploy", "Fetch YouTube Chat Data",
+                "Fetch Doneru Donations"]
+    types: [completed]
+
+  schedule:
+    # 保険。焼き直し（01:00 UTC）→ 配り、のあと。`bake_down.yml`（04:00）とも
+    # ずらしてある。日本時間の昼過ぎ
+    - cron: "30 4 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "issue を実際に開く／書き換える／閉じる（off なら見るだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 配りと取り込みが続けて終わった日に2本同時に走ると、
+# 同じ issue を2本立てにいく。1本ずつ通す
+concurrency:
+  group: ship-down
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # 配りの run と、その step の結果を読む
+  actions: read
+  # issue を開く・書き換える・閉じる
+  issues: write
+
+jobs:
+  ship_down:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # **本番の1回は、pip を1つも通らない。** ここが読むのは GitHub の口だけで、
+      # BigQuery も Firestore も1行も触らない。「配れていないこと」を知らせる係が、
+      # **関係のない依存が1つ壊れただけで止まる**形にしたくない。
+      #
+      # PyYAML を入れるのは**確かめ（selftest）のためだけ。**
+      # あれがワークフローの YAML を読んで、繋ぎ先の名前と、配る step が
+      # 実在するかを突き合わせる
+      - name: 確かめが YAML を読むぶんだけ入れる
+        run: |
+          pip install pyyaml
+          # 素性の見張り（下の step）が `island_channels` などを読み込むので、
+          # BigQuery の口も要る。**入れないと見張りが ImportError で落ちる。**
+          # ここを削るなら、見張りのほうも一緒に外すことになる（#500）
+          pip install -r python/requirements.txt
+
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている
+      # （#180 Doneru の鍵 / #217 Anthropic の鍵 / #379 名簿 1,065 実行ぶん）。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      #
+      # この係は `run_watch` ごしに `logsafe` を取り込んでいるので、
+      # **下の3つの step は全部「口」。** 手前に置き忘れていないかは
+      # `python/logsafe_wiring_selftest.py` が見ている（同じ job に在ることまで見る。
+      # job が違えばランナーが別なので、隣で通っていてもこちらの出力は守られない）。
+      # 認証もクエリも要らず 0.5 秒で終わる。落ちたら下は1行も走らない
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # 偽の GitHub で回すだけ。外へは1バイトも出ない。
+      # **本番を触る前に、判断のところ（`where_broke` と `assess`）が
+      # 生きているかを見る。** ここが壊れたまま apply で走ると、空振りの issue が
+      # 毎日開くか、**本当に本番が壊れた日に黙る**かのどちらかになる
+      - name: 判断のところを、偽物で先に回す
+        run: python python/ship_down_selftest.py
+
+      # 焼き直しの見張りと**土台を共有している**（`python/run_watch.py`）。
+      # こちらを直したせいであちらが壊れていないかを、ここで一度見る。
+      # 偽物で回すだけなので、外へは出ない
+      - name: 土台を共有している相手も、いっしょに回す
+        run: python python/bake_down_selftest.py
+
+      - name: いまの配りを見て、issue を合わせる
+        env:
+          # 手で押したときだけ既定が「見るだけ」。
+          # cron と、配りに繋いで来たぶんは**読む人がいない**ので apply
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then
+            python python/ship_down.py --apply
+          else
+            python python/ship_down.py
+          fi
+
+      # **黙って赤くならない。** 毎回ひとりでに走るものは、落ちたことに
+      # 誰も気づかない。せめてどこで落ちたかを要約に残す
+      # （要約は run の1枚目に出るので、ログを開かずに読める）
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 配りの様子を映せませんでした"
+            echo ""
+            echo '**配りが赤いという意味ではありません。**'
+            echo 'この仕組みのほう（判断・GitHub の口・繋ぎ先の名前のどれか）が'
+            echo '動いていません。issue が**いまの状態と食い違ったまま**になっています。'
+            echo ""
+            echo '`python python/ship_down_selftest.py` と'
+            echo '`python python/ship_down.py` を手元で回すと、どれかが分かります。'
+            echo '（後者は `GITHUB_REPOSITORY` と `GITHUB_TOKEN` が要ります）'
+          } >> "$GITHUB_STEP_SUMMARY"

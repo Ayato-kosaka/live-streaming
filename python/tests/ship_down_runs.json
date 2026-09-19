@@ -1,0 +1,68 @@
+{
+ "_": "本番の run #114（2026-09-09）。配り終わったあとで索引のデプロイが落ちた回。読むところだけに削って、押した主は毎晩のぶんに置き換えてある",
+ "runs": [
+  {
+   "id": 34297158817,
+   "run_number": 114,
+   "event": "workflow_dispatch",
+   "status": "completed",
+   "conclusion": "failure",
+   "run_started_at": "2026-09-09T00:57:10Z",
+   "triggering_actor": {
+    "login": "github-actions[bot]"
+   }
+  }
+ ],
+ "steps": [
+  {
+   "name": "Set up job",
+   "number": 1,
+   "conclusion": "success"
+  },
+  {
+   "name": "Run actions/checkout@v3",
+   "number": 2,
+   "conclusion": "success"
+  },
+  {
+   "name": "🏗️ `.env` ファイルの作成",
+   "number": 3,
+   "conclusion": "success"
+  },
+  {
+   "name": "Run npm ci && npm run build:web",
+   "number": 4,
+   "conclusion": "success"
+  },
+  {
+   "name": "Run FirebaseExtended/action-hosting-deploy@v0",
+   "number": 5,
+   "conclusion": "success"
+  },
+  {
+   "name": "🔐 Firestore ルールのデプロイ",
+   "number": 6,
+   "conclusion": "success"
+  },
+  {
+   "name": "🔐 Storage ルールのデプロイ",
+   "number": 7,
+   "conclusion": "success"
+  },
+  {
+   "name": "🔎 Firestore インデックスのデプロイ",
+   "number": 8,
+   "conclusion": "failure"
+  },
+  {
+   "name": "Post Run actions/checkout@v3",
+   "number": 16,
+   "conclusion": "success"
+  },
+  {
+   "name": "Complete job",
+   "number": 17,
+   "conclusion": "success"
+  }
+ ]
+}
