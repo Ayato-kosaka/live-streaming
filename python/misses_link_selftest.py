@@ -236,7 +236,10 @@ def scan(root: Path, top: int, ban: frozenset[str]) -> dict:
             for m in HASH_RE.finditer(line):
                 kind = classify(line, m.group(1), m.start(), named_line,
                                 named_file, top)
-                if kind in promote:
+                # **足を抜いても、数字でないものは数字にならない。** `#ffffff` を
+                # `look` に上げると `int()` で落ちる（対照に色が1つも無かったので
+                # 気づかなかった。いまは `issue` の写しに色を植えてある）
+                if kind in promote and m.group(1).isdigit():
                     kind = "look"
                 counts[kind] += 1
                 hit_line = hit_file = True
@@ -345,6 +348,9 @@ PLANT_ISSUE = (
     "python/fake_issue.py",
     "# 島の遠隔操作のつなぎ（#{gap}）。配信1回ぶんの一時状態。\n"
     "# 決めごとは `docs/island-misses.md` #{live} に書いてある。\n"
+    "# **色も1つ置く。** `BREAK=ignore-far` で全部を見に行ったとき、`#ffffff` を\n"
+    "# 番号として読もうとして落ちる作りになっていないかを、ここで見る\n"
+    "BADGE = \"#ffffff\"\n"
     "ISLAND_REMOTE = 1\n",
 )
 PLANT_HIGH = (
