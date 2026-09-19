@@ -178,18 +178,62 @@ export function charPlace(icon: string, figure: number) {
  * `transform` を返す。**器は正方形にしておくこと**（正方形でないと、
  * 絵の描かれる位置と % のもとになる箱がずれる）。
  *
+ * ## 器が正方形でも、絵は器いっぱいには広がらない
+ *
+ * `object-fit: contain` は器の**短いほう**に合わせて絵を収める。正方形の器に
+ * 横長の絵（`ar > 1`）を入れると、縦は器の `1/ar` しか使わない。残りは上下の
+ * 余白で、絵は無い。**その取りこぼしが `m`。**
+ *
+ * ここを見ていなかったので、横長の絵だけ `ar` 倍ぶん小さく置いていた。
+ * 図鑑（`/friends`）でいちばん小さく出ていた1人がこれで、中央値の 0.750倍だった。
+ * 縦長の絵（`ar < 1`）は `m = 1` なので、前と1pxも変わらない。
+ *
+ * ## 描かれた部分は、器から出さない
+ *
+ * 高さの頭打ち（0.85〜1.25）は「背丈をそろえる」ための下駄なので、**平たい絵**
+ * （描かれた高さが枠の 52%）に当てると、下限に引っぱられて倍率が 1.343 まで上がり、
+ * **横が器の 1.31 倍**になっていた。器の外側にはみ出た絵は、器を持っている
+ * マスの外——つまり隣の人の場所——に描かれる。
+ *
+ * だから最後に「描かれた部分が器に収まる」ところまで倍率を下げる。
+ * ここを通すと、**はみ出しは器の形だけで決まる**（器が正方形なら 0 になる）。
+ * そろえる大きさより、はみ出さないほうが先。
+ *
  * @param icon   どの絵か
  * @param want   器に対して、描かれた部分をどれくらいの大きさにしたいか
  * @param bottom 足元を器の底に合わせる（地面に立たせるとき）
+ * @param over   測った箱を外から渡す。**透過を持たない絵**のように、焼いた表
+ *               （alpha の外接矩形）では描かれた範囲を言い当てられないときだけ使う
  */
-export function charFit(icon: string, want: number, bottom = false): { transform: string } {
-  const [bx, by, bw, bh, ar] = charBox(icon);
-  let k = want / Math.sqrt(Math.max(0.05, bw * bh * ar));
-  k = Math.min((want * 1.25) / bh, Math.max((want * 0.85) / bh, k));
+export function charFit(
+  icon: string,
+  want: number,
+  bottom = false,
+  over?: CharBox,
+): { transform: string } {
+  const [bx, by, bw, bh, ar] = over ?? charBox(icon);
+  // contain の取りこぼし。器の中で、絵そのものが占める幅と高さの割合
+  const m = Math.max(ar, 1);
+  const wc = ar / m;
+  const hc = 1 / m;
+  // 器に対する、描かれた部分の幅と高さ（倍率1のとき）
+  const uw = bw * wc;
+  const uh = bh * hc;
+  let k = want / Math.sqrt(Math.max(0.05, uw * uh));
+  // 背丈の頭打ち。面積をそろえきると、細長い人だけ頭ひとつ抜ける
+  k = Math.min((want * 1.25) / uh, Math.max((want * 0.85) / uh, k));
+  // 器から出さない。**頭打ちより後**に当てる（頭打ちが倍率を上げることがある）
+  k = Math.min(k, 1 / Math.max(uw, uh));
+  /* 絵そのものが器の中でどこから始まるか。横はどこも中央ぞろえ。
+     縦は `bottom` のときだけ器の底に付く（`object-position: center bottom`）。
+     `ar <= 1` では hc = 1 なので、どちらでも 0 になる——**この差が出るのは
+     横長の絵だけ**で、見開きの1枚がそこで足元を器の下に落としていた。 */
+  const x0 = (1 - wc) / 2;
+  const y0 = bottom ? 1 - hc : (1 - hc) / 2;
   /* `translate(t) scale(k)` は「拡大してから動かす」ので、中心から c にある点は
      k·c へ動く。t = ねらい − k·c。単位は**拡大前の器**に対する割合。 */
-  const cx = (bx + bw / 2 - 0.5) * ar;
-  const cy = bottom ? by + bh - 0.5 : by + bh / 2 - 0.5;
+  const cx = x0 + (bx + bw / 2) * wc - 0.5;
+  const cy = y0 + (bottom ? by + bh : by + bh / 2) * hc - 0.5;
   const tx = -k * cx;
   const ty = (bottom ? 0.5 : 0) - k * cy;
   return { transform: `translate(${(tx * 100).toFixed(1)}%, ${(ty * 100).toFixed(1)}%) scale(${k.toFixed(3)})` };

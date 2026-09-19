@@ -707,8 +707,14 @@
      キャラクターは Google ドライブから `=s640` で取っている（`FriendsWall.tsx`）。
      dpr2 の画面で引き伸ばさずに出せるのは 320px までなので、
      ここ（280px）も PC（330px）も、ほぼ実寸のまま出せる。 */
-  max-width: 92%;
-  max-height: 100%;
+  /* **正方形にする。** `charFit` の寄せは「正方形の器に対する割合」で
+     書いてある（`content/characterBox.ts`）。`max-width` と `max-height` で
+     囲うと、器は元の絵の比のままになって、横長・縦長の人だけ寄せがずれる。
+     辺は「横 92% と 器の高さ 280px の小さいほう」＝いままで絵が収まっていた
+     大きさそのもので、縦長の絵（12人）は 1px も変わらない。 */
+  width: min(92%, 280px);
+  aspect-ratio: 1 / 1;
+  height: auto;
   object-fit: contain;
   object-position: center bottom;
   /* 中に描かれた figure の大きさは人によって 1.5 倍違う。
@@ -812,8 +818,15 @@
   cursor: pointer;
 }
 .rzk-cell:active { transform: translateY(2px); box-shadow: none; }
-/* 枠は 86%。中に描かれた figure をそろえる寄せは `fitStyle` が付ける */
-.rzk-cell img { width: 86%; height: 86%; object-fit: contain; }
+/* 枠は 86%。中に描かれた figure をそろえる寄せは `charFit` が付ける。
+
+   **正方形にするのに `height: 86%` を使わない。** マスは `aspect-ratio` で
+   高さを決めていて、その中でまた縦の % を引くと、Chrome は絵の本来の高さを
+   先に立ててから 86% を取る。128×192 の絵で 40.1 × 51.7px——**縦長の器**に
+   なった。器が正方形だという前提で寄せを計算している `charFit` は、そこで
+   縦に伸びた箱ごと絵を置くので、マスの下へ 16.1px（マスの約1/3）はみ出す。
+   高さは `aspect-ratio` から取る。こちらは元の絵の比を見ない。 */
+.rzk-cell img { width: 86%; aspect-ratio: 1 / 1; height: auto; object-fit: contain; }
 /* 選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6） */
 .rzk-cell.is-on { border: 2px solid var(--pick); }
 /* マスの通し番号。絵の上に直に置くと、暗い絵のところで 1.30 : 1 まで落ちる
@@ -854,8 +867,9 @@
   .rzk-page { display: grid; grid-template-columns: 340px 1fr; grid-template-areas: "tag tag" "art fields" "art pager"; column-gap: var(--sp-5); align-content: start; padding: var(--sp-5); }
   .rzk-tag { grid-area: tag; }
   .rzk-art { grid-area: art; height: 360px; align-self: center; margin-bottom: 0; }
-  /* 絵は図鑑の主役。枠いっぱいまで使う（ac-reference 7章 4） */
-  .rzk-art img { max-width: 96%; }
+  /* 絵は図鑑の主役。枠いっぱいまで使う（ac-reference 7章 4）。
+     器の高さはこのブロックで 360px になるので、辺もそこに合わせる */
+  .rzk-art img { width: min(96%, 360px); }
   .rzk-fields { grid-area: fields; align-self: center; }
   .rzk-pager { grid-area: pager; }
 }

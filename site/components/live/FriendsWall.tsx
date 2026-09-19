@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENTS } from "@/content/residents";
-import { charFit } from "@/content/characterBox";
+import { charBox, charFit, type CharBox } from "@/content/characterBox";
 import { useResidentDaysState } from "@/lib/residentDays";
 import { VOICES } from "@/content/chatter";
 import Walk from "@/components/ui/Walk";
@@ -103,6 +103,118 @@ const ROLES = [
   ["scene", "背景あり", "bg"],
 ] as const;
 
+/**
+ * 透過を1画素も持たない絵の、**実際に描かれている範囲**。
+ *
+ * 背景なし（`plain`）の絵は、ふつう地が透けている。焼いた箱
+ * （`content/characterBox.ts` の `BOX`）は **alpha の外接矩形**なので、
+ * 透過が1画素も無い絵では「枠いっぱい」としか言えない。そうなると
+ *
+ *   - 大きさをそろえる相手が、人ではなく**紙**になる（その人だけ小さく出る）
+ *   - 紙そのものが、マスの中に白い四角として出る
+ *
+ * 絵を描き直せるのは本人だけなので、こちらは**見えかたのほうを合わせる。**
+ * 白い地は `mix-blend-mode: multiply` で敷き紙に溶かし（白 × 下地 = 下地）、
+ * 大きさは「地の色と違う画素」の外接矩形でそろえる。
+ * 焼いた箱を書き替えるのではなく、ここで測ったものを `charFit` に渡す。
+ *
+ * ## 数える相手を絞る
+ *
+ * 全員ぶん画素を読むと 103枚ぶんの canvas になる。透過を持たない絵は
+ * **必ず「枠いっぱい」の箱**になるので、そこだけ見ればよい（本番の103人で3人）。
+ * 読めない絵（他所から来ていて canvas が汚れる、まだ来ていない）は
+ * そのまま素通りさせる。**読めなかったことを「紙だった」と読まない。**
+ */
+/**
+ * 透過を持たない絵の見せかた。白（255,255,255）に下地を掛けると下地そのものに
+ * なるので、`multiply` で紙の白が消える。絵の色はほんの少し紙の色に寄る。
+ * **透過を持っている人には付けない**（掛けると色が沈む）。
+ */
+function paperInk(paper: boolean) {
+  return paper ? ({ mixBlendMode: "multiply" } as const) : null;
+}
+
+const PAPER = new Map<string, CharBox | null>();
+
+function paperBox(im: HTMLImageElement, icon: string): CharBox | null {
+  const w = im.naturalWidth;
+  const h = im.naturalHeight;
+  if (!w || !h) return null;
+  const cv = document.createElement("canvas");
+  cv.width = w;
+  cv.height = h;
+  const g = cv.getContext("2d", { willReadFrequently: true });
+  if (!g) return null;
+  g.drawImage(im, 0, 0);
+  let d: Uint8ClampedArray;
+  try {
+    d = g.getImageData(0, 0, w, h).data;
+  } catch {
+    return null; // 別のところから来た絵。読めないだけで、紙とは限らない
+  }
+  // 1画素でも透けていれば、焼いた箱のほうが正しい
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 255) return null;
+  // 地の色は四隅から。四隅がばらけていたら「一色の地」ではないので触らない
+  const at = (x: number, y: number) => (y * w + x) * 4;
+  const corners = [at(0, 0), at(w - 1, 0), at(0, h - 1), at(w - 1, h - 1)];
+  const [r0, g0, b0] = [d[corners[0]], d[corners[0] + 1], d[corners[0] + 2]];
+  const far = (i: number) =>
+    Math.max(Math.abs(d[i] - r0), Math.abs(d[i + 1] - g0), Math.abs(d[i + 2] - b0));
+  for (const c of corners) if (far(c) > 12) return null;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (far(at(x, y)) <= 12) continue;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  }
+  if (x1 < x0 || y1 < y0) return null; // 一色しかない。人が描かれていない
+  return [x0 / w, y0 / h, (x1 + 1 - x0) / w, (y1 + 1 - y0) / h, w / h];
+}
+
+/**
+ * 図鑑に並ぶ人のうち、透過を持たない絵を持っている人の箱。
+ * 一度測ったら覚えておく（面の中で何度も描き直されるため）。
+ */
+function usePaperArt(ids: string[]): Map<string, CharBox> {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    /* 透過を持たない絵は、必ず箱が「枠いっぱい」になる。そこだけ読む */
+    const want = ids.filter((id) => {
+      if (PAPER.has(id)) return false;
+      const [bx, by, bw, bh] = charBox(id);
+      return bx === 0 && by === 0 && bw === 1 && bh === 1;
+    });
+    for (const id of want) {
+      PAPER.set(id, null); // 測りに行った印。二重に読まない
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onload = () => {
+        if (!alive) return;
+        const box = paperBox(im, id);
+        if (box) {
+          PAPER.set(id, box);
+          bump((n) => n + 1);
+        }
+      };
+      im.src = charImg(id, 128);
+    }
+    return () => {
+      alive = false;
+    };
+  }, [ids]);
+  const out = new Map<string, CharBox>();
+  for (const id of ids) {
+    const b = PAPER.get(id);
+    if (b) out.set(id, b);
+  }
+  return out;
+}
+
 export default function FriendsWall({ plans }: { plans: PlanDays }) {
   const show = useResidentShow();
   /* あやと島カード（#173）。あやとの言葉:「/friends で、持ってるカード
@@ -118,6 +230,10 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
      スマホから足した人も、焼き直しを待たずに出る（`lib/characters.ts`）。 */
   const { chars, read: charsRead, reload: reloadChars } = useCharacters();
   const here = useOnIslandToday();
+  /* 透過を持たない絵（本番の103人で1人）。白い紙がマスに出てしまうので、
+     見えかたと大きさをここで合わせる */
+  const ids = useMemo(() => (chars ?? []).map((c) => c.id), [chars]);
+  const paper = usePaperArt(ids);
   /* 一緒にいた日数（#91）。**読めているかも一緒に持つ**（#115） */
   const { days: liveDays, read: daysRead } = useResidentDaysState();
   const list = chars ?? [];
@@ -239,7 +355,14 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 640 なのは、ここが図鑑の主役だから。箱は 280px（PC 330px）
                 あるので、dpr2 の画面でも引き伸ばさずに出せる。
                 一覧のマスは 128px のまま。増えるのは開いている1枚だけ。 */}
-            <img key={r.id} src={charImg(r.id, 640)} alt="" style={charFit(r.id, 0.94, true)} />
+            {/* 透過を持たない絵は、白い地を敷き紙に溶かして、
+                測った箱で大きさをそろえる（`usePaperArt`） */}
+            <img
+              key={r.id}
+              src={charImg(r.id, 640)}
+              alt=""
+              style={{ ...charFit(r.id, 0.94, true, paper.get(r.id)), ...paperInk(paper.has(r.id)) }}
+            />
           </div>
 
           <dl className="rzk-fields">
@@ -421,7 +544,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                   src={charImg(x.id, 128)}
                   alt={`${i + 1}人目`}
                   loading="lazy"
-                  style={charFit(x.id, 0.82)}
+                  style={{ ...charFit(x.id, 0.82, false, paper.get(x.id)), ...paperInk(paper.has(x.id)) }}
                 />
               </button>
             );
