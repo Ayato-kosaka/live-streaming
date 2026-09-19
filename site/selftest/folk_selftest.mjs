@@ -17,12 +17,13 @@
  * ## 何を見ているか
  *
  *  1. 12人ちょうど出る／同じ人を2度出さない／同じ日なら同じ顔ぶれ
- *  2. **点（`score`）を持たない名簿**——いまの `content/residents.ts` と同じ形。
- *     よく来る人ほど島にいる日が多い（上位12と下位12で差が出る）
- *  3. **点を持つ名簿**——投げ銭の額1位（出席0日）も島に出る。
- *     点を外すと同じ人が出なくなる（＝点を見ている、が数で見える）
+ *  2. **点（`score`）を持たない名簿**——焼き直しの前の受け皿。
+ *     出席0日の人は島に出ず、出席の上から `FIXED_SEATS` 人が毎日そのまま出る
+ *  3. **点を持つ名簿**——投げ銭の額1位（出席0日）は島に出る。
+ *     **出席0日・投げ銭0円の人は1日も出ない**
+ *     （あやとの決め 2026-09-19 / #568 Q1=A。経緯は `docs/island-misses.md` #175）
  *  4. **前の日と顔ぶれが完全に同じ日が 0日**（日替わりになっている）
- *  5. 90日でひとりも歩けない人が、ならして1人未満
+ *  5. **抽選席の重みを平らにすると差が消える**（対照。点を見ていることが数で見える）
  *
  * 人の数と日数の分布は、**本番の102人と同じ形**（2026-09-15 の `residents.ts`）。
  * 額は偽物で、本番の値は1つも置いていない。
@@ -32,7 +33,10 @@
  * `FOLK_TS` に壊した写しの道を渡すと、そちらを組み立てて回す。
  *
  * ```bash
- * # 古い式（出席日数をそのまま指数にする）に戻した写しで回すと落ちる
+ * # 選びかたを自前で書いた写し（`rosterOf` を通らない）で回すと落ちる
+ * sed 's/rosterOf(people.filter((p) => p.icon), max, jstDay(today))/'\
+ * '[...people].sort((a, b) => b.days - a.days).slice(0, max)/' \
+ *   site/components/isle/folk.ts > /tmp/folk-old.ts
  * FOLK_TS=/tmp/folk-old.ts node site/selftest/folk_selftest.mjs
  * ```
  */
@@ -91,8 +95,11 @@ execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
   "--skipLibCheck",
 ], {stdio: "inherit"});
 
-const {createFolk, outToday} = createRequire(import.meta.url)(join(OUT, "folk.js"));
-console.log(`# 組み立てた本体: ${SRC}`);
+const req = createRequire(import.meta.url);
+const {createFolk, outToday} = req(join(OUT, "folk.js"));
+/** 席の分けかたは `roster.ts` が決める。**ここに写しを置かない** */
+const {FIXED_SEATS} = req(join(OUT, "roster.js"));
+console.log(`# 組み立てた本体: ${SRC}（固定席 ${FIXED_SEATS}人）`);
 
 let BAD = 0;
 let OK = 0;
@@ -238,16 +245,26 @@ check("候補が12人以下なら、そのまま全員",
 
 // ------------------------------------------------------------------ 2
 
-console.log("\n# 2. 点を持たない名簿（＝いまの residents.ts）でも、よく来る人ほど島にいる");
+console.log("\n# 2. 点を持たない名簿（＝焼き直しの前の受け皿）でも、来ていない人は出ない");
 const plain = walk(PLAIN);
-const ratio = plain.top12 / plain.bottom12;
-console.log(`  90日の窓を ${plain.windows} 本: 出席上位12 ${plain.top12.toFixed(1)}日`
-  + ` / 下位12 ${plain.bottom12.toFixed(1)}日 → ${ratio.toFixed(2)}倍`
-  + ` / 一度も出ない人 ${plain.zero.toFixed(2)}人`);
-check("出席上位のほうがはっきり多い（2倍以上）", ratio >= 2, ratio.toFixed(2));
-check("開きすぎてもいない（9倍まで。古い式は336倍だった）", ratio <= 9, ratio.toFixed(2));
-check("90日で一度も歩けない人が、ならして1人未満", plain.zero < 1, plain.zero.toFixed(2));
-check("公平（10.6日）より上位がはっきり多い", plain.top12 > 14, plain.top12.toFixed(1));
+const plainOut = PLAIN.map((p, i) => ({p, i, n: plain.avg[i]}));
+const plainZero = plainOut.filter((x) => x.p.days === 0);
+const plainLive = plainOut.filter((x) => x.p.days > 0);
+const plainFixed = [...plainLive].sort((a, b) => b.p.days - a.p.days).slice(0, FIXED_SEATS);
+console.log(`  出席0日の ${plainZero.length}人: 島にいた日 ${plainZero.reduce((n, x) => n + x.n, 0).toFixed(1)}日`);
+console.log(`  出席の上から ${FIXED_SEATS}人: ${plainFixed.map((x) => `${x.n.toFixed(0)}日`).join(" ")}`
+  + ` / そのすぐ下: ${[...plainLive].sort((a, b) => b.p.days - a.p.days)[FIXED_SEATS].n.toFixed(0)}日`);
+check("出席0日の人は島に出ない（点が付かないので候補から外れる）",
+  plainZero.every((x) => x.n === 0),
+  plainZero.filter((x) => x.n > 0).length + "人 出た");
+check(`出席の上から ${FIXED_SEATS}人は、90日ぜんぶ島にいる`,
+  plainFixed.every((x) => x.n === 90), plainFixed.map((x) => x.n.toFixed(0)).join());
+check("出席のある人は、全員が一度は島に出る",
+  plainLive.every((x) => x.n > 0),
+  plainLive.filter((x) => x.n === 0).length + "人 出なかった");
+check("90日ぜんぶ島にいるのは、その人たちだけ",
+  plainOut.filter((x) => x.n === 90).length === FIXED_SEATS,
+  `${plainOut.filter((x) => x.n === 90).length}人`);
 
 // ------------------------------------------------------------------ 3
 
@@ -258,20 +275,19 @@ const without = plain.avg[TOP_YEN];
 console.log(`  額1位（p${TOP_YEN}・出席0日・点 ${SCORED[TOP_YEN].score.toFixed(3)}）:`
   + ` 点あり ${withScore.toFixed(1)}日 / 点なし ${without.toFixed(1)}日`);
 check("額1位が島に出ている", withScore > 0, withScore.toFixed(1));
-check("点なしのときよりはっきり多い（1.3倍以上）",
-  withScore / Math.max(without, 1e-9) >= 1.3,
-  `${withScore.toFixed(1)} / ${without.toFixed(1)}`);
+check("点なし（出席だけ）のときは出ていない＝額を見ている", without === 0, without.toFixed(1));
 check("出席0日でも、公平な10.6日の半分は歩く", withScore > 5.3, withScore.toFixed(1));
 
-/* 出席0日・投げ銭0円の人を対照に置く。**同じ0日でも、額があるかで差が出る** */
+/* 出席0日・投げ銭0円の人を対照に置く。**あやとの決め（#568 Q1=A）で、島に出さない** */
 const POOR = DAYS.map((d, i) => ({d, i})).filter((x) => x.d === 0 && YEN[x.i] === 0)[0].i;
-console.log(`  出席0日・投げ銭0円（p${POOR}・点 ${SCORED[POOR].score.toFixed(3)}）:`
-  + ` ${scored.avg[POOR].toFixed(1)}日`);
-check("額のある0日の人のほうが多く出る",
-  withScore > scored.avg[POOR] * 1.3,
-  `${withScore.toFixed(1)} / ${scored.avg[POOR].toFixed(1)}`);
-check("それでも、投げ銭0円の人が島から消えてはいない", scored.avg[POOR] > 0,
-  scored.avg[POOR].toFixed(1));
+const POORS = DAYS.map((d, i) => i).filter((i) => DAYS[i] === 0 && YEN[i] === 0);
+console.log(`  出席0日・投げ銭0円（${POORS.length}人・点 ${SCORED[POOR].score.toFixed(3)}）:`
+  + ` ${POORS.reduce((n, i) => n + scored.avg[i], 0).toFixed(1)}日`);
+check("3ヶ月なにもしていない人は、1日も島に出ない（#568 Q1=A）",
+  POORS.every((i) => scored.avg[i] === 0),
+  POORS.filter((i) => scored.avg[i] > 0).length + "人 出た");
+check("額のある0日の人は出ている（切っているのは点0であって、出席0日ではない）",
+  withScore > 0 && scored.avg[POOR] === 0);
 
 // ------------------------------------------------------------------ 4 / 5
 
@@ -281,15 +297,34 @@ console.log(`  前の日と顔ぶれが完全に同じ日: 点なし ${plain.sam
 check("点なしで 0日", plain.same === 0, String(plain.same));
 check("点ありで 0日", scored.same === 0, String(scored.same));
 
-console.log("\n# 5. 点を見ている（対照。名簿ぜんぶを同じ点にすると、差が縮む）");
-const flat = walk(SCORED.map((p) => ({icon: p.icon, days: p.days, score: 0.5})));
-const flatRatio = flat.top12 / flat.bottom12;
-console.log(`  点を平らにすると: 上位12÷下位12 ${flatRatio.toFixed(2)}倍`
-  + ` / 額1位 ${flat.avg[TOP_YEN].toFixed(1)}日`);
-check("平らにすると差がほぼ消える（1.3倍の内側）", flatRatio < 1.3, flatRatio.toFixed(2));
-check("点を付けたほうは、はっきり広い（2倍以上の開き）",
-  (scored.top12 / scored.bottom12) / flatRatio >= 2,
-  `${(scored.top12 / scored.bottom12).toFixed(2)} / ${flatRatio.toFixed(2)}`);
+console.log("\n# 5. 点を見ている（対照。抽選席の重みを平らにすると、差が消える）");
+/* 固定席の人と、点0で切られた人は**そのまま**にして、抽選席だけを平らにする。
+   名簿ぜんぶを同じ点にすると、点0の人が居なくなって固定席の顔ぶれまで変わり、
+   何が効いたのか分からなくなる */
+const ORDER = SCORED.map((p, i) => ({p, i}))
+  .filter((x) => x.p.score > 0)
+  .sort((a, b) => b.p.score - a.p.score || a.i - b.i)
+  .map((x) => x.i);
+const FIXED = ORDER.slice(0, FIXED_SEATS);
+const LOT = ORDER.slice(FIXED_SEATS);
+const flat = walk(SCORED.map((p, i) => ({
+  icon: p.icon,
+  days: p.days,
+  score: FIXED.includes(i) || p.score === 0 ? p.score : 0.5,
+})));
+const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+const hi12 = LOT.slice(0, 12);
+const lo12 = LOT.slice(-12);
+const ratioIn = (r) => mean(hi12.map((i) => r.avg[i])) / mean(lo12.map((i) => r.avg[i]));
+console.log(`  抽選席の 点の上12人 ÷ 点の下12人: 点あり ${ratioIn(scored).toFixed(2)}倍`
+  + ` / 平らにすると ${ratioIn(flat).toFixed(2)}倍`);
+check("平らにすると抽選席の差がほぼ消える（1.2倍の内側）", ratioIn(flat) < 1.2,
+  ratioIn(flat).toFixed(2));
+check("点を見ているほうは、はっきり広い（1.3倍以上の開き）",
+  ratioIn(scored) / ratioIn(flat) >= 1.3,
+  `${ratioIn(scored).toFixed(2)} / ${ratioIn(flat).toFixed(2)}`);
+check("平らにしても固定席は動かない（＝上の差は席、下の差は点）",
+  FIXED.every((i) => flat.avg[i] === 90), FIXED.map((i) => flat.avg[i].toFixed(0)).join());
 
 console.log("");
 if (BAD) {
