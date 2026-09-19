@@ -121,6 +121,9 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 from config import BQ_PROJECT_ID  # noqa: E402
 from doneru_supporters import jst_date  # noqa: E402
 from logsafe import mask  # noqa: E402
+from ticket_labels import (  # noqa: E402
+    HANDLE, WAIT_AYATO, WAIT_STYLE, ping_text, should_ping,
+)
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
@@ -299,6 +302,11 @@ def body(n: int, since, unlinked: int = 0) -> str:
         f"投げ銭してくれた **{n}人** が、まだ YouTube につながっていません。"
         "このままだとカードが渡りません。",
         "",
+        # **ここが唯一の「飛ぶ」行。** 題名に【あやとの操作】と書いても
+        # 通知は1通も飛ばない（#478 がそうだった）。行の頭に置くのは、
+        # 囲いや引用に巻き込まれないため（`python/ticket_labels.py`）
+        f"{HANDLE} 対応表を触れるのはあやとだけなので、ここはお願いします。",
+        "",
         "`/me` の「投げ銭を、YouTube につなぐ」から紐付けてください。",
     ]
     if since:
@@ -422,19 +430,35 @@ class Gh:
     def create(self, title: str, text: str, label: str) -> dict:
         # ラベルは issue に付けるときも作られるが、色も説明も付かない。
         # 一覧で見分けが付くように、先に作っておく（あれば 422 で、それでよい）
-        try:
-            self._call("POST", f"/repos/{self.repo}/labels",
-                       {"name": label, "color": LABEL_COLOR,
-                        "description": LABEL_DESC})
-        except urllib.error.HTTPError as e:
-            if e.code != 422:
-                raise
+        #
+        # **待ちの札（`待ち-あやと`）も一緒に付ける。** 付いていないと
+        # 毎週の棚卸し（`python/ticket_stock.py`）から見えない——
+        # あれは題名の【】ではなく札しか読まない
+        for name, color, desc in ((label, LABEL_COLOR, LABEL_DESC),
+                                  (WAIT_AYATO, *WAIT_STYLE[WAIT_AYATO])):
+            try:
+                self._call("POST", f"/repos/{self.repo}/labels",
+                           {"name": name, "color": color, "description": desc})
+            except urllib.error.HTTPError as e:
+                if e.code != 422:
+                    raise
         return self._call("POST", f"/repos/{self.repo}/issues",
-                          {"title": title, "body": text, "labels": [label]})
+                          {"title": title, "body": text,
+                           "labels": [label, WAIT_AYATO]})
 
     def patch(self, number: int, payload: dict) -> dict:
         return self._call("PATCH",
                           f"/repos/{self.repo}/issues/{number}", payload)
+
+    def comment(self, number: int, text: str) -> dict:
+        """コメントを1本足す。**通知が飛ぶのはここだけ。**
+
+        本文を書き換えても GitHub は誰にも知らせない。開き直しただけでも
+        飛ばない。だから「いま、あやとの番になった」ことを伝える口が要る。
+        """
+        return self._call("POST",
+                          f"/repos/{self.repo}/issues/{number}/comments",
+                          {"body": text})
 
 
 def run(gh, w: dict, apply: bool = False) -> dict:
@@ -497,6 +521,12 @@ def run(gh, w: dict, apply: bool = False) -> dict:
         gh.patch(issue["number"], payload)
         logger.info("issue #%s を%sました（紐付け待ち %d人）", issue["number"],
                     "開き直し" if what == "reopen" else "書き換え", n)
+        # **毎晩は鳴らさない。** 書き換えのたびにコメントすると雑音になる。
+        # 鳴るのは「閉じていたものが開き直った」ときと、
+        # 「前の本文にメンションが無かった」ときだけ（`ticket_labels.should_ping`）
+        if should_ping(what, issue.get("body") or "", True):
+            gh.comment(issue["number"], ping_text("投げ銭の紐付けが待っています"))
+            logger.info("issue #%s であやとを呼びました", issue["number"])
         return {"action": what, "planned": what, "number": issue["number"]}
 
     if what == "close":

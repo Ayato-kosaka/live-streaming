@@ -1,0 +1,67 @@
+# **PR の本文に `Closes #NNN` が在れば、マージでひとりでに閉じる。**
+# その仕組みはもう在るのに、使えていなかった。
+#
+# 直近30本のマージ済み PR を数えた（2026-09-19）:
+#
+#   `Closes` / `Fixes` / `Resolves` が在る … **1本（3%）**
+#   本文が `#NNN` に触れている             … 29本
+#
+# つまり閉じるのは毎回人の手で、だから閉じ忘れる。
+#
+# ## 落ちる条件を、わざと狭くしてある
+#
+# 「`#NNN` に触れているのに `Closes` が無い」で落とすと、直近30本のうち
+# **28本**が赤くなる。このリポジトリでは `#173` のような番号が
+# `docs/island-misses.md` の**節番号**としても使われていて、そちらのほうが多い。
+# 関係ない PR まで赤くすると、そのうち誰も読まなくなる。
+#
+# 落ちるのは「**いま開いている issue の番号**を指していて、`Closes` が無い」
+# ときだけ。直近30本に当てると1本（3%）で、しかもその1本は節番号の巻き添え。
+# 逃がし方（本文に `#147 は閉じない` と1行）も出す文の中に書いてある。
+#
+# 中身と対照は `python/closes_check.py` / `python/closes_check_selftest.py`。
+name: Closes Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: closes-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  closes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # **PR の本文は環境変数で渡す。** `${{ }}` を直接 `run:` の中に
+      # 展開すると、本文に書いたものがそのままシェルとして走る
+      - name: 開いている issue を指しているのに Closes が無いか
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          out="$(python3 python/closes_check.py 2>&1)"; rc=$?
+          echo "$out"
+          {
+            echo "### Closes の確認"
+            echo ""
+            echo '```'
+            echo "$out"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"

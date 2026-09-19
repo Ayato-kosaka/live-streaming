@@ -99,6 +99,12 @@ from doneru_supporters import jst_date  # noqa: E402
 # pull request を除くところも、開いているほうを先に取るところも同じでよい
 from donor_calls import PLAN, find_issue  # noqa: E402
 
+# **待ちの相手の札と、あやとの呼び方もここから借りる。**
+# メンションの字を各所に散らすと、変わった日に半分だけ直る
+from ticket_labels import (  # noqa: E402
+    HANDLE, WAIT_AYATO, WAIT_STYLE, WAIT_US, ping_text, should_ping,
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -257,6 +263,14 @@ def body(a: dict) -> str:
             "**セッションが切れているので、入れ直すまで戻りません。**",
             "",
             since,
+            "",
+            # **ここだけがメンションを入れる分岐。**
+            # cookie を入れ直せるのはあやとだけで、待っても直らない。
+            # 下の「何日も入っていない」ほうは、こちらが流し直せば入ることが
+            # あるので入れない——毎晩鳴るものに毎晩メンションすると、
+            # そのうち誰も読まなくなる
+            f"{HANDLE} cookie を入れ直せるのはあやとだけなので、"
+            "ここはお願いします。",
         ]
     else:
         n = a["days"]
@@ -357,21 +371,38 @@ class Gh:
             "GET", f"/repos/{self.repo}/issues?labels={label}&state=all&per_page=100"
         )
 
-    def create(self, title: str, text: str, label: str) -> dict:
+    def create(self, title: str, text: str, label: str, wait: str = "") -> dict:
         # ラベルは issue に付けるときも作られるが、色も説明も付かない。
         # 一覧で見分けが付くように、先に作っておく（あれば 422 で、それでよい）
-        try:
-            self._call("POST", f"/repos/{self.repo}/labels",
-                       {"name": label, "color": LABEL_COLOR,
-                        "description": LABEL_DESC})
-        except urllib.error.HTTPError as e:
-            if e.code != 422:
-                raise
+        #
+        # **待ちの札も一緒に付ける。** 付いていないと毎週の棚卸し
+        # （`python/ticket_stock.py`）から見えない。あれは題名の【】ではなく
+        # 札しか読まない。どちらの札かは、落ち方で変わる
+        # （セッション切れ＝あやと待ち／何日も入っていない＝こちら）
+        names = [label] + ([wait] if wait else [])
+        styles = {label: (LABEL_COLOR, LABEL_DESC)}
+        styles.update({k: v for k, v in WAIT_STYLE.items()})
+        for name in names:
+            color, desc = styles[name]
+            try:
+                self._call("POST", f"/repos/{self.repo}/labels",
+                           {"name": name, "color": color, "description": desc})
+            except urllib.error.HTTPError as e:
+                if e.code != 422:
+                    raise
         return self._call("POST", f"/repos/{self.repo}/issues",
-                          {"title": title, "body": text, "labels": [label]})
+                          {"title": title, "body": text, "labels": names})
 
     def patch(self, number: int, payload: dict) -> dict:
         return self._call("PATCH", f"/repos/{self.repo}/issues/{number}", payload)
+
+    def comment(self, number: int, text: str) -> dict:
+        """コメントを1本足す。**通知が飛ぶのはここだけ。**
+
+        本文を書き換えても、開き直しただけでも、GitHub は誰にも知らせない。
+        """
+        return self._call("POST", f"/repos/{self.repo}/issues/{number}/comments",
+                          {"body": text})
 
 
 def run(gh, a: dict, apply: bool = False) -> dict:
@@ -417,8 +448,13 @@ def run(gh, a: dict, apply: bool = False) -> dict:
         return {"action": "dry", "planned": what,
                 "number": issue["number"] if issue else None}
 
+    # **メンションを入れるのは「セッション切れ」のときだけ。**
+    # 何日も入っていないほうは、こちらが流し直せば入ることがある
+    needs_ayato = a["why"] == "expired"
+
     if what == "create":
-        made = gh.create(TITLE, want, LABEL)
+        made = gh.create(TITLE, want, LABEL,
+                         WAIT_AYATO if needs_ayato else WAIT_US)
         logger.info("issue #%s を開きました", made.get("number"))
         return {"action": what, "planned": what, "number": made.get("number")}
 
@@ -430,6 +466,12 @@ def run(gh, a: dict, apply: bool = False) -> dict:
         gh.patch(issue["number"], payload)
         logger.info("issue #%s を%sました", issue["number"],
                     "開き直し" if what == "reopen" else "書き換え")
+        # **毎晩は鳴らさない。** 鳴るのは開き直したときと、
+        # 「何日も入っていない」から「セッション切れ」に変わったとき
+        if should_ping(what, issue.get("body") or "", needs_ayato):
+            gh.comment(issue["number"],
+                       ping_text("Doneru の cookie が切れています"))
+            logger.info("issue #%s であやとを呼びました", issue["number"])
         return {"action": what, "planned": what, "number": issue["number"]}
 
     if what == "close":

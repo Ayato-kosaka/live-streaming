@@ -168,6 +168,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-db-notes.md`](docs/island-db-notes.md) — データ設計の**検討メモ**。
   なぜそう決めたか・何に躓いたか。**日付の付いた記録なので、あとから直さない**
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
+- [`docs/island-tickets.md`](docs/island-tickets.md) — **issue の片づけが、人の記憶を
+  使わずにどう回っているか。** 待ちの相手の札・毎週の棚卸し・`Closes #NNN`・
+  機械が立てる issue であやとを呼ぶところ
 - [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
   焼き込み（`site/content/*.ts`）が古いと思ったらここ
 
