@@ -3,36 +3,8 @@
  "_kind": "PRIVATE=非公開（403） / LOGIN=ログインが要る（401） / GONE=消えている（404） / NO_REC=録画そのものが無い / OTHER=見たことのない返り。**戻るほう（PRIVATE / LOGIN）もここには入る。** 隠すための表ではなく、見張りが「増えたぶんだけ」を言うための表なので。隠す相手は python/data/dead_streams.json のほう（戻らないものだけ）。",
  "_deep": "2段目（youtubei/v1/player）で「押せば見られる」と分かった日。毎晩ここに無い id と、30日たった id だけを深く見る。見られないもの・測れなかったものは載せない（毎晩見直すため）。",
  "_privacy": "入れてよいのは 配信ID・種類・日付・焼き込みのファイル名 だけ。題名も、視聴者さんの名前も、チャンネルIDも書かない。",
- "_measured": "2026-09-18",
+ "_measured": "2026-09-19",
  "ids": {
-  "-BsqaHWdUpI": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "-LJHF7G97A0": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "7YJHsTCrxko": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "8uPcdx4I0x0": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
   "Aea0S3WIZLU": {
    "kind": "GONE",
    "since": "2026-09-18"
@@ -41,20 +13,6 @@
    "kind": "NO_REC",
    "since": "2026-09-18"
   },
-  "GUVxac75B94": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "IFit2OMxHlA": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
   "JXEHbJX9Szw": {
    "kind": "GONE",
    "since": "2026-09-18"
@@ -62,48 +20,6 @@
   "LfUJ25h2f44": {
    "kind": "NO_REC",
    "since": "2026-09-18"
-  },
-  "M1P6m8TRjG0": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "Oi6nkCEfDNw": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "Tfl2I6Z6Gis": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "U4pyOXYSLZo": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "WZndyh3P_nQ": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "YbPvEzaa9eY": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
   },
   "cqf1unuyPXI": {
    "kind": "NO_REC",
@@ -131,27 +47,6 @@
   "p1-bliAqLJo": {
    "kind": "GONE",
    "since": "2026-09-18"
-  },
-  "r-EuQai-sMo": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "uOJikeLFTfU": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
-  },
-  "uicj5rra3V8": {
-   "kind": "PRIVATE",
-   "since": "2026-09-18",
-   "files": [
-    "cityStreams.ts"
-   ]
   }
  },
  "deep": {
@@ -634,6 +529,66 @@
   "esevUsePhMQ": "2026-09-18",
   "ey_pIoeVo_8": "2026-09-18",
   "f0D0YNq41lI": "2026-09-18",
-  "f3W2JxAHsQs": "2026-09-18"
+  "f3W2JxAHsQs": "2026-09-18",
+  "f9j0z_OcZpo": "2026-09-19",
+  "fH13PheJneU": "2026-09-19",
+  "fKeOH8MRlew": "2026-09-19",
+  "fSYAepSlDLI": "2026-09-19",
+  "fVGk-fQPROA": "2026-09-19",
+  "fdDK5n80hwo": "2026-09-19",
+  "fguIWqpU7xA": "2026-09-19",
+  "fk6rtyQMGY0": "2026-09-19",
+  "fqk0KVAqMps": "2026-09-19",
+  "fwUCpg4w0zE": "2026-09-19",
+  "gCDDxZyNy6k": "2026-09-19",
+  "gHTWAMKCITo": "2026-09-19",
+  "gcc3xTG6zNo": "2026-09-19",
+  "gqnf-2UTraM": "2026-09-19",
+  "gse7fek4Cpk": "2026-09-19",
+  "h-MRAFyj3Yc": "2026-09-19",
+  "h2d-assfrh0": "2026-09-19",
+  "h8mxqPKtVoo": "2026-09-19",
+  "hB1jT4Nl4II": "2026-09-19",
+  "hJHBl9gsvfw": "2026-09-19",
+  "hJW3dD7yOT0": "2026-09-19",
+  "hPZ2hAggOLE": "2026-09-19",
+  "haHAczqMooM": "2026-09-19",
+  "hbuzGO95DYE": "2026-09-19",
+  "hhW0LTh3xIw": "2026-09-19",
+  "hnVwWLDS6B8": "2026-09-19",
+  "hqWuJyxghfQ": "2026-09-19",
+  "hrXYXcu9IDE": "2026-09-19",
+  "hw5qLPIV3bM": "2026-09-19",
+  "hwJOAa5Kt8U": "2026-09-19",
+  "i84NTPVAsu0": "2026-09-19",
+  "iI35QPmp8x8": "2026-09-19",
+  "iLNWFjrdVFw": "2026-09-19",
+  "iOSWFRFuAQ4": "2026-09-19",
+  "i_P1pRTEps8": "2026-09-19",
+  "iaz-gO_NK8M": "2026-09-19",
+  "itQ8b_XeK0U": "2026-09-19",
+  "iv2max-f4QU": "2026-09-19",
+  "j9I6IVo86w8": "2026-09-19",
+  "j9le-e_raKA": "2026-09-19",
+  "jCwf-vlnEiM": "2026-09-19",
+  "jEUDlyRvDWA": "2026-09-19",
+  "jTpvux9mM44": "2026-09-19",
+  "jWHxbg9IUOE": "2026-09-19",
+  "jX6NIopOoLY": "2026-09-19",
+  "j_yInDStbKg": "2026-09-19",
+  "jsmLfqwAI7c": "2026-09-19",
+  "jwh1FeaQwzE": "2026-09-19",
+  "k-3fN6Ynsok": "2026-09-19",
+  "k3fmojcipn8": "2026-09-19",
+  "k4DxGQlkD6U": "2026-09-19",
+  "kNWqxeh732U": "2026-09-19",
+  "kWnLiOQGhFE": "2026-09-19",
+  "kf8ZLyVf4t8": "2026-09-19",
+  "koEV5cYVgfA": "2026-09-19",
+  "kunXt2sXnFQ": "2026-09-19",
+  "kwWohGs52OY": "2026-09-19",
+  "kyzCpe5Znyk": "2026-09-19",
+  "l-px7j-mt3I": "2026-09-19",
+  "l5ODV6hfCLQ": "2026-09-19"
  }
 }
