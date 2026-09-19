@@ -5,9 +5,32 @@
  *   python3 -m http.server 4290 --directory site/.next-3190 &
  *   SPORT=4290 node tools/sprites/dexfit.mjs      # 0=通った / 1=見つかった / 2=数えるものが無い
  *
+ *   ORIGIN=https://live-streaming-d3cac.web.app node tools/sprites/dexfit.mjs
+ *
  * **4190 は使わない。** Chrome も node の fetch も「危ない口」として塞いでいて
  * （ManageSieve）、node からは `bad port` で1本も取りに行けない。
  * 絵が全部「配られていない」に化ける（`crawl.mjs` で実際に踏んだ）。
+ *
+ * ## 出したあとは、本番の画素で数える（`ORIGIN=`）
+ *
+ * 手元の書き出しで 0件になっても、それは**出す前のもの**でしか言えていない。
+ * 「直したと言う前に、本番の値で確かめる」（`island-misses.md` #1）ので、
+ * `ORIGIN` を渡したら localhost ではなく**出したバイト列**を開く。
+ *
+ * **この箱のブラウザは本番に直接届かない**（proxy が ERR_CONNECTION_RESET）。
+ * なので `prod.mjs` の `viaCurl(ctx)` に要求を横取りさせて curl から取る。
+ * 絵の置き場（`firebasestorage.googleapis.com`）は `prod.mjs` の `PASS` に
+ * 入っているので通る。**通らない先があると、面は壊れているのではなく飢える。**
+ * 飢えを壊れと読んだことが3回あるので（`prod.mjs` の `PASS` のコメント）、
+ * 止めた先・たどった先・小さすぎた本文を**撮るたびに表に出して、止めた先が
+ * 1つでもあれば数字を出さずに落ちる。**
+ *
+ * 本番モードでは名簿も**本番の口から**その場で取る（`/tmp/ch.json` に
+ * 頼らない）。古い写しを分母に置くと、増減したときに「マスが足りない」で
+ * 落ちるか、悪ければ**測れていないものを 0件として通す**（#157）。
+ *
+ * 差し替え（`route.mjs` の `offline`）は本番モードでは**掛けない。**
+ * 手元の絵を返してしまうと、見ているのは本番の画素ではなくなる。
  *
  * ## なぜ要るか
  *
@@ -55,6 +78,19 @@
  *   BREAK=cell   マスの矩形ではなく画面ぜんぶと比べる
  *   BREAK=square 器の形を見ない
  *
+ * 本番モードには足がもう1本ある。**通していない先があると面は飢える**ので、
+ * そこに気づけるかを `STARVE=` で確かめる。
+ *
+ *   STARVE='plain-128' ORIGIN=… node tools/sprites/dexfit.mjs
+ *
+ * 絵を止めた状態。ここで落ちなければ、飢えた面を 0件で通すということ。
+ *
+ * **図鑑の絵は置き場を直に指していない。** 名簿（`/island-api/characters`）が
+ * 返す URL は `firebasestorage.googleapis.com` だが、面が実際に読んでいるのは
+ * 同じ生まれの `/island-api/characters/<id>/plain-128.webp` のほう（実測）。
+ * だから `STARVE='firebasestorage'` は**何も止めない。** 止めた気になって
+ * 「落ちなかった＝大丈夫」と読まないこと。
+ *
  * **足の数だけ用意する**（`island-standards.md` 15）。どれを1本抜いても
  * 対照が落ちる。落ちなければ、その足は最初から何も見ていない。
  *
@@ -68,11 +104,23 @@ import { chromium } from "playwright-core";
 import { readFileSync } from "fs";
 import { offline } from "./route.mjs";
 import { repoPath } from "./repo.mjs";
+import { blocked, fetchProd, redirects, thin, viaCurl } from "./prod.mjs";
 
 const SPORT = process.env.SPORT || "4290";
-const PAGE = process.env.PAGE || "/friends.html";
+/** 渡されたら本番モード。空なら今までどおり localhost の書き出しを見る */
+const ORIGIN = (process.env.ORIGIN || "").replace(/\/$/, "");
+/* 静的に配ったものは `.html` を付けないと引けないが、本番の Hosting は
+   拡張子なしで配る。**既定を分ける。** ここを間違えると 404 を掴んで
+   「マスが0枚」になり、直っているものが壊れて見える */
+const PAGE = process.env.PAGE || (ORIGIN ? "/friends" : "/friends.html");
+const AT = ORIGIN ? `本番 ${ORIGIN}${PAGE}` : `手元 http://localhost:${SPORT}${PAGE}`;
+/** 対照。本番モードでこの先を止めて、**飢えに気づくか**を見る
+ *  （`STARVE='plain-128' ORIGIN=… node …` で落ちなければ、その足は何も見ていない） */
+const STARVE = process.env.STARVE || "";
 const WIDTHS = (process.env.WIDTHS || "320,390,640,1000").split(",").map(Number);
-/** 本番の名簿。`curl .../island-api/characters > /tmp/ch.json` で落としておく */
+/** 手元モードで差し込む名簿。`curl -sSL .../island-api/characters > /tmp/ch.json`。
+ *  **`-L` を付ける**（付けないとリダイレクトの本文21バイトを掴む。#164）。
+ *  本番モードでは読まない——その場で本番の口から取る */
 const CHJSON = process.env.CHJSON || "/tmp/ch.json";
 const BREAK = process.env.BREAK || "";
 /** ±何%を「そろっている」とするか */
@@ -224,29 +272,92 @@ const b = await chromium.launch({
 });
 
 let CH = null;
-try {
-  CH = readFileSync(CHJSON, "utf8");
-} catch {
-  console.log(`::error::本番の名簿がありません（${CHJSON}）。`);
-  console.log("  curl -s https://live-streaming-d3cac.web.app/island-api/characters > /tmp/ch.json");
-  await b.close();
-  process.exit(2);
+if (ORIGIN) {
+  /* **本番モードの名簿は、その場で本番の口から取る。** 手元の写しを分母に
+     置くと、名簿が増減した晩に「マスが足りない」で落ちるか、悪ければ
+     測れていないものを 0件として通す（#157）。`fetchProd` は `-L` 付きなので
+     リダイレクトの本文21バイトを掴まない（#164） */
+  try {
+    const { body } = await fetchProd(`${ORIGIN}/island-api/characters`);
+    CH = body.toString("utf8");
+    JSON.parse(CH);
+  } catch (e) {
+    console.log(`::error::本番の名簿が取れません（${ORIGIN}/island-api/characters）: ${e.message}`);
+    await b.close();
+    process.exit(2);
+  }
+} else {
+  try {
+    CH = readFileSync(CHJSON, "utf8");
+  } catch {
+    console.log(`::error::本番の名簿がありません（${CHJSON}）。`);
+    console.log("  curl -sSL https://live-streaming-d3cac.web.app/island-api/characters > /tmp/ch.json");
+    await b.close();
+    process.exit(2);
+  }
 }
 const PEOPLE = (JSON.parse(CH).characters || []).filter((c) => c.plain?.sizes?.["128"]).length;
 
+/** curl 経由は1本ずつ順に取るので、本番は待ちを長く取る */
+const TMO = ORIGIN ? 180000 : 30000;
+
+/**
+ * 止めた先・たどった先・小さすぎた本文を表に出す。**止めた先が1つでもあれば false。**
+ *
+ * 通していない先があると、面は壊れているのではなく**飢えている。**
+ * 見分けがつかないまま「本番の不具合」と読んだことが3回ある（`prod.mjs`）。
+ * ここは絵を数える道具なので、飢えはそのまま「はみ出し」の嘘の数字になる。
+ */
+function fed(ctx, label) {
+  if (!ORIGIN) return true;
+  let ok = true;
+  for (const [from, to] of redirects(ctx)) console.log(`   ⇢ ${label} たどった ${from} → ${to}`);
+  for (const [u, n] of thin(ctx)) {
+    ok = false;
+    console.log(`::error::${label} 本文が ${n}B しかない: ${u}`);
+  }
+  for (const [host, n] of blocked(ctx)) {
+    ok = false;
+    console.log(`::error::${label} 外に出られなかった先: ${host} ×${n}（prod.mjs の PASS を見る）`);
+  }
+  return ok;
+}
+
 async function open(width) {
   const ctx = await b.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: 2 });
-  await offline(ctx);
-  // 名簿は本番のものを返す。**あとから登録した route が先に効く**
-  await ctx.route(/\/island-api\/characters(\?|$)/, (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: CH }),
-  );
+  if (ORIGIN) {
+    /* **差し替えは掛けない。** 手元の絵を返したら、見ているのは本番の画素で
+       なくなる。置き場は `PASS` に入っているので curl 経由で本物が来る */
+    await viaCurl(ctx);
+    if (STARVE) {
+      /* 対照の足。**`viaCurl` が使っているのと同じ数えもの**に足す（`blocked()` は
+         写しではなく本体を返す）。別の数えものを立てると、通してあるのに
+         気づかない穴をそのまま残すことになる。あとから登録した route が先に効く */
+      await ctx.route(new RegExp(STARVE), (r) => {
+        const m = blocked(ctx);
+        const h = (() => { try { return new URL(r.request().url()).host; } catch { return STARVE; } })();
+        m.set(h, (m.get(h) || 0) + 1);
+        return r.abort();
+      });
+    }
+  } else {
+    await offline(ctx);
+    // 名簿は本番のものを返す。**あとから登録した route が先に効く**
+    await ctx.route(/\/island-api\/characters(\?|$)/, (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: CH }),
+    );
+  }
   const p = await ctx.newPage();
-  const res = await p.goto(`http://localhost:${SPORT}${PAGE}`, { waitUntil: "load", timeout: 60000 });
+  const url = ORIGIN ? `${ORIGIN}${PAGE}` : `http://localhost:${SPORT}${PAGE}`;
+  /* 本番は絵を curl で1本ずつ取るので `load` まで待つと届かない。
+     面そのものが来たかだけを見て、絵は下の待ちで数える */
+  const res = await p
+    .goto(url, { waitUntil: ORIGIN ? "domcontentloaded" : "load", timeout: TMO })
+    .catch(() => null);
   if (!res || res.status() >= 400) return { ctx, p, ok: false };
   await p
     .waitForFunction((n) => document.querySelectorAll(".rzk-cell img").length >= n, PEOPLE, {
-      timeout: 30000,
+      timeout: TMO,
     })
     .catch(() => {});
   // 畳んだ中・画面の外の絵は要求されない。全部剥がしてから測る
@@ -256,7 +367,7 @@ async function open(width) {
   await p
     .waitForFunction(
       () => [...document.querySelectorAll(".rzk-cell img")].every((im) => im.complete),
-      { timeout: 30000 },
+      { timeout: TMO },
     )
     .catch(() => {});
   await p.waitForTimeout(600);
@@ -271,7 +382,14 @@ const INKS = new Map();
 {
   const { ctx, p, ok } = await open(390);
   if (!ok) {
-    console.log(`::error::${PAGE} が開けません（SPORT=${SPORT}）`);
+    console.log(`::error::${AT} が開けません`);
+    await b.close();
+    process.exit(2);
+  }
+  /* **飢えは、絵を1枚読む前に見る。** 取れなかった絵は描かれないので
+     はみ出しようがなく、そのまま「0件」という合格に化ける（#157） */
+  if (!fed(ctx, "対照")) {
+    console.log("::error::外に出られなかった先があります。飢えた面では数えません");
     await b.close();
     process.exit(2);
   }
@@ -324,6 +442,12 @@ const INKS = new Map();
   for (const r of probes) {
     if (!INKS.has(r.src)) INKS.set(r.src, await p.evaluate(INK, r.src));
   }
+  const blind = probes.filter((r) => !INKS.get(r.src));
+  if (blind.length) {
+    console.log(`::error::対照の絵を ${blind.length}枚 読めませんでした（画素が取れない）`);
+    await b.close();
+    process.exit(2);
+  }
   const side = (kind) => probes.filter((r) => r.probe === kind);
   const overOf = (kind) => side(kind).filter((r) => out(r, INKS.get(r.src)) > 1).length;
   const flatOf = (kind) => side(kind).filter((r) => flat(r) > 1).length;
@@ -352,6 +476,7 @@ const INKS = new Map();
 /* ───────── 本物の面 ───────── */
 
 let paper = [];
+let starved = false;
 let over = 0;
 let notSquare = 0;
 let seen = 0;
@@ -360,7 +485,7 @@ let spreadWorst = null;
 for (const W of WIDTHS) {
   const { ctx, p, ok } = await open(W);
   if (!ok) {
-    console.log(`::error::幅 ${W} で ${PAGE} が開けません`);
+    console.log(`::error::幅 ${W} で ${AT} が開けません`);
     await ctx.close();
     await b.close();
     process.exit(2);
@@ -421,13 +546,18 @@ for (const W of WIDTHS) {
         off.map((s) => `マス${s.n} ${(s.size / mid).toFixed(3)}倍`).join(" / "),
     );
   }
+  if (!fed(ctx, `幅 ${W}`)) starved = true;
   await ctx.close();
 }
 
 if (over) fail.push(`マスからはみ出している絵が ${over}件`);
 if (notSquare) fail.push(`器が正方形でないマスが ${notSquare}件`);
+/* **飢えたまま出た 0件は、合格ではない。** 取れなかった絵はそもそも
+   描かれないので、はみ出しようがない（#157 の「測れていないものを 0 で出す」） */
+if (starved) fail.push("外に出られなかった先がある。この数字は当てにならない");
 
 console.log("");
+console.log(`   見たもの: ${AT}`);
 for (const line of note) console.log(`   ${line}`);
 console.log(
   `合計  幅 ${WIDTHS.length}とおり / 名簿 ${PEOPLE}人 / 数えたマス ${seen}枚 / ` +
