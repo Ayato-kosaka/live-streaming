@@ -2,12 +2,44 @@
  * 図鑑（`/friends`）の「もらったカード」欄から、**その人のカードぜんぶへ
  * 行けるか**を見る。
  *
- *   tools/build.sh 3170
+ *   node tools/sprites/cardgo.mjs                    # 本番の面。**ビルド要らず**（既定）
+ *   ORIGIN=https://… node tools/sprites/cardgo.mjs   # 向け先を変える
+ *
+ *   tools/build.sh 3170                              # 手元の書き出しを見るとき
  *   python3 -m http.server 4170 --directory site/.next-3170 &
  *   PORT=4170 node tools/sprites/cardgo.mjs
  *
  * 0＝通った / 1＝行けない人がいた・札の字が行き先と食い違っていた /
- * 2＝数えるものが無い（本番の口が引けない・図鑑が出ない・対照が外れた）
+ * 2＝数えるものが無い（本番の口が引けない・図鑑が出ない・外に出られなかった
+ *   先がある・対照が外れた）
+ *
+ * ## 既定は本番。手元の書き出しは `PORT=` を渡したときだけ
+ *
+ * 立てた日（#587）は `localhost` しか開けなかった。**誰かが先にビルドしない
+ * かぎり、この見張りは一度も走らない**——`ERR_CONNECTION_REFUSED` で落ちるだけ。
+ * 人が居ないと走らない見張りは、無いのと同じ。なので**既定を本番**にした。
+ *
+ * 向け先の決め方は `kdfit.mjs` と同じ形にしてある。あちらは `ORIGIN=` を
+ * 渡したときだけ本番を見る（手元が既定）。ここは**逆向き**で、`ORIGIN` は
+ * 前から**口を引く先**として既定を持っている（数えるもとは、いつでも本番の
+ * 口から取る）。だから**渡されたほう＝在りかを名指ししたほう**を見る、という
+ * 同じ決め方で `PORT=` があれば手元、無ければ本番にした。
+ * 前からの `PORT=4170 node …` は、そのまま今までどおり動く。
+ *
+ * **面の名前は拡張子で分かれる。** 静的に配ったものは `.html` を付けないと
+ * 引けないが、本番の Hosting は拡張子なしで配る（`kdfit.mjs` と同じ）。
+ *
+ * **この箱のブラウザは本番に直接届かない**（proxy が ERR_CONNECTION_RESET）。
+ * `prod.mjs` の `viaCurl(ctx)` に要求を横取りさせて curl から取る。
+ * 止めた先・たどった先・小さすぎた本文は**表に出して、止めた先が1つでも
+ * あれば数字を出さずに 2 で止まる。** 通っていない先があると、面は壊れるのでは
+ * なく**飢える**——束ねた JS が1本来ないだけで図鑑は0マスになり、
+ * 「行けない人 0件」という嘘の合格になる（#157）。
+ *
+ * **住人の絵は本番モードでも `offline` で差し替える。** ここは画素ではなく
+ * **どこへ行けるか**を数える道具なので、本物の絵は要らない（`kdfit.mjs` が
+ * 差し替えないのは、あちらが画素を測るから）。**`viaCurl` より後に登録する**
+ * ——Playwright はあとに登録した route から当てる。
  *
  * ## なぜ要るか
  *
@@ -42,6 +74,18 @@
  *
  * どちらも**当てると落ちる**（1）。当てずに落ちないことも毎回見る——
  * 片側だけは対照ではない（`docs/island-standards.md` §15）。
+ * **足は1本ずつ折る。** `cut2` はたどれるかだけ、`golink` は札の字だけを
+ * 落とす（本番の実測で 17件 / 22件、もう一方は 0件）。2本まとめて落ちる対照は、
+ * 死んだ足を隠す（`docs/island-misses.md` #128）。
+ *
+ * 本番モードには足がもう1本ある。**通していない先があると面は飢える**ので、
+ * そこに気づけるかを `STARVE=` で確かめる（`kdfit.mjs` と同じ形）。
+ *
+ *   STARVE='_next/static' node tools/sprites/cardgo.mjs   # 2 で落ちる
+ *
+ * 止められるのは **curl が運んでいるもの**（面と、束ねた JS）だけ。絵と口は
+ * あとから登録した差し替えが受けるので、ここでは止まらない——そこは
+ * 手元のファイルから来ていて、外に出ていないので飢えようが無い。
  *
  * ## 判定そのものは、毎 PR で回る
  *
@@ -59,6 +103,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { blocked, redirects, thin, viaCurl } from "./prod.mjs";
 import { goesElsewhere, reachGap, verdict } from "./cardgojudge.mjs";
 
 
@@ -67,10 +112,27 @@ const RUN =
   process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
 if (RUN) {
-  const PORT = process.env.PORT || "4170";
-  const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+  /** 渡されたら手元の書き出しを見る。**空なら本番**（既定） */
+  const PORT = process.env.PORT || "";
+  /** 口を引く先。面も（`PORT` が無ければ）ここから開く */
+  const ORIGIN = (process.env.ORIGIN || "https://live-streaming-d3cac.web.app").replace(/\/$/, "");
+  const HERE = Boolean(PORT);
+  /* 静的に配ったものは `.html` が要るが、本番の Hosting は拡張子なしで配る。
+     間違えると 404 を掴んで「図鑑のマスが0」になり、出ているものが壊れて見える */
+  const PAGE = HERE ? `http://localhost:${PORT}/friends.html` : `${ORIGIN}/friends`;
+  /** curl 経由は1本ずつ取ってくるので、本番は待ちを長く取る */
+  const TMO = HERE ? 15000 : 120000;
   const OUT = process.env.OUT || join(tmpdir(), "cardgo");
   const BREAK = process.env.BREAK || "";
+  /** 対照の足。本番モードでこの先を止めて、**飢えに気づくか**を見る */
+  const STARVE = process.env.STARVE || "";
+  /* **手元モードでは、この足は付いていない。** localhost しか叩かないので
+     止める先が無く、当てても緑のまま通る。**緑を「足が効いた」と読まれると、
+     死んだ足をそのまま置くことになる**ので、当てられた時点で止める */
+  if (STARVE && HERE) {
+    console.error("見つからなかった: STARVE= は本番モードの足です（PORT= を外してください）");
+    process.exit(2);
+  }
   const SHOT = process.env.SHOT === "1";
   mkdirSync(OUT, { recursive: true });
 
@@ -162,6 +224,29 @@ if (RUN) {
     deviceScaleFactor: 2,
     reducedMotion: "reduce",
   });
+  /* **本番モードは curl 越しに取る。** この箱のブラウザは本番に届かない。
+     **いちばん先に登録する**——あとから登録した route が先に当たるので、
+     下の差し替え（絵・口）が全部こちらより優先される */
+  if (!HERE) {
+    await viaCurl(ctx);
+    if (STARVE) {
+      /* **`viaCurl` が使っているのと同じ数えもの**に足す（`blocked()` は写しではなく
+         本体を返す）。別の数えものを立てると、通してあるのに気づかない穴を
+         そのまま残すことになる */
+      await ctx.route(new RegExp(STARVE), (r) => {
+        const m = blocked(ctx);
+        const h = (() => {
+          try {
+            return new URL(r.request().url()).host;
+          } catch {
+            return STARVE;
+          }
+        })();
+        m.set(h, (m.get(h) || 0) + 1);
+        return r.abort();
+      });
+    }
+  }
   // キャラクターの絵は落としてあるものを1人ずつ返す（`avatars.py` / `chars.py`）
   await offline(ctx);
 
@@ -211,8 +296,37 @@ if (RUN) {
     return json({ error: "notfound" }, 404);
   });
 
+  /**
+   * **飢えていないか。** 止めた先・たどった先・小さすぎた本文を表に出して、
+   * 止めた先が1つでもあれば `missing` に入れる（＝数字を出さずに 2）。
+   *
+   * 取れなかった束ねた JS の先には**図鑑そのものが出ない**ので、
+   * 「行けない人 0件」という合格に化ける（#157）。手元モードでは何も見ない
+   * （localhost しか叩かないので、止める先が無い）。
+   */
+  const fed = (label) => {
+    if (HERE) return;
+    for (const [from, to] of redirects(ctx)) console.log(`   ⇢ ${label} たどった ${from} → ${to}`);
+    for (const [u, n] of thin(ctx)) missing.push(`${label} 本文が ${n}B しかない: ${u}`);
+    for (const [host, n] of blocked(ctx)) {
+      missing.push(`${label} 外に出られなかった先: ${host} ×${n}（prod.mjs の PASS を見る）`);
+    }
+  };
+
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
+
+  /** 図鑑を開いて、マスが並ぶまで待つ。**本番は curl 越しなので待ちが長い** */
+  async function openFriends(after = 600) {
+    const res = await p
+      .goto(PAGE, { waitUntil: HERE ? "networkidle" : "domcontentloaded", timeout: TMO })
+      .catch(() => null);
+    if (!res || res.status() >= 400) {
+      missing.push(`${PAGE} が開けません（${res ? res.status() : "届かない"}）`);
+    }
+    await p.waitForSelector(".rzk-cell", { timeout: TMO }).catch(() => {});
+    if (after) await p.waitForTimeout(after);
+  }
 
   /**
    * 直す前の姿を作り直す（対照）。
@@ -251,9 +365,12 @@ if (RUN) {
       return false;
     }, how);
 
-  await p.goto(`http://localhost:${PORT}/friends.html`, { waitUntil: "networkidle" });
-  await p.waitForSelector(".rzk-cell", { timeout: 15000 }).catch(() => {});
-  await p.waitForTimeout(600);
+  console.log("見たもの:", HERE ? `手元 ${PAGE}` : `本番 ${PAGE}`);
+  await openFriends();
+  /* **飢えを、数える前に見る。** 束ねた JS が1本来ないだけで図鑑は0マスになり、
+     「マスが0」という別の理由で落ちて、通っていない先に気づけない */
+  fed("図鑑");
+  if (missing.length) await stop(b, 2, `見つからなかった: ${missing.join(" / ")}`);
 
   const cells = await p.locator(".rzk-cell").count();
   console.log("図鑑のマス:", cells);
@@ -373,8 +490,7 @@ if (RUN) {
   /* 読めなかったとき。**0枚と同じ絵にしない**（`docs/island-standards.md` §10）。
      カードの口を落として開き直して、いちばん多く持っている人の札を見る。 */
   cardsDown = true;
-  await p.goto(`http://localhost:${PORT}/friends.html`, { waitUntil: "domcontentloaded" });
-  await p.waitForSelector(".rzk-cell", { timeout: 15000 }).catch(() => {});
+  await openFriends(0);
   await p.locator(".rzk-cell").nth(AT.get(持っている人[0][0])).click();
   await p.waitForTimeout(1200);
   const 落ちたとき = await p.evaluate(() => ({
@@ -391,6 +507,7 @@ if (RUN) {
     bad.push("カードの口が落ちたときに、読めなかったと言っていない（0枚と同じ絵）");
   }
 
+  fed("読めなかったとき");
   await b.close();
 
   const code = verdict({ missing, bad });
