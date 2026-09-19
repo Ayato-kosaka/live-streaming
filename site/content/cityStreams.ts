@@ -1724,6 +1724,25 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-09-18"
       }
     ]
+  },
+  "finland": {
+    "ヘルシンキ": [
+      {
+        "videoId": "VwUgzKblYyM",
+        "title": "【最終日】親友に会いにスウェーデンまでヒッチハイクします。フィンランド🇫🇮ヘルシンキ　まで",
+        "date": "2026-09-19"
+      },
+      {
+        "videoId": "WuA1ZykNUWk",
+        "title": "【最終日】親友に会いにスウェーデンまでヒッチハイクします。フィンランド🇫🇮ヘルシンキ　まで part 2",
+        "date": "2026-09-19"
+      },
+      {
+        "videoId": "d2q2XuA7ss0",
+        "title": "【最終日】親友に会いにスウェーデンまでヒッチハイクします。フィンランド🇫🇮ヘルシンキ　まで part 2",
+        "date": "2026-09-19"
+      }
+    ]
   }
 };
 

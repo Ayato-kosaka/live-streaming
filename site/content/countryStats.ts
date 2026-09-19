@@ -37,6 +37,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "czech": { lives: 6, people: 20, msgs: 204, days: 6, top: ["2024-12-09", "QzkTER4Tml4", "チェコ最終日なので、質問コーナーします", 7] },
   "egypt": { lives: 37, people: 69, msgs: 9366, days: 27, top: ["2025-05-04", "cK0tttTZ3as", "GWエジプト祭り2日目 - ルクソール東側 神殿巡りとラクダ飯", 15] },
   "estonia": { lives: 1, people: 32, msgs: 1104, days: 1, top: ["2026-09-18", "kunXt2sXnFQ", "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン まで", 32] },
+  "finland": { lives: 3, people: 33, msgs: 1025, days: 1, top: ["2026-09-19", "WuA1ZykNUWk", "【最終日】親友に会いにスウェーデンまでヒッチハイクします。フィンランド🇫🇮ヘルシンキ まで part 2", 24] },
   "france": { lives: 19, people: 68, msgs: 2128, days: 17, top: ["2025-03-13", "2fdbFpZgWVs", "ひとり旅が再び始まりました。パリを少し歩きます。", 12] },
   "georgia": { lives: 394, people: 1278, msgs: 67487, days: 373, top: ["2025-12-23", "xud2lfBsF48", "電波良し、気分良し、活気よし", 63] },
   "germany": { lives: 14, people: 51, msgs: 1758, days: 11, top: ["2025-03-28", "W5Q-wKTzflY", "前編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃すぎた…", 17] },
@@ -68,4 +69,4 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
  * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = 22;
+export const COUNTRIES_WALKED = 23;
