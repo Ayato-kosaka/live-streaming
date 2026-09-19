@@ -31,9 +31,8 @@
 
 - `tools/sprites/rootcheck.mjs` … 0.18秒・依存なし。`selftest.yml` の毎 PR
 - `tools/sprites/ogcheck.py` … 6.0秒・Pillow だけ。`selftest.yml` の毎 PR
-- `tools/sprites/walkedcount.mjs` / `tools/sprites/dexfit.mjs` /
-  `tools/sprites/kdfit.mjs` … 書き出しとブラウザが要るので
-  `selftest.yml` の別の job（`browserwatch`）
+- `tools/sprites/walkedcount.mjs` / `tools/sprites/dexfit.mjs` …
+  書き出しとブラウザが要るので `selftest.yml` の別の job（`browserwatch`）
 
 ## 測った値（2026-09-19。この箱。4コア）
 
@@ -159,6 +158,12 @@ EXCUSES: dict[str, str] = {
     "tools/sprites/dexdays.mjs":
         "図鑑の札の「いっしょにいた日数」を1枚ずつ開いて見る。札の中身は"
         "本番の口から来るので、PR の書き出しでは空になる（2026-09-19）",
+    "tools/sprites/kdfit.mjs":
+        "台所の絵が器からはみ出していないか。`browserwatch` に足して当ててみたが、"
+        "住人・視聴者・ショートの絵も要り、キャラの絵だけでは**対照に使う"
+        "平たい絵が1枚も揃わず 2 で落ちた**（2026-09-19。run 35422246754。"
+        "本物で返せた枚数 キャラ 0/772・ショート 0/172・視聴者 0/264）。"
+        "土台は `browserwatch` に在るので、絵の落とし方が決まれば載せられる",
     "tools/sprites/dexspot.mjs":
         "図鑑の札の「今日いるところ」を1枚ずつ開いて見る。`dexdays.mjs` と同じく"
         "本番の口が要る（2026-09-19）",
