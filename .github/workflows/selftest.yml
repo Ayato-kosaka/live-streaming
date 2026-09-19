@@ -189,7 +189,12 @@ jobs:
   # 残りは `python/watch_excuses.py` に**理由つきで**断ってある。
   # 土台（書き出し＋ブラウザ＋住人の絵）はここに在るので、次に載せるならここへ足す。
   #
-  # 別の job にしてあるのは、上の見張り（144秒）を待たせないため。並んで走る。
+  # 別の job にしてあるのは、上の見張り（196秒）を待たせないため。並んで走る。
+  #
+  # **CI の実測**（2026-09-19。run 35418964922。この job ぜんぶで 588秒）:
+  #   site の npm ci 13秒 / 書き出し 42秒 / ブラウザ 19秒 /
+  #   絵を落とす 345秒（2回目からはキャッシュに当たる） /
+  #   walkedcount ＋ dexfit で 163秒
   browserwatch:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -209,8 +214,8 @@ jobs:
         working-directory: site
         run: npm ci --no-audit --no-fund
 
-      # 手元の箱で1分10秒（2026-09-19 実測）。**開発サーバーでは測らない**
-      # ——先読みも束ね方も本番と違う（`CLAUDE.md`）
+      # 手元の箱で1分10秒、**CI で 42秒**（2026-09-19 実測。run 35418964922）。
+      # **開発サーバーでは測らない**——先読みも束ね方も本番と違う（`CLAUDE.md`）
       - name: 書き出す
         working-directory: site
         env:
@@ -240,17 +245,39 @@ jobs:
             exit 2
           fi
 
+      - name: 住人の名簿を取る（絵の置き場が書いてある）
+        run: |
+          set -euo pipefail
+          mkdir -p .cikey
+          curl -sS --max-time 60 \
+            https://live-streaming-d3cac.web.app/island-api/characters \
+            > .cikey/characters.json
+          cp .cikey/characters.json /tmp/ch.json
+
+      # **落とし直しに 345秒**かかっていた（2026-09-19 の CI 実測。392枚）。
+      # 毎 PR で同じ絵を落とすので、置きっぱなしにする。
+      #
+      # 鍵は名簿の JSON の指紋でよい。絵の URL に Firebase の `token=` が
+      # 入っていて、**絵を差し替えると token が変わる**ので、差し替えた日だけ
+      # 鍵が外れて落とし直す。日付を鍵にすると「その日のうちに差し替えた絵」を
+      # 丸一日見のがす——そちらは取らない。
+      # 外れても下の step がそのまま落とすので、**当たらない日でも結果は同じ**
+      - name: 落とした絵を使いまわす
+        uses: actions/cache@v4
+        with:
+          path: /tmp/chars
+          key: island-chars-${{ hashFiles('.cikey/characters.json') }}
+
       # **絵を落とさないと、dexfit は103人ぜんぶを同じ1枚で測る。**
       # それでも最後まで走って「はみ出し 0件」と言う——いちばん悪い嘘。
-      # だから枚数を数えて、落ちていなければここで止める
+      # だから枚数を数えて、落ちていなければここで止める。
+      # `chars.py` は既に在るぶんを飛ばすので、当たった回は0枚落として帰る
       - name: 住人の絵を落とす（落ちていなければ止める）
         run: |
           set -euo pipefail
-          curl -sS --max-time 60 \
-            https://live-streaming-d3cac.web.app/island-api/characters > /tmp/ch.json
           python3 tools/sprites/chars.py
           n="$(ls /tmp/chars | wc -l)"
-          echo "落ちた絵 ${n} 枚"
+          echo "手元にある絵 ${n} 枚"
           if [ "$n" -lt 50 ]; then
             echo "::error::絵が落ちていない。dexfit は全員おなじ顔で「はみ出し 0件」と言う"
             exit 2
