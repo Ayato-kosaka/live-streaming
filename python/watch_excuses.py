@@ -31,8 +31,9 @@
 
 - `tools/sprites/rootcheck.mjs` … 0.18秒・依存なし。`selftest.yml` の毎 PR
 - `tools/sprites/ogcheck.py` … 6.0秒・Pillow だけ。`selftest.yml` の毎 PR
-- `tools/sprites/walkedcount.mjs` / `tools/sprites/dexfit.mjs` …
-  書き出しとブラウザが要るので `selftest.yml` の別の job（`browserwatch`）
+- `tools/sprites/walkedcount.mjs` / `tools/sprites/dexfit.mjs` /
+  `tools/sprites/kdfit.mjs` … 書き出しとブラウザが要るので
+  `selftest.yml` の別の job（`browserwatch`）
 
 ## 測った値（2026-09-19。この箱。4コア）
 
