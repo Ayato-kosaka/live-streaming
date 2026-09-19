@@ -1,0 +1,260 @@
+/**
+ * `prodsweep.mjs` の**判定と、面の集めかた**だけを、本番もブラウザも無しで確かめる。
+ *
+ *     node tools/sprites/prodsweep_selftest.mjs
+ *
+ * 終了コード 0=ぜんぶ通った / 1=落ちた / 2=数えるものが無い。
+ *
+ * ## なぜ要るか
+ *
+ * `prodsweep.mjs` は**配ったあとに本番を一周する**見張りで、腐ったときに出るのは
+ * **「違反 0」**（#157 #164）。0件はいちばん合格に見えるので、毎 PR で回す。
+ *
+ * ## ブラウザを使わない理由と、そのぶん失うもの
+ *
+ * CI には `tools/sprites/node_modules` が無いので、`playwright-core` を import した
+ * 時点で見張りは import の行で死ぬ。`prodsweep.mjs` は curl しか使わず、
+ * 借りている `prod.mjs` も `playwright-core` を**回すときに読む**（`prodcurl_selftest.mjs`
+ * と同じ形）。**失うのは「本番に届くか」だけ。** そこは本物を1回回して見る。
+ *
+ * ## 足を1本ずつ抜く（`docs/island-standards.md` §15）
+ *
+ * 見る足は6本あって、**1本抜くたびに別々の台が、別々の項目で落ちる。**
+ *
+ * | 抜く足 | 落ちる台［落ちる項目］ |
+ * | --- | --- |
+ * | `status` | `404`［—］（404 が通ってしまう） |
+ * | `h1` | `h1none` `h1two`［—］ |
+ * | `title` | `titleempty` `titlenone`［—］ |
+ * | `thin` | `thin`［—］ |
+ * | `follow` | `moved`［status h1 title thin］（301 の本文21バイトを掴む） |
+ * | `tell` | `moved`［tell］（追えてはいるが、追ったと言わない） |
+ *
+ * **`follow` と `tell` は同じ台を落とすが、落とす項目が違う。**
+ * 台の名前だけで見比べると2本が同じ足に見えるので、**項目まで突き合わせる。**
+ */
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createServer } from "node:http";
+
+import {
+  CONTROLS, countH1, fetchOne, judgePage, runControls, sitemapPaths, staticAppPaths, titleOf,
+} from "./prodsweep.mjs";
+import { THIN_BYTES } from "./prod.mjs";
+
+/* **偽のサーバへは proxy を通さない。** curl は環境変数を見るので、
+   通すと自分の中の 127.0.0.1 にすら届かないことがある */
+process.env.NO_PROXY = "127.0.0.1,localhost";
+process.env.no_proxy = "127.0.0.1,localhost";
+
+let OK = 0;
+let BAD = 0;
+/** 数えたものの総数。**1つも無ければ 2 で落ちる**（§15） */
+let SEEN = 0;
+
+function check(name, ok, got) {
+  SEEN++;
+  if (ok) { OK++; console.log(`  ok   ${name}`); }
+  else { BAD++; console.log(`  NG   ${name}  ← ${got}`); }
+}
+
+const sig = (rows) =>
+  rows.filter((r) => !r.ok).map((r) => `${r.name}[${r.keys.join(" ")}]`).sort().join(" ");
+
+/* ------------------------------------------------ 1. 対照が、素で揃う -- */
+
+console.log("1. 足を1本も抜かなければ、台8本がぜんぶ期待どおり");
+{
+  const rows = await runControls();
+  check(`台は ${CONTROLS.length}本 立つ`, rows.length === CONTROLS.length, `${rows.length}本`);
+  check("外れた台は無い", sig(rows) === "", sig(rows));
+  /* **「落ちてほしい台が、狙った足だけで落ちた」まで見る。**
+     ここを見ないと、台が別の理由で落ちていても素通りする */
+  /* **落ちてほしい台が、狙った足「だけ」で落ちること。**
+     1枚で2つも3つも折れる台を置くと、その足を抜いても台が別の理由で落ち続けて、
+     **抜いたことに気づけない**（`/ctl/thin` を 21B の裸の本文にすると
+     `h1` と `title` でも落ちて、`BREAK=thin` が空振りする） */
+  for (const [name, , want, wantKeys] of CONTROLS) {
+    if (want) continue;
+    const row = rows.find((r) => r.name === name);
+    check(`${name} は「${wantKeys.join(" ")}」だけで落ちる`,
+      row.keys.join(" ") === wantKeys.join(" "), row.keys.join(" ") || "落ちなかった");
+  }
+  /* **その守りそのものが生きているか。** わざと足を書き違えた表を渡して、
+     `runControls` が「狙いと違う足で落ちた」と言うところまで見る */
+  const wrong = await runControls({ controls: [["thin", "/ctl/thin", false, ["h1"]]] });
+  check("狙いと違う足で落ちた台は、外れたものとして返る",
+    wrong.length === 1 && !wrong[0].ok && wrong[0].keys.join(" ") === "thin",
+    JSON.stringify(wrong[0]));
+
+  const moved = rows.find((r) => r.name === "moved");
+  check("moved は追って通り、追ったことが字に出る",
+    moved.got && moved.notes.length === 1 && moved.notes[0].includes("たどった"),
+    JSON.stringify(moved.notes));
+}
+
+/* ------------------------------------------- 2. 足を1本ずつ抜くと落ちる -- */
+
+console.log("2. 足を1本ずつ抜くと、別々の台が別々の項目で落ちる");
+{
+  /** 抜く足 → 外れてほしい台［外れてほしい項目］ */
+  const WANT = {
+    status: "404[]",
+    h1: "h1none[] h1two[]",
+    title: "titleempty[] titlenone[]",
+    thin: "thin[]",
+    follow: "moved[status h1 title thin]",
+    tell: "moved[tell]",
+  };
+  const got = {};
+  for (const leg of Object.keys(WANT)) {
+    got[leg] = sig(await runControls({ legs: new Set([leg]) }));
+    check(`BREAK=${leg} で外れる台`, got[leg] === WANT[leg], `${got[leg] || "1本も外れなかった"}`);
+  }
+  /* **足の数だけ落ちること。** 6本の抜きかたが同じ台を同じ項目で落としているなら、
+     それは1本の足を6回折っているだけ（§15「対照は、足の数だけ用意する」） */
+  const uniq = new Set(Object.values(got));
+  check("6本の抜きかたが、6とおり別々に落ちる", uniq.size === 6, `${uniq.size}とおり`);
+}
+
+/* -------------------------------------------------- 3. 判定そのもの -- */
+
+console.log("3. 判定（題名・h1・痩せ）");
+{
+  check("<head> の題名を拾う",
+    titleOf("<html><head><title> あやと島 </title></head><body></body></html>") === "あやと島",
+    JSON.stringify(titleOf("<html><head><title> あやと島 </title></head></html>")));
+  /* **本文の SVG の題名を、面の題名として拾わない。**
+     拾うと「題名が空」の面が、絵の説明のおかげで通る */
+  check("本文の SVG の題名は拾わない",
+    titleOf("<html><head></head><body><svg><title>絵の説明</title></svg></body></html>") === null,
+    JSON.stringify(titleOf("<html><head></head><body><svg><title>絵の説明</title></svg></body></html>")));
+  check("題名が空なら空で返る",
+    titleOf("<html><head><title></title></head></html>") === "", "空でない");
+  check("h1 を数える（属性つきも）",
+    countH1('<h1 class="a">あ</h1><h1>い</h1>') === 2, String(countH1('<h1 class="a">あ</h1><h1>い</h1>')));
+  check("h1 が無ければ 0", countH1("<h2>あ</h2>") === 0, String(countH1("<h2>あ</h2>")));
+
+  const good = { status: 200, bytes: 50000, hops: 0, final: "/x", url: "/x",
+    body: "<html><head><title>面</title></head><body><h1>面</h1></body></html>", err: null };
+  check("まともな面は1つも落ちない", judgePage(good).checks.every((c) => c.ok),
+    JSON.stringify(judgePage(good).checks.filter((c) => !c.ok)));
+  const keys = (r) => judgePage(r).checks.filter((c) => !c.ok).map((c) => c.key).join(" ");
+  check("境目のすぐ下は痩せで落ちる", keys({ ...good, bytes: THIN_BYTES - 1 }) === "thin",
+    keys({ ...good, bytes: THIN_BYTES - 1 }));
+  check("境目のすぐ上は落ちない", keys({ ...good, bytes: THIN_BYTES }) === "", keys({ ...good, bytes: THIN_BYTES }));
+  /* 本番の最小の面（2026-09-19 の実測: `/roulette` 36,076B）は必ず通る */
+  check("本番の最小の面（36,076B）は落ちない", keys({ ...good, bytes: 36076 }) === "", keys({ ...good, bytes: 36076 }));
+
+  /* **読めなかったものを、測れた顔で 0 に畳まない**（#157） */
+  const un = judgePage({ err: "届かない", status: null, body: "", bytes: 0, hops: 0, final: "/x" });
+  check("読めなかった面は「違反0」にならず、読めなかったと返る",
+    un.unread === true && un.checks.length === 0, JSON.stringify(un));
+
+  /* 追ったのに黙る＝別の面を見ているのに気づけない（#164） */
+  const told = judgePage({ ...good, hops: 1, final: "/cards", url: "/nordic/photos" });
+  check("追ったら、どこからどこへ追ったかが字に出る",
+    told.notes.length === 1 && told.notes[0].includes("/nordic/photos") && told.notes[0].includes("/cards"),
+    JSON.stringify(told.notes));
+  check("追っていなければ黙る", judgePage(good).notes.length === 0, JSON.stringify(judgePage(good).notes));
+}
+
+/* ------------------------------------- 4. 面の一覧が、手書きでないこと -- */
+
+console.log("4. 面の一覧は、手で並べていない");
+{
+  /* 偽の `site/app` を作って、そこから出せることを見る。
+     **手で並べた表なら、ここで1本も増えない** */
+  const box = mkdtempSync(join(tmpdir(), "prodsweep-"));
+  const app = join(box, "app");
+  for (const d of ["", "about", "kitchen", "kitchen/[slug]", "(grp)/hidden",
+    "nordic/day/[n]", "board/@side", "notapage"]) {
+    mkdirSync(join(app, d), { recursive: true });
+    if (d !== "notapage") writeFileSync(join(app, d, "page.tsx"), "export default function P(){}\n");
+  }
+  writeFileSync(join(app, "notapage", "layout.tsx"), "export default function L(){}\n");
+  const got = staticAppPaths(app).paths;
+  check("page.tsx の在る道が出る（表紙も）",
+    got.includes("/") && got.includes("/about") && got.includes("/kitchen"), got.join(" "));
+  check("動く段（[slug]）を含む道は出さない",
+    !got.some((p) => p.includes("[")), got.join(" "));
+  check("(group) は道に出さない", got.includes("/hidden") && !got.some((p) => p.includes("(")), got.join(" "));
+  check("@slot は道に出さない", got.includes("/board") && !got.some((p) => p.includes("@")), got.join(" "));
+  check("page.tsx が無い場所は出さない", !got.includes("/notapage"), got.join(" "));
+
+  /* **1本足したら、道具を直さずに増える**（合格の条件2） */
+  const before = staticAppPaths(app).paths.length;
+  mkdirSync(join(app, "brandnew"), { recursive: true });
+  writeFileSync(join(app, "brandnew", "page.tsx"), "export default function P(){}\n");
+  const after = staticAppPaths(app).paths;
+  check("面を1つ足すと、道具を直さずに1つ増える",
+    after.length === before + 1 && after.includes("/brandnew"), `${before} → ${after.length}`);
+  rmSync(box, { recursive: true, force: true });
+
+  /* 読めない場所を渡されたら、0本を「0本でした」と言わずに理由を返す */
+  const lost = staticAppPaths(join(box, "no-such-dir"));
+  check("読めない場所は、理由つきで 0本を返す",
+    lost.paths.length === 0 && lost.why !== "", JSON.stringify(lost));
+
+  /* 本物のリポジトリ。**sitemap に無い面が落ちていないこと**まで見る。
+     `/roulette` は配信に映る面で、sitemap には載っていない */
+  const real = staticAppPaths().paths;
+  check("本物の site/app から 20本以上出る", real.length >= 20, `${real.length}本`);
+  for (const p of ["/roulette", "/me", "/me/desk", "/me/remote", "/me/roulette", "/design", "/nordic/photos"]) {
+    check(`sitemap に無い ${p} が一覧に居る`, real.includes(p), real.join(" "));
+  }
+}
+
+/* ---------------------------------------- 5. sitemap の読みかたと、足し算 -- */
+
+console.log("5. sitemap から引いて、足りないぶんを足す");
+{
+  const XML = `<?xml version="1.0" encoding="UTF-8"?><urlset>
+    <url><loc>https://example.test/</loc></url>
+    <url><loc>https://example.test/about</loc></url>
+    <url><loc>https://example.test/kitchen/curry</loc></url>
+    <url><loc>https://example.test/about</loc></url></urlset>`;
+  const srv = createServer((req, res) => {
+    if (req.url === "/sitemap.xml") {
+      res.writeHead(200, { "content-type": "application/xml" });
+      return res.end(XML);
+    }
+    res.writeHead(404); res.end("no");
+  });
+  await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+  const base = `http://127.0.0.1:${srv.address().port}`;
+
+  const sm = await sitemapPaths(base);
+  check("<loc> から道だけを取り出す",
+    sm.paths.join(" ") === "/ /about /kitchen/curry", sm.paths.join(" "));
+  check("同じ道は1本にまとめる", sm.paths.length === 3, String(sm.paths.length));
+
+  /* sitemap が無い（あるいは落ちた）ときに、0本を「0本でした」と言わない */
+  const gone = await sitemapPaths(`${base}/nowhere`);
+  check("sitemap が無ければ理由つきで 0本", gone.paths.length === 0 && gone.why !== "", JSON.stringify(gone));
+
+  /* 足し算そのもの。**sitemap に在る道は二度数えない** */
+  const extra = ["/", "/roulette", "/me"].filter((p) => !sm.paths.includes(p));
+  check("sitemap に在る道は足さない（/ は重ねない）", extra.join(" ") === "/roulette /me", extra.join(" "));
+
+  /* 404 を「読めなかった」に畳まない（`-f` を付けていない証拠） */
+  const r404 = await fetchOne(`${base}/nowhere`);
+  check("404 は読めたものとして返る（err ではない）",
+    r404.err === null && r404.status === 404, JSON.stringify({ err: r404.err, status: r404.status }));
+
+  await new Promise((r) => srv.close(r));
+}
+
+/* ------------------------------------------------------------ まとめ -- */
+
+console.log("");
+if (SEEN === 0) {
+  console.log("::error::数えるものが1つも無かった。");
+  process.exit(2);
+}
+if (BAD) {
+  console.log(`NG が ${BAD} 件（通ったのは ${OK} 件 / 見たのは ${SEEN} 件）。`);
+  process.exit(1);
+}
+console.log(`${SEEN} 件ぜんぶ通った。`);
