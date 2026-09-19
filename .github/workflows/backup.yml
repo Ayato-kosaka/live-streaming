@@ -184,9 +184,13 @@ jobs:
       # **24。** Node 20 は 2026-04 に寿命が切れていて、いま緑なのは
       # ランナーが node20 の action を勝手に 24 へ載せ替えているからでしかない。
       # ここの node が動かすのは `npx firebase-tools@13`（演習のエミュレータ）
-      # だけで、あの版の `engines` は 22 までしか書いていないが、
-      # **24 でも立ち上がって突き合わせまで通ることを dry_run の回で見ている。**
-      # リポジトリの他の node もぜんぶ 24（`functions/` だけ別。理由は下記）
+      # だけ。あの版の `engines` は 22 までしか書いていないので、**24 で本当に
+      # 立ち上がるかは押して見るしかない。** そして `dry_run` では見られない
+      # ——下見の回はこの job ごと飛ぶ（`if: needs.take.outputs.drill == '1'`）。
+      # run 35426831380（dry_run を外した回）で、エミュレータが立って
+      # islandNotes の突き合わせまで通るのを見ている。
+      # リポジトリの他の node もぜんぶ 24（`functions/` だけ別。あそこの
+      # `engines` は Cloud Functions のランタイムそのもので、こちらでは決められない）
       - uses: actions/setup-node@v5
         with:
           node-version: "24"
