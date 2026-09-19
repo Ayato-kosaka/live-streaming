@@ -497,7 +497,7 @@ export const RECIPES: Recipe[] = [
     slug: "pepper-pot-au-feu",
     name: "胡椒のポトフ",
     emoji: "🍲",
-    icon: "food-onion",
+    icon: "food-pepper",
     country: "georgia",
     kind: "soup",
     date: "2026-09-09",
