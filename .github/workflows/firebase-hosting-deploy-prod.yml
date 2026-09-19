@@ -191,3 +191,58 @@ jobs:
             exit 0
           fi
           exit "$code"
+
+      # **配ったあと、図鑑の「もらったカード」から、その人のカードぜんぶへ
+      # 行けるかを数える**（`docs/island-misses.md` #177 の見張り）。
+      #
+      # ここに置く理由は、上の `prodsweep.mjs` と同じ。**本番を読む見張りの
+      # 居場所は、本番に配ったあと。** 毎 PR に載せると、本番の Hosting と
+      # `/island-api` が返らない日に**関係のない PR が赤くなる**——偽の赤は、
+      # 人に CI を無視する癖を付ける。配りの後ろなら、同じ赤が
+      # **本当に見たい赤**になる。
+      #
+      # `prodsweep.mjs` との違いは**ブラウザが要る**こと。欄は押して開く形
+      # （`Longer`）なので、配られたバイト列を読むだけでは「3枚目から先へ
+      # 行けるか」が分からない。枚数のもとは本番の口（`GET /cards`）から取る
+      # ——差し込みのカードは1人3枚までで、**43枚の人が居ない**まま
+      # 「溜まったときに壊れるもの」を測ることになる。
+      #
+      # **`PORT=` は渡さない。** 渡すと手元の書き出しを見にいく。配ったあとに
+      # 見るべきは本番の面なので、既定（本番）のまま走らせる。
+      - name: 確かめる道具とブラウザを入れる（下の step 用）
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -uo pipefail
+          # **ここでは何も決めない。** 入らなかったのは「測れていない」であって
+          # 「本番が壊れている」ではないので、赤くしない（配りはもう済んでいる）。
+          # 入ったかどうかは下の step が chrome の有無で見て、無ければ警告で抜ける
+          sudo mkdir -p /opt/pw-browsers || true
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers || true
+          (cd tools/sprites && npm ci --no-audit --no-fund) || true
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium || true
+          ls -la /opt/pw-browsers || true
+
+      # **落ちても配りは取り消さない**（もう出ている）。赤くして残す形。
+      # **continue-on-error は付けない**（隠れた赤は誰も見ない。#132）。
+      #
+      # **2（測れなかった）では止めない。** 上の2本と同じで、測れないことと
+      # 行けないことは別（`docs/island-standards.md` §15）。道具は本番の口が
+      # 引けない・図鑑が出ない・外に出られなかった先がある・対照が外れた、の
+      # どれでも 2 を返して**数字を1つも出さない。**
+      - name: 配ったカードの欄から、その人のカードぜんぶへ行けるか
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::warning::ブラウザを用意できず、カードを数えられませんでした（配るのは済んでいます）"
+            exit 0
+          fi
+          node tools/sprites/cardgo.mjs && code=0 || code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning::本番のカードを数えられませんでした（配るのは済んでいます）"
+            exit 0
+          fi
+          exit "$code"
