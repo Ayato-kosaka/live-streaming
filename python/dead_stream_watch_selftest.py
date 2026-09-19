@@ -79,6 +79,7 @@ from dead_stream_watch import (  # noqa: E402
 )
 
 import build_dead_streams as build  # noqa: E402
+import dead_stream_watch as watch  # noqa: E402  足を抜くときに触るのはこちら
 
 REPO = Path(__file__).resolve().parent.parent
 WATCH = REPO / "python" / "dead_stream_watch.py"
@@ -87,24 +88,70 @@ BUILD = REPO / "python" / "build_dead_streams.py"
 # YouTube の id の11字目に立てる字。**ここを外すと oembed は 400 を返す**
 TAIL_OK = set("AEIMQUYcgkosw048")
 
-# 配信を名指ししている焼き込みの本数。**中身ではなく形**なので、
-# 毎晩の焼き直しでは動かない（動くのは面を1つ足したときだけ）
-WANT_FILES = 9
-
-# **本数そのものは、ここに写さない。**
-# 焼き直しは毎晩 videos を足すので、今日の数（2026-09-17 は 719）を書くと
-# **翌朝には赤くなり、誰かが数字を書き換えるだけの作業になる。**
-# そうやって手で合わせる見張りは、いずれ黙らされる
-# （`docs/island-standards.md` 15章・`docs/island-misses.md` #102）。
+# **数（本数もファイル数も）を、ここに写さない。**
+# 焼き直しは毎晩 videos を足すので、今日の数を書くと**翌朝には赤くなり、
+# 誰かが数字を書き換えるだけの作業になる。** そうやって手で合わせる見張りは
+# いずれ黙らされる（`docs/island-standards.md` 15章・`docs/island-misses.md` #102）。
+#
+# 2026-09-19 まで `WANT_FILES = 9` と手で書いてあった。**あれは「縮んでいないか」
+# しか見ていない。** 焼き込みが1本増えても、その1本が新しい書きかたなら
+# `files` に出てこないので、9 のまま通る。実際に `chapterStreams.ts`（717本）・
+# `shorts.ts`（83本）・`streamPeaks.ts`（267本）が**分母に1行も出ていなかった**
+# （#168）。数える代わりに、**構造で見る**（下の `QUOTED` / `_shape`）。
 #
 # 見たいのは「拾う側が黙って縮んでいないか」なので、**別の拾いかたと
-# 突き合わせる。** 下の2通りはどちらも本物の規則より狭いので、
-# ここで拾えたものは本物でも必ず拾えていないとおかしい。
-# 分母が増えても減っても、この関係は変わらない
+# 突き合わせる。** 下の6通りは本物の規則を**写していない**（本物は1本の
+# 正規表現で、こちらは書きかたごとに1本ずつ）。ここで拾えたものは、
+# 本物でも必ず拾えていないとおかしい。分母が増えても減っても、この関係は変わらない
 SUBSET_RE = [
     re.compile(r'"v"\s*:\s*"([A-Za-z0-9_-]{11})"'),
     re.compile(r'videoId\s*:\s*"([A-Za-z0-9_-]{11})"'),
+    re.compile(r'\bvideo:\s*"([A-Za-z0-9_-]{11})"'),
+    re.compile(r'\["\d{4}-\d\d-\d\d",\s"([A-Za-z0-9_-]{11})"'),
+    re.compile(r'"([A-Za-z0-9_-]{11})":\{"k"'),
+    re.compile(r'\bid:\s"([A-Za-z0-9_-]{11})",\sdate:'),
 ]
+
+# 引用符の中の11字ぜんぶ。**分母をこちらから出す**ための、いちばん広い網。
+# 「配信IDの形をしているのに、見たファイルに1行も出ていない焼き込み」が
+# 在ったら落ちる——これなら、**次に足された焼き込みが黙って落ちることは無い**
+QUOTED = re.compile(r'"([A-Za-z0-9_-]{11})"')
+
+
+def _shape(v: str) -> bool:
+    """配信IDの形をしているか。**本物の `looks_like_video` を呼ばない。**
+
+    呼ぶと、あちらが壊れたときにこちらも同じだけ壊れて対照にならない。
+    ここは仕様のほうを写す——11字目は16通り、小文字と `-` だけの11字は slug。
+    """
+    return v[10] in TAIL_OK and any(c.isupper() or c.isdigit() for c in v)
+
+
+# 足を1本ずつ抜く旗（`docs/island-standards.md` §15「対照は、足の数だけ用意する」）。
+# **どれを抜いても同じ1件で落ちるなら、それは1本の足しかない。**
+#
+# | `BREAK` | 抜くもの | 落ちる項目 |
+# | --- | --- | --- |
+# | `narrow` | 名前で分からない書きかた（`LOOSE_RE`）を見ない＝2026-09-19 まで本番がこれ | こぼれ・分母・面の表 |
+# | `novideo` | `video:` だけ見ない | 分母（`nordic.ts` が消える）・面の表 |
+# | `nogate` | 形の確かめ（`looks_like_video`）を外す | 配信ではない11字を拾わない |
+# | `nopages` | 面の表から、新しく見えた焼き込みを落とす | 面の表 |
+BREAK = os.environ.get("BREAK", "")
+LEGS = ("narrow", "novideo", "nogate", "nopages")
+
+
+def _apply_break() -> None:
+    """`BREAK` の足を、本物のモジュールから抜く。"""
+    if BREAK == "narrow":
+        watch.LOOSE_RE = re.compile(r"(?!)")
+    elif BREAK == "novideo":
+        watch.VIDEO_RE = re.compile(r'"?(?:videoId|v)"?:\s*"([A-Za-z0-9_-]{11})"')
+    elif BREAK == "nogate":
+        watch.looks_like_video = lambda v: True
+    elif BREAK == "nopages":
+        for name in ("chapterStreams.ts", "shorts.ts", "streamPeaks.ts",
+                     "legendDays.ts", "countryStats.ts", "nordic.ts"):
+            watch.PAGES.pop(name, None)
 
 
 def _is_day(x: str) -> bool:
@@ -122,8 +169,15 @@ def main() -> int:
     if not CONTENT.is_dir():
         print(f"::error::種がありません（{CONTENT}）", file=sys.stderr)
         return 2
-    real, real_files = scan_dir(CONTENT)
-    check("配信を名指ししている焼き込みの本数", len(real_files), WANT_FILES)
+    if BREAK:
+        if BREAK not in LEGS:
+            print(f"::error::BREAK={BREAK} は足の名前ではありません"
+                  f"（使えるのは {', '.join(LEGS)}）", file=sys.stderr)
+            return 2
+        print(f"** BREAK={BREAK} —— 足を1本抜いてある。ここは落ちるのが正しい **")
+        _apply_break()
+
+    real, real_files = watch.scan_dir(CONTENT)
 
     # **狭い拾いかたで拾えたものが、本物からこぼれていないか。**
     # 数を写さずに「縮んでいない」を見るのはこれ（上の SUBSET_RE の注）
@@ -131,7 +185,7 @@ def main() -> int:
     for f in sorted(CONTENT.rglob("*.ts")):
         t = f.read_text(encoding="utf8", errors="replace")
         for rx in SUBSET_RE:
-            subset.update(rx.findall(t))
+            subset.update(v for v in rx.findall(t) if _shape(v))
     # **落ちたときに270本ぶん並べない。** 公開のログに流れるので、
     # 件数と頭の5本で足りる（どれか1本を追えば原因は同じ）
     missed = sorted(subset - set(real))
@@ -139,11 +193,45 @@ def main() -> int:
     check("狭い拾いかたで拾えた配信が、本物からこぼれていない", shown, "0本")
     print(f"    （狭い拾いかた {len(subset)} 本 / 本物 {len(real)} 本 を突き合わせた）")
 
-    # 3通りの書き方が、3本とも当たっているか。**どれか1つ欠けても本数は近い値になる**
+    # --- 1b. 分母を、こちらから数える（`WANT_FILES` の代わり）----------------
+    # **「9本を見ました」を手で書かない。** 引用符の中の11字を全部あたって、
+    # 配信IDの形をしたものが在るのに `files` に1行も出ていない焼き込みを並べる。
+    # ここが空でないかぎり、**次に足された焼き込みが黙って落ちることは無い**
+    holes: list[str] = []
+    cand_files = 0
+    cand_total = 0
+    for f in sorted(CONTENT.rglob("*.ts")):
+        t = f.read_text(encoding="utf8", errors="replace")
+        cand = sorted({v for v in QUOTED.findall(t) if _shape(v)})
+        if not cand:
+            continue
+        cand_files += 1
+        cand_total += len(cand)
+        if f.name not in real_files:
+            holes.append(f"{f.name}（{len(cand)}本。例 {cand[:3]}）")
+    print(f"    （配信IDの形をした11字を持つ焼き込み {cand_files} 本 / "
+          f"見たファイル {len(real_files)} 本 / 形の通った11字 {cand_total} 個）")
+    if cand_files == 0:
+        print("::error::引用符の中に、配信IDの形をした11字が1つもありません"
+              "（種が読めていない）", file=sys.stderr)
+        return 2
+    check("配信IDの形をした11字を持つのに、見たファイルに出ていない焼き込み", holes, [])
+
+    # 本物が拾ったものが、ぜんぶ形の規則を通ること。
+    # **通らないものが在ったら、形の規則のほうが狭すぎる**
+    # （名前で分かる `videoId:` にはわざと形を当てていないので、ここで気づける）
+    check("本物の拾ったものが、ぜんぶ形の規則を通る",
+          sorted(v for v in real if not _shape(v))[:5], [])
+
+    # 6通りの書き方が、6本とも当たっているか。**どれか1つ欠けても本数は近い値になる**
     for name, shape in (
         ("onThisDay.ts", '"v":"…"（空白なし）'),
         ("cityStreams.ts", '"videoId": "…"'),
         ("countries.ts", 'videoId: "…"'),
+        ("nordic.ts", 'video: "…"'),
+        ("chapterStreams.ts", '["日付", "…", …]'),
+        ("streamPeaks.ts", '"…": {…}'),
+        ("shorts.ts", 'id: "…"'),
     ):
         got = len([v for v, s in real.items() if name in s.files])
         check(f"{name} から拾えた本数が 0 でない（{shape}）", got > 0, True)

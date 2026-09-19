@@ -133,9 +133,53 @@ from unicodedata import east_asian_width
 REPO = Path(__file__).resolve().parent.parent
 CONTENT = REPO / "site" / "content"
 
-# 焼き込みの中で配信を名指ししている鍵。**この2つだけ。**
-# `id:` や `slug:` まで拾うと、11字の別物（料理の合言葉など）が混ざる
-VIDEO_RE = re.compile(r'"?(?:videoId|v)"?:\s*"([A-Za-z0-9_-]{11})"')
+# 焼き込みの中で配信を名指ししている鍵。**名前で分かるぶん。**
+# ここは形を見ない——`videoId` と書いてあるものは配信IDだと信じてよい
+VIDEO_RE = re.compile(r'"?(?:videoId|v|video)"?:\s*"([A-Za-z0-9_-]{11})"')
+
+# **名前で分からない書きかた**（2026-09-19）。ここを見ていなかったので、
+# `chapterStreams.ts` の 717本・`shorts.ts` の 83本・`streamPeaks.ts` の 267本が
+# **1本も数えられていなかった。** 見張りは毎晩「9本の焼き込みを見ました」と
+# 言っていて、そこに一度も出てこなかった（`docs/island-misses.md` #168）。
+#
+# | 書きかた | どこ |
+# | --- | --- |
+# | `["日付", "ID", …]` | `chapterStreams.ts` `legendDays.ts` `countryStats.ts` |
+# | `"ID": { … }` | `streamPeaks.ts` |
+# | `id: "ID"` | `shorts.ts` |
+#
+# **形を見ないと拾えない。** `"middle-east": {` も `id: "app-android"` も
+# 同じ11字なので、素直に広げると分母のほうが膨らむ（実測で偽物 10 件）。
+LOOSE_RE = re.compile(
+    r'\[\s*"\d{4}-\d\d-\d\d",\s*"([A-Za-z0-9_-]{11})"'  # ["日付", "ID", …]
+    r'|"([A-Za-z0-9_-]{11})"\s*:\s*\{'                     # "ID": {…}
+    r'|\bid:\s*"([A-Za-z0-9_-]{11})"'                       # id: "ID"
+)
+
+# YouTube の id の11字目に立てる字。**16通りしかない**——64ビットを6ビットずつ
+# 11字に載せるので、最後の字は4ビットぶんしか使わない。
+# `dead_stream_watch_selftest.py` の `TAIL_OK` と同じ（あちらは対照の id を作るため）
+TAIL_OK = frozenset("AEIMQUYcgkosw048")
+
+
+def looks_like_video(v: str) -> bool:
+    """名前で分からない11字が、配信IDの形をしているか。
+
+    2つ見る。**どちらも本番の 812本ぜんぶが通ることを確かめてある**
+    （`dead_stream_watch_selftest.py` の「本物がぜんぶ形の規則を通る」）。
+
+    1. 11字目が `TAIL_OK` にある（`middle-east` の `t`、`app-android` の `d`、
+       `newyear-24h` の `h`、`latvia-s167` の `7` はここで落ちる）
+    2. 大文字か数字を1つ以上もつ。小文字と `-` だけの11字は slug のほう
+       （`netherlands` `french-toas` `okonomiyaki` がここで落ちる。
+       1 だけでは通ってしまう）
+
+    **`VIDEO_RE` には当てない。** 名前で分かっているものを形で落とすと、
+    落ちたことに誰も気づけない。ここは「名前が無いぶんを、形で補う」側だけ。
+    """
+    return v[10] in TAIL_OK and any(c.isupper() or c.isdigit() for c in v)
+
+
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 # 配信IDの形。**`-` や `_` で始まるものもある**
 ID_RE = re.compile(r"[A-Za-z0-9_-]{11}")
@@ -184,6 +228,13 @@ PAGES: dict[str, str] = {
     "cityStreams.ts": "街ごとの配信一覧（/map/<国>）",
     "onThisDay.ts": "1年前の今日（島のトップ）",
     "kitchenTalk.ts": "料理のときのコメント（/kitchen/<品>。40本、どれも他の面にも出る）",
+    # ここから下は、名前で分からない書きかたで名指ししていた面（2026-09-19）
+    "countryStats.ts": "国ごとの「いちばん人が集まった配信」（/map/<国>）",
+    "nordic.ts": "北欧の旅の、その日の配信（/nordic/day/<n>, /nordic/<国>）",
+    "chapterStreams.ts": "過去の島の配信一覧（/island/<章>/streams）",
+    "legendDays.ts": "語り継がれている企画の、日ごとの配信（/legends/<名前>）",
+    "shorts.ts": "ショート動画の棚（/map, 島の棚）",
+    "streamPeaks.ts": "コメントがいちばん重なった秒（配信カードの押しどころ）",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -192,8 +243,12 @@ PAGES: dict[str, str] = {
 # **その1件の行き先がその配信しかない。** 押して見られなければ、
 # その品・そのアプリ・その言葉が、行き止まりになる。
 # 一覧（`SIDE`）は「並んでいるうちの1枚」で、隣に生きた配信がある
-FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts")
-SIDE = ("streamTypes.ts", "cityStreams.ts", "onThisDay.ts", "kitchenTalk.ts")
+# `countryStats.ts` と `nordic.ts` は**1件を選んで押し出す側**。
+# 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
+FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
+         "countryStats.ts", "nordic.ts")
+SIDE = ("streamTypes.ts", "cityStreams.ts", "onThisDay.ts", "kitchenTalk.ts",
+        "chapterStreams.ts", "legendDays.ts", "shorts.ts", "streamPeaks.ts")
 
 # 対照の生きた側。**あやとの配信から選んだ、いまのところ公開のもの。**
 # 3本並べてあるのは、1本が非公開になった日に見張りごと止まらないため。
@@ -323,13 +378,18 @@ def scan_dir(d: Path) -> tuple[dict[str, Sighting], list[str]]:
         text = p.read_text(encoding="utf8", errors="replace")
         rel = p.name
         found = False
-        for m in VIDEO_RE.finditer(text):
-            found = True
-            s = seen.setdefault(m.group(1), Sighting())
-            s.files.add(rel)
-            got = _near_date(text, m.start())
-            if got:
-                s.dates.add(got)
+        for rx in (VIDEO_RE, LOOSE_RE):
+            for m in rx.finditer(text):
+                vid = next(g for g in m.groups() if g)
+                # 名前で分からない書きかたは、**形まで見てから**拾う
+                if rx is LOOSE_RE and not looks_like_video(vid):
+                    continue
+                found = True
+                s = seen.setdefault(vid, Sighting())
+                s.files.add(rel)
+                got = _near_date(text, m.start())
+                if got:
+                    s.dates.add(got)
         if found:
             files.append(rel)
     return seen, files
