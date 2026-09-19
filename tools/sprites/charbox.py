@@ -280,10 +280,16 @@ export function charFit(
   k = Math.min((want * 1.25) / uh, Math.max((want * 0.85) / uh, k));
   // 器から出さない。**頭打ちより後**に当てる（頭打ちが倍率を上げることがある）
   k = Math.min(k, 1 / Math.max(uw, uh));
+  /* 絵そのものが器の中でどこから始まるか。横はどこも中央ぞろえ。
+     縦は `bottom` のときだけ器の底に付く（`object-position: center bottom`）。
+     `ar <= 1` では hc = 1 なので、どちらでも 0 になる——**この差が出るのは
+     横長の絵だけ**で、見開きの1枚がそこで足元を器の下に落としていた。 */
+  const x0 = (1 - wc) / 2;
+  const y0 = bottom ? 1 - hc : (1 - hc) / 2;
   /* `translate(t) scale(k)` は「拡大してから動かす」ので、中心から c にある点は
      k·c へ動く。t = ねらい − k·c。単位は**拡大前の器**に対する割合。 */
-  const cx = (bx + bw / 2 - 0.5) * wc;
-  const cy = (bottom ? by + bh - 0.5 : by + bh / 2 - 0.5) * hc;
+  const cx = x0 + (bx + bw / 2) * wc - 0.5;
+  const cy = y0 + (bottom ? by + bh : by + bh / 2) * hc - 0.5;
   const tx = -k * cx;
   const ty = (bottom ? 0.5 : 0) - k * cy;
   return { transform: `translate(${(tx * 100).toFixed(1)}%, ${(ty * 100).toFixed(1)}%) scale(${k.toFixed(3)})` };
