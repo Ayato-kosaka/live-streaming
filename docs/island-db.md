@@ -533,7 +533,9 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 ##### 公開に戻ったものを受ける道（2026-09-18。#532）
 
 その37本の受け口が `python/admin/failed_reentry.py`
-（`run_admin_script.yml` から `script = failed_reentry`。**既定は下見**）。
+（**毎晩ひとりでに走る**——`.github/workflows/failed_reentry_nightly.yml` が
+`Fetch Doneru Donations` の完了に繋いである。手で押すなら
+`run_admin_script.yml` から `script = failed_reentry` で、**そちらの既定は下見**）。
 **枠（`QUERY_SELECT_TARGET_VIDEOS`）は1行も変えていない。**
 状態を `WAITING` に戻すだけで、拾い直しは既存の窓の外の枠に任せる。
 
@@ -543,7 +545,8 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 | 戻す相手 | 非公開の印を持つ **`FAILED` と `SKIPPED`**。`SKIPPED` も見るのは、一度戻して翌晩の取り込みがこけると `handle_failure` が終端へ落とすため（`FAILED` だけ見ていると二度と出てこない） |
 | 何本まで戻すか | **今夜の枠の空きぶん、かつ1回5本まで。** 空きは本物の `QUERY_SELECT_TARGET_VIDEOS` を流して数える（条件を書き写さない）。戻した古い配信は `first_seen_at ASC` で**枠の先頭に並ぶ**ので、37本を一度に戻すと本物の取りこぼしが2晩ぶん後ろへ回る（[`island-misses.md` #149](./island-misses.md)） |
 | 戻したあと | 窓の外の枠が翌晩に拾い、**1本につき1回試して `SUCCEEDED` か `SKIPPED` で終わる。** `WAITING` には戻らない |
-| 毎晩たたかない | **人が押したときだけ走る。** 37本を毎晩ぶら下げると「毎晩赤い見張りは誰も読まない」に戻る（#521） |
+| いつ走るか | **毎晩**（2026-09-19 から。`Fetch Doneru Donations` の完了に `workflow_run` で繋ぎ、cron は保険）。人が押すのを待つ形だと、**あやとが公開に戻しても誰かが押すまで永久に戻らない**——赤くならず、画面に配信が1本出ないだけで終わる。繋ぎ先は**1本だけ**（晩に2回走ると外当てが倍になり、枠も1晩10本ぶん食う）。`rebake.yml` の step にしなかったのは、あちらが master へ push して Hosting まで配るワークフローで、**落ちる理由が混ざる**ため |
+| 毎晩赤くならないか | **空振りの晩は1バイトも書かず、緑で終わる**（書く道は「戻せるものが在る」回にしか開かない）。赤は「戻せるのに枠が無い」「書いたあとの数え直しが合わない」（1）と「**測れていない**」（2）だけ |
 
 書き換えるのは `status` と `next_retry_at` の2つだけ。`attempt_count` /
 `last_attempt_at` は動かさない（**試していないから**）し、

@@ -112,9 +112,11 @@ yt-dlp の返した字が `last_error_detail` にそのまま残っている
 そのときの答えだけを持つ」）。ここが `dead_streams` の「403 は隠さない」と
 折り合うところ——**あちらが持たないのと同じ理由で、こちらも持たない。**
 
-**ただし `failed_reentry` は人が押す。** 7日を過ぎた `FAILED` は取り込みの
-どちらの枠にも入らない（`python/admin/failed_reentry.py` の1章）ので、
-あやとが公開に戻しただけでは表は動かない。**そこだけは繋がっていない。**
+`failed_reentry` は**毎晩ひとりでに走る**（2026-09-19 から。
+`.github/workflows/failed_reentry_nightly.yml` が `Fetch Doneru Donations` の
+完了に繋いである）。7日を過ぎた `FAILED` は取り込みのどちらの枠にも入らない
+（`python/admin/failed_reentry.py` の1章）ので、**そこを毎晩そとから測って返す。**
+あやとが公開に戻すと、その晩に `WAITING` へ返り、**次の焼き直しで島に出る。**
 
 ### 数は減る。減るほうが正しい
 

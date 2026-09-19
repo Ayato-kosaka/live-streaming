@@ -1,5 +1,8 @@
 """**非公開だった配信が公開に戻っていたら、`WAITING` に戻して取り込みに渡す。**
 
+**毎晩ひとりでに走る**（`.github/workflows/failed_reentry_nightly.yml`。6章）。
+下は、その場で確かめたいとき・先に少しだけ戻したいときの手押し。
+
     Actions > 管理スクリプトを実行 > script = failed_reentry
     ARGS  {}                        測って数えるだけ（**既定は下見。1バイトも書かない**）
           {"apply": true}           戻せるものを `WAITING` に戻す
@@ -120,11 +123,32 @@ sqlite に直して、本番と同じ形の表に当てる。
 （`cap` を抜くと C のほかに E も落ちる）。見るのは
 **どの足を抜いても、必ず対応する対照が落ちること。**
 
-## 6. 毎晩には繋いでいない
+## 6. 毎晩ひとりでに走る（2026-09-19 から）
 
-いまは**手で押すものだけ。** 繋ぐかどうかは、本番で1回押して数字を見てから
-決める（`docs/island-misses.md` #148 の決めごと3「繋いだら、繋ぎが発火する
-ところを本番で1回見るまで数えない」）。
+`.github/workflows/failed_reentry_nightly.yml` が、`Fetch Doneru Donations` の
+完了に `workflow_run` で繋いで**毎晩 `{"apply": true}` で回す**（cron は保険）。
+**手で押す道はそのまま**（`run_admin_script.yml` から `script = failed_reentry`。
+そちらの既定は下見）。
+
+手で押すだけの形をやめたのは、**あやとが公開に戻しても、誰かが押すまで永久に
+戻ってこない**から。赤くならない——画面に配信が1本出ないだけで、run はどこも
+緑で終わる。「鳴る仕組みが構造的に鳴りえない」形だった。
+
+繋ぎ先を1本にしてあるのと、`rebake.yml` の step にしなかった理由は、
+あちらのファイルの頭に測った数字ごと書いてある。要点だけ:
+
+  - 晩に2回走ると、外当てが倍になり、**枠も1晩10本ぶん**食う（3章の決めが崩れる）
+  - `rebake` は `site/content/` を焼いて master に push し Hosting まで配る。
+    直近11回のうち7回が赤で、相乗りすると**こちらの赤が見分けられない**
+
+**上限（`MAX_PER_RUN`）と枠の空きは、繋いでも1バイトも変えていない。**
+毎晩ぶんの ARGS に `limit` を渡さないのも同じ理由で、何本戻すかの決めを
+ワークフロー側に散らさない。ここを見張るのは:
+
+  - `python/admin/failed_reentry_selftest.py` の 14〜16
+    （**ワークフローの字から ARGS を取り出して**、本物を回す）
+  - `python/failed_reentry_nightly_selftest.py`
+    （繋ぎ先の `name:`・繋ぎの本数・毎晩ぶんの既定・`continue-on-error` の隠し）
 """
 
 import os
