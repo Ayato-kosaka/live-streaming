@@ -217,11 +217,14 @@ jobs:
           set -uo pipefail
           # **ここでは何も決めない。** 入らなかったのは「測れていない」であって
           # 「本番が壊れている」ではないので、赤くしない（配りはもう済んでいる）。
-          # 入ったかどうかは下の step が chrome の有無で見て、無ければ警告で抜ける
+          # 入ったかどうかは下の step の道具が自分で見る（`tools/sprites/chrome.mjs` が
+          # 在りかを探して、無ければ 2 を返す）。ここは落とさない
           sudo mkdir -p /opt/pw-browsers || true
           sudo chown "$(id -u):$(id -g)" /opt/pw-browsers || true
           (cd tools/sprites && npm ci --no-audit --no-fund) || true
           node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium || true
+          # **どの番号で置かれたかを、毎回ログに残す。** 番号が変わったことに
+          # 気づけるのはここだけ（下の step は番号を知らない作りにしてある）
           ls -la /opt/pw-browsers || true
 
       # **落ちても配りは取り消さない**（もう出ている）。赤くして残す形。
@@ -231,15 +234,17 @@ jobs:
       # 行けないことは別（`docs/island-standards.md` §15）。道具は本番の口が
       # 引けない・図鑑が出ない・外に出られなかった先がある・対照が外れた、の
       # どれでも 2 を返して**数字を1つも出さない。**
+      # **ブラウザの版を、ここで名指ししない。** 最初はここに
+      # `[ -x /opt/pw-browsers/chromium-1194/… ]` と書いていた。番号は
+      # `playwright-core` の版で変わるので、上げた日から**この if が永遠に真になり、
+      # 毎回「警告」で抜けたまま緑に見えて1行も数えない。** 歯止めだけを glob に
+      # しても、今度は道具のほうが古い番号を掴んで**本番は無事なのに赤くなる。**
+      # 在りかは `tools/sprites/chrome.mjs` が1か所で決め、無ければ道具が 2 を返す。
+      # **ここは 2 を警告に倒すだけ**（`prodsweep` と同じ形）。
       - name: 配ったカードの欄から、その人のカードぜんぶへ行けるか
         if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
-          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
-          if [ ! -x "$chrome" ]; then
-            echo "::warning::ブラウザを用意できず、カードを数えられませんでした（配るのは済んでいます）"
-            exit 0
-          fi
           node tools/sprites/cardgo.mjs && code=0 || code=$?
           if [ "$code" = "2" ]; then
             echo "::warning::本番のカードを数えられませんでした（配るのは済んでいます）"

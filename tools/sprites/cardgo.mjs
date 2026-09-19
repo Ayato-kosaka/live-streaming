@@ -102,6 +102,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
+import { chromeLookedIn, chromePath } from "./chrome.mjs";
 import { offline } from "./route.mjs";
 import { blocked, redirects, thin, viaCurl } from "./prod.mjs";
 import { goesElsewhere, reachGap, verdict } from "./cardgojudge.mjs";
@@ -215,10 +216,21 @@ if (RUN) {
 
   if (missing.length) await stop(null, 2, `見つからなかった: ${missing.join(" / ")}`);
 
-  const b = await chromium.launch({
-    executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    args: ["--no-sandbox"],
-  });
+  /* **ブラウザの版を、ここで名指ししない。** この道具は配りの後ろ
+     （`firebase-hosting-deploy-prod.yml`）で走るようになって、あそこは
+     その場で `playwright-core` に落とさせている。落ちる先は
+     `chromium-<build 番号>` で、**版を上げた日に番号が変わる。**
+     番号を書いておくと、その日から起動に失敗して**本番は無事なのに赤くなる。**
+     無ければ 2（測れていない）で止める——**1 にしない。** */
+  const exe = chromePath();
+  if (!exe) {
+    await stop(
+      null,
+      2,
+      `見つからなかった: ブラウザが無い（見た先: ${chromeLookedIn().join(" / ")}）`,
+    );
+  }
+  const b = await chromium.launch({ executablePath: exe, args: ["--no-sandbox"] });
   const ctx = await b.newContext({
     viewport: { width: Number(process.env.W || 390), height: 844 },
     deviceScaleFactor: 2,
