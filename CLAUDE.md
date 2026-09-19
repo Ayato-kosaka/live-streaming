@@ -165,6 +165,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-db.md`](docs/island-db.md) — **データ設計。ERD・用語・責務の表・列の一覧。**
   「何が正で、誰が書いて、誰が読むか」は3章。列を1つ引きに来たら4章
 - [`docs/island-api.md`](docs/island-api.md) — 口（`/island-api/*`）の一覧。誰が叩けるか・1日の上限
+- [`docs/island-audit.md`](docs/island-audit.md) — **いま何が、どこに、いくつあるか。**
+  スプシとドライブの残り・責務の割れ具合・同じ形の失敗の残数・退避・見張りの範囲。
+  **手を付ける前に、数を見に来るところ**（やることの表ではない）
 - [`docs/island-db-notes.md`](docs/island-db-notes.md) — データ設計の**検討メモ**。
   なぜそう決めたか・何に躓いたか。**日付の付いた記録なので、あとから直さない**
 - [`docs/island-plan-drafts.md`](docs/island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み
