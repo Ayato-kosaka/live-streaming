@@ -1743,6 +1743,15 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-09-19"
       }
     ]
+  },
+  "sweden": {
+    "ストックホルム": [
+      {
+        "videoId": "GBYHxJQGlCY",
+        "title": "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム",
+        "date": "2026-09-20"
+      }
+    ]
   }
 };
 
