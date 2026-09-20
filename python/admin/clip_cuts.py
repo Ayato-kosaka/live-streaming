@@ -430,4 +430,8 @@ def main() -> None:
             log.info("      …ほか %d件", len(c["rows"]) - show)
 
 
-main()
+# **道具として読み込まれたときは走らない。** `chat_day` が起点の出しかた
+# （`stream_start_ms`）を借りに来る。裸で `main()` を呼んでいると、
+# 借りた瞬間に切り抜きが1本走って、Firestore を読みに行ってしまう
+if __name__ == "__main__":
+    main()
