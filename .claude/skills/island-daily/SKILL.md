@@ -157,7 +157,18 @@ print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
 3. **1件のコメントを、地名や出来事に結びつけない**
 4. 「動かない日」と「移動した日」で、コメントの使えかたが違う
 
-⚠ **当日ぶんのチャットは BigQuery に無い。** 数えられるのは今晩の取り込みのあと。
+⚠ **当日ぶんのチャットは BigQuery に無い。Firestore を見る**（`clip_cuts` の
+`source: "live"`、または `chat_day`）。**「BigQuery に来ていないので数えられない」で
+止めない**——止めて怒られた（2026-09-20）。
+
+⚠ **日誌を書いたら、その日の企画の見出しも読む**（#180）。同じ面の上下に並ぶので、
+食い違っていれば必ず気づく。
+
+```bash
+curl -s "https://live-streaming-d3cac.web.app/island-api/streamevents?day=2026-09-18" \
+  | python3 -c "import sys,json;[print(x['id'],x['title']) for x in json.load(sys.stdin)['events']]"
+```
+
 字幕も来ていないなら、**その日は書かずに翌朝書く。** コメントの山だけで書くと
 骨格ごと外す（5日目が実際にそれで、本番に出してから全部書き直した）。
 
