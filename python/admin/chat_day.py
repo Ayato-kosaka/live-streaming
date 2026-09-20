@@ -50,13 +50,35 @@ ARGS:
   {"paid": true}              … 投げ銭の行だけ
 """
 
-import sys
-
 from _fs import args, db, log, readonly
 from clip_cuts import SKIP_AUTHOR, SKIP_TEXT, hms, stream_start_ms
 
 # 出す行数の上限。Actions のログは 1回で数MBまでなので、そこに収まる数
 MAX_LINES = 4000
+
+# **ふつうのコメントの `kind`。** 口（`functions/src/chatCapture.ts` の `keep`）が
+# `snippet.type` をそのまま入れている。投げ銭は `superChatEvent` など別の字になる。
+# ここを `"text"` と書いていて、**930行ぜんぶに投げ銭の印が付いた**（2026-09-20）
+PLAIN_KIND = "textMessageEvent"
+
+
+def is_paid(kind: str) -> bool:
+    """この行は投げ銭つきか。
+
+    **決まりの出どころは口のほう**（`chatCapture.ts` の
+    `return kind !== "" && kind !== "textMessageEvent";`）。
+    同じ条件をこちらにも書くので、**あちらを変えたらここも変える。**
+    `kind` を持っていない古い書類は、投げ銭ではない側に倒す
+    （投げ銭を見落とすほうが、ふつうのコメントを投げ銭と言うより害が小さい）。
+
+    Args:
+        kind: 書類の `kind`（`snippet.type`）
+
+    Returns:
+        投げ銭つきなら True
+    """
+    k = str(kind or "")
+    return k != "" and k != PLAIN_KIND
 
 
 def latest_video(client) -> str:
@@ -108,7 +130,7 @@ def main() -> None:
         if name in SKIP_AUTHOR or text in SKIP_TEXT:
             continue
         # **額は読まない。** 投げ銭かどうかだけを、印として持つ
-        paid = bool(m.get("kind") and m.get("kind") != "text")
+        paid = is_paid(m.get("kind"))
         if paid_only and not paid:
             continue
         rows.append((s, name, text, paid))
@@ -124,4 +146,6 @@ def main() -> None:
         log.info("…ほか %d件（`limit` を上げると出ます）", len(rows) - limit)
 
 
-main()
+# **見張りから読み込まれたときは走らない。** `clip_cuts` と同じ理由
+if __name__ == "__main__":
+    main()
