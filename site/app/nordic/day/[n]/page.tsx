@@ -13,6 +13,7 @@ import RoadStops from "@/components/nordic/RoadStops";
 import Shops from "@/components/nordic/Shops";
 import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
+import Rides from "@/components/nordic/Rides";
 import Strong from "@/components/nordic/Strong";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
@@ -22,6 +23,7 @@ import {
   MAIN,
   NORDIC_GUIDE,
   NORDIC_LOG,
+  NORDIC_RIDES,
   ROUTE,
   STOP_SEQ,
   cityCountry,
@@ -31,6 +33,7 @@ import {
   dayName,
   loadSpots,
   nordicCountry,
+  rideCount,
   wantsOf,
   type Day,
   type Leg,
@@ -38,30 +41,38 @@ import {
 } from "@/content/nordic";
 import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 import { shopsOf } from "@/content/nordicShops";
+import { foodsOf } from "@/content/nordicFood";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
  *
- * オーナーの言葉:
+ * ## 責務は「旅の準備」から「旅の振り返り」へ移した（2026-09-21）
  *
- * > 旅の予定の部分はもっともっと1日1日どんなふうになるのかっていうのを詳しく見たい
+ * あやとの言葉:
  *
- * > `/nordic/day/x` には、ヒッチハイク情報、ルート中のよりたい場所、
- * > その街固有の楽しみ方（食べる、見る、体験する、買う）、などの情報があると良い
+ * > この画面を通して、「旅の準備」の画面から「旅の振返り」の画面に責務を変えて欲しい。
+ * > なので、実際に通ったルートや載せてくれた人などガッツリ。
+ * > 朝、どこから立つか とか 気をつけること、寄り道候補、見たいものなどは
+ * > 優先度を下げるイメージ。
  *
- * だから、行き先と距離を並べるだけにしない。**その日を過ごすことになる人が
- * 知りたい順**に置く。
+ * 出発前は「その日を過ごすことになる人が知りたい順」で並べていた。
+ * **旅が終わると、その順は誰の役にも立たなくなる。** 9月21日に開く人は
+ * もう出発しないので、起きる時刻も、立つところの見立ても、読む理由が無い。
+ * 読む理由があるのは、**誰が停まってくれたか**のほうだけ。
  *
- *   1. どんな日か          … 一行と、その日の絵
- *   2. どこを、どうやって   … 区間ごとに。切符から決まっていることも
- *   3. **親指を上げる**     … 乗る道・越える国境・立つところ・難しさ
- *   4. **明るいうち**       … ヒッチハイクは日のあるあいだしかできない。
- *                             距離より先に、その日の長さが決まっている
- *   5. 決まっていないこと   … 日にち以外の、着く時刻・泊まるところ。**埋めない**
- *   6. この日に、言う       … わかれ道（オーナーの指示でここへ移した）
- *   7. **その街で、食べる・見る・やる・買う**
- *   8. 越える国境と、言葉   … 国が変わる日だけ
- *   9. その日に起きたこと   … 越えてから入る
+ *   1. どんな日か           … 一行と、その日の絵
+ *   2. **その日の道のり**   … 乗せてくれた人が、1人ずつ縦に並ぶ（`Rides`）
+ *   3. この日、何が起きたか … 日誌と、その日の配信（`DayLog`）
+ *   4. 実際に通った街       … 区間ごとに。**「通る」ではなく「通った」**
+ *   5. この日、国が変わった … 国が変わる日だけ
+ *   6. 旅の前に、決めていたこと … 上の4つ以外は**ぜんぶ畳んでここへ**。
+ *                                朝立つところ・気をつけること・親指を上げる・
+ *                                明るいうち・寄り道・見たいもの・寄るかもしれない街
+ *   7. 買う／ごはん         … 畳んだ区画として、そのあとに
+ *   8. わかれ道と、付箋
+ *
+ * **畳んだものは1つも消していない。** 押せば出発前と同じ中身が出る。
+ * 旅は毎年あるものなので、次に走るときの下調べとしてそのまま使える。
  *
  * **書いていいのは、事実だけ。** `content/nordic.ts` の区間と、
  * `content/nordic/*.json`（あやとの用意したガイドから作った見どころ）に
@@ -474,6 +485,30 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
     .map((l) => themeById(`leg-${l.id}`))
     .filter((t) => !!t);
 
+  /* その日、何に乗って進んだか。**この面の主役。**
+     行を持たない日（動かないヴィリニュス・リガと、船だけで着いた9日目）は
+     空になる。**「0台」とは書かない**——乗らなかったことは出来事ではない。 */
+  const rides = NORDIC_RIDES[day.id] ?? [];
+  const cars = rideCount(day.id);
+
+  /* 旅の前に決めてあったぶん。**1つも無ければ、畳みの区画ごと出さない。**
+     空の紙が1枚立つと、そこに何かあると思って押す人が出る。 */
+  const roadStops = legs.filter((l) => (l.stops?.length ?? 0) > 0);
+  const unsure =
+    hitch || (legs.some((l) => l.fare && !l.fare.yen) && !!day.stay) || legs.length === 0;
+  const hasHours = (!!sun && !!sc) || unsure;
+  const hasPlan =
+    !!(day.wake || day.start) ||
+    (day.worry?.length ?? 0) > 0 ||
+    hitchLegs.length > 0 ||
+    hasHours ||
+    roadStops.length > 0 ||
+    (day.detour?.length ?? 0) > 0 ||
+    goCities.length > 0 ||
+    maybeCities.length > 0 ||
+    shopCities.some((c) => !!shopsOf(c)) ||
+    foodSlugs.some((s) => foodsOf(s).length > 0);
+
   const asks: SayItem[] = [
     ...legs
       .filter((l) => l.fork)
@@ -518,24 +553,33 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         }
       />
 
-      {/* 街に着いた人のための、近道。**この面は上から読むと長い。**
-          あやとはビャウィストクの路上でこれを開いて、お店にたどり着けなかった。
-          お店の区画は見どころの下（面のかなり後ろ）にあるので、
-          頭に1つだけ行き先を置く。**2つ以上は置かない**（近道が増えると目次になる）。 */}
-      {shopJump && (
-        <p className="chips nday-jump">
-          <a className="chip link" href={`#shop-${encodeURIComponent(shopJump)}`}>
-            <Icon name="souvenir" size={18} />
-            {shopJump}で、買う
-          </a>
-        </p>
-      )}
+      {/* その日の道のり。**この面の主役。いちばん上、いちばん大きく。**
 
-      {/* この日の道。区間ごとに、絵・距離・時間・決まっている時刻・その区間の話。
+          あやとの言葉（2026-09-21）:
+
+          > この画面を通して、「旅の準備」の画面から「旅の振返り」の画面に
+          > 責務を変えて欲しい。なので、実際に通ったルートや載せてくれた人などガッツリ。
+
+          旅が終わった日の面を開く人が知りたいのは、**誰が停まってくれたか。**
+          何時に起きる予定だったかではない。だから見出しのすぐ下に置く。 */}
+      <Rides rides={rides} count={cars} />
+
+      {/* この日、何が起きたか。その日の配信への1本道もここが持っている。
+          **焼いてあるものをそのまま出す**（`NORDIC_LOG`）。あやとが送ってきた
+          一言は、受け取った側が Git に焼いて出す運用になった
+          （`components/nordic/DayLog.tsx`）。
+
+          道のりの真下に置くのは、**同じ日を2度読ませないため。**
+          道のりが「誰の車で進んだか」で、こちらが「その車の外で何があったか」。 */}
+      <DayLog entry={NORDIC_LOG[day.id]} />
+
+      {/* 実際に通った街。**「通る」ではなく「通った」。**
+          旅が終わってから開く面なので、よていの言い方のままだと
+          いつまでも出発していないように読める。
           動かない日（休息日）は区間が無いので、この区画そのものを出さない。 */}
       {legs.length > 0 && (
         <section className="panel paper" id="road">
-          <h2>この日の道</h2>
+          <h2>実際に通った街</h2>
           {legs.map((l) => {
             const c = l.enters ? nordicCountry(l.enters) : undefined;
             return (
@@ -567,208 +611,14 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
               </div>
             );
           })}
-
-          {/* 親指を上げるところ。**ヒッチハイクの区間にだけ出る。** */}
-          {hitchLegs.map((l) => (
-            <Hitch key={l.id} leg={l} />
-          ))}
-          <Hours day={day} sun={sun} sc={sc} hitch={hitch} legs={legs} />
         </section>
       )}
 
-      {/* 動かない日は「この日の道」が無いので、時間だけを1枚の紙にする。 */}
-      {legs.length === 0 && (sun || day.stay) && (
-        <section className="panel paper" id="hours">
-          <h2>この日の、明るいうち</h2>
-          <Hours day={day} sun={sun} sc={sc} hitch={hitch} legs={legs} />
-        </section>
-      )}
-
-      {/* 朝、どこから立つか。**区間の「立つところ」とは別もの。**
-          あちらは幹線のどこに立つかで、こちらは**宿からそこへどう出るか。**
-          ワルシャワの宿は幹線まで9.3kmあって、朝いちばんの1時間がそこに消える。
-          距離の話より先に読まれるべきなので、時間の区画のすぐ下に置く。 */}
-      {(day.wake || day.start) && (
-        <section className="panel paper" id="start">
-          <h2>朝、どこから立つか</h2>
-          {day.wake && (
-            <p className="nday-wake">
-              起きる <b>{day.wake}</b>
-            </p>
-          )}
-          {day.start && (
-            <p className="nday-lead">
-              <b>{day.start.from}</b> から。<Strong t={day.start.how} />
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* 気をつけること。**書いてあるのは、行程表で名指しになっている懸念だけ。**
-          「たぶん大丈夫」は書かない。埋めると、本当に危ない日が埋もれる。 */}
-      {(day.worry?.length ?? 0) > 0 && (
-        <section className="panel paper" id="worry">
-          <h2>気をつけること</h2>
-          <ul className="nday-worry">
-            {day.worry!.map((w) => (
-              <li key={w}>
-                <Strong t={w} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* わかれ道。**この面に入ったときに出す**（オーナーの指示）。
-          数が読めないときは、区画ごと出ない。 */}
-      {/* 止まる街の並びと、旅程の日付を渡す。**この面には司令塔（`TripNow`）が
-          居ない**ので、いまどこかはここが自分で読む。渡すのは字と数字と日付だけに
-          して、旅程表そのものを面の JS に連れてこない。 */}
-      <DaySay items={asks} route={route} until={LEAVE.date} />
-
-      {/* その区間あての付箋。**宛先を持っている区間だけ出す**（#160）。
-          10区間ぶん先に並べると、そのうち9つが空の区画になる。
-          付箋が集まった区間から `content/themes.ts` に1行足していく
-          （あやとの指示「付箋が集まった日だけ足す」）。
-
-          **「言う」ではなく「貼る」。** すぐ上の `DaySay` が「この日に、言う」で、
-          あちらは押すだけの分かれ道。同じ言葉にすると、押す区画と書く区画が
-          見出しで見分けられなくなる。 */}
-      {legThemes.map((t) => (
-        <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
-      ))}
-
-      {/* 道すじの上にある寄り道。**区間ごとに1枚。**
-          すぐ下の「順調だったら、寄る」はその日ぜんぶに掛かる話で、
-          こちらは「その道の、その地点」の話。幹線から何km外れるかを持っている。
-          `stops` があるのはヒッチハイクの区間だけなので、飛行機と船の日は出ない。 */}
-      {legs
-        .filter((l) => (l.stops?.length ?? 0) > 0)
-        .map((l) => (
-          <section key={l.id} className="panel paper" id={`stops-${l.id}`}>
-            {/* **見出しに街の名前を2つ入れない。** 390px だと
-                「ビャウィストクからヴィ／リニュスへ」で名前の途中で割れる。
-                どこからどこへは、すぐ下の一行が言う（そこは割れてよい）。 */}
-            <h2>道すじの上の、寄り道</h2>
-            <p className="nday-sub">
-              {cityName(l.from)} から {cityName(l.to)} まで
-            </p>
-            <RoadStops stops={l.stops!} />
-          </section>
-        ))}
-
-      {/* 順調だったら、寄る。**寄ると決まっていない。**
-          ヒッチハイクは着く時刻が読めないので、予定として書くと嘘になる。
-          「順調だったら」を見出しに入れて、決まりごとに見えないようにする。 */}
-      {(day.detour?.length ?? 0) > 0 && (
-        <section className="panel paper" id="detour">
-          <h2>順調だったら、寄る</h2>
-          <ul className="nday-detour">
-            {day.detour!.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* その街で見たいもの。**この日に着く街ごとに、1枚ずつ。**
-
-          あやとの言葉（2026-09-09）:
-
-          > その日程表のところに「この街で見たいもの」みたいな欄をつけてもらって、
-          > 例えば1日目だったらワルシャワがつくと思うんですけど、「ワルシャワで
-          > 見たいもの」みたいな欄をつけてもらって、もちろん1日のルートの部分は
-          > 残しつつ、（…）欄を作って地図を貼って、で、見るべきものを
-          > ポンポンってリストアップしてください
-
-          **街の名前は旅程（`DAYS` `ROUTE`）から出す。** ここにも見出しにも
-          街名を書かない。旅程は #91 で一度ぜんぶ変わっていて、そのとき
-          手で書いた街名だけが古いまま残る。
-
-          地図は OpenStreetMap の実データを焼いたもの（`tools/nordic/citymap.py`）。
-          外の地図サービスを画面から呼ぶことはしない（書き出しに全部入っている）。 */}
-      {goCities.map((c) => (
-        <section key={c.city} className="panel paper" id={`want-${c.city}`}>
-          <h2>{c.city}で見たいもの</h2>
-          {/* まず地図。**どこに何があるかが先で、一覧は後。**
-              道・川・旧市街まで描いてある実データの地図（`CityMap`）。
-              **地図の下に番号の札を並べない。** 番号は一覧の行が持っている */}
-          <CityMap city={c.city} />
-          <WantList items={c.items} />
-          {c.country && c.list.length > 0 && (
-            <Link
-              className="chip link"
-              href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
-            >
-              {c.city}の{c.list.length}件を読む
-              <Icon name="right" size={14} />
-            </Link>
-          )}
-        </section>
-      ))}
-
-      {/* その街の、おみやげと雑貨。**見どころのすぐ下。**
-          あやとの言葉（2026-09-13・ビャウィストクで）:
-
-          > お土産とか雑貨とか行きたかったけど、あやと島みても見つからず行けなかった
-
-          街の見どころと同じ「その街で何をするか」の話なので、地図のすぐ下に置く。
-          国のごはん（`DailyFood`）より手前なのは、あちらが国の話で、
-          こちらがその街の話だから。粒の細かいほうから読めるようにする。
-
-          **街の名前はここに書かない**（旅程から来る）。日付を渡すのは、
-          「いま開いてる」を今日の面でだけ言うため（`ShopRows`）。 */}
-      {shopCities.map((city) => (
-        <Shops key={city} city={city} date={day.date} />
-      ))}
-
-      {/* その日の終わりにいる国の、ふだんのごはん。
-          あやとの言葉（2026-09-12）:
-
-          > ○○日目に、食べるべきもの
-          > 今回は「観光名物」ではなく、現地人が子どもの頃から食べている／
-          > スーパーや家庭に普通にある／…ものを優先します
-
-          **見どころのあとに置く。** 上の「見たいもの」は着いた街の話で、
-          こちらは国の話。街より粒が大きいので、街のあとに来ると順に読める。
-          国の名前はここで書かない（`DailyFood` が slug から引く）。 */}
-      {foodSlugs.map((slug) => (
-        <DailyFood key={slug} country={slug} named={foodSlugs.length > 1} />
-      ))}
-
-      {/* 寄るかどうかがまだ決まっていない街。**畳んでおく。**
-          着く街と同じ高さで開いていると、寄ると決まって見える。
-          地図も畳みの中に入れる（開くまで、そこは寄る街ではない）。 */}
-      {maybeCities.length > 0 && (
-        <section className="panel paper" id="maybe">
-          <h2>寄るかもしれない街</h2>
-          {maybeCities.map((c) => (
-            <div key={c.city} className="folds ndcity">
-              <Fold
-                title={`${c.city}で見たいもの`}
-                lead={`通り道にある${c.items.length}件`}
-              >
-                      <WantList items={c.items} />
-                {c.country && c.list.length > 0 && (
-                  <Link
-                    className="chip link"
-                    href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
-                  >
-                    {c.city}の{c.list.length}件を読む
-                    <Icon name="right" size={14} />
-                  </Link>
-                )}
-              </Fold>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* 国が変わる日だけ。入る国と、その日から使う言葉。
+      {/* 国が変わった日だけ。入った国のページと、その日から使った言葉。
           ポーランドの言葉はガイドに無いので、その日はこの区画が出ない。 */}
       {enters.length > 0 && (
         <section className="panel paper" id="enter">
-          <h2>この日、国が変わる</h2>
+          <h2>この日、国が変わった</h2>
           {enters.map((c) => (
             <Link key={c.slug} className="tile" href={`/nordic/${c.slug}`}>
               <span className="tile-mark">
@@ -801,11 +651,147 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         </section>
       )}
 
-      {/* 越えた日にだけ入る。よていだけの面は、出発前にしか読む理由がない。
-          **焼いてあるものをそのまま出す**（`NORDIC_LOG`）。あやとが送ってきた
-          一言は、受け取った側が Git に焼いて出す運用になった
-          （`components/nordic/DayLog.tsx`）。 */}
-      <DayLog entry={NORDIC_LOG[day.id]} />
+      {/* 旅の前に、決めていたこと。**消さずに、畳んで下げる。**
+
+          あやとの言葉（2026-09-21）:
+
+          > 朝、どこから立つか とか 気をつけること、寄り道候補、見たいものなどは
+          > 優先度を下げるイメージ
+
+          どれも出発前に調べて書いたもので、**いま読むなら「そう決めていた」**
+          という読み方になる。1枚の紙にまとめて、見出しでそう名乗る。
+          既定は全部閉じ。押せば中身はそのまま出る。 */}
+      {hasPlan && (
+        <section className="panel paper" id="plan">
+          <h2>旅の前に、決めていたこと</h2>
+          <div className="folds">
+            {(day.wake || day.start) && (
+              <Fold title="朝、どこから立つか" lead={day.wake ? `起きる ${day.wake}` : undefined}>
+                {day.start && (
+                  <p className="nday-lead">
+                    <b>{day.start.from}</b> から。<Strong t={day.start.how} />
+                  </p>
+                )}
+              </Fold>
+            )}
+
+            {(day.worry?.length ?? 0) > 0 && (
+              <Fold title="気をつけること" note={`${day.worry!.length}件`}>
+                <ul className="nday-worry">
+                  {day.worry!.map((w) => (
+                    <li key={w}>
+                      <Strong t={w} />
+                    </li>
+                  ))}
+                </ul>
+              </Fold>
+            )}
+
+            {/* 親指を上げるところ。**乗る道と国境は事実、立つところと
+                難しさは見立て。** 印と断りは `Hitch` が持っている。 */}
+            {hitchLegs.length > 0 && (
+              <Fold title="親指を上げるところ" lead={`むずかしさ ${HARD[hitchLegs[0].hitch!.hard]}`}>
+                {hitchLegs.map((l) => (
+                  <Hitch key={l.id} leg={l} />
+                ))}
+              </Fold>
+            )}
+
+            {hasHours && (
+              <Fold
+                title="この日の、明るいうち"
+                lead={sun ? `明るいのは ${daylight(sun.rise, sun.set)}` : undefined}
+              >
+                <Hours day={day} sun={sun} sc={sc} hitch={hitch} legs={legs} />
+              </Fold>
+            )}
+
+            {/* 道すじの上にある寄り道。**区間ごとに1つ。**
+                幹線から何km外れるかを持っているのはこちら。 */}
+            {roadStops.map((l) => (
+              <Fold
+                key={l.id}
+                title="道すじの上の、寄り道"
+                lead={`${cityName(l.from)} から ${cityName(l.to)} まで`}
+                note={`${l.stops!.length}件`}
+              >
+                <RoadStops stops={l.stops!} />
+              </Fold>
+            ))}
+
+            {(day.detour?.length ?? 0) > 0 && (
+              <Fold title="順調だったら、寄る" note={`${day.detour!.length}件`}>
+                <ul className="nday-detour">
+                  {day.detour!.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </Fold>
+            )}
+
+            {/* その街で見たいもの。地図も畳みの中へ。
+                **街の名前は旅程から出す**（ここにも見出しにも手で書かない）。 */}
+            {goCities.map((c) => (
+              <Fold key={c.city} title={`${c.city}で見たいもの`} note={`${c.items.length}件`}>
+                <CityMap city={c.city} />
+                <WantList items={c.items} />
+                {c.country && c.list.length > 0 && (
+                  <Link
+                    className="chip link"
+                    href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
+                  >
+                    {c.city}の{c.list.length}件を読む
+                    <Icon name="right" size={14} />
+                  </Link>
+                )}
+              </Fold>
+            ))}
+
+            {maybeCities.map((c) => (
+              <Fold
+                key={c.city}
+                title={`${c.city}に、寄るかもしれなかった`}
+                lead={`通り道にある${c.items.length}件`}
+              >
+                <WantList items={c.items} />
+                {c.country && c.list.length > 0 && (
+                  <Link
+                    className="chip link"
+                    href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
+                  >
+                    {c.city}の{c.list.length}件を読む
+                    <Icon name="right" size={14} />
+                  </Link>
+                )}
+              </Fold>
+            ))}
+
+            {/* その街の、おみやげと雑貨。
+                ここは「これから買いに行く人」のための行き先だったが、旅の終わった
+                面ではその用はもう無い。中身（地図アプリへの1本道）は畳みの中に残す。
+                **頭にあった近道の札は外した**——行き先が閉じた畳みの中になったので、
+                押しても何も開かない札になる。 */}
+            {shopCities.map((city) => (
+              <Shops key={city} city={city} date={day.date} bare />
+            ))}
+
+            {/* その日に足を置いた国の、ふだんのごはん。
+                国の名前はここで書かない（`DailyFood` が slug から引く）。 */}
+            {foodSlugs.map((slug) => (
+              <DailyFood key={slug} country={slug} named={foodSlugs.length > 1} fold />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* わかれ道。越えた日は「もう越えました」と、集まった答えだけが残る。
+          **この面には司令塔（`TripNow`）が居ない**ので、いまどこかはここが自分で読む。 */}
+      <DaySay items={asks} route={route} until={LEAVE.date} />
+
+      {/* その区間あての付箋。**宛先を持っている区間だけ出す**（#160）。 */}
+      {legThemes.map((t) => (
+        <Notes key={t.id} theme={t.id} title={`${t.name}に、貼る`} />
+      ))}
 
       {/* 前の日・次の日。旅は一本道なので、めくって読めるようにする。 */}
       <div className="nnav">

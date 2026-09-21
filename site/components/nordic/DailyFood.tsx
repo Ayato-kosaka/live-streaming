@@ -31,14 +31,42 @@ import { foodCountryName, foodsOf, type DailyFood as Food } from "@/content/nord
 export default function DailyFood({
   country,
   named = false,
+  fold = false,
 }: {
   country: string;
   /** 同じ面に国が2つ以上並ぶ日は、題に国の名前を入れる。 */
   named?: boolean;
+  /**
+   * 紙も題も持たずに、畳み1つだけを返すか。**旅の終わった日の面は `true`。**
+   *
+   * あそこはもう「何を食べるか」を決める面ではなく、その日を振り返る面なので、
+   * 他の「旅の前に、決めていたこと」と同じ束に並べる。8日目は国が3つあるが、
+   * 畳み3行になるだけで背は伸びない。
+   */
+  fold?: boolean;
 }) {
   const foods = foodsOf(country);
   if (foods.length === 0) return null;
   const name = foodCountryName(country);
+
+  const rows = (
+    <div className="folds">
+      {foods.map((f) => (
+        <FoodRow key={`${f.country}-${f.name}`} food={f} />
+      ))}
+    </div>
+  );
+
+  if (fold)
+    return (
+      <Fold
+        title={name ? `${name}の、ふだんのごはん` : "ふだん、何を食べてるんだろう"}
+        lead="スーパーの棚と、家の食卓にあるもの"
+        note={`${foods.length}品`}
+      >
+        {rows}
+      </Fold>
+    );
 
   return (
     <section className="panel paper nfood" id={`food-${country}`}>
@@ -56,11 +84,7 @@ export default function DailyFood({
       <p className="nfood-lead">
         {name ? `${name}の、スーパーの棚と家の食卓にあるもの。` : "スーパーの棚と、家の食卓にあるもの。"}
       </p>
-      <div className="folds">
-        {foods.map((f) => (
-          <FoodRow key={`${f.country}-${f.name}`} food={f} />
-        ))}
-      </div>
+      {rows}
     </section>
   );
 }
