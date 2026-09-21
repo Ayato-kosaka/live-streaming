@@ -256,6 +256,20 @@ Playwright は `tools/sprites/node_modules` にある（リポジトリ直下に
 cd tools/sprites && npm ci
 ```
 
+**worktree を切ったときは、2つの `node_modules` で扱いが違う。** 片方だけ直すと
+残りが落ちたままになる（2026-09-21 に2人が同じところで転んだ。9本落ちて、
+うち8本と1本で原因が別だった）。
+
+| | どうするか | 外すとどうなるか |
+| --- | --- | --- |
+| `functions/node_modules`（331MB） | **symlink でよい** | 無いと見張りが**8本**落ちる（`clean_selftest` ほかが `functions/node_modules/.bin/tsc` を起こすだけなので、symlink 越しでも解決する） |
+| `tools/sprites/node_modules`（9.6MB） | **実体を複製する。symlink では駄目** | `watch_census_selftest.py` が**1本**落ちる |
+
+`tools/sprites` のほうが symlink で駄目なのは、`python/watch_census_selftest.py:457` が
+`p.resolve().relative_to(root.resolve())` で道具の在りかを worktree 基準に直すから。
+symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に解決されて、
+`ValueError: is not in the subpath of` になる。
+
 直下ではなく `tools/sprites/` に置いてあるのは、**直下は Expo の側**で、確認用の
 道具とは別物だから。ここに `package.json` が無いと、npm が上に登って直下の
 `package.json` を書き換える（実際に踏んだ）。
