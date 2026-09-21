@@ -50,6 +50,7 @@ export default function Shops({
   city,
   date,
   fold = false,
+  bare = false,
 }: {
   city: string;
   /** この面が指している日。`ShopRows` が「今日かどうか」を見るのに使う */
@@ -62,6 +63,15 @@ export default function Shops({
    * 日ごとの面は街が1つで、しかも**その街に立っている人が開く面**なので開いたまま。
    */
   fold?: boolean;
+  /**
+   * 紙も題も持たずに、畳み1つだけを返すか。
+   *
+   * 1日ぶりの面では、この畳みは**他の畳みと同じ束に並ぶ**
+   * （「旅の前に、決めていたこと」）。自分で紙を立てると、
+   * 畳み1行のために上下 24px ずつの余白を持った紙が1枚増えて、
+   * 束が3つに割れて見える。
+   */
+  bare?: boolean;
 }) {
   const data = shopsOf(city);
   if (!data) return null;
@@ -145,18 +155,20 @@ export default function Shops({
     </>
   );
 
-  if (fold) {
+  if (fold || bare) {
+    const shut = (
+      <Fold
+        title={`${city}で、買う`}
+        lead={groups.map((g) => g.label).join("・")}
+        note={`${data.shops.length}軒`}
+      >
+        {body}
+      </Fold>
+    );
+    if (bare) return shut;
     return (
       <section className="panel paper nshop" id={`shop-${city}`}>
-        <div className="folds">
-          <Fold
-            title={`${city}で、買う`}
-            lead={groups.map((g) => g.label).join("・")}
-            note={`${data.shops.length}軒`}
-          >
-            {body}
-          </Fold>
-        </div>
+        <div className="folds">{shut}</div>
       </section>
     );
   }
