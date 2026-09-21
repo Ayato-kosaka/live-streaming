@@ -23,6 +23,9 @@ SVG のパスに焼く。北欧の地図（`python/build_nordic_map.py`）と同
 ## 出すもの
 
 - `site/content/atlas/route.json` … 世界1枚（/map の主役）
+  - `countries` … 配信中に歩いた国。`content/countries.ts` の `order` と1対1
+  - `before` … 配信を始める前に歩いた国（スペイン・イタリア）。番号が無いので、
+    同じ層に混ぜず、画面でも別の塗りにする（下の `BEFORE`）
 - `site/content/atlas/c/<slug>.json` … 国ごとの寄りの地図（/map/<slug> の頭）
 
 国ごとの地図は世界地図を拡大したものではなく、その国の範囲で投影し直して
@@ -81,6 +84,35 @@ ROUTE = {
     "Georgia": "georgia",
     "Armenia": "armenia",
     "Iran": "iran-border",
+}
+
+# 配信を始める前に歩いた国。**`ROUTE` とは別に持つ。**
+#
+# `ROUTE` は「配信中に歩いた国」で、`content/countries.ts` の `order`
+# （◯カ国目）と1対1になっている。スペイン（バルセロナ 12日）と
+# イタリア（ローマ 12日）は日本を出たあとの6週間で、配信が1本も無い
+# （`content/countries.ts` の `BEFORE_STREAM`）。**配信中の訪問が無いので
+# `order` が振れない。**
+#
+# 番号の振れない国を `ROUTE` に混ぜると、地図で番号付きの18カ国と同じ塗りに
+# なって「なぜこの国だけ番号が無いのか」が画面の謎になる。別の層
+# （`route.json` の `before`）に焼いて、画面側で別の見た目にする。
+BEFORE = {
+    "Spain": "spain",
+    "Italy": "italy",
+}
+
+# 配信前の国の名札を置く場所。**形の真ん中あたりの、陸の上。**
+#
+# 泊まった街（バルセロナ 2.17E / ローマ 12.5E）に置いてみたが、スマホ幅では
+# 2枚の札が横に重なって「スペイン」が読めなくなった（実測 390px、札の間隔
+# 59px に対して札の幅が 98px）。街に寄せる理由は番号のピンのほう（押しどころが
+# 街と結びつく）にはあるが、こちらは押せない国の名札なので、真ん中でよい。
+BEFORE_AT = {
+    "spain": ("スペイン", -3.70, 40.20),
+    # イタリアはローマ（12.5E）だと札が半分ティレニア海に出て、コルシカ島を
+    # 指しているように見えた。半島の幅の真ん中（アペニンの上）に寄せる。
+    "italy": ("イタリア", 13.60, 42.30),
 }
 
 LAKES = {
@@ -662,6 +694,10 @@ ZOOM = {
     "georgia": (39.8, 47.0, 40.8, 43.8),
     "armenia": (43.2, 47.2, 38.6, 41.4),
     "iran-border": (44.4, 48.6, 38.0, 40.4),
+    # 配信前の2カ国。`/map/<slug>` の面はまだ無いが、寄りの地図は世界1枚の
+    # 拡大ではなくその国の範囲で投影し直したものなので、焼くのはここでしかできない。
+    "spain": (-9.6, 3.6, 35.9, 43.9),
+    "italy": (6.4, 18.8, 35.3, 47.2),
 }
 
 
@@ -714,6 +750,8 @@ def build(
     min_area: float,
     detail: bool,
     dots: int = 78,
+    route: dict | None = None,
+    before: dict | None = None,
 ) -> tuple[dict, callable]:
     """指定した範囲の地形を焼く。世界1枚も国ごとの寄りも、これ1つで作る。
 
@@ -729,6 +767,8 @@ def build(
         min_area: これより小さい輪は捨てる
         detail: 森・きらめきなどの飾りを入れるか
         dots: 飾りを撒く格子の横の数。寄った地図ほど少なくてよい
+        route: 明るく塗る国（TopoJSON の名前 → slug）。既定は `ROUTE`
+        before: 別の層に焼く「配信前に歩いた国」。渡すと `before` が出る
     Returns:
         (焼いた中身, 経度緯度→座標に直す関数)
     """
@@ -784,15 +824,36 @@ def build(
     land_rings = rings_of(land)
     out["land"] = rings_path(land_rings)
 
+    want = route if route is not None else ROUTE
     country_rings: dict[str, list] = {}
+    before_rings: dict[str, list] = {}
     for g in topo["objects"]["countries"]["geometries"]:
-        slug = ROUTE.get(g["properties"]["name"])
-        if not slug:
+        nm = g["properties"]["name"]
+        slug = want.get(nm)
+        bslug = before.get(nm) if before else None
+        if not slug and not bslug:
             continue
         rs = rings_of(g)
-        if rs:
+        if not rs:
+            continue
+        if slug:
             country_rings.setdefault(slug, []).extend(rs)
+        if bslug:
+            before_rings.setdefault(bslug, []).extend(rs)
     out["countries"] = {s: rings_path(r) for s, r in country_rings.items()}
+    if before is not None:
+        # 名札の座標もここで出す。**TS 側で経度緯度から座標を作らない**
+        # （投影のパラメータが片方だけ変わったときに黙ってズレる）。
+        out["before"] = [
+            {
+                "slug": s,
+                "name": BEFORE_AT[s][0],
+                "d": rings_path(r),
+                "x": round(project(*BEFORE_AT[s][1:])[0], 1),
+                "y": round(project(*BEFORE_AT[s][1:])[1], 1),
+            }
+            for s, r in before_rings.items()
+        ]
 
     # ---- 湖 --------------------------------------------------------
     out["lakes"] = ""
@@ -1023,7 +1084,7 @@ def main() -> None:
     # ---- 世界1枚 ----------------------------------------------------
     out, project = build(
         topo, arcs, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, VIEW_W,
-        eps=0.9, min_area=3.2, detail=True,
+        eps=0.9, min_area=3.2, detail=True, before=BEFORE,
     )
     view_w, view_h = out["view"]["w"], out["view"]["h"]
 
@@ -1119,9 +1180,14 @@ def main() -> None:
         eps = 0.34 if span < 5 else (0.5 if span < 11 else 0.8)
         # 国の地図にも草と砂を撒く。世界の地図だけ地面に情報量があって、
         # 国の地図が更地だと、寄ったとたんに安っぽく見える（ac-reference 4章）。
+        # 配信前の国の寄りでは、その国自身も明るく塗る。**世界1枚とは別の
+        # 決まりにする。** あちらは番号付きの18カ国と並ぶので分けて塗るが、
+        # 寄りの地図は主役がその国1つなので、薄いままだと何を見ているのか
+        # 分からない（`countries` に自分が居ないと `CountryMap` が塗らない）。
         co, cproj = build(
             topo, arcs, a, b, c, d, 900.0,
             eps=eps, min_area=2.5, detail=True, dots=52,
+            route=({**ROUTE, **BEFORE} if slug in BEFORE.values() else ROUTE),
         )
         mine = {x[0] for x in CITIES if x[4] == slug}
         co["cities"] = [
