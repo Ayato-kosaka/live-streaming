@@ -46,7 +46,7 @@ export type Resident = {
 export const RESIDENTS: Resident[] = [
   { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 85, score: 0.936, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
   { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 81, score: 0.995, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
-  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 54, score: 0.907, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
+  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 54, score: 0.902, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
   { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 49, score: 0.980, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
   { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 46, score: 0.956, channel: "UCceC2uQXoN9wt2POovos37Q" },
   { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", emoji: "🍃", days: 46, score: 0.961, channel: "UCfhX-rOzBe-QhWPPv03FtQA" },
@@ -57,7 +57,7 @@ export const RESIDENTS: Resident[] = [
   { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 32, score: 0.446, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
   { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 32, score: 0.917, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
   { icon: "1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz", emoji: "🪆", days: 31, score: 0.873, channel: "UCbz2F3GGD_EpBzrWb8WM-cg" },
-  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 27, score: 0.838, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
+  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 27, score: 0.848, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
   { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 21, score: 0.877, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
   { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 14, score: 0.897, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
   { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 14, score: 0.422, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
