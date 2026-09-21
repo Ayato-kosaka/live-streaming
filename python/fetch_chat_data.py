@@ -57,6 +57,9 @@ from utils.time import (
     calculate_next_retry_at,
     is_late_lane,
 )
+# **属性で呼ぶ。** `sleep` / `clock` を見張りが差し替えるので、
+# `from utils.throttle import sleep` で取り込むと差し替えが届かない
+from utils import throttle
 
 
 # ============================================================================
@@ -114,9 +117,14 @@ def main() -> int:
             return 0
         
         # 各動画を処理
+        #
+        # **粘りの財布は回に1つ。** 429 は1本にだけ出るものではないので、
+        # 動画ごとに上限を持たせるだけだと、混んだ晩に合計が何十分にもなる
+        # （`utils/throttle.py` の `PER_RUN_BUDGET_SECONDS`）
+        budget = throttle.RetryBudget()
         results = []
         for video in videos:
-            result = process_video(video, yt_dlp_version, run_id)
+            result = process_video(video, yt_dlp_version, run_id, budget)
             results.append(result)
         
         # 実行結果サマリー
@@ -145,18 +153,76 @@ def main() -> int:
 # 動画単位の処理
 # ============================================================================
 
-def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
+def download_with_backoff(video_id: str, logger: VideoLogger, budget) -> tuple:
+    """yt-dlp を叩く。**「混んでいる」で落ちたときだけ、待って撃ち直す。**
+
+    撃ち直すのは 429 系だけ（`utils.throttle.is_rate_limited`）。
+    動画が消えた・チャットが無い・Cookie が切れた、は何度叩いても通らないし、
+    叩くほど嫌われるので1回で諦める。
+
+    **晩の試行回数（`attempt_count`）はここでは動かさない。**
+    あれは7日ルールの勘定で、晩の中の撃ち直しを足すと
+    **粘った晩ほど早く SKIPPED に落ちる。**
+
+    Returns:
+        (成功フラグ, エラーメッセージ)。`download_chat_data` と同じ形
+    """
+    success, error_msg = download_chat_data(video_id)
+    if success or not throttle.is_rate_limited(error_msg):
+        return success, error_msg
+
+    # ここから先が「粘り」。財布に付けるのも、上限を測るのもこの区間だけで、
+    # 1発目のダウンロードは数えない（1発目はどの晩も必ず撃つぶんなので）
+    started = throttle.clock()
+    shots = []          # (何回目を, 何秒待って撃ったか)
+    stopped_by = ""
+
+    retry_no = 1
+    while not success and throttle.is_rate_limited(error_msg):
+        wait, why = budget.next_wait(retry_no, throttle.clock() - started)
+        if wait is None:
+            stopped_by = why
+            break
+        throttle.sleep(wait)
+        shots.append((retry_no + 1, wait))   # 1発目を「1回目」と数える
+        success, error_msg = download_chat_data(video_id)
+        retry_no += 1
+
+    budget.spend(throttle.clock() - started)
+
+    # **毎晩読むログなので、粘ったぶんを1行にまとめる。**
+    # 「粘ったのかどうか」が外から分からないのがいまの困りごとなので、
+    # 何回目を何秒待って撃ったかまで入れる（撃ち直していない晩は1行も増えない）
+    seq = " / ".join(f"{n}回目は{w}秒待って" for n, w in shots)
+    if success:
+        logger.info(f"混雑（429）で撃ち直して成功: {seq}（晩の試行回数は増やしていない）")
+    elif shots:
+        # **止めた理由を必ず出す。** 「回数で止めた」と「時間で止めた」は、
+        # 次に直すところが違う。混雑ではない失敗に変わった晩もここに来る
+        tail = f"止めた理由: {stopped_by}" if stopped_by else "混雑ではない失敗に変わった"
+        logger.warning(f"混雑（429）で撃ち直したが駄目だった: {seq}（{tail}）")
+    else:
+        # 1回も撃ち直せなかった（財布が空 or 上限0）。**黙って諦めない**
+        logger.warning(f"混雑（429）だが撃ち直さなかった（{stopped_by}）")
+
+    return success, error_msg
+
+
+def process_video(video, yt_dlp_version: str, run_id: str, budget=None) -> ProcessingResult:
     """
     1つの動画を処理
-    
+
     Args:
         video: Video オブジェクト
         yt_dlp_version: yt-dlp のバージョン
         run_id: 実行ID
-        
+        budget: 回ぜんたいで粘ってよい時間の財布（省略したら1本ぶんだけ作る）
+
     Returns:
         ProcessingResult オブジェクト
     """
+    if budget is None:
+        budget = throttle.RetryBudget()
     video_logger = VideoLogger(video.video_id)
     video_logger.info("処理を開始")
     
@@ -175,8 +241,9 @@ def process_video(video, yt_dlp_version: str, run_id: str) -> ProcessingResult:
         video_logger.info(f"試行回数: {video.attempt_count}")
         
         # yt-dlp でチャットデータをダウンロード
+        # **混んでいる（429）ときだけ、同じ回の中で待って撃ち直す**
         video_logger.info("yt-dlp でチャットデータをダウンロード中...")
-        success, error_msg = download_chat_data(video.video_id)
+        success, error_msg = download_with_backoff(video.video_id, video_logger, budget)
         
         if not success:
             # yt-dlp 実行失敗
