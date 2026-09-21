@@ -32,7 +32,7 @@
 | **Goals 表**（目標金額1行） | `app/alertbox/api.utils.ts:31`（`getById`） | 生きている | **生きている。残件** |
 | **SuperChats 表**（スパチャの控え・411行） | `app/alertbox/api.utils.ts:51`（`insert`） | 生きている | **生きている。残件** |
 | **画面のログ**（`EXPO_PUBLIC_GAS_LOG_API_URL`） | OBS の面がスプシへ1行ずつ POST | 59か所 → 31か所 | **`app/alertbox` の36か所。残件** |
-| **gviz の直読み**（料理ランキング） | `public/料理ランキング変動.html` | 2本 | **1本。残件** |
+| **gviz の直読み**（料理ランキング） | `public/料理ランキング変動.html` | 2本 | **0本。** 面ごと消した（2026-09-21 / #388） |
 | **ドライブのキャラクター画像** | `lh3.googleusercontent.com/d/{id}=s{大きさ}` が島のほぼ全面 | 11か所 | **本番0。** `/island-api/characters/{icon}/plain-128.webp` に移った |
 | **使っていない env**（`PYTHON_GAS_API_URL` / `_PW`） | 毎晩の取り込みに渡していた | 生きていた | **消した。** `python/fetch_chat_data_old.py` ごと無い |
 | **クレジット巻き・なに食べよの進捗バー・チャット表示** | OBS の3面 | 生きていた | **面ごと無い**（`app/` に残るのは `alertbox` `ve-comment` `ve-postit` `daily_user_stats` の4面） |
@@ -49,14 +49,20 @@ grep すると10件当たるが、**本番の画面は1つも無い。**
 `tools/sprites/crawlcheck/stub.html` と `tools/sprites/route.mjs:309` は
 **「届かない先」をわざと置いてある**もの。消さない。
 
-## 1-3. GAS の口（`script.google.com/macros/s/…/exec`）が5か所
+## 1-3. GAS の口（`script.google.com/macros/s/…/exec`）が4か所
 
 | どこ | 何の口か | 鍵を持っているか |
 | --- | --- | --- |
 | `app/alertbox/api.utils.ts:11,31,51` | Goals / SuperChats（`EXPO_PUBLIC_GAS_API_URL`） | **無い。`?table=` を付ければ誰でも全件取れる** |
 | `functions/src/islandApi.ts:197` | 島から叩く側 | Functions の中 |
 | `functions/src/nanitabeyoWeeklyReportProxy.ts:5` / `app/daily_user_stats/lib/api.ts:4` | なに食べよの週報 | ソースに直書き |
-| `public/nanitabeyo-improvement-theme-survey/index.html:438` / `public/#853_dish_categories_ranking_review.html:857` | なに食べよのアンケート・ランキング | ページに直書き |
+| `public/nanitabeyo-improvement-theme-survey/index.html:438` | なに食べよのアンケート | ページに直書き |
+
+**ランキングの口（`#853_…`）は 2026-09-21 に無くなった。** 仕様ごと下ろしたので、
+レビューの面（`public/#853_dish_categories_ranking_review.html`）と、その結果を配信に
+映していたテロップ（`public/料理ランキング変動.html`）の**2枚とも無い。**
+合言葉を持っていた口はこのリポジトリのどこにも残っていない（GAS とスプシはあやとのもの。触っていない）。
+テロップだけまた要るときは、`29edb95` の姿が git に残っている。
 
 **`EXPO_PUBLIC_` は「隠す」ではなく「公開してよい」の宣言。** Expo は書き出しの中へ焼くので、
 GitHub Secret に入れてあっても本番の JS から読める。**この口に鍵を持たせても意味がない。**
