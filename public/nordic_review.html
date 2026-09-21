@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#05102a" />
+    <title>北欧旅 9日間 ふりかえり</title>
+    <style>
+      /* =========================================================
+         北欧旅 9日間 ふりかえり（2026-09-11 クタイシ → 09-20 ストックホルム）
+         - OBS ブラウザソース 1920x1080 前提
+         - クリック / Enter / → で進む、← / Backspace で戻る
+         - 実行時の外部依存なし（Firestore 同期のときだけ gstatic の SDK）
+         - 絵文字は1文字も使わない。印は自前の SVG で描く
+         ========================================================= */
+      :root {
+        --text: #eaf3ff;
+        --muted: #a8c2dc;
+        --dim: #7d9ab7;
+        --ice: #8fe3ff;
+        --aurora: #79f0c6;
+        --amber: #ffd79a;
+        --rose: #ff9fbb;
+        --card: rgba(255, 255, 255, 0.075);
+        --card-strong: rgba(255, 255, 255, 0.14);
+        --line: rgba(175, 214, 255, 0.24);
+        --line-strong: rgba(175, 214, 255, 0.5);
+        --radius: 22px;
+        --radius-sm: 13px;
+        --shadow: 0 14px 34px rgba(0, 12, 32, 0.4);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        cursor: pointer;
+        user-select: none;
+        font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP",
+          "Yu Gothic UI", "Segoe UI", Arial, sans-serif;
+        font-feature-settings: "palt" 1;
+        /* 夜明けの空。上は夜、下は水平線の明かり */
+        background:
+          radial-gradient(120% 62% at 50% 104%, rgba(255, 206, 160, 0.34) 0%, rgba(255, 206, 160, 0) 62%),
+          radial-gradient(80% 50% at 14% 2%, rgba(120, 240, 200, 0.13) 0%, rgba(120, 240, 200, 0) 68%),
+          linear-gradient(180deg, #05102a 0%, #0a2145 36%, #16456e 66%, #2c6e91 88%, #5f9fb9 100%);
+      }
+
+      /* ============ 背景（空・オーロラ・雪） ============ */
+      #sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+      .aurora {
+        position: absolute;
+        left: -20%;
+        width: 140%;
+        height: 46vh;
+        opacity: 0.5;
+        /* transform だけを動かす。塗り直しではなく合成で済ませるため */
+        will-change: transform;
+        background: radial-gradient(60% 100% at 30% 50%, rgba(121, 240, 198, 0.33) 0%, rgba(121, 240, 198, 0) 70%),
+          radial-gradient(52% 100% at 66% 45%, rgba(143, 227, 255, 0.28) 0%, rgba(143, 227, 255, 0) 72%);
+      }
+      .aurora.a1 { top: -8vh; animation: drift1 46s ease-in-out infinite alternate; }
+      .aurora.a2 { top: 4vh; opacity: 0.34; animation: drift2 62s ease-in-out infinite alternate; }
+      @keyframes drift1 {
+        from { transform: translate3d(-4%, 0, 0) skewY(-2deg) scaleY(1); }
+        to { transform: translate3d(6%, 3vh, 0) skewY(2deg) scaleY(1.12); }
+      }
+      @keyframes drift2 {
+        from { transform: translate3d(5%, 2vh, 0) skewY(3deg); }
+        to { transform: translate3d(-6%, -2vh, 0) skewY(-1deg); }
+      }
+      .star {
+        position: absolute;
+        width: 2px; height: 2px;
+        border-radius: 999px;
+        background: #dff0ff;
+        opacity: 0.75;
+        animation: twinkle 5s ease-in-out infinite alternate;
+      }
+      @keyframes twinkle { from { opacity: 0.18; } to { opacity: 0.9; } }
+      .snow {
+        position: absolute;
+        top: -4vh;
+        width: 5px; height: 5px;
+        border-radius: 999px;
+        background: rgba(233, 246, 255, 0.85);
+        animation: snowfall linear infinite;
+      }
+      @keyframes snowfall {
+        from { transform: translate3d(0, -6vh, 0); }
+        to { transform: translate3d(3vw, 108vh, 0); }
+      }
+
+      /* ============ 舞台 ============ */
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 56px 78px;
+        transition: opacity 0.32s ease;
+      }
+      #stage.fading { opacity: 0; }
+
+      [data-step] {
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      [data-step].on { opacity: 1; transform: none; }
+      [data-dim] { transition: opacity 0.4s ease; }
+      [data-dim].dimmed { opacity: 0.3; }
+
+      .corner-tag {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0.26em;
+        color: var(--dim);
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .corner-title {
+        margin: 0 0 26px;
+        font-weight: 900;
+        font-size: 54px;
+        line-height: 1.14;
+        text-align: center;
+        letter-spacing: 0.01em;
+        background: linear-gradient(92deg, #a9f3ff, #d9e9ff 46%, #ffd79a);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.7;
+        text-align: center;
+      }
+      b { color: #fff; font-weight: 900; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      /* ---- 1. タイトル ---- */
+      .t-wrap { text-align: center; max-width: 1400px; }
+      .t-kicker {
+        font-size: 20px; font-weight: 800; letter-spacing: 0.3em; color: var(--ice);
+        margin-bottom: 18px;
+      }
+      .t-main {
+        margin: 0;
+        font-size: 132px;
+        font-weight: 900;
+        line-height: 1.06;
+        letter-spacing: 0.02em;
+        background: linear-gradient(96deg, #bff4ff, #ffffff 40%, #ffd79a);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        text-shadow: 0 18px 50px rgba(120, 200, 255, 0.16);
+      }
+      .t-sub {
+        margin-top: 24px;
+        font-size: 34px; font-weight: 800; color: #dceaff;
+      }
+      .t-lead {
+        margin: 30px auto 0;
+        max-width: 1220px;
+        font-size: 24px; font-weight: 600; line-height: 1.85; color: var(--muted);
+      }
+      .t-rule {
+        width: 220px; height: 2px; margin: 28px auto 0;
+        background: linear-gradient(90deg, rgba(143,227,255,0), var(--ice), rgba(143,227,255,0));
+      }
+
+      /* ---- 2. 数字 ---- */
+      .n-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        width: 100%;
+        max-width: 1560px;
+      }
+      .n-cell {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 26px 18px 22px;
+        text-align: center;
+        box-shadow: var(--shadow);
+      }
+      .n-cell.hi { background: var(--card-strong); border-color: var(--line-strong); }
+      .n-num {
+        font-size: 82px; font-weight: 900; line-height: 1;
+        color: var(--ice);
+        letter-spacing: -0.01em;
+      }
+      .n-cell.hi .n-num { color: var(--amber); }
+      .n-label { margin-top: 12px; font-size: 21px; font-weight: 800; color: #d8e8f8; }
+      .n-foot { margin-top: 26px; font-size: 25px; font-weight: 700; line-height: 1.7; color: #cfe2f5; text-align: center; }
+
+      /* ---- 3. 9日間の道のり ---- */
+      .d-wrap { display: flex; gap: 28px; width: 100%; max-width: 1800px; align-items: stretch; }
+      .d-map { flex: 0 0 470px; position: relative; }
+      .d-map svg { width: 100%; height: 100%; display: block; }
+      .mroute { fill: none; stroke: rgba(175, 214, 255, 0.22); stroke-width: 3; stroke-linecap: round; }
+      .mleg { fill: none; stroke: var(--ice); stroke-width: 4.5; stroke-linecap: round; opacity: 0; transition: opacity 0.5s ease; }
+      .mleg.marked { opacity: 1; }
+      .mleg.sea { stroke: var(--aurora); stroke-dasharray: 9 10; }
+      .mleg.air { stroke: var(--amber); stroke-dasharray: 4 11; }
+      .mcity circle { fill: #0a1f3d; stroke: rgba(175, 214, 255, 0.35); stroke-width: 2; transition: all 0.45s ease; }
+      .mcity text { fill: var(--dim); font-size: 15px; font-weight: 800; transition: fill 0.45s ease; }
+      .mcity.marked circle { fill: var(--ice); stroke: #eaf7ff; r: 8; }
+      .mcity.marked text { fill: #ffffff; }
+      .d-list { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+      .d-row {
+        display: flex; gap: 16px; align-items: baseline;
+        background: var(--card);
+        border: 1px solid transparent;
+        border-left: 3px solid rgba(143, 227, 255, 0.4);
+        border-radius: 12px;
+        padding: 9px 16px;
+      }
+      .d-row .d-when { flex: 0 0 300px; font-size: 20px; font-weight: 900; color: var(--ice); }
+      .d-row .d-when span { color: var(--dim); font-weight: 700; font-size: 17px; }
+      .d-row .d-text { flex: 1; font-size: 18px; font-weight: 600; line-height: 1.55; color: #dbe9f8; }
+
+      /* ---- 4. 乗せてくれた人たち ---- */
+      .c-cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; width: 100%; max-width: 1840px; align-items: start; }
+      .c-day { display: flex; flex-direction: column; gap: 10px; }
+      .c-day-head {
+        font-size: 20px; font-weight: 900; color: var(--amber);
+        letter-spacing: 0.08em; padding-left: 4px;
+      }
+      .car-row {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+      }
+      .car-row .car-name { font-size: 17.5px; font-weight: 900; color: #f2f8ff; line-height: 1.4; }
+      .car-row .car-desc { margin-top: 4px; font-size: 15px; font-weight: 600; line-height: 1.52; color: var(--muted); }
+
+      /* ---- 5. トラブル ---- */
+      .tr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1640px; }
+      .tr-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); }
+      .tr-head { display: flex; align-items: baseline; gap: 12px; }
+      .tr-no { font-size: 34px; font-weight: 900; color: rgba(255, 159, 187, 0.85); line-height: 1; }
+      .tr-title { font-size: 28px; font-weight: 900; color: #fff; }
+      .tr-day { margin-left: auto; font-size: 16px; font-weight: 800; color: var(--dim); }
+      .tr-body { margin-top: 12px; font-size: 19px; font-weight: 600; line-height: 1.66; color: #d5e6f6; }
+
+      /* ---- 6. クイズ ---- */
+      .q-wrap { width: 100%; max-width: 1400px; text-align: center; }
+      .q-no { font-size: 22px; font-weight: 900; letter-spacing: 0.24em; color: var(--amber); margin-bottom: 20px; }
+      .q-text { font-size: 50px; font-weight: 900; line-height: 1.42; color: #fff; }
+      .q-choices { margin-top: 48px; display: flex; flex-direction: column; gap: 18px; }
+      .qc {
+        position: relative;
+        display: flex; align-items: center; gap: 20px;
+        background: var(--card); border: 2px solid var(--line);
+        border-radius: 18px; padding: 20px 28px;
+        transition: all 0.45s ease;
+      }
+      .qc .qc-key {
+        flex: 0 0 52px; height: 52px; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; font-weight: 900; color: #06182f;
+        background: rgba(175, 214, 255, 0.55);
+      }
+      .qc .qc-body { font-size: 34px; font-weight: 800; color: #eaf3ff; }
+      .qc .qc-tag {
+        margin-left: auto; display: flex; align-items: center; gap: 10px;
+        opacity: 0; transform: translateX(10px); transition: all 0.45s ease;
+        font-size: 24px; font-weight: 900; color: #06210f;
+        background: var(--aurora); border-radius: 999px; padding: 7px 20px 7px 14px;
+      }
+      .qc.marked { border-color: var(--aurora); background: rgba(121, 240, 198, 0.14); }
+      .qc.marked .qc-key { background: var(--aurora); }
+      .qc.marked .qc-tag { opacity: 1; transform: none; }
+
+      /* ---- 7. 盛り上がり ---- */
+      .p-list { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1500px; }
+      .p-row {
+        display: flex; align-items: center; gap: 24px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: var(--radius); padding: 18px 26px; box-shadow: var(--shadow);
+      }
+      .p-row.top { background: var(--card-strong); border-color: rgba(255, 215, 154, 0.55); }
+      .p-rank { flex: 0 0 96px; font-size: 42px; font-weight: 900; color: var(--ice); line-height: 1; }
+      .p-row.top .p-rank { color: var(--amber); font-size: 52px; }
+      .p-rank em { font-style: normal; font-size: 22px; margin-left: 2px; }
+      .p-main { flex: 1; }
+      .p-title { font-size: 28px; font-weight: 900; color: #fff; }
+      .p-quote { margin-top: 6px; font-size: 20px; font-weight: 600; color: var(--muted); }
+      .p-count {
+        flex: 0 0 auto; font-size: 30px; font-weight: 900; color: var(--amber);
+        background: rgba(255, 215, 154, 0.12); border: 1px solid rgba(255, 215, 154, 0.4);
+        border-radius: 999px; padding: 8px 22px;
+      }
+
+      /* ---- 8. 視聴者さんが動かした旅 ---- */
+      .v-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; width: 100%; max-width: 1800px; align-items: stretch; }
+      .v-card {
+        background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 24px 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px;
+      }
+      .v-day { font-size: 16px; font-weight: 900; letter-spacing: 0.14em; color: var(--amber); }
+      .v-title { font-size: 25px; font-weight: 900; line-height: 1.42; color: #fff; }
+      .v-body { font-size: 18px; font-weight: 600; line-height: 1.66; color: var(--muted); margin-top: auto; }
+
+      /* ---- 9. 投げ銭 ---- */
+      .g-wrap { display: flex; gap: 30px; width: 100%; max-width: 1760px; align-items: stretch; }
+      .corner-title.g-title { margin-bottom: 14px; }
+      .g-left { flex: 0 0 560px; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+      .g-total-label { font-size: 26px; font-weight: 900; color: var(--muted); letter-spacing: 0.1em; }
+      .g-total { font-size: 104px; font-weight: 900; line-height: 1; color: var(--amber); }
+      .g-goal { font-size: 24px; font-weight: 800; color: var(--muted); }
+      .g-bar { height: 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; border: 1px solid var(--line); }
+      .g-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--ice), var(--amber)); }
+      .g-note { font-size: 20px; font-weight: 700; color: #cfe2f5; line-height: 1.7; }
+      .g-right { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+      .g-big {
+        display: flex; align-items: center; gap: 22px;
+        background: var(--card-strong); border: 1px solid var(--line-strong);
+        border-radius: 18px; padding: 11px 26px;
+      }
+      .g-big .g-rank { font-size: 40px; font-weight: 900; color: var(--amber); min-width: 90px; }
+      .g-big .g-name { font-size: 36px; font-weight: 900; color: #fff; }
+      .g-big .g-amt { margin-left: auto; font-size: 36px; font-weight: 900; color: var(--ice); }
+      .g-row {
+        display: flex; align-items: center; gap: 18px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 12px; padding: 5px 24px;
+      }
+      .g-row .g-rank { font-size: 22px; font-weight: 900; color: var(--dim); min-width: 78px; }
+      .g-row .g-name { font-size: 23px; font-weight: 800; color: #eaf3ff; }
+      .g-row .g-amt { margin-left: auto; font-size: 23px; font-weight: 900; color: var(--ice); }
+      .g-rest { margin-top: 6px; }
+      .g-rest-head { font-size: 18px; font-weight: 900; color: var(--dim); letter-spacing: 0.18em; margin-bottom: 8px; }
+      .g-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+      .g-chip {
+        background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line);
+        border-radius: 999px; padding: 4px 14px; font-size: 16px; font-weight: 700; color: #d6e6f6;
+      }
+      .g-chip em { font-style: normal; color: var(--ice); font-weight: 900; margin-left: 6px; }
+
+      /* ---- 10. 手紙 ---- */
+      .l-wrap { width: 100%; max-width: 1320px; }
+      .l-para {
+        font-size: 25px; font-weight: 600; line-height: 1.95; color: #e2eefb;
+        margin-bottom: 22px; padding-left: 26px; border-left: 3px solid rgba(143, 227, 255, 0.4);
+      }
+      .l-sign { text-align: right; font-size: 28px; font-weight: 900; color: var(--ice); margin-top: 8px; }
+
+      /* ---- 11. エンディング ---- */
+      .e-wrap { text-align: center; }
+      .e-main {
+        margin: 0; font-size: 104px; font-weight: 900; line-height: 1.16;
+        background: linear-gradient(96deg, #bff4ff, #ffffff 46%, #ffd79a);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .e-sub { margin-top: 34px; font-size: 30px; font-weight: 700; color: #d5e6f6; line-height: 1.7; }
+      .e-small { margin-top: 56px; font-size: 19px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; }
+
+      /* ============ コントローラ（?role=ctrl） ============ */
+      body.ctrl { cursor: default; overflow: hidden; }
+      body.ctrl #stage, body.ctrl #progress, body.ctrl #hint, body.ctrl #sky { display: none; }
+      #ctrl-ui {
+        position: fixed; inset: 0; z-index: 40;
+        display: none; flex-direction: column; gap: 12px;
+        padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+      }
+      body.ctrl #ctrl-ui { display: flex; }
+      #ctrl-ui .c-head {
+        display: flex; align-items: center; justify-content: space-between;
+        font-weight: 900; color: var(--muted); font-size: 14px;
+      }
+      #ctrl-ui .c-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+      #ctrl-ui .c-dot { width: 10px; height: 10px; border-radius: 999px; background: #55657a; }
+      #ctrl-ui .c-dot.ok { background: #52d3ab; }
+      #ctrl-ui .c-dot.ng { background: #f08aa0; }
+      #ctrl-ui .c-now {
+        background: var(--card-strong); border: 1px solid var(--line);
+        border-radius: var(--radius); padding: 16px 18px; text-align: center;
+      }
+      #ctrl-ui .c-corner { font-weight: 900; font-size: clamp(22px, 7vw, 34px); color: #fff; }
+      #ctrl-ui .c-step { color: var(--muted); font-weight: 800; font-size: 14px; margin-top: 4px; }
+      #ctrl-ui .c-main { display: flex; gap: 12px; flex: none; }
+      #ctrl-ui button {
+        font-family: inherit; color: var(--text);
+        border: 1px solid var(--line); border-radius: var(--radius);
+        font-weight: 900; cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation; /* ダブルタップのズーム由来の余計な発火を止める */
+        user-select: none;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      #ctrl-ui button:active { transform: scale(0.97); }
+      #ctrl-ui .c-back { flex: 1; height: 26vh; font-size: clamp(18px, 5vw, 26px); color: var(--muted); }
+      #ctrl-ui .c-next {
+        flex: 2.4; height: 26vh; font-size: clamp(26px, 8vw, 40px);
+        color: #06182f; border: 0; background: linear-gradient(120deg, #8fe3ff, #79f0c6);
+      }
+      #ctrl-ui .c-extra { display: flex; gap: 8px; }
+      #ctrl-ui .c-extra button { flex: 1; padding: 12px; font-size: 15px; }
+      #ctrl-ui .c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; }
+      #ctrl-ui .c-grid button { padding: 12px 10px; font-size: clamp(13px, 3.6vw, 17px); text-align: left; }
+      #ctrl-ui .c-grid button.act { border-color: var(--ice); background: rgba(143, 227, 255, 0.22); }
+      #ctrl-ui .c-banner {
+        background: rgba(255, 215, 154, 0.16); border: 1px solid var(--line);
+        border-radius: var(--radius-sm); font-size: 13px; font-weight: 800;
+        line-height: 1.6; padding: 10px 14px; display: none;
+      }
+      #ctrl-ui .c-banner.show { display: block; }
+
+      /* ============ 進行UI ============ */
+      #progress {
+        position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 10px; align-items: center; z-index: 20;
+      }
+      #progress .dot {
+        width: 11px; height: 11px; border-radius: 999px;
+        background: rgba(200, 224, 255, 0.24); transition: all 0.3s ease;
+      }
+      #progress .dot.act { width: 34px; background: linear-gradient(90deg, var(--ice), var(--aurora)); }
+      #hint {
+        position: fixed; right: 24px; bottom: 20px; z-index: 20;
+        color: rgba(200, 224, 255, 0.5); font-size: 14px; font-weight: 800;
+        transition: opacity 1s ease;
+      }
+      #hint.gone { opacity: 0; }
+
+      /* ============ 紙吹雪（北欧なので雪の粒） ============ */
+      #confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+      .confetti {
+        position: absolute; top: -4vh; width: 12px; height: 12px;
+        border-radius: 3px; opacity: 0.92; animation: fall linear forwards;
+      }
+      @keyframes fall {
+        0% { transform: translateY(-6vh) rotate(0deg); }
+        100% { transform: translateY(112vh) rotate(680deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+        [data-step] { opacity: 0; transform: none; }
+        [data-step].on { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sky" aria-hidden="true">
+      <div class="aurora a1"></div>
+      <div class="aurora a2"></div>
+    </div>
+
+    <main id="stage" role="main" aria-live="polite"></main>
+    <div id="progress" aria-hidden="true"></div>
+    <div id="hint">クリック / Enter で進む ・ ← で戻る</div>
+    <div id="confetti-layer" aria-hidden="true"></div>
+
+    <div id="ctrl-ui">
+      <div class="c-head">
+        <span>北欧旅ふりかえり コントローラ</span>
+        <span class="c-status"><span class="c-dot" id="c-dot"></span><span id="c-status-text">接続中…</span></span>
+      </div>
+      <div class="c-banner" id="c-banner"></div>
+      <div class="c-now">
+        <div class="c-corner" id="c-corner">—</div>
+        <div class="c-step" id="c-step"></div>
+      </div>
+      <div class="c-main">
+        <button class="c-back" id="c-back">もどる</button>
+        <button class="c-next" id="c-next">つぎへ</button>
+      </div>
+      <div class="c-extra">
+        <button id="c-confetti">紙吹雪もう一回</button>
+        <button id="c-top">最初から</button>
+      </div>
+      <div class="c-grid" id="c-grid"></div>
+    </div>
+
+    <script>
+      "use strict";
+
+      /* =========================================================
+         DECK
+         2026-09-11 クタイシ 〜 2026-09-20 ストックホルムの9日間。
+         数字は実測、言い回しは本人の話とチャットの原文から確定したもの。
+         **ここに無いことを画面に出さない。**
+         ========================================================= */
+      const DECK = {
+        title: {
+          main: "会いに行った9日間",
+          sub: "2026年9月11日 クタイシ → 9月20日 ストックホルム",
+          lead: "スウェーデンに、会いたい人がいる。飛行機が高いのでポーランドまで飛んで、そこから先はヒッチハイク。",
+        },
+        numbers: {
+          cells: [
+            { n: "9", label: "日間" },
+            { n: "6", label: "カ国" },
+            { n: "18", label: "乗せてくれた車", hi: true },
+            { n: "1,377", label: "km をヒッチハイクで" },
+            { n: "5", label: "回、国境を越えた" },
+            { n: "20", label: "本の配信" },
+            { n: "10,949", label: "件のコメント", hi: true },
+            { n: "118", label: "人が来てくれた" },
+          ],
+          foot: "クタイシからカトヴィツェまで飛行機で2,450km。**そこから先は、ぜんぶ人の車と船。**",
+        },
+        days: [
+          { when: "出発", date: "9/11", where: "クタイシ", text: "クタイシの空港に着いた。ここから夜の便でポーランドへ。" },
+          { when: "1日目", date: "9/12", where: "カトヴィツェ → ワルシャワ・車6台", text: "1台目の車はロータリーをぐるぐる回った。降ろされたのは目的地から30キロ逆戻りした小さな街。野宿を覚悟したところで停まってくれたのが、カメラマンの人。" },
+          { when: "2日目", date: "9/13", where: "ワルシャワ → ビャウィストク・車2台", text: "日曜のワルシャワは店が全部閉まっていた。一度断られた人が戻ってきて、一般道を200キロで飛ばしてくれた。" },
+          { when: "3日目", date: "9/14", where: "ビャウィストク → ヴィリニュス・車3台", text: "寒すぎてマダムコートを買った。80歳のおじいさんが国境を越えてくれて、降りるときに金を要求された。" },
+          { when: "4日目", date: "9/15", where: "ヴィリニュス・動かない日", text: "丘の上から赤い屋根が一面に広がった。シャコティスが顎に刺さった。" },
+          { when: "5日目", date: "9/16", where: "ヴィリニュス → リガ・車6台", text: "1台目がいきなり目的地まで行くというので、**ぬるすぎるのであえて途中で降りた。**" },
+          { when: "6日目", date: "9/17", where: "リガ・動かない日", text: "一度は入れなかった建物に、おばちゃんに笑われながら通してもらえた。頼んだ紅茶のポットが空だった。" },
+          { when: "7日目", date: "9/18", where: "リガ → タリン・車1台", text: "朝にシムが壊れた。ダンボールで札を作り直して、10分で停まった。**この旅で最後の1台。**" },
+          { when: "8日目", date: "9/19", where: "タリン → ヘルシンキ → 船", text: "機材が全部やられて、悲しさに浸りながら配信を切って2時間寝た。出港40分前にカバンを取りに走った。" },
+          { when: "9日目", date: "9/20", where: "ストックホルム着", text: "朝10時、フェリーで着いた。**配信を終えてから、親友に会った。**" },
+        ],
+        cars: [
+          {
+            head: "1日目（6台）",
+            items: [
+              { name: "ロータリーをぐるぐる回ったおじさん", desc: "この旅の1台目。ヒッチハイクだと伝わっていなくて、降ろされたのは鉄道の駅" },
+              { name: "小さな町まで乗せてくれたおじさん", desc: "30キロ逆戻り。教会に入って旅の無事を祈った" },
+              { name: "直談判して、朝の地点まで戻してくれた人", desc: "**進むためではなく、戻るための1台**" },
+              { name: "マイケル", desc: "逆方向なのに、高速のガソリンスタンドまで" },
+              { name: "スモークチーズをくれたカップル", desc: "20キロほど" },
+              { name: "カメラマンのニキ", desc: "野宿を覚悟したところで。つたない英語で、たくさん話しかけてくれた" },
+            ],
+          },
+          {
+            head: "2日目（2台）",
+            items: [
+              { name: "ジュースをくれたマイケル", desc: "" },
+              { name: "ロシア紳士のニキ二人組", desc: "**一度は断られた。** そのあと戻ってきて、一般道を200キロで" },
+            ],
+          },
+          {
+            head: "3日目（3台）",
+            items: [
+              { name: "クールなおじさん", desc: "とうもろこしだらけの田舎道" },
+              { name: "ジョージアのおじさん（80歳）", desc: "35年もののオールドカー。ガス欠。**日本刀を持っていた。** 降りるとき金を要求された" },
+              { name: "英国風の紳士おじ", desc: "1時間20分停まらず、落ち込んでガソリンスタンドで直談判したら、すぐ" },
+            ],
+          },
+          {
+            head: "5日目（6台）",
+            items: [
+              { name: "話に必ずオチがあるおじ", desc: "リガまで行ってくれそうだったが、**ぬるすぎるのであえて降りた**" },
+              { name: "無口なおじ", desc: "タクシーみたいに使ってしまった" },
+              { name: "おしゃべりな女性ふたり", desc: "「もうひとつ街を見ろ」" },
+              { name: "配達しまくっている個人事業主のニキ", desc: "タリン出身で、行く先のことを教えてくれた" },
+              { name: "トラックのおじさん", desc: "20キロだけ" },
+              { name: "老夫婦", desc: "空港へ友だちを迎えに行く予定だったのに、街まで。**飲み物をこぼした。札も置いてきた**" },
+            ],
+          },
+          {
+            head: "7日目（1台）",
+            items: [
+              { name: "ずっと電話していた無口なおじさん", desc: "10分で停まった。**この旅で最後の1台**" },
+            ],
+          },
+        ],
+        troubles: {
+          items: [
+            { title: "恐喝", day: "3日目", body: "国境を越えてくれた80歳のおじいさんが、降りるとき金を要求。300円を渡して降りた" },
+            { title: "無賃乗車寸前", day: "5日目", body: "リガのバスでカードが使えない。乗ってから気づいた" },
+            { title: "シムが壊れた", day: "7日目", body: "出発の朝。買い直して、パンを買って、バスに乗り遅れた" },
+            { title: "札が前日の車の中", day: "7日目", body: "ダンボールをもらって書き直した" },
+            { title: "機材が全滅", day: "8日目", body: "前日のどしゃ降りで iPhone・Android・モバイルバッテリー2つ。**バッテリーは2つとも死んだ**" },
+            { title: "カバン置き忘れ", day: "8日目", body: "出港40分前に、3階のゲーム屋に。走って取りに戻って駆け込み乗船" },
+          ],
+          note: "鳩に頭にフンを落とされた話は7日目。**手で取った**",
+        },
+        quiz: [
+          { q: "3日目、寒さに負けて買ったコートに、視聴者さんが付けたあだ名は？", choices: ["ボスコート", "マダムコート", "ムッシュコート"], answer: 1 },
+          { q: "1日目、視聴者さんが教えてくれた「ポーランド語でヒッチハイク」は？", choices: ["スパシーバ", "アウトストプ", "ジュレック"], answer: 1 },
+          { q: "3日目、国境を越えて乗せてくれたおじいさんは何歳？", choices: ["65歳", "72歳", "80歳"], answer: 2 },
+          { q: "そのおじいさんに、降りるとき払った金額は？", choices: ["約100円", "約300円", "約1,000円"], answer: 1 },
+          { q: "6日目、リガのブレーメンの音楽隊の像で、さわったのは？", choices: ["ネコの背中", "ロバの鼻", "ニワトリのとさか"], answer: 1 },
+          { q: "6日目、カフェで紅茶を頼んだら、ポットはどうなっていた？", choices: ["空っぽだった", "コーヒーが入っていた", "ふたが開かなかった"], answer: 0 },
+          { q: "8日目、ムーミンカフェのタピオカはいくら？", choices: ["約500円", "約1,000円", "約1,500円"], answer: 2 },
+        ],
+        peaks: {
+          note: "5分のあいだに**何人が書いたか**で並べた（1人の連投は数に入れない）。",
+          items: [
+            { rank: 1, count: "15人", title: "9/20 配信の締め", quote: "「ついに会えるね」「ここまでよく頑張った」" },
+            { rank: 2, count: "14人", title: "9/17 紅茶のポットが空", quote: "「あれま？！からやないかい！！」" },
+            { rank: 3, count: "12人", title: "9/18 どしゃ降りのあとスーパー", quote: "醤油の値段に全員が食いついた" },
+            { rank: 4, count: "12人", title: "9/14 営業作戦が成功した瞬間", quote: "1時間半停まらず、路肩をやめて直接声をかけに行った" },
+            { rank: 5, count: "12人", title: "9/17 砂時計で蒸らし時間を選ぶ紅茶", quote: "「レア、ミディアム・レア、ウェルダンな感じ？」" },
+          ],
+        },
+        viewers: [
+          { day: "1日目", title: "「アウトストプ」を教えた", body: "ヒッチハイクだと伝わらなくて駅に降ろされた、その直後" },
+          { day: "5日目", title: "バスの支払い方法を4通り調べた", body: "無賃乗車寸前のリガのバスで" },
+          { day: "6日目", title: "「ロバの鼻をさわると幸運」", body: "ブレーメンの音楽隊の像で" },
+          { day: "6日目", title: "日本の深夜3時に、目覚ましをかけた人が2人", body: "夜景配信のため。その日の1コメント目が「**起きたよ**」" },
+          { day: "1日目", title: "もらったキャラクターを、ファミマでシールにしてきた", body: "「俺嬉しすぎてスマホケースに入れたわ」" },
+        ],
+        gift: {
+          total: "80,970円",
+          goal: "目標 50,000円",
+          note: "2026年7月26日から、北欧旅のために。",
+          top: [
+            { rank: "1位", name: "aoi", amt: "23,700円" },
+            { rank: "2位", name: "まこも", amt: "19,100円" },
+            { rank: "3位", name: "らん", amt: "16,000円" },
+            { rank: "4位", name: "kana", amt: "8,000円" },
+            { rank: "5位", name: "まーさん", amt: "7,100円" },
+            { rank: "6位", name: "たぃ", amt: "7,060円" },
+            { rank: "7位", name: "田中とら", amt: "5,920円" },
+            { rank: "8位", name: "moimoilove", amt: "4,500円" },
+            { rank: "9位", name: "ももしろう", amt: "2,900円" },
+            { rank: "10位", name: "ひめひめ", amt: "2,500円" },
+            { rank: "10位", name: "ひー", amt: "2,500円" },
+          ],
+          rest: [
+            ["えびっち", "2,400"], ["dekoboko", "2,260"], ["ayato arigato", "2,000"],
+            ["murasaki", "1,600"], ["mikan", "1,500"], ["ゆずたつ", "1,100"],
+            ["もっと豆挽けコーヒー商店", "1,000"], ["鴨川小夜", "1,000"], ["おすみ", "1,000"],
+            ["YOKOHAMA_Night", "800"], ["desora", "700"], ["チャイナモンスター", "320"],
+            ["シメサバ", "320"], ["スカイライン", "320"], ["元キノコさん", "300"],
+            ["くまたん", "200"], ["大津谷", "160"],
+          ],
+        },
+        letter: {
+          paras: [
+            "9日間で10,949件のコメントを読みました。いちばん多かったのは「気をつけて」でも「おめでとう」でもなく、**誰かが停まってくれた瞬間の拍手**でした。18台ぶん、全部数えてあります。",
+            "印象に残っているのは、3日目に恐喝された直後のことです。まーさんが「電車にのりなはれ！大盤振る舞い！」と1,600円を投げて、あやとさんがそれでもヒッチハイクを選んで、まーさんが「ぐすん」「もう十分取れ高あるじゃーん」「まあ、わかさまにしたがうけどさ・・・」と続けていました。**あれは心配していた人の言葉です。**",
+            "6日目の夜景配信で、日本の深夜3時に目覚ましをかけた人が2人いました。その日の1コメント目は「**あやとさん**」「**起きたよ**」でした。画面のこちら側も、ちゃんと旅をしていたのだと思います。",
+            "9日目、最後の5分にいちばん人が集まりました。**15人が同時に「ついに会えるね」と書いていました。** ここから7泊、ゆっくりしてきてください。",
+          ],
+          sign: "あやと島案内鳥 より",
+        },
+        ending: {
+          main: "ストックホルムに着きました。",
+          sub: "9/20 着。ここから7泊、9月27日に発つまでが北欧旅。",
+          small: "あやと島 live-streaming-d3cac.web.app",
+        },
+      };
+
+      /* ======================== 小道具 ======================== */
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+      }
+      /** 原文の ** は「ここを強く」の印。逃がしてから太字にする */
+      function md(s) {
+        return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+      }
+
+      /* ======================== 区画 ======================== */
+      const DOT_LABELS = [
+        "タイトル",
+        "数字で見る9日間",
+        "9日間の道のり",
+        "乗せてくれた人たち",
+        "トラブル選手権",
+        "クイズ",
+        "盛り上がりの瞬間",
+        "視聴者さんが動かした旅",
+        "投げ銭ありがとう",
+        "案内鳥からの手紙",
+        "エンディング",
+      ];
+
+      /* ---- 1. タイトル ---- */
+      function renderTitle() {
+        const t = DECK.title;
+        return `
+          <div class="t-wrap">
+            <div class="t-kicker" data-step="0">NORDIC 2026</div>
+            <h1 class="t-main" data-step="0">${escapeHtml(t.main)}</h1>
+            <div class="t-rule" data-step="1"></div>
+            <div class="t-sub" data-step="1">${escapeHtml(t.sub)}</div>
+            <p class="t-lead" data-step="2">${escapeHtml(t.lead)}</p>
+          </div>`;
+      }
+
+      /* ---- 2. 数字 ---- */
+      function renderNumbers() {
+        const cells = DECK.numbers.cells
+          .map(
+            (c, i) => `
+            <div class="n-cell${c.hi ? " hi" : ""}" data-step="${i + 1}">
+              <div class="n-num">${escapeHtml(c.n)}</div>
+              <div class="n-label">${escapeHtml(c.label)}</div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">NUMBERS</div>
+          <h2 class="corner-title" data-step="0">数字で見る9日間</h2>
+          <div class="n-grid">${cells}</div>
+          <div class="n-foot" data-step="9">${md(DECK.numbers.foot)}</div>`;
+      }
+
+      /* ---- 3. 9日間の道のり ----
+         地図は SMIL を使わず、CSS の class 切り替えだけで光らせる
+         （SMIL は動かすたびに図全体を描き直すので、OBS で重くなる）。 */
+      const MAP_CITIES = [
+        { id: "kut", x: 392, y: 520, name: "クタイシ", mark: 0, anchor: "end", dx: -14, dy: 5 },
+        { id: "kat", x: 118, y: 452, name: "カトヴィツェ", mark: 1, anchor: "end", dx: -14, dy: 5 },
+        { id: "war", x: 182, y: 386, name: "ワルシャワ", mark: 1, anchor: "start", dx: 14, dy: 5 },
+        { id: "bia", x: 236, y: 340, name: "ビャウィストク", mark: 2, anchor: "start", dx: 14, dy: 5 },
+        { id: "vil", x: 288, y: 288, name: "ヴィリニュス", mark: 3, anchor: "start", dx: 14, dy: 5 },
+        { id: "rig", x: 246, y: 206, name: "リガ", mark: 5, anchor: "start", dx: 14, dy: 5 },
+        { id: "tal", x: 254, y: 126, name: "タリン", mark: 7, anchor: "start", dx: 14, dy: 5 },
+        { id: "hel", x: 300, y: 78, name: "ヘルシンキ", mark: 8, anchor: "start", dx: 14, dy: 5 },
+        { id: "sto", x: 118, y: 104, name: "ストックホルム", mark: 9, anchor: "end", dx: -14, dy: 5 },
+      ];
+      const MAP_LEGS = [
+        { from: "kut", to: "kat", mark: 0, kind: "air" },
+        { from: "kat", to: "war", mark: 1, kind: "" },
+        { from: "war", to: "bia", mark: 2, kind: "" },
+        { from: "bia", to: "vil", mark: 3, kind: "" },
+        { from: "vil", to: "rig", mark: 5, kind: "" },
+        { from: "rig", to: "tal", mark: 7, kind: "" },
+        { from: "tal", to: "hel", mark: 8, kind: "sea" },
+        { from: "hel", to: "sto", mark: 9, kind: "sea" },
+      ];
+      function renderDays() {
+        const at = (id) => MAP_CITIES.find((c) => c.id === id);
+        const base = MAP_LEGS.map((l) => {
+          const a = at(l.from), b = at(l.to);
+          return `<path class="mroute" d="M${a.x} ${a.y} L${b.x} ${b.y}" />`;
+        }).join("");
+        const legs = MAP_LEGS.map((l) => {
+          const a = at(l.from), b = at(l.to);
+          return `<path class="mleg ${l.kind}" data-mark="${l.mark}" d="M${a.x} ${a.y} L${b.x} ${b.y}" />`;
+        }).join("");
+        const cities = MAP_CITIES.map(
+          (c) => `
+            <g class="mcity" data-mark="${c.mark}">
+              <circle cx="${c.x}" cy="${c.y}" r="6" />
+              <text x="${c.x + c.dx}" y="${c.y + c.dy}" text-anchor="${c.anchor}">${escapeHtml(c.name)}</text>
+            </g>`
+        ).join("");
+        const rows = DECK.days
+          .map(
+            (d, i) => `
+            <div class="d-row" data-step="${i}">
+              <div class="d-when">${escapeHtml(d.when)} <span>${escapeHtml(d.date)}・${escapeHtml(d.where)}</span></div>
+              <div class="d-text">${md(d.text)}</div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">ROUTE</div>
+          <h2 class="corner-title" data-step="0">9日間の道のり</h2>
+          <div class="d-wrap">
+            <div class="d-map" data-step="0">
+              <svg viewBox="0 0 430 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                ${base}${legs}${cities}
+              </svg>
+            </div>
+            <div class="d-list">${rows}</div>
+          </div>`;
+      }
+
+      /* ---- 4. 乗せてくれた人たち ---- */
+      function renderCars() {
+        const cols = DECK.cars
+          .map((g, i) => {
+            const items = g.items
+              .map(
+                (c) => `
+                <div class="car-row">
+                  <div class="car-name">${escapeHtml(c.name)}</div>
+                  ${c.desc ? `<div class="car-desc">${md(c.desc)}</div>` : ""}
+                </div>`
+              )
+              .join("");
+            return `<div class="c-day" data-step="${i}"><div class="c-day-head">${escapeHtml(g.head)}</div>${items}</div>`;
+          })
+          .join("");
+        // 日ごとに1列。1日目と5日目が6台ずつなので、5列でちょうど収まる
+        return `
+          <div class="corner-tag" data-step="0">18 RIDES</div>
+          <h2 class="corner-title" data-step="0">18台が停まってくれた</h2>
+          <div class="c-cols">${cols}</div>`;
+      }
+
+      /* ---- 5. トラブル選手権 ---- */
+      function renderTroubles() {
+        const cards = DECK.troubles.items
+          .map(
+            (t, i) => `
+            <div class="tr-card" data-step="${i}">
+              <div class="tr-head">
+                <div class="tr-no">${i + 1}</div>
+                <div class="tr-title">${escapeHtml(t.title)}</div>
+                <div class="tr-day">${escapeHtml(t.day)}</div>
+              </div>
+              <div class="tr-body">${md(t.body)}</div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">TROUBLE</div>
+          <h2 class="corner-title" data-step="0">9日で、これだけ起きた</h2>
+          <div class="tr-grid">${cards}</div>
+          <div class="note" data-step="6" style="margin-top:26px">${md(DECK.troubles.note)}</div>`;
+      }
+
+      /* ---- 6. クイズ ----
+         **進行の画面（ctrl）には、問いも選択肢も答えも出さない。**
+         ctrl では render 自体を呼ばないので、DOM にこの文字は載らない。 */
+      const QKEY = ["A", "B", "C"];
+      function renderQuiz(qi) {
+        const q = DECK.quiz[qi];
+        const choices = q.choices
+          .map(
+            (c, i) => `
+            <div class="qc" data-step="1" data-mark="${i === q.answer ? 2 : 99}" data-dim="${i === q.answer ? 99 : 2}">
+              <div class="qc-key">${QKEY[i]}</div>
+              <div class="qc-body">${escapeHtml(c)}</div>
+              <div class="qc-tag">
+                <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+                  <path d="M4 11.4 L9 16.2 L18 5.8" fill="none" stroke="#06210f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>こたえ
+              </div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="q-wrap">
+            <div class="q-no" data-step="0">QUIZ ${qi + 1} / ${DECK.quiz.length}</div>
+            <div class="q-text" data-step="0">${escapeHtml(q.q)}</div>
+            <div class="q-choices">${choices}</div>
+          </div>`;
+      }
+
+      /* ---- 7. 盛り上がりの瞬間 ---- */
+      function renderPeaks() {
+        const n = DECK.peaks.items.length;
+        const rows = DECK.peaks.items
+          .map(
+            (p, i) => `
+            <div class="p-row${p.rank === 1 ? " top" : ""}" data-step="${n - 1 - i}">
+              <div class="p-rank">${p.rank}<em>位</em></div>
+              <div class="p-main">
+                <div class="p-title">${escapeHtml(p.title)}</div>
+                <div class="p-quote">${escapeHtml(p.quote)}</div>
+              </div>
+              <div class="p-count">${escapeHtml(p.count)}</div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">PEAKS</div>
+          <h2 class="corner-title" data-step="0">盛り上がりの瞬間 TOP5</h2>
+          <div class="note" data-step="0" style="margin-bottom:22px">${md(DECK.peaks.note)}</div>
+          <div class="p-list">${rows}</div>`;
+      }
+
+      /* ---- 8. 視聴者さんが動かした旅 ---- */
+      function renderViewers() {
+        const cards = DECK.viewers
+          .map(
+            (v, i) => `
+            <div class="v-card" data-step="${i}">
+              <div class="v-day">${escapeHtml(v.day)}</div>
+              <div class="v-title">${escapeHtml(v.title)}</div>
+              <div class="v-body">${md(v.body)}</div>
+            </div>`
+          )
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">FROM THE CHAT</div>
+          <h2 class="corner-title" data-step="0">画面のこちら側が、旅を動かした</h2>
+          <div class="v-grid">${cards}</div>`;
+      }
+
+      /* ---- 9. 投げ銭ありがとう ---- */
+      function renderGift() {
+        const g = DECK.gift;
+        // 1位・2位・3位は1つずつ、4位以下はまとめて出す
+        const stepOf = (rank) => (rank === "1位" ? 5 : rank === "2位" ? 4 : rank === "3位" ? 3 : 2);
+        const rows = g.top
+          .map((t) => {
+            const big = ["1位", "2位", "3位"].includes(t.rank);
+            return `
+            <div class="${big ? "g-big" : "g-row"}" data-step="${stepOf(t.rank)}">
+              <div class="g-rank">${escapeHtml(t.rank)}</div>
+              <div class="g-name">${escapeHtml(t.name)}</div>
+              <div class="g-amt">${escapeHtml(t.amt)}</div>
+            </div>`;
+          })
+          .join("");
+        const chips = g.rest
+          .map((r) => `<span class="g-chip">${escapeHtml(r[0])}<em>${escapeHtml(r[1])}</em></span>`)
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">THANK YOU</div>
+          <h2 class="corner-title g-title" data-step="0">投げ銭ありがとう</h2>
+          <div class="g-wrap">
+            <div class="g-left">
+              <div class="g-total-label" data-step="0">豚の貯金箱</div>
+              <div class="g-total" data-step="0">${escapeHtml(g.total)}</div>
+              <div class="g-bar" data-step="0"><i></i></div>
+              <div class="g-goal" data-step="0">${escapeHtml(g.goal)}</div>
+              <div class="g-note" data-step="0">${escapeHtml(g.note)}</div>
+            </div>
+            <div class="g-right">
+              ${rows}
+              <div class="g-rest" data-step="1">
+                <div class="g-rest-head">以下</div>
+                <div class="g-chips">${chips}</div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      /* ---- 10. 案内鳥からの手紙 ---- */
+      function renderLetter() {
+        const paras = DECK.letter.paras
+          .map((p, i) => `<p class="l-para" data-step="${i}">${md(p)}</p>`)
+          .join("");
+        return `
+          <div class="corner-tag" data-step="0">LETTER</div>
+          <h2 class="corner-title" data-step="0">あやと島案内鳥 からの手紙</h2>
+          <div class="l-wrap">
+            ${paras}
+            <div class="l-sign" data-step="4">${escapeHtml(DECK.letter.sign)}</div>
+          </div>`;
+      }
+
+      /* ---- 11. エンディング ---- */
+      function renderEnding() {
+        const e = DECK.ending;
+        return `
+          <div class="e-wrap">
+            <h2 class="e-main" data-step="0">${escapeHtml(e.main)}</h2>
+            <div class="e-sub" data-step="1">${escapeHtml(e.sub)}</div>
+            <div class="e-small" data-step="2">${escapeHtml(e.small)}</div>
+          </div>`;
+      }
+
+      /* ======================== シーンの並び ======================== */
+      const SCENES = [
+        { dot: 0, total: 2, render: renderTitle },
+        { dot: 1, total: 9, render: renderNumbers },
+        { dot: 2, total: 9, render: renderDays },
+        { dot: 3, total: 4, render: renderCars },
+        { dot: 4, total: 6, render: renderTroubles },
+      ];
+      // クイズは1問1画面。ctrl には問題数しか出さない
+      DECK.quiz.forEach((_, i) => {
+        SCENES.push({
+          dot: 5,
+          total: 2,
+          render: () => renderQuiz(i),
+          ctrlTitle: `クイズ ${i + 1}問目 / ${DECK.quiz.length}問`,
+          ctrlSubs: [
+            "つぎ: 三択を出す",
+            "つぎ: 答えあわせ",
+            i + 1 < DECK.quiz.length ? "つぎ: 次の問題へ" : "つぎ: 次のコーナーへ",
+          ],
+        });
+      });
+      SCENES.push({ dot: 6, total: 4, render: renderPeaks });
+      SCENES.push({ dot: 7, total: 4, render: renderViewers });
+      SCENES.push({ dot: 8, total: 5, render: renderGift, confettiAt: 5 });
+      SCENES.push({ dot: 9, total: 4, render: renderLetter });
+      SCENES.push({ dot: 10, total: 2, render: renderEnding, confettiAt: 0, confettiBig: true });
+
+      const DOT_OF_SCENE = SCENES.map((s) => s.dot);
+      const DOT_COUNT = DOT_LABELS.length;
+
+      /* ======================== ステート機械 ======================== */
+      const stage = document.getElementById("stage");
+      const progress = document.getElementById("progress");
+      const hint = document.getElementById("hint");
+      let sceneIdx = 0;
+      let stepIdx = 0;
+      let interacted = false;
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function buildDots() {
+        progress.innerHTML = Array.from({ length: DOT_COUNT }, () => '<span class="dot"></span>').join("");
+      }
+      function updateDots() {
+        const cur = DOT_OF_SCENE[sceneIdx];
+        [...progress.children].forEach((d, i) => d.classList.toggle("act", i === cur));
+      }
+
+      function applySteps() {
+        if (IS_CTRL) return; // ctrl には舞台が無い
+        stage.querySelectorAll("[data-step]").forEach((el) => {
+          el.classList.toggle("on", Number(el.dataset.step) <= stepIdx);
+        });
+        stage.querySelectorAll("[data-mark]").forEach((el) => {
+          el.classList.toggle("marked", Number(el.dataset.mark) <= stepIdx);
+        });
+        stage.querySelectorAll("[data-dim]").forEach((el) => {
+          el.classList.toggle("dimmed", Number(el.dataset.dim) <= stepIdx);
+        });
+        const s = SCENES[sceneIdx];
+        if (s.confettiAt != null && stepIdx === s.confettiAt) {
+          spawnConfetti(s.confettiBig ? 160 : 90);
+        }
+      }
+
+      function renderScene() {
+        /* **ctrl では区画の中身を組み立てない。**
+           クイズの問いと答えを、進行する人の手元に1文字も出さないため
+           （隠すのではなく、そもそも作らない）。 */
+        if (IS_CTRL) {
+          updateDots();
+          updateCtrlLabels();
+          return;
+        }
+        stage.innerHTML = SCENES[sceneIdx].render();
+        updateDots();
+        requestAnimationFrame(() => requestAnimationFrame(applySteps));
+      }
+
+      function gotoScene(i, step) {
+        sceneIdx = Math.max(0, Math.min(SCENES.length - 1, i));
+        stepIdx = Math.max(0, Math.min(SCENES[sceneIdx].total, step ?? 0));
+        if (IS_CTRL) {
+          renderScene();
+        } else {
+          stage.classList.add("fading");
+          setTimeout(() => {
+            renderScene();
+            stage.classList.remove("fading");
+          }, reduceMotion ? 0 : 260);
+        }
+        onStateChanged();
+      }
+
+      function advance() {
+        dismissHint();
+        if (stepIdx < SCENES[sceneIdx].total) {
+          stepIdx++;
+          applySteps();
+          if (IS_CTRL) updateCtrlLabels();
+          onStateChanged();
+        } else if (sceneIdx < SCENES.length - 1) {
+          gotoScene(sceneIdx + 1, 0);
+        }
+      }
+      function back() {
+        dismissHint();
+        if (stepIdx > 0) {
+          stepIdx--;
+          applySteps();
+          if (IS_CTRL) updateCtrlLabels();
+          onStateChanged();
+        } else if (sceneIdx > 0) {
+          const prev = sceneIdx - 1;
+          gotoScene(prev, SCENES[prev].total);
+        }
+      }
+      function dismissHint() {
+        if (!interacted) {
+          interacted = true;
+          setTimeout(() => hint.classList.add("gone"), 4000);
+        }
+      }
+
+      /* ======================== 背景の粒 ======================== */
+      function buildSky() {
+        if (IS_CTRL) return;
+        const sky = document.getElementById("sky");
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < 48; i++) {
+          const s = document.createElement("div");
+          s.className = "star";
+          s.style.left = Math.random() * 100 + "vw";
+          s.style.top = Math.random() * 62 + "vh";
+          s.style.animationDelay = (Math.random() * 5).toFixed(2) + "s";
+          frag.appendChild(s);
+        }
+        if (!reduceMotion) {
+          for (let i = 0; i < 28; i++) {
+            const f = document.createElement("div");
+            f.className = "snow";
+            f.style.left = Math.random() * 100 + "vw";
+            f.style.opacity = (0.25 + Math.random() * 0.45).toFixed(2);
+            const sz = (3 + Math.random() * 4).toFixed(1) + "px";
+            f.style.width = sz;
+            f.style.height = sz;
+            f.style.animationDuration = (13 + Math.random() * 12).toFixed(1) + "s";
+            f.style.animationDelay = (-Math.random() * 20).toFixed(1) + "s";
+            frag.appendChild(f);
+          }
+        }
+        sky.appendChild(frag);
+      }
+
+      /* ======================== 紙吹雪 ======================== */
+      const COLORS = ["#8fe3ff", "#79f0c6", "#ffd79a", "#ffffff", "#bcd9ff", "#ff9fbb"];
+      function spawnConfetti(count) {
+        if (reduceMotion || IS_CTRL) return;
+        const layer = document.getElementById("confetti-layer");
+        for (let i = 0; i < count; i++) {
+          const c = document.createElement("div");
+          c.className = "confetti";
+          c.style.left = Math.random() * 100 + "vw";
+          c.style.background = COLORS[(Math.random() * COLORS.length) | 0];
+          c.style.width = 7 + Math.random() * 9 + "px";
+          c.style.height = 7 + Math.random() * 12 + "px";
+          c.style.animationDuration = 3.6 + Math.random() * 2.6 + "s";
+          c.style.animationDelay = Math.random() * 0.9 + "s";
+          layer.appendChild(c);
+          setTimeout(() => c.remove(), 7500);
+        }
+      }
+
+      /* ======================== 入力 ======================== */
+      // ctrl ではグローバル入力を登録しない。
+      // （登録するとボタンの click と二重に発火して、1タップで2つ以上進む）
+      const IS_CTRL = new URLSearchParams(location.search).get("role") === "ctrl";
+      if (!IS_CTRL) {
+        window.addEventListener("pointerdown", (ev) => {
+          if (ev.button === 2) return;
+          advance();
+        });
+        window.addEventListener("contextmenu", (ev) => {
+          ev.preventDefault();
+          back();
+        });
+      }
+      window.addEventListener("keydown", (ev) => {
+        const k = ev.key;
+        if (k === "Enter" || k === " " || k === "ArrowRight" || k === "ArrowDown") {
+          ev.preventDefault();
+          advance();
+        } else if (k === "Backspace" || k === "ArrowLeft" || k === "ArrowUp") {
+          ev.preventDefault();
+          back();
+        } else if (/^[0-9]$/.test(k)) {
+          // 数字キー: 区画の頭出し（リハーサル用）
+          const target = DOT_OF_SCENE.indexOf(Number(k));
+          if (target >= 0) gotoScene(target, 0);
+        } else if (k === "End") {
+          // 区画は11あるので、最後のひとつは End で出す
+          gotoScene(SCENES.length - 1, 0);
+        }
+      });
+
+      // 検証・リハーサル用フック
+      window.__jump = (i, step) => gotoScene(i, step ?? 0);
+      window.__sceneCount = SCENES.length;
+      window.__dotOfScene = DOT_OF_SCENE;
+      window.__totals = SCENES.map((s) => s.total);
+      window.__state = () => ({ scene: sceneIdx, step: stepIdx });
+
+      /* =========================================================
+         リモート同期（Firestore）
+         - 無指定: ローカル操作のみ（SDK は読み込まない）
+         - ?role=view : Firestore の状態に追従（OBS 側）
+         - ?role=ctrl : スマホのコントローラ（進行を送る）
+         - ?auto=秒数 : 自動進行（同期なしのときの代わり）
+
+         書けるのはあやとだけ。`firestore.rules` の monthlyReview は
+           読む … 誰でも（OBS はログインできないので開けてある）
+           書く … `islandUsers/{uid}.admin` が立っている人だけ
+         なので、**ctrl はログインしてからでないと進行を送れない。**
+         同じ端末で島にログインしてあれば、何も押さずに繋がる
+         （SDK の版と apiKey を島に合わせてあるのがその仕掛け）。
+         ========================================================= */
+      const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM",
+        authDomain: "live-streaming-d3cac.firebaseapp.com",
+        projectId: "live-streaming-d3cac",
+        storageBucket: "live-streaming-d3cac.firebasestorage.app",
+        messagingSenderId: "291182823114",
+        appId: "1:291182823114:web:84e7d7c52c8d3ca7d39633",
+      };
+      // ルールが monthlyReview にしか開いていないので、コレクションはそのまま
+      const SYNC_COLLECTION = "monthlyReview";
+      const SYNC_DOC = "2026nordic-fty8zuh6";
+
+      const params = new URLSearchParams(location.search);
+      const ROLE = params.get("role"); // "ctrl" | "view" | null
+      const AUTO_SEC = Math.max(0, Number(params.get("auto")) || 0);
+
+      /* Firebase の SDK。**版を島（package.json の firebase ^12）に揃えてある。**
+         ログインは localStorage に `firebase:authUser:<apiKey>:[DEFAULT]` の形で
+         残るので、同じ apiKey・同じ既定アプリ名・同じ大版なら、島でログイン済みの
+         端末はここでも押さずにログイン済みになる。配信の当日に押させない。 */
+      const SDK = "https://www.gstatic.com/firebasejs/12.18.0";
+
+      let publishFn = null; // ctrl のときだけ入る。**ログインするまで null**
+      let signInFn = null; // 「Google でログイン」の中身
+
+      /* コントローラの札。**「いま押せば OBS が動く」ときだけ緑にする。** */
+      let linkOk = false; // Firestore からスナップショットが来ている
+      let authOk = false; // ログインしている
+      let sendErr = ""; // 直前の送信が落ちた理由。空なら落ちていない
+      function refreshCtrlStatus() {
+        if (ROLE !== "ctrl") return;
+        if (!linkOk) setCtrlStatus(false, "つながっていません");
+        else if (!authOk) setCtrlStatus(false, "ログインが要ります");
+        else if (sendErr) setCtrlStatus(false, sendErr);
+        else setCtrlStatus(true, "同期中");
+      }
+      let applyingRemote = false;
+      let lastConfetti = 0;
+      let lastSeenTs = 0; // これより古いスナップショットは無視（連打時の巻き戻り防止）
+      let seenFirstSnap = false; // 1枚目を受けたか（紙吹雪の空撃ち防止）
+
+      function onStateChanged() {
+        updateCtrlLabels();
+        if (publishFn && !applyingRemote) {
+          const ts = Date.now();
+          lastSeenTs = Math.max(lastSeenTs, ts);
+          publishFn({ scene: sceneIdx, step: stepIdx, ts, confetti: lastConfetti })
+            .then(() => {
+              if (!sendErr) return;
+              sendErr = "";
+              cEls.banner.classList.remove("show");
+              refreshCtrlStatus();
+            })
+            .catch((e) => {
+              const denied = e && (e.code === "permission-denied" || /permission/i.test(String(e)));
+              sendErr = denied ? "このアカウントでは操作できません" : "送信失敗";
+              refreshCtrlStatus();
+              if (denied) showSignIn("進行を動かせるのは、島の管理者のアカウントだけです。入り直してください。");
+            });
+        }
+      }
+
+      /** Firebase のアプリ。ログインと Firestore で**同じものを使う**（別にすると別のログインになる） */
+      async function firebaseApp() {
+        const { initializeApp, getApps } = await import(`${SDK}/firebase-app.js`);
+        return getApps()[0] ?? initializeApp(FIREBASE_CONFIG);
+      }
+
+      async function initSync(onRemote) {
+        const fsm = await import(`${SDK}/firebase-firestore.js`);
+        const db = fsm.getFirestore(await firebaseApp());
+        const ref = fsm.doc(db, SYNC_COLLECTION, SYNC_DOC);
+        fsm.onSnapshot(
+          ref,
+          (snap) => {
+            if (snap.exists()) onRemote(snap.data(), snap.metadata.hasPendingWrites);
+            linkOk = true;
+            refreshCtrlStatus();
+          },
+          () => {
+            linkOk = false;
+            refreshCtrlStatus();
+          }
+        );
+        return (data) => fsm.setDoc(ref, data);
+      }
+
+      /* ---------- ログイン（ctrl だけ） ----------
+         OBS（view）は読むだけなので、**そちらでは firebase-auth を落とさない。**
+         配信に映っている側に、押せもしないログインの札を出さないため。 */
+      async function initAuth(onUser) {
+        const am = await import(`${SDK}/firebase-auth.js`);
+        const auth = am.getAuth(await firebaseApp());
+        am.onAuthStateChanged(auth, onUser);
+        return () => am.signInWithPopup(auth, new am.GoogleAuthProvider());
+      }
+
+      /** コントローラに「Google でログイン」を出す。押せる札にする（文だけ出さない） */
+      function showSignIn(msg) {
+        if (ROLE !== "ctrl") return;
+        cEls.banner.textContent = "";
+        const p = document.createElement("div");
+        p.textContent = msg;
+        const b = document.createElement("button");
+        b.textContent = "Google でログイン";
+        b.style.cssText = "margin-top:8px;padding:10px 14px;font-size:15px;touch-action:manipulation";
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          try {
+            if (signInFn) await signInFn();
+          } catch (e) {
+            /* 落ちた符丁は画面に出さない。読むのはあやとで、できることは
+               「もう一度押す」だけ。符丁は console にだけ残す。 */
+            console.error("北欧旅ふりかえり: ログインできなかった —", e);
+            p.textContent = "ログインできませんでした。もう一度押してください。";
+          } finally {
+            b.disabled = false;
+          }
+        });
+        cEls.banner.append(p, b);
+        cEls.banner.classList.add("show");
+      }
+
+      /* ---------- コントローラUI ---------- */
+      const cEls = {
+        dot: document.getElementById("c-dot"),
+        statusText: document.getElementById("c-status-text"),
+        banner: document.getElementById("c-banner"),
+        corner: document.getElementById("c-corner"),
+        step: document.getElementById("c-step"),
+        next: document.getElementById("c-next"),
+        back: document.getElementById("c-back"),
+        grid: document.getElementById("c-grid"),
+        confetti: document.getElementById("c-confetti"),
+        top: document.getElementById("c-top"),
+      };
+      function setCtrlStatus(ok, text) {
+        if (ROLE !== "ctrl") return;
+        cEls.dot.className = "c-dot " + (ok ? "ok" : "ng");
+        cEls.statusText.textContent = text || (ok ? "同期中" : "未接続");
+      }
+      function updateCtrlLabels() {
+        if (ROLE !== "ctrl") return;
+        const s = SCENES[sceneIdx];
+        if (s.ctrlTitle) {
+          /* **クイズは、いま何問目かと「つぎに何が起きるか」だけ。**
+             問い・選択肢・答えは、あやとも視聴者さんと一緒に初見で答える。 */
+          cEls.corner.textContent = s.ctrlTitle;
+          cEls.step.textContent = s.ctrlSubs[Math.min(stepIdx, s.ctrlSubs.length - 1)];
+        } else {
+          const dot = DOT_OF_SCENE[sceneIdx];
+          cEls.corner.textContent = DOT_LABELS[dot];
+          cEls.step.textContent = `ステップ ${stepIdx}/${s.total} ・ 全体 ${sceneIdx + 1}/${SCENES.length}`;
+        }
+        [...cEls.grid.children].forEach((b, i) => b.classList.toggle("act", i === DOT_OF_SCENE[sceneIdx]));
+      }
+      function initCtrlUi() {
+        document.body.classList.add("ctrl");
+        cEls.next.addEventListener("click", advance);
+        cEls.back.addEventListener("click", back);
+        cEls.top.addEventListener("click", () => gotoScene(0, 0));
+        cEls.confetti.addEventListener("click", () => {
+          lastConfetti = Date.now();
+          onStateChanged();
+        });
+        DOT_LABELS.forEach((label, dot) => {
+          const b = document.createElement("button");
+          b.textContent = `${dot}. ${label}`;
+          b.addEventListener("click", () => gotoScene(DOT_OF_SCENE.indexOf(dot), 0));
+          cEls.grid.appendChild(b);
+        });
+        updateCtrlLabels();
+      }
+
+      /* ---------- 起動 ---------- */
+      buildDots();
+      buildSky();
+      if (IS_CTRL) initCtrlUi();
+      renderScene();
+
+      if (ROLE === "ctrl") {
+        initSync((data, isLocalEcho) => {
+          // 自分の書き込みエコーと古いスナップショットは無視（多重進行・巻き戻り防止）
+          if (isLocalEcho) return;
+          if (typeof data.ts === "number") {
+            if (data.ts <= lastSeenTs) return;
+            lastSeenTs = data.ts;
+          }
+          if (data.scene === sceneIdx && data.step === stepIdx) return;
+          applyingRemote = true;
+          sceneIdx = Math.max(0, Math.min(SCENES.length - 1, data.scene ?? 0));
+          stepIdx = Math.max(0, Math.min(SCENES[sceneIdx].total, data.step ?? 0));
+          lastConfetti = data.confetti || lastConfetti;
+          updateCtrlLabels();
+          applyingRemote = false;
+        })
+          .then(async (pub) => {
+            setCtrlStatus(false, "ログインを確かめています…");
+            /* **ログインが確かめられるまで publishFn を入れない。**
+               入れてしまうと、押した瞬間に静かに落ちる。 */
+            signInFn = await initAuth((user) => {
+              authOk = !!user;
+              sendErr = "";
+              publishFn = user ? pub : null;
+              if (user) {
+                cEls.banner.classList.remove("show");
+                refreshCtrlStatus();
+                onStateChanged();
+              } else {
+                refreshCtrlStatus();
+                showSignIn("進行を動かすにはログインが要ります。島と同じアカウントで入ってください。");
+              }
+            });
+          })
+          .catch((e) => {
+            linkOk = false;
+            setCtrlStatus(false, "つながりません");
+            console.error("北欧旅ふりかえり: 進行のつなぎに入れなかった —", e);
+            cEls.banner.textContent = "進行がつながりません。電波を確かめて、開き直してください。";
+            cEls.banner.classList.add("show");
+          });
+      } else if (ROLE === "view") {
+        hint.classList.add("gone");
+        initSync((data) => {
+          // 古いスナップショットは無視（順序の入れ替わりによる巻き戻り防止）
+          if (typeof data.ts === "number") {
+            if (data.ts <= lastSeenTs) return;
+            lastSeenTs = data.ts;
+          }
+          /* 1枚目のスナップショットでは飛ばさない（OBS を開いた瞬間に前の紙吹雪が飛ぶのを止める）。
+             書類は confetti: 0 から始まるので、「開いた直後か」で見る。 */
+          if (typeof data.confetti === "number" && data.confetti > lastConfetti) {
+            if (seenFirstSnap) spawnConfetti(140);
+            lastConfetti = data.confetti;
+          }
+          seenFirstSnap = true;
+          if (data.scene === sceneIdx && data.step === stepIdx) return;
+          applyingRemote = true;
+          if (data.scene !== sceneIdx) {
+            gotoScene(data.scene ?? 0, data.step ?? 0);
+          } else {
+            stepIdx = Math.max(0, Math.min(SCENES[sceneIdx].total, data.step ?? 0));
+            applySteps();
+          }
+          applyingRemote = false;
+        }).catch(() => {
+          /* 繋がらないときはローカル操作のまま */
+        });
+      }
+
+      if (AUTO_SEC > 0) setInterval(advance, AUTO_SEC * 1000);
+    </script>
+  </body>
+</html>
