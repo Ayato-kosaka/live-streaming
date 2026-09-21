@@ -61,6 +61,29 @@ const PIN_SLOTS: [number, number][] = [
 
 type City = { id: string; name: string; x: number; y: number; country: string; kind: string };
 
+/**
+ * 配信を始める前に歩いた国（スペイン・イタリア）。
+ *
+ * **番号の付いた18カ国と同じ見た目にしない。** あちらの `order`（◯カ国目）は
+ * 配信中に入った順で、この2カ国には配信が1本も無いので番号が振れない
+ * （`content/countries.ts` の `BEFORE_STREAM`）。同じ塗りで並べると
+ * 「なぜこの国だけ番号が無いのか」が画面の謎になる。
+ *
+ * 分けかたは3つ重ねる。**1つだと地図の描き分けに見えない。**
+ * ・塗りを歩いた国と歩いていない陸の中間にする（歩いたのは本当なので、
+ *   まわりの陸と同じにはしない）
+ * ・境を点線にする。点線は「配信という記録が残っていない歩き」の印
+ * ・押せる丸ではなく、押せない名札だけを置く。行き先のページが無いから
+ *
+ * 名札を2行にしてあるのは、スマホ幅で2枚が横に重なるから（1行だと 390px で
+ * 札の幅 98px、間隔 59px）。縦に積むと、どの幅でも 59px あれば足りる。
+ *
+ * 形も名札の位置も `python/build_world_route.py` が焼いたもの。
+ * ここで経度緯度から座標を作らないこと。
+ */
+type Before = { slug: string; name: string; d: string; x: number; y: number };
+const BEFORE = (MAP as unknown as { before?: Before[] }).before ?? [];
+
 const W = MAP.view.w;
 const H = MAP.view.h;
 
@@ -493,6 +516,11 @@ export default function WorldRoute({
                 <stop offset="0.62" stopColor="#c3dd72" />
                 <stop offset="1" stopColor="var(--am-on-s)" />
               </linearGradient>
+              {/* 配信前に歩いた国。amOff（歩いていない陸）と amOn（歩いた国）の中間 */}
+              <linearGradient id="amPre" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={H}>
+                <stop offset="0" stopColor="var(--am-pre-n)" />
+                <stop offset="1" stopColor="var(--am-pre-s)" />
+              </linearGradient>
               <filter id="amSoft" x="-15%" y="-15%" width="130%" height="130%">
                 <feGaussianBlur stdDeviation="7" />
               </filter>
@@ -516,6 +544,23 @@ export default function WorldRoute({
               <path d={MAP.land} fill="none" stroke="var(--am-foam)" strokeWidth={9 / k} strokeLinejoin="round" />
               <path d={MAP.land} fill="none" stroke="var(--am-sand-wet)" strokeWidth={6.5 / k} strokeLinejoin="round" />
               <path d={MAP.land} fill="url(#amOff)" stroke="var(--am-sand)" strokeWidth={3.5 / k} strokeLinejoin="round" />
+
+              {/* 配信より前に歩いた国。番号付きの国の下に敷く。
+                  境が点線なのは、この2カ国に配信（＝記録）が無いから */}
+              {BEFORE.map((b) => (
+                <g key={`b${b.slug}`}>
+                  <path d={b.d} fill="url(#amPre)" />
+                  <path
+                    d={b.d}
+                    fill="none"
+                    stroke="#3e7c33"
+                    strokeWidth={3.4 / k}
+                    strokeDasharray={[11 / k, 9 / k].join(" ")}
+                    strokeLinecap="round"
+                    opacity="0.55"
+                  />
+                </g>
+              ))}
 
               {/* 通った国。まわりより明るく、彩度も高く */}
               {Object.entries(MAP.countries).map(([slug, d]) => (
@@ -599,6 +644,17 @@ export default function WorldRoute({
                   {s.name}
                 </span>
               ))}
+            {/* 配信前に歩いた国の名札。**押せる丸は置かない。**
+                この2カ国には `/map/<slug>` のページが無いので、押せる形にすると
+                押しても何も起きない（`docs/island-play.md` 4章の「作り物の当たり」）。
+                街の名前と違って、世界ぜんぶの面（is-wide）でも消さない。
+                消すと、薄い国が名無しで2つ浮いているだけになる。 */}
+            {BEFORE.filter((b) => inBox(b.x, b.y)).map((b) => (
+              <span key={`bl${b.slug}`} className="abefore" style={pos(b.x, b.y)}>
+                <b>{b.name}</b>
+                <i>配信前</i>
+              </span>
+            ))}
             {labels.city.filter((v) => !v.hide).map(({ c, dy, left }) => (
               <span
                 key={c.id}
@@ -776,6 +832,14 @@ export default function WorldRoute({
       </div>
 
       <div className="amap-foot">
+        {/* 線の凡例より先に、国の塗りの凡例を出す。
+            「番号が無い国がある」のほうが、見て最初に引っかかるところなので */}
+        {BEFORE.length > 0 && (
+          <span className="amap-key is-before">
+            <i aria-hidden />
+            配信前に歩いた（番号なし）
+          </span>
+        )}
         {LEGEND.filter(([move]) => moved[move]).map(([move, label]) => {
           const st = MOVE[move];
           return (

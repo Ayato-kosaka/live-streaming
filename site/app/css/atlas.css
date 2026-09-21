@@ -22,6 +22,11 @@
   --am-off-s: #ddd3a2;
   --am-on-n: #8cd85a;
   --am-on-s: #e3d383;
+  /* 配信より前に歩いた国。歩いた国（--am-on-*）より明るく、色を抜いてある。
+     「間の色」にすると、隣のフランスとの差が明度で 0.02 しか無くて
+     描き分けに見えなかった。抜けた色のほうが「記録が残っていない」に合う。 */
+  --am-pre-n: #cfe6b0;
+  --am-pre-s: #ece3bd;
   --am-wood: #4b9c46;
   --am-dune: #d9bd7a;
   --am-ridge: #b08a5a;
@@ -302,6 +307,42 @@
 /* 近い街どうしで名前が重なるときの逃がしぶん（WorldRoute が決める） */
 .acity b { transform: translateY(var(--acity-dy, 0px)); }
 .amap-pins.is-wide .acity { opacity: 0; }
+
+/* 配信より前に歩いた国の名札（スペイン・イタリア）。
+   **押せるピンと同じ形にしない。** この2カ国には行き先のページが無いので、
+   丸い番号の形にすると押せそうに見えて、押しても何も起きない。
+   点線の縁は、地図の中でこの国を囲んでいる線と同じ意味。
+   薄い塗りの上に字を直に置くと 3 : 1 を割るので、紙を1枚敷く。 */
+.abefore {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  /* 2行に積む。横に並べると、スマホ幅でスペインとイタリアの札が重なる */
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 2px 7px 3px;
+  line-height: 1.25;
+  border-radius: 999px;
+  border: 1.5px dashed #3e7c33;
+  background: var(--paper);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.abefore b {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--am-ink);
+}
+/* 「配信前」。#3e7c33 だと紙の上で 4.85 : 1 しか無い。11.5px の字なので
+   --ink と同じ濃さまで落とす（#2f6127 で 7.0 : 1）。 */
+.abefore i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: #2f6127;
+  letter-spacing: 0.02em;
+}
 .amap-pins.is-wide .apin-dot {
   width: 18px;
   height: 18px;
@@ -515,6 +556,16 @@
   letter-spacing: 0.02em;
 }
 .amap-key svg { display: block; flex: none; border-radius: 4px; }
+/* 国の塗りの凡例。線ではないので、地図に塗ってある色と点線の縁をそのまま写す */
+.amap-key.is-before i {
+  display: block;
+  flex: none;
+  width: 30px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1.5px dashed #3e7c33;
+  background: linear-gradient(var(--am-pre-n), var(--am-pre-s));
+}
 /* 白い線（飛行機・船）は紙の上で消える。この2つだけ下に海の色を敷く */
 .amap-key[data-move="air"] svg,
 .amap-key[data-move="sea"] svg {
