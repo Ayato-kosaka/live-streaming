@@ -48,6 +48,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
   "poland": { lives: 6, people: 57, msgs: 2624, days: 2, top: ["2026-09-12", "hrXYXcu9IDE", "【一日目】親友に会いにスウェーデンまで、ワルシャワまで", 44] },
   "slovakia": { lives: 2, people: 7, msgs: 52, days: 2, top: ["2024-12-03", "uylUHvF_1WM", "チェコに着いたので、魅力を探りませう", 5] },
+  "sweden": { lives: 2, people: 42, msgs: 1232, days: 2, top: ["2026-09-20", "GBYHxJQGlCY", "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム", 38] },
   "turkey": { lives: 16, people: 69, msgs: 5469, days: 15, top: ["2025-04-11", "UULcHjBHSJM", "【神回】トルコ🇹🇷イスタンブールでアジア側にいってみた", 25] },
   "uae": { lives: 3, people: 12, msgs: 879, days: 3, top: ["2025-06-27", "UbbfjRJ6KTM", "【神回】🇦🇪アブダビ街歩き！白モスク→ローカル飯→夕暮れビーチまで🌇", 10] },
   "uk": { lives: 51, people: 120, msgs: 17821, days: 45, top: ["2025-02-01", "nKTakrtzWM8", "イギリスの古都チェスターを歩く！城壁に囲まれた、黒白の美しい街並み、絶景リバーサイド散歩！", 25] },};
