@@ -15,11 +15,16 @@
 
 ## `nordic.from` は入れない
 
-**ここでは触らない。** `site/content/countries.ts` に北欧の6カ国が無いので、
-北欧の章に `from` を入れると `python/build_chapter_stats.py` が
+**ここでは触らない。** `site/content/countries.ts` に北欧の6カ国が無いあいだに
+北欧の章へ `from` を入れると、`python/build_chapter_stats.py` が
 その章を数えはじめて、国0・配信0の島ができる。
 北欧が「いまいる島」になるのは `opensAt`（出発の日時）で決まっていて、
 `from` は要らない。**countries.ts に6カ国が入るまで、ここは空のまま。**
+
+**6カ国が入ったら、`from` は入っていてよい**（2026-09-22、GitHub #282）。
+前はそこを見ずに「`from` が空でない」だけで止めていたので、**旅が終わって
+6カ国を移したあと、この道具は二度と `--check` を通らなくなっていた。**
+断る条件は「`from` が入っているのに、その章の国が `countries.ts` に無い」。
 
 ## 省いたときに入る日
 
@@ -55,6 +60,7 @@ log = logging.getLogger("depart")
 
 ROOT = Path(__file__).resolve().parent.parent
 CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
+COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
 JST = timezone(timedelta(hours=9))
 
 # 閉じる章と、その次に始まる章
@@ -88,6 +94,26 @@ def field(src: str, slug: str, name: str) -> str:
     a, b = block(src, slug)
     m = re.search(rf'\n\s*{name}: "([^"]*)",', src[a:b])
     return m.group(1) if m else ""
+
+
+def chapter_countries(src: str, slug: str) -> list[str]:
+    """その章の `countries: [...]` に並んでいる slug。"""
+    a, b = block(src, slug)
+    m = re.search(r"\n\s*countries: \[([^\]]*)\]", src[a:b])
+    return re.findall(r'"([a-z-]+)"', m.group(1)) if m else []
+
+
+def missing_from_countries_ts(slugs: list[str]) -> list[str]:
+    """`countries.ts` の `COUNTRIES` にまだ無い slug。
+
+    見るのは `COUNTRIES` の行（`    slug: "…",`）だけ。`AHEAD_COUNTRIES`
+    （これから歩く国）は1行で書いてあるので、この形には当たらない。
+    **当ててしまうと「これから歩く国」を「歩いた国」と読んで、
+    この見張りが素通りする。**
+    """
+    text = COUNTRIES_TS.read_text(encoding="utf-8")
+    have = set(re.findall(r'^    slug: "([a-z-]+)",$', text, re.M))
+    return [s for s in slugs if s not in have]
 
 
 def departed_on(src: str) -> str:
@@ -126,14 +152,27 @@ def main() -> int:
     log.info("いま: %s.to = %r / %s.from = %r", CLOSING, now_to, OPENING, nordic_from)
 
     if nordic_from:
-        # 入れないと決めてあるものが入っている。気づかず進めない
-        log.error(
-            "%s.from に %r が入っています。countries.ts に北欧の6カ国が入るまで、"
-            "ここは空にしておいてください（このファイルの説明）",
+        # **`from` が入っていること自体は、もう咎めない。** 咎めるのは
+        # 「`from` が入っているのに、その章の国が `countries.ts` に無い」ほう。
+        # そのときだけ、国0・配信0の島ができる（このファイルの説明）。
+        want = chapter_countries(src, OPENING)
+        missing = missing_from_countries_ts(want)
+        if not want or missing:
+            log.error(
+                "%s.from に %r が入っているのに、countries.ts に %s がありません。"
+                "先に6カ国を足してください（このファイルの説明）",
+                OPENING,
+                nordic_from,
+                "、".join(missing) if missing else "その章の国",
+            )
+            return 1
+        log.info(
+            "%s.from = %r。countries.ts に %d カ国そろっています（%s）",
             OPENING,
             nordic_from,
+            len(want),
+            "、".join(want),
         )
-        return 1
 
     if a.check:
         return 0

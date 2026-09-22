@@ -56,6 +56,20 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const idx = ordered.findIndex((x) => x.slug === c.slug);
   const prev = ordered[idx - 1];
   const next = ordered[idx + 1];
+  /**
+   * スタンプに押す「◯カ国目」。**`order` ではなく、国だけを数え直した番号。**
+   *
+   * `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
+   * 1つ振ってある。`/map` の年表は前からそこを避けて数え直していて
+   * （`app/map/page.tsx` の `noOf`）、この面だけが `order` を生で押していた。
+   *
+   * イランが表のいちばん後ろにいるあいだは、どちらも同じ数に見えていた。
+   * **北欧の6カ国がその後ろに並んだ日に、初めて1つずれる**——
+   * ポーランドは18番目に歩いた国なのに、`order` は 19 になる。
+   * 同じ面のことを、年表と札が別の数で言うのがいちばん悪い。
+   */
+  const walkedNo =
+    ordered.filter((x) => isWalkedCountry(x.slug)).findIndex((x) => x.slug === c.slug) + 1;
   const cooked = RECIPES.filter((r) => r.country === c.slug);
   const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
   /**
@@ -115,7 +129,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
               押した印だけが別の数を言う。** */}
           {isWalkedCountry(c.slug) && (
             <span className="apass-stamp" aria-hidden>
-              <b>{c.order}</b>
+              <b>{walkedNo}</b>
               <i>カ国目</i>
             </span>
           )}

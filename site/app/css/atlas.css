@@ -58,7 +58,11 @@
   /* 縮尺の棒を「地図の幅の何%」で引くために、ここを測る基準にする */
   container-type: inline-size;
   width: 100%;
-  aspect-ratio: var(--am-ratio, 1400 / 1145);
+  /* 既定値は置かない。世界地図も国の地図も `--am-ratio` を渡す
+     （`WorldRoute.tsx` / `CountryMap.tsx`）。ここに数を書いておくと、
+     焼き込みの `view` が変わった日に**絵だけが潰れて、額縁は前の比のまま**になる。
+     渡ってこなかったときだけ、四角く収まるところへ落とす。 */
+  aspect-ratio: var(--am-ratio, 1 / 1);
   border-radius: calc(var(--r-3) - 9px);
   overflow: hidden;
   background: var(--am-sea-deep);
