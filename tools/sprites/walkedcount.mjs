@@ -83,7 +83,15 @@ const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d
   (m) => ({ slug: m[1], entered: m[2] }),
 );
 
-/** 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。** */
+/**
+ * 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。**
+ *
+ * **歩き終わって `COUNTRIES` へ移された国は、そちらが正。** 旅程は予定で、
+ * `countries.ts` の滞在は帰ってから書く事実なので、両方に居るなら事実を採る
+ * （`content/walked.ts` の `known` と同じ決まり）。
+ * ここを見ていなかったので、北欧の6カ国を `COUNTRIES` へ移した日に
+ * 「6カ国が AHEAD_COUNTRIES にない」と言って**面を1枚も見ずに帰っていた。**
+ */
 function itineraryMatches() {
   const n = readFileSync(repoPath("site/content/nordic.ts"), "utf8");
   const want = new Map();
@@ -94,8 +102,10 @@ function itineraryMatches() {
     const e = line.match(/^\s*enters: "([a-z-]+)",/);
     if (e && !want.has(e[1])) want.set(e[1], date);
   }
+  const done = new Set(DONE);
   const bad = [];
   for (const [slug, day] of want) {
+    if (done.has(slug)) continue;
     const got = AHEAD.find((a) => a.slug === slug);
     if (!got) bad.push(`${slug} が AHEAD_COUNTRIES にない`);
     else if (got.entered !== day) bad.push(`${slug} の入国日 ${got.entered} ≠ 旅程 ${day}`);
@@ -246,11 +256,16 @@ if (bad.length) {
   await b.close();
   process.exit(2);
 }
-if (!DONE.length || !AHEAD.length) {
-  console.log(`数えるものがありません（歩き終わった国 ${DONE.length} / 旅の国 ${AHEAD.length}）`);
+/* **`AHEAD` は空でよい。** 旅が終わって6カ国が `COUNTRIES` へ移ると、
+   「これから歩く国」は 0 になる。それは数えるものが無いのではなく、
+   **ぜんぶ歩き終わった**ということ。ここで 2 を返していたころ、
+   旅の終わった日から次の旅が決まるまで、この見張りは黙って休んでいた。 */
+if (!DONE.length) {
+  console.log(`数えるものがありません（歩き終わった国 ${DONE.length}）`);
   await b.close();
   process.exit(2);
 }
+console.log(`歩き終わった国 ${DONE.length} / これから歩く国 ${AHEAD.length}`);
 
 const PAGES = everyPage();
 if (!PAGES.length) {
