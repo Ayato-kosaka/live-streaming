@@ -414,46 +414,6 @@
       [data-dim] { transition: opacity 0.4s ease; }
       [data-dim].dimmed { opacity: 0.34; }
 
-      /* ============ 寄りのカメラ ============
-         スマホの OBS で横に寝かせて見ると 1920 が 844 になる（0.44倍）。
-         15px の字は 6.6px にしかならず、**分量を減らさずに読ませるには
-         字を大きくするしかない。** 暗くしても字は大きくならない。
-
-         そこで、**いま喋っているところ（その歩で出たもの）に寄る。**
-         舞台ごと拡大して、寄り先を画面の真ん中に、いっぱいに置く。
-         - 倍率は JS が出す（幅 90% / 高さ 85% に収める・1〜3倍・縮小はしない）
-         - 動かすのは transform だけ。**地図の viewBox は1ドットも触らない**
-           （触ると SVG が中身を全部描き直す。CLAUDE.md）
-         - 寄りは**歩が変わった時の一回きり**。animation で回し続けない
-         - will-change は SVG の中の要素ではなく**舞台そのもの**に付ける
-         進行の点（#progress）と右下の案内（#hint）は #stage の外にあるので、
-         一緒には拡大されない。**寄っても操作の目印は元の大きさのまま残る。** */
-      #stage {
-        transform-origin: 0 0;
-        will-change: transform;
-      }
-      /* **寄りは滑らせない。一発で切り替える。**
-         滑らせると、舞台ぜんぶ（地図の SVG を含む 1920x1080）が倍率の変わる
-         たびに描き直される。区画2 で1歩あたりの描画プロセスの CPU を測ると:
-           直す前（寄りなし）        345 ms
-           寄る・一発で切り替え      419 ms
-           寄る・300ms かけて滑らす  905 ms
-           寄る・220ms              909 ms   ← **縮めても減らない**
-           寄る・120ms              895 ms   ← 同上
-         時間ではなく「倍率が変わった回数」で決まる固定の代金なので、
-         短くしても効かない。配信で使うものなので、カクつくくらいなら
-         切り替えのほうがよい。測り方は tools/sprites/framecpu.mjs と同じ
-         （CDP の Performance.ProcessTime。壁の時計では測らない）。
-         速い機械で滑らせたくなったら --cam-ms を足すだけで戻せる。 */
-      #stage.cam-on {
-        transition: opacity 0.32s ease, transform var(--cam-ms, 0ms) cubic-bezier(0.33, 0.1, 0.2, 1);
-      }
-      /* 区画を移すときは舞台が透明になっているあいだに寄り直す。
-         透明なうちに動かせば、前の区画の寄りから新しい寄りへ**斜めに飛ぶ絵**が出ない */
-      #stage.cam-instant { transition: opacity 0.32s ease; }
-      /* **消さない。薄くするだけ。** 何の話の途中かが分からなくなる */
-      #stage.cam-on [data-step].on:not(.cam-near) { opacity: 0.28; }
-
       b { color: var(--ink); font-weight: 900; }
       em { font-style: normal; }
 
@@ -487,9 +447,7 @@
         font-weight: 900; font-size: 36px; line-height: 1.12;
         color: var(--ink); letter-spacing: 0.01em;
       }
-      /* **横いっぱいに伸ばさない。** 1行 1070px の添え書きは、寄っても 1.6倍
-         （幅で頭打ち）にしかならない。折り返して塊にすると 2.8倍まで寄れる */
-      .note { color: var(--ink-2); font-size: 18px; font-weight: 700; line-height: 1.7; text-align: center; max-width: 620px; margin-inline: auto; }
+      .note { color: var(--ink-2); font-size: 18px; font-weight: 700; line-height: 1.7; text-align: center; }
 
       /* ---- 平らなチップ。押せないので厚みも影も付けない ---- */
       .chip {
@@ -637,22 +595,12 @@
         background: color-mix(in srgb, var(--chip) 34%, var(--paper));
         border-radius: var(--r-0); padding: 5px 15px;
       }
-      .d-row .d-text { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.7; color: var(--ink-2); }
-      /* **字の段を紙いっぱいに広げない。** 1236px だと寄っても 1.40倍（幅で頭打ち）で、
-         24px の字がスマホで 14.8px にしかならない。1010px に詰めると 1.7倍まで寄れる。
-         写真（.dp）は紙の幅いっぱいのまま。下に敷くものなので詰めても得がない */
-      .d-row .d-when, .d-row .d-text { max-width: 1010px; }
+      .d-row .d-text { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.8; color: var(--ink-2); }
 
       /* ---- 4. 乗せてくれた人たち ----
          1枚の紙を5列に割る。日ごとに1列で、罫で分ける。 */
-      /* 列の幅は renderCars が台数から出す（style で差し込む）。
-         ここの repeat(5,1fr) は、万一 style が無かったときの受け皿 */
       .c-cols { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 1840px; align-items: stretch; }
       .c-day { display: flex; flex-direction: column; padding: 16px 16px 18px; border-right: 1px solid var(--hair); }
-      /* 台数の多い日は中を2段に。**段組みは上から下へ流す**（multicol）ので、
-         1台目・2台目…の順が縦に読める。grid の行流しだと横に読むことになる */
-      .c-day.two .c-items { column-count: 2; column-gap: 20px; }
-      .c-day.two .car-row { break-inside: avoid; }
       .c-day:last-child { border-right: 0; }
       .c-day-head {
         font-size: 19px; font-weight: 900; color: var(--marker-ink);
@@ -722,8 +670,7 @@
       .qc.marked .qc-tag { opacity: 1; transform: none; }
 
       /* ---- 7. 盛り上がり ---- */
-      /* 1行 879px だと寄っても 1.97倍（幅で頭打ち）。行を詰めると 2.5倍まで寄れる */
-      .p-list { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 1380px; align-items: stretch; overflow: hidden; }
+      .p-list { display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 1760px; align-items: stretch; overflow: hidden; }
       .p-row {
         display: flex; align-items: center; gap: 22px;
         padding: 12px 24px;
@@ -801,9 +748,8 @@
       .fd-note { margin-top: auto; font-size: 19px; font-weight: 800; line-height: 1.72; color: var(--ink-2); }
 
       /* ---- 11. 投げ銭 ---- */
-      /* 順位の1行が 1132px あって 1.59倍で頭打ちだった。詰めて寄れるようにする */
-      .g-wrap { display: flex; gap: 26px; width: 100%; max-width: 1420px; align-items: stretch; }
-      .g-left { flex: 0 0 470px; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 26px 34px; }
+      .g-wrap { display: flex; gap: 26px; width: 100%; max-width: 1760px; align-items: stretch; }
+      .g-left { flex: 0 0 556px; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 26px 34px; }
       .g-left .ic { width: 92px; height: 92px; }
       .g-total-label { font-size: 24px; font-weight: 900; color: var(--ink-2); letter-spacing: 0.1em; }
       .g-total { font-size: 100px; font-weight: 900; line-height: 1; color: var(--accent-ink); }
@@ -811,7 +757,7 @@
       .g-bar { height: 18px; border-radius: var(--r-0); background: var(--paper-2); overflow: hidden; border: 1px solid var(--hair-strong); }
       .g-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--gold), var(--accent)); }
       .g-note { font-size: 19px; font-weight: 800; color: var(--ink-2); line-height: 1.7; }
-      .g-right { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 14px 22px; }
+      .g-right { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 16px 22px; }
       .g-big {
         display: flex; align-items: center; gap: 22px;
         background: color-mix(in srgb, var(--gold) 30%, transparent);
@@ -824,23 +770,16 @@
       .g-row .g-rank { font-size: 21px; font-weight: 900; color: var(--ink-2); min-width: 80px; }
       .g-row .g-name { font-size: 22px; font-weight: 900; color: var(--ink); }
       .g-row .g-amt { margin-left: auto; font-size: 22px; font-weight: 900; color: var(--ink-2); }
-      .g-rest { margin-top: 2px; }
-      .g-rest-head { font-size: 17px; font-weight: 900; color: var(--frame-deep); letter-spacing: 0.18em; margin-bottom: 5px; }
-      /* **横に伸ばさない。** 855px の帯だと寄っても 2.0倍（幅で頭打ち）で、
-         16.5px の名前がスマホで 14.6px にしかならない。折り返して塊にする */
-      .g-chips { display: flex; flex-wrap: wrap; gap: 8px; max-width: 620px; }
+      .g-rest { margin-top: 6px; }
+      .g-rest-head { font-size: 17px; font-weight: 900; color: var(--frame-deep); letter-spacing: 0.18em; margin-bottom: 8px; }
+      .g-chips { display: flex; flex-wrap: wrap; gap: 8px; }
       .g-chip em { color: var(--accent-ink); font-weight: 900; margin-left: 6px; }
 
       /* ---- 12. 手紙 ---- */
-      /* **段を狭くする。** 1226px の1段落は寄っても 1.4倍が上限（幅で頭打ち）。
-         968px まで詰めると 1.8倍まで寄れて、24px の字がスマホで 19px になる。
-         日本語の本文としても 51字/行 は長すぎた */
-      .l-wrap { width: 100%; max-width: 1060px; padding: 20px 46px 16px; }
+      .l-wrap { width: 100%; max-width: 1320px; padding: 26px 46px 22px; }
       .l-para {
-        /* 段を 968px に詰めたぶん行数が増えた。**行送りと段間で背を戻す。**
-           戻さないと紙が縦に伸びて、区画の見出しが画面の上に出る（出した） */
-        font-size: 24px; font-weight: 700; line-height: 1.78; color: var(--ink-2);
-        margin: 0 0 14px; padding-left: 24px; border-left: 4px solid var(--frame);
+        font-size: 24px; font-weight: 700; line-height: 1.95; color: var(--ink-2);
+        margin: 0 0 20px; padding-left: 24px; border-left: 4px solid var(--frame);
       }
       .l-sign {
         display: flex; align-items: center; justify-content: flex-end; gap: 12px;
@@ -1116,25 +1055,16 @@
          大きい1枚にだけ落ち影を敷く——机に写真が1枚置いてある、の絵。
          厚みと取り違えられないように、右下へずらして、ぼかす。
          ========================================================= */
-      .akc { width: 100%; max-width: 1812px; display: flex; flex-direction: column; gap: 10px; }
-      /* 1812px の1段は寄れない（1.0倍）。詰めて塊にする */
-      .akc-lead { margin: 0 auto; max-width: 880px; font-size: 20px; font-weight: 700; line-height: 1.48; color: var(--ink-2); }
-      /* **隙間は、壁（24枚）の高さの調節つまみ。** 8列の1枚は残りの幅を割った
-         ぶんだけ大きくなり、3段ぶん背が伸びる。隙間を広げると1枚が小さくなって
-         区画がちょうど画面に収まる（狭めると見出しの板が上へ出る） */
-      .akc-body { display: flex; gap: 60px; align-items: flex-start; }
+      .akc { width: 100%; max-width: 1812px; display: flex; flex-direction: column; gap: 14px; }
+      .akc-lead { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.6; color: var(--ink-2); }
+      .akc-body { display: flex; gap: 32px; align-items: flex-start; }
 
-      /* **大きい1枚は、縦に伸ばしすぎない。** 400px 幅だと絵と説明で 590px の
-         縦長になり、寄っても 1.5倍（高さで頭打ち）。340px に詰めると 1.8倍まで
-         寄れて、余ったぶんは右の壁（小さいカード）が広く使う */
-      .akc-hero { flex: 0 0 320px; }
+      .akc-hero { flex: 0 0 400px; }
       .akc-hero .akc-card { box-shadow: var(--shadow-2); }
-      /* 大きい1枚の説明。**写真ごと寄るので倍率は 1.5倍しか出ない。**
-         足りないぶんは素の大きさで稼ぐ（17/15 → 21/18） */
-      .akc-hero-cap { margin-top: 8px; font-size: 26px; font-weight: 800; line-height: 1.5; color: var(--ink); }
-      .akc-hero-cap span { display: block; font-size: 22px; font-weight: 700; color: var(--ink-2); }
+      .akc-hero-cap { margin-top: 12px; font-size: 17px; font-weight: 800; line-height: 1.5; color: var(--ink); }
+      .akc-hero-cap span { display: block; font-size: 15px; font-weight: 700; color: var(--ink-2); }
 
-      .akc-wall { flex: 1 1 auto; display: grid; grid-template-columns: repeat(8, 1fr); gap: 15px; }
+      .akc-wall { flex: 1 1 auto; display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
       /* 壁の1枚には影を敷かない。24枚ぶん重なると紙が汚れて見えるし、
          OBS で毎フレーム24個のぼかしを払うことになる。細い罫だけで足りる */
       .akc-wall .akc-card { border-color: var(--hair-strong); }
@@ -1160,18 +1090,16 @@
           rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.13) 60%, rgba(0, 0, 0, 0) 100%);
       }
 
-      /* 引用と数字を横に並べると 1812px の帯になって、寄っても 1.0倍だった。
-         縦に積んで詰めると 1.9倍まで寄れる */
-      .akc-foot { display: flex; flex-direction: column; align-items: stretch; gap: 8px; max-width: 920px; margin-inline: auto; }
+      .akc-foot { display: flex; align-items: center; gap: 22px; }
       .akc-quote {
-        flex: 1 1 auto; padding: 8px 20px 9px;
+        flex: 1 1 auto; padding: 10px 20px 12px;
         background: var(--sheet); border: 1px solid var(--hair-strong); border-radius: var(--r-0);
         font-size: 19px; font-weight: 800; line-height: 1.55; color: var(--ink);
       }
       .akc-quote i { font-style: normal; color: var(--ink-2); font-weight: 700; font-size: 16px; }
-      .akc-nums { display: flex; gap: 20px; flex: 0 0 auto; justify-content: center; }
+      .akc-nums { display: flex; gap: 20px; flex: 0 0 auto; }
       .akc-num { text-align: center; }
-      .akc-num b { display: block; font-size: 30px; line-height: 1.05; color: var(--accent-ink); }
+      .akc-num b { display: block; font-size: 34px; line-height: 1.05; color: var(--accent-ink); }
       .akc-num span { font-size: 14px; font-weight: 800; color: var(--ink-2); }
       /* 焼いた絵が1枚も無いとき（手形を載せ忘れ）。**空の枠を並べない** */
       .akc-none { padding: 40px 0; text-align: center; }
@@ -1817,7 +1745,7 @@
       /** 区画の見出し。**この面で厚みを持つのはこの板だけ**（押せる合図ではなく、板の側面） */
       function cornerHead(tag, title, ico) {
         return `
-          <div class="corner-head" data-step="0" data-nozoom>
+          <div class="corner-head" data-step="0">
             ${icon(ico)}
             <div>
               <div class="corner-tag">${tag}</div>
@@ -1866,7 +1794,7 @@
         const map = renderDeckMap(null).replace(/ data-dmark="[^"]*"/g, "");
         return `
           <div class="t-wrap">
-            ${map ? `<div class="t-map" data-step="0" data-nozoom>${map}</div>` : ""}
+            ${map ? `<div class="t-map" data-step="0">${map}</div>` : ""}
             <div class="t-right">
               <div data-step="0">
                 <div class="corner-head t-plank">
@@ -2095,11 +2023,11 @@
           .map(
             (d, i) => `
             <div class="d-row" data-step="${i}" data-solo>
-              <div class="d-when" data-zoom>${escapeHtml(d.when)}
+              <div class="d-when">${escapeHtml(d.when)}
                 <span>${escapeHtml(d.date)}・${escapeHtml(d.where)}</span>
                 <em class="d-stat">${escapeHtml(d.stat)}</em>
               </div>
-              ${d.paras.map((t) => `<p class="d-text" data-zoom>${md(t)}</p>`).join("")}
+              ${d.paras.map((t) => `<p class="d-text">${md(t)}</p>`).join("")}
               ${dayPhoto(d.date, dayVoice(d))}
             </div>`
           )
@@ -2107,7 +2035,7 @@
         return `
           ${cornerHead("ROUTE", "9日間の道のり", "pin")}
           <div class="d-wrap">
-            <div class="d-map" data-step="0" data-nozoom>${renderDeckMap(null)}</div>
+            <div class="d-map" data-step="0">${renderDeckMap(null)}</div>
             <div class="d-list sheet">${rows}</div>
           </div>`;
       }
@@ -2119,24 +2047,19 @@
             const items = g.items
               .map(
                 (c) => `
-                <div class="car-row" data-zoom>
+                <div class="car-row">
                   <div class="car-name">${escapeHtml(c.name)}</div>
                   ${c.desc ? `<div class="car-desc">${md(c.desc)}</div>` : ""}
                 </div>`
               )
               .join("");
-            return `<div class="c-day${g.items.length > 3 ? " two" : ""}" data-step="${i}"><div class="c-day-head" data-zoom>${escapeHtml(g.head)}</div><div class="c-items">${items}</div></div>`;
+            return `<div class="c-day" data-step="${i}"><div class="c-day-head">${escapeHtml(g.head)}</div>${items}</div>`;
           })
           .join("");
-        /* 日ごとに1列。**台数の多い日は幅を倍にして、中を2段に割る。**
-           1日目と5日目の6台を1段で積むと列が 537px の縦長になって、
-           寄っても 1.7倍（高さで頭打ち）——15px の字がスマホで 11px にしかならない。
-           2段にすると高さが半分になって 3倍まで寄れる（スマホで 20px）。
-           **割り方はデータから決める。** 台数が変わったら列の幅も勝手に変わる */
-        const tracks = DECK.cars.map((g) => (g.items.length > 3 ? "2.2fr" : "1fr")).join(" ");
+        // 日ごとに1列。1日目と5日目が6台ずつなので、5列でちょうど収まる
         return `
           ${cornerHead("18 RIDES", "18台が停まってくれた", "car")}
-          <div class="c-cols sheet" style="grid-template-columns:${tracks}">${cols}</div>`;
+          <div class="c-cols sheet">${cols}</div>`;
       }
 
       /* ---- 5. 通った街と見たもの ---- */
@@ -2232,7 +2155,7 @@
           .join("");
         return `
           <div class="q-wrap">
-            <div class="corner-head q-head" data-step="0" data-nozoom>
+            <div class="corner-head q-head" data-step="0">
               ${icon("quiz")}
               <div>
                 <div class="q-no">QUIZ ${qi + 1} / ${DECK.quiz.length}</div>
@@ -2786,168 +2709,6 @@
         if (s.confettiAt != null && stepIdx === s.confettiAt) {
           spawnConfetti(s.confettiBig ? 160 : 90);
         }
-        applyCamera();
-      }
-
-      /* ======================== 寄りのカメラ ========================
-         その歩で出たもの（＝いま喋っているところ）に舞台ごと寄る。
-
-         寄り先の決め方:
-           1. いまの歩の `[data-step]` のうち、出ているもの
-           2. そのうち `data-nozoom` は外す（区画の見出しの板・地図）
-           3. 中に `data-zoom` があればそちらへ降りる
-              （1日ぶんの紙は inset:0 で枠いっぱいに広がっているので、
-                枠ではなく**中の字**を寄り先にしないと倍率が出ない）
-
-         倍率は**中の字の実寸**で測った箱から出す。要素の箱ではない。
-         `.e-small` は 1400px の箱に 600px ぶんしか字が無く、箱で測ると
-         1.2倍にしかならない。字で測れば 2.8倍まで寄れる。
-         ================================================================ */
-      const CAM_W = 1728;      // 幅 90%
-      const CAM_H = 918;       // 高さ 85%
-      const CAM_MIN = 1.05;    // これ未満は動かすだけ無駄
-      const CAM_MAX = 3;
-      const CAM_BIG = 40;      // もうこれだけ大きい字なら寄らない（クイズ・表題・締め）
-
-      /* 寄りは**進行しているときだけ**動かす。
-         `window.__jump` は頭出しの穴で、見張りの道具（deckwalk）が
-         **素の 1920x1080 に収まっているか**を測るのに使う。寄ったままだと
-         枠から出た位置しか返らず、収まりを測れない。
-         寄りのほうを測る道具（deckread.mjs）は `window.__cam(true)` で入れる。 */
-      let camLive = true;
-      let camState = { k: 1, x: 0, y: 0, font: 0, chars: 0, w: 0, h: 0 };
-
-      /** その字が本当に見えているか。opacity 0 の「せいかい」の札まで数えると、
-          クイズの本文の大きさが 37px ではなく 27px と出る（実際に出た） */
-      function camVisible(el, stop) {
-        for (let e = el; e && e !== stop.parentElement; e = e.parentElement) {
-          const st = getComputedStyle(e);
-          if (st.display === "none" || st.visibility === "hidden") return false;
-          /* **出方の途中（0→1）を「見えていない」と数えない。**
-             寄りは `.on` を付けたその場で決める。そのとき歩の opacity は
-             まだ 0 なので、数えると本文が1文字も見つからず、倍率が
-             「字の大きさ」ではなく「箱の大きさ」で決まってしまう
-             （クイズの 52px が 1.48倍に寄って画面から出かけた） */
-          if (parseFloat(st.opacity) === 0 && !(e.hasAttribute("data-step") && e.classList.contains("on"))) return false;
-        }
-        return true;
-      }
-
-      /** 寄り先の「字の箱」と、字数で重みづけした中央の大きさ */
-      function camInk(el, box, sizes) {
-        const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-        let n;
-        while ((n = w.nextNode())) {
-          const t = (n.textContent || "").replace(/\s+/g, "");
-          if (!t) continue;
-          const par = n.parentElement;
-          if (!par || !camVisible(par, el)) continue;
-          const r = document.createRange();
-          r.selectNodeContents(n);
-          for (const q of r.getClientRects()) {
-            if (!q.width && !q.height) continue;
-            box.push(q);
-          }
-          sizes.push([parseFloat(getComputedStyle(par).fontSize), t.length]);
-        }
-        // 絵も寄り先のうち（旅の写真・あやと島カード）
-        el.querySelectorAll("img, svg, canvas").forEach((g) => {
-          const q = g.getBoundingClientRect();
-          if (q.width && q.height) box.push(q);
-        });
-      }
-
-      function camMedian(sizes) {
-        if (!sizes.length) return 0;
-        const a = sizes.slice().sort((x, y) => x[0] - y[0]);
-        const tot = a.reduce((s, x) => s + x[1], 0);
-        let acc = 0;
-        for (const [f, c] of a) { acc += c; if (acc >= tot / 2) return f; }
-        return a[a.length - 1][0];
-      }
-
-      /** いまの歩の寄り先を集める */
-      function camTargets() {
-        const out = [];
-        stage.querySelectorAll('[data-step="' + stepIdx + '"]').forEach((el) => {
-          if (!el.classList.contains("on")) return;
-          if (el.hasAttribute("data-nozoom")) return;
-          const inner = el.hasAttribute("data-zoom") ? [el] : [...el.querySelectorAll("[data-zoom]")];
-          out.push(...(inner.length ? inner : [el]));
-        });
-        /* 寄り先がひとつも無い歩——区画の頭で、見出しの板しか出ていないとき——は
-           **その板に寄る。** 出ているものがそれしか無いのだから、それが
-           いま喋っているところ。park して素の大きさで放り出すと 36px のままになる */
-        if (!out.length) {
-          stage.querySelectorAll('[data-step="' + stepIdx + '"]').forEach((el) => {
-            if (el.classList.contains("on")) out.push(el);
-          });
-        }
-        return out;
-      }
-
-      function applyCamera() {
-        if (IS_CTRL) return;
-        stage.querySelectorAll(".cam-near").forEach((e) => e.classList.remove("cam-near"));
-        const park = () => {
-          stage.classList.remove("cam-on");
-          stage.style.transform = "";
-          camState = { k: 1, x: 0, y: 0, font: camState.font, chars: camState.chars, w: 0, h: 0 };
-        };
-        if (!camLive) return park();
-
-        const targets = camTargets();
-        if (!targets.length) return park();
-
-        /* いま当たっている倍率を割り戻して**素の座標**に直す。
-           transform を一度 none にして測ると、動いている最中の値が
-           巻き戻って1フレームだけ跳ねる。計算で戻すほうが静か。 */
-        const m = new DOMMatrixReadOnly(getComputedStyle(stage).transform);
-        const k0 = m.a || 1, ex = m.e, ey = m.f;
-        const sizes = [];
-        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-        for (const t of targets) {
-          const rects = [];
-          camInk(t, rects, sizes);
-          if (!rects.length) {
-            const q = t.getBoundingClientRect();
-            if (q.width && q.height) rects.push(q);
-          }
-          /* 歩は translateY(14px) から出てくる。**その 14px を引いてから測る。**
-             引かないと、落ち着いたときの位置より k×14px 下を中心にしてしまう */
-          const owner = t.closest("[data-step]");
-          const dy = owner ? new DOMMatrixReadOnly(getComputedStyle(owner).transform).f : 0;
-          for (const q of rects) {
-            x0 = Math.min(x0, (q.left - ex) / k0);
-            y0 = Math.min(y0, (q.top - ey) / k0 - dy);
-            x1 = Math.max(x1, (q.right - ex) / k0);
-            y1 = Math.max(y1, (q.bottom - ey) / k0 - dy);
-          }
-        }
-        if (!(x1 > x0)) return park();
-        const w = x1 - x0, h = y1 - y0;
-        if (!(w > 0) || !(h > 0)) return park();
-
-        const font = camMedian(sizes);
-        const chars = sizes.reduce((s, x) => s + x[1], 0);
-        // もう大きい字は寄らない。クイズの問い（52px）まで拡大すると画面から出る
-        let k = font >= CAM_BIG ? 1 : Math.min(CAM_W / w, CAM_H / h);
-        k = Math.max(1, Math.min(CAM_MAX, k));
-        camState = { k, x: 0, y: 0, font, chars, w, h };
-        if (k < CAM_MIN) return park();
-
-        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-        const tx = innerWidth / 2 - k * cx;
-        const ty = innerHeight / 2 - k * cy;
-        camState.x = tx;
-        camState.y = ty;
-        // 寄り先を持っている歩だけ、明るいまま残す
-        targets.forEach((t) => {
-          const owner = t.closest('[data-step="' + stepIdx + '"]') || t;
-          owner.classList.add("cam-near");
-        });
-        stage.classList.add("cam-on");
-        stage.style.transform = "translate(" + tx.toFixed(2) + "px," + ty.toFixed(2) + "px) scale(" + k.toFixed(4) + ")";
       }
 
       function renderScene() {
@@ -2961,16 +2722,7 @@
         }
         stage.innerHTML = SCENES[sceneIdx].render();
         updateDots();
-        /* 組み直した直後は**寄りを飛ばす。** 舞台が透明なうちに新しい寄りへ
-           置き換えたいので、transform の transition を1フレームだけ外す。
-           外さないと、前の区画の寄りから新しい寄りへ斜めに滑る絵が出る */
-        stage.classList.add("cam-instant");
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            applySteps();
-            requestAnimationFrame(() => stage.classList.remove("cam-instant"));
-          })
-        );
+        requestAnimationFrame(() => requestAnimationFrame(applySteps));
       }
 
       function gotoScene(i, step) {
@@ -2990,7 +2742,6 @@
 
       function advance() {
         dismissHint();
-        camLive = true;
         if (stepIdx < SCENES[sceneIdx].total) {
           stepIdx++;
           applySteps();
@@ -3002,7 +2753,6 @@
       }
       function back() {
         dismissHint();
-        camLive = true;
         if (stepIdx > 0) {
           stepIdx--;
           applySteps();
@@ -3073,14 +2823,7 @@
       });
 
       // 検証・リハーサル用フック
-      /* **頭出しでは寄らない。** deckwalk は「素の 1920x1080 に収まっているか」を
-         測る道具で、寄ったままだと枠から出た位置しか返らない。
-         寄りのほうを測るときは window.__cam(true) で明示的に入れる。 */
-      window.__jump = (i, step) => { camLive = false; applyCamera(); gotoScene(i, step ?? 0); };
-      window.__cam = (on) => { camLive = on !== false; applyCamera(); return camState; };
-      // いまの歩の寄り先そのもの。deckread.mjs が**寄り先の中の字**を測るのに使う
-      window.__camPick = () => camTargets();
-      window.__camState = () => camState;
+      window.__jump = (i, step) => gotoScene(i, step ?? 0);
       window.__sceneCount = SCENES.length;
       window.__dotOfScene = DOT_OF_SCENE;
       window.__totals = SCENES.map((s) => s.total);
@@ -3338,7 +3081,6 @@
           if (data.scene === sceneIdx && data.step === stepIdx) return;
           applyingRemote = true;
           if (data.scene !== sceneIdx) {
-            camLive = true;
             gotoScene(data.scene ?? 0, data.step ?? 0);
           } else {
             stepIdx = Math.max(0, Math.min(SCENES[sceneIdx].total, data.step ?? 0));
