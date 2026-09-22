@@ -2,7 +2,7 @@
  * 国ごとの寄り地図。`python/build_world_route.py` が焼いたものをここで束ねる。
  *
  * 動的 import にすると、静的書き出しのときにどの国が要るか webpack が
- * 決められず、17カ国ぶんぜんぶを1つの塊にしてしまう。
+ * 決められず、24カ国ぶんぜんぶを1つの塊にしてしまう。
  * ここで名前を書いておけば、使う国だけがそのページの HTML に入る。
  */
 import france from "@/content/atlas/c/france.json";
@@ -23,6 +23,12 @@ import azerbaijan from "@/content/atlas/c/azerbaijan.json";
 import georgia from "@/content/atlas/c/georgia.json";
 import armenia from "@/content/atlas/c/armenia.json";
 import iranBorder from "@/content/atlas/c/iran-border.json";
+import poland from "@/content/atlas/c/poland.json";
+import lithuania from "@/content/atlas/c/lithuania.json";
+import latvia from "@/content/atlas/c/latvia.json";
+import estonia from "@/content/atlas/c/estonia.json";
+import finland from "@/content/atlas/c/finland.json";
+import sweden from "@/content/atlas/c/sweden.json";
 
 export type CountryMapData = {
   view: { w: number; h: number };
@@ -60,4 +66,10 @@ export const COUNTRY_MAPS: Record<string, CountryMapData> = {
   georgia,
   armenia,
   "iran-border": iranBorder,
+  poland,
+  lithuania,
+  latvia,
+  estonia,
+  finland,
+  sweden,
 } as unknown as Record<string, CountryMapData>;

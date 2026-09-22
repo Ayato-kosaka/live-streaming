@@ -498,7 +498,14 @@ export default function WorldRoute({
         ))}
       </div>
 
-      <div className="amap">
+      {/* **縦横比は焼き込み（`route.json` の `view`）から渡す。**
+          CSS の既定値（`1400 / 1145`）は枠を広げる前の数で、`atlas.css` に
+          書いてある。あちらに頼っていたので、`build_world_route.py` の
+          `LAT_MAX` を 60.5 → 70.5 にして地図が 1400x1645 になった瞬間、
+          **絵だけが縦に潰れた**（額縁は 1145 のつもりのまま）。
+          国の寄り地図（`CountryMap`）は前から自分の `view` を渡している。
+          **同じ数を CSS とデータの2か所に置かない。** */}
+      <div className="amap" style={{ ["--am-ratio" as string]: `${W} / ${H}` }}>
         <div className="amap-stage" ref={stageRef}>
           <svg className="amap-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="日本を出てから、これまでに歩いた国ぜんぶの地図">
             <defs>
