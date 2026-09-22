@@ -42,23 +42,45 @@ if [ -n "$b" ] && git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
   fi
 fi
 
-# 3. master に入っていない自分の枝
+[ -z "$msg" ] && note_only=1 || note_only=0
+
+# 3. master に入っていない自分の枝。**これは止めない。念を押すだけ。**
+#
+# 2026-09-22、これで止めるようにしたら**毎回止まった。** CI が回っている
+# あいだは当たり前にこの状態になるのに、hook からは「CI 待ち」と
+# 「投げ出し」の区別がつかない（この箱のトークンはダミーで PR の状態を
+# 引けない）。**区別できないもので止めると、正しく待っている回も止まる。**
+#
+# 止めるのは「literally まだ保存していない」1と2だけにして、ここは
+# 目に入る場所に文を出すだけにする。**行動を変えるのは読む側の仕事。**
+warn=""
 if [ -n "$b" ] && [ "$b" != "master" ] && git rev-parse origin/master >/dev/null 2>&1; then
   ahead=$(git rev-list --count origin/master.."$b" 2>/dev/null || echo 0)
   if [ "${ahead:-0}" -gt 0 ]; then
-    msg="${msg}**${b} に、master へ入っていない commit が ${ahead} 件ある。**
+    warn="**${b} に、master へ入っていない commit が ${ahead} 件ある。**
 
 PR は作ったか。CI は見たか。**緑なら、自分でマージする。**
 「緑になりしだいマージします」で終わらない——それが可否を預けるということ。
-マージできない理由があるなら、**その理由を1行で言ってから**終わる。
+待っているなら、**何をどれだけ待っているか**を言ってから終わる。
 "
   fi
 fi
 
-[ -z "$msg" ] && exit 0
-{
-  echo "──────── 終わる前に ────────"
-  printf '%s' "$msg"
-  echo "────────────────────────────"
-} >&2
-exit 2
+if [ -n "$msg" ]; then
+  {
+    echo "──────── 終わる前に ────────"
+    printf '%s' "$msg"
+    [ -n "$warn" ] && printf '\n%s' "$warn"
+    echo "────────────────────────────"
+  } >&2
+  exit 2
+fi
+
+if [ -n "$warn" ]; then
+  {
+    echo "──────── 念のため ────────"
+    printf '%s' "$warn"
+    echo "──────────────────────────"
+  } >&2
+fi
+exit 0
