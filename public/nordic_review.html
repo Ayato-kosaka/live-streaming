@@ -1722,10 +1722,11 @@
               </div>`
           )
           .join("");
-        /* 写真は旅の頭から終わりまで等間隔に5枚（cardWallPicks と同じ選び方）。
+        /* 写真は5枚。**立つのは点（投げ銭と出席の順位）の上位5人で、1人1枚ずつ。**
+           写真は旅の頭から終わりまで散らす（titlePicks）。
            **手形が載っていなければ列ごと出さない。** 空の枠を並べない */
         const cards = CARD_DATA
-          ? cardWallPicks(5).map((c) => cardFace(c.photo, c.who, false)).join("")
+          ? titlePicks(5).map((c) => cardFace(c.photo, c.who, false)).join("")
           : "";
         /* 地図は**全区間を素の強さで**出す。表紙は「どこを歩いたか」の1枚で、
            何日目の話でもないため。
@@ -2245,28 +2246,170 @@
       ];
 
       /**
-       * 壁に出す「写真 × その写真に立っている1人」を選ぶ。
+       * その人の「島でのえらばれやすさ」（0〜1）。
        *
-       * **決め打ちで選ぶ。** 乱数を使うと配信のたびに並びが変わって、
-       * 前もって撮った確認の絵と突き合わせられなくなる。
-       * 旅の頭から終わりまで等間隔に取るので、9日ぶんの景色が満遍なく並ぶ。
-       * 立つ人は1枚ずつずらす——**同じ顔が24枚並ばないように。**
+       * **自前で順位を組まない。** 中身は site/content/residents.ts の score で、
+       * 直近90日の投げ銭の総額の順位と、同じ期間の出席日数の順位を
+       * それぞれ 0〜1 に直して足して2で割ったもの。島を日替わりで歩く人を
+       * 選んでいる重み（components/island/roster.ts）と同じ物差しを、
+       * カードに誰を立てるかにも使う（あやと・2026-09-22
+       * 「投げ銭順位や出席順位が高い人を優先して」）。
+       *
+       * 手形に score が無い人（名簿の直近90日より前の人）は 0。
+       * **0 は順番が後ろになるだけで、出られなくなってはいけない。**
        */
-      function cardWallPicks(n) {
+      function charScore(icon) {
+        const ch = CARD_DATA && CARD_DATA.chars[icon];
+        return ch && typeof ch.score === "number" ? ch.score : 0;
+      }
+
+      /** 点の高い順。**同点は icon 順**にして決め打ちにする（乱数を使わない） */
+      function byScore(a, b) {
+        return (
+          charScore(b.icon) - charScore(a.icon) ||
+          (a.icon < b.icon ? -1 : a.icon > b.icon ? 1 : 0)
+        );
+      }
+
+      /** 壁と表紙に出せる景色を、旅の順に。**右下が水面の5枚は外す** */
+      function wallPhotos() {
         const all = [];
         CARD_DATA.days.forEach((d) =>
           d.photos.forEach((p) => {
             if (CARD_WALL_SKIP.indexOf(p.id) < 0) all.push(p);
           })
         );
+        return all;
+      }
+
+      /**
+       * 1枚の写真に立てる人を選ぶ。**その写真に立っている人のうち、いちばん点の高い人。**
+       *
+       * ただし既に cap 枚出ている人は次点に譲る（同じ顔が壁を埋めないため）。
+       * **全員が上限に達していたら、いちばん出ていない人**に回す——
+       * 写真は空けないが、上限を超えるぶんまで点の高い人に寄せない
+       * （点だけで戻すと、上限2枚のはずの人が24枚中4枚に出た。実測）。
+       * `avoid` は「できれば避ける icon」（**隣の1枚と同じ顔にしない**ため。
+       * 上限2枚は守れていても、24枚の壁で隣どうしが同じ顔だと目につく。実測で出た）。
+       * `used` は icon → もう何枚に出たか。
+       */
+      function pickWho(photo, used, cap, avoid) {
+        const people = (photo.people || []).slice().sort(byScore);
+        if (!people.length) return null;
+        const n = (w) => used.get(w.icon) || 0;
+        // sort が点の高い順に並べてあるので、同数なら先に来たほう＝点の高いほうが残る
+        const other = people.filter((w) => w.icon !== avoid);
+        const who =
+          other.find((w) => n(w) < cap) ||
+          // 上限に達した人しか残っていない。**隣と同じ顔にするより、
+          // いちばん出ていない人を1枚おまけ**にしたほうが壁は散る
+          (other.length ? other.reduce((a, w) => (n(w) < n(a) ? w : a)) : null) ||
+          people.reduce((a, w) => (n(w) < n(a) ? w : a));
+        used.set(who.icon, n(who) + 1);
+        return who;
+      }
+
+      /* 壁で同じ顔を何枚まで許すか。**2枚。**
+         24枚に対して立てる人が22人いるので、1枚ずつでも壁は埋まる。
+         **ただし1枚ずつに切ると、上位も下位もきっちり同じ枚数になって、
+         「点の高い人を優先する」が効かなくなる。** 2枚までにすれば上位の人が
+         2枚に出られて、それでも壁の 2/24。
+         実測では12人が立って、いちばん多い人が3枚（24枚に対して11人×2枚では
+         2枚足りず、そのぶんが上の「いちばん出ていない人」に回ったもの）。 */
+      const WALL_FACE_CAP = 2;
+
+      /**
+       * 壁に出す「写真 × その写真に立っている1人」を選ぶ。
+       *
+       * **決め打ちで選ぶ。** 乱数を使うと配信のたびに並びが変わって、
+       * 前もって撮った確認の絵と突き合わせられなくなる。
+       * 写真の選び方は変えない——旅の頭から終わりまで等間隔に取るので、
+       * 11日ぶんの景色が満遍なく並ぶ。**変えたのは立つ人の決め方で、
+       * 順繰りではなく点の高い順**（上限まで出た人は次点に譲る）。
+       */
+      function cardWallPicks(n, cap) {
+        const all = wallPhotos();
         if (!all.length) return [];
         const step = all.length / n;
+        const used = new Map();
         const out = [];
         for (let i = 0; i < n; i++) {
           const p = all[Math.min(all.length - 1, Math.round(i * step))];
-          const who = p.people[i % p.people.length];
+          // 直前の1枚と同じ顔は避ける（横に8枚並ぶので、隣どうしがいちばん目につく）
+          const prev = out.length ? out[out.length - 1].who.icon : null;
+          const who = pickWho(p, used, cap || WALL_FACE_CAP, prev);
           if (who) out.push({ photo: p, who });
         }
+        return out;
+      }
+
+      /* 同じ人が「その日の主役」（日ごとの区画の大きい1枚）になれる日数の上限。**2日。**
+         旅は10日なので、**上限2日なら主役は最低5人に散る**（10日 ÷ 2日）。
+         上限を置かないと、ほぼ全部の写真に写っている点いちばんの人が
+         10日中8日の主役になった（実測）。順位は使うが、
+         「上位が強いこと」と「上位だけが出ること」は別
+         （docs/island-design.md 5章「同じ顔で埋めない」）。 */
+      const DAY_LEAD_CAP = 2;
+
+      /**
+       * 日ごとの主役を、**全日まとめて一度だけ決める。**
+       *
+       * 1日ずつその場で決めると、どの順で呼ばれたかで結果が変わる。
+       * 日の昇順に、その日の代表写真に立っている人のうち点の高い人から配り、
+       * 既に上限まで主役になった人は次点に譲る。**前日と同じ人も避ける。**
+       * 乱数を使わないので、何度開いても同じ並びになる。
+       */
+      let DAY_LEADS = null;
+      function dayLeads() {
+        if (DAY_LEADS) return DAY_LEADS;
+        DAY_LEADS = new Map();
+        const used = new Map();
+        let prev = null;
+        ((CARD_DATA && CARD_DATA.days) || []).forEach((d) => {
+          const hero = d.photos.find((p) => p.id === d.hero) || d.photos[0];
+          if (!hero) return;
+          const who = pickWho(hero, used, DAY_LEAD_CAP, prev);
+          if (!who) return;
+          DAY_LEADS.set(d.day, who.icon);
+          prev = who.icon;
+        });
+        return DAY_LEADS;
+      }
+
+      /**
+       * 表紙の5枚。**点の上位5人が、1人1枚ずつ立つ。同じ人は2枚に出ない。**
+       *
+       * 壁と違って、写真を先に決めない。**人を先に決めて、その人が実際に
+       * 立っている写真から渡す**（先に写真を決めると、上位の人がたまたま
+       * その5枚に居なかっただけで表紙から落ちる）。
+       * 写真は旅の頭から終わりまで散らす——i番目の人には「旅の i/(n-1) あたり」に
+       * いちばん近い、まだ使っていない自分の写真を渡す。
+       * 点の高い順に配るので、左から右へ旅の順にもなる。**決め打ち。**
+       */
+      function titlePicks(n) {
+        const all = wallPhotos();
+        if (!all.length) return [];
+        const where = new Map(); // icon → その人が立っている写真の位置
+        all.forEach((p, i) =>
+          (p.people || []).forEach((w) => {
+            if (!where.has(w.icon)) where.set(w.icon, []);
+            where.get(w.icon).push(i);
+          })
+        );
+        const icons = [...where.keys()].sort((a, b) => byScore({ icon: a }, { icon: b }));
+        const taken = new Set();
+        const out = [];
+        icons.slice(0, n).forEach((icon, i) => {
+          const target = n > 1 ? Math.round((i * (all.length - 1)) / (n - 1)) : 0;
+          let at = -1;
+          where.get(icon).forEach((j) => {
+            if (taken.has(j)) return;
+            if (at < 0 || Math.abs(j - target) < Math.abs(at - target)) at = j;
+          });
+          if (at < 0) return; // その人の写真が全部ふさがっていた
+          taken.add(at);
+          out.push({ photo: all[at], who: all[at].people.find((w) => w.icon === icon) });
+        });
         return out;
       }
 
@@ -2333,6 +2476,9 @@
            同着は後ろの日（旅の終わりに近いほう）。決め打ちなので毎回同じ1枚 */
         const day = CARD_DATA.days.reduce((a, b) => (b.cardCount >= a.cardCount ? b : a));
         const hero = day.photos.find((p) => p.id === day.hero) || day.photos[0];
+        /* 大きい1枚に立つのも**点のいちばん高い人。** ここだけ icon 順のままだと、
+           区画でいちばん大きく出る1人が順位と関係なく決まる */
+        const heroWho = (hero.people || []).slice().sort(byScore)[0];
         const wall = cardWallPicks(CARD_WALL_N).map((c) => cardFace(c.photo, c.who, false)).join("");
         return `
           ${head}
@@ -2340,7 +2486,7 @@
             <p class="akc-lead" data-step="0">その日に投げ銭してくれた人へ、<b>その日の景色に自分のキャラクターが立った1枚</b>が届く。受け取りに行く場所はどこにも無くて、あやと島の「じぶんのこと」に勝手に増えていく。</p>
             <div class="akc-body">
               <div class="akc-hero" data-step="1">
-                ${cardFace(hero, hero.people[0], true)}
+                ${heroWho ? cardFace(hero, heroWho, true) : ""}
                 <div class="akc-hero-cap">${escapeHtml(hero.note || "その日の景色")}
                   <span>${cardWhen(day.day)}・この日だけで${day.cardCount}枚が配られた</span>
                 </div>
@@ -2372,20 +2518,28 @@
         });
         if (!day || !day.photos.length) return "";
         const hero = day.photos.find((p) => p.id === day.hero) || day.photos[0];
-        /* 立つ人は日ごとに変える。**決め打ちで、日から決まる。**
-           同じ人が9日ぶん並ぶと「その日いた人」に見えない */
-        const seed = Number(day.day.slice(8, 10)) || 0;
-        const who = hero.people[seed % hero.people.length];
+        /* 主役（大きい1枚）は dayLeads が全日まとめて決めたぶん。
+           **点の高い人から配るが、1人2日までで止める**（DAY_LEAD_CAP）。
+           前は日付から順繰りに決めていて順位を見ておらず、点だけで選ぶと
+           10日中8日が同じ顔になった。添えの2枚は、その日に立っている人の
+           点の高い順から——**1日の中では同じ人を2枚に出さない。** */
+        const leadIcon = dayLeads().get(day.day);
+        const who =
+          (hero.people || []).find((w) => w.icon === leadIcon) || pickWho(hero, new Map(), 1);
+        const used = new Map(who ? [[who.icon, 1]] : []);
         const rest = day.photos
           .filter((p) => p.id !== hero.id && CARD_WALL_SKIP.indexOf(p.id) < 0)
           .slice(0, 2)
-          .map((p, i) => `<div class="dp-sub">${cardFace(p, p.people[(seed + i + 1) % p.people.length], false)}</div>`)
+          .map((p) => {
+            const w = pickWho(p, used, 1);
+            return w ? `<div class="dp-sub">${cardFace(p, w, false)}</div>` : "";
+          })
           .join("");
         const heads = new Set();
         day.photos.forEach((p) => p.people.forEach((w) => heads.add(w.icon)));
         return `
           <div class="dp">
-            <div class="dp-main">${cardFace(hero, who, true)}</div>
+            <div class="dp-main">${who ? cardFace(hero, who, true) : ""}</div>
             ${rest ? `<div class="dp-rest">${rest}</div>` : ""}
             <div class="dp-note">
               ${hero.note ? `<b>${escapeHtml(hero.note)}</b>` : ""}
