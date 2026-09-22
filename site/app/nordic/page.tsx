@@ -11,6 +11,7 @@ import MapLegend from "@/components/nordic/MapLegend";
 import Notes from "@/components/live/Notes";
 import Countries from "@/components/nordic/Countries";
 import TripPhotos from "@/components/nordic/TripPhotos";
+import TripShorts from "@/components/nordic/TripShorts";
 import {
   ARRIVE,
   DAYS,
@@ -75,6 +76,9 @@ const MOVE: Record<string, string> = {
  *   2. **なぜ行くのか**      … 会いたい人のことと、なぜ歩くのか（WHY）
  *   3. どこを通るのか        … 地図
  *   4. 何をするのか          … **旅のよてい。1日1行。押すとその日のページへ**（Days）
+ *   4'. 短いほうで見るなら    … **この旅のショート動画**（TripShorts）。
+ *                              日ごとの面も1本ずつ持っているが、どの日に出ているかは
+ *                              開くまで分からない。旅程表のすぐ下に一覧で置く
  *   5. どこへ行けばもっと見られるか … 通る6カ国 → 国のページ
  *   6. この旅に、言う        … やってほしいことを書く。**押して答えるわかれ道は
  *                              その日のページへ移した**（オーナーの指示）
@@ -294,6 +298,13 @@ export default async function NordicPage() {
             貼るので、旅程表の中に並べると旅程表が写真置き場になる。 */}
         <TripPhotos />
       </section>
+
+      {/* この旅のショート動画。**旅程表のすぐ下。**
+          日ごとの面が1本ずつ持っているが、どの日に出ているかは開くまで
+          分からない（`components/nordic/TripShorts.tsx`）。
+          扱っているものが旅程表と同じ「その日」なので、並びを離さない。
+          1本も出ていないうちは、区画そのものが出ない。 */}
+      <TripShorts />
 
       {/* 旅のしおり。**紙で囲まない。** 中身が行き先1つしか無い紙は、
           見出しとふちのほうが中身より大きくなる。タイルは板なので、

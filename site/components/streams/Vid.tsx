@@ -60,7 +60,11 @@ export function Vid({
             {date && <time>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
-        <b>{title}</b>
+        {/* 実在する題名の引用（`tools/sprites/noemoji.mjs` の印）。
+            **録画の残っていない回（`VidGone`）にも同じ印を付ける。**
+            前は `<a class="vid">` かどうかで免除していたので、同じ題名が
+            押せる回だけ通って、押せない回で落ちていた。 */}
+        <b data-quote="title">{title}</b>
         {peak && <i className="vid-peak">コメントが重なった {atText(peak.k)} から</i>}
       </span>
     </a>
@@ -86,7 +90,7 @@ export function VidGone({ title, date, tag }: { title: string; date?: string; ta
             {date && <time>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
-        <b>{title}</b>
+        <b data-quote="title">{title}</b>
         <i className="vid-gone-note">録画は残っていない</i>
       </span>
     </span>

@@ -251,13 +251,14 @@ export default function MapPage() {
                   <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
                     <img
                       src={shortThumb(s.id)}
-                      alt={s.title}
+                      alt={s.title} data-quote="title"
                       width={480}
                       height={360}
                       loading="lazy"
                       decoding="async"
                     />
-                    <b>{s.title}</b>
+                    {/* 絵にも字にも、実在する題名がそのまま入る（`noemoji.mjs` の印） */}
+                    <b data-quote="title">{s.title}</b>
                     {/* **日付を出さない。** この段は「2週間ずつ」しか聞いていないので
                         日付を書かない決まりで作ってある（上の注）。ショートの日付は
                         撮った日ではなく出した日なので、ここに並べると

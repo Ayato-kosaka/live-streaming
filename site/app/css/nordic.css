@@ -635,6 +635,100 @@ p.nday-log-when {
   color: var(--ink-2);
 }
 
+/* その日のショート動画（`components/nordic/DayLog.tsx`）。
+
+   **板にして、厚みを付ける。** ここは1本だけ立っていることが多いので、
+   「一面ぜんぶ押せる並びには厚みを付けない」の例外（`docs/island-design.md` 3-3）は
+   使えない。押せるものが1つなら、押せる合図が要る。合図は厚みだけ——
+   光らせない、きらめかせない、色も変えない。
+
+   絵は縦（3:4）。YouTube の 480×360 は縦の絵を中心に置いて、まわりを
+   同じ絵のぼかしで埋めたもの。`cover` で縦の枠に入れるとぼかしが左右へ逃げて、
+   元の絵が残る（`app/css/chain.css` の `.isle-shots` と同じ理由）。 */
+/* 幅は、すぐ上の日誌の字と同じところで止める（`pages.css` の
+   `.panel p { max-width: var(--read-col) }`）。止めないと PC で板だけが
+   紙いっぱい（1,350px）に伸びて、72px の絵の右に空きが1,200px 残る。 */
+.nday-shots {
+  display: grid;
+  gap: var(--sp-2);
+  max-width: var(--read-col);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.nday-shots a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* 絵を角の内側で切るので、左の余白は絵そのものが持つ */
+  padding: 0 var(--sp-3) 0 0;
+  overflow: hidden;
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+}
+.nday-shots a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.nday-shots a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
+/* 外から来る絵なので、読める前から高さを取っておく（`docs/island-ux.md` 5.13）。
+   地は海の浅いところ。取れなかった日も、板の形は変わらない。 */
+.nday-shots img {
+  display: block;
+  flex: none;
+  width: 72px;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
+}
+.nday-shot-txt { display: grid; gap: 3px; min-width: 0; padding: var(--sp-2) 0; }
+/* 押したら何が起きるか。**ここが板の言葉**（`docs/island-design.md` 5-2）。 */
+.nday-shot-txt b {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.4;
+}
+/* YouTube に実在する題名。**引用なので1文字も直さない**（1章の例外）。
+   長いので3行で止める。全部は YouTube 側で読める。 */
+.nday-shot-txt i {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* この旅のショート動画の一覧（`components/nordic/TripShorts.tsx`）。
+   格子そのものは島と同じ1枚（`app/css/chain.css` の `.isle-shots`）を使う。
+   ここで足すのは、見出しの下の一行だけ。
+
+   `pages.css` の `.panel p { font-size: var(--fs-body) }` が (0,1,1) なので、
+   class ひとつ（0,1,0）では負ける。**紙の中の段落は、必ず要素を添えて書く。** */
+p.nsh-lead {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+  font-size: var(--fs-note);
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+/* 格子の幅を、紙の段落と同じところで止める（`pages.css` の
+   `.panel p { max-width: var(--read-col) }`）。
+
+   `.isle-shots` は `auto-fill` で列を作るので、**幅を止めないと PC で
+   12列ぶんの枠ができる。** 島のショートは20〜31本あって埋まるが、
+   この旅はまだ4本。実測で、1,350px の紙に 96px の絵が4枚だけ左に寄って、
+   右に8列ぶんの空きが残った。列の数ではなく**紙の幅**を止めると、
+   絵の大きさがスマホ（3列・106px）と PC（5列・106px）で揃う。 */
+.nsh-grid { max-width: var(--read-col); }
+
 /* 48px は `ui.css` の `.dform input` が素のところで取っている。
    ここで足していたぶんは、そちらへ寄せた。 */
 

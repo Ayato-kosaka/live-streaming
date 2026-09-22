@@ -87,13 +87,14 @@ export default function IsleSheet({
                 <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
                   <img
                     src={shortThumb(s.id)}
-                    alt={s.title}
+                    alt={s.title} data-quote="title"
                     width={480}
                     height={360}
                     loading="lazy"
                     decoding="async"
                   />
-                  <b>{s.title}</b>
+                  {/* 絵にも字にも、実在する題名がそのまま入る（`noemoji.mjs` の印） */}
+                  <b data-quote="title">{s.title}</b>
                   {/* 年は板の頭に書いてある（「2024年10月から12月まで」）ので、月日だけ。
                       「ヴェルサイユ・2024-11-05」は 107px の桁に入らず、年のほうが切れる */}
                   <i>{s.city ? `${s.city}・${md(s.date)}` : md(s.date)}</i>

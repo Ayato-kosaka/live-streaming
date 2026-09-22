@@ -1,5 +1,6 @@
 import Icon from "@/components/ui/Icon";
 import type { DayLog as Entry } from "@/content/nordic";
+import { shortHref, shortThumb, type NordicShort } from "./shorts";
 
 /**
  * その日に、何が起きたか。**焼いてあるものを、そのまま出す。**
@@ -32,6 +33,15 @@ import type { DayLog as Entry } from "@/content/nordic";
  * 書く口が消えても、**その日に何があったかを読むところは要る。**
  * よていだけの旅程表は出発前にしか読む理由がなくて、旅が終わったあとも
  * `/nordic` が開かれる理由はここにしかない。
+ *
+ * ## その日を見る道は、ここに2本ある
+ *
+ * 長いほう（その日の配信）と、短いほう（ショート動画）。**同じ「その日を見る」
+ * なので、区画を2つに割らない。** 見出しを2つ立てると、読む人は同じ日の
+ * 話を2度読まされる（`docs/island-misses.md` の決めごと6「似た面は寄せる」）。
+ *
+ * ショートは絵が主役なので板にして、配信は字1行のまま置く。
+ * **板の合図は厚みだけ**（`docs/island-design.md` 3-3）。光らせない。
  */
 
 /** 「2026-09-14」→「9月14日(月)」。書き出しは UTC で走るので、月日は文字列から取る。 */
@@ -40,32 +50,77 @@ function when(iso: string) {
   return `${Number(iso.slice(5, 7))}月${Number(iso.slice(8, 10))}日(${w})`;
 }
 
-export default function DayLog({ entry }: { entry?: Entry }) {
-  // 書かれていない日は、区画そのものを出さない。**誰が見ていても同じ。**
+export default function DayLog({
+  entry,
+  shorts = [],
+}: {
+  entry?: Entry;
+  /** その日に出したショート動画（`components/nordic/shorts.ts`）。無い日は空 */
+  shorts?: NordicShort[];
+}) {
+  // 何も無い日は、区画そのものを出さない。**誰が見ていても同じ。**
   // 「まだ何も起きていません」と書くと、旅がうまくいっていないように読める。
-  if (!entry) return null;
+  // **日誌とショートは別々に増える。** 日誌がまだ焼かれていない日に
+  // ショートだけ出ることがあるので、片方だけでも区画は立てる。
+  if (!entry && shorts.length === 0) return null;
 
   return (
     <section className="panel paper" id="was">
       <h2>この日、何が起きたか</h2>
-      <div className="nday-log">
-        {entry.date && <p className="nday-log-when">{when(entry.date)}</p>}
-        {/* 改行のまま出す。2〜3行で書くものなので、つなげると読めない */}
-        {entry.body.split("\n").map((ln, i) => (
-          <p key={i}>{ln}</p>
-        ))}
-        {entry.video && (
-          <a
-            className="nday-vid"
-            href={`https://www.youtube.com/watch?v=${entry.video}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            その日の配信を見る
-            <Icon name="external" size={14} />
-          </a>
-        )}
-      </div>
+      {entry && (
+        <div className="nday-log">
+          {entry.date && <p className="nday-log-when">{when(entry.date)}</p>}
+          {/* 改行のまま出す。2〜3行で書くものなので、つなげると読めない */}
+          {entry.body.split("\n").map((ln, i) => (
+            <p key={i}>{ln}</p>
+          ))}
+          {entry.video && (
+            <a
+              className="nday-vid"
+              href={`https://www.youtube.com/watch?v=${entry.video}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              その日の配信を見る
+              <Icon name="external" size={14} />
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* その日のショート動画。**埋め込まない。**
+          プレイヤーを立てると、面を開いた瞬間に外へつなぎに行く
+          （`docs/island-atlas.md` 4章）。押したら YouTube へ出る絵にする。
+
+          題名は YouTube に実在するものをそのまま出す。絵文字が入っているが、
+          **引用なので直さない**（`docs/island-design.md` 1章の唯一の例外）。
+
+          絵には `alt` を入れない。**すぐ隣に題名が字で出ている**ので、
+          入れると読み上げが同じ題名を2回言う。 */}
+      {shorts.length > 0 && (
+        <ul className="nday-shots">
+          {shorts.map((s) => (
+            <li key={s.id}>
+              <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={shortThumb(s.id)}
+                  alt=""
+                  loading="lazy"
+                  width={480}
+                  height={360}
+                />
+                <span className="nday-shot-txt">
+                  <b>
+                    その日のショート動画を見る
+                    <Icon name="external" size={13} />
+                  </b>
+                  <i data-quote="title">{s.title}</i>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

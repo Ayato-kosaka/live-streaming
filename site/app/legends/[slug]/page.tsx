@@ -182,7 +182,10 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
                       {d.slice(5, 7).replace(/^0/, "")}/{d.slice(8, 10).replace(/^0/, "")}
                     </span>
                     <span className="lgd-t">
-                      {t}
+                      {/* 実在する題名の引用（`tools/sprites/noemoji.mjs` の印）。
+                          **すぐ下の `<em>` はこちらが書いた札**なので、箱ごとでは
+                          なく題名だけを包む。親に付けると自分たちの字まで免除になる。 */}
+                      <span data-quote="title">{t}</span>
                       {v === all.top && <em>いちばん人が集まった日</em>}
                       {picked.has(v) && <em>上に出ている回</em>}
                     </span>

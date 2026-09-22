@@ -459,34 +459,90 @@
         font-size: 16.5px; font-weight: 800;
       }
 
-      /* ---- 1. 表紙 ---- */
-      .t-wrap { text-align: center; max-width: 1420px; }
+      /* ---- 1. 表紙 ----
+         **図鑑を見開きで開いたところ。** 左の頁が旅の地図、右の頁が表題。
+         字だけの表紙にしない——これは旅の資料なので、
+         一発目に「どこを歩いたか」と「誰が立ったか」が見えているほうが強い。
+         使う絵は**すべて資料の中にあるもの**（renderDeckMap / cardFace）で、
+         表紙のために新しく取りに行かない。 */
+      .t-wrap {
+        display: flex; align-items: stretch; gap: 34px;
+        width: 100%; max-width: 1812px;
+      }
+      /* 左の頁。**地図の置き場は 0.60（幅÷高さ）**。焼き込みがその比で
+         切り出してあるので、ここを崩すと端の街が枠から出る。
+         紙の内寸で比を合わせる（padding 14 + 枠線1 を引いた残り） */
+      .t-map {
+        flex: 0 0 552px; height: 900px; padding: 14px;
+        background: var(--sheet);
+        border: 1px solid var(--hair-strong);
+        border-radius: var(--r-0);
+      }
+      .t-map svg { width: 100%; height: 100%; display: block; }
+      /* 歩を進めると svg に .has-mark が付く（applySteps が舞台の .dmap を
+         無条件に呼ぶため）。表紙は日を選んでいないので、**薄くするほうを戻す。**
+         光るほうは印の欄を落としてあるので当たらない（renderTitle 側） */
+      .t-map .dmap.has-mark .dm-leg,
+      .t-map .dmap.has-mark .dm-city,
+      .t-map .dmap.has-mark .dm-chip { opacity: 1; }
+
+      /* 右の頁。上から 表題 → 紙（ひとこと＋数字） → 写真の列。
+         **高さは左の地図が決める。** 余りは3つのあいだに散らす */
+      .t-right {
+        flex: 1 1 auto; min-width: 0;
+        display: flex; flex-direction: column; justify-content: space-between;
+      }
       /* 表紙の板。区画の見出しと**同じ部品**（.corner-head）で、幅だけ中身に合わせる。
          厚みを持つ部品を2種類にしない */
       .corner-head.t-plank {
-        display: inline-flex; padding: 8px 26px 10px; margin-bottom: 24px;
+        display: inline-flex; align-items: center; gap: 14px;
+        padding: 7px 24px 9px; margin-bottom: 18px;
         border-radius: var(--r-1);
       }
-      .t-ico { width: 124px; height: 124px; margin-bottom: 2px; }
-      .t-kicker { font-size: 19px; font-weight: 900; letter-spacing: 0.3em; color: var(--frame-deep); }
+      .t-plank .ic { width: 40px; height: 40px; flex: 0 0 40px; }
+      .t-kicker { font-size: 19px; font-weight: 900; letter-spacing: 0.3em; color: var(--ink); }
       .t-main {
         margin: 0;
-        font-size: 126px; font-weight: 900; line-height: 1.08;
+        font-size: 116px; font-weight: 900; line-height: 1.06;
         letter-spacing: 0.02em; color: var(--ink);
       }
       /* 表紙の飾り。菱形と点を並べただけの罫。**光らせない** */
       .t-rule {
-        width: 300px; height: 14px; margin: 26px auto 0;
+        width: 300px; height: 14px; margin: 20px 0 0;
         background:
           radial-gradient(circle at 50% 50%, var(--frame-dark) 0 6px, transparent 7px) 50% 50% / 300px 14px no-repeat,
           linear-gradient(90deg, transparent 0 34px, var(--hair-strong) 34px calc(100% - 34px), transparent calc(100% - 34px)) 50% 50% / 100% 2px no-repeat;
       }
-      .t-sub { margin-top: 22px; font-size: 32px; font-weight: 900; color: var(--ink); }
+      .t-sub { margin-top: 18px; font-size: 31px; font-weight: 900; color: var(--ink); }
+
+      /* ひとことと数字は**紙1枚にまとめる。** 別々の板にすると、
+         表題のとなりに読ませるかたまりが2つ増えて、表紙が散らかる */
+      .t-sheet { padding: 22px 34px 20px; }
       .t-lead {
-        margin: 26px auto 0; max-width: 1180px;
-        padding: 22px 38px;
-        font-size: 24px; font-weight: 700; line-height: 1.85; color: var(--ink-2);
+        margin: 0; padding: 0 0 18px;
+        border-bottom: 1px solid var(--hair);
+        /* 2行に割れる。26px だと2行目が「チハイク。」の5文字だけになって、
+           紙の下に1行ぶんの空きが立つ。28px にすると8文字残る */
+        font-size: 28px; font-weight: 700; line-height: 1.7; color: var(--ink-2);
       }
+      .t-nums { display: flex; padding-top: 16px; }
+      .t-num {
+        flex: 1 1 0; text-align: center;
+        border-right: 1px solid var(--hair);
+      }
+      .t-num:last-child { border-right: 0; }
+      .t-num b { display: block; font-size: 50px; font-weight: 900; line-height: 1; color: var(--ink); }
+      .t-num.hi b { color: var(--accent-ink); }
+      .t-num span { display: block; margin-top: 7px; font-size: 17px; font-weight: 800; color: var(--ink-2); }
+
+      /* 旅の写真。**添え書きを付けない。** 表紙で読ませるのは表題と紙の2つだけで、
+         ここは「こういう9日間だった」を絵で言う列。
+         高さで揃える（写真は全部たて長なので、幅で揃えると段差が出る） */
+      /* 右ふちを紙とそろえる。左寄せのままだと写真の列だけ 25px 手前で終わって、
+         見開きの右の頁が1枚だけ短く見える */
+      .t-cards { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+      .t-cards .akc-card { box-shadow: var(--shadow-2); }
+      .t-cards .akc-shot { height: 292px; width: auto; }
 
       /* ---- 2. 数字 ----
          1枚の紙に罫を引いた図鑑の表。カードを12枚並べない。 */
@@ -1076,6 +1132,26 @@
       /* 写真を添えた日は、区画の残りの高さを使い切る */
       .d-wrap:has(.dp) { flex: 1 1 auto; min-height: 0; }
 
+      /* ---- その日の声 ----
+         **写真の右の空きに置く。** 字の下に足すと、行の高さが決まっている
+         ぶん写真が潰れる（いちばん字の多い日で、残りが 99px しかない）。
+         横はどの日も 750px 以上あまっているので、そちらを使う。
+         出来事の段落（24px）より一段小さくして、**別の層だと分かるように**する。 */
+      .dp-note .dv { margin-bottom: 9px; }
+      .dv { display: flex; flex-direction: column; gap: 5px; }
+      .dv-line { display: flex; align-items: baseline; gap: 9px; font-size: 19px; line-height: 1.5; font-weight: 700; color: var(--ink-2); }
+      .dv-line.me { color: var(--ink); }
+      /* 誰の言葉か。**枠を変えず地の色だけで分ける**（数字の区画と同じ作法） */
+      .dv-who { flex: 0 0 auto; font-size: 14px; font-weight: 900; padding: 2px 9px; border-radius: var(--r-0); white-space: nowrap; }
+      .dv-line.fan .dv-who { background: color-mix(in srgb, var(--marker) 78%, transparent); color: var(--marker-ink); }
+      .dv-line.me .dv-who { background: color-mix(in srgb, var(--chip) 40%, var(--paper)); color: var(--chip-ink); }
+      /* 写真が1枚も無い日の逃げ道。**声だけでも、いちばん下に敷く** */
+      .dv-alone { margin-top: auto; padding-top: 12px; }
+      /* 写真の見出し（.dp-note b）は**塊で改行させる**ために display:block に
+         してある。声の中の「ここを強く」はその塊ではないので、戻す。
+         戻さないと1本の引用が3段に割れて、写真の上まで伸びる（実際に割れた）。 */
+      .dp-note .dv b { display: inline; font-size: inherit; color: var(--ink); font-weight: 900; }
+
       #ico-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
       .ic { display: inline-block; vertical-align: middle; }
 
@@ -1289,6 +1365,10 @@
               "スーパーでブルーチーズとパンを買い、公園で鳥にパンをやり、教会に入って旅の無事を祈った。段ボールをもらって、黄色い枠を残したボードを作った。サービスエリアでトラックに直談判して全滅。**3台目に乗って着いたのは、朝いた地点だった。**",
               "マイケル、若い夫妻のルノー、パーキングエリアのおじさんがくれた**スープ**。野宿を覚悟したところで停まってくれたのが、仕事帰りのカメラマン。ワルシャワに着いたのは**18時間後**。ホステルに日本人がいた。",
             ],
+            voice: [
+              { w: "fan", t: "「ヒッチハイクするのて大変てよくわかりました。頑張ってください」" },
+              { w: "me", t: "「本当に**過酷でドキドキの連続**ですが、無事に辿り着けるよう楽しもー」" },
+            ],
           },
           {
             when: "2日目", date: "9/13", where: "ワルシャワ → ビャウィストク", stat: "車2台・197km",
@@ -1296,6 +1376,11 @@
               "日曜だった。ポーランドは**法律で日曜の商売が制限される**ので、街から人も店も消えていた。バスを降りられず乗り過ごし、着いたモールはガラガラでユニクロは閉店中。**ビッグマックは1,000円**（日本は500円）。開いていたのはパン屋だけだった。",
               "トラックのマイケルが飲み物と充電器を貸してくれた。チェリー味の**ドパガキ**は長距離ドライバー御用達らしい。一度は断られた二人組が戻ってきて、BMWに乗せてくれた。名前はアンドレ。**一般道で200キロ出ていた。**",
               "ビャウィストクにはブラニツキ宮殿と庭園があり、大聖堂ではミサで子どもが歌い、街では祭りをやっていた。可愛いと思って近づいた店はナイトクラブだった。ホステルは**チョコミントみたいな階段**の一人部屋だった。",
+            ],
+            voice: [
+              { w: "fan", t: "「あやとさんと一緒に旅しているハラハラ、ドキドキ、ワクワクの北欧旅」" },
+              { w: "me", t: "「まこもがいつもヒッチハイク中に『お願いします〜』って**一緒に叫んでくれるから、車が止まってくれる**よ」" },
+              { w: "me", t: "「あおちゃんが調べてくれたり、アイデアだしてくれたり、応援してくれるから、**ギリギリ乗り越えれてる**」" },
             ],
           },
           {
@@ -1306,6 +1391,11 @@
               "電車なら1,600円。「乗りなはれ」と投げ銭までもらったが、乗らずに続けた。**1時間20分、1台も停まらない。** 路肩をやめて直接声をかけに行く**「営業作戦」**に切り替えたら、すぐ決まった。虹が出た。",
               "ヴィリニュスでポトフの材料と**ギラ**——黒パンを発酵させた、ビールのようでコーラのような飲みもの——を買って乾杯した。",
             ],
+            voice: [
+              { w: "fan", t: "「画面越しでも、一緒に必死にヒッチハイクしてます」" },
+              { w: "me", t: "「**配信を回してないと、絶対に僕はこの旅を実現できてません。**みんなとの絆や信頼関係の積み重ねがあって、長いヒッチハイク待ちも耐えれるし、見ず知らずの国で見ず知らずの人に直談判する勇気を貰えてます」" },
+              { w: "me", t: "「でも、僕たちの勇気が強くなればなるほど**過酷な旅路にしたくなる**のは、僕の悪いところです」" },
+            ],
           },
           {
             when: "4日目", date: "9/15", where: "ヴィリニュス", stat: "動かない日",
@@ -1314,6 +1404,10 @@
               "教会の天井と鐘。ゲディミナスの丘に登ると赤い屋根が一面に広がって、「今日の配信は神回」と言われた。**ウジュピス共和国**という非公認の国にも入った。憲法が長すぎて、途中で分からなくなった。",
               "名物**シャコティス**は、木の枝みたいにとげとげしていた。鳩サブレのようでもあり、カリカリのバームクーヘンのようでもあった。**顎に刺さった。**",
               "夜は電子レンジでポトフ。作り方は視聴者さんが最初から最後まで指示してくれた。**生姜をそのまま一気食いして悶絶したのが、この日の撮れ高。**",
+            ],
+            voice: [
+              { w: "fan", t: "「素敵な景色や建物、街並みを沢山見せてくれてありがとう」" },
+              { w: "me", t: "「中世を感じる統一されたヨーロッパらしい街並みは本当に素敵だったね。**こちらこそ一緒に見てくれてありがとう**」" },
             ],
           },
           {
@@ -1324,6 +1418,10 @@
               "3台目は女性ふたり組で、「バウスカも見ていけ」と勧めてくれた。川の向こうに城があった。4台目は配達のクリストファ。5台目は20キロだけ。**6台目の老夫婦がリガまで。革シートに飲み物をこぼした。**",
               "飛び乗った市内バスで**カードが使えず、無賃乗車寸前。** 視聴者さんが支払い方法を4通り調べてくれて助かった。バスは1.5ユーロ、マクドナルドは約700円。ホステルは「ネカフェみたい」だった。",
             ],
+            voice: [
+              { w: "fan", t: "「6回もヒッチハイクしたんですね。外国でも優しい人ばっかりですね」" },
+              { w: "me", t: "「この日が1番贅沢に旅して見たいもの全部見た日だね。**この日を境に体力がおかしくなった**」" },
+            ],
           },
           {
             when: "6日目", date: "9/17", where: "リガ", stat: "動かない日",
@@ -1332,6 +1430,10 @@
               "**三人兄弟の家**は右から16・17・18世紀。左の建物に入れずに引き返し、真ん中からもう一度挑んで、**おばちゃんに笑われながら**通してもらえた。大聖堂にはラファエロの『キリストの変容』。**猫の家**の黒猫は、ギルドに入会を断られた主の当てつけだという。",
               "カフェで**アップルシナモン**。頼んだ紅茶のポットは**空っぽ**で、店員が淹れに来た。**砂時計で蒸らし時間を選ぶ**方式。「レア、ミディアム・レア、ウェルダンな感じ？」。アール・ヌーヴォーの通りは、建物じゅうが顔だらけだった。",
               "一日じゅう電波が落ちた。「顔色が悪い」「痩せた？」と心配された。**日本の深夜3時にもう一度、夜のリガを歩く約束をして、本当に2人が目覚ましをかけて来てくれた。** 明日は308km、この旅でいちばん落とせない日になる。",
+            ],
+            voice: [
+              { w: "fan", t: "「自分では考えもしなかった世界を見せてくれてありがとう」" },
+              { w: "me", t: "「開始からずーっと圧巻の景色で興奮が止まらなかったけど、**一緒に感動できて嬉しかった**よ」" },
             ],
           },
           {
@@ -1349,7 +1451,11 @@
               "3時半起き、4時半に配信開始。前日のどしゃ降りで**iPhone も Android もモバイルバッテリー2つも、全部おかしくなっていた。** 電池が保たないので配信を切って2時間寝た。**9階建ての巨大フェリー**でヘルシンキへ。",
               "上陸したら、なぜか充電問題は解決していた。iPhone はケーブルだけが駄目で予備が使えた。Android は水が入っていただけ。バッテリーは2つとも死んでいたので買い直した。**首都なのに人がいない。**「今までのおとぎの街から、大人の街へ来た」と言われた。",
               "マリメッコ、フライングタイガー（無料グミに行列）、マーケット広場。**ヘルシンキ大聖堂は結婚式で貸切だった。** ムーミンカフェの**コーヒータピオカは約1,500円**で、容器が顔より大きい。親友への土産の紅茶は、味を**みんなの多数決でレモン**に決めた。",
-              "出港40分前、**カバンを3階のゲーム屋に置いてきた**ことに気づいて走って取りに戻り、駆け込みで乗った。売店のお姉さんが水をくれた。4人部屋で、**漏れた飲み物に濡れた舟形のライ麦パン**を、濡れたまま食べた。",
+              "出港40分前、**預けていたカバンを取りに戻って**、走って駆け込みで乗った。売店のお姉さんが水をくれた。4人部屋で、**漏れた飲み物に濡れた舟形のライ麦パン**を、濡れたまま食べた。",
+            ],
+            voice: [
+              { w: "fan", t: "「配信できない時間はラッキーと思ってゆっくり休んで体調整えてね」" },
+              { w: "me", t: "「みんなが励ましてくれるし、**寝たらなんとかなりそうな気がしてきた**」" },
             ],
           },
           {
@@ -1359,6 +1465,10 @@
               "**ガムラスタン**は13世紀からの石畳で、『魔女の宅急便』のモデルと言われる。もったいぶって見せた細い道は「**ただの細い道**」と言われ、本物の細い道では**一方通行を逆走して笑われた。** 日本語のツアーにこっそり混じり、王宮では**偶然、衛兵交代式**に出くわした。",
               "IKEAでシナモンロール5個とコーヒー。知らないおじさまがコーヒーを手伝ってくれた。**トイレは250円**、ビッグマックは1,040円、外食は日本の2〜4倍。花屋のひまわりは日本と同じくらい高かった。**9日歩いた靴から、親指が出た。**",
               "絵葉書で見た絶景ポイントにたどり着いた。「絵画みたい」。**配信を終えてから、親友に会った。** 2023年の夏に出会って3ヶ月で帰ってしまった友だちが、**最寄り駅まで迎えに来てくれた。** ここから7泊。",
+            ],
+            voice: [
+              { w: "fan", t: "「船酔いしそうな時は、上を向いて目をつぶって横になってると酔わないんだよ」" },
+              { w: "me", t: "「激酔いしてきて、外の空気吸いに行こうと思って、**無限階段で断念してた**」" },
             ],
           },
         ],
@@ -1497,45 +1607,34 @@
             { title: "シムが壊れた", day: "7日目", body: "出発の朝。買い直して、パンを買って、**バスに乗り遅れてチケットを二重に買った**" },
             { title: "頭にフン", day: "7日目", body: "タリンの広場で鳩の大群に囲まれて。**手で取った。**「運が付いた」と言われた" },
             { title: "機材が全滅", day: "8日目", body: "前日のどしゃ降りで iPhone・Android・モバイルバッテリー2つ。**バッテリーは2つとも死んだ**" },
-            { title: "カバン置き忘れ", day: "8日目", body: "出港40分前に、3階のゲーム屋に。走って取りに戻って**駆け込み乗船**" },
+            { title: "駆け込み乗船", day: "8日目", body: "出港40分前に、預けていたカバンを取りに戻った。**走って戻って滑り込み**" },
           ],
           note: "9日目もまだ起きる。**カバンを置いたままソフトクリームを買いに行き**、配信は5人分の声がこだまし、**9日歩いた靴から親指が出た。**",
         },
         quiz: [
           { lv: "やさしい", q: "3日目、寒さに負けて買ったコートに、視聴者さんが付けたあだ名は？", choices: ["ボスコート", "マダムコート", "ムッシュコート"], answer: 1 },
           { lv: "やさしい", q: "1日目、ヒッチハイク用のボードは何で作った？", choices: ["スケッチブック", "段ボール", "ノートの裏"], answer: 1 },
-          { lv: "やさしい", q: "出発の日、バスに乗る直前に宿へ取りに戻ったものは？", choices: ["お水", "充電器", "パスポート"], answer: 0 },
           { lv: "やさしい", q: "2日目、ワルシャワの店がほとんど閉まっていた理由は？", choices: ["祝日だった", "日曜は法律で商売が制限される", "ストライキ"], answer: 1 },
           { lv: "やさしい", q: "4日目、リトアニアの名物菓子シャコティスを食べて、何が起きた？", choices: ["顎に刺さった", "歯が欠けた", "落として割れた"], answer: 0 },
           { lv: "やさしい", q: "6日目、リガで「触ると幸運」と教わって触った像は？", choices: ["三人兄弟の像", "ブレーメンの音楽隊", "人魚姫"], answer: 1 },
-          { lv: "やさしい", q: "7日目、タリンの広場で頭に落ちてきたものは？", choices: ["どんぐり", "鳩のフン", "雨どいの水"], answer: 1 },
           { lv: "やさしい", q: "8日目、ヘルシンキ大聖堂に入れなかった理由は？", choices: ["改修工事中", "閉館時間", "結婚式で貸切だった"], answer: 2 },
           { lv: "やさしい", q: "9日目、スウェーデンといえば、で盛り上がった世界的ポップグループは？", choices: ["ABBA", "Queen", "a-ha"], answer: 0 },
           { lv: "やさしい", q: "9日間歩き続けた結果、靴はどうなっていた？", choices: ["かかとが取れた", "親指が飛び出していた", "靴ひもが切れた"], answer: 1 },
           { lv: "ふつう", q: "1日目、視聴者さんが教えてくれた「ポーランド語でヒッチハイク」は？", choices: ["スパシーバ", "アウトストプ", "ジュレック"], answer: 1 },
-          { lv: "ふつう", q: "3日目、国境を越えて乗せてくれたおじいさんは何歳？", choices: ["65歳", "72歳", "80歳"], answer: 2 },
-          { lv: "ふつう", q: "その車で起きたトラブルは？", choices: ["パンク", "ガス欠", "エンジン停止"], answer: 1 },
-          { lv: "ふつう", q: "そのおじいさんに、降りるとき払った金額は？", choices: ["約100円", "約300円", "約1,000円"], answer: 1 },
           { lv: "ふつう", q: "2日目、ワルシャワのマクドナルドのビッグマックはいくら？", choices: ["約500円", "約1,000円", "約1,500円"], answer: 1 },
           { lv: "ふつう", q: "4日目、ホステルのキッチンに「無かった」ものは？", choices: ["電子レンジ", "コンロ", "冷蔵庫"], answer: 1 },
-          { lv: "ふつう", q: "5日目、リガの市内バスで陥ったピンチは？", choices: ["乗り間違えた", "カードが使えず無賃乗車寸前", "財布を落とした"], answer: 1 },
           { lv: "ふつう", q: "6日目、なぜリガにブレーメンの音楽隊の像がある？", choices: ["ブレーメン市と姉妹都市だから", "童話の作者がリガ出身", "音楽祭の記念"], answer: 0 },
           { lv: "ふつう", q: "6日目、カフェで紅茶を頼んだら、ポットはどうなっていた？", choices: ["空っぽだった", "コーヒーが入っていた", "ふたが開かなかった"], answer: 0 },
           { lv: "ふつう", q: "7日目の朝、ヒッチハイクの札はどこにあった？", choices: ["ホステルのロビー", "前日に乗せてもらった車の中", "バスの座席"], answer: 1 },
           { lv: "ふつう", q: "7日目、リガからタリンまで乗せてくれた車は？", choices: ["ワゴン車", "トラック", "ベンツ"], answer: 2 },
           { lv: "ふつう", q: "8日目、親友への土産の紅茶。みんなの多数決で決まった味は？", choices: ["ミント", "カモミール", "レモン"], answer: 2 },
-          { lv: "ふつう", q: "9日目、ストックホルムに着いたとき動いていなかったものは？", choices: ["エスカレーター全部", "貴族ロード（動く歩道）", "港のバス"], answer: 1 },
           { lv: "むずかしい", q: "2日目、一度は断ったのに戻ってきて、BMWで乗せてくれた人の名前は？", choices: ["アンドレ", "マイケル", "クリストファ"], answer: 0 },
           { lv: "むずかしい", q: "そのBMWが一般道で出していた速度は？", choices: ["時速120キロ", "時速200キロ", "時速260キロ"], answer: 1 },
           { lv: "むずかしい", q: "4日目、ヴィリニュスと姉妹都市になったばかりの日本の都市は？", choices: ["京都", "名古屋", "札幌"], answer: 1 },
-          { lv: "むずかしい", q: "5日目、1台目が「リガまで行く」と言ったが、どうした？", choices: ["そのまま乗った", "あえて途中で降りた", "断った"], answer: 1 },
           { lv: "むずかしい", q: "5日目に寄り道したビルジャイ城、上空から見るとどんな形？", choices: ["星型（五稜郭のような形）", "円形", "正方形"], answer: 0 },
           { lv: "むずかしい", q: "6日目、ロバの鼻だと思って触ったのは、実は何だった？", choices: ["犬", "魚", "ニワトリ"], answer: 1 },
-          { lv: "むずかしい", q: "7日目、4時間乗せてくれたイケオジが、道中ずっとしていたことは？", choices: ["歌っていた", "電話していた", "寝ていた"], answer: 1 },
-          { lv: "むずかしい", q: "8日目、出港直前にカバンを忘れてきた場所は？", choices: ["薬局", "本屋", "ゲーム屋"], answer: 2 },
-          { lv: "むずかしい", q: "8日目、フェリーの4人部屋で、漏れた飲み物に濡れたものは？", choices: ["パスポート", "ライ麦パン", "買ったばかりの紅茶"], answer: 1 },
+          { lv: "むずかしい", q: "8日目、フェリーの出港40分前、あやとは何をしていた？", choices: ["預けたカバンを取りに戻っていた", "ムーミンカフェにいた", "紅茶を選んでいた"], answer: 0 },
           { lv: "むずかしい", q: "8日目、ムーミンカフェのコーヒータピオカはいくら？", choices: ["約500円", "約1,000円", "約1,500円"], answer: 2 },
-          { lv: "むずかしい", q: "9日目、ガムラスタンの細い道でやってしまったことは？", choices: ["頭をぶつけた", "一方通行を逆走した", "スマホを落とした"], answer: 1 },
         ],
         peaks: {
           note: "5分のあいだに**何人が書いたか**で並べた（1人の連投は数に入れない）。",
@@ -1598,6 +1697,7 @@
             "3日目に恐喝された直後、チャットは数秒で「警察よぶ？」「こわいよー」で埋まりました。**300円で済んだと分かるまでの、あの数秒が9日でいちばん長かったと思います。**",
             "6日目の夜景配信で、日本の深夜3時に目覚ましをかけた人が2人いました。その枠の1コメント目は「**起きたよ**」でした。画面のこちら側も、ちゃんと旅をしていたのだと思います。",
             "この9日で、**49人が初めてコメントしました。** 来てくれた125人の、4割です。旅がいちばん動いたのは、たぶん道の上ではなくて、このチャット欄でした。",
+            "日ごとの声とは別に、旅ぜんたいへ届いた言葉が2つあります。ひとつは「日本にいながら、ヨーロッパのヒッチハイクの大冒険旅。**私の宝物になりました**」。もうひとつは「**本当は力になっているのか不安でした。**ただ頑張って、しか言って無いから。それでも私の出来る事をしようと考え直して、旅に参加させて貰っていた」。**どちらも、この9日間の裏側にあった気持ちです。**",
             "最後の5分に、いちばん人が集まりました。**15人が同時に「ついに会えるね」と書いていました。** ここから7泊、ゆっくりしてきてください。",
           ],
           sign: "あやと島案内鳥 より",
@@ -1654,17 +1754,63 @@
           </div>`;
       }
 
-      /* ---- 1. タイトル ---- */
+      /* ---- 1. タイトル ----
+         見開き。左の頁に旅の地図、右の頁に表題・ひとこと・旅の写真。
+
+         **3歩で組み上がる。**
+           0 … 地図と表題（これが何の話か、ここで決まる）
+           1 … ひとことと数字
+           2 … 旅の写真
+         一気に出すと、一発目の1秒で目が散る。
+         地図は素の強さ（mark は null）。**日を光らせるのは道のりの区画の仕事**で、
+         表紙で光らせると「いま何日目の話か」を聞かれる。 */
       function renderTitle() {
         const t = DECK.title;
+        /* 数字は DECK.numbers から**先頭4つをそのまま**取る。
+           表紙用に選び直すと、次の区画の表と食い違ったとき気づけない */
+        const nums = DECK.numbers.cells
+          .slice(0, 4)
+          .map(
+            (c) => `
+              <div class="t-num${c.hi ? " hi" : ""}">
+                <b>${escapeHtml(c.n)}</b><span>${escapeHtml(c.label)}</span>
+              </div>`
+          )
+          .join("");
+        /* 写真は5枚。**立つのは点（投げ銭と出席の順位）の上位5人で、1人1枚ずつ。**
+           写真は旅の頭から終わりまで散らす（titlePicks）。
+           **手形が載っていなければ列ごと出さない。** 空の枠を並べない */
+        const cards = CARD_DATA
+          ? titlePicks(5).map((c) => cardFace(c.photo, c.who, false)).join("")
+          : "";
+        /* 地図は**全区間を素の強さで**出す。表紙は「どこを歩いたか」の1枚で、
+           何日目の話でもないため。
+           歩を進める仕掛け（applySteps）は、舞台に .dmap が1つでもあると
+           `setDeckMapMark(dmap, stepIdx)` を呼ぶ。道のりの区画では「1歩＝1日」
+           なので正しいが、**表紙では歩の数が日付になってしまう**（実際に
+           2歩目でワルシャワ〜ビャウィストクだけが光り、残りが 0.3 に沈んだ）。
+           印の欄（data-dmark）を落としておけば、どの日にも当たらないので
+           何も光らない。薄くなるほう（.has-mark）は下の CSS で戻す。 */
+        const map = renderDeckMap(null).replace(/ data-dmark="[^"]*"/g, "");
         return `
           <div class="t-wrap">
-            <div data-step="0">${icon("book", "t-ico")}</div>
-            <div class="corner-head t-plank" data-step="0"><div class="t-kicker">NORDIC 2026</div></div>
-            <h1 class="t-main" data-step="0">${escapeHtml(t.main)}</h1>
-            <div class="t-rule" data-step="1"></div>
-            <div class="t-sub" data-step="1">${escapeHtml(t.sub)}</div>
-            <p class="t-lead sheet" data-step="2">${escapeHtml(t.lead)}</p>
+            ${map ? `<div class="t-map" data-step="0">${map}</div>` : ""}
+            <div class="t-right">
+              <div data-step="0">
+                <div class="corner-head t-plank">
+                  ${icon("book")}
+                  <div class="t-kicker">NORDIC 2026</div>
+                </div>
+                <h1 class="t-main">${escapeHtml(t.main)}</h1>
+                <div class="t-rule"></div>
+                <div class="t-sub">${escapeHtml(t.sub)}</div>
+              </div>
+              <div class="t-sheet sheet" data-step="1">
+                <p class="t-lead">${escapeHtml(t.lead)}</p>
+                <div class="t-nums">${nums}</div>
+              </div>
+              ${cards ? `<div class="t-cards" data-step="2">${cards}</div>` : ""}
+            </div>
           </div>`;
       }
 
@@ -1882,7 +2028,7 @@
                 <em class="d-stat">${escapeHtml(d.stat)}</em>
               </div>
               ${d.paras.map((t) => `<p class="d-text">${md(t)}</p>`).join("")}
-              ${dayPhoto(d.date)}
+              ${dayPhoto(d.date, dayVoice(d))}
             </div>`
           )
           .join("");
@@ -2155,28 +2301,170 @@
       ];
 
       /**
-       * 壁に出す「写真 × その写真に立っている1人」を選ぶ。
+       * その人の「島でのえらばれやすさ」（0〜1）。
        *
-       * **決め打ちで選ぶ。** 乱数を使うと配信のたびに並びが変わって、
-       * 前もって撮った確認の絵と突き合わせられなくなる。
-       * 旅の頭から終わりまで等間隔に取るので、9日ぶんの景色が満遍なく並ぶ。
-       * 立つ人は1枚ずつずらす——**同じ顔が24枚並ばないように。**
+       * **自前で順位を組まない。** 中身は site/content/residents.ts の score で、
+       * 直近90日の投げ銭の総額の順位と、同じ期間の出席日数の順位を
+       * それぞれ 0〜1 に直して足して2で割ったもの。島を日替わりで歩く人を
+       * 選んでいる重み（components/island/roster.ts）と同じ物差しを、
+       * カードに誰を立てるかにも使う（あやと・2026-09-22
+       * 「投げ銭順位や出席順位が高い人を優先して」）。
+       *
+       * 手形に score が無い人（名簿の直近90日より前の人）は 0。
+       * **0 は順番が後ろになるだけで、出られなくなってはいけない。**
        */
-      function cardWallPicks(n) {
+      function charScore(icon) {
+        const ch = CARD_DATA && CARD_DATA.chars[icon];
+        return ch && typeof ch.score === "number" ? ch.score : 0;
+      }
+
+      /** 点の高い順。**同点は icon 順**にして決め打ちにする（乱数を使わない） */
+      function byScore(a, b) {
+        return (
+          charScore(b.icon) - charScore(a.icon) ||
+          (a.icon < b.icon ? -1 : a.icon > b.icon ? 1 : 0)
+        );
+      }
+
+      /** 壁と表紙に出せる景色を、旅の順に。**右下が水面の5枚は外す** */
+      function wallPhotos() {
         const all = [];
         CARD_DATA.days.forEach((d) =>
           d.photos.forEach((p) => {
             if (CARD_WALL_SKIP.indexOf(p.id) < 0) all.push(p);
           })
         );
+        return all;
+      }
+
+      /**
+       * 1枚の写真に立てる人を選ぶ。**その写真に立っている人のうち、いちばん点の高い人。**
+       *
+       * ただし既に cap 枚出ている人は次点に譲る（同じ顔が壁を埋めないため）。
+       * **全員が上限に達していたら、いちばん出ていない人**に回す——
+       * 写真は空けないが、上限を超えるぶんまで点の高い人に寄せない
+       * （点だけで戻すと、上限2枚のはずの人が24枚中4枚に出た。実測）。
+       * `avoid` は「できれば避ける icon」（**隣の1枚と同じ顔にしない**ため。
+       * 上限2枚は守れていても、24枚の壁で隣どうしが同じ顔だと目につく。実測で出た）。
+       * `used` は icon → もう何枚に出たか。
+       */
+      function pickWho(photo, used, cap, avoid) {
+        const people = (photo.people || []).slice().sort(byScore);
+        if (!people.length) return null;
+        const n = (w) => used.get(w.icon) || 0;
+        // sort が点の高い順に並べてあるので、同数なら先に来たほう＝点の高いほうが残る
+        const other = people.filter((w) => w.icon !== avoid);
+        const who =
+          other.find((w) => n(w) < cap) ||
+          // 上限に達した人しか残っていない。**隣と同じ顔にするより、
+          // いちばん出ていない人を1枚おまけ**にしたほうが壁は散る
+          (other.length ? other.reduce((a, w) => (n(w) < n(a) ? w : a)) : null) ||
+          people.reduce((a, w) => (n(w) < n(a) ? w : a));
+        used.set(who.icon, n(who) + 1);
+        return who;
+      }
+
+      /* 壁で同じ顔を何枚まで許すか。**2枚。**
+         24枚に対して立てる人が22人いるので、1枚ずつでも壁は埋まる。
+         **ただし1枚ずつに切ると、上位も下位もきっちり同じ枚数になって、
+         「点の高い人を優先する」が効かなくなる。** 2枚までにすれば上位の人が
+         2枚に出られて、それでも壁の 2/24。
+         実測では12人が立って、いちばん多い人が3枚（24枚に対して11人×2枚では
+         2枚足りず、そのぶんが上の「いちばん出ていない人」に回ったもの）。 */
+      const WALL_FACE_CAP = 2;
+
+      /**
+       * 壁に出す「写真 × その写真に立っている1人」を選ぶ。
+       *
+       * **決め打ちで選ぶ。** 乱数を使うと配信のたびに並びが変わって、
+       * 前もって撮った確認の絵と突き合わせられなくなる。
+       * 写真の選び方は変えない——旅の頭から終わりまで等間隔に取るので、
+       * 11日ぶんの景色が満遍なく並ぶ。**変えたのは立つ人の決め方で、
+       * 順繰りではなく点の高い順**（上限まで出た人は次点に譲る）。
+       */
+      function cardWallPicks(n, cap) {
+        const all = wallPhotos();
         if (!all.length) return [];
         const step = all.length / n;
+        const used = new Map();
         const out = [];
         for (let i = 0; i < n; i++) {
           const p = all[Math.min(all.length - 1, Math.round(i * step))];
-          const who = p.people[i % p.people.length];
+          // 直前の1枚と同じ顔は避ける（横に8枚並ぶので、隣どうしがいちばん目につく）
+          const prev = out.length ? out[out.length - 1].who.icon : null;
+          const who = pickWho(p, used, cap || WALL_FACE_CAP, prev);
           if (who) out.push({ photo: p, who });
         }
+        return out;
+      }
+
+      /* 同じ人が「その日の主役」（日ごとの区画の大きい1枚）になれる日数の上限。**2日。**
+         旅は10日なので、**上限2日なら主役は最低5人に散る**（10日 ÷ 2日）。
+         上限を置かないと、ほぼ全部の写真に写っている点いちばんの人が
+         10日中8日の主役になった（実測）。順位は使うが、
+         「上位が強いこと」と「上位だけが出ること」は別
+         （docs/island-design.md 5章「同じ顔で埋めない」）。 */
+      const DAY_LEAD_CAP = 2;
+
+      /**
+       * 日ごとの主役を、**全日まとめて一度だけ決める。**
+       *
+       * 1日ずつその場で決めると、どの順で呼ばれたかで結果が変わる。
+       * 日の昇順に、その日の代表写真に立っている人のうち点の高い人から配り、
+       * 既に上限まで主役になった人は次点に譲る。**前日と同じ人も避ける。**
+       * 乱数を使わないので、何度開いても同じ並びになる。
+       */
+      let DAY_LEADS = null;
+      function dayLeads() {
+        if (DAY_LEADS) return DAY_LEADS;
+        DAY_LEADS = new Map();
+        const used = new Map();
+        let prev = null;
+        ((CARD_DATA && CARD_DATA.days) || []).forEach((d) => {
+          const hero = d.photos.find((p) => p.id === d.hero) || d.photos[0];
+          if (!hero) return;
+          const who = pickWho(hero, used, DAY_LEAD_CAP, prev);
+          if (!who) return;
+          DAY_LEADS.set(d.day, who.icon);
+          prev = who.icon;
+        });
+        return DAY_LEADS;
+      }
+
+      /**
+       * 表紙の5枚。**点の上位5人が、1人1枚ずつ立つ。同じ人は2枚に出ない。**
+       *
+       * 壁と違って、写真を先に決めない。**人を先に決めて、その人が実際に
+       * 立っている写真から渡す**（先に写真を決めると、上位の人がたまたま
+       * その5枚に居なかっただけで表紙から落ちる）。
+       * 写真は旅の頭から終わりまで散らす——i番目の人には「旅の i/(n-1) あたり」に
+       * いちばん近い、まだ使っていない自分の写真を渡す。
+       * 点の高い順に配るので、左から右へ旅の順にもなる。**決め打ち。**
+       */
+      function titlePicks(n) {
+        const all = wallPhotos();
+        if (!all.length) return [];
+        const where = new Map(); // icon → その人が立っている写真の位置
+        all.forEach((p, i) =>
+          (p.people || []).forEach((w) => {
+            if (!where.has(w.icon)) where.set(w.icon, []);
+            where.get(w.icon).push(i);
+          })
+        );
+        const icons = [...where.keys()].sort((a, b) => byScore({ icon: a }, { icon: b }));
+        const taken = new Set();
+        const out = [];
+        icons.slice(0, n).forEach((icon, i) => {
+          const target = n > 1 ? Math.round((i * (all.length - 1)) / (n - 1)) : 0;
+          let at = -1;
+          where.get(icon).forEach((j) => {
+            if (taken.has(j)) return;
+            if (at < 0 || Math.abs(j - target) < Math.abs(at - target)) at = j;
+          });
+          if (at < 0) return; // その人の写真が全部ふさがっていた
+          taken.add(at);
+          out.push({ photo: all[at], who: all[at].people.find((w) => w.icon === icon) });
+        });
         return out;
       }
 
@@ -2243,6 +2531,9 @@
            同着は後ろの日（旅の終わりに近いほう）。決め打ちなので毎回同じ1枚 */
         const day = CARD_DATA.days.reduce((a, b) => (b.cardCount >= a.cardCount ? b : a));
         const hero = day.photos.find((p) => p.id === day.hero) || day.photos[0];
+        /* 大きい1枚に立つのも**点のいちばん高い人。** ここだけ icon 順のままだと、
+           区画でいちばん大きく出る1人が順位と関係なく決まる */
+        const heroWho = (hero.people || []).slice().sort(byScore)[0];
         const wall = cardWallPicks(CARD_WALL_N).map((c) => cardFace(c.photo, c.who, false)).join("");
         return `
           ${head}
@@ -2250,7 +2541,7 @@
             <p class="akc-lead" data-step="0">その日に投げ銭してくれた人へ、<b>その日の景色に自分のキャラクターが立った1枚</b>が届く。受け取りに行く場所はどこにも無くて、あやと島の「じぶんのこと」に勝手に増えていく。</p>
             <div class="akc-body">
               <div class="akc-hero" data-step="1">
-                ${cardFace(hero, hero.people[0], true)}
+                ${heroWho ? cardFace(hero, heroWho, true) : ""}
                 <div class="akc-hero-cap">${escapeHtml(hero.note || "その日の景色")}
                   <span>${cardWhen(day.day)}・この日だけで${day.cardCount}枚が配られた</span>
                 </div>
@@ -2271,8 +2562,30 @@
       /* ---- 1日ぶんの区画に、その日の写真を添える ----
          **出るのは大きい代表1枚と、その日の他の景色2枚まで。**
          日ごとの行は字が主役なので、写真で3段目を作らない。 */
-      function dayPhoto(dayId) {
-        if (!CARD_DATA) return "";
+      /* ---- その日の声 ----
+         配信のあとにコメント欄でやりとりした、**その日の気持ち**。
+         出来事の段落とは別の層なので、字の大きさも色も分ける。
+
+         **置き場は写真の右の空き。** 日ごとの行は高さが決まっていて
+         （.d-list の min-height）、字の下に足すと写真が下から潰れる。
+         横はどの日も 750px 以上あまっているので、そこを使う。
+         材料が無い日（出発・7日目）は**何も出さない。埋めない。** */
+      function dayVoice(d) {
+        if (!d.voice || !d.voice.length) return "";
+        const lines = d.voice
+          .map(
+            (v) => `
+            <div class="dv-line ${v.w === "me" ? "me" : "fan"}">
+              <span class="dv-who">${v.w === "me" ? "あやと" : "視聴者さん"}</span>
+              <span class="dv-say">${md(v.t)}</span>
+            </div>`
+          )
+          .join("");
+        return `<div class="dv">${lines}</div>`;
+      }
+
+      function dayPhoto(dayId, voice) {
+        if (!CARD_DATA) return voice ? `<div class="dv-alone">${voice}</div>` : "";
         const key = String(dayId).trim();
         const day = CARD_DATA.days.find((d) => {
           if (d.day === key) return true;
@@ -2280,24 +2593,33 @@
           const m = key.match(/^(\d{1,2})\s*\/\s*(\d{1,2})$/);
           return !!m && d.day.slice(5) === `${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
         });
-        if (!day || !day.photos.length) return "";
+        if (!day || !day.photos.length) return voice ? `<div class="dv-alone">${voice}</div>` : "";
         const hero = day.photos.find((p) => p.id === day.hero) || day.photos[0];
-        /* 立つ人は日ごとに変える。**決め打ちで、日から決まる。**
-           同じ人が9日ぶん並ぶと「その日いた人」に見えない */
-        const seed = Number(day.day.slice(8, 10)) || 0;
-        const who = hero.people[seed % hero.people.length];
+        /* 主役（大きい1枚）は dayLeads が全日まとめて決めたぶん。
+           **点の高い人から配るが、1人2日までで止める**（DAY_LEAD_CAP）。
+           前は日付から順繰りに決めていて順位を見ておらず、点だけで選ぶと
+           10日中8日が同じ顔になった。添えの2枚は、その日に立っている人の
+           点の高い順から——**1日の中では同じ人を2枚に出さない。** */
+        const leadIcon = dayLeads().get(day.day);
+        const who =
+          (hero.people || []).find((w) => w.icon === leadIcon) || pickWho(hero, new Map(), 1);
+        const used = new Map(who ? [[who.icon, 1]] : []);
         const rest = day.photos
           .filter((p) => p.id !== hero.id && CARD_WALL_SKIP.indexOf(p.id) < 0)
           .slice(0, 2)
-          .map((p, i) => `<div class="dp-sub">${cardFace(p, p.people[(seed + i + 1) % p.people.length], false)}</div>`)
+          .map((p) => {
+            const w = pickWho(p, used, 1);
+            return w ? `<div class="dp-sub">${cardFace(p, w, false)}</div>` : "";
+          })
           .join("");
         const heads = new Set();
         day.photos.forEach((p) => p.people.forEach((w) => heads.add(w.icon)));
         return `
           <div class="dp">
-            <div class="dp-main">${cardFace(hero, who, true)}</div>
+            <div class="dp-main">${who ? cardFace(hero, who, true) : ""}</div>
             ${rest ? `<div class="dp-rest">${rest}</div>` : ""}
             <div class="dp-note">
+              ${voice || ""}
               ${hero.note ? `<b>${escapeHtml(hero.note)}</b>` : ""}
               <span>この日の景色に、${heads.size}人が立った</span>
             </div>
@@ -2308,7 +2630,7 @@
       const SCENES = [
         { dot: 0, total: 2, render: renderTitle },
         { dot: 1, total: 13, render: renderNumbers },
-        { dot: 2, total: 9, render: renderDays },
+        { dot: 2, total: 9, render: renderDays, mapByStep: true },
         { dot: 3, total: 4, render: renderCars },
         { dot: 4, total: 5, render: renderPlaces },
         { dot: 5, total: 4, render: renderFood },
@@ -2374,12 +2696,15 @@
         stage.querySelectorAll("[data-dim]").forEach((el) => {
           el.classList.toggle("dimmed", Number(el.dataset.dim) <= stepIdx);
         });
+        const s0 = SCENES[sceneIdx];
         /* 地図は**作り直さない。** class を付け替えるだけにする。
            組み立て直すと CSS の transition が1度も走らず、1日ずつ送っても
            絵がぱっと入れ替わるだけになる。印は data-dmark（上の data-mark とは
            別の欄）で持たせてあるので、歩を進める仕掛けとぶつからない。 */
-        const dmap = stage.querySelector(".dmap");
-        if (dmap) setDeckMapMark(dmap, stepIdx);
+        if (s0.mapByStep) {
+          const dmap = stage.querySelector(".dmap");
+          if (dmap) setDeckMapMark(dmap, stepIdx);
+        }
         const s = SCENES[sceneIdx];
         if (s.confettiAt != null && stepIdx === s.confettiAt) {
           spawnConfetti(s.confettiBig ? 160 : 90);

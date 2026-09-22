@@ -88,9 +88,30 @@ export default async function ChapterIsland({
      日どりの決まっていない島（アルバニア）は旅の spec を持たないので、
      いままでどおり素材のあるぶんだけ建って、船着き場は残る。 */
   const isle = isleSpec(c, prev, next);
-  // 桟橋は素材が無くても建つので、それ以外が1つも無ければ「何も建っていない島」
-  const bare = isle.places.length <= 1;
-  const spec = bare && c.opensAt ? nordicSpec(c, prev) : isle;
+  /* **建つものの多いほうで建てる。**
+
+     ここは長いあいだ「素材の spec が桟橋1つしか建てられなければ旅の spec」
+     （`isle.places.length <= 1`）だった。桟橋は素材が無くても建つので、
+     1つなら「何も建っていない島」という読み方そのものは正しい。
+     **しきい値が低すぎた。**
+
+     2026-09-17、`python/build_shorts.py` が北欧の章にショートを3本焼いた。
+     その瞬間に素材の spec が2つ（ショート＋桟橋）になって「何も建っていない」を
+     外れ、`/island/nordic` は**ショート1軒だけの痩せた島**に落ちた。
+     旅の spec が建てていた5軒（この旅のこと・旅の6カ国・旅のしおり・
+     この旅の掲示板・桟橋）が、機械が焼いた1本のせいで黙って消えている。
+     **赤くならない。島が薄くなるだけ**なので、5日のあいだ誰も気づかなかった。
+     しかも `/now` の札は「この旅のこと・旅の6カ国・旅のしおり」と
+     約束したままここを指していた（`lib/stay.ts`）ので、**札の約束が
+     5日間、嘘になっていた。**
+
+     数を1つ上げても同じことが起きる（次は伝説が1つ焼かれた日）。
+     **数えるのをやめて、両方組み立てて多いほうを採る。**
+     旅から帰って素材（配信・歩いた国・伝説）が焼かれれば、素材の spec が
+     自然に追い越す。`c.from` を書き入れた日に島が消える地雷
+     （下のコメント）も、これなら踏まない。 */
+  const trip = c.opensAt ? nordicSpec(c, prev) : undefined;
+  const spec = trip && isle.places.length < trip.places.length ? trip : isle;
 
   return (
     <>
