@@ -1681,11 +1681,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   "lithuania": {
     "ヴィリニュス": [
       {
-        "videoId": "ZuzHKyDfocw",
-        "title": "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで",
-        "date": "2026-09-14"
-      },
-      {
         "videoId": "wB9ntPJ5_h8",
         "title": "【四日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアヴィリュニュス観光日",
         "date": "2026-09-15"
@@ -1713,11 +1708,6 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
   },
   "estonia": {
     "タリン": [
-      {
-        "videoId": "oBN2tNEj3wA",
-        "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日 part2 夜景だよ！",
-        "date": "2026-09-18"
-      },
       {
         "videoId": "kunXt2sXnFQ",
         "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
@@ -1755,6 +1745,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "nGgoJ753rBw",
         "title": "皆さんお元気ですか？ストックホルム散策しましょう。",
         "date": "2026-09-21"
+      },
+      {
+        "videoId": "zNpq6Z-uN3Y",
+        "title": "北欧旅の振り返りしよーやー！",
+        "date": "2026-09-22"
       }
     ]
   }
