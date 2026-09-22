@@ -89,7 +89,18 @@ jobs:
         run: |
           python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
           python3 -m yt_dlp --version
-          ffmpeg -version | head -1
+          # **ffmpeg はランナーに入っていない。** 区間だけを落とす
+          # （`--download-sections`）には要るので、ここで入れる。
+          # 無いと yt-dlp が「partially ... but ffmpeg is not installed」で
+          # 諦めるが、**その手前で口は通っている**ので、ボット確認と
+          # 読み違えやすい（2026-09-22 に1回そうなった）
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          # **`| head -1` を付けない。** この step の shell は `bash -e` で
+          # pipefail が無いので、ffmpeg が無くても `head` の 0 で通ってしまう。
+          # 上の実測はそれで「道具は入っている」と報告していた
+          ffmpeg -version
+          ffprobe -version
           # PO Token を作る側。**無いと媒体の URL を渡してもらえない。**
           # deno で走らせるので node_modules だけ用意する（build は要らない）。
           git clone --depth 1 --branch 2.0.0 \
