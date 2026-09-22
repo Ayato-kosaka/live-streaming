@@ -15,6 +15,7 @@ import DailyFood from "@/components/nordic/DailyFood";
 import DayLog from "@/components/nordic/DayLog";
 import Rides from "@/components/nordic/Rides";
 import Strong from "@/components/nordic/Strong";
+import { shortsOfDay } from "@/components/nordic/shorts";
 import Notes from "@/components/live/Notes";
 import { themeById } from "@/content/themes";
 import {
@@ -570,8 +571,14 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           （`components/nordic/DayLog.tsx`）。
 
           道のりの真下に置くのは、**同じ日を2度読ませないため。**
-          道のりが「誰の車で進んだか」で、こちらが「その車の外で何があったか」。 */}
-      <DayLog entry={NORDIC_LOG[day.id]} />
+          道のりが「誰の車で進んだか」で、こちらが「その車の外で何があったか」。
+
+          **その日のショート動画も、ここが持つ。** 長いほう（配信）と短いほう
+          （ショート）は、どちらも「その日を見る」道。区画を分けると、
+          同じ日の見出しが2つ並ぶ（`components/nordic/DayLog.tsx`）。
+          どの日の話かは題名から引いている（`components/nordic/shorts.ts`）ので、
+          ここに日とショートの対応表は持たない。 */}
+      <DayLog entry={NORDIC_LOG[day.id]} shorts={shortsOfDay(day.id)} />
 
       {/* 実際に通った街。**「通る」ではなく「通った」。**
           旅が終わってから開く面なので、よていの言い方のままだと
