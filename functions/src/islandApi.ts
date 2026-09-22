@@ -250,9 +250,17 @@ type GoalRaw = {
   superChatAmount?: unknown;
   targetAmount?: unknown;
 };
+/* GAS がこけた回だけの、短い寿命(#604)。
+   こけた回まで5分据え置くと、**1回の取りこぼしで5分ぶん古い額が出る。**
+   実際に 63,330円（9日前の控え）と 80,970円 が行き来した。
+   すぐ叩き直せるように短くするが、0 にはしない（落ちている先を毎回叩かない）。 */
+const GOAL_RETRY_TTL_MS = 30 * 1000;
 /* 鍵は変わらないが、スパチャの額は増える。**Doneru と同じ間隔で読み直す。** */
 let goalCache: GoalRec | null = null;
 let goalAt = 0;
+/* **この回ぶんの寿命。** GAS が読めた回は 5分、こけた回は 30秒。
+   入口の判定はここを見る（`FUND_TTL_MS` を直に見ない）。 */
+let goalTtl = FUND_TTL_MS;
 /* 前回どちらから読めたか。**切り替わった回をログに立てるためだけに持つ。** */
 let goalFrom: string | null = null;
 
@@ -332,6 +340,16 @@ async function goalFromGas(): Promise<GoalRec | null> {
  * Firestore が正になるのは `SuperChats` の書き込み先を移したあと（#305 の3）。
  * **それまでは、額が増える側が正。**
  *
+ * **GAS がこけた回に、控えへ落ちない**(#604)。手元に GAS から取った値が
+ * あるなら、それを返し続ける。GAS への読みは一時的にこけるので、
+ * 落ちるたびに控え（9日前のことがある）を掴むと、**同じ時刻に叩いても
+ * 額が行ったり来たりする。** 控えに落ちてよいのは、キャッシュが1つも
+ * 無いとき（冷たいインスタンスの初回）だけ。
+ *
+ * ただし **控えのほうが額が大きければ、そちらを採る**（上の「額が増える側が正」）。
+ * 比べられるのは**鍵が同じとき**だけ。鍵が違えば別の企画の貯金箱なので、
+ * 額の大小に意味が無い。
+ *
  * どちらも読めなかったときに **0 を作らない。** 前に読めた値（`goalCache`）が
  * あればそれを返し、それも無ければ null を返す。null を受けた `GET /fund` は
  * `island/state.fund` の集計値に落ち、そこも空なら 503 を返して、
@@ -341,18 +359,54 @@ async function goalFromGas(): Promise<GoalRec | null> {
  * @return {Promise<GoalRec | null>} 元。1つも読めなければ null
  */
 async function goalRecord(): Promise<GoalRec | null> {
-  if (goalCache && Date.now() - goalAt < FUND_TTL_MS) return goalCache;
-  let from = "gas";
-  let rec = await goalFromGas();
-  if (!rec) {
+  if (goalCache && Date.now() - goalAt < goalTtl) return goalCache;
+
+  const gas = await goalFromGas();
+  if (gas) {
+    if (goalFrom && goalFrom !== "gas") {
+      logger.warn(`goal record: source changed ${goalFrom} -> gas`);
+    }
+    logger.info("goal record: from gas");
+    goalFrom = "gas";
+    goalCache = gas;
+    goalAt = Date.now();
+    goalTtl = FUND_TTL_MS;
+    return gas;
+  }
+
+  /* ここから下は GAS がこけた回。**控えを読んでも、すぐには採らない。**
+     いま持っている値と見比べて、増える側だけを通す。 */
+  const back = await goalFromFirestore();
+  const cached = goalCache;
+  /* 貯まっている額。起点は負の数なので、足した形でしか大小を比べられない。 */
+  const sum = (r: GoalRec) => r.start + r.superchat;
+  let rec: GoalRec | null;
+  let from: string | null;
+  if (!cached) {
+    // 冷たいインスタンスの初回だけ、控えに落ちる
+    rec = back;
+    from = back ? "firestore" : null;
+  } else if (back && back.key === cached.key && sum(back) > sum(cached)) {
+    rec = back;
     from = "firestore";
-    rec = await goalFromFirestore();
+  } else {
+    rec = cached;
+    from = goalFrom;
   }
   if (!rec) {
     // 数字が消えるより古いほうがまし。無ければ「無い」と言う（0 にしない）
-    logger.warn("goal record: no source readable");
-    return goalCache;
+    logger.warn("goal record: gas miss (nothing readable)");
+    return null;
   }
+  /* **こけた回を、あとから数えられる形で残す。** 旅のあいだは誰も見ていないので、
+     「どのくらい GAS が読めていないか」「踏みとどまったか落ちたか」が
+     ログにしか無い。`gas miss` で全部、括弧の中で内訳が数えられる。
+     **額は出さない。** このリポジトリは公開で、ログも誰でも読める。 */
+  logger.warn(
+    rec === cached ?
+      "goal record: gas miss (kept cache)" :
+      "goal record: gas miss (fell back to firestore)",
+  );
   /* **どちらから読んだかを毎回残す。** 旅のあいだに GAS が切れても
      誰も見ていないので、「いつ控えに切り替わったか」がログにしか無い。
      切り替わった回だけは warn にして、grep で1行に絞れるようにする。 */
@@ -363,6 +417,8 @@ async function goalRecord(): Promise<GoalRec | null> {
   goalFrom = from;
   goalCache = rec;
   goalAt = Date.now();
+  // こけた回は短く持つ。GAS が戻ったら 30秒で本物へ戻れるように
+  goalTtl = GOAL_RETRY_TTL_MS;
   return rec;
 }
 

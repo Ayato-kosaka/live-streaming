@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-09-21
+ * 数えた日: 2026-09-22
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -41,14 +41,18 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", days: 68 },
       { icon: "18F1UehNd5efpQztgrRqHOGnibXJQYuda", days: 59 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 50 },
+      { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 44 },
       { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 33 },
       { icon: "1U4OS9WR37dE3rBLZf4oVBpmOZVkPsKfE", days: 29 },
       { icon: "1I_M6D8cTyv3YHJn2WTNSyQrkF8tNTMsZ", days: 25 },
       { icon: "1rkhrzVUpkZGXfSpDbyxzOKoHLUZKy8VL", days: 24 },
+      { icon: "1gMkpXBjdoaF2h_fwbByRXhvFZcJ8ulzK", days: 17 },
       { icon: "1Y1UY-zSP4LrjEvWXvFKXkhJ0JCTD8LFS", days: 16 },
       { icon: "1h8-hyQRdUyqKWSfrQlz55VJLTUN2ibiB", days: 15 },
       { icon: "1TS5HWkC1AmGnn3yLqoppPuhq1V_8p3Q7", days: 12 },
+      { icon: "1Ypw31n_0wRri-oEhRpqAB3p6jZFtN7BN", days: 11 },
       { icon: "1EjhtLAwDDBF_8sr60802BeCtebKXbc_Y", days: 10 },
+      { icon: "1m_QE_hV46Ppy50vh5ic2H89AdkRVWMLG", days: 7 },
       { icon: "1h6oOLYFl6J1jb5_dGWcokkKw_bE78Pt_", days: 6 },
       { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", days: 4 },
       { icon: "1tfS_fQYCUkkbVCyRwdYeqGPZ3rACU4VX", days: 4 },
@@ -66,6 +70,8 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 77 },
       { icon: "1rkhrzVUpkZGXfSpDbyxzOKoHLUZKy8VL", days: 60 },
       { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 43 },
+      { icon: "1m_QE_hV46Ppy50vh5ic2H89AdkRVWMLG", days: 35 },
+      { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 34 },
       { icon: "1Y1UY-zSP4LrjEvWXvFKXkhJ0JCTD8LFS", days: 30 },
       { icon: "1U4OS9WR37dE3rBLZf4oVBpmOZVkPsKfE", days: 29 },
       { icon: "1AzM8uFWB67nZ6SyinVeHHIK9OiWoXR9Y", days: 22 },
@@ -78,6 +84,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", days: 3 },
       { icon: "1h-O2B6oLncxDyQYVDwEsELSdGdajIc37", days: 3 },
       { icon: "1TS5HWkC1AmGnn3yLqoppPuhq1V_8p3Q7", days: 2 },
+      { icon: "1gMkpXBjdoaF2h_fwbByRXhvFZcJ8ulzK", days: 2 },
       { icon: "1EjhtLAwDDBF_8sr60802BeCtebKXbc_Y", days: 1 },
       { icon: "1tfS_fQYCUkkbVCyRwdYeqGPZ3rACU4VX", days: 1 },
     ],
@@ -94,6 +101,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 110 },
       { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 106 },
       { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", days: 84 },
+      { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 76 },
       { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 70 },
       { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 64 },
       { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", days: 60 },
@@ -129,6 +137,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1h6oOLYFl6J1jb5_dGWcokkKw_bE78Pt_", days: 13 },
       { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 12 },
       { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", days: 12 },
+      { icon: "1m_QE_hV46Ppy50vh5ic2H89AdkRVWMLG", days: 11 },
       { icon: "1Ngr31whwrzOnlOah0MctMlsACXsMbIgM", days: 10 },
       { icon: "1xsgHUd1SDC049DHL7yLWAIfal8DQvT8Z", days: 10 },
       { icon: "18F1UehNd5efpQztgrRqHOGnibXJQYuda", days: 9 },
@@ -183,6 +192,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", days: 3 },
       { icon: "1p46JvC_wbKo-rDEzE2pRMZh2neekNvta", days: 3 },
       { icon: "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp", days: 3 },
+      { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 3 },
       { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 2 },
       { icon: "18-GR9oQLMF6V_qEY2q9D0HO2ggdXsCsC", days: 2 },
       { icon: "1EjhtLAwDDBF_8sr60802BeCtebKXbc_Y", days: 2 },
