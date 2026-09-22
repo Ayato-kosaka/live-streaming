@@ -104,7 +104,7 @@ def probe_client(url, client, timeout=75):
     """
     cmd = base_args(client) + [
         "--skip-download", "--print", "%(format_id)s %(vcodec)s %(height)s",
-        "-f", "bv*[height<=720]", url]
+        "-f", "bv*", "-S", "res:720", url]
     t0 = time.time()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -121,8 +121,17 @@ def probe_client(url, client, timeout=75):
 
 
 def grab(url, client, start, end, height, dst, fmt=None):
+    """区間を1本落とす。
+
+    **大きさは `height<=` で絞らない。`-S res:` で選ぶ。**
+    `height` で絞ると**縦の配信で 360p までしか取れない。** 縦動画の
+    「720p」は height が 1280 なので `height<=720` から落ちて、残るのが
+    360x640 だけになる（2026-09-22 に実測。5.9MB / 80秒 / 360x640）。
+    yt-dlp の `res` は**短いほうの辺**なので、縦でも横でも
+    「短辺がこの値まで」で同じ意味になる。
+    """
     cmd = base_args(client) + [
-        "-f", fmt or f"bv*[height<={height}]+ba/b[height<={height}]",
+        "-f", fmt or "bv*+ba/b", "-S", f"res:{height}",
         "--merge-output-format", "mp4",
         "--download-sections", f"*{start}-{end}",
         "-o", str(dst), url]
