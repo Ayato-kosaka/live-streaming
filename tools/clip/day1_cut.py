@@ -163,13 +163,21 @@ def cmd_scan():
 
 
 def download(v, height, tries=24):
-    """h264 + m4a で揃えて落とす。**揃えておくと、繋ぐときに焼き直さずに済む。**"""
+    """h264 + m4a で揃えて落とす。**揃えておくと、繋ぐときに焼き直さずに済む。**
+
+    **大きさは `height<=` で絞らない。`-S` で選ぶ。**
+    `height` で絞ると**縦の配信で 360p までしか取れない**（縦の「720p」は
+    height が 1280 なので落ちる。2026-09-22 に `fetch.py` 側で実測）。
+    `res` は短いほうの辺なので、縦でも横でも同じ意味になる。
+    h264 と m4a を選びたいのは変わらないので、絞りではなく**並べ替えの
+    優先**として渡す（無ければ他の符号で落ちる。落ちないよりよい）。
+    """
     dst = WORK / f"{v}.mp4"
     if dst.exists():
         return dst
     WORK.mkdir(exist_ok=True)
     ok = ytdlp([
-        "-f", f"bv*[height<={height}][vcodec^=avc1]+ba[ext=m4a]/b[height<={height}]",
+        "-f", "bv*+ba/b", "-S", f"res:{height},vcodec:h264,acodec:aac",
         "--merge-output-format", "mp4",
         "-o", str(WORK / "%(id)s.%(ext)s"),
         f"https://www.youtube.com/watch?v={v}",
