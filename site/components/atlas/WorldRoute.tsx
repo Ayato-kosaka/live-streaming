@@ -815,7 +815,8 @@ export default function WorldRoute({
                     <span className="scard-meta">
                       {h.date && <time>{ymd(h.date)}</time>}
                     </span>
-                    <b>{h.title}</b>
+                    {/* 実在する題名の引用（`tools/sprites/noemoji.mjs` の印） */}
+                    <b data-quote="title">{h.title}</b>
                   </span>
                 </a>
               );

@@ -40,7 +40,10 @@ export function StreamCard({
             {date && <time>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
-        <b>{title}</b>
+        {/* YouTube に実在する題名。**引用なので直さない**
+            （`docs/island-design.md` 1章の唯一の例外）。印は題名の箱そのものに
+            付ける——`tools/sprites/noemoji.mjs` はこの印の中だけを数えない。 */}
+        <b data-quote="title">{title}</b>
       </span>
     </a>
   );

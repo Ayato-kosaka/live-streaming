@@ -56,7 +56,9 @@ export function ShortGrid({ shorts }: { shorts: Short[] }) {
       {(s) => (
         <li key={s.id}>
           <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
-            <img src={shortThumb(s.id)} alt={s.title} loading="lazy" width={480} height={360} />
+            {/* `alt` に入るのも実在する題名（`tools/sprites/noemoji.mjs` の印）。
+                空要素なので、印が付いているとタグごと数えられない */}
+            <img src={shortThumb(s.id)} alt={s.title} data-quote="title" loading="lazy" width={480} height={360} />
           </a>
         </li>
       )}
