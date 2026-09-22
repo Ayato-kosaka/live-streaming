@@ -8,8 +8,28 @@ name: 切り抜きの mp4 を取る
 # （実測 160.79.106.128〜137）。ランナーは1つの IP で最後まで通る。
 # 詳しくは docs/clip-download.md。
 #
-# **YOUTUBE_COOKIES には触らない。** あれは毎晩の取り込みが握っている。
-# 使い捨てアカウントの Cookie を入れるなら YOUTUBE_COOKIES_CLIP（別物）。
+# **Cookie は `YOUTUBE_COOKIES` を読む。書き換えない。**
+#
+# 2本目（`YOUTUBE_COOKIES_CLIP`）を用意してもらう前提で書いていたが、
+# **前提が違っていた。** あやとの言葉（2026-09-22、#322）:
+#
+#   > YOUTUBE_COOKIES を使いまわしてください。
+#   > これ、本アカじゃない、yt dlp 専用クッキー。
+#
+# こちらは「あれはあやと本人のアカウントなので、切り抜きの荒い弾かれ方に
+# 巻き込むと毎晩の取り込みごと止まる」と読んでいた。**本人のではなかった。**
+# 巻き込む相手が居ないので、2本目は要らない。
+#
+# **ただし読むだけ。`cookies/update` は絶対に使わない。**
+# あれを使うと Secret 自体が書き換わる（`schedule_fetch_chat.yml` の最後の
+# step がやっているのがそれ）。切り抜きが書き換えると、毎晩の取り込みが
+# 掴む Cookie が変わる。**取り込みが止まると島の数字が全部止まる。**
+# ここが握ってよいのは `/tmp` に置いた写しだけ。
+#
+# **毎晩の取り込みと同時に走らせない**（下の concurrency）。同じセッションを
+# 2か所から同時に使うと、片方が無効化されることがある。手で押すものなので、
+# 取り込みの時間帯（21:49〜23:32 UTC）を避ければ足りる。
+#
 # 無ければ無いまま走る。
 
 on:
@@ -32,6 +52,18 @@ on:
       pause:
         description: "1周ごとに空ける秒数"
         default: "120"
+
+# **毎晩の取り込みと同じ枠に入れる。** 名前をあちらと揃えてあるので、
+# 片方が走っているあいだ、もう片方は待つ（`schedule_fetch_chat.yml:15`）。
+# 同じ Cookie のセッションを2か所から同時に使うと、片方が無効化されることがある。
+#
+# **取り込みを待たせる側になることは承知のうえ。** こちらは手で押すもので
+# 数分で終わる。取り込みはもともと1時間49分〜3時間32分遅れて走っているので、
+# 数分の待ちは誤差の内。**逆に、取り込みが Cookie ごと死ぬのは island の数字が
+# 全部止まる。** 待たせるほうが安い。
+concurrency:
+  group: fetch-chat-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -73,11 +105,13 @@ jobs:
       - name: Cookie があれば置く
         # 秘密情報が無ければ何もしない。**中身はログに出さない。**
         env:
-          CK: ${{ secrets.YOUTUBE_COOKIES_CLIP }}
+          # **読むだけ。** 書き換えないこと（上の説明）
+          CK: ${{ secrets.YOUTUBE_COOKIES }}
         run: |
           if [ -n "$CK" ]; then
-            # #322 では base64 で貼ってもらう手順にしたが、生で貼られることもある。
-            # **どちらでも受ける。** 中身は絶対に出さない。
+            # 毎晩の取り込みが握っている Secret なので、形は向こうに合わせる。
+            # base64 のことも生のこともある。**どちらでも受ける。**
+            # 中身は絶対に出さない。
             printf '%s' "$CK" | base64 -d > /tmp/clip_cookies.txt 2>/dev/null \
               || printf '%s' "$CK" > /tmp/clip_cookies.txt
             grep -q "youtube" /tmp/clip_cookies.txt || printf '%s' "$CK" > /tmp/clip_cookies.txt
