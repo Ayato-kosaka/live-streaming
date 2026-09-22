@@ -459,34 +459,90 @@
         font-size: 16.5px; font-weight: 800;
       }
 
-      /* ---- 1. 表紙 ---- */
-      .t-wrap { text-align: center; max-width: 1420px; }
+      /* ---- 1. 表紙 ----
+         **図鑑を見開きで開いたところ。** 左の頁が旅の地図、右の頁が表題。
+         字だけの表紙にしない——これは旅の資料なので、
+         一発目に「どこを歩いたか」と「誰が立ったか」が見えているほうが強い。
+         使う絵は**すべて資料の中にあるもの**（renderDeckMap / cardFace）で、
+         表紙のために新しく取りに行かない。 */
+      .t-wrap {
+        display: flex; align-items: stretch; gap: 34px;
+        width: 100%; max-width: 1812px;
+      }
+      /* 左の頁。**地図の置き場は 0.60（幅÷高さ）**。焼き込みがその比で
+         切り出してあるので、ここを崩すと端の街が枠から出る。
+         紙の内寸で比を合わせる（padding 14 + 枠線1 を引いた残り） */
+      .t-map {
+        flex: 0 0 552px; height: 900px; padding: 14px;
+        background: var(--sheet);
+        border: 1px solid var(--hair-strong);
+        border-radius: var(--r-0);
+      }
+      .t-map svg { width: 100%; height: 100%; display: block; }
+      /* 歩を進めると svg に .has-mark が付く（applySteps が舞台の .dmap を
+         無条件に呼ぶため）。表紙は日を選んでいないので、**薄くするほうを戻す。**
+         光るほうは印の欄を落としてあるので当たらない（renderTitle 側） */
+      .t-map .dmap.has-mark .dm-leg,
+      .t-map .dmap.has-mark .dm-city,
+      .t-map .dmap.has-mark .dm-chip { opacity: 1; }
+
+      /* 右の頁。上から 表題 → 紙（ひとこと＋数字） → 写真の列。
+         **高さは左の地図が決める。** 余りは3つのあいだに散らす */
+      .t-right {
+        flex: 1 1 auto; min-width: 0;
+        display: flex; flex-direction: column; justify-content: space-between;
+      }
       /* 表紙の板。区画の見出しと**同じ部品**（.corner-head）で、幅だけ中身に合わせる。
          厚みを持つ部品を2種類にしない */
       .corner-head.t-plank {
-        display: inline-flex; padding: 8px 26px 10px; margin-bottom: 24px;
+        display: inline-flex; align-items: center; gap: 14px;
+        padding: 7px 24px 9px; margin-bottom: 18px;
         border-radius: var(--r-1);
       }
-      .t-ico { width: 124px; height: 124px; margin-bottom: 2px; }
-      .t-kicker { font-size: 19px; font-weight: 900; letter-spacing: 0.3em; color: var(--frame-deep); }
+      .t-plank .ic { width: 40px; height: 40px; flex: 0 0 40px; }
+      .t-kicker { font-size: 19px; font-weight: 900; letter-spacing: 0.3em; color: var(--ink); }
       .t-main {
         margin: 0;
-        font-size: 126px; font-weight: 900; line-height: 1.08;
+        font-size: 116px; font-weight: 900; line-height: 1.06;
         letter-spacing: 0.02em; color: var(--ink);
       }
       /* 表紙の飾り。菱形と点を並べただけの罫。**光らせない** */
       .t-rule {
-        width: 300px; height: 14px; margin: 26px auto 0;
+        width: 300px; height: 14px; margin: 20px 0 0;
         background:
           radial-gradient(circle at 50% 50%, var(--frame-dark) 0 6px, transparent 7px) 50% 50% / 300px 14px no-repeat,
           linear-gradient(90deg, transparent 0 34px, var(--hair-strong) 34px calc(100% - 34px), transparent calc(100% - 34px)) 50% 50% / 100% 2px no-repeat;
       }
-      .t-sub { margin-top: 22px; font-size: 32px; font-weight: 900; color: var(--ink); }
+      .t-sub { margin-top: 18px; font-size: 31px; font-weight: 900; color: var(--ink); }
+
+      /* ひとことと数字は**紙1枚にまとめる。** 別々の板にすると、
+         表題のとなりに読ませるかたまりが2つ増えて、表紙が散らかる */
+      .t-sheet { padding: 22px 34px 20px; }
       .t-lead {
-        margin: 26px auto 0; max-width: 1180px;
-        padding: 22px 38px;
-        font-size: 24px; font-weight: 700; line-height: 1.85; color: var(--ink-2);
+        margin: 0; padding: 0 0 18px;
+        border-bottom: 1px solid var(--hair);
+        /* 2行に割れる。26px だと2行目が「チハイク。」の5文字だけになって、
+           紙の下に1行ぶんの空きが立つ。28px にすると8文字残る */
+        font-size: 28px; font-weight: 700; line-height: 1.7; color: var(--ink-2);
       }
+      .t-nums { display: flex; padding-top: 16px; }
+      .t-num {
+        flex: 1 1 0; text-align: center;
+        border-right: 1px solid var(--hair);
+      }
+      .t-num:last-child { border-right: 0; }
+      .t-num b { display: block; font-size: 50px; font-weight: 900; line-height: 1; color: var(--ink); }
+      .t-num.hi b { color: var(--accent-ink); }
+      .t-num span { display: block; margin-top: 7px; font-size: 17px; font-weight: 800; color: var(--ink-2); }
+
+      /* 旅の写真。**添え書きを付けない。** 表紙で読ませるのは表題と紙の2つだけで、
+         ここは「こういう9日間だった」を絵で言う列。
+         高さで揃える（写真は全部たて長なので、幅で揃えると段差が出る） */
+      /* 右ふちを紙とそろえる。左寄せのままだと写真の列だけ 25px 手前で終わって、
+         見開きの右の頁が1枚だけ短く見える */
+      .t-cards { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+      .t-cards .akc-card { box-shadow: var(--shadow-2); }
+      .t-cards .akc-shot { height: 292px; width: auto; }
 
       /* ---- 2. 数字 ----
          1枚の紙に罫を引いた図鑑の表。カードを12枚並べない。 */
@@ -1643,17 +1699,62 @@
           </div>`;
       }
 
-      /* ---- 1. タイトル ---- */
+      /* ---- 1. タイトル ----
+         見開き。左の頁に旅の地図、右の頁に表題・ひとこと・旅の写真。
+
+         **3歩で組み上がる。**
+           0 … 地図と表題（これが何の話か、ここで決まる）
+           1 … ひとことと数字
+           2 … 旅の写真
+         一気に出すと、一発目の1秒で目が散る。
+         地図は素の強さ（mark は null）。**日を光らせるのは道のりの区画の仕事**で、
+         表紙で光らせると「いま何日目の話か」を聞かれる。 */
       function renderTitle() {
         const t = DECK.title;
+        /* 数字は DECK.numbers から**先頭4つをそのまま**取る。
+           表紙用に選び直すと、次の区画の表と食い違ったとき気づけない */
+        const nums = DECK.numbers.cells
+          .slice(0, 4)
+          .map(
+            (c) => `
+              <div class="t-num${c.hi ? " hi" : ""}">
+                <b>${escapeHtml(c.n)}</b><span>${escapeHtml(c.label)}</span>
+              </div>`
+          )
+          .join("");
+        /* 写真は旅の頭から終わりまで等間隔に5枚（cardWallPicks と同じ選び方）。
+           **手形が載っていなければ列ごと出さない。** 空の枠を並べない */
+        const cards = CARD_DATA
+          ? cardWallPicks(5).map((c) => cardFace(c.photo, c.who, false)).join("")
+          : "";
+        /* 地図は**全区間を素の強さで**出す。表紙は「どこを歩いたか」の1枚で、
+           何日目の話でもないため。
+           歩を進める仕掛け（applySteps）は、舞台に .dmap が1つでもあると
+           `setDeckMapMark(dmap, stepIdx)` を呼ぶ。道のりの区画では「1歩＝1日」
+           なので正しいが、**表紙では歩の数が日付になってしまう**（実際に
+           2歩目でワルシャワ〜ビャウィストクだけが光り、残りが 0.3 に沈んだ）。
+           印の欄（data-dmark）を落としておけば、どの日にも当たらないので
+           何も光らない。薄くなるほう（.has-mark）は下の CSS で戻す。 */
+        const map = renderDeckMap(null).replace(/ data-dmark="[^"]*"/g, "");
         return `
           <div class="t-wrap">
-            <div data-step="0">${icon("book", "t-ico")}</div>
-            <div class="corner-head t-plank" data-step="0"><div class="t-kicker">NORDIC 2026</div></div>
-            <h1 class="t-main" data-step="0">${escapeHtml(t.main)}</h1>
-            <div class="t-rule" data-step="1"></div>
-            <div class="t-sub" data-step="1">${escapeHtml(t.sub)}</div>
-            <p class="t-lead sheet" data-step="2">${escapeHtml(t.lead)}</p>
+            ${map ? `<div class="t-map" data-step="0">${map}</div>` : ""}
+            <div class="t-right">
+              <div data-step="0">
+                <div class="corner-head t-plank">
+                  ${icon("book")}
+                  <div class="t-kicker">NORDIC 2026</div>
+                </div>
+                <h1 class="t-main">${escapeHtml(t.main)}</h1>
+                <div class="t-rule"></div>
+                <div class="t-sub">${escapeHtml(t.sub)}</div>
+              </div>
+              <div class="t-sheet sheet" data-step="1">
+                <p class="t-lead">${escapeHtml(t.lead)}</p>
+                <div class="t-nums">${nums}</div>
+              </div>
+              ${cards ? `<div class="t-cards" data-step="2">${cards}</div>` : ""}
+            </div>
           </div>`;
       }
 
@@ -2297,7 +2398,7 @@
       const SCENES = [
         { dot: 0, total: 2, render: renderTitle },
         { dot: 1, total: 13, render: renderNumbers },
-        { dot: 2, total: 9, render: renderDays },
+        { dot: 2, total: 9, render: renderDays, mapByStep: true },
         { dot: 3, total: 4, render: renderCars },
         { dot: 4, total: 5, render: renderPlaces },
         { dot: 5, total: 4, render: renderFood },
@@ -2363,12 +2464,15 @@
         stage.querySelectorAll("[data-dim]").forEach((el) => {
           el.classList.toggle("dimmed", Number(el.dataset.dim) <= stepIdx);
         });
+        const s0 = SCENES[sceneIdx];
         /* 地図は**作り直さない。** class を付け替えるだけにする。
            組み立て直すと CSS の transition が1度も走らず、1日ずつ送っても
            絵がぱっと入れ替わるだけになる。印は data-dmark（上の data-mark とは
            別の欄）で持たせてあるので、歩を進める仕掛けとぶつからない。 */
-        const dmap = stage.querySelector(".dmap");
-        if (dmap) setDeckMapMark(dmap, stepIdx);
+        if (s0.mapByStep) {
+          const dmap = stage.querySelector(".dmap");
+          if (dmap) setDeckMapMark(dmap, stepIdx);
+        }
         const s = SCENES[sceneIdx];
         if (s.confettiAt != null && stepIdx === s.confettiAt) {
           spawnConfetti(s.confettiBig ? 160 : 90);
