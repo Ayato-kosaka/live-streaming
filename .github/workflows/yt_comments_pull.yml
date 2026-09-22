@@ -1,0 +1,107 @@
+name: コメント欄を取る
+
+# 北欧旅のふりかえりに「その日ごとの心境」を入れるための材料を、
+# YouTube の**コメント欄**から持ち帰る（ショート4本＋当時のアーカイブ19本）。
+# ライブチャットの取り込み（Fetch YouTube Chat Data）とは別もので、
+# あちらは配信中の流れ、こちらは終わったあとに書き込まれた言葉。
+#
+# **なぜ Actions か。** 作業箱から叩くと Cookie 無しでは1本も取れない
+# （`Sign in to confirm you're not a bot`。別々のランナーで81回すべて同じ文句。
+# `docs/clip-download.md` の実測）。ランナーなら Cookie が使える。
+#
+# ## Cookie（`YOUTUBE_COOKIES` を使い回す。#322 で 2026-09-22 に決まった）
+#
+# あれは本人のアカウントではなく yt-dlp 専用に取ったもの。それでも
+# **技術的な危なさは残る**ので、ここは3つ守っている。
+#
+#   1. **読むだけ（`cookies@v3`）。`cookies/update@v3` を呼ばない。**
+#      セッションを Secret へ書き戻すのは毎晩の取り込み1本だけに置く。
+#      2本が書き戻すと、どちらが最新かを誰も知らなくなる
+#   2. **毎晩の取り込みと同時に走らせない。** 下の `concurrency` を
+#      `schedule_fetch_chat.yml` と**同じグループ**にしてある。同時に走ると
+#      古いほうが新しいほうを上書きして、**両方が締め出される**
+#   3. **`workflow_dispatch` だけ。cron を付けない。** 定時で起きると、
+#      遅れて発火する毎晩の取り込み（1時間49分〜3時間32分遅れ）と
+#      いつ重なるか読めない
+#
+# 押すのは **21:30〜23:59 UTC を避けた時間帯**（毎晩の取り込みが遅れて
+# 走ってくる帯）。`concurrency` は待たせるだけで、待たせないほうが早く済む。
+
+on:
+  workflow_dispatch:
+    inputs:
+      videos:
+        description: "videoId をカンマ区切り。空なら北欧旅の23本（ショート4＋アーカイブ19。一覧は python/admin/comments_pull.py）"
+        required: false
+        default: ""
+        type: string
+      max_comments:
+        description: "1本あたりのコメント上限（既定 500。理由は python/admin/comments_pull.py）"
+        required: false
+        default: "500"
+        type: string
+
+# **`schedule_fetch_chat.yml` と同じグループ。**
+#
+# あちらは `fetch-chat-${{ github.ref }}` で、定時実行は必ず既定の枝
+# （master）で走るので、評価される字は `fetch-chat-refs/heads/master`。
+# こちらは**どの枝から押しても**その字になるように、直に書いてある
+# （枝から押したときに素通りするほうが危ない）。
+# **あちらの `concurrency` を変えるときは、ここも変える。**
+concurrency:
+  group: fetch-chat-refs/heads/master
+  cancel-in-progress: false # 実行中を殺さず、次の起動を待たせる
+
+permissions:
+  contents: read
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # **持ち帰る形が壊れていないかを、口を開く前に見る**（`logsafe_selftest` と同じ置き方）。
+      # ネットにも yt-dlp にも出ず 0.1 秒で終わる。落ちたら下は1行も走らない。
+      # 見ているのは「素性を落とすか・1本落ちても続くか・429 で撃ち直すか・
+      # ログに本文を出さないか」の4つ。**出てからでは消せない**ので手前に置く
+      - name: 持ち帰る形が壊れていないか
+        run: python3 python/admin/comments_pull_selftest.py
+
+      - name: Setup yt-dlp
+        uses: AnimMouse/setup-yt-dlp@v3
+
+      # **読むだけ。** `cookies/update@v3`（書き戻し）はここでは呼ばない。
+      # 書き戻すのは `schedule_fetch_chat.yml` の1本だけ
+      - name: Setup yt-dlp YouTube cookies
+        uses: AnimMouse/setup-yt-dlp/cookies@v3
+        with:
+          cookies: ${{ secrets.YOUTUBE_COOKIES }}
+
+      # **ログに出るのは「何本目 / 全何本、取れた件数」だけ。**
+      # 本文も表示名も1文字も出ない（このリポジトリは公開で、
+      # Actions のログも誰でも読める）
+      - name: コメント欄を取る
+        env:
+          VIDEOS: ${{ inputs.videos }}
+          MAXC: ${{ inputs.max_comments || '500' }}
+        run: |
+          python3 python/admin/comments_pull.py \
+            --videos "$VIDEOS" \
+            --max-comments "$MAXC" \
+            --out out/comments.json
+
+      # **1本も取れなかった回も渡す。** 取れなかった videoId と理由が
+      # 入っているので、次にどう押すかの材料になる
+      - name: 渡す
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: yt-comments-${{ github.run_id }}
+          path: out/
+          retention-days: 30

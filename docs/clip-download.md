@@ -135,3 +135,37 @@ artifact は30日で消える。**要るものはその場で落とす。**
 `--write-subs --sub-langs live_chat` は別の口なので通る。
 各行に `videoOffsetTimeMsec` が入っていて、**配信内の位置がそのまま取れる。**
 15時間を目で探さずに済む。**Cookie は使わない。**
+
+## コメント欄（あとからの言葉）は Actions で取る
+
+上の `live_chat` は**配信中の流れ**。コメント欄は**終わったあとに
+書き込まれた言葉**で、別の口から取る。北欧旅のふりかえりに入れる
+「その日ごとの心境」は、後者が材料になる。
+
+**この箱からは取れない**（Cookie 無しは全部ボット確認）。Actions で押す。
+
+1. Actions で **「コメント欄を取る」**（`yt_comments_pull.yml`）を押す
+2. 入れるもの
+
+   | 入力 | 何を入れるか |
+   | --- | --- |
+   | `videos` | videoId をカンマ区切り。**空なら北欧旅の23本**（ショート4＋アーカイブ19） |
+   | `max_comments` | 1本あたりの上限。既定 500 |
+
+3. 終わったら、その run の **Artifacts** から `yt-comments-<run_id>` を落とす。
+   中の `comments.json` が全部入りで、`comments[]` の1件はこの形
+
+   ```
+   videoId / author / text / likeCount / publishedAt / publishedAtText / isReply
+   ```
+
+   **チャンネルIDは入っていない**（本文に貼られたぶんも伏せる）。
+   取れなかった videoId は `failed[]` に理由つきで並ぶ。
+
+**押す時間帯は 21:30〜23:59 UTC を避ける。** 毎晩の取り込みが遅れて走ってくる帯で、
+Cookie を持ち回っているのはあちら1本だけ。`concurrency` は同じグループにしてあるので
+同時には走らないが、待たされるより避けたほうが早い。**Cookie は読むだけで、
+ここからは書き戻さない**（`cookies/update@v3` を呼ぶのは `schedule_fetch_chat.yml` だけ）。
+
+取ってくる側は `python/admin/comments_pull.py`、その配線ごと見ているのが
+`python/admin/comments_pull_selftest.py`（毎 PR で走る）。
