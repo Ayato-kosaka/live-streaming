@@ -135,6 +135,7 @@ TIPS = [
 CHANNELS = {
     CID["nami"]: {"days": 61, "lastAt": "2026-09-20T10:00:00Z"},
     CID["aoi"]: {"days": 7, "lastAt": "2025-12-31T10:00:00Z"},
+    CID["tip"]: {"days": 3, "lastAt": "2026-03-10T10:00:00Z"},
 }
 
 CHAT_ROWS = [(CID["nami"], 1204), (CID["aoi"], 88), (CID["other"], 5),
@@ -325,6 +326,13 @@ def check_run() -> None:
                       (r"@[A-Za-z0-9_.-]{3,}", "ハンドル")):
         if re.search(pat, text):
             bad(f"(5) 公開の場の出力に {what} の形が出た")
+
+    # **台帳の相手が1人に決まるか**まで出す（件数だけでは決められない）
+    tip = [ln for ln in body if "🦑" in ln]
+    if len(tip) != 1 or "1件 / 相手1人 / 2026-03-10" not in tip[0]:
+        bad("(4) 台帳の列に『件数 / 相手の人数 / 最後の日』が出ていない")
+    if "**相手が1人に決まる** 1人" not in text:
+        bad("(4) 台帳の相手が1人に決まる人の数え方が違う")
 
     # 7. 1バイトも書かない
     if writes:

@@ -56,12 +56,18 @@ ignorePunctuation:true})` ——そのもの。空白・記号・ひらがなと
 | ゆる | **ゆるい一致**でチャットに近い人数。**0 なら本当に居ない** |
 | 近 | ゆるい一致の相手のうち、**いちばんよく来ている1人**の
        コメント件数 / 一緒にいた日数 / 最後に喋った日 |
-| 銭 | 投げ銭の台帳（`islandTips`）に、**名前で**近い行が何件あるか |
+| 台帳 | 投げ銭の台帳（`islandTips`）に**名前で**近い行の件数と、
+        その行が指している**相手が何人**か、いちばん多い相手の最後の日 |
 
-**`銭` は名前でしか当たらない。** この人たちは `channelId` を持たないので、
+**`台帳` は名前でしか当たらない。** この人たちは `channelId` を持たないので、
 台帳とは名前以外に繋がる道が無い。**「たぶんこの人」は混ぜない**ので、
-近い行が1件も無ければ `銭0` と出るだけ。当たった行に `channelId` が
-入っていれば `(ch1)` のように添える——**そこが、結べるかもしれない唯一の糸。**
+近い行が1件も無ければ `0件` と出るだけ。
+
+**相手の人数まで出すのがここの肝。** 当たった行が `channelId` を持って
+いれば、それは**チャットの表示名とは別の糸**（台帳の名乗りは投げてくれた
+その瞬間の字で、いま YouTube に出ている表示名とは限らない）。
+**相手が1人なら結べるかもしれないし、2人以上なら決められない。**
+件数だけ出すと、10件が1人ぶんなのか10人ぶんなのかが読めない。
 
 ## 何を出さないか
 
@@ -502,7 +508,7 @@ def build(blanks: dict, titles: dict, counts: dict, exact: dict,
         counts: channelId -> チャットの件数
         exact: 書類ID -> 完全一致した channelId の集合
         near: 書類ID -> {"chat": [場所], "tips": [場所]}
-        tips: 台帳の行（`channelId` を持つか だけ）
+        tips: 台帳の行（その行の `channelId`。無ければ空）
         got: 引けた channelId の並び（`near["chat"]` の場所が指す先）
         unseen: 引けなかったチャンネルの数
         icons: `residents.ts` に並んでいる書類ID
@@ -516,6 +522,12 @@ def build(blanks: dict, titles: dict, counts: dict, exact: dict,
         hits = near.get(doc_id) or {}
         chat = [got[i] for i in (hits.get("chat") or []) if i < len(got)]
         tip_at = [i for i in (hits.get("tips") or []) if i < len(tips)]
+        # **相手が何人か**まで数える。件数だけだと、10件が1人ぶんなのか
+        # 10人ぶんなのかが読めない（結べるかどうかはそこで決まる）
+        who: dict = {}
+        for i in tip_at:
+            if tips[i]:
+                who[tips[i]] = who.get(tips[i], 0) + 1
         rows.append({
             "id": doc_id,
             "emoji": v["emoji"],
@@ -529,7 +541,7 @@ def build(blanks: dict, titles: dict, counts: dict, exact: dict,
             "loose": len(chat),
             "near": chat,
             "tips": len(tip_at),
-            "tips_ch": sum(1 for i in tip_at if tips[i]),
+            "tips_who": who,
             # **引けていないチャンネルが残っているあいだは言い切らない**
             # （`docs/island-standards.md` §10）
             "unsure": bool(unseen) and not chat,
@@ -550,23 +562,29 @@ def peek(src, rows: list) -> None:
         src: Firestore クライアント（読むだけの写し）
         rows: `build()` が返した材料。**その場で書き足す**
     """
+    def look(cid: str) -> dict:
+        """チャンネル1つぶんの「まだ来ているか」。**名前は読まない。**"""
+        d = src.collection("islandChannels").document(cid).get()
+        v = (d.to_dict() or {}) if d.exists else {}
+        return {"days": v.get("days") if isinstance(v.get("days"), int) else 0,
+                "last": day_of(v.get("lastAt"))}
+
     for r in rows:
         r["peek"] = None
-        if not r["near"]:
-            continue
+        r["tips_peek"] = None
         # コメントの多い順に、上から少しだけ
         order = sorted(r["near"], key=lambda c: -r["counts"].get(c, 0))
         best = None
         for cid in order[:MAX_PEEK]:
-            d = src.collection("islandChannels").document(cid).get()
-            v = (d.to_dict() or {}) if d.exists else {}
-            days = v.get("days") if isinstance(v.get("days"), int) else 0
-            last = day_of(v.get("lastAt"))
-            cand = {"msgs": r["counts"].get(cid, 0), "days": days,
-                    "last": last}
+            cand = dict(look(cid), msgs=r["counts"].get(cid, 0))
             if best is None or cand["msgs"] > best["msgs"]:
                 best = cand
         r["peek"] = best
+        # **台帳の相手も同じように見る。** チャットに1人も居ない人でも、
+        # 台帳には居ることがある（名乗りが違うだけ）
+        if r["tips_who"]:
+            top = max(r["tips_who"], key=lambda c: r["tips_who"][c])
+            r["tips_peek"] = look(top)
 
 
 # ------------------------------------------------------------ 行にする
@@ -591,8 +609,8 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
     out = [
         wpad("指紋", 7) + wpad("絵文字", 8) + wpad("載った日", 12)
         + wpad("直した日", 12) + "絵 名 " + wpad("島", 4)
-        + " 完全  ゆる  " + wpad("近い人（件数/日数/最後）", 32)
-        + "投げ銭",
+        + " 完全  ゆる  " + wpad("チャットで近い人（件数/日数/最後）", 36)
+        + "台帳（件数/相手/最後）",
         "-" * 104,
     ]
     for r in rows:
@@ -604,9 +622,15 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
             near = "（見ていないのが残る）"
         else:
             near = "—"
-        tips = f"{r['tips']}件"
-        if r["tips_ch"]:
-            tips += f"(ch{r['tips_ch']})"
+        if not r["tips"]:
+            tips = "0件"
+        else:
+            # **「相手なし」と「相手0人」は別の読みかたをされる。**
+            # 当たった行が channelId を持っていないだけで、行は在る
+            tips = f"{r['tips']}件 / " + (
+                f"相手{len(r['tips_who'])}人" if r["tips_who"] else "相手なし")
+            if r["tips_peek"]:
+                tips += f" / {r['tips_peek']['last']}"
         if _break("secret"):
             # **守りを1本抜く。** 対照 (5) がここで落ちることを見張りが見る
             emoji = emoji + "/" + str(r.get("leak") or "")
@@ -617,7 +641,7 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
             + f"{r['pics']}  {r['names']}  "
             + ("居る" if r["island"] else "無し")
             + f"  {r['exact']:>3}  {r['loose']:>3}  "
-            + wpad(near, 32)
+            + wpad(near, 36)
             + tips
         )
     out.append("")
@@ -642,9 +666,11 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
                f"{sum(1 for r in rows if not r['names']):>5}人"
                f"（うちハンドルだけ持っている "
                f"{sum(1 for r in rows if not r['names'] and r['handle_only'])}人）")
-    out.append(f"  投げ銭の台帳に名前で当たる {sum(1 for r in rows if r['tips']):>5}人"
-               f"（うち channelId 付きの行を持つ "
-               f"{sum(1 for r in rows if r['tips_ch'])}人）")
+    out.append(
+        f"  投げ銭の台帳に名前で当たる {sum(1 for r in rows if r['tips']):>5}人"
+        f"（うち **相手が1人に決まる** "
+        f"{sum(1 for r in rows if len(r['tips_who']) == 1)}人"
+        f" / 2人以上で選べない {sum(1 for r in rows if len(r['tips_who']) > 1)}人）")
     return out
 
 
@@ -722,8 +748,9 @@ _C_DOC = {k: f"{i}" + "0123456789abcdef" * 2
 _C_CID = {k: "UCxx" + f"{i:02d}" + "seibutsudummy000000"
           for i, k in enumerate(list(_C_CASE) + ["blind1", "gone1"])}
 
-# 仕込みの台帳。`(表示名, channelId を持つか)`
-_C_TIPS = [("なみのり", True), ("アオイトリ", False), ("だれでもない", False)]
+# 仕込みの台帳。`(表示名, その行の channelId)`
+_C_TIPS = [("なみのり", _C_CID["plain"]), ("アオイトリ", ""),
+           ("だれでもない", "")]
 
 
 def _control_input() -> tuple:
@@ -796,6 +823,8 @@ def _control_run(blanks: dict, titles: dict, counts: dict,
     for r in rows:
         r["peek"] = ({"msgs": counts.get(r["near"][0], 0), "days": 7,
                       "last": "2026-01-03"} if r["near"] else None)
+        r["tips_peek"] = ({"days": 7, "last": "2026-01-04"}
+                          if r["tips_who"] else None)
         r["leak"] = blanks[r["id"]]["names"][0] if blanks[r["id"]]["names"] \
             else ""
     return rows, []
@@ -958,7 +987,7 @@ def collect(src, budget: float) -> tuple:
 
     # --- 投げ銭の台帳。**名前でしか当たらない**（この人たちは ID を持たない）
     tips_name: list = []
-    tips_ch: list = []
+    tips_cid: list = []
     q = src.collection("islandTips").select(
         ["displayNameSnapshot", "channelId"]).limit(MAX_TIPS)
     for d in q.get():
@@ -967,7 +996,7 @@ def collect(src, budget: float) -> tuple:
         if not s:
             continue
         tips_name.append(s)
-        tips_ch.append(bool(nm.clean(v.get("channelId"), 64)))
+        tips_cid.append(nm.clean(v.get("channelId"), 64))
     log.info("投げ銭の台帳のうち、表示名を持つ行: %d件（上限 %d）",
              len(tips_name), MAX_TIPS)
 
@@ -1007,7 +1036,7 @@ def collect(src, budget: float) -> tuple:
     log.info("ゆるい鍵を動かしたのは本物です: %s / node %s / ICU %s",
              res.get("how"), res.get("node"), res.get("icu"))
 
-    rows = build(blanks, titles, counts, exact, res["out"], tips_ch,
+    rows = build(blanks, titles, counts, exact, res["out"], tips_cid,
                  got_ids, seen["ch_blind"], icons)
     peek(src, rows)
     return rows, total, taken, seen
