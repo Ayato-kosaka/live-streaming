@@ -73,41 +73,60 @@ def read_dt(tab):
 def google_logged_in(tab):
     return any(c["name"] == "SID" for c in tab.call("Network.getCookies", urls=["https://accounts.google.com/"]).get("cookies", []))
 
-CLICK = r"""(() => {
-  const vis = e => e && e.offsetParent !== null;
-  if ([...document.querySelectorAll('input[type=password]')].some(vis)) return 'PASSWORD';
-  const txt = e => (e.innerText || e.value || '').trim();
-  const clickables = () => [...document.querySelectorAll('button,a,[role=button],[role=link],input[type=submit]')].filter(vis);
+# 押す先を JS で探し、座標を返す。押すのは Input.dispatchMouseEvent（本物のクリック）。
+# Google のボタンは Google Identity Services の iframe（accounts.google.com/gsi/button）の中に
+# 描かれることがあり、上のページの JS からは .click() できないが、座標のクリックなら届く。
+# 「Googleプライバシーポリシー」のような規約のリンクを押し続けたことがあるので、規約系は外す。
+FIND = r"""(() => {
+  const vis = e => { if (!e) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && e.offsetParent !== null; };
+  const at = (e, kind) => { e.scrollIntoView({block: 'center'}); const r = e.getBoundingClientRect(); return {kind, x: r.x + r.width / 2, y: r.y + r.height / 2, diag: diag()}; };
+  if ([...document.querySelectorAll('input[type=password]')].some(vis)) return {kind: 'PASSWORD'};
+  const txt = e => (e.innerText || e.value || e.getAttribute('aria-label') || e.getAttribute('alt') || '').trim().replace(/\s+/g, ' ');
+  const NG = /ポリシー|規約|policy|terms|ヘルプ|help|プライバシー|privacy/i;
+  const clickables = () => [...document.querySelectorAll('button,a,[role=button],[role=link],input[type=submit],[data-identifier]')].filter(vis).filter(e => !NG.test(txt(e)));
+  const diag = () => 'clickables=[' + clickables().map(e => e.tagName.toLowerCase() + ':' + txt(e).slice(0, 25)).slice(0, 15).join(' | ').replace(/\S+@\S+/g, '<mail>') +
+    '] iframes=[' + [...document.querySelectorAll('iframe')].filter(vis).map(f => { try { const u = new URL(f.src); return u.host + u.pathname; } catch (_) { return '?'; } }).join(' | ') + ']';
   if (location.host.includes('accounts.google.com')) {
     const acct = [...document.querySelectorAll('[data-identifier]')].filter(vis);
-    if (acct.length) { acct[0].click(); return 'google:account(' + acct.length + ')'; }
+    if (acct.length) return at(acct[0], 'google:account(' + acct.length + ')');
     const b = clickables().find(e => /^(続行|次へ|許可|同意する|Continue|Allow|Next|I agree)$/i.test(txt(e)));
-    if (b) { b.click(); return 'google:' + txt(b); }
-    return 'google:none [' + clickables().map(txt).filter(Boolean).slice(0, 12).join(' | ').replace(/\S+@\S+/g, '<mail>') + ']';
+    if (b) return at(b, 'google:' + txt(b));
+    return {kind: 'google:none', diag: diag()};
   }
+  const gsi = [...document.querySelectorAll('iframe')].filter(vis).find(f => /accounts\.google\.com\/gsi/.test(f.src));
+  if (gsi) return at(gsi, 'doneru:gsi-iframe');
   const g = clickables().find(e => /google/i.test(txt(e)));
-  if (g) { g.click(); return 'doneru:' + txt(g).slice(0, 30); }
+  if (g) return at(g, 'doneru:' + txt(g).slice(0, 30));
   const l = clickables().find(e => /ログイン|login|sign ?in/i.test(txt(e)));
-  if (l) { l.click(); return 'doneru:' + txt(l).slice(0, 30); }
-  return 'doneru:none [' + clickables().map(txt).filter(Boolean).slice(0, 12).join(' | ') + ']';
+  if (l) return at(l, 'doneru:' + txt(l).slice(0, 30));
+  return {kind: 'doneru:none', diag: diag()};
 })()"""
+
+def click(t, x, y):
+    for typ in ("mouseMoved", "mousePressed", "mouseReleased"):
+        t.call("Input.dispatchMouseEvent", type=typ, x=x, y=y, button="left", clickCount=1)
 
 tab = Tab(pages()[0]); tab.call("Network.enable")
 print("google SID in profile:", google_logged_in(tab))
 dt = read_dt(tab)
 print("existing _dt valid:", bool(dt))
 if not dt:
-    tab.call("Page.navigate", url="https://doneru.jp/login"); time.sleep(6)
+    tab.call("Page.navigate", url="https://doneru.jp/login"); time.sleep(8)
     for step in range(15):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
-        cur = Tab(g[-1]) if g else Tab([p for p in ps if "doneru" in p["url"]][-1] if any("doneru" in p["url"] for p in ps) else ps[0])
+        d = [p for p in ps if "doneru" in p["url"]]
+        cur = Tab(g[-1] if g else (d[-1] if d else ps[0]))
         dt = read_dt(tab)
         if dt: break
-        url = cur.js("location.href"); r = cur.js(CLICK)
-        print(f"step {step}: {where(url)} -> {r}")
-        if r == "PASSWORD":
+        url = cur.js("location.href"); r = cur.js(FIND) or {"kind": "none"}
+        # 押す候補の一覧は、最初の1回と、押す先が見つからなかったときだけ出す
+        if step == 0 or "x" not in r:
+            print("  diag:", r.get("diag"))
+        print(f"step {step}: {where(url)} -> {r['kind']}")
+        if r["kind"] == "PASSWORD":
             print("STOP: パスワードを求められた。何も打たずに止める（あやとの手が要る）"); sys.exit(3)
+        if "x" in r: click(cur, r["x"], r["y"])
         time.sleep(6)
     dt = dt or read_dt(tab)
 if dt:
