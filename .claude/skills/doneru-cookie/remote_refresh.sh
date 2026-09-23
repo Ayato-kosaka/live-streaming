@@ -15,7 +15,7 @@ PROFILE="/home/ubuntu/doneru-chrome"
 PORT=9222
 DT_FILE=/tmp/.doneru_dt
 # どこで抜けても Chrome を閉じてからにする。閉じずに止めると、取り直したセッションが EBS に書き戻されない
-trap 'pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 5; rm -f "$DT_FILE" /tmp/doneru_challenge.txt' EXIT
+trap 'pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 5; rm -f "$DT_FILE" "$DT_FILE.browser" /tmp/doneru_challenge.txt' EXIT
 
 # Ubuntu の pip は PEP 668 で素のままだと入れてくれない。apt を先に試す。
 python3 -c 'import websocket' 2>/dev/null || apt-get install -y -qq python3-websocket >/dev/null 2>&1 \
@@ -172,6 +172,17 @@ if not dt:
 if dt:
     fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600); os.write(fd, dt.encode()); os.close(fd)
     print("got _dt")
+    # ブラウザの中から同じ API を叩く。EC2 からの curl は Cloudflare に 403 で弾かれることがあり
+    # （2026-09-23: ログイン直後の本物の _dt で 403）、curl だけでは _dt の良し悪しを言えない
+    tab.call("Page.navigate", url="https://doneru.jp/"); time.sleep(6)
+    end = time.strftime("%Y-%m-%d", time.gmtime()); start = time.strftime("%Y-%m-%d", time.gmtime(time.time() - 7 * 86400))
+    res = tab.call("Runtime.evaluate", awaitPromise=True, returnByValue=True, expression=
+        "fetch('https://api.doneru.jp/streamer/donation-list/csv?start=%s&end=%s', {credentials: 'include'})"
+        ".then(async r => { const t = await r.text(); return r.status + ' ' + (t.trim().startsWith('<') ? 'html' : 'text') + ' lines=' + t.split('\\n').length; })"
+        ".catch(e => 'error ' + e)" % (start, end))
+    bs = str(res.get("result", {}).get("value"))
+    print("browser fetch:", bs)
+    with open(out + ".browser", "w") as f: f.write(bs.split(" ")[0])
 else:
     print("no _dt after login flow")
 PY
@@ -191,9 +202,16 @@ CODE=$(curl -s -o /tmp/dt_check.out -w '%{http_code}' \
   -H "user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36" \
   "https://api.doneru.jp/streamer/donation-list/csv?start=${WEEKAGO}&end=${TODAY}")
 echo "api.doneru.jp -> HTTP ${CODE}"
-case "$CODE" in 200) : ;; *) echo "ERROR: _dt が無効（HTTP ${CODE}）"; exit 2 ;; esac
-head -c1 /tmp/dt_check.out | grep -q '<' && { echo "ERROR: HTML が返った（ログイン画面/Cloudflare）"; exit 2; }
-echo "csv rows (header 込み): $(wc -l < /tmp/dt_check.out)"; rm -f /tmp/dt_check.out
+BROWSER=$(cat "${DT_FILE}.browser" 2>/dev/null); rm -f "${DT_FILE}.browser"
+if [ "$CODE" = 200 ] && ! head -c1 /tmp/dt_check.out | grep -q '<'; then
+  echo "csv rows (header 込み): $(wc -l < /tmp/dt_check.out)"
+else
+  # 403 の中身は Cloudflare の HTML か Doneru の応答か（値ではなく種類だけ出す）
+  echo "curl body: $(head -c1 /tmp/dt_check.out | grep -q '<' && echo html || echo text), $(wc -c < /tmp/dt_check.out) bytes, cf: $(grep -c -i cloudflare /tmp/dt_check.out)"
+  [ "$BROWSER" = 200 ] || { echo "ERROR: _dt が無効（curl ${CODE} / browser ${BROWSER}）"; rm -f /tmp/dt_check.out; exit 2; }
+  echo "curl は弾かれたがブラウザでは 200。入れて、Actions の取り込みで確かめる"
+fi
+rm -f /tmp/dt_check.out
 
 # 4. GitHub Secret に入れる（値は stdin。ログに出ない）
 printf '%s' "$DT" | sudo -u ubuntu -i -- gh secret set DONERU_COOKIE --repo "$REPO" \
