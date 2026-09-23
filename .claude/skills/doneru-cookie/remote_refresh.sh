@@ -84,7 +84,7 @@ FIND = r"""(() => {
   const txt = e => (e.innerText || e.value || e.getAttribute('aria-label') || e.getAttribute('alt') || '').trim().replace(/\s+/g, ' ');
   const NG = /ポリシー|規約|policy|terms|ヘルプ|help|プライバシー|privacy/i;
   const clickables = () => [...document.querySelectorAll('button,a,[role=button],[role=link],input[type=submit],[data-identifier]')].filter(vis).filter(e => !NG.test(txt(e)));
-  const diag = () => 'clickables=[' + clickables().map(e => e.tagName.toLowerCase() + ':' + txt(e).slice(0, 25)).slice(0, 15).join(' | ').replace(/\S+@\S+/g, '<mail>') +
+  const diag = () => 'clickables=[' + clickables().map(e => e.tagName.toLowerCase() + ':' + txt(e).slice(0, 25) + (e.pathname ? '(' + e.pathname + ')' : '')).slice(0, 30).join(' | ').replace(/\S+@\S+/g, '<mail>') +
     '] iframes=[' + [...document.querySelectorAll('iframe')].filter(vis).map(f => { try { const u = new URL(f.src); return u.host + u.pathname; } catch (_) { return '?'; } }).join(' | ') + ']';
   if (location.host.includes('accounts.google.com')) {
     const acct = [...document.querySelectorAll('[data-identifier]')].filter(vis);
@@ -97,7 +97,7 @@ FIND = r"""(() => {
   if (gsi) return at(gsi, 'doneru:gsi-iframe');
   const g = clickables().find(e => /google/i.test(txt(e)));
   if (g) return at(g, 'doneru:' + txt(g).slice(0, 30));
-  const l = clickables().find(e => /ログイン|login|sign ?in/i.test(txt(e)));
+  const l = clickables().find(e => /ログイン|log ?in|sign ?in|sign ?up|新規登録|はじめる|始める|get started|dashboard|ダッシュボード/i.test(txt(e)) || /login|signin|auth/i.test(e.pathname || ''));
   if (l) return at(l, 'doneru:' + txt(l).slice(0, 30));
   return {kind: 'doneru:none', diag: diag()};
 })()"""
@@ -111,7 +111,8 @@ print("google SID in profile:", google_logged_in(tab))
 dt = read_dt(tab)
 print("existing _dt valid:", bool(dt))
 if not dt:
-    tab.call("Page.navigate", url="https://doneru.jp/login"); time.sleep(8)
+    # /login は存在しない（Return to Home の画面になる）。トップから入口を押していく
+    tab.call("Page.navigate", url="https://doneru.jp/"); time.sleep(8)
     for step in range(15):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
