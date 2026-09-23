@@ -43,9 +43,13 @@ curl -s "http://localhost:${PORT}/json/version" >/dev/null || { echo "ERROR: デ
 # 2. CDP で _dt を読む。無ければログインボタンを押していく（値は DT_FILE にだけ書く）
 rm -f "$DT_FILE"
 python3 - "$DT_FILE" <<'PY'
-import json, os, re, sys, time, urllib.request, websocket
+import hashlib, json, os, re, sys, time, urllib.request, websocket
 out = sys.argv[1]
 BASE = "http://localhost:9222"
+# Doneru（YouTube チャンネル ayato_arigato）に使う Google アカウント（あやと 2026-09-23）。
+# リポジトリは公開なので、メールそのものではなく小文字にしたものの SHA-256 で照合する。
+# 上を当て推量で押したら別のアカウントで本人確認に飛んだので、一致しなければ押さずに止める
+ACCOUNT_SHA256 = "fc610098750871be3c2dbc1490ffff5de0e60d720b520366f993698fa8bb4adc"
 
 def pages():
     return [t for t in json.load(urllib.request.urlopen(BASE + "/json/list")) if t["type"] == "page"]
@@ -88,7 +92,7 @@ FIND = r"""(() => {
     '] iframes=[' + [...document.querySelectorAll('iframe')].filter(vis).map(f => { try { const u = new URL(f.src); return u.host + u.pathname; } catch (_) { return '?'; } }).join(' | ') + ']';
   if (location.host.includes('accounts.google.com')) {
     const acct = [...document.querySelectorAll('[data-identifier]')].filter(vis);
-    if (acct.length) return at(acct[0], 'google:account(' + acct.length + ')');
+    if (acct.length) return {kind: 'google:chooser', accounts: acct.map(e => { const r0 = e.getBoundingClientRect(), r = {x: r0.x + r0.width / 2, y: r0.y + r0.height / 2}; return {id: (e.getAttribute('data-identifier') || '').toLowerCase(), x: r.x, y: r.y}; })};
     const b = clickables().find(e => /^(続行|次へ|許可|同意する|Continue|Allow|Next|I agree)$/i.test(txt(e)));
     if (b) return at(b, 'google:' + txt(b));
     return {kind: 'google:none', diag: diag()};
@@ -133,6 +137,12 @@ if not dt:
         # 開いた時点でスマホに通知が飛ぶので、待たずに止める。ここで粘ると毎回あやとを起こす
         if "accounts.google.com" in (url or "") and "/challenge/" in url:
             print(f"STOP: Google が本人確認を求めた（{where(url)}）。何も押さずに止める（あやとの手が要る）"); sys.exit(3)
+        if r["kind"] == "google:chooser":
+            hit = [i for i, a in enumerate(r["accounts"]) if hashlib.sha256(a["id"].encode()).hexdigest() == ACCOUNT_SHA256]
+            print(f"  account chooser: {len(r['accounts'])} 件、一致 {hit}")
+            if not hit:
+                print("STOP: Doneru のアカウントが選択肢に無い。何も押さずに止める（あやとの手が要る）"); sys.exit(3)
+            r = r["accounts"][hit[0]]
         if "x" in r: click(cur, r["x"], r["y"])
         time.sleep(6)
     dt = dt or read_dt(tab)

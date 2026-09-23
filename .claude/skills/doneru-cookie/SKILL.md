@@ -56,6 +56,9 @@ bash .claude/skills/doneru-cookie/ec2_exec.sh .claude/skills/doneru-cookie/remot
 Doneru の配信者ログインは `https://doneru.jp/auth/login?loginType=streamer` の
 「Sign in with YouTube」で、その行き先は **`/auth/youtube?type=streamer`**（あやと 2026-09-23）。
 スクリプトはここへ直接行くので、Google のアカウント選択から始まる。
+アカウント選択では **Doneru（YouTube チャンネル ayato_arigato）のアカウントだけを押す**。
+リポジトリは公開なので、メールは `ACCOUNT_SHA256`（小文字にしたものの SHA-256）で持つ。
+一致するものが無ければ押さずに止まる（上を当て推量で押したら、別のアカウントで本人確認に飛んだ）。
 `https://doneru.jp/login` は**存在しない**（「Return to Home」だけの画面）。
 
 ## 3. 入れたあと
