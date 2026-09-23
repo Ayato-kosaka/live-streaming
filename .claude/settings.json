@@ -1,16 +1,31 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(aws --profile sandbox:*)",
+      "Bash(bash .claude/skills/doneru-cookie/ec2_exec.sh:*)",
+      "Bash(cp /home/user/ayato-kosaka/nanitabeyo/.claude/skills/ec2-chrome-operate/ec2_exec.sh .claude/skills/doneru-cookie/:*)",
+      "Write(.claude/skills/doneru-cookie/**)",
+      "Edit(.claude/skills/doneru-cookie/**)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/stop-check.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/stop-check.sh"
+          }
         ]
       }
     ],
@@ -18,7 +33,10 @@
       {
         "matcher": "Write",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/no-clobber.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/no-clobber.sh"
+          }
         ]
       }
     ]
