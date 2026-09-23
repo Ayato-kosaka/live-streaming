@@ -1750,6 +1750,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "zNpq6Z-uN3Y",
         "title": "北欧旅の振り返りしよーやー！",
         "date": "2026-09-22"
+      },
+      {
+        "videoId": "dWAQsv5jKzY",
+        "title": "スウェーデンのスカンセンみに行こか",
+        "date": "2026-09-23"
       }
     ]
   }
