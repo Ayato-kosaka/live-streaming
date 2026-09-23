@@ -268,6 +268,12 @@
     </style>
     <script>
       if (location.protocol !== "file:") document.getElementById("maru").media = "";
+      /* 進行の人の手元（?role=ctrl）は**縦で持つ**ので、縦向きの案内（#rotate）を
+         出してはいけない。body.ctrl が付くのは本文の script まで進んでからで、
+         そこまでに1度描かれると案内が一瞬ちらつく。**描かれる前にここで決める。** */
+      if (new URLSearchParams(location.search).get("role") === "ctrl") {
+        document.documentElement.classList.add("is-ctrl");
+      }
     </script>
 
     <style>
@@ -1163,6 +1169,57 @@
       #ico-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
       .ic { display: inline-block; vertical-align: middle; }
 
+      /* ============ 縦向きのときの案内 ============
+         この資料は 1920x1080 の横長1枚に組んである。縦で開くと2段組みの
+         右の段が画面の外に出て、日ごとの面が地図だけになる。
+         **中身を縦用に組み直すのではなく、横にしてもらう。**
+
+         判定は**向き**で見る（幅で見ると、PC の細いウィンドウでも出る）。
+         横にした瞬間にこの面は消えて、資料がそのまま出る——JS は何もしない
+         ので、回した瞬間のずれが無い。 */
+      #rotate {
+        display: none;
+        position: fixed; inset: 0; z-index: 60;
+        align-items: center; justify-content: center;
+        padding: 24px;
+        background: var(--ground-paper);
+        background-attachment: fixed;
+        cursor: default;
+      }
+      @media (orientation: portrait) { #rotate { display: flex; } }
+      /* 進行の人は縦で持つ。**ここに案内を出すと操作できなくなる** */
+      html.is-ctrl #rotate, body.ctrl #rotate { display: none; }
+
+      #rotate .rot-card {
+        width: 100%; max-width: 420px;
+        padding: 30px 26px 30px;
+        text-align: center;
+        background: var(--sheet);
+        border: 1px solid var(--hair-strong);
+        border-radius: var(--r-2);
+      }
+      #rotate .rot-ic { display: block; width: 158px; height: 126px; margin: 0 auto 4px; }
+      /* 厚み（--pop）を持つのは木の板だけ。資料の中の決まりと同じにする */
+      #rotate .rot-plank {
+        display: inline-block;
+        margin: 8px 0 18px;
+        padding: 10px 26px 12px;
+        background: linear-gradient(180deg, #f8c377 0%, var(--frame) 40%, #eaa843 100%);
+        border-radius: var(--r-3);
+        box-shadow: var(--pop);
+        /* **板の中で折り返させない。** 6.4vw だと 390px 幅で
+           「横向きにしてくださ／い」と割れて、最後の1文字だけがぶら下がる。
+           板は一息で読む札なので、入る大きさまで落として1行に収める */
+        white-space: nowrap;
+        font-size: clamp(17px, 5.1vw, 27px); font-weight: 900; line-height: 1.25;
+        color: var(--ink);
+      }
+      #rotate .rot-sub {
+        margin: 6px 0 0;
+        font-size: clamp(15px, 4.2vw, 17px); font-weight: 800; line-height: 1.75;
+        color: var(--ink-2);
+      }
+
       @media (prefers-reduced-motion: reduce) {
         * { transition: none !important; animation: none !important; }
         [data-step] { opacity: 0; transform: none; }
@@ -1303,6 +1360,30 @@
     <div id="progress" aria-hidden="true"></div>
     <div id="hint">クリック / Enter で進む ・ ← で戻る</div>
     <div id="confetti-layer" aria-hidden="true"></div>
+
+    <!-- 縦向きのときだけ出る案内。**この面の外には何も足していない**ので、
+         横にすると資料がそのまま現れる。絵は #ico-defs の光を引いて描く
+         （絵文字は使わない。docs/island-design.md 1章） -->
+    <div id="rotate">
+      <div class="rot-card">
+        <svg class="rot-ic" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <!-- 接地影。無いと板が浮く -->
+          <ellipse cx="60" cy="87" rx="40" ry="4.6" fill="#6b5a1f" opacity=".17" />
+          <!-- 回してほしい向き。輪郭線ではなく、塗った帯と三角で描く -->
+          <path d="M28.99 34.71A33 33 0 0 1 87.03 27.07L81.30 31.09A26 26 0 0 0 35.57 37.11Z" fill="url(#gCoral)" />
+          <path d="M92.36 23.34L91.63 39.73L75.98 34.82Z" fill="url(#gCoral)" />
+          <!-- 横にした端末 -->
+          <rect x="18" y="40" width="84" height="44" rx="9" fill="url(#gWood)" />
+          <rect x="24" y="45" width="68" height="34" rx="5" fill="url(#gCream)" />
+          <!-- 中に見えている資料。板が1枚と、字が2行 -->
+          <rect x="29" y="50" width="30" height="7" rx="3.5" fill="url(#gGold)" />
+          <rect x="29" y="61" width="52" height="4.6" rx="2.3" fill="url(#gSeaLite)" opacity=".75" />
+          <rect x="29" y="69" width="38" height="4.6" rx="2.3" fill="url(#gSeaLite)" opacity=".5" />
+        </svg>
+        <div class="rot-plank">横向きにしてください</div>
+        <p class="rot-sub">画面を横にすると、9日間のふりかえりが開きます。</p>
+      </div>
+    </div>
 
     <div id="ctrl-ui">
       <div class="c-head">
@@ -2802,17 +2883,23 @@
       // ctrl ではグローバル入力を登録しない。
       // （登録するとボタンの click と二重に発火して、1タップで2つ以上進む）
       const IS_CTRL = new URLSearchParams(location.search).get("role") === "ctrl";
+      /* 縦のあいだは #rotate が画面ぜんぶを覆っている。そこを触って歩が進むと、
+         横にした瞬間に知らない区画から始まる。**縦のあいだは歩を進めない。** */
+      const PORTRAIT = window.matchMedia("(orientation: portrait)");
       if (!IS_CTRL) {
         window.addEventListener("pointerdown", (ev) => {
           if (ev.button === 2) return;
+          if (PORTRAIT.matches) return;
           advance();
         });
         window.addEventListener("contextmenu", (ev) => {
           ev.preventDefault();
+          if (PORTRAIT.matches) return;
           back();
         });
       }
       window.addEventListener("keydown", (ev) => {
+        if (PORTRAIT.matches && !IS_CTRL) return;
         const k = ev.key;
         if (k === "Enter" || k === " " || k === "ArrowRight" || k === "ArrowDown") {
           ev.preventDefault();
