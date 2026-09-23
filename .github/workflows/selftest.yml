@@ -330,7 +330,7 @@ jobs:
           echo "── dexfit 終了コード ${rc2}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ]
 
-      # 振り返り資料（`public/nordic_review.html`）は**配信で一発目に出す1枚**で、
+      # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
       # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。
       # ここで歩かせる。書き出し（site/.next-ci）は要らない——資料は public/ に
       # 在る静的な1枚なので、**本番と同じ並び**（public/ に site/public/fonts を
@@ -347,11 +347,11 @@ jobs:
           sv=$!
           trap 'kill "$sv" 2>/dev/null || true' EXIT
           for _ in $(seq 30); do
-            curl -sf -o /dev/null "http://127.0.0.1:4733/nordic_review.html" && break
+            curl -sf -o /dev/null "http://127.0.0.1:4733/nordic/review.html" && break
             sleep 1
           done
           rc1=0
-          SHOTS=/tmp/deckshots URL=http://127.0.0.1:4733/nordic_review.html \
+          SHOTS=/tmp/deckshots URL=http://127.0.0.1:4733/nordic/review.html \
             node tools/sprites/deckwalk.mjs || rc1=$?
           echo "── deckwalk 終了コード ${rc1}"
           rc2=0

@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 const EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const FILE = path.join(ROOT, "public", "nordic_review.html");
+const FILE = path.join(ROOT, "public", "nordic", "review.html");
 const PAGE = pathToFileURL(FILE).href + "?role=ctrl";
 
 // クイズの語は資料そのものから取る。手で並べると、問題を足した日に黙って漏れる
