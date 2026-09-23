@@ -724,7 +724,7 @@ def case13_mention():
     # 「何日も入っていない」で開いた回の札は、こちら待ち
     gh2 = FakeGh()
     night(gh2, N_3DAY)
-    ck("何日も入っていないほうの札は「待ち-こちら」",
+    ck("何日も入っていないほうの札は「待ち-システム」",
        ticket_labels.WAIT_US in gh2.issues[0]["labels"],
        gh2.issues[0]["labels"])
     ck("そちらではコメントも足さない", gh2.commented == 0, gh2.commented)

@@ -233,7 +233,7 @@ class Gh:
     LABEL_COLOR = "ededed"
     LABEL_DESC = ""
 
-    # **待ちの札**（`python/ticket_labels.py` の `待ち-あやと` / `待ち-こちら`）。
+    # **待ちの札**（`python/ticket_labels.py` の `待ち-あやと` / `待ち-システム`）。
     # 付いていないと、毎週の棚卸し（`python/ticket_stock.py`）が「札が無い」に
     # 数える。空なら何も付けない。
     #
@@ -310,6 +310,20 @@ class Gh:
             except urllib.error.HTTPError as e:
                 if e.code != 422:
                     raise
+                # **既にある札は、色と説明を揃え直す。**
+                # 422 は「もう在る」。以前はそこで諦めていたが、
+                # **issue に付けた拍子に暗黙で作られた札**は色も説明も
+                # 既定のままで、作り直す機会が二度と来ない
+                # （2026-09-23 に `待ち-システム` が実際にそうなった）。
+                # 名前が同じなら中身を送り直す。**送るのは色と説明だけ**で、
+                # 名前は変えない（変えると付いている issue の札が動く）。
+                try:
+                    q = urllib.parse.quote(name)
+                    self._call("PATCH", f"/repos/{self.repo}/labels/{q}",
+                               {"color": color, "description": desc})
+                except urllib.error.HTTPError:
+                    # 揃わなくても issue は立てる。**見た目のために止めない**
+                    pass
         return self._call("POST", f"/repos/{self.repo}/issues",
                           {"title": title, "body": text,
                            "labels": [n for n, _, _ in made]})
