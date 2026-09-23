@@ -2923,11 +2923,30 @@ export const islandApi = onRequest(
            出していた**。`docs/nordic-fund.md` が「サイトは満額で数える」と
            決めていたのを、あやとの指示で取り消してある。
 
-           出どころは GAS の Goals（配信の OBS が読んでいるのと同じ1件）。
-             currentAmount = startAmount + superChatAmount + doneruAmount
-           startAmount はこの企画の起点で、負の数。 */
-        const superchat = goal ? goal.superchat : num(f.superchat);
-        const start = goal ? goal.start : num(f.start);
+             total = 起点 + スパチャの半分 + Doneru
+           起点はこの企画の出発点で、負の数（支出の合計の符号を反転したもの）。
+
+           **出どころは台帳の焼き直し（`island/state.fund.box`）。**（#305）
+           長いあいだ GAS の `Goals` が正で、ここはその控えしか読めなかった。
+           理由は「額が伸びる側が正」——スパチャを書き足しているのが配信の
+           OBS で、その書き先が表しか無かったから。
+
+           **その前提が逆になった。** OBS は
+           `POST /island-api/alertbox/{合言葉}/superchat` を叩くようになり、
+           伸びるのは台帳（`islandFundSuperChats`）だけになった。表の
+           `superChatAmount` はもう伸びない。**このまま GAS を読み続けると、
+           投げ銭が入っても島の豚だけが伸びない。**
+
+           合計は毎晩 `python/fund_daily.py` が焼き直している。焼き直しは
+           BigQuery からの取りこぼし拾いも兼ねているので、**口がこけた晩の
+           ぶんも翌朝ここに乗る。** 1件ずつ数え直さないのは、509件を
+           島を開くたびに読ませないため。
+
+           **`goalRecord()` は消していない。** Doneru の鍵はまだそこから
+           来ていて（`doneruKeyOnly`）、バーの高さもそこに控えがある。 */
+        const b = boxOf(f.box);
+        const superchat = b ? b.superchat : num(f.superchat);
+        const start = b ? b.start : num(f.start);
         let total = (doneru ?? 0) + superchat + start;
         /* **人が実際に出した額は、上の合計とは別物。** 合計には起点の
            マイナスが入っているので、「N人があわせて◯円出してくれました」に
@@ -2951,7 +2970,10 @@ export const islandApi = onRequest(
         res.json({
           total,
           given,
-          goal: goal ? goal.goal : 0,
+          /* バーの高さ。**貯まっている額とは別もの**なので、台帳の目標が
+             読めなければ `goalRecord()` 側（`islandGoal` の `targetAmount`）に
+             落ちる。ここで 0 を返すと、画面のバーが割り算で落ちる。 */
+          goal: b && b.goalYen > 0 ? b.goalYen : goal ? goal.goal : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
           /* Doneru のぶんが止まっている日だけ、いつまで入っているかを足す。
