@@ -155,7 +155,7 @@ if not dt:
     # /auth/youtube?type=streamer（あやと 2026-09-23）。直接行けば Google のアカウント選択から始まる。
     # （/login は存在しない。Return to Home の画面になる）
     tab.call("Page.navigate", url="https://doneru.jp/auth/youtube?type=streamer"); time.sleep(8)
-    for step in range(15):
+    for step in range(25):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
         d = [p for p in ps if "doneru" in p["url"]]
@@ -184,10 +184,10 @@ if not dt:
             while time.time() - t0 < WAIT_DP_SEC:
                 time.sleep(5)
                 ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"] and "/challenge/dp" in p["url"]]
-                if not g or read_dt(tab): break
+                if not g or (read_dt(tab) or stale) != stale: break
             print(f"  challenge/dp: {int(time.time() - t0)}秒で抜けた（{'まだ本人確認' if g else '先へ進んだ'}）")
             with open(CHALLENGE_FILE, "a") as f: f.write("done\n")
-            if g and not read_dt(tab):
+            if g and (read_dt(tab) or stale) == stale:
                 print("STOP: 本人確認が通らなかった。何も押さずに止める"); sys.exit(3)
             time.sleep(4); continue
         if "accounts.google.com" in (url or "") and "/challenge/" in url:
