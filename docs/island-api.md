@@ -277,6 +277,8 @@ OBS に映すものと、あやとの手元のコントローラーを繋ぐ口�
 | `POST` | `/alertbox/session` | あやとだけ | アラートボックスの席を開く |
 | `GET` | `/alertbox/:id/wss` | 席を知っている人 | 繋ぎ先 |
 | `POST` | `/alertbox/:id/yt-token` | 席を知っている人 | トークンを取り直す |
+| `POST` | `/alertbox/:id/superchat` | 席を知っている人 | スパチャ1件を豚の貯金箱の台帳へ（#305）。**同じ item id を2回投げても増えない** |
+| `GET` | `/alertbox/:id/fund` | 席を知っている人 | 配信の豚に出す額。**`GET /fund` を使わない**（あちらは CDN に5〜10分焼き付く） |
 | `POST` | `/remote/session` | あやとだけ | 島の遠隔操作の席を開く |
 | `POST` | `/remote` | 席の持ち主だけ | 島を動かす（見ている場所・ひとこと） |
 | `GET` | `/remote?sessionId=…` | 席を知っている人 | いまの指示（表示側が読む） |

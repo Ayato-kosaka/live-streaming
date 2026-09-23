@@ -1,89 +1,13 @@
-// API utility functions for GAS and Cloud Functions
+/* あやと島の口を叩くところ（#305 で GAS を落とした）。
 
-import { AlertboxCharacter, GASApiResponse } from "./types";
+   ここには長いあいだ、スプレッドシートを読み書きする道具が3つあった
+   （`getTable` / `getById` / `insert`）。表を読むのも書くのも
+   `EXPO_PUBLIC_GAS_API_URL` 1本で、**それは書き出しに焼かれる**ので、
+   URL を知っていれば誰でも全件読めた。
 
-/**
- * Get data from a GAS table
- * @param table Table name (e.g., "Viewers", "Goals", "SuperChats")
- * @returns Response data
- */
-export async function getTable<T>(table: string): Promise<GASApiResponse<T>> {
-  const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}`;
-  const response = await fetch(url);
+   いまは名簿もスパチャも貯金箱も、合言葉の要るあやと島の口を通る。 */
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${table}: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Get a specific record by ID from a GAS table
- * @param table Table name
- * @param id Record ID
- * @returns Response data
- */
-export async function getById<T>(
-  table: string,
-  id: string
-): Promise<GASApiResponse<T>> {
-  const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}&id=${id}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${table} with id ${id}: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Insert a record into a GAS table
- * @param table Table name
- * @param record Record to insert
- * @returns Response data
- */
-export async function insert<T>(
-  table: string,
-  record: T
-): Promise<GASApiResponse<unknown>> {
-  const url = `${process.env.EXPO_PUBLIC_GAS_API_URL}?table=${table}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ record }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to insert into ${table}: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Get doneruAmount from Cloud Functions
- * @param key Donery goal key
- * @returns Amount as a number
- */
-export async function getDoneruAmount(key: string): Promise<number> {
-  const url = `https://doneruamount-3phus6cpxa-uc.a.run.app/doneruAmount?key=${key}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch doneruAmount: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  const amount = Number(data.amount);
-
-  if (isNaN(amount)) {
-    throw new Error(`Invalid doneruAmount response: ${data}`);
-  }
-
-  return amount;
-}
+import { AlertboxCharacter, SuperChatNotification } from "./types";
 
 /* ---------------- あやと島ごしの口（#180） ----------------
 
@@ -143,6 +67,78 @@ export async function getAlertboxCharacters(
   const data = await res.json();
   const list = Array.isArray(data?.characters) ? data.characters : [];
   return list as AlertboxCharacter[];
+}
+
+/**
+ * スパチャ1件を、豚の貯金箱の台帳に入れてもらう（#305）。
+ *
+ * 前はスプレッドシートの `SuperChats` へ1件ずつ足していた
+ * （`insert("SuperChats", …)`）。表を消すと貯金箱が止まるので、
+ * あやと島の台帳（`islandFundSuperChats`）へ移した。
+ *
+ * **同じ通知を2回投げても増えない。** 書類IDは通知のID（`LCC.…`）を
+ * ほどいた26文字で、サーバー側が上書きにする。配信の途中で OBS を
+ * 開き直しても、毎晩の掃除が BigQuery から同じものを拾っても、1件に潰れる。
+ *
+ * **本文（`message`）は送らない。** 貯金箱に要るのは額と誰かだけで、
+ * 視聴者さんが書いた字を台帳に残す理由が無い（表には残っていた）。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @param {SuperChatNotification} n 受け取った通知
+ * @return {Promise<string>} 入った書類ID（26文字）
+ */
+export async function postAlertboxSuperchat(
+  k: string,
+  n: SuperChatNotification
+): Promise<string> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/superchat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: n.id,
+      currency: n.currency,
+      jpy: n.jpy,
+      nickname: n.nickname,
+      test: n.test,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to post alertbox superchat: ${res.status}`);
+  }
+  const data = await res.json();
+  return String(data?.id ?? "");
+}
+
+/**
+ * 配信の豚の貯金箱に出す額をもらう（#305）。
+ *
+ * 前は GAS の `Goals` を直に読んでいた（`getById("Goals", …)`）。
+ * **伸びるのは台帳だけになった**ので、表を読み続けると配信の豚が
+ * 投げ銭で伸びなくなる。
+ *
+ * 誰でも読める `GET /island-api/fund` を使わないのは、あちらが CDN に
+ * 5〜10分焼き付くから。配信の途中で開き直した豚が、10分古い額から
+ * 数え直すことになる。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @return {Promise<{currentAmount: number; targetAmount: number; label: string}>} 豚に出す3つ
+ */
+export async function getAlertboxFund(k: string): Promise<{
+  currentAmount: number;
+  targetAmount: number;
+  label: string;
+}> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/fund`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox fund: ${res.status}`);
+  }
+  const data = await res.json();
+  const currentAmount = Number(data?.currentAmount);
+  const targetAmount = Number(data?.targetAmount);
+  /* **読めなかったものを 0 にしない。** 0円の豚は、豚が出ないより悪い
+     （`docs/island-standards.md` 10章）。投げて、呼んだ側に印を出させる。 */
+  if (!Number.isFinite(currentAmount) || !Number.isFinite(targetAmount)) {
+    throw new Error("Invalid alertbox fund response");
+  }
+  return { currentAmount, targetAmount, label: String(data?.label ?? "") };
 }
 
 /**

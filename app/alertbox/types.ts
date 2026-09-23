@@ -101,36 +101,22 @@ export type NotificationData =
   | YouTubeSubscriberNotification
   | MembershipNotification;
 
-// GAS API Response types
-export interface GASApiResponse<T> {
-  ok: boolean;
-  table: string;
-  data: T;
-}
-
-// Goals table record (fetched from GAS)
-export interface GoalRecord {
-  id: string;
-  startAmount: number;
-  superChatAmount: number;
-  doneruGoalKey: string;
-  targetAmount: number;
-  label: string;
-}
-
-// Goal state (UI - includes calculated currentAmount)
-export interface GoalState extends GoalRecord {
+/**
+ * 配信の豚に出す3つ（#305）。
+ *
+ * **前はスプレッドシートの `Goals` 表の1行をそのまま継いでいた。**
+ * 起点・スパチャの累計・Doneru の鍵まで持っていて、額を組み立てるのは
+ * こちら側の仕事だった。額の式は `functions/src/islandApi.ts` に寄せたので、
+ * ここが持つのは**豚に描くもの**だけになった。
+ *
+ * 鍵を持たなくなったのが大きい。`doneruGoalKey` はここに入るたび、
+ * 配信の機械のメモリと OBS のログに乗っていた（#180 と同じ性質）。
+ */
+export interface GoalState {
+  /** 豚の針が指す額 */
   currentAmount: number;
-}
-
-// SuperChats table record (for POST to GAS)
-export interface SuperChatRecord {
-  id: string;
-  amount?: number;
-  currency?: string;
-  jpy?: number;
-  message?: string;
-  nickname?: string;
-  test?: boolean;
-  type?: 'superchat';
+  /** バーの高さ */
+  targetAmount: number;
+  /** 目標の名前。分からなければ空文字 */
+  label: string;
 }
