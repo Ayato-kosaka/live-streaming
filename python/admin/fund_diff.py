@@ -302,8 +302,26 @@ def main() -> int:
              prod_total, prod.get("given"), prod.get("goal"), prod.get("people"))
     log.info("  逆算した Doneru の累計: %d円", doneru)
 
+    # ---- 焼き直しが、いま数えたものと合っているか ----
+    # **切り替えたあとの `GET /fund` が読むのは、数え直した値ではなく
+    # ここ（`island/state.fund.box`）。** 焼き直しが古いまま切り替えると、
+    # 「数えたら合っていたのに、出したら違う額が出る」になる
+    baked = ((client.collection("island").document("state").get().to_dict()
+              or {}).get("fund") or {}).get("box") or {}
+    b_sc = int(baked.get("superchat") or 0)
+    b_start = int(baked.get("start") or 0)
+    log.info("")
+    log.info("焼き直し（island/state.fund.box）: superchat=%d / start=%d / "
+             "count=%s / updatedAt=%s",
+             b_sc, b_start, baked.get("count"), baked.get("updatedAt"))
+    if b_sc != s["superchat"] or b_start != fb.start_amount(s["spend"]):
+        log.error("**焼き直しが、いま数えたものと合いません。**"
+                  "fund_sync を apply で回してから、もう一度ここを見る")
+        return 1
+
     # ---- 案0: そのまま切り替える ----
-    plain = fb.box(s["superchatFull"], doneru, s["spend"])
+    # **焼き直しの値で組む。** 切り替えたあとの口が読むのはこちら
+    plain = b_sc + doneru + b_start
     need = plain - prod_total
     log.info("")
     log.info("案0 そのまま切り替える: total=%d円（いまとの差 %+d円）", plain, need)
