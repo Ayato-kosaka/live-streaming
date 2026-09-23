@@ -49,7 +49,7 @@ def ok(cond: bool, what: str) -> None:
 def case_wait_of() -> None:
     print("\n[1] 付いている札から、待ちの相手を1つ選ぶ")
     ok(wait_of([{"name": WAIT_AYATO}]) == WAIT_AYATO, "あやと待ちを読む")
-    ok(wait_of(["待ち-こちら"]) == WAIT_US, "名前だけの並びでも読む")
+    ok(wait_of(["待ち-システム"]) == WAIT_US, "名前だけの並びでも読む")
     ok(wait_of([{"name": "bug"}, {"name": AFTER_TRIP}]) == AFTER_TRIP,
        "関係ない札が混ざっていても読む")
     ok(wait_of([]) == "", "1つも付いていなければ空")
