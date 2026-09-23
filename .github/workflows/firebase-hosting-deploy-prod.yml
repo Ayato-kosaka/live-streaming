@@ -22,7 +22,13 @@ jobs:
           # いまは OBS の URL の ?k=… （こちらが出した合言葉）だけを渡し、
           # 鍵を使うのは Functions の中だけ。Secret は消していない
           # （python の取り込みが Actions の中で使っている）。
-          echo "EXPO_PUBLIC_GAS_API_URL=${{ secrets.EXPO_PUBLIC_GAS_API_URL }}" >> .env
+          # EXPO_PUBLIC_GAS_API_URL も渡さない（#305）。**参照がもう1つも無い。**
+          # スプレッドシートを読み書きしていた3つ（getTable / getById / insert）を
+          # 落として、名簿もスパチャも貯金箱もあやと島の口へ移した。
+          # 焼いたままにすると、次に「表から取ればいい」と書いた人のぶんから
+          # 消えた表を読みに行くことになるし、**URL を知っていれば誰でも
+          # 全件読める**表への入口が、書き出しに残り続ける。
+          # Secret は消していない（python/admin の移行ものが Actions の中で使う）。
           echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
           echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
           # EXPO_PUBLIC_YOUTUBE_API_KEY は渡さない。**参照がもう1つも無い。**
