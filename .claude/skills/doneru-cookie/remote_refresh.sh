@@ -35,7 +35,7 @@ rm -f "$PROFILE"/Singleton*
 
 # 1. デバッグポート付きで起動
 sudo -u ubuntu -i -- sh -c "export DISPLAY=:20; nohup google-chrome \
-  --user-data-dir=${PROFILE} --remote-debugging-port=${PORT} \
+  --user-data-dir=${PROFILE} --remote-debugging-port=${PORT} --remote-allow-origins=http://localhost:${PORT} \
   --no-first-run --no-default-browser-check https://doneru.jp/ \
   >/tmp/chrome_doneru.log 2>&1 & sleep 20; echo launched"
 curl -s "http://localhost:${PORT}/json/version" >/dev/null || { echo "ERROR: デバッグポートが開かない"; tail -5 /tmp/chrome_doneru.log; exit 1; }
@@ -52,7 +52,8 @@ def pages():
 
 class Tab:
     def __init__(self, t):
-        self.ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=30); self.n = 0
+        # Origin を付けると Chrome 111+ は 403 で弾く（起動側の --remote-allow-origins と二重に塞ぐ）
+        self.ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=30, suppress_origin=True); self.n = 0
     def call(self, method, **params):
         self.n += 1; self.ws.send(json.dumps({"id": self.n, "method": method, "params": params}))
         while True:
@@ -117,6 +118,7 @@ else:
 PY
 RC=$?
 [ "$RC" -eq 3 ] && exit 3
+[ "$RC" -eq 0 ] || { echo "ERROR: CDP の手順が落ちた（exit $RC）。STDERR を見る"; exit 1; }
 [ -s "$DT_FILE" ] || { echo "ERROR: _dt を取れなかった。上の step の行を見て、押す所を足す"; exit 2; }
 DT=$(cat "$DT_FILE"); rm -f "$DT_FILE"
 
