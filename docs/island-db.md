@@ -382,7 +382,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
 | 豚の貯金箱の**額** | Firestore `islandFundSuperChats` → `island/state.fund.box` | GAS の `SuperChats` 表（もう誰も読み書きしない） | **台帳が正**（2026-09-23。#305）。OBS が `POST /island-api/alertbox/{合言葉}/superchat` で台帳へ書き足すようになったので、**伸びるのは台帳だけ。** サイトも OBS も焼き直し（`fund.box`）を読む |
-| 豚の貯金箱の**鍵とバーの高さ** | Firestore `islandGoal/2025-10-24` | GAS の `Goals` 表（`goal_backup_nightly` だけが読む） | **Firestore が正**（2026-09-23。#305）。ここを通るのは Doneru の鍵と `targetAmount` だけで、**どちらも増えない。** 「額が伸びる側が正」で GAS を先に読んでいた理由ごと無くなったので、読む先を1つに畳んだ（#604 の大小比較も一緒に落とした） |
+| 豚の貯金箱の**鍵とバーの高さ** | Firestore `islandGoal/2025-10-24` | GAS の `Goals` 表（**手で押したときだけ**写す） | **Firestore が正**（2026-09-23。#305）。ここを通るのは Doneru の鍵と `targetAmount` だけで、**どちらも増えない。** 「額が伸びる側が正」で GAS を先に読んでいた理由ごと無くなったので、読む先を1つに畳んだ（#604 の大小比較も一緒に落とした） |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
 ### 3.4 キャラクターは誰のものか — **結ぶ材料がどこにあるか**
@@ -977,13 +977,19 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 `/island-api/fund` と Doneru の累計に突き合わせて、**GAS と1円でも違えば
 書かない。** 流しても本番の見た目は変わらない（控えを作るだけ）。
 
-**毎晩ひとりでに流れる**（`.github/workflows/goal_backup_nightly.yml` が
-`python/admin/goal_backup.py` 越しに呼ぶ。#614）。手で流していた頃は
-**9日開いた**ことがあり、そのぶん「GAS がこけた回」の落差になっていた。
-合わなかった晩（本番は5分ぶん寝かせた値を返すので、投げ銭の直後は必ず
+**もう毎晩は走らない**（2026-09-23。#305）。`goal_backup_nightly.yml` から
+`workflow_run` と cron を外して、**手で押すときだけ**動くようにした。
+#614 で毎晩に繋いだ目的は「控えが古いまま踏まれると9日前の額が出る」こと
+だったが、**その落ち先に額が入っていない**（額は台帳から来る）。
+そして `goal_migrate` の止め金は「GAS と本番が1円まで合うこと」で、
+**GAS が凍った時点で必ず外れる**——繋いだままだと毎晩赤くなり、
+読まれない赤の中に本物の赤が埋もれる。畳んだ理由はワークフローの頭にある。
+
+押しかたは Actions の「豚の貯金箱の控えを写す」を `dry_run: false` で。
+合わなかった回（本番は5分ぶん寝かせた値を返すので、投げ銭の直後は必ず
 合わない）は数分おいて1回だけ試し直し、それでも合わなければ**書かずに緑**で
-終える。控えが1日古くなるだけで壊れてはいない。**3晩続けて書けなかった
-ときだけ赤。** 何晩続いているかは下の `islandGoalHealth`。
+終える。**3回続けて書けなかったときだけ赤。** 何回続いているかは下の
+`islandGoalHealth`。
 
 **`label`（目標の名前）はここに無い。** 配信の豚に出す名前は
 `islandFundGoals` の `label`（`island/state.fund.box.goal.label` に焼かれる）。
@@ -1002,42 +1008,39 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 Doneru は鍵が引けないので `null` になる。
 **貯金箱が「0円」と出るのは、止まるより悪い**（`island-standards.md` 10章）。
 
-**あやとが表を消すと `goal_backup_nightly` が赤くなる。** そうなったら写しを
-止めて、この書類は人が直す側に回す（鍵も高さも年に何度も変わらない）。
+**あやとが表を消したら、この書類は人が直す側に回す**（鍵も高さも年に何度も
+変わらない）。写しの仕組み（`goal_backup_nightly.yml`）はそのとき畳んでよい。
 
-ただし **ここのほうが額が大きければ、そちらを採る**（上の「額が増える側が
-正」）。比べられるのは**鍵が同じとき**だけで、鍵が違えば別の企画の貯金箱
-なので額の大小に意味が無い。
+バーの高さがここから取れなければ `island/state.fund.box.goal.yen`、
+それも無ければ 0（画面は割り算を避ける）。額のほうがどれも無ければ
+`island/state.fund` の集計値、それも空なら 503 を返して画面が数字を消す
+（[`island-standards.md`](./island-standards.md) 10章）。
 
-どれも無ければ `island/state.fund` の集計値、それも空なら 503 を返して
-画面が数字を消す（[`island-standards.md`](./island-standards.md) 10章）。
+**寿命は結果で違う。** 読めた回は5分、読めなかった回は**30秒**
+（`GOAL_RETRY_TTL_MS`）。読めなかった回まで5分据え置くと、1回の取りこぼしが
+5分ぶん尾を引く（Doneru の鍵が引けないあいだ、Doneru のぶんが欠ける）。
 
-**寿命は出どころで違う。** GAS が読めた回は5分、こけた回は**30秒**
-（`GOAL_RETRY_TTL_MS`）。こけた回まで5分据え置くと、1回の取りこぼしで
-5分ぶん古い額が出る。
+**読めなかった回はログに出る**（`goal record: firestore miss`。括弧の中が
+内訳で、`kept cache`（前に読めた値を返した）/ `nothing readable`（1つも無い））。
 
-**どちらから読んだかは毎回ログに出る**（`goal record: from gas`。切り替わった
-回だけ `source changed …` が warn で立つ）。**こけた回は `gas miss` で全部
-数えられる**。括弧の中が内訳で、`kept cache`（踏みとどまった）/
-`fell back to firestore`（控えを採った）/ `nothing readable`（1つも無い）。
+**`islandGoalHealth/last`** — 控えを**何回続けて写せていないか**の札（1書類）
 
-**`islandGoalHealth/last`** — 控えを**何晩続けて写せていないか**の札（1書類）
-
-`python/admin/goal_backup.py` が毎晩書く。**画面からは読めない**
-（読むのは毎晩の仕組みだけで、島には出ない）。`islandDoneruHealth` と同じ形。
+`python/admin/goal_backup.py` が押されるたびに書く。**画面からは読めない**
+（島には出ない）。`islandDoneruHealth` と同じ形。
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
 | `at` | string | この札を書いた時刻（ISO8601 UTC） |
 | `lastOutcome` | string | 直近の結果（`ok` / `mismatch`） |
 | `okAt` / `okDay` | string | 最後に控えを写せた時刻と、その日（日本時間） |
-| `missStreak` | number | **続けて写せなかった晩の数。** 3 で赤になる |
+| `missStreak` | number | **続けて写せなかった数。** 3 で赤になる |
 | `missDay` | string | 最後に「写せなかった」と数えた日（日本時間） |
-| `missSince` | string | その連続の1晩目（日本時間） |
+| `missSince` | string | その連続の1回目（日本時間） |
 
-**数えるのは「晩」であって「回」ではない。** 同じ日に2回走っても増えない
-（繋ぎ元が2回発火した晩や人が押した回で、3晩ぶんが1日に溜まると
-**理由のない赤**になる）。写せた晩に 0 へ戻る。
+**数えるのは「日」であって「押した回」ではない。** 同じ日に2回押しても
+増えない（3回ぶんが1日に溜まると**理由のない赤**になる）。写せた日に 0 へ戻る。
+毎晩に繋がっていたころの「晩」が、いまは「押した日」になっている
+（**数えかたは1バイトも変えていない**。走る回数が変わっただけ）。
 
 #### c. 押した・数えた
 
