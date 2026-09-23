@@ -406,6 +406,16 @@
       }
 
       /* ============ 舞台 ============ */
+      /* 台。倍率は JS が --k に入れる（CSS だけでは長さを無単位の倍率に
+         できない）。origin を中心にして、画面の真ん中に置く */
+      #canvas {
+        position: fixed;
+        left: 50%; top: 50%;
+        width: 1920px; height: 1080px;
+        transform: translate(-50%, -50%) scale(var(--k, 1));
+        transform-origin: center center;
+      }
+
       #stage {
         position: fixed;
         inset: 0;
@@ -1233,6 +1243,16 @@
     <script src="review/manifest.js"></script>
   </head>
   <body>
+    <!-- **1920x1080 の台。** この資料は横長1枚として組んであって、
+         画面いっぱいに伸ばすと 1600x900 を下回ったところから中身が枠を
+         はみ出す（1440x900 で39個、1366x768 で170個、スマホ横で396個。
+         2026-09-23 実測）。**伸ばすのをやめて、台ごと縮める。**
+         どの大きさでも「1920x1080 で見たときと同じ絵」が出る。
+         OBS の 1920x1080 では倍率がちょうど 1 になるので、何も変わらない。
+
+         中の要素は position: fixed のままでよい。**変形した親が
+         fixed の基準になる**ので、画面ではなくこの台の中で位置が決まる。 -->
+    <div id="canvas">
     <!-- 浜。図鑑を開いている場所。動かない -->
     <div id="beach" aria-hidden="true">
       <div class="b-sand"></div>
@@ -1364,6 +1384,8 @@
     <!-- 縦向きのときだけ出る案内。**この面の外には何も足していない**ので、
          横にすると資料がそのまま現れる。絵は #ico-defs の光を引いて描く
          （絵文字は使わない。docs/island-design.md 1章） -->
+    </div><!-- /#canvas -->
+
     <div id="rotate">
       <div class="rot-card">
         <svg class="rot-ic" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
@@ -2887,6 +2909,18 @@
       const IS_CTRL = new URLSearchParams(location.search).get("role") === "ctrl";
       /* 縦のあいだは #rotate が画面ぜんぶを覆っている。そこを触って歩が進むと、
          横にした瞬間に知らない区画から始まる。**縦のあいだは歩を進めない。** */
+      /* 台の倍率。**画面に入る大きさまで縮める（widthとheightの小さいほう）。**
+         大きい画面では 1 を超えて拡大もする——1920 で作った1枚なので、
+         2560 の画面では 1.33 倍にしたほうが、まわりに余白を出すより素直。
+         上限は置かない（縦横比が保たれるので、どちらかの端は必ず画面に付く）。 */
+      function fitCanvas() {
+        const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+        document.documentElement.style.setProperty("--k", String(k));
+      }
+      fitCanvas();
+      addEventListener("resize", fitCanvas);
+      addEventListener("orientationchange", fitCanvas);
+
       const PORTRAIT = window.matchMedia("(orientation: portrait)");
       if (!IS_CTRL) {
         window.addEventListener("pointerdown", (ev) => {
