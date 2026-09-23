@@ -53,8 +53,9 @@ bash .claude/skills/doneru-cookie/ec2_exec.sh .claude/skills/doneru-cookie/remot
 | `STOP: パスワードを求められた` / `STOP: Google が本人確認を求めた` | 終了コード3。**何も打っていない・押していない** | あやとに渡す（4章） |
 | `api.doneru.jp -> HTTP 200` と `csv rows` | `_dt` が本物 | — |
 
-Doneru の入口は **トップ → `配信者ログイン` → `/auth/login` → `Sign in with YouTube` →
-`accounts.google.com` のアカウント選択**（2026-09-23 の実測）。
+Doneru の配信者ログインは `https://doneru.jp/auth/login?loginType=streamer` の
+「Sign in with YouTube」で、その行き先は **`/auth/youtube?type=streamer`**（あやと 2026-09-23）。
+スクリプトはここへ直接行くので、Google のアカウント選択から始まる。
 `https://doneru.jp/login` は**存在しない**（「Return to Home」だけの画面）。
 
 ## 3. 入れたあと

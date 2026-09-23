@@ -111,8 +111,10 @@ print("google SID in profile:", google_logged_in(tab))
 dt = read_dt(tab)
 print("existing _dt valid:", bool(dt))
 if not dt:
-    # /login は存在しない（Return to Home の画面になる）。トップから入口を押していく
-    tab.call("Page.navigate", url="https://doneru.jp/"); time.sleep(8)
+    # 配信者のログインは /auth/login?loginType=streamer の「Sign in with YouTube」で、その行き先が
+    # /auth/youtube?type=streamer（あやと 2026-09-23）。直接行けば Google のアカウント選択から始まる。
+    # （/login は存在しない。Return to Home の画面になる）
+    tab.call("Page.navigate", url="https://doneru.jp/auth/youtube?type=streamer"); time.sleep(8)
     for step in range(15):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
