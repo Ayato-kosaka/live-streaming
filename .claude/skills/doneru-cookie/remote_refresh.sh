@@ -4,7 +4,7 @@
 # 切れていれば「Google でログイン → アカウント選択 → 同意」だけを CDP で押して取り直し、
 # api.doneru.jp で妥当性を確かめてから gh で DONERU_COOKIE に入れる。
 # **値はログにも標準出力にも出さない。** 出すのは「形」と HTTP コードだけ。
-# **パスワード欄が出たら何も打たずに終了コード3で止まる。** そこから先はあやとの手。
+# **パスワード欄・本人確認（2段階）が出たら何も押さずに終了コード3で止まる。** そこから先はあやとの手。
 set -u
 REPO="Ayato-kosaka/live-streaming"
 # Google / Doneru のセッションが残っているのは既定のプロファイル（nanitabeyo の作業で作ったもの）。
@@ -127,6 +127,10 @@ if not dt:
         print(f"step {step}: {where(url)} -> {r['kind']}")
         if r["kind"] == "PASSWORD":
             print("STOP: パスワードを求められた。何も打たずに止める（あやとの手が要る）"); sys.exit(3)
+        # /challenge/ は本人確認（dp = スマホに「はい」の通知、ipp = SMS、totp = 認証アプリ …）。
+        # 開いた時点でスマホに通知が飛ぶので、待たずに止める。ここで粘ると毎回あやとを起こす
+        if "accounts.google.com" in (url or "") and "/challenge/" in url:
+            print(f"STOP: Google が本人確認を求めた（{where(url)}）。何も押さずに止める（あやとの手が要る）"); sys.exit(3)
         if "x" in r: click(cur, r["x"], r["y"])
         time.sleep(6)
     dt = dt or read_dt(tab)
