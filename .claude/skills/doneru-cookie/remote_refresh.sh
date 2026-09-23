@@ -1,4 +1,4 @@
-#TIMEOUT=900
+#TIMEOUT=1200
 #!/bin/sh
 # EC2 上で走る。ログイン済み Chrome から _dt を平文で読み（CDP。復号不要）、
 # 切れていれば「Google でログイン → アカウント選択 → 同意」だけを CDP で押して取り直し、
@@ -15,7 +15,7 @@ PROFILE="/home/ubuntu/doneru-chrome"
 PORT=9222
 DT_FILE=/tmp/.doneru_dt
 # どこで抜けても Chrome を閉じてからにする。閉じずに止めると、取り直したセッションが EBS に書き戻されない
-trap 'pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 5; rm -f "$DT_FILE"' EXIT
+trap 'pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 5; rm -f "$DT_FILE" /tmp/doneru_challenge.txt' EXIT
 
 # Ubuntu の pip は PEP 668 で素のままだと入れてくれない。apt を先に試す。
 python3 -c 'import websocket' 2>/dev/null || apt-get install -y -qq python3-websocket >/dev/null 2>&1 \
@@ -49,6 +49,12 @@ BASE = "http://localhost:9222"
 # Doneru（YouTube チャンネル ayato_arigato）に使う Google アカウント（あやと 2026-09-23）。
 # リポジトリは公開なので、メールそのものではなく小文字にしたものの SHA-256 で照合する。
 # 上を当て推量で押したら別のアカウントで本人確認に飛んだので、一致しなければ押さずに止める
+# challenge/dp で待つ秒数。あやとがスマホを手にしているときだけ意味がある
+# （通知は画面を開いた時点で飛ぶので、待っても待たなくても通知の数は変わらない）
+WAIT_DP_SEC = 300
+CHALLENGE_FILE = "/tmp/doneru_challenge.txt"
+# dp の画面に大きく出る照合用の数字（1〜3桁だけの字の塊）
+NUMS = r"""[...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && e.offsetParent !== null && /^\d{1,3}$/.test((e.innerText || '').trim())).map(e => e.innerText.trim())"""
 ACCOUNT_SHA256 = "fc610098750871be3c2dbc1490ffff5de0e60d720b520366f993698fa8bb4adc"
 
 def pages():
@@ -135,6 +141,23 @@ if not dt:
             print("STOP: パスワードを求められた。何も打たずに止める（あやとの手が要る）"); sys.exit(3)
         # /challenge/ は本人確認（dp = スマホに「はい」の通知、ipp = SMS、totp = 認証アプリ …）。
         # 開いた時点でスマホに通知が飛ぶので、待たずに止める。ここで粘ると毎回あやとを起こす
+        # challenge/dp（スマホに「はい」＋数字の照合）だけは、あやとが手元で押せるように待つ。
+        # 画面の数字は CHALLENGE_FILE に書く。こちらは別の SSM コマンドでそれを読んで、あやとに伝える
+        if "accounts.google.com" in (url or "") and "/challenge/dp" in url and WAIT_DP_SEC > 0:
+            nums = cur.js(NUMS) or []
+            with open(CHALLENGE_FILE, "w") as f: f.write(f"{int(time.time())} numbers={nums}\n")
+            os.chmod(CHALLENGE_FILE, 0o644)
+            print(f"  challenge/dp: 画面の数字 {nums}。{WAIT_DP_SEC}秒待つ")
+            t0 = time.time()
+            while time.time() - t0 < WAIT_DP_SEC:
+                time.sleep(5)
+                ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"] and "/challenge/dp" in p["url"]]
+                if not g or read_dt(tab): break
+            print(f"  challenge/dp: {int(time.time() - t0)}秒で抜けた（{'まだ本人確認' if g else '先へ進んだ'}）")
+            with open(CHALLENGE_FILE, "a") as f: f.write("done\n")
+            if g and not read_dt(tab):
+                print("STOP: 本人確認が通らなかった。何も押さずに止める"); sys.exit(3)
+            time.sleep(4); continue
         if "accounts.google.com" in (url or "") and "/challenge/" in url:
             print(f"STOP: Google が本人確認を求めた（{where(url)}）。何も押さずに止める（あやとの手が要る）"); sys.exit(3)
         if r["kind"] == "google:chooser":
