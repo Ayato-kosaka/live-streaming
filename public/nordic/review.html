@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
   <head>
+    <!-- **置き場所は /nordic/review だが、連れているものは島の根にある。**
+         焼いた手形（review/manifest.js）が写真を `review/p/…` と相対で持っていて、
+         地図も `nordic_review_mapdata.js` で隣を見る。この面だけ1つ下の階に
+         降りたので、base を根に固定しないと `/nordic/review/…` を探しに行って
+         写真が1枚も出ない。手形を焼き直して絶対パスにする手もあるが、
+         **焼いたものを触らずに済むこちらを採った**（元のスクリプトを直すと
+         過去に焼いたものと食い違う）。 -->
+    <base href="/" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />

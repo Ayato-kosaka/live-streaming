@@ -1,4 +1,4 @@
-// 振り返り資料（public/nordic_review.html）を全区画・全ステップ歩く。
+// 振り返り資料（public/nordic/review.html）を全区画・全ステップ歩く。
 //   node tools/sprites/deckwalk.mjs
 // 見るもの: はみ出し（横・下・上）/ JSエラー / 絵文字 / 各区画の最後の1枚
 // **終了コードで判定する**（0=見つからなかった / 1=見つかった）。行の見た目で判断しない。
@@ -12,10 +12,10 @@ const ROOT = path.resolve(HERE, "..", "..");
 const EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 // **本番と同じ条件で見たいときは http で配って URL を渡す。**
 //   python3 -m http.server 4711 --directory public &
-//   URL=http://localhost:4711/nordic_review.html node tools/sprites/deckwalk.mjs
+//   URL=http://localhost:4711/nordic/review.html node tools/sprites/deckwalk.mjs
 // file:// で開くと丸ゴシックの @font-face が効かない（資料側で切ってある）。
 // 字の形が本番と変わるので、**明るさや字の濃さを測るときは必ず http にする。**
-const PAGE = process.env.URL || pathToFileURL(path.join(ROOT, "public", "nordic_review.html")).href;
+const PAGE = process.env.URL || pathToFileURL(path.join(ROOT, "public", "nordic", "review.html")).href;
 const OUT = process.env.SHOTS || "/tmp/deckshots";
 fs.mkdirSync(OUT, { recursive: true });
 

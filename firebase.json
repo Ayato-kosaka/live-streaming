@@ -8,6 +8,16 @@
     ],
     "redirects": [
       {
+        "source": "/nordic_review.html",
+        "destination": "/nordic/review",
+        "type": 301
+      },
+      {
+        "source": "/nordic_review",
+        "destination": "/nordic/review",
+        "type": 301
+      },
+      {
         "source": "/nordic/photos",
         "destination": "/cards",
         "type": 301
