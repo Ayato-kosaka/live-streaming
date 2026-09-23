@@ -55,7 +55,9 @@ WAIT_DP_SEC = 300
 CHALLENGE_FILE = "/tmp/doneru_challenge.txt"
 CHOICE_FILE = "/tmp/doneru_choice.txt"
 # Doneru の配信者は YouTube チャンネル ayato_arigato。同じ Google アカウントに別のチャンネルがある
-CHANNEL_RE = r"ayato|arigato|あやと"
+# 同じ Google アカウントに「あやと」「あやと と アプリ作り」などが並ぶので、名前が一致するものだけを押す
+# （delegation の一覧は「<名前> Youtube」の形。li と中の要素が同じ字で重なって出る）
+CHANNEL_RE = r"^ayato_arigato( Youtube)?$"
 # dp の画面に大きく出る照合用の数字（1〜3桁だけの字の塊）
 NUMS = r"""[...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && e.offsetParent !== null && /^\d{1,3}$/.test((e.innerText || '').trim())).map(e => e.innerText.trim())"""
 ACCOUNT_SHA256 = "fc610098750871be3c2dbc1490ffff5de0e60d720b520366f993698fa8bb4adc"
@@ -198,6 +200,7 @@ if not dt:
             opts = r["options"]
             print("  delegation:", [o["text"] for o in opts])
             hit = [o for o in opts if re.search(CHANNEL_RE, o["text"], re.I)]
+            if len({o["text"] for o in hit}) == 1: hit = hit[-1:]   # 同じ字の重なりは1つに（内側の要素を押す）
             if len(hit) != 1:
                 # 決まらなければ選択肢を書き出し、こちらが SSM で CHOICE_FILE に番号を書くまで待つ
                 with open(CHALLENGE_FILE, "w") as f: f.write("channels=" + json.dumps([o["text"] for o in opts], ensure_ascii=False) + "\n")
