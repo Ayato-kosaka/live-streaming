@@ -78,7 +78,7 @@ run_one_command() {
   local FIRST_LINE
   FIRST_LINE=$(head -1 "$SCRIPT_FILE")
   case "$FIRST_LINE" in
-    '#TIMEOUT='*) THIS_TIMEOUT="${FIRST_LINE#'#TIMEOUT='}"; tail -n +2 "$SCRIPT_FILE" > "${SCRIPT_FILE}.body"; SCRIPT_FILE="${SCRIPT_FILE}.body" ;;
+    '#TIMEOUT='*) THIS_TIMEOUT="${FIRST_LINE#'#TIMEOUT='}"; tail -n +2 "$SCRIPT_FILE" > /tmp/ec2_exec_body.sh; SCRIPT_FILE=/tmp/ec2_exec_body.sh ;;
   esac
 
   jq -n --rawfile s "$SCRIPT_FILE" --arg t "$((THIS_TIMEOUT + 120))" \
