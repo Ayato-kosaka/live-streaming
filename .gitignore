@@ -99,3 +99,6 @@ python/admin/_incoming/
 # リポジトリ直下で走らせると置き土産が出るが、これは道具の作業ファイルで
 # 中身に意味は無い。毎回コミットを求められるので無視する。
 deno.lock
+
+# 配ってある先の道（セッションごとの覚え書き。`/hand-off` と stop hook が使う）
+.claude/.handoff

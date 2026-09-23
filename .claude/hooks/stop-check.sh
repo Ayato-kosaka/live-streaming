@@ -22,14 +22,45 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || exit 0)" || exit 0
 msg=""
 b=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')
 
-# 1. 未コミット
-n=$(git status --porcelain 2>/dev/null | wc -l)
-if [ "$n" -gt 0 ]; then
-  msg="${msg}**未コミットが ${n} 件ある。**
-$(git status --porcelain 2>/dev/null | head -10)
+# **配ってあるぶんは、この数から外す。**
+#
+# 2026-09-23、エージェント2人がこの作業ディレクトリを共有していて、
+# あちらの書きかけを「未コミット」として毎回止めた。**文は「誰かの作業中
+# なら任せて良い」と言っているのに、コードにその逃げ道が無かった。**
+# 文が嘘をついている見張りは、読む側が無視するようになる。
+#
+# `.claude/.handoff` に、いま配ってある先の**道のあたま**を1行ずつ書く。
+# 配るときに書いて、上がってきたら消す（`/hand-off` の手順）。
+# **ここに書いていないものは、今までどおり止める。**
+hoff=".claude/.handoff"
+skip() {
+  # 覚え書きそのものは、いつでも外す（git に入れないもの）
+  [ "$1" = "$hoff" ] && return 0
+  [ -f "$hoff" ] || return 1
+  while IFS= read -r pre; do
+    case "$pre" in ''|'#'*) continue ;; esac
+    case "$1" in "$pre"*) return 0 ;; esac
+  done < "$hoff"
+  return 1
+}
 
-誰かの作業中なら、その人に任せて良い（その場合は、誰の何かを言ってから終わる）。
+mine=""; theirs=0
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  path=${line#???}
+  if skip "$path"; then theirs=$((theirs + 1)); else mine="${mine}${line}
+"; fi
+done <<EOF
+$(git status --porcelain 2>/dev/null)
+EOF
+
+n=$(printf '%s' "$mine" | grep -c . || true)
+if [ "${n:-0}" -gt 0 ]; then
+  msg="${msg}**未コミットが ${n} 件ある**（配ってあるぶんは除いて数えた）。
+$(printf '%s' "$mine" | head -10)
+
 自分のものなら commit して push する。
+誰かに配ってあるものなら、**\`.claude/.handoff\` にその道を書く**（\`/hand-off\`）。
 "
 fi
 
