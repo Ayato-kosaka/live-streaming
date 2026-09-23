@@ -22,6 +22,8 @@
      **「そもそも何も出ていない」**
   7. **1バイトも書かない**（`_fs.readonly()` が塞ぐ）
 
+`BREAK=` の足は7本（`loose` `keep` `blind` `split` `secret` `write` `dup`）。
+
 ## 終了コード
 
   0 … 通った / 1 … 見つかった / 2 … 数えられなかった（node で本物を動かせない）
@@ -128,7 +130,8 @@ CHARS = [
 
 TIPS = [
     ("tip1", {"displayNameSnapshot": T_TIP, "channelId": CID["tip"]}),
-    ("tip2", {"displayNameSnapshot": N_NAMI, "channelId": ""}),
+    # **相手はすでに図鑑の別の人のもの**（ふさがりの印が付くこと）
+    ("tip2", {"displayNameSnapshot": N_NAMI, "channelId": CID["taken1"]}),
     ("tip3", {"displayNameSnapshot": "だれでもない", "channelId": ""}),
 ]
 
@@ -238,7 +241,7 @@ def bad(msg: str) -> None:
 
 # BREAK の名前 -> 落ちてほしい足の番号
 LEGS = {"loose": "1", "keep": "2", "blind": "3", "split": "4",
-        "secret": "5", "write": "6"}
+        "secret": "5", "write": "6", "dup": "7"}
 
 
 def check_control() -> None:
@@ -331,8 +334,14 @@ def check_run() -> None:
     tip = [ln for ln in body if "🦑" in ln]
     if len(tip) != 1 or "1件 / 相手1人 / 2026-03-10" not in tip[0]:
         bad("(4) 台帳の列に『件数 / 相手の人数 / 最後の日』が出ていない")
-    if "**相手が1人に決まる** 1人" not in text:
-        bad("(4) 台帳の相手が1人に決まる人の数え方が違う")
+    if "**そのまま結べる見込み** 1人" not in text:
+        bad("(4) そのまま結べる見込みの人数の数え方が違う")
+    # **すでに別の人のものになっている相手には、印が付く**
+    nami = [ln for ln in body if "🐚" in ln]
+    if len(nami) != 1 or "**ふさがり**" not in nami[0]:
+        bad("(4) ふさがりの印が表に出ていない")
+    if "ふさがり 1人" not in text:
+        bad("(4) ふさがりの数え方が違う")
 
     # 7. 1バイトも書かない
     if writes:
@@ -384,7 +393,7 @@ def main() -> int:
         print(f"characters_why: **{len(FAIL)}件** 見つかりました", file=REAL_ERR)
         return 1
     print("characters_why: 7つとも通りました"
-          "（素で通る / BREAK 6本が足1本ずつ / 欠けない / 割れる / "
+          "（素で通る / BREAK 7本が足1本ずつ / 欠けない / 割れる / "
           "素性ゼロ / その対照 / 書かない）", file=REAL_ERR)
     return 0
 

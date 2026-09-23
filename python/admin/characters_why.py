@@ -69,6 +69,17 @@ ignorePunctuation:true})` ——そのもの。空白・記号・ひらがなと
 **相手が1人なら結べるかもしれないし、2人以上なら決められない。**
 件数だけ出すと、10件が1人ぶんなのか10人ぶんなのかが読めない。
 
+**「相手1人」だけでは、まだ結べる印にならない。** 2つ添える。
+
+| 印 | 何が起きているか |
+| --- | --- |
+| `ふさがり` | その相手は**すでに図鑑の別の人の `channelId`**。結ぶと二重になる |
+| `かぶり` | **空いている別の人も、同じ相手**を指している。どちらか決められない |
+
+`characters_name_match.plan()` が書く前に見ている2つ（`taken` と `shared`）と
+同じもの。**あちらは書かないために見て、こちらは決める人に見せるために出す。**
+印が付いていない「相手1人」だけが、そのまま結べる見込みのある人。
+
 ## 何を出さないか
 
 **このリポジトリは公開で、Actions のログも誰でも読める。**
@@ -94,7 +105,9 @@ ARGS にも名前を取らない（ARGS はログに出る）。
   5. **出す行に、仕込んだ名前が1文字も出ない**
   6. **読むだけの写しに、1バイトも書けない**
 
-`BREAK=loose|keep|blind|split|secret|write` で足を1本ずつ抜ける。
+  7. **そのまま結べない相手（ふさがり・かぶり）に、印が付く**
+
+`BREAK=loose|keep|blind|split|secret|write|dup` で足を1本ずつ抜ける。
 抜いたぶんの対照が落ちることまで見るのが `characters_why_selftest.py`。
 
 ## 終了コード
@@ -221,10 +234,10 @@ def roster_all(src) -> tuple:
         src: Firestore クライアント（読むだけの写し）
 
     Returns:
-        （空いている人 書類ID -> 材料, 使われている channelId の数, 図鑑の人数）
+        （空いている人 書類ID -> 材料, 使われている channelId の集合, 図鑑の人数）
     """
     blanks: dict = {}
-    taken = 0
+    taken: set = set()
     total = 0
     q = (
         src.collection(CHARACTERS)
@@ -235,8 +248,9 @@ def roster_all(src) -> tuple:
     for d in q.get():
         v = d.to_dict() or {}
         total += 1
-        if nm.clean(v.get("channelId"), 64):
-            taken += 1
+        cid = nm.clean(v.get("channelId"), 64)
+        if cid:
+            taken.add(cid)
             continue
         channel = nm.clean(v.get("channelName"), MAX_NAME)
         names = [nm.clean(a, MAX_NAME) for a in (v.get("aliases") or [])
@@ -542,6 +556,8 @@ def build(blanks: dict, titles: dict, counts: dict, exact: dict,
             "near": chat,
             "tips": len(tip_at),
             "tips_who": who,
+            # いちばん多い相手。**印を付ける先**（ふさがり／かぶり）
+            "tips_top": (max(who, key=lambda c: who[c]) if who else None),
             # **引けていないチャンネルが残っているあいだは言い切らない**
             # （`docs/island-standards.md` §10）
             "unsure": bool(unseen) and not chat,
@@ -549,6 +565,32 @@ def build(blanks: dict, titles: dict, counts: dict, exact: dict,
             "titles": titles,
         })
     return rows
+
+
+def marks(rows: list, taken: set) -> None:
+    """台帳の相手に、**そのまま結べない理由**の印を付ける。
+
+    「相手1人」だけでは結べる印にならない。すでに図鑑の別の人のもので
+    あることも、空いている別の人と取り合いになっていることもある。
+    `characters_name_match.plan()` が**書く前に見ている**2つと同じもので、
+    ここは決める人に見せるために出す。
+
+    Args:
+        rows: `build()` が返した材料。**その場で書き足す**
+        taken: すでに図鑑の誰かに結ばれている channelId
+    """
+    who: dict = {}
+    for r in rows:
+        if r["tips_top"]:
+            who[r["tips_top"]] = who.get(r["tips_top"], 0) + 1
+    for r in rows:
+        top = r["tips_top"]
+        if _break("dup"):
+            # **守りを1本抜く。** 対照 7 がここで落ちる
+            r["tips_taken"] = r["tips_dup"] = False
+            continue
+        r["tips_taken"] = bool(top) and top in taken
+        r["tips_dup"] = bool(top) and who.get(top, 0) > 1
 
 
 def peek(src, rows: list) -> None:
@@ -631,6 +673,10 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
                 f"相手{len(r['tips_who'])}人" if r["tips_who"] else "相手なし")
             if r["tips_peek"]:
                 tips += f" / {r['tips_peek']['last']}"
+            if r["tips_taken"]:
+                tips += " **ふさがり**"
+            if r["tips_dup"]:
+                tips += " **かぶり**"
         if _break("secret"):
             # **守りを1本抜く。** 対照 (5) がここで落ちることを見張りが見る
             emoji = emoji + "/" + str(r.get("leak") or "")
@@ -668,10 +714,28 @@ def lines(rows: list, total: int, taken: int, seen: dict) -> list:
                f"{sum(1 for r in rows if not r['names'] and r['handle_only'])}人）")
     out.append(
         f"  投げ銭の台帳に名前で当たる {sum(1 for r in rows if r['tips']):>5}人"
-        f"（うち **相手が1人に決まる** "
-        f"{sum(1 for r in rows if len(r['tips_who']) == 1)}人"
-        f" / 2人以上で選べない {sum(1 for r in rows if len(r['tips_who']) > 1)}人）")
+        f"（うち **そのまま結べる見込み** "
+        f"{ok_link(rows)}人"
+        f" / 相手が2人以上 {sum(1 for r in rows if len(r['tips_who']) > 1)}人"
+        f" / ふさがり {sum(1 for r in rows if r['tips_taken'])}人"
+        f" / かぶり {sum(1 for r in rows if r['tips_dup'])}人）")
     return out
+
+
+def ok_link(rows: list) -> int:
+    """**そのまま結べる見込みのある人数。**
+
+    「相手が1人に決まり、その相手がふさがっても、かぶってもいない」人。
+    ここが、決める人にいちばん効く1つの数。
+
+    Args:
+        rows: 材料
+
+    Returns:
+        人数
+    """
+    return sum(1 for r in rows if len(r["tips_who"]) == 1
+               and not r["tips_taken"] and not r["tips_dup"])
 
 
 def verdict(rows: list) -> int:
@@ -749,8 +813,12 @@ _C_CID = {k: "UCxx" + f"{i:02d}" + "seibutsudummy000000"
           for i, k in enumerate(list(_C_CASE) + ["blind1", "gone1"])}
 
 # 仕込みの台帳。`(表示名, その行の channelId)`
+#
+# **`なみのり` の相手は、すでに図鑑の誰かのもの**（ふさがり）。
+# **`がぎぐ` と `そら とぶ` は同じ1人を指す**（かぶり）
 _C_TIPS = [("なみのり", _C_CID["plain"]), ("アオイトリ", ""),
-           ("だれでもない", "")]
+           ("だれでもない", ""), ("がぎぐ", _C_CID["other"]),
+           ("そら とぶ", _C_CID["other"])]
 
 
 def _control_input() -> tuple:
@@ -820,6 +888,7 @@ def _control_run(blanks: dict, titles: dict, counts: dict,
         exact[doc_id] = {c for k in ks for c in by_key.get(k, set())}
     rows = build(blanks, titles, counts, exact, res["out"],
                  [t[1] for t in tips], got_ids, unseen, icons)
+    marks(rows, {_C_CID["plain"]})
     for r in rows:
         r["peek"] = ({"msgs": counts.get(r["near"][0], 0), "days": 7,
                       "last": "2026-01-03"} if r["near"] else None)
@@ -904,6 +973,24 @@ def run_control() -> list:
     if not planted or not hunt(text + "\n" + planted[0]):
         bad.append("(5) 探し方が、わざと混ぜた仕込みにも当たらない")
 
+    # 7. **そのまま結べない相手に、印が付く**
+    #
+    # ここの仕込みは**完全一致で当たる字**にしてある。ゆるい鍵でしか
+    # 当たらない字にすると、`BREAK=loose` を当てたときに足 1 と一緒に
+    # ここも落ちて、「4通りに壊したが、折れたのは同じ1本」になる
+    r = by_id.get(_C_DOC["plain"])
+    if not r or not r["tips_taken"] or r["tips_dup"]:
+        bad.append("(7) すでに図鑑の誰かのものになっている相手に、"
+                   "**ふさがり**の印が付かない")
+    for key in ("dakuten", "space"):
+        r = by_id.get(_C_DOC[key])
+        if not r or not r["tips_dup"]:
+            bad.append(f"(7) {key} の相手が別の人ともかぶっているのに、"
+                       "**かぶり**の印が付かない")
+    r = by_id.get(_C_DOC["kana"])
+    if not r or r["tips_taken"] or r["tips_dup"]:
+        bad.append("(7) 印の要らない人にまで印が付いた")
+
     # 6. 読むだけの写しに、1バイトも書けない
     probe = _Counter()
     src = guard(probe)
@@ -961,16 +1048,16 @@ def collect(src, budget: float) -> tuple:
         log.error("図鑑が1件も返りませんでした")
         return None, 0, 0, {}
     log.info("図鑑 %d人 / channelId が入っている %d人 / 空いている %d人",
-             total, taken, len(blanks))
+             total, len(taken), len(blanks))
     if not blanks:
         log.error("空いている人が1人もいません（**数えるものが無い**）")
-        return None, total, taken, {}
+        return None, total, len(taken), {}
 
     rows_bq = nm.chat_channels()
     if not rows_bq:
         log.error("チャットにチャンネルが1つも出ていません。"
                   "**0件なのか、引けていないのかが分けられません**")
-        return None, total, taken, {}
+        return None, total, len(taken), {}
     log.info("チャットに出ているチャンネル: %d個", len(rows_bq))
     counts = {c: n for c, n in rows_bq}
 
@@ -983,7 +1070,7 @@ def collect(src, budget: float) -> tuple:
     if not seen["ch_got"]:
         log.error("表示名を1つも引けませんでした。"
                   "**0件だったのか、訊けなかったのかが分けられません**")
-        return None, total, taken, seen
+        return None, total, len(taken), seen
 
     # --- 投げ銭の台帳。**名前でしか当たらない**（この人たちは ID を持たない）
     tips_name: list = []
@@ -1010,7 +1097,7 @@ def collect(src, budget: float) -> tuple:
         log.error("完全一致の字をそろえられませんでした")
         for line in nm.BLOCKED:
             log.error("  %s", line)
-        return None, total, taken, seen
+        return None, total, len(taken), seen
     by_key: dict = {}
     for c in got_ids:
         for k in nm.keys_of(titles[c][1], table["map"]):
@@ -1032,14 +1119,15 @@ def collect(src, budget: float) -> tuple:
                   "**数字を1つも出さずに止まります**")
         for line in BLOCKED:
             log.error("  %s", line)
-        return None, total, taken, seen
+        return None, total, len(taken), seen
     log.info("ゆるい鍵を動かしたのは本物です: %s / node %s / ICU %s",
              res.get("how"), res.get("node"), res.get("icu"))
 
     rows = build(blanks, titles, counts, exact, res["out"], tips_cid,
                  got_ids, seen["ch_blind"], icons)
+    marks(rows, taken)
     peek(src, rows)
-    return rows, total, taken, seen
+    return rows, total, len(taken), seen
 
 
 def main() -> int:
@@ -1060,8 +1148,8 @@ def main() -> int:
         for line in bad:
             log.error("  %s", line)
         return 2
-    log.info("対照 6つ、通りました（ゆるい鍵／落とさない／"
-             "言い切らない／寄りを弾く／名前を出さない／書かない）")
+    log.info("対照 7つ、通りました（ゆるい鍵／落とさない／言い切らない／"
+             "寄りを弾く／名前を出さない／書かない／結べない相手に印）")
 
     try:
         rows, total, taken, seen = collect(guard(db()), budget)
