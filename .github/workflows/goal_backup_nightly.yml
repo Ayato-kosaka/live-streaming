@@ -1,0 +1,245 @@
+name: 豚の貯金箱の控えを写す
+
+# GAS の `Goals` 1行を、Firestore の控え（`islandGoal/2025-10-24`）へ毎晩写す。
+# 中身は `python/admin/goal_migrate.py` ——**書く／書かないの判断は
+# 1バイトも変えていない。** ここがやるのは「毎晩ひとりでに回すこと」と
+# 「合わなかった晩に赤くしすぎないこと」だけ（`python/admin/goal_backup.py`）。
+#
+# ## なぜ要るか（#614）
+#
+# 控えは、本番（`functions/src/islandApi.ts` の `goalRecord()`）が
+# **GAS を読めなかったときだけ**落ちてくる先。#604（PR #613）で
+# 「GAS がこけた回に控えへ落ちない」ようにしたので、残っている壊れ方は
+# **冷たいインスタンスの初回に GAS がこける**ときだけになった。
+# 手元にキャッシュが1件も無いので、そこしか行き先がない。
+#
+# そして **その控えが 2026-09-12 に写したきりだった。** つまり、そこを踏むと
+# **9日前の額が豚の貯金箱に出る。** 頻度は下がったが 0 ではない。
+#
+# 毎晩写していれば、同じことが起きても**ずれは最大1日**。
+# 直すのは「古さ」であって、落ちる先そのものではない。
+#
+# **押す人がいないと止まる。** 手で流すものとして作られていて、実際に
+# 9日開いた。あやとは旅のあいだつながらない。だから毎晩の後ろに繋ぐ。
+#
+# ## 繋ぎかた — `workflow_run` が本体。cron は保険
+#
+# このリポジトリで定時実行が実際に発火した実績があるのは
+# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`（20:30 UTC）
+# の古参2本だけで、しかも**1時間49分〜3時間32分遅れて**走る。
+# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は翌朝まで発火しなかった。
+# **cron を当てにしない**（`CLAUDE.md`、`docs/island-misses.md` #125）。
+#
+# **`conclusion` は見ない。** `Fetch Doneru Donations` は落ちた回にも後段まで
+# 走る。成功のときだけ繋ぐと、呼び出しの出た晩だけ控えが古くなる。
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの `name:` を書き換えると
+# **黙って切れる。赤くならない。走らなくなるだけ。** それを見張るために
+# `python/goal_backup_nightly_selftest.py` が、ここに書いた名前と
+# 実在するファイルの `name:` を**字で突き合わせる**（食い違ったら PR で赤くなる）。
+#
+# ## 繋ぎ先を `Fetch Doneru Donations` にした理由
+#
+#   1. **`schedule_fetch_chat.yml` には繋がない。** あちらは最後の step が
+#      Secret を書き換える。そこへぶら下げると、鍵まわりの回に毎晩1本増える
+#   2. Doneru のほうは **`probe: true` で1バイトも書かずに手で押せる。**
+#      繋ぎが生きているかを、本番を汚さずに確かめられる
+#      （`tips_after_doneru.yml` / `channel_alias_nightly.yml` /
+#       `failed_reentry_nightly.yml` と同じ）
+#   3. **Doneru の取り込みの後ろに来るのが、そもそも都合がよい。**
+#      控えの突き合わせは Doneru の累計を別に読む（`goal_migrate` 4章）。
+#      あちらが走り終わったあとなら、本番と GAS が同じところを向いている
+#
+# **1本だけ。** 2本に繋ぐと1晩に2回走る。書く中身は何度流しても同じ（書類IDが
+# 固定）なので壊れはしないが、**合わなかった晩の待ち（6分）が2回**になるし、
+# 「続けて書けなかった晩」の数えかたが晩と回でずれる入口を増やすことになる。
+#
+# ## 毎晩赤くしない（#521）
+#
+# `goal_migrate.py` は**本番の額と1円まで一致しないと、1行も書かずに落ちる。**
+# 正しい止め金なので、そのまま残してある。ただし本番は5分ぶん寝かせた値を
+# 返す（`FUND_TTL_MS` と CDN）ので、**投げ銭の直後に走った晩は必ず合わない。**
+#
+# そのまま毎晩ぶら下げると毎晩赤くなり、**誰も読まなくなる。** そして
+# 読まれない赤の中に、本物の赤——「見ている表が本番の元ではない」——が埋もれる。
+#
+# だから `goal_backup.py` が: 合わなければ6分おいてもう1回 →
+# それでも合わなければ **1行も書かずに緑**（控えは前の晩のまま。1日古くなるだけ）
+# → **3晩続けて書けなかったときだけ赤。** 何晩続いているかは Firestore の札
+# （`islandGoalHealth/last`）が覚える。理由は向こうの頭に書いてある。
+#
+# ## ログ
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# **鍵（`doneruGoalKey`）は1文字も出ない**（長さと形だけ）。額は合計と目標額
+# ——本番の `/island-api/fund` が誰にでも返している値——だけが出る。
+# 個人の名前も個人の額も、この表はそもそも持っていない。
+# ARGS に取るのは `{}` か `{"apply": true}` だけ。
+
+on:
+  # **保険。** 本体は下の `workflow_run`。
+  # `rebake.yml`（01:00）・`tips_after_doneru.yml`（01:30）・
+  # `channel_alias_nightly.yml`（01:45）・`donor_calls.yml`/`backup.yml`（02:00）・
+  # `failed_reentry_nightly.yml`（02:15）・`ingest_down.yml`（02:30）・
+  # `ticket_stock.yml`（03:00 月曜）・`bake_down.yml`（04:00）・
+  # `ship_down.yml`（04:30）と重ねない。
+  # ここが2時間遅れても 05:30 UTC で、取り込みの実測（21:49〜23:32）の後ろに入る
+  schedule:
+    - cron: "30 3 * * *"
+
+  # **繋ぎが本体。** 名前を書き換えると黙って切れる（上の「繋ぎかた」）。
+  # 見張りが、この字と実在するファイルの `name:` を突き合わせている。
+  # **1本だけにしてある**（上の「繋ぎ先を…にした理由」）
+  workflow_run:
+    workflows: ["Fetch Doneru Donations"]
+    types: [completed]
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "見るだけ（控えに1バイトも書かない）。手で押すときはまずこのまま"
+        required: false
+        default: true
+        type: boolean
+
+# 同じ書類を2本が同時に書き換えないように1本ずつ。
+# 手で押す側（`run_admin_script.yml` から `goal_migrate`）は別の群れなので、
+# **そちらと同時に押さない**（書く中身は同じだが、こちらの「合わなかった晩」の
+# 数えかたに、向こうが書いた直後の値が混ざる）
+concurrency:
+  group: goal-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    # ふつうの晩は1分で終わる（GAS・本番・Doneru を1回ずつ読んで、書類を1つ書く）。
+    # 合わなかった晩は**6分の待ちが1回**入るので、そのぶんを見込む
+    timeout-minutes: 20
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Firestore（控えと札）を読み書きするのに要る。
+      # **GAS の鍵も Doneru の鍵も要らない**——読むのはどちらも公開の口で、
+      # `doneruGoalKey` は GAS の表から実行時に引く（Secret に置いていない）
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # `PyYAML` は `python/requirements.txt` に入っていない（あちらは本番の
+      # スクリプトが要るものだけ）。下の「繋ぎが切れていないか」がワークフローを
+      # YAML として読むのに要るので、ここで別に入れる。
+      # **入れ忘れると `No module named yaml` で毎晩赤くなり、中身を1つも見ないまま
+      # 落ちた run が「繋ぎが切れた」に見える**
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+          pip install PyYAML
+
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている
+      # （#180 Doneru の鍵 / #217 Anthropic の鍵 / #379 名簿 1,065 実行ぶん）。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      # **同じ job に置くことが要る**（job が違えばランナーが別で、隣の job で
+      # 通っていてもこちらの出力は1文字も守られていない）。0.5 秒で終わる
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # **すぐ下で回すものの決めを、回す前に見る。** 偽の GAS・偽の本番・
+      # 偽の Firestore で最後まで動かして、「1円まで合わないと1行も書かない」
+      # 「合わなければ数分おいて1回だけ試し直す」「それでも合わなければ書かずに緑」
+      # 「3晩続けて書けなければ赤」「書けた晩に連続を 0 に戻す」を実測する。
+      # ネットにも本番にも出ない。**ここが落ちたら、控えに触らずに止まる。**
+      - name: 写しかたが変わっていないか
+        run: python3 python/admin/goal_backup_selftest.py
+
+      # **繋ぎそのものが生きているかを、繋ぎで来た回にも見る。**
+      # 上の `workflow_run` の字と、実在するワークフローの `name:` を突き合わせ、
+      # 毎晩ぶんの既定が下見に化けていないか（#144 の「空回しの緑」）を、
+      # この step の `run:` を実際に bash で回して確かめる
+      - name: 繋ぎが切れていないか
+        run: python3 python/goal_backup_nightly_selftest.py
+
+      # 繋ぎと cron で来たぶんは、押す人がいない。入力も空で来る
+      # （`inputs.*` が空文字になる）。**ここで決めて env に置き、以降は env だけを
+      # 見る。** `!inputs.dry_run` を直接書くと、空文字が false と読まれて
+      # **たまたま**動く形になる（`rebake.yml` / `failed_reentry_nightly.yml` と同じ手当て）。
+      #
+      # **毎晩ぶんは下見にしない。** 下見のまま毎晩回すと、控えは1日も新しく
+      # ならないのに run だけが緑で並ぶ（#144 の裏返し）。
+      # 手で押したときだけ、既定を下見にして様子を見られるようにする
+      - name: 今回の押しかたを決める
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
+            echo "GOAL_DRY=0" >> "$GITHUB_ENV"
+            echo "毎晩ぶん（$EVENT）: 本番と1円まで合っていたら控えを写します"
+          else
+            if [ "$IN_DRY" = "false" ]; then
+              echo "GOAL_DRY=0" >> "$GITHUB_ENV"
+            else
+              echo "GOAL_DRY=1" >> "$GITHUB_ENV"
+            fi
+            echo "手で押したぶん: dry_run=$IN_DRY"
+          fi
+
+      # ARGS は env としてログに出るが、ここに入るのは `{}` か `{"apply": true}` だけ。
+      #
+      # **`continue-on-error` を付けない。`|| true` も書かない。**
+      # 誰も見ていない時間に走るので、**赤以外に気づく道が無い**（#132 / #144）。
+      # ただし**合わなかった晩は、そもそも緑で返る**（3晩続いたときだけ 1）。
+      # ここで隠すと、その3晩目まで隠れる
+      - name: 控えを写す
+        id: backup
+        working-directory: python/admin
+        run: |
+          set -euo pipefail
+          if [ "$GOAL_DRY" = "1" ]; then
+            ARGS='{}' python goal_backup.py
+          else
+            ARGS='{"apply": true}' python goal_backup.py
+          fi
+
+      # **黙って赤くならない。** 繋ぎと cron で走るぶんは誰も見ていないので、
+      # せめて何が起きたのかを要約に残す（run の1枚目に出る。ログを開かずに読める）
+      - name: 落ちたときに、何が起きたのかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 豚の貯金箱の控えを写せませんでした"
+            echo ""
+            echo '**控えが壊れたという意味ではありません。** 本番と1円まで'
+            echo '一致しない回は1行も書かないので、落ちた回の控えは'
+            echo '**前に写したときのまま**です。本番の額（`/island-api/fund`）も'
+            echo '動いていません——控えを読むのは、GAS が読めなかったときだけです。'
+            echo ""
+            echo 'ここが赤いときに起きていることは、2つのどちらかです:'
+            echo ""
+            echo '- **3晩続けて書けなかった** … 本番が5分ぶん寝ているだけなら、'
+            echo '  ここまで続きません。**見ている GAS の表が、本番の元では'
+            echo '  なくなっている**かもしれません。控えはその日数ぶん古いままです'
+            echo '- **合わなかったのとは別の落ちかた** … 表が読めない／'
+            echo '  `doneruGoalKey` の形が違う／書いたあとの読み直しがずれた'
+            echo ""
+            echo '何晩続けて書けていないかは、Firestore の `islandGoalHealth/last`'
+            echo 'にあります（`missStreak` と `missSince`）。'
+            echo ""
+            echo 'いま合うかだけ見るなら、このワークフローを `dry_run: true` で'
+            echo '手で押してください（1バイトも書かずに、合うかどうかだけ出ます）。'
+          } >> "$GITHUB_STEP_SUMMARY"
