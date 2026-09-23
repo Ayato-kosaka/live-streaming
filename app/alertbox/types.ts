@@ -118,9 +118,24 @@ export interface GoalRecord {
   label: string;
 }
 
-// Goal state (UI - includes calculated currentAmount)
-export interface GoalState extends GoalRecord {
+/**
+ * 配信の豚に出す3つ（#305）。
+ *
+ * **前は `GoalRecord`（スプレッドシートの Goals 表の1行）を継いでいた。**
+ * 起点・スパチャの累計・Doneru の鍵まで持っていて、額を組み立てるのは
+ * こちら側の仕事だった。額の式は `functions/src/islandApi.ts` に寄せたので、
+ * ここが持つのは**豚に描くもの**だけになった。
+ *
+ * 鍵を持たなくなったのが大きい。`doneruGoalKey` はここに入るたび、
+ * 配信の機械のメモリと OBS のログに乗っていた（#180 と同じ性質）。
+ */
+export interface GoalState {
+  /** 豚の針が指す額 */
   currentAmount: number;
+  /** バーの高さ */
+  targetAmount: number;
+  /** 目標の名前。分からなければ空文字 */
+  label: string;
 }
 
 // SuperChats table record (for POST to GAS)

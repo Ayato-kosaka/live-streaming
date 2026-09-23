@@ -1,6 +1,10 @@
 // API utility functions for GAS and Cloud Functions
 
-import { AlertboxCharacter, GASApiResponse } from "./types";
+import {
+  AlertboxCharacter,
+  GASApiResponse,
+  SuperChatNotification,
+} from "./types";
 
 /**
  * Get data from a GAS table
@@ -143,6 +147,78 @@ export async function getAlertboxCharacters(
   const data = await res.json();
   const list = Array.isArray(data?.characters) ? data.characters : [];
   return list as AlertboxCharacter[];
+}
+
+/**
+ * スパチャ1件を、豚の貯金箱の台帳に入れてもらう（#305）。
+ *
+ * 前はスプレッドシートの `SuperChats` へ1件ずつ足していた
+ * （`insert("SuperChats", …)`）。表を消すと貯金箱が止まるので、
+ * あやと島の台帳（`islandFundSuperChats`）へ移した。
+ *
+ * **同じ通知を2回投げても増えない。** 書類IDは通知のID（`LCC.…`）を
+ * ほどいた26文字で、サーバー側が上書きにする。配信の途中で OBS を
+ * 開き直しても、毎晩の掃除が BigQuery から同じものを拾っても、1件に潰れる。
+ *
+ * **本文（`message`）は送らない。** 貯金箱に要るのは額と誰かだけで、
+ * 視聴者さんが書いた字を台帳に残す理由が無い（表には残っていた）。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @param {SuperChatNotification} n 受け取った通知
+ * @return {Promise<string>} 入った書類ID（26文字）
+ */
+export async function postAlertboxSuperchat(
+  k: string,
+  n: SuperChatNotification
+): Promise<string> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/superchat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: n.id,
+      currency: n.currency,
+      jpy: n.jpy,
+      nickname: n.nickname,
+      test: n.test,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to post alertbox superchat: ${res.status}`);
+  }
+  const data = await res.json();
+  return String(data?.id ?? "");
+}
+
+/**
+ * 配信の豚の貯金箱に出す額をもらう（#305）。
+ *
+ * 前は GAS の `Goals` を直に読んでいた（`getById("Goals", …)`）。
+ * **伸びるのは台帳だけになった**ので、表を読み続けると配信の豚が
+ * 投げ銭で伸びなくなる。
+ *
+ * 誰でも読める `GET /island-api/fund` を使わないのは、あちらが CDN に
+ * 5〜10分焼き付くから。配信の途中で開き直した豚が、10分古い額から
+ * 数え直すことになる。
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @return {Promise<{currentAmount: number; targetAmount: number; label: string}>} 豚に出す3つ
+ */
+export async function getAlertboxFund(k: string): Promise<{
+  currentAmount: number;
+  targetAmount: number;
+  label: string;
+}> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/fund`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox fund: ${res.status}`);
+  }
+  const data = await res.json();
+  const currentAmount = Number(data?.currentAmount);
+  const targetAmount = Number(data?.targetAmount);
+  /* **読めなかったものを 0 にしない。** 0円の豚は、豚が出ないより悪い
+     （`docs/island-standards.md` 10章）。投げて、呼んだ側に印を出させる。 */
+  if (!Number.isFinite(currentAmount) || !Number.isFinite(targetAmount)) {
+    throw new Error("Invalid alertbox fund response");
+  }
+  return { currentAmount, targetAmount, label: String(data?.label ?? "") };
 }
 
 /**

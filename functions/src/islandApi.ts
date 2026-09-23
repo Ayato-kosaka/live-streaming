@@ -931,6 +931,159 @@ const handleOf = (v: unknown): string => {
   return s ? `@${s}`.slice(0, MAX_HANDLE_LEN) : "";
 };
 
+/* ---- スパチャを台帳に入れる（#305） ----
+
+   **書類IDが、この仕組みのいちばん大事なところ。** 入り口が3つ
+   （OBS のアラートボックス・毎晩の BigQuery・手入力）あって、3つが同じ
+   スパチャを指したときに1件に潰れないと、貯金箱の額が増えていく。
+
+   YouTube のスパチャには 26文字の item id があって、**出どころが違っても
+   ここに行き着く。** 包み方だけが違う。
+
+     アラートボックス（YouTube Data API） … `LCC.` + base64url(protobuf)
+     BigQuery `chat_messages.event_id`    … base64(protobuf)
+
+   **そのまま比べると1件も一致しない**（44文字と40文字）。ほどいて26文字に
+   してはじめて突き合わせられる。ほどきかたは `python/fund_box.py` の
+   `item_id_from_lcc()` / `item_id_from_event()` と同じにそろえてある。
+   **片方だけ直すと、同じスパチャが2件になって貯金箱が増える。**
+
+   下の道具は `functions/selftest/fund_superchat_selftest.mjs` が
+   `lib/islandApi.js` から切り出して回す。**写しを持たせない**ため、
+   ここから `async function fetchHandle` の手前までを丸ごと切り出す。
+   **あいだに別のものを挟まない。**（挟むと、切り出しが外の値を
+   欲しがって動かなくなる） */
+
+/** 台帳の書類ID。**26文字**（`python/fund_box.py` の `ITEM_ID` と同じ形）。 */
+const FUND_ITEM_ID = /^[A-Za-z0-9_-]{26}$/;
+/* 円として受ける通貨の書きかた。**ここに無いものは台帳に入れない。**
+   実データに `ILS` `CA$` `₪` が数件あり、BigQuery から拾う側
+   （`python/fund_box.py` の `bq_superchats`）は `¥` で始まる行しか見ていない。
+   入れる側だけが外貨を通すと、**毎晩の掃除で消えも増えもしない1件**が
+   台帳に残って、額の出どころが2通りになる。 */
+const FUND_YEN = new Set(["円", "¥", "JPY"]);
+
+/**
+ * アラートボックスが持ってきたID（`LCC.…`）から、26文字の item id を取る。
+ * @param {unknown} v `LCC.` で始まる44文字ぶん
+ * @return {string} 26文字の item id。ほどけなければ空文字
+ */
+const itemIdFromLcc = (v: unknown): string => {
+  const raw = typeof v === "string" ? v : "";
+  if (!raw.startsWith("LCC.")) return "";
+  /* **`latin1` で戻す。** `ascii` は最上位ビットを落とすので、別のIDが
+     たまたま26文字の形に化けることがある。latin1 なら化けずに、
+     下の正規表現で落ちる（python 側の `decode("ascii", "ignore")` と
+     同じところに着く——どちらも「26文字の形でなければ空」）。 */
+  const tail = Buffer.from(raw.slice(4), "base64url")
+    .subarray(-26)
+    .toString("latin1");
+  return FUND_ITEM_ID.test(tail) ? tail : "";
+};
+
+/** 台帳に入れる日付と時刻。**どの入り口からも同じ形で入れる。** */
+type FundJst = {day: string; at: string};
+
+/**
+ * いまの日本時間。台帳の `day` と `at` は、どの入り口からも同じ形で入れる。
+ *
+ * **配信の時計を信じない。** 通知にはそもそも時刻が入っていないし、
+ * OBS の入っている機械の時計は旅先の時差で動く。`day` が1日ずれると
+ * `GET /fund/history` の並びと、手入力の札（`claim`）の突き合わせが外れる。
+ * @param {number} now いまの時刻（ミリ秒）
+ * @return {FundJst} `2026-09-23` と `2026-09-23T20:05:03+09:00` の2つ
+ */
+const fundJst = (now: number): FundJst => {
+  const p = new Date(now + 9 * 3600 * 1000).toISOString();
+  return {day: p.slice(0, 10), at: `${p.slice(0, 19)}+09:00`};
+};
+
+/** 台帳に入れる1件。書類IDは中身から決まる（**2回入れても増えない**）。 */
+type FundChat = {doc: string; rec: Json};
+
+/**
+ * 通知1件を、台帳に入れられる形にする。**入れないものは null。**
+ *
+ * 落とすのは4つ。どれも**額が狂う側**に倒れるものだけを見ている。
+ *
+ *   1. 通知のテスト（`test: true`）… 出ていないお金
+ *   2. 円以外 … 毎晩の掃除が見ないので、入れると出どころが2通りになる
+ *   3. 0円以下 … 額として意味が無い
+ *   4. ほどけないID … 書類IDが決まらないと、2回投げたぶんが2件になる
+ *
+ * **落としたものを 200 で黙って飲まない。** 呼ぶ側（OBS）はしくじりを
+ * ログにだけ残して先へ進む作りなので、ここで黙ると「入っているつもりで
+ * 入っていない」が誰にも見えない。
+ * @param {Json} b 受け取った本文
+ * @param {number} now いまの時刻（ミリ秒）
+ * @return {FundChat | null} 書類IDと中身。入れないなら null
+ */
+const fundChatOf = (b: Json, now: number): FundChat | null => {
+  if (b.test === true) return null;
+  if (!FUND_YEN.has(String(b.currency ?? ""))) return null;
+  const yen = Math.trunc(Number(b.jpy));
+  if (!Number.isFinite(yen) || yen <= 0) return null;
+  const doc = itemIdFromLcc(b.id);
+  if (!doc) return null;
+  const {day, at} = fundJst(now);
+  return {
+    doc,
+    rec: {
+      yen,
+      at,
+      day,
+      /* 名前は `GET /fund/history`（あやとだけ）に出る。**ログには出さない。**
+         ハンドルは31文字まであるので、名前の20文字では切れる（別人になる）。 */
+      who: clean(b.nickname, MAX_HANDLE_LEN),
+      // 入れるのは円だけなので、書くのも円だけ。表記の揺れを残さない
+      currency: "円",
+      /* 出どころ。`src` は「誰が拾ったか」で、`from` は「どの道を通ったか」。
+         GAS の表から移した411件は `src: "alertbox" / from: "gas"` なので、
+         こちらを見れば**新しい口を通ったぶんだけ**を後から数えられる。 */
+      src: "alertbox",
+      from: "island-api",
+    },
+  };
+};
+
+/** 台帳の焼き直し（`island/state.fund.box`）1件ぶん。 */
+type FundBox = {
+  /** 貯金箱に入るぶん（**÷2 済み**） */
+  superchat: number;
+  /** 起点。支出の合計の符号を反転した**負の数** */
+  start: number;
+  /** バーの高さ。分からなければ 0 */
+  goalYen: number;
+  /** 目標の名前。分からなければ空文字 */
+  goalLabel: string;
+};
+
+/**
+ * 台帳の焼き直しを、使える形にする。**半端に読めたものは通さない。**
+ *
+ * **欠けた欄を 0 で埋めない。** 起点（25万円ほどの負の数）が欠けたまま
+ * 0 になると、貯金箱は実際より25万円多い額を出す。`goalRec()` と同じ決めごと。
+ * 起点だけは **0 も正しい値**（支出が1件も無ければ 0）なので、
+ * 真偽ではなく `Number.isFinite` で見る。
+ * @param {unknown} v `island/state.fund.box`
+ * @return {FundBox | null} 使える値。1つでも欠けていれば null
+ */
+const boxOf = (v: unknown): FundBox | null => {
+  const b = (typeof v === "object" && v ? v : {}) as Json;
+  const superchat = Number(b.superchat);
+  const start = Number(b.start);
+  if (!Number.isFinite(superchat) || superchat < 0) return null;
+  if (!Number.isFinite(start)) return null;
+  const g = (typeof b.goal === "object" && b.goal ? b.goal : {}) as Json;
+  const yen = Number(g.yen);
+  return {
+    superchat,
+    start,
+    goalYen: Number.isFinite(yen) && yen > 0 ? yen : 0,
+    goalLabel: String(g.label ?? ""),
+  };
+};
+
 /**
  * チャンネルIDから、いまのハンドルを引く。
  *
@@ -1800,6 +1953,10 @@ const naps = (ms: number): Promise<void> =>
 */
 /** Doneru の投げ銭通知が流れてくる WebSocket。向こうが決めた形。 */
 const DONERU_WSS = "wss://push.doneru.jp/alertbox";
+/* OBS の URL に載る合言葉のかたち。**引きに行く前の関所は、ここ1か所。**
+   合言葉で引く関数が2つ（`alertboxKey` / `alertboxExists`）になったので、
+   片方だけ緩めても赤くならない。緩めたほうから総当たりを掛けられる。 */
+const ALERTBOX_ID = /^[0-9a-f]{32}$/;
 
 /**
  * 合言葉から、その持ち主の Doneru の鍵を引く。
@@ -1810,10 +1967,29 @@ const DONERU_WSS = "wss://push.doneru.jp/alertbox";
  * @return {Promise<string>} Doneru の鍵。無ければ空文字
  */
 async function alertboxKey(id: string): Promise<string> {
-  if (!/^[0-9a-f]{32}$/.test(id)) return "";
+  if (!ALERTBOX_ID.test(id)) return "";
   const q = await USERS.where("alertboxId", "==", id).limit(1).get();
   if (q.empty) return "";
   return String(q.docs[0].data()?.doneruKey ?? "");
+}
+
+/**
+ * その合言葉が、誰かの OBS のものかどうか。
+ *
+ * **Doneru の鍵は見ない。** 台帳へ書く口（`POST …/superchat`）は Doneru に
+ * 一度も触らないので、鍵の有無で断ると「鍵を入れ直している最中の晩だけ
+ * スパチャが台帳に入らない」になる。見るのは合言葉だけ。
+ *
+ * **形を先に見る。** 32桁でないものを引きに行かない——当てられない長さで
+ * あることが合言葉の強さなので、短いものを1回でも引くと、
+ * 総当たりに Firestore を使わせることになる。
+ * @param {string} id 32桁の合言葉
+ * @return {Promise<boolean>} 誰かのものなら true
+ */
+async function alertboxExists(id: string): Promise<boolean> {
+  if (!ALERTBOX_ID.test(id)) return false;
+  const q = await USERS.where("alertboxId", "==", id).limit(1).get();
+  return !q.empty;
 }
 
 /**
@@ -4004,6 +4180,93 @@ export const islandApi = onRequest(
           res.set("Cache-Control", "no-store");
           res.status(502).json({error: "doneru unavailable"});
         }
+        return;
+      }
+
+      /* スパチャ1件を、豚の貯金箱の台帳に入れる（#305）。
+
+         **ここが「額が伸びる側」になる。** いままで伸びていたのは
+         スプレッドシートの `SuperChats` で、`GET /fund` はそこから
+         引いた合計を返していた。表を消すと貯金箱が止まるので、
+         書き足す先をこちらへ移す。
+
+         ログインが要らないのは上2つと同じ理由（OBS のブラウザソースは
+         合言葉を持てない）。**Doneru の鍵は見ない**（`alertboxExists`）。
+
+         **同じ item id を2回投げても増えない。** 書類IDが中身から決まって
+         いて、`set(..., {merge: true})` で上書きになる。配信の途中で
+         OBS を開き直しても、毎晩の掃除が BigQuery から同じものを拾っても、
+         1件に潰れる。
+
+         **額もIDも名前もログに出さない。** このリポジトリは公開で、
+         Actions のログも誰でも読める。出すのは「入れたか、断ったか」だけ。 */
+      const abSc = path.match(/^\/alertbox\/([0-9a-f]{32})\/superchat$/);
+      if (method === "POST" && abSc) {
+        if (!(await alertboxExists(abSc[1]))) {
+          /* 合言葉が違う。**当たったかどうかを書き分けない**（上2つと同じ）。 */
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no alertbox"});
+          return;
+        }
+        const one = fundChatOf(body, Date.now());
+        if (!one) {
+          res.set("Cache-Control", "no-store");
+          res.status(400).json({error: "not a superchat we keep"});
+          return;
+        }
+        await FUND_CHATS.doc(one.doc).set(one.rec, {merge: true});
+        res.set("Cache-Control", "no-store");
+        /* 書類IDを返す。**呼んだ側が元から持っているもの**（送ってきたIDを
+           ほどいただけ）なので、新しく漏れるものは1つも無い。
+           OBS のログで「どの1件が入ったか」を後から追える。 */
+        res.json({ok: true, id: one.doc});
+        return;
+      }
+
+      /* 配信の豚の貯金箱が、起き上がるときに読む額（#305）。
+
+         **OBS は前まで GAS の `Goals` を直に読んでいた。** そこが正で
+         なくなったので、読む先をここへ移す。伸びるのは台帳だけなので、
+         **表を読み続けると配信の豚が伸びなくなる。**
+
+         **`GET /fund`（誰でも読める側）とは分けてある。** あちらは CDN に
+         5〜10分焼き付く作りで、配信の途中に開き直した豚が10分古い額から
+         数え直すことになる。ここは `no-store`。
+
+         返すのは配信の画面に出す3つだけ（額・目標・名前）。**人数も
+         内訳も返さない。** 豚に出ないものを渡す理由が無い。 */
+      const abFund = path.match(/^\/alertbox\/([0-9a-f]{32})\/fund$/);
+      if (method === "GET" && abFund) {
+        if (!(await alertboxExists(abFund[1]))) {
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no alertbox"});
+          return;
+        }
+        const [doneru, snap, goal] = await Promise.all([
+          doneruNow(),
+          STATE_DOC.get(),
+          goalRecord(),
+        ]);
+        const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
+        const b = boxOf(f.box);
+        /* **0円を 200 で返さない。** 豚が「0円」と出るのは、出ないより悪い
+           （`docs/island-standards.md` 10章）。読めなかったときは 200 以外を
+           返して、OBS 側に印だけ出させる（`setDead("init")`）。 */
+        if (!b || doneru === null) {
+          logger.warn(
+            `alertbox fund: not ready (box=${!!b} doneru=${doneru !== null})`,
+          );
+          res.set("Cache-Control", "no-store");
+          res.status(503).json({error: "no fund data"});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json({
+          // 豚の針が指す額。**式は `GET /fund` の total と同じ1本**
+          currentAmount: b.start + b.superchat + doneru,
+          targetAmount: b.goalYen > 0 ? b.goalYen : goal ? goal.goal : 0,
+          label: b.goalLabel,
+        });
         return;
       }
 

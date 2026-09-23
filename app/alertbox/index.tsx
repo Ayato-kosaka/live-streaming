@@ -21,8 +21,6 @@ import {
   NotificationData,
   AlertViewer,
   GoalState,
-  SuperChatRecord,
-  GoalRecord,
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
@@ -36,11 +34,10 @@ import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
 import { DoneruConnector, YouTubeConnector } from "./connectors";
 import {
-  getById,
-  insert,
-  getDoneruAmount,
   getAlertboxWss,
   getAlertboxCharacters,
+  getAlertboxFund,
+  postAlertboxSuperchat,
 } from "./api.utils";
 
 // 受け付け可能な通知タイプのリスト（ガードに利用）
@@ -50,9 +47,6 @@ const NOTIFICATION_TYPES = [
   "youtubeSubscriber",
   "membership",
 ] as const satisfies readonly NotificationData["type"][];
-
-// Goals テーブルのレコード ID（要件により固定）
-const GOAL_ID = "2025-10-24";
 
 // SuperChat 金額を currentAmount に加算する際の換算レート
 // 仕様: JPY 金額の 1/2 を目標金額に加算
@@ -247,34 +241,24 @@ export default function AlertBox() {
       }
     };
 
-    // 初期化処理（Goals / doneruAmount を取得）
+    /* 豚の貯金箱に出す額を取ってくる（#305）。
+
+       前は GAS の `Goals` を読んで、そこに入っていた Doneru の鍵で
+       Doneru の累計を自分で足していた。**鍵をブラウザに渡す形**だったのと、
+       **表が正でなくなった**のとで、両方ともサーバー側へ寄せた。
+
+       式（起点 + スパチャの半分 + Doneru）は `functions/src/islandApi.ts` に
+       1本だけある。ここで組み直さない——2か所にあると、いつか2つが
+       違う額を言う（`python/fund_box.py` の頭に同じことが書いてある）。 */
     const fetchInitialData = async () => {
       try {
-        // 2. Goals を取得（id 固定: 2025-10-24）
-        const goalsResponse = await getById<GoalRecord>("Goals", GOAL_ID);
-        if (!goalsResponse.ok) {
-          throw new Error("Failed to fetch Goals");
-        }
-        const goalRecord = goalsResponse.data;
-        sendLog("AlertBox", sessionId, "fetchGoalsSuccess", { goalRecord });
-
-        // 3. doneruAmount を取得
-        const doneruAmount = await getDoneruAmount(goalRecord.doneruGoalKey);
-        sendLog("AlertBox", sessionId, "fetchDoneruAmountSuccess", {
-          doneruAmount,
-        });
-
-        // currentAmount を算出して goal state にセット
-        const currentAmount =
-          goalRecord.startAmount + goalRecord.superChatAmount + doneruAmount;
+        const fund = await getAlertboxFund(alertboxId);
         setGoal({
-          ...goalRecord,
-          currentAmount,
+          currentAmount: fund.currentAmount,
+          targetAmount: fund.targetAmount,
+          label: fund.label,
         });
-        sendLog("AlertBox", sessionId, "initSuccess", {
-          currentAmount,
-          goal: goalRecord,
-        });
+        sendLog("AlertBox", sessionId, "initSuccess", { goal: fund });
       } catch (error) {
         /* **貯金箱が出せないだけ。** 通知そのものは別の口から来るので、
            ここで画面を差し替えない（前は差し替えていたので、この口が
@@ -331,30 +315,24 @@ export default function AlertBox() {
         });
       }
 
-      // superchat の場合のみ SuperChats に INSERT
-      if (notification.type === "superchat" && !notification.test) {
-        const superChatRecord: SuperChatRecord = {
-          id: notification.id || `unknown-${new Date().getTime()}`,
-          amount: notification.amount,
-          currency: notification.currency,
-          jpy: notification.jpy,
-          message: notification.message,
-          nickname: notification.nickname,
-          test: notification.test,
-          type: notification.type,
-        };
+      /* superchat のときだけ、豚の貯金箱の台帳に1件入れてもらう（#305）。
 
-        // INSERT は非同期で実行し、失敗してもキュー追加は続行
-        insert("SuperChats", superChatRecord)
-          .then(() => {
-            sendLog("AlertBox", sessionId, "superChatInsertSuccess", {
-              id: notification.id,
-            });
+         前はスプレッドシートの `SuperChats` へ足していた。表を消すと
+         貯金箱が止まるので、あやと島の台帳へ移してある。
+
+         **書き込みがこけても、アラートの表示は1ミリも止めない。**
+         キュー追加は下で続く。こぼれても毎晩の掃除（`python/fund_daily.py`）が
+         BigQuery から拾い直すので、**消えはしない。**
+         止めるほうが害が大きい——配信に映るのはアラートで、台帳は映らない。 */
+      if (notification.type === "superchat" && !notification.test) {
+        postAlertboxSuperchat(alertboxId, notification)
+          .then((id) => {
+            sendLog("AlertBox", sessionId, "superChatInsertSuccess", { id });
           })
           .catch((error) => {
             sendLog("AlertBox", sessionId, "superChatInsertError", {
               id: notification.id,
-              error,
+              error: String(error),
             });
           });
       }
