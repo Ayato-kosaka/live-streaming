@@ -185,27 +185,38 @@ const MAX_WEEK_LINES = 8;
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
    鍵は Functions の中に置いたまま、こちらから叩いて数字だけ返す。 */
 const DONERU_GOAL = "https://api.doneru.jp/widget/goal/data";
-/* 豚の貯金箱の「額ではないほう」（#305）。**Doneru の鍵と、バーの高さ。**
+/* Doneru の鍵（#639）。**島にひとつ。目標ごとではない。**
 
-   ここは長いあいだ GAS の `Goals` 表が正で、Firestore はその控えだった。
-   理由は「額が伸びる側が正」——スパチャを書き足していたのが配信の OBS で、
-   書き先が表しか無かったから。控えを先に読むと、投げ銭が入っても
-   サイトの豚が伸びない側を読むことになっていた。
+   ここは長いあいだ「豚の貯金箱の元」だった。GAS の `Goals` 表の4欄
+   （起点・スパチャ・目標額・鍵）を写した `islandGoal/2025-10-24` を読んで、
+   **額まで全部そこから出していた。** 額は #305 で台帳
+   （`islandFundSuperChats` → `island/state.fund.box`）へ、バーの高さは
+   `islandFundGoals` へ移った。**残ったのは鍵1つ**で、それだけのために
+   4欄ぶんの読み手（`goalRec` / `goalFromFirestore` / `goalRecord`）を
+   抱えていた。しかも旧い書類には誰も使わない欄が2つ古い値のまま凍っていて、
+   **次に読む人が「こっちが正かな」と思う形**になっていた。
 
-   **その理由ごと無くなった。** 額はもう台帳（`islandFundSuperChats` →
-   `island/state.fund.box`）から来ていて、ここを通らない。残っているのは
-   **増えない2つ**だけ——Doneru の鍵（`doneruGoalKey`）とバーの高さ
-   （`targetAmount`）。増えないものに「伸びる側が正」は効かないので、
-   読む先を1つに畳んだ。
+   **目標（`islandFundGoals`）の中に置かない。** 鍵は Doneru 側の目標
+   ウィジェット1つを指していて、`doneruNow()` が引くのは**そのウィジェットの
+   累計**。貯金箱の合計はそれを丸ごと足しているので、鍵が引けなければ
+   合計はその額ぶん落ちる。目標に紐づけると、
+   `fund_add {"kind":"goal","from":"<次の日付>"}` を1回打っただけで
+   新しい書類に鍵が無くなり、**目標を作るというふつうの操作が黙って額を落とす。**
 
-   `startAmount` / `superChatAmount` もまだ書類に入っているが、**誰も
-   使っていない**（`goalRec` が半端な書類を弾くために形だけ見ている）。
+   島の側の実物もそう言っている——いま走っている目標は
+   `islandFundGoals/2026-07-27` なのに、鍵は 2025-10-24 の書類に入ったまま
+   生き延びていた。**鍵は目標より長生きする。**
 
-   中身は `.github/workflows/goal_backup_nightly.yml`（#614）が毎晩写す。
-   **あやとが表を消したら、あちらは赤くなる。** そのときは写しを止めて、
-   この書類を人が直す側に回す——鍵も高さも、年に何度も変わるものではない。 */
-const GOAL_ID = "2025-10-24";
-const GOAL_DOC = db.collection("islandGoal").doc(GOAL_ID);
+   書くのは `python/admin/doneru_key.py` だけ。 */
+const DONERU_KEY_DOC = db.collection("islandFundConfig").doc("doneru");
+/* 鍵の形。**32桁の16進**（2026-09-24 に本番のものを、長さと形だけ測って
+   確かめた。値は出していない）。`python/fund_box.py` の `DONERU_KEY` と同じ。
+
+   **幅を持たせない。** 前は `[0-9a-f]{16,64}` で、幅の意味は誰も説明できず
+   「本番のものが通る範囲」でしかなかった。幅があると**半分に切れた鍵が通る。**
+   通っても Doneru は 0円ではなくエラーを返すので合計は結局止まるが、
+   止まる場所が遠くなるだけで得が無い。 */
+const DONERU_KEY = /^[0-9a-f]{32}$/;
 /* Doneru の取り込みが最後に通った日（#294。`python/doneru_health.py` が写す）。
    Doneru の寄付は cookie ひとつで取りに行っているので、**切れた日から
    BigQuery に入らなくなる。** 豚の貯金箱はスパチャぶんだけ伸びて、
@@ -237,124 +248,68 @@ const DONERU_STALE_DAYS = 3;
 /** Doneru を叩き直す間隔。1人ずつ叩くと相手先に迷惑なので、しばらく寝かせる。 */
 const FUND_TTL_MS = 5 * 60 * 1000;
 let fundCache: {at: number; doneru: number} | null = null;
-/** 豚の貯金箱の1件ぶん。**サイトはここを配信とそっくり同じに読む。** */
-type GoalRec = {key: string; start: number; superchat: number; goal: number};
-/** 読んだままの4欄。**Firestore も GAS も、同じ名前で同じものを持つ。** */
-type GoalRaw = {
-  doneruGoalKey?: unknown;
-  startAmount?: unknown;
-  superChatAmount?: unknown;
-  targetAmount?: unknown;
-};
 /* 読めなかった回だけの、短い寿命(#604)。
-   こけた回まで5分据え置くと、**1回の取りこぼしが5分ぶん尾を引く。**
+   こけた回まで5分据え置くと、**1回の取りこぼしが5分ぶん尾を引く**
+   ——そのあいだ Doneru のぶんが欠けた額（＝503）が出る。
    すぐ読み直せるように短くするが、0 にはしない（落ちている先を毎回叩かない）。 */
-const GOAL_RETRY_TTL_MS = 30 * 1000;
-/* 鍵も高さも年に何度も変わらないが、**書類ごと読めない回がある。**
+const KEY_RETRY_TTL_MS = 30 * 1000;
+/* 鍵は年に何度も変わらないが、**書類ごと読めない回がある。**
    Doneru と同じ間隔で読み直す。 */
-let goalCache: GoalRec | null = null;
-let goalAt = 0;
+let keyCache: string | null = null;
+let keyAt = 0;
 /* **この回ぶんの寿命。** 読めた回は 5分、こけた回は 30秒。
    入口の判定はここを見る（`FUND_TTL_MS` を直に見ない）。 */
-let goalTtl = FUND_TTL_MS;
+let keyTtl = FUND_TTL_MS;
 
 /**
- * 読んだ4欄を、使える形にする。**半端に読めたものは通さない。**
+ * Doneru の鍵を取る。環境変数があればそれ、無ければ
+ * `islandFundConfig/doneru` の `goalKey` から。
  *
- * 欠けた欄を 0 で埋めない。起点（`startAmount`。25万円ほどの負の数）が
- * 欠けたまま 0 になると、貯金箱は実際より25万円多い額を出す。
- * **黙って違う額を出すくらいなら、次の出どころへ落とすほうがいい。**
- * @param {GoalRaw} d 読んだ4欄
- * @param {string} from どこから読んだか（ログ用。額は出さない）
- * @return {GoalRec | null} 使える値。1つでも欠けていれば null
- */
-function goalRec(d: GoalRaw, from: string): GoalRec | null {
-  const k = String(d.doneruGoalKey ?? "");
-  if (!/^[0-9a-f]{16,64}$/.test(k)) {
-    logger.warn("goal record: bad key", from);
-    return null;
-  }
-  const start = Number(d.startAmount);
-  const superchat = Number(d.superChatAmount);
-  if (!Number.isFinite(start) || !Number.isFinite(superchat)) {
-    logger.warn("goal record: bad amounts", from);
-    return null;
-  }
-  /* 目標額だけは「いま貯まっている額」ではなく、バーの高さ。
-     ここで落とすと貯まっている額まで消えるので、既定に落として通す。 */
-  const goal = Number(d.targetAmount);
-  return {key: k, start, superchat, goal: Number.isFinite(goal) ? goal : 50000};
-}
-
-/**
- * 貯金箱の元を Firestore（`islandGoal/{id}`）から読む。
- * **GAS の表が消えたときの控え。**
- * @return {Promise<GoalRec | null>} 読めた値。書類が無い・欠けていれば null
- */
-async function goalFromFirestore(): Promise<GoalRec | null> {
-  try {
-    const snap = await GOAL_DOC.get();
-    if (!snap.exists) return null;
-    return goalRec((snap.data() ?? {}) as GoalRaw, "firestore");
-  } catch (e) {
-    logger.warn("goal record read failed (firestore)", String(e));
-    return null;
-  }
-}
-
-/**
- * 豚の貯金箱の「増えないほう」を1件返す（Doneru の鍵と、バーの高さ）。
- *
- * **出どころは `islandGoal/{id}` の1つだけ。** 長いあいだ GAS の表を先に
- * 読んで、こけた回だけこちらへ落ちる二段構えだった。理由は「額が増える側が
- * 正」——スパチャの書き先が表しか無かったから。額が台帳から来るように
- * なって（#305）、ここを通るのは**増えないもの**だけになったので、
- * 出どころを1つに畳んだ。
- *
- * 二段構えごと落としたのは、あれが額の大小を比べる作りだったため（#604）。
- * 比べる相手が無くなった以上、残すと「何もしない比較」だけが残る。
- *
- * 読めなかったときに **0 を作らない。** 前に読めた値（`goalCache`）が
- * あればそれを返し、それも無ければ null を返す。null を受けた `GET /fund` は
- * バーの高さを `island/state.fund.box` 側に取りに行き、Doneru は鍵が引けず
- * `null` になる。**貯金箱が「0円」と出るのは、止まるより悪い**
+ * **0 を作らない。** 読めなかったら、前に読めた鍵を返し続ける。それも
+ * 無ければ空文字を返す。空を受けた `doneruNow()` は null を返し、
+ * `GET /fund` は合計が 0 以下になって 503、`GET /alertbox/{合言葉}/fund` も
+ * 503 を返す。**貯金箱が「0円」と出るのは、止まるより悪い**
  * （`docs/island-standards.md` 10章）。
  *
- * こけた回を短い寿命で持つのも前のまま（#604）。5分据え置くと、1回の
- * 取りこぼしで5分ぶん Doneru のぶんが欠けた額が出る。
- * @return {Promise<GoalRec | null>} 鍵と高さ。読めなければ null
- */
-async function goalRecord(): Promise<GoalRec | null> {
-  if (goalCache && Date.now() - goalAt < goalTtl) return goalCache;
-
-  const rec = await goalFromFirestore();
-  if (!rec) {
-    /* 数字が消えるより古いほうがまし。**キャッシュも無ければ「無い」と言う。**
-       **額は出さない。** このリポジトリは公開で、ログも誰でも読める。 */
-    logger.warn(
-      goalCache ?
-        "goal record: firestore miss (kept cache)" :
-        "goal record: firestore miss (nothing readable)",
-    );
-    goalAt = Date.now();
-    goalTtl = GOAL_RETRY_TTL_MS;
-    return goalCache;
-  }
-  goalCache = rec;
-  goalAt = Date.now();
-  goalTtl = FUND_TTL_MS;
-  return rec;
-}
-
-/**
- * Doneru の goal key を取る。環境変数があればそれ、無ければ
- * `islandGoal/{id}` から。
- * @return {Promise<string>} 鍵。取れなければ空文字
+ * **形の違うものを通さない。** 半端な鍵で Doneru を叩いても額は返らないので、
+ * 通しても止まる場所が遠くなるだけ。**入口で弾いて、ログに1行残す。**
+ *
+ * **鍵そのものはログに出さない。** このリポジトリは公開で、
+ * Actions のログも誰でも読める（`CLAUDE.md`）。
+ * @return {Promise<string>} 32桁の16進。取れなければ空文字
  */
 async function doneruKeyOnly(): Promise<string> {
+  /* 逃げ道。**本番の書類を触らずに差し替えられる1本。**
+     ここも形を見る——env の打ち間違いは、書類の壊れかたより起きやすい。 */
   const env = process.env.DONERU_GOAL_KEY ?? "";
-  if (env) return env;
-  return (await goalRecord())?.key ?? "";
+  if (env) {
+    if (DONERU_KEY.test(env)) return env;
+    logger.warn("doneru key: env has bad shape");
+  }
+  if (keyCache && Date.now() - keyAt < keyTtl) return keyCache;
+
+  let k = "";
+  try {
+    const snap = await DONERU_KEY_DOC.get();
+    k = String((snap.data() ?? {}).goalKey ?? "");
+  } catch (e) {
+    logger.warn("doneru key read failed", String(e));
+  }
+  if (!DONERU_KEY.test(k)) {
+    // 数字が消えるより古いほうがまし。**キャッシュも無ければ「無い」と言う**
+    logger.warn(
+      keyCache ?
+        "doneru key: miss (kept cache)" :
+        "doneru key: miss (nothing readable)",
+    );
+    keyAt = Date.now();
+    keyTtl = KEY_RETRY_TTL_MS;
+    return keyCache ?? "";
+  }
+  keyCache = k;
+  keyAt = Date.now();
+  keyTtl = FUND_TTL_MS;
+  return k;
 }
 
 const MAX_NOTE_LEN = 120;
@@ -986,7 +941,8 @@ type FundBox = {
  * 台帳の焼き直しを、使える形にする。**半端に読めたものは通さない。**
  *
  * **欠けた欄を 0 で埋めない。** 起点（25万円ほどの負の数）が欠けたまま
- * 0 になると、貯金箱は実際より25万円多い額を出す。`goalRec()` と同じ決めごと。
+ * 0 になると、貯金箱は実際より25万円多い額を出す（#305 まで `goalRec()` が
+ * 同じ決めごとを持っていた。あちらは #639 で畳んだ）。
  * 起点だけは **0 も正しい値**（支出が1件も無ければ 0）なので、
  * 真偽ではなく `Number.isFinite` で見る。
  * @param {unknown} v `island/state.fund.box`
@@ -2826,10 +2782,9 @@ export const islandApi = onRequest(
          演出上の都合」と書いてあったが、**それが間違いだった**
          (`docs/nordic-fund.md` 9.1)。 */
       if (method === "GET" && path === "/fund") {
-        const [doneru, snap, goal, asOf] = await Promise.all([
+        const [doneru, snap, asOf] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
-          goalRecord(),
           /* **足すだけ。** ここが落ちても `doneruAsOf` が null を返すので、
              今までの4欄は1つも欠けない(`doneruAsOf` は投げない)。 */
           doneruAsOf(),
@@ -2866,8 +2821,9 @@ export const islandApi = onRequest(
            ぶんも翌朝ここに乗る。** 1件ずつ数え直さないのは、509件を
            島を開くたびに読ませないため。
 
-           **`goalRecord()` は消していない。** Doneru の鍵はまだそこから
-           来ていて（`doneruKeyOnly`）、バーの高さもそこに控えがある。 */
+           **旧い書類（`islandGoal`）はもう1回も読まない。**（#639）
+           最後まで残っていた Doneru の鍵が `islandFundConfig/doneru` へ
+           移ったので、あの書類を読む理由が1つも無くなった。 */
         const b = boxOf(f.box);
         const superchat = b ? b.superchat : num(f.superchat);
         const start = b ? b.start : num(f.start);
@@ -2894,10 +2850,16 @@ export const islandApi = onRequest(
         res.json({
           total,
           given,
-          /* バーの高さ。**貯まっている額とは別もの**なので、台帳の目標が
-             読めなければ `goalRecord()` 側（`islandGoal` の `targetAmount`）に
-             落ちる。ここで 0 を返すと、画面のバーが割り算で落ちる。 */
-          goal: b && b.goalYen > 0 ? b.goalYen : goal ? goal.goal : 0,
+          /* バーの高さ。**貯まっている額とは別もの。**
+
+             **落ち先を持たない**（#639）。前は台帳の目標が読めないときに
+             `islandGoal` の `targetAmount` へ落ちていたが、あちらは GAS の表を
+             写しただけの凍った数字で、**人が直せる場所ではない。**
+             目標を決めているのは `islandFundGoals` ひとつなので、そこが空なら
+             「目標は無い」が正しい答え。0 を受けた側は割り算をしない
+             （島は焼き込みの `FUND_GOAL_YEN` を使い、豚は
+             `targetAmount <= 0` で 0% を出す）。 */
+          goal: b ? b.goalYen : 0,
           people: num(f.people),
           updatedAt: num(f.updatedAt) || null,
           /* Doneru のぶんが止まっている日だけ、いつまで入っているかを足す。
@@ -4188,10 +4150,9 @@ export const islandApi = onRequest(
           res.status(404).json({error: "no alertbox"});
           return;
         }
-        const [doneru, snap, goal] = await Promise.all([
+        const [doneru, snap] = await Promise.all([
           doneruNow(),
           STATE_DOC.get(),
-          goalRecord(),
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const b = boxOf(f.box);
@@ -4210,7 +4171,9 @@ export const islandApi = onRequest(
         res.json({
           // 豚の針が指す額。**式は `GET /fund` の total と同じ1本**
           currentAmount: b.start + b.superchat + doneru,
-          targetAmount: b.goalYen > 0 ? b.goalYen : goal ? goal.goal : 0,
+          /* バーの高さ。**落ち先は持たない**（`GET /fund` と同じ。#639）。
+             0 のとき豚は 0% を出す（`PiggyGauge` が `targetAmount <= 0` を見る）。 */
+          targetAmount: b.goalYen,
           label: b.goalLabel,
         });
         return;

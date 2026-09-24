@@ -101,9 +101,10 @@ Firestore `islandTips` に入っている）ので、**消すだけで依存が1
 **中身そのものは 3,683 → 4,215 行に増えている。**
 
 `islandApi.ts` が直に触る14種:
-`island` `islandChannels` `islandDoneruHealth` `islandFundSuperChats` `islandGoal` `islandHearts`
-`islandNotes` `islandPollVotes` `islandPolls` `islandRate` `islandUsers` `islandVisits`
-`nordicPhotos` `rouletteSessions`。
+`island` `islandChannels` `islandDoneruHealth` `islandFundConfig` `islandFundSuperChats`
+`islandHearts` `islandNotes` `islandPollVotes` `islandPolls` `islandRate` `islandUsers`
+`islandVisits` `nordicPhotos` `rouletteSessions`。
+（2026-09-24 に `islandGoal` が抜けて `islandFundConfig` が入った。#639）
 
 **困るのは3つ、それぞれ別。**
 
