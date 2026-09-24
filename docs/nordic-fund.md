@@ -1060,7 +1060,7 @@ GAS が `=SUM(...)/2` なので、奇数円のスパチャがあると
 | `superChatAmount`（`=SUM(D:D)/2` の1マス） | `islandFundSuperChats` 411件を足して ÷2 |
 | `startAmount`（`-249646` の1マス） | `islandFundSpends` 7件を足して符号を反転 |
 | `targetAmount` `label`（1マス） | `islandFundGoals` のいま走っている1件 |
-| `doneruGoalKey` → Doneru の API | **変えない。** 控えは持たない |
+| `doneruGoalKey` → Doneru の API | `islandFundConfig/doneru` の `goalKey`（#639。**島にひとつ**） |
 
 **Doneru は Firestore に持たない。** 向こうの API が持っている累計なので、
 こちらが写しを持つと二重管理になるし、鍵が要る。読むときに足す。
@@ -1197,20 +1197,24 @@ goal      = island/state.fund.box.goal.yen      （GAS の targetAmount の代�
 **誰でも読める `GET /fund` を OBS に使わせない**——あちらは CDN に5〜10分
 焼き付くので、配信の途中で開き直した豚が10分古い額から数え直すことになる。
 
-**Doneru の goal key は `islandGoal/{id}` から引く。** GAS はもう見ない。
+**Doneru の goal key は `islandFundConfig/doneru` から引く**（2026-09-24。#639）。
+GAS も `islandGoal` も、もう見ない。
 
-あの書類を写す仕組み（`goal_backup_nightly.yml`。#614）は、**毎晩ぶんを畳んで
-手押しだけにした**（#305）。理由は2つ。**(1)** あれを毎晩に繋いだ目的は
-「控えが古いまま踏まれると9日前の額が出る」ことだったが、**その落ち先に
-額が入っていない**（額は台帳から来る）。**(2)** `goal_migrate` の止め金は
-「GAS と本番が1円まで合うこと」で、**書き込み先を移した時点で GAS は凍る**ので
-次の投げ銭で必ず外れ、3晩で赤になってそこから毎晩赤い。
-**毎晩赤い見張りは誰にも読まれなくなる**——#614 がいちばん気をつけたのが
-そこなので、自分では壊さない。
+**島にひとつ。目標ごとではない。** 鍵は Doneru 側の目標ウィジェット1つを
+指していて、`doneruNow()` が引くのは**そのウィジェットの累計**（194,820円）。
+目標に紐づけると、次の目標を1件足しただけで新しい書類に鍵が無くなり、
+**目標を作るというふつうの操作が、黙って合計を 194,820円 落とす。**
+実物もそう言っていた——いま走っている目標は `islandFundGoals/2026-07-27`
+なのに、鍵は `islandGoal/2025-10-24` に入ったまま生き延びていた。
 
-消さずに残したのは、GAS の表がまだ在るあいだ**手で押す道**が要るから
-（鍵を作り直した・バーの高さを変えた）。表が消えたら、この書類は人が直す側に
-回す（どちらも年に何度も変わらない）。
+GAS の表を `islandGoal` へ写す仕組み（`goal_backup_nightly.yml` /
+`goal_backup.py` / `goal_migrate.py`。#614）は、**#639 でファイルごと畳んだ。**
+写す先を誰も読まなくなったので、押しても新しくなるものが1つも無い。
+残すと「こちらが正かな」と思わせる書類が2つ並ぶだけになる。
+
+**バーの高さも落ち先を持たない**（#639）。前は台帳の目標が空いたときに
+`islandGoal` の `targetAmount` へ落ちていたが、あちらは凍った数字で
+人が直せる場所ではない。台帳の目標が空なら 0（＝目標は無い）を返す。
 
 #### 切り替えで額が動かないようにした（補正 5,760円）
 
@@ -1243,13 +1247,12 @@ goal      = island/state.fund.box.goal.yen      （GAS の targetAmount の代�
 
 1. `fund_sync` を `{"apply": true}` で回して、台帳を BigQuery に追いつかせる
 2. `fund_diff` を回して、**案0 の差が `+0円`** になることを見る
-3. **`goal_backup` を `{"apply": true}` で1回押す**（Actions の
-   「豚の貯金箱の控えを写す」を `dry_run: false`）。GAS と本番がまだ一致して
-   いるうちに、`islandGoal` へ**最後の写し**を取る。配ったあとは二度と
-   一致しないので、**この1回を逃すと控えが古いまま固定される。**
-   控えの額はもう読まれないが、**Doneru の鍵とバーの高さがそこにしか
-   無くなる**ので、中身は正しい状態で止めておきたい
-4. そこで初めて Functions を配る
+3. そこで初めて Functions を配る
+
+**3 の前に `goal_backup` を押す手順がここに1行あった**（GAS と本番が
+一致しているうちに `islandGoal` へ最後の写しを取る）。2026-09-23 に押して
+あり、#639 で鍵をそこから `islandFundConfig/doneru` へ移したので、
+**その道具ごと畳んだ。** いま `islandGoal` を新しくする仕組みは無い
 
 1 を飛ばすと、その日の配信ぶん（BigQuery にまだ入っていない）を補正に
 含めてしまい、**翌朝そのぶんだけ足りなくなる。**
@@ -1264,6 +1267,7 @@ goal      = island/state.fund.box.goal.yen      （GAS の targetAmount の代�
 | 掃除を手で流す | `python/admin/fund_sync.py` | **書かない** |
 | 手で1件足す／消す | `python/admin/fund_add.py` | **書かない** |
 | 式と鍵の付け方 | `python/fund_box.py` | — |
+| Doneru の鍵を写す／見る | `python/admin/doneru_key.py` | **書かない**。`{"apply": true}` で書く |
 | 移行の種（支出7件・目標1件） | `python/fund_seed.py` | — |
 
 **移行前と移行後が1円でも違ったら、`fund_migrate` は書かずに落ちる。**

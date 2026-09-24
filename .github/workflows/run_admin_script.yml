@@ -54,6 +54,17 @@ name: 管理スクリプトを実行
 #                   **貯金箱の額が動く。** sweep が無いと31日より前は書かない
 #   fund_add      … 手で1件足す／消す（スパチャ・支出・目標）。
 #                   {"kind":"spend","day":"2026-09-11","title":"宿代","yen":4000}
+#   doneru_key    … Doneru の鍵を、旧い書類（islandGoal）から島にひとつの
+#                   置き場（islandFundConfig/doneru）へ写す（#639）。
+#                   {} で下見（**1バイトも書かない**）、{"apply": true} で写す。
+#                   **鍵を ARGS に書かない**（ARGS はログに出る）。取り替えると
+#                   きは環境変数 DONERU_GOAL_KEY_NEW に入れて押す。
+#                   出るのは長さ・形・一致したかだけで、値は1文字も出ない。
+#                   **鍵を失うと豚の貯金箱から Doneru のぶんが丸ごと消える**
+#                   （合計が負になって /island-api/fund が 503 を返す）
+#   doneru_key_selftest
+#                 … 上の決め方を偽の Firestore で動かす。
+#                   **本番にも資格情報にも触らない**（手元でも走る）
 # キャラクターの絵をドライブから Firebase Storage へ移すぶん（#284 の C 群）。
 # **既定では1バイトも書かない。** 書くには {"apply": true} を付ける。
 #   characters_migrate … Viewers 表とドライブのフォルダ2つを突き合わせて、

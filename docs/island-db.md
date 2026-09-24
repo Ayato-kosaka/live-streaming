@@ -382,7 +382,8 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
 | 豚の貯金箱の**額** | Firestore `islandFundSuperChats` → `island/state.fund.box` | GAS の `SuperChats` 表（もう誰も読み書きしない） | **台帳が正**（2026-09-23。#305）。OBS が `POST /island-api/alertbox/{合言葉}/superchat` で台帳へ書き足すようになったので、**伸びるのは台帳だけ。** サイトも OBS も焼き直し（`fund.box`）を読む |
-| 豚の貯金箱の**鍵とバーの高さ** | Firestore `islandGoal/2025-10-24` | GAS の `Goals` 表（**手で押したときだけ**写す） | **Firestore が正**（2026-09-23。#305）。ここを通るのは Doneru の鍵と `targetAmount` だけで、**どちらも増えない。** 「額が伸びる側が正」で GAS を先に読んでいた理由ごと無くなったので、読む先を1つに畳んだ（#604 の大小比較も一緒に落とした） |
+| 豚の貯金箱の**Doneru の鍵** | Firestore `islandFundConfig/doneru` の `goalKey` | 環境変数 `DONERU_GOAL_KEY`（Functions の逃げ道） | **Firestore が正**（2026-09-24。#639）。**島にひとつ。目標ごとではない**——鍵は Doneru 側の目標ウィジェット1つを指していて、貯金箱の合計はその累計を丸ごと足している。目標に紐づけると、次の目標を1件足しただけで Doneru のぶんが落ちる |
+| 豚の貯金箱の**バーの高さ** | Firestore `islandFundGoals` のいま走っている1件 → `island/state.fund.box.goal.yen` | — | **落ち先を持たない**（2026-09-24。#639）。前は `islandGoal` の `targetAmount` へ落ちていたが、あちらは GAS の表を写した凍った数字で、人が直せる場所ではない。台帳の目標が空なら「目標は無い」（0）が正しい答え |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
 ### 3.4 キャラクターは誰のものか — **結ぶ材料がどこにあるか**
@@ -698,9 +699,9 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 **この22本に無いもの**（コードにはあるが、いま本番に書類が0件）:
 `islandHere`（居場所。すぐ消える）、`streamChatMessages` / `streamChatRuns`
 （配信中だけ溜まる）、`islandDrafts`、`islandVotes`。
-**`islandGoal` はこれから作る**（#305・下の b）。GAS の `Goals` 表の
-**控え**で、表を消しても豚の貯金箱が止まらないようにするためのもの。
-`goal_migrate` を `{"apply": true}` で流すまで0件。
+**`islandFundConfig` はこれから作る**（#639・下の b）。Doneru の鍵を
+**島にひとつ**持つ書類（`doneru` の1件だけ）。
+**`islandGoal` と `islandGoalHealth` は在るが、もう誰も読まない**（#639）。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
 **`islandDoneruHealth` もこれから作る**（#294）。Doneru のぶんが最後に
@@ -950,97 +951,65 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
 
-**`islandGoal/{id}`** — Doneru の鍵と、バーの高さ（#305）
+**`islandFundConfig/doneru`** — Doneru の鍵（#639）
 
-**Doneru の鍵と、バーの高さ。額はここに無い**（2026-09-23。#305）。
-書類IDは GAS の `Goals` 表の id をそのまま使う（いまは `2025-10-24` の1件だけ）。
-
-**`startAmount` / `superChatAmount` も書類には入っているが、誰も使っていない。**
-額は台帳（`islandFundSuperChats` → `island/state.fund.box`）から来る。
-残っているのは、半端に写された書類を弾くために形だけ見ているから。
+**島にひとつ。書類は `doneru` の1件だけ。**
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
-| `doneruGoalKey` | string | Doneru の goal key。16〜64桁の16進。**形が違うと本番は GAS に落ちる** |
-| `startAmount` | number | この企画の起点。**負の数**（これまでに使った額） |
-| `superChatAmount` | number | スパチャの積み上がり。**合計してから半分**（1件ずつ半分にすると奇数円のぶんだけずれる） |
-| `targetAmount` | number | 目標額（バーの高さ）。欠けていたら 50,000 に落ちる |
+| `goalKey` | string | Doneru の goal key。**32桁の16進**。形が違えば読む側が弾く |
 
-    total = doneruAmount + superChatAmount + startAmount
-    given = doneruAmount + superChatAmount   （起点を含まない。人が出した額）
+**なぜ目標（`islandFundGoals`）の中に置かないか。** 鍵は Doneru 側の
+目標ウィジェット1つを指していて、`doneruNow()` が引くのは**そのウィジェットの
+累計**。貯金箱の合計はそれを丸ごと足している（2026-09-24 の実測で 194,820円）。
+目標に紐づけると、`fund_add {"kind":"goal","from":"<次の日付>"}` を1回打った
+だけで新しい書類に鍵が無くなり、**目標を作るというふつうの操作が、黙って
+合計を 194,820円 落とす。** 島の側の実物もそう言っている——いま走っている
+目標は `islandFundGoals/2026-07-27` なのに、鍵は `islandGoal/2025-10-24` に
+入ったまま生き延びていた。**鍵は目標より長生きする。**
 
-**`doneruAmount` はここに持たない。** Doneru 側が持っている累計を、読むときに
-足す（`functions/src/islandApi.ts` の `doneruNow`）。
+**書くのは `python/admin/doneru_key.py` だけ。** 既定は下見で、
+`{"apply": true}` のときだけ旧い書類から写す。**鍵を ARGS に取らない**
+（ARGS は公開の Actions ログに出る）。取り替えるときは環境変数
+`DONERU_GOAL_KEY_NEW` に入れて押す。出るのは長さ・形・一致したかだけ。
 
-**書くのは `python/admin/goal_migrate.py` だけ。** GAS の `Goals` を読んで
-写す。`{"apply": true}` を付けたときだけ書き、書く前に本番の
-`/island-api/fund` と Doneru の累計に突き合わせて、**GAS と1円でも違えば
-書かない。** 流しても本番の見た目は変わらない（控えを作るだけ）。
+**読むのは `functions/src/islandApi.ts` の `doneruKeyOnly()` だけ。**
+環境変数 `DONERU_GOAL_KEY` があればそちらが勝つ（本番の書類を触らずに
+差し替えられる逃げ道）。**どちらの側も 32桁の16進しか通さない。**
 
-**もう毎晩は走らない**（2026-09-23。#305）。`goal_backup_nightly.yml` から
-`workflow_run` と cron を外して、**手で押すときだけ**動くようにした。
-#614 で毎晩に繋いだ目的は「控えが古いまま踏まれると9日前の額が出る」こと
-だったが、**その落ち先に額が入っていない**（額は台帳から来る）。
-そして `goal_migrate` の止め金は「GAS と本番が1円まで合うこと」で、
-**GAS が凍った時点で必ず外れる**——繋いだままだと毎晩赤くなり、
-読まれない赤の中に本物の赤が埋もれる。畳んだ理由はワークフローの頭にある。
-
-押しかたは Actions の「豚の貯金箱の控えを写す」を `dry_run: false` で。
-合わなかった回（本番は5分ぶん寝かせた値を返すので、投げ銭の直後は必ず
-合わない）は数分おいて1回だけ試し直し、それでも合わなければ**書かずに緑**で
-終える。**3回続けて書けなかったときだけ赤。** 何回続いているかは下の
-`islandGoalHealth`。
-
-**`label`（目標の名前）はここに無い。** 配信の豚に出す名前は
-`islandFundGoals` の `label`（`island/state.fund.box.goal.label` に焼かれる）。
-
-**読む先はここ1つ**（2026-09-23。#305）。長いあいだ GAS を先に読んで、
-こけた回だけここへ落ちる二段構えだった。理由は「額が増える側が正」で、
-スパチャの書き先が表しか無かったから。額が台帳から来るようになって、
-ここを通るのは**増えないもの**だけになったので、二段構えを畳んだ。
-
-一緒に落としたのが #604 の「控えのほうが額が大きければそちらを採る」。
-あれは額の大小を比べる作りで、比べる相手が無くなった。残すと、何もしない
-比較だけが次に読む人の前に残る。
-
-**読めなかったときに 0 を返さない。** 前に読めた値を返し続け、それも無ければ
-`null`。`null` を受けた `GET /fund` はバーの高さを `fund.box` 側に取りに行き、
-Doneru は鍵が引けないので `null` になる。
+**読めなかったときに 0 を作らない。** 前に読めた鍵を返し続け、それも無ければ
+空文字。空を受けた `doneruNow()` は `null` を返し、`GET /fund` は合計が
+0 以下になって 503、`GET /alertbox/{合言葉}/fund` も 503。
 **貯金箱が「0円」と出るのは、止まるより悪い**（`island-standards.md` 10章）。
 
-**あやとが表を消したら、この書類は人が直す側に回す**（鍵も高さも年に何度も
-変わらない）。写しの仕組み（`goal_backup_nightly.yml`）はそのとき畳んでよい。
-
-バーの高さがここから取れなければ `island/state.fund.box.goal.yen`、
-それも無ければ 0（画面は割り算を避ける）。額のほうがどれも無ければ
-`island/state.fund` の集計値、それも空なら 503 を返して画面が数字を消す
-（[`island-standards.md`](./island-standards.md) 10章）。
-
 **寿命は結果で違う。** 読めた回は5分、読めなかった回は**30秒**
-（`GOAL_RETRY_TTL_MS`）。読めなかった回まで5分据え置くと、1回の取りこぼしが
-5分ぶん尾を引く（Doneru の鍵が引けないあいだ、Doneru のぶんが欠ける）。
+（`KEY_RETRY_TTL_MS`）。読めなかった回まで5分据え置くと、1回の取りこぼしで
+5分ぶん Doneru のぶんが欠けた額（＝503）が出る。
 
-**読めなかった回はログに出る**（`goal record: firestore miss`。括弧の中が
-内訳で、`kept cache`（前に読めた値を返した）/ `nothing readable`（1つも無い））。
+**読めなかった回はログに出る**（`doneru key: miss`。括弧の中が内訳で、
+`kept cache`（前に読めた鍵を返した）/ `nothing readable`（1つも無い））。
+**鍵そのものは1文字も出ない。**
 
-**`islandGoalHealth/last`** — 控えを**何回続けて写せていないか**の札（1書類）
+**`islandGoal/{id}`** — **旧。もう誰も読まない**（#639）
 
-`python/admin/goal_backup.py` が押されるたびに書く。**画面からは読めない**
-（島には出ない）。`islandDoneruHealth` と同じ形。
+GAS の `Goals` 表（起点・スパチャ・目標額・鍵の4欄）を写しただけの1書類
+（`2025-10-24`）。#305 で額が台帳へ移り、**#639 で最後に残っていた
+Doneru の鍵も `islandFundConfig/doneru` へ移った。**
+`functions/src/islandApi.ts` からも `python/` からも、**もう1回も引かない。**
 
-| 項目 | 型 | 中身 |
-| --- | --- | --- |
-| `at` | string | この札を書いた時刻（ISO8601 UTC） |
-| `lastOutcome` | string | 直近の結果（`ok` / `mismatch`） |
-| `okAt` / `okDay` | string | 最後に控えを写せた時刻と、その日（日本時間） |
-| `missStreak` | number | **続けて写せなかった数。** 3 で赤になる |
-| `missDay` | string | 最後に「写せなかった」と数えた日（日本時間） |
-| `missSince` | string | その連続の1回目（日本時間） |
+**消していない。** 理由は2つ——(1) 鍵の写しがそこにしか無い形で残っていて、
+戻すときの最後の1本になる、(2) 毎晩の退避に入っているので置いておく害が小さい
+（`python/backup/plan.py` の `KEEP`）。**新しく書く仕組みも無い**
+（GAS から写していた `goal_backup_nightly.yml` / `goal_migrate.py` /
+`goal_backup.py` は #639 で畳んだ。役目が終わったから）。
 
-**数えるのは「日」であって「押した回」ではない。** 同じ日に2回押しても
-増えない（3回ぶんが1日に溜まると**理由のない赤**になる）。写せた日に 0 へ戻る。
-毎晩に繋がっていたころの「晩」が、いまは「押した日」になっている
-（**数えかたは1バイトも変えていない**。走る回数が変わっただけ）。
+**次に読む人へ:** この書類の `startAmount` / `superChatAmount` /
+`targetAmount` は**古い値のまま凍っている。** どれも本番の額とは関係ない。
+
+**`islandGoalHealth/last`** — **旧。もう誰も書かない**（#639）
+
+`goal_backup.py` が「何回続けて控えを写せていないか」を覚えていた札。
+写す仕組みごと畳んだので、中身はその最後の日で止まっている。
 
 #### c. 押した・数えた
 

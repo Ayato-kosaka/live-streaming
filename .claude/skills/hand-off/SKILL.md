@@ -120,7 +120,7 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 
 ```
 python/admin/
-.github/workflows/goal_backup_nightly.yml
+.github/workflows/rebake.yml
 ```
 
 **なぜ要るか。** 終わりぎわの見張り（`.claude/hooks/stop-check.sh`）は
