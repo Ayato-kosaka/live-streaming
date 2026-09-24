@@ -951,6 +951,83 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
 
+**`islandFundSuperChats/{書類ID}`** — 豚の貯金箱に入ったスパチャの控え
+
+**入り口が3つある**（OBS のアラートボックス・毎晩の BigQuery 拾い直し・
+手入れ）。3つが同じスパチャを指したときに1件へ潰れるよう、
+**書類IDを中身から決める。**
+
+| 書類IDの形 | どこから |
+| --- | --- |
+| 26文字の item id | アラートボックス（`LCC.…` をほどく）／BigQuery（`event_id` をほどく）。**この2つは同じところに着く** |
+| `manual-<日付>-<8桁>` | 手入れ（画面 / `fund_add`）。`sha1(日付\|額\|名前)` の頭8桁 |
+| `manual-1` … `manual-16` | GAS の表から移した16件。**IDを変えない**（移行を2回流すと増えるため） |
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `yen` | number | 円。**半分にする前**の、その人が出した額 |
+| `at` | string \| null | ISO8601。手入れは `T00:00:00+09:00`（時刻は分からない） |
+| `day` | string | JST の日。**どの入り口からも必ず書く**（並べ替えの鍵） |
+| `who` | string | 出した人の名前。分からなければ空 |
+| `currency` | string | `円`。**円しか入れない**（豚も GAS も円しか足していない） |
+| `src` | string | `alertbox` / `bigquery` / `manual` |
+| `from` | string | `gas` / `island-api`。どの道を通ったか |
+| `claim` | string | `<日付>\|<額>`。**手入れにだけ付く二重よけの札**（下） |
+| `claimedBy` | string \| null | その札を使った item id |
+
+**`claim` が無いと、手で入れた1件が翌晩2件になる。** 手入れの書類IDは
+`manual-…`、BigQuery のほうは26文字の item id なので、**書類IDでは重ならない。**
+毎晩の掃除（`python/fund_daily.py`）は同じ日・同じ額の札を探して、
+見つかれば足さずに札を使い切る。札は1件に1回しか使えないので、
+同じ日に同じ額のスパチャが2つあれば2つめはちゃんと足される。
+
+**読めるのはあやとだけ**（`GET /fund/history`）。名前と額が1件ずつ並ぶ。
+`firestore.rules` でも閉じてある。
+
+**`islandFundSpends/{書類ID}`** — 出費。**「もらったお金の行き先」の台帳**
+
+書類IDは `<日付>-<sha1(日付|題|額) の頭8桁>`。**2回入れても増えない。**
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `day` | string | JST の日 |
+| `title` | string | 何に使ったか |
+| `yen` | number | 円 |
+
+**ここがいちばん大事な台帳**（#639。あやとの決め 2026-09-24）。
+「財布は1つ。**0から貯め直すのは、前の目標のぶんを支出として書くことで
+起きる**」——日付で区切らないのは、そうしないと「もらったお金を何に使ったか」
+の管理が漏れるから。だから**目標の切り替えも、ここに1行増える。**
+
+合計は焼き直し（`island/state.fund.box.spend`）に乗り、符号を反転した
+`start`（負の数）が豚の `startAmount` になる。
+
+**`islandFundGoals/{開始日}`** — 目標。**書類IDが開始日そのもの**
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `from` | string | 開始日（＝書類ID） |
+| `to` | string \| null | おわった日。**入っていれば終わったもの** |
+| `label` | string | 名前。配信の豚のバーの上に出る |
+| `yen` | number | 目標額。バーの高さ |
+
+**いまの目標は「`from` がいちばん新しい1件で、`to` が空いているもの」**
+（`python/fund_box.py` の `read_goal`）。閉じていたら「いまは目標が無い」で、
+1つ前へは遡らない——**目標は同時に1つ**という決まりだから。
+
+**だから、打ち間違えた未来の日付の目標を「閉じる」と、いま走っている
+目標が島から消える。** 消す口（`DELETE /fund/goals/{from}`）が在るのは
+そのため。
+
+**`islandFundHealth/last`** — 毎晩の掃除が置く札（`python/fund_daily.py`）
+
+**この3本に書ける道は2つだけ。** 画面（`/me/desk` の「貯金箱」→
+`functions/src/fundDesk.ts`）と、GitHub Actions（`python/admin/fund_add.py`）。
+**書類IDの式は `python/fund_box.py` が正で、TypeScript 側はその写し。**
+ずれていないことは `functions/selftest/fund_docid_selftest.mjs` が
+毎 PR で突き合わせる（同じ入力を両方に食わせて、1文字でも違えば落ちる）。
+口の一覧は [`island-api.md`](./island-api.md) の 1.1。
+
 **`islandFundConfig/doneru`** — Doneru の鍵（#639）
 
 **島にひとつ。書類は `doneru` の1件だけ。**
