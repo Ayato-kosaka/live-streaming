@@ -56,7 +56,7 @@ export const RESIDENTS: Resident[] = [
   { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 33, score: 0.449, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
   { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 33, score: 0.918, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
   { icon: "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ", emoji: "🦔", days: 30, score: 0.903, channel: "UCHdRx9BTg6q_SF5y-4Wg5WQ" },
-  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 30, score: 0.842, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
+  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 30, score: 0.847, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
   { icon: "1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz", emoji: "🪆", days: 28, score: 0.857, channel: "UCbz2F3GGD_EpBzrWb8WM-cg" },
   { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 22, score: 0.872, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
   { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 17, score: 0.903, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
