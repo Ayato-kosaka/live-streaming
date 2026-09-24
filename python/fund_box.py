@@ -73,6 +73,33 @@ C_SUPERCHAT = "islandFundSuperChats"
 C_SPEND = "islandFundSpends"
 C_GOAL = "islandFundGoals"
 
+# Doneru の鍵の置き場（#639）。**島にひとつ。目標ごとではない。**
+#
+# 鍵は Doneru 側の「目標ウィジェット」1つを指していて、`doneruNow()` が
+# そこから引いてくるのは**そのウィジェットの累計**（いま 194,820円）。
+# 貯金箱の合計はその累計を丸ごと足しているので、**鍵が変わると合計が
+# その額ぶん落ちる。**
+#
+# だから `islandFundGoals`（目標）の中に置かない。置くと
+# `fund_add {"kind":"goal","from":"<次の日付>"}` を1回打っただけで、
+# 新しい目標の書類に鍵が無い → Doneru のぶんが 0 → 合計が 194,820円 減る。
+# **目標を作るというふつうの操作が、黙って額を落とす形**になる。
+#
+# 島の側の実物もそう言っている——いま走っている目標は
+# `islandFundGoals/2026-07-27` なのに、鍵は `islandGoal/2025-10-24` に
+# 入ったまま生き延びていた。**鍵は目標より長生きする。**
+C_CONFIG = "islandFundConfig"
+DONERU_DOC = "doneru"
+
+# Doneru の鍵の形。**32桁の16進。**
+#
+# 前は `[0-9a-f]{16,64}` と幅を持たせてあったが、幅の意味は誰も説明できず、
+# 「本番のものが通る範囲」でしかなかった。本番の鍵は 32桁（2026-09-24 に
+# 長さと形だけを測って確かめた。値は出していない）。
+# **幅を持たせると、半分に切れた鍵が通る。** 通ると Doneru は 0円を返さず
+# エラーを返すので合計は止まるが、止まる場所が遠くなるだけ得が無い。
+DONERU_KEY = re.compile(r"^[0-9a-f]{32}$")
+
 JST = timezone(timedelta(hours=9))
 
 # GAS の表（配信の OBS が読んでいるのと同じもの）。鍵は要らない。
@@ -456,3 +483,22 @@ def read_goal(db) -> dict:
             return {}
         return v
     return {}
+
+
+def read_doneru_key(db) -> str:
+    """Doneru の鍵を、島にひとつの置き場から読む（#639）。
+
+    **鍵そのものを返す。呼んだ側がログに出さないこと。**
+    このリポジトリは公開で、Actions のログも誰でも読める。
+
+    Args:
+        db: Firestore クライアント
+
+    Returns:
+        32桁の16進。書類が無い・欄が無い・形が違えば空文字
+    """
+    snap = db.collection(C_CONFIG).document(DONERU_DOC).get()
+    if not snap.exists:
+        return ""
+    v = str((snap.to_dict() or {}).get("goalKey") or "")
+    return v if DONERU_KEY.match(v) else ""
