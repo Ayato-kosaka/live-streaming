@@ -349,6 +349,45 @@ const FUND_ALL = (() => {
 })();
 const FUND_SUM = FUND_ALL.reduce((a, c) => a + c.yen, 0);
 
+/* 豚の貯金箱の机（#292 のオーナー画面ぶん）。**額は本番と同じ数にしてある**
+   （2026-09-24 の `GET /island-api/fund` が `total 86,510 / given 341,916 /
+   goal 50,000`）。差し込みに本番と違う値を置くと、直っていないものが
+   直って見える（`docs/island-misses.md` の決めごと2）。
+
+     -255,406（起点） + 147,096（スパチャの半分） + 194,820（Doneru）= 86,510
+
+   **名前と題は作り物。** 本物の出費の題は公開のリポジトリに置かない。 */
+const FUND_DONERU = 194820;
+let FUND_SPENDS = [
+  { id: "2026-09-02-11111111", day: "2026-09-02", title: "アプリ運営費", yen: 5760 },
+  { id: "2026-07-26-22222222", day: "2026-07-26", title: "アプリ運営費", yen: 30800 },
+  { id: "2026-06-29-33333333", day: "2026-06-29", title: "アプリ運営費", yen: 14510 },
+  { id: "2026-06-10-44444444", day: "2026-06-10", title: "散髪", yen: 11110 },
+  { id: "2026-05-31-55555555", day: "2026-05-31", title: "退避", yen: 36300 },
+  { id: "2026-05-23-66666666", day: "2026-05-23", title: "お菓子", yen: 300 },
+  { id: "2026-05-22-77777777", day: "2026-05-22", title: "シャワルマ", yen: 570 },
+  { id: "2026-05-21-88888888", day: "2026-05-21", title: "これまでの退避", yen: 156056 },
+];
+let FUND_GOALS = [
+  { id: "2026-07-27", from: "2026-07-27", to: null, label: "北欧周りたい", yen: 50000 },
+  { id: "2026-03-01", from: "2026-03-01", to: "2026-07-26", label: "カメラを買う", yen: 40000 },
+];
+/** 焼き直し（`island/state.fund.box`）。**出費を足し引きしたら作り直す。** */
+const fundBox = () => {
+  const spend = FUND_SPENDS.reduce((a, s) => a + s.yen, 0);
+  const now = FUND_GOALS.find((g) => !g.to);
+  return {
+    superchat: 147096,
+    superchatFull: 294192,
+    count: 509,
+    spend,
+    spendCount: FUND_SPENDS.length,
+    start: -spend,
+    goal: now ? { from: now.from, label: now.label, yen: now.yen } : null,
+    updatedAt: "2026-09-24",
+  };
+};
+
 /** ルーレットのセッション（#164）。id は本番と同じ 32 桁。 */
 const RL_ID = "0123456789abcdef0123456789abcdef";
 const rlItem = (id, label, name, byHand = false) => ({
@@ -620,6 +659,90 @@ export async function apply(ctx, opts = {}) {
         count: (opts.fundnosum ?? process.env.FUNDNOSUM === "1") ? null : FUND_ALL.length,
         yen: (opts.fundnosum ?? process.env.FUNDNOSUM === "1") ? null : FUND_SUM,
       });
+    }
+    /* 豚の貯金箱の机（#292）。**書いた結果まで返す**ので、押したあとの
+       姿（増えていない・額が変わった）もそのまま撮れる。
+       `FUNDBOXDOWN=1` で「焼き直しが読めなかった」ほうも撮れる
+       （0円と見分けが付くか。`docs/island-standards.md` 10章）。 */
+    if (path.startsWith("/fund/")) {
+      const m = r.request().method();
+      const down = opts.fundboxdown ?? process.env.FUNDBOXDOWN === "1";
+      const box = () => (down ? null : fundBox());
+      const sorted = () =>
+        [...FUND_SPENDS].sort((a, b) =>
+          a.day === b.day ? b.id.localeCompare(a.id) : b.day.localeCompare(a.day));
+      const page = (before, n) => {
+        const all = sorted();
+        const at = before ? all.findIndex((x) => `${x.day}_${x.id}` === before) + 1 : 0;
+        const spends = all.slice(at, at + n);
+        const more = at + n < all.length;
+        const last = spends[spends.length - 1];
+        return { spends, more, next: more && last ? `${last.day}_${last.id}` : null };
+      };
+      let body = {};
+      try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
+      if (path === "/fund/desk") {
+        /* **1行も入っていない日**も撮れるようにする（`FUNDNONE=1`）。
+           「まだ1行も入っていない」の次の一手が書いてあるかを見るため。 */
+        if (opts.fundnone ?? process.env.FUNDNONE === "1") {
+          return json(r, {
+            box: { ...fundBox(), spend: 0, spendCount: 0, start: 0, goal: null },
+            doneru: FUND_DONERU,
+            spends: [], more: false, next: null, goals: [],
+          });
+        }
+        return json(r, {
+          box: box(),
+          doneru: down ? null : FUND_DONERU,
+          ...page(null, 12),
+          goals: [...FUND_GOALS].sort((a, b) => b.from.localeCompare(a.from)),
+        });
+      }
+      if (path === "/fund/spends" && m === "GET") {
+        return json(r, page(u.searchParams.get("before"),
+          Math.min(Number(u.searchParams.get("limit") || 12), 120)));
+      }
+      if (path === "/fund/spends" && m === "POST") {
+        const id = `${body.day}-${String(body.title).length}${body.yen}`.slice(0, 40);
+        const already = FUND_SPENDS.some((x) => x.id === id);
+        const spend = { id, day: body.day, title: body.title, yen: body.yen };
+        if (!already) FUND_SPENDS = [spend, ...FUND_SPENDS];
+        return json(r, { spend, already, box: box() });
+      }
+      if (path.startsWith("/fund/spends/") && m === "DELETE") {
+        const id = decodeURIComponent(path.slice("/fund/spends/".length));
+        FUND_SPENDS = FUND_SPENDS.filter((x) => x.id !== id);
+        return json(r, { deleted: id, box: box() });
+      }
+      if (path === "/fund/goals" && m === "POST") {
+        const goal = { id: body.from, from: body.from, to: null, label: body.label, yen: body.yen };
+        const already = FUND_GOALS.some((g) => g.id === goal.id);
+        FUND_GOALS = [goal, ...FUND_GOALS.filter((g) => g.id !== goal.id)];
+        return json(r, { goal, already, box: box() });
+      }
+      if (path.endsWith("/close") && m === "POST") {
+        const from = decodeURIComponent(
+          path.slice("/fund/goals/".length, -"/close".length));
+        FUND_GOALS = FUND_GOALS.map((g) => (g.id === from ? { ...g, to: body.to } : g));
+        const goal = FUND_GOALS.find((g) => g.id === from);
+        return json(r, { goal, box: box() });
+      }
+      if (path.startsWith("/fund/goals/") && m === "DELETE") {
+        const from = decodeURIComponent(path.slice("/fund/goals/".length));
+        FUND_GOALS = FUND_GOALS.filter((g) => g.id !== from);
+        return json(r, { deleted: from, box: box() });
+      }
+      if (path === "/fund/chats" && m === "POST") {
+        return json(r, {
+          chat: { id: `manual-x`, day: body.day, yen: body.yen, who: body.who },
+          already: false,
+          box: box(),
+        });
+      }
+      if (path.startsWith("/fund/chats/") && m === "DELETE") {
+        const id = decodeURIComponent(path.slice("/fund/chats/".length));
+        return json(r, { deleted: id, box: box() });
+      }
     }
     if (path === "/nordic/photos") return json(r, { days: PHOTO_DAYS });
     /* アラートボックスの合言葉（#180）。**本物の32桁と同じ形にする。**

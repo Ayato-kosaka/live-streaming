@@ -110,6 +110,11 @@ EXCUSES: dict[str, str] = {
     "tools/sprites/atlashouse.mjs":
         "建設中の家とできあがった家の寸法を突き合わせて人が見る。"
         "書き出しとブラウザが要る（2026-09-19）",
+    "tools/sprites/fundshot.mjs":
+        "貯金箱の机（`/me/desk`）を12とおりの姿で撮って人が見る道具。"
+        "書き出しとブラウザが要って、ひと回り10〜20分（2026-09-24 実測）。"
+        "機械で言える範囲（口の守り・2回入れても増えない・焼き直しの数）は"
+        "`functions/selftest/fund_*_selftest.mjs` の3本に切り出して毎 PR で回す",
 
     # ---- 書き出し＋ブラウザが要って、1回が長い ----
     "tools/sprites/crawl.mjs":
