@@ -184,6 +184,47 @@ WATCH_STEPS = (
     # 「島の数字が焼き直せていません。島に出ている数はきのうのままです」の
     # issue が立つ。**数はちゃんと新しくなっているのに**
     "押しても見られない配信が増えたか",
+    # 住人の絵の大きさを測り直せなかった、という赤。**ここが1本抜けていた**
+    # （2026-09-23 22:39 の run がこれで落ちて、`#511` に「島に出ている数は
+    # きのうのままです」と出た。**その回は 22:50:57 に master へ入り、
+    # 22:51:01 に配り終わっている**）。同じ形の抜けがもう出ないように、
+    # `bake_down_selftest.py` が**配りのうしろの step を全部数えて**、
+    # この表と付き合わせる（`island-misses.md` #187）
+    "絵の大きさを測り直せたか",
+)
+
+# **配りのうしろに在るが、赤くならない step。** 見張りではないので、
+# ここに名前を置いて「数え落としではない」と言えるようにしておく。
+# `bake_down_selftest.py` が「配りのうしろの step は、`WATCH_STEPS` か
+# `FROZEN_STEP` か `STALE_STEP` か、この表のどれか」を両側から見る
+AFTER_DEPLOY_NOT_RED = (
+    "配っていないときの案内",           # dry_run / deploy off のときの案内
+    "落ちたときに、どこで落ちたかを残す",  # `if: failure()` の記録係
+)
+
+# **master に入る手前で回る判定器（自己テスト）。** ここが赤いのは
+# **「島のデータが古い」ではない**——判定するほうが落ちていて、焼いたものは
+# 1バイトも commit されずに止まっている。**7本は焼く前、3本（site のもの）は
+# 焼いたあと・commit の前**で、どちらも「この回のぶんが入らない」という点で同じ。
+#
+# 分けないと、issue の見出しが「島の数字が焼き直せていません。島に出ている数は
+# きのうのままです」になる。**データは1バイトも古くなっていないのに**、
+# あやとは焼き直しのログを探しに行くことになる（`#511` が2日そうだった）。
+#
+# **手で並べた一覧ではない。** `bake_down_selftest.py` が `rebake.yml` を読んで、
+# **配りより前で `*_selftest` を行の頭から起こしている step** を数え、この表と
+# 両側から突き合わせる。片側だけだと、step を1本足した日に黙って外れる
+SELFTEST_STEPS = (
+    "またいだ呼び出しが合っているか",
+    "詰まりの見張りが効くか",
+    "焼いた並びが毎回同じか",
+    "やせを止める関所が効くか",
+    "島を歩く人の選びかたが変わっていないか",
+    "焼き込みが古くなっていないかの見張りが効くか",
+    "押しても見られない配信の見張りが効くか",
+    "表紙の島が、投げ銭と出席の両方を見て人を選んでいるか",
+    "えらばれかたの式が、決めたとおりか",
+    "コメントが読めなかったとき、黙って飲み込んでいないか",
 )
 
 # **この係にとっての「無人」。** `workflow_dispatch` は手で押したぶんで、
@@ -198,6 +239,7 @@ UNATTENDED = ("schedule", "workflow_run")
 def unattended(r: dict) -> bool:
     """その run に、押した人がいなかったか。"""
     return r.get("event") in UNATTENDED
+
 
 # 焼き直しが何日走っていなかったら、**ログに1行**書くか。
 # **issue にはしない。** 走っていないのは「落ちた」とも「凍った」とも違うし、
@@ -218,7 +260,6 @@ LABEL = "bake-down"
 # どちらの赤かは本文が持つ（タイトルに入れると、落ちた↔凍ったで毎回書き換わって、
 # 書き換えた人と綱引きになる）
 TITLE = "島の数字が、新しくなっていません"
-
 
 
 def pick_run(runs: list):
@@ -247,7 +288,7 @@ def why_red(steps: list) -> dict:
         steps: その run の step（`{"name": ..., "conclusion": ...}` の並び）
 
     Returns:
-        {"why": "frozen" / "stale" / "watch" / "broken",
+        {"why": "frozen" / "stale" / "watch" / "selftest" / "broken",
          "step": 落ちた step の名前か None}
     """
     failed = [s for s in (steps or []) if s.get("conclusion") in RED]
@@ -265,8 +306,16 @@ def why_red(steps: list) -> dict:
     # 見出しから消える。** 出したあとの見張り以外に落ちたものがあるかを先に見る
     hard = [s for s in failed
             if s.get("name") not in WATCH_STEPS
+            and s.get("name") not in SELFTEST_STEPS
             and s.get("name") not in (FROZEN_STEP, STALE_STEP)]
     if not hard:
+        # **自己テストを、出したあとの見張りより先に見る。** 自己テストが
+        # 落ちた回は焼く手前で止まっているので、配り終わったあとに鳴る
+        # 見張りより、そちらのほうが起きていることとして大きい。
+        # 2026-09-24 05:46 の run が実際に両方落ちていた（step 13 と step 43）
+        for s in failed:
+            if s.get("name") in SELFTEST_STEPS:
+                return {"why": "selftest", "step": s.get("name")}
         for s in failed:
             if s.get("name") in WATCH_STEPS:
                 return {"why": "watch", "step": s.get("name")}
@@ -286,6 +335,7 @@ def assess(run, steps, by_hand: bool = False) -> dict:
     | --- | --- |
     | 緑 | **新しくなっている** |
     | 赤 + step「凍っていたら赤くする」が落ちた | **凍っている** |
+    | 赤 + 焼く前の自己テストだけが落ちた | **判定器が落ちた**（データは古くない） |
     | 赤 + それ以外 | **焼くのが落ちた** |
     | 赤 + **そのあと手で押して通っている** | **分からない**（1晩ぶん保留） |
     | `cancelled` など、どちらとも言えない | **分からない**（開きも閉じもしない） |
@@ -297,7 +347,8 @@ def assess(run, steps, by_hand: bool = False) -> dict:
         by_hand: `fixed_by_hand()` の返り値
 
     Returns:
-        {"down": True/False/None, "why": "frozen"/"stale"/"watch"/"broken"/"byhand"/None,
+        {"down": True/False/None,
+         "why": "frozen"/"stale"/"watch"/"selftest"/"broken"/"byhand"/None,
          "step": 落ちた step か None, "at": run の始まった時刻か None}
     """
     if not run:
@@ -353,6 +404,17 @@ def body(a: dict) -> str:
             "",
             "`島の数字を焼き直す` のいちばん新しい run を開いて、その step の"
             "出している数を見てください。**焼き直しを押し直す必要はありません。**",
+        ]
+    elif a["why"] == "selftest":
+        head = [
+            "焼き直しは、**master に入る手前で止まりました。** 落ちたのは "
+            f"**{a['step']}** ——見張りが効くかを見る自己テストです。",
+            "",
+            "**島のデータが古いのではなく、判定するほうが落ちています。** "
+            "前の回までに焼けたぶんは、master にも本番にも入っています。",
+            "",
+            "`島の数字を焼き直す` のいちばん新しい run を開いて、その step の "
+            "`::error::` の行を見てください。直せば次の回でひとりでに焼けます。",
         ]
     elif a["why"] == "frozen":
         head = [

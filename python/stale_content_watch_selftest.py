@@ -2,7 +2,28 @@
 
     python3 python/stale_content_watch_selftest.py
 
-終了コード 0=ぜんぶ通った / 1=外したものがある。
+    BREAK=round python3 python/stale_content_watch_selftest.py   # 足を1本抜く
+
+終了コード 0=ぜんぶ通った / 1=外したものがある / 2=`BREAK` の名前が違う。
+
+## 境目は、すぐ両隣で別々に当てる
+
+割合で見る本（`chatter.ts`）の境目は、`stale_content_watch.over_share()` の
+1か所で決まっている。**ちょうどしきい値のときは鳴らさない。**
+
+足は4本あって、2本ずつ向きが違う:
+
+| 足 | 作りかた | ほしい答え |
+| --- | --- | --- |
+| 境目の内側 | いまの名簿から `share*N//100` 人 | 通った |
+| 境目の外側 | その次の1人 | 赤 |
+| ちょうど `share`% | **200人の名簿を組んで** 100人 | 通った |
+| `share`% のすぐ上 | 同じ名簿で 101人 | 赤 |
+
+下の2本を別に持っているのは、**いまの名簿（99人）ではちょうど 50% を
+作れない**から（50% は 49.5人）。2026-09-24 まではここが1本しかなく、
+`round(99 * 50 / 100)` ＝ 50人 を「ちょうど 50%」だと思っていた。
+実際は 50.505% で、**判定は正しいのに対照だけが落ちた**（`island-misses.md` #187）。
 
 ## なぜ「落ちるまで古くする」だけでは対照にならないか
 
@@ -38,7 +59,7 @@
 
 from __future__ import annotations
 
-import re
+import os
 import shutil
 import subprocess
 import sys
@@ -48,6 +69,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import stale_content_watch  # noqa: E402
 from stale_content_watch import (  # noqa: E402
     BOOKS,
     CONTENT,
@@ -60,12 +82,37 @@ from stale_content_watch import (  # noqa: E402
     Facts,
     iter_string_dates,
     judge,
-    scan,
     scan_dir,
 )
 
 REPO = Path(__file__).resolve().parent.parent
 TODAY = date(2026, 9, 17)
+
+# **境目の足を、1本ずつ抜く**（`island-standards.md` §15 の決めごと「対照は、
+# 足の数だけ用意する」）。当てるとその足だけが落ちるのが正しい。
+#
+# | `BREAK` | 何を元に戻すか | 落ちる足 |
+# | --- | --- | --- |
+# | `round` | 割合を**丸めてから**比べる（2026-09-24 まではこれだった） | `50% のすぐ上（101/200人）` |
+# | `ge` | ちょうどしきい値でも鳴らす（`>` を `>=` に） | `ちょうど50%（100/200人）` |
+#
+# **2本を1本にまとめない。** `round` は「境目がぼやける」、`ge` は「境目を
+# どちらへ倒すか」で、別のこと。片方だけ当てて通すと、もう片方が寝ていても出る。
+BREAK = os.environ.get("BREAK", "")
+LEGS = ("round", "ge")
+
+
+def _hobble() -> None:
+    """`BREAK` の足を、本物のモジュールから抜く。抜いていなければ何もしない。"""
+    if BREAK == "round":
+        stale_content_watch.over_share = (
+            lambda missing, total, share: round(100 * missing / total) > share
+        )
+    elif BREAK == "ge":
+        stale_content_watch.over_share = (
+            lambda missing, total, share: missing * 100 >= share * total
+        )
+
 
 # **しきい値から作らない2つの数。** 上の docstring を読んでから触る。
 #   green … これだけ古くても「正常な空き」。鳴ったら狼少年
@@ -126,7 +173,8 @@ def _rewrite_dates(src: str, when: date) -> str:
 def _drop_key(src: str, name: str, key: str) -> str:
     """その本から鍵を1つ消す（行ごと）。`KEYS` の赤い側を作るのに使う。"""
     rx = KEY_RE[name]
-    lines = [ln for ln in src.splitlines(keepends=True) if not (m := rx.match(ln)) or m.group(1) != key]
+    lines = [ln for ln in src.splitlines(keepends=True)
+             if not (m := rx.match(ln)) or m.group(1) != key]
     return "".join(lines)
 
 
@@ -167,6 +215,14 @@ def _status(seen: dict[str, Facts], name: str) -> str:
 
 
 def main() -> int:
+    if BREAK:
+        if BREAK not in LEGS:
+            print(f"::error::BREAK={BREAK} は足の名前ではありません。"
+                  f"使えるのは {', '.join(LEGS)}")
+            return 2
+        print(f"** BREAK={BREAK} —— 足を1本抜いてある。ここは落ちるのが正しい **")
+        _hobble()
+
     src_of = {p.name: p.read_text(encoding="utf-8") for p in sorted(CONTENT.glob("*.ts"))}
     base = {n: _facts(n, s) for n, s in src_of.items()}
 
@@ -312,17 +368,53 @@ def main() -> int:
             seen[name] = _facts(name, _voiceless(src_of[name], name, roster, n))
             check(f"{name} を{label}({pct}%＝{n}人)にしたとき", _status(seen, name), want)
 
-        # ちょうどしきい値のときは鳴らさない（境界で1人ずれていないか）
-        seen = dict(base)
-        seen[name] = _facts(
-            name, _voiceless(src_of[name], name, roster, round(len(roster) * b.share / 100))
-        )
-        check(f"{name} がちょうど{b.share}%のとき", _status(seen, name), "通った")
+        # --- 境目を、**すぐ両隣で別々に**当てる -----------------------------
+        # 前はここが1本しかなく、しかも `round(len(roster) * share / 100)` 人を
+        # 「ちょうど share%」だと思っていた。**名簿が 99人のとき、50% に
+        # あたるのは 49.5人で、整数では作れない。** `round` は 50人を返すので、
+        # 作っていたのは 50.505%（＝しきい値を超えている側）だった。
+        # 名簿が 102人だったあいだは 51人＝ちょうど 50% で当たっていたので、
+        # **名簿が1人減った晩に、判定は正しいまま対照だけが落ちた**（#187）。
+        #
+        # いまは境目の**両側**を、割り算ではなく整数から作る:
+        #   n_ok  … しきい値を超えない**いちばん大きい**人数（= share*N//100）
+        #   n_red … その次の1人（ここから先は超えている）
+        # 割り切れる名簿（102人・50%）なら n_ok がちょうど 50% そのものになる。
+        n_ok = b.share * len(roster) // 100
+        n_red = n_ok + 1
+        for label, n, want in ((f"境目の内側({n_ok}人)", n_ok, "通った"),
+                               (f"境目の外側({n_red}人)", n_red, "赤")):
+            seen = dict(base)
+            seen[name] = _facts(name, _voiceless(src_of[name], name, roster, n))
+            check(f"{name} を{label}にしたとき", _status(seen, name), want)
+        # 作ったものが本当に境目の両隣かを、印字して残す（分母を出す。§15）
+        print(f"  {name}: 名簿 {len(roster)}人 / しきい値 {b.share}% → "
+              f"内側 {n_ok}人={100 * n_ok / len(roster):.2f}% / "
+              f"外側 {n_red}人={100 * n_red / len(roster):.2f}%")
 
         # 上流（名簿）が空なら「数えられない」。0件を通ったと読ませない（§15）
         seen = dict(base)
         seen[b.upstream] = Facts(name=b.upstream, found=True, dates=base[b.upstream].dates, keys=[])
         check(f"{name} の上流の鍵が0件のとき", _status(seen, name), "数えられない")
+
+    # --- 4d. ちょうどしきい値そのものと、そのすぐ上（名簿を作って当てる）------
+    # 上の足は**いまの名簿の人数**に縛られる。99人では 50% ちょうどを作れないし、
+    # 丸めの穴（`round(50.5)` が偶数側の 50 に寄る）も踏めない。
+    # ここだけは名簿を自分で組んで、**ちょうど** と **そのすぐ上** を別々に当てる。
+    for name, b in BOOKS.items():
+        if b.rule != SHARE:
+            continue
+        up = b.upstream
+        total = 200  # 100 で割り切れる人数。50% ちょうどが整数で作れる
+        keys = [f"UC{i:04d}" for i in range(total)]
+        exact = b.share * total // 100          # ちょうどしきい値
+        for label, gone, want in ((f"ちょうど{b.share}%（{exact}/{total}人）", exact, "通った"),
+                                  (f"{b.share}% のすぐ上（{exact + 1}/{total}人）", exact + 1, "赤")):
+            seen = dict(base)
+            seen[up] = Facts(name=up, found=True, dates=base[up].dates, keys=list(keys))
+            seen[name] = Facts(name=name, found=True, dates=base[name].dates,
+                               keys=keys[gone:])
+            check(f"{name} が{label}のとき", _status(seen, name), want)
 
     # --- 5. 数えられない側 ---------------------------------------------------
     for name in sorted(dated):
