@@ -124,7 +124,10 @@ class Book:
     upstream: str = ""
     # `SHARE` のしきい値（%）。**全部そろっていることを求めない本**に使う。
     # セリフは持たない人がいて当たり前で（持たない人は共通のセリフに落ちる）、
-    # `KEYS` のように1人でも欠けたら赤にすると、永遠に赤いまま誰も読まなくなる
+    # `KEYS` のように1人でも欠けたら赤にすると、永遠に赤いまま誰も読まなくなる。
+    #
+    # **「ここまでは当たり前」の上限。** ちょうどこの値のときは鳴らさない
+    # （境目の決め方と、丸めを入れない理由は `over_share()`）
     share: int = 0
     # 欠けたものを**名指しで印字してよいか。** 料理や伝説の slug は出してよいが、
     # 住人の icon は出さない（この頭の「印字に入れないもの」）。数は出す
@@ -225,7 +228,10 @@ BOOKS: dict[str, Book] = {
         "**しきい値から作っていない実測2つ**のあいだに置いた: "
         "あやとに「台詞が普通すぎる」と言われた 2026-09-16 の朝が **80/102人＝78%**、"
         "その日に書き切ったあとが **27/102人＝26%**（どちらも git の実測）。"
-        "26% 側で鳴らず、78% 側で鳴る",
+        "26% 側で鳴らず、78% 側で鳴る。"
+        "**実測2つは、ちょうど 50 のときにどちらへ倒すかを言っていない。** "
+        "そこは `over_share()` で決めてある——**ちょうど 50 は鳴らさない**"
+        "（日で見る本の「ちょうどしきい値の日は鳴らさない」と同じ向き）",
         upstream="residents.ts",
         share=50,
         todo="`python/admin/chatter_voices.py` で口調を拾って `chatter.ts` に書き足す",
@@ -439,6 +445,48 @@ class Verdict:
         return not self.red and not self.blind
 
 
+def over_share(missing: int, total: int, share: int) -> bool:
+    """欠けた割合が、しきい値を**超えた**か。`SHARE` の本の境目はここ1か所。
+
+    ## ちょうどしきい値のときは、鳴らさない
+
+    `share` は「**ここまで欠けているのは当たり前**」の上限であって、
+    「ここから先が普通」ではない。だから `>=` ではなく `>` で見る。
+    日で見る本（`LATEST` / `COVERS`）が「ちょうどしきい値の日は鳴らさない」で
+    そろえてあるので、**割合の本だけ逆向きにしない**。
+
+    `chatter.ts` の 50% を決めた実測（78% で鳴る / 26% で鳴らない）は、
+    **ちょうど 50 のときにどちらへ倒すかを何も言っていない。**
+    言っていないものを実測から読み取ったふりをせず、
+    「しきい値ちょうどは、まだ当たり前の側」と**ここで決めた**
+    （2026-09-24。`island-misses.md` #187）。
+
+    ## 丸めてから比べない
+
+    前はここが `round(100 * missing / total) > share` だった。**割合を先に
+    丸めるので、境目が実際の値から最大 0.5 ポイントずれる。** しかも
+    Python の `round` は偶数側へ寄せるので、ずれ方が上下で違う:
+
+    | 人数 | 本当の割合 | 丸めると | 丸めて比べると | 正しくは |
+    | --- | --- | --- | --- | --- |
+    | 101/200 | 50.5% | 50 | 通った | **赤**（50 を超えている） |
+    | 50/99 | 50.505% | 51 | 赤 | 赤 |
+    | 49/99 | 49.49% | 49 | 通った | 通った |
+
+    **名簿の人数が変わるたびに境目が動く**ので、名簿が偶数のあいだは気づけない。
+    整数のまま両辺に `total` を掛けて比べれば、丸めが1つも入らない。
+
+    Args:
+        missing: 下流に無い鍵の数
+        total: 上流の鍵の数（0 を渡さないこと。呼ぶ前に「数えられない」で弾く）
+        share: しきい値（%）
+
+    Returns:
+        しきい値を超えていれば True
+    """
+    return missing * 100 > share * total
+
+
 def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = None) -> Verdict:
     """読んだ結果を見て、赤にするかどうかを決める。**ファイルを開かない。**
 
@@ -473,13 +521,16 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
             up = seen.get(b.upstream)
             if up is None or not up.found or not up.keys:
                 v.blind.append(f"{name} の上流 {b.upstream} から鍵が取れません")
-                v.results.append(Result(name, b.who, SHARE, b.share, "数えられない", f"上流 {b.upstream} の鍵が0件"))
+                v.results.append(Result(name, b.who, SHARE, b.share, "数えられない",
+                                        f"上流 {b.upstream} の鍵が0件"))
                 continue
             mine = set(f.keys)
             missing = [k for k in up.keys if k not in mine]
+            # **`pct` は印字だけに使う。** 判定は `over_share` の整数どうしで見る
             pct = round(100 * len(missing) / len(up.keys))
-            detail = f"上流 {b.upstream} の {len(up.keys)}人 / ここ {len(f.keys)}人 / 無い {len(missing)}人（{pct}%）"
-            if pct > b.share:
+            detail = (f"上流 {b.upstream} の {len(up.keys)}人 / ここ {len(f.keys)}人"
+                      f" / 無い {len(missing)}人（{pct}%）")
+            if over_share(len(missing), len(up.keys), b.share):
                 # **誰が欠けているかは出さない。** icon は公開だが、ここに
                 # 並べると「この人のセリフが無い」という名指しの一覧になる。
                 # 拾うのは `python/admin/chatter_voices.py` の仕事
@@ -511,7 +562,8 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
                     + ("：" + ", ".join(missing[:10]) if b.names else "")
                     + (f" → {b.todo}" if b.todo else "")
                 )
-                v.results.append(Result(name, b.who, KEYS, 0, "赤", detail + f" / 欠け {len(missing)}"))
+                v.results.append(Result(name, b.who, KEYS, 0, "赤",
+                                        detail + f" / 欠け {len(missing)}"))
             else:
                 v.results.append(Result(name, b.who, KEYS, 0, "通った", detail))
             continue
@@ -568,7 +620,8 @@ def report(v: Verdict, today: date) -> None:
     print()
     print(f"  {'本':22} {'だれが':14} {'見かた':7} {'しきい値':>6}  {'判定':10} 中身")
     for r in sorted(v.results, key=lambda r: (r.rule == SKIP, r.name)):
-        days = f"{r.days}日" if r.rule in (LATEST, COVERS) else f"{r.days}%" if r.rule == SHARE else "-"
+        days = (f"{r.days}日" if r.rule in (LATEST, COVERS)
+                else f"{r.days}%" if r.rule == SHARE else "-")
         print(f"  {r.name:22} {r.who:14} {r.rule:7} {days:>6}  {r.status:10} {r.detail}")
 
     for line in v.blind:

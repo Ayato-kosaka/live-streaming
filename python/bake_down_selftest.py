@@ -65,6 +65,7 @@ issue に出る。** 赤くならないし、issue も立つので、誰も気�
 import importlib.util
 import io
 import os
+import re
 import sys
 import urllib.error
 
@@ -195,6 +196,28 @@ STEPS_WATCH = [
 STEPS_BROKEN_AND_WATCH = [
     {"name": "焼く", "conclusion": "failure"},
     {"name": "分かち合う絵を撮り直せたか", "conclusion": "failure"},
+]
+
+# **判定器（自己テスト）が落ちた朝。** 2026-09-24 05:46 の本物の run の写し。
+# 焼く手前で止まるので `焼く` は skipped、そのあと `if: !cancelled()` の
+# 見張りが1本だけ走って、そちらも鳴っている。
+# **島のデータは1バイトも古くなっていない**——前の回（22:50:57）に master へ
+# 入って、22:51:01 に配り終わっている
+STEPS_SELFTEST = [
+    {"name": "またいだ呼び出しが合っているか", "conclusion": "success"},
+    {"name": "焼き込みが古くなっていないかの見張りが効くか", "conclusion": "failure"},
+    {"name": "焼く", "conclusion": "skipped"},
+    {"name": "master に入れる", "conclusion": "skipped"},
+    {"name": "Hosting を配る", "conclusion": "skipped"},
+    {"name": "セリフの届いていない人がいないか", "conclusion": "failure"},
+    {"name": bake_down.STALE_STEP, "conclusion": "success"},
+]
+
+# **判定器も落ちて、焼くほうも落ちた朝。** ここは「焼くのが落ちた」を採る——
+# 判定器に寄せると、落ちた焼き直しが見出しから消える
+STEPS_SELFTEST_AND_BROKEN = [
+    {"name": "焼き込みが古くなっていないかの見張りが効くか", "conclusion": "failure"},
+    {"name": "焼く", "conclusion": "failure"},
 ]
 
 STEPS_FROZEN = [
@@ -507,6 +530,58 @@ def case2c_watch():
     both = bake_down.why_red(STEPS_BROKEN_AND_WATCH)
     ck("焼き直しも落ちていたら「落ちた」を採る", both["why"] == "broken", both["why"])
     ck("乗るのは落ちた焼き直しのほう", both["step"] == "焼く", both["step"])
+    return gh
+
+
+def case2d_selftest():
+    """**判定器が落ちた朝を、「島が古い」と言わないか。**
+
+    分けなかったあいだ、`stale_content_watch_selftest.py` が1本落ちるだけで
+    「島の数字が焼き直せていません。**島に出ている数はきのうのままです**」の
+    issue が立った。**その回、島の数字はきのうのままではない**——前の回に
+    焼けて、master にも本番にも入っている（`#511` が2日そう言い続けた）。
+    """
+    print("\n[2d] 判定器（自己テスト）が落ちた朝 → 「島が古い」と言わない")
+    gh = FakeGh()
+
+    r, a = morning(gh, FROZEN, STEPS_SELFTEST)
+    ck("見立て", (a["down"], a["why"]) == (True, "selftest"), (a["down"], a["why"]))
+    ck("乗った step", a["step"] == "焼き込みが古くなっていないかの見張りが効くか",
+       a["step"])
+
+    st_body = gh.issues[0]["body"]
+    broken_body = bake_down.body(
+        {"down": True, "why": "broken", "step": "焼く", "at": STARTED})
+    watch_body = bake_down.body(
+        {"down": True, "why": "watch", "step": "分かち合う絵を撮り直せたか",
+         "at": STARTED})
+
+    # **ここが本題。** 「本当に島が古い回」と「判定器が落ちただけの回」で
+    # 文面が変わること。片方だけ見ても、分けたことにならない
+    stale_body = bake_down.body(
+        {"down": True, "why": "stale", "step": bake_down.STALE_STEP, "at": STARTED})
+    ck("本文が「落ちた」と違う", st_body != broken_body, "違う")
+    ck("本文が「見張りが鳴った」とも違う", st_body != watch_body, "違う")
+    ck("本文が「本当に島が古い回」とも違う", st_body != stale_body, "違う")
+    ck("**「きのうのまま」と言わない**", "きのうのまま" not in st_body, "言わない")
+    ck("「落ちた」のほうは「きのうのまま」と言う",
+       "きのうのまま" in broken_body, "言う")
+    ck("**判定するほうが落ちている、と書いてある**",
+       "判定するほうが落ちています" in st_body, "書いてある")
+    ck("落ちた自己テストの名前が出る",
+       "焼き込みが古くなっていないかの見張りが効くか" in st_body, "出る")
+    ck("押し直せとは書かない（次の回で焼ける）", "dry_run" not in st_body, "書かない")
+
+    # **同じ朝に見張りも鳴っていたら、判定器のほうを採る。**
+    # 焼く手前で止まっているほうが、配り終わったあとの見張りより大きい
+    ck("見張りも鳴っていても判定器を採る", a["why"] == "selftest", a["why"])
+
+    # **焼くほうも落ちていたら、そちらを採る。** ここを逆にすると、
+    # 落ちた焼き直しが見出しから消える（[2c] と同じ決めごと）
+    both = bake_down.why_red(STEPS_SELFTEST_AND_BROKEN)
+    ck("焼くほうも落ちていたら「落ちた」を採る", both["why"] == "broken", both["why"])
+    ck("乗るのは落ちた焼き直しのほう", both["step"] == "焼く", both["step"])
+    print(f"    （落ちた {len(broken_body)}文字 / 判定器 {len(st_body)}文字）")
     return gh
 
 
@@ -871,6 +946,32 @@ def case12_empty():
     ck("それで issue は立てない", gh3.created == 0, gh3.created)
 
 
+# **自己テストを「回している」行**。`python3 …_selftest.py` / `node …_selftest.mjs` が
+# **行の頭に来ているもの**だけ。コメントや説明文に名前が出るだけの行を数えない
+# （#141：`sed 's/[[:space:]]#.*//'` が行頭の `#` を落とさず、名前が出るだけの1本を
+# 「走る」に数えた。ここで同じ穴を踏まないよう、字ではなく**起こしかた**で見る）
+RUNS_SELFTEST = re.compile(r"^\s*(?:python3?|node)\s+[\w./-]*_selftest\.(?:py|mjs)\b")
+
+
+def _steps_in_order(yml: str) -> list:
+    """`rebake.yml` の step を、**書いてある順に** `{name, run}` で返す。
+
+    `case13_yaml()` が使う。`yaml.safe_load` は job を辞書で返すが、Python 3.7
+    以降は入った順を保つので、**そのまま並べれば YAML の順になる。**
+    ここが順を失うと「配りより前／後ろ」が意味を持たなくなるので、
+    呼ぶ側が「配りの step が1つだけ見つかる」で毎回確かめている。
+    """
+    import yaml
+
+    with open(os.path.join(FLOW, yml), encoding="utf-8") as fh:
+        d = yaml.safe_load(fh) or {}
+    out = []
+    for job in (d.get("jobs") or {}).values():
+        for st in (job.get("steps") or []):
+            out.append({"name": st.get("name"), "run": st.get("run") or ""})
+    return out
+
+
 def case13_yaml():
     """**ワークフローの YAML と突き合わせる。**
 
@@ -881,7 +982,9 @@ def case13_yaml():
     見るのは3つ。どれも**壊れても赤くならない**もの:
 
     1. 見張る相手（`rebake.yml`）が実在するか
-    2. 乗っている step（「凍っていたら赤くする」）が、その中に実在するか
+    2. 乗っている step（「凍っていたら赤くする」）が、その中に実在するか。
+       **そして逆向きも**——配りのうしろに立っている step が全部仕分けて
+       あるか、焼く前の自己テストが表と一致するか（#187）
     3. この係の `workflow_run` の繋ぎ先が、実在するワークフローの `name:` か
     """
     print("\n[13] ワークフローの YAML と突き合わせる")
@@ -917,6 +1020,80 @@ def case13_yaml():
     missing = [n for n in bake_down.WATCH_STEPS if n not in steps]
     ck(f"出したあとの見張りが全部実在する（{len(bake_down.WATCH_STEPS)}本）",
        not missing, missing or "ぜんぶ在る")
+
+    # 2b. **逆向きも見る。** 上の足は「表に在る名前が YAML に在るか」しか
+    #     見ていないので、**YAML にだけ在る step** は素通りする。
+    #     実際に「絵の大きさを測り直せたか」が1本抜けていて、
+    #     2026-09-23 22:39 の run（**master に入って本番にも配り終わった回**）が
+    #     「島に出ている数はきのうのままです」の issue になった（#187）。
+    #
+    #     数えるのは**配りより後ろの step**。そこに立っているものは、
+    #     見張り（`WATCH_STEPS`）か、凍り／古いか、赤くならない案内係しかない。
+    raw = _steps_in_order(bake_down.WORKFLOW_FILE)
+    ck(f"`rebake.yml` の step を順番に読めた（{len(raw)}個）", len(raw) > 30, len(raw))
+    deploy = [i for i, st in enumerate(raw) if st["name"] == "Hosting を配る"]
+    ck("配りの step が1つだけ見つかる", len(deploy) == 1, deploy)
+    after = [st["name"] for st in raw[deploy[0] + 1:]] if deploy else []
+    known = (set(bake_down.WATCH_STEPS) | set(bake_down.AFTER_DEPLOY_NOT_RED)
+             | {bake_down.FROZEN_STEP, bake_down.STALE_STEP})
+    stray = [n for n in after if n not in known]
+    ck(f"配りのうしろの step が全部仕分けてある（{len(after)}個 見た）",
+       not stray, stray or "ぜんぶ仕分けてある")
+    ck("見ている分母が0ではない", len(after) > 0, len(after))
+
+    # 2c. **焼く前の自己テストも、両側から。**
+    #     こちらは名前を手で並べない——`rebake.yml` の中で
+    #     **配りより前に `*_selftest` を回している step** を数えて突き合わせる。
+    #     手で並べると、`run:` を1本足した日に黙って外れる（#125 の繋ぎ忘れ）
+    #     **`_selftest` の字を探すだけでは駄目**（#141 と同じ穴）。
+    #     step「凍っていないか」は heredoc の中の説明文で
+    #     `python/bake_order_selftest.py` に触れているだけなのに、字で数えると
+    #     「自己テストを回している」に化ける。**行の頭から起こしているもの**だけ数える
+    before = raw[:deploy[0]] if deploy else []
+    found = [st["name"] for st in before
+             if any(RUNS_SELFTEST.match(ln) for ln in (st["run"] or "").splitlines())]
+    ck(f"焼く前に自己テストを回す step を数えた（{len(before)}個 見た）",
+       len(found) > 0, len(found))
+    ck(f"自己テストの表が YAML と一致する（表 {len(bake_down.SELFTEST_STEPS)}本）",
+       sorted(found) == sorted(bake_down.SELFTEST_STEPS),
+       sorted(set(found) ^ set(bake_down.SELFTEST_STEPS)) or "一致")
+
+    # 2d. **この2つの足を、1本ずつ外して落ちることまで見る。**
+    #     「0件で緑」は、数えていなくても同じ顔をする（§15）。
+    #     外すのは**実際に抜けていた1本**——`WATCH_STEPS` から
+    #     「絵の大きさを測り直せたか」を抜くと、2026-09-23 22:39 の朝に戻る
+    real_watch = bake_down.WATCH_STEPS
+    try:
+        bake_down.WATCH_STEPS = tuple(
+            n for n in real_watch if n != "絵の大きさを測り直せたか")
+        broke = set(bake_down.WATCH_STEPS) | set(bake_down.AFTER_DEPLOY_NOT_RED) \
+            | {bake_down.FROZEN_STEP, bake_down.STALE_STEP}
+        left = [n for n in after if n not in broke]
+        ck("（対照）見張りを1本抜くと、配りのうしろの足が落ちる",
+           left == ["絵の大きさを測り直せたか"], left)
+        # **そのとき、本文が嘘に戻ることまで見る。** 仕分けが外れると
+        # 「島に出ている数はきのうのままです」に落ちる
+        lie = bake_down.body(bake_down.assess(
+            row(99, "failure"),
+            [{"name": "Hosting を配る", "conclusion": "success"},
+             {"name": "絵の大きさを測り直せたか", "conclusion": "failure"}]))
+        ck("（対照）抜くと本文が「きのうのまま」に戻る", "きのうのまま" in lie, "戻る")
+    finally:
+        bake_down.WATCH_STEPS = real_watch
+    fixed = bake_down.body(bake_down.assess(
+        row(99, "failure"),
+        [{"name": "Hosting を配る", "conclusion": "success"},
+         {"name": "絵の大きさを測り直せたか", "conclusion": "failure"}]))
+    ck("戻すと本文が「きのうのまま」と言わない", "きのうのまま" not in fixed, "言わない")
+
+    real_self = bake_down.SELFTEST_STEPS
+    try:
+        bake_down.SELFTEST_STEPS = real_self[1:]
+        ck("（対照）自己テストを1本抜くと、表と YAML が食い違う",
+           sorted(found) != sorted(bake_down.SELFTEST_STEPS),
+           sorted(set(found) ^ set(bake_down.SELFTEST_STEPS)))
+    finally:
+        bake_down.SELFTEST_STEPS = real_self
 
     # 3. この係の繋ぎ先が、実在するワークフローの name: か。
     #    **PyYAML は `on:` を真偽値の True として読む**（YAML 1.1）ので、両方引く
@@ -991,10 +1168,11 @@ def main() -> int:
     os.environ["GITHUB_ACTIONS"] = "true"
     print("=== 偽の GitHub で、焼き直しが止まっているの映し方を動かす ===")
     print("（GitHub には1バイトも出ません）")
-    gh = case1_broken()
+    case1_broken()
     gh2 = case2_frozen()
     case2b_stale()
     case2c_watch()
+    case2d_selftest()
     gh2 = case3_close(gh2)
     case4_same(gh2)
     case5_switch()
