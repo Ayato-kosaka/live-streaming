@@ -1596,3 +1596,143 @@ export const deleteCharacter = (id: string, token: string) =>
     method: "DELETE",
     headers: auth(token),
   });
+
+
+/* ---------------- 豚の貯金箱の出し入れ（#292 のオーナー画面ぶん） ----------
+   **あやとだけ。** 出費と目標は、いままで GitHub Actions からしか入らず、
+   画面からは1件も見られなかった。
+
+   額が動く口なので、送るのは1件ずつ。**まとめて入れる道も、まとめて
+   消す道も無い**（`functions/src/fundDesk.ts`）。同じものを2回送っても
+   書類IDが中身から決まるので増えない。 */
+
+/** 焼き直した合計（`island/state.fund.box`）。**島の豚が出しているのと同じ値。** */
+export type FundBox = {
+  /** 貯金箱に入るぶん（**÷2 済み**） */
+  superchat: number;
+  /** 人が出した額（÷2 する前） */
+  superchatFull: number;
+  count: number;
+  spend: number;
+  spendCount: number;
+  /** 起点。支出の合計の符号を反転した**負の数** */
+  start: number;
+  goal: { from?: string; label?: string; yen?: number } | null;
+  /** 焼き直した日 */
+  updatedAt?: string;
+};
+
+/** 出費1件。**「もらったお金の行き先」の台帳**（#639）。 */
+export type FundSpend = { id: string; day: string; title: string; yen: number };
+
+/** 目標1件。`to` が入っていれば終わったもの。 */
+export type FundGoal = {
+  id: string;
+  from: string;
+  to: string | null;
+  label: string;
+  yen: number;
+};
+
+/** 机を1枚ぶん。 */
+export type FundDesk = {
+  /** **読めなかったら null。0 にしない**（`docs/island-standards.md` 10） */
+  box: FundBox | null;
+  doneru: number | null;
+  spends: FundSpend[];
+  more: boolean;
+  next: string | null;
+  goals: FundGoal[];
+};
+
+/** 出費の続き1ページぶん。 */
+export type FundSpendPage = {
+  spends: FundSpend[];
+  more: boolean;
+  next: string | null;
+};
+
+/** 書いたあとの返事。**焼き直しが返る**ので、額をその場で出し直せる。 */
+export type FundWrote<T> = T & { already?: boolean; box: FundBox | null };
+
+/** 机を1枚ぶん読む。 */
+export const getFundDesk = (token: string) =>
+  req<FundDesk>("/fund/desk", { headers: auth(token) });
+
+/** 出費の続き。`before` に前のページの `next` を渡す。 */
+export const getFundSpends = (
+  token: string,
+  before?: string | null,
+  limit?: number,
+) => {
+  const q = new URLSearchParams();
+  if (before) q.set("before", before);
+  if (limit) q.set("limit", String(limit));
+  const s = q.toString();
+  return req<FundSpendPage>(`/fund/spends${s ? `?${s}` : ""}`, {
+    headers: auth(token),
+  });
+};
+
+/**
+ * 出費を1行足す。**同じ日・同じ題・同じ額を2回送っても増えない。**
+ * 返ってくる `already` が true なら、前から在った行を上書きしただけ。
+ */
+export const addFundSpend = (
+  p: { day: string; title: string; yen: number },
+  token: string,
+) =>
+  req<FundWrote<{ spend: FundSpend }>>("/fund/spends", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(p),
+  });
+
+/** 出費を1行消す。**書類IDを指したときだけ。** */
+export const dropFundSpend = (id: string, token: string) =>
+  req<{ deleted: string; box: FundBox | null }>(
+    `/fund/spends/${encodeURIComponent(id)}`,
+    { method: "DELETE", headers: auth(token) },
+  );
+
+/** 目標をはじめる。書類IDは開始日そのもの。 */
+export const addFundGoal = (
+  p: { from: string; label: string; yen: number },
+  token: string,
+) =>
+  req<FundWrote<{ goal: FundGoal }>>("/fund/goals", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(p),
+  });
+
+/** 目標をおわりにする。**消すのとは違う。** 台帳には残る。 */
+export const closeFundGoal = (from: string, to: string, token: string) =>
+  req<FundWrote<{ goal: FundGoal }>>(
+    `/fund/goals/${encodeURIComponent(from)}/close`,
+    { method: "POST", headers: auth(token), body: JSON.stringify({ to }) },
+  );
+
+/** 打ち間違えた目標を消す。**書類IDを指したときだけ。** */
+export const dropFundGoal = (from: string, token: string) =>
+  req<{ deleted: string; box: FundBox | null }>(
+    `/fund/goals/${encodeURIComponent(from)}`,
+    { method: "DELETE", headers: auth(token) },
+  );
+
+/** 取りこぼしたスパチャを、手で1件足す。 */
+export const addFundChat = (
+  p: { day: string; yen: number; who: string },
+  token: string,
+) =>
+  req<FundWrote<{ chat: { id: string; day: string; yen: number; who: string } }>>(
+    "/fund/chats",
+    { method: "POST", headers: auth(token), body: JSON.stringify(p) },
+  );
+
+/** スパチャの控えを1件消す。**書類IDを指したときだけ。** */
+export const dropFundChat = (id: string, token: string) =>
+  req<{ deleted: string; box: FundBox | null }>(
+    `/fund/chats/${encodeURIComponent(id)}`,
+    { method: "DELETE", headers: auth(token) },
+  );

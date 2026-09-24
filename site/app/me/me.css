@@ -1075,3 +1075,216 @@
 }
 .mp-sc-more:active { transform: translateY(4px); box-shadow: none; }
 .mp-sc-more:disabled { opacity: 0.62; box-shadow: none; }
+
+/* --- 豚の貯金箱の机（`components/me/FundDesk.tsx`。#292 / #639） ---------
+   出費・目標・スパチャの3つを縦に積まない。札で切り替えて、同時に1つ
+   （`docs/island-standards.md` 7章）。**押しどころは厚みだけで示す**
+   （3-3）。1行1行には厚みを付けない。 */
+
+/* いくら入っているか。**この面でいちばん大きい字。** */
+.fd-top {
+  margin: 0 0 var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: var(--bw-1) solid var(--frame);
+}
+.fd-total {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.fd-total b {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+/* 読めなかったとき。**0円と見分けが付く**（`island-standards.md` 10章） */
+.fd-total.is-off { font-weight: 700; }
+/* もらった／つかった。**この2つが、財布の両側。** */
+.fd-side {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.fd-side b {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.fd-side span { color: var(--frame-dark); }
+.fd-goalnow {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.fd-goalnow b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* 中の札。**外の道具の札（`.mp-tab`）より一回り小さくする。**
+   同じ大きさで入れ子にすると、どちらが上の並びか分からなくなる。 */
+.fd-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.fd-tab {
+  min-height: 48px;
+  padding: var(--sp-1);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.fd-tab.is-on {
+  border-color: var(--pick);
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* 押したら、いくらになるか。**打っているあいだだけ出る。** */
+.fd-peek {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.fd-peek b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* 月ごとのまとまり。**溜まっても背が変わらないように、月で切る。** */
+.fd-month { margin-top: var(--sp-4); }
+.fd-monthh {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--bw-1) solid var(--frame);
+}
+.fd-monthh b { font-size: var(--fs-body); font-weight: 900; color: var(--ink); }
+.fd-monthh i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.fd-rows { list-style: none; margin: 0; padding: 0; }
+/* 1行。日・なにに・いくら・けす。**題だけが伸び縮みする。** */
+.fd-rows > li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-1) 0;
+  flex-wrap: wrap;
+}
+.fd-rows > li + li { border-top: var(--bw-1) solid var(--frame); }
+.fd-day {
+  flex: none;
+  width: 44px;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.fd-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+.fd-yen {
+  flex: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* 消すのは2段。**1回押すと「ほんとうに消す／やめる」に変わる。** */
+.fd-ask {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+/* 一覧の中では、2段めを**次の行へ落とす。**
+   同じ行に並べると、`.fd-title` が縮んで「アプリ運営費」が「ア.」になる
+   ——**何を消すのかが読めないまま「ほんとうに消す」を押させる**ことになる。
+   390px の実測でそうなった（2026-09-24）。 */
+.fd-rows > li .fd-ask {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+.fd-x {
+  flex: none;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+  box-shadow: var(--pop-sm);
+}
+.fd-x.is-yes { color: var(--ink); }
+.fd-x:active { transform: translateY(4px); box-shadow: none; }
+
+/* いまめざしているもの。**1枚だけ。** */
+.fd-card {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.fd-cardh {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.fd-cardh b { font-size: var(--fs-h3); font-weight: 900; color: var(--ink); }
+.fd-cardh i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.fd-cardn {
+  margin: var(--sp-1) 0 var(--sp-2);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.fd-close { margin-bottom: var(--sp-2); }

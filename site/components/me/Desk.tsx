@@ -19,9 +19,9 @@ const AlertBoxBox = dynamic(() => import("./AlertBoxBox"), { ssr: false });
 /* キャラクターも同じ理由で、開いた札のぶんだけ降ろす。**こちらは
    97人ぶんの絵を引く**ので、机を開いただけで降ろすと重い。 */
 const Characters = dynamic(() => import("./Characters"), { ssr: false });
-/* スパチャの控えも同じ。**415件を数えて1ページ引く**ので、机を開いた
-   だけで降ろさない（`islandFundSuperChats`。#292）。 */
-const FundHistory = dynamic(() => import("./FundHistory"), { ssr: false });
+/* 貯金箱も同じ。**台帳を3本（スパチャ・出費・目標）引く**ので、机を開いた
+   だけで降ろさない（#292）。 */
+const FundDesk = dynamic(() => import("./FundDesk"), { ssr: false });
 
 /* 道具の並びは `./tools` が1か所で持つ。**ここで並べない。**
    `/me` の入口の添え書きが同じ並びを手で持っていて、道具を1つ外した日に
@@ -141,7 +141,7 @@ export default function Desk() {
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}
-          {tool === "fund" && <FundHistory />}
+          {tool === "fund" && <FundDesk />}
           {tool === "obs" && <AlertBoxBox />}
         </div>
       </section>
