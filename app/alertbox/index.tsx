@@ -37,6 +37,7 @@ import {
   getAlertboxWss,
   getAlertboxCharacters,
   getAlertboxFund,
+  getAlertboxReplay,
   postAlertboxSuperchat,
 } from "./api.utils";
 
@@ -58,6 +59,13 @@ const SUPERCHAT_CONVERSION_RATE = 0.5;
    あやとに「開き直して」と言わせないための下限がここ。
    配信4時間でも24回しか叩かないので、口の負担にはならない。 */
 const CHARACTERS_REFRESH_MS = 10 * 60 * 1000;
+
+/* 「もう一度出して」を聞きにいく間隔（2026-09-25。あやとの要件）。
+   あやとが机で押してから配信に出るまでの遅れが、だいたいこの半分になる。
+   3秒にしたのは、配信4時間で 4,800回（1回の返りは数十バイト）という
+   ところで折り合うから。**押した本人が「出ない」と思う前に出る**のが
+   ここの仕事なので、10秒では遅い。 */
+const REPLAY_POLL_MS = 3000;
 
 /* 動画が**動き出すのを待つ上限**。ここを過ぎたら絵のままにする。
    - 投げ銭のアラートは 30 秒出ている（`config.ts` の `alertDuration`）ので、
@@ -388,6 +396,80 @@ export default function AlertBox() {
        差し替えない作りにしてある。 */
     const charactersTimer = setInterval(fetchCharacters, CHARACTERS_REFRESH_MS);
     cleanupFunctions.push(() => clearInterval(charactersTimer));
+
+    /* あやとが机から「もう一度出して」と押したものを拾う（2026-09-25）。
+
+       あやとの言葉「たまに配信中見逃すので。…本当は即時で再アラートできる
+       機能ほしい」。押すのは `/me/desk`、置き場は Firestore、ここは聞くだけ。
+
+       ## 変なものを出さないための3つ
+
+       1. **出す中身は、口が台帳から組んだもの**。押した人が送った字は
+          1文字も通らない（`functions/src/fundDesk.ts`）
+       2. **起き上がって最初に受け取った印は、控えるだけで出さない。**
+          OBS を開き直した瞬間に、さっき押された指示が流れるのを止める
+       3. **同じ印は2回出さない。** 口のほうも1分のあいだ印を進めない
+          （二度押しで二度出さない）。どちらか片方でも守りになるが、
+          **配信に出るものなので2重にしてある**
+
+       **`test: true` を立てて渡す。** そうしないと `handleNotification` が
+       台帳へもう1件書き込んで（`postAlertboxSuperchat`）、**もう一度出す
+       たびに貯金箱が伸びる。** 書類IDは中身から決まるので実際には増えない
+       が、口を叩く理由が無い。額も、もう一度足してはいけない。 */
+    let lastReplaySeq = 0;
+    let firstReplay = true;
+    const replayTick = async () => {
+      try {
+        const got = await getAlertboxReplay(alertboxId);
+        if (!got.seq || !got.show) return;
+        if (firstReplay) {
+          // 起き上がった1回目。**控えるだけ**
+          firstReplay = false;
+          lastReplaySeq = got.seq;
+          sendLog("AlertBox", sessionId, "replayBaseline", { seq: got.seq });
+          return;
+        }
+        if (got.seq <= lastReplaySeq) return;
+        lastReplaySeq = got.seq;
+        sendLog("AlertBox", sessionId, "replayPlay", {
+          seq: got.seq,
+          kind: got.show.kind,
+        });
+        setNotificationQueue((prev) => [
+          ...prev,
+          got.show!.kind === "donation"
+            ? {
+                id: `replay-${got.seq}`,
+                type: "donation",
+                amount: got.show!.yen,
+                assetID: null,
+                message: got.show!.text,
+                messageType: 1,
+                nickname: got.show!.who,
+                // **台帳へ書き戻させないための印**（上の説明）
+                test: true,
+              }
+            : {
+                id: `replay-${got.seq}`,
+                type: "superchat",
+                amount: got.show!.yen,
+                currency: "¥",
+                jpy: got.show!.yen,
+                message: got.show!.text,
+                nickname: got.show!.who,
+                test: true,
+              },
+        ]);
+      } catch (error) {
+        /* 聞けなかっただけ。**配信には何も出さない**（印は進めない）。
+           1回こけても次の3秒で聞き直すので、ここでは止めない。 */
+        sendLog("AlertBox", sessionId, "replayError", {
+          error: String(error),
+        });
+      }
+    };
+    const replayTimer = setInterval(replayTick, REPLAY_POLL_MS);
+    cleanupFunctions.push(() => clearInterval(replayTimer));
 
     // Initialize Doneru connector if enabled
     if (enabledSources.includes("doneru")) {

@@ -11,9 +11,9 @@
  * （`admin.auth().verifyIdToken` → `islandUsers/{uid}.admin`）を通す。
  * 差し替えるのは、外に出ていく2つ（合言葉の検算・Firestore）だけ。
  * 手本は `tools/fund/ownercheck.cjs`（`GET /fund/history` のぶん）で、
- * あれと同じことを**書ける8本**に当てる。
+ * あれと同じことを**いまの10本**に当てる（**配信に字が出る口**も含む）。
  *
- * 見るのは5とおり × 9本。
+ * 見るのは5とおり × 10本。
  *
  * | 合言葉 | 通ってよいか |
  * | --- | --- |
@@ -92,7 +92,7 @@ if (BUILD) {
 
 const nodeRequire = createRequire(join(FUNCTIONS, "package.json"));
 const admin = nodeRequire("firebase-admin");
-const {DocumentReference, Query, CollectionReference} =
+const {DocumentReference, Query, CollectionReference, WriteBatch} =
   nodeRequire("@google-cloud/firestore");
 
 /* ---------------- 仕込む中身（ぜんぶ偽の字） ---------------- */
@@ -101,6 +101,8 @@ const {DocumentReference, Query, CollectionReference} =
 const SECRET = "ひみつの名前";
 /** 出費の題。**これも人には見せない** */
 const SECRET_TITLE = "ひみつの宿";
+/** 投げ銭に添えられた本文。**名前と同じ扱い**（2026-09-25） */
+const SECRET_TEXT = "ひみつのことば";
 
 /** 誰の合言葉か。`null` は「検算に落ちる（にせもの）」 */
 let TOKEN_UID = null;
@@ -115,7 +117,20 @@ DocumentReference.prototype.get = async function() {
   READS++;
   const col = this.parent.id;
   if (col === "islandUsers") {
-    return {exists: true, data: () => ({admin: IS_ADMIN}), get: () => undefined};
+    return {
+      exists: true,
+      // 合言葉はあやとの控えから引く（`POST /fund/replay` の出し先）
+      data: () => ({admin: IS_ADMIN, alertboxId: "a".repeat(32)}),
+      get: () => undefined,
+    };
+  }
+  if (col === "islandFundReplay") {
+    return {exists: false, data: () => ({}), get: () => undefined};
+  }
+  if (col === "islandFundDonations") {
+    const v = {day: "2026-09-10", at: "2026-09-10T20:00:00+09:00",
+      yen: 300, who: SECRET, text: SECRET_TEXT};
+    return {exists: true, data: () => v, get: (k) => v[k]};
   }
   if (col === "islandFundSpends") {
     const v = {day: "2026-09-01", title: SECRET_TITLE, yen: 400};
@@ -126,7 +141,8 @@ DocumentReference.prototype.get = async function() {
     return {exists: true, data: () => v, get: (k) => v[k]};
   }
   if (col === "islandFundSuperChats") {
-    const v = {day: "2026-09-10", yen: 1000, who: SECRET};
+    const v = {day: "2026-09-10", at: "2026-09-10T20:00:00+09:00",
+      yen: 1000, who: SECRET, text: SECRET_TEXT};
     return {exists: true, data: () => v, get: (k) => v[k]};
   }
   // island/state（焼き直しの置き場）ほか
@@ -137,6 +153,17 @@ DocumentReference.prototype.set = async function() {
 };
 DocumentReference.prototype.delete = async function() {
   WRITES++;
+};
+/* まとめ書き。**`commit()` を数える**（目標を作る枝がこちらを通る）。 */
+WriteBatch.prototype.set = function() {
+  return this;
+};
+WriteBatch.prototype.delete = function() {
+  return this;
+};
+WriteBatch.prototype.commit = async function() {
+  WRITES++;
+  return [];
 };
 
 /** 台帳の1ページぶん。**403 の道でここに来たら、そこで落とす。** */
@@ -242,16 +269,20 @@ function call(method, path, headers, body) {
 /** 叩く先。**書ける口を1本も落とさない**（落とすとそこだけ開いていても緑） */
 const WAYS = [
   ["GET", "/island-api/fund/desk", {}, false],
+  ["GET", "/island-api/fund/feed", {}, false],
   ["GET", "/island-api/fund/spends", {}, false],
   ["POST", "/island-api/fund/spends",
     {day: "2026-09-12", title: "宿代", yen: 400}, true],
   ["DELETE", "/island-api/fund/spends/2026-09-01-deadbeef", {}, true],
   ["POST", "/island-api/fund/goals",
     {from: "2026-10-01", label: "つぎのたび", yen: 300}, true],
-  ["POST", "/island-api/fund/goals/2026-07-27/close", {to: "2026-09-27"}, true],
   ["DELETE", "/island-api/fund/goals/2026-07-27", {}, true],
   ["POST", "/island-api/fund/chats", {day: "2026-09-12", yen: 500}, true],
   ["DELETE", "/island-api/fund/chats/AAAAAAAAAAAAAAAAAAAAAAAAAA", {}, true],
+  /* **もう一度出す**（2026-09-25）。配信に字が出る口なので、
+     ここが開いていると**他人が配信に好きなものを出せる**。 */
+  ["POST", "/island-api/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"}, true],
 ];
 
 /** [名前, ヘッダ, 合言葉の中の uid, その人は admin か] */
@@ -284,7 +315,8 @@ for (const [tag, headers, uid, isAdmin] of WHO) {
     } else {
       if (r.status !== 403) wrong.push(`${method} ${path}=${r.status}`);
       if (WRITES !== 0) wrote.push(`${method} ${path}`);
-      if (text.includes(SECRET) || text.includes(SECRET_TITLE)) {
+      if (text.includes(SECRET) || text.includes(SECRET_TITLE) ||
+          text.includes(SECRET_TEXT)) {
         leaked.push(`${method} ${path}`);
       }
     }
@@ -319,7 +351,7 @@ const BREAKS = [
     "あやとかを見るのをやめる",
     "if (!(await deps.ownerUid(q.auth))) {",
     "if (false) {",
-    "合言葉なし: 9本とも 403",
+    "合言葉なし: 10本とも 403",
   ],
   [
     "断る前に書いてしまう",

@@ -110,3 +110,32 @@ jobs:
         if: ${{ always() }}
         continue-on-error: true
         run: python python/doneru_health.py
+
+      # Doneru の投げ銭を**1件ずつ**島の置き場へ写す（2026-09-25）。
+      #
+      # Doneru の API から取れるのは**ウィジェットの累計1つだけ**で、
+      # 「誰が・いつ・いくら・何と書いて」は BigQuery にしか無い。
+      # Functions からは BigQuery を引けないので、ここで写す。
+      #
+      # **上の札より後ろに置く。** 「いつまで入っているか」を
+      # `islandDoneruHealth/last.okDay` から読むので、先に新しくなっている
+      # 必要がある。
+      #
+      # **continue-on-error は付けない。** 写せなかった晩は画面が内訳を
+      # 出さなくなる（0 を作らないため）ので、黙って落ちてはいけない。
+      # 額そのものは1円も動かない（豚は向こうの累計を読んでいる）。
+      - name: Doneru の投げ銭を1件ずつ写す
+        if: ${{ always() }}
+        run: python python/doneru_ledger.py
+
+      # スパチャの本文を、あとから台帳へ足す（2026-09-25）。
+      #
+      # 本文を残しはじめたのは配信の OBS が叩く口だけで、**それより前の
+      # ぶんと、OBS を起動し忘れた晩のぶん**には入らない。BigQuery には
+      # 在るので、既にある書類へ足す（**新しくは作らない**）。
+      #
+      # ここに置くのは、上と同じ「BigQuery から島へ写す」仕事だから。
+      # チャットの取り込み（20:00 UTC）はこの回（20:30 UTC）より前に走る。
+      - name: スパチャの本文を台帳へ足す
+        if: ${{ always() }}
+        run: python python/superchat_text.py

@@ -107,14 +107,30 @@ function scenario(store, opt = {}) {
     get: (k) => (v ? v[k] : undefined),
   });
 
+  /** 絞り込み。**本物と同じで、欄を持たない書類は落ちる。** */
+  const keep = (v, where) =>
+    (where ?? []).every(([f, op, x]) => {
+      const got = v[f];
+      if (op === "==") return got === x;
+      // Firestore は**欄を持たない書類を範囲から落とす。** ここも同じにする
+      if (got === undefined || got === null) return false;
+      if (op === "<") return got < x;
+      if (op === "<=") return got <= x;
+      if (op === ">") return got > x;
+      if (op === ">=") return got >= x;
+      throw new Error(`偽の Firestore は ${op} を持たない`);
+    });
+
   const query = (name, q) => ({
+    where: (f, op, v) =>
+      query(name, {...q, where: [...(q.where ?? []), [f, op, v]]}),
     orderBy: (f, dir) =>
       query(name, {...q, order: [...(q.order ?? []), [f, dir ?? "asc"]]}),
     startAfter: (...v) => query(name, {...q, after: v}),
     limit: (n) => query(name, {...q, limit: n}),
     aggregate: (spec) => ({
       get: async () => {
-        const rows = docsOf(name);
+        const rows = docsOf(name).filter(([, v]) => keep(v, q.where));
         const out = {};
         for (const [k, f] of Object.entries(spec)) {
           if (f.op === "count") out[k] = rows.length;
@@ -129,7 +145,19 @@ function scenario(store, opt = {}) {
       },
     }),
     get: async () => {
-      let rows = docsOf(name).map(([id, v]) => snapOf(id, v));
+      let rows = docsOf(name)
+        .filter(([, v]) => keep(v, q.where))
+        .map(([id, v]) => snapOf(id, v));
+      /* **並べ替えの欄を持たない書類は、本物でも返ってこない。**
+         `at` の無い控え13件が feed に出てこないのは、この性質そのもの。 */
+      for (const [f] of q.order ?? []) {
+        if (f !== DOC_ID) {
+          rows = rows.filter((d) => {
+            const v = d.data()[f];
+            return v !== undefined && v !== null;
+          });
+        }
+      }
       for (const [f, dir] of [...(q.order ?? [])].reverse()) {
         const key = (d) => (f === DOC_ID ? d.id : String(d.data()[f] ?? ""));
         rows.sort((a, b) =>
@@ -138,11 +166,17 @@ function scenario(store, opt = {}) {
       }
       if (q.after) {
         const [d0, i0] = q.after;
-        rows = rows.filter((d) => {
-          const day = String(d.data().day ?? "");
-          if (day !== d0) return day < d0;
-          return d.id < i0;
-        });
+        const f0 = (q.order ?? [])[0]?.[0];
+        if (i0 === undefined) {
+          // 1本だけで送る形（履歴の続き）
+          rows = rows.filter((d) => String(d.data()[f0] ?? "") < d0);
+        } else {
+          rows = rows.filter((d) => {
+            const day = String(d.data().day ?? "");
+            if (day !== d0) return day < d0;
+            return d.id < i0;
+          });
+        }
       }
       if (q.limit !== undefined) rows = rows.slice(0, q.limit);
       return {
@@ -154,28 +188,53 @@ function scenario(store, opt = {}) {
     },
   });
 
+  /**
+   * 1件書く。`batch` からもここを通す（**書き込みの道を1本にする**）。
+   * @param {string} name コレクション名
+   * @param {string} id 書類ID
+   * @param {object} data 中身
+   * @param {object} [o] `{merge}`
+   */
+  const putDoc = (name, id, data, o) => {
+    if (opt.breakRebake && name === "island") {
+      throw new Error("焼き直しだけ落ちる（偽）");
+    }
+    writes.push({col: name, id, data, merge: !!(o ?? {}).merge});
+    store[name] = store[name] ?? {};
+    store[name][id] = (o ?? {}).merge ?
+      {...(store[name][id] ?? {}), ...data} :
+      {...data};
+  };
+  const delDoc = (name, id) => {
+    writes.push({col: name, id, del: true});
+    delete store[name]?.[id];
+  };
+
   const db = {
     collection: (name) => ({
       ...query(name, {}),
       doc: (id) => ({
         id,
+        _c: name,
         get: async () => snapOf(id, store[name]?.[id]),
-        set: async (data, o) => {
-          if (opt.breakRebake && name === "island") {
-            throw new Error("焼き直しだけ落ちる（偽）");
-          }
-          writes.push({col: name, id, data, merge: !!(o ?? {}).merge});
-          store[name] = store[name] ?? {};
-          store[name][id] = (o ?? {}).merge ?
-            {...(store[name][id] ?? {}), ...data} :
-            {...data};
-        },
-        delete: async () => {
-          writes.push({col: name, id, del: true});
-          delete store[name]?.[id];
-        },
+        set: async (data, o) => putDoc(name, id, data, o),
+        delete: async () => delDoc(name, id),
       }),
     }),
+    /* まとめ書き。**本物と同じで、`commit()` まで1バイトも書かない。** */
+    batch: () => {
+      const q = [];
+      return {
+        set: (ref, data, o) => q.push(["set", ref._c, ref.id, data, o]),
+        delete: (ref) => q.push(["del", ref._c, ref.id]),
+        commit: async () => {
+          for (const w of q) {
+            if (w[0] === "set") putDoc(w[1], w[2], w[3], w[4]);
+            else delDoc(w[1], w[2]);
+          }
+        },
+      };
+    },
   };
 
   const admin = {
@@ -272,11 +331,29 @@ import {createRequire} from "node:module";
 
 /* ---------------- 仕込む中身（ぜんぶ偽の字） ---------------- */
 
-/** スパチャの控え2件。**名前も額も偽物** */
+/** スパチャの控え2件。**名前も額も本文も偽物** */
 const CHATS = {
-  "AAAAAAAAAAAAAAAAAAAAAAAAAA": {yen: 1001, day: "2026-09-10", who: "さくら"},
-  "BBBBBBBBBBBBBBBBBBBBBBBBBB": {yen: 500, day: "2026-09-11", who: "うめ"},
+  "AAAAAAAAAAAAAAAAAAAAAAAAAA": {
+    yen: 1001, day: "2026-09-10", at: "2026-09-10T20:01:00+09:00",
+    who: "さくら", text: "ひみつのことば",
+  },
+  "BBBBBBBBBBBBBBBBBBBBBBBBBB": {
+    yen: 500, day: "2026-09-11", at: "2026-09-11T21:02:00+09:00", who: "うめ",
+  },
 };
+/** Doneru の写し2件。**スパチャと同じ晩のものを混ぜる**（並び順を見るため） */
+const DONS = {
+  "d0001": {
+    yen: 300, day: "2026-09-10", at: "2026-09-10T20:30:00+09:00",
+    who: "もみじ", text: "ひみつのドネ", src: "doneru",
+  },
+  "d0002": {
+    yen: 700, day: "2026-07-01", at: "2026-07-01T19:00:00+09:00", who: "まつ",
+    src: "doneru",
+  },
+};
+/** ドネの写しが、いつまで入っているか。**無いと内訳を出さない** */
+const DON_OK = {at: "2026-09-25T00:00:00Z", okDay: "2026-09-24", count: 2, yen: 1000};
 /** 出費1件 */
 const SPENDS = {"2026-09-01-deadbeef": {day: "2026-09-01", title: "宿代", yen: 400}};
 /** 目標1件（開いている） */
@@ -285,9 +362,27 @@ const GOALS = {"2026-07-27": {from: "2026-07-27", label: "きたへいきたい"
 /** 筋書きごとに新しい写しを作る（前の組の書き込みを持ち越さない） */
 const seed = () => ({
   islandFundSuperChats: {...CHATS},
+  islandFundDonations: {...DONS},
   islandFundSpends: {...SPENDS},
   islandFundGoals: {...GOALS},
-  island: {},
+  islandFundHealth: {donations: {...DON_OK}},
+  islandUsers: {"ayato-uid": {admin: true, alertboxId: "a".repeat(32)}},
+  islandFundReplay: {},
+  /* 焼き直しずみの盤。**`GET /fund/desk` は数え直さず、ここを読む**
+     （島の豚が出している額と1円も違わないようにするため）。
+     中身は、上の仕込みを `rebake` が数えたのと同じ数にしてある。 */
+  island: {
+    state: {
+      fund: {
+        box: {
+          superchat: 750, superchatFull: 1501, count: 2,
+          spend: 400, spendCount: 1, start: -400,
+          goal: {from: "2026-07-27", label: "きたへいきたい", yen: 50000},
+          updatedAt: "2026-09-25",
+        },
+      },
+    },
+  },
 });
 
 /** 焼き直しの値を取り出す。 */
@@ -352,7 +447,7 @@ console.log("\n# 2. 2回入れても増えない");
   const goal = {from: "2026-10-01", label: "つぎのたび", yen: 30000};
   await g.call("POST", "/fund/goals", goal);
   await g.call("POST", "/fund/goals", goal);
-  check("目標も2件にならない",
+  check("目標も2件にならない（前の1件＋新しい1件）",
     Object.keys(g.store.islandFundGoals).length === 2,
     Object.keys(g.store.islandFundGoals).join(","));
 }
@@ -473,35 +568,35 @@ console.log("\n# 5. 焼き直しが、毎晩の掃除と同じ数を書く");
       Object.keys(w.data.fund).join(",") === "box"),
     JSON.stringify(s.writes.filter((w) => w.col === "island").map((w) => w.data)));
 
-  // 目標を閉じたら「いまの目標」は無くなる
-  const c = scenario(seed());
-  const r = await c.call("POST", "/fund/goals/2026-07-27/close",
-    {to: "2026-09-27"});
-  check("閉じると 200", r.status === 200, String(r.status));
-  check("閉じたら、焼き直しの目標が無くなる", boxOf(c).goal === null,
-    JSON.stringify(boxOf(c)?.goal));
-  check("閉じても台帳には残る（いつからいつまで、が読める）",
-    c.store.islandFundGoals["2026-07-27"].to === "2026-09-27",
-    JSON.stringify(c.store.islandFundGoals["2026-07-27"]));
-
-  // いちばん新しい `from` が開いていれば、それが「いまの目標」
+  // 次の目標を作ると、前のは機械が閉じる（単独の「閉じる」は置かない）
   const n = scenario(seed());
-  await n.call("POST", "/fund/goals/2026-07-27/close", {to: "2026-09-27"});
-  await n.call("POST", "/fund/goals",
+  const nr = await n.call("POST", "/fund/goals",
     {from: "2026-09-28", label: "つぎのたび", yen: 30000});
-  check("次の目標を立てると、そちらが入る",
+  check("作ると 200", nr.status === 200, String(nr.status));
+  check("前のを1件閉じたと返す", nr.body.closed === 1,
+    JSON.stringify(nr.body?.closed));
+  check("前の目標は、**新しいのが始まる前の日**で閉じている",
+    n.store.islandFundGoals["2026-07-27"].to === "2026-09-27",
+    JSON.stringify(n.store.islandFundGoals["2026-07-27"]));
+  check("焼き直しの目標が、新しいほうに入れ替わる",
     boxOf(n).goal?.label === "つぎのたび", JSON.stringify(boxOf(n)?.goal));
 
-  // 閉じる日の形も見る
+  // 「閉じる」だけの口は置かない（あやと「閉じるは不要」）
   const t = scenario(seed());
   const tr = await t.call("POST", "/fund/goals/2026-07-27/close",
-    {to: "2026-02-31"});
-  check("閉じる日が暦に無ければ断る", tr.status === 400 && tr.body.error === "to",
-    `${tr.status} ${JSON.stringify(tr.body)}`);
-  const tn = scenario(seed());
-  const tnr = await tn.call("POST", "/fund/goals/2026-12-01/close",
-    {to: "2026-12-02"});
-  check("無い目標は閉じられない（404）", tnr.status === 404, String(tnr.status));
+    {to: "2026-09-27"});
+  check("単独で閉じる口は無い（405）", tr.status === 405, String(tr.status));
+  check("閉じる口を叩いても、台帳は1バイトも変わらない",
+    !t.store.islandFundGoals["2026-07-27"].to,
+    JSON.stringify(t.store.islandFundGoals["2026-07-27"]));
+
+  // 目標が1つも開いていない状態から作る
+  const z = scenario({...seed(), islandFundGoals: {}});
+  const zr = await z.call("POST", "/fund/goals",
+    {from: "2026-09-28", label: "はじめて", yen: 10000});
+  check("開いている目標が無くても作れる（閉じた数は 0）",
+    zr.status === 200 && zr.body.closed === 0,
+    `${zr.status} closed=${zr.body?.closed}`);
 }
 
 console.log("\n# 6. 手入れのスパチャに、二重よけの札が付く");
@@ -574,6 +669,9 @@ console.log("\n# 9. ログに、素性が1文字も出ない");
   await s.call("POST", "/fund/chats",
     {day: "2026-09-12", yen: 1000, who: "ひみつの名前"});
   await s.call("DELETE", "/fund/spends/2026-09-01-deadbeef");
+  await s.call("POST", "/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"});
+  await s.call("GET", "/fund/feed");
   const text = s.logs.join("\n");
   for (const [what, pat] of [
     ["名前", "ひみつの名前"],
@@ -581,10 +679,209 @@ console.log("\n# 9. ログに、素性が1文字も出ない");
     ["額", "4000"],
     ["日付", "2026-09-12"],
     ["書類ID", "deadbeef"],
+    ["投げ銭の本文", "ひみつのことば"],
+    ["ドネの本文", "ひみつのドネ"],
   ]) {
     check(`ログに${what}が出ていない`, !text.includes(pat), text.slice(0, 160));
   }
   console.log(`  （読んだログは ${text.length} 字 / ${s.logs.length} 行）`);
+}
+
+console.log("\n# 10. いまの目標に対する内訳（足し引きが「いま」に戻る）");
+{
+  const s = scenario(seed());
+  const r = await s.call("GET", "/fund/desk");
+  const sp = r.body.split;
+  check("内訳が返る", !!sp, JSON.stringify(r.body?.split));
+  check(
+    "4行の足し引きが「いま」に戻る",
+    sp && sp.start + sp.superchat + sp.doneru - sp.spend === sp.total,
+    JSON.stringify(sp),
+  );
+  check("「いま」が、豚に出ている額と同じ", sp && sp.total === r.body.total,
+    `${sp?.total} / ${r.body?.total}`);
+  /* 仕込み: スパチャ 1001+500=1501 → 半分 750（どちらも 2026-07-27 より後）。
+     始まる前のスパチャは 0 なので、期間内も 750。
+     ドネは 2026-09-10 の 300 だけ（2026-07-01 は前）。
+     出費は 2026-09-01 の 400 だけ（目標の開始は 2026-07-27）。
+     Doneru の累計（偽）は 1000 なので、いま = -400 + 750 + 1000 = 1350。
+     開始時点 = 1350 - 750 - 300 + 400 = 700。 */
+  check("スパチャは期間内だけ（750）", sp?.superchat === 750, String(sp?.superchat));
+  check("ドネも期間内だけ（300。7月の700は入らない）", sp?.doneru === 300,
+    String(sp?.doneru));
+  check("出費も期間内だけ（400）", sp?.spend === 400, String(sp?.spend));
+  check("開始時点は残り（700）", sp?.start === 700, String(sp?.start));
+  check("ドネがいつまで入っているかも返る", sp?.donationsAsOf === "2026-09-24",
+    String(sp?.donationsAsOf));
+
+  // 目標が始まる前のスパチャは、期間内から抜ける
+  const b = seed();
+  b.islandFundSuperChats["CCCCCCCCCCCCCCCCCCCCCCCCCC"] =
+    {yen: 2000, day: "2026-01-01", at: "2026-01-01T20:00:00+09:00", who: "ふゆ"};
+  // 焼き直しも、その1件を数えた値にしておく（1501 + 2000 = 3501 → 半分 1750）
+  b.island.state.fund.box = {
+    ...b.island.state.fund.box, superchat: 1750, superchatFull: 3501, count: 3,
+  };
+  const s2 = scenario(b);
+  const r2 = await s2.call("GET", "/fund/desk");
+  const sp2 = r2.body.split;
+  check("始まる前のスパチャは、期間内に入らない（3501 の半分 1750 − 1000）",
+    sp2?.superchat === 750, String(sp2?.superchat));
+  check("それでも足し引きは「いま」に戻る",
+    sp2 && sp2.start + sp2.superchat + sp2.doneru - sp2.spend === sp2.total,
+    JSON.stringify(sp2));
+
+  // ドネの写しが無いときは、内訳を1行も出さない
+  const n = seed();
+  n.islandFundHealth = {};
+  const s3 = scenario(n);
+  const r3 = await s3.call("GET", "/fund/desk");
+  check("ドネの写しが無いときは、内訳を出さない（0 を作らない）",
+    r3.body.split === null, JSON.stringify(r3.body?.split));
+  check("それでも「いま」の額は出る", r3.body.total !== null,
+    String(r3.body?.total));
+
+  // 目標が無いときも出さない
+  const g = seed();
+  g.islandFundGoals = {};
+  const s4 = scenario(g);
+  const r4 = await s4.call("GET", "/fund/desk");
+  check("目標が無いときは、内訳を出さない", r4.body.split === null,
+    JSON.stringify(r4.body?.split));
+}
+
+console.log("\n# 11. スパチャとドネを、まぜて時系列で返す");
+{
+  const s = scenario(seed());
+  const r = await s.call("GET", "/fund/feed");
+  const got = r.body.got;
+  check("4件とも返る", got.length === 4, String(got.length));
+  check(
+    "新しい順（9/11 21:02 → 9/10 20:30 → 9/10 20:01 → 7/1）",
+    got.map((g) => g.at).join(",") ===
+      ["2026-09-11T21:02:00+09:00", "2026-09-10T20:30:00+09:00",
+        "2026-09-10T20:01:00+09:00", "2026-07-01T19:00:00+09:00"].join(","),
+    got.map((g) => g.at).join(","),
+  );
+  check("どちらから来たかが付いている",
+    got.filter((g) => g.kind === "donation").length === 2 &&
+    got.filter((g) => g.kind === "superchat").length === 2,
+    got.map((g) => g.kind).join(","));
+  check("本文が返る", got.find((g) => g.id === "d0001")?.text === "ひみつのドネ",
+    JSON.stringify(got.find((g) => g.id === "d0001")));
+
+  // 新着だけ
+  const n = await s.call("GET", "/fund/feed", {},
+    {since: "2026-09-10T20:30:00+09:00"});
+  check("`since` を渡すと、それより後だけ（1件）", n.body.got.length === 1,
+    n.body.got.map((g) => g.at).join(","));
+  const q = await s.call("GET", "/fund/feed", {},
+    {since: "2026-09-11T21:02:00+09:00"});
+  check("何も来ていなければ 0件（静かなときの返り）", q.body.got.length === 0,
+    String(q.body.got.length));
+
+  // 続き
+  const p1 = await s.call("GET", "/fund/feed", {}, {limit: 2});
+  check("1ページ目は2件で、続きがあると言う",
+    p1.body.got.length === 2 && p1.body.more === true && !!p1.body.next,
+    `${p1.body.got.length} more=${p1.body.more}`);
+  const p2 = await s.call("GET", "/fund/feed", {}, {before: p1.body.next});
+  const ids = new Set([...p1.body.got, ...p2.body.got]
+    .map((g) => `${g.kind}_${g.id}`));
+  check("2ページで4件ぜんぶ、1回ずつ", ids.size === 4, String(ids.size));
+
+  // 時刻の分からない控え
+  const t = seed();
+  t.islandFundSuperChats["manual-1"] = {yen: 200, day: "", at: null, who: ""};
+  const s2 = scenario(t);
+  const r2 = await s2.call("GET", "/fund/feed");
+  check("時刻の無い控えは、並びに出てこない",
+    !r2.body.got.some((g) => g.id === "manual-1"),
+    r2.body.got.map((g) => g.id).join(","));
+  check("**黙って落とさず、数と額を返す**",
+    r2.body.noTime?.count === 1 && r2.body.noTime?.yen === 200,
+    JSON.stringify(r2.body?.noTime));
+}
+
+console.log("\n# 12. もう一度出す（変なものを配信に出さない）");
+{
+  const s = scenario(seed());
+  const r = await s.call("POST", "/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"});
+  check("200 で返る", r.status === 200, String(r.status));
+  check("出すものが返る（押した人が、押す前に見たものと同じ）",
+    r.body.shown?.who === "さくら" && r.body.shown?.yen === 1001,
+    JSON.stringify(r.body?.shown));
+  const put = s.store.islandFundReplay["a".repeat(32)];
+  check("置き場は**合言葉そのもの**", !!put, Object.keys(s.store.islandFundReplay).join(","));
+  check("中身は台帳から組んだもの", put?.text === "ひみつのことば", String(put?.text));
+
+  // 二度押しで二度出ない
+  const again = await s.call("POST", "/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"});
+  check("2回目は `already`", again.body.already === true,
+    JSON.stringify(again.body));
+  check("2回目は印を進めていない（配信には出ない）",
+    s.store.islandFundReplay["a".repeat(32)].seq === put.seq,
+    `${put.seq} / ${s.store.islandFundReplay["a".repeat(32)].seq}`);
+
+  // 別の1件なら出る
+  const other = await s.call("POST", "/fund/replay",
+    {kind: "donation", id: "d0001"});
+  check("別の1件なら、印が進む",
+    other.body.already === false &&
+    s.store.islandFundReplay["a".repeat(32)].seq > put.seq,
+    JSON.stringify(other.body?.already));
+
+  // 送った字は1文字も通らない
+  const inj = scenario(seed());
+  await inj.call("POST", "/fund/replay", {
+    kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA",
+    who: "にせもの", yen: 999999, text: "配信に出したい字",
+  });
+  const got = inj.store.islandFundReplay["a".repeat(32)];
+  check("送った名前は通らない", got.who === "さくら", String(got.who));
+  check("送った額は通らない", got.yen === 1001, String(got.yen));
+  check("送った本文は通らない", got.text === "ひみつのことば", String(got.text));
+
+  // 無い1件・形の違うもの
+  const bad1 = await inj.call("POST", "/fund/replay",
+    {kind: "superchat", id: "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"});
+  check("台帳に無い1件は 404", bad1.status === 404, String(bad1.status));
+  const bad2 = await inj.call("POST", "/fund/replay", {kind: "なにか", id: "x"});
+  check("知らない種類は 400", bad2.status === 400 && bad2.body.error === "kind",
+    `${bad2.status} ${JSON.stringify(bad2.body)}`);
+
+  // アラートボックスを1度も開いていない
+  const nk = seed();
+  nk.islandUsers = {"ayato-uid": {admin: true}};
+  const s2 = scenario(nk);
+  const r2 = await s2.call("POST", "/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"});
+  check("出し先が無ければ 409（黙って落とさない）",
+    r2.status === 409 && r2.body.error === "noalertbox",
+    `${r2.status} ${JSON.stringify(r2.body)}`);
+  check("出し先が無いときは1バイトも書かない",
+    Object.keys(s2.store.islandFundReplay).length === 0,
+    Object.keys(s2.store.islandFundReplay).join(","));
+}
+
+console.log("\n# 13. 配信側が拾うとき（古いものを出さない）");
+{
+  const s = scenario(seed());
+  await s.call("POST", "/fund/replay",
+    {kind: "superchat", id: "AAAAAAAAAAAAAAAAAAAAAAAAAA"});
+  const now = s.store.islandFundReplay["a".repeat(32)].seq;
+  const fresh = await s.mod.replayFor("a".repeat(32), now + 1000);
+  check("押した直後は、出すものが返る", fresh.show?.who === "さくら",
+    JSON.stringify(fresh));
+  const old = await s.mod.replayFor("a".repeat(32), now + 121000);
+  check("2分より古い指示は返らない（`seq: 0`）",
+    old.seq === 0 && !old.show, JSON.stringify(old));
+  const none = await s.mod.replayFor("b".repeat(32), now);
+  check("知らない合言葉には何も返らない", none.seq === 0, JSON.stringify(none));
+  const bad = await s.mod.replayFor("にせ", now);
+  check("形の違う合言葉にも何も返らない", bad.seq === 0, JSON.stringify(bad));
 }
 
 /* ---------------- 対照 ---------------- */
@@ -656,6 +953,66 @@ const BREAKS = [
     "claim: (0, exports.claimKey)(day, yen),",
     "claim: \"\",",
     "`claim` が「日付|額」",
+  ],
+  [
+    "始まる前のスパチャを引かない（期間内に全部入れる）",
+    "const superchat = superchatAll - Math.floor(fullBefore / SUPERCHAT_RATE);",
+    "const superchat = superchatAll;",
+    "始まる前のスパチャは、期間内に入らない（3501 の半分 1750 − 1000）",
+  ],
+  [
+    "開始時点を残差で出すのをやめる（0 を置く）",
+    "const start = total - superchat - doneru + spend;",
+    "const start = 0;",
+    "「いま」が、豚に出ている額と同じ",
+  ],
+  [
+    "ドネの写しが無くても内訳を出す（0 を作る）",
+    "if (!asOf || !(Number(h.count) > 0))",
+    "if (false)",
+    "ドネの写しが無いときは、内訳を出さない（0 を作らない）",
+  ],
+  [
+    "期間で切らずに、ドネを全部数える",
+    "DONATIONS.where(\"day\", \">=\", from)",
+    "DONATIONS.where(\"day\", \">=\", \"1970-01-01\")",
+    "ドネも期間内だけ（300。7月の700は入らない）",
+  ],
+  [
+    "二度押しで二度出す（同じ1件でも印を進める）",
+    "if (cur.id === id && cur.kind === kind &&",
+    "if (false &&",
+    "2回目は印を進めていない（配信には出ない）",
+  ],
+  [
+    "出す中身を、送られてきた本文から組む",
+    "text: typeof v.text === \"string\" ? v.text : \"\",\n            };\n            /* **`seq` はサーバーの時刻。**",
+    "text: String(q.body.text ?? \"\"),\n            };\n            /* **`seq` はサーバーの時刻。**",
+    "送った本文は通らない",
+  ],
+  [
+    "古い指示も配信へ返す",
+    "if (!seq || now - seq > REPLAY_FRESH_MS)",
+    "if (!seq)",
+    "2分より古い指示は返らない（`seq: 0`）",
+  ],
+  [
+    "前の目標を閉じない（最大1が壊れる）",
+    "const open = (await listGoals()).filter((g) => !g.to && g.from !== from);",
+    "const open = [];",
+    "前のを1件閉じたと返す",
+  ],
+  [
+    "閉じる日を、新しい目標と同じ日にする",
+    "const to = dayBefore(from);",
+    "const to = from;",
+    "前の目標は、**新しいのが始まる前の日**で閉じている",
+  ],
+  [
+    "ログに投げ銭の本文を出す",
+    "firebase_functions_1.logger.info(\"fund desk: replay queued\");",
+    "firebase_functions_1.logger.info(`fund desk: replay ${shown.text}`);",
+    "ログに投げ銭の本文が出ていない",
   ],
   [
     "ログに題を出す",

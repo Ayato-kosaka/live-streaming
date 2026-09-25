@@ -257,6 +257,15 @@ service cloud.firestore {
     match /islandFundSuperChats/{docId} { allow read, write: if false; }
     match /islandFundSpends/{docId} { allow read, write: if false; }
     match /islandFundGoals/{docId} { allow read, write: if false; }
+    /* Doneru の投げ銭を1件ずつ写したもの（2026-09-25）。**スパチャの控えと
+       まったく同じ性質**——名前と額に加えて、**本文まで入っている。**
+       書くのは毎晩の写し（`python/doneru_ledger.py`）、読むのは Functions
+       （`GET /island-api/fund/feed`。あやとだけ）。 */
+    match /islandFundDonations/{docId} { allow read, write: if false; }
+    /* もう一度アラートを出す指示（2026-09-25）。書類IDが**配信の合言葉**で、
+       中には出す名前・額・本文がそのまま入っている。**画面からは触らせない**
+       ——書くのは口（あやとだけ）、読むのも口（合言葉を知っている OBS）。 */
+    match /islandFundReplay/{docId} { allow read, write: if false; }
     /* Doneru の鍵の置き場(#639)。**いちばん開けてはいけない1書類。**
        いちばん下の「それ以外は禁止」でも閉じているが、**名指しで書いておく。**
        名前の無い入れ物は「まだ決めていない」に見えて、いつか誰かが
