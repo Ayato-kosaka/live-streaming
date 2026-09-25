@@ -54,6 +54,11 @@ import {handleCharacters} from "./islandCharacter";
    いないので消せない。Functions からなら何ができるかを、まず測る
    （`publicPurge.ts` 冒頭）。 */
 import {handlePublicPurge} from "./publicPurge";
+/* 豚の貯金箱の出し入れ(#292 のオーナー画面ぶん)。同じ理由で外に置いてある。
+   **出費と目標は、いままで GitHub Actions からしか入らなかった。**
+   額が動く口なので、書類IDを中身から決めて2回入れても増えない形にして、
+   書いたあとに `island/state.fund.box` を焼き直す(`fundDesk.ts` 冒頭)。 */
+import {handleFundDesk} from "./fundDesk";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -2319,6 +2324,27 @@ export const islandApi = onRequest(
           {method, path, auth: req.headers.authorization, body},
           res,
           {ownerUid},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- 豚の貯金箱の出し入れ(#292) ----------------
+         中身は `fundDesk.ts`。ここは取り付けだけ。扱ったら true。
+         **あやとだけ。** 出費・目標・手入れのスパチャを1件ずつ足して消す。
+         `GET /fund`(誰でも)と `GET /fund/history`(控えを読むだけ)は
+         向こうが持っているので、あちらには手を出さない。 */
+      if (
+        await handleFundDesk(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            query: (req.query ?? {}) as Json,
+            body,
+          },
+          res,
+          {ownerUid, doneruNow},
         )
       ) {
         return;

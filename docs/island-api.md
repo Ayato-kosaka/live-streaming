@@ -41,6 +41,45 @@
 控え（`islandFundSuperChats`）は `firestore.rules` でも閉じてある。
 確かめかたは `node tools/fund/ownercheck.cjs`（本番も Firestore も触らない）。
 
+### 1.1 豚の貯金箱の出し入れ（`/fund/…`。あやとだけ）
+
+中身は `functions/src/fundDesk.ts`。画面は `/me/desk` の「貯金箱」。
+**8本とも `ownerUid` を通る。** `Cache-Control: no-store`。
+
+| メソッド | パス | 何を |
+| --- | --- | --- |
+| `GET` | `/fund/desk` | 焼き直しの合計＋Doneru＋出費の1ページ目（20件）＋目標ぜんぶ |
+| `GET` | `/fund/spends` | 出費の続き。`?limit=`（既定20・最大120）・`?before=`（`<日付>_<書類ID>`） |
+| `POST` | `/fund/spends` | 出費を1行。`{day, title, yen}` |
+| `DELETE` | `/fund/spends/{書類ID}` | 出費を1行消す |
+| `POST` | `/fund/goals` | 目標をはじめる。`{from, label, yen}`。**書類IDは `from`** |
+| `POST` | `/fund/goals/{from}/close` | 目標をおわりにする。`{to}`。**消さない**（台帳に残る） |
+| `DELETE` | `/fund/goals/{from}` | 打ち間違えた目標を消す |
+| `POST` | `/fund/chats` | 取りこぼしたスパチャを1件。`{day, yen, who}` |
+| `DELETE` | `/fund/chats/{書類ID}` | スパチャの控えを1件消す |
+
+決めごとは4つ。
+
+1. **2回入れても増えない。** 書類IDが中身から決まる（`python/fund_box.py`
+   の `spend_id` / `manual_id` と**同じ式**）。返事の `already` が
+   「前から在った行を上書きしただけ」を言う
+2. **消すのは書類IDを指したときだけ。** まとめて消す道は無い。
+   行き先を指さない `DELETE` は 405
+3. **入らないもの** — 0円以下・小数・1,000万円超・空の題・
+   形の違う日付・**暦に無い日**（`2026-02-31`）
+4. **書いたら `island/state.fund.box` を焼き直す。** 島の豚も配信の豚も
+   そこを読んでいる（#305）ので、焼き直さないと次の晩まで額が動かない。
+   **焼き直しは台帳を数え直すだけで、新しい正を作らない。**
+   こけたときは返事の `box` が `null`（台帳への書き込みは取り消さない）
+
+確かめかたは3本、どれも毎 PR で走る（本番も Firestore も触らない）。
+
+| | 見るもの |
+| --- | --- |
+| `functions/selftest/fund_owner_selftest.mjs` | **本物の `ownerUid` を通して** 5とおり × 9本。403 と「1バイトも書いていない」まで |
+| `functions/selftest/fund_desk_selftest.mjs` | 2回入れても増えない・入らないものが入らない・消すのは書類IDだけ・焼き直しの数 |
+| `functions/selftest/fund_docid_selftest.mjs` | **Python と TypeScript の書類IDが1文字も違わない** |
+
 `GET /state` が返すもの（`site/lib/api.ts` の `IslandState`）:
 
 | 鍵 | 中身 |

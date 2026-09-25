@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getFundHistory, type FundChat } from "@/lib/api";
+import {
+  dropFundChat,
+  getFundHistory,
+  type FundBox,
+  type FundChat,
+} from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import ReadAgain from "./ReadAgain";
 
@@ -38,6 +43,12 @@ import ReadAgain from "./ReadAgain";
  * ページの切れ目は日をまたぐ。いちばん古い組は途中までしか手元に無いので、
  * そこに「2件・1,000円」と書くと**その晩の合計として嘘になる。**
  * 続きがあるあいだ、いちばん下の組だけ数を出さない。
+ *
+ * ## 消せるのは、貯金箱の机から開いたときだけ（2026-09-24）
+ *
+ * `onDropped` を渡されたときだけ、1行ずつ消せるようになる。
+ * **額が動くので2段**——1回押すと「ほんとうに消す／やめる」に変わる。
+ * まとめて消す道は作らない（口にも無い。`functions/src/fundDesk.ts`）。
  */
 
 /** 1回目に取る数。**1件が1行**なので、札の下に10行ちょっと。 */
@@ -97,7 +108,18 @@ function groupByDay(chats: FundChat[]): DayGroup[] {
   return out;
 }
 
-export default function FundHistory() {
+export default function FundHistory({
+  again: outerAgain = 0,
+  onDropped,
+}: {
+  /** 外から読み直させる合図。手で1件足したあとに増える */
+  again?: number;
+  /**
+   * 1件消したときに呼ばれる。**渡されたときだけ、消す押しどころが出る。**
+   * 焼き直しが返るので、呼んだ側は額をその場で出し直せる。
+   */
+  onDropped?: (box: FundBox | null) => void;
+} = {}) {
   const { token } = useAuth();
   /** 読み終えたぶん。取りにいっている最中は null（0件と区別する） */
   const [chats, setChats] = useState<FundChat[] | null>(null);
@@ -115,6 +137,8 @@ export default function FundHistory() {
   const [addBad, setAddBad] = useState(false);
   /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
   const [again, setAgain] = useState(0);
+  /** 消す前の一拍。**額が動くものを1タップで消させない** */
+  const [ask, setAsk] = useState<string | null>(null);
 
   const thisYear = useMemo(() => new Date().getFullYear(), []);
   /* 続きを押したときに、いま手元にある「次の位置」を使う。
@@ -176,7 +200,7 @@ export default function FundHistory() {
       window.removeEventListener("online", wake);
       document.removeEventListener("visibilitychange", onShow);
     };
-  }, [token, again]);
+  }, [token, again, outerAgain]);
 
   const addMore = useCallback(async () => {
     if (adding) return;
@@ -200,6 +224,28 @@ export default function FundHistory() {
       setAdding(false);
     }
   }, [adding, token]);
+
+  const drop = async (id: string) => {
+    setAsk(null);
+    try {
+      const t = await withRead(token());
+      if (!t) throw new Error("no-token");
+      const r = await dropFundChat(id, t);
+      setChats((cur) => (cur ?? []).filter((c) => c.id !== id));
+      /* 数え直しは待たない。**手元から1件減らしたぶんだけ引く**
+         （数えられていなければ、そのまま出さない） */
+      setAll((cur) => ({
+        count: cur.count === null ? null : cur.count - 1,
+        yen:
+          cur.yen === null ?
+            null :
+            cur.yen - ((chats ?? []).find((c) => c.id === id)?.yen ?? 0),
+      }));
+      onDropped?.(r.box);
+    } catch {
+      setAddBad(true);
+    }
+  };
 
   if (read === "down") {
     return (
@@ -259,6 +305,28 @@ export default function FundHistory() {
                   <span className="mp-sc-time">{timeLabel(c)}</span>
                   <span className="mp-sc-who">{c.who}</span>
                   <span className="mp-sc-yen">{yen(c.yen)}</span>
+                  {onDropped &&
+                    (ask === c.id ? (
+                      <span className="fd-ask">
+                        <button
+                          className="fd-x is-yes"
+                          onClick={() => drop(c.id)}
+                        >
+                          ほんとうに消す
+                        </button>
+                        <button className="fd-x" onClick={() => setAsk(null)}>
+                          やめる
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        className="fd-x"
+                        aria-label={`${yen(c.yen)} の1件を消す`}
+                        onClick={() => setAsk(c.id)}
+                      >
+                        けす
+                      </button>
+                    ))}
                 </li>
               ))}
             </ul>
