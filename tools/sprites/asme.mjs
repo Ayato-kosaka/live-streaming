@@ -403,7 +403,7 @@ let FUND_GOT = (() => {
 const GOT_NOTIME = { count: 13, yen: 3000 };
 /** リアルタイムを測るための印。1回だけ「いま届いた」を作る */
 let FEED_START = 0;
-let FEED_SENT = false;
+let FEED_SENT = 0;
 /** さっき「もう一度出して」と頼まれた1件。**二度押しで二度出さない** */
 let REPLAY_LAST = "";
 
@@ -766,11 +766,15 @@ export async function apply(ctx, opts = {}) {
       if (path === "/fund/feed" && m === "GET") {
         const live = Number(opts.fundlive ?? process.env.FUNDLIVE ?? 0);
         if (live > 0 && !FEED_START) FEED_START = Date.now();
-        if (live > 0 && !FEED_SENT && Date.now() - FEED_START >= live) {
-          FEED_SENT = true;
+        /* **1回だけでなく、live ミリ秒ごとに1件足す。** 静かなときの遅れ
+           （20秒の窓）と、配信中の遅れ（2秒の窓）は別の数なので、
+           2件目以降まで測れないと「配信中は何秒か」が出せない。 */
+        if (live > 0 && Date.now() - FEED_START >= live) {
+          FEED_START = Date.now();
+          FEED_SENT += 1;
           const jst = new Date(Date.now() + 9 * 3600 * 1000).toISOString();
           FUND_GOT = [{
-            id: "sclive000000000000000000000".slice(0, 26),
+            id: `sclive${String(FEED_SENT).padStart(20, "0")}`.slice(0, 26),
             kind: "superchat",
             at: `${jst.slice(0, 19)}+09:00`,
             day: jst.slice(0, 10),

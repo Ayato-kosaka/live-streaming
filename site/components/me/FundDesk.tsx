@@ -779,7 +779,12 @@ function MoneyPane({
         <div className="fd-split">
           <p className="fd-splith">
             <b>{now.label}</b>
-            <i>{dayLabel(now.from, thisYear)} から</i>
+            {/* めざす額は、この札にも出す。**頭からは消してある**ので、
+                ここに無いと目標・出費の札の上から 50,000円 が消える。 */}
+            <i>
+              めざす {yen(now.yen)}
+              <span>{dayLabel(now.from, thisYear)} から</span>
+            </i>
           </p>
           <dl className="fd-splitrows">
             <div>

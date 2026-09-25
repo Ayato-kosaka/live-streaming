@@ -24,7 +24,7 @@
  * | 落ちた | 「読みに行けなかった」の1枚（0件と別の顔） |
  * | 視聴者さん | 道具そのものが出ないこと・口を1度も引かないこと |
  * | PC 幅 | スマホ幅だけで出さない |
- * | **とどくまでの秒数** | 「たぶん1秒」を答えにしない。**測る** |
+ * | **とどくまでの秒数** | 「たぶん1秒」を答えにしない。**間隔を測って、遅れを出す** |
  * | **裏に回したら聞かない** | 叩いた回数で見る |
  *
  * 差し込みの額は**本番と同じ数**にしてある（`asme.mjs` の `fundBox`）。
@@ -220,6 +220,9 @@ const type = async (p, i, v) => {
   await el.fill(v);
 };
 
+/** `ONLY=live` を渡すと、測るところだけ回す（絵は撮り直さない）。 */
+const ONLY = process.env.ONLY || "";
+if (ONLY !== "live") {
 await shot("1-スパチャドネ");
 await shot("2-もう一度出す-押す前", {}, async (p) => {
   await p.click(".fd-got > li .fd-again");
@@ -264,42 +267,73 @@ await shot("12-落ちた", { down: true });
 await shot("13-視聴者", { admin: false });
 await shot("14-PC幅", { wide: true });
 await shot("15-PC幅-目標出費", { wide: true, pane: "money" });
+}
 
 /* ---------------- リアルタイムが何秒で出るか ----------------
    **「たぶん1秒」は答えにならない。** 差し込みに「N ミリ秒たったら1件
    届く」を仕込んで、**画面の上で新しい行が増えるまで**を測る。
    測っているのは口の遅れではなく、**この画面が聞きにいく間隔ぶんの遅れ**。 */
 {
-  const ctx = await ctxOf({ pane: "got", fundlive: 6000 });
+  /* 差し込みは「前に足してから 1秒たったあとの最初の問い合わせ」で1件足す。
+     **静かなとき（20秒の窓）と配信中（2秒の窓）は別の数**なので、
+     1件目と、そのあとの3件を分けて測る。 */
+  const ctx = await ctxOf({ pane: "got", fundlive: 1000 });
   const p = await ctx.newPage();
   await p.goto(`${ORIGIN}/me/desk.html`, { waitUntil: "domcontentloaded" })
     .catch(() => {});
   await p.waitForTimeout(16000);
-  const before = await p.evaluate(
-    () => document.querySelectorAll(".fd-got > li").length);
-  const t0 = Date.now();
-  // 差し込みは「最初に聞かれてから 6秒後」に1件足す。**足された瞬間は
-  // こちらからは見えない**ので、画面に出た時刻から引いて出す
-  const came = await p
-    .waitForFunction(
-      (n) => document.querySelectorAll(".fd-got > li").length > n,
-      before,
-      { timeout: 60000 },
-    )
-    .then(() => Date.now() - t0)
-    .catch(() => -1);
-  const live = await p.evaluate(() => ({
+
+  /**
+   * 次の1件が画面に出るまでの秒。
+   * @return {Promise<number>} 秒。こなければ -1
+   */
+  const nextRow = async () => {
+    const n = await p.evaluate(
+      () => document.querySelectorAll(".fd-got > li").length);
+    const t0 = Date.now();
+    return p
+      .waitForFunction(
+        (m) => document.querySelectorAll(".fd-got > li").length > m, n,
+        { timeout: 60000, polling: 100 },
+      )
+      .then(() => (Date.now() - t0) / 1000)
+      .catch(() => -1);
+  };
+
+  // 1件目。**この時点ではまだ「静か」なので、20秒の窓のどこか**
+  const first = await nextRow();
+  // 2件目から。**ここからは「配信中」＝2秒の窓**
+  const live = [];
+  for (let i = 0; i < 3; i++) live.push(await nextRow());
+  const state = await p.evaluate(() => ({
     間隔: document.querySelector(".fd-live")?.textContent ?? "",
     いちばん上: document.querySelector(".fd-got > li .fd-gotwho")?.textContent ?? "",
   }));
   await p.screenshot({ path: `${OUT}/16-とどいた.png`, fullPage: true });
+  /* **測っているのは「間隔」で、「遅れ」ではない。**
+     差し込みは問い合わせが来たときに1件足すので、足された行はその返事に
+     そのまま乗る。つまりここで出るのは**次の行が出るまでの間隔**。
+     本物の投げ銭はいつ入るか分からないので、遅れは **0〜間隔** に散る。
+     平均はその半分——島の「いま居る人」が同じ形で「平均1秒」と
+     書いているのと、同じ出しかた（`components/island/HereFolks.tsx`）。 */
+  const worst = live.length ? Math.max(...live) : -1;
   console.log(
     "16-とどいた".padEnd(18),
-    JSON.stringify({ ...live, 待った秒: came < 0 ? "こなかった" : came / 1000 }),
+    JSON.stringify({
+      ...state,
+      静かなときの間隔秒: first < 0 ? "こなかった" : first,
+      配信中の間隔秒: live.map((x) => (x < 0 ? "こなかった" : x)),
+      "配信中の遅れ（0〜これ／平均はその半分）": worst,
+    }),
   );
-  if (came < 0) {
+  if (first < 0 || live.some((x) => x < 0)) {
     bad++;
     console.log(" ".repeat(18), "★リアルタイムで届かなかった");
+  } else if (worst > 4) {
+    /* 配信中は2秒おきに聞いているので、**最悪でも2秒＋往復**で出る。
+       4秒を超えたら、間隔の切り替えが効いていない。 */
+    bad++;
+    console.log(" ".repeat(18), `★配信中なのに間隔が ${worst}秒ある`);
   }
   await p.close();
   await ctx.close();

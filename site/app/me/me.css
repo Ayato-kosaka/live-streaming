@@ -1432,6 +1432,14 @@
   flex: none;
   font-style: normal;
   font-size: var(--fs-min);
+  font-weight: 800;
+  text-align: right;
+  color: var(--ink);
+}
+/* 「いつから」は、めざす額の下。**同じ行に詰めると名前が縮む** */
+.fd-splith i span {
+  display: block;
+  margin-top: 2px;
   font-weight: 700;
   color: var(--ink-2);
 }

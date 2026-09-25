@@ -102,6 +102,16 @@ const hm = /const MAX_HANDLE_LEN = (\d+);/.exec(js);
 if (!hm) nothing("MAX_HANDLE_LEN が見つからない");
 const MAX_HANDLE_LEN = Number(hm[1]);
 
+/* 本文の長さは `fundDesk.ts` が持っていて、こちらは借りている
+   （2026-09-25。**2か所に別の数を置かない**ため）。切り出した字はその
+   `require` を持たないので、**本物の数を読んで渡す。**
+   ここを決め打ちにすると、向こうを直した日に**この見張りだけが古い数で
+   通る**——長さの守りを見ている道具が、長さを見ていないことになる。 */
+const fd = readFileSync(join(FUNCTIONS, "lib/fundDesk.js"), "utf8");
+const tm = /exports\.MAX_FUND_TEXT = (\d+);|MAX_FUND_TEXT = (\d+)/.exec(fd);
+if (!tm) nothing("MAX_FUND_TEXT が見つからない");
+const MAX_FUND_TEXT = Number(tm[1] ?? tm[2]);
+
 for (const [name, src] of [["FUND", FUND], ["GUARD", GUARD]]) {
   for (const want of name === "FUND" ?
     ["FUND_ITEM_ID", "FUND_YEN", "itemIdFromLcc", "fundChatOf", "boxOf"] :
@@ -145,6 +155,13 @@ const BREAKS = {
     "",
   ],
   noexists: ["GUARD", /return !q\.empty;/, "return true;"],
+  /* 本文を長さで切らない（2026-09-25）。**置き場に際限のない字を入れない**
+     という守りで、`who` を `MAX_HANDLE_LEN` で切っているのと同じ性質。 */
+  notext: [
+    "FUND",
+    /text: clean\(b\.message, fundDesk_1\.MAX_FUND_TEXT\),/,
+    "text: String(b.message ?? \"\"),",
+  ],
 };
 
 /**
@@ -239,8 +256,9 @@ async function run(breaks) {
   const {fund, guard} = damaged(breaks);
   const {fundChatOf, itemIdFromLcc} = new Function(
     "MAX_HANDLE_LEN",
+    "fundDesk_1",
     `${CLEAN}\n${fund}\nreturn {fundChatOf, itemIdFromLcc};`,
-  )(MAX_HANDLE_LEN);
+  )(MAX_HANDLE_LEN, {MAX_FUND_TEXT});
   const users = fakeUsers();
   const {alertboxExists} = new Function(
     "USERS",
@@ -292,6 +310,20 @@ async function run(breaks) {
   );
 
   // 3. 入れてはいけないもの
+  /* 投げてくれた人の本文（2026-09-25）。**入ること**と、
+     **長さで切れること**の両方を見る。 */
+  {
+    const said = "ありがとう";
+    post({...YEN, id: "LCC." + LCC_ID.slice(4), message: said}, 2);
+    const one = fundChatOf({...YEN, message: said}, 2);
+    check("本文が台帳に入る", one?.rec?.text === said);
+    const long = fundChatOf({...YEN, message: "あ".repeat(4000)}, 2);
+    check(
+      "本文は長さで切れる",
+      typeof long?.rec?.text === "string" &&
+        long.rec.text.length === MAX_FUND_TEXT,
+    );
+  }
   check("円以外は入らない", !post({...YEN, currency: "CA$"}, 1));
   check("test: true は入らない", !post({...YEN, test: true}, 1));
   check(
@@ -354,6 +386,7 @@ const EXPECT = {
   ],
   noguard: ["32桁でない合言葉では Firestore を引かない"],
   noexists: ["偽物の合言葉は通らない"],
+  notext: ["本文は長さで切れる"],
 };
 
 console.log("\n# 2. 守りを1本ずつ外すと、その足だけが落ちること");
