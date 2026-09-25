@@ -74,7 +74,9 @@
         font-size: clamp(14px, 1.2vw, 22px);
         font-weight: 900;
         letter-spacing: 0.18em;
-        color: var(--muted);
+        /* ここだけ --muted を使わない。面の上端はオーロラがいちばん明るいところで、
+           --muted(#a9c7e4) だと実測 3.17 まで落ちた。氷白に上げる */
+        color: #d7e9fb;
         margin-bottom: 6px;
       }
       .corner-title {
@@ -715,6 +717,20 @@
         overflow: hidden;
         contain: layout paint style;
       }
+      /* 見出し（.corner-tag / .corner-title）は画面の上まん中に来る。
+         そこはオーロラがいちばん明るいところで、字が地に沈む（実測 3.17）。
+         **左右の隅は明るいまま**、まん中だけ沈める幕を1枚かぶせる。
+         動かさないので、これ自体は毎フレームの描き直しを起こさない */
+      #sky::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(66% 40% at 50% 2%,
+          rgba(1, 3, 11, 0.7) 0%,
+          rgba(1, 3, 11, 0.5) 38%,
+          rgba(1, 3, 11, 0.22) 66%,
+          rgba(1, 3, 11, 0) 92%);
+      }
       /* 星。動かさないので値は一度だけ焼かれる */
       #sky .stars {
         position: absolute;
@@ -806,9 +822,9 @@
         0%   { transform: translate3d(-3%, 2%, 0) scaleY(0.96); }
         100% { transform: translate3d(4%, 0, 0) scaleY(1.14); }
       }
-      @keyframes aur-glow-a { 0% { opacity: 0.55; } 100% { opacity: 0.9; } }
+      @keyframes aur-glow-a { 0% { opacity: 0.5; } 100% { opacity: 0.78; } }
       @keyframes aur-glow-b { 0% { opacity: 0.6; } 100% { opacity: 0.34; } }
-      @keyframes aur-glow-c { 0% { opacity: 0.46; } 100% { opacity: 0.82; } }
+      @keyframes aur-glow-c { 0% { opacity: 0.42; } 100% { opacity: 0.7; } }
 
       /* 雪。30粒まで。1粒ずつ小さな要素にして transform だけで落とす */
       #sky .snow i {
@@ -943,6 +959,45 @@
       /* 流行語のノミネート6枚だけ、あと 21px 足りなかった */
       .buzz-word { font-size: clamp(20px, 1.8vw, 34px); }
 
+      /* ============ 検品で出たぶんの直し ============ */
+
+      /* 王冠が賞名の頭に 55×23px かぶって「2026年9月」の 02 が読めなかった。
+         3面（流行語・おもしろ・投げ銭1位）で同じ。王冠の右端が札の左から
+         61px なので、賞名をそのぶん右にどける。
+         **8月版（本番）にも同じ形で在る**（45×14px）。あちらは #649 に切った。 */
+      .winner-card .prize { padding-left: 34px; }
+
+      /* 絵文字の字形を OBS の機械任せにしない。
+         この箱では 😭 と 😊 だけ単色で出て、濃い紺の札に沈んだ。
+         あやとの機械では色つきで出る見込みだが、**確かめていない**ので固定する。 */
+      body {
+        font-family: ui-rounded, system-ui, -apple-system, "Hiragino Sans",
+          "Noto Sans JP", "Segoe UI", Arial, sans-serif,
+          "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+      }
+
+      /* コーナーの札が、オーロラの明るいところに重なる面で 3.44 まで落ちていた
+         （本文・名前・引用はどれも 7 以上）。飾りだが読めないのは困る。 */
+      .corner-tag {
+        color: #cfe4ff;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+      }
+
+      /* おもしろ大賞の受賞カードで、アイコンだけが1行を占めていた */
+      .winner-card .note .av { flex: 0 0 auto; }
+      .winner-card .note > span { flex: 1 1 320px; min-width: 0; }
+
+      /* エンディングが高さの27%しか使っていなくて、締めとして薄かった */
+      .ending-emoji { font-size: clamp(64px, 7vw, 132px); }
+      .end-thanks {
+        margin-top: clamp(14px, 2.4vh, 30px);
+        display: flex;
+        gap: clamp(10px, 1.2vw, 22px);
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .end-thanks .av { width: clamp(52px, 4vw, 78px); height: clamp(52px, 4vw, 78px); }
+
     </style>
   </head>
   <body>
@@ -1044,7 +1099,7 @@
             { name: "@ootuka-yakiniku", d: 14 },
             { name: "@Mikio_Mano", d: 11 },
           ],
-          note: "8/31〜9/24 に配信のあった25日が分母。同じ日に何枠あってもまとめて1日、0時すぎに再開した続き枠は前日ぶん。その日どれかに1つでも書いていれば出席。",
+          note: "8/31〜9/24 に配信のあった25日が分母。",
         },
 
         /* ============ ② 流行語大賞 ============ */
@@ -1533,8 +1588,7 @@
           <h2 class="corner-title">はじめまして</h2>
           <div class="panel">
             <div class="big-count" data-step="1">
-              <span class="n">${N.featured.length}</span><span class="l">人</span>
-              <div class="l">9月、はじめて声をかけてくれました 👏</div>
+              <div class="l">9月、はじめて声をかけてくれた人たち 👏</div>
             </div>
             <div class="grid-2">
               ${N.featured.map((o, i) => quoteCard(o, i + 2)).join("")}
@@ -1615,11 +1669,19 @@
       }
 
       function renderEnding() {
+        // 皆勤賞の6人の顔で締める。ここまでの25面の主役なので
+        const faces = D.kinkin.winners.map((p) => avatarHtml(p.name, "av-lg")).join("");
         return `
           <div data-step="0">
             <div class="ending-emoji">🌌</div>
             <h1 class="hero-title">${e(D.ending.title)}</h1>
             <p class="hero-sub">${e(D.ending.sub)}</p>
+          </div>
+          <div data-step="1">
+            <div class="end-thanks">${faces}</div>
+            <p class="hero-sub" style="margin-top:clamp(10px,1.6vh,20px)">
+              25日ぜんぶに来てくれた6人と、しゃべってくれた180人に。ありがとうございました。
+            </p>
           </div>`;
       }
 
@@ -1631,7 +1693,7 @@
       const CORNER_OF = []; // シーンごとの「どのコーナーか」。手で数えない
       const push = (corner, scene) => { SCENES.push(scene); CORNER_OF.push(corner); };
 
-      push(0, { total: 2, render: renderOpening });
+      push(0, { total: 1, render: renderOpening });
       push(1, { total: 1, render: renderKinkinPodium });
       push(1, { total: 1, render: renderKinkinList });
       push(2, { total: D.buzzwords.nominees.length, render: renderBuzzNominees });
@@ -1654,7 +1716,7 @@
       push(9, { total: 4, render: renderTipsTop, confettiAt: 4, confettiBig: true });
       push(10, { total: Math.ceil(D.letter.paragraphs.length / 2), render: () => renderLetter(0) });
       push(10, { total: Math.floor(D.letter.paragraphs.length / 2) + 1, render: () => renderLetter(1) });
-      push(11, { total: 1, render: renderEnding, confettiAt: 0 });
+      push(11, { total: 1, render: renderEnding, confettiAt: 1, confettiBig: true });
 
       const DOT_LABELS = [
         "オープニング",
@@ -1762,7 +1824,7 @@
       /* ======================== 紙吹雪 ======================== */
       const COLORS = ["#f6a9c7", "#b9b7ff", "#9be7d5", "#ffc8a8", "#ffd98a", "#dbe6ff"];
       function spawnConfetti(count) {
-        if (reduceMotion) return;
+        if (reduceMotion || ROLE === "ctrl") return;
         const layer = document.getElementById("confetti-layer");
         for (let i = 0; i < count; i++) {
           const c = document.createElement("div");
