@@ -128,8 +128,22 @@ function scenario(store, opt = {}) {
       query(name, {...q, order: [...(q.order ?? []), [f, dir ?? "asc"]]}),
     startAfter: (...v) => query(name, {...q, after: v}),
     limit: (n) => query(name, {...q, limit: n}),
+    select: (...f) => query(name, {...q, select: f}),
     aggregate: (spec) => ({
       get: async () => {
+        /* **絞り込みつきの `sum()` は、本物なら複合索引を要る。**
+           2026-09-25 に本番でこれを踏んだ（`GET /fund/desk` の内訳が
+           まるごと出なくなった）。偽物が受け付けてしまうと、**同じ形に
+           戻した日にこの見張りが緑のまま通る。** 本物と同じように断る。
+
+           索引の要らない形（欄を絞って読んで、こちらで足す）が正しい
+           （`functions/src/fundDesk.ts` の `yenWhere`）。 */
+        const summing = Object.values(spec).some((f) => f.op === "sum");
+        if (summing && (q.where ?? []).length > 0) {
+          throw new Error(
+            "9 FAILED_PRECONDITION: The query requires an index.",
+          );
+        }
         const rows = docsOf(name).filter(([, v]) => keep(v, q.where));
         const out = {};
         for (const [k, f] of Object.entries(spec)) {
@@ -179,6 +193,25 @@ function scenario(store, opt = {}) {
         }
       }
       if (q.limit !== undefined) rows = rows.slice(0, q.limit);
+      /* **読みをこけさせる**（`breakRead`）。本番で索引が足りない回と
+         同じ形——1本でもこけたら、内訳は組まずに理由を返す。 */
+      if (opt.breakRead && q.select) throw new Error("読めない（偽）");
+      /* `select()` は**返す欄を絞るだけ。** 本物と同じで、絞った欄は
+         `get(k)` で読める。ここを素通しにすると、口が絞っていない欄を
+         読んでいても気づけない。 */
+      if (q.select) {
+        rows = rows.map((d) => {
+          const v = d.data() ?? {};
+          const kept = {};
+          for (const k of q.select) if (k in v) kept[k] = v[k];
+          return {
+            id: d.id,
+            exists: d.exists,
+            data: () => kept,
+            get: (k) => kept[k],
+          };
+        });
+      }
       return {
         size: rows.length,
         empty: rows.length === 0,
@@ -750,6 +783,81 @@ console.log("\n# 10. いまの目標に対する内訳（足し引きが「い�
     JSON.stringify(r4.body?.split));
 }
 
+console.log("\n# 10.5 内訳が出ないときは、**どの門で止まったか**を名前で返す");
+{
+  /* 2026-09-25 に本番で内訳が消えたとき、画面からは「出せません」としか
+     見えず、**門が6つあるのでどこで止まったのか分からなかった。**
+     本番のログを読むまで13分かかった。名前を返させる。 */
+  /** 仕込みを1つ壊して、返ってくる門の名前を見る */
+  const whyOf = async (fix) => {
+    const st = seed();
+    fix(st);
+    const s = scenario(st);
+    const r = await s.call("GET", "/fund/desk");
+    return [r.body.splitWhy, r.body.split];
+  };
+
+  {
+    const [why, sp] = await whyOf(() => {});
+    check("ふつうは門の名前が出ない（内訳が出る）", why === null && !!sp,
+      `${why} / ${!!sp}`);
+  }
+  {
+    const [why] = await whyOf((st) => {
+      st.islandFundGoals = {};
+    });
+    check("目標が無い → `goal`", why === "goal", String(why));
+  }
+  {
+    const [why] = await whyOf((st) => {
+      st.island = {};
+    });
+    check("焼き直しが読めない → `total`", why === "total", String(why));
+  }
+  {
+    const [why] = await whyOf((st) => {
+      delete st.island.state.fund.box.spend;
+    });
+    check("焼き直しに欄が足りない → `box`", why === "box", String(why));
+  }
+  {
+    const [why] = await whyOf((st) => {
+      st.islandFundHealth = {};
+    });
+    check("ドネの写しの札が無い → `health`", why === "health", String(why));
+  }
+  {
+    const [why] = await whyOf((st) => {
+      st.islandFundHealth.donations.count = 0;
+    });
+    check("写しが0件 → `health`", why === "health", String(why));
+  }
+  {
+    /* 焼き直しが台帳より古い。**始まる前ぶんのほうが、焼いた合計より
+       大きい**という、ありえない形になる。 */
+    const [why] = await whyOf((st) => {
+      // 始まる前に 10,000円 の控えが在るのに、焼いた合計は 1円
+      st.islandFundSuperChats["DDDDDDDDDDDDDDDDDDDDDDDDDD"] = {
+        yen: 10000, day: "2026-01-01", at: "2026-01-01T20:00:00+09:00",
+        who: "ふゆ",
+      };
+      st.island.state.fund.box.superchat = 1;
+      st.island.state.fund.box.superchatFull = 2;
+    });
+    check("焼き直しが台帳より古い → `stale`", why === "stale", String(why));
+  }
+  {
+    // 読みがこける（偽の Firestore に、読めない入れ物を作る）
+    const st = seed();
+    const s = scenario(st, {breakRead: true});
+    const r = await s.call("GET", "/fund/desk");
+    check("読みがこけた → `read`", r.body.splitWhy === "read",
+      String(r.body?.splitWhy));
+    check("こけても「いま」の額は出る", r.body.total !== null,
+      String(r.body?.total));
+  }
+}
+
 console.log("\n# 11. スパチャとドネを、まぜて時系列で返す");
 {
   const s = scenario(seed());
@@ -974,9 +1082,19 @@ const BREAKS = [
   ],
   [
     "期間で切らずに、ドネを全部数える",
-    "DONATIONS.where(\"day\", \">=\", from)",
-    "DONATIONS.where(\"day\", \">=\", \"1970-01-01\")",
+    "yenWhere(DONATIONS, \">=\", from)",
+    "yenWhere(DONATIONS, \">=\", \"1970-01-01\")",
     "ドネも期間内だけ（300。7月の700は入らない）",
+  ],
+  [
+    /* **2026-09-25 に本番で踏んだ形に、わざと戻す。** 絞り込みつきの
+       `sum()` は複合索引が要って（#168 で作れない）、内訳がまるごと
+       出なくなる。偽の Firestore も本物と同じように断るので、
+       ここが赤くなる。 */
+    "絞り込みつきの sum() に戻す（本番で内訳が消えた形）",
+    "const snap = await col.where(\"day\", op, day).select(\"yen\")\n        .limit(SPLIT_CAP + 1).get();",
+    "const snap = await col.where(\"day\", op, day)\n        .aggregate({yen: admin.firestore.AggregateField.sum(\"yen\")}).get();",
+    "内訳が返る",
   ],
   [
     "二度押しで二度出す（同じ1件でも印を進める）",
@@ -1007,6 +1125,14 @@ const BREAKS = [
     "const to = dayBefore(from);",
     "const to = from;",
     "前の目標は、**新しいのが始まる前の日**で閉じている",
+  ],
+  [
+    /* 門の名前を潰す。**「出せません」しか言わない形に戻す**と、
+       次に止まったとき、またログを読みに行くことになる。 */
+    "止まった門の名前を、1つに潰す",
+    "return { split: null, why: \"health\" };",
+    "return { split: null, why: \"read\" };",
+    "ドネの写しの札が無い → `health`",
   ],
   [
     "ログに投げ銭の本文を出す",
