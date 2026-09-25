@@ -91,6 +91,46 @@ def main() -> None:
     n0, y0 = box_of(desk0)
     log.info("いまの出費: %d件 / %s円", n0, y0)
 
+    # ---- 内訳が、豚に出ている額とぴったり合うか ----
+    #
+    # **ここが、この道具のいちばん大事なところ。** 机は5行の内訳を出すが、
+    # 「足して頭の額に戻る」ことは**本番の数でしか確かめられない**
+    # （作りとしては合わない形を作れないが、それは「作りがそう」までしか
+    #  言っていない。`docs/island-misses.md` #1 と同じ筋で、本番の値で見る）。
+    #
+    # **読めない日は内訳をまるごと出さない**のが正しい姿なので、
+    # 無いこと自体は赤にしない。**在るのに合わないときだけ**落とす。
+    sp = desk0.get("split")
+    if not sp:
+        log.warning(
+            "内訳が出ていません（ドネの写しがまだ無い日はこうなる。"
+            "`doneru_ledger_run` を `{\"all\": true}` で1回押すと入ります）"
+        )
+    else:
+        base = int(sp.get("base") or 0)
+        chat = int(sp.get("chat") or 0)
+        doneru = int(sp.get("doneru") or 0)
+        spend = int(sp.get("spend") or 0)
+        got = int(sp.get("total") or 0)
+        log.info(
+            "内訳: 開始時点 %s円 / スパチャ %s円 / ドネ %s円 / 出費 %s円",
+            base, chat, doneru, spend,
+        )
+        # 足し引きが内訳の中で閉じているか（画面が5行目に出す額）
+        if base + chat + doneru + spend != got:
+            raise SystemExit(
+                f"**内訳の足し引きが合いません**: "
+                f"{base}+{chat}+{doneru}+{spend} != {got}"
+            )
+        # そして、それが公開の口の額と同じか（豚に出ている額）
+        if got != int(a["total"]):
+            raise SystemExit(
+                f"**内訳の合計が豚と違います**: 内訳 {got}円 / 豚 {a['total']}円"
+            )
+        log.info(
+            "**内訳の合計 %s円 は、豚に出ている額と1円まで同じです**", got,
+        )
+
     doc = ""
     try:
         # ---- 2. 1件入れる ----
