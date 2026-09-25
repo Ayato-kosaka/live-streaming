@@ -88,12 +88,34 @@ const db = admin.firestore();
 
 /** スパチャの控え。**`islandApi.ts` の `FUND_CHATS` と同じ入れ物。** */
 const CHATS = db.collection("islandFundSuperChats");
+/* Doneru の1件ずつ（2026-09-25）。**Doneru の API は累計1つしか返さない。**
+   1件ずつは BigQuery（`doneru_donations`）にしか無く、Functions から
+   BigQuery は引けない（クライアントを足していない）ので、
+   `python/doneru_ledger.py` が毎晩ここへ写す。`doneru_health.py` が
+   「いつまで入っているか」を1枚写しているのと同じ形。
+
+   **額の正はここではない。** 豚に出る Doneru のぶんは、いまも向こうの
+   ウィジェットの累計（`doneruNow()`）。ここは**履歴と、期間で切った内訳**の
+   ために持つ写しで、合計の計算には1バイトも使わない（内訳の「開始時点」が
+   残差なので、写しがずれても豚の額は動かない）。 */
+const DONATIONS = db.collection("islandFundDonations");
+/** あやとの控え。**アラートボックスの合言葉**（`alertboxId`）をここから引く。 */
+const USERS = db.collection("islandUsers");
 /** 出費の台帳。**「もらったお金の行き先」はここが正**（#639）。 */
 const SPENDS = db.collection("islandFundSpends");
 /** 目標。開始日が書類ID。`to` が空いている1件が「いまの目標」。 */
 const GOALS = db.collection("islandFundGoals");
 /** 焼き直しの置き場。`island/state.fund.box`。 */
 const STATE = db.collection("island").doc("state");
+/** Doneru の写しが、いつまで入っているか（`python/doneru_ledger.py` が書く）。 */
+const DON_HEALTH = db.collection("islandFundHealth").doc("donations");
+/* もう一度アラートを出す指示（2026-09-25）。書類IDは**アラートボックスの
+   合言葉そのもの**（`islandUsers/{uid}.alertboxId` の32桁）。
+   `functions/src/remote.ts` と同じ形——**書くのはあやとだけ、読むのは
+   合言葉を知っている人だけ。`where` も `orderBy` も使わない**（#168）。 */
+const REPLAY = db.collection("islandFundReplay");
+/** 合言葉の形。`islandApi.ts` の `ALERTBOX_ID` と同じ。 */
+const ALERTBOX_ID = /^[0-9a-f]{32}$/;
 
 /** スパチャのうち貯金箱に入る割合。**仕様**（`python/fund_box.py` と同じ）。 */
 const SUPERCHAT_RATE = 2;
@@ -123,6 +145,38 @@ const TITLE_MAX = 60;
 const LABEL_MAX = 40;
 /** 出した人の名前。YouTube のハンドルがこれを超えることはない。 */
 const WHO_MAX = 31;
+/**
+ * 投げ銭に添えられた本文の長さ（2026-09-25）。
+ *
+ * YouTube のスーパーチャットは 200文字まで、Doneru も同じくらい。
+ * **切るために置いているのではなく、際限のない字を置き場に入れない**
+ * ためだけの線（`WHO_MAX` と同じ性質）。`islandApi.ts` の `fundChatOf` が
+ * ここを借りる——**2か所に別の数を置かない。**
+ */
+export const MAX_FUND_TEXT = 300;
+
+/* ---- もう一度アラートを出す（2026-09-25） ----
+   あやとの言葉「たまに配信中見逃すので。…本当は即時で再アラートできる
+   機能ほしい」。 */
+
+/**
+ * 同じ1件を、この時間のうちに2回頼まれたら**2回目は書かない。**
+ *
+ * **二度押しで二度出さない**ための線。押しどころを disabled にするのは
+ * 画面側の話で、電波が細いときは返事が来る前にもう一度押される。
+ * 口のほうで潰さないと、配信に同じお礼が2回出る。
+ */
+const REPLAY_SAME_MS = 60_000;
+
+/**
+ * 出してよい鮮度。これより古い指示は、配信側が拾っても**出さない。**
+ *
+ * **古いものが勝手に出ないため。** OBS を開き直した瞬間に、1時間前に
+ * 押された指示が流れる、というのがいちばん困る事故。
+ * 配信側は起き上がった1回目を**印を控えるだけ**にして出さない
+ * （`app/alertbox/index.tsx`）ので、守りは2重になっている。
+ */
+const REPLAY_FRESH_MS = 120_000;
 
 type Json = Record<string, unknown>;
 
@@ -243,6 +297,18 @@ const isDay = (v: unknown): v is string => {
 };
 
 /**
+ * その日の**前の日**。目標を閉じる日に使う。
+ *
+ * 新しい目標と同じ日で閉じると、**どちらの期間にも入る1日**ができて、
+ * 内訳の足し引きが2通りになる。`isDay` を通った字しか渡さない。
+ * @param {string} day `2026-09-28`
+ * @return {string} `2026-09-27`
+ */
+const dayBefore = (day: string): string =>
+  new Date(Date.parse(`${day}T00:00:00Z`) - 86400000)
+    .toISOString().slice(0, 10);
+
+/**
  * 円。**0円以下は入れない。** 小数も桁あふれも入れない。
  * @param {unknown} v 入力
  * @return {number} 円。入れてはいけない値なら 0
@@ -341,6 +407,218 @@ async function rebake(): Promise<Box | null> {
 
 /* ---------------------------------------------------------------- 読み */
 
+/* ---------------------------------------------------------------- 内訳 */
+
+/**
+ * いまの目標に対する内訳（2026-09-25）。あやとの言葉:
+ *
+ * > 今の目標に対する総金額（豚にでてるやつ）も内訳付きで出したい。
+ * > （開始時点、スパチャ、ドネ、期間内出費とか見れたらわかりやすいかも。）
+ *
+ * ## 「開始時点」は測るものではなく、**残り**
+ *
+ * 財布は1つで、日付では切らない（#639。あやとの決め）。**切るのは表示だけ。**
+ * `GET /fund` の計算には1バイトも触らない。
+ *
+ *     開始時点 ＝ いま − スパチャ（期間内） − ドネ（期間内） ＋ 出費（期間内）
+ *
+ * こう組むと、4行の足し引きは**必ず**「いま」に戻る。
+ * **合わない内訳を出さないための作り**で、数字を合わせにいったのではない。
+ * 意味のほうも正しい——目標が始まった時点で財布に入っていた額そのもの。
+ *
+ * ## スパチャの「期間内」は、引き算で出す
+ *
+ * 貯金箱に入るのは半分で、**足してから半分にする**（`python/fund_box.py`）。
+ * 期間ごとに半分にすると、両方が奇数の月に1円ずれる。だから
+ * **全体の半分から、始まる前のぶんの半分を引く。** これなら必ず足して戻る。
+ *
+ * ## 写しが読めないときは、**内訳を出さない**
+ *
+ * ドネの1件ずつは Firestore の写し（`python/doneru_ledger.py`）から数える。
+ * 写しが無い・止まっているときに 0 と読むと、その日の「ドネ 0円」が
+ * まるごと「開始時点」へ流れ込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * 読めないときは `null` を返して、画面は内訳を1行も出さない
+ * （`docs/island-standards.md` 10章）。
+ */
+type FundSplit = {
+  /** 目標が始まった時点で、財布に入っていた額 */
+  start: number;
+  /** 期間内のスパチャ（**÷2 後**） */
+  superchat: number;
+  /** 期間内の Doneru */
+  doneru: number;
+  /** 期間内の出費（**引く額。正の数で返す**） */
+  spend: number;
+  /** 4行の足し引き。**`GET /fund` の `total` と1円まで同じ** */
+  total: number;
+  /** ドネの写しが、いつまで入っているか（`YYYY-MM-DD`） */
+  donationsAsOf: string;
+};
+
+/**
+ * 内訳を組む。**1つでも読めなければ null。**
+ * @param {string} from 目標の始まった日（`2026-07-27`）
+ * @param {number} total いま貯金箱にいくら入っているか
+ * @param {number} superchatAll 貯金箱に入っているスパチャぶん（÷2 後）
+ * @return {Promise<FundSplit | null>} 内訳。組めなければ null
+ */
+async function splitOf(
+  from: string,
+  total: number,
+  superchatAll: number,
+): Promise<FundSplit | null> {
+  try {
+    const [health, before, spent, given] = await Promise.all([
+      DON_HEALTH.get(),
+      /* 始まる前のスパチャ。**`day` の単一フィールドだけ**で絞るので
+         複合索引は要らない（#168）。 */
+      CHATS.where("day", "<", from)
+        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
+      SPENDS.where("day", ">=", from)
+        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
+      DONATIONS.where("day", ">=", from)
+        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
+    ]);
+    /* 写しが1度も来ていない／札が無いときは、内訳を組まない。
+       **0 を作らない**（`docs/island-standards.md` 10章）。 */
+    const h = health.exists ? health.data() ?? {} : {};
+    const asOf = typeof h.okDay === "string" ? h.okDay : "";
+    if (!asOf || !(Number(h.count) > 0)) return null;
+
+    const fullBefore = Number(before.data().yen) || 0;
+    const spend = Number(spent.data().yen) || 0;
+    const doneru = Number(given.data().yen) || 0;
+    /* **全体の半分から、始まる前のぶんの半分を引く。** 期間ごとに
+       半分にすると、両方が奇数のときに1円ずれる。 */
+    const superchat = superchatAll - Math.floor(fullBefore / SUPERCHAT_RATE);
+    const start = total - superchat - doneru + spend;
+    return {
+      start,
+      superchat,
+      doneru,
+      spend,
+      total: start + superchat + doneru - spend,
+      donationsAsOf: asOf,
+    };
+  } catch (e) {
+    // **額を1つも出さない。** 組めなかったことだけ残す
+    logger.warn("fund desk split failed", String(e));
+    return null;
+  }
+}
+
+/* ---------------------------------------------------------------- 履歴 */
+
+/** 履歴の1件。スパチャも Doneru も、画面から見れば同じ「もらった1件」。 */
+type FundGot = {
+  id: string;
+  /** `superchat` か `donation` */
+  kind: "superchat" | "donation";
+  /** ISO8601（日本時間）。**並べ替えの鍵** */
+  at: string;
+  day: string;
+  yen: number;
+  who: string;
+  /** 添えられた本文。**あやとだけが読む** */
+  text: string;
+};
+
+/**
+ * スパチャと Doneru を**まぜて時系列**で返す（2026-09-25）。
+ *
+ * あやとの言葉「スパチャ・ドネの履歴が見れたい」。前は2つが別の場所に
+ * あって、**同じ晩に来た2件がどちらが先か分からなかった。**
+ *
+ * ## 2つの入れ物を1回のクエリでは読めない
+ *
+ * Firestore にコレクションをまたぐ並べ替えは無いので、**両方から同じ数だけ
+ * 引いて、手元で混ぜて切る。** 1ページ N件なら、引くのは 2(N+1) 件。
+ *
+ * ## 並べるのは `at`
+ *
+ * `day` だと、同じ晩の中で順が決まらない（配信中はそこがいちばん見たい）。
+ * **`at` を持たない控えは、この並びに出てこない**——GAS の表から移した
+ * 13件がそれで、日付そのものが分かっていない。黙って落とさず、
+ * 件数と額を `noTime` で返して画面の最後に1行出す。
+ *
+ * ## 新着だけ取る
+ *
+ * `since` を渡すと**それより後の1件ずつ**だけ返す。配信中に2秒おきに
+ * 聞くのはこちらで、ふだんは0件（数百バイト）で返る。
+ * `at` の**同じ単一フィールド**に範囲と並べ替えを掛けるので、
+ * 自動でできる索引の範囲に収まる（複合索引は作れない。#168）。
+ * @param {object} q `limit` / `before`（続き）/ `since`（新着だけ）
+ * @return {Promise<object>} 1ページぶんと、続きの位置
+ */
+async function listFeed(q: {
+  limit?: unknown; before?: unknown; since?: unknown;
+}): Promise<{
+  got: FundGot[]; more: boolean; next: string | null;
+  noTime: {count: number; yen: number} | null;
+}> {
+  const want = Number(q.limit ?? PAGE);
+  const n = Number.isFinite(want) ?
+    Math.min(Math.max(Math.trunc(want), 1), PAGE_MAX) :
+    PAGE;
+  const before = String(q.before ?? "");
+  const since = String(q.since ?? "");
+
+  /**
+   * 片方の入れ物から、新しい順に n+1 件。
+   * @param {FirebaseFirestore.CollectionReference} col 入れ物
+   * @param {"superchat" | "donation"} kind どちら
+   * @return {Promise<FundGot[]>} 1件ずつ
+   */
+  const side = async (
+    col: FirebaseFirestore.CollectionReference,
+    kind: "superchat" | "donation",
+  ): Promise<FundGot[]> => {
+    let r = col.orderBy("at", "desc");
+    if (since) r = r.where("at", ">", since);
+    if (before) r = r.startAfter(before);
+    const snap = await r.limit(n + 1).get();
+    return snap.docs.map((d) => {
+      const v = d.data();
+      return {
+        id: d.id,
+        kind,
+        at: typeof v.at === "string" ? v.at : "",
+        day: typeof v.day === "string" ? v.day : "",
+        yen: Number(v.yen) || 0,
+        who: typeof v.who === "string" ? v.who : "",
+        text: typeof v.text === "string" ? v.text : "",
+      };
+    });
+  };
+
+  const [a, b] = await Promise.all([
+    side(CHATS, "superchat"),
+    side(DONATIONS, "donation"),
+  ]);
+  const all = [...a, ...b].sort((x, y) => y.at.localeCompare(x.at));
+  const got = all.slice(0, n);
+  const more = all.length > n;
+  const last = got[got.length - 1];
+
+  /* 時刻の分からない控え。**いちばん後ろまで来たときだけ数える**
+     （毎回数えると、2秒おきの新着取りでも集計が1回走る）。 */
+  let noTime: {count: number; yen: number} | null = null;
+  if (!since && !more) {
+    try {
+      const agg = await CHATS.where("at", "==", null).aggregate({
+        count: admin.firestore.AggregateField.count(),
+        yen: admin.firestore.AggregateField.sum("yen"),
+      }).get();
+      const count = Number(agg.data().count) || 0;
+      if (count > 0) noTime = {count, yen: Number(agg.data().yen) || 0};
+    } catch (e) {
+      // 数えられなかっただけ。**0 と書かない**（`island-standards.md` 10章）
+      logger.warn("fund feed notime failed", String(e));
+    }
+  }
+  return {got, more, next: more && last ? last.at : null, noTime};
+}
+
 /**
  * 出費を新しい順に1ページぶん。
  *
@@ -400,6 +678,49 @@ async function listGoals(): Promise<Goal[]> {
   });
 }
 
+/**
+ * 配信側（OBS）が拾う、もう一度出す指示（2026-09-25）。
+ *
+ * **ログインは要らない。** OBS のブラウザソースは合言葉を持てないので、
+ * 32桁の合言葉を知っていることが合言葉になっている（`GET /roulette/{id}` と
+ * `GET /alertbox/{合言葉}/fund` と同じ形）。取り付けは `islandApi.ts`。
+ *
+ * ## 古いものを出さない
+ *
+ * **鮮度で切る。** `REPLAY_FRESH_MS` より古い指示は `seq: 0` を返して、
+ * 配信側には何も届かない。いちばん困る事故は「OBS を開き直した瞬間に、
+ * 1時間前に押された指示が流れる」ことで、ここで止まる。
+ *
+ * 配信側にも守りがある——**起き上がって最初に受け取った印は、控えるだけで
+ * 出さない**（`app/alertbox/index.tsx`）。**2重にしてあるのは、片方が
+ * 外れても配信に変なものが出ないようにするため。**
+ *
+ * ## 出す中身は、口が組んだもの
+ *
+ * ここが返すのは台帳から組んだ名前・額・本文だけ。押した人が
+ * 送った字は1文字も通っていない（`POST /fund/replay`）。
+ * @param {string} key アラートボックスの合言葉（32桁）
+ * @param {number} now いまの時刻（ミリ秒）
+ * @return {Promise<object>} `seq` と、出すもの。無ければ `seq: 0`
+ */
+export async function replayFor(key: string, now: number): Promise<Json> {
+  if (!ALERTBOX_ID.test(key)) return {seq: 0};
+  const snap = await REPLAY.doc(key).get();
+  if (!snap.exists) return {seq: 0};
+  const v = snap.data() ?? {};
+  const seq = Number(v.seq) || 0;
+  if (!seq || now - seq > REPLAY_FRESH_MS) return {seq: 0};
+  return {
+    seq,
+    show: {
+      kind: v.kind === "donation" ? "donation" : "superchat",
+      yen: Number(v.yen) || 0,
+      who: typeof v.who === "string" ? v.who : "",
+      text: typeof v.text === "string" ? v.text : "",
+    },
+  };
+}
+
 /* ---------------------------------------------------------------- 口 */
 
 /**
@@ -427,6 +748,8 @@ export async function handleFundDesk(
   const chatOne = /^\/fund\/chats\/(.+)$/.exec(q.path);
   const known =
     q.path === "/fund/desk" ||
+    q.path === "/fund/feed" ||
+    q.path === "/fund/replay" ||
     q.path === "/fund/spends" ||
     q.path === "/fund/goals" ||
     q.path === "/fund/chats" ||
@@ -453,16 +776,107 @@ export async function handleFundDesk(
         deps.doneruNow(),
       ]);
       const f = ((state.exists ? state.data() ?? {} : {}).fund ?? {}) as Json;
+      const box =
+        (typeof f.box === "object" && f.box ? f.box : null) as Json | null;
+      /* いま貯金箱にいくら入っているか。**式は `GET /fund` の `total` と
+         同じ1本**（起点 ＋ スパチャの半分 ＋ Doneru）。ここで別の式を
+         組まない——2か所にあると、いつか2つが違う額を言う。 */
+      const start = Number(box?.start);
+      const superchat = Number(box?.superchat);
+      const total =
+        box && doneru !== null &&
+        Number.isFinite(start) && Number.isFinite(superchat) ?
+          start + superchat + doneru :
+          null;
+      /* いまの目標（`to` の空いているいちばん新しい1件）。
+         **目標は同時に1つ**（`python/fund_box.py` の `read_goal`）。 */
+      const now = goals.find((g) => !g.to) ?? null;
       res.json({
         /* 焼き直しの値そのもの。**画面の額はここから出す**ので、
            島の豚が出している額と1円も違わない。読めなければ null。 */
-        box: (f.box ?? null) as Json | null,
+        box,
         /* Doneru は向こうの API が持っている累計で、控えを持たない。
            **読めなかったら null。0 にしない**（`island-standards.md` 10）。 */
         doneru,
+        total,
+        /* いまの目標に対する内訳。**1つでも読めなければ null**（下の
+           `splitOf` の頭。合わない内訳は、無いほうがマシ）。 */
+        split: now && total !== null ?
+          await splitOf(now.from, total, superchat) :
+          null,
         ...page,
         goals,
       });
+      return true;
+    }
+
+    /* ---- スパチャ・ドネの履歴（まぜて時系列） ----
+       `?since=` を渡すと**それより後の1件ずつ**だけ返る。配信中に
+       2秒おきに聞くのはこちらで、ふだんは0件で返る。 */
+    if (q.method === "GET" && q.path === "/fund/feed") {
+      res.json(await listFeed(q.query));
+      return true;
+    }
+
+    /* ---- もう一度アラートを出す ----
+       **出す中身は、こちらが台帳から組む。** 送られてくるのは
+       「どの1件か」だけで、名前も額も本文も本文から読まない。
+       ここを素通しにすると、**押した人が配信に好きな字を出せる**
+       （`functions/src/remote.ts` の `PLACES` と同じ考え）。 */
+    if (q.method === "POST" && q.path === "/fund/replay") {
+      const uid = await deps.ownerUid(q.auth);
+      const kind = String(q.body.kind ?? "");
+      const id = docIdOf(String(q.body.id ?? ""));
+      if (kind !== "superchat" && kind !== "donation") {
+        res.status(400).json({error: "kind"});
+        return true;
+      }
+      if (!id) {
+        res.status(400).json({error: "id"});
+        return true;
+      }
+      /* 出し先は**あやとのアラートボックスの合言葉**。無いなら、出す先が
+         そもそも無い（OBS を1度も開いていない）。 */
+      const me = uid ? (await USERS.doc(uid).get()).data() ?? {} : {};
+      const key = String(me.alertboxId ?? "");
+      if (!ALERTBOX_ID.test(key)) {
+        res.status(409).json({error: "noalertbox"});
+        return true;
+      }
+      const src = kind === "superchat" ? CHATS : DONATIONS;
+      const row = await src.doc(id).get();
+      if (!row.exists) {
+        res.status(404).json({error: "notfound"});
+        return true;
+      }
+      const v = row.data() ?? {};
+      const ref = REPLAY.doc(key);
+      const cur = (await ref.get()).data() ?? {};
+      /* 印はサーバーの時刻。**ただし必ず前より大きくする**——同じミリ秒に
+         2件頼まれると、配信側の「前に見た印より大きいか」で2件めが
+         見送られる（**押したのに出ない**）。 */
+      const at = Math.max(Date.now(), (Number(cur.seq) || 0) + 1);
+      /* **二度押しで二度出さない。** 同じ1件を1分のうちにもう一度
+         頼まれたら、印（`seq`）を進めずにそう返す。進めなければ
+         配信側は「もう出したもの」として見送る。 */
+      if (cur.id === id && cur.kind === kind &&
+          at - (Number(cur.seq) || 0) < REPLAY_SAME_MS) {
+        res.json({already: true, seq: Number(cur.seq) || 0});
+        return true;
+      }
+      const shown = {
+        kind,
+        id,
+        yen: Number(v.yen) || 0,
+        who: typeof v.who === "string" ? v.who : "",
+        text: typeof v.text === "string" ? v.text : "",
+      };
+      /* **`seq` はサーバーの時刻。** 配信側は「前に見た印より大きい」
+         ことと「新しいこと」の両方を見て出す（`REPLAY_FRESH_MS`）。 */
+      await ref.set({...shown, seq: at, by: uid}, {merge: false});
+      // **額も名前も本文も書類IDも出さない。** 出したことだけ
+      logger.info("fund desk: replay queued");
+      res.json({already: false, seq: at, shown});
       return true;
     }
 
@@ -521,8 +935,15 @@ export async function handleFundDesk(
     }
 
     /* ---- 目標を作る。書類IDは開始日そのもの ----
-       **同時に1つ**（`python/fund_box.py` の `read_goal` が、いちばん
-       新しい `from` を1件だけ見る）。前のを閉じてから次を始める。 */
+       **同時に1つ**（あやと 2026-09-24「目標は最大1です」）。
+
+       **閉じる口は置かない。** 単独のボタンがあると、押したあと
+       「目標が無い」状態ができる。目標は次のが始まったときに終わるので、
+       **新しいのを作ったら、前のはここが閉じる。** 最大1が、人の手順では
+       なく仕組みで守られる。
+
+       閉じる日は**新しい目標の前の日**にする。同じ日にすると、どちらの
+       期間にも入る1日ができて、内訳の足し引きが2通りになる。 */
     if (q.method === "POST" && q.path === "/fund/goals") {
       const from = q.body.from;
       const label = clean(q.body.label, LABEL_MAX);
@@ -540,45 +961,25 @@ export async function handleFundDesk(
         return true;
       }
       const had = (await GOALS.doc(from).get()).exists;
-      /* **`to` は書かない。** 閉じてある目標をもう一度「はじめる」と
-         押したときに、`to` を消すか残すかはここでは決められない
-         （消すなら開き直し、残すなら中身だけ直す）。閉じるのは下の口。 */
-      await GOALS.doc(from).set({from, label, yen}, {merge: true});
-      logger.info(`fund desk: goal ${had ? "same" : "new"}`);
+      /* いま開いている目標を、まとめて閉じる。**`to` を書くのはここだけ。**
+         ふつうは1件だが、過去に2件開いたままになっていても畳まれる。 */
+      const open = (await listGoals()).filter((g) => !g.to && g.from !== from);
+      const to = dayBefore(from);
+      const batch = db.batch();
+      for (const g of open) batch.set(GOALS.doc(g.id), {to}, {merge: true});
+      /* **`to` は書かない。** 閉じてある目標を同じ日でもう一度作ったときに、
+         開き直すのか中身だけ直すのかは、ここでは決められない。
+         `merge: true` なので、前に入っていた `to` はそのまま残る。 */
+      batch.set(GOALS.doc(from), {from, label, yen}, {merge: true});
+      await batch.commit();
+      logger.info(
+        `fund desk: goal ${had ? "same" : "new"} (closed ${open.length})`,
+      );
       res.json({
         goal: {id: from, from, to: null, label, yen},
+        /** 機械が閉じた数。**画面はこれを見て「前のを終わりにした」と言う** */
+        closed: open.length,
         already: had,
-        box: await rebake(),
-      });
-      return true;
-    }
-
-    /* ---- 目標を閉じる ----
-       **消すのとは違う。** 終わった目標は台帳に残る（いつからいつまで、
-       何を目指していたか、が出費の一覧と並んで読めないと意味が無い）。 */
-    if (q.method === "POST" && goalOne && goalOne[1].endsWith("/close")) {
-      const from = docIdOf(goalOne[1].slice(0, -"/close".length));
-      const snap = from ? await GOALS.doc(from).get() : null;
-      if (!snap || !snap.exists) {
-        res.status(404).json({error: "notfound"});
-        return true;
-      }
-      const to = q.body.to;
-      if (!isDay(to)) {
-        res.status(400).json({error: "to"});
-        return true;
-      }
-      await GOALS.doc(from).set({to}, {merge: true});
-      logger.info("fund desk: goal closed");
-      const v = snap.data() ?? {};
-      res.json({
-        goal: {
-          id: from,
-          from,
-          to,
-          label: typeof v.label === "string" ? v.label : "",
-          yen: Number(v.yen) || 0,
-        },
         box: await rebake(),
       });
       return true;

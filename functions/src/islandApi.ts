@@ -58,7 +58,7 @@ import {handlePublicPurge} from "./publicPurge";
    **出費と目標は、いままで GitHub Actions からしか入らなかった。**
    額が動く口なので、書類IDを中身から決めて2回入れても増えない形にして、
    書いたあとに `island/state.fund.box` を焼き直す(`fundDesk.ts` 冒頭)。 */
-import {handleFundDesk} from "./fundDesk";
+import {MAX_FUND_TEXT, handleFundDesk, replayFor} from "./fundDesk";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    引き当ては N:N（1本の配信に企画が何本も乗る）なので、
@@ -926,6 +926,16 @@ const fundChatOf = (b: Json, now: number): FundChat | null => {
          こちらを見れば**新しい口を通ったぶんだけ**を後から数えられる。 */
       src: "alertbox",
       from: "island-api",
+      /* 投げてくれた人が書いた本文（#292 の続き。2026-09-25）。
+         **ここまで1文字も残していなかった。** あやとの言葉
+         「メッセージが見れたり」——配信中に見逃したものを机から拾い直す
+         のに、額と名前だけでは何を言ってくれたのか分からない。
+
+         **名前とまったく同じ扱いにする。** 読めるのはあやとだけ
+         （`ownerUid` ＋ `no-store`）、ログには1文字も出さない。
+         長さで切るのは、`who` を `MAX_HANDLE_LEN` で切っているのと同じ形
+         ——置き場に際限のない字を入れない、というだけ。 */
+      text: clean(b.message, MAX_FUND_TEXT),
     },
   };
 };
@@ -4202,6 +4212,30 @@ export const islandApi = onRequest(
           targetAmount: b.goalYen,
           label: b.goalLabel,
         });
+        return;
+      }
+
+      /* もう一度アラートを出す指示を、配信側が拾う（2026-09-25）。
+
+         あやとの言葉「たまに配信中見逃すので。…本当は即時で再アラート
+         できる機能ほしい」。押すのは机（`POST /island-api/fund/replay`）で、
+         ここは**拾うだけ**。中身は `fundDesk.ts` の `replayFor`。
+
+         ログインが要らないのは上の2つと同じ理由（OBS のブラウザソースは
+         合言葉を持てない）。**返すのは台帳から組んだ名前・額・本文だけ**で、
+         押した人が送った字は1文字も通らない。
+
+         **古い指示は返さない**（2分）。OBS を開き直した瞬間に1時間前の
+         お礼が流れる、というのがいちばん困る事故。 */
+      const abRp = path.match(/^\/alertbox\/([0-9a-f]{32})\/replay$/);
+      if (method === "GET" && abRp) {
+        if (!(await alertboxExists(abRp[1]))) {
+          res.set("Cache-Control", "no-store");
+          res.status(404).json({error: "no alertbox"});
+          return;
+        }
+        res.set("Cache-Control", "no-store");
+        res.json(await replayFor(abRp[1], Date.now()));
         return;
       }
 
