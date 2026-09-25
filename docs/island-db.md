@@ -972,6 +972,7 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 | `currency` | string | `円`。**円しか入れない**（豚も GAS も円しか足していない） |
 | `src` | string | `alertbox` / `bigquery` / `manual` |
 | `from` | string | `gas` / `island-api`。どの道を通ったか |
+| `text` | string | **投げてくれた人が書いた本文**（2026-09-25 から）。名前と同じ扱い |
 | `claim` | string | `<日付>\|<額>`。**手入れにだけ付く二重よけの札**（下） |
 | `claimedBy` | string \| null | その札を使った item id |
 
@@ -981,8 +982,59 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 見つかれば足さずに札を使い切る。札は1件に1回しか使えないので、
 同じ日に同じ額のスパチャが2つあれば2つめはちゃんと足される。
 
-**読めるのはあやとだけ**（`GET /fund/history`）。名前と額が1件ずつ並ぶ。
+**読めるのはあやとだけ**（`GET /fund/feed`）。名前と額と本文が1件ずつ並ぶ。
 `firestore.rules` でも閉じてある。
+
+**`text` を入れはじめたのは 2026-09-25。** それより前の516件には入っていない。
+口（OBS が叩く `POST /alertbox/{合言葉}/superchat`）を通ったぶんにしか
+付かないので、**毎晩の掃除が BigQuery から拾ったぶんにも付かない。**
+`python/superchat_text.py` が毎晩あとから足す（**既にある書類にだけ。
+新しくは作らない**——入れる係を2つにすると、どちらの決めにも従わない行が残る）。
+
+**`islandFundDonations/{donation_id}`** — Doneru の投げ銭を1件ずつ写したもの
+
+**Doneru の API は累計1つしか返さない。** 1件ずつは BigQuery
+（`doneru_donations`。2026-09-25 実測で 1,027行・2024-12-20 から）にしか無く、
+Functions から BigQuery は引けないので、`python/doneru_ledger.py` が毎晩写す。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `yen` | number | 円 |
+| `at` | string | ISO8601（日本時間）。**履歴の並べ替えの鍵** |
+| `day` | string | JST の日。**期間で切るのはこれ** |
+| `who` | string | 出した人の名前 |
+| `text` | string | 書いてくれた本文 |
+| `status` | string | `振込完了` / `振込待ち` ほか |
+| `viewerPk` | string | どねID（`islandDonors` と同じ鍵） |
+| `src` | string | `doneru` |
+
+**額の正はここではない。** 豚に出る Doneru のぶんは、いまも向こうの
+ウィジェットの累計（`doneruNow()`）。ここは**履歴と、期間で切った内訳**の
+ための写しで、合計の計算には1バイトも使わない。内訳の「開始時点」は残差で
+出しているので、**写しがずれても豚の額は1円も動かない。**
+
+**「いつまで入っているか」は取り込みが決める。** `islandFundHealth/donations`
+の `okDay` は `islandDoneruHealth/last.okDay`（＝Doneru の取り込みが最後に
+入った日）をそのまま写したもの。cookie が3日前に切れていれば写しも3日前まで
+なので、**自分が走ったことを「新しい」と言わない。**
+札が無い／`count` が 0 のときは、画面が内訳を1行も出さない。
+
+**`islandFundReplay/{アラートボックスの合言葉}`** — もう一度出す指示（2026-09-25）
+
+書類IDが**配信の合言葉**（`islandUsers/{uid}.alertboxId` の32桁）。
+`islandRemote` と同じ形で、**書くのはあやとだけ、読むのは合言葉を知っている人だけ。**
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `seq` | number | サーバーの時刻（ミリ秒）。**必ず前より大きい** |
+| `kind` | string | `superchat` / `donation` |
+| `id` | string | もとの1件の書類ID |
+| `yen` / `who` / `text` | | **台帳から組んだもの**。押した人が送った字は通らない |
+| `by` | string | 押した人の uid |
+
+**同じ1件を1分のうちにもう一度頼まれても、`seq` を進めない**（二度押しで
+二度出さない）。**2分より古い指示は配信へ返らない。** 詳しくは
+[`island-api.md`](./island-api.md) の 1.1。
 
 **`islandFundSpends/{書類ID}`** — 出費。**「もらったお金の行き先」の台帳**
 
@@ -1019,7 +1071,13 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 目標が島から消える。** 消す口（`DELETE /fund/goals/{from}`）が在るのは
 そのため。
 
-**`islandFundHealth/last`** — 毎晩の掃除が置く札（`python/fund_daily.py`）
+**`islandFundHealth/{last, donations, superchatText}`** — 毎晩の札
+
+| 書類 | 書くもの | 何を言う札か |
+| --- | --- | --- |
+| `last` | `python/fund_daily.py` | 掃除が通ったか |
+| `donations` | `python/doneru_ledger.py` | ドネの写しが**いつまで**入っているか（`okDay` `count` `yen`）。**画面が内訳を出してよいかは、ここで決まる** |
+| `superchatText` | `python/superchat_text.py` | 本文をあとから何件足したか |
 
 **この3本に書ける道は2つだけ。** 画面（`/me/desk` の「貯金箱」→
 `functions/src/fundDesk.ts`）と、GitHub Actions（`python/admin/fund_add.py`）。
