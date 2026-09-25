@@ -756,6 +756,9 @@ export async function apply(ctx, opts = {}) {
           doneru: dn,
           total,
           split,
+          /* 止まった門の名前（2026-09-25）。**画面は出さない**が、
+             本物が返すものは差し込みも返す（形を本番と揃える）。 */
+          splitWhy: split ? null : nowGoal ? "health" : "goal",
           ...page(null, 12),
           goals: [...FUND_GOALS].sort((a, b2) => b2.from.localeCompare(a.from)),
         });

@@ -130,6 +130,20 @@ const PAGE_MAX = 120;
 const GOALS_MAX = 60;
 
 /**
+ * 内訳を組むときに、1つの入れ物から読んでよい行数（2026-09-25）。
+ *
+ * **`sum()` が使えないので、行を読んで足す**（`yenWhere` の頭）。
+ * 読む数は「目標が始まる前ぶん」なので、**歴史ぶんだけ増える。**
+ * いまは 377行（スパチャ 516件のうち 2026-07-27 より前）・出費 7行・
+ * ドネは期間内 88行（2026-09-25 の実測）。
+ *
+ * **超えたら内訳を出さない。** 足りない数で組むと、差は「開始時点」が
+ * 黙って飲み込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * この数に届くころには、焼き直し側に持たせるほうが正しい。
+ */
+const SPLIT_CAP = 20000;
+
+/**
  * 1件の額の上限（円）。
  *
  * **押し間違いの桁ずれを止めるためだけの線。** 0円以下を弾くのと同じ性質で、
@@ -456,54 +470,149 @@ type FundSplit = {
 };
 
 /**
- * 内訳を組む。**1つでも読めなければ null。**
+ * 内訳が組めなかった理由。**画面には出さない。** 本番で1回通す道具
+ * （`python/admin/fund_desk_probe.py`）が、止まった門を名指しするのに使う。
+ *
+ * 2026-09-25 に、配ったあと内訳が出ない不具合が出た。画面からは
+ * 「内訳は、いま出せません。」としか見えず、**門が6つあるのでどこで
+ * 止まったのか分からなかった。** 本番の Functions のログを読んで初めて
+ * 理由が出るまで13分かかっている。**口のほうに名前を言わせる。**
+ */
+type SplitWhy =
+  /** いま走っている目標が無い */
+  | "goal"
+  /** 焼き直しか Doneru が読めず、「いま」の額が出せない */
+  | "total"
+  /** 焼き直しに欄が足りない（`superchatFull` / `spend`） */
+  | "box"
+  /** ドネの写しの札が無い・空（`islandFundHealth/donations`） */
+  | "health"
+  /** 読みがこけた、または多すぎて数えきれない */
+  | "read"
+  /** 焼き直しが台帳より古くて、期間内が負になる */
+  | "stale";
+
+/** 内訳と、組めなかったときの理由。**どちらか片方だけが入る。** */
+type SplitOut = {split: FundSplit | null; why: SplitWhy | null};
+
+/**
+ * 内訳の材料を1つ読む。**`sum()` を使わない。**
+ *
+ * ## なぜ `sum()` を使えないか（2026-09-25。本番で踏んだ）
+ *
+ * `where("day", ...)` と `sum("yen")` を組み合わせると、Firestore は
+ * **複合索引を要求する**——単一フィールドの自動索引には足す欄（`yen`）が
+ * 入っていないから。うちは複合索引を作れない（#168）ので、本番で
+ * こうなっていた。
+ *
+ *     WARNING fund desk split failed
+ *       Error: 9 FAILED_PRECONDITION: The query requires an index.
+ *
+ * **絞り込みだけなら索引は要らない。** 欄を `yen` に絞って読んで、
+ * 足すのはこちらでやる（本番で両方叩いて確かめた。
+ * `python/admin/fund_split_probe.py`）。
+ *
+ * **数えきれない数が返ったら、投げる。** 足りない数で内訳を作ると、
+ * 差は「開始時点」が黙って飲み込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * @param {FirebaseFirestore.CollectionReference} col 入れ物
+ * @param {"<" | ">="} op 境目の向き
+ * @param {string} day 境目の日
+ * @return {Promise<number>} 円の合計
+ */
+async function yenWhere(
+  col: FirebaseFirestore.CollectionReference,
+  op: "<" | ">=",
+  day: string,
+): Promise<number> {
+  const snap = await col.where("day", op, day).select("yen")
+    .limit(SPLIT_CAP + 1).get();
+  if (snap.size > SPLIT_CAP) throw new Error("too many rows to add up");
+  let yen = 0;
+  snap.forEach((d) => {
+    const n = Number(d.get("yen"));
+    if (Number.isFinite(n)) yen += n;
+  });
+  return yen;
+}
+
+/**
+ * 内訳を組む。**1つでも読めなければ、理由の名前を返す。**
+ *
+ * ## 焼き直しに合わせる側と、いまを読む側
+ *
+ * 「いま」の額（`total`）は **焼き直し（`island/state.fund.box`）＋ Doneru の
+ * いまの累計** でできている。だから内訳の各行も、**同じ古さのもの**から
+ * 出さないと、行だけが新しくなって開始時点が差を飲み込む。
+ *
+ * | 行 | どこから |
+ * | --- | --- |
+ * | スパチャ | **焼き直しの合計 − 始まる前ぶん（いま読む）** |
+ * | 出費 | **焼き直しの合計 − 始まる前ぶん（いま読む）** |
+ * | ドネ | **いま読む**（`total` の Doneru がいまの累計なので） |
+ * | 開始時点 | 残差（4行の足し引きが必ず「いま」に戻る） |
+ *
+ * 焼き直したあとに来たスパチャは `total` にも入っていないが、
+ * **「始まる前ぶん」はそれに動かされない**ので、ずれは期間内の行に
+ * 収まったまま——`total` と同じ古さで揃う。出費も同じ理由
+ * （`fund_add` から入れたぶんは焼き直されていない）。
+ *
+ * **期間内を直に読んで引き算しない。** そうすると焼き直しの古さが
+ * 期間内の行に乗って、開始時点が同じだけ逆にずれる。
  * @param {string} from 目標の始まった日（`2026-07-27`）
  * @param {number} total いま貯金箱にいくら入っているか
  * @param {number} superchatAll 貯金箱に入っているスパチャぶん（÷2 後）
- * @return {Promise<FundSplit | null>} 内訳。組めなければ null
+ * @param {number} spendAll 焼き直しの出費の合計
+ * @return {Promise<SplitOut>} 内訳。組めなければ理由
  */
 async function splitOf(
   from: string,
   total: number,
   superchatAll: number,
-): Promise<FundSplit | null> {
+  spendAll: number,
+): Promise<SplitOut> {
+  if (!Number.isFinite(spendAll)) return {split: null, why: "box"};
   try {
-    const [health, before, spent, given] = await Promise.all([
+    const [health, fullBefore, spendBefore, doneru] = await Promise.all([
       DON_HEALTH.get(),
-      /* 始まる前のスパチャ。**`day` の単一フィールドだけ**で絞るので
-         複合索引は要らない（#168）。 */
-      CHATS.where("day", "<", from)
-        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
-      SPENDS.where("day", ">=", from)
-        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
-      DONATIONS.where("day", ">=", from)
-        .aggregate({yen: admin.firestore.AggregateField.sum("yen")}).get(),
+      /* 始まる前のスパチャと出費。**`day` の単一フィールドだけ**で絞って、
+         足すのはこちら（`yenWhere` の頭。`sum()` は索引が要る）。 */
+      yenWhere(CHATS, "<", from),
+      yenWhere(SPENDS, "<", from),
+      // ドネだけは期間内を読む（`total` の Doneru がいまの累計なので）
+      yenWhere(DONATIONS, ">=", from),
     ]);
     /* 写しが1度も来ていない／札が無いときは、内訳を組まない。
        **0 を作らない**（`docs/island-standards.md` 10章）。 */
     const h = health.exists ? health.data() ?? {} : {};
     const asOf = typeof h.okDay === "string" ? h.okDay : "";
-    if (!asOf || !(Number(h.count) > 0)) return null;
+    if (!asOf || !(Number(h.count) > 0)) {
+      return {split: null, why: "health"};
+    }
 
-    const fullBefore = Number(before.data().yen) || 0;
-    const spend = Number(spent.data().yen) || 0;
-    const doneru = Number(given.data().yen) || 0;
     /* **全体の半分から、始まる前のぶんの半分を引く。** 期間ごとに
        半分にすると、両方が奇数のときに1円ずれる。 */
     const superchat = superchatAll - Math.floor(fullBefore / SUPERCHAT_RATE);
+    const spend = spendAll - spendBefore;
+    /* 焼き直しが台帳より古いと、引き算が負になることがある。
+       **負の「期間内」を出さない**——足し引きは合っても、読む人には
+       意味の通らない数になる。 */
+    if (superchat < 0 || spend < 0) return {split: null, why: "stale"};
     const start = total - superchat - doneru + spend;
     return {
-      start,
-      superchat,
-      doneru,
-      spend,
-      total: start + superchat + doneru - spend,
-      donationsAsOf: asOf,
+      split: {
+        start,
+        superchat,
+        doneru,
+        spend,
+        total: start + superchat + doneru - spend,
+        donationsAsOf: asOf,
+      },
+      why: null,
     };
   } catch (e) {
     // **額を1つも出さない。** 組めなかったことだけ残す
     logger.warn("fund desk split failed", String(e));
-    return null;
+    return {split: null, why: "read"};
   }
 }
 
@@ -605,12 +714,19 @@ async function listFeed(q: {
   let noTime: {count: number; yen: number} | null = null;
   if (!since && !more) {
     try {
-      const agg = await CHATS.where("at", "==", null).aggregate({
-        count: admin.firestore.AggregateField.count(),
-        yen: admin.firestore.AggregateField.sum("yen"),
-      }).get();
-      const count = Number(agg.data().count) || 0;
-      if (count > 0) noTime = {count, yen: Number(agg.data().yen) || 0};
+      /* **`sum()` を使わない。** 絞り込みと足し算を一緒に頼むと
+         複合索引が要る（2026-09-25 に本番で踏んだ。`yenWhere` の頭）。
+         ここは13件しか無いので、読んで数える。 */
+      const snap = await CHATS.where("at", "==", null).select("yen")
+        .limit(SPLIT_CAP + 1).get();
+      if (snap.size > 0 && snap.size <= SPLIT_CAP) {
+        let yen = 0;
+        snap.forEach((d) => {
+          const n = Number(d.get("yen"));
+          if (Number.isFinite(n)) yen += n;
+        });
+        noTime = {count: snap.size, yen};
+      }
     } catch (e) {
       // 数えられなかっただけ。**0 と書かない**（`island-standards.md` 10章）
       logger.warn("fund feed notime failed", String(e));
@@ -791,6 +907,14 @@ export async function handleFundDesk(
       /* いまの目標（`to` の空いているいちばん新しい1件）。
          **目標は同時に1つ**（`python/fund_box.py` の `read_goal`）。 */
       const now = goals.find((g) => !g.to) ?? null;
+      /* 内訳。**組めなかったときは、どの門で止まったかを名前で返す。**
+         画面には出さないが、本番で1回通す道具がこれを読む
+         （2026-09-25。理由が分からず13分よけいにかかったので）。 */
+      const sp: SplitOut = !now ?
+        {split: null, why: "goal"} :
+        total === null ?
+          {split: null, why: "total"} :
+          await splitOf(now.from, total, superchat, Number(box?.spend));
       res.json({
         /* 焼き直しの値そのもの。**画面の額はここから出す**ので、
            島の豚が出している額と1円も違わない。読めなければ null。 */
@@ -801,9 +925,9 @@ export async function handleFundDesk(
         total,
         /* いまの目標に対する内訳。**1つでも読めなければ null**（下の
            `splitOf` の頭。合わない内訳は、無いほうがマシ）。 */
-        split: now && total !== null ?
-          await splitOf(now.from, total, superchat) :
-          null,
+        split: sp.split,
+        /** 組めなかった門の名前。**画面は出さない。** 道具が読む */
+        splitWhy: sp.why,
         ...page,
         goals,
       });

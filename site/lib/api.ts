@@ -1672,6 +1672,17 @@ export type FundDesk = {
   total: number | null;
   /** いまの目標に対する内訳。**出せないときは null**（1行も出さない） */
   split: FundSplit | null;
+  /**
+   * 内訳が出せなかったとき、**どの門で止まったか**（2026-09-25）。
+   *
+   * **画面には出さない。** 読む人に要るのは「いま出せません」だけで、
+   * 中の話は要らない（`docs/island-standards.md` 6章）。
+   * これを読むのは本番で1回通す道具（`python/admin/fund_desk_probe.py`）。
+   *
+   * 配ったあと内訳が出なくなったとき、画面からは理由が分からず、
+   * **本番のログを読むまで13分かかった。** 名前を返させるようにした。
+   */
+  splitWhy?: "goal" | "total" | "box" | "health" | "read" | "stale" | null;
   spends: FundSpend[];
   more: boolean;
   next: string | null;

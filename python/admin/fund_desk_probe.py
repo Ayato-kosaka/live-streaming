@@ -98,29 +98,52 @@ def main() -> None:
     # （作りとしては合わない形を作れないが、それは「作りがそう」までしか
     #  言っていない。`docs/island-misses.md` #1 と同じ筋で、本番の値で見る）。
     #
-    # **読めない日は内訳をまるごと出さない**のが正しい姿なので、
-    # 無いこと自体は赤にしない。**在るのに合わないときだけ**落とす。
+    # **無いときは、どの門で止まったかを名指しする**（2026-09-25）。
+    #
+    # 配ったあと内訳が出なくなったとき、この道具は「内訳が出ていません」と
+    # しか言わなかった。**門が6つあるので、どこで止まったのか分からない。**
+    # 本番の Functions のログを読んで理由（複合索引が要る）にたどり着くまで
+    # **13分よけいにかかった。** 口に名前を返させて、ここで出す。
+    WHY = {
+        "goal": "いま走っている目標が無い（`to` の空いている1件が無い）",
+        "total": "焼き直しか Doneru が読めず、「いま」の額が出せない",
+        "box": "焼き直しに欄が足りない（superchatFull / spend）",
+        "health": "ドネの写しの札が無い・空"
+                  "（`doneru_ledger_run` を `{\"all\": true}` で1回押す）",
+        "read": "読みがこけた、または多すぎて数えきれない"
+                "（**Functions のログに理由が出ている**）",
+        "stale": "焼き直しが台帳より古くて、期間内が負になる"
+                 "（毎晩の掃除を待つか `fund_sync`）",
+    }
     sp = desk0.get("split")
     if not sp:
+        why = desk0.get("splitWhy")
+        # **門の名前を出す。** 「出ていません」だけでは、次も13分かかる
         log.warning(
-            "内訳が出ていません（ドネの写しがまだ無い日はこうなる。"
-            "`doneru_ledger_run` を `{\"all\": true}` で1回押すと入ります）"
+            "内訳が出ていません。止まった門: %s — %s",
+            why or "（口が名前を返していない。配り直しが要る）",
+            WHY.get(str(why), "知らない門"),
         )
+        # 目標が在るのに出ないのは不具合。**無いときだけは、正しい姿**
+        if why != "goal":
+            raise SystemExit(f"**目標が在るのに内訳が出ません**（門: {why}）")
     else:
-        base = int(sp.get("base") or 0)
-        chat = int(sp.get("chat") or 0)
+        start = int(sp.get("start") or 0)
+        chat = int(sp.get("superchat") or 0)
         doneru = int(sp.get("doneru") or 0)
+        # **出費は正の数で返る。** 足し引きでは引く
         spend = int(sp.get("spend") or 0)
         got = int(sp.get("total") or 0)
         log.info(
-            "内訳: 開始時点 %s円 / スパチャ %s円 / ドネ %s円 / 出費 %s円",
-            base, chat, doneru, spend,
+            "内訳: 開始時点 %s円 / スパチャ %s円 / ドネ %s円 / 出費 -%s円 → %s円",
+            start, chat, doneru, spend, got,
         )
+        log.info("ドネの写しは %s まで入っています", sp.get("donationsAsOf"))
         # 足し引きが内訳の中で閉じているか（画面が5行目に出す額）
-        if base + chat + doneru + spend != got:
+        if start + chat + doneru - spend != got:
             raise SystemExit(
                 f"**内訳の足し引きが合いません**: "
-                f"{base}+{chat}+{doneru}+{spend} != {got}"
+                f"{start}+{chat}+{doneru}-{spend} != {got}"
             )
         # そして、それが公開の口の額と同じか（豚に出ている額）
         if got != int(a["total"]):
