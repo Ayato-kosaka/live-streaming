@@ -1288,3 +1288,181 @@
   color: var(--ink-2);
 }
 .fd-close { margin-bottom: var(--sp-2); }
+
+/* --- スパチャ・ドネの履歴と内訳（2026-09-25。あやとの要件） ------------
+   札は2つ。配信中に開くほう（スパチャ・ドネ）と、前後に開くほう（目標・出費）。
+   前は3つの札で、読むだけの控えと出費が混ざっていた。 */
+
+.fd-tabs.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* いま何秒おきに見ているか。**押しどころではないので、厚みを付けない**
+   （`docs/island-design.md` 3-3）。丸の色だけで、生きているかを言う。 */
+.fd-live {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.fd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--frame-dark);
+}
+.fd-live.is-on .fd-dot { background: var(--pick); }
+.fd-live i {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* もらった1件。**1件が2〜3行**（いつ・だれ・本文）なので、行ではなく札。 */
+.fd-got { list-style: none; margin: 0; padding: 0; }
+.fd-got > li {
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+/* ドネは左に細い帯。**色を2つ使わない**——同じ並びの中で、どちらから
+   来たかだけが違う（字でも「ドネ」と出る。色だけに頼らない）。 */
+.fd-got > li.is-doneru { border-left: 4px solid var(--frame-dark); }
+
+.fd-gothead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.fd-gotwhen {
+  font-size: var(--fs-min);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.fd-gotkind {
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.fd-gotyen {
+  margin-left: auto;
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.fd-gotwho {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink);
+}
+/* 書いてくれた本文。**折り返す**（1行に詰めない。読むために出している） */
+.fd-gottext {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-note);
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+/* もう一度出す。**行の下にまるごと1つ**（題を押しつぶさない） */
+.fd-again { width: 100%; margin-top: var(--sp-2); }
+
+/* 出す前に、配信に出るものをそのまま見せる。 */
+.fd-replay {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border: var(--bw-1) dashed var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper-2);
+}
+.fd-replayhead {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-min);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.fd-replaybody {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.fd-replaybody b { font-weight: 900; }
+.fd-replaybody i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* 時刻の分からない控え。**並びに出せないぶんを、数と額だけ。** */
+.fd-notime {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* いまの目標に対する内訳。**足し引きが必ず「いま」に戻る5行。** */
+.fd-split {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.fd-splith {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+.fd-splith b { font-size: var(--fs-h3); font-weight: 900; color: var(--ink); }
+.fd-splith i {
+  flex: none;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.fd-splitrows { margin: 0; }
+.fd-splitrows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 28px;
+}
+.fd-splitrows dt {
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.fd-splitrows dd {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+/* いちばん下の「いま」。**豚に出ている額と1円まで同じ**なので、そこだけ太く */
+.fd-splitrows > div.is-sum {
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: var(--bw-1) solid var(--frame);
+}
+.fd-splitrows > div.is-sum dt { font-weight: 900; color: var(--ink); }
+.fd-splitrows > div.is-sum dd { font-size: var(--fs-h3); font-weight: 900; }
+
+/* 打ち間違えた目標を消す。**終わらせる道ではない**ので、離して置く。 */
+.fd-drop { margin-top: var(--sp-4); }

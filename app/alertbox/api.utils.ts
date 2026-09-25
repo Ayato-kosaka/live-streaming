@@ -214,3 +214,52 @@ export async function refreshDoneruYoutubeToken(
   const data = await response.json();
   return data;
 }
+/** もう一度出す指示（2026-09-25）。`seq` が 0 なら、いま出すものは無い。 */
+export interface AlertboxReplay {
+  /** サーバーの時刻（ミリ秒）。**同じ印は2回出さない** */
+  seq: number;
+  show?: {
+    kind: "superchat" | "donation";
+    yen: number;
+    who: string;
+    text: string;
+  };
+}
+
+/**
+ * 「もう一度出して」と頼まれていないかを聞く（2026-09-25）。
+ *
+ * あやとの言葉「たまに配信中見逃すので。…本当は即時で再アラートできる
+ * 機能ほしい」。押すのはあやとの机で、ここは**拾うだけ。**
+ *
+ * **返ってくるのは台帳から組んだ名前・額・本文だけ。** 押した人が送った字は
+ * 1文字も通らない（`functions/src/fundDesk.ts` の `POST /fund/replay`）。
+ *
+ * **古い指示は返ってこない**（口が2分で切る）。こちら側も、起き上がって
+ * 最初に受け取った印は控えるだけで出さない（`index.tsx`）。
+ * **2重にしてあるのは、片方が外れても配信に変なものが出ないようにするため。**
+ * @param {string} k OBS の URL に載せた 32 桁の合言葉
+ * @return {Promise<AlertboxReplay>} 出すもの。無ければ `seq: 0`
+ */
+export async function getAlertboxReplay(k: string): Promise<AlertboxReplay> {
+  const res = await fetch(`${ISLAND_API}/alertbox/${k}/replay`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch alertbox replay: ${res.status}`);
+  }
+  const data = await res.json();
+  const seq = Number(data?.seq);
+  if (!Number.isFinite(seq) || seq <= 0) return { seq: 0 };
+  const show = data?.show;
+  const yen = Number(show?.yen);
+  // **中身が読めないものは「無い」に倒す。** 空のお礼を配信に出さない
+  if (!show || !Number.isFinite(yen) || yen <= 0) return { seq: 0 };
+  return {
+    seq,
+    show: {
+      kind: show.kind === "donation" ? "donation" : "superchat",
+      yen,
+      who: String(show.who ?? ""),
+      text: String(show.text ?? ""),
+    },
+  };
+}

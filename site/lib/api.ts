@@ -1454,7 +1454,13 @@ export type FundHistory = {
   yen: number | null;
 };
 
-/** 新しい順に1ページぶん。`before` に前のページの `next` を渡すと続き。 */
+/**
+ * 新しい順に1ページぶん。`before` に前のページの `next` を渡すと続き。
+ *
+ * **画面からはもう呼んでいない**（2026-09-25）。スパチャと Doneru を
+ * まぜて時系列で見る `GET /fund/feed` に寄せた。口のほうは残っていて、
+ * 本番で1度通す道具（`python/admin/fund_history_probe.py`）が使っている。
+ */
 export const getFundHistory = (
   token: string,
   before?: string | null,
@@ -1634,15 +1640,68 @@ export type FundGoal = {
   yen: number;
 };
 
+/**
+ * いまの目標に対する内訳（2026-09-25）。
+ *
+ * **4行の足し引きは、必ず `total` に戻る**（サーバーが「開始時点」を
+ * 残差で出しているため。`functions/src/fundDesk.ts` の `splitOf`）。
+ * **合わない内訳は、無いほうがマシ**なので、1つでも読めないときは
+ * まるごと `null` で来る。
+ */
+export type FundSplit = {
+  /** 目標が始まった時点で、財布に入っていた額 */
+  start: number;
+  /** 期間内のスパチャ（**÷2 後**） */
+  superchat: number;
+  /** 期間内の Doneru */
+  doneru: number;
+  /** 期間内の出費（**引く額。正の数で来る**） */
+  spend: number;
+  /** 4行の足し引き。**豚に出ている額と1円まで同じ** */
+  total: number;
+  /** ドネの1件ずつが、いつまで入っているか */
+  donationsAsOf: string;
+};
+
 /** 机を1枚ぶん。 */
 export type FundDesk = {
   /** **読めなかったら null。0 にしない**（`docs/island-standards.md` 10） */
   box: FundBox | null;
   doneru: number | null;
+  /** いま貯金箱にいくら入っているか。**豚と同じ式**。読めなければ null */
+  total: number | null;
+  /** いまの目標に対する内訳。**出せないときは null**（1行も出さない） */
+  split: FundSplit | null;
   spends: FundSpend[];
   more: boolean;
   next: string | null;
   goals: FundGoal[];
+};
+
+/** もらった1件。**スパチャも Doneru も、画面から見れば同じもの。** */
+export type FundGot = {
+  id: string;
+  kind: "superchat" | "donation";
+  /** ISO8601（日本時間）。**並べ替えの鍵** */
+  at: string;
+  day: string;
+  yen: number;
+  who: string;
+  /** 添えられた本文。**あやとだけが読む** */
+  text: string;
+};
+
+/** 履歴1ページぶん。 */
+export type FundFeed = {
+  got: FundGot[];
+  more: boolean;
+  /** 続きの位置（いちばん古い1件の `at`） */
+  next: string | null;
+  /**
+   * 時刻の分からない控え。**GAS の表から移したぶん。**
+   * 並びに出せないので、数と額だけ最後に1行出す。数えられなければ null。
+   */
+  noTime: { count: number; yen: number } | null;
 };
 
 /** 出費の続き1ページぶん。 */
@@ -1695,23 +1754,27 @@ export const dropFundSpend = (id: string, token: string) =>
     { method: "DELETE", headers: auth(token) },
   );
 
-/** 目標をはじめる。書類IDは開始日そのもの。 */
+/**
+ * 目標をはじめる。書類IDは開始日そのもの。
+ *
+ * **前の目標は、サーバーが閉じる**（返事の `closed` がその数）。
+ * 目標は同時に1つという決まりを、人の手順ではなく仕組みで守る。
+ */
 export const addFundGoal = (
   p: { from: string; label: string; yen: number },
   token: string,
 ) =>
-  req<FundWrote<{ goal: FundGoal }>>("/fund/goals", {
+  req<FundWrote<{ goal: FundGoal; closed: number }>>("/fund/goals", {
     method: "POST",
     headers: auth(token),
     body: JSON.stringify(p),
   });
 
-/** 目標をおわりにする。**消すのとは違う。** 台帳には残る。 */
-export const closeFundGoal = (from: string, to: string, token: string) =>
-  req<FundWrote<{ goal: FundGoal }>>(
-    `/fund/goals/${encodeURIComponent(from)}/close`,
-    { method: "POST", headers: auth(token), body: JSON.stringify({ to }) },
-  );
+/*
+ * 「おわりにする」の口は**置いていない**（2026-09-24。あやと「目標は最大1です。
+ * なので閉じるは不要な気もする」）。単独のボタンがあると、押したあとに
+ * 「目標が無い」状態ができる。**次のを作ったときに、前のはサーバーが閉じる。**
+ */
 
 /** 打ち間違えた目標を消す。**書類IDを指したときだけ。** */
 export const dropFundGoal = (from: string, token: string) =>
@@ -1736,3 +1799,50 @@ export const dropFundChat = (id: string, token: string) =>
     `/fund/chats/${encodeURIComponent(id)}`,
     { method: "DELETE", headers: auth(token) },
   );
+
+
+/**
+ * スパチャと Doneru を**まぜて時系列**で1ページぶん（2026-09-25）。
+ *
+ * - `since` … それより後に来たものだけ。**配信中に2秒おきに聞くのはこちら**
+ * - `before` … 続き（前のページの `next`）
+ */
+export const getFundFeed = (
+  token: string,
+  p: { since?: string | null; before?: string | null; limit?: number } = {},
+) => {
+  const q = new URLSearchParams();
+  if (p.since) q.set("since", p.since);
+  if (p.before) q.set("before", p.before);
+  if (p.limit) q.set("limit", String(p.limit));
+  const s = q.toString();
+  return req<FundFeed>(`/fund/feed${s ? `?${s}` : ""}`, { headers: auth(token) });
+};
+
+/** もう一度出す前に、何が出るかを見せるためのもの。 */
+export type FundShown = {
+  kind: "superchat" | "donation";
+  id: string;
+  yen: number;
+  who: string;
+  text: string;
+};
+
+/**
+ * 配信にもう一度アラートを出す。
+ *
+ * **送るのは「どの1件か」だけ。** 出す名前も額も本文もサーバーが台帳から
+ * 組むので、ここから配信へ好きな字を出すことはできない。
+ *
+ * `already` が true なら、**同じ1件をさっき頼んだばかり**（1分以内）。
+ * サーバーは印を進めないので、配信には**もう出ない**。
+ */
+export const replayFund = (
+  p: { kind: "superchat" | "donation"; id: string },
+  token: string,
+) =>
+  req<{ already: boolean; seq: number; shown?: FundShown }>("/fund/replay", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(p),
+  });
