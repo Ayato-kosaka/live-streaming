@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#fff7fb" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b1732" />
     <title>9月のふりかえり授賞式</title>
     <style>
       /* =========================================
@@ -1154,7 +1154,7 @@
             { name: "@ootuka-yakiniku", d: 14 },
             { name: "@Mikio_Mano", d: 11 },
           ],
-          note: "8/31〜9/24 に配信のあった25日が分母。",
+          note: "8/31〜9/24 に配信のあった25日が分母。同じ日に何枠あっても1日。",
         },
 
         /* ============ ② 流行語大賞 ============ */
@@ -1233,6 +1233,7 @@
           {
             rank: 5,
             when: "9/7 03:18",
+            title: "心霊配信",
             what: "花火は2分で終わっていた。ロープウェイも止まっていて、街灯のない山道を歩いて下りることになった深夜3時",
             lines: [
               { t: "03:11", name: "@さおり-k1n", msg: "見守ります　付き合うよ" },
@@ -1245,6 +1246,7 @@
           {
             rank: 4,
             when: "9/13 20:02",
+            title: "一度断られた車が、戻ってきた",
             what: "一度は断られた相手が、戻ってきて乗せてくれた。ビャウィストクまで一気に",
             lines: [
               { t: "20:02", name: "@aoi1685", msg: "やったやったやったったたたた" },
@@ -1257,6 +1259,7 @@
           {
             rank: 3,
             when: "9/18 15:36",
+            title: "旅の最後のヒッチハイク",
             what: "旅の最後のヒッチハイク。ボードを前日の車に置き忘れ、バスの中で作り直して、立って30分弱",
             lines: [
               { t: "15:36", name: "@さおり-k1n", msg: "やった" },
@@ -1269,6 +1272,7 @@
           {
             rank: 2,
             when: "9/13 00:49",
+            title: "ワルシャワ直行が決まった",
             what: "ポーランドを南から北へ。8時間止まらなかった日の、いちばん最後に決まったワルシャワ直行",
             lines: [
               { t: "00:50", name: "@ゆずたつ-q3n", msg: "いええええ！" },
@@ -1281,6 +1285,7 @@
           {
             rank: 1,
             when: "9/20 17:33",
+            title: "ストックホルム上陸",
             what: "18時間の船を降りて、ストックホルム上陸。9日間、6つの国、18台",
             lines: [
               { t: "17:27", name: "@まーさん7286", msg: "ストックホルム上陸！" },
@@ -1338,7 +1343,8 @@
             { name: "@tomatotakeru2313", date: "9/18", msg: "チャンネル登録と高評価ボタン押させて貰いました。" },
             { name: "@Riaにゃん", date: "9/17", msg: "初見です🐹" },
           ],
-          note: "「初見です」「はじめまして」と自分で書いてくれた人だけ。黙って来て黙って帰った人のほうが、きっとずっと多い。",
+          count: 86,
+          note: "そのうち、自分から名乗ってくれた人を並べました。黙って来て黙って帰った人のほうが、きっとずっと多い。",
         },
 
         /* ============ ⑨ 投げ銭 ============ */
@@ -1367,6 +1373,7 @@
         ending: {
           title: "10月も、島で会いましょう",
           sub: "8/31 トビリシ 〜 9/24 ストックホルム　25日・35枠・16,276コメント",
+          ps: "次はアルバニアだそうです。",
         },
       };
       // 各人の YouTube 公開アイコン。キーは @ を落としたハンドル
@@ -1430,6 +1437,39 @@
                 <div class="num">${e(s.n)}<span style="font-size:0.5em">${e(s.unit)}</span></div>
                 <div class="label">${e(s.label)}</div>
               </div>`).join("")}
+          </div>
+          <div class="program" data-step="2">
+            ${DOT_LABELS.slice(1, -1).map((x) => `<span>${e(x)}</span>`).join("")}
+          </div>`;
+      }
+
+      /* 画面に出す呼び名。**YouTube の生ハンドルを出さない**（SKILL §6）。
+         `-k1n` `-z3i` は YouTube が重複を避けるために勝手に付けた記号で、
+         本人の名前ではない。`@` と、その記号と、末尾の数字を落として「さん」を付ける。
+         **`AVATARS` / `CHARS` を引く鍵は生のままにする**（辞書の鍵が生ハンドル）。 */
+      const DISP_KEEP = new Set(["user"]); // 落とすと意味の無い字だけ残る人
+      function dispName(raw) {
+        let s = String(raw || "").replace(/^@/, "");
+        const cut = s.replace(/-[A-Za-z0-9]{2,6}$/, "");
+        if (cut !== s && cut.length >= 2 && !DISP_KEEP.has(cut.toLowerCase())) s = cut;
+        const d = s.replace(/(\D)\d{3,}$/, "$1");
+        if (d.length >= 2) s = d;
+        return /(さん|ちゃん|くん)$/.test(s) ? s : s + " さん";
+      }
+
+      /* 8月版の `quoteCard` を上書きする。**中身は同じで、名前だけ呼び名に通す。**
+         （この関数は基盤側で先に宣言されていて、こちらが後に来るので上書きになる） */
+      function quoteCard(o, step, extra) {
+        return `
+          <div class="quote-card" ${step != null ? `data-step="${step}"` : ""}>
+            <div class="who">
+              ${avatarHtml(o.name, "av-md")}
+              <span class="name-pill">${e(dispName(o.name))}</span>
+              ${o.date ? `<span class="stream-tag">${e(o.date)}</span>` : ""}
+              ${extra ? `<span class="stream-tag">${e(extra)}</span>` : ""}
+            </div>
+            <div class="msg">「${e(o.msg)}」</div>
+            ${o.note ? `<div class="note">${e(o.note)}</div>` : ""}
           </div>`;
       }
 
@@ -1449,7 +1489,7 @@
                 <div class="podium-card">
                   <div class="kaikin-badge">皆勤賞</div>
                   ${avatarHtml(p.name, "av-lg")}
-                  <div class="p-name">${e(p.name)}</div>
+                  <div class="p-name">${e(dispName(p.name))}</div>
                   <div class="p-stat">出席 ${K.denom}/${K.denom}日</div>
                   <div class="p-stat">${e(p.word)}</div>
                 </div>`).join("")}
@@ -1467,7 +1507,7 @@
               ${K.others.map((p) => `
                 <div class="reg-row">
                   ${avatarHtml(p.name, "av-sm")}
-                  <span class="r-name">${e(p.name)}</span>
+                  <span class="r-name">${e(dispName(p.name))}</span>
                   <span class="r-stat">${p.d}/${K.denom}日</span>
                 </div>`).join("")}
             </div>
@@ -1537,7 +1577,7 @@
                   <div class="who">
                     <span class="name-pill">${e(c.label)}</span>
                     ${avatarHtml(c.name, "av-md")}
-                    <span class="stream-tag">${e(c.name)} ・ ${e(c.date)}</span>
+                    <span class="stream-tag">${e(dispName(c.name))} ・ ${e(c.date)}</span>
                   </div>
                   <div class="msg">「${e(c.msg)}」</div>
                   ${c.note ? `<div class="note">${e(c.note)}</div>` : ""}
@@ -1562,7 +1602,7 @@
               <div class="msg">「${e(gp.winner.msg)}」</div>
               <div class="note" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 ${avatarHtml(gp.winner.name, "av-md")}
-                <span>${e(gp.winner.name)} ・ ${e(gp.winner.date)}<br />${e(gp.note)}</span>
+                <span>${e(dispName(gp.winner.name))} ・ ${e(gp.winner.date)}<br />${e(gp.note)}</span>
               </div>
             </div>
           </div>`;
@@ -1578,14 +1618,15 @@
             <div data-step="0">
               <div class="burst-head">
                 <span class="rank-badge ${b.rank === 1 ? "first" : ""}">${b.rank === 1 ? "👑 " : ""}第${b.rank}位</span>
-                <span class="burst-title">${e(b.what)}</span>
+                <span class="burst-title">${e(b.title)}</span>
               </div>
               <div class="burst-meta">${e(b.when)}</div>
+              <div class="burst-ctx">${e(b.what)}</div>
             </div>
             <div class="replay" data-step="1">
               ${b.lines.map((l, i) => `
                 <div class="line" data-step="1" style="transition-delay:${Math.min(i * 0.28, 3.2)}s">
-                  <span class="t">${e(l.t)}</span>${avatarHtml(l.name, "av-sm")}<span class="n">${e(l.name)}</span><span class="m">${e(l.msg)}</span>
+                  <span class="t">${e(l.t)}</span>${avatarHtml(l.name, "av-sm")}<span class="n">${e(dispName(l.name))}</span><span class="m">${e(l.msg)}</span>
                 </div>`).join("")}
             </div>
           </div>`;
@@ -1605,7 +1646,7 @@
               <div class="quote-card" data-step="${i + 1}">
                 <div class="who">
                   ${avatarHtml(r.name, "av-md")}
-                  <span class="name-pill">${e(r.name)}</span>
+                  <span class="name-pill">${e(dispName(r.name))}</span>
                   <span class="stream-tag">${e(r.date)}</span>
                   ${r.hero ? `<span class="name-pill">🏆 大賞</span>` : ""}
                 </div>
@@ -1647,10 +1688,11 @@
           <h2 class="corner-title">はじめまして</h2>
           <div class="panel">
             <div class="big-count" data-step="1">
-              <div class="l">9月、はじめて声をかけてくれた人たち 👏</div>
+              <span class="n">${N.count}</span><span class="l">人</span>
+              <div class="l">9月、はじめてコメントしてくれました 👏</div>
             </div>
             <div class="grid-2">
-              ${N.featured.map((o, i) => quoteCard(o, i + 2)).join("")}
+              ${N.featured.map((o, i) => quoteCard(o, i + 2, "初コメント")).join("")}
             </div>
             <div class="footnote" data-step="${N.featured.length + 2}">${e(N.note)}</div>
           </div>`;
@@ -1680,7 +1722,7 @@
                 <div class="don-row">
                   <span class="d-rank">${p.rank}位</span>
                   ${charHtml(p, "ch-sm")}
-                  <span class="d-name">${e(p.display)}</span>
+                  <span class="d-name">${e(p.display)} さん</span>
                   <span class="d-amt">${yen(p.yen)}円</span>
                 </div>`).join("")}
             </div>
@@ -1695,7 +1737,7 @@
             ${charHtml(p, "ch-lg")}
             <div>
               <div class="prize">${medal} 第${p.rank}位</div>
-              <div class="p-name">${e(p.display)}</div>
+              <div class="p-name">${e(p.display)} さん</div>
             </div>
             <span class="don-amt-big">${yen(p.yen)}円</span>
           </div>`;
@@ -1712,7 +1754,7 @@
               <div class="prize">2026年9月 投げ銭ランキング 第1位</div>
               <div class="note" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:0">
                 ${charHtml(top, "ch-lg")}
-                <span class="msg" style="font-size:clamp(22px,2vw,40px)">${e(top.display)}</span>
+                <span class="msg" style="font-size:clamp(22px,2vw,40px)">${e(top.display)} さん</span>
                 <span class="don-amt-big">${yen(top.yen)}円</span>
               </div>
             </div>
@@ -1751,6 +1793,9 @@
             <p class="hero-sub" style="margin-top:clamp(10px,1.6vh,20px)">
               25日ぜんぶに来てくれた6人と、しゃべってくれた180人に。ありがとうございました。
             </p>
+            <p class="hero-sub" style="font-size:clamp(14px,1.2vw,22px);margin-top:clamp(6px,1vh,12px)">
+              ${e(D.ending.ps)}
+            </p>
           </div>`;
       }
 
@@ -1762,7 +1807,7 @@
       const CORNER_OF = []; // シーンごとの「どのコーナーか」。手で数えない
       const push = (corner, scene) => { SCENES.push(scene); CORNER_OF.push(corner); };
 
-      push(0, { total: 1, render: renderOpening });
+      push(0, { total: 2, render: renderOpening });
       push(1, { total: 1, render: renderKinkinPodium });
       push(1, { total: 1, render: renderKinkinList });
       push(2, { total: D.buzzwords.nominees.length, render: renderBuzzNominees });
@@ -2230,3 +2275,4 @@
       if (AUTO_SEC > 0) setInterval(advance, AUTO_SEC * 1000);
     </script>
   </body>
+</html>
