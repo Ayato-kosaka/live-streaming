@@ -1154,7 +1154,7 @@
             { name: "@ootuka-yakiniku", d: 14 },
             { name: "@Mikio_Mano", d: 11 },
           ],
-          note: "8/31〜9/24 に配信のあった25日が分母。",
+          note: "8/31〜9/24 に配信のあった25日が分母。同じ日に何枠あっても1日。",
         },
 
         /* ============ ② 流行語大賞 ============ */
@@ -1343,7 +1343,8 @@
             { name: "@tomatotakeru2313", date: "9/18", msg: "チャンネル登録と高評価ボタン押させて貰いました。" },
             { name: "@Riaにゃん", date: "9/17", msg: "初見です🐹" },
           ],
-          note: "「初見です」「はじめまして」と自分で書いてくれた人だけ。黙って来て黙って帰った人のほうが、きっとずっと多い。",
+          count: 86,
+          note: "そのうち、自分から名乗ってくれた人を並べました。黙って来て黙って帰った人のほうが、きっとずっと多い。",
         },
 
         /* ============ ⑨ 投げ銭 ============ */
@@ -1436,6 +1437,9 @@
                 <div class="num">${e(s.n)}<span style="font-size:0.5em">${e(s.unit)}</span></div>
                 <div class="label">${e(s.label)}</div>
               </div>`).join("")}
+          </div>
+          <div class="program" data-step="2">
+            ${DOT_LABELS.slice(1, -1).map((x) => `<span>${e(x)}</span>`).join("")}
           </div>`;
       }
 
@@ -1684,7 +1688,8 @@
           <h2 class="corner-title">はじめまして</h2>
           <div class="panel">
             <div class="big-count" data-step="1">
-              <div class="l">9月、はじめて声をかけてくれた人たち 👏</div>
+              <span class="n">${N.count}</span><span class="l">人</span>
+              <div class="l">9月、はじめてコメントしてくれました 👏</div>
             </div>
             <div class="grid-2">
               ${N.featured.map((o, i) => quoteCard(o, i + 2, "初コメント")).join("")}
