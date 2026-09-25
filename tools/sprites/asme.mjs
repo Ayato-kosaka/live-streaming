@@ -372,6 +372,41 @@ let FUND_GOALS = [
   { id: "2026-07-27", from: "2026-07-27", to: null, label: "北欧周りたい", yen: 50000 },
   { id: "2026-03-01", from: "2026-03-01", to: "2026-07-26", label: "カメラを買う", yen: 40000 },
 ];
+/* スパチャ・ドネの履歴（2026-09-25）。**本文つきで、まぜて時系列。**
+   本物と同じ形（`GET /island-api/fund/feed`）で返す。名前も本文も作り物。 */
+const GOT_TEXT = [
+  "いつも楽しく見てます！", "きょうのコロッケ、おいしそうでした",
+  "", "北欧たのしんできてね", "配信ありがとう〜",
+  "道中きをつけて", "", "スウェーデンのごはん気になる",
+];
+let FUND_GOT = (() => {
+  const out = [];
+  let t = Date.parse("2026-09-24T22:40:00+09:00");
+  for (let i = 0; i < 60; i++) {
+    const at = new Date(t).toISOString().replace("Z", "+00:00");
+    const jst = new Date(t + 9 * 3600 * 1000).toISOString();
+    out.push({
+      id: i % 3 === 0 ? `d${String(i).padStart(4, "0")}` :
+        `sc${String(i).padStart(4, "0")}aaaaaaaaaaaaaaaaaaaaaa`.slice(0, 26),
+      kind: i % 3 === 0 ? "donation" : "superchat",
+      at: `${jst.slice(0, 19)}+09:00`,
+      day: jst.slice(0, 10),
+      yen: SC_YEN[i % SC_YEN.length],
+      who: SC_NAMES[(i * 3) % SC_NAMES.length],
+      text: GOT_TEXT[i % GOT_TEXT.length],
+    });
+    t -= (7 + (i % 5)) * 60 * 1000;
+  }
+  return out;
+})();
+/** 時刻のわからない控え（GAS から移したぶん）。**並びに出ない** */
+const GOT_NOTIME = { count: 13, yen: 3000 };
+/** リアルタイムを測るための印。1回だけ「いま届いた」を作る */
+let FEED_START = 0;
+let FEED_SENT = false;
+/** さっき「もう一度出して」と頼まれた1件。**二度押しで二度出さない** */
+let REPLAY_LAST = "";
+
 /** 焼き直し（`island/state.fund.box`）。**出費を足し引きしたら作り直す。** */
 const fundBox = () => {
   const spend = FUND_SPENDS.reduce((a, s) => a + s.yen, 0);
@@ -685,17 +720,95 @@ export async function apply(ctx, opts = {}) {
         /* **1行も入っていない日**も撮れるようにする（`FUNDNONE=1`）。
            「まだ1行も入っていない」の次の一手が書いてあるかを見るため。 */
         if (opts.fundnone ?? process.env.FUNDNONE === "1") {
+          const b0 = { ...fundBox(), spend: 0, spendCount: 0, start: 0, goal: null };
           return json(r, {
-            box: { ...fundBox(), spend: 0, spendCount: 0, start: 0, goal: null },
+            box: b0,
             doneru: FUND_DONERU,
+            total: b0.start + b0.superchat + FUND_DONERU,
+            split: null,
             spends: [], more: false, next: null, goals: [],
           });
         }
+        const b = box();
+        const dn = down ? null : FUND_DONERU;
+        const total = b && dn !== null ? b.start + b.superchat + dn : null;
+        const nowGoal = FUND_GOALS.find((g) => !g.to);
+        /* 内訳。**足し引きが必ず「いま」に戻る**のは本物と同じ（開始時点が
+           残差）。期間内の数は、本番の実測に合わせてある
+           （2026-07-27 から：スパチャ 12,140 / ドネ 40,600 / 出費 5,760）。 */
+        const nosplit = opts.fundnosplit ?? process.env.FUNDNOSPLIT === "1";
+        let split = null;
+        if (total !== null && nowGoal && !nosplit) {
+          const spendIn = FUND_SPENDS
+            .filter((x) => x.day >= nowGoal.from)
+            .reduce((a, x) => a + x.yen, 0);
+          const scIn = 12140;
+          const dnIn = 40600;
+          const start = total - scIn - dnIn + spendIn;
+          split = {
+            start, superchat: scIn, doneru: dnIn, spend: spendIn,
+            total: start + scIn + dnIn - spendIn,
+            donationsAsOf: "2026-09-24",
+          };
+        }
         return json(r, {
-          box: box(),
-          doneru: down ? null : FUND_DONERU,
+          box: b,
+          doneru: dn,
+          total,
+          split,
           ...page(null, 12),
-          goals: [...FUND_GOALS].sort((a, b) => b.from.localeCompare(a.from)),
+          goals: [...FUND_GOALS].sort((a, b2) => b2.from.localeCompare(a.from)),
+        });
+      }
+      /* スパチャ・ドネの履歴。`since` で新着だけ、`before` で続き。
+         **`FUNDLIVE=<ミリ秒>` を渡すと、その時間がたったところで1件届く**
+         ——リアルタイムが何秒で画面に出るかを測るために置いてある。 */
+      if (path === "/fund/feed" && m === "GET") {
+        const live = Number(opts.fundlive ?? process.env.FUNDLIVE ?? 0);
+        if (live > 0 && !FEED_START) FEED_START = Date.now();
+        if (live > 0 && !FEED_SENT && Date.now() - FEED_START >= live) {
+          FEED_SENT = true;
+          const jst = new Date(Date.now() + 9 * 3600 * 1000).toISOString();
+          FUND_GOT = [{
+            id: "sclive000000000000000000000".slice(0, 26),
+            kind: "superchat",
+            at: `${jst.slice(0, 19)}+09:00`,
+            day: jst.slice(0, 10),
+            yen: 1234,
+            who: "いまきたひと",
+            text: "とどいた",
+          }, ...FUND_GOT];
+        }
+        const n = Math.min(Number(u.searchParams.get("limit") || 15), 120);
+        const since = u.searchParams.get("since");
+        const before = u.searchParams.get("before");
+        let all = [...FUND_GOT].sort((a, b2) => b2.at.localeCompare(a.at));
+        if (since) all = all.filter((g) => g.at > since);
+        if (before) all = all.filter((g) => g.at < before);
+        const got = all.slice(0, n);
+        const more = all.length > n;
+        const last = got[got.length - 1];
+        return json(r, {
+          got, more, next: more && last ? last.at : null,
+          noTime: !since && !more ? GOT_NOTIME : null,
+        });
+      }
+      /* もう一度出す。**本物と同じで、送られてきた字は返さない**
+         （台帳の1件から組む）。同じ1件を続けて頼むと `already`。 */
+      if (path === "/fund/replay" && m === "POST") {
+        const row = FUND_GOT.find(
+          (g) => g.id === body.id && g.kind === body.kind);
+        if (!row) {
+          return r.fulfill({ status: 404, contentType: "application/json",
+            body: JSON.stringify({ error: "notfound" }) });
+        }
+        const key = `${body.kind}_${body.id}`;
+        const already = REPLAY_LAST === key;
+        REPLAY_LAST = key;
+        return json(r, {
+          already, seq: Date.now(),
+          shown: { kind: row.kind, id: row.id, yen: row.yen, who: row.who,
+            text: row.text },
         });
       }
       if (path === "/fund/spends" && m === "GET") {
@@ -717,15 +830,17 @@ export async function apply(ctx, opts = {}) {
       if (path === "/fund/goals" && m === "POST") {
         const goal = { id: body.from, from: body.from, to: null, label: body.label, yen: body.yen };
         const already = FUND_GOALS.some((g) => g.id === goal.id);
-        FUND_GOALS = [goal, ...FUND_GOALS.filter((g) => g.id !== goal.id)];
-        return json(r, { goal, already, box: box() });
-      }
-      if (path.endsWith("/close") && m === "POST") {
-        const from = decodeURIComponent(
-          path.slice("/fund/goals/".length, -"/close".length));
-        FUND_GOALS = FUND_GOALS.map((g) => (g.id === from ? { ...g, to: body.to } : g));
-        const goal = FUND_GOALS.find((g) => g.id === from);
-        return json(r, { goal, box: box() });
+        /* **前のは機械が閉じる**（本物と同じ。単独の「閉じる」は無い）。
+           閉じる日は新しい目標の前の日 */
+        const to = new Date(Date.parse(`${body.from}T00:00:00Z`) - 86400000)
+          .toISOString().slice(0, 10);
+        const open = FUND_GOALS.filter((g) => !g.to && g.id !== goal.id);
+        FUND_GOALS = [
+          goal,
+          ...FUND_GOALS.filter((g) => g.id !== goal.id)
+            .map((g) => (g.to ? g : { ...g, to })),
+        ];
+        return json(r, { goal, already, closed: open.length, box: box() });
       }
       if (path.startsWith("/fund/goals/") && m === "DELETE") {
         const from = decodeURIComponent(path.slice("/fund/goals/".length));
