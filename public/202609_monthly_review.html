@@ -1053,6 +1053,29 @@
       /* 絵の無い人（名前で突合できなかった匿名の人）は、頭文字の枠で置く */
       .ch-none { background: rgba(120, 170, 255, 0.16); border: 1px dashed rgba(170, 200, 255, 0.35); }
 
+      /* ============ 皆勤賞の「何ヶ月連続」 ============
+         出席日数のすぐ下。金の札にして、名前より小さく・数字だけ太く。
+         初めての人は数ではなく言葉（「1ヶ月連続」は数えるものが無い）。 */
+      .p-streak {
+        margin-top: clamp(3px, 0.5vh, 7px);
+        display: inline-block;
+        padding: 2px clamp(7px, 0.6vw, 11px);
+        border-radius: 999px;
+        font-size: clamp(11px, 0.85vw, 16px);
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        color: #2a1d05;
+        background: linear-gradient(135deg, #ffd984, #f7b64a);
+        box-shadow: 0 1px 6px rgba(247, 182, 74, 0.35);
+      }
+      /* はじめての人は、金ではなく銀のほうが「これから」に見える */
+      .p-streak.p-first {
+        color: #e8f1ff;
+        background: rgba(150, 185, 255, 0.18);
+        border: 1px solid rgba(170, 200, 255, 0.45);
+        box-shadow: none;
+      }
+
     </style>
   </head>
   <body>
@@ -1132,11 +1155,11 @@
         kinkin: {
           denom: 28,
           winners: [
-            { name: "@dekobokov6229", word: "出発の日、いちばんに送り出してくれた人。「2周年おめでとう🎉 ジョージア生活ありがとう。そして北欧の旅へワクワクドキドキ楽しんでいこう」" },
-            { name: "@さおり-k1n", word: "到着の瞬間を、いちばん最初に言葉にした人。「最終目的地、無事に到着👏👏👏」" },
-            { name: "@ココ-r6m3x", word: "28日、静かに全部の日にいた人。旅の終わりに「皆さん凄いです」" },
-            { name: "@ビスケット-t2f", word: "ワクワクの号令はいつもここから。「祭り！！オラ、ワクワクすっぞ！」" },
-            { name: "@清志郎-n1s", word: "短い一言で、28日ぜんぶに印を付けた人。旅立ちの朝は「いってらっしゃい✈️」" },
+            { name: "@dekobokov6229", streak: 2, word: "出発の日、いちばんに送り出してくれた人。「2周年おめでとう🎉 ジョージア生活ありがとう。そして北欧の旅へワクワクドキドキ楽しんでいこう」" },
+            { name: "@さおり-k1n", streak: 1, word: "到着の瞬間を、いちばん最初に言葉にした人。「最終目的地、無事に到着👏👏👏」" },
+            { name: "@ココ-r6m3x", streak: 2, word: "28日、静かに全部の日にいた人。旅の終わりに「皆さん凄いです」" },
+            { name: "@ビスケット-t2f", streak: 2, word: "ワクワクの号令はいつもここから。「祭り！！オラ、ワクワクすっぞ！」" },
+            { name: "@清志郎-n1s", streak: 5, word: "短い一言で、28日ぜんぶに印を付けた人。旅立ちの朝は「いってらっしゃい✈️」" },
           ],
           others: [
             { name: "@まこも-z3i", d: 27 },
@@ -1478,6 +1501,17 @@
 
       /* ① 皆勤賞: 表彰台と出席日数リストで2面に割る。
          1面に詰めると 1920×1080 で上が切れる（実際に切れた）。 */
+      /* 皆勤賞が何ヶ月続いているか。**1ヶ月目は「1ヶ月連続」と書かない。**
+         連続は2つ目から数えるもので、初めての人には別の言葉が要る。
+         数え方は python/monthly_tips.py 側ではなく集計で出してある
+         （月末配信の日で区切った期間ごとに、その期間ぜんぶの日にいたか）。 */
+      function streakHtml(n) {
+        const v = Number(n || 0);
+        if (v >= 2) return `<div class="p-streak">${v}ヶ月連続</div>`;
+        if (v === 1) return `<div class="p-streak p-first">はじめての皆勤賞</div>`;
+        return "";
+      }
+
       function renderKinkinPodium() {
         const K = D.kinkin;
         return `
@@ -1494,6 +1528,7 @@
                   ${avatarHtml(p.name, "av-lg")}
                   <div class="p-name">${e(dispName(p.name))}</div>
                   <div class="p-stat">出席 ${K.denom}/${K.denom}日</div>
+                  ${streakHtml(p.streak)}
                   <div class="p-stat">${e(p.word)}</div>
                 </div>`).join("")}
             </div>
