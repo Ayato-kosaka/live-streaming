@@ -167,6 +167,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
   **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）
 - [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
+- [`docs/island-money.md`](docs/island-money.md) — **お金の出しかた。視聴者さんに見せる額は全部ここの式1本。**
+  貢献額（スパチャ ÷ 2 + Doneru）・実額を出してよい場所の表・名寄せは図鑑ひとつ・月末の期間の決め方。
+  **額を出す面を触る前に必ず読む**
 - [`docs/island-db.md`](docs/island-db.md) — **データ設計。ERD・用語・責務の表・列の一覧。**
   「何が正で、誰が書いて、誰が読むか」は3章。列を1つ引きに来たら4章
 - [`docs/island-api.md`](docs/island-api.md) — 口（`/island-api/*`）の一覧。誰が叩けるか・1日の上限

@@ -232,7 +232,49 @@ def box(superchat_yen: int, doneru: int, spend_yen: int) -> int:
     Returns:
         貯金箱の額（円）
     """
-    return superchat_yen // SUPERCHAT_RATE + doneru - spend_yen
+    # **式は `viewer_yen()` ひとつ。** ここで書き直さない。
+    # 貯金箱と、視聴者さんに見せる額で割り方が別れると、
+    # ランキングの合計と貯金箱の増えかたが静かにずれる
+    return viewer_yen(superchat_yen, doneru) - spend_yen
+
+
+def viewer_yen(superchat_yen: int, doneru_yen: int) -> int:
+    """**視聴者さんに見せる額は、全部これを通す。**
+
+        貢献額 = スパチャ ÷ 2 + Doneru
+
+    貯金箱（`box()`）から支出を引かないだけで、**式は同じもの。**
+    月末配信のランキングも、島の面も、見せる額はここを通す。
+
+    ## なぜ「いくら出したか」ではないのか
+
+    あやとの言葉（2026-09-26）:
+
+    > ランキングの仕様 = 豚の貯金箱の仕様 = いくら配信の企画や
+    > 私の夢への応援に貢献してくれたか。実額は視聴者には一切見せない。
+
+    スパチャは YouTube が半分持っていくので、**出してくれた額と、
+    夢に届いた額が違う。** 表彰するのは届いたほう。1,000円のスパチャと
+    500円の Doneru は、旅には同じだけ効いている。
+
+    ## 端数は切り捨て（`//`）
+
+    `box()` と同じ割り方にしてある。**片方だけ丸め方を変えると、
+    ランキングの合計と貯金箱の増えかたがずれる。**
+
+    ## 足してから半分にする
+
+    `box()` の注意書きと同じ。1件ずつ半分にすると、奇数円のスパチャの
+    数だけずれる。**1人ぶんの合計を渡すこと。**
+
+    Args:
+        superchat_yen: その人のスパチャの円の合計（半分にする前）
+        doneru_yen: その人の Doneru の円の合計
+
+    Returns:
+        貢献額（円）
+    """
+    return superchat_yen // SUPERCHAT_RATE + doneru_yen
 
 
 def start_amount(spend_yen: int) -> int:

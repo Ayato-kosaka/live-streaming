@@ -1104,57 +1104,60 @@
 
       /* =========================================================
          9月のふりかえり授賞式 データ
-         対象期間: 2026-08-31 〜 2026-09-24（JST）
+         対象期間: 2026-08-29 〜 2026-09-25（JST）
+         （前回の月末配信の日から、今回の前日まで。あやと 2026-09-26）
          ・引用は原文のまま。標準の絵文字コードだけ実絵文字に直し、
            チャンネル独自の絵文字（:washhands: など）は落としてある
          ・**個人別のコメント数は1つも出していない**（嫌がる人が多い）
-         ・出席は日ごと。0時をまたいだ続き枠6本は前日に寄せてある
+         ・出席は日ごと。0時をまたいだ続き枠7本は前日に寄せてある
          ========================================================= */
       const AVATAR_ALIAS = {};
 
       const REVIEW_DATA = {
         month: "9月",
-        period: "8/31 〜 9/24",
+        period: "8/29 〜 9/25",
 
         opening: {
           title: "9月のふりかえり授賞式",
           sub: "ジョージアから、スウェーデンまで",
           stats: [
-            { n: "25", unit: "日", label: "配信のあった日" },
-            { n: "35", unit: "枠", label: "0時をまたいだ続きも入れて" },
-            { n: "16,276", unit: "", label: "みんなのコメント" },
-            { n: "180", unit: "人", label: "しゃべってくれた人" },
+            { n: "28", unit: "日", label: "配信のあった日" },
+            { n: "39", unit: "枠", label: "0時をまたいだ続きも入れて" },
+            { n: "17,913", unit: "", label: "みんなのコメント" },
+            { n: "194", unit: "人", label: "しゃべってくれた人" },
           ],
         },
 
         /* ============ ① 皆勤賞 ============ */
         kinkin: {
-          denom: 25,
+          denom: 28,
           winners: [
             { name: "@dekobokov6229", word: "出発の日、いちばんに送り出してくれた人。「2周年おめでとう🎉 ジョージア生活ありがとう。そして北欧の旅へワクワクドキドキ楽しんでいこう」" },
             { name: "@さおり-k1n", word: "到着の瞬間を、いちばん最初に言葉にした人。「最終目的地、無事に到着👏👏👏」" },
-            { name: "@まこも-z3i", word: "拍手がいつも先頭にいた人。車が止まるたび、料理ができるたび、まず手を叩いていた" },
-            { name: "@ココ-r6m3x", word: "25日、静かに全部の日にいた人。旅の終わりに「皆さん凄いです」" },
+            { name: "@ココ-r6m3x", word: "28日、静かに全部の日にいた人。旅の終わりに「皆さん凄いです」" },
             { name: "@ビスケット-t2f", word: "ワクワクの号令はいつもここから。「祭り！！オラ、ワクワクすっぞ！」" },
-            { name: "@清志郎-n1s", word: "短い一言で、25日ぜんぶに印を付けた人。旅立ちの朝は「いってらっしゃい✈️」" },
+            { name: "@清志郎-n1s", word: "短い一言で、28日ぜんぶに印を付けた人。旅立ちの朝は「いってらっしゃい✈️」" },
           ],
           others: [
-            { name: "@もっと豆挽けコーヒー商店", d: 24 },
-            { name: "@ゆずたつ-q3n", d: 24 },
-            { name: "@たぃpi", d: 23 },
-            { name: "@aoi1685", d: 22 },
-            { name: "@beamjim1497", d: 22 },
-            { name: "@まーさん7286", d: 20 },
-            { name: "@茶々-d7c", d: 19 },
-            { name: "@シメサバ44", d: 18 },
-            { name: "@kana3019", d: 16 },
+            { name: "@まこも-z3i", d: 27 },
+            { name: "@ゆずたつ-q3n", d: 27 },
+            { name: "@もっと豆挽けコーヒー商店", d: 26 },
+            { name: "@beamjim1497", d: 25 },
+            { name: "@たぃpi", d: 25 },
+            { name: "@aoi1685", d: 24 },
+            { name: "@まーさん7286", d: 22 },
+            { name: "@シメサバ44", d: 20 },
+            { name: "@茶々-d7c", d: 20 },
+            { name: "@kana3019", d: 18 },
+            { name: "@reim改", d: 17 },
             { name: "@cmkeg4u5", d: 15 },
-            { name: "@reim改", d: 15 },
+            { name: "@ootuka-yakiniku", d: 15 },
             { name: "@田中とら-f6x", d: 15 },
-            { name: "@ootuka-yakiniku", d: 14 },
-            { name: "@Mikio_Mano", d: 11 },
+            { name: "@Mikio_Mano", d: 12 },
+            { name: "@ゆうチャンネル-w8v", d: 12 },
+            { name: "@らん-x2m8e", d: 12 },
           ],
-          note: "8/31〜9/24 に配信のあった25日が分母。同じ日に何枠あっても1日。",
+          note: "8/29〜9/25 に配信のあった28日が分母。同じ日に何枠あっても1日。",
         },
 
         /* ============ ② 流行語大賞 ============ */
@@ -1343,15 +1346,15 @@
             { name: "@tomatotakeru2313", date: "9/18", msg: "チャンネル登録と高評価ボタン押させて貰いました。" },
             { name: "@Riaにゃん", date: "9/17", msg: "初見です🐹" },
           ],
-          count: 86,
+          count: 91,
           note: "そのうち、自分から名乗ってくれた人を並べました。黙って来て黙って帰った人のほうが、きっとずっと多い。",
         },
 
         /* ============ ⑨ 投げ銭 ============ */
         tips: {
-          rows: [{"handle": "@まこも-z3i", "display": "まこも", "yen": 18600, "rank": 1, "icon": "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-"}, {"handle": "@aoi1685", "display": "aoi", "yen": 12400, "rank": 2, "icon": "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K"}, {"handle": "@田中とら-f6x", "display": "田中とら", "yen": 8640, "rank": 3, "icon": "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x"}, {"handle": "@kana3019", "display": "kana", "yen": 8000, "rank": 4, "icon": "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt"}, {"handle": "@たぃpi", "display": "たぃpi", "yen": 7060, "rank": 5, "icon": "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47"}, {"handle": "@まーさん7286", "display": "まーさん", "yen": 5200, "rank": 6, "icon": "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU"}, {"handle": "@らん-x2m8e", "display": "らん", "yen": 5000, "rank": 7, "icon": "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS"}, {"handle": "@moimoilove6331", "display": "moimoilove", "yen": 4500, "rank": 8, "icon": "f003927aa7df4f5599a6bd58e2d324450"}, {"handle": "@えびっち-m7r", "display": "えびっち", "yen": 3360, "rank": 9, "icon": "a43e965774df4900b7c8724c66f5deba0"}, {"handle": "@dekobokov6229", "display": "dekobokov", "yen": 3260, "rank": 10, "icon": "18okO58dwMaci-9R1go0Rj1dTqliSWlz3"}, {"handle": "@鴨川小夜", "display": "鴨川小夜", "yen": 2200, "rank": 11, "icon": "5cc99a90acad4e7997d92b27c5207c6c0"}, {"handle": "@ひめひめ-r9z", "display": "ひめひめ", "yen": 2100, "rank": 12, "icon": "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ"}, {"handle": null, "display": "ayato arigato", "yen": 2000, "rank": 13, "icon": null}, {"handle": "@murasaki_ม่วง", "display": "murasaki_ม่วง", "yen": 1600, "rank": 14, "icon": "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp"}, {"handle": "@ももしろう-y2z", "display": "ももしろう", "yen": 1400, "rank": 15, "icon": "1y17p0D56itwNXWWEzo94jF4ThNETczQg"}, {"handle": "@もっと豆挽けコーヒー商店", "display": "もっと豆挽けコーヒー商店", "yen": 1300, "rank": 16, "icon": "f203e9529b7941c89940a568e03b83b00"}, {"handle": "@ゆずたつ-q3n", "display": "ゆずたつ", "yen": 1200, "rank": 17, "icon": "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb"}, {"handle": "@desora-t5n", "display": "desora", "yen": 900, "rank": 18, "icon": "0c8468a6411842cdb144f70eefee5b7b0"}, {"handle": "@YOKOHAMA_Night", "display": "YOKOHAMA_Night", "yen": 800, "rank": 19, "icon": "c3cca678865a4021a048e617fab35db30"}, {"handle": "@mikan-2024", "display": "mikan", "yen": 500, "rank": 20, "icon": "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz"}, {"handle": null, "display": "ひー", "yen": 500, "rank": 20, "icon": null}, {"handle": "@シメサバ44", "display": "シメサバ44", "yen": 320, "rank": 22, "icon": "d2ff6294640d4a5aa19bce30dfcbc8840"}, {"handle": "@スカイライン-t2w", "display": "スカイライン", "yen": 320, "rank": 22, "icon": "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq"}, {"handle": "@くまたん-m8q", "display": "くまたん", "yen": 200, "rank": 24, "icon": "02e7cc3109ef45e2bc56aaf7f520ef7c0"}, {"handle": "@元キノコさん", "display": "元キノコさん", "yen": 200, "rank": 24, "icon": "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_"}],
-          total: 91560,
-          period: "2026-08-31〜2026-09-24",
+          rows: [{"handle": "@aoi1685", "display": "@aoi1685", "yen": 13900, "rank": 1, "icon": "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K"}, {"handle": "@まこも-z3i", "display": "@まこも-z3i", "yen": 9300, "rank": 2, "icon": "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-"}, {"handle": "@たぃpi", "display": "@たぃpi", "yen": 6580, "rank": 3, "icon": "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47"}, {"handle": "@田中とら-f6x", "display": "@田中とら-f6x", "yen": 4320, "rank": 4, "icon": "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x"}, {"handle": "@kana3019", "display": "@kana3019", "yen": 4000, "rank": 5, "icon": "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt"}, {"handle": "@らん-x2m8e", "display": "@らん-x2m8e", "yen": 3000, "rank": 6, "icon": "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS"}, {"handle": "@まーさん7286", "display": "@まーさん7286", "yen": 2900, "rank": 7, "icon": "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU"}, {"handle": "@moimoilove6331", "display": "@moimoilove6331", "yen": 2250, "rank": 8, "icon": "f003927aa7df4f5599a6bd58e2d324450"}, {"handle": "@ひめひめ-r9z", "display": "@ひめひめ-r9z", "yen": 2100, "rank": 9, "icon": "1NLsB-D-jeUxQ3viqwhJu2GkRRXsYXAaQ"}, {"handle": null, "display": "ayato arigato", "yen": 2000, "rank": 10, "icon": null}, {"handle": "@dekobokov6229", "display": "@dekobokov6229", "yen": 1980, "rank": 11, "icon": "18okO58dwMaci-9R1go0Rj1dTqliSWlz3"}, {"handle": "@えびっち-m7r", "display": "@えびっち-m7r", "yen": 1840, "rank": 12, "icon": "a43e965774df4900b7c8724c66f5deba0"}, {"handle": "@もっと豆挽けコーヒー商店", "display": "@もっと豆挽けコーヒー商店", "yen": 1300, "rank": 13, "icon": "f203e9529b7941c89940a568e03b83b00"}, {"handle": "@ゆずたつ-q3n", "display": "@ゆずたつ-q3n", "yen": 1200, "rank": 14, "icon": "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb"}, {"handle": "@鴨川小夜", "display": "@鴨川小夜", "yen": 1100, "rank": 15, "icon": "5cc99a90acad4e7997d92b27c5207c6c0"}, {"handle": "@murasaki_ม่วง", "display": "@murasaki_ม่วง", "yen": 800, "rank": 16, "icon": "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp"}, {"handle": "@ももしろう-y2z", "display": "@ももしろう-y2z", "yen": 700, "rank": 17, "icon": "1y17p0D56itwNXWWEzo94jF4ThNETczQg"}, {"handle": "@スカイライン-t2w", "display": "@スカイライン-t2w", "yen": 660, "rank": 18, "icon": "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq"}, {"handle": "@desora-t5n", "display": "@desora-t5n", "yen": 450, "rank": 19, "icon": "0c8468a6411842cdb144f70eefee5b7b0"}, {"handle": "@YOKOHAMA_Night", "display": "@YOKOHAMA_Night", "yen": 400, "rank": 20, "icon": "c3cca678865a4021a048e617fab35db30"}, {"handle": "@mikan-2024", "display": "@mikan-2024", "yen": 250, "rank": 21, "icon": "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz"}, {"handle": "@シメサバ44", "display": "@シメサバ44", "yen": 160, "rank": 22, "icon": "d2ff6294640d4a5aa19bce30dfcbc8840"}, {"handle": "@くまたん-m8q", "display": "@くまたん-m8q", "yen": 100, "rank": 23, "icon": "02e7cc3109ef45e2bc56aaf7f520ef7c0"}, {"handle": "@元キノコさん", "display": "@元キノコさん", "yen": 100, "rank": 23, "icon": "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_"}],
+          total: 61390,
+          period: "2026-08-29〜2026-09-25",
         },
 
         /* ============ ⑩ 手紙 ============ */
@@ -1359,20 +1362,20 @@
           // **「誰々が何々と言いました」を並べない**（あやと 2026-09-25）。
           // 9月そのものを、外から見てどうだったかで書く
           paragraphs: [
-            "9月は、島がいちばん遠くまで動いた月でした。8月31日にジョージアのトビリシで始まり、9月24日にはストックホルムの湖のほとりにいます。25日間、35枠、16,276行のコメント。",
+            "9月は、島がいちばん遠くまで動いた月でした。8月29日にジョージアのトビリシで始まり、9月25日にはストックホルムの市庁舎の前に立っています。28日間、39枠、17,913行のコメント。",
             "前半と後半で、配信の形がまるごと入れ替わりました。前半は台所です。900円の醤油を買って、それで一週間ぶんの料理をまかない、深夜の花火を見に行って空振りし、街灯のない山道を歩いて下りました。決まった場所に集まって、同じ鍋をのぞく日々でした。",
             "9月11日、それが終わります。そこから9日間、ポーランド、リトアニア、ラトビア、エストニア、フィンランド、スウェーデン。18台の車。決まった場所が無くなって、毎晩ちがう路肩と、ちがう人の車の中から配信が始まるようになりました。",
             "変わったのは配信の形だけではありません。見ている側の役割が変わりました。台所では味見役だった人たちが、旅では道を調べる人になりました。どこに立てば車が止まるか。高速の手前でブレーキを踏ませてはいけない理由。「ヒッチハイク」が通じない国で何と言えばいいか。バス代がアプリで払えないとき、車内のどこを見ればいいか。眺めているだけでは出てこない種類の言葉が、必要になった晩にちょうど出てきていました。",
             "だから9月は、うまくいった月というより、うまくいかない時間が長かった月です。1時間半どの車も止まらない夜があり、お金を請求されて払った夜があり、ボードを車に置き忘れた朝があり、豪雨で靴がびしょ濡れになった日がありました。盛り上がった瞬間を並べ直すと、そのほとんどが「やっと止まった車」です。止まらない時間の長さが、止まった瞬間の値打ちを作っていました。",
             "9月20日17時33分、ストックホルム上陸。面白いのは、着いたあとの数日のほうが配信が静かだったことです。旅が終わると、また台所に戻りました。カツカレーを2時間半かけて作り、庭のリンゴの木を見て、湖のほとりで寝転がる。国境を6つまたいで戻ってきたのに、そこに集まっている人たちは何も変わっていませんでした。",
-            "25日ぜんぶに来てくれた人が6人。来られない日があった人もいます。仕事が終わってからアーカイブで追いかけた人もいます。16,276行が残りましたが、書かずに見ていた時間のほうがずっと長いはずです。次はアルバニアだそうです。また、島で。",
+            "28日ぜんぶに来てくれた人が5人。来られない日があった人もいます。仕事が終わってからアーカイブで追いかけた人もいます。17,913行が残りましたが、書かずに見ていた時間のほうがずっと長いはずです。次はアルバニアだそうです。また、島で。",
           ],
           sign: "あやと島案内鳥 より",
         },
 
         ending: {
           title: "10月も、島で会いましょう",
-          sub: "8/31 トビリシ 〜 9/24 ストックホルム　25日・35枠・16,276コメント",
+          sub: "8/29 トビリシ 〜 9/25 ストックホルム　28日・39枠・17,913コメント",
           ps: "次はアルバニアだそうです。",
         },
       };
@@ -1482,7 +1485,7 @@
           <h2 class="corner-title">皆勤賞</h2>
           <div class="panel">
             <div class="nominee-label" data-step="0" style="text-align:center">
-              🏆 8/31からの25日間、ぜんぶの日に来てくれた6人
+              🏆 ${e(D.period.split("〜")[0].trim())}からの${K.denom}日間、ぜんぶの日に来てくれた${K.winners.length}人
             </div>
             <div class="podium" data-step="1">
               ${K.winners.map((p) => `
@@ -1722,7 +1725,7 @@
                 <div class="don-row">
                   <span class="d-rank">${p.rank}位</span>
                   ${charHtml(p, "ch-sm")}
-                  <span class="d-name">${e(p.display)} さん</span>
+                  <span class="d-name">${e(dispName(p.display))}</span>
                   <span class="d-amt">${yen(p.yen)}円</span>
                 </div>`).join("")}
             </div>
@@ -1737,7 +1740,7 @@
             ${charHtml(p, "ch-lg")}
             <div>
               <div class="prize">${medal} 第${p.rank}位</div>
-              <div class="p-name">${e(p.display)} さん</div>
+              <div class="p-name">${e(dispName(p.display))}</div>
             </div>
             <span class="don-amt-big">${yen(p.yen)}円</span>
           </div>`;
@@ -1754,7 +1757,7 @@
               <div class="prize">2026年9月 投げ銭ランキング 第1位</div>
               <div class="note" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:0">
                 ${charHtml(top, "ch-lg")}
-                <span class="msg" style="font-size:clamp(22px,2vw,40px)">${e(top.display)} さん</span>
+                <span class="msg" style="font-size:clamp(22px,2vw,40px)">${e(dispName(top.display))}</span>
                 <span class="don-amt-big">${yen(top.yen)}円</span>
               </div>
             </div>
@@ -1791,7 +1794,7 @@
           <div data-step="1">
             <div class="end-thanks">${faces}</div>
             <p class="hero-sub" style="margin-top:clamp(10px,1.6vh,20px)">
-              25日ぜんぶに来てくれた6人と、しゃべってくれた180人に。ありがとうございました。
+              ${D.kinkin.denom}日ぜんぶに来てくれた${D.kinkin.winners.length}人と、しゃべってくれた${D.opening.stats[3].n}人に。ありがとうございました。
             </p>
             <p class="hero-sub" style="font-size:clamp(14px,1.2vw,22px);margin-top:clamp(6px,1vh,12px)">
               ${e(D.ending.ps)}
