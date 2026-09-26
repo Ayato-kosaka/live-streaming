@@ -7,9 +7,27 @@ import IsleReview from "@/components/isle/IsleReview";
 import IsleSpan from "@/components/isle/IsleSpan";
 import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
-import { isleSpec, nordicSpec, type Neighbour } from "@/components/isle/spec";
+import {
+  albaniaSpec,
+  isleSpec,
+  nordicSpec,
+  type IsleSpec,
+  type Neighbour,
+} from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
 import { chapterNeighbours, type Chapter } from "@/content/chapters";
+
+/**
+ * 旅そのものの島を建てる章。**章ごとに建てるものが違う。**
+ *
+ * ここに無い章は、素材（配信・歩いた国・伝説）だけで建つ（`isleSpec`）。
+ * **「日どりが入っているか」で振り分けない**——アルバニアに日どりを
+ * 入れた日に、アルバニアの島が北欧の島になる（下の注の事故）。
+ */
+const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour) => IsleSpec> = {
+  nordic: nordicSpec,
+  albania: albaniaSpec,
+};
 
 /**
  * 過去の島と、次の島。**歩ける。**
@@ -110,7 +128,11 @@ export default async function ChapterIsland({
      旅から帰って素材（配信・歩いた国・伝説）が焼かれれば、素材の spec が
      自然に追い越す。`c.from` を書き入れた日に島が消える地雷
      （下のコメント）も、これなら踏まない。 */
-  const trip = c.opensAt ? nordicSpec(c, prev) : undefined;
+  /* **旅の島は、章ごとに建てるものが違う。** ここは長いあいだ
+     `c.opensAt ? nordicSpec(...)` で、**「日どりが入っている章 = 北欧」**
+     という前提に寄りかかっていた。アルバニアに日どりが入った瞬間に
+     その前提が崩れる（上の注の事故がそのまま戻る）。 */
+  const trip = TRIP_SPEC[c.slug]?.(c, prev);
   const spec = trip && isle.places.length < trip.places.length ? trip : isle;
 
   return (
