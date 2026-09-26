@@ -65,6 +65,15 @@ export type Theme = {
 export const NORDIC_GROUP = "北欧の旅";
 
 /**
+ * いま歩いている旅の見出し。**旅が変わったら、ここを次の旅の見出しにする。**
+ *
+ * 島の風船（`components/isle/spec.ts` の `albaniaSpec`）はこの字で引く。
+ * 旅ごとに `spec.ts` の側へ見出しを直書きすると、旅が変わった日に
+ * **島の板だけが前の旅の棚を出し続ける**（北欧のときが実際にそうだった）。
+ */
+export const ALBANIA_GROUP = "アルバニアの旅";
+
+/**
  * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
  *
  * ここに置いた宛先は `content/plans.ts` の企画と id が同じなので、
@@ -83,6 +92,19 @@ export const PLAN_DONE_GROUP = "行ってきた企画";
  * 次も同じものがある。
  */
 export const THEMES: Theme[] = [
+  /* **いちばん上は、いま歩いている旅。** 旅が変わったら並べ替える。
+     終わった旅の行は消さない（下の「終わった企画の行を消さないこと」と同じ理由）。 */
+  {
+    id: "albania",
+    name: "アルバニアでこれやって",
+    group: ALBANIA_GROUP,
+    /* **行き先を持たせない。** まだ旅の面（`/albania`）が無い。
+       いまリンクを書くと、受け皿が島の玄関を 200 で返して、
+       押した人は「なぜ違う面が出たのか」が分からない
+       （`app/nordic/photos/page.tsx` の同じ決まり）。 */
+    lead: "アルバニアでやってほしいこと。行く先も、食べるものも、まだ何も決まっていない。",
+    placeholder: "例）ベラトの丘の上まで登って、窓だらけの街を上から見てほしい",
+  },
   {
     id: "nordic",
     name: "北欧旅ぜんぶ",
@@ -219,7 +241,9 @@ export type Shelf = { group: string; themes: Theme[] };
  * 「行ってきた企画」は、これからのものより下。終わったものが上に来ると、
  * 次に何があるのかを探すのに、済んだものを読み飛ばすことになる。
  */
-const ORDER = [NORDIC_GROUP, PLAN_GROUP, PLAN_DONE_GROUP];
+/* **いま歩いている旅がいちばん上。** 終わった旅（北欧）はその下。
+   足し忘れると、知らない見出しとして後ろへ回る（`rank`）。 */
+const ORDER = [ALBANIA_GROUP, NORDIC_GROUP, PLAN_GROUP, PLAN_DONE_GROUP];
 
 /**
  * 宛先の札を、見出しごとに束ねる。

@@ -29,7 +29,13 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import { NORDIC_GROUP, THEMES, type Theme } from "@/content/themes";
+import {
+  ALBANIA_GROUP,
+  NORDIC_GROUP,
+  PLAN_GROUP,
+  THEMES,
+  type Theme,
+} from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { pier, type Neighbour } from "./pier";
 import { isleSpanRange } from "./span";
@@ -385,8 +391,52 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
  * 並びは表の順（旅で通る順）。**枚数では動かさない**
  * （`docs/island-play.md`「順位表を作らない」）。
  */
-function nordicThemes(): Theme[] {
-  return THEMES.filter((t) => t.group === NORDIC_GROUP);
+function themesIn(...groups: string[]): Theme[] {
+  return THEMES.filter((t) => groups.includes(t.group));
+}
+
+/**
+ * アルバニアの島。**旅の面も旅程もまだ無いので、建つのは風船ひとつ。**
+ *
+ * 北欧の島（`nordicSpec`）は「この旅のこと・旅の6カ国・旅のしおり・
+ * この旅の掲示板」の4軒が建つ。**あれは素材がそろっているから建つ**ので、
+ * アルバニアに同じものを渡すと、中身の無い行き先が4つ建つ。
+ * 実際、振り分けが `c.opensAt` の有無だけだったころ、アルバニアの島に
+ * **北欧の板が5枚**建っていた（`app/island/[chapter]/page.tsx` の注）。
+ *
+ * だから旅ごとに何を建てるかを決める。アルバニアはいま1つだけ——
+ * やってほしいことを受ける風船（あやと 2026-09-27）。
+ * 旅程が決まったら、ここに国と区間の札が増える。
+ */
+export function albaniaSpec(c: Chapter, prev?: Neighbour): IsleSpec {
+  const art = artOf(c.slug, []);
+  return {
+    slug: c.slug,
+    name: c.name,
+    note: c.note,
+    days: chapterDays(c),
+    from: c.from,
+    to: c.to,
+    theme: art.theme,
+    places: [
+      {
+        id: "wish",
+        label: "アルバニアでこれやって",
+        blurb: "やってほしいことを貼る",
+        icon: "lantern-hanging",
+        size: 58,
+        sign: true,
+        note: "行く先も、食べるものも、まだ何も決まっていない。",
+        board: themesIn(ALBANIA_GROUP, PLAN_GROUP),
+        more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },
+      },
+      pier(prev),
+    ],
+    folk: [],
+    prev,
+    building: c.opensAt,
+    art,
+  };
 }
 
 /**
@@ -459,7 +509,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       icon: "signboard",
       size: 58,
       note: "行きたい場所も、やってほしいことも。",
-      board: nordicThemes(),
+      board: themesIn(NORDIC_GROUP),
       more: { label: "島の掲示板へ", sub: "北欧以外の企画も、ここから出せる", href: "/board" },
     },
   ];
