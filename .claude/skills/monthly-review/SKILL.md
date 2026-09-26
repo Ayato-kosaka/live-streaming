@@ -5,7 +5,7 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 
 # 月末配信ふりかえり授賞式スキル
 
-前月末〜当月末の配信を1枚のOBS画面で表彰式にする。参考実装: `public/202608_monthly_review.html`(2026年8月版・完成形)。新しい月は `public/2026MM_monthly_review.html` として新規作成する(過去ページは上書きしない)。
+前月末〜当月末の配信を1枚のOBS画面で表彰式にする。参考実装: `public/202609_monthly_review.html`(2026年9月版・完成形)。**8月版を土台にしない**——王冠が賞名にかぶる形が残っている(#649)。新しい月は `public/2026MM_monthly_review.html` として新規作成する(過去ページは上書きしない)。
 
 ## 1. ワークフロー
 
@@ -70,7 +70,7 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 - `public/2026MM_monthly_review.html` **単一ファイル・実行時の外部依存なし**(オフラインでも開ける。例外はFirestore同期時のgstatic SDKのみ)。
 - シーン/ステップ進行機構: `SCENES`配列+`[data-step]`表示制御+進行ドット+紙吹雪+`?auto=秒`の自動進行。クリック/Enterで進む、←で戻る。1920×1080前提、横スクロール禁止。
 - **アバター**: YouTubeチャンネルページの og:image をビルド時に取得し `=s176-c-rj`(JPEG)でdata URI埋め込み。取れない人はイニシャルの丸にフォールバック。投げ銭アバターはユーザー提供URLから取得。巨大なdata URIはEditツールでなくnodeスクリプトのプレースホルダ置換で注入する。
-- **Firestore同期**: `?role=ctrl`(スマホコントローラ) / `?role=view`(OBS側)。**同期まわりは `public/202608_monthly_review.html` からまるごとコピーする**(firebaseConfig・SDKの版・ログイン・札の出しかたが1式で噛み合っている)。ドキュメントは `monthlyReview/2026MM-<ランダム>` を月ごとに新規発行。
+- **Firestore同期**: `?role=ctrl`(スマホコントローラ) / `?role=view`(OBS側)。**同期まわりは `public/202609_monthly_review.html` からまるごとコピーする**(firebaseConfig・SDKの版・ログイン・札の出しかたが1式で噛み合っている)。ドキュメントは `monthlyReview/2026MM-<ランダム>` を月ごとに新規発行。
 - **書けるのはあやとだけ**(2026-09-11〜)。`firestore.rules` の monthlyReview は「読むのは誰でも1件ずつ／書くのは `islandUsers/{uid}.admin` が立っている人だけ」。前は誰でも書けて、**外から進行を飛ばせた**。
   - **ctrl はログインしていないと進行を送れない。** 同じ端末で島(`/`)にログイン済みなら押さずに繋がる(SDKの版と apiKey を島に合わせてあるのがその仕掛け)。繋がらないときだけ「Google でログイン」が出る。
   - **SDKの版を勝手に下げない。** 島(`site/package.json` の firebase ^12)と大版がずれると、ログインの引き継ぎが効かなくなって、配信の当日に押させることになる。
