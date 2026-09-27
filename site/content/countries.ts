@@ -568,12 +568,20 @@ export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === 
  * 国の名前と slug は歩き終わるまで変わらないので、ここに置く。
  * 万一ずれても、出るのは「旗が出ない」までで、別の国の旗は出ない。
  *
- * **いまは空。** 北欧の6カ国は歩き終わって `COUNTRIES` へ移した（2026-09-22）。
+ * 北欧の6カ国は歩き終わって `COUNTRIES` へ移した（2026-09-22）。
  * ここと `COUNTRIES` の両方に同じ国が居ると、`content/walked.ts` が
  * 二重に数える——あちらは `known` で弾いているが、**弾かれるものを置いておく
- * 理由が無い。** 次の旅が決まったら、またここから始める。
+ * 理由が無い。** 歩き終わったら、記録を持たせて `COUNTRIES` へ移す。
  */
-export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = [];
+export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = [
+  /* アルバニア。あやとが 2026-09-28 に着いた（本人の知らせ）。
+     **街はまだ入れていない。** ここが持つのは名前と旗の鍵だけで、
+     街と滞在は歩き終わってから `COUNTRIES` に書く決まり。
+
+     `entered` を入れた日から「歩いた国」の数に1つ足される
+     （`content/walked.ts`）。着いた日なので、そこは合っている。 */
+  { slug: "albania", name: "アルバニア", entered: "2026-09-28" },
+];
 
 /**
  * 「歩いた国」に数えてよい slug か。**`iran-border` は国ではない。**
