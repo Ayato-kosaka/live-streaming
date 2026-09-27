@@ -70,7 +70,7 @@ const BREAK = process.env.BREAK || "";
 const SELFTEST = process.argv.includes("--selftest");
 
 /** 見る日。**国境を越える日の前後を必ず入れる**（そこで焼き込みと画面が割れる） */
-const DAYS = (process.env.DAYS || "2026-09-13,2026-09-17,2026-09-18,2026-09-19,2026-09-26").split(",");
+const DAYS = (process.env.DAYS || "2026-09-13,2026-09-17,2026-09-18,2026-09-19,2026-09-26,2026-09-27,2026-09-28").split(",");
 
 // ---------------------------------------------------------------- ほしい数
 
@@ -91,6 +91,22 @@ const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d
  * （`content/walked.ts` の `known` と同じ決まり）。
  * ここを見ていなかったので、北欧の6カ国を `COUNTRIES` へ移した日に
  * 「6カ国が AHEAD_COUNTRIES にない」と言って**面を1枚も見ずに帰っていた。**
+ *
+ * ## 旅程を持たない国が `AHEAD_COUNTRIES` にいてよい
+ *
+ * **新しい旅は、回りかたが決まる前に始まる。** アルバニアがそれで、
+ * 2026-09-28 に着いた時点で旅程は1行も無かった（どこを回るかは本人も未定）。
+ * ここで「旅程にない」と落としていたので、旅に出た日から旅程を書き終える日まで、
+ * この道具は**面を1枚も見ずに帰る**ことになっていた。
+ *
+ * 旅程と突き合わせられないぶん、代わりに2つ見る。
+ *
+ *   1. **歩き終わった国が居残っていないか。** `COUNTRIES` へ移したら
+ *      `AHEAD_COUNTRIES` からは消す。両方に居ると、どちらが正か読めない
+ *   2. **旗が引けるか。** 国を足して `Flag.tsx` を足し忘れると、`Flag` が
+ *      null を返して `/now` のいちばん大きい絵（実測 234px）が消える。
+ *      2026-09-28 に実際に踏んだ。国だけ足して旗を忘れるのは、この道具が
+ *      いちばん拾いやすい形の抜け
  */
 function itineraryMatches() {
   const n = readFileSync(repoPath("site/content/nordic.ts"), "utf8");
@@ -110,7 +126,12 @@ function itineraryMatches() {
     if (!got) bad.push(`${slug} が AHEAD_COUNTRIES にない`);
     else if (got.entered !== day) bad.push(`${slug} の入国日 ${got.entered} ≠ 旅程 ${day}`);
   }
-  for (const a of AHEAD) if (!want.has(a.slug)) bad.push(`${a.slug} が旅程にない`);
+  const flags = readFileSync(repoPath("site/components/ui/Flag.tsx"), "utf8");
+  for (const a of AHEAD) {
+    if (done.has(a.slug)) bad.push(`${a.slug} は歩き終わっているのに AHEAD_COUNTRIES に残っている`);
+    // `albania: {` も `"iran-border": {` も拾う
+    else if (!new RegExp(`^\\s*"?${a.slug}"?:`, "m").test(flags)) bad.push(`${a.slug} の旗が Flag.tsx にない`);
+  }
   return bad;
 }
 
