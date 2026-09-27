@@ -1770,6 +1770,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "fuNbxQyO2Sw",
         "title": "９月の月末配信や！！！えげつない1ヶ月やったな！！",
         "date": "2026-09-26"
+      },
+      {
+        "videoId": "IQvqpxcbf0c",
+        "title": "バイバイスウェーデン！バイバイ北欧旅😭",
+        "date": "2026-09-28"
       }
     ]
   }
