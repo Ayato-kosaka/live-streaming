@@ -1775,6 +1775,16 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "IQvqpxcbf0c",
         "title": "バイバイスウェーデン！バイバイ北欧旅😭",
         "date": "2026-09-28"
+      },
+      {
+        "videoId": "HjSLfg57t7E",
+        "title": "アルバニアつきましたー",
+        "date": "2026-09-28"
+      },
+      {
+        "videoId": "zjHZucyfrq8",
+        "title": "アルバニアのホステルが至上最悪！？",
+        "date": "2026-09-28"
       }
     ]
   }
