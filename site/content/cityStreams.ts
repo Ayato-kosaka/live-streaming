@@ -1790,6 +1790,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "-XSFRIeEpSw",
         "title": "アルバニアでルーティン立て直すぞ！今週の作戦会議や！！",
         "date": "2026-09-29"
+      },
+      {
+        "videoId": "cpOZCgtD4GI",
+        "title": "アルバニアでケバブスフラキたべよ",
+        "date": "2026-09-30"
       }
     ]
   }
