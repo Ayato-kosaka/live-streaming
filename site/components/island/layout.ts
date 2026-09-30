@@ -188,7 +188,10 @@ export const PLACES: Place[] = [
     id: "board",
     x: 610,
     y: 872,
-    label: "企画をだす",
+    /* **看板・ナビ・パンくず・面の題を、全部この字にそろえる**（`app/board/page.tsx`）。
+       「企画をだす」だと、面の名前と中の札1枚（企画）が同じ字になって、
+       付箋がその枝に見えていた。板が受けるのは注文で、企画はそこから育つもの。 */
+    label: "やってほしいこと",
     icon: "signboard",
     size: 62,
     href: "/board",

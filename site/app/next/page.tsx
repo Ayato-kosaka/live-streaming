@@ -46,7 +46,7 @@ export default function NextPage() {
         <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
-            <b>企画をだす</b>
+            <b>やってほしいこと</b>
             <i>思いついたことを、そのまま貼る</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />

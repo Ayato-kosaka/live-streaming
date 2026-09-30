@@ -13,9 +13,10 @@ import {
   replySticky,
   type Sticky,
 } from "@/lib/api";
-import { shelves, THEMES, themeById, type Theme } from "@/content/themes";
+import { isOpenTheme, openThemes, shelves, THEMES, themeById, type Theme } from "@/content/themes";
 import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
 import ReadAgain from "@/components/me/ReadAgain";
+import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import Wrote from "@/components/ui/Wrote";
@@ -102,6 +103,15 @@ type Props = {
   /** 見出し。省略すると「みんなの付箋」 */
   title?: string;
   /**
+   * 書く欄を、はじめから開いておく。
+   *
+   * **掲示板だけ true。** あちらは付箋の札が既定で開いていて、書くのが用事。
+   * 企画の札は書く欄が開いたまま出るので、片方だけ畳んでおくと
+   * 「開いている箱に書く」がまた起きる（本番の実測で 3/3 が企画の欄に入った）。
+   * 国や区間の面は読みに来る場所なので、畳んだままでよい。
+   */
+  writeOpen?: boolean;
+  /**
    * 読めた枚数を、外へ返す。
    * 掲示板の札（`Board.tsx`）が「開く前から枚数を出す」ために使う。
    * 読めていないあいだは呼ばない（0枚と読めなかったを同じ顔にしない）。
@@ -117,7 +127,7 @@ function ordered(list: Sticky[]): Sticky[] {
   });
 }
 
-export default function Notes({ themes, theme, bare = false, title, onCount }: Props) {
+export default function Notes({ themes, theme, bare = false, title, writeOpen = false, onCount }: Props) {
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -135,24 +145,61 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  /** 書く欄が開いているか。**畳んだ状態から始める。** 上に置いたので、
-      開きっぱなしにすると 300px ぶん、付箋の山が下へ押し出される */
-  const [open, setOpen] = useState(false);
+  /** 書く欄が開いているか。読みに来る面は畳んだ状態から始める
+      （開きっぱなしにすると 300px ぶん、付箋の山が下へ押し出される）。
+      掲示板だけは開いて出す（`writeOpen`）。 */
+  const [open, setOpen] = useState(writeOpen);
+  /** 書く宛先。null のあいだは、いま読んでいる棚か、書ける宛先の1つ目 */
+  const [to, setTo] = useState<string | null>(null);
   /** しまったものを見ているか。あやとだけ */
   const [bin, setBin] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
   const { user, token } = useAuth();
   const owner = useOwner();
 
-  const now = fixed ?? themeById(pick) ?? THEMES[0];
+  /** いま読んでいる棚。**書く宛先とは別**（畳んだ宛先の棚も読めるため） */
+  const here = fixed ?? themeById(pick) ?? THEMES[0];
 
   /* 札を並べ直すのに使う今日。**画面が出てから入れる。**
      静的書き出しなので、ここで `new Date()` を直に呼ぶとビルドした日が
      焼き込まれて、終わった企画がいつまでも「これからの企画」に並ぶ
      （9月6日に終わったフード＆ワイン祭りが、実際にそうなっていた）。 */
   const [today, setToday] = useState<Date | null>(null);
-  /** 見出しごとに束ねた札。企画は日付で「これから／行ってきた」に分かれる */
-  const groups = useMemo(() => shelves(shelf, today), [shelf, today]);
+  /**
+   * 棚に平らに並べるのは、**もう終わった宛先だけ。**
+   *
+   * あやとの言葉（2026-09-30）:
+   *
+   * > 付箋の項目に古いのが多くて醜い
+   *
+   * 生きている4つは、書く欄の「どこへ」の丸札が**同じ仕事**をしている
+   * （書く先を決める・下の一覧を絞る）。同じ見た目の選び札を2組出すと、
+   * 390px では同じ字が画面の中で2回ずつ出る。**出すのは片方だけ。**
+   *
+   * 終わったぶんは消さずに畳みへ入れる。消すと、貼られた付箋が
+   * どこからも読めなくなる（消えてはいないが、届かない）。
+   */
+  const closedThemes = useMemo(
+    () => shelf.filter((t) => !isOpenTheme(t, today)),
+    [shelf, today],
+  );
+  /** 畳みの中の見出しごとの束（「北欧の旅」「行ってきた企画」など） */
+  const groups = useMemo(() => shelves(closedThemes, today), [closedThemes, today]);
+  /**
+   * いま**書ける**宛先だけ（`content/themes.ts` の `openThemes`）。
+   *
+   * 棚（読む側）は13〜15あるが、そのうち生きているのは4つで、残りは
+   * 終わった北欧の国べつ7つと終わった企画3つ。**死んだ札の上に生きた札が
+   * 乗っている選び先**を出していたので、あやとに「古いのが多くて醜い」と
+   * 言われた（2026-09-30）。書く先の選び札は、書ける宛先だけにする。
+   */
+  const writable = useMemo(
+    () => openThemes(today).filter((t) => shelf.some((x) => x.id === t.id)),
+    [shelf, today],
+  );
+  /** 書く宛先。**読んでいる棚とは別に持つ**（畳んだ棚を読みながら、生きた宛先に書ける） */
+  const dest =
+    fixed ?? writable.find((t) => t.id === to) ?? writable[0] ?? here;
 
   useEffect(() => {
     setHearted(heartedLocally());
@@ -235,6 +282,12 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
     for (const n of notes ?? []) m.set(n.theme, (m.get(n.theme) ?? 0) + 1);
     return m;
   }, [notes]);
+  /** 畳みの見出しに出す数。**宛先の数ではなく、その中に貼られている付箋の枚数。**
+      閉じたまま「いくつ入っているか」が分かるのは、読む人には枚数のほうなので。 */
+  const closedNotes = useMemo(
+    () => closedThemes.reduce((n, t) => n + (counts.get(t.id) ?? 0), 0),
+    [closedThemes, counts],
+  );
 
   const list = useMemo(
     () => ordered((notes ?? []).filter((n) => fixed || n.theme === pick)),
@@ -256,7 +309,7 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
     setErr(null);
     try {
       const { note } = await postSticky(
-        { theme: now.id, text: t, by: name.trim() || undefined },
+        { theme: dest.id, text: t, by: name.trim() || undefined },
         await token(),
       );
       setNotes((cur) => [note, ...(cur ?? [])]);
@@ -328,34 +381,10 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
   const inner = (
     <>
       {!bare && <h2>{title ?? "みんなの付箋"}</h2>}
-      <p className="muted">
-        {fixed ?
-          fixed.lead :
-          "どれあての付箋か、選んでから書いてね。"}
-      </p>
-
-      {/* テーマの選び札。束ねかたごとに1行にする。
-          厚みは1枚ずつ付ける。「付けなくてよい」例外が効くのは
-          一面ぜんぶが押せるマスの並びのときだけで、ここは紙の面の途中にある
-          （`docs/island-world.md` 3.5）。 */}
-      {groups.map((g) => (
-        <div className="nb-group" key={g.group}>
-          <span className="nb-glabel">{g.group}</span>
-          <div className="nb-tabs">
-            {g.themes.map((s) => (
-              <button
-                key={s.id}
-                className={`nb-tab${s.id === pick ? " is-on" : ""}`}
-                aria-pressed={s.id === pick}
-                onClick={() => setPick(s.id)}
-              >
-                <b>{s.name}</b>
-                {(counts.get(s.id) ?? 0) > 0 && <i>{counts.get(s.id)}</i>}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* 宛先が決まって来た人にだけ、その宛先の一行を出す。
+          選ぶ人には、選んだ宛先の一行を**書く欄の中**で出す（下の `.nt-lead`）。
+          上にも出すと、同じことを2回言うことになる。 */}
+      {fixed && <p className="muted">{fixed.lead}</p>}
 
       {/* 書く欄。**付箋の山より前に置く。**
           あとに置いていたときは、貼ってある枚数ぶん下までスクロールしないと
@@ -365,11 +394,16 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
           出しっぱなしにはしない。名前・本文・ボタンで 300px 近く取るので、
           開いたままだと今度は付箋の山が画面の外へ出る。押す段を1つ挟む。
 
-          宛先はもう決まっている。名前は本文の前に置く。あとに置いていたときは、
-          書き終えた人がそこまで目を戻さず、本文の末尾に「by まこも」と書いていた。
+          名前は本文の前に置く。あとに置いていたときは、書き終えた人が
+          そこまで目を戻さず、本文の末尾に「by まこも」と書いていた。
 
           **読めていないあいだは出さない**（#36）。貼れても、貼った1枚だけが
-          板ぜんぶの顔で並ぶ。区画は残して、押しどころだけ出さない。 */}
+          板ぜんぶの顔で並ぶ。区画は残して、押しどころだけ出さない。
+
+          **紙の形そのものを付箋にした。** ここはただの箱で、貼られた付箋だけが
+          画びょうの刺さった色紙だった。企画の書く欄も同じただの箱なので、
+          選び違えた人に、書いているあいだ一度も手ごたえが無かった
+          （あやと 2026-09-30「見た目も同じで使い分けがわかりにくいね」）。 */}
       {!bin && !open && !blank && read === "ok" && (
         <button
           className="nt-open"
@@ -386,9 +420,44 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
 
       {!bin && open && (
         <div className="nt-write">
-          <p className="nt-to">
-            <span>{now.name}</span>あてに貼ります
-          </p>
+          {/* 画びょう。貼られた付箋（`.nx-notes > li`）と同じ絵を同じ場所に刺す */}
+          <span className="nx-pin" aria-hidden>
+            <Pin tone={PINS[0]} size={19} />
+          </span>
+          {fixed ? (
+            <p className="nt-to">
+              <span>{fixed.name}</span>あてに貼ります
+            </p>
+          ) : (
+            /* **書ける宛先だけを並べる**（`writable`）。棚は13〜15あるが、
+               そのうち生きているのは4つ。終わった国と終わった企画を選び先に
+               出しておくと、書いたものが誰も見ない棚に入る。 */
+            <div className="nt-dest">
+              <span className="nt-dest-l">どこへ</span>
+              <div className="nt-dests">
+                {writable.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`nt-destb${t.id === dest.id ? " is-on" : ""}`}
+                    aria-pressed={t.id === dest.id}
+                    onClick={() => {
+                      setTo(t.id);
+                      /* **下の一覧もここで絞る。** この丸札が、生きている宛先の
+                         唯一の選び札になった（棚からは外した）。書く先だけ動かして
+                         一覧が前の宛先のままだと、書いた1枚がどこにも出てこない。 */
+                      setPick(t.id);
+                    }}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* 選んだ宛先が「何を書く場所か」を言う一行（`content/themes.ts` の `lead`）。
+              仕組みの話はしない。書くことだけを言う。 */}
+          {!fixed && <p className="nt-lead">{dest.lead}</p>}
           <label className="nt-field">
             <span>名前（書かなくてもいい）</span>
             {user ? (
@@ -412,7 +481,7 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
               onChange={(e) => setText(e.target.value)}
               rows={3}
               maxLength={MAX}
-              placeholder={now.placeholder}
+              placeholder={dest.placeholder}
             />
           </label>
           <div className="brow">
@@ -428,17 +497,62 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
         </div>
       )}
 
+      {/* 終わった旅と企画。**畳んで、閉じたまま出す。**
+          前はここに13〜15の宛先が平らに並んでいて、あやとに
+          「付箋の項目に古いのが多くて醜い」と言われた（2026-09-30）。
+          生きている4つは、すぐ上の「どこへ」の丸札が同じ仕事をしているので、
+          ここには出さない。**残るのは終わったぶんだけ**なので、畳みが1つになる。
+
+          消さずに畳むのは、貼られた付箋をどこからも読めなくしないため。
+          開けば今までどおり押せて、押せば下の一覧がその宛先に絞られる。
+
+          **中が空なら、畳みごと出さない。** 空の畳みは、押しても何も無い札。
+
+          厚みは1枚ずつ付ける。「付けなくてよい」例外が効くのは一面ぜんぶが
+          押せるマスの並びのときだけで、ここは紙の面の途中にある
+          （`docs/island-world.md` 3.5）。 */}
+      {groups.length > 0 && (
+        <Fold
+          /* **「行き先」と書かない。** 中に「行ってきた企画」が入っている。
+             企画は行き先ではないので、外の見出しだけを読むと嘘になる。
+             中の見出し（`shelves` の group）は今までどおり分かれている。 */
+          title="終わった旅と企画"
+          note={closedNotes > 0 ? `${closedNotes}枚` : undefined}
+        >
+          {groups.map((g) => (
+            <div className="nb-group" key={g.group}>
+              <span className="nb-glabel">{g.group}</span>
+              <div className="nb-tabs">
+                {g.themes.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`nb-tab${t.id === pick ? " is-on" : ""}`}
+                    aria-pressed={t.id === pick}
+                    /* 終わった宛先なので、**読む先だけ動かす。**
+                       書く先（`to`）は触らない。押した先にはもう書けない。 */
+                    onClick={() => setPick(t.id)}
+                  >
+                    <b>{t.name}</b>
+                    {(counts.get(t.id) ?? 0) > 0 && <i>{counts.get(t.id)}</i>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </Fold>
+      )}
+
       <div className="nb-board">
         {!fixed && (
           <div className="nb-head">
-            <h3 className="sub">{now.name}</h3>
+            <h3 className="sub">{here.name}</h3>
             {list.length > 0 && (
               <span className="bd-count">
                 <b>{list.length}</b>枚
               </span>
             )}
-            {now.href && (
-              <Link className="nb-go" href={now.href} prefetch={false}>
+            {here.href && (
+              <Link className="nb-go" href={here.href} prefetch={false}>
                 この話をしている場所へ
                 <Icon name="right" size={13} />
               </Link>
@@ -467,15 +581,21 @@ export default function Notes({ themes, theme, bare = false, title, onCount }: P
             <b>{bin ? "しまったものはありません" : "まだ1枚も貼られていません"}</b>
             {/* **書く欄が開いているかで、言うことを変える。**
                 開いたあとも「押すと、書く欄がひらきます」と言い続けていたころ、
-                すぐ上に開いている欄を指して、もう一度開く札が出ていた。 */}
-            <p>
-              {bin ?
-                "しまったものが、ここに並びます。" :
-                open ?
-                  `上の欄に書くと、${now.name}あての1枚目になります。` :
-                  `${now.name}あての1枚目になれるよ。`}
-            </p>
-            {!bin && !open && (
+                すぐ上に開いている欄を指して、もう一度開く札が出ていた。
+
+                **いま読んでいる棚が書く宛先でないときは、何も言わない。**
+                終わった国の空の棚で「1枚目になれるよ」と誘うと、押した先の
+                宛先は別のところを指している。 */}
+            {(bin || dest.id === here.id) && (
+              <p>
+                {bin ?
+                  "しまったものが、ここに並びます。" :
+                  open ?
+                    `上の欄に書くと、${here.name}あての1枚目になります。` :
+                    `${here.name}あての1枚目になれるよ。`}
+              </p>
+            )}
+            {!bin && !open && dest.id === here.id && (
               <button
                 className="blank-go"
                 onClick={() => {
