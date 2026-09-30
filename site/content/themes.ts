@@ -59,6 +59,16 @@ export type Theme = {
   lead: string;
   /** 書く欄の見本。実際に書けそうなものにする */
   placeholder: string;
+  /**
+   * **もう書けない宛先。** 話が終わっているので、書く欄の選び先から外す。
+   *
+   * 行そのものは消さない。消すと、貼られた付箋がどこからも読めなくなる
+   * （消えてはいないが、届かない）。読む側の棚には今までどおり並ぶ。
+   *
+   * 企画あて（`PLAN_GROUP`）には**書かない。** あちらは同じ id の企画に
+   * 日付を聞けるので、字で持つと2か所が食い違う（`isOpenTheme`）。
+   */
+  closed?: boolean;
 };
 
 /** 旅の宛先を束ねる見出し。島の面（`components/isle/spec.ts`）もこの字で引く。 */
@@ -107,11 +117,15 @@ export const THEMES: Theme[] = [
   },
   {
     id: "nordic",
-    name: "北欧旅ぜんぶ",
+    name: "北欧の旅",
     group: NORDIC_GROUP,
     href: "/nordic",
-    lead: "旅ぜんぶに言いたいこと。国が決まっていなくていい。",
-    placeholder: "例）現地のお祭りに参加してほしい。地元の人しか来ないやつ",
+    /* **旅が終わったので、注文ではなく思い出を聞く欄にした。**
+       見本の文の形が、そのまま集まるものの形になる（`georgia-bye` で学んだ）。
+       「〜してほしい」のまま置いておくと、もう行かない国への注文が集まり続ける。
+       国べつの7つは `closed` にしてあるので、北欧あてはここ1つ。 */
+    lead: "北欧の旅、どこがいちばん心に残りましたか。",
+    placeholder: "例）ヘルシンキの朝の市場の回がよかった。湯気と人の声だけずっと聞いてた",
   },
   {
     id: "poland",
@@ -120,6 +134,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/poland",
     lead: "ポーランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヴァヴェル城と、火を吹く龍の像が見たい",
+    closed: true,
   },
   {
     id: "lithuania",
@@ -128,6 +143,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/lithuania",
     lead: "リトアニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）赤煉瓦の城と、十字架の丘が見たいです",
+    closed: true,
   },
   {
     id: "latvia",
@@ -136,6 +152,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/latvia",
     lead: "ラトビアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）リガの中央市場で、地元の人が買うものを見たい",
+    closed: true,
   },
   {
     id: "estonia",
@@ -144,6 +161,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/estonia",
     lead: "エストニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）タリンの旧市街を、朝いちばんに歩いてほしい",
+    closed: true,
   },
   {
     id: "finland",
@@ -152,6 +170,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/finland",
     lead: "フィンランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヘルシンキの市場で、朝ごはんを食べてほしい",
+    closed: true,
   },
   {
     id: "sweden",
@@ -160,6 +179,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/sweden",
     lead: "スウェーデンで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ストックホルムの島を、歩いて渡ってほしい",
+    closed: true,
   },
   {
     /* 区間の宛先。**付箋が付いているものだけ置く。**
@@ -171,6 +191,7 @@ export const THEMES: Theme[] = [
     href: "/nordic/day/depart",
     lead: "唯一の飛行機の日。深夜1時5分に着いて、始発まで数時間あります。",
     placeholder: "例）空港のなかを探検してほしい",
+    closed: true,
   },
   /* ---- 企画（`content/plans.ts` の `PLANS`）----
      **企画の id を、そのままテーマの id にする。** 対応表を別に持つと、
@@ -216,6 +237,18 @@ export const THEMES: Theme[] = [
     placeholder: "例）3ヶ月で帰るはずが2年。よくここまで来たなと思う",
   },
   {
+    /* **注文ではない字の置き場。** 本番のデータを見ると、企画の欄に出された
+       3件のうち1件が「イラン旅から見てます」という長く見ている人の便りだった
+       （2026-09-30）。注文でもサイトへの要望でもないので、`island` にも
+       旅の宛先にも入らず、行き場が無かった。**行き場が無い字は、いちばん
+       それらしい欄に入る。** 欄を作れば、そこに入る。 */
+    id: "hello",
+    name: "あやとへ ひとこと",
+    group: "そのほか",
+    lead: "注文じゃなくていい。見ていて思ったこと、伝えたいこと。",
+    placeholder: "例）イラン旅から見てます。無事ジョージアに帰ってきてほっとしました",
+  },
+  {
     /* どの旅にも紐づかない要望の置き場。**1つだけ作っておく。**
        「LINEグループを作ってほしい」がこれで、いまは北欧旅あての札が
        付いたまま貼られている（宛先が無かったので、いちばん近いものを選んだ）。 */
@@ -227,6 +260,32 @@ export const THEMES: Theme[] = [
     placeholder: "例）配信のあとに見返せる場所がほしい",
   },
 ];
+
+/**
+ * いま**書ける**宛先か。読む側は関係ない（棚には全部並ぶ）。
+ *
+ * あやとの指摘（2026-09-30）:
+ *
+ * > 付箋の項目に古いのが多くて醜い
+ *
+ * 実際、13ある宛先のうち**12が終わった話**だった（北欧の旅は 9/21 に終わり、
+ * 企画3つも全部済んでいる）。生きている宛先1つが、死んだ札12枚の上に乗っていた。
+ *
+ * 判定の出どころは2つある。**どちらも「字で持たない」ほうを選んでいる。**
+ *
+ *   1. 旅の宛先 … `closed`（こちらが畳んだ印）
+ *   2. 企画の宛先 … **同じ id の企画に日付を聞く**（`groupOf` と同じ）。
+ *      字で「終わった」と持つと、`/next` が「もう行ってきた」に置いたものが
+ *      掲示板ではまだ書けたままになる
+ */
+export function isOpenTheme(t: Theme, now: Date | null): boolean {
+  if (t.closed) return false;
+  return groupOf(t, now) !== PLAN_DONE_GROUP;
+}
+
+/** いま書ける宛先だけ。**書く欄の選び先は、これを使う。** */
+export const openThemes = (now: Date | null): Theme[] =>
+  THEMES.filter((t) => isOpenTheme(t, now));
 
 /** id から1つ引く。知らない id は undefined。 */
 export const themeById = (id: string): Theme | undefined =>

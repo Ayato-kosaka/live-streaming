@@ -208,17 +208,24 @@ export function HereRoute({ slug }: { slug: string }) {
   return <WorldRoute here={ring} focus={slug} />;
 }
 
-/** 旅程から引いた、いま歩いている旅の国1つ（組み立ては `./page.tsx`）。 */
+/** いま歩いている旅の国1つ（組み立ては `./page.tsx`）。 */
 export type TripStep = {
   slug: string;
   name: string;
-  en: string;
+  /** 英字の国名。**旅程を持たない旅では無い。** 無いものを埋めない */
+  en?: string;
   /** 入った日（YYYY-MM-DD） */
   from: string;
-  /** 出た日。まだ先の日付でも入っている（出すかどうかは今日と見比べて決める） */
+  /** 出た日。まだ先の日付でも入っている（出すかどうかは今日と見比べて決める）。無ければ空 */
   to: string;
-  /** 通った街と、その日 */
+  /** 通った街と、その日。旅程を持たない旅では空 */
   towns: { name: string; date: string }[];
+  /** その国を歩いた章の slug。ここで見出しを分ける */
+  chapter: string;
+  /** その章の名前（`content/chapters.ts` が正本）。そのまま見出しになる */
+  chapterName: string;
+  /** その国の面。**持たない旅もある**ので、無ければ空（押せない札にする） */
+  href: string;
 };
 
 /** 「2026/09/11」。年表の他の行（`./page.tsx` の `span`）と同じ並びで、日まで出す。 */
@@ -234,14 +241,11 @@ const ymd = (d: string) => `${d.slice(0, 4)}/${d.slice(5, 7)}/${d.slice(8, 10)}`
 export function TripCountries({
   steps,
   start,
-  label,
   open,
 }: {
   steps: TripStep[];
   /** 通し番号の続き。`COUNTRIES` の最後の番号 */
   start: number;
-  /** 章の名前（`content/chapters.ts`） */
-  label: string;
   open: boolean;
 }) {
   /* 最初の描画は焼いた日で。本物の今日で引き直すのは画面が出てから
@@ -255,67 +259,119 @@ export function TripCountries({
   }, []);
 
   const walked = steps.filter((x) => x.from <= day);
-  if (!walked.length || !label) return null;
+  if (!walked.length) return null;
 
-  const first = walked[0].name;
-  const last = walked[walked.length - 1].name;
+  /* **畳みは旅ごとに分ける。** 旅がひとつ終わって次が始まっても、まだどちらの国も
+     `COUNTRIES` に移っていない日がありうる。1枚にまとめると、見出しの章名が
+     どちらか片方の嘘になる。見出しの名前は `chapterName`（`content/chapters.ts`）。 */
+  const groups: { chapter: string; label: string; steps: TripStep[] }[] = [];
+  for (const x of walked) {
+    const g = groups[groups.length - 1];
+    if (g && g.chapter === x.chapter) g.steps.push(x);
+    else groups.push({ chapter: x.chapter, label: x.chapterName, steps: [x] });
+  }
+  // 通し番号は旅をまたいで続ける。畳みが分かれても「◯カ国目」は1本の列
+  const noOf = new Map(walked.map((x, i) => [x.slug, start + i + 1]));
+  /** いちばん新しく入った国。「いまここ」はここにしか付かない */
+  const latest = walked[walked.length - 1];
 
   return (
-    <Fold
-      title={label}
-      lead={walked.length > 1 ? `${first}から${last}まで` : `${first}から`}
-      note={`${walked.length}カ国`}
-      open={open}
-    >
-      <ol className="atrip">
-        {walked.map((x, i) => {
-          const towns = [...new Set(x.towns.filter((t) => t.date <= day).map((t) => t.name))];
-          const out = x.to && x.to <= day ? x.to : "";
-          return (
-            <li key={x.slug}>
-              <span className="atrip-rail" aria-hidden />
-              <span className="atrip-no" aria-hidden>
-                {start + i + 1}
-              </span>
-              <Link className="atrip-card" href={`/nordic/${x.slug}`} prefetch={false}>
-                <span className="atrip-flag">
-                  <Flag slug={x.slug} size={34} />
-                </span>
-                <span className="atrip-body">
-                  <span className="atrip-name">
-                    <b>{x.name}</b>
-                    <em>{x.en}</em>
+    <>
+      {groups.map((g, gi) => (
+        <Fold
+          key={g.chapter}
+          title={g.label}
+          /* **見出しと同じ語を、その下でもう一度言わない。** 旅の名前がそのまま
+             国名の章（アルバニア）は、1カ国のあいだ「アルバニア／アルバニアから」と
+             2段で同じ字が並ぶ。回る国が増えれば「アルバニアから◯◯まで」になって
+             ひとりでに意味を持つので、消すのは重なっているあいだだけ。 */
+          lead={
+            g.steps.length > 1
+              ? `${g.steps[0].name}から${g.steps[g.steps.length - 1].name}まで`
+              : g.label === g.steps[0].name
+                ? ""
+                : `${g.steps[0].name}から`
+          }
+          note={`${g.steps.length}カ国`}
+          // 開けておくのはいちばん新しい旅ひとつ。2枚開くと、どこまで来たかが読みにくい
+          open={open && gi === groups.length - 1}
+        >
+          <ol className="atrip">
+            {g.steps.map((x) => {
+              const towns = [...new Set(x.towns.filter((t) => t.date <= day).map((t) => t.name))];
+              const out = x.to && x.to <= day ? x.to : "";
+              const body = (
+                <>
+                  <span className="atrip-flag">
+                    <Flag slug={x.slug} size={34} />
                   </span>
-                  <span className="atrip-when">
-                    {/* 同じ日に入って出た国（ヘルシンキ乗り継ぎ）は、日付ひとつ。
-                        `./page.tsx` の `span` が同じ月をまとめるのと同じ決まり */}
-                    {!out
-                      ? `${ymd(x.from)} –`
-                      : out === x.from
-                        ? ymd(x.from)
-                        : `${ymd(x.from)} – ${ymd(out).slice(5)}`}
-                    {/* 「いまここ」は**国に付く**印で、街に付く印ではない。
-                        下の街の列の末尾に置くと、列の最後の街の隣に並ぶので
-                        「その街にいる」と読める（実際そう読み違えた）。
-                        日付の「09/11 –」の隣なら、「その日からこの国にいる」に
-                        しか読めない。**まだ出ていない国だけ**に付ける。 */}
-                    {live && !out && i === walked.length - 1 && (
-                      <span className="atrip-here">いまここ</span>
+                  <span className="atrip-body">
+                    <span className="atrip-name">
+                      <b>{x.name}</b>
+                      {/* 旅程を持たない旅には英字の国名が無い。**空の欄を置かない** */}
+                      {x.en && <em>{x.en}</em>}
+                    </span>
+                    <span className="atrip-when">
+                      {/* 同じ日に入って出た国（ヘルシンキ乗り継ぎ）は、日付ひとつ。
+                          `./page.tsx` の `span` が同じ月をまとめるのと同じ決まり */}
+                      {!out
+                        ? `${ymd(x.from)} –`
+                        : out === x.from
+                          ? ymd(x.from)
+                          : `${ymd(x.from)} – ${ymd(out).slice(5)}`}
+                      {/* 「いまここ」は**国に付く**印で、街に付く印ではない。
+                          下の街の列の末尾に置くと、列の最後の街の隣に並ぶので
+                          「その街にいる」と読める（実際そう読み違えた）。
+                          日付の「09/11 –」の隣なら、「その日からこの国にいる」に
+                          しか読めない。**まだ出ていない国だけ**に付ける。 */}
+                      {live && !out && x === latest && <span className="atrip-here">いまここ</span>}
+                    </span>
+                    {/* 街が分かっていない国では、列ごと出さない。空の列は隙間になるだけ */}
+                    {towns.length > 0 && (
+                      <span className="atrip-tags">
+                        {towns.slice(0, 5).map((t) => (
+                          <span key={t}>{t}</span>
+                        ))}
+                        {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
+                      </span>
                     )}
                   </span>
-                  <span className="atrip-tags">
-                    {towns.slice(0, 5).map((t) => (
-                      <span key={t}>{t}</span>
-                    ))}
-                    {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
+                </>
+              );
+              return (
+                <li key={x.slug}>
+                  <span className="atrip-rail" aria-hidden />
+                  <span className="atrip-no" aria-hidden>
+                    {noOf.get(x.slug)}
                   </span>
-                </span>
-                <Icon name="right" size={15} className="tile-go" />
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
-    </Fold>
+                  {/* **行き先を持たない国は、押せる形にしない。** 旅程の無い旅には
+                      国ごとの面が無い。矢印（`tile-go`）は「押すと進む」の印なので、
+                      行き先が無い札には出さない（`docs/island-misses.md` #12）。
+
+                      厚み（`0 6px 0` の台）と浮き上がりも外す。島では**厚みが
+                      「押せる」の合図ひとつ**と決まっているので、押せない札に
+                      残すと合図が嘘になる（`docs/island-design.md` 3章。
+                      数えているのは `tools/sprites/popcheck.mjs`）。
+                      落ち影だけ残して、札としての形は同じにする。 */}
+                  {x.href ? (
+                    <Link className="atrip-card" href={x.href} prefetch={false}>
+                      {body}
+                      <Icon name="right" size={15} className="tile-go" />
+                    </Link>
+                  ) : (
+                    <span
+                      className="atrip-card"
+                      style={{ boxShadow: "var(--shadow-1)", transform: "none" }}
+                    >
+                      {body}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </Fold>
+      ))}
+    </>
   );
 }

@@ -15,7 +15,9 @@ const FLAGS = [
   "hungary", "uk", "turkey", "cyprus", "egypt", "jordan", "uae", "azerbaijan",
   "georgia", "armenia", "iran-border",
   "poland", "lithuania", "latvia", "estonia", "finland", "sweden",
-  "denmark", "norway", "canada", "japan",
+  "denmark", "norway",
+  "albania",
+  "canada", "japan",
 ];
 
 const TOTAL = GROUPS.reduce((n, g) => n + g.names.length, 0);
