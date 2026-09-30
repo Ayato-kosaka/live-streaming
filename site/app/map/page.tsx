@@ -6,14 +6,15 @@ import Fold from "@/components/ui/Fold";
 import Walked from "@/components/atlas/Walked";
 import { WALKED_DONE } from "@/content/walked";
 import { isWalkedCountry } from "@/content/countries";
-import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
+import { AHEAD_COUNTRIES, BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
 import { HereRoute, HereStat, HereTag, MapHead, TripCountries, type TripStep } from "./parts";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
-import { CHAPTERS, tripDate } from "@/content/chapters";
+import { chapterNow, tripDate } from "@/content/chapters";
+import { tripPageOf } from "@/content/trip";
 import { BUILT_AT } from "@/lib/builtAt";
 import { LEAVE, MAIN, NORDIC_COUNTRIES, cityName } from "@/content/nordic";
 import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
@@ -66,22 +67,15 @@ const CHAPTER_OF: Record<string, string> = {
 };
 
 /**
- * いま歩いている旅の国。**`content/countries.ts` には足さない。**
+ * 旅程を持っている旅の、国ごとの区間。**日付は旅程が正で、手で書かない。**
  *
- * あちらは「歩いた国」の一覧で、`order`（何カ国目）も世界地図の焼き込みも
- * そこから数えている。歩いている最中の国を混ぜると、歩く前から歩いたことになる
- * （`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
- *
- * かわりに**旅程（`content/nordic.ts` の ROUTE）から引く。** 入った日は区間の
- * 日付で、そこから先は旅が進めばひとりでに増える。**ここで日付を手で書かない。**
- * 書くと、国境を越えた翌日にまた古くなる。
- *
- * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
- * 画面が出てから（`./parts.tsx` の `TripCountries`）。
+ * いまここにあるのは北欧（`content/nordic.ts` の ROUTE）だけ。入った日も出た日も
+ * 通った街も、旅程の区間から引く。旅が進めばひとりでに増える。
  */
-const TRIP_STEPS: TripStep[] = (() => {
-  const out: TripStep[] = [];
-  let cur: TripStep | undefined;
+const ITINERARY = (() => {
+  type Leg = { name: string; en: string; from: string; to: string; towns: { name: string; date: string }[] };
+  const m = new Map<string, Leg>();
+  let cur: Leg | undefined;
   for (const l of MAIN) {
     if (l.enters) {
       const c = NORDIC_COUNTRIES.find((x) => x.slug === l.enters);
@@ -90,25 +84,71 @@ const TRIP_STEPS: TripStep[] = (() => {
       if (cur) cur.to = l.date ?? "";
       // `en` は旅程のほうが総大文字（"POLAND"）。年表の他の行と同じ書き方にそろえる
       cur = {
-        slug: c.slug,
         name: c.name,
         en: c.en.charAt(0) + c.en.slice(1).toLowerCase(),
         from: l.date ?? "",
         to: "",
         towns: [],
       };
-      out.push(cur);
+      m.set(c.slug, cur);
     }
     if (cur && l.date) cur.towns.push({ name: cityName(l.to), date: l.date });
   }
   // 最後の国は、旅が終わる日まで。**終わりを空けたままにしない**（ジョージアと同じ）
   if (cur) cur.to = LEAVE.date;
-  // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
-  return out.filter((x) => x.from && !COUNTRIES.some((c) => c.slug === x.slug));
+  return m;
 })();
 
-/** 旅程を持っている章。名前は `content/chapters.ts` が正本なので、ここに書かない。 */
-const TRIP_CHAPTER = CHAPTERS.find((c) => c.slug === "nordic");
+/**
+ * いま歩いている旅の国。**`content/countries.ts` の `COUNTRIES` には足さない。**
+ *
+ * あちらは「歩いた国」の一覧で、`order`（何カ国目）も世界地図の焼き込みも
+ * そこから数えている。歩いている最中の国を混ぜると、歩く前から歩いたことになる
+ * （`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
+ *
+ * ## 並べるものは `AHEAD_COUNTRIES` から引く。旅程からではない
+ *
+ * ここは旅程（北欧の ROUTE）だけを見て組み立てていた。**旅程は、旅が始まる前に
+ * 書き終わっているとは限らない。** アルバニアは 2026-09-28 に着いた時点で
+ * 旅程が1行も無く（どこを回るかは本人も未定）、この段に**絶対に現れなかった。**
+ * 表紙・`/now`・`/about` が24と言っている日に、年表の合計だけが23で止まる。
+ *
+ * 数えかたは `content/walked.ts` が持っている1本に合わせる——**歩き終わった国
+ * （`COUNTRIES`）＋ いま歩いている旅のうち今日までに入った国（`AHEAD_COUNTRIES`）。**
+ * 並べるものと数えるものを別の出どころから引くと、また食い違う。
+ *
+ * 日付は、旅程があればそちらが正（区間の日付）。無ければ `entered` を使う。
+ * 街と出た日は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ *
+ * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
+ * 画面が出てから（`./parts.tsx` の `TripCountries`）。
+ */
+const TRIP_STEPS: TripStep[] = AHEAD_COUNTRIES
+  // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
+  .filter((c) => isWalkedCountry(c.slug) && !COUNTRIES.some((d) => d.slug === c.slug))
+  .map((c) => {
+    const it = ITINERARY.get(c.slug);
+    const from = it?.from || c.entered;
+    /* 章は**その国に入った日に動いていた章**を引く。"nordic" と書くと、旅が
+       変わった日に見出しが前の旅の名前のまま残る。名前は `content/chapters.ts` が正本。
+       日付だけで決まるので、焼き込んでも答えは動かない（旅の土地の暦の昼で引く）。 */
+    const ch = chapterNow(new Date(`${from}T12:00:00+02:00`));
+    // その旅が国ごとの面を持っていれば、そこへ送る。持たない旅は送り先なし
+    const trip = tripPageOf(ch.slug);
+    return {
+      slug: c.slug,
+      name: it?.name ?? c.name,
+      en: it?.en,
+      from,
+      to: it?.to ?? "",
+      towns: it?.towns ?? [],
+      chapter: ch.slug,
+      chapterName: ch.name,
+      href: trip ? `${trip}/${c.slug}` : "",
+    };
+  })
+  .filter((x) => x.from)
+  .sort((a, b) => a.from.localeCompare(b.from));
 
 /** 焼いたときに、もう旅に出ていたか。年表のどの章を開いておくかを決める。 */
 const TRIP_ON = TRIP_STEPS.some((x) => x.from <= tripDate(BUILT_AT));
@@ -336,13 +376,13 @@ export default function MapPage() {
               </Fold>
             );
           })}
-          {/* いま歩いている旅の国。国境を越えた日にひとりでに1行増える。 */}
+          {/* いま歩いている旅の国。国境を越えた日にひとりでに1行増える。
+              見出しは旅ごとに分かれる（章の名前は `chapterName` で渡してある）。 */}
           <TripCountries
             steps={TRIP_STEPS}
             /* 通し番号の続きは**国の数**から。`COUNTRIES.length` だと
                「イラン（国境まで）」が1つ番号を食って、旅の1国目が19番になる */
             start={WALKED_DONE}
-            label={TRIP_CHAPTER?.name ?? ""}
             open={TRIP_ON}
           />
         </div>
