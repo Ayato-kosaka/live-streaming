@@ -15,7 +15,7 @@ const PORT = process.env.PORT || "3000";
  */
 // 島に建っているものは全部押せる（docs/island-design.md 6章）。看板の有無に関わらず全部見る。
 const NAMES = { "tower-studio": "配信", "hut-workshop": "アプリ", "signpost-flags": "歩いた国",
-  "tent": "これから", "signboard": "企画をだす", "hut-ayato": "あやとのこと",
+  "tent": "これから", "signboard": "やってほしいこと", "hut-ayato": "あやとのこと",
   "hut-kitchen": "作った料理", "hall-museum": "伝説の企画", "globe-stand": "いまどこ",
   "tent-small": "住んでる人" };
 

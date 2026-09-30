@@ -3,9 +3,14 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import Board from "@/components/live/Board";
 
+/* **面の名前は「やってほしいこと」。**
+   「企画をだす」だったころ、面の名前と中の札1枚（企画）が同じ字だったので、
+   付箋はその枝に見えていた。板の仕事は注文を受けることで、企画はそこから育つもの。
+   実測（2026-09-30）では、視聴者さんが企画の欄に出した3件が3件とも付箋だった。
+   URL（`/board`）は変えない。外から貼られたリンクが死ぬ。 */
 export const metadata: Metadata = {
-  title: "企画をだす",
-  description: "こういうことやってほしい、を出せる掲示板。ログイン不要。題ひとつで出して、あとから育てられます。",
+  title: "やってほしいこと",
+  description: "「これ見てきて」「これやって」を書く板。ログイン不要。付箋1枚でも、1日つかう企画でも。",
 };
 
 /* 付箋の棚割りは、ここで組まなくなった。
@@ -16,11 +21,11 @@ export const metadata: Metadata = {
 
 export default function BoardPage() {
   return (
-    <PageShell current="board" crumbs={[{ label: "企画をだす" }]}>
+    <PageShell current="board" crumbs={[{ label: "やってほしいこと" }]}>
       <PageHead
         icon="signboard"
-        title="企画をだす"
-        lead="「こういうことやってほしい」を貼る板。むちゃな企画ほど、だいたい通る。"
+        title="やってほしいこと"
+        lead="むちゃなものほど、だいたい通る。書いたことが、ほんとうに配信になる。"
         say={GUIDE.board}
       />
       <Board />

@@ -320,8 +320,19 @@
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
 .bd-write { position: relative; }
+/* 企画の書く欄だけが持つ「いつごろ」。**これが付箋との違いを言う唯一のもの。**
+   「企画とは配信1本ぶんです」と字で説明する代わりに、欄そのもので言う
+   （`docs/island-standards.md` 6章）。紙の中なので、上の欄との間だけ空ける。 */
+.bd-when { margin-top: var(--sp-3); }
 /* 面のいちばん上に置く札。紙の外にあるので、上の余白は紙と同じだけ取る */
 .bd-pick { margin: var(--sp-4) 0 var(--sp-4); }
+/* **大きい字を、大きい字にする。**
+   `.mp-tab` は札ぜんぶ 11.5px（`--fs-min`）で、添え書きと同じ大きさだった。
+   選ぶところなので、選ぶ言葉（「これやって」「1日つかう企画」）が先に目に入ってほしい。
+   字が5〜7文字なので 390px の札（内側 167px）に 16px でも1行で収まる。
+   **折れないことは測って確かめる**（日本語はどこでも折れるので、
+   長い字に戻すときはここも測り直す）。 */
+.bd-pick .mp-tab-l { font-size: var(--fs-h3); }
 
 /* 島で今夜のおたずねを押してきた人に出る、渡ってきた先の受け口。
    板に留めた紙1枚。押すのは中のボタンだけなので、紙そのものは平ら。 */
@@ -1410,8 +1421,87 @@
 .nt-obtn:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
 .nt-obox { display: grid; gap: var(--sp-2); width: 100%; }
 
-/* 書く欄。宛先はもう決まっているので、そこを最初に言い切る */
-.nt-write { margin-top: var(--sp-5); display: grid; gap: var(--sp-3); }
+/* 書く欄。**紙そのものを付箋にする。**
+   ここはただの箱で、貼られた付箋（`.nx-notes > li`）だけが画びょうの刺さった
+   色紙だった。企画の書く欄（`.bd-write`）も同じただの箱なので、
+   **選び違えた人に、書いているあいだ一度も手ごたえが無かった**
+   （あやと 2026-09-30「見た目も同じで使い分けがわかりにくいね」）。
+   付箋の紙の色・角の丸み・落ち影・画びょうを、5章の付箋からそのまま持ってくる。
+
+   **傾けない。** 貼られた付箋は最大 17em なので 1.4度でも収まるが、こちらは
+   面いっぱいの幅がある。背が 400px あるので 1度でも左右に 7px ずつ出て、
+   390px で横あふれになる。傾き以外は同じなので、付箋には見える。
+
+   影は 3px ぼかす。ぼかし0で下へ出る影は「押せる厚み」の合図なので
+   （`docs/island-design.md` 3章）、押せない紙に付けると合図が嘘になる。 */
+.nt-write {
+  position: relative;
+  margin-top: var(--sp-5);
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  border-radius: 4px 4px 9px 9px;
+  background: linear-gradient(#fff8bf, #fdefa2);
+  box-shadow: 2px 4px 3px rgba(120, 90, 40, 0.16);
+  color: var(--ink);
+}
+/* 広い画面では幅を止める。**面いっぱいに伸ばすと、紙ではなく帯に見える。**
+   貼られた付箋（`.nx-notes > li`）は 17em なので、その倍までにして
+   「同じ紙の、大きいほう」に見えるところで止める。
+   狭い画面では面いっぱいのまま（書く欄を痩せさせない）。 */
+@media (min-width: 720px) {
+  .nt-write { max-width: 34em; }
+}
+/* 画びょうは紙の上辺のまん中。付箋（`.nx-notes .nx-pin`）と同じ位置・同じ大きさ */
+.nt-write > .nx-pin {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  line-height: 0;
+}
+/* 宛先の選び札。**書ける宛先だけが並ぶ**（`content/themes.ts` の `openThemes`）。
+   棚の札（`.nb-tab`）と同じ形にはしない。あちらは読む棚を選ぶもので、
+   同じ形だと同じことをする札が上下に2組並ぶ。こちらは小さい丸札。 */
+.nt-dest { display: grid; gap: var(--sp-2); }
+.nt-dest-l {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.nt-dests { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* 押せるので板・厚み4px・48px（`docs/island-world.md` 3.4）。
+   色紙の上に置くので、面は紙の色のまま浮かせる */
+.nt-destb {
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+/* いま選んでいる宛先は**押し込まれたまま**（`.nb-tab.is-on` と同じ決め）。
+   朱を足さない。色を増やすより沈めるほうが、どれを選んだかが形で分かる。 */
+.nt-destb.is-on {
+  transform: translateY(4px);
+  box-shadow: var(--pg-lit);
+  border-color: var(--frame-dark);
+}
+.nt-destb:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+/* 選んだ宛先が「何を書く場所か」を言う一行（`content/themes.ts` の `lead`）。
+   仕組みの説明は書かない（`docs/island-standards.md` 6章）。 */
+.nt-lead {
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
 .nt-to {
   margin: 0;
   font-size: var(--fs-note);

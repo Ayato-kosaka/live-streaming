@@ -129,7 +129,7 @@ function shownStatus(p: NextPlan, git: GitPlan | null, now: number | null): Plan
 }
 
 /**
- * 企画をだす（掲示板）。
+ * やってほしいこと（掲示板）。
  *
  * ## 入れ物が1つになった（#161）
  *
@@ -150,9 +150,22 @@ function shownStatus(p: NextPlan, git: GitPlan | null, now: number | null): Plan
  * ## 何をどこへ書くか
  *
  * ここが受けるのは **「まだ無い企画」だけ**。すでに決まっている旅への注文は、
- * 宛先を持った付箋（`Notes`）のほうへ回る。本番のデータでは、提案8件のうち
- * 7件が実際には後者だった（#159）。分かれ道は面の上から見えていないと
- * 意味がないので、「企画をだす」と「みんなの付箋」を同じ面に、この順で並べてある。
+ * 宛先を持った付箋（`Notes`）のほうへ回る。
+ *
+ * **札を足しても、選び違いは止まらなかった。** 2026-09-30 の本番で、
+ * 視聴者さんが企画の欄に出した3件が**3件とも付箋**だった（アルバニアへの注文2件と、
+ * あやとへのひとこと1件）。あやと本人も「企画で合ってるのか、イマイチ私も
+ * よくわかってない」と言っている。**書いた人の問題ではなく、欄の問題。**
+ *
+ * 直したのは4つ。字を足したところは1つも無い。
+ *
+ *   1. 面の名前を「やってほしいこと」にした。面の名前と札1枚が同じ字
+ *      （「企画をだす」）だったので、付箋はその枝に見えていた
+ *   2. **既定の札を付箋にした。** 実績が 3/3 で付箋。着いた人は、すでに
+ *      開いている箱に書く
+ *   3. **見分けを形にした。** 付箋の書く欄は画びょうを刺した色紙、企画の書く欄は
+ *      日にちの欄を持つ紙。並べれば、字を読まなくても別のものに見える
+ *   4. 札の字を、判定の規則（「まだ無いこと」）から**選ぶ人の言葉**にした
  */
 export default function Board() {
   const [plans, setPlans] = useState<NextPlan[] | null>(null);
@@ -163,6 +176,10 @@ export default function Board() {
   /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
   const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
   const [title, setTitle] = useState("");
+  /** いつごろやるか。**自由記入**（サーバー側も `when` は40字の素の字）。
+      これが「企画とは配信1本ぶんのこと」を言う唯一の合図なので、空でも出せるが
+      欄そのものは必ず出す（`content/voice.ts` の `whenLabel`）。 */
+  const [when, setWhen] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
   /** いま出したもの。出したあと、それをどう育てるかを言うために持つ。 */
@@ -170,8 +187,11 @@ export default function Board() {
   const [hearted, setHearted] = useState<Set<string>>(new Set());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
-  /** どちらの札が出ているか。**この面の用事は「企画をだす」**なので、企画から。 */
-  const [tab, setTab] = useState<"plan" | "note">("plan");
+  /** どちらの札が出ているか。**付箋から。**
+      前は企画から開いていた。着いた人は、すでに開いている箱に書くので、
+      開いている箱が企画だと、注文もひとことも全部そこに入る
+      （本番の実測で 3/3。`Board` の上の注）。 */
+  const [tab, setTab] = useState<"plan" | "note">("note");
   /** 付箋の枚数。数えているのは `Notes` なので、そこから受け取る（null は読み込み中） */
   const [noteCount, setNoteCount] = useState<number | null>(null);
   const [sort, setSort] = useState<"hearts" | "new">("hearts");
@@ -310,7 +330,7 @@ export default function Board() {
     setErr(null);
     try {
       const { plan } = await postNextPlan(
-        { ...EMPTY_PLAN, title: t, by: name.trim() || undefined },
+        { ...EMPTY_PLAN, title: t, when: when.trim(), by: name.trim() || undefined },
         await token(),
       );
       setPlans((cur) => [plan, ...(cur ?? [])]);
@@ -320,6 +340,7 @@ export default function Board() {
       if (plan.byLogin) rememberLoginPlan(plan.id);
       setMine((m) => new Set([...m, plan.id]));
       setTitle("");
+      setWhen("");
       // 出したものはハートが0なので、人気順のままだといちばん下に沈む。
       // 「出せました」と言った先が空だと、出せていないのと同じ。
       setSort("new");
@@ -431,10 +452,17 @@ export default function Board() {
       <div className="mp-tabs is-2 bd-pick" role="tablist" aria-label="この板でできること">
         {(
           [
-            /* **数を言ってよいのは、読めたときだけ。** 読めなかった日に
-               「まだ無いこと 0」と出すと、並んでいる板を空だと言うことになる */
-            ["plan", "企画をだす", "まだ無いこと", read === "ok" ? String(all.length) : ""],
-            ["note", "付箋をはる", "決まっている旅へ", noteCount === null ? "" : String(noteCount)],
+            /* **札の字は、選ぶ人の言葉にする。**
+               前は「企画をだす／まだ無いこと」と「付箋をはる／決まっている旅へ」で、
+               どちらも**こちらの仕分けの規則**だった。読む人は自分のしたいことを
+               規則に翻訳しないと選べない。書きたいことをそのまま言う字に替える。
+
+               **数を言ってよいのは、読めたときだけ。** 読めなかった日に
+               「0」と出すと、並んでいる板を空だと言うことになる。
+
+               付箋を先（左）に置く。既定で開くのはこちら。 */
+            ["note", "これやって", "行き先や、いまの旅へ", noteCount === null ? "" : String(noteCount)],
+            ["plan", "1日つかう企画", "日にちを決めてやること", read === "ok" ? String(all.length) : ""],
           ] as const
         ).map(([id, label, sub, n]) => (
           <button
@@ -512,6 +540,22 @@ export default function Board() {
               rows={2}
               maxLength={60}
               placeholder={BOARD.placeholder}
+            />
+          </label>
+          {/* **この欄が、付箋との違いを言っている唯一のもの。**
+              「企画とは配信1本ぶんです」と字で説明する代わりに、日にちを聞く欄を
+              置く。付箋の欄には無いので、並べれば粒度の違いが形で分かる
+              （`docs/island-standards.md` 6章）。
+              空でも出せる。決まっていないから出すものなので、必須にすると
+              出せる人がいなくなる。 */}
+          <label className="nt-field bd-when">
+            <span>{BOARD.whenLabel}</span>
+            <input
+              className="bin"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              maxLength={40}
+              placeholder={BOARD.whenPlaceholder}
             />
           </label>
           <div className="brow">
@@ -818,7 +862,9 @@ export default function Board() {
       {/* 島じゅうの付箋を、宛先（テーマ）ごとにまとめて読む。
           枚数は札に出したいので、開く前から数えている（`onCount`）。 */}
       <div className="bd-pane" hidden={tab !== "note"}>
-        <Notes themes={THEMES} onCount={setNoteCount} />
+        {/* **書く欄を開いて出す**（`writeOpen`）。企画の札は書く欄が開いたまま
+            出るので、こちらだけ畳んでおくと「開いている箱に書く」がまた起きる。 */}
+        <Notes themes={THEMES} writeOpen onCount={setNoteCount} />
       </div>
     </>
   );

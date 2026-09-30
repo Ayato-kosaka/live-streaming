@@ -98,7 +98,9 @@ export const REMOTE_DOORS: RemoteButton[] = [
   { at: "/streams", label: "配信" },
   { at: "/apps", label: "アプリ" },
   { at: "/next", label: "これから" },
-  { at: "/board", label: "企画をだす" },
+  /* 字だけ島にそろえる（`components/island/layout.ts`）。`at` は変えない。
+     サーバー（`functions/src/remote.ts` の `PLACES`）が見ているのは行き先だけ。 */
+  { at: "/board", label: "やってほしいこと" },
   { at: "/map", label: "歩いた国" },
 ];
 
