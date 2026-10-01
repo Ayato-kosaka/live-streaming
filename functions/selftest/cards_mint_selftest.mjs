@@ -14,6 +14,14 @@
  * 4. 何も変わっていない書類には、**1バイトも書かない**（毎晩の空回しで
  *    全枚数を書き直さない）
  * 5. 名乗りを持たない投げ銭（Doneru の無記名）でも落ちず、`null` が入る
+ * 6. **企画の無い写真（`streamEventId: ""`）でもカードができる。**
+ *    囲ってあったころ、企画の立っていない日が11日ぶん0枚だった
+ * 7. **22時に始まった配信に 00:23 で投げてくれた人が、前日の写真の
+ *    カードになる**（台帳の生の `day` は翌日・`videoStartedAt` は前日）。
+ *    ついでに「翌日に始まった別の配信の人」が混ざらないことも見る
+ * 8. **1枚の写真から出たカードは、全部同じ `day` を持つ**
+ * 9. 写真が `videoIds` を持たなければ、企画のものに落ちる。
+ *    持っていれば、そちらが勝つ
  *
  * ## なぜ本番のデータを引かないか
  *
@@ -181,6 +189,7 @@ function scenario(store) {
   const ev = load("streamEvents");
   for (const f of [
     "mintCards", "mintForImage", "tipRef", "loadEvents", "channelsOfDay",
+    "tipsForImage", "tipDay", "imageDay",
   ]) {
     if (typeof ev[f] !== "function") {
       console.error(`lib/streamEvents.js から ${f} を取り出せなかった`);
@@ -192,7 +201,10 @@ function scenario(store) {
 
 /* ---------------- 仕込む中身（ぜんぶ偽の字） ---------------- */
 
-/** カードになる画像1枚 */
+/**
+ * カードになる画像1枚。**`imageRef` が返す形そのまま**
+ * （`day` と `videoIds` を持つ）。
+ */
 const IMAGE = {
   id: "img_0000001",
   streamEventId: "ev1",
@@ -202,7 +214,12 @@ const IMAGE = {
   h: 3,
   note: "",
   at: 300,
+  day: "2026-09-11",
+  videoIds: [],
 };
+
+/** 日本時間の時刻を、ミリ秒にする。**配信の始まりを仕込むのに使う** */
+const jst = (iso) => Date.parse(`${iso}+09:00`);
 
 /** 投げてくれた人のチャンネルID。**偽の字** */
 const CH_A = "UC_a_000000001";
@@ -483,7 +500,184 @@ console.log("\n# 5. その日投げてくれた人にも、名乗りが付いて
   );
 }
 
-console.log("\n# 6. ログに、視聴者さんの素性が1文字も出ない");
+console.log("\n# 6. 企画の無い写真（`streamEventId: \"\"`）でもカードができる");
+{
+  /* **ここが11日間カードを0枚にしていたところ。** 企画が立っていない日に
+     貼った写真は、企画の書類が引けないという理由だけで1枚も作られなかった。
+     軸は写真の `day` に降りたので、企画が1本も無くても作る。 */
+  const s = scenario({
+    islandStreamEvent: {},
+    islandTips: {tip_a: TIPS.tip_a},
+    islandCards: {},
+  });
+  const got = await s.ev.mintForImage({...IMAGE, streamEventId: ""});
+  check("1枚できた", got.made === 1, JSON.stringify(got));
+  const w = writeOf(s.writes, "img_0000001__UC_a_000000001");
+  check(
+    "`day` は写真の日（企画が無くても決まる）",
+    w?.data.day === "2026-09-11",
+    JSON.stringify(w?.data.day),
+  );
+  check(
+    "`streamEventId` は空のまま（勝手にどこかの企画へ付けない）",
+    w?.data.streamEventId === "",
+    JSON.stringify(w?.data.streamEventId),
+  );
+}
+
+console.log("\n# 7. 0時をまたいだ配信（22時開始・00:23 に投げた人）");
+{
+  /* 2026-09-06 の配信で実際に踏んだ形。22時に始まった配信に、
+     22:27 と（日をまたいで）00:23 の2人が投げてくれた。**同じ配信**
+     なのに、台帳の生の `day` だけで当てると後半の1人が翌日に落ちて、
+     その日の写真にカードが付かない。
+
+     `videoStartedAt`（配信の始まり）で当てる。 */
+  const START = jst("2026-09-06T22:00:00");
+  const s = scenario({
+    islandStreamEvent: {},
+    islandTips: {
+      tip_early: {
+        channelId: CH_A,
+        day: "2026-09-06",
+        videoId: "vid00000006",
+        videoStartedAt: START,
+        donatedAt: jst("2026-09-06T22:27:00"),
+        displayNameSnapshot: "さくら",
+      },
+      tip_late: {
+        channelId: "UC_b_000000002",
+        // **生の日は翌日。** 配信の始まりは前日
+        day: "2026-09-07",
+        videoId: "vid00000006",
+        videoStartedAt: START,
+        donatedAt: jst("2026-09-07T00:23:00"),
+        displayNameSnapshot: "あおい",
+      },
+      tip_next: {
+        /* **翌日に始まった、別の配信。** 翌日ぶんを引いてくるので
+           ここまで混ざってくる。入ってはいけない */
+        channelId: "UC_d_000000004",
+        day: "2026-09-07",
+        videoId: "vid00000007",
+        videoStartedAt: jst("2026-09-07T20:00:00"),
+        donatedAt: jst("2026-09-07T20:10:00"),
+        displayNameSnapshot: "べつのひ",
+      },
+    },
+    islandCards: {},
+  });
+  const image = {
+    ...IMAGE,
+    id: "img_0000006",
+    streamEventId: "",
+    day: "2026-09-06",
+  };
+  const got = await s.ev.mintForImage(image);
+  check("2枚できた（前半の人と、0時すぎの人）", got.made === 2,
+    JSON.stringify(got));
+  check(
+    "**00:23 に投げた人が、前日の写真のカードになっている**",
+    !!writeOf(s.writes, "img_0000006__UC_b_000000002"),
+    s.writes.map((w) => w.id).join(" / "),
+  );
+  check(
+    "翌日に始まった別の配信の人は、入っていない（広げない）",
+    !writeOf(s.writes, "img_0000006__UC_d_000000004"),
+    s.writes.map((w) => w.id).join(" / "),
+  );
+  /* **1枚の写真から出たカードは、全部同じ日付。** 投げ銭の日をそのまま
+     入れていたころは、ここで 09-06 と 09-07 に割れていた（本番の
+     food-wine-fest の3枚がそれ）。割れると画面の札が片方だけ出ない。 */
+  check(
+    "出たカードの `day` が全部 2026-09-06（割れていない）",
+    s.writes.length === 2 &&
+      s.writes.every((w) => w.data.day === "2026-09-06"),
+    s.writes.map((w) => `${w.id}=${w.data.day}`).join(" / "),
+  );
+
+  /* **写真の名札（`channelsOfDay`）も、同じ規則で同じ人を出す。**
+     ここだけ生の `day` で引いていたので、0時をまたいだ晩に
+     カードと食い違っていた。 */
+  const people = await s.ev.channelsOfDay([], "2026-09-06");
+  check(
+    "名札も2人（カードと同じ顔ぶれ）",
+    people.length === 2 &&
+      people.every((p) => p.channelId !== "UC_d_000000004"),
+    JSON.stringify(people.map((p) => p.channelId)),
+  );
+  const next = await s.ev.channelsOfDay([], "2026-09-07");
+  check(
+    "翌日の名札は、翌日に始まった配信の1人だけ（二重に数えない）",
+    next.length === 1 && next[0].channelId === "UC_d_000000004",
+    JSON.stringify(next.map((p) => p.channelId)),
+  );
+}
+
+console.log("\n# 8. 写真に `videoIds` が無ければ、企画のものに落ちる");
+{
+  /* 0時またぎの逃げ道。**いま本番で `videoIds` を持っているのは企画の
+     ほうだけ**なので、写真が持っていなければ企画のものを使う。
+     データを1バイトも動かさずに、いまの挙動が保たれる。
+
+     仕込む投げ銭の生の `day` は、写真の日からも翌日からも離してある。
+     **動画IDで拾えていなければ、絶対に当たらない。** */
+  const TIP_FAR = {
+    channelId: CH_A,
+    day: "2026-09-25",
+    donatedAt: 5000,
+    displayNameSnapshot: "さくら",
+  };
+  const base = {
+    ...IMAGE,
+    id: "img_0000009",
+    streamEventId: "ev9",
+    day: "2026-09-19",
+  };
+  const store = () => ({
+    islandStreamEvent: {
+      ev9: {date: "2026-09-19", videoIds: ["vid00000009"]},
+    },
+    islandTips: {
+      tip_ev: {...TIP_FAR, videoId: "vid00000009"},
+      tip_im: {
+        ...TIP_FAR,
+        channelId: "UC_b_000000002",
+        videoId: "vid00000010",
+      },
+    },
+    islandCards: {},
+  });
+
+  const s1 = scenario(store());
+  const g1 = await s1.ev.mintForImage({...base, videoIds: []});
+  check(
+    "写真が持っていなければ、企画の `videoIds` で拾う",
+    g1.made === 1 && !!writeOf(s1.writes, "img_0000009__UC_a_000000001"),
+    `${JSON.stringify(g1)} / ${s1.writes.map((w) => w.id).join(" / ")}`,
+  );
+  check(
+    "拾ったカードの `day` も、写真の日（投げ銭の日ではない）",
+    writeOf(s1.writes, "img_0000009__UC_a_000000001")?.data.day ===
+      "2026-09-19",
+    JSON.stringify(
+      writeOf(s1.writes, "img_0000009__UC_a_000000001")?.data.day,
+    ),
+  );
+
+  const s2 = scenario(store());
+  const g2 = await s2.ev.mintForImage({
+    ...base,
+    videoIds: ["vid00000010"],
+  });
+  check(
+    "写真が持っていれば、そちらが勝つ（企画のものは見ない）",
+    g2.made === 1 && !!writeOf(s2.writes, "img_0000009__UC_b_000000002"),
+    `${JSON.stringify(g2)} / ${s2.writes.map((w) => w.id).join(" / ")}`,
+  );
+}
+
+console.log("\n# 9. ログに、視聴者さんの素性が1文字も出ない");
 {
   const s = scenario({
     islandStreamEvent: EVENTS,

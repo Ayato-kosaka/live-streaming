@@ -61,8 +61,9 @@ import {handlePublicPurge} from "./publicPurge";
 import {MAX_FUND_TEXT, handleFundDesk, replayFor} from "./fundDesk";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
-   引き当ては N:N（1本の配信に企画が何本も乗る）なので、
-   `eventsForTip` は**当たった企画を全部返す**(`streamEvents.ts` 冒頭)。 */
+   当たりの軸は**写真の日**（企画の日ではない。企画の立っていない日にも
+   写真は貼れる）。その写真に当たる投げ銭を引くのは `tipsForImage`
+   (`streamEvents.ts` 冒頭)。 */
 import {
   EVENTS,
   IMAGES,
@@ -2132,14 +2133,18 @@ async function saveEventImage(
     NPHOTOS.doc(ref.id).set({day, path: stored, url, w, h, note, at, uid}),
   ]);
 
-  if (streamEventId) {
-    try {
-      const made = await mintForImage(imageRef(ref.id, doc));
-      logger.info("cards for image", ref.id, JSON.stringify(made));
-    } catch (e) {
-      // カードは日次ジョブでも作られる。ここで落ちても写真は貼れている
-      logger.warn("mint for image failed", ref.id, String(e));
-    }
+  /* **企画が無くてもカードを作る。** 前はここが `if (streamEventId)` で
+     囲ってあり、企画の立っていない日に貼った写真は1枚もカードにならな
+     かった（本番で11日ぶん0枚）。カードの軸は写真の日（`imageDay`）に
+     降りたので、企画は「あれば `videoIds` と日付の落ち先に使う」だけ。
+     上の `image with no stream event` の札はそのまま残す——企画が
+     付いていないこと自体は本当で、あとから結べるため。 */
+  try {
+    const made = await mintForImage(imageRef(ref.id, doc));
+    logger.info("cards for image", ref.id, JSON.stringify(made));
+  } catch (e) {
+    // カードは日次ジョブでも作られる。ここで落ちても写真は貼れている
+    logger.warn("mint for image failed", ref.id, String(e));
   }
   return {ok: true, id: ref.id, doc, events};
 }
@@ -2704,6 +2709,20 @@ export const islandApi = onRequest(
             0,
             Math.min(9999, Number(body.sortOrder) || 0),
           );
+        }
+        /* **この写真はこの配信のもの、を写真に付ける。**
+           0時をまたいで2本に割れた夜の後半を、あやとが手で拾うための道。
+           いままで `videoIds` は企画にしか付けられず、企画の立っていない
+           日には拾いようが無かった。
+
+           検め方は `eventRef` と同じ（11文字・40本まで）。送られてきた
+           一覧でまるごと置き換える——打ち間違えたものを外す道が要る。
+           空で送るのは「ぜんぶ外す」なので、それも通す。 */
+        if (Array.isArray(body.videoIds)) {
+          patch.videoIds = (body.videoIds as unknown[])
+            .map((x) => clean(x, 16))
+            .filter((x) => VIDEO_ID.test(x))
+            .slice(0, 40);
         }
         await ref.set(patch, {merge: true});
         /* 付け替えたら、カードを合わせ直す。**消してから作り直さない。**
