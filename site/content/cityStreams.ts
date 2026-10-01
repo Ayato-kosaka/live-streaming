@@ -1795,6 +1795,16 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "cpOZCgtD4GI",
         "title": "アルバニアでケバブスフラキたべよ",
         "date": "2026-09-30"
+      },
+      {
+        "videoId": "H5Ox41m1LE0",
+        "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
+        "date": "2026-10-01"
+      },
+      {
+        "videoId": "C1dzddgQr30",
+        "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
+        "date": "2026-10-01"
       }
     ]
   }
