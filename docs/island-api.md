@@ -265,8 +265,8 @@ localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 | --- | --- | --- | --- |
 | `GET` | `/streamevents?day=YYYY-MM-DD` | 誰でも | **その日に立っている企画**。1日に何本でも立つので配列 |
 | `GET` | `/streamevents/:id/images` | 誰でも | その企画の画像 |
-| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。**貼った時点でカードも作る**（1日120枚） |
-| `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。カードも作り直す |
+| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。**貼った時点でカードも作る**（1日120枚）。**企画が1本も立っていない日でも作る**（カードの軸は写真の日） |
+| `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。`videoIds`（11文字・40本まで）も受ける＝**この写真はこの配信のもの**と名乗らせる（0時またぎの逃げ道。**画面はまだ無い**）。カードも作り直す |
 | `DELETE` | `/streamevents/images/:id` | あやとだけ | 画像を消す。**カードも実体も消える** |
 | `GET` | `/nordic/photos` | 誰でも | 旧・日付から入る道。`days[].people[]` は**絵と名前だけ**（`channelId` は返さない） |
 | `POST` | `/nordic/photos` | あやとだけ | 旧・日付から貼る。**中で新旧どちらの入れ物にも書く** |

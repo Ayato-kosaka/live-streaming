@@ -30,11 +30,11 @@ erDiagram
     islandDonors           ||--o{ doneru_donations       : "viewer_pk"
     islandDonors           |o--o| islandChannels         : "どねIDをチャンネルに結ぶ"
 
-    islandStreamEvent      ||--o{ islandStreamEventImage : "streamEventId"
+    islandStreamEvent      |o--o{ islandStreamEventImage : "streamEventId（空でよい）"
     islandStreamEvent      ||--o{ islandHearts           : "plan"
     islandStreamEvent      |o--o| plans_ts               : "planId"
     islandStreamEventImage ||--o{ islandCards            : "streamEventImageId"
-    islandTips             ||--o{ islandCards            : "誰に配るかを決める"
+    islandTips             ||--o{ islandCards            : "誰に配るかを決める（IDは残らない）"
     islandStreamEventImage ||--|| storage_photos         : "storagePath"
 
     themes_ts              ||--o{ islandNotes            : "theme"
@@ -49,8 +49,14 @@ erDiagram
 **`islandXxx` は Firestore**、`plans_ts` `themes_ts` は Git
 （`site/content/plans.ts` / `themes.ts`）、`storage_photos` は Cloud Storage。
 
-**カードは、写真と投げ銭の掛け算でできる。** 1枚の写真に対して、その企画の日に
+**カードは、写真と投げ銭の掛け算でできる。** 1枚の写真に対して、**その写真の日**に
 投げ銭した人ぶんカードができる。だから `islandCards` に矢印が2本入っている。
+**企画は軸ではない**（1.3）ので、`islandStreamEvent` からは矢印が来ていない。
+
+**台帳からの矢印は、鍵ではない。** カードは台帳のIDを1つも持たない——残るのは
+`earnedAt` と `nameSnapshot` だけで、元の投げ銭には戻れない。だから台帳の行を
+消してもカードは消えない（消す道は、画像を付け替えるか消したときの作り直しだけ）。
+矢印は「誰に配るかを、そのとき台帳が決めた」という意味。
 
 ### 1.2 配信とコメント（BigQuery）
 
@@ -96,7 +102,7 @@ erDiagram
 ```mermaid
 erDiagram
     islandStreamEvent {
-        string id PK "Firestore の自動ID"
+        string id PK "決め打ちのIDと自動IDが混在"
         string title "題。これだけあれば出せる"
         string date "YYYY-MM-DD"
         string status "proposed next done"
@@ -106,16 +112,18 @@ erDiagram
     }
     islandStreamEventImage {
         string id PK "書類IDは移行の前後で変えない"
-        string streamEventId FK "空なら、まだ決まっていない"
+        string streamEventId FK "空でよい。企画の無い日にも貼れる"
         string role "card gallery cover"
         string storagePath "Cloud Storage の道"
-        string day "YYYY-MM-DD"
+        string day "YYYY-MM-DD。カードの軸はここ"
+        string_array videoIds "この写真はこの配信のもの。0時またぎ"
     }
     islandCards {
         string id PK "画像のID__チャンネルID"
         string channelId FK "もらった人"
         string streamEventImageId FK "どの画像か"
-        string streamEventId FK "どの企画か"
+        string streamEventId FK "どの企画か。空のこともある"
+        string day "写真の日。1枚の写真から出たぶんは全部同じ"
         number earnedAt "もらった時刻（投げ銭の時刻）"
         number x "0..1。置き方"
         number y "0..1。足元の高さ"
@@ -125,25 +133,40 @@ erDiagram
         string sourceEventId "yt:videoId:eventId か doneru:donationId"
         string source "youtube_superchat doneru"
         string channelId FK "紐付いていなければ null"
-        string day "日本時間で切った配信日"
+        string day "投げた瞬間の日本時間。生の日"
+        number videoStartedAt "配信が始まった時刻。配信日はこれで決まる"
         number amount "外に出さない"
     }
-    islandStreamEvent      ||--o{ islandStreamEventImage : "streamEventId"
+    islandStreamEvent      |o--o{ islandStreamEventImage : "streamEventId（空でよい）"
     islandStreamEventImage ||--o{ islandCards            : "streamEventImageId"
-    islandTips             ||--o{ islandCards            : "その日に出した人ぶん"
+    islandTips             ||--o{ islandCards            : "その写真の日に出した人ぶん"
 ```
 
-**企画と配信は N:N。** 1本の配信に企画が何本も乗る（9月11日は「北欧旅の出発日」
-「海外出発二周年」「ジョージアバイバイ」の3本）。だから
-「`videoId` → その配信の企画」を**1本に決めない。**
+**カードの軸は写真の日**（2026-10-01・[`island-card-rfc.md`](./island-card-rfc.md) 7章）。
+企画は「その写真はこの企画のもの」という札で、**付いていなくてもカードはできる。**
+前は企画が軸で、企画の立っていない日は写真を貼ってもカードが0枚だった
+（本番で11日間そうなっていた）。
+
+日付は2本あって、別々に決まる。
+
+| | 上から順に、決まったところで止まる |
+| --- | --- |
+| 写真の日 | `islandStreamEventImage.day` →（付いている企画の `date`）→ 貼った時刻 |
+| 投げ銭の日 | `islandTips.videoStartedAt` → `islandTips.day` → 投げた時刻 |
 
 当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
 
-1. その企画が `videoIds` でこの配信を名乗っている
-2. 企画の日付と、投げ銭の日（日本時間）が同じ
+1. 写真の日と、投げ銭の日が同じ
+2. 投げ銭の `videoId` が、**写真の** `videoIds`（空なら、その写真が付いている
+   企画の `videoIds`）に入っている
 
-**1で当たったら2を見ない、にしない。** あやとが `videoIds` を足すのは
-たいてい1本だけなので、そこで打ち切ると残りのカードが黙って消える。
+**企画と配信は N:N。** 1本の配信に企画が何本も乗る（9月11日は「北欧旅の出発日」
+「海外出発二周年」「ジョージアバイバイ」の3本）。だから
+「`videoId` → その配信の企画」を**1本に決めない。** ただし**カードの枚数には
+効かない**——枚数を決めるのはその日の写真の枚数。
+
+仕様の正本は [`island-cards.md`](./island-cards.md) 2章。**当たり方の決めは
+あちらに1か所だけ書く。**
 
 ---
 
@@ -175,9 +198,13 @@ erDiagram
 
 | 切り方 | 境目 | どこで |
 | --- | --- | --- |
-| **日本時間の0時** | JST 00:00 | 投げ銭の「配信日」（`islandTips.day` / カード / `islandChannels.days` / `island/state.stats`） |
+| **日本時間の0時** | JST 00:00 | 投げ銭を切る生の日（`islandTips.day` / `islandChannels.days` / `island/state.stats`） |
 | **UTC**（＝JST 朝9時） | JST 09:00 | 出席の数え方（`python/build_residents.py`）と、口の1日の上限（`islandRate`・`today()`） |
-| **配信の一晩** | 人が決める | 0時をまたいだぶんは `islandStreamEvent.videoIds` に後半の動画IDを足す |
+| **配信の一晩** | **配信が始まった日**（`islandTips.videoStartedAt`）。足りないぶんは人が決める | カードの当たり（`tipDay` / `tip_day`）。配信が2本に割れた晩は、後半の動画IDを**写真**の `videoIds`（空なら企画の `videoIds`）に足す |
+
+**カードが見るのは3つめ。** 生の `day`（1つめ）ではない——22時に始まった配信に
+0時すぎに投げてくれた人が、同じ配信なのに翌日へ落ちるため
+（[`island-cards.md`](./island-cards.md) 2章）。
 
 **UTC で切るのは、22時開始の枠と0時をまたいだ続きを1日にまとめるため。**
 JST で切ると夜中に1日が割れて、連投制限も訪問者数も半分になる。
@@ -364,7 +391,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | --- | --- | --- | --- |
 | 島の数字 | Firestore `island/state.stats` `island/state.fund` | BigQuery | `python/island_daily_stats.py` |
 | 投げ銭台帳 | Firestore `islandTips` | BigQuery（スパチャ＋Doneru） | `python/island_tips.py` |
-| カード | Firestore `islandCards` | 写真 × 台帳 | `python/island_cards.py` / `functions/src/streamEvents.ts` |
+| カード | Firestore `islandCards` | **その日の写真 × その日の台帳**（軸は `islandStreamEventImage.day`） | `python/island_cards.py` / `functions/src/streamEvents.ts` |
 | チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
 | チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
 | 焼き込み | Git `site/content/*`（自動生成ぶん） | BigQuery ほか | `.github/workflows/rebake.yml`（5.2） |
@@ -381,6 +408,9 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
+| **「このカードは何日のものか」** | `islandStreamEventImage.day`（写真が自分で持つ） | 付いている企画の `date` | **写真が正**（2026-10-01）。企画は空のことがあるので軸にしない。企画の日付に落ちるのは、`day` を持たない古い画像だけ |
+| **「この投げ銭はどの日の配信か」** | `islandTips.videoStartedAt`（配信の始まり） | `islandTips.day`（投げた瞬間の日本時間） | **`videoStartedAt` が正**（2.3）。0時をまたいだ晩に、生の `day` だけが翌日へずれる |
+| **「この写真はどの配信のものか」**（0時またぎ） | `islandStreamEventImage.videoIds` | `islandStreamEvent.videoIds` | **写真が先、空なら企画に落ちる。** 本番で持っているのは企画の1件だけなので、移さずに落ちる形にした（2026-10-01 時点） |
 | 豚の貯金箱の**額** | Firestore `islandFundSuperChats` → `island/state.fund.box` | GAS の `SuperChats` 表（もう誰も読み書きしない） | **台帳が正**（2026-09-23。#305）。OBS が `POST /island-api/alertbox/{合言葉}/superchat` で台帳へ書き足すようになったので、**伸びるのは台帳だけ。** サイトも OBS も焼き直し（`fund.box`）を読む |
 | 豚の貯金箱の**Doneru の鍵** | Firestore `islandFundConfig/doneru` の `goalKey` | 環境変数 `DONERU_GOAL_KEY`（Functions の逃げ道） | **Firestore が正**（2026-09-24。#639）。**島にひとつ。目標ごとではない**——鍵は Doneru 側の目標ウィジェット1つを指していて、貯金箱の合計はその累計を丸ごと足している。目標に紐づけると、次の目標を1件足しただけで Doneru のぶんが落ちる |
 | 豚の貯金箱の**バーの高さ** | Firestore `islandFundGoals` のいま走っている1件 → `island/state.fund.box.goal.yen` | — | **落ち先を持たない**（2026-09-24。#639）。前は `islandGoal` の `targetAmount` へ落ちていたが、あちらは GAS の表を写した凍った数字で、人が直せる場所ではない。台帳の目標が空なら「目標は無い」（0）が正しい答え |
@@ -883,9 +913,10 @@ island/state
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
-| `streamEventId` | string | どの企画のものか。**空なら、まだ決まっていない** |
+| `streamEventId` | string | どの企画のものか。**空でよい**——企画の立っていない日にも貼れるし、カードもできる。あとから結べる |
 | `role` | string | `card` / `gallery` / `cover`。**カードになるのは `card` だけ** |
-| `day` | string | その日（YYYY-MM-DD）。旧・北欧の画面が日ごとに並べるのに使う |
+| `day` | string | その日（YYYY-MM-DD）。**カードの軸はここ**（1.3）。貼る口が必ず書くので、企画の有る無しに関わらず決まる。旧・北欧の画面が日ごとに並べるのにも使う |
+| `videoIds` | string[] | **この写真はこの配信のもの**（11文字・40本まで）。0時をまたいで配信が2本に割れた晩に、後半を人が拾う道。**空なら、付いている企画の `videoIds` に落ちる。** 口は `POST /streamevents/images/{id}`、**画面はまだ無い** |
 | `storagePath` | string | Cloud Storage の道（4.4） |
 | `url` | string | 合言葉つきの URL |
 | `w` / `h` | number | 寸法（0〜20000） |
@@ -897,6 +928,8 @@ island/state
 
 **1枚は1つの企画にしか付かない。** 1日に企画は何本でも立つので、貼るときの
 既定は「その日のいちばん古い企画」。あとから付け替えられる（カードも作り直す）。
+**1本も立っていなければ空のまま貼る。** 貼る画面もそう言っている
+（「この日に立っている企画はありません。写真はこのまま貼れます。」）。
 
 **`islandCards/{cardId}`** — 配られたカード（#173・#202 で作り直し）
 
@@ -906,9 +939,9 @@ island/state
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
 | `channelId` | string | もらった人。**誰の絵が乗るかも、まずこれで決まる**（2.4） |
-| `streamEventId` | string | どの企画のカードか |
+| `streamEventId` | string | どの企画のカードか。**空のこともある**（企画の立っていない日。画面の札は `day` から引くので、空でも困らない） |
 | `streamEventImageId` | string | どの画像か |
-| `day` | string | その日（YYYY-MM-DD）。画面が企画の札を引く |
+| `day` | string | **その写真の日**（YYYY-MM-DD）。画面が札を引く。**投げ銭の日ではない**——入れると、0時をまたいだ晩に同じ写真から出たカードが2つの日付に割れる。**1枚の写真から出たカードは全部同じ日付** |
 | `earnedAt` | number | もらった時刻（＝投げ銭の時刻） |
 | `nameSnapshot` | string \| null | **投げたときに名乗っていた名前**（台帳の `displayNameSnapshot` の写し）。名簿が `channelId` を持っていない人の**絵の受け皿**と、**名前を出してよいかの判定**に使う |
 | `x` / `y` / `rot` / `scale` | number | 置き方。`x` `y` は 0〜1、`y` は**足元**の高さ。`rot` は ±180、`scale` は 0.2〜3 |
@@ -922,6 +955,13 @@ island/state
 
 **両側から埋めて、どちらが先でも同じ結果になるようにしてある。** 片方だけだと
 「画像が先で投げ銭が後」の日か「貼った夜」のどちらかが空になる。
+**当たり方の式も両側に同じものを置く**（`imageDay` / `tipDay` ↔ `image_day` /
+`tip_day`）。片方だけ持っていた時期があり、本番の数字がずれていた。
+
+**「写真はあるのに0枚の日」は、組み立てとは別に数える**（`python/card_gap_watch.py`。
+毎晩 `tips_after_doneru.yml` から）。組み立ては、自分の当たり方が壊れていることを
+自分では言えない（[`island-cards.md`](./island-cards.md) 2章）。
+
 **平置きにしてあるのは索引の都合** — [`island-db-notes.md` の6](./island-db-notes.md)。
 
 **`islandTips/{tipId}`** — 投げ銭の台帳（#202）
@@ -934,10 +974,10 @@ island/state
 | `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>`。**一意** |
 | `source` | string | `youtube_superchat` / `doneru` |
 | `channelId` | string \| null | YouTube のチャンネル。Doneru は `islandDonors` を通して引く。紐付いていなければ null |
-| `day` | string | **日本時間で切った配信日**（YYYY-MM-DD） |
+| `day` | string | **日本時間で切った、投げた瞬間の日**（YYYY-MM-DD）。**配信日ではない**——0時をまたいだ晩は、後半に投げた人がここで翌日になる。カードの当たりは下の `videoStartedAt` を先に見る（2.3） |
 | `donatedAt` | number | 出された時刻（ミリ秒） |
 | `videoId` | string \| null | どの配信か。**Doneru のぶんは、時刻を配信の時間帯に当てて埋めている。** 配信していない時間のものは null |
-| `videoStartedAt` | number \| null | その配信が始まった時刻。0時をまたいだぶんを人が拾うときに要る |
+| `videoStartedAt` | number \| null | **その配信が始まった時刻。カードの「配信日」はここで決まる**（`tipDay` / `tip_day`）。落とすと補正がまるごと死ぬので、`python/island_tips.py` が BigQuery の `started_ms` から必ず入れる |
 | `amount` | number \| null | 視聴者が払った額 |
 | `currency` | string | `JPY` ほか。**外貨が混ざる**（本番の380件に ₪ と CA$ が1件ずつあった） |
 | `settlementAmount` | number \| null | 手数料を引いた額（Doneru だけ） |
@@ -1543,6 +1583,10 @@ YouTube                    Doneru
 | `island_tips.py` | `islandTips` | `doneru_donations` ＋ `chat_messages` ＋ **`islandDonors`** |
 | `island_cards.py` | `islandCards` | `islandTips` × `islandStreamEventImage` |
 
+**`tips_after_doneru.yml` は、そのあとに見張りを1本回す**（`python/card_gap_watch.py`）。
+**1バイトも書かない**ので上の表には無い。「写真はあるのにカードが0枚の日」を数えて、
+あれば run を赤くする。
+
 **`islandDonors` が先。** 台帳は Doneru のぶんを対応表でチャンネルIDに直すので、
 対応表が古いまま台帳を作ると、その晩に初めて紐付いた人のぶんが誰にも渡らない。
 
@@ -1655,6 +1699,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | 焼き直し | 画面の数字だけが古くなる（本番の島の状態そのものは動いている） | 手で押せば追いつく |
 | 呼び名の追いつき（`channel_alias_nightly.yml`） | **その晩から図鑑に入った人・チャンネル名を変えた人が、ドネルの名乗りで引けない。** 配信の画面にその人の絵が出ない。**赤くはならない側の症状** | 次の晩に追いつく（毎回、図鑑ぜんぶを引き直しているため）。急ぐなら `dry_run: false` で手で押す |
 | 呼び名のぶつかり検査（同じ run の後半） | **違う人どうしが OBS の目で同じ字**になったまま晩を越す。投げ銭した人と別人の絵が配信に出る | run が**赤くなる**（1＝見つかった / 2＝数えられていない）。要約の1枚目に次に何を見るかが出る |
+| カードの組み立て（`island_cards.py` / `mintForImage`） | **投げてくれた人に、その日のカードが渡らない。** 写真も台帳も無事なので、画面はふつうに出る——**気づける字がどこにも出ない** | 見張り（`python/card_gap_watch.py`）が同じ晩に**赤くする**（1＝写真はあるのに0枚の日がある / 2＝数えられていない）。直したあとは次の晩に遡って作られる（鍵が決め打ちなので二重にならない） |
 | `collectLiveChat` | 配信中のコメントが溜まらない。**切り抜きの材料が無くなる** | BigQuery 側は翌日の取り込みで入るので、切り抜き以外は影響しない |
 | Doneru のセッション（`_dt`） | `fetch_doneru_donations` が終了コード2で落ちる | 6.4 |
 
@@ -1669,6 +1714,7 @@ commit の前に止め金が2つある。**`residents.ts` の `ACTIVE_FRIENDS` �
 | Doneru のセッションが何日持ったか | `doneru_ingest_runs`。`ok` が続いたあとの最初の `session_expired` がそのセッションの終わり |
 | Doneru のぶんが、いつまで島に入っているか | `islandDoneruHealth/last` の `okDay`（`python/doneru_health.py` が写す）。3日以上古いと `/nordic` の応援の区画に出る。`docs/nordic-fund.md` 9.13 |
 | 寄付の件数・合計・重なり | 同 → `doneru_audit`（**数字だけ出す**） |
+| カードが配られていない日があるか | `投げ銭の台帳を入れ直す` の run の「写真はあるのにカードが0枚の日が無いか」。**日付と件数だけが出る**（誰が取りこぼされたかは出さない） |
 | 焼き込みが新しいか | 4.3 の「どこを見るか」の表 |
 
 **このリポジトリは公開で、Actions のログも誰でも読める。**
