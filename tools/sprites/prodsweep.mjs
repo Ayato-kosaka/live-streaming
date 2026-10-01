@@ -53,7 +53,8 @@
  *    `/island/<章>/streams` の4面を足した）
  * 2. **リポジトリの `site/app` の下の `page.tsx` ぜんぶ** — `[` を含む道（動く段）を除いた
  *    静的な道。sitemap に載っていない7面がここで出る:
- *    `/design` `/me` `/me/desk` `/me/remote` `/me/roulette` `/nordic/photos` `/roulette`
+ *    `/design` `/me` `/me/desk` `/me/remote` `/me/roulette` `/next/new`
+ *    `/nordic/photos` `/roulette`
  * 3. **本番の `/all`（島のなか ぜんぶ）に並んでいる行き先** — 121面。
  *    **動く段の面は、ここからしか出ない。**
  *
@@ -319,6 +320,10 @@ export const ABSENCES = [
       + "**壊れると配信にそのまま映る**ので、見張りの一覧からは外さない（2026-09-19）" },
   { path: "/nordic/photos", lists: ["sitemap", "all"],
     why: "`/cards` へ送るだけの面。行き先そのものは sitemap にも `/all` にも並んでいる（2026-09-19）" },
+  { path: "/next/new", lists: ["sitemap", "all"],
+    why: "`/board` へ送るだけの面。企画を出す口を畳んだので中身が無い"
+      + "（2026-10-01）。面ごと消さないのは、貼られた `?id=…` 付きの URL と"
+      + "`/me` の「続きを書く」が死ぬため。行き先の `/board` は両方に並んでいる" },
 ];
 
 /** 理由として通る形か。**空・短い・日付が無いのどれかなら通さない** */
