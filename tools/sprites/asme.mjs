@@ -123,7 +123,28 @@ const NOTE_TEXTS = [
   "雨の日にしかやらない配信を1本だけ残しておく",
   "帰る前の日に、その旅でいちばん良かった場所へもう一度行く",
 ];
-const THEMES_SEED = ["nordic", "island", "kitchen", "nordic", "island"];
+/**
+ * 付箋の宛先を散らす。**1件目は、いちばん上の宛先（いま歩いている旅）。**
+ *
+ * 掲示板が最初に開く棚がそこなので、**ここが表とずれると、差し込んだ付箋が
+ * 1枚も出ない棚に入る。** 2026-10-01 に旅がアルバニアに変わったあと、
+ * ここは `"nordic"` を直打ちしたままで、`boardsweep.mjs` の
+ * 「あやとの道具」の場面が**2つとも作れなくなっていた**
+ * （1枚も並ばないので、付箋の上の返信・しまうが1つも出ない）。
+ * もう表に無い `"kitchen"` も入っていた。
+ *
+ * 1件目だけ表から取る。**取れなかったら黙って続けない。**
+ */
+const headTheme = () => {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "content", "themes.ts"),
+    "utf8",
+  );
+  const m = src.slice(src.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/);
+  if (!m) throw new Error("content/themes.ts から1件目の宛先の id が読めなかった");
+  return m[1];
+};
+const THEMES_SEED = [headTheme(), "island", "hello", headTheme(), "island"];
 /* 何枚あるところを測るか。**0 / 3 / 40 / 200 を差し替えて撮る**
    （データが溜まったときに壊れないかを見るため）。既定は本番に近い20枚。
    20枚を超えるぶんは同じ文を繰り返して水増しする。 */
@@ -159,9 +180,12 @@ const MINE = {
 const ALL_N = Math.max(0, NOTE_N - 3);
 const ALL = {
   notes: (NOTE_N === 0 ? [] : [
-    { id: "b1", theme: "nordic", text: "友達へのプレゼントを決める", by: "まこも", hearts: 2, byOwner: false, createdAt: ago(1) },
+    /* 1枚目は**いちばん上の宛先**（`THEMES_SEED[0]`）。掲示板が最初に開く棚に
+       1枚も無いと、付箋の上に付く道具（返信・しまう・リンク）がどれも出ない。
+       **リンクつきを1枚入れておく**（`safeLink` が通す `https` のものだけ）。 */
+    { id: "b1", theme: THEMES_SEED[0], text: "友達へのプレゼントを決める", by: "まこも", hearts: 2, byOwner: false, link: "https://www.openstreetmap.org/#map=13/41.33/19.82", createdAt: ago(1) },
     { id: "b2", theme: "island", text: "LINEのグループを作ってほしい", by: "のり", hearts: 1, byOwner: false, createdAt: ago(2) },
-    { id: "b3", theme: "kitchen", text: "現地の粉でおやき", by: "", hearts: 0, byOwner: false, createdAt: ago(3) },
+    { id: "b3", theme: THEMES_SEED[0], text: "現地の粉でおやき", by: "", hearts: 0, byOwner: false, createdAt: ago(3) },
   ].slice(0, NOTE_N)).concat(
     Array.from({ length: ALL_N }, (_, i) => [NOTE_TEXTS[i % NOTE_TEXTS.length] + (i >= NOTE_TEXTS.length ? `（${Math.floor(i / NOTE_TEXTS.length) + 1}回目）` : ""), i]).map(([text, i]) => ({
       id: `c${i + 1}`,

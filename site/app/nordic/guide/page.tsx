@@ -1,3 +1,4 @@
+import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
@@ -107,7 +108,7 @@ export default function NordicGuidePage() {
     <PageShell
       current="next"
       crumbs={[
-        { label: "これから", href: "/next" },
+        crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },
         { label: "旅のしおり" },
       ]}

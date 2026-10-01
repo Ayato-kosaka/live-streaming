@@ -72,7 +72,13 @@ export default function NextUp() {
   const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? BUILT_AT) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
-  const ahead = rest.length + 1;
+  /* **これから分を、正直に数える。** `+1` は `plan` のぶんだが、`plan` は
+     まだ来ていない企画が無くなると**終わった企画を返す**（`nextPlan()` の
+     受け。すぐ下の `NowLive.tsx` に同じ注がある）。そのまま足すと、
+     これから分が 0 の日に「これからの予定 1件」と出る。
+     `rest` と同じものさしで `plan` も見る（`docs/island-standards.md` 16章）。 */
+  const planAhead = (planDaysLeft(plan, today ?? BUILT_AT) ?? -1) >= 0;
+  const ahead = rest.length + (planAhead ? 1 : 0);
 
   return (
     <section className="nextup">
@@ -106,11 +112,13 @@ export default function NextUp() {
       {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
           「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。 */}
       <Link className="nextup-all" href="/next">
+        {/* **0件のときに「これからの予定」と言わない。**
+            字は中身から作る（`docs/island-standards.md` 16章）。 */}
         <span>
-          <b>これからの予定を、ぜんぶ見る</b>
+          <b>{ahead > 0 ? "これからの予定を、ぜんぶ見る" : "企画を、ぜんぶ見る"}</b>
           <i>付箋を貼って、行き先に口を出せます</i>
         </span>
-        <em>{ahead}件</em>
+        {ahead > 0 && <em>{ahead}件</em>}
       </Link>
     </section>
   );

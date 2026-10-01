@@ -21,9 +21,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
     // その日いてくれた人に渡る1枚（#173）。誰でも見られる面
     "/cards",
-    // 企画のページを書くところ。**ログイン必須をやめた**ので（#161）、
-    // 誰でも入れる面になった。索引から外す理由がなくなっている。
-    "/next/new",
+    // 「企画のページを作る」（`/next/new`）は並べない（2026-10-01）。
+    // 視聴者さんが企画を出す道を畳んで、いまは `/board` へ送るだけの1枚
+    // （`robots: index: false`）。索引に出すと、検索から来た人が送り返される。
     // これからの大きい企画。専用ページを持つものはここに足す。
     "/nordic", "/nordic/guide",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている

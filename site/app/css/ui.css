@@ -865,4 +865,3 @@
 .mp-tab.is-on .mp-tab-s { color: var(--ink); }
 
 /* 出ていないほうの面は、背も持たない */
-.bd-pane[hidden] { display: none; }

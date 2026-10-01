@@ -1,3 +1,4 @@
+import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -264,7 +265,7 @@ export default async function NordicCountryPage({
     <PageShell
       current="next"
       crumbs={[
-        { label: "これから", href: "/next" },
+        crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },
         { label: c.name },
       ]}

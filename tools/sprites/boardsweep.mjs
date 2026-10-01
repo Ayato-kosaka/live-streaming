@@ -15,16 +15,20 @@
  *
  * ## なぜ要るのか
  *
- * 全130面を掃き出す `foldsweep.mjs` は、**畳み（`<details>`）は開くが、
- * 札で切り替える面は開かない。** 掲示板は `.bd-pane` が2つあって
- * **同時に1つしか出ない**ので、出ていないほうの中身は毎回
- * `display:none` として「数えなかったもの」に落ちる。
- * 落ちた数は内訳に出るが、**それが 48px を割っているかどうかは分からない。**
- * つまり「掲示板は割れ0件」は、**片方の札しか見ていない0件**だった
- * （`docs/island-misses.md` #85 と同じ形。あちらは畳み、こちらは札）。
+ * 全130面を掃き出す `foldsweep.mjs` は、**その面が「どう返されたか」で
+ * 変わるところを見ない。** 掲示板の押しどころは、口が返した中身で出入りする
+ * ——読めなかった日・返ってこない日・0枚の日・あやとが開いた日で、
+ * 画面にあるものがそれぞれ違う。差し込み無しの1回では、
+ * **視聴者さんが書く欄が1つも出ない姿**しか測れない。
  *
- * **force では開かない。** `hidden` を外して両方いっぺんに出すと、
- * 誰も見ていない姿を測ることになる。**実際に札を押して、出た姿で測る。**
+ * ## 札は無くなった（2026-10-01）
+ *
+ * 前はここに「これやって（付箋）」と「1日つかう企画」の2枚の札があって、
+ * `.bd-pane` の出ていないほうが毎回「数えなかったもの」に落ちていた
+ * （`docs/island-misses.md` #85 と同じ形）。**視聴者さんが企画を出す道を
+ * 畳んで、掲示板は付箋ひとつになった**ので、札を押し分けるところは消えた。
+ * 2状態の面として残っているのはトップの「今日の島」（`.today-fold`）だけで、
+ * 自己確認（`PROBE=1`）の仕込みはそちらへ入れる。
  *
  * ## 場面の作りかた
  *
@@ -45,10 +49,9 @@
  *
  * 2本立てで確かめる。**片方だけでは足りない。**
  *   1. `hitbox.mjs` の仕込み（畳みの中の 40px が割れに挙がるか）
- *   2. **この道具のための仕込み**。出ていないほうの `.bd-pane` に 40px を入れて、
- *      **企画の札の場面では挙がらず、付箋の札の場面では挙がる**ことを見る。
- *      これが「札を押して中を見にいけている」ことの、ただ一つの証拠になる。
- *      同じものを `/` の `.today-fold` にも入れる（閉じている／開いた の対）。
+ *   2. **この道具のための仕込み**。`/` の閉じた `.today-fold` に 40px を入れて、
+ *      **閉じている場面では挙がらず、開いた場面では挙がる**ことを見る。
+ *      これが「中を見にいけている」ことの、ただ一つの証拠になる。
  *
  * 出るもの: /tmp/boardsweep/<scene>-<幅>.png と report.json、画面のまとめ。
  */
@@ -76,17 +79,14 @@ const tap = async (p, sel, opts = {}) => {
   await l.nth(opts.nth ?? 0).click({ timeout: 5000 });
   await p.waitForTimeout(opts.wait ?? 700);
 };
-const toNote = (p) => tap(p, ".mp-tab", { text: "付箋をはる", wait: 900 });
-/* **出ているほうの札の中だけを押す。** 出ていないほうの `.bd-pane` にも
-   同じ形の押しどころ（`.longer` `.nt-bin`）があって、素の `.first()` は
-   そちらを掴む。掴んだ先は `display:none` なので押せず、**押せなかった場面が
-   前の場面のまま測られる**（実際に「付箋の あと◯枚だす」と「しまったものを
-   見る」の2場面が、押す前と1バイト違わない絵になっていた）。 */
-const IN = ".bd-pane:not([hidden]) ";
+/* 掲示板の札は無くなったので、**出ているほうを選ぶ必要がなくなった**
+   （2026-10-01。前は `.bd-pane:not([hidden])` を頭に付けないと、隠れている
+   札の中の同じ形の押しどころを掴んで、押せないまま前の場面を測っていた）。
+   トップの「今日の島」だけ、まだ畳みで出入りする。 */
 /** 「あと◯枚だす」を、出し切るまで押す */
 const pushLonger = async (p) => {
   for (let i = 0; i < 6; i++) {
-    const b = p.locator(`${IN}.longer`).first();
+    const b = p.locator(".longer").first();
     if (!(await b.count())) break;
     if (/たたむ/.test(await b.innerText())) break;
     await b.click({ timeout: 5000 });
@@ -106,136 +106,87 @@ const pushLonger = async (p) => {
  * want … その場面になった印。**出ていなければ測らない**                 *
  * ------------------------------------------------------------------ */
 const SCENES = [
-  /* ---- 口が落ちている日。**旧の掃き出しが見ていたのはここだけ** ---- */
+  /* ---- 口が落ちている日。**差し込み無しの1回が見ていたのはここだけ** ---- */
   {
-    id: "plan-down", page: "/board", seed: "none",
-    say: "企画の札（着いたまま）／口が落ちている",
-    want: '.bd-pane:not([hidden]) .blank.is-off',
-  },
-  {
-    id: "note-down", page: "/board", seed: "none", act: toNote,
-    say: "付箋の札を押した／口が落ちている ← 旧で測れなかった14個はここ",
-    want: '.bd-pane:not([hidden]) .nb-tabs',
+    id: "note-down", page: "/board", seed: "none",
+    say: "口が落ちている（読み直す札だけが出る）",
+    want: ".blank.is-off",
   },
   /* ---- 返ってこない日。押しどころは出ない（骨だけ）が、表には要る ---- */
   {
-    id: "plan-wait", page: "/board", seed: "wait", nowait: true,
-    say: "企画の札／まだ返ってきていない",
-    want: ".bd-list.is-wait",
-  },
-  {
-    id: "note-wait", page: "/board", seed: "wait", nowait: true, act: toNote,
-    say: "付箋の札／まだ返ってきていない",
+    id: "note-wait", page: "/board", seed: "wait", nowait: true,
+    say: "まだ返ってきていない（灰色の骨）",
     want: ".nx-notes.is-wait",
   },
   /* ---- 口が生きている日（入っていない人）。ここがいちばん多い姿 ---- */
   {
-    id: "plan", prod: true, page: "/board", seed: "ok",
-    say: "企画の札／並んでいる（入っていない人）",
-    want: ".bd-write textarea",
+    id: "note", prod: true, page: "/board", seed: "ok",
+    say: "並んでいる（入っていない人）。書く欄は開いて出る",
+    want: ".nt-write textarea",
   },
   {
-    id: "plan-ask", page: "/board", seed: "ok", poll: true,
-    say: "企画の札／島でおたずねを押してきた人",
+    id: "note-ask", page: "/board", seed: "ok", poll: true,
+    say: "島でおたずねを押してきた人（書く欄の中に橋が出る）",
     want: ".bd-bridge-go",
   },
   {
-    id: "plan-posted", page: "/board", seed: "ok",
-    say: "企画の札／出した直後",
+    id: "note-blank", prod: true, page: "/board", seed: "ok",
+    say: "1枚も貼られていない棚（終わった宛先）を選んだ",
+    /* **終わった宛先を選ぶ。** 畳みの中の札を押すと、読む先だけが動く
+       （書く先は生きている宛先のまま）。行き先を持つ宛先なので、
+       ここでだけ「この話をしている場所へ」が出る。
+
+       **先に畳みを開く。** 閉じた `<details>` の中は
+       `content-visibility: hidden` で、`getClientRects()` は前の版の箱を
+       返すのに、その場所には別のものが乗っている。開かずに押すと
+       **隣の札を押して、場面が作れたことにして測る**（`CLAUDE.md`
+       「畳んだ中の絵を数えない」と同じ形）。 */
     act: async (p) => {
-      await p.locator(".bd-write textarea").fill("島に温泉を作る回をやってほしい");
-      await tap(p, ".bd-write .bbtn", { wait: 1200 });
+      await p.evaluate(() => {
+        for (const d of document.querySelectorAll("details.fold"))
+          if (d.querySelector(".nb-tabs")) d.open = true;
+      });
+      await p.waitForTimeout(400);
+      await tap(p, ".nb-tab", { text: "ポーランド" });
     },
-    want: ".bd-done-go",
+    want: ".blank", wantText: "まだ1枚も貼られていません",
   },
   {
-    id: "plan-empty", page: "/board", seed: "empty",
-    say: "企画の札／読めた上で1件も無い",
-    want: ".bd-empty-go",
-  },
-  {
-    id: "plan-mine", page: "/board", seed: "ok", mine: true,
-    say: "企画の札／自分が出したものだけ",
-    act: (p) => tap(p, `${IN}.bsort button`, { text: "じぶんの" }),
-    want: ".bsort button.is-on",
-  },
-  {
-    id: "plan-longer", prod: true, page: "/board", seed: "ok",
-    say: "企画の札／「あと◯件だす」を押し切った",
+    id: "note-longer", prod: true, page: "/board", seed: "ok",
+    say: "「あと◯枚だす」を押し切った",
     act: pushLonger,
-    want: `${IN}.longer`, wantText: "たたむ",
+    want: ".longer", wantText: "たたむ",
+  },
+  {
+    id: "note-empty", page: "/board", seed: "empty",
+    say: "読めた上で0枚（書く欄は開いているので、開く札は出ない）",
+    want: ".blank", wantText: "まだ1枚も貼られていません",
   },
   /* ---- 入っている人 ---- */
   {
-    id: "plan-login", page: "/board", seed: "login",
-    say: "企画の札／入っている人（名前の欄が札になる・ログインの畳みが消える）",
+    id: "note-login", page: "/board", seed: "login",
+    say: "入っている人（名前の欄が札になる・ログインの畳みが消える）",
     want: ".bin-locked",
   },
   /* ---- あやと ---- */
   {
-    id: "plan-owner", page: "/board", seed: "admin",
-    say: "企画の札／あやと（段を動かす・しまう が出る）",
-    want: ".bd-own .nt-obtn",
-  },
-  {
-    id: "plan-owner-open", page: "/board", seed: "admin",
-    say: "企画の札／あやとが「段を動かす」を押した",
-    act: (p) => tap(p, `${IN}.bd-own .nt-obtn`, { text: "段を動かす" }),
-    want: ".bd-own .nt-obox select",
-  },
-  {
-    id: "plan-owner-bin", page: "/board", seed: "admin",
-    say: "企画の札／あやとが「しまったものを見る」を押した",
-    act: (p) => tap(p, `${IN}.nt-bin`, { wait: 1500 }),
-    want: `${IN}.nt-bin`, wantText: "出ているものに戻る",
-  },
-  /* ---- 付箋の札 ---- */
-  {
-    id: "note", prod: true, page: "/board", seed: "ok", act: toNote,
-    say: "付箋の札／並んでいる（入っていない人）",
-    want: ".nt-open",
-  },
-  {
-    id: "note-write", prod: true, page: "/board", seed: "ok",
-    say: "付箋の札／書く欄をひらいた",
-    act: async (p) => { await toNote(p); await tap(p, `${IN}.nt-open`); },
-    want: ".nt-write textarea",
-  },
-  {
-    id: "note-blank", prod: true, page: "/board", seed: "ok",
-    say: "付箋の札／1枚も貼られていない棚を選んだ",
-    act: async (p) => { await toNote(p); await tap(p, `${IN}.nb-tab`, { text: "ポーランド" }); },
-    want: ".blank-go",
-  },
-  {
-    id: "note-longer", prod: true, page: "/board", seed: "ok",
-    say: "付箋の札／「あと◯枚だす」を押し切った",
-    act: async (p) => { await toNote(p); await pushLonger(p); },
-    want: `${IN}.longer`, wantText: "たたむ",
-  },
-  {
-    id: "note-down-ok", page: "/board", seed: "empty", act: toNote,
-    say: "付箋の札／読めた上で0枚",
-    want: ".blank-go",
-  },
-  {
-    id: "note-owner", page: "/board", seed: "admin", act: toNote,
-    say: "付箋の札／あやと（返信する・しまう が出る）",
+    id: "note-owner", page: "/board", seed: "admin",
+    say: "あやと（返信する・しまう が出る）",
     want: ".nt-own .nt-obtn",
   },
   {
     id: "note-owner-open", page: "/board", seed: "admin",
-    say: "付箋の札／あやとが「返信する」を押した",
-    act: async (p) => { await toNote(p); await tap(p, `${IN}.nt-own .nt-obtn`, { text: "返信" }); },
+    say: "あやとが「返信する」を押した",
+    act: (p) => tap(p, ".nt-own .nt-obtn", { text: "返信" }),
     want: ".nt-own .nt-obox textarea",
   },
   {
     id: "note-owner-bin", page: "/board", seed: "admin",
-    say: "付箋の札／あやとが「しまったものを見る」を押した",
-    act: async (p) => { await toNote(p); await tap(p, `${IN}.nt-bin`, { wait: 1500 }); },
-    want: `${IN}.nt-bin`, wantText: "貼ってあるものに戻る",
+    say: "あやとが「しまったものを見る」を押した",
+    act: (p) => tap(p, ".nt-bin", { wait: 1500 }),
+    want: ".nt-bin", wantText: "貼ってあるものに戻る",
   },
-  /* ---- トップの畳み（`.today-fold`）。同じ形がもう1つある ---- */
+  /* ---- トップの畳み（`.today-fold`）。**島に残った2状態の面はここだけ** ---- */
   {
     id: "today-shut", prod: true, page: "/", seed: "none",
     say: "トップ／今日の島は閉じたまま",
@@ -258,47 +209,38 @@ const SCENES = [
  * 機械で確かめる。出ていなければ、その分かれ道は測れていない。          *
  * ------------------------------------------------------------------ */
 const BRANCHES = [
-  // Board.tsx
-  ["Board.tsx .bd-pick の札", ".mp-tab", 2, "plan"],
-  ["Board.tsx 名前の欄（入っていない人）", ".bd-write input.bin", 1, "plan"],
-  ["Board.tsx 本文の欄", ".bd-write textarea", 1, "plan"],
-  ["Board.tsx 「出す」", ".bd-write .bbtn", 1, "plan"],
-  ["Board.tsx 書き出しの札", ".nx-seed", 4, "plan"],
-  ["Board.tsx むちゃの証拠（伝説へ）", ".bd-write .chip.link", 5, "plan"],
-  ["Board.tsx ページ1枚で書く", '.bd-write a.tile[href*="/next/new"]', 1, "plan"],
-  ["Board.tsx ログインの畳み（入っていない人）", ".bd-write details.fold summary", 1, "plan"],
-  ["Board.tsx 畳みの中のログイン", ".bd-write .signin-go", 1, "plan"],
-  ["Board.tsx 並べ替え", ".bsort button", 2, "plan"],
-  ["Board.tsx ハート", ".bd-list .vote", 1, "plan"],
-  ["Board.tsx 立ったページへ", ".bd-list .bd-go", 1, "plan"],
-  ["Board.tsx これから／伝説のタイル", 'section.panel a.tile[href="/next"]', 1, "plan"],
-  ["Board.tsx もっと出す", ".longer", 1, "plan"],
-  ["Board.tsx おたずねの橋", ".bd-bridge-go", 1, "plan-ask"],
-  ["Board.tsx 出したあとの「くわしく書く」", ".bd-done-go", 1, "plan-posted"],
-  ["Board.tsx 空の板の「いちばんに出す」", ".bd-empty-go", 1, "plan-empty"],
-  ["Board.tsx 「じぶんの◯」", ".bsort button.is-on", 1, "plan-mine"],
-  ["Board.tsx 自分のものを直す", '.bd-list a.bd-go[href*="/next/new"]', 1, "plan-mine"],
-  ["Board.tsx 読み直す（板）", ".bd-pane:not([hidden]) .blank-go", 1, "plan-down"],
-  ["Board.tsx 入っている人の行き先", '.bd-write a.tile[href="/me"]', 1, "plan-login"],
-  ["Board.tsx あやとの道具", ".bd-own .nt-obtn", 2, "plan-owner"],
-  ["Board.tsx しまったものを見る", ".nt-bin", 1, "plan-owner"],
-  ["Board.tsx 段を動かす（開いた中）", ".bd-own .nt-obox select", 1, "plan-owner-open"],
-  ["Board.tsx 結び付け先の欄", ".bd-own .nt-obox input", 1, "plan-owner-open"],
-  ["Board.tsx 「動かす」", ".bd-own .nt-obox .bbtn", 1, "plan-owner-open"],
-  // Notes.tsx（付箋の札の中）
-  ["Notes.tsx 宛先の札", ".nb-tab", 12, "note"],
-  ["Notes.tsx この話をしている場所へ", ".nb-go", 1, "note"],
-  ["Notes.tsx 書く欄をひらく", ".nt-open", 1, "note"],
+  // Board.tsx（付箋ひとつになったので、ここが持つのは周りだけ）
+  ["Board.tsx むちゃの証拠（伝説へ）", ".chip.link", 5, "note"],
+  ["Board.tsx これからのタイル", 'a.tile[href="/next"]', 1, "note"],
+  ["Board.tsx 伝説のタイル", 'a.tile[href="/legends"]', 1, "note"],
+  ["Board.tsx 畳みの見出し（終わった宛先／ログイン）", "details.fold summary", 2, "note"],
+  ["Board.tsx 畳みの中のログイン", ".signin-go", 1, "note"],
+  // Notes.tsx
+  ["Notes.tsx 書く先の丸札", ".nt-destb", 4, "note"],
+  ["Notes.tsx 終わった宛先の札", ".nb-tab", 10, "note"],
+  /* 名前とリンクで2つ。**1つと書いていた日は、リンクの欄を足しても気づかない** */
+  ["Notes.tsx 名前・リンクの欄", ".nt-write input.bin", 2, "note"],
+  ["Notes.tsx リンクの欄", '.nt-write input[type="url"]', 1, "note"],
+  ["Notes.tsx 本文の欄", ".nt-write textarea", 1, "note"],
+  ["Notes.tsx 「はりだす」", ".nt-write .bbtn", 1, "note"],
   ["Notes.tsx 付箋のハート", ".nt-heart", 1, "note"],
-  ["Notes.tsx もっと出す（付箋）", ".bd-pane:not([hidden]) .longer", 1, "note"],
-  ["Notes.tsx 名前の欄", ".nt-write input.bin", 1, "note-write"],
-  ["Notes.tsx 本文の欄", ".nt-write textarea", 1, "note-write"],
-  ["Notes.tsx 「はりだす」", ".nt-write .bbtn", 1, "note-write"],
-  ["Notes.tsx いちばんに貼る", ".blank-go", 1, "note-blank"],
-  ["Notes.tsx 読み直す（付箋）", ".bd-pane:not([hidden]) .blank-go", 1, "note-down"],
+  ["Notes.tsx 貼られたリンク", ".nt-link", 1, "note"],
+  ["Notes.tsx もっと出す（付箋）", ".longer", 1, "note"],
+  ["Notes.tsx おたずねの橋", ".bd-bridge-go", 1, "note-ask"],
+  /* 行き先を持つ宛先でしか出ない。いま歩いている旅（棚の1件目）はまだ
+     面を持っていないので、**終わった宛先を選んだ場面でだけ**測れる */
+  ["Notes.tsx この話をしている場所へ", ".nb-go", 1, "note-blank"],
+  ["Notes.tsx 読み直す（付箋）", ".blank-go", 1, "note-down"],
+  ["Notes.tsx 入っている人の名前の札", ".bin-locked", 1, "note-login"],
   ["Notes.tsx あやとの道具", ".nt-own .nt-obtn", 2, "note-owner"],
+  ["Notes.tsx しまったものを見る", ".nt-bin", 1, "note-owner"],
   ["Notes.tsx 返信の欄", ".nt-own .nt-obox textarea", 1, "note-owner-open"],
   ["Notes.tsx 「返す」", ".nt-own .nt-obox .bbtn", 1, "note-owner-open"],
+  /* **`.nt-open`（「自分も書く」）は、掲示板では出ない。**
+     あちらは `writeOpen` で書く欄を開いて出すので、開く札がそもそも無い。
+     国や区間の面（`theme` を決め打ちで渡す側）にだけ出るもので、
+     そこは `foldsweep.mjs` が見ている。ここに並べると、
+     **出ないのが正しいものを「出なかった」と毎回赤く出す。** */
   // Today.tsx
   ["Today.tsx 今日の島の札", ".today-tab", 1, "today-shut"],
   ["Today.tsx 畳みの中の行き先", ".today-fold .today-go", 1, "today-open"],
@@ -308,15 +250,18 @@ const BRANCHES = [
 /* ------------------------------------------------------------------ *
  * この道具のための仕込み                                              *
  *                                                                     *
- * 40px を**出ていないほうの中**に置く。企画の札では挙がらず、付箋の札で  *
- * 挙がる——その差だけが「札を押して中を見にいけている」ことの証拠。      *
- * `hitbox.mjs` の仕込み（畳みの中）とは別のものを見ているので、両方要る。 *
+ * 40px を**まだ開いていない畳みの中**に置く。閉じている場面では挙がらず、 *
+ * 開いた場面で挙がる——その差だけが「中を見にいけている」ことの証拠。    *
+ * `hitbox.mjs` の仕込み（`<details>` の中）とは別のものを見ているので、   *
+ * 両方要る。                                                          *
+ *                                                                     *
+ * **入れる先はトップの「今日の島」だけになった**（2026-10-01）。前は     *
+ * 掲示板の出ていない `.bd-pane` にも入れていたが、札を畳んで付箋ひとつに  *
+ * したので、掲示板に「出ていないほう」が無い。                          *
  * ------------------------------------------------------------------ */
 const BD_PROBE = `(() => {
   document.getElementById("bdprobe")?.remove();
-  const host =
-    document.querySelectorAll(".bd-pane")[1] ||   // 掲示板：付箋の札のほう
-    document.querySelector(".today-fold");        // トップ：今日の島の中
+  const host = document.querySelector(".today-fold");   // トップ：今日の島の中
   if (!host) return false;
   const a = document.createElement("a");
   a.id = "bdprobe"; a.href = "/"; a.textContent = "板";
@@ -328,10 +273,11 @@ const BD_PROBE = `(() => {
 })()`;
 const isBdProbe = (r) => r.t === "板";
 
-/* 場面ごとに「仕込みが挙がるべきか」。**出ていないほうに入れてあるので、
-   企画の札・閉じた今日の島では挙がらないのが正しい。** */
-const bdProbeWant = (sc) =>
-  sc.page === "/" ? sc.id === "today-open" : /^note/.test(sc.id);
+/* 場面ごとに「仕込みが挙がるべきか」。**閉じた畳みの中に入れてあるので、
+   閉じたままの場面では挙がらないのが正しい。**
+   入れる先（`.today-fold`）があるのはトップだけなので、掲示板の場面では
+   `bdProbeIn === false`（入れる先が無い）になり、そちらは見ない。 */
+const bdProbeWant = (sc) => sc.id === "today-open";
 
 /* ------------------------------------------------------------------ */
 
@@ -474,11 +420,12 @@ for (const sc of SCENES) {
       return o;
     }, [...new Set(BRANCHES.map(([, s]) => s))]);
 
-    /* 旧の掃き出しが「数えなかった」ぶん。**この場面で出ていない札の中身**を、
-       出どころつきで数える。ここが14の出どころ。 */
+    /* 差し込み無しの1回が「数えなかった」ぶん。**この場面でまだ開いていない
+       畳みの中身**を、出どころつきで数える。開いた場面で同じものが測れたか、
+       あとで突き合わせる。 */
     row.hiddenPane = await p.evaluate((sel) => {
       const out = [];
-      for (const pane of document.querySelectorAll(".bd-pane[hidden], .today-fold[hidden]"))
+      for (const pane of document.querySelectorAll(".today-fold[hidden]"))
         for (const e of pane.querySelectorAll(sel))
           out.push({
             c: e.tagName + (typeof e.className === "string" && e.className.trim() ? "." + e.className.trim().split(/\s+/)[0] : ""),
@@ -511,6 +458,13 @@ for (const sc of SCENES) {
          同じ回に入れると「札の中を見にいけていない」と出る（1280 で実際に出た）。
          いっしょに入れないと確かめられないものでもないので、順に見る。 */
       await delProbe(p);
+      /* **入れる先があるのはトップだけ。** 掲示板には「まだ開いていない畳み」が
+         無い（2026-10-01 に札を畳んで付箋ひとつにした）。入れる先が無い面で
+         「挙がらなかった」を落ちと数えると、自己確認が毎回赤くなって、
+         **ほんとうに見にいけていない回**が埋もれる。 */
+      if (sc.page !== "/") {
+        row.bdProbe = null;
+      } else {
       const want = bdProbeWant(sc);
       /* **入れてすぐ測らない。** トップは板が 0.2 秒かけて開き、島も動いている。
          入れた場所に一瞬だけ何かが乗っていることがあって、そのときだけ
@@ -538,6 +492,7 @@ for (const sc of SCENES) {
           `出ていないほうに入れた 40px は、この場面で ${want ? "挙がるはず" : "挙がらないはず"} → ${got ? "挙がった" : "挙がらなかった"}`,
       };
       await p.evaluate(() => document.getElementById("bdprobe")?.remove());
+      }
     }
 
     const clean = (m) => ({
@@ -608,20 +563,23 @@ function say(report) {
       (missBranch ? "  ← 出なかったぶんは、道具が届いていないのか中身が違うのかを目で確かめる" : ""),
   );
 
-  /* ---- 旧で測れていなかったぶん ---- */
-  console.log("\n■ 旧の掃き出しが数えていなかったぶん（出ていない札の中）");
-  if (!done.some((r) => r.scene === "note-down"))
-    console.log("  （この回は plan-down / note-down を回していないので、突き合わせなし）");
+  /* ---- 開く前に数えていなかったぶん ----
+     **掲示板には札が無くなった**（2026-10-01）ので、2状態で突き合わせられる
+     のはトップの「今日の島」だけ。閉じたままの場面で畳みの中にいた
+     押しどころが、開いた場面でちゃんと測れたかを見る。 */
+  console.log("\n■ 開く前には数えていなかったぶん（まだ開いていない畳みの中）");
+  if (!done.some((r) => r.scene === "today-open"))
+    console.log("  （この回は today-shut / today-open を回していないので、突き合わせなし）");
   for (const W of WIDTHS.map(([w]) => w)) {
-    const base = done.find((r) => r.scene === "plan-down" && r.W === W);
-    const opened = done.find((r) => r.scene === "note-down" && r.W === W);
+    const base = done.find((r) => r.scene === "today-shut" && r.W === W);
+    const opened = done.find((r) => r.scene === "today-open" && r.W === W);
     if (!base || !opened) continue;
     const want = base.hiddenPane || [];
     const got = opened.after.rows.concat(opened.after.skipped);
     const found = want.filter((x) => got.some((g) => g.c === x.c && g.t === x.t));
     console.log(
-      `  幅 ${W}: 出ていない札の中にいた押しどころ ${want.length}個` +
-        ` → 札を押して測れたもの ${found.length}個 / まだ ${want.length - found.length}個`,
+      `  幅 ${W}: 閉じた畳みの中にいた押しどころ ${want.length}個` +
+        ` → 開いて測れたもの ${found.length}個 / まだ ${want.length - found.length}個`,
     );
     for (const x of want) {
       const g = got.find((q) => q.c === x.c && q.t === x.t);
@@ -706,7 +664,8 @@ function say(report) {
     let bad = 0;
     for (const r of done) {
       const v = r.probe, q = r.bdProbe;
-      const ok = (v?.ok ?? false) && (q?.ok ?? false);
+      /* `q === null` は「この面には入れる先が無い」。**落ちではない** */
+      const ok = (v?.ok ?? false) && (q === null ? true : q?.ok ?? false);
       if (!ok) bad++;
       if (!ok || r === done[0]) {
         console.log(`  ${ok ? "○" : "!!"} ${r.scene} ${r.W}`);

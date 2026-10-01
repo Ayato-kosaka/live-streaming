@@ -290,49 +290,15 @@
   .nx-notes.is-wait > li { animation: none; }
 }
 
-/* 書く前に、何を書けばいいのかの見本。押すと入力欄に入る */
-.nx-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
-/* 「書き出しを選ぶ」。--ink-3 は紙の上で 4.25 : 1 しか無く、読ませる字には使わない
-   決まりになっている（`docs/island-review-3.md` 6.2 a）。--ink-2 で 5.6 : 1。 */
-.nx-seeds > span { font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); align-self: center; }
-/* 押すと書き出しが本文に入る札。破線は「厚み1種類」に無い3つ目の合図なので
-   やめて、押せるチップの型（板・厚み4px・48px）にそろえる。 */
-.nx-seed {
-  display: inline-flex; align-items: center;
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
-  transition: transform 0.12s ease;
-}
-.nx-seed:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 
 /* =========================================================
    6. 掲示板
    ここは名前もログインも要らずに貼れる場所。
    だから「書くところ」がいちばん大きく、いちばん明るい。
    ========================================================= */
-.bd-write { position: relative; }
-/* 企画の書く欄だけが持つ「いつごろ」。**これが付箋との違いを言う唯一のもの。**
-   「企画とは配信1本ぶんです」と字で説明する代わりに、欄そのもので言う
-   （`docs/island-standards.md` 6章）。紙の中なので、上の欄との間だけ空ける。 */
-.bd-when { margin-top: var(--sp-3); }
-/* 面のいちばん上に置く札。紙の外にあるので、上の余白は紙と同じだけ取る */
-.bd-pick { margin: var(--sp-4) 0 var(--sp-4); }
-/* **大きい字を、大きい字にする。**
-   `.mp-tab` は札ぜんぶ 11.5px（`--fs-min`）で、添え書きと同じ大きさだった。
-   選ぶところなので、選ぶ言葉（「これやって」「1日つかう企画」）が先に目に入ってほしい。
-   字が5〜7文字なので 390px の札（内側 167px）に 16px でも1行で収まる。
-   **折れないことは測って確かめる**（日本語はどこでも折れるので、
-   長い字に戻すときはここも測り直す）。 */
-.bd-pick .mp-tab-l { font-size: var(--fs-h3); }
+/* **企画の書く欄（`.bd-write`）と、2枚の札（`.bd-pick`）は無くなった**
+   （2026-10-01）。視聴者さんが企画を出す道を畳んで、この面は付箋ひとつに
+   なった。付箋の書く欄は `.nt-write`（下の8章）。 */
 
 /* 島で今夜のおたずねを押してきた人に出る、渡ってきた先の受け口。
    板に留めた紙1枚。押すのは中のボタンだけなので、紙そのものは平ら。 */
@@ -385,102 +351,9 @@
 }
 .bd-count b { font-size: var(--fs-body); color: var(--ink); }
 
-/* 貼れたあとの1行。押しどころは 48px を割らない */
-.bd-done {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  margin: var(--sp-3) 0 0;
-  font-size: var(--fs-note);
-  font-weight: 700;
-  line-height: var(--lh-body);
-  color: var(--ink);
-}
-.bd-done > b { font-weight: 900; }
-.bd-done-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 48px;
-  margin-left: auto;
-  padding: 0 var(--sp-4);
-  border: var(--bw-2) solid var(--frame);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  cursor: pointer;
-}
-.bd-done-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
 
-/* 1件も貼られていないとき。空の板を見せて終わらせず、書く場所へ戻す1手を置く */
-.bd-empty { text-align: center; }
-.bd-empty > p { margin: var(--sp-2) 0 0; }
-.bd-empty-go {
-  margin-top: var(--sp-4);
-  display: inline-flex; align-items: center; gap: var(--sp-2);
-  min-height: 48px;
-  padding: 0 var(--sp-5);
-  border-radius: var(--r-2);
-  border: var(--bw-2) solid var(--frame-dark);
-  background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
-  box-shadow: 0 5px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.5);
-  color: var(--ink);
-  font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.03em;
-  transition: transform 0.13s ease, box-shadow 0.13s ease;
-}
-.bd-empty-go:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
-.bd-empty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
 
-/* 貼られた企画。板に画びょうで留めた紙に見せる */
-.bd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
-.bd-list > li {
-  position: relative;
-  display: flex;
-  gap: var(--sp-3);
-  align-items: flex-start;
-  padding: var(--sp-4) var(--sp-3) var(--sp-3);
-  border-radius: 5px 5px 12px 12px;
-  background: linear-gradient(#fffdf3, #fdf4dd);
-  /* 付箋と同じ理由でぼかす（押せない紙に厚みを付けない） */
-  box-shadow: 2px 5px 3px rgba(120, 90, 40, 0.15);
-}
-/* 取りに行っているあいだの灰色。出てくる紙とまったく同じ形で、色だけ抜く。
-   1.4秒でゆっくり明滅させる（これより速いと落ち着かない） */
-.bd-list.is-wait > li {
-  height: 92px;
-  background: color-mix(in srgb, var(--ink-3) 20%, transparent);
-  box-shadow: none;
-  animation: waitfade 1.4s ease-in-out infinite;
-}
-.bd-list.is-wait > li:nth-child(2) { animation-delay: 0.18s; }
-.bd-list.is-wait > li:nth-child(3) { animation-delay: 0.36s; }
-@keyframes waitfade {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bd-list.is-wait > li { animation: none; }
-}
-.bd-list > li:nth-child(3n + 2) { transform: rotate(-0.35deg); }
-.bd-list > li:nth-child(3n) { transform: rotate(0.3deg); }
-.bd-list .nx-pin { position: absolute; top: -6px; left: 22px; }
-/* いちばん票が集まっているものだけ、赤い枠で前に出す（紙の型の選択と同じ作り） */
-.bd-list > li.is-top { box-shadow: 0 0 0 3px var(--pick), 2px 6px 3px rgba(120, 90, 40, 0.18); }
-.bd-list > li.is-picked { background: linear-gradient(#fffdf0, #fff2c8); box-shadow: 0 0 0 3px var(--gold), 2px 6px 3px rgba(120, 90, 40, 0.18); }
 
-/* 育った企画の「ひとことで言うと」。題の下に、題より小さく置く。
-   ここに本文まで出さない。読ませる場所は、立ったページのほう。 */
-.bd-note {
-  margin: var(--sp-2) 0 0 !important;
-  font-size: var(--fs-note) !important;
-  font-weight: 700 !important;
-  color: var(--ink-2);
-  line-height: var(--lh-note);
-}
 
 /* 紙の上の行き先（育てにいく・立ったページへ）。
    押せるので板。48px の押しどころで厚み 6px（`docs/island-design.md` 3章）。 */
@@ -503,42 +376,10 @@
 }
 .bd-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
 
-/* もう直せない、を言う1行。**押せないので、完全に平ら。**
-   ここに厚みを付けると「押せば直せる」に見える。 */
-.bd-locked {
-  display: block;
-  margin-top: var(--sp-3);
-  font-size: var(--fs-min);
-  font-weight: 700;
-  color: var(--ink-2);
-  line-height: var(--lh-note);
-}
 
-/* 段と Git 側が食い違っている、を言う1行（あやとにだけ出る）。
-   **押せないので平ら。** 直すのはすぐ下の「段を動かす」なので、
-   ここに厚みを付けると押しどころが2つに見える。
-   左の罫だけで、ふつうの添え書きと見分ける。 */
-.bd-mismatch {
-  display: block;
-  margin-top: var(--sp-3);
-  padding-left: var(--sp-3);
-  border-left: var(--bw-2) solid var(--frame);
-  font-size: var(--fs-min);
-  font-weight: 700;
-  color: var(--ink-2);
-  line-height: var(--lh-note);
-}
 
-/* あやとの道具（段を動かす・しまう）。紙の上に並ぶ板なので、行を分けて置く。
-   付箋の `.nt-own` は `.nt-foot` の中にいて `display: contents` で足りていたが、
-   こちらは紙の本文の下に直に付くので、自分で並びを持つ。 */
-.bd-own {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
+/* 企画の段を動かす道具（`.bd-own`）も無くなった。あやとが段を動かすのは
+   じぶんのこと（`/me` の `PlanCare`）だけになっている。 */
 
 /* =========================================================
    7. 紙の型 — 台紙と紙
@@ -1226,7 +1067,7 @@
 /* いま選んでいる棚。**押し込まれたまま**にする
    （`docs/island-design.md` 3-5「押したら沈む」）。
 
-   はじめ `.bsort` にならって朱の細枠を巻いていたが、48px の札を
+   はじめ並べ替えの札にならって朱の細枠を巻いていたが、48px の札を
    ぐるりと1本の輪で囲むと、紙の面でいちばん強い赤になって
    「注意」に見えた。朱は表では「いま選んでいる」だが、
    **細枠と輪では強さが違う。** 色を足さずに、沈めるだけで言う。
@@ -1366,6 +1207,36 @@
   color: #6b5530;
 }
 
+/* 貼られたリンク1本（2026-10-01）。
+   企画の口を畳んだときに、企画にあって付箋に無かったのはこれだけだった。
+
+   **押せるので板・厚み4px・48px**（`docs/island-world.md` 3.4）。付箋の
+   黄色い紙の上に載るので、地は白寄りにして紙との境を出す（返信の
+   `.nt-reply` と同じ考え）。
+
+   **行ぜんぶを取らせる。** 出す字は行き先の名前だけ（`linkLabel`）なので
+   短く、素のままだと 100px ほどの札が本文の下に1つ浮く。紙の幅に合わせると、
+   どこを押せばいいかを探さなくてよくなる。 */
+.nt-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  /* 行き先の名前は切らずに出す。長い宛先は折り返させる
+     （横あふれを作らない。`crawl.mjs` が見ている） */
+  word-break: break-all;
+}
+.nt-link:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+
 /* 付箋の足もと。ハートと、あやとの道具が並ぶ */
 .nt-foot {
   display: flex;
@@ -1376,8 +1247,7 @@
 }
 
 /* ハート。押せるので板・厚み6px・48px（`docs/island-world.md` 3.4）。
-   形は企画のハート（.vote）と同じ羽根。同じ「押して数が動く」ものなので、
-   別の絵にしない。**違うのは、もう一度押すと外れること。** */
+   「押して数が動く」もの。**もう一度押すと外れる。** */
 .nt-heart {
   display: inline-flex;
   align-items: center;
@@ -1423,8 +1293,8 @@
 
 /* 書く欄。**紙そのものを付箋にする。**
    ここはただの箱で、貼られた付箋（`.nx-notes > li`）だけが画びょうの刺さった
-   色紙だった。企画の書く欄（`.bd-write`）も同じただの箱なので、
-   **選び違えた人に、書いているあいだ一度も手ごたえが無かった**
+   色紙だった。書く箱と貼られた紙が別物に見えていたので、
+   **書いているあいだ、どこへ貼ろうとしているのか手ごたえが無かった**
    （あやと 2026-09-30「見た目も同じで使い分けがわかりにくいね」）。
    付箋の紙の色・角の丸み・落ち影・画びょうを、5章の付箋からそのまま持ってくる。
 

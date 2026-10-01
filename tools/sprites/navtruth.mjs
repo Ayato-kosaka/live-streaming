@@ -73,8 +73,20 @@ const TENSED = [
   { re: /行ってきた|やった|終わった|おわった|過去|これまで/, want: "past" },
 ];
 
+/**
+ * **順番の案内は、時制ではない。**
+ *
+ * 「つぎの島」「ひとつ前の島」「いまの島にもどる」は、**並びの中での位置**を
+ * 言っている。章の島は日付順に並んでいるので、過去の島から見た「つぎの島」も
+ * 過去にある。これを時制として読むと、正しい案内を赤くする。
+ *
+ * 「もどる」も同じで、来た道を指しているだけ。
+ */
+const SEQ = /つぎの島|次の島|ひとつ前の島|前の島|もどる|戻る/;
+
 /** 札の時制。無ければ null（数えない）。 */
 export function tenseOf(label) {
+  if (SEQ.test(label)) return null;
   for (const t of TENSED) if (t.re.test(label)) return t.want;
   return null;
 }
@@ -136,10 +148,25 @@ function links(html) {
   return out;
 }
 
+/**
+ * 1面とってくる。
+ *
+ * **手元の書き出しを配っているときは `.html` を足す。**
+ * `python3 -m http.server` は `/board` では返さない（`/board.html` で返す）。
+ * ここを足さずに回したら、**129面のうち大半が「取れなかった」のまま
+ * 終了コード 0 になった。** 嘘が無いのではなく、見ていなかっただけ。
+ * 判定が出ないときに緑を返す道具は、**無いより悪い**
+ * （`docs/island-standards.md` 13章「当座の判定は、まずその判定を疑う」）。
+ */
 async function get(path) {
-  const r = await fetch(`${BASE}${path === "/" ? "/" : path}`, { redirect: "follow" });
-  if (!r.ok) return null;
-  return await r.text();
+  const tries = process.env.DIST ?
+    [path === "/" ? "/index.html" : `${path}.html`, path] :
+    [path];
+  for (const t of tries) {
+    const r = await fetch(`${BASE}${t}`, { redirect: "follow" });
+    if (r.ok) return await r.text();
+  }
+  return null;
 }
 
 // ------------------------------------------------------------------- 対照
@@ -159,6 +186,10 @@ function selftest() {
   ck("「いまどこ」は now", tenseOf("いまどこ"), "now");
   ck("「配信」は時制なし", tenseOf("配信"), null);
   ck("「作った料理」を past と読まない", tenseOf("作った料理"), null);
+  ck("「つぎの島 アルバニア」は順番なので時制なし", tenseOf("つぎの島 アルバニア"), null);
+  ck("「ひとつ前の島 北欧周遊」も時制なし", tenseOf("ひとつ前の島 北欧周遊"), null);
+  ck("「いまの島にもどる」も時制なし", tenseOf("いまの島にもどる"), null);
+  ck("「これから」は、もどるが無ければ future のまま", tenseOf("これから"), "future");
 
   ck("YYYY-MM-DD を拾う", datesIn("…2026-09-06…", T), ["2026-09-06"]);
   ck("M/D を今年として拾う", datesIn("9/6 のお祭り", T), ["2026-09-06"]);
@@ -247,6 +278,12 @@ async function main() {
     }
   }
   console.log(`見た面 ${page.size} / ${paths.length}`);
+  /* **取れなかった面があったら、そこで止める。** 見ていない面のぶんだけ
+     嘘を見落としているので、「嘘なし」と言う資格が無い。 */
+  if (page.size < paths.length) {
+    console.error(`取れなかった面が ${paths.length - page.size} 件あります。数える前に止めます`);
+    process.exit(2);
+  }
 
   // ---- 1. 時制の札が、行き先の中身と合っているか
   const lies = []; const unknown = []; let checked = 0;
