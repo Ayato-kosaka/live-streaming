@@ -815,6 +815,50 @@ const handleOf = (v: unknown): string => {
   return s ? `@${s}`.slice(0, MAX_HANDLE_LEN) : "";
 };
 
+/* ---- 付箋に貼るリンク1本（2026-10-01） ----
+
+   企画にあって付箋に無かったのは**リンクだけ**だったので、そこを足して
+   企画の口を畳んだ。入れ物も口も1本だけで、何本も並べさせない。 */
+
+/** リンクの長さ。ブラウザが実際に通す URL の相場（`clean` に倣って切る） */
+const MAX_LINK_LEN = 2048;
+
+/**
+ * 貼ってよいリンクだけを通す。**通せなければ空を返す。**
+ *
+ * ## 字の長さの話ではなく、安全の話
+ *
+ * ここを通った字は、画面でそのまま `<a href>` になる。`javascript:` が
+ * 通ると、付箋を**読んだ人**のブラウザでその字が走る。付箋はログイン不要で
+ * 誰でも貼れるので、貼る人と読む人が別人であることが前提の口。
+ *
+ * ## なぜ前方一致で済ませないか
+ *
+ * `clean` が先に制御文字を落とす。`java<TAB>script:alert(1)` は
+ * `clean` を抜けた時点で `javascript:alert(1)` になっているし、
+ * 頭の空白も `trim` で消える。**前方一致は「落としたあとの字」に
+ * かけないと意味が無い**ので、落としたあとに `new URL()` で解析して
+ * `protocol` だけを見る。解析できない字（`/foo`・`//evil.com` のような
+ * 相手先の無い書き方）は、そこで落ちる。
+ *
+ * **空は 400 にしない。** リンクは書かなくてよい欄なので、
+ * 「貼らなかった」と「貼れない字だった」を呼ぶ側で分ける。
+ * @param {unknown} v 送られてきた字
+ * @return {string} `http(s)` のリンク。通せなければ空
+ */
+function safeLink(v: unknown): string {
+  const s = clean(v, MAX_LINK_LEN);
+  if (!s) return "";
+  try {
+    /* 第2引数（基準）を渡さない。渡すと相対パスが本物の URL に化けて、
+       島の中へ飛ばすリンクを外から差せる */
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
+  } catch {
+    return "";
+  }
+}
+
 /* ---- スパチャを台帳に入れる（#305） ----
 
    **書類IDが、この仕組みのいちばん大事なところ。** 入り口が3つ
@@ -1186,6 +1230,8 @@ type StickyShape = {
   text: string;
   /** 名乗った名前。名乗っていなければ無い */
   by?: string;
+  /** 貼られたリンク1本。貼っていなければ無い（`safeLink` を通ったものだけ） */
+  link?: string;
   hearts: number;
   /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
   byOwner: boolean;
@@ -1215,6 +1261,9 @@ function stickyShape(d: FirebaseFirestore.QueryDocumentSnapshot): StickyShape {
     theme: (v.theme as string) ?? "",
     text: (v.text as string) ?? "",
     by: (v.by as string) || undefined,
+    /* リンクは**読むときにも通す。** 入れ物に入ったあとで安全の決まりを
+       きつくした日に、古い書類だけが素通りするのを止める（返事と同じ理由） */
+    link: safeLink(v.link) || undefined,
     hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
     byOwner: v.byOwner === true,
     reply: reply || undefined,
@@ -3349,12 +3398,21 @@ export const islandApi = onRequest(
         const theme = clean(body.theme, 40);
         const text = cleanText(body.text, MAX_NOTE_LEN);
         const cid = String(body.cid ?? "");
+        /* 貼ってよいリンクだけ（`safeLink`）。**書かなくてよい欄**なので、
+           空は 400 にしない。字が入っていたのに通らなかったときだけ断る
+           ——黙って捨てると、貼った人の画面からリンクが消えて理由が無い */
+        const sent = clean(body.link, MAX_LINK_LEN);
+        const link = safeLink(sent);
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
           return;
         }
         if (text.length < 2) {
           res.status(400).json({error: "text too short"});
+          return;
+        }
+        if (sent && !link) {
+          res.status(400).json({error: "bad link"});
           return;
         }
         if (!isCid(cid)) {
@@ -3383,6 +3441,10 @@ export const islandApi = onRequest(
         const ref = await NOTES.add({
           theme,
           text,
+          /* 貼られたリンク1本。**無いときは null。** `undefined` を渡すと
+             Firestore がその場で落ちる（`ignoreUndefinedProperties` は
+             入れていない） */
+          link: link || null,
           /* 名乗った名前。ログインしている人は、島に出す名前をそのまま使う。
              **本文に「by まこも」と書かせない**ための欄なので、
              ログインしていない人にも空けてある。 */
@@ -3403,6 +3465,7 @@ export const islandApi = onRequest(
             theme,
             text,
             by: who?.name || clean(body.by, MAX_NAME_LEN) || undefined,
+            link: link || undefined,
             hearts: 0,
             byOwner,
             createdAt: new Date(now).toISOString(),

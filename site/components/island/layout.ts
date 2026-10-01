@@ -94,11 +94,17 @@ export const PLACES: Place[] = [
     id: "next",
     x: 296,
     y: 548,
-    label: "これから",
+    /* **時制を名乗らない。** 「これから」にしていたので、これから分が
+       0件になった日から半月、空の部屋へ案内し続けていた（あやと 2026-10-01
+       「ルーティングが下手すぎ」／`docs/island-standards.md` 16章）。
+       0件になりうる時制は、入口の札に入れない。時制は中身の側が言う。 */
+    label: "企画",
     icon: "tent",
     size: 66,
     href: "/next",
-    blurb: "次にやる企画と、行き先",
+    /* 添え書きにも時制を入れない。看板の字は丸ごと `<a>` の中に入るので、
+       ここに「これから」と書くと札を直した意味が無くなる（見張りが拾う） */
+    blurb: "日にちの決まった企画と、その記録",
     sign: true,
     countdown: true,
   },
@@ -220,6 +226,21 @@ export const DOORS: Spot[] = PLACES;
 export const SPOTS: Spot[] = PLACES.filter((p) => p.sign);
 
 export const placeById = (id: SpotId) => PLACES.find((p) => p.id === id)!;
+
+/**
+ * パンくずの1段。**札を手で書き写さない。**
+ *
+ * 「これから」は、`/nordic` とその下の4面のパンくずに**手書きで5つ**
+ * 複製されていた。島の札を「企画」に直しても、そこだけ古い字が残る——
+ * 実際に残って、見張り（`navtruth.mjs`）が拾った（2026-10-01）。
+ *
+ * **名簿・一覧を手で作らない**（`docs/island-standards.md` 8章）の、
+ * 導線版。ここを通せば、札を1か所直せば島じゅうのパンくずが揃う。
+ */
+export const crumbOf = (id: SpotId) => {
+  const p = placeById(id);
+  return { label: p.label, href: p.href };
+};
 
 /** あやとの立ち位置(初期) */
 export const AYATO_HOME = { x: 646, y: 790 };

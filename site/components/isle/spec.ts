@@ -510,7 +510,9 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       size: 58,
       note: "行きたい場所も、やってほしいことも。",
       board: themesIn(NORDIC_GROUP),
-      more: { label: "島の掲示板へ", sub: "北欧以外の企画も、ここから出せる", href: "/board" },
+      /* **「企画も出せる」と言わない（2026-10-01）。** 押した先は付箋ひとつ。
+         ここの板は北欧あての付箋だけなので、言うのは「ほかの宛先もある」。 */
+      more: { label: "島の掲示板へ", sub: "北欧以外あての付箋も、ここから貼れる", href: "/board" },
     },
   ];
   return {

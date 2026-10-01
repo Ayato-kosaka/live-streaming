@@ -520,6 +520,14 @@ export type Sticky = {
   text: string;
   /** 名乗った名前。名乗っていなければ無い */
   by?: string;
+  /**
+   * 貼られたリンク1本。貼っていなければ無い。
+   *
+   * **`http` / `https` だけ**（サーバー側の `safeLink` が `protocol` を見て
+   * 弾く）。画面でそのまま `<a href>` になるので、`javascript:` が通ると
+   * 付箋を**読んだ人**のブラウザでその字が走る。
+   */
+  link?: string;
   hearts: number;
   /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
   byOwner: boolean;
@@ -572,7 +580,14 @@ export const getArchivedStickies = (token: string, theme?: string) =>
 
 /** 貼る。名前は書かなくていい（ログインしていれば島に出す名前が入る）。 */
 export const postSticky = (
-  p: { theme: string; text: string; by?: string; byOwner?: boolean },
+  p: {
+    theme: string;
+    text: string;
+    by?: string;
+    /** 1本だけ。空なら「貼らなかった」で、断られない */
+    link?: string;
+    byOwner?: boolean;
+  },
   token?: string | null,
 ) =>
   req<{ note: Sticky }>("/stickies", {

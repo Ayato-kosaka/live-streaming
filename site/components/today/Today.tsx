@@ -263,8 +263,11 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
                 代わりの字も置かない。「読みに行けなかった」は中の話なので
                 （`docs/island-design.md` 4章）。 */}
             {noPoll === "ok" && "今夜のおたずねは、まだ出ていない。"}
+            {/* **「企画を貼る」と言わない（2026-10-01）。** 押した先は
+                付箋ひとつになっていて、企画を出す欄はもう無い。
+                行き先の面の名前と同じ字で呼ぶ。 */}
             <Link className="poll-why" href="/board">
-              掲示板に企画を貼る
+              やってほしいことを書く
               <Arrow size={11} />
             </Link>
           </p>

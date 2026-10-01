@@ -26,6 +26,29 @@
  * 場面が作れたかどうかは、呼ぶ側（`boardsweep.mjs`）が印で確かめる。
  */
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * いちばん上の宛先の id を、**表そのものから**取る。
+ *
+ * `content/themes.ts` は TypeScript なので、ここからは `import` できない
+ * （この道具は素の `.mjs`）。`tsc` を回すのは重いので、宛先の表の
+ * 1件目の id を読み出すだけにする。
+ * **取れなかったら黙って続けない。** 差し込んだ付箋が1枚も出ない棚に入って、
+ * 付箋の押しどころを1つも測らないまま場面だけ埋まるのがいちばん危ない。
+ */
+const headTheme = () => {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "content", "themes.ts"),
+    "utf8",
+  );
+  const m = src.slice(src.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/);
+  if (!m) throw new Error("content/themes.ts から1件目の宛先の id が読めなかった");
+  return m[1];
+};
+
 const now = Date.now();
 const ago = (ms) => new Date(now - ms).toISOString();
 const H = 3600000;
@@ -90,10 +113,20 @@ const NOTE_TEXTS = [
   "コインランドリーで洗濯が終わるまでの雑談回",
   "地図を見ずに、聞いた道だけで宿まで帰る",
 ];
-/* **`nordic` に厚く積む。** 掲示板が最初に開く棚がここなので、
-   「あと◯枚だす」も、返信つきの背の高い付箋も、ここでしか出ない。
-   `poland` は空のまま残す（空札「いちばんに貼る」を撮るため）。 */
-const NOTE_THEMES = ["nordic", "nordic", "nordic", "nordic", "nordic", "nordic", "nordic", "island", "island", "kitchen"];
+/* **掲示板が最初に開く棚に厚く積む。** そこは `content/themes.ts` の先頭
+   （いま歩いている旅）で、「あと◯枚だす」も、返信つきの背の高い付箋も、
+   リンクつきの付箋も、その棚でしか出ない。
+
+   **id を直打ちしない（2026-10-01）。** ここは長く `"nordic"` を直打ちして
+   いたが、旅がアルバニアに変わって先頭が入れ替わった日に、差し込んだ10枚が
+   **1枚も出ない棚に入った**（画面は「まだ1枚も貼られていません」になり、
+   付箋の押しどころが1つも測れないまま場面だけ埋まる）。`kitchen` という
+   宛先も、もう表に無い。先頭は表から取る。
+
+   終わった宛先（`poland` など）は空のまま残す——空の棚を選んだ場面を
+   撮るため。 */
+const HEAD = headTheme();
+const NOTE_THEMES = [HEAD, HEAD, HEAD, HEAD, HEAD, HEAD, HEAD, "island", "island", "hello"];
 
 export const NOTES = NOTE_TEXTS.map((text, i) => ({
   id: `n${i + 1}`,
@@ -102,6 +135,13 @@ export const NOTES = NOTE_TEXTS.map((text, i) => ({
   by: BY[i % BY.length],
   hearts: [1, 9, 0, 3, 22, 0, 5, 2, 0, 11][i % 10],
   byOwner: i === 0,
+  /* リンクつきの付箋（2026-10-01）。**はじめの6枚の中に入れる。**
+     付箋は6枚だけ出して残りは押して出す（`Longer`）ので、7枚目以降に
+     付けると、押して出すまでリンクの札が1つも画面に無く、
+     **測ったつもりで測れない**（結び付けた企画と同じ轍）。
+     `link` は `https` のものだけ——口（`safeLink`）が通すのはそれだけなので、
+     本番で起こりえない形を差し込まない。 */
+  ...(i === 1 ? { link: "https://www.openstreetmap.org/#map=14/54.68/25.27" } : {}),
   // 3枚に1枚は返事つき。**返事のある付箋がいちばん背が高い**
   ...(i % 3 === 0 ? { reply: "やります。1日目から数えてみる。", repliedAt: ago((i + 1) * 24 * H) } : {}),
   createdAt: ago((i + 1) * 24 * H),
@@ -163,7 +203,7 @@ export async function seedBoard(ctx, opts = {}) {
     if (path === "/stickies" && method === "POST") {
       let body = {};
       try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
-      return json(r, { note: { id: "n-new", theme: body.theme || "nordic", text: body.text || "貼ったもの", by: body.by || "", hearts: 0, byOwner: false, createdAt: new Date().toISOString() } });
+      return json(r, { note: { id: "n-new", theme: body.theme || "nordic", text: body.text || "貼ったもの", by: body.by || "", link: body.link || undefined, hearts: 0, byOwner: false, createdAt: new Date().toISOString() } });
     }
     if (/\/heart$/.test(path)) return json(r, { hearts: 1, on: true });
     if (/\/status$/.test(path)) return json(r, { plan: PLANS[0] });

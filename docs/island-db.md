@@ -1214,6 +1214,7 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。企画（上）と同じ理由で、欄ごと落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
 | `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
+| `link` | string | 貼られたリンク。**`http(s)` だけ**（`safeLink`）・2048字。無ければ空 |
 | `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |

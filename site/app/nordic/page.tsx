@@ -1,3 +1,4 @@
+import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
@@ -163,7 +164,7 @@ export default async function NordicPage() {
   );
 
   return (
-    <PageShell current="next" crumbs={[{ label: "これから", href: "/next" }, { label: "北欧ヒッチハイク" }]}>
+    <PageShell current="next" crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
       <TripNow
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}

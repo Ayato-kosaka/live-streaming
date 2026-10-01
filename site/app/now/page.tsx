@@ -1,3 +1,4 @@
+import { placeById } from "@/components/island/layout";
 import type { Metadata } from "next";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { SayRoom } from "@/components/ui/Say";
@@ -70,9 +71,14 @@ export default function NowPage() {
           <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
             <Link className="pap-go" href="/next">
               <img src="/sprites/tent.webp" alt="" />
+              {/* **札も添え書きも、島の表（`layout.ts`）から引く。**
+                  ここに手で「これから」と書いていたので、島の札を直しても
+                  この1枚だけ古い字が残った（`navtruth.mjs` が拾った）。
+                  入口の札に時制を入れない決まりは
+                  `docs/island-standards.md` 16章。 */}
               <span>
-                <b>これから</b>
-                <i>次に行くところ、次にやること。付箋も貼れる</i>
+                <b>{placeById("next").label}</b>
+                <i>{placeById("next").blurb}</i>
               </span>
               <Icon name="right" size={14} />
             </Link>

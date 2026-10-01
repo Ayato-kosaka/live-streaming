@@ -760,8 +760,7 @@
    板の型では「窓の上ぶちにはめた木の札」。
    幅いっぱいの帯にすると Web の見出しに戻ってしまうので、文字の幅に合わせて、
    窓の縁をまたがせる。ここが「ゲームの窓」に見えるかどうかの分かれ目。 */
-.panel > h2,
-.panel > .bhead > h2 {
+.panel > h2 {
   position: relative;
   z-index: 1;
   width: fit-content;
@@ -792,15 +791,12 @@
   max-width: calc(100% + 10px);
 }
 @media (min-width: 720px) {
-  .panel > h2,
-  .panel > .bhead > h2 { padding: var(--sp-3) var(--sp-5) var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4); }
+  .panel > h2 { padding: var(--sp-3) var(--sp-5) var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4); }
   .panel > h2:first-child { margin: calc(-1 * var(--sp-6)) 0 var(--sp-4) var(--sp-2); max-width: 100%; }
 }
 /* 札の両端に打ってある留め具。片側だけだと箇条書きの点に見える */
 .panel > h2::before,
-.panel > h2::after,
-.panel > .bhead > h2::before,
-.panel > .bhead > h2::after {
+.panel > h2::after {
   content: "";
   flex: none;
   width: 7px; height: 7px;
@@ -1297,7 +1293,7 @@ a.chip:active, button.chip:active, .chip.link:active {
   /* 桃の上の白い字は 2.6 : 1。前は面の上半分に桃を残していたが、
      そこがまだ 3.9 : 1 だった。このサイトでいちばん押してほしいボタンなので、
      色より読めるほうを取って面ぜんぶを濃い桃にする（4.8 : 1）。
-     桃そのものは、隣に並ぶ .vote の羽根と、押したときの手ごたえに残る。 */
+     桃そのものは、隣に並ぶハート（`.nt-heart`）の羽根と、押したときの手ごたえに残る。 */
   background: linear-gradient(180deg,
     var(--accent-deep) 0%,
     color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
@@ -1318,54 +1314,12 @@ a.chip:active, button.chip:active, .chip.link:active {
   box-shadow: none;
   transform: none;
 }
-.bhead { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-3); flex-wrap: wrap; }
-.bsort { display: flex; gap: var(--sp-1); }
-.bsort button {
-  font-size: var(--fs-note); font-weight: 900;
-  /* 指で押せる最小 48px（island-design 3-2）。38px にしていたが、
-     実測すると当たりも 42px しか無く、決まりを割っていた。 */
-  padding: var(--sp-2) var(--sp-4); min-height: 48px;
-  border-radius: var(--r-1);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  border: var(--bw-1) solid var(--frame);
-  /* 48px の札なら厚みは6px（island-design 3章）。 */
-  box-shadow: var(--pg-lit), 0 6px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
-}
-/* いま選んでいる並び。塗りは変えず、朱の細枠だけ（ac-reference ⑦-6）。 */
-/* 選ばれている札は、色ではなく**沈んだまま**で言う（island-design.md 3-5）。
-   前は朱の輪で囲っていたが、同じ面の付箋の棚も朱の輪にしたところ、
-   48px の札をぐるりと囲む輪は細枠と同じ色でも別物の強さになり、
-   紙の面でいちばん強い赤が2種類の意味で並ぶことになった。
-   `:active` と同じ形なので、合図を1つも増やしていない。 */
-.bsort button.is-on {
-  transform: translateY(6px);
-  box-shadow: var(--pg-lit);
-}
-.bsort button:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
-/* 提案の並べ方そのものは live.css の .bd-list が持っている。
-   ここには、どのページでも同じ形をしているハートの札だけを置く。
-   「さんせい」（押しっぱなし）から「ハート」（もう一度押すと外れる）に
-   変わったが（#161）、形は付箋と同じ羽根のまま。数え方が違うだけで、
-   やっていることは「押して数が動く」で同じなので、別の絵にしない。 */
-.vote {
-  flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 54px; min-height: 54px;
-  background: var(--paper); border: var(--bw-2) solid var(--frame);
-  border-radius: var(--r-1); padding: var(--sp-2) var(--sp-1);
-  box-shadow: var(--pg-lit), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
-  transition: transform 0.12s ease;
-}
-.vote svg { width: 20px; height: 19px; color: var(--accent); }
-/* もう押したもの。塗りは変えず朱の細枠だけ（ac-reference ⑦-6）。
-   厚みは押せる合図なので、押したあとも同じだけ残す。 */
-.vote.is-on { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark)); }
-.vote.is-on svg { color: var(--accent-deep); }
-.vote:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
-.vote b { font-size: var(--fs-body); font-weight: 900; }
-.idea-body { min-width: 0; flex: 1; }
-.idea-body p { margin: 0; font-size: var(--fs-body); line-height: 1.8; font-weight: 600; word-break: break-word; }
-.idea-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
-.idea-meta em { font-style: normal; color: var(--frame-deep); }
+/* **一覧の頭（`.bhead`）と並べ替えの札（`.bsort`）は無くなった**
+   （2026-10-01）。持っていたのは企画の一覧だけで、視聴者さんが企画を出す道を
+   畳んだので、どの画面も吐かなくなった。付箋は宛先の札で絞る（`.nt-destb`）。 */
+/* **企画の「さんせい」（`.vote`）と1件の中身（`.idea-body` / `.idea-meta`）は
+   無くなった**（2026-10-01）。視聴者さんが企画を出す道を畳んだので、
+   掲示板に並ぶのは付箋だけ。ハートは `.nt-heart`（`live.css`）が持っている。 */
 
 .scroll-cue {
   position: absolute;

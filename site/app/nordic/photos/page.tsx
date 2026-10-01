@@ -1,3 +1,4 @@
+import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
@@ -35,7 +36,7 @@ export default function NordicPhotosPage() {
     <PageShell
       current="next"
       crumbs={[
-        { label: "これから", href: "/next" },
+        crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },
         { label: "旅の写真" },
       ]}

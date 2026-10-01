@@ -43,6 +43,21 @@ import { Pin } from "./art";
  * **決まった状態で来た人に、もう一度テーマを選ばせない。** 国のページから
  * 書く人は、もうその国の話をしている。
  *
+ * ## リンク1本（2026-10-01）
+ *
+ * あやとの言葉:
+ *
+ * > 企画と付箋がわかりにくいので 企画は消しましょう。（略）
+ * > リンク系は、付箋にも張れるようにすると統合できるかも？
+ *
+ * 企画にあって付箋に無かったのは**リンクだけ**だった。足したので、
+ * 掲示板は付箋ひとつになった（`Board.tsx`）。
+ *
+ * **1本だけ。** 何本も貼れる欄にすると、本文より長い付箋ができる。
+ * 出す字は行き先の名前だけにする（`linkLabel`。素の URL を出すと、
+ * 120字の本文が 2,048字の URL に埋まる）。
+ * 通してよい字は `okLink` で、**守りはサーバー側**（`safeLink`）。
+ *
  * ## ハート
  *
  * ログイン不要で、もう一度押すと外れる。押したかどうかは端末に覚えておく
@@ -89,6 +104,43 @@ const STEP = 12;
 
 /** 付箋の長さ。サーバー側の `MAX_NOTE_LEN` と同じ。 */
 const MAX = 120;
+/** リンクの長さ。サーバー側の `MAX_LINK_LEN` と同じ。 */
+const MAX_LINK = 2048;
+
+/**
+ * 貼ってよいリンクか。**サーバー側の `safeLink` と同じ規則を、わざと両方に置く。**
+ *
+ * こちらは「断られる前に言う」ためだけのもの。**守りはサーバー側**で、
+ * ここを抜かれても `POST /stickies` が 400 を返す（画面の判定は、
+ * 画面を通らない相手には効かない）。
+ *
+ * `javascript:` を弾くのに前方一致を使わないのは、サーバー側と同じ理由
+ * ——頭の空白やタブで姿を変えられるから。`new URL()` に解かせて
+ * `protocol` だけを見る。基準（第2引数）は渡さない。渡すと `/foo` が
+ * 本物の URL に化けて、島の中へ飛ばすリンクが通る。
+ */
+function okLink(s: string): boolean {
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * リンクに出す札の字。**URL をそのまま出さない。**
+ *
+ * 付箋は120字で、URL は2048字まで入る。素で出すと、1枚が URL で埋まって
+ * 本文が読めなくなる。出すのは行き先の名前（`hostname`）だけにする。
+ */
+function linkLabel(href: string): string {
+  try {
+    return `${new URL(href).hostname.replace(/^www\./, "")}を見る`;
+  } catch {
+    return "リンクを見る";
+  }
+}
 
 type Props = {
   /** テーマを選ばせる。掲示板はこちら */
@@ -100,23 +152,30 @@ type Props = {
    * 折りたたみの中に置くときに使う。紙の上に紙は重ねない。
    */
   bare?: boolean;
-  /** 見出し。省略すると「みんなの付箋」 */
-  title?: string;
+  /**
+   * 見出し。省略すると「みんなの付箋」。
+   *
+   * **`null` で見出しを出さない。** 掲示板（`/board`）は面の題が
+   * 「やってほしいこと」で、その下にもう一度同じものの名前を置くと、
+   * 同じ場所に名前が2つ並ぶ。
+   */
+  title?: string | null;
+  /**
+   * 島でおたずねを押してきた人の、押した1枚。
+   *
+   * **押した直後に「理由も書ける？」でここへ来る**（`docs/island-play.md` 7章）。
+   * 着いた先がまっさらな入力欄だと、何の話をしていたのかが消えている。
+   * 押した札をもう一度見せて、その続きから書けるようにする。
+   * 押していない人には渡さない（渡されなければ、橋そのものが出ない）。
+   */
+  ask?: { question: string; label: string } | null;
   /**
    * 書く欄を、はじめから開いておく。
    *
-   * **掲示板だけ true。** あちらは付箋の札が既定で開いていて、書くのが用事。
-   * 企画の札は書く欄が開いたまま出るので、片方だけ畳んでおくと
-   * 「開いている箱に書く」がまた起きる（本番の実測で 3/3 が企画の欄に入った）。
+   * **掲示板だけ true。** あちらは書くのが用事で、ほかに書く欄が1つも無い。
    * 国や区間の面は読みに来る場所なので、畳んだままでよい。
    */
   writeOpen?: boolean;
-  /**
-   * 読めた枚数を、外へ返す。
-   * 掲示板の札（`Board.tsx`）が「開く前から枚数を出す」ために使う。
-   * 読めていないあいだは呼ばない（0枚と読めなかったを同じ顔にしない）。
-   */
-  onCount?: (n: number) => void;
 };
 
 /** 運営者の付箋を先に、そのあとは新しい順。表示のたびに並びが動かないようにする。 */
@@ -127,7 +186,14 @@ function ordered(list: Sticky[]): Sticky[] {
   });
 }
 
-export default function Notes({ themes, theme, bare = false, title, writeOpen = false, onCount }: Props) {
+export default function Notes({
+  themes,
+  theme,
+  bare = false,
+  title,
+  ask,
+  writeOpen = false,
+}: Props) {
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -142,6 +208,8 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
   const [again, setAgain] = useState(0);
   const [hearted, setHearted] = useState<Set<string>>(new Set());
   const [text, setText] = useState("");
+  /** 貼るリンク1本。**書かなくてよい欄**なので、空のまま出せる */
+  const [link, setLink] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -271,11 +339,10 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
     };
   }, [fixed, stowed, token, again]);
 
-  /* 読めた枚数を親へ返す。**しまったものを見ているあいだは返さない**
-     （札に出る数が、貼ってある枚数ではなくなる）。 */
-  useEffect(() => {
-    if (notes && read === "ok" && !bin) onCount?.(notes.length);
-  }, [notes, read, bin, onCount]);
+  /* 枚数を外へ返す口（`onCount`）は無くなった（2026-10-01）。
+     使っていたのは掲示板の2枚の札で、「開く前から枚数が出ている」ために
+     要っていた。札が無くなって、枚数は棚の見出し（`.bd-count`）が
+     そのまま出している。 */
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -305,15 +372,29 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
       setErr("もう少しだけ書いてほしいな");
       return;
     }
+    const u = link.trim();
+    /* **断られる前に言う。** サーバー側も見ているが（`safeLink`）、
+       400 を「いま貼れなかった」として出すと、直せる間違いが
+       電波の話に見える。 */
+    if (u && !okLink(u)) {
+      setErr("リンクは http から始まるものだけ貼れるよ");
+      return;
+    }
     setSending(true);
     setErr(null);
     try {
       const { note } = await postSticky(
-        { theme: dest.id, text: t, by: name.trim() || undefined },
+        {
+          theme: dest.id,
+          text: t,
+          link: u || undefined,
+          by: name.trim() || undefined,
+        },
         await token(),
       );
       setNotes((cur) => [note, ...(cur ?? [])]);
       setText("");
+      setLink("");
     } catch (e) {
       setErr(
         String(e).includes("429") ?
@@ -380,7 +461,8 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
 
   const inner = (
     <>
-      {!bare && <h2>{title ?? "みんなの付箋"}</h2>}
+      {/* `title={null}` で見出しを出さない（面の題と同じ字を2つ並べないため） */}
+      {!bare && title !== null && <h2>{title ?? "みんなの付箋"}</h2>}
       {/* 宛先が決まって来た人にだけ、その宛先の一行を出す。
           選ぶ人には、選んだ宛先の一行を**書く欄の中**で出す（下の `.nt-lead`）。
           上にも出すと、同じことを2回言うことになる。 */}
@@ -458,6 +540,28 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
           {/* 選んだ宛先が「何を書く場所か」を言う一行（`content/themes.ts` の `lead`）。
               仕組みの話はしない。書くことだけを言う。 */}
           {!fixed && <p className="nt-lead">{dest.lead}</p>}
+          {/* 島で押してきた人だけに出る。押した札をそのまま見せて、
+              書き出しまで入れておく。ここで「何の話だっけ」に戻さない。 */}
+          {ask && (
+            <div className="bd-bridge">
+              <b>さっき「{ask.label}」を押しましたね</b>
+              <i>{ask.question}</i>
+              <button
+                type="button"
+                className="bd-bridge-go"
+                onClick={() => {
+                  const seed = `${ask.label}で、`;
+                  // すでに書いてあるものを消さない。書き出しは前に足すだけ
+                  setText((t) => (t.startsWith(seed) ? t : seed + t));
+                  box.current?.focus();
+                }}
+              >
+                その続きから書く
+                {/* 行き先は下の入力欄。矢印もそちらを向ける */}
+                <Icon name="chevron" size={13} />
+              </button>
+            </div>
+          )}
           <label className="nt-field">
             <span>名前（書かなくてもいい）</span>
             {user ? (
@@ -482,6 +586,21 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
               rows={3}
               maxLength={MAX}
               placeholder={dest.placeholder}
+            />
+          </label>
+          {/* **1本だけ。** 企画の欄は8本まで持てたが、こちらは本文が120字しか
+              ない。URL は 2,048字まで入るので、何本も置ける欄にすると
+              頼みごとより行き先のほうが長い付箋ができる。 */}
+          <label className="nt-field">
+            <span>リンク（なくてもいい）</span>
+            <input
+              className="bin"
+              type="url"
+              inputMode="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              maxLength={MAX_LINK}
+              placeholder="https://"
             />
           </label>
           <div className="brow">
@@ -626,6 +745,29 @@ export default function Notes({ themes, theme, bare = false, title, writeOpen = 
               {/* **書いてくれたまま出す。** 改行を潰すと、行末と次の行頭が
                   くっついて別の語に読める（#83） */}
               <Wrote t={n.text} />
+              {/* 貼られたリンク。**出す字はこちらで決める**（`linkLabel`）。
+                  URL を素で出すと、付箋1枚が URL で埋まる。
+                  島の外へ出るので、新しいタブで開いて、こちらの窓への
+                  参照は渡さない（`noopener`。`noreferrer` で、どの付箋から
+                  来たかも渡さない）。 */}
+              {/* **出すときにも `okLink` を通す。** サーバー（`safeLink`）が
+                  入れるときと読むときの両方で見ているが、ここは `href` に
+                  人の字がそのまま入る出口なので、1枚に頼らない。React は
+                  `javascript:` の `href` を止めてくれない（警告だけ）。
+                  口を1つ足した日・古い答えが挟まった日に、ここが最後の壁 */}
+              {n.link && okLink(n.link) && (
+                <a
+                  className="nt-link"
+                  href={n.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  /* 札の字は行き先の名前だけなので、読み上げには元の URL を添える */
+                  title={n.link}
+                >
+                  <Icon name="right" size={12} />
+                  {linkLabel(n.link)}
+                </a>
+              )}
               {n.by && <em className="nb-by">{n.by} さん</em>}
 
               {/* あやとからの返信。紙の上の紙なので、厚みは付けない */}

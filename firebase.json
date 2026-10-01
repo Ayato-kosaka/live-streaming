@@ -26,6 +26,16 @@
         "source": "/nordic/photos/**",
         "destination": "/cards",
         "type": 301
+      },
+      {
+        "source": "/next/new",
+        "destination": "/board",
+        "type": 301
+      },
+      {
+        "source": "/next/new/**",
+        "destination": "/board",
+        "type": 301
       }
     ],
     "rewrites": [

@@ -9,8 +9,8 @@ import { LEGENDS } from "@/content/legends";
 import "./next.css";
 
 export const metadata: Metadata = {
-  title: "これから",
-  description: "次に行くところ、次にやること。付箋でみんなの知恵を貼れます。",
+  title: "企画",
+  description: "日にちが決まった企画と、終わった企画。付箋でみんなの知恵を貼れます。",
 };
 
 /**
@@ -28,11 +28,14 @@ export const metadata: Metadata = {
  */
 export default function NextPage() {
   return (
-    <PageShell current="next" crumbs={[{ label: "これから" }]}>
+    <PageShell current="next" crumbs={[{ label: "企画" }]}>
       <PageHead
         icon="tent"
-        title="これから"
-        lead="次に行くところと、やろうとしていること。日にちはあやとが決めますが、中身はみんなで。"
+        /* **時制を題にしない。** これから分は 0 件になる日がある
+           （`docs/island-standards.md` 16章）。段の見出しのほうが
+           「これから」「もう行ってきた」を、中身を数えてから言う。 */
+        title="企画"
+        lead="日にちが決まったものと、終わったもの。日にちはあやとが決めますが、中身はみんなで。"
         say={GUIDE.next}
       />
       <NextPlans />
@@ -60,16 +63,10 @@ export default function NextPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        {/* ログイン必須をやめた（#161）。誰でも書けるようになったので、
-            札の一言も「あやとが声をかけた人だけ」から書き替える。 */}
-        <Link className="tile" href="/next/new">
-          <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
-          <span className="tile-text">
-            <b>企画のページを作る</b>
-            <i>題ひとつから、ページ1枚まで</i>
-          </span>
-          <Icon name="right" size={15} className="tile-go" />
-        </Link>
+        {/* 「企画のページを作る」（`/next/new`）への札は外した（2026-10-01）。
+            視聴者さんが企画を出す道を畳んだので、押した先は `/board` へ
+            送り返すだけの1枚になっている。**すぐ上の掲示板の札と行き先が
+            同じ**なので、2枚並べると選べるものが2つあるように見える。 */}
       </Panel>
     </PageShell>
   );
