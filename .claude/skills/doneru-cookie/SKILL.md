@@ -33,20 +33,25 @@ Doneru の取り込み（`Fetch Doneru Donations`）の認証は、ブラウザ�
 ```bash
 aws --profile sandbox --region ap-northeast-1 sts get-caller-identity   # 通らなければ止める
 bash .claude/skills/doneru-cookie/ec2_exec.sh .claude/skills/doneru-cookie/remote_refresh.sh   # run_in_background: true
+bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>                          # 前で回す（timeout 660000）
 ```
 
-同時に、**画面の数字を EC2 から読む見張り**を Monitor で立てる。スクリプトは本人確認の画面で
-数字を `/tmp/doneru_challenge.txt` に書いて最大5分待つので、別の SSM コマンドでそれを読む:
+**`wait_challenge.sh` が `CHALLENGE: … numbers=['51', '51']` を出したら、その場で
+「数字は 51」とだけ書いて turn を終える。** 結果の確認はそのあと。
+あやとが押す5分の窓は、数字が画面に出た瞬間から減り始める。
 
-```bash
-A="aws --profile sandbox --region ap-northeast-1"
-cid=$($A ssm send-command --instance-ids i-0684d39b0c1b1abb6 --document-name AWS-RunShellScript \
-  --parameters 'commands=["cat /tmp/doneru_challenge.txt 2>/dev/null || true"]' --query Command.CommandId --output text)
-$A ssm get-command-invocation --command-id "$cid" --instance-id i-0684d39b0c1b1abb6 --query StandardOutputContent --output text
-```
+**やってはいけない（2026-10-01 に全部やって、通知を1回無駄にした）:**
 
-`numbers=['48', '48']` が出たら、**すぐ**あやとに「数字は 48」と書く。`done` が付けば先へ進んでいる。
-（Monitor の中でこれを10秒おきに回し、変わったときだけ1行出す。起動から数字が出るまで1〜2分）
+- **`ec2_exec.sh` の出力ファイルを前で待たない。** あの出力は SSM が終わってから
+  まとめて届く。数字の行がそこに見えた時点で、5分の窓はもう閉じている
+- **Monitor で数字を拾う形にしない。** 前で別の道具を待っているあいだ、Monitor の
+  知らせはこちらに届かない。あやとが「数字何番？」と聞いてきて、答えたときには切れていた
+- **数字を伝える turn で、ほかの仕事（issue を見る・次の段取り）を挟まない**
+
+`NO-CHALLENGE:` が出たら本人確認は要らなかった（`_dt` がまだ生きていた）。下の表で読む。
+
+窓を逃したら、**その通知は無視してよい**とあやとに書いてから、もう1回回す
+（前の回の `RUN FINISHED` を待ってから）。
 
 合格は、出力に次の2行が**両方**あること:
 
