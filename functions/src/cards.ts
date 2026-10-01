@@ -46,7 +46,6 @@ import {keysOf} from "./islandCharacter";
 import {
   CARDS,
   IMAGES,
-  MAX_IMAGES,
   MAX_NAME,
   clean,
   defaultPlace,
@@ -63,8 +62,45 @@ const db = admin.firestore();
 /** 持ち主を突き合わせる先。`islandUsers/{uid}.channelId`。 */
 const USERS = db.collection("islandUsers");
 
-/** 一度に返す枚数。新しいほうから。 */
-const MAX_CARDS = 600;
+/**
+ * **暴走を止める栓。枚数を絞るための値ではない。**
+ *
+ * 前はここが `600` で、`/cards` は新しい順に600枚で切っていた。
+ * カードは「写真1枚 × その日投げてくれた人」なので、**写真96枚で617枚**に
+ * なる。つまり600は写真の枚数ではなく、とっくに超えていた——
+ * **いちばん古い17枚（9/06・9/11・9/12 と 9/13 の一部）が公開の口から
+ * 取れていなかった**（`docs/island-card-data.md` 4.2 と 6-7）。あやとの言葉
+ * （2026-10-01）:
+ *
+ * > カードは600が上限とかやめて欲しい。大昔のカードも取得できないとおかしい。
+ *
+ * **全部返す。** そのうえで、際限なく読むのも駄目なので栓だけ残す。
+ * 2万枚にしたのは、**先に壊れるもの（応答の大きさ）より手前**だから。
+ *
+ * - 1枚 **491バイト**（`cards_bulk_selftest.mjs` の実測。1,000枚で
+ *   生 479KB / gzip 44KB）。2万枚で **生 9.8MB / gzip 約 0.9MB**。
+ *   `islandApi` は v2（`onRequest`・512MiB）なので応答の上限は 32MB、
+ *   その内側に収まる——**栓のほうが先に鳴る**（鳴る前に落ちない）
+ * - いま617枚。1日あたり写真8枚 × 8人 ≒ 64枚増える見当なので、**300日ぶん**
+ *
+ * **当たったら `logger.error` を出す**（下の `listCards`）。黙って切ると、
+ * 切れていることがどこにも出ないまま画面は緑のままになる——いま直して
+ * いるのがそれ（`docs/island-standards.md` 10・13）。
+ *
+ * **栓が鳴ったら、栓を上げるのではなく送り（ページング）を入れる。**
+ * 2万枚を一度に返す面は、その前にスマホで開けなくなっている
+ * （gzip 0.9MB）。栓は「落ちる前に気づくための鈴」であって、
+ * 画面が耐えられる枚数ではない。
+ */
+const CARDS_HARD_CAP = 20000;
+
+/**
+ * `db.getAll` に一度に渡す数。**Firestore の上限があるので割って投げる。**
+ *
+ * リポジトリの他も300で割っている（`python/island_cards.py` の `get_all`）。
+ * `streamEvents.ts` の `mintCards` は書きも混ざるので200。
+ */
+const GETALL_CHUNK = 300;
 
 /** キャラクターの名簿(#284)。**絵と呼び名の対応はここにしか無い。** */
 const CHARACTERS = db.collection("islandCharacter");
@@ -355,7 +391,20 @@ export type Icons = {
  * @return {Promise<Icons | null>} 引き当て表。読めなかったときは `null`
  */
 export async function iconsOf(names: string[]): Promise<Icons | null> {
-  const list = [...new Set(names.filter((x) => x))].slice(0, MAX_CARDS);
+  /* **ここは切らない。** 前は `MAX_CARDS`（カードの枚数の栓）を使い回して
+     600で切っていたが、これは**名乗りの種類**の数で、カードの枚数とは
+     別のもの。切ると「601種類目の名乗りの人だけ絵が消える」——それは
+     カードが落ちるのと同じ見え方（候補0人＝誰も投げ銭していない）になる。
+
+     名簿（`MAX_CHARACTERS`）側に寄せるのも採らなかった。引ける鍵は
+     `lookupKeys` なので**1人が何本も持つ**（呼び名ぶん）。人数で切ると
+     名簿に載っている人の絵まで落ちる。
+
+     際限が要らないのは、渡ってくるのが呼ぶ側の読んだぶんだけだから。
+     `listCards` は `CARDS_HARD_CAP` で、`listPhotoDays` は出す日数で
+     もう止まっている。**ここで二重に止めても、黙って絵が減るだけ。**
+     引く仕事も Map の参照だけで、1件も読みに行かない。 */
+  const list = [...new Set(names.filter((x) => x))];
   const byName = new Map<string, string>();
   try {
     const book = await characterBook();
@@ -462,11 +511,31 @@ export class IconsUnavailable extends Error {}
 const placeOf = (v: Json, id: string): Place => shapePlace(v, defaultPlace(id));
 
 /**
+ * 画像を、`getAll` を割って引く。**何枚あっても1枚も落とさない。**
+ *
+ * 割りを**並べて投げる**（順に待たない）。カードは何百枚あっても画像は
+ * 数百枚なので割りは数本にしかならず、順に待つとそのぶんそのまま遅くなる。
+ * @param {string[]} ids 画像の書類ID。**重複を落としてから渡す**
+ * @return {Promise<FirebaseFirestore.DocumentSnapshot[]>} 引けたもの
+ */
+async function imagesOf(
+  ids: string[],
+): Promise<FirebaseFirestore.DocumentSnapshot[]> {
+  const parts: Promise<FirebaseFirestore.DocumentSnapshot[]>[] = [];
+  for (let i = 0; i < ids.length; i += GETALL_CHUNK) {
+    const part = ids.slice(i, i + GETALL_CHUNK);
+    parts.push(db.getAll(...part.map((id) => IMAGES.doc(id))));
+  }
+  return (await Promise.all(parts)).flat();
+}
+
+/**
  * 配られたカードを、新しい順に返す。
  *
  * **`where` と `orderBy` を混ぜない。** 混ぜると複合索引が要る(#168)。
  * だから引くのはどちらか片方だけで、並べ替えは最後の `sortCards` が手元でやる。
- * 画像は `getAll` で1往復。カードの枚数ぶん引きにいかない。
+ * 画像は `getAll` を300件ずつに割って、並べて引く（`imagesOf`）。
+ * カードの枚数ぶん引きにいかない。
  * @param {CardDeps} deps 呼ぶ側から借りるもの
  * @param {string} [channelId] 渡すと、そのチャンネルのぶんだけ引く
  * @return {Promise<Card[]>} 新しい順のカード
@@ -479,19 +548,39 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
      その人のぶんだけ引くときは `where` 1本にする。**`orderBy` を足さない**
      （複合索引が要る）。並び順は下の `sortCards` が同じ規則で付け直すので、
      返るものの順番は公開の口と変わらない。 */
-  const snap = channelId ?
-    await CARDS.where("channelId", "==", channelId).limit(MAX_CARDS).get() :
-    await CARDS.orderBy("earnedAt", "desc").limit(MAX_CARDS).get();
+  const base = channelId ?
+    CARDS.where("channelId", "==", channelId) :
+    CARDS.orderBy("earnedAt", "desc");
+  /* **栓より1枚だけ多く引く。** ちょうど栓の数で返ってきたとき、
+     「ぴったりだった」のか「切れた」のかが区別できない。1枚余分に
+     引けば、切れたことが確実に分かる（その1枚は下で捨てる）。 */
+  const snap = await base.limit(CARDS_HARD_CAP + 1).get();
   if (snap.empty) return [];
+  if (snap.size > CARDS_HARD_CAP) {
+    /* **黙って切らない。** 切れていることがどこにも出ないと、画面は
+       「それで全部」の顔で古い日を落とす——600で切っていたときに
+       実際に起きていたこと。`warn` ではなく `error` にしてあるのは、
+       ここに来た時点で**送りを入れる直しが要る**から。
+       **視聴者さんの素性は1文字も出さない**（チャンネルIDも名前も）。 */
+    logger.error(
+      "cards hard cap hit",
+      JSON.stringify({cap: CARDS_HARD_CAP, scoped: !!channelId}),
+    );
+  }
 
-  const rows = snap.docs.map((d) => ({id: d.id, v: d.data() ?? {}}));
+  const rows = snap.docs.slice(0, CARDS_HARD_CAP)
+    .map((d) => ({id: d.id, v: d.data() ?? {}}));
+  /* **ここも切らない。** 前は `MAX_IMAGES`（600）で切っていたが、
+     引き当てから漏れた画像のカードは下の `if (!im || !im.url) continue`
+     で**黙って落ちる**。古い写真のカードだけが画面から消えるのが、
+     まさにそれだった。切る代わりに、`getAll` を割って投げる。 */
   const imageIds = [
     ...new Set(
       rows
         .map((r) => clean(r.v.streamEventImageId, 64))
         .filter((x): x is string => !!x),
     ),
-  ].slice(0, MAX_IMAGES);
+  ];
 
   /* **絵の引き当ては、画像と名簿と一緒に投げる。** 順に待つと、
      カードが何枚でも往復は2本しか増えないのに、返るのが1本ぶん遅くなる。
@@ -501,9 +590,7 @@ async function listCards(deps: CardDeps, channelId?: string): Promise<Card[]> {
      チャンネルIDを集めて渡す必要はない。名乗りは書類に焼き込んで
      ある(`streamEvents.ts` の `mintCards`)ので、辞書は引き直さない。 */
   const [images, residents, icons] = await Promise.all([
-    imageIds.length ?
-      db.getAll(...imageIds.map((id) => IMAGES.doc(id))) :
-      Promise.resolve([]),
+    imagesOf(imageIds),
     deps.listResidents(),
     iconsOf(rows.map((r) => clean(r.v.nameSnapshot, MAX_NAME))),
   ]);

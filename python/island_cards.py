@@ -1,9 +1,9 @@
 """あやと島カード（`islandCards`）を作る。#202
 
-台帳（`islandTips`）と、企画に付く画像（`islandStreamEventImage` の
+台帳（`islandTips`）と、カード画像（`islandStreamEventImage` の
 `role: "card"`）を掛け合わせて、`islandCards` に置く。
 
-    カード = その企画のカード画像 × その企画に当たる投げ銭
+    カード = その日のカード画像 × その日投げてくれた人
 
 ## 「引くときに組み立てる」から「置いてある」へ変えた
 
@@ -16,15 +16,28 @@
 サブコレクションにしないのも同じ理由で、あちらはコレクショングループ
 索引が要る。
 
-## 企画と配信は N:N
+## 軸は企画ではなく**日付**（2026-10-01・案C）
 
-**1本の配信に企画が何本も乗る。** 9月11日は「北欧旅の出発日」
-「海外出発二周年」「ジョージアバイバイ」の3本が同じ配信。
+前は「企画 → その企画の画像 → その企画に当たる投げ銭」で当てていた。
+**企画が無い日は、写真を貼ってもカードが1枚もできない。** 企画の表は
+手書き（`python/stream_events_seed.json`）で 2026-09-20 までしか無く、
+**9/21 から 10/01 まで11日間、カードが0枚のまま誰も気づかなかった**
+（毎晩のジョブは「あるべき617枚／新しく作る0枚」と出して緑だった。
+`docs/island-card-rfc.md` 0章）。
 
-だから**1つ見つけたところで止めない。** 当たった企画すべてについて、
-その企画のカード画像ぶんカードを作る。9/11 に投げてくれた人は、
-3企画それぞれのカード写真ぶんもらう。カードIDは画像のIDを含むので
-ぶつからない。
+いまは**画像の日**が軸で、企画は「その日に付く札」に降りた。
+
+    画像の日 = image.day ||（その画像の企画の date）|| jst_day(image.at)
+    投げ銭の日 = jst_day(videoStartedAt) || tip.day || jst_day(donatedAt)
+
+当たりは「日が同じ」か「`videoId` が画像の `videoIds`（無ければその画像の
+企画の `videoIds`）に入っている」のどちらか。**企画が無くても作る**ので、
+`streamEventId` は空文字のままカードになる。
+
+**1本の配信に企画が何本も乗る**（9月11日は3本が同じ配信）という形は
+変わっていないが、**カードの枚数には効かなくなった。** 画像1枚につき
+1人1枚で、同じ日の画像が何枚あってもそのぶんだけ出る。
+カードIDは画像のIDを含むのでぶつからない。
 
 ## 2か所から作る
 
@@ -130,46 +143,102 @@ def default_place(card_id: str) -> dict:
     }
 
 
-def events_for_tip(events: List[dict], tip: dict) -> List[dict]:
-    """その投げ銭が、どの企画のものか。**当たったものを全部返す。**
+def image_day(im: dict, events: Dict[str, dict]) -> str:
+    """その画像が「何日の写真か」。**カードの日付はこれ。**
 
-    当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
-
-    1. その企画が `videoIds` でこの配信を名乗っている（0時をまたいだ
-       後半を、人が手で拾うための道）
-    2. 企画の日付と、投げ銭の日（日本時間）が同じ
-
-    **1で当たったら2を見ない、にしない。** 9月11日の配信には企画が3本
-    乗っていて、あやとが `videoIds` を足すのはたいてい1本だけ。そこで
-    打ち切ると、残り2本のカードが黙って消える。
+    貼ったときに `day` が入っている（`functions/src/islandApi.ts` の
+    `saveEventImage`）ので、ふつうはそれで決まる。**企画は見ない。**
+    企画の日付を見るのは、`day` を持っていない古い画像のためだけ。
 
     Args:
-        events: 企画ぜんぶ
+        im: 画像1件
+        events: 企画ID -> 企画（`date` と `videoIds` だけ）
+
+    Returns:
+        YYYY-MM-DD。どれも分からなければ空文字
+    """
+    if im.get("day"):
+        return im["day"]
+    ev = events.get(im.get("streamEventId") or "")
+    if ev and ev.get("date"):
+        return ev["date"]
+    if im.get("at"):
+        return jst_day(int(im["at"]))
+    return ""
+
+
+def tip_day(tip: dict) -> str:
+    """その投げ銭が「何日の配信のものか」。
+
+    **配信の日は、投げ銭の日ではなく「その配信が始まった日」。**
+
+    2026-09-06 の配信で踏んだ。22時に始まった `q30MlzefQ8c` に、
+    たぃさん（22:27）と aoi さん（翌 00:23）が投げてくれた。**同じ配信**
+    なのに、台帳の `day` で当てていたので aoi さんだけ翌日に落ちて、
+    その日の写真にカードが付かなかった。
+
+    配信が「どの日のものか」を決めるのは配信の始まりで、視聴者が
+    いつ押したかではない。`videoStartedAt` が分かっているならそちらを使う。
+
+    Args:
         tip: 投げ銭1件
 
     Returns:
-        当たった企画。0本のこともある
+        YYYY-MM-DD。どれも分からなければ空文字
     """
-    # **配信の日は、投げ銭の日ではなく「その配信が始まった日」。**
-    #
-    # 2026-09-06 の配信で踏んだ。22時に始まった `q30MlzefQ8c` に、
-    # たぃさん（22:27）と aoi さん（翌 00:23）が投げてくれた。**同じ配信**
-    # なのに、日付で当てていたので aoi さんだけ翌日に落ちて、その日の
-    # 写真にカードが付かなかった。
-    #
-    # 配信が「どの日のものか」を決めるのは配信の始まりで、視聴者が
-    # いつ押したかではない。videoId が分かっているならそちらを使う。
-    day = tip.get("day")
     if tip.get("videoStartedAt"):
-        day = jst_day(int(tip["videoStartedAt"]))
+        return jst_day(int(tip["videoStartedAt"]))
+    if tip.get("day"):
+        return tip["day"]
+    if tip.get("donatedAt"):
+        return jst_day(int(tip["donatedAt"]))
+    return ""
 
-    out = []
-    for e in events:
-        by_video = bool(tip.get("videoId")) and tip["videoId"] in e["videoIds"]
-        by_date = bool(e["date"]) and e["date"] == day
-        if by_video or by_date:
-            out.append(e)
-    return out
+
+def video_ids(im: dict, events: Dict[str, dict]) -> List[str]:
+    """その画像が名乗っている配信。**画像を先に見て、無ければ企画に落ちる。**
+
+    0時をまたいだ後半を人が手で拾うための道で、**本番でこれを持っているのは
+    企画が1件だけ**（`food-wine-fest` の2本）。画像の側に移し替えると
+    本番のデータを動かすことになるので、**移さずに、画像 → 企画の順で見る。**
+    これから貼るものには画像に付けられる。
+
+    Args:
+        im: 画像1件
+        events: 企画ID -> 企画
+
+    Returns:
+        配信ID の一覧
+    """
+    if im.get("videoIds"):
+        return im["videoIds"]
+    ev = events.get(im.get("streamEventId") or "")
+    return (ev or {}).get("videoIds") or []
+
+
+def hits(tip: dict, im: dict, events: Dict[str, dict]) -> bool:
+    """その投げ銭が、その画像に当たるか。**当たり方はここ1か所だけ。**
+
+    1. 日が同じ（画像の日 == 投げ銭の日）
+    2. `videoId` が画像の名乗る配信に入っている
+
+    **日が空のものどうしを当てない。** `day` も `at` も無い画像と、
+    `day` も `donatedAt` も無い投げ銭は、どちらも空文字になる。
+    そこを素通しにすると、素性の分からないもの全部が総当たりで繋がる。
+
+    Args:
+        tip: 投げ銭1件
+        im: 画像1件
+        events: 企画ID -> 企画
+
+    Returns:
+        当たるなら True
+    """
+    day = image_day(im, events)
+    if day and day == tip_day(tip):
+        return True
+    vid = tip.get("videoId")
+    return bool(vid) and vid in video_ids(im, events)
 
 
 def load(db: firestore.Client) -> tuple:
@@ -179,31 +248,42 @@ def load(db: firestore.Client) -> tuple:
         db: Firestore クライアント
 
     Returns:
-        (企画, 企画ID -> カード画像, 台帳)
+        (企画ID -> 企画, カード画像ぜんぶ, 台帳)
     """
-    events = []
+    # 企画はもう軸ではない。**`videoIds` と、`day` を持たない古い画像の
+    # 日付の落ち先**としてしか使わないので、ID で引ける形にして持つ
+    events: Dict[str, dict] = {}
     for d in db.collection("islandStreamEvent").stream():
         v = d.to_dict() or {}
         if v.get("hidden") is True:
             continue
         vids = [x for x in (v.get("videoIds") or []) if isinstance(x, str)]
         date = v.get("date") if isinstance(v.get("date"), str) else ""
-        events.append({"id": d.id, "date": date, "videoIds": vids})
+        events[d.id] = {"id": d.id, "date": date, "videoIds": vids}
 
-    images: Dict[str, List[dict]] = {}
-    n_img = 0
+    images: List[dict] = []
     for d in db.collection("islandStreamEventImage").stream():
         v = d.to_dict() or {}
         if (v.get("role") or "card") != "card" or not v.get("url"):
             continue
-        ev = v.get("streamEventId")
-        if not ev:
-            # まだどの企画のものか決まっていない画像。カードは作れない
-            continue
-        images.setdefault(ev, []).append(
-            {"id": d.id, "streamEventId": ev, "at": int(v.get("at") or 0)}
+        # **`streamEventId` が空でも読む。** ここで飛ばしていたせいで、
+        # 企画の無い日（2026-09-21 以降）のカードが11日間0枚だった。
+        # 企画はもう必須ではなく、日付が軸（`image_day`）
+        images.append(
+            {
+                "id": d.id,
+                "streamEventId": v.get("streamEventId") or "",
+                "at": int(v.get("at") or 0),
+                # 貼ったときから入っている日付。**これがカードの日付になる**
+                "day": v.get("day") if isinstance(v.get("day"), str) else "",
+                # 0時またぎを人が手で拾う道。いまは企画が持っているが、
+                # これから貼るものは画像に付けられる（`video_ids`）
+                "videoIds": [
+                    x for x in (v.get("videoIds") or []) if isinstance(x, str)
+                ],
+            }
         )
-        n_img += 1
+    n_img = len(images)
 
     tips = []
     for d in db.collection("islandTips").stream():
@@ -218,10 +298,10 @@ def load(db: firestore.Client) -> tuple:
                 "day": v.get("day") or "",
                 "videoId": v.get("videoId"),
                 # **配信の始まった時刻。落とすと日付の補正が効かない。**
-                # `events_for_tip` はこれを見て「投げ銭の日」ではなく
-                # 「配信の始まった日」で企画に当てる。ここに入れ忘れて
-                # いたので補正がまるごと死んでいた（本番で aoi さんが
-                # 翌日に落ちていた。ホワイトリストで救われていただけ）
+                # `tip_day` はこれを見て「投げ銭の日」ではなく
+                # 「配信の始まった日」を返す。ここに入れ忘れていたので
+                # 補正がまるごと死んでいた（本番で aoi さんが翌日に
+                # 落ちていた。ホワイトリストで救われていただけ）
                 "videoStartedAt": v.get("videoStartedAt"),
                 "donatedAt": int(v.get("donatedAt") or 0),
                 # **投げてくれたときに名乗っていた名前。**
@@ -249,13 +329,14 @@ def main() -> int:
     # (画像, 人) -> いちばん早い投げ銭。同じ人が同じ日に何度投げても1枚
     want: Dict[str, dict] = {}
     for tip in tips:
-        for ev in events_for_tip(events, tip):
-            for im in images.get(ev["id"], []):
-                key = f"{im['id']}__{tip['channelId']}"
-                had = want.get(key)
-                if had and had["tip"]["donatedAt"] <= tip["donatedAt"]:
-                    continue
-                want[key] = {"image": im, "tip": tip, "event": ev}
+        for im in images:
+            if not hits(tip, im, events):
+                continue
+            key = f"{im['id']}__{tip['channelId']}"
+            had = want.get(key)
+            if had and had["tip"]["donatedAt"] <= tip["donatedAt"]:
+                continue
+            want[key] = {"image": im, "tip": tip}
     logger.info("あるべきカード: %d枚", len(want))
     if not want:
         return 0
@@ -272,12 +353,17 @@ def main() -> int:
     make, fix = [], []
     for key in keys:
         w = want[key]
-        # **投げ銭の日ではなく、企画の日。** 台帳の day は投げてくれた
-        # 瞬間の日本時間なので、0時をまたいだ配信では後半の人が翌日に
-        # なる。そのまま入れると同じ1枚の写真から出たカードが2つの日付に
-        # 割れて、画面（day で企画名を引く）で片方だけ企画名が消える。
-        # 日付の無い企画（提案）だけ、投げ銭の日に落ちる。
-        day = w["event"]["date"] or w["tip"]["day"]
+        # **投げ銭の日ではなく、画像の日**（2026-10-01・案C）。
+        #
+        # 台帳の day は投げてくれた瞬間の日本時間なので、0時をまたいだ
+        # 配信では後半の人が翌日になる。そのまま入れると同じ1枚の写真から
+        # 出たカードが2つの日付に割れて、画面（day で企画名を引く）で
+        # 片方だけ企画名が消える。**1枚の写真から出たカードは全部同じ日付。**
+        #
+        # 前は「企画の日付 || 台帳の day」だった。企画を軸から降ろしたので、
+        # **企画の無い日でもカードが日付を持てる**形に変えた。企画の日付は
+        # `image_day` の中で、`day` を持たない古い画像の落ち先として残っている。
+        day = image_day(w["image"], events)
         who = {
             "channelId": w["tip"]["channelId"],
             "streamEventId": w["image"]["streamEventId"],

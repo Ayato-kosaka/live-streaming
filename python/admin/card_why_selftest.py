@@ -224,8 +224,9 @@ def make_store() -> dict:
     }
     # 配られたカード。鍵は本番と同じ `<画像のID>__<チャンネルID>`
     # （`functions/src/streamEvents.ts` の `cardId`）。
-    # **`day` は企画の日**（`island_cards.py` が `企画の日付 || 台帳の day`
-    # で入れる）なので、台帳の日とずれることがある。d がその形
+    # **`day` は写真の日**（`island_cards.py` の `image_day` が
+    # `画像の day || 企画の日付 || 貼った日` で入れる）なので、
+    # 台帳の日とずれることがある。d がその形
     cards = {}
     for i, img in enumerate((doc_id(200), doc_id(201), doc_id(202))):
         cards[f"{img}__{CH['a']}"] = {

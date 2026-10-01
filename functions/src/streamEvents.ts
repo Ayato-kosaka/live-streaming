@@ -117,9 +117,20 @@ export type TipRef = {
    * 名前を変えた日に判定が動く。
    */
   nameSnapshot: string | null;
-  /** 日本時間で切った配信日（YYYY-MM-DD） */
+  /**
+   * 台帳が持っている生の日（YYYY-MM-DD）。**投げてくれた瞬間の日本時間。**
+   * 0時をまたいだ配信では、後半に投げた人がここで翌日になる。
+   * **カードの当たりに使うのはここではなく `tipDay`。**
+   */
   day: string;
   videoId: string | null;
+  /**
+   * **その配信が始まった時刻**（ミリ秒）。無ければ 0。
+   *
+   * `python/island_tips.py` が BigQuery の `started_ms` から入れている。
+   * 日付の補正（`tipDay`）はここだけを見る。
+   */
+  videoStartedAt: number;
   /** もらった時刻（ミリ秒） */
   donatedAt: number;
 };
@@ -127,6 +138,7 @@ export type TipRef = {
 /** 画像のうち、カードを組むために要るところだけ。 */
 export type ImageRef = {
   id: string;
+  /** 付いている企画。**空でよい**（企画の立っていない日にも貼れる） */
   streamEventId: string;
   role: ImageRole;
   url: string;
@@ -134,6 +146,21 @@ export type ImageRef = {
   h: number;
   note: string;
   at: number;
+  /**
+   * その写真の日（YYYY-MM-DD）。**貼った時点から入っている**
+   * （`islandApi.ts` の `saveEventImage` が `doc.day` に書く）。
+   *
+   * **カードの軸はここ。** 企画ではない——企画の立っていない日があるため。
+   */
+  day: string;
+  /**
+   * 「この写真はこの配信のもの」と名乗る動画。**0時またぎの逃げ道。**
+   *
+   * 空なら企画（`EventRef.videoIds`）に落ちる。こうしておくと本番の
+   * データを1バイトも動かさずにいまの挙動が保たれ、これから先は
+   * 写真そのものに付けられる（`POST /streamevents/images/{id}`）。
+   */
+  videoIds: string[];
 };
 
 /**
@@ -236,58 +263,66 @@ export async function loadEvents(): Promise<EventRef[]> {
 }
 
 /**
- * その投げ銭が、どの企画のものか。**当たったものを全部返す。**
- *
- * 当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
- *
- * 1. **その企画が `videoIds` でこの配信を名乗っている。** 0時をまたいで
- *    2本に割れた配信の後半を、人が手で拾うための道
- * 2. **企画の日付と、投げ銭の日（日本時間）が同じ。**
- *
- * **1で当たったら2を見ない、にしない。** 9月11日の配信には企画が3本
- * 乗っていて、あやとが `videoIds` を足すのはたいてい1本だけ。そこで
- * 打ち切ると、残り2本のカードが黙って消える（あやと・2026-09-07）。
- * @param {EventRef[]} events 企画ぜんぶ
- * @param {TipRef} tip 投げ銭1件
- * @return {EventRef[]} 当たった企画。**0本のこともある**
- */
-export function eventsForTip(events: EventRef[], tip: TipRef): EventRef[] {
-  const out: EventRef[] = [];
-  for (const e of events) {
-    const byVideo = !!tip.videoId && e.videoIds.includes(tip.videoId);
-    const byDate = !!e.date && e.date === tip.day;
-    if (byVideo || byDate) out.push(e);
-  }
-  return out;
-}
-
-/**
- * その企画の投げ銭を引く。**画像を貼った直後に、その場でカードを作るため。**
+ * **その写真に当たる投げ銭**を引く。画像を貼った直後に、その場で
+ * カードを作るため。
  *
  * 日次ジョブを待たない道が要る。名簿（旧 `nordicDays`）は翌朝に入るので
  * 「貼ったらその日のぶんが配られる」が成り立たなかったが、**台帳は
  * 投げ銭のたびに入る**ので、貼った時点でもう相手がいる。
  *
- * 引き方は**単一フィールドの等価と `in` だけ**（索引が要らない範囲）。
- * @param {EventRef} ev 企画
- * @return {Promise<TipRef[]>} その企画に当たる投げ銭
+ * 当たり方は2つあって、**両方を足す**（片方で打ち切らない）。
+ *
+ * 1. `tipDay(tip)` が写真の日と同じ
+ * 2. `tip.videoId` が写真の `videoIds`（**無ければ企画の `videoIds`**）
+ *    に入っている。0時またぎを人が手で拾う逃げ道
+ *
+ * ## なぜ `day` を2本引くのか
+ *
+ * 引けるのは台帳の**生の** `day`（投げた瞬間の日本時間）だけで、
+ * `tipDay` の補正は手元でしかかけられない。**`tipDay` は生の `day`
+ * 以前にしかならない**——配信は投げ銭より先に始まるので、補正は
+ * 「翌日に落ちていたものを前の日へ戻す」方向にしか効かない。
+ * だから写真の日 `D` に当たる投げ銭の生の `day` は、`D` か `D+1` の
+ * どちらかしかない。2本引いて、手元で `tipDay` で絞る。
+ *
+ * 引き方は**単一フィールドの等価と `in` だけ**（索引を増やさない・#168）。
+ * @param {ImageRef} image 写真
+ * @param {EventRef | null} ev 付いている企画。**無いこともある**
+ * @return {Promise<TipRef[]>} その写真に当たる投げ銭
  */
-export async function tipsForEvent(ev: EventRef): Promise<TipRef[]> {
+export async function tipsForImage(
+  image: ImageRef,
+  ev: EventRef | null,
+): Promise<TipRef[]> {
+  const day = imageDay(image, ev);
+  /* 写真が自分で名乗っていればそれ。無ければ企画のものに落ちる。
+     本番で `videoIds` を持っているのは企画のほうだけなので、こうすると
+     データを1バイトも動かさずにいまの挙動が保たれる。 */
+  const vids = image.videoIds.length ? image.videoIds : ev?.videoIds ?? [];
   const jobs: Promise<FirebaseFirestore.QuerySnapshot>[] = [];
-  if (ev.date) jobs.push(TIPS.where("day", "==", ev.date).get());
-  for (let i = 0; i < ev.videoIds.length; i += IN_CHUNK) {
-    const part = ev.videoIds.slice(i, i + IN_CHUNK);
-    jobs.push(TIPS.where("videoId", "in", part).get());
+  if (day) {
+    jobs.push(TIPS.where("day", "==", day).get());
+    jobs.push(TIPS.where("day", "==", dayAfter(day)).get());
+  }
+  for (let i = 0; i < vids.length; i += IN_CHUNK) {
+    jobs.push(TIPS.where("videoId", "in", vids.slice(i, i + IN_CHUNK)).get());
   }
   if (jobs.length === 0) return [];
   const snaps = await Promise.all(jobs);
+  const inVids = new Set(vids);
   const seen = new Set<string>();
   const out: TipRef[] = [];
   for (const s of snaps) {
     s.forEach((d) => {
       if (seen.has(d.id)) return;
       seen.add(d.id);
-      out.push(tipRef(d.id, d.data() ?? {}));
+      const t = tipRef(d.id, d.data() ?? {});
+      /* **翌日ぶんを引いたままにしない。** `D+1` の問い合わせには
+         「翌日に始まった別の配信」の投げ銭も混ざってくる。ここで
+         落とさないと、その人たちに前の日の写真が渡る。 */
+      const hit = (!!day && tipDay(t) === day) ||
+        (!!t.videoId && inVids.has(t.videoId));
+      if (hit) out.push(t);
     });
   }
   return out;
@@ -305,14 +340,44 @@ export function tipRef(id: string, v: Json): TipRef {
     at instanceof admin.firestore.Timestamp ?
       at.toMillis() :
       Number(at) || 0;
+  /* **配信の始まった時刻も読む。** `donatedAt` と同じで、Timestamp で
+     入っていることも数で入っていることもある（`python/island_tips.py` は
+     数で書くが、口から入れ直したぶんは Timestamp になる）。
+     ここを読み落とすと `tipDay` の補正がまるごと死ぬ——python 側では
+     実際にそれで、22時に始まった配信の 00:23 に投げてくれた人が1人、
+     本番で翌日に落ちていた。 */
+  const started = v.videoStartedAt;
+  const startedMs =
+    started instanceof admin.firestore.Timestamp ?
+      started.toMillis() :
+      Number(started) || 0;
   return {
     id,
     channelId: clean(v.channelId, 64) || null,
     nameSnapshot: clean(v.displayNameSnapshot, MAX_NAME) || null,
     day: isDay(v.day) ? v.day : ms ? jstDay(ms) : "",
     videoId: clean(v.videoId, 16) || null,
+    videoStartedAt: startedMs,
     donatedAt: ms,
   };
+}
+
+/**
+ * その投げ銭が、**どの日の配信**のものか。
+ *
+ * **`videoStartedAt` を先に見るのが肝。** 配信が「どの日のものか」を
+ * 決めるのは配信の始まりで、視聴者がいつ押したかではない。22時に始まった
+ * 配信に 00:23 で投げてくれた人は、台帳の `day`（投げた瞬間の日本時間）が
+ * 翌日になっている。そのまま当てると、**同じ配信なのにその人だけ翌日の
+ * 写真に落ちる**（2026-09-06 の配信で実際に1人落ちた。`python/island_cards.py`
+ * の `events_for_tip` に同じ補正が入っている。**TypeScript 側はこれを
+ * 持っていなかった**ので、ここで揃える）。
+ * @param {TipRef} tip 投げ銭1件
+ * @return {string} 配信の日（YYYY-MM-DD）。決まらなければ空
+ */
+export function tipDay(tip: TipRef): string {
+  if (tip.videoStartedAt) return jstDay(tip.videoStartedAt);
+  return tip.day || (tip.donatedAt ? jstDay(tip.donatedAt) : "");
 }
 
 /**
@@ -323,6 +388,9 @@ export function tipRef(id: string, v: Json): TipRef {
  */
 export function imageRef(id: string, v: Json): ImageRef {
   const role = clean(v.role, 12);
+  /* 検め方は `eventRef` と同じ。写真に付ける動画IDも企画に付けるものも、
+     同じ11文字・同じ上限で扱わないと、片方だけ通る形が生まれる。 */
+  const vids = Array.isArray(v.videoIds) ? v.videoIds : [];
   return {
     id,
     streamEventId: clean(v.streamEventId, 64),
@@ -334,7 +402,45 @@ export function imageRef(id: string, v: Json): ImageRef {
     h: Number(v.h) || 0,
     note: clean(v.note, 200),
     at: Number(v.at) || 0,
+    day: isDay(v.day) ? v.day : "",
+    videoIds: vids
+      .map((x) => clean(x, 16))
+      .filter((x) => VIDEO_ID.test(x))
+      .slice(0, 40),
   };
+}
+
+/**
+ * その写真が、**どの日のもの**か。**カードの `day` はここから決まる。**
+ *
+ * 貼るときに `day` が入る（`islandApi.ts` の `saveEventImage`）ので、
+ * ふつうはそれで決まる。企画の日付に落ちるのは、移してきた古い書類の
+ * ように `day` を持たないものだけ。
+ *
+ * **企画の日付を軸にしない。** 企画の立っていない日に貼った写真が
+ * 落ちる先を失う（それで11日ぶんカードが0枚になっていた）。
+ * @param {ImageRef} image 写真
+ * @param {EventRef | null} ev 付いている企画。無いこともある
+ * @return {string} その写真の日（YYYY-MM-DD）。決まらなければ空
+ */
+export function imageDay(image: ImageRef, ev: EventRef | null): string {
+  if (image.day) return image.day;
+  if (ev?.date) return ev.date;
+  return image.at ? jstDay(image.at) : "";
+}
+
+/**
+ * 次の日（YYYY-MM-DD）。
+ *
+ * 台帳を「その日」と「その翌日」の2本で引くために要る。日付の足し算
+ * だけなので時差は関係ない（UTC の0時で足して、同じ UTC で読む）。
+ * @param {string} day YYYY-MM-DD
+ * @return {string} 翌日
+ */
+function dayAfter(day: string): string {
+  const ms = Date.parse(`${day}T00:00:00Z`);
+  if (!Number.isFinite(ms)) return day;
+  return new Date(ms + 86400000).toISOString().slice(0, 10);
 }
 
 /**
@@ -368,16 +474,19 @@ export type MintResult = {made: number; kept: number; fixed: number};
  * `earnedAt` も `streamEventImageId` も無い。`/cards` は
  * `orderBy("earnedAt")` で引くので、足さないと**動かしたカードだけが
  * 一覧から消える**（並べ替えの欄が無い書類は、その問い合わせに載らない）。
- * @param {ImageRef[]} images カードになる画像
- * @param {TipRef[]} tips その企画に当たる投げ銭
- * @param {string} eventDay その企画の日付。カードの `day` はここから決める
+ * @param {ImageRef} image カードになる画像。**1枚ぶん**
+ * @param {TipRef[]} tips その写真に当たる投げ銭
+ * @param {EventRef | null} ev 付いている企画。**無いこともある**
  * @return {Promise<MintResult>} 作った数、すでにあった数、素性を足した数
  */
 export async function mintCards(
-  images: ImageRef[],
+  image: ImageRef,
   tips: TipRef[],
-  eventDay: string,
+  ev: EventRef | null,
 ): Promise<MintResult> {
+  /* **日付は写真が決める。** 1回だけ出して、この写真から出る
+     カード全部に同じものを入れる（下の `day` の注を見る）。 */
+  const cardDay = imageDay(image, ev);
   /** 同じ人が同じ日に何度も投げても、カードは1枚。いちばん早い1回を採る。 */
   const first = new Map<string, TipRef>();
   for (const t of tips) {
@@ -386,11 +495,9 @@ export async function mintCards(
     const had = first.get(who);
     if (!had || t.donatedAt < had.donatedAt) first.set(who, t);
   }
-  const want: {id: string; image: ImageRef; tip: TipRef; who: string}[] = [];
-  for (const im of images) {
-    for (const [who, tip] of first) {
-      want.push({id: cardId(im.id, who), image: im, tip, who});
-    }
+  const want: {id: string; tip: TipRef; who: string}[] = [];
+  for (const [who, tip] of first) {
+    want.push({id: cardId(image.id, who), tip, who});
   }
   if (want.length === 0) return {made: 0, kept: 0, fixed: 0};
 
@@ -407,22 +514,29 @@ export async function mintCards(
     part.forEach((w, k) => {
       const who = {
         channelId: w.tip.channelId,
-        streamEventId: w.image.streamEventId,
-        streamEventImageId: w.image.id,
+        streamEventId: image.streamEventId,
+        streamEventImageId: image.id,
         /* 日付も持つ。画面が企画の札を引くのに使う。画像から辿れば
            出せるが、`/cards` は毎回100枚単位で返すので、そのたびに
            企画まで往復すると読みが3倍になる。
 
-           **投げ銭の日ではなく、企画の日を入れる。** 台帳の `day` は
-           投げてくれた瞬間の日本時間で、0時をまたいだ配信では後半の人が
-           翌日になる。それをそのまま入れると、**同じ1枚の写真から
-           出たカードが2つの日付に割れる**（本番で実際に割れていた。
-           food-wine-fest の3枚が 09-06 と 09-07）。画面は `day` で
-           企画名を引くので、割れたほうは企画名が出ず、日付も1日ずれる。
-           カードは企画に属するものなので、企画の日付を持たせる。
-           日付の無い企画（提案）だけ、投げ銭の日に落ちる。 */
-        day: eventDay || w.tip.day,
-        earnedAt: w.tip.donatedAt || w.image.at || now,
+           **入れるのは「写真の日」**（`imageDay`）。投げ銭の日ではない。
+           台帳の `day` は投げてくれた瞬間の日本時間で、0時をまたいだ
+           配信では後半の人が翌日になる。それをそのまま入れると
+           **同じ1枚の写真から出たカードが2つの日付に割れる**（本番で
+           実際に割れていた。food-wine-fest の3枚が 09-06 と 09-07）。
+           画面は `day` で企画の札を引くので、割れたほうは札が出ず、
+           日付も1日ずれる。
+
+           **前は「企画の日」を入れていた。写真の日に変えたのは、
+           企画の立っていない日があるから。** 企画が無ければ日付の
+           落ち先も無くなり、そこに貼った写真のカードが丸ごと作られ
+           なかった（本番で11日ぶん0枚）。写真は `day` を貼った時点から
+           持っているので、企画の有る無しに関わらず必ず決まる。
+           企画は「あれば落ち先として使う」だけに降りた（`imageDay`）。
+           **割れさせない、という元の目的はそのまま。** */
+        day: cardDay,
+        earnedAt: w.tip.donatedAt || image.at || now,
         /* **投げてくれたときに名乗っていた名前を、ここで焼き込む。**
 
            絵の本筋は `channelId`（`cards.ts` の `pickIcon`）で、ここは
@@ -492,11 +606,25 @@ export async function mintCards(
  */
 export async function mintForImage(image: ImageRef): Promise<MintResult> {
   if (image.role !== "card") return {made: 0, kept: 0, fixed: 0};
-  const snap = await EVENTS.doc(image.streamEventId).get();
-  if (!snap.exists) return {made: 0, kept: 0, fixed: 0};
-  const ev = eventRef(snap.id, snap.data() ?? {});
-  const tips = await tipsForEvent(ev);
-  return mintCards([image], tips, ev.date);
+  /* **企画が無くてもカードは作る。** ここは長いあいだ「企画の書類が
+     無ければ黙って `made: 0` で帰る」だった。企画の立っていない日に
+     貼った写真のカードが、それで11日ぶん0枚になっていた。
+     企画は「あれば `videoIds` と日付の落ち先に使う」だけ。 */
+  const ev = await eventOf(image.streamEventId);
+  const tips = await tipsForImage(image, ev);
+  return mintCards(image, tips, ev);
+}
+
+/**
+ * 企画を1本読む。**無ければ `null`。**
+ * @param {string} id 企画のID。**空のこともある**（企画の無い日の写真）
+ * @return {Promise<EventRef | null>} 企画。無ければ null
+ */
+async function eventOf(id: string): Promise<EventRef | null> {
+  // 空の書類IDで `doc("")` を呼ぶと Firestore 側で落ちる。手前で止める
+  if (!id) return null;
+  const snap = await EVENTS.doc(id).get();
+  return snap.exists ? eventRef(snap.id, snap.data() ?? {}) : null;
 }
 
 /**
@@ -510,15 +638,14 @@ export async function mintForImage(image: ImageRef): Promise<MintResult> {
 export async function resyncCardsOfImage(
   image: ImageRef,
 ): Promise<MintResult> {
-  const snap = await EVENTS.doc(image.streamEventId).get();
-  const ev = snap.exists ?
-    eventRef(snap.id, snap.data() ?? {}) :
-    null;
-  const tips = ev ? await tipsForEvent(ev) : [];
+  const ev = await eventOf(image.streamEventId);
+  /* **カードになるのは `role: "card"` だけ。** 役目を外されたら、
+     当たる投げ銭は0件 ＝ 下の `keep` が空 ＝ ぜんぶ消える、で終わる。
+     ここで役目を見ずに引くと、消したそばから `mintCards` が作り直して
+     **本人が動かした置き方だけが既定値に戻る。** */
+  const tips = image.role === "card" ? await tipsForImage(image, ev) : [];
   const keep = new Set(
-    image.role === "card" ?
-      tips.map((t) => cardId(image.id, whoKey(t.channelId))) :
-      [],
+    tips.map((t) => cardId(image.id, whoKey(t.channelId))),
   );
   const had = await CARDS.where("streamEventImageId", "==", image.id)
     .limit(1000)
@@ -530,7 +657,7 @@ export async function resyncCardsOfImage(
     await batch.commit();
     logger.info("dropped stale cards", image.id, gone.length);
   }
-  return mintCards([image], tips, ev?.date ?? "");
+  return mintCards(image, tips, ev);
 }
 
 /* ---------------- 置き方の既定値 ----------------
@@ -623,6 +750,11 @@ export function shapePlace(b: Json, now: Place): Place {
  * 落ちる（`cards.ts` の `pickIcon`）ので、その写しも一緒に返す。
  * 名前を出してよいかの判定も、いまもこの写しだけで決まる。
  * `islandTips` の中にしか無い値なので、チャンネルIDから引き直さない。
+ *
+ * **当たり方はカード（`tipsForImage`）と同じものを使う。** ここだけ生の
+ * `day` で引いていたので、0時をまたいだ晩に**写真の名札とカードが
+ * 食い違っていた**（本番の 9/17 がそれで、カード136枚に対して名札は
+ * 別の人数）。同じ日を同じ規則で出す。
  * @param {EventRef[]} events 企画ぜんぶ
  * @param {string} day その日（YYYY-MM-DD）
  * @return {Promise<Tipper[]>} その日**投げてくれた**人。**外へは出ない**
@@ -638,7 +770,14 @@ export async function channelsOfDay(
   for (const e of events) {
     if (e.date === day) e.videoIds.forEach((v) => vids.add(v));
   }
-  const jobs = [TIPS.where("day", "==", day).get()];
+  /* **「その日」と「その翌日」の2本。** 理由は `tipsForImage` と同じで、
+     台帳から引けるのは生の `day` だけ、`tipDay` の補正は手元でしか
+     かけられない。補正は前の日へ戻す方向にしか効かないので、
+     `D` の配信に当たる投げ銭の生の `day` は `D` か `D+1` しかない。 */
+  const jobs = [
+    TIPS.where("day", "==", day).get(),
+    TIPS.where("day", "==", dayAfter(day)).get(),
+  ];
   const list = [...vids];
   for (let i = 0; i < list.length; i += IN_CHUNK) {
     jobs.push(TIPS.where("videoId", "in", list.slice(i, i + IN_CHUNK)).get());
@@ -654,14 +793,26 @@ export async function channelsOfDay(
   const out = new Map<string, Tipper & {at: number}>();
   for (const s of snaps) {
     s.forEach((d) => {
-      const c = clean(d.get("channelId"), 64);
+      const t = tipRef(d.id, d.data() ?? {});
+      const c = t.channelId;
       if (!c) return;
-      const at = Number(d.get("donatedAt")) || 0;
+      /* **ここは「その日投げてくれた人」のまま。1人も広げない**
+         （2026-09-14 の障害。`docs/island-incident-2026-09-14-cards.md`）。
+         見ているのは台帳（`islandTips`）だけで、コメントした人も、
+         来ていただけの人も、ここには1人も入らない。増えも減りもするのは
+         **同じ投げ銭がどちらの日に数えられるか**だけで、
+         投げていない人が入る道はこの関数のどこにも無い。
+
+         絞り方は `tipsForImage` と同じ2つ:
+         `tipDay` がその日か、企画が名乗っている配信か。 */
+      const hit = tipDay(t) === day || (!!t.videoId && vids.has(t.videoId));
+      if (!hit) return;
+      const at = t.donatedAt;
       const had = out.get(c);
       if (had && had.at <= at) return;
       out.set(c, {
         channelId: c,
-        nameSnapshot: clean(d.get("displayNameSnapshot"), MAX_NAME),
+        nameSnapshot: t.nameSnapshot ?? "",
         at,
       });
     });

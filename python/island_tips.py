@@ -454,7 +454,14 @@ def main() -> int:
         logger.info("**0時をまたいだ配信**（始まった日と投げ銭の日が違う）:")
         for (vid, started), days in sorted(crossed.items()):
             logger.info("  %s  開始 %s → 投げ銭 %s", vid, started, ", ".join(sorted(days)))
-        logger.info("  %s の企画に videoIds を足すと、後半のぶんもカードになります", started)
+        # **写真のほうに足す。** カードの軸は 2026-10-01 から日付（写真の日）で、
+        # 企画は立っていない日がある（`docs/island-card-rfc.md`）。
+        # ただし `videoStartedAt` が入っていれば `tip_day` が自動で前の日へ戻すので、
+        # ここに出たからといって手で足す必要があるとは限らない
+        logger.info(
+            "  %s の写真（無ければ企画）に videoIds を足すと、後半のぶんも拾えます",
+            started,
+        )
 
     nameless = [r for r in rows if r["source"] == "doneru" and not r["channelId"]]
     if nameless:
