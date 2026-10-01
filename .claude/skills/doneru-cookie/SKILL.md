@@ -48,7 +48,7 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
   知らせはこちらに届かない。あやとが「数字何番？」と聞いてきて、答えたときには切れていた
 - **数字を伝える turn で、ほかの仕事（issue を見る・次の段取り）を挟まない**
 
-`NO-CHALLENGE:` が出たら本人確認は要らなかった（`_dt` がまだ生きていた）。下の表で読む。
+`NO-CHALLENGE:` が出たら、続く行を下の表で読む（`existing _dt valid: True` なら本人確認は要らなかった）。
 
 窓を逃したら、**その通知は無視してよい**とあやとに書いてから、もう1回回す
 （前の回の `RUN FINISHED` を待ってから）。

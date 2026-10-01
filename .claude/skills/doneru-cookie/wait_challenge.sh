@@ -17,7 +17,7 @@ SINCE=$(( $(date +%s) - 120 ))
 
 for _ in $(seq 1 120); do
   if grep -qE "final state|RUN FINISHED" "$RUN_OUT" 2>/dev/null; then
-    echo "NO-CHALLENGE: 本人確認を経ずに終わった。出力を読む:"; grep -E "OK:|STOP|existing _dt|fetch|HTTP" "$RUN_OUT"
+    echo "NO-CHALLENGE: 数字を拾う前に回が終わった（本人確認が要らなかったか、窓が切れた）。出力を読む:"; grep -E "OK:|STOP|existing _dt|challenge|fetch|HTTP" "$RUN_OUT"
     exit 0
   fi
   cid=$($A ssm send-command --instance-ids $ID --document-name AWS-RunShellScript \
