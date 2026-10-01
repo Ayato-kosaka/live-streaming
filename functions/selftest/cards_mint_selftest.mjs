@@ -22,6 +22,12 @@
  * 8. **1枚の写真から出たカードは、全部同じ `day` を持つ**
  * 9. 写真が `videoIds` を持たなければ、企画のものに落ちる。
  *    持っていれば、そちらが勝つ
+ * 10. **その日を配信日とする投げ銭が0件の日（配信の無い日）の写真が、
+ *    その日に届いた投げ銭の人に渡る**（本番の 2026-09-27）。
+ *    **配信があった日は1人も増えない**ことも、同じ仕込みで見る
+ * 11. 10 の絞りを外すと、**配信があった日の人数が増える**（対照）
+ * 12. Doneru（`videoStartedAt` を持たない）が届いた日は、必ず
+ *    「0件」にならない。10 の安全弁
  *
  * ## なぜ本番のデータを引かないか
  *
@@ -189,7 +195,7 @@ function scenario(store) {
   const ev = load("streamEvents");
   for (const f of [
     "mintCards", "mintForImage", "tipRef", "loadEvents", "channelsOfDay",
-    "tipsForImage", "tipDay", "imageDay",
+    "tipsForImage", "tipDay", "imageDay", "rawDayFallback", "tipHits",
   ]) {
     if (typeof ev[f] !== "function") {
       console.error(`lib/streamEvents.js から ${f} を取り出せなかった`);
@@ -677,7 +683,204 @@ console.log("\n# 8. 写真に `videoIds` が無ければ、企画のものに落
   );
 }
 
-console.log("\n# 9. ログに、視聴者さんの素性が1文字も出ない");
+console.log("\n# 9. 配信の無い日の写真（本番の 2026-09-27 の形）");
+{
+  /* **今日いちばん直したいところ。** 配信は 9/26（月末配信）と 9/28 で、
+     **9/27 には1本も無い。** 日本時間 9/27 の未明に届いた投げ銭3件は
+     9/26 に始まった配信のものなので、補正（`tipDay`）が 9/26 へ寄せる。
+     その結果、9/27 に貼った写真を受け取る人が**0人**になっていた
+     （補正を入れる前は、生の日付で3人付いていた）。
+
+     その日を配信日とする投げ銭が0件の日だけ、生の `day` でも当てる。 */
+  const START = jst("2026-09-26T21:00:00");
+  const GAP = {
+    tip_m1: {
+      // 配信中（9/26 21:30）。生の日も配信の日も 9/26
+      channelId: CH_A,
+      day: "2026-09-26",
+      videoId: "vid00000026",
+      videoStartedAt: START,
+      donatedAt: jst("2026-09-26T21:30:00"),
+      displayNameSnapshot: "さくら",
+    },
+    tip_m2: {
+      // **0時すぎ。生の日は 9/27 だが、配信の日は 9/26。** 3人ぶん
+      channelId: "UC_b_000000002",
+      day: "2026-09-27",
+      videoId: "vid00000026",
+      videoStartedAt: START,
+      donatedAt: jst("2026-09-27T00:10:00"),
+      displayNameSnapshot: "ななしのごんべえ",
+    },
+    tip_m3: {
+      channelId: "UC_c_000000003",
+      day: "2026-09-27",
+      videoId: "vid00000026",
+      videoStartedAt: START,
+      donatedAt: jst("2026-09-27T00:20:00"),
+    },
+    tip_m4: {
+      channelId: "UC_d_000000004",
+      day: "2026-09-27",
+      videoId: "vid00000026",
+      videoStartedAt: START,
+      donatedAt: jst("2026-09-27T00:30:00"),
+    },
+  };
+  const base = {...IMAGE, streamEventId: "", videoIds: []};
+  const img27 = {...base, id: "img_0000027", day: "2026-09-27"};
+  const img26 = {...base, id: "img_0000026", day: "2026-09-26"};
+
+  const s27 = scenario({islandStreamEvent: {}, islandTips: GAP, islandCards: {}});
+  const g27 = await s27.ev.mintForImage(img27);
+  check(
+    "**9/27 の写真が、その日に届いた投げ銭の3人に渡る**（0枚だったところ）",
+    g27.made === 3,
+    `${JSON.stringify(g27)} / ${s27.writes.map((w) => w.id).join(" / ")}`,
+  );
+  check(
+    "渡るのは生の日で届いた3人（4人目を増やしていない）",
+    s27.writes.map((w) => w.id).sort().join(",") === [
+      "img_0000027__UC_b_000000002",
+      "img_0000027__UC_c_000000003",
+      "img_0000027__UC_d_000000004",
+    ].join(","),
+    s27.writes.map((w) => w.id).sort().join(","),
+  );
+  check(
+    "9/27 のカードの `day` は写真の日（割れていない）",
+    s27.writes.every((w) => w.data.day === "2026-09-27"),
+    s27.writes.map((w) => `${w.id}=${w.data.day}`).join(" / "),
+  );
+
+  /* **配信があった日は、1人も増えない。** 9/26 は4人のまま。 */
+  const s26 = scenario({islandStreamEvent: {}, islandTips: GAP, islandCards: {}});
+  const g26 = await s26.ev.mintForImage(img26);
+  check(
+    "**配信があった 9/26 の写真は4枚のまま**（1人も増えない）",
+    g26.made === 4,
+    `${JSON.stringify(g26)} / ${s26.writes.map((w) => w.id).join(" / ")}`,
+  );
+
+  /* 写真の名札（`channelsOfDay`）も、同じ式を通って同じ顔ぶれになる。 */
+  const sp = scenario({islandStreamEvent: {}, islandTips: GAP, islandCards: {}});
+  const p27 = await sp.ev.channelsOfDay([], "2026-09-27");
+  const p26 = await sp.ev.channelsOfDay([], "2026-09-26");
+  check(
+    "9/27 の名札も3人（カードと同じ顔ぶれ）",
+    p27.map((p) => p.channelId).sort().join(",") === [
+      "UC_b_000000002", "UC_c_000000003", "UC_d_000000004",
+    ].join(","),
+    JSON.stringify(p27.map((p) => p.channelId)),
+  );
+  check(
+    "9/26 の名札は4人（増えていない）",
+    p26.length === 4,
+    JSON.stringify(p26.map((p) => p.channelId)),
+  );
+
+  /* **絞りそのものを見る。** 配信のある日は `false`、無い日だけ `true`。 */
+  const s0 = scenario({});
+  const rows = Object.entries(GAP).map(([id, v]) => s0.ev.tipRef(id, v));
+  check(
+    "配信のあった 9/26 は、生の `day` に落ちない（`rawDayFallback` が false）",
+    s0.ev.rawDayFallback("2026-09-26", rows) === false,
+    String(s0.ev.rawDayFallback("2026-09-26", rows)),
+  );
+  check(
+    "配信の無い 9/27 だけ、生の `day` に落ちる（true）",
+    s0.ev.rawDayFallback("2026-09-27", rows) === true,
+    String(s0.ev.rawDayFallback("2026-09-27", rows)),
+  );
+  check(
+    "`channelId` を持たない投げ銭は数えない（python の `load` とそろえる）",
+    s0.ev.rawDayFallback(
+      "2026-09-30",
+      [s0.ev.tipRef("x", {day: "2026-09-30", donatedAt: 1})],
+    ) === true,
+    "channelId の無い1件で false になっている",
+  );
+}
+
+console.log("\n# 10. 対照。絞りを外すと、配信があった日の人が増える");
+{
+  /* 2026-09-06 の形（#7 と同じ仕込み）で、**9/07 の写真**を見る。
+     9/07 にも配信があるので、00:23 に投げた人（生の日は 9/07・配信の日は
+     9/06）は 9/07 の写真を取らない。**絞りを外すと取る。**
+     これが増えないことが、絞りが効いている証拠。 */
+  const START = jst("2026-09-06T22:00:00");
+  const s = scenario({});
+  const late = s.ev.tipRef("tip_late", {
+    channelId: "UC_b_000000002",
+    day: "2026-09-07",
+    videoId: "vid00000006",
+    videoStartedAt: START,
+    donatedAt: jst("2026-09-07T00:23:00"),
+  });
+  const next = s.ev.tipRef("tip_next", {
+    channelId: "UC_d_000000004",
+    day: "2026-09-07",
+    videoId: "vid00000007",
+    videoStartedAt: jst("2026-09-07T20:00:00"),
+    donatedAt: jst("2026-09-07T20:10:00"),
+  });
+  const rows = [late, next];
+  const raw = s.ev.rawDayFallback("2026-09-07", rows);
+  check("9/07 は配信のある日（絞りが閉じている）", raw === false, String(raw));
+  const on = rows.filter((t) => s.ev.tipHits(t, "2026-09-07", new Set(), raw));
+  const off = rows.filter((t) => s.ev.tipHits(t, "2026-09-07", new Set(), true));
+  check(
+    "絞りがあると、9/07 の写真は1人（9/07 の配信の人だけ）",
+    on.length === 1 && on[0].id === "tip_next",
+    on.map((t) => t.id).join(","),
+  );
+  check(
+    "**絞りを外すと2人に増える**（対照。この絞りが効いている）",
+    off.length === 2,
+    off.map((t) => t.id).join(","),
+  );
+}
+
+console.log("\n# 11. Doneru が届いた日は、必ず「0件」にならない（安全弁）");
+{
+  /* Doneru は `videoStartedAt` を持たないので、**補正後の日＝生の日**。
+     つまり Doneru が1件でも届いた日は、生の `day` へ落ちることがない。
+     **投げ銭のある日がうっかり落ちない**のは、この性質のおかげ。 */
+  const s = scenario({
+    islandStreamEvent: {},
+    islandTips: {
+      tip_dn: {
+        // Doneru。配信IDも配信の始まりも持たない
+        channelId: CH_A,
+        day: "2026-09-29",
+        donatedAt: jst("2026-09-29T19:00:00"),
+        displayNameSnapshot: "さくら",
+      },
+      tip_prev: {
+        // 前の晩（9/28 22:00 開始）の配信に、0時すぎで投げてくれた人
+        channelId: "UC_b_000000002",
+        day: "2026-09-29",
+        videoId: "vid00000028",
+        videoStartedAt: jst("2026-09-28T22:00:00"),
+        donatedAt: jst("2026-09-29T00:40:00"),
+        displayNameSnapshot: "ななしのごんべえ",
+      },
+    },
+    islandCards: {},
+  });
+  const got = await s.ev.mintForImage({
+    ...IMAGE, id: "img_0000029", streamEventId: "",
+    day: "2026-09-29", videoIds: [],
+  });
+  check(
+    "Doneru の1件があるので、9/29 は生の `day` へ落ちない",
+    got.made === 1 && s.writes.map((w) => w.id).join(",") ===
+      "img_0000029__UC_a_000000001",
+    `${JSON.stringify(got)} / ${s.writes.map((w) => w.id).join(" / ")}`,
+  );
+}
+
+console.log("\n# 12. ログに、視聴者さんの素性が1文字も出ない");
 {
   const s = scenario({
     islandStreamEvent: EVENTS,

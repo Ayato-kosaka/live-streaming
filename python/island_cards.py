@@ -34,6 +34,18 @@
 企画の `videoIds`）に入っている」のどちらか。**企画が無くても作る**ので、
 `streamEventId` は空文字のままカードになる。
 
+## 配信の無い日だけ、生の `day` に落ちる（2026-10-01）
+
+補正（`tip_day`）は「配信が始まった日へ戻す」向きにしか効かない。だから
+**その日に始まった配信が1本も無い日は、補正が人を前の日へ送り出すだけで、
+代わりに誰も来ない。** 2026-09-27 がそれで、日本時間 9/27 の未明に届いた
+投げ銭3件が 9/26 の配信のものだったため、**9/27 に貼った写真を受け取る人が
+0人になった**（補正を入れる前は生の日付で3人付いていた）。
+
+**その日を配信日とする投げ銭が0件の日だけ**、生の `day` でも当てる
+（`stream_days` と `hits` の3つめ）。配信があった日は条件に入らないので
+**1人も増えない。** 詳しくは `hits` の頭と `docs/island-cards.md` 2章。
+
 **1本の配信に企画が何本も乗る**（9月11日は3本が同じ配信）という形は
 変わっていないが、**カードの枚数には効かなくなった。** 画像1枚につき
 1人1枚で、同じ日の画像が何枚あってもそのぶんだけ出る。
@@ -216,20 +228,81 @@ def video_ids(im: dict, events: Dict[str, dict]) -> List[str]:
     return (ev or {}).get("videoIds") or []
 
 
-def hits(tip: dict, im: dict, events: Dict[str, dict]) -> bool:
+def stream_days(tips: List[dict]) -> set:
+    """**その日を配信日とする投げ銭がある日**を、ぜんぶ集める。
+
+    `hits` の3つめ（生の `day` への落ち）を、**その日だけ**に絞るために要る。
+    1件ずつでは決まらない——その日ぜんぶを見て「0件」と言えないといけない。
+
+    `functions/src/streamEvents.ts` の `rawDayFallback` と**同じ数え方**。
+    あちらは写真の日のまわり（生の `day` が `D` と `D+1`）しか引けないが、
+    補正は前の日へ戻す向きにしか効かないので、`tip_day` が `D` になる
+    投げ銭の生の `day` は `D` か `D+1` しかない。だから同じ答えになる。
+
+    数えるのは `load` を通った投げ銭だけ。あちらで `channelId` の無いものを
+    落としてある（誰のものか分からない投げ銭にカードは作らない）ので、
+    TypeScript 側も `channelId` のあるものだけを数えている。
+
+    Args:
+        tips: 台帳（`load` が返したもの）
+
+    Returns:
+        配信日として使われている日の集合
+    """
+    return {d for d in (tip_day(t) for t in tips) if d}
+
+
+def hits(tip: dict, im: dict, events: Dict[str, dict], days: set) -> bool:
     """その投げ銭が、その画像に当たるか。**当たり方はここ1か所だけ。**
 
     1. 日が同じ（画像の日 == 投げ銭の日）
     2. `videoId` が画像の名乗る配信に入っている
+    3. **その日を配信日とする投げ銭が1件も無い日**なら、生の `day` が同じ
 
     **日が空のものどうしを当てない。** `day` も `at` も無い画像と、
     `day` も `donatedAt` も無い投げ銭は、どちらも空文字になる。
     そこを素通しにすると、素性の分からないもの全部が総当たりで繋がる。
 
+    ## 3 は何のためか（2026-09-27 の写真）
+
+    補正（`tip_day`）は「配信が始まった日へ戻す」向きにしか効かない。
+    だから**その日に始まった配信が1本も無い日は、補正が人を前の日へ
+    送り出すだけで、代わりに誰も来ない。**
+
+    2026-09-27 がそれだった。配信は 9/26（月末配信）と 9/28 で、9/27 には
+    1本も無い。日本時間 9/27 の未明に届いた投げ銭3件は 9/26 に始まった
+    配信のものなので補正が 9/26 へ寄せ、**9/27 に貼った写真を受け取る人が
+    0人になった**（補正を入れる前は生の日付で3人付いていた）。
+
+    ## なぜ「0件のときだけ」なのか
+
+    **配信があった日を1人も増やさないため。** その日を配信日とする投げ銭が
+    1件でもあれば `days` にその日が入るので、そこでは何も変わらない。
+    2026-09-06 の補正（22時開始の配信に 00:23 で投げてくれた人を前日へ
+    戻す）も、翌日 9/07 に別の配信があるかぎり 9/07 側は落ちない。
+
+    Doneru の投げ銭は `videoStartedAt` を持たないので、補正後の日＝生の日に
+    なる。**つまり Doneru が1件でも届いた日は、必ず「0件」にならない。**
+    これがこの絞り方の安全弁で、投げ銭のある日がうっかり落ちることはない。
+
+    ## **1人も外へ広げない**
+
+    見ているのは台帳（`islandTips`）だけ。動くのは**同じ投げ銭がどちらの日に
+    数えられるか**だけで、投げていない人が入る道はここに1本も無い
+    （2026-09-14 の障害・`docs/island-incident-2026-09-14-cards.md`）。
+
+    ## 配ったあとで、その日が配信日になったら
+
+    写真を貼った時点では配信が無く（＝配られ）、その晩に配信が始まって投げ銭が
+    届くと、翌朝ここから見ると条件が閉じる。**すでに配ったカードはそのまま
+    残る**（ここも `mintForImage` も作る側で、消す側ではない）。
+    **取り上げる向きには動かさない**のが今回の直しの趣旨なので、これでよい。
+
     Args:
         tip: 投げ銭1件
         im: 画像1件
         events: 企画ID -> 企画
+        days: 配信日として使われている日（`stream_days`）
 
     Returns:
         当たるなら True
@@ -238,7 +311,11 @@ def hits(tip: dict, im: dict, events: Dict[str, dict]) -> bool:
     if day and day == tip_day(tip):
         return True
     vid = tip.get("videoId")
-    return bool(vid) and vid in video_ids(im, events)
+    if vid and vid in video_ids(im, events):
+        return True
+    # 配信の無い日だけ、生の `day` で拾う。**この絞りを外すと、配信があった
+    # 日の人が余分にもらう**（前の日の配信の人が翌日の写真まで取る）
+    return bool(day) and day not in days and tip.get("day") == day
 
 
 def load(db: firestore.Client) -> tuple:
@@ -326,11 +403,15 @@ def main() -> int:
     db = firestore.Client(project=BQ_PROJECT_ID)
     events, images, tips = load(db)
 
+    # 配信日として使われている日。**写真1枚ずつではなく、台帳ぜんぶから
+    # 1回だけ出す**（`hits` の3つめが、その日だけに絞るために見る）
+    days = stream_days(tips)
+
     # (画像, 人) -> いちばん早い投げ銭。同じ人が同じ日に何度投げても1枚
     want: Dict[str, dict] = {}
     for tip in tips:
         for im in images:
-            if not hits(tip, im, events):
+            if not hits(tip, im, events, days):
                 continue
             key = f"{im['id']}__{tip['channelId']}"
             had = want.get(key)

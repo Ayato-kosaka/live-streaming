@@ -3,7 +3,7 @@
     python3 python/admin/island_cards_selftest.py
 
 **本番には1バイトも出ない。** Firestore も BigQuery も資格情報も要らない
-（どちらも偽物を `sys.modules` に置いてから読み込む）。見るのは6つ:
+（どちらも偽物を `sys.modules` に置いてから読み込む）。見るのは9つ:
 
   1. **投げたときの名乗りが、カードに焼き込まれる**（台帳の
      `displayNameSnapshot` → カードの `nameSnapshot`）。Doneru に別名で
@@ -18,6 +18,13 @@
   5. **下見（`--dry-run`）が既定**の作りが生きている
   6. 公開の場（`GITHUB_ACTIONS=true`）で、出力にチャンネルIDも名乗りも
      1文字も出ない。**対照として、外すと出ることも見る**
+  7. **その日を配信日とする投げ銭が0件の日（配信の無い日）の写真が、
+     その日に届いた投げ銭の人に渡る**（本番の 2026-09-27）。
+     **配信があった日は1人も増えない**ことも、同じ仕込みで見る
+  8. 2026-09-06 の補正（22時開始の配信に 00:23 で投げた人を前日へ戻す）が
+     生きている。**7 の絞りを外すと、配信があった日の人数が増える**（対照）
+  9. Doneru（`videoStartedAt` を持たない）が届いた日は、必ず「0件」に
+     ならない。7 の安全弁
 
 ## なぜ 6 に対照が要るのか
 
@@ -37,6 +44,7 @@ import io
 import os
 import sys
 import types
+from datetime import datetime, timedelta, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PY_DIR = os.path.dirname(HERE)
@@ -207,21 +215,24 @@ def store(cards=None, with_name=True):
     }
 
 
-def run(argv, cards=None, public=True, with_name=True):
-    """本体を1回まわす。
+def run_on(st, argv=None, public=False):
+    """**入れ物をそのまま渡して**本体を1回まわす。
+
+    `run` は仕込みが1日ぶんに決まっているので、日付をまたぐ筋書き
+    （0時またぎ・配信の無い日）はこちらを使う。
 
     Args:
+        st: 入れ物ぜんぶ（コレクション名 -> 書類ID -> 中身）
         argv: `island_cards.py` に渡す引数
-        cards: すでに入っているカード
         public: 公開の場（`GITHUB_ACTIONS`）として回すか
-        with_name: 台帳に名乗りを入れるか
 
     Returns:
         (終了コード, 書いたものの一覧, `commit()` の回数, 出力ぜんぶ)
     """
     sink = {"writes": [], "commits": 0}
-    db = FakeDb(store(cards, with_name), sink)
+    db = FakeDb(st, sink)
     island_cards.firestore.Client = lambda **kw: db
+    argv = argv or []
 
     had_env = os.environ.get("GITHUB_ACTIONS")
     if public:
@@ -249,6 +260,21 @@ def run(argv, cards=None, public=True, with_name=True):
         else:
             os.environ["GITHUB_ACTIONS"] = had_env
     return code, sink["writes"], sink["commits"], buf.getvalue()
+
+
+def run(argv, cards=None, public=True, with_name=True):
+    """1日ぶんの仕込みで、本体を1回まわす。
+
+    Args:
+        argv: `island_cards.py` に渡す引数
+        cards: すでに入っているカード
+        public: 公開の場（`GITHUB_ACTIONS`）として回すか
+        with_name: 台帳に名乗りを入れるか
+
+    Returns:
+        (終了コード, 書いたものの一覧, `commit()` の回数, 出力ぜんぶ)
+    """
+    return run_on(store(cards, with_name), argv, public)
 
 
 BAD = 0
@@ -407,6 +433,263 @@ check(
     pub[-200:],
 )
 check("枚数だけは出る（何も見ていないのではない）", "あるべきカード: 3枚" in pub, pub[-200:])
+
+
+# ---------------------------------------------------- 日付をまたぐ筋書き
+#
+# **ここから下は、`store()` の1日ぶんでは作れない形。** `run_on` に入れ物を
+# そのまま渡す。本番で実際に起きた3つを、形だけ写してある。
+
+CH4 = "UCq7r6s5t4u3v2w1x0y9z8aO"  # 4人目。**偽の字**
+V26, V06, V07, V28 = "vid00000026", "vid00000006", "vid00000007", "vid00000028"
+
+
+def jst(iso: str) -> int:
+    """日本時間の `YYYY-MM-DDTHH:MM:SS` を、ミリ秒にする。
+
+    配信の始まりを仕込むのに使う。`functions/selftest/cards_mint_selftest.mjs`
+    の `jst()` と同じもの。
+
+    Args:
+        iso: `2026-09-26T21:00:00` の形（日本時間）
+
+    Returns:
+        ミリ秒
+    """
+    t = datetime.fromisoformat(iso).replace(tzinfo=timezone(timedelta(hours=9)))
+    return int(t.timestamp() * 1000)
+
+
+def photo(doc_id: str, day: str, at: int) -> dict:
+    """カードになる写真1枚。**企画は付いていない**（`streamEventId` は空）。
+
+    Args:
+        doc_id: 書類ID（使う側で持つ）
+        day: 写真の日
+        at: 貼った時刻（ミリ秒）
+
+    Returns:
+        画像1件の中身
+    """
+    del doc_id
+    return {
+        "role": "card",
+        "url": "https://example.invalid/x.jpg",
+        "streamEventId": "",
+        "at": at,
+        "day": day,
+    }
+
+
+def ids(writes) -> list:
+    """書いたものの書類IDを並べる。"""
+    return sorted(w["id"] for w in writes)
+
+
+print("\n# 6. 配信の無い日の写真（本番の 2026-09-27 の形）")
+#
+# 配信は 9/26（月末配信）と 9/28 で、**9/27 には1本も無い。** 日本時間
+# 9/27 の未明に届いた投げ銭3件は 9/26 に始まった配信のものなので、補正
+# （`tip_day`）が 9/26 へ寄せる。**その結果 9/27 の写真が0枚になっていた。**
+START_26 = jst("2026-09-26T21:00:00")
+GAP = {
+    "islandStreamEvent": {},
+    "islandStreamEventImage": {
+        "img_0000026": photo("img_0000026", "2026-09-26", jst("2026-09-26T23:00:00")),
+        "img_0000027": photo("img_0000027", "2026-09-27", jst("2026-09-27T12:00:00")),
+    },
+    "islandTips": {
+        # 配信中（9/26 21:30）。生の日も配信の日も 9/26
+        "tip_m1": {
+            "channelId": CH["a"],
+            "day": "2026-09-26",
+            "videoId": V26,
+            "videoStartedAt": START_26,
+            "donatedAt": jst("2026-09-26T21:30:00"),
+            "displayNameSnapshot": NAME["a"],
+        },
+        # **0時すぎ。生の日は 9/27 だが、配信の日は 9/26**。3人ぶん
+        "tip_m2": {
+            "channelId": CH["b"],
+            "day": "2026-09-27",
+            "videoId": V26,
+            "videoStartedAt": START_26,
+            "donatedAt": jst("2026-09-27T00:10:00"),
+            "displayNameSnapshot": NAME["b"],
+        },
+        "tip_m3": {
+            "channelId": CH["c"],
+            "day": "2026-09-27",
+            "videoId": V26,
+            "videoStartedAt": START_26,
+            "donatedAt": jst("2026-09-27T00:20:00"),
+        },
+        "tip_m4": {
+            "channelId": CH4,
+            "day": "2026-09-27",
+            "videoId": V26,
+            "videoStartedAt": START_26,
+            "donatedAt": jst("2026-09-27T00:30:00"),
+        },
+    },
+    "islandCards": {},
+}
+code, writes, _, out = run_on(GAP)
+check("終了コード 0", code == 0, str(code))
+check(
+    "配信日として数えられている日は 9/26 だけ（9/27 は0件）",
+    island_cards.stream_days(list(GAP["islandTips"].values())) == {"2026-09-26"},
+    repr(island_cards.stream_days(list(GAP["islandTips"].values()))),
+)
+got_27 = [w for w in writes if w["id"].startswith("img_0000027__")]
+got_26 = [w for w in writes if w["id"].startswith("img_0000026__")]
+check(
+    "**9/27 の写真が、その日に届いた投げ銭の3人に渡る**（0枚だったところ）",
+    len(got_27) == 3,
+    f"{len(got_27)} 枚 / {ids(writes)}",
+)
+check(
+    "9/27 のカードは、生の日で届いた3人ぶん（4人目を増やしていない）",
+    sorted(w["id"].split("__")[1] for w in got_27)
+    == sorted([CH["b"], CH["c"], CH4]),
+    repr(sorted(w["id"].split("__")[1] for w in got_27)),
+)
+check(
+    "**配信があった 9/26 の写真は4枚のまま**（1人も増えない）",
+    len(got_26) == 4,
+    f"{len(got_26)} 枚 / {ids(writes)}",
+)
+check(
+    "9/27 のカードの `day` は写真の日（割れていない）",
+    all(w["data"]["day"] == "2026-09-27" for w in got_27),
+    repr([w["data"]["day"] for w in got_27]),
+)
+check("ぜんぶで7枚", len(writes) == 7, f"{len(writes)} 枚 / {ids(writes)}")
+
+print("\n# 7. 2026-09-06 の補正は生きている（配信があった日は増えない）")
+#
+# 22時に始まった配信に、22:27 と（日をまたいで）00:23 の2人。**同じ配信**
+# なので、00:23 の人も前日 9/06 の写真をもらう。翌日 9/07 にも配信があるので、
+# **9/07 の写真は 9/07 の配信の人だけ**（00:23 の人が二重に取らない）。
+START_06 = jst("2026-09-06T22:00:00")
+MID = {
+    "islandStreamEvent": {},
+    "islandStreamEventImage": {
+        "img_0000006": photo("img_0000006", "2026-09-06", jst("2026-09-06T23:00:00")),
+        "img_0000007": photo("img_0000007", "2026-09-07", jst("2026-09-07T21:00:00")),
+    },
+    "islandTips": {
+        "tip_early": {
+            "channelId": CH["a"],
+            "day": "2026-09-06",
+            "videoId": V06,
+            "videoStartedAt": START_06,
+            "donatedAt": jst("2026-09-06T22:27:00"),
+            "displayNameSnapshot": NAME["a"],
+        },
+        "tip_late": {
+            # **生の日は翌日。配信の始まりは前日**
+            "channelId": CH["b"],
+            "day": "2026-09-07",
+            "videoId": V06,
+            "videoStartedAt": START_06,
+            "donatedAt": jst("2026-09-07T00:23:00"),
+            "displayNameSnapshot": NAME["b"],
+        },
+        "tip_next": {
+            # **翌日に始まった、別の配信**
+            "channelId": CH4,
+            "day": "2026-09-07",
+            "videoId": V07,
+            "videoStartedAt": jst("2026-09-07T20:00:00"),
+            "donatedAt": jst("2026-09-07T20:10:00"),
+        },
+    },
+    "islandCards": {},
+}
+code, writes, _, out = run_on(MID)
+check("終了コード 0", code == 0, str(code))
+check(
+    "**00:23 に投げた人が、前日 9/06 の写真のカードになっている**",
+    f"img_0000006__{CH['b']}" in ids(writes),
+    repr(ids(writes)),
+)
+check(
+    "9/06 の写真は2枚（前半の人と、0時すぎの人）",
+    len([w for w in writes if w["id"].startswith("img_0000006__")]) == 2,
+    repr(ids(writes)),
+)
+check(
+    "**9/07 の写真は、9/07 の配信の1人だけ**（0時すぎの人が二重に取らない）",
+    [w["id"] for w in writes if w["id"].startswith("img_0000007__")]
+    == [f"img_0000007__{CH4}"],
+    repr(ids(writes)),
+)
+check("ぜんぶで3枚", len(writes) == 3, f"{len(writes)} 枚 / {ids(writes)}")
+
+# **対照。** 絞り（「その日を配信日とする投げ銭が0件のときだけ」）を外すと、
+# 配信があった 9/07 の写真を 00:23 の人も取って**2人に増える。**
+# これが増えないことが、絞りが効いている証拠。
+ROWS = list(MID["islandTips"].values())
+IMG_07 = {"id": "img_0000007", "streamEventId": "", "at": 0,
+          "day": "2026-09-07", "videoIds": []}
+DAYS = island_cards.stream_days(ROWS)
+N_ON = sum(1 for t in ROWS if island_cards.hits(t, IMG_07, {}, DAYS))
+N_OFF = sum(1 for t in ROWS if island_cards.hits(t, IMG_07, {}, set()))
+check(
+    "9/06 と 9/07 の両方が、配信日として数えられている",
+    DAYS == {"2026-09-06", "2026-09-07"},
+    repr(DAYS),
+)
+check("絞りがあると、9/07 の写真は1人", N_ON == 1, f"{N_ON} 人")
+check(
+    "**絞りを外すと2人に増える**（対照。この絞りが効いている）",
+    N_OFF == 2,
+    f"{N_OFF} 人",
+)
+
+print("\n# 8. Doneru が届いた日は、必ず「0件」にならない（安全弁）")
+#
+# Doneru は `videoStartedAt` を持たないので、**補正後の日＝生の日**になる。
+# つまり Doneru が1件でも届いた日は `stream_days` に必ず入り、生の `day` へ
+# 落ちることがない。**投げ銭のある日がうっかり落ちない**のはこの性質。
+DONERU = {
+    "islandStreamEvent": {},
+    "islandStreamEventImage": {
+        "img_0000029": photo("img_0000029", "2026-09-29", jst("2026-09-29T20:00:00")),
+    },
+    "islandTips": {
+        # Doneru。配信IDも配信の始まりも持たない
+        "tip_dn": {
+            "channelId": CH["a"],
+            "day": "2026-09-29",
+            "donatedAt": jst("2026-09-29T19:00:00"),
+            "displayNameSnapshot": NAME["a"],
+        },
+        # 前の晩（9/28 22:00 開始）の配信に、0時すぎで投げてくれた人
+        "tip_prev": {
+            "channelId": CH["b"],
+            "day": "2026-09-29",
+            "videoId": V28,
+            "videoStartedAt": jst("2026-09-28T22:00:00"),
+            "donatedAt": jst("2026-09-29T00:40:00"),
+            "displayNameSnapshot": NAME["b"],
+        },
+    },
+    "islandCards": {},
+}
+code, writes, _, out = run_on(DONERU)
+check("終了コード 0", code == 0, str(code))
+check(
+    "Doneru の1件で、9/29 が配信日として数えられる",
+    "2026-09-29" in island_cards.stream_days(list(DONERU["islandTips"].values())),
+    repr(island_cards.stream_days(list(DONERU["islandTips"].values()))),
+)
+check(
+    "9/29 の写真は、Doneru の1人だけ（前の晩の配信の人は取らない）",
+    ids(writes) == [f"img_0000029__{CH['a']}"],
+    repr(ids(writes)),
+)
 
 print("")
 if BAD:
