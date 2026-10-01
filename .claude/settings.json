@@ -3,6 +3,7 @@
     "allow": [
       "Bash(aws --profile sandbox:*)",
       "Bash(bash .claude/skills/doneru-cookie/ec2_exec.sh:*)",
+      "Bash(bash .claude/skills/doneru-cookie/wait_challenge.sh:*)",
       "Bash(cp /home/user/ayato-kosaka/nanitabeyo/.claude/skills/ec2-chrome-operate/ec2_exec.sh .claude/skills/doneru-cookie/:*)",
       "Write(.claude/skills/doneru-cookie/**)",
       "Edit(.claude/skills/doneru-cookie/**)"
