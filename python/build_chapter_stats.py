@@ -48,6 +48,10 @@ from build_dead_streams import blocked, check_written, sql_public  # noqa: E402
 from build_residents import BOT_NAME, fetch_characters, link, look  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 
+# **`site/content/*.ts` を字で読むのは1本だけ**（`python/ts_read.py`）。
+# ここに専用の正規表現を持っていたせいで、北欧が黙って落ちていた
+from ts_read import read_chapters as read_chapters_ts  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -61,19 +65,55 @@ OPEN_END = "2100-01-01"
 
 
 def read_chapters() -> list[dict]:
-    """chapters.ts から slug と期間を読み出す。まだ始まっていない章は外す。"""
+    """chapters.ts から slug と期間を読み出す。**まだ始まっていない章は外す。**
+
+    ## 読み方は `python/ts_read.py` の1本
+
+    前はここに専用の正規表現があって、`slug → name → from → to` が
+    **改行だけを挟んで続く**ことを求めていた。`chapters.ts` の北欧は
+    `slug:` と `name:` のあいだに9行のコメントが挟まっているので、
+    **そこで切れて北欧が丸ごと落ちていた。** 例外も警告も出ないまま、
+    `chapterStats.ts` と `chapterStreams.ts` から 9/12〜9/27 の配信が
+    消えていた（`python/ts_read.py` の頭に経緯を書いた）。
+
+    ## 「読み落とした」と「0章」を同じ顔にしない
+
+    - 読めたのに取りこぼした（`missed`）… 読み方かファイルの書き方が合っていない
+    - 1章も名乗っていない（`declared` が 0）… 置き場が違う・ファイルが空
+
+    直す相手が別なので、**別の字で止める**（`docs/island-standards.md` §15）。
+
+    ## 外すのは「まだ始まっていない章」だけ。**黙って外さない**
+
+    `from`（実際にその島にいた期間）が空の章は、BigQuery に渡す期間が無い。
+    外すのは正しいが、**外したことを言わずに消すと、北欧と同じ消え方になる。**
+    何を外したかをログに出す。
+    """
     src = CHAPTERS_TS.read_text(encoding="utf-8")
-    out = []
-    for m in re.finditer(
-        r'slug: "([a-z-]+)",\n\s*name: "([^"]+)",\n\s*from: "([\d-]*)",\n\s*to: "([\d-]*)",',
-        src,
-    ):
-        slug, name, frm, to = m.groups()
-        if not frm:
-            continue  # 北欧はまだ始まっていない。数えるものが無い
-        out.append({"slug": slug, "name": name, "from": frm, "to": to or OPEN_END})
+    got = read_chapters_ts(src)
+    if not got.declared:
+        raise SystemExit("::error::chapters.ts が章を1つも名乗っていません（数えるものが無い）")
+    if got.missed:
+        raise SystemExit(
+            f"::error::chapters.ts の章を読み落としました"
+            f"（名乗り {got.declared} / 読めた {len(got.rows)}）。"
+            f"python/ts_read.py の読み方か、chapters.ts の書き方が合っていません"
+        )
+
+    out, waiting = [], []
+    for c in got.rows:
+        if not c["from"]:
+            waiting.append(c["slug"])  # まだ始まっていない。数える期間が無い
+            continue
+        out.append({"slug": c["slug"], "name": c["name"], "from": c["from"],
+                    "to": c["to"] or OPEN_END})
+    logger.info(
+        "章 %d個を数える（%s）/ まだ始まっていないので外す %d個（%s）",
+        len(out), ", ".join(c["slug"] for c in out),
+        len(waiting), ", ".join(waiting) or "なし",
+    )
     if not out:
-        raise SystemExit("chapters.ts から章を1つも読めなかった")
+        raise SystemExit("::error::chapters.ts に、始まっている章が1つもありません")
     return out
 
 

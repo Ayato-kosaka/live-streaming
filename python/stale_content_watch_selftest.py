@@ -71,6 +71,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import stale_content_watch  # noqa: E402
+import ts_read  # noqa: E402
 from stale_content_watch import (  # noqa: E402
     BOOKS,
     CHAPTERS_TS,
@@ -83,9 +84,9 @@ from stale_content_watch import (  # noqa: E402
     SKIP,
     Facts,
     Span,
+    chapter_spans,
     iter_string_dates,
     judge,
-    read_chapters,
     scan_dir,
 )
 
@@ -222,7 +223,8 @@ def _facts(name: str, src: str) -> Facts:
     if name in KEY_RE:
         f.keys = KEY_RE[name].findall(src)
     if name == CHAPTERS_TS:
-        f.chapters = read_chapters(src)
+        f.chapters = chapter_spans(src)
+        f.chapters_missed = ts_read.read_chapters(src).missed
     return f
 
 
@@ -390,6 +392,17 @@ def main() -> int:
         check(f"{name}：どの章の表なのかを書き忘れたとき",
               [r.status for r in v.results if r.name == name], ["数えられない"])
 
+        # 章を読み落としていたら、**先ぶんの表は通ったと言わない。**
+        # 落ちた章がこの本の持ち主だったら、旅が終わったかどうかが分からない
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates,
+                                  chapters=base[CHAPTERS_TS].chapters,
+                                  chapters_missed=1)
+        v = judge(seen, after)
+        check(f"{CHAPTERS_TS} を1章読み落としたとき（{name} 側から）",
+              any("読めていません" in line for line in v.blind), True)
+
         # --- 本番の章 × 本番の表。**ここが「いまの本番で緑か」** -------------
         sp = {x.slug: x for x in base[CHAPTERS_TS].chapters}.get(b.chapter)
         check(f"{name} の章 {b.chapter} が本番の {CHAPTERS_TS} から読める",
@@ -457,7 +470,7 @@ export const CHAPTERS: Chapter[] = [
   },
 ];
 """
-    got = {sp.slug: (sp.start, sp.end) for sp in read_chapters(made)}
+    got = {sp.slug: (sp.start, sp.end) for sp in chapter_spans(made)}
     check("章を4つとも読む", sorted(got), ["alpha", "beta", "delta", "gamma"])
     check("`to` が入っていればそれが終わり（本文の to: に釣られない）",
           got.get("alpha"), (date(2026, 1, 1), date(2026, 1, 10)))
@@ -472,7 +485,7 @@ export const CHAPTERS: Chapter[] = [
 
     # コメントの中の章を、章として数えない（丸ごとコメントアウトされた章）
     check("コメントの中の章を数えない",
-          len(read_chapters(made.replace('    slug: "gamma",', '    // slug: "gamma",'))), 3)
+          len(chapter_spans(made.replace('    slug: "gamma",', '    // slug: "gamma",'))), 3)
 
     # --- 4. 鍵で見る本（①b）も両側から ---------------------------------------
     for name, b in BOOKS.items():

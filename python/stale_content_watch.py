@@ -124,6 +124,12 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）。
+# 同じものを3通りに書いていたので、北欧の章が1つの読み方からだけ落ちていた
+from ts_read import read_chapters  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 CONTENT = REPO / "site" / "content"
 
@@ -439,6 +445,11 @@ def _as_date(s: str) -> date | None:
 # **`site/content/chapters.ts` だけが、旅の始まりと終わりの出どころ。**
 # 島の連なりも表紙も `/now` もここを見ている（`lib/stay.ts`）。
 # 見張りだけ別のところから決めると、画面と見張りが別のことを言う日が来る。
+#
+# **字を読むのは `python/ts_read.py`。ここではやらない。** 同じものを3通りに
+# 書いていたので、北欧の章が片方の読み方からだけ落ちて、島の数字から
+# 9/12〜9/27 が丸ごと消えていた（`ts_read.py` の頭）。ここがやるのは、
+# 読めた章から「始まりと終わり」を決めるところだけ。
 
 
 @dataclass(frozen=True)
@@ -458,150 +469,7 @@ class Span:
         return self.end is not None and self.end < today
 
 
-_KEY_RE = re.compile(r"([A-Za-z_]\w*)\s*:\s*")
-_PAIRS = {"[": "]", "{": "}", "(": ")"}
-
-
-def _skip_string(src: str, i: int) -> int:
-    """`src[i]` の引用符から、閉じる引用符の位置まで。閉じていなければ末尾。"""
-    q = src[i]
-    j = i + 1
-    n = len(src)
-    while j < n:
-        if src[j] == "\\":
-            j += 2
-            continue
-        if src[j] == q:
-            return j
-        j += 1
-    return n - 1
-
-
-def _match(src: str, i: int) -> int:
-    """`src[i]` の開き括弧に対応する閉じ括弧の位置。**文字列の中は数えない。**"""
-    stack = [_PAIRS[src[i]]]
-    j, n = i + 1, len(src)
-    while j < n and stack:
-        c = src[j]
-        if c in "\"'`":
-            j = _skip_string(src, j)
-        elif c in _PAIRS:
-            stack.append(_PAIRS[c])
-        elif c == stack[-1]:
-            stack.pop()
-        j += 1
-    return j - 1 if not stack else n - 1
-
-
-def _code_only(src: str) -> str:
-    """コメントを空白に置き換えた字。**文字列の中は1字も触らない。**
-
-    `//` はアイコンの URL の中にも出るので、`_string_spans` と同じ歩き方で
-    「いま文字列の中か」を見ながら進む。**改行は残す**（行の形が崩れると、
-    どこを読み違えたのかを追えなくなる）。
-    """
-    out = list(src)
-    i, n = 0, len(src)
-    while i < n:
-        c = src[i]
-        if c in "\"'`":
-            i = _skip_string(src, i) + 1
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "/":
-            j = src.find("\n", i)
-            j = n if j < 0 else j
-            out[i:j] = " " * (j - i)
-            i = j
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "*":
-            j = src.find("*/", i + 2)
-            j = n if j < 0 else j + 2
-            for k in range(i, j):
-                if out[k] != "\n":
-                    out[k] = " "
-            i = j
-            continue
-        i += 1
-    return "".join(out)
-
-
-def _array_body(src: str, name: str) -> str:
-    """`export const NAME … = [ … ]` の中身。見つからなければ空。"""
-    # 名前と `=` のあいだに型が入る（`CHAPTERS: Chapter[] =`）。`=` と `;` だけ
-    # 跨がせない——跨がせると、別の宣言の `= [` を掴む
-    m = re.search(rf"\b{re.escape(name)}\b[^=;]*=\s*\[", src)
-    if not m:
-        return ""
-    i = m.end() - 1
-    return src[i + 1 : _match(src, i)]
-
-
-def _objects(body: str) -> list[str]:
-    """配列の中の `{…}` を、いちばん外側だけ1つずつ。"""
-    out = []
-    i, n = 0, len(body)
-    while i < n:
-        c = body[i]
-        if c == "{":
-            e = _match(body, i)
-            out.append(body[i + 1 : e])
-            i = e + 1
-            continue
-        if c in "\"'`":
-            i = _skip_string(body, i) + 1
-            continue
-        i += 1
-    return out
-
-
-def _fields(obj: str) -> dict[str, str]:
-    """`{…}` の**いちばん外側の欄だけ**を「鍵 → 字」で返す。
-
-    **正規表現1本で済ませない。** `note:` の本文に `to: "…"` のような字が
-    入っていると、欄として拾ってしまう。入れ子（`countries: [...]`）と
-    文字列の中は、歩きながら飛ばす。
-    """
-    out: dict[str, str] = {}
-    key = ""
-    i, n = 0, len(obj)
-    while i < n:
-        c = obj[i]
-        if c in "\"'`":
-            e = _skip_string(obj, i)
-            if key:
-                out[key] = obj[i + 1 : e]
-                key = ""
-            i = e + 1
-            continue
-        if c in _PAIRS:
-            i = _match(obj, i) + 1
-            key = ""
-            continue
-        if c == ",":
-            key = ""
-            i += 1
-            continue
-        # 鍵の頭か。語の途中（`plannedDays` の `l`）を鍵と読まないよう境目を見る
-        if (i == 0 or not (obj[i - 1].isalnum() or obj[i - 1] == "_")) and (
-            m := _KEY_RE.match(obj, i)
-        ):
-            key = m.group(1)
-            i = m.end()
-            continue
-        if key and not c.isspace():
-            # 引用符の付かない値（数・真偽）
-            j = i
-            while j < n and obj[j] not in ",\n":
-                j += 1
-            out[key] = obj[i:j].strip()
-            key = ""
-            i = j
-            continue
-        i += 1
-    return out
-
-
-def read_chapters(src: str) -> list[Span]:
+def chapter_spans(src: str) -> list[Span]:
     """`chapters.ts` から章の始まりと終わりを読む。
 
     **決めかたは `chapters.ts` の `began()` / `ended()` に合わせる。**
@@ -616,27 +484,25 @@ def read_chapters(src: str) -> list[Span]:
     `to` は旅から帰った本人が手で入れる欄なので、**そこだけを見ると永久に
     閉じない。** 次の章の始まりまで見るのは、そのための逃げ道。
     """
-    objs = [_fields(o) for o in _objects(_array_body(_code_only(src), "CHAPTERS"))]
-    rows = [f for f in objs if f.get("slug")]
+    rows = read_chapters(src).rows
 
-    def start_of(f: dict[str, str]) -> date | None:
-        if f.get("from"):
+    def start_of(f: dict) -> date | None:
+        if f["from"]:
             return _as_date(f["from"])
-        return _as_date(f.get("opensAt", "")[:10])
+        return _as_date(f["opensAt"][:10])
 
     # 次の章は**本線だけ**で数える（枝は本線の1歩ではない。`branchOf`）。
     # 枝を数えると、枝の出た日で親の章が閉じてしまう
-    main = sorted(d for f in rows if not f.get("branchOf") and (d := start_of(f)))
+    main = sorted(d for f in rows if not f["branchOf"] and (d := start_of(f)))
 
     out: list[Span] = []
     for f in rows:
         start = start_of(f)
-        end = _as_date(f.get("to", ""))
+        end = _as_date(f["to"])
         if end is None and start is not None:
             cands: list[date] = []
-            days = f.get("plannedDays", "")
-            if days.isdigit() and int(days) > 0:
-                cands.append(start + timedelta(days=int(days) - 1))
+            if f["plannedDays"] > 0:
+                cands.append(start + timedelta(days=f["plannedDays"] - 1))
             nxt = [d for d in main if d > start]
             if nxt:
                 cands.append(nxt[0] - timedelta(days=1))
@@ -655,6 +521,10 @@ class Facts:
     keys: list[str] = field(default_factory=list)
     # `chapters.ts` だけが持つ。`COVERS` の本が「旅が終わったか」を引きにくる
     chapters: list[Span] = field(default_factory=list)
+    # 名乗っているのに読めなかった章の数（`ts_read.ChapterRead.missed`）。
+    # **0 でなければ「数えられない」。** 読み落とした章が先ぶんの表の持ち主
+    # だったら、旅が終わったかどうかが分からないまま通ってしまう
+    chapters_missed: int = 0
 
 
 def scan(path: Path) -> Facts:
@@ -669,7 +539,11 @@ def scan(path: Path) -> Facts:
     if path.name in KEY_RE:
         f.keys = KEY_RE[path.name].findall(src)
     if path.name == CHAPTERS_TS:
-        f.chapters = read_chapters(src)
+        # 2回読んでいるのは、`chapter_spans()` を「字を渡せば章が返る」形の
+        # ままにしておきたいから（対照が仕込みの字をそのまま当てられる）。
+        # `chapters.ts` は15KB なので、2回でも測れるほどの差は出ない
+        f.chapters = chapter_spans(src)
+        f.chapters_missed = read_chapters(src).missed
     return f
 
 
@@ -804,6 +678,17 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
         v.blind.append(f"{name} が `BOOKS` の表にありません。仕分けを決めて足してください")
     for name in sorted(set(books) - set(seen)):
         v.blind.append(f"{name} が置き場にありません（表には在る）")
+
+    # **章を読み落としていたら、先へ進まない。** 落ちた章が先ぶんの表の持ち主
+    # だったら「旅が終わったか」が分からないまま通る。`chapterStats.ts` が
+    # 北欧を丸ごと落としていたのが、これを見ていなかったから
+    ch = seen.get(CHAPTERS_TS)
+    if ch and ch.found and ch.chapters_missed:
+        v.blind.append(
+            f"{CHAPTERS_TS} が名乗っている章のうち {ch.chapters_missed}個を読めていません"
+            f"（読めたのは {len(ch.chapters)}個）。`python/ts_read.py` の読み方か、"
+            f"{CHAPTERS_TS} の書き方のどちらかが合っていません"
+        )
 
     for name in sorted(books):
         b = books[name]
