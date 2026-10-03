@@ -22,11 +22,16 @@
  * ## 枠の埋めかた
  *
  * 引き（島ぜんぶ）は**島の縦幅を画面の高さに合わせる**（`IsleStage` の
- * `wideSpan`）。いまの島は縦が横の 1.6倍あるので、630px の枠に島まるごとを
- * 入れると横は 400px にしかならず、**残り 800px が海だけ**になる。
- * だから島を枠より大きく置いて、上下を枠で切る（`app/css/hero.css` の
- * `html[data-og]`）。切る量が偏らないように、**島の陸そのものを測って
- * 枠の中央に合わせる。** 島の形は章で変わるので、ここに座標を書かない。
+ * `wideSpan`）。縦に細い島を 630px の枠に丸ごと入れると横は 400px にしかならず、
+ * **残り 800px が海だけ**になる。だから島を枠より大きく置いて、上下を枠で切る
+ * （`app/css/hero.css` の `html[data-og]`）。切る量が偏らないように、
+ * **島の陸そのものを測って枠の中央に合わせる。** 島の形は章で変わるので、
+ * ここに座標を書かない。
+ *
+ * **どれだけ大きく置くかは `ogframe.mjs`。** 幅だけで決めていたら、丸い島の章
+ * （アルバニア、9/28〜）で陸が枠の高さに届かず、上下に 167px ずつ海が余った。
+ * いまは幅と高さの大きいほうを採る。計算をあちらへ切り出してあるのは、
+ * **この道具は開くだけでブラウザを起こす**ので見張りから当てられないため。
  *
  * ## 顔は1人ずつ本物で
  *
@@ -69,6 +74,7 @@ import { chromium } from "playwright-core";
 import { offline, offlineTally } from "./route.mjs";
 import { fromRoot } from "./repo.mjs";
 import { findStage } from "./stage.mjs";
+import { isleHeight, framingFaults, LAND_W as FRAME_LAND_W } from "./ogframe.mjs";
 
 /** 並列で作業するとき、エージェントごとに別のポートを使う。既定は 3000。 */
 const PORT = process.env.PORT || "3000";
@@ -79,19 +85,16 @@ const STAMP = process.env.STAMP || "";
 const NOW = process.env.OG_NOW || "";
 const W = 1200, H = 630;
 /**
- * 島の陸を、枠の何割の幅にするか。**高さではなく幅で決める。**
+ * 島の陸を、枠の何割の幅に置くか。**ここは下限で、これだけでは決まらない。**
  *
- * 高さを決め打ちにすると、**丸い島の章になった日に島が枠から溢れる。**
- * 引きの倍率は「島の縦幅を画面の高さに合わせる」ので（`IsleStage` の
- * `wideSpan`）、島の横幅は置いた高さにほぼ比例する。だから一度測って、
- * 幅がここに来る高さを計算する。**縦に細い島は上下が切れ、丸い島は
- * まるごと入る**——どちらも、こちらが決めなくてよい。
+ * 「丸い島はまるごと入る——こちらが決めなくてよい」と書いてあったのが外れた。
+ * まるごと入った結果、9/28 にアルバニアの章へ移った翌晩から**上下に 167px ずつ
+ * 海が余って**、毎晩の焼き直しが「海 70.2% / 陸 13.3%」で赤くなっている。
+ * 決め方そのものは `ogframe.mjs` に移した（幅と高さの大きいほうを採る）。
  */
-const LAND_W = Number(process.env.OG_LAND || 540);
+const LAND_W = Number(process.env.OG_LAND || FRAME_LAND_W);
 /** 測るための、最初の高さ。ここから比で伸ばすので、値そのものに意味は無い */
 const PROBE = 780;
-/** 伸ばしすぎ・縮めすぎの止め。島が枠の外まで伸びると、海が1本も写らない */
-const ISLE_MIN = 520, ISLE_MAX = 1400;
 
 /** 枠ごと送られたぶんを、上の箱まで全部ゼロに戻す（ブラウザの中で走る） */
 const unscroll = () => {
@@ -201,8 +204,11 @@ if (!land) {
   await bye(b, 2, `島の陸（${(S.land ?? []).join(" / ")}）が見つかりません。` +
     `島の絵の class が変わったなら tools/sprites/stage.mjs の STAGES に足す`);
 }
-/* 測った幅から、**陸が LAND_W になる高さ**を出す（横幅は置いた高さにほぼ比例）。 */
-const isle = Math.round(Math.max(ISLE_MIN, Math.min(ISLE_MAX, (PROBE * LAND_W) / land.w)));
+/* 測った箱から、島を置く高さを出す。**決まりは `ogframe.mjs`。**
+   幅で決めた大きさと、高さで決めた大きさの大きいほう——縦に細い島は幅で
+   決まって前と変わらず、丸い島だけ高さまで伸びる。 */
+const fit = isleHeight(land, { probe: PROBE, landW: LAND_W });
+const isle = fit.isle;
 await p.evaluate((v) => document.documentElement.style.setProperty("--og-isle", `${v}px`), isle);
 await p.evaluate(unscroll);
 await p.waitForTimeout(1200);
@@ -236,14 +242,17 @@ const after = await p.evaluate((sel) => {
 }, land.sel);
 console.log(
   `島 ${S.kind}（${S.root}）  cam ${await p.getAttribute(S.root, "data-cam")}  枠 ${W}x${H}  ` +
-    `島を置いた高さ ${isle}px  島の陸 ${Math.round(after.w)}x${Math.round(after.h)}（${land.sel}）  ` +
+    `島を置いた高さ ${isle}px（${fit.by}で決定${fit.capped ? "・止めに当たり" : ""}）  ` +
+    `島の陸 ${Math.round(after.w)}x${Math.round(after.h)}（${land.sel}）  ` +
     `寄せ ${dx.toFixed(0)},${dy.toFixed(0)}`,
 );
-/* 狙った幅に届かなかったら黙って出さない。**止めの値に当たった**ということなので、
-   島の形が変わったか、枠の決めごとのほうが合っていない */
-if (Math.abs(after.w - LAND_W) > LAND_W * 0.08) {
-  await bye(b, 2, `島の陸が ${Math.round(after.w)}px（狙いは ${LAND_W}px）。` +
-    `止め（${ISLE_MIN}〜${ISLE_MAX}px）に当たっています`);
+/* 置いたあとの陸の箱が、**枠として成り立っているか。**
+   細すぎる（止めに当たった）・広すぎる（左右から海が消える）・
+   枠を埋めていない（上下に海が余る）を、撮る前に言う。
+   画素で見るのは `ogcheck.py` のほうで、こちらは箱でしか言えないぶん。 */
+const framing = framingFaults(after, { landW: LAND_W, frame: { w: W, h: H } });
+if (framing.length) {
+  await bye(b, 2, `島の置き方が枠に合っていません: ${framing.join(" / ")}`);
 }
 
 /* **看板と帯が、枠の中にまるごと入っているか。**
