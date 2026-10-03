@@ -250,6 +250,41 @@ jobs:
 """)
 
 
+def unfed(doc: dict) -> list[str]:
+    """見張りを起こすのに、**その前に依存を入れていない** job を挙げる。
+
+    `logsafe_selftest.py` は `island_channels` などを取り込むので、
+    `python/requirements.txt` が入っていないと **ImportError で落ちる。**
+    落ちると見張りそのものが回らず、口はその job で1つも守られない。
+
+    2026-10-03、新しく足した `upkeep_watch.yml` が
+    `pip install pyyaml` だけを写してこちらを落とし、初回の空回しが
+    step 5 で落ちた。**写すときに1行落とす**という形なので、
+    次に誰かがワークフローを足した日にまた起きる。だからここで数える。
+
+    Args:
+        doc: ワークフロー1本の中身
+
+    Returns:
+        「job 名 / 見張りの step 名」の一覧。守れている job は出ない
+    """
+    bad = []
+    for job_name, job in (doc.get("jobs") or {}).items():
+        if not isinstance(job, dict):
+            continue
+        job_wd = ((job.get("defaults") or {}).get("run") or {}).get("working-directory", "")
+        fed = False
+        for step in job.get("steps") or []:
+            if not isinstance(step, dict):
+                continue
+            run = step.get("run")
+            if isinstance(run, str) and "python/requirements.txt" in run:
+                fed = True
+            if is_guard(step, job_wd) and not fed:
+                bad.append(f"{job_name} / {step.get('name', '(名無し)')}")
+    return bad
+
+
 def main() -> int:
     mouth_set = mouths()
     if not mouth_set:
@@ -336,6 +371,32 @@ def main() -> int:
         print(f"[6] ○ 辿りを外すと {len(gone)} → {len(shallow)} 件に減る（辿りが効いている）")
     else:
         print(f"[6] ✕ 辿りを外しても {len(shallow)} 件のまま。**1段しか見ていない**")
+        ng += 1
+
+    # [7] 見張りを起こす job が、その前に依存を入れているか。
+    #     入れていないと見張りが ImportError で落ち、**その job は丸ごと無防備**
+    starved = [f"{n}: {row}" for n, d in docs.items() for row in unfed(d)]
+    if starved:
+        print(f"[7] ✕ 依存を入れずに見張りを起こす job が {len(starved)}件")
+        for row in starved:
+            print(f"      {row}")
+        ng += 1
+    else:
+        print("[7] ○ 見張りを起こす job は、どれも手前で依存を入れている")
+
+    # [8] その足が寝ていないこと。依存の step を消したら挙がるか
+    fasted = copy.deepcopy(base)
+    for job in (fasted.get("jobs") or {}).values():
+        if isinstance(job, dict):
+            job["steps"] = [
+                s_ for s_ in (job.get("steps") or [])
+                if not (isinstance(s_, dict) and isinstance(s_.get("run"), str)
+                        and "python/requirements.txt" in s_["run"])
+            ]
+    if unfed(fasted):
+        print(f"[8] ○ 依存の step を消すと {len(unfed(fasted))}件 挙がる")
+    else:
+        print("[8] ✕ 依存の step を消しても挙がらない。**[7] は何も見ていない**")
         ng += 1
 
     print()
