@@ -24,7 +24,7 @@ import { chapterNeighbours, type Chapter } from "@/content/chapters";
  * **「日どりが入っているか」で振り分けない**——アルバニアに日どりを
  * 入れた日に、アルバニアの島が北欧の島になる（下の注の事故）。
  */
-const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour) => IsleSpec> = {
+const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour, next?: Neighbour) => IsleSpec> = {
   nordic: nordicSpec,
   albania: albaniaSpec,
 };
@@ -132,7 +132,11 @@ export default async function ChapterIsland({
      `c.opensAt ? nordicSpec(...)` で、**「日どりが入っている章 = 北欧」**
      という前提に寄りかかっていた。アルバニアに日どりが入った瞬間に
      その前提が崩れる（上の注の事故がそのまま戻る）。 */
-  const trip = TRIP_SPEC[c.slug]?.(c, prev);
+  /* **となりの島は両方渡す。** `albaniaSpec` は中で `isleSpec` を建ててから
+     風船を足す作りなので、ここで `next` を落とすと、その島だけ「つぎの島」への
+     渡し板が桟橋から消える（いまのアルバニアは最後の章なので目には見えないが、
+     次の章を1行足した日に消える）。 */
+  const trip = TRIP_SPEC[c.slug]?.(c, prev, next);
   const spec = trip && isle.places.length < trip.places.length ? trip : isle;
 
   return (

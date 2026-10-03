@@ -396,7 +396,7 @@ function themesIn(...groups: string[]): Theme[] {
 }
 
 /**
- * アルバニアの島。**旅の面も旅程もまだ無いので、建つのは風船ひとつ。**
+ * アルバニアの島。**素材の島に、風船を1つ足したもの。**
  *
  * 北欧の島（`nordicSpec`）は「この旅のこと・旅の6カ国・旅のしおり・
  * この旅の掲示板」の4軒が建つ。**あれは素材がそろっているから建つ**ので、
@@ -404,39 +404,44 @@ function themesIn(...groups: string[]): Theme[] {
  * 実際、振り分けが `c.opensAt` の有無だけだったころ、アルバニアの島に
  * **北欧の板が5枚**建っていた（`app/island/[chapter]/page.tsx` の注）。
  *
- * だから旅ごとに何を建てるかを決める。アルバニアはいま1つだけ——
+ * だから旅ごとに何を建てるかを決める。アルバニアで足すのは1つだけ——
  * やってほしいことを受ける風船（あやと 2026-09-27）。
  * 旅程が決まったら、ここに国と区間の札が増える。
+ *
+ * ## なぜ素材の島を**作り直さず、包む**のか
+ *
+ * ここは前、風船と桟橋の2軒だけを返していた。呼び出し側は
+ * 「建つものの多いほうを採る」（`app/island/[chapter]/page.tsx`）ので、
+ * **章の表に `from` が入って配信が焼かれた晩に、素材の島（配信のやぐら＋
+ * この島のこと＋桟橋の3軒）が追い越して、風船が黙って消える。**
+ * 実際に `chapters.ts` へ `from: "2026-09-28"` を入れて焼き直しを模すと、
+ * `/island/albania` から「アルバニアでこれやって」が落ちた。
+ * **赤くならない。島から1軒消えるだけ**——北欧が5日間ショート1軒の島に
+ * なっていたのと同じ壊れ方（同ファイルの注）。
+ *
+ * 風船は素材から生まれるものではない（掲示板の宛先が出どころ）ので、
+ * **素材と取り替えっこにしない。** 素材の島を建ててから、その上に足す。
+ * こうすると配信・住人・伝説が焼かれるたびに島が勝手に太り、
+ * 風船は旅が終わるまで残る。
  */
-export function albaniaSpec(c: Chapter, prev?: Neighbour): IsleSpec {
-  const art = artOf(c.slug, []);
-  return {
-    slug: c.slug,
-    name: c.name,
-    note: c.note,
-    days: chapterDays(c),
-    from: c.from,
-    to: c.to,
-    theme: art.theme,
-    places: [
-      {
-        id: "wish",
-        label: "アルバニアでこれやって",
-        blurb: "やってほしいことを貼る",
-        icon: "lantern-hanging",
-        size: 58,
-        sign: true,
-        note: "行く先も、食べるものも、まだ何も決まっていない。",
-        board: themesIn(ALBANIA_GROUP, PLAN_GROUP),
-        more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },
-      },
-      pier(prev),
-    ],
-    folk: [],
-    prev,
-    building: c.opensAt,
-    art,
+export function albaniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
+  const isle = isleSpec(c, prev, next);
+  const wish: IslePlaceSpec = {
+    id: "wish",
+    label: "アルバニアでこれやって",
+    blurb: "やってほしいことを貼る",
+    icon: "lantern-hanging",
+    size: 58,
+    sign: true,
+    note: "行く先も、食べるものも、まだ何も決まっていない。",
+    board: themesIn(ALBANIA_GROUP, PLAN_GROUP),
+    more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },
   };
+  /* 桟橋は `isleSpec` が**いちばん最後**に足す。島から島へ渡るところなので
+     並びの末尾に置いておきたい。だから風船はその1つ手前に差す。 */
+  const places = [...isle.places];
+  places.splice(Math.max(0, places.length - 1), 0, wish);
+  return { ...isle, places, building: c.opensAt };
 }
 
 /**
