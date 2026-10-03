@@ -32,6 +32,7 @@ master へ押し込む run なので、**読む人はいない。**
 | 4a | **正常な晩（1% やせ）では鳴らない** | 狼少年。毎晩止まって、誰も読まなくなる |
 | 4b | **塊が落ちたら（40% までに）鳴る** | 寝ている。4割消えても通す見張りは見張りではない |
 | 5 | **そのルールを `RULES` から外すと、同じ写しが通る** | 別のルールが先に捕まえている（＝この行は要らない、か、重なっている） |
+| 6 | **`match` が、名簿と帳尻の合う縮みを通し、合わない形で止まる** | 正しい縮みを止めている（2026-10-03 の 103→100 がこれ）か、何も見ていない |
 
 3 と 4 は**対**で見る。片方だけだと、何にでも赤を出す関所でも通る
 （`docs/island-standards.md` §15 の決めごと）。
@@ -48,8 +49,10 @@ master へ押し込む run なので、**読む人はいない。**
 
 ## 壊しかたを、ルールの種類で変える理由
 
-`RULES` の見かたは4つ（`keep` / `floor` / `band` / `share`）。
-どれも**同じ物差し（やせた割合）**で壊す——そうしないと
+`RULES` の見かたは5つ（`keep` / `floor` / `band` / `share` / `match`）。
+壊しかたを変えるのは前の4つ。**`match` は 6章でまとめて見る**（物差しが
+「前の版」ではなく「同じ回に焼いた別のファイル」なので、やせ具合では読めない）。
+前の4つはどれも**同じ物差し（やせた割合）**で壊す——そうしないと
 「どれくらいやせたら鳴るか」を並べて読めない。
 ただし**そのルールだけがやせる**ように、当てかたは分けてある。
 
@@ -76,7 +79,6 @@ import io
 import contextlib
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -232,13 +234,13 @@ NORMAL = 0.01   # 1%（1本非公開になった、取り込み直しで境目�
 BLOCK = 0.40    # 4割（国ひとつ・章ひとつが落ちる、より大きい）
 
 
-def ring_at(g: dict, rule: dict, text: str) -> tuple[float, str, str] | None:
+def ring_at(g: dict, rule: dict, text: str, mate: str | None = None) -> tuple[float, str, str] | None:
     """**何%やせたら鳴るか。** (割合, 一言, 鳴った字面)。100% やせても鳴らなければ None。"""
     for pct in range(1, 101):
         after, how = thin(g, rule, text, pct / 100)
         if after == text:
             continue
-        ok, *_ = g["judge"](rule, text, after)
+        ok, *_ = g["judge"](rule, text, after, mate)
         if not ok:
             return pct / 100, how, after
     return None
@@ -271,20 +273,65 @@ def run_guard(before: Path, work: Path, paths: list[str], rules=None) -> tuple[i
     return code, buf.getvalue()
 
 
-def stage(td: Path, override: dict[str, str] | None = None) -> tuple[Path, Path, list[str]]:
-    """本番の焼き込みを「焼く前」に、写しを「焼いた後」に置く。
+_SEED: dict[str, str] = {}
+
+
+def roster_matched(box: str) -> str:
+    """`characterBox.ts` を**名簿とそろえた形**にする（＝焼き直しが書くはずの形）。
+
+    名簿に居ない id の箱を落とし、箱の無い人に箱を足す。値は見ない
+    （この確かめが見るのは**数と id** だけ）。
+    """
+    roster = re.findall(r'icon: "([^"]+)"',
+                        (CONTENT / "residents.ts").read_text(encoding="utf-8"))
+    lines = box.split("\n")
+    box_re = re.compile(r'^  "([^"]+)": \[')
+    at = [i for i, ln in enumerate(lines) if box_re.match(ln)]
+    have = {box_re.match(lines[i]).group(1): lines[i] for i in at}
+    sample = lines[at[0]]
+    body = [have.get(i) or re.sub(r'^  "[^"]+"', f'  "{i}"', sample) for i in roster]
+    return "\n".join(lines[:at[0]] + body + lines[at[-1] + 1:])
+
+
+def seed(name: str) -> str:
+    """**対照の種**。本番の焼き込みそのまま——`characterBox.ts` だけは別。
+
+    いま master に入っている `characterBox.ts` は**名簿より3人多い**
+    （2026-10-03 現在、箱 103 / 名簿 100）。これは**関所が止めるべき状態**で、
+    実際に止めている。そのまま「何も壊していない写し」の種にすると、
+    3章（何も壊していない写しが通る）が仕様どおりに落ちてしまう。
+
+    だから種だけ、**今夜の焼き直しが書くはずの形**（名簿とそろった 100箱）に
+    直す。いま入っている 103箱のほうは 6章で名指しで当てる——
+    **「箱だけ残っている」で止まること**が、そちらの見どころなので。
+    """
+    if name not in _SEED:
+        text = (CONTENT / name).read_text(encoding="utf-8")
+        _SEED[name] = roster_matched(text) if name == "characterBox.ts" else text
+    return _SEED[name]
+
+
+def mate_of(g: dict, rule: dict) -> str | None:
+    """`match` のルールが帳尻を合わせる相手の字面。ほかの見かたでは None。"""
+    return seed(rule["mate"]) if rule["kind"] == g["MATCH"] else None
+
+
+def stage(td: Path, override: dict[str, str] | None = None,
+          before_override: dict[str, str] | None = None) -> tuple[Path, Path, list[str]]:
+    """焼き込みの種を「焼く前」に、写しを「焼いた後」に置く。
 
     **種は本番のファイル**（`site/content/*.ts`）。作り物の2行で試すと、
     焼き込みの書き方が変わった日に、変わったことに気づけない。
+    `characterBox.ts` だけ種を直している理由は `seed()` に書いた。
     """
     before, work = td / "before", td / "after"
     (work / "site" / "content").mkdir(parents=True, exist_ok=True)
     before.mkdir(parents=True, exist_ok=True)
     paths = []
     for name in sorted(WATCHED):
-        src = CONTENT / name
-        shutil.copyfile(src, before / name)
-        text = (override or {}).get(name) or src.read_text(encoding="utf-8")
+        (before / name).write_text(
+            (before_override or {}).get(name) or seed(name), encoding="utf-8")
+        text = (override or {}).get(name) or seed(name)
         (work / "site" / "content" / name).write_text(text, encoding="utf-8")
         paths.append(f"site/content/{name}")
     return before, work, paths
@@ -316,13 +363,21 @@ def check_denominator(g: dict) -> None:
         raise SystemExit(2)
     rows, dead = 0, []
     for name in WATCHED:
-        text = (CONTENT / name).read_text(encoding="utf-8")
+        text = seed(name)
         for r in g["RULES"][name]:
             rows += 1
             if r["kind"] == g["SHARE"]:
                 den = g["measure"](text, r["den"], "count")
                 numv = g["measure"](text, r["num"], "count")
                 hit, shown = den, f"{numv}/{den}"
+            elif r["kind"] == g["MATCH"]:
+                # **相手の正規表現も当たらないと鳴れない。** こちらだけ数えて
+                # 「当たっている」と読むと、相手が0件の回に黙って飛ばす行になる
+                mine = g["measure"](text, r["pat"], "count")
+                spare = g["measure"](text, r["spare"], "count") if r["spare"] else 0
+                theirs = g["measure"](mate_of(g, r), r["mate_pat"], "count")
+                hit = min(mine, theirs)
+                shown = f"{mine}+{spare} / {r['mate_label']} {theirs}"
             else:
                 hit = g["measure"](text, r["pat"], r["mode"])
                 shown = f"{hit:,}"
@@ -371,16 +426,18 @@ def check_broken(g: dict) -> None:
     total = sum(len(g["RULES"][n]) for n in WATCHED)
 
     for name in WATCHED:
-        text = (CONTENT / name).read_text(encoding="utf-8")
+        text = seed(name)
         for r in g["RULES"][name]:
             tag = f"{name} の「{r['label']}」"
+            mate = mate_of(g, r)
 
-            # 4a. **正常な晩で鳴らないこと。** `keep` は「1つでも減ったら止める」
-            #     ための行なので、ここは見ない（見ると、仕様どおりの行が落ちる）
-            if r["kind"] == g["KEEP"]:
+            # 4a. **正常な晩で鳴らないこと。** `keep` と `match` は「1つでも
+            #     食い違ったら止める」ための行なので、ここは見ない
+            #     （見ると、仕様どおりの行が落ちる）
+            if r["kind"] in (g["KEEP"], g["MATCH"]):
                 quiet += 1
                 print(f"  --   {tag} —— 正常な晩は見ない"
-                      "（`keep` は1つ減っただけで止めるための行）")
+                      f"（`{r['kind']}` は1つ食い違っただけで止めるための行）")
             else:
                 small, how = thin(g, r, text, NORMAL)
                 ok, *_ = g["judge"](r, text, small)
@@ -390,7 +447,7 @@ def check_broken(g: dict) -> None:
                     crybaby.append(tag)
 
             # 4b. **塊が落ちたら鳴ること。**
-            got = ring_at(g, r, text)
+            got = ring_at(g, r, text, mate)
             if got is None or got[0] > BLOCK:
                 where = "100% やせても鳴らない" if got is None else f"{got[0]:.0%} やせないと鳴らない"
                 asleep.append(f"{tag}（{where}）")
@@ -439,6 +496,101 @@ def check_broken(g: dict) -> None:
             print("    - " + tag)
 
 
+# ---------------------------------------------------------------- 6. 名簿とそろっているか
+
+
+BOX_LINE = r'^  "[^"]+": \['
+
+
+def to_no_art(box: str, n: int) -> str:
+    """箱を n 人ぶん `noArt`（測れなかった人）へ移す。
+
+    **帳尻は合ったまま、箱だけ減る形。** 絵の置き場が落ちた晩がこれ。
+    「箱＋測れなかった人＝名簿」だけを見ていると素通りするので、
+    `match` の `arg`（箱そのものの床）が仕事をしているかを、ここで当てる。
+    """
+    ms = list(re.finditer(BOX_LINE + r'.*\n', box, re.M))[:n]
+    ids = [re.match(r'^  "([^"]+)"', m.group(0)).group(1) for m in ms]
+    out = box
+    for m in reversed(ms):
+        out = out[:m.start()] + out[m.end():]
+    lo = out.index("  noArt: [")
+    hi = out.index("  ],", lo)
+    body = "\n".join('    "%s",' % i for i in ids)
+    return out[:lo] + "  noArt: [\n" + body + "\n" + out[hi:]
+
+
+def with_strays(box: str, n: int) -> str:
+    """名簿に居ない id の箱を n 個足す（＝**消えた人の箱が残っている**形）。
+
+    いま master に入っているものをそのまま使わない。**今夜の焼き直しが通れば、
+    master の箱は名簿とそろう**ので、本物に頼ると明日からこの足が空振りする。
+    """
+    ms = list(re.finditer(BOX_LINE + r'.*\n', box, re.M))
+    sample = ms[0].group(0)
+    extra = "".join(re.sub(r'^  "[^"]+"', f'  "もう名簿にいない人{i}"', sample)
+                    for i in range(n))
+    return box[:ms[-1].end()] + extra + box[ms[-1].end():]
+
+
+def check_roster(g: dict) -> None:
+    """**正しい縮みを通し、合わない形で止まるか。**
+
+    ここだけ物差しが違う（前の版ではなく、同じ回に焼いた `residents.ts`）ので、
+    4・5章のやせ具合では読めない。**5つとも本番のファイルを種にして当てる。**
+    """
+    print("\n6. `characterBox.ts` が、名簿（residents.ts）と帳尻が合っているか")
+    if "characterBox.ts" not in WATCHED or "residents.ts" not in WATCHED:
+        say(False, "characterBox.ts と residents.ts の両方を見張っている")
+        return
+
+    real = (CONTENT / "characterBox.ts").read_text(encoding="utf-8")
+    matched = seed("characterBox.ts")          # 名簿とそろえた形（＝焼き直しが書くはず）
+    roster = g["measure"](seed("residents.ts"), r'icon: "', "count")
+    n_real = g["measure"](real, BOX_LINE, "count")
+    n_match = g["measure"](matched, BOX_LINE, "count")
+    print(f"     いま master に入っている箱 {n_real} / 名簿 {roster}人"
+          f" / 名簿とそろえると {n_match}箱")
+
+    # 4人消えて1人入った晩（2026-10-03 に止まった形）を、本物に頼らず組み立てる。
+    # **今夜の焼き直しが通れば master の箱は名簿とそろう**ので、
+    # 「いま 103 入っている」に寄りかかると、明日からこの足が空振りする
+    was = with_strays(neutralize(matched, BOX_LINE, 1), 4)
+    stale = with_strays(matched, 3)
+
+    # (前の版, 焼いた版, 止まってほしいか, 何を見ているか)
+    cases = [
+        (real, matched, False,
+         f"**いま master に入っている箱を、今夜そのまま焼いたら。**"
+         f" 箱 {n_real} → {n_match} / 名簿 {roster}人"),
+        (was, matched, False,
+         f"名簿から4人消えて1人入った晩（箱 {g['measure'](was, BOX_LINE, 'count')}"
+         f" → {n_match}、名簿 {roster}人）。**正しい縮み**"),
+        (matched, neutralize(matched, BOX_LINE, 5), True,
+         f"箱だけ 5 減る（{n_match} → {n_match - 5}、名簿は {roster}人のまま）"),
+        (stale, stale, True,
+         f"名簿から消えた人の箱が残ったまま"
+         f"（箱 {g['measure'](stale, BOX_LINE, 'count')} / 名簿 {roster}人）"),
+        (matched, to_no_art(matched, 15), True,
+         f"測れなかった人が 15人。帳尻は {n_match - 15}+15={roster} で合うが、"
+         "箱そのものが名簿の9割を切る（＝絵の置き場が落ちた晩）"),
+        (matched, to_no_art(matched, 2), False,
+         f"測れなかった人が 2人。帳尻が合い、箱も {n_match - 2} 残っている"
+         "——**この形まで止めると、永久に焼けなくなる**"),
+    ]
+    for before_box, after_box, want_stop, why in cases:
+        with tempfile.TemporaryDirectory() as td:
+            b, work, paths = stage(Path(td), {"characterBox.ts": after_box},
+                                   {"characterBox.ts": before_box})
+            code, out = run_guard(b, work, paths)
+            hit = [ln for ln in out.splitlines()
+                   if ln.startswith("::error::") and "名簿とそろった箱" in ln]
+            ok = (code == 1 and len(hit) == 1) if want_stop else (code == 0 and not hit)
+            say(ok, f"{'止まる' if want_stop else '通る'}: {why}（終了コード {code}）")
+            if hit:
+                print("         " + hit[0].replace("::error::", "→ "))
+
+
 def main() -> int:
     g = load_guard()
     print(f"見張りを {YML.name} の step「{STEP}」から切り出した（{len(guard_src().splitlines())} 行）")
@@ -446,6 +598,7 @@ def main() -> int:
     check_denominator(g)
     check_clean(g)
     check_broken(g)
+    check_roster(g)
 
     print()
     if fails:

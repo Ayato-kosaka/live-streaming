@@ -804,20 +804,33 @@ jobs:
           import re
           import sys
 
-          # 見かたは4つ。
+          # 見かたは5つ。**前の4つは前と後を比べる。5つめだけが横を見る。**
           #   keep  : 1つでも減ったら止める。**読み落としでしか減らない数**にだけ使う
           #           （章は `chapters.ts`、国は `countries.ts` から来る。人が書いた表は消えない）
           #   floor : 前の値の何倍まで縮んでよいか。累積の数に使う
           #   band  : 上にも下にも幅を持たせる。窓で切っていて正常でも動く数に使う
           #   share : 「埋まっている割合」が何ポイント落ちたら止めるか。
           #           **件数が減らないまま中身だけ空になる壊れかた**は、これでしか捕まらない
-          KEEP, FLOOR, BAND, SHARE = "keep", "floor", "band", "share"
+          #   match : **同じ回に焼いた別のファイルの数と、帳尻が合っているか。**
+          #           上の4つは「前の版」が物差しなので、**正しい縮みも止めてしまう。**
+          #           元が減ったから減った、という形はここで見る（下の `characterBox.ts`）
+          KEEP, FLOOR, BAND, SHARE, MATCH = "keep", "floor", "band", "share", "match"
 
 
-          def rule(label, kind, arg, pat=None, mode="count", num=None, den=None, note=""):
+          def rule(label, kind, arg, pat=None, mode="count", num=None, den=None, note="",
+                   mate=None, mate_pat=None, mate_label="", spare=None):
+              """1本ぶんの見かた。`mate*` と `spare` は `match` のときだけ使う。
+
+              @param mate       帳尻を合わせる相手のファイル名（**同じ置き場の、焼いたあとの版**）
+              @param mate_pat   相手の中で数える正規表現
+              @param mate_label 表に出す相手の呼び名（「名簿」など）
+              @param spare      自分の中で「数に入れてよい当たり」。
+                                焼いた側が「測れなかった」と名指しで書いているぶん
+              """
               return {
                   "label": label, "kind": kind, "arg": arg,
                   "pat": pat, "mode": mode, "num": num, "den": den, "note": note,
+                  "mate": mate, "mate_pat": mate_pat, "mate_label": mate_label, "spare": spare,
               }
 
 
@@ -899,20 +912,55 @@ jobs:
                   rule("題名の入っているショート", SHARE, 5.0,
                        num=r'title: "[^"]', den=r"^\s{4}\{ id: "),
               ],
-              # 絵の大きさの表。**人数ぶんだけ増える表**なので、縮んだら異常。
-              # 名簿から人が消えることはある（あやとが消したとき）が、そのときは
-              # 消した本人が見ているので、1人でも減ったら止めてよい（`keep`）。
-              # 焼くほう（`charbox.py`）も「いま入っている人数より減ったら書かない」を
-              # 持っているが、**あちらが見るのは自分が前に書いた版**。ここは
-              # 「この晩に焼く前」と比べるので、二重ではなく層が違う。
+              # 絵の大きさの表。**この1枚だけ、物差しが「前の版」ではない。**
+              #
+              # 長いこと「1人でも減ったら止める」（`keep`）で見ていた。書いてあった
+              # 理由は「名簿から人が消えるのはあやとが消したときで、そのときは消した
+              # 本人が見ている」。**その前提が外れていた。** 2026-10-03 の焼き直しで
+              # 箱 103 → 100 が止まった。減った4人はどれも古いドライブidで、
+              # **過去のどこかで Firestore から消えていた人**。誰も見ていない。
+              # 同じ晩に1人入っているので 103 − 4 + 1 = 100。**正しい縮み**だった。
+              #
+              # 前の版を物差しにする限り、この形は毎晩止まる。止まるあいだ、新しく
+              # 入った人の箱は永久に焼かれず、`python/stale_content_watch.py` が
+              # 「名簿の1件が焼かれていません」と毎晩赤くする。**自分では二度と
+              # 緑にならない見張り**になる（`tools/sprites/charbox.py` の先頭に、
+              # 焼く側が同じところで転んだ記録がある）。
+              #
+              # **正しい物差しは名簿（`residents.ts`）。** この表は名簿の人ぶんだけ
+              # 箱を持つ表なので、**増えても減っても、名簿と帳尻が合っていればよい。**
+              # 合っていないほう——箱だけ減った・名簿から消えた人の箱が残っている——が
+              # 異常。焼く側（`charbox.py` の `judge()`）もこの考えで動いている。
               "characterBox.ts": [
-                  # 箱の行（103）。1人でも減ったら止める
-                  rule("絵の箱", KEEP, 0, r'^\s{2}"[^"]+": \['),
-                  # **本丸。件数が1件も減らないまま、中身だけ壊れる形がある。**
+                  # **本丸その1。箱（100）＋測れなかった人（0）＝名簿（100）。**
+                  #
+                  # 「測れなかった人」を足すのは、焼く側が名指しで `noArt` に書いて
+                  # いるから。背景なしの絵が無い人・絵が開けない人は箱を持てないので、
+                  # ぴったり一致だけを求めると**その人が1人いるだけで永久に止まる。**
+                  #
+                  # `arg`（0.9）は、その `noArt` が膨らんで帳尻だけ合う形の止め。
+                  # 絵の置き場が落ちた晩は全員が `noArt` に落ちるので、
+                  # **箱そのものが名簿の9割を切ったら、帳尻が合っていても止める。**
+                  # 9割にしたのは、実測の `noArt` が 0人のまま続いているから
+                  # （103箱 / noArt 0）。1人2人は起こりうるが、10人まとめて
+                  # 測れなくなるのは「1枚ずつ壊れた」ではなく「置き場が落ちた」の形
+                  #
+                  # **承知のうえの副作用。** 上の「住人の絵の大きさを測り直す」が
+                  # 落ちた晩は、この表が**前のまま戻される**（`git checkout --`）。
+                  # 名簿がその晩に動いていたら、ここが食い違いとして止める——
+                  # つまり**その晩は他の焼き込みも master に入らない。**
+                  # もともとその run は「絵の大きさを測り直せたか」で赤くなる晩なので、
+                  # 赤を1つ増やすのではなく、**入れないほうに倒した。**
+                  # 置き場が何日も落ちたままなら、先にそちらを直す
+                  rule("名簿とそろった箱", MATCH, 0.9, r'^\s{2}"[^"]+": \[',
+                       mate="residents.ts", mate_pat=r'icon: "', mate_label="名簿",
+                       # `noArt` の並びは4字下げの `"id",`。箱の行（2字下げ）とは別
+                       spare=r'^\s{4}"[^"]+",$'),
+                  # **本丸その2。件数が1件も減らないまま、中身だけ壊れる形がある。**
                   # 絵の置き場が中身の入った 200 を返さず、四隅まで塗った当たり障りの
                   # ない板を返した晩は、透明でない画素の外接矩形が**全員ぶん枠いっぱい**
-                  # （`[0.0, 0.0, 1.0, 1.0, …]`）になる。行数は 103 のままなので
-                  # 上の「絵の箱」では捕まらず、**島の全員が不揃いに戻る**。
+                  # （`[0.0, 0.0, 1.0, 1.0, …]`）になる。行数は名簿と合ったままなので
+                  # 上の「名簿とそろった箱」では捕まらず、**島の全員が不揃いに戻る**。
                   # いま枠いっぱいなのは 103人中3人（本当にそう描かれている人）
                   rule("枠いっぱいでない箱", SHARE, 5.0,
                        num=r'^\s{2}"[^"]+": \[(?!0\.0, 0\.0, 1\.0, 1\.0,)[^\n\]]+\]',
@@ -941,8 +989,32 @@ jobs:
               return f"{v * 100:.1f}%"
 
 
-          def judge(r, before_text, after_text):
-              """1つのルールを見る。(通ったか, 前の表示, 後の表示, 許す下限の表示, 一言) を返す。"""
+          def judge(r, before_text, after_text, mate_text=None):
+              """1つのルールを見る。(通ったか, 前の表示, 後の表示, 許す下限の表示, 一言) を返す。
+
+              @param mate_text `match` のとき、帳尻を合わせる相手の**焼いたあと**の字面
+              """
+              if r["kind"] == MATCH:
+                  # **前の版は見ない。** 見ると、元が減ったから減っただけの回まで止まる
+                  a = measure(after_text, r["pat"], "count")
+                  sp = measure(after_text, r["spare"], "count") if r["spare"] else 0
+                  b = measure(before_text, r["pat"], "count")
+                  shown = f"{num(a)}+{sp}" if sp else num(a)
+                  if mate_text is None:
+                      return False, num(b), shown, "—", f"{r['mate']} が読めないので数えていない"
+                  m = measure(mate_text, r["mate_pat"], "count")
+                  if m == 0:
+                      # 相手が空。**相手の側のルールが落とす**ので、ここで二重に鳴らさない
+                      return True, num(b), shown, "—", f"{r['mate_label']}が0件なので飛ばした"
+                  floor = m * r["arg"]
+                  limit = f"{r['mate_label']} {num(m)} とぴったり（箱は {floor:,.1f} 以上）"
+                  if a + sp != m:
+                      return False, num(b), shown, limit, f"{r['mate_label']}と {a + sp - m:+,}"
+                  # 帳尻は合っている。あとは**測れなかった人だけで埋まっていないか**
+                  if a < floor:
+                      return False, num(b), shown, limit, f"測れなかった人が {sp}人"
+                  return True, num(b), shown, limit, f"{r['mate_label']}と同じ"
+
               if r["kind"] == SHARE:
                   db = measure(before_text, r["den"], "count")
                   da = measure(after_text, r["den"], "count")
@@ -991,7 +1063,14 @@ jobs:
                   after_text = after_p.read_text(encoding="utf-8")
                   before_text = before_p.read_text(encoding="utf-8")
                   for r in RULES.get(name, []):
-                      ok, b, a, limit, note = judge(r, before_text, after_text)
+                      # `match` の相手は**同じ回に焼いたほう**を見る。焼き直して
+                      # いない回でも、隣に置いてある版（master のまま）が相手になる
+                      mate_text = None
+                      if r["kind"] == MATCH:
+                          mate_p = after_p.parent / r["mate"]
+                          if mate_p.exists():
+                              mate_text = mate_p.read_text(encoding="utf-8")
+                      ok, b, a, limit, note = judge(r, before_text, after_text, mate_text)
                       rows.append((name, r["label"], b, a, limit, note if ok else f"**{note}**"))
                       if not ok:
                           bad.append((name, r["label"], b, a, limit, note))
@@ -1014,6 +1093,8 @@ jobs:
                       "",
                       "焼いた結果が、焼く前より縮んでいます。**毎晩ぶんは増えるのが正常**なので、",
                       "縮むのは数え方か読み方が変わったときです。",
+                      "（`〜とぴったり` と書いてある行だけは物差しが違います。**前の版ではなく、",
+                      "同じ回に焼いた別のファイルと帳尻が合っているか**を見ています）",
                       "",
                       "| ファイル | 何を | 前 | 後 | 止めない範囲 |",
                       "| --- | --- | ---: | ---: | ---: |",
@@ -1030,6 +1111,12 @@ jobs:
                       "   取り込み（Fetch YouTube Chat Data）が失敗した晩ではないか",
                       "3. **「章」「国」が落ちているとき** — 人が書いた表を読めていません。",
                       "   その表を触った直後なら、書き方が正規表現から外れています",
+                      "4. **「名簿とそろった箱」が落ちているとき** — 箱の数と名簿の人数が",
+                      "   食い違っています。**減ったこと自体は異常ではありません**",
+                      "   （名簿から人が消えれば箱も消えます）。食い違いのほうを見てください。",
+                      "   箱だけ足りないなら `tools/sprites/charbox.py` が測れていません。",
+                      "   同じ run の `住人の絵の大きさを測り直す` に warning が出ていたら、",
+                      "   表は前のまま戻っています。**先に絵の置き場（口）のほうを直します**",
                       "",
                       "直したら、Actions から `dry_run: false` で押し直します。",
                       "**master には何も入っていないので、急がなくても壊れません。**",
