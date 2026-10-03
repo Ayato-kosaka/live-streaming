@@ -64,14 +64,17 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import stale_content_watch  # noqa: E402
+import ts_read  # noqa: E402
 from stale_content_watch import (  # noqa: E402
     BOOKS,
+    CHAPTERS_TS,
     CONTENT,
     COVERS,
     KEY_RE,
@@ -80,6 +83,8 @@ from stale_content_watch import (  # noqa: E402
     SHARE,
     SKIP,
     Facts,
+    Span,
+    chapter_spans,
     iter_string_dates,
     judge,
     scan_dir,
@@ -95,11 +100,17 @@ TODAY = date(2026, 9, 17)
 # | --- | --- | --- |
 # | `round` | 割合を**丸めてから**比べる（2026-09-24 まではこれだった） | `50% のすぐ上（101/200人）` |
 # | `ge` | ちょうどしきい値でも鳴らす（`>` を `>=` に） | `ちょうど50%（100/200人）` |
+# | `covers-today` | 先ぶんの表に**いつでも今日まで**を求める（2026-10-03 まではこれだった） | `終わった旅 × 表が最終日まで在る` |
+# | `covers-free` | 先ぶんの表に**旅の始まりまで**しか求めない（「終わった旅は見ない」の行きすぎ） | `進んでいる旅 × 表が古い` ほか |
 #
 # **2本を1本にまとめない。** `round` は「境目がぼやける」、`ge` は「境目を
 # どちらへ倒すか」で、別のこと。片方だけ当てて通すと、もう片方が寝ていても出る。
+#
+# 先ぶんの表の2本も同じで、**向きが逆。** `covers-today` は「直っているものを
+# 鳴らす」側（毎晩の焼き直しが9/29から赤かったのがこれ）、`covers-free` は
+# 「壊れていても黙る」側（次の旅が始まった晩に、古い表のまま緑になる）。
 BREAK = os.environ.get("BREAK", "")
-LEGS = ("round", "ge")
+LEGS = ("round", "ge", "covers-today", "covers-free")
 
 
 def _hobble() -> None:
@@ -112,6 +123,14 @@ def _hobble() -> None:
         stale_content_watch.over_share = (
             lambda missing, total, share: missing * 100 >= share * total
         )
+    elif BREAK == "covers-today":
+        # 旅が終わっていても今日を求める（直っているものを鳴らす側）
+        stale_content_watch.covers_until = (
+            lambda span, today, days: today + timedelta(days=days)
+        )
+    elif BREAK == "covers-free":
+        # 旅の始まりまでしか求めない（壊れていても黙る側）
+        stale_content_watch.covers_until = lambda span, today, days: span.start
 
 
 # **しきい値から作らない2つの数。** 上の docstring を読んでから触る。
@@ -139,9 +158,9 @@ TWO_SIDES: dict[str, tuple[int, int]] = {
     # どちらも「OSM の店がどれくらいの速さで入れ替わるか」ではない。
     # それはこちらからは測れない（`BOOKS` の why に書いた）
     "nordicShops.ts": (18, 126),
-    # COVERS の2本は「あと何日ぶん残っているか」。負が古い側
-    "nordic.ts": (5, -1),
-    "nordicSun.ts": (5, -1),
+    # **`COVERS` の2本（`nordic.ts` `nordicSun.ts`）はここに居ない。**
+    # あちらは「今日から何日前か」ではなく「**旅が終わっているか**」で境目が
+    # 変わるので、日数1本では両側を作れない。4通りを下の「3c」で当てる
 }
 
 # `SHARE` で見る本の、**しきい値から作らない2つの割合**（%）。
@@ -203,11 +222,16 @@ def _facts(name: str, src: str) -> Facts:
     f.dates = sorted(seen)
     if name in KEY_RE:
         f.keys = KEY_RE[name].findall(src)
+    if name == CHAPTERS_TS:
+        f.chapters = chapter_spans(src)
+        f.chapters_missed = ts_read.read_chapters(src).missed
     return f
 
 
-def _status(seen: dict[str, Facts], name: str) -> str:
-    v = judge(seen, TODAY)
+def _status(seen: dict[str, Facts], name: str, today: date = TODAY) -> str:
+    """その本の判定。**きょうを選べる**——`COVERS` の本は、旅の最中と旅のあとで
+    求めるものが変わるので、同じ写しを別の日に当てないと片側しか見られない。"""
+    v = judge(seen, today)
     for r in v.results:
         if r.name == name:
             return r.status
@@ -240,36 +264,39 @@ def main() -> int:
     check("素の写しで見た本の数", len(copy.results), len(BOOKS))
 
     # --- 1. 判定する本が、表と食い違っていないか -----------------------------
+    # **分母をここで固定する**（§15）。判定する本が増えたのに対照を足し忘れると、
+    # その1本だけ誰も当てないまま毎晩通る
     judged = {n for n, b in BOOKS.items() if b.rule != SKIP}
     dated = {n for n in judged if BOOKS[n].rule in (LATEST, COVERS)}
-    check("両側の数を持っている本の数", sorted(TWO_SIDES), sorted(dated))
+    latest_books = {n for n in judged if BOOKS[n].rule == LATEST}
+    covers_books = {n for n in judged if BOOKS[n].rule == COVERS}
+    check("両側の数を持っている本の数", sorted(TWO_SIDES), sorted(latest_books))
+    # `COVERS` の本は、章（旅）を名指ししていないと「終わったか」が決まらない
+    for name in sorted(covers_books):
+        check(f"{name} が章を名指ししている", bool(BOOKS[name].chapter), True)
 
     # --- 2. しきい値そのものが動いていないか ---------------------------------
     # **`green` で鳴らず `red` で鳴る**、を日数の側からも押さえる。
     # ここが無いと、しきい値を1日にしても green の写しを作る側が一緒にずれる。
     for name, (green, red) in TWO_SIDES.items():
         b = BOOKS[name]
-        if b.rule == LATEST:
-            check(f"{name} のしきい値が実測の正常な空き({green}日)より広い", b.days >= green, True)
-            check(f"{name} のしきい値が止まった長さ({red}日)より狭い", b.days < red, True)
+        check(f"{name} のしきい値が実測の正常な空き({green}日)より広い", b.days >= green, True)
+        check(f"{name} のしきい値が止まった長さ({red}日)より狭い", b.days < red, True)
 
     # --- 3. 本ごとに、正常な側と古い側の両方を当てる -------------------------
+    # **`TWO_SIDES` は `LATEST` の本だけ**（上の check 1 がそれを縛っている）。
+    # `COVERS` は日数1本では両側を作れないので、下の 3c で別に当てる
     for name, (green, red) in TWO_SIDES.items():
-        b = BOOKS[name]
         for side, offset, want in (("正常", green, "通った"), ("古い", red, "赤")):
-            if b.rule == LATEST:
-                when = TODAY - timedelta(days=offset)
-            else:  # COVERS は「あと何日ぶん残っているか」
-                when = TODAY + timedelta(days=offset)
             seen = dict(base)
-            seen[name] = _facts(name, _rewrite_dates(src_of[name], when))
+            seen[name] = _facts(name, _rewrite_dates(src_of[name], TODAY - timedelta(days=offset)))
             check(f"{name} を{side}側({offset}日)にしたとき", _status(seen, name), want)
 
         # ちょうどしきい値の日は鳴らさない（境界で1日ずれていないか）
-        if b.rule == LATEST:
-            seen = dict(base)
-            seen[name] = _facts(name, _rewrite_dates(src_of[name], TODAY - timedelta(days=b.days)))
-            check(f"{name} がちょうど{b.days}日前のとき", _status(seen, name), "通った")
+        b = BOOKS[name]
+        seen = dict(base)
+        seen[name] = _facts(name, _rewrite_dates(src_of[name], TODAY - timedelta(days=b.days)))
+        check(f"{name} がちょうど{b.days}日前のとき", _status(seen, name), "通った")
 
     # --- 3b. コメントの中の日付を、中身と読んでいないか -----------------------
     # **ここが抜けると、いちばん静かに壊れる。** `chapterStats.ts` は冒頭に
@@ -298,6 +325,167 @@ def main() -> int:
     # 読むと、そこから先の日付が丸ごと落ちて「日付0件」になる
     url = '[{ icon: "https://yt4.ggpht.com/x=s64", date: "2026-09-16" }]'
     check("文字列の中の URL の後ろの日付", [d.isoformat() for d in _facts("x.ts", url).dates], ["2026-09-16"])
+
+    # --- 3c. 先ぶんの表を、**旅の最中と旅のあとで別々に**当てる --------------
+    #
+    # ここが1通りしか無かったので、2026-09-29 から毎晩2本が赤かった。
+    # 「いつでも今日まで」を求めていて、**終わった旅の旅程が今日まで
+    # 伸びていないことを不具合として鳴らしていた。**
+    #
+    # 直すときに危ないのは**行きすぎ**のほう——「終わった旅は見ない」に
+    # すると、次の旅が始まった晩から古い表のまま緑になる。だから4通りを
+    # 並べて当てる。**2通りだけ（終わった旅の緑と赤）にしない。**
+    #
+    # | 旅 | 表 | ほしい答え | 抜けると何が起きるか |
+    # | --- | --- | --- | --- |
+    # | 進んでいる | 今日まで在る | 通った | 旅のあいだじゅう狼少年 |
+    # | 進んでいる | 古い | **赤** | **次の旅で黙る**（いちばん悪い） |
+    # | 終わった | 最終日まで在る | 通った | 直っているものを毎晩鳴らす |
+    # | 終わった | 最終日の手前で切れている | **赤** | 旅程の焼き損ねを見のがす |
+    #
+    # 4通りは**作った章**で当てる。本番の章がいま進んでいるか終わっているかに
+    # よらず、次の旅が来ても同じ4通りが回る。本番の章と本番の表の組み合わせは、
+    # そのすぐ下で別に当てる（こちらが「いまの本番で緑か」）。
+    for name in sorted(covers_books):
+        b = BOOKS[name]
+
+        start, last = date(2026, 3, 1), date(2026, 3, 20)
+        during, after = date(2026, 3, 10), date(2026, 4, 1)
+        closed = Span(b.chapter, start, last)   # 終わりの決まっている章
+        openep = Span(b.chapter, start, None)   # 終わりがまだ決まっていない章
+
+        def _with(span: Span, table_last: date) -> dict[str, Facts]:
+            seen = dict(base)
+            seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                      dates=base[CHAPTERS_TS].dates, chapters=[span])
+            seen[name] = _facts(name, _rewrite_dates(src_of[name], table_last))
+            return seen
+
+        for label, span, table_last, clock, want in (
+            ("進んでいる旅 × 表が今日まで在る", closed, during, during, "通った"),
+            ("進んでいる旅 × 表が古い", closed, during - timedelta(days=1), during, "赤"),
+            ("終わった旅 × 表が最終日まで在る", closed, last, after, "通った"),
+            ("終わった旅 × 表が最終日の手前で切れている", closed, last - timedelta(days=1),
+             after, "赤"),
+            # 終わりがまだ決まっていない章（`to` が空で、次の章もまだ無い）は
+            # **終わっていない側。** ここを「終わった」に倒すと、旅のあいだずっと黙る
+            ("終わりが未定の旅 × 表が今日まで在る", openep, during, during, "通った"),
+            ("終わりが未定の旅 × 表が古い", openep, during - timedelta(days=1), during, "赤"),
+        ):
+            check(f"{name}：{label}", _status(_with(span, table_last), name, clock), want)
+
+        # --- 章が読めないときは、**通ったと言わない** -----------------------
+        # ここが「読めなければ見ない」だと、`chapters.ts` の章の名前を
+        # 変えた日から、この本は二度と鳴らなくなる（§15 の「いつでも通る見張り」）
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates,
+                                  chapters=[Span("よその章", start, last)])
+        seen[name] = _facts(name, _rewrite_dates(src_of[name], last))
+        check(f"{name}：章 {b.chapter} が {CHAPTERS_TS} に無いとき",
+              _status(seen, name, after), "数えられない")
+
+        # 表に章を書き忘れた本も同じ。**既定で通さない**
+        books = dict(BOOKS)
+        books[name] = replace(b, chapter="")
+        v = judge(dict(base), after, books)
+        check(f"{name}：どの章の表なのかを書き忘れたとき",
+              [r.status for r in v.results if r.name == name], ["数えられない"])
+
+        # 章を読み落としていたら、**先ぶんの表は通ったと言わない。**
+        # 落ちた章がこの本の持ち主だったら、旅が終わったかどうかが分からない
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates,
+                                  chapters=base[CHAPTERS_TS].chapters,
+                                  chapters_missed=1)
+        v = judge(seen, after)
+        check(f"{CHAPTERS_TS} を1章読み落としたとき（{name} 側から）",
+              any("読めていません" in line for line in v.blind), True)
+
+        # --- 本番の章 × 本番の表。**ここが「いまの本番で緑か」** -------------
+        sp = {x.slug: x for x in base[CHAPTERS_TS].chapters}.get(b.chapter)
+        check(f"{name} の章 {b.chapter} が本番の {CHAPTERS_TS} から読める",
+              sp is not None and sp.start is not None, True)
+        if sp is None or sp.start is None:
+            continue
+        check(f"{name}：本番の表を、旅のとちゅう（{sp.start + timedelta(days=1)}）に当てて",
+              _status(dict(base), name, sp.start + timedelta(days=1)), "通った")
+        if sp.end is None:
+            # 終わりが決まっていない章なら、旅のあとは当てられない。
+            # **黙って飛ばさず、飛ばしたことを印字する**（分母。§15）
+            print(f"  {name}: 章 {b.chapter} はまだ終わりが決まっていないので、"
+                  f"「旅のあと」は当てていない")
+            continue
+        check(f"{name}：本番の表を、旅のあと（{sp.end + timedelta(days=5)}）に当てて",
+              _status(dict(base), name, sp.end + timedelta(days=5)), "通った")
+        print(f"  {name}: 章 {b.chapter} {sp.start}〜{sp.end} / "
+              f"表のいちばん先 {base[name].dates[-1]}")
+        check(f"{name} の表が、章の最終日まで届いている",
+              base[name].dates[-1] >= sp.end, True)
+
+    # --- 3d. 章の読み取りが、コメントと入れ子に騙されないか ------------------
+    #
+    # `chapters.ts` はコメントだらけで、本文のほうにも日付が山ほど書いてある
+    # （「あやと 2026-09-06『ストックホルム出るまでが北欧旅です』」など）。
+    # **コメントの中の `to: "…"` を欄として拾うと、旅の終わりが別の日になる。**
+    # そうなると先ぶんの表の判定が丸ごとずれるので、ここで押さえる。
+    #
+    # 本番の `chapters.ts` では **`to` の入っている章しか通らない。**
+    # `plannedDays` で閉じる道と、次の章の前日で閉じる道は、本番では
+    # どこも通らないまま残る（通らない枝は、壊れても誰も気づかない）。
+    # だから字を自分で組んで、3通りの閉じかたを別々に当てる。
+    made = """
+export type Chapter = { slug: string };
+export const CHAPTERS: Chapter[] = [
+  {
+    slug: "alpha",
+    from: "2026-01-01",
+    to: "2026-01-10",
+    countries: ["a", "b"],
+    icon: "https://example.com/a//b.png",
+    note: "to: \\"2026-12-31\\" と本文に書いてあっても、欄ではない",
+  },
+  {
+    // ここに to: "2026-12-31" と書いてもコメント
+    /* from: "2020-01-01" も同じ */
+    slug: "beta",
+    from: "2026-01-11",
+    to: "",
+    plannedDays: 5,
+    countries: [],
+  },
+  {
+    slug: "delta",
+    branchOf: "alpha",
+    from: "2026-01-12",
+    to: "",
+    countries: [],
+  },
+  {
+    slug: "gamma",
+    from: "",
+    opensAt: "2026-02-01T00:00:00+09:00",
+    countries: [],
+  },
+];
+"""
+    got = {sp.slug: (sp.start, sp.end) for sp in chapter_spans(made)}
+    check("章を4つとも読む", sorted(got), ["alpha", "beta", "delta", "gamma"])
+    check("`to` が入っていればそれが終わり（本文の to: に釣られない）",
+          got.get("alpha"), (date(2026, 1, 1), date(2026, 1, 10)))
+    # beta は `plannedDays` 5日ぶん（1/11〜1/15）。次の**本線**は gamma の 2/1 なので
+    # 1/31 のほうが遅い。**枝（delta の 1/12）を次の章に数えると 1/11 になる**
+    check("`to` が空なら plannedDays ぶん（枝は次の章に数えない）",
+          got.get("beta"), (date(2026, 1, 11), date(2026, 1, 15)))
+    check("plannedDays も無ければ、次の本線の前日", got.get("delta"),
+          (date(2026, 1, 12), date(2026, 1, 31)))
+    check("`from` が空なら opensAt の日。あとが無ければ終わりは未定",
+          got.get("gamma"), (date(2026, 2, 1), None))
+
+    # コメントの中の章を、章として数えない（丸ごとコメントアウトされた章）
+    check("コメントの中の章を数えない",
+          len(chapter_spans(made.replace('    slug: "gamma",', '    // slug: "gamma",'))), 3)
 
     # --- 4. 鍵で見る本（①b）も両側から ---------------------------------------
     for name, b in BOOKS.items():

@@ -87,6 +87,11 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは1本だけ**（`python/ts_read.py`）
+from ts_read import read_chapters as read_chapters_ts  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
 SRC = DATA / "shorts.json"
@@ -295,38 +300,24 @@ FAR = date(9999, 12, 31)
 def read_chapters() -> list[dict]:
     """`site/content/chapters.ts` から章を読む。
 
-    **読み落としたら落とす。** 正規表現で TS を読むので、書き方が変わると
-    黙って章が減る。減ったぶんのショートは「どの章にも入らない」に落ちて
-    棚から消えるので、**例外にして気づけるようにする**
-    （`python/stays.py` の `read_countries()` と同じ考え）。
-    """
-    text = CHAPTERS_TS.read_text(encoding="utf-8")
-    body = text.split("export const CHAPTERS", 1)
-    if len(body) != 2:
-        raise SystemExit("::error::chapters.ts に CHAPTERS がありません")
-    body = body[1].split("\n];", 1)[0]
+    **読み落としたら落とす。** 字で TS を読む以上、書き方が変わると黙って章が
+    減る。減ったぶんのショートは「どの章にも入らない」に落ちて棚から消えるので、
+    **例外にして気づけるようにする**（`python/stays.py` の `read_countries()` と
+    同じ考え）。名乗っている数と読めた数の突き合わせは `ts_read` が持っている。
 
-    want = len(re.findall(r"^\s*slug: \"", body, re.M))
-    out = []
-    for blk in re.split(r"^\s*\{\s*$", body, flags=re.M):
-        m = re.search(r'slug: "([a-z-]+)"', blk)
-        if not m:
-            continue
-        def pick(k: str) -> str:
-            mm = re.search(rf'{k}: "([^"]*)"', blk)
-            return mm.group(1) if mm else ""
-        days = re.search(r"plannedDays: (\d+)", blk)
-        out.append({
-            "slug": m.group(1),
-            "from": pick("from"),
-            "to": pick("to"),
-            "opensAt": pick("opensAt"),
-            "branchOf": pick("branchOf"),
-            "plannedDays": int(days.group(1)) if days else 0,
-        })
-    if len(out) != want or not out:
-        raise SystemExit(f"::error::chapters.ts の章を読み落としました（{len(out)}/{want}）")
-    return out
+    **読み方そのものはここに書かない**（`python/ts_read.py`）。前はここと
+    `build_chapter_stats.py` と `stale_content_watch.py` に別々の読み方があって、
+    そのうち1つだけが北欧の章を落としていた。
+    """
+    got = read_chapters_ts(CHAPTERS_TS.read_text(encoding="utf-8"))
+    if not got.declared:
+        raise SystemExit("::error::chapters.ts が章を1つも名乗っていません")
+    if got.missed:
+        raise SystemExit(
+            f"::error::chapters.ts の章を読み落としました"
+            f"（名乗り {got.declared} / 読めた {len(got.rows)}）"
+        )
+    return got.rows
 
 
 def spans(chs: list[dict]) -> dict[str, tuple[date, date, bool]]:

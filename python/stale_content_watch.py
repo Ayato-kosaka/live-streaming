@@ -40,7 +40,7 @@
 | 見かた | 何が起きたら赤いか | どの本に付けるか |
 | --- | --- | --- |
 | `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（料理・声・ショート） |
-| `COVERS` | 中の**いちばん先の日付**が、もう今日に届いていない | 先ぶんの表（旅程・日の出） |
+| `COVERS` | 中の**いちばん先の日付**が、要るところまで届いていない | 先ぶんの表（旅程・日の出） |
 | `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 人が上流を書いたら続けて焼くもの（①b） |
 | `SHARE` | 上流の鍵のうち**下流に無いものの割合**が `share`% を超えた | 全部そろわないのが普通のもの（セリフ） |
 
@@ -52,6 +52,38 @@
 `KEYS` と `SHARE` は日付を見ない。`kitchenTalk.ts` は**日付を1つも持っていない**ので、
 日で測ろうとすると一生鳴れない。見るべきは「`recipes.ts` に在る品が焼かれているか」で、
 これは人が上流を書いた翌日から赤くなってほしい。だから猶予を置いていない。
+
+## `COVERS` は「今日まで」ではない。**旅が終わっていれば、旅の最終日まで**
+
+先ぶんの表（旅程 `nordic.ts`・日の出 `nordicSun.ts`）は、旅のあいだは今日まで
+届いていないと困る。**だが旅が終わったら、そこで止まっているのが正しい。**
+終わった旅の旅程が今日まで伸びていたら、そちらのほうが嘘になる。
+
+ここが「いつでも今日まで」だったので、北欧の旅が終わった 2026-09-27 の翌々日から、
+毎晩の焼き直しが2本ぶん赤くなり続けた。**直っているものを不具合として鳴らす見張りは、
+鳴らない見張りと同じくらい悪い**（`docs/island-standards.md` §13）。
+
+**だからといって「終わった旅は見ない」にはしない。** 無条件に外すと、
+**次の旅が始まった晩から、古い表のまま緑になる。** 旅程を1日も足さずに出発しても、
+誰も鳴らさない。それは `shorts.ts` が127日止まっても緑だったのと同じ形（#119）。
+
+| 旅 | 表がどこまで要るか |
+| --- | --- |
+| まだ終わっていない（進んでいる・これから） | **今日**（＋`days` 日） |
+| もう終わった | **旅の最終日** |
+
+## 「旅が終わったか」を、その表の中から決めない
+
+終わったかどうかを**その本のいちばん先の日付**から決めると、どんなに古い表でも
+「そこで終わった旅」に見える。**いつでも通る見張り**ができあがる（§15）。
+
+出どころは `site/content/chapters.ts` の章ひとつ（`BOOKS` の `chapter` に slug を書く）。
+あちらは島の連なり・表紙・`/now` がすでに見ているもので、**旅が終わったかどうかの
+唯一の出どころ。** 終わりの決めかたも `chapters.ts` の `ended()` に合わせてある——
+`to` が入っていればそれ、空なら `plannedDays` ぶんか、次の章が始まる前日の早いほう。
+**`to` は旅から帰った本人が手で入れる欄なので、そこだけを見ると永久に閉じない。**
+
+**日付をここに書かない。** 「2026-09-27 を過ぎたら」と書くと、次の旅でそのまま嘘になる。
 
 ## 日付は、コメントから拾わない
 
@@ -89,17 +121,27 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）。
+# 同じものを3通りに書いていたので、北欧の章が1つの読み方からだけ落ちていた
+from ts_read import read_chapters  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 CONTENT = REPO / "site" / "content"
 
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
+# 章（＝旅）の在りか。**`COVERS` の本は、終わったかどうかをここから引く。**
+CHAPTERS_TS = "chapters.ts"
+
 # 見かた
 LATEST = "LATEST"  # いちばん新しい過去の日付が、今日から離れていないか
-COVERS = "COVERS"  # いちばん先の日付が、まだ今日に届いているか
+COVERS = "COVERS"  # いちばん先の日付が、要るところ（旅の最中なら今日、
+                   # 終わった旅なら旅の最終日）まで届いているか
 KEYS = "KEYS"  # 上流の鍵が、下流に全部あるか
 SHARE = "SHARE"  # 上流の鍵のうち、下流に無いものの**割合**が share% を超えたか
 SKIP = "SKIP"  # 見ない（理由を必ず書く）
@@ -132,6 +174,11 @@ class Book:
     # 欠けたものを**名指しで印字してよいか。** 料理や伝説の slug は出してよいが、
     # 住人の icon は出さない（この頭の「印字に入れないもの」）。数は出す
     names: bool = True
+    # `COVERS` の本が見る章の slug（`site/content/chapters.ts`）。
+    # **旅が終わったかどうかの出どころはここ1つ。** その本の中の日付から
+    # 決めると、どんなに古い表でも「そこで終わった旅」に見えて永久に緑になる。
+    # `COVERS` の本には必ず書く（書いていなければ「数えられない」で止まる）
+    chapter: str = ""
     # **赤い行に、次にやることを1行そえる。** 「古い」と言われても、
     # 何をすれば緑になるかが本ごとに違う（料理は配信を見る、旅程は章を
     # 閉じる）。書かないと、読んだ人がまた調べ直すことになる
@@ -297,16 +344,23 @@ BOOKS: dict[str, Book] = {
     # --- 先ぶんの表。尽きたら鳴る ---
     "nordic.ts": Book(
         HUMAN, COVERS, 0,
-        "いま歩いている旅の旅程。出発前に確定しているので古くはならないが、"
-        "**旅の終わり（2026-09-27）を過ぎると、旅程が今日に届かなくなる。**"
-        "そのときは面を次の章に替える時期",
-        todo="旅が終わったので、北欧の章を閉じて6カ国を countries.ts に足す（issue #282）",
+        "北欧の旅の旅程。出発前に全日ぶん確定するので、旅のあいだは今日まで届いて"
+        "いて当たり前。**旅が終わったら、旅の最終日で止まっているのが正しい**"
+        "（終わった旅の旅程が今日まで伸びていたら、そちらが嘘）。"
+        "終わったかどうかは `chapters.ts` の `nordic` から引く（`covers_until`）",
+        chapter="nordic",
+        todo="旅がまだなら `site/content/nordic.ts` の `DAYS` と `ROUTE` に残りの日を足す。"
+             "終わった旅で足りないなら、**旅程と `site/content/chapters.ts` の章の `to` が"
+             "食い違っている**ので、どちらが正しいかを先に決める",
     ),
     "nordicSun.ts": Book(
         MACHINE, COVERS, 0,
         "旅の日ごとの日の出・日の入り（`tools/nordic_sun.py`）。旅程と同じ日数ぶんしか無い。"
-        "尽きると、旅の面から明るさの欄が消える",
-        todo="`nordic.ts` を新しくしてから `tools/nordic_sun.py` を回し直す（issue #282）",
+        "尽きると、旅の面から明るさの欄が消える。**旅程と同じ章で測る**"
+        "——片方だけ今日を求めると、旅が終わった晩に2本のうち1本だけが鳴る",
+        chapter="nordic",
+        todo="`nordic.ts` をそろえてから `python3 tools/nordic_sun.py` を回し直す"
+             "（`--check` で突き合わせだけもできる）",
     ),
     # --- 見ない。理由つき ---
     "aboutWords.ts": Book(
@@ -386,6 +440,77 @@ def _as_date(s: str) -> date | None:
         return None  # 2026-13-45 のような字。日付ではないので数えない
 
 
+# ---------------------------------------------------------------- 章を読む
+#
+# **`site/content/chapters.ts` だけが、旅の始まりと終わりの出どころ。**
+# 島の連なりも表紙も `/now` もここを見ている（`lib/stay.ts`）。
+# 見張りだけ別のところから決めると、画面と見張りが別のことを言う日が来る。
+#
+# **字を読むのは `python/ts_read.py`。ここではやらない。** 同じものを3通りに
+# 書いていたので、北欧の章が片方の読み方からだけ落ちて、島の数字から
+# 9/12〜9/27 が丸ごと消えていた（`ts_read.py` の頭）。ここがやるのは、
+# 読めた章から「始まりと終わり」を決めるところだけ。
+
+
+@dataclass(frozen=True)
+class Span:
+    """章（＝旅）ひとつぶんの、始まった日と終わった日。
+
+    `end` が `None` なのは「**終わりがまだ決まっていない**」であって、
+    「終わった」ではない。読む側は必ず分けて扱う（`ended()`）。
+    """
+
+    slug: str
+    start: date | None
+    end: date | None
+
+    def ended(self, today: date) -> bool:
+        """その日、この旅はもう終わっていたか。**最終日の当日はまだ終わっていない。**"""
+        return self.end is not None and self.end < today
+
+
+def chapter_spans(src: str) -> list[Span]:
+    """`chapters.ts` から章の始まりと終わりを読む。
+
+    **決めかたは `chapters.ts` の `began()` / `ended()` に合わせる。**
+    あちらと別の決めかたをすると、画面が「旅のとちゅう」と言っている晩に
+    見張りだけ「終わった」と言う、という食い違いが出る（実際に出た。
+    `chapters.ts` の `chapterRunning` の注）。
+
+      始まり … `from`（事実）が先。空なら `opensAt`（予定）の日付
+      終わり … `to` が入っていればそれ。空なら `plannedDays` ぶんか、
+               **本線の次の章が始まる前日**の、早いほう
+
+    `to` は旅から帰った本人が手で入れる欄なので、**そこだけを見ると永久に
+    閉じない。** 次の章の始まりまで見るのは、そのための逃げ道。
+    """
+    rows = read_chapters(src).rows
+
+    def start_of(f: dict) -> date | None:
+        if f["from"]:
+            return _as_date(f["from"])
+        return _as_date(f["opensAt"][:10])
+
+    # 次の章は**本線だけ**で数える（枝は本線の1歩ではない。`branchOf`）。
+    # 枝を数えると、枝の出た日で親の章が閉じてしまう
+    main = sorted(d for f in rows if not f["branchOf"] and (d := start_of(f)))
+
+    out: list[Span] = []
+    for f in rows:
+        start = start_of(f)
+        end = _as_date(f["to"])
+        if end is None and start is not None:
+            cands: list[date] = []
+            if f["plannedDays"] > 0:
+                cands.append(start + timedelta(days=f["plannedDays"] - 1))
+            nxt = [d for d in main if d > start]
+            if nxt:
+                cands.append(nxt[0] - timedelta(days=1))
+            end = min(cands) if cands else None
+        out.append(Span(f["slug"], start, end))
+    return out
+
+
 @dataclass
 class Facts:
     """1本を読んで分かったこと。**判定はしない。**"""
@@ -394,6 +519,12 @@ class Facts:
     found: bool = False
     dates: list[date] = field(default_factory=list)
     keys: list[str] = field(default_factory=list)
+    # `chapters.ts` だけが持つ。`COVERS` の本が「旅が終わったか」を引きにくる
+    chapters: list[Span] = field(default_factory=list)
+    # 名乗っているのに読めなかった章の数（`ts_read.ChapterRead.missed`）。
+    # **0 でなければ「数えられない」。** 読み落とした章が先ぶんの表の持ち主
+    # だったら、旅が終わったかどうかが分からないまま通ってしまう
+    chapters_missed: int = 0
 
 
 def scan(path: Path) -> Facts:
@@ -407,6 +538,12 @@ def scan(path: Path) -> Facts:
     f.dates = sorted(seen)
     if path.name in KEY_RE:
         f.keys = KEY_RE[path.name].findall(src)
+    if path.name == CHAPTERS_TS:
+        # 2回読んでいるのは、`chapter_spans()` を「字を渡せば章が返る」形の
+        # ままにしておきたいから（対照が仕込みの字をそのまま当てられる）。
+        # `chapters.ts` は15KB なので、2回でも測れるほどの差は出ない
+        f.chapters = chapter_spans(src)
+        f.chapters_missed = read_chapters(src).missed
     return f
 
 
@@ -487,6 +624,40 @@ def over_share(missing: int, total: int, share: int) -> bool:
     return missing * 100 > share * total
 
 
+def covers_until(span: Span, today: date, days: int) -> date:
+    """先ぶんの表が、**どこまで届いていれば緑か。** `COVERS` の境目はここ1か所。
+
+    ## 旅が終わっていれば、旅の最終日まで
+
+    終わった旅の旅程が今日まで伸びていないのは、**正常。** 伸びていたら
+    そちらのほうが嘘になる。ここが「いつでも今日まで」だったので、
+    北欧の旅が終わったあと、毎晩の焼き直しが2本ぶん赤くなり続けた。
+
+    ## まだ終わっていなければ、今日（＋`days` 日）まで
+
+    **「終わった旅は見ない」にしない。** 無条件に外すと、**次の旅が
+    始まった晩から、古い表のまま緑になる。** まだ始まっていない章も
+    「終わっていない」側に入れる——出発前の旅程は全日ぶん確定しているので、
+    今日まで届いていて当たり前（北欧は出発の2日前に確定していた）。
+
+    ## 日付をここに書かない
+
+    「2026-09-27 を過ぎたら」と書いた瞬間、次の旅で嘘になる。
+    終わったかどうかは `chapters.ts` の章（`Span`）だけが知っている。
+
+    Args:
+        span: その本が属する章（`BOOKS` の `chapter`）
+        today: きょう
+        days: 旅のあいだに、今日より何日先まで要るか（`Book.days`）
+
+    Returns:
+        表のいちばん先の日付が、この日以上なら緑
+    """
+    if span.ended(today):
+        return span.end  # `ended()` が True なら、終わりの日は必ず入っている
+    return today + timedelta(days=days)
+
+
 def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = None) -> Verdict:
     """読んだ結果を見て、赤にするかどうかを決める。**ファイルを開かない。**
 
@@ -507,6 +678,17 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
         v.blind.append(f"{name} が `BOOKS` の表にありません。仕分けを決めて足してください")
     for name in sorted(set(books) - set(seen)):
         v.blind.append(f"{name} が置き場にありません（表には在る）")
+
+    # **章を読み落としていたら、先へ進まない。** 落ちた章が先ぶんの表の持ち主
+    # だったら「旅が終わったか」が分からないまま通る。`chapterStats.ts` が
+    # 北欧を丸ごと落としていたのが、これを見ていなかったから
+    ch = seen.get(CHAPTERS_TS)
+    if ch and ch.found and ch.chapters_missed:
+        v.blind.append(
+            f"{CHAPTERS_TS} が名乗っている章のうち {ch.chapters_missed}個を読めていません"
+            f"（読めたのは {len(ch.chapters)}個）。`python/ts_read.py` の読み方か、"
+            f"{CHAPTERS_TS} の書き方のどちらかが合っていません"
+        )
 
     for name in sorted(books):
         b = books[name]
@@ -589,13 +771,44 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
             continue
 
         if b.rule == COVERS:
+            # **旅が終わったかどうかは、この本の中からは決めない。**
+            # 自分のいちばん先の日付で決めると、どんなに古い表でも
+            # 「そこで終わった旅」に見えて、永久に緑になる（§15）
+            if not b.chapter:
+                v.blind.append(
+                    f"{name} は {COVERS} で見る本なのに、どの章の表なのか"
+                    f"（`Book.chapter`）が書いてありません"
+                )
+                v.results.append(Result(name, b.who, COVERS, b.days, "数えられない", "章が未指定"))
+                continue
+            ch = seen.get(CHAPTERS_TS)
+            spans = {s.slug: s for s in (ch.chapters if ch else [])}
+            span = spans.get(b.chapter)
+            if span is None or span.start is None:
+                v.blind.append(
+                    f"{name} の章 `{b.chapter}` を {CHAPTERS_TS} から読めません"
+                    f"（読めた章 {len(spans)}個）。旅が終わったかどうかが決まらないので、"
+                    f"通ったとは言いません"
+                )
+                v.results.append(Result(name, b.who, COVERS, b.days, "数えられない",
+                                        f"章 {b.chapter} が読めない"))
+                continue
             last = f.dates[-1]
-            left = (last - today).days
-            detail = f"いちばん先の日付 {last}（あと{left}日）/ 日付 {len(f.dates)}件"
-            if left < b.days:
+            until = covers_until(span, today, b.days)
+            done = span.ended(today)
+            detail = (
+                f"いちばん先の日付 {last} / 章 {b.chapter} "
+                f"{span.start}〜{span.end or '終わり未定'}"
+                f"（{'終わった' if done else '終わっていない'}）"
+                f" / {until} まで要る / 日付 {len(f.dates)}件"
+            )
+            if last < until:
                 v.red.append(
-                    f"{name} の表が今日に届いていません（いちばん先が {last} / "
-                    f"あと{b.days}日ぶんは要る）"
+                    (f"{name} の表が、終わった旅（{b.chapter}）の最終日 {until} まで"
+                     f"届いていません（いちばん先が {last}）"
+                     if done else
+                     f"{name} の表が今日に届いていません（いちばん先が {last} / "
+                     f"{until} まで要る）")
                     + (f" → {b.todo}" if b.todo else "")
                 )
                 v.results.append(Result(name, b.who, COVERS, b.days, "赤", detail))
