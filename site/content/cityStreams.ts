@@ -1808,8 +1808,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       },
       {
         "videoId": "2zJMCF5TfJ8",
-        "title": "アルバニアで暗殺者のパスタ作りたい！",
+        "title": "アルバニアでピザ食べる！",
         "date": "2026-10-02"
+      },
+      {
+        "videoId": "hK0SwIeAxg0",
+        "title": "アルバニアの首都を待ち歩きや！",
+        "date": "2026-10-03"
       }
     ]
   }
