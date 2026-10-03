@@ -106,7 +106,13 @@ jobs:
       # PyYAML を入れるのは**確かめ（selftest）のためだけ。**
       # あれがワークフローの YAML を読んで、繋ぎ先の名前が実在するかを見る
       - name: 確かめが YAML を読むぶんだけ入れる
-        run: pip install pyyaml
+        run: |
+          pip install pyyaml
+          # 素性の見張り（下の step）が `island_channels` などを読み込むので、
+          # BigQuery の口も要る。**入れないと見張りが ImportError で落ちる**（#500）。
+          # `bake_down.yml` が同じ理由で同じものを入れている。2026-10-03 に
+          # ここを省いて、初回の空回しが step 5 で落ちた
+          pip install -r python/requirements.txt
 
       # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
       # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている。
