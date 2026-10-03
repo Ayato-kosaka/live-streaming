@@ -544,7 +544,8 @@ python3 python/build_dead_streams.py --no-deep   # 1段目だけ（4分）。**�
 ```bash
 python3 python/stale_content_watch.py              # 0=通った / 1=古い / 2=数えるものが無い
 python3 python/stale_content_watch.py --dir 写し --today 2026-09-17
-python3 python/stale_content_watch_selftest.py     # 対照（122件）
+python3 python/stale_content_watch_selftest.py     # 対照（175件）
+BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本抜く
 ```
 
 **BigQuery も git も引かない。** 読むのは `site/content/*.ts` の中だけで、
@@ -579,7 +580,7 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | 見かた | 何が起きたら赤いか | 付けた本 |
 | --- | --- | --- |
 | `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（12本） |
-| `COVERS` | 中の**いちばん先の日付**が、もう今日に届いていない | 先ぶんの表（2本） |
+| `COVERS` | 中の**いちばん先の日付**が、要るところまで届いていない（下） | 先ぶんの表（2本） |
 | `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 上流が人・名簿の3本 |
 | `SHARE` | 上流の鍵のうち**下流に無いものの割合**が超えた | セリフ（1本） |
 
@@ -589,6 +590,31 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 `KEYS` を足したのは `kitchenTalk.ts` のため。あれは**日付を1つも持っていない**ので、
 日で測ろうとすると一生鳴れない。見るべきは「`recipes.ts` に在る品が焼かれているか」で、
 これは人が上流を書いた翌日から赤くなってほしい（猶予を置いていない）。
+
+### `COVERS` の「要るところ」は、旅が終わると変わる
+
+先ぶんの表（`nordic.ts` `nordicSun.ts`）は、旅のあいだは今日まで届いていないと
+困る。**だが旅が終わったら、旅の最終日で止まっているのが正しい。**
+終わった旅の旅程が今日まで伸びていたら、そちらのほうが嘘になる。
+
+| 旅 | 表がどこまで要るか |
+| --- | --- |
+| まだ終わっていない（進んでいる・これから） | **今日** |
+| もう終わった | **旅の最終日** |
+
+ここが「いつでも今日まで」だったので、北欧の旅が終わった 2026-09-27 の
+翌々日から、毎晩の焼き直しが2本ぶん赤くなり続けた。
+
+**「終わった旅は見ない」にはしない。** 無条件に外すと、**次の旅が始まった晩から、
+古い表のまま緑になる。** 旅程を1日も足さずに出発しても誰も鳴らさない。
+
+旅が終わったかどうかは **`site/content/chapters.ts` の章**から引く
+（`BOOKS` の `chapter` に slug を書く）。**その本の中の日付からは決めない**
+——自分のいちばん先の日付で決めると、どんなに古い表でも「そこで終わった旅」に
+見えて、いつでも通る見張りになる（`island-standards.md` §15）。
+終わりの決めかたは `chapters.ts` の `ended()` に合わせてある
+（`to` → `plannedDays` → 次の章の前日）。**`to` は旅から帰った本人が手で入れる欄**
+なので、そこだけを見ると永久に閉じない。
 
 ### 35本の仕分け（2026-09-17）
 
@@ -609,8 +635,8 @@ python3 python/stale_content_watch_selftest.py     # 対照（122件）
 | `legends.ts` | 人 | LATEST | 300日 | 25日前 |
 | `shorts.ts` | 機械（YouTube） | LATEST | 90日 | 2日前 |
 | `chapterStreams.ts` | 機械（章が閉じたとき） | LATEST | 300日 | 6日前 |
-| `nordic.ts` | 人（旅程） | COVERS | 今日まで | あと10日 |
-| `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 今日まで | あと10日 |
+| `nordic.ts` | 人（旅程） | COVERS | 旅のあいだは今日まで／終わったら旅の最終日 | あと10日 |
+| `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 同上（同じ章で測る） | あと10日 |
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
 | `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
