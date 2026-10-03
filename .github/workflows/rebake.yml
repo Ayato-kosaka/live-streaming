@@ -681,7 +681,42 @@ jobs:
             # その晩は「古いまま」で済んで、壊れた表が commit されることはない
             git checkout -- site/content/characterBox.ts || true
             echo "CHARBOX_BAD=1" >> "$GITHUB_ENV"
-            echo "::warning::絵の大きさを測り直せませんでした。表は前のまま戻しました。run の最後で赤くします"
+
+            # **焼けなかった表は、この回の対象から外す。**
+            #
+            # 外さないと、下の「中の数が縮んでいないか」が**焼いていない表**を
+            # 名簿と突き合わせる。名簿がその晩に動いていれば食い違いとして止まり、
+            # **同じ晩の他の焼き込み（residents / onThisDay / cityStreams …）まで
+            # master に入らない。** 絵の置き場は外のサービスなので、何日か落ちたら
+            # そのあいだ島の数字が丸ごと止まる。
+            #
+            # 2026-09-16 に一度それをやっている（`docs/island-misses.md` #105。
+            # 焼き直しが1本目で止まって、島の数字が丸ごと1日止まった）。
+            # あのとき決めたのは **「1本が落ちても後ろを止めない」**。
+            #
+            # そして突き合わせても分かるのは「焼けなかった」ことだけで、
+            # それは run の最後の「絵の大きさを測り直せたか」がもう言っている。
+            # **同じことを2か所で言ったうえ、片方が他の9本を人質に取る形**だった。
+            #
+            # 外すのは `REBAKE_PATHS` から。ここを削ると commit の名指し・差分の表・
+            # 関所・凍りの見張りが**まとめて**この1枚を見なくなる。表は上で前のまま
+            # 戻してあるので、commit から外れても入らなくなるものは無い。
+            # **黙って外さない。** 要約に出し、run は最後で赤くする
+            # `${…:-}` にしてあるのは `set -u` 避け。ここは `REBAKE_CHARBOX=1` の
+            # 回しか来ないので必ず入っているが、空で来ても step を落とさない
+            left="$(printf '%s\n' ${REBAKE_PATHS:-} \
+              | grep -vx 'site/content/characterBox.ts' | tr '\n' ' ' | sed 's/ *$//')"
+            echo "REBAKE_PATHS=$left" >> "$GITHUB_ENV"
+            {
+              echo ""
+              echo "### 住人の絵の大きさ（characterBox.ts）は、今夜焼けませんでした"
+              echo ""
+              echo "表は前のまま戻しました。**この回は、名簿との突き合わせも見ていません**"
+              echo "（焼いていない表を名簿と当てても「焼けなかった」としか出ず、"
+              echo "同じ晩の他の焼き込みまで止めることになるためです）。"
+              echo "run は最後の \`絵の大きさを測り直せたか\` で赤くなります。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::絵の大きさを測り直せませんでした。表は前のまま戻し、この回の対象からも外しました。run の最後で赤くします"
           fi
 
       - name: 何がどれだけ変わったか
@@ -804,20 +839,33 @@ jobs:
           import re
           import sys
 
-          # 見かたは4つ。
+          # 見かたは5つ。**前の4つは前と後を比べる。5つめだけが横を見る。**
           #   keep  : 1つでも減ったら止める。**読み落としでしか減らない数**にだけ使う
           #           （章は `chapters.ts`、国は `countries.ts` から来る。人が書いた表は消えない）
           #   floor : 前の値の何倍まで縮んでよいか。累積の数に使う
           #   band  : 上にも下にも幅を持たせる。窓で切っていて正常でも動く数に使う
           #   share : 「埋まっている割合」が何ポイント落ちたら止めるか。
           #           **件数が減らないまま中身だけ空になる壊れかた**は、これでしか捕まらない
-          KEEP, FLOOR, BAND, SHARE = "keep", "floor", "band", "share"
+          #   match : **同じ回に焼いた別のファイルの数と、帳尻が合っているか。**
+          #           上の4つは「前の版」が物差しなので、**正しい縮みも止めてしまう。**
+          #           元が減ったから減った、という形はここで見る（下の `characterBox.ts`）
+          KEEP, FLOOR, BAND, SHARE, MATCH = "keep", "floor", "band", "share", "match"
 
 
-          def rule(label, kind, arg, pat=None, mode="count", num=None, den=None, note=""):
+          def rule(label, kind, arg, pat=None, mode="count", num=None, den=None, note="",
+                   mate=None, mate_pat=None, mate_label="", spare=None):
+              """1本ぶんの見かた。`mate*` と `spare` は `match` のときだけ使う。
+
+              @param mate       帳尻を合わせる相手のファイル名（**同じ置き場の、焼いたあとの版**）
+              @param mate_pat   相手の中で数える正規表現
+              @param mate_label 表に出す相手の呼び名（「名簿」など）
+              @param spare      自分の中で「数に入れてよい当たり」。
+                                焼いた側が「測れなかった」と名指しで書いているぶん
+              """
               return {
                   "label": label, "kind": kind, "arg": arg,
                   "pat": pat, "mode": mode, "num": num, "den": den, "note": note,
+                  "mate": mate, "mate_pat": mate_pat, "mate_label": mate_label, "spare": spare,
               }
 
 
@@ -899,20 +947,56 @@ jobs:
                   rule("題名の入っているショート", SHARE, 5.0,
                        num=r'title: "[^"]', den=r"^\s{4}\{ id: "),
               ],
-              # 絵の大きさの表。**人数ぶんだけ増える表**なので、縮んだら異常。
-              # 名簿から人が消えることはある（あやとが消したとき）が、そのときは
-              # 消した本人が見ているので、1人でも減ったら止めてよい（`keep`）。
-              # 焼くほう（`charbox.py`）も「いま入っている人数より減ったら書かない」を
-              # 持っているが、**あちらが見るのは自分が前に書いた版**。ここは
-              # 「この晩に焼く前」と比べるので、二重ではなく層が違う。
+              # 絵の大きさの表。**この1枚だけ、物差しが「前の版」ではない。**
+              #
+              # 長いこと「1人でも減ったら止める」（`keep`）で見ていた。書いてあった
+              # 理由は「名簿から人が消えるのはあやとが消したときで、そのときは消した
+              # 本人が見ている」。**その前提が外れていた。** 2026-10-03 の焼き直しで
+              # 箱 103 → 100 が止まった。減った4人はどれも古いドライブidで、
+              # **過去のどこかで Firestore から消えていた人**。誰も見ていない。
+              # 同じ晩に1人入っているので 103 − 4 + 1 = 100。**正しい縮み**だった。
+              #
+              # 前の版を物差しにする限り、この形は毎晩止まる。止まるあいだ、新しく
+              # 入った人の箱は永久に焼かれず、`python/stale_content_watch.py` が
+              # 「名簿の1件が焼かれていません」と毎晩赤くする。**自分では二度と
+              # 緑にならない見張り**になる（`tools/sprites/charbox.py` の先頭に、
+              # 焼く側が同じところで転んだ記録がある）。
+              #
+              # **正しい物差しは名簿（`residents.ts`）。** この表は名簿の人ぶんだけ
+              # 箱を持つ表なので、**増えても減っても、名簿と帳尻が合っていればよい。**
+              # 合っていないほう——箱だけ減った・名簿から消えた人の箱が残っている——が
+              # 異常。焼く側（`charbox.py` の `judge()`）もこの考えで動いている。
               "characterBox.ts": [
-                  # 箱の行（103）。1人でも減ったら止める
-                  rule("絵の箱", KEEP, 0, r'^\s{2}"[^"]+": \['),
-                  # **本丸。件数が1件も減らないまま、中身だけ壊れる形がある。**
+                  # **本丸その1。箱（100）＋測れなかった人（0）＝名簿（100）。**
+                  #
+                  # 「測れなかった人」を足すのは、焼く側が名指しで `noArt` に書いて
+                  # いるから。背景なしの絵が無い人・絵が開けない人は箱を持てないので、
+                  # ぴったり一致だけを求めると**その人が1人いるだけで永久に止まる。**
+                  #
+                  # `arg`（0.9）は、その `noArt` が膨らんで帳尻だけ合う形の止め。
+                  # 絵の置き場が落ちた晩は全員が `noArt` に落ちるので、
+                  # **箱そのものが名簿の9割を切ったら、帳尻が合っていても止める。**
+                  # 9割にしたのは、実測の `noArt` が 0人のまま続いているから
+                  # （103箱 / noArt 0）。1人2人は起こりうるが、10人まとめて
+                  # 測れなくなるのは「1枚ずつ壊れた」ではなく「置き場が落ちた」の形
+                  #
+                  # **焼けなかった晩は、ここまで来ない。** 上の「住人の絵の大きさを
+                  # 測り直す」が落ちた回は、この表を前のまま戻したうえで
+                  # `REBAKE_PATHS` から外している。焼いていない表を名簿と当てても
+                  # 分かるのは「焼けなかった」ことだけで、それは run の最後の
+                  # 「絵の大きさを測り直せたか」がもう言っている。
+                  # **同じことを2か所で言ったうえ、片方が他の9本を人質に取る形**に
+                  # なるので外した（`docs/island-misses.md` #105「1本が落ちても
+                  # 後ろを止めない」）。外したことは要約に出る
+                  rule("名簿とそろった箱", MATCH, 0.9, r'^\s{2}"[^"]+": \[',
+                       mate="residents.ts", mate_pat=r'icon: "', mate_label="名簿",
+                       # `noArt` の並びは4字下げの `"id",`。箱の行（2字下げ）とは別
+                       spare=r'^\s{4}"[^"]+",$'),
+                  # **本丸その2。件数が1件も減らないまま、中身だけ壊れる形がある。**
                   # 絵の置き場が中身の入った 200 を返さず、四隅まで塗った当たり障りの
                   # ない板を返した晩は、透明でない画素の外接矩形が**全員ぶん枠いっぱい**
-                  # （`[0.0, 0.0, 1.0, 1.0, …]`）になる。行数は 103 のままなので
-                  # 上の「絵の箱」では捕まらず、**島の全員が不揃いに戻る**。
+                  # （`[0.0, 0.0, 1.0, 1.0, …]`）になる。行数は名簿と合ったままなので
+                  # 上の「名簿とそろった箱」では捕まらず、**島の全員が不揃いに戻る**。
                   # いま枠いっぱいなのは 103人中3人（本当にそう描かれている人）
                   rule("枠いっぱいでない箱", SHARE, 5.0,
                        num=r'^\s{2}"[^"]+": \[(?!0\.0, 0\.0, 1\.0, 1\.0,)[^\n\]]+\]',
@@ -941,8 +1025,32 @@ jobs:
               return f"{v * 100:.1f}%"
 
 
-          def judge(r, before_text, after_text):
-              """1つのルールを見る。(通ったか, 前の表示, 後の表示, 許す下限の表示, 一言) を返す。"""
+          def judge(r, before_text, after_text, mate_text=None):
+              """1つのルールを見る。(通ったか, 前の表示, 後の表示, 許す下限の表示, 一言) を返す。
+
+              @param mate_text `match` のとき、帳尻を合わせる相手の**焼いたあと**の字面
+              """
+              if r["kind"] == MATCH:
+                  # **前の版は見ない。** 見ると、元が減ったから減っただけの回まで止まる
+                  a = measure(after_text, r["pat"], "count")
+                  sp = measure(after_text, r["spare"], "count") if r["spare"] else 0
+                  b = measure(before_text, r["pat"], "count")
+                  shown = f"{num(a)}+{sp}" if sp else num(a)
+                  if mate_text is None:
+                      return False, num(b), shown, "—", f"{r['mate']} が読めないので数えていない"
+                  m = measure(mate_text, r["mate_pat"], "count")
+                  if m == 0:
+                      # 相手が空。**相手の側のルールが落とす**ので、ここで二重に鳴らさない
+                      return True, num(b), shown, "—", f"{r['mate_label']}が0件なので飛ばした"
+                  floor = m * r["arg"]
+                  limit = f"{r['mate_label']} {num(m)} とぴったり（箱は {floor:,.1f} 以上）"
+                  if a + sp != m:
+                      return False, num(b), shown, limit, f"{r['mate_label']}と {a + sp - m:+,}"
+                  # 帳尻は合っている。あとは**測れなかった人だけで埋まっていないか**
+                  if a < floor:
+                      return False, num(b), shown, limit, f"測れなかった人が {sp}人"
+                  return True, num(b), shown, limit, f"{r['mate_label']}と同じ"
+
               if r["kind"] == SHARE:
                   db = measure(before_text, r["den"], "count")
                   da = measure(after_text, r["den"], "count")
@@ -977,10 +1085,12 @@ jobs:
 
               before_dir = pathlib.Path(args.before)
               rows, bad = [], []
+              looked = set()
 
               for p in args.paths.split():
                   after_p = pathlib.Path(p)
                   name = after_p.name
+                  looked.add(name)
                   if not after_p.exists():
                       bad.append((name, "焼かれていない", "—", "—", "—", "ファイルが無い"))
                       continue
@@ -991,7 +1101,14 @@ jobs:
                   after_text = after_p.read_text(encoding="utf-8")
                   before_text = before_p.read_text(encoding="utf-8")
                   for r in RULES.get(name, []):
-                      ok, b, a, limit, note = judge(r, before_text, after_text)
+                      # `match` の相手は**同じ回に焼いたほう**を見る。焼き直して
+                      # いない回でも、隣に置いてある版（master のまま）が相手になる
+                      mate_text = None
+                      if r["kind"] == MATCH:
+                          mate_p = after_p.parent / r["mate"]
+                          if mate_p.exists():
+                              mate_text = mate_p.read_text(encoding="utf-8")
+                      ok, b, a, limit, note = judge(r, before_text, after_text, mate_text)
                       rows.append((name, r["label"], b, a, limit, note if ok else f"**{note}**"))
                       if not ok:
                           bad.append((name, r["label"], b, a, limit, note))
@@ -1006,6 +1123,17 @@ jobs:
               md += ["| " + " | ".join(str(x) for x in row) + " |" for row in rows]
               md.append("")
 
+              # **見ていないものを黙らない。** 当てた数だけ並べると、
+              # 「対象から外れた1枚」が表から消えるだけで何も言わない形になる。
+              # 焼いていない回（`only:` で選んだ・`charbox.py` が落ちて外した）は
+              # 正常だが、**外れていること自体は読む人に見えていないといけない**
+              unseen = [n for n in RULES if n not in looked]
+              if unseen:
+                  md += [
+                      f"**この回で焼いていないので、見ていないもの**: {', '.join(unseen)}",
+                      "",
+                  ]
+
               if bad:
                   # **何が何になったかを書く。** 旅先でスマホから読んで、そのまま手を
                   # 打てるところまで。「止めました」だけでは、読んでも何もできない
@@ -1014,6 +1142,8 @@ jobs:
                       "",
                       "焼いた結果が、焼く前より縮んでいます。**毎晩ぶんは増えるのが正常**なので、",
                       "縮むのは数え方か読み方が変わったときです。",
+                      "（`〜とぴったり` と書いてある行だけは物差しが違います。**前の版ではなく、",
+                      "同じ回に焼いた別のファイルと帳尻が合っているか**を見ています）",
                       "",
                       "| ファイル | 何を | 前 | 後 | 止めない範囲 |",
                       "| --- | --- | ---: | ---: | ---: |",
@@ -1030,6 +1160,12 @@ jobs:
                       "   取り込み（Fetch YouTube Chat Data）が失敗した晩ではないか",
                       "3. **「章」「国」が落ちているとき** — 人が書いた表を読めていません。",
                       "   その表を触った直後なら、書き方が正規表現から外れています",
+                      "4. **「名簿とそろった箱」が落ちているとき** — 箱の数と名簿の人数が",
+                      "   食い違っています。**減ったこと自体は異常ではありません**",
+                      "   （名簿から人が消えれば箱も消えます）。食い違いのほうを見てください。",
+                      "   箱だけ足りないなら `tools/sprites/charbox.py` が測り損ねた人がいます",
+                      "   （焼けなかった回はこの行そのものが出ません。対象から外れるので、",
+                      "   「見ていないもの」のほうに名前が出ます）",
                       "",
                       "直したら、Actions から `dry_run: false` で押し直します。",
                       "**master には何も入っていないので、急がなくても壊れません。**",
@@ -1825,13 +1961,34 @@ jobs:
             cat /tmp/chatter.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$code" != "0" ]; then
+          # **0 と 1 と 2 を同じ顔で返さない**（`docs/island-standards.md` §15）。
+          #
+          # 1 は「数えたうえで、届いていない人がいた」。
+          # 2 は「数えられなかった」——**届いているかどうかは分かっていない。**
+          # 2026-10-03 の焼き直しが実際に 2 で終わったのに、ここが 1 の字
+          # （セリフが届いていません）を出していた。原因は手前の step が落ちて
+          # `site の依存を入れる` が skip され、`tsc` が無いまま走ったこと。
+          # ログだけ読むと「誰かのセリフが無い」に見えて、`chatter.ts` を
+          # 開きに行くことになる。**そこには何も無い。**
+          #
+          # **2 も赤のまま。** 測れていないのは問題なので緑にはしない
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "セリフを書き足すのは \`site/content/chatter.ts\`。上に出ている icon で引きます。"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::島でよく歩く人に、その人のセリフが届いていません。上の表を見てください"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「セリフが足りない」ではありません。数えられませんでした。**"
+              echo "合否は出していないので、**届いているかどうかは分かっていません。**"
+              echo "何が足りなかったか（組み立てる道具か、読めなかったファイルか）は上のログに出ています。"
+              echo "手前の step が落ちた晩は \`site の依存を入れる\`（\`npm ci\`）が skip され、"
+              echo "\`site/node_modules/.bin/tsc\` が無いままここだけ走ります。**その晩は手前の赤が先です。**"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::島のセリフを数えられませんでした（終了コード ${code}）。届いているかどうかは分かっていません。上のログを見てください"
           fi
           exit "$code"
 
@@ -1863,12 +2020,23 @@ jobs:
             cat /tmp/stale.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$code" != "0" ]; then
+          # 隣の「セリフの届いていない人がいないか」と同じ分け（§15）。
+          # この見張りも 2 を返す（置き場が無い・*.ts が1本も無い・判定不能）。
+          # **2 のときに「新しくするのは /island-fresh」と言うと嘘になる。**
+          # 古いのではなく、古いかどうかを**見られていない**
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "新しくするのは \`/island-fresh\`。料理・他己紹介・歩いた国は配信を見ないと決まりません。"
             } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「古くなっている」ではありません。見られませんでした。**"
+              echo "合否は出していないので、**古いかどうかは分かっていません。** 上のログを見てください。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::焼き込みが古いかどうかを見られませんでした（終了コード ${code}）"
           fi
           exit "$code"
 
@@ -1922,17 +2090,31 @@ jobs:
           set -uo pipefail
           python3 python/ingest_watch.py > /tmp/ingest_watch.txt 2>&1 && code=0 || code=$?
           cat /tmp/ingest_watch.txt
-          if [ "$code" != "0" ]; then
+          # ここも §15 の分け。この見張りの 2 は「BQ_PROJECT_ID が無い」
+          # 「`videos` が空」——**詰まっているのではなく、数えられていない**
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "拾い直す枠は \`python/bq/queries.py\` の \`QUERY_SELECT_TARGET_VIDEOS\`、"
               echo "1晩に拾う本数は \`python/config.py\` の \`LATE_LANE_MAX_VIDEOS\` です。"
             } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「詰まっている」ではありません。数えられませんでした。**"
+              echo "合否は出していないので、**詰まっているかどうかは分かっていません。** 上のログを見てください。"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$REBAKE_DRY" = "1" ]; then
-            [ "$code" != "0" ] && echo "::warning::取り込みが詰まっています（見るだけの回なので赤くしません）"
+            # 見るだけの回は赤くしない。**ただし 1 と 2 で字を変える**
+            [ "$code" = "1" ] && echo "::warning::取り込みが詰まっています（見るだけの回なので赤くしません）"
+            [ "$code" != "0" ] && [ "$code" != "1" ] \
+              && echo "::warning::取り込みが詰まっているかを数えられませんでした（終了コード ${code}）"
             exit 0
+          fi
+          if [ "$code" != "0" ] && [ "$code" != "1" ]; then
+            echo "::error::取り込みが詰まっているかを数えられませんでした（終了コード ${code}）"
           fi
           exit "$code"
 
