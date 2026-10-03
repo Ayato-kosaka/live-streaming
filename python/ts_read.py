@@ -216,6 +216,70 @@ def fields(obj: str) -> dict[str, str]:
     return out
 
 
+def list_field(obj: str, key: str) -> list[str]:
+    """`{…}` の中の `key: ["a", "b"]` を、**中の字の並び**として返す。
+
+    `fields()` は入れ子（`[...]` `{...}`）をわざと欄にしない——`note:` の本文に
+    `to: "…"` のような字が入っていると欄として拾ってしまうので、歩きながら飛ばす
+    作りになっている。**そこは変えない**（変えると、どの呼ぶ側も「欄が1つ増えた」
+    ことに気づかないまま挙動が変わる）。
+
+    欄を1つだけ、名指しで取りに来るための口をここに足した。
+    取れるのは**文字列の並びだけ**（`countries: ["poland", …]`）。
+    入れ子の中の入れ子や、計算式は読まない——読めない形を書くほうが間違いなので、
+    **空で返す**（呼ぶ側は「空」と「書いていない」を区別しない。どちらも
+    「まだ埋まっていない」として扱ってよい欄にしか使わない）。
+
+    Args:
+        obj: `objects()` が切り出した `{…}` の中身
+        key: 取りたい欄の名（`"countries"`）
+
+    Returns:
+        中の字の並び。欄が無い／並びでなければ空
+    """
+    want = ""
+    i, n = 0, len(obj)
+    while i < n:
+        c = obj[i]
+        if c in "\"'`":
+            i = skip_string(obj, i) + 1
+            want = ""
+            continue
+        if c in _PAIRS:
+            if want == key and c == "[":
+                return _strings_in(obj[i + 1 : close_at(obj, i)])
+            i = close_at(obj, i) + 1
+            want = ""
+            continue
+        if c == ",":
+            want = ""
+            i += 1
+            continue
+        # 鍵の頭か。`fields()` と同じ見かた（語の途中から読み始めない）
+        if (i == 0 or not (obj[i - 1].isalnum() or obj[i - 1] == "_")) and (
+            m := _KEY_RE.match(obj, i)
+        ):
+            want = m.group(1)
+            i = m.end()
+            continue
+        i += 1
+    return []
+
+
+def _strings_in(src: str) -> list[str]:
+    """`[…]` の中の文字列リテラルを、並んでいる順に。"""
+    out = []
+    i, n = 0, len(src)
+    while i < n:
+        if src[i] in "\"'`":
+            e = skip_string(src, i)
+            out.append(src[i + 1 : e])
+            i = e + 1
+            continue
+        i += 1
+    return out
+
+
 # ---------------------------------------------------------------- 章（chapters.ts）
 
 # 章1つぶんで、読む側がみんな使う欄。**ここに無い欄は落ちる**ので、
@@ -241,7 +305,8 @@ class ChapterRead:
 def read_chapters(src: str) -> ChapterRead:
     """`chapters.ts` の字から、章を1つずつ。**並びはファイルのまま。**
 
-    返す欄は `CHAPTER_KEYS` と `plannedDays`（数。無ければ 0）。
+    返す欄は `CHAPTER_KEYS` と `plannedDays`（数。無ければ 0）と
+    `countries`（字の並び。無ければ空）。
     無い欄は空の字で埋める——**呼ぶ側に `.get()` を書かせない**（書かせると、
     綴り違いが「欄が無い」に化けて黙って通る）。
 
@@ -260,5 +325,9 @@ def read_chapters(src: str) -> ChapterRead:
         row = {k: f.get(k, "") for k in CHAPTER_KEYS}
         days = f.get("plannedDays", "")
         row["plannedDays"] = int(days) if days.isdigit() else 0
+        # **並びの欄は `fields()` からは出てこない**（入れ子は飛ばす作り）ので、
+        # 名指しで取りに行く。`countries` は「その章で歩いた国」で、
+        # 終わった章なら埋まっているはずの欄（`python/upkeep_watch.py` が見ている）
+        row["countries"] = list_field(obj, "countries")
         rows.append(row)
     return ChapterRead(rows=rows, declared=len(SLUG_RE.findall(body)))
