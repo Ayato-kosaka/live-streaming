@@ -33,6 +33,7 @@ master へ押し込む run なので、**読む人はいない。**
 | 4b | **塊が落ちたら（40% までに）鳴る** | 寝ている。4割消えても通す見張りは見張りではない |
 | 5 | **そのルールを `RULES` から外すと、同じ写しが通る** | 別のルールが先に捕まえている（＝この行は要らない、か、重なっている） |
 | 6 | **`match` が、名簿と帳尻の合う縮みを通し、合わない形で止まる** | 正しい縮みを止めている（2026-10-03 の 103→100 がこれ）か、何も見ていない |
+| 7 | **絵の表を焼けなかった晩に、他の焼き込みが巻き添えにならない** | 外のサービスが落ちただけで島の数字が丸ごと止まる（#105 で「1本が落ちても後ろを止めない」と決めた） |
 
 3 と 4 は**対**で見る。片方だけだと、何にでも赤を出す関所でも通る
 （`docs/island-standards.md` §15 の決めごと）。
@@ -115,6 +116,23 @@ def guard_src() -> str:
     lo = text.index("<<'PY'\n", head) + 7
     hi = text.index("\n          PY\n", lo)
     return "\n".join(line[10:] for line in text[lo:hi].split("\n"))
+
+
+def step_run(name: str) -> str:
+    """step の `run:` の中身を切り出す（字下げ10桁を落とす）。
+
+    7章で、**シェルのほうの足**（焼けなかった表を対象から外すところ）を
+    そのまま走らせるために要る。ここも `guard_src()` と同じく PyYAML は使わない。
+    """
+    text = YML.read_text(encoding="utf-8")
+    head = text.index(f"- name: {name}")
+    lo = text.index("\n        run: |\n", head) + len("\n        run: |\n")
+    out = []
+    for line in text[lo:].split("\n"):
+        if line.strip() and not line.startswith(" " * 10):
+            break
+        out.append(line[10:])
+    return "\n".join(out)
 
 
 def load_guard():
@@ -500,6 +518,7 @@ def check_broken(g: dict) -> None:
 
 
 BOX_LINE = r'^  "[^"]+": \['
+ROSTER_LINE = r'icon: "'
 
 
 def to_no_art(box: str, n: int) -> str:
@@ -546,7 +565,7 @@ def check_roster(g: dict) -> None:
 
     real = (CONTENT / "characterBox.ts").read_text(encoding="utf-8")
     matched = seed("characterBox.ts")          # 名簿とそろえた形（＝焼き直しが書くはず）
-    roster = g["measure"](seed("residents.ts"), r'icon: "', "count")
+    roster = g["measure"](seed("residents.ts"), ROSTER_LINE, "count")
     n_real = g["measure"](real, BOX_LINE, "count")
     n_match = g["measure"](matched, BOX_LINE, "count")
     print(f"     いま master に入っている箱 {n_real} / 名簿 {roster}人"
@@ -591,6 +610,113 @@ def check_roster(g: dict) -> None:
                 print("         " + hit[0].replace("::error::", "→ "))
 
 
+# ------------------------------------------- 7. 焼けなかった晩に、後ろを止めないか
+
+
+CHARBOX_STEP = "住人の絵の大きさを測り直す"
+
+
+def run_charbox_step(td: Path, charbox_rc: int, paths: list[str]) -> tuple[str, str]:
+    """step「住人の絵の大きさを測り直す」を、**そのまま走らせる。**
+
+    `charbox.py` の代わりに `charbox_rc` で終わる作り物を置く。返すのは
+    (GITHUB_ENV に書かれたもの, GITHUB_STEP_SUMMARY に書かれたもの)。
+
+    **シェルのほうも対照に入れる。** 「焼けなかった表を対象から外す」は
+    ここ（yaml の `run:`）にしか無いので、見張りの python だけ回しても、
+    外し忘れ・外しすぎのどちらも捕まらない。
+    """
+    work = td / f"step{charbox_rc}"
+    (work / "tools" / "sprites").mkdir(parents=True)
+    (work / "site" / "content").mkdir(parents=True)
+    (work / "tools" / "sprites" / "charbox.py").write_text(
+        f"raise SystemExit({charbox_rc})\n", encoding="utf-8")
+    (work / "site" / "content" / "characterBox.ts").write_text("焼く前\n", encoding="utf-8")
+    env_f, sum_f = work / "env.txt", work / "summary.md"
+    env_f.write_text("", encoding="utf-8")
+    sum_f.write_text("", encoding="utf-8")
+
+    # `git checkout --` が効くように、ちゃんとした木にする
+    for cmd in (["git", "init", "-q"],
+                ["git", "config", "user.email", "t@example.com"],
+                ["git", "config", "user.name", "t"],
+                ["git", "add", "-A"],
+                ["git", "commit", "-q", "-m", "種"]):
+        subprocess.run(cmd, cwd=work, check=True, capture_output=True)
+    # 焼いたあと（通った回はここが残り、落ちた回は戻される）
+    (work / "site" / "content" / "characterBox.ts").write_text("焼いた後\n", encoding="utf-8")
+
+    env = {**os.environ,
+           "REBAKE_PATHS": " ".join(paths),
+           "GITHUB_ENV": str(env_f),
+           "GITHUB_STEP_SUMMARY": str(sum_f)}
+    subprocess.run(["bash", "-c", step_run(CHARBOX_STEP)],
+                   cwd=work, env=env, capture_output=True)
+    return env_f.read_text(encoding="utf-8"), sum_f.read_text(encoding="utf-8")
+
+
+def check_unbaked(g: dict) -> None:
+    """**焼けなかった晩に、他の焼き込みが巻き添えにならないか。**
+
+    絵の置き場は外のサービスで、こちらでは直せない。落ちた晩に関所が
+    `characterBox.ts` を名簿と当てて止めると、**同じ晩の他の焼き込みまで
+    master に入らない**（#105 で「1本が落ちても後ろを止めない」と決めた）。
+    """
+    print("\n7. 絵の表を焼けなかった晩に、後ろを止めないか")
+    paths = [f"site/content/{n}" for n in sorted(WATCHED)]
+
+    with tempfile.TemporaryDirectory() as td:
+        # 7a. 落ちた回 —— 表は戻り、対象から外れる
+        env_bad, sum_bad = run_charbox_step(Path(td), 1, paths)
+        left = [ln[len("REBAKE_PATHS="):] for ln in env_bad.splitlines()
+                if ln.startswith("REBAKE_PATHS=")]
+        say(bool(left) and "site/content/characterBox.ts" not in left[-1].split(),
+            f"落ちた回: `characterBox.ts` が対象から外れる（残り {len(left[-1].split()) if left else 0} 枚）")
+        say(bool(left) and sorted(left[-1].split()) == sorted(
+                p for p in paths if not p.endswith("characterBox.ts")),
+            "落ちた回: **外れるのはその1枚だけ**（他の焼き込みは残る）")
+        say("CHARBOX_BAD=1" in env_bad, "落ちた回: run の最後で赤くする印が立つ")
+        say("名簿との突き合わせも見ていません" in sum_bad,
+            "落ちた回: **外したことを要約に書く**（黙って外さない）")
+
+        # 7b. 通った回 —— 外す道が広すぎないか。ここが広いと関所が寝る
+        env_ok, _ = run_charbox_step(Path(td), 0, paths)
+        say("REBAKE_PATHS" not in env_ok,
+            "通った回: 対象から外さない（**外す道が広すぎない**）")
+        say("CHARBOX_BAD" not in env_ok, "通った回: 赤くする印も立たない")
+
+    # 7c. その外れた対象で関所を回す。**表は古い 103 のまま、名簿は 100。**
+    #     6章の4つめ（名簿から消えた人の箱が残ったまま）とまったく同じ中身で、
+    #     違うのは対象に入っているかどうかだけ。あちらは止まり、こちらは通る
+    stale = with_strays(seed("characterBox.ts"), 3)
+    with tempfile.TemporaryDirectory() as td:
+        before, work, all_paths = stage(Path(td), {"characterBox.ts": stale},
+                                        {"characterBox.ts": stale})
+        thin_paths = [p for p in all_paths if not p.endswith("characterBox.ts")]
+        code, out = run_guard(before, work, thin_paths)
+        n_box = g["measure"](stale, BOX_LINE, "count")
+        n_res = g["measure"](seed("residents.ts"), ROSTER_LINE, "count")
+        say(code == 0,
+            f"焼けなかった晩: 箱 {n_box} / 名簿 {n_res}人 のままでも、"
+            f"**他の焼き込み {len(thin_paths)} 枚は通る**（終了コード {code}）")
+        say("characterBox.ts" not in [ln.split("|")[1].strip()
+                                      for ln in out.splitlines()
+                                      if ln.startswith("| ") and ln.count("|") > 2][1:],
+            "焼けなかった晩: 当てた表に `characterBox.ts` の行が出ない")
+        say("見ていないもの" in out and "characterBox.ts" in out,
+            "焼けなかった晩: **見ていないものとして名指しで出る**（素通りで黙らない）")
+
+        # 同じ写しを、対象に入れたまま回すと止まる。**外れたから通った**ことの裏
+        code2, _ = run_guard(before, work, all_paths)
+        say(code2 == 1,
+            f"同じ写しでも、対象に入っていれば止まる（終了コード {code2}）"
+            "——**通ったのは「外れたから」で、関所が寝たからではない**")
+
+    # 外したのはこの回だけ。表そのものは見張りの分母に残っている（1章と噛み合わせ）
+    say("characterBox.ts" in g["RULES"] and "characterBox.ts" in WATCHED,
+        "外すのは**その回だけ**。`RULES` と分母からは外れていない（1章がそこを見ている）")
+
+
 def main() -> int:
     g = load_guard()
     print(f"見張りを {YML.name} の step「{STEP}」から切り出した（{len(guard_src().splitlines())} 行）")
@@ -599,6 +725,7 @@ def main() -> int:
     check_clean(g)
     check_broken(g)
     check_roster(g)
+    check_unbaked(g)
 
     print()
     if fails:
