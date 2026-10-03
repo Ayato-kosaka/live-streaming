@@ -179,7 +179,7 @@
  */
 
 import {execFileSync} from "node:child_process";
-import {copyFileSync, mkdtempSync, readFileSync, writeFileSync} from "node:fs";
+import {copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync} from "node:fs";
 import {createRequire} from "node:module";
 import {tmpdir} from "node:os";
 import {dirname, join} from "node:path";
@@ -227,8 +227,11 @@ bring(join(CONTENT, "walked.ts"), "walked.ts");
 bring(join(CONTENT, "countries.ts"), "countries.ts");
 copyFileSync(join(SITE, "lib", "builtAt.ts"), join(WORK, "builtAt.ts"));
 
+/* **道具そのもの。** 無いときと、あって落ちたときで言うことが変わる（下の catch） */
+const TSC = join(SITE, "node_modules", ".bin", "tsc");
+
 try {
-  execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
+  execFileSync(TSC, [
     join(WORK, "chatter.ts"),
     join(WORK, "residents.ts"),
     join(WORK, "legends.ts"),
@@ -251,9 +254,22 @@ try {
 } catch {
   /* **組み立てられなかったのは「違反0」ではない。** 落ちた合図（1）と混ぜると、
      写しを作り損ねた回が「セリフが足りない」に見える（`docs/island-standards.md` §15）。
-     tsc の言い分は上に出ているので、ここは1行だけ足して 2 で終わる。 */
+
+     **「何が足りなかったか」まで言う。** 2 で終わったとき、読む人が次に打つ手は
+     「道具が無い」と「型が通らない」で正反対になる。2026-10-03 の焼き直しが
+     前者で、ログには「組み立てられませんでした」としか出ていなかったので、
+     `site/node_modules` が無いことに誰も気づけなかった。 */
   console.log("");
-  console.log("組み立てられませんでした。数えていないので、合否は出していません。");
+  if (!existsSync(TSC)) {
+    console.log("組み立てる道具がありません。数えていないので、合否は出していません。");
+    console.log(`  無いもの: ${TSC}`);
+    console.log("  site の依存が入っていません。`cd site && npm ci` を通してから回す。");
+    console.log("  rebake.yml では、手前の step が落ちると `site の依存を入れる` が");
+    console.log("  skip されてここだけ走る。**その晩は手前の赤を直すのが先。**");
+  } else {
+    console.log("組み立てられませんでした。数えていないので、合否は出していません。");
+    console.log("  tsc の言い分は上に出ている。型が通らないので、まずそこを直す。");
+  }
   console.log(`  セリフ帳: ${CHATTER}`);
   console.log(`  名簿    : ${RESIDENTS_SRC}`);
   process.exit(2);

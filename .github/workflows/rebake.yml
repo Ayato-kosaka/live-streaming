@@ -1912,13 +1912,34 @@ jobs:
             cat /tmp/chatter.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$code" != "0" ]; then
+          # **0 と 1 と 2 を同じ顔で返さない**（`docs/island-standards.md` §15）。
+          #
+          # 1 は「数えたうえで、届いていない人がいた」。
+          # 2 は「数えられなかった」——**届いているかどうかは分かっていない。**
+          # 2026-10-03 の焼き直しが実際に 2 で終わったのに、ここが 1 の字
+          # （セリフが届いていません）を出していた。原因は手前の step が落ちて
+          # `site の依存を入れる` が skip され、`tsc` が無いまま走ったこと。
+          # ログだけ読むと「誰かのセリフが無い」に見えて、`chatter.ts` を
+          # 開きに行くことになる。**そこには何も無い。**
+          #
+          # **2 も赤のまま。** 測れていないのは問題なので緑にはしない
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "セリフを書き足すのは \`site/content/chatter.ts\`。上に出ている icon で引きます。"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::島でよく歩く人に、その人のセリフが届いていません。上の表を見てください"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「セリフが足りない」ではありません。数えられませんでした。**"
+              echo "合否は出していないので、**届いているかどうかは分かっていません。**"
+              echo "何が足りなかったか（組み立てる道具か、読めなかったファイルか）は上のログに出ています。"
+              echo "手前の step が落ちた晩は \`site の依存を入れる\`（\`npm ci\`）が skip され、"
+              echo "\`site/node_modules/.bin/tsc\` が無いままここだけ走ります。**その晩は手前の赤が先です。**"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::島のセリフを数えられませんでした（終了コード ${code}）。届いているかどうかは分かっていません。上のログを見てください"
           fi
           exit "$code"
 
@@ -1950,12 +1971,23 @@ jobs:
             cat /tmp/stale.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$code" != "0" ]; then
+          # 隣の「セリフの届いていない人がいないか」と同じ分け（§15）。
+          # この見張りも 2 を返す（置き場が無い・*.ts が1本も無い・判定不能）。
+          # **2 のときに「新しくするのは /island-fresh」と言うと嘘になる。**
+          # 古いのではなく、古いかどうかを**見られていない**
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "新しくするのは \`/island-fresh\`。料理・他己紹介・歩いた国は配信を見ないと決まりません。"
             } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「古くなっている」ではありません。見られませんでした。**"
+              echo "合否は出していないので、**古いかどうかは分かっていません。** 上のログを見てください。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::焼き込みが古いかどうかを見られませんでした（終了コード ${code}）"
           fi
           exit "$code"
 
@@ -2009,17 +2041,31 @@ jobs:
           set -uo pipefail
           python3 python/ingest_watch.py > /tmp/ingest_watch.txt 2>&1 && code=0 || code=$?
           cat /tmp/ingest_watch.txt
-          if [ "$code" != "0" ]; then
+          # ここも §15 の分け。この見張りの 2 は「BQ_PROJECT_ID が無い」
+          # 「`videos` が空」——**詰まっているのではなく、数えられていない**
+          if [ "$code" = "1" ]; then
             {
               echo ""
               echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
               echo "拾い直す枠は \`python/bq/queries.py\` の \`QUERY_SELECT_TARGET_VIDEOS\`、"
               echo "1晩に拾う本数は \`python/config.py\` の \`LATE_LANE_MAX_VIDEOS\` です。"
             } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「詰まっている」ではありません。数えられませんでした。**"
+              echo "合否は出していないので、**詰まっているかどうかは分かっていません。** 上のログを見てください。"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$REBAKE_DRY" = "1" ]; then
-            [ "$code" != "0" ] && echo "::warning::取り込みが詰まっています（見るだけの回なので赤くしません）"
+            # 見るだけの回は赤くしない。**ただし 1 と 2 で字を変える**
+            [ "$code" = "1" ] && echo "::warning::取り込みが詰まっています（見るだけの回なので赤くしません）"
+            [ "$code" != "0" ] && [ "$code" != "1" ] \
+              && echo "::warning::取り込みが詰まっているかを数えられませんでした（終了コード ${code}）"
             exit 0
+          fi
+          if [ "$code" != "0" ] && [ "$code" != "1" ]; then
+            echo "::error::取り込みが詰まっているかを数えられませんでした（終了コード ${code}）"
           fi
           exit "$code"
 
