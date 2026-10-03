@@ -285,6 +285,12 @@ export async function loadEvents(): Promise<EventRef[]> {
  * だから写真の日 `D` に当たる投げ銭の生の `day` は、`D` か `D+1` の
  * どちらかしかない。2本引いて、手元で `tipDay` で絞る。
  *
+ * ## 3. 配信の無い日は、生の `day` に落ちる（`rawDayFallback`）
+ *
+ * 補正は「前の日へ戻す」向きにしか効かないので、**その日に始まった配信が
+ * 1本も無い日は、補正が人を奪っていくだけで誰も連れてこない。**
+ * そういう日だけ、生の `day` でも当てる（下の `rawDayFallback`）。
+ *
  * 引き方は**単一フィールドの等価と `in` だけ**（索引を増やさない・#168）。
  * @param {ImageRef} image 写真
  * @param {EventRef | null} ev 付いている企画。**無いこともある**
@@ -311,21 +317,99 @@ export async function tipsForImage(
   const snaps = await Promise.all(jobs);
   const inVids = new Set(vids);
   const seen = new Set<string>();
-  const out: TipRef[] = [];
+  /* **当たりを決める前に、引けたものを全部そろえる。** 生の `day` へ
+     落ちてよい日かどうか（`rawDayFallback`）は、1件ずつでは決まらない
+     ——その日ぜんぶを見て「0件」と言えないといけない。 */
+  const all: TipRef[] = [];
   for (const s of snaps) {
     s.forEach((d) => {
       if (seen.has(d.id)) return;
       seen.add(d.id);
-      const t = tipRef(d.id, d.data() ?? {});
-      /* **翌日ぶんを引いたままにしない。** `D+1` の問い合わせには
-         「翌日に始まった別の配信」の投げ銭も混ざってくる。ここで
-         落とさないと、その人たちに前の日の写真が渡る。 */
-      const hit = (!!day && tipDay(t) === day) ||
-        (!!t.videoId && inVids.has(t.videoId));
-      if (hit) out.push(t);
+      all.push(tipRef(d.id, d.data() ?? {}));
     });
   }
-  return out;
+  const raw = rawDayFallback(day, all);
+  /* **翌日ぶんを引いたままにしない。** `D+1` の問い合わせには
+     「翌日に始まった別の配信」の投げ銭も混ざってくる。ここで
+     落とさないと、その人たちに前の日の写真が渡る。 */
+  return all.filter((t) => tipHits(t, day, inVids, raw));
+}
+
+/**
+ * **その日を配信日とする投げ銭が、1件も無いか。**
+ * `true` なら、その日の写真は生の `day` でも当てる（`tipHits`）。
+ *
+ * ## なぜこれが要るか（2026-09-27 の写真）
+ *
+ * 補正（`tipDay`）は「配信が始まった日へ戻す」向きにしか効かない。
+ * だから**その日に始まった配信が1本も無い日は、補正が人を前の日へ
+ * 送り出すだけで、代わりに誰も来ない。**
+ *
+ * 2026-09-27 がそれだった。配信は 9/26（月末配信）と 9/28 で、9/27 には
+ * 1本も無い。日本時間 9/27 の未明に届いた投げ銭3件は 9/26 に始まった
+ * 配信のものなので補正が 9/26 へ寄せ、**9/27 に貼った写真を受け取る人が
+ * 0人になった**（補正を入れる前は生の日付で3人付いていた）。
+ * 直すために条件を絞ったのが、ここ。
+ *
+ * ## なぜ「0件のときだけ」なのか
+ *
+ * **配信があった日を1人も増やさないため。** その日を配信日とする投げ銭が
+ * 1件でもあれば `false` を返すので、そこでは何も変わらない。2026-09-06 の
+ * 補正（22時開始の配信に 00:23 で投げてくれた人を前日へ戻す）も、翌日
+ * 9/07 に別の配信があるかぎり 9/07 側は `false` なので壊れない。
+ *
+ * Doneru の投げ銭は `videoStartedAt` を持たないので、補正後の日＝生の日に
+ * なる。**つまり Doneru が1件でも届いた日は、必ず「0件」にならない。**
+ * これがこの絞り方の安全弁で、投げ銭のある日がうっかり落ちることはない。
+ *
+ * ## **1人も外へ広げない**
+ *
+ * 見ているのは台帳（`islandTips`）だけ。動くのは**同じ投げ銭が
+ * どちらの日に数えられるか**だけで、投げていない人が入る道はここにも
+ * `tipHits` にも1本も無い（2026-09-14 の障害・
+ * `docs/island-incident-2026-09-14-cards.md`）。
+ *
+ * **数えるのは `channelId` を持つ投げ銭だけ。** `python/island_cards.py` は
+ * 読み込みの時点でそれを落としている（誰のものか分からない投げ銭に
+ * カードは作らない）ので、そろえないと2か所で答えが割れる。
+ *
+ * ## 配ったあとで日が配信日になったら
+ *
+ * 写真を貼った時点では配信が無く（＝配られ）、その晩に配信が始まって投げ銭が
+ * 届くと、翌朝の `island_cards.py` から見ると `false` に変わる。**すでに
+ * 配ったカードはそのまま残る**（どちらも作る側で、消す側ではない）。
+ * **取り上げる向きには動かさない**のが今回の直しの趣旨なので、これでよい。
+ * @param {string} day 写真の日（YYYY-MM-DD）。空なら落ちない
+ * @param {TipRef[]} tips その日のまわりで引けた投げ銭
+ * @return {boolean} 生の `day` でも当てるなら true
+ */
+export function rawDayFallback(day: string, tips: TipRef[]): boolean {
+  if (!day) return false;
+  return !tips.some((t) => !!t.channelId && tipDay(t) === day);
+}
+
+/**
+ * その投げ銭が、その日の写真に当たるか。**当たり方の式はここ1か所。**
+ *
+ * `python/island_cards.py` の `hits` と**同じ3つ**（順番も同じ）。
+ * 片方だけ直すと、貼った夜と翌朝でカードの日付を押し合う。
+ * @param {TipRef} tip 投げ銭1件
+ * @param {string} day 写真の日（YYYY-MM-DD）
+ * @param {Set<string>} vids その写真が名乗っている配信
+ * @param {boolean} raw 生の `day` でも当てるか（`rawDayFallback`）
+ * @return {boolean} 当たるなら true
+ */
+export function tipHits(
+  tip: TipRef,
+  day: string,
+  vids: Set<string>,
+  raw: boolean,
+): boolean {
+  if (day && tipDay(tip) === day) return true;
+  if (tip.videoId && vids.has(tip.videoId)) return true;
+  /* 配信の無い日だけ、生の `day` で拾う。**条件を外すと、配信があった日の
+     人が余分にもらう**（前の日の配信の人が翌日の写真まで取る）。 */
+  return raw && tip.day === day;
 }
 
 /**
@@ -783,6 +867,19 @@ export async function channelsOfDay(
     jobs.push(TIPS.where("videoId", "in", list.slice(i, i + IN_CHUNK)).get());
   }
   const snaps = await Promise.all(jobs);
+  /* 当たりを決める前に、引けたものをそろえる。**生の `day` へ落ちてよい日か
+     どうかは、その日ぜんぶを見ないと決まらない**（`rawDayFallback`）。
+     ここを1件ずつで済ませると、カード（`tipsForImage`）と顔ぶれが割れる。 */
+  const all: TipRef[] = [];
+  const seen = new Set<string>();
+  for (const s of snaps) {
+    s.forEach((d) => {
+      if (seen.has(d.id)) return;
+      seen.add(d.id);
+      all.push(tipRef(d.id, d.data() ?? {}));
+    });
+  }
+  const raw = rawDayFallback(day, all);
   /* **同じ人は1回だけ。** 1日に何度も投げてくれた人が人数ぶん並ばない
      ように、チャンネルIDで畳む。
 
@@ -791,30 +888,26 @@ export async function channelsOfDay(
      そろえないと**同じ人のカードと写真の名札で別の絵が出る**（同じ日に
      名乗りを変えた人）。問い合わせの返る順に頼らない。 */
   const out = new Map<string, Tipper & {at: number}>();
-  for (const s of snaps) {
-    s.forEach((d) => {
-      const t = tipRef(d.id, d.data() ?? {});
-      const c = t.channelId;
-      if (!c) return;
-      /* **ここは「その日投げてくれた人」のまま。1人も広げない**
-         （2026-09-14 の障害。`docs/island-incident-2026-09-14-cards.md`）。
-         見ているのは台帳（`islandTips`）だけで、コメントした人も、
-         来ていただけの人も、ここには1人も入らない。増えも減りもするのは
-         **同じ投げ銭がどちらの日に数えられるか**だけで、
-         投げていない人が入る道はこの関数のどこにも無い。
+  for (const t of all) {
+    const c = t.channelId;
+    if (!c) continue;
+    /* **ここは「その日投げてくれた人」のまま。1人も広げない**
+       （2026-09-14 の障害。`docs/island-incident-2026-09-14-cards.md`）。
+       見ているのは台帳（`islandTips`）だけで、コメントした人も、
+       来ていただけの人も、ここには1人も入らない。増えも減りもするのは
+       **同じ投げ銭がどちらの日に数えられるか**だけで、
+       投げていない人が入る道はこの関数のどこにも無い。
 
-         絞り方は `tipsForImage` と同じ2つ:
-         `tipDay` がその日か、企画が名乗っている配信か。 */
-      const hit = tipDay(t) === day || (!!t.videoId && vids.has(t.videoId));
-      if (!hit) return;
-      const at = t.donatedAt;
-      const had = out.get(c);
-      if (had && had.at <= at) return;
-      out.set(c, {
-        channelId: c,
-        nameSnapshot: t.nameSnapshot ?? "",
-        at,
-      });
+       絞り方は `tipsForImage` と同じ式（`tipHits`）を通す。 */
+    const hit = tipHits(t, day, vids, raw);
+    if (!hit) continue;
+    const at = t.donatedAt;
+    const had = out.get(c);
+    if (had && had.at <= at) continue;
+    out.set(c, {
+      channelId: c,
+      nameSnapshot: t.nameSnapshot ?? "",
+      at,
     });
   }
   return [...out.values()].map(({channelId, nameSnapshot}) =>
