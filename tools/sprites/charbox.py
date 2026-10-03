@@ -26,16 +26,37 @@
 640px あれば 0.15% きざみで足りる。640 が無い人（元の絵が 640px より
 小さくて焼かれなかった人）は 256、128 と落ちる。
 
-## 減ったら書かない
+## 減ったら書かない——ただし**数ではなく、人で比べる**
 
-口が落ちていたり、返ってくる人数が減っていたりしたときに黙って
-焼き直すと、**島の全員が「枠いっぱい」に戻る。** 赤くならず、
-島の大きさだけが不揃いになるので気づけない。いま入っている人数より
-減る焼き直しは断る。
+口が落ちていたり、絵が落とせなかったりしたときに黙って焼き直すと、
+**島の全員が「枠いっぱい」に戻る。** 赤くならず、島の大きさだけが
+不揃いになるので気づけない。だから減る焼き直しは断る。
+
+**長いこと、ここを「人数」で見ていた**（`len(rows) < had` なら断る）。
+それだと**本当に人が消えた日から、永久に焼けなくなる。** 2026-10-03 の実測:
+
+| | 数 |
+| --- | --- |
+| `characterBox.ts` の箱 | 103 |
+| 口が返した人 | **100**（4人が Firestore から消え、1人増えた） |
+
+測れる数が箱の数より永久に少ないので、関所が毎晩断る。新しく入った人の箱は
+永久に焼かれず、`python/stale_content_watch.py` が「`residents.ts` の1件が
+焼かれていません」と**毎晩赤くする。自分では二度と緑にならない見張り**に
+なっていた（`docs/island-standards.md`「判定が出ないときに緑を返す道具は、
+無いより悪い」の裏返し。**永久に赤を返す見張りも、誰も読まなくなる**）。
+
+いまは `judge()` が**誰が消えるのか**で見る。消える箱のうち、
+
+- **まだ名簿（口）に居る人** → 測り損ね（絵が落とせなかった等）。**断る**
+- **名簿からも消えている人** → 本当に消えた人。**書いてよい**
+
+守りたかったものはそのまま断り、本当に消えた人のぶんは先へ進める。
 """
 import datetime
 import io
 import json
+import math
 import os
 import re
 import sys
@@ -46,6 +67,106 @@ from PIL import Image
 API = os.getenv("ISLAND_API") or "https://live-streaming-d3cac.web.app/island-api"
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "site", "content", "characterBox.ts")
+
+
+# 箱の行だけに当たる正規表現。**`noArt` の並びは4字下げ**なので、
+# 2字下げ＋`": ["` で箱の行とだけ当たる（`noArt` の id を箱と数えない）
+BOX_RE = re.compile(r'^\s{2}"([^"]+)":\s\[', re.M)
+
+# **口が壊れている回の床。** いま入っている箱の数に対する割合で見る。
+#
+# 口が 0人（あるいは数人）を返すと、`judge()` から見て「箱にある人が
+# 名簿からも消えた」と読めてしまう——つまり**全員の箱を消して書いてよい**に
+# なる。そこだけは人で比べても抜けないので、別に床を置く。
+#
+# **0.9 は実測から決めた。** `site/content/characterBox.ts` の git 履歴に
+# 焼いた回ぶんの `CHARACTER_BOX_BAKED.people`（そのとき口が返した人数）が
+# 残っている:
+#
+#   2026-09-11 **95** → 09-17 102 → 09-18 103 → 09-19 103 → 09-20 103
+#   → 09-21 103 → 09-22 103 → 09-23 103（以後 103 で頭打ち）
+#   2026-10-03 **100**（本番を手で引いた実測。4人減って1人増えた）
+#
+# 口が返す人数は、始まってから**一度も頭打ち 103人の 92.2%（=95人）を
+# 割っていない。** 唯一の減りは 103 → 100 の **-2.9%**。
+# 床を 90% に置くと、
+#
+#   - 実測のいちばん低いところ（92.2%）より**下**なので、本物の晩は通る
+#     （いまの 103箱 / 100人は、床 93人に対して 7人の余裕がある）
+#   - 「口が落ちた・途中で切れた」側（0人・1桁・2桁前半）は**ぜんぶ捕まる**
+#
+# 1人を下限に挟んでいるのは、箱が1つも無い初回（`had` が 0 で床も 0 になる）に
+# **空の表を焼かせない**ため。島には最初から22人居たので、0人は「人が居ない」
+# ではなく「口が壊れた」の形。
+FLOOR_SHARE = 0.9
+
+# **床を1回だけ降ろす口。** 人が本当に口の数を見たうえで、その数を書く。
+# 数が合っていなければ効かない——「とりあえず置いておけば通る」にしない。
+# （床で断ったまま誰も直せない、という形を作らないために残してある）
+EXPECT_ENV = "CHARBOX_EXPECT_PEOPLE"
+
+
+def baked_ids(path: str = "") -> set:
+    """いま `characterBox.ts` に入っている箱の id。無ければ空。
+
+    **数ではなく id を返す。** `judge()` が「誰が消えるのか」で判断するので、
+    ここで数に畳むと、本当に消えた人と測り損ねが見分けられなくなる。
+    """
+    p = path or OUT
+    if not os.path.exists(p):
+        return set()
+    with open(p, encoding="utf-8") as f:
+        return set(BOX_RE.findall(f.read()))
+
+
+def judge(had: set, rows: set, api: set, expect=None) -> tuple:
+    """この焼き直しを書いてよいか。→ (書いてよいか, 1行の理由)
+
+    **網にも本番にも触らない。** 3つの集合だけで決まるので、
+    `tools/sprites/charbox_selftest.py` がそのまま回せる。
+
+    @param had    いま `characterBox.ts` に入っている箱の id
+    @param rows   今回測れた id
+    @param api    口（`/island-api/characters`）が返した id
+    @param expect `CHARBOX_EXPECT_PEOPLE` の値（文字列。床を降ろすとき）
+    """
+    gone = had - rows                 # 箱から消える人
+    unexplained = gone & api          # **まだ名簿に居るのに箱が消える**
+    fresh = rows - had                # 新しく入る箱
+
+    # 床。**人で比べても抜けるのはここだけ**なので、先に見る
+    floor = max(1, math.ceil(len(had) * FLOOR_SHARE))
+    low = len(api) < floor
+    # **0人は降ろせない。** 口が0人を返すのは「人が居ない」ではなく口が壊れた形
+    # （島には最初から22人居た）。降ろす口を残すと、そこが全消しの引き金になる
+    waived = low and len(api) >= 1 \
+        and expect is not None and expect.strip() == str(len(api))
+    if low and not waived:
+        hint = (f"数を見たうえで通すなら {EXPECT_ENV}={len(api)} を付けて回す"
+                if len(api) >= 1 else
+                "**0人は降ろせません。** 口が落ちているので、口を直してから焼く")
+        return False, (
+            f"口が {len(api)}人しか返していません"
+            f"（床は {floor}人＝いま入っている {len(had)}箱の {FLOOR_SHARE:.0%}）。"
+            f"口が落ちている回に焼くと、生きている人まで「消えた」ことにされます。"
+            f"{hint}"
+        )
+
+    # 測り損ね。**既存の `no_art`（絵が開けない人）がここに入る**
+    if unexplained:
+        names = ", ".join(sorted(unexplained)[:5])
+        more = " …" if len(unexplained) > 5 else ""
+        return False, (
+            f"まだ名簿に居るのに箱が消えます {len(unexplained)}人: {names}{more}。"
+            f"測り損ね（背景なしの絵が無い・絵が開けない・中身が空）なので書きません"
+        )
+
+    tail = f"・床を {EXPECT_ENV} で降ろした" if waived else ""
+    return True, (
+        f"書きます（口 {len(api)}人 / 測れた {len(rows)}人 / いま {len(had)}箱 / "
+        f"箱から消える {len(gone)}人＝名簿からも消えている / "
+        f"新しく入る {len(fresh)}人{tail}）"
+    )
 
 
 def fetch(url: str, timeout: int = 90) -> bytes:
@@ -102,17 +223,22 @@ def main() -> None:
             round(w / h, 4),
         ))
 
-    # 減る焼き直しは断る（先頭の説明「減ったら書かない」）
-    had = len(re.findall(r'^\s{2}"[^"]+":\s\[', open(OUT, encoding="utf-8").read(), re.M)) if os.path.exists(OUT) else 0
-    if len(rows) < had:
-        print(f"いま {had}人ぶん入っているのに {len(rows)}人しか測れなかったので書きません", file=sys.stderr)
+    # 減る焼き直しは断る（先頭の説明「減ったら書かない——ただし人で比べる」）。
+    # **数ではなく id を渡す。** 誰が消えるのかで決まる
+    had = baked_ids()
+    # id を持たない応答は、人として数えない（空文字が1人ぶんに化ける）
+    ok, why = judge(had, {r[0] for r in rows},
+                    {c["id"] for c in chars if c.get("id")},
+                    os.getenv(EXPECT_ENV))
+    print(why, file=sys.stdout if ok else sys.stderr)
+    if not ok:
         raise SystemExit(1)
 
     body = "\n".join(
         f'  "{i}": [{x}, {y}, {ww}, {hh}, {ar}],' for i, x, y, ww, hh, ar in rows
     )
     open(OUT, "w", encoding="utf-8").write(HEAD + body + TAIL + stamp(len(chars), len(rows), no_art))
-    print(f"{len(rows)}人ぶん焼いた（前は {had}人 / 測れなかった {len(no_art)}人）→ {OUT}")
+    print(f"{len(rows)}人ぶん焼いた（前は {len(had)}人 / 測れなかった {len(no_art)}人）→ {OUT}")
 
 
 def stamp(people: int, boxes: int, no_art: list) -> str:
