@@ -1,0 +1,154 @@
+name: 人の手入れ待ちを常設の札に映す
+
+# いま**人が欄を埋めないと消えない**ものだけを数えて、常設の issue（#664）の
+# 中の区画を書き換える（`python/upkeep_watch.py`）。埋まったら、その行は消える。
+#
+# ## なぜ要るか
+#
+# 2026-09-29 からの12晩、毎晩の焼き直しが続けて赤かった。原因は4つで、
+# **性質が2種類に分かれていた**——3本は仕組みの不具合（正しい状態でも緑に
+# ならない形）、1本は整備の漏れ（`albania.from` が空）。
+#
+# 4本は `bake_down` の issue 1本にまとまって出ていて、そこから
+# 「どれが人待ちか」は読めない。しかもその1本は16日間ずっと開いていたので、
+# 一覧の中で背景になっていた。**知らせる仕組みは正しく鳴っていた。**
+# 鳴り方が1本に混ざっていたほうが問題だった。
+#
+# だから **人の手入れ待ちだけ**を、別の札へ分けて出す。
+# 仕組みの不具合（機械が焼く本の赤）は、いままでどおり `bake_down` の側。
+#
+# ## 札は1本。新しく立てない
+#
+# `#664`（`整備` の札）の本文に `<!-- upkeep:begin -->` の区画を切って、
+# **その中だけ**を書き換える。**人が手で書いた経緯は1文字も触らない。**
+# 毎晩 issue を立てる作りにすると、一覧がこの係の札で埋まって、
+# いま直そうとしている「背景になる」をこちらが起こすことになる。
+#
+# ## 繋ぎ先（`workflow_run`）
+#
+# **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
+# あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
+# （20:30 UTC）の古参2本だけで、しかも1時間49分〜3時間32分遅れて走る。
+# 2026-09-10 に載せた `rebake.yml` の cron は、翌朝まで待っても発火しなかった。
+# 下の cron は**保険**として置いてある。
+#
+# 読む元は `site/content/*.ts`（＝毎晩の焼き直しが書き換える先）なので、
+# **焼き直しの完了のうしろ**に繋ぐ。繋ぎ先を2本にしてあるのは、片方が消えても
+# 止まらないようにするため。`Fetch YouTube Chat Data` のほうは発火の実績がある。
+#
+# **`conclusion` は見ない。** 繋ぎ先が赤い日こそ、こちらが動かないといけない。
+# 焼き直しが赤いまま何晩も続いたときに「人待ちはどれか」を出すのがこの仕事なので、
+# 成功したときだけ繋ぐと**いちばん要る朝だけ黙る。**
+#
+# **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると
+# 黙って切れる。**赤くならない。走らなくなるだけ。** 名前が実在するかは
+# `python/upkeep_watch_selftest.py` が毎回突き合わせている。
+#
+# ## 手で押すときの既定は「見るだけ」
+#
+# `apply` の既定は false。押し間違えても issue は動かない。
+# **押す人のいないとき（cron と、繋いで来たぶん）だけ apply で走る。**
+#
+# ## 赤くしない
+#
+# 手入れが何件溜まっていても、この job は緑で終わる。
+# **赤で知らせるのをやめるために作ったもの**が自分で赤を積んだら元に戻る。
+# 赤くなるのは「数えられない」「GitHub に届かない」＝**この仕組みそのものが
+# 動いていない**ときだけ。
+
+on:
+  workflow_run:
+    # 読む元は焼き直しが書き換える `site/content/*.ts`。
+    # 後者は前者の繋ぎが切れたときの受け皿（発火の実績あり）
+    workflows: ["島の数字を焼き直す", "Fetch YouTube Chat Data"]
+    types: [completed]
+
+  schedule:
+    # 保険。焼き直しの cron（01:00 UTC）より後ろ、`bake_down` の隣
+    - cron: "17 4 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "issue #664 の区画を実際に書き換える（off なら見るだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 焼き直しと取り込みが続けて終わった日に2本同時に走ると、同じ本文を
+# 2本で奪い合う。1本ずつ通す
+concurrency:
+  group: upkeep-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # #664 の本文を読んで、区画だけ書き換える
+  issues: write
+
+jobs:
+  upkeep_watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # **本番の1回は、pip を1つも通らない。** ここが読むのは
+      # `site/content/*.ts` と GitHub の口だけで、BigQuery も Firestore も
+      # 1行も触らない。「人の手入れが溜まっている」を知らせる係が、
+      # **関係のない依存が1つ壊れただけで止まる**形にしたくない。
+      #
+      # PyYAML を入れるのは**確かめ（selftest）のためだけ。**
+      # あれがワークフローの YAML を読んで、繋ぎ先の名前が実在するかを見る
+      - name: 確かめが YAML を読むぶんだけ入れる
+        run: pip install pyyaml
+
+      # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
+      # このリポジトリは公開で、Actions のログも誰でも読める。実際に3回出ている。
+      # **消すのは出たあと。出る前に止めたいので、口より手前に置く。**
+      # **同じ job に置くことが要る**（job が違えばランナーが別）
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # 偽の GitHub で回すだけ。外へは1バイトも出ない。
+      # **本番を触る前に、振り分け（人／機械）が生きているかを見る。**
+      # ここが壊れたまま apply で走ると、機械の赤が札に混ざって
+      # 「読んでも自分の出番が無い一覧」に戻る
+      - name: 振り分けのところを、偽物で先に回す
+        run: python3 python/upkeep_watch_selftest.py
+
+      - name: いま手入れを待っている欄を数えて、札の区画を合わせる
+        env:
+          # 手で押したときだけ既定が「見るだけ」。
+          # cron と、繋いで来たぶんは**読む人がいない**ので apply
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then
+            python3 python/upkeep_watch.py --apply
+          else
+            python3 python/upkeep_watch.py
+          fi
+
+      # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに
+      # 誰も気づかない。せめてどこで落ちたかを要約に残す
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 手入れ待ちを札に映せませんでした"
+            echo ""
+            echo '**手入れが溜まっているという意味ではありません。**'
+            echo 'この仕組みのほう（数え・GitHub の口のどちらか）が動いていません。'
+            echo 'issue #664 の区画が**いまの状態と食い違ったまま**になっています。'
+            echo ""
+            echo '`python3 python/upkeep_watch_selftest.py` と'
+            echo '`python3 python/upkeep_watch.py --no-github` を手元で回すと、'
+            echo 'どちらかが分かります。'
+          } >> "$GITHUB_STEP_SUMMARY"
