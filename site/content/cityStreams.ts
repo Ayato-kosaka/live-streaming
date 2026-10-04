@@ -1815,6 +1815,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "hK0SwIeAxg0",
         "title": "アルバニアの首都を待ち歩きや！",
         "date": "2026-10-03"
+      },
+      {
+        "videoId": "da7K3qD5NmI",
+        "title": "アルバニアや！",
+        "date": "2026-10-04"
       }
     ]
   }

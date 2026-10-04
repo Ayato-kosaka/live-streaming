@@ -265,16 +265,16 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   },
   // アルバニア
   "albania": {
-    people: 78,
-    streams: 9,
+    people: 82,
+    streams: 10,
     residents: [
-      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 7 },
-      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 7 },
-      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 7 },
+      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 8 },
+      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 8 },
+      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 8 },
+      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 8 },
       { icon: "cf129e7ea06f499693a002543dcd7c290", days: 7 },
       { icon: "f203e9529b7941c89940a568e03b83b00", days: 7 },
       { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 6 },
-      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 6 },
       { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 5 },
       { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 5 },
       { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 4 },
