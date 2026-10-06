@@ -1820,6 +1820,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "da7K3qD5NmI",
         "title": "アルバニアや！",
         "date": "2026-10-04"
+      },
+      {
+        "videoId": "XKpFeM0mQ2I",
+        "title": "【速報】スマホが盗まれました",
+        "date": "2026-10-05"
       }
     ]
   }
