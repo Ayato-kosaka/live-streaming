@@ -1825,6 +1825,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "XKpFeM0mQ2I",
         "title": "【速報】スマホが盗まれました",
         "date": "2026-10-05"
+      },
+      {
+        "videoId": "GRd0d7d7Ngg",
+        "title": "遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に暗殺者のパスタ",
+        "date": "2026-10-06"
       }
     ]
   }
