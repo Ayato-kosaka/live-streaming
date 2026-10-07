@@ -91,7 +91,7 @@ import { fromRoot, repoPath } from "./repo.mjs";
 /* 行き先が在るかの判定は1か所から。**本番は `public/*` に `site/out/.` を
    重ねたものを配る**ので、書き出したものだけ見ると `public/` の面が
    ぜんぶリンク切れに見える（`crawltargets.mjs` の頭） */
-import { brokenLinks, norm, publicTargets, targetSet } from "./crawltargets.mjs";
+import { brokenLinks, publicTargets, targetSet } from "./crawltargets.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** 書き出したものを配る静的サーバのポート。並列作業では別々にする。 */
