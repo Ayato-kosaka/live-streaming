@@ -55,10 +55,15 @@ export function IslandHeader({
   return (
     <header className="ih">
       <div className="ih-in">
-        {/* ここだけは先読みを残す。島は全部の面のハブで、いちばん押される。
-            それに、ほとんどの人は島から入ってくるので、島の JS はもう
-            キャッシュに乗っている。残しても実際には払わない。 */}
-        <Link href="/" className="ih-home">
+        {/* ここも先読みしない。
+            前は「島は全部の面のハブで、いちばん押される。島の JS はもう
+            キャッシュに乗っているから、残しても実際には払わない」と書いてあった。
+            **JS の話としては正しいが、先読みが取りに行くのは JS ではない。**
+            島の RSC（`/index.txt`）は 105KB あって、キャッシュには乗っていない
+            （島を HTML で開いた人は `.txt` を取っていない）。この札は
+            全部の面の頭に居るので、**島じゅうのどの面を開いても 105KB 増える。**
+            押されるかどうかは分からないが、105KB は必ず払う。 */}
+        <Link prefetch={false} href="/" className="ih-home">
           <Gull size={26} shadow={false} />
           <b>あやと島</b>
         </Link>

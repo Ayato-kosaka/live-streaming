@@ -88,7 +88,7 @@ export default function NextUp() {
               読めていないのと同じ絵になる。 */}
           <i>行ってきた企画が{done}つ</i>
         </div>
-        <Link className="nextup-all" href="/next">
+        <Link prefetch={false} className="nextup-all" href="/next">
           <span>
             <b>企画を、ぜんぶ見る</b>
             <i>付箋を貼って、行き先に口を出せます</i>
@@ -145,7 +145,7 @@ export default function NextUp() {
       )}
       {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
           「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。 */}
-      <Link className="nextup-all" href="/next">
+      <Link prefetch={false} className="nextup-all" href="/next">
         {/* **0件のときに「これからの予定」と言わない。** 0件の日はこの枝に
             来ない（上で別の絵を返している）ので、ここは言い切ってよい
             （`docs/island-standards.md` 16章）。 */}

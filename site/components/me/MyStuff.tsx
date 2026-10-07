@@ -137,7 +137,7 @@ function Notes({
       <div className="blank">
         <b>まだ1枚も貼っていません</b>
         <p>むちゃな注文ほど、だいたい通ります。</p>
-        <Link className="blank-go" href="/board">
+        <Link prefetch={false} className="blank-go" href="/board">
           板に貼りにいく
           <Icon name="right" size={14} />
         </Link>
@@ -200,7 +200,7 @@ function Plans({
       <div className="blank">
         <b>まだ1つも出していません</b>
         <p>題ひとつでいい。日にちも場所も、あとから足せる。</p>
-        <Link className="blank-go" href="/board">
+        <Link prefetch={false} className="blank-go" href="/board">
           企画を出しにいく
           <Icon name="right" size={14} />
         </Link>
@@ -266,7 +266,7 @@ function Cards({
             投げ銭は投げられたその日に台帳へ入るので、貼られた時点で配られる
             （`functions/src/cards.ts` 冒頭）。 */}
         <p>配信で投げ銭すると、その日の写真がカードになって増えていきます。</p>
-        <Link className="blank-go" href="/cards">
+        <Link prefetch={false} className="blank-go" href="/cards">
           配られたカードを見る
           <Icon name="right" size={14} />
         </Link>

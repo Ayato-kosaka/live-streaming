@@ -47,7 +47,7 @@ export default function NewPlanPage() {
       <section className="panel paper">
         <h1>企画のページを作る</h1>
         <p className="muted">やってほしいことは、掲示板の付箋から。</p>
-        <Link className="tile" href="/board">
+        <Link prefetch={false} className="tile" href="/board">
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>やってほしいこと</b>

@@ -106,14 +106,14 @@ export default function Board() {
               </Link>
             );
           })}
-          <Link className="chip link" href="/legends">
+          <Link prefetch={false} className="chip link" href="/legends">
             ぜんぶ見る
             <Icon name="right" size={12} />
           </Link>
         </div>
 
         {/* 読む先。**出す先ではない。** 付箋から育った企画が、どこに出るか */}
-        <Link className="tile" href="/next" style={{ marginTop: "var(--sp-4)" }}>
+        <Link prefetch={false} className="tile" href="/next" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/tent.webp" alt="" />
           {/* **0件のときに「これから」と言わない。** ここは実際に
               「これから／いま 0 つ立っています」と出していて、**同じ札が
@@ -129,7 +129,7 @@ export default function Board() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <Link className="tile" href="/legends">
+        <Link prefetch={false} className="tile" href="/legends">
           <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
           <span className="tile-text">
             <b>伝説の企画</b>

@@ -202,7 +202,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
 
       {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
       {t.deeper && (
-        <Link className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
+        <Link prefetch={false} className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
           <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
           <span className="tile-text">
             <b>{t.deeper.label}</b>

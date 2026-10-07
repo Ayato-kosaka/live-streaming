@@ -47,7 +47,7 @@ UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
 def _keys(path: str, name: str, key: str) -> list:
     """焼き込みの並びから、欄を1つぶん。**読み落としたら止める。**
 
-    字を読むのは `python/ts_read.py` の1本だけ（`docs/island-misses.md` #204）。
+    字を読むのは `python/ts_read.py` の1本だけ（`docs/island-misses.md` #208）。
     ここは前 `icon:\\s*"([^"]+)"` のように**深さを見ずに**拾っていた。
     いまの名簿は1人1行なので当たっていたが、落ちたぶんは黙って枚数が減るだけで、
     **「本番と同じ絵で撮った」つもりの絵が1枚ずつ ayato.png に落ちる。**

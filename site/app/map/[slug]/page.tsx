@@ -272,7 +272,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
             ))}
           </div>
           {cooked.length > DISHES && (
-            <Link className="tile" href="/kitchen" style={{ marginTop: 12 }}>
+            <Link prefetch={false} className="tile" href="/kitchen" style={{ marginTop: 12 }}>
               <ArtStamp size={44} className="tile-icon" />
               <span className="tile-text">
                 <b>のこりの{cooked.length - DISHES}品も見る</b>

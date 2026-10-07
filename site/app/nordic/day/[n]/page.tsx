@@ -217,7 +217,7 @@ function wantItems(
       cat: s?.cat ?? w.cat ?? "see",
       title: s?.title ?? w.title ?? "",
       point: s?.point ?? w.point,
-      img: s?.img,
+      img: s?.thumb,
       n: k?.n,
       href: k?.href,
       far: k?.far,
@@ -236,7 +236,7 @@ function wantItems(
       cat: s.cat,
       title: s.title,
       point: s.point,
-      img: s.img,
+      img: s.thumb,
       n: k?.n,
       href: k?.href,
       far: k?.far,
@@ -628,7 +628,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         <section className="panel paper" id="enter">
           <h2>この日、国が変わった</h2>
           {enters.map((c) => (
-            <Link key={c.slug} className="tile" href={`/nordic/${c.slug}`}>
+            <Link prefetch={false} key={c.slug} className="tile" href={`/nordic/${c.slug}`}>
               <span className="tile-mark">
                 <Flag slug={c.slug} size={26} />
               </span>
@@ -744,7 +744,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 <CityMap city={c.city} />
                 <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (
-                  <Link
+                  <Link prefetch={false}
                     className="chip link"
                     href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
                   >
@@ -763,7 +763,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
               >
                 <WantList items={c.items} />
                 {c.country && c.list.length > 0 && (
-                  <Link
+                  <Link prefetch={false}
                     className="chip link"
                     href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
                   >
@@ -804,7 +804,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
       {/* 前の日・次の日。旅は一本道なので、めくって読めるようにする。 */}
       <div className="nnav">
         {prev ? (
-          <Link href={dayHref(prev)}>
+          <Link prefetch={false} href={dayHref(prev)}>
             <Icon name="right" size={14} className="is-flip" />
             {dayName(prev)}
           </Link>
@@ -812,7 +812,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
           <span />
         )}
         {next ? (
-          <Link href={dayHref(next)}>
+          <Link prefetch={false} href={dayHref(next)}>
             {dayName(next)}
             <Icon name="right" size={14} />
           </Link>
@@ -821,7 +821,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         )}
       </div>
 
-      <Link className="tile" href="/nordic#plan">
+      <Link prefetch={false} className="tile" href="/nordic#plan">
         <span className="tile-mark">
           <Icon name="road" size={26} />
         </span>
