@@ -1093,6 +1093,12 @@
 .isle-going .isle-mark:active { transform: translateY(2px); box-shadow: 0 2px 0 #c9a978; }
 /* 同じ札を2枚出さない。留めているあいだ、島の上の札は引っ込む */
 .isle[data-dock] .isle-spot .isle-mark { opacity: 0; pointer-events: none; }
+/* 吹き出しと建物の中を開いているあいだは、下の `.isle.is-talking .isle-mark` が
+   この札も透明にする。**指も一緒に引っ込める。** 透明なまま押せると、
+   「どこを押しても吹き出しを閉じる」（ゲームの作法）が画面の下ふちだけ
+   効かなくなって、閉じるつもりの指が建物に入ってしまう */
+.isle.is-talking .isle-going .isle-mark,
+.isle.is-sheet .isle-going .isle-mark { pointer-events: none; }
 /* 出発までの日数。札の右肩に貼ったシール */
 .isle-badge {
   position: absolute;
