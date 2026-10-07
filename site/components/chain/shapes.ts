@@ -25,17 +25,22 @@ export type IslandArt = {
    * **一様に引く。並び順は出る頻度に効かない**（前のコメントは「手前から順に
    * 多く出る」と書いてあったが、`plants()` はそうしていなかった）。
    * だから**種類の数がそのまま構成比**になる。木を1種足すと、その島は
-   * そのぶん木が増えて岩が減る。増やすときはそこまで見ること。 */
-  props: { n: string; s: number }[];
+   * そのぶん木が増えて岩が減る。増やすときはそこまで見ること。
+   *
+   * `once: true` を付けたものだけは別で、**島に1つだけ**置かれる（風車・泉）。
+   * 一様に引くと、島に風車が6基建つ。目印は1つだから目印になる。 */
+  props: { n: string; s: number; once?: boolean }[];
   /** 高台を持つ島か。山のある土地だけ */
   plateau?: boolean;
   /**
    * 島の色。`app/css/tokens.css` の `[data-theme]` に渡す。
    *
-   * **色は章の色ではなく、土地の色**（`docs/island-atlas.md` 3章）。
-   * 何も書かなければ既定（温帯の緑）。乾いた土地は desert、寒い土地は nordic。
+   * **色は章の色ではなく、土地の色と、その章の季節**（`docs/island-atlas.md` 3章、
+   * `docs/island-world.md` 3.1）。季節は章の日付から出るので、どちらも事実。
+   * 何も書かなければ既定（温帯の緑）＝表に無い章の受け皿。
+   * 6つの中身は `app/css/tokens.css` の「土地ごとの色」の表にある。
    */
-  theme?: "desert" | "nordic";
+  theme?: "autumn" | "desert" | "highland" | "arid" | "nordic" | "mediterranean";
   /** 配置を決める種。変えると草木の並びが変わる */
   seed: number;
 };
@@ -48,42 +53,73 @@ export type IslandArt = {
  * - コーカサス … まるく大きい。真ん中に山（高台）。腰を据えた章
  * - イラン … 南へ細く突き出た小島。歩いて国境へ行って戻ってきた
  * - 北欧 … 南北に長く、西側がフィヨルドで刻まれている
+ * - アルバニア … 南北に長く、西（海側）は滑らかで、東（山側）が刻まれている
+ *
+ * **草木は、その章で実際にあったもの。** 畑の章には畑を、遺跡の章には遺跡を撒く。
+ * 名前は `content/sprites.json` にあるもの（`site/public/sprites/` に実在するか
+ * どうかは `site/selftest/isleart_selftest.mjs` が数えている）。
  */
 export const ISLAND_ART: Record<string, IslandArt> = {
   europe: {
     radii: [1.14, 1.02, 0.92, 0.96, 1.06, 1.12, 1.04, 0.94, 0.9, 0.98, 1.12, 1.22, 1.16, 1.02, 0.96, 1.06],
     squash: 0.62,
+    /* 落葉期の畑の国（2024-10-28〜2025-03-29、9カ国）。
+       **草地を区画に切る。** ヨーロッパの田園は一面の草ではなく、生垣と柵で
+       細かく割られた畑。木を並べるだけでは、どの温帯の島とも同じ絵になる。 */
     props: [
+      { n: "tree-tall", s: 0.34 },
       { n: "tree-round", s: 0.3 },
       { n: "tree-default", s: 0.28 },
-      { n: "tree-tall", s: 0.34 },
+      { n: "hedge", s: 0.15 },
+      { n: "fence", s: 0.13 },
       { n: "bush", s: 0.16 },
-      { n: "flower-red", s: 0.1 },
-      { n: "flower-yellow", s: 0.1 },
+      // 目印は1つだから目印になる（`once`）。風車は木より高くする
+      { n: "windmill", s: 0.5, once: true },
     ],
+    theme: "autumn",
     seed: 1028,
   },
   "middle-east": {
     radii: [0.86, 0.9, 1.06, 1.24, 1.3, 1.2, 1.0, 0.86, 0.82, 0.9, 1.08, 1.22, 1.26, 1.12, 0.96, 0.86],
     squash: 0.58,
+    /* 乾いた土地（91日・5カ国）。木3種・乾いた地面3種・遺跡3種を同じ割合で。
+       **サボテンは置かない。** あれはアメリカ大陸の植物で、中東には生えていない。
+       島が嘘をつくので、ヤシと棘のある低木に替えた。 */
     props: [
       /* ナツメヤシ。ここに生えているのはココヤシ（tree-palm）ではない。
        *
-       * **サボテンの2倍以上の高さにする。** ナツメヤシは20m級で、砂漠で
-       * いちばん背の高いもの。ここが島の骨格になる。
-       * 一度 0.34 と 0.26 で置いて、撒かれたのが若木のほうだったために
-       * サボテンの1.44倍にしかならず、**低木に見えた。**
-       * 大人の木で 0.40（サボテン比 2.22倍）、若木で 0.28（1.56倍）。
-       *
-       * 種類は2つまで。3つ入れると、木が構成比の半分を占めて
-       * 岩とサボテンが消え、乾いた島に見えなくなる（実際そうなった）。 */
+       * **背の高いものを1本は置く。** ナツメヤシは20m級で、砂漠でいちばん
+       * 背の高いもの。ここが島の骨格になる。一度 0.34 で置いて、
+       * 撒かれたのが若木のほうだったために**低木に見えた。** */
       { n: "tree-date", s: 0.4 },
       { n: "tree-date-young", s: 0.28 },
-      { n: "cactus", s: 0.18 },
+      { n: "tree-palm-short", s: 0.26 },
       // 苔の生えていない岩。rock-flat は天面がまるごと苔（h0.29 s0.65）で、
       // 乾いた土の島の上でいちばん彩度の高い緑になっていた
       { n: "rock-dry", s: 0.12 },
       { n: "stone-small", s: 0.1 },
+      { n: "bush-spiky", s: 0.14 },
+      /* 遺跡。砂に半分埋まった石柱と、横倒しの石の頭。
+         **ここは代金を払っている。** 撒くものを5種から10種に増やしたとき、
+         1フレームの CPU が 6.5 → 9.0ms（+38%。前後を交互に3往復）に伸びた。
+
+         効いているのは **絵の種類の数**（ブラウザが焼き分ける枚数）で、
+         大きさでも、描く画素でもない。確かめた:
+
+           描く画素   前後どちらも 5.18M（画面の大きさぶん。変わらない）
+           撒く面積   Σs² は前 101,519 → 後 78,944 で、**後のほうが小さい**
+           小さくする 石柱 0.3→0.24・頭 0.16→0.13 で測り直して 9.1/9.9/8.5。
+                      **1ミリ秒も戻らなかった**
+
+         払う価値があると見ている。この島は6島でいちばん軽いほうから2番目で、
+         9.0ms は目安の 16ms（空いている実機で 60fps）の内側にいる。
+         いっぽう遺跡は、この章を遺跡の章にしている当のもの。
+         **いずれ重くなったら、種類を減らすのが効く**（大きさではない）。 */
+      { n: "statue-column", s: 0.3 },
+      { n: "statue-column-broken", s: 0.18 },
+      { n: "statue-head", s: 0.16 },
+      // オアシスの泉。島に1つだけ
+      { n: "fountain-square", s: 0.24, once: true },
     ],
     theme: "desert",
     seed: 330,
@@ -91,41 +127,92 @@ export const ISLAND_ART: Record<string, IslandArt> = {
   caucasus: {
     radii: [1.04, 1.1, 1.14, 1.08, 1.0, 0.98, 1.06, 1.12, 1.1, 1.02, 0.96, 0.98, 1.06, 1.12, 1.1, 1.04],
     squash: 0.64,
+    /* 441日いて、料理42品のうち32品がここの島（`content/recipes.ts`）。
+       **食べるものが育っている島にする。** 前は `crop-row` 1種だけだったので、
+       畑が同じ畝の繰り返しに見えていた。作物を4種混ぜると、畝が色の帯になる。
+       ぶどうの国なので樽も置く。
+       **重さは増えない。** 撒く数は島の面積で決まっていて、種類の数では
+       変わらない（`plants` / `world.ts` の `scatter`）。6島でいちばん重い島
+       （1フレーム 5.7〜5.9ms）なので、ここは増やさないこと。 */
     props: [
       { n: "tree-fat", s: 0.24 },
       { n: "tree-round", s: 0.22 },
       { n: "tree-pine-round", s: 0.26 },
+      { n: "crop-wheat", s: 0.12 },
+      { n: "crop-corn", s: 0.14 },
+      { n: "crop-pumpkin", s: 0.1 },
+      { n: "crop-melon", s: 0.1 },
       { n: "crop-row", s: 0.1 },
       { n: "bush-large", s: 0.14 },
-      { n: "flower-purple", s: 0.08 },
+      { n: "barrel", s: 0.12 },
     ],
     plateau: true,
+    theme: "highland",
     seed: 629,
   },
   "iran-walk": {
     radii: [0.72, 0.78, 0.9, 0.96, 1.0, 1.12, 1.3, 1.42, 1.34, 1.14, 1.0, 0.94, 0.88, 0.8, 0.72, 0.7],
     squash: 0.56,
+    /* 岩と土だけの島（10日・380km 歩いた）。木は1本も生やさない。
+       **岩を小さくした。** 0.4（= 104単位）の `rock-dry-tall` は住人の背丈より
+       大きく、島に白い枕が転がっているように見えていた。0.22 まで下げて
+       種類を7つに増やすと、同じ数でも「石の多い尾根」に読める。
+       サボテンも外した。中東と同じ理由で、アメリカ大陸の植物だから。 */
     props: [
-      // 岩と土だけの島。ここも苔は生やさない（乾いた岩）
-      { n: "rock-dry-tall", s: 0.4 },
-      { n: "rock-dry-large", s: 0.3 },
-      { n: "cactus-short", s: 0.24 },
+      { n: "rock-dry-tall", s: 0.22 },
+      { n: "rock-dry-large", s: 0.18 },
+      { n: "rock-dry", s: 0.14 },
+      { n: "stone-tall", s: 0.16 },
+      { n: "stone-large", s: 0.13 },
+      { n: "stone-small", s: 0.1 },
+      { n: "rock-small", s: 0.1 },
     ],
-    theme: "desert",
+    theme: "arid",
     seed: 429,
   },
   nordic: {
     radii: [1.3, 1.16, 0.9, 0.72, 0.66, 0.74, 0.92, 1.12, 1.28, 1.1, 0.82, 0.62, 0.7, 0.86, 1.06, 1.24],
     squash: 0.7,
+    /* 針葉樹の森（16日・9月）。
+       **雪を置かない。** `tree-snow` と `rocks-snow` が入っていたが、行ったのは
+       9月で、島が嘘をつく。いまは1枚も撒かれていないので誰も気づいていなかった
+       だけ。4種のもみの木で密にして、地面の苔（rock-flat の天面）を混ぜる。 */
     props: [
       { n: "tree-pine-tall", s: 0.36 },
       { n: "tree-pine", s: 0.3 },
-      { n: "tree-snow", s: 0.28 },
-      { n: "rocks-snow", s: 0.16 },
+      { n: "tree-pine-small", s: 0.22 },
+      { n: "tree-cone", s: 0.26 },
       { n: "rock-large", s: 0.14 },
+      { n: "rock-flat", s: 0.12 },
     ],
     theme: "nordic",
     seed: 911,
+  },
+  /* **トップページの島**（`app/page.tsx`）。
+     ここが表に無かったので、アルバニアは温帯の既定に落ちていた——つまり
+     **草木がヨーロッパと100%同じ**で、いちばん人の目に触れる面が、
+     いちばん手抜きになっていた（2026-10-06 の実測）。
+
+     土地は地中海。石灰岩の白い礫浜に、オリーブと糸杉とマキ（硬葉樹の低木）。
+     国土の7割が山なので高台を持つ。形は南北に長く、西（アドリア海側）は
+     滑らかで、東（山側）が刻まれている。 */
+  albania: {
+    radii: [1.26, 1.1, 0.86, 0.74, 0.82, 0.68, 0.9, 1.04, 1.3, 1.16, 0.96, 0.9, 0.88, 0.92, 1.02, 1.18],
+    squash: 0.6,
+    props: [
+      { n: "tree-round", s: 0.3 },
+      { n: "tree-fat", s: 0.26 },
+      { n: "tree-narrow", s: 0.34 },
+      { n: "bush-spiky", s: 0.16 },
+      { n: "bush-small", s: 0.12 },
+      { n: "stone-flat", s: 0.12 },
+      { n: "stone-large", s: 0.14 },
+      { n: "rock-flat", s: 0.12 },
+    ],
+    plateau: true,
+    theme: "mediterranean",
+    // 着いた日（2026-09-28）
+    seed: 928,
   },
 };
 
@@ -185,6 +272,10 @@ export function plants(
    * これからキットを足すたびに同じことが起きる。
    * 場所は場所、種類は種類で引けば、種類を足しても**位置と本数は動かない。** */
   const pick = rng((art.seed * 2654435761) >>> 0);
+  /* 目印（`once`）は一様に引かない。**先に1つずつ置いて、残りを一様に引く。**
+     引く側に混ぜると、島に風車が6基建つ。 */
+  const solo = art.props.filter((p) => p.once);
+  const pool = art.props.filter((p) => !p.once);
   const out: Plant[] = [];
   let guard = 0;
   while (out.length < n && guard++ < n * 20) {
@@ -196,7 +287,8 @@ export function plants(
     const y = Math.sin(t) * rr * d * art.squash;
     // 同じところに重ねない
     if (out.some((p) => Math.hypot(p.x - x, (p.y - y) / art.squash) < r * gap)) continue;
-    const kind = art.props[Math.floor(pick() * art.props.length)];
+    const kind =
+      out.length < solo.length ? solo[out.length] : pool[Math.floor(pick() * pool.length)] ?? solo[0];
     out.push({ n: kind.n, x, y, s: kind.s * r, flip: pick() < 0.5 });
   }
   return out.sort((a, b) => a.y - b.y);
@@ -225,13 +317,13 @@ function radiusAtUnit(radii: number[], angle: number): number {
 export type Ground = "temperate" | "dry" | "cold";
 
 /** 島の色。`tokens.css` が持っている 3つのうちどれになるか */
-export const THEME_OF: Record<Ground, "" | "desert" | "nordic"> = {
+export const THEME_OF: Record<Ground, "" | IslandArt["theme"]> = {
   temperate: "",
   dry: "desert",
   cold: "nordic",
 };
 
-const PLANTS_OF: Record<Ground, { n: string; s: number }[]> = {
+const PLANTS_OF: Record<Ground, IslandArt["props"]> = {
   temperate: [
     { n: "tree-round", s: 0.3 },
     { n: "tree-default", s: 0.28 },
@@ -240,19 +332,24 @@ const PLANTS_OF: Record<Ground, { n: string; s: number }[]> = {
     { n: "flower-red", s: 0.1 },
     { n: "flower-yellow", s: 0.1 },
   ],
+  /* **サボテンを置かない。** アメリカ大陸の植物で、乾いた土地ならどこにでも
+     生えていると思われているだけ。代わりに棘のある低木（マキ）を置く。 */
   dry: [
     { n: "tree-date", s: 0.4 },
     { n: "tree-date-young", s: 0.28 },
-    { n: "cactus", s: 0.18 },
+    { n: "tree-palm-short", s: 0.26 },
+    { n: "bush-spiky", s: 0.14 },
     { n: "rock-dry", s: 0.12 },
     { n: "stone-small", s: 0.1 },
   ],
+  /* **雪を置かない。** いつ行くか分からない章の受け皿なので、
+     季節を決めてしまうものは置けない。 */
   cold: [
     { n: "tree-pine-tall", s: 0.36 },
     { n: "tree-pine", s: 0.3 },
-    { n: "tree-snow", s: 0.28 },
-    { n: "rocks-snow", s: 0.16 },
+    { n: "tree-pine-small", s: 0.22 },
     { n: "rock-large", s: 0.14 },
+    { n: "rock-flat", s: 0.12 },
   ],
 };
 
@@ -294,4 +391,4 @@ export function artOf(slug: string, regions: string[] = []): IslandArt {
 }
 
 /** 島の色。表に無い章は土地から決まる */
-export const GROUND_ART: Record<Ground, { n: string; s: number }[]> = PLANTS_OF;
+export const GROUND_ART: Record<Ground, IslandArt["props"]> = PLANTS_OF;

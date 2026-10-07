@@ -331,8 +331,12 @@ type Ctx = {
 
 /** 低木・石・切株・草むらの取り合わせ。土地によって中身が変わる */
 function bushOf(art: IslandArt, r: () => number): DecoKindPick {
-  const dry = art.theme === "desert";
+  /* 土地が6つに増えたので、ここも名前で分けない。**何でできている地面か**で分ける。
+     前は `desert` と `nordic` だけを見ていて、新しい土地はぜんぶ温帯の取り合わせ
+     （きのこ入り）に落ちていた。石灰岩のアルバニアにきのこは生えない。 */
+  const dry = art.theme === "desert" || art.theme === "arid";
   const cold = art.theme === "nordic";
+  const stony = art.theme === "mediterranean";
   const k = r();
   if (dry) {
     if (k < 0.52) return { k: "rock", s: 15 + r() * 10 };
@@ -343,6 +347,12 @@ function bushOf(art: IslandArt, r: () => number): DecoKindPick {
     if (k < 0.44) return { k: "rock", s: 15 + r() * 10 };
     if (k < 0.78) return { k: "tuft", s: 13 + r() * 6 };
     return { k: "bush", s: 17 + r() * 7 };
+  }
+  if (stony) {
+    // 石灰岩の礫と、乾いた草むらと、硬葉樹の低木。きのこと切株は出さない
+    if (k < 0.46) return { k: "rock", s: 13 + r() * 9 };
+    if (k < 0.76) return { k: "tuft", s: 13 + r() * 7 };
+    return { k: "bush", s: 16 + r() * 7 };
   }
   if (k < 0.3) return { k: "bush", s: 19 + r() * 8 };
   if (k < 0.5) return { k: "tuft", s: 14 + r() * 7 };
@@ -418,6 +428,10 @@ function scatter(art: IslandArt, ctx: Ctx, n: number): Plant[] {
      1本の流れから交互に引くと、`props` に1種足しただけで置き場所まで動く
      （`shapes.ts` の plants と同じ理由。中東にナツメヤシを足して岩が消えた） */
   const kindOf = rng((art.seed * 2654435761) >>> 0);
+  /* 目印（`once`）は一様に引かない。先に1つずつ置いて、残りを一様に引く
+     （`shapes.ts` の `plants` と同じ決まり。混ぜると島に風車が6基建つ） */
+  const solo = art.props.filter((p) => p.once);
+  const pool = art.props.filter((p) => !p.once);
   const out: Plant[] = [];
   let guard = 0;
   while (out.length < n && guard++ < n * 40) {
@@ -432,7 +446,8 @@ function scatter(art: IslandArt, ctx: Ctx, n: number): Plant[] {
     if (onTrail(ctx.seg, x, y, 26)) continue;
     if (out.some((p) => Math.hypot(p.x - x, (p.y - y) / ctx.w.squash) < Math.max(54, ctx.r * 0.12)))
       continue;
-    const kind = art.props[Math.floor(kindOf() * art.props.length)];
+    const kind =
+      out.length < solo.length ? solo[out.length] : pool[Math.floor(kindOf() * pool.length)] ?? solo[0];
     out.push({
       n: kind.n,
       x: Math.round(x),

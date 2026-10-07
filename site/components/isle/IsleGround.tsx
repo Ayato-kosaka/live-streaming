@@ -87,15 +87,24 @@ function IsleGroundRaw({ w }: { w: IsleWorld }) {
       {/* 花。色ごとに1本ずつ */}
       <path className="ig-fl-shade" d={w.flowers.shade} />
       {w.flowers.petals.map((d, i) => (
-        <path key={i} d={d} fill={FLOWER[i]} />
+        <path key={i} d={d} style={{ fill: FLOWER[i] }} />
       ))}
-      <path className="ig-fl-core" d={w.flowers.cores} />
+      <path className="ig-fl-core" d={w.flowers.cores} style={{ fill: "var(--flower-core)" }} />
     </g>
   );
 }
 
-/** 花の色。本物の花壇に合わせて、白・黄・赤・紫の4色 */
-const FLOWER = ["#ffffff", "#ffd93f", "#f4595f", "#b47bea"];
+/**
+ * 花の色。**島ごとに変わる**（`app/css/tokens.css` の `[data-theme]`）。
+ *
+ * 前はここに白・黄・赤・紫がベタ書きしてあって、**砂漠にも雪国にも同じ4色が
+ * 同じ割合で咲いていた。** 6島ぜんぶが同じ花壇を持っていたということ。
+ * 咲くものは土地で変わるので、色はトークンのほうに置く。
+ *
+ * **`fill=` の属性では渡せない。** 表示属性に `var()` は書けないので
+ * （Chrome は黙って無視して黒くなる）、`style` で渡している。
+ */
+const FLOWER = ["var(--flower-a)", "var(--flower-b)", "var(--flower-c)", "var(--flower-d)"];
 
 /**
  * 焼いた飾りを描く。**順番が大事。**
