@@ -247,7 +247,7 @@ class World:
     rows: list[dict]                  # `chapters.ts` の章（読めたもの）
     countries: list[dict]             # `countries.ts` の国 → 滞在
     itineraries: set[str]             # 旅程のある章の slug（`site/content/<slug>.ts`）
-    about: str                        # `/about` の年表の字（`STEPS` の中身）
+    about: str                        # `/about` の年表の字（`STORY` の中身）
     current: dict                     # 島の便り（`/island-api/state` の `current`）
     stale_days: int                   # `site/lib/place.ts` の `PLACE_STALE_DAYS`
 
