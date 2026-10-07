@@ -123,7 +123,14 @@ export function placeOutdated(updatedAt: string | undefined, now: Date = new Dat
   // その日いっぱいまでを「その日に書いた」とみなす
   const t = Date.parse(`${updatedAt}T23:59:59+09:00`);
   if (Number.isNaN(t)) return true;
-  if (t < now.getTime() - PLACE_STALE_DAYS * 86400000) return true;
+  /* **日数は、時刻の引き算ではなく暦日で数える。** 時刻で引くと、
+     同じ便りが朝は「新しい」で夜は「古い」になる（境目が1日ぶん揺れる）。
+     島の日付はどこも日本時間で切ってあるので、ここも日本時間の暦日で数える
+     （`lib/nightly.ts` の `jstNow` と同じ線。`content/plans.ts` の `daysUntil`
+     が UTC で切っていて、毎日 00:00〜09:00 JST のあいだ「今日」が前の日を
+     指していたのと同じ踏み方をしない）。 */
+  const jstDay = (ms: number) => Math.floor((ms + 9 * 3600000) / 86400000);
+  if (jstDay(now.getTime()) - jstDay(t) > PLACE_STALE_DAYS) return true;
   if (began == null) return false;
   return t < began;
 }
