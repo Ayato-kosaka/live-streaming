@@ -37,6 +37,7 @@ import {
   type Theme,
 } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
+import { isleIcon } from "./icons";
 import { pier, type Neighbour } from "./pier";
 import { isleSpanRange } from "./span";
 
@@ -215,7 +216,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "countries",
       label: "この島で歩いた国",
       blurb: `${countries.length}カ国`,
-      icon: "signpost-flags",
+      icon: isleIcon(c.slug, "countries", "signpost-flags"),
       size: 64,
       sign: true,
       items: countries.map((k) => ({
@@ -233,7 +234,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "streams",
       label: "この島で起きたこと",
       blurb: `${streams.length}本の配信`,
-      icon: "tower-studio",
+      icon: isleIcon(c.slug, "streams", "tower-studio"),
       size: 118,
       sign: true,
       /* **`c.from` を直に割らない。** 章の表に日付が入るのは旅から帰ったときなので、
@@ -269,7 +270,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       /* 板に色紙が何枚も貼ってある絵。**中に出るものと同じ形**にしてある。
          北欧の島の「この旅の掲示板」も同じ絵だが、あちらは別の島で、
          札に出る名前が違う（`docs/island-design.md` 6章「札は答えだけを言う」） */
-      icon: "signboard",
+      icon: isleIcon(c.slug, "shorts", "signboard"),
       size: 58,
       note: `${span(shorts[0].date, shorts[shorts.length - 1].date)}、${shorts.length}本。`,
       shorts,
@@ -281,7 +282,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "legends",
       label: "この島の代表的な企画",
       blurb: legends[0].title,
-      icon: "hall-museum",
+      icon: isleIcon(c.slug, "legends", "hall-museum"),
       size: 74,
       sign: true,
       note: "この島にいたあいだにやった、大きい企画。",
@@ -303,7 +304,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "apps",
       label: "この島で作っていたアプリ",
       blurb: apps.map((x) => x.app.name).join("・"),
-      icon: "hut-workshop",
+      icon: isleIcon(c.slug, "apps", "hut-workshop"),
       size: 78,
       sign: true,
       note: "旅先で、配信しながら作っていた。",
@@ -324,7 +325,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "first",
       label: "はじめての配信",
       blurb: FIRST_STREAM[0],
-      icon: "campfire",
+      icon: isleIcon(c.slug, "first", "campfire"),
       size: 40,
       note: "ここから全部が始まった。1本目の配信。",
       items: [
@@ -343,7 +344,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       id: "facts",
       label: "この島のこと",
       blurb: `${days.toLocaleString()}日いた`,
-      icon: "statue",
+      icon: isleIcon(c.slug, "facts", "statue"),
       size: 54,
       sign: true,
       note: c.note,
@@ -370,7 +371,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
        島に建てられる数を決めているのは面の広さで、**引きで名前が出る数**の
        6つ（`docs/island-design.md` 3-4）とは別の話。名前のほうは `sign` で
        6つに絞ってあるので、建物は素材のあるだけ建ててよい。 */
-    places: [...places, pier(prev, next)],
+    places: [...places, pier(c.slug, prev, next)],
     folk: st?.residents ?? [],
     prev,
     next,
@@ -430,7 +431,7 @@ export function albaniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): Isl
     id: "wish",
     label: "アルバニアでこれやって",
     blurb: "やってほしいことを貼る",
-    icon: "lantern-hanging",
+    icon: isleIcon(c.slug, "wish", "lantern-hanging"),
     size: 58,
     sign: true,
     note: "行く先も、食べるものも、まだ何も決まっていない。",
@@ -528,7 +529,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     from: c.from,
     to: c.to,
     theme: art.theme,
-    places: [...places, pier(prev)],
+    places: [...places, pier(c.slug, prev)],
     folk: [],
     prev,
     building: c.opensAt,

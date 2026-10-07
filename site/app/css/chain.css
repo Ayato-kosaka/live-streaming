@@ -39,8 +39,14 @@
   height: 322px;
   border: 3px solid var(--frame-dark);
   border-radius: 26px;
-  /* 空。頭の上がいちばん濃くて、水平線のほうが明るい */
-  background: linear-gradient(180deg, #8ed4f7 0%, #b9e9fd 52%, #e8f8ff 100%);
+  /* 空。頭の上がいちばん濃くて、水平線のほうが明るい。
+     **色は島ごとに持ち替える**（下の「島ごとの空」）。既定は温帯の青空 */
+  --atl-sky-a: #8ed4f7;
+  --atl-sky-b: #b9e9fd;
+  --atl-sky-c: #e8f8ff;
+  /* 水平線ぎわの霞。土地の空気の色（砂・雪・海）。透明なら出ない */
+  --atl-haze: transparent;
+  background: linear-gradient(180deg, var(--atl-sky-a) 0%, var(--atl-sky-b) 52%, var(--atl-sky-c) 100%);
   /* 押せない板なので、**厚みを付けない。**
      合図は厚み1種類だけ（`docs/island-design.md` 3章）。
      内側の光だけにして、落ち影とも取り違えられないようにする */
@@ -62,6 +68,161 @@
 .atl-cloud.is-a { left: 6%; top: 12%; width: 92px; height: 26px; }
 .atl-cloud.is-b { left: 4%; top: 17%; width: 58px; height: 20px; opacity: 0.8; }
 .atl-cloud.is-c { right: 8%; top: 24%; width: 74px; height: 22px; opacity: 0.66; }
+
+/* ---- 島ごとの空 ------------------------------------------------------
+   あやとの言葉（2026-10-07）:「それぞれの島が見た目が似すぎてて
+   全然面白さがない」。
+
+   ここは長いあいだ**グラデ1本と雲3つが固定**で、模型を6つ並べると
+   **空だけ6枚とも1ピクセル違わなかった。** 島の模型がどれだけ違っても、
+   面の7割を占める空が同じなら、ぱっと見は同じ絵になる。
+
+   **島の slug で引く。** `:has()` で「いま真ん中にいる模型」を見るので、
+   `Isles.tsx` には1行も足していない（空は模型の持ち物ではなく、
+   いまどこの空の下にいるかの話なので、章の色（`data-theme`）でも足りない
+   ——`desert` と `nordic` の2つしかなく、6島を6通りに分けられない）。
+
+   **足すのは静止物だけ。** 動く層を板いっぱいに敷くと、外接矩形が板ぜんぶに
+   なって毎フレーム塗り直される（`CLAUDE.md`「島の SVG の中で動かしたもの」）。
+   ここで増えるのはグラデの色と、塗るだけの帯と、丸の位置。
+   **カメラを焼き直すときにしか塗られないので、1フレームの代金は増えない。** */
+
+/* 水平線ぎわの霞。**塗るだけ。** 模型（z-index 1〜4）より下に敷く */
+.atl-stage::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 38%;
+  background: linear-gradient(180deg, transparent, var(--atl-haze));
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ヨーロッパ … 温帯の青空。雲3つ（既定のまま）。
+   この島だけは既定の値をそのまま使うので、上書きは霞だけ */
+.atl-stage:has(.atl-isle.is-at[data-ch="europe"]) {
+  --atl-haze: rgba(255, 255, 255, 0.4);
+}
+
+/* 中東 … 日に灼けた空。上は青いが、地平は砂が舞って白く濁る。
+   **雲は1つだけ。** 乾いた土地の空に雲は並ばない */
+.atl-stage:has(.atl-isle.is-at[data-ch="middle-east"]) {
+  --atl-sky-a: #6fc3ee;
+  --atl-sky-b: #bfe2ef;
+  --atl-sky-c: #f7e8c8;
+  --atl-haze: rgba(240, 214, 160, 0.72);
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="middle-east"]) .atl-cloud.is-b,
+.atl-stage:has(.atl-isle.is-at[data-ch="middle-east"]) .atl-cloud.is-c {
+  display: none;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="middle-east"]) .atl-cloud.is-a {
+  left: 62%;
+  top: 9%;
+  width: 60px;
+  height: 14px;
+  opacity: 0.5;
+}
+
+/* コーカサス … 高い山の空。上がいちばん濃い。
+   雲は2つ、**高いところに小さく**。山の上から見下ろしている空 */
+.atl-stage:has(.atl-isle.is-at[data-ch="caucasus"]) {
+  --atl-sky-a: #3f9fdc;
+  --atl-sky-b: #8fd0f2;
+  --atl-sky-c: #dff1fb;
+  --atl-haze: rgba(205, 228, 240, 0.62);
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="caucasus"]) .atl-cloud.is-c { display: none; }
+.atl-stage:has(.atl-isle.is-at[data-ch="caucasus"]) .atl-cloud.is-a {
+  left: 10%;
+  top: 6%;
+  width: 54px;
+  height: 14px;
+  opacity: 0.62;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="caucasus"]) .atl-cloud.is-b {
+  left: 68%;
+  top: 11%;
+  width: 40px;
+  height: 12px;
+  opacity: 0.52;
+}
+
+/* イランまで歩く … 国境まで歩いた日の、雲ひとつない空。
+   **雲は0。** 歩いているあいだ日陰が無かった、という空にする */
+.atl-stage:has(.atl-isle.is-at[data-ch="iran-walk"]) {
+  --atl-sky-a: #8ecde9;
+  --atl-sky-b: #d6e8ea;
+  --atl-sky-c: #f8efd6;
+  --atl-haze: rgba(236, 204, 150, 0.6);
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="iran-walk"]) .atl-cloud { display: none; }
+
+/* 北欧 … 低く垂れた灰青の空。**雲は4つ**で、4つ目は板の `::before`。
+   いちばん下に靄を置いて、水平線をぼかす */
+.atl-stage:has(.atl-isle.is-at[data-ch="nordic"]) {
+  --atl-sky-a: #93b9d2;
+  --atl-sky-b: #c3d9e6;
+  --atl-sky-c: #eaf2f6;
+  --atl-haze: rgba(236, 244, 248, 0.86);
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="nordic"]) .atl-cloud.is-a {
+  left: 3%;
+  top: 7%;
+  width: 118px;
+  height: 20px;
+  opacity: 0.82;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="nordic"]) .atl-cloud.is-b {
+  left: 30%;
+  top: 14%;
+  width: 96px;
+  height: 18px;
+  opacity: 0.7;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="nordic"]) .atl-cloud.is-c {
+  right: 2%;
+  top: 6%;
+  width: 104px;
+  height: 20px;
+  opacity: 0.78;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="nordic"])::before {
+  content: "";
+  position: absolute;
+  right: 22%;
+  top: 19%;
+  width: 72px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* アルバニア … アドリア海の夕方寄りの空。下が暖かい。
+   雲は2つ、海から上がってくる高さに */
+.atl-stage:has(.atl-isle.is-at[data-ch="albania"]) {
+  --atl-sky-a: #5cc0ee;
+  --atl-sky-b: #b5e4f6;
+  --atl-sky-c: #ffe9d4;
+  --atl-haze: rgba(255, 206, 160, 0.66);
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="albania"]) .atl-cloud.is-b { display: none; }
+.atl-stage:has(.atl-isle.is-at[data-ch="albania"]) .atl-cloud.is-a {
+  left: 8%;
+  top: 22%;
+  width: 78px;
+  height: 18px;
+  opacity: 0.66;
+}
+.atl-stage:has(.atl-isle.is-at[data-ch="albania"]) .atl-cloud.is-c {
+  right: 12%;
+  top: 30%;
+  width: 56px;
+  height: 16px;
+  opacity: 0.56;
+}
 
 /* ---- 模型ひとつ --------------------------------------------------------
    まん中に1つ、左右にとなりの島、上に枝の島。
