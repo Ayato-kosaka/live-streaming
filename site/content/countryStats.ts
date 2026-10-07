@@ -29,6 +29,7 @@ export type CountryStat = {
 };
 
 const COUNTRY_STATS: Record<string, CountryStat> = {
+  "albania": { lives: 11, people: 88, msgs: 3385, days: 9, top: ["2026-09-30", "cpOZCgtD4GI", "アルバニアでケバブスフラキたべよ", 33] },
   "armenia": { lives: 37, people: 779, msgs: 11663, days: 29, top: ["2026-05-06", "8A-2mqkoAYs", "【8日目】怖いイメージを変えたいので 一緒にご飯食べにイランまで歩く。 8日目 Tatev 29キロ", 211] },
   "austria": { lives: 7, people: 18, msgs: 136, days: 7, top: ["2024-11-30", "A-5gn9cQM34", "日本は深夜やけど、オーストリアは良い時間なので靴磨きします", 6] },
   "azerbaijan": { lives: 21, people: 27, msgs: 2223, days: 19, top: ["2025-07-04", "I-9ORIGJG-w", "なにこれの新バージョンの紹介します。スーパー行きました。", 9] },
@@ -48,7 +49,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
   "poland": { lives: 6, people: 57, msgs: 2624, days: 2, top: ["2026-09-12", "hrXYXcu9IDE", "【一日目】親友に会いにスウェーデンまで、ワルシャワまで", 44] },
   "slovakia": { lives: 2, people: 7, msgs: 52, days: 2, top: ["2024-12-03", "uylUHvF_1WM", "チェコに着いたので、魅力を探りませう", 5] },
-  "sweden": { lives: 19, people: 114, msgs: 7117, days: 17, top: ["2026-09-20", "GBYHxJQGlCY", "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム", 38] },
+  "sweden": { lives: 8, people: 76, msgs: 3732, days: 8, top: ["2026-09-20", "GBYHxJQGlCY", "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム", 38] },
   "turkey": { lives: 16, people: 69, msgs: 5469, days: 15, top: ["2025-04-11", "UULcHjBHSJM", "【神回】トルコ🇹🇷イスタンブールでアジア側にいってみた", 25] },
   "uae": { lives: 3, people: 12, msgs: 879, days: 3, top: ["2025-06-27", "UbbfjRJ6KTM", "【神回】🇦🇪アブダビ街歩き！白モスク→ローカル飯→夕暮れビーチまで🌇", 10] },
   "uk": { lives: 51, people: 120, msgs: 17821, days: 45, top: ["2025-02-01", "nKTakrtzWM8", "イギリスの古都チェスターを歩く！城壁に囲まれた、黒白の美しい街並み、絶景リバーサイド散歩！", 25] },};
@@ -70,4 +71,4 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
  * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = 23;
+export const COUNTRIES_WALKED = 24;
