@@ -2040,6 +2040,62 @@ jobs:
           fi
           exit "$code"
 
+      # **その日が来ると嘘になる字が、画面に出ていないか。**
+      #
+      # `python/text_expires_watch.py` は 2026-09-17 に作ってから、**19日間
+      # どのワークフローにも繋がっていなかった**（`grep -rn text_expires_watch
+      # .github/workflows/` が0件）。唯一ひとりでに走っていたのは
+      # `python/text_expires_watch_selftest.py` だが、あれは
+      # **`TODAY = date(2026, 9, 17)` で時計が凍っている**（仕込みの再現性のため、
+      # わざとそうしてある）。つまり **9/18 以降に嘘になる字は、自動では
+      # 一生拾われなかった。** 本物の今日で回る側が、どこにも無かった。
+      #
+      # 隣の「焼き込みが古くなっていないか」と**軸が違う。** あちらは
+      # 焼き込みの中の日付が今日から離れたのを見る。こちらは画面に出る文が
+      # いつ嘘になるかを見る（`site/app` `site/content` `site/components`）。
+      #
+      # ## なぜ deploy の後ろか
+      #
+      # 隣と同じ。**これで commit も deploy も止めない。** 文が1つ古いだけで、
+      # 同じ晩に焼けた数字まで master に入らないのは悪い。
+      # `python/bake_down.py` の `WATCH_STEPS` にこの step の名前を足してあるので、
+      # ここが赤い朝に「焼くのが落ちた」の issue は立たない。
+      # **ここの名前を変えるなら、あちらの表も一緒に。**
+      - name: その日が来ると嘘になる字が出ていないか
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          python3 python/text_expires_watch.py > /tmp/expires.txt 2>&1 && code=0 || code=$?
+          cat /tmp/expires.txt
+          {
+            echo ""
+            echo "### その日が来ると嘘になる字"
+            echo ""
+            echo '```'
+            cat /tmp/expires.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # 隣の2本と同じ分け（`docs/island-standards.md` §15）。
+          # この見張りの 2 は「画面に出る字が1つも見つからない」
+          # 「日付を持つ字が1つも無い」——**嘘があるのではなく、読みかたが外れている**
+          if [ "$code" = "1" ]; then
+            {
+              echo ""
+              echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+              echo "直すのは、上に出ている \`ファイル:行\` の文です。日付と「これから起きる言い方」が同じ文に在ると拾います。"
+              echo "いつ読んでも本当な言い方に書き替えてください。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::その日が来ると嘘になる字が画面に出ています。上の一覧を見てください"
+          elif [ "$code" != "0" ]; then
+            {
+              echo ""
+              echo "**この赤は「嘘になる字が在る」ではありません。数えられませんでした。**"
+              echo "合否は出していないので、**嘘になる字が在るかどうかは分かっていません。** 上のログを見てください。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::嘘になる字が在るかどうかを数えられませんでした（終了コード ${code}）"
+          fi
+          exit "$code"
+
       # **取り込みが詰まっていないかを、焼いたあとに見る。**
       #
       # 2026-09-17 に本番を数えたら、`youtube_chat.videos` の `WAITING` 28本のうち
