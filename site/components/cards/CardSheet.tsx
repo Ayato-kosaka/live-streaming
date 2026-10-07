@@ -129,6 +129,9 @@ export default function CardSheet({
   const [failed, setFailed] = useState<null | "photo" | "chr">(null);
   /** 絵が読み終わった回数。**読み終わってから描く**ための合図 */
   const [ready, setReady] = useState(0);
+  /* あやとの絵が読めたか。**読めていないのに札だけ出さない**——押しても
+     何も起きない札になる（「入れたのに入っていない」を出さないのと同じ）。 */
+  const [hasMate, setHasMate] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const cvRef = useRef<HTMLCanvasElement>(null);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
@@ -192,6 +195,7 @@ export default function CardSheet({
         return;
       }
       art.current = { photo, chr, mate };
+      setHasMate(!!mate);
       setReady((n) => n + 1);
     })();
     return () => {
@@ -360,7 +364,15 @@ export default function CardSheet({
     const cv = cvRef.current;
     if (!photo || !chr || !cv) return;
     const src = opaqueBox(chr);
-    const back = defaultPlaceFor(cv.width, cv.height, src.w, src.h);
+    /* **送るときだけ丸める**（`clampPlace` はサーバーと同じ式）。
+       画面に出すほうは `moved` を空にした素の既定なので、丸めの誤差が
+       1pxも乗らない。覚えるほうは、送った値と覚えられた値をそろえる。 */
+    const back = clampPlace(defaultPlaceFor(cv.width, cv.height, src.w, src.h), {
+      x: 0.98,
+      y: 0.95,
+      rot: 0,
+      scale: 1,
+    });
     (async () => {
       const tk = await token();
       if (!tk) return;
@@ -517,6 +529,7 @@ export default function CardSheet({
               並びはやることの順（連れを足す → 大きさ → もとへ）。 */}
           {chosen && (
             <div className="akd-tune">
+              {hasMate && (
               <button
                 type="button"
                 className={`akd-mate${withAyato ? " is-on" : ""}`}
@@ -529,6 +542,7 @@ export default function CardSheet({
                 <img src={AYATO} alt="" width={30} height={30} />
                 あやともいっしょに
               </button>
+              )}
               <label className="akd-zoom">
                 <span>大きさ</span>
                 <input

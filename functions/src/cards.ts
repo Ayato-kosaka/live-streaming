@@ -695,8 +695,13 @@ function sortCards(list: Card[]): Card[] {
 
    公開の `id` を使っているのは **React の key だけ**
    (`site/components/cards/CardSheet.tsx` の `picks`)。
-   `POST /cards/<id>` は画面のどこからも呼ばれていない(本人とあやとが使う口で、
-   IDは `GET /cards/mine` から取れる)。だから公開の `id` に要るのは
+   **立ち位置を動かす画面は、この `id` を使わない。**
+   `POST /cards/<id>` に渡せるのは本当のカードIDだけで、それが入るのは
+   `GET /cards/mine`。画面はそちらを引いて「写真 × 絵」で引き当てている
+   (`site/components/cards/cards.ts` の `useMyCardIds`)。
+   **引き当てられない＝自分のカードではない**ので、手元で動くだけになる。
+
+   だから公開の `id` に要るのは
    「その応答の中で一意」「同じ中身なら毎回同じ」「人を指さない」の3つだけ。 */
 
 /** 誰でも読める応答の1枚。**`channelId` を持たない。** */

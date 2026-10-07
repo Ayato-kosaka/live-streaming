@@ -583,9 +583,12 @@ export function useMyCardIds(): {
 
   useEffect(() => load(false), [load]);
 
+  /* **`again` の顔を変えない。** 呼ぶ側（`CardSheet`）の効果の持ちものに
+     入るので、毎回ちがう関数を返すと効果が描くたびに回る。 */
+  const again = useCallback(() => load(true), [load]);
   return {
     idOf: (photoId, icon) => ids.get(`${photoId}__${icon}`) ?? null,
-    again: () => load(true),
+    again,
   };
 }
 
