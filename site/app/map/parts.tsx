@@ -159,7 +159,11 @@ export function HereTag({ slug }: { slug: string }) {
  * 次の島へ渡った日が、そのまま出国の日（`lib/stay.ts` の `stayClosedOn`）。
  */
 export function StayOut({ slug }: { slug: string }) {
-  const [out, setOut] = useState<string | null>(null);
+  /* 焼いた HTML に出る1回目も、**焼いた日**で引く（`lib/builtAt.ts`）。
+     ここは問答無用で「まだ、いる」から始めていたので、**もう出た国の
+     パスポートにも、焼いた HTML には必ず「まだ、いる」が入っていた。**
+     JS の動かない読み手——OGP・検索の下見——には、それしか見えない */
+  const [out, setOut] = useState<string | null>(() => stayClosedOn(slug, BUILT_AT));
   useEffect(() => setOut(stayClosedOn(slug, new Date())), [slug]);
   return <>{out ? out.replace(/-/g, "/") : "まだ、いる"}</>;
 }
@@ -178,12 +182,21 @@ export function StayLen({ slug, from, plus }: { slug: string; from: string; plus
   useEffect(() => {
     const out = stayClosedOn(slug, new Date());
     const end = out ? Date.parse(`${out}T00:00:00Z`) : Date.now();
-    setN(Math.floor((end - new Date(from).getTime()) / 86400000) + plus);
+    /* 引き直したほうも 0 で止める。先の日付から始まる国を足したときに
+       マイナスの日数を出さないため */
+    setN(Math.max(0, Math.floor((end - new Date(from).getTime()) / 86400000) + plus));
   }, [slug, from, plus]);
-  /* 画面が出るまでのあいだ出す数。`Days.tsx` が持っている基準日と**同じ日**にする。
-     ずらすと、直す前と後で焼いた HTML の字が変わる */
-  const baked =
-    Math.floor((new Date("2026-09-05").getTime() - new Date(from).getTime()) / 86400000) + plus;
+  /* 画面が出るまでのあいだ出す数。`Days.tsx` と**同じ基準日**——焼いた日
+     （`BUILT_AT`）——で引く。ここには日付を直に書いた `new Date` が置いて
+     あった。焼き直しても動かない日付なので、**その日より後に入った国は
+     必ずマイナスになる。** 本番の `/map/sweden` が「いた日数 -15」を
+     焼いていた（`docs/island-misses.md` #5 #6）。
+     出国済みならそこで止めるのも、引き直したあとと揃える。
+     0 で止めるのは、開発サーバで `BUILT_AT` が1970年になるため
+     （`Days.tsx` と同じ理由）。**日数にマイナスは無い** */
+  const bakedOut = stayClosedOn(slug, BUILT_AT);
+  const bakedEnd = bakedOut ? Date.parse(`${bakedOut}T00:00:00Z`) : BUILT_AT.getTime();
+  const baked = Math.max(0, Math.floor((bakedEnd - new Date(from).getTime()) / 86400000) + plus);
   return <>{(n ?? baked).toLocaleString()}</>;
 }
 
