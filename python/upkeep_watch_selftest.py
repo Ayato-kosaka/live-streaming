@@ -264,29 +264,32 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
     recipe_keys = ["gyoza", "carbonara"]
     kitchen_keys = recipe_keys if kitchen_keys is None else kitchen_keys
 
-    # **鍵の形は `stale_content_watch.KEY_RE` に合わせる。** 合っていないと
-    # 「鍵が0件」で数えられなくなって、確かめたいところまで届かない
+    # **並びの名前は本物に合わせる**（`stale_content_watch.KEY_OF`）。
+    # 鍵を読むのは `ts_read` で、**どの並びから取るかを名前で決めている**ので、
+    # 名前が違うと「鍵が0件」で数えられなくなって、確かめたいところまで届かない。
+    # 名前で決めているのは、字下げの深さで決めると行の折り方が変わった日に
+    # 黙って読めなくなるから（`python/ts_read.py` の頭）
     special = {
         # 人が書く本。日で見る（`LATEST`）
         "voices.ts": _ts([voices]),
-        "recipes.ts": "export const R = [\n"
+        "recipes.ts": "export const RECIPES = [\n"
                       + "".join(f'  {{\n    slug: "{k}",\n    day: "{recipes}",\n  }},\n'
                                for k in recipe_keys)
                       + "];\n",
         # 機械が焼く本。日で見る
         "shorts.ts": _ts([shorts]),
         # ①b。上流は `recipes.ts`
-        "kitchenTalk.ts": "export const K = {\n"
+        "kitchenTalk.ts": "const KITCHEN_TALK = {\n"
                           + "".join(f'  "{k}": {{}},\n' for k in kitchen_keys)
                           + "};\n",
-        "legends.ts": 'export const L = [\n  {\n    slug: "first",\n'
+        "legends.ts": 'export const LEGENDS = [\n  {\n    slug: "first",\n'
                       '    day: "2026-10-01",\n  },\n];\n',
-        "legendDays.ts": 'export const LD = {\n  "first": {},\n};\n',
+        "legendDays.ts": 'const LEGEND_DAYS = {\n  "first": {},\n};\n',
         # 名簿と、そこから焼かれる箱・セリフ
-        "residents.ts": 'export const RS = [\n  { icon: "a", n: 1 },\n'
+        "residents.ts": 'export const RESIDENTS = [\n  { icon: "a", n: 1 },\n'
                         '  { icon: "b", n: 2 },\n];\n',
-        "characterBox.ts": 'export const CB = {\n  "a": [0],\n  "b": [0],\n};\n',
-        "chatter.ts": 'export const CH = [\n  {\n    icon: "a",\n  },\n'
+        "characterBox.ts": 'const BOX = {\n  "a": [0],\n  "b": [0],\n};\n',
+        "chatter.ts": 'export const VOICES = [\n  {\n    icon: "a",\n  },\n'
                       '  {\n    icon: "b",\n  },\n];\n',
         "chapters.ts": CHAPTERS_OK if chapters is None else chapters,
         "countries.ts": COUNTRIES_OK if countries is None else countries,

@@ -69,17 +69,18 @@
 """
 
 import json
-import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# `chapters.ts` を読むのはここ1本だけ。**自前の正規表現を増やさない**
-# （2026-10-03 に3つあった読み方を1本に寄せたばかり。`python/ts_read.py` の頭）
-from ts_read import code_only, fields, read_chapters  # noqa: E402
-from ts_read import objects as ts_objects  # noqa: E402
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）。
+# **自前の正規表現を増やさない。** 2026-10-03 に3つあった読み方を1本に寄せたのに、
+# このファイルが4本目を生やしていた（国の滞在と旅程を、ここだけ別の読み方で
+# 読んでいた）。読み方が増えれば、その数だけ別々に腐る（`ts_read.py` の頭）
+from ts_read import read_ahead_countries, read_array, read_chapters  # noqa: E402
+from ts_read import read_countries as read_countries_ts  # noqa: E402
 
 # 日付はぜんぶ JST で数える。配信の日付（`videos.actual_start_time`）が JST なので、
 # ここだけ UTC にすると、朝10時（01:00 UTC）に焼く晩に1日ずれる
@@ -104,48 +105,11 @@ ITINERARY_CHAPTERS = {"nordic"}
 NOT_A_CITY = {"船の中", "飛行機の中"}
 
 
-def _bracket(src: str, start: int) -> str:
-    """`src[start]` の `[` から対応する `]` までを返す。"""
-    depth = 0
-    for i in range(start, len(src)):
-        if src[i] == "[":
-            depth += 1
-        elif src[i] == "]":
-            depth -= 1
-            if depth == 0:
-                return src[start : i + 1]
-    raise ValueError("閉じていない [")
-
-
-def _objects(arr: str) -> list:
-    """`[ {...}, {...} ]` を、いちばん外側の `{...}` ごとに切る。"""
-    out, depth, cur = [], 0, ""
-    for ch in arr[1:-1]:
-        if ch == "{":
-            depth += 1
-        if depth > 0:
-            cur += ch
-        if ch == "}":
-            depth -= 1
-            if depth == 0:
-                out.append(cur)
-                cur = ""
-    return out
-
-
-def _array_of(src: str, name: str) -> str:
-    """`export const <name>: X[] = [ ... ]` の中身を返す。
-
-    `X[]` の `[` を掴まないように、`= [` から探す。
-    """
-    head = src.index(f"export const {name}")
-    return _bracket(src, src.index("= [", head) + 2)
-
-
 def read_countries() -> list:
     """countries.ts から「国 → 滞在（期間と街）」を読み出す。
 
-    **正規表現ひと息で国の塊を取らない。** ここは前、こう書いてあった:
+    **読むのは `ts_read.read_countries()` の1本。** ここは前、自前の正規表現で
+    こう書いてあった:
 
         re.search(r"stays: \\[((?:.|\\n)*?)\\],\\n    summary", block)
 
@@ -154,35 +118,32 @@ def read_countries() -> list:
     読めた国は18ではなく17だった。onThisDay.ts の 618件のうち **378件**が
     ジョージアなので、次に焼いた瞬間その378件から場所が消える。
 
-    落ちても例外は出ない。件数が減るだけなので、緑のまま master に入る。
-    括弧を数えて切り出し、**滞在の数が合わなければ落とす**。
+    そこを括弧を数える形に直したが、**読み方そのものはここに残っていた**
+    （`countries.ts` を読む2本目）。片方だけ腐るのを避けるため、字を読むのは
+    `python/ts_read.py` に寄せた。ここに残すのは「読み落ちたら止める」ところだけ。
+
+    `exact` は「日どりが日単位で確かか」。人が帰ってから書いた滞在は
+    9ヶ月の塊になっていることがあるので、日単位では確かでない。
     （`docs/island-misses.md` #45）
     """
-    src = COUNTRIES_TS.read_text(encoding="utf-8")
-    src = src[src.index("export const COUNTRIES") :]
-    out = []
-    for m in re.finditer(r'slug: "([a-z-]+)",\s*\n\s*name: "([^"]+)",', src):
-        tail = src[m.end() :]
-        head = tail.find("stays:")
-        if head < 0:
-            continue
-        arr = _bracket(tail, tail.index("[", head))
-        stays = []
-        for sm in re.finditer(
-            r'from:\s*"([\d-]*)",\s*to:\s*"([\d-]*)",\s*cities:\s*\[([^\]]*)\]', arr, re.S
-        ):
-            cities = [c.strip().strip('"') for c in sm.group(3).split(",") if c.strip()]
-            # `exact` は「日どりが日単位で確かか」。人が帰ってから書いた滞在は
-            # 9ヶ月の塊になっていることがあるので、日単位では確かでない
-            stays.append({"from": sm.group(1), "to": sm.group(2), "cities": cities, "exact": False})
-        out.append({"slug": m.group(1), "name": m.group(2), "stays": stays})
-
-    # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった。
-    want = len(re.findall(r"cities:\s*\[", src))
-    got = sum(len(c["stays"]) for c in out)
-    if want != got:
-        raise ValueError(f"countries.ts の滞在 {want} 件のうち {got} 件しか読めていない")
-    return out
+    got = read_countries_ts(COUNTRIES_TS.read_text(encoding="utf-8"))
+    # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった
+    if got.declared == 0:
+        raise ValueError("countries.ts に国が1つも無い（置き場が変わった？）")
+    if got.missed:
+        raise ValueError(f"countries.ts の国 {got.declared} 件のうち {got.missed} 件を読み落とした")
+    if got.stays_missed:
+        raise ValueError(
+            f"countries.ts の滞在 {got.stays_declared} 件のうち {got.stays_got} 件しか読めていない"
+        )
+    return [
+        {
+            "slug": c["slug"],
+            "name": c["name"],
+            "stays": [{**s, "exact": False} for s in c["stays"]],
+        }
+        for c in got.rows
+    ]
 
 
 def _next_day(d: str) -> str:
@@ -208,33 +169,43 @@ def read_nordic(after: str = "") -> list:
     # そこだけ借りて振り分けに使う（一覧をそのまま街にはしない）。
     where = {city: c["slug"] for c in guide for city in c["cities"]}
 
-    # 区間。`enters` を持つものが国境で、その日付が入国の日
+    # 区間。`enters` を持つものが国境で、その日付が入国の日。
+    # **字を読むのは `ts_read`。** ここは前、`\n    date: "…"` のように
+    # 字下げを当てにした正規表現で読んでいた。欄の順を入れ替えたり注釈を
+    # 1行挟んだだけで、その区間が黙って落ちる形（`ts_read.py` の頭と同じ轍）
+    route = read_array(
+        src, "ROUTE", keys=("id", "from", "to", "date", "enters"), id_key="id"
+    )
+    if route.missed:
+        raise ValueError(
+            f"nordic.ts の ROUTE の {route.declared} 件のうち {route.missed} 件を読み落とした"
+        )
     legs, enters = {}, []
-    for o in _objects(_array_of(src, "ROUTE")):
-        lid = re.search(r'id: "([^"]+)"', o)
-        day = re.search(r'\n    date: "([\d-]+)"', o)
-        if not lid or not day:
+    for r in route.rows:
+        if not r["date"]:
             continue
-        legs[lid.group(1)] = {
-            "date": day.group(1),
-            "cities": [m.group(1) for m in re.finditer(r'\n    (?:from|to): "([^"]+)"', o)],
+        # 区間の起点と終点。**並びは「から → へ」のまま**（街を振り分けるとき、
+        # 先に出てきたほうを隣の国の街として落とす側がこの順を見る）
+        legs[r["id"]] = {
+            "date": r["date"],
+            "cities": [c for c in (r["from"], r["to"]) if c],
         }
-        ent = re.search(r'enters: "([a-z-]+)"', o)
-        if ent:
-            enters.append((day.group(1), ent.group(1), lid.group(1)))
+        if r["enters"]:
+            enters.append((r["date"], r["enters"], r["id"]))
 
     # 日ごとの泊まる先。区間の無い日（休息日）の街はここからしか取れない
-    days = []
-    for o in _objects(_array_of(src, "DAYS")):
-        day = re.search(r'\n    date: "([\d-]+)"', o)
-        if not day:
-            continue
-        stay = re.search(r'\n    stay: "([^"]+)"', o)
-        days.append({
-            "date": day.group(1),
-            "stay": stay.group(1) if stay else "",
-            "legs": re.findall(r'leg\("([a-z0-9-]+)"\)', o),
-        })
+    day_read = read_array(
+        src, "DAYS", keys=("id", "date", "stay"), lists=("legs",), id_key="id"
+    )
+    if day_read.missed:
+        raise ValueError(
+            f"nordic.ts の DAYS の {day_read.declared} 件のうち {day_read.missed} 件を読み落とした"
+        )
+    days = [
+        {"date": d["date"], "stay": d["stay"], "legs": d["legs"]}
+        for d in day_read.rows
+        if d["date"]
+    ]
     if not enters or not days:
         raise ValueError("nordic.ts から旅程を読めていない（ROUTE の enters / DAYS が空）")
 
@@ -296,34 +267,26 @@ def read_ahead() -> list:
     **`COUNTRIES` にまだ無い国の置き場。** 街も滞在も歩き終わってから書く決まり
     なので、ここが持っているのは名前と旗の鍵と「着いた日」だけ。
 
-    `ts_read.array_body()` を使わないのは、あちらが `=` までに `;` を跨がせない
-    作りだから（別の宣言の `= [` を掴まないため）。ここの型注釈は
-    `{ slug: string; name: string; entered: string }[]` と `;` を含むので当たらない。
-    **あちらを緩めない**——緩めると、跨がせない理由のほうが消える。
-    代わりに、このファイルが前から持っている `_array_of`（`export const <名>` から
-    `= [` を探す）で在りかだけを出して、中身は `ts_read` に読ませる。
-    コメントは `ts_read.code_only` で先に落とす——落とさないと、注の本文に
-    出てくる `entered` を欄と読む。
-
-    **`{…}` を切るのも `ts_read.objects()`。** このファイルの `_objects()` は
-    外側の `{}` を**付けたまま**返すので、`ts_read.fields()` に渡すと丸ごと
-    入れ子として飛ばされて0件になる（実際にそうなった）。
+    読むのは `ts_read.read_ahead_countries()`。ここが前、自前の `_array_of()` で
+    在りかを探していたのは、`ts_read.array_body()` が `=` までに `;` を
+    跨がせない作りだったから（別の宣言の `= [` を掴まないため）。
+    ここの型注釈は `{ slug: string; … }[]` と `;` を含むので当たらなかった。
+    **緩めるのではなく、歩いて探す形に直した**（`ts_read._assign_at`）ので、
+    跨がせない理由は残したまま、自前の在りか探しが要らなくなった。
     """
-    src = code_only(COUNTRIES_TS.read_text(encoding="utf-8"))
-    body = _array_of(src, "AHEAD_COUNTRIES")
-    rows = []
-    for obj in ts_objects(body):
-        f = fields(obj)
-        if not f.get("slug") or not f.get("entered"):
-            continue
-        rows.append({"slug": f["slug"], "name": f.get("name", f["slug"]), "entered": f["entered"]})
+    got = read_ahead_countries(COUNTRIES_TS.read_text(encoding="utf-8"))
     # **止め金。** 読み落としは例外を出さず、国が黙って減るだけ
     # （`read_countries()` と同じ理由）。減ると、その国の配信は行き場を失って
     # 板に `p:""` の無言の行として並ぶ
-    want = len(re.findall(r'slug:\s*"', body))
-    if want != len(rows):
-        raise ValueError(f"AHEAD_COUNTRIES の {want} 件のうち {len(rows)} 件しか読めていない")
-    return rows
+    if got.missed:
+        raise ValueError(
+            f"AHEAD_COUNTRIES の {got.declared} 件のうち {len(got.rows)} 件しか読めていない"
+        )
+    return [
+        {"slug": r["slug"], "name": r["name"] or r["slug"], "entered": r["entered"]}
+        for r in got.rows
+        if r["entered"]
+    ]
 
 
 def read_chapters_ts() -> list:

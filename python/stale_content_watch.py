@@ -115,7 +115,7 @@
 「数えた日: YYYY-MM-DD」を書く。**焼くたびに今日になる**ので、
 そのまま最大値を取ると、中の数字が1つも動いていない晩でも「今日ぶん」に見える。
 
-だから拾うのは **`"..."` の中に在る日付だけ**（`_string_spans`）。
+だから拾うのは **`"..."` の中に在る日付だけ**（`ts_read.string_spans`）。
 注釈を落としてから数えるのは `island-misses.md` #125 の決めごと2と同じ形。
 
 ## 判定はファイルを読まない
@@ -147,6 +147,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）。
 # 同じものを3通りに書いていたので、北欧の章が1つの読み方からだけ落ちていた
+import ts_read  # noqa: E402
 from ts_read import read_chapters  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
@@ -211,22 +212,72 @@ class Book:
 
 
 # 鍵の集め方。`KEYS` の本と、その上流にだけ要る。
-# **形が本ごとに違うので、1本ずつ書く**（`recipes.ts` は `slug: "..."`、
-# `kitchenTalk.ts` は `"...": {` の鍵）。当てずっぽうの正規表現を1本で済ませない。
-KEY_RE = {
-    "recipes.ts": re.compile(r'^\s+slug: "([^"]+)"', re.M),
-    "kitchenTalk.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{', re.M),
-    "legends.ts": re.compile(r'^\s+slug: "([^"]+)"', re.M),
-    "legendDays.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{', re.M),
+#
+# **形が本ごとに違うので、1本ずつ書く**（`recipes.ts` は並びの中の `slug`、
+# `kitchenTalk.ts` は `Record<string, …>` の鍵）。ただし**読み方は書かない**——
+# どの並び（または表）から、どの欄を取るかだけを書く。字を読むのは
+# `python/ts_read.py` の1本（`ts_read.py` の頭）。
+#
+# 前はここに本ごとの正規表現が7本あった。どれも**字下げの深さ**を当てにしていて
+# （`^\s+\{ icon: "`）、行の折り方が変わればその人が黙って消える形だった。
+# `chapters.ts` の北欧が消えたのと同じ理由なので、同じところに寄せた。
+#
+# | 形 | 書きかた | 例 |
+# | --- | --- | --- |
+# | 並びの中の欄 | `("ARRAY", "欄")` | `recipes.ts` の `RECIPES` の `slug` |
+# | 表の鍵 | `("MAP",)` | `kitchenTalk.ts` の `KITCHEN_TALK` |
+KEY_OF: dict[str, tuple] = {
+    "recipes.ts": (("RECIPES", "slug"),),
+    "kitchenTalk.ts": (("KITCHEN_TALK",),),
+    "legends.ts": (("LEGENDS", "slug"),),
+    "legendDays.ts": (("LEGEND_DAYS",),),
     # **名簿。** Firestore の `islandCharacter` そのものが毎晩ここに焼かれる
     # （`residents.ts` の頭に「並んでいるのは、キャラクターの名簿そのもの」と
     # 書いてある）。**名簿は本番にしかない、ではなかった**（#132）
-    "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"', re.M),
-    # 箱の行（`  "icon": [`）と、測れなかった人（`    "icon",`）の**両方**を鍵にする。
-    # 測れない人を鍵に含めないと、絵の無い人がいる限り永久に赤くなる
-    "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)', re.M),
-    "chatter.ts": re.compile(r'^\s+icon: "([^"]+)"', re.M),
+    "residents.ts": (("RESIDENTS", "icon"),),
+    # 箱（`BOX` の鍵）と、測れなかった人（`CHARACTER_BOX_BAKED.noArt`）の
+    # **両方**を鍵にする。測れない人を鍵に含めないと、絵の無い人がいる限り
+    # 永久に赤くなる
+    "characterBox.ts": (("BOX",), ("CHARACTER_BOX_BAKED", "noArt")),
+    "chatter.ts": (("VOICES", "icon"),),
 }
+
+
+def keys_of(name: str, src: str) -> list[str]:
+    """その本が名乗っている鍵を、書いてある順に。表に無い本は空。
+
+    **読み落ちを数で止めない。** ここは「上流と比べて何人欠けているか」を
+    数える側なので、落ちれば**上流との差として表に出る**（止めるのではなく
+    赤くなるのが正しい）。数えるものが0件なら `judge()` が
+    「数えられない」で止める（`docs/island-standards.md` §15）。
+
+    Args:
+        name: 本の名前（`"recipes.ts"`）
+        src: その本の中身そのもの
+
+    Returns:
+        鍵の並び。重なりは落とさない（上流との差を数えるのに件数も使う）
+    """
+    out: list[str] = []
+    for spec in KEY_OF.get(name, ()):
+        if len(spec) == 1:
+            # 表（`Record<string, …>`）の鍵
+            out += [k for k, _ in ts_read.read_map(src, spec[0])]
+            continue
+        who, key = spec
+        body = ts_read.array_body(ts_read.code_only(src), who)
+        if body:
+            # 並びの中の欄（`RECIPES` の `slug`）
+            out += [
+                v for o in ts_read.objects(body)
+                if (v := ts_read.fields(o).get(key, ""))
+            ]
+            continue
+        # 並びでなければ、表の中の `key: ["…", …]`（`CHARACTER_BOX_BAKED.noArt`）
+        ob = ts_read.object_body(ts_read.code_only(src), who)
+        if ob:
+            out += ts_read.list_field(ob, key)
+    return out
 
 # `rebake.yml` の step「凍っていないか」が日数を持っている本。
 # **ここでは判定しない**（上の「どう分担するか」）。表には出す。
@@ -446,45 +497,14 @@ BOOKS: dict[str, Book] = {
 # ---------------------------------------------------------------- 読むところ
 
 
-def _string_spans(src: str) -> list[tuple[int, int]]:
-    """`"..."` `'...'` `` `...` `` の中身の位置。**コメントは入らない。**
-
-    URL（`https://…`）が文字列の中に入っているので、`//` を見て
-    コメントだと決める前に、文字列に入っているかどうかを先に見る。
-    """
-    out: list[tuple[int, int]] = []
-    i, n = 0, len(src)
-    while i < n:
-        c = src[i]
-        if c in "\"'`":
-            j = i + 1
-            start = j
-            while j < n:
-                if src[j] == "\\":
-                    j += 2
-                    continue
-                if src[j] == c:
-                    break
-                j += 1
-            out.append((start, min(j, n)))
-            i = j + 1
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "/":
-            j = src.find("\n", i)
-            i = n if j < 0 else j + 1
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "*":
-            j = src.find("*/", i + 2)
-            i = n if j < 0 else j + 2
-            continue
-        i += 1
-    return out
-
-
 def iter_string_dates(src: str) -> list[tuple[int, int, str]]:
     """文字列リテラルの中にある日付の位置と字。**対照はここを書き換えて作る。**"""
     out = []
-    for a, b in _string_spans(src):
+    # **「どこが字で、どこが注釈か」を数えるのは `ts_read` の1本だけ。**
+    # ここは前、同じ歩きを自前に持っていた（URL の `//` を注釈と読まないよう、
+    # 文字列に入っているかを先に見る作り）。写しが2つあると、片方だけ直した日に
+    # 見ているものが違う（`ts_read.py` の頭）
+    for a, b in ts_read.string_spans(src):
         for m in DATE_RE.finditer(src, a, b):
             out.append((m.start(), m.end(), m.group(0)))
     return out
@@ -593,8 +613,7 @@ def scan(path: Path) -> Facts:
     src = path.read_text(encoding="utf-8")
     seen = {d for _, _, s in iter_string_dates(src) if (d := _as_date(s))}
     f.dates = sorted(seen)
-    if path.name in KEY_RE:
-        f.keys = KEY_RE[path.name].findall(src)
+    f.keys = keys_of(path.name, src)
     if path.name == CHAPTERS_TS:
         # 2回読んでいるのは、`chapter_spans()` を「字を渡せば章が返る」形の
         # ままにしておきたいから（対照が仕込みの字をそのまま当てられる）。

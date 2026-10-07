@@ -34,7 +34,6 @@
 
 import argparse
 import json
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -42,6 +41,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from build_dead_streams import blocked, check_written  # noqa: E402
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
@@ -77,20 +79,38 @@ WHERE g IS NOT NULL GROUP BY g
 
 
 def legends() -> list[dict]:
-    """legends.ts から slug・期間・抜き書きの videoId を読む。TS を1つの正にする。"""
-    src = LEGENDS_TS.read_text(encoding="utf-8")
-    out = []
-    for block in src.split('\n    slug: "')[1:]:
-        slug = block[: block.index('"')]
-        rng = re.search(r'range: \["([\d-]+)", "([\d-]+)"\]', block)
-        picked = re.findall(r'videoId: "([^"]+)"', block)
-        out.append(
-            {
-                "slug": slug,
-                "range": (rng.group(1), rng.group(2)) if rng else None,
-                "picked": picked,
-            }
+    """legends.ts から slug・期間・抜き書きの videoId を読む。TS を1つの正にする。
+
+    **字を読むのは `python/ts_read.py` の1本だけ。** ここは前、
+    `src.split('\\n    slug: "')` で塊に割って、塊ごとに
+    `range: \\["…", "…"\\]` を当てていた。字下げ4つという**見た目**と、
+    2つの日付が**隣り合っていること**の両方を当てにしていたので、注釈を
+    1行挟むだけでその伝説の期間が黙って `None` になる
+    （`chapters.ts` の北欧がそれで消えた。`ts_read.py` の頭）。
+    """
+    got = ts_read.read_array(
+        LEGENDS_TS.read_text(encoding="utf-8"),
+        "LEGENDS",
+        keys=("slug",),
+        lists=("range",),
+        nested={"streams": ("videoId",)},
+    )
+    # **止め金。** 読み落としは例外を出さず、伝説が黙って減るだけ。
+    # 減ると、その伝説の日は `legendDays.ts` に1行も焼かれない
+    if got.declared == 0:
+        raise SystemExit("legends.ts に伝説が1つもありません（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"legends.ts の {got.declared} 件のうち {got.missed} 件を読み落としました"
         )
+    out = []
+    for r in got.rows:
+        rng = r["range"]
+        out.append({
+            "slug": r["slug"],
+            "range": (rng[0], rng[1]) if len(rng) >= 2 else None,
+            "picked": [s["videoId"] for s in r["streams"] if s["videoId"]],
+        })
     return out
 
 

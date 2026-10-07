@@ -43,7 +43,6 @@ ARGS: なし（`{}`）。**読むだけ。1バイトも書かない。**
 **チャンネルIDも名前も書類IDも出さない。** 出すのは人数と、指紋だけ。
 """
 
-import re
 import sys
 
 from _fs import ReadOnly, args, db, log, readonly
@@ -51,6 +50,9 @@ from _fs import ReadOnly, args, db, log, readonly
 sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from logsafe import mask  # noqa: E402
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
 
 CHARACTERS = "islandCharacter"
 CHANNELS = "islandChannels"
@@ -70,25 +72,34 @@ CONTROL_MIN = 60
 ROOT = __file__.rsplit("/", 3)[0]
 RESIDENTS_TS = ROOT + "/site/content/residents.ts"
 
-# `{ icon: "...", emoji: "...", days: 12, score: 0.5, channel: "UC..." },`
-ROW = re.compile(
-    r'\{\s*icon:\s*"([^"]+)"'
-    r'(?:,\s*emoji:\s*"[^"]*")?'
-    r",\s*days:\s*(\d+)"
-    r",\s*score:\s*[\d.]+"
-    r'(?:,\s*channel:\s*"([^"]+)")?\s*\}'
-)
-
-
 def baked() -> dict:
     """焼き込みの名簿。書類ID -> (直近90日の日数, 結べたチャンネル or None)。
 
+    **字を読むのは `python/ts_read.py` の1本だけ**（`ts_read.py` の頭）。
+    ここは前、`icon → emoji → days → score → channel` が**この順で隣り合って
+    いること**を1本の正規表現で求めていた。欄を1つ足すか順を入れ替えるだけで
+    その人が黙って消える形で、`chapters.ts` の北欧が消えたのと同じ理由。
+
     Returns:
         書類ID -> `(days, channel)`
+
+    Raises:
+        SystemExit: 名乗っている人数と読めた人数が合わない（読み落とし）
     """
     with open(RESIDENTS_TS, encoding="utf-8") as f:
-        src = f.read()
-    return {m[0]: (int(m[1]), m[2] or None) for m in ROW.findall(src)}
+        got = ts_read.read_array(
+            f.read(), "RESIDENTS", keys=("icon", "days", "channel"), id_key="icon"
+        )
+    if got.declared == 0:
+        raise SystemExit("residents.ts の RESIDENTS が空です（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"residents.ts の {got.declared} 人のうち {got.missed} 人を読み落としました"
+        )
+    return {
+        r["icon"]: (int(r["days"]) if r["days"].isdigit() else 0, r["channel"] or None)
+        for r in got.rows
+    }
 
 
 def main() -> None:
