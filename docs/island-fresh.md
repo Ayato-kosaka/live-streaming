@@ -552,7 +552,7 @@ python3 python/build_dead_streams.py --no-deep   # 1段目だけ（4分）。**�
 ```bash
 python3 python/stale_content_watch.py              # 0=通った / 1=古い / 2=数えるものが無い
 python3 python/stale_content_watch.py --dir 写し --today 2026-09-17
-python3 python/stale_content_watch_selftest.py     # 対照（175件）
+python3 python/stale_content_watch_selftest.py     # 対照（182件）
 BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本抜く
 ```
 
@@ -636,7 +636,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `voices.ts` | 人 | LATEST | 60日 | 6日前 |
 | `site.ts`（`updatedAt`） | 人 | LATEST | 30日 | 13日前 |
 | `streamTypes.ts` | 人 | LATEST | 60日 | 24日前 |
-| `plans.ts` | 人 | LATEST | 60日 | 6日前 |
+| `plans.ts` | 人 | **見ない** | — | **0件が正常**（2026-10-07 / #673）。見張りは `site/selftest/leadplan_selftest.mjs` |
 | `apps.ts` | 人 | LATEST | 120日 | 26日前 |
 | `countries.ts` | 人 | LATEST | 150日 | 6日前 |
 | `chapters.ts` | 人 | LATEST | 240日 | 6日前 |

@@ -3,14 +3,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getState, type IslandCurrent } from "@/lib/api";
 import { NOW_FALLBACK, LINKS } from "@/content/site";
-import { nextPlan, planDaysLeft, planPhase, type PlanPhase } from "@/content/plans";
+import { planDaysLeft, planPhase, type PlanPhase } from "@/content/plans";
+import { leadPlan } from "@/lib/leadPlan";
 import { placeCountry } from "@/content/place";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
 import { stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
-import { readNight } from "@/lib/nightly";
+import { BUILT_AT, readNight } from "@/lib/nightly";
+import { weekAhead } from "@/lib/week";
 import Say from "@/components/ui/Say";
 import { nights } from "@/content/nights";
 
@@ -88,6 +90,8 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
      出るまでのあいだは板で場所を取り、返事が来て何も無ければ板ごと畳む。 */
   const [ready, setReady] = useState(false);
   const [clock, setClock] = useState<Clock | null>(null);
+  /** 本物の今日。画面が出るまでは `null`（焼いた日で埋める。`lib/builtAt.ts`） */
+  const [now, setNow] = useState<Date | null>(null);
   /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [ago, setAgo] = useState<string | null>(null);
   const [next, setNext] = useState<{ title: string; days: number | null; phase: PlanPhase } | null>(
@@ -121,14 +125,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
     // 画面が出てから数えて、1分ごとに数え直す。
     const tick = () => {
       const now = new Date();
+      setNow(now);
       setClock(readClock(now));
       /* いちばん近い企画。**「あと何日」で選ばない。**
          旅は出発の日を過ぎると日数がマイナスになるので、残り日数で絞ると
          17日間そのあいだ、いま行っている旅がここから丸ごと落ちる
          （実測：旅の4日目の `/now` に企画の札が1枚も無い）。
          いま行っているものを先に出す決めかたは、島の1画面目と同じものを見る
-         （`content/plans.ts` の `nextPlan`）。 */
-      const p = nextPlan(now);
+         （`lib/leadPlan.ts`）。**先が0件の日は何も返らない**ので、
+         この札は出ない。前は `nextPlan()` を読んでいて、あれが
+         もう行ってきた北欧旅を返すので「行ってきた／ヒッチハイクで北欧へ」が
+         25日ぶん出ていた（#673）。 */
+      const p = leadPlan(now);
       setNext(p ? { title: p.title, days: planDaysLeft(p, now), phase: planPhase(p, now) } : null);
       setStay(stayNow(now));
       setTravel(travelNow(now));
@@ -163,6 +171,16 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
      旅を出しているとき（`trip`）はテントの絵が場所を言うので、旗は添えない。 */
   const here = placeCountry(cur.place);
   const flag = trip ? null : here?.slug ?? null;
+
+  /* **「今週、なにをするんだろう」から、過ぎた日の行を落とす**（`lib/week.ts`）。
+     この欄はあやとが手で打つので、旅のあいだは何日も打ち直せない。実測
+     2026-10-07 の本番は `9/27 ストックホルムを発つ` `9/28 アルバニア着` が
+     10日前のまま並んでいた。**`current` は書き換えない**（島の記録で、
+     本人が `/me/desk` から直す欄）。落とすのは画面の側だけ。
+     全部過ぎていたら、下の箱ごと出ない——見出しだけ残すと「今週やること」と
+     書いてある空の紙になる。
+     画面が出るまでは焼いた日で数える（焼いた HTML と最初の描画をそろえる）。 */
+  const week = weekAhead(cur.week, now ?? BUILT_AT);
 
   return (
     <>
@@ -276,20 +294,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                 </span>
                 <span className="tile-text">
                   <b>
+                    {/* **「行ってきた」の枝は外した。** 選ぶ側
+                        （`lib/leadPlan.ts`）が行ってきた企画を返さなくなったので、
+                        ここに来るのは「いま行っている」か「まだ来ていない」だけ。
+                        前は `nextPlan()` が終わった企画を返していて、旅から
+                        帰った 9/28 から「次の企画まで あと-19日」→「行ってきた」と
+                        出ていた（#673）。**字で言い直すのではなく、
+                        出さないのが正しかった。** */}
                     {next.phase === "during"
                       ? "いま、この企画のとちゅう"
-                      : /* **行ってきた企画を「次の企画」と呼ばない。**
-                           まだ来ていない企画が1つも無くなると、`nextPlan()` は
-                           終わった企画を返す（次の大物を先に告知するための受け）。
-                           日数で言うとマイナスになるので、旅から帰った 9/28 から
-                           「次の企画まで あと-19日」と出ていた。**新しい企画を
-                           足すまで消えない**ので、日数ではなく位置づけで言う。
-                           字は島の1画面目（`components/live/NextUp.tsx`）と揃える。 */
-                        next.phase === "after"
-                        ? "行ってきた"
-                        : next.days === null
-                          ? "次の企画"
-                          : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
+                      : next.days === null
+                        ? "次の企画"
+                        : `次の企画まで ${next.days === 0 ? "今日" : `あと${next.days}日`}`}
                   </b>
                   <i>{next.title}</i>
                 </span>
@@ -298,15 +314,18 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             )}
           </div>
         ) : (
-          /* 時計を読むまでの板。**2枚取る。** 今夜の札は時計の答えがどれでも必ず出るし、
-             次の企画の札も `nextPlan()` が必ず1つ返す（先の予定が無くなったら
-             大物か先頭に落ちる）ので、この2枚は日によって消えない。
+          /* 時計を読むまでの板。今夜の札は時計の答えがどれでも必ず出るので1枚。
+             **企画の札のぶんを取るかは、焼いた日に先の企画が在ったかで決める**
+             （`lib/nightly.ts` の `BUILT_AT`）。先が0件の日はあの札が出ないので、
+             2枚取ると出たときに1枚ぶん縮んで下がずれる。
+             前はここに「`nextPlan()` が必ず1つ返すので2枚は消えない」と
+             書いてあった。**消えないのは、行ってきた企画を返していたから。**
              旅の札（3枚目）は便りの日付で決まるぶん、先に数えられない。
 
              背は px で書かず、**字を出さない写し**で取る（`docs/island-misses.md` #146）。
              1枚目の添えの行は幅390で2行、2枚目は企画の名前で1行。 */
           <div className="tiles" style={{ marginTop: "var(--sp-4)", textAlign: "left" }} aria-hidden>
-            {[2, 1].map((lines, i) => (
+            {(leadPlan(BUILT_AT) ? [2, 1] : [2]).map((lines, i) => (
               <span className="tile is-skel" key={i}>
                 <span className="tile-icon nw-sk-box" />
                 <span className="tile-text">
@@ -375,11 +394,11 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           <div className="pap">
             <b className="pap-tag">島だより</b>
             <span className="np-stamp">{cur.updatedAt?.replace(/-/g, ".")}</span>
-            {cur.week?.length > 0 && (
+            {week.length > 0 && (
               <section className="pap-sec">
                 <h2 className="pap-h">今週、なにをするんだろう</h2>
                 <ul className="pap-rows">
-                  {cur.week.map((w, i) => (
+                  {week.map((w, i) => (
                     <li key={i}>{w}</li>
                   ))}
                 </ul>
@@ -389,11 +408,11 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           </div>
         </div>
       ) : (
-        cur.week?.length > 0 && (
+        week.length > 0 && (
           <section className="panel">
             <h2>今週やること</h2>
             <ul className="week">
-              {cur.week.map((w, i) => (
+              {week.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}
             </ul>

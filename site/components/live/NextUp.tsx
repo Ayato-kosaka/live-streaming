@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BUILT_AT, livePlans, planDaysLeft, planPhase, nextPlan, type Plan } from "@/content/plans";
+import { BUILT_AT, livePlans, planDaysLeft, planPhase, type Plan } from "@/content/plans";
+import { leadPlan, planAheadCount, planBoard } from "@/lib/leadPlan";
 import { HOME } from "@/content/voice";
 import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
@@ -21,12 +22,19 @@ import Wrote from "@/components/ui/Wrote";
  *
  * 静的書き出しなので「いちばん近い」はビルド時の日付で焼き込まれてしまう。
  * 画面が出たあとに今日の日付で計算し直す。
+ *
+ * **先の企画が0件の日は、ここに企画を出さない。** 長いあいだ
+ * `content/plans.ts` の `nextPlan()` を読んでいて、あれは先が0件になると
+ * `big` の付いた企画（＝もう行ってきた北欧旅）を返す。旅から帰った
+ * 2026-09-28 から25日ぶん、この見出しの下に「行ってきた／ヒッチハイクで
+ * 北欧へ」が出ていた（あやと 2026-10-07 / #673「行ってきたが出てるのはバグ」）。
+ * 選ぶのは `lib/leadPlan.ts` で、**行ってきた企画には落ちない。**
  */
 export default function NextUp() {
   /* 最初の1枚は**焼いた日**で決める（`content/plans.ts` の `BUILT_AT`）。
      ここで `new Date()` を呼ぶと、焼いた HTML とブラウザの最初の描画が
      別の企画を指して、1フレームだけ違う札が出る。 */
-  const [plan, setPlan] = useState<Plan | undefined>(() => nextPlan(BUILT_AT));
+  const [plan, setPlan] = useState<Plan | undefined>(() => leadPlan(BUILT_AT));
   const [days, setDays] = useState<number | null>(null);
   const [today, setToday] = useState<Date | null>(null);
   /**
@@ -37,7 +45,7 @@ export default function NextUp() {
 
   useEffect(() => {
     const now = new Date();
-    const p = nextPlan(now);
+    const p = leadPlan(now);
     setToday(now);
     setPlan(p);
     setDays(p ? planDaysLeft(p, now) : null);
@@ -52,15 +60,43 @@ export default function NextUp() {
       const e = s?.nordic?.endedOn ?? null;
       if (!alive || (!a && !e)) return;
       setFacts({ arrived: a, ended: e });
-      setPlan(nextPlan(new Date()));
+      setPlan(leadPlan(new Date(), { arrived: a, ended: e }));
     });
     return () => {
       alive = false;
     };
   }, []);
 
-  if (!plan) return null;
   const PL = livePlans(facts);
+  /* **先の企画が0件の日。** 0件は壊れているのではなく、ふつうの状態
+     （あやと 2026-10-07「とくになし」）。だからこの欄ごと黙って消すのではなく、
+     **何件見てそうなったのかと並べて置く**（`docs/island-standards.md` §10 §15）。
+     消すと「読めていない」と同じ絵になり、企画の面への口もここから失われる。 */
+  if (!plan) {
+    const done = planBoard(today ?? BUILT_AT, facts).after.length;
+    return (
+      <section className="nextup">
+        {/* **時制を名乗らない**（§16）。「いま、いちばん近い企画」は、その企画が
+            在る日の字。無い日に残すと、その札だけが嘘になる。
+            **ベルも出さない。** あれは「新しいことがある」の合図で、
+            何も無い日に鳴らすものではない（`content/voice.ts` の `HOME.nextUp` は
+            在る日の見出しなので、そのまま置いてある）。 */}
+        <p className="nextup-eyebrow">企画</p>
+        <div className="nextup-none">
+          <b>日にちの決まった企画は、いまはありません</b>
+          {/* **0 を、何件見てそうなったかと並べる**（§15）。「ありません」だけだと、
+              読めていないのと同じ絵になる。 */}
+          <i>行ってきた企画が{done}つ</i>
+        </div>
+        <Link className="nextup-all" href="/next">
+          <span>
+            <b>企画を、ぜんぶ見る</b>
+            <i>付箋を貼って、行き先に口を出せます</i>
+          </span>
+        </Link>
+      </section>
+    );
+  }
   // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
   // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
   /* 画面が出るまでは**焼いた日**で数える（`lib/nightly.ts` の `BUILT_AT`）。
@@ -72,13 +108,11 @@ export default function NextUp() {
   const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? BUILT_AT) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
-  /* **これから分を、正直に数える。** `+1` は `plan` のぶんだが、`plan` は
-     まだ来ていない企画が無くなると**終わった企画を返す**（`nextPlan()` の
-     受け。すぐ下の `NowLive.tsx` に同じ注がある）。そのまま足すと、
-     これから分が 0 の日に「これからの予定 1件」と出る。
-     `rest` と同じものさしで `plan` も見る（`docs/island-standards.md` 16章）。 */
-  const planAhead = (planDaysLeft(plan, today ?? BUILT_AT) ?? -1) >= 0;
-  const ahead = rest.length + (planAhead ? 1 : 0);
+  /* **これから分は、企画の状態から数える。**「あと何日」で数えてはいけない。
+     いま行っている企画（旅）は始まる日を過ぎているので日数がマイナスで、
+     日数で絞ると旅の最中ずっと 0 件になる（`planPhase` が3つに分けている理由）。
+     0 件の日はここには来ない（上で返している）ので、`ahead` は必ず1以上。 */
+  const ahead = planAheadCount(today ?? BUILT_AT, facts);
 
   return (
     <section className="nextup">
@@ -112,13 +146,14 @@ export default function NextUp() {
       {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
           「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。 */}
       <Link className="nextup-all" href="/next">
-        {/* **0件のときに「これからの予定」と言わない。**
-            字は中身から作る（`docs/island-standards.md` 16章）。 */}
+        {/* **0件のときに「これからの予定」と言わない。** 0件の日はこの枝に
+            来ない（上で別の絵を返している）ので、ここは言い切ってよい
+            （`docs/island-standards.md` 16章）。 */}
         <span>
-          <b>{ahead > 0 ? "これからの予定を、ぜんぶ見る" : "企画を、ぜんぶ見る"}</b>
+          <b>これからの予定を、ぜんぶ見る</b>
           <i>付箋を貼って、行き先に口を出せます</i>
         </span>
-        {ahead > 0 && <em>{ahead}件</em>}
+        <em>{ahead}件</em>
       </Link>
     </section>
   );

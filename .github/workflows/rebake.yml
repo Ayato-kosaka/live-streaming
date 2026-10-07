@@ -1739,6 +1739,7 @@ jobs:
       # 焼き込みは Hosting を配り直して初めて画面に出る。
       # **deploy を on にしたときだけ**（手で押したときの既定は off。cron は on）
       - name: Hosting を配る
+        id: deploy
         if: env.REBAKE_DRY == '0' && env.REBAKE_DEPLOY == '1' && steps.commit.outputs.changed == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -2177,8 +2178,29 @@ jobs:
       # **黙って赤くならない。** 毎晩ひとりでに走るものは、落ちたことに誰も
       # 気づかない。せめてどこで落ちたかを要約に残す
       # （要約は run の1枚目に出るので、ログを開かずに読める）
+      #
+      # ## 「master には入れていません」を、決め打ちで書かない
+      #
+      # ここは長いあいだ、落ちた理由を見ずに `**master には入れていません。**` と
+      # 書いていた。**配りまで通った回でも、そう書いていた。**
+      # 2026-10-07 の run（`37583492083`）が実際にそれで、step 34「master に
+      # 入れる」と 35「Hosting を配る」は通って commit `599290b` が入っているのに、
+      # この要約だけが「入れていません」と言っていた。
+      # すぐ上の見張り（§15 の3本）が「**この赤は『落ちた』ではありません。**
+      # 焼けたものは master に入れて、配るところまで済んでいます」と正しく
+      # 言っているのを、**job の要約が打ち消していた。**
+      #
+      # だから **step 34 が通ったかどうかで字を分ける。** 要約を読んだ人が
+      # 「入っていないのか」を自分で調べ直さずに済むように。
       - name: 落ちたときに、どこで落ちたかを残す
         if: failure()
+        env:
+          # **step 34 の結果**。`skipped` は dry_run で走らなかったとき
+          COMMIT_RESULT: ${{ steps.commit.outcome }}
+          # 1=入れた / 0=前と同じで入れなかった / 空=step まで来ていない
+          COMMIT_CHANGED: ${{ steps.commit.outputs.changed }}
+          # **step 35**。`skipped` は deploy が off か、入るものが無かったとき
+          DEPLOY_RESULT: ${{ steps.deploy.outcome }}
         run: |
           {
             echo ""
@@ -2186,11 +2208,47 @@ jobs:
             echo ""
             echo "- 回そうとしたもの: \`${REBAKE_SCRIPTS:-（決まる前に落ちた）}\`"
             echo "- 見るだけだったか: \`${REBAKE_DRY:-?}\`（1 なら見るだけ）"
-            echo "- **master には入れていません。**"
-            echo ""
-            echo "赤い step を開きます。よくあるのは3つです。"
-            echo ""
-            echo "1. **焼く** — BigQuery に届いていない（認証・権限）か、クエリが変わった"
-            echo "2. **中の数が縮んでいないか** — 焼いた結果がやせた合図。何が何になったかが表で出ています"
-            echo "3. **site のビルドが通るか** — 焼いた TS が壊れている。ここで止めたので本番は無事です"
           } >> "$GITHUB_STEP_SUMMARY"
+
+          # 入ったか。**ここだけで決める**（字を2か所で作らない）
+          landed=0
+          if [ "$COMMIT_RESULT" = "success" ] && [ "${COMMIT_CHANGED:-}" = "1" ]; then
+            landed=1
+          fi
+
+          {
+            if [ "$landed" = "1" ] && [ "$DEPLOY_RESULT" = "success" ]; then
+              echo "- **焼けたものは master に入れて、配るところまで済んでいます。**"
+              echo "  落ちたのはそのあとの見張りです（島に出ている数は新しくなっています）"
+            elif [ "$landed" = "1" ]; then
+              echo "- **焼けたものは master に入れてあります。** まだ配っていません"
+              echo "  （Hosting: \`${DEPLOY_RESULT:-走っていない}\`）。"
+              echo "  画面に出すには Actions の「Firebase Hosting Deploy」を手で起動します"
+            elif [ "$COMMIT_RESULT" = "success" ]; then
+              echo "- 焼いた結果が前と同じだったので、**commit するものがありませんでした**"
+              echo "  （落ちたのは焼いたあとです）"
+            elif [ "${REBAKE_DRY:-0}" = "1" ]; then
+              echo "- 見るだけ（dry_run）の回なので、**master には入れていません**"
+            else
+              echo "- **master には入れていません**（「master に入れる」は \`${COMMIT_RESULT:-走っていない}\`）"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # **入っている回に「焼くので落ちた」の心当たりを並べない。**
+          # 3つはどれも commit より前の step で、通っている
+          if [ "$landed" = "1" ] || [ "$COMMIT_RESULT" = "success" ]; then
+            {
+              echo ""
+              echo "赤い step を開きます。**配りのうしろに立つ見張り**のどれかです"
+              echo "（古くなった焼き込み・嘘になった字・取り込みの詰まり・絵の撮り直し）。"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo ""
+              echo "赤い step を開きます。よくあるのは3つです。"
+              echo ""
+              echo "1. **焼く** — BigQuery に届いていない（認証・権限）か、クエリが変わった"
+              echo "2. **中の数が縮んでいないか** — 焼いた結果がやせた合図。何が何になったかが表で出ています"
+              echo "3. **site のビルドが通るか** — 焼いた TS が壊れている。ここで止めたので本番は無事です"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
