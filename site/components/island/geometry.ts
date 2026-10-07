@@ -59,22 +59,83 @@ function join(a: string, b: string): string {
   return b.startsWith("-") ? a + b : a + " " + b;
 }
 
-export function smoothClosedPath(points: Pt[], tension = 1): string {
+/**
+ * 点ごとの「接線の効き」。**折れているところだけ弱める。**
+ *
+ * Catmull-Rom は点そのものは必ず通るが、その手前と先を
+ * 隣どうしの向き（p2-p0）で引っぱるので、**角が小屋根のようにまるまる。**
+ * 島の輪郭でいうと、岬の先が団子になり、入り江の口が広がって
+ * 「湾を入れたのに、じゃがいものまま」になる（2026-10-07）。
+ *
+ * そこで、**入ってくる向きと出ていく向きがどれだけ違うか**で引っぱりを弱める。
+ *
+ * - まっすぐ（なめらかな浜）… そのまま 1。64点の円で1点あたり 5.6度しか
+ *   曲がらないので cos は 0.995。**いまの島の輪郭は1点も弱まらない**
+ * - 32度まで曲がる ………… ここまでは 1。起伏（`wobble`）はこの範囲に収まる
+ * - 90度以上 …………………… 0.25。岬の先と入り江の口がここに来る
+ *
+ * 下限を 0 にしないのは、0 にすると区間がまっすぐな線分になって、
+ * 浜が多角形に見えるから。0.25 残すと「角は立っているが、辺は曲がっている」になる。
+ *
+ * **弱める方向にしか動かさない**ので、制御点が伸びて輪が交差することはない。
+ */
+function kinkScale(points: Pt[]): number[] {
   const n = points.length;
-  if (n < 3) return "";
   const at = (i: number) => points[((i % n) + n) % n];
-  let d = "M" + join(n1(at(0)[0]), n1(at(0)[1]));
-  /* 三次ベジェが続くあいだ、`C` は最初の1回だけ書けばよい（SVG の決まり）。
-     127回ぶんの `C` が消える。 */
-  d += "C";
-  let first = true;
+  return points.map((_, i) => {
+    const p0 = at(i - 1);
+    const p1 = at(i);
+    const p2 = at(i + 1);
+    const ax = p1[0] - p0[0];
+    const ay = p1[1] - p0[1];
+    const bx = p2[0] - p1[0];
+    const by = p2[1] - p1[1];
+    const la = Math.hypot(ax, ay) || 1;
+    const lb = Math.hypot(bx, by) || 1;
+    const cos = (ax * bx + ay * by) / (la * lb);
+    // cos 0.85（32度）以上はそのまま、cos 0（90度）で 0.25 まで落とす
+    return Math.max(0.25, Math.min(1, 0.25 + (cos / 0.85) * 0.75));
+  });
+}
+
+/**
+ * 閉じた点列 → 三次ベジェの列（`[制御点1, 制御点2, 行き先]`）。
+ *
+ * **描く（`smoothClosedPath`）のと、数える（`flattenClosed`）のとで、
+ * 同じ1本から出す。** 別々に書くと、見張りが「交差していない」と言っている形と
+ * 画面に出ている形が、いつのまにか別物になる。
+ */
+function cubicsOf(points: Pt[], tension: number): [Pt, Pt, Pt][] {
+  const n = points.length;
+  const at = (i: number) => points[((i % n) + n) % n];
+  const k = kinkScale(points);
+  const ks = (i: number) => k[((i % n) + n) % n];
+  const out: [Pt, Pt, Pt][] = [];
   for (let i = 0; i < n; i++) {
     const p0 = at(i - 1);
     const p1 = at(i);
     const p2 = at(i + 1);
     const p3 = at(i + 2);
-    const c1: Pt = [p1[0] + ((p2[0] - p0[0]) / 6) * tension, p1[1] + ((p2[1] - p0[1]) / 6) * tension];
-    const c2: Pt = [p2[0] - ((p3[0] - p1[0]) / 6) * tension, p2[1] - ((p3[1] - p1[1]) / 6) * tension];
+    const t1 = tension * ks(i);
+    const t2 = tension * ks(i + 1);
+    out.push([
+      [p1[0] + ((p2[0] - p0[0]) / 6) * t1, p1[1] + ((p2[1] - p0[1]) / 6) * t1],
+      [p2[0] - ((p3[0] - p1[0]) / 6) * t2, p2[1] - ((p3[1] - p1[1]) / 6) * t2],
+      p2,
+    ]);
+  }
+  return out;
+}
+
+export function smoothClosedPath(points: Pt[], tension = 1): string {
+  const n = points.length;
+  if (n < 3) return "";
+  let d = "M" + join(n1(points[0][0]), n1(points[0][1]));
+  /* 三次ベジェが続くあいだ、`C` は最初の1回だけ書けばよい（SVG の決まり）。
+     127回ぶんの `C` が消える。 */
+  d += "C";
+  let first = true;
+  for (const [c1, c2, p2] of cubicsOf(points, tension)) {
     for (const v of [c1[0], c1[1], c2[0], c2[1], p2[0], p2[1]]) {
       const t = n1(v);
       d = first ? d + t : join(d, t);
@@ -82,6 +143,33 @@ export function smoothClosedPath(points: Pt[], tension = 1): string {
     }
   }
   return d + "Z";
+}
+
+/**
+ * `smoothClosedPath` が描くのと**同じ曲線**を、細かく折った点列にする。
+ *
+ * 輪郭が自分と交差していないか、裏返っていないかを**ブラウザを出さずに**
+ * 数えるためのもの（`site/selftest/isleart_selftest.mjs`）。
+ * 刻みを深くしすぎると、制御点が伸びて曲線が自分をまたぐ——そうなっても
+ * 絵は出るので、見ただけでは気づけない。
+ */
+export function flattenClosed(points: Pt[], per = 8, tension = 1): Pt[] {
+  const n = points.length;
+  if (n < 3) return [];
+  const out: Pt[] = [];
+  let p1 = points[0];
+  for (const [c1, c2, p2] of cubicsOf(points, tension)) {
+    for (let s = 0; s < per; s++) {
+      const t = s / per;
+      const u = 1 - t;
+      out.push([
+        u * u * u * p1[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * p2[0],
+        u * u * u * p1[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * p2[1],
+      ]);
+    }
+    p1 = p2;
+  }
+  return out;
 }
 
 export function blob(cx: number, cy: number, radii: number[], squash = 1, tension = 1): string {
@@ -94,9 +182,12 @@ export function inset(radii: number[], delta: number): number[] {
 }
 
 /**
- * 半径配列を n 点に増やす。
- * 16方位のままだと起伏を足しても角が丸まって消えてしまうので、
- * 波打ち際のように「細かく不規則な縁」を作りたいときは先に増やす。
+ * 半径配列を n 点に増やす。**角度で線形に読むだけ**なので、元の方位は
+ * そのままの値で残る（n が元の整数倍なら、元の点は1つもずれない）。
+ *
+ * つまり **n を増やしても刻みは細かくならない。** 細かい湾や岬が欲しければ、
+ * 増やすのはここではなく**元の方位の数**（`shapes.ts` の `radii`）のほう。
+ * 16方位だと、いちばん狭い刻みでも 22.5度ぶんの幅を持ってしまう。
  */
 export function resample(radii: number[], n: number): number[] {
   return Array.from({ length: n }, (_, i) => radiusAt(radii, i / n));

@@ -22,6 +22,9 @@
  *  5. **サボテンがどの島にも無い**。アメリカ大陸の植物なので、中東にもイランにも
  *     生えていない（`docs/island-atlas.md` 3章「島が嘘をつかない」）
  *  6. **雪を置いた島が無い**。北欧へ行ったのは9月
+ *  7. **島の輪郭が、島ごとに違う**（どの2章も一致率 80% 未満・平均 65% 未満・24方位以上）。
+ *     2026-10-07 まで、6島は「どれも同じじゃがいも」で平均 74.5% / 最大 94.5% だった
+ *  8. **刻みを深くしすぎて輪郭が壊れていない**（自己交差・裏返り。浜と草地の両方）
  *
  * ## しきい値（ΔE。CIE76）
  *
@@ -50,6 +53,17 @@
  * # 2. 砂漠の砂を既定に戻す（ΔE 3.4 の色づかいへ）
  * sed 's/--sand: #f0c87b/--sand: #fae7b2/' site/app/css/tokens.css > /tmp/broken.css
  * TOKENS_CSS=/tmp/broken.css node site/selftest/isleart_selftest.mjs
+ *
+ * # 3. 北欧を 16方位のじゃがいもに戻す（直す前の値）
+ * #    → 一致率 86.5%（アルバニアと）で赤・24方位の条件でも赤
+ *
+ * # 4. アルバニアの東の入り江を中心まで届くほど深くする（0.62 → 0.04）
+ * #    → 「裏返っていない」が赤
+ *
+ * # 5. 折れ角の弱め（`geometry.ts` の `kinkScale`）を外して引っぱりを強くする
+ * #    `geometry.ts` の `kinkScale` の戻り値を 5 に置き換えた写しを作って
+ * #    GEOMETRY_TS=/tmp/broken-geo.ts node site/selftest/isleart_selftest.mjs
+ * #    → 12本ぜんぶで「自己交差していない」が赤
  * ```
  */
 import { execFileSync } from "node:child_process";
@@ -67,6 +81,8 @@ const ISLAND = join(SITE, "components", "island");
 const SHAPES = process.env.SHAPES_TS || join(SITE, "components", "chain", "shapes.ts");
 const TOKENS = process.env.TOKENS_CSS || join(SITE, "app", "css", "tokens.css");
 const CHAPTERS = process.env.CHAPTERS_TS || join(SITE, "content", "chapters.ts");
+/** 輪郭を描く道具。**折れ角の弱めを外すと赤くなる**ことを見るために差し替えられる */
+const GEOMETRY = process.env.GEOMETRY_TS || join(ISLAND, "geometry.ts");
 const SPRITES = join(SITE, "public", "sprites");
 
 let BAD = 0;
@@ -84,7 +100,7 @@ function check(name, good, why = "") {
 // ---- 本体を組み立てる ------------------------------------------------------
 const OUT = mkdtempSync(join(tmpdir(), "isleart-out-"));
 const WORK = mkdtempSync(join(tmpdir(), "isleart-src-"));
-copyFileSync(join(ISLAND, "geometry.ts"), join(WORK, "geometry.ts"));
+copyFileSync(GEOMETRY, join(WORK, "geometry.ts"));
 // 別名（`@/components/island/…`）は tsc が道に直してくれない
 writeFileSync(
   join(WORK, "shapes.ts"),
@@ -100,6 +116,9 @@ execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
 ], { stdio: "inherit" });
 const req = createRequire(import.meta.url);
 const { ISLAND_ART, artOf, plants } = req(join(OUT, "shapes.js"));
+/* `shapes.ts` が読んでいるので、`geometry.js` も同じ置き場に出ている。
+   **描くのと同じ道具で数える**（別に書き写すと、画面の形と見張りが別物になる） */
+const { resample, wobble, radiiToPoints, flattenClosed } = req(join(OUT, "geometry.js"));
 console.log(`# 組み立てた本体: ${SHAPES}`);
 
 // ---- 1. 章がぜんぶ表に載っているか ----------------------------------------
@@ -226,6 +245,139 @@ for (const s of slugs) {
     check(`${s} の ${one.n} が島に1つだけ`, n === 1, `${n}個 出た`);
   }
 }
+
+// ---- 7. 島の輪郭が、島ごとに違うか ----------------------------------------
+/* 2026-10-07 に測ったとき、**6島は「どれも同じじゃがいも」だった。**
+   浜のふち（`path.ig-sand`）を大きさと位置だけそろえて重ねると、
+   一致率は平均 74.5% / 最大 94.5%（コーカサスとイランが 94.5%）。
+   湾も岬もフィヨルドも、1つも絵に出ていなかった。
+
+   ## 測りかた（`tools/sprites/isleshape.mjs` と同じ）
+
+   `radii` から、島と同じ順で浜のふちを組む（resample → wobble →
+   Catmull-Rom）。**面積を1にそろえ、重心を原点に置いてから**重ねて、
+   重なり ÷ 合わせ（IoU）。向きは直さない——島は地図と同じで北が上なので、
+   回して合わせると「東西に長い島」と「南北に長い島」が同じ形になる。
+
+   半径は**どの章も 300 で揃える**。大小は滞在日数で決まる別の話だし、
+   章の日付が動くたびに見張りの数字が動くのも困る。
+
+   ## しきい値
+
+   直したあとの実測が**平均 55.9% / 最大 75.8%**（北欧とアルバニア。
+   どちらも南北に長いので、ここがいちばん似る）。余白を残して
+
+     どの2章も …… 80% 未満
+     平均 ………… 65% 未満
+
+   現状ぎりぎりに置くと、章を1つ足しただけで赤くなって見張りが捨てられる。
+   **緩めるときは、先に `tools/sprites/isleshape.mjs` で絵を見ること。**
+   数字が通っても「どれがどの島か当てられる」が本当の合格条件。 */
+const R_FIX = 300;
+const COAST_N = 64; // `components/isle/world.ts` と同じ
+const BEACH = 40;
+const SQ = 0.9;
+/** 章ひとつぶんの、浜のふちと草地のふち（描かれるのと同じ曲線を折ったもの） */
+function coastOf(slug) {
+  const art = ISLAND_ART[slug] ?? artOf(slug, []);
+  const base = resample(art.radii.map((v) => v * R_FIX), COAST_N);
+  const sand = wobble(base, art.seed + 11, Math.max(4, R_FIX * 0.022), [3, 7, 13]);
+  const grass = wobble(sand.map((v) => v - BEACH), art.seed + 23, Math.max(3, R_FIX * 0.014), [4, 9, 17]);
+  const line = (radii) => flattenClosed(radiiToPoints(0, 0, radii, SQ), 8);
+  return { art, sand, grass, sandLine: line(sand), grassLine: line(grass) };
+}
+const COAST = Object.fromEntries(slugs.map((s) => [s, coastOf(s)]));
+
+/** 面積を1に、重心を原点に置いてから、升目で塗る */
+const GRID = 256;
+function mask(P) {
+  let A = 0, cx = 0, cy = 0;
+  for (let i = 0; i < P.length; i++) {
+    const [ax, ay] = P[i], [bx, by] = P[(i + 1) % P.length];
+    const c = ax * by - bx * ay;
+    A += c; cx += (ax + bx) * c; cy += (ay + by) * c;
+  }
+  A /= 2; cx /= 6 * A; cy /= 6 * A;
+  const k = (GRID * 0.42) / Math.sqrt(Math.abs(A));
+  const q = P.map(([x, y]) => [(x - cx) * k + GRID / 2, (y - cy) * k + GRID / 2]);
+  const m = new Uint8Array(GRID * GRID);
+  for (let gy = 0; gy < GRID; gy++) {
+    const y = gy + 0.5, xs = [];
+    for (let i = 0; i < q.length; i++) {
+      const [ax, ay] = q[i], [bx, by] = q[(i + 1) % q.length];
+      if ((ay <= y && by > y) || (by <= y && ay > y)) xs.push(ax + ((y - ay) / (by - ay)) * (bx - ax));
+    }
+    xs.sort((a, b) => a - b);
+    for (let t = 0; t + 1 < xs.length; t += 2)
+      for (let gx = Math.ceil(xs[t]); gx < xs[t + 1]; gx++) if (gx >= 0 && gx < GRID) m[gy * GRID + gx] = 1;
+  }
+  return m;
+}
+const MASK = Object.fromEntries(slugs.map((s) => [s, mask(COAST[s].sandLine)]));
+let sum = 0, pairs = 0, worst = [0, "", ""];
+for (let i = 0; i < slugs.length; i++)
+  for (let j = i + 1; j < slugs.length; j++) {
+    const a = MASK[slugs[i]], b = MASK[slugs[j]];
+    let inter = 0, uni = 0;
+    for (let k = 0; k < GRID * GRID; k++) { if (a[k] & b[k]) inter++; if (a[k] | b[k]) uni++; }
+    const v = inter / uni;
+    sum += v; pairs++;
+    if (v > worst[0]) worst = [v, slugs[i], slugs[j]];
+  }
+check(
+  `輪郭が、どの2章でも一致率 80% 未満（${pairs}組）`,
+  worst[0] < 0.8,
+  `いちばん似ているのが ${(worst[0] * 100).toFixed(1)}%（${worst[1]} と ${worst[2]}）`,
+);
+check(
+  `輪郭の一致率の平均が 65% 未満`,
+  sum / pairs < 0.65,
+  `平均 ${((sum / pairs) * 100).toFixed(1)}%`,
+);
+if (worst[0] < 0.8)
+  console.log(`       平均 ${((sum / pairs) * 100).toFixed(1)}% / いちばん似ている2島 ${(worst[0] * 100).toFixed(1)}%（${worst[1]} と ${worst[2]}）`);
+
+/* **方位の数。** 16方位では、いちばん狭い刻みでも 22.5度ぶんの幅を持つので
+   湾も岬も入らない。ここを戻されると、数字（上の一致率）より先に意図が消える */
+const coarse = slugs.filter((s) => (ISLAND_ART[s]?.radii.length ?? 0) < 24);
+check("輪郭が24方位以上（16方位では湾も岬も入らない）", coarse.length === 0, coarse.join(" "));
+
+// ---- 8. 刻みを深くしすぎて、輪郭が壊れていないか ---------------------------
+/* 刻みを深くすると、Catmull-Rom の制御点が伸びて**曲線が自分をまたぐ**。
+   またいでも絵は出る（塗りが裏返って穴があくだけ）ので、見ただけでは気づけない。
+   浜だけでなく**草地も**見る。草地は浜から 40 内側なので、入り江の底では
+   浜より深く切れていて、先に壊れるのはこちら。 */
+function crossings(P) {
+  const n = P.length;
+  const side = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  let hits = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = i + 2; j < n; j++) {
+      if (i === 0 && j === n - 1) continue;
+      const a = P[i], b = P[(i + 1) % n], c = P[j], d = P[(j + 1) % n];
+      if (side(a, b, c) !== side(a, b, d) && side(c, d, a) !== side(c, d, b)) hits++;
+    }
+  return hits;
+}
+const tangled = [];
+const flipped = [];
+for (const s of slugs) {
+  for (const [label, line] of [["浜", COAST[s].sandLine], ["草地", COAST[s].grassLine]]) {
+    if (crossings(line)) tangled.push(`${s}の${label}`);
+    /* **裏返り。** 島は中心から見て一周ぶんの形なので、どの点も中心より外に
+       あって、一周したときの向きが変わらない。制御点が伸びて中心を跨ぐと
+       ここが崩れる（符号つき面積の向きが逆になるか、中心にめり込む） */
+    let A = 0;
+    for (let i = 0; i < line.length; i++) {
+      const [ax, ay] = line[i], [bx, by] = line[(i + 1) % line.length];
+      A += ax * by - bx * ay;
+    }
+    const near = Math.min(...line.map(([x, y]) => Math.hypot(x, y / SQ)));
+    if (A <= 0 || near < 10) flipped.push(`${s}の${label}`);
+  }
+}
+check("輪郭が自己交差していない（浜と草地。刻みを深くしすぎると壊れる）", tangled.length === 0, tangled.join(" "));
+check("輪郭が裏返っていない（中心を跨いでいない）", flipped.length === 0, flipped.join(" "));
 
 console.log(`\n通った ${OK} / 落ちた ${BAD}`);
 process.exit(BAD ? 1 : 0);
