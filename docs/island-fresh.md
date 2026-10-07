@@ -66,6 +66,7 @@
 | `shorts.ts` | `build_shorts.py` | **あやとがショートを出す**（YouTube を読む。BigQuery ではない） |
 | `site.ts` の `STATS_FALLBACK` | `build_site_stats.py` | 配信・コメント・人が増える（**公開の口** `/island-api/state` を読む。BigQuery ではない） |
 | `characterBox.ts` | `tools/sprites/charbox.py` | **名簿に人が増える**（`build_residents` と同じ回で焼く。BigQuery ではなく**公開の口** `/island-api/characters` を読む） |
+| `nordicSun.ts` | `tools/nordic_sun.py` | **旅程（`nordic.ts`）がのびる**（BigQuery も外の口も引かない。緯度経度と日付から計算する） |
 
 **上から4本目までは入力が本番だけ。** 人がリポジトリに何も書かなくても正しい答えが出る。
 
@@ -603,7 +604,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 
 ### `COVERS` の「要るところ」は、旅が終わると変わる
 
-先ぶんの表（`nordic.ts` `nordicSun.ts`）は、旅のあいだは今日まで届いていないと
+先ぶんの表（`nordic.ts`）は、旅のあいだは今日まで届いていないと
 困る。**だが旅が終わったら、旅の最終日で止まっているのが正しい。**
 終わった旅の旅程が今日まで伸びていたら、そちらのほうが嘘になる。
 
@@ -646,7 +647,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `shorts.ts` | 機械（YouTube） | LATEST | 90日 | 2日前 |
 | `chapterStreams.ts` | 機械（章が閉じたとき） | LATEST | 300日 | 6日前 |
 | `nordic.ts` | 人（旅程） | COVERS | 旅のあいだは今日まで／終わったら旅の最終日 | あと10日 |
-| `nordicSun.ts` | 機械（`tools/nordic_sun.py`） | COVERS | 同上（同じ章で測る） | あと10日 |
+| `nordicSun.ts` | ①b（**毎晩**。`tools/nordic_sun.py`。上流 `nordic.ts`） | KEYS | — | 17/17日（2026-10-07 に `COVERS` から移した） |
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
 | `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
 | `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8 |
@@ -729,9 +730,33 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 
 ### 2026-09-28 から赤くなるもの
 
-`nordic.ts` と `nordicSun.ts` は旅の終わり（2026-09-27）までしか日付を持たない。
-**28日からは「表が今日に届いていない」で赤くなる。** それは不具合ではなく、
-**旅の面を次の章に替える時期**という知らせ。繋ぐ前にここを承知しておくこと。
+`nordic.ts` は旅の終わり（2026-09-27）までしか日付を持たない。
+旅が終わったあとは**旅の最終日まで在れば緑**（`covers_until`）なので、
+旅の面を次の章に替えるまで静かに緑のままでいる。
+
+### 日の出の表（`nordicSun.ts`）を `COVERS` から外した（2026-10-07）
+
+**満たしようのない赤になりかけていた。** 焼くほう（`tools/nordic_sun.py`）が
+初日・最終日・街を**手で持っていた**ので、
+
+- 旅程が1日のびた日から、見張りが赤くなる
+- `todo` のとおり `python3 tools/nordic_sun.py` を回しても、**赤は消えない**
+  （同じ17日を焼き直すだけ）。実測で確かめた
+- 消すには**焼くほうのソースを人が書き換える**しかなかった
+
+日の出・日の入りは**緯度経度と日付から計算で出る**（外の口も BigQuery も
+要らない）。人の頭の中にしか無いのは旅程だけ。つまり**人を待つ理由が
+1つも無かった**——`shorts.ts`（#119）と `site.ts`（#202）と同じ外し方で、
+軸は「誰が打つか」ではなく「**本番（ここでは旅程）を読めば答えが出るか**」。
+
+いまは焼く日と焼く街を旅程から引いて、`rebake.yml` が毎晩焼く。
+見るのは「**旅程の日が全部焼かれているか**」（`KEYS`。上流 `nordic.ts`）で、
+赤が立つのは「人が旅程を書いたが、まだ焼き直しが来ていない」あいだだけ。
+**その赤は次の晩に機械が消す**（`kitchenTalk.ts` と同じ①b の形）。
+
+旅程に座標の無い街が入ったときだけ、人の手が要る——そのときは焼くほうが
+**1バイトも書かずに名指しで断って 2 で止まり**、run の最後が赤くなる
+（`tools/nordic_sun.py` の `CITY_GEO` / `NO_SUN`）。
 
 ---
 

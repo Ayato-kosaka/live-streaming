@@ -77,6 +77,7 @@ from stale_content_watch import (  # noqa: E402
     CHAPTERS_TS,
     CONTENT,
     COVERS,
+    KEY_FN,
     KEY_RE,
     KEYS,
     LATEST,
@@ -221,7 +222,13 @@ def _rewrite_dates(src: str, when: date) -> str:
 
 def _drop_key(src: str, name: str, key: str) -> str:
     """その本から鍵を1つ消す（行ごと）。`KEYS` の赤い側を作るのに使う。"""
-    rx = KEY_RE[name]
+    rx = KEY_RE.get(name)
+    if rx is None:
+        # `KEY_FN` で読む本（旅程）。鍵は字そのものなので、**その字が在る行**を落とす。
+        # 旅程の日付は `ROUTE` と `NORDIC_LOG` にも同じ字で出るので、
+        # そちらも一緒に落ちる——鍵が消えることだけが要るので、それでよい
+        return "".join(ln for ln in src.splitlines(keepends=True)
+                       if f'"{key}"' not in ln)
     lines = [ln for ln in src.splitlines(keepends=True)
              if not (m := rx.match(ln)) or m.group(1) != key]
     return "".join(lines)
@@ -250,7 +257,11 @@ def _facts(name: str, src: str) -> Facts:
         except ValueError:
             pass
     f.dates = sorted(seen)
-    if name in KEY_RE:
+    # **読むほうと同じ順で引く**（`stale_content_watch.scan()`）。
+    # 片方だけ `KEY_FN` を見ていないと、仕込みの鍵が0件になって素通りする
+    if name in KEY_FN:
+        f.keys = KEY_FN[name](src)
+    elif name in KEY_RE:
         f.keys = KEY_RE[name].findall(src)
     if name == CHAPTERS_TS:
         f.chapters = chapter_spans(src)
