@@ -28,7 +28,6 @@ OpenStreetMap の Nominatim。この箱から届く（Overpass は届かない�
 
 import json
 import math
-import re
 import os
 import sys
 import time
@@ -36,6 +35,11 @@ import urllib.parse
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+sys.path.insert(0, os.path.join(ROOT, "python"))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+from ts_read import read_trip  # noqa: E402
 SRC = os.path.join(ROOT, "site", "content", "nordic")
 OUT = os.path.join(SRC, "geo.json")
 REPORT = os.path.join(ROOT, "tools", "nordic", "geo-report.txt")
@@ -81,22 +85,38 @@ def visit_cities():
     `nordic.ts` の `VISIT_CITIES` と同じ作り（ROUTE の from / to / stay と
     DAYS の city / stay）。`maybe`（寄るかもしれない街）は入れない。
 
-    TypeScript を Python から読めないので字面で拾っているが、**表は増やさない。**
-    元が変われば、ここも一緒に変わる。
+    **読むのは `python/ts_read.py` の `read_trip()` 1本だけ。**
+    ここは前、字面でこう拾っていた:
+
+        s = s.split("export const WANTS")[0]
+        for m in re.finditer(r'\\b(?:from|to|stay|city):\\s*"([^"]+)"', s):
+
+    **深さを見ていない**ので、入れ子の `start.from`（「トビリシ Didube」）や
+    宿の名前（「Hostel Sofiia」）や「高速のサービスエリア」まで街として拾って、
+    実測で **29件**返していた（本当の街は12件）。害が出ていなかったのは、
+    呼ぶ側が `CENTER` と突き合わせて絞っていたからだけ。
+    視聴者さんの提案（`WANTS`）が混ざるのを `split` で切っていたのも同じ形で、
+    **並びの名前で切れば要らない**（`read_trip` は `ROUTE` と `DAYS` しか見ない）。
+
+    Returns:
+        `(行くと決まっている街, 寄るかもしれない街)`。どちらも集合
     """
-    s = open(NORDIC_TS, encoding="utf-8").read()
-    # **旅程より下は見ない。** 視聴者さんの提案（`WANTS`）にも `city:` があるので、
-    # 字面で拾うと「行く街」に混ざる。実際、提案に付いた `city: "シャウレイ"` が
-    # 行く街として拾われていた。シャウレイは**寄るか決まっていない街**で、
-    # そこの地図を焼いたことを一度叱られている（`docs/island-misses.md` #4）。
-    s = s.split("export const WANTS")[0]
-    go, maybe = set(), set()
-    for m in re.finditer(r'\b(?:from|to|stay|city):\s*"([^"]+)"', s):
-        go.add(m.group(1).split("（")[0].split("(")[0].strip())
-    for m in re.finditer(r"maybe:\s*\[([^\]]*)\]", s):
-        for c in re.findall(r'"([^"]+)"', m.group(1)):
-            maybe.add(c.strip())
-    return go - maybe, maybe
+    got = read_trip(open(NORDIC_TS, encoding="utf-8").read())
+    # **読み落としたら止める。** 街が1つ落ちると、その街の見どころに
+    # ピンが1本も立たないまま地図が焼ける（黙って減るだけ）
+    if got.missed or got.legs_missed:
+        raise SystemExit(
+            f"{NORDIC_TS} を読み落としました"
+            f"（日 {got.missed}件 / 区間 {got.legs_missed}件）。"
+            "`python/ts_read.py` の読み方か、旅程の書き方が合っていません"
+        )
+    if not got.cities:
+        raise SystemExit(f"{NORDIC_TS} から街が1つも読めません（置き場が変わった？）")
+    # **寄るかもしれない街は、言われるまで焼かない。** 行く街として出てきても、
+    # `maybe` にも書いてあるなら落とす。シャウレイの地図を焼いて一度叱られている
+    # （`docs/island-misses.md` #4）
+    maybe = set(got.maybe)
+    return set(got.cities) - maybe, maybe
 
 
 # 拾ってよい種類。ここに無いものは「あやしい」に回して、目で見る。

@@ -78,6 +78,7 @@ from stale_content_watch import (  # noqa: E402
     CHAPTERS_TS,
     CONTENT,
     COVERS,
+    KEY_FN,
     KEYS,
     LATEST,
     SHARE,
@@ -233,12 +234,23 @@ PLANT_RE = {
     "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"'),
     "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)'),
     "chatter.ts": re.compile(r'^\s+icon: "([^"]+)"'),
+    # 焼いた日の出の表の、日の鍵（`  "2026-09-11": {`）
+    "nordicSun.ts": re.compile(r'^\s+"(\d{4}-\d\d-\d\d)": \{'),
 }
 
 
 def _drop_key(src: str, name: str, key: str) -> str:
     """その本から鍵を1つ消す（行ごと）。`KEYS` の赤い側を作るのに使う。"""
-    rx = PLANT_RE[name]
+    rx = PLANT_RE.get(name)
+    if rx is None:
+        # **`PLANT_RE` に無い本は、`KEY_FN` で読む本だけ**（旅程）。
+        # ここに落ちてくる本が増えたら、仕込みの作り方を足し忘れている
+        assert name in KEY_FN, f"{name} の仕込みの作り方がありません（PLANT_RE に足す）"
+        # 鍵は字そのものなので、**その字が在る行**を落とす。
+        # 旅程の日付は `ROUTE` と `NORDIC_LOG` にも同じ字で出るので、
+        # そちらも一緒に落ちる——鍵が消えることだけが要るので、それでよい
+        return "".join(ln for ln in src.splitlines(keepends=True)
+                       if f'"{key}"' not in ln)
     lines = [ln for ln in src.splitlines(keepends=True)
              if not (m := rx.match(ln)) or m.group(1) != key]
     return "".join(lines)
@@ -280,6 +292,10 @@ def _facts(name: str, src: str) -> Facts:
         except ValueError:
             pass
     f.dates = sorted(seen)
+    # **読むほうと同じ口を通す**（`stale_content_watch.scan()` も `keys_of()`）。
+    # 仕込みを作るほう（`PLANT_RE`）と読み返すほうを**別の読み方にしてある**のは、
+    # 同じ読み方で仕込んで同じ読み方で読み返すと、その読み方が本物に
+    # 当たっていなくても対照が通ってしまうから（`_voiceless` の注と同じ理由）
     f.keys = keys_of(name, src)
     if name == CHAPTERS_TS:
         f.chapters = chapter_spans(src)

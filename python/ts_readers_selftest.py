@@ -56,7 +56,11 @@ import stale_content_watch as stale  # noqa: E402
 import ts_read  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
-PY = REPO / "python"
+# **数えるのは Python ぜんぶ。`python/` だけでは足りない。**
+# 2026-10-08 に数えたら、`tools/nordic/geocode.py` が旅程を自前に読んでいて、
+# 深さを見ずに拾うので「Hostel Sofiia」「高速のサービスエリア」まで街として
+# 返していた（29件。本当の街は12件）。`python/` だけ見ていたら見つからない
+ROOTS = (REPO / "python", REPO / "tools")
 CONTENT = REPO / "site" / "content"
 
 BREAK = os.environ.get("BREAK", "")
@@ -113,6 +117,9 @@ MAPS = (
     ("legendDays.ts", "LEGEND_DAYS"),
     ("streamPeaks.ts", "PEAKS"),
     ("characterBox.ts", "BOX"),
+    ("nordicSun.ts", "SUN_BY_DAY"),
+    # 章 → ショートの並び。鍵は章の合言葉で、`id` は**中の並び**にある
+    ("shorts.ts", "SHORTS"),
 )
 
 # 2026-10-07 まで、それぞれの本をこう読んでいた。**この対照が易しくなって
@@ -157,6 +164,9 @@ LEGACY = {
         re.compile(r'^\s+"([a-z0-9-]+)": \{', re.M), "nest",
     ),
     ("characterBox.ts", "BOX"): (re.compile(r'^\s+"([^"]+)": \[', re.M), "nest"),
+    ("nordicSun.ts", "SUN_BY_DAY"): (
+        re.compile(r'^\s+"(\d{4}-\d\d-\d\d)": \{$', re.M), "nest",
+    ),
 }
 
 # `nest` の崩し方で足す字。**いちばん外側ではないところに、同じ名前の欄を置く。**
@@ -167,6 +177,9 @@ NEST = {
     ("kitchenTalk.ts", "KITCHEN_TALK"): '\n    sub: {\n      "ghost": {},\n    },',
     ("legendDays.ts", "LEGEND_DAYS"): '\n    sub: {\n      "ghost": {},\n    },',
     ("characterBox.ts", "BOX"): None,  # 値が `[数, …]` なので入れ子に欄を置けない
+    # **塊を開く形で書く。** 昔の読み方は行末が `{` で終わることまで
+    # 求めているので、1行に畳むと当たらない（仕込みが仕込みにならない）
+    ("nordicSun.ts", "SUN_BY_DAY"): '\n    sub: {\n      "2099-01-01": {\n      },\n    },',
 }
 
 # **注釈を挟めない本。** 1件が `{…}` ではないので、挟む場所そのものが無い
@@ -373,6 +386,35 @@ def main() -> int:
     # **挟めなかった本は、名指しのものだけ。** 黙って増えたら、挟み方が壊れている
     check("注釈を挟めなかった本は、挟む場所の無いものだけ", set(no_gap), NO_GAP)
 
+    # --- 2b. 旅程（`read_trip`）も、同じ字で3人が引いている ---------------------
+    #
+    # 日の出を焼くほう（`tools/nordic_sun.py`）・焼き込みが古くなっていないかを
+    # 見る見張り（`stale_content_watch` の `KEY_FN`）・その日どの国にいたかを出す
+    # ところ（`python/stays.py`）・地図の街を決めるところ
+    # （`tools/nordic/geocode.py`）の**4人が同じ1本を引く。**
+    # 字を別々に読むと、`DAYS` の外に1日書かれた瞬間に数えているものが食い違う。
+    trip_src = src_of.get("nordic.ts", "")
+    trip = ts_read.read_trip(trip_src)
+    print(f"  nordic.ts の旅程: 日 名乗り {trip.declared} / 読めた {len(trip.days)}"
+          f" / 区間 名乗り {trip.legs_declared} / 読めた {len(trip.legs)}"
+          f" / 街 {len(trip.cities)}（うち寄るかもしれない街 {len(trip.maybe)}）")
+    check("旅程が1日も名乗っていない、ということは無い", trip.declared > 0, True)
+    check("旅程の日を1日も読み落としていない", trip.missed, 0)
+    check("旅程の区間を1本も読み落としていない", trip.legs_missed, 0)
+    check("旅程の街が0件ではない", len(trip.cities) > 0, True)
+    gap_trip = ts_read.read_trip(_inject_gap(_inject_gap(trip_src, "ROUTE"), "DAYS"))
+    check("旅程に注釈を挟んでも、同じ日が同じ順で出る",
+          [d.date for d in gap_trip.days], [d.date for d in trip.days])
+    check("旅程に注釈を挟んでも、朝いる街が同じ",
+          [d.wakes_in for d in gap_trip.days], [d.wakes_in for d in trip.days])
+    check("旅程に注釈を挟んでも、街の並びが同じ", gap_trip.cities, trip.cities)
+    check("旅程に注釈を挟んでも読み落とし0",
+          (gap_trip.missed, gap_trip.legs_missed), (0, 0))
+    # **寄るかもしれない街を、行く街に混ぜない。** 混ぜると行っていない街の
+    # 地図を焼く（`docs/island-misses.md` #4。実際に叱られている）
+    check("寄るかもしれない街が、行く街に混ざっていない",
+          sorted(set(trip.cities) & set(trip.maybe)), [])
+
     # --- 3. 読み手が増えていないか -------------------------------------------
     counted, extra = census()
     for rel, n in sorted(counted.items()):
@@ -413,38 +455,51 @@ _FRAGS = (
 # **ここに在るものは、寄せずに残したもの。** 数と理由を書く。
 # 数が変わったら赤になるので、**足すときは理由を書かざるを得ない。**
 ALLOW: dict[str, tuple[int, str]] = {
-    "ts_read.py": (1, "ここが唯一の読み手。`slug: \"` の数は、読み落としを数えるためのもの"),
-    # --- 自分が書いた字を、1行だけ当てて書き直すところ（読み手ではない）---
-    # どれも「動かしてよい行」を1種類に決めて、**他が1行でも動いたら書かずに落ちる**。
-    # 落ちたことに気づけない形ではないので、構造で読み直す意味が無い
-    "build_chapter_stats.py": (2, "`chapterStats.ts` の本数と住人の行だけを当てる（字面の手術）"),
-    "build_site_stats.py": (4, "`siteStats.ts` の5行だけを当てる（字面の手術）"),
-    "nordic_depart.py": (1, "`chapters.ts` の `to: \"\"` を1か所だけ埋める（読むほうは ts_read）"),
+    "python/ts_read.py": (1, "ここが唯一の読み手。`slug: \"` の数は、読み落としを数えるためのもの"),
+    # --- 自分が書いた字を、1行だけ当てて書き直す／読み返すところ（読み手ではない）---
+    # どれも「動かしてよい行」を1種類に決めて、**他が1行でも動いたら書かずに落ちる**か、
+    # **自分が書いた形をそのまま読み返す**だけ。形は書くほうが1か所で決めている
+    "python/build_chapter_stats.py": (2, "`chapterStats.ts` の本数と住人の行だけを当てる（字面の手術）"),
+    "python/build_site_stats.py": (4, "`siteStats.ts` の5行だけを当てる（字面の手術）"),
+    "python/nordic_depart.py": (1, "`chapters.ts` の `to: \"\"` を1か所だけ埋める（読むほうは ts_read）"),
+    "tools/nordic_sun.py": (
+        2,
+        "**自分が焼いた `nordicSun.ts` を読み返す**（`--check` の突き合わせ）。"
+        "旅程のほうは `ts_read.read_trip()` を通している",
+    ),
+    "tools/sprites/charbox.py": (1, "自分が焼いた `characterBox.ts` の `BOX` を読み返す"),
     # --- 構造ではなく「字の並び」を数えるところ ---
-    "dead_stream_watch.py": (
+    "python/dead_stream_watch.py": (
         3,
         "焼き込みの**どんな形の中にでも**居る配信IDを拾う。構造を読む道具では"
         "見つからない（`[\"日付\", \"ID\"]` も `\"ID\": {…}` も）",
     ),
-    "text_expires_watch.py": (
+    "python/text_expires_watch.py": (
         1,
         "企画1つの中の日付を**深さを問わず**掃き寄せる。入れ子の `when:` も要るので、"
         "いちばん外側の欄だけ返す読み手に替えると日付が減る（`plans.ts` の "
         "`reached.when` が実際にそれ）",
     ),
+    "tools/sprites/avatars.py": (
+        1,
+        "引用の吹き出しのアイコンURLを**深さを問わず**集める（`kitchenTalk.ts` の "
+        "`talk[].icon` は入れ子）。落ちても手元の絵が1枚減るだけで、焼き込みには出ない。"
+        "名簿とショートのほうは `ts_read` を通している",
+    ),
     # --- 対照（仕込みを作る／別の読み方で突き合わせる）---
     # **本物と同じ読み方で仕込むと、その読み方が本物に当たっていなくても通る。**
     # ここは「わざと別の読み方」にしてある
-    "ts_read_selftest.py": (2, "昔の読み方と、仕込みの在りか（対照）"),
-    "stale_content_watch_selftest.py": (7, "鍵の行を1本落として赤い側を作る（仕込み）"),
-    "shrink_guard_selftest.py": (4, "名簿と箱から人を抜いて縮んだ側を作る（仕込み）"),
-    "bake_order_selftest.py": (5, "焼いた本から数を抜き出して、焼き直しの順を当てる（対照）"),
-    "build_residents_selftest.py": (1, "焼いた1行の score を読み返す（対照）"),
-    "dead_stream_watch_selftest.py": (4, "本物と別の読み方で配信IDを数える（対照）"),
-    "viewable_streams_selftest.py": (2, "2つの焼き込みの数を突き合わせる（対照）"),
+    "python/ts_read_selftest.py": (3, "昔の読み方と、仕込みの在りか（対照）"),
+    "python/stale_content_watch_selftest.py": (8, "鍵の行を1本落として赤い側を作る（仕込み）"),
+    "python/nordic_sun_selftest.py": (4, "焼いた表から日と街を抜いて、縮んだ側を作る（仕込み）"),
+    "python/shrink_guard_selftest.py": (4, "名簿と箱から人を抜いて縮んだ側を作る（仕込み）"),
+    "python/bake_order_selftest.py": (5, "焼いた本から数を抜き出して、焼き直しの順を当てる（対照）"),
+    "python/build_residents_selftest.py": (1, "焼いた1行の score を読み返す（対照）"),
+    "python/dead_stream_watch_selftest.py": (4, "本物と別の読み方で配信IDを数える（対照）"),
+    "python/viewable_streams_selftest.py": (2, "2つの焼き込みの数を突き合わせる（対照）"),
     # --- TS ではないもの ---
-    "channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),
-    "failed_reentry_nightly_selftest.py": (2, "ワークフローの YAML を読む（TS ではない）"),
+    "python/channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),
+    "python/failed_reentry_nightly_selftest.py": (2, "ワークフローの YAML を読む（TS ではない）"),
 }
 
 
@@ -461,16 +516,17 @@ def census() -> tuple[dict[str, int], list[str]]:
         `({相対パス: 本数}, 表に無かった相対パス)`
     """
     counted: dict[str, int] = {}
-    for p in sorted(PY.rglob("*.py")):
-        if p.name == "ts_readers_selftest.py":
-            continue  # ここ（`_FRAGS` と `LEGACY` を持っている）は数えない
-        code = _code(p.read_text(encoding="utf-8"))
-        n = sum(
-            1 for m in _RAW.finditer(code)
-            if any(f in m.group("body") for f in _FRAGS)
-        )
-        if n:
-            counted[str(p.relative_to(PY))] = n
+    for root in ROOTS:
+        for p in sorted(root.rglob("*.py")):
+            if p.name == "ts_readers_selftest.py":
+                continue  # ここ（`_FRAGS` と `LEGACY` を持っている）は数えない
+            code = _code(p.read_text(encoding="utf-8"))
+            n = sum(
+                1 for m in _RAW.finditer(code)
+                if any(f in m.group("body") for f in _FRAGS)
+            )
+            if n:
+                counted[str(p.relative_to(REPO))] = n
     return counted, [k for k in counted if k not in ALLOW]
 
 

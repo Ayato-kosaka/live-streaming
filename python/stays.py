@@ -79,7 +79,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # **自前の正規表現を増やさない。** 2026-10-03 に3つあった読み方を1本に寄せたのに、
 # このファイルが4本目を生やしていた（国の滞在と旅程を、ここだけ別の読み方で
 # 読んでいた）。読み方が増えれば、その数だけ別々に腐る（`ts_read.py` の頭）
-from ts_read import read_ahead_countries, read_array, read_chapters  # noqa: E402
+from ts_read import read_ahead_countries, read_chapters, read_trip  # noqa: E402
 from ts_read import read_countries as read_countries_ts  # noqa: E402
 
 # 日付はぜんぶ JST で数える。配信の日付（`videos.actual_start_time`）が JST なので、
@@ -169,42 +169,47 @@ def read_nordic(after: str = "") -> list:
     # そこだけ借りて振り分けに使う（一覧をそのまま街にはしない）。
     where = {city: c["slug"] for c in guide for city in c["cities"]}
 
-    # 区間。`enters` を持つものが国境で、その日付が入国の日。
-    # **字を読むのは `ts_read`。** ここは前、`\n    date: "…"` のように
-    # 字下げを当てにした正規表現で読んでいた。欄の順を入れ替えたり注釈を
-    # 1行挟んだだけで、その区間が黙って落ちる形（`ts_read.py` の頭と同じ轍）
-    route = read_array(
-        src, "ROUTE", keys=("id", "from", "to", "date", "enters"), id_key="id"
-    )
-    if route.missed:
+    # **旅程を読むのは `ts_read.read_trip()` の1本だけ。**
+    # ここは前、`\n    date: "…"` のように字下げを当てにした正規表現で読んでいた。
+    # 欄の順を入れ替えたり注釈を1行挟んだだけで、その区間が黙って落ちる形
+    # （`ts_read.py` の頭と同じ轍）。
+    #
+    # 同じ旅程を、**日の出を焼くほう**（`tools/nordic_sun.py`）と
+    # **焼き込みが古くなっていないかを見る見張り**（`stale_content_watch.py` の
+    # `KEY_FN`）も読む。3つが別々に字を読むと、`DAYS` の外に1日書かれた瞬間に
+    # 数えているものが食い違う。だから3つとも同じ1本を通す。
+    trip = read_trip(src)
+    if trip.legs_missed:
         raise ValueError(
-            f"nordic.ts の ROUTE の {route.declared} 件のうち {route.missed} 件を読み落とした"
+            f"nordic.ts の ROUTE の {trip.legs_declared} 件のうち "
+            f"{trip.legs_missed} 件を読み落とした"
         )
+    if trip.missed:
+        raise ValueError(
+            f"nordic.ts の DAYS の {trip.declared} 件のうち {trip.missed} 件を読み落とした"
+        )
+
+    # 区間。`enters` を持つものが国境で、その日付が入国の日
     legs, enters = {}, []
-    for r in route.rows:
+    for lid, r in trip.legs.items():
         if not r["date"]:
             continue
         # 区間の起点と終点。**並びは「から → へ」のまま**（街を振り分けるとき、
         # 先に出てきたほうを隣の国の街として落とす側がこの順を見る）
-        legs[r["id"]] = {
+        legs[lid] = {
             "date": r["date"],
             "cities": [c for c in (r["from"], r["to"]) if c],
         }
         if r["enters"]:
-            enters.append((r["date"], r["enters"], r["id"]))
+            enters.append((r["date"], r["enters"], lid))
 
-    # 日ごとの泊まる先。区間の無い日（休息日）の街はここからしか取れない
-    day_read = read_array(
-        src, "DAYS", keys=("id", "date", "stay"), lists=("legs",), id_key="id"
-    )
-    if day_read.missed:
-        raise ValueError(
-            f"nordic.ts の DAYS の {day_read.declared} 件のうち {day_read.missed} 件を読み落とした"
-        )
+    # 日ごとの泊まる先。区間の無い日（休息日）の街はここからしか取れない。
+    # **`stay` は字のまま受け取る**（`TripDay.stay`）——括弧の添え書きは
+    # 下で自分で落とす決まりなので、先に落とされると二重にかかる
     days = [
-        {"date": d["date"], "stay": d["stay"], "legs": d["legs"]}
-        for d in day_read.rows
-        if d["date"]
+        {"date": d.date, "stay": d.stay, "legs": list(d.legs)}
+        for d in trip.days
+        if d.date
     ]
     if not enters or not days:
         raise ValueError("nordic.ts から旅程を読めていない（ROUTE の enters / DAYS が空）")

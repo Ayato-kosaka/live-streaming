@@ -43,13 +43,13 @@
 **読み方が3つあると、3つぶん別々に腐る。** コメントを1行足しただけで片方だけが
 落ちるのは、誰にも気づけない。だからここ1本にした。
 
-**そして4日後、自前の読み手が14本生えていた**（2026-10-07。`docs/island-misses.md` #203）。
+**そして4日後、自前の読み手が23か所あった**（2026-10-07。`docs/island-misses.md` #204）。
 寄せたのは `chapters.ts` を読む3本だけで、**他の本を数えていなかった。**
 国の滞在・旅程・料理・伝説・山・名簿・セリフ・鍵、どれも同じ形の危うさを
 持っていた（欄が隣り合っていること、または字下げの深さを当てにしていた）。
-14本ともここに寄せて、**生えたら赤くなる見張り**を足した
-（`python/ts_readers_selftest.py`。`python/` の中の「TS の欄を字で読んでいそうな
-正規表現」を数えて、表に書いた数と1つでも違えば赤）。
+23か所ともここに寄せて、**生えたら赤くなる見張り**を足した
+（`python/ts_readers_selftest.py`。`python/` と `tools/` の中の「TS の欄を字で
+読んでいそうな正規表現」を数えて、表に書いた数と1つでも違えば赤）。
 文で「増やすな」と書いても、セッションが変わると守られない。
 
 ## ここがやること・やらないこと
@@ -455,6 +455,37 @@ def count_keys(body: str, key: str) -> int:
     return got
 
 
+def count_objects(body: str) -> int:
+    """配列の中の、**いちばん外側の `{…}` の数**。
+
+    `len(objects(body))` と同じ数を返すが、**通る道が別。** 括弧の深さを
+    数えるだけで、`close_at()` も `objects()` も通らない。
+
+    読み落としを捕まえる数は、**欄を読むのとは別の道で出す**のが決まり
+    （`docs/island-misses.md` #204 の決めごと3）。`len(objects(…))` を
+    名乗りに使うと、`objects()` が1件落とした日に名乗りも1つ減って、
+    **読み落としが永久に 0 になる。**
+    """
+    got, i, n, depth = 0, 0, len(body), 0
+    while i < n:
+        c = body[i]
+        if c in "\"'`":
+            i = skip_string(body, i) + 1
+            continue
+        if c in _PAIRS:
+            depth += 1
+            if c == "{" and depth == 1:
+                got += 1
+            i += 1
+            continue
+        if c in ")]}":
+            depth -= 1
+            i += 1
+            continue
+        i += 1
+    return got
+
+
 def const_string(src: str, name: str) -> str:
     """`const NAME = "…";` の字。無ければ空。**注釈は先に落とすこと。**"""
     m = re.search(rf"\b{re.escape(name)}\b[^=\n]*=\s*[\"'`]", src)
@@ -798,3 +829,165 @@ def read_ahead_countries(src: str) -> ArrayRead:
     決まりなので、ここが持っているのは名前と旗の鍵と「着いた日」だけ。
     """
     return read_array(src, "AHEAD_COUNTRIES", keys=("slug", "name", "entered"))
+# ---------------------------------------------------------------- 旅程（nordic.ts）
+
+# 旅程1日ぶんで、読む側がみんな使う欄。**ここに無い欄は落ちる**
+TRIP_DAY_KEYS = ("id", "date", "city", "stay")
+
+# 区間（`ROUTE`）で、読む側がみんな使う欄。**ここに無い欄は落ちる。**
+# 街の名はここと `DAYS` にしか無く、`date` と `enters`（この区間でどの国に
+# 入るか）は `python/stays.py` が「その日どの国にいたか」を出すのに使う
+TRIP_LEG_KEYS = ("id", "from", "to", "stay", "date", "enters")
+
+# 添え書きを落とす。`site/content/nordic.ts` の `cityName` と同じ決め
+# （「ストックホルム（友だちの家に7泊）」→「ストックホルム」）。
+# **両方に同じ式を書いているのは、片方が TypeScript で読めないから。**
+# 向こうを変えたらここも変える、と `nordic.ts` 側にも書いてある
+_CITY_TAIL = re.compile(r"（.*$")
+
+
+def city_name(s: str) -> str:
+    """街の名から添え書きを落とす。`nordic.ts` の `cityName` と同じ。"""
+    return _CITY_TAIL.sub("", s).strip()
+
+
+@dataclass(frozen=True)
+class TripDay:
+    """旅程の1日。**判定はしない。字をそのまま持つ。**"""
+
+    id: str
+    date: str
+    # その日の朝いる街。**着く先ではない**（`site/app/nordic/day/[n]/page.tsx` の
+    # `sunCity()` と同じ決め——区間があれば1本目の `from`、無ければ `city`）。
+    # 取れなければ空。**ここだけ添え書きを落としてある**（`city_name`）
+    wakes_in: str = ""
+    # 泊まる先と、その日の `city`。**字のまま**（「ストックホルム（友だちの家）」の
+    # 括弧も付いたまま）。落としたい側は `city_name()` を通す——
+    # `python/stays.py` は括弧の付いた字から自分で落とす決まりを持っているので、
+    # ここで先に落とすと、あちらの決まりが二重にかかる
+    stay: str = ""
+    city: str = ""
+    # その日に通る区間の id。**書いてある順**（`legs: [leg("a-b"), leg("b-c")]`）
+    legs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TripRead:
+    """旅程を読んだ結果。**判定はしない。数だけ添える。**"""
+
+    days: list[TripDay] = field(default_factory=list)
+    # 旅のあいだに足をつける街。**並びは通る順**（`VISIT_CITIES` と同じ作り）
+    cities: list[str] = field(default_factory=list)
+    # 寄るかもしれない街（`maybe`）。**`cities` からは引いていない。**
+    # 引くかどうかは呼ぶ側が決める——地図を焼くほうは引く（行くと決まって
+    # いない街の地図を焼いて一度叱られている。`docs/island-misses.md` #4）が、
+    # 「旅程に出てくる街」として数える側は引かない
+    maybe: list[str] = field(default_factory=list)
+    # ファイルが名乗っている日の数（`DAYS` の中の、いちばん外側の `{…}` の数）。
+    # **読めた数ではない。** これと `len(days)` の差が読み落とし。
+    #
+    # **`id: "` を数えない。** 日の中には分かれ道の選択肢
+    # （`fork.options` の `{ id: "trakai", … }`）が入れ子で在るので、
+    # 字で数えると 17日のファイルが 19 を名乗る。
+    # 数えるのは `count_objects()`——**`objects()` を通らない道**で深さを数える。
+    # `len(objects(…))` で数えると、`objects()` が1件落とした日に名乗りも
+    # 1つ減って、**読み落としが永久に 0 になる**（#204 の決めごと3）。
+    # **日付を持たない行も読み落としに数える**——この表を読むのは
+    # 日の出を焼くほうと見張りで、どちらも日付の無い日は扱えない
+    declared: int = 0
+    # 区間（`ROUTE`）。`id` → `TRIP_LEG_KEYS` の欄。**並びは書いてある順。**
+    # 日の出を焼くほうは `days` しか見ないが、「その日どの国にいたか」を出す側は
+    # `enters`（この区間でどの国に入るか）と `date` が要る（`python/stays.py`）
+    legs: dict[str, dict[str, str]] = field(default_factory=dict)
+    # ファイルが名乗っている区間の数（`ROUTE` の中の、いちばん外側の `{…}` の数）。
+    # **日と同じ理由で `{}` を数える**（入れ子の `fork.options` も `id:` を持つ）
+    legs_declared: int = 0
+
+    @property
+    def missed(self) -> int:
+        """名乗っているのに読めなかった日の数。**0 でなければ呼ぶ側が止める。**"""
+        return self.declared - len(self.days)
+
+    @property
+    def legs_missed(self) -> int:
+        """名乗っているのに読めなかった区間の数。**0 でなければ呼ぶ側が止める。**
+
+        日が全部読めていても、区間が1本落ちればその日に入った国が消える
+        （`python/stays.py`）。**日と別に数える。**
+        """
+        return self.legs_declared - len(self.legs)
+
+
+def read_trip(src: str) -> TripRead:
+    """旅程（`site/content/nordic.ts`）から、日と街を読む。
+
+    **出どころを2つにしない。** 日の出の表を焼くほうも、焼き込みが古く
+    なっていないかを見る見張りも、ここ1本から引く。別々に字を読むと、
+    `chapters.ts` を3通りに読んで北欧だけが落ちたのと同じことが起きる
+    （このファイルの頭）。
+
+    街の並びは `nordic.ts` の `VISIT_CITIES` と同じ作り——`ROUTE` の
+    `from` / `to` / `stay` と `DAYS` の `city` / `stay` を、出てくる順に。
+    **`maybe`（寄るかもしれない街）は `cities` に入れない。** 寄ると決まって
+    いない街のぶんまで焼くと、行かない街の日の出が表に並ぶ。
+    `maybe` そのものは別の欄で返す——地図を焼くほう（`tools/nordic/geocode.py`）は
+    「`cities` に出てきたが `maybe` にも在る街」を落とす決まりを持っている。
+
+    Args:
+        src: `site/content/nordic.ts` の中身そのもの
+
+    Returns:
+        `TripRead`。**`missed` を見ずに `days` だけ使わないこと**
+    """
+    code = code_only(src)
+    route_body = array_body(code, "ROUTE")
+    days_body = array_body(code, "DAYS")
+
+    legs: dict[str, dict[str, str]] = {}
+    cities: list[str] = []
+    maybe: list[str] = []
+
+    def add(name: str) -> None:
+        c = city_name(name)
+        if c and c not in cities:
+            cities.append(c)
+
+    def add_maybe(obj: str) -> None:
+        for name in list_field(obj, "maybe"):
+            c = city_name(name)
+            if c and c not in maybe:
+                maybe.append(c)
+
+    for obj in objects(route_body):
+        f = fields(obj)
+        if not f.get("id"):
+            continue
+        legs[f["id"]] = {k: f.get(k, "") for k in TRIP_LEG_KEYS}
+        for k in ("from", "to", "stay"):
+            if f.get(k):
+                add(f[k])
+        add_maybe(obj)
+
+    days: list[TripDay] = []
+    for obj in objects(days_body):
+        f = fields(obj)
+        if not f.get("id") or not f.get("date"):
+            continue
+        # その日の区間。`legs: [leg("katowice-warszawa")]` と書いてあるが、
+        # `list_field()` は角括弧の中の**文字列リテラルを並んでいる順に**返すので、
+        # 関数の呼び出しごしでも id が取れる（`leg(` のほうは字ではないので出ない）
+        ids = list_field(obj, "legs")
+        first = next((legs[i] for i in ids if i in legs), None)
+        wakes = city_name(first["from"]) if first else city_name(f.get("city", ""))
+        days.append(TripDay(
+            id=f["id"], date=f["date"], wakes_in=wakes,
+            stay=f.get("stay", ""), city=f.get("city", ""), legs=tuple(ids),
+        ))
+        for k in ("city", "stay"):
+            if f.get(k):
+                add(f[k])
+        add_maybe(obj)
+
+    return TripRead(days=days, cities=cities, maybe=maybe,
+                    declared=count_objects(days_body),
+                    legs=legs, legs_declared=count_objects(route_body))

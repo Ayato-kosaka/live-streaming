@@ -293,9 +293,16 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
                       '  {\n    icon: "b",\n  },\n];\n',
         "chapters.ts": CHAPTERS_OK if chapters is None else chapters,
         "countries.ts": COUNTRIES_OK if countries is None else countries,
-        # 先ぶんの表。章 `nordic` が終わっているので、最終日まで在れば緑
-        "nordic.ts": _ts(["2026-09-12", "2026-09-27"]),
-        "nordicSun.ts": _ts(["2026-09-12", "2026-09-27"]),
+        # 先ぶんの表。章 `nordic` が終わっているので、最終日まで在れば緑。
+        # **`DAYS` の形で置く**（日の出の表の上流になるので、
+        # `python/ts_read.py` の `read_trip` が日を読める形でないと鍵が0件になる）
+        "nordic.ts": 'export const DAYS: Day[] = [\n'
+                     '  {\n    id: "day-1",\n    date: "2026-09-12",\n  },\n'
+                     '  {\n    id: "day-2",\n    date: "2026-09-27",\n  },\n];\n',
+        # 旅程から焼く表（①b）。**旅程の日が全部在れば緑**
+        "nordicSun.ts": 'export const SUN_BY_DAY = {\n'
+                        '  "2026-09-12": {\n  },\n'
+                        '  "2026-09-27": {\n  },\n};\n',
         # 旅ごとに取り直す写し（`SNAP`）。終わった旅のうちに取ってある
         "nordicShops.ts": _ts(["2026-09-13"]),
         # 章を持たない先ぶんの表（`COVERS` / `ENDLESS`）。先の予定が1件は要る

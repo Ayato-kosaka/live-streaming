@@ -27,7 +27,12 @@ import urllib.request
 # 回したときに本体（master）の名簿を読んで、**枝で足した住人が落ちる**
 # （`docs/island-misses.md` #129 / #131）
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from repo import repo_path  # noqa: E402
+from repo import repo_path, repo_root  # noqa: E402
+
+sys.path.insert(0, str(repo_root() / "python"))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+from ts_read import count_keys, fields, objects, read_array, read_map  # noqa: E402
 
 SRC = repo_path("site/content/residents.ts")
 VOICES = repo_path("site/content/voices.ts")
@@ -37,6 +42,47 @@ KITCHEN_TALK = repo_path("site/content/kitchenTalk.ts")
 SHORTS = repo_path("site/content/shorts.ts")
 OUT = "/tmp/avatars"
 UA = {"User-Agent": "AyatoIslandBot/1.0 (design reference study)"}
+
+
+def _keys(path: str, name: str, key: str) -> list:
+    """焼き込みの並びから、欄を1つぶん。**読み落としたら止める。**
+
+    字を読むのは `python/ts_read.py` の1本だけ（`docs/island-misses.md` #204）。
+    ここは前 `icon:\\s*"([^"]+)"` のように**深さを見ずに**拾っていた。
+    いまの名簿は1人1行なので当たっていたが、落ちたぶんは黙って枚数が減るだけで、
+    **「本番と同じ絵で撮った」つもりの絵が1枚ずつ ayato.png に落ちる。**
+    """
+    got = read_array(open(path, encoding="utf-8").read(), name,
+                     keys=(key,), id_key=key)
+    if got.declared == 0:
+        raise SystemExit(f"{path} の {name} が空です（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"{path} の {name} の {got.declared} 件のうち {got.missed} 件を読み落としました"
+        )
+    return [r[key] for r in got.rows]
+
+
+def _map_keys(path: str, name: str, key: str) -> list:
+    """`Record<string, X[]>` の表の、**中の並びぜんぶ**から欄を1つぶん。
+
+    `shorts.ts` の `SHORTS` は「章 → ショートの並び」なので、
+    `read_array()` では取れない。表を鍵ごとに開いて、中の `{…}` を読む。
+    """
+    src = open(path, encoding="utf-8").read()
+    rows = read_map(src, name)
+    if not rows:
+        raise SystemExit(f"{path} の {name} が空です（置き場が変わった？）")
+    out, want = [], 0
+    for _slug, body in rows:
+        want += count_keys(body, key)
+        out += [v for o in objects(body) if (v := fields(o).get(key, ""))]
+    # **止め金。** 落ちたぶんは黙って枚数が減るだけ（`_keys()` と同じ理由）
+    if want != len(out):
+        raise SystemExit(
+            f"{path} の {name} が名乗っている {want} 件のうち {len(out)} 件しか読めていません"
+        )
+    return out
 
 
 def get(url: str, dst: str) -> bool:
@@ -77,7 +123,7 @@ def thumbs() -> None:
     """
     out = f"{OUT}/yt-thumb"
     os.makedirs(out, exist_ok=True)
-    ids = re.findall(r'id:\s*"([\w-]{6,})"', open(SHORTS, encoding="utf-8").read())
+    ids = _map_keys(SHORTS, "SHORTS", "id")
     got = sum(get(f"https://i.ytimg.com/vi/{i}/hqdefault.jpg", f"{out}/{i}.jpg") for i in ids)
     print(f"{got}/{len(ids)} 枚（ショートのサムネイル） -> {out}")
 
@@ -111,7 +157,7 @@ def main() -> None:
     # **どの枝の名簿を読んだか**を先に言う。落としてきた枚数だけ出しても、
     # それが本体の名簿なのか自分の枝の名簿なのかは出力から分からない（#131）
     print(f"名簿の出どころ: {SRC}")
-    ids = re.findall(r'icon:\s*"([^"]+)"', open(SRC, encoding="utf-8").read())
+    ids = _keys(SRC, "RESIDENTS", "icon")
     got = 0
     for i in ids:
         dst = f"{OUT}/{i}.png"
