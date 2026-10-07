@@ -18,7 +18,8 @@ import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
 import { REMOTE_VIEW_EVENT, remoteView } from "@/lib/remote";
-import { daysUntil, nextPlan } from "@/content/plans";
+import { daysUntil } from "@/content/plans";
+import { leadPlan } from "@/lib/leadPlan";
 import { NOW_FALLBACK } from "@/content/site";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
 import { placeWord } from "@/lib/stay";
@@ -499,7 +500,11 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
        そこで島が変わらないと、島の絵は現実と同期していないことになる。 */
     const read = () => {
       const now = new Date();
-      setDays(daysUntil(nextPlan(now)?.date, now));
+      /* 札に出す「あと何日」。**選ぶのは `lib/leadPlan.ts`。**
+         `content/plans.ts` の `nextPlan()` は先が0件になると行ってきた企画を
+         返すので、ここに渡すと過去の日付から数えることになる（#673）。
+         先が0件なら `null`——下の札は `days >= 0` でしか出さないので消える。 */
+      setDays(daysUntil(leadPlan(now)?.date, now));
       const n = todayNews(now);
       setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
       setOnAir(readNight(now).onAir);

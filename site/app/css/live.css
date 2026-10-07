@@ -821,6 +821,28 @@
 /* ベルを置くときは、札の中の短い金の棒を消す。合図が2つになるため */
 .nextup-eyebrow.has-bell { padding-left: var(--sp-2); gap: var(--sp-2); }
 .nextup-eyebrow.has-bell::before { display: none; }
+/* **日にちの決まった企画が1つも無い日の紙。**
+   先の予定が0件なのは正常な状態（あやと 2026-10-07 / #673「とくになし」）。
+   ここは押すものではないので、**厚みも落ちる影も付けない**
+   （`docs/island-world.md` 3.4）。押せるのはすぐ下の「ぜんぶ見る」1枚だけ。
+   背は、企画の札（`.nextup-card`）より低い——無いものに場所を取らせない。 */
+.nextup-none {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-3);
+  background: var(--paper);
+  box-shadow: none;
+}
+.nextup-none b { font-size: var(--fs-body); font-weight: 900; line-height: var(--lh-body); }
+.nextup-none i {
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
 /* 予定をぜんぶ見にいく口。札を押すと1つの企画に入ってしまうので、別に置く */
 .nextup-all {
   display: flex;
