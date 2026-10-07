@@ -61,6 +61,25 @@
  *   nosrcset 描かれた絵だけ見て、`srcset` の候補を見ない（#122 の形が出ない）
  *   nofetch  サーバに聞かず、描かれたかどうかだけで決める（畳みの中が見えない）
  *   noh1 / nojs / noover / nolink   その1つを見ない
+ *   nopublic `public/` の行き先を足さない（**直す前の姿。**
+ *            `/nordic/review` が毎回リンク切れとして挙がる）
+ *
+ * ## リンクの行き先は、2つの山の合わせ
+ *
+ * 本番（Firebase Hosting）が配る `dist/` は、**`public/*` を写したうえに
+ * `site/out/.` を重ねたもの**（`package.json` の `copy-public` /
+ * `build:island`）。ここは書き出したもの（`site/.next-*`）だけを配って
+ * 歩くので、**`public/` に在る面を知らない。**
+ *
+ * そのせいで `/nordic` → `/nordic/review` が**毎回リンク切れとして挙がって
+ * いた**（本番は 200。`public/nordic/review.html`）。2026-10-07 に担当5人が
+ * 全員これを「既存の偽陽性です」と報告してきた。
+ * **毎回1件の嘘が出ていると、本物の赤がそこに埋もれる。**
+ *
+ * いまは `public/` を**実際に歩いて**、在る `.html` を行き先に足す
+ * （`crawltargets.mjs`）。**名指しで黙らせていない**ので、
+ * ファイルが消えれば足されず、そのまま赤くなる。
+ * 置き場は `PUBDIR=` で差し替えられる（既定はリポジトリの `public`）。
  */
 import { chromium } from "playwright-core";
 import { readdirSync, statSync } from "node:fs";
@@ -69,6 +88,10 @@ import { createServer } from "node:http";
 import { join, dirname, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fromRoot, repoPath } from "./repo.mjs";
+/* 行き先が在るかの判定は1か所から。**本番は `public/*` に `site/out/.` を
+   重ねたものを配る**ので、書き出したものだけ見ると `public/` の面が
+   ぜんぶリンク切れに見える（`crawltargets.mjs` の頭） */
+import { brokenLinks, publicTargets, targetSet } from "./crawltargets.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** 書き出したものを配る静的サーバのポート。並列作業では別々にする。 */
@@ -100,6 +123,9 @@ const skip = {
   js: BREAK === "nojs",
   over: BREAK === "noover",
   link: BREAK === "nolink",
+  /* `nopublic` … `public/` の行き先を足さない（**直す前の姿。**
+     `/nordic/review` が毎回リンク切れとして挙がる。対照の1枚が落ちる） */
+  pub: BREAK === "nopublic",
 };
 
 function walk(d, base = "") {
@@ -113,12 +139,6 @@ function walk(d, base = "") {
   return out;
 }
 
-/** リンクと面を同じ綴りに揃える。`/about.html` も `/about/` も `/about` */
-const norm = (s) => {
-  let x = String(s).split("#")[0].split("?")[0];
-  x = x.replace(/\.html$/, "").replace(/\/index$/, "").replace(/\/$/, "");
-  return x || "/";
-};
 
 /* ── 絵の生死は、配っているサーバに直に聞く ───────────────────────────
    Content-Type には頼らない。`python3 -m http.server` は拡張子で名前を付けるので、
@@ -366,6 +386,11 @@ const FIXTURES = [
   ["/jserr.html", ["JS"]],
   ["/wide.html", ["横あふれ"]],
   ["/deadlink.html", ["リンク切れ"]],
+  /* `public/` の側に在る面への行き先。**挙げてはいけない**（本番は 200）。
+     `nopublic` で足すのをやめると、ここが落ちる＝直す前の姿 */
+  ["/publiclink.html", []],
+  // 同じ段に在りそうで無い先。**「その段は見ない」で黙らせていたら落ちる**
+  ["/deadpublic.html", ["リンク切れ"]],
   ["/stub.html", []],
 ];
 
@@ -403,7 +428,7 @@ async function makeCtx() {
 }
 
 /** 面をひと組み歩いて、面ごとの「見つかったもの」を返す。対照にも本番にも同じものを当てる */
-async function sweep(base, pages, { quiet = false, known = null } = {}) {
+async function sweep(base, pages, { quiet = false, known = null, pubDir = null } = {}) {
   const ctx = await makeCtx();
   const p = await ctx.newPage();
   const seen = [];
@@ -444,15 +469,19 @@ async function sweep(base, pages, { quiet = false, known = null } = {}) {
   // 島の中のリンク切れ
   // `ONLY=` で面を絞っても、**リンクの行き先は島ぜんぶ**と突き合わせる。
   // 絞った側だけを表にすると、残りが全部「島の中に無い先」になる
-  const all = new Set((known || pages).map(norm));
+  /* **行き先は2つの山の合わせ。** 書き出したものと、`public/` に在る面
+     （本番の `dist/` は `public/*` に `site/out/.` を重ねたもの）。
+     **名指しで黙らせていない**ので、`public/` のファイルが消えたら
+     足されず、そのまま赤くなる（`crawltargets.mjs`） */
+  const fromPublic = skip.pub || !pubDir ? [] : publicTargets(pubDir);
+  const all = targetSet(known || pages, fromPublic);
   const broken = [];
   if (!skip.link) {
     for (const s of seen)
-      for (const l of new Set(s.links.map(norm)))
-        if (!all.has(l)) {
-          broken.push({ page: s.page, l });
-          per.get(s.page)?.f.push({ kind: "リンク切れ", t: `島の中に無い先: ${l}` });
-        }
+      for (const l of brokenLinks(s.links, all)) {
+        broken.push({ page: s.page, l });
+        per.get(s.page)?.f.push({ kind: "リンク切れ", t: `島の中に無い先: ${l}` });
+      }
   }
 
   if (!quiet)
@@ -464,7 +493,7 @@ async function sweep(base, pages, { quiet = false, known = null } = {}) {
         `${f.length ? "NG" : "ok"} ${page} [${e.v.status}] h1=${e.v.info.h1}` + (f.length ? "\n      " + f.map((x) => x.t).join("\n      ") : ""),
       );
     }
-  return { per, tally, unseen, broken, seenPages: seen.length };
+  return { per, tally, unseen, broken, seenPages: seen.length, fromPublic };
 }
 
 function fail(msg) {
@@ -492,7 +521,9 @@ function fail(msg) {
   const got = await sweep(
     cbase,
     FIXTURES.map(([f]) => f),
-    { quiet: true },
+    // `public/` の代役は**対照の台のほう**（`crawlcheck/pub/`）。本物を渡すと、
+    // 本物のファイルが消えたときに落ちるのが「リンク切れ」ではなく「対照が壊れた」になる
+    { quiet: true, pubDir: join(dir, "pub") },
   );
   console.log("── 対照（わざと壊した面を、拾えるか／拾わずにいられるか）");
   let miss = 0;
@@ -524,7 +555,12 @@ const everyPage = walk(DIST).sort();
 const pages = everyPage.filter((x) => !ONLY.length || ONLY.includes(x));
 if (!pages.length) await fail(`\n${DIST} に面が無い。先に書き出してください（tools/build.sh）。`);
 
-const { per, tally, unseen, broken, seenPages } = await sweep(BASE, pages, { known: everyPage });
+/* **行き先には `public/` の面も入れる。** 本番の `dist/` は `public/*` を
+   写したうえに `site/out/.` を重ねたもので、`public/nordic/review.html` は
+   Next の書き出しには無い。渡さないと毎回1件、嘘の NG が出る */
+const PUBDIR = fromRoot(process.env.PUBDIR || "public");
+const { per, tally, unseen, broken, seenPages, fromPublic } =
+  await sweep(BASE, pages, { known: everyPage, pubDir: PUBDIR });
 await b.close();
 
 const bad = [...per.values()].filter((e) => e.f.length).length;
@@ -557,6 +593,12 @@ if (skip.img) {
 }
 console.log(`  面の NG                     ${bad} / ${seenPages}`);
 console.log(`  島の中のリンク切れ           ${broken.length ? [...new Set(broken.map((x) => x.l))].join(", ") : "none"}`);
+/* **何を行き先に足したかを出す。** 0件なら `public/` を見られていない
+   （置き場の名前が変わった・渡し忘れた）ので、数で分かるようにする */
+console.log(
+  `  うち public/ の面           ${fromPublic.length}件${skip.pub ? "（BREAK=nopublic で足していない）" : ""}` +
+    `${fromPublic.length ? `: ${fromPublic.join(", ")}` : ` ← ${PUBDIR} に .html が無い`}`,
+);
 
 if (unseen.length) process.exit(2);
 if (!seenPages) {

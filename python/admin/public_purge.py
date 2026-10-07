@@ -34,8 +34,9 @@ ARGS 例:
 いちばん取り返しのつかないものが、いちばん守られていない。
 
 止まっていた理由は #289 と同じで、**Actions のサービスアカウントに
-Storage の権限が1つも無い**（#296 で あやとに `roles/storage.objectViewer` を
-付けてもらう依頼を出したまま、旅に出てしまっている）。
+Storage の権限が1つも無い**（#296 で `roles/storage.objectViewer` を頼んだが、
+**付けずに済んだ。** 2026-09-13 に合言葉つき URL の道で 340MB ぶんを退避へ
+入れて、#296 は閉じた。残っているのは `purged/public-bucket/` の2件・23KB だけ）。
 
 ところが #289 で、**Functions のサービスアカウントなら公開バケットに対して
 全部できる**ことが本番で分かった。写真が入っているのは**別のバケット**
@@ -48,7 +49,9 @@ Storage の権限が1つも無い**（#296 で あやとに `roles/storage.objec
 **ファイル名は1つも出ない**（口がそもそも返さない）。
 
 `storage.objects.list` が「できる」と出たら、その道で退避が組める。
-「できない」と出たら、#296 の依頼（あやとの1分の操作）を待つしかない。
+「できない」と出ても退避は止まらない（**索引から合言葉つき URL を辿る道**で
+入っている。`docs/island-backup.md`）。ここで測っているのは
+**索引に載っていない実体にも届く道があるか**のほう。
 
 ## 内訳が要る（2026-09-13）
 
@@ -216,17 +219,18 @@ def photos(got: dict) -> None:
     # **判定は list だけで出さない。** 退避には中身を読む get が要る
     can = can or {}
     if can.get("storage.objects.list") and can.get("storage.objects.get"):
-        log.info("  → この道で写真の退避が組めます（#296 の依頼は待たなくてよい）")
+        log.info("  → この道で写真の退避が組めます（権限を足さなくてよい）")
     elif can.get("storage.objects.list"):
         # **数えられるが、読めない。** 退避に要るのは中身のほう。
         # ここを list だけで「組めます」と言って、1度まちがえている。
         log.info("  → 数えられますが、**中身を読めません**（objects.get が無い）。")
         log.info("     退避に要るのは中身のほうなので、この道だけでは組めません。")
-        log.info("     #296 の依頼（あやとの操作）は生きたままです。")
+        log.info("     索引から合言葉つき URL を辿る道のほうは動いています（docs/island-backup.md）。")
+        log.info("     この道も通したいなら、roles/storage.objectViewer 相当が要ります。")
     else:
         if d.get("why"):
             log.info("  止まった種類: %s", d.get("why"))
-        log.info("  → この道では数えられません。#296 の依頼（あやとの操作）待ちです")
+        log.info("  → この道では数えられません（roles/storage.objectViewer 相当が要ります）")
 
 
 def look(token: str) -> dict:
