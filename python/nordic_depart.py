@@ -58,6 +58,11 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("depart")
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
@@ -71,48 +76,79 @@ DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def block(src: str, slug: str) -> tuple[int, int]:
-    """`chapters.ts` の中で、その章の { … } がどこからどこまでか。"""
-    at = src.find(f'slug: "{slug}",')
+    """`chapters.ts` の中で、その章の `{ … }` がどこからどこまでか。
+
+    **書き込むためだけの口。** 読むのは `ts_read` に任せてあるが、`to: ""` を
+    埋めるときは「元の字のどこを触るか」が要る。`ts_read.code_only()` は
+    長さを変えないので、注釈を落とした字で測った位置はそのまま元の字に当たる。
+    """
+    code = ts_read.code_only(src)
+    at, end = ts_read.array_span(code, "CHAPTERS")
     if at < 0:
-        log.error("chapters.ts に slug: \"%s\" がありません", slug)
+        log.error("chapters.ts に CHAPTERS の並びがありません")
         sys.exit(1)
-    start = src.rfind("{", 0, at)
-    depth = 0
-    for i in range(start, len(src)):
-        if src[i] == "{":
-            depth += 1
-        elif src[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return start, i + 1
-    log.error("slug: \"%s\" の { } が閉じていません", slug)
+    body = code[at + 1 : end]
+    for i, e in ts_read.object_spans(body):
+        if ts_read.fields(body[i + 1 : e]).get("slug") == slug:
+            return at + 1 + i, at + 1 + e + 1
+    log.error("chapters.ts に slug: \"%s\" がありません", slug)
     sys.exit(1)
 
 
+def chapters(src: str) -> list[dict]:
+    """章ぜんぶ。**読み落としがあれば止める。**
+
+    **字を読むのは `python/ts_read.py` の1本だけ。** ここは前、自前に
+    `slug: "…"` を探して `{ }` を数え、欄ごとに正規表現を当てていた。
+    `chapters.ts` を読む道具が3つあって北欧が片方から落ちた話と同じ形
+    （`ts_read.py` の頭）。読み方を増やせば、その数だけ別々に腐る。
+    """
+    got = ts_read.read_chapters(src)
+    if got.declared == 0:
+        log.error("chapters.ts に章が1つもありません（置き場が変わった？）")
+        sys.exit(1)
+    if got.missed:
+        log.error("chapters.ts の章 %d 件のうち %d 件を読み落としました",
+                  got.declared, got.missed)
+        sys.exit(1)
+    return got.rows
+
+
 def field(src: str, slug: str, name: str) -> str:
-    """その章の項目の、いまの値。"""
-    a, b = block(src, slug)
-    m = re.search(rf'\n\s*{name}: "([^"]*)",', src[a:b])
-    return m.group(1) if m else ""
+    """その章の項目の、いまの値。無ければ空。"""
+    row = next((c for c in chapters(src) if c["slug"] == slug), None)
+    if row is None:
+        log.error("chapters.ts に slug: \"%s\" がありません", slug)
+        sys.exit(1)
+    return row.get(name, "")
 
 
 def chapter_countries(src: str, slug: str) -> list[str]:
     """その章の `countries: [...]` に並んでいる slug。"""
-    a, b = block(src, slug)
-    m = re.search(r"\n\s*countries: \[([^\]]*)\]", src[a:b])
-    return re.findall(r'"([a-z-]+)"', m.group(1)) if m else []
+    row = next((c for c in chapters(src) if c["slug"] == slug), None)
+    if row is None:
+        log.error("chapters.ts に slug: \"%s\" がありません", slug)
+        sys.exit(1)
+    return row["countries"]
 
 
 def missing_from_countries_ts(slugs: list[str]) -> list[str]:
     """`countries.ts` の `COUNTRIES` にまだ無い slug。
 
-    見るのは `COUNTRIES` の行（`    slug: "…",`）だけ。`AHEAD_COUNTRIES`
-    （これから歩く国）は1行で書いてあるので、この形には当たらない。
-    **当ててしまうと「これから歩く国」を「歩いた国」と読んで、
+    見るのは `COUNTRIES` だけ。`AHEAD_COUNTRIES`（これから歩く国）は数えない。
+    **数えてしまうと「これから歩く国」を「歩いた国」と読んで、
     この見張りが素通りする。**
+
+    前はここも自前の正規表現（`^    slug: "…",$`）で、**字下げ4つ**という
+    見た目だけで COUNTRIES と AHEAD を見分けていた。`ts_read` は並びの名前で
+    切るので、字下げが変わっても見分けが外れない。
     """
-    text = COUNTRIES_TS.read_text(encoding="utf-8")
-    have = set(re.findall(r'^    slug: "([a-z-]+)",$', text, re.M))
+    got = ts_read.read_countries(COUNTRIES_TS.read_text(encoding="utf-8"))
+    if got.missed:
+        log.error("countries.ts の国 %d 件のうち %d 件を読み落としました",
+                  got.declared, got.missed)
+        sys.exit(1)
+    have = {c["slug"] for c in got.rows}
     return [s for s in slugs if s not in have]
 
 

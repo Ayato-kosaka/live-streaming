@@ -50,8 +50,13 @@ YouTube 側にチャットの記録そのものが無い。買い出しの日は
 
 import argparse
 import json
-import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
@@ -119,28 +124,63 @@ def load(name: str):
 
 
 def recipes() -> list[dict]:
-    """recipes.ts から slug と配信の対応だけを読む。TS を1つの正にするため、写しを作らない。"""
-    src = RECIPES_TS.read_text(encoding="utf-8")
-    out = []
-    for block in src.split('\n  {\n    slug: "')[1:]:
-        slug = block[: block.index('"')]
-        streams = [
-            {"label": m[0], "date": m[1], "v": m[2]}
-            for m in re.findall(
-                r'\{ label: "([^"]+)", date: "([^"]+)", videoId: "([^"]+)"', block
-            )
-        ]
-        out.append({"slug": slug, "streams": streams})
-    return out
+    """recipes.ts から slug と配信の対応だけを読む。TS を1つの正にするため、写しを作らない。
+
+    **字を読むのは `python/ts_read.py` の1本だけ。** ここは前、
+    `src.split('\\n  {\\n    slug: "')` で塊に割って、塊ごとに
+    `{ label: "…", date: "…", videoId: "…"` を当てていた。
+    **欄が3つ、この順で隣り合っていること**を当てにしていたので、
+    `label` と `date` のあいだに注釈が1行入るだけでその配信が黙って消える
+    （`chapters.ts` の北欧がそれで消えた。`ts_read.py` の頭）。
+    """
+    got = ts_read.read_array(
+        RECIPES_TS.read_text(encoding="utf-8"),
+        "RECIPES",
+        keys=("slug",),
+        nested={"streams": ("label", "date", "videoId")},
+    )
+    # **止め金。** 読み落としは例外を出さず、料理が黙って減るだけ。
+    # 減ると、その料理の回は `kitchenTalk.ts` に1行も焼かれない
+    if got.declared == 0:
+        raise SystemExit("recipes.ts に料理が1つもありません（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"recipes.ts の {got.declared} 件のうち {got.missed} 件を読み落としました"
+        )
+    return [
+        {
+            "slug": r["slug"],
+            "streams": [
+                {"label": x["label"], "date": x["date"], "v": x["videoId"]}
+                for x in r["streams"]
+                if x["videoId"]
+            ],
+        }
+        for r in got.rows
+    ]
 
 
 def resident_icons() -> dict[str, str]:
-    """チャンネルID → キャラクターの絵の id（residents.ts）。"""
-    src = RESIDENTS_TS.read_text(encoding="utf-8")
-    return {
-        m[1]: m[0]
-        for m in re.findall(r'icon: "([^"]+)".*?channel: "([^"]+)"', src)
-    }
+    """チャンネルID → キャラクターの絵の id（residents.ts）。
+
+    前はここも `icon: "…".*?channel: "…"` と、**2つの欄が同じ行にある**ことを
+    当てにしていた。名簿は1人1行で焼かれているので当たっていたが、
+    行の折り方が変わればその人が黙って消える。読むのは `ts_read` の1本に寄せた。
+    """
+    got = ts_read.read_array(
+        RESIDENTS_TS.read_text(encoding="utf-8"),
+        "RESIDENTS",
+        keys=("icon", "channel"),
+        id_key="icon",
+    )
+    if got.declared == 0:
+        raise SystemExit("residents.ts に住人が1人もいません（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"residents.ts の {got.declared} 人のうち {got.missed} 人を読み落としました"
+        )
+    # チャンネルIDの付いていない人（名乗りでしか結べていない人）は入れない
+    return {r["channel"]: r["icon"] for r in got.rows if r["channel"]}
 
 
 def icon_url(u: str) -> str:

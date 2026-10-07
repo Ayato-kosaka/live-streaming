@@ -299,69 +299,16 @@ def _field(slug: str, key: str) -> str:
 # そうしておかないと、仕込みで両側（鳴る／黙る）を当てられない。
 
 
-@dataclass(frozen=True)
-class CountryRead:
-    """`countries.ts` を読んだ結果。**判定はしない。数だけ添える。**"""
-
-    rows: list[dict] = field(default_factory=list)
-    declared: int = 0  # ファイルが名乗っている国の数（`slug: "` の数）
-
-    @property
-    def missed(self) -> int:
-        """名乗っているのに読めなかった数。**0 でなければ呼ぶ側が止める。**"""
-        return self.declared - len(self.rows)
-
-
-def read_countries(src: str) -> CountryRead:
-    """`countries.ts` から「国 → 滞在（`from` / `to`）」を読む。
-
-    **字を読むのは `python/ts_read.py` の部品**（`code_only` でコメントを
-    落とし、`array_body` で `COUNTRIES` を切り、`objects` と `fields` で
-    1国ずつ）。新しい読み方をここに書かない——`chapters.ts` が3通りに
-    読まれていたときに、北欧の章が片方からだけ落ちた（`ts_read.py` の頭）。
-
-    `stays` は入れ子なので `fields()` からは出てこない（あちらは
-    `note:` の本文に `to: "…"` と書いてあるのを欄と読まないように、
-    入れ子を飛ばす作りになっている）。ここだけ名指しで切り出す。
-
-    **読み落としは数で捕まえる。** 書き方が変われば落ちるのは避けられないので、
-    落ちたことが分かるようにする（`CountryRead.missed`）。
-
-    Args:
-        src: `site/content/countries.ts` の中身そのもの
-
-    Returns:
-        `CountryRead`。**`missed` を見ずに `rows` だけ使わないこと**
-    """
-    body = ts_read.array_body(ts_read.code_only(src), "COUNTRIES")
-    rows = []
-    for obj in ts_read.objects(body):
-        f = ts_read.fields(obj)
-        slug = f.get("slug")
-        if not slug:
-            continue
-        rows.append({"slug": slug, "name": f.get("name", ""),
-                     "stays": _stays_in(obj)})
-    return CountryRead(rows=rows, declared=len(ts_read.SLUG_RE.findall(body)))
-
-
-def _stays_in(obj: str) -> list[dict]:
-    """国1つぶんの `{…}` から `stays: [{ from, to }, …]` を取る。
-
-    `[` の対応は `ts_read.close_at` に任せる（文字列の中の括弧を数えない）。
-    `from` も `to` も**無ければ空の字**で返す——呼ぶ側に `.get()` を
-    書かせない（書かせると、綴り違いが「欄が無い」に化けて黙って通る）。
-    """
-    m = re.search(r"\bstays\s*:\s*\[", obj)
-    if not m:
-        return []
-    i = m.end() - 1
-    inner = obj[i + 1: ts_read.close_at(obj, i)]
-    out = []
-    for one in ts_read.objects(inner):
-        f = ts_read.fields(one)
-        out.append({"from": f.get("from", ""), "to": f.get("to", "")})
-    return out
+# **`countries.ts` を読むのは `ts_read.read_countries()`。** ここは前、同じものを
+# 自前に組み立てていた（`ts_read` の部品は借りていたが、組み立てはここ）。
+# `python/stays.py` にも別の組み立てがあって、**同じファイルを2通りに読んでいた。**
+# あちらは正規表現で `from → to → cities` の並びを当てにしていたので、注釈が
+# 1行挟まるとその国が丸ごと落ちる形だった（`ts_read.py` の頭と同じ轍）。
+#
+# **ここで名前だけ借りておく**のは、仕込みの写しを食わせられるようにするため
+# （字を渡せば国が返る形。置き場を決め打ちにしない）。
+read_countries = ts_read.read_countries
+CountryRead = ts_read.CountryRead
 
 
 def read_about_steps(src: str) -> str:
@@ -384,9 +331,7 @@ def read_place_stale_days(src: str) -> int:
     読めなかったら 0 を返して、呼ぶ側が**「数えられない」で止める。**
     既定値をここに置くと、あちらの書きかたが変わった日に黙ってすり替わる。
     """
-    m = re.search(r"\bPLACE_STALE_DAYS\s*(?::\s*number\s*)?=\s*(\d+)",
-                  ts_read.code_only(src))
-    return int(m.group(1)) if m else 0
+    return ts_read.const_int(ts_read.code_only(src), "PLACE_STALE_DAYS")
 
 
 # 島の便りの `week` の行頭（「9/27 ストックホルムを発つ」）。

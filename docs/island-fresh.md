@@ -101,13 +101,30 @@
 結ぶところは `python/build_residents.py` の `link()` **1か所だけ**が持っていて、
 `build_chapter_stats.py` もそこを呼ぶ。2か所で結ぶと、島と連なりで別の絵が出る。
 
-**`site/content/chapters.ts` を字で読むのも1か所だけ**（`python/ts_read.py`）。
-前はここが3通りあって、**そのうち1つだけが北欧の章を黙って落としていた**
-（`slug:` と `name:` のあいだに9行のコメントが挟まっているため）。
+**`site/content/*.ts` を字で読むのも1か所だけ**（`python/ts_read.py`）。
+前は `chapters.ts` だけで3通りあって、**そのうち1つだけが北欧の章を黙って
+落としていた**（`slug:` と `name:` のあいだに9行のコメントが挟まっているため）。
 `chapterStats.ts` にも `chapterStreams.ts` にも 9/12〜9/27 の配信が入らず、
-例外もログも出ないまま5日以上そのままだった。読む道具を増やさないこと。
-読み落としは `ChapterRead.missed`（名乗っている章の数と読めた数の差）で立つので、
-**呼ぶ側はそれを見て止める。**
+例外もログも出ないまま5日以上そのままだった。
+
+**章を1本に寄せても、ほかの本が同じことをしていた。** 2026-10-07 に数えたら、
+`site/content/*.ts` を自前に読んでいる場所が **13ファイルに23か所**あった
+（`stays.py` の国と旅程、`build_kitchen_talk.py` の料理と名簿、
+`build_legend_days.py` の伝説、`build_on_this_day.py` の山、
+`stale_content_watch.py` の鍵7本、`nordic_depart.py`、`upkeep_watch.py`、
+`admin/` の3本、`tools/nordic/geocode.py` の街、`tools/sprites/avatars.py` の2本）。
+どれも「欄が隣り合っていること」か「字下げの深さ」を
+当てにしていて、**注釈を1行挟むだけでその1件が黙って消える**形だった。
+23か所とも `ts_read.py` に寄せた（`site/lib/place.ts` の日数を読む1か所も）。
+**読む道具を増やさないこと。**
+
+読み落としは `missed`（名乗っている件数と読めた件数の差）で立つので、
+**呼ぶ側はそれを見て止める。** 見張りは2本ある。
+
+| 見張り | 何を見るか |
+| --- | --- |
+| `python/ts_read_selftest.py` | 章が読めるか・読み落としたら `missed` が立つか・呼ぶ側が止まるか |
+| `python/ts_readers_selftest.py` | **15本の焼き込みぜんぶ**で名乗りと読めた数が合うか・注釈を挟んでも落ちないか・**自前の読み手が生えていないか**（`python/` と `tools/` の数を `ALLOW` と突き合わせる） |
 
 **決められないものは結ばない。** 同じ鍵が2人に付いているとき、1つの絵に2つの
 チャンネルが当たるときは、どちらも候補に入れない。当てずっぽうで立たせると

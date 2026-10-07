@@ -60,6 +60,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -78,7 +79,6 @@ from stale_content_watch import (  # noqa: E402
     CONTENT,
     COVERS,
     KEY_FN,
-    KEY_RE,
     KEYS,
     LATEST,
     SHARE,
@@ -89,6 +89,7 @@ from stale_content_watch import (  # noqa: E402
     chapter_spans,
     iter_string_dates,
     judge,
+    keys_of,
     scan_dir,
 )
 
@@ -220,11 +221,32 @@ def _rewrite_dates(src: str, when: date) -> str:
     return "".join(out)
 
 
+# **仕込みを作るための字の当て方。** 見張りが読むほうは `keys_of()`（構造を
+# 歩いて読む）に寄せたので、ここは**別の読み方のまま**にしてある。
+# 同じ読み方で仕込んで同じ読み方で読み返すと、その読み方が本物に当たって
+# いなくても対照が通ってしまう（`_voiceless` の注と同じ理由）。
+# ここは「行を1本消す」だけなので、行の形を当てるほうが素直。
+PLANT_RE = {
+    "recipes.ts": re.compile(r'^\s+slug: "([^"]+)"'),
+    "kitchenTalk.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
+    "legends.ts": re.compile(r'^\s+slug: "([^"]+)"'),
+    "legendDays.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
+    "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"'),
+    "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)'),
+    "chatter.ts": re.compile(r'^\s+icon: "([^"]+)"'),
+    # 焼いた日の出の表の、日の鍵（`  "2026-09-11": {`）
+    "nordicSun.ts": re.compile(r'^\s+"(\d{4}-\d\d-\d\d)": \{'),
+}
+
+
 def _drop_key(src: str, name: str, key: str) -> str:
     """その本から鍵を1つ消す（行ごと）。`KEYS` の赤い側を作るのに使う。"""
-    rx = KEY_RE.get(name)
+    rx = PLANT_RE.get(name)
     if rx is None:
-        # `KEY_FN` で読む本（旅程）。鍵は字そのものなので、**その字が在る行**を落とす。
+        # **`PLANT_RE` に無い本は、`KEY_FN` で読む本だけ**（旅程）。
+        # ここに落ちてくる本が増えたら、仕込みの作り方を足し忘れている
+        assert name in KEY_FN, f"{name} の仕込みの作り方がありません（PLANT_RE に足す）"
+        # 鍵は字そのものなので、**その字が在る行**を落とす。
         # 旅程の日付は `ROUTE` と `NORDIC_LOG` にも同じ字で出るので、
         # そちらも一緒に落ちる——鍵が消えることだけが要るので、それでよい
         return "".join(ln for ln in src.splitlines(keepends=True)
@@ -234,13 +256,26 @@ def _drop_key(src: str, name: str, key: str) -> str:
     return "".join(lines)
 
 
+def _drop_stamp(src: str) -> str:
+    """`export const CHARACTER_BOX_BAKED = { … } as const;` を丸ごと外す。
+
+    **在りかを探すのは `ts_read`。** 仕込みを貼る前に、いま在る塊を外すため。
+    """
+    a, b = ts_read.object_span(ts_read.code_only(src), "CHARACTER_BOX_BAKED")
+    if a < 0:
+        return src
+    head = src.rfind("export const", 0, a)
+    tail = src.find(";", b)
+    return src[: head if head >= 0 else a] + src[(tail + 1) if tail >= 0 else b + 1 :]
+
+
 def _voiceless(src: str, name: str, roster: list[str], want: int) -> str:
     """名簿のうち**セリフの無い人が `want` 人**になるまで、`icon` の行を落とす。
 
     割合を数字で渡さず、**本物の `chatter.ts` から人を抜いて作る。**
-    数字で渡すと、読むほうの正規表現が本物に当たっていなくても通ってしまう。
+    数字で渡すと、読むほうが本物に当たっていなくても通ってしまう。
     """
-    voiced = [k for k in KEY_RE[name].findall(src) if k in set(roster)]
+    voiced = [k for k in keys_of(name, src) if k in set(roster)]
     have = len(roster) - len(voiced)
     for k in sorted(voiced)[: max(0, want - have)]:
         src = _drop_key(src, name, k)
@@ -257,12 +292,11 @@ def _facts(name: str, src: str) -> Facts:
         except ValueError:
             pass
     f.dates = sorted(seen)
-    # **読むほうと同じ順で引く**（`stale_content_watch.scan()`）。
-    # 片方だけ `KEY_FN` を見ていないと、仕込みの鍵が0件になって素通りする
-    if name in KEY_FN:
-        f.keys = KEY_FN[name](src)
-    elif name in KEY_RE:
-        f.keys = KEY_RE[name].findall(src)
+    # **読むほうと同じ口を通す**（`stale_content_watch.scan()` も `keys_of()`）。
+    # 仕込みを作るほう（`PLANT_RE`）と読み返すほうを**別の読み方にしてある**のは、
+    # 同じ読み方で仕込んで同じ読み方で読み返すと、その読み方が本物に
+    # 当たっていなくても対照が通ってしまうから（`_voiceless` の注と同じ理由）
+    f.keys = keys_of(name, src)
     if name == CHAPTERS_TS:
         f.chapters = chapter_spans(src)
         f.chapters_missed = ts_read.read_chapters(src).missed
@@ -683,7 +717,11 @@ export const CHAPTERS: Chapter[] = [
         for k in [k for k in base[up].keys if k not in set(base[name].keys)]:
             clean = _drop_key(clean, up, k)
         gone = base[name].keys[0]
-        dropped = _drop_key(src_of[name], name, gone)
+        # **焼いたときのことを書いた塊は、いったん丸ごと外す。** 下で仕込みを
+        # 貼るので、残しておくと `CHARACTER_BOX_BAKED` が1つのファイルに2つ
+        # 並ぶ。本物の焼き手（`tools/sprites/charbox.py`）は塊を**書き換える**
+        # ので、そんな字は本番には出ない。仕込みを本物と同じ形にしておく
+        dropped = _drop_stamp(_drop_key(src_of[name], name, gone))
         seen = dict(base)
         seen[up] = _facts(up, clean)
         seen[name] = _facts(name, dropped)
