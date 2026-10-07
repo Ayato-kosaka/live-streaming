@@ -481,9 +481,24 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         <filter id="nmDrop" x="-30%" y="-30%" width="160%" height="180%">
           <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.28" />
         </filter>
+        {/* **陸のかたちは1回だけ書く。** 岸の帯（影・浅瀬・泡・砂浜）は同じ線を
+            太さと色だけ変えて重ねたもので、素直に書くと 44KB の `d` が9枚ぶん
+            ——1枚の面で 400KB——焼かれる。書き出した HTML にはハイドレーション用の
+            写しも入るので、払うのはその倍。prefetch で隣の国を先読みすると、
+            見てもいない面のぶんまで同じ額を払う。
+            `<use>` は形だけを借りる。塗り・線の色・太さ・破線は**受け継がれる種類**の
+            指定なので、借りる側の class に書いてあるものがそのまま効く。 */}
+        <path id="nmLandShape" d={land} />
         <clipPath id="nmLandClip">
-          <path d={land} />
+          <use href="#nmLandShape" />
         </clipPath>
+        {/* 国のかたちは、草の塗りと境のにじみで2枚ずつ使う */}
+        {Object.entries(countries).map(([slug, d]) => (
+          <path key={slug} id={`nmC-${slug}`} d={d} />
+        ))}
+        {/* 森と山は、同じかたちをずらして3枚ずつ重ねる */}
+        <path id="nmHills" d={hills} />
+        <path id="nmWoods" d={woods} />
       </defs>
 
       {/* ---- 海 ---------------------------------------------------- */}
@@ -508,38 +523,38 @@ export default function RouteMapSvg({ here }: { here?: string }) {
       </g>
 
       {/* ---- 岸。沖から順に 影 → 浅瀬 → 泡 → 濡れた砂 --------------- */}
-      <path className="nm-landdrop" d={land} filter="url(#nmLandDrop)" transform="translate(3 7)" />
-      <path className="nm-shelf" d={land} filter="url(#nmShelf)" />
-      <path className="nm-shallow" d={land} />
-      <path className="nm-foam-lace" d={land} />
-      <path className="nm-foam" d={land} />
+      <use className="nm-landdrop" href="#nmLandShape" filter="url(#nmLandDrop)" transform="translate(3 7)" />
+      <use className="nm-shelf" href="#nmLandShape" filter="url(#nmShelf)" />
+      <use className="nm-shallow" href="#nmLandShape" />
+      <use className="nm-foam-lace" href="#nmLandShape" />
+      <use className="nm-foam" href="#nmLandShape" />
 
       {/* ---- 陸 ---------------------------------------------------- */}
       {/* 通らない国どうしの境は描かない。描くと政治の地図になって、
           通る6カ国が主役だということが伝わらなくなる。 */}
-      <path className="nm-land" d={land} fill="url(#nmLand)" />
-      {Object.entries(countries).map(([slug, d]) => (
-        <path key={slug} className={`nm-c nm-c-${slug}`} d={d} />
+      <use className="nm-land" href="#nmLandShape" fill="url(#nmLand)" />
+      {Object.keys(countries).map((slug) => (
+        <use key={slug} className={`nm-c nm-c-${slug}`} href={`#nmC-${slug}`} />
       ))}
       {/* 国の境。かたい線は引かず、両側に落ちる淡い影だけで分ける。 */}
-      {Object.entries(countries).map(([slug, d]) => (
-        <path key={`s${slug}`} className="nm-seam" d={d} />
+      {Object.keys(countries).map((slug) => (
+        <use key={`s${slug}`} className="nm-seam" href={`#nmC-${slug}`} />
       ))}
       {/* 砂浜。陸の内側にだけ出す（外は濡れた砂と泡が受け持つ） */}
       <g clipPath="url(#nmLandClip)">
-        <path className="nm-sand" d={land} />
-        <path className="nm-sand-wet" d={land} />
+        <use className="nm-sand" href="#nmLandShape" />
+        <use className="nm-sand-wet" href="#nmLandShape" />
       </g>
 
       {/* ---- 地面の情報量 ------------------------------------------ */}
       {/* 森と山は、同じパスをずらして3枚。奥から 影 → 光 → 本体。 */}
       <g clipPath="url(#nmLandClip)">
-        <path className="nm-hill-shade" d={hills} transform="translate(4 4)" />
-        <path className="nm-hill-hi" d={hills} transform="translate(-3 -4)" />
-        <path className="nm-hill" d={hills} />
-        <path className="nm-wood-shade" d={woods} transform="translate(1.6 2)" />
-        <path className="nm-wood-hi" d={woods} transform="translate(-1.4 -1.8)" />
-        <path className="nm-wood" d={woods} />
+        <use className="nm-hill-shade" href="#nmHills" transform="translate(4 4)" />
+        <use className="nm-hill-hi" href="#nmHills" transform="translate(-3 -4)" />
+        <use className="nm-hill" href="#nmHills" />
+        <use className="nm-wood-shade" href="#nmWoods" transform="translate(1.6 2)" />
+        <use className="nm-wood-hi" href="#nmWoods" transform="translate(-1.4 -1.8)" />
+        <use className="nm-wood" href="#nmWoods" />
       </g>
       <path className="nm-lake" d={lakes} />
       <path className="nm-river" d={rivers} />

@@ -97,9 +97,19 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
               {mine && (
                 <mask id={`${uid}-focus`}>
                   <rect width={w} height={h} fill="#ffffff" />
-                  <path d={mine} fill="#000000" />
+                  <use href={`#${uid}-mine`} fill="#000000" />
                 </mask>
               )}
+              {/* **同じかたちを2度書かない。** 岸の帯は陸の線を太さと色だけ変えて
+                  5枚、主役の国は膜・塗り・ふちで3枚重ねる。素直に書くと
+                  `/map/sweden` で 165KB、`/map/uk` で 148KB が同じ字の写しになる
+                  （書き出した HTML にはハイドレーション用の写しも入るので、その倍）。
+                  `<use>` は形だけを借りる。塗りも線も**受け継がれる種類**の指定なので、
+                  借りる側に書いたものがそのまま効く。
+                  **名前は defs のほかのものとぶつけない**——北欧の地図では色と
+                  取り合って、岸も砂浜も森もまるごと消えた。`uid` を頭に付ける。 */}
+              <path id={`${uid}-land`} d={m.land} />
+              {mine && <path id={`${uid}-mine`} d={mine} />}
             </defs>
 
             <rect width={w} height={h} fill={`url(#${uid}-sea)`} />
@@ -110,17 +120,17 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             ))}
 
             {/* 岸。浅瀬 → 泡 → 濡れ砂 → 乾いた砂 */}
-            <path d={m.land} fill="none" stroke="var(--am-shelf)" strokeWidth="30" strokeLinejoin="round" opacity="0.85" filter={`url(#${uid}-soft)`} />
-            <path d={m.land} fill="none" stroke="var(--am-shelf-hi)" strokeWidth="14" strokeLinejoin="round" opacity="0.9" />
-            <path d={m.land} fill="none" stroke="var(--am-foam)" strokeWidth="8" strokeLinejoin="round" />
-            <path d={m.land} fill="none" stroke="var(--am-sand-wet)" strokeWidth="5.5" strokeLinejoin="round" />
-            <path d={m.land} fill={`url(#${uid}-off)`} stroke="var(--am-sand)" strokeWidth="3" strokeLinejoin="round" />
+            <use href={`#${uid}-land`} fill="none" stroke="var(--am-shelf)" strokeWidth="30" strokeLinejoin="round" opacity="0.85" filter={`url(#${uid}-soft)`} />
+            <use href={`#${uid}-land`} fill="none" stroke="var(--am-shelf-hi)" strokeWidth="14" strokeLinejoin="round" opacity="0.9" />
+            <use href={`#${uid}-land`} fill="none" stroke="var(--am-foam)" strokeWidth="8" strokeLinejoin="round" />
+            <use href={`#${uid}-land`} fill="none" stroke="var(--am-sand-wet)" strokeWidth="5.5" strokeLinejoin="round" />
+            <use href={`#${uid}-land`} fill={`url(#${uid}-off)`} stroke="var(--am-sand)" strokeWidth="3" strokeLinejoin="round" />
 
             {/* まわりの国はうっすら。主役の国だけ明るく塗る */}
             {others.map(([s, d]) => (
               <path key={s} d={d} fill="#cfdca4" opacity="0.75" />
             ))}
-            {mine && <path d={mine} fill={`url(#${uid}-on)`} />}
+            {mine && <use href={`#${uid}-mine`} fill={`url(#${uid}-on)`} />}
 
             {/* 山 */}
             <path d={m.ridges} fill="none" stroke="var(--am-ridge)" strokeWidth="22" strokeLinecap="round" opacity="0.26" filter={`url(#${uid}-soft)`} />
@@ -146,7 +156,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
                 移動の線と街はこのあとに描くので、沈まない。 */}
             {mine && <rect width={w} height={h} fill="var(--paper-out)" opacity="0.4" mask={`url(#${uid}-focus)`} />}
             {/* 国のふち。かたい線は引かず、内側に落ちる淡い影で分ける */}
-            {mine && <path d={mine} fill="none" stroke="#3e7c33" strokeWidth="4" opacity="0.3" />}
+            {mine && <use href={`#${uid}-mine`} fill="none" stroke="#3e7c33" strokeWidth="4" opacity="0.3" />}
 
             {/* 移動した線 */}
             {m.legs.map((l) => {
