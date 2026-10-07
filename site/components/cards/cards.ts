@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCards,
+  getMyCards,
   getNordicPhotos,
   type IslandCard,
   type NordicPhoto,
 } from "@/lib/api";
-import { withRead, type Read } from "@/lib/auth";
+import { useAuth, withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
 import { charImg } from "@/lib/charImg";
 
@@ -517,6 +518,78 @@ export function useCardWall(): WallState {
     return shelves(photos ?? [], withIcons(cards ?? []), counts);
   }, [photos, cards]);
   return { days, photosRead, cardsRead, add, drop, reload: () => load(true) };
+}
+
+/* ---------------- 本当のカードID ----------------
+   **動かせるのは自分のカードだけ**で、動かすには本当のカードID
+   （`<写真のID>__<チャンネルID>`）が要る。誰でも読める `GET /cards` は
+   人を指さない字に作り替えて返すので（`functions/src/cards.ts` の
+   `forEveryone`）、**公開の一覧から来たカードは、そのままでは動かせない。**
+
+   本当のIDが入るのは `GET /cards/mine` だけ。ログインした人のぶんを1回
+   引いて、「写真 × 絵」から引ける表にしておく。表に無ければ、それは
+   自分のカードではない——**手元で動かせるが、保存はしない。** */
+
+/** 取りにいったもの。uid ごとに1回だけ。紙を開くたびに往復を増やさない */
+const MINE = new Map<string, Promise<IslandCard[]>>();
+
+/**
+ * 自分のカードの、本当のID。**「写真のID__絵」で引ける表を返す。**
+ *
+ * ログインしていなければ空の表。読めなくても空の表——**動かせるか
+ * どうかの話なので、読めなかったことを画面に出さない**（出しても、
+ * 見ている人にできることが1つも増えない）。
+ */
+export function useMyCardIds(): {
+  /** 自分のカードなら本当のID。違えば null */
+  idOf: (photoId: string, icon: string) => string | null;
+  /** 貼られたばかりの写真で外したとき、1回だけ取り直す */
+  again: () => void;
+} {
+  const { user, token } = useAuth();
+  const [ids, setIds] = useState<Map<string, string>>(new Map());
+  const uid = user?.uid ?? "";
+
+  const load = useCallback(
+    (fresh: boolean) => {
+      if (!uid) {
+        setIds(new Map());
+        return;
+      }
+      if (fresh) MINE.delete(uid);
+      let got = MINE.get(uid);
+      if (!got) {
+        got = (async () => {
+          const t = await token();
+          if (!t) return [];
+          const r = await withRead(getMyCards(t));
+          return r?.cards ?? [];
+        })();
+        MINE.set(uid, got);
+      }
+      got
+        .then((list) => {
+          const at = new Map<string, string>();
+          for (const c of list) {
+            if (c.icon) at.set(`${c.photoId}__${c.icon}`, c.id);
+          }
+          setIds(at);
+        })
+        // 読めなくても空の表のまま。保存できないだけで、動かすのは動く
+        .catch(() => MINE.delete(uid));
+    },
+    [uid, token],
+  );
+
+  useEffect(() => load(false), [load]);
+
+  /* **`again` の顔を変えない。** 呼ぶ側（`CardSheet`）の効果の持ちものに
+     入るので、毎回ちがう関数を返すと効果が描くたびに回る。 */
+  const again = useCallback(() => load(true), [load]);
+  return {
+    idOf: (photoId, icon) => ids.get(`${photoId}__${icon}`) ?? null,
+    again,
+  };
 }
 
 /* ---------------- 立ち位置 ----------------

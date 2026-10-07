@@ -1,5 +1,5 @@
 /**
- * 写真にキャラクターを1体だけ焼く。
+ * 写真にキャラクターを焼く。
  *
  * **合成はブラウザでやる。** サーバーで焼くと、同じ1枚を人数ぶん作って
  * 置いておくことになる。ここでやれば、押した人の端末で1枚作って渡すだけで済む。
@@ -13,21 +13,36 @@
  * **`crossOrigin = "anonymous"` を付けて読めば canvas は汚れない。**
  * 付け忘れると汚れて、`toBlob` がその場で例外を投げる（写真のほうも同じ）。
  * ここを1か所に閉じ込めてあるのは、その付け忘れを起こさないため。
+ *
+ * ## 置きどころの計算はここに書かない
+ *
+ * 寸法も締め方も2体の並べ方も `components/cards/place.ts` にある。
+ * **ブラウザの要らない形にしておかないと、「枠から出ないか」「重ならないか」
+ * を node から確かめられない**（`site/selftest/cardplace_selftest.mjs`）。
+ * ここに残っているのは、絵を読む・透明なふちを落とす・canvas に描く、
+ * の3つだけ。
  */
 
-/** 寸法。`docs/nordic-photos.md` 5章の表と1対1で対応する。 */
-export const STAMP = {
-  /** 縦の写真。キャラクターの横幅は、写真の横幅のこれだけ */
-  byWidth: 0.34,
-  /** 横の写真。横幅で決めると大きすぎるので、高さを基準にする */
-  byHeight: 0.2,
-  /** 右端からの空き（写真の横幅に対して） */
-  right: 0.02,
-  /** 下端からの空き（写真の高さに対して） */
-  bottom: 0.05,
-  /** 傾き。見本は0度だった */
-  tilt: 0,
-} as const;
+/* 寸法・置き方・2体の並べ方は `components/cards/place.ts`。
+   **ここから呼ぶ側のために通してある**（import 先を増やさないため）。 */
+export {
+  STAMP,
+  stampBox,
+  clampPlace,
+  defaultPlaceFor,
+  layout,
+  tiltOf,
+  type Box,
+  type Place,
+  type Placed,
+} from "@/components/cards/place";
+
+import {
+  layout,
+  type Box,
+  type Place,
+  type Placed,
+} from "@/components/cards/place";
 
 /** 焼き上がりの長辺。これ以上大きくしても、持って帰る先で使い道がない。 */
 export const OUT_LONG = 2048;
@@ -37,8 +52,6 @@ export const UPLOAD_LONG = 1600;
 
 /** 電波の細いところから貼るときの長辺。1600 のおよそ 1/3 の重さになる。 */
 export const UPLOAD_THIN = 900;
-
-export type Box = { x: number; y: number; w: number; h: number };
 
 /**
  * 絵を1枚読む。**canvas に描くので必ず crossOrigin を付ける。**
@@ -105,48 +118,6 @@ export function opaqueBox(img: HTMLImageElement): Box {
 }
 
 /**
- * 本人が動かした置き方。**動かしていないカードは渡さない。**
- * 割合（0〜1）で、`y` は足元の高さ（`docs/island-cards.md` 5章）。
- */
-export type Place = { x: number; y: number; rot: number; scale: number };
-
-/**
- * キャラクターを置くところ。返るのは**見えている中身**の矩形。
- *
- * 縦の写真は横幅で、横の写真は高さで決める（`docs/nordic-photos.md` 5章）。
- * 縦の写真で高さを基準にすると小さすぎ、横の写真で横幅を基準にすると
- * 画面の3分の1がキャラクターになる。
- *
- * **既定は右下ひとところ、大きさも1つ。** 台帳の `x/y/scale` を素直に
- * 使うと、散らした先が右端を越えて絵が切れ、1人ずつ大きさが変わる
- * （あやと・2026-09-10）。本人が動かしたぶんだけ `place` で受けて、
- * そのときも枠から出さない。**画面側（`components/cards/cards.ts` の
- * `cardPlace`）と同じ決め方にしてある。** 片方だけ直すと、見えている絵と
- * 持って帰る絵がずれる。
- *
- * @param pw 写真の横幅 @param ph 写真の高さ
- * @param cw キャラクターの中身の横幅 @param ch 同じく高さ
- */
-export function stampBox(
-  pw: number,
-  ph: number,
-  cw: number,
-  ch: number,
-  place?: Place | null,
-): Box {
-  const aspect = cw / Math.max(1, ch);
-  const k = place ? Math.min(2, Math.max(0.4, place.scale || 1)) : 1;
-  const w = (ph > pw ? pw * STAMP.byWidth : ph * STAMP.byHeight * aspect) * k;
-  const h = w / aspect;
-  if (!place) {
-    return { x: pw - pw * STAMP.right - w, y: ph - ph * STAMP.bottom - h, w, h };
-  }
-  const x = Math.min(pw - w, Math.max(0, place.x * pw - w / 2));
-  const y = Math.min(ph - h, Math.max(0, place.y * ph - h));
-  return { x, y, w, h };
-}
-
-/**
  * 足元に落ちる影。
  *
  * 島の絵の決まりの3番目（`docs/island-design.md` 2章）。
@@ -173,11 +144,80 @@ function groundShadow(g: CanvasRenderingContext2D, at: Box) {
   g.restore();
 }
 
+/** 焼く1体ぶん。絵と、本人が動かした置き方。 */
+export type Figure = { img: HTMLImageElement; place?: Place | null };
+
 /**
  * 写真にキャラクターを焼いて、canvas を返す。
  *
- * `chr` が null なら、写真をそのまま写した canvas が返る
+ * **先頭が本人、2体目が連れ（あやと本人）。** 並べ方は
+ * `components/cards/place.ts` の `layout` が決める——連れは本人を
+ * 押しのけず、足元をそろえて、重ならないところに立つ。
+ *
+ * `figures` が空なら、写真をそのまま写した canvas が返る
  * （「そのまま保存」も同じ道を通す。道が2本あると片方だけ直し忘れる）。
+ *
+ * @param into 描き先。**渡すと作り直さずにそこへ描く。** 指で引きずって
+ *   いるあいだ、1フレームごとに canvas を作り捨てないため
+ */
+export function composeMany(
+  photo: HTMLImageElement,
+  figures: Figure[],
+  into?: HTMLCanvasElement | null,
+): HTMLCanvasElement {
+  const long = Math.max(photo.naturalWidth, photo.naturalHeight);
+  const k = long > OUT_LONG ? OUT_LONG / long : 1;
+  const pw = Math.round(photo.naturalWidth * k);
+  const ph = Math.round(photo.naturalHeight * k);
+  const cv = into ?? document.createElement("canvas");
+  cv.width = pw;
+  cv.height = ph;
+  const g = cv.getContext("2d");
+  if (!g) return cv;
+  g.clearRect(0, 0, pw, ph);
+  g.drawImage(photo, 0, 0, pw, ph);
+  if (figures.length === 0) return cv;
+
+  const src = figures.map((f) => opaqueBox(f.img));
+  const at = layout(
+    pw,
+    ph,
+    src.map((b, i) => ({ w: b.w, h: b.h, place: figures[i].place })),
+  );
+  /* **影を先に、ぜんぶまとめて落とす。** 1人ずつ「影→本体」で描くと、
+     隣に立った人の足元の影が、先に描いた人の足の上に乗る。 */
+  at.forEach((p) => groundShadow(g, p.box));
+  at.forEach((p, i) => draw(g, figures[i].img, src[i], p));
+  return cv;
+}
+
+/** 1体を、傾きと左右の返しごと描く。傾きの原点は足元（画面側と同じ）。 */
+function draw(
+  g: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  src: Box,
+  at: Placed,
+) {
+  const cx = at.box.x + at.box.w / 2;
+  const foot = at.box.y + at.box.h;
+  const moved = at.rot || at.flip;
+  if (moved) {
+    g.save();
+    g.translate(cx, foot);
+    if (at.rot) g.rotate((at.rot * Math.PI) / 180);
+    // 左に立つ連れは左右を返す。**絵はどれも左を向いている**ので、
+    // 返さないと本人に背を向けたまま並ぶ
+    if (at.flip) g.scale(-1, 1);
+    g.translate(-cx, -foot);
+  }
+  g.drawImage(img, src.x, src.y, src.w, src.h, at.box.x, at.box.y, at.box.w, at.box.h);
+  if (moved) g.restore();
+}
+
+/**
+ * 写真にキャラクターを1体だけ焼く。**いままでの呼び口。**
+ *
+ * `chr` が null なら、写真をそのまま写した canvas が返る。
  */
 export function compose(
   photo: HTMLImageElement,
@@ -185,32 +225,7 @@ export function compose(
   /** 本人が動かしたときだけ渡す。既定（右下）でよければ渡さない */
   place?: Place | null,
 ): HTMLCanvasElement {
-  const long = Math.max(photo.naturalWidth, photo.naturalHeight);
-  const k = long > OUT_LONG ? OUT_LONG / long : 1;
-  const pw = Math.round(photo.naturalWidth * k);
-  const ph = Math.round(photo.naturalHeight * k);
-  const cv = document.createElement("canvas");
-  cv.width = pw;
-  cv.height = ph;
-  const g = cv.getContext("2d");
-  if (!g) return cv;
-  g.drawImage(photo, 0, 0, pw, ph);
-  if (!chr) return cv;
-
-  const src = opaqueBox(chr);
-  const at = stampBox(pw, ph, src.w, src.h, place);
-  groundShadow(g, at);
-  // 傾きの原点は足元。傾けても足の位置が動かないようにする（画面側と同じ）
-  const tilt = place ? Math.max(-20, Math.min(20, place.rot || 0)) : STAMP.tilt;
-  if (tilt) {
-    g.save();
-    g.translate(at.x + at.w / 2, at.y + at.h);
-    g.rotate((tilt * Math.PI) / 180);
-    g.translate(-(at.x + at.w / 2), -(at.y + at.h));
-  }
-  g.drawImage(chr, src.x, src.y, src.w, src.h, at.x, at.y, at.w, at.h);
-  if (tilt) g.restore();
-  return cv;
+  return composeMany(photo, chr ? [{ img: chr, place }] : []);
 }
 
 /**

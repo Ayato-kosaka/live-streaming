@@ -491,7 +491,44 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 置き方を動かせるのは**本人だけ**（`POST /cards/{cardId}`）。あやとは全部動かせる。
 自分のカードかどうかは、送られてきた値ではなく `islandUsers/{uid}.channelId` で決める。
 
-**動かす画面はまだ無い。** 口と持ち方だけが先にある。
+### 動かす画面（2026-10-07 から）
+
+開いた紙（`components/cards/CardSheet.tsx`）の写真を**なぞると動く。**
+指でもマウスでも、矢印キーでも動く。
+
+**動かすのは誰でもできる。** ログインしていない人も、他人のカードも、
+手元で動かして持って帰れる。ここを「ログインしないと動かせない」に
+すると、ほとんどの人が触れなくなる。
+
+**覚えるのは、ログインした本人の、自分のカードだけ。** 口がその判定を
+持っているので（`islandUsers/{uid}.channelId` との照合）、画面は
+本当のカードIDを引き当てられるかどうかだけを見ている。
+
+本当のカードID（`<画像のID>__<チャンネルID>`）が入るのは
+**`GET /cards/mine` だけ。** 誰でも読める `GET /cards` は人を指さない
+字に作り替えて返す（3章）ので、公開の一覧から来たカードはそのままでは
+動かせない。`components/cards/cards.ts` の `useMyCardIds` が
+「写真 × 絵」から引き当てる。**引けなければ、それは自分のカードではない。**
+
+送る前に、画面の側でも枠へ締める（`components/cards/place.ts` の
+`clampPlace`）。**サーバーの `shapePlace` と1つも違わない答えを返すこと。**
+片方だけ違うと、画面では置けたのに保存して開き直すと別の場所に戻る。
+突き合わせは `site/selftest/cardplace_selftest.mjs` の 2。
+
+投げるのは**動かし終わってから1回**（0.7秒）。引きずっている途中には投げない。
+
+### あやと本人を、隣に並べる（2026-10-07 から）
+
+「あやともいっしょに」を押すと、本人のキャラクターの隣にあやとが立つ。
+
+- **既定は入れない。** 開いた瞬間に出るのは写真そのもの（4章）
+- **保存しない。手元だけ。** 書類に欄を足していない。保存すると、
+  他の人が見るカードの見た目まで変わる。誰も頼んでいない
+- **押しのけない。** 動かした位置があるならそちらが先で、あやとは
+  空いているほうへ立つ。足元の高さをそろえ、重ならない
+  （`components/cards/place.ts` の `layout`）
+- 左に立つときは**左右を返す。** キャラクターの絵はどれも左を向いて
+  いるので、返さないと本人に背を向けたまま並ぶ
 
 ### 動かしていないカードは、既定の値では置かない
 
@@ -526,6 +563,7 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 | 返す口 | `functions/src/cards.ts`（`islandApi.ts` には取り付けだけ） |
 | 絵をチャンネルに当てる（かぶった名前を止めるのもここ） | `functions/src/cards.ts` の `iconsOf`。確かめは `functions/selftest/cards_icons_selftest.mjs` |
 | 公開の応答から人を指す値を落とす | `functions/src/cards.ts` の `forEveryone` / `peopleForEveryone`。確かめは `functions/selftest/cards_public_selftest.mjs` |
+| 立ち位置の計算（締め方・2体の並べ方） | `site/components/cards/place.ts`。確かめは `site/selftest/cardplace_selftest.mjs`、絵で見るのは `tools/sprites/cardmove.mjs` |
 | 組み立て（貼ったとき） | `functions/src/streamEvents.ts` の `mintForImage` → `tipsForImage` → `mintCards` |
 | 組み立て（毎日） | `python/island_cards.py` の `hits` → `main` |
 | **当たり方（日の決め方）** | `streamEvents.ts` の `imageDay` / `tipDay`、`island_cards.py` の `image_day` / `tip_day`。**両側に同じものを置く** |
