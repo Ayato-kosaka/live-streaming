@@ -36,9 +36,19 @@ import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
  * 閉じた `<details>` の中の `loading="lazy"` はブラウザが要求しないので、
  * 着いた時点で飛ぶのは開いている月のぶんだけになる。
  *
- * 開いた状態にするのは**先頭の1か月だけ**（`docs/island-design.md` 4章
- * 「開いた状態を初期値にしていいのは、そのページで最も伝えたい1つだけ」）。
- * いちばん新しい月が、この面でいちばん見たいもの。
+ * **どの月も開けておかない。** 前はいちばん新しい月だけ開けていたが、
+ * そこに何本入っているかは**カレンダーの都合**で決まる。コーカサスを測った日は
+ * 月が始まったばかりで12本しか無く、3,198px に収まっていた。同じ作りのまま
+ * ヨーロッパは 5,845px（6.9画面）、中東 5,217px、北欧 4,228px になる——
+ * 先頭の月が 35本・34本・24本だから、ただそれだけの理由で。
+ * **「いまは少ないから大丈夫」で決めた背は、月が変われば伸びる**
+ * （`docs/island-standards.md` 7「溜まっても背が変わらない形にする」）。
+ *
+ * 閉じきると、どの章も**月の見出しだけが並ぶ目次**になって、本数が何本でも
+ * 背が変わらない。振り返る面の用事は「いつ何があったか」なので、
+ * 目次はそのまま答えになっている（`docs/island-design.md` 4章
+ * 「読む人が目次から探すものは必ず折りたたみ」）。
+ * いちばん新しい月は、いちばん上にいて1回押せば開く。
  */
 
 export function generateStaticParams() {
@@ -103,14 +113,8 @@ export default async function ChapterStreams({
       </p>
 
       <div className="folds">
-        {months.map((m, i) => (
-          <Fold
-            key={m.key}
-            title={m.label}
-            note={`${m.rows.length}本`}
-            // いちばん新しい月だけ開けておく。残りは見出しだけ並べる
-            open={i === 0}
-          >
+        {months.map((m) => (
+          <Fold key={m.key} title={m.label} note={`${m.rows.length}本`}>
             <div className="scards">
               {m.rows.map(([date, videoId, title, people]) => (
                 <StreamCard
