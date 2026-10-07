@@ -85,7 +85,18 @@ const HERE = 150;
  * 実測（390px・表紙の寄り）で足元が枠の 94%、下に残った 61px は
  * 「今日の島」の札がまるごと占めていた。
  */
-const FOOT_LOW = 0.6;
+/* **0.6 から 0.74 へ上げた。** ここは「あやとが枠のどこまで下へ行けるか」の
+   上限であると同時に、**カメラが北へどこまで行けるか**の上限でもある
+   （カメラは `foot(FOOT_LOW)` より北へは出られない）。
+   あやとは浜の船着き場に降りるので島のいちばん南におり、建物は全部その北にいる。
+   0.6 だと、降り立った1画面に当たりの入る建物が 390px で 7軒、1280px で
+   4軒しか無かった（12軒中）。画面の外の5〜8軒は当たりの中心が y = -58 / -34 /
+   -24 / -3 と枠の上に外れていて、`pointer-events: none` で押せない——
+   **存在に気づく道が無い。**
+   0.74 なら、あやとの下に残る地面は 390px で 189px（枠の 26%）。
+   もとの困りごと（「下部押してもマップが下にいかない」。実測で残り 61px）は
+   そのままに、北の建物が1画面に入る。 */
+const FOOT_LOW = 0.74;
 /** 同じく、上限。上へ寄せすぎると、こんどは北の建物が枠から出る */
 const FOOT_HIGH = 0.3;
 /** 指で押せる最小の大きさ(画面px) */
@@ -124,9 +135,78 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const blockers = useRef<Box[] | null>(null);
 
   const [box, setBox] = useState({ w: 1440, h: 820 });
+  /**
+   * 画面の幅を実際に測ったか。**測るまでは寄り引きを名乗らない。**
+   *
+   * 焼いた HTML は幅を知らないので、仮の PC 幅（1440）で作られる。そのまま
+   * `data-view="wide"` を書き出していると、スマホで開いた人は
+   * **看板の絵（900×410・92KB）を1枚まるごと取って描いてから**、
+   * hydration の直後にそれが消えて右上の小さい印に入れ替わる。
+   * 実測（390px・CPU4倍＋4G）で `wide` を名乗っていたのは 800〜2661ms で、
+   * そのあいだに取った 92KB は最後に `display:none` で捨てられていた。
+   *
+   * 手で作った島は先に同じ直しを持っていた（`components/island/IslandStage.tsx`
+   * の `sized`。「実測でその看板が LCP・4,756ms で、しかも捨てる絵だった」）。
+   * **表紙が章の島に入れ替わった日から、こちらにだけ無かった。**
+   *
+   * 測る前は属性を出さない。どちらを出すかは CSS の幅そのものが決める
+   * （`app/css/hero.css`）。スマホの既定は小さい印なので、看板のほうは
+   * `loading="lazy"`（隠れているあいだは取りにいかない）に落ちる。
+   */
+  const [sized, setSized] = useState(false);
+  /**
+   * React が手を付けたか（hydration が済んで、押せば動くようになったか）。
+   *
+   * 島の絵は焼いた HTML に入っているので、**描き終わってもまだ押せない。**
+   * 実測（390px・CPU4倍＋4G）で、島の DOM が出るのが 741ms、建物の当たりが
+   * 寸法を持つのが 922ms、React が手を付けるのが 2579ms。
+   * **そのあいだの 1.6〜2.1 秒、押しても何も起きないのに、絵は完成して見える。**
+   * 初見の人はここで1〜2回押して、無反応のまま下へ送ってしまう。
+   *
+   * `useEffect` は hydration のあとにしか走らないので、ここが立った瞬間が
+   * そのまま「押せるようになった」。`data-live` を出して、立つまでは
+   * `chain.css` が島をごく薄く沈めて `cursor: progress` にする。
+   * **字は増やさない**（画面でシステムの仕様を説明しない。`CLAUDE.md`）。
+   */
+  const [live, setLive] = useState(false);
   const [wide, setWide] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [openSpot, setOpenSpot] = useState<string | null>(null);
+  /**
+   * 「いま行こうとしている建物」。押した瞬間に決まって、**着くまで変わらない。**
+   *
+   * ## 直す前に起きていたこと（390px の実測）
+   *
+   * 「企画」を1回押したあと、開いている札を 100ms ごとに追うと:
+   *
+   *     100ms 企画@258,415 → 400ms 企画@258,171 → 500ms あやとのこと@257,225
+   *     → 900ms いまどこ@258,579 → 1100ms 企画@157,240 → 1500ms 企画@143,243
+   *
+   * **別の建物の札に3回入れ替わり、最初の位置から最大 244px 動いた。**
+   * 1タップ目の 400/700/1000ms 後に、札が出ていた場所をそのまま押すと、
+   * **3回とも「配信」の当たりを踏んで `/index.html`**（＝どこへも行かない）。
+   * 狙った「企画」には 0/3。PC 1280 でも2回入れ替わり、最大 350px。
+   *
+   * 理由は2つあって、どちらも「歩いているあいだ」に効く。
+   *
+   * 1. 開く札を毎フレーム「いちばん近い建物」で決め直していた。歩く道すがら
+   *    別の建物のそばを通れば、その建物の札に入れ替わる
+   * 2. 札の置き場所がカメラの ease に追随する。カメラは 1.5秒かけて寄るので、
+   *    そのあいだ札は画面の上を滑り続ける
+   *
+   * ## 決めたこと
+   *
+   * 押した建物を `dock` に留めて、**開く札をそれ1枚に固定する**（1の答え）。
+   * そのうえで、**札は島の上ではなく画面の下ふちに1枚出す**（2の答え。
+   * `.isle-going`）。画面に固定した札なので 1px も動かないし、
+   * **着くのを 1.5秒待たずに「みる」が押せる。** ゲームの作法としても素直で、
+   * 「押した → 行き先が手元に出る → 歩きながら入れる」になる。
+   *
+   * 留めを解くのは、その人が**別のことをしたとき**だけ
+   * （地面を押す・住人に話しかける・キーで歩く・島をながめる）。
+   * 着いた瞬間に解くと、そこで札が島の上へ跳んで、また 244px 動くことになる。
+   */
+  const [dock, setDock] = useState<string | null>(null);
   const [sheet, setSheet] = useState<string | null>(null);
   const [hint, setHint] = useState(false);
   const [ready, setReady] = useState<Set<string>>(new Set());
@@ -144,6 +224,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   useEffect(() => {
     if (cover) rememberVisit();
   }, [cover]);
+
+  /* 押せるようになった合図。**効果が走った＝hydration が済んだ**ということ */
+  useEffect(() => setLive(true), []);
 
   const avatar = useRef({ ...world.start });
   const facing = useRef(1);
@@ -166,6 +249,16 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   wideRef.current = wide;
   const hoverRef = useRef(hover);
   hoverRef.current = hover;
+  /* 留めている行き先。**押したその場で書く**（上の `dock`）。
+     state の反映は次の描き直しなので、ref を待たせると1フレームだけ
+     「いちばん近い建物」が勝って、札が一瞬よそへ入れ替わる */
+  const dockRef = useRef(dock);
+  dockRef.current = dock;
+  /** 留めを解く。別のことをしたときだけ呼ぶ */
+  const undock = useCallback(() => {
+    dockRef.current = null;
+    setDock((d) => (d === null ? d : null));
+  }, []);
 
   /** 島の草地。住人もあやとも、ここから出ない */
   const ground: Ground = useMemo(
@@ -216,6 +309,35 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     [ext],
   );
 
+  /**
+   * **降り立った1画面に、建物の並びが入る広さ。**
+   *
+   * 寄りの倍率を「1ワールド単位あたり何 px か」だけで決めていたので、
+   * 画面の縦が短い PC（1280x800 で島は 688px）では、見えている世界が
+   * 縦 336 ワールド単位しか無かった。建物は y = 572〜899 に散っているので、
+   * **12軒のうち4軒しか当たりが画面に入っていない。** 390px でも7軒。
+   * 残りは `pointer-events: none` で、存在に気づく道が無い。
+   *
+   * 数字を1つ大きくするのではなく、**建物の並びのほうから広さを解く。**
+   * カメラは `foot(FOOT_LOW)` より北へ行けないので、枠の上ふちは
+   * `start.y - FOOT_LOW * V` に決まる。いちばん北の建物の当たり（48px）が
+   * そこへ入る V を出す。画面の縦が変わっても、機種ごとの数字を書き足さずに済む。
+   *
+   * **船着き場は入れない。** あれはあやとの足元にあるので、入れると
+   * 「もう入っている」ことになって、北の建物を見に行かない。
+   */
+  const townSpan = useCallback(
+    (w: number, h: number) => {
+      const ys = world.places.filter((q) => q.id !== "pier").map((q) => q.y);
+      if (!ys.length) return 0;
+      /* 当たりの上辺が枠に入って初めて押せる。48px ぶんと、少しの余白を見込む */
+      const k = FOOT_LOW - (TAP_FIT + 16) / Math.max(1, h);
+      if (k <= 0.05) return 0;
+      return ((world.start.y - Math.min(...ys)) / k) * (w / Math.max(1, h));
+    },
+    [world],
+  );
+
   const spanOf = useCallback(
     (w: number, h: number, all: boolean) => {
       if (all) return wideSpan(w, h);
@@ -223,10 +345,14 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       // 寄りは「1ワールド単位あたり何 px か」で決める。画面の幅で割ると、
       // 大きな画面ほど引いてしまって、住人の大きさが機種で変わる
       const near = m === "phone" ? 340 : m === "tablet" ? Math.max(430, w / 1.75) : Math.max(560, w / 2.05);
+      /* 建物の並びが入るところまでは引く。**ただし寄りの倍率の 2.2倍まで。**
+         建物が島のはるか北に1軒だけ建っている章の島だと、解いた広さが
+         島ぜんぶとほぼ同じになって、「島をながめる」と見分けがつかなくなる */
+      const want = Math.max(near, Math.min(townSpan(w, h), near * 2.2));
       // 小さい島では、寄りすぎると島より海のほうが広く映る
-      return Math.min(near, fullSpan(w, h) * 0.92);
+      return Math.min(want, fullSpan(w, h) * 0.92);
     },
-    [fullSpan, wideSpan],
+    [fullSpan, wideSpan, townSpan],
   );
 
   /** 建物の並びのまん中。カメラはあやとを追いつつ、ここへ引き戻す */
@@ -266,6 +392,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       // 何十枚も描いてから所定の位置に着くことになる。1フレームで置く
       snapCam.current = true;
       setBox({ w: r.width, h: r.height });
+      /* 測り終えた。ここから先だけ寄り引きを名乗ってよい（上の `sized`） */
+      setSized(true);
     };
     const ro = new ResizeObserver(read);
     ro.observe(el);
@@ -709,7 +837,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       }
 
       // --- 建物の札 ---
-      let best: string | null = hoverRef.current;
+      /* **行き先を留めているあいだは、いちばん近い建物で決め直さない。**
+         歩く道すがら別の建物のそばを通るたびに札が入れ替わっていた（上の `dock`）。 */
+      let best: string | null = dockRef.current ?? hoverRef.current;
       if (!best) {
         let bd = HERE;
         for (const sp of world.places) {
@@ -736,6 +866,16 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           // 固定にすると寄ったときに絵の下半分が押せない
           hostRef.current?.style.setProperty("--ws", `${Math.max(TAP_MIN, FOLK_H * kk).toFixed(1)}px`);
         }
+        /* あやとの外接矩形（画面px）。絵の置き方は下の `<image>` と同じ式
+           （`x: -AYATO_H * 0.43, y: -AYATO_H, w: AYATO_H * 0.86, h: AYATO_H`）。
+           押しどころではないので `tapTaken` には入れない——入れると、
+           あやとの立っているところの建物が押せなくなる。 */
+        const meBox = {
+          x: sx(me.x) - AYATO_H * 0.43 * kk,
+          y: sy(me.y) - AYATO_H * kk,
+          w: AYATO_H * 0.86 * kk,
+          h: AYATO_H * kk,
+        };
         const hitsNow = placePlates(world.places, {
           b,
           kk,
@@ -749,7 +889,14 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           wide: wideRef.current,
           taken: uiBoxes.current,
           tapTaken: tapBoxes.current,
-          open: lastOpen,
+          /* 留めているあいだ、札は画面の下ふちに1枚出している（`.isle-going`）。
+             島の上には出さないので、場所も取らせない */
+          open: dockRef.current ? null : lastOpen,
+          /* **あやと自身。** 避ける相手に入っていなかったので、降り立った
+             1画面目で「配信」の札があやとを 87%（390px）／52%（1280px）
+             覆っていた。あやとは押されるまで動かないので、最初のタップが
+             あるまで永久にその姿のまま。島の主人公が、島の札に隠れていた。 */
+          me: meBox,
         });
         /* **出ている札の箱は、見積もりではなく実測で持つ。**
            `placePlates` は札の置き場所を決めるために箱を組み立てているが、
@@ -902,6 +1049,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "w", "a", "s", "d"].includes(k)) {
         keys.current[k] = true;
         dismissHint();
+        /* キーで歩き出した＝自分で行き先を変えた。留めは解く（上の `dock`） */
+        undock();
         e.preventDefault();
       }
     };
@@ -915,7 +1064,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, [dismissHint]);
+  }, [dismissHint, undock]);
 
   /** 建物へ歩く。押した瞬間に札が開くので、着く前から行き先が分かる */
   const goTo = (s: Placed) => {
@@ -923,8 +1072,22 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     walkingTo.current = null;
     dismissHint();
     setOpenSpot(s.id);
+    /* **行き先をここで留める。** 札は島の上ではなく画面の下ふちに出るので、
+       歩いているあいだも場所が変わらず、着くのを待たずに「みる」が押せる */
+    dockRef.current = s.id;
+    setDock(s.id);
     if (wide) setWide(false);
   };
+
+  /** その建物に入る。中身のあるものは島の上に板が開き、1つしか無いものは外へ出る */
+  const enterPlace = useCallback(
+    (sp: Placed) => {
+      dismissHint();
+      if (sp.items || sp.facts || sp.shorts || sp.board) setSheet(sp.id);
+      else if (sp.href) router.push(sp.href);
+    },
+    [dismissHint, router],
+  );
 
   /** 住人に話しかける。遠ければまず歩いて近づいてから */
   const approach = useCallback(
@@ -932,6 +1095,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       const v = folk[i];
       const me = avatar.current;
       dismissHint();
+      /* 別のことをしたので、行き先の留めは解く（上の `dock`） */
+      undock();
       if (Math.hypot(me.x - v.x, (me.y - v.y) * 1.3) <= TALK_REACH) {
         openTalk(i);
         return;
@@ -941,7 +1106,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       walkingTo.current = i;
       target.current = { x: v.x + (me.x > v.x ? 40 : -40), y: v.y + 8 };
     },
-    [folk, openTalk, dismissHint],
+    [folk, openTalk, dismissHint, undock],
   );
 
   const onStageClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -970,6 +1135,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     }
     walkingTo.current = null;
     target.current = { x: wx, y: wy };
+    /* 地面を押した＝行き先ではなくその場所へ歩く。留めは解く（上の `dock`） */
+    undock();
   };
 
   /* 景色は島に置いたら二度と動かない。要素を1度だけ作って使い回す。
@@ -1016,6 +1183,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   }
 
   const openPlace = world.places.find((p) => p.id === sheet) ?? null;
+  /** いま行こうとしている建物（`dock`）。画面の下ふちの札はこれ1枚 */
+  const dockPlace = dock ? (world.places.find((p) => p.id === dock) ?? null) : null;
 
   return (
     <div
@@ -1028,9 +1197,16 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
          `components/island/IslandStage.tsx` の `data-view`）。
          ここが無いあいだ、章の島では `hero.css` の出し分けがどれも当たらず、
          **スマホは引きに移っても 124px の小さい印のまま**だった。
-         スマホの寄りだけが小さい印で、あとは看板まるごと。 */
-      data-view={modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
-      data-mode={modeOf(box.w)}
+         スマホの寄りだけが小さい印で、あとは看板まるごと。
+         **ただし測るまでは出さない**（上の `sized`）。焼いた HTML が仮の
+         PC 幅で "wide" を名乗っていると、スマホが 92KB の看板を取って捨てる。 */
+      data-view={!sized ? undefined : modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
+      data-mode={sized ? modeOf(box.w) : undefined}
+      /* React が手を付けたか。立つまでは押しても何も起きないので、島を薄く沈める */
+      data-live={live ? "" : undefined}
+      /* いま行き先を留めているか。留めているあいだ、札は島の上ではなく
+         画面の下ふちに1枚だけ出す（`.isle-going`） */
+      data-dock={dock ? "" : undefined}
       /* 表紙か。**看板ロゴが右上にいる面かどうか**が、隅の道具の置き方を変える
          （`chain.css` の `.isle-tools`）。章の島には看板が無いので、
          引きで道具の名前を戻せる。表紙は同じ隅に看板がいて戻せない。 */
@@ -1144,6 +1320,14 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       {/* 島の下ふち。海をページの地へ溶かす */}
       <span className="isle-shore" aria-hidden />
 
+      {/* 押せるようになるまでの薄い幕。**焼いた HTML にこれが入っている。**
+          絵は焼いてあるので島は先に描き終わるが、押して歩けるのは React が
+          手を付けてから（実測 390px・CPU4倍＋4G で 2579ms。それまでに地面を
+          押しても、あやとは歩き出さない）。待てという合図がどこにも無いので、
+          初見の人はそこで1〜2回押して、無反応のまま下へ送ってしまう。
+          指は取らない（`chain.css`）ので、JS 無しで動くものは幕越しに押せる。 */}
+      {!live && <span className="isle-wait" aria-hidden />}
+
       {/* 建物の札。寄りでは近づくと開いて、名前と一言と「みる」が出る。
           **引き（島ぜんぶ）では、建っているもの全部の名前が出る。開かない。**
           引きに出せる札は6つまで（`docs/island-design.md` 3-4・6章）で、
@@ -1157,11 +1341,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
              **中身のある建物は、島から出ない。** 島の上に板が開いて、その中に一覧が出る
              （あやとの「やぐらみたいな感じで…が見れて」）。
              行き先が1つしかないもの（旅のしおり・掲示板）だけ、そのまま外へ出る */
-          const enter = () => {
-            dismissHint();
-            if (sp.items || sp.facts || sp.shorts || sp.board) setSheet(sp.id);
-            else if (sp.href) router.push(sp.href);
-          };
+          const enter = () => enterPlace(sp);
           return (
             <div
               key={sp.id}
@@ -1194,6 +1374,21 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           );
         })}
       </div>
+
+      {/* いま行こうとしている建物の札。**島の上ではなく、画面の下ふちに1枚。**
+          ---------------------------------------------------------
+          島の上に置くと、カメラが 1.5秒かけて寄るあいだ札が画面を滑り続ける
+          （実測 390px で最大 244px、1280px で 350px）。滑った先を押すと
+          別の建物の当たりを踏むので、**押した先と行った先が違う**。
+
+          押した瞬間にここへ出して、着くまで動かさない。**歩き終わるのを
+          待たずに「みる」が押せる**のも、ゲームとしてはこちらが素直
+          （`dock` の注）。留めが解けたら消えて、ふつうの札（建物の頭の上）に戻る。 */}
+      {dockPlace && !wide && (
+        <div className="isle-going" data-ui>
+          <PlaceMark place={dockPlace} left={left} onOpen={() => enterPlace(dockPlace)} />
+        </div>
+      )}
 
       {/* 住人。押す所は建物の当たりより奥に置く（会話はおまけ。行き先を塞がない）。
           **引きでは話しかけられない。** 引きの住人は 20px ほどの点で、
@@ -1289,6 +1484,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           onClick={() => {
             // 話している最中に引くと、島ぜんぶの上に吹き出しだけが残る
             closeTalk();
+            /* カメラを切り替えた＝島を見わたすほうへ移った。留めは解く */
+            undock();
             setWide((v) => !v);
           }}
           aria-label={wide ? UI.comeDown : UI.lookAround}
@@ -1413,6 +1610,18 @@ function placePlates(
     /** **指を実際に取る**ものだけ。当たりの取り合いはこちらで見る */
     tapTaken: { x: number; y: number; w: number; h: number }[];
     open: string | null;
+    /**
+     * あやたの立っている箱（画面px）。**札が避ける相手に入れる。**
+     *
+     * 島の主人公が、避ける相手になっていなかった。実測（降り立った1画面目）で
+     * 「配信」の札があやとを 390px で 87%、1280px で 52% 覆っていて、
+     * 頭のてっぺんしか出ていない。しかも**あやとは押されるまで動かない**ので、
+     * 最初のタップがあるまでその姿が続く。
+     *
+     * 押しどころではないので `tapTaken` には入れない（入れると、あやとの
+     * 立っているところの建物が押せなくなる）。
+     */
+    me?: Box | null;
   },
 ): Box[] {
   const pad = 8;
@@ -1426,6 +1635,12 @@ function placePlates(
      入れるのは島の隅の道具と、**先に置いた札**と、**ほかの建物の当たり**
      （`hitBoxes`。下の `other()`）。 */
   const placed = o.taken.slice();
+  /* あやとは「読めなくなる場所」の仲間。札はここを避けて上下左右へ回る
+     （`.isle-spot[data-edge]` の矢が、建物のほうを指し続ける）。 */
+  if (o.me && o.me.w > 0) {
+    taken.push(o.me);
+    placed.push(o.me);
+  }
   /* 建物の当たり（指で押せる最小 48px まで広げたもの）を、**先に全部そろえる。**
      ---------------------------------------------------------------------
      前は札を1枚置くたびに `taken` へ足していたので、**自分より後ろに並んで
