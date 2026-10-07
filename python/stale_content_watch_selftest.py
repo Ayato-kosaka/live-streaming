@@ -77,11 +77,13 @@ from stale_content_watch import (  # noqa: E402
     CHAPTERS_TS,
     CONTENT,
     COVERS,
+    ENDLESS,
     KEY_RE,
     KEYS,
     LATEST,
     SHARE,
     SKIP,
+    SNAP,
     Facts,
     Span,
     chapter_spans,
@@ -109,8 +111,19 @@ TODAY = date(2026, 9, 17)
 # 先ぶんの表の2本も同じで、**向きが逆。** `covers-today` は「直っているものを
 # 鳴らす」側（毎晩の焼き直しが9/29から赤かったのがこれ）、`covers-free` は
 # 「壊れていても黙る」側（次の旅が始まった晩に、古い表のまま緑になる）。
+#
+# | `BREAK` | 何を元に戻すか | 落ちる足 |
+# | --- | --- | --- |
+# | `snap-days` | 写しを**日だけ**で見る（2026-10-06 までの `nordicShops.ts`） | `終わった旅 × 旅のうちに取れている` |
+# | `snap-free` | 写しに**何も求めない**（「終わった旅は見ない」の行きすぎ） | `進んでいる旅 × 取った日が古い` ほか |
+# | `endless-chapter` | 章を持たない表を**章の表と同じに**読む（`ENDLESS` を見ない） | `plans.ts` の「数えられない」 |
+#
+# `snap-days` が、2026-10-14 に立つはずだった**消しようのない赤**そのもの。
+# 日だけで見ると、終わった旅の店の表が31日目から赤くなり、持ち主が人待ちなので
+# 整備の札に永久に居座る。`snap-free` はその逆で、次の旅が始まっても黙る側。
 BREAK = os.environ.get("BREAK", "")
-LEGS = ("round", "ge", "covers-today", "covers-free")
+LEGS = ("round", "ge", "covers-today", "covers-free",
+        "snap-days", "snap-free", "endless-chapter")
 
 
 def _hobble() -> None:
@@ -131,6 +144,26 @@ def _hobble() -> None:
     elif BREAK == "covers-free":
         # 旅の始まりまでしか求めない（壊れていても黙る側）
         stale_content_watch.covers_until = lambda span, today, days: span.start
+    elif BREAK == "snap-days":
+        # 旅が終わっていても「今日から days 日」で見る（2026-10-06 まではこれ）。
+        # **これが 2026-10-14 に立つはずだった、消しようのない赤**
+        stale_content_watch.snap_window = (
+            lambda span, today, days: (today - timedelta(days=days), today)
+        )
+    elif BREAK == "snap-free":
+        # 何も求めない（終わった旅も進んでいる旅も素通り）
+        stale_content_watch.snap_window = (
+            lambda span, today, days: (date(1970, 1, 1), date(2999, 12, 31))
+        )
+    elif BREAK == "endless-chapter":
+        # 章を持たない表（`ENDLESS`）を、ふつうの章の名と同じに読む。
+        # `chapters.ts` に「終わらない」という章は無いので、`plans.ts` が
+        # 毎晩「数えられない」になる——**見張りが1本、黙って消える**
+        real_span_of = stale_content_watch.span_of
+        stale_content_watch.span_of = (
+            lambda book, seen: (None, "章が読めません")
+            if book.chapter == ENDLESS else real_span_of(book, seen)
+        )
 
 
 # **しきい値から作らない2つの数。** 上の docstring を読んでから触る。
@@ -143,24 +176,27 @@ TWO_SIDES: dict[str, tuple[int, int]] = {
     "site.ts": (14, 60),  # 人が手で書く updatedAt。2週間は普通、2ヶ月は放置
     "streamTypes.ts": (28, 130),  # 直近1年の最大は28日
     "countries.ts": (120, 200),  # 最大120日（旅のあいだは増えない）
-    "plans.ts": (30, 130),
     "apps.ts": (102, 200),  # 2026-02-26 → 06-08 の102日
     "chapters.ts": (126, 400),  # 章の間隔の中央値126日
     "legends.ts": (222, 400),  # 2025-05-07 → 12-15 の222日
     "shorts.ts": (45, 130),  # 130 は #119 の127日のすぐ上
     "chapterStreams.ts": (130, 400),  # 章が閉じる間隔は3〜6ヶ月
-    # 街の店。**日数の出どころが他と違う**ので、ここに書いておく。
-    #   green 18 … いまの旅は17日（`chapters.ts` の `plannedDays`）。
-    #              旅の前日に取って最終日まで使うと18日古くなる。これは正常
-    #   red  126 … **旅と旅のあいだの実測。** ひとつ前の章（イランまで歩く）が
-    #              終わった 2026-05-08 から、北欧が始まる 2026-09-11 まで126日。
-    #              前の旅の表を持ち越すと、それだけ古い表を配ることになる
-    # どちらも「OSM の店がどれくらいの速さで入れ替わるか」ではない。
-    # それはこちらからは測れない（`BOOKS` の why に書いた）
-    "nordicShops.ts": (18, 126),
-    # **`COVERS` の2本（`nordic.ts` `nordicSun.ts`）はここに居ない。**
+    # **`COVERS` の3本（`nordic.ts` `nordicSun.ts` `plans.ts`）と
+    # `SNAP` の1本（`nordicShops.ts`）はここに居ない。**
     # あちらは「今日から何日前か」ではなく「**旅が終わっているか**」で境目が
-    # 変わるので、日数1本では両側を作れない。4通りを下の「3c」で当てる
+    # 変わるので、日数1本では両側を作れない。4通りを下の「3c」「3f」で当てる
+}
+
+# `SNAP` で見る本の、**しきい値から作らない2つの数**（旅の最中に測る側）。
+#   green 18 … いまの旅は17日（`chapters.ts` の `plannedDays`）。
+#              旅の前日に取って最終日まで使うと18日古くなる。これは正常
+#   red  126 … **旅と旅のあいだの実測。** ひとつ前の章（イランまで歩く）が
+#              終わった 2026-05-08 から、北欧が始まる 2026-09-11 まで126日。
+#              前の旅の表を持ち越すと、それだけ古い表を配ることになる
+# どちらも「OSM の店がどれくらいの速さで入れ替わるか」ではない。
+# それはこちらからは測れない（`BOOKS` の why に書いた）
+TWO_SNAPS: dict[str, tuple[int, int]] = {
+    "nordicShops.ts": (18, 126),
 }
 
 # `SHARE` で見る本の、**しきい値から作らない2つの割合**（%）。
@@ -267,18 +303,30 @@ def main() -> int:
     # **分母をここで固定する**（§15）。判定する本が増えたのに対照を足し忘れると、
     # その1本だけ誰も当てないまま毎晩通る
     judged = {n for n, b in BOOKS.items() if b.rule != SKIP}
-    dated = {n for n in judged if BOOKS[n].rule in (LATEST, COVERS)}
+    dated = {n for n in judged if BOOKS[n].rule in (LATEST, COVERS, SNAP)}
     latest_books = {n for n in judged if BOOKS[n].rule == LATEST}
+    snap_books = {n for n in judged if BOOKS[n].rule == SNAP}
     covers_books = {n for n in judged if BOOKS[n].rule == COVERS}
+    # 章に属する先ぶんの表と、**どの旅にも属さない表**（`ENDLESS`）は別に当てる。
+    # 片方の足でもう片方を測ると、章を持たない表が「終わった旅」の枝を通る
+    chapter_covers = {n for n in covers_books if BOOKS[n].chapter != ENDLESS}
+    endless_covers = {n for n in covers_books if BOOKS[n].chapter == ENDLESS}
     check("両側の数を持っている本の数", sorted(TWO_SIDES), sorted(latest_books))
-    # `COVERS` の本は、章（旅）を名指ししていないと「終わったか」が決まらない
-    for name in sorted(covers_books):
+    check("写しの両側の数を持っている本の数", sorted(TWO_SNAPS), sorted(snap_books))
+    # `COVERS` / `SNAP` の本は、章（旅）を名指ししていないと「終わったか」が決まらない。
+    # **`ENDLESS` もここでは「名指しした」側**（空と区別が付く字が書いてある）
+    for name in sorted(covers_books | snap_books):
         check(f"{name} が章を名指ししている", bool(BOOKS[name].chapter), True)
+    # 章を持たない表は `COVERS` だけ。`SNAP` は旅ごとに取り直す写しなので、
+    # 「終わらない」と言った瞬間に、旅が終わっても取り直しを求め続けることになる
+    check("章を持たない表が SNAP に紛れていない",
+          sorted(n for n in snap_books if BOOKS[n].chapter == ENDLESS), [])
+    check("章を持たない表が1本は在る（分母が0ではない）", len(endless_covers) > 0, True)
 
     # --- 2. しきい値そのものが動いていないか ---------------------------------
     # **`green` で鳴らず `red` で鳴る**、を日数の側からも押さえる。
     # ここが無いと、しきい値を1日にしても green の写しを作る側が一緒にずれる。
-    for name, (green, red) in TWO_SIDES.items():
+    for name, (green, red) in list(TWO_SIDES.items()) + list(TWO_SNAPS.items()):
         b = BOOKS[name]
         check(f"{name} のしきい値が実測の正常な空き({green}日)より広い", b.days >= green, True)
         check(f"{name} のしきい値が止まった長さ({red}日)より狭い", b.days < red, True)
@@ -346,7 +394,7 @@ def main() -> int:
     # 4通りは**作った章**で当てる。本番の章がいま進んでいるか終わっているかに
     # よらず、次の旅が来ても同じ4通りが回る。本番の章と本番の表の組み合わせは、
     # そのすぐ下で別に当てる（こちらが「いまの本番で緑か」）。
-    for name in sorted(covers_books):
+    for name in sorted(chapter_covers):
         b = BOOKS[name]
 
         start, last = date(2026, 3, 1), date(2026, 3, 20)
@@ -423,6 +471,157 @@ def main() -> int:
               f"表のいちばん先 {base[name].dates[-1]}")
         check(f"{name} の表が、章の最終日まで届いている",
               base[name].dates[-1] >= sp.end, True)
+
+    # --- 3e. 章を持たない先ぶんの表（`ENDLESS`）-----------------------------
+    #
+    # 企画の表は旅ごとのものではない。**いつ読んでも「これから」が1件は在る**のが
+    # 正しいので、章が終わっても緩まない。ここが `LATEST` だったあいだ、
+    # 企画4件が全部終わったまま25日ぶん、表紙が「行ってきた」北欧旅を
+    # 「いま、いちばん近い企画」として出していて、見張りは毎晩緑だった。
+    #
+    # | 表 | ほしい答え | 抜けると何が起きるか |
+    # | --- | --- | --- |
+    # | 先の予定が1件でもある | 通った | 企画を足しても鳴り続ける |
+    # | 先の予定が0件（きょうが最後） | **赤** | **いまの本番がこれ。25日黙った** |
+    # | 章が終わっても、先の予定が在れば | 通った | 章に引きずられている |
+    for name in sorted(endless_covers):
+        for label, table_last, clock, want in (
+            ("先の予定が1件ある（あすの日付）", TODAY + timedelta(days=1), TODAY, "通った"),
+            ("先の予定がきょうの日付だけ", TODAY, TODAY, "通った"),
+            ("先の予定が0件（いちばん先がきのう）", TODAY - timedelta(days=1), TODAY, "赤"),
+            ("ずっと先の予定（1年先）", TODAY + timedelta(days=365), TODAY, "通った"),
+        ):
+            seen = dict(base)
+            seen[name] = _facts(name, _rewrite_dates(src_of[name], table_last))
+            check(f"{name}：{label}", _status(seen, name, clock), want)
+
+        # **章が終わっても緩まない。** `chapters.ts` を丸ごと「終わった章1つ」に
+        # しても、先の予定が0件なら赤のまま。ここが緩むと、旅が終わった日から
+        # 企画が1件も無くても毎晩緑になる
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates,
+                                  chapters=[Span("nordic", date(2026, 1, 1),
+                                                 date(2026, 1, 10))])
+        seen[name] = _facts(name, _rewrite_dates(src_of[name], TODAY - timedelta(days=1)))
+        check(f"{name}：章が全部終わっていても、先が0件なら赤",
+              _status(seen, name, TODAY), "赤")
+
+        # `chapters.ts` が1行も読めなくても、章を持たない表は判定できる。
+        # **ここで「数えられない」に落ちると、他の本の都合でこの見張りが消える**
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates, chapters=[])
+        seen[name] = _facts(name, _rewrite_dates(src_of[name], TODAY - timedelta(days=1)))
+        check(f"{name}：章が1つも読めなくても判定できる", _status(seen, name, TODAY), "赤")
+
+        # --- 本番の表。**ここが「いまの本番で赤か」** -----------------------
+        ahead = [d for d in base[name].dates if d >= date.today()]
+        print(f"  {name}: 本番の日付 {len(base[name].dates)}件 / "
+              f"いちばん先 {base[name].dates[-1]} / "
+              f"きょう（{date.today()}）以降 {len(ahead)}件")
+
+    # --- 3f. 旅ごとに取り直す写し（`SNAP`）---------------------------------
+    #
+    # `nordicShops.ts` を日だけで見ていたので、**2026-10-14 に消しようのない
+    # 赤が立つ**ところだった（旅の最終日 09-27 ＋ 取った日 09-13 から31日）。
+    # 終わった旅の店の表は、そこで止まっているのが正しい。
+    #
+    # **「終わった旅は見ない」にしない。** 無条件に外すと、前の旅の表を
+    # 持ち越したまま次の旅が始まっても黙る（旅と旅のあいだは実測で最大126日）。
+    #
+    # | 旅 | 取った日 | ほしい答え | 抜けると何が起きるか |
+    # | --- | --- | --- | --- |
+    # | 進んでいる | 新しい | 通った | 旅のあいだじゅう狼少年 |
+    # | 進んでいる | 古い | **赤** | 古い店の表で旅の面を配る |
+    # | 終わった | 旅のうちに取れている | 通った | **消しようのない赤**（2026-10-14） |
+    # | 終わった | 前の旅から持ち越している | **赤** | 旅が変わっても黙る |
+    # | 終わった | 旅のあとに取り直している | **赤** | 章の `to` と食い違っている |
+    for name in sorted(snap_books):
+        b = BOOKS[name]
+        green, red = TWO_SNAPS[name]
+
+        start, last = date(2026, 3, 1), date(2026, 3, 20)
+        during, after = date(2026, 3, 10), date(2026, 4, 1)
+        closed = Span(b.chapter, start, last)
+        openep = Span(b.chapter, start, None)
+
+        def _snap(span: Span, took: date) -> dict[str, Facts]:
+            seen = dict(base)
+            seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                      dates=base[CHAPTERS_TS].dates, chapters=[span])
+            seen[name] = _facts(name, _rewrite_dates(src_of[name], took))
+            return seen
+
+        for label, span, took, clock, want in (
+            # 旅の最中。**しきい値から作らない2つの数**（`TWO_SNAPS`）で当てる
+            (f"進んでいる旅 × 正常な空き({green}日前)", closed,
+             during - timedelta(days=green), during, "通った"),
+            (f"進んでいる旅 × 前の旅の持ち越し({red}日前)", closed,
+             during - timedelta(days=red), during, "赤"),
+            # 終わりが未定の章も「終わっていない」側
+            (f"終わりが未定の旅 × 前の旅の持ち越し({red}日前)", openep,
+             during - timedelta(days=red), during, "赤"),
+            # 旅のあと。**日ではなく、旅のうちに取れているか**
+            ("終わった旅 × 旅のうちに取れている（最終日）", closed, last, after, "通った"),
+            ("終わった旅 × 旅のうちに取れている（出発の前日）", closed,
+             start - timedelta(days=1), after, "通った"),
+            ("終わった旅 × 旅の始まりちょうど", closed, start, after, "通った"),
+            (f"終わった旅 × 旅の {b.days}日前ちょうど（境目の内側）", closed,
+             start - timedelta(days=b.days), after, "通った"),
+            (f"終わった旅 × 旅の {b.days + 1}日前（前の旅の表）", closed,
+             start - timedelta(days=b.days + 1), after, "赤"),
+            ("終わった旅 × 旅のあとに取り直している", closed,
+             last + timedelta(days=1), after, "赤"),
+        ):
+            check(f"{name}：{label}", _status(_snap(span, took), name, clock), want)
+
+        # 章が読めないときは、**通ったと言わない**（§15）
+        seen = dict(base)
+        seen[CHAPTERS_TS] = Facts(name=CHAPTERS_TS, found=True,
+                                  dates=base[CHAPTERS_TS].dates,
+                                  chapters=[Span("よその章", start, last)])
+        seen[name] = _facts(name, _rewrite_dates(src_of[name], last))
+        check(f"{name}：章 {b.chapter} が {CHAPTERS_TS} に無いとき",
+              _status(seen, name, after), "数えられない")
+
+        # 表に章を書き忘れた本も同じ。**既定で通さない**
+        books = dict(BOOKS)
+        books[name] = replace(b, chapter="")
+        v = judge(dict(base), after, books)
+        check(f"{name}：どの章の表なのかを書き忘れたとき",
+              [r.status for r in v.results if r.name == name], ["数えられない"])
+
+        # **章を持たない表（`ENDLESS`）として書いてしまったとき。**
+        # 旅ごとに取り直す写しに「終わらない」と言うと、旅が終わっても
+        # 取り直しを求め続けることになる。**落ちるのではなく「数えられない」**
+        books = dict(BOOKS)
+        books[name] = replace(b, chapter=ENDLESS)
+        v = judge(dict(base), after, books)
+        check(f"{name}：章を持たない表として書いてしまったとき",
+              [r.status for r in v.results if r.name == name], ["数えられない"])
+
+        # --- 本番の章 × 本番の表。**ここが「いまの本番で緑か」** -------------
+        sp = {x.slug: x for x in base[CHAPTERS_TS].chapters}.get(b.chapter)
+        check(f"{name} の章 {b.chapter} が本番の {CHAPTERS_TS} から読める",
+              sp is not None and sp.start is not None, True)
+        if sp is None or sp.start is None:
+            continue
+        print(f"  {name}: 章 {b.chapter} {sp.start}〜{sp.end} / "
+              f"取った日 {base[name].dates[-1]}")
+        check(f"{name}：本番の写しを、旅のとちゅう（{sp.start + timedelta(days=1)}）に当てて",
+              _status(dict(base), name, sp.start + timedelta(days=1)), "通った")
+        if sp.end is None:
+            print(f"  {name}: 章 {b.chapter} はまだ終わりが決まっていないので、"
+                  f"「旅のあと」は当てていない")
+            continue
+        # **日だけで見ていたら赤が立っていた日**を、名指しで当てる。
+        # ここが「31日目」。`BREAK=snap-days` を当てるとこの行が落ちる
+        boom = sp.end + timedelta(days=b.days + 1)
+        check(f"{name}：旅が終わって {b.days + 1}日たった日（{boom}）も緑",
+              _status(dict(base), name, boom), "通った")
+        check(f"{name}：旅が終わって1年たった日も緑",
+              _status(dict(base), name, sp.end + timedelta(days=365)), "通った")
 
     # --- 3d. 章の読み取りが、コメントと入れ子に騙されないか ------------------
     #
@@ -627,7 +826,9 @@ export const CHAPTERS: Chapter[] = [
         # もう片方では日付で見る本。順を混ぜると、あとから書いたほうが
         # 先に直したところを元に戻す（実際に踏んだ）。
         for name, b in BOOKS.items():
-            if b.rule == LATEST:
+            # `SNAP` は旅の最中なら日で見る側。`TODAY`（2026-09-17）は北欧の
+            # 旅のまっただ中なので、きのう取ったことにすれば通る
+            if b.rule in (LATEST, SNAP):
                 (green_dir / name).write_text(
                     _rewrite_dates(src_of[name], TODAY - timedelta(days=1)), encoding="utf-8"
                 )

@@ -222,6 +222,48 @@ def main() -> int:
 
     shutil.rmtree(base, ignore_errors=True)
 
+    # ---- 繋ぎ。**本物の今日で呼ばれる側が、どこかに在るか** ----
+    #
+    # ここが無いあいだ、この道具は 2026-09-17 から**19日間、どのワークフロー
+    # にも繋がっていなかった**（`grep -rn text_expires_watch .github/workflows/`
+    # が0件）。ひとりでに走っていたのはこの対照だけで、**こちらは
+    # `TODAY = date(2026, 9, 17)` で時計が凍っている**——仕込みを再現する
+    # ために、わざとそうしてある。
+    #
+    # つまり **9/18 以降に嘘になる字は、自動では一生拾われなかった。**
+    # それでも `python/watch_census_selftest.py` は緑だった——あちらは
+    # 「この対照から子として起こされている」で走っていると数えるので、
+    # **凍った時計で走っているのか本物の今日で走っているのかを見分けない。**
+    #
+    # 見分けるのはここの仕事。**`--today` の付かない呼び出し**が、
+    # ワークフローの `run:` のコマンドの位置に1つは要る。
+    import yaml  # noqa: PLC0415
+
+    me = "python/text_expires_watch.py"
+    calls = []
+    flow = REPO / ".github" / "workflows"
+    for f in sorted(flow.glob("*.y*ml")):
+        doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        for job in (doc.get("jobs") or {}).values():
+            for st in (job.get("steps") or []):
+                for line in (st.get("run") or "").splitlines():
+                    # **コマンドの位置でしか拾わない。** `echo "（python/… ）"` の
+                    # ようなお知らせを呼び出しと読むと、走っていないものが
+                    # 「走っている」に化ける（`watch_census_selftest.py` と同じ決め）
+                    body = line.strip()
+                    if body.startswith("#") or me not in body:
+                        continue
+                    head = body.split(me)[0]
+                    if head.replace("python3", "").replace("python", "").strip():
+                        continue
+                    calls.append((f.name, st.get("name"), "--today" in body))
+    live = [c for c in calls if not c[2]]
+    check("本体が、どこかのワークフローの run: から呼ばれている", len(calls) > 0, True)
+    check("**本物の今日で**回る呼び出しが1つはある（`--today` 無し）",
+          len(live) > 0, True)
+    for f, name, _ in live:
+        print(f"  繋ぎ: {f} の step「{name}」")
+
     print(f"対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")
     for line in ng:
         print(f"::error::{line}")

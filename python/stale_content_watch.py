@@ -35,14 +35,20 @@
 調べ直すことになるし、**35本ぶん並んでいないと分母にならない**
 （`docs/island-standards.md` §15）。
 
-## 4つの見かた
+## 5つの見かた
 
 | 見かた | 何が起きたら赤いか | どの本に付けるか |
 | --- | --- | --- |
 | `LATEST` | 中の**いちばん新しい過去の日付**が、今日から `days` 日より前 | 増えていくもの（料理・声・ショート） |
-| `COVERS` | 中の**いちばん先の日付**が、要るところまで届いていない | 先ぶんの表（旅程・日の出） |
+| `COVERS` | 中の**いちばん先の日付**が、要るところまで届いていない | 先ぶんの表（旅程・日の出・企画） |
+| `SNAP` | **取った日**が、その旅のためのものになっていない | 旅ごとに取り直す写し（街の店） |
 | `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 人が上流を書いたら続けて焼くもの（①b） |
 | `SHARE` | 上流の鍵のうち**下流に無いものの割合**が `share`% を超えた | 全部そろわないのが普通のもの（セリフ） |
+
+`COVERS` と `SNAP` は、どちらも**章（旅）で切る。** 向きが逆なだけ——
+`COVERS` は「いちばん**先**が、要るところまで届いているか」、`SNAP` は
+「いちばん**新しい**（＝取った）日が、その旅のうちに在るか」。
+日だけで測ると、どちらも**旅が終わった日から消しようのない赤**になる。
 
 `KEYS` と `SHARE` を分けてあるのは、**「1件も欠けてはいけない」と「欠けていて
 当たり前」を同じ判定にすると、後者が永遠に赤いまま誰にも読まれなくなる**から。
@@ -71,6 +77,18 @@
 | --- | --- |
 | まだ終わっていない（進んでいる・これから） | **今日**（＋`days` 日） |
 | もう終わった | **旅の最終日** |
+
+## どの旅にも属さない先ぶんの表（`ENDLESS`）
+
+企画の表（`plans.ts`）も先ぶんの表だが、**旅ごとのものではない。**
+いつ読んでも「これからの企画」が1件は在るのが正しい。だから章に結ばず、
+`chapter=ENDLESS` と書いて**終わらない**ことにする（`ended()` が永久に False
+なので、求めるのはいつでも「今日以降」）。
+
+ここは長いあいだ `LATEST` 60日で見ていた。**測れていたのは「いちばん新しい
+企画がいつのものか」だけ**で、`BOOKS` のコメント自身がそう認めていた。
+企画4件が全部終わって、表紙の「いま、いちばん近い企画」が
+**「行ってきた」北欧旅を25日ぶん出していた**あいだ、この見張りは毎晩緑だった。
 
 ## 「旅が終わったか」を、その表の中から決めない
 
@@ -144,7 +162,16 @@ COVERS = "COVERS"  # いちばん先の日付が、要るところ（旅の最�
                    # 終わった旅なら旅の最終日）まで届いているか
 KEYS = "KEYS"  # 上流の鍵が、下流に全部あるか
 SHARE = "SHARE"  # 上流の鍵のうち、下流に無いものの**割合**が share% を超えたか
+SNAP = "SNAP"  # 旅ごとに取り直す写し。旅が終わったら、その旅のうちに取れていればよい
 SKIP = "SKIP"  # 見ない（理由を必ず書く）
+
+# `COVERS` の本のうち、**どの旅にも属さない表**に書く章の名。
+# 企画の表（`plans.ts`）は「この旅ぶん」ではなく、**いつ読んでも先が在る**のが
+# 正しい。章に結ぶと、その章が終わった日から、先の企画が0件でも緑になる。
+#
+# **空（`chapter=""`）と同じ顔にしない。** 空は「どの章の表か書き忘れた」で、
+# こちらは「章を持たないと決めた」。同じ顔にすると、書き忘れが黙って通る
+ENDLESS = "終わらない"
 
 # だれが新しくするか（`docs/island-fresh.md` 1章の仕分け）
 MACHINE = "機械"  # 本番を読めば答えが出る。毎晩ひとりでに焼ける
@@ -174,10 +201,11 @@ class Book:
     # 欠けたものを**名指しで印字してよいか。** 料理や伝説の slug は出してよいが、
     # 住人の icon は出さない（この頭の「印字に入れないもの」）。数は出す
     names: bool = True
-    # `COVERS` の本が見る章の slug（`site/content/chapters.ts`）。
+    # `COVERS` / `SNAP` の本が見る章の slug（`site/content/chapters.ts`）。
     # **旅が終わったかどうかの出どころはここ1つ。** その本の中の日付から
     # 決めると、どんなに古い表でも「そこで終わった旅」に見えて永久に緑になる。
-    # `COVERS` の本には必ず書く（書いていなければ「数えられない」で止まる）
+    # `COVERS` / `SNAP` の本には必ず書く（書いていなければ「数えられない」で止まる）。
+    # **どの旅にも属さない表**（`plans.ts`）だけ `ENDLESS` と書く
     chapter: str = ""
     # **赤い行に、次にやることを1行そえる。** 「古い」と言われても、
     # 何をすれば緑になるかが本ごとに違う（料理は配信を見る、旅程は章を
@@ -311,21 +339,23 @@ BOOKS: dict[str, Book] = {
         "歩いた国と滞在。**旅から帰った本人が書く**ので、旅のあいだは1行も増えない"
         "（いまの旅の滞在は `nordic.ts` から出す）。実測の空きは最大120日",
     ),
-    "plans.ts": Book(
-        HUMAN, LATEST, 60,
-        "企画の選定。**中に過去の日付が2つしか無い**（ほかは `until` `when` の先ぶん）ので、"
-        "測れているのは「いちばん新しい企画がいつのものか」だけ。60日は `streamTypes` に揃えた",
-    ),
     "nordicShops.ts": Book(
-        OUTSIDE, LATEST, 30,
+        OUTSIDE, SNAP, 30,
         "街の店（OpenStreetMap、`tools/nordic/shops.py`）。焼くほうが"
         "**いちばん古い街を取った日**を `SHOPS_FETCHED` に書き戻す（#132。"
         "前は取った日がどこにも無くて測れなかった）。"
         "**30日は「旅をまたいだか」を見る値で、店の入れ替わりの速さではない**"
         "——OSM の店がどれくらいの速さで変わるかは、こちらからは測れない。"
         "この表は旅ごとに取り直すもので、いまの旅は17日（`chapters.ts` の `plannedDays`）。"
-        "旅の前日に取って最終日まで使うと最大18日古くなるので、その上に置いた",
-        todo="`python3 tools/nordic/shops.py` を回して街の表を取り直す",
+        "旅の前日に取って最終日まで使うと最大18日古くなるので、その上に置いた。"
+        "**日だけで見ると、旅が終わった31日目に消しようのない赤が立つ**"
+        "（終わった旅の店の表はそこで止まっているのが正しいのに、"
+        "持ち主が `外の地図`＝人待ちなので、整備の札に永久に居座る）。"
+        "だから旅の章で切る（`SNAP`）",
+        chapter="nordic",
+        todo="旅がまだなら `python3 tools/nordic/shops.py` を回して街の表を取り直す。"
+             "終わった旅なら、**その旅のうちに取れていれば緑**なので、"
+             "赤いときは店の表と `site/content/chapters.ts` の章の日付が食い違っている",
     ),
     "apps.ts": Book(
         HUMAN, LATEST, 120,
@@ -361,6 +391,22 @@ BOOKS: dict[str, Book] = {
         chapter="nordic",
         todo="`nordic.ts` をそろえてから `python3 tools/nordic_sun.py` を回し直す"
              "（`--check` で突き合わせだけもできる）",
+    ),
+    "plans.ts": Book(
+        HUMAN, COVERS, 0,
+        "企画の表。**先の企画が1件も無いと、表紙の「いま、いちばん近い企画」が"
+        "`big` の付いた大きい企画（＝もう行ってきた旅）に落ちる**（`nextPlan()`）。"
+        "**前はここを `LATEST` 60日で見ていた。** あれが測っていたのは"
+        "「いちばん新しい企画がいつのものか」だけで、**いちばん先の企画が"
+        "過ぎていても、過ぎたばかりなら緑**だった。実際に、ぜんぶ終わった企画4件の"
+        "まま25日ぶん「行ってきた」北欧旅が表紙に出ていて、この見張りは毎晩緑だった。"
+        "測るものを「いちばん新しい過去」から「いちばん先」に変えたので、"
+        "**日数のしきい値は要らない**——先が1件も無ければ、その日に鳴る。"
+        "どの旅にも属さない表なので章は `ENDLESS`",
+        chapter=ENDLESS,
+        todo="`site/content/plans.ts` の `PLANS` に、これからやる企画を足す"
+             "（**日にちはあやとが決める。** 日が決まっていないものは "
+             "`date` を空けると「これから」に居座るので、ここは埋まらない）",
     ),
     # --- 見ない。理由つき ---
     "aboutWords.ts": Book(
@@ -658,6 +704,77 @@ def covers_until(span: Span, today: date, days: int) -> date:
     return today + timedelta(days=days)
 
 
+def snap_window(span: Span, today: date, days: int) -> tuple[date, date]:
+    """旅ごとに取り直す写しが、**いつ取られていれば緑か。** `SNAP` の境目はここ1か所。
+
+    ## 旅が終わっていれば、その旅のうちに取れていればよい
+
+    `nordicShops.ts` は旅の街の店の表で、**旅が終われば、もう取り直さない。**
+    日数だけで見ると、旅が終わった `days` 日後から**消しようのない赤**が立つ:
+
+    - 終わった旅の店の表が古いのは**正常**（取り直すほうが嘘になる）
+    - なのに持ち主は `外の地図`＝人待ちなので、`upkeep_watch` が整備の札に出す
+    - **人が何をしても消えない。** 整備の札がまた「自分の出番が無い一覧」になる
+
+    実際に 2026-10-14（旅の最終日 09-27 ＋ 取った日 09-13 から31日）に立つ
+    ところだった。`nordic.ts` / `nordicSun.ts` で 2026-10-03 に直したのと同じ形。
+
+    終わった旅で見るのは「**この旅のために取ったものか**」だけ:
+
+    - 上は **旅の最終日**。それより後に取れていたら、旅が終わってから
+      取り直したか、章の `to` が間違っている
+    - 下は **旅の始まりの `days` 日前**。それより前なら、**ひとつ前の旅の表を
+      持ち越している**（旅と旅のあいだは実測で最大126日空く）
+
+    ## まだ終わっていなければ、今日から `days` 日前まで
+
+    旅の最中は、日で見る本（`LATEST`）と同じ。**「終わった旅は見ない」に
+    しない**——無条件に外すと、次の旅が始まっても古い表のまま緑になる。
+
+    ## 日付をここに書かない
+
+    終わったかどうかは `chapters.ts` の章（`Span`）だけが知っている。
+
+    Args:
+        span: その本が属する章（`BOOKS` の `chapter`）
+        today: きょう
+        days: 旅のあいだに許す古さ（`Book.days`）
+
+    Returns:
+        （いちばん古くていい日, いちばん新しくていい日）。**両端を含む**
+    """
+    if span.ended(today):
+        return span.start - timedelta(days=days), span.end
+    return today - timedelta(days=days), today
+
+
+def span_of(book: Book, seen: dict[str, Facts]) -> tuple[Span | None, str]:
+    """その本が属する章。**`COVERS` と `SNAP` が、ここ1か所から引く。**
+
+    「どの章の表か書き忘れた」と「章を持たないと決めた（`ENDLESS`）」を
+    **別の顔で返す。** 同じにすると、書き忘れが黙って通る（§15）。
+
+    Args:
+        book: 仕分け1本ぶん
+        seen: 本の名前 → `Facts`
+
+    Returns:
+        （章。読めなければ None, 読めなかった理由。読めていれば空）
+    """
+    if book.chapter == ENDLESS:
+        # どの旅にも属さない表。**終わらない**ので `ended()` は永久に False
+        return Span(ENDLESS, None, None), ""
+    if not book.chapter:
+        return None, "どの章の表なのか（`Book.chapter`）が書いてありません"
+    ch = seen.get(CHAPTERS_TS)
+    spans = {s.slug: s for s in (ch.chapters if ch else [])}
+    span = spans.get(book.chapter)
+    if span is None or span.start is None:
+        return None, (f"章 `{book.chapter}` を {CHAPTERS_TS} から読めません"
+                      f"（読めた章 {len(spans)}個）")
+    return span, ""
+
+
 def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = None) -> Verdict:
     """読んだ結果を見て、赤にするかどうかを決める。**ファイルを開かない。**
 
@@ -770,41 +887,78 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
                 v.results.append(Result(name, b.who, LATEST, b.days, "通った", detail))
             continue
 
-        if b.rule == COVERS:
+        if b.rule in (COVERS, SNAP):
             # **旅が終わったかどうかは、この本の中からは決めない。**
-            # 自分のいちばん先の日付で決めると、どんなに古い表でも
-            # 「そこで終わった旅」に見えて、永久に緑になる（§15）
-            if not b.chapter:
+            # 自分の日付から決めると、どんなに古い表でも「そこで終わった旅」に
+            # 見えて、永久に緑になる（§15）
+            span, why = span_of(b, seen)
+            if span is None:
                 v.blind.append(
-                    f"{name} は {COVERS} で見る本なのに、どの章の表なのか"
-                    f"（`Book.chapter`）が書いてありません"
+                    f"{name} は {b.rule} で見る本なのに、{why}。"
+                    f"旅が終わったかどうかが決まらないので、通ったとは言いません"
                 )
-                v.results.append(Result(name, b.who, COVERS, b.days, "数えられない", "章が未指定"))
+                v.results.append(Result(name, b.who, b.rule, b.days, "数えられない", why))
                 continue
-            ch = seen.get(CHAPTERS_TS)
-            spans = {s.slug: s for s in (ch.chapters if ch else [])}
-            span = spans.get(b.chapter)
-            if span is None or span.start is None:
+
+        if b.rule == SNAP:
+            # **章を持たない表（`ENDLESS`）を `SNAP` に書かない。**
+            # 旅ごとに取り直す写しに「終わらない」と言うと、旅が終わっても
+            # 取り直しを求め続けることになる。対照が `BOOKS` の側で先に
+            # 止めているが、**落ちるのではなく「数えられない」で出す**
+            if span.start is None:
                 v.blind.append(
-                    f"{name} の章 `{b.chapter}` を {CHAPTERS_TS} から読めません"
-                    f"（読めた章 {len(spans)}個）。旅が終わったかどうかが決まらないので、"
-                    f"通ったとは言いません"
+                    f"{name} は {SNAP} で見る本なのに、章を持たない表"
+                    f"（`{ENDLESS}`）として書いてあります"
                 )
-                v.results.append(Result(name, b.who, COVERS, b.days, "数えられない",
-                                        f"章 {b.chapter} が読めない"))
+                v.results.append(Result(name, b.who, SNAP, b.days, "数えられない",
+                                        "章を持たない写し"))
                 continue
+            # 旅ごとに取り直す写し。**いちばん新しい日付＝取った日**
+            took = f.dates[-1]
+            lo, hi = snap_window(span, today, b.days)
+            done = span.ended(today)
+            detail = (
+                f"取った日 {took} / 章 {b.chapter} "
+                f"{span.start}〜{span.end or '終わり未定'}"
+                f"（{'終わった' if done else '終わっていない'}）"
+                f" / {lo}〜{hi} なら緑 / 日付 {len(f.dates)}件"
+            )
+            if not (lo <= took <= hi):
+                v.red.append(
+                    (f"{name} の表が、終わった旅（{b.chapter} {span.start}〜{span.end}）の"
+                     f"ものではありません（取った日 {took} / {lo}〜{hi} なら緑）"
+                     if done else
+                     f"{name} が {(today - took).days}日前で止まっています"
+                     f"（しきい値 {b.days}日 / 取った日 {took}）")
+                    + (f" → {b.todo}" if b.todo else "")
+                )
+                v.results.append(Result(name, b.who, SNAP, b.days, "赤", detail))
+            else:
+                v.results.append(Result(name, b.who, SNAP, b.days, "通った", detail))
+            continue
+
+        if b.rule == COVERS:
             last = f.dates[-1]
             until = covers_until(span, today, b.days)
             done = span.ended(today)
-            detail = (
-                f"いちばん先の日付 {last} / 章 {b.chapter} "
-                f"{span.start}〜{span.end or '終わり未定'}"
+            # **どの旅にも属さない表は、章の字を出さない。**「章 終わらない
+            # None〜終わり未定」と出ても、読む人には何も言っていない
+            where = (
+                "章を持たない表（いつ読んでも先が在るのが正しい）"
+                if b.chapter == ENDLESS else
+                f"章 {b.chapter} {span.start}〜{span.end or '終わり未定'}"
                 f"（{'終わった' if done else '終わっていない'}）"
+            )
+            detail = (
+                f"いちばん先の日付 {last} / {where}"
                 f" / {until} まで要る / 日付 {len(f.dates)}件"
             )
             if last < until:
                 v.red.append(
-                    (f"{name} の表が、終わった旅（{b.chapter}）の最終日 {until} まで"
+                    (f"{name} に、これから先の日付が1つもありません"
+                     f"（いちばん先が {last} / {until} 以降が要る）"
+                     if b.chapter == ENDLESS else
+                     f"{name} の表が、終わった旅（{b.chapter}）の最終日 {until} まで"
                      f"届いていません（いちばん先が {last}）"
                      if done else
                      f"{name} の表が今日に届いていません（いちばん先が {last} / "
@@ -833,7 +987,7 @@ def report(v: Verdict, today: date) -> None:
     print()
     print(f"  {'本':22} {'だれが':14} {'見かた':7} {'しきい値':>6}  {'判定':10} 中身")
     for r in sorted(v.results, key=lambda r: (r.rule == SKIP, r.name)):
-        days = (f"{r.days}日" if r.rule in (LATEST, COVERS)
+        days = (f"{r.days}日" if r.rule in (LATEST, COVERS, SNAP)
                 else f"{r.days}%" if r.rule == SHARE else "-")
         print(f"  {r.name:22} {r.who:14} {r.rule:7} {days:>6}  {r.status:10} {r.detail}")
 

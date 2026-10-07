@@ -78,7 +78,22 @@ export function pickPlace<T>(
 }
 
 /**
- * 人が書いた「いまどこ」が、**いまの旅より前に書かれたまま**か。
+ * 「いまどこ」の便りが、**何日たったら「いま」ではなくなるか。**
+ *
+ * `current` は `place` `word` `week` をまとめて持つ1つの箱で、`/now` は
+ * これを**「いまいる国と、今週やること」**として出している
+ * （`content/nights.ts` の `now`）。**週の箱なので、境目は1週間。**
+ *
+ * **ここが唯一の出どころ。** `python/upkeep_watch.py` はこのファイルから
+ * この数を読んで同じ境目で数える（日数を2か所に置かない。
+ * `docs/island-fresh.md` 2章）。**書きかたを変えるなら、あちらの
+ * `read_place_stale_days()` も一緒に**（読めなくなったら、あちらは
+ * 「数えられない」で止まる。黙って通らない）。
+ */
+export const PLACE_STALE_DAYS = 7;
+
+/**
+ * 人が書いた「いまどこ」が、**もう「いま」ではない**か。
  *
  * `/island-api/state` の `current.place`（「ジョージア・トビリシ」）は
  * あやとが手で書く欄で、**旅の17日間、ヒッチハイクの途中では書き替えられない。**
@@ -88,15 +103,34 @@ export function pickPlace<T>(
  * **「人が書く欄だから直せない」ではない。** 直せないのは中身で、
  * **古くなったものをそのまま「いま」として出すかどうかは、こちらが決めること。**
  *
- * 判定は、便りを書いた日（`current.updatedAt`）といまの章の始まり。
- * 章が変わるより前に書かれていれば、その場所はもう「いま」ではない。
+ * 見るのは2つ。**どちらか片方だけでは、いつでも通る判定になる。**
+ *
+ * 1. **いまの章の始まりより前に書かれていないか。** 章が変わっていれば、
+ *    その場所はもう「いま」ではない
+ * 2. **`PLACE_STALE_DAYS` 日より前に書かれていないか。**
+ *
+ * 2 が無いあいだ、ここは**章が始まった日に書けば、その章が何ヶ月続いても
+ * 永久に「新しい」**と答えていた。実際にアルバニアの章は 2026-09-28 に
+ * 始まって `updatedAt` も 2026-09-28 で、**1 だけでは一生古くならない。**
+ * その8日後、本番の `/now` は「9/27 ストックホルムを発つ」を
+ * **今週の予定**として出していた。
+ *
  * 日付が読めないものも、古いものとして扱う（読めないことを「新しい」にしない）。
  */
 export function placeOutdated(updatedAt: string | undefined, now: Date = new Date()): boolean {
   const began = chapterSpan(chapterNow(now), now).from;
-  if (began == null) return false;
-  if (!updatedAt) return true;
+  if (!updatedAt) return began == null ? false : true;
   // その日いっぱいまでを「その日に書いた」とみなす
   const t = Date.parse(`${updatedAt}T23:59:59+09:00`);
-  return Number.isNaN(t) || t < began;
+  if (Number.isNaN(t)) return true;
+  /* **日数は、時刻の引き算ではなく暦日で数える。** 時刻で引くと、
+     同じ便りが朝は「新しい」で夜は「古い」になる（境目が1日ぶん揺れる）。
+     島の日付はどこも日本時間で切ってあるので、ここも日本時間の暦日で数える
+     （`lib/nightly.ts` の `jstNow` と同じ線。`content/plans.ts` の `daysUntil`
+     が UTC で切っていて、毎日 00:00〜09:00 JST のあいだ「今日」が前の日を
+     指していたのと同じ踏み方をしない）。 */
+  const jstDay = (ms: number) => Math.floor((ms + 9 * 3600000) / 86400000);
+  if (jstDay(now.getTime()) - jstDay(t) > PLACE_STALE_DAYS) return true;
+  if (began == null) return false;
+  return t < began;
 }
