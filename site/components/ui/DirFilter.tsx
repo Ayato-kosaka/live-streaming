@@ -22,9 +22,22 @@ import { useEffect, useRef, useState } from "react";
  *
  * 「0件」で終わらせない（`docs/island-world.md` 4.1）。
  * 何を打ったら当たるかを1つ書いて、空にする板を置く。
+ *
+ * ## 打ったら、当たった棚を開ける
+ *
+ * 棚は畳んである（`app/all/page.tsx`）。当たった行だけを残しても、
+ * その行が**閉じた畳みの中にいたら1枚も見えない。**
+ * 「コロッケ」と打って何も出てこない面になるので、
+ * **当たりのある棚はこちらで開ける。**
+ *
+ * 消したら元に戻す。打つ前にどこを開けていたかを控えておいて、
+ * 字が空になったところで戻す。戻さないと、一度打っただけで
+ * 面が 12画面に開ききったまま残る。
  */
 export default function DirFilter({ total }: { total: number }) {
   const box = useRef<HTMLInputElement>(null);
+  /** 打ち始める前の、棚の開き具合。字が空に戻ったらここへ戻す */
+  const before = useRef<boolean[] | null>(null);
   const [hit, setHit] = useState(total);
   const [word, setWord] = useState("");
 
@@ -45,9 +58,21 @@ export default function DirFilter({ total }: { total: number }) {
     const n = seen.size;
     // 1行も残らなかった棚は、見出しごと引っ込める。
     // 名前だけの棚が並んでいると「あるのに出てこない」と読まれる。
+    const shelves: { fold: HTMLDetailsElement | null; hit: boolean }[] = [];
     document.querySelectorAll<HTMLElement>(".dxs").forEach((sec) => {
-      sec.hidden = !sec.querySelector("[data-q]:not([hidden])");
+      const hitHere = !!sec.querySelector("[data-q]:not([hidden])");
+      sec.hidden = !hitHere;
+      shelves.push({ fold: sec.querySelector<HTMLDetailsElement>("details.fold"), hit: hitHere });
     });
+    if (w) {
+      // 打ち始めた1回だけ、いまの開き具合を控える
+      if (!before.current) before.current = shelves.map((x) => !!x.fold?.open);
+      shelves.forEach((x) => { if (x.fold && x.hit) x.fold.open = true; });
+    } else if (before.current) {
+      const was = before.current;
+      shelves.forEach((x, i) => { if (x.fold) x.fold.open = was[i] ?? false; });
+      before.current = null;
+    }
     setHit(n);
   }, [word]);
 
