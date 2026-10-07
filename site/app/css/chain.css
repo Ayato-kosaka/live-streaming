@@ -1509,7 +1509,87 @@
   .isle-hint { top: calc(162px + env(safe-area-inset-top)); }
 }
 
+/* 640px から上は、島の下ふちのまん中へ降ろす。
+   ---------------------------------------------------------
+   **上の 146px は、島の名前（`.isle-sign`、2行ぶん）がいる前提の数字。**
+   表紙にはその名前が無く、代わりに同じ場所へ看板ロゴ（`.hero-copy`）が来る。
+   こちらは `.isle` の兄弟として**あとに**書かれていて、どちらも z-index: 5
+   なので、後ろに書かれたほうが勝つ。
+
+   実測（案内あり／`visibility:hidden` の2枚を撮って差の出た画素を数えた）:
+
+       390px 82.2%  ／  820px 58.5%  ／  1280px 1.6%  ／  1680px 1.6%
+
+   **PC の人は、島の歩きかたを一度も知らされていない**（案内は一生に一度
+   5.6秒だけで、`localStorage` に書いたら二度と出ない）。
+
+   降ろす先は下ふちのまん中。640px から上は、隅の道具が左下（`.isle-tools`）、
+   「今日の島」の板がタブレットは右下・PC は右上なので、**下のまん中だけが
+   どの幅でも空いている**。海のぼかし（`.isle-shore`、下から 90px）より上。
+
+   **寄せるのに `transform` を使わない。** 入りの動き（`hintIn`）が
+   `transform: none` で終わり、`fill-mode: both` でそれを握り続けるので
+   （`CLAUDE.md`）、ここで書いた translate は数秒後に消える。
+   左右を 0 にして `margin-inline: auto` で寄せる。 */
+@media (min-width: 640px) {
+  .isle-hint {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: calc(104px + env(safe-area-inset-bottom));
+    width: fit-content;
+    margin-inline: auto;
+    text-align: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) { .isle-hint { animation: none; } }
+
+/* ---- 押せるようになるまで（`IsleStage` の `data-live`）-------------------
+   島の絵は焼いた HTML に入っているので、**描き終わってもまだ押せない。**
+   実測（390px・CPU4倍＋4G）で、島の DOM が出るのが 741ms、建物の当たりが
+   寸法を持つのが 922ms、React が手を付けるのが 2579ms。読み込みの 1600ms 後に
+   地面を押しても、あやとは歩き出さない（2400ms 後なら歩く）。
+   **1.6〜2.1秒、絵は完成して見えるのに、押しても何も起きない。**
+
+   字は足さない（画面でシステムの仕様を説明しない。`CLAUDE.md`）。
+   **島をごく薄く沈めて、指の形を「待ち」に変えるだけ。** 立ち上がった瞬間に
+   veil が消えるので、「いま押せるようになった」が絵として分かる。
+
+   `pointer-events: none` なので、JS 無しでも動くもの（`.isle-atlas` は
+   ただの `<a>`）は幕越しにそのまま押せる。沈めるのは見た目だけ。
+
+   **`.isle::after` は使えない。** あそこは時間帯の色かぶせ（夕方・夜）が
+   `mix-blend-mode` 込みで使っている。幕は自前の1枚（`.isle-wait`）にして、
+   `IsleStage` が押せるようになった時点で外す。 */
+.isle-wait {
+  position: absolute;
+  inset: 0;
+  /* 島の上に載っているもの（札 5・道具と板 4）より上。指は取らない */
+  z-index: 6;
+  pointer-events: none;
+  background: rgba(10, 42, 58, 0.22);
+  /* 止まった幕だと「そういう絵」に見える。ゆっくり息をさせて「待ち」を出す。
+     動かすのは幕の `opacity` だけなので、合成だけで済んで島は塗り直されない
+     （`CLAUDE.md`「島の SVG の中で動かしたものは外接矩形ぶん塗り直される」の
+     外側にいる）。メインスレッドは hydration で塞がっているので、
+     **合成で動くものしか動けない**、という事情もある。 */
+  animation: isleWait 1.5s ease-in-out infinite alternate;
+}
+@keyframes isleWait {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+/* 指の形も「待ち」に。ボタンとリンクは自分の cursor を持っているので、
+   継承では変わらない。名指しで上書きする */
+.isle:not([data-live]),
+.isle:not([data-live]) .isle-hit,
+.isle:not([data-live]) .isle-who-hit,
+.isle:not([data-live]) .isle-mark,
+.isle:not([data-live]) .isle-view { cursor: progress; }
+@media (prefers-reduced-motion: reduce) {
+  .isle-wait { animation: none; }
+}
 
 /* 島の下に続く紙。トップと同じ形（島が板、その下が紙） */
 .isle-page { padding-top: 10px; }

@@ -124,6 +124,40 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   const blockers = useRef<Box[] | null>(null);
 
   const [box, setBox] = useState({ w: 1440, h: 820 });
+  /**
+   * 画面の幅を実際に測ったか。**測るまでは寄り引きを名乗らない。**
+   *
+   * 焼いた HTML は幅を知らないので、仮の PC 幅（1440）で作られる。そのまま
+   * `data-view="wide"` を書き出していると、スマホで開いた人は
+   * **看板の絵（900×410・92KB）を1枚まるごと取って描いてから**、
+   * hydration の直後にそれが消えて右上の小さい印に入れ替わる。
+   * 実測（390px・CPU4倍＋4G）で `wide` を名乗っていたのは 800〜2661ms で、
+   * そのあいだに取った 92KB は最後に `display:none` で捨てられていた。
+   *
+   * 手で作った島は先に同じ直しを持っていた（`components/island/IslandStage.tsx`
+   * の `sized`。「実測でその看板が LCP・4,756ms で、しかも捨てる絵だった」）。
+   * **表紙が章の島に入れ替わった日から、こちらにだけ無かった。**
+   *
+   * 測る前は属性を出さない。どちらを出すかは CSS の幅そのものが決める
+   * （`app/css/hero.css`）。スマホの既定は小さい印なので、看板のほうは
+   * `loading="lazy"`（隠れているあいだは取りにいかない）に落ちる。
+   */
+  const [sized, setSized] = useState(false);
+  /**
+   * React が手を付けたか（hydration が済んで、押せば動くようになったか）。
+   *
+   * 島の絵は焼いた HTML に入っているので、**描き終わってもまだ押せない。**
+   * 実測（390px・CPU4倍＋4G）で、島の DOM が出るのが 741ms、建物の当たりが
+   * 寸法を持つのが 922ms、React が手を付けるのが 2579ms。
+   * **そのあいだの 1.6〜2.1 秒、押しても何も起きないのに、絵は完成して見える。**
+   * 初見の人はここで1〜2回押して、無反応のまま下へ送ってしまう。
+   *
+   * `useEffect` は hydration のあとにしか走らないので、ここが立った瞬間が
+   * そのまま「押せるようになった」。`data-live` を出して、立つまでは
+   * `chain.css` が島をごく薄く沈めて `cursor: progress` にする。
+   * **字は増やさない**（画面でシステムの仕様を説明しない。`CLAUDE.md`）。
+   */
+  const [live, setLive] = useState(false);
   const [wide, setWide] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [openSpot, setOpenSpot] = useState<string | null>(null);
@@ -144,6 +178,9 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
   useEffect(() => {
     if (cover) rememberVisit();
   }, [cover]);
+
+  /* 押せるようになった合図。**効果が走った＝hydration が済んだ**ということ */
+  useEffect(() => setLive(true), []);
 
   const avatar = useRef({ ...world.start });
   const facing = useRef(1);
@@ -266,6 +303,8 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
       // 何十枚も描いてから所定の位置に着くことになる。1フレームで置く
       snapCam.current = true;
       setBox({ w: r.width, h: r.height });
+      /* 測り終えた。ここから先だけ寄り引きを名乗ってよい（上の `sized`） */
+      setSized(true);
     };
     const ro = new ResizeObserver(read);
     ro.observe(el);
@@ -1028,9 +1067,13 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
          `components/island/IslandStage.tsx` の `data-view`）。
          ここが無いあいだ、章の島では `hero.css` の出し分けがどれも当たらず、
          **スマホは引きに移っても 124px の小さい印のまま**だった。
-         スマホの寄りだけが小さい印で、あとは看板まるごと。 */
-      data-view={modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
-      data-mode={modeOf(box.w)}
+         スマホの寄りだけが小さい印で、あとは看板まるごと。
+         **ただし測るまでは出さない**（上の `sized`）。焼いた HTML が仮の
+         PC 幅で "wide" を名乗っていると、スマホが 92KB の看板を取って捨てる。 */
+      data-view={!sized ? undefined : modeOf(box.w) === "phone" && !wide ? "close" : "wide"}
+      data-mode={sized ? modeOf(box.w) : undefined}
+      /* React が手を付けたか。立つまでは押しても何も起きないので、島を薄く沈める */
+      data-live={live ? "" : undefined}
       /* 表紙か。**看板ロゴが右上にいる面かどうか**が、隅の道具の置き方を変える
          （`chain.css` の `.isle-tools`）。章の島には看板が無いので、
          引きで道具の名前を戻せる。表紙は同じ隅に看板がいて戻せない。 */
@@ -1143,6 +1186,14 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
 
       {/* 島の下ふち。海をページの地へ溶かす */}
       <span className="isle-shore" aria-hidden />
+
+      {/* 押せるようになるまでの薄い幕。**焼いた HTML にこれが入っている。**
+          絵は焼いてあるので島は先に描き終わるが、押して歩けるのは React が
+          手を付けてから（実測 390px・CPU4倍＋4G で 2579ms。それまでに地面を
+          押しても、あやとは歩き出さない）。待てという合図がどこにも無いので、
+          初見の人はそこで1〜2回押して、無反応のまま下へ送ってしまう。
+          指は取らない（`chain.css`）ので、JS 無しで動くものは幕越しに押せる。 */}
+      {!live && <span className="isle-wait" aria-hidden />}
 
       {/* 建物の札。寄りでは近づくと開いて、名前と一言と「みる」が出る。
           **引き（島ぜんぶ）では、建っているもの全部の名前が出る。開かない。**
