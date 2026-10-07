@@ -901,6 +901,18 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
                 continue
 
         if b.rule == SNAP:
+            # **章を持たない表（`ENDLESS`）を `SNAP` に書かない。**
+            # 旅ごとに取り直す写しに「終わらない」と言うと、旅が終わっても
+            # 取り直しを求め続けることになる。対照が `BOOKS` の側で先に
+            # 止めているが、**落ちるのではなく「数えられない」で出す**
+            if span.start is None:
+                v.blind.append(
+                    f"{name} は {SNAP} で見る本なのに、章を持たない表"
+                    f"（`{ENDLESS}`）として書いてあります"
+                )
+                v.results.append(Result(name, b.who, SNAP, b.days, "数えられない",
+                                        "章を持たない写し"))
+                continue
             # 旅ごとに取り直す写し。**いちばん新しい日付＝取った日**
             took = f.dates[-1]
             lo, hi = snap_window(span, today, b.days)

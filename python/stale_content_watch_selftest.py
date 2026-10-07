@@ -592,6 +592,15 @@ def main() -> int:
         check(f"{name}：どの章の表なのかを書き忘れたとき",
               [r.status for r in v.results if r.name == name], ["数えられない"])
 
+        # **章を持たない表（`ENDLESS`）として書いてしまったとき。**
+        # 旅ごとに取り直す写しに「終わらない」と言うと、旅が終わっても
+        # 取り直しを求め続けることになる。**落ちるのではなく「数えられない」**
+        books = dict(BOOKS)
+        books[name] = replace(b, chapter=ENDLESS)
+        v = judge(dict(base), after, books)
+        check(f"{name}：章を持たない表として書いてしまったとき",
+              [r.status for r in v.results if r.name == name], ["数えられない"])
+
         # --- 本番の章 × 本番の表。**ここが「いまの本番で緑か」** -------------
         sp = {x.slug: x for x in base[CHAPTERS_TS].chapters}.get(b.chapter)
         check(f"{name} の章 {b.chapter} が本番の {CHAPTERS_TS} から読める",
