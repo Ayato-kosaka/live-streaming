@@ -4,14 +4,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/ui/IconCore";
 import {
-  compose,
+  clampPlace,
+  composeMany,
+  defaultPlaceFor,
   loadImage,
+  opaqueBox,
   stampFileName,
   toJpeg,
+  type Figure,
   type Place,
 } from "@/components/nordic/stamp";
+import { moveCard } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import DropPhoto from "./DropPhoto";
-import { cardIcon, cardWhen, type PhotoGroup, type PlanBrief } from "./cards";
+import {
+  cardIcon,
+  cardWhen,
+  useMyCardIds,
+  type PhotoGroup,
+  type PlanBrief,
+} from "./cards";
 
 /**
  * 写真を1枚ひらいて、キャラクターを入れて、持って帰るところ。
@@ -34,18 +46,47 @@ import { cardIcon, cardWhen, type PhotoGroup, type PlanBrief } from "./cards";
  *
  * ## 出ているこの絵が、そのまま持って帰る1枚
  *
- * 画面に出しているのは合成したあとの canvas なので、**見えているものと
- * 保存されるものが必ず同じ**になる。長押しでも持って帰れる。
+ * 画面に出しているのは合成したあとの canvas（と、それを焼いた jpeg）なので、
+ * **見えているものと保存されるものが必ず同じ**になる。長押しでも持って帰れる。
+ *
+ * 引きずっているあいだだけ canvas が前に出て、手が止まると jpeg に
+ * 入れ替わる。**絵は同じ。** 1フレームごとに jpeg へ焼くと 2048px では
+ * 間に合わないので、動いているあいだは焼かないだけ。長押しで保存するのは
+ * jpeg のほうなので、**手を離したあとの画面には、いつも焼き上がりが出ている。**
  *
  * 保存は3段構え（`docs/nordic-photos.md` 6章）。スマホで押す人のほうが
  * 多く、`<a download>` は iOS Safari で効かないことがある。
  *   1. 端末が共有を持っていれば、そこへ渡す（iOS はここに「画像を保存」が出る）
  *   2. 無ければ `<a download>`
  *   3. どちらも駄目でも、出ている絵が焼き上がりなので長押しで保存できる
+ *
+ * ## 立ち位置は、本人のカードだけ覚える
+ *
+ * 引きずって動かすのは**誰でもできる。** ログインしていない人も、他人の
+ * カードも、手元で動かして持って帰れる。ここを「ログインしないと動かせない」
+ * にすると、ほとんどの人が触れなくなる。
+ *
+ * **覚えるのは、ログインした本人の、自分のカードだけ**（`POST /cards/<id>`
+ * がその判定を持っている）。本当のカードIDは `GET /cards/mine` にしか
+ * 入らないので、引き当ては `useMyCardIds`。
+ *
+ * ## あやと本人を入れるかどうかは、保存しない
+ *
+ * 書類に欄を足さない。保存すると、**他の人が見るカードの見た目まで変わる。**
+ * 誰も頼んでいない。ここでやっているのは「自分の記念の1枚をどう作るか」
+ * なので、持って帰る絵にだけ効かせる。
  */
 
 /** 選ぶところに出す1人。 */
 type Pick = { key: string; icon: string; name: string; place: Place | null };
+
+/** あやと本人の絵。**島に立っているのと同じ1枚**（`/characters/ayato.webp`）。 */
+const AYATO = "/characters/ayato.webp";
+
+/** 手が止まってから焼くまで。**動かしているあいだは焼かない** */
+const BAKE_MS = 150;
+/** 動かし終わってから覚えるまで。**引きずっている途中には投げない** */
+const SAVE_MS = 700;
 
 export default function CardSheet({
   group,
@@ -77,10 +118,31 @@ export default function CardSheet({
 
   /** いま入れている人。**はじめは誰も入れない。** */
   const [chosen, setChosen] = useState<Pick | null>(null);
+  /** あやとも入れるか。**手元だけ。保存しない。** */
+  const [withAyato, setWithAyato] = useState(false);
+  /** 動かしたぶん。**null はその人の元の立ち位置**（既定か、覚えてあるぶん） */
+  const [moved, setMoved] = useState<Place | null>(null);
   const [out, setOut] = useState<{ url: string; blob: Blob } | null>(null);
+  /** 動かしている最中。canvas を前に出して、jpeg へは焼かない */
+  const [live, setLive] = useState(false);
   /** 焼けなかった理由。"photo" は写真そのもの、"chr" はキャラクターの絵 */
   const [failed, setFailed] = useState<null | "photo" | "chr">(null);
+  /** 絵が読み終わった回数。**読み終わってから描く**ための合図 */
+  const [ready, setReady] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const cvRef = useRef<HTMLCanvasElement>(null);
+  /** 読み終えた絵。焼き直しのたびに読み直さない */
+  const art = useRef<{
+    photo: HTMLImageElement | null;
+    chr: HTMLImageElement | null;
+    mate: HTMLImageElement | null;
+  }>({ photo: null, chr: null, mate: null });
+
+  const { user, token } = useAuth();
+  const { idOf, again } = useMyCardIds();
+  /** 本当のカードID。**これが取れたときだけ覚える**（他人のは 403） */
+  const cardId = chosen ? idOf(group.photoId, chosen.icon) : null;
+  const canSave = !!user && !!cardId;
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -91,19 +153,31 @@ export default function CardSheet({
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  // 選ぶたびに焼き直す。前の1枚は URL ごと捨てる（放っておくと溜まる）
+  /* 人を選び直したら、動かしたぶんは持ち越さない。立ち位置は人ごとのもの */
+  const who = chosen?.icon ?? "";
+  useEffect(() => setMoved(null), [who]);
+
   const shot = group.url;
   const icon = chosen?.icon ?? null;
-  const place = chosen?.place ?? null;
+  /** いま描く立ち位置。動かしていなければ、その人の元の立ち位置 */
+  const place = moved ?? chosen?.place ?? null;
+
+  /* ---- 絵を読む。**人や写真が変わったときだけ** ---- */
   useEffect(() => {
     let gone = false;
-    let url = "";
-    setOut(null);
     setFailed(null);
+    /* **前の1枚を先に捨てる。** 残しておくと、人を選び直した直後の
+       150ms だけ「前の人が入った絵」が出たままになる */
+    setOut((had) => {
+      if (had) URL.revokeObjectURL(had.url);
+      return null;
+    });
+    art.current = { photo: null, chr: null, mate: null };
     (async () => {
-      const [photo, chr] = await Promise.all([
+      const [photo, chr, mate] = await Promise.all([
         loadImage(shot),
         icon ? loadImage(cardIcon(icon, 640)) : Promise.resolve(null),
+        icon ? loadImage(AYATO) : Promise.resolve(null),
       ]);
       if (gone) return;
       if (!photo) {
@@ -117,19 +191,187 @@ export default function CardSheet({
         setFailed("chr");
         return;
       }
-      const blob = await toJpeg(compose(photo, chr, place));
-      if (gone || !blob) {
-        if (!gone) setFailed("photo");
-        return;
-      }
-      url = URL.createObjectURL(blob);
-      setOut({ url, blob });
+      art.current = { photo, chr, mate };
+      setReady((n) => n + 1);
     })();
     return () => {
       gone = true;
-      if (url) URL.revokeObjectURL(url);
     };
-  }, [shot, icon, place]);
+  }, [shot, icon]);
+
+  /* ---- canvas に描く。**動かしているあいだはここだけ** ---- */
+  useEffect(() => {
+    const { photo, chr, mate } = art.current;
+    const cv = cvRef.current;
+    if (!photo || !cv) return;
+    const figures: Figure[] = [];
+    if (chr) figures.push({ img: chr, place });
+    /* あやとは**入れると言ったときだけ、2体目として。** 並べ方
+       （押しのけない・足元をそろえる・重ならない）は `place.ts` の `layout` */
+    if (chr && mate && withAyato) figures.push({ img: mate });
+    composeMany(photo, figures, cv);
+  }, [ready, place, withAyato]);
+
+  /* ---- 焼く。**手が止まってから1回** ---- */
+  useEffect(() => {
+    if (live || !ready) return;
+    const cv = cvRef.current;
+    if (!art.current.photo || !cv) return;
+    let gone = false;
+    const t = setTimeout(async () => {
+      const blob = await toJpeg(cv);
+      if (gone) return;
+      if (!blob) {
+        setFailed("photo");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      setOut((had) => {
+        if (had) URL.revokeObjectURL(had.url);
+        return { url, blob };
+      });
+    }, BAKE_MS);
+    return () => {
+      gone = true;
+      clearTimeout(t);
+    };
+  }, [ready, place, withAyato, live]);
+
+  /* 紙を閉じるときに、最後の1枚を捨てる（放っておくと溜まる）。
+     **閉じるときの1回だけ**なので、入れ替えのたびの始末は上でやっている。 */
+  const last = useRef<string>("");
+  last.current = out?.url ?? "";
+  useEffect(
+    () => () => {
+      if (last.current) URL.revokeObjectURL(last.current);
+    },
+    [],
+  );
+
+  /* ---- 覚える。**動かし終わってから1回だけ** ---- */
+  const sent = useRef<string>("");
+  useEffect(() => {
+    if (!canSave || !cardId || !moved) return;
+    const key = JSON.stringify(moved);
+    if (key === sent.current) return;
+    const t = setTimeout(async () => {
+      const tk = await token();
+      if (!tk) return;
+      try {
+        await moveCard(cardId, moved, tk);
+        sent.current = key;
+      } catch {
+        /* 覚えられなくても、出ている絵はそのまま持って帰れる。
+           ここで何か言っても、見ている人にできることが1つも増えない */
+      }
+    }, SAVE_MS);
+    return () => clearTimeout(t);
+  }, [canSave, cardId, moved, token]);
+
+  /** 手が動いた。**止まって `BAKE_MS` 経ったら焼く** */
+  const beat = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touch = useCallback(() => {
+    setLive(true);
+    if (beat.current) clearTimeout(beat.current);
+    beat.current = setTimeout(() => setLive(false), BAKE_MS);
+  }, []);
+  useEffect(
+    () => () => {
+      if (beat.current) clearTimeout(beat.current);
+    },
+    [],
+  );
+
+  /** いまの立ち位置を、割合で。動かしていなければ既定のところから始める */
+  const placeNow = useCallback((): Place => {
+    if (place) return place;
+    const { photo, chr } = art.current;
+    const cv = cvRef.current;
+    if (!photo || !chr || !cv) return { x: 0.8, y: 0.95, rot: 0, scale: 1 };
+    const src = opaqueBox(chr);
+    return defaultPlaceFor(cv.width, cv.height, src.w, src.h);
+  }, [place]);
+
+  /** 動かす。**締め方はサーバーと同じ式**（`place.ts` の `clampPlace`） */
+  const nudge = useCallback(
+    (dx: number, dy: number, dk = 0) => {
+      const now = placeNow();
+      setMoved(
+        clampPlace(
+          { x: now.x + dx, y: now.y + dy, rot: now.rot, scale: now.scale + dk },
+          now,
+        ),
+      );
+      touch();
+    },
+    [placeNow, touch],
+  );
+
+  /* ---- 指とマウス。**引きずった距離ぶん動かす**（指の下へ飛ばさない） ---- */
+  const grab = useRef<{ id: number; x: number; y: number; at: Place } | null>(null);
+  const onDown = useCallback(
+    (e: React.PointerEvent<HTMLImageElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      grab.current = { id: e.pointerId, x: e.clientX, y: e.clientY, at: placeNow() };
+    },
+    [placeNow],
+  );
+  const onMove = useCallback(
+    (e: React.PointerEvent<HTMLImageElement>) => {
+      const g = grab.current;
+      if (!g || g.id !== e.pointerId) return;
+      const box = e.currentTarget.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      const x = g.at.x + (e.clientX - g.x) / box.width;
+      const y = g.at.y + (e.clientY - g.y) / box.height;
+      setMoved(clampPlace({ ...g.at, x, y }, g.at));
+      touch();
+    },
+    [touch],
+  );
+  const onUp = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
+    if (grab.current?.id === e.pointerId) grab.current = null;
+    setLive(false);
+  }, []);
+
+  const onKey = useCallback(
+    (e: React.KeyboardEvent) => {
+      const step = e.shiftKey ? 0.05 : 0.01;
+      const go: Record<string, [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      };
+      const d = go[e.key];
+      if (!d) return;
+      e.preventDefault();
+      nudge(d[0], d[1]);
+    },
+    [nudge],
+  );
+
+  /** もとの場所へ。**覚えてあるぶんも、既定と同じところへ戻す** */
+  const reset = useCallback(() => {
+    setMoved(null);
+    touch();
+    if (!canSave || !cardId) return;
+    const { photo, chr } = art.current;
+    const cv = cvRef.current;
+    if (!photo || !chr || !cv) return;
+    const src = opaqueBox(chr);
+    const back = defaultPlaceFor(cv.width, cv.height, src.w, src.h);
+    (async () => {
+      const tk = await token();
+      if (!tk) return;
+      try {
+        await moveCard(cardId, back, tk);
+        sent.current = "";
+      } catch {
+        /* 戻せなくても、出ている絵は既定のところに立っている */
+      }
+    })();
+  }, [canSave, cardId, token, touch]);
 
   const save = useCallback(async () => {
     if (!out) return;
@@ -151,6 +393,17 @@ export default function CardSheet({
     a.download = name;
     a.click();
   }, [out, group.day]);
+
+  /* ログインしているのに表が古いと、貼られたばかりの写真で自分のカードを
+     見落とす。**1回だけ取り直す**（取り直しても無ければ、他人のカード） */
+  const asked = useRef("");
+  useEffect(() => {
+    if (!user || !who || cardId) return;
+    const key = `${group.photoId}__${who}`;
+    if (asked.current === key) return;
+    asked.current = key;
+    again();
+  }, [user, who, cardId, group.photoId, again]);
 
   return (
     <div className="akd-modal" role="dialog" aria-modal="true" aria-label="あやと島カード">
@@ -177,23 +430,50 @@ export default function CardSheet({
 
         <div className="akd-sheet-body">
           <div className="nstudio-shot">
-            {out ? (
-              <img src={out.url} alt={group.note || "その日の写真"} />
-            ) : failed === "chr" ? (
-              /* 焼けていない1枚を出しておくと、長押しで持って帰れてしまう。
-                 絵は出さずに、次にできることだけ言う。 */
-              <p className="nstudio-off">
-                このキャラクターの絵がいま読めません。
-                <br />
-                ほかの人にしてみてください。
-              </p>
-            ) : failed ? (
-              <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
-            ) : (
-              <div className="wait is-card" aria-hidden>
-                <span />
-              </div>
-            )}
+            {/* **canvas が土台で、焼いた jpeg がその上に乗っている。**
+                中身は同じ絵。動かしているあいだだけ canvas が前に出る
+                （`is-live`）ので、指に付いてくるのは canvas のほう。
+                手が止まれば jpeg が戻ってきて、長押しでそのまま保存できる。 */}
+            <div className={`akd-stage${out || live ? "" : " is-off"}`}>
+              <canvas ref={cvRef} className={live ? "is-live" : ""} aria-hidden />
+              {out && (
+                <img
+                  src={out.url}
+                  alt={group.note || "その日の写真"}
+                  className={chosen ? "is-movable" : ""}
+                  /* 入れている人がいるときだけ、引きずって動かせる。
+                     いないときは素の写真なので、動かすものが無い */
+                  {...(chosen
+                    ? {
+                        tabIndex: 0,
+                        "aria-label": "キャラクターのいるところ。矢印キーでうごかせます",
+                        onPointerDown: onDown,
+                        onPointerMove: onMove,
+                        onPointerUp: onUp,
+                        onPointerCancel: onUp,
+                        onKeyDown: onKey,
+                      }
+                    : {})}
+                />
+              )}
+            </div>
+            {!out &&
+              !live &&
+              (failed === "chr" ? (
+                /* 焼けていない1枚を出しておくと、長押しで持って帰れてしまう。
+                   絵は出さずに、次にできることだけ言う。 */
+                <p className="nstudio-off">
+                  このキャラクターの絵がいま読めません。
+                  <br />
+                  ほかの人にしてみてください。
+                </p>
+              ) : failed ? (
+                <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
+              ) : (
+                <div className="wait is-card" aria-hidden>
+                  <span />
+                </div>
+              ))}
           </div>
           {group.note && <p className="nstudio-note">{group.note}</p>}
 
@@ -231,6 +511,43 @@ export default function CardSheet({
                 ))}
               </div>
             </>
+          )}
+
+          {/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
+              並びはやることの順（連れを足す → 大きさ → もとへ）。 */}
+          {chosen && (
+            <div className="akd-tune">
+              <button
+                type="button"
+                className={`akd-mate${withAyato ? " is-on" : ""}`}
+                aria-pressed={withAyato}
+                onClick={() => {
+                  setWithAyato((v) => !v);
+                  touch();
+                }}
+              >
+                <img src={AYATO} alt="" width={30} height={30} />
+                あやともいっしょに
+              </button>
+              <label className="akd-zoom">
+                <span>大きさ</span>
+                <input
+                  type="range"
+                  min={60}
+                  max={160}
+                  step={5}
+                  value={Math.min(160, Math.max(60, Math.round((place?.scale ?? 1) * 100)))}
+                  aria-label="大きさ"
+                  onChange={(e) =>
+                    nudge(0, 0, Number(e.target.value) / 100 - (place?.scale ?? 1))
+                  }
+                />
+              </label>
+              <button type="button" className="akd-undo" onClick={reset}>
+                もとのばしょ
+              </button>
+              <p className="akd-tune-tip">写真の上をなぞると、立つところが変わります。</p>
+            </div>
           )}
 
           {/* その日の企画への行き先。**いちばん下に置く。** 上に置くと、
