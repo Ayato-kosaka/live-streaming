@@ -25,6 +25,25 @@
 **countries.ts を上書きしない。** 帰ってきた本人が滞在を書いたら、そちらが正。
 ここが出すのは「まだ書かれていない、いまの旅」のぶんだけ。
 
+## 旅程ファイルの無い章（2026-10-06 に足した）
+
+上の2つでは足りない。`nordic.ts` のような旅程ファイルは**北欧にしか無い。**
+行き先だけ決めて発った章——アルバニアがそれ——は、滞在の出どころがどこにも無い。
+
+無いとどうなるかは本番で出た。スウェーデンの滞在が `to: ""`（開いたまま）
+だったので、読む側（`hi = stay["to"] or "9999-12-31"`）から見ると以後がぜんぶ
+スウェーデンで、**アルバニアの配信11本が「スウェーデン・ストックホルム」として
+焼かれていた。** そこを閉じるだけでは嘘が無言に変わるだけで、11本は行き場を失う。
+
+だから3つ目を足した。
+
+  旅程ファイルの無い章 … `chapters.ts` の章の `from`〜`to` と
+                         `countries.ts` の `AHEAD_COUNTRIES` の `entered`
+
+出せるのは「章ぜんぶで1カ国」までの粗さだが、**無言よりは粗いほうがいい。**
+旅程ファイルの在る章には手を出さない（`ITINERARY_CHAPTERS`）——あちらのほうが
+国の切れ目も街も細かいので、両方が出すと細かいほうが潰れる。
+
 ## 境目の日をどちらの国に入れるか
 
 国をまたぐ日は、朝と晩で国が違う。**両方に入れると、その日の配信が2カ国で
@@ -51,8 +70,16 @@
 
 import json
 import re
+import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# `chapters.ts` を読むのはここ1本だけ。**自前の正規表現を増やさない**
+# （2026-10-03 に3つあった読み方を1本に寄せたばかり。`python/ts_read.py` の頭）
+from ts_read import code_only, fields, read_chapters  # noqa: E402
+from ts_read import objects as ts_objects  # noqa: E402
 
 # 日付はぜんぶ JST で数える。配信の日付（`videos.actual_start_time`）が JST なので、
 # ここだけ UTC にすると、朝10時（01:00 UTC）に焼く晩に1日ずれる
@@ -62,6 +89,15 @@ ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
 NORDIC_TS = ROOT / "site" / "content" / "nordic.ts"
 NORDIC_JSON = ROOT / "site" / "content" / "nordic" / "index.json"
+CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
+
+# 旅程ファイルを持っている章。**ここに在る章には、受け皿が手を出さない。**
+#
+# 旅程（`content/nordic.ts` の ROUTE）は「何日にどの国へ入るか」まで持っているので、
+# 国の切れ目も街も、そちらのほうが細かい。受け皿が出せるのは「章ぜんぶで1カ国」
+# までなので、**両方が出すと細かいほうが潰れる。**
+# 旅程ファイルを足した章は、ここにも足す。
+ITINERARY_CHAPTERS = {"nordic"}
 
 # 泊まる先が街でない日。**場所ではないので街として扱わない。**
 # 題名に「船」が入った配信を街の欄に入れると、地図に無い点が立つ。
@@ -254,6 +290,139 @@ def read_nordic(after: str = "") -> list:
     return out
 
 
+def read_ahead() -> list:
+    """`countries.ts` の `AHEAD_COUNTRIES` を、`{slug, name, entered}` の並びで。
+
+    **`COUNTRIES` にまだ無い国の置き場。** 街も滞在も歩き終わってから書く決まり
+    なので、ここが持っているのは名前と旗の鍵と「着いた日」だけ。
+
+    `ts_read.array_body()` を使わないのは、あちらが `=` までに `;` を跨がせない
+    作りだから（別の宣言の `= [` を掴まないため）。ここの型注釈は
+    `{ slug: string; name: string; entered: string }[]` と `;` を含むので当たらない。
+    **あちらを緩めない**——緩めると、跨がせない理由のほうが消える。
+    代わりに、このファイルが前から持っている `_array_of`（`export const <名>` から
+    `= [` を探す）で在りかだけを出して、中身は `ts_read` に読ませる。
+    コメントは `ts_read.code_only` で先に落とす——落とさないと、注の本文に
+    出てくる `entered` を欄と読む。
+
+    **`{…}` を切るのも `ts_read.objects()`。** このファイルの `_objects()` は
+    外側の `{}` を**付けたまま**返すので、`ts_read.fields()` に渡すと丸ごと
+    入れ子として飛ばされて0件になる（実際にそうなった）。
+    """
+    src = code_only(COUNTRIES_TS.read_text(encoding="utf-8"))
+    body = _array_of(src, "AHEAD_COUNTRIES")
+    rows = []
+    for obj in ts_objects(body):
+        f = fields(obj)
+        if not f.get("slug") or not f.get("entered"):
+            continue
+        rows.append({"slug": f["slug"], "name": f.get("name", f["slug"]), "entered": f["entered"]})
+    # **止め金。** 読み落としは例外を出さず、国が黙って減るだけ
+    # （`read_countries()` と同じ理由）。減ると、その国の配信は行き場を失って
+    # 板に `p:""` の無言の行として並ぶ
+    want = len(re.findall(r'slug:\s*"', body))
+    if want != len(rows):
+        raise ValueError(f"AHEAD_COUNTRIES の {want} 件のうち {len(rows)} 件しか読めていない")
+    return rows
+
+
+def read_chapters_ts() -> list:
+    """`chapters.ts` の章。**読み落としがあれば止める。**"""
+    got = read_chapters(CHAPTERS_TS.read_text(encoding="utf-8"))
+    if got.declared == 0:
+        raise ValueError("chapters.ts に章が1つも無い（置き場が変わった？）")
+    if got.missed:
+        raise ValueError(f"chapters.ts の章 {got.declared} 件のうち {got.missed} 件を読み落とした")
+    return got.rows
+
+
+def chapter_stays(chapters: list, ahead: list, after: str = "", today: str = "") -> list:
+    """**旅程ファイルの無い章**の滞在を、章の期間と `AHEAD_COUNTRIES` から組む。
+
+    ## なぜ要るか
+
+    「いま歩いている旅」の滞在を出せるのは `read_nordic()` だけで、あれが読むのは
+    `content/nordic.ts` **1本の直書き**。だから旅程ファイルを持たない章——
+    行き先だけ決めて発った章——は、**滞在の出どころがどこにも無い。**
+
+    無いとどうなるかは、2026-09-28 からのアルバニアで出た。スウェーデンの滞在が
+    `to: ""`（開いたまま）だったので、開いた滞在が以後の配信を飲み込んで、
+    アルバニアの配信11本が「スウェーデン・ストックホルム」として焼かれていた。
+    **そこを閉じるだけでは、嘘が無言に変わるだけ**——11本は `p:""` の行き場なしになる
+    （`docs/island-misses.md` #12「配信はのこっていない」と同じ形）。
+
+    ## 何から組むか
+
+    **日付をコードに書かない。** 章が変わるたびに嘘になる。使うのは2つだけ。
+
+    - `chapters.ts` の章の `from`〜`to` … 章の切れ目。**`to` が入れば滞在も閉じる**
+    - `AHEAD_COUNTRIES` の `entered` … その国に着いた日
+
+    `entered` がどの章の期間に入るかで、国と章を結ぶ。章の `countries` は見ない
+    ——歩いた国を `COUNTRIES` に書き入れるまで、あそこは空のままだから。
+
+    街は分からないので、**国の名前を1つだけ置く。** 推測で街を書かない決まりは
+    `build_on_this_day.place_of()` と同じで、あちらも街が当たらなければ
+    国の名前を見せる場所にする。街が1つの滞在は `build_city_streams.pick()` が
+    「その期間の配信ぜんぶ」として扱うので、本数も落ちない。
+
+    Args:
+        chapters: `read_chapters_ts()` の行
+        ahead: `read_ahead()` の行
+        after: ここまでは前の国のもの、という日（`countries.ts` のいちばん新しい終わり）
+        today: 今日（JST）。**まだ着いていない国は滞在ではない**ので落とす
+
+    Returns:
+        `read_countries()` と同じ形（`slug` / `name` / `stays`）
+    """
+    today = today or datetime.now(JST).date().isoformat()
+    # 章1つに国が2つ以上来ることがある（旅程ファイルを持たない章で国境を越えた）。
+    # そのときは**入った順に区切る**——重ねると、その日の配信が2カ国で二重に数えられる
+    by_chapter: dict[str, list] = {}
+    for a in sorted(ahead, key=lambda x: x["entered"]):
+        ch = next(
+            (
+                c
+                for c in chapters
+                if c["from"]
+                and c["from"] <= a["entered"]
+                and (not c["to"] or a["entered"] <= c["to"])
+            ),
+            None,
+        )
+        if ch is None or ch["slug"] in ITINERARY_CHAPTERS:
+            continue
+        by_chapter.setdefault(ch["slug"], []).append((ch, a))
+
+    out = []
+    for rows in by_chapter.values():
+        for i, (ch, a) in enumerate(rows):
+            lo = max(a["entered"], ch["from"])
+            if after and lo <= after:
+                lo = _next_day(after)
+            # 次の国に入る前日まで。最後の国は章の終わりまで（章が開いていれば開いたまま）
+            hi = _prev_day(rows[i + 1][1]["entered"]) if i + 1 < len(rows) else ch["to"]
+            # **まだ来ていない日は滞在ではない**（`read_nordic()` と同じ決まり）。
+            # 着く前の国の札が先に立つと、街の欄が「配信はのこっていない」と言い出す
+            if lo > today:
+                continue
+            if hi and lo > hi:
+                continue
+            out.append({
+                "slug": a["slug"],
+                "name": a["name"],
+                # **日単位で確か。** 着いた日と章の切れ目から出しているので、
+                # 題名を見て国を当て直す必要がない（`build_city_streams.pick()` が見る印）
+                "stays": [{"from": lo, "to": hi, "cities": [a["name"]], "exact": True}],
+            })
+    return out
+
+
+def read_ahead_chapters(after: str = "") -> list:
+    """旅程ファイルの無い章の滞在。本番のファイルを読んで `chapter_stays()` に渡すだけ。"""
+    return chapter_stays(read_chapters_ts(), read_ahead(), after=after)
+
+
 def is_country(slug: str) -> bool:
     """「歩いた国」に数えてよい slug か。
 
@@ -275,7 +444,12 @@ def read_all() -> list:
     last = max((s["to"] for c in done for s in c["stays"] if s["to"]), default="")
     known = {c["slug"] for c in done}
     # 歩き終わって countries.ts に移された国は、旅程側から足さない（二重になる）
-    return done + [c for c in read_nordic(after=last) if c["slug"] not in known]
+    out = done + [c for c in read_nordic(after=last) if c["slug"] not in known]
+    known |= {c["slug"] for c in out}
+    # 旅程ファイルの無い章。**旅程の在る章はこちらが手を出さない**（`ITINERARY_CHAPTERS`）ので、
+    # 上の2つで出た国と重ならない。それでも `known` で止めておく——
+    # 出どころが3つになったので、重なったときに黙って二重に数えさせない
+    return out + [c for c in read_ahead_chapters(after=last) if c["slug"] not in known]
 
 
 if __name__ == "__main__":
