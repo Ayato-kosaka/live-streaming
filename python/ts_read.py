@@ -331,3 +331,152 @@ def read_chapters(src: str) -> ChapterRead:
         row["countries"] = list_field(obj, "countries")
         rows.append(row)
     return ChapterRead(rows=rows, declared=len(SLUG_RE.findall(body)))
+
+
+# ---------------------------------------------------------------- 旅程（nordic.ts）
+
+# 旅程1日ぶんで、読む側がみんな使う欄。**ここに無い欄は落ちる**
+TRIP_DAY_KEYS = ("id", "date", "city", "stay")
+
+# 区間（`ROUTE`）の欄。街の名はここと `DAYS` にしか無い
+TRIP_LEG_KEYS = ("id", "from", "to", "stay")
+
+# 添え書きを落とす。`site/content/nordic.ts` の `cityName` と同じ決め
+# （「ストックホルム（友だちの家に7泊）」→「ストックホルム」）。
+# **両方に同じ式を書いているのは、片方が TypeScript で読めないから。**
+# 向こうを変えたらここも変える、と `nordic.ts` 側にも書いてある
+_CITY_TAIL = re.compile(r"（.*$")
+
+
+def city_name(s: str) -> str:
+    """街の名から添え書きを落とす。`nordic.ts` の `cityName` と同じ。"""
+    return _CITY_TAIL.sub("", s).strip()
+
+
+@dataclass(frozen=True)
+class TripDay:
+    """旅程の1日。**判定はしない。字をそのまま持つ。**"""
+
+    id: str
+    date: str
+    # その日の朝いる街。**着く先ではない**（`site/app/nordic/day/[n]/page.tsx` の
+    # `sunCity()` と同じ決め——区間があれば1本目の `from`、無ければ `city`）。
+    # 取れなければ空
+    wakes_in: str = ""
+
+
+@dataclass(frozen=True)
+class TripRead:
+    """旅程を読んだ結果。**判定はしない。数だけ添える。**"""
+
+    days: list[TripDay] = field(default_factory=list)
+    # 旅のあいだに足をつける街。**並びは通る順**（`VISIT_CITIES` と同じ作り）
+    cities: list[str] = field(default_factory=list)
+    # ファイルが名乗っている日の数（`DAYS` の中の、いちばん外側の `{…}` の数）。
+    # **読めた数ではない。** これと `len(days)` の差が読み落とし。
+    #
+    # **`id: "` を数えない。** 日の中には分かれ道の選択肢
+    # （`fork.options` の `{ id: "trakai", … }`）が入れ子で在るので、
+    # 字で数えると 17日のファイルが 19 を名乗る。
+    # **日付を持たない行も読み落としに数える**——この表を読むのは
+    # 日の出を焼くほうと見張りで、どちらも日付の無い日は扱えない
+    declared: int = 0
+
+    @property
+    def missed(self) -> int:
+        """名乗っているのに読めなかった数。**0 でなければ呼ぶ側が止める。**"""
+        return self.declared - len(self.days)
+
+
+def read_trip(src: str) -> TripRead:
+    """旅程（`site/content/nordic.ts`）から、日と街を読む。
+
+    **出どころを2つにしない。** 日の出の表を焼くほうも、焼き込みが古く
+    なっていないかを見る見張りも、ここ1本から引く。別々に字を読むと、
+    `chapters.ts` を3通りに読んで北欧だけが落ちたのと同じことが起きる
+    （このファイルの頭）。
+
+    街の並びは `nordic.ts` の `VISIT_CITIES` と同じ作り——`ROUTE` の
+    `from` / `to` / `stay` と `DAYS` の `city` / `stay` を、出てくる順に。
+    **`maybe`（寄るかもしれない街）は入れない。** 寄ると決まっていない街の
+    ぶんまで焼くと、行かない街の日の出が表に並ぶ。
+
+    Args:
+        src: `site/content/nordic.ts` の中身そのもの
+
+    Returns:
+        `TripRead`。**`missed` を見ずに `days` だけ使わないこと**
+    """
+    code = code_only(src)
+    route_body = array_body(code, "ROUTE")
+    days_body = array_body(code, "DAYS")
+
+    legs: dict[str, dict[str, str]] = {}
+    cities: list[str] = []
+
+    def add(name: str) -> None:
+        c = city_name(name)
+        if c and c not in cities:
+            cities.append(c)
+
+    for obj in objects(route_body):
+        f = fields(obj)
+        if not f.get("id"):
+            continue
+        legs[f["id"]] = {k: f.get(k, "") for k in TRIP_LEG_KEYS}
+        for k in ("from", "to", "stay"):
+            if f.get(k):
+                add(f[k])
+
+    days: list[TripDay] = []
+    for obj in objects(days_body):
+        f = fields(obj)
+        if not f.get("id") or not f.get("date"):
+            continue
+        # その日の区間。`legs: [leg("katowice-warszawa")]` と書いてあるので、
+        # **関数の呼び出しの中の字**を拾って `ROUTE` から引き直す
+        ids = list_field(obj, "legs") or _strings_in(_field_span(obj, "legs"))
+        first = next((legs[i] for i in ids if i in legs), None)
+        wakes = city_name(first["from"]) if first else city_name(f.get("city", ""))
+        days.append(TripDay(id=f["id"], date=f["date"], wakes_in=wakes))
+        for k in ("city", "stay"):
+            if f.get(k):
+                add(f[k])
+
+    return TripRead(days=days, cities=cities,
+                    declared=len(objects(days_body)))
+
+
+def _field_span(obj: str, key: str) -> str:
+    """`{…}` の中の `key: [...]` の、角括弧の中身そのまま。無ければ空。
+
+    `list_field()` は**文字列の並び**しか返さない。旅程の `legs` は
+    `[leg("id"), leg("id")]` という**関数の呼び出しの並び**なので、
+    あちらでは空になる。括弧の中を字のまま取って、`_strings_in()` に渡す。
+    """
+    i, n = 0, len(obj)
+    want = ""
+    while i < n:
+        c = obj[i]
+        if c in "\"'`":
+            i = skip_string(obj, i) + 1
+            want = ""
+            continue
+        if c in _PAIRS:
+            if want == key and c == "[":
+                return obj[i + 1 : close_at(obj, i)]
+            i = close_at(obj, i) + 1
+            want = ""
+            continue
+        if c == ",":
+            want = ""
+            i += 1
+            continue
+        if (i == 0 or not (obj[i - 1].isalnum() or obj[i - 1] == "_")) and (
+            m := _KEY_RE.match(obj, i)
+        ):
+            want = m.group(1)
+            i = m.end()
+            continue
+        i += 1
+    return ""
