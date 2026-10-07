@@ -137,8 +137,13 @@ probe: true で押す → 焼き直しが走る → 5c811ba を commit する �
   最後の step が `YOUTUBE_COOKIES` の Secret を書き換える。編集は可、起動は不可
 - **`viewer-video/` の4つの mp4。** 視聴者さんのもの
 - **自動生成のファイルを手で直さない**（`site/content/cityStreams.ts`、
-  `site/content/nordic/*.json`、`site/content/sprites.json`、`site/content/characterBox.ts`）。
+  `site/content/nordic/*.json`、`site/content/sprites.json`、
+  `site/content/characterBox.ts`、`site/content/nordicSun.ts`）。
   元のスクリプトを直して作り直す
+- **`tools/nordic_sun.py` に旅の日付を手で書かない。** 初日・最終日・街は
+  旅程（`site/content/nordic.ts`）から引いている。手で書くと、旅程がのびた日から
+  **人が来るまで表が止まる**（2026-10-07 までそうだった。`island-misses.md` #203）。
+  新しい街が旅程に入ったときだけ `CITY_GEO` に緯度経度と9月の時差を1行足す
 - **`EXPO_PUBLIC_` に鍵を入れない。** あれは「隠す」ではなく「公開してよい」の宣言で、
   書き出しの中に焼かれる（過去に2回出した）
 - **`playwright-core` の版を上げない**（`tools/sprites/package.json` で 1.56.0 に止めてある）。
