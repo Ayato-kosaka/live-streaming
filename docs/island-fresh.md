@@ -64,6 +64,7 @@
 | `cityStreams.ts` | `build_city_streams.py` | 配信が増える（街の一覧が増えるのは人待ち） |
 | `countryStats.ts` | `build_country_stats.py` | 配信が増える（国の一覧が増えるのは人待ち） |
 | `shorts.ts` | `build_shorts.py` | **あやとがショートを出す**（YouTube を読む。BigQuery ではない） |
+| `site.ts` の `STATS_FALLBACK` | `build_site_stats.py` | 配信・コメント・人が増える（**公開の口** `/island-api/state` を読む。BigQuery ではない） |
 | `characterBox.ts` | `tools/sprites/charbox.py` | **名簿に人が増える**（`build_residents` と同じ回で焼く。BigQuery ではなく**公開の口** `/island-api/characters` を読む） |
 
 **上から4本目までは入力が本番だけ。** 人がリポジトリに何も書かなくても正しい答えが出る。
@@ -341,7 +342,8 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
 | `chapters.ts` | 章（島）の区切り |
 | `legends.ts` | どれを伝説と呼ぶか |
 | `plans.ts` `apps.ts` | 企画・アプリの選定 |
-| `voice.ts` `chatter.ts` `site.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
+| `voice.ts` `chatter.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
+| `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | 名前・説明・本人から聞いた事実（誕生日・日本を出た日・勤めていた期間）・画面に出る言葉。**同じファイルの `STATS_FALLBACK` だけは①**（2章） |
 | `aboutWords.ts`、`nordic.ts` の `WHY` `THEMES` `THEME_WORD` `UNPLANNED` `THANKS` | **本人が書いた文そのもの。** 本人が書かないかぎり増えない |
 
 **「選ぶ」が入っているものは、全部ここ。** 数える・並べる・絞るは機械にできるが、
@@ -660,6 +662,44 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `nordicFood.ts` | 人（読みもの） | — | 見ない | 日付を持たない |
 | `themes.ts` `voice.ts` `nights.ts` `roulette.ts` | 人（画面に出る言葉） | — | 見ない | 日付を持たない |
 | `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
+
+### `site.ts` を②から①へ移した（2026-10-07）
+
+上の表で `site.ts` が `人 / LATEST / 30日` になっているのは、**仕分けが間違っていた。**
+測っていたのは `STATS_FALLBACK.updatedAt` で、そこに並ぶ4つ（配信本数・配信した日・
+コメント数・のべ人数）は**人の頭の中に無い。** `python/island_daily_stats.py` が
+毎晩 BigQuery から数えて Firestore（`island/state.stats`）に書き、口
+（`GET /island-api/state`）がそれをそのまま返している。**口が返す数の写しを、
+人に打ち直させていた。**
+
+そのせいで 2026-10-07 には33日古くなっていた。
+
+| | 焼き込み（2026-09-04） | 口（2026-10-06・実測） |
+| --- | --- | --- |
+| 配信 | 747本 | **800本** |
+| コメント | 125,262 | **148,399** |
+| 人 | 2,215 | **2,333** |
+| 配信した日 | 610日 | **649日** |
+
+**`shorts.ts` と同じ外し方**（1章の「BigQuery に無い」は「機械では取れない」ではない）。
+こちらは「人が手で書く欄」と書いてあったが、**書く値の出どころが本番だった。**
+軸は誰が打つかではなく、**本番を読めば答えが出るか。**
+
+いまは `python/build_site_stats.py` が毎晩焼く（2章の表）。見張りは
+`機械 / LATEST / 3日`。`updatedAt` が毎晩動くので、口が晩（UTC）に書いて翌日に
+読むと1日前がふつうに出る——2晩落ちても見のがし、3晩目で鳴る。
+
+**`site.ts` には人の欄が同居している**ので、焼くのは `STATS_FALLBACK` の中だけ。
+塊の外（`SITE` `PROFILE` `NOW_FALLBACK` `LINKS`）が1バイトでも動いたら、
+焼くほうが書かずに落ちる。`recipes: RECIPES.length` と
+`since: "2024-10-28"` も触らない（前者は数える欄、後者は増えも減りもしない）。
+
+**人の欄は、まだ測れていない。** `PROFILE` の日付（誕生日・日本を出た日・
+勤めていた期間）は**事実なので古くならない**が、`SITE.description` と
+`PROFILE.body` は書き替わりうる。そこを日で測るには「いつ書いた字か」が要るので、
+**先に 4章の `aboutWords.ts` と同じ形（本人の言葉に書いた日を添える）に
+してからでないと足せない。** 測れていないものを「測った」と言わない
+（`docs/island-standards.md` §15）。
 
 ### 「分からない」だった3本を、測れるようにした（2026-09-17）
 

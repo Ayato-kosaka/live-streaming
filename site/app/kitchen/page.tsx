@@ -34,6 +34,15 @@ export default function KitchenPage() {
     .filter((k) => k.n > 0)
     .sort((a, b) => b.n - a.n);
 
+  /**
+   * 魚の品数。**下の1行に手で書いてあった**（「魚が3品しかないのは」）。
+   * すぐ上の帯は `byKind` から数えているので、4品目を作った日に
+   * **同じ畳みの中で帯が4・文が3**になる（`docs/island-standards.md` 8章の
+   * 「手で書かない。数える」。`STATS_FALLBACK.recipes` が 32 と書いてあって
+   * 棚が 37 を出していたのと同じ形）。
+   */
+  const fish = byKind.find((k) => k.id === "fish")?.n ?? 0;
+
   /** 何月に何品押したか。スタンプ帳なので、押されていない月も空けたまま並べる。 */
   const months: { key: string; n: number }[] = [];
   const dates = RECIPES.map((r) => r.date).sort();
@@ -142,7 +151,7 @@ export default function KitchenPage() {
                 ))}
               </ul>
               <p>
-                現地の食材で日本の味を作ろうとすると、だいたい粉ものか麺になる。魚が3品しかないのは、内陸のジョージアで生の魚を手に入れるのが難しいから。
+                現地の食材で日本の味を作ろうとすると、だいたい粉ものか麺になる。魚が{fish}品しかないのは、内陸のジョージアで生の魚を手に入れるのが難しいから。
               </p>
             </Fold>
 

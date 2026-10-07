@@ -1396,14 +1396,14 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `python/data/shorts.json` | ショートの一覧（`shorts.ts` の元） | **BigQuery にショートは1本も入っていない** |
 | `python/voices_picks.json` | 他己紹介の抜粋（`voices.ts` の元） | どの声を載せるか |
 | `python/kitchen_talk_picks.json` | その日の台所の引用（`kitchenTalk.ts` の元） | 機械が選ぶと「こんばんは」が並ぶ |
-| `site.ts` `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章 |
+| `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` ／ `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章。**同じファイルの `STATS_FALLBACK` は機械が焼く**（下の (a)） |
 | `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` `nights.ts` `place.ts` `trip.ts` `tripPlaces.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表・夜の言い方・場所・旅 | 決めごと |
 
 #### 機械が焼く（**手で書き換えない**）
 
 **元のスクリプトを直してから作り直す。** 2つに分かれる。
 
-**(a) 毎晩ひとりでに焼ける**（`rebake.yml` の cron。この5本）
+**(a) 毎晩ひとりでに焼ける**（`rebake.yml`。この8本）
 
 | 焼かれるもの | 元 | 回すもの |
 | --- | --- | --- |
@@ -1412,6 +1412,19 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
 | `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
 | `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
+| `countryStats.ts` | BigQuery + 滞在（`python/stays.py`） | `python/build_country_stats.py` |
+| `shorts.ts` | **YouTube のショートのタブ**（BigQuery ではない） | `python/build_shorts.py` |
+| `site.ts` の `STATS_FALLBACK` | **公開の口**（`GET /island-api/state` の `stats`） | `python/build_site_stats.py` |
+
+**`site.ts` だけは、人の欄と同居している。** 焼くのは `STATS_FALLBACK` の中の
+5つ（`streams` `streamDays` `comments` `people` `updatedAt`）だけで、
+`SITE` も `PROFILE` も、`recipes: RECIPES.length` も `since` も触らない。
+塊の外が1バイトでも動いたら、焼くほうが書かずに落ちる。
+
+**`STATS_FALLBACK` が BigQuery ではなく口を読むのは、焼きたいものが
+「数え直した値」ではなく「口が返す数の写し」だから。** 画面は口が返れば
+上書きする（`site/lib/liveStats.tsx`）ので、受け皿が口と食い違っていると
+**口が落ちた日だけ数字が飛ぶ。** 同じ数を2通りに数えない（3章）。
 
 `build_city_streams` だけは上流に人の書く `countries.ts` があるが、
 **街の一覧が止まっても街ごとの本数は機械だけで動く**ので毎晩に入れてある。

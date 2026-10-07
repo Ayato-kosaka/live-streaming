@@ -86,7 +86,7 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この7本だけ**）
+# ## 毎晩ひとりでに回すもの（**この8本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
@@ -95,6 +95,7 @@ name: 島の数字を焼き直す
 #   build_city_streams    cityStreams.ts
 #   build_country_stats   countryStats.ts
 #   build_shorts          shorts.ts          ※ BigQuery ではなく YouTube を読む
+#   build_site_stats      site.ts            ※ BigQuery ではなく**公開の口**を読む
 #
 # **そのうしろに、下流がもう1本ぶら下がる**（下の「回すもの」の表には並べない）。
 #
@@ -130,6 +131,24 @@ name: 島の数字を焼き直す
 # YouTube 側は連打すると reCAPTCHA を返す（この箱で実際に踏んだ）ので、
 # スクリプトは1本につき5秒あける。**開くのは手元にまだ無いものだけ**なので、
 # ふだんの晩は一覧の2〜3回のやりとりで終わる。
+#
+# `build_site_stats` が読むのは **公開の口そのまま**（`GET /island-api/state` の
+# `stats`）。BigQuery でも YouTube でもない。焼きたいものが「BigQuery を数え直した
+# 値」ではなく**「口が返す数の写し」**だから——画面は口が返れば上書きするので、
+# 受け皿が口と食い違っていたら、口が落ちた日だけ数字が飛ぶ。
+#
+# 毎晩に入れたのは 2026-10-07。それまでは **人が手で打ち直す決まり**で、
+# `STATS_FALLBACK` は **2026-09-04 から33日止まっていた**（焼き込み 747本 /
+# 口 800本。コメントは 125,262 / 148,399）。`shorts.ts` と同じ外し方で、
+# **機械で取れる数を人に打たせていた**（`docs/island-fresh.md` 1章）。
+#
+# **触るのは `STATS_FALLBACK` の中だけ。** `site.ts` には `SITE`（名前・説明）と
+# `PROFILE`（誕生日・日本を出た日・勤めていた期間）という**本人から聞いた事実**が
+# 同居している。塊の外が1バイトでも動いたら、焼くほうが書かずに落ちる。
+#
+# **口が落ちた晩は焼かない。** 0 を焼くと、受け皿が出るまさにその日の表紙が
+# 「0本の配信」になる。終了コード 3 で引き下がるので、下の「焼く」は
+# 赤にせず一言だけ残す（`build_shorts` と同じ形）。
 #
 # `build_country_stats` を毎晩に入れたのは 2026-09-16。それまでは
 # 「BigQuery から焼く」と書いてあるのに取り置きの JSON を焼き直すだけで、
@@ -173,7 +192,7 @@ name: 島の数字を焼き直す
 #
 # このリポジトリは公開で、Actions のログも誰でも読める。
 # **入力もログも、数字とファイル名しか出さない。**
-# ここで回す7本は YouTube API を叩かないので、**Doneru の鍵は取り出さない**
+# ここで回す8本は YouTube API を叩かないので、**Doneru の鍵は取り出さない**
 # （`run_admin_script.yml` はやっているが、ここでは要らない。要らないものは触らない）。
 
 on:
@@ -217,7 +236,7 @@ on:
   workflow_dispatch:
     inputs:
       scripts:
-        description: "回すもの（カンマ区切り。空なら8本ぜんぶ）例: build_residents,build_stream_peaks"
+        description: "回すもの（カンマ区切り。空なら9本ぜんぶ）例: build_residents,build_stream_peaks"
         required: false
         default: ""
         type: string
@@ -275,11 +294,11 @@ jobs:
           # cron と同じ扱いにする。**片方だけ手当てすると、繋ぎ替えたあと
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
-            # 毎晩ぶん。**機械だけで答えの決まる5本**を、配るところまで
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts" >> "$GITHUB_ENV"
+            # 毎晩ぶん。**機械だけで答えの決まる8本**を、配るところまで
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 7本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 8本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -303,7 +322,7 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_kitchen_talk"
+          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk"
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
           # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
@@ -313,7 +332,7 @@ jobs:
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので8本ぜんぶ回します"
+            echo "入力が空なので9本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -353,6 +372,12 @@ jobs:
               build_city_streams)  p="site/content/cityStreams.ts" ;;
               build_country_stats) p="site/content/countryStats.ts" ;;
               build_shorts)        p="site/content/shorts.ts" ;;
+              # **`site.ts` は焼き込みの中で唯一、人の欄と同居している。**
+              # 焼くのは `STATS_FALLBACK` の中だけで、`SITE` と `PROFILE` には
+              # 1バイトも触らない（`python/build_site_stats.py` の `patch()` が
+              # 塊の外が動いたら落ちる）。commit の名指しはファイル単位なので、
+              # ここに並ぶのはファイルまるごとになる
+              build_site_stats)    p="site/content/site.ts" ;;
               build_kitchen_talk)  p="site/content/kitchenTalk.ts" ;;
               *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
             esac
@@ -460,6 +485,23 @@ jobs:
       # ここも BigQuery を引かない。落ちれば、クエリを1回も動かさずに止まる。
       - name: やせを止める関所が効くか
         run: python3 python/shrink_guard_selftest.py
+
+      # **受け皿の数字を焼くほうが、焼いてはいけない晩に焼かないか。**
+      #
+      # `STATS_FALLBACK` は**口が落ちた日にだけ画面に出る**受け皿。
+      # だから壊れかたがいちばん悪いのは「**口が落ちた晩に 0 を焼く**」で、
+      # そうなると口が落ちたその日の表紙が「0本の配信」になる。
+      # **赤くならない。その日の数字だけが嘘になる。**
+      #
+      # もう1つ、`site.ts` には `SITE`（名前・説明）と `PROFILE`（誕生日・
+      # 日本を出た日・勤めていた期間）という**本人から聞いた事実**が同居している。
+      # 当てる先が1行ずれると、機械があやとの書いた文を書き換える。
+      #
+      # どちらも下の「中の数が縮んでいないか」では捕まらない——
+      # 0 は縮みとして止まるが、**人の欄を書き換えた回は数が1つも動かない。**
+      # だから焼く前に、焼く側の足を当てる（本番も口も叩かない）。
+      - name: 受け皿の数字の焼きかたが、焼いてはいけない晩を断るか
+        run: python3 python/build_site_stats_selftest.py
 
       # **これから回す `build_residents.py` の決めを、回す前に見る。**
       #
@@ -619,6 +661,34 @@ jobs:
                   git checkout -- site/content/shorts.ts || true
                   echo "SHORTS_BAD=1" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。棚は前のまま戻しました。run の最後で赤くします"
+                fi ;;
+              build_site_stats)
+                # **ここは BigQuery でも YouTube でもなく、公開の口**
+                # （`GET /island-api/state` の `stats`）。鍵は要らない。
+                #
+                # **落ちても止めない。** 止めると同じ晩に焼けた他の7本まで
+                # master に入らなくなる（`build_shorts` と同じ考え）。
+                #
+                # 終わりかたを2つに分ける。
+                #   3 … 口に届かなかった（受け皿は前のまま。**こちらの落ち度ではない**）
+                #   3以外の0以外 … 口は答えたが焼けない中身だった
+                #                  （欄が欠けた・0 が返った・縮んだ・先の日付）。人が見る話
+                #
+                # **どちらでも、スクリプトは1バイトも書かない。** 0 を焼いたら、
+                # 受け皿が出るまさにその日の表紙が「0本の配信」になる。
+                echo "$s は BigQuery ではなく公開の口（/island-api/state）を読みます"
+                set +e
+                python "python/$s.py"
+                rc=$?
+                set -e
+                if [ "$rc" = "3" ]; then
+                  echo "SITE_STATS_DOWN=1" >> "$GITHUB_ENV"
+                  echo "::warning::$s は口に届きませんでした。受け皿の数字は前のままです（赤にはしません）"
+                elif [ "$rc" != "0" ]; then
+                  # 書かずに落ちる作りだが、途中で殺されたときだけ書きかけが残りうる
+                  git checkout -- site/content/site.ts || true
+                  echo "SITE_STATS_BAD=1" >> "$GITHUB_ENV"
+                  echo "::warning::$s が落ちました。受け皿の数字は前のまま戻しました。run の最後で赤くします"
                 fi ;;
               *) python "python/$s.py" ;;
             esac
@@ -1006,6 +1076,33 @@ jobs:
                   rule("料理", FLOOR, 0.95, r"people: (\d+)"),
                   rule("引用", FLOOR, 0.9, r"\btext: "),
               ],
+              # 表紙の受け皿の数字（`STATS_FALLBACK`）。**4つとも1行に1つの数**なので、
+              # 件数ではなく中の数字そのものを見る（`sum` だが当たりは1つずつ）。
+              #
+              # **しきい値は 0.98 で、根拠は「この4つは全期間の数え上げ」だから。**
+              # `COUNT(*)` を時期で切らずに数えているので、正常な晩の動きは
+              # 「増える」か「動かない」しかない。縮むのは動画の非公開か取り込み直しで、
+              # どちらも**1〜数件**（2026-10-06 の実測で 800本 / 148,399件なので、
+              # 1本は 0.1%、1件は 0.0007%）。2% は配信 16本・コメント 2,968件に当たる。
+              #
+              # **焼く側にも断る足がある（二重ではなく層が違う）。**
+              # `python/build_site_stats.py` の `judge()` は「**口が前より小さい数を
+              # 返した**」を 1件でも断る。ここが見るのは「**焼いた結果がやせた**」で、
+              # 口を読む道を通らない壊れかた（当てる正規表現が外れた・前の値が
+              # 読めなかった）を出口でもう一度捕まえる。
+              #
+              # **`recipes` と `since` は見ない。** `recipes: RECIPES.length` は数字を
+              # 持たず（焼かない欄）、`since` は初回の配信日で増えも減りもしない。
+              # **`SITE` と `PROFILE` も見ない**——焼かない欄をここに並べると、
+              # 「見張っている」と読める行が増えるだけで、当てる先は1バイトも動かない。
+              # あちらを守っているのは焼く側の `patch()`（塊の外が動いたら書かない）と、
+              # その対照（`python/build_site_stats_selftest.py` の6章）。
+              "site.ts": [
+                  rule("配信", FLOOR, 0.98, r"^\s+streams: (\d+),$", mode="sum"),
+                  rule("配信した日", FLOOR, 0.98, r"^\s+streamDays: (\d+),$", mode="sum"),
+                  rule("コメント", FLOOR, 0.98, r"^\s+comments: (\d+),$", mode="sum"),
+                  rule("のべ人数", FLOOR, 0.98, r"^\s+people: (\d+),$", mode="sum"),
+              ],
           }
 
 
@@ -1287,6 +1384,11 @@ jobs:
                                      "（`python/stale_content_watch.py` の KEYS。日数を2か所に置かない）"),
               "kitchenTalk.ts": (0, "上流が人（recipes.ts と手で選ぶ引用）。BigQuery を引かない"),
               "shorts.ts": (0, "あやとがショートを出した晩だけ動く。4ヶ月出ない期間が実際にある"),
+              "site.ts": (0, "表紙の受け皿の数字。**日ではなく、中に焼いた "
+                             "`STATS_FALLBACK.updatedAt` が今日からどれだけ離れたか**で見る"
+                             "（`python/stale_content_watch.py` の LATEST 3日。"
+                             "日数を2か所に置かない）。"
+                             "こちらで日数を持つと、口が落ちた晩に2か所から同じことを言う"),
           }
 
           # 焼いた日そのもの。中身ではないので、比べる前に落とす
@@ -1794,6 +1896,53 @@ jobs:
             echo "1晩なら向こうの都合です。**何晩も続いたら、取りかたのほうを見てください**"
             echo "（\`python/build_shorts.py\`。ショートは4ヶ月出ない期間が実際にあるので、"
             echo "日数の凍り見張りは付けていません。届いたかどうかだけ、ここで言っています）。"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # **受け皿の数字を焼けなかった晩を、ここで赤にする。**
+      # commit と deploy のうしろに置くのは「凍っていたら赤くする」と同じ理由。
+      #
+      # **黙って緑にしない。** この数字が置いていかれても画面は赤くならず、
+      # **口が落ちた日の表紙だけが古い数を出す**。言わないと誰も気づけない
+      # （実際に33日気づかなかった。`docs/island-misses.md`）。
+      - name: 受け皿の数字を焼けたか
+        if: ${{ !cancelled() && env.SITE_STATS_BAD == '1' }}
+        run: |
+          {
+            echo ""
+            echo "### 表紙の受け皿の数字（site.ts の STATS_FALLBACK）を焼けませんでした"
+            echo ""
+            echo "**数字は前のままです**（1バイトも書き換わっていません）。"
+            echo "口（\`GET /island-api/state\`）は答えたのに、その中身が焼けない形でした。"
+            echo "落ちた理由は上の「焼く」に出ています。よくあるのは3つです。"
+            echo ""
+            echo "1. **欄が欠けている・0 が返った** — \`island/state.stats\` が壊れています。"
+            echo "   \`python/island_daily_stats.py\`（取り込みの最後の step）を見てください"
+            echo "2. **いま焼いてある数より縮んだ** — 累積の数が減るのは、取り込み直しか"
+            echo "   動画の非公開です。数十%動いているなら数えかたのほうです"
+            echo "3. **\`site.ts\` の書き方が変わった** — \`STATS_FALLBACK\` の行に"
+            echo "   当てられなくなっています（人の欄を守るため、当てられなければ書きません）"
+            echo ""
+            echo "手で焼くには \`python3 python/build_site_stats.py --dry-run\` で差を見てから、"
+            echo "\`--dry-run\` を外します。"
+            echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::表紙の受け皿の数字を焼けませんでした。数字は前のままです"
+          exit 1
+
+      # 届かなかった晩は、赤にしないかわりに**必ず一言残す。**
+      # 緑のまま黙って終わると、「今日は数字が動かなかった晩」と見分けがつかない。
+      - name: 口から数字を取れたか
+        if: ${{ !cancelled() && env.SITE_STATS_DOWN == '1' }}
+        run: |
+          {
+            echo ""
+            echo "### 口（/island-api/state）から数字を取れませんでした"
+            echo ""
+            echo "**受け皿の数字は前のまま**です（1バイトも書き換わっていません）。"
+            echo "**落ちたわけではありません。** 1晩なら向こうの都合です。"
+            echo "**何晩も続いたら**、口そのものが落ちています——そのときは"
+            echo "受け皿の数字が出っぱなしになる側なので、"
+            echo "\`python/stale_content_watch.py\` が \`site.ts\` を3日で赤くします。"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # **絵の大きさを測り直せなかった晩を、ここで赤にする。**
