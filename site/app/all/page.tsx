@@ -3,6 +3,7 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import DirFilter from "@/components/ui/DirFilter";
 import Icon from "@/components/ui/Icon";
+import Fold from "@/components/ui/Fold";
 import { DEST_COUNT, SHELVES } from "@/content/directory";
 import AllIsleRow from "@/components/chain/AllIsleRow";
 import { ISLE_ROW } from "@/components/chain/route";
@@ -35,6 +36,21 @@ export const metadata: Metadata = {
  * 種類のボタンを並べると、この面そのものが探しものになる。
  * 打った字が名前・添え書き・slug・英語名のどれかに当たれば残る、の1本にした。
  * 一覧はここ（サーバ）で刷って、ブラウザへ行くのは入力欄だけ（`DirFilter`）。
+ *
+ * ## 棚は畳む。開けておくのは先頭の1つだけ
+ *
+ * 素で並べると 390px で 10,473px ＝ **12.4画面**あった。
+ * 棚が9つあるのに、**何の棚があるかを見るだけで12画面送らされる。**
+ * 「全部ある」が見えていたのではなく、**端から端まで送らないと見えなかった。**
+ *
+ * 畳むと9つの見出しが1画面に収まって、棚ごとの枚数も並ぶ。
+ * 「全部ある」はここで見える。開けておくのは先頭（島のなか）だけ
+ * （`docs/island-design.md` 4章）。
+ *
+ * **2タップは壊れない。** 名前が分かっているときの道は絞り込み欄で、
+ * 打つと当たった棚がひとりでに開く（`components/ui/DirFilter.tsx`）。
+ * 畳んだのは「どこにあるか分からないから眺める」ほうの道で、
+ * そちらは**まず棚を選ぶ**のが本来の形。
  */
 export default function AllPage() {
   return (
@@ -47,9 +63,15 @@ export default function AllPage() {
 
       <DirFilter total={DEST_COUNT} />
 
-      {SHELVES.map((s) => (
-        <section className="panel paper dxs" key={s.id} id={s.id}>
-          <h2>{s.title}</h2>
+      <div className="folds">
+        {SHELVES.map((s, i) => (
+        /* 絞り込みは棚ごと引っ込めるので、`.dxs` の囲みは畳みの外に残す
+           （`components/ui/DirFilter.tsx`）。畳みを `.dxs` ごと引っ込めると、
+           中身が当たっていない棚だけが消える。 */
+        <section className="dxs" key={s.id} id={s.id}>
+          {/* 枚数を見出しの右に出す。畳んだときに読むのはここなので、
+              「何の棚が、いくつ」が見出しだけで揃う */}
+          <Fold title={s.title} note={`${s.items.length}枚`} open={i === 0}>
           {/* 棚の見出しの下の1行。「配信の型」の棚だけ旅かどうかで言い方が変わり
               （`content/directory.ts` の `say("typesLong")`）、素の `Say` だと
               焼いた HTML は空白1文字ぶんしか取らないので、画面が出た瞬間に
@@ -78,8 +100,10 @@ export default function AllPage() {
               </li>
             ))}
           </ul>
+          </Fold>
         </section>
-      ))}
+        ))}
+      </div>
     </PageShell>
   );
 }

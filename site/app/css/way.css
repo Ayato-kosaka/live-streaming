@@ -214,6 +214,25 @@
 .dxq-clear:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.7); }
 .dxq-n { margin: 0; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); }
 
+/* 棚を畳みにしたので、`ui.css` の「紙の上の段」と同じ扱いにする。
+   `.folds > .fold` が当たらないのは、あいだに `<section class="dxs">` が
+   1枚挟まっているから。その section は絞り込みが**棚ごと**引っ込めるのに
+   要る（`components/ui/DirFilter.tsx`）ので、外さずにここで同じことを言う。 */
+.folds > .dxs > .fold {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  /* 9棚ぶんの中身は、画面の外にいるあいだ版組みしないでよい。
+     auto なので、いちど測った高さは覚えている（`ui.css` の `.folds > .fold`） */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 68px;
+}
+.folds > .dxs + .dxs > .fold {
+  border-top: 1px solid color-mix(in srgb, var(--rule) 66%, transparent);
+}
+/* 絞り込みで棚が消えたとき、罫線が二重に残らないようにする */
+.folds > .dxs[hidden] { display: none; }
+
 /* 棚。行はぜんぶ押せるので、1枚ずつに厚みを付けない
    （`docs/island-design.md` 3章の例外。並びそのものが合図になる）。
    **押せない行を1つも混ぜないこと。** 混ぜた瞬間にこの例外が嘘になる。 */
