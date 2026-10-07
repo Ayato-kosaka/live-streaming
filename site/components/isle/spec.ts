@@ -102,8 +102,8 @@ export type IsleSpec = {
   radius?: number;
   from: string;
   to: string;
-  /** 島の色（`app/css/tokens.css` の [data-theme]） */
-  theme?: "desert" | "nordic";
+  /** 島の色（`app/css/tokens.css` の [data-theme]）。顔ぶれは `IslandArt` が持つ */
+  theme?: IslandArt["theme"];
   places: IslePlaceSpec[];
   /** その章のあいだに来てくれていた人（絵のある人だけ）。
       `score` は島に出るえらばれやすさ（0〜1。額の順位＋出席の順位）。
