@@ -146,7 +146,7 @@ import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from typing import Callable
 
