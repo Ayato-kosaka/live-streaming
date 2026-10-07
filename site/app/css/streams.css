@@ -823,34 +823,23 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    ========================================================= */
 
 /* 絞り込み。押して選ぶチップだけを並べる。
-   国が6つ・種類が7つあるので、幅の狭い画面では1行を横に流す。 */
+   横に流していたのをやめて、どの幅でも折り返す。
+
+   390px では「どこで」の中身が 833px あって枠が 340px しかなく、
+   **アゼルバイジャン・ジョージア・アルメニアの3つが着いた時点で0%**
+   （「なにを」も 魚・汁もの・副菜・甘いもの の4つが0%）だった。
+   全39品のうちジョージアが32品、つまり**いちばん大きい棚が
+   1pxも見えていない。** 右がまだ続いている合図はぼかし1本だけで、
+   しかも `calc(100% - 26px)` の固定なので、いちばん右まで送っても
+   薄いまま＝「まだ右がある」と嘘をつき続けていた。
+
+   折り返すとチップが2〜3行になって `.kt-tools` が 100px ほど伸びるが、
+   `/kitchen` は 2,887px（3.4画面）なので収まる。
+   見えない棚があるより、100px 長いほうがよい。 */
 .kt-tools { display: grid; gap: var(--sp-2); }
-.kt-tools .zk-picks {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  /* 板になったチップは下に6pxの厚みがある。横に流す箱で切らないよう下を空ける */
-  padding-bottom: var(--sp-2);
-  /* 指ではじいたとき、チップが半分切れたところで止まらないようにする。
-     見出し（どこで / なにを）のぶんだけ左を空けて、そこへ吸い付かせる */
-  scroll-snap-type: x proximity;
-  scroll-padding-left: 3.6em;
-  overscroll-behavior-x: contain;
-}
-.kt-tools .zk-pick { scroll-snap-align: start; }
-.kt-tools .zk-picks::-webkit-scrollbar { display: none; }
-/* 右がまだ続いていることを、紙の色へのぼかしで伝える */
-.kt-tools .zk-picks {
-  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
-}
-.kt-tools .zk-pick { flex: none; }
-@media (min-width: 900px) {
-  .kt-tools .zk-picks {
-    flex-wrap: wrap; overflow: visible;
-    -webkit-mask-image: none; mask-image: none;
-  }
-}
+/* 行の先頭の見出し（どこで / なにを）は、折り返した2行目以降の
+   チップと高さがそろうように上に寄せる。真ん中だと宙に浮く。 */
+.kt-tools .zk-picks-t { align-self: flex-start; min-height: 38px; display: flex; align-items: center; }
 /* いま何品出ているか。絞り込むと減る数なので、チップの列の外に出す */
 .kt-count {
   margin: 0;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { StreamCard } from "@/components/ui/Bits";
 import Icon from "@/components/ui/Icon";
+import Fold from "@/components/ui/Fold";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 
@@ -28,10 +29,16 @@ import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
  *
  * ## 月で畳む
  *
- * ヨーロッパは121本ある。素で並べると 40画面をこえる
- * （`docs/island-ux.md` 8.1 は入口の面を3画面までとしている）。
- * ここは入口ではなく一覧なので長くてよいが、**どこを読んでいるかは要る。**
- * 月の見出しを差し込んで、月ごとの本数を出す。
+ * コーカサスは476本ある。素で並べると 51,479px ＝ **61画面**で、
+ * いちばん下まで送るとサムネイルが476枚（約5MB）飛ぶ。
+ * 月の見出しを差し込んだだけでは長さは1pxも減らなかったので、
+ * **月ごと `<details>` に畳む**（`site/components/ui/Fold.tsx`）。
+ * 閉じた `<details>` の中の `loading="lazy"` はブラウザが要求しないので、
+ * 着いた時点で飛ぶのは開いている月のぶんだけになる。
+ *
+ * 開いた状態にするのは**先頭の1か月だけ**（`docs/island-design.md` 4章
+ * 「開いた状態を初期値にしていいのは、そのページで最も伝えたい1つだけ」）。
+ * いちばん新しい月が、この面でいちばん見たいもの。
  */
 
 export function generateStaticParams() {
@@ -95,26 +102,30 @@ export default async function ChapterStreams({
         へ。
       </p>
 
-      {months.map((m) => (
-        <section key={m.key} className="chap-month">
-          <h2>
-            {m.label}
-            <i>{m.rows.length}本</i>
-          </h2>
-          <div className="scards">
-            {m.rows.map(([date, videoId, title, people]) => (
-              <StreamCard
-                key={videoId}
-                videoId={videoId}
-                title={title}
-                date={date}
-                // その日に何人が書き込んだか。配信の大きさが、並べたときに見える
-                tag={people > 0 ? `${people}人` : undefined}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      <div className="folds">
+        {months.map((m, i) => (
+          <Fold
+            key={m.key}
+            title={m.label}
+            note={`${m.rows.length}本`}
+            // いちばん新しい月だけ開けておく。残りは見出しだけ並べる
+            open={i === 0}
+          >
+            <div className="scards">
+              {m.rows.map(([date, videoId, title, people]) => (
+                <StreamCard
+                  key={videoId}
+                  videoId={videoId}
+                  title={title}
+                  date={date}
+                  // その日に何人が書き込んだか。配信の大きさが、並べたときに見える
+                  tag={people > 0 ? `${people}人` : undefined}
+                />
+              ))}
+            </div>
+          </Fold>
+        ))}
+      </div>
 
       <p className="chain-foot">
         <Link href={`/island/${c.slug}`} prefetch={false}>
