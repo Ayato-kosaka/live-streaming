@@ -153,7 +153,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
 
       <nav className="pager">
         {ALL_APPS.filter((x) => x.slug !== a.slug).map((x) => (
-          <Link key={x.slug} href={`/apps/${x.slug}`}>
+          <Link prefetch={false} key={x.slug} href={`/apps/${x.slug}`}>
             {x.name}
             <Icon name="right" size={13} />
           </Link>

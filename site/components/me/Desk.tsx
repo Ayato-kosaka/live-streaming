@@ -101,7 +101,7 @@ export default function Desk() {
     return (
       <section className="panel paper">
         <h2>ここは、あやとの机</h2>
-        <Link className="blank-go" href="/me">
+        <Link prefetch={false} className="blank-go" href="/me">
           じぶんのことへ
           <Icon name="right" size={14} />
         </Link>
@@ -148,7 +148,7 @@ export default function Desk() {
 
       {/* 配信中に開く2つ。**道具の札には混ぜない。**
           あちらは「その日のうちに入れる」もので、こちらは別の端末で開く面。 */}
-      <Link className="mp-goto" href="/me/roulette">
+      <Link prefetch={false} className="mp-goto" href="/me/roulette">
         <Icon name="poll" size={22} />
         <span className="mp-goto-t">
           <b>ルーレット</b>
@@ -156,7 +156,7 @@ export default function Desk() {
         </span>
         <Icon name="right" size={14} />
       </Link>
-      <Link className="mp-goto" href="/me/remote">
+      <Link prefetch={false} className="mp-goto" href="/me/remote">
         <Icon name="signpost" size={22} />
         <span className="mp-goto-t">
           <b>島の遠隔操作</b>

@@ -163,7 +163,7 @@ export function NowCountry() {
         </>
       )}
 
-      <Link className="pap-go" href={`/map/${c.slug}`} style={{ marginTop: "var(--sp-3)" }}>
+      <Link prefetch={false} className="pap-go" href={`/map/${c.slug}`} style={{ marginTop: "var(--sp-3)" }}>
         <img src="/sprites/signpost.webp" alt="" />
         <span>
           <b>{c.name}でやったこと、ぜんぶ</b>

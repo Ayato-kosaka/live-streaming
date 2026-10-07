@@ -164,7 +164,7 @@ export default function StreamsPage() {
         <div className="tiles" style={{ marginTop: "var(--sp-3)" }}>
           {/* 桃（--roof-coral）はクッキング配信の型の色。行き先の飾りに使うと、
               「桃＝クッキングの型」の対応が崩れる。小屋の屋根の色に置き換える。 */}
-          <Link className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
+          <Link prefetch={false} className="tile" href="/kitchen" style={{ ["--tile" as string]: "var(--roof-wood)" }}>
             <ArtStamp size={44} className="tile-icon" />
             <span className="tile-text">
               <b>作った料理</b>
@@ -172,7 +172,7 @@ export default function StreamsPage() {
             </span>
             <Icon name="right" size={15} className="tile-go" />
           </Link>
-          <Link className="tile" href="/legends" style={{ ["--tile" as string]: "var(--gold)" }}>
+          <Link prefetch={false} className="tile" href="/legends" style={{ ["--tile" as string]: "var(--gold)" }}>
             <ArtMedal size={44} className="tile-icon" />
             <span className="tile-text">
               <b>伝説の企画</b>

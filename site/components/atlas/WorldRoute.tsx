@@ -534,6 +534,22 @@ export default function WorldRoute({
               <filter id="amRidge" x="-15%" y="-15%" width="130%" height="130%">
                 <feGaussianBlur stdDeviation="5" />
               </filter>
+              {/* **陸のかたちは1回だけ書く。** 岸の帯は同じ線を太さと色だけ変えて
+                  5枚重ねたもので、素直に書くと 83KB の `d` が5回——1枚の面で
+                  372KB——焼かれる。書き出した HTML にはハイドレーション用の写しも
+                  入るので、払うのはその倍。`<use>` は形だけを借り、塗りと線は
+                  借りる側のもの（どちらも受け継がれる種類の指定）が効く。
+                  **名前は defs のほかのものとぶつけない。** 北欧の地図で
+                  `nmLand` を色と取り合って、岸の帯も砂浜も森もまるごと消えた。
+                  絵は出てしまうので、画素で見るまで分からない。 */}
+              <path id="amLandShape" d={MAP.land} />
+              {/* 国のかたちも、塗りと境で2枚ずつ使う */}
+              {BEFORE.map((b) => (
+                <path key={`bd${b.slug}`} id={`amB-${b.slug}`} d={b.d} />
+              ))}
+              {Object.entries(MAP.countries).map(([slug, d]) => (
+                <path key={`cd${slug}`} id={`amC-${slug}`} d={d as string} />
+              ))}
             </defs>
 
             {/* 海。上が明るく、下へ行くほど深い青 */}
@@ -546,19 +562,19 @@ export default function WorldRoute({
               ))}
 
               {/* 岸。浅瀬 → 泡 → 濡れ砂 → 乾いた砂。島の砂浜と同じ重ね方 */}
-              <path d={MAP.land} fill="none" stroke="var(--am-shelf)" strokeWidth={34 / k} strokeLinejoin="round" opacity="0.85" filter="url(#amSoft)" />
-              <path d={MAP.land} fill="none" stroke="var(--am-shelf-hi)" strokeWidth={16 / k} strokeLinejoin="round" opacity="0.9" />
-              <path d={MAP.land} fill="none" stroke="var(--am-foam)" strokeWidth={9 / k} strokeLinejoin="round" />
-              <path d={MAP.land} fill="none" stroke="var(--am-sand-wet)" strokeWidth={6.5 / k} strokeLinejoin="round" />
-              <path d={MAP.land} fill="url(#amOff)" stroke="var(--am-sand)" strokeWidth={3.5 / k} strokeLinejoin="round" />
+              <use href="#amLandShape" fill="none" stroke="var(--am-shelf)" strokeWidth={34 / k} strokeLinejoin="round" opacity="0.85" filter="url(#amSoft)" />
+              <use href="#amLandShape" fill="none" stroke="var(--am-shelf-hi)" strokeWidth={16 / k} strokeLinejoin="round" opacity="0.9" />
+              <use href="#amLandShape" fill="none" stroke="var(--am-foam)" strokeWidth={9 / k} strokeLinejoin="round" />
+              <use href="#amLandShape" fill="none" stroke="var(--am-sand-wet)" strokeWidth={6.5 / k} strokeLinejoin="round" />
+              <use href="#amLandShape" fill="url(#amOff)" stroke="var(--am-sand)" strokeWidth={3.5 / k} strokeLinejoin="round" />
 
               {/* 配信より前に歩いた国。番号付きの国の下に敷く。
                   境が点線なのは、この2カ国に配信（＝記録）が無いから */}
               {BEFORE.map((b) => (
                 <g key={`b${b.slug}`}>
-                  <path d={b.d} fill="url(#amPre)" />
-                  <path
-                    d={b.d}
+                  <use href={`#amB-${b.slug}`} fill="url(#amPre)" />
+                  <use
+                    href={`#amB-${b.slug}`}
                     fill="none"
                     stroke="#3e7c33"
                     strokeWidth={3.4 / k}
@@ -570,12 +586,12 @@ export default function WorldRoute({
               ))}
 
               {/* 通った国。まわりより明るく、彩度も高く */}
-              {Object.entries(MAP.countries).map(([slug, d]) => (
-                <path key={slug} d={d as string} fill="url(#amOn)" />
+              {Object.keys(MAP.countries).map((slug) => (
+                <use key={slug} href={`#amC-${slug}`} fill="url(#amOn)" />
               ))}
               {/* 国の境。かたい線は引かない。内側に落ちる淡い影で分ける */}
-              {Object.entries(MAP.countries).map(([slug, d]) => (
-                <path key={`e${slug}`} d={d as string} fill="none" stroke="#3e7c33" strokeWidth={3 / k} opacity="0.3" />
+              {Object.keys(MAP.countries).map((slug) => (
+                <use key={`e${slug}`} href={`#amC-${slug}`} fill="none" stroke="#3e7c33" strokeWidth={3 / k} opacity="0.3" />
               ))}
 
               {/* 山脈。やわらかい帯の上に丸い山の印 */}

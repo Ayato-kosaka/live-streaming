@@ -46,7 +46,7 @@ export default function NextPage() {
         <p>
           ここに並んでいるものも、ほとんどが誰かの思いつきから始まった。掲示板に貼る、週のはじめの会議で見る、日にちが決まったらこの面のいちばん上に出る。そして終わったものの中で、いつまでも話に出てくるものが伝説になる。
         </p>
-        <Link className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
+        <Link prefetch={false} className="tile" href="/board" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>やってほしいこと</b>
@@ -55,7 +55,7 @@ export default function NextPage() {
           <Icon name="right" size={15} className="tile-go" />
         </Link>
         {/* 終わった企画の行き先。前はこの一周が掲示板の面の中でしか見えていなかった。 */}
-        <Link className="tile" href="/legends">
+        <Link prefetch={false} className="tile" href="/legends">
           <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
           <span className="tile-text">
             <b>伝説の企画へ</b>

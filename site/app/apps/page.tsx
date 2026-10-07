@@ -140,7 +140,7 @@ export default function AppsPage() {
 
               {/* 中のページへは、何が読めるのかを言って渡す。
                   「作ってきた記録」だけだと、節目と配信が付いていることが分からない。 */}
-              <Link className="tile" href={`/apps/${a.slug}`}>
+              <Link prefetch={false} className="tile" href={`/apps/${a.slug}`}>
                 <span className="tile-mark">
                   <Icon name="log" size={24} />
                 </span>
@@ -174,7 +174,7 @@ export default function AppsPage() {
                 <span className="chip dark">{a.status}</span>
               </b>
               <p>{a.summary}</p>
-              <Link className="tile" href={`/apps/${a.slug}`}>
+              <Link prefetch={false} className="tile" href={`/apps/${a.slug}`}>
                 <span className="tile-mark">
                   <Icon name="log" size={24} />
                 </span>

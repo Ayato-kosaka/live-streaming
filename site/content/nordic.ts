@@ -1583,7 +1583,11 @@ export type NordicSpot = {
   time: string;
   season: string;
   tags: string[];
+  /** 52px 角の段の頭に出すぶん（幅 250）。`img` を使うと4倍払う */
+  thumb: string;
+  /** 国の札（/nordic）の 72px の帯に出すぶん（幅 500） */
   img: string;
+  /** 畳みを開いたときの大きい1枚（幅 960） */
   big: string;
   cm: string;
 };

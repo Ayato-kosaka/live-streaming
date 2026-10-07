@@ -172,7 +172,7 @@ export default function Shelf() {
   return (
     <div className="shelf">
       {boxes.map((b) => (
-        <Link className="shelf-box" key={b.href} href={b.href}>
+        <Link prefetch={false} className="shelf-box" key={b.href} href={b.href}>
           <span className="shelf-mark" aria-hidden>
             <Icon name={b.mark} size={26} />
           </span>

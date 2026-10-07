@@ -137,7 +137,7 @@ export default function Shops({
           店の前に立った人がその場で開けるように、道を1本だけ通す。 */}
       {groups.length > 0 && (
         <p className="chips nshop-book">
-          <Link className="chip link" href="/nordic/guide#souvenir">
+          <Link prefetch={false} className="chip link" href="/nordic/guide#souvenir">
             <Icon name="book" size={18} />
             しおりの、おみやげ{SOUVENIRS}品
           </Link>

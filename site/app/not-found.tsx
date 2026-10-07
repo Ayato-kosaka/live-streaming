@@ -21,7 +21,7 @@ export default function NotFound() {
         lead="押した先が島から外れているみたい。"
       />
       <div className="tiles">
-        <Link className="tile" href="/">
+        <Link prefetch={false} className="tile" href="/">
           <img className="tile-icon" src="/sprites/hut-ayato.webp" alt="" />
           <span className="tile-text">
             <b>島にもどる</b>
@@ -29,7 +29,7 @@ export default function NotFound() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <Link className="tile" href="/all">
+        <Link prefetch={false} className="tile" href="/all">
           <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
           <span className="tile-text">
             <b>島のなか ぜんぶ</b>
