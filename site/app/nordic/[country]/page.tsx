@@ -87,8 +87,15 @@ const MOVE: Record<string, string> = { hitch: "ヒッチハイク", ferry: "フ�
  * ここの番号は**押せない。** この行そのものが押すと開く畳みなので、中に
  * もう1つ押しどころを入れると、押した先が2つになる。だから厚みも付けない
  * （`island-design.md` 3章3）。番号を押して点を光らせられるのは日ページ。
+ *
+ * ## 同じ写真を、2つの大きさで取りに行かない
+ *
+ * 段の頭は 52px 角なので、ふだんは `thumb`（幅 250）で足りる。
+ * ただし**表紙に使った1枚だけは別**で、そちらはもう幅 960 で落ちている。
+ * 小さい版をあらためて頼むと、同じ絵を2回ぶん払うことになるので、
+ * 落ちているほうをそのまま使う（`thumb` で渡す）。
  */
-function Spot({ s, k }: { s: NordicSpot; k?: SpotKey }) {
+function Spot({ s, k, thumb }: { s: NordicSpot; k?: SpotKey; thumb?: string }) {
   return (
     <Fold
       title={
@@ -96,7 +103,7 @@ function Spot({ s, k }: { s: NordicSpot; k?: SpotKey }) {
           {(s.img || k?.n != null || k?.far) && (
             <span className="nspot-fig">
               {s.img ? (
-                <img className="nspot-th" src={s.img} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                <img className="nspot-th" src={thumb ?? s.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" />
               ) : (
                 <span className="nspot-th" aria-hidden="true" />
               )}
@@ -174,7 +181,7 @@ function Spot({ s, k }: { s: NordicSpot; k?: SpotKey }) {
  * **4つに入らないものを押し込まない。** いまのデータは全部この4つだが、
  * 増えたときに黙って消えるほうが悪いので、余りは最後に「そのほか」で出す。
  */
-function Cats({ list, keys }: { list: NordicSpot[]; keys?: Record<string, SpotKey> }) {
+function Cats({ list, keys, hero }: { list: NordicSpot[]; keys?: Record<string, SpotKey>; hero?: string }) {
   const groups = CATS.map((c) => ({ label: c.label, list: list.filter((s) => s.cat === c.key) }));
   const rest = list.filter((s) => !CATS.some((c) => c.key === s.cat));
   if (rest.length > 0) groups.push({ label: "そのほか", list: rest });
@@ -190,7 +197,7 @@ function Cats({ list, keys }: { list: NordicSpot[]; keys?: Record<string, SpotKe
             </h4>
             <div className="folds">
               {g.list.map((s) => (
-                <Spot key={s.id} s={s} k={keys?.[s.id]} />
+                <Spot key={s.id} s={s} k={keys?.[s.id]} thumb={s.big && s.big === hero ? s.big : undefined} />
               ))}
             </div>
           </div>
@@ -200,11 +207,11 @@ function Cats({ list, keys }: { list: NordicSpot[]; keys?: Record<string, SpotKe
 }
 
 /** 街の畳み。行かない街と、寄るかもしれない街はこの形で置く。 */
-function CityFold({ city, list }: SpotCity) {
+function CityFold({ city, list, hero }: SpotCity & { hero?: string }) {
   return (
     <section className="gchap ncity" id={`city-${encodeURIComponent(city)}`}>
       <Fold title={<span className="gchap-h">{city}</span>} lead={list[0]?.title} note={`${list.length}件`}>
-        <Cats list={list} />
+        <Cats list={list} hero={hero} />
       </Fold>
     </section>
   );
@@ -249,6 +256,9 @@ export default async function NordicCountryPage({
 
   // その国の顔になる写真。最初の見どころのものを使う。
   const hero = spots.find((s) => s.big) ?? spots[0];
+  // 表紙に出す1枚の URL。**この絵を持っている段は、小さい版を頼まない**
+  // （同じ写真を2つの大きさで取りに行かないため。`Spot` の覚え書き）。
+  const heroSrc = hero?.big;
 
   const idx = NORDIC_COUNTRIES.findIndex((x) => x.slug === c.slug);
   const prev = NORDIC_COUNTRIES[idx - 1];
@@ -327,14 +337,14 @@ export default async function NordicCountryPage({
                   しか出さないので、出発の街（カトヴィツェ）はどこにも出ていなかった */}
               <CityMap city={g.city} />
               {/* 地図の下に番号の札を並べない。番号はこの段の行が持っている */}
-              <Cats list={g.list} keys={cityKeys(g.city)} />
+              <Cats list={g.list} keys={cityKeys(g.city)} hero={heroSrc} />
             </section>
           ))}
           {/* 街に紐づかないもの（郷土料理など）。降りる街の下に置く。 */}
           {nation.length > 0 && (
             <section className="ncgo">
               <h3>{c.name}のどこでも</h3>
-              <Cats list={nation} />
+              <Cats list={nation} hero={heroSrc} />
             </section>
           )}
         </Panel>
@@ -361,7 +371,7 @@ export default async function NordicCountryPage({
           <h2>寄るかもしれないところ</h2>
           <p className="muted">通り道にあるところ。寄るかどうかは、これから決まります。</p>
           {maybe.map((g) => (
-            <CityFold key={g.city} {...g} />
+            <CityFold key={g.city} {...g} hero={heroSrc} />
           ))}
         </Panel>
       )}
@@ -379,7 +389,7 @@ export default async function NordicCountryPage({
             今回のルートからは外れる{skip.length}か所。{skipSpots}件。
           </p>
           {skip.map((g) => (
-            <CityFold key={g.city} {...g} />
+            <CityFold key={g.city} {...g} hero={heroSrc} />
           ))}
         </Panel>
       )}
@@ -390,7 +400,7 @@ export default async function NordicCountryPage({
 
       <div className="nnav">
         {prev ? (
-          <Link href={`/nordic/${prev.slug}`}>
+          <Link prefetch={false} href={`/nordic/${prev.slug}`}>
             <Icon name="right" size={14} className="is-flip" />
             <Flag slug={prev.slug} size={22} />
             {prev.name}
@@ -399,7 +409,7 @@ export default async function NordicCountryPage({
           <span />
         )}
         {next ? (
-          <Link href={`/nordic/${next.slug}`}>
+          <Link prefetch={false} href={`/nordic/${next.slug}`}>
             <Flag slug={next.slug} size={22} />
             {next.name}
             <Icon name="right" size={14} />
