@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/ui/IconCore";
 import {
@@ -103,18 +103,26 @@ export default function CardSheet({
   onDropped?: (photoId: string) => void;
 }) {
   /* 同じ絵の人を2度出さない。台帳は人ごとに1枚だが、Doneru から手で入った
-     人と YouTube の人が同じ絵に当たることがある。 */
-  const picks: Pick[] = [];
-  for (const c of group.cards) {
-    if (picks.some((p) => p.icon === c.icon)) continue;
-    picks.push({
-      key: c.id,
-      icon: c.icon,
-      name: c.name || "",
-      // 本人が動かしたぶんだけ、その値で置く（既定は右下ひとところ）
-      place: c.moved ? { x: c.x, y: c.y, rot: c.rot, scale: c.scale } : null,
-    });
-  }
+     人と YouTube の人が同じ絵に当たることがある。
+
+     **顔を変えない（`useMemo`）。** ここで毎回ならべ直すと `place` が
+     描くたびに別のものになり、**焼き直す効果が自分の出した絵で起き直って
+     止まらなくなる**（覚えてある立ち位置を持つカードだけ、150ms ごとに
+     2048px を焼きつづける）。並べ替えの元は紙を開いたときのまま動かない。 */
+  const picks = useMemo<Pick[]>(() => {
+    const out: Pick[] = [];
+    for (const c of group.cards) {
+      if (out.some((p) => p.icon === c.icon)) continue;
+      out.push({
+        key: c.id,
+        icon: c.icon,
+        name: c.name || "",
+        // 本人が動かしたぶんだけ、その値で置く（既定は右下ひとところ）
+        place: c.moved ? { x: c.x, y: c.y, rot: c.rot, scale: c.scale } : null,
+      });
+    }
+    return out;
+  }, [group.cards]);
 
   /** いま入れている人。**はじめは誰も入れない。** */
   const [chosen, setChosen] = useState<Pick | null>(null);
@@ -487,6 +495,11 @@ export default function CardSheet({
                 </div>
               ))}
           </div>
+          {/* **写真のすぐ下に置く。** 下の手（連れ・大きさ・もとへ）と
+              一緒にしていたが、候補が11人いる日は札が3段になって、
+              そこが窓の下へ落ちる。**なぞれることを、いちばん知って
+              ほしい人に届かない**（9月6日の紙が実際にそうだった）。 */}
+          {chosen && <p className="nstudio-tip">写真の上をなぞると、立つところが変わります。</p>}
           {group.note && <p className="nstudio-note">{group.note}</p>}
 
           {picks.length > 0 && (
@@ -560,7 +573,6 @@ export default function CardSheet({
               <button type="button" className="akd-undo" onClick={reset}>
                 もとのばしょ
               </button>
-              <p className="akd-tune-tip">写真の上をなぞると、立つところが変わります。</p>
             </div>
           )}
 

@@ -518,6 +518,27 @@ console.log("\n# 開き直すと、覚えた場所に立っている");
     re.sum !== one1.sum, `既定 ${one1.sum} / 開き直し ${re.sum}`);
   must("覚えた場所の絵と同じ", re.sum === moved1.sum,
     `動かした直後 ${moved1.sum} / 開き直し ${re.sum}`);
+  /* **誰も触っていないのに焼き直していないか。** 覚えてある立ち位置を持つ
+     カードは、`place` が描くたびに別のものになると**自分の出した絵で
+     焼き直しが起き直って止まらなくなる**（150ms ごとに 2048px を焼く）。
+     絵は正しく出るので、見ても分からない。**焼き上がりの入れ替わりを数える。** */
+  const spun = await r2.p.evaluate(
+    () =>
+      new Promise((done) => {
+        const img = document.querySelector(".akd-modal .akd-stage img");
+        let n = 0;
+        const mo = new MutationObserver(() => {
+          n += 1;
+        });
+        mo.observe(img, {attributes: true, attributeFilter: ["src"]});
+        setTimeout(() => {
+          mo.disconnect();
+          done(n);
+        }, 2500);
+      }),
+  );
+  must("触っていないあいだ、焼き直していない", spun === 0,
+    `2.5秒で ${spun} 回 焼き直した`);
   await r2.ctx.close();
 }
 

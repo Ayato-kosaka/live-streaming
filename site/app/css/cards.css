@@ -582,17 +582,6 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-/* なぞると動く、という一言。**行をまるごと使う**（上の3つの後ろに
-   ぶら下がると、折り返しのたびに居場所が変わって読みにくい） */
-.akd-tune-tip {
-  flex: 1 0 100%;
-  margin: 0;
-  font-size: var(--fs-note);
-  font-weight: 700;
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-
 /* 誰を入れるか。**全部のマスが押せるので、1枚ずつに厚みは付けない。** */
 .nstudio-pick {
   display: grid;
