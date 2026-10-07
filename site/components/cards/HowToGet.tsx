@@ -135,7 +135,7 @@ export default function HowToGet() {
         ))}
       </ol>
 
-      <Link className="akg-go" href="/me">
+      <Link prefetch={false} className="akg-go" href="/me">
         じぶんのことを見る
         <Icon name="right" size={14} />
       </Link>
@@ -151,7 +151,7 @@ export default function HowToGet() {
         <section className="akg-note">
           <h3>キャラクターって？</h3>
           <p>あやとが、ひとりずつ描いています。まだの人は、描けた日にこれまでのぶんも出てきます。</p>
-          <Link className="akg-go" href="/friends">
+          <Link prefetch={false} className="akg-go" href="/friends">
             住んでる人を見る
             <Icon name="right" size={14} />
           </Link>

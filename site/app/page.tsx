@@ -205,7 +205,7 @@ export default function Home() {
           {/* 掲示板への誘いは、絵と3行と大きいボタンの箱を積んでいた（290px）。
               ここで言いたいのは「行き先は自分でも出せる」の一言だけなので、
               押せる板1枚に畳んだ。読ませる文は掲示板の面が持っている。 */}
-          <Link className="hjoin" href="/board">
+          <Link prefetch={false} className="hjoin" href="/board">
             <img className="hjoin-art" src="/sprites/signboard.webp" alt="" loading="lazy" />
             <span className="hjoin-body">
               <b>{HOME.board}</b>
@@ -255,7 +255,7 @@ export default function Home() {
               **同じものを2通りに言わない。** もらいかたは面の側が持っているので、
               ここでは条件を1つも書かない（書けば守れない約束になる。
               `docs/island-misses.md` #103）。 */}
-          <Link className="hjoin" href="/cards">
+          <Link prefetch={false} className="hjoin" href="/cards">
             {/* 写真は焼いたスプライトに無い。**大きく出す物はスプライト**だが、
                 カードは建物でも場所でもないので、ここは 64 枠の絵のほう
                 （`components/ui/Icon.tsx`「主役なら 48〜64」）。

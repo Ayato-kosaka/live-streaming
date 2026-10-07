@@ -86,7 +86,7 @@ function Row({ day }: { day: Day }) {
   const asks = legs.filter((l) => l.fork).length + (day.fork ? 1 : 0);
   const art = legs[0]?.art ?? day.art;
   return (
-    <Link className="ndayr" href={dayHref(day)}>
+    <Link prefetch={false} className="ndayr" href={dayHref(day)}>
       {art && <Mark art={art} size={38} className="ndayr-art" />}
       <span className="ndayr-body">
         <span className="ndayr-top">
@@ -192,7 +192,7 @@ function GroupRow({ days }: { days: Day[] }) {
         {/* 日ごとの面への入口。**その日の話が書かれた札には印が付く。** */}
         <span className="ndayg-days">
           {days.map((d) => (
-            <Link
+            <Link prefetch={false}
               key={d.id}
               className="ndayc"
               id={d.id}

@@ -69,24 +69,24 @@ export default function Meishi() {
       {/* 数字は4つ。押せるので板にする（厚みは押せるものだけ・`docs/island-world.md` 3.4）。
           どれも「その数を持っている面」へ行く。数と行き先が食い違わないようにする。 */}
       <div className="mei-nums">
-        <Link className="mei-num" href="/streams">
+        <Link prefetch={false} className="mei-num" href="/streams">
           <em>
             <LiveNumber statKey="streams" fallback={s.streams} />
           </em>
           <span>本の配信</span>
         </Link>
-        <Link className="mei-num" href="/map">
+        <Link prefetch={false} className="mei-num" href="/map">
           {/* **焼いた数を出さない。** 国境を越えた日の朝から、その晩の焼き直しが
               配られるまで1つ少ない数が出る。押した先（`/map`）が並べている数と
               食い違うので、ここも画面が出てから数え直す（`content/walked.ts`）。 */}
           <em><Walked /></em>
           <span>カ国を歩いた</span>
         </Link>
-        <Link className="mei-num" href="/kitchen">
+        <Link prefetch={false} className="mei-num" href="/kitchen">
           <em>{s.recipes}</em>
           <span>品つくった</span>
         </Link>
-        <Link className="mei-num" href="/friends">
+        <Link prefetch={false} className="mei-num" href="/friends">
           <em>
             <LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />
           </em>
@@ -115,7 +115,7 @@ export default function Meishi() {
           </span>
           <Icon name="external" size={14} />
         </a>
-        <Link className="mei-go" href="/now">
+        <Link prefetch={false} className="mei-go" href="/now">
           <Icon name="pin" size={22} />
           <span>
             {/* 「いまどこ」は `/now` と同じ判定・同じ言い方で出す（`lib/stay.ts`
@@ -130,7 +130,7 @@ export default function Meishi() {
           </span>
           <Icon name="right" size={14} />
         </Link>
-        <Link className="mei-go" href="/about">
+        <Link prefetch={false} className="mei-go" href="/about">
           <Icon name="cottage" size={22} />
           <span>
             <b>あやとの話をもっと聞く</b>

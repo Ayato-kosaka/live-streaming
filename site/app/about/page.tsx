@@ -322,7 +322,7 @@ export default function AboutPage() {
             この面の中にもう一度出ていた。それだけで 1,006px あった。
             「これから」の札も外した。ヘッダーの札と、道のりの最後の石から行ける。 */}
         <div className="tiles" style={{ marginTop: 14 }}>
-          <Link className="tile" href="/now">
+          <Link prefetch={false} className="tile" href="/now">
             <span className="tile-mark">
               <Icon name="globe" size={24} />
             </span>
@@ -471,7 +471,7 @@ export default function AboutPage() {
         <p className="muted">3つとも、配信しながらやっている。</p>
         <div className="ado">
           {DOING.map((d) => (
-            <Link className="ado-card" href={d.href} key={d.href}>
+            <Link prefetch={false} className="ado-card" href={d.href} key={d.href}>
               {d.art}
               <b>{d.title}</b>
               <p>{d.note}</p>
@@ -486,7 +486,7 @@ export default function AboutPage() {
           ひとりでやっているわけじゃない。島に住んでいるのは、配信に来てくれる人たち。
           いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
         </p>
-        <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href="/friends" style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="friends" size={24} />
           </span>
@@ -551,7 +551,7 @@ export default function AboutPage() {
         <p className="muted" style={{ marginTop: 12 }}>
           配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。
         </p>
-        <Link className="tile" href="/map" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href="/map" style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="flagpost" size={24} />
           </span>

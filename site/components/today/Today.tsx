@@ -266,7 +266,7 @@ export default function Today({ place }: { place: "corner" | "bar" }) {
             {/* **「企画を貼る」と言わない（2026-10-01）。** 押した先は
                 付箋ひとつになっていて、企画を出す欄はもう無い。
                 行き先の面の名前と同じ字で呼ぶ。 */}
-            <Link className="poll-why" href="/board">
+            <Link prefetch={false} className="poll-why" href="/board">
               やってほしいことを書く
               <Arrow size={11} />
             </Link>

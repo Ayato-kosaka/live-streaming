@@ -162,7 +162,7 @@ export default function RemoteBox() {
     return (
       <section className="panel paper">
         <h2>ここは、あやとの机</h2>
-        <Link className="blank-go" href="/">
+        <Link prefetch={false} className="blank-go" href="/">
           島へもどる
           <Icon name="right" size={14} />
         </Link>

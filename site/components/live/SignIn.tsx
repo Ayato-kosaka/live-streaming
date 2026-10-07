@@ -28,7 +28,7 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
      （じぶんのことへ行けば、まとめて1か所にある） */
   if (user) {
     return (
-      <Link className="tile" href="/me">
+      <Link prefetch={false} className="tile" href="/me">
         {/* 顔は**毎晩入れ直る `channelPhoto`**。ログインした日のまま止まる
             `photo` を出すと、ここだけ古い顔になる（`docs/island-misses.md` #1）。 */}
         {user.channelPhoto ? (

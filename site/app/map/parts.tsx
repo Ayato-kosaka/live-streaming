@@ -61,7 +61,7 @@ export function MapHead({ region }: { region: string }) {
       {LEAD}
       {region}まで来ました。いまは
       {dest ? (
-        <Link className="phead-go" href={dest}>
+        <Link prefetch={false} className="phead-go" href={dest}>
           {trip.name}
         </Link>
       ) : (

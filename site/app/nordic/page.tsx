@@ -338,7 +338,7 @@ export default async function NordicPage() {
           紙の上に置かなくてもそれだけで押せるものに見える。 */}
       {/* 紙どうしのあいだは 32px 空く決まりなので、板1枚のときは自分で空ける。
           空けないと、すぐ下の紙の見出し（貼り紙）がこの板に乗り上げる。 */}
-      <Link className="tile" href="/nordic/guide" style={{ marginBottom: "var(--sp-6)" }}>
+      <Link prefetch={false} className="tile" href="/nordic/guide" style={{ marginBottom: "var(--sp-6)" }}>
         <span className="tile-mark">
           <Icon name="book" size={26} />
         </span>

@@ -575,7 +575,7 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
         <p className="rz-today">
           <b>今日、島を歩いているのは{here.size}人。</b>
           近くまで行くと、向こうから話しかけてくる。
-          <Link href="/">
+          <Link prefetch={false} href="/">
             島へ会いに行く
             <Icon name="right" size={13} />
           </Link>

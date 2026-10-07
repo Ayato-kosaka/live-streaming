@@ -80,7 +80,7 @@ export default function CardStrip({
         </div>
       )}
 
-      <Link className="tile" href="/cards">
+      <Link prefetch={false} className="tile" href="/cards">
         <span className="tile-mark">
           <Icon name="island" size={24} />
         </span>

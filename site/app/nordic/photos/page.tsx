@@ -45,7 +45,7 @@ export default function NordicPhotosPage() {
       <section className="panel paper">
         <h1>旅の写真</h1>
         <p className="muted">あやと島カードにまとまりました。</p>
-        <Link className="tile" href="/cards">
+        <Link prefetch={false} className="tile" href="/cards">
           <span className="tile-mark">
             <Icon name="island" size={24} />
           </span>
