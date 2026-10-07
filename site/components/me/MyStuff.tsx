@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   PLAN_STATUS_NAME,
-  canEditPlan,
-  myPlans,
   type NextPlan,
   type Sticky,
 } from "@/lib/api";
@@ -210,27 +208,18 @@ function Plans({
     );
   return (
     <Longer items={plans.list} first={4} step={10} unit="件" className="mp-plans">
-      {(p) => {
-        const edit = canEditPlan(p, uid, myPlans());
-        return (
-          <li key={p.id}>
-            <span className="mp-plan-t">
-              <b>{p.title || "（題なし）"}</b>
-              <i>
-                <span>{PLAN_STATUS_NAME[p.status]}</span>
-                {jstDay(p.createdAt) && <span>{jstDay(p.createdAt)}</span>}
-                {p.hearts > 0 && <span>さんせい {p.hearts}</span>}
-              </i>
-            </span>
-            {edit === "ok" && (
-              <Link className="mp-go" href={`/next/new?id=${p.id}`}>
-                そだてる
-                <Icon name="right" size={13} />
-              </Link>
-            )}
-          </li>
-        );
-      }}
+      {(p) => (
+        <li key={p.id}>
+          <span className="mp-plan-t">
+            <b>{p.title || "（題なし）"}</b>
+            <i>
+              <span>{PLAN_STATUS_NAME[p.status]}</span>
+              {jstDay(p.createdAt) && <span>{jstDay(p.createdAt)}</span>}
+              {p.hearts > 0 && <span>さんせい {p.hearts}</span>}
+            </i>
+          </span>
+        </li>
+      )}
     </Longer>
   );
 }
