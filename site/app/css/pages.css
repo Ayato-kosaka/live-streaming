@@ -936,7 +936,17 @@ p > a[href^="mailto:"] { padding-block: var(--tap-inline); }
   border-radius: var(--r-0); padding: 2px var(--sp-2);
   box-shadow: none;
 }
-.scard-body b { font-size: var(--fs-body); font-weight: 900; line-height: 1.5; }
+/* 題名は3行で切る。**カードの背を、題名の長さに決めさせない。**
+   配信の題名は YouTube にあるものをそのまま出す（引用なので直せない）ので、
+   いちばん長いもので84字あり、390幅だと6行＝カード1枚で **268px** になる。
+   絵は 112x63px なので、字だけが下へ伸びて並びが読めなくなるし、
+   「何枚ならべたら何px」が決められない（`島の配信` の面はそれで背を決めている）。
+   3行あれば 48字ほど読めて、どの配信かは分かる。続きは押した先の YouTube に在る。 */
+.scard-body b {
+  font-size: var(--fs-body); font-weight: 900; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden;
+}
 
 /* タイル。ここがいちばん「押せる板」に見えないといけない */
 .tiles { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; }

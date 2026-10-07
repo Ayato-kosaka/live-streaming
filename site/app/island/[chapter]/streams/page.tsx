@@ -36,19 +36,33 @@ import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
  * 閉じた `<details>` の中の `loading="lazy"` はブラウザが要求しないので、
  * 着いた時点で飛ぶのは開いている月のぶんだけになる。
  *
- * **どの月も開けておかない。** 前はいちばん新しい月だけ開けていたが、
- * そこに何本入っているかは**カレンダーの都合**で決まる。コーカサスを測った日は
- * 月が始まったばかりで12本しか無く、3,198px に収まっていた。同じ作りのまま
- * ヨーロッパは 5,845px（6.9画面）、中東 5,217px、北欧 4,228px になる——
- * 先頭の月が 35本・34本・24本だから、ただそれだけの理由で。
- * **「いまは少ないから大丈夫」で決めた背は、月が変われば伸びる**
+ * **「いちばん新しい月を開けておく」はやめた。** そこに何本入っているかは
+ * **カレンダーの都合**で決まる。コーカサスを測った日は月が始まったばかりで
+ * 12本しか無く 3,198px に収まっていたので、この形で通っていた。同じ作りのまま
+ * ヨーロッパは 5,845px（6.9画面）、中東 5,217px、北欧 4,228px——
+ * 先頭の月が 35本・34本・24本だから、ただそれだけの理由で
  * （`docs/island-standards.md` 7「溜まっても背が変わらない形にする」）。
  *
- * 閉じきると、どの章も**月の見出しだけが並ぶ目次**になって、本数が何本でも
- * 背が変わらない。振り返る面の用事は「いつ何があったか」なので、
- * 目次はそのまま答えになっている（`docs/island-design.md` 4章
- * 「読む人が目次から探すものは必ず折りたたみ」）。
- * いちばん新しい月は、いちばん上にいて1回押せば開く。
+ * **かといって、全部畳むのも駄目だった。** 一度そうして、着いた瞬間に配信が
+ * **1本も見えない**面になった。面の名前は「○○の配信」で、配信を見にきた人が
+ * 索引だけ見せられる。軽くはなったが**面の仕事が落ちている**
+ * （`docs/island-misses.md` #207）。
+ *
+ * ## いまの形
+ *
+ * **上に新しい3本を出して、残りぜんぶは「月でさがす」の中に置く。**
+ *
+ * - 着いた時点で見えるのは、いつも**3本**。月に何本あっても変わらない
+ * - 月の索引も畳みの中。**月は増えつづける**（コーカサスはもう16か月）ので、
+ *   並べたままだと索引だけで 912px になり、それだけで2画面に迫る
+ * - だから背は「器＋1段＋3枚」で決まり、**章が変わっても月が増えても動かない**
+ *
+ * 上の3本は、開いた月の中にももう一度出る。**数を合わせるため**で、
+ * 月の札には「35本」と書いてあるのに31本しか無い、という見え方のほうが困る。
+ *
+ * 3本という数は測って決めた。1枚の背は題名の行数で 100〜200px 変わるので、
+ * いちばん長い題名が並んだときでも 390幅・いちばん下まで送って 2画面
+ * （1,688px）に収まるのがここまで（実測は下の表）。
  */
 
 export function generateStaticParams() {
@@ -112,23 +126,33 @@ export default async function ChapterStreams({
         へ。
       </p>
 
-      <div className="folds">
-        {months.map((m) => (
-          <Fold key={m.key} title={m.label} note={`${m.rows.length}本`}>
-            <div className="scards">
-              {m.rows.map(([date, videoId, title, people]) => (
-                <StreamCard
-                  key={videoId}
-                  videoId={videoId}
-                  title={title}
-                  date={date}
-                  // その日に何人が書き込んだか。配信の大きさが、並べたときに見える
-                  tag={people > 0 ? `${people}人` : undefined}
-                />
-              ))}
-            </div>
-          </Fold>
+      {/* 着いた時点で見えるぶん。**数を固定する**ので、月に何本あっても背は変わらない */}
+      <div className="scards">
+        {streams.slice(0, NEWEST).map(([date, videoId, title, people]) => (
+          <StreamCard key={videoId} videoId={videoId} title={title} date={date} tag={card(people)} />
         ))}
+      </div>
+
+      <div className="folds">
+        <Fold title="月でさがす" note={`${streams.length}本`}>
+          <div className="folds">
+            {months.map((m) => (
+              <Fold key={m.key} title={m.label} note={`${m.rows.length}本`}>
+                <div className="scards">
+                  {m.rows.map(([date, videoId, title, people]) => (
+                    <StreamCard
+                      key={videoId}
+                      videoId={videoId}
+                      title={title}
+                      date={date}
+                      tag={card(people)}
+                    />
+                  ))}
+                </div>
+              </Fold>
+            ))}
+          </div>
+        </Fold>
       </div>
 
       <p className="chain-foot">
@@ -139,6 +163,12 @@ export default async function ChapterStreams({
     </PageShell>
   );
 }
+
+/** 着いた時点で出す本数。**背を決めているのはここ**（上の覚え書き） */
+const NEWEST = 3;
+
+/** その日に何人が書き込んだか。配信の大きさが、並べたときに見える */
+const card = (people: number) => (people > 0 ? `${people}人` : undefined);
 
 const ym = (d: string) => {
   const [y, m] = d.split("-");
