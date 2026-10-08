@@ -40,7 +40,6 @@ BigQuery に繋げない環境では、あらかじめ吸い出した行を渡�
 import argparse
 import json
 import logging
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -54,6 +53,9 @@ from build_dead_streams import (  # noqa: E402
     sql_public,
 )
 from stays import read_all  # noqa: E402
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -124,8 +126,20 @@ def read_peaks() -> dict:
     if not PEAKS_TS.exists():
         logger.warning("%s がまだ無い。山の秒は付けずに焼く", PEAKS_TS.name)
         return {}
-    m = re.search(r"const PEAKS: Record<string, Peak> = (\{.*?\});", PEAKS_TS.read_text(encoding="utf-8"), re.S)
-    return {k: v["k"] for k, v in json.loads(m.group(1)).items()} if m else {}
+    # **字を読むのは `python/ts_read.py` の1本だけ。** ここは前、
+    # `const PEAKS: Record<string, Peak> = (\{.*?\});` を当てて `json.loads` に
+    # 渡していた。**型注釈をそのまま書き写していた**ので、あちらの型名が
+    # 変わるだけで何も読めず、黙って `{}` に落ちる（山の秒が全部消える）。
+    rows = ts_read.read_map(PEAKS_TS.read_text(encoding="utf-8"), "PEAKS")
+    if not rows:
+        logger.warning("%s から山を読めなかった。山の秒は付けずに焼く", PEAKS_TS.name)
+        return {}
+    out = {}
+    for vid, body in rows:
+        k = dict(ts_read.entries(body)).get("k", "")
+        if k.lstrip("-").isdigit():
+            out[vid] = int(k)
+    return out
 
 
 def names_of(city: str) -> list:

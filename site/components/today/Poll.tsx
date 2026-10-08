@@ -217,7 +217,7 @@ export default function Poll({
         <>
           <p className="poll-said">{`いま${(poll.options.find((o) => o.id === mine)?.votes ?? 0).toLocaleString()}人がこっちを押した`}</p>
           {/* 次の段への橋。押した直後がいちばん気分が乗っているので、ここに置く */}
-          <Link className="poll-why" href="/board">
+          <Link prefetch={false} className="poll-why" href="/board">
             理由も書ける？
             <Arrow size={11} />
           </Link>

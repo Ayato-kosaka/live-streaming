@@ -287,7 +287,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               </Link>
             )}
             {next && (
-              <Link className="tile" href="/next">
+              <Link prefetch={false} className="tile" href="/next">
                 {/* しらせの合図はサイト全体でこのベル1種類。予定の入口には必ず付ける */}
                 <span className="tile-mark">
                   <NoticeBell size={32} />

@@ -90,7 +90,7 @@ export default function TripPhotos() {
   if (read === "wait" || (read === "ok" && photos === 0)) return null;
 
   return (
-    <Link className="tile nph-go" href="/cards">
+    <Link prefetch={false} className="tile nph-go" href="/cards">
       <span className="tile-mark">
         <Icon name="photo" size={24} />
       </span>

@@ -61,6 +61,8 @@ from ts_read import ChapterRead, code_only, read_chapters  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 CHAPTERS_TS = REPO / "site" / "content" / "chapters.ts"
+# 旅程。**日の出の表を焼くほうと見張りが、どちらもここから読む**
+TRIP_TS = REPO / "site" / "content" / "nordic.ts"
 
 # **足を1本ずつ抜く**（`island-standards.md` §15「対照は、足の数だけ用意する」）。
 #
@@ -262,6 +264,91 @@ def main() -> int:
                     check(f"{who} が本番の字から nordic を返す", f"止まった: {e}", True)
             finally:
                 mod.CHAPTERS_TS = keep
+
+    # --- 5. 旅程（`read_trip`）------------------------------------------------
+    #
+    # 旅の日の出・日の入り（`site/content/nordicSun.ts`）を焼くほうと、
+    # 焼き込みが古くなっていないかを見る見張りが、**どちらもここから引く。**
+    # 片方が自分で正規表現を書くと、`chapters.ts` を3通りに読んで北欧だけが
+    # 落ちたのと同じことが起きる（このファイルの頭）。
+    #
+    # **本番で当てるところと、仕込みで当てるところを分ける。**
+    # 本番は「いま落ちていないこと」、仕込みは「落ちたときに気づけること」。
+    trip_src = TRIP_TS.read_text(encoding="utf-8")
+    trip = ts_read.read_trip(trip_src)
+    print(f"  本番の {TRIP_TS.name}: 名乗り {trip.declared}日 / 読めた {len(trip.days)}日"
+          f" / 街 {len(trip.cities)}件")
+    check("本番の旅程が1日も名乗っていない、ということは無い", trip.declared > 0, True)
+    check("本番の旅程を1日も読み落としていない", trip.missed, 0)
+    check("本番の旅程の街が0件ではない", len(trip.cities) > 0, True)
+    # **区間（`ROUTE`）を引き直せているか。** その日の朝いる街は
+    # `legs: [leg("katowice-warszawa")]` の先の `from` にしか無い。
+    # 引き直しが壊れると、朝の街が全部「その日の `city`」に落ちて、
+    # **出発の日に着く先の日の出**が出る（画面側で一度やっている）
+    wakes = [d.wakes_in for d in trip.days if d.wakes_in]
+    print(f"  うち、朝いる街が読めた日: {len(wakes)}/{len(trip.days)}日")
+    check("朝いる街が読めている日が在る（分母）", len(wakes) > 0, True)
+    check("本番の旅程ぜんぶで、朝いる街が読める", len(wakes), len(trip.days))
+
+    # **この対照が易しくなっていないか。** 本番の旅程から
+    # 「入れ子で `id:` を持つ日」（分かれ道の選択肢）が消えたら、
+    # 名乗りの数え方が壊れても通ってしまう
+    nested = len(re.findall(r'\{ id: "[a-z-]+", label:', trip_src))
+    print(f"  うち、入れ子で id を持つ行（分かれ道の選択肢）: {nested}個")
+    check("本番の旅程に、入れ子の id がまだ在る（対照が易しくなっていない）",
+          nested > 0, True)
+
+    made_trip = """
+export const ROUTE: Leg[] = [
+  {
+    id: "a-b",
+    from: "あの街（空港のまわり）",
+    to: "この街",
+    note: "本文に date: \\"2099-01-01\\" と書いてあっても、欄ではない",
+  },
+];
+export const DAYS: Day[] = [
+  {
+    id: "day-1",
+    // ここに date: "2099-01-01" と書いてもコメント
+    date: "2026-03-01",
+    legs: [leg("a-b")],
+    fork: { options: [{ id: "yoru", label: "寄る" }] },
+  },
+  {
+    id: "day-2",
+    date: "2026-03-02",
+    city: "その街",
+    maybe: ["よその街"],
+  },
+];
+export const WANTS: Want[] = [
+  { city: "まぎれこむ街" },
+];
+"""
+    mt = ts_read.read_trip(made_trip)
+    check("仕込みの旅程を2日とも読む", [d.id for d in mt.days], ["day-1", "day-2"])
+    check("仕込みも読み落とし0（入れ子の id を名乗りに数えない）", mt.missed, 0)
+    check("区間の `leg(...)` から朝の街を引く", mt.days[0].wakes_in, "あの街")
+    check("区間が無い日は `city` が朝の街", mt.days[1].wakes_in, "その街")
+    check("街は通る順に並ぶ。添え書きは落とす",
+          mt.cities, ["あの街", "この街", "その街"])
+    check("`maybe`（寄るかもしれない街）を街に入れない", "よその街" in mt.cities, False)
+    check("`WANTS`（視聴者さんの提案）の街を混ぜない", "まぎれこむ街" in mt.cities, False)
+    check("本文の date: に釣られない", [d.date for d in mt.days],
+          ["2026-03-01", "2026-03-02"])
+
+    # 日付を持たない行は**読み落としに数える。** 黙って飛ばすと、
+    # 日の出を焼くほうがその日を飛ばしたことに誰も気づけない
+    nodate = made_trip.replace('    date: "2026-03-02",\n', "")
+    md = ts_read.read_trip(nodate)
+    check("日付の無い日は、読み落としとして立つ", md.missed, 1)
+    check("読めたぶんはそのまま返る", [d.id for d in md.days], ["day-1"])
+
+    # 空の旅程は、名乗り0・読み落とし0（**別の顔にする**）
+    empty_trip = ts_read.read_trip("export const DAYS: Day[] = [\n];\n")
+    check("空の旅程は、名乗り0・読み落とし0",
+          (empty_trip.declared, empty_trip.missed), (0, 0))
 
     # --- 出す ----------------------------------------------------------------
     print(f"対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")

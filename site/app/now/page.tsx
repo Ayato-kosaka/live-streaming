@@ -69,7 +69,7 @@ export default function NowPage() {
               （`docs/island-ux.md` 8.1「入口の面は3画面まで」）。
               減らすなら、2つあるほうから減らす。 */}
           <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
-            <Link className="pap-go" href="/next">
+            <Link prefetch={false} className="pap-go" href="/next">
               <img src="/sprites/tent.webp" alt="" />
               {/* **札も添え書きも、島の表（`layout.ts`）から引く。**
                   ここに手で「これから」と書いていたので、島の札を直しても

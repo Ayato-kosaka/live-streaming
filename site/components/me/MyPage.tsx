@@ -164,7 +164,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
           だけで消していたころ、細い電波では入口がここから消えて、画面上に
           `/me/desk` へ行く道が1本も残らなかった（`island-standards.md` 10）。 */}
       {owner === "yes" && (
-        <Link className="mp-goto is-lead" href="/me/desk">
+        <Link prefetch={false} className="mp-goto is-lead" href="/me/desk">
           <Icon name="signpost" size={22} />
           <span className="mp-goto-t">
             <b>島の手入れ</b>

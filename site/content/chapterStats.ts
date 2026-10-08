@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-10-07
+ * 数えた日: 2026-10-08
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -266,7 +266,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // アルバニア
   "albania": {
     people: 90,
-    streams: 12,
+    streams: 13,
     residents: [
       { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 10 },
       { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 10 },

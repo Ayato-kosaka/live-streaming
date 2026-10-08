@@ -26,6 +26,7 @@ master へ押し込む run なので、**読む人はいない。**
 
 | | 見るもの | 落ちる条件 |
 | --- | --- | --- |
+| 0 | **毎晩の一覧と allowlist が食い違っていないか** | `ALL` に足して毎晩に足し忘れた（2026-10-07 に踏んだ） |
 | 1 | **焼いて commit するファイルが、全部 `RULES` に載っているか** | 見張りのいないファイルを commit している |
 | 2 | **`RULES` の正規表現が、いまの焼き込みに当たるか**（分母） | 当たらない＝そのルールは永遠に鳴れない |
 | 3 | **何も壊していない写しが通る** | 何にでも赤を出す関所になっている |
@@ -140,6 +141,41 @@ def load_guard():
     ns: dict = {"__name__": "shrink_guard"}
     exec(compile(guard_src(), "<rebake.yml:中の数が縮んでいないか>", "exec"), ns)
     return ns
+
+
+# **毎晩には乗せない、と決めてあるもの。理由を書かないと足せない**
+# （`python/watch_excuses.py` と同じ形。`docs/island-standards.md` §8）。
+#
+# ここに名前が無いスクリプトが `ALL` に在って毎晩の一覧に無ければ、
+# **乗せたつもりで乗っていない**として落とす。1章で両側から見る。
+NOT_NIGHTLY: dict[str, str] = {
+    "build_kitchen_talk":
+        "BigQuery を引かない。`python/data/kitchen_*.json` の焼き直しなので、"
+        "回しても同じものが焼き直るだけ。先に JSON を取り直すのは人の仕事"
+        "（2026-10-07 現在）",
+}
+
+
+def nightly_scripts() -> list[str]:
+    """**毎晩ひとりでに回る一覧**を、step「今回の押しかたを決める」から読む。
+
+    allowlist（`ALL`）とは**別の並び**。あちらの「入力が空なら全部」は、
+    手で押して入力欄を空にしたときだけ通る道なので、`ALL` に足しただけでは
+    毎晩には乗らない（2026-10-07 に実際に踏んだ）。
+    """
+    text = YML.read_text(encoding="utf-8")
+    head = text.index("- name: 今回の押しかたを決める")
+    tail = text.index("- name: 回すものを決める（allowlist）", head)
+    m = re.search(r'echo "REBAKE_IN=([a-z0-9_,]+)"', text[head:tail])
+    return sorted(m.group(1).split(",")) if m else []
+
+
+def allowlist_scripts() -> list[str]:
+    """**回してよい一覧**（`ALL`）を、step「回すものを決める（allowlist）」から読む。"""
+    text = YML.read_text(encoding="utf-8")
+    head = text.index("- name: 回すものを決める（allowlist）")
+    m = re.search(r'^\s*ALL="([^"]+)"', text[head:], re.M)
+    return sorted(m.group(1).split()) if m else []
 
 
 def baked_paths() -> list[str]:
@@ -359,6 +395,46 @@ WATCHED: list[str] = []
 
 
 # ---------------------------------------------------------------- 1・2. 分母
+
+
+def check_wiring() -> None:
+    """**毎晩の一覧と allowlist が食い違っていないか。**
+
+    `rebake.yml` は同じ「回すもの」を2か所に持っている。
+
+    | どこ | 何の一覧か | いつ通る道か |
+    | --- | --- | --- |
+    | `REBAKE_IN=`（決める step） | **毎晩ひとりでに回る** | cron / 取り込みに繋いだぶん |
+    | `ALL=`（allowlist step） | **回してよい** | 押されたぶん（入力が空なら全部） |
+
+    2026-10-07 に `nordic_sun` を足したとき、**`ALL` にだけ足して毎晩の一覧に
+    足し忘れた。** 手で押せば回るので、確かめも通る。**毎晩だけ乗らない。**
+    見張り（`python/stale_content_watch.py`）が「旅程の日が焼かれていない」と
+    言うようになっても、消すのは人の手になる——**乗せたつもりで乗っていない**
+    （`docs/island-misses.md` #125 と同じ形）。
+    """
+    print("\n0. 毎晩の一覧と allowlist が食い違っていないか")
+    nightly, allow = nightly_scripts(), allowlist_scripts()
+    print(f"  毎晩 {len(nightly)}本 / 回してよい {len(allow)}本 / "
+          f"毎晩に乗せない理由つき {len(NOT_NIGHTLY)}本")
+    say(bool(nightly) and bool(allow),
+        f"両方の一覧が読める（毎晩 {len(nightly)} / allowlist {len(allow)}）")
+    stray = [n for n in nightly if n not in allow]
+    say(not stray,
+        f"毎晩の一覧が、ぜんぶ allowlist に在る（無い: {stray or 'なし'}）"
+        "——**無いと毎晩の run が allowlist で止まる**")
+    # 理由が腐っていないか（`BREAK=rot` 相当。表に在るのに `ALL` に無い）
+    rot = [n for n in NOT_NIGHTLY if n not in allow]
+    say(not rot, f"毎晩に乗せない理由が、在るものについて書かれている（余り: {rot or 'なし'}）")
+    missing = [n for n in allow if n not in nightly and n not in NOT_NIGHTLY]
+    say(not missing,
+        f"allowlist に在って毎晩に無いものには、理由が書いてある（無い: {missing or 'なし'}）")
+    for n, why in sorted(NOT_NIGHTLY.items()):
+        if n in nightly:
+            say(False, f"{n} は毎晩に乗っているのに、乗せない理由が残っている（{why[:30]}…）")
+        else:
+            say(len(why) >= 12 and re.search(r"\d{4}-\d\d-\d\d", why) is not None,
+                f"{n} を毎晩に乗せない理由に、12文字以上と日付が在る")
 
 
 def check_denominator(g: dict) -> None:
@@ -721,6 +797,7 @@ def main() -> int:
     g = load_guard()
     print(f"見張りを {YML.name} の step「{STEP}」から切り出した（{len(guard_src().splitlines())} 行）")
 
+    check_wiring()
     check_denominator(g)
     check_clean(g)
     check_broken(g)

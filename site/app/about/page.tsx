@@ -208,6 +208,23 @@ const STORY: Step[] = [
     href: "/nordic",
     go: "北欧の旅へ",
   },
+  {
+    /* **年表が、いまいる島に届いていなかった。** 北欧へ発った行で終わっていたので、
+       「ここまでと、いま」を名乗る面が **9/11 で止まって**いた。旅から戻った
+       9/28 以降、いちばん新しい行が「これから発つ」と読める状態だった。
+
+       日付は章（`content/chapters.ts`）から引く。**ここで西暦を手打ちしない**——
+       着いた日が1日ずれたら、島の連なりとこの年表が別の日を言うことになる。
+       中身は**出る前・最中・帰ったあとのどれで読んでも合う字**にする
+       （すぐ上の北欧の行と同じ決まり）。だから「いまここ」と書かない。
+       「いま」を言うのは `/now` の面の仕事で、年表の仕事ではない。 */
+    date: chapterFrom("albania"),
+    kind: "travel",
+    what: "北欧の旅を終えて、アルバニアへ",
+    note: "ストックホルムから飛んで、アドリア海をはさんだイタリアの向かいへ",
+    href: "/island/albania",
+    go: "アルバニアの島へ",
+  },
 ];
 
 /**
@@ -322,7 +339,7 @@ export default function AboutPage() {
             この面の中にもう一度出ていた。それだけで 1,006px あった。
             「これから」の札も外した。ヘッダーの札と、道のりの最後の石から行ける。 */}
         <div className="tiles" style={{ marginTop: 14 }}>
-          <Link className="tile" href="/now">
+          <Link prefetch={false} className="tile" href="/now">
             <span className="tile-mark">
               <Icon name="globe" size={24} />
             </span>
@@ -471,7 +488,7 @@ export default function AboutPage() {
         <p className="muted">3つとも、配信しながらやっている。</p>
         <div className="ado">
           {DOING.map((d) => (
-            <Link className="ado-card" href={d.href} key={d.href}>
+            <Link prefetch={false} className="ado-card" href={d.href} key={d.href}>
               {d.art}
               <b>{d.title}</b>
               <p>{d.note}</p>
@@ -486,7 +503,7 @@ export default function AboutPage() {
           ひとりでやっているわけじゃない。島に住んでいるのは、配信に来てくれる人たち。
           いまの住人は<LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />人。
         </p>
-        <Link className="tile" href="/friends" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href="/friends" style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="friends" size={24} />
           </span>
@@ -551,7 +568,7 @@ export default function AboutPage() {
         <p className="muted" style={{ marginTop: 12 }}>
           配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。
         </p>
-        <Link className="tile" href="/map" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href="/map" style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="flagpost" size={24} />
           </span>

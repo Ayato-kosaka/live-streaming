@@ -164,7 +164,7 @@ export default function LegendsPage() {
             options={again.map((l) => ({ id: l.slug, label: l.title }))}
             after={
               <>
-                ここに無い案は、<Link href="/board">掲示板</Link>へ。
+                ここに無い案は、<Link prefetch={false} href="/board">掲示板</Link>へ。
               </>
             }
           />
@@ -172,7 +172,7 @@ export default function LegendsPage() {
       </Sheet>
 
       <div className="tiles">
-        <Link className="tile" href="/streams/meeting" style={{ ["--tile" as string]: "var(--roof-gold)" }}>
+        <Link prefetch={false} className="tile" href="/streams/meeting" style={{ ["--tile" as string]: "var(--roof-gold)" }}>
           <img className="tile-icon" src="/sprites/tower-studio.webp" alt="" />
           <span className="tile-text">
             <b>企画会議を見る</b>
@@ -180,7 +180,7 @@ export default function LegendsPage() {
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
-        <Link className="tile" href="/board" style={{ ["--tile" as string]: "var(--roof-mint)" }}>
+        <Link prefetch={false} className="tile" href="/board" style={{ ["--tile" as string]: "var(--roof-mint)" }}>
           <img className="tile-icon" src="/sprites/signboard.webp" alt="" />
           <span className="tile-text">
             <b>次の伝説を出す</b>

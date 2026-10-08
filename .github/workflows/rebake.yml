@@ -86,7 +86,7 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この8本だけ**）
+# ## 毎晩ひとりでに回すもの（**この9本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
@@ -96,6 +96,7 @@ name: 島の数字を焼き直す
 #   build_country_stats   countryStats.ts
 #   build_shorts          shorts.ts          ※ BigQuery ではなく YouTube を読む
 #   build_site_stats      site.ts            ※ BigQuery ではなく**公開の口**を読む
+#   nordic_sun            nordicSun.ts       ※ BigQuery も外の口も引かない（計算だけ）
 #
 # **そのうしろに、下流がもう1本ぶら下がる**（下の「回すもの」の表には並べない）。
 #
@@ -171,6 +172,23 @@ name: 島の数字を焼き直す
 # 順番は入力の並びではなく**下の ALL の並びで回す**。依存があるため。
 #   - `build_on_this_day` は `streamPeaks.ts` を読む → 先に `build_stream_peaks`
 #   - `build_kitchen_talk` は `residents.ts` を読む   → 先に `build_residents`
+#
+# `nordic_sun` だけは **`python/` ではなく `tools/nordic_sun.py`**。BigQuery も
+# 外の口も引かず、**緯度経度と日付から計算する**（NOAA の式。open-meteo の
+# 128件と1分以内で合わせてある）。毎晩に入れたのは 2026-10-07。
+#
+# それまでは焼くほうが**初日・最終日・街を手で持っていた**ので、毎晩回しても
+# 同じ17日を焼き直すだけだった。だから毎晩に入れる理由が無く、そのかわり
+# **次の旅で旅程が1日のびた日から、人が手で回すまで見張りが赤**になる形だった
+# （`python/stale_content_watch.py` の `nordicSun.ts`）。計算で出るものを
+# 人待ちにしていた、という意味では `shorts.ts`（#119）と `site.ts`（#202）と
+# 同じ外し方。いまは焼く日と焼く街を**旅程（`site/content/nordic.ts`）から引く**
+# ので、旅程がのびた晩にこの表もひとりでにのびる。
+#
+# 上流が人（旅程を書くのは本人）なので、**旅程が1日も動かない晩は1バイトも
+# 変わらない。** 凍りの見張りは 0（見ない）にしてある——日で見ると、旅と旅の
+# あいだ（実測で最大126日）ずっと赤くなる。見るのは
+# 「**旅程の日が全部焼かれているか**」で、そちらは `stale_content_watch.py`。
 #
 # ## 🔴 ここから回してはいけないもの（allowlist に入れていない理由）
 #
@@ -294,11 +312,14 @@ jobs:
           # cron と同じ扱いにする。**片方だけ手当てすると、繋ぎ替えたあと
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
-            # 毎晩ぶん。**機械だけで答えの決まる8本**を、配るところまで
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats" >> "$GITHUB_ENV"
+            # 毎晩ぶん。**機械だけで答えの決まる9本**を、配るところまで。
+            # **ここは `ALL` とは別の並び。** 下の allowlist に足しただけでは
+            # 毎晩には乗らない（あちらの「入力が空なら全部」は、手で押して
+            # 入力欄を空にしたときだけ通る道）。**足すときは両方に足す。**
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats,nordic_sun" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 8本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 9本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -322,17 +343,19 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk"
+          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk nordic_sun"
 
-          # カンマ・空白・改行で割る。**大文字・`python/`・`.py` は書かれても通す**
-          # （スマホの入力欄は勝手に頭を大文字にする。そこで落とすのは意地悪なだけ）
+          # カンマ・空白・改行で割る。**大文字・`python/`・`tools/`・`.py` は
+          # 書かれても通す**（スマホの入力欄は勝手に頭を大文字にする。
+          # そこで落とすのは意地悪なだけ）。`tools/` を通すのは `nordic_sun` のため
+          # ——あれだけ置き場が `tools/` なので、上の表をそのまま写すとこの形になる
           raw="$(printf '%s' "${REBAKE_IN:-}" | tr ',' '\n' | tr -d ' \t\r' \
-                 | tr 'A-Z' 'a-z' | sed 's|^python/||; s/\.py$//' \
+                 | tr 'A-Z' 'a-z' | sed 's|^python/||; s|^tools/||; s/\.py$//' \
                  | grep -v '^$' | tr '\n' ' ' || true)"
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので9本ぜんぶ回します"
+            echo "入力が空なので10本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -379,6 +402,16 @@ jobs:
               # ここに並ぶのはファイルまるごとになる
               build_site_stats)    p="site/content/site.ts" ;;
               build_kitchen_talk)  p="site/content/kitchenTalk.ts" ;;
+              # **ここだけ `python/` ではなく `tools/nordic_sun.py`。**
+              # BigQuery も外の口も引かない——緯度経度と日付から計算するだけで、
+              # 焼く日と焼く街は旅程（`content/nordic.ts`）から引く。
+              # **読むだけのファイルを、この step の字に書かないこと**（置き場の
+              # 頭から書いた道で）。ここの字から「焼いて commit しうるファイル」を
+              # 数えている見張りが在る（`python/shrink_guard_selftest.py` の
+              # `baked_paths()`）ので、書くと「見張りのいないファイル」に化ける。
+              # 下の step「焼く」に名指しの case が在る（既定の枝に落ちると
+              # `python/nordic_sun.py` を探して無い、で落ちる）
+              nordic_sun)          p="site/content/nordicSun.ts" ;;
               *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
             esac
             paths="$paths $p"
@@ -689,6 +722,31 @@ jobs:
                   git checkout -- site/content/site.ts || true
                   echo "SITE_STATS_BAD=1" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。受け皿の数字は前のまま戻しました。run の最後で赤くします"
+                fi ;;
+              nordic_sun)
+                # **旅の日ごとの日の出・日の入り。** BigQuery も外の口も引かない
+                # （NOAA の式。緯度経度と日付だけ）。置き場が `python/` ではなく
+                # `tools/` なので、ここで名指しで呼ぶ。
+                #
+                # 焼く日と焼く街は**旅程（`site/content/nordic.ts`）から引く。**
+                # だから旅程がのびた晩に、この表もひとりでにのびる。
+                # 2026-10-07 まで初日・最終日・街が焼くほうに手で書いてあって、
+                # **旅程がのびたら人が来るまで表が止まる**作りだった。
+                #
+                # **落ちても、ここでは止めない。** 止めると同じ晩に焼けた他の9本まで
+                # master に入らなくなる（`build_shorts` と同じ考え。#105）。
+                # 旅程に座標の無い街が入っていると 2 で引き下がる——そのとき
+                # 焼くほうは**1バイトも書かない**ので、表は前のまま。
+                # 前のまま戻しておいて、**run のいちばん最後で赤くする。**
+                echo "$s は BigQuery を引きません（緯度経度と日付から計算します）"
+                set +e
+                python3 tools/nordic_sun.py
+                rc=$?
+                set -e
+                if [ "$rc" != "0" ]; then
+                  git checkout -- site/content/nordicSun.ts || true
+                  echo "NORDIC_SUN_BAD=1" >> "$GITHUB_ENV"
+                  echo "::warning::$s が落ちました。日の出の表は前のまま戻しました。run の最後で赤くします"
                 fi ;;
               *) python "python/$s.py" ;;
             esac
@@ -1097,6 +1155,22 @@ jobs:
               # 「見張っている」と読める行が増えるだけで、当てる先は1バイトも動かない。
               # あちらを守っているのは焼く側の `patch()`（塊の外が動いたら書かない）と、
               # その対照（`python/build_site_stats_selftest.py` の6章）。
+              # 旅の日ごとの日の出・日の入り。**物差しは前の版でよい。**
+              # 旅程は出発前に全日ぶん確定するので、正常な晩の動きは
+              # 「のびる」か「動かない」しかない（`nordic.ts` の `DAYS` の頭）。
+              # 縮むのは旅程を1日直したとき（17日のうち1日＝-5.9%）か、
+              # 旅程が読めなかったとき（**丸ごと落ちる**）。そのあいだに置いた。
+              #
+              # **焼けなかった晩は、ここまで来ない。** 上の「焼く」が落ちた回は
+              # 表を前のまま戻してあるので、前と後が同じで素通りする
+              # （落ちたこと自体は run の最後の「日の出の表を焼けたか」が言う）。
+              "nordicSun.ts": [
+                  # 日（17）。旅程の初日〜最終日ぶん。1日直しても 0.94 で残る
+                  rule("日", FLOOR, 0.9, r'^\s{2}"\d{4}-\d\d-\d\d": \{'),
+                  # 街ごとの明け暮れ（136 ＝ 17日 x 8街）。**街が1つ落ちると -12.5%。**
+                  # 日の数は1つも減らないので、上の行では捕まらない
+                  rule("街ごとの明け暮れ", FLOOR, 0.9, r'rise: "'),
+              ],
               "site.ts": [
                   rule("配信", FLOOR, 0.98, r"^\s+streams: (\d+),$", mode="sum"),
                   rule("配信した日", FLOOR, 0.98, r"^\s+streamDays: (\d+),$", mode="sum"),
@@ -1383,6 +1457,9 @@ jobs:
                                      "**名簿に居て箱の無い人**で見る"
                                      "（`python/stale_content_watch.py` の KEYS。日数を2か所に置かない）"),
               "kitchenTalk.ts": (0, "上流が人（recipes.ts と手で選ぶ引用）。BigQuery を引かない"),
+              "nordicSun.ts": (0, "旅程（nordic.ts）が1日ものびない限り、同じ表が焼ける。"
+                                  "**日ではなく、旅程の日が全部焼かれているか**で見る"
+                                  "（`python/stale_content_watch.py` の KEYS。日数を2か所に置かない）"),
               "shorts.ts": (0, "あやとがショートを出した晩だけ動く。4ヶ月出ない期間が実際にある"),
               "site.ts": (0, "表紙の受け皿の数字。**日ではなく、中に焼いた "
                              "`STATS_FALLBACK.updatedAt` が今日からどれだけ離れたか**で見る"
@@ -1944,6 +2021,38 @@ jobs:
             echo "受け皿の数字が出っぱなしになる側なので、"
             echo "\`python/stale_content_watch.py\` が \`site.ts\` を3日で赤くします。"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # **日の出の表を焼けなかった晩を、ここで赤にする。**
+      # commit と deploy のうしろに置くのは「凍っていたら赤くする」と同じ理由。
+      #
+      # **黙って緑にしない。** この表が置いていかれても画面は赤くならず、
+      # **焼かれていない日の面から明るさの欄が消えるだけ**（#105 の形）。
+      # 言わないと誰も気づけない。
+      - name: 日の出の表を焼けたか
+        if: ${{ !cancelled() && env.NORDIC_SUN_BAD == '1' }}
+        run: |
+          {
+            echo ""
+            echo "### 旅の日の出・日の入り（nordicSun.ts）を焼けませんでした"
+            echo ""
+            echo "**表は前のままです**（1バイトも書き換わっていません）。落ちた理由は上の"
+            echo "「焼く」に出ています。よくあるのは2つです。"
+            echo ""
+            echo "1. **旅程に、座標も断りも無い街が入っている** — \`tools/nordic_sun.py\` の"
+            echo "   \`CITY_GEO\` に緯度経度と9月の時差を足すか、焼かない名前なら \`NO_SUN\` に"
+            echo "   理由を添えて足してください。**街の名はログに名指しで出ています**"
+            echo "2. **旅程（\`site/content/nordic.ts\`）の \`DAYS\` が読めなくなった** —"
+            echo "   読み落とした日数がログに出ます。\`python/ts_read.py\` の読み方か、"
+            echo "   \`nordic.ts\` の書き方のどちらかが合っていません"
+            echo ""
+            echo "**焼かれていない日の面からは、明るさの欄が消えます**（赤くはなりません）。"
+            echo "\`python/stale_content_watch.py\` が \`nordicSun.ts\` を毎晩赤くします。"
+            echo "手で焼くには \`python3 tools/nordic_sun.py\` を回します"
+            echo "（\`--check\` で突き合わせだけもできます）。"
+            echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::旅の日の出・日の入りを焼けませんでした。表は前のままです"
+          exit 1
 
       # **絵の大きさを測り直せなかった晩を、ここで赤にする。**
       # commit と deploy のうしろに置くのは「凍っていたら赤くする」と同じ理由で、

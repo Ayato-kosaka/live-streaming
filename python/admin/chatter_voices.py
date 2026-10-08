@@ -38,11 +38,13 @@ icon は `residents.ts` に載っていて既に公開なので、これで新�
 
 import json
 import os
-import re
 import sys
 from collections import defaultdict
 
 from _fs import args, log  # noqa: E402
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RESIDENTS = os.path.join(ROOT, "site", "content", "residents.ts")
@@ -58,28 +60,41 @@ PER_PERSON = 40
 MAX_BYTES = 1 << 30  # 1GiB
 
 
+def _read(path: str, name: str, keys: tuple) -> list:
+    """焼き込みの並びを1つ読む。**読み落としたら止める。**
+
+    字を読むのは `python/ts_read.py` の1本だけ（`ts_read.py` の頭）。
+    ここは前、`\\{[^{}]*icon:\\s*"…"[^{}]*\\}` のように**1人が1行で
+    焼かれていること**を当てにしていた。行の折り方が変わればその人が
+    黙って消えるので、数で止める形に直した。
+    """
+    with open(path, encoding="utf-8") as f:
+        got = ts_read.read_array(f.read(), name, keys=keys, id_key="icon")
+    if got.declared == 0:
+        raise SystemExit(f"{os.path.basename(path)} の {name} が空です（置き場が変わった？）")
+    if got.missed:
+        raise SystemExit(
+            f"{os.path.basename(path)} の {name} の {got.declared} 件のうち "
+            f"{got.missed} 件を読み落としました"
+        )
+    return got.rows
+
+
 def voiced_icons() -> set:
     """`chatter.ts` の VOICES に載っている icon。"""
-    s = open(CHATTER, encoding="utf-8").read()
-    body = s[s.index("export const VOICES"): s.index("export const COMMON_HOURS")]
-    return set(re.findall(r'icon:\s*"([^"]+)"', body))
+    return {r["icon"] for r in _read(CHATTER, "VOICES", ("icon",))}
 
 
 def roster() -> list:
     """名簿を score の高い順に。`{icon, channel, score, days}`。"""
-    s = open(RESIDENTS, encoding="utf-8").read()
     out = []
-    for m in re.finditer(r"\{[^{}]*icon:\s*\"([^\"]+)\"[^{}]*\}", s):
-        blk, icon = m.group(0), m.group(1)
-        ch = re.search(r'channel:\s*"([^"]+)"', blk)
-        sc = re.search(r"score:\s*([0-9.]+)", blk)
-        dy = re.search(r"days:\s*([0-9]+)", blk)
-        if not ch:
-            continue
+    for r in _read(RESIDENTS, "RESIDENTS", ("icon", "channel", "score", "days")):
+        if not r["channel"]:
+            continue  # チャンネルIDの付いていない人（名乗りでしか結べていない人）
         out.append({
-            "icon": icon, "channel": ch.group(1),
-            "score": float(sc.group(1)) if sc else 0.0,
-            "days": int(dy.group(1)) if dy else 0,
+            "icon": r["icon"], "channel": r["channel"],
+            "score": float(r["score"]) if r["score"] else 0.0,
+            "days": int(r["days"]) if r["days"].isdigit() else 0,
         })
     out.sort(key=lambda p: -p["score"])
     return out

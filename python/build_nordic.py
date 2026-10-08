@@ -92,6 +92,12 @@ def main() -> None:
                     "time": s.get("time", ""),
                     "season": s.get("season", ""),
                     "tags": s.get("tags", []),
+                    # 出す大きさで3つ持つ。**画面の箱に合わせて選ぶ。**
+                    # 段の頭のサムネイルは 52px 角なので、500 を取りに行くと
+                    # 1枚で 4倍払う（フィンランドは段が42あるので、着いた
+                    # とたんに 18枚ぶん）。国の札（/nordic）は 72px の帯で
+                    # 幅いっぱいに伸びるので、そちらは 500 のまま。
+                    "thumb": fix_width(s.get("img", ""), 250),
                     "img": fix_width(s.get("img", ""), 500),
                     "big": fix_width(s.get("big", ""), 960),
                     "cm": s.get("cm") or "",

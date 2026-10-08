@@ -130,6 +130,9 @@ sys.path.insert(0, __file__.rsplit("/", 2)[0])
 
 from logsafe import mask  # noqa: E402
 
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
+
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 # **道具を写さずに借りる。** 図鑑の読み方・チャットの引き方・表示名の
@@ -294,12 +297,19 @@ def island_icons(root: str) -> set:
     Raises:
         FileNotFoundError: 焼き込みが無い
     """
-    import re
-
     path = os.path.join(root, "site", "content", "residents.ts")
     with open(path, encoding="utf-8") as f:
-        text = f.read()
-    return set(re.findall(r'icon:\s*"([^"]+)"', text))
+        got = ts_read.read_array(f.read(), "RESIDENTS", keys=("icon",), id_key="icon")
+    # **読めなかったら 0件 に畳まず投げる**（この関数の頭）。
+    # 名乗っている数と読めた数が合わないのも、同じ顔で投げる——
+    # 「島に1人も居ない」と「1人だけ読み落とした」を取り違えない
+    if got.declared == 0:
+        raise FileNotFoundError(f"{path} の RESIDENTS が空です（置き場が変わった？）")
+    if got.missed:
+        raise ValueError(
+            f"{path} の {got.declared} 人のうち {got.missed} 人を読み落としました"
+        )
+    return {r["icon"] for r in got.rows}
 
 
 def repo_root() -> str:

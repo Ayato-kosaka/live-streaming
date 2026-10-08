@@ -101,7 +101,7 @@ export default function FriendsPage() {
                 （`docs/island-misses.md` 決めごと7）。 */}
             <p>名前もアイコンも、出すか出さないかは自分で決められる。</p>
             <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
-              <Link className="pap-go" href="/me">
+              <Link prefetch={false} className="pap-go" href="/me">
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>
                   <b>島での見え方を決める</b>

@@ -69,6 +69,11 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import ts_read  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 SITE = REPO / "site"
 
@@ -156,6 +161,9 @@ CARRY_FROM: dict[str, re.Pattern[str]] = {
 # 企画の切れ目。ここで持ち回っている日を捨てる（次の企画の文に前の日を付けない）
 CARRY_RESET = re.compile(r"^  \{$|^  \},?$|^\];$")
 
+# 名前で置いた字が日付かどうか。**形でないものを日として読まない**
+DATE_ONLY = re.compile(r"\d{4}-\d{2}-\d{2}")
+
 MIRAI = "MIRAI"  # まだ来ていない日。その日に嘘になる
 SUGITA = "SUGITA"  # もう過ぎた日。いま嘘
 
@@ -163,46 +171,12 @@ SUGITA = "SUGITA"  # もう過ぎた日。いま嘘
 # ---------------------------------------------------------------- 読むところ
 
 
-def spans(src: str) -> list[tuple[str, int, int]]:
-    """字の在りか。`("str"|"code", 始まり, 終わり)`。**注釈は返さない。**
-
-    `//` `/* */` を落として、引用符の中を `str`、それ以外を `code` で返す。
-    JSX の地の文は `code` のほうに残るので、下の `texts()` が拾い直す。
-    """
-    out: list[tuple[str, int, int]] = []
-    i, n, code_from = 0, len(src), 0
-    while i < n:
-        c = src[i]
-        if c in "\"'`":
-            out.append(("code", code_from, i))
-            j = i + 1
-            start = j
-            while j < n:
-                if src[j] == "\\":
-                    j += 2
-                    continue
-                if src[j] == c:
-                    break
-                j += 1
-            out.append(("str", start, min(j, n)))
-            i = j + 1
-            code_from = i
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "/":
-            out.append(("code", code_from, i))
-            j = src.find("\n", i)
-            i = n if j < 0 else j + 1
-            code_from = i
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "*":
-            out.append(("code", code_from, i))
-            j = src.find("*/", i + 2)
-            i = n if j < 0 else j + 2
-            code_from = i
-            continue
-        i += 1
-    out.append(("code", code_from, n))
-    return out
+# **「どこが字で、どこが注釈か」を数えるのは `python/ts_read.py` の1本だけ。**
+# ここは前、同じ歩きを自前に持っていた（`//` を見る前に、文字列の中かどうかを
+# 先に見る作り）。写しが3つに増えていて、片方だけ直した日に見ているものが
+# 違う形だった（`ts_read.py` の頭）。**ここは TSX も読む**が、文字列と注釈の
+# 見分けは TS と同じなので、同じ歩きで足りる。
+spans = ts_read.spans
 
 
 # JSX の地の文は `>` と `<` のあいだにいる。`{}` は差し込みなので境目になる
@@ -380,10 +354,12 @@ def _carry_map(src: str, rel: str) -> dict[int, date]:
     lines = src.split("\n")
     # **名前で置いた日も解く。** 同じ日を2か所に書かないために
     # `until: NORDIC_UNTIL` と書いてあると、日が1つも見つからない
+    # 名前で置いた字を引くのは `ts_read.string_consts()`（字を読むのは1本だけ）。
+    # 日付の形でないものは、ここで落とす——日として読めない字を日にしない
     named = {
-        m.group(1): d
-        for m in re.finditer(r'^const ([A-Z_]+) = "(\d{4}-\d{2}-\d{2})";', src, re.M)
-        if (d := _mk(*(int(x) for x in m.group(2).split("-"))))
+        k: d
+        for k, v in ts_read.string_consts(src).items()
+        if DATE_ONLY.fullmatch(v) and (d := _mk(*(int(x) for x in v.split("-"))))
     }
     # まず企画ごとの区切りを決めて、その区間の日をぜんぶ集める
     out: dict[int, date] = {}
