@@ -109,8 +109,12 @@ export async function abhit({
       if (!b0) { gone.push({ side: "後だけ", k: a.k, t: a.t, fold: a.fold }); continue; }
       bm.delete(a.k);
       if (b0.why || a.why) { if (b0.why !== a.why) gone.push({ k: a.k, t: a.t, b: b0.why || "測れた", a: a.why || "測れた" }); continue; }
-      if (a.hit[0] < b0.hit[0] || a.hit[1] < b0.hit[1]) shrunk.push({ t: a.t, c: a.c, fold: a.fold, b: b0.hit, a: a.hit });
-      else if (a.hit[0] > b0.hit[0] || a.hit[1] > b0.hit[1]) grew.push({ t: a.t, c: a.c, fold: a.fold, b: b0.hit, a: a.hit });
+      /* **前後の比べも 1px の目で。** `hitbox.mjs` が境目を 1/16px まで
+         詰めるようになったので、同じ札が 48.4 と 48.5 で出る。
+         生の値で比べると、何も変えていない回が「縮んだ1件」になる。 */
+      const px = (v) => Math.round(v);
+      if (px(a.hit[0]) < px(b0.hit[0]) || px(a.hit[1]) < px(b0.hit[1])) shrunk.push({ t: a.t, c: a.c, fold: a.fold, b: b0.hit, a: a.hit });
+      else if (px(a.hit[0]) > px(b0.hit[0]) || px(a.hit[1]) > px(b0.hit[1])) grew.push({ t: a.t, c: a.c, fold: a.fold, b: b0.hit, a: a.hit });
     }
     for (const [, r] of bm) gone.push({ side: "前だけ", k: r.k, t: r.t, fold: r.fold });
     const inFold = after.filter((r) => r.fold).length;

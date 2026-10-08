@@ -69,17 +69,63 @@ def voices() -> None:
     print(f"{got}/{len(urls)} 枚（視聴者さんのアイコン） -> {out}")
 
 
+def built_video_ids() -> list[str]:
+    """**書き出した HTML が実際に呼んでいる** YouTube のサムネイルの id。
+
+    `shorts.ts` だけを読んでいたころは、ショートの85本しか落ちていなかった。
+    ところがサムネイルを出すのはショートの格子だけではない——配信の一覧
+    （`components/streams/Vid.tsx`）・世界地図の道中（`WorldRoute.tsx`）・
+    `components/ui/Bits.tsx` も `i.ytimg.com/vi/<id>/mqdefault.jpg` を呼ぶ。
+    その id は `chapterStreams.ts` のような**配列で持つ表**に入っていて、
+    `videoId:` という字では出てこない（1本 = [日付, videoId, 題名, 人数]）。
+    名簿の形を1つずつ覚えるのは `docs/island-standards.md` §8 の
+    「名簿を手で作らない」に反するので、**書き出したものを読む。**
+
+    実測（2026-10-07）: `shorts.ts` 85本に対して、書き出しに出てくる id は
+    **785本**。足りない 700本は全部おなじ写真に落ちていたので、
+    `/map/georgia` の配信58本は**58枚とも同じ絵**で写っていた。
+
+    置き場が無ければ空を返す（ビルドしていない手元でも動くように）。
+    """
+    import glob
+
+    ids: list[str] = []
+    roots = sorted(glob.glob(repo_path("site/.next-*"))) + [repo_path("site/out")]
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for dirpath, _dirnames, files in os.walk(root):
+            if "/_next/" in dirpath + "/" or "/cache/" in dirpath + "/":
+                continue
+            for f in files:
+                if not f.endswith(".html"):
+                    continue
+                try:
+                    body = open(os.path.join(dirpath, f), encoding="utf-8", errors="ignore").read()
+                except OSError:
+                    continue
+                ids += re.findall(r"i\.ytimg\.com/vi/([A-Za-z0-9_-]{6,})/", body)
+    return list(dict.fromkeys(ids))
+
+
 def thumbs() -> None:
-    """ショート動画のサムネイル。
+    """配信とショートのサムネイル。
 
     **1枚に潰さない。** 58本が全部おなじ絵で写ると、格子を並べても
     「絵が縦に切れているか」「題名が2行で止まっているか」しか見えない。
+
+    落とすのは `mqdefault`（画面が呼ぶのはこちら）。`route.mjs` は
+    `/vi/<id>/<なんでも>` を `<id>.jpg` 1枚で返すので、どちらの綴りで
+    呼ばれても同じ1枚が当たる。
     """
     out = f"{OUT}/yt-thumb"
     os.makedirs(out, exist_ok=True)
     ids = re.findall(r'id:\s*"([\w-]{6,})"', open(SHORTS, encoding="utf-8").read())
-    got = sum(get(f"https://i.ytimg.com/vi/{i}/hqdefault.jpg", f"{out}/{i}.jpg") for i in ids)
-    print(f"{got}/{len(ids)} 枚（ショートのサムネイル） -> {out}")
+    built = built_video_ids()
+    # 書き出しが無い手元でも、せめてショートは落ちる
+    ids = list(dict.fromkeys(ids + built))
+    got = sum(get(f"https://i.ytimg.com/vi/{i}/mqdefault.jpg", f"{out}/{i}.jpg") for i in ids)
+    print(f"{got}/{len(ids)} 枚（配信とショートのサムネイル。書き出しから {len(built)}本） -> {out}")
 
 
 # 図鑑で出す大きさ。**`site/components/live/FriendsWall.tsx` の `drive()` と

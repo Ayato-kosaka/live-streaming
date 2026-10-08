@@ -583,7 +583,7 @@ function say(report) {
     );
     for (const x of want) {
       const g = got.find((q) => q.c === x.c && q.t === x.t);
-      console.log(`    ${x.c}「${x.t || "(字なし)"}」 → ${g ? (g.hit ? `当たり ${fmtHit(g)}${g.hit[0] < MIN || g.hit[1] < MIN ? "  ← 割れ" : ""}` : `測れず（${g.why}）`) : "**まだ測れていない**"}`);
+      console.log(`    ${x.c}「${x.t || "(字なし)"}」 → ${g ? (g.hit ? `当たり ${fmtHit(g)}${g.small ? "  ← 割れ" : ""}` : `測れず（${g.why}）`) : "**まだ測れていない**"}`);
     }
   }
 

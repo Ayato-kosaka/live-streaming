@@ -4,6 +4,23 @@
  *   PORT=4150 PAGES=/design,/nordic/guide node tools/sprites/shotstable.mjs
  *   PORT=4150 DPR=3 PAGES=/nordic/guide node tools/sprites/shotstable.mjs
  *
+ * ## 撮りかたは、関門をかける相手と同じにする（2026-10-07）
+ *
+ * ここは長いこと `fullPage: true` で**面を丸ごと1枚**に撮っていた。
+ * ところが関門をかける相手（`inkpx.mjs` / `inkband.mjs`）は、
+ * **そんな撮りかたを一度もしない。** あちらは窓（既定 844px）を送りながら撮る。
+ *
+ * 丸ごと撮ると、背の高い面で2枚のあいだに絵が崩れる。
+ * 実測（`/island/caucasus/streams`・780x73,202＝5,709万画素）:
+ *
+ *   丸ごと1枚   ちがう画素 47,552,590 / 57,097,560（**83%**）
+ *   窓ぶんずつ  ちがう画素 0
+ *
+ * **面の側に直すものは無かった。** 測りかたが相手と違っていただけで、
+ * この面は毎回「2枚が揃わない」で落ちて、**濃さの数字を1つも出さずに
+ * 全体が 1 で落ちていた**（`docs/island-standards.md` §13。
+ * 毎回出る嘘は本物の赤を埋める——`island-misses.md` #200）。
+ *
  * 終了コード: 0＝2枚が揃った / 1＝揃わない面がある / 2＝数えるものが無い
  * （対照が落ちた・開けなかった面がある）。
  *
@@ -88,33 +105,64 @@ function diffPx(a, c) {
 }
 
 /**
- * 面を1枚開いて、何も変えずに2回撮る。`between` を渡すと、あいだでそれを走らせる。
+ * 面を1枚開いて、**窓ぶんずつ**何も変えずに2回撮って比べる。
+ * `between` を渡すと、2枚のあいだでそれを走らせる（対照用）。
  *
  * **面ごとに新しいタブで開いて、撮り終えたら閉じる。** 5万画素を超える絵を
  * 同じタブで何枚も撮ると、描画のプロセスが落ちて
  * `Target page, context or browser has been closed` で**道具ごと死ぬ**
  * （26面の回で実際に落ちた）。落ちたときに何も言わずに終わるのがいちばん悪いので、
  * ここで受けて「撮れなかった面」として数に残す。
+ *
+ * 送り先の限りは**毎回測り直す。** 送るうちに面は伸びる
+ * （`content-visibility: auto` の段が見積りの高さから本当の高さに変わる）。
+ * `inkband.mjs` が同じ穴で 158か所を見ていなかった。
  */
-async function twice(base, path, miss, between = null) {
-  const p = await ctx.newPage();
+async function windowed(base, path, miss, between = null) {
+  /* **タブを開くところも try の中。** ブラウザごと落ちたとき、ここが外に
+     あると `browserContext.newPage: Target page, context or browser has been
+     closed` が**捕まらない例外**になって、道具が数を1つも出さずに死ぬ
+     （2026-10-07 の 134面の回で実際にそうなった。面ぜんぶを1枚に撮る
+     5,709万画素で描画プロセスが落ちていた）。
+     落ちたことは「撮れなかった面」として数に残す——**黙って終わらない。** */
+  let p;
   try {
+    p = await ctx.newPage();
     const got = await openChecked(p, base, path, { miss, waitUntil: "networkidle", timeout: 60000 });
     if (!got.ok) return null;
     await p.waitForTimeout(1200);
     await p.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
     await p.waitForTimeout(1300);
-    await p.evaluate(() => window.scrollTo(0, 0));
-    await p.waitForTimeout(400);
-    const a = await p.screenshot({ fullPage: true });
-    if (between) { await p.evaluate(between); await p.waitForTimeout(200); }
-    const c = await p.screenshot({ fullPage: true });
-    return diffPx(a, c);
+    let n = 0, all = 0, settle = 0, wins = 0, tall = 0;
+    for (let y = 0; ; y += H) {
+      const docH = await p.evaluate(() => document.documentElement.scrollHeight);
+      tall = Math.max(tall, docH);
+      if (y > 0 && y >= docH) break;
+      await p.evaluate((yy) => window.scrollTo(0, yy), y);
+      await p.waitForTimeout(350);
+      /* **1枚目の落ち着きも数える。** 丸ごと1枚で撮っていたころ、
+         `/kitchen/karaage` は1枚目と2枚目が 73画素ちがって、2枚目と3枚目は
+         0画素だった（「最初の1枚が落ち着く前の絵」）。窓ぶんの撮りでは
+         実測 0 だが、**0 であることを印字するために測る。** */
+      /* 落ち着きを見るのは**面の1窓目だけ。** 「1枚目が落ち着く前」は
+         面を開いた直後の1回きりの話で、窓ごとに起きるものではない。
+         窓ごとに1枚ずつ余分に撮ると、44窓ある面で撮る枚数が1.5倍になる。 */
+      const warm = wins === 0 ? await p.screenshot() : null;
+      const a = await p.screenshot();
+      const sd = warm ? diffPx(warm, a) : { n: 0, err: null };
+      if (between) { await p.evaluate(between); await p.waitForTimeout(200); }
+      const c = await p.screenshot();
+      const d = diffPx(a, c);
+      if (d.err) { miss.push(`${path} の窓${wins}（${d.err}）`); return null; }
+      n += d.n; all += d.all; settle += sd.err ? 0 : sd.n; wins++;
+      if (docH <= H) break;
+    }
+    return { n, all, w: W * DPR, h: tall * DPR, wins, settle };
   } catch (e) {
     miss.push(`${path}（撮れなかった: ${String(e).split("\n")[0].slice(0, 80)}）`);
     return null;
   } finally {
-    await p.close().catch(() => {});
+    await p?.close().catch(() => {});
   }
 }
 
@@ -124,8 +172,8 @@ const bail = async (msg) => { console.log(msg); await b.close(); process.exit(2)
 {
   const fx = await serveFixtures("inkpxfix");
   const miss0 = [];
-  const same = await twice(fx.base, "/fix.html", miss0);
-  const moved = await twice(fx.base, "/fix.html", miss0, () => {
+  const same = await windowed(fx.base, "/fix.html", miss0);
+  const moved = await windowed(fx.base, "/fix.html", miss0, () => {
     // 地の色を変える。**字ではなく地**を動かすのは、字が消えたのを
     // 「揃っている」と読む作りになっていないかを見るため
     document.body.style.setProperty("background", "#4b2e05", "important");
@@ -147,27 +195,29 @@ const miss = [];
 let seen = 0, shaky = 0;
 const rows = [];
 for (const path of PAGES) {
-  const r = await twice(`http://localhost:${PORT}`, path, miss);
+  const r = await windowed(`http://localhost:${PORT}`, path, miss);
   if (!r) { console.log(`${path}  開けず`); continue; }
   if (r.err) { miss.push(`${path}（${r.err}）`); continue; }
   seen++;
   const bad = r.n / r.all > TOL;
   if (bad) shaky++;
   rows.push({ path, ...r, bad });
-  console.log(`${path}  ${r.w}x${r.h}  ちがう画素 ${r.n} / ${r.all}${bad ? "  ← 2枚が揃わない" : ""}`);
+  console.log(`${path}  ${r.w}x${r.h}  窓 ${r.wins}  ちがう画素 ${r.n} / ${r.all}（1枚目の落ち着き ${r.settle}）${bad ? "  ← 2枚が揃わない" : ""}`);
 }
 await b.close();
 
 console.log(`\n── 数えたもの（幅 ${W}px / dpr ${DPR} / 見のがす割合 ${TOL}）`);
 console.log(`  見た面           ${seen} / ${PAGES.length}`);
 console.log(`  2枚が揃わない面   ${shaky} 面`);
-console.log(`  いちばん高い絵    ${rows.length ? Math.max(...rows.map((r) => r.h)) : 0} 画素`);
+console.log(`  いちばん背の高い面 ${rows.length ? Math.max(...rows.map((r) => r.h)) : 0} 画素（窓 ${H * DPR}px ずつ撮る）`);
+console.log(`  撮った窓          ${rows.reduce((a, r) => a + r.wins, 0)} 枚`);
+console.log(`  1枚目の落ち着き    いちばん大きい面で ${rows.length ? Math.max(...rows.map((r) => r.settle)) : 0} 画素（0 でなければ、1枚目は落ち着いていない）`);
 console.log(`  見ていないもの: 押すと変わる面の、押したあとの姿（ここは開いた畳みまで）`);
 
 if (miss.length) { reportMissing(miss); process.exit(2); }
 if (!seen) { console.log("\n面を1枚も撮れませんでした。数えるものがありません。"); process.exit(2); }
 if (shaky) {
-  console.log(`\nだめ: 2枚が揃わない面が ${shaky} 面。**この面で字の濃さを測っても当てにならない**（dpr を下げるか、面を短くする）。`);
+  console.log(`\nだめ: 2枚が揃わない面が ${shaky} 面。**この面で字の濃さを測っても当てにならない**（dpr を下げる）。`);
   process.exit(1);
 }
 console.log(`\n${seen}面、2枚は揃いました。`);

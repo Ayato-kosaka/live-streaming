@@ -537,6 +537,10 @@
   text-underline-offset: 3px;
   text-decoration-color: var(--accent-deep);
   padding-block: 16px;
+  /* `chain.css` の `.chain-foot a` と同じ理由。インラインの padding で
+     稼いだ当たりは、位置を持たないまま上の塊に取られる。
+     ここは実測では取られていないが、**同じ形を3つとも揃えておく。** */
+  position: relative;
 }
 .phead-mark {
   grid-column: 1;

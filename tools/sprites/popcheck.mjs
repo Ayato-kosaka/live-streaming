@@ -1,5 +1,8 @@
 /**
- * 「押せないのに厚みがある」ものを、21面ぶん数える。
+ * 「押せないのに厚みがある」ものを、**島の面ぜんぶ**で数える。
+ * 面の一覧は `islepages.mjs` が書き出したものを歩いて出す（2026-10-07 の実測で 138面）。
+ * **ここに写しを置かない。** 手で並べていたあいだは 26面で、残りは
+ * 「数えないまま 0件」だった。
  *
  *   PORT=3130 node tools/sprites/popcheck.mjs
  *   BREAK=noclick node tools/sprites/popcheck.mjs   # わざと盲点を作る（対照が落ちる）
@@ -55,6 +58,7 @@ import { offline } from "./route.mjs";
 import { openChecked, reportMissing } from "./served.mjs";
 import { serveFixtures, reportControl } from "./fixserve.mjs";
 import { writeFileSync } from "node:fs";
+import { PAGES as ISLE_PAGES } from "./islepages.mjs";
 
 const PORT = process.env.PORT || "3130";
 /** わざと盲点を作る。何が効いているかを見るためのもの（上の一覧） */
@@ -68,24 +72,11 @@ const skip = {
   details: BREAK === "nodetails",
 };
 
-/* 面が増えたら、ここに足すか PAGES=... で渡す。
-   足さないと、新しい面だけ数えないまま「0件」と出る。
-
-   **`/roulette`（配信の表示側）はここに入れない。** あれは島ではなく、
-   OBS に映すルーレットをそのまま写した面で（`docs/island-world.md` 2章）、
-   「準備中」の札に 13px の厚みがある。島の決まりでは違反だが、
-   厚みを取ると配信の絵が変わる。数えると毎回1件出て、それを直したくなる。 */
-const PAGES = (
-  process.env.PAGES ||
-  [
-    "/", "/about", "/streams", "/streams/cooking", "/kitchen", "/kitchen/egg-sandwich",
-    "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
-    "/board", "/map", "/map/france", "/nordic", "/nordic/guide", "/nordic/finland",
-    "/nordic/photos", "/cards", "/all", "/friends", "/now", "/design",
-    // ログインした人にしか出ない面。`SEED=` を渡したときだけ中身が出る
-    "/me", "/me/roulette",
-  ].join(",")
-).split(",");
+/* 面の一覧は**ここに書かない**。書き出したものを歩いて数える
+   （`islepages.mjs`）。手で並べていたあいだ、ここは26面しか持っていなくて、
+   残りの112面は「数えないまま 0件」として素通りしていた。
+   `/roulette` を外す理由も、あちらの `SKIP` に理由ごと移してある。 */
+const PAGES = (process.env.PAGES || ISLE_PAGES.join(",")).split(",").filter(Boolean);
 
 /**
  * 面ひとつぶんの「厚みのある要素」を集める。**対照にも本物にも同じものを当てる。**
