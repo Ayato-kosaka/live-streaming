@@ -56,11 +56,27 @@ export type Place = { x: number; y: number; rot: number; scale: number };
  * `flip` が立つのは**連れが本人の左に立ったとき**だけ。キャラクターの絵は
  * どれも左を向いているので、左に立つと**本人に背を向ける。** 返せば
  * 向き合う。本人（先頭）には立たない——1体のときの絵を変えないため。
+ *
+ * **字や標識の入った絵は返さない**（`Actor.canFlip` が `false`）。
+ * 返すと字が裏返って読めなくなる。
  */
 export type Placed = { box: Box; rot: number; flip: boolean };
 
 /** 1体ぶんの、絵の中身の大きさと、本人が動かした置き方。 */
-export type Actor = { w: number; h: number; place?: Place | null };
+export type Actor = {
+  w: number;
+  h: number;
+  place?: Place | null;
+  /**
+   * 左右を返してよい絵か。**既定は返してよい**（`undefined` は `true`）。
+   *
+   * 連れが本人の左に立つと、返さないかぎり背を向ける。キャラクターの絵は
+   * どれも左を向いているので、ふだんは返してよい。**返してはいけないのは、
+   * 字や標識の入った絵**——返すと字が裏返って読めなくなる
+   * （あやとステッカーの「STOP」が実際にそうなった。2026-10-08）。
+   */
+  canFlip?: boolean;
+};
 
 const clamp = (n: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, n));
@@ -249,11 +265,14 @@ export function layout(pw: number, ph: number, actors: Actor[]): Placed[] {
   const toRight = freeR >= freeL;
   const avail = (toRight ? freeR : freeL) - gap;
 
+  /** 返してよい絵か。**渡していなければ返してよい**（いままでと同じ） */
+  const canFlip = m.canFlip !== false;
+
   if (avail >= mate.w * MATE_MIN) {
     // 空いているほうへ。**本人の隣に立たせる**（離して置くと、連れに見えない）
     if (mate.w > avail) mate = standAt(scaleFoot(mate, avail / mate.w));
     mate.x = toRight ? right + gap : left - gap - mate.w;
-    return [you, { box: mate, rot: 0, flip: !toRight }];
+    return [you, { box: mate, rot: 0, flip: !toRight && canFlip }];
   }
 
   /* どちらへ寄せても入らない。**2人そろって縮める。**
@@ -268,5 +287,5 @@ export function layout(pw: number, ph: number, actors: Actor[]): Placed[] {
   you.box = { ...you.box, x: you.box.x + dx };
   occ2.x += dx;
   mate.x = stayRight ? occ2.x - gap - mate.w : occ2.x + occ2.w + gap;
-  return [you, { box: mate, rot: 0, flip: stayRight }];
+  return [you, { box: mate, rot: 0, flip: stayRight && canFlip }];
 }

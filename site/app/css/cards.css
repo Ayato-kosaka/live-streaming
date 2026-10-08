@@ -933,3 +933,42 @@
   }
   .akg-note + .akg-note { margin-top: 0; }
 }
+
+/* --- どのあやとを入れるか（`CardSheet` の「あやとも入れますか」） --------
+   **1枚に決め打ちだったものを、`content/goods.ts` の `STICKERS` から
+   並べるようにした**（2026-10-08。あやと「あやと島カードに一緒に貼る
+   あやとで選べるようにしてね」）。
+
+   顔の札（`.npick`）ではなく、もとからある `.akd-mate` の丸い札をそのまま
+   並べる。顔の札は1マス 60×88px の升目なので、**2つ目の升目を置くと
+   紙の背が 88px 伸びて、下の「大きさ」と「もとのばしょ」が窓から落ちる。**
+   丸い札なら 48px の1段で済み、増えたら折り返すだけ。
+
+   `.akd-mate` そのもの（厚み・押しどころ 48px・選んだときの朱）は上の
+   決めを使い回しているので、ここでは**並べ方だけ**を足す。 */
+.akd-mates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+/* 「入れない」の丸。絵の代わりに置くので、**絵と同じ 30px**。
+   空けておく、を破線1つで言う（`.npick-none` と同じ言い方）。 */
+.akd-mate-none {
+  display: block;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1.5px dashed color-mix(in srgb, var(--rule) 80%, transparent);
+  border-radius: var(--r-0);
+}
+/* 選んでいる札は**朱**で言う（`docs/island-world.md` 3.2 の色の表）。
+   `--accent-2`（水色）は「外へ出る」の色で、選んでいることの色ではない。
+
+   1枚の入り切りだったころは気づかなかったが、**同じ紙の上の顔の札
+   （`.npick.is-on`）が朱なので、並べた瞬間に「選んでいる」が2色になる。**
+   押し込んだ見た目（`translateY` と影を落とす）は上の決めのまま。 */
+.akd-mate.is-on {
+  border-color: var(--pg-pick);
+  background: color-mix(in srgb, var(--pick) 8%, var(--paper));
+}
