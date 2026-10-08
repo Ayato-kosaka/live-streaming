@@ -63,6 +63,8 @@
  *   noh1 / nojs / noover / nolink   その1つを見ない
  *   nopublic `public/` の行き先を足さない（**直す前の姿。**
  *            `/nordic/review` が毎回リンク切れとして挙がる）
+ *   nofiles  落とせるファイルを行き先に足さない（**直す前の姿。**
+ *            `/goods` の「おとす」が毎回リンク切れとして挙がる）
  *
  * ## リンクの行き先は、2つの山の合わせ
  *
@@ -91,7 +93,7 @@ import { fromRoot, repoPath } from "./repo.mjs";
 /* 行き先が在るかの判定は1か所から。**本番は `public/*` に `site/out/.` を
    重ねたものを配る**ので、書き出したものだけ見ると `public/` の面が
    ぜんぶリンク切れに見える（`crawltargets.mjs` の頭） */
-import { brokenLinks, publicTargets, targetSet } from "./crawltargets.mjs";
+import { brokenLinks, fileTargets, publicTargets, targetSet } from "./crawltargets.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** 書き出したものを配る静的サーバのポート。並列作業では別々にする。 */
@@ -126,6 +128,10 @@ const skip = {
   /* `nopublic` … `public/` の行き先を足さない（**直す前の姿。**
      `/nordic/review` が毎回リンク切れとして挙がる。対照の1枚が落ちる） */
   pub: BREAK === "nopublic",
+  /* `nofiles` … 落とせるファイルを行き先に足さない（**直す前の姿。**
+     `/goods` の「おとす」（`/goods/ayato-sticker.jpg`）が毎回リンク切れと
+     して挙がる。対照の1枚が落ちる） */
+  files: BREAK === "nofiles",
 };
 
 function walk(d, base = "") {
@@ -391,6 +397,11 @@ const FIXTURES = [
   ["/publiclink.html", []],
   // 同じ段に在りそうで無い先。**「その段は見ない」で黙らせていたら落ちる**
   ["/deadpublic.html", ["リンク切れ"]],
+  /* 落とせるファイルへの行き先。**挙げてはいけない**（押せば 200 で落ちる）。
+     `nofiles` で足すのをやめると、ここが落ちる＝直す前の姿 */
+  ["/filelink.html", []],
+  // 落とせそうで無いファイル。**「拡張子が付いていたら見ない」で黙らせていたら落ちる**
+  ["/deadfile.html", ["リンク切れ"]],
   ["/stub.html", []],
 ];
 
@@ -428,7 +439,7 @@ async function makeCtx() {
 }
 
 /** 面をひと組み歩いて、面ごとの「見つかったもの」を返す。対照にも本番にも同じものを当てる */
-async function sweep(base, pages, { quiet = false, known = null, pubDir = null } = {}) {
+async function sweep(base, pages, { quiet = false, known = null, pubDir = null, fileDir = null } = {}) {
   const ctx = await makeCtx();
   const p = await ctx.newPage();
   const seen = [];
@@ -474,7 +485,12 @@ async function sweep(base, pages, { quiet = false, known = null, pubDir = null }
      **名指しで黙らせていない**ので、`public/` のファイルが消えたら
      足されず、そのまま赤くなる（`crawltargets.mjs`） */
   const fromPublic = skip.pub || !pubDir ? [] : publicTargets(pubDir);
-  const all = targetSet(known || pages, fromPublic);
+  /* **行き先は面だけではない。** 落とせるファイル（`/goods` の「おとす」が
+     渡す `/goods/ayato-sticker.jpg`）は `.html` ではないので、面の一覧には
+     載らない。押せば 200 で落ちてくるのに、毎回「島の中に無い先」として
+     挙がっていた（2026-10-08）。ここも**名指しで黙らせず、在るかを見る** */
+  const fromFiles = skip.files || !fileDir ? [] : fileTargets(fileDir);
+  const all = targetSet(known || pages, [...fromPublic, ...fromFiles]);
   const broken = [];
   if (!skip.link) {
     for (const s of seen)
@@ -523,7 +539,10 @@ function fail(msg) {
     FIXTURES.map(([f]) => f),
     // `public/` の代役は**対照の台のほう**（`crawlcheck/pub/`）。本物を渡すと、
     // 本物のファイルが消えたときに落ちるのが「リンク切れ」ではなく「対照が壊れた」になる
-    { quiet: true, pubDir: join(dir, "pub") },
+    /* 落とせるファイルの代役も**対照の台のほう**（`crawlcheck/` の中の
+       `pix.png` ほか）。本物の書き出しを渡すと、本物が変わったときに
+       落ちるのが「リンク切れ」ではなく「対照が壊れた」になる */
+    { quiet: true, pubDir: join(dir, "pub"), fileDir: dir },
   );
   console.log("── 対照（わざと壊した面を、拾えるか／拾わずにいられるか）");
   let miss = 0;
@@ -560,7 +579,7 @@ if (!pages.length) await fail(`\n${DIST} に面が無い。先に書き出して
    Next の書き出しには無い。渡さないと毎回1件、嘘の NG が出る */
 const PUBDIR = fromRoot(process.env.PUBDIR || "public");
 const { per, tally, unseen, broken, seenPages, fromPublic } =
-  await sweep(BASE, pages, { known: everyPage, pubDir: PUBDIR });
+  await sweep(BASE, pages, { known: everyPage, pubDir: PUBDIR, fileDir: DIST });
 await b.close();
 
 const bad = [...per.values()].filter((e) => e.f.length).length;
