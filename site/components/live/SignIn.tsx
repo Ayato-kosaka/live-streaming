@@ -59,6 +59,9 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
       <ul>
         <li>出した企画が、自分のものになる</li>
         <li>名前を毎回書かなくていい</li>
+        {/* 2026-10-08 から。**ログインでできることが1つ増えた**ので、
+            ここに足す（入る理由は、この一覧にしか書いていない） */}
+        <li>付箋に絵を貼れる</li>
       </ul>
       <p className="signin-warn">
         Google の画面に移ります。<b>「このアプリは確認されていません」</b>と出たら、

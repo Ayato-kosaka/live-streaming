@@ -147,7 +147,7 @@ export default function Board() {
           {user ? (
             <SignIn />
           ) : (
-            <Fold title="名前とアイコンも島に出したい" lead="YouTubeのアカウントでログインすると出せます">
+            <Fold title="名前とアイコンも島に出したい" lead="絵を貼るのも、ログインしてから">
               <SignIn />
             </Fold>
           )}

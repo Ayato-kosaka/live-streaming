@@ -1233,6 +1233,8 @@ type StickyShape = {
   by?: string;
   /** 貼られたリンク1本。貼っていなければ無い（`safeLink` を通ったものだけ） */
   link?: string;
+  /** 貼られた絵1枚。貼っていなければ無い（**ログインした人だけが貼れる**） */
+  pic?: PicShape;
   hearts: number;
   /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
   byOwner: boolean;
@@ -1265,6 +1267,9 @@ function stickyShape(d: FirebaseFirestore.QueryDocumentSnapshot): StickyShape {
     /* リンクは**読むときにも通す。** 入れ物に入ったあとで安全の決まりを
        きつくした日に、古い書類だけが素通りするのを止める（返事と同じ理由） */
     link: safeLink(v.link) || undefined,
+    /* 絵も**読むときに形をそろえる**（リンクと返事と同じ理由）。
+       2枚のうち片方しか無い書類は、無かったことにして返す（`picShape`）。 */
+    pic: picShape(v.pic),
     hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
     byOwner: v.byOwner === true,
     reply: reply || undefined,
@@ -1951,6 +1956,213 @@ async function alertboxExists(id: string): Promise<boolean> {
 const photoUrl = (path: string, token: string): string =>
   "https://firebasestorage.googleapis.com/v0/b/" +
   `${BUCKET}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+
+/* ---- 付箋に貼る絵（2026-10-08） ----
+
+   あやとの言葉:
+
+   > 付箋に画像も貼れるようにしてほしくて。（略）
+   > でなんか見るときは邪魔にならないようにしてほしいんですけど。
+
+   **字の付箋はログイン不要のまま。絵だけ、ログインが要る側にする。**
+   字は1日20枚の枠があって、荒れたら「しまう」で下ろせる。絵は
+   **あやとのチャンネルに紐づく公開の面に即出る**ので、
+   誰が貼ったか辿れない状態では受けない。
+
+   **ブラウザから置き場（Storage）へは触らせない。** `storage.rules` は
+   `allow read, write: if false` のままで、置くのはここ（Admin SDK）だけ
+   （写真と同じ形。`BUCKET` の説明）。
+
+   **小さいほうを一緒に受ける。** 板は付箋が並ぶ面なので、開いていない
+   あいだも大きい絵を1枚ずつ落とすと、**貼られるほど重くなる面**になる
+   （`docs/island-standards.md` 7章）。ブラウザが2枚焼いて送り、
+   こちらは2枚とも中身を見てから置く。小さいほうが来なければ断る——
+   片方で済ませる道を開けると、そこが必ず使われる。 */
+
+/** 大きいほうの上限。写真（`MAX_PHOTO_BYTES`）と同じ4MB。 */
+const MAX_PIC_BYTES = MAX_PHOTO_BYTES;
+/**
+ * 小さいほうの上限。
+ *
+ * ブラウザは長辺480で焼いて送る（`site/components/live/notePic.ts`）。
+ * webp でも jpeg でも 100KB に収まるので、**6倍の余裕**で切る。
+ * ここを大きいほうと同じ4MBにすると、同じ絵を2回送るだけで
+ * 「小さいほうも受けた」ことになって、板が重くなる道が開く。
+ */
+const MAX_PIC_THUMB_BYTES = 600 * 1024;
+/**
+ * これより小さいものは絵として扱わない。
+ *
+ * 頭の数バイトだけ本物の魔法の字を並べた字（`\xff\xd8\xff` だけの3バイト）は、
+ * 形の判定を通る。**写真の口（1024）より緩いのは、小さいほうが
+ * 480px の単色だと 1KB を切ることがある**ため。
+ */
+const MIN_PIC_BYTES = 512;
+/**
+ * 1日に貼れる絵。**字（20枚）より少なくする。**
+ *
+ * 字は入れ物の中だけで済むが、絵は置き場に残って、消すのは人の手。
+ * 6枚なら「言いたいことを1つ、絵つきで」には足りて、置き場は荒れない。
+ */
+const PICS_PER_DAY = 6;
+/**
+ * base64 として受けてよい字。**ここに無い字が混ざっていたら断る。**
+ *
+ * `Buffer.from(s, "base64")` は知らない字を**黙って捨てる**ので、
+ * でたらめな字でも何かのバイト列になる。そのまま形を見ると
+ * 「絵ではない」で落ちるが、落ちる理由が1段遠くなる。
+ */
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+
+/** 受ける絵の種類。**この3つだけ。** */
+type PicKind = "jpeg" | "png" | "webp";
+
+/**
+ * 中身の頭を見て、何の絵かを決める。
+ *
+ * **名乗り（拡張子・`Content-Type`・data URL の頭）を信じない。**
+ * 置き場に置いたものは誰でも読める URL になるので、名乗りで通すと
+ * 置き場に何でも置けることになる（写真の口と同じ理由。`saveEventImage`）。
+ *
+ * png を受けるのは、iOS の Safari が `canvas.toDataURL("image/webp")` を
+ * 黙って png に落とすことがあるため（写真の口で、あやとの iPhone から
+ * 1枚も貼れなかった）。
+ * @param {Buffer} b 中身
+ * @return {PicKind | null} 絵の種類。絵でなければ null
+ */
+function picKind(b: Buffer): PicKind | null {
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    return "jpeg";
+  }
+  const png = "89504e470d0a1a0a";
+  if (b.length >= 8 && b.subarray(0, 8).toString("hex") === png) {
+    return "png";
+  }
+  if (
+    b.length >= 12 &&
+    b.subarray(0, 4).toString("ascii") === "RIFF" &&
+    b.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return "webp";
+  }
+  return null;
+}
+
+/** 送られてきた1枚を見た結果。 */
+type PicBytes =
+  | {ok: true; kind: PicKind; buf: Buffer}
+  | {ok: false; error: string};
+
+/**
+ * 送られてきた1枚を、**置く前に**ぜんぶ見る。
+ *
+ * 見るのは4つ——1枚か / base64 か / 大きさ / 中身が絵か。
+ * **どれかに外れたら、置き場には1バイトも書かない**（呼ぶ側が
+ * ここを通ってから `savePic` を呼ぶ）。
+ * @param {unknown} v 送られてきた字（data URL でも中身だけでも受ける）
+ * @param {number} max 上限のバイト数
+ * @return {PicBytes} 通ったら種類と中身、駄目なら理由
+ */
+function picBytes(v: unknown, max: number): PicBytes {
+  /* **1枚まで。** 配列で来たら、ここで落ちる（`typeof` が "object"）。
+     何枚も貼れる欄にすると、本文120字の付箋が絵の棚になる。 */
+  if (typeof v !== "string") return {ok: false, error: "one picture only"};
+  const b64 = v.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
+  if (!b64 || !BASE64.test(b64)) return {ok: false, error: "bad image"};
+  const buf = Buffer.from(b64, "base64");
+  if (buf.length < MIN_PIC_BYTES || buf.length > max) {
+    return {ok: false, error: "bad size"};
+  }
+  const kind = picKind(buf);
+  if (!kind) return {ok: false, error: "not an image"};
+  return {ok: true, kind, buf};
+}
+
+/** 付箋に貼られた絵1枚。**画面に返す形**（置き場の在りかは返さない）。 */
+type PicShape = {
+  /** 開いたときの1枚 */
+  url: string;
+  w: number;
+  h: number;
+  /** 閉じているあいだの1枚。**板に並ぶのはこちら** */
+  thumb: string;
+  tw: number;
+  th: number;
+};
+
+/** 入れ物に入る形。画面に返す形＋消すときに要る置き場の在りか。 */
+type PicDoc = PicShape & {path: string; thumbPath: string; at: number};
+
+/**
+ * 絵を2枚、置き場に焼く。**`picBytes` を通ったものだけ渡す。**
+ * @param {string} noteId 付箋の書類ID。置き場の名前になる
+ * @param {object} big 開いたときの1枚（`picBytes` を通ったもの）
+ * @param {object} small 板に並ぶ1枚（`picBytes` を通ったもの）
+ * @param {Json} b 送られてきた中身（寸法を読む）
+ * @return {Promise<PicDoc>} 入れ物に入れる形
+ */
+async function savePic(
+  noteId: string,
+  big: PicBytes & {ok: true},
+  small: PicBytes & {ok: true},
+  b: Json,
+): Promise<PicDoc> {
+  const day = jstDay(Date.now());
+  const bucket = admin.storage().bucket(BUCKET);
+  const put = async (
+    one: PicBytes & {ok: true},
+    name: string,
+  ): Promise<{path: string; url: string}> => {
+    const path = `notes/${day}/${name}.${one.kind}`;
+    const token = randomUUID();
+    await bucket.file(path).save(one.buf, {
+      contentType: `image/${one.kind}`,
+      metadata: {
+        // 置き場の名前に id が入っていて中身は変わらないので、長く持たせてよい
+        cacheControl: "public, max-age=31536000, immutable",
+        metadata: {firebaseStorageDownloadTokens: token},
+      },
+    });
+    return {path, url: photoUrl(path, token)};
+  };
+  /* **2枚とも置けてから、呼ぶ側が付箋を書く。** 途中で落ちた回は
+     付箋そのものが書かれないので、**半分だけの絵が画面に出ることはない**
+     （置き場に迷子の1枚が残るだけ。誰からも読めない）。 */
+  const a = await put(big, noteId);
+  const t = await put(small, `${noteId}-s`);
+  const size = (v: unknown): number =>
+    Math.max(0, Math.min(20000, Number(v) || 0));
+  return {
+    url: a.url,
+    path: a.path,
+    w: size(b.w),
+    h: size(b.h),
+    thumb: t.url,
+    thumbPath: t.path,
+    tw: size(b.tw),
+    th: size(b.th),
+    at: Date.now(),
+  };
+}
+
+/**
+ * 入れ物に入っている絵を、画面に返す形に直す。
+ *
+ * **2枚とも URL が在るときだけ返す。** 片方だけのものを返すと、画面が
+ * 無いほうを `<img src="undefined">` で引きに行く。
+ * @param {unknown} v 書類の `pic`
+ * @return {PicShape | undefined} 絵。無ければ undefined
+ */
+function picShape(v: unknown): PicShape | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const p = v as Json;
+  const url = clean(p.url, 600);
+  const thumb = clean(p.thumb, 600);
+  if (!url || !thumb) return undefined;
+  const n = (x: unknown): number =>
+    Math.max(0, Math.min(20000, Number(x) || 0));
+  return {url, w: n(p.w), h: n(p.h), thumb, tw: n(p.tw), th: n(p.th)};
+}
 
 /* ---- 企画に付く画像(#202) ----
    旧 `nordicPhotos`。**書く口は当面2つ動かす。**
@@ -3449,6 +3661,34 @@ export const islandApi = onRequest(
           res.status(403).json({error: "not allowed"});
           return;
         }
+        /* 絵は1枚だけ、**ログインした人だけ**（2026-10-08）。
+           字は今までどおり誰でも貼れる。
+           **置き場に触る前に、断るものを全部断る**（`picBytes`）。
+           枠（下の `takeQuota`）より前に見るのは、形が違う1枚で
+           その日の枠が減らないようにするため（写真の口と同じ決まり）。 */
+        const sentPic =
+          body.image !== undefined && body.image !== null && body.image !== "";
+        let big: PicBytes | null = null;
+        let small: PicBytes | null = null;
+        if (sentPic) {
+          if (!who) {
+            /* **401。** 合言葉が無い（`GET /stickies?mine=1` と同じ言い方）。
+               画面は書く欄の中で先に言っているが（`Notes.tsx`）、
+               画面を通らない相手にはここが壁。 */
+            res.status(401).json({error: "no token"});
+            return;
+          }
+          big = picBytes(body.image, MAX_PIC_BYTES);
+          if (!big.ok) {
+            res.status(400).json({error: big.error});
+            return;
+          }
+          small = picBytes(body.thumb, MAX_PIC_THUMB_BYTES);
+          if (!small.ok) {
+            res.status(400).json({error: `thumb ${small.error}`});
+            return;
+          }
+        }
         if (
           !byOwner &&
           !(await takeQuota(who?.uid ?? cid, "sticky", STICKIES_PER_DAY))
@@ -3456,14 +3696,32 @@ export const islandApi = onRequest(
           res.status(429).json({error: "too many today"});
           return;
         }
+        /* 絵の枠は、字の枠とは別に数える。**字を20枚貼れることと、
+           置き場に絵を20枚置けることは、別の話。** */
+        if (
+          sentPic &&
+          who &&
+          !byOwner &&
+          !(await takeQuota(who.uid, "stickypic", PICS_PER_DAY))
+        ) {
+          res.status(429).json({error: "too many pictures today"});
+          return;
+        }
         const now = Date.now();
-        const ref = await NOTES.add({
+        /* **書類IDを先に取る。** 絵の置き場の名前に入れるので、
+           `add()`（書いてから id が決まる）では間に合わない。 */
+        const ref = NOTES.doc();
+        const pic =
+          big?.ok && small?.ok ? await savePic(ref.id, big, small, body) : null;
+        await ref.set({
           theme,
           text,
           /* 貼られたリンク1本。**無いときは null。** `undefined` を渡すと
              Firestore がその場で落ちる（`ignoreUndefinedProperties` は
              入れていない） */
           link: link || null,
+          /* 貼られた絵1枚。**無いときは null**（リンクと同じ理由）。 */
+          pic,
           /* 名乗った名前。ログインしている人は、島に出す名前をそのまま使う。
              **本文に「by まこも」と書かせない**ための欄なので、
              ログインしていない人にも空けてある。 */
@@ -3485,11 +3743,53 @@ export const islandApi = onRequest(
             text,
             by: who?.name || clean(body.by, MAX_NAME_LEN) || undefined,
             link: link || undefined,
+            /* 貼ったその場で画面に出す1枚。**置いたものをそのまま返す**
+               （入れ物を読み直さない。読み直すと、貼った人だけが待つ）。 */
+            pic: pic ? picShape(pic) : undefined,
             hearts: 0,
             byOwner,
             createdAt: new Date(now).toISOString(),
           },
         });
+        return;
+      }
+
+      /* 絵だけを外す。**あやとだけ。1タップ。**
+         付箋そのものは残す（字は本人が書いたもの）。荒れた絵が公開の面に
+         出たときに、**いちばん短い手で下ろせる道**がここ。
+         付箋ごと下ろすなら `archive`（あちらは消さずにしまう）。
+
+         置き場の実体も消す。Firestore だけ消して実体を残すと、
+         **もう誰からも見えないのに、URL を知っている人には見え続ける**
+         （写真の `dropEventImage` と同じ決まり）。 */
+      const picMatch = path.match(/^\/stickies\/([A-Za-z0-9_-]{6,})\/pic$/);
+      if (method === "DELETE" && picMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const ref = NOTES.doc(picMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        const had = (cur.get("pic") ?? {}) as Json;
+        const bucket = admin.storage().bucket(BUCKET);
+        for (const p of [clean(had.path, 300), clean(had.thumbPath, 300)]) {
+          if (p) await bucket.file(p).delete({ignoreNotFound: true});
+        }
+        await ref.set(
+          {
+            pic: admin.firestore.FieldValue.delete(),
+            picDroppedAt: Date.now(),
+            picDroppedBy: uid,
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, pic: null});
         return;
       }
 
