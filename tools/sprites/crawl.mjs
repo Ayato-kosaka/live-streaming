@@ -129,7 +129,7 @@ const skip = {
      `/nordic/review` が毎回リンク切れとして挙がる。対照の1枚が落ちる） */
   pub: BREAK === "nopublic",
   /* `nofiles` … 落とせるファイルを行き先に足さない（**直す前の姿。**
-     `/goods` の「おとす」（`/characters/ayato.webp`）が毎回リンク切れと
+     `/goods` の「おとす」（`/goods/ayato-sticker.jpg`）が毎回リンク切れと
      して挙がる。対照の1枚が落ちる） */
   files: BREAK === "nofiles",
 };
@@ -486,7 +486,7 @@ async function sweep(base, pages, { quiet = false, known = null, pubDir = null, 
      足されず、そのまま赤くなる（`crawltargets.mjs`） */
   const fromPublic = skip.pub || !pubDir ? [] : publicTargets(pubDir);
   /* **行き先は面だけではない。** 落とせるファイル（`/goods` の「おとす」が
-     渡す `/characters/ayato.webp`）は `.html` ではないので、面の一覧には
+     渡す `/goods/ayato-sticker.jpg`）は `.html` ではないので、面の一覧には
      載らない。押せば 200 で落ちてくるのに、毎回「島の中に無い先」として
      挙がっていた（2026-10-08）。ここも**名指しで黙らせず、在るかを見る** */
   const fromFiles = skip.files || !fileDir ? [] : fileTargets(fileDir);

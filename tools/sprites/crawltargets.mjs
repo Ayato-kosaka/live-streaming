@@ -86,7 +86,7 @@ export function htmlFiles(dir, base = "") {
  * 配り先に在る、**面ではないファイル**（落とせる絵・PDF・テキスト）。
  *
  * リンクの行き先は面だけではない。グッズの面（`/goods`）は
- * `<a href="/characters/ayato.webp" download>` でステッカーを渡していて、
+ * `<a href="/goods/ayato-sticker.jpg" download>` でステッカーを渡していて、
  * **押せば 200 で落ちてくる**のに、`.html` だけを行き先と数えていたころは
  * 毎回「島の中に無い先」として挙がっていた（2026-10-08）。
  *
@@ -94,7 +94,7 @@ export function htmlFiles(dir, base = "") {
  * 置き場から消えれば足されず、そのまま赤くなる。
  *
  * @param {string} dir 配っている置き場（書き出したもの。`site/.next-*`）
- * @returns {string[]} `/characters/ayato.webp` のような並び
+ * @returns {string[]} `/goods/ayato-sticker.jpg` のような並び
  */
 export function fileTargets(dir, base = "") {
   let out = [];
@@ -138,7 +138,7 @@ export function publicTargets(dir) {
  * @returns {Set<string>}
  */
 export function targetSet(pages, extra = []) {
-  /* 落とせるファイル（`/characters/ayato.webp`）も `extra` で来る。
+  /* 落とせるファイル（`/goods/ayato-sticker.jpg`）も `extra` で来る。
      `norm()` は `.html` と末尾の `/` しか落とさないので、当てても字は変わらない */
   return new Set([...pages.map(norm), ...extra.map(norm)]);
 }

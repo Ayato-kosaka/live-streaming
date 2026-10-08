@@ -230,7 +230,7 @@ export default function GoodsPage() {
           icon="shirt"
           title="SUZURI のグッズ"
           tag="お店"
-          lead="ここだけ、島の外のお店です。"
+          lead={`ここだけ、島の外のお店です。${SUZURI.what}`}
         >
           {/* **外に出ることが分かる印を付ける**（`Icon` の `external`）。
               新しいタブで開いて、こちらの窓への参照は渡さない
