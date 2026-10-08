@@ -200,6 +200,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - `/island-fresh` — 焼き込みのうち**人の判断が要るもの**を新しくする（料理のスタンプ・引用・他己紹介・歩いた国）。
   機械だけで決まる4本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`）
 - `/clip-cut` — 配信からショートにする区間の候補を出す（切るところまで。編集はしない）
+- `/ask-ayato` — **あやとに判断を仰ぐ。通知が飛ぶ形でメンションするところまで**
+  （自分のアカウントで書いた `@Ayato-kosaka` は**1通も飛ばない**。下の「つまずきやすいところ」）
 
 ## 検証のしかた
 
@@ -356,6 +358,20 @@ await offline(ctx);
   - **繋ぎが生きているかは `Fetch Doneru Donations` を `probe: true` で
     押して確かめる。** 1バイトも書かずに40秒で終わるので、本番を汚さずに
     「繋いだ先が起きるか」だけを見られる。
+
+- **自分のアカウントで書いた `@Ayato-kosaka` は、通知が飛ばない** — セッションから
+  issue に書くときは**あやと本人のトークン**で書いている。GitHub は**自分で自分を
+  呼んでも通知を飛ばさない。** 字としては在るので、**書いたほうは届いた気になる。**
+  飛ばすには `github-actions[bot]` に書かせる:
+
+  ```bash
+  gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/call_ayato.yml/dispatches \
+    -f ref=master -f 'inputs[issue]=701' -f 'inputs[text]=何を決めてほしいか'
+  ```
+
+  **囲い・引用・バッククォートの中の `@名前` も飛ばない**（`ticket_labels.mention_live()`
+  が判定を持っている。人の目で見ない）。**ワークフローに渡した字は公開のログに出る**ので、
+  視聴者さんの素性を入れない。手順は `/ask-ayato`。
 
 - **`EXPO_PUBLIC_` は「隠す」ではなく「公開してよい」の宣言** — Expo は
   この接頭辞の環境変数を**書き出しの中へ焼く。** GitHub Secret に入れて
