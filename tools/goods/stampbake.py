@@ -75,8 +75,32 @@ SIDE = 360
 TILE_W = 0.62
 #: 型を置く間隔（型の幅・高さに対する割合）。1.0 だとぴったり並ぶ。
 STEP_X, STEP_Y = 1.02, 0.78
-#: 透かしの濃さ。0〜1。絵の上で読めて、絵が潰れない濃さ。
-INK = 0.62
+#: 透かしの濃さ。0〜1。**読めるいちばん薄いところ。**
+#:
+#: あやとの言葉（2026-10-08）: 「LINEスタンプの透かしが濃すぎる。薄くて良い」。
+#: 0.62 / 0.45 / 0.35 / 0.25 / 0.18 で焼いて並べ、**100%（360px）と、面に出る
+#: 150px の両方で「LINEスタンプ」が読める**いちばん薄いところとして 0.30 にした。
+#: 0.25 より下は 150px で字が地に沈んで、見た人には汚れにしか見えない——
+#: 透かしは「取ったものがそのまま使えない」ためのものなので、
+#: **読めなくなった時点で、薄いのではなく効いていない。**
+INK = 0.30
+
+#: 透かしで「動いた」とみなす1画素の差（RGB の差の合計）。**下げない。**
+#: 下げると、ほとんど動いていない画素まで数えて、
+#: 透かしの載っていない絵が対照を素通りする。
+#: 濃さを薄くしたぶんは、`MOVED` を下げるのではなく `STRONG`（下）で見る。
+MOVED = 24
+
+#: 白地に置いたとき、動く画素の**割合**。これは**字の形**で決まるので、
+#: 濃さを変えてもほとんど動かない（INK 0.1〜0.9 で 0.102〜0.132）。
+#: つまり**ここだけ見ても濃さは分からない。** 見ているのは「置いたかどうか」。
+COVER = (0.08, 0.20)
+
+#: 動いた画素の、1画素あたりの差の平均。**濃さはこちらに出る**（INK に比例する。
+#: 実測 0.20→88 / 0.25→108 / 0.30→127 / 0.35→147 / 0.45→186 / 0.62→251）。
+#: 幅は INK ≒ 0.25〜0.35 ぶん。**濃さを変えたらここも一緒に直す**——
+#: 直さずに通るなら、それは濃さを見ていない対照。
+STRONG = (105.0, 150.0)
 
 #: 絵がまだ無いあいだ、枠に出しておく板の地の色（`app/goods/goods.css` の紙と同じ系）。
 PENDING_BG = (244, 238, 226)
@@ -138,46 +162,100 @@ def bake_one(name: str, src: Path | None) -> Path:
     return dst
 
 
-def inked(before: Image.Image, after: Image.Image) -> float:
-    """透かしで動いた画素の割合。**0 なら焼けていない。**"""
+def inked(before: Image.Image, after: Image.Image) -> tuple[float, float]:
+    """透かしで動いた画素の **割合** と、動いた画素1つあたりの **差の平均**。
+
+    **両方返すのは、割合だけでは濃さが見えないから。** 字の形は濃さを変えても
+    同じなので、割合は INK 0.1 でも 0.9 でも 0.10〜0.13 のまま。
+    薄くしすぎたことに気づけるのは平均のほう（`STRONG`）。
+
+    **どちらも 0 なら、1画素も動いていない＝焼けていない。**
+    """
     # `getdata()` は Pillow 14 で消える。**版で名前の変わらない `tobytes()`**
     # を使う（CI と手元で Pillow の版が違っても同じ数が出る）
     a = before.convert("RGB").tobytes()
     b = after.convert("RGB").tobytes()
-    n = sum(
-        1 for i in range(0, len(a), 3)
-        if abs(a[i] - b[i]) + abs(a[i + 1] - b[i + 1]) + abs(a[i + 2] - b[i + 2]) > 24
-    )
-    return n / (before.width * before.height)
+    moved = 0
+    total = 0
+    for i in range(0, len(a), 3):
+        d = (abs(a[i] - b[i]) + abs(a[i + 1] - b[i + 1])
+             + abs(a[i + 2] - b[i + 2]))
+        if d > MOVED:
+            moved += 1
+            total += d
+    px = before.width * before.height
+    return moved / px, (total / moved if moved else 0.0)
+
+
+def band(name: str, got: tuple[float, float]) -> list[str]:
+    """割合と濃さが、どちらも幅の中にいるか。**外れたぶんを字にして返す。**"""
+    cover, strong = got
+    out = []
+    if not COVER[0] < cover < COVER[1]:
+        out.append(f"{name}: 動いた画素 {cover:.4f}（{COVER[0]}〜{COVER[1]} を見込む）")
+    if not STRONG[0] < strong < STRONG[1]:
+        out.append(f"{name}: 濃さ {strong:.1f}（{STRONG[0]}〜{STRONG[1]} を見込む）")
+    return out
 
 
 def drill() -> bool:
     """対照。**本物を1枚も焼く前に、焼けていないものを見分けられるかを見る。**
 
-    足は3本。1本でも外れたら、本物の数字を1つも出さずに帰る。
+    足は4本。1本でも外れたら、本物の数字を1つも出さずに帰る。
+
+    見るのは「置いたか」だけではなく「**どれだけ濃く**置いたか」。
+    割合（`COVER`）は字の形で決まるので濃さを変えても動かず、
+    **割合だけの対照は、透かしをいくら薄くしても通ってしまう。**
     """
     ok = True
-    # (1) 平らな地に置いたら、字のぶんの画素が動く
+    bad: list[str] = []
+
+    # (1) 平らな地に置いたら、字のぶんの画素が、その濃さで動く
     flat = Image.new("RGBA", (SIDE, SIDE), (255, 255, 255, 255))
     got = paint(flat)
-    r = inked(flat, got)
-    if not 0.04 < r < 0.60:
-        print(f"対照1 外れ: 白地に置いて動いた画素 {r:.3f}（0.04〜0.60 を見込む）")
-        ok = False
-    # (2) 置かなければ動かない（判定そのものが何にでも反応していないか）
-    if inked(flat, flat) != 0:
-        print("対照2 外れ: 同じ絵どうしで差が出た")
-        ok = False
+    one = inked(flat, got)
+    bad += band("対照1 白地", one)
+
+    # (2) 置かなければ1画素も動かない（判定そのものが何にでも反応していないか）
+    if inked(flat, flat) != (0.0, 0.0):
+        bad.append("対照2: 同じ絵どうしで差が出た")
+
     # (3) webp にして読み直しても残る（**配るのは webp**）
     import io
     buf = io.BytesIO()
     got.convert("RGB").save(buf, "WEBP", quality=86, method=6)
     back = Image.open(io.BytesIO(buf.getvalue()))
-    r2 = inked(flat, back)
-    if not 0.04 < r2 < 0.60:
-        print(f"対照3 外れ: webp にしたら動いた画素が {r2:.3f}")
+    two = inked(flat, back)
+    bad += band("対照3 webp", two)
+
+    # (4) **本物の絵で、焼いた／焼いていないが見分けられるか。**
+    #     平らな白だけで見ていると、「0 と出る」のが地の平らさのおかげなのか
+    #     判定が効いているからなのか分からない。元の絵そのものを両側に当てる。
+    three = (0.0, 0.0)
+    src = next((p for _, p in sources() if p), None)
+    if src is None:
+        bad.append("対照4: 元の絵が1枚も無いので、焼いた／焼いていないを比べられない")
+    else:
+        raw = square(Image.open(src), SIDE)
+        if inked(raw, raw) != (0.0, 0.0):
+            bad.append(f"対照4: 焼いていない絵どうしで差が出た（{src.name}）")
+        three = inked(raw, paint(raw))
+        if three[0] < 0.05 or three[1] < STRONG[0] - 20:
+            bad.append(
+                f"対照4: 焼いた絵と元の絵の差が小さすぎる（{src.name} "
+                f"{three[0]:.4f} / {three[1]:.1f}）"
+            )
+
+    for b in bad:
+        print(b)
         ok = False
-    print(f"対照: 白地 {r:.3f} / webp {r2:.3f} / 同じ絵 0.000")
+    print(
+        f"対照: 白地 {one[0]:.4f}/{one[1]:.1f}"
+        f" · webp {two[0]:.4f}/{two[1]:.1f}"
+        f" · 元の絵 {three[0]:.4f}/{three[1]:.1f}"
+        f" · 焼いていない 0.0000/0.0"
+        f"（割合 {COVER[0]}〜{COVER[1]} / 濃さ {STRONG[0]}〜{STRONG[1]}）"
+    )
     return ok
 
 

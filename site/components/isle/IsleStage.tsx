@@ -10,6 +10,7 @@ import Icon from "@/components/ui/IconCore";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { UI } from "@/content/voice";
 import { charPlace } from "@/content/characterBox";
+import { AYATO_ASPECT, AYATO_SRC } from "@/lib/ayatoArt";
 import IsleGround, { Building } from "./IsleGround";
 import IsleSheet from "./IsleSheet";
 import {
@@ -66,6 +67,9 @@ import { charImg } from "@/lib/charImg";
 
 /** あやとの背丈。島の主人公なので、住人より必ず大きい */
 const AYATO_H = 60;
+/** あやとの絵の横幅。**比は絵そのものから引く**（`lib/ayatoArt.ts`）。
+    ここに数を書くと、絵を描き直した日に横へ潰れる */
+const AYATO_W = AYATO_H * AYATO_ASPECT;
 /** 住人の背丈 */
 const FOLK_H = 52;
 const folkIconUrl = (id: string) => charImg(id, 128);
@@ -867,13 +871,13 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
           hostRef.current?.style.setProperty("--ws", `${Math.max(TAP_MIN, FOLK_H * kk).toFixed(1)}px`);
         }
         /* あやとの外接矩形（画面px）。絵の置き方は下の `<image>` と同じ式
-           （`x: -AYATO_H * 0.43, y: -AYATO_H, w: AYATO_H * 0.86, h: AYATO_H`）。
+           （`x: -AYATO_W / 2, y: -AYATO_H, w: AYATO_W, h: AYATO_H`）。
            押しどころではないので `tapTaken` には入れない——入れると、
            あやとの立っているところの建物が押せなくなる。 */
         const meBox = {
-          x: sx(me.x) - AYATO_H * 0.43 * kk,
+          x: sx(me.x) - (AYATO_W / 2) * kk,
           y: sy(me.y) - AYATO_H * kk,
-          w: AYATO_H * 0.86 * kk,
+          w: AYATO_W * kk,
           h: AYATO_H * kk,
         };
         const hitsNow = placePlates(world.places, {
@@ -1279,10 +1283,10 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
                 className="ayato"
               >
                 <image
-                  href="/characters/ayato.webp"
-                  x={-AYATO_H * 0.43}
+                  href={AYATO_SRC}
+                  x={-AYATO_W / 2}
                   y={-AYATO_H}
-                  width={AYATO_H * 0.86}
+                  width={AYATO_W}
                   height={AYATO_H}
                   preserveAspectRatio="xMidYMax meet"
                 />

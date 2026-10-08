@@ -125,15 +125,47 @@
 }
 .gd-go > svg { flex: none; }
 
-/* 外の店。写真を1枚だけ添える。**押すと出ていくことは印（external）が言う** */
-.gd-out > img {
-  flex: none;
-  width: 92px;
-  height: 92px;
+/* 外の店。**写真は横に並べる。**
+   1枚だけ添えていたころは、その1枚の商品しか無い店に見えていた
+   （あやと 2026-10-08、2回目の指摘）。
+   押すと出ていくことは印（external）が言う。 */
+.gd-shop {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+/* 枚数は決め打ちしない。`auto-fit` なので、`shots` を増やしても
+   1行に収まるぶんだけ細くなる（2枚でも3枚でも同じ書き方で並ぶ） */
+.gd-shopshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: var(--sp-2);
+  /* PC では、写真が板の幅いっぱい（403px角）に伸びて、
+     同じ面のほかの札より大きくなっていた。**店は主役ではない。**
+     スマホ（390px）では板のほうが狭いので、ここは効かない */
+  max-width: 360px;
+}
+.gd-shopshots > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
   border-radius: var(--r-0);
   object-fit: cover;
   background: var(--paper-2);
 }
+
+.gd-shopside {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.gd-shopside > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gd-shopside > svg { flex: none; }
 
 /* ---- ステッカー --------------------------------------------------------- */
 

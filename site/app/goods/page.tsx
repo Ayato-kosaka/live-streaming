@@ -6,7 +6,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import StampVotes from "@/components/goods/StampVotes";
-import { LINE_STAMPS, LINE_WORDS, STICKERS, SUZURI } from "@/content/goods";
+import { LINE_STAMPS, LINE_WANT, LINE_WORDS, STICKERS, SUZURI } from "@/content/goods";
 
 import "./goods.css";
 
@@ -94,6 +94,14 @@ function Say({ theme, title, lead, omit }: {
     </div>
   );
 }
+
+/**
+ * あやとのセリフで、まだ決まっていない数。
+ *
+ * **手で書かない。** 絵が1枚届いた日に、面の「あと◯つ」だけが古くなる。
+ * 埋まったら 0 になって、募集の字そのものが消える。
+ */
+const LINE_LEFT = Math.max(0, LINE_WANT - LINE_STAMPS.length);
 
 export default function GoodsPage() {
   return (
@@ -214,8 +222,18 @@ export default function GoodsPage() {
           title="LINEスタンプ"
           tag="検討中"
           /* **「絵はこれから」と書かない。** 絵が届いたので、書いたままだと
-             その日から嘘になる。数は `LINE_STAMPS` から出す（足した日に直し忘れない） */
-          lead={`あやとの${LINE_STAMPS.length}枚。どれがいいか、押して教えてください。`}
+             その日から嘘になる。数は `LINE_STAMPS` から出す（足した日に直し忘れない）。
+
+             **何を集めている欄なのかを、頭で言う。** 「あやとの11枚。どれがいいか」
+             だけだと、11枚から選ぶ話にしか読めない。集めているのは、まだ決まって
+             いないぶんのセリフのほう（あやと #701）。
+             残りの数も手で書かない（`content/goods.ts` の `LINE_WANT`）。
+             埋まったら募集の字は出さない——0枚を募る字が残らないように */
+          lead={
+            LINE_LEFT > 0
+              ? `あと${LINE_LEFT}つ、セリフが決まっていません。いいと思ったものを押して、ほしい一言を出してください。`
+              : `あやとの${LINE_STAMPS.length}枚。いいと思ったものを押して教えてください。`
+          }
         >
           <StampVotes />
           <Say
@@ -239,25 +257,36 @@ export default function GoodsPage() {
               新しいタブで開いて、こちらの窓への参照は渡さない
               （`noopener`。`noreferrer` で、どこから来たかも渡さない）。
               `prefetch` の見張り（`prefetch_selftest.mjs`）は `<Link>` を
-              数えているので、外へ出るものは素の `<a>` のままにする */}
+              数えているので、外へ出るものは素の `<a>` のままにする。
+
+              **写真は横に並べて、題は店の名前。** 1枚だけ・題が商品名だと、
+              その商品1つしか無い店に見える（あやと 2026-10-08、2回目の指摘）。
+              枚数は決め打ちしない——`shots` に1行足せば並ぶ */}
           <a
-            className="gd-go gd-out"
+            className="gd-go gd-out gd-shop"
             href={SUZURI.href}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img
-              src={SUZURI.thumb}
-              alt=""
-              width={SUZURI.w}
-              height={SUZURI.h}
-              loading="lazy"
-            />
-            <span>
-              <b>{SUZURI.cap}</b>
-              <i>{SUZURI.note}</i>
+            <span className="gd-shopshots">
+              {SUZURI.shots.map((shot) => (
+                <img
+                  key={shot.src}
+                  src={shot.src}
+                  alt={shot.alt}
+                  width={shot.w}
+                  height={shot.h}
+                  loading="lazy"
+                />
+              ))}
             </span>
-            <Icon name="external" size={16} />
+            <span className="gd-shopside">
+              <span>
+                <b>{SUZURI.cap}</b>
+                <i>{SUZURI.note}</i>
+              </span>
+              <Icon name="external" size={16} />
+            </span>
           </a>
         </Sec>
       </div>
