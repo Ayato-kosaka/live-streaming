@@ -177,6 +177,10 @@ export default function CardSheet({
   const cvRef = useRef<HTMLCanvasElement>(null);
   /** 人を選んだときに増える手。**増えたところまで紙を送る**のに要る */
   const tuneRef = useRef<HTMLDivElement>(null);
+  /** 写真の箱。**焼き直しているあいだ、高さを畳ませない**ために測る */
+  const shotRef = useRef<HTMLDivElement>(null);
+  /** 最後に出ていた写真の高さ（px）。0 はまだ1度も出ていない */
+  const shotH = useRef(0);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
   const art = useRef<{
     photo: HTMLImageElement | null;
@@ -234,6 +238,21 @@ export default function CardSheet({
     );
     return () => clearTimeout(t);
   }, [chosen]);
+
+  /* 写真の箱の高さを覚える。**焼き直しのあいだ畳ませない**ため。
+
+     人を選び直すと焼き上がりをいったん捨てる（上の `setOut(null)`）ので、
+     写真の代わりに待ちの印（`--wait-h: 200px`）が出る。本物の写真は
+     1280 幅で 376px あるので、**選ぶたびに紙が 176px 縮んで、150ms 後に
+     また伸びる。** 読んでいる人の指の下で下の手が飛ぶし、
+     「増えたところまで送る」も縮んだ側の高さで送ってしまう
+     （実測 2026-10-08: 送ったのは 5px、要るのは 225px）。
+
+     写真そのものは変わらないので、**一度測ったら、その高さを下限にする。** */
+  useEffect(() => {
+    const h = shotRef.current?.getBoundingClientRect().height ?? 0;
+    if (out && h > 0) shotH.current = h;
+  }, [out]);
 
   const shot = group.url;
   const icon = chosen?.icon ?? null;
@@ -564,7 +583,13 @@ export default function CardSheet({
         </div>
 
         <div className="akd-sheet-body">
-          <div className="nstudio-shot">
+          <div
+            className="nstudio-shot"
+            ref={shotRef}
+            /* **畳ませない。** 理由は上の `shotH`。まだ1度も出ていないときは
+               何も指定しない（待ちの印の高さのままでよい） */
+            style={shotH.current ? { minHeight: shotH.current } : undefined}
+          >
             {/* **canvas が土台で、焼いた jpeg がその上に乗っている。**
                 中身は同じ絵。動かしているあいだだけ canvas が前に出る
                 （`is-live`）ので、指に付いてくるのは canvas のほう。
