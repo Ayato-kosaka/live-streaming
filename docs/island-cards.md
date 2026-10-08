@@ -519,7 +519,7 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 
 ### あやと本人を、隣に並べる（2026-10-07 から）
 
-「あやともいっしょに」を押すと、本人のキャラクターの隣にあやとが立つ。
+「あやとも入れますか」で1枚えらぶと、本人のキャラクターの隣にあやとが立つ。
 
 - **既定は入れない。** 開いた瞬間に出るのは写真そのもの（4章）
 - **保存しない。手元だけ。** 書類に欄を足していない。保存すると、
@@ -528,7 +528,36 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
   空いているほうへ立つ。足元の高さをそろえ、重ならない
   （`components/cards/place.ts` の `layout`）
 - 左に立つときは**左右を返す。** キャラクターの絵はどれも左を向いて
-  いるので、返さないと本人に背を向けたまま並ぶ
+  いるので、返さないと本人に背を向けたまま並ぶ。
+  ただし**字や標識の入った絵は返さない**（下）
+
+#### どのあやとを入れるかは、えらべる（2026-10-08 から）
+
+あやとの言葉:「あやと島カードに一緒に貼るあやとで選べるようにしてね」。
+
+**並ぶのは `content/goods.ts` の `STICKERS`。** グッズの面（`/goods`）に
+落とせる形で並んでいる、あのステッカーそのもの。**カードの側に名簿を
+置かない**ので、ステッカーを1枚足した日に、落とせる面とカードの両方で
+同時に増える。
+
+- **焼くのは `art`（面に並べる小さいほう）ではなく `file`（元絵）。**
+  持って帰る1枚は長辺 2048px なので、小さいほうを焼くと、
+  貼ったあやとだけが眠い絵になる
+- **どれをえらんだかも保存しない。** 入れる／入れないと同じ理由（上）。
+  口（`POST /cards/<id>`）が受けるのは立ち位置だけで、欄は1つも増えていない。
+  **いま配ってある 780枚以上の書類は、1枚も読み替えなくてよい**
+- **左右を返してよいかは、絵のほうが持っている**（`Sticker.canFlip`）。
+  連れは本人の左に立つことが多いので、既定のままだと必ず返る。
+  2枚目の「ヒッチハイクするあやと」は「STOP」の字が入っていて、
+  返すと **「ꟼOTƧ」** になった。**字の入った絵は `canFlip: false`**。
+  省略できない欄にしてあるので、1枚足すたびにどちらかを決めることになる
+- **えらんだ絵が読めなかったら、焼かない。** キャラクターの絵と同じ守りで、
+  出ている焼き上がりごと捨てて「このあやとの絵がいま読めません」に替える。
+  入れたつもりの1枚を、入らないまま持って帰らせない
+- **いままでと同じ選びかたをした人のカードは、1画素も変わらない。**
+  いちばん上の1枚（`isle`）は `/characters/ayato.webp` そのもので、
+  画素も焼いた jpeg のバイト列も前の版と同じであることを突き合わせてある
+  （`tools/sprites/cardmate.mjs` に `BASE=` で前の版を渡す）
 
 ### 動かしていないカードは、既定の値では置かない
 
@@ -563,7 +592,9 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 | 返す口 | `functions/src/cards.ts`（`islandApi.ts` には取り付けだけ） |
 | 絵をチャンネルに当てる（かぶった名前を止めるのもここ） | `functions/src/cards.ts` の `iconsOf`。確かめは `functions/selftest/cards_icons_selftest.mjs` |
 | 公開の応答から人を指す値を落とす | `functions/src/cards.ts` の `forEveryone` / `peopleForEveryone`。確かめは `functions/selftest/cards_public_selftest.mjs` |
-| 立ち位置の計算（締め方・2体の並べ方） | `site/components/cards/place.ts`。確かめは `site/selftest/cardplace_selftest.mjs`、絵で見るのは `tools/sprites/cardmove.mjs` |
+| 立ち位置の計算（締め方・2体の並べ方・返してよいか） | `site/components/cards/place.ts`。確かめは `site/selftest/cardplace_selftest.mjs`、絵で見るのは `tools/sprites/cardmove.mjs` |
+| **入れられるあやとの一覧** | `site/content/goods.ts` の `STICKERS`（`/goods` と同じ1本）。**カードの側に名簿を置かない** |
+| **選び替えて、焼き上がりの画素を前の版と突き合わせる** | `tools/sprites/cardmate.mjs`（`BASE=` に前の版の出力。0=同じ / 1=変わった / 2=数えるものが無い） |
 | 組み立て（貼ったとき） | `functions/src/streamEvents.ts` の `mintForImage` → `tipsForImage` → `mintCards` |
 | 組み立て（毎日） | `python/island_cards.py` の `hits` → `main` |
 | **当たり方（日の決め方）** | `streamEvents.ts` の `imageDay` / `tipDay`、`island_cards.py` の `image_day` / `tip_day`。**両側に同じものを置く** |
