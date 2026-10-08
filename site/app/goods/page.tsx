@@ -96,7 +96,6 @@ function Say({ theme, title, lead, omit }: {
 }
 
 export default function GoodsPage() {
-  const sticker = STICKERS[0];
   return (
     <PageShell crumbs={[{ label: "あやとグッズ" }]}>
       <PageHead
@@ -119,26 +118,31 @@ export default function GoodsPage() {
           tag="無料"
           lead="島を歩いているあやと。落として、好きなところに貼ってください。"
         >
-          <div className="gd-sticker">
-            <img
-              className="gd-stickerart"
-              src={sticker.art}
-              alt={sticker.name}
-              width={sticker.w}
-              height={sticker.h}
-            />
-            <span className="gd-stickerside">
-              <b>{sticker.name}</b>
-              {/* **落ちてくるのは元絵そのまま。** 面に出しているのは小さく
-                  焼いたほうで、押したときだけ大きいほうを取りにいく
-                  （`content/goods.ts`）。`download` を付けるので、
-                  押すと開かずに手元へ落ちる */}
-              <a className="gd-get" href={sticker.file} download={sticker.saveAs}>
-                <Icon name="download" size={18} />
-                おとす
-              </a>
-            </span>
-          </div>
+          {/* **1枚ぶんを決め打ちしない。** `STICKERS[0]` と書いていたので、
+              2枚目を足した日に増えたのはデータだけで、面は1枚のままだった。
+              増えても減っても、ここは並べるだけにしておく */}
+          {STICKERS.map((sticker) => (
+            <div className="gd-sticker" key={sticker.id}>
+              <img
+                className="gd-stickerart"
+                src={sticker.art}
+                alt={sticker.name}
+                width={sticker.w}
+                height={sticker.h}
+              />
+              <span className="gd-stickerside">
+                <b>{sticker.name}</b>
+                {/* **落ちてくるのは元絵そのまま。** 面に出しているのは小さく
+                    焼いたほうで、押したときだけ大きいほうを取りにいく
+                    （`content/goods.ts`）。`download` を付けるので、
+                    押すと開かずに手元へ落ちる */}
+                <a className="gd-get" href={sticker.file} download={sticker.saveAs}>
+                  <Icon name="download" size={18} />
+                  おとす
+                </a>
+              </span>
+            </div>
+          ))}
           <Say
             theme="goods-art"
             title="自分の1枚を出す"
@@ -206,7 +210,9 @@ export default function GoodsPage() {
           icon="talk"
           title="LINEスタンプ"
           tag="検討中"
-          lead={`あやとの${LINE_STAMPS.length}枚。セリフだけ決まっていて、絵はこれから。`}
+          /* **「絵はこれから」と書かない。** 絵が届いたので、書いたままだと
+             その日から嘘になる。数は `LINE_STAMPS` から出す（足した日に直し忘れない） */
+          lead={`あやとの${LINE_STAMPS.length}枚。どれがいいか、押して教えてください。`}
         >
           <StampVotes />
           <Say

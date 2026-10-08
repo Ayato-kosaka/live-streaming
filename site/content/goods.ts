@@ -59,18 +59,27 @@ export type Sticker = {
 };
 
 /**
- * いまあるステッカー。**1枚**（あやと「今は一つで、あやと島を歩いてる
- * キャラクター画像」）。増えたらここに1行足す。
+ * いまあるステッカー。**1枚。**
+ *
+ * あやと「ステッカーには既存のあやと島を歩くキャラも」（2026-10-08）。
+ * **島でほんとうに歩いているあの絵**そのもの
+ * （`public/characters/ayato.webp`。`IsleStage` が島に立てているのと同じ1枚）。
+ *
+ * **写しを作らず、島と同じファイルを指している。** 写すと、島の絵を描き直した日に
+ * ステッカーだけ前の絵のまま残る。
+ *
+ * **緑の STOP の絵（`ayato-sticker.jpg`）は外した**——あやと「緑の『島を歩くあやと』は
+ * ステッカーから外してください。間違えました」（2026-10-08）。
  */
 export const STICKERS: Sticker[] = [
   {
-    id: "walk",
-    name: "島を歩くあやと",
-    art: "/goods/ayato-sticker.webp",
-    file: "/goods/ayato-sticker.jpg",
-    saveAs: "ayato-sticker.jpg",
-    w: 320,
-    h: 480,
+    id: "isle",
+    name: "島にいるあやと",
+    art: "/characters/ayato.webp",
+    file: "/characters/ayato.webp",
+    saveAs: "ayato-island.webp",
+    w: 273,
+    h: 319,
   },
 ];
 
@@ -112,16 +121,20 @@ export const LINE_PENDING = "/goods/line/pending.webp";
  * そのあとに気持ちが4つ、最後に使いどころのある3つ、という並びになっている。
  */
 export const LINE_STAMPS: LineStamp[] = [
-  { id: "ohayou", line: "おはよう" },
-  { id: "konbanwa", line: "こんばんは" },
-  { id: "oyasumi", line: "おやすみ" },
-  { id: "arigatou", line: "ありがとう" },
-  { id: "ureshii", line: "うれしい" },
-  { id: "iiyanka", line: "いいやんか" },
-  { id: "yabai", line: "やばいよやばいよ" },
-  { id: "chottomatte", line: "ちょっとまってよ" },
-  { id: "sugumodoru", line: "すぐもどる" },
-  { id: "oumaiga", line: "おーまいがー" },
+  { id: "ohayou", line: "おはよう", art: "/goods/line/ohayou.webp" },
+  { id: "konbanwa", line: "こんばんは", art: "/goods/line/konbanwa.webp" },
+  { id: "oyasumi", line: "おやすみ", art: "/goods/line/oyasumi.webp" },
+  { id: "arigatou", line: "ありがとう", art: "/goods/line/arigatou.webp" },
+  { id: "ureshii", line: "うれしい", art: "/goods/line/ureshii.webp" },
+  /* **すごいよ は、あとから届いた11枚目。** 気持ちの並びの中に入れてある
+     （うれしい → すごいよ → いいやんか）。LINE に出すときの順番は
+     あやとが後で決めるので、ここの並びは島の面の並びでしかない。 */
+  { id: "sugoiyo", line: "すごいよ", art: "/goods/line/sugoiyo.webp" },
+  { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
+  { id: "yabai", line: "やばいよやばいよ", art: "/goods/line/yabai.webp" },
+  { id: "chottomatte", line: "ちょっとまってよ", art: "/goods/line/chottomatte.webp" },
+  { id: "sugumodoru", line: "すぐもどる", art: "/goods/line/sugumodoru.webp" },
+  { id: "oumaiga", line: "おーまいがー", art: "/goods/line/oumaiga.webp" },
 ];
 
 /** スタンプの一言だけ。付箋の中から「この一言のこと」を見分けるのに使う。 */
