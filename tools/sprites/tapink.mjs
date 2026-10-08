@@ -118,6 +118,17 @@ const { SEL_ALL } = await import("./hitbox.mjs");
 /** 子の回ぶんの結果。`sweep()` が積む */
 const runs = [];
 
+/**
+ * 何も言わなくなった子を見限る秒数。
+ *
+ * 2026-10-08 に `hitbox` が `/nordic/latvia` で**30分** 0.6% CPU のまま
+ * 止まった（同じ面を1枚だけ渡すと数秒で終わる。箱の側の一時的な詰まり）。
+ * 止まっても**終わらない**ので、待っているほうは「まだ回っている」と
+ * 見分けがつかない。**長く回る道具は、止まったことを数で言えないと
+ * 落ちたのと同じ**（`docs/island-standards.md` §15）。
+ */
+const STALL = Number(process.env.STALL || 420) * 1000;
+
 /** 子を1本起こして、出力と終了コードを持ち帰る。出力はそのまま流す */
 function run(tool, env, { quiet = false, label = "" } = {}) {
   return new Promise((done) => {
@@ -126,9 +137,28 @@ function run(tool, env, { quiet = false, label = "" } = {}) {
       stdio: ["ignore", "pipe", "pipe"],
     });
     let out = "";
-    ch.stdout.on("data", (d) => { out += d; if (!quiet) process.stdout.write(d); });
-    ch.stderr.on("data", (d) => { out += d; if (!quiet) process.stderr.write(d); });
-    ch.on("close", (code) => done({ code, out, label: label || tool }));
+    let stalled = false;
+    /* **何も言わなくなったら見限る。** 面を1枚測るたびに1行出るので、
+       `STALL` 秒だまっていたら止まっている。殺すと子は 0 以外で終わるので、
+       分母の行が出ず「数えられなかった回」として上に出る——**黙って
+       「割れ 0」にはならない。** */
+    let timer = null;
+    const beat = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        stalled = true;
+        out += `\n[tapink] ${label || tool} が ${STALL / 1000}秒 だまったので止めました（止まった面から先は測れていません）\n`;
+        process.stdout.write(out.slice(out.lastIndexOf("\n[tapink]")));
+        ch.kill("SIGKILL");
+      }, STALL);
+    };
+    beat();
+    ch.stdout.on("data", (d) => { out += d; beat(); if (!quiet) process.stdout.write(d); });
+    ch.stderr.on("data", (d) => { out += d; beat(); if (!quiet) process.stderr.write(d); });
+    ch.on("close", (code) => {
+      if (timer) clearTimeout(timer);
+      done({ code: stalled ? 2 : code, out, label: label || tool });
+    });
   });
 }
 

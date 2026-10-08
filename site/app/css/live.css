@@ -71,8 +71,15 @@
   color: var(--ink);
 }
 .nx-clock em b { display: block; font-size: 30px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 1px; }
-/* 「あと」は数字の上に小さく。数字を読む邪魔をしない大きさで */
-.nx-clock em span { display: block; font-size: var(--fs-min); letter-spacing: 0.12em; opacity: 0.78; margin-bottom: 1px; }
+/* 「あと」は数字の上に小さく。数字を読む邪魔をしない大きさで。
+   **薄めない。** この札の桃は「墨をそのまま置いて 5.4 : 1」になるよう
+   紙を混ぜて決めた色で（すぐ上の註）、そこに `opacity: 0.78` を掛けると
+   **11.5px の字が 3.87 : 1** まで落ちる（2026-10-08 実測。
+   字[126,90,58] 地[255,187,190]）。`opacity` は computed の `color` に
+   出てこないので、**宣言だけ見ていると 5.4 のまま合格に見える**
+   （`CLAUDE.md`「字の色は、宣言された値ではなく描かれた画素から取る」）。
+   小ささは字の大きさと字間で出す。 */
+.nx-clock em span { display: block; font-size: var(--fs-min); letter-spacing: 0.12em; margin-bottom: 1px; }
 /* 日だけ大きく。人が見ているのは「あと何日」で、時分はその添え物 */
 .nx-clock em:first-child { min-width: 74px; }
 .nx-clock em:first-child b { font-size: 42px; }

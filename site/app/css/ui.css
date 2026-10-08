@@ -24,6 +24,14 @@
   line-height: var(--lh-body);
   color: var(--ink);
   cursor: pointer;
+  /* **48px ちょうどなので、下に来た塊に端を取られる。**
+     すぐ下が札の並び（`.chips`）になる面で、その箱がボタンの下端に
+     0.5〜1px かぶる。位置を持たないと、かぶられたぶんは指に届かない。
+     実測（2026-10-08 / `/nordic/day/7` / 幅 1000px）:
+     箱 48.00px・**当たり 47.52px** → `position: relative` で 48.49px。
+     同じボタンが面によって 47.4〜48.8 に散っていたのがこれ
+     （`docs/island-misses.md` #211）。 */
+  position: relative;
 }
 .longer:active {
   transform: translateY(4px);

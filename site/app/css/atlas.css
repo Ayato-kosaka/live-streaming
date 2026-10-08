@@ -371,6 +371,16 @@
 .atrace-go {
   display: inline-flex; align-items: center; gap: 6px;
   min-height: 48px;
+  /* **48px ちょうどの押しどころは、下に来た塊に端を取られる。**
+     ここは行の中の箱（`inline-flex`）で、行の高さは字の高さしか無い。
+     すぐ下の `.atrace-hint` はその行のあとから始まるので、**ボタンの
+     下端 1px の上に乗る。** 位置を持たない要素は「位置を持つものが上」で
+     重なるので、取られたぶんはそのまま指に届かない。
+     実測（2026-10-08 / `/map` / 幅 1000px）: 箱 48.00px に対して
+     **当たり 46.99px**。`position: relative` を足すと 48.96px。
+     1px も動かさずに重なりだけ勝つ（`chain.css` の `.chain-foot a` と同じ手）。
+     幅 390px では 48 を割っていなかった——**同じ札を幅ごとに測る。** */
+  position: relative;
   padding: 0 var(--sp-5);
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
