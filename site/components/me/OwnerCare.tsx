@@ -5,6 +5,7 @@ import {
   PLAN_STATUS_NAME,
   archiveNextPlan,
   archiveSticky,
+  dropStickyPic,
   getArchivedPlans,
   getArchivedStickies,
   getMyStickies,
@@ -23,6 +24,7 @@ import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { jstDay } from "@/lib/nightly";
 import Wrote from "@/components/ui/Wrote";
+import NotePic from "@/components/live/NotePic";
 
 
 /**
@@ -287,6 +289,22 @@ function StickyRow({
     }
   };
 
+  /** 絵だけを外す。**1タップ。** 付箋の字は残る（`DELETE /stickies/:id/pic`） */
+  const dropPic = async () => {
+    const t = await token();
+    if (!t) return;
+    setBusy(true);
+    setErr(false);
+    try {
+      await dropStickyPic(note.id, t);
+      onChanged({...note, pic: undefined});
+    } catch {
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const stow = async () => {
     const t = await token();
     if (!t) return;
@@ -307,6 +325,10 @@ function StickyRow({
       {/* **書いてくれたまま出す**（#83）。返すときに、貼った人の改行が見えていないと
           何に答えているのか分からなくなる */}
       <Wrote t={note.text} as="p" className="mp-care-text" />
+      {/* 貼られた絵（2026-10-08）。**ここに出さないと、荒れた絵を見つける
+          場所が板しかなくなる。** 返す机は、あやとが上から順に片づける
+          ところなので、外す押しどころも下に並べてある */}
+      {note.pic && <NotePic pic={note.pic} />}
       {/* テーマ・日付・貼った人。**札にしない**（`.mp-note-foot`）。
           札は1つ 28px と左右の余白を持つので、3つ並ぶと1件が1行ぶん高くなる。
           区切りは入れ物が中黒で入れるので、ここでは字だけを並べる。 */}
@@ -332,6 +354,12 @@ function StickyRow({
         <button className="mp-send is-small is-quiet" disabled={busy} onClick={stow}>
           {stowed ? "もどす" : "しまう"}
         </button>
+        {/* 絵が貼ってある1枚にだけ出る。**付箋ごと下ろさずに、絵だけ外す** */}
+        {note.pic && (
+          <button className="mp-send is-small is-quiet" disabled={busy} onClick={dropPic}>
+            絵をはずす
+          </button>
+        )}
       </div>
       {err && (
         <p className="err">

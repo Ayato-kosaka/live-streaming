@@ -40,6 +40,7 @@ erDiagram
     themes_ts              ||--o{ islandNotes            : "theme"
     islandStreamEvent      ||--o{ islandNotes            : "planId（旧）"
     islandNotes            ||--o{ islandHearts           : "note"
+    islandNotes            ||--o| storage_photos         : "pic（2枚。開くほうと板に並ぶほう）"
 
     islandPolls            ||--o{ islandPollVotes        : "pollId"
 ```
@@ -1255,6 +1256,8 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | `hearts` | number | ハートの数。`islandHearts` の書類の数と同じになる |
 | `byOwner` | boolean | 運営者が立てた付箋か。**おたずねの選択肢がこれになる** |
 | `link` | string | 貼られたリンク。**`http(s)` だけ**（`safeLink`）・2048字。無ければ空 |
+| `pic` | object \| null | 貼られた絵1枚（2026-10-08）。**ログインした人だけ**（1日6枚）。中身は `url` `w` `h`（開くほう）/ `thumb` `tw` `th`（板に並ぶほう）/ `path` `thumbPath`（置き場の道。**画面には返さない**）/ `at`。無ければ null |
+| `picDroppedAt` / `picDroppedBy` | number / string | あやとが絵を外した印。**置き場の実体も消えている**ので、戻らない |
 | `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
@@ -1536,14 +1539,27 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 
 ### 4.4 Cloud Storage
 
-置いてあるのは、旅の写真の実体だけ。
+置いてあるのは、**旅の写真の実体**と、**付箋に貼られた絵**（2026-10-08〜）。
+
+| | 旅の写真 | 付箋の絵 |
+| --- | --- | --- |
+| 道 | `nordic/photos/{YYYY-MM-DD}/{imageId}.{jpeg\|png\|webp}` | `notes/{YYYY-MM-DD}/{noteId}.{kind}`（開くほう）と `notes/{YYYY-MM-DD}/{noteId}-s.{kind}`（板に並ぶほう） |
+| 1枚の上限 | 4MB | 開くほう 4MB / 板に並ぶほう 600KB |
+| 置ける人 | あやとだけ | **ログインした人**（1日6枚） |
+| 種類 | 中身のバイトで jpeg / webp | 中身のバイトで jpeg / png / webp |
+| 消すのは | `DELETE /streamevents/images/{id}` | `DELETE /stickies/{id}/pic`（**あやとだけ**。1タップ） |
+
+どちらも共通:
 
 | | |
 | --- | --- |
-| 道 | `nordic/photos/{YYYY-MM-DD}/{imageId}.{jpeg\|png\|webp}` |
-| 1枚の上限 | 4MB |
 | キャッシュ | `public, max-age=31536000, immutable`（道に id が入っていて中身が変わらないため） |
 | 読ませ方 | ファイルの metadata に付けた**ダウンロードの合言葉**（`?alt=media&token=…`） |
+
+**付箋の絵が2枚あるのは、板が重くならないようにするため。** 掲示板は付箋が
+並ぶ面なので、閉じているあいだに大きい絵を1枚ずつ落とすと、貼られるほど
+重くなる（`docs/island-standards.md` 7章）。実測（2026-10-08・幅390）:
+絵つき6枚が並ぶ画面で **+145.8KB**（1枚 24.3KB）、押して1枚ひらくと **+70KB**。
 
 `storage.rules` は **`allow read, write: if false`**。
 
