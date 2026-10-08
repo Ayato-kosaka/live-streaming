@@ -512,6 +512,24 @@ export const postNote = (planId: string, text: string, token?: string | null) =>
    あちらは `planId`、こちらは `theme` を持つ。画面を切り替えている
    途中の日に、両方が混ざったものが両方の画面に出るのを止めるため。 */
 
+/**
+ * 付箋に貼られた絵1枚（2026-10-08）。
+ *
+ * **寸法（`w`/`h`・`tw`/`th`）を一緒に持つ。** 無いと `<img>` が読み込む前の
+ * 高さを 0 で置いて、絵が入った瞬間に下の付箋がまとめて飛ぶ
+ * （`docs/island-standards.md` 7章「出るときにも背が変わる」）。
+ */
+export type StickyPic = {
+  /** 押して開いたときの1枚（長辺1200） */
+  url: string;
+  w: number;
+  h: number;
+  /** 閉じているあいだの1枚（長辺480）。**板に並ぶのはこちら** */
+  thumb: string;
+  tw: number;
+  th: number;
+};
+
 /** 貼られた付箋1枚。 */
 export type Sticky = {
   id: string;
@@ -528,6 +546,14 @@ export type Sticky = {
    * 付箋を**読んだ人**のブラウザでその字が走る。
    */
   link?: string;
+  /**
+   * 貼られた絵1枚。貼っていなければ無い（2026-10-08）。
+   *
+   * **貼れるのはログインした人だけ**（サーバー側が 401 を返す）。
+   * 2枚あるのは、板に並ぶあいだに大きい絵を落とさないため——
+   * 閉じているあいだは `thumb`、押して開いたら `url`。
+   */
+  pic?: StickyPic;
   hearts: number;
   /** 運営者が立てた付箋か。おたずねの選択肢はこれ */
   byOwner: boolean;
@@ -578,7 +604,13 @@ export const getArchivedStickies = (token: string, theme?: string) =>
     { headers: auth(token) },
   );
 
-/** 貼る。名前は書かなくていい（ログインしていれば島に出す名前が入る）。 */
+/**
+ * 貼る。名前は書かなくていい（ログインしていれば島に出す名前が入る）。
+ *
+ * **絵を付けるときは `token` が要る**（無いと 401）。送るのは2枚で、
+ * どちらもブラウザで焼いたもの（`components/live/notePic.ts` の `pickPic`）。
+ * 片方だけ送ると 400 になる——板に並ぶほうを省く道は開けていない。
+ */
 export const postSticky = (
   p: {
     theme: string;
@@ -587,6 +619,15 @@ export const postSticky = (
     /** 1本だけ。空なら「貼らなかった」で、断られない */
     link?: string;
     byOwner?: boolean;
+    /** 開いたときの1枚。base64（data URL の頭は付いていてもいい） */
+    image?: string;
+    /** 板に並ぶ1枚。`image` を送るなら必ず付ける */
+    thumb?: string;
+    /** 寸法。`<img>` が場所を先に取るために要る */
+    w?: number;
+    h?: number;
+    tw?: number;
+    th?: number;
   },
   token?: string | null,
 ) =>
@@ -610,6 +651,18 @@ export const replySticky = (id: string, text: string, token: string) =>
     `/stickies/${id}/reply`,
     { method: "POST", headers: auth(token), body: JSON.stringify({ text }) },
   );
+
+/**
+ * 貼られた絵だけを外す。**あやとだけ。1タップ。**
+ *
+ * 付箋の字は残る。置き場の実体もここで消えるので、**戻せない**
+ * （付箋ごと下ろすだけなら `archiveSticky`。あちらは消さずにしまう）。
+ */
+export const dropStickyPic = (id: string, token: string) =>
+  req<{ id: string; pic: null }>(`/stickies/${id}/pic`, {
+    method: "DELETE",
+    headers: auth(token),
+  });
 
 /** しまう・戻す。**あやとだけ。消えない。** ハートの数はそのまま残る。 */
 export const archiveSticky = (id: string, on: boolean, token: string) =>

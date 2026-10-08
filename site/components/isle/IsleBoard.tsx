@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Pin } from "@/components/live/art";
+import NotePic from "@/components/live/NotePic";
 import Icon from "@/components/ui/IconCore";
 import ReadAgain from "@/components/me/ReadAgain";
 import { getStickies, type Sticky } from "@/lib/api";
@@ -201,6 +202,11 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
               </span>
               {/* **書いてくれたまま出す**（#83） */}
               <Wrote t={n.text} />
+              {/* 貼られた絵。**ここも板と同じ姿で出す**（`NotePic.tsx`）。
+                  出さないでおくと、絵のある付箋が島の板では字だけになって、
+                  同じ1枚が面によって別のものに見える。
+                  閉じているあいだは小さいほうしか落ちてこない */}
+              {n.pic && <NotePic pic={n.pic} />}
               {n.by && <em className="nb-by">{n.by} さん</em>}
             </li>
           ))}

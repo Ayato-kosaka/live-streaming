@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   archiveSticky,
+  dropStickyPic,
   getArchivedStickies,
   getStickies,
   heartSticky,
@@ -21,6 +22,9 @@ import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import Wrote from "@/components/ui/Wrote";
 import { Pin } from "./art";
+import NotePic from "./NotePic";
+import SignIn from "./SignIn";
+import { pickPic, type PickedPic } from "./notePic";
 
 /**
  * みんなの付箋（#160）。
@@ -57,6 +61,21 @@ import { Pin } from "./art";
  * 出す字は行き先の名前だけにする（`linkLabel`。素の URL を出すと、
  * 120字の本文が 2,048字の URL に埋まる）。
  * 通してよい字は `okLink` で、**守りはサーバー側**（`safeLink`）。
+ *
+ * ## 絵1枚（2026-10-08）
+ *
+ * あやとの言葉:
+ *
+ * > 付箋に画像も貼れるようにしてほしくて。（略）
+ * > でなんか見るときは邪魔にならないようにしてほしいんですけど。
+ *
+ * **絵だけログインが要る。字は今までどおり誰でも。** 絵はあやとの
+ * チャンネルに紐づく公開の面に即出るので、誰が貼ったか辿れない状態では
+ * 受けない（口の側も 401 を返す。`functions/src/islandApi.ts`）。
+ * ログインしていない人には、**書く欄の中で押す前に**そう言う。
+ *
+ * 「邪魔にならない」は `NotePic.tsx`——閉じているあいだは決まった高さの
+ * 切手1枚で、押すとその場で大きくなる。板に落ちてくるのは小さいほうだけ。
  *
  * ## ハート
  *
@@ -211,6 +230,10 @@ export default function Notes({
   /** 貼るリンク1本。**書かなくてよい欄**なので、空のまま出せる */
   const [link, setLink] = useState("");
   const [name, setName] = useState("");
+  /** 貼る絵1枚。**ログインした人だけが選べる**（下の `.nt-pick`） */
+  const [pic, setPic] = useState<PickedPic | null>(null);
+  /** 焼いているあいだ。スマホの大きい写真だと1秒ほどかかる */
+  const [baking, setBaking] = useState(false);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   /** 書く欄が開いているか。読みに来る面は畳んだ状態から始める
@@ -366,6 +389,29 @@ export default function Notes({
      書く欄を開く段をもう1つ出さない。同じ行き先の押しどころを2つ置かない。 */
   const blank = read === "ok" && list.length === 0 && !bin;
 
+  /** 選んだ絵を外す。見本の URL は手で返す（放っておくと端末に残る） */
+  const dropPic = () => {
+    setPic((cur) => {
+      if (cur) URL.revokeObjectURL(cur.preview);
+      return null;
+    });
+  };
+
+  /** 絵を1枚えらぶ。**焼くのはここ**（送る前に小さくする。`notePic.ts`） */
+  const takePic = async (file: File | undefined) => {
+    if (!file) return;
+    setBaking(true);
+    setErr(null);
+    const r = await pickPic(file);
+    setBaking(false);
+    if (!r.ok) {
+      setErr(r.why);
+      return;
+    }
+    dropPic();
+    setPic(r.pic);
+  };
+
   const submit = async () => {
     const t = text.trim();
     if (t.length < 2) {
@@ -389,17 +435,32 @@ export default function Notes({
           text: t,
           link: u || undefined,
           by: name.trim() || undefined,
+          /* 絵は2枚いっしょに送る（`notePic.ts`）。片方だけだと 400 */
+          image: pic?.image,
+          thumb: pic?.thumb,
+          w: pic?.w,
+          h: pic?.h,
+          tw: pic?.tw,
+          th: pic?.th,
         },
         await token(),
       );
       setNotes((cur) => [note, ...(cur ?? [])]);
       setText("");
       setLink("");
+      dropPic();
     } catch (e) {
+      const s = String(e);
       setErr(
-        String(e).includes("429") ?
+        s.includes("429") ?
           "今日はたくさん貼ってくれた。また明日おねがい。" :
-          "いま貼れなかった。少し待って、もう一度。",
+          s.includes("401") ?
+            "絵を貼るには、ログインしてね。" :
+            /* 400 は、こちらで直せる間違い。**電波の話にしない**
+               （貼った絵が通らなかっただけで、板は読めている） */
+            s.includes("400") && pic ?
+              "この絵は貼れなかった。ほかの絵でためしてみて。" :
+              "いま貼れなかった。少し待って、もう一度。",
       );
     } finally {
       setSending(false);
@@ -603,8 +664,55 @@ export default function Notes({
               placeholder="https://"
             />
           </label>
+          {/* 絵1枚（2026-10-08）。**ログインした人だけ。**
+              あやとの言葉:「付箋に画像も貼れるようにしてほしくて」。
+
+              ログインしていない人には、**押す前に**そう言う。押してから
+              断られる形にすると、絵をえらんで焼いてから「駄目でした」になる。
+              ここで入ってもらえば、書いた字はそのまま残る（同じ面のまま）。 */}
+          <div className="nt-field nt-pics">
+            <span>絵（なくてもいい）</span>
+            {user ? (
+              pic ? (
+                <span className="nt-picked">
+                  {/* 見本は、えらんだ絵そのもの。**貼ったあとの大きさで出す**
+                      （`.nt-pic` と同じ背）ので、板での姿が先に分かる */}
+                  <img src={pic.preview} alt="" />
+                  <button type="button" className="nt-picoff" onClick={dropPic}>
+                    <Icon name="close" size={12} />
+                    この絵をはずす
+                  </button>
+                </span>
+              ) : (
+                <label className={`nt-pick${baking ? " is-busy" : ""}`}>
+                  <Icon name="plus" size={13} />
+                  {baking ? "よみこんでいます…" : "絵をえらぶ"}
+                  <input
+                    type="file"
+                    /* **`image/*`。種類で絞らない。** iPhone の写真は HEIC で、
+                       jpeg だけを並べると選べない写真ができる。**どの道、
+                       送る前にこちらで jpeg か webp に焼き直す**（`notePic.ts`）し、
+                       置くかどうかは口が中身のバイトで決める。
+                       島のほかの2か所（`Characters.tsx` / `PhotoPost.tsx`）も同じ */
+                    accept="image/*"
+                    onChange={(e) => {
+                      void takePic(e.target.files?.[0]);
+                      /* 同じ絵をもう一度えらべるように空にする
+                         （`change` は値が同じだと飛んでこない） */
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )
+            ) : (
+              <span className="nt-picin">
+                <i>絵を貼るのは、ログインしてから。字だけなら、そのまま貼れるよ。</i>
+                <SignIn compact />
+              </span>
+            )}
+          </div>
           <div className="brow">
-            <button className="bbtn" onClick={submit} disabled={sending}>
+            <button className="bbtn" onClick={submit} disabled={sending || baking}>
               {sending ? "はりだし中…" : "はりだす"}
             </button>
           </div>
@@ -755,6 +863,11 @@ export default function Notes({
                   人の字がそのまま入る出口なので、1枚に頼らない。React は
                   `javascript:` の `href` を止めてくれない（警告だけ）。
                   口を1つ足した日・古い答えが挟まった日に、ここが最後の壁 */}
+              {/* 貼られた絵1枚（2026-10-08）。**閉じているあいだは切手1枚ぶん。**
+                  押すと、その場で大きくなる（`NotePic.tsx`）。
+                  字の下に置くのは、読む順を変えないため——絵を上に置くと、
+                  絵のある付箋だけ字が1段下がって、流れが途切れる。 */}
+              {n.pic && <NotePic pic={n.pic} />}
               {n.link && okLink(n.link) && (
                 <a
                   className="nt-link"
@@ -812,6 +925,14 @@ export default function Notes({
                       )
                     }
                     onStow={(on) => stow(n, on)}
+                    onDropPic={() =>
+                      setNotes(
+                        (cur) =>
+                          cur?.map((x) =>
+                            x.id === n.id ? { ...x, pic: undefined } : x,
+                          ) ?? cur,
+                      )
+                    }
                     stowed={bin}
                   />
                 )}
@@ -836,21 +957,27 @@ export default function Notes({
 }
 
 /**
- * あやとの道具。**1枚につき、返信としまうの2つだけ。**
+ * あやとの道具。**1枚につき、返信としまうの2つ**（絵が貼ってあれば3つ）。
  *
  * 出るかどうかは `/me` の `admin` で決めているが、それは道具を出すかどうかの
  * 話でしかない。実際に書けるかは、書く先の口がもう一度見ている
  * （`functions/src/islandApi.ts` の `ownerUid`）。
+ *
+ * **「絵をはずす」は1タップ。** 確かめを挟まないのは、荒れた絵が公開の面に
+ * 出ている時間をいちばん短くするため。外しても付箋の字は残る
+ * （付箋ごと下ろすなら「しまう」。あちらは消さずにしまう）。
  */
 function OwnerTools({
   note,
   onReply,
   onStow,
+  onDropPic,
   stowed,
 }: {
   note: Sticky;
   onReply: (reply: string | null, repliedAt: string | null) => void;
   onStow: (on: boolean) => void;
+  onDropPic: () => void;
   stowed: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -881,6 +1008,26 @@ function OwnerTools({
       <button className="nt-obtn" onClick={() => onStow(!stowed)}>
         {stowed ? "もどす" : "しまう"}
       </button>
+      {/* 絵が貼ってある1枚にだけ出る。**1タップで外れる。** */}
+      {note.pic && (
+        <button
+          className="nt-obtn"
+          onClick={async () => {
+            const t = await token();
+            if (!t) return;
+            // 押した瞬間に消す。戻すものではないので、返事を待たせない
+            onDropPic();
+            try {
+              await dropStickyPic(note.id, t);
+            } catch {
+              /* 外せなかったぶんは、次に読み直したときに戻ってくる。
+                 ここで謝らない（板は読めている） */
+            }
+          }}
+        >
+          絵をはずす
+        </button>
+      )}
       {open && (
         <span className="nt-obox">
           <textarea

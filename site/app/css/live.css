@@ -1436,3 +1436,119 @@
 }
 .nt-open:active,
 .nt-bin:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+
+
+/* =========================================================
+   12. 付箋に貼る絵（2026-10-08。`components/live/NotePic.tsx`）
+   あやとの言葉:「付箋に画像も貼れるようにしてほしくて。
+   でなんか見るときは邪魔にならないようにしてほしいんですけど。」
+
+   **閉じているあいだの背は固定。** 板は付箋が並ぶ面なので、1枚が
+   中身の縦横ぶん伸びると、貼られるほど下の付箋が遠くなる
+   （`docs/island-standards.md` 7章）。縦の写真でも横の写真でも、
+   閉じているあいだは同じ 104px の切手1枚ぶん（`cover` で切る）。
+   ========================================================= */
+.nt-pic {
+  display: block;
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-0);
+  /* 写真の台紙。紙の上に紙を重ねるので、白で浮かせる */
+  background: #fffdf5;
+  /* 押せるので厚みを付ける。合図は厚み1種類だけ（`island-design.md` 3-3）。
+     ぼかさず真下へ出す——付箋そのものの影（2px 4px 3px でぼかす）と
+     向きもぼかしも違えておく */
+  box-shadow: 0 4px 0 rgba(140, 110, 50, 0.45);
+  cursor: pointer;
+  /* 閉じているあいだの高さ。付箋の字3行ぶんより低くする */
+  --nt-pic-h: 104px;
+}
+.nt-pic > img {
+  display: block;
+  width: 100%;
+  height: var(--nt-pic-h);
+  border-radius: var(--r-0);
+  object-fit: cover;
+  /* 焼いた絵が入るまでの地。**真っ白を置かない**（入ったのか
+     入っていないのかが分からない） */
+  background: color-mix(in srgb, var(--ink-3) 14%, transparent);
+}
+.nt-pic:active { transform: translateY(4px); box-shadow: none; }
+/* 開いたら、切らずに全部見せる。**その場で開く**ので、
+   高さは画面の半分までにして、板を読んでいた場所を画面に残す */
+.nt-pic.is-open > img {
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+}
+
+/* ---- 書く欄の「絵」（`.nt-pics`） ---- */
+.nt-pick {
+  /* 本物の口（`input[type=file]`）をこの中に隠すので、
+     **置き場所の基準をここに置く**（置かないと、どこか上の
+     位置指定された箱まで飛んで1px はみ出す） */
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: start;
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  box-shadow: var(--pop-sm);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+.nt-pick:active { transform: translateY(4px); box-shadow: none; }
+/* 焼いているあいだ。**押しどころを消さない**（押しても何も起きないだけ） */
+.nt-pick.is-busy { opacity: 0.72; }
+/* 本物の口は隠す。押しどころは上の札そのもの */
+.nt-pick > input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.nt-picked { display: grid; gap: var(--sp-2); justify-items: start; }
+/* 見本は、貼ったあとと同じ姿（`.nt-pic` と同じ 104px・同じ切りかた）。
+   ここで小さく出すと、板に出てはじめて切り口が分かることになる */
+.nt-picked > img {
+  display: block;
+  width: 100%;
+  height: 104px;
+  border-radius: var(--r-0);
+  object-fit: cover;
+  background: color-mix(in srgb, var(--ink-3) 14%, transparent);
+}
+.nt-picoff {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: var(--pop-sm);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+.nt-picoff:active { transform: translateY(4px); box-shadow: none; }
+
+/* ログインしていない人に出る1行と、入る道。
+   **押す前に言う**ので、ここは平ら（押しどころは中の札だけ） */
+.nt-picin { display: grid; gap: var(--sp-2); justify-items: start; }
+.nt-picin > i {
+  font-style: normal;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  /* `--lh-note` はこのファイルに3か所あるが、**どこにも定義が無い**
+     （2026-10-08 に数えた）。新しく増やさないので `--lh-body` を使う */
+  line-height: var(--lh-body);
+  color: var(--ink-2);
+}

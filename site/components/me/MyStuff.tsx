@@ -12,6 +12,7 @@ import { jstDay } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { Pin } from "@/components/live/art";
+import NotePic from "@/components/live/NotePic";
 import CardOne from "@/components/cards/CardOne";
 import type { PlanDays, ShownCard } from "@/components/cards/cards";
 import ReadAgain, { Waiting } from "./ReadAgain";
@@ -152,6 +153,9 @@ function Notes({
             <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />
             {/* **自分が書いたまま出す**（#83） */}
             <Wrote t={n.text} as="p" className="mp-note-text" />
+            {/* 貼った絵。**ここにも出す**——自分の付箋を見に来た人の手元で
+                絵が消えていると、貼れていないように読める（`NotePic.tsx`） */}
+            {n.pic && <NotePic pic={n.pic} />}
             {/* テーマと日付は札にしない。**枠と余白のぶんだけ背が伸びる**し、
                 押せない札が押しどころの隣に並ぶと、合図が濁る。 */}
             <p className="mp-note-foot">
