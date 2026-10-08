@@ -14,6 +14,7 @@ import {
   type Figure,
   type Place,
 } from "@/components/nordic/stamp";
+import { STICKERS } from "@/content/goods";
 import { moveCard } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import DropPhoto from "./DropPhoto";
@@ -75,13 +76,27 @@ import {
  * 書類に欄を足さない。保存すると、**他の人が見るカードの見た目まで変わる。**
  * 誰も頼んでいない。ここでやっているのは「自分の記念の1枚をどう作るか」
  * なので、持って帰る絵にだけ効かせる。
+ *
+ * **どのあやとを入れたかも、同じ理由で保存しない**（2026-10-08）。
+ * `POST /cards/<id>` が受けるのは立ち位置（`x/y/rot/scale`）だけで、
+ * そこへ1欄足すと、**ログインした本人が、自分のカードを開いたときだけ
+ * 覚える**という、同じ札なのに人によって振る舞いの違うものになる。
+ * いま配ってあるカードの書類も、1枚も読み替えなくてよい——
+ * **欄が無い＝入れない**で、いままでと同じ絵が出る。
+ *
+ * ## 入れるあやとは `content/goods.ts` の `STICKERS` から引く
+ *
+ * **ここに名簿を作らない**（`docs/island-standards.md` 8章）。
+ * グッズの面に並んでいるステッカーが、そのまま選び先になる。
+ * 1枚足した日に、落とせる面とカードの両方で同時に増える。
+ *
+ * 焼くのに使うのは `art`（面に並べる小さいほう）ではなく **`file`（元絵）**。
+ * 持って帰る1枚は長辺 2048px で焼くので、小さいほうを使うと、
+ * 貼ったあやとだけが眠い絵になる。
  */
 
 /** 選ぶところに出す1人。 */
 type Pick = { key: string; icon: string; name: string; place: Place | null };
-
-/** あやと本人の絵。**島に立っているのと同じ1枚**（`/characters/ayato.webp`）。 */
-const AYATO = "/characters/ayato.webp";
 
 /** 手が止まってから焼くまで。**動かしているあいだは焼かない** */
 const BAKE_MS = 150;
@@ -126,20 +141,19 @@ export default function CardSheet({
 
   /** いま入れている人。**はじめは誰も入れない。** */
   const [chosen, setChosen] = useState<Pick | null>(null);
-  /** あやとも入れるか。**手元だけ。保存しない。** */
-  const [withAyato, setWithAyato] = useState(false);
+  /** どのあやとを入れるか（`STICKERS` の `id`）。**null は入れない。手元だけ。** */
+  const [mateId, setMateId] = useState<string | null>(null);
   /** 動かしたぶん。**null はその人の元の立ち位置**（既定か、覚えてあるぶん） */
   const [moved, setMoved] = useState<Place | null>(null);
   const [out, setOut] = useState<{ url: string; blob: Blob } | null>(null);
   /** 動かしている最中。canvas を前に出して、jpeg へは焼かない */
   const [live, setLive] = useState(false);
-  /** 焼けなかった理由。"photo" は写真そのもの、"chr" はキャラクターの絵 */
-  const [failed, setFailed] = useState<null | "photo" | "chr">(null);
+  /** 焼けなかった理由。"photo" は写真、"chr" はキャラクター、**"mate" は選んだあやと** */
+  const [failed, setFailed] = useState<null | "photo" | "chr" | "mate">(null);
   /** 絵が読み終わった回数。**読み終わってから描く**ための合図 */
   const [ready, setReady] = useState(0);
-  /* あやとの絵が読めたか。**読めていないのに札だけ出さない**——押しても
-     何も起きない札になる（「入れたのに入っていない」を出さないのと同じ）。 */
-  const [hasMate, setHasMate] = useState(false);
+  /** あやとの絵が読み終わった回数。**人の絵とは読む所が別**なので別に数える */
+  const [mateReady, setMateReady] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
   const cvRef = useRef<HTMLCanvasElement>(null);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
@@ -172,6 +186,14 @@ export default function CardSheet({
   const icon = chosen?.icon ?? null;
   /** いま描く立ち位置。動かしていなければ、その人の元の立ち位置 */
   const place = moved ?? chosen?.place ?? null;
+  /** いま入れるあやと。**人を入れていないときは読みに行かない**（2体目だから） */
+  const mate = useMemo(
+    () => (icon && mateId ? (STICKERS.find((s) => s.id === mateId) ?? null) : null),
+    [icon, mateId],
+  );
+  const mateSrc = mate?.file ?? null;
+  /** 左右を返してよい絵か。**字の入った絵は返さない**（`content/goods.ts`） */
+  const mateFlip = mate?.canFlip ?? true;
 
   /* ---- 絵を読む。**人や写真が変わったときだけ** ---- */
   useEffect(() => {
@@ -183,12 +205,13 @@ export default function CardSheet({
       if (had) URL.revokeObjectURL(had.url);
       return null;
     });
-    art.current = { photo: null, chr: null, mate: null };
+    /* **あやとの絵は捨てない。** あちらは `mateSrc` だけで決まるので、
+       人を選び直すたびに読み直すと、そのたび読み込み待ちが挟まる */
+    art.current = { ...art.current, photo: null, chr: null };
     (async () => {
-      const [photo, chr, mate] = await Promise.all([
+      const [photo, chr] = await Promise.all([
         loadImage(shot),
         icon ? loadImage(cardIcon(icon, 640)) : Promise.resolve(null),
-        icon ? loadImage(AYATO) : Promise.resolve(null),
       ]);
       if (gone) return;
       if (!photo) {
@@ -202,8 +225,7 @@ export default function CardSheet({
         setFailed("chr");
         return;
       }
-      art.current = { photo, chr, mate };
-      setHasMate(!!mate);
+      art.current = { ...art.current, photo, chr };
       setReady((n) => n + 1);
     })();
     return () => {
@@ -211,22 +233,62 @@ export default function CardSheet({
     };
   }, [shot, icon]);
 
+  /* ---- 選んだあやとを読む。**人の絵とは別に読む** ----
+     いっしょに読むと、ステッカーを選び直すたびに写真とキャラクターまで
+     読み直して、そのたび絵がいちど消える。 */
+  useEffect(() => {
+    let gone = false;
+    if (!mateSrc) {
+      art.current.mate = null;
+      /* 「入れない」に戻したら、止めるのをやめる。**ここで戻さないと、
+         読めない1枚を選んだあと、素の写真にも戻れなくなる** */
+      setFailed((had) => (had === "mate" ? null : had));
+      setMateReady((n) => n + 1);
+      return;
+    }
+    (async () => {
+      const img = await loadImage(mateSrc);
+      if (gone) return;
+      art.current.mate = img;
+      if (img) {
+        setFailed((had) => (had === "mate" ? null : had));
+      } else {
+        /* **キャラクターの絵と同じ守り。** 読めないまま焼くと、あやとの
+           入っていない1枚を「入れたつもり」で持って帰ることになる。
+           焼いてあった前の1枚も捨てる——残すと長押しで保存できてしまう。 */
+        setFailed("mate");
+        setOut((had) => {
+          if (had) URL.revokeObjectURL(had.url);
+          return null;
+        });
+      }
+      setMateReady((n) => n + 1);
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [mateSrc]);
+
   /* ---- canvas に描く。**動かしているあいだはここだけ** ---- */
   useEffect(() => {
-    const { photo, chr, mate } = art.current;
+    const { photo, chr } = art.current;
     const cv = cvRef.current;
     if (!photo || !cv) return;
+    /* 止めているあいだは描かない。**描くと、出せない絵が canvas に残る** */
+    if (failed) return;
     const figures: Figure[] = [];
     if (chr) figures.push({ img: chr, place });
     /* あやとは**入れると言ったときだけ、2体目として。** 並べ方
-       （押しのけない・足元をそろえる・重ならない）は `place.ts` の `layout` */
-    if (chr && mate && withAyato) figures.push({ img: mate });
+       （押しのけない・足元をそろえる・重ならない）は `place.ts` の `layout`。
+       **字の入った絵は左右を返さない**（`canFlip`） */
+    if (chr && art.current.mate)
+      figures.push({ img: art.current.mate, canFlip: mateFlip });
     composeMany(photo, figures, cv);
-  }, [ready, place, withAyato]);
+  }, [ready, mateReady, place, failed, mateFlip]);
 
   /* ---- 焼く。**手が止まってから1回** ---- */
   useEffect(() => {
-    if (live || !ready) return;
+    if (live || !ready || failed) return;
     const cv = cvRef.current;
     if (!art.current.photo || !cv) return;
     let gone = false;
@@ -247,7 +309,7 @@ export default function CardSheet({
       gone = true;
       clearTimeout(t);
     };
-  }, [ready, place, withAyato, live]);
+  }, [ready, mateReady, place, live, failed]);
 
   /* 紙を閉じるときに、最後の1枚を捨てる（放っておくと溜まる）。
      **閉じるときの1回だけ**なので、入れ替えのたびの始末は上でやっている。 */
@@ -487,6 +549,14 @@ export default function CardSheet({
                   <br />
                   ほかの人にしてみてください。
                 </p>
+              ) : failed === "mate" ? (
+                /* 選んだあやとが読めなかったとき。**キャラクターのときと同じ扱い。**
+                   あやとの入っていない1枚を、入れたつもりで持って帰らせない */
+                <p className="nstudio-off">
+                  このあやとの絵がいま読めません。
+                  <br />
+                  ほかのあやとか、「入れない」にしてみてください。
+                </p>
               ) : failed ? (
                 <p className="nstudio-off">いま写真が読めません。あとでもう一度。</p>
               ) : (
@@ -538,24 +608,58 @@ export default function CardSheet({
             </>
           )}
 
+          {/* どのあやとを入れるか。**入れた人がいるときだけ出る**——
+              2体目は本人の隣に立つものなので、本人のいない写真には出ようがない。
+
+              並ぶのは `content/goods.ts` の `STICKERS` そのまま。**ここに
+              名簿を作らない**ので、ステッカーが1枚増えた日に勝手に増える。
+              増えても折り返すだけなので、紙の背は段ぶんしか伸びない。 */}
+          {chosen && (
+            <>
+              {/* 顔の札（「だれを入れますか」）と**同じ声で問う。** 札の列の中へ
+                  入れてみたが、問いの字のぶん折り返しが1段増えて、かえって
+                  40px 高くなった（実測 104px → 160px）。1行取るほうが短い。 */}
+              <p className="nstudio-ask">あやとも入れますか</p>
+              <div className="akd-mates" role="group" aria-label="あやとも入れますか">
+                <button
+                  type="button"
+                  className={`akd-mate${mateId === null ? " is-on" : ""}`}
+                  aria-pressed={mateId === null}
+                  onClick={() => {
+                    setMateId(null);
+                    touch();
+                  }}
+                >
+                  {/* 「入れない」は禁止ではなく、対等な選択肢の1つ。空けておく、を
+                      島の言葉（破線）で言う（顔の札の `.npick-none` と同じ）。 */}
+                  <span className="akd-mate-none" aria-hidden />
+                  入れない
+                </button>
+                {STICKERS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`akd-mate${mateId === s.id ? " is-on" : ""}`}
+                    aria-pressed={mateId === s.id}
+                    onClick={() => {
+                      setMateId(s.id);
+                      touch();
+                    }}
+                  >
+                    {/* 札に出すのは小さいほう（`art`）。**焼くのは元絵（`file`）**で、
+                        そちらは押されたときに読みにいく */}
+                    <img src={s.art} alt="" width={30} height={30} />
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
-              並びはやることの順（連れを足す → 大きさ → もとへ）。 */}
+              並びはやることの順（大きさ → もとへ）。 */}
           {chosen && (
             <div className="akd-tune">
-              {hasMate && (
-              <button
-                type="button"
-                className={`akd-mate${withAyato ? " is-on" : ""}`}
-                aria-pressed={withAyato}
-                onClick={() => {
-                  setWithAyato((v) => !v);
-                  touch();
-                }}
-              >
-                <img src={AYATO} alt="" width={30} height={30} />
-                あやともいっしょに
-              </button>
-              )}
               <label className="akd-zoom">
                 <span>大きさ</span>
                 <input
