@@ -27,6 +27,8 @@
  * 書いてよいのは「その人がこれから何をするか／何が起きるか」だけ。
  */
 
+import { AYATO_H_PX, AYATO_W } from "@/lib/ayatoArt";
+
 /** 欄のいまの段。見た目はここで決まる（`app/goods/goods.css`） */
 export type Stage =
   /** もう手に入る */
@@ -98,8 +100,10 @@ export const STICKERS: Sticker[] = [
     saveAs: "ayato-island.webp",
     /* 島を歩いているあやとそのもの。**左を向いている**ので、左に立つときは返す */
     canFlip: true,
-    w: 273,
-    h: 319,
+    /* 寸法は島と同じ1本から（`lib/ayatoArt.ts`）。**ここに数を写すと、
+       絵を描き直した日にステッカーの枠だけ前の形のまま残る** */
+    w: AYATO_W,
+    h: AYATO_H_PX,
   },
   {
     /* **2枚目**（あやと「この子もステッカーに欲しい」2026-10-08）。
