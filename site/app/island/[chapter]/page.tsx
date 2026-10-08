@@ -10,6 +10,7 @@ import { isleLead } from "@/components/isle/span";
 import {
   albaniaSpec,
   isleSpec,
+  macedoniaSpec,
   nordicSpec,
   type IsleSpec,
   type Neighbour,
@@ -27,6 +28,7 @@ import { chapterNeighbours, type Chapter } from "@/content/chapters";
 const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour, next?: Neighbour) => IsleSpec> = {
   nordic: nordicSpec,
   albania: albaniaSpec,
+  "north-macedonia": macedoniaSpec,
 };
 
 /**

@@ -191,6 +191,27 @@ export const SHELVES: Shelf[] = [
     ],
   },
   {
+    /* 北マケドニア。**面は1枚だが、棚を立てる。**
+       北欧の棚に混ぜると「北欧の旅」の中の1行になって、別の国の話だと読めない。
+       歩いて国の面（`/map/<国>`）ができたら、そちらもここへ並べる。 */
+    id: "north-macedonia",
+    title: "北マケドニア",
+    /* **時点を言わない**（`docs/island-standards.md` 16章）。
+       「これから行く国」と書くと、着いた日から嘘になる。 */
+    note: "海に出ない、山と湖の国。首都はスコピエ",
+    items: [
+      {
+        href: "/north-macedonia",
+        name: "北マケドニア",
+        note: "どんな国か・スコピエ・食べもの・ことば",
+        q: q(
+          "北マケドニア north macedonia スコピエ skopje オフリド ohrid マトカ matka " +
+            "タヴチェグラフチェ アイヴァル ajvar デナル denar キリル文字 バルカン",
+        ),
+      },
+    ],
+  },
+  {
     id: "atlas",
     title: "島の連なり",
     note: "旅の章ごとに島が1つ建っている",

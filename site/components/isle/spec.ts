@@ -446,6 +446,42 @@ export function albaniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): Isl
 }
 
 /**
+ * 北マケドニアの島。**素材の島に、国の案内を1つ足したもの。**
+ *
+ * 作りは `albaniaSpec` と同じ——**素材の島を作り直さず、包む。**
+ * ここで風船や板を並べ直すと、配信が1本焼かれた晩に素材の島が建つ数で
+ * 追い越して、足したものが黙って消える（`albaniaSpec` の注と
+ * `docs/island-misses.md` #185）。
+ *
+ * 足すのは1つだけ。**この国に何があるかを読む面への入口**（`/north-macedonia`）。
+ * アルバニアの風船（やってほしいことを貼る）と違うのは、あちらが
+ * 「まだ何も決まっていない」island だったのに対して、こちらは**行く先の
+ * 中身が先に分かっている**から——島に降りた人が最初に欲しいのはそれ。
+ *
+ * 国を歩いて `content/countries.ts` に載り、配信が焼かれれば、
+ * 道しるべもやぐらも石碑も勝手に建つ。この札はそのあいだも残る。
+ */
+export function macedoniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
+  const isle = isleSpec(c, prev, next);
+  const guide: IslePlaceSpec = {
+    id: "guidebook",
+    /* **島の固有名詞を名前にしない**（`docs/island-design.md` 6章）。
+       押す前に、中に何があるかが読めること。 */
+    label: "この国の歩きかた",
+    blurb: "首都・見どころ・食べもの",
+    icon: isleIcon(c.slug, "guidebook", "stall"),
+    size: 58,
+    sign: true,
+    href: "/north-macedonia",
+  };
+  /* 桟橋は `isleSpec` が**いちばん最後**に足す（島から島へ渡るところなので
+     並びの末尾）。だからその1つ手前に差す。 */
+  const places = [...isle.places];
+  places.splice(Math.max(0, places.length - 1), 0, guide);
+  return { ...isle, places, building: c.opensAt };
+}
+
+/**
  * 次の島（北欧）。
  *
  * **建てるものが違う**（`docs/island-atlas.md` 4章）。過去の島は
