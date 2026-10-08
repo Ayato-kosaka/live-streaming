@@ -361,6 +361,7 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
 | `legends.ts` | どれを伝説と呼ぶか |
 | `plans.ts` `apps.ts` | 企画・アプリの選定 |
 | `voice.ts` `chatter.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
+| `goods.ts` | グッズの品ぞろえ。**LINEスタンプの絵が届いたら `art` に1行**（絵は `tools/goods/line-src/` に置いて `python3 tools/goods/stampbake.py`。透かしを焼くのはそこ1か所で、焼いていない絵を `art` に書くと`python/goods_stamp_selftest.py` が赤くなる） |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | 名前・説明・本人から聞いた事実（誕生日・日本を出た日・勤めていた期間）・画面に出る言葉。**同じファイルの `STATS_FALLBACK` だけは①**（2章） |
 | `aboutWords.ts`、`nordic.ts` の `WHY` `THEMES` `THEME_WORD` `UNPLANNED` `THANKS` | **本人が書いた文そのもの。** 本人が書かないかぎり増えない |
 
