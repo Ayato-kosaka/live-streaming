@@ -59,16 +59,48 @@ export type Sticker = {
 };
 
 /**
- * いまあるステッカー。**1枚**（あやと「今は一つで、あやと島を歩いてる
- * キャラクター画像」）。増えたらここに1行足す。
+ * いまあるステッカー。**3枚。並びもあやとが決めたとおり。**
+ *
+ * 1枚目は**島でほんとうに歩いているあの絵**そのもの
+ * （`public/characters/ayato.webp`。`IsleStage` が島に立てているのと同じ1枚）。
+ * **写しを作らず、島と同じファイルを指している。** 写すと、島の絵を描き直した日に
+ * ステッカーだけ前の絵のまま残る。
+ *
+ * 3枚目は緑の1枚。**題は「ヒッチハイクするあやと」**（あやと 2026-10-08。
+ * 並びも「STOP が3枚目でいいや」）。
+ * 親指を立てて道に立っている絵なので、「島を歩く」ではない。
+ *
+ * **ここの並びが、あやと島カードに入れるあやとの選び先にもなる**
+ * （`components/cards/CardSheet.tsx`）。1行足せば、カードでも選べるようになる。
  */
 export const STICKERS: Sticker[] = [
   {
+    id: "isle",
+    name: "島にいるあやと",
+    art: "/characters/ayato.webp",
+    file: "/characters/ayato.webp",
+    saveAs: "ayato-island.webp",
+    w: 273,
+    h: 319,
+  },
+  {
+    /* **2枚目**（あやと「この子もステッカーに欲しい」2026-10-08）。
+       LINEスタンプと同じ線の絵。**透過のまま配る**ので、白地の無いところへも貼れる。
+       題はこちらで付けた（あやとは題を言っていない）。変えたければ1行。 */
     id: "walk",
-    name: "島を歩くあやと",
+    name: "歩いているあやと",
+    art: "/goods/ayato-walk.webp",
+    file: "/goods/ayato-walk.png",
+    saveAs: "ayato-walk.png",
+    w: 480,
+    h: 480,
+  },
+  {
+    id: "hitch",
+    name: "ヒッチハイクするあやと",
     art: "/goods/ayato-sticker.webp",
     file: "/goods/ayato-sticker.jpg",
-    saveAs: "ayato-sticker.jpg",
+    saveAs: "ayato-hitchhike.jpg",
     w: 320,
     h: 480,
   },
@@ -112,16 +144,20 @@ export const LINE_PENDING = "/goods/line/pending.webp";
  * そのあとに気持ちが4つ、最後に使いどころのある3つ、という並びになっている。
  */
 export const LINE_STAMPS: LineStamp[] = [
-  { id: "ohayou", line: "おはよう" },
-  { id: "konbanwa", line: "こんばんは" },
-  { id: "oyasumi", line: "おやすみ" },
-  { id: "arigatou", line: "ありがとう" },
-  { id: "ureshii", line: "うれしい" },
-  { id: "iiyanka", line: "いいやんか" },
-  { id: "yabai", line: "やばいよやばいよ" },
-  { id: "chottomatte", line: "ちょっとまってよ" },
-  { id: "sugumodoru", line: "すぐもどる" },
-  { id: "oumaiga", line: "おーまいがー" },
+  { id: "ohayou", line: "おはよう", art: "/goods/line/ohayou.webp" },
+  { id: "konbanwa", line: "こんばんは", art: "/goods/line/konbanwa.webp" },
+  { id: "oyasumi", line: "おやすみ", art: "/goods/line/oyasumi.webp" },
+  { id: "arigatou", line: "ありがとう", art: "/goods/line/arigatou.webp" },
+  { id: "ureshii", line: "うれしい", art: "/goods/line/ureshii.webp" },
+  /* **すごいよ は、あとから届いた11枚目。** 気持ちの並びの中に入れてある
+     （うれしい → すごいよ → いいやんか）。LINE に出すときの順番は
+     あやとが後で決めるので、ここの並びは島の面の並びでしかない。 */
+  { id: "sugoiyo", line: "すごいよ", art: "/goods/line/sugoiyo.webp" },
+  { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
+  { id: "yabai", line: "やばいよやばいよ", art: "/goods/line/yabai.webp" },
+  { id: "chottomatte", line: "ちょっとまってよ", art: "/goods/line/chottomatte.webp" },
+  { id: "sugumodoru", line: "すぐもどる", art: "/goods/line/sugumodoru.webp" },
+  { id: "oumaiga", line: "おーまいがー", art: "/goods/line/oumaiga.webp" },
 ];
 
 /** スタンプの一言だけ。付箋の中から「この一言のこと」を見分けるのに使う。 */
@@ -141,8 +177,17 @@ export const SUZURI = {
   thumb: "/goods/suzuri-tote.webp",
   w: 560,
   h: 560,
-  /** 写真の中身。見えているものだけを言う */
+  /** 写真の中身。**見えているものだけを言う** */
   cap: "イギリスのトートバッグ",
+  /**
+   * 何が買えるか。
+   *
+   * **品ぞろえも値段も書かない**——向こうが持っているので、焼くと変わった日から嘘になる。
+   * 書くのは「トートバッグだけではない」ことまで（あやと 2026-10-08
+   * 「スズリはトートバッグだけじゃなくてキャラクターのグッズとかも買えます」）。
+   * 写真が1枚だと、その1枚しか無い店に見える。
+   */
+  what: "トートバッグのほかに、キャラクターのグッズもあります。",
   /** 押したら何が起きるか */
   note: "押すと、島の外の店にうつる",
 };
