@@ -278,10 +278,35 @@
 }
 /* 足。**紙の外へ出ない。** 候補が12人いても「ほぞんする」がここに居る */
 .akd-sheet-foot {
+  position: relative;
   flex: 0 0 auto;
   padding: var(--sp-3) var(--sp-4);
   border-top: 1px solid var(--pg-rule);
   background: var(--pg-sheet);
+}
+/* まだ下に続く、の合図（`is-more`）。**足の上に、紙の色がすっと薄れる帯**を置く。
+
+   図鑑から開いた紙は人が入った状態で出るので下へ送らない。そのぶん
+   「あやとも入れますか」が窓の下に隠れて、**見えているところが罫と足で
+   きれいに終わって、終わった紙に見える**（2026-10-08、本番で実測）。
+
+   動かさない。**続いていることだけ**を言う。送り切ったら消える。
+   押せるものではないので、指も矢印も取らない（`pointer-events: none`）。 */
+.akd-sheet-foot::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--pg-sheet), transparent);
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.akd-sheet.is-more .akd-sheet-foot::before { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .akd-sheet-foot::before { transition: none; }
 }
 .akd-close {
   display: grid;
