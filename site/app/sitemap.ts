@@ -25,7 +25,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 視聴者さんが企画を出す道を畳んで、いまは `/board` へ送るだけの1枚
     // （`robots: index: false`）。索引に出すと、検索から来た人が送り返される。
     // これからの大きい企画。専用ページを持つものはここに足す。
+    // **足し忘れると `prodsweep.mjs` が「sitemap.xml に無い」で赤くする。**
+    // 2026-10-08 に `/north-macedonia` を作ったとき、面と `/all` の棚は足したのに
+    // ここを忘れて、配ったあとの見張りで見つかった。面を1枚増やす仕事は3か所ある。
     "/nordic", "/nordic/guide",
+    "/north-macedonia",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
     "/privacy",
     // **看板の6つは全部ここに並べる。** `/about` は頭のバーにも名刺にも
