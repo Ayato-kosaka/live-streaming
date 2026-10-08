@@ -1,0 +1,75 @@
+name: あやとを呼ぶ
+
+# **こちらからあやとに相談を届ける、唯一の口。**
+#
+# あやと（2026-10-08）:
+#
+# > 他に判断必要なことあればメンションしてね
+# > （私のアカウントでメンションしても通知来ないのでGitHub action 経由とかで。）
+#
+# セッションから issue に書くときは**あやと本人のトークン**で書いている。
+# GitHub は**自分で自分を呼んでも通知を飛ばさない**ので、`@Ayato-kosaka` と
+# 書いても1通も届かない。**字としては在るので、書いたほうは届いた気になる。**
+# ここを通すと `github-actions[bot]` が書くので、はじめて通知になる。
+#
+# ## 入れた字は、公開のログに出る
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# **視聴者さんの素性（名前・channelId・どねID・uid・ハンドル）を `text` に入れない。**
+# 入れたいときは issue の本文に書いて、ここからは「#NNN を見て」とだけ言う。
+#
+# ## 使いかた
+#
+#   gh api -X POST repos/:owner/:repo/actions/workflows/call_ayato.yml/dispatches \
+#     -f ref=master -f inputs[issue]=701 -f inputs[text]='画像をどこに置くか決めてください'
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "どの issue に書くか（番号だけ）"
+        required: true
+        type: string
+      text:
+        description: "何を決めてほしいか（1〜2行。視聴者さんの素性を入れない）"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 番号が番号か
+        env:
+          ISSUE: ${{ inputs.issue }}
+        run: |
+          set -euo pipefail
+          # **数字だけ通す。** `701 && curl …` のようなものを後ろの step へ渡さない
+          case "$ISSUE" in
+            ''|*[!0-9]*) echo "::error::issue は番号だけ: $ISSUE"; exit 1 ;;
+          esac
+
+      - name: 呼ぶ
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE: ${{ inputs.issue }}
+          TEXT: ${{ inputs.text }}
+        run: |
+          set -euo pipefail
+          # **`@Ayato-kosaka` を囲いにも引用にも入れない。**
+          # コードブロック・行頭の `>`・バッククォートの中は、字として在っても飛ばない
+          # （python/ticket_labels.py の mention_live にその判定が書いてある）。
+          # だから本文は「素の行」で始める。$TEXT は jq に値として渡して、
+          # 中身が何であれ字として扱う（本文の形を壊させない）
+          body="$(jq -rn --arg t "$TEXT" '
+            "@Ayato-kosaka 判断をお願いします。\n\n" + $t +
+            "\n\n---\n_あやと島案内鳥が呼んでいます_"
+          ')"
+          printf '%s\n' "$body" | gh api -X POST \
+            "repos/$REPO/issues/$ISSUE/comments" -F body=@- --jq '.html_url'
