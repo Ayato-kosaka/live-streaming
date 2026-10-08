@@ -141,7 +141,7 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { isleSpec, albaniaSpec, nordicSpec } = req(join(OUT, "components", "isle", "spec.js"));
+const { isleSpec, albaniaSpec, macedoniaSpec, nordicSpec } = req(join(OUT, "components", "isle", "spec.js"));
 const { CHAPTERS } = req(join(OUT, "content", "chapters.js"));
 console.log(`# 組み立てた絵の表: ${SRC}`);
 
@@ -161,7 +161,7 @@ function check(name, good, why = "") {
 
 /* 島の建てかたは**本番の面と同じ**にする（`app/island/[chapter]/page.tsx`）。
    旅の spec を持っている章は、建つものの多いほうで建つ */
-const TRIP = { nordic: nordicSpec, albania: albaniaSpec };
+const TRIP = { nordic: nordicSpec, albania: albaniaSpec, "north-macedonia": macedoniaSpec };
 const NEAR = { name: "となりの島", href: "/island/x" };
 const isles = CHAPTERS.map((c) => {
   const base = isleSpec(c, NEAR, NEAR);
@@ -170,7 +170,11 @@ const isles = CHAPTERS.map((c) => {
   return { slug: c.slug, places: spec.places };
 });
 
-check("6章ぶんの島が建つ", isles.length === 6, `${isles.length}章`);
+/* **数を焼かない。** ここは長く `=== 6` だったので、**章を1つ足した日に
+   この見張りが落ちた**（北マケドニアを足して実際に落ちた）。見たいのは
+   「章の表を読めているか」であって章の数ではないので、下限だけ見る
+   （0章になったら読めていない）。 */
+check(`章の表を読めている（${isles.length}章・6章以上）`, isles.length >= 6, `${isles.length}章`);
 
 for (const i of isles) {
   console.log(`  - ${i.slug}: ${i.places.map((p) => `${p.id}=${p.icon}`).join(" ")}`);
@@ -252,6 +256,11 @@ const WANT = {
   "iran-walk": "countries streams shorts legends facts pier",
   nordic: "countries streams shorts facts pier",
   albania: "facts wish pier",
+  /* 着いていない島。まだ配信も歩いた国も焼かれていないので、建つのは
+     足した案内（`macedoniaSpec`）と桟橋だけ。**歩いて素材が焼かれたら
+     ここを増やす**——増えたことに気づかないまま減らさないため、
+     減っても増えても赤くなる形にしてある。 */
+  "north-macedonia": "guidebook pier",
 };
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");

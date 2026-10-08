@@ -1,0 +1,146 @@
+/*
+ * 北マケドニアの面だけで使うもの。
+ *
+ * **札や折りたたみは作り直さない。** しおり（`/nordic/guide`）が使っている
+ * 「紙の型」（`app/css/nordic.css` の `.gbook` `.gtoc` `.gchap` `.gcard` …）を
+ * そのまま借りる。同じ用事の面が2通りの見た目を持つと、島の中で部屋が
+ * 増えたように見える（`docs/island-design.md`）。
+ *
+ * ここに置くのは、この面にしか無いもの——地図と、頭に並ぶ数だけ。
+ */
+
+/* ---- 地図 --------------------------------------------------------------- */
+
+.nmmap {
+  margin: 10px 0 0;
+}
+
+.nmmap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-2);
+  /* 島と同じで輪郭線を引かない。縁は影で止める */
+  box-shadow: var(--shadow-1);
+}
+
+/* 色は島の色から取る。地図だけ別の色を持つと、島の色を変えたとき取り残される */
+.nmm-sea { fill: var(--sea-mid); }
+.nmm-land { fill: color-mix(in srgb, var(--sand) 72%, var(--ink-2)); }
+/* 西どなりのアルバニア。ほかの隣国と地続きなので、**明るさだけで一段分ける。**
+   色を変えると「ここも主役」に見えて、緑の北マケドニアと取り合いになる */
+.nmm-al { fill: color-mix(in srgb, var(--sand) 97%, var(--grass-hi)); }
+.nmm-mk { fill: var(--grass); }
+/* 湖。**海の色をそのまま使わない**——使うと湖と海がつながって見える */
+.nmm-lake { fill: color-mix(in srgb, var(--sea-shallow) 80%, var(--grass-lo)); }
+
+.nmm-pin circle {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
+.nmm-pin.is-cap circle { fill: var(--pick); stroke: var(--paper); stroke-width: 5; }
+/* 国の外（ティラナ）。点も字も一段おとす */
+.nmm-pin.is-away circle { fill: var(--paper); stroke: var(--ink-2); }
+
+/* 字の下に敷く紙。**縁取りでごまかさない**（`NmMapSvg.tsx` の注） */
+.nmm-lab { fill: var(--paper); opacity: 0.93; }
+
+.nmm-pin text {
+  font-family: inherit;
+  font-weight: 900;
+  fill: var(--ink);
+}
+
+.nmm-pin.is-away .nmm-lab { opacity: 0.8; }
+.nmm-pin.is-away text { fill: var(--ink-2); }
+
+.nmmap figcaption {
+  margin: 7px 2px 0;
+  font-size: var(--fs-min);
+  line-height: 1.8;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* ---- 頭に並ぶ数 --------------------------------------------------------- */
+
+/* 4つ並ぶ。**溜まらない欄**（増えるものではない）ので、横に詰めてよい */
+.nmfacts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  margin: 12px 0 0;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  overflow: hidden;
+}
+
+.nmfacts div {
+  background: var(--paper);
+  padding: 9px 10px;
+}
+
+.nmfacts b {
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.nmfacts em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 900;
+  margin-left: 2px;
+}
+
+.nmfacts span {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-min);
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+@media (min-width: 560px) {
+  .nmfacts { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ---- 行き先の札 --------------------------------------------------------- */
+
+/* `.gcard` を借りたうえで、絵と現地語の綴りぶんだけ足す */
+.nmspot {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 0 9px;
+  align-items: start;
+}
+
+.nmspot > .ic { grid-row: span 2; margin-top: 2px; }
+.nmspot .nmspot-h { grid-column: 2; }
+.nmspot .nmspot-b { grid-column: 2; }
+
+/* 現地の綴り。**字を小さくしすぎない**——これは見せて指さすための字 */
+.nmspot-local {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-2);
+  /* キリル文字は焼いた丸ゴシック（fonts.css）に入っていないので、端末の字に落ちる */
+  font-family: ui-rounded, -apple-system, "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+}
+
+/* 行き方と値段。本文と見分けがつくように、左に細い罫を立てる */
+.nmspot-how {
+  margin: 6px 0 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--rule);
+  font-size: 12px;
+  line-height: 1.85;
+  font-weight: 700;
+  color: var(--ink-2);
+}
