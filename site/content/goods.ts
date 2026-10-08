@@ -49,10 +49,25 @@ export type Sticker = {
   name: string;
   /** 面に並べる1枚（長辺480） */
   art: string;
-  /** 落とすときの1枚（元絵） */
+  /**
+   * 落とすときの1枚（元絵）。
+   *
+   * **あやと島カードに焼くのもこちら**（`components/cards/CardSheet.tsx`）。
+   * 持って帰る1枚は長辺 2048px なので、`art` を焼くと貼ったあやとだけ眠くなる。
+   */
   file: string;
   /** 落ちてくるファイルの名前 */
   saveAs: string;
+  /**
+   * 左右を返してよい絵か。**あやと島カードで、本人の左に立つときに効く。**
+   *
+   * キャラクターの絵は**どれも左を向いている**ので、返さないと本人に背を
+   * 向けたまま並ぶ。だから返してよい。**返してはいけないのは、字や標識の
+   * 入った絵**——返すと字が裏返る（「STOP」が「ꟼOTƧ」になった。2026-10-08）。
+   *
+   * **省略できない。** 1枚足すたびに、どちらかを必ず決めてもらう。
+   */
+  canFlip: boolean;
   /** `art` の寸法。場所を先に取るために要る */
   w: number;
   h: number;
@@ -69,8 +84,9 @@ export type Sticker = {
  * 2枚目は緑の1枚。**題は「ヒッチハイクするあやと」**（あやと 2026-10-08）。
  * 親指を立てて道に立っている絵なので、「島を歩く」ではない。
  *
- * **ここの並びが、あやと島カードに入れるあやとの選び先にもなる**
- * （`components/cards/CardSheet.tsx`）。1行足せば、カードでも選べるようになる。
+ * **ここの並びが、あやと島カードに入れるあやとの選び先でもある**
+ * （`components/cards/CardSheet.tsx`。2026-10-08 から）。1枚足せば、
+ * 落とせる面とカードの両方で同時に増える。**カードの側に名簿は無い。**
  */
 export const STICKERS: Sticker[] = [
   {
@@ -79,6 +95,8 @@ export const STICKERS: Sticker[] = [
     art: "/characters/ayato.webp",
     file: "/characters/ayato.webp",
     saveAs: "ayato-island.webp",
+    /* 島を歩いているあやとそのもの。**左を向いている**ので、左に立つときは返す */
+    canFlip: true,
     w: 273,
     h: 319,
   },
@@ -88,6 +106,8 @@ export const STICKERS: Sticker[] = [
     art: "/goods/ayato-sticker.webp",
     file: "/goods/ayato-sticker.jpg",
     saveAs: "ayato-hitchhike.jpg",
+    /* 「STOP」の字が入っている。返すと読めなくなるので、返さない */
+    canFlip: false,
     w: 320,
     h: 480,
   },

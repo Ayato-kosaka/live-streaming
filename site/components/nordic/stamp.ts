@@ -145,7 +145,16 @@ function groundShadow(g: CanvasRenderingContext2D, at: Box) {
 }
 
 /** 焼く1体ぶん。絵と、本人が動かした置き方。 */
-export type Figure = { img: HTMLImageElement; place?: Place | null };
+export type Figure = {
+  img: HTMLImageElement;
+  place?: Place | null;
+  /**
+   * 左右を返してよい絵か。**既定は返してよい。**
+   * 字や標識の入った絵（あやとステッカーの「STOP」）は `false`。
+   * 判断そのものは `components/cards/place.ts` の `Actor.canFlip`。
+   */
+  canFlip?: boolean;
+};
 
 /**
  * 写真にキャラクターを焼いて、canvas を返す。
@@ -182,7 +191,12 @@ export function composeMany(
   const at = layout(
     pw,
     ph,
-    src.map((b, i) => ({ w: b.w, h: b.h, place: figures[i].place })),
+    src.map((b, i) => ({
+      w: b.w,
+      h: b.h,
+      place: figures[i].place,
+      canFlip: figures[i].canFlip,
+    })),
   );
   /* **影を先に、ぜんぶまとめて落とす。** 1人ずつ「影→本体」で描くと、
      隣に立った人の足元の影が、先に描いた人の足の上に乗る。 */
