@@ -972,3 +972,36 @@
   border-color: var(--pg-pick);
   background: color-mix(in srgb, var(--pick) 8%, var(--paper));
 }
+
+/* --- 押して開けるカード（図鑑・じぶんのこと） --------------------------
+   **`CardOne` に `onOpen` を渡したときだけ**、絵のところが `<button>` に
+   なる（2026-10-08。あやと「このページからあやとじまカードダウンロード
+   できないとダメ」）。開くのは `/cards` と同じ紙（`CardSheet`）。
+
+   押す場所は**絵そのもの**（`docs/island-design.md` 3章の1）。帯の中の
+   企画は字の行き先で、行く先が別なので一緒にできない（`<button>` の中に
+   `<a>` は置けない、というのもある）。
+
+   **厚みを付ける**（3章の3）。3章の例外「一面に並ぶマスが全部押せるときは
+   1枚ずつに厚みを付けない」は、`/cards` の写真のマス（`.akd-tile`）の側。
+   図鑑もじぶんのことも、カードは**欄のひとつとして数枚ならぶだけ**で、
+   まわりは押せない字と欄。例外の理由は「並びそのものが合図になる」なので、
+   並びが面を埋めていないときは効かない。
+
+   **厚みのぶんの場所を取らない。** 取ると帯が 4px 下がって、
+   いま並んでいるカードの背が全部変わる。絵は `position: relative` なので
+   帯より上に塗られ、厚みは帯の上の余白（8px）に乗る。 */
+.akd-shot.is-tap {
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--pop-sm);
+}
+/* 押したら沈む。**色は変えない**（`docs/island-design.md` 3章の3）。
+   厚みのぶんだけ下がるので、帯は動かない。 */
+.akd-shot.is-tap:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}

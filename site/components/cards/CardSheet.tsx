@@ -106,6 +106,7 @@ const SAVE_MS = 700;
 export default function CardSheet({
   group,
   plans,
+  startIcon,
   onClose,
   onDropped,
 }: {
@@ -113,6 +114,19 @@ export default function CardSheet({
   group: PhotoGroup;
   /** その日の企画。**1日に何本でも立つ** */
   plans?: PlanBrief[];
+  /**
+   * 開いた瞬間から入れておく人の絵。
+   *
+   * **渡すのは「1人ぶんの紙」だけ**（図鑑とじぶんのこと）。あちらは
+   * その人のカード1枚を押して開くので、素の写真で開くと**押した絵と
+   * 開いた絵が別もの**になる。
+   *
+   * **渡さなければ素の写真のまま**（`/cards` の、何人も写っている紙）。
+   * あやと「代表でキャラクターを埋めるのはやめて欲しい」は、
+   * 4人ぶんあるカードの1人目が代表に見える、という話だった。
+   * 1人しかいない紙には、代表も何もない。
+   */
+  startIcon?: string;
   onClose: () => void;
   /** 消えた1枚。**あやとだけ**（道具そのものが `DropPhoto` の中で消える） */
   onDropped?: (photoId: string) => void;
@@ -139,8 +153,13 @@ export default function CardSheet({
     return out;
   }, [group.cards]);
 
-  /** いま入れている人。**はじめは誰も入れない。** */
-  const [chosen, setChosen] = useState<Pick | null>(null);
+  /**
+   * いま入れている人。**はじめは誰も入れない**——`startIcon` を渡した
+   * 1人ぶんの紙だけ、その人から始まる。
+   */
+  const [chosen, setChosen] = useState<Pick | null>(
+    () => (startIcon ? (picks.find((p) => p.icon === startIcon) ?? null) : null),
+  );
   /** どのあやとを入れるか（`STICKERS` の `id`）。**null は入れない。手元だけ。** */
   const [mateId, setMateId] = useState<string | null>(null);
   /** 動かしたぶん。**null はその人の元の立ち位置**（既定か、覚えてあるぶん） */

@@ -13,7 +13,7 @@ import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { Pin } from "@/components/live/art";
 import NotePic from "@/components/live/NotePic";
-import CardOne from "@/components/cards/CardOne";
+import CardPeek from "@/components/cards/CardPeek";
 import type { PlanDays, ShownCard } from "@/components/cards/cards";
 import ReadAgain, { Waiting } from "./ReadAgain";
 import Wrote from "@/components/ui/Wrote";
@@ -276,9 +276,5 @@ function Cards({
         </Link>
       </div>
     );
-  return (
-    <Longer items={cards.list} first={4} step={8} unit="枚" as="div" className="akd-grid">
-      {(c) => <CardOne key={c.id} card={c} plans={planDays[c.day]} showName={false} />}
-    </Longer>
-  );
+  return <CardPeek cards={cards.list} planDays={planDays} first={4} step={8} />;
 }
