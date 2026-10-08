@@ -254,16 +254,26 @@ check(
 /* ------------------------------------------- 5. 対照。直したものが効いているか */
 
 /* **`nextPlan()` は同じ表で行ってきた企画を返す。** ここが undefined になったら
-   対照が効いていない（＝どちらを使っても同じ）ので、上の合格が何も言っていない */
-const allPast = nextPlan(noon(2026, 10, 7));
+   対照が効いていない（＝どちらを使っても同じ）ので、上の合格が何も言っていない
+
+   **日を焼かない。** ここは長く `2026-10-07`（＝この見張りを書いた日の本番）
+   だったので、**先の予定を1件足した日にこの対照が落ちた**（北マケドニアへの
+   移動を足して実際に落ちた）。見たいのは「ぜんぶ行ってきた日に2つが違う答えを
+   出すか」であって特定の日ではないので、**表のいちばん後ろの予定の、その先の日**を
+   その場で出す（`docs/island-misses.md` #193 の決めごと4——見張りが赤いときは、
+   まず見張りの前提が崩れていないかを見る）。 */
+const LAST = PLANS.map((p) => p.done || p.until || p.date || "0000-00-00").sort().at(-1);
+const AFTER_ALL = noon(Number(LAST.slice(0, 4)) + 1, 1, 15);
+const allPast = nextPlan(AFTER_ALL);
 check(
-  "対照：`nextPlan()` は、いまの本番で行ってきた企画を返す",
-  allPast !== undefined && planPhase(allPast, T) === "after",
+  `対照：ぜんぶ行ってきた日（${LAST} の翌年）に、\`nextPlan()\` は行ってきた企画を返す`,
+  allPast !== undefined && planPhase(allPast, AFTER_ALL) === "after",
   `出た=${allPast?.id}`,
 );
 check(
   "対照：`leadPlan()` は、同じ日に何も返さない",
-  leadPlan(noon(2026, 10, 7)) === undefined,
+  leadPlan(AFTER_ALL) === undefined,
+  `出た=${leadPlan(AFTER_ALL)?.id}`,
 );
 
 /* -------------------------------------------- 6. 今週、なにをするんだろう */

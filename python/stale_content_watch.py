@@ -555,6 +555,13 @@ BOOKS: dict[str, Book] = {
         "（`docs/island-fresh.md` 4章「本人の言葉には、書かれた日をいっしょに置く」）",
     ),
     "nordicFood.ts": Book(HUMAN, SKIP, 0, "旅先のふだんのごはんの読みもの。日付を1つも持たない"),
+    "northMacedonia.ts": Book(
+        HUMAN, SKIP, 0,
+        "北マケドニアの案内（`/north-macedonia`）。見どころ・食べもの・ことばの読みもので、"
+        "**今日がいつかを知らないと決められない字は1つも置いていない**"
+        "（お祭りは「毎年10月」まで。移動する日は企画の表が持つ）。"
+        "中にある数字（1963年の地震、2,764m、288m）は動かない事実なので、古くならない",
+    ),
     "themes.ts": Book(HUMAN, SKIP, 0, "掲示板のテーマ。画面に出る言葉で、日付を持たない"),
     "voice.ts": Book(HUMAN, SKIP, 0, "島のことばづかい。画面に出る言葉"),
     "nights.ts": Book(HUMAN, SKIP, 0, "配信の時間の言い方。画面に出る言葉"),

@@ -90,6 +90,18 @@ export const ISLE_ICONS: Record<string, Record<string, string>> = {
     facts: "statue-block",
     pier: "pier",
   },
+
+  /* 北マケドニア。**海に出ない国**なので、水ぎわのものは海のものにしない。
+     - この島のこと … 穴の空いた立石。コキノ（紀元前1800年ごろの巨石の観測所）は、
+       岩の割れ目ごしに日の出の位置を見る。石そのものが暦だった土地
+     - となりの島へ … 板を渡した渡し場。オフリドの崖ぞいの桟道（カネオへ行く板の道）と、
+       湖に杭を打って建てた骨の湾の家。**桟橋も小舟も海のものなので置かない**
+     - この国の歩きかた … 市の屋台。スコピエの旧市場（Стара чаршија）がこの国の入口 */
+  "north-macedonia": {
+    facts: "statue-ring",
+    pier: "path-wood",
+    guidebook: "stall-green",
+  },
 };
 
 /**
