@@ -199,6 +199,29 @@ export type PhotoGroup = {
   cardCount?: number;
 };
 
+/**
+ * カード1枚を、開いた紙（`CardSheet`）に渡せる形にする。
+ *
+ * **図鑑（`/friends`）とじぶんのこと（`/me`）から開くときに使う。**
+ * あちらに並んでいるのは「その人の1枚」なので、紙に立てる候補も
+ * **その1人だけ。** ほかの人を混ぜない——混ぜると、投げ銭していない
+ * 人のキャラクターを合成して持ち帰れることになる（`docs/island-cards.md` 1章）。
+ *
+ * `/cards` の紙（何人も写っている写真）はいままでどおり `byPhoto` /
+ * `shelves` から来る。**こちらは1枚ぶんの入口を足しただけ。**
+ */
+export function soloGroup(card: ShownCard): PhotoGroup {
+  return {
+    photoId: card.photoId,
+    url: card.url,
+    w: card.w,
+    h: card.h,
+    note: card.note,
+    day: card.day,
+    cards: [card],
+  };
+}
+
 /** 1日ぶんの棚。1日に写真は何枚でも貼られる。 */
 export type DayShelf = { day: string; photos: PhotoGroup[] };
 
