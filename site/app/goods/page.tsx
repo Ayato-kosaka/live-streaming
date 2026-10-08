@@ -239,25 +239,36 @@ export default function GoodsPage() {
               新しいタブで開いて、こちらの窓への参照は渡さない
               （`noopener`。`noreferrer` で、どこから来たかも渡さない）。
               `prefetch` の見張り（`prefetch_selftest.mjs`）は `<Link>` を
-              数えているので、外へ出るものは素の `<a>` のままにする */}
+              数えているので、外へ出るものは素の `<a>` のままにする。
+
+              **写真は横に並べて、題は店の名前。** 1枚だけ・題が商品名だと、
+              その商品1つしか無い店に見える（あやと 2026-10-08、2回目の指摘）。
+              枚数は決め打ちしない——`shots` に1行足せば並ぶ */}
           <a
-            className="gd-go gd-out"
+            className="gd-go gd-out gd-shop"
             href={SUZURI.href}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img
-              src={SUZURI.thumb}
-              alt=""
-              width={SUZURI.w}
-              height={SUZURI.h}
-              loading="lazy"
-            />
-            <span>
-              <b>{SUZURI.cap}</b>
-              <i>{SUZURI.note}</i>
+            <span className="gd-shopshots">
+              {SUZURI.shots.map((shot) => (
+                <img
+                  key={shot.src}
+                  src={shot.src}
+                  alt={shot.alt}
+                  width={shot.w}
+                  height={shot.h}
+                  loading="lazy"
+                />
+              ))}
             </span>
-            <Icon name="external" size={16} />
+            <span className="gd-shopside">
+              <span>
+                <b>{SUZURI.cap}</b>
+                <i>{SUZURI.note}</i>
+              </span>
+              <Icon name="external" size={16} />
+            </span>
           </a>
         </Sec>
       </div>
