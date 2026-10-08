@@ -30,6 +30,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // ここを忘れて、配ったあとの見張りで見つかった。面を1枚増やす仕事は3か所ある。
     "/nordic", "/nordic/guide",
     "/north-macedonia",
+    // 島から持って帰れるものと、いっしょに決めるもの（2026-10-08）。
+    // **面を1枚増やす仕事は3か所**（上の注）。ここが3か所目
+    "/goods",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
     "/privacy",
     // **看板の6つは全部ここに並べる。** `/about` は頭のバーにも名刺にも

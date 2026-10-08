@@ -195,7 +195,22 @@ type Props = {
    * 国や区間の面は読みに来る場所なので、畳んだままでよい。
    */
   writeOpen?: boolean;
+  /**
+   * この字とぴったり同じ付箋は、一覧に出さない。
+   *
+   * **面の上に、もう別の形で出ているぶん。** グッズの面（`/goods`）が
+   * LINEスタンプの10枚を枠として並べていて、その1枚ずつの「いいね」が
+   * 同じ字の付箋のハートになっている（`components/goods/StampVotes.tsx`）。
+   * 出さないと、枠と一覧に同じ字が2回ならぶ。
+   *
+   * **消しているのではない。** その付箋は枠のほうで出ているし、
+   * `/board` の棚にも今までどおり並ぶ。
+   */
+  omitTexts?: string[];
 };
+
+/** 字で外すものが無いときに渡す1つ。**毎回 `[]` を作ると `useMemo` が効かない** */
+const NOTHING: string[] = [];
 
 /** 運営者の付箋を先に、そのあとは新しい順。表示のたびに並びが動かないようにする。 */
 function ordered(list: Sticky[]): Sticky[] {
@@ -212,6 +227,7 @@ export default function Notes({
   title,
   ask,
   writeOpen = false,
+  omitTexts: omit = NOTHING,
 }: Props) {
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
@@ -380,8 +396,15 @@ export default function Notes({
   );
 
   const list = useMemo(
-    () => ordered((notes ?? []).filter((n) => fixed || n.theme === pick)),
-    [notes, fixed, pick],
+    () =>
+      ordered(
+        (notes ?? []).filter(
+          (n) =>
+            (fixed || n.theme === pick) &&
+            !omit.includes(n.text.trim()),
+        ),
+      ),
+    [notes, fixed, pick, omit],
   );
 
   /* 「まだ1枚も貼られていません」の空札が出ているか。

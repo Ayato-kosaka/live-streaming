@@ -83,6 +83,44 @@ export function htmlFiles(dir, base = "") {
 }
 
 /**
+ * 配り先に在る、**面ではないファイル**（落とせる絵・PDF・テキスト）。
+ *
+ * リンクの行き先は面だけではない。グッズの面（`/goods`）は
+ * `<a href="/goods/ayato-sticker.jpg" download>` でステッカーを渡していて、
+ * **押せば 200 で落ちてくる**のに、`.html` だけを行き先と数えていたころは
+ * 毎回「島の中に無い先」として挙がっていた（2026-10-08）。
+ *
+ * ここも**名指しで黙らせない。** 実際に歩いて、在るファイルだけを足す。
+ * 置き場から消えれば足されず、そのまま赤くなる。
+ *
+ * @param {string} dir 配っている置き場（書き出したもの。`site/.next-*`）
+ * @returns {string[]} `/goods/ayato-sticker.jpg` のような並び
+ */
+export function fileTargets(dir, base = "") {
+  let out = [];
+  let names;
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return out;
+  }
+  for (const f of names) {
+    if (SKIP_DIRS.includes(f)) continue;
+    const p = join(dir, f);
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      continue;
+    }
+    if (st.isDirectory()) out = out.concat(fileTargets(p, `${base}/${f}`));
+    // 面（`.html`）は `htmlFiles` の担当。ここは**それ以外**だけを数える
+    else if (!f.endsWith(".html")) out.push(`${base}/${f}`);
+  }
+  return out;
+}
+
+/**
  * `public/` が本番で配っている行き先。**在るものだけ。**
  *
  * @param {string} dir リポジトリの `public/`
@@ -100,6 +138,8 @@ export function publicTargets(dir) {
  * @returns {Set<string>}
  */
 export function targetSet(pages, extra = []) {
+  /* 落とせるファイル（`/goods/ayato-sticker.jpg`）も `extra` で来る。
+     `norm()` は `.html` と末尾の `/` しか落とさないので、当てても字は変わらない */
   return new Set([...pages.map(norm), ...extra.map(norm)]);
 }
 

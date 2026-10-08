@@ -13,6 +13,7 @@ import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { rememberVisit, VISITED } from "@/components/today/visit";
 import { jstNow, readNight } from "@/lib/nightly";
+import { AYATO_ASPECT, AYATO_SRC } from "@/lib/ayatoArt";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
@@ -46,6 +47,9 @@ export type { Resident };
 const GRASS_R = inset(ISLAND.radii, GRASS_INSET - 6);
 /** あやとの背丈。島の主人公なので、住人より必ず大きい。 */
 const AYATO_H = 60;
+/** あやとの絵の横幅。**比は絵そのものから引く**（`lib/ayatoArt.ts`）。
+    ここに数を書くと、絵を描き直した日に横へ潰れる */
+const AYATO_W = AYATO_H * AYATO_ASPECT;
 /**
  * 住人の背丈。あやとより小さく置く。主役はあやと。
  *
@@ -1687,10 +1691,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 className="ayato"
               >
                 <image
-                  href="/characters/ayato.webp"
-                  x={-AYATO_H * 0.43}
+                  href={AYATO_SRC}
+                  x={-AYATO_W / 2}
                   y={-AYATO_H}
-                  width={AYATO_H * 0.86}
+                  width={AYATO_W}
                   height={AYATO_H}
                   preserveAspectRatio="xMidYMax meet"
                 />

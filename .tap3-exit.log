@@ -1,0 +1,8 @@
+hit exit=0
+shots exit=0
+px exit=0
+band exit=0
+popcheck exit=0
+crawl exit=0
+hit1000 exit=1
+FINISHED

@@ -31,13 +31,14 @@
  *
  *   blind     行き先を見ずに素通りさせる（「見ない」で黙らせた形）
  *   nopublic  `public/` の行き先を足さない（直す前の姿。嘘の NG が出る）
+ *   nofiles   落とせるファイルを足さない（直す前の姿。`/goods` の「おとす」が挙がる）
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { brokenLinks, htmlFiles, norm, publicTargets, targetSet } from "./crawltargets.mjs";
+import { brokenLinks, fileTargets, htmlFiles, norm, publicTargets, targetSet } from "./crawltargets.mjs";
 import { repoPath } from "./repo.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,8 @@ const G = {
   brokenLinks: BREAK === "blind" ? () => [] : brokenLinks,
   // `public/` を足さない＝直す前の姿（嘘の NG が1件出る）
   publicTargets: BREAK === "nopublic" ? () => [] : publicTargets,
+  // 落とせるファイルを足さない＝直す前の姿（`/goods` の「おとす」が毎回挙がる）
+  fileTargets: BREAK === "nofiles" ? () => [] : fileTargets,
 };
 
 let SEEN = 0, BAD = 0;
@@ -106,6 +109,26 @@ check("`public/` に在る面と同じ段でも、無い先は挙げる",
 check("島の中に無い先は挙げる（元からの判定を壊していない）",
   G.brokenLinks(["/no-such-page-in-the-island"], targetSet(DIST, real)).length === 1);
 
+console.log("\n[4b] 落とせるファイルへの行き先（面ではないが、配り先に在る）");
+/* `/goods` の「おとす」は `/goods/ayato-sticker.jpg` を渡す。**面ではない**ので
+   `.html` だけを数えていたころは毎回「島の中に無い先」として挙がっていた。
+   **両側から当てる**——在るものが通ること、無いものが挙がること。 */
+const fbox = mkdtempSync(join(tmpdir(), "crawlfiles-"));
+mkdirSync(join(fbox, "goods"), { recursive: true });
+writeFileSync(join(fbox, "goods", "ayato-sticker.jpg"), "jpeg");
+writeFileSync(join(fbox, "index.html"), "<!doctype html><title>x</title>");
+const dlLinks = ["/goods/ayato-sticker.jpg", "/goods/no-such.jpg"];
+const withDl = G.brokenLinks(dlLinks, targetSet(DIST, G.fileTargets(fbox)));
+check("在る落としものは挙げない（嘘の NG を出さない）",
+  withDl.length === 1 && withDl[0] === "/goods/no-such.jpg", `挙げた: ${withDl.join(", ") || "なし"}`);
+check("面（.html）は数に混ぜない（面の一覧の担当）",
+  !G.fileTargets(fbox).includes("/index.html"), G.fileTargets(fbox).join(", "));
+rmSync(join(fbox, "goods", "ayato-sticker.jpg"));
+const goneDl = G.brokenLinks(dlLinks, targetSet(DIST, G.fileTargets(fbox)));
+check("**消えたら挙げる**（拡張子だけで黙らせていない）", goneDl.length === 2);
+rmSync(fbox, { recursive: true, force: true });
+check("無い置き場は空で返る（例外で止めない）", fileTargets(join(fbox, "ない")).length === 0);
+
 console.log("\n[5] crawl.mjs が、その判定をほんとうに呼んでいるか");
 check("判定は crawltargets.mjs から呼ぶ（道具の中で書き直さない）",
   /from "\.\/crawltargets\.mjs"/.test(src));
@@ -117,6 +140,13 @@ check("対照に、挙げてはいけない1枚と挙げてほしい1枚があ�
 check("何件足したかを報告に出す（0件なら見られていないと分かる）",
   /うち public\/ の面/.test(src));
 check("BREAK=nopublic がある（足す足を折れる）", /nopublic/.test(src));
+check("本番の面を歩くときに、配り先そのものを渡している（落としもののため）",
+  /fileDir: DIST/.test(src));
+check("対照には**台そのもの**を渡している（本物の書き出しを渡さない）",
+  /fileDir: dir/.test(src));
+check("対照に、落としもので挙げてはいけない1枚と挙げてほしい1枚がある",
+  /\["\/filelink\.html", \[\]\]/.test(src) && /\["\/deadfile\.html", \["リンク切れ"\]\]/.test(src));
+check("BREAK=nofiles がある（足す足を折れる）", /nofiles/.test(src));
 
 console.log("\n[6] 本物の木で、リンクと行き先が繋がっているか");
 const nordicPage = readFileSync(repoPath("site", "app", "nordic", "page.tsx"), "utf8");
@@ -130,5 +160,5 @@ if (BAD) {
   console.log(`✕ ${SEEN}件中 ${BAD}件 落ちました${BREAK ? `（BREAK=${BREAK}）` : ""}: ${fails.join(" / ")}`);
   process.exit(1);
 }
-console.log(`○ ${SEEN}件ぜんぶ通りました（綴り・public/ の行き先・消えたら赤・段ごと黙らせない・呼び出し）`);
+console.log(`○ ${SEEN}件ぜんぶ通りました（綴り・public/ の行き先・落としもの・消えたら赤・段ごと黙らせない・呼び出し）`);
 process.exit(0);

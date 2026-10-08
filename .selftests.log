@@ -1,0 +1,106 @@
+[対照] 回し役そのものが、落ちるときに落ちるか
+  ○ onlygreen → 終了コード 0（欲しいのは 0）
+  ○ tmpb351v4eq → 終了コード 1（欲しいのは 1）・「red_selftest.py」が出た: True
+  ○ onlymjs → 終了コード 1（欲しいのは 1）・「redjs_selftest.mjs」が出た: True
+  ○ empty → 終了コード 2（欲しいのは 2）
+  ○ 回し役は落ちられる
+
+[見張り] 95本を回す
+  ○ python/admin/card_why_selftest.py  終了コード 0  0.2秒
+  ○ python/admin/channel_alias_selftest.py  終了コード 0  1.1秒
+  ○ python/admin/characters_drop_selftest.py  終了コード 0  0.3秒
+  ○ python/admin/characters_freeze_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/characters_handle_selftest.py  終了コード 0  0.2秒
+  ○ python/admin/characters_link_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/characters_name_match_selftest.py  終了コード 0  4.6秒
+  ○ python/admin/characters_touch_selftest.py  終了コード 0  1.3秒
+  ○ python/admin/characters_why_selftest.py  終了コード 0  4.9秒
+  ○ python/admin/chat_day_selftest.py  終了コード 0  0.4秒
+  ○ python/admin/chatter_one_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/comments_pull_selftest.py  終了コード 0  1.7秒
+  ○ python/admin/doneru_key_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/donors_import_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/failed_reentry_selftest.py  終了コード 0  1.0秒
+  ○ python/admin/failed_terminate_selftest.py  終了コード 0  0.3秒
+  ○ python/admin/firestore_delete_selftest.py  終了コード 0  0.0秒
+  ○ python/admin/ip_purge_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/island_cards_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/name_clash_selftest.py  終了コード 0  9.3秒
+  ○ python/admin/tail_alias_selftest.py  終了コード 0  0.1秒
+  ○ python/admin/tip_alias_selftest.py  終了コード 0  0.2秒
+  ○ python/backup/photos_selftest.py  終了コード 0  0.8秒
+  ○ python/backup_drill_selftest.py  終了コード 0  0.4秒
+  ○ python/bake_down_selftest.py  終了コード 0  0.4秒
+  ○ python/bake_order_selftest.py  終了コード 0  3.6秒
+  ○ python/baked_today_selftest.py  終了コード 0  0.1秒
+  ○ python/build_residents_selftest.py  終了コード 0  0.1秒
+  ○ python/build_site_stats_selftest.py  終了コード 0  0.1秒
+  ○ python/card_gap_watch_selftest.py  終了コード 0  0.1秒
+  ○ python/channel_alias_nightly_selftest.py  終了コード 0  0.9秒
+  ○ python/closes_check_selftest.py  終了コード 0  0.1秒
+  ○ python/crosscall_selftest.py  終了コード 0  1.5秒
+  ○ python/dead_stream_watch_selftest.py  終了コード 0  2.7秒
+  ○ python/doneru_firstseen_selftest.py  終了コード 0  0.7秒
+  ○ python/doneru_supporters_selftest.py  終了コード 0  0.1秒
+  ○ python/donor_calls_selftest.py  終了コード 0  0.1秒
+  ○ python/failed_reentry_nightly_selftest.py  終了コード 0  1.6秒
+  ○ python/fund_gate_names_selftest.py  終了コード 0  0.1秒
+  ○ python/ingest_down_selftest.py  終了コード 0  0.1秒
+  ○ python/logsafe_selftest.py  終了コード 0  0.6秒
+  ○ python/logsafe_wiring_selftest.py  終了コード 0  0.6秒
+  ○ python/misses_link_selftest.py  終了コード 0  2.4秒
+  ○ python/misses_num_selftest.py  終了コード 0  1.2秒
+  ○ python/monthly_tips_selftest.py  終了コード 0  0.1秒
+  ○ python/name_tail_selftest.py  終了コード 0  2.3秒
+  ○ python/public_ids_selftest.py  終了コード 0  0.1秒
+  ○ python/rebake_summary_selftest.py  終了コード 0  0.2秒
+  ○ python/ship_down_selftest.py  終了コード 0  0.5秒
+  ○ python/shrink_guard_selftest.py  終了コード 0  2.8秒
+  ○ python/stale_content_watch_selftest.py  終了コード 0  1.3秒
+  ○ python/stays_selftest.py  終了コード 0  0.1秒
+  ○ python/stuck_waiting_selftest.py  終了コード 0  0.4秒
+  ○ python/text_expires_watch_selftest.py  終了コード 0  5.0秒
+  ○ python/ticket_labels_selftest.py  終了コード 0  0.0秒
+  ○ python/ticket_stock_selftest.py  終了コード 0  0.1秒
+  ○ python/ts_read_selftest.py  終了コード 0  0.4秒
+  ○ python/upkeep_watch_selftest.py  終了コード 0  3.0秒
+  ○ python/viewable_streams_selftest.py  終了コード 0  0.5秒
+  ○ python/watch_census_selftest.py  終了コード 0  2.9秒
+  ○ python/workflow_link_selftest.py  終了コード 0  0.3秒
+  ○ python/ytdlp_retry_selftest.py  終了コード 0  0.1秒
+  ○ site/selftest/cardplace_selftest.mjs  終了コード 0  2.9秒
+  ○ site/selftest/chatdown_selftest.mjs  終了コード 0  2.1秒
+  ○ site/selftest/chatter_selftest.mjs  終了コード 0  2.3秒
+  ○ site/selftest/folk_selftest.mjs  終了コード 0  2.0秒
+  ○ site/selftest/isleart_selftest.mjs  終了コード 0  1.5秒
+  ○ site/selftest/isleplace_selftest.mjs  終了コード 0  3.9秒
+  ○ site/selftest/leadplan_selftest.mjs  終了コード 0  2.4秒
+  ○ site/selftest/roster_selftest.mjs  終了コード 0  2.4秒
+  ○ functions/selftest/cards_bulk_selftest.mjs  終了コード 0  27.6秒
+  ○ functions/selftest/cards_byid_selftest.mjs  終了コード 0  23.8秒
+  ○ functions/selftest/cards_icons_selftest.mjs  終了コード 0  21.7秒
+  ○ functions/selftest/cards_mine_selftest.mjs  終了コード 0  19.4秒
+  ○ functions/selftest/cards_mint_selftest.mjs  終了コード 0  22.1秒
+  ○ functions/selftest/cards_public_selftest.mjs  終了コード 0  19.5秒
+  ○ functions/selftest/character_alias_selftest.mjs  終了コード 0  21.1秒
+  ○ functions/selftest/clean_selftest.mjs  終了コード 0  16.7秒
+  ○ functions/selftest/doneru_key_selftest.mjs  終了コード 0  16.1秒
+  ○ functions/selftest/donor_firstseen_selftest.mjs  終了コード 0  21.8秒
+  ○ functions/selftest/fund_desk_selftest.mjs  終了コード 0  20.4秒
+  ○ functions/selftest/fund_docid_selftest.mjs  終了コード 0  16.9秒
+  ○ functions/selftest/fund_owner_selftest.mjs  終了コード 0  21.6秒
+  ○ functions/selftest/fund_superchat_selftest.mjs  終了コード 0  15.4秒
+  ○ functions/selftest/sticky_link_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/charbox_selftest.py  終了コード 0  0.1秒
+  ○ tools/sprites/cardgo_selftest.mjs  終了コード 0  0.2秒
+  ○ tools/sprites/crawl_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/heroicon_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/inkband_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/inkpx_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/ogframe_selftest.mjs  終了コード 0  0.1秒
+  ○ tools/sprites/preclaim_selftest.mjs  終了コード 0  1.2秒
+  ○ tools/sprites/prodcurl_selftest.mjs  終了コード 0  0.2秒
+  ○ tools/sprites/prodsweep_selftest.mjs  終了コード 0  0.8秒
+
+見た 95本 / 通った 95本 / 落ちた 0本
+○ ぜんぶ通りました

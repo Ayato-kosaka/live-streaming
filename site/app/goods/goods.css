@@ -1,0 +1,335 @@
+/*
+ * あやとグッズ（`/goods`）の面だけで使うもの。
+ *
+ * **器は作り直さない。** 欄は島の「紙の型」（`app/css/pages.css` の
+ * `.panel.paper`）、畳みは `.fold`、ハートは `.nt-heart` を借りる。
+ * 同じ用事のものが2通りの見た目を持つと、島の中で部屋が増えたように見える
+ * （`docs/island-design.md`）。
+ *
+ * ここに置くのは、この面にしか無いもの——欄の見出しと札、ステッカーの並べ方、
+ * スタンプの10枚、外の店への板。
+ */
+
+.gdbook {
+  margin-top: 4px;
+}
+
+/* 目次から来ることは無いが、`#linestamp` のような道で貼られたときに
+   頭がぴったり画面の端に貼りつかないよう、息継ぎを置く（`.gchap` と同じ） */
+.gd-sec {
+  scroll-margin-top: var(--sp-4);
+}
+@media (min-width: 900px) {
+  /* 看板の高さ 93px（`pages.css` の `.ih`）＋ 息継ぎのぶん */
+  .gd-sec { scroll-margin-top: calc(93px + var(--sp-4)); }
+}
+
+/* ---- 欄の見出し --------------------------------------------------------- */
+
+.gd-h {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-head);
+}
+
+.gd-h > b {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* 開く前に分かる1語。**押せないので、厚みは付けない**（`island-design.md` 3-3）。
+   平らな札のまま、地の色だけで「もう在る／まだ決めていない」を分ける。 */
+.gd-tag {
+  flex: none;
+  margin-left: auto;
+  padding: 3px var(--sp-2);
+  border-radius: var(--r-0);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  background: var(--chip);
+  color: var(--chip-ink);
+}
+/* まだ何も決まっていないもの。**色を1つ足さない**——蛍光ペンの帯
+   （`--marker`）は島のほかの面でも「ここが今の話」を表す印なので、
+   そのまま借りる */
+.gd-sec[data-tag="検討中"] > .gd-h > .gd-tag {
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+/* 島の外。押すと出ていく、は板のほうの印（`.gd-out`）が言うので、
+   札は一段おとす */
+.gd-sec[data-tag="お店"] > .gd-h > .gd-tag {
+  background: color-mix(in srgb, var(--rule) 40%, var(--paper));
+  color: var(--ink-2);
+}
+
+.gd-lead {
+  margin: var(--sp-2) 0 0;
+  font-size: 12.5px;
+  line-height: var(--lh-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 欄の中の但し書き。「これから決める」のような、押しどころの無い1行 */
+.gd-note {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  line-height: 1.85;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* ---- 押せる板（島の中へ・島の外へ） ------------------------------------- */
+
+.gd-go {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  min-height: 56px;
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: var(--paper);
+  /* 押せるものには厚み。合図は厚み1種類だけ（`island-design.md` 3-3） */
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  text-decoration: none;
+}
+.gd-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+
+.gd-go > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gd-go b {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+}
+.gd-go i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: var(--fs-note);
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.gd-go > svg { flex: none; }
+
+/* 外の店。**写真は横に並べる。**
+   1枚だけ添えていたころは、その1枚の商品しか無い店に見えていた
+   （あやと 2026-10-08、2回目の指摘）。
+   押すと出ていくことは印（external）が言う。 */
+.gd-shop {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+/* 枚数は決め打ちしない。`auto-fit` なので、`shots` を増やしても
+   1行に収まるぶんだけ細くなる（2枚でも3枚でも同じ書き方で並ぶ） */
+.gd-shopshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: var(--sp-2);
+  /* PC では、写真が板の幅いっぱい（403px角）に伸びて、
+     同じ面のほかの札より大きくなっていた。**店は主役ではない。**
+     スマホ（390px）では板のほうが狭いので、ここは効かない */
+  max-width: 360px;
+}
+.gd-shopshots > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-0);
+  object-fit: cover;
+  background: var(--paper-2);
+}
+
+.gd-shopside {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.gd-shopside > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gd-shopside > svg { flex: none; }
+
+/* ---- ステッカー --------------------------------------------------------- */
+
+.gd-sticker {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+.gd-stickerart {
+  flex: none;
+  width: 132px;
+  height: auto;
+  border-radius: var(--r-0);
+  background: var(--paper);
+  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり） */
+  border: 1px solid var(--rule);
+}
+
+.gd-stickerside {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* **押しどころを横いっぱいに伸ばさない。** 広い画面で 1,000px の
+     「おとす」になると、押す場所が1つしか無いことが伝わらなくなる */
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.gd-stickerside > b {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* 落とすところ。**48px を切らない。**
+   色は掲示板の「はりだす」（`app/css/pages.css` の `.bbtn`）と同じ recipe。
+   はじめ `--accent`（桃）の上に `--accent-ink` を置いていたら、描いた画素で
+   **2.85 : 1** だった（`tools/sprites/inkpx.mjs`）。桃は「いま・今日」を
+   言う飾りの色で、字を乗せる地ではない。濃い桃にクリームの字で 4.8 : 1。
+   **桃そのものは、押したときの手ごたえと側面に残る。** */
+.gd-get {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg,
+    var(--accent-deep) 0%,
+    color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
+  color: var(--paper);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  letter-spacing: var(--ls-head);
+  text-decoration: none;
+  /* 側面は面より濃く。同じ色だと厚みが見えず、押せる合図が消える */
+  box-shadow:
+    0 6px 0 color-mix(in srgb, var(--accent-deep) 58%, var(--ink)),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+.gd-get:active {
+  transform: translateY(6px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* ---- LINEスタンプの10枚 ------------------------------------------------- */
+
+.gd-stamps { margin-top: var(--sp-3); }
+
+.gd-grid {
+  display: grid;
+  /* 390px では3枚ならび（4段）、広い画面では5枚ならび（2段）。
+     **10枚が1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと
+     1枚が 60px まで痩せて、焼いた透かしが読めなくなる */
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 608px;
+}
+
+.gd-grid > li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* 絵の入る場所。**一面に並ぶマスが全部押せるわけではない**ので、
+   マスそのものには厚みを付けない。押せるのは下のハート1つだけ
+   （`docs/island-design.md` 3-3 の例外は「全部押せるとき」だけ） */
+.gd-stampart {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: var(--r-0);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.gd-stampart > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+/* **空の枠を黙って並べない。** 絵がまだ届いていないことを、枠の中で言う */
+.gd-stampart > em {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 2px;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  text-align: center;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+}
+
+.gd-stampline {
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink);
+}
+
+/* 数を取りに行っているあいだ。**0 と同じ絵にしない**ので、数字を出さずに
+   場所だけ取る（`docs/island-design.md` 4章の「読み込み中」）。
+   ハート（48px）と同じ背にして、数が入ったときに行が飛ばないようにする */
+.gd-stampwait {
+  display: block;
+  width: 62px;
+  /* **ハート（`.nt-heart` の min-height）と同じ背。** 1px でも違うと、
+     数が入った瞬間に10枚ぶんの行がいっせいに飛ぶ
+     （`docs/island-standards.md` 7章） */
+  height: 48px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--rule) 30%, transparent);
+}
+
+/* 広い画面では、ステッカーをもう一回り大きく。**1枚しか無いので主役にする** */
+@media (min-width: 720px) {
+  .gd-stickerart { width: 188px; }
+}
+
+/* 押したのに動かなかったときの1行。**読めなかったときの札とは別の顔**にする
+   （あちらは灰色の「もうすぐ出る」ではなく、もう一度読みに行く押しどころを持つ） */
+.gd-why {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-note);
+  line-height: 1.8;
+  font-weight: 800;
+  color: var(--accent-ink);
+}
+
+/* ---- 付箋の畳み --------------------------------------------------------- */
+
+.gd-say { margin-top: var(--sp-4); }

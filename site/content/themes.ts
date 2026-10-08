@@ -255,9 +255,9 @@ export const THEMES: Theme[] = [
      （この表の頭の決まり）。「そのほか」より前なのは、あちらが
      「どこにも入らない字の置き場」で、受け皿はいつも最後にいるため。
 
-     **行き先（`href`）を持たせない。** グッズの話をしている面がまだ無い。
-     いまリンクを書くと、受け皿が島の玄関を 200 で返して、押した人は
-     「なぜ違う面が出たのか」が分からない（`albania` と同じ決まり）。 */
+     **行き先（`href`）は3つとも `/goods`。** 2026-10-08 にその面ができた
+     （`app/goods/page.tsx`）。棚の札から、その話をしている場所へ出られる。
+     1枚の面の中に3つの欄が在るので、`#` 付きでその欄まで送る。 */
   {
     /* **「ポスター」とも「ブロマイド」とも名乗らない。** 何にするかはまだ
        決まっていないので、**形から聞く。** 名前で形を決めると、そこへ寄った
@@ -267,6 +267,7 @@ export const THEMES: Theme[] = [
     id: "goods-art",
     name: "あやとの絵と写真",
     group: GOODS_GROUP,
+    href: "/goods#sticker",
     lead: "あやとの絵や写真を、どんな形でほしいか。",
     placeholder: "例）部屋に貼れる大きさで1枚。旅先の景色のなかに、あやとが小さく写っているの",
   },
@@ -274,6 +275,7 @@ export const THEMES: Theme[] = [
     id: "goods-calendar",
     name: "カレンダー",
     group: GOODS_GROUP,
+    href: "/goods#calendar",
     lead: "カレンダーに入れてほしい写真と、壁にかけるか机に置くか。",
     placeholder: "例）壁にかけるので大きいの。月ごとに、その月に歩いていた国の写真がいい",
   },
@@ -281,6 +283,7 @@ export const THEMES: Theme[] = [
     id: "goods-linestamp",
     name: "LINEスタンプ",
     group: GOODS_GROUP,
+    href: "/goods#linestamp",
     lead: "どんな一言のスタンプがほしいか。あやとの口ぐせでも、島の住人でも。",
     placeholder: "例）「おなかすいた」をあやとの顔で。毎日つかう",
   },
