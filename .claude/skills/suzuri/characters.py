@@ -8,6 +8,7 @@
     d["changed"]  # 同じ絵文字で、島の絵が描き直された人 [{mid, char, emoji, src, sim}]
     d["gone"]     # SUZURI に在って、島に居ない人      [{mid, title}]
     d["opaque"]   # 背景なしの絵に透過が無い人（作らない）[{char, emoji}]
+    d["short"]    # 品目が5つそろっていない住人（Actions が3品目で作った人など）[{mid, char, emoji, src, items}]
 
 ## 何で突き合わせるか
 
@@ -29,7 +30,7 @@ import sys
 import urllib.request
 
 sys.path.insert(0, "/home/ubuntu/cdp")
-from suzuri_ops import list_ids, prep, read, transparent  # noqa: E402
+from suzuri_ops import ORDER, list_ids, prep, read, transparent  # noqa: E402
 
 API = "https://live-streaming-d3cac.web.app/island-api/characters"
 WORK = "/home/ubuntu/suzuri"
@@ -90,9 +91,9 @@ def diff(t):
     # SUZURI に上げてあるのは余白を落とした絵なので、島のほうも余白を落とした版で比べる。
     # 余白の有る元絵と比べると、同じ絵でも枠の取り方がずれて相関が下がる
     feats = {c["char"]: feat(Image.open(c["src"] or c["raw"])) for c in chars}
-    have, changed, gone = set(), [], []
+    have, changed, gone, short = set(), [], [], []
     for mid in list_ids(t):
-        m, _ = read(t, mid)
+        m, ps = read(t, mid)
         if not m or not m.get("title") or SERIES not in m["title"]:
             continue
         tex = feat(Image.open(io.BytesIO(urllib.request.urlopen(m["textureUrl"], timeout=60).read())))
@@ -109,6 +110,9 @@ def diff(t):
                 gone.append({"mid": mid, "title": m["title"]})
             continue
         have.add(c["char"])
+        pub = sorted(p["item"]["name"] for p in ps if p["published"])
+        if pub != sorted(ORDER):
+            short.append({"mid": mid, "char": c["char"], "emoji": c["emoji"], "src": c["src"], "items": pub})
         s = sim(tex, feats[c["char"]])
         if s < SAME:
             changed.append({"mid": mid, "char": c["char"], "emoji": c["emoji"], "src": c["src"],
@@ -117,15 +121,15 @@ def diff(t):
     new.sort(key=lambda c: c.get("createdAt") or "")
     opaque = [{"char": c["char"], "emoji": c["emoji"]} for c in chars if not c["transparent"]]
     return {"new": [{"char": c["char"], "emoji": c["emoji"], "src": c["src"]} for c in new],
-            "changed": changed, "gone": gone, "opaque": opaque, "island": len(chars)}
+            "changed": changed, "gone": gone, "opaque": opaque, "short": short, "island": len(chars)}
 
 
 if __name__ == "__main__":
     from suzuri_ops import fresh_tab
     d = diff(fresh_tab())
     json.dump(d, open(f"{WORK}/diff.json", "w"), ensure_ascii=False, indent=1)
-    print(f"島 {d['island']} 人 / 新しく作る {len(d['new'])} / 絵が変わった {len(d['changed'])} / 島に居ない {len(d['gone'])} / 透過なし {len(d['opaque'])}")
-    for k in ("changed", "gone", "opaque"):
+    print(f"島 {d['island']} 人 / 新しく作る {len(d['new'])} / 絵が変わった {len(d['changed'])} / 島に居ない {len(d['gone'])} / 透過なし {len(d['opaque'])} / 品目が足りない {len(d['short'])}")
+    for k in ("changed", "gone", "opaque", "short"):
         for x in d[k]:
             print(k, json.dumps(x, ensure_ascii=False))
     print("new:", " ".join(x["emoji"] for x in d["new"]))

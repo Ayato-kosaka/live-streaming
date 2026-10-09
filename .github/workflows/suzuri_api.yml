@@ -1,0 +1,104 @@
+name: SUZURI API
+
+# SUZURI の公式 API を呼ぶ口（`python/suzuri_api.py`）。あやとの決め（#732、2026-10-09）:
+#
+# > 汎用スズリAPI呼び出しGitHub Actions を作って、C案が良さそう。
+# > スキルは残しとくけど、ワークフローの方が早い時はそっち使う感じがいいかな。
+#
+# ## 2つの起こされ方
+#
+# - **手で押す**（`workflow_dispatch`）: `command` と `args` を渡して、何でも1回呼ぶ。
+#   既定は `dry_run: true`（押し間違えても SUZURI は変わらない）
+# - **毎晩ひとりでに**: 取り込みの完了に繋いで `characters` を回し、島に新しく入った
+#   キャラクターの住人グッズを作る。**作るのはステッカー・キーホルダー・マグの3品目。**
+#   缶バッジとパネルは API で大きさを保存できると分かるまで、スキル（`/suzuri`）で足す
+#
+# ## なぜ取り込みに繋いだか
+#
+# このリポジトリで当てにできる定時は、取り込み2本の完了だけ（`CLAUDE.md`「新しく載せた cron は、
+# 発火を1回見るまで当てにしない」）。`rebake.yml` と同じく `workflow_run` で繋ぎ、cron は保険に置く。
+# **`conclusion` は見ない**（取り込みは呼び出しの晩に exit 1 で終わる。あれは失敗ではない）。
+# **繋ぎはワークフローの `name:` で解決される。** あちらの名前を変えると黙って切れる。
+#
+# ## 鍵
+#
+# `SUZURI_API_KEY`（Secret）。無ければ毎晩の回は何もせずに緑で終わる（入れる前から赤が並ばないように）。
+# 手で押した回は、鍵が無ければ赤で止まる。
+
+on:
+  workflow_run:
+    workflows: ["Fetch YouTube Chat Data"]
+    types: [completed]
+  schedule:
+    # 保険。取り込みが発火しなかった晩の受け皿（日本時間の朝 11 時ごろ）
+    - cron: "7 2 * * *"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "何をするか"
+        type: choice
+        options: [materials, characters, create, update, delete, preview, probe]
+        default: materials
+      args:
+        description: "コマンドに渡す引数（例: update なら `21116414 --price 300`、probe なら `21116414 --item can-badge --scale 0.8`）"
+        required: false
+        default: ""
+      dry_run:
+        description: "見るだけ（characters / create / delete で効く）"
+        type: boolean
+        default: true
+
+concurrency:
+  group: suzuri-api
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  suzuri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUZURI_API_KEY: ${{ secrets.SUZURI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pillow を入れる
+        run: pip install --quiet Pillow
+
+      - name: 鍵があるか
+        id: key
+        run: |
+          if [ -n "$SUZURI_API_KEY" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "ok=0" >> "$GITHUB_OUTPUT"
+          echo "SUZURI_API_KEY が Secret に無い（あやとの操作。#736）" | tee -a "$GITHUB_STEP_SUMMARY"
+          # 手で押したときだけ赤にする。毎晩の回は、鍵が入るまで何もしないで緑
+          [ "${{ github.event_name }}" = "workflow_dispatch" ] && exit 1 || exit 0
+
+      - name: 手で押した回
+        if: steps.key.outputs.ok == '1' && github.event_name == 'workflow_dispatch'
+        env:
+          CMD: ${{ inputs.command }}
+          ARGS: ${{ inputs.args }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          extra=""
+          case "$CMD" in characters|create|delete) [ "$DRY" = "true" ] && extra="--dry-run" ;; esac
+          # ARGS は人が打った字。シェルに通さず、python の shlex で分ける
+          python3 - "$CMD" "$extra" <<'PY'
+          import os, shlex, subprocess, sys
+          cmd, extra = sys.argv[1], sys.argv[2]
+          argv = ["python3", "python/suzuri_api.py", cmd] + shlex.split(os.environ.get("ARGS", "")) + ([extra] if extra else [])
+          print("$", " ".join(shlex.quote(a) for a in argv[2:]))
+          sys.exit(subprocess.call(argv))
+          PY
+
+      - name: 毎晩の回（島に新しく入ったキャラクターの住人グッズ）
+        if: steps.key.outputs.ok == '1' && github.event_name != 'workflow_dispatch'
+        run: python3 python/suzuri_api.py characters
